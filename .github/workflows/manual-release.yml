@@ -58,12 +58,18 @@ jobs:
             --exclude="docs" \
             --exclude="CLAUDE.md" \
             --exclude="README.md" \
-            --exclude="CHANGELOG.md" \
             --exclude="LICENSE" \
             --exclude="WeintCodex" \
             ./ WeintCodex/
 
+          # CHANGELOG.md bleibt ausdruecklich DRIN. WeintCompanion liest
+          # sie aus dem installierten Addon-Ordner
+          # (core/changelog_source.py drueben, addon_entries): ohne sie
+          # faellt die Aenderungsansicht auf den Text des GitHub-Releases
+          # zurueck und zeigt nur die JEWEILS LETZTE Fassung statt der
+          # ganzen Reihe.
           test -f WeintCodex/WeintCodex.toc
+          test -f WeintCodex/CHANGELOG.md
 
       # WICHTIG: tag/notes NUR ueber env uebergeben - eine direkte
       # ${{ inputs.notes }}-Interpolation im Skript bricht bei

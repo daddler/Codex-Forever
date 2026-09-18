@@ -79,9 +79,15 @@ Der Ordner im ZIP **muss** `WeintCodex` heissen und eine
 `test -f`, bevor er packt.
 
 Draussen bleiben: `.git`, `.github`, `.gitignore`, `docs`, `CLAUDE.md`,
-`README.md`, `CHANGELOG.md`, `LICENSE`. Ein Testlauf und eine
-Entwicklerdokumentation gehören nicht in den Addon-Ordner eines
-Spielers.
+`README.md`, `LICENSE`. Ein Testlauf und eine Entwicklerdokumentation
+gehören nicht in den Addon-Ordner eines Spielers.
+
+**`CHANGELOG.md` bleibt ausdrücklich drin.** WeintCompanion liest sie
+aus dem *installierten* Addon-Ordner (`core/changelog_source.py` drüben,
+`addon_entries()`). Fehlt sie, fällt die Änderungsansicht auf den Text
+des GitHub-Releases zurück — und zeigt damit nur die jeweils letzte
+Fassung statt der ganzen Reihe. Der Workflow prüft das mit einem
+`test -f`, damit es nicht noch einmal still verlorengeht.
 
 Neben dem ZIP wird eine `.sha256` veröffentlicht. Die Companion prüft
 sie, wenn sie da ist, und **warnt nur**, wenn sie fehlt — sie blockiert
