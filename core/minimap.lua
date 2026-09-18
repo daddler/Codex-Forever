@@ -1,0 +1,241 @@
+-- ==========================================================
+-- WeintCodex Minimap Button
+-- LibDataBroker + LibDBIcon
+-- ==========================================================
+
+local LDB = LibStub("LibDataBroker-1.1")
+local DBIcon = LibStub("LibDBIcon-1.0")
+
+WeintCodex.Minimap = WeintCodex.Minimap or {}
+
+----------------------------------------------------------
+-- SavedVariables
+----------------------------------------------------------
+
+local function GetDB()
+
+WeintCodex_SavedData = WeintCodex_SavedData or {}
+
+WeintCodex_SavedData.minimap =
+WeintCodex_SavedData.minimap or {
+    hide = false,
+}
+
+return WeintCodex_SavedData.minimap
+
+end
+
+----------------------------------------------------------
+-- Öffnen / Schließen
+----------------------------------------------------------
+
+local function ToggleAddon()
+
+if not WeintCodex.MainFrame then
+    return
+    end
+
+    if WeintCodex.MainFrame:IsShown() then
+
+        WeintCodex.MainFrame:Hide()
+
+        else
+
+            if WeintCodex.ResetToHome then
+                WeintCodex.ResetToHome()
+                end
+
+                WeintCodex.MainFrame:Show()
+
+                end
+
+                end
+
+                ----------------------------------------------------------
+                -- Tooltip-Helfer
+                ----------------------------------------------------------
+
+                -- Wie viele Schlachtzuege kennt das Addon? Bewusst die Zahl der
+                -- INSTANZEN und nicht der Bosse: die Bosslisten von Forever sind
+                -- nicht veroeffentlicht und bleiben leer, bis sie es sind
+                -- (siehe data/raids.lua). Eine "0 Bosse" im Tooltip waere keine
+                -- Auskunft, sondern ein Fehlerbild.
+                local function GetRaidCount()
+
+                if type(WeintCodex_Raids) ~= "table" then
+                    return 0
+                    end
+
+                    local count = 0
+
+                    for _ in ipairs(WeintCodex_Raids) do
+                        count = count + 1
+                        end
+
+                        return count
+
+                        end
+
+                        local function GetCurrentSpec()
+
+                        local _, class = UnitClass("player")
+
+                        local spec = GetSpecialization and GetSpecialization()
+
+                        if not spec then
+                            return class or "Unbekannt"
+                            end
+
+                            local id, name = GetSpecializationInfo(spec)
+
+                            if name then
+                                return string.format("%s (%s)", class, name)
+                                end
+
+                                return class or "Unbekannt"
+
+                                end
+
+                                ----------------------------------------------------------
+                                -- DataBroker Objekt
+                                ----------------------------------------------------------
+
+                                local launcher = LDB:NewDataObject("WeintCodex", {
+
+                                    type = "launcher",
+
+                                    icon = "Interface\\AddOns\\WeintCodex\\media\\button",
+
+                                    label = "WeintCodex",
+
+                                    ------------------------------------------------------
+                                    -- Klick
+                                    ------------------------------------------------------
+
+                                    OnClick = function(_, button)
+
+                                    if button == "LeftButton" then
+
+                                        ToggleAddon()
+
+                                        elseif button == "RightButton" then
+
+                                            if not WeintCodex.MainFrame:IsShown() then
+                                                ToggleAddon()
+                                                end
+
+                                                if WeintCodex.Navigation
+                                                    and WeintCodex.Navigation.SwitchTo then
+
+                                                    WeintCodex.Navigation.SwitchTo("raids")
+
+                                                    end
+
+                                                    end
+
+                                                    end,
+
+                                                    ------------------------------------------------------
+                                                    -- Tooltip
+                                                    ------------------------------------------------------
+
+                                                    OnTooltipShow = function(tt)
+
+                                                    tt:AddLine("|cff7C6CFFWeintCodex|r")
+                                                    tt:AddLine("|cffA0A0ACRaid Guide & Intelligence System|r")
+                                                    tt:AddLine(" ")
+
+                                                    tt:AddDoubleLine(
+                                                        "|cff34C77BLinksklick|r",
+                                                        "Addon öffnen / schließen",
+                                                        1,1,1,
+                                                        .85,.85,.85
+                                                    )
+
+                                                    tt:AddDoubleLine(
+                                                        "|cff8B7BFFRechtsklick|r",
+                                                        "Schlachtzüge öffnen",
+                                                        1,1,1,
+                                                        .85,.85,.85
+                                                    )
+
+                                                    tt:AddLine(" ")
+
+                                                    tt:AddDoubleLine(
+                                                        "|cffA0A0ACVersion|r",
+                                                        WeintCodex.Version or "?",
+                                                        1,1,1,
+                                                        .85,.85,.85
+                                                    )
+
+                                                    tt:AddDoubleLine(
+                                                        "|cffA0A0ACSchlachtzüge|r",
+                                                        tostring(GetRaidCount()),
+                                                                     1,1,1,
+                                                                     .85,.85,.85
+                                                    )
+
+                                                    tt:AddDoubleLine(
+                                                        "|cffA0A0ACKlasse|r",
+                                                        GetCurrentSpec(),
+                                                                     1,1,1,
+                                                                     .85,.85,.85
+                                                    )
+
+                                                    end,
+
+                                })
+
+                                ----------------------------------------------------------
+                                -- Registrierung
+                                ----------------------------------------------------------
+
+                                local frame = CreateFrame("Frame")
+
+                                frame:RegisterEvent("PLAYER_LOGIN")
+
+                                frame:SetScript("OnEvent", function()
+
+                                DBIcon:Register(
+                                    "WeintCodex",
+                                    launcher,
+                                    GetDB()
+                                )
+
+                                end)
+
+----------------------------------------------------------
+-- Sichtbarkeit
+----------------------------------------------------------
+-- LibDBIcon fuehrt den Zustand in derselben Tabelle, die es bei der
+-- Registrierung bekommen hat (`hide`), verlaesst sich aber darauf, dass
+-- Show/Hide ueber die Bibliothek laufen - das blosse Umsetzen des Feldes
+-- greift erst beim naechsten Login. Deshalb beides zusammen.
+--
+-- Vor PLAYER_LOGIN ist der Knopf noch nicht registriert; das Feld wird dann
+-- trotzdem geschrieben, und die Registrierung liest es kurz darauf.
+----------------------------------------------------------
+
+function WeintCodex.Minimap.IsShown()
+
+    return not GetDB().hide
+
+end
+
+function WeintCodex.Minimap.SetShown(shown)
+
+    local db = GetDB()
+
+    db.hide = not shown
+
+    if DBIcon.IsRegistered and not DBIcon:IsRegistered("WeintCodex") then
+        return
+    end
+
+    if shown then
+        DBIcon:Show("WeintCodex")
+    else
+        DBIcon:Hide("WeintCodex")
+    end
+
+end

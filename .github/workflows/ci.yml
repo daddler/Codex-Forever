@@ -1,0 +1,57 @@
+name: Prüfen
+
+# Laeuft bei jedem Push und jedem Pull Request. Sie ist fuer dieses Repo
+# wichtiger als fuer die meisten: World of Warcraft: Forever ist nicht
+# erschienen, es gibt also kein Spiel, in dem sich etwas ausprobieren
+# liesse. Bis dahin ist dieser Lauf die einzige Stelle, an der ein
+# Ladefehler auffaellt, bevor jemand ihn im Spiel sieht.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Lua 5.1 installieren
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y lua5.1 luajit >/dev/null
+
+      # Erste Stufe: Syntax. Findet nur Tippfehler, aber die sofort und
+      # mit Zeilennummer.
+      - name: Syntax jeder Lua-Datei
+        run: |
+          fehler=0
+          for f in $(find core data modules .github/tests -name '*.lua' | sort); do
+            if ! luac5.1 -p "$f"; then
+              echo "::error file=$f::Syntaxfehler"
+              fehler=1
+            fi
+          done
+          exit $fehler
+
+      # Zweite Stufe: laedt das Addon wirklich? Das findet die
+      # Fehlerklasse, die luac nicht sieht - eine Datei, die in der .toc
+      # fehlt oder zu frueh steht.
+      - name: Ladetest
+        run: lua5.1 .github/tests/load_test.lua .
+
+      - name: Datentest
+        run: lua5.1 .github/tests/data_test.lua .
+
+      # Dritte Stufe: nennen .toc, core/main.lua, data/changelog.lua und
+      # CHANGELOG.md dieselbe Fassung? Hier ohne Tag, also nur die drei
+      # Dateien gegeneinander - der Tag kommt erst beim Release dazu.
+      - name: Fassungsangaben
+        run: |
+          VERSION=$(grep -oP '^##\s*Version:\s*\K\S+' WeintCodex.toc)
+          echo "Fassung laut .toc: $VERSION"
+          python3 .github/scripts/release_notes.py "v$VERSION" > /dev/null

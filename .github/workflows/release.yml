@@ -1,0 +1,115 @@
+name: Addon packen und ans Release haengen
+
+# Laeuft, sobald ein Release veroeffentlicht wird - auch eines, das von
+# Hand ueber die GitHub-Oberflaeche angelegt wurde. Baut das ZIP, das
+# WeintCompanion herunterlaedt, und haengt es samt Pruefsumme an.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set version
+        run: |
+          echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+
+      - name: Lua 5.1 installieren
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y lua5.1 >/dev/null
+
+      # Erste Station, noch vor dem Bauen: laedt das Addon ueberhaupt?
+      # Ein Release, dessen ZIP im Spiel einen Lua-Fehler wirft, ist
+      # teurer als ein rotes Kreuz hier.
+      - name: Ladetest und Datentest
+        run: |
+          lua5.1 .github/tests/load_test.lua .
+          lua5.1 .github/tests/data_test.lua .
+
+      # Zweite Station: passt der Tag zu den vier Stellen, die die
+      # Fassung nennen - und schreibt er sie GENAUSO? Ein Tag, der die
+      # Fassung anders schreibt (".5.0.0.0" statt "v5.0.0.0"), laeuft
+      # sonst glatt durch, und die Update-Pruefung der Companion meldet
+      # danach nach jeder Aktualisierung erneut dasselbe Update.
+      - name: Tag und Fassungen pruefen
+        run: |
+          if ! python3 .github/scripts/release_notes.py "$VERSION" > /dev/null; then
+            echo "::error::Tag $VERSION passt nicht zu den Fassungsangaben im Repo (siehe oben). Release loeschen, Tag richtig schreiben, neu anlegen."
+            exit 1
+          fi
+
+      # Der Ordner im ZIP MUSS "WeintCodex" heissen und eine
+      # "WeintCodex.toc" enthalten - danach sucht der Installer der
+      # Companion (core/installer.py). Alles, was nicht ins
+      # Addon-Verzeichnis eines Spielers gehoert, bleibt draussen.
+      - name: Addon-Ordner bauen
+        run: |
+          mkdir WeintCodex
+
+          rsync -a \
+            --exclude=".git" \
+            --exclude=".github" \
+            --exclude=".gitignore" \
+            --exclude="docs" \
+            --exclude="CLAUDE.md" \
+            --exclude="README.md" \
+            --exclude="CHANGELOG.md" \
+            --exclude="LICENSE" \
+            --exclude="WeintCodex" \
+            ./ WeintCodex/
+
+          test -f WeintCodex/WeintCodex.toc
+
+      - name: ZIP bauen
+        run: |
+          zip -r "WeintCodex-${VERSION}.zip" WeintCodex
+
+      # Die Pruefsumme neben dem ZIP. Die Companion prueft sie, wenn sie
+      # da ist, und warnt nur, wenn sie fehlt (core/installer_workflow.py).
+      - name: Pruefsumme
+        run: |
+          sha256sum "WeintCodex-${VERSION}.zip" > "WeintCodex-${VERSION}.zip.sha256"
+
+      # Ein ueber die GitHub-Oberflaeche angelegtes Release hat oft ein
+      # leeres Beschreibungsfeld. In WeintCompanion stand dann unter
+      # "Addon & Updates" dauerhaft "Keine Änderungen gefunden." - der
+      # Text war wirklich leer, obwohl CHANGELOG.md gepflegt ist. Fehlt
+      # er, wird er hier nachgetragen; ein vorhandener bleibt
+      # unangetastet.
+      - name: Leeren Release-Text aus dem Changelog nachtragen
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          body=$(gh release view "$VERSION" --repo "${{ github.repository }}" --json body --jq .body)
+
+          if [ -n "$body" ]; then
+            echo "Release-Text vorhanden - unveraendert."
+            exit 0
+          fi
+
+          if python3 .github/scripts/release_notes.py "$VERSION" > release-notes.md; then
+            gh release edit "$VERSION" \
+              --repo "${{ github.repository }}" \
+              --notes-file release-notes.md
+          else
+            echo "::warning::Kein Changelog-Abschnitt fuer $VERSION - Release bleibt ohne Text."
+          fi
+
+      - name: ZIP ans Release haengen
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            WeintCodex-${{ env.VERSION }}.zip
+            WeintCodex-${{ env.VERSION }}.zip.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

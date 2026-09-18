@@ -1,0 +1,15 @@
+# Nichts aus dem Spiel und nichts vom Bauen.
+*.zip
+*.zip.sha256
+WeintCodex/
+
+# Editoren und Betriebssysteme
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# Lua-Bytecode aus einem Testlauf
+*.luac

@@ -1,0 +1,100 @@
+name: Release auf Knopfdruck
+
+# Legt ein GitHub-Release an (Tag + Text + Addon-ZIP + Pruefsumme) per
+# Knopfdruck unter "Actions". Der uebliche Weg fuer dieses Repo - ein
+# Release von Hand anzulegen geht auch, ist aber ein Schritt mehr.
+#
+# Das ZIP wird hier direkt mitgebaut, weil ein vom GITHUB_TOKEN
+# erstelltes Release den Workflow "Addon packen" aus Sicherheitsgruenden
+# NICHT ausloest.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release-Tag, genau v + die Fassung aus der .toc (z. B. v5.0.0.0)"
+        required: true
+      notes:
+        description: "Release-Text (Markdown). Leer lassen = Abschnitt aus CHANGELOG.md"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Lua 5.1 installieren
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y lua5.1 >/dev/null
+
+      - name: Ladetest und Datentest
+        run: |
+          lua5.1 .github/tests/load_test.lua .
+          lua5.1 .github/tests/data_test.lua .
+
+      # Passt der Tag zu den vier Stellen, die die Fassung nennen - und
+      # schreibt er sie GENAUSO? Siehe .github/scripts/release_notes.py.
+      - name: Tag und Fassungen pruefen
+        env:
+          TAG: ${{ inputs.tag }}
+        run: python3 .github/scripts/release_notes.py "$TAG" > /dev/null
+
+      - name: Addon-Ordner bauen
+        run: |
+          mkdir WeintCodex
+
+          rsync -a \
+            --exclude=".git" \
+            --exclude=".github" \
+            --exclude=".gitignore" \
+            --exclude="docs" \
+            --exclude="CLAUDE.md" \
+            --exclude="README.md" \
+            --exclude="CHANGELOG.md" \
+            --exclude="LICENSE" \
+            --exclude="WeintCodex" \
+            ./ WeintCodex/
+
+          test -f WeintCodex/WeintCodex.toc
+
+      # WICHTIG: tag/notes NUR ueber env uebergeben - eine direkte
+      # ${{ inputs.notes }}-Interpolation im Skript bricht bei
+      # Anfuehrungszeichen oder Klammern in den Notes (Shell-Injection).
+      - name: ZIP und Pruefsumme bauen
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          zip -r "WeintCodex-${TAG}.zip" WeintCodex
+          sha256sum "WeintCodex-${TAG}.zip" > "WeintCodex-${TAG}.zip.sha256"
+
+      - name: Release-Text holen
+        env:
+          TAG: ${{ inputs.tag }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          if [ -n "$NOTES" ]; then
+            printf '%s' "$NOTES" > release-notes.md
+          else
+            python3 .github/scripts/release_notes.py "$TAG" > release-notes.md
+          fi
+
+      - name: Release anlegen
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          gh release create "$TAG" \
+            --repo "${{ github.repository }}" \
+            --target "${{ github.sha }}" \
+            --title "$TAG" \
+            --notes-file release-notes.md \
+            "WeintCodex-${TAG}.zip" \
+            "WeintCodex-${TAG}.zip.sha256"

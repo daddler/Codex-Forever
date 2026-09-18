@@ -1,0 +1,84 @@
+## Interface: 120000
+## Title: |cff7C6CFFWeintCodex|r
+## Notes: Raid Guide & Intelligence System — Forever Edition
+## Author: Fabian
+## Version: 5.0.0.0
+## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
+
+#
+# ZUR SCHNITTSTELLENNUMMER OBEN: SIE IST EINE VERMUTUNG, KEIN WISSEN.
+#
+# World of Warcraft: Forever erscheint am 4. November 2026 und laeuft
+# nach allem, was bekannt ist, auf der modernen Client-Fassung. 120000
+# ist die Nummer, die dazu passt - belegt ist sie nicht, weil es den
+# Client noch nicht gibt.
+#
+# Sie darf hier stehen, weil ein Fehlgriff folgenlos und sofort
+# behebbar ist: stimmt die Nummer nicht, erscheint das Addon in der
+# Liste als "veraltet" und laedt nur mit gesetztem Haken bei
+# "Veraltete AddOns laden". Es ist EINE Zeile, die dann zu aendern
+# ist, und keine einzige Datei darunter haengt daran.
+#
+# Dieselbe Entscheidung hat die Companion fuer den Ordnernamen des
+# Spiels getroffen (`_forever_` in core/wow_clients.py): eine benannte
+# Vermutung an genau einer Stelle ist besser als eine stille an
+# vielen.
+#
+# ZUM ORDNERNAMEN: Dieses Addon MUSS in einem Ordner namens
+# "WeintCodex" liegen, und diese Datei MUSS "WeintCodex.toc" heissen.
+# WeintCompanion sucht beim Installieren genau danach
+# (core/installer.py), und die Medienpfade in core/ui.lua sind darauf
+# absolut verdrahtet - WoW kennt keine relativen Texturpfade.
+#
+
+#
+# LADEREIHENFOLGE IST DER EINZIGE ABHAENGIGKEITSMECHANISMUS, DEN WOW
+# KENNT. Eine Datei kann WeintCodex.Anderes nur ansprechen, wenn
+# anderes.lua frueher steht. Eine neue Datei, die hier fehlt, laedt
+# nicht - ohne Fehler, ohne Hinweis.
+#
+
+libs/LibStub/LibStub.lua
+libs/CallbackHandler-1.0/CallbackHandler-1.0.xml
+libs/LibDataBroker-1.1/LibDataBroker-1.1.lua
+libs/LibDBIcon-1.0/lib.xml
+
+#
+# core/main.lua steht VOR core/ui.lua: die Titelleiste schreibt die
+# Fassung hin, und die steht dort.
+#
+core/main.lua
+core/names.lua
+core/ui.lua
+core/access.lua
+core/navigation.lua
+core/minimap.lua
+core/onboarding.lua
+
+data/changelog.lua
+data/companion_live.lua
+data/raids.lua
+data/specs.lua
+
+#
+# modules/encounter_tracking.lua steht vor modules/raidpages.lua: die
+# Schlachtzugseite meldet ihre Instanzen beim Laden dort an.
+#
+modules/charakter.lua
+modules/encounter_tracking.lua
+modules/raidpages.lua
+modules/signup.lua
+modules/calendar.lua
+modules/groupcheck.lua
+modules/materials.lua
+modules/loot.lua
+modules/dialog.lua
+modules/companion.lua
+modules/companionpage.lua
+modules/sync.lua
+modules/settings.lua
+
+#
+# Zuletzt: die Suche baut ihren Index aus allem darueber.
+#
+core/search.lua

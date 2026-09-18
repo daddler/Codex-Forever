@@ -1,0 +1,155 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working
+with code in this repository. It is a **router**, not a knowledge base:
+detailed system documentation lives under `docs/` and is loaded on demand
+via the task-routing table below, not kept permanently in context.
+
+## What this is
+
+**WeintCodex — Forever Edition** is a World of Warcraft **Forever** addon:
+a raid guide & guild intelligence system (raid roster/calendar,
+character management, group check, materials tracking, Companion bridge).
+
+Comments and in-game UI text are in German; Lua identifiers are in
+English/mixed. There is no build step, package manager, or runtime test
+suite — pure WoW addon Lua, loaded directly by the game client per
+`WeintCodex.toc`. Two offline Lua 5.1 checks live under `.github/tests/`.
+
+It grew out of the Mists of Pandaria addon (`daddler/WeintCodex`) **by
+removal, not by rewrite** — the same way `Companion-Forever` grew out of
+`WeintCompanion`. The old addon keeps its own repository and its own
+release channel.
+
+## Role in the ecosystem
+
+WeintCodex is one of three sibling repos that together form the Weint
+ecosystem:
+
+```
+Codex-Forever (this repo, in-game Lua)
+    ↕ SavedVariables file (no network)     ↔  Companion-Forever (desktop app)
+                                                    ↕ HTTP :8765
+    ← clipboard (WCIMPORT string)           ←  WeintCodex Bot (Discord bot)
+```
+
+- **Codex-Forever** (this repo) — the in-game addon.
+- **Companion-Forever** — installs/updates this addon, bridges it to
+  Discord, and is the **authoritative host for every cross-repo data
+  contract** (see routing table — most "how does X sync" answers live in
+  `../Companion-Forever/docs/*.md`, a sibling checkout).
+- **WeintCodex Bot** — Discord bot backend; talks to this addon only
+  indirectly, via a `WCIMPORT:` string a player pastes in, or via the
+  Companion relaying it.
+
+**This addon never talks to the bot or the network directly.** Everything
+arrives either through `WeintCodex_SavedData`/`WeintCompanionDB`/
+`WeintCompanionInboxDB` (the SavedVariables files the Companion also
+reads/writes), through `data/companion_live.lua` (which the Companion
+rewrites), or through a copy-pasted `WCIMPORT:` string.
+
+## Critical invariants (always relevant, keep in mind for any change)
+
+- **`unknown` ≠ `0` ≠ `false`.** This is the single most important rule in
+  this repository, and for this edition it is not theoretical: the boss
+  lists are empty on purpose, the material watchlist is empty on purpose,
+  and Forever's client API is unverified. A missing item level, an
+  unanswered client call, an empty boss list, a material without a target
+  — none of these may be rendered as a measured zero, a red dot, or a
+  progress bar at 0 %. Details: `docs/invariants/data-integrity.md`.
+- **The empty tables are a documented state, not a gap.**
+  `data/raids.lua` (boss lists) and the watchlist in
+  `modules/materials.lua` carry no content, and **must never be backfilled
+  from Mists of Pandaria** — that would accuse players of shortfalls their
+  game does not have. Same decision, same reasoning as
+  `../Companion-Forever/docs/systems/forever-data.md`.
+- **What the client can answer is never derived or guessed.** Equipment
+  slots come from `GetInventorySlotInfo`, not a hard-coded list; the
+  specialization comes from the client or stays `nil`. Five releases of
+  bugs in the MoP addon came from breaking this rule.
+- **UTF-8 vs. Lua byte-wise string functions.** Never use `string.upper`,
+  `#`, or `:sub` on German display text — use `Spaced`/`WeintCodex.Upper`/
+  `WeintCodex.Truncate`/`Utf8Len`/`Utf8Sub` from `core/ui.lua`.
+- **One accent, and it carries meaning only.** `accent`, `purple`,
+  `violet` and `brandA` are the same colour on purpose, and
+  `.github/tests/load_test.lua` holds them to it. A second meaning-bearing
+  colour is how the previous edition ended up with "amber carries meaning,
+  purple carries light".
+- **Every colour value lives in `core/ui.lua`.** It is the translation of
+  the Companion's `gui/theme/tokens.py`. A hex value anywhere else is a
+  surface that gets missed when the palette changes.
+- **Never write to a freshly created fallback table instead of
+  `WeintCodex_SavedData`.** WoW only persists variables declared in the
+  `.toc`; a silent fallback loses data with no error.
+- **`WeintCodex.toc` load order is the only dependency mechanism.** A
+  module can only reference `WeintCodex.Other` if `other.lua` loads
+  earlier; a new file must be added to the `.toc` (libraries → core →
+  data → modules) or it silently won't load. `load_test.lua` catches
+  both mistakes.
+- **The addon folder must be named `WeintCodex` and the TOC
+  `WeintCodex.toc`.** The Companion's installer looks for exactly that
+  (`core/installer.py` over there), and the media paths in `core/ui.lua`
+  are absolute.
+- **Bump the version in three places together** — `## Version` in
+  `.toc`, `WeintCodex.Version` in `core/main.lua`, and the top entry in
+  `data/changelog.lua` — plus a `CHANGELOG.md` section, and the release
+  tag must be exactly `v` + that version. See
+  `docs/development/releases.md`.
+
+## Development workflow
+
+No build step. Before pushing:
+
+```bash
+luac5.1 -p $(find core data modules -name '*.lua')   # Syntax
+lua5.1 .github/tests/load_test.lua .                 # lädt das Addon?
+lua5.1 .github/tests/data_test.lua .                 # Daten + Fassungen
+```
+
+**There is no game to verify against** — Forever has not been released.
+The load test against a stubbed client is therefore not a nicety but the
+main safety net; it catches missing/misordered `.toc` entries and calls
+into modules that no longer exist. A green run means "it loads", never
+"it works".
+
+## Task routing — read only what the task needs
+
+| Task touches… | Read |
+|---|---|
+| UI-Struktur, Theme, `core/ui.lua`, Navigationsspalte, PageHead, Detailbereich | `docs/architecture/overview.md` |
+| Leere Tabellen, `unknown ≠ 0`, Leerzustände | `docs/invariants/data-integrity.md` |
+| Schlachtzüge, Bosslisten, Lockouts, Fortschritt | `docs/systems/raids-and-progress.md` |
+| Charakterseite, Twinks, Ausrüstungsstand | `docs/systems/character.md` |
+| Gruppencheck | `docs/systems/groupcheck.md` |
+| Companion-Sync allgemein (Inbox/Outbound, `ProcessInbox`) | `docs/systems/companion-bridge.md` |
+| Onboarding-Tour, Update-Changelog-Popup | `docs/systems/onboarding-changelog.md` |
+| Release schneiden, Changelog, Patchnote-Stil, Builder | `docs/development/releases.md` |
+| Kopflose Prüfläufe, Client-Attrappe | `.github/tests/README.md` |
+| Zugriffsprofile / `core/access.lua` | `../Companion-Forever/docs/access-profile-bridge.md` |
+| Ausrüstungsstand an die Companion (`character_sheet`) | `../Companion-Forever/docs/character-sheet-bridge.md` |
+| Live-Brücke (`data/companion_live.lua`) | `../Companion-Forever/docs/live-bridge.md` |
+| Raid-Termin, Countdown, Zusagen | `../Companion-Forever/docs/raid-schedule-bridge.md` |
+| WCIMPORT-Import (`/wc import`, Bot-Slash-Commands) | `../Companion-Forever/docs/wcimport-protocol.md` |
+| Raid-Anmeldeliste, `source`/`status`/`lineup` | `../Companion-Forever/docs/wcimport-protocol.md` |
+| Charakterzuordnung, WeintAdmin-Backup | `../Companion-Forever/docs/character-links-and-admin-bridge.md` |
+| Companion-Authentifizierung/Token | `../Companion-Forever/docs/companion-auth.md` |
+| Welche Spieldaten fehlen und warum | `../Companion-Forever/docs/systems/forever-data.md` |
+
+Cross-repo tasks (something touches Codex **and** Companion **and/or**
+Bot): read this table's Companion-doc pointers first — they are the
+authoritative contract for the wire format, and the Codex-local docs
+above only add what's specific to this repo's implementation.
+
+## What this edition deliberately does not have
+
+Do not add these back without a stated reason that survives the question
+"what number is this built on, and where does that number come from?":
+
+| Nicht vorhanden | Warum |
+|---|---|
+| Simmen, Statgewichte, Zielausrüstung | Es gibt keinen Sim für Forever. |
+| Sockelsteine, Verzauberungen, Umschmieden, Tempo-Schwellen | Hingen an `data/spec_profiles.lua`, `gems.lua`, `enchants.lua`, `breakpoints.lua` aus MoP. Keine davon sagt über Forever etwas aus. |
+| BiS-Listen | Setzen Bosslisten und Beute voraus — beides unveröffentlicht. |
+| WeakAuras | Für Forever zunächst nicht unterstützt. |
+| Academy, WeintTV, Rotationshelfer | Brauchen ein auswertbares Kampflog. Ob Forever eines hergibt, ist nicht bestätigt — siehe `../Companion-Forever/docs/systems/forever-data.md`, letzter Abschnitt. |
+| Ausrüstungs-Alarm, Einkaufsliste, Sockelfenster-Hilfe | Hätten ohne Verzauberungen und Sockel nichts zu melden. |

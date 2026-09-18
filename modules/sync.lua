@@ -1,0 +1,725 @@
+--------------------------------------------------
+-- WeintCodex :: Sync / Import Module
+--
+-- Import-Formate (Discord-Bot):
+--
+-- BOSSGUIDES:
+--   WCIMPORT:BOSS:BossName:tank:Tip1,Tip2:healer:Tip1:dps:Tip1::NächsterBoss:...
+--
+-- RAID (Mittwoch):
+--   WCIMPORT:RAIDWED:2026-06-14:2000:Raidtitel:Name1|TANK|WARRIOR|Everlook|Notiz|companion|active|in|,...
+--
+-- RAID (Donnerstag):
+--   WCIMPORT:RAIDTHU:2026-06-14:2000:Raidtitel:Name1|TANK|WARRIOR|Everlook|...
+--
+-- RAID (Legacy – geht zu Mittwoch):
+--   WCIMPORT:RAID:2026-06-14:2000:Raidtitel:Name1|TANK|WARRIOR|Everlook|...
+--
+-- Spielerfelder in dieser Reihenfolge:
+--   1 Name  2 Rolle  3 Klasse  4 Realm  5 Notiz
+--   6 Herkunft des Namens ("raidlead"/"companion"/"discord")
+--   7 Anmeldestatus des Tages ("active"/"tentative"/"bench")
+--   8 Aufstellung ("in"/"out"/leer = nicht angekündigt)
+--
+-- Angehängt wird immer hinten, nie umbelegt: ein älteres Addon liest
+-- nur bis zu dem Feld, das es kennt, und verhält sich unverändert.
+--
+-- (Uhrzeit als "HHMM" ohne Doppelpunkt; Realm-Feld leer = Realm des
+-- einladenden Spielers wird beim Kalender-Invite angenommen)
+--
+-- MATERIALIEN:
+--   WCIMPORT:MAT:2026-06-14:Webstoff|100|Notiz|Rohstoffe,Pilze|50||Rohstoffe,Stein|25|Engis|Metalle
+--
+-- OPTIONALER COMMUNITY-TAG (rückwärtskompatibel):
+--   WCIMPORT:<TYP>@<COMMUNITY-ID>:<Nutzlast>
+--   z. B. WCIMPORT:RAIDWED@123456789012345678:2026-06-14:2000:...
+--
+-- Gehört die ID nicht zur verknüpften Community, wird der Import
+-- abgewiesen statt eingearbeitet (siehe core/access.lua). Strings ohne
+-- Tag gelten als Alt-Format und werden angenommen. Die Nutzlast selbst
+-- ist davon unberührt – geteilt wird nur das Typfeld.
+--------------------------------------------------
+
+WeintCodex.Sync = {}
+
+local C          = WeintCodex.Colors
+local importDialog = nil
+
+-- Welche Rolle ein Import-Typ braucht: dieselbe Freigabe, die auch die
+-- Anzeige des Bereichs steuert. Wer die Raids sehen darf, darf sie auch
+-- importieren.
+local IMPORT_FEATURE = {
+
+    BOSS    = "bossguides.tips",
+    RAIDWED = "raids.view",
+    RAIDTHU = "raids.view",
+    RAID    = "raids.view",
+    MAT     = "materials.view",
+
+}
+
+--------------------------------------------------
+-- Helpers
+--------------------------------------------------
+
+local function SetSolidBg(f, r, g, b, a)
+    local t = f:CreateTexture(nil, "BACKGROUND")
+    t:SetAllPoints(f)
+    t:SetColorTexture(r, g, b, a or 1)
+    return t
+end
+
+local function DrawBorder(f, r, g, b, a, thick)
+    thick = thick or 1
+    local W, H = f:GetWidth(), f:GetHeight()
+    local function T(pt, rpt, w, h)
+        local t = f:CreateTexture(nil, "OVERLAY")
+        t:SetColorTexture(r, g, b, a)
+        t:SetPoint(pt, f, rpt, 0, 0)
+        t:SetSize(w, h)
+    end
+    T("TOPLEFT",    "TOPLEFT",    W,     thick)
+    T("BOTTOMLEFT", "BOTTOMLEFT", W,     thick)
+    T("TOPLEFT",    "TOPLEFT",    thick, H)
+    T("TOPRIGHT",   "TOPRIGHT",   thick, H)
+end
+
+--------------------------------------------------
+-- Parser: Boss-Guides
+--------------------------------------------------
+
+local function ParseBossImport(payload)
+    local result    = {}
+    local bossParts = {}
+
+    for bossBlock in (payload .. "::"):gmatch("(.-)::") do
+        local trimmed = bossBlock:match("^%s*(.-)%s*$")
+        if trimmed ~= "" then bossParts[#bossParts + 1] = trimmed end
+    end
+
+    for _, block in ipairs(bossParts) do
+        local fields = {}
+        for field in (block .. ":"):gmatch("([^:]*):") do
+            fields[#fields + 1] = field
+        end
+        local bossName = fields[1]
+        if bossName and bossName ~= "" then
+            result[bossName] = {}
+            local i = 2
+            while i <= #fields do
+                local roleKey = fields[i]:lower()
+                if roleKey == "tank" or roleKey == "healer" or roleKey == "dps" then
+                    local tips = {}
+                    i = i + 1
+                    if fields[i] then
+                        for tip in (fields[i] .. ","):gmatch("([^,]*),") do
+                            local trimmed = tip:match("^%s*(.-)%s*$")
+                            if trimmed ~= "" then tips[#tips + 1] = trimmed end
+                        end
+                    end
+                    result[bossName][roleKey] = tips
+                end
+                i = i + 1
+            end
+        end
+    end
+    return result
+end
+
+--------------------------------------------------
+-- Parser: Raid-Anmeldungen
+-- Format: DATUM:HHMM:TITEL:Name1|ROLLE|KLASSE|REALM|Notiz,Name2|...
+-- (Uhrzeit als "HHMM" ohne Doppelpunkt, der wuerde sonst mit dem
+-- Feldtrenner kollidieren)
+--------------------------------------------------
+
+local function ParseRaidImport(payload)
+    local dateStr, timeStr, title, remainder =
+        payload:match("^([^:]*):([^:]*):([^:]*):(.*)$")
+
+    if not dateStr then
+        -- Altes Format ohne Uhrzeit/Titel (Abwaertskompatibilitaet)
+        dateStr   = payload:match("^([^:]*):") or ""
+        timeStr   = ""
+        title     = ""
+        remainder = payload:match("^[^:]*:(.*)$") or ""
+    end
+
+    local players = {}
+
+    for playerEntry in (remainder .. ","):gmatch("([^,]*),") do
+        local trimmed = playerEntry:match("^%s*(.-)%s*$")
+        if trimmed ~= "" then
+            local pparts = {}
+            for pp in (trimmed .. "|"):gmatch("([^|]*)|") do
+                pparts[#pparts + 1] = pp:match("^%s*(.-)%s*$")
+            end
+            if pparts[1] and pparts[1] ~= "" then
+                players[#players + 1] = {
+                    name  = pparts[1] or "",
+                    role  = (pparts[2] or "DPS"):upper(),
+                    class = (pparts[3] or ""):upper(),
+                    realm = pparts[4] or "",
+                    note  = pparts[5] or "",
+                    -- Feld 6: woher der Name stammt ("raidlead",
+                    -- "companion", "discord"). "discord" heisst, dass
+                    -- der Bot keinen Charakter kennt und den
+                    -- Discord-Anzeigenamen als Platzhalter geschickt
+                    -- hat - der existiert ingame nicht, eine Einladung
+                    -- dorthin geht ins Leere. Ohne dieses Feld waren
+                    -- beide Faelle nicht unterscheidbar, ein
+                    -- Platzhaltername sieht aus wie ein Charaktername.
+                    --
+                    -- Ein aelterer Bot schickt das Feld nicht; leer
+                    -- gilt deshalb als echter Charaktername, sonst
+                    -- waere nach einem Addon-Update ploetzlich das
+                    -- ganze Roster "unbekannt".
+                    source = (pparts[6] or ""):lower(),
+                    -- Feld 7: der Anmeldestatus dieses Tages
+                    -- ("active", "tentative", "bench"). Der Bot
+                    -- schickte alle drei schon immer in einem Topf,
+                    -- ohne sie zu benennen - der Kalender-Invite lud
+                    -- deshalb die Ersatzbank und die Vorlaeufigen mit
+                    -- ein. "absent" kommt gar nicht vor, eine
+                    -- Abmeldung ist keine Anmeldung.
+                    --
+                    -- Feld 8: die vom Raidlead angekuendigte
+                    -- Aufstellung. Drei Werte, nicht zwei: "in",
+                    -- "out" und LEER fuer "es wurde nichts
+                    -- angekuendigt". Der Unterschied traegt, denn er
+                    -- fuehrt zu entgegengesetztem Verhalten - ohne
+                    -- Ankuendigung werden die Zusagen eingeladen, mit
+                    -- Ankuendigung genau sie.
+                    --
+                    -- Beide fehlen bei einem aelteren Bot, und beide
+                    -- gelten dann als "keine Angabe" statt als
+                    -- Befund; sonst stuende nach einem Addon-Update
+                    -- schlagartig ein leerer Invite da.
+                    status = (pparts[7] or ""):lower(),
+                    lineup = (pparts[8] or ""):lower(),
+                }
+            end
+        end
+    end
+
+    local hour   = tonumber(timeStr and timeStr:sub(1, 2))
+    local minute = tonumber(timeStr and timeStr:sub(3, 4))
+
+    return {
+        date    = dateStr,
+        hour    = hour,
+        minute  = minute,
+        title   = (title and title ~= "") and title or nil,
+        players = players,
+        -- Wann dieser Stand eingearbeitet wurde - nicht wann der Raid
+        -- ist. Ohne die Angabe sieht ein zwei Wochen alter Roster fuer
+        -- den kommenden Mittwoch genauso aus wie ein frischer, und
+        -- genau das war der Grund, warum niemand merkte, dass die
+        -- Zustellung gar nicht mehr ankam (siehe
+        -- data/companion_live.lua).
+        importedAt = time(),
+    }
+end
+
+--------------------------------------------------
+-- Parser: Materialien
+-- Format: DATUM:Name:Menge:Notiz:Name:Menge:Notiz...
+--------------------------------------------------
+
+local function ParseMatImport(payload)
+    local parts = {}
+    for p in (payload .. ":"):gmatch("([^:]*):") do
+        parts[#parts + 1] = p
+    end
+
+    local date  = parts[1] or ""
+    local items = {}
+
+    -- Everything after first colon is a comma-separated list of item entries
+    local remainder = payload:match("^[^:]*:(.*)$") or ""
+    for itemEntry in (remainder .. ","):gmatch("([^,]*),") do
+        local trimmed = itemEntry:match("^%s*(.-)%s*$")
+        if trimmed ~= "" then
+            local iparts = {}
+            for ip in (trimmed .. "|"):gmatch("([^|]*)|") do
+                iparts[#iparts + 1] = ip:match("^%s*(.-)%s*$")
+            end
+            if iparts[1] and iparts[1] ~= "" then
+                items[#items + 1] = {
+                    name     = iparts[1] or "",
+                    count    = iparts[2] or "0",
+                    note     = iparts[3] or "",
+                    category = iparts[4] ~= "" and iparts[4] or "Rohstoffe",
+                }
+            end
+        end
+    end
+
+    return { date = date, items = items }
+end
+
+--------------------------------------------------
+-- EditBox-Escape rueckgaengig machen
+--
+-- Das Spiel verdoppelt jedes woertliche "|" beim Einfuegen von Text in
+-- eine EditBox (Strg+V ebenso wie Tippen): "||" ist die eingebaute
+-- Schreibweise fuer EIN woertliches Pipe-Zeichen, weil ein einzelnes
+-- "|" sonst als Beginn eines Farb-/Texturcodes gelesen werden koennte.
+-- Jedes WCIMPORT-Format trennt seine Felder mit "|" - ohne dieses
+-- Rueckgaengigmachen kommt bei TG.ParseTransfer() & Co. ein Payload an,
+-- in dem jeder Feldtrenner doppelt steht (bestaetigt per DEBUG-Log an
+-- einem gemeldeten Fall: 15 Datensaetze, durchweg 9 statt 5 Teile je
+-- Zeile, ItemID immer nil - siehe CHANGELOG.md 3.0.2.3).
+--
+-- Betrifft NUR das manuelle Einfuegen hier auf der Import-Seite. Die
+-- automatische Zustellung ueber die SavedVariables-Bruecke
+-- (modules/companion.lua, INBOX_HANDLERS.raid_import -> QuickImport)
+-- geht nie durch eine EditBox und darf NICHT hierdurch laufen - sonst
+-- wuerde ein dort absichtlich leeres Feld ("|...||...|") faelschlich
+-- mit dem Feld daneben verschmolzen.
+function WeintCodex.Sync.UndoEditBoxPipeEscape(text)
+    if type(text) ~= "string" then return text end
+    return (text:gsub("||", "|"))
+end
+
+--------------------------------------------------
+-- Import verarbeiten
+--------------------------------------------------
+
+--------------------------------------------------
+local function ProcessImport(rawStr)
+    rawStr = rawStr:match("^%s*(.-)%s*$")
+    if rawStr == "" then
+        return false, "Leerer Import-String."
+    end
+    if not rawStr:match("^WCIMPORT:") then
+        return false, "Ungültiges Format. String muss mit WCIMPORT: beginnen."
+    end
+
+    local typeTag, payload = rawStr:match("^WCIMPORT:([^:]+):(.+)$")
+    if not typeTag then
+        return false, "Konnte Typ nicht erkennen."
+    end
+
+    -- Optionaler Community-Tag. Das Typfeld ist das erste Feld und enthält
+    -- nie ein "@", deshalb genügt ein Split - die Nutzlast bleibt unberührt
+    -- (BOSS trennt intern mit "::", MAT/RAID mit ":", beides unverändert).
+    -- Muss VOR dem :upper() passieren, sonst würde eine alphanumerische
+    -- Community-ID großgeschrieben und passte nicht mehr zur Bindung.
+    local baseTag, community = typeTag:match("^([^@]+)@(.+)$")
+    if baseTag then typeTag = baseTag end
+
+    typeTag = typeTag:upper()
+
+    if community and WeintCodex.Access and WeintCodex.Access.IsForeign(community) then
+        return false, string.format(WeintCodex.Access.MSG_FOREIGN_IMPORT,
+            WeintCodex.Access.CommunityName())
+    end
+
+    -- Gildeninterne Typen brauchen die passende Rolle; ein abgelaufenes
+    -- Profil darf Bestehendes weiter lesen, aber nichts Neues aufnehmen.
+    local needed = IMPORT_FEATURE[typeTag]
+    if needed and WeintCodex.Access then
+        if not WeintCodex.Access.Can(needed) then
+            return false, string.format(WeintCodex.Access.MSG_IMPORT_DENIED,
+                WeintCodex.Access.TierLabel())
+        end
+        if not WeintCodex.Access.IngestAllowed() then
+            return false, WeintCodex.Access.MSG_IMPORT_EXPIRED
+        end
+    end
+
+    -- BOSS GUIDES
+    if typeTag == "BOSS" then
+        local data  = ParseBossImport(payload)
+        local count = 0
+        for _ in pairs(data) do count = count + 1 end
+        if count == 0 then
+            return false, "Keine Boss-Daten gefunden. Überprüfe das Format."
+        end
+        if not WeintCodex.SavedData then WeintCodex.SavedData = {} end
+        if not WeintCodex.SavedData.bossData then WeintCodex.SavedData.bossData = {} end
+        for bossName, bossData in pairs(data) do
+            WeintCodex.SavedData.bossData[bossName] = bossData
+        end
+        return true, WeintCodex.Icon("Interface\\RaidFrame\\ReadyCheck-Ready", 14) .. " " .. count .. " Boss-Guide(s) erfolgreich importiert."
+
+    -- RAID MITTWOCH
+    elseif typeTag == "RAIDWED" or typeTag == "RAID" then
+        local data  = ParseRaidImport(payload)
+        local count = data.players and #data.players or 0
+        if not WeintCodex.SavedData then WeintCodex.SavedData = {} end
+        WeintCodex.SavedData.raidWednesday = data
+        if WeintCodex.Signup and WeintCodex.Signup.ResolveNames then
+            WeintCodex.Signup.ResolveNames(data)
+        end
+        if WeintCodex.Signup and WeintCodex.Signup.RefreshDay then
+            WeintCodex.Signup.RefreshDay("wednesday", data)
+        end
+        return true, WeintCodex.Icon("Interface\\RaidFrame\\ReadyCheck-Ready", 14) .. " Mittwoch-Raid vom " .. data.date .. " mit " .. count .. " Spielern importiert."
+
+    -- RAID DONNERSTAG
+    elseif typeTag == "RAIDTHU" then
+        local data  = ParseRaidImport(payload)
+        local count = data.players and #data.players or 0
+        if not WeintCodex.SavedData then WeintCodex.SavedData = {} end
+        WeintCodex.SavedData.raidThursday = data
+        if WeintCodex.Signup and WeintCodex.Signup.ResolveNames then
+            WeintCodex.Signup.ResolveNames(data)
+        end
+        if WeintCodex.Signup and WeintCodex.Signup.RefreshDay then
+            WeintCodex.Signup.RefreshDay("thursday", data)
+        end
+        return true, WeintCodex.Icon("Interface\\RaidFrame\\ReadyCheck-Ready", 14) .. " Donnerstag-Raid vom " .. data.date .. " mit " .. count .. " Spielern importiert."
+
+    -- MATERIALIEN
+    elseif typeTag == "MAT" then
+        local data  = ParseMatImport(payload)
+        local count = data.items and #data.items or 0
+        if not WeintCodex.SavedData then WeintCodex.SavedData = {} end
+        WeintCodex.SavedData.materialData = data
+        if WeintCodex.Materials and WeintCodex.Materials.Refresh then
+            WeintCodex.Materials.Refresh(data)
+        end
+        return true, WeintCodex.Icon("Interface\\RaidFrame\\ReadyCheck-Ready", 14) .. " " .. count .. " Material(ien) importiert (Stand: " .. data.date .. ")."
+
+    else
+        -- Eine Companion oder ein Bot aus dem MoP-Zweig kann Typen
+        -- schicken, die es hier nicht gibt (SW, TG, WA). Die Meldung
+        -- sagt deshalb, was dieses Addon kann, statt nur "unbekannt".
+        return false, "Unbekannter Typ: " .. typeTag
+            .. ". Erlaubt: BOSS, RAIDWED, RAIDTHU, MAT"
+    end
+end
+
+--------------------------------------------------
+-- MEHRERE UMSCHLAEGE IN EINEM TEXT (seit 3.1.2.0)
+--------------------------------------------------
+-- Aus EINEM Sim-Lauf kommen ZWEI Auskuenfte: die Wertegewichtung und der
+-- Zielzustand. Bis hierher waren das zwei Strings - zweimal einfuegen,
+-- zweimal auf Importieren, fuer einen Vorgang, den der Spieler als einen
+-- erlebt. Der zweite blieb dabei regelmaessig liegen, und was fehlt,
+-- sieht man an einer Empfehlung nicht an.
+--
+-- ZERLEGT WIRD AN "WCIMPORT:", NICHT AN ZEILENUMBRUECHEN. Eine Nutzlast
+-- darf selbst welche enthalten (eine abgeschriebene Werteliste zum
+-- Beispiel), ein Umschlag beginnt dagegen nachweislich mit diesem Wort.
+--
+-- EIN EINZELNER STRING VERHAELT SICH GENAU WIE VORHER, und das ist hier
+-- die eigentliche Anforderung: derselbe Rueckgabewert, dieselbe Meldung,
+-- derselbe Fehlertext. Alles andere waere eine zweite Fassung des
+-- Importwegs, die bei der ersten Aenderung auseinanderlaeuft.
+--
+-- TEILERFOLG GILT ALS FEHLER. Ging einer von zweien schief, kommt
+-- `false` zurueck: das Eingabefeld bleibt dann stehen, und ein zweiter
+-- Versuch wiederholt beide. Beide Nutzlasten ERSETZEN (Gewichtung wie
+-- Zielzustand), ein zweiter Durchlauf richtet also keinen Schaden an -
+-- ein geleertes Feld dagegen haette den misslungenen Teil verloren.
+
+local function SplitEnvelopes(text)
+    local starts = {}
+    local from = 1
+
+    while true do
+        local at = text:find("WCIMPORT:", from, true)
+        if not at then break end
+        starts[#starts + 1] = at
+        from = at + 9
+    end
+
+    local parts = {}
+
+    for i = 1, #starts do
+        local stop  = (starts[i + 1] or (#text + 1)) - 1
+        local piece = text:sub(starts[i], stop):match("^%s*(.-)%s*$")
+        if piece ~= "" then parts[#parts + 1] = piece end
+    end
+
+    return parts
+end
+
+WeintCodex.Sync.SplitEnvelopes = SplitEnvelopes
+
+function WeintCodex.Sync.ProcessImportText(text)
+    text = tostring(text or "")
+
+    -- VORHER geleert, nicht nachher: ein Rest aus dem vorigen Einfuegen
+    -- wuerde sonst dem naechsten Text als sein Lauf angerechnet - und
+    -- das waere genau die Verwechslung, gegen die der ganze Handshake
+    -- gebaut ist.
+    WeintCodex.Sync._lastImportRun = nil
+
+    local parts = SplitEnvelopes(text)
+
+    -- Kein Umschlag darin: die alte Fehlermeldung ist die richtige, und
+    -- sie soll woertlich dieselbe bleiben.
+    if #parts == 0 then
+        return ProcessImport(text)
+    end
+
+    local messages, failed = {}, 0
+
+    for _, part in ipairs(parts) do
+        local ok, msg = ProcessImport(part)
+        if not ok then failed = failed + 1 end
+        messages[#messages + 1] = ok and msg or ("Fehler: " .. tostring(msg))
+    end
+
+    if #parts == 1 then
+        return failed == 0, messages[1]
+    end
+
+    return failed == 0, table.concat(messages, "\n")
+end
+
+--------------------------------------------------
+-- Import-Dialog (vollständige Seite im ContentPanel)
+--------------------------------------------------
+
+function WeintCodex.Sync.ShowImportDialog()
+    local cp = WeintCodex.ContentPanel
+    for _, child in pairs({cp:GetChildren()}) do child:Hide() end
+    WeintCodex.Navigation.ClearSidebar()
+
+    if importDialog then
+        importDialog:SetParent(cp)
+        importDialog:ClearAllPoints()
+        importDialog:SetAllPoints(cp)
+        importDialog:Show()
+        importDialog.EditBox:SetText("")
+        importDialog.StatusText:SetText("")
+        return
+    end
+
+    local f = CreateFrame("Frame", nil, cp)
+    f:SetAllPoints(cp)
+    importDialog = f
+
+    -- Title
+    local titleStr = f:CreateFontString(nil, "OVERLAY")
+    titleStr:SetFont(WeintCodex.Fonts.sansBold, 24, "")
+    titleStr:SetPoint("TOPLEFT", f, "TOPLEFT", 24, -18)
+    titleStr:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
+    titleStr:SetText("Daten importieren")
+
+    WeintCodex.SetBreadcrumb("Import")
+    WeintCodex.Navigation.SetInspector({
+        { type = "header", text = "Unterstützte Typen" },
+        { type = "rows", rows = {
+            { label = "BOSS",    value = "Bossguides" },
+            { label = "RAIDWED", value = "Raid Mittwoch" },
+            { label = "RAIDTHU", value = "Raid Donnerstag" },
+            { label = "MAT",     value = "Materialien" },
+        }},
+        { type = "divider" },
+        { type = "card", lines = {
+            "Der Bot-Exportbefehl erzeugt den passenden",
+            "WCIMPORT:...-String automatisch.",
+            "",
+            "Welche Typen du importieren darfst,",
+            "hängt an deiner Discord-Rolle.",
+        }},
+    })
+
+    local divider = f:CreateTexture(nil, "OVERLAY")
+    divider:SetHeight(1)
+    divider:SetPoint("TOPLEFT",  f, "TOPLEFT",  24, -50)
+    divider:SetPoint("TOPRIGHT", f, "TOPRIGHT", -24, -50)
+    divider:SetColorTexture(C.borderStrong[1], C.borderStrong[2], C.borderStrong[3], 1.0)
+
+    -- Help text
+    local helpText = f:CreateFontString(nil, "OVERLAY")
+    helpText:SetFont(WeintCodex.Fonts.sans, 12, "")
+    helpText:SetPoint("TOPLEFT", f, "TOPLEFT", 24, -62)
+    helpText:SetWidth(840)
+    helpText:SetJustifyH("LEFT")
+    helpText:SetSpacing(3)
+    helpText:SetTextColor(C.textNormal[1], C.textNormal[2], C.textNormal[3])
+    helpText:SetText(
+        "Führe im Discord-Bot einen Exportbefehl aus und füge den generierten String unten ein.\n\n" ..
+        "|cff7C6CFFBossnotizen:|r  /export boss        ->  WCIMPORT:BOSS:...\n" ..
+        "|cff4EA8F5Raid Mi:|r      /export raidwed     ->  WCIMPORT:RAIDWED:...\n" ..
+        "|cff4EA8F5Raid Do:|r      /export raidthu     ->  WCIMPORT:RAIDTHU:...\n" ..
+        "|cff7C6CFFMaterialien:|r  /export mat         ->  WCIMPORT:MAT:...\n\n" ..
+        "Mehrere Zeilen dürfen zusammen hier hinein — sie werden nacheinander gelesen."
+    )
+
+    -- Format reference box
+    local fmtBg = CreateFrame("Frame", nil, f)
+    fmtBg:SetSize(840, 66)
+    fmtBg:SetPoint("TOPLEFT", f, "TOPLEFT", 24, -186)
+    SetSolidBg(fmtBg, C.bgCard[1], C.bgCard[2], C.bgCard[3], 0.90)
+    DrawBorder(fmtBg, C.borderStrong[1], C.borderStrong[2], C.borderStrong[3], 1.0, 1)
+
+    local fmtTitle = fmtBg:CreateFontString(nil, "OVERLAY")
+    fmtTitle:SetFont(WeintCodex.Fonts.sans, 10, "")
+    fmtTitle:SetPoint("TOPLEFT", fmtBg, "TOPLEFT", 8, -8)
+    fmtTitle:SetTextColor(C.textDim[1], C.textDim[2], C.textDim[3])
+    fmtTitle:SetText("|cff5F5F6BFormat-Referenz:|r")
+
+    local fmtText = fmtBg:CreateFontString(nil, "OVERLAY")
+    fmtText:SetFont(WeintCodex.Fonts.sans, 10, "")
+    fmtText:SetPoint("TOPLEFT", fmtTitle, "BOTTOMLEFT", 0, -2)
+    fmtText:SetWidth(824)
+    fmtText:SetJustifyH("LEFT")
+    fmtText:SetSpacing(2)
+    fmtText:SetTextColor(C.textDim[1], C.textDim[2], C.textDim[3])
+    fmtText:SetText(
+        "BOSS: WCIMPORT:BOSS:BossName:tank:Tip1,Tip2:healer:Tip1:dps:Tip1::NächsterBoss:...\n" ..
+        "RAID: WCIMPORT:RAIDWED:DATUM:HHMM:TITEL:Name|TANK|WARRIOR|REALM|,Name2|HEALER|PALADIN|REALM|,..." ..
+        "    WA: WCIMPORT:WA:Kategorie:AuraName|KLASSE|Autor|v|Beschreibung,...\n" ..
+        "Optional hinter dem Typ: @COMMUNITY-ID (z. B. WCIMPORT:RAIDWED@123...:...) – " ..
+        "Strings einer anderen Community werden abgewiesen."
+    )
+
+    -- EditBox label
+    local editLabel = f:CreateFontString(nil, "OVERLAY")
+    editLabel:SetFont(WeintCodex.Fonts.sans, 11, "")
+    editLabel:SetPoint("TOPLEFT", f, "TOPLEFT", 24, -264)
+    editLabel:SetTextColor(C.textDim[1], C.textDim[2], C.textDim[3])
+    editLabel:SetText("Import-String einfügen  (Strg+V):")
+
+    -- EditBox background
+    local editBg = CreateFrame("Frame", nil, f)
+    editBg:SetSize(840, 120)
+    editBg:SetPoint("TOPLEFT", f, "TOPLEFT", 24, -280)
+    SetSolidBg(editBg, C.headerBg[1], C.headerBg[2], C.headerBg[3], 0.95)
+    DrawBorder(editBg, C.borderStrong[1], C.borderStrong[2], C.borderStrong[3], 1.0, 1)
+
+    local editBox = CreateFrame("EditBox", nil, editBg)
+    editBox:SetSize(830, 114)
+    editBox:SetPoint("TOPLEFT", editBg, "TOPLEFT", 5, -3)
+    editBox:SetMultiLine(true)
+    editBox:SetMaxLetters(0)
+    editBox:SetAutoFocus(false)
+    editBox:SetFont(WeintCodex.Fonts.sans, 11, "")
+    editBox:SetTextColor(C.textNormal[1], C.textNormal[2], C.textNormal[3])
+    editBox:SetTextInsets(6, 6, 6, 6)
+
+    local editScroll = CreateFrame("ScrollFrame", nil, editBg, "UIPanelScrollFrameTemplate")
+    editScroll:SetSize(830, 114)
+    editScroll:SetPoint("TOPLEFT", editBg, "TOPLEFT", 0, 0)
+    editScroll:SetScrollChild(editBox)
+
+    editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    editBox:SetScript("OnTabPressed",    function(self) self:ClearFocus() end)
+    f.EditBox = editBox
+
+    -- Buttons row
+    local importBtn = CreateFrame("Button", nil, f)
+    importBtn:SetSize(200, 38)
+    importBtn:SetPoint("TOPLEFT", f, "TOPLEFT", 24, -412)
+    SetSolidBg(importBtn, C.purple[1], C.purple[2], C.purple[3], 0.80)
+    DrawBorder(importBtn, C.purple[1], C.purple[2], C.purple[3], 1.0, 1)
+
+    local importBtnLbl = importBtn:CreateFontString(nil, "OVERLAY")
+    importBtnLbl:SetAllPoints(importBtn)
+    importBtnLbl:SetFont(WeintCodex.Fonts.sans, 13, "")
+    importBtnLbl:SetText("|cffffffff" .. WeintCodex.Icon("Interface\\Icons\\INV_Misc_Note_01", 14) .. "  Importieren|r")
+
+    importBtn:SetScript("OnEnter", function(self)
+        SetSolidBg(self, math.min(1, C.purple[1] * 1.3), math.min(1, C.purple[2] * 1.3), math.min(1, C.purple[3] * 1.2), 0.95)
+    end)
+    importBtn:SetScript("OnLeave", function(self)
+        SetSolidBg(self, C.purple[1], C.purple[2], C.purple[3], 0.80)
+    end)
+
+    local clearBtn = CreateFrame("Button", nil, f)
+    clearBtn:SetSize(120, 38)
+    clearBtn:SetPoint("TOPLEFT", importBtn, "TOPRIGHT", 12, 0)
+    SetSolidBg(clearBtn, C.danger[1] * 0.3, C.danger[2] * 0.3, C.danger[3] * 0.3, 0.80)
+    DrawBorder(clearBtn, C.danger[1], C.danger[2], C.danger[3], 0.80, 1)
+
+    local clearBtnLbl = clearBtn:CreateFontString(nil, "OVERLAY")
+    clearBtnLbl:SetAllPoints(clearBtn)
+    clearBtnLbl:SetFont(WeintCodex.Fonts.sans, 12, "")
+    clearBtnLbl:SetText("|cffF88C8BLeeren|r")
+
+    clearBtn:SetScript("OnClick", function()
+        editBox:SetText("")
+        editBox:SetFocus()
+        f.StatusText:SetText("")
+    end)
+
+    -- Status text
+    local statusText = f:CreateFontString(nil, "OVERLAY")
+    statusText:SetFont(WeintCodex.Fonts.sans, 13, "")
+    statusText:SetPoint("TOPLEFT", f, "TOPLEFT", 24, -462)
+    statusText:SetWidth(840)
+    statusText:SetJustifyH("LEFT")
+    f.StatusText = statusText
+
+    -- Import-Historie (letzte Importe)
+    local histTitle = f:CreateFontString(nil, "OVERLAY")
+    histTitle:SetFont(WeintCodex.Fonts.sans, 11, "")
+    histTitle:SetPoint("TOPLEFT", f, "TOPLEFT", 24, -490)
+    histTitle:SetTextColor(C.textDim[1], C.textDim[2], C.textDim[3])
+    histTitle:SetText("|cff5F5F6B— Letzte Importe —|r")
+
+    local histText = f:CreateFontString(nil, "OVERLAY")
+    histText:SetFont(WeintCodex.Fonts.sans, 11, "")
+    histText:SetPoint("TOPLEFT", f, "TOPLEFT", 24, -508)
+    histText:SetTextColor(C.textDim[1], C.textDim[2], C.textDim[3])
+    histText:SetWidth(840)
+    histText:SetSpacing(3)
+    f.HistText = histText
+
+    local function UpdateHistory()
+        local sd  = WeintCodex.SavedData
+        local lines = {}
+        if sd then
+            if sd.raidWednesday and sd.raidWednesday.date and sd.raidWednesday.date ~= "" then
+                lines[#lines+1] = "|cff4EA8F5" .. WeintCodex.Icon("Interface\\Icons\\Ability_Warrior_BattleShout", 14) .. "|r  Mittwoch-Raid:   " .. sd.raidWednesday.date .. "   (" .. (sd.raidWednesday.players and #sd.raidWednesday.players or 0) .. " Spieler)"
+            end
+            if sd.raidThursday and sd.raidThursday.date and sd.raidThursday.date ~= "" then
+                lines[#lines+1] = "|cff4EA8F5" .. WeintCodex.Icon("Interface\\Icons\\Ability_Warrior_BattleShout", 14) .. "|r  Donnerstag-Raid: " .. sd.raidThursday.date .. "   (" .. (sd.raidThursday.players and #sd.raidThursday.players or 0) .. " Spieler)"
+            end
+            if sd.materialData and sd.materialData.date and sd.materialData.date ~= "" then
+                lines[#lines+1] = "|cff7C6CFF" .. WeintCodex.Icon("Interface\\Icons\\INV_Crate_01", 14) .. "|r  Materialien:     " .. sd.materialData.date .. "   (" .. (sd.materialData.items and #sd.materialData.items or 0) .. " Einträge)"
+            end
+        end
+        if #lines == 0 then
+            histText:SetText("|cff3A3A44Noch keine Importe vorhanden.|r")
+        else
+            histText:SetText(table.concat(lines, "\n"))
+        end
+    end
+
+    UpdateHistory()
+
+    -- Import button logic
+    importBtn:SetScript("OnClick", function()
+        local raw = editBox:GetText()
+        raw = WeintCodex.Sync.UndoEditBoxPipeEscape(raw)
+        raw = raw:match("^%s*(.-)%s*$")
+        if raw == "" then
+            f.StatusText:SetText("|cffF46366" .. WeintCodex.Icon("Interface\\RaidFrame\\ReadyCheck-NotReady", 14) .. " Bitte einen Import-String einfügen.|r")
+            return
+        end
+
+        local ok, msg = WeintCodex.Sync.ProcessImportText(raw)
+        if ok then
+            f.StatusText:SetText("|cff34C77B" .. msg .. "|r")
+            editBox:SetText("")
+            UpdateHistory()
+            C_Timer.After(0.8, function()
+                print("|cff7C6CFF[WeintCodex]|r |cff34C77B" .. msg .. "|r")
+            end)
+        else
+            f.StatusText:SetText("|cffF46366" .. WeintCodex.Icon("Interface\\RaidFrame\\ReadyCheck-NotReady", 14) .. " Fehler: " .. msg .. "|r")
+        end
+    end)
+end
+
+--------------------------------------------------
+-- Quick import via /wc import <string>
+--------------------------------------------------
+
+function WeintCodex.Sync.QuickImport(str)
+    local ok, msg = WeintCodex.Sync.ProcessImportText(str)
+    if ok then
+        print("|cff7C6CFF[WeintCodex Import]|r |cff34C77B" .. msg .. "|r")
+    else
+        print("|cff7C6CFF[WeintCodex Import]|r |cffF46366Fehler: " .. msg .. "|r")
+    end
+end
