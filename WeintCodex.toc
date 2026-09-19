@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 5.0.0.0
+## Version: 5.1.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -58,15 +58,27 @@ core/onboarding.lua
 data/changelog.lua
 data/companion_live.lua
 data/raids.lua
+data/dungeons.lua
 data/specs.lua
+
+#
+# data/roles.lua steht NACH data/specs.lua: es liest die Talentbaeume,
+# um zu sagen, welche davon eine Rolle tragen koennen.
+#
+data/roles.lua
 
 #
 # modules/encounter_tracking.lua steht vor modules/raidpages.lua: die
 # Schlachtzugseite meldet ihre Instanzen beim Laden dort an.
 #
+# modules/rolepanel.lua steht vor beiden Instanzseiten: Dungeons und
+# Schlachtzuege zeichnen ihre Rollen mit demselben Baustein.
+#
 modules/charakter.lua
 modules/encounter_tracking.lua
+modules/rolepanel.lua
 modules/raidpages.lua
+modules/dungeonpages.lua
 modules/signup.lua
 modules/calendar.lua
 modules/groupcheck.lua

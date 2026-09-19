@@ -8,8 +8,9 @@ via the task-routing table below, not kept permanently in context.
 ## What this is
 
 **WeintCodex — Forever Edition** is a World of Warcraft **Forever** addon:
-a raid guide & guild intelligence system (raid roster/calendar,
-character management, group check, materials tracking, Companion bridge).
+a raid guide & guild intelligence system (raids and dungeons with
+per-role information, raid roster/calendar, character management, group
+check, materials tracking, Companion bridge).
 
 Comments and in-game UI text are in German; Lua identifiers are in
 English/mixed. There is no build step, package manager, or runtime test
@@ -50,19 +51,36 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
 
 ## Critical invariants (always relevant, keep in mind for any change)
 
-- **`unknown` ≠ `0` ≠ `false`.** This is the single most important rule in
-  this repository, and for this edition it is not theoretical: the boss
-  lists are empty on purpose, the material watchlist is empty on purpose,
-  and Forever's client API is unverified. A missing item level, an
-  unanswered client call, an empty boss list, a material without a target
-  — none of these may be rendered as a measured zero, a red dot, or a
-  progress bar at 0 %. Details: `docs/invariants/data-integrity.md`.
-- **The empty tables are a documented state, not a gap.**
-  `data/raids.lua` (boss lists) and the watchlist in
-  `modules/materials.lua` carry no content, and **must never be backfilled
-  from Mists of Pandaria** — that would accuse players of shortfalls their
-  game does not have. Same decision, same reasoning as
-  `../Companion-Forever/docs/systems/forever-data.md`.
+- **`unknown` ≠ `0` ≠ `false` ≠ provisional.** This is the single most
+  important rule in this repository, and for this edition it is not
+  theoretical: most boss lists are empty on purpose, the material
+  watchlist is empty on purpose, and Forever's client API is
+  unverified. A missing item level, an unanswered client call, an empty
+  boss list, a material without a target — none of these may be
+  rendered as a measured zero, a red dot, or a progress bar at 0 %.
+  Since 5.1.0.0 there is a fourth state, **provisional**: data that is
+  in the game but was never announced. Details:
+  `docs/invariants/data-integrity.md`.
+- **Kein Bestand ohne Herkunft.** Nothing may appear in a data table
+  whose source cannot be named — that, not emptiness, was always the
+  rule. `data/raids.lua` therefore **must never be backfilled from
+  Mists of Pandaria** (that would accuse players of shortfalls their
+  game does not have), but since the beta client shipped (17.09.2026)
+  it *does* carry the encounter lists for Barrow Deeps and Hyjal
+  Summit, each with a `bossSource` marking them **provisional** and
+  shown as such on every surface. A filled boss list without
+  `bossSource` fails `data_test.lua`; so does an empty one *with* it.
+  Onyxias Hort, all nine dungeon boss lists and the material watchlist
+  stay empty — no source, no entry. Same reasoning as
+  `../Companion-Forever/docs/systems/forever-data.md`; details in
+  `docs/systems/raids-and-progress.md`, section *Herkunft ist Pflicht*.
+- **Rollen: drei Bestände, nie zusammengezogen.** Which talent tree
+  carries which role is known (`data/specs.lua`); how many slots a role
+  has is known for 5-player groups and **`nil` for 10/20/40**; what a
+  role does at a given boss is known for **no** fight in Forever and
+  comes only from the Discord bot (`WCIMPORT:BOSS`). Never write
+  generic tactics — they fit every game and no fight in Forever.
+  Details: `docs/systems/dungeons.md`.
 - **What the client can answer is never derived or guessed.** Equipment
   slots come from `GetInventorySlotInfo`, not a hard-coded list; the
   specialization comes from the client or stays `nil`. Five releases of
@@ -118,7 +136,8 @@ into modules that no longer exist. A green run means "it loads", never
 |---|---|
 | UI-Struktur, Theme, `core/ui.lua`, Navigationsspalte, PageHead, Detailbereich | `docs/architecture/overview.md` |
 | Leere Tabellen, `unknown ≠ 0`, Leerzustände | `docs/invariants/data-integrity.md` |
-| Schlachtzüge, Bosslisten, Lockouts, Fortschritt | `docs/systems/raids-and-progress.md` |
+| Schlachtzüge, Bosslisten, Lockouts, Fortschritt, Herkunft einer Liste | `docs/systems/raids-and-progress.md` |
+| Dungeons, Stufenbereiche, Rollen (Tank/Heiler/DD), Rollen-Tipps | `docs/systems/dungeons.md` |
 | Charakterseite, Twinks, Ausrüstungsstand | `docs/systems/character.md` |
 | Gruppencheck | `docs/systems/groupcheck.md` |
 | Companion-Sync allgemein (Inbox/Outbound, `ProcessInbox`) | `docs/systems/companion-bridge.md` |

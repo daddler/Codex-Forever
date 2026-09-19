@@ -113,7 +113,8 @@ local TOUR_STEPS = {
       title = "So ist das Fenster aufgebaut",
       body =
         "Links steht die Navigationsspalte, in vier Gruppen: " .. A("Raid")
-        .. " (Übersicht, Schlachtzüge, Anmeldung, Kalender, Gruppencheck), "
+        .. " (Übersicht, Schlachtzüge, Dungeons, Anmeldung, Kalender, "
+        .. "Gruppencheck), "
         .. A("Charakter") .. ", " .. A("Gilde") .. " (Materialien, Import) "
         .. "und " .. A("System") .. " (Companion, Einstellungen).\n\n"
         .. "In der Mitte steht die Seite. Rechts erscheint ein schmales Feld, "
@@ -123,16 +124,40 @@ local TOUR_STEPS = {
         .. "Oben in der Titelleiste sitzt die Suche — mit " .. A("Strg+K")
         .. " auch ohne Mausklick." },
 
+    { chapter = "Erste Schritte", icon = ICON .. "INV_Misc_Key_03",
+      title = "Instanzen: Dungeons und Schlachtzüge",
+      body =
+        "Unter " .. A("Dungeons") .. " stehen die neun Instanzen von Forever, "
+        .. "mit Gebiet und Stufenbereich — von " .. E("Hall of Thanes")
+        .. " unter Eisenschmiede bis zu " .. E("Shaper's Terrace")
+        .. " im Krater von Un'Goro. Ob deine Stufe passt, steht rechts "
+        .. "daneben.\n\n"
+        .. "Unter " .. A("Schlachtzüge") .. " stehen die drei großen: Barrow "
+        .. "Deeps, Hyjal Summit und Onyxias Hort. Trägst du diese Woche schon "
+        .. "eine gespeicherte ID, steht das ganz oben.\n\n"
+        .. "Zu jeder Instanz gibt es eine " .. A("Aufstellung") .. ": wie "
+        .. "viele Plätze Tank, Heiler und Schaden haben und welche "
+        .. "Talentbäume sie tragen können. Ein Klick auf einen Boss zeigt, "
+        .. "was für deine Rolle an ihm zu beachten ist — sofern der Bot dazu "
+        .. "etwas geliefert hat." },
+
     { chapter = "Erste Schritte", icon = ICON .. "INV_Misc_PocketWatch_01",
       title = "Was WeintCodex noch nicht weiß",
       body =
-        E("Die Bosslisten von Forever sind nicht veröffentlicht.") .. " "
-        .. "Deshalb steht unter " .. A("Schlachtzüge") .. " bei jedem "
-        .. "Schlachtzug \"noch nicht bekannt\" statt einer Bossliste.\n\n"
-        .. "Das ist kein Fehler und keine halbfertige Fassung: die Listen aus "
-        .. "Mists of Pandaria zu übernehmen hätte bedeutet, dir Bosse "
-        .. "anzuzeigen, die es in deinem Spiel nicht gibt. WeintCodex trägt "
-        .. "sie nach, sobald sie feststehen.\n\n"
+        E("Die Bosslisten stehen noch nicht fest.") .. " "
+        .. "Bei Barrow Deeps und Hyjal Summit siehst du Bosse — die stammen "
+        .. "aus den Dateien der Beta und sind von Blizzard nicht bestätigt. "
+        .. "Deshalb steht überall " .. E("\"vorläufig\"") .. " dabei, wo sie "
+        .. "auftauchen. Namen und Reihenfolge können sich bis zum Erscheinen "
+        .. "noch ändern.\n\n"
+        .. "Bei " .. A("Onyxias Hort") .. " und bei den Dungeons steht "
+        .. "\"noch nicht bekannt\" — dazu liegt nichts vor, auch nicht "
+        .. "vorläufig. Das ist kein Fehler und keine halbfertige Fassung: "
+        .. "Listen aus einem anderen Spiel zu übernehmen hätte bedeutet, dir "
+        .. "Bosse anzuzeigen, die es in deinem Spiel nicht gibt.\n\n"
+        .. "Und was ein Tank oder ein Heiler an einem bestimmten Boss zu tun "
+        .. "hat, weiß dieses Addon nur, wenn es jemand geschickt hat. "
+        .. "Erfundene Taktik gibt es hier nicht.\n\n"
         .. "Aus demselben Grund gibt es in dieser Fassung " .. E("kein")
         .. " Simmen, keine WeakAuras, keine Sockelsteine und keine "
         .. "Verzauberungsempfehlungen. Sie hingen alle an Zahlen, die für "

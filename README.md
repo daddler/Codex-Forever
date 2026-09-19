@@ -34,9 +34,15 @@ WeintCompanion 5.
 * **Neues Aussehen („Graphit"):** neutraler, kühler Grund, eine
   Serifenschrift für Überschriften, genau ein Akzent, der ausschliesslich
   Bedeutung trägt. Dasselbe Bild wie in WeintCompanion.
-* **Die Bosslisten sind leer, und das mit Absicht.** Sie sind nicht
-  veröffentlicht. Das Addon sagt „noch nicht bekannt" statt etwas zu
-  erfinden.
+* **Alle neun Dungeons und alle drei Schlachtzüge sind drin** — mit
+  Gebiet, Stufenbereich und einem eigenen Bereich für Tank, Heiler und
+  Schaden.
+* **Was nicht feststeht, steht auch nicht als feststehend da.** Die
+  Bosslisten von Barrow Deeps und Hyjal Summit stammen aus dem
+  Beta-Client und sind nicht bestätigt — sie sind überall als
+  „vorläufig" ausgewiesen. Zu Onyxias Hort und zu den Dungeonbossen
+  liegt nichts vor; dort sagt das Addon „noch nicht bekannt" statt
+  etwas zu erfinden.
 
 Die alte Fassung (`daddler/WeintCodex`) läuft für Mists of Pandaria Classic
 weiter und behält ihren eigenen Update-Kanal.
@@ -48,7 +54,8 @@ weiter und behält ihren eigenen Update-Kanal.
 | Bereich | Was es beantwortet |
 |---|---|
 | **Übersicht** | Was ist heute Abend zu tun? Nächster Raid, offene Ausrüstung, Schlachtzüge, Gildenbank. |
-| **Schlachtzüge** | Welche Instanzen es gibt, ob du eine gespeicherte ID trägst, welche Bossnotizen der Bot geliefert hat. |
+| **Schlachtzüge** | Welche Instanzen es gibt, welche Bosse darin stehen, ob du eine gespeicherte ID trägst — und je Boss, was für Tank, Heiler und Schaden zu beachten ist. |
+| **Dungeons** | Alle neun, mit Gebiet und Stufenbereich. Passt meine Stufe? Wie ist die Gruppe aufzustellen? |
 | **Anmeldung** | Wer hat sich für Mittwoch und Donnerstag eingetragen — mit Rolle, Klasse und Notiz. |
 | **Kalender** | Der Termin, und für die Raidleitung die Ingame-Einladung. |
 | **Gruppencheck** | Trägt jeder etwas auf jedem Platz? Ist etwas zerbrochen? Wie weit liegen die Stufen auseinander? |
@@ -87,7 +94,7 @@ Im Spiel öffnet `/wc` das Fenster.
 | `/wc` | Fenster öffnen und schliessen |
 | `/wc tour` | Die Einführung erneut ansehen |
 | `/wc gruppe` · `/wc gruppe prüfen` | Gruppencheck öffnen bzw. sofort durchlaufen |
-| `/wc raids` · `/wc anmeldung` · `/wc kalender` | direkt zum Bereich |
+| `/wc raids` · `/wc dungeons` · `/wc anmeldung` · `/wc kalender` | direkt zum Bereich |
 | `/wc charakter` · `/wc materialien` · `/wc companion` | direkt zum Bereich |
 | `/wc import` | Import-Seite |
 | `/wc einstellungen` | Einstellungen |

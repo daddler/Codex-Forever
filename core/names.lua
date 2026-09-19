@@ -130,3 +130,34 @@ function WeintCodex.Names.Match(candidate, list)
     return nil
 
 end
+
+--------------------------------------------------
+-- Klassennamen
+--------------------------------------------------
+-- DER CLIENT WEISS, WIE DIE KLASSEN AUF DEUTSCH HEISSEN. Er führt sie
+-- in LOCALIZED_CLASS_NAMES_MALE/FEMALE, und das ist die einzige
+-- Quelle, die in jeder Sprachfassung stimmt. Eine eigene Tabelle
+-- "WARRIOR = Krieger" daneben wäre eine zweite Wahrheit - und in der
+-- französischen Fassung eine falsche.
+--
+-- Antwortet der Client nicht (kopfloser Prüflauf, fremdes Kürzel),
+-- bleibt das Kürzel selbst stehen. "WARRIOR" ist hässlich, aber es
+-- ist wahr; ein geratener deutscher Name wäre es nicht.
+
+function WeintCodex.Names.ClassLabel(classFile)
+
+    if type(classFile) ~= "string" or classFile == "" then return nil end
+
+    local male = _G.LOCALIZED_CLASS_NAMES_MALE
+    if type(male) == "table" and type(male[classFile]) == "string" then
+        return male[classFile]
+    end
+
+    local female = _G.LOCALIZED_CLASS_NAMES_FEMALE
+    if type(female) == "table" and type(female[classFile]) == "string" then
+        return female[classFile]
+    end
+
+    return classFile
+
+end

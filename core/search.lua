@@ -7,12 +7,13 @@
 -- WeintCodex.toc), damit alle referenzierten Datentabellen und Module
 -- beim Aufbau bereits existieren.
 --
--- DIE SEITEN STEHEN MIT IM INDEX, und das ist fuer diese Fassung nicht
--- nebensaechlich: die Bosslisten von Forever sind leer (data/raids.lua),
--- und eine Suche, die ausschliesslich Bossnamen und Verzauberungen
--- kennt, faende auf einem frischen Stand ueberhaupt nichts. Sie saehe
--- dann aus wie kaputt. Mit den Seiten darin ist sie vom ersten Tag an
--- brauchbar - und fuellt sich von selbst, sobald Daten dazukommen.
+-- DIE SEITEN STEHEN MIT IM INDEX, und das war fuer diese Fassung nicht
+-- nebensaechlich: als die Bosslisten von Forever noch leer waren, faende
+-- eine Suche, die ausschliesslich Bossnamen kennt, auf einem frischen
+-- Stand ueberhaupt nichts. Sie saehe dann aus wie kaputt. Mit den Seiten
+-- darin ist sie vom ersten Tag an brauchbar - und sie fuellt sich von
+-- selbst, sobald Daten dazukommen. Genau das ist seither passiert:
+-- neun Dungeons und einundzwanzig Bosse stehen inzwischen mit drin.
 --------------------------------------------------
 
 WeintCodex.Search = {}
@@ -24,6 +25,7 @@ local ROW_H = 26
 local CATEGORY_LABEL = {
     page      = "SEITE",
     raid      = "SCHLACHTZUG",
+    dungeon   = "DUNGEON",
     boss      = "BOSS",
     material  = "MATERIAL",
     character = "CHARAKTER",
@@ -35,6 +37,7 @@ local CATEGORY_LABEL = {
 local PAGES = {
     { id = "uebersicht",  label = "Übersicht" },
     { id = "raids",       label = "Schlachtzüge" },
+    { id = "dungeons",    label = "Dungeons" },
     { id = "anmeldung",   label = "Anmeldung" },
     { id = "kalender",    label = "Kalender" },
     { id = "gruppe",      label = "Gruppencheck" },
@@ -85,6 +88,30 @@ local function BuildIndex()
                 category = "boss",
                 label    = boss.name,
                 onClick  = function() GoTo("raids") end,
+            }
+        end
+    end
+
+    -- DIE DUNGEONS SIND DER GRUND, WARUM DIE SUCHE JETZT ETWAS
+    -- FINDET. Neun Instanzen mit Namen, Gebiet und Stufenbereich sind
+    -- der erste Bestand dieser Fassung, der gross genug ist, um eine
+    -- Suche zu lohnen - und der Stufenbereich steht mit im Treffer,
+    -- weil "welche Ini mit 42?" die Frage ist, mit der man sucht.
+    for _, dungeon in ipairs((WeintCodex.DungeonData
+            and WeintCodex.DungeonData.All()) or {}) do
+        local range = WeintCodex.DungeonData.LevelRange(dungeon)
+        index[#index + 1] = {
+            category = "dungeon",
+            label    = dungeon.name .. (range and (" (" .. range .. ")") or ""),
+            onClick  = function() GoTo("dungeons") end,
+        }
+
+        -- Auch hier: leere Liste, kein Platzhalter.
+        for _, boss in ipairs(dungeon.bosses or {}) do
+            index[#index + 1] = {
+                category = "boss",
+                label    = boss.name,
+                onClick  = function() GoTo("dungeons") end,
             }
         end
     end

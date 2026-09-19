@@ -386,8 +386,12 @@ local function ViewDiagnose(y)
               end
 
               if count == 0 then
-                  Say("Keine gespeicherte Schlachtzug-ID. Sind die"
-                      .. " Bosslisten noch leer, ist das der Normalfall.")
+                  -- Vor dem 09.12.2026 ist das der Normalfall und
+                  -- kein Befund: geschlossene Schlachtzuege vergeben
+                  -- keine IDs.
+                  Say("Keine gespeicherte Schlachtzug-ID. Solange die"
+                      .. " Schlachtzuege nicht geoeffnet haben, ist das"
+                      .. " der Normalfall.")
               end
           end },
     })
@@ -397,24 +401,50 @@ local function ViewDiagnose(y)
         "Was WeintCodex über Forever weiß — und was nicht.")
 
     local bosses = WeintCodex.RaidData and WeintCodex.RaidData.KnownBossCount()
+    local state  = (WeintCodex.RaidData and WeintCodex.RaidData.BossListState
+        and WeintCodex.RaidData.BossListState()) or "none"
 
     y = Info(y, "Schlachtzüge",
         tostring(#((WeintCodex.RaidData and WeintCodex.RaidData.All()) or {})))
 
+    y = Info(y, "Dungeons",
+        tostring(#((WeintCodex.DungeonData and WeintCodex.DungeonData.All()) or {})))
+
     -- Ausdrücklich ein Text und keine Null: "noch nicht veröffentlicht"
-    -- ist die Auskunft, eine 0 wäre eine Behauptung.
-    y = Info(y, "Bosse",
-        bosses and tostring(bosses)
+    -- ist die Auskunft, eine 0 wäre eine Behauptung. Und eine Zahl
+    -- allein wäre hier inzwischen auch eine: die Listen stammen aus
+    -- dem Beta-Client, also steht der Vorbehalt in derselben Zeile.
+    local bossValue
+    if not bosses then
+        bossValue = WeintCodex.ColorText("textDim", "noch nicht veröffentlicht")
+    elseif state == "confirmed" then
+        bossValue = tostring(bosses)
+    else
+        bossValue = bosses .. " "
+            .. WeintCodex.ColorText("textDim", "(vorläufig)")
+    end
+    y = Info(y, "Bosse", bossValue)
+
+    -- Die Dungeonbosse stehen getrennt, weil sie einen anderen Zustand
+    -- haben: zu ihnen liegt nichts vor, auch nicht vorläufig.
+    local dungeonBosses = WeintCodex.DungeonData
+        and WeintCodex.DungeonData.KnownBossCount()
+    y = Info(y, "Dungeonbosse",
+        dungeonBosses and tostring(dungeonBosses)
             or WeintCodex.ColorText("textDim", "noch nicht veröffentlicht"))
 
     y = Info(y, "Spezialisierungen",
         tostring(#(WeintCodex_Specs or {})))
 
-    y = Note(y, "Die Bosslisten von Forever sind nicht veröffentlicht."
-        .. " WeintCodex trägt sie nach, sobald sie feststehen — und"
-        .. " erfindet sie bis dahin nicht. Verzauberungen, Sockel,"
-        .. " Umschmieden, Simmen und WeakAuras gibt es in dieser Fassung"
-        .. " gar nicht.", "textDim")
+    y = Note(y, "Die Bosslisten der Schlachtzüge stammen aus dem"
+        .. " Beta-Client und sind von Blizzard nicht bestätigt — Namen"
+        .. " und Reihenfolge können sich bis zum Erscheinen ändern. Zu"
+        .. " den Dungeonbossen und zu Onyxias Hort liegt nichts vor;"
+        .. " WeintCodex trägt sie nach und erfindet sie bis dahin"
+        .. " nicht. Was eine Rolle an einem Boss zu tun hat, weiß das"
+        .. " Addon nur, wenn der Bot es geliefert hat. Verzauberungen,"
+        .. " Sockel, Umschmieden, Simmen und WeakAuras gibt es in"
+        .. " dieser Fassung gar nicht.", "textDim")
 
     return y
 end

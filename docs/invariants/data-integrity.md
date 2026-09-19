@@ -9,36 +9,114 @@ dieses Addon anzeigen könnte, kennt es noch nicht.**
 > Eine fehlende Angabe ist `nil`. Sie ist nie `0`, nie `false`, nie ein
 > leerer Balken und nie ein roter Punkt.
 
-Drei Zustände, die nirgends zusammenfallen dürfen:
+Vier Zustände, die nirgends zusammenfallen dürfen:
 
 | Zustand | Heisst | Darstellung |
 |---|---|---|
 | `nil` | „nicht gemessen / nicht bekannt" | Gedankenstrich, Kontur statt Punkt, Text „noch nicht bekannt" |
 | `0` | „gemessen, und das Ergebnis ist null" | Zahl, Punkt in der passenden Farbe |
+| **vorläufig** | „es steht etwas da, aber es steht nicht fest" | Zahl **plus Herkunft**, nie das Grün einer gesicherten Angabe |
 | gesperrt | „es gibt Daten, du darfst sie nicht sehen" | „Gesperrt", nie eine Zahl |
 
-Wer die drei zusammenzieht, macht aus einer Datenlücke einen Befund.
+Wer die vier zusammenzieht, macht aus einer Datenlücke einen Befund —
+oder aus einer Vermutung eine Messung.
+
 Genau dieselbe Konvention gilt drüben in der Companion (`stars == 0`
 heisst „keine Daten", `at == -1` heisst „kein Zeitpunkt bekannt") — sie
 ist der Grund, warum die beiden Programme dieselbe Sprache sprechen.
 
+### Der vierte Zustand ist mit 5.1.0.0 dazugekommen
+
+Bis dahin gab es ihn nicht, weil es ihn nicht geben musste: über
+Forever war entweder etwas veröffentlicht oder gar nichts. Seit dem
+Beta-Start liegt ein dritter Fall vor — Angaben, die **im Spiel
+stehen**, aber **nicht angekündigt** sind (die Encounter-Listen im
+Client). Sie wegzulassen hiesse, etwas zu verschweigen, das da ist;
+sie ohne Hinweis zu zeigen hiesse, etwas zu behaupten, das sich noch
+ändert.
+
+Die Regel dafür ist knapp:
+
+> **Kein Bestand ohne Herkunft.** Was nicht aus einer Ankündigung
+> stammt, trägt seine Quelle mit sich und wird überall, wo es
+> erscheint, als vorläufig ausgewiesen.
+
+Und die Gegenrichtung, damit die Regel nicht zur Floskel wird:
+`BossesConfirmed()` liefert nur bei `kind == "release"` `true`. Alles
+andere — auch eine vergessene, unbekannte oder kaputte Quelle — gilt
+als **nicht** bestätigt. Das ist die Richtung, in die ein Irrtum
+harmlos ist.
+
 ## Wo sie in diesem Addon greift
 
-### Die Bosslisten (`data/raids.lua`)
+### Die Bosslisten (`data/raids.lua`, `data/dungeons.lua`)
+
+Hier stehen inzwischen **alle vier Zustände nebeneinander**, und das
+macht diese Stelle zum besten Beispiel der ganzen Regel:
+
+| Instanz | Zustand | Was dasteht |
+|---|---|---|
+| Barrow Deeps, Hyjal Summit | vorläufig | 8 bzw. 13 Bosse, überall mit „Vorläufig · Beta-Client 1.60.1.69876" |
+| Onyxias Hort | `nil` | „Bosse noch nicht bekannt" |
+| alle neun Dungeons | `nil` | „noch nicht bekannt", mit Begründung |
 
 `WeintCodex.RaidData.KnownBossCount()` liefert **`nil`**, solange keine
-einzige Bossliste gefüllt ist — nicht `0`. Die Übersicht schreibt
-deshalb „bosse offen" statt „0 bosse", und die Schlachtzugsseite zeigt
-keinen Fortschrittsbalken bei null Prozent.
+einzige Bossliste gefüllt ist — nicht `0`. Solange das so war, schrieb
+die Übersicht „bosse offen" statt „0 bosse". Dieselbe Funktion gibt es
+für die Dungeons (`WeintCodex.DungeonData.KnownBossCount()`), und dort
+liefert sie heute noch `nil`.
 
-`WeintCodex.RaidData.HasBosses(raid)` ist der Weg, nach dem zu fragen.
-Wer stattdessen `#raid.bosses` zählt, bekommt `0` und weiss nicht, was
-die `0` bedeutet.
+`HasBosses(instanz)` ist der Weg, nach dem Bestand zu fragen. Wer
+stattdessen `#instanz.bosses` zählt, bekommt `0` oder `8` und weiss in
+beiden Fällen nicht, was die Zahl bedeutet.
 
-`.github/tests/data_test.lua` hält das fest — und zwar in beide
-Richtungen: solange nichts eingetragen ist, muss `KnownBossCount()`
-`nil` liefern; sobald der erste Boss eingetragen wird, muss es die
-Summe sein. An der Prüfung ist dafür nichts zu ändern.
+`BossSourceLabel(raid)` ist der Weg, nach der **Herkunft** zu fragen.
+Er liefert `nil` für eine bestätigte Liste (da ist nichts
+einzuschränken) und einen Text für jede andere. Jede Stelle, die eine
+Bosszahl zeigt, zeigt diesen Text mit — Seitenkopf, Detailbereich,
+Übersicht, Diagnose.
+
+`.github/tests/data_test.lua` hält beides fest:
+
+* solange nichts eingetragen ist, muss `KnownBossCount()` `nil`
+  liefern; sobald der erste Boss eingetragen wird, die Summe. An der
+  Prüfung war dafür nichts zu ändern — sie ist von selbst auf den
+  anderen Zweig gekippt, als die Listen kamen.
+* **keine Bossliste ohne Herkunft.** Eine gefüllte Liste ohne
+  `bossSource` lässt den Lauf durchfallen, eine leere Liste **mit**
+  `bossSource` ebenso. Eine unbelegte Liste ist der eine Zustand, den
+  es hier nie geben soll.
+
+### Die Rollen (`data/roles.lua`)
+
+Dieselbe Regel, auf eine Frage angewandt, bei der sie besonders leicht
+zu brechen wäre: **was macht der Tank an diesem Boss?**
+
+Drei Bestände, die nicht zusammenfallen dürfen:
+
+| Bestand | Zustand | Quelle |
+|---|---|---|
+| Welcher Baum welche Rolle trägt | bekannt | `data/specs.lua` |
+| Wie viele Plätze eine Rolle hat | bekannt für Fünfergruppen, `nil` für 10/20/40 | `Roles.Frame(size)` |
+| Was eine Rolle an einem Boss tut | für **keinen** Kampf in Forever bekannt | nur der Discord-Bot (`WCIMPORT:BOSS`) |
+
+`Roles.Frame(10)` liefert ausdrücklich `nil` und nicht „2 Tanks, 3
+Heiler". Wie viele Tanks ein Schlachtzug braucht, entscheiden seine
+Bosse; deren Mechaniken sind nicht veröffentlicht. Eine Verteilung aus
+einem anderen Spiel wäre genau der Fehler, den die leeren Bosslisten
+vermieden haben.
+
+`Roles.Tips(boss, rolle)` unterscheidet drei Antworten, und alle drei
+stehen so in der Oberfläche:
+
+* `nil` → gesperrt (`bossguides.tips`) **oder** zu diesem Boss wurde
+  nie etwas importiert
+* leere Tabelle → der Bot kennt den Boss, hat zu **dieser** Rolle aber
+  nichts gesagt
+* gefüllte Tabelle → es steht etwas da
+
+Allgemeinplätze („Tank: dreh den Boss weg") wären hier billig zu haben
+und würden zu jedem Spiel passen — und zu keinem Kampf in Forever.
 
 ### Die Ausrüstung (`modules/charakter.lua`)
 
@@ -116,6 +194,10 @@ passiert — lautlos und wertlos. Deshalb prüft `data_test.lua` den
 
 * Liefert `KnownBossCount()` `nil` statt `0`, solange nichts da ist?
 * Stimmt `HasBosses()` mit dem tatsächlichen Bestand überein?
+* Trägt **jede** gefüllte Bossliste eine Herkunft — und **keine** leere
+  eine?
+* Liefert `FitsLevel()` `nil` statt `false`, wenn der Client keine
+  Stufe genannt hat?
 * Liefert eine unbekannte Kennung `nil` statt eines leeren Eintrags?
 * Liefert eine unbekannte Klasse eine leere **Liste** (nicht `nil`) —
   weil der Aufrufer darüber iteriert?

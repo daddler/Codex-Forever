@@ -66,12 +66,21 @@ stellt `ADDON_LOADED` und `PLAYER_LOGIN` zu und prüft danach sechs Dinge:
    Lua-Fehler beim ersten Öffnen des Kalenders. Aus der MoP-Fassung ist
    ein gutes Dutzend Module entfallen; das ist die naheliegendste
    Fehlerklasse dieser Fassung.
-6. **Jede Seite lässt sich zeichnen.** `SwitchTo` wird für alle zehn
+6. **Jede Seite lässt sich zeichnen.** `SwitchTo` wird für alle elf
    Navigationseinträge aufgerufen. Laden und Zeichnen sind zwei
    verschiedene Zeitpunkte — ein Modul kann tadellos laden und beim
    ersten Klick auf einen `nil`-Wert laufen. Es entsteht dabei kein
    Bild; geprüft ist ausschliesslich, dass der Aufbau durchläuft.
-7. **Der eine Akzent ist einer.** `accent`, `purple`, `violet` und
+7. **Jede *Instanz* lässt sich zeichnen**, nicht nur die erste.
+   `SwitchTo` schlägt je Seite den zuletzt gewählten Eintrag auf — im
+   kopflosen Lauf also immer den ersten. Genau die interessanten Fälle
+   blieben damit ungeprüft: Onyxias Hort **ohne** Bossliste nimmt einen
+   anderen Zweig als die beiden mit, und Hyjal Summits dreizehn Bosse
+   bauen ein Bildlauffeld, das Barrow Deeps' acht nicht brauchen. Dazu
+   der Klick auf eine Bosszeile, der den Detailbereich mit den
+   Rollen-Tipps neu aufbaut — ein dritter Zeitpunkt, an dem etwas
+   brechen kann.
+8. **Der eine Akzent ist einer.** `accent`, `purple`, `violet` und
    `brandA` müssen denselben Ton tragen. Laufen sie auseinander, stehen
    wieder zwei Bedeutungsfarben nebeneinander — genau der Zustand, den
    „Graphit" abgelöst hat.
@@ -98,6 +107,13 @@ wertlos. Geprüft wird deshalb der *Mechanismus*:
 | `KnownBossCount()` liefert `nil`, nicht `0` | solange keine Bossliste gefüllt ist |
 | `KnownBossCount()` liefert die Summe | sobald eine gefüllt ist — ohne Änderung an der Prüfung |
 | `HasBosses()` stimmt mit dem Bestand überein | in beide Richtungen |
+| **keine Bossliste ohne Herkunft** | eine gefüllte Liste ohne `bossSource` fällt durch — und eine leere **mit** ebenso |
+| `order` stimmt mit der Position überein | sonst zeigt die Seite eine andere Pullreihenfolge an, als die Liste meint |
+| neun Dungeons, je mit beiden Stufen und einem Gebiet | ein halber Stufenbereich ist kein Bereich |
+| `FitsLevel()` ohne Stufe liefert `nil`, nicht `false` | „passt nicht" wäre eine Behauptung über eine Stufe, die niemand kennt |
+| `Roles.Frame(10/20/40)` liefert `nil` | wie viele Tanks ein Schlachtzug braucht, entscheiden seine Bosse |
+| „Wilder Kampf" steht unter Tank **und** Schaden | und nicht bei den Heilern |
+| `Roles.Tips()` unterscheidet vier Zustände | gesperrt ≠ nie importiert ≠ Rolle leer ≠ Tipps |
 | neun Klassen mal drei Bäume | gegen `analyzer/data/specs.py` der Companion |
 | „Wilder Kampf" trägt **keine** Rolle | er ist beide, und das ist die richtige Antwort |
 | jede andere Spezialisierung trägt eine | eine fehlende wäre hier eine Lücke |

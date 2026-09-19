@@ -259,7 +259,7 @@ ScanFolder("modules")
 Section("Jede Seite laesst sich zeichnen")
 
 local TABS = {
-    "uebersicht", "raids", "anmeldung", "kalender", "gruppe",
+    "uebersicht", "raids", "dungeons", "anmeldung", "kalender", "gruppe",
     "charakter", "materialien", "import", "companion", "settings",
 }
 
@@ -271,6 +271,65 @@ for _, tabId in ipairs(TABS) do
         failures = failures + 1
         print("  FEHL  " .. tabId .. ": " .. tostring(drawErr))
     end
+end
+
+--------------------------------------------------
+-- 5a. JEDE INSTANZ, nicht nur die erste
+--------------------------------------------------
+-- SwitchTo oben schlaegt je Seite den ZULETZT GEWAEHLTEN Eintrag auf -
+-- im kopflosen Lauf also den ersten. Genau die interessanten Faelle
+-- blieben damit ungeprueft: der Schlachtzug OHNE Bossliste (Onyxias
+-- Hort) nimmt einen anderen Zweig als die beiden mit, und die
+-- Bossliste mit dreizehn Eintraegen baut ein Bildlauffeld, das die
+-- mit acht nicht braucht.
+--
+-- Beide Zweige brechen erst beim Zeichnen, nicht beim Laden - und
+-- ohne Spiel sieht sie sonst niemand.
+
+Section("Jede Instanz laesst sich zeichnen")
+
+local function DrawEach(tabId, list, label)
+    WeintCodex.Navigation.SwitchTo(tabId)
+    for index, entry in ipairs(list) do
+        local ok, err = pcall(WeintCodex.Navigation.ActivateIndex, index)
+        if ok then
+            print("  ok    " .. label .. " " .. tostring(entry.id))
+        else
+            failures = failures + 1
+            print("  FEHL  " .. label .. " " .. tostring(entry.id)
+                .. ": " .. tostring(err))
+        end
+    end
+end
+
+DrawEach("raids",    WeintCodex.RaidData.All(),    "Schlachtzug")
+DrawEach("dungeons", WeintCodex.DungeonData.All(), "Dungeon")
+
+-- Und ein Boss mit Rollen-Tipps: der Klick auf eine Bosszeile baut
+-- den Detailbereich neu auf, und das ist ein dritter Zeitpunkt, an
+-- dem etwas brechen kann.
+Section("Rollen-Tipps im Detailbereich")
+
+do
+    _G.WeintCodex_SavedData.bossData = {
+        ["Bandalar"] = { tank = { "eine Notiz" }, healer = {} },
+        ["Kein Boss von uns"] = { dps = { "ohne Zuordnung" } },
+    }
+
+    local raid = WeintCodex.RaidData.Get("hyjal_summit")
+    local drawn, err = pcall(function()
+        for _, boss in ipairs(raid.bosses) do
+            WeintCodex.Navigation.SetInspector(
+                WeintCodex.RolePanel.BossBlocks(raid, boss))
+        end
+        -- Und die Seite selbst noch einmal, damit die Zeile "TIPPS"
+        -- und die Notiz ohne Zuordnung mitlaufen.
+        WeintCodex.Navigation.SwitchTo("raids")
+    end)
+
+    Check(drawn, "Rollenbloecke je Boss: " .. (drawn and "ok" or tostring(err)))
+
+    _G.WeintCodex_SavedData.bossData = {}
 end
 
 --------------------------------------------------

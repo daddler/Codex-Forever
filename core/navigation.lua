@@ -30,6 +30,12 @@ local tabs = {
     -- feature - der Bestand steht in data/raids.lua und kommt nicht vom Bot.
     { id = "raids",      icon = ICON_PATH .. "nav_bosse",      label = "Schlachtzüge" },
 
+    -- Die Dungeons, aus demselben Grund ohne feature: Namen, Gebiete und
+    -- Stufenbereiche stehen in data/dungeons.lua. Gildenintern sind allein
+    -- die Rollen-Tipps des Bots, und die gaten in der Seite (siehe
+    -- data/roles.lua) - der neutrale Teil bleibt damit offen.
+    { id = "dungeons",   icon = ICON_PATH .. "nav_dungeons",   label = "Dungeons" },
+
     -- Die Anmeldeliste dagegen ist eine gildeninterne Lieferung.
     { id = "anmeldung",  icon = ICON_PATH .. "nav_raids",      label = "Anmeldung",
       feature = "raids.view" },
@@ -62,9 +68,10 @@ local tabs = {
 
 -- Hoehenrechnung der Spalte, damit der naechste Eintrag nicht still unter der
 -- Kontozeile am Fuss verschwindet: 12 Innenabstand + 4x40 Gruppenkopf +
--- 10x42 Eintrag = 592. Zur Verfuegung stehen bei kleinstem Fenster
--- 780 - 40 (Titelleiste) - 56 (Kontozeile) = 684. Wer hier etwas ergaenzt,
--- rechnet also nach oder gibt der Spalte einen Bildlauf.
+-- 11x42 Eintrag = 634. Zur Verfuegung stehen bei kleinstem Fenster
+-- 780 - 40 (Titelleiste) - 56 (Kontozeile) = 684. Mit den Dungeons sind
+-- davon 50 px uebrig - der naechste Eintrag passt NICHT mehr. Wer hier
+-- etwas ergaenzt, gibt der Spalte einen Bildlauf.
 
 -- tabId -> Feature, einzige Quelle bleibt die tabs-Tabelle oben.
 local tabFeature = {}
@@ -1967,6 +1974,10 @@ function WeintCodex.Navigation.SwitchTo(tabId)
         if WeintCodex.RaidPages and WeintCodex.RaidPages.Show then
             WeintCodex.RaidPages.Show()
         end
+    elseif tabId == "dungeons" then
+        if WeintCodex.DungeonPages and WeintCodex.DungeonPages.Show then
+            WeintCodex.DungeonPages.Show()
+        end
     elseif tabId == "anmeldung" then
         if WeintCodex.Signup and WeintCodex.Signup.Show then
             WeintCodex.Signup.Show()
@@ -2535,12 +2546,28 @@ function WeintCodex.ShowHome()
 
     local knownBosses = WeintCodex.RaidData and WeintCodex.RaidData.KnownBossCount()
 
+    -- "21 bosse" und "Bosslisten hinterlegt" wäre hier zu viel
+    -- versprochen: die Listen stammen aus dem Beta-Client und sind
+    -- nicht bestätigt (siehe data/raids.lua). Der Zustand des
+    -- Bestands entscheidet deshalb über Ton UND Text - eine
+    -- vorläufige Liste bekommt nicht das Grün einer gesicherten.
+    local bossState = (WeintCodex.RaidData and WeintCodex.RaidData.BossListState
+        and WeintCodex.RaidData.BossListState()) or "none"
+
+    local BOSS_NOTE = {
+        none        = "Bosslisten noch nicht bekannt",
+        provisional = "Bosslisten vorläufig (Beta-Client)",
+        partial     = "Teils bestätigt, teils vorläufig",
+        confirmed   = "Bosslisten hinterlegt",
+    }
+
     CardHeader(raids, "Schlachtzüge",
         knownBosses and (knownBosses .. " bosse") or "bosse offen",
-        knownBosses and "success" or "textMuted")
+        (bossState == "confirmed") and "success"
+            or (knownBosses and "warning" or "textMuted"))
 
     local raidNote = WeintCodex.Eyebrow(raids,
-        knownBosses and "Bosslisten hinterlegt" or "Bosslisten noch nicht bekannt",
+        BOSS_NOTE[bossState] or BOSS_NOTE.none,
         { size = 10 })
     raidNote:SetPoint("TOPLEFT", raids, "TOPLEFT", 20, -44)
 
