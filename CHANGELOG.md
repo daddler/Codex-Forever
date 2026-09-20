@@ -9,7 +9,7 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [5.1.0.0] – 2026-09-19
+## [5.1.0.0] – 2026-09-20
 
 **Die Dungeons sind da — alle neun.** Ein eigener Punkt in der
 Navigation, mit Gebiet und Stufenbereich zu jeder Instanz: von *Hall of
