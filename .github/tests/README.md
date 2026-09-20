@@ -38,7 +38,7 @@ tadellos:
 ## `load_test.lua`
 
 Lädt das ganze Addon gegen `wow_stub.lua` in der Reihenfolge der `.toc`,
-stellt `ADDON_LOADED` und `PLAYER_LOGIN` zu und prüft danach sechs Dinge:
+stellt `ADDON_LOADED` und `PLAYER_LOGIN` zu und prüft danach neun Dinge:
 
 1. **Es lädt.** Jede Datei und jede von einer `.xml` eingebundene
    Bibliothek läuft durch.
@@ -71,16 +71,40 @@ stellt `ADDON_LOADED` und `PLAYER_LOGIN` zu und prüft danach sechs Dinge:
    verschiedene Zeitpunkte — ein Modul kann tadellos laden und beim
    ersten Klick auf einen `nil`-Wert laufen. Es entsteht dabei kein
    Bild; geprüft ist ausschliesslich, dass der Aufbau durchläuft.
-7. **Jede *Instanz* lässt sich zeichnen**, nicht nur die erste.
-   `SwitchTo` schlägt je Seite den zuletzt gewählten Eintrag auf — im
-   kopflosen Lauf also immer den ersten. Genau die interessanten Fälle
-   blieben damit ungeprüft: Onyxias Hort **ohne** Bossliste nimmt einen
-   anderen Zweig als die beiden mit, und Hyjal Summits dreizehn Bosse
-   bauen ein Bildlauffeld, das Barrow Deeps' acht nicht brauchen. Dazu
-   der Klick auf eine Bosszeile, der den Detailbereich mit den
-   Rollen-Tipps neu aufbaut — ein dritter Zeitpunkt, an dem etwas
-   brechen kann.
-8. **Der eine Akzent ist einer.** `accent`, `purple`, `violet` und
+7. **Jede *Instanz* und jeder *Boss* lassen sich zeichnen**, nicht nur
+   die erste Instanz. `SwitchTo` schlägt je Seite den zuletzt gewählten
+   Eintrag auf — im kopflosen Lauf also immer den ersten. Genau die
+   interessanten Fälle blieben damit ungeprüft: Onyxias Hort **ohne**
+   Bossliste nimmt einen anderen Zweig als die beiden mit, und die
+   Bossseite ist eine eigene Darstellung (drei Rollenkarten statt
+   Lockout und Aufstellung). Jeder Boss läuft **dreimal** durch: ohne
+   importierte Tipps, mit (darunter ein absichtlich überlanger, der
+   gekürzt werden muss) und mit gesperrtem Zugriffsprofil.
+
+   Ausgewählt wird über `Select()` und **nicht** über `ActivateIndex()`:
+   die Unternavigation ist ein Baum, ihre Zeilen zählen Bosse mit. Ein
+   Index aus der Instanzliste zeigte auf eine Bosszeile — der erste
+   Anlauf dieser Prüfung war grün und maß den kleinsten statt des
+   größten Baums.
+8. **Nichts muss scrollen.** Zwei Spalten können über den Fensterrand
+   hinauslaufen, und beide tun es lautlos: ein Navigationseintrag unter
+   der Kontozeile und ein Bosseintrag unter dem Fensterrand sehen nicht
+   aus wie ein Fehler, sondern wie eine Funktion, die es nicht gibt.
+   Geprüft wird gegen die Höhe beim **kleinsten zulässigen Fenster**
+   (780 px):
+
+   | Prüfung | Stand |
+   |---|---|
+   | Navigationsspalte ≤ Budget | 604 von 684 px |
+   | … und Luft für einen weiteren Eintrag | 80 px frei |
+   | Unternavigation im schlimmsten Fall ≤ Budget | Hyjal Summit: 602 von 716 px |
+   | … und Luft für weitere Bosse | 114 px frei |
+   | `MeasureSidebar()` rechnet dasselbe wie der Aufbau | — |
+
+   Die Rechnung stand bis 5.1.0.0 als Kommentar in
+   `core/navigation.lua` („wer hier etwas ergänzt, rechnet nach"). Ein
+   Kommentar prüft nichts.
+9. **Der eine Akzent ist einer.** `accent`, `purple`, `violet` und
    `brandA` müssen denselben Ton tragen. Laufen sie auseinander, stehen
    wieder zwei Bedeutungsfarben nebeneinander — genau der Zustand, den
    „Graphit" abgelöst hat.

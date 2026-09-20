@@ -73,11 +73,23 @@ local function BuildIndex()
         }
     end
 
+    -- EIN TREFFER LANDET AUF DEM TREFFER, nicht auf der Seite, auf der
+    -- er steht. Wer "Sonya Darkhallow" sucht, will bei Sonya
+    -- Darkhallow herauskommen - nicht auf einer Schlachtzugseite, die
+    -- gerade irgendetwas anderes aufgeschlagen hat. Select() setzt die
+    -- Auswahl, GoTo() oeffnet die Seite damit.
+    local function Open(module, instanceId, bossId, tabId)
+        return function()
+            if module and module.Select then module.Select(instanceId, bossId) end
+            GoTo(tabId)
+        end
+    end
+
     for _, raid in ipairs((WeintCodex.RaidData and WeintCodex.RaidData.All()) or {}) do
         index[#index + 1] = {
             category = "raid",
             label    = raid.name .. " (" .. raid.size .. "er)",
-            onClick  = function() GoTo("raids") end,
+            onClick  = Open(WeintCodex.RaidPages, raid.id, nil, "raids"),
         }
 
         -- Solange die Listen leer sind, passiert hier schlicht nichts.
@@ -87,7 +99,7 @@ local function BuildIndex()
             index[#index + 1] = {
                 category = "boss",
                 label    = boss.name,
-                onClick  = function() GoTo("raids") end,
+                onClick  = Open(WeintCodex.RaidPages, raid.id, boss.id, "raids"),
             }
         end
     end
@@ -103,7 +115,7 @@ local function BuildIndex()
         index[#index + 1] = {
             category = "dungeon",
             label    = dungeon.name .. (range and (" (" .. range .. ")") or ""),
-            onClick  = function() GoTo("dungeons") end,
+            onClick  = Open(WeintCodex.DungeonPages, dungeon.id, nil, "dungeons"),
         }
 
         -- Auch hier: leere Liste, kein Platzhalter.
@@ -111,7 +123,7 @@ local function BuildIndex()
             index[#index + 1] = {
                 category = "boss",
                 label    = boss.name,
-                onClick  = function() GoTo("dungeons") end,
+                onClick  = Open(WeintCodex.DungeonPages, dungeon.id, boss.id, "dungeons"),
             }
         end
     end

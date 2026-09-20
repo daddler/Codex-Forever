@@ -56,18 +56,32 @@ für einen Teil vor, für andere keine, und die vorhandenen widersprechen
 sich zwischen den Builds; eine Liste, die vier Dungeons stillschweigend
 als bosslos führte, wäre schlechter als gar keine.
 
-**Die Bossliste rollt.** Dreizehn Bosse passen nicht in eine Karte. Ohne
-Bildlauf verschwände der Rest unten aus dem Fenster — unsichtbar und
-unerreichbar, ausgerechnet dann, wenn am meisten dasteht.
+**Man sieht jederzeit, wo man ist — und nichts muss dafür scrollen.**
+Die Spalte links zeigt jetzt zwei Ebenen: die Instanzen, und darunter
+eingerückt die Bosse der Instanz, in der man gerade steckt. Beide
+Antworten auf *wo bin ich* stehen damit gleichzeitig und dauerhaft da,
+statt nacheinander in einer Brotkrume. Je Boss ein Punkt für „gelegt"
+und, wo Taktik vorliegt, ein `TIPPS` daneben.
+
+Der Inhaltsbereich zeigt dafür den **ausgewählten Boss** mit seinen drei
+Rollen — also das, wofür links kein Platz ist. Eine Liste, die man ohnehin
+zur Orientierung braucht, ein zweites Mal in der Mitte zu zeigen und dann
+ausgerechnet die Mitte scrollen zu lassen, war der falsche Weg herum.
+
+**Die Suche landet auf dem Treffer.** Wer „Sonya Darkhallow" eingibt,
+kommt bei Sonya Darkhallow heraus und nicht auf einer Schlachtzugseite,
+die gerade etwas anderes aufgeschlagen hat.
+
+**Die Stufenbereiche der Dungeons stehen endlich da.** Die zweite Zeile
+eines Eintrags in der Spalte erwartete bisher eine andere Form, als die
+Schlachtzugseite lieferte — die Zeile wurde gebaut und blieb leer. Kein
+Fehler, keine Meldung, nur eine Auskunft, die nie ankam. Jetzt steht bei
+jedem Dungeon sein Stufenbereich und bei jedem Schlachtzug seine Grösse.
 
 **Ausserdem:** die Einführung hat ein Kapitel über Instanzen und Rollen
 bekommen, `/wc dungeons` führt direkt hin, und die Diagnose unter
 *Einstellungen* zählt Dungeons und Dungeonbosse getrennt — weil sie einen
 anderen Zustand haben als die Schlachtzugsbosse.
-
-> **Hinweis zur Navigationsspalte:** mit den Dungeons steht sie bei elf
-> Einträgen (634 px von 684 verfügbaren). Der nächste Eintrag passt nicht
-> mehr, ohne dass die Spalte einen Bildlauf bekommt.
 
 ## [5.0.0.0] – 2026-09-18
 

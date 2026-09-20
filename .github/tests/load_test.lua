@@ -288,10 +288,16 @@ end
 
 Section("Jede Instanz laesst sich zeichnen")
 
-local function DrawEach(tabId, list, label)
-    WeintCodex.Navigation.SwitchTo(tabId)
-    for index, entry in ipairs(list) do
-        local ok, err = pcall(WeintCodex.Navigation.ActivateIndex, index)
+-- Ueber Select() und nicht ueber ActivateIndex(): die Unternavigation
+-- ist ein BAUM, ihre Zeilen zaehlen Bosse mit. Ein Index aus der
+-- Instanzliste zeigte damit auf eine Bosszeile - der Lauf waere gruen
+-- geworden und haette etwas anderes geprueft, als er meint.
+local function DrawEach(module, tabId, list, label)
+    for _, entry in ipairs(list) do
+        local ok, err = pcall(function()
+            assert(module.Select(entry.id), "Select lehnt eine bekannte Kennung ab")
+            WeintCodex.Navigation.SwitchTo(tabId)
+        end)
         if ok then
             print("  ok    " .. label .. " " .. tostring(entry.id))
         else
@@ -302,34 +308,149 @@ local function DrawEach(tabId, list, label)
     end
 end
 
-DrawEach("raids",    WeintCodex.RaidData.All(),    "Schlachtzug")
-DrawEach("dungeons", WeintCodex.DungeonData.All(), "Dungeon")
+DrawEach(WeintCodex.RaidPages,    "raids",    WeintCodex.RaidData.All(),    "Schlachtzug")
+DrawEach(WeintCodex.DungeonPages, "dungeons", WeintCodex.DungeonData.All(), "Dungeon")
 
--- Und ein Boss mit Rollen-Tipps: der Klick auf eine Bosszeile baut
--- den Detailbereich neu auf, und das ist ein dritter Zeitpunkt, an
--- dem etwas brechen kann.
-Section("Rollen-Tipps im Detailbereich")
+-- Und JEDER Boss. Die Bossseite ist eine eigene Darstellung (drei
+-- Rollenkarten statt Lockout und Aufstellung) und damit ein eigener
+-- Zeitpunkt, an dem etwas brechen kann - mit importierten Tipps
+-- anders als ohne, und gesperrt wieder anders.
+Section("Jeder Boss laesst sich zeichnen")
 
 do
+    local function EveryBoss(label)
+        for _, raid in ipairs(WeintCodex.RaidData.All()) do
+            for _, boss in ipairs(raid.bosses or {}) do
+                local ok, err = pcall(function()
+                    assert(WeintCodex.RaidPages.Select(raid.id, boss.id))
+                    WeintCodex.Navigation.SwitchTo("raids")
+                end)
+                if not ok then
+                    failures = failures + 1
+                    print("  FEHL  " .. label .. " " .. boss.id .. ": " .. tostring(err))
+                    return false
+                end
+            end
+        end
+        print("  ok    " .. label)
+        return true
+    end
+
+    EveryBoss("ohne Tipps")
+
+    -- Mit Tipps: ein langer Tipp muss gekuerzt werden (sonst schoebe
+    -- er die dritte Rollenkarte aus dem Fenster), eine leere Rolle
+    -- ist etwas anderes als eine fehlende, und eine Notiz ohne
+    -- Zuordnung landet im Detailbereich.
     _G.WeintCodex_SavedData.bossData = {
-        ["Bandalar"] = { tank = { "eine Notiz" }, healer = {} },
+        ["Bandalar"] = {
+            tank   = { "eine Notiz", "noch eine", "und eine dritte" },
+            healer = {},
+            dps    = { string.rep("sehr langer Hinweis ", 20) },
+        },
         ["Kein Boss von uns"] = { dps = { "ohne Zuordnung" } },
     }
+    EveryBoss("mit Tipps")
 
-    local raid = WeintCodex.RaidData.Get("hyjal_summit")
-    local drawn, err = pcall(function()
-        for _, boss in ipairs(raid.bosses) do
-            WeintCodex.Navigation.SetInspector(
-                WeintCodex.RolePanel.BossBlocks(raid, boss))
-        end
-        -- Und die Seite selbst noch einmal, damit die Zeile "TIPPS"
-        -- und die Notiz ohne Zuordnung mitlaufen.
-        WeintCodex.Navigation.SwitchTo("raids")
-    end)
-
-    Check(drawn, "Rollenbloecke je Boss: " .. (drawn and "ok" or tostring(err)))
+    -- Gesperrt: die Karten muessen "gesperrt" sagen und duerfen nicht
+    -- an einem nil-Wert brechen.
+    local realCan = WeintCodex.Access.Can
+    WeintCodex.Access.Can = function(key) return key ~= "bossguides.tips" end
+    EveryBoss("mit gesperrtem Zugriffsprofil")
+    WeintCodex.Access.Can = realCan
 
     _G.WeintCodex_SavedData.bossData = {}
+end
+
+--------------------------------------------------
+-- 5b. NICHTS MUSS SCROLLEN
+--------------------------------------------------
+-- Zwei Spalten koennen ueber den Fensterrand hinauslaufen, und beide
+-- tun es LAUTLOS: ein Navigationseintrag unter der Kontozeile und ein
+-- Bosseintrag unter dem Fensterrand sehen nicht aus wie ein Fehler,
+-- sondern wie eine Funktion, die es nicht gibt.
+--
+-- Bis 5.1.0.0 stand die Rechnung als Kommentar in core/navigation.lua
+-- ("wer hier etwas ergaenzt, rechnet nach"). Ein Kommentar prueft
+-- nichts. Jetzt rechnen NavColumnHeight/SubNavHeight dasselbe nach,
+-- und dieser Abschnitt haelt sie gegen die Hoehe, die beim KLEINSTEN
+-- zulaessigen Fenster zur Verfuegung steht.
+
+Section("Nichts muss scrollen")
+
+local navUsed   = WeintCodex.Navigation.NavColumnHeight()
+local navBudget = WeintCodex.Navigation.NavColumnBudget()
+
+Check(navUsed <= navBudget,
+    "Navigationsspalte: " .. navUsed .. " von " .. navBudget .. " px")
+
+-- Luft fuer mindestens einen weiteren Eintrag. Ohne diese Pruefung
+-- faellt erst der Eintrag auf, der schon nicht mehr passt - und dann
+-- ist die Frage nicht mehr "passt er?", sondern "was werfen wir
+-- raus?".
+Check(navBudget - navUsed >= 40,
+    "Navigationsspalte hat Luft fuer einen weiteren Eintrag ("
+    .. (navBudget - navUsed) .. " px frei)")
+
+local subBudget = WeintCodex.Navigation.SubNavBudget()
+
+-- Die Unternavigation ist ein BAUM: unter dem ausgewaehlten
+-- Schlachtzug haengen seine Bosse. Geprueft wird der schlimmste Fall,
+-- also der Schlachtzug mit den meisten Bossen - Hyjal Summit mit
+-- dreizehn ist der Grund, warum die Liste ueberhaupt aus der Seite
+-- heraus musste.
+local function WorstCase(all, HasBosses)
+    local worst, count = nil, -1
+    for _, entry in ipairs(all) do
+        local n = HasBosses(entry) and #entry.bosses or 0
+        if n > count then worst, count = entry, n end
+    end
+    return worst
+end
+
+local worstRaid = WorstCase(WeintCodex.RaidData.All(),
+    WeintCodex.RaidData.HasBosses)
+
+-- Ueber Select() und nicht ueber ActivateIndex(): der Baum zaehlt
+-- Bosszeilen mit, ein Index aus der Schlachtzugliste zeigte also auf
+-- die falsche Zeile. Genau dieser Irrtum hat beim ersten Lauf den
+-- kleinsten statt des groessten Baums gemessen.
+if worstRaid then WeintCodex.RaidPages.Select(worstRaid.id) end
+WeintCodex.Navigation.SwitchTo("raids")
+
+local subUsed = WeintCodex.Navigation.SubNavHeight()
+Check(subUsed > 0, "die Unternavigation der Schlachtzuege ist eine Spalte")
+Check(subUsed <= subBudget,
+    "Schlachtzuege mit den meisten Bossen (" .. tostring(worstRaid and worstRaid.name)
+    .. "): " .. subUsed .. " von " .. subBudget .. " px")
+
+-- Luft fuer weitere Bosse. Die Bosslisten stammen aus dem
+-- Beta-Client (data/raids.lua) und koennen sich aendern; ein
+-- vierzehnter Boss darf nicht der sein, bei dem die Spalte still
+-- ueberlaeuft.
+Check(subBudget - subUsed >= 60,
+    "die Unternavigation hat Luft fuer weitere Bosse ("
+    .. (subBudget - subUsed) .. " px frei)")
+
+WeintCodex.Navigation.SwitchTo("dungeons")
+local dungUsed = WeintCodex.Navigation.SubNavHeight()
+Check(dungUsed <= subBudget,
+    "Dungeons: " .. dungUsed .. " von " .. subBudget .. " px")
+
+-- Und die Rechnung ohne Aufbau muss dieselbe sein wie die mit: sonst
+-- koennte eine Seite vorher etwas anderes pruefen, als hinterher
+-- dasteht.
+do
+    local items = {
+        { label = "A", status = "x" },
+        { label = "B" },
+        { label = "C", indent = true },
+        { isGroup = true, label = "G" },
+    }
+    WeintCodex.Navigation.BuildSidebar("Probe", items)
+    Check(WeintCodex.Navigation.SubNavHeight()
+        == WeintCodex.Navigation.MeasureSidebar(items),
+        "MeasureSidebar rechnet dasselbe wie der Aufbau")
 end
 
 --------------------------------------------------

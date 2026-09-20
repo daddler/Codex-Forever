@@ -107,6 +107,23 @@ Vier Zustände, vier Texte:
 | Boss bekannt, Rolle leer | „Der Bot hat zu dieser Rolle nichts geliefert" |
 | Tipps vorhanden | die Tipps |
 
+### Die Seite ist gedeckelt, der Detailbereich nicht
+
+`RolePanel.BossCards` zeigt je Rolle höchstens **zwei** Tipps und kürzt
+jeden auf 120 Zeichen. Beides ist eine Deckelung gegen dieselbe Gefahr:
+wie lang ein Tipp ist, entscheidet der Bot, und beim kleinsten
+zulässigen Fenster ist der Inhaltsbereich keine Seite, sondern eine
+212 px schmale Spalte — drei ungekürzte Tipps je Rolle könnten dort
+neun Zeilen ergeben und die dritte Karte aus dem Fenster schieben.
+
+Gekürzt wird mit `WeintCodex.Truncate`, also **zeichenweise**: ein
+Umlaut, den man in der Mitte zerschneidet, wird im Spiel zu einem
+leeren Kästchen.
+
+Verloren geht dabei nichts, und die Karte sagt auch, was fehlt
+(„gekürzt", „*n* weitere", oder beides). Der Detailbereich zeigt alle
+Tipps ungekürzt und rollt, weil er dafür gebaut ist.
+
 Allgemeinplätze stehen hier nicht. „Tank: dreh den Boss vom Raid weg"
 wäre billig zu haben, passte zu jedem Spiel und zu keinem Kampf in
 Forever.
@@ -127,11 +144,21 @@ unangetastet (siehe `core/ui.lua`).
 | `data/roles.lua` | Rollenmodell: Labels, Farben, `Frame`, `Specs`, `Tips`, `HasTips` |
 | `modules/rolepanel.lua` | Darstellung: Karte „Aufstellung", Detailblöcke je Instanz und je Boss |
 | `modules/dungeonpages.lua` | Die Seite |
-| `core/navigation.lua` | Navigationseintrag `dungeons` |
+| `core/navigation.lua` | Navigationseintrag `dungeons`, zweistufige Listenspalte |
 | `core/search.lua` | Dungeons und ihre Stufen im Suchindex |
 
+Die Unternavigation ist derselbe **Baum** wie bei den Schlachtzügen:
+Instanzen auf der ersten Ebene, die Bosse der ausgewählten eingerückt
+auf der zweiten. Heute bleibt die zweite Ebene leer — sobald
+`data/dungeons.lua` Bosslisten trägt, füllt sie sich, ohne dass an
+`modules/dungeonpages.lua` etwas zu ändern wäre.
+
+Die zweite Zeile eines Dungeoneintrags ist sein **Stufenbereich**. Das
+ist es, wonach man in einer Liste von neun Dungeons sucht.
+
 Die Navigationsspalte ist mit den Dungeons bei **elf** Einträgen
-angekommen. Nachgerechnet: 12 Innenabstand + 4×40 Gruppenkopf + 11×42
-Eintrag = 634 px, verfügbar sind beim kleinsten Fenster 684. **Der
-nächste Eintrag passt nicht mehr** — wer einen ergänzt, gibt der
-Spalte vorher einen Bildlauf.
+angekommen: 604 von 684 px beim kleinsten Fenster. Die Rechnung steht
+nicht mehr als Kommentar da, sondern als Funktion, und der Prüflauf
+hält sie gegen das Budget — samt der Forderung, dass noch Luft für
+einen weiteren Eintrag bleibt. Siehe `docs/architecture/overview.md`,
+Abschnitt *Nichts muss scrollen*.

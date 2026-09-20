@@ -281,3 +281,141 @@ function WeintCodex.RolePanel.TipsSummary(instance)
     end
     return "Rollen-Tipps zu " .. tipped .. " von " .. total .. " Bossen"
 end
+
+--------------------------------------------------
+-- Die drei Rollenkarten zu EINEM Boss, im Seitenkörper
+--------------------------------------------------
+-- Seit die Bosse links in der Unternavigation stehen, ist der
+-- Inhaltsbereich für den AUSGEWÄHLTEN Boss frei - und das ist die
+-- bessere Verwendung: eine Liste, die man ohnehin schon links sieht,
+-- noch einmal in der Mitte zu zeigen, war der Grund, warum sie
+-- scrollen musste.
+--
+-- DIE SEITE IST GEDECKELT, DER DETAILBEREICH NICHT. Wie viele Tipps
+-- der Bot je Rolle schickt, weiss niemand vorher; eine Karte, die
+-- daran wächst, schiebt die nächste aus dem Fenster. Die Seite zeigt
+-- deshalb höchstens PAGE_TIPS je Rolle und sagt, wie viele noch
+-- kommen - der Detailbereich (BossBlocks) zeigt alle und rollt, weil
+-- er dafür gebaut ist.
+--------------------------------------------------
+
+-- ZWEI TIPPS JE ROLLE AUF DER SEITE, und jeder auf PAGE_TIP_CHARS
+-- Zeichen gekuerzt. Beides ist eine Deckelung gegen dieselbe Gefahr:
+-- wie lang ein Tipp ist, entscheidet der Bot, und beim kleinsten
+-- zulaessigen Fenster ist der Inhaltsbereich keine Seite, sondern
+-- eine 212 px schmale Spalte. Drei ungekuerzte Tipps je Rolle
+-- koennten dort neun Zeilen ergeben - und die dritte Karte aus dem
+-- Fenster schieben.
+--
+-- Gekuerzt wird mit WeintCodex.Truncate, also ZEICHENWEISE: ein
+-- Umlaut, den man in der Mitte zerschneidet, wird im Spiel zu einem
+-- leeren Kaestchen (siehe core/ui.lua).
+--
+-- Der vollstaendige Text geht nirgends verloren - der Detailbereich
+-- zeigt alle Tipps ungekuerzt und rollt, weil er dafuer gebaut ist.
+local PAGE_TIPS       = 2
+local PAGE_TIP_CHARS  = 120
+
+local CARD_HEAD_H = 40
+local CARD_PAD    = 16
+local LINE_GAP    = 5
+
+-- Eine Textzeile in die Karte setzen und ihre echte Höhe zurückgeben.
+-- Gemessen und nicht geschätzt: ein umgebrochener Tipp ist zwei
+-- Zeilen hoch, und eine geschätzte Höhe schiebt die nächste Karte
+-- entweder in diese hinein oder lässt eine Lücke.
+local function CardLine(card, y, text, color, size)
+    local fs = card:CreateFontString(nil, "OVERLAY")
+    fs:SetFont(WeintCodex.Fonts.sans, size or 12, "")
+    fs:SetPoint("TOPLEFT",  card, "TOPLEFT",  CARD_PAD + 4, y)
+    fs:SetPoint("TOPRIGHT", card, "TOPRIGHT", -CARD_PAD, y)
+    fs:SetJustifyH("LEFT")
+    fs:SetSpacing(2)
+    local col = C[color or "textMuted"] or C.textMuted
+    fs:SetTextColor(col[1], col[2], col[3])
+    fs:SetText(text or "")
+
+    local ok, h = pcall(fs.GetStringHeight, fs)
+    h = (ok and type(h) == "number" and h > 0) and h or ((size or 12) + 3)
+    return y - math.ceil(h) - LINE_GAP
+end
+
+-- Zeichnet Tank, Heiler und Schadensausteiler untereinander.
+-- Rückgabe: Liste der erzeugten Karten und das neue y.
+function WeintCodex.RolePanel.BossCards(parent, y, instance, boss)
+    local PAD_X = WeintCodex.Metrics.PAD_X
+    local GAP   = WeintCodex.Metrics.GAP
+    local made  = {}
+
+    local bossName = boss and boss.name or nil
+    local allowed  = WeintCodex.Roles.TipsAllowed()
+
+    for _, role in ipairs(WeintCodex.Roles.ORDER) do
+        local card = WeintCodex.CreateSurface(parent, {
+            height = CARD_HEAD_H, tone = "plain", radius = 14, backdrop = "bgDark",
+        })
+        card:SetPoint("TOPLEFT",  parent, "TOPLEFT",   PAD_X, y)
+        card:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -PAD_X, y)
+        made[#made + 1] = card
+
+        local title = card:CreateFontString(nil, "OVERLAY")
+        title:SetFont(WeintCodex.Fonts.sansSemi, 13, "")
+        title:SetPoint("TOPLEFT", card, "TOPLEFT", CARD_PAD + 4, -14)
+        local tone = C[WeintCodex.Roles.Tone(role)] or C.textNormal
+        title:SetTextColor(tone[1], tone[2], tone[3])
+        title:SetText(WeintCodex.Roles.Label(role))
+
+        local ly = -CARD_HEAD_H
+
+        if not allowed then
+            ly = CardLine(card, ly,
+                "Gildeninterne Taktiknotiz – für dein Zugriffsprofil gesperrt.",
+                "textFaint", 11)
+        else
+            local tips = WeintCodex.Roles.Tips(bossName, role)
+
+            if tips == nil then
+                -- Nie etwas importiert. Das ist eine andere Auskunft
+                -- als "zu dieser Rolle steht nichts drin".
+                ly = CardLine(card, ly,
+                    "Noch nichts geliefert. Was hier steht, kommt aus dem "
+                    .. "Discord-Bot – die Mechaniken von Forever sind nicht "
+                    .. "veröffentlicht.", "textFaint", 11)
+            elseif #tips == 0 then
+                ly = CardLine(card, ly,
+                    "Der Bot kennt diesen Boss, hat zu dieser Rolle aber "
+                    .. "nichts gesagt.", "textFaint", 11)
+            else
+                local shown, cut = math.min(#tips, PAGE_TIPS), false
+                for i = 1, shown do
+                    local tip = tostring(tips[i])
+                    local short = WeintCodex.Truncate(tip, PAGE_TIP_CHARS)
+                    if short ~= tip then cut = true end
+                    ly = CardLine(card, ly, "• " .. short, "textMuted", 12)
+                end
+
+                -- Der Hinweis steht nur da, wo wirklich etwas fehlt -
+                -- und er sagt, WAS fehlt: weitere Tipps, gekuerzter
+                -- Text, oder beides.
+                local rest = #tips - shown
+                if rest > 0 or cut then
+                    local note
+                    if rest > 0 and cut then
+                        note = "gekürzt, und " .. rest .. " weitere – vollständig im Detailbereich"
+                    elseif rest > 0 then
+                        note = rest .. " weitere im Detailbereich rechts"
+                    else
+                        note = "gekürzt – vollständig im Detailbereich rechts"
+                    end
+                    ly = CardLine(card, ly, note, "textFaint", 11)
+                end
+            end
+        end
+
+        local height = -ly + CARD_PAD - LINE_GAP
+        card:SetHeight(height)
+        y = y - height - GAP
+    end
+
+    return made, y
+end

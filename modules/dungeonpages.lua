@@ -9,6 +9,11 @@
 -- bekannt (Blizzard hat sie auf der BlizzCon vorgestellt) und die
 -- Bosslisten nicht. Die Seite sagt beides.
 --
+-- Der Baum links ist derselbe wie bei den Schlachtzügen: Instanzen
+-- auf der ersten Ebene, die Bosse des ausgewählten eingerückt auf der
+-- zweiten. Heute bleibt die zweite Ebene leer - sobald data/dungeons.lua
+-- Bosslisten trägt, füllt sie sich, ohne dass hier etwas zu ändern wäre.
+--
 -- WAS HIER BEWUSST NICHT STEHT:
 --
 --   * KEINE BOSSLISTE. Für fünf der neun Dungeons liegen Bossnamen
@@ -29,9 +34,11 @@ WeintCodex.DungeonPages = {}
 
 local C = WeintCodex.Colors
 
-local page       = nil
-local rows       = {}
-local selectedId = nil
+local page         = nil
+local rows         = {}
+local selectedId   = nil
+local selectedBoss = nil
+local building     = false
 
 local function ClearRows()
     for _, row in ipairs(rows) do row:Hide() end
@@ -69,8 +76,54 @@ local function BuildPage()
 end
 
 --------------------------------------------------
+-- Detailbereich: der Dungeon selbst
+--------------------------------------------------
 
-local function DrawDungeon(f, dungeon)
+local function InstanceInspector(dungeon)
+    local known = WeintCodex.DungeonData.HasBosses(dungeon)
+    local range = WeintCodex.DungeonData.LevelRange(dungeon)
+    local level = MyLevel()
+    local fits  = WeintCodex.DungeonData.FitsLevel(dungeon, level)
+
+    -- Vier Zustände, vier Texte. Ohne Stufe vom Client steht da
+    -- "nicht bekannt" und nicht "passt nicht".
+    local levelValue, levelColor
+    if level == nil then
+        levelValue, levelColor = "noch nicht bekannt", "textFaint"
+    elseif fits == true then
+        levelValue, levelColor = level .. " · passt", "successBright"
+    elseif level < (dungeon.minLevel or 0) then
+        levelValue, levelColor = level .. " · zu niedrig", "warningBright"
+    else
+        levelValue, levelColor = level .. " · darüber", "textMuted"
+    end
+
+    local blocks = {
+        { type = "header", text = "Dungeon" },
+        { type = "rows", rows = {
+            { label = "Gebiet",       value = WeintCodex.DungeonData.ZoneLabel(dungeon) or "—" },
+            { label = "Stufen",       value = range or "noch nicht bekannt",
+              valueColor = range and "textNormal" or "textFaint" },
+            { label = "Gruppengröße", value = dungeon.size .. " Spieler" },
+            { label = "Inhalt",       value = dungeon.release or "—" },
+            { label = "Bosse",
+              value = known and tostring(#dungeon.bosses) or "noch nicht bekannt",
+              valueColor = known and "textNormal" or "textFaint" },
+            { label = "Deine Stufe",  value = levelValue, valueColor = levelColor },
+        }},
+        { type = "divider" },
+    }
+
+    for _, block in ipairs(WeintCodex.RolePanel.InstanceBlocks(dungeon)) do
+        blocks[#blocks + 1] = block
+    end
+
+    return blocks
+end
+
+--------------------------------------------------
+
+local function DrawInstance(f, dungeon)
     ClearRows()
 
     local PAD_X = WeintCodex.Metrics.PAD_X
@@ -88,8 +141,6 @@ local function DrawDungeon(f, dungeon)
         { key = "size", label = "Gruppe", value = dungeon.size, tone = "textNormal" },
     }
 
-    -- Die Bosszahl steht NUR da, wenn sie bekannt ist. Eine 0 wäre
-    -- keine leere Auskunft, sondern eine falsche.
     if known then
         stats[#stats + 1] = { key = "bosses", label = "Bosse",
             value = #dungeon.bosses, tone = "textNormal" }
@@ -136,86 +187,150 @@ local function DrawDungeon(f, dungeon)
     bossTitle:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
     bossTitle:SetText("Bosse")
 
+    local text, note
     if known then
-
-        local by = -46
-        for _, boss in ipairs(dungeon.bosses) do
-            local row = CreateFrame("Frame", nil, bossCard)
-            row:SetHeight(34)
-            row:SetPoint("TOPLEFT",  bossCard, "TOPLEFT",  20, by)
-            row:SetPoint("TOPRIGHT", bossCard, "TOPRIGHT", -20, by)
-
-            local lbl = WeintCodex.Label(row, boss.name or "?",
-                { color = "textNormal", size = 13 })
-            lbl:SetPoint("LEFT", row, "LEFT", 0, 0)
-
-            WeintCodex.RowLine(row, -33)
-            by = by - 36
-        end
-
+        text = #dungeon.bosses .. " Bosse stehen links in der Spalte. Ein Klick "
+            .. "auf einen davon zeigt hier, was für Tank, Heiler und "
+            .. "Schadensausteiler zu beachten ist."
     else
-
         -- Der ehrliche Leerzustand. Er sagt, WARUM nichts da ist -
         -- das ist der Unterschied zu einer leeren Liste, die wie ein
         -- Fehler aussieht.
-        local empty = WeintCodex.Label(bossCard,
-            "Welche Bosse in " .. dungeon.name .. " stehen, hat Blizzard nicht "
+        text = "Welche Bosse in " .. dungeon.name .. " stehen, hat Blizzard nicht "
             .. "veröffentlicht. Im Beta-Client stehen Namen für einen Teil der "
             .. "Dungeons, für andere keine – und sie ändern sich von Build zu "
             .. "Build. WeintCodex trägt die Listen nach, wenn sie vollständig "
-            .. "sind, und erfindet sie bis dahin nicht.",
-            { color = "textMuted", size = 13 })
-        empty:SetPoint("TOPLEFT",  bossCard, "TOPLEFT",   20, -50)
-        empty:SetPoint("TOPRIGHT", bossCard, "TOPRIGHT", -20, -50)
+            .. "sind, und erfindet sie bis dahin nicht."
+        note = "Forever erscheint am 04.11.2026"
+    end
 
-        local when = WeintCodex.Eyebrow(bossCard,
-            "Forever erscheint am 04.11.2026",
+    local lbl = WeintCodex.Label(bossCard, text, { color = "textMuted", size = 13 })
+    lbl:SetPoint("TOPLEFT",  bossCard, "TOPLEFT",   20, -50)
+    lbl:SetPoint("TOPRIGHT", bossCard, "TOPRIGHT", -20, -50)
+
+    if note then
+        local when = WeintCodex.Eyebrow(bossCard, note,
             { color = "textFaint", size = 10 })
-        when:SetPoint("TOPLEFT", empty, "BOTTOMLEFT", 0, -14)
-
+        when:SetPoint("TOPLEFT", lbl, "BOTTOMLEFT", 0, -14)
     end
 
-    --------------------------------------------------
-    -- Detailbereich
-    --------------------------------------------------
+    WeintCodex.Navigation.SetInspector(InstanceInspector(dungeon))
+end
 
-    local level = MyLevel()
-    local fits  = WeintCodex.DungeonData.FitsLevel(dungeon, level)
+--------------------------------------------------
+-- Ein Boss: die drei Rollen
+--------------------------------------------------
 
-    -- Drei Zustaende, drei Texte. Ohne Stufe vom Client steht da
-    -- "nicht bekannt" und nicht "passt nicht".
-    local levelValue, levelColor
-    if level == nil then
-        levelValue, levelColor = "noch nicht bekannt", "textFaint"
-    elseif fits == true then
-        levelValue, levelColor = level .. " · passt", "successBright"
-    elseif level < (dungeon.minLevel or 0) then
-        levelValue, levelColor = level .. " · zu niedrig", "warningBright"
-    else
-        levelValue, levelColor = level .. " · darüber", "textMuted"
+local function DrawBoss(f, dungeon, boss, index)
+    ClearRows()
+
+    local PAD_Y = WeintCodex.Metrics.PAD_Y
+    local GAP   = WeintCodex.Metrics.GAP
+
+    local head = WeintCodex.PageHead(f, {
+        eyebrow   = dungeon.name,
+        title     = boss.name or "?",
+        titleSize = 26,
+        sub       = WeintCodex.DungeonData.ZoneLabel(dungeon) or "",
+        subColor  = "textMuted",
+        height    = 86,
+        stats     = {
+            { key = "pull", label = "Pull",
+              value = (boss.order or index) .. "/" .. #dungeon.bosses,
+              tone = "textNormal" },
+        },
+    })
+    rows[#rows + 1] = head
+
+    local y = -(PAD_Y + 86) - (GAP - 8)
+
+    local cards = WeintCodex.RolePanel.BossCards(f, y, dungeon, boss)
+    for _, card in ipairs(cards) do rows[#rows + 1] = card end
+
+    WeintCodex.Navigation.SetInspector(
+        WeintCodex.RolePanel.BossBlocks(dungeon, boss))
+end
+
+--------------------------------------------------
+-- Der Baum links
+--------------------------------------------------
+
+local function BuildTree(f)
+    building = true
+
+    local dungeons = WeintCodex.DungeonData.All()
+    local items    = {}
+    local active   = 1
+
+    local current = WeintCodex.DungeonData.Get(selectedId) or dungeons[1]
+    selectedId = current and current.id or nil
+
+    for _, dungeon in ipairs(dungeons) do
+        items[#items + 1] = {
+            -- Der Stufenbereich als zweite Zeile: er ist das, wonach
+            -- man in einer Liste von neun Dungeons sucht.
+            label   = dungeon.name,
+            status  = WeintCodex.DungeonData.LevelRange(dungeon),
+            onClick = function()
+                local changed = (selectedId ~= dungeon.id)
+                selectedId   = dungeon.id
+                selectedBoss = nil
+                WeintCodex.SetBreadcrumb("Dungeons", dungeon.name)
+                DrawInstance(f, dungeon)
+                if changed and not building then BuildTree(f) end
+            end,
+        }
+
+        if current and dungeon.id == current.id and not selectedBoss then
+            active = #items
+        end
+
+        if current and dungeon.id == current.id then
+            for index, boss in ipairs(dungeon.bosses or {}) do
+                items[#items + 1] = {
+                    label  = boss.name,
+                    indent = true,
+                    mark   = WeintCodex.Roles.HasTips(boss.name) and "Tipps" or nil,
+                    markColor = "textMuted",
+                    onClick = function()
+                        selectedBoss = boss.id
+                        WeintCodex.SetBreadcrumb("Dungeons", dungeon.name, boss.name)
+                        DrawBoss(f, dungeon, boss, index)
+                    end,
+                }
+                if selectedBoss == boss.id then active = #items end
+            end
+        end
     end
 
-    local blocks = {
-        { type = "header", text = "Dungeon" },
-        { type = "rows", rows = {
-            { label = "Gebiet",       value = WeintCodex.DungeonData.ZoneLabel(dungeon) or "—" },
-            { label = "Stufen",       value = range or "noch nicht bekannt",
-              valueColor = range and "textNormal" or "textFaint" },
-            { label = "Gruppengröße", value = dungeon.size .. " Spieler" },
-            { label = "Inhalt",       value = dungeon.release or "—" },
-            { label = "Bosse",
-              value = known and tostring(#dungeon.bosses) or "noch nicht bekannt",
-              valueColor = known and "textNormal" or "textFaint" },
-            { label = "Deine Stufe",  value = levelValue, valueColor = levelColor },
-        }},
-        { type = "divider" },
-    }
+    WeintCodex.Navigation.BuildSidebar("Dungeons", items)
+    WeintCodex.Navigation.ActivateIndex(active)
 
-    for _, block in ipairs(WeintCodex.RolePanel.InstanceBlocks(dungeon)) do
-        blocks[#blocks + 1] = block
+    building = false
+end
+
+--------------------------------------------------
+-- Von aussen auf einen Dungeon oder Boss zeigen
+--------------------------------------------------
+-- Dasselbe wie bei den Schlachtzuegen, und aus demselben Grund: die
+-- Suche kennt neun Dungeons mit Stufenbereich, und ein Treffer soll
+-- dort landen, wo er hingehoert.
+
+function WeintCodex.DungeonPages.Select(dungeonId, bossId)
+    local dungeon = WeintCodex.DungeonData.Get(dungeonId)
+    if not dungeon then return false end
+
+    selectedId   = dungeon.id
+    selectedBoss = nil
+
+    if bossId then
+        for _, boss in ipairs(dungeon.bosses or {}) do
+            if boss.id == bossId then selectedBoss = bossId break end
+        end
     end
 
-    WeintCodex.Navigation.SetInspector(blocks)
+    if page and page:IsShown() then BuildTree(page) end
+    return true
 end
 
 --------------------------------------------------
@@ -227,31 +342,5 @@ function WeintCodex.DungeonPages.Show()
     local f = BuildPage()
     f:Show()
 
-    local dungeons = WeintCodex.DungeonData.All()
-
-    local items = {}
-    for _, dungeon in ipairs(dungeons) do
-        items[#items + 1] = {
-            label   = dungeon.name,
-            -- Der Stufenbereich als Statuszeile: er ist das, wonach
-            -- man in einer Liste von neun Dungeons sucht.
-            status  = WeintCodex.DungeonData.LevelRange(dungeon),
-            onClick = function()
-                selectedId = dungeon.id
-                WeintCodex.SetBreadcrumb("Dungeons", dungeon.name)
-                DrawDungeon(f, dungeon)
-            end,
-        }
-    end
-
-    WeintCodex.Navigation.BuildSidebar("Dungeons", items)
-
-    -- Den zuletzt gewählten wieder aufschlagen: wer zwischen zwei
-    -- Bereichen hin- und herspringt, will nicht jedes Mal von vorn
-    -- anfangen.
-    local index = 1
-    for i, dungeon in ipairs(dungeons) do
-        if dungeon.id == selectedId then index = i break end
-    end
-    WeintCodex.Navigation.ActivateIndex(index)
+    BuildTree(f)
 end

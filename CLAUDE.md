@@ -81,6 +81,24 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   comes only from the Discord bot (`WCIMPORT:BOSS`). Never write
   generic tactics — they fit every game and no fight in Forever.
   Details: `docs/systems/dungeons.md`.
+- **Nichts muss scrollen — und das ist nachgerechnet, nicht
+  geschätzt.** The nav column and the sub-nav list can both overflow
+  the window silently: an entry below the account row looks like a
+  feature that does not exist, not like a bug. `NavColumnHeight()`,
+  `SubNavHeight()` and `MeasureSidebar()` compute what each occupies,
+  `load_test.lua` holds them against the smallest allowed window
+  (780 px) and additionally demands headroom for one more entry. Page
+  content that grows from bot-supplied data is capped instead (see
+  `RolePanel.BossCards`); the detail column is the one place that
+  scrolls, because it is built for it. Details:
+  `docs/architecture/overview.md`, section *Nichts muss scrollen*.
+- **Die Unternavigation ist zweistufig, und das beantwortet „wo bin
+  ich".** Instances on level one, the bosses of the **selected**
+  instance indented below (`indent = true`). Never put a list there
+  that the page already shows, and never put the boss list back into
+  the content area — that is what made it scroll. `status` on a
+  sub-nav item takes a string **or** `{ text, color }`; it silently
+  rendered an empty line for years when given the wrong one.
 - **What the client can answer is never derived or guessed.** Equipment
   slots come from `GetInventorySlotInfo`, not a hard-coded list; the
   specialization comes from the client or stays `nil`. Five releases of

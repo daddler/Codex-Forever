@@ -66,12 +66,10 @@ local tabs = {
     { id = "settings",   icon = ICON_PATH .. "nav_einstellungen", label = "Einstellungen" },
 }
 
--- Hoehenrechnung der Spalte, damit der naechste Eintrag nicht still unter der
--- Kontozeile am Fuss verschwindet: 12 Innenabstand + 4x40 Gruppenkopf +
--- 11x42 Eintrag = 634. Zur Verfuegung stehen bei kleinstem Fenster
--- 780 - 40 (Titelleiste) - 56 (Kontozeile) = 684. Mit den Dungeons sind
--- davon 50 px uebrig - der naechste Eintrag passt NICHT mehr. Wer hier
--- etwas ergaenzt, gibt der Spalte einen Bildlauf.
+-- Die Hoehenrechnung dieser Spalte steht weiter unten als Funktion
+-- (NavColumnHeight/NavColumnBudget) und wird vom kopflosen Prueflauf
+-- gegengerechnet. Sie war bis 5.1.0.0 ein Kommentar, den man beim
+-- Ergaenzen eines Eintrags haette lesen muessen.
 
 -- tabId -> Feature, einzige Quelle bleibt die tabs-Tabelle oben.
 local tabFeature = {}
@@ -93,12 +91,40 @@ end
 
 local tabButtons = {}
 
-local NAV_ITEM_H   = 40
+local NAV_ITEM_H   = 38
 local NAV_ITEM_GAP = 2
 local NAV_PAD      = 12
 local NAV_GROUP_H  = 24   -- Gruppenlabel inkl. 4 px Abstand darunter
-local NAV_GROUP_TOP= 16   -- Luft ueber einer neuen Gruppe (ausser der ersten)
+local NAV_GROUP_TOP= 14   -- Luft ueber einer neuen Gruppe (ausser der ersten)
 local NAV_GLYPH    = 18
+
+-- WAS DIE SPALTE BELEGT, UND WAS IHR ZUSTEHT - ausgerechnet statt
+-- geschaetzt, weil der Fehler sonst erst auffaellt, wenn der letzte
+-- Eintrag unter der Kontozeile verschwunden ist. Und lautlos: ein
+-- Eintrag, den man nicht sieht, sieht nicht aus wie ein Fehler,
+-- sondern wie eine Funktion, die es nicht gibt.
+--
+-- NavColumnHeight() rechnet denselben y-Zaehler nach, den der Aufbau
+-- unten laeuft. NavColumnBudget() ist die Hoehe, die beim KLEINSTEN
+-- Fenster zur Verfuegung steht. `.github/tests/load_test.lua` haelt
+-- die beiden gegeneinander - damit ist aus dem Kommentar "wer hier
+-- etwas ergaenzt, rechnet nach" eine Pruefung geworden.
+local NAV_FOOTER_H = 56   -- Kontozeile am Fuss
+
+function WeintCodex.Navigation.NavColumnHeight()
+    local h = NAV_PAD
+    for _, tabDef in ipairs(tabs) do
+        if tabDef.group then h = h + NAV_GROUP_TOP + NAV_GROUP_H end
+        h = h + NAV_ITEM_H + NAV_ITEM_GAP
+    end
+    return h
+end
+
+function WeintCodex.Navigation.NavColumnBudget()
+    local limits = WeintCodex.WindowLimits or {}
+    local minH   = limits.minH or 780
+    return minH - (WeintCodex.Metrics.TITLEBAR_H or 40) - NAV_FOOTER_H
+end
 
 -- Icon- und Textfarbe an EINER Stelle: aktiv > gesperrt > Hover > Ruhe. Ohne
 -- diesen gemeinsamen Weg würde jedes der drei Skripte (SetTabActive, OnEnter,
@@ -363,6 +389,30 @@ end
 --     "erledigt/offen" sind keine Reiter - das waere die eine Stelle, an der
 --     die Uebersetzung des Entwurfs kippt, weil er Bossguides nicht zeigt.
 --
+-- DIE LISTENSPALTE IST SEIT 5.1.0.0 ZWEISTUFIG. Ein Eintrag mit
+-- `indent = true` sitzt eingerueckt unter dem vorangehenden und gehoert
+-- zu ihm - so stehen die Bosse eines Schlachtzugs unter ihrem
+-- Schlachtzug, statt als Liste im Inhalt.
+--
+-- Der Grund ist nicht Platz, sondern Orientierung: WO BIN ICH ist auf
+-- zwei Ebenen zu beantworten (in welcher Instanz, an welchem Boss),
+-- und beide Antworten stehen jetzt gleichzeitig und dauerhaft da -
+-- nicht nacheinander in einer Brotkrume, die beim naechsten Klick
+-- weiterzieht. Der Inhaltsbereich zeigt dafuer den AUSGEWAEHLTEN Boss
+-- statt einer Liste, die man ohnehin schon links sieht.
+--
+-- Felder eines Eintrags:
+--
+--   label        Beschriftung (Pflicht)
+--   status       Zweite Zeile: Text ODER { text = , color = }
+--   indent       zweite Ebene, kleiner und eingerueckt
+--   dot          Statuspunkt links (Farbtoken) - nur mit indent
+--   mark         Kennzeichen rechts, mono und gesperrt
+--   markColor    dessen Farbton (Vorgabe textFaint)
+--   portrait     Bild links
+--   accentColor  dauerhafter Streifen am linken Rand
+--   isGroup      nicht anklickbare Zwischenueberschrift
+--
 -- Beides sitzt IN der Seite, nicht im Fensterrahmen. Die Shell bleibt damit
 -- auf allen Seiten gleich, was der eigentliche Punkt der Aenderung war.
 --------------------------------------------------
@@ -374,6 +424,48 @@ local subNavColumn  = nil   -- Listenspalte
 
 local SUBNAV_COL_W  = 232
 local SUBNAV_TOP_H  = 54    -- Reiterleiste 38 + 16 Abstand
+
+-- Zeilenhoehen der Listenspalte. Sie stehen hier, weil SubNavHeight()
+-- weiter unten damit rechnet und der Prueflauf das Ergebnis gegen die
+-- verfuegbare Hoehe haelt: eine Unternavigation, die scrollen muesste,
+-- ist der Zustand, den diese Fassung gerade abgeschafft hat.
+local SUBNAV_ITEM_H   = 36   -- Eintrag ohne zweite Zeile
+local SUBNAV_STATUS_H = 44   -- Eintrag mit zweiter Zeile
+local SUBNAV_CHILD_H  = 28   -- eingerueckter Eintrag (zweite Ebene)
+local SUBNAV_GROUP_H  = 26
+local SUBNAV_TITLE_H  = 26
+local SUBNAV_GAP      = 2
+
+local subNavUsed = 0
+
+-- Was die Listenspalte zuletzt belegt hat, und was ihr zusteht.
+function WeintCodex.Navigation.SubNavHeight()
+    return subNavUsed
+end
+
+function WeintCodex.Navigation.SubNavBudget()
+    local limits = WeintCodex.WindowLimits or {}
+    return (limits.minH or 780) - (WeintCodex.Metrics.TITLEBAR_H or 40)
+        - WeintCodex.Metrics.PAD_Y
+end
+
+-- Wie hoch eine Liste WUERDE, ohne sie zu bauen. Damit kann eine Seite
+-- vorher pruefen, ob ihr Baum passt, statt es hinterher zu sehen.
+function WeintCodex.Navigation.MeasureSidebar(items)
+    local h = WeintCodex.Metrics.PAD_Y + SUBNAV_TITLE_H
+    for _, it in ipairs(items or {}) do
+        if it.isGroup then
+            h = h + SUBNAV_GROUP_H + 8
+        elseif it.indent then
+            h = h + SUBNAV_CHILD_H + SUBNAV_GAP
+        elseif it.status ~= nil then
+            h = h + SUBNAV_STATUS_H + SUBNAV_GAP
+        else
+            h = h + SUBNAV_ITEM_H + SUBNAV_GAP
+        end
+    end
+    return h + WeintCodex.Metrics.PAD_Y
+end
 
 local function EnsureSubNavColumn()
     if subNavColumn then return subNavColumn end
@@ -397,6 +489,7 @@ function WeintCodex.Navigation.ClearSidebar()
     wipe(sidebarGroups)
     if subNavStrip then subNavStrip:Hide() end
     if subNavColumn then subNavColumn:Hide() end
+    subNavUsed = 0
     WeintCodex.SetSubNavWidth(0)
     WeintCodex.SetSubNavTop(0)
 end
@@ -406,7 +499,9 @@ end
 local function NeedsColumn(items)
     local count = 0
     for _, it in ipairs(items) do
-        if it.isGroup or it.portrait or it.status or it.indent then return true end
+        if it.isGroup or it.portrait or it.status or it.indent or it.mark then
+            return true
+        end
         count = count + 1
     end
     return count > 7
@@ -458,17 +553,19 @@ local function BuildColumn(sectionTitle, items)
     title:SetPoint("TOPLEFT", col, "TOPLEFT", pad + 11, -WeintCodex.Metrics.PAD_Y)
     table.insert(sidebarGroups, title)
 
-    local offsetY = -WeintCodex.Metrics.PAD_Y - 26
+    local offsetY = -WeintCodex.Metrics.PAD_Y - SUBNAV_TITLE_H
 
     for _, itemDef in ipairs(items) do
         if itemDef.isGroup then
             local lbl = WeintCodex.Eyebrow(col, itemDef.label or "", { color = "textGhost" })
             lbl:SetPoint("TOPLEFT", col, "TOPLEFT", pad + 11, offsetY - 8)
             table.insert(sidebarGroups, lbl)
-            offsetY = offsetY - 26
+            offsetY = offsetY - SUBNAV_GROUP_H - 8
         else
-            local hasStatus = itemDef.status ~= nil
-            local itemH = hasStatus and 44 or 36
+            local child     = itemDef.indent == true
+            local hasStatus = itemDef.status ~= nil and not child
+            local itemH = child and SUBNAV_CHILD_H
+                or (hasStatus and SUBNAV_STATUS_H or SUBNAV_ITEM_H)
 
             local btn = CreateFrame("Button", nil, col)
             btn:SetHeight(itemH)
@@ -500,7 +597,31 @@ local function BuildColumn(sectionTitle, items)
             end
             BaselineAccent()
 
-            local textX = 12
+            local textX = child and 30 or 12
+
+            -- Die Fuehrungslinie der zweiten Ebene. Sie laeuft durch
+            -- die ganze Zeilenhoehe, damit untereinanderstehende
+            -- Kinder EINE durchgehende Linie ergeben und nicht drei
+            -- Striche: die Linie ist das, was "gehoert zu dem da
+            -- drueber" sagt, nicht die Einrueckung allein.
+            if child then
+                local guide = btn:CreateTexture(nil, "ARTWORK")
+                guide:SetWidth(1)
+                guide:SetPoint("TOPLEFT",    btn, "TOPLEFT", 14, 0)
+                guide:SetPoint("BOTTOMLEFT", btn, "BOTTOMLEFT", 14, 0)
+                guide:SetColorTexture(C.border[1], C.border[2], C.border[3], 1.0)
+                btn._guide = guide
+            end
+
+            -- Statuspunkt der zweiten Ebene: "gelegt" oder "offen".
+            -- Ein leerer Punkt ist "offen/unbekannt" und wird nur
+            -- umrandet (siehe WeintCodex.StatusDot).
+            if child then
+                local dot = WeintCodex.StatusDot(btn, itemDef.dot, 6)
+                dot:SetPoint("LEFT", btn, "LEFT", 22, 0)
+                btn._dot = dot
+                textX = 38
+            end
 
             if itemDef.portrait then
                 local box = btn:CreateTexture(nil, "ARTWORK")
@@ -512,9 +633,11 @@ local function BuildColumn(sectionTitle, items)
                 textX = 46
             end
 
+            local labelSize = child and 12 or 13
             local label = btn:CreateFontString(nil, "OVERLAY")
-            label:SetFont(WeintCodex.Fonts.sans, 13, "")
+            label:SetFont(WeintCodex.Fonts.sans, labelSize, "")
             label:SetJustifyH("LEFT")
+            label:SetWordWrap(false)
             label:SetText(itemDef.label or "")
             label:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3])
             if hasStatus then
@@ -522,16 +645,49 @@ local function BuildColumn(sectionTitle, items)
             else
                 label:SetPoint("LEFT", btn, "LEFT", textX, 0)
             end
-            label:SetPoint("RIGHT", btn, "RIGHT", -12, 0)
-            btn._label = label
+            btn._label      = label
+            btn._labelSize  = labelSize
 
+            -- Kennzeichen rechts (z.B. "TIPPS"): es steht nur da, wo
+            -- wirklich etwas vorliegt. Ein Zeichen an jeder Zeile
+            -- waere keine Auskunft. Die Beschriftung endet davor,
+            -- sonst laeuft ein langer Bossname darunter durch.
+            if itemDef.mark then
+                local mark = btn:CreateFontString(nil, "OVERLAY")
+                mark:SetFont(WeintCodex.Fonts.mono, 9, "")
+                mark:SetPoint("RIGHT", btn, "RIGHT", -10, 0)
+                local mc = C[itemDef.markColor or "textFaint"] or C.textFaint
+                mark:SetTextColor(mc[1], mc[2], mc[3])
+                mark:SetText(WeintCodex.Spaced(WeintCodex.Upper(itemDef.mark)))
+                btn._mark = mark
+                label:SetPoint("RIGHT", mark, "LEFT", -8, 0)
+            else
+                label:SetPoint("RIGHT", btn, "RIGHT", -12, 0)
+            end
+
+            -- STATUS DARF TEXT ODER TABELLE SEIN, und das ist keine
+            -- Bequemlichkeit: bis 5.1.0.0 erwartete diese Stelle
+            -- ausschliesslich { text = , color = }, waehrend die
+            -- Schlachtzugseite seit jeher einen nackten String
+            -- ("10er") uebergab. Lua indiziert einen String ohne
+            -- Fehler, `("10er").text` ist nil - die Zeile wurde also
+            -- 44 px hoch gebaut und blieb LEER. Kein Fehler, keine
+            -- Meldung, nur eine Auskunft, die nie ankam.
             if hasStatus then
+                local statusText, statusColor
+                if type(itemDef.status) == "table" then
+                    statusText  = itemDef.status.text
+                    statusColor = itemDef.status.color
+                else
+                    statusText = tostring(itemDef.status)
+                end
+
                 local st = btn:CreateFontString(nil, "OVERLAY")
                 st:SetFont(WeintCodex.Fonts.mono, 9, "")
                 st:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 0, -3)
-                local sc = C[itemDef.status.color or "textFaint"] or C.textFaint
+                local sc = C[statusColor or "textFaint"] or C.textFaint
                 st:SetTextColor(sc[1], sc[2], sc[3])
-                st:SetText(WeintCodex.Spaced(WeintCodex.Upper(itemDef.status.text or "")))
+                st:SetText(WeintCodex.Spaced(WeintCodex.Upper(statusText or "")))
                 btn._statusLbl = st
             end
 
@@ -540,14 +696,14 @@ local function BuildColumn(sectionTitle, items)
                 if on then
                     self._bg:SetColorTexture(C.surface3[1], C.surface3[2], C.surface3[3], 1.0)
                     self._label:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
-                    self._label:SetFont(WeintCodex.Fonts.sansMedium, 13, "")
+                    self._label:SetFont(WeintCodex.Fonts.sansMedium, self._labelSize, "")
                     self._accent:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1.0)
                     self._accent:Show()
                     for _, t in pairs(self._corners or {}) do t:Show() end
                 else
                     self._bg:SetColorTexture(0, 0, 0, 0)
                     self._label:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3])
-                    self._label:SetFont(WeintCodex.Fonts.sans, 13, "")
+                    self._label:SetFont(WeintCodex.Fonts.sans, self._labelSize, "")
                     BaselineAccent()
                     for _, t in pairs(self._corners or {}) do t:Hide() end
                 end
@@ -573,9 +729,14 @@ local function BuildColumn(sectionTitle, items)
             end)
 
             table.insert(sidebarItems, btn)
-            offsetY = offsetY - itemH - 2
+            offsetY = offsetY - itemH - SUBNAV_GAP
         end
     end
+
+    -- Was die Spalte belegt hat. Der Prueflauf haelt das gegen
+    -- SubNavBudget() - eine Unternavigation, die scrollen muesste,
+    -- faellt damit auf, bevor jemand sie im Spiel sieht.
+    subNavUsed = -offsetY + WeintCodex.Metrics.PAD_Y
 end
 
 function WeintCodex.Navigation.BuildSidebar(sectionTitle, items)

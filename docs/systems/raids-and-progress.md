@@ -121,14 +121,45 @@ Boss aus einem neueren Build), stehen weiterhin gesammelt und ohne
 Zuordnung im Detailbereich — statt sie einem Schlachtzug zuzuschlagen,
 zu dem sie vielleicht nicht gehören.
 
-### Die Bossliste rollt
+### Die Bossliste steht links, nicht in der Seite
 
-Hyjal Summit hat dreizehn Bosse; in die Karte passen sie nicht. Ohne
-Bildlauf verschwände der Rest unten aus dem Fenster — unsichtbar,
-unerreichbar und ausgerechnet dann, wenn am meisten dasteht. Die Liste
-liegt deshalb in einem Bildlauffeld, dessen Leiste sich ausblendet,
-wenn es nichts zu rollen gibt (`scrollBarHideable`). Derselbe Fehler,
-dieselbe Abhilfe wie einst im Detailbereich.
+Hyjal Summit hat dreizehn Bosse; in eine Karte im Inhaltsbereich
+passen sie nicht. Der erste Anlauf gab der Liste ein Bildlauffeld —
+und das war zweimal falsch: eine Liste, die man ohnehin zur
+Orientierung braucht, gehört in die **Navigation**, nicht in den
+Inhalt; und ausgerechnet die Mitte scrollen zu lassen ist die
+unangenehmste Stelle dafür.
+
+Die Unternavigation ist deshalb ein **Baum**: die drei Schlachtzüge auf
+der ersten Ebene, die Bosse des **ausgewählten** eingerückt auf der
+zweiten. Damit stehen beide Antworten auf *wo bin ich* gleichzeitig und
+dauerhaft da — in welcher Instanz, an welchem Boss —, und der
+Inhaltsbereich wird frei für das, wofür links kein Platz ist: den
+ausgewählten Boss mit seinen drei Rollen.
+
+Nur die Bosse des ausgewählten Schlachtzugs: alle einundzwanzig
+gleichzeitig wären wieder eine Spalte, die scrollen müsste, und Bosse
+eines Schlachtzugs, in dem man gerade nicht steckt, beantworten keine
+Frage.
+
+Je Bosseintrag stehen links ein Statuspunkt (gelegt / offen) und
+rechts das Kennzeichen `TIPPS`, wo Rollen-Tipps des Bots vorliegen —
+und nur dort. Ein Zeichen an jeder Zeile wäre keine Auskunft.
+
+Dass nichts davon scrollen muss, ist **nachgerechnet und geprüft**,
+nicht geschätzt: siehe `docs/architecture/overview.md`, Abschnitt
+*Nichts muss scrollen*.
+
+### Von aussen auf einen Boss zeigen
+
+`RaidPages.Select(raidId, bossId)` setzt die Auswahl; der Aufruf danach
+(`GoToTab`) öffnet die Seite damit. Die globale Suche benutzt das: wer
+„Sonya Darkhallow" eingibt, landet bei Sonya Darkhallow — nicht auf
+einer Schlachtzugseite, die gerade etwas anderes aufgeschlagen hat.
+
+Eine unbekannte Kennung wählt nichts aus (`false`), eine Bosskennung
+aus dem falschen Schlachtzug wählt die Instanz und keinen Boss.
+`DungeonPages.Select` ist dasselbe für die Dungeons.
 
 ## Der Fortschritt
 

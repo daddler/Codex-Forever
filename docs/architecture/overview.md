@@ -118,6 +118,58 @@ reine Beschriftungen wird es eine Reiterleiste über dem Inhalt, alles
 darüber (oder sobald ein Eintrag mehr trägt als eine Beschriftung) eine
 Listenspalte links.
 
+**Die Listenspalte ist zweistufig.** Ein Eintrag mit `indent = true`
+sitzt eingerückt unter dem vorangehenden und gehört zu ihm — so stehen
+die Bosse eines Schlachtzugs unter ihrem Schlachtzug. Der Grund ist
+nicht Platz, sondern Orientierung: *wo bin ich* ist auf zwei Ebenen zu
+beantworten (in welcher Instanz, an welchem Boss), und beide Antworten
+stehen damit gleichzeitig und dauerhaft da statt nacheinander in einer
+Brotkrume.
+
+| Feld | Wirkung |
+|---|---|
+| `label` | Beschriftung (Pflicht) |
+| `status` | zweite Zeile — **Text oder** `{ text = , color = }` |
+| `indent` | zweite Ebene: kleiner, eingerückt, mit Führungslinie |
+| `dot` | Statuspunkt links (nur mit `indent`) |
+| `mark` / `markColor` | Kennzeichen rechts, mono und gesperrt |
+| `portrait` | Bild links |
+| `accentColor` | dauerhafter Streifen am linken Rand |
+| `isGroup` | nicht anklickbare Zwischenüberschrift |
+
+`status` nahm bis 5.1.0.0 ausschliesslich die Tabellenform. Die
+Schlachtzugseite übergab seit jeher einen nackten String (`"10er"`) —
+Lua indiziert einen String ohne Fehler, `("10er").text` ist `nil`, die
+Zeile wurde also 44 px hoch gebaut und blieb **leer**. Kein Fehler,
+keine Meldung, nur eine Auskunft, die nie ankam. Beide Formen sind
+jetzt erlaubt.
+
+### Nichts muss scrollen
+
+Zwei Spalten können über den Fensterrand hinauslaufen, und beide tun es
+lautlos: ein Navigationseintrag unter der Kontozeile und ein
+Bosseintrag unter dem Fensterrand sehen nicht aus wie ein Fehler,
+sondern wie eine Funktion, die es nicht gibt.
+
+Die Rechnung dafür stand bis 5.1.0.0 als Kommentar („wer hier etwas
+ergänzt, rechnet nach"). Ein Kommentar prüft nichts. Jetzt rechnen vier
+Funktionen sie nach, und `.github/tests/load_test.lua` hält sie
+gegeneinander:
+
+| Funktion | Antwortet |
+|---|---|
+| `Navigation.NavColumnHeight()` | was die Navigationsspalte belegt |
+| `Navigation.NavColumnBudget()` | was ihr beim kleinsten Fenster zusteht |
+| `Navigation.SubNavHeight()` | was die zuletzt gebaute Listenspalte belegt |
+| `Navigation.SubNavBudget()` | was ihr zusteht |
+| `Navigation.MeasureSidebar(items)` | wie hoch eine Liste **würde**, ohne sie zu bauen |
+
+Stand heute: Navigationsspalte 604 von 684 px, Unternavigation im
+schlimmsten Fall (Hyjal Summit mit dreizehn Bossen) 602 von 716 px. Der
+Prüflauf verlangt zusätzlich **Luft für einen weiteren Eintrag** — ohne
+das fällt erst der Eintrag auf, der schon nicht mehr passt, und dann
+ist die Frage nicht mehr „passt er?", sondern „was werfen wir raus?".
+
 ## Der Seitenkopf
 
 `WeintCodex.PageHead(parent, opts)` ist der **einzige** Ort, an dem ein
