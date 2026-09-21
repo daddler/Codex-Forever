@@ -432,10 +432,164 @@ Check(subBudget - subUsed >= 60,
     "die Unternavigation hat Luft fuer weitere Bosse ("
     .. (subBudget - subUsed) .. " px frei)")
 
-WeintCodex.Navigation.SwitchTo("dungeons")
-local dungUsed = WeintCodex.Navigation.SubNavHeight()
-Check(dungUsed <= subBudget,
-    "Dungeons: " .. dungUsed .. " von " .. subBudget .. " px")
+-- DIE DUNGEONS SIND SEIT 5.2.0.0 DER SCHWIERIGERE FALL, und zwar
+-- um Groessenordnungen: neunundzwanzig Instanzen (neun aus Forever,
+-- zwanzig aus Classic) mit Stufenzeile waeren 1334 px in einer
+-- Spalte von 716. Die Seite staffelt deshalb nach Stufenabschnitt
+-- und Fluegel und rechnet ihren Baum vor dem Bauen durch.
+--
+-- EINE STICHPROBE REICHT HIER NICHT. Welcher Baum der hoechste ist,
+-- haengt nicht am Dungeon mit den meisten Bossen (Blackrock Depths
+-- mit zweiundzwanzig ist in Fluegel geteilt und deshalb harmlos),
+-- sondern am Zusammenspiel aus Abschnittsgroesse, Fluegelzahl und
+-- Bosszahl. Geprueft wird deshalb JEDE Instanz in JEDEM Fluegel -
+-- das sind ein paar Dutzend Baeume, und genau einer davon muss
+-- eines Tages der sein, der zu hoch wird.
+local subHeadroom = WeintCodex.Navigation.SubNavHeadroom()
+local worstDung, worstDungName, worstDungFail = 0, "", nil
+
+for _, dungeon in ipairs(WeintCodex.DungeonData.AllInstances()) do
+    local wings = WeintCodex.DungeonData.Wings(dungeon) or { false }
+    for _, wing in ipairs(wings) do
+        -- Ueber Select() auf einen Boss des Fluegels: nur so geht
+        -- die Seite in die vertiefte Ansicht, und nur die traegt die
+        -- Bossliste.
+        local first = wing
+            and WeintCodex.DungeonData.BossesInWing(dungeon, wing)[1]
+            or (dungeon.bosses or {})[1]
+        WeintCodex.DungeonPages.Select(dungeon.id, first and first.id or nil)
+        WeintCodex.Navigation.SwitchTo("dungeons")
+
+        local used = WeintCodex.Navigation.SubNavHeight()
+        if used > worstDung then
+            worstDung     = used
+            worstDungName = dungeon.name .. (wing and (" / " .. wing) or "")
+        end
+        if used > subBudget - subHeadroom and not worstDungFail then
+            worstDungFail = dungeon.name .. (wing and (" / " .. wing) or "")
+                .. " (" .. used .. " px)"
+        end
+    end
+end
+
+Check(worstDungFail == nil,
+    "jeder der " .. #WeintCodex.DungeonData.AllInstances()
+    .. " Dungeons passt in die Spalte"
+    .. (worstDungFail and (" - zu hoch: " .. worstDungFail) or ""))
+
+Check(worstDung <= subBudget,
+    "Dungeons, schlimmster Fall (" .. worstDungName .. "): "
+    .. worstDung .. " von " .. subBudget .. " px")
+
+Check(subBudget - worstDung >= subHeadroom,
+    "auch der hoechste Dungeonbaum laesst Luft ("
+    .. (subBudget - worstDung) .. " px frei)")
+
+-- Und die Seite muss dieselbe Grenze benutzen wie dieser Prueflauf.
+-- Stuenden die 60 px an zwei Stellen, liefe eine davon irgendwann
+-- nach - und der Fehler waere eine Spalte, die still ueberlaeuft.
+-- DER AUFKLAPPWEG SELBST. Stufenabschnitte und Fluegel sind
+-- Gruppenkoepfe, und die stehen nicht in sidebarItems -
+-- ActivateIndex loest sie also nie aus. Ein Fehler darin faellt
+-- ohne diese Runde erst im Spiel auf, und zwar als Spalte, die
+-- nicht mehr reagiert.
+--
+-- Geklickt wird in Runden, weil jeder Klick die Liste neu aufwirft:
+-- ein Abschnitt oeffnet sich, und darunter stehen ploetzlich sieben
+-- Instanzen, die es vorher nicht gab.
+do
+    WeintCodex.Navigation.SwitchTo("dungeons")
+    local clicks, broken, overflow = 0, nil, nil
+
+    for round = 1, 5 do
+        local count = #WeintCodex.Navigation.SidebarButtons()
+        for index = 1, count do
+            local btn = WeintCodex.Navigation.SidebarButtons()[index]
+            if btn then
+                local ok, err = pcall(function() btn:Click() end)
+                clicks = clicks + 1
+                if not ok and not broken then
+                    broken = "Runde " .. round .. ", Eintrag " .. index
+                        .. ": " .. tostring(err)
+                end
+                local used = WeintCodex.Navigation.SubNavHeight()
+                if used > subBudget and not overflow then
+                    overflow = "nach Runde " .. round .. ", Eintrag " .. index
+                        .. ": " .. used .. " px"
+                end
+            end
+        end
+    end
+
+    Check(clicks > 50, "der Aufklappweg wurde durchlaufen (" .. clicks .. " Klicks)")
+
+    -- DASS HIER UEBERHAUPT ETWAS PASSIERT, IST NEU. Bis 5.2.0.0
+    -- kannte die Client-Attrappe kein Click() und fiel auf Noop
+    -- zurueck - ActivateIndex aktivierte nie einen Eintrag, und
+    -- damit lief im ganzen Prueflauf keine einzige Seitenzeichnung.
+    -- Gruen war er trotzdem.
+    Check(WeintCodex.DungeonPages.PageHeight() > 0,
+        "ein Klick zeichnet wirklich eine Seite")
+    Check(broken == nil, "kein Eintrag der Dungeonspalte wirft"
+        .. (broken and (" - " .. broken) or ""))
+    Check(overflow == nil, "die Spalte laeuft auf keinem Weg ueber"
+        .. (overflow and (" - " .. overflow) or ""))
+end
+
+-- DER INHALTSBEREICH SCROLLT GENAUSO WENIG WIE DIE SPALTE, und er
+-- ist der schwierigere Fall: wie lang eine Bosskarte wird,
+-- entscheidet der Bestand (Beschwoerungsanleitungen, Widersprueche,
+-- Teillisten). Eine Karte, deren Text unter dem Kartenrand
+-- weiterlaeuft, sieht nicht aus wie ein Fehler, sondern wie ein
+-- Satz, der aufhoert.
+do
+    local budget = WeintCodex.DungeonPages.PageBudget()
+    local worst, worstName, failed = 0, "", nil
+
+    local function Measure(dungeonId, bossId, label)
+        WeintCodex.DungeonPages.Select(dungeonId, bossId)
+        WeintCodex.Navigation.SwitchTo("dungeons")
+        local used = WeintCodex.DungeonPages.PageHeight()
+        if used > worst then worst, worstName = used, label end
+        if used > budget and not failed then
+            failed = label .. " (" .. used .. " px)"
+        end
+    end
+
+    for _, dungeon in ipairs(WeintCodex.DungeonData.AllInstances()) do
+        Measure(dungeon.id, nil, dungeon.name)
+        for _, boss in ipairs(dungeon.bosses or {}) do
+            Measure(dungeon.id, boss.id, dungeon.name .. " / " .. boss.name)
+        end
+    end
+
+    -- Die Uebersicht der beschwoerbaren Bosse waechst mit dem
+    -- Bestand und wird nur ueber einen Klick erreicht.
+    WeintCodex.Navigation.SwitchTo("dungeons")
+    local first = WeintCodex.Navigation.SidebarButtons()[1]
+    if first then
+        first:Click()
+        local used = WeintCodex.DungeonPages.PageHeight()
+        if used > worst then worst, worstName = used, "Beschwoerbare Zusatzbosse" end
+        if used > budget and not failed then
+            failed = "Beschwoerbare Zusatzbosse (" .. used .. " px)"
+        end
+    end
+
+    Check(failed == nil, "keine Dungeonseite laeuft unten aus dem Fenster"
+        .. (failed and (" - " .. failed) or ""))
+    Check(worst <= budget, "Seiteninhalt, schlimmster Fall (" .. worstName .. "): "
+        .. worst .. " von " .. budget .. " px")
+end
+
+Check(WeintCodex.Navigation.Fits({ { label = "A" } }) == true,
+    "Navigation.Fits nimmt einen kleinen Baum an")
+do
+    local huge = {}
+    for i = 1, 60 do huge[i] = { label = "x" .. i, status = "y" } end
+    Check(WeintCodex.Navigation.Fits(huge) == false,
+        "Navigation.Fits lehnt einen zu grossen Baum ab")
+end
 
 -- Und die Rechnung ohne Aufbau muss dieselbe sein wie die mit: sonst
 -- koennte eine Seite vorher etwas anderes pruefen, als hinterher

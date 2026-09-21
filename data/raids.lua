@@ -52,15 +52,15 @@
 -- liest sich im Code wie eine belegte.
 --------------------------------------------------
 
--- Die eine Herkunftsangabe, auf die beide Listen zeigen. Sie steht
--- hier oben, damit ein neuer Build an EINER Stelle nachgezogen wird
--- und nicht an zweien halb.
-local BETA_CLIENT = {
-    kind  = "beta",
-    build = "1.60.1.69876",
-    date  = "17.09.2026",
-    label = "Beta-Client 1.60.1.69876",
-}
+-- DIE EINE HERKUNFTSANGABE, AUF DIE BEIDE LISTEN ZEIGEN.
+-- Seit 5.2.0.0 steht sie nicht mehr hier, sondern in
+-- data/sources.lua: die Dungeons brauchen dieselbe Angabe, und
+-- zweimal dasselbe halb gepflegt ist der Zustand, den diese
+-- Umstellung abschafft. Der Bezug bleibt derselbe Build - das
+-- spaetere Client-Update 1.60.1.69913 hat an den Encounterdaten
+-- nichts geaendert, und eine hochgezaehlte Buildnummer waere eine
+-- Pruefung, die nie stattgefunden hat.
+local BETA_CLIENT = WeintCodex.Sources.BETA_69876
 
 WeintCodex_Raids = {
 
@@ -180,11 +180,11 @@ end
 -- Die Herkunft als Anzeigetext, oder nil. Die Oberfläche hängt ihn
 -- an jede vorläufige Liste - eine vorläufige Liste ohne diesen
 -- Zusatz wäre eine Behauptung.
+-- Seit 5.2.0.0 rechnet WeintCodex.Sources den Text aus - dieselbe
+-- Stelle, die auch die Dungeons benutzen. Vorher stand die Formel
+-- hier und dort dieselbe Formel noch einmal.
 function WeintCodex.RaidData.BossSourceLabel(raid)
-    local source = WeintCodex.RaidData.BossSource(raid)
-    if not source then return nil end
-    if source.kind == "release" then return nil end
-    return "Vorläufig · " .. (source.label or "unbelegte Quelle")
+    return WeintCodex.Sources.Label(WeintCodex.RaidData.BossSource(raid))
 end
 
 -- Wie viele Bosse insgesamt bekannt sind. `nil` (nicht 0), solange

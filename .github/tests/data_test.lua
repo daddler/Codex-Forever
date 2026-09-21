@@ -279,6 +279,300 @@ Check(WeintCodex.DungeonData.FitsLevel(WeintCodex_Dungeons[1], 0) == nil,
     "Stufe 0 ist keine Stufe")
 
 --------------------------------------------------
+-- 2c. KEINE BOSSLISTE OHNE HERKUNFT - AUCH BEI DEN DUNGEONS
+--------------------------------------------------
+-- Dieselbe Regel wie bei den Schlachtzuegen, aber mit einem
+-- schaerferen Anlass: die Dungeonlisten stammen NICHT aus dem
+-- Client, sondern aus Beta-Berichten. Niemand in diesem Projekt hat
+-- den Forever-Client gelesen. Eine Liste, die das nicht sagt, ist
+-- genau der Bestand, der fester aussieht, als er ist.
+
+Section("Dungeons: keine Bossliste ohne Herkunft")
+
+local function CheckBossList(dungeon, label)
+    if #dungeon.bosses == 0 then
+        -- Eine leere Liste darf KEINE Herkunft tragen: sonst stuende
+        -- eine Quelle da, die nichts geliefert hat.
+        Check(WeintCodex.DungeonData.BossSource(dungeon) == nil,
+            label .. ": ohne Bosse auch keine Herkunft")
+        return
+    end
+
+    local source = WeintCodex.DungeonData.BossSource(dungeon)
+    Check(WeintCodex.Sources.IsValid(source),
+        label .. ": die Bossliste nennt eine gueltige Herkunft")
+
+    -- IM ZWEIFEL NICHT BESTAETIGT. Nur "release" gilt als
+    -- bestaetigt; alles andere MUSS einen Hinweistext liefern.
+    if source and source.kind == "release" then
+        Check(WeintCodex.Sources.Label(source) == nil,
+            label .. ": eine bestaetigte Liste braucht keinen Zusatz")
+    else
+        Check(type(WeintCodex.Sources.Label(source)) == "string",
+            label .. ": eine unbestaetigte Liste wird als solche ausgewiesen")
+        Check(type(WeintCodex.Sources.Why(source)) == "string",
+            label .. ": und sagt auch, WARUM sie nicht feststeht")
+        Check(WeintCodex.DungeonData.BossesConfirmed(dungeon) == false,
+            label .. ": im Zweifel NICHT bestaetigt")
+    end
+
+    -- Vollstaendigkeit und Reihenfolge sind zwei verschiedene
+    -- Aussagen, und beide muessen dastehen. Fehlt eine, liest die
+    -- Seite sie als "nein" - und das waere geraten statt gesagt.
+    Check(type(dungeon.bossesComplete) == "boolean",
+        label .. ": sagt, ob die Liste vollstaendig ist")
+    Check(type(dungeon.orderKnown) == "boolean",
+        label .. ": sagt, ob die Reihenfolge bekannt ist")
+
+    local bossIds = {}
+    for index, boss in ipairs(dungeon.bosses) do
+        Check(type(boss.id) == "string" and boss.id ~= "",
+            label .. "/" .. index .. " hat eine Kennung")
+        Check(bossIds[boss.id] == nil,
+            label .. ": Bosskennung " .. tostring(boss.id) .. " ist eindeutig")
+        bossIds[boss.id] = true
+        Check(type(boss.name) == "string" and boss.name ~= "",
+            label .. "/" .. index .. " hat einen Namen")
+    end
+
+    -- DIE PULLNUMMER IST DIE HEIKELSTE ANGABE DIESER TABELLE.
+    -- Steht sie da, wo die Reihenfolge nicht bekannt ist, zeigt die
+    -- Seite "3 von 7" ueber einer Liste, die niemand geordnet hat.
+    if dungeon.orderKnown then
+        local expected = 0
+        for _, boss in ipairs(dungeon.bosses) do
+            if boss.order ~= nil then
+                expected = expected + 1
+                Check(boss.order == expected,
+                    label .. ": " .. boss.name .. " steht an Stelle " .. expected)
+            end
+        end
+        Check(expected > 0,
+            label .. ": eine bekannte Reihenfolge hat auch Nummern")
+    else
+        for _, boss in ipairs(dungeon.bosses) do
+            Check(boss.order == nil,
+                label .. ": " .. boss.name
+                    .. " traegt keine Nummer, weil die Folge unbekannt ist")
+        end
+    end
+
+    -- Mehr benannte Kaempfe als es gibt, waere ein Widerspruch in
+    -- sich.
+    local total = WeintCodex.DungeonData.BossCount(dungeon)
+    if total then
+        Check(total >= #dungeon.bosses,
+            label .. ": die Gesamtzahl ist nicht kleiner als die benannten")
+    end
+
+    -- FLUEGEL DUERFEN KEINEN BOSS VERLIEREN. Die Listenspalte zeigt
+    -- immer nur EINEN Fluegel; ein Boss ohne Fluegelangabe in einer
+    -- Instanz, die Fluegel hat, waere in der Oberflaeche NIRGENDS zu
+    -- sehen - lautlos, und genau deshalb steht die Pruefung hier.
+    local wings = WeintCodex.DungeonData.Wings(dungeon)
+    if wings then
+        local covered = 0
+        for _, wing in ipairs(wings) do
+            local inWing = #WeintCodex.DungeonData.BossesInWing(dungeon, wing)
+            Check(inWing > 0, label .. ": Fluegel " .. wing .. " ist nicht leer")
+            covered = covered + inWing
+        end
+        Check(covered == #dungeon.bosses,
+            label .. ": jeder Boss steckt in einem Fluegel ("
+                .. covered .. " von " .. #dungeon.bosses .. ")")
+    end
+end
+
+for _, dungeon in ipairs(WeintCodex_Dungeons) do
+    CheckBossList(dungeon, dungeon.id)
+end
+
+-- Eine Anzahl ohne Namen ist eine Auskunft und muss eine Quelle
+-- haben - sonst stuende eine Zahl da, die niemand genannt hat.
+for _, dungeon in ipairs(WeintCodex_Dungeons) do
+    if #dungeon.bosses == 0 and dungeon.bossCount then
+        Check(WeintCodex.Sources.IsValid(dungeon.countSource),
+            dungeon.id .. ": die gezaehlten Kaempfe nennen ihre Herkunft")
+    end
+    if dungeon.partial then
+        Check(WeintCodex.Sources.IsValid(dungeon.partial.source),
+            dungeon.id .. ": die Teilliste nennt ihre Herkunft")
+        Check(dungeon.bossCount and #dungeon.partial.names < dungeon.bossCount,
+            dungeon.id .. ": eine Teilliste ist kuerzer als das Ganze")
+    end
+end
+
+--------------------------------------------------
+-- 2d. Die klassischen Dungeons
+--------------------------------------------------
+-- Sie stehen im Bestand, weil Forever sie im Kern weiterfuehrt -
+-- und sie tragen eine ANDERE Herkunft als alles andere hier: die
+-- Angabe stimmt fuer Classic, und fuer Forever ist sie eine
+-- begruendete Erwartung. Faellt diese Unterscheidung weg, steht ein
+-- zwanzig Jahre alter Bossname da, als haette Blizzard ihn fuer
+-- Forever bestaetigt.
+
+Section("Klassische Dungeons")
+
+Check(type(WeintCodex_ClassicDungeons) == "table",
+    "data/dungeons_classic.lua ist geladen")
+Check(#WeintCodex_ClassicDungeons == 20, "zwanzig klassische Dungeons")
+
+-- DIE KENNUNGEN MUESSEN UEBER BEIDE TABELLEN EINDEUTIG SEIN.
+-- DungeonData.Get() durchsucht erst Forever, dann Classic; eine
+-- doppelte Kennung lieferte still den falschen Dungeon.
+local allIds = {}
+for _, dungeon in ipairs(WeintCodex_Dungeons) do allIds[dungeon.id] = "forever" end
+
+for _, dungeon in ipairs(WeintCodex_ClassicDungeons) do
+    Check(allIds[dungeon.id] == nil,
+        "Kennung " .. tostring(dungeon.id) .. " kollidiert nicht mit Forever")
+    allIds[dungeon.id] = "classic"
+
+    Check(WeintCodex.DungeonData.IsLegacy(dungeon) == true,
+        dungeon.id .. " ist als Classic-Bestand gekennzeichnet")
+    Check(dungeon.bossSource and dungeon.bossSource.kind == "classic",
+        dungeon.id .. ": die Herkunft ist classic")
+    Check(WeintCodex.DungeonData.BossesConfirmed(dungeon) == false,
+        dungeon.id .. ": Classic ist fuer Forever nicht bestaetigt")
+    Check(dungeon.raresListed == false,
+        dungeon.id .. ": sagt, dass seltene Spawns nicht vollstaendig sind")
+    Check(type(dungeon.minLevel) == "number" and type(dungeon.maxLevel) == "number"
+        and dungeon.minLevel <= dungeon.maxLevel,
+        dungeon.id .. " hat einen brauchbaren Stufenbereich")
+    Check(type(dungeon.size) == "number" and dungeon.size > 0,
+        dungeon.id .. " hat eine Gruppengroesse")
+    Check(WeintCodex.DungeonData.ZoneLabel(dungeon) ~= nil,
+        dungeon.id .. ": es gibt immer einen anzeigbaren Gebietsnamen")
+
+    CheckBossList(dungeon, dungeon.id)
+
+    -- Get() muss ihn finden. Ohne das landet jeder Suchtreffer auf
+    -- einen klassischen Dungeon ins Leere.
+    Check(WeintCodex.DungeonData.Get(dungeon.id) == dungeon,
+        dungeon.id .. ": Get findet ihn")
+end
+
+-- UBRS IST DER EINE DUNGEON, DER KEINE FUENFERGRUPPE IST. Er steht
+-- hier als eigene Pruefung, damit niemand size == 5 als Invariante
+-- in die Oberflaeche schreibt.
+local ubrs = WeintCodex.DungeonData.Get("upper_blackrock_spire")
+Check(ubrs and ubrs.size == 10,
+    "Upper Blackrock Spire ist eine Zehnergruppe")
+
+--------------------------------------------------
+-- 2e. Staffelung und beschwoerbare Bosse
+--------------------------------------------------
+
+Section("Staffelung und Beschwoerung")
+
+local instances = WeintCodex.DungeonData.AllInstances()
+Check(#instances == #WeintCodex_Dungeons + #WeintCodex_ClassicDungeons,
+    "AllInstances fuehrt beide Bestaende (" .. #instances .. ")")
+
+-- Nach Mindeststufe sortiert: das ist die Frage, mit der man auf
+-- eine Dungeonliste schaut.
+local sorted = true
+for index = 2, #instances do
+    if instances[index].minLevel < instances[index - 1].minLevel then sorted = false end
+end
+Check(sorted, "AllInstances ist nach Mindeststufe sortiert")
+
+-- JEDE INSTANZ STECKT IN GENAU EINEM ABSCHNITT. Eine in keinem
+-- waere in der Oberflaeche unerreichbar, eine in zweien doppelt.
+local seenInBracket = {}
+local bracketTotal = 0
+for _, bucket in ipairs(WeintCodex.DungeonData.Brackets()) do
+    Check(#bucket.dungeons > 0, "Abschnitt " .. bucket.label .. " ist nicht leer")
+    Check(type(bucket.label) == "string" and bucket.label ~= "",
+        "Abschnitt hat eine Beschriftung")
+    for _, dungeon in ipairs(bucket.dungeons) do
+        Check(seenInBracket[dungeon.id] == nil,
+            dungeon.id .. " steckt in genau einem Abschnitt")
+        seenInBracket[dungeon.id] = true
+        bracketTotal = bracketTotal + 1
+    end
+end
+Check(bracketTotal == #instances,
+    "die Abschnitte fassen alle " .. #instances .. " Instanzen")
+
+for _, dungeon in ipairs(instances) do
+    local index = WeintCodex.DungeonData.BracketIndexOf(dungeon.id)
+    local bucket = WeintCodex.DungeonData.Brackets()[index]
+    local found = false
+    for _, entry in ipairs(bucket.dungeons) do
+        if entry.id == dungeon.id then found = true end
+    end
+    Check(found, dungeon.id .. ": BracketIndexOf zeigt auf seinen Abschnitt")
+end
+
+-- DIE BESCHWOERBAREN BOSSE. Danach war ausdruecklich gefragt, und
+-- eine Beschwoerungsanleitung ohne Herkunft waere dieselbe
+-- Behauptung wie eine Bossliste ohne.
+local summonable = WeintCodex.DungeonData.AllSummonable()
+Check(#summonable > 0, "es sind beschwoerbare Zusatzbosse eingetragen ("
+    .. #summonable .. ")")
+
+for _, entry in ipairs(summonable) do
+    local label = entry.dungeon.id .. "/" .. entry.boss.id
+    Check(type(entry.boss.summon.text) == "string" and entry.boss.summon.text ~= "",
+        label .. ": sagt, WIE er beschworen wird")
+    Check(WeintCodex.Sources.IsValid(entry.boss.summon.source),
+        label .. ": die Anleitung nennt ihre Herkunft")
+end
+
+-- Und die Unterscheidung, die staendig verwechselt wird: Spieler
+-- beschwoeren geht in Forever anders als Bosse beschwoeren.
+Check(type(WeintCodex.DungeonData.SUMMONING.players) == "string",
+    "die Seite sagt auch, wie man SPIELER beschwoert")
+Check(WeintCodex.Sources.IsValid(WeintCodex.DungeonData.SUMMONING.source),
+    "auch diese Auskunft nennt ihre Herkunft")
+
+--------------------------------------------------
+-- 2f. Das Herkunftsmodell selbst
+--------------------------------------------------
+
+Section("Herkunft")
+
+Check(type(WeintCodex.Sources) == "table", "data/sources.lua ist geladen")
+
+for _, kind in ipairs(WeintCodex.Sources.KINDS) do
+    local probe = { kind = kind, label = "Probe" }
+    Check(WeintCodex.Sources.IsValid(probe), kind .. " ist eine gueltige Art")
+    if kind == "release" then
+        Check(WeintCodex.Sources.IsConfirmed(probe) == true,
+            "release gilt als bestaetigt")
+        Check(WeintCodex.Sources.Label(probe) == nil,
+            "release braucht keinen Zusatz")
+        Check(WeintCodex.Sources.Why(probe) == nil,
+            "release braucht keine Begruendung")
+    else
+        Check(WeintCodex.Sources.IsConfirmed(probe) == false,
+            kind .. " gilt NICHT als bestaetigt")
+        Check(type(WeintCodex.Sources.Label(probe)) == "string",
+            kind .. " bekommt einen Zusatz")
+        Check(type(WeintCodex.Sources.Why(probe)) == "string",
+            kind .. " bekommt eine Begruendung")
+    end
+end
+
+Check(WeintCodex.Sources.IsValid({ label = "ohne Art" }) == false,
+    "eine Quelle ohne Art ist keine")
+Check(WeintCodex.Sources.IsValid({ kind = "geraten", label = "x" }) == false,
+    "eine erfundene Art ist keine")
+Check(WeintCodex.Sources.IsValid({ kind = "beta" }) == false,
+    "eine Quelle ohne Anzeigetext ist keine")
+Check(WeintCodex.Sources.IsConfirmed(nil) == false,
+    "keine Quelle heisst nicht bestaetigt")
+
+-- VON ZWEI QUELLEN DIE SCHWAECHERE. Die Gesamtangabe einer Instanz
+-- darf nie fester klingen als ihr schwaechster Teil.
+Check(WeintCodex.Sources.Weaker(
+        { kind = "release", label = "a" },
+        { kind = "community", label = "b" }).kind == "community",
+    "Weaker liefert die schwaechere von zweien")
+
+--------------------------------------------------
 -- 3. Die Spezialisierungen
 --------------------------------------------------
 

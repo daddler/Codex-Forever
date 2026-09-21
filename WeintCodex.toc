@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 5.1.0.0
+## Version: 5.2.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -57,8 +57,22 @@ core/onboarding.lua
 
 data/changelog.lua
 data/companion_live.lua
+
+#
+# data/sources.lua steht VOR den Bestandsdateien: raids.lua,
+# dungeons.lua und dungeons_classic.lua tragen an jeder Liste, woher
+# sie stammt, und holen sich die Herkunftsangaben von dort.
+#
+data/sources.lua
 data/raids.lua
 data/dungeons.lua
+
+#
+# data/dungeons_classic.lua steht NACH data/dungeons.lua: die
+# klassischen Dungeons haengen sich an dieselben Zugriffsfunktionen
+# (WeintCodex.DungeonData) und muessen sie vorfinden.
+#
+data/dungeons_classic.lua
 data/specs.lua
 
 #

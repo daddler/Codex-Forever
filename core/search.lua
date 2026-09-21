@@ -35,7 +35,7 @@ local CATEGORY_LABEL = {
 -- in core/navigation.lua; gesperrte Bereiche faengt GoToTab selbst ab
 -- (es laeuft ueber SwitchTo und damit ueber die Sperrpruefung).
 local PAGES = {
-    { id = "uebersicht",  label = "Übersicht" },
+    { id = "übersicht",  label = "Übersicht" },
     { id = "raids",       label = "Schlachtzüge" },
     { id = "dungeons",    label = "Dungeons" },
     { id = "anmeldung",   label = "Anmeldung" },
@@ -104,25 +104,36 @@ local function BuildIndex()
         end
     end
 
-    -- DIE DUNGEONS SIND DER GRUND, WARUM DIE SUCHE JETZT ETWAS
-    -- FINDET. Neun Instanzen mit Namen, Gebiet und Stufenbereich sind
-    -- der erste Bestand dieser Fassung, der gross genug ist, um eine
-    -- Suche zu lohnen - und der Stufenbereich steht mit im Treffer,
-    -- weil "welche Ini mit 42?" die Frage ist, mit der man sucht.
+    -- DIE DUNGEONS SIND DER GRUND, WARUM DIE SUCHE ETWAS FINDET, und
+    -- seit 5.2.0.0 sind es NEUNUNDZWANZIG Instanzen statt neun: die
+    -- klassischen gehoeren dazu, weil Forever sie im Kern
+    -- weiterfuehrt. Der Stufenbereich steht mit im Treffer, weil
+    -- "welche Ini mit 42?" die Frage ist, mit der man sucht - und die
+    -- beantwortet eine Neunerliste falsch.
+    --
+    -- AllInstances() und nicht All(): die klassischen Dungeons sind
+    -- genau die, die man ueber die Suche ansteuert, weil sie in der
+    -- Listenspalte hinter einem Stufenabschnitt liegen.
     for _, dungeon in ipairs((WeintCodex.DungeonData
-            and WeintCodex.DungeonData.All()) or {}) do
-        local range = WeintCodex.DungeonData.LevelRange(dungeon)
+            and WeintCodex.DungeonData.AllInstances()) or {}) do
+        local range  = WeintCodex.DungeonData.LevelRange(dungeon)
+        local legacy = WeintCodex.DungeonData.IsLegacy(dungeon)
         index[#index + 1] = {
             category = "dungeon",
-            label    = dungeon.name .. (range and (" (" .. range .. ")") or ""),
+            label    = dungeon.name .. (range and (" (" .. range .. ")") or "")
+                    .. (legacy and "  · Classic" or ""),
             onClick  = Open(WeintCodex.DungeonPages, dungeon.id, nil, "dungeons"),
         }
 
-        -- Auch hier: leere Liste, kein Platzhalter.
+        -- Auch hier: leere Liste, kein Platzhalter. Der Zusatz am
+        -- Bossnamen sagt, wonach man sonst vergeblich suchte -
+        -- ein beschwoerbarer Boss steht nicht da, bis jemand etwas
+        -- tut, und das ist die Auskunft, die ein Treffer braucht.
         for _, boss in ipairs(dungeon.bosses or {}) do
             index[#index + 1] = {
                 category = "boss",
-                label    = boss.name,
+                label    = boss.name .. "  · " .. dungeon.name
+                        .. (boss.summon and "  · beschwörbar" or ""),
                 onClick  = Open(WeintCodex.DungeonPages, dungeon.id, boss.id, "dungeons"),
             }
         end

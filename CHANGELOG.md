@@ -9,6 +9,75 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [5.2.0.0] – 2026-09-21
+
+**Die zwanzig klassischen Dungeons stehen jetzt mit im Bestand.** Forever
+ersetzt sie nicht, es stellt neun daneben — wer mit Stufe 32 einen Dungeon
+suchte, bekam von einer Neunerliste die falsche Antwort. Die Liste links
+führt jetzt **neunundzwanzig** Instanzen, sortiert nach Stufe, und die
+Suche findet sie alle.
+
+Ihre Herkunft ist eine andere als alles andere hier, und das steht dran:
+dass es *Darkmaster Gandling* in der Scholomance gibt, ist seit zwanzig
+Jahren nachprüfbar — dass Forever ihn unverändert übernimmt, ist es
+**nicht**. Blizzard hat angekündigt, die Beute jedes Bosses überarbeitet zu
+haben, und über die Kämpfe selbst nichts gesagt.
+
+**Bosslisten für Hall of Thanes und Ruins of Lordaeron**, dazu die zwei
+Bosse der *Drowned City*, die auf der BlizzCon spielbar waren. Sie stammen
+**nicht aus dem Client**, sondern aus Beta-Berichten — niemand in diesem
+Projekt hat den Forever-Client gelesen. Genau das steht an jeder Liste, und
+es ist eine schwächere Aussage als die „vorläufig" der Schlachtzüge.
+
+Dafür gibt es seit dieser Fassung fünf Arten von Herkunft statt zwei
+(`data/sources.lua`): `release`, `announced`, `beta`, `community`,
+`classic`. Nur `release` gilt als bestätigt — alles andere trägt auf der
+Oberfläche einen Zusatz **und** eine Begründung, warum es nicht feststeht.
+
+**Zu jedem Boss steht, wo er steht.** Witherfang patrouilliert den ersten
+langen Gang, Durgen Dirgehammer wartet mit zwei Steingolems, Ambassador
+Flamelash steht allein in der Kammer der Verzauberung.
+
+**Bilder gibt es keine, und das bleibt so.** Blizzard hat für Forever keine
+Dungeonkarten veröffentlicht; im Beta-Client liegt für vier der neun
+Instanzen überhaupt Kartenmaterial. Unabhängig davon gehört es Blizzard.
+Auf Texturpfade des Clients zu zeigen wäre möglich — welche Forever
+vergibt, weiss hier aber niemand, und ein geratener Pfad zeichnet im Spiel
+ein grünes Rechteck. Wo ein Boss steht, lässt sich **sagen**; das ist der
+Teil, der geht.
+
+**Elf beschwörbare Zusatzbosse, mit eigener Übersicht.** Viktor the Vile
+hinter dem Kohlenbecken in Lordaeron, Kirtonos the Herald, der Avatar von
+Hakkar, Atal'alarion, Urok Doomhowl, Lord Valthalak, Gahz'rilla, Postmaster
+Malown, Jarien und Sothos, Lord Hel'nurath, Mutanus. An jedem steht, wie er
+kommt. Dazu die Unterscheidung, die ständig verwechselt wird: **Spieler**
+beschwört in Forever nur der Hexenmeister — Rufsteine sind nicht
+freigeschaltet.
+
+**Wo Quellen sich widersprechen, steht der Widerspruch da.** Für
+*Excavation Site* kursieren vier Bossnamen, die eine andere Darstellung
+bestreitet. Für *Blackmaw Hold* kursiert eine Liste, die nachweislich die
+der Drowned City ist. Für *City of Dalaran* sind neun Kämpfe berichtet und
+fünf Namen — die Seite nennt deshalb die **Anzahl** und weist die Namen als
+Ausschnitt aus, statt eine Fünferliste zu zeigen, wo neun Kämpfe stehen.
+
+**Die Liste links läuft trotzdem nicht über.** Neunundzwanzig Instanzen mit
+Stufenzeile wären 1334 px in einer Spalte von 716. Sie öffnet deshalb einen
+Stufenabschnitt nach dem anderen, und grosse Instanzen (Blackrock Depths,
+Dire Maul, Stratholme, Scarlet Monastery) einen Flügel nach dem anderen.
+Der Prüflauf rechnet **jede** Instanz in **jedem** Flügel gegen das Budget
+und klickt den Aufklappweg einmal komplett durch.
+
+### Zum Client-Build 1.60.1.69913
+
+Danach war gefragt, und die ehrliche Antwort ist: er bringt für die
+Bosslisten nichts. Er ist vom 18.09.2026, das erste Update nach dem
+Beta-Start, und hat nach allem, was berichtet wird, Starter,
+Absturzmeldung und ein paar Grafikdateien angefasst — Talente, Zauber und
+Gegenstände nicht. Die Schlachtzugslisten behalten deshalb ihren Bezug auf
+1.60.1.69876: eine hochgezählte Buildnummer wäre eine Prüfung, die nie
+stattgefunden hat.
+
 ## [5.1.0.0] – 2026-09-20
 
 **Die Dungeons sind da — alle neun.** Ein eigener Punkt in der
