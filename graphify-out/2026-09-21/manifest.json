@@ -1,367 +1,367 @@
 {
   ".github/scripts/release_notes.py": {
-    "mtime": 1789947814.3055754,
-    "seen": 1790002428.3392062,
+    "mtime": 1789991314.1384368,
+    "seen": 1789991537.543428,
     "ast_hash": "ae3b3617c9c6ebddc025a7bba0882bfd",
     "semantic_hash": "ae3b3617c9c6ebddc025a7bba0882bfd"
   },
   ".github/tests/data_test.lua": {
-    "mtime": 1790001103.0734653,
-    "seen": 1790002428.33921,
+    "mtime": 1789991314.1385663,
+    "seen": 1789991537.5434308,
     "ast_hash": "ecadff0bcae8ca6a94d7ccb348bbf82c",
     "semantic_hash": "ecadff0bcae8ca6a94d7ccb348bbf82c"
   },
   ".github/tests/load_test.lua": {
-    "mtime": 1790001103.0734653,
-    "seen": 1790002428.3392122,
-    "ast_hash": "3a4606629c3abcc03da3ea43e80412aa",
+    "mtime": 1789997760.0612621,
+    "seen": 1789998028.915471,
+    "ast_hash": "c190c951e06727b726864a24b1c504b3",
     "semantic_hash": ""
   },
   ".github/tests/wow_stub.lua": {
-    "mtime": 1790001103.0734653,
-    "seen": 1790002428.339214,
+    "mtime": 1789997512.1251874,
+    "seen": 1789998028.915472,
     "ast_hash": "26f0b58202d01c446f36e8ba27eea4ec",
     "semantic_hash": ""
   },
   "WeintCodex.toc": {
-    "mtime": 1790001585.9814541,
-    "seen": 1790002428.3392155,
-    "ast_hash": "58bab518e4a37650e860c3d903e5c29e",
-    "semantic_hash": ""
+    "mtime": 1789991314.1388493,
+    "seen": 1789991537.5434337,
+    "ast_hash": "12db0c5b9fdb7719dd586594c16182aa",
+    "semantic_hash": "12db0c5b9fdb7719dd586594c16182aa"
   },
   "core/access.lua": {
-    "mtime": 1789947814.306348,
-    "seen": 1790002428.3392174,
+    "mtime": 1789991314.1388493,
+    "seen": 1789991537.5434341,
     "ast_hash": "22cae2ced786df8a3f1a15b4634f0853",
     "semantic_hash": "22cae2ced786df8a3f1a15b4634f0853"
   },
   "core/main.lua": {
-    "mtime": 1790001589.409454,
-    "seen": 1790002428.3392189,
-    "ast_hash": "7ae6a3ecabeef400913707579b389bad",
-    "semantic_hash": ""
+    "mtime": 1789991314.1391437,
+    "seen": 1789991537.5434349,
+    "ast_hash": "c81b9e60bed1dbfcfdeb4e6b270d6b2f",
+    "semantic_hash": "c81b9e60bed1dbfcfdeb4e6b270d6b2f"
   },
   "core/minimap.lua": {
-    "mtime": 1789947814.3069499,
-    "seen": 1790002428.3392205,
+    "mtime": 1789991314.1391437,
+    "seen": 1789991537.5434353,
     "ast_hash": "bdce4d24dfca64f544f4204d1473dc3c",
     "semantic_hash": "bdce4d24dfca64f544f4204d1473dc3c"
   },
   "core/names.lua": {
-    "mtime": 1789947814.3069499,
-    "seen": 1790002428.3392222,
+    "mtime": 1789991314.1391437,
+    "seen": 1789991537.5434358,
     "ast_hash": "9a6e7e15ab87e401595b8fe2747a6777",
     "semantic_hash": "9a6e7e15ab87e401595b8fe2747a6777"
   },
   "core/navigation.lua": {
-    "mtime": 1790001506.253456,
-    "seen": 1790002428.3392234,
-    "ast_hash": "4336692f691336b13803c73b8b9f26bf",
+    "mtime": 1789997263.4481785,
+    "seen": 1789998028.915477,
+    "ast_hash": "be0fd6f2ee33e9110a9e350bb8b2e493",
     "semantic_hash": ""
   },
   "core/onboarding.lua": {
-    "mtime": 1789947814.3069499,
-    "seen": 1790002428.3392246,
+    "mtime": 1789991314.1391437,
+    "seen": 1789991537.5434365,
     "ast_hash": "d3614f7106f2b02654d2ea7226ce7976",
     "semantic_hash": "d3614f7106f2b02654d2ea7226ce7976"
   },
   "core/search.lua": {
-    "mtime": 1790001103.0734653,
-    "seen": 1790002428.339226,
+    "mtime": 1789991314.1391437,
+    "seen": 1789991537.543437,
     "ast_hash": "ece052d36d5860084b43bfb3f5315630",
     "semantic_hash": "ece052d36d5860084b43bfb3f5315630"
   },
   "core/ui.lua": {
-    "mtime": 1790001103.0734653,
-    "seen": 1790002428.3392272,
+    "mtime": 1789996978.176164,
+    "seen": 1789998028.915479,
     "ast_hash": "d10999501bdca71f83a26173c97bce76",
     "semantic_hash": ""
   },
   "data/changelog.lua": {
-    "mtime": 1790001593.837454,
-    "seen": 1790002428.3392284,
-    "ast_hash": "03cad4218b4d25d1f0eef960e6576679",
-    "semantic_hash": ""
+    "mtime": 1789991314.1391437,
+    "seen": 1789991537.5434382,
+    "ast_hash": "a01f4554e0cb0469ca9e72151029e059",
+    "semantic_hash": "a01f4554e0cb0469ca9e72151029e059"
   },
   "data/companion_live.lua": {
-    "mtime": 1789947814.3084521,
-    "seen": 1790002428.3392303,
+    "mtime": 1789991314.1397202,
+    "seen": 1789991537.5434384,
     "ast_hash": "f6d151c13d7ad894349cf7bfe7f08632",
     "semantic_hash": "f6d151c13d7ad894349cf7bfe7f08632"
   },
   "data/dungeons.lua": {
-    "mtime": 1790001103.0734653,
-    "seen": 1790002428.3392315,
+    "mtime": 1789991314.1397202,
+    "seen": 1789991537.5434387,
     "ast_hash": "6df87332bd06dd702d615e92638398f2",
     "semantic_hash": "6df87332bd06dd702d615e92638398f2"
   },
   "data/dungeons_classic.lua": {
-    "mtime": 1790001103.0774653,
-    "seen": 1790002428.3392339,
+    "mtime": 1789991314.1397202,
+    "seen": 1789991537.5434391,
     "ast_hash": "7e9eb74cb95d9be990c04ccff0802834",
     "semantic_hash": "7e9eb74cb95d9be990c04ccff0802834"
   },
   "data/raids.lua": {
-    "mtime": 1790001103.0774653,
-    "seen": 1790002428.339235,
+    "mtime": 1789991314.1397202,
+    "seen": 1789991537.5434396,
     "ast_hash": "b2c23d01167c764ca5c8401caecd4248",
     "semantic_hash": "b2c23d01167c764ca5c8401caecd4248"
   },
   "data/roles.lua": {
-    "mtime": 1789947814.3084521,
-    "seen": 1790002428.339237,
+    "mtime": 1789991314.1397202,
+    "seen": 1789991537.5434399,
     "ast_hash": "4bc7f7bda742ce68ca5eef9eda00b803",
     "semantic_hash": "4bc7f7bda742ce68ca5eef9eda00b803"
   },
   "data/sources.lua": {
-    "mtime": 1790001103.0774653,
-    "seen": 1790002428.3392382,
+    "mtime": 1789991314.1397202,
+    "seen": 1789991537.5434403,
     "ast_hash": "814642957c064292a8afb40f9cfc4c45",
     "semantic_hash": "814642957c064292a8afb40f9cfc4c45"
   },
   "data/specs.lua": {
-    "mtime": 1789947814.3084521,
-    "seen": 1790002428.3392396,
+    "mtime": 1789991314.1397202,
+    "seen": 1789991537.5434406,
     "ast_hash": "bb596a0d945681b76a96d0b6f54dd2a8",
     "semantic_hash": "bb596a0d945681b76a96d0b6f54dd2a8"
   },
   "libs/CallbackHandler-1.0/CallbackHandler-1.0.lua": {
-    "mtime": 1789947814.3096185,
-    "seen": 1790002428.3392415,
+    "mtime": 1789991314.1402442,
+    "seen": 1789991537.543441,
     "ast_hash": "3757ba9ef62c5ee38d9246bce316b5a6",
     "semantic_hash": "3757ba9ef62c5ee38d9246bce316b5a6"
   },
   "libs/LibDBIcon-1.0/LibDBIcon-1.0.lua": {
-    "mtime": 1789947814.3096724,
-    "seen": 1790002428.339243,
+    "mtime": 1789991314.1402705,
+    "seen": 1789991537.5434413,
     "ast_hash": "4283a1c2660b3fec58663044a0f4908a",
     "semantic_hash": "4283a1c2660b3fec58663044a0f4908a"
   },
   "libs/LibDataBroker-1.1/LibDataBroker-1.1.lua": {
-    "mtime": 1789947814.3098989,
-    "seen": 1790002428.3392448,
+    "mtime": 1789991314.1403258,
+    "seen": 1789991537.543442,
     "ast_hash": "ff28faeb5d0defa77d4e7c5355dbf3f4",
     "semantic_hash": "ff28faeb5d0defa77d4e7c5355dbf3f4"
   },
   "libs/LibStub/LibStub.lua": {
-    "mtime": 1789947814.3099666,
-    "seen": 1790002428.339246,
+    "mtime": 1789991314.140349,
+    "seen": 1789991537.5434425,
     "ast_hash": "7910c93ea926ea64df391cf9a2f1958a",
     "semantic_hash": "7910c93ea926ea64df391cf9a2f1958a"
   },
   "libs/LibStub/LibStub.toc": {
-    "mtime": 1789947814.3100445,
-    "seen": 1790002428.3392477,
+    "mtime": 1789991314.1403809,
+    "seen": 1789991537.5434427,
     "ast_hash": "0715a3a00d35b4a0829efeaf5f66ce5c",
     "semantic_hash": "0715a3a00d35b4a0829efeaf5f66ce5c"
   },
   "modules/calendar.lua": {
-    "mtime": 1789947814.321097,
-    "seen": 1790002428.339249,
+    "mtime": 1789991314.1446152,
+    "seen": 1789991537.5434432,
     "ast_hash": "8c649db7bfcde71771fd981ea76b1c96",
     "semantic_hash": "8c649db7bfcde71771fd981ea76b1c96"
   },
   "modules/charakter.lua": {
-    "mtime": 1789947814.3255084,
-    "seen": 1790002428.33925,
+    "mtime": 1789991314.1454244,
+    "seen": 1789991537.5434437,
     "ast_hash": "b1b832d0e2cf3f85c9e5f2a02a454e43",
     "semantic_hash": "b1b832d0e2cf3f85c9e5f2a02a454e43"
   },
   "modules/companion.lua": {
-    "mtime": 1789947814.3255084,
-    "seen": 1790002428.3392515,
+    "mtime": 1789991314.1454244,
+    "seen": 1789991537.5434442,
     "ast_hash": "86fac42e6e05d3d207dbbc57d278ce55",
     "semantic_hash": "86fac42e6e05d3d207dbbc57d278ce55"
   },
   "modules/companionpage.lua": {
-    "mtime": 1789947814.3255084,
-    "seen": 1790002428.3392525,
+    "mtime": 1789991314.1454244,
+    "seen": 1789991537.5434444,
     "ast_hash": "82f577ea269ec97eaaa4561e47f81323",
     "semantic_hash": "82f577ea269ec97eaaa4561e47f81323"
   },
   "modules/dialog.lua": {
-    "mtime": 1789947814.3255084,
-    "seen": 1790002428.3392537,
+    "mtime": 1789991314.1454244,
+    "seen": 1789991537.543445,
     "ast_hash": "3ee5c82b08a5635b1ffc679f65756408",
     "semantic_hash": "3ee5c82b08a5635b1ffc679f65756408"
   },
   "modules/dungeonpages.lua": {
-    "mtime": 1790001533.5694554,
-    "seen": 1790002428.339255,
-    "ast_hash": "99a002b84459748450f80fe63b1c3e86",
+    "mtime": 1789997849.919225,
+    "seen": 1789998028.915489,
+    "ast_hash": "17e9281960ebcf982b69c2ec6215c27a",
     "semantic_hash": ""
   },
   "modules/encounter_tracking.lua": {
-    "mtime": 1789947814.3255084,
-    "seen": 1790002428.3392565,
+    "mtime": 1789991314.1454244,
+    "seen": 1789991537.5434458,
     "ast_hash": "66d56b8fa29c5dfadb1aa37c10cae980",
     "semantic_hash": "66d56b8fa29c5dfadb1aa37c10cae980"
   },
   "modules/groupcheck.lua": {
-    "mtime": 1789947814.3255084,
-    "seen": 1790002428.339258,
+    "mtime": 1789991314.1454244,
+    "seen": 1789991537.543446,
     "ast_hash": "992a7cbfbc2777b62c7ef90b3599331d",
     "semantic_hash": "992a7cbfbc2777b62c7ef90b3599331d"
   },
   "modules/loot.lua": {
-    "mtime": 1789947814.3255084,
-    "seen": 1790002428.3392596,
+    "mtime": 1789991314.1454244,
+    "seen": 1789991537.5434465,
     "ast_hash": "b509b38501c0522234984916d12f8a11",
     "semantic_hash": "b509b38501c0522234984916d12f8a11"
   },
   "modules/materials.lua": {
-    "mtime": 1789947814.3255084,
-    "seen": 1790002428.3392615,
+    "mtime": 1789991314.1454244,
+    "seen": 1789991537.5434468,
     "ast_hash": "705a5394bfac9f7a39b848b752aa1c5a",
     "semantic_hash": "705a5394bfac9f7a39b848b752aa1c5a"
   },
   "modules/raidpages.lua": {
-    "mtime": 1789947814.3255084,
-    "seen": 1790002428.3392632,
+    "mtime": 1789991314.1454244,
+    "seen": 1789991537.5434473,
     "ast_hash": "2003d98f8ea79eaa8220e2872a5de08e",
     "semantic_hash": "2003d98f8ea79eaa8220e2872a5de08e"
   },
   "modules/rolepanel.lua": {
-    "mtime": 1790001103.1134653,
-    "seen": 1790002428.3392644,
+    "mtime": 1789997842.1330845,
+    "seen": 1789998028.9154925,
     "ast_hash": "f033ee93677bf9c13869a0591ce9e1b7",
     "semantic_hash": ""
   },
   "modules/settings.lua": {
-    "mtime": 1789947814.3255084,
-    "seen": 1790002428.3392658,
+    "mtime": 1789991314.1454244,
+    "seen": 1789991537.543448,
     "ast_hash": "36a360d00d788758063ee77d2fb83ff0",
     "semantic_hash": "36a360d00d788758063ee77d2fb83ff0"
   },
   "modules/signup.lua": {
-    "mtime": 1789947814.3255084,
-    "seen": 1790002428.3392673,
+    "mtime": 1789991314.1454244,
+    "seen": 1789991537.5434487,
     "ast_hash": "e43d09c1daa13d0d3db73ba6e4222057",
     "semantic_hash": "e43d09c1daa13d0d3db73ba6e4222057"
   },
   "modules/sync.lua": {
-    "mtime": 1789947814.3255084,
-    "seen": 1790002428.3392684,
+    "mtime": 1789991314.1454244,
+    "seen": 1789991537.543449,
     "ast_hash": "1b0272a28fddd3415fcd2f79a21fcb11",
     "semantic_hash": "1b0272a28fddd3415fcd2f79a21fcb11"
   },
   ".github/tests/README.md": {
-    "mtime": 1790001103.0734653,
-    "seen": 1790002428.3392699,
+    "mtime": 1789991314.1384368,
+    "seen": 1789998028.9154952,
     "ast_hash": "5753443de4452a3e0c846c88c278044d",
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1789947814.3058984,
-    "seen": 1790002428.339271,
+    "mtime": 1789991314.1385663,
+    "seen": 1789998028.9154959,
     "ast_hash": "bff1abf94df706e7d1c8579df24745d7",
     "semantic_hash": ""
   },
   ".github/workflows/manual-release.yml": {
-    "mtime": 1789947814.306348,
-    "seen": 1790002428.3392727,
+    "mtime": 1789991314.1388493,
+    "seen": 1789998028.9154966,
     "ast_hash": "100535d9fd1da66f6a70321b53042bab",
     "semantic_hash": ""
   },
   ".github/workflows/release.yml": {
-    "mtime": 1789947814.306348,
-    "seen": 1790002428.3392742,
+    "mtime": 1789991314.1388493,
+    "seen": 1789998028.9154975,
     "ast_hash": "be407aed5d753c8cd850d9129c153595",
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1790001607.3454537,
-    "seen": 1790002428.3392758,
-    "ast_hash": "c66a5d3317a8726734362624d18463ec",
+    "mtime": 1789998002.3743534,
+    "seen": 1789998028.9154978,
+    "ast_hash": "a6a195851c13312db6f45d0a9a987a6d",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1790001103.0734653,
-    "seen": 1790002428.339277,
+    "mtime": 1789997981.3022573,
+    "seen": 1789998028.9154983,
     "ast_hash": "80fd705d7cc42267f4e8e1ded7c03587",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1789947814.306348,
-    "seen": 1790002428.3392782,
+    "mtime": 1789991314.1388493,
+    "seen": 1789998028.9154985,
     "ast_hash": "7d060ad99cc0df846e0f1e39e7f131d9",
     "semantic_hash": ""
   },
   "docs/architecture/overview.md": {
-    "mtime": 1790001103.0774653,
-    "seen": 1790002428.3392797,
+    "mtime": 1789997966.520983,
+    "seen": 1789998028.915499,
     "ast_hash": "db86af71962ebac1dac6f133ff883c71",
     "semantic_hash": ""
   },
   "docs/development/releases.md": {
-    "mtime": 1789947814.3089633,
-    "seen": 1790002428.3392808,
+    "mtime": 1789991314.139941,
+    "seen": 1789998028.9154994,
     "ast_hash": "b6dd0a8b818b3a445d3113cdeafe71f3",
     "semantic_hash": ""
   },
   "docs/invariants/data-integrity.md": {
-    "mtime": 1790001103.0774653,
-    "seen": 1790002428.3392823,
+    "mtime": 1789991314.139941,
+    "seen": 1789998028.9154997,
     "ast_hash": "62a267a2ea93fe858e8ff849664d5140",
     "semantic_hash": ""
   },
   "docs/systems/character.md": {
-    "mtime": 1789947814.3089633,
-    "seen": 1790002428.3392835,
+    "mtime": 1789991314.139941,
+    "seen": 1789998028.9155004,
     "ast_hash": "bdbdb50ca160e20eba0b07bbbe1216f1",
     "semantic_hash": ""
   },
   "docs/systems/companion-bridge.md": {
-    "mtime": 1789947814.3093352,
-    "seen": 1790002428.3392844,
+    "mtime": 1789991314.1401029,
+    "seen": 1789998028.9155009,
     "ast_hash": "f80c2e1bbde00bc758a0b2245baf3a3c",
     "semantic_hash": ""
   },
   "docs/systems/dungeons.md": {
-    "mtime": 1790001103.0774653,
-    "seen": 1790002428.3392856,
+    "mtime": 1789997941.122698,
+    "seen": 1789998028.9155014,
     "ast_hash": "1d0b49666331cbeae4c8af32ec2888cf",
     "semantic_hash": ""
   },
   "docs/systems/groupcheck.md": {
-    "mtime": 1789947814.3093352,
-    "seen": 1790002428.339287,
+    "mtime": 1789991314.1401029,
+    "seen": 1789998028.9155016,
     "ast_hash": "49007f71997bd5bdc045ca68c0292b33",
     "semantic_hash": ""
   },
   "docs/systems/onboarding-changelog.md": {
-    "mtime": 1789947814.3093352,
-    "seen": 1790002428.339288,
+    "mtime": 1789991314.1401029,
+    "seen": 1789998028.915502,
     "ast_hash": "b0db3e165d68155467dff61049d758c2",
     "semantic_hash": ""
   },
   "docs/systems/raids-and-progress.md": {
-    "mtime": 1789947814.3093352,
-    "seen": 1790002428.3392894,
+    "mtime": 1789991314.1401029,
+    "seen": 1789998028.9155025,
     "ast_hash": "bad2b6b0ac979965a210692eea78a9d1",
     "semantic_hash": ""
   },
   "media/fonts/IBMPlex-LICENSE.txt": {
-    "mtime": 1789947814.3101165,
-    "seen": 1790002428.3392913,
+    "mtime": 1789991314.1404152,
+    "seen": 1789998028.915503,
     "ast_hash": "4d4949dda4b23922e334f0cbf6179065",
     "semantic_hash": ""
   },
   "media/fonts/Newsreader-LICENSE.txt": {
-    "mtime": 1789947814.313097,
-    "seen": 1790002428.3392928,
+    "mtime": 1789991314.1416152,
+    "seen": 1789998028.9155035,
     "ast_hash": "18b1799c268d8ac577c6aa8597f5b404",
     "semantic_hash": ""
   },
   "media/button.png": {
-    "mtime": 1789947814.3101165,
-    "seen": 1790002428.3392937,
+    "mtime": 1789991314.1404152,
+    "seen": 1789998028.9155042,
     "ast_hash": "4f89a923157fd8415a0f0639b93b3d64",
     "semantic_hash": ""
   },
   "media/logo.png": {
-    "mtime": 1789947814.321097,
-    "seen": 1790002428.3392947,
+    "mtime": 1789991314.1438682,
+    "seen": 1789998028.9155047,
     "ast_hash": "bd49bc9df4095680c36b0ed9c498a36a",
     "semantic_hash": ""
   }
