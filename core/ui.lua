@@ -533,6 +533,68 @@ function WeintCodex.MonoNumber(parent, text, opts)
 end
 
 --------------------------------------------------
+-- Fliesstext mit berechneter Hoehe
+--------------------------------------------------
+-- Ein umgebrochener Absatz ist so hoch, wie der Client ihn setzt - und
+-- der Client ist im kopflosen Prueflauf nicht da. GetStringHeight()
+-- antwortet dort mit einer Zeile, und eine Seite, die damit rechnet,
+-- ist im Prueflauf kuerzer als im Spiel: genau der Fehler, den der
+-- Lauf finden soll, bliebe unsichtbar.
+--
+-- Die Hoehe wird deshalb GESCHAETZT, aus Zeichen je Zeile bei der
+-- schmalsten Breite, die der Aufrufer nennt - und zwar im Spiel und
+-- im Prueflauf gleich. Die Schaetzung ist absichtlich knapp (0,60 em
+-- je Zeichen, IBM Plex Sans liegt darunter): im Zweifel bleibt unter
+-- dem Absatz Luft, nie laeuft er in den naechsten hinein.
+--
+-- Zeichen, nicht Bytes (Utf8Len), und ohne Farbcodes: ein |cffRRGGBB
+-- ist zehn Bytes, die keine Breite haben.
+--
+-- opts:
+--   width     schmalste Breite, in die der Absatz passen muss (Pflicht)
+--   size      Schriftgrad (13), font, color, spacing (3), justify
+--
+-- Rueckgabe: der FontString (Hoehe gesetzt, noch nicht verankert) und
+-- seine Hoehe.
+--------------------------------------------------
+
+local function PlainText(text)
+    local s = tostring(text or "")
+    s = s:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+    return s
+end
+
+function WeintCodex.EstimateLines(text, cols)
+    cols = math.max(1, cols or 1)
+    local lines = 0
+    for segment in (PlainText(text) .. "\n"):gmatch("(.-)\n") do
+        local len = WeintCodex.Utf8Len(segment)
+        lines = lines + math.max(1, math.ceil(len / cols))
+    end
+    return lines
+end
+
+function WeintCodex.Paragraph(parent, text, opts)
+    opts = opts or {}
+    local size    = opts.size or 13
+    local spacing = opts.spacing or 3
+    local fs = parent:CreateFontString(nil, "OVERLAY")
+    fs:SetFont(opts.font or F.sans, size, "")
+    fs:SetJustifyH(opts.justify or "LEFT")
+    fs:SetJustifyV("TOP")
+    fs:SetSpacing(spacing)
+    fs:SetWordWrap(true)
+    fs:SetTextColor(unpack(Col(opts.color or "textMuted")))
+    fs:SetText(text or "")
+
+    local cols  = math.floor((opts.width or 300) / (size * 0.60))
+    local lines = WeintCodex.EstimateLines(text, cols)
+    local h     = lines * (size + spacing)
+    fs:SetHeight(h)
+    return fs, h
+end
+
+--------------------------------------------------
 -- Seitenkopf
 --------------------------------------------------
 -- Das wiederkehrende Muster aller entworfenen Seiten: kleine Mono-Zeile

@@ -9,6 +9,46 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [5.2.0.1] – 2026-09-21
+
+**Die Dungeonseite ist eine Seite, keine vier Spalten.** Bis hierher
+teilten sich Navigation, ein Baum aus Stufen, Instanzen *und* Bossen,
+ein 212 px schmaler Inhalt und ein Detailbereich rechts die
+Aufmerksamkeit — und die Bosskarte in der Mitte sagte, dass die Bosse
+links stehen. Jetzt führt die Spalte links nur noch Dungeons, nach
+Stufe; die Seite selbst hat die volle Breite und liest sich von oben
+nach unten: Kopf (Name, Stufe, Gruppe, Bosse, und ob die eigene Stufe
+passt), die **Bosse als nummerierte Pillen** in einer Zeile (bei
+Flügeln ein Reiter je Flügel), darunter **eine** Karte — die
+Aufstellung, oder nach einem Klick auf eine Pille der Boss: wo er
+steht, wie er kommt, was die Rollen tun. Der Detailbereich rechts
+bleibt auf dieser Seite zu.
+
+Die Aufstellung nennt zu jeder Rolle die Plätze und die Talentbäume
+**nach Klasse gruppiert** statt als Liste von zwanzig Zeilen. Zu einem
+Boss ohne Rollenhinweise steht das **einmal** da, nicht dreimal; mit
+Hinweisen bekommt jede Rolle ihre Zeile, ungekürzt — die Karte rollt,
+wenn der Bot mehr schickt, als das Fenster zeigt.
+
+Woher eine Bossliste stammt, steht als Vorsatz an der Bosszeile; die
+Begründung erscheint, wenn man ihn überfährt. Neun berichtete Kämpfe
+ohne Namen (City of Dalaran) sind **neun leere Pillen**, nicht eine
+leere Liste. Die neun Dungeons von Forever tragen in der Spalte das
+Kennzeichen *Forever*.
+
+### Technisch
+
+Texthöhen werden mit `WeintCodex.Paragraph` aus Zeichen je Zeile
+geschätzt statt vom Client gemessen, damit Prüflauf und Spiel dieselbe
+Seite bauen. `load_test.lua` misst die Seite bei der Breite des
+kleinsten Fensters (`Navigation.ContentBudgetWidth()`), zeichnet jeden
+Dungeon-Boss (auch mit dreissig Tipps und mit gesperrtem
+Zugriffsprofil) und prüft, dass eine Bosskarte mit zu vielen Tipps das
+Fenster genau füllt. Die Client-Attrappe misst Textbreiten jetzt
+proportional zur Zeichenzahl. `modules/rolepanel.lua` hat zwei neue
+Bausteine (`Roster`, `BossRoleRows`); die alten bleiben für die
+Schlachtzugseite.
+
 ## [5.2.0.0] – 2026-09-21
 
 **Die zwanzig klassischen Dungeons stehen jetzt mit im Bestand.** Forever

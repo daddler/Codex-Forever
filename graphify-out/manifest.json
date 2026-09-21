@@ -12,16 +12,16 @@
     "semantic_hash": "ecadff0bcae8ca6a94d7ccb348bbf82c"
   },
   ".github/tests/load_test.lua": {
-    "mtime": 1789991314.1385663,
-    "seen": 1789991537.5434325,
-    "ast_hash": "d381dca51572860e4047b66ca40e5321",
-    "semantic_hash": "d381dca51572860e4047b66ca40e5321"
+    "mtime": 1789997760.0612621,
+    "seen": 1789998028.915471,
+    "ast_hash": "c190c951e06727b726864a24b1c504b3",
+    "semantic_hash": ""
   },
   ".github/tests/wow_stub.lua": {
-    "mtime": 1789991314.1385663,
-    "seen": 1789991537.5434332,
-    "ast_hash": "e7f87ac1395a298d1af7b8fd359b6f25",
-    "semantic_hash": "e7f87ac1395a298d1af7b8fd359b6f25"
+    "mtime": 1789997512.1251874,
+    "seen": 1789998028.915472,
+    "ast_hash": "26f0b58202d01c446f36e8ba27eea4ec",
+    "semantic_hash": ""
   },
   "WeintCodex.toc": {
     "mtime": 1789991314.1388493,
@@ -54,10 +54,10 @@
     "semantic_hash": "9a6e7e15ab87e401595b8fe2747a6777"
   },
   "core/navigation.lua": {
-    "mtime": 1789991314.1391437,
-    "seen": 1789991537.543436,
-    "ast_hash": "7c426beba4bfe05b1762f017c0c00e5d",
-    "semantic_hash": "7c426beba4bfe05b1762f017c0c00e5d"
+    "mtime": 1789997263.4481785,
+    "seen": 1789998028.915477,
+    "ast_hash": "be0fd6f2ee33e9110a9e350bb8b2e493",
+    "semantic_hash": ""
   },
   "core/onboarding.lua": {
     "mtime": 1789991314.1391437,
@@ -72,10 +72,10 @@
     "semantic_hash": "ece052d36d5860084b43bfb3f5315630"
   },
   "core/ui.lua": {
-    "mtime": 1789991314.1391437,
-    "seen": 1789991537.5434375,
-    "ast_hash": "cc657622870273a6d48f4476c30dff9e",
-    "semantic_hash": "cc657622870273a6d48f4476c30dff9e"
+    "mtime": 1789996978.176164,
+    "seen": 1789998028.915479,
+    "ast_hash": "d10999501bdca71f83a26173c97bce76",
+    "semantic_hash": ""
   },
   "data/changelog.lua": {
     "mtime": 1789991314.1391437,
@@ -186,10 +186,10 @@
     "semantic_hash": "3ee5c82b08a5635b1ffc679f65756408"
   },
   "modules/dungeonpages.lua": {
-    "mtime": 1789991314.1454244,
-    "seen": 1789991537.5434453,
-    "ast_hash": "9d5713fb71d31df2d436d78a15268f5b",
-    "semantic_hash": "9d5713fb71d31df2d436d78a15268f5b"
+    "mtime": 1789997849.919225,
+    "seen": 1789998028.915489,
+    "ast_hash": "17e9281960ebcf982b69c2ec6215c27a",
+    "semantic_hash": ""
   },
   "modules/encounter_tracking.lua": {
     "mtime": 1789991314.1454244,
@@ -222,10 +222,10 @@
     "semantic_hash": "2003d98f8ea79eaa8220e2872a5de08e"
   },
   "modules/rolepanel.lua": {
-    "mtime": 1789991314.1454244,
-    "seen": 1789991537.5434477,
-    "ast_hash": "d54ad329b5f52c00ada45b1401a40868",
-    "semantic_hash": "d54ad329b5f52c00ada45b1401a40868"
+    "mtime": 1789997842.1330845,
+    "seen": 1789998028.9154925,
+    "ast_hash": "f033ee93677bf9c13869a0591ce9e1b7",
+    "semantic_hash": ""
   },
   "modules/settings.lua": {
     "mtime": 1789991314.1454244,
@@ -244,5 +244,125 @@
     "seen": 1789991537.543449,
     "ast_hash": "1b0272a28fddd3415fcd2f79a21fcb11",
     "semantic_hash": "1b0272a28fddd3415fcd2f79a21fcb11"
+  },
+  ".github/tests/README.md": {
+    "mtime": 1789991314.1384368,
+    "seen": 1789998028.9154952,
+    "ast_hash": "5753443de4452a3e0c846c88c278044d",
+    "semantic_hash": ""
+  },
+  ".github/workflows/ci.yml": {
+    "mtime": 1789991314.1385663,
+    "seen": 1789998028.9154959,
+    "ast_hash": "bff1abf94df706e7d1c8579df24745d7",
+    "semantic_hash": ""
+  },
+  ".github/workflows/manual-release.yml": {
+    "mtime": 1789991314.1388493,
+    "seen": 1789998028.9154966,
+    "ast_hash": "100535d9fd1da66f6a70321b53042bab",
+    "semantic_hash": ""
+  },
+  ".github/workflows/release.yml": {
+    "mtime": 1789991314.1388493,
+    "seen": 1789998028.9154975,
+    "ast_hash": "be407aed5d753c8cd850d9129c153595",
+    "semantic_hash": ""
+  },
+  "CHANGELOG.md": {
+    "mtime": 1789998002.3743534,
+    "seen": 1789998028.9154978,
+    "ast_hash": "a6a195851c13312db6f45d0a9a987a6d",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1789997981.3022573,
+    "seen": 1789998028.9154983,
+    "ast_hash": "80fd705d7cc42267f4e8e1ded7c03587",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1789991314.1388493,
+    "seen": 1789998028.9154985,
+    "ast_hash": "7d060ad99cc0df846e0f1e39e7f131d9",
+    "semantic_hash": ""
+  },
+  "docs/architecture/overview.md": {
+    "mtime": 1789997966.520983,
+    "seen": 1789998028.915499,
+    "ast_hash": "db86af71962ebac1dac6f133ff883c71",
+    "semantic_hash": ""
+  },
+  "docs/development/releases.md": {
+    "mtime": 1789991314.139941,
+    "seen": 1789998028.9154994,
+    "ast_hash": "b6dd0a8b818b3a445d3113cdeafe71f3",
+    "semantic_hash": ""
+  },
+  "docs/invariants/data-integrity.md": {
+    "mtime": 1789991314.139941,
+    "seen": 1789998028.9154997,
+    "ast_hash": "62a267a2ea93fe858e8ff849664d5140",
+    "semantic_hash": ""
+  },
+  "docs/systems/character.md": {
+    "mtime": 1789991314.139941,
+    "seen": 1789998028.9155004,
+    "ast_hash": "bdbdb50ca160e20eba0b07bbbe1216f1",
+    "semantic_hash": ""
+  },
+  "docs/systems/companion-bridge.md": {
+    "mtime": 1789991314.1401029,
+    "seen": 1789998028.9155009,
+    "ast_hash": "f80c2e1bbde00bc758a0b2245baf3a3c",
+    "semantic_hash": ""
+  },
+  "docs/systems/dungeons.md": {
+    "mtime": 1789997941.122698,
+    "seen": 1789998028.9155014,
+    "ast_hash": "1d0b49666331cbeae4c8af32ec2888cf",
+    "semantic_hash": ""
+  },
+  "docs/systems/groupcheck.md": {
+    "mtime": 1789991314.1401029,
+    "seen": 1789998028.9155016,
+    "ast_hash": "49007f71997bd5bdc045ca68c0292b33",
+    "semantic_hash": ""
+  },
+  "docs/systems/onboarding-changelog.md": {
+    "mtime": 1789991314.1401029,
+    "seen": 1789998028.915502,
+    "ast_hash": "b0db3e165d68155467dff61049d758c2",
+    "semantic_hash": ""
+  },
+  "docs/systems/raids-and-progress.md": {
+    "mtime": 1789991314.1401029,
+    "seen": 1789998028.9155025,
+    "ast_hash": "bad2b6b0ac979965a210692eea78a9d1",
+    "semantic_hash": ""
+  },
+  "media/fonts/IBMPlex-LICENSE.txt": {
+    "mtime": 1789991314.1404152,
+    "seen": 1789998028.915503,
+    "ast_hash": "4d4949dda4b23922e334f0cbf6179065",
+    "semantic_hash": ""
+  },
+  "media/fonts/Newsreader-LICENSE.txt": {
+    "mtime": 1789991314.1416152,
+    "seen": 1789998028.9155035,
+    "ast_hash": "18b1799c268d8ac577c6aa8597f5b404",
+    "semantic_hash": ""
+  },
+  "media/button.png": {
+    "mtime": 1789991314.1404152,
+    "seen": 1789998028.9155042,
+    "ast_hash": "4f89a923157fd8415a0f0639b93b3d64",
+    "semantic_hash": ""
+  },
+  "media/logo.png": {
+    "mtime": 1789991314.1438682,
+    "seen": 1789998028.9155047,
+    "ast_hash": "bd49bc9df4095680c36b0ed9c498a36a",
+    "semantic_hash": ""
   }
 }

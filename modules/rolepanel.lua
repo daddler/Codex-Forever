@@ -106,6 +106,175 @@ function WeintCodex.RolePanel.Card(parent, instance)
 end
 
 --------------------------------------------------
+-- Die Aufstellung im Seitenkoerper, zeilenweise (Dungeonseite)
+--------------------------------------------------
+-- Dieselben drei Bestaende wie oben, in der Reihenfolge, in der man
+-- sie liest: erst WELCHE Rolle und WIE VIELE davon, dann WER sie
+-- tragen kann. Die Baeume stehen nach Klasse gruppiert in EINEM
+-- Absatz statt als Liste - neunzehn Zeilen fuer die Schadensausteiler
+-- waeren keine Auskunft, sondern eine Wand.
+--
+-- Zeichnet in `parent` ab `y` und gibt das y darunter zurueck. Die
+-- Hoehe rechnet WeintCodex.Paragraph gegen `opts.width` - die
+-- schmalste Breite, die der Aufrufer garantiert.
+
+local ROSTER_ROW_GAP = 12
+
+local function SpecSummary(role)
+    local groups, order = {}, {}
+    for _, entry in ipairs(WeintCodex.Roles.Specs(role)) do
+        local cls = entry.spec.class
+        if not groups[cls] then
+            groups[cls] = {}
+            order[#order + 1] = cls
+        end
+        local name = entry.spec.name
+        if entry.formDependent then name = name .. " (je nach Gestalt)" end
+        table.insert(groups[cls], name)
+    end
+    local parts = {}
+    for _, cls in ipairs(order) do
+        local label = (WeintCodex.Names and WeintCodex.Names.ClassLabel
+                and WeintCodex.Names.ClassLabel(cls)) or cls
+        parts[#parts + 1] = WeintCodex.ColorText("textNormal", label)
+            .. " " .. table.concat(groups[cls], ", ")
+    end
+    return table.concat(parts, "  ·  ")
+end
+
+function WeintCodex.RolePanel.Roster(parent, y, instance, opts)
+    opts = opts or {}
+    local x     = opts.x or 0
+    local right = opts.right or 0
+    local width = opts.width or 300
+    local frame = WeintCodex.Roles.Frame(instance and instance.size)
+
+    -- Ohne Rahmen steht der Grund da, nicht eine Zahl aus einem
+    -- anderen Spiel.
+    if not frame then
+        local why = WeintCodex.Paragraph(parent,
+            "Wie viele Tanks und Heiler " .. (instance and instance.name or "diese Instanz")
+            .. " braucht, entscheiden ihre Bosse - und deren Mechaniken sind "
+            .. "nicht veröffentlicht. WeintCodex trägt die Verteilung nach, "
+            .. "sobald sie feststeht.",
+            { width = width, size = 12, color = "textDim" })
+        why:SetPoint("TOPLEFT",  parent, "TOPLEFT",  x, y)
+        why:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -right, y)
+        y = y - why:GetHeight() - ROSTER_ROW_GAP
+    end
+
+    for _, role in ipairs(WeintCodex.Roles.ORDER) do
+        local tone = WeintCodex.Roles.Tone(role)
+
+        -- Der Farbbalken traegt die Rolle, der Name traegt sie noch
+        -- einmal: Farbe allein ist kein Zustand.
+        local bar = parent:CreateTexture(nil, "ARTWORK")
+        bar:SetSize(3, 16)
+        bar:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 1)
+        local bc = C[tone] or C.textNormal
+        bar:SetColorTexture(bc[1], bc[2], bc[3], 0.9)
+
+        local name = WeintCodex.Label(parent, WeintCodex.Roles.Label(role),
+            { color = tone, size = 14, font = WeintCodex.Fonts.sansSemi })
+        name:SetPoint("TOPLEFT", parent, "TOPLEFT", x + 14, y)
+
+        -- Die Plaetze: bekannt oder ausdruecklich nicht. Mono, weil
+        -- es eine Zahl ist - aber nicht gesperrt und nicht versal,
+        -- die Zeile soll sich lesen wie ein Satz.
+        local slots = frame and frame[role]
+        local mark = parent:CreateFontString(nil, "OVERLAY")
+        mark:SetFont(WeintCodex.Fonts.monoMedium, 11, "")
+        mark:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -right, y - 2)
+        mark:SetJustifyH("RIGHT")
+        if slots then
+            mark:SetTextColor(C.textNormal[1], C.textNormal[2], C.textNormal[3])
+            mark:SetText(slots .. (slots == 1 and " Platz" or " Plätze"))
+        else
+            mark:SetTextColor(C.textFaint[1], C.textFaint[2], C.textFaint[3])
+            mark:SetText("Plätze unbekannt")
+        end
+
+        local specs, specH = WeintCodex.Paragraph(parent, SpecSummary(role),
+            { width = width - 14, size = 12, color = "textMuted" })
+        specs:SetPoint("TOPLEFT",  parent, "TOPLEFT",  x + 14, y - 22)
+        specs:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -right,  y - 22)
+
+        y = y - 22 - specH - ROSTER_ROW_GAP
+    end
+
+    return y
+end
+
+--------------------------------------------------
+-- Die Rollen an EINEM Boss, zeilenweise (Dungeonseite)
+--------------------------------------------------
+-- Dieselben vier Zustaende wie in BossBlocks, aber nicht dreimal
+-- derselbe Leerzustand untereinander: liegt zu einem Boss NICHTS vor,
+-- steht das einmal da, mit der Auskunft, woher etwas kaeme. Erst wenn
+-- der Bot etwas geliefert hat, bekommt jede Rolle ihre Zeile - und
+-- dann auch die, zu der er nichts gesagt hat.
+--
+-- Die Tipps stehen vollstaendig und ungekuerzt: der Aufrufer legt
+-- diesen Block in eine Flaeche, die rollen darf.
+
+function WeintCodex.RolePanel.BossRoleRows(parent, y, boss, opts)
+    opts = opts or {}
+    local x     = opts.x or 0
+    local right = opts.right or 0
+    local width = opts.width or 300
+    local bossName = boss and boss.name or "?"
+
+    local function Line(text, color, size, indent)
+        local fs, h = WeintCodex.Paragraph(parent, text,
+            { width = width - (indent or 0), size = size or 12, color = color or "textMuted" })
+        fs:SetPoint("TOPLEFT",  parent, "TOPLEFT",  x + (indent or 0), y)
+        fs:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -right, y)
+        y = y - h
+    end
+
+    if not WeintCodex.Roles.TipsAllowed() then
+        Line("Die Rollenhinweise des Bots sind gildeninterne Taktiknotizen "
+            .. "und für dein Zugriffsprofil gesperrt.", "textDim", 12)
+        return y
+    end
+
+    if not WeintCodex.Roles.HasTips(bossName) then
+        Line("Zu " .. bossName .. " liegt noch nichts vor. Rollenhinweise kommen "
+            .. "aus dem Discord-Bot (WCIMPORT:BOSS, einfügen unter Import) - die "
+            .. "Mechaniken der Kämpfe in Forever sind nicht veröffentlicht, und "
+            .. "WeintCodex denkt sich keine aus.", "textDim", 12)
+        return y
+    end
+
+    for _, role in ipairs(WeintCodex.Roles.ORDER) do
+        local tone = WeintCodex.Roles.Tone(role)
+        local bar = parent:CreateTexture(nil, "ARTWORK")
+        bar:SetSize(3, 14)
+        bar:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 1)
+        local bc = C[tone] or C.textNormal
+        bar:SetColorTexture(bc[1], bc[2], bc[3], 0.9)
+
+        local name = WeintCodex.Label(parent, WeintCodex.Roles.Label(role),
+            { color = tone, size = 13, font = WeintCodex.Fonts.sansSemi })
+        name:SetPoint("TOPLEFT", parent, "TOPLEFT", x + 14, y)
+        y = y - 20
+
+        local tips = WeintCodex.Roles.Tips(bossName, role)
+        if tips and #tips > 0 then
+            for _, tip in ipairs(tips) do
+                Line("• " .. tostring(tip), "textMuted", 12, 14)
+                y = y - 3
+            end
+        else
+            Line("Der Bot hat zu dieser Rolle nichts geliefert.", "textFaint", 12, 14)
+        end
+        y = y - ROSTER_ROW_GAP
+    end
+
+    return y
+end
+
+--------------------------------------------------
 -- Detailbereich: die Rollen einer Instanz
 --------------------------------------------------
 -- Was sich über die Rollen sagen lässt, OHNE einen bestimmten Boss zu

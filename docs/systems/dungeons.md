@@ -135,8 +135,9 @@ zwei Helfern vor Ort. Das steht in `DungeonData.SUMMONING`.
 ## Bilder: keine, und warum
 
 Nach einem Kompendium mit Bildern wurde ausdrücklich gefragt. Die
-ehrliche Antwort steht als Kommentar über `MapNote()` in
-`modules/dungeonpages.lua` und hat zwei voneinander unabhängige Teile:
+ehrliche Antwort steht als Kommentar *Warum hier keine Bilder stehen*
+in `modules/dungeonpages.lua` und hat zwei voneinander unabhängige
+Teile:
 
 1. **Es gibt sie nicht.** Blizzard hat für Forever keine Dungeonkarten
    veröffentlicht. Im Beta-Client liegt für **vier** der neun Instanzen
@@ -157,41 +158,79 @@ Bild.
 „Patrouilliert den ersten langen Gang auf einer sehr weiten Route",
 „allein in der Kammer der Verzauberung", „Endkammer, zusammen mit zwei
 Steingolems". Das ist die Auskunft, für die man sonst auf ein Bild
-schaut, und sie lässt sich belegen.
+schaut, und sie lässt sich belegen — und sie steht auf der Bosskarte an
+erster Stelle.
 
-## Die Liste links läuft nicht über
+## Die Seite: drei Flächen, eine Leserichtung
+
+Bis 5.2.0.0 teilten sich **vier** Flächen die Aufmerksamkeit:
+Navigation, ein Baum aus Stufen, Instanzen *und* Bossen, ein
+Inhaltsbereich von 212 px und rechts ein Detailbereich, der alles
+trug, was auf der Seite keinen Platz hatte. Die Seite selbst war die
+schmalste der vier, und ihre Bosskarte sagte, dass die Bosse links
+stehen.
+
+Seither sind es **drei** Flächen, und die Seite liest sich von oben
+nach unten:
+
+| Fläche | Trägt |
+|---|---|
+| Spalte links | **nur Dungeons**, nach Stufenabschnitt; unten die Übersicht der beschwörbaren Bosse |
+| Kopf | Name (das Zentrum), Stufenbereich · Gruppengrösse · Bosszahl, der Themensatz in der Serife; rechts, ob die eigene Stufe passt |
+| Bosszeile | eine **Pille je Boss**: Nummer (nur bei bekannter Reihenfolge), Name, Kennzeichen (`BESCHWÖREN` > `OPTIONAL` > `TIPPS`); rechts der Vorsatz der Herkunft mit Begründung im Tooltip; bei Flügeln Reiter darüber, **ein Flügel zur Zeit** |
+| Detailkarte | ohne Boss die **Aufstellung**, mit Boss das Berichtete: *So kommt er*, *Wo er steht*, *Dazu*, *Rollen* |
+
+Der Detailbereich rechts bleibt auf dieser Seite zu. Ein Klick auf
+eine Pille öffnet den Boss in der Karte, ein zweiter Klick (oder das
+`×`) schliesst ihn; ein zweiter Klick auf den offenen Dungeon in der
+Spalte führt ebenfalls zur Aufstellung zurück.
+
+Vier Zustände der Bosszeile, keiner davon eine leere Liste:
+
+| Bestand | Bosszeile |
+|---|---|
+| Namen liegen vor | Pillen; darunter ggf. „7 Kämpfe sind bekannt, ihre Reihenfolge nicht" |
+| nur die Anzahl (City of Dalaran) | neun **leere Pillen** mit `?`, darunter die bisher benannten |
+| Widerspruch (Excavation Site, Blackmaw Hold) | kein Bestand, der Widerspruch als Absatz, Vorsatz „Quellen widersprechen sich" |
+| nichts | ein Absatz, der sagt, dass nichts veröffentlicht ist |
+
+### Die Spalte läuft nicht über, und die Seite auch nicht
 
 Neunundzwanzig Instanzen mit Stufenzeile wären **1334 px** in einer
-Spalte von **716** (kleinstes zulässiges Fenster). Die zweiundzwanzig
-Kämpfe von Blackrock Depths sind allein 660 px. Beides zusammen ist
-nicht eng, sondern unmöglich.
+Spalte von **716** (kleinstes zulässiges Fenster). **Stufenabschnitte**
+(`DungeonData.Brackets()`) lösen das: genau einer ist offen, fünf
+Abschnitte, 4 – 7 Instanzen je Abschnitt. Gemessener schlimmster
+Fall: **612 von 716 px**, 104 px frei — seit die Bosse nicht mehr in
+der Spalte stehen, für jeden Dungeon gleich.
 
-Zwei Staffelungen lösen das, und keine versteckt etwas:
+Die Seite hat ihr eigenes Budget (`DungeonPages.PageBudget()`), und
+drei Dinge halten sie darunter:
 
-* **Stufenabschnitte** (`DungeonData.Brackets()`) fassen die Instanzen.
-  Genau einer ist offen. Fünf Abschnitte, 4 – 7 Instanzen je Abschnitt.
 * **Flügel** (`DungeonData.Wings()`) fassen die Kämpfe grosser
-  Instanzen. Sie sind **keine Erfindung des Addons**: Scarlet Monastery,
-  Dire Maul und Stratholme haben im Spiel getrennte Eingänge, Blackrock
-  Depths läuft jede Gruppe in Abschnitten. Eine Instanz ohne Flügel
-  zeigt ihre Kämpfe am Stück.
+  Instanzen; die Bosszeile zeigt einen zur Zeit. Sie sind **keine
+  Erfindung des Addons**: Scarlet Monastery, Dire Maul und Stratholme
+  haben im Spiel getrennte Eingänge, Blackrock Depths läuft jede Gruppe
+  in Abschnitten.
+* **Texthöhen werden geschätzt, nicht gemessen** (`WeintCodex.Paragraph`
+  in `core/ui.lua`): Zeichen je Zeile bei der schmalsten Breite, im
+  Spiel und im Prüflauf gleich. Der Client der Attrappe misst jede
+  Zeile mit 12 px — eine Seite, die damit rechnete, wäre im Prüflauf
+  kürzer als im Spiel.
+* **Die Detailkarte rollt**, wenn ihr Inhalt nicht passt. Sie ist die
+  eine Fläche der Seite, die das darf, und sie tut es nur, wenn der Bot
+  mehr geschickt hat, als das Fenster zeigt. Gekürzt wird nichts.
 
-Dazu rechnet die Seite ihren Baum **vor dem Bauen** durch
-(`Navigation.Fits`, neu in 5.2.0.0, teilt sich die 60 px Luft mit dem
-Prüflauf): passt er mit Bossen, zeigt sie ihn mit; sonst vertieft sie
-(Rücksprungzeile, gewählte Instanz, deren Flügel und Kämpfe). Das ist
-genau der Zweck, für den `MeasureSidebar` gebaut wurde.
-
-Gemessener schlimmster Fall: **612 von 716 px**, 104 px frei.
-
-`load_test.lua` rechnet **jede** der 29 Instanzen in **jedem** Flügel
-gegen das Budget und klickt den Aufklappweg einmal komplett durch —
-Gruppenköpfe stehen nicht in `sidebarItems`, `ActivateIndex` löst sie
-also nie aus, und ein Fehler darin fiele sonst erst im Spiel auf.
+`load_test.lua` setzt den Inhaltsbereich auf die Breite des kleinsten
+Fensters (`Navigation.ContentBudgetWidth()`), zeichnet **jede** Instanz
+in **jedem** Flügel und **jeden** Boss, misst die Seite gegen das
+Budget, klickt den Aufklappweg der Spalte durch und prüft, dass eine
+Bosskarte mit dreissig Tipps das Fenster genau füllt und keinen Pixel
+darüber hinausläuft. Gemessener schlimmster Fall der Seite: Stratholme,
+**646 von 716 px**.
 
 ### Ein Flügel darf keinen Boss verlieren
 
-Die Spalte zeigt immer nur **einen** Flügel. Ein Boss ohne
+Die Bosszeile zeigt immer nur **einen** Flügel. Ein Boss ohne
 Flügelangabe in einer Instanz, die Flügel hat, wäre in der Oberfläche
 **nirgends** zu sehen — lautlos. `data_test.lua` prüft deshalb, dass die
 Flügel zusammen jeden Boss der Instanz fassen.
@@ -201,15 +240,19 @@ Flügel zusammen jeden Boss der Instanz fassen.
 `DungeonData.FitsLevel(dungeon, level)` beantwortet „passt das zu
 mir?" — und liefert **`nil`**, wenn der Client keine Stufe genannt
 hat. `nil` ist nicht `false`: „passt nicht" wäre eine Behauptung über
-eine Stufe, die niemand kennt. Im Detailbereich stehen deshalb drei
-Zustände (`passt`, `zu niedrig`, `darüber`) und ein vierter
-(`noch nicht bekannt`).
+eine Stufe, die niemand kennt. Im Kopf stehen deshalb drei Zustände
+(`passt`, `zu niedrig`, `darüber`) — und ohne Stufe vom Client steht
+dort **nichts**, nicht „Stufe 0".
 
 ## Die Rollen
 
 `data/roles.lua` ist die gemeinsame Quelle für Tank, Heiler und
 Schadensausteiler; `modules/rolepanel.lua` ist die gemeinsame
-Darstellung, von Dungeon- und Schlachtzugseite benutzt.
+Darstellung, von Dungeon- und Schlachtzugseite benutzt. Die
+Schlachtzugseite zeichnet Karten (`Card`, `BossCards`) und
+Detailblöcke (`InstanceBlocks`, `BossBlocks`); die Dungeonseite
+zeichnet Zeilen in ihre Detailkarte (`Roster`, `BossRoleRows`). Beide
+lesen dieselben drei Bestände.
 
 **Der ganze Zweck ist, drei Bestände auseinanderzuhalten.** Sie
 beantworten drei verschiedene Fragen und sind unterschiedlich
@@ -252,22 +295,27 @@ Vier Zustände, vier Texte:
 | Boss bekannt, Rolle leer | „Der Bot hat zu dieser Rolle nichts geliefert" |
 | Tipps vorhanden | die Tipps |
 
-### Die Seite ist gedeckelt, der Detailbereich nicht
+### Schlachtzug: die Seite ist gedeckelt, der Detailbereich nicht
 
-`RolePanel.BossCards` zeigt je Rolle höchstens **zwei** Tipps und kürzt
-jeden auf 120 Zeichen. Beides ist eine Deckelung gegen dieselbe Gefahr:
-wie lang ein Tipp ist, entscheidet der Bot, und beim kleinsten
-zulässigen Fenster ist der Inhaltsbereich keine Seite, sondern eine
-212 px schmale Spalte — drei ungekürzte Tipps je Rolle könnten dort
-neun Zeilen ergeben und die dritte Karte aus dem Fenster schieben.
+`RolePanel.BossCards` (Schlachtzugseite) zeigt je Rolle höchstens
+**zwei** Tipps und kürzt jeden auf 120 Zeichen. Beides ist eine
+Deckelung gegen dieselbe Gefahr: wie lang ein Tipp ist, entscheidet der
+Bot, und neben dem Detailbereich ist der Inhaltsbereich beim kleinsten
+Fenster eine 212 px schmale Spalte.
 
 Gekürzt wird mit `WeintCodex.Truncate`, also **zeichenweise**: ein
 Umlaut, den man in der Mitte zerschneidet, wird im Spiel zu einem
-leeren Kästchen.
+leeren Kästchen. Verloren geht dabei nichts, und die Karte sagt auch,
+was fehlt. Der Detailbereich zeigt alle Tipps ungekürzt und rollt.
 
-Verloren geht dabei nichts, und die Karte sagt auch, was fehlt
-(„gekürzt", „*n* weitere", oder beides). Der Detailbereich zeigt alle
-Tipps ungekürzt und rollt, weil er dafür gebaut ist.
+### Dungeon: die Detailkarte rollt, gekürzt wird nichts
+
+`RolePanel.BossRoleRows` (Dungeonseite) zeigt **alle** Tipps
+ungekürzt — die Detailkarte ist ein Bildlauffeld und nimmt bei Bedarf
+den Platz bis zum Fensterrand. Liegt zu einem Boss **nichts** vor,
+steht das **einmal** da (mit der Auskunft, woher etwas käme), nicht
+dreimal untereinander; erst wenn der Bot etwas geliefert hat, bekommt
+jede Rolle ihre Zeile — auch die, zu der er nichts gesagt hat.
 
 Allgemeinplätze stehen hier nicht. „Tank: dreh den Boss vom Raid weg"
 wäre billig zu haben, passte zu jedem Spiel und zu keinem Kampf in
@@ -289,9 +337,10 @@ unangetastet (siehe `core/ui.lua`).
 | `data/dungeons.lua` | Die neun von Forever + `All/Get/HasBosses/BossesComplete/OrderKnown/BossSource/BossCount/SummonableBosses/LevelRange/ZoneLabel/FitsLevel` |
 | `data/dungeons_classic.lua` | Die zwanzig aus Classic + `AllClassic/AllInstances/IsLegacy/AllSummonable/Brackets/BracketIndexOf/Wings/BossesInWing` |
 | `data/roles.lua` | Rollenmodell: Labels, Farben, `Frame`, `Specs`, `Tips`, `HasTips` |
-| `modules/rolepanel.lua` | Darstellung: Karte „Aufstellung", Detailblöcke je Instanz und je Boss |
-| `modules/dungeonpages.lua` | Die Seite, die Staffelung, `MapNote()` |
-| `core/navigation.lua` | Navigationseintrag `dungeons`, Listenspalte, anklickbare Gruppenköpfe, `Fits`/`SubNavHeadroom`/`SidebarButtons` |
+| `modules/rolepanel.lua` | Darstellung: `Card`/`BossCards`/`InstanceBlocks`/`BossBlocks` (Schlachtzug), `Roster`/`BossRoleRows` (Dungeon) |
+| `modules/dungeonpages.lua` | Die Seite: Kopf, Bosszeile, Detailkarte, Spalte, Übersicht der beschwörbaren Bosse |
+| `core/ui.lua` | `Paragraph`/`EstimateLines`: Fliesstext mit geschätzter Höhe |
+| `core/navigation.lua` | Navigationseintrag `dungeons`, Listenspalte, anklickbare Gruppenköpfe, `Fits`/`SubNavHeadroom`/`SidebarButtons`/`ContentBudgetWidth` |
 | `core/search.lua` | Alle 29 Instanzen und ihre Bosse im Suchindex |
 
 `data/dungeons_classic.lua` lädt **nach** `data/dungeons.lua` (siehe
@@ -300,22 +349,26 @@ unangetastet (siehe `core/ui.lua`).
 gefunden wird. `data/sources.lua` lädt **vor** beiden und vor
 `data/raids.lua`.
 
-### Der Baum links
+### Die Spalte links
 
-Die Unternavigation ist weiterhin ein **Baum** — Instanzen auf der
-ersten Ebene, die Bosse der ausgewählten eingerückt auf der zweiten.
-Dazu gekommen ist eine Ebene **darüber**: Stufenabschnitte, und bei
-grossen Instanzen Flügel. Beides sind Gruppenköpfe, und die sind seit
-5.2.0.0 anklickbar.
+Die Unternavigation führt **Stufenabschnitte** als anklickbare
+Gruppenköpfe und darunter die Dungeons des offenen Abschnitts. Bosse
+stehen **nicht** in ihr — anders als bei den Schlachtzügen, wo die
+zweistufige Liste bleibt. Der Grund ist die Seite: sie hat ohne
+Detailbereich die Breite für eine Bosszeile, und eine Liste, die man
+ohnehin auf der Seite sieht, noch einmal links zu zeigen, war der
+Grund für vier konkurrierende Flächen.
 
-Ein anklickbarer Gruppenkopf ist trotzdem **kein Eintrag**: er landet in
+Ein anklickbarer Gruppenkopf ist **kein Eintrag**: er landet in
 `sidebarGroups` und nicht in `sidebarItems`. Sonst verschöbe er jeden
 Index, mit dem eine Seite ihren aktiven Eintrag markiert
 (`ActivateIndex`), und die Markierung sässe eine Zeile daneben.
 
 Die zweite Zeile eines Dungeoneintrags ist sein **Stufenbereich** — das
-ist es, wonach man in einer Liste von neunundzwanzig Dungeons sucht. Das
-Kennzeichen rechts an einem Boss sagt, was für einer es ist:
+ist es, wonach man in einer Liste von neunundzwanzig Dungeons sucht.
+Die neun Dungeons von Forever tragen rechts das Kennzeichen
+**FOREVER**, damit man sie zwischen den zwanzig klassischen findet.
+Das Kennzeichen an einer Boss-Pille sagt, was für einer es ist:
 **BESCHWÖREN** schlägt **OPTIONAL** schlägt **TIPPS**, weil „steht ohne
 Zutun gar nicht da" die dringendere Auskunft ist.
 

@@ -93,7 +93,18 @@ function Methods:SetShown(v) self._shown = v and true or false end
 
 function Methods:SetText(text) self._text = text end
 
-function Methods:GetStringWidth()  return 100 end
+-- Die Textbreite waechst mit dem Text. Bis 5.2.0.0 antwortete die
+-- Attrappe mit festen 100 px - eine Bosszeile aus Pillen, deren
+-- Breite aus dem Text kommt, war damit weder zu kurz noch zu lang,
+-- sondern beliebig. Sechs Pixel je ZEICHEN (nicht je Byte: ein
+-- Umlaut ist zwei Bytes und ein Zeichen) sind keine Messung, aber
+-- eine, die in dieselbe Richtung zeigt wie der Client.
+function Methods:GetStringWidth()
+    local s = tostring(self._text or "")
+    local n = 0
+    for _ in s:gmatch("[^\128-\191]") do n = n + 1 end
+    return n * 6
+end
 function Methods:GetStringHeight() return 12  end
 
 function Methods:GetVerticalScroll()      return 0 end

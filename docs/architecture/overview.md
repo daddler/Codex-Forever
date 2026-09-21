@@ -79,7 +79,7 @@ damit als ungültige UTF-8-Folge wieder heraus.
 ```
 
 * **`core/ui.lua`** baut die Flächen und die Bausteine (Karte, Knopf,
-  Schalter, Regler, Chip, Statuspunkt, Seitenkopf, Bildlauf).
+  Schalter, Regler, Chip, Statuspunkt, Seitenkopf, Absatz, Bildlauf).
 * **`core/navigation.lua`** füllt die Navigationsspalte, verteilt die
   Klicks auf die Module (`SwitchTo`), zeichnet die Startseite
   (`ShowHome`) und stellt den Detailbereich bereit (`SetInspector`).
@@ -111,6 +111,12 @@ zeigen gibt.
 Bedienung.** Was man umstellen kann, steht dort, wo man es sieht — die
 einzige Ausnahme sind Knöpfe, die woanders hinführen.
 
+**Nicht jede Seite hat einen.** Die Dungeonseite verzichtet auf ihn:
+neben Listenspalte und Detailbereich blieben dem Inhalt beim kleinsten
+Fenster 212 px, und die Seite wurde zur schmalsten von vier Flächen.
+Sie trägt stattdessen alles selbst, in voller Breite, mit **einer**
+Detailkarte, die rollen darf (siehe `docs/systems/dungeons.md`).
+
 ### Die Unternavigation
 
 `BuildSidebar(titel, items)` entscheidet die Form selbst: bis sieben
@@ -118,13 +124,16 @@ reine Beschriftungen wird es eine Reiterleiste über dem Inhalt, alles
 darüber (oder sobald ein Eintrag mehr trägt als eine Beschriftung) eine
 Listenspalte links.
 
-**Die Listenspalte ist zweistufig.** Ein Eintrag mit `indent = true`
+**Die Listenspalte kann zweistufig sein.** Ein Eintrag mit `indent = true`
 sitzt eingerückt unter dem vorangehenden und gehört zu ihm — so stehen
 die Bosse eines Schlachtzugs unter ihrem Schlachtzug. Der Grund ist
 nicht Platz, sondern Orientierung: *wo bin ich* ist auf zwei Ebenen zu
 beantworten (in welcher Instanz, an welchem Boss), und beide Antworten
 stehen damit gleichzeitig und dauerhaft da statt nacheinander in einer
-Brotkrume.
+Brotkrume. Die Dungeonseite beantwortet die zweite Ebene auf der Seite
+selbst (die aktive Pille der Bosszeile) und führt in der Spalte nur
+Dungeons — eine Liste, die man auf der Seite sieht, steht nicht noch
+einmal links.
 
 | Feld | Wirkung |
 |---|---|
@@ -165,10 +174,17 @@ gegeneinander:
 | `Navigation.MeasureSidebar(items)` | wie hoch eine Liste **würde**, ohne sie zu bauen |
 
 Stand heute: Navigationsspalte 604 von 684 px, Unternavigation im
-schlimmsten Fall (Hyjal Summit mit dreizehn Bossen) 602 von 716 px. Der
+schlimmsten Fall (Dungeons, grösster Stufenabschnitt) 612 von 716 px. Der
 Prüflauf verlangt zusätzlich **Luft für einen weiteren Eintrag** — ohne
 das fällt erst der Eintrag auf, der schon nicht mehr passt, und dann
 ist die Frage nicht mehr „passt er?", sondern „was werfen wir raus?".
+
+Der Inhalt selbst hat dieselbe Regel, und die Dungeonseite rechnet sie
+nach (`DungeonPages.PageHeight()` gegen `PageBudget()`): Texthöhen
+werden mit `WeintCodex.Paragraph` aus Zeichen je Zeile **geschätzt**,
+nicht gemessen, damit Spiel und Prüflauf dieselbe Seite bauen. Was aus
+dem Bestand des Bots wächst, landet in der Detailkarte — der einen
+Fläche der Seite, die rollen darf.
 
 ## Der Seitenkopf
 

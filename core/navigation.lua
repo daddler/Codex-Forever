@@ -438,6 +438,23 @@ local SUBNAV_GAP      = 2
 
 local subNavUsed = 0
 
+-- Wie breit die Listenspalte ist. Eine Seite, die neben ihr steht,
+-- rechnet damit aus, wie schmal sie beim kleinsten Fenster wird -
+-- und die Zahl steht hier, nicht ein zweites Mal dort.
+function WeintCodex.Navigation.SubNavWidth()
+    return SUBNAV_COL_W
+end
+
+-- Was dem Inhalt beim kleinsten Fenster an Breite bleibt, wenn links
+-- eine Listenspalte steht und rechts kein Detailbereich. Die
+-- Dungeonseite rechnet ihre Bosszeile dagegen, und der Prueflauf
+-- setzt den Inhaltsbereich darauf, damit er den schlimmsten Fall
+-- misst und nicht die Vorgabe der Attrappe.
+function WeintCodex.Navigation.ContentBudgetWidth()
+    local limits = WeintCodex.WindowLimits or {}
+    return (limits.minW or 1180) - (WeintCodex.Metrics.NAV_W or 232) - SUBNAV_COL_W
+end
+
 -- Was die Listenspalte zuletzt belegt hat, und was ihr zusteht.
 function WeintCodex.Navigation.SubNavHeight()
     return subNavUsed

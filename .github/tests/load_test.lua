@@ -288,6 +288,13 @@ end
 
 Section("Jede Instanz laesst sich zeichnen")
 
+-- DER INHALTSBEREICH HAT HIER DIE BREITE DES KLEINSTEN FENSTERS. Die
+-- Attrappe gibt jedem Frame 800 px; die Dungeonseite bricht ihre
+-- Bosszeile aber nach der Breite um, die sie vorfindet - und der
+-- schlimmste Fall (die meisten Zeilen, die hoechste Seite) ist der
+-- schmalste Inhalt, nicht ein Vorgabewert.
+WeintCodex.ContentPanel:SetWidth(WeintCodex.Navigation.ContentBudgetWidth())
+
 -- Ueber Select() und nicht ueber ActivateIndex(): die Unternavigation
 -- ist ein BAUM, ihre Zeilen zaehlen Bosse mit. Ein Index aus der
 -- Instanzliste zeigte damit auf eine Bosszeile - der Lauf waere gruen
@@ -318,20 +325,28 @@ DrawEach(WeintCodex.DungeonPages, "dungeons", WeintCodex.DungeonData.All(), "Dun
 Section("Jeder Boss laesst sich zeichnen")
 
 do
+    -- Schlachtzug UND Dungeon: die Bossseiten sind zwei Darstellungen
+    -- (Rollenkarten dort, Detailkarte hier) und damit zwei Stellen,
+    -- an denen etwas brechen kann.
     local function EveryBoss(label)
-        for _, raid in ipairs(WeintCodex.RaidData.All()) do
-            for _, boss in ipairs(raid.bosses or {}) do
-                local ok, err = pcall(function()
-                    assert(WeintCodex.RaidPages.Select(raid.id, boss.id))
-                    WeintCodex.Navigation.SwitchTo("raids")
-                end)
-                if not ok then
-                    failures = failures + 1
-                    print("  FEHL  " .. label .. " " .. boss.id .. ": " .. tostring(err))
-                    return false
+        local function Each(list, module, tabId)
+            for _, instance in ipairs(list) do
+                for _, boss in ipairs(instance.bosses or {}) do
+                    local ok, err = pcall(function()
+                        assert(module.Select(instance.id, boss.id))
+                        WeintCodex.Navigation.SwitchTo(tabId)
+                    end)
+                    if not ok then
+                        failures = failures + 1
+                        print("  FEHL  " .. label .. " " .. boss.id .. ": " .. tostring(err))
+                        return false
+                    end
                 end
             end
+            return true
         end
+        if not Each(WeintCodex.RaidData.All(), WeintCodex.RaidPages, "raids") then return false end
+        if not Each(WeintCodex.DungeonData.AllInstances(), WeintCodex.DungeonPages, "dungeons") then return false end
         print("  ok    " .. label)
         return true
     end
@@ -341,13 +356,17 @@ do
     -- Mit Tipps: ein langer Tipp muss gekuerzt werden (sonst schoebe
     -- er die dritte Rollenkarte aus dem Fenster), eine leere Rolle
     -- ist etwas anderes als eine fehlende, und eine Notiz ohne
-    -- Zuordnung landet im Detailbereich.
+    -- Zuordnung landet im Detailbereich. Der Dungeonboss bekommt so
+    -- viele Tipps, dass seine Detailkarte rollen MUSS.
+    local many = {}
+    for i = 1, 30 do many[i] = "Hinweis " .. i .. ": " .. string.rep("Text ", 30) end
     _G.WeintCodex_SavedData.bossData = {
         ["Bandalar"] = {
             tank   = { "eine Notiz", "noch eine", "und eine dritte" },
             healer = {},
             dps    = { string.rep("sehr langer Hinweis ", 20) },
         },
+        ["Faldrim Anvilmar"] = { tank = many, healer = {}, dps = { "kurz" } },
         ["Kein Boss von uns"] = { dps = { "ohne Zuordnung" } },
     }
     EveryBoss("mit Tipps")
@@ -435,25 +454,22 @@ Check(subBudget - subUsed >= 60,
 -- DIE DUNGEONS SIND SEIT 5.2.0.0 DER SCHWIERIGERE FALL, und zwar
 -- um Groessenordnungen: neunundzwanzig Instanzen (neun aus Forever,
 -- zwanzig aus Classic) mit Stufenzeile waeren 1334 px in einer
--- Spalte von 716. Die Seite staffelt deshalb nach Stufenabschnitt
--- und Fluegel und rechnet ihren Baum vor dem Bauen durch.
+-- Spalte von 716. Die Spalte staffelt deshalb nach Stufenabschnitt,
+-- und die Bosse stehen seit dem Umbau der Seite nicht mehr in ihr,
+-- sondern auf der Seite (Bosszeile, ein Fluegel zur Zeit).
 --
--- EINE STICHPROBE REICHT HIER NICHT. Welcher Baum der hoechste ist,
--- haengt nicht am Dungeon mit den meisten Bossen (Blackrock Depths
--- mit zweiundzwanzig ist in Fluegel geteilt und deshalb harmlos),
--- sondern am Zusammenspiel aus Abschnittsgroesse, Fluegelzahl und
--- Bosszahl. Geprueft wird deshalb JEDE Instanz in JEDEM Fluegel -
--- das sind ein paar Dutzend Baeume, und genau einer davon muss
--- eines Tages der sein, der zu hoch wird.
+-- Geprueft wird trotzdem JEDE Instanz in JEDEM Fluegel: der offene
+-- Stufenabschnitt entscheidet, wie hoch die Spalte wird, und jeder
+-- Fluegel zeichnet die Seite einmal mit seiner Bosszeile - ein
+-- Fehler in einem Fluegelreiter fiele sonst erst im Spiel auf.
 local subHeadroom = WeintCodex.Navigation.SubNavHeadroom()
 local worstDung, worstDungName, worstDungFail = 0, "", nil
 
 for _, dungeon in ipairs(WeintCodex.DungeonData.AllInstances()) do
     local wings = WeintCodex.DungeonData.Wings(dungeon) or { false }
     for _, wing in ipairs(wings) do
-        -- Ueber Select() auf einen Boss des Fluegels: nur so geht
-        -- die Seite in die vertiefte Ansicht, und nur die traegt die
-        -- Bossliste.
+        -- Ueber Select() auf einen Boss des Fluegels: so zeigt die
+        -- Seite diesen Fluegel und diesen Boss.
         local first = wing
             and WeintCodex.DungeonData.BossesInWing(dungeon, wing)[1]
             or (dungeon.bosses or {})[1]
@@ -564,11 +580,20 @@ do
     end
 
     -- Die Uebersicht der beschwoerbaren Bosse waechst mit dem
-    -- Bestand und wird nur ueber einen Klick erreicht.
+    -- Bestand und wird nur ueber einen Klick erreicht: ihre Zeile
+    -- steht am Ende der Spalte, und gesucht wird sie ueber ihre
+    -- Beschriftung, nicht ueber einen Index, der beim naechsten
+    -- Umbau daneben saesse.
     WeintCodex.Navigation.SwitchTo("dungeons")
-    local first = WeintCodex.Navigation.SidebarButtons()[1]
-    if first then
-        first:Click()
+    local summonRow
+    for _, btn in ipairs(WeintCodex.Navigation.SidebarButtons()) do
+        if btn._label and btn._label:GetText() == "Beschwörbare Zusatzbosse" then
+            summonRow = btn
+        end
+    end
+    Check(summonRow ~= nil, "die Spalte fuehrt die beschwoerbaren Zusatzbosse")
+    if summonRow then
+        summonRow:Click()
         local used = WeintCodex.DungeonPages.PageHeight()
         if used > worst then worst, worstName = used, "Beschwoerbare Zusatzbosse" end
         if used > budget and not failed then
@@ -580,6 +605,19 @@ do
         .. (failed and (" - " .. failed) or ""))
     Check(worst <= budget, "Seiteninhalt, schlimmster Fall (" .. worstName .. "): "
         .. worst .. " von " .. budget .. " px")
+
+    -- Und mit einem Bot, der nicht aufhoert: dreissig Tipps zu einer
+    -- Rolle passen in kein Fenster. Die Detailkarte nimmt dann den
+    -- Platz bis zum Rand und rollt - die Seite wird genau so hoch
+    -- wie das Budget, keinen Pixel hoeher.
+    local many = {}
+    for i = 1, 30 do many[i] = "Hinweis " .. i .. ": " .. string.rep("Text ", 30) end
+    _G.WeintCodex_SavedData.bossData = { ["Faldrim Anvilmar"] = { tank = many } }
+    Measure("hall_of_thanes", "faldrim_anvilmar", "Hall of Thanes / Faldrim Anvilmar mit 30 Tipps")
+    _G.WeintCodex_SavedData.bossData = {}
+    Check(WeintCodex.DungeonPages.PageHeight() == budget,
+        "eine Bosskarte mit zu vielen Tipps fuellt das Fenster und rollt ("
+        .. WeintCodex.DungeonPages.PageHeight() .. " von " .. budget .. " px)")
 end
 
 Check(WeintCodex.Navigation.Fits({ { label = "A" } }) == true,

@@ -1,45 +1,46 @@
 --------------------------------------------------
 -- WeintCodex :: Dungeons
 --
--- NEUNUNDZWANZIG INSTANZEN, DREI HERKUENFTE, EIN BAUM.
+-- NEUNUNDZWANZIG INSTANZEN, DREI FLAECHEN, EINE SEITE.
 --
--- Bis 5.1.0.0 fuehrte diese Seite neun Dungeons ohne einen einzigen
--- Boss. Seither hat sich zweierlei geaendert, und nur eines davon
--- ist neue Information:
+-- Bis 5.2.0.0 teilten sich vier Flaechen die Aufmerksamkeit:
+-- Navigation, ein Baum aus Stufen, Instanzen und Bossen, ein
+-- Inhaltsbereich von 212 px und rechts ein Detailbereich, der alles
+-- trug, was auf der Seite nicht mehr Platz hatte. Die Seite selbst
+-- war die schmalste der vier - und ihre Bosskarte sagte, dass die
+-- Bosse links stehen.
 --
---   1. Die klassischen Dungeons gehoeren dazu. Forever ersetzt sie
---      nicht, es stellt neun daneben - wer auf Stufe 32 einen
---      Dungeon sucht, bekommt von einer Neunerliste die falsche
---      Antwort.
---   2. Fuer einen Teil der Forever-Dungeons liegen Bossnamen vor.
---      NICHT von Blizzard, sondern aus Beta-Berichten. Sie stehen
---      hier, und daneben steht, woher sie kommen.
+-- Seither ist es EINE Seite in voller Breite, und sie liest sich von
+-- oben nach unten:
 --
--- DIE SEITE HAT DESHALB EINE AUFGABE MEHR ALS FRUEHER: sie muss
--- sichtbar machen, wie fest etwas steht. Eine Bossliste aus einem
--- Forenbericht sieht auf einer Oberflaeche genauso aus wie eine aus
--- dem Handbuch - es sei denn, die Oberflaeche sagt den Unterschied.
--- Das tut sie hier an drei Stellen: im Kopf (Herkunftszeile), auf
--- der Bosskarte (warum es nicht feststeht) und im Detailbereich
--- (der lange Text dazu).
+--   1. DER KOPF. Name, Stufenbereich, Gruppengroesse, Bosszahl -
+--      und rechts, ob die eigene Stufe passt.
+--   2. DIE BOSSE, als Zeile nummerierter Pillen. Ein Klick oeffnet
+--      den Boss darunter, ein zweiter schliesst ihn. Grosse
+--      Instanzen zeigen ihre Fluegel als Reiter darueber, einen
+--      Fluegel zur Zeit - so verliert kein Fluegel einen Boss.
+--   3. DIE DETAILKARTE. Ohne Boss die Aufstellung (Rollen, Plaetze,
+--      Baeume), mit Boss das, was ueber ihn berichtet ist: wo er
+--      steht, wie er kommt, was die Rollen tun. Sie ist die eine
+--      Flaeche, die rollen darf - was der Bot je Rolle schickt, weiss
+--      niemand vorher, und gekuerzt wird hier nichts.
 --
--- WARUM DER BAUM SICH STAFFELT. Neunundzwanzig Instanzen mit
--- Stufenzeile sind 1334 px, die Listenspalte hat 716. Die Seite
--- rechnet ihren Baum deshalb VOR dem Bauen durch
--- (Navigation.Fits) und faellt auf eine Ansicht zurueck, die passt.
--- Das ist genau der Zweck, fuer den MeasureSidebar gebaut wurde:
--- eine Spalte, die still ueberlaeuft, sieht nicht aus wie ein
--- Fehler, sondern wie eine Funktion, die es nicht gibt.
+-- Die Spalte links fuehrt nur noch Dungeons, nach Stufenabschnitt.
+-- Der Detailbereich rechts bleibt auf dieser Seite zu.
 --
--- WAS HIER WEITERHIN NICHT STEHT:
+-- WAS SICH NICHT GEAENDERT HAT, weil es keine Frage der Form ist:
 --
---   * KEINE ERFUNDENE TAKTIK. Positionshinweise ("patrouilliert den
---     ersten Gang") stehen da, wo sie berichtet sind. Was eine Rolle
---     an einem Kampf tut, kommt vom Discord-Bot oder gar nicht.
---   * KEINE KARTENBILDER. Siehe MapNote() weiter unten - das ist
---     eine eigene Entscheidung mit einer eigenen Begruendung.
---   * KEINE GESPEICHERTE ID. Fuenfergruppen haben keinen
---     Wochen-Lockout.
+--   * DIE HERKUNFT STEHT DRAN. Eine Bossliste aus einem Forenbericht
+--     sieht auf einer Oberflaeche genauso aus wie eine aus dem
+--     Handbuch - es sei denn, die Oberflaeche sagt den Unterschied.
+--     Er steht als Vorsatz an der Bosszeile, und wer ihn ueberfaehrt,
+--     liest, warum.
+--   * KEINE ERFUNDENE TAKTIK. Was eine Rolle an einem Kampf tut,
+--     kommt vom Discord-Bot oder gar nicht.
+--   * KEINE PULLNUMMER OHNE REIHENFOLGE. `orderKnown = false` heisst:
+--     die Pillen tragen keine Zahl.
+--   * KEINE KARTENBILDER. Siehe unten.
+--   * KEINE GESPEICHERTE ID. Fuenfergruppen haben keinen Lockout.
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -48,6 +49,7 @@ WeintCodex.DungeonPages = {}
 local C = WeintCodex.Colors
 local D = WeintCodex.DungeonData
 local S = WeintCodex.Sources
+local M = WeintCodex.Metrics
 
 local page         = nil
 local rows         = {}
@@ -55,7 +57,6 @@ local selectedId   = nil
 local selectedBoss = nil
 local selectedWing = nil
 local openBracket  = 1
-local browsing     = true
 local showSummons  = false
 local building     = false
 
@@ -63,6 +64,21 @@ local function ClearRows()
     for _, row in ipairs(rows) do row:Hide() end
     wipe(rows)
 end
+
+--------------------------------------------------
+-- Masse
+--------------------------------------------------
+
+local PAD_X, PAD_Y, GAP = M.PAD_X, M.PAD_Y, M.GAP
+
+local CARD_PAD      = 20    -- Innenabstand der Detailkarte
+local BAR_W         = 10    -- schlanke Bildlaufleiste in der Karte
+local SECTION_H     = 22    -- Rubrikzeile "Bosse"
+local PILL_H        = 28
+local PILL_GAP_X    = 8
+local PILL_GAP_Y    = 6
+local GHOST_W       = 40    -- Pille ohne Namen (Anzahl bekannt)
+local MIN_DETAIL_H  = 160   -- weniger Karte als das ist keine
 
 --------------------------------------------------
 -- Die eigene Stufe
@@ -103,34 +119,113 @@ end
 --
 -- WAS ES STATTDESSEN GIBT, und das ist der brauchbare Teil: WO ein
 -- Boss steht, laesst sich SAGEN, auch ohne ihn zu zeigen. Genau
--- dafuer ist `boss.position` da.
+-- dafuer ist `boss.position` da, und genau deshalb steht es auf der
+-- Bosskarte an erster Stelle.
 
-local function MapNote(dungeon)
-    if D.IsLegacy(dungeon) then
-        return "Karten zeigt WeintCodex keine - die des Spiels gehören "
-            .. "Blizzard. Wo ein Boss steht, steht als Text an ihm."
+--------------------------------------------------
+-- Was die Seite an Platz hat
+--------------------------------------------------
+-- BREITE: im Spiel die des Inhaltsbereichs; im Prueflauf setzt
+-- load_test.lua den Inhaltsbereich auf die Breite des kleinsten
+-- Fensters, damit der Lauf den schlimmsten Fall misst. Wo eine
+-- Hoehe aus Text geschaetzt wird (WeintCodex.Paragraph), rechnet
+-- die Seite IMMER mit der kleinsten Breite - die Schaetzung soll im
+-- Spiel und im Prueflauf dieselbe sein.
+--
+-- HOEHE: dasselbe Budget wie fuer die Listenspalte
+-- (Navigation.SubNavBudget), nur fuer den Inhalt - und aus demselben
+-- Grund: was hier unten rausfaellt, faellt lautlos raus.
+
+local function MinContentWidth()
+    return WeintCodex.Navigation.ContentBudgetWidth()
+end
+
+local function ContentWidth()
+    local cp = WeintCodex.ContentPanel
+    local w  = cp and cp:GetWidth()
+    if type(w) ~= "number" or w < MinContentWidth() then
+        return MinContentWidth()
     end
-    if dungeon.mapArt == true then
-        return "Für diesen Dungeon liegt im Beta-Client Kartenmaterial. "
-            .. "WeintCodex zeigt es nicht: es gehört Blizzard, und welchen "
-            .. "Texturpfad Forever dafür vergibt, ist unbekannt. Wo ein Boss "
-            .. "steht, steht als Text an ihm."
-    end
-    if dungeon.mapArt == false then
-        return "Für diesen Dungeon liegt im Beta-Client noch keine Karte - "
-            .. "auch nicht im Spiel. Ohne Karte und ohne Bossliste bleibt "
-            .. "diese Seite bei dem, was angekündigt ist."
-    end
-    return nil
+    return w
+end
+
+-- Der Inhalt zwischen den Raendern, beim kleinsten Fenster.
+local function ContentBudget()
+    local limits = WeintCodex.WindowLimits or {}
+    return (limits.minH or 780) - (M.TITLEBAR_H or 40) - 2 * PAD_Y
+end
+
+-- Was im SPIEL gerade an Hoehe da ist - mehr als das Budget, wenn
+-- das Fenster groesser ist als das kleinste. Die Detailkarte darf
+-- den Platz nehmen; die Rechnung des Prueflaufs bleibt beim Budget.
+local function AvailableHeight()
+    local cp = WeintCodex.ContentPanel
+    local h  = cp and cp:GetHeight()
+    local budget = ContentBudget()
+    if type(h) ~= "number" or h - 2 * PAD_Y < budget then return budget end
+    return h - 2 * PAD_Y
+end
+
+-- Wie hoch die zuletzt gezeichnete Seite geworden ist, von der
+-- Oberkante des Inhaltsbereichs bis zur Unterkante des letzten
+-- Bausteins. Der Prueflauf haelt das gegen PageBudget().
+local pageUsed = 0
+
+function WeintCodex.DungeonPages.PageHeight()
+    return pageUsed
+end
+
+function WeintCodex.DungeonPages.PageBudget()
+    return ContentBudget() + PAD_Y
+end
+
+-- Breite, die ein Absatz in der Detailkarte mindestens hat.
+local function BodyWidthMin()
+    return MinContentWidth() - 2 * PAD_X - 2 * CARD_PAD - BAR_W
 end
 
 --------------------------------------------------
--- Herkunft als Text
+-- Kleine Helfer
 --------------------------------------------------
 
--- Die kurze Zeile: "Unbestaetigt - Beta-Berichte der Community".
-local function SourceLine(dungeon)
-    return S.Label(D.BossSource(dungeon))
+-- Breite eines Textes: gemessen, aber nie schmaler als geschaetzt.
+-- Im Prueflauf antwortet der Client mit einem Naeherungswert, im
+-- Spiel mit der Wahrheit - und wo die Schaetzung darueber liegt,
+-- bleibt Luft, nie fehlt welche.
+local function TextWidth(fs, text, size, factor)
+    local est = WeintCodex.Utf8Len(text) * size * (factor or 0.56)
+    local ok, w = pcall(fs.GetStringWidth, fs)
+    if ok and type(w) == "number" and w > est then return w end
+    return est
+end
+
+local function Tooltip(frame, title, lines)
+    frame:EnableMouse(true)
+    frame:SetScript("OnEnter", function(self)
+        if not GameTooltip then return end
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
+        GameTooltip:SetText(title, C.textBright[1], C.textBright[2], C.textBright[3])
+        for _, line in ipairs(lines) do
+            if line and line ~= "" then
+                GameTooltip:AddLine(line, C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
+            end
+        end
+        GameTooltip:Show()
+    end)
+    frame:SetScript("OnLeave", function()
+        if GameTooltip then GameTooltip:Hide() end
+    end)
+end
+
+-- Ein Eyebrow, den man ueberfahren kann: fuer den Vorsatz der
+-- Herkunft, der seine Begruendung im Tooltip traegt.
+local function HoverEyebrow(parent, text, opts)
+    local host = CreateFrame("Frame", nil, parent)
+    host:SetHeight(14)
+    local fs = WeintCodex.Eyebrow(host, text, opts)
+    fs:SetPoint("RIGHT", host, "RIGHT", 0, 0)
+    host:SetWidth(TextWidth(fs, WeintCodex.Spaced(text), opts.size or 10, 0.6) + 4)
+    return host, fs
 end
 
 -- Was ueber die Vollstaendigkeit zu sagen ist. Drei Faelle, drei
@@ -145,11 +240,12 @@ local function CompletenessLine(dungeon)
             return named .. " von " .. total .. " Kämpfen benannt - die Liste "
                 .. "ist unvollständig."
         end
-        return "Diese Liste ist UNVOLLSTAENDIG: es sind " .. named .. " Kämpfe "
-            .. "bekannt, wie viele es insgesamt sind, nicht."
+        return "Die Liste ist unvollständig: " .. named .. " Kämpfe sind bekannt, "
+            .. "wie viele es insgesamt sind, nicht."
     end
     if D.OrderKnown(dungeon) == false then
-        return named .. " Kämpfe sind bekannt, ihre Reihenfolge nicht."
+        return named .. " Kämpfe sind bekannt, ihre Reihenfolge nicht - deshalb "
+            .. "steht keine Nummer daran."
     end
     return nil
 end
@@ -158,511 +254,590 @@ end
 -- Seite
 --------------------------------------------------
 
+local Redraw
+
 local function BuildPage()
     if page then return page end
     local cp = WeintCodex.ContentPanel
     local f  = CreateFrame("Frame", nil, cp)
     f:SetAllPoints(cp)
+
+    -- Waechst das Fenster, laufen die Pillen anders um - und alles
+    -- darunter rueckt. Neu gezeichnet wird nur, wenn sich die
+    -- Zeilenzahl wirklich aendert; das entscheidet die Seite selbst
+    -- (siehe f._relayout, gesetzt in DrawBosses).
+    f:SetScript("OnSizeChanged", function()
+        if f._relayout then f._relayout() end
+    end)
+
     page = f
     return f
 end
 
 --------------------------------------------------
--- Detailbereich: der Dungeon selbst
+-- 1. Der Kopf
 --------------------------------------------------
+-- Der Name ist das Zentrum. Darunter eine Zeile Tatsachen, darunter
+-- - in der ruhigen Serife - der eine Satz, der sagt, was das fuer
+-- ein Ort ist. Rechts oben, falls der Client eine Stufe nennt, ob
+-- sie passt. Sonst nichts: kein Kennzahlenblock, keine Metadaten.
 
-local function InstanceInspector(dungeon)
+local function DrawHead(f, dungeon)
     local range = D.LevelRange(dungeon)
-    local level = MyLevel()
-    local fits  = D.FitsLevel(dungeon, level)
+    local named = D.HasBosses(dungeon) and #dungeon.bosses or nil
+    local total = D.BossCount(dungeon)
 
-    -- Vier Zustaende, vier Texte. Ohne Stufe vom Client steht da
-    -- "nicht bekannt" und nicht "passt nicht".
-    local levelValue, levelColor
-    if level == nil then
-        levelValue, levelColor = "noch nicht bekannt", "textFaint"
-    elseif fits == true then
-        levelValue, levelColor = level .. " · passt", "successBright"
-    elseif level < (dungeon.minLevel or 0) then
-        levelValue, levelColor = level .. " · zu niedrig", "warningBright"
-    else
-        levelValue, levelColor = level .. " · darüber", "textMuted"
-    end
-
-    -- Die Bosszeile unterscheidet drei Dinge, die frueher alle
-    -- "noch nicht bekannt" hiessen: benannte Kaempfe, gezaehlte
-    -- Kaempfe, und gar nichts.
-    local named  = D.HasBosses(dungeon) and #dungeon.bosses or nil
-    local total  = D.BossCount(dungeon)
-    local bossValue, bossColor
+    local facts = {}
+    facts[#facts + 1] = range and ("Stufe " .. range) or "Stufenbereich noch nicht bekannt"
+    facts[#facts + 1] = dungeon.size .. " Spieler"
     if named and total and named < total then
-        bossValue, bossColor = named .. " von " .. total, "warningBright"
+        facts[#facts + 1] = named .. " von " .. total .. " Bossen bekannt"
     elseif named then
-        bossValue, bossColor = tostring(named), "textNormal"
+        facts[#facts + 1] = named .. (named == 1 and " Boss" or " Bosse")
     elseif total then
-        bossValue, bossColor = total .. " · Namen unbekannt", "warningBright"
-    else
-        bossValue, bossColor = "noch nicht bekannt", "textFaint"
+        facts[#facts + 1] = total .. " Kämpfe"
     end
 
-    local blocks = {
-        { type = "header", text = D.IsLegacy(dungeon) and "Dungeon (Classic)" or "Dungeon" },
-        { type = "rows", rows = {
-            { label = "Gebiet",       value = D.ZoneLabel(dungeon) or "—" },
-            { label = "Stufen",       value = range or "noch nicht bekannt",
-              valueColor = range and "textNormal" or "textFaint" },
-            { label = "Gruppengröße", value = dungeon.size .. " Spieler" },
-            { label = "Inhalt",       value = dungeon.release or "—" },
-            { label = "Bosse",        value = bossValue, valueColor = bossColor },
-            { label = "Deine Stufe",  value = levelValue, valueColor = levelColor },
-        }},
-    }
+    -- Hoehe aus den Teilen, nicht geraten: Eyebrow, Titel, Fakten -
+    -- und der Themensatz, wenn es einen gibt.
+    local baseH  = 10 + 6 + 34 + 4 + 16
+    local themeH = 0
+    local THEME_SIZE, THEME_SPACING = 14, 2
+    if dungeon.theme then
+        local cols = math.floor((MinContentWidth() - 2 * PAD_X) / (THEME_SIZE * 0.60))
+        themeH = 6 + WeintCodex.EstimateLines(dungeon.theme, cols) * (THEME_SIZE + THEME_SPACING)
+    end
+
+    local head = WeintCodex.PageHead(f, {
+        eyebrow   = (D.IsLegacy(dungeon) and "Classic · " or "Dungeon · ")
+                 .. (D.ZoneLabel(dungeon) or ""),
+        title     = dungeon.name,
+        titleSize = 30,
+        sub       = table.concat(facts, "   ·   "),
+        subSize   = 13,
+        subColor  = range and "textMuted" or "textFaint",
+        height    = baseH + themeH,
+    })
+    rows[#rows + 1] = head
 
     if dungeon.theme then
-        blocks[#blocks + 1] = { type = "divider" }
-        blocks[#blocks + 1] = { type = "text", text = dungeon.theme, color = "textMuted" }
+        local themeFs = WeintCodex.Paragraph(head, dungeon.theme, {
+            width = MinContentWidth() - 2 * PAD_X, size = THEME_SIZE, spacing = THEME_SPACING,
+            color = "textDim", font = WeintCodex.Fonts.displayQuiet,
+        })
+        themeFs:SetPoint("TOPLEFT",  head.Sub, "BOTTOMLEFT", 0, -6)
+        themeFs:SetPoint("TOPRIGHT", head,     "TOPRIGHT",   0, 0)
     end
 
-    -- DER LANGE HERKUNFTSTEXT. Er steht im Detailbereich und nicht
-    -- auf der Seite, weil der Detailbereich die eine Stelle ist, die
-    -- rollen darf - und weil er nur den interessiert, der nachfragt.
-    local source = D.BossSource(dungeon)
-    if source then
-        blocks[#blocks + 1] = { type = "divider" }
-        blocks[#blocks + 1] = { type = "header", text = "Woher die Bossliste stammt" }
-        blocks[#blocks + 1] = { type = "text", text = S.Label(source) or source.label,
-                                color = "warningBright" }
-        blocks[#blocks + 1] = { type = "text", text = S.Why(source) or "", color = "textDim" }
-        local completeness = CompletenessLine(dungeon)
-        if completeness then
-            blocks[#blocks + 1] = { type = "text", text = completeness, color = "textDim" }
+    -- Vier Zustaende, drei davon sichtbar. Ohne Stufe vom Client
+    -- steht hier NICHTS - nicht "passt nicht", und nicht "Stufe 0".
+    local level = MyLevel()
+    local fits  = D.FitsLevel(dungeon, level)
+    if level and fits ~= nil then
+        local text, tone
+        if fits then
+            text, tone = "Deine Stufe " .. level .. " · passt", "successBright"
+        elseif level < (dungeon.minLevel or 0) then
+            text, tone = "Deine Stufe " .. level .. " · zu niedrig", "warningBright"
+        else
+            text, tone = "Deine Stufe " .. level .. " · darüber", "textFaint"
+        end
+        local chip = WeintCodex.Eyebrow(head, text, { color = tone, size = 10, justify = "RIGHT" })
+        chip:SetPoint("TOPRIGHT", head, "TOPRIGHT", 0, -1)
+    end
+
+    return -(PAD_Y + head.Height)
+end
+
+--------------------------------------------------
+-- 2. Die Bosse
+--------------------------------------------------
+
+-- EINE PILLE JE BOSS. Nummer (nur wo die Reihenfolge bekannt ist),
+-- Name, und rechts ein Kennzeichen, wenn es eines gibt: BESCHWOEREN
+-- schlaegt OPTIONAL schlaegt TIPPS, weil "steht ohne Zutun gar nicht
+-- da" die dringendere Auskunft ist. Die Breite kommt aus dem Text.
+local function BossPill(f, dungeon, boss)
+    local tag, tagTone
+    if boss.summon then
+        tag, tagTone = "Beschwören", "warningBright"
+    elseif boss.optional then
+        tag, tagTone = "Optional", "textFaint"
+    elseif WeintCodex.Roles.HasTips(boss.name) then
+        tag, tagTone = "Tipps", "textMuted"
+    end
+
+    local pill = WeintCodex.CreateSurface(f, {
+        button = true, tone = "flat", surface = "surface2",
+        radius = 8, backdrop = "bgDark", height = PILL_H,
+    })
+
+    local x = 12
+    local num
+    if boss.order then
+        num = pill:CreateFontString(nil, "OVERLAY")
+        num:SetFont(WeintCodex.Fonts.monoBold, 10, "")
+        num:SetPoint("LEFT", pill, "LEFT", x, 0)
+        num:SetText(tostring(boss.order))
+        x = x + TextWidth(num, tostring(boss.order), 10, 0.6) + 8
+    end
+
+    local name = pill:CreateFontString(nil, "OVERLAY")
+    name:SetFont(WeintCodex.Fonts.sans, 12, "")
+    name:SetWordWrap(false)
+    name:SetPoint("LEFT", pill, "LEFT", x, 0)
+    name:SetText(boss.name or "?")
+    x = x + TextWidth(name, boss.name or "?", 12)
+
+    -- Ungesperrt, anders als die Kennzeichen der Spalte: in einer
+    -- Zeile aus elf Pillen ist Breite das knappe Gut.
+    if tag then
+        local mark = pill:CreateFontString(nil, "OVERLAY")
+        mark:SetFont(WeintCodex.Fonts.mono, 9, "")
+        mark:SetPoint("LEFT", pill, "LEFT", x + 8, 0)
+        local mc = C[tagTone] or C.textFaint
+        mark:SetTextColor(mc[1], mc[2], mc[3])
+        mark:SetText(WeintCodex.Upper(tag))
+        x = x + 8 + TextWidth(mark, tag, 9, 0.6)
+    end
+
+    pill:SetWidth(x + 12)
+    pill._w = x + 12
+
+    -- Der aktive Zustand: hellere Flaeche, heller Name, Akzentlinie
+    -- unten. Derselbe Wortschatz wie in der Navigationsspalte.
+    local line = pill:CreateTexture(nil, "ARTWORK")
+    line:SetHeight(2)
+    line:SetPoint("BOTTOMLEFT",  pill, "BOTTOMLEFT",   8, 0)
+    line:SetPoint("BOTTOMRIGHT", pill, "BOTTOMRIGHT", -8, 0)
+    line:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1.0)
+    line:Hide()
+
+    local active = (selectedBoss == boss.id)
+    local function Paint(hover)
+        if active then
+            pill:SetSurface("surface3")
+            name:SetFont(WeintCodex.Fonts.sansMedium, 12, "")
+            name:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
+            if num then num:SetTextColor(C.accent[1], C.accent[2], C.accent[3]) end
+            line:Show()
+        elseif hover then
+            pill:SetSurface("surface3")
+            name:SetTextColor(C.textNormal[1], C.textNormal[2], C.textNormal[3])
+        else
+            pill:SetSurface("surface2")
+            name:SetFont(WeintCodex.Fonts.sans, 12, "")
+            name:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3])
+            if num then num:SetTextColor(C.textFaint[1], C.textFaint[2], C.textFaint[3]) end
+            line:Hide()
         end
     end
+    Paint(false)
 
-    if dungeon.conflict then
-        blocks[#blocks + 1] = { type = "divider" }
-        blocks[#blocks + 1] = { type = "header", text = "Widerspruch in den Quellen" }
-        blocks[#blocks + 1] = { type = "text", text = dungeon.conflict, color = "textDim" }
-    end
+    pill:SetScript("OnEnter", function() Paint(true) end)
+    pill:SetScript("OnLeave", function() Paint(false) end)
+    pill:SetScript("OnClick", function()
+        if selectedBoss == boss.id then
+            selectedBoss = nil
+        else
+            selectedBoss = boss.id
+        end
+        Redraw()
+    end)
 
-    local mapNote = MapNote(dungeon)
-    if mapNote then
-        blocks[#blocks + 1] = { type = "divider" }
-        blocks[#blocks + 1] = { type = "header", text = "Karten und Bilder" }
-        blocks[#blocks + 1] = { type = "text", text = mapNote, color = "textDim" }
-    end
-
-    blocks[#blocks + 1] = { type = "divider" }
-    for _, block in ipairs(WeintCodex.RolePanel.InstanceBlocks(dungeon)) do
-        blocks[#blocks + 1] = block
-    end
-
-    return blocks
+    rows[#rows + 1] = pill
+    return pill
 end
 
---------------------------------------------------
--- Eine Karte mit Titel, Text und optionalem Zusatz
---------------------------------------------------
--- Dreimal gebraucht auf dieser Seite (Bosse, Beschwoerung,
--- Widerspruch), deshalb einmal gebaut.
-
--- WIE HOCH EINE KARTE WIRD, UND WARUM DAS AUSGERECHNET WIRD.
---
--- Beim kleinsten zulaessigen Fenster ist der Inhaltsbereich keine
--- Seite, sondern eine rund 212 px schmale Spalte - da passen etwa
--- vierunddreissig Zeichen in eine Zeile. Eine Karte mit fester Hoehe
--- und einem Text, dessen Laenge aus dem Bestand kommt, laeuft dort
--- ueber, und ein Text, der unter dem Kartenrand weiterlaeuft, sieht
--- nicht aus wie ein Fehler, sondern wie ein Satz, der aufhoert.
---
--- Dieselbe Gefahr und dieselbe Antwort wie bei RolePanel.BossCards:
--- rechnen, und im Zweifel kuerzen. Der ungekuerzte Text steht im
--- Detailbereich - das ist die eine Stelle, die rollen darf.
-local LINE_H      = 16
-local NARROW_COLS = 34   -- Zeichen je Zeile beim schmalsten Inhaltsbereich
-local MAX_LINES   = 9
-
--- WAS AUF DER BOSSSEITE FUER DIE DREI ROLLENKARTEN RESERVIERT WIRD.
--- Sie stehen UNTER der Karte und messen sich selbst
--- (RolePanel.BossCards) - ihre Hoehe steht also erst fest, wenn die
--- Karte darueber schon haengt. Statt sie zweimal zu zeichnen,
--- bekommt die Karte oben einen Deckel, und der Prueflauf rechnet die
--- fertige Seite gegen das Budget: laeuft sie ueber, ist diese Zahl
--- zu klein und nicht die Karte zu lang.
-local ROLE_CARDS_RESERVE = 260
-
--- Zeichenweise, nicht byteweise: ein Umlaut, den man in der Mitte
--- zerschneidet, wird im Spiel zu einem leeren Kaestchen.
-local function EstimateLines(text)
-    local lines = 0
-    for segment in (tostring(text or "") .. "\n"):gmatch("(.-)\n") do
-        local len = WeintCodex.Utf8Len(segment)
-        lines = lines + math.max(1, math.ceil(len / NARROW_COLS))
-    end
-    return lines
-end
-
--- WAS DIE SEITE UEBERHAUPT ZUR VERFUEGUNG HAT. Dieselbe Rechnung wie
--- fuer die Listenspalte (Navigation.SubNavBudget), nur fuer den
--- Inhaltsbereich - und aus demselben Grund: was hier unten
--- rausfaellt, faellt lautlos raus.
-local function ContentBudget()
-    local limits = WeintCodex.WindowLimits or {}
-    return (limits.minH or 780) - (WeintCodex.Metrics.TITLEBAR_H or 40)
-        - 2 * WeintCodex.Metrics.PAD_Y
-end
-
--- Wie hoch die zuletzt gezeichnete Seite geworden ist. Der Prueflauf
--- haelt das gegen ContentBudget() - siehe .github/tests/load_test.lua.
-local pageUsed = 0
-
-function WeintCodex.DungeonPages.PageHeight()
-    return pageUsed
-end
-
-function WeintCodex.DungeonPages.PageBudget()
-    return ContentBudget()
-end
-
--- DIE HOEHENRECHNUNG STEHT AN EINER STELLE, UND DAS IST DIE LEHRE
--- AUS DEM ERSTEN ANLAUF: sie stand an zweien (Aufrufer rechnete
--- Zeilen, Karte rechnete Hoehe) und lief um 26 px auseinander - genau
--- um die Fussnote, die eine gekuerzte Karte zusaetzlich braucht. Die
--- Seite lief damit unten aus dem Fenster.
---
--- Der Aufrufer sagt jetzt, WIE VIEL PLATZ da ist. Wie viele Zeilen
--- daraus werden, entscheidet die Karte.
---
--- Die Fussnotenzeile wird IMMER mitgerechnet, auch ohne Fussnote:
--- ob gekuerzt wird, stellt sich erst beim Messen heraus, und eine
--- Karte, die dann 26 px mehr braucht als zugeteilt, ist derselbe
--- Fehler noch einmal.
-local function InfoCard(f, y, opts)
-    local text     = opts.text or ""
-    local overhead = 16 + 26                    -- Rand + Titelzeile
-        + (opts.badge and 18 or 0)
-        + 26                                    -- Fussnotenzeile, immer
-        + 16
-
-    local maxLines = opts.maxHeight
-        and math.max(1, math.floor((opts.maxHeight - overhead) / LINE_H))
-        or MAX_LINES
-
-    local lines = EstimateLines(text)
-    local cut   = false
-    if lines > maxLines then
-        text  = WeintCodex.Truncate(text, maxLines * NARROW_COLS)
-        lines = maxLines
-        cut   = true
-    end
-
-    local height = overhead + lines * LINE_H
-
-    local card = WeintCodex.CreateSurface(f, {
-        tone = "plain", radius = 14, backdrop = "bgDark",
+-- Eine Pille ohne Namen. Der Fall City of Dalaran: neun Kaempfe
+-- sind berichtet, ihre Namen nicht. Neun leere Plaetze sagen genau
+-- das - und keine Nummer, weil eine Reihenfolge ohne Namen keine
+-- ist.
+local function GhostPill(f)
+    local pill = WeintCodex.CreateSurface(f, {
+        tone = "flat", surface = "surface1", radius = 8,
+        backdrop = "bgDark", height = PILL_H, width = GHOST_W,
     })
-    card:SetPoint("TOPLEFT",  f, "TOPLEFT",   WeintCodex.Metrics.PAD_X, y)
-    card:SetPoint("TOPRIGHT", f, "TOPRIGHT", -WeintCodex.Metrics.PAD_X, y)
-    card:SetHeight(height)
+    local q = pill:CreateFontString(nil, "OVERLAY")
+    q:SetFont(WeintCodex.Fonts.mono, 11, "")
+    q:SetPoint("CENTER", pill, "CENTER", 0, 0)
+    q:SetTextColor(C.textFaint[1], C.textFaint[2], C.textFaint[3])
+    q:SetText("?")
+    pill._w = GHOST_W
+    rows[#rows + 1] = pill
+    return pill
+end
 
+-- Pillen in Zeilen legen. Gibt die Zeilenzahl zurueck - und wird
+-- beim Vergroessern des Fensters noch einmal gefragt, ob sie
+-- gleich bleibt.
+local function LayoutPills(f, pills, top, width)
+    local x, y, n = 0, top, 1
+    for _, pill in ipairs(pills) do
+        if x > 0 and x + pill._w > width then
+            x = 0
+            y = y - PILL_H - PILL_GAP_Y
+            n = n + 1
+        end
+        pill:ClearAllPoints()
+        pill:SetPoint("TOPLEFT", f, "TOPLEFT", PAD_X + x, y)
+        x = x + pill._w + PILL_GAP_X
+    end
+    return n
+end
+
+-- Die Rubrikzeile ueber den Pillen: links "BOSSE · 4", rechts der
+-- Vorsatz der Herkunft. Er ist die eine Stelle auf der Seite, die
+-- sagt, wie fest die Liste steht - und im Tooltip, warum.
+local function SectionHead(f, y, label, source, extraLines, badgeText)
+    local rubric = WeintCodex.Eyebrow(f, label, { color = "textDim", size = 10 })
+    rubric:SetPoint("TOPLEFT", f, "TOPLEFT", PAD_X, y - 4)
+    rows[#rows + 1] = rubric
+
+    local text = badgeText or (source and S.Label(source))
+    if text then
+        local host = HoverEyebrow(f, text, { color = "warningBright", size = 10, justify = "RIGHT" })
+        host:SetPoint("TOPRIGHT", f, "TOPRIGHT", -PAD_X, y - 4)
+        local lines = { source and S.Why(source) or nil }
+        for _, extra in ipairs(extraLines or {}) do lines[#lines + 1] = extra end
+        Tooltip(host, "Woher das stammt", lines)
+        rows[#rows + 1] = host
+    end
+
+    return y - SECTION_H
+end
+
+-- Ein kurzer Absatz unter der Bosszeile (Vollstaendigkeit) oder an
+-- ihrer Stelle (kein Bestand). Gibt das y darunter zurueck.
+local function Note(f, y, text, color, size)
+    local fs, h = WeintCodex.Paragraph(f, text, {
+        width = MinContentWidth() - 2 * PAD_X, size = size or 12, color = color or "textDim",
+    })
+    fs:SetPoint("TOPLEFT",  f, "TOPLEFT",   PAD_X, y)
+    fs:SetPoint("TOPRIGHT", f, "TOPRIGHT", -PAD_X, y)
+    rows[#rows + 1] = fs
+    return y - h
+end
+
+-- Zeichnet den ganzen Bossabschnitt und gibt das y darunter zurueck.
+-- Vier Zustaende, vier Bilder - keiner davon ist eine leere Liste.
+local function DrawBosses(f, y, dungeon)
+    local named = D.HasBosses(dungeon) and #dungeon.bosses or nil
+    local total = D.BossCount(dungeon)
+
+    -- Namen liegen vor.
+    if named then
+        local wings = D.Wings(dungeon)
+        local completeness = CompletenessLine(dungeon)
+        y = SectionHead(f, y, "Bosse · " .. named, D.BossSource(dungeon),
+            { completeness })
+
+        local shown = dungeon.bosses
+        if wings then
+            local known = false
+            for _, wing in ipairs(wings) do
+                if wing == selectedWing then known = true end
+            end
+            if not known then selectedWing = wings[1] end
+            shown = D.BossesInWing(dungeon, selectedWing)
+
+            local items, selected = {}, 1
+            for index, wing in ipairs(wings) do
+                items[index] = { text = wing .. " · " .. #D.BossesInWing(dungeon, wing), key = wing }
+                if wing == selectedWing then selected = index end
+            end
+            local tabs = WeintCodex.CreateSegmentedControl(f, {
+                items = items, selected = selected, backdrop = "bgDark",
+                onSelect = function(key)
+                    selectedWing = key
+                    selectedBoss = nil
+                    Redraw()
+                end,
+            })
+            tabs:SetPoint("TOPLEFT", f, "TOPLEFT", PAD_X, y)
+            rows[#rows + 1] = tabs
+            y = y - 38 - 10
+        end
+
+        local pills = {}
+        for _, boss in ipairs(shown) do
+            pills[#pills + 1] = BossPill(f, dungeon, boss)
+        end
+
+        local top = y
+        local n = LayoutPills(f, pills, top, ContentWidth() - 2 * PAD_X)
+        y = y - n * PILL_H - (n - 1) * PILL_GAP_Y
+
+        -- Beim Vergroessern des Fensters neu umbrechen; nur wenn die
+        -- Zeilenzahl kippt, wird die Seite neu gezeichnet.
+        f._relayout = function()
+            local m = LayoutPills(f, pills, top, ContentWidth() - 2 * PAD_X)
+            if m ~= n then Redraw() end
+        end
+
+        if completeness then
+            y = Note(f, y - 6, completeness, "textFaint", 11)
+        end
+        return y
+
+    -- Die Anzahl liegt vor, die Namen nicht.
+    elseif total then
+        y = SectionHead(f, y, "Kämpfe · " .. total, dungeon.countSource or S.COMMUNITY,
+            { "Berichtet sind " .. total .. " Kämpfe. Ihre Namen sind es nicht - und "
+              .. "die wenigen, die kursieren, ergeben keine Liste, sondern einen "
+              .. "Ausschnitt." })
+        local pills = {}
+        for _ = 1, total do pills[#pills + 1] = GhostPill(f) end
+        local top = y
+        local n = LayoutPills(f, pills, top, ContentWidth() - 2 * PAD_X)
+        y = y - n * PILL_H - (n - 1) * PILL_GAP_Y
+        f._relayout = function()
+            local m = LayoutPills(f, pills, top, ContentWidth() - 2 * PAD_X)
+            if m ~= n then Redraw() end
+        end
+
+        local text = total .. " Kämpfe berichtet, Namen unbekannt."
+        if dungeon.partial and dungeon.partial.names then
+            text = text .. " Bisher benannt (" .. #dungeon.partial.names .. " von "
+                .. total .. "): " .. table.concat(dungeon.partial.names, ", ") .. "."
+        end
+        return Note(f, y - 8, text, "textFaint", 11)
+
+    -- Zwei Quellen, die einander widersprechen, ergeben keine Liste -
+    -- sie ergeben einen offenen Punkt, und der steht hier als solcher.
+    elseif dungeon.conflict then
+        y = SectionHead(f, y, "Bosse", nil, nil, "Quellen widersprechen sich")
+        f._relayout = nil
+        return Note(f, y, dungeon.conflict, "textMuted", 12)
+
+    -- Gar nichts. Auch das ist eine Auskunft, und sie steht da.
+    else
+        y = SectionHead(f, y, "Bosse", nil, nil, nil)
+        f._relayout = nil
+        return Note(f, y, "Welche Bosse in " .. dungeon.name .. " stehen, hat Blizzard "
+            .. "nicht veröffentlicht, und aus der Beta wird dazu nichts berichtet. "
+            .. "WeintCodex trägt die Liste nach, wenn es eine gibt, und erfindet "
+            .. "sie bis dahin nicht.", "textMuted", 12)
+    end
+end
+
+--------------------------------------------------
+-- 3. Die Detailkarte
+--------------------------------------------------
+-- EINE Karte, mit Kopf und Koerper. Der Koerper ist ein Bildlauffeld:
+-- passt der Inhalt, ist die Karte genau so hoch wie er; passt er
+-- nicht, nimmt die Karte den Platz bis zum Fensterrand und rollt.
+-- Das ist die eine Flaeche der Seite, die rollen darf - und sie
+-- rollt nur, wenn der Bot mehr geschickt hat, als das Fenster zeigt.
+--
+-- opts:
+--   eyebrow, title, titleFont, titleSize
+--   onClose            Schliessen-Knopf rechts oben
+--   build(inner, w)    zeichnet den Koerper in `inner`, `w` ist die
+--                      kleinste Breite; gibt die Hoehe zurueck
+--
+-- Gibt das y unter der Karte zurueck.
+
+local function DetailCard(f, y, opts)
+    local card = WeintCodex.CreateSurface(f, { tone = "plain", radius = 14, backdrop = "bgDark" })
+    card:SetPoint("TOPLEFT",  f, "TOPLEFT",   PAD_X, y)
+    card:SetPoint("TOPRIGHT", f, "TOPRIGHT", -PAD_X, y)
+    rows[#rows + 1] = card
+
+    local headY = -CARD_PAD
+    if opts.eyebrow then
+        local eb = WeintCodex.Eyebrow(card, opts.eyebrow, { color = "textDim", size = 10 })
+        eb:SetPoint("TOPLEFT", card, "TOPLEFT", CARD_PAD, headY)
+        headY = headY - 16
+    end
+
+    local titleSize = opts.titleSize or 20
     local title = card:CreateFontString(nil, "OVERLAY")
-    title:SetFont(WeintCodex.Fonts.sansSemi, 14, "")
-    title:SetPoint("TOPLEFT", card, "TOPLEFT", 20, -16)
+    title:SetFont(opts.titleFont or WeintCodex.Fonts.display, titleSize, "")
+    title:SetPoint("TOPLEFT", card, "TOPLEFT", CARD_PAD, headY)
     title:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
     title:SetText(opts.title or "")
+    headY = headY - titleSize - 8
 
-    local top = -42
-
-    -- Die Herkunftszeile steht UEBER dem Text und nicht darunter:
-    -- wer die Liste liest, soll vorher wissen, worauf er schaut.
-    if opts.badge then
-        local badge = WeintCodex.Eyebrow(card, opts.badge,
-            { color = opts.badgeColor or "warningBright", size = 10 })
-        badge:SetPoint("TOPLEFT", card, "TOPLEFT", 20, top)
-        top = top - 18
+    if opts.onClose then
+        local close = WeintCodex.CreateButton(card, {
+            kind = "ghost", text = "\195\151", width = 28, height = 28, size = 15,
+            radius = 8, backdrop = "cardTop", onClick = opts.onClose,
+        })
+        close:SetPoint("TOPRIGHT", card, "TOPRIGHT", -12, -12)
     end
 
-    local lbl = WeintCodex.Label(card, text, { color = "textMuted", size = 13 })
-    lbl:SetPoint("TOPLEFT",  card, "TOPLEFT",  20, top)
-    lbl:SetPoint("TOPRIGHT", card, "TOPRIGHT", -20, top)
+    local headH = -headY
 
-    -- VERLOREN GEHT NICHTS, UND DIE KARTE SAGT AUCH, DASS GEKUERZT
-    -- WURDE. Eine stille Kuerzung ist schlimmer als eine sichtbare:
-    -- sie liest sich wie der ganze Text.
-    local note = opts.note
-    if cut then
-        note = (note and (note .. "  ·  ") or "") .. "gekürzt – vollständig rechts"
-    end
-    if note then
-        local n = WeintCodex.Eyebrow(card, note, { color = "textFaint", size = 10 })
-        n:SetPoint("BOTTOMLEFT", card, "BOTTOMLEFT", 20, 14)
-    end
+    -- Der Koerper. Breite im Spiel aus dem Rahmen, im Prueflauf aus
+    -- dem Budget; die Schaetzung der Absaetze rechnet immer mit dem
+    -- Budget.
+    local sf, inner = WeintCodex.CreateScrollArea(card, CARD_PAD, -headH, 100, 100, true)
+    sf:ClearAllPoints()
+    sf:SetPoint("TOPLEFT",     card, "TOPLEFT",      CARD_PAD, -headH)
+    sf:SetPoint("BOTTOMRIGHT", card, "BOTTOMRIGHT", -CARD_PAD - BAR_W, CARD_PAD)
+    inner:SetWidth(ContentWidth() - 2 * PAD_X - 2 * CARD_PAD - BAR_W)
+    sf.scrollBarHideable = true
+    sf:HookScript("OnSizeChanged", function(self, w)
+        if type(w) == "number" and w > 0 then inner:SetWidth(w) end
+    end)
 
-    rows[#rows + 1] = card
-    return card
-end
+    local needed = opts.build(inner, BodyWidthMin()) or 0
+    inner:SetHeight(math.max(1, needed))
 
---------------------------------------------------
--- Der Dungeon
---------------------------------------------------
+    local remaining = AvailableHeight() + y - PAD_Y
+    local wanted    = headH + needed + CARD_PAD
+    local bar       = sf.WCScrollBar
 
-local function DrawInstance(f, dungeon)
-    ClearRows()
-
-    local PAD_X = WeintCodex.Metrics.PAD_X
-    local PAD_Y = WeintCodex.Metrics.PAD_Y
-    local GAP   = WeintCodex.Metrics.GAP
-
-    local range  = D.LevelRange(dungeon)
-    local named  = D.HasBosses(dungeon) and #dungeon.bosses or nil
-    local total  = D.BossCount(dungeon)
-
-    local stats = {
-        { key = "size", label = "Gruppe", value = dungeon.size, tone = "textNormal" },
-    }
-    if named then
-        stats[#stats + 1] = { key = "bosses", label = "Bosse", value = named,
-            tone = D.BossesComplete(dungeon) and "textNormal" or "warningBright" }
-    elseif total then
-        stats[#stats + 1] = { key = "bosses", label = "Kämpfe", value = total,
-            tone = "warningBright" }
-    end
-
-    local head = WeintCodex.PageHead(f, {
-        eyebrow   = (D.IsLegacy(dungeon) and "Classic · " or "")
-                 .. (D.ZoneLabel(dungeon) or "Dungeon"),
-        title     = dungeon.name,
-        titleSize = 28,
-        sub       = range and ("Stufe " .. range) or "Stufenbereich noch nicht bekannt",
-        subColor  = range and "textMuted" or "textFaint",
-        height    = 92,
-        stats     = stats,
-    })
-    rows[#rows + 1] = head
-
-    local y = -(PAD_Y + 92)
-
-    local roleCard, roleH = WeintCodex.RolePanel.Card(f, dungeon)
-    roleCard:SetPoint("TOPLEFT",  f, "TOPLEFT",   PAD_X, y)
-    roleCard:SetPoint("TOPRIGHT", f, "TOPRIGHT", -PAD_X, y)
-    rows[#rows + 1] = roleCard
-    y = y - roleH - GAP
-
-    --------------------------------------------------
-    -- Die Bosskarte: vier Zustaende
-    --------------------------------------------------
-
-    local title, text, badge, note
-
-    if named then
-        title = "Bosse"
-        badge = SourceLine(dungeon)
-        local wings = D.Wings(dungeon)
-        text = named .. " Kämpfe stehen links in der Spalte"
-            .. (wings and (", nach " .. #wings .. " Flügeln geteilt") or "")
-            .. ". Ein Klick darauf zeigt hier, wo der Boss steht und was für "
-            .. "Tank, Heiler und Schadensausteiler zu beachten ist."
-        note = CompletenessLine(dungeon)
-
-    elseif total then
-        -- DER FALL CITY OF DALARAN: die Anzahl ist bekannt, die
-        -- Namen sind es nicht. Das ist eine Auskunft und kein
-        -- Leerzustand - "neun Kaempfe" beantwortet die Frage "wie
-        -- lang wird das?" bereits.
-        title = "Kämpfe"
-        badge = S.Label(dungeon.countSource or S.COMMUNITY)
-        text  = "Berichtet sind " .. total .. " Kämpfe. Ihre Namen sind es "
-             .. "nicht - und die wenigen, die kursieren, ergeben keine Liste, "
-             .. "sondern einen Ausschnitt."
-        if dungeon.partial and dungeon.partial.names then
-            text = text .. "\n\nBisher benannt (" .. #dungeon.partial.names
-                .. " von " .. total .. "): "
-                .. table.concat(dungeon.partial.names, ", ") .. "."
-        end
-        note = "Reihenfolge unbekannt"
-
-    elseif dungeon.conflict then
-        -- DER FALL EXCAVATION SITE UND BLACKMAW HOLD. Zwei Quellen,
-        -- die einander widersprechen, ergeben keine Liste - sie
-        -- ergeben einen offenen Punkt, und der steht hier als
-        -- solcher. Das ist mehr wert als Schweigen: wer die
-        -- kursierende Liste anderswo gesehen hat, erfaehrt hier,
-        -- warum sie hier fehlt.
-        title = "Bosse"
-        badge = "Quellen widersprechen sich"
-        text  = dungeon.conflict
-        note  = "Forever erscheint am 04.11.2026"
-
+    if wanted <= remaining then
+        card:SetHeight(math.max(wanted, MIN_DETAIL_H))
+        if bar then bar:Hide() end
+        y = y - card:GetHeight()
     else
-        title = "Bosse"
-        text  = "Welche Bosse in " .. dungeon.name .. " stehen, hat Blizzard "
-             .. "nicht veröffentlicht, und aus der Beta wird dazu nichts "
-             .. "berichtet. WeintCodex trägt die Liste nach, wenn es eine "
-             .. "gibt, und erfindet sie bis dahin nicht."
-        note  = "Forever erscheint am 04.11.2026"
-    end
-
-    local summonable = D.SummonableBosses(dungeon)
-
-    -- DER PLATZ WIRD GETEILT, NICHT GESCHAETZT. Was nach Kopf und
-    -- Aufstellung uebrig ist, geht an die Bosskarte - und wenn eine
-    -- Beschwoerungskarte folgt, an beide zur Haelfte. Feste Hoehen
-    -- waeren hier das Problem: wie lang der Text wird, entscheidet
-    -- der Bestand.
-    local space = ContentBudget() + y - PAD_Y
-    if #summonable > 0 then space = math.floor((space - GAP) / 2) end
-
-    local bossCard = InfoCard(f, y, {
-        title = title, text = text, badge = badge, note = note,
-        maxHeight = space,
-    })
-    y = y - bossCard:GetHeight() - GAP
-
-    --------------------------------------------------
-    -- Beschwoerbare Zusatzbosse
-    --------------------------------------------------
-    -- Sie bekommen eine eigene Karte und nicht eine Zeile in der
-    -- Liste. Grund: sie stehen nicht da, bis jemand etwas tut - wer
-    -- das nicht weiss, laeuft an ihnen vorbei, und genau das ist die
-    -- Auskunft, die eine Bossliste nicht gibt.
-
-    if #summonable > 0 then
-        local lines = {}
-        for _, boss in ipairs(summonable) do
-            lines[#lines + 1] = boss.name .. " — " .. (boss.summon.text or "")
+        -- Fuellt bis zum Rand und rollt. Unten verankert, damit die
+        -- Karte mit dem Fenster mitwaechst, ohne neu zu zeichnen.
+        card:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -PAD_X, PAD_Y)
+        if bar then bar:Show() end
+        y = -(PAD_Y + AvailableHeight())
+        -- Weniger als MIN_DETAIL_H waere keine Karte, sondern ein
+        -- Schlitz - dann ist die Bosszeile zu hoch, nicht der Text zu
+        -- lang, und der Prueflauf soll es so sehen.
+        if remaining < MIN_DETAIL_H then
+            y = y - (MIN_DETAIL_H - remaining)
         end
-        local summonCard = InfoCard(f, y, {
-            title  = #summonable == 1 and "Beschwörbarer Zusatzboss"
-                  or ("Beschwörbare Zusatzbosse (" .. #summonable .. ")"),
-            text   = table.concat(lines, "\n\n"),
-            badge    = S.Label(summonable[1].summon.source),
-            maxHeight = ContentBudget() + y - PAD_Y,
-        })
-        y = y - summonCard:GetHeight()
     end
 
-    pageUsed = -y + PAD_Y
-    WeintCodex.Navigation.SetInspector(InstanceInspector(dungeon))
+    sf:SetVerticalScroll(0)
+    if sf.UpdateScrollChildRect then sf:UpdateScrollChildRect() end
+    return y
 end
 
---------------------------------------------------
--- Ein Boss
---------------------------------------------------
-
-local function BossInspector(dungeon, boss)
-    local blocks = {
-        { type = "header", text = "Boss" },
-        { type = "rows", rows = {
-            { label = "Instanz", value = dungeon.name },
-            { label = "Flügel", value = boss.wing or "—",
-              valueColor = boss.wing and "textNormal" or "textFaint" },
-            -- DIE PULLNUMMER STEHT NUR DA, WO DIE REIHENFOLGE
-            -- BEKANNT IST. In den Ruins of Lordaeron liegen sieben
-            -- Namen vor und keine Folge; "3 von 7" waere dort eine
-            -- Zahl, die niemand kennt.
-            { label = "Reihenfolge",
-              value = boss.order and (boss.order .. " von " .. #dungeon.bosses)
-                   or "nicht bekannt",
-              valueColor = boss.order and "textNormal" or "textFaint" },
-            { label = "Art", value = boss.summon and "nur beschworen"
-                   or (boss.optional and "optional" or "auf dem Weg"),
-              valueColor = boss.summon and "warningBright" or "textNormal" },
-        }},
-    }
-
-    if boss.nameAlt then
-        blocks[#blocks + 1] = { type = "divider" }
-        blocks[#blocks + 1] = { type = "header", text = "Zweiter Name" }
-        blocks[#blocks + 1] = { type = "text", color = "textDim",
-            text = "Derselbe Kampf wird auch als \"" .. boss.nameAlt .. "\" "
-                .. "berichtet. Welchen Namen der Client vergibt, ist offen - "
-                .. "WeintCodex sucht Bossnotizen unter beiden." }
-    end
-
-    if boss.position then
-        blocks[#blocks + 1] = { type = "divider" }
-        blocks[#blocks + 1] = { type = "header", text = "Wo er steht" }
-        blocks[#blocks + 1] = { type = "text", text = boss.position, color = "textMuted" }
-    end
-
-    if boss.note then
-        blocks[#blocks + 1] = { type = "divider" }
-        blocks[#blocks + 1] = { type = "header", text = "Dazu" }
-        blocks[#blocks + 1] = { type = "text", text = boss.note, color = "textMuted" }
-    end
-
-    if boss.summon then
-        blocks[#blocks + 1] = { type = "divider" }
-        blocks[#blocks + 1] = { type = "header", text = "Beschwören" }
-        blocks[#blocks + 1] = { type = "text", text = boss.summon.text, color = "textMuted" }
-        blocks[#blocks + 1] = { type = "text", color = "textFaint",
-            text = S.Label(boss.summon.source) or "" }
-    end
-
-    blocks[#blocks + 1] = { type = "divider" }
-    for _, block in ipairs(WeintCodex.RolePanel.BossBlocks(dungeon, boss)) do
-        blocks[#blocks + 1] = block
-    end
-
-    return blocks
+-- Ein Zwischentitel im Kartenkoerper.
+local function BodyHeading(inner, y, text)
+    local h = WeintCodex.Label(inner, text, { color = "textBright", size = 13,
+        font = WeintCodex.Fonts.sansSemi })
+    h:SetPoint("TOPLEFT", inner, "TOPLEFT", 0, y)
+    return y - 20
 end
 
-local function DrawBoss(f, dungeon, boss)
-    ClearRows()
-
-    local PAD_X = WeintCodex.Metrics.PAD_X
-    local PAD_Y = WeintCodex.Metrics.PAD_Y
-    local GAP   = WeintCodex.Metrics.GAP
-
-    local stats = {}
-    if boss.order then
-        stats[#stats + 1] = { key = "pull", label = "Pull",
-            value = boss.order .. "/" .. #dungeon.bosses, tone = "textNormal" }
-    end
-
-    local head = WeintCodex.PageHead(f, {
-        eyebrow   = dungeon.name .. (boss.wing and (" · " .. boss.wing) or ""),
-        title     = boss.name or "?",
-        titleSize = 26,
-        sub       = boss.summon and "Erscheint nur, wenn die Gruppe ihn holt"
-                 or (boss.optional and "Optional - nicht auf dem Hauptweg"
-                 or (D.ZoneLabel(dungeon) or "")),
-        subColor  = boss.summon and "warningBright" or "textMuted",
-        height    = 86,
-        stats     = stats,
+local function BodyText(inner, y, text, width, opts)
+    opts = opts or {}
+    local fs, h = WeintCodex.Paragraph(inner, text, {
+        width = width, size = opts.size or 13, color = opts.color or "textMuted",
     })
-    rows[#rows + 1] = head
+    fs:SetPoint("TOPLEFT",  inner, "TOPLEFT",  0, y)
+    fs:SetPoint("TOPRIGHT", inner, "TOPRIGHT", 0, y)
+    return y - h
+end
 
-    local y = -(PAD_Y + 86) - (GAP - 8)
+--------------------------------------------------
+-- 3a. Ohne Boss: die Aufstellung
+--------------------------------------------------
 
-    -- Die Beschwoerung steht UEBER den Rollenkarten: wer den Boss
-    -- nicht beschwoeren kann, braucht nicht zu wissen, wie man ihn
-    -- tankt.
+-- Kein Kennzeichen im Kopf: die Zeilen sagen die Plaetze selbst, und
+-- "1 Tank · 1 Heiler · 3 DD" darueber sagte dasselbe noch einmal.
+local function DrawRoster(f, y, dungeon)
+    return DetailCard(f, y, {
+        title      = "Aufstellung",
+        titleFont  = WeintCodex.Fonts.sansSemi,
+        titleSize  = 15,
+        build = function(inner, w)
+            local endY = WeintCodex.RolePanel.Roster(inner, 0, dungeon, { width = w })
+            return -endY
+        end,
+    })
+end
+
+--------------------------------------------------
+-- 3b. Mit Boss: was ueber ihn berichtet ist
+--------------------------------------------------
+
+local function DrawBossDetail(f, y, dungeon, boss)
+    local parts = {}
+    if boss.order then
+        parts[#parts + 1] = "Boss " .. boss.order .. " von " .. #dungeon.bosses
+    else
+        parts[#parts + 1] = "Boss"
+    end
+    if boss.wing then parts[#parts + 1] = boss.wing end
     if boss.summon then
-        local card = InfoCard(f, y, {
-            title  = "So kommt er",
-            text   = boss.summon.text,
-            badge    = S.Label(boss.summon.source),
-            maxHeight = ContentBudget() + y - PAD_Y - ROLE_CARDS_RESERVE,
-        })
-        y = y - card:GetHeight() - GAP
-    elseif boss.position then
-        local card = InfoCard(f, y, {
-            title    = "Wo er steht",
-            text     = boss.position,
-            maxHeight = ContentBudget() + y - PAD_Y - ROLE_CARDS_RESERVE,
-        })
-        y = y - card:GetHeight() - GAP
+        parts[#parts + 1] = "Nur beschworen"
+    elseif boss.optional then
+        parts[#parts + 1] = "Optional"
     end
 
-    -- BossCards liefert die Karten UND das y darunter - nur damit
-    -- laesst sich sagen, wie hoch die Seite geworden ist. Wie hoch
-    -- sie werden DARF, prueft .github/tests/load_test.lua.
-    local cards, endY = WeintCodex.RolePanel.BossCards(f, y, dungeon, boss)
-    for _, card in ipairs(cards) do rows[#rows + 1] = card end
+    return DetailCard(f, y, {
+        eyebrow = table.concat(parts, " · "),
+        title   = boss.name or "?",
+        onClose = function()
+            selectedBoss = nil
+            Redraw()
+        end,
+        build = function(inner, w)
+            local y = 0
 
-    pageUsed = -endY + PAD_Y
-    WeintCodex.Navigation.SetInspector(BossInspector(dungeon, boss))
+            if boss.nameAlt then
+                y = BodyText(inner, y, "Wird auch als „" .. boss.nameAlt .. "“ berichtet - "
+                    .. "welchen Namen der Client vergibt, ist offen.", w,
+                    { size = 12, color = "textDim" }) - 12
+            end
+
+            -- Die Beschwoerung steht VOR dem Standort: wer den Boss
+            -- nicht holen kann, braucht nicht zu wissen, wo er steht.
+            if boss.summon then
+                y = BodyHeading(inner, y, "So kommt er")
+                y = BodyText(inner, y, boss.summon.text or "", w)
+                local label = S.Label(boss.summon.source)
+                if label then
+                    y = BodyText(inner, y - 4, label, w, { size = 11, color = "warningBright" })
+                end
+                y = y - 14
+            end
+
+            if boss.position then
+                y = BodyHeading(inner, y, "Wo er steht")
+                y = BodyText(inner, y, boss.position, w) - 14
+            end
+
+            if boss.note then
+                y = BodyHeading(inner, y, "Dazu")
+                y = BodyText(inner, y, boss.note, w) - 14
+            end
+
+            y = BodyHeading(inner, y, "Rollen")
+            y = WeintCodex.RolePanel.BossRoleRows(inner, y, boss, { width = w })
+
+            return -y
+        end,
+    })
+end
+
+--------------------------------------------------
+-- Der Dungeon, zusammengesetzt
+--------------------------------------------------
+
+local function DrawDungeon(f, dungeon)
+    ClearRows()
+    f._relayout = nil
+
+    local y = DrawHead(f, dungeon)
+    y = DrawBosses(f, y - 8, dungeon)
+
+    local boss
+    if selectedBoss then
+        for _, candidate in ipairs(dungeon.bosses or {}) do
+            if candidate.id == selectedBoss then boss = candidate end
+        end
+        if not boss then selectedBoss = nil end
+    end
+
+    if boss then
+        y = DrawBossDetail(f, y - GAP, dungeon, boss)
+    else
+        y = DrawRoster(f, y - GAP, dungeon)
+    end
+
+    pageUsed = -y
 end
 
 --------------------------------------------------
@@ -670,269 +845,191 @@ end
 --------------------------------------------------
 -- Verstreut ueber neunundzwanzig Dungeons waere diese Auskunft
 -- keine. Deshalb hat sie eine eigene Seite, erreichbar aus der
--- Liste.
+-- Spalte - und jede Zeile fuehrt zum Boss.
 
-local function DrawSummonOverview(f)
+local BuildTree
+
+local function DrawSummons(f)
     ClearRows()
-
-    local PAD_X = WeintCodex.Metrics.PAD_X
-    local PAD_Y = WeintCodex.Metrics.PAD_Y
-    local GAP   = WeintCodex.Metrics.GAP
+    f._relayout = nil
 
     local all = D.AllSummonable()
 
     local head = WeintCodex.PageHead(f, {
         eyebrow   = "Dungeons",
         title     = "Beschwörbare Zusatzbosse",
-        titleSize = 28,
-        sub       = "Gegner, die nur erscheinen, wenn die Gruppe etwas dafür tut",
+        titleSize = 30,
+        sub       = #all .. " Gegner erscheinen erst, wenn die Gruppe etwas dafür tut",
+        subSize   = 13,
         subColor  = "textMuted",
-        height    = 92,
-        stats     = { { key = "n", label = "Bosse", value = #all, tone = "textNormal" } },
+        height    = 10 + 6 + 34 + 4 + 16,
     })
     rows[#rows + 1] = head
 
-    local y = -(PAD_Y + 92)
+    local y = -(PAD_Y + head.Height) - GAP
 
-    local lines = {}
-    for _, entry in ipairs(all) do
-        lines[#lines + 1] = entry.boss.name .. "  ·  " .. entry.dungeon.name
-    end
+    pageUsed = -DetailCard(f, y, {
+        title     = "Wo es welche gibt",
+        titleFont = WeintCodex.Fonts.sansSemi,
+        titleSize = 15,
+        build = function(inner, w)
+            local y = 0
+            local ROW = 30
+            for _, entry in ipairs(all) do
+                local row = CreateFrame("Button", nil, inner)
+                row:SetHeight(ROW)
+                row:SetPoint("TOPLEFT",  inner, "TOPLEFT",  0, y)
+                row:SetPoint("TOPRIGHT", inner, "TOPRIGHT", 0, y)
+                local bg = row:CreateTexture(nil, "BACKGROUND")
+                bg:SetAllPoints(row)
+                bg:SetColorTexture(1, 1, 1, 0)
 
-    local card = InfoCard(f, y, {
-        title = "Wo es welche gibt",
-        text  = (#lines > 0) and table.concat(lines, "\n")
-             or "Keiner bekannt.",
-        note     = "Ein Klick auf den Dungeon links zeigt, wie er beschworen wird",
-        maxHeight = ContentBudget() + y - PAD_Y,
+                local name = WeintCodex.Label(row, entry.boss.name, { color = "textNormal", size = 13 })
+                name:SetPoint("LEFT", row, "LEFT", 4, 0)
+
+                local where = WeintCodex.Eyebrow(row, entry.dungeon.name,
+                    { color = "textFaint", size = 9, justify = "RIGHT" })
+                where:SetPoint("RIGHT", row, "RIGHT", -4, 0)
+
+                row:SetScript("OnEnter", function()
+                    bg:SetColorTexture(1, 1, 1, 0.04)
+                    name:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
+                end)
+                row:SetScript("OnLeave", function()
+                    bg:SetColorTexture(1, 1, 1, 0)
+                    name:SetTextColor(C.textNormal[1], C.textNormal[2], C.textNormal[3])
+                end)
+                row:SetScript("OnClick", function()
+                    selectedId   = entry.dungeon.id
+                    selectedBoss = entry.boss.id
+                    selectedWing = entry.boss.wing
+                    showSummons  = false
+                    BuildTree(f)
+                end)
+                WeintCodex.RowLine(row, -(ROW - 1))
+                y = y - ROW
+            end
+            if #all == 0 then
+                y = BodyText(inner, y, "Keiner bekannt.", w)
+            end
+
+            -- DIE WICHTIGE UNTERSCHEIDUNG, UND SIE WIRD STAENDIG
+            -- VERWECHSELT: Spieler beschwoeren und Bosse beschwoeren
+            -- sind zwei verschiedene Dinge, und nur eines davon geht
+            -- in Forever ueberhaupt.
+            y = BodyHeading(inner, y - 20, "Spieler beschwören ist etwas anderes")
+            y = BodyText(inner, y, D.SUMMONING.players or "", w)
+            local label = S.Label(D.SUMMONING.source)
+            if label then
+                y = BodyText(inner, y - 4, label, w, { size = 11, color = "warningBright" })
+            end
+            return -y
+        end,
     })
-
-    -- DIE WICHTIGE UNTERSCHEIDUNG, UND SIE WIRD STAENDIG
-    -- VERWECHSELT: Spieler beschwoeren und Bosse beschwoeren sind
-    -- zwei verschiedene Dinge, und nur eines davon geht in Forever
-    -- ueberhaupt.
-    local blocks = {
-        { type = "header", text = "Zwei Arten von Beschwörung" },
-        { type = "text", color = "textMuted",
-          text = "BOSSE beschwören: " .. #all .. " Gegner im ganzen Spiel "
-              .. "erscheinen erst, wenn die Gruppe etwas dafür tut - ein "
-              .. "Kohlenbecken entzündet, einen Gegenstand einsetzt, eine "
-              .. "Questreihe abschließt." },
-        { type = "divider" },
-        { type = "text", color = "textMuted",
-          text = "SPIELER beschwören: " .. (D.SUMMONING.players or "") },
-        { type = "text", color = "textFaint",
-          text = S.Label(D.SUMMONING.source) or "" },
-    }
-    pageUsed = -y + card:GetHeight() + PAD_Y
-    WeintCodex.Navigation.SetInspector(blocks)
 end
 
 --------------------------------------------------
--- Der Baum links
+-- Neu zeichnen, was gerade dran ist
 --------------------------------------------------
--- ZWEI ANSICHTEN, UND DIE SEITE RECHNET AUS, WELCHE PASST.
---
---   BLAETTERN  Stufenabschnitte als Koepfe, darunter die Instanzen
---              des offenen Abschnitts. So sucht man einen Dungeon:
---              nach Stufe, nicht nach Namen.
---   VERTIEFEN  Eine Ruecksprungzeile, die gewaehlte Instanz, ihre
---              Fluegel und deren Kaempfe.
---
--- Wo beides zusammen passt, wird beides gezeigt (Navigation.Fits
--- rechnet es nach). Wo nicht - und das ist bei den grossen
--- klassischen Instanzen der Regelfall -, vertieft die Spalte.
 
-local BuildTree
-local BossItem
+Redraw = function()
+    if not page then return end
+    if showSummons then
+        WeintCodex.SetBreadcrumb("Dungeons", "Beschwörbare Zusatzbosse")
+        DrawSummons(page)
+        return
+    end
+    local dungeon = D.Get(selectedId)
+    if not dungeon then return end
+    local bossName
+    for _, boss in ipairs(dungeon.bosses or {}) do
+        if boss.id == selectedBoss then bossName = boss.name end
+    end
+    if bossName then
+        WeintCodex.SetBreadcrumb("Dungeons", dungeon.name, bossName)
+    else
+        WeintCodex.SetBreadcrumb("Dungeons", dungeon.name)
+    end
+    DrawDungeon(page, dungeon)
+end
 
-local function InstanceItem(f, dungeon, withBosses)
+--------------------------------------------------
+-- Die Spalte links: Dungeons, nach Stufe
+--------------------------------------------------
+-- Stufenabschnitte als Koepfe, darunter die Instanzen des offenen
+-- Abschnitts. So sucht man einen Dungeon: nach Stufe, nicht nach
+-- Namen. Bosse stehen hier NICHT mehr - sie stehen auf der Seite,
+-- wo Platz fuer sie ist. Die Spalte passt damit immer (612 von 716
+-- px im groessten Abschnitt), und load_test.lua misst es nach.
+
+local function InstanceItem(f, dungeon)
     return {
         label  = dungeon.name,
         status = D.LevelRange(dungeon),
+        mark   = (not D.IsLegacy(dungeon)) and "Forever" or nil,
+        markColor = "textFaint",
         onClick = function()
             local changed = (selectedId ~= dungeon.id)
-            selectedId   = dungeon.id
-            selectedBoss = nil
-            showSummons  = false
+            selectedId  = dungeon.id
+            showSummons = false
+            -- Ein zweiter Klick auf den offenen Dungeon fuehrt zurueck
+            -- zur Aufstellung. Waehrend die Spalte gebaut wird, klickt
+            -- nicht der Nutzer, sondern ActivateIndex - dann bleibt
+            -- die Bossauswahl stehen (Select() setzt sie vorher).
+            if changed or not building then
+                selectedBoss = nil
+            end
             if changed then selectedWing = nil end
-            WeintCodex.SetBreadcrumb("Dungeons", dungeon.name)
-            DrawInstance(f, dungeon)
-            if not building and (changed or browsing) then
-                browsing = false
-                BuildTree(f)
-            end
+            Redraw()
         end,
     }
 end
 
-local function BossItems(f, dungeon, into)
-    local wings = D.Wings(dungeon)
-
-    if wings then
-        if selectedWing == nil then selectedWing = wings[1] end
-        local known = false
-        for _, wing in ipairs(wings) do
-            if wing == selectedWing then known = true end
-        end
-        if not known then selectedWing = wings[1] end
-
-        for _, wing in ipairs(wings) do
-            local count = #D.BossesInWing(dungeon, wing)
-            into[#into + 1] = {
-                isGroup = true,
-                label   = wing,
-                count   = count,
-                open    = (wing == selectedWing),
-                onClick = function()
-                    selectedWing = wing
-                    selectedBoss = nil
-                    if not building then BuildTree(f) end
-                end,
-            }
-            if wing == selectedWing then
-                for _, boss in ipairs(D.BossesInWing(dungeon, wing)) do
-                    into[#into + 1] = BossItem(f, dungeon, boss)
-                end
-            end
-        end
-    else
-        for _, boss in ipairs(dungeon.bosses or {}) do
-            into[#into + 1] = BossItem(f, dungeon, boss)
-        end
-    end
-end
-
---------------------------------------------------
-
-BossItem = function(f, dungeon, boss)
-    -- Das Kennzeichen rechts sagt, WAS fuer ein Eintrag das ist,
-    -- und es gibt drei Sorten. "BESCHWOEREN" schlaegt "TIPPS":
-    -- dass der Boss ohne Zutun gar nicht dasteht, ist die
-    -- dringendere Auskunft.
-    local mark, markColor
-    if boss.summon then
-        mark, markColor = "Beschwören", "warningBright"
-    elseif boss.optional then
-        mark, markColor = "Optional", "textFaint"
-    elseif WeintCodex.Roles.HasTips(boss.name) then
-        mark, markColor = "Tipps", "textMuted"
-    end
-
+local function SummonRow(f)
     return {
-        label     = boss.name,
-        indent    = true,
-        mark      = mark,
-        markColor = markColor,
-        onClick   = function()
-            selectedBoss = boss.id
-            showSummons  = false
-            WeintCodex.SetBreadcrumb("Dungeons", dungeon.name, boss.name)
-            DrawBoss(f, dungeon, boss)
+        label   = "Beschwörbare Zusatzbosse",
+        status  = tostring(#D.AllSummonable()) .. " im ganzen Spiel",
+        onClick = function()
+            showSummons  = true
+            selectedBoss = nil
+            Redraw()
         end,
     }
 end
-
---------------------------------------------------
 
 BuildTree = function(f)
     building = true
 
     local current = D.Get(selectedId) or D.AllInstances()[1]
-    selectedId = current and current.id or nil
+    selectedId  = current and current.id or nil
     openBracket = D.BracketIndexOf(selectedId)
 
-    local brackets = D.Brackets()
-
-    -- Die Uebersicht der beschwoerbaren Bosse steht ganz oben und
-    -- nicht in einem Abschnitt: sie gehoert zu keiner Stufe.
-    local function SummonRow()
-        return {
-            label   = "Beschwörbare Zusatzbosse",
-            status  = tostring(#D.AllSummonable()) .. " im ganzen Spiel",
+    local items = {}
+    for index, bucket in ipairs(D.Brackets()) do
+        items[#items + 1] = {
+            isGroup = true,
+            label   = bucket.label,
+            count   = #bucket.dungeons,
+            open    = (index == openBracket),
             onClick = function()
-                showSummons  = true
-                selectedBoss = nil
-                WeintCodex.SetBreadcrumb("Dungeons", "Beschwörbare Zusatzbosse")
-                DrawSummonOverview(f)
+                openBracket = index
+                local first = bucket.dungeons[1]
+                if first then
+                    selectedId   = first.id
+                    selectedBoss = nil
+                    selectedWing = nil
+                    showSummons  = false
+                end
+                if not building then BuildTree(f) end
             end,
         }
-    end
-
-    -- ANSICHT 1: blaettern, mit den Bossen der gewaehlten Instanz,
-    -- falls sie noch dazupassen.
-    local function BrowseItems(withBosses)
-        local items = { SummonRow() }
-        for index, bucket in ipairs(brackets) do
-            items[#items + 1] = {
-                isGroup = true,
-                label   = bucket.label,
-                count   = #bucket.dungeons,
-                open    = (index == openBracket),
-                onClick = function()
-                    openBracket = index
-                    local first = bucket.dungeons[1]
-                    if first then
-                        selectedId   = first.id
-                        selectedBoss = nil
-                        selectedWing = nil
-                        showSummons  = false
-                        WeintCodex.SetBreadcrumb("Dungeons", first.name)
-                        DrawInstance(f, first)
-                    end
-                    browsing = true
-                    if not building then BuildTree(f) end
-                end,
-            }
-            if index == openBracket then
-                for _, dungeon in ipairs(bucket.dungeons) do
-                    items[#items + 1] = InstanceItem(f, dungeon)
-                    if withBosses and dungeon.id == selectedId then
-                        BossItems(f, dungeon, items)
-                    end
-                end
+        if index == openBracket then
+            for _, dungeon in ipairs(bucket.dungeons) do
+                items[#items + 1] = InstanceItem(f, dungeon)
             end
         end
-        return items
     end
-
-    -- ANSICHT 2: vertiefen.
-    local function FocusItems()
-        local items = {
-            {
-                label   = "‹  Alle Dungeons",
-                onClick = function()
-                    browsing     = true
-                    selectedBoss = nil
-                    if not building then BuildTree(f) end
-                end,
-            },
-            InstanceItem(f, current),
-        }
-        BossItems(f, current, items)
-        return items
-    end
-
-    local items
-    if showSummons then
-        items = BrowseItems(false)
-    elseif browsing then
-        -- Passt der Baum MIT Bossen, zeigt er sie: ein Klick
-        -- weniger, und kein Verlust.
-        local withBosses = BrowseItems(true)
-        items = WeintCodex.Navigation.Fits(withBosses) and withBosses
-             or BrowseItems(false)
-    else
-        items = FocusItems()
-        -- DER RUECKFALL, DEN ES HOFFENTLICH NIE BRAUCHT. Traegt eine
-        -- Instanz eines Tages mehr Kaempfe, als selbst die vertiefte
-        -- Ansicht fasst, waere die Spalte still uebergelaufen. Dann
-        -- lieber ohne Bossliste als mit einer unsichtbaren - und der
-        -- Prueflauf faellt vorher durch.
-        if not WeintCodex.Navigation.Fits(items) then
-            items = { items[1], items[2] }
-        end
-    end
+    items[#items + 1] = SummonRow(f)
 
     -- Welche Zeile ist die aktive? Ueber den Inhalt gesucht und
     -- nicht mitgezaehlt: Gruppenkoepfe zaehlen in sidebarItems nicht
@@ -942,17 +1039,7 @@ BuildTree = function(f)
         if not item.isGroup then
             cursor = cursor + 1
             if showSummons then
-                if item.status and item.label == "Beschwörbare Zusatzbosse" then
-                    active = cursor
-                end
-            elseif selectedBoss then
-                if item.indent then
-                    for _, boss in ipairs(current.bosses or {}) do
-                        if boss.id == selectedBoss and boss.name == item.label then
-                            active = cursor
-                        end
-                    end
-                end
+                if item.label == "Beschwörbare Zusatzbosse" then active = cursor end
             elseif item.label == (current and current.name) then
                 active = cursor
             end
@@ -979,14 +1066,12 @@ function WeintCodex.DungeonPages.Select(dungeonId, bossId)
     selectedBoss = nil
     selectedWing = nil
     showSummons  = false
-    browsing     = true
 
     if bossId then
         for _, boss in ipairs(dungeon.bosses or {}) do
             if boss.id == bossId then
                 selectedBoss = bossId
                 selectedWing = boss.wing
-                browsing     = false
             end
         end
     end
@@ -1000,6 +1085,9 @@ end
 function WeintCodex.DungeonPages.Show()
     local cp = WeintCodex.ContentPanel
     for _, child in pairs({ cp:GetChildren() }) do child:Hide() end
+
+    -- Diese Seite hat keinen Detailbereich: alles steht auf ihr.
+    WeintCodex.Navigation.ClearInspector()
 
     local f = BuildPage()
     f:Show()
