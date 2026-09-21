@@ -449,6 +449,25 @@ function WeintCodex.Navigation.SubNavBudget()
         - WeintCodex.Metrics.PAD_Y
 end
 
+-- DIE LUFT, DIE FREI BLEIBEN MUSS, ALS EINE ZAHL. Der Prueflauf
+-- fordert sie ein, und die Dungeonseite rechnet damit, ob ihr Baum
+-- noch passt - es waere sonst dieselbe Zahl an zwei Stellen, und
+-- eine davon liefe irgendwann nach. 60 px sind rund zwei
+-- Bosszeilen: genug, dass ein nachgetragener Kampf nicht sofort
+-- ueber den Rand faellt.
+local SUBNAV_HEADROOM = 60
+
+function WeintCodex.Navigation.SubNavHeadroom()
+    return SUBNAV_HEADROOM
+end
+
+-- Passt dieser Baum, MIT der geforderten Luft? Eine Seite, deren
+-- Liste aus dem Bestand waechst, fragt hier, bevor sie baut.
+function WeintCodex.Navigation.Fits(items)
+    return WeintCodex.Navigation.MeasureSidebar(items)
+        <= WeintCodex.Navigation.SubNavBudget() - SUBNAV_HEADROOM
+end
+
 -- Wie hoch eine Liste WUERDE, ohne sie zu bauen. Damit kann eine Seite
 -- vorher pruefen, ob ihr Baum passt, statt es hinterher zu sehen.
 function WeintCodex.Navigation.MeasureSidebar(items)
@@ -557,9 +576,53 @@ local function BuildColumn(sectionTitle, items)
 
     for _, itemDef in ipairs(items) do
         if itemDef.isGroup then
-            local lbl = WeintCodex.Eyebrow(col, itemDef.label or "", { color = "textGhost" })
-            lbl:SetPoint("TOPLEFT", col, "TOPLEFT", pad + 11, offsetY - 8)
+            -- EIN GRUPPENKOPF DARF SEIT 5.2.0.0 ANKLICKBAR SEIN, und
+            -- das ist kein Schmuck: die Dungeonseite fuehrt
+            -- neunundzwanzig Instanzen. Alle gleichzeitig in der
+            -- Spalte waeren 1334 px in einem 716-px-Budget - sie
+            -- MUESSEN sich also gruppenweise oeffnen lassen, und eine
+            -- Gruppe, die man nicht anklicken kann, oeffnet nichts.
+            --
+            -- Ein anklickbarer Gruppenkopf ist trotzdem KEIN Eintrag:
+            -- er landet in sidebarGroups und nicht in sidebarItems.
+            -- Sonst verschoebe er jeden Index, mit dem eine Seite
+            -- ihren aktiven Eintrag markiert (ActivateIndex), und die
+            -- Markierung saesse eine Zeile daneben.
+            local host = col
+            if itemDef.onClick then
+                local gbtn = CreateFrame("Button", nil, col)
+                gbtn:SetHeight(SUBNAV_GROUP_H)
+                gbtn:SetPoint("TOPLEFT",  col, "TOPLEFT",   pad, offsetY - 8)
+                gbtn:SetPoint("TOPRIGHT", col, "TOPRIGHT", -pad, offsetY - 8)
+                gbtn:SetScript("OnClick", function() itemDef.onClick() end)
+                table.insert(sidebarGroups, gbtn)
+                host = gbtn
+            end
+
+            local tone = itemDef.open and "textMuted" or "textGhost"
+            local lbl = WeintCodex.Eyebrow(host, itemDef.label or "",
+                { color = itemDef.labelColor or tone })
+            if host == col then
+                lbl:SetPoint("TOPLEFT", col, "TOPLEFT", pad + 11, offsetY - 8)
+            else
+                lbl:SetPoint("LEFT", host, "LEFT", 11, 0)
+            end
             table.insert(sidebarGroups, lbl)
+
+            -- Die Anzahl rechts. Sie ist der Grund, eine geschlossene
+            -- Gruppe ueberhaupt anzuklicken: ohne sie sagt "Stufe
+            -- 40-52" nicht, ob dahinter zwei Dungeons stehen oder
+            -- sieben.
+            if itemDef.count then
+                local cnt = host:CreateFontString(nil, "OVERLAY")
+                cnt:SetFont(WeintCodex.Fonts.mono, 9, "")
+                cnt:SetPoint("RIGHT", host, "RIGHT", host == col and -(pad) or -10, 0)
+                local cc = C[itemDef.open and "accent" or "textGhost"] or C.textGhost
+                cnt:SetTextColor(cc[1], cc[2], cc[3])
+                cnt:SetText(tostring(itemDef.count))
+                table.insert(sidebarGroups, cnt)
+            end
+
             offsetY = offsetY - SUBNAV_GROUP_H - 8
         else
             local child     = itemDef.indent == true
@@ -759,6 +822,23 @@ function WeintCodex.Navigation.UpdateSidebarStatus(index, status)
     local sc = C[status.color or "textFaint"] or C.textFaint
     btn._statusLbl:SetTextColor(sc[1], sc[2], sc[3])
     btn._statusLbl:SetText(WeintCodex.Spaced(WeintCodex.Upper(status.text or "")))
+end
+
+-- FUER DEN KOPFLOSEN PRUEFLAUF, und nur dafuer. Seit die
+-- Dungeonseite Stufenabschnitte und Fluegel aufklappt, haengt ein
+-- Teil ihres Verhaltens an Klicks, die ActivateIndex nicht ausloest
+-- (Gruppenkoepfe stehen nicht in sidebarItems). Ohne diesen Zugriff
+-- laesst sich der Aufklappweg nicht durchlaufen - und ein Fehler
+-- darin faellt erst im Spiel auf.
+function WeintCodex.Navigation.SidebarButtons()
+    local clickable = {}
+    for _, btn in ipairs(sidebarItems) do clickable[#clickable + 1] = btn end
+    for _, grp in ipairs(sidebarGroups) do
+        if type(grp) == "table" and type(grp.Click) == "function" then
+            clickable[#clickable + 1] = grp
+        end
+    end
+    return clickable
 end
 
 function WeintCodex.Navigation.ActivateFirst()

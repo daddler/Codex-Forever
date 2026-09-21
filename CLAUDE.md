@@ -59,21 +59,44 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   boss list, a material without a target — none of these may be
   rendered as a measured zero, a red dot, or a progress bar at 0 %.
   Since 5.1.0.0 there is a fourth state, **provisional**: data that is
-  in the game but was never announced. Details:
-  `docs/invariants/data-integrity.md`.
+  in the game but was never announced. Since 5.2.0.0 there are two
+  more, and they are not decoration: **counted but unnamed** (City of
+  Dalaran — nine encounters reported, names unknown: `bossCount` set,
+  `bosses` empty) and **contested** (Excavation Site, Blackmaw Hold —
+  sources contradict each other: `conflict` set, everything else
+  empty). Neither may be rendered as an empty list or as silence.
+  Details: `docs/invariants/data-integrity.md`.
 - **Kein Bestand ohne Herkunft.** Nothing may appear in a data table
   whose source cannot be named — that, not emptiness, was always the
   rule. `data/raids.lua` therefore **must never be backfilled from
   Mists of Pandaria** (that would accuse players of shortfalls their
   game does not have), but since the beta client shipped (17.09.2026)
   it *does* carry the encounter lists for Barrow Deeps and Hyjal
-  Summit, each with a `bossSource` marking them **provisional** and
-  shown as such on every surface. A filled boss list without
-  `bossSource` fails `data_test.lua`; so does an empty one *with* it.
-  Onyxias Hort, all nine dungeon boss lists and the material watchlist
-  stay empty — no source, no entry. Same reasoning as
+  Summit. Since 5.2.0.0 `data/sources.lua` is the **one** place that
+  defines what a source is, for raids and dungeons alike, with five
+  kinds in decreasing firmness: `release`, `announced`, `beta`,
+  `community`, `classic`. **Only `release` counts as confirmed**;
+  every other kind carries a visible prefix *and* a `Why()` sentence
+  on every surface. A filled boss list without a valid source fails
+  `data_test.lua`; so does an empty one *with* one. Onyxias Hort,
+  Excavation Site, Blackmaw Hold, four more dungeons and the material
+  watchlist stay empty — no source, no entry. Same reasoning as
   `../Companion-Forever/docs/systems/forever-data.md`; details in
-  `docs/systems/raids-and-progress.md`, section *Herkunft ist Pflicht*.
+  `docs/systems/raids-and-progress.md`, section *Herkunft ist Pflicht*,
+  and `docs/systems/dungeons.md`, section *Fünf Arten von Herkunft*.
+- **Nobody here has read the Forever client.** Dungeon boss names come
+  from *reports about* the client, not from the client — they are
+  `community`, never `beta`. Claiming `beta` claims a check that never
+  happened. The same applies to level ranges, encounter counts and
+  summon instructions.
+- **`order` only where the order is known.** `orderKnown = false` means
+  **no** boss in that list may carry `order`, and the page prints no
+  pull number. "3 von 7" over an unordered list is a number nobody
+  knows. `data_test.lua` enforces both directions.
+- **A wing may not lose a boss.** The sub-nav shows one wing at a time;
+  a boss without a `wing` in an instance that has wings would be
+  visible **nowhere**, silently. `data_test.lua` checks that the wings
+  together cover every boss.
 - **Rollen: drei Bestände, nie zusammengezogen.** Which talent tree
   carries which role is known (`data/specs.lua`); how many slots a role
   has is known for 5-player groups and **`nil` for 10/20/40**; what a
@@ -155,7 +178,8 @@ into modules that no longer exist. A green run means "it loads", never
 | UI-Struktur, Theme, `core/ui.lua`, Navigationsspalte, PageHead, Detailbereich | `docs/architecture/overview.md` |
 | Leere Tabellen, `unknown ≠ 0`, Leerzustände | `docs/invariants/data-integrity.md` |
 | Schlachtzüge, Bosslisten, Lockouts, Fortschritt, Herkunft einer Liste | `docs/systems/raids-and-progress.md` |
-| Dungeons, Stufenbereiche, Rollen (Tank/Heiler/DD), Rollen-Tipps | `docs/systems/dungeons.md` |
+| Dungeons (Forever **und** Classic), Stufenbereiche, Bosslisten, Flügel, beschwörbare Zusatzbosse, Rollen | `docs/systems/dungeons.md` |
+| Herkunft eines Eintrags, `data/sources.lua`, `release`/`announced`/`beta`/`community`/`classic` | `docs/systems/dungeons.md`, Abschnitt *Fünf Arten von Herkunft* |
 | Charakterseite, Twinks, Ausrüstungsstand | `docs/systems/character.md` |
 | Gruppencheck | `docs/systems/groupcheck.md` |
 | Companion-Sync allgemein (Inbox/Outbound, `ProcessInbox`) | `docs/systems/companion-bridge.md` |
@@ -188,5 +212,6 @@ Do not add these back without a stated reason that survives the question
 | Sockelsteine, Verzauberungen, Umschmieden, Tempo-Schwellen | Hingen an `data/spec_profiles.lua`, `gems.lua`, `enchants.lua`, `breakpoints.lua` aus MoP. Keine davon sagt über Forever etwas aus. |
 | BiS-Listen | Setzen Bosslisten und Beute voraus — beides unveröffentlicht. |
 | WeakAuras | Für Forever zunächst nicht unterstützt. |
+| Karten- und Bossbilder | Blizzard hat für Forever keine Dungeonkarten veröffentlicht (im Beta-Client liegt für vier der neun Instanzen überhaupt Material), und das Material gehört Blizzard. Ein geratener Texturpfad zeichnet im Spiel ein grünes Rechteck. `boss.position` sagt stattdessen in Worten, wo einer steht. |
 | Academy, WeintTV, Rotationshelfer | Brauchen ein auswertbares Kampflog. Ob Forever eines hergibt, ist nicht bestätigt — siehe `../Companion-Forever/docs/systems/forever-data.md`, letzter Abschnitt. |
 | Ausrüstungs-Alarm, Einkaufsliste, Sockelfenster-Hilfe | Hätten ohne Verzauberungen und Sockel nichts zu melden. |

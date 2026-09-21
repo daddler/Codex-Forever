@@ -186,6 +186,47 @@ gegen die Schadensrangliste gemessen und bekommt dauerhaft einen Stern,
 obwohl er seine Aufgabe einwandfrei erfüllt. Das ist keine Lücke,
 sondern die richtige Antwort — und `data_test.lua` hält sie fest.
 
+## Sechs Zustände, nicht zwei
+
+Bis 5.0.0.0 war ein Bestand entweder da oder nicht. Das reicht nicht.
+Seit 5.2.0.0 hält das Addon sechs Zustände auseinander, und jeder hat
+auf der Oberfläche einen eigenen Text:
+
+| Zustand | Im Bestand | Was dastehen muss |
+|---|---|---|
+| **bestätigt** | Liste + `bossSource.kind == "release"` | die Liste, ohne Zusatz |
+| **vorläufig** | Liste + `kind` ist `announced`/`beta`/`community`/`classic` | die Liste **plus** Herkunft **plus** Begründung |
+| **unvollständig** | Liste + `bossesComplete = false` | wie viele von wie vielen |
+| **gezählt, unbenannt** | `bossCount` gesetzt, `bosses` leer | die **Anzahl** — „neun Kämpfe, Namen unbekannt" |
+| **umstritten** | `conflict` gesetzt, sonst leer | der Widerspruch selbst |
+| **unbekannt** | alles leer | warum nichts da ist |
+
+Die letzten drei sind die neuen, und sie sind der eigentliche Gewinn:
+
+* **Gezählt, unbenannt** ist mehr als Schweigen. Für die City of
+  Dalaran sind neun Kämpfe berichtet und fünf Namen. Fünf Namen als
+  Liste einzutragen hiesse, einen Dungeon mit neun Kämpfen als Dungeon
+  mit fünf zu führen; gar nichts zu sagen verschweigt eine Auskunft,
+  die man hat. „Neun Kämpfe" beantwortet *„wie lang wird das?"* bereits.
+* **Umstritten** ist mehr als Schweigen. Für Excavation Site kursieren
+  vier Bossnamen, die eine andere Darstellung bestreitet; für Blackmaw
+  Hold kursiert eine Liste, die nachweislich die der Drowned City ist.
+  Wer die kursierende Liste anderswo gesehen hat, soll hier erfahren,
+  **warum** sie fehlt — sonst sieht das Addon einfach veraltet aus.
+* **Vorläufig** ist seit 5.2.0.0 abgestuft. `data/sources.lua` kennt
+  fünf Arten von Herkunft, und nur `release` gilt als bestätigt. Die
+  Abstufung ist nicht Kosmetik: eine Liste aus dem Client (`beta`) und
+  eine aus einem Forenbericht (`community`) sind verschieden fest, und
+  eine Oberfläche, die beide gleich darstellt, behauptet etwas.
+
+### Im Zweifel die schwächere Quelle
+
+`Sources.Weaker(a, b)` liefert von zweien die schwächere, und
+`IsConfirmed()` ist `false` für alles ausser `release` — auch für `nil`.
+Beides zeigt in dieselbe Richtung: die Gesamtangabe einer Instanz darf
+nie fester klingen als ihr schwächster Teil, und ein Irrtum soll nach
+unten gehen.
+
 ## Wie man das prüft, wenn nichts drinsteht
 
 Ein Test, der über eine leere Tabelle läuft, wird grün, weil nichts
@@ -201,6 +242,14 @@ passiert — lautlos und wertlos. Deshalb prüft `data_test.lua` den
 * Liefert eine unbekannte Kennung `nil` statt eines leeren Eintrags?
 * Liefert eine unbekannte Klasse eine leere **Liste** (nicht `nil`) —
   weil der Aufrufer darüber iteriert?
+* Trägt **jeder** Boss eine `order`, wenn `orderKnown = true` — und
+  **keiner** eine, wenn `orderKnown = false`?
+* Fassen die Flügel einer Instanz zusammen **jeden** ihrer Bosse? Einer
+  ohne Flügel wäre in der Oberfläche nirgends zu sehen, lautlos.
+* Nennt **jede** Beschwörungsanleitung ihre Herkunft?
+* Ist `bossCount` nie kleiner als die Zahl der benannten Bosse?
+* Sind die Kennungen über **beide** Dungeontabellen eindeutig? Eine
+  Kollision lieferte still den falschen Dungeon.
 
 Diese Prüfungen bleiben gültig, egal was später in den Tabellen steht.
 

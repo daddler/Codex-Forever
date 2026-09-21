@@ -177,3 +177,31 @@ Sie sagen nichts darüber, ob eine Seite richtig aussieht, ob eine
 Rechnung stimmt oder ob der echte Client dieselben Antworten gibt.
 
 **Ein grüner Lauf heisst „es lädt", nicht „es funktioniert".**
+
+## Die Attrappe klickt jetzt wirklich (seit 5.2.0.0)
+
+`Methods:Click()` gab es in `wow_stub.lua` nicht. Die Attrappe fällt für
+jede unbekannte Methode auf `Noop` zurück — `btn:Click()` lief damit ins
+Leere, **lautlos**. Folge: `Navigation.ActivateIndex()` aktivierte im
+Prüflauf nie einen Eintrag, und damit lief keine einzige
+Seitenzeichnung. Der Lauf war trotzdem grün, weil er die Hälfte des
+Addons nie angefasst hat.
+
+Das ist genau die Sorte Fehler, gegen die dieser Prüflauf gebaut wurde:
+etwas, das nichts auslöst. `Click`, `Enter` und `Leave` stellen die
+Skripte jetzt zu, und `load_test.lua` prüft ausdrücklich, dass ein Klick
+wirklich eine Seite zeichnet (`DungeonPages.PageHeight() > 0`).
+
+## Was der Lauf seit 5.2.0.0 zusätzlich misst
+
+* **Jede** der 29 Dungeoninstanzen in **jedem** Flügel gegen das Budget
+  der Listenspalte — eine Stichprobe reicht nicht, weil der höchste Baum
+  nicht am Dungeon mit den meisten Bossen hängt, sondern am Zusammenspiel
+  aus Abschnittsgrösse, Flügelzahl und Bosszahl.
+* Den **Aufklappweg**: jeder Eintrag und jeder Gruppenkopf wird in fünf
+  Runden angeklickt (Gruppenköpfe stehen nicht in `sidebarItems`,
+  `ActivateIndex` löst sie also nie aus).
+* Die **Höhe des Inhaltsbereichs** für jede Instanz, jeden Boss und die
+  Übersicht der beschwörbaren Bosse. Wie lang eine Karte wird,
+  entscheidet der Bestand — und ein Text, der unter dem Kartenrand
+  weiterläuft, sieht aus wie ein Satz, der aufhört.

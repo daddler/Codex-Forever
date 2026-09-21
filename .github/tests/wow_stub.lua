@@ -163,6 +163,34 @@ function Methods:GetScript(event)
     return self._scripts[event]
 end
 
+-- CLICK MUSS WIRKLICH KLICKEN, und bis 5.2.0.0 tat es das nicht.
+--
+-- Die Attrappe faellt fuer jede unbekannte Methode auf Noop zurueck
+-- (siehe FrameMeta.__index weiter unten). `btn:Click()` lief damit
+-- ins Leere - lautlos. Folge: Navigation.ActivateIndex() aktivierte
+-- im Prueflauf NIE einen Eintrag, und damit lief keine einzige
+-- Seitenzeichnung. Der Lauf war gruen, weil er die Haelfte des
+-- Addons nie angefasst hat.
+--
+-- Das ist genau die Sorte Fehler, gegen die dieser Prueflauf gebaut
+-- wurde: etwas, das nichts ausloest.
+function Methods:Click(button, down)
+    local handler = self._scripts and self._scripts["OnClick"]
+    if handler then handler(self, button or "LeftButton", down or false) end
+end
+
+-- Dasselbe fuer die Maus: einige Seiten haengen ihre Auskunft an
+-- OnEnter/OnLeave, und ohne Ausloeser bliebe auch die ungeprueft.
+function Methods:Enter()
+    local handler = self._scripts and self._scripts["OnEnter"]
+    if handler then handler(self) end
+end
+
+function Methods:Leave()
+    local handler = self._scripts and self._scripts["OnLeave"]
+    if handler then handler(self) end
+end
+
 function Methods:SetPoint(...) end
 function Methods:ClearAllPoints() end
 
