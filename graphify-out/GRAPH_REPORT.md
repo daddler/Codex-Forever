@@ -1,17 +1,17 @@
 # Graph Report - Codex-Forever  (2026-09-21)
 
 ## Corpus Check
-- 54 files · ~145,892 words
+- 54 files · ~147,521 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 30 file(s) not represented in the graph (top: .tga 12, .ttf 10, (none) 3)
 
 ## Summary
-- 788 nodes · 1616 edges · 34 communities (25 shown, 9 thin omitted)
-- Extraction: 76% EXTRACTED · 24% INFERRED · 0% AMBIGUOUS · INFERRED: 388 edges (avg confidence: 0.85)
+- 793 nodes · 1641 edges · 35 communities (26 shown, 9 thin omitted)
+- Extraction: 75% EXTRACTED · 25% INFERRED · 0% AMBIGUOUS · INFERRED: 405 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a6f1e040`
+- Built from commit: `dcc73925`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -25,7 +25,7 @@
 - settings.lua
 - WeintCodex.ColorText
 - charakter.lua
-- BuildTree
+- Wo sie in diesem Addon greift
 - companion.lua
 - groupcheck.lua
 - release_notes.py
@@ -41,11 +41,12 @@
 - Die Einführung
 - updatePosition
 - getAnchors
+- CLAUDE.md
 
 ## God Nodes (most connected - your core abstractions)
 1. `WeintCodex.ColorText()` - 32 edges
 2. `WeintCodex.ShowHome()` - 31 edges
-3. `WeintCodex.Navigation.SetInspector()` - 25 edges
+3. `WeintCodex.Navigation.SetInspector()` - 26 edges
 4. `WeintCodex.Access.Can()` - 20 edges
 5. `WeintCodex.Navigation.SwitchTo()` - 20 edges
 6. `CreateCalendarFrame()` - 20 edges
@@ -55,69 +56,69 @@
 10. `Col()` - 16 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Technisch` --references--> `BuildColumn()`  [INFERRED]
-  CHANGELOG.md → core/navigation.lua
 - `Critical invariants (always relevant, keep in mind for any change)` --references--> `Spaced()`  [INFERRED]
   CLAUDE.md → core/ui.lua
-- `Die Ausrüstungsplätze kommen vom Client` --references--> `EquipSlots()`  [INFERRED]
-  docs/systems/character.md → modules/charakter.lua
 - `Die Bausteine` --references--> `EquipSlots()`  [INFERRED]
   docs/systems/groupcheck.md → modules/charakter.lua
 - `Die Spezialisierung (`data/specs.lua`, `modules/charakter.lua`)` --references--> `CurrentSpec()`  [INFERRED]
   docs/invariants/data-integrity.md → modules/charakter.lua
+- `Die Client-Aufrufe` --references--> `SafeCall()`  [INFERRED]
+  docs/invariants/data-integrity.md → modules/encounter_tracking.lua
+- `Technisch` --references--> `BuildColumn()`  [INFERRED]
+  CHANGELOG.md → core/navigation.lua
 
 ## Import Cycles
 - None detected.
 
-## Communities (34 total, 9 thin omitted)
+## Communities (35 total, 9 thin omitted)
 
 ### Community 0 - "navigation.lua"
-Cohesion: 0.05
-Nodes (70): ApplyItemDisplay(), BuildColumn(), BuildStrip(), Can(), ClearContentPanel(), CreateItemRow(), DateKey(), Ellipsis() (+62 more)
+Cohesion: 0.06
+Nodes (47): ApplyItemDisplay(), BuildColumn(), BuildStrip(), Can(), ClearContentPanel(), CreateItemRow(), DateKey(), EnsureSubNavColumn() (+39 more)
 
 ### Community 1 - "dungeonpages.lua"
 Cohesion: 0.06
-Nodes (60): WeintCodex.CreateSurface(), WeintCodex.Eyebrow(), WeintCodex.PageHead(), WeintCodex.Paragraph(), WeintCodex.ShowExportDialog(), D.AllInstances(), D.AllSummonable(), D.BossesInWing() (+52 more)
+Nodes (59): Technisch, WeintCodex.Navigation.ClearInspector(), D.AllInstances(), D.AllSummonable(), D.BossesInWing(), D.BracketIndexOf(), D.Brackets(), D.IsLegacy() (+51 more)
 
 ### Community 3 - "access.lua"
 Cohesion: 0.12
-Nodes (44): CopyFeatures(), CopyStrings(), EnsureBadge(), Mark(), NormalizeId(), Row(), Say(), Stamp() (+36 more)
+Nodes (43): CopyFeatures(), CopyStrings(), EnsureBadge(), Mark(), NormalizeId(), Row(), Say(), Stamp() (+35 more)
 
 ### Community 4 - "ui.lua"
-Cohesion: 0.07
-Nodes (38): Critical invariants (always relevant, keep in mind for any change), Development workflow, Role in the ecosystem, Task routing — read only what the task needs, What this edition deliberately does not have, What this is, ApplySavedWindow(), ApplyVerticalGradient() (+30 more)
+Cohesion: 0.06
+Nodes (73): WeintCodex.Names.ClassLabel(), Ellipsis(), WeintCodex.Navigation.ClearSidebar(), WeintCodex.Navigation.RefreshAccount(), WeintCodex.ShowHome(), ApplySavedWindow(), ApplyVerticalGradient(), Col() (+65 more)
 
 ### Community 5 - "calendar.lua"
-Cohesion: 0.09
-Nodes (42): WeintCodex.Names.Equal(), WeintCodex.Names.Match(), WeintCodex.Names.Normalize(), WeintCodex.Names.Split(), WeintCodex.Navigation.ActivateFirst(), AddPlayers(), AlternateInviteName(), CreateCalendarFrame() (+34 more)
+Cohesion: 0.08
+Nodes (46): WeintCodex.Names.Equal(), WeintCodex.Names.Match(), WeintCodex.Names.Me(), WeintCodex.Names.Normalize(), WeintCodex.Names.Split(), WeintCodex.Icon(), AddPlayers(), AlternateInviteName() (+38 more)
 
 ### Community 7 - "encounter_tracking.lua"
-Cohesion: 0.08
-Nodes (31): Datenintegrität: `unknown` ist nicht `0`, Der Ausrüstungsstand an die Companion (`modules/companion.lua`), Der vierte Zustand ist mit 5.1.0.0 dazugekommen, Die Ausrüstung (`modules/charakter.lua`), Die Bosslisten (`data/raids.lua`, `data/dungeons.lua`), Die Client-Aufrufe, Die Materialien (`modules/materials.lua`), Die Regel (+23 more)
+Cohesion: 0.10
+Nodes (36): WeintCodex.RaidData.All(), WeintCodex.RaidData.BossesConfirmed(), WeintCodex.RaidData.BossListState(), WeintCodex.RaidData.BossSource(), WeintCodex.RaidData.BossSourceLabel(), WeintCodex.RaidData.Get(), WeintCodex.RaidData.HasBosses(), WeintCodex.RaidData.KnownBossCount() (+28 more)
 
 ### Community 8 - "settings.lua"
-Cohesion: 0.14
-Nodes (26): GetDB(), ToggleAddon(), WeintCodex.Minimap.IsShown(), WeintCodex.Minimap.SetShown(), WeintCodex.Navigation.CurrentTab(), WeintCodex.CreateScrollArea(), WeintCodex.CreateSlider(), Buttons() (+18 more)
+Cohesion: 0.12
+Nodes (29): GetDB(), ToggleAddon(), WeintCodex.Minimap.IsShown(), WeintCodex.Minimap.SetShown(), WeintCodex.Navigation.ActivateIndex(), WeintCodex.Navigation.CurrentTab(), SetEscapeClose(), WeintCodex.ApplyWindowBehaviour() (+21 more)
 
 ### Community 9 - "WeintCodex.ColorText"
-Cohesion: 0.13
-Nodes (29): A(), AddButton(), BuildVisibleSteps(), ClearButtons(), CollectChangelogSince(), CreateButton(), Dismiss(), E() (+21 more)
+Cohesion: 0.17
+Nodes (25): A(), AddButton(), BuildVisibleSteps(), ClearButtons(), CollectChangelogSince(), CreateButton(), Dismiss(), E() (+17 more)
 
 ### Community 10 - "charakter.lua"
-Cohesion: 0.11
-Nodes (32): WeintCodex.CreateToggle(), WeintCodex.Label(), WeintCodex.Specs.ByIndex(), WeintCodex.Specs.ByName(), WeintCodex.Specs.ForClass(), WeintCodex.Specs.Key(), Die Spezialisierung (`data/specs.lua`, `modules/charakter.lua`), Charakter: Ausrüstung und Twinks (+24 more)
+Cohesion: 0.12
+Nodes (27): WeintCodex.CreateToggle(), WeintCodex.Specs.ByIndex(), WeintCodex.Specs.ByName(), WeintCodex.Specs.ForClass(), WeintCodex.Specs.Key(), Charakter: Ausrüstung und Twinks, Die Ausrüstungsplätze kommen vom Client, Die Spezialisierung (+19 more)
 
-### Community 11 - "BuildTree"
+### Community 11 - "Wo sie in diesem Addon greift"
 Cohesion: 0.13
-Nodes (33): WeintCodex.Names.ClassLabel(), WeintCodex.RaidData.BossSourceLabel(), WeintCodex.RaidData.Get(), TipsAllowed(), WeintCodex.Roles.Frame(), WeintCodex.Roles.FrameLabel(), WeintCodex.Roles.HasTips(), WeintCodex.Roles.Label() (+25 more)
+Nodes (14): Datenintegrität: `unknown` ist nicht `0`, Der Ausrüstungsstand an die Companion (`modules/companion.lua`), Der vierte Zustand ist mit 5.1.0.0 dazugekommen, Die Ausrüstung (`modules/charakter.lua`), Die Bosslisten (`data/raids.lua`, `data/dungeons.lua`), Die Client-Aufrufe, Die Materialien (`modules/materials.lua`), Die Regel (+6 more)
 
 ### Community 12 - "companion.lua"
 Cohesion: 0.11
-Nodes (31): WeintCodex.Access.Init(), OnEvent(), WeintCodex.Names.Me(), `character_sheet` — was leer bleibt, und warum, Die Companion-Brücke, Die Reihenfolge in `ProcessQueue`, Die Seite *Companion*, Versionssperren (+23 more)
+Nodes (30): WeintCodex.Access.Init(), OnEvent(), `character_sheet` — was leer bleibt, und warum, Die Companion-Brücke, Die Reihenfolge in `ProcessQueue`, Die Seite *Companion*, Versionssperren, Was hereinkommt (+22 more)
 
 ### Community 13 - "groupcheck.lua"
-Cohesion: 0.12
-Nodes (26): Der Gruppencheck (`modules/groupcheck.lua`), Bedienung, Die Schlange läuft einzeln, Drei Regeln, die nicht Geschmack sind, Eine unbekannte Gegenstandsstufe ist keine Null, Gruppencheck, Nicht erreichbar ist kein Befund, Was geprüft wird (+18 more)
+Cohesion: 0.10
+Nodes (28): WeintCodex.Navigation.ActivateFirst(), WeintCodex.CreateCard(), Der Gruppencheck (`modules/groupcheck.lua`), Bedienung, Die Bausteine, Die Schlange läuft einzeln, Drei Regeln, die nicht Geschmack sind, Eine unbekannte Gegenstandsstufe ist keine Null (+20 more)
 
 ### Community 14 - "release_notes.py"
 Cohesion: 0.05
@@ -145,19 +146,19 @@ Nodes (3): Check(), CheckBossList(), FeralIn()
 
 ### Community 27 - "Dungeons und Rollen"
 Cohesion: 0.09
-Nodes (21): Beschwörbare Zusatzbosse, Bilder: keine, und warum, Der Bestand, Die eigene Stufe, Die Navigationsspalte selbst, Die neun von Forever, Die Rollen, Die Seite: drei Flächen, eine Leserichtung (+13 more)
+Nodes (22): Beschwörbare Zusatzbosse, Bilder: keine, und warum, Der Bestand, Die eigene Stufe, Die Navigationsspalte selbst, Die neun von Forever, Die Rollen, Die Seite: drei Flächen, eine Leserichtung (+14 more)
 
 ### Community 28 - "Schlachtzüge, Bosse und Fortschritt"
-Cohesion: 0.17
-Nodes (11): Alle Client-Aufrufe sind defensiv, Der Bestand, Der Fortschritt, Die Bossliste steht links, nicht in der Seite, Die Bosslisten: zwei vorläufig, eine leer, Die vier Bestände der Seite, Herkunft ist Pflicht, Nachtragen (+3 more)
+Cohesion: 0.14
+Nodes (13): GoToTab(), Alle Client-Aufrufe sind defensiv, Der Bestand, Der Fortschritt, Die Bossliste steht links, nicht in der Seite, Die Bosslisten: zwei vorläufig, eine leer, Die vier Bestände der Seite, Herkunft ist Pflicht (+5 more)
 
 ### Community 29 - "Oberfläche: Aufbau und Designsprache „Graphit""
 Cohesion: 0.18
 Nodes (10): Das Bild, Der Detailbereich, Der Fensteraufbau, Der Seitenkopf, Die Unternavigation, Farben ansprechen, Nichts muss scrollen, Oberfläche: Aufbau und Designsprache „Graphit" (+2 more)
 
 ### Community 30 - "Changelog"
-Cohesion: 0.18
-Nodes (10): [5.0.0.0] – 2026-09-18, [5.1.0.0] – 2026-09-20, [5.2.0.0] – 2026-09-21, [5.2.0.1] – 2026-09-21, [5.2.0.2] – 2026-09-21, Changelog, Technisch, Technisch (+2 more)
+Cohesion: 0.17
+Nodes (11): [5.0.0.0] – 2026-09-18, [5.1.0.0] – 2026-09-20, [5.2.0.0] – 2026-09-21, [5.2.0.1] – 2026-09-21, [5.2.0.2] – 2026-09-21, [5.2.0.3] – 2026-09-21, Changelog, Technisch (+3 more)
 
 ### Community 31 - "Die Einführung"
 Cohesion: 0.25
@@ -171,6 +172,10 @@ Nodes (8): createButton(), lib:Refresh(), lib:Register(), lib:SetButtonRadius(),
 Cohesion: 0.67
 Nodes (3): getAnchors(), onEnter(), onEnterCompartment()
 
+### Community 34 - "CLAUDE.md"
+Cohesion: 0.25
+Nodes (6): Critical invariants (always relevant, keep in mind for any change), Development workflow, Role in the ecosystem, Task routing — read only what the task needs, What this edition deliberately does not have, What this is
+
 ## Knowledge Gaps
 - **83 isolated node(s):** `Warum es sie gibt`, ``load_test.lua``, ``data_test.lua``, ``wow_stub.lua``, `Was diese Läufe **nicht** leisten` (+78 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 230 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
@@ -179,17 +184,17 @@ Nodes (3): getAnchors(), onEnter(), onEnterCompartment()
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `WeintCodex.Navigation.SwitchTo()` connect `navigation.lua` to `dungeonpages.lua`, `access.lua`, `ui.lua`, `calendar.lua`, `WeintCodex.ColorText`, `charakter.lua`, `BuildTree`, `groupcheck.lua`, `load_test.lua`?**
-  _High betweenness centrality (0.173) - this node is a cross-community bridge._
+- **Why does `WeintCodex.Navigation.SwitchTo()` connect `navigation.lua` to `dungeonpages.lua`, `access.lua`, `ui.lua`, `calendar.lua`, `encounter_tracking.lua`, `settings.lua`, `WeintCodex.ColorText`, `charakter.lua`, `groupcheck.lua`, `load_test.lua`?**
+  _High betweenness centrality (0.165) - this node is a cross-community bridge._
 - **Why does `Drei Dinge, die in WoW anders gelöst werden müssen` connect `ui.lua` to `Oberfläche: Aufbau und Designsprache „Graphit"`?**
-  _High betweenness centrality (0.128) - this node is a cross-community bridge._
+  _High betweenness centrality (0.127) - this node is a cross-community bridge._
 - **Why does `Oberfläche: Aufbau und Designsprache „Graphit"` connect `Oberfläche: Aufbau und Designsprache „Graphit"` to `ui.lua`?**
   _High betweenness centrality (0.126) - this node is a cross-community bridge._
 - **Are the 31 inferred relationships involving `WeintCodex.ColorText()` (e.g. with `Row()` and `Warn()`) actually correct?**
   _`WeintCodex.ColorText()` has 31 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 15 inferred relationships involving `WeintCodex.ShowHome()` (e.g. with `WeintCodex.CreateButton()` and `WeintCodex.CreateMeter()`) actually correct?**
   _`WeintCodex.ShowHome()` has 15 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 10 inferred relationships involving `WeintCodex.Navigation.SetInspector()` (e.g. with `WeintCodex.SetDetailShown()` and `CreateCalendarFrame()`) actually correct?**
-  _`WeintCodex.Navigation.SetInspector()` has 10 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 11 inferred relationships involving `WeintCodex.Navigation.SetInspector()` (e.g. with `WeintCodex.SetDetailShown()` and `CreateCalendarFrame()`) actually correct?**
+  _`WeintCodex.Navigation.SetInspector()` has 11 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 13 inferred relationships involving `WeintCodex.Access.Can()` (e.g. with `Can()` and `BuildVisibleSteps()`) actually correct?**
   _`WeintCodex.Access.Can()` has 13 INFERRED edges - model-reasoned connections that need verification._

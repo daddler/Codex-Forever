@@ -10,7 +10,7 @@
   "8": "settings.lua",
   "9": "WeintCodex.ColorText",
   "10": "charakter.lua",
-  "11": "BuildTree",
+  "11": "Wo sie in diesem Addon greift",
   "12": "companion.lua",
   "13": "groupcheck.lua",
   "14": "release_notes.py",
@@ -32,5 +32,6 @@
   "30": "Changelog",
   "31": "Die Einführung",
   "32": "updatePosition",
-  "33": "getAnchors"
+  "33": "getAnchors",
+  "34": "CLAUDE.md"
 }

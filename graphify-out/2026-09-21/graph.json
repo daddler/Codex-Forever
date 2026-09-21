@@ -13,7 +13,7 @@
       "file_type": "code",
       "norm_label": "applyitemdisplay()",
       "source_file": "core/navigation.lua",
-      "source_location": "L1935"
+      "source_location": "L1992"
     },
     {
       "id": "core_navigation_buildcolumn",
@@ -61,7 +61,7 @@
       "file_type": "code",
       "norm_label": "clearcontentpanel()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2186"
+      "source_location": "L2243"
     },
     {
       "id": "core_navigation_createitemrow",
@@ -73,7 +73,7 @@
       "file_type": "code",
       "norm_label": "createitemrow()",
       "source_file": "core/navigation.lua",
-      "source_location": "L1981"
+      "source_location": "L2038"
     },
     {
       "id": "core_navigation_datekey",
@@ -85,7 +85,7 @@
       "file_type": "code",
       "norm_label": "datekey()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2411"
+      "source_location": "L2468"
     },
     {
       "id": "core_navigation_ellipsis",
@@ -97,7 +97,7 @@
       "file_type": "code",
       "norm_label": "ellipsis()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2533"
+      "source_location": "L2590"
     },
     {
       "id": "core_navigation_ensuresubnavcolumn",
@@ -121,7 +121,7 @@
       "file_type": "code",
       "norm_label": "getmaterialshortagecount()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2470"
+      "source_location": "L2527"
     },
     {
       "id": "core_navigation_getnextraidlabel",
@@ -133,7 +133,7 @@
       "file_type": "code",
       "norm_label": "getnextraidlabel()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2420"
+      "source_location": "L2477"
     },
     {
       "id": "core_navigation_getqueuecount",
@@ -145,7 +145,7 @@
       "file_type": "code",
       "norm_label": "getqueuecount()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2489"
+      "source_location": "L2546"
     },
     {
       "id": "core_navigation_getsignupcount",
@@ -157,7 +157,7 @@
       "file_type": "code",
       "norm_label": "getsignupcount()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2453"
+      "source_location": "L2510"
     },
     {
       "id": "core_navigation_gototab",
@@ -169,7 +169,7 @@
       "file_type": "code",
       "norm_label": "gototab()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2498"
+      "source_location": "L2555"
     },
     {
       "id": "core_navigation_inspectorbody",
@@ -181,7 +181,7 @@
       "file_type": "code",
       "norm_label": "inspectorbody()",
       "source_file": "core/navigation.lua",
-      "source_location": "L916"
+      "source_location": "L973"
     },
     {
       "id": "core_navigation_inspectorbutton",
@@ -193,7 +193,7 @@
       "file_type": "code",
       "norm_label": "inspectorbutton()",
       "source_file": "core/navigation.lua",
-      "source_location": "L1377"
+      "source_location": "L1434"
     },
     {
       "id": "core_navigation_inspectorcard",
@@ -205,7 +205,7 @@
       "file_type": "code",
       "norm_label": "inspectorcard()",
       "source_file": "core/navigation.lua",
-      "source_location": "L1332"
+      "source_location": "L1389"
     },
     {
       "id": "core_navigation_inspectorchecklistitem",
@@ -217,7 +217,7 @@
       "file_type": "code",
       "norm_label": "inspectorchecklistitem()",
       "source_file": "core/navigation.lua",
-      "source_location": "L1296"
+      "source_location": "L1353"
     },
     {
       "id": "core_navigation_inspectordivider",
@@ -229,7 +229,7 @@
       "file_type": "code",
       "norm_label": "inspectordivider()",
       "source_file": "core/navigation.lua",
-      "source_location": "L968"
+      "source_location": "L1025"
     },
     {
       "id": "core_navigation_inspectorheader",
@@ -241,7 +241,7 @@
       "file_type": "code",
       "norm_label": "inspectorheader()",
       "source_file": "core/navigation.lua",
-      "source_location": "L957"
+      "source_location": "L1014"
     },
     {
       "id": "core_navigation_inspectorinput",
@@ -253,7 +253,7 @@
       "file_type": "code",
       "norm_label": "inspectorinput()",
       "source_file": "core/navigation.lua",
-      "source_location": "L1069"
+      "source_location": "L1126"
     },
     {
       "id": "core_navigation_inspectoritemlist",
@@ -265,7 +265,7 @@
       "file_type": "code",
       "norm_label": "inspectoritemlist()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2062"
+      "source_location": "L2119"
     },
     {
       "id": "core_navigation_inspectorlistcard",
@@ -277,7 +277,7 @@
       "file_type": "code",
       "norm_label": "inspectorlistcard()",
       "source_file": "core/navigation.lua",
-      "source_location": "L1249"
+      "source_location": "L1306"
     },
     {
       "id": "core_navigation_inspectornotes",
@@ -289,7 +289,7 @@
       "file_type": "code",
       "norm_label": "inspectornotes()",
       "source_file": "core/navigation.lua",
-      "source_location": "L1526"
+      "source_location": "L1583"
     },
     {
       "id": "core_navigation_inspectorrows",
@@ -301,7 +301,7 @@
       "file_type": "code",
       "norm_label": "inspectorrows()",
       "source_file": "core/navigation.lua",
-      "source_location": "L978"
+      "source_location": "L1035"
     },
     {
       "id": "core_navigation_inspectortext",
@@ -313,7 +313,7 @@
       "file_type": "code",
       "norm_label": "inspectortext()",
       "source_file": "core/navigation.lua",
-      "source_location": "L1014"
+      "source_location": "L1071"
     },
     {
       "id": "core_navigation_locked",
@@ -349,7 +349,7 @@
       "file_type": "code",
       "norm_label": "notesborder()",
       "source_file": "core/navigation.lua",
-      "source_location": "L1440"
+      "source_location": "L1497"
     },
     {
       "id": "core_navigation_notespromptbutton",
@@ -361,7 +361,7 @@
       "file_type": "code",
       "norm_label": "notespromptbutton()",
       "source_file": "core/navigation.lua",
-      "source_location": "L1495"
+      "source_location": "L1552"
     },
     {
       "id": "core_navigation_notessegment",
@@ -373,7 +373,7 @@
       "file_type": "code",
       "norm_label": "notessegment()",
       "source_file": "core/navigation.lua",
-      "source_location": "L1460"
+      "source_location": "L1517"
     },
     {
       "id": "core_navigation_notestextlength",
@@ -385,7 +385,7 @@
       "file_type": "code",
       "norm_label": "notestextlength()",
       "source_file": "core/navigation.lua",
-      "source_location": "L1519"
+      "source_location": "L1576"
     },
     {
       "id": "core_navigation_parseymd",
@@ -397,7 +397,7 @@
       "file_type": "code",
       "norm_label": "parseymd()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2402"
+      "source_location": "L2459"
     },
     {
       "id": "core_navigation_settabactive",
@@ -424,18 +424,6 @@
       "source_location": "L132"
     },
     {
-      "id": "core_navigation_weintcodex_navigation_activatefirst",
-      "label": "WeintCodex.Navigation.ActivateFirst()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "navigation.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.navigation.activatefirst()",
-      "source_file": "core/navigation.lua",
-      "source_location": "L861"
-    },
-    {
       "id": "core_navigation_weintcodex_navigation_activateindex",
       "label": "WeintCodex.Navigation.ActivateIndex()",
       "_callable": true,
@@ -445,7 +433,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.navigation.activateindex()",
       "source_file": "core/navigation.lua",
-      "source_location": "L873"
+      "source_location": "L930"
     },
     {
       "id": "core_navigation_weintcodex_navigation_buildsidebar",
@@ -457,7 +445,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.navigation.buildsidebar()",
       "source_file": "core/navigation.lua",
-      "source_location": "L822"
+      "source_location": "L879"
     },
     {
       "id": "core_navigation_weintcodex_navigation_clearinspector",
@@ -469,7 +457,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.navigation.clearinspector()",
       "source_file": "core/navigation.lua",
-      "source_location": "L940"
+      "source_location": "L997"
     },
     {
       "id": "core_navigation_weintcodex_navigation_clearsidebar",
@@ -493,7 +481,19 @@
       "file_type": "code",
       "norm_label": "weintcodex.navigation.cleartitleactions()",
       "source_file": "core/navigation.lua",
-      "source_location": "L951"
+      "source_location": "L1008"
+    },
+    {
+      "id": "core_navigation_weintcodex_navigation_contentbudgetwidth",
+      "label": "WeintCodex.Navigation.ContentBudgetWidth()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "navigation.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.navigation.contentbudgetwidth()",
+      "source_file": "core/navigation.lua",
+      "source_location": "L453"
     },
     {
       "id": "core_navigation_weintcodex_navigation_fits",
@@ -577,7 +577,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.navigation.setinspector()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2115"
+      "source_location": "L2172"
     },
     {
       "id": "core_navigation_weintcodex_navigation_settabbadge",
@@ -625,7 +625,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.navigation.showaccesslock()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2324"
+      "source_location": "L2381"
     },
     {
       "id": "core_navigation_weintcodex_navigation_showplaceholder",
@@ -637,7 +637,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.navigation.showplaceholder()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2280"
+      "source_location": "L2337"
     },
     {
       "id": "core_navigation_weintcodex_navigation_sidebarbuttons",
@@ -649,7 +649,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.navigation.sidebarbuttons()",
       "source_file": "core/navigation.lua",
-      "source_location": "L850"
+      "source_location": "L907"
     },
     {
       "id": "core_navigation_weintcodex_navigation_subnavbudget",
@@ -709,7 +709,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.navigation.switchto()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2209"
+      "source_location": "L2266"
     },
     {
       "id": "core_navigation_weintcodex_navigation_updatesidebarstatus",
@@ -721,7 +721,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.navigation.updatesidebarstatus()",
       "source_file": "core/navigation.lua",
-      "source_location": "L836"
+      "source_location": "L893"
     },
     {
       "id": "core_navigation_weintcodex_showhome",
@@ -733,7 +733,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.showhome()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2537"
+      "source_location": "L2594"
     },
     {
       "id": "core_ui_updatecontentinsets",
@@ -748,16 +748,16 @@
       "source_location": "L1759"
     },
     {
-      "id": "core_ui_weintcodex_createsegmentedcontrol",
-      "label": "WeintCodex.CreateSegmentedControl()",
+      "id": "core_ui_weintcodex_createcard",
+      "label": "WeintCodex.CreateCard()",
       "_callable": true,
       "_origin": "ast",
       "community": 0,
       "community_name": "navigation.lua",
       "file_type": "code",
-      "norm_label": "weintcodex.createsegmentedcontrol()",
+      "norm_label": "weintcodex.createcard()",
       "source_file": "core/ui.lua",
-      "source_location": "L867"
+      "source_location": "L1382"
     },
     {
       "id": "core_ui_weintcodex_drawslimborder",
@@ -770,18 +770,6 @@
       "norm_label": "weintcodex.drawslimborder()",
       "source_file": "core/ui.lua",
       "source_location": "L1357"
-    },
-    {
-      "id": "core_ui_weintcodex_setbreadcrumb",
-      "label": "WeintCodex.SetBreadcrumb()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "navigation.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.setbreadcrumb()",
-      "source_file": "core/ui.lua",
-      "source_location": "L1606"
     },
     {
       "id": "core_ui_weintcodex_setdetailshown",
@@ -820,18 +808,6 @@
       "source_location": "L1773"
     },
     {
-      "id": "core_ui_weintcodex_statusdot",
-      "label": "WeintCodex.StatusDot()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "navigation.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.statusdot()",
-      "source_file": "core/ui.lua",
-      "source_location": "L712"
-    },
-    {
       "id": "core_ui_weintcodex_upper",
       "label": "WeintCodex.Upper()",
       "_callable": true,
@@ -844,19 +820,79 @@
       "source_location": "L457"
     },
     {
-      "id": "modules_calendar_weintcodex_calendar_show",
-      "label": "WeintCodex.Calendar.Show()",
+      "id": "data_raids_weintcodex_raiddata_all",
+      "label": "WeintCodex.RaidData.All()",
       "_callable": true,
       "_origin": "ast",
       "community": 0,
       "community_name": "navigation.lua",
       "file_type": "code",
-      "norm_label": "weintcodex.calendar.show()",
-      "source_file": "modules/calendar.lua",
-      "source_location": "L2053"
+      "norm_label": "weintcodex.raiddata.all()",
+      "source_file": "data/raids.lua",
+      "source_location": "L144"
     },
     {
-      "id": "modules_companionpage_buildpage",
+      "id": "data_raids_weintcodex_raiddata_bossesconfirmed",
+      "label": "WeintCodex.RaidData.BossesConfirmed()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "navigation.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.raiddata.bossesconfirmed()",
+      "source_file": "data/raids.lua",
+      "source_location": "L175"
+    },
+    {
+      "id": "data_raids_weintcodex_raiddata_bossliststate",
+      "label": "WeintCodex.RaidData.BossListState()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "navigation.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.raiddata.bossliststate()",
+      "source_file": "data/raids.lua",
+      "source_location": "L212"
+    },
+    {
+      "id": "data_raids_weintcodex_raiddata_bosssource",
+      "label": "WeintCodex.RaidData.BossSource()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "navigation.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.raiddata.bosssource()",
+      "source_file": "data/raids.lua",
+      "source_location": "L166"
+    },
+    {
+      "id": "data_raids_weintcodex_raiddata_hasbosses",
+      "label": "WeintCodex.RaidData.HasBosses()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "navigation.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.raiddata.hasbosses()",
+      "source_file": "data/raids.lua",
+      "source_location": "L158"
+    },
+    {
+      "id": "data_raids_weintcodex_raiddata_knownbosscount",
+      "label": "WeintCodex.RaidData.KnownBossCount()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "navigation.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.raiddata.knownbosscount()",
+      "source_file": "data/raids.lua",
+      "source_location": "L193"
+    },
+    {
+      "id": "modules_dungeonpages_buildpage",
       "label": "BuildPage()",
       "_callable": true,
       "_origin": "ast",
@@ -864,44 +900,32 @@
       "community_name": "navigation.lua",
       "file_type": "code",
       "norm_label": "buildpage()",
-      "source_file": "modules/companionpage.lua",
-      "source_location": "L44"
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L288"
     },
     {
-      "id": "modules_companionpage_stamp",
-      "label": "Stamp()",
+      "id": "modules_dungeonpages_weintcodex_dungeonpages_show",
+      "label": "WeintCodex.DungeonPages.Show()",
       "_callable": true,
       "_origin": "ast",
       "community": 0,
       "community_name": "navigation.lua",
       "file_type": "code",
-      "norm_label": "stamp()",
-      "source_file": "modules/companionpage.lua",
-      "source_location": "L36"
+      "norm_label": "weintcodex.dungeonpages.show()",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L1126"
     },
     {
-      "id": "modules_companionpage_staterow",
-      "label": "StateRow()",
+      "id": "modules_groupcheck_drawnotice",
+      "label": "DrawNotice()",
       "_callable": true,
       "_origin": "ast",
       "community": 0,
       "community_name": "navigation.lua",
       "file_type": "code",
-      "norm_label": "staterow()",
-      "source_file": "modules/companionpage.lua",
-      "source_location": "L57"
-    },
-    {
-      "id": "modules_companionpage_weintcodex_companionpage_show",
-      "label": "WeintCodex.CompanionPage.Show()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "navigation.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.companionpage.show()",
-      "source_file": "modules/companionpage.lua",
-      "source_location": "L82"
+      "norm_label": "drawnotice()",
+      "source_file": "modules/groupcheck.lua",
+      "source_location": "L589"
     },
     {
       "id": "modules_settings_weintcodex_settings_show",
@@ -914,18 +938,6 @@
       "norm_label": "weintcodex.settings.show()",
       "source_file": "modules/settings.lua",
       "source_location": "L653"
-    },
-    {
-      "id": "core_navigation_weintcodex_navigation_contentbudgetwidth",
-      "label": "WeintCodex.Navigation.ContentBudgetWidth()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "dungeonpages.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.navigation.contentbudgetwidth()",
-      "source_file": "core/navigation.lua",
-      "source_location": "L453"
     },
     {
       "id": "core_ui_weintcodex_createsurface",
@@ -1381,7 +1393,7 @@
       "file_type": "code",
       "norm_label": "bodyheading()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L716"
+      "source_location": "L755"
     },
     {
       "id": "modules_dungeonpages_bodytext",
@@ -1393,7 +1405,7 @@
       "file_type": "code",
       "norm_label": "bodytext()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L723"
+      "source_location": "L762"
     },
     {
       "id": "modules_dungeonpages_bodywidthmin",
@@ -1417,19 +1429,7 @@
       "file_type": "code",
       "norm_label": "bosspill()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L360"
-    },
-    {
-      "id": "modules_dungeonpages_buildpage",
-      "label": "BuildPage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "dungeonpages.lua",
-      "file_type": "code",
-      "norm_label": "buildpage()",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L259"
+      "source_location": "L389"
     },
     {
       "id": "modules_dungeonpages_clearrows",
@@ -1453,7 +1453,7 @@
       "file_type": "code",
       "norm_label": "completenessline()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L234"
+      "source_location": "L263"
     },
     {
       "id": "modules_dungeonpages_contentbudget",
@@ -1489,7 +1489,7 @@
       "file_type": "code",
       "norm_label": "detailcard()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L641"
+      "source_location": "L680"
     },
     {
       "id": "modules_dungeonpages_drawbossdetail",
@@ -1501,7 +1501,7 @@
       "file_type": "code",
       "norm_label": "drawbossdetail()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L755"
+      "source_location": "L794"
     },
     {
       "id": "modules_dungeonpages_drawbosses",
@@ -1513,7 +1513,7 @@
       "file_type": "code",
       "norm_label": "drawbosses()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L524"
+      "source_location": "L563"
     },
     {
       "id": "modules_dungeonpages_drawdungeon",
@@ -1525,7 +1525,7 @@
       "file_type": "code",
       "norm_label": "drawdungeon()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L819"
+      "source_location": "L858"
     },
     {
       "id": "modules_dungeonpages_drawhead",
@@ -1537,7 +1537,7 @@
       "file_type": "code",
       "norm_label": "drawhead()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L285"
+      "source_location": "L314"
     },
     {
       "id": "modules_dungeonpages_drawroster",
@@ -1549,7 +1549,7 @@
       "file_type": "code",
       "norm_label": "drawroster()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L739"
+      "source_location": "L778"
     },
     {
       "id": "modules_dungeonpages_drawsummons",
@@ -1561,7 +1561,7 @@
       "file_type": "code",
       "norm_label": "drawsummons()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L852"
+      "source_location": "L891"
     },
     {
       "id": "modules_dungeonpages_ghostpill",
@@ -1573,7 +1573,7 @@
       "file_type": "code",
       "norm_label": "ghostpill()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L456"
+      "source_location": "L494"
     },
     {
       "id": "modules_dungeonpages_hovereyebrow",
@@ -1585,7 +1585,7 @@
       "file_type": "code",
       "norm_label": "hovereyebrow()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L222"
+      "source_location": "L251"
     },
     {
       "id": "modules_dungeonpages_instanceitem",
@@ -1597,7 +1597,7 @@
       "file_type": "code",
       "norm_label": "instanceitem()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L965"
+      "source_location": "L1004"
     },
     {
       "id": "modules_dungeonpages_layoutpills",
@@ -1609,7 +1609,7 @@
       "file_type": "code",
       "norm_label": "layoutpills()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L474"
+      "source_location": "L513"
     },
     {
       "id": "modules_dungeonpages_mincontentwidth",
@@ -1645,7 +1645,19 @@
       "file_type": "code",
       "norm_label": "note()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L512"
+      "source_location": "L551"
+    },
+    {
+      "id": "modules_dungeonpages_pilledge",
+      "label": "PillEdge()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "dungeonpages.lua",
+      "file_type": "code",
+      "norm_label": "pilledge()",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L226"
     },
     {
       "id": "modules_dungeonpages_sectionhead",
@@ -1657,7 +1669,7 @@
       "file_type": "code",
       "norm_label": "sectionhead()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L492"
+      "source_location": "L531"
     },
     {
       "id": "modules_dungeonpages_summonrow",
@@ -1669,7 +1681,7 @@
       "file_type": "code",
       "norm_label": "summonrow()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L988"
+      "source_location": "L1027"
     },
     {
       "id": "modules_dungeonpages_textwidth",
@@ -1729,19 +1741,19 @@
       "file_type": "code",
       "norm_label": "weintcodex.dungeonpages.select()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1061"
+      "source_location": "L1102"
     },
     {
-      "id": "modules_dungeonpages_weintcodex_dungeonpages_show",
-      "label": "WeintCodex.DungeonPages.Show()",
+      "id": "core_ui_weintcodex_createtoggle",
+      "label": "WeintCodex.CreateToggle()",
       "_callable": true,
       "_origin": "ast",
-      "community": 1,
-      "community_name": "dungeonpages.lua",
+      "community": 10,
+      "community_name": "charakter.lua",
       "file_type": "code",
-      "norm_label": "weintcodex.dungeonpages.show()",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1085"
+      "norm_label": "weintcodex.createtoggle()",
+      "source_file": "core/ui.lua",
+      "source_location": "L975"
     },
     {
       "id": "core_ui_weintcodex_label",
@@ -2032,54 +2044,6 @@
       "source_location": "L147"
     },
     {
-      "id": "data_raids_weintcodex_raiddata_all",
-      "label": "WeintCodex.RaidData.All()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "BuildTree",
-      "file_type": "code",
-      "norm_label": "weintcodex.raiddata.all()",
-      "source_file": "data/raids.lua",
-      "source_location": "L144"
-    },
-    {
-      "id": "data_raids_weintcodex_raiddata_bossesconfirmed",
-      "label": "WeintCodex.RaidData.BossesConfirmed()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "BuildTree",
-      "file_type": "code",
-      "norm_label": "weintcodex.raiddata.bossesconfirmed()",
-      "source_file": "data/raids.lua",
-      "source_location": "L175"
-    },
-    {
-      "id": "data_raids_weintcodex_raiddata_bossliststate",
-      "label": "WeintCodex.RaidData.BossListState()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "BuildTree",
-      "file_type": "code",
-      "norm_label": "weintcodex.raiddata.bossliststate()",
-      "source_file": "data/raids.lua",
-      "source_location": "L212"
-    },
-    {
-      "id": "data_raids_weintcodex_raiddata_bosssource",
-      "label": "WeintCodex.RaidData.BossSource()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "BuildTree",
-      "file_type": "code",
-      "norm_label": "weintcodex.raiddata.bosssource()",
-      "source_file": "data/raids.lua",
-      "source_location": "L166"
-    },
-    {
       "id": "data_raids_weintcodex_raiddata_bosssourcelabel",
       "label": "WeintCodex.RaidData.BossSourceLabel()",
       "_callable": true,
@@ -2102,30 +2066,6 @@
       "norm_label": "weintcodex.raiddata.get()",
       "source_file": "data/raids.lua",
       "source_location": "L148"
-    },
-    {
-      "id": "data_raids_weintcodex_raiddata_hasbosses",
-      "label": "WeintCodex.RaidData.HasBosses()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "BuildTree",
-      "file_type": "code",
-      "norm_label": "weintcodex.raiddata.hasbosses()",
-      "source_file": "data/raids.lua",
-      "source_location": "L158"
-    },
-    {
-      "id": "data_raids_weintcodex_raiddata_knownbosscount",
-      "label": "WeintCodex.RaidData.KnownBossCount()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "BuildTree",
-      "file_type": "code",
-      "norm_label": "weintcodex.raiddata.knownbosscount()",
-      "source_file": "data/raids.lua",
-      "source_location": "L193"
     },
     {
       "id": "data_roles_tipsallowed",
@@ -2512,30 +2452,6 @@
       "source_location": "L156"
     },
     {
-      "id": "core_names_weintcodex_names_equal",
-      "label": "WeintCodex.Names.Equal()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "companion.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.names.equal()",
-      "source_file": "core/names.lua",
-      "source_location": "L77"
-    },
-    {
-      "id": "core_names_weintcodex_names_match",
-      "label": "WeintCodex.Names.Match()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "companion.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.names.match()",
-      "source_file": "core/names.lua",
-      "source_location": "L120"
-    },
-    {
       "id": "core_names_weintcodex_names_me",
       "label": "WeintCodex.Names.Me()",
       "_callable": true,
@@ -2546,42 +2462,6 @@
       "norm_label": "weintcodex.names.me()",
       "source_file": "core/names.lua",
       "source_location": "L99"
-    },
-    {
-      "id": "core_names_weintcodex_names_normalize",
-      "label": "WeintCodex.Names.Normalize()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "companion.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.names.normalize()",
-      "source_file": "core/names.lua",
-      "source_location": "L67"
-    },
-    {
-      "id": "core_names_weintcodex_names_split",
-      "label": "WeintCodex.Names.Split()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "companion.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.names.split()",
-      "source_file": "core/names.lua",
-      "source_location": "L48"
-    },
-    {
-      "id": "modules_calendar_alternateinvitename",
-      "label": "AlternateInviteName()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "companion.lua",
-      "file_type": "code",
-      "norm_label": "alternateinvitename()",
-      "source_file": "modules/calendar.lua",
-      "source_location": "L288"
     },
     {
       "id": "modules_companion_boundcommunityid",
@@ -2632,6 +2512,18 @@
       "source_location": "L277"
     },
     {
+      "id": "modules_companion_dispatch",
+      "label": "Dispatch()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "companion.lua",
+      "file_type": "code",
+      "norm_label": "dispatch()",
+      "source_file": "modules/companion.lua",
+      "source_location": "L392"
+    },
+    {
       "id": "modules_companion_initialize",
       "label": "Initialize()",
       "_callable": true,
@@ -2666,6 +2558,18 @@
       "norm_label": "livedelivery()",
       "source_file": "modules/companion.lua",
       "source_location": "L438"
+    },
+    {
+      "id": "modules_companion_processqueue",
+      "label": "ProcessQueue()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "companion.lua",
+      "file_type": "code",
+      "norm_label": "processqueue()",
+      "source_file": "modules/companion.lua",
+      "source_location": "L480"
     },
     {
       "id": "modules_companion_schedulecharactersheet",
@@ -2800,18 +2704,6 @@
       "source_location": "L72"
     },
     {
-      "id": "core_ui_weintcodex_createcard",
-      "label": "WeintCodex.CreateCard()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 13,
-      "community_name": "groupcheck.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.createcard()",
-      "source_file": "core/ui.lua",
-      "source_location": "L1382"
-    },
-    {
       "id": "modules_groupcheck_after",
       "label": "After()",
       "_callable": true,
@@ -2884,18 +2776,6 @@
       "source_location": "L216"
     },
     {
-      "id": "modules_groupcheck_drawnotice",
-      "label": "DrawNotice()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 13,
-      "community_name": "groupcheck.lua",
-      "file_type": "code",
-      "norm_label": "drawnotice()",
-      "source_file": "modules/groupcheck.lua",
-      "source_location": "L589"
-    },
-    {
       "id": "modules_groupcheck_drawtable",
       "label": "DrawTable()",
       "_callable": true,
@@ -2918,6 +2798,18 @@
       "norm_label": "groupunits()",
       "source_file": "modules/groupcheck.lua",
       "source_location": "L73"
+    },
+    {
+      "id": "modules_groupcheck_joinlist",
+      "label": "JoinList()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 13,
+      "community_name": "groupcheck.lua",
+      "file_type": "code",
+      "norm_label": "joinlist()",
+      "source_file": "modules/groupcheck.lua",
+      "source_location": "L452"
     },
     {
       "id": "modules_groupcheck_makerunbutton",
@@ -3349,7 +3241,7 @@
       "file_type": "code",
       "norm_label": "samecolor()",
       "source_file": ".github/tests/load_test.lua",
-      "source_location": "L655"
+      "source_location": "L664"
     },
     {
       "id": "github_tests_load_test_scanfolder",
@@ -4537,31 +4429,139 @@
       "file_type": "code",
       "norm_label": "weintcodex.resettohome()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2987"
+      "source_location": "L3044"
     },
     {
-      "id": "modules_companion_dispatch",
-      "label": "Dispatch()",
+      "id": "modules_sync_drawborder",
+      "label": "DrawBorder()",
       "_callable": true,
       "_origin": "ast",
       "community": 3,
       "community_name": "access.lua",
       "file_type": "code",
-      "norm_label": "dispatch()",
-      "source_file": "modules/companion.lua",
-      "source_location": "L392"
+      "norm_label": "drawborder()",
+      "source_file": "modules/sync.lua",
+      "source_location": "L72"
     },
     {
-      "id": "modules_companion_processqueue",
-      "label": "ProcessQueue()",
+      "id": "modules_sync_parsebossimport",
+      "label": "ParseBossImport()",
       "_callable": true,
       "_origin": "ast",
       "community": 3,
       "community_name": "access.lua",
       "file_type": "code",
-      "norm_label": "processqueue()",
-      "source_file": "modules/companion.lua",
-      "source_location": "L480"
+      "norm_label": "parsebossimport()",
+      "source_file": "modules/sync.lua",
+      "source_location": "L91"
+    },
+    {
+      "id": "modules_sync_parsematimport",
+      "label": "ParseMatImport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "parsematimport()",
+      "source_file": "modules/sync.lua",
+      "source_location": "L229"
+    },
+    {
+      "id": "modules_sync_parseraidimport",
+      "label": "ParseRaidImport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "parseraidimport()",
+      "source_file": "modules/sync.lua",
+      "source_location": "L136"
+    },
+    {
+      "id": "modules_sync_processimport",
+      "label": "ProcessImport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "processimport()",
+      "source_file": "modules/sync.lua",
+      "source_location": "L290"
+    },
+    {
+      "id": "modules_sync_setsolidbg",
+      "label": "SetSolidBg()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "setsolidbg()",
+      "source_file": "modules/sync.lua",
+      "source_location": "L65"
+    },
+    {
+      "id": "modules_sync_splitenvelopes",
+      "label": "SplitEnvelopes()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "splitenvelopes()",
+      "source_file": "modules/sync.lua",
+      "source_location": "L419"
+    },
+    {
+      "id": "modules_sync_weintcodex_sync_processimporttext",
+      "label": "WeintCodex.Sync.ProcessImportText()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.sync.processimporttext()",
+      "source_file": "modules/sync.lua",
+      "source_location": "L443"
+    },
+    {
+      "id": "modules_sync_weintcodex_sync_quickimport",
+      "label": "WeintCodex.Sync.QuickImport()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.sync.quickimport()",
+      "source_file": "modules/sync.lua",
+      "source_location": "L718"
+    },
+    {
+      "id": "modules_sync_weintcodex_sync_showimportdialog",
+      "label": "WeintCodex.Sync.ShowImportDialog()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.sync.showimportdialog()",
+      "source_file": "modules/sync.lua",
+      "source_location": "L479"
+    },
+    {
+      "id": "modules_sync_weintcodex_sync_undoeditboxpipeescape",
+      "label": "WeintCodex.Sync.UndoEditBoxPipeEscape()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.sync.undoeditboxpipeescape()",
+      "source_file": "modules/sync.lua",
+      "source_location": "L280"
     },
     {
       "id": "libs_libdbicon_1_0_libdbicon_1_0_createbutton",
@@ -4792,18 +4792,6 @@
       "source_location": "L1513"
     },
     {
-      "id": "core_ui_setsolidbg",
-      "label": "SetSolidBg()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "setsolidbg()",
-      "source_file": "core/ui.lua",
-      "source_location": "L208"
-    },
-    {
       "id": "core_ui_spaced",
       "label": "Spaced()",
       "_callable": true,
@@ -4900,28 +4888,16 @@
       "source_location": "L1180"
     },
     {
-      "id": "core_ui_weintcodex_createslider",
-      "label": "WeintCodex.CreateSlider()",
+      "id": "core_ui_weintcodex_createsegmentedcontrol",
+      "label": "WeintCodex.CreateSegmentedControl()",
       "_callable": true,
       "_origin": "ast",
       "community": 4,
       "community_name": "ui.lua",
       "file_type": "code",
-      "norm_label": "weintcodex.createslider()",
+      "norm_label": "weintcodex.createsegmentedcontrol()",
       "source_file": "core/ui.lua",
-      "source_location": "L1092"
-    },
-    {
-      "id": "core_ui_weintcodex_createtoggle",
-      "label": "WeintCodex.CreateToggle()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.createtoggle()",
-      "source_file": "core/ui.lua",
-      "source_location": "L975"
+      "source_location": "L867"
     },
     {
       "id": "core_ui_weintcodex_cutcorners",
@@ -5068,6 +5044,30 @@
       "source_location": "L1215"
     },
     {
+      "id": "core_ui_weintcodex_setbreadcrumb",
+      "label": "WeintCodex.SetBreadcrumb()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "ui.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.setbreadcrumb()",
+      "source_file": "core/ui.lua",
+      "source_location": "L1606"
+    },
+    {
+      "id": "core_ui_weintcodex_statusdot",
+      "label": "WeintCodex.StatusDot()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "ui.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.statusdot()",
+      "source_file": "core/ui.lua",
+      "source_location": "L712"
+    },
+    {
       "id": "core_ui_weintcodex_truncate",
       "label": "WeintCodex.Truncate()",
       "_callable": true,
@@ -5116,76 +5116,112 @@
       "source_location": "L1527"
     },
     {
-      "id": "modules_dialog_create",
-      "label": "Create()",
+      "id": "modules_companionpage_buildpage",
+      "label": "BuildPage()",
       "_callable": true,
       "_origin": "ast",
       "community": 4,
       "community_name": "ui.lua",
       "file_type": "code",
-      "norm_label": "create()",
-      "source_file": "modules/dialog.lua",
-      "source_location": "L21"
+      "norm_label": "buildpage()",
+      "source_file": "modules/companionpage.lua",
+      "source_location": "L44"
     },
     {
-      "id": "modules_dialog_createbutton",
-      "label": "CreateButton()",
+      "id": "modules_companionpage_stamp",
+      "label": "Stamp()",
       "_callable": true,
       "_origin": "ast",
       "community": 4,
       "community_name": "ui.lua",
       "file_type": "code",
-      "norm_label": "createbutton()",
-      "source_file": "modules/dialog.lua",
-      "source_location": "L14"
+      "norm_label": "stamp()",
+      "source_file": "modules/companionpage.lua",
+      "source_location": "L36"
     },
     {
-      "id": "modules_dialog_weintcodex_dialog_hide",
-      "label": "WeintCodex.Dialog.Hide()",
+      "id": "modules_companionpage_staterow",
+      "label": "StateRow()",
       "_callable": true,
       "_origin": "ast",
       "community": 4,
       "community_name": "ui.lua",
       "file_type": "code",
-      "norm_label": "weintcodex.dialog.hide()",
-      "source_file": "modules/dialog.lua",
-      "source_location": "L112"
+      "norm_label": "staterow()",
+      "source_file": "modules/companionpage.lua",
+      "source_location": "L57"
     },
     {
-      "id": "modules_dialog_weintcodex_dialog_show",
-      "label": "WeintCodex.Dialog.Show()",
+      "id": "modules_companionpage_weintcodex_companionpage_show",
+      "label": "WeintCodex.CompanionPage.Show()",
       "_callable": true,
       "_origin": "ast",
       "community": 4,
       "community_name": "ui.lua",
       "file_type": "code",
-      "norm_label": "weintcodex.dialog.show()",
-      "source_file": "modules/dialog.lua",
-      "source_location": "L96"
+      "norm_label": "weintcodex.companionpage.show()",
+      "source_file": "modules/companionpage.lua",
+      "source_location": "L82"
     },
     {
-      "id": "modules_groupcheck_joinlist",
-      "label": "JoinList()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "joinlist()",
-      "source_file": "modules/groupcheck.lua",
-      "source_location": "L452"
-    },
-    {
-      "id": "core_ui_weintcodex_icon",
-      "label": "WeintCodex.Icon()",
+      "id": "core_names_weintcodex_names_equal",
+      "label": "WeintCodex.Names.Equal()",
       "_callable": true,
       "_origin": "ast",
       "community": 5,
       "community_name": "calendar.lua",
       "file_type": "code",
-      "norm_label": "weintcodex.icon()",
-      "source_file": "core/ui.lua",
-      "source_location": "L179"
+      "norm_label": "weintcodex.names.equal()",
+      "source_file": "core/names.lua",
+      "source_location": "L77"
+    },
+    {
+      "id": "core_names_weintcodex_names_match",
+      "label": "WeintCodex.Names.Match()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "calendar.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.names.match()",
+      "source_file": "core/names.lua",
+      "source_location": "L120"
+    },
+    {
+      "id": "core_names_weintcodex_names_normalize",
+      "label": "WeintCodex.Names.Normalize()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "calendar.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.names.normalize()",
+      "source_file": "core/names.lua",
+      "source_location": "L67"
+    },
+    {
+      "id": "core_names_weintcodex_names_split",
+      "label": "WeintCodex.Names.Split()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "calendar.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.names.split()",
+      "source_file": "core/names.lua",
+      "source_location": "L48"
+    },
+    {
+      "id": "core_navigation_weintcodex_navigation_activatefirst",
+      "label": "WeintCodex.Navigation.ActivateFirst()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "calendar.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.navigation.activatefirst()",
+      "source_file": "core/navigation.lua",
+      "source_location": "L918"
     },
     {
       "id": "modules_calendar_addplayers",
@@ -5198,6 +5234,18 @@
       "norm_label": "addplayers()",
       "source_file": "modules/calendar.lua",
       "source_location": "L1784"
+    },
+    {
+      "id": "modules_calendar_alternateinvitename",
+      "label": "AlternateInviteName()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "calendar.lua",
+      "file_type": "code",
+      "norm_label": "alternateinvitename()",
+      "source_file": "modules/calendar.lua",
+      "source_location": "L288"
     },
     {
       "id": "modules_calendar_createcalendarframe",
@@ -5402,6 +5450,18 @@
       "norm_label": "weintcodex.calendar.dump()",
       "source_file": "modules/calendar.lua",
       "source_location": "L593"
+    },
+    {
+      "id": "modules_calendar_weintcodex_calendar_show",
+      "label": "WeintCodex.Calendar.Show()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "calendar.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.calendar.show()",
+      "source_file": "modules/calendar.lua",
+      "source_location": "L2053"
     },
     {
       "id": "modules_companion_weintcodex_companion_forgetlivestamp",
@@ -5630,138 +5690,6 @@
       "norm_label": "weintcodex.signup.statuslabel()",
       "source_file": "modules/signup.lua",
       "source_location": "L231"
-    },
-    {
-      "id": "modules_sync_drawborder",
-      "label": "DrawBorder()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "drawborder()",
-      "source_file": "modules/sync.lua",
-      "source_location": "L72"
-    },
-    {
-      "id": "modules_sync_parsebossimport",
-      "label": "ParseBossImport()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "parsebossimport()",
-      "source_file": "modules/sync.lua",
-      "source_location": "L91"
-    },
-    {
-      "id": "modules_sync_parsematimport",
-      "label": "ParseMatImport()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "parsematimport()",
-      "source_file": "modules/sync.lua",
-      "source_location": "L229"
-    },
-    {
-      "id": "modules_sync_parseraidimport",
-      "label": "ParseRaidImport()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "parseraidimport()",
-      "source_file": "modules/sync.lua",
-      "source_location": "L136"
-    },
-    {
-      "id": "modules_sync_processimport",
-      "label": "ProcessImport()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "processimport()",
-      "source_file": "modules/sync.lua",
-      "source_location": "L290"
-    },
-    {
-      "id": "modules_sync_setsolidbg",
-      "label": "SetSolidBg()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "setsolidbg()",
-      "source_file": "modules/sync.lua",
-      "source_location": "L65"
-    },
-    {
-      "id": "modules_sync_splitenvelopes",
-      "label": "SplitEnvelopes()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "splitenvelopes()",
-      "source_file": "modules/sync.lua",
-      "source_location": "L419"
-    },
-    {
-      "id": "modules_sync_weintcodex_sync_processimporttext",
-      "label": "WeintCodex.Sync.ProcessImportText()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.sync.processimporttext()",
-      "source_file": "modules/sync.lua",
-      "source_location": "L443"
-    },
-    {
-      "id": "modules_sync_weintcodex_sync_quickimport",
-      "label": "WeintCodex.Sync.QuickImport()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.sync.quickimport()",
-      "source_file": "modules/sync.lua",
-      "source_location": "L718"
-    },
-    {
-      "id": "modules_sync_weintcodex_sync_showimportdialog",
-      "label": "WeintCodex.Sync.ShowImportDialog()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.sync.showimportdialog()",
-      "source_file": "modules/sync.lua",
-      "source_location": "L479"
-    },
-    {
-      "id": "modules_sync_weintcodex_sync_undoeditboxpipeescape",
-      "label": "WeintCodex.Sync.UndoEditBoxPipeEscape()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.sync.undoeditboxpipeescape()",
-      "source_file": "modules/sync.lua",
-      "source_location": "L280"
     },
     {
       "id": "github_tests_wow_stub_m_fireevent",
@@ -6577,7 +6505,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.navigation.currenttab()",
       "source_file": "core/navigation.lua",
-      "source_location": "L2205"
+      "source_location": "L2262"
     },
     {
       "id": "core_ui_weintcodex_createscrollarea",
@@ -6590,6 +6518,18 @@
       "norm_label": "weintcodex.createscrollarea()",
       "source_file": "core/ui.lua",
       "source_location": "L1240"
+    },
+    {
+      "id": "core_ui_weintcodex_createslider",
+      "label": "WeintCodex.CreateSlider()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "settings.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.createslider()",
+      "source_file": "core/ui.lua",
+      "source_location": "L1092"
     },
     {
       "id": "modules_settings_buttons",
@@ -7012,6 +6952,18 @@
       "source_location": "L539"
     },
     {
+      "id": "core_ui_setsolidbg",
+      "label": "SetSolidBg()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "WeintCodex.ColorText",
+      "file_type": "code",
+      "norm_label": "setsolidbg()",
+      "source_file": "core/ui.lua",
+      "source_location": "L208"
+    },
+    {
       "id": "core_ui_weintcodex_colortext",
       "label": "WeintCodex.ColorText()",
       "_callable": true,
@@ -7022,6 +6974,66 @@
       "norm_label": "weintcodex.colortext()",
       "source_file": "core/ui.lua",
       "source_location": "L1224"
+    },
+    {
+      "id": "core_ui_weintcodex_icon",
+      "label": "WeintCodex.Icon()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "WeintCodex.ColorText",
+      "file_type": "code",
+      "norm_label": "weintcodex.icon()",
+      "source_file": "core/ui.lua",
+      "source_location": "L179"
+    },
+    {
+      "id": "modules_dialog_create",
+      "label": "Create()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "WeintCodex.ColorText",
+      "file_type": "code",
+      "norm_label": "create()",
+      "source_file": "modules/dialog.lua",
+      "source_location": "L21"
+    },
+    {
+      "id": "modules_dialog_createbutton",
+      "label": "CreateButton()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "WeintCodex.ColorText",
+      "file_type": "code",
+      "norm_label": "createbutton()",
+      "source_file": "modules/dialog.lua",
+      "source_location": "L14"
+    },
+    {
+      "id": "modules_dialog_weintcodex_dialog_hide",
+      "label": "WeintCodex.Dialog.Hide()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "WeintCodex.ColorText",
+      "file_type": "code",
+      "norm_label": "weintcodex.dialog.hide()",
+      "source_file": "modules/dialog.lua",
+      "source_location": "L112"
+    },
+    {
+      "id": "modules_dialog_weintcodex_dialog_show",
+      "label": "WeintCodex.Dialog.Show()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "WeintCodex.ColorText",
+      "file_type": "code",
+      "norm_label": "weintcodex.dialog.show()",
+      "source_file": "modules/dialog.lua",
+      "source_location": "L96"
     },
     {
       "id": "modules_materials_creatematframe",
@@ -7131,15 +7143,27 @@
       "source_location": "L1"
     },
     {
-      "id": "modules_companionpage",
-      "label": "companionpage.lua",
+      "id": "data_raids",
+      "label": "raids.lua",
       "_origin": "ast",
       "community": 0,
       "community_name": "navigation.lua",
       "file_type": "code",
-      "norm_label": "companionpage.lua",
-      "source_file": "modules/companionpage.lua",
+      "norm_label": "raids.lua",
+      "source_file": "data/raids.lua",
       "source_location": "L1"
+    },
+    {
+      "id": "docs_systems_raids_and_progress_von_aussen_auf_einen_boss_zeigen",
+      "label": "Von aussen auf einen Boss zeigen",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "navigation.lua",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "von aussen auf einen boss zeigen",
+      "source_file": "docs/systems/raids-and-progress.md",
+      "source_location": "L153"
     },
     {
       "id": "data_dungeons",
@@ -7206,6 +7230,18 @@
       "norm_label": "charakter.lua",
       "source_file": "modules/charakter.lua",
       "source_location": "L1"
+    },
+    {
+      "id": "docs_invariants_data_integrity_die_spezialisierung_data_specs_lua_modules_charakter_lua",
+      "label": "Die Spezialisierung (`data/specs.lua`, `modules/charakter.lua`)",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "charakter.lua",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "die spezialisierung (`data/specs.lua`, `modules/charakter.lua`)",
+      "source_file": "docs/invariants/data-integrity.md",
+      "source_location": "L175"
     },
     {
       "id": "docs_systems_character",
@@ -7304,17 +7340,6 @@
       "source_location": "L54"
     },
     {
-      "id": "data_raids",
-      "label": "raids.lua",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "BuildTree",
-      "file_type": "code",
-      "norm_label": "raids.lua",
-      "source_file": "data/raids.lua",
-      "source_location": "L1"
-    },
-    {
       "id": "data_roles",
       "label": "roles.lua",
       "_origin": "ast",
@@ -7348,17 +7373,6 @@
       "source_location": "L1"
     },
     {
-      "id": "core_names",
-      "label": "names.lua",
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "companion.lua",
-      "file_type": "code",
-      "norm_label": "names.lua",
-      "source_file": "core/names.lua",
-      "source_location": "L1"
-    },
-    {
       "id": "modules_companion",
       "label": "companion.lua",
       "_origin": "ast",
@@ -7370,6 +7384,114 @@
       "source_location": "L1"
     },
     {
+      "id": "docs_systems_companion_bridge",
+      "label": "companion-bridge.md",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "companion.lua",
+      "file_type": "document",
+      "node_kind": "page",
+      "norm_label": "companion-bridge.md",
+      "source_file": "docs/systems/companion-bridge.md",
+      "source_location": "L1"
+    },
+    {
+      "id": "docs_systems_companion_bridge_character_sheet_was_leer_bleibt_und_warum",
+      "label": "`character_sheet` \u2014 was leer bleibt, und warum",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "companion.lua",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "`character_sheet` \u2014 was leer bleibt, und warum",
+      "source_file": "docs/systems/companion-bridge.md",
+      "source_location": "L91"
+    },
+    {
+      "id": "docs_systems_companion_bridge_die_companion_br\u00fccke",
+      "label": "Die Companion-Br\u00fccke",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "companion.lua",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "die companion-brucke",
+      "source_file": "docs/systems/companion-bridge.md",
+      "source_location": "L1"
+    },
+    {
+      "id": "docs_systems_companion_bridge_die_reihenfolge_in_processqueue",
+      "label": "Die Reihenfolge in `ProcessQueue`",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "companion.lua",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "die reihenfolge in `processqueue`",
+      "source_file": "docs/systems/companion-bridge.md",
+      "source_location": "L42"
+    },
+    {
+      "id": "docs_systems_companion_bridge_die_seite_companion",
+      "label": "Die Seite *Companion*",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "companion.lua",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "die seite *companion*",
+      "source_file": "docs/systems/companion-bridge.md",
+      "source_location": "L122"
+    },
+    {
+      "id": "docs_systems_companion_bridge_versionssperren",
+      "label": "Versionssperren",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "companion.lua",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "versionssperren",
+      "source_file": "docs/systems/companion-bridge.md",
+      "source_location": "L114"
+    },
+    {
+      "id": "docs_systems_companion_bridge_was_hereinkommt",
+      "label": "Was hereinkommt",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "companion.lua",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "was hereinkommt",
+      "source_file": "docs/systems/companion-bridge.md",
+      "source_location": "L55"
+    },
+    {
+      "id": "docs_systems_companion_bridge_was_hinausgeht",
+      "label": "Was hinausgeht",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "companion.lua",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "was hinausgeht",
+      "source_file": "docs/systems/companion-bridge.md",
+      "source_location": "L72"
+    },
+    {
+      "id": "docs_systems_companion_bridge_zwei_wege_hinein_und_warum_es_zwei_sind",
+      "label": "Zwei Wege hinein, und warum es zwei sind",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "companion.lua",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "zwei wege hinein, und warum es zwei sind",
+      "source_file": "docs/systems/companion-bridge.md",
+      "source_location": "L15"
+    },
+    {
       "id": "modules_groupcheck",
       "label": "groupcheck.lua",
       "_origin": "ast",
@@ -7379,6 +7501,18 @@
       "norm_label": "groupcheck.lua",
       "source_file": "modules/groupcheck.lua",
       "source_location": "L1"
+    },
+    {
+      "id": "docs_invariants_data_integrity_der_gruppencheck_modules_groupcheck_lua",
+      "label": "Der Gruppencheck (`modules/groupcheck.lua`)",
+      "_origin": "ast",
+      "community": 13,
+      "community_name": "groupcheck.lua",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "der gruppencheck (`modules/groupcheck.lua`)",
+      "source_file": "docs/invariants/data-integrity.md",
+      "source_location": "L144"
     },
     {
       "id": "docs_systems_groupcheck",
@@ -8179,18 +8313,6 @@
       "source_location": "L197"
     },
     {
-      "id": "docs_systems_dungeons_die_tipps_kommen_vom_bot_oder_gar_nicht",
-      "label": "Die Tipps kommen vom Bot, oder gar nicht",
-      "_origin": "ast",
-      "community": 27,
-      "community_name": "Dungeons und Rollen",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "die tipps kommen vom bot, oder gar nicht",
-      "source_file": "docs/systems/dungeons.md",
-      "source_location": "L281"
-    },
-    {
       "id": "docs_systems_dungeons_die_zwanzig_aus_classic",
       "label": "Die zwanzig aus Classic",
       "_origin": "ast",
@@ -8467,18 +8589,6 @@
       "source_location": "L1"
     },
     {
-      "id": "docs_systems_raids_and_progress_von_aussen_auf_einen_boss_zeigen",
-      "label": "Von aussen auf einen Boss zeigen",
-      "_origin": "ast",
-      "community": 28,
-      "community_name": "Schlachtz\u00fcge, Bosse und Fortschritt",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "von aussen auf einen boss zeigen",
-      "source_file": "docs/systems/raids-and-progress.md",
-      "source_location": "L153"
-    },
-    {
       "id": "docs_architecture_overview",
       "label": "overview.md",
       "_origin": "ast",
@@ -8610,112 +8720,27 @@
       "source_location": "L1"
     },
     {
-      "id": "docs_systems_companion_bridge",
-      "label": "companion-bridge.md",
+      "id": "modules_sync",
+      "label": "sync.lua",
       "_origin": "ast",
       "community": 3,
       "community_name": "access.lua",
-      "file_type": "document",
-      "node_kind": "page",
-      "norm_label": "companion-bridge.md",
-      "source_file": "docs/systems/companion-bridge.md",
+      "file_type": "code",
+      "norm_label": "sync.lua",
+      "source_file": "modules/sync.lua",
       "source_location": "L1"
     },
     {
-      "id": "docs_systems_companion_bridge_character_sheet_was_leer_bleibt_und_warum",
-      "label": "`character_sheet` \u2014 was leer bleibt, und warum",
+      "id": "docs_systems_dungeons_die_tipps_kommen_vom_bot_oder_gar_nicht",
+      "label": "Die Tipps kommen vom Bot, oder gar nicht",
       "_origin": "ast",
       "community": 3,
       "community_name": "access.lua",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "`character_sheet` \u2014 was leer bleibt, und warum",
-      "source_file": "docs/systems/companion-bridge.md",
-      "source_location": "L91"
-    },
-    {
-      "id": "docs_systems_companion_bridge_die_companion_br\u00fccke",
-      "label": "Die Companion-Br\u00fccke",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "access.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "die companion-brucke",
-      "source_file": "docs/systems/companion-bridge.md",
-      "source_location": "L1"
-    },
-    {
-      "id": "docs_systems_companion_bridge_die_reihenfolge_in_processqueue",
-      "label": "Die Reihenfolge in `ProcessQueue`",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "access.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "die reihenfolge in `processqueue`",
-      "source_file": "docs/systems/companion-bridge.md",
-      "source_location": "L42"
-    },
-    {
-      "id": "docs_systems_companion_bridge_die_seite_companion",
-      "label": "Die Seite *Companion*",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "access.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "die seite *companion*",
-      "source_file": "docs/systems/companion-bridge.md",
-      "source_location": "L122"
-    },
-    {
-      "id": "docs_systems_companion_bridge_versionssperren",
-      "label": "Versionssperren",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "access.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "versionssperren",
-      "source_file": "docs/systems/companion-bridge.md",
-      "source_location": "L114"
-    },
-    {
-      "id": "docs_systems_companion_bridge_was_hereinkommt",
-      "label": "Was hereinkommt",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "access.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "was hereinkommt",
-      "source_file": "docs/systems/companion-bridge.md",
-      "source_location": "L55"
-    },
-    {
-      "id": "docs_systems_companion_bridge_was_hinausgeht",
-      "label": "Was hinausgeht",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "access.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "was hinausgeht",
-      "source_file": "docs/systems/companion-bridge.md",
-      "source_location": "L72"
-    },
-    {
-      "id": "docs_systems_companion_bridge_zwei_wege_hinein_und_warum_es_zwei_sind",
-      "label": "Zwei Wege hinein, und warum es zwei sind",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "access.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "zwei wege hinein, und warum es zwei sind",
-      "source_file": "docs/systems/companion-bridge.md",
-      "source_location": "L15"
+      "norm_label": "die tipps kommen vom bot, oder gar nicht",
+      "source_file": "docs/systems/dungeons.md",
+      "source_location": "L281"
     },
     {
       "id": "changelog",
@@ -8739,7 +8764,7 @@
       "node_kind": "heading",
       "norm_label": "[5.0.0.0] \u2013 2026-09-18",
       "source_file": "CHANGELOG.md",
-      "source_location": "L188"
+      "source_location": "L229"
     },
     {
       "id": "changelog_5_1_0_0_2026_09_20",
@@ -8751,7 +8776,7 @@
       "node_kind": "heading",
       "norm_label": "[5.1.0.0] \u2013 2026-09-20",
       "source_file": "CHANGELOG.md",
-      "source_location": "L114"
+      "source_location": "L155"
     },
     {
       "id": "changelog_5_2_0_0_2026_09_21",
@@ -8763,7 +8788,31 @@
       "node_kind": "heading",
       "norm_label": "[5.2.0.0] \u2013 2026-09-21",
       "source_file": "CHANGELOG.md",
-      "source_location": "L45"
+      "source_location": "L86"
+    },
+    {
+      "id": "changelog_5_2_0_1_2026_09_21",
+      "label": "[5.2.0.1] \u2013 2026-09-21",
+      "_origin": "ast",
+      "community": 30,
+      "community_name": "Changelog",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "[5.2.0.1] \u2013 2026-09-21",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L46"
+    },
+    {
+      "id": "changelog_5_2_0_2_2026_09_21",
+      "label": "[5.2.0.2] \u2013 2026-09-21",
+      "_origin": "ast",
+      "community": 30,
+      "community_name": "Changelog",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "[5.2.0.2] \u2013 2026-09-21",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L12"
     },
     {
       "id": "changelog_changelog",
@@ -8787,19 +8836,31 @@
       "node_kind": "heading",
       "norm_label": "technisch",
       "source_file": "CHANGELOG.md",
-      "source_location": "L236"
+      "source_location": "L34"
     },
     {
-      "id": "changelog_unreleased",
-      "label": "[Unreleased]",
+      "id": "changelog_technisch_277",
+      "label": "Technisch",
       "_origin": "ast",
       "community": 30,
       "community_name": "Changelog",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "[unreleased]",
+      "norm_label": "technisch",
       "source_file": "CHANGELOG.md",
-      "source_location": "L12"
+      "source_location": "L277"
+    },
+    {
+      "id": "changelog_technisch_73",
+      "label": "Technisch",
+      "_origin": "ast",
+      "community": 30,
+      "community_name": "Changelog",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "technisch",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L73"
     },
     {
       "id": "changelog_zum_client_build_1_60_1_69913",
@@ -8811,7 +8872,7 @@
       "node_kind": "heading",
       "norm_label": "zum client-build 1.60.1.69913",
       "source_file": "CHANGELOG.md",
-      "source_location": "L104"
+      "source_location": "L145"
     },
     {
       "id": "docs_systems_onboarding_changelog",
@@ -8921,14 +8982,14 @@
       "source_location": "L1"
     },
     {
-      "id": "modules_dialog",
-      "label": "dialog.lua",
+      "id": "modules_companionpage",
+      "label": "companionpage.lua",
       "_origin": "ast",
       "community": 4,
       "community_name": "ui.lua",
       "file_type": "code",
-      "norm_label": "dialog.lua",
-      "source_file": "modules/dialog.lua",
+      "norm_label": "companionpage.lua",
+      "source_file": "modules/companionpage.lua",
       "source_location": "L1"
     },
     {
@@ -9040,6 +9101,17 @@
       "source_location": "L33"
     },
     {
+      "id": "core_names",
+      "label": "names.lua",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "calendar.lua",
+      "file_type": "code",
+      "norm_label": "names.lua",
+      "source_file": "core/names.lua",
+      "source_location": "L1"
+    },
+    {
       "id": "modules_calendar",
       "label": "calendar.lua",
       "_origin": "ast",
@@ -9059,17 +9131,6 @@
       "file_type": "code",
       "norm_label": "signup.lua",
       "source_file": "modules/signup.lua",
-      "source_location": "L1"
-    },
-    {
-      "id": "modules_sync",
-      "label": "sync.lua",
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "sync.lua",
-      "source_file": "modules/sync.lua",
       "source_location": "L1"
     },
     {
@@ -9129,18 +9190,6 @@
       "norm_label": "der ausrustungsstand an die companion (`modules/companion.lua`)",
       "source_file": "docs/invariants/data-integrity.md",
       "source_location": "L162"
-    },
-    {
-      "id": "docs_invariants_data_integrity_der_gruppencheck_modules_groupcheck_lua",
-      "label": "Der Gruppencheck (`modules/groupcheck.lua`)",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "encounter_tracking.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "der gruppencheck (`modules/groupcheck.lua`)",
-      "source_file": "docs/invariants/data-integrity.md",
-      "source_location": "L144"
     },
     {
       "id": "docs_invariants_data_integrity_der_vierte_zustand_ist_mit_5_1_0_0_dazugekommen",
@@ -9227,18 +9276,6 @@
       "source_location": "L90"
     },
     {
-      "id": "docs_invariants_data_integrity_die_spezialisierung_data_specs_lua_modules_charakter_lua",
-      "label": "Die Spezialisierung (`data/specs.lua`, `modules/charakter.lua`)",
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "encounter_tracking.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "die spezialisierung (`data/specs.lua`, `modules/charakter.lua`)",
-      "source_file": "docs/invariants/data-integrity.md",
-      "source_location": "L175"
-    },
-    {
       "id": "docs_invariants_data_integrity_im_zweifel_die_schw\u00e4chere_quelle",
       "label": "Im Zweifel die schw\u00e4chere Quelle",
       "_origin": "ast",
@@ -9317,6 +9354,17 @@
       "file_type": "code",
       "norm_label": "onboarding.lua",
       "source_file": "core/onboarding.lua",
+      "source_location": "L1"
+    },
+    {
+      "id": "modules_dialog",
+      "label": "dialog.lua",
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "WeintCodex.ColorText",
+      "file_type": "code",
+      "norm_label": "dialog.lua",
+      "source_file": "modules/dialog.lua",
       "source_location": "L1"
     },
     {
@@ -10217,7 +10265,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2025",
+      "source_location": "L2082",
       "weight": 1.0
     },
     {
@@ -10229,7 +10277,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2471",
+      "source_location": "L2528",
       "weight": 1.0
     },
     {
@@ -10241,7 +10289,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2421",
+      "source_location": "L2478",
       "weight": 1.0
     },
     {
@@ -10253,7 +10301,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2427",
+      "source_location": "L2484",
       "weight": 1.0
     },
     {
@@ -10265,7 +10313,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2454",
+      "source_location": "L2511",
       "weight": 1.0
     },
     {
@@ -10277,7 +10325,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2107",
+      "source_location": "L2164",
       "weight": 1.0
     },
     {
@@ -10289,7 +10337,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1565",
+      "source_location": "L1622",
       "weight": 1.0
     },
     {
@@ -10301,7 +10349,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1582",
+      "source_location": "L1639",
       "weight": 1.0
     },
     {
@@ -10313,7 +10361,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1821",
+      "source_location": "L1878",
       "weight": 1.0
     },
     {
@@ -10325,7 +10373,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1860",
+      "source_location": "L1917",
       "weight": 1.0
     },
     {
@@ -10361,7 +10409,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L823",
+      "source_location": "L880",
       "weight": 1.0
     },
     {
@@ -10373,7 +10421,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L825",
+      "source_location": "L882",
       "weight": 1.0
     },
     {
@@ -10385,7 +10433,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L826",
+      "source_location": "L883",
       "weight": 1.0
     },
     {
@@ -10397,7 +10445,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L828",
+      "source_location": "L885",
       "weight": 1.0
     },
     {
@@ -10433,7 +10481,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2116",
+      "source_location": "L2173",
       "weight": 1.0
     },
     {
@@ -10445,7 +10493,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2125",
+      "source_location": "L2182",
       "weight": 1.0
     },
     {
@@ -10457,7 +10505,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2130",
+      "source_location": "L2187",
       "weight": 1.0
     },
     {
@@ -10469,7 +10517,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2132",
+      "source_location": "L2189",
       "weight": 1.0
     },
     {
@@ -10481,7 +10529,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2136",
+      "source_location": "L2193",
       "weight": 1.0
     },
     {
@@ -10493,7 +10541,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2141",
+      "source_location": "L2198",
       "weight": 1.0
     },
     {
@@ -10505,7 +10553,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2144",
+      "source_location": "L2201",
       "weight": 1.0
     },
     {
@@ -10517,7 +10565,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2146",
+      "source_location": "L2203",
       "weight": 1.0
     },
     {
@@ -10529,7 +10577,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2148",
+      "source_location": "L2205",
       "weight": 1.0
     },
     {
@@ -10541,7 +10589,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2150",
+      "source_location": "L2207",
       "weight": 1.0
     },
     {
@@ -10553,7 +10601,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2152",
+      "source_location": "L2209",
       "weight": 1.0
     },
     {
@@ -10565,7 +10613,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2154",
+      "source_location": "L2211",
       "weight": 1.0
     },
     {
@@ -10577,7 +10625,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2156",
+      "source_location": "L2213",
       "weight": 1.0
     },
     {
@@ -10601,7 +10649,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2325",
+      "source_location": "L2382",
       "weight": 1.0
     },
     {
@@ -10613,7 +10661,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2392",
+      "source_location": "L2449",
       "weight": 1.0
     },
     {
@@ -10625,7 +10673,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2281",
+      "source_location": "L2338",
       "weight": 1.0
     },
     {
@@ -10637,7 +10685,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2210",
+      "source_location": "L2267",
       "weight": 1.0
     },
     {
@@ -10649,7 +10697,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2211",
+      "source_location": "L2268",
       "weight": 1.0
     },
     {
@@ -10661,7 +10709,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2212",
+      "source_location": "L2269",
       "weight": 1.0
     },
     {
@@ -10673,7 +10721,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2213",
+      "source_location": "L2270",
       "weight": 1.0
     },
     {
@@ -10685,7 +10733,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2223",
+      "source_location": "L2280",
       "weight": 1.0
     },
     {
@@ -10697,7 +10745,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2224",
+      "source_location": "L2281",
       "weight": 1.0
     },
     {
@@ -10709,7 +10757,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2230",
+      "source_location": "L2287",
       "weight": 1.0
     },
     {
@@ -10721,7 +10769,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2992",
+      "source_location": "L3049",
       "weight": 1.0
     },
     {
@@ -10733,7 +10781,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2997",
+      "source_location": "L3054",
       "weight": 1.0
     },
     {
@@ -10745,7 +10793,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2538",
+      "source_location": "L2595",
       "weight": 1.0
     },
     {
@@ -10757,7 +10805,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2539",
+      "source_location": "L2596",
       "weight": 1.0
     },
     {
@@ -10769,7 +10817,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2540",
+      "source_location": "L2597",
       "weight": 1.0
     },
     {
@@ -10781,7 +10829,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2541",
+      "source_location": "L2598",
       "weight": 1.0
     },
     {
@@ -10793,7 +10841,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2544",
+      "source_location": "L2601",
       "weight": 1.0
     },
     {
@@ -10805,7 +10853,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2584",
+      "source_location": "L2641",
       "weight": 1.0
     },
     {
@@ -10817,7 +10865,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2620",
+      "source_location": "L2677",
       "weight": 1.0
     },
     {
@@ -10829,7 +10877,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2622",
+      "source_location": "L2679",
       "weight": 1.0
     },
     {
@@ -10841,7 +10889,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2631",
+      "source_location": "L2688",
       "weight": 1.0
     },
     {
@@ -10853,7 +10901,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2765",
+      "source_location": "L2822",
       "weight": 1.0
     },
     {
@@ -10865,7 +10913,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2939",
+      "source_location": "L2996",
       "weight": 1.0
     },
     {
@@ -10877,7 +10925,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2977",
+      "source_location": "L3034",
       "weight": 1.0
     },
     {
@@ -10889,7 +10937,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2981",
+      "source_location": "L3038",
       "weight": 1.0
     },
     {
@@ -13294,6 +13342,18 @@
     },
     {
       "source": "modules_dungeonpages_bosspill",
+      "target": "modules_dungeonpages_pilledge",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L403",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_bosspill",
       "target": "modules_dungeonpages_textwidth",
       "relation": "calls",
       "_origin": "ast",
@@ -13301,7 +13361,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L382",
+      "source_location": "L412",
       "weight": 1.0
     },
     {
@@ -13325,7 +13385,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L679",
+      "source_location": "L718",
       "weight": 1.0
     },
     {
@@ -13337,7 +13397,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L685",
+      "source_location": "L724",
       "weight": 1.0
     },
     {
@@ -13349,7 +13409,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L688",
+      "source_location": "L727",
       "weight": 1.0
     },
     {
@@ -13361,7 +13421,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L769",
+      "source_location": "L808",
       "weight": 1.0
     },
     {
@@ -13373,7 +13433,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L780",
+      "source_location": "L819",
       "weight": 1.0
     },
     {
@@ -13385,7 +13445,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L788",
+      "source_location": "L827",
       "weight": 1.0
     },
     {
@@ -13397,7 +13457,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L531",
+      "source_location": "L570",
       "weight": 1.0
     },
     {
@@ -13409,7 +13469,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L532",
+      "source_location": "L571",
       "weight": 1.0
     },
     {
@@ -13421,7 +13481,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L564",
+      "source_location": "L603",
       "weight": 1.0
     },
     {
@@ -13433,7 +13493,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L568",
+      "source_location": "L607",
       "weight": 1.0
     },
     {
@@ -13445,7 +13505,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L568",
+      "source_location": "L607",
       "weight": 1.0
     },
     {
@@ -13457,7 +13517,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L579",
+      "source_location": "L618",
       "weight": 1.0
     },
     {
@@ -13469,7 +13529,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L590",
+      "source_location": "L629",
       "weight": 1.0
     },
     {
@@ -13481,7 +13541,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L820",
+      "source_location": "L859",
       "weight": 1.0
     },
     {
@@ -13493,7 +13553,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L823",
+      "source_location": "L862",
       "weight": 1.0
     },
     {
@@ -13505,7 +13565,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L824",
+      "source_location": "L863",
       "weight": 1.0
     },
     {
@@ -13517,7 +13577,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L835",
+      "source_location": "L874",
       "weight": 1.0
     },
     {
@@ -13529,7 +13589,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L837",
+      "source_location": "L876",
       "weight": 1.0
     },
     {
@@ -13541,7 +13601,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L307",
+      "source_location": "L336",
       "weight": 1.0
     },
     {
@@ -13553,7 +13613,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L334",
+      "source_location": "L363",
       "weight": 1.0
     },
     {
@@ -13565,7 +13625,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L740",
+      "source_location": "L779",
       "weight": 1.0
     },
     {
@@ -13577,7 +13637,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L853",
+      "source_location": "L892",
       "weight": 1.0
     },
     {
@@ -13589,7 +13649,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L871",
+      "source_location": "L910",
       "weight": 1.0
     },
     {
@@ -13601,7 +13661,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L913",
+      "source_location": "L952",
       "weight": 1.0
     },
     {
@@ -13613,7 +13673,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L920",
+      "source_location": "L959",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_ghostpill",
+      "target": "modules_dungeonpages_pilledge",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L499",
       "weight": 1.0
     },
     {
@@ -13625,7 +13697,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L227",
+      "source_location": "L256",
       "weight": 1.0
     },
     {
@@ -13637,7 +13709,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L514",
+      "source_location": "L553",
       "weight": 1.0
     },
     {
@@ -13649,7 +13721,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L499",
+      "source_location": "L538",
       "weight": 1.0
     },
     {
@@ -13661,7 +13733,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L503",
+      "source_location": "L542",
       "weight": 1.0
     },
     {
@@ -13685,7 +13757,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1092",
+      "source_location": "L1133",
       "weight": 1.0
     },
     {
@@ -15297,13 +15369,13 @@
     },
     {
       "source": "changelog_5_0_0_0_2026_09_18",
-      "target": "changelog_technisch",
+      "target": "changelog_technisch_277",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CHANGELOG.md",
-      "source_location": "L236",
+      "source_location": "L277",
       "weight": 1.0
     },
     {
@@ -15314,23 +15386,34 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CHANGELOG.md",
-      "source_location": "L104",
+      "source_location": "L145",
       "weight": 1.0
     },
     {
-      "source": "changelog_changelog",
-      "target": "changelog_5_1_0_0_2026_09_20",
+      "source": "changelog_5_2_0_1_2026_09_21",
+      "target": "changelog_technisch_73",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CHANGELOG.md",
-      "source_location": "L114",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "changelog_5_2_0_2_2026_09_21",
+      "target": "changelog_technisch",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CHANGELOG.md",
+      "source_location": "L34",
       "weight": 1.0
     },
     {
       "source": "changelog_changelog",
-      "target": "changelog_unreleased",
+      "target": "changelog_5_2_0_2_2026_09_21",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -15341,13 +15424,35 @@
     },
     {
       "source": "changelog_changelog",
+      "target": "changelog_5_1_0_0_2026_09_20",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CHANGELOG.md",
+      "source_location": "L155",
+      "weight": 1.0
+    },
+    {
+      "source": "changelog_changelog",
       "target": "changelog_5_0_0_0_2026_09_18",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CHANGELOG.md",
-      "source_location": "L188",
+      "source_location": "L229",
+      "weight": 1.0
+    },
+    {
+      "source": "changelog_changelog",
+      "target": "changelog_5_2_0_1_2026_09_21",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CHANGELOG.md",
+      "source_location": "L46",
       "weight": 1.0
     },
     {
@@ -15358,7 +15463,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CHANGELOG.md",
-      "source_location": "L45",
+      "source_location": "L86",
       "weight": 1.0
     },
     {
@@ -15946,7 +16051,18 @@
     },
     {
       "source": "core_navigation",
-      "target": "core_navigation_inspectortext",
+      "target": "core_navigation_weintcodex_navigation_cleartitleactions",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "core/navigation.lua",
+      "source_location": "L1008",
+      "weight": 1.0
+    },
+    {
+      "source": "core_navigation",
+      "target": "core_navigation_inspectorheader",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -15957,13 +16073,46 @@
     },
     {
       "source": "core_navigation",
+      "target": "core_navigation_inspectordivider",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "core/navigation.lua",
+      "source_location": "L1025",
+      "weight": 1.0
+    },
+    {
+      "source": "core_navigation",
+      "target": "core_navigation_inspectorrows",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "core/navigation.lua",
+      "source_location": "L1035",
+      "weight": 1.0
+    },
+    {
+      "source": "core_navigation",
+      "target": "core_navigation_inspectortext",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "core/navigation.lua",
+      "source_location": "L1071",
+      "weight": 1.0
+    },
+    {
+      "source": "core_navigation",
       "target": "core_navigation_inspectorinput",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L1069",
+      "source_location": "L1126",
       "weight": 1.0
     },
     {
@@ -15996,18 +16145,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L1249",
-      "weight": 1.0
-    },
-    {
-      "source": "core_navigation",
-      "target": "core_navigation_inspectorchecklistitem",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "core/navigation.lua",
-      "source_location": "L1296",
+      "source_location": "L1306",
       "weight": 1.0
     },
     {
@@ -16023,13 +16161,24 @@
     },
     {
       "source": "core_navigation",
+      "target": "core_navigation_inspectorchecklistitem",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "core/navigation.lua",
+      "source_location": "L1353",
+      "weight": 1.0
+    },
+    {
+      "source": "core_navigation",
       "target": "core_navigation_inspectorcard",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L1332",
+      "source_location": "L1389",
       "weight": 1.0
     },
     {
@@ -16040,29 +16189,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L1377",
-      "weight": 1.0
-    },
-    {
-      "source": "core_navigation",
-      "target": "core_navigation_notesborder",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "core/navigation.lua",
-      "source_location": "L1440",
-      "weight": 1.0
-    },
-    {
-      "source": "core_navigation",
-      "target": "core_navigation_notessegment",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "core/navigation.lua",
-      "source_location": "L1460",
+      "source_location": "L1434",
       "weight": 1.0
     },
     {
@@ -16078,13 +16205,35 @@
     },
     {
       "source": "core_navigation",
+      "target": "core_navigation_notesborder",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "core/navigation.lua",
+      "source_location": "L1497",
+      "weight": 1.0
+    },
+    {
+      "source": "core_navigation",
+      "target": "core_navigation_notessegment",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "core/navigation.lua",
+      "source_location": "L1517",
+      "weight": 1.0
+    },
+    {
+      "source": "core_navigation",
       "target": "core_navigation_notespromptbutton",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L1495",
+      "source_location": "L1552",
       "weight": 1.0
     },
     {
@@ -16095,7 +16244,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L1519",
+      "source_location": "L1576",
       "weight": 1.0
     },
     {
@@ -16106,7 +16255,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L1526",
+      "source_location": "L1583",
       "weight": 1.0
     },
     {
@@ -16117,7 +16266,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L1935",
+      "source_location": "L1992",
       "weight": 1.0
     },
     {
@@ -16128,7 +16277,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L1981",
+      "source_location": "L2038",
       "weight": 1.0
     },
     {
@@ -16139,7 +16288,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2062",
+      "source_location": "L2119",
       "weight": 1.0
     },
     {
@@ -16150,7 +16299,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2115",
+      "source_location": "L2172",
       "weight": 1.0
     },
     {
@@ -16161,7 +16310,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2186",
+      "source_location": "L2243",
       "weight": 1.0
     },
     {
@@ -16172,7 +16321,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2205",
+      "source_location": "L2262",
       "weight": 1.0
     },
     {
@@ -16183,7 +16332,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2209",
+      "source_location": "L2266",
       "weight": 1.0
     },
     {
@@ -16194,7 +16343,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2280",
+      "source_location": "L2337",
       "weight": 1.0
     },
     {
@@ -16205,7 +16354,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2324",
+      "source_location": "L2381",
       "weight": 1.0
     },
     {
@@ -16216,7 +16365,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2402",
+      "source_location": "L2459",
       "weight": 1.0
     },
     {
@@ -16227,7 +16376,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2411",
+      "source_location": "L2468",
       "weight": 1.0
     },
     {
@@ -16238,7 +16387,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2420",
+      "source_location": "L2477",
       "weight": 1.0
     },
     {
@@ -16249,7 +16398,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2453",
+      "source_location": "L2510",
       "weight": 1.0
     },
     {
@@ -16260,7 +16409,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2470",
+      "source_location": "L2527",
       "weight": 1.0
     },
     {
@@ -16271,7 +16420,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2489",
+      "source_location": "L2546",
       "weight": 1.0
     },
     {
@@ -16282,7 +16431,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2498",
+      "source_location": "L2555",
       "weight": 1.0
     },
     {
@@ -16293,7 +16442,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2533",
+      "source_location": "L2590",
       "weight": 1.0
     },
     {
@@ -16304,7 +16453,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2537",
+      "source_location": "L2594",
       "weight": 1.0
     },
     {
@@ -16315,7 +16464,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L2987",
+      "source_location": "L3044",
       "weight": 1.0
     },
     {
@@ -16518,50 +16667,6 @@
     },
     {
       "source": "core_navigation",
-      "target": "core_navigation_weintcodex_navigation_buildsidebar",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "core/navigation.lua",
-      "source_location": "L822",
-      "weight": 1.0
-    },
-    {
-      "source": "core_navigation",
-      "target": "core_navigation_weintcodex_navigation_updatesidebarstatus",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "core/navigation.lua",
-      "source_location": "L836",
-      "weight": 1.0
-    },
-    {
-      "source": "core_navigation",
-      "target": "core_navigation_weintcodex_navigation_sidebarbuttons",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "core/navigation.lua",
-      "source_location": "L850",
-      "weight": 1.0
-    },
-    {
-      "source": "core_navigation",
-      "target": "core_navigation_weintcodex_navigation_activatefirst",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "core/navigation.lua",
-      "source_location": "L861",
-      "weight": 1.0
-    },
-    {
-      "source": "core_navigation",
       "target": "core_navigation_locked",
       "relation": "contains",
       "_origin": "ast",
@@ -16573,13 +16678,57 @@
     },
     {
       "source": "core_navigation",
+      "target": "core_navigation_weintcodex_navigation_buildsidebar",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "core/navigation.lua",
+      "source_location": "L879",
+      "weight": 1.0
+    },
+    {
+      "source": "core_navigation",
+      "target": "core_navigation_weintcodex_navigation_updatesidebarstatus",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "core/navigation.lua",
+      "source_location": "L893",
+      "weight": 1.0
+    },
+    {
+      "source": "core_navigation",
+      "target": "core_navigation_weintcodex_navigation_sidebarbuttons",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "core/navigation.lua",
+      "source_location": "L907",
+      "weight": 1.0
+    },
+    {
+      "source": "core_navigation",
+      "target": "core_navigation_weintcodex_navigation_activatefirst",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "core/navigation.lua",
+      "source_location": "L918",
+      "weight": 1.0
+    },
+    {
+      "source": "core_navigation",
       "target": "core_navigation_weintcodex_navigation_activateindex",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L873",
+      "source_location": "L930",
       "weight": 1.0
     },
     {
@@ -16590,7 +16739,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L916",
+      "source_location": "L973",
       "weight": 1.0
     },
     {
@@ -16601,51 +16750,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "core/navigation.lua",
-      "source_location": "L940",
-      "weight": 1.0
-    },
-    {
-      "source": "core_navigation",
-      "target": "core_navigation_weintcodex_navigation_cleartitleactions",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "core/navigation.lua",
-      "source_location": "L951",
-      "weight": 1.0
-    },
-    {
-      "source": "core_navigation",
-      "target": "core_navigation_inspectorheader",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "core/navigation.lua",
-      "source_location": "L957",
-      "weight": 1.0
-    },
-    {
-      "source": "core_navigation",
-      "target": "core_navigation_inspectordivider",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "core/navigation.lua",
-      "source_location": "L968",
-      "weight": 1.0
-    },
-    {
-      "source": "core_navigation",
-      "target": "core_navigation_inspectorrows",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "core/navigation.lua",
-      "source_location": "L978",
+      "source_location": "L997",
       "weight": 1.0
     },
     {
@@ -19439,7 +19544,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".github/tests/load_test.lua",
-      "source_location": "L655",
+      "source_location": "L664",
       "weight": 1.0
     },
     {
@@ -21402,13 +21507,35 @@
     },
     {
       "source": "modules_dungeonpages",
+      "target": "modules_dungeonpages_instanceitem",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L1004",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages",
+      "target": "modules_dungeonpages_summonrow",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L1027",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages",
       "target": "modules_dungeonpages_weintcodex_dungeonpages_select",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1061",
+      "source_location": "L1102",
       "weight": 1.0
     },
     {
@@ -21419,7 +21546,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1085",
+      "source_location": "L1126",
       "weight": 1.0
     },
     {
@@ -21523,13 +21650,24 @@
     },
     {
       "source": "modules_dungeonpages",
+      "target": "modules_dungeonpages_pilledge",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L226",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages",
       "target": "modules_dungeonpages_hovereyebrow",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L222",
+      "source_location": "L251",
       "weight": 1.0
     },
     {
@@ -21540,7 +21678,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L234",
+      "source_location": "L263",
       "weight": 1.0
     },
     {
@@ -21551,7 +21689,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L259",
+      "source_location": "L288",
       "weight": 1.0
     },
     {
@@ -21562,7 +21700,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L285",
+      "source_location": "L314",
       "weight": 1.0
     },
     {
@@ -21573,7 +21711,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L360",
+      "source_location": "L389",
       "weight": 1.0
     },
     {
@@ -21584,7 +21722,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L456",
+      "source_location": "L494",
       "weight": 1.0
     },
     {
@@ -21595,7 +21733,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L474",
+      "source_location": "L513",
       "weight": 1.0
     },
     {
@@ -21606,7 +21744,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L492",
+      "source_location": "L531",
       "weight": 1.0
     },
     {
@@ -21617,7 +21755,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L512",
+      "source_location": "L551",
       "weight": 1.0
     },
     {
@@ -21628,7 +21766,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L524",
+      "source_location": "L563",
       "weight": 1.0
     },
     {
@@ -21650,7 +21788,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L641",
+      "source_location": "L680",
       "weight": 1.0
     },
     {
@@ -21661,7 +21799,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L716",
+      "source_location": "L755",
       "weight": 1.0
     },
     {
@@ -21672,7 +21810,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L723",
+      "source_location": "L762",
       "weight": 1.0
     },
     {
@@ -21683,7 +21821,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L739",
+      "source_location": "L778",
       "weight": 1.0
     },
     {
@@ -21694,7 +21832,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L755",
+      "source_location": "L794",
       "weight": 1.0
     },
     {
@@ -21705,7 +21843,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L819",
+      "source_location": "L858",
       "weight": 1.0
     },
     {
@@ -21716,7 +21854,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L852",
+      "source_location": "L891",
       "weight": 1.0
     },
     {
@@ -21728,28 +21866,6 @@
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
       "source_location": "L90",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_instanceitem",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L965",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_summonrow",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L988",
       "weight": 1.0
     },
     {
@@ -23576,7 +23692,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L659",
+      "source_location": "L615",
       "weight": 1.0
     },
     {
@@ -23588,7 +23704,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L700",
+      "source_location": "L757",
       "weight": 1.0
     },
     {
@@ -23600,7 +23716,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L741",
+      "source_location": "L798",
       "weight": 1.0
     },
     {
@@ -23648,7 +23764,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1988",
+      "source_location": "L2045",
       "weight": 1.0
     },
     {
@@ -23660,7 +23776,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2534",
+      "source_location": "L2591",
       "weight": 1.0
     },
     {
@@ -23672,7 +23788,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2422",
+      "source_location": "L2479",
       "weight": 1.0
     },
     {
@@ -23684,7 +23800,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2491",
+      "source_location": "L2548",
       "weight": 1.0
     },
     {
@@ -23696,7 +23812,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1379",
+      "source_location": "L1436",
       "weight": 1.0
     },
     {
@@ -23708,7 +23824,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1385",
+      "source_location": "L1442",
       "weight": 1.0
     },
     {
@@ -23720,7 +23836,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1343",
+      "source_location": "L1400",
       "weight": 1.0
     },
     {
@@ -23732,7 +23848,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1302",
+      "source_location": "L1359",
       "weight": 1.0
     },
     {
@@ -23744,7 +23860,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L963",
+      "source_location": "L1020",
       "weight": 1.0
     },
     {
@@ -23756,7 +23872,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L963",
+      "source_location": "L1020",
       "weight": 1.0
     },
     {
@@ -23768,7 +23884,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1092",
+      "source_location": "L1149",
       "weight": 1.0
     },
     {
@@ -23780,7 +23896,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1128",
+      "source_location": "L1185",
       "weight": 1.0
     },
     {
@@ -23792,7 +23908,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1255",
+      "source_location": "L1312",
       "weight": 1.0
     },
     {
@@ -23804,7 +23920,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1562",
+      "source_location": "L1619",
       "weight": 1.0
     },
     {
@@ -23816,7 +23932,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1562",
+      "source_location": "L1619",
       "weight": 1.0
     },
     {
@@ -23828,7 +23944,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L1499",
+      "source_location": "L1556",
       "weight": 1.0
     },
     {
@@ -23840,7 +23956,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L945",
+      "source_location": "L1002",
       "weight": 1.0
     },
     {
@@ -23900,7 +24016,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2123",
+      "source_location": "L2180",
       "weight": 1.0
     },
     {
@@ -23912,7 +24028,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2333",
+      "source_location": "L2390",
       "weight": 1.0
     },
     {
@@ -23924,7 +24040,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2370",
+      "source_location": "L2427",
       "weight": 1.0
     },
     {
@@ -23936,7 +24052,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2376",
+      "source_location": "L2433",
       "weight": 1.0
     },
     {
@@ -23948,7 +24064,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2233",
+      "source_location": "L2290",
       "weight": 1.0
     },
     {
@@ -23960,7 +24076,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2237",
+      "source_location": "L2294",
       "weight": 1.0
     },
     {
@@ -23972,7 +24088,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2241",
+      "source_location": "L2298",
       "weight": 1.0
     },
     {
@@ -23984,7 +24100,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2245",
+      "source_location": "L2302",
       "weight": 1.0
     },
     {
@@ -23996,7 +24112,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2249",
+      "source_location": "L2306",
       "weight": 1.0
     },
     {
@@ -24008,7 +24124,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2253",
+      "source_location": "L2310",
       "weight": 1.0
     },
     {
@@ -24020,7 +24136,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2257",
+      "source_location": "L2314",
       "weight": 1.0
     },
     {
@@ -24032,7 +24148,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2261",
+      "source_location": "L2318",
       "weight": 1.0
     },
     {
@@ -24044,7 +24160,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2265",
+      "source_location": "L2322",
       "weight": 1.0
     },
     {
@@ -24056,7 +24172,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2269",
+      "source_location": "L2326",
       "weight": 1.0
     },
     {
@@ -24068,7 +24184,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L841",
+      "source_location": "L898",
       "weight": 1.0
     },
     {
@@ -24080,7 +24196,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2542",
+      "source_location": "L2599",
       "weight": 1.0
     },
     {
@@ -24092,7 +24208,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2566",
+      "source_location": "L2623",
       "weight": 1.0
     },
     {
@@ -24104,7 +24220,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2599",
+      "source_location": "L2656",
       "weight": 1.0
     },
     {
@@ -24116,7 +24232,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2606",
+      "source_location": "L2663",
       "weight": 1.0
     },
     {
@@ -24128,7 +24244,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2623",
+      "source_location": "L2680",
       "weight": 1.0
     },
     {
@@ -24140,7 +24256,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2629",
+      "source_location": "L2686",
       "weight": 1.0
     },
     {
@@ -24152,7 +24268,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2760",
+      "source_location": "L2817",
       "weight": 1.0
     },
     {
@@ -24164,7 +24280,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2803",
+      "source_location": "L2860",
       "weight": 1.0
     },
     {
@@ -24176,7 +24292,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2805",
+      "source_location": "L2862",
       "weight": 1.0
     },
     {
@@ -24188,7 +24304,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2813",
+      "source_location": "L2870",
       "weight": 1.0
     },
     {
@@ -24200,7 +24316,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2833",
+      "source_location": "L2890",
       "weight": 1.0
     },
     {
@@ -24212,7 +24328,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2838",
+      "source_location": "L2895",
       "weight": 1.0
     },
     {
@@ -24224,7 +24340,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2908",
+      "source_location": "L2965",
       "weight": 1.0
     },
     {
@@ -24236,7 +24352,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2941",
+      "source_location": "L2998",
       "weight": 1.0
     },
     {
@@ -24248,7 +24364,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "core/navigation.lua",
-      "source_location": "L2967",
+      "source_location": "L3024",
       "weight": 1.0
     },
     {
@@ -25364,7 +25480,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L717",
+      "source_location": "L756",
       "weight": 1.0
     },
     {
@@ -25376,7 +25492,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L725",
+      "source_location": "L764",
       "weight": 1.0
     },
     {
@@ -25388,7 +25504,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L366",
+      "source_location": "L395",
       "weight": 1.0
     },
     {
@@ -25400,7 +25516,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L370",
+      "source_location": "L399",
       "weight": 1.0
     },
     {
@@ -25412,7 +25528,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L400",
+      "source_location": "L430",
       "weight": 1.0
     },
     {
@@ -25424,7 +25540,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L235",
+      "source_location": "L264",
       "weight": 1.0
     },
     {
@@ -25436,7 +25552,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L237",
+      "source_location": "L266",
       "weight": 1.0
     },
     {
@@ -25448,7 +25564,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L238",
+      "source_location": "L267",
       "weight": 1.0
     },
     {
@@ -25460,7 +25576,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L246",
+      "source_location": "L275",
       "weight": 1.0
     },
     {
@@ -25472,7 +25588,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L642",
+      "source_location": "L681",
       "weight": 1.0
     },
     {
@@ -25484,7 +25600,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L649",
+      "source_location": "L688",
       "weight": 1.0
     },
     {
@@ -25496,7 +25612,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L663",
+      "source_location": "L702",
       "weight": 1.0
     },
     {
@@ -25508,7 +25624,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L675",
+      "source_location": "L714",
       "weight": 1.0
     },
     {
@@ -25520,7 +25636,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L790",
+      "source_location": "L829",
       "weight": 1.0
     },
     {
@@ -25532,7 +25648,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L808",
+      "source_location": "L847",
       "weight": 1.0
     },
     {
@@ -25544,7 +25660,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L525",
+      "source_location": "L564",
       "weight": 1.0
     },
     {
@@ -25556,7 +25672,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L526",
+      "source_location": "L565",
       "weight": 1.0
     },
     {
@@ -25568,7 +25684,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L530",
+      "source_location": "L569",
       "weight": 1.0
     },
     {
@@ -25580,7 +25696,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L532",
+      "source_location": "L571",
       "weight": 1.0
     },
     {
@@ -25592,7 +25708,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L542",
+      "source_location": "L581",
       "weight": 1.0
     },
     {
@@ -25604,7 +25720,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L549",
+      "source_location": "L588",
       "weight": 1.0
     },
     {
@@ -25616,7 +25732,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L286",
+      "source_location": "L315",
       "weight": 1.0
     },
     {
@@ -25628,7 +25744,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L287",
+      "source_location": "L316",
       "weight": 1.0
     },
     {
@@ -25640,7 +25756,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L288",
+      "source_location": "L317",
       "weight": 1.0
     },
     {
@@ -25652,7 +25768,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L308",
+      "source_location": "L337",
       "weight": 1.0
     },
     {
@@ -25664,7 +25780,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L311",
+      "source_location": "L340",
       "weight": 1.0
     },
     {
@@ -25676,7 +25792,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L312",
+      "source_location": "L341",
       "weight": 1.0
     },
     {
@@ -25688,7 +25804,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L313",
+      "source_location": "L342",
       "weight": 1.0
     },
     {
@@ -25700,7 +25816,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L324",
+      "source_location": "L353",
       "weight": 1.0
     },
     {
@@ -25712,7 +25828,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L335",
+      "source_location": "L364",
       "weight": 1.0
     },
     {
@@ -25724,7 +25840,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L345",
+      "source_location": "L374",
       "weight": 1.0
     },
     {
@@ -25736,7 +25852,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L745",
+      "source_location": "L784",
       "weight": 1.0
     },
     {
@@ -25748,7 +25864,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L856",
+      "source_location": "L895",
       "weight": 1.0
     },
     {
@@ -25760,7 +25876,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L858",
+      "source_location": "L897",
       "weight": 1.0
     },
     {
@@ -25772,7 +25888,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L887",
+      "source_location": "L926",
       "weight": 1.0
     },
     {
@@ -25784,7 +25900,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L890",
+      "source_location": "L929",
       "weight": 1.0
     },
     {
@@ -25796,7 +25912,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L907",
+      "source_location": "L946",
       "weight": 1.0
     },
     {
@@ -25808,7 +25924,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L909",
+      "source_location": "L948",
       "weight": 1.0
     },
     {
@@ -25820,7 +25936,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L922",
+      "source_location": "L961",
       "weight": 1.0
     },
     {
@@ -25832,7 +25948,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L457",
+      "source_location": "L495",
       "weight": 1.0
     },
     {
@@ -25844,7 +25960,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L225",
+      "source_location": "L254",
       "weight": 1.0
     },
     {
@@ -25856,7 +25972,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L968",
+      "source_location": "L1007",
       "weight": 1.0
     },
     {
@@ -25868,7 +25984,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L969",
+      "source_location": "L1008",
       "weight": 1.0
     },
     {
@@ -25892,7 +26008,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L513",
+      "source_location": "L552",
       "weight": 1.0
     },
     {
@@ -25904,7 +26020,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L493",
+      "source_location": "L532",
       "weight": 1.0
     },
     {
@@ -25916,7 +26032,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L497",
+      "source_location": "L536",
       "weight": 1.0
     },
     {
@@ -25928,7 +26044,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L501",
+      "source_location": "L540",
       "weight": 1.0
     },
     {
@@ -25940,7 +26056,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L991",
+      "source_location": "L1030",
       "weight": 1.0
     },
     {
@@ -25964,7 +26080,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1079",
+      "source_location": "L1120",
       "weight": 1.0
     },
     {
@@ -25976,7 +26092,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1090",
+      "source_location": "L1131",
       "weight": 1.0
     },
     {
@@ -25988,7 +26104,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1095",
+      "source_location": "L1136",
       "weight": 1.0
     },
     {
@@ -27768,6 +27884,18 @@
       "weight": 1.0
     },
     {
+      "source": "changelog_technisch",
+      "target": "core_navigation_buildcolumn",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "context": "BuildColumn",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L36",
+      "weight": 1.0
+    },
+    {
       "source": "docs_invariants_data_integrity_die_spezialisierung_data_specs_lua_modules_charakter_lua",
       "target": "modules_charakter_currentspec",
       "relation": "references",
@@ -27849,6 +27977,18 @@
       "context": "ParseBossImport",
       "source_file": "docs/systems/dungeons.md",
       "source_location": "L286",
+      "weight": 1.0
+    },
+    {
+      "source": "changelog_technisch",
+      "target": "modules_dungeonpages_pilledge",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "context": "PillEdge",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L42",
       "weight": 1.0
     },
     {
@@ -27937,5 +28077,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "4c66cf40f3d0060062223cdab5c69ba8cf8bd38b"
+  "built_at_commit": "a6f1e0400ccc6ea44a9bf6795e1db611a60b2c62"
 }

@@ -12,9 +12,9 @@
     "semantic_hash": "ecadff0bcae8ca6a94d7ccb348bbf82c"
   },
   ".github/tests/load_test.lua": {
-    "mtime": 1790001103.0734653,
-    "seen": 1790002428.3392122,
-    "ast_hash": "3a4606629c3abcc03da3ea43e80412aa",
+    "mtime": 1790003319.7458937,
+    "seen": 1790013943.6805212,
+    "ast_hash": "81b71c9ab9a91b82f5bece1c2ef94ea4",
     "semantic_hash": ""
   },
   ".github/tests/wow_stub.lua": {
@@ -24,9 +24,9 @@
     "semantic_hash": ""
   },
   "WeintCodex.toc": {
-    "mtime": 1790001585.9814541,
-    "seen": 1790002428.3392155,
-    "ast_hash": "58bab518e4a37650e860c3d903e5c29e",
+    "mtime": 1790012002.2528691,
+    "seen": 1790013943.6805243,
+    "ast_hash": "e158245afb5e0cd7c86271969794a330",
     "semantic_hash": ""
   },
   "core/access.lua": {
@@ -36,9 +36,9 @@
     "semantic_hash": "22cae2ced786df8a3f1a15b4634f0853"
   },
   "core/main.lua": {
-    "mtime": 1790001589.409454,
-    "seen": 1790002428.3392189,
-    "ast_hash": "7ae6a3ecabeef400913707579b389bad",
+    "mtime": 1790012003.7488692,
+    "seen": 1790013943.6805267,
+    "ast_hash": "5f9b76d4e02175542af33d2ae9fe722a",
     "semantic_hash": ""
   },
   "core/minimap.lua": {
@@ -72,15 +72,15 @@
     "semantic_hash": "ece052d36d5860084b43bfb3f5315630"
   },
   "core/ui.lua": {
-    "mtime": 1790001103.0734653,
-    "seen": 1790002428.3392272,
-    "ast_hash": "d10999501bdca71f83a26173c97bce76",
+    "mtime": 1790003060.2618997,
+    "seen": 1790013943.680536,
+    "ast_hash": "14bec5debee579df13f9149585f2823a",
     "semantic_hash": ""
   },
   "data/changelog.lua": {
-    "mtime": 1790001593.837454,
-    "seen": 1790002428.3392284,
-    "ast_hash": "03cad4218b4d25d1f0eef960e6576679",
+    "mtime": 1790012013.0648699,
+    "seen": 1790013943.680537,
+    "ast_hash": "75fb48c5bdbc02f0c3301173bde9d29b",
     "semantic_hash": ""
   },
   "data/companion_live.lua": {
@@ -186,9 +186,9 @@
     "semantic_hash": "3ee5c82b08a5635b1ffc679f65756408"
   },
   "modules/dungeonpages.lua": {
-    "mtime": 1790001533.5694554,
-    "seen": 1790002428.339255,
-    "ast_hash": "99a002b84459748450f80fe63b1c3e86",
+    "mtime": 1790012108.3008754,
+    "seen": 1790013943.6805577,
+    "ast_hash": "57c5fae2d317617b2bb936887564a6ae",
     "semantic_hash": ""
   },
   "modules/encounter_tracking.lua": {
@@ -270,9 +270,9 @@
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1790001607.3454537,
-    "seen": 1790002428.3392758,
-    "ast_hash": "c66a5d3317a8726734362624d18463ec",
+    "mtime": 1790012025.9968705,
+    "seen": 1790013943.6805735,
+    "ast_hash": "847352126a610149597e8edf6ada8d8f",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -318,9 +318,9 @@
     "semantic_hash": ""
   },
   "docs/systems/dungeons.md": {
-    "mtime": 1790001103.0774653,
-    "seen": 1790002428.3392856,
-    "ast_hash": "1d0b49666331cbeae4c8af32ec2888cf",
+    "mtime": 1790012100.564875,
+    "seen": 1790013943.680583,
+    "ast_hash": "79bace7327eb8d533cd11bf208388735",
     "semantic_hash": ""
   },
   "docs/systems/groupcheck.md": {
