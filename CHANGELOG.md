@@ -9,6 +9,45 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [5.2.0.3] – 2026-09-21
+
+**Die Dungeonseite zeigt jetzt denselben rechten Detailbereich wie die
+Schlachtzugseite** (`WeintCodex.Navigation.SetInspector`) — für ein
+einheitliches Bild zwischen beiden Seiten. Der Bereich trägt
+Kennzahlen (Gebiet, Stufe, Gruppengröße, Bosszahl) und, wo eine Quelle
+vorliegt, eine dauerhaft sichtbare "Woher die Bossliste stammt"-Karte
+mit Begründung — vorher stand die Begründung nur im Tooltip des
+Vorsatzes an der Bosszeile.
+
+**Das ist kein bedingungsloser Rückbau auf das Vier-Flächen-Layout vor
+5.2.0.0.** Der Detailbereich beansprucht 420 px (372 px Karte + 16 px
+Abstand + 32 px Innenrand); von den 716 px Inhaltsbreite beim
+kleinsten Fenster bleiben dann 296 px für die Bosszeile. Bei den
+meisten der 29 Dungeons passt das — bei den wenigen mit vielen Bossen
+in einem Flügel (Stratholme, Blackrock Depths, Scholomance, Lower
+Blackrock Spire) würde die Bosszeile bei dieser Breite so viele Zeilen
+brauchen, dass für die Detailkarte darunter nicht einmal die
+Mindesthöhe von 160 px übrig bliebe. Die Seite zeichnet sich deshalb
+zunächst mit Detailbereich, misst sich selbst gegen dasselbe Budget,
+das `load_test.lua` prüft (`PageHeight()` gegen `PageBudget()`), und
+zeichnet bei Überlauf sofort noch einmal in voller Breite ohne
+Detailbereich — dieselbe Messung, keine separate Schätzung, die davon
+abweichen könnte.
+
+### Technisch
+
+`core/navigation.lua`: `BuildColumn` unverändert seit 5.2.0.2, aber
+`core/ui.lua`s `WeintCodex.Metrics` trägt jetzt zusätzlich
+`DETAIL_GAP`. `modules/dungeonpages.lua`: `MinContentWidth()` liest ein
+neues `inspectorShown`-Flag und zieht bei offenem Detailbereich
+`DETAIL_W + DETAIL_GAP + PAD_X` von der Budgetbreite ab; `DrawDungeon`
+probiert über die neue `DrawDungeonAt(f, dungeon, withInspector)`
+zunächst den schmalen Entwurf und wiederholt bei Überlauf mit
+`withInspector = false`. `.github/tests/load_test.lua` setzt die
+Breite der Client-Attrappe jetzt auf die schmalere, detailbereich-
+bewusste Zahl (die Attrappe kennt `SetPoint` nicht und würde sonst mit
+mehr Platz rechnen, als im Spiel tatsächlich da ist).
+
 ## [5.2.0.2] – 2026-09-21
 
 **Die Stufenabschnitte links sind jetzt als Knöpfe zu erkennen, nicht

@@ -288,12 +288,18 @@ end
 
 Section("Jede Instanz laesst sich zeichnen")
 
--- DER INHALTSBEREICH HAT HIER DIE BREITE DES KLEINSTEN FENSTERS. Die
--- Attrappe gibt jedem Frame 800 px; die Dungeonseite bricht ihre
--- Bosszeile aber nach der Breite um, die sie vorfindet - und der
--- schlimmste Fall (die meisten Zeilen, die hoechste Seite) ist der
--- schmalste Inhalt, nicht ein Vorgabewert.
-WeintCodex.ContentPanel:SetWidth(WeintCodex.Navigation.ContentBudgetWidth())
+-- DER INHALTSBEREICH HAT HIER DIE BREITE DES KLEINSTEN FENSTERS, MIT
+-- OFFENEM DETAILBEREICH. Die Attrappe gibt jedem Frame 800 px und
+-- kennt SetPoint nicht (core/ui.lua schmaelert den Inhaltsbereich im
+-- echten Spiel ueber genau das, wenn WeintCodex.SetDetailShown(true)
+-- laeuft) - ohne diese Zeile rechnete der Prueflauf mit mehr Platz,
+-- als seit 5.2.0.3 tatsaechlich da ist, sobald die Dungeonseite ihren
+-- Detailbereich zeigt (wie die Schlachtzugseite es schon immer tut).
+-- Schlachtzugseite und die Uebersicht der beschwoerbaren Zusatzbosse
+-- lesen diese Zahl nicht direkt und bleiben unberuehrt.
+local M = WeintCodex.Metrics
+WeintCodex.ContentPanel:SetWidth(WeintCodex.Navigation.ContentBudgetWidth()
+    - (M.DETAIL_W + M.DETAIL_GAP + M.PAD_X))
 
 -- Ueber Select() und nicht ueber ActivateIndex(): die Unternavigation
 -- ist ein BAUM, ihre Zeilen zaehlen Bosse mit. Ein Index aus der

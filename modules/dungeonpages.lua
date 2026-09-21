@@ -26,7 +26,15 @@
 --      niemand vorher, und gekuerzt wird hier nichts.
 --
 -- Die Spalte links fuehrt nur noch Dungeons, nach Stufenabschnitt.
--- Der Detailbereich rechts bleibt auf dieser Seite zu.
+--
+-- SEIT 5.2.0.3 zeigt die Seite denselben rechten Detailbereich wie
+-- die Schlachtzugseite (Kennzahlen, Herkunft der Bossliste) - aber
+-- NICHT bedingungslos: der Bereich braucht 420 px, die der Bosszeile
+-- fehlen. Bei den wenigen Dungeons mit vielen Bossen in einem Fluegel
+-- (Stratholme, Blackrock Depths, Scholomance, Lower Blackrock Spire)
+-- zeichnet die Seite sich zuerst mit Bereich, misst sich selbst gegen
+-- ihr eigenes Budget und faellt bei Ueberlauf auf die volle Breite
+-- ohne Bereich zurueck (siehe DrawDungeon/DrawDungeonAt).
 --
 -- WAS SICH NICHT GEAENDERT HAT, weil es keine Frage der Form ist:
 --
@@ -51,14 +59,15 @@ local D = WeintCodex.DungeonData
 local S = WeintCodex.Sources
 local M = WeintCodex.Metrics
 
-local page         = nil
-local rows         = {}
-local selectedId   = nil
-local selectedBoss = nil
-local selectedWing = nil
-local openBracket  = 1
-local showSummons  = false
-local building     = false
+local page           = nil
+local rows           = {}
+local selectedId     = nil
+local selectedBoss   = nil
+local selectedWing   = nil
+local openBracket    = 1
+local showSummons    = false
+local building       = false
+local inspectorShown = false
 
 local function ClearRows()
     for _, row in ipairs(rows) do row:Hide() end
@@ -136,8 +145,18 @@ end
 -- (Navigation.SubNavBudget), nur fuer den Inhalt - und aus demselben
 -- Grund: was hier unten rausfaellt, faellt lautlos raus.
 
+-- Seit 5.2.0.3 zeigt die Dungeonseite denselben rechten Detailbereich
+-- wie die Schlachtzugseite (WeintCodex.Navigation.SetInspector). Der
+-- schmaelert den Inhaltsbereich im Spiel automatisch (WeintCodex.
+-- SetDetailShown) - diese Funktion muss dieselbe Schmaelerung schon
+-- VOR dem Zeichnen kennen, sonst rechnet die Seite mit mehr Platz,
+-- als tatsaechlich da ist, sobald der Bereich offen ist.
 local function MinContentWidth()
-    return WeintCodex.Navigation.ContentBudgetWidth()
+    local w = WeintCodex.Navigation.ContentBudgetWidth()
+    if inspectorShown then
+        w = w - (M.DETAIL_W + M.DETAIL_GAP + M.PAD_X)
+    end
+    return w
 end
 
 local function ContentWidth()
@@ -852,12 +871,98 @@ local function DrawBossDetail(f, y, dungeon, boss)
 end
 
 --------------------------------------------------
+-- Detailbereich: der Dungeon selbst
+--------------------------------------------------
+-- Derselbe Baustein wie auf der Schlachtzugseite (WeintCodex.
+-- Navigation.SetInspector) - fuer ein einheitliches Bild zeigt die
+-- Dungeonseite seit 5.2.0.3 denselben rechten Kontextbereich.
+--
+-- WAS BEWUSST NICHT MIT HINUEBERWANDERT ist die vollstaendige
+-- Rollenliste je Talentbaum (bei Schlachtzuegen: RolePanel.
+-- InstanceBlocks). Die steht bei Schlachtzuegen im Detailbereich,
+-- weil deren Seite keine eigene Bosszeile hat, die die Breite
+-- braucht. Bei Dungeons zeigt die Aufstellung-Karte im Hauptinhalt
+-- genau das schon, in voller Breite lesbar statt in 372 px
+-- zusammengequetscht - eine zweite Kopie waere hier keine Erklaerung,
+-- sondern eine schlechtere Wiederholung derselben Liste.
+local function DungeonInspector(dungeon)
+    local named  = D.HasBosses(dungeon) and #dungeon.bosses or nil
+    local total  = D.BossCount(dungeon)
+    local source = D.BossSource(dungeon)
+    local range  = D.LevelRange(dungeon)
+
+    local bossValue, bossColor
+    if named and total and named < total then
+        bossValue, bossColor = named .. " von " .. total, "warningBright"
+    elseif named then
+        bossValue, bossColor = tostring(named), source and "warningBright" or "textNormal"
+    elseif total then
+        bossValue, bossColor = total .. " · Namen unbekannt", "warningBright"
+    elseif dungeon.conflict then
+        bossValue, bossColor = "Quellen widersprechen sich", "warningBright"
+    else
+        bossValue, bossColor = "noch nicht bekannt", "textFaint"
+    end
+
+    local blocks = {
+        { type = "header", text = "Dungeon" },
+        { type = "rows", rows = {
+            { label = "Gebiet",       value = D.ZoneLabel(dungeon) or "—" },
+            { label = "Stufe",        value = range or "unbekannt",
+              valueColor = range and "textNormal" or "textFaint" },
+            { label = "Gruppe",       value = dungeon.size .. " Spieler" },
+            { label = "Bosse",        value = bossValue, valueColor = bossColor },
+        }},
+    }
+
+    -- "Woher die Bossliste stammt" wie bei Schlachtzuegen - bisher
+    -- stand die Begruendung nur im Tooltip des Vorsatzes an der
+    -- Bosszeile, und ein Tooltip findet niemand, der nicht ohnehin
+    -- schon vermutet, dass da einer ist.
+    if source then
+        blocks[#blocks + 1] = { type = "divider" }
+        blocks[#blocks + 1] = { type = "header", text = "Woher die Bossliste stammt" }
+        blocks[#blocks + 1] = { type = "text", text = S.Label(source),
+            color = "warningBright", size = 11, gap = 4 }
+        blocks[#blocks + 1] = { type = "text", text = S.Why(source), color = "textMuted" }
+    elseif dungeon.conflict then
+        blocks[#blocks + 1] = { type = "divider" }
+        blocks[#blocks + 1] = { type = "header", text = "Woher die Bossliste stammt" }
+        blocks[#blocks + 1] = { type = "text", text = "Quellen widersprechen sich",
+            color = "warningBright", size = 11, gap = 4 }
+        blocks[#blocks + 1] = { type = "text", text = dungeon.conflict, color = "textMuted" }
+    end
+
+    if D.IsLegacy(dungeon) then
+        blocks[#blocks + 1] = { type = "divider" }
+        blocks[#blocks + 1] = { type = "header", text = "Klassischer Dungeon" }
+        blocks[#blocks + 1] = { type = "text",
+            text = "Blizzard hat die Beute jedes Bosses überarbeitet; die "
+                .. "Legacy-Aufgaben führen weiter durch ihn hindurch.",
+            color = "textDim", size = 10 }
+    end
+
+    return blocks
+end
+
+--------------------------------------------------
 -- Der Dungeon, zusammengesetzt
 --------------------------------------------------
 
-local function DrawDungeon(f, dungeon)
+-- Zeichnet den Dungeon einmal, mit oder ohne rechten Detailbereich.
+-- `withInspector` entscheidet VOR jeder Pixelrechnung (MinContentWidth
+-- liest inspectorShown), sonst zeichnet die Runde noch mit der alten
+-- Breite.
+local function DrawDungeonAt(f, dungeon, withInspector)
     ClearRows()
     f._relayout = nil
+
+    inspectorShown = withInspector
+    if withInspector then
+        WeintCodex.Navigation.SetInspector(DungeonInspector(dungeon))
+    else
+        WeintCodex.Navigation.ClearInspector()
+    end
 
     local y = DrawHead(f, dungeon)
     y = DrawBosses(f, y - 8, dungeon)
@@ -879,6 +984,21 @@ local function DrawDungeon(f, dungeon)
     pageUsed = -y
 end
 
+-- ERST DER DETAILBEREICH WIE BEI SCHLACHTZUEGEN. Passt die Seite bei
+-- der schmaleren Breite nicht ins Budget (viele Bosse, viele
+-- Fluegel-Pillen - Stratholme, Blackrock Depths, Dire Maul, Scarlet
+-- Monastery), faellt sie auf die volle Breite ohne Detailbereich
+-- zurueck. Das ist dieselbe Messung, mit der load_test.lua das
+-- Budget prueft (PageHeight gegen PageBudget), keine eigene
+-- Schaetzung, die davon abweichen koennte - und deshalb kein neuer
+-- Fall, den der Prueflauf nicht ohnehin schon durchspielt.
+local function DrawDungeon(f, dungeon)
+    DrawDungeonAt(f, dungeon, true)
+    if pageUsed > WeintCodex.DungeonPages.PageBudget() then
+        DrawDungeonAt(f, dungeon, false)
+    end
+end
+
 --------------------------------------------------
 -- Uebersicht: alles, was sich beschwoeren laesst
 --------------------------------------------------
@@ -891,6 +1011,11 @@ local BuildTree
 local function DrawSummons(f)
     ClearRows()
     f._relayout = nil
+
+    -- Diese Uebersicht gehoert zu keinem einzelnen Dungeon - kein
+    -- Detailbereich, dafuer die volle Breite fuer die Liste.
+    inspectorShown = false
+    WeintCodex.Navigation.ClearInspector()
 
     local all = D.AllSummonable()
 
@@ -1127,8 +1252,10 @@ function WeintCodex.DungeonPages.Show()
     local cp = WeintCodex.ContentPanel
     for _, child in pairs({ cp:GetChildren() }) do child:Hide() end
 
-    -- Diese Seite hat keinen Detailbereich: alles steht auf ihr.
-    WeintCodex.Navigation.ClearInspector()
+    -- Der Detailbereich wird nicht hier pauschal geleert: SwitchTo tut
+    -- das schon vor jedem Tabwechsel, und innerhalb des Tabs setzt ihn
+    -- DrawDungeon/DrawSummons bei jeder Zeichnung neu - je nachdem, ob
+    -- gerade ein einzelner Dungeon oder die Uebersicht gezeigt wird.
 
     local f = BuildPage()
     f:Show()

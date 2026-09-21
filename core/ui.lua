@@ -1439,6 +1439,7 @@ WeintCodex.Metrics = {
     TITLEBAR_H = TITLEBAR_H,
     NAV_W      = NAV_W,
     DETAIL_W   = DETAIL_W,
+    DETAIL_GAP = DETAIL_GAP,
     PAD_X      = 32,   -- Innenabstand des Inhaltsbereichs, Entwurf: 24px 32px
     PAD_Y      = 24,
     GAP        = 16,

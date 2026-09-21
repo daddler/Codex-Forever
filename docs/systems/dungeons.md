@@ -180,10 +180,51 @@ nach unten:
 | Bosszeile | eine **Pille je Boss**: Nummer (nur bei bekannter Reihenfolge), Name, Kennzeichen (`BESCHWÖREN` > `OPTIONAL` > `TIPPS`); rechts der Vorsatz der Herkunft mit Begründung im Tooltip; bei Flügeln Reiter darüber, **ein Flügel zur Zeit** |
 | Detailkarte | ohne Boss die **Aufstellung**, mit Boss das Berichtete: *So kommt er*, *Wo er steht*, *Dazu*, *Rollen* |
 
-Der Detailbereich rechts bleibt auf dieser Seite zu. Ein Klick auf
-eine Pille öffnet den Boss in der Karte, ein zweiter Klick (oder das
-`×`) schliesst ihn; ein zweiter Klick auf den offenen Dungeon in der
-Spalte führt ebenfalls zur Aufstellung zurück.
+Ein Klick auf eine Pille öffnet den Boss in der Karte, ein zweiter
+Klick (oder das `×`) schliesst ihn; ein zweiter Klick auf den offenen
+Dungeon in der Spalte führt ebenfalls zur Aufstellung zurück.
+
+### Der Detailbereich rechts, wo er passt
+
+Bis 5.2.0.2 blieb der Detailbereich rechts auf dieser Seite immer zu.
+Seit 5.2.0.3 zeigt sie ihn, für dasselbe einheitliche Bild wie die
+Schlachtzugseite (`WeintCodex.Navigation.SetInspector`): Kennzahlen
+(Gebiet, Stufe, Gruppengrösse, Bosszahl) und, wo eine Quelle vorliegt,
+eine dauerhaft sichtbare *Woher die Bossliste stammt*-Karte mit
+Begründung — vorher stand die Begründung nur im Tooltip des Vorsatzes
+an der Bosszeile.
+
+**Das ist kein bedingungsloser Rückbau auf das Vier-Flächen-Layout vor
+5.2.0.0.** Der Detailbereich beansprucht 420 px (`DETAIL_W` 372 +
+`DETAIL_GAP` 16 + `PAD_X` 32); von den 716 px Inhaltsbreite beim
+kleinsten Fenster bleiben dann 296 px für die Bosszeile. Bei den
+meisten der 29 Dungeons reicht das. Bei den wenigen mit vielen Bossen
+in einem Flügel (Stratholme, Blackrock Depths, Scholomance, Lower
+Blackrock Spire) bräuchte die Bosszeile bei 296 px so viele Zeilen,
+dass für die Detailkarte darunter nicht einmal die Mindesthöhe von
+160 px übrig bliebe — genau der Fall, für den `DetailCard` schon
+immer absichtlich überlaufen lässt, statt eine Karte zu zeigen, die
+keine mehr ist (siehe unten, *Die Detailkarte rollt*).
+
+`DrawDungeon` (`modules/dungeonpages.lua`) zeichnet deshalb zunächst
+mit Detailbereich (`DrawDungeonAt(f, dungeon, true)`), misst sich
+selbst gegen dasselbe Budget, das `load_test.lua` prüft
+(`PageHeight()` gegen `PageBudget()`), und zeichnet bei Überlauf
+sofort noch einmal in voller Breite ohne Detailbereich
+(`DrawDungeonAt(f, dungeon, false)`) — dieselbe Messung, keine
+separate Schätzung, die vom Prüflauf abweichen könnte. Welche
+Dungeons zurückfallen, ist damit kein fester Name im Code, sondern
+eine Folge des tatsächlichen Bestands: kommt ein Boss dazu oder ändert
+sich ein Flügel, entscheidet die nächste Zeichnung neu.
+
+Damit die Seite bei offenem Detailbereich mit der richtigen (schmalen)
+Breite rechnet, bevor irgendetwas Pixel zählt, liest `MinContentWidth`
+ein `inspectorShown`-Flag, das `DrawDungeonAt` vor jeder Zeichnung
+setzt. Die Client-Attrappe kennt `SetPoint` nicht und kann die
+Schmälerung des Inhaltsbereichs deshalb nicht selbst nachvollziehen
+(anders als im Spiel, wo `WeintCodex.SetDetailShown` sie sofort
+anwendet) — `load_test.lua` setzt die Breite der Attrappe deshalb
+direkt auf die detailbereich-bewusste Zahl.
 
 Vier Zustände der Bosszeile, keiner davon eine leere Liste:
 
@@ -221,12 +262,19 @@ drei Dinge halten sie darunter:
   mehr geschickt hat, als das Fenster zeigt. Gekürzt wird nichts.
 
 `load_test.lua` setzt den Inhaltsbereich auf die Breite des kleinsten
-Fensters (`Navigation.ContentBudgetWidth()`), zeichnet **jede** Instanz
-in **jedem** Flügel und **jeden** Boss, misst die Seite gegen das
-Budget, klickt den Aufklappweg der Spalte durch und prüft, dass eine
-Bosskarte mit dreissig Tipps das Fenster genau füllt und keinen Pixel
-darüber hinausläuft. Gemessener schlimmster Fall der Seite: Stratholme,
-**646 von 716 px**.
+Fensters **mit offenem Detailbereich** (716 px `ContentBudgetWidth()`
+minus die 420 px, die der Detailbereich braucht — siehe oben), zeichnet
+**jede** Instanz in **jedem** Flügel und **jeden** Boss, misst die
+Seite gegen das Budget, klickt den Aufklappweg der Spalte durch und
+prüft, dass eine Bosskarte mit dreissig Tipps das Fenster genau füllt
+und keinen Pixel darüber hinausläuft. Gemessener schlimmster Fall
+seit 5.2.0.3: mehrere Dungeons mit Detailbereich landen exakt bei
+**716 von 716 px** (die Detailkarte füllt bis zum Rand und rollt —
+das ist der vorgesehene, keine Fehlerfall); unter den vier Dungeons,
+die auf die volle Breite zurückfallen, bleibt Stratholme mit
+**646 von 716 px** der schlimmste — unverändert zur Messung vor
+5.2.0.3, weil `DrawDungeonAt(f, dungeon, false)` exakt denselben Weg
+zeichnet wie vor dieser Version.
 
 ### Ein Flügel darf keinen Boss verlieren
 

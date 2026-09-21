@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "5.2.0.3",
+        date    = "21.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Dungeonseite zeigt jetzt denselben rechten Infobereich wie die Schlachtzugseite.|r Stufe, Gruppengröße, Bosszahl und woher die Bossliste stammt stehen dort auf einen Blick – vorher stand die Herkunft nur versteckt im Tooltip.",
+            "|cff7C6CFFBei den wenigen sehr großen Dungeons bleibt die Seite in voller Breite.|r Stratholme, Blackrock Depths, Scholomance und Lower Blackrock Spire haben so viele Bosse, dass der Infobereich der Bosszeile den Platz nehmen würde – dort zeigt die Seite lieber alle Bosse übersichtlich als einen Infobereich, der eng wird.",
+        },
+    },
+    {
         version = "5.2.0.2",
         date    = "21.09.2026",
         notes   = {
