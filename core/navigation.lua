@@ -606,25 +606,82 @@ local function BuildColumn(sectionTitle, items)
             -- ihren aktiven Eintrag markiert (ActivateIndex), und die
             -- Markierung saesse eine Zeile daneben.
             local host = col
+            local disclosure, discloseColor
             if itemDef.onClick then
                 local gbtn = CreateFrame("Button", nil, col)
                 gbtn:SetHeight(SUBNAV_GROUP_H)
                 gbtn:SetPoint("TOPLEFT",  col, "TOPLEFT",   pad, offsetY - 8)
                 gbtn:SetPoint("TOPRIGHT", col, "TOPRIGHT", -pad, offsetY - 8)
+                WeintCodex.CutCorners(gbtn, 6, "bgDark")
+
+                -- Ohne sichtbares Zeichen sieht ein Gruppenkopf aus wie
+                -- eine Zwischenueberschrift, nicht wie ein Knopf - genau
+                -- das hat niemanden ahnen lassen, dass sich hier etwas
+                -- oeffnet. Aufklapp-Pfeil plus derselbe Hover-Schimmer
+                -- wie bei jeder anklickbaren Zeile sagen es vorher.
+                local hoverBg = gbtn:CreateTexture(nil, "BACKGROUND")
+                hoverBg:SetAllPoints(gbtn)
+                hoverBg:SetColorTexture(1, 1, 1, 0)
+
+                discloseColor = itemDef.open and C.accent or C.textFaint
+                disclosure = gbtn:CreateFontString(nil, "OVERLAY")
+                disclosure:SetFont(WeintCodex.Fonts.monoBold, 11, "")
+                disclosure:SetPoint("LEFT", gbtn, "LEFT", 2, 0)
+                disclosure:SetText(itemDef.open and "v" or ">")
+                disclosure:SetTextColor(discloseColor[1], discloseColor[2], discloseColor[3])
+
                 gbtn:SetScript("OnClick", function() itemDef.onClick() end)
+                gbtn:SetScript("OnEnter", function()
+                    hoverBg:SetColorTexture(1, 1, 1, 0.05)
+                    disclosure:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
+                end)
+                gbtn:SetScript("OnLeave", function()
+                    hoverBg:SetColorTexture(1, 1, 1, 0)
+                    disclosure:SetTextColor(discloseColor[1], discloseColor[2], discloseColor[3])
+                end)
                 table.insert(sidebarGroups, gbtn)
+                table.insert(sidebarGroups, hoverBg)
+                table.insert(sidebarGroups, disclosure)
                 host = gbtn
             end
 
-            local tone = itemDef.open and "textMuted" or "textGhost"
-            local lbl = WeintCodex.Eyebrow(host, itemDef.label or "",
-                { color = itemDef.labelColor or tone })
-            if host == col then
-                lbl:SetPoint("TOPLEFT", col, "TOPLEFT", pad + 11, offsetY - 8)
+            local tone = itemDef.open and "textMuted" or "textDim"
+            local lblX = host == col and 0 or 18
+
+            -- Ein Stufenbereich ("Ab Stufe 13 - 22") komplett gesperrt zu
+            -- schreiben (WeintCodex.Eyebrow fuegt zwischen JEDEM Zeichen
+            -- ein Leerzeichen ein) macht aus einer kurzen Zahl eine sehr
+            -- breite Zeile - in der 232-px-Spalte lief sie in die rechts
+            -- stehende Anzahl hinein ("13 -6 22" statt "13-22" und "6").
+            -- Gesperrt bleibt nur der kurze Vorsatz, die Zahlen selbst
+            -- stehen eng und lesbar daneben.
+            if itemDef.rangeLo and itemDef.rangeHi then
+                local prefix = WeintCodex.Eyebrow(host, "Stufe",
+                    { color = itemDef.labelColor or tone })
+                if host == col then
+                    prefix:SetPoint("TOPLEFT", col, "TOPLEFT", pad + 11 + lblX, offsetY - 8)
+                else
+                    prefix:SetPoint("LEFT", host, "LEFT", lblX, 0)
+                end
+                table.insert(sidebarGroups, prefix)
+
+                local range = host:CreateFontString(nil, "OVERLAY")
+                range:SetFont(WeintCodex.Fonts.mono, 12, "")
+                local rc = itemDef.open and C.textNormal or C.textMuted
+                range:SetTextColor(rc[1], rc[2], rc[3])
+                range:SetText(itemDef.rangeLo .. "\226\128\147" .. itemDef.rangeHi)
+                range:SetPoint("LEFT", prefix, "RIGHT", 6, 0)
+                table.insert(sidebarGroups, range)
             else
-                lbl:SetPoint("LEFT", host, "LEFT", 11, 0)
+                local lbl = WeintCodex.Eyebrow(host, itemDef.label or "",
+                    { color = itemDef.labelColor or tone })
+                if host == col then
+                    lbl:SetPoint("TOPLEFT", col, "TOPLEFT", pad + 11 + lblX, offsetY - 8)
+                else
+                    lbl:SetPoint("LEFT", host, "LEFT", lblX, 0)
+                end
+                table.insert(sidebarGroups, lbl)
             end
-            table.insert(sidebarGroups, lbl)
 
             -- Die Anzahl rechts. Sie ist der Grund, eine geschlossene
             -- Gruppe ueberhaupt anzuklicken: ohne sie sagt "Stufe
@@ -634,7 +691,7 @@ local function BuildColumn(sectionTitle, items)
                 local cnt = host:CreateFontString(nil, "OVERLAY")
                 cnt:SetFont(WeintCodex.Fonts.mono, 9, "")
                 cnt:SetPoint("RIGHT", host, "RIGHT", host == col and -(pad) or -10, 0)
-                local cc = C[itemDef.open and "accent" or "textGhost"] or C.textGhost
+                local cc = C[itemDef.open and "accent" or "textFaint"] or C.textFaint
                 cnt:SetTextColor(cc[1], cc[2], cc[3])
                 cnt:SetText(tostring(itemDef.count))
                 table.insert(sidebarGroups, cnt)

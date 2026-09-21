@@ -9,6 +9,40 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [5.2.0.2] – 2026-09-21
+
+**Die Stufenabschnitte links sind jetzt als Knöpfe zu erkennen, nicht
+als blasse Zwischenüberschrift.** Ein Aufklapp-Pfeil (`>` geschlossen,
+`v` geöffnet) und ein Hover-Schimmer — derselbe wie bei jeder anderen
+anklickbaren Zeile — sagen es, bevor man es zufällig herausfindet.
+Geschlossene Abschnitte stehen zudem in einem lesbaren Grauton statt im
+fast unsichtbaren vorherigen.
+
+Der Stufenbereich selbst ("Stufe 13 – 22") lief in der 232 px schmalen
+Spalte vorher in die rechts stehende Anzahl der Dungeons hinein: die
+gesamte Zeile war komplett buchstabengesperrt geschrieben, und das
+machte aus einer kurzen Zahl eine zu breite. Jetzt ist nur noch der
+kurze Vorsatz *Stufe* gesperrt, die Zahlen selbst stehen eng und ohne
+Kollision daneben.
+
+Die Boss-Pillen auf der Dungeonseite haben jetzt eine dünne Kontur —
+unausgewählt verschwammen sie zuvor mit dem dunklen Seitenhintergrund
+und sahen aus wie Fliesstext, nicht wie ein Knopf. Die Kontur färbt sich
+beim Überfahren und bei Auswahl mit, in derselben Zustandssprache wie
+die Fläche dahinter.
+
+### Technisch
+
+`core/navigation.lua`: `BuildColumn` nimmt für Gruppenköpfe optional
+`rangeLo`/`rangeHi` entgegen und rendert dann Vorsatz und Zahlenbereich
+getrennt statt eines einzigen, komplett gesperrten Strings; ohne die
+beiden Felder bleibt die alte Darstellung (z. B. für den Testfall in
+`load_test.lua`) unverändert. `modules/dungeonpages.lua` übergibt
+`bucket.min`/`bucket.max` aus `DungeonData.Brackets()` und zeichnet mit
+dem neuen `PillEdge`-Helfer eine Kontur um jede Boss- und Ghost-Pille,
+die von den bestehenden Eckmasken (`WeintCodex.CutCorners`) automatisch
+mitgerundet wird.
+
 ## [5.2.0.1] – 2026-09-21
 
 **Die Dungeonseite ist eine Seite, keine vier Spalten.** Bis hierher

@@ -217,6 +217,35 @@ local function Tooltip(frame, title, lines)
     end)
 end
 
+-- Eine duenne Kontur um eine Pille. Ohne sie verschwimmt eine nicht
+-- ausgewaehlte Pille mit dem dunklen Seitenhintergrund (surface2 auf
+-- bgDark ist nur ein Hauch heller) - nichts sagt "das hier ist ein
+-- Knopf, kein Fliesstext". Die Eckmasken der Pille (WeintCodex.CutCorners,
+-- Layer OVERLAY) zeichnen sich ueber die eckigen Enden dieser Linien
+-- und runden sie damit mit, ohne dass die Kontur das selbst tun muss.
+local function PillEdge(pill)
+    local top = pill:CreateTexture(nil, "ARTWORK")
+    top:SetHeight(1)
+    top:SetPoint("TOPLEFT", pill, "TOPLEFT", 0, 0)
+    top:SetPoint("TOPRIGHT", pill, "TOPRIGHT", 0, 0)
+    local bottom = pill:CreateTexture(nil, "ARTWORK")
+    bottom:SetHeight(1)
+    bottom:SetPoint("BOTTOMLEFT", pill, "BOTTOMLEFT", 0, 0)
+    bottom:SetPoint("BOTTOMRIGHT", pill, "BOTTOMRIGHT", 0, 0)
+    local left = pill:CreateTexture(nil, "ARTWORK")
+    left:SetWidth(1)
+    left:SetPoint("TOPLEFT", pill, "TOPLEFT", 0, 0)
+    left:SetPoint("BOTTOMLEFT", pill, "BOTTOMLEFT", 0, 0)
+    local right = pill:CreateTexture(nil, "ARTWORK")
+    right:SetWidth(1)
+    right:SetPoint("TOPRIGHT", pill, "TOPRIGHT", 0, 0)
+    right:SetPoint("BOTTOMRIGHT", pill, "BOTTOMRIGHT", 0, 0)
+    for _, t in ipairs({ top, bottom, left, right }) do
+        t:SetColorTexture(C.border[1], C.border[2], C.border[3], 0.9)
+    end
+    return top, bottom, left, right
+end
+
 -- Ein Eyebrow, den man ueberfahren kann: fuer den Vorsatz der
 -- Herkunft, der seine Begruendung im Tooltip traegt.
 local function HoverEyebrow(parent, text, opts)
@@ -371,6 +400,7 @@ local function BossPill(f, dungeon, boss)
         button = true, tone = "flat", surface = "surface2",
         radius = 8, backdrop = "bgDark", height = PILL_H,
     })
+    local edgeT, edgeB, edgeL, edgeR = PillEdge(pill)
 
     local x = 12
     local num
@@ -414,6 +444,11 @@ local function BossPill(f, dungeon, boss)
     line:Hide()
 
     local active = (selectedBoss == boss.id)
+    local function SetEdge(color, alpha)
+        for _, t in ipairs({ edgeT, edgeB, edgeL, edgeR }) do
+            t:SetColorTexture(color[1], color[2], color[3], alpha)
+        end
+    end
     local function Paint(hover)
         if active then
             pill:SetSurface("surface3")
@@ -421,15 +456,18 @@ local function BossPill(f, dungeon, boss)
             name:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
             if num then num:SetTextColor(C.accent[1], C.accent[2], C.accent[3]) end
             line:Show()
+            SetEdge(C.accent, 0.55)
         elseif hover then
             pill:SetSurface("surface3")
             name:SetTextColor(C.textNormal[1], C.textNormal[2], C.textNormal[3])
+            SetEdge(C.borderStrong, 1.0)
         else
             pill:SetSurface("surface2")
             name:SetFont(WeintCodex.Fonts.sans, 12, "")
             name:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3])
             if num then num:SetTextColor(C.textFaint[1], C.textFaint[2], C.textFaint[3]) end
             line:Hide()
+            SetEdge(C.border, 0.9)
         end
     end
     Paint(false)
@@ -458,6 +496,7 @@ local function GhostPill(f)
         tone = "flat", surface = "surface1", radius = 8,
         backdrop = "bgDark", height = PILL_H, width = GHOST_W,
     })
+    PillEdge(pill)
     local q = pill:CreateFontString(nil, "OVERLAY")
     q:SetFont(WeintCodex.Fonts.mono, 11, "")
     q:SetPoint("CENTER", pill, "CENTER", 0, 0)
@@ -1009,6 +1048,8 @@ BuildTree = function(f)
         items[#items + 1] = {
             isGroup = true,
             label   = bucket.label,
+            rangeLo = bucket.min,
+            rangeHi = bucket.max,
             count   = #bucket.dungeons,
             open    = (index == openBracket),
             onClick = function()
