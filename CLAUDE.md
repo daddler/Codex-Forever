@@ -122,12 +122,17 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   ich".** Raids: instances on level one in the sub-nav, the bosses of
   the **selected** raid indented below (`indent = true`), never the
   boss list back in the content area — that is what made it scroll.
-  Dungeons (since the redesign after 5.2.0.0): the sub-nav carries
-  **only dungeons**, the page carries the bosses as a one-row pill
-  strip and **no** detail column — a boss list the page shows never
-  appears left as well, and nothing on the page grows unbounded
-  except the one detail card that is built to scroll. Details:
-  `docs/systems/dungeons.md`, section *Die Seite: drei Flächen*.
+  Dungeons (since the redesign after 5.2.0.0, re-laid out in
+  5.2.0.5): the sub-nav carries **only dungeons**; the page carries
+  the bosses as a **grid of cards** whose column count is computed
+  from the real width and the longest name (`GridLayout`), never
+  fixed — a boss list the page shows never appears left as well, and
+  nothing on the page grows unbounded except the one context card
+  that is built to scroll. The right detail column is shown only
+  when it has content *and* does not cost the grid its shape
+  (`DrawDungeon` draws, measures, and redraws full-width).
+  Details: `docs/systems/dungeons.md`, section *Die Seite: drei
+  Ebenen, zwei Zustände*.
   `status` on a sub-nav item takes a string **or** `{ text, color }`;
   it silently rendered an empty line for years when given the wrong
   one.

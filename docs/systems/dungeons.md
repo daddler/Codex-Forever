@@ -161,62 +161,149 @@ Steingolems". Das ist die Auskunft, für die man sonst auf ein Bild
 schaut, und sie lässt sich belegen — und sie steht auf der Bosskarte an
 erster Stelle.
 
-## Die Seite: drei Flächen, eine Leserichtung
+## Die Seite: drei Ebenen, zwei Zustände
 
-Bis 5.2.0.0 teilten sich **vier** Flächen die Aufmerksamkeit:
+Bis 5.2.0.0 teilten sich **vier Flächen** die Aufmerksamkeit:
 Navigation, ein Baum aus Stufen, Instanzen *und* Bossen, ein
 Inhaltsbereich von 212 px und rechts ein Detailbereich, der alles
 trug, was auf der Seite keinen Platz hatte. Die Seite selbst war die
 schmalste der vier, und ihre Bosskarte sagte, dass die Bosse links
 stehen.
 
-Seither sind es **drei** Flächen, und die Seite liest sich von oben
-nach unten:
+Bis 5.2.0.4 war das gelöst, aber nicht geordnet: Titel, Gebiet,
+Stufenbereich, Gruppengrösse, eine Bosszahl als Kennzahl rechts oben,
+ein Stufenchip darunter, der Themensatz, eine Zeile aus Boss-Pillen,
+der Herkunftsvorsatz und eine Karte, die ohne Boss vor allem ihre
+eigene Leere beschrieb — **acht Einzelteile auf einer Ebene**, von
+denen keines wichtiger aussah als das andere.
 
-| Fläche | Trägt |
+Seit 5.2.0.5 hat die Seite **drei Ebenen**, und sie stehen immer in
+derselben Reihenfolge:
+
+| Ebene | Trägt |
 |---|---|
-| Spalte links | **nur Dungeons**, nach Stufenabschnitt; unten die Übersicht der beschwörbaren Bosse |
-| Kopf | Name (das Zentrum), Stufenbereich · Gruppengrösse, der Themensatz in der Serife; rechts die **Bosszahl als Kennzahl**, wo sie hinpasst, darunter, ob die eigene Stufe passt |
-| Bosszeile | eine **Pille je Boss**: Nummer (nur bei bekannter Reihenfolge), Name, Kennzeichen (`BESCHWÖREN` > `OPTIONAL` > `TIPPS`); rechts der Vorsatz der Herkunft mit Begründung im Tooltip; bei Flügeln Reiter darüber, **ein Flügel zur Zeit** |
-| Detailkarte | ohne Boss die **Aufstellung**, mit Boss das Berichtete: *So kommt er*, *Wo er steht*, *Dazu*, *Rollen* |
+| 1 · Dungeonkontext | eine Kennzeichnung (`CLASSIC` / `FOREVER`), den Namen, **eine** Tatsachenzeile — Gebiet · Stufenbereich · Gruppengrösse · Bosszahl · (ob die eigene Stufe passt) — und darunter den Themensatz in der Serife |
+| 2 · Bosse | ein **Raster aus Karten**: Nummer oben links (nur bei bekannter Reihenfolge), Kennzeichen oben rechts (`BESCHWÖREN` > `OPTIONAL` > `TIPPS`), Name darunter; rechts über dem Raster der Vorsatz der Herkunft mit Begründung im Tooltip; bei Flügeln Reiter darüber, **ein Flügel zur Zeit** |
+| 3 · Kontextkarte | **ohne Boss** die Aufstellung — und, wo die Seite in voller Breite steht, *Woher die Bossliste stammt* im Klartext; **mit Boss** das Berichtete: *So kommt er*, *Wo er steht*, *Dazu*, *Rollen* |
 
-Ein Klick auf eine Pille öffnet den Boss in der Karte, ein zweiter
-Klick (oder das `×`) schliesst ihn; ein zweiter Klick auf den offenen
-Dungeon in der Spalte führt ebenfalls zur Aufstellung zurück.
+Die Spalte links führt **nur Dungeons**, nach Stufenabschnitt; unten
+die Übersicht der beschwörbaren Bosse.
+
+### Zwei Zustände, eine Struktur
+
+Ein Klick auf eine Bosskarte ersetzt die Übersicht **nicht**: das
+Raster bleibt stehen, die angeklickte Karte trägt einen Akzentbalken
+an der linken Kante, und nur die Kontextkarte darunter wechselt ihren
+Inhalt. Wer wissen will, wo er ist, muss dafür nichts zuklappen. Im
+Kopf der Karte steht die Einordnung (*BOSS 03 · SCARLET · OPTIONAL*),
+der Name und rechts der Weg zurück — beschriftet, wo er danebenpasst
+(`HintFits()`), sonst als `×` an derselben Stelle. Ein zweiter Klick
+auf dieselbe Karte schliesst den Boss ebenfalls, und ein zweiter Klick
+auf den offenen Dungeon in der Spalte führt zur Übersicht zurück.
+
+**Weggefallen ist der Wegweiser** *„Ein Klick auf einen Boss zeigt ihn
+hier"* aus 5.2.0.4. Er stand im Kopf einer Karte, die ohne Boss nichts
+anderes zu sagen hatte, und beschrieb damit vor allem ihre eigene
+Leere. Eine Karte, die Aufstellung *und* Herkunft trägt, braucht keine
+Bedienungsanleitung.
 
 **Dieselben Bausteine wie die Schlachtzugseite, nicht ähnliche.** Der
-Kopf ist `WeintCodex.PageHead` mit derselben Kennzahl rechts wie in
-`modules/raidpages.lua`; der Detailbereich ist
-`Navigation.SetInspector`; die Spalte ist `Navigation.BuildSidebar`
-mit derselben zweiten Zeile; der Rand der Pillen kommt aus
-`WeintCodex.DrawBorder` (`core/ui.lua`), mit dem auch `Chip` und
-`CreateButton` umrandet sind. Wo der Dungeonbereich etwas anders macht
-— keine gespeicherte ID, keine Bosse in der Spalte, eine rollende
-Karte statt einer Liste —, steht der Grund daneben.
+Kopf ist `WeintCodex.PageHead` wie in `modules/raidpages.lua`; der
+Detailbereich ist `Navigation.SetInspector`; die Spalte ist
+`Navigation.BuildSidebar` mit derselben zweiten Zeile; der Rand der
+Bosskarten kommt aus `WeintCodex.DrawBorder` (`core/ui.lua`), mit dem
+auch `Chip` und `CreateButton` umrandet sind. Wo der Dungeonbereich
+etwas anders macht — keine gespeicherte ID, keine Bosse in der Spalte,
+eine rollende Karte statt einer Liste —, steht der Grund daneben.
 
-### Die Bosszahl steht an genau einer Stelle
+### Karten statt Pillen, und warum
 
-Sie ist dreimal verfügbar — als Kennzahl im Kopf, als Zeile *Bosse* im
-Detailbereich, als Rubrik `BOSSE · 7` über den Pillen — und **dreimal
-dasselbe ist keine Betonung, sondern Lärm**. Welche Stelle es wird,
-entscheidet der Platz, gerechnet und nicht gehofft (`HeadStatFits()`
-in `modules/dungeonpages.lua`):
+Eine Reihe schmaler, gerundeter Schaltflächen ist das Bild, mit dem
+jede Oberfläche *„hier wechselst du die Ansicht"* sagt. Was der
+Dungeon **enthält**, sah damit aus wie ein Bedienelement — und stand
+zugleich in Konkurrenz zur Spalte links, die genau das tut.
 
-| Lage | Wo die Zahl steht |
+Eine Karte sieht aus wie ein Gegenstand:
+
+```
++---------------------------+  +---------------------------+
+| 03               OPTIONAL |  | 04                        |
+| Commander Springvale      |  | Odo the Blindwatcher      |
++---------------------------+  +---------------------------+
+```
+
+Die **Kopfzeile** gibt es nur, wo sie etwas trägt. Trägt in der ganzen
+gezeigten Liste keine Karte eine Nummer (`orderKnown = false`) und
+kein Kennzeichen, sind alle Karten flach (32 statt 46 px) — und zwar
+**alle**, damit das Raster eine Zeilenhöhe hat und nicht zwei. Eine
+reservierte Zeile, die nirgends etwas enthält, ist Luft, die wie ein
+Fehler aussieht.
+
+### Die Spaltenzahl ist gerechnet, nicht gesetzt
+
+`GridLayout(width, longest)` in `modules/dungeonpages.lua` entscheidet
+sie aus der **wirklichen** Breite und dem **längsten Namen der
+gezeigten Liste**:
+
+| Bedingung | Spalten |
 |---|---|
-| Titel lässt rechts `64 + 16` px frei | **Kennzahl** im Kopf, wie beim Schlachtzug |
-| passt nicht, Detailbereich offen | dessen Zeile *Bosse* — die Faktenzeile trägt sie **nicht** |
-| passt nicht, kein Detailbereich | zurück in die **Faktenzeile** |
+| Karte ≥ 150 px **und** der längste Name passt ganz hinein | **3** |
+| dasselbe, eine Stufe schmaler | **2** |
+| sonst | **1**, volle Breite |
 
-Warum überhaupt gerechnet wird: mit offenem Detailbereich bleiben dem
-Inhalt 296 px, dem Kopf also 232. Ein Kennzahlenblock ist 64 px breit
-und rechtsbündig; ein Titel wie *Temple of Atal'Hakkar* in 30 px liefe
-ihm ungebremst darunter. Geschätzt wird mit derselben Kennzahl wie
-überall (0,60 em je Zeichen, `WeintCodex.Paragraph`), damit Spiel und
-Prüflauf dieselbe Seite bauen. Denselben Test macht `HintFits()` für
-den Wegweiser im Kopf der Aufstellungskarte (*„Ein Klick auf einen
-Boss zeigt ihn hier"*): in einer 192 px schmalen Karte steht lieber
-kein Satz als einer im Titel.
+Drei Spalten sind das Ziel, aber eine Folge, keine Vorgabe: *Blackrock
+Depths* hat Bosse mit 26 Zeichen; in 210 px stünden die nicht, sondern
+endeten in einem abgeschnittenen Wort. Gerechnet wird mit derselben
+Kennzahl wie überall in diesem Repository (0,60 em je Zeichen, siehe
+`WeintCodex.Paragraph`), damit Spiel und Prüflauf dasselbe Raster
+bauen.
+
+Wächst das Fenster, rücken die Karten still nach (`PlaceGrid` →
+`f._relayout`); **neu gezeichnet** wird die Seite nur, wenn die
+Spaltenzahl wirklich kippt — denn nur dann ändert sich die Höhe des
+Rasters und alles darunter.
+
+### Der Dungeonkontext steht in einer Zeile
+
+Bis 5.2.0.4 verteilte sich, was dieser Dungeon *ist*, auf vier
+Flächen: eine Kennzahl rechts oben (*BOSSE 9*), ein Stufenchip
+darunter, eine Faktenzeile links und der Themensatz. Die Kennzahl
+stand dabei so weit von allem anderen entfernt, dass sie zu keiner
+Auskunft mehr gehörte — und weil ihr Platz je nach Titelbreite
+wechselte, gab es **drei** Rechnungen dafür, wo eine Zahl hingehört
+(`HeadStatFits()`, seither entfallen).
+
+Jetzt steht alles in einer Zeile:
+
+```
+Tirisfal Glades  ·  Stufe 22 – 30  ·  5 Spieler  ·  9 Bosse  ·  Deine Stufe 30 · passt
+```
+
+Sie ist ein **umbrechender Absatz** (`WeintCodex.Paragraph`) und keine
+freilaufende Zeile: bei offenem Detailbereich bleiben dem Kopf 232 px,
+und eine Zeile ohne Breite liefe dort ungebremst aus der Seite heraus.
+Die Stufenauskunft trägt ihre Farbe inline (`WeintCodex.ColorText`) —
+sie ist der einzige Teil der Zeile, der von der eigenen Figur abhängt.
+
+Die Kennzeichnung darüber ist auf **ein Wort** zusammengezogen
+(`CLASSIC` / `FOREVER`). Das Gebiet stand dort bis 5.2.0.4 gesperrt und
+versal mit drin; *„D U N G E O N · T I R I S F A L  G L A D E S"* ist
+rund 300 px breit und lief bei offenem Detailbereich aus dem Kopf
+heraus. Als Tatsache steht es jetzt in der Tatsachenzeile.
+
+Die Bosszahl kennt dort fünf Formulierungen, und keine davon ist eine
+`0`:
+
+| Bestand | In der Zeile |
+|---|---|
+| Liste vollständig | „9 Bosse" |
+| Liste unvollständig | „4 von 9 Bossen benannt" |
+| nur die Anzahl | „9 Kämpfe, Namen unbekannt" |
+| Widerspruch | „Bosse: Quellen widersprechen sich" |
+| nichts | „Bosse noch nicht bekannt" |
+
+Die Rubrik über dem Raster heisst deshalb schlicht `BOSSE` — *„BOSSE ·
+9"* wäre dieselbe Zahl ein zweites Mal auf derselben Seite.
 
 ### Der Detailbereich rechts, wo er passt
 
@@ -225,31 +312,37 @@ Seit 5.2.0.3 zeigt sie ihn, für dasselbe einheitliche Bild wie die
 Schlachtzugseite (`WeintCodex.Navigation.SetInspector`): Kennzahlen
 (Gebiet, Stufe, Gruppengrösse, Bosszahl) und, wo eine Quelle vorliegt,
 eine dauerhaft sichtbare *Woher die Bossliste stammt*-Karte mit
-Begründung — vorher stand die Begründung nur im Tooltip des Vorsatzes
-an der Bosszeile.
+Begründung.
 
 **Das ist kein bedingungsloser Rückbau auf das Vier-Flächen-Layout vor
 5.2.0.0.** Der Detailbereich beansprucht 420 px (`DETAIL_W` 372 +
 `DETAIL_GAP` 16 + `PAD_X` 32); von den 716 px Inhaltsbreite beim
-kleinsten Fenster bleiben dann 296 px für die Bosszeile. Bei den
-meisten der 29 Dungeons reicht das. Bei den wenigen mit vielen Bossen
-in einem Flügel (Stratholme, Blackrock Depths, Scholomance, Lower
-Blackrock Spire) bräuchte die Bosszeile bei 296 px so viele Zeilen,
-dass für die Detailkarte darunter nicht einmal die Mindesthöhe von
-160 px übrig bliebe — genau der Fall, für den `DetailCard` schon
-immer absichtlich überlaufen lässt, statt eine Karte zu zeigen, die
-keine mehr ist (siehe unten, *Die Detailkarte rollt*).
+kleinsten Fenster bleiben dann 296 px. `DrawDungeon` zeichnet deshalb
+zuerst **mit** Bereich, misst sich selbst und zeichnet bei Bedarf noch
+einmal in voller Breite. **Drei** Dinge entscheiden das, alle
+gerechnet:
 
-`DrawDungeon` (`modules/dungeonpages.lua`) zeichnet deshalb zunächst
-mit Detailbereich (`DrawDungeonAt(f, dungeon, true)`), misst sich
-selbst gegen dasselbe Budget, das `load_test.lua` prüft
-(`PageHeight()` gegen `PageBudget()`), und zeichnet bei Überlauf
-sofort noch einmal in voller Breite ohne Detailbereich
-(`DrawDungeonAt(f, dungeon, false)`) — dieselbe Messung, keine
-separate Schätzung, die vom Prüflauf abweichen könnte. Welche
-Dungeons zurückfallen, ist damit kein fester Name im Code, sondern
-eine Folge des tatsächlichen Bestands: kommt ein Boss dazu oder ändert
-sich ein Flügel, entscheidet die nächste Zeichnung neu.
+1. **Sie passt nicht.** Viele Bosse, viele Flügelreiter — dann bliebe
+   der Kontextkarte nicht einmal ihre Mindesthöhe von 160 px. Gemessen
+   wird mit derselben Rechnung, mit der `load_test.lua` das Budget
+   prüft (`PageHeight()` gegen `PageBudget()`), damit hier kein Fall
+   entsteht, den der Prüflauf nicht ohnehin durchspielt.
+2. **Das Raster wäre keines mehr** *(seit 5.2.0.5)*. In 232 px steht
+   eine Karte je Zeile, und eine Spalte ist keine Übersicht, sondern
+   eine Liste. Käme die Seite in voller Breite auf mehr als eine
+   Spalte, ist die Übersicht den Bereich wert — seine Auskünfte trägt
+   dann die Kontextkarte im Seitenkörper (`SourceBody`), es geht also
+   keine verloren. Im voreingestellten Fenster (1500 px) greift das
+   nicht: dort bleiben dem Inhalt auch mit Bereich 552 px, und das
+   sind drei Spalten.
+3. **Er hätte nichts zu zeigen** *(seit 5.2.0.5)*. `SetInspector`
+   zeigt nichts, wenn die Blockliste leer ist — die Seite räumte ihm
+   die 420 px aber trotzdem ein. Für die Dungeons ohne Bestand und
+   ohne Herkunft war das die halbe Seite für nichts.
+
+Welche Dungeons zurückfallen, ist damit kein fester Name im Code,
+sondern eine Folge des tatsächlichen Bestands: kommt ein Boss dazu
+oder ändert sich ein Flügel, entscheidet die nächste Zeichnung neu.
 
 Damit die Seite bei offenem Detailbereich mit der richtigen (schmalen)
 Breite rechnet, bevor irgendetwas Pixel zählt, liest `MinContentWidth`
@@ -260,12 +353,22 @@ Schmälerung des Inhaltsbereichs deshalb nicht selbst nachvollziehen
 anwendet) — `load_test.lua` setzt die Breite der Attrappe deshalb
 direkt auf die detailbereich-bewusste Zahl.
 
-Vier Zustände der Bosszeile, keiner davon eine leere Liste:
+### Die Herkunft steht in jedem Zustand genau einmal sichtbar
 
-| Bestand | Bosszeile |
+Ist der Detailbereich offen, steht sie dort. Steht die Seite in voller
+Breite, trägt sie die Kontextkarte unter der Aufstellung (`SourceBody`
+in `modules/dungeonpages.lua`) — Vorsatz und `Why()`-Satz im Klartext,
+dazu der Hinweis auf den klassischen Dungeon. Zweimal derselbe Absatz
+nebeneinander wäre keine Betonung; keinmal wäre der Zustand vor
+5.2.0.3, in dem die Begründung nur im Tooltip eines Vorsatzes stand,
+den niemand findet, der nicht ohnehin vermutet, dass da einer ist.
+
+Vier Zustände des Bossabschnitts, keiner davon eine leere Liste:
+
+| Bestand | Bossabschnitt |
 |---|---|
-| Namen liegen vor | Pillen; darunter ggf. „7 Kämpfe sind bekannt, ihre Reihenfolge nicht" |
-| nur die Anzahl (City of Dalaran) | neun **leere Pillen** mit `?`, darunter die bisher benannten |
+| Namen liegen vor | das Kartenraster; darunter ggf. „7 Kämpfe sind bekannt, ihre Reihenfolge nicht" |
+| nur die Anzahl (City of Dalaran) | neun **leere Karten** mit `?`, darunter die bisher benannten |
 | Widerspruch (Excavation Site, Blackmaw Hold) | kein Bestand, der Widerspruch als Absatz, Vorsatz „Quellen widersprechen sich" |
 | nichts | ein Absatz, der sagt, dass nichts veröffentlicht ist |
 
@@ -291,9 +394,13 @@ drei Dinge halten sie darunter:
   Spiel und im Prüflauf gleich. Der Client der Attrappe misst jede
   Zeile mit 12 px — eine Seite, die damit rechnete, wäre im Prüflauf
   kürzer als im Spiel.
-* **Die Detailkarte rollt**, wenn ihr Inhalt nicht passt. Sie ist die
+* **Die Kontextkarte rollt**, wenn ihr Inhalt nicht passt. Sie ist die
   eine Fläche der Seite, die das darf, und sie tut es nur, wenn der Bot
   mehr geschickt hat, als das Fenster zeigt. Gekürzt wird nichts.
+* **Das Raster ist gedeckelt, ohne gekürzt zu werden.** Seine Höhe
+  hängt an der Spaltenzahl, und die hängt an der Breite — fällt sie,
+  fällt die Seite in die volle Breite zurück (siehe oben), wo drei
+  Spalten aus vierzehn Bossen fünf Zeilen machen statt vierzehn.
 
 `load_test.lua` setzt den Inhaltsbereich auf die Breite des kleinsten
 Fensters **mit offenem Detailbereich** (716 px `ContentBudgetWidth()`
@@ -301,14 +408,14 @@ minus die 420 px, die der Detailbereich braucht — siehe oben), zeichnet
 **jede** Instanz in **jedem** Flügel und **jeden** Boss, misst die
 Seite gegen das Budget, klickt den Aufklappweg der Spalte durch und
 prüft, dass eine Bosskarte mit dreissig Tipps das Fenster genau füllt
-und keinen Pixel darüber hinausläuft. Gemessener schlimmster Fall
-seit 5.2.0.3: mehrere Dungeons mit Detailbereich landen exakt bei
-**716 von 716 px** (die Detailkarte füllt bis zum Rand und rollt —
-das ist der vorgesehene, keine Fehlerfall); unter den vier Dungeons,
-die auf die volle Breite zurückfallen, bleibt Stratholme mit
-**646 von 716 px** der schlimmste — unverändert zur Messung vor
-5.2.0.3, weil `DrawDungeonAt(f, dungeon, false)` exakt denselben Weg
-zeichnet wie vor dieser Version.
+und keinen Pixel darüber hinausläuft. Gemessener schlimmster Fall seit
+5.2.0.5: **716 von 716 px** — die Kontextkarte füllt bis zum Rand und
+rollt, das ist der vorgesehene und kein Fehlerfall. Beim kleinsten
+zulässigen Fenster fällt dabei **jeder** Dungeon mit Bossliste in die
+volle Breite (Grund 2 oben) und bekommt dort drei Spalten; beim
+voreingestellten Fenster (1500 px) behalten alle bis auf die
+bossreichsten — Blackrock Depths, Lower Blackrock Spire, Scholomance,
+Stratholme — den Detailbereich **und** drei Spalten.
 
 ### Ein Flügel darf keinen Boss verlieren
 
@@ -393,7 +500,7 @@ was fehlt. Der Detailbereich zeigt alle Tipps ungekürzt und rollt.
 ### Dungeon: die Detailkarte rollt, gekürzt wird nichts
 
 `RolePanel.BossRoleRows` (Dungeonseite) zeigt **alle** Tipps
-ungekürzt — die Detailkarte ist ein Bildlauffeld und nimmt bei Bedarf
+ungekürzt — die Kontextkarte ist ein Bildlauffeld und nimmt bei Bedarf
 den Platz bis zum Fensterrand. Liegt zu einem Boss **nichts** vor,
 steht das **einmal** da (mit der Auskunft, woher etwas käme), nicht
 dreimal untereinander; erst wenn der Bot etwas geliefert hat, bekommt
@@ -456,7 +563,8 @@ wonach man in einer Liste von neunundzwanzig Dungeons sucht, und er
 bekommt deshalb die ganze Breite. Siehe
 `docs/architecture/overview.md`, Abschnitt *Die Unternavigation*.
 
-Das Kennzeichen an einer Boss-Pille sagt, was für einer es ist:
+Das Kennzeichen oben rechts auf einer Bosskarte sagt, was für
+einer es ist:
 **BESCHWÖREN** schlägt **OPTIONAL** schlägt **TIPPS**, weil „steht ohne
 Zutun gar nicht da" die dringendere Auskunft ist.
 

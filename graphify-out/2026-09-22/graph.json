@@ -28,6 +28,18 @@
       "source_location": "L605"
     },
     {
+      "id": "core_navigation_buildstrip",
+      "label": "BuildStrip()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "navigation.lua",
+      "file_type": "code",
+      "norm_label": "buildstrip()",
+      "source_file": "core/navigation.lua",
+      "source_location": "L573"
+    },
+    {
       "id": "core_navigation_can",
       "label": "Can()",
       "_callable": true,
@@ -74,18 +86,6 @@
       "norm_label": "datekey()",
       "source_file": "core/navigation.lua",
       "source_location": "L2529"
-    },
-    {
-      "id": "core_navigation_ellipsis",
-      "label": "Ellipsis()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "navigation.lua",
-      "file_type": "code",
-      "norm_label": "ellipsis()",
-      "source_file": "core/navigation.lua",
-      "source_location": "L2651"
     },
     {
       "id": "core_navigation_ensuresubnavcolumn",
@@ -230,18 +230,6 @@
       "norm_label": "inspectorheader()",
       "source_file": "core/navigation.lua",
       "source_location": "L1075"
-    },
-    {
-      "id": "core_navigation_inspectorinput",
-      "label": "InspectorInput()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "navigation.lua",
-      "file_type": "code",
-      "norm_label": "inspectorinput()",
-      "source_file": "core/navigation.lua",
-      "source_location": "L1187"
     },
     {
       "id": "core_navigation_inspectoritemlist",
@@ -412,6 +400,18 @@
       "source_location": "L132"
     },
     {
+      "id": "core_navigation_weintcodex_navigation_activatefirst",
+      "label": "WeintCodex.Navigation.ActivateFirst()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "navigation.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.navigation.activatefirst()",
+      "source_file": "core/navigation.lua",
+      "source_location": "L979"
+    },
+    {
       "id": "core_navigation_weintcodex_navigation_activateindex",
       "label": "WeintCodex.Navigation.ActivateIndex()",
       "_callable": true,
@@ -434,18 +434,6 @@
       "norm_label": "weintcodex.navigation.buildsidebar()",
       "source_file": "core/navigation.lua",
       "source_location": "L939"
-    },
-    {
-      "id": "core_navigation_weintcodex_navigation_clearinspector",
-      "label": "WeintCodex.Navigation.ClearInspector()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "navigation.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.navigation.clearinspector()",
-      "source_file": "core/navigation.lua",
-      "source_location": "L1058"
     },
     {
       "id": "core_navigation_weintcodex_navigation_clearsidebar",
@@ -542,18 +530,6 @@
       "norm_label": "weintcodex.navigation.navcolumnheight()",
       "source_file": "core/navigation.lua",
       "source_location": "L114"
-    },
-    {
-      "id": "core_navigation_weintcodex_navigation_refreshaccount",
-      "label": "WeintCodex.Navigation.RefreshAccount()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "navigation.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.navigation.refreshaccount()",
-      "source_file": "core/navigation.lua",
-      "source_location": "L308"
     },
     {
       "id": "core_navigation_weintcodex_navigation_setinspector",
@@ -712,18 +688,6 @@
       "source_location": "L953"
     },
     {
-      "id": "core_navigation_weintcodex_resettohome",
-      "label": "WeintCodex.ResetToHome()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "navigation.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.resettohome()",
-      "source_file": "core/navigation.lua",
-      "source_location": "L3105"
-    },
-    {
       "id": "core_navigation_weintcodex_showhome",
       "label": "WeintCodex.ShowHome()",
       "_callable": true,
@@ -736,28 +700,16 @@
       "source_location": "L2655"
     },
     {
-      "id": "core_ui_drawborder",
-      "label": "DrawBorder()",
+      "id": "core_ui_updatecontentinsets",
+      "label": "UpdateContentInsets()",
       "_callable": true,
       "_origin": "ast",
       "community": 0,
       "community_name": "navigation.lua",
       "file_type": "code",
-      "norm_label": "drawborder()",
+      "norm_label": "updatecontentinsets()",
       "source_file": "core/ui.lua",
-      "source_location": "L223"
-    },
-    {
-      "id": "core_ui_weintcodex_createbutton",
-      "label": "WeintCodex.CreateButton()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "navigation.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.createbutton()",
-      "source_file": "core/ui.lua",
-      "source_location": "L780"
+      "source_location": "L1760"
     },
     {
       "id": "core_ui_weintcodex_createcard",
@@ -772,6 +724,18 @@
       "source_location": "L1382"
     },
     {
+      "id": "core_ui_weintcodex_createmeter",
+      "label": "WeintCodex.CreateMeter()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "navigation.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.createmeter()",
+      "source_file": "core/ui.lua",
+      "source_location": "L1180"
+    },
+    {
       "id": "core_ui_weintcodex_drawslimborder",
       "label": "WeintCodex.DrawSlimBorder()",
       "_callable": true,
@@ -784,28 +748,40 @@
       "source_location": "L1357"
     },
     {
-      "id": "core_ui_weintcodex_setbreadcrumb",
-      "label": "WeintCodex.SetBreadcrumb()",
+      "id": "core_ui_weintcodex_setdetailshown",
+      "label": "WeintCodex.SetDetailShown()",
       "_callable": true,
       "_origin": "ast",
       "community": 0,
       "community_name": "navigation.lua",
       "file_type": "code",
-      "norm_label": "weintcodex.setbreadcrumb()",
+      "norm_label": "weintcodex.setdetailshown()",
       "source_file": "core/ui.lua",
-      "source_location": "L1607"
+      "source_location": "L1767"
     },
     {
-      "id": "core_ui_weintcodex_statusdot",
-      "label": "WeintCodex.StatusDot()",
+      "id": "core_ui_weintcodex_setsubnavtop",
+      "label": "WeintCodex.SetSubNavTop()",
       "_callable": true,
       "_origin": "ast",
       "community": 0,
       "community_name": "navigation.lua",
       "file_type": "code",
-      "norm_label": "weintcodex.statusdot()",
+      "norm_label": "weintcodex.setsubnavtop()",
       "source_file": "core/ui.lua",
-      "source_location": "L712"
+      "source_location": "L1780"
+    },
+    {
+      "id": "core_ui_weintcodex_setsubnavwidth",
+      "label": "WeintCodex.SetSubNavWidth()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "navigation.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.setsubnavwidth()",
+      "source_file": "core/ui.lua",
+      "source_location": "L1774"
     },
     {
       "id": "core_ui_weintcodex_upper",
@@ -820,52 +796,16 @@
       "source_location": "L457"
     },
     {
-      "id": "modules_companionpage_buildpage",
-      "label": "BuildPage()",
+      "id": "modules_calendar_weintcodex_calendar_show",
+      "label": "WeintCodex.Calendar.Show()",
       "_callable": true,
       "_origin": "ast",
       "community": 0,
       "community_name": "navigation.lua",
       "file_type": "code",
-      "norm_label": "buildpage()",
-      "source_file": "modules/companionpage.lua",
-      "source_location": "L44"
-    },
-    {
-      "id": "modules_companionpage_stamp",
-      "label": "Stamp()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "navigation.lua",
-      "file_type": "code",
-      "norm_label": "stamp()",
-      "source_file": "modules/companionpage.lua",
-      "source_location": "L36"
-    },
-    {
-      "id": "modules_companionpage_staterow",
-      "label": "StateRow()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "navigation.lua",
-      "file_type": "code",
-      "norm_label": "staterow()",
-      "source_file": "modules/companionpage.lua",
-      "source_location": "L57"
-    },
-    {
-      "id": "modules_companionpage_weintcodex_companionpage_show",
-      "label": "WeintCodex.CompanionPage.Show()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "navigation.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.companionpage.show()",
-      "source_file": "modules/companionpage.lua",
-      "source_location": "L82"
+      "norm_label": "weintcodex.calendar.show()",
+      "source_file": "modules/calendar.lua",
+      "source_location": "L2053"
     },
     {
       "id": "modules_groupcheck_drawnotice",
@@ -892,28 +832,16 @@
       "source_location": "L653"
     },
     {
-      "id": "core_ui_spaced",
-      "label": "Spaced()",
+      "id": "core_navigation_weintcodex_navigation_clearinspector",
+      "label": "WeintCodex.Navigation.ClearInspector()",
       "_callable": true,
       "_origin": "ast",
       "community": 1,
       "community_name": "dungeonpages.lua",
       "file_type": "code",
-      "norm_label": "spaced()",
-      "source_file": "core/ui.lua",
-      "source_location": "L480"
-    },
-    {
-      "id": "core_ui_utf8charlen",
-      "label": "Utf8CharLen()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "dungeonpages.lua",
-      "file_type": "code",
-      "norm_label": "utf8charlen()",
-      "source_file": "core/ui.lua",
-      "source_location": "L402"
+      "norm_label": "weintcodex.navigation.clearinspector()",
+      "source_file": "core/navigation.lua",
+      "source_location": "L1058"
     },
     {
       "id": "core_ui_weintcodex_createsurface",
@@ -962,18 +890,6 @@
       "norm_label": "weintcodex.paragraph()",
       "source_file": "core/ui.lua",
       "source_location": "L577"
-    },
-    {
-      "id": "core_ui_weintcodex_showexportdialog",
-      "label": "WeintCodex.ShowExportDialog()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "dungeonpages.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.showexportdialog()",
-      "source_file": "core/ui.lua",
-      "source_location": "L1851"
     },
     {
       "id": "core_ui_weintcodex_utf8len",
@@ -1357,7 +1273,7 @@
       "file_type": "code",
       "norm_label": "availableheight()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L226"
+      "source_location": "L195"
     },
     {
       "id": "modules_dungeonpages_bodyheading",
@@ -1369,7 +1285,7 @@
       "file_type": "code",
       "norm_label": "bodyheading()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L966"
+      "source_location": "L870"
     },
     {
       "id": "modules_dungeonpages_bodytext",
@@ -1381,7 +1297,7 @@
       "file_type": "code",
       "norm_label": "bodytext()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L973"
+      "source_location": "L877"
     },
     {
       "id": "modules_dungeonpages_bodywidthmin",
@@ -1393,31 +1309,19 @@
       "file_type": "code",
       "norm_label": "bodywidthmin()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L248"
+      "source_location": "L217"
     },
     {
-      "id": "modules_dungeonpages_bosscard",
-      "label": "BossCard()",
+      "id": "modules_dungeonpages_bosspill",
+      "label": "BossPill()",
       "_callable": true,
       "_origin": "ast",
       "community": 1,
       "community_name": "dungeonpages.lua",
       "file_type": "code",
-      "norm_label": "bosscard()",
+      "norm_label": "bosspill()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L549"
-    },
-    {
-      "id": "modules_dungeonpages_bosstag",
-      "label": "BossTag()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "dungeonpages.lua",
-      "file_type": "code",
-      "norm_label": "bosstag()",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L527"
+      "source_location": "L468"
     },
     {
       "id": "modules_dungeonpages_buildpage",
@@ -1429,19 +1333,7 @@
       "file_type": "code",
       "norm_label": "buildpage()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L345"
-    },
-    {
-      "id": "modules_dungeonpages_cardedge",
-      "label": "CardEdge()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "dungeonpages.lua",
-      "file_type": "code",
-      "norm_label": "cardedge()",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L301"
+      "source_location": "L314"
     },
     {
       "id": "modules_dungeonpages_clearrows",
@@ -1453,7 +1345,7 @@
       "file_type": "code",
       "norm_label": "clearrows()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L109"
+      "source_location": "L87"
     },
     {
       "id": "modules_dungeonpages_completenessline",
@@ -1465,7 +1357,7 @@
       "file_type": "code",
       "norm_label": "completenessline()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L320"
+      "source_location": "L289"
     },
     {
       "id": "modules_dungeonpages_contentbudget",
@@ -1477,7 +1369,7 @@
       "file_type": "code",
       "norm_label": "contentbudget()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L218"
+      "source_location": "L187"
     },
     {
       "id": "modules_dungeonpages_contentwidth",
@@ -1489,7 +1381,7 @@
       "file_type": "code",
       "norm_label": "contentwidth()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L208"
+      "source_location": "L177"
     },
     {
       "id": "modules_dungeonpages_detailcard",
@@ -1501,7 +1393,7 @@
       "file_type": "code",
       "norm_label": "detailcard()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L877"
+      "source_location": "L783"
     },
     {
       "id": "modules_dungeonpages_drawbossdetail",
@@ -1513,7 +1405,7 @@
       "file_type": "code",
       "norm_label": "drawbossdetail()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1048"
+      "source_location": "L918"
     },
     {
       "id": "modules_dungeonpages_drawbosses",
@@ -1525,7 +1417,7 @@
       "file_type": "code",
       "norm_label": "drawbosses()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L741"
+      "source_location": "L648"
     },
     {
       "id": "modules_dungeonpages_drawdungeon",
@@ -1537,7 +1429,7 @@
       "file_type": "code",
       "norm_label": "drawdungeon()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1257"
+      "source_location": "L1100"
     },
     {
       "id": "modules_dungeonpages_drawdungeonat",
@@ -1549,7 +1441,7 @@
       "file_type": "code",
       "norm_label": "drawdungeonat()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1194"
+      "source_location": "L1061"
     },
     {
       "id": "modules_dungeonpages_drawhead",
@@ -1561,7 +1453,7 @@
       "file_type": "code",
       "norm_label": "drawhead()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L446"
+      "source_location": "L372"
     },
     {
       "id": "modules_dungeonpages_drawroster",
@@ -1573,7 +1465,7 @@
       "file_type": "code",
       "norm_label": "drawroster()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1016"
+      "source_location": "L895"
     },
     {
       "id": "modules_dungeonpages_drawsummons",
@@ -1585,7 +1477,7 @@
       "file_type": "code",
       "norm_label": "drawsummons()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1281"
+      "source_location": "L1116"
     },
     {
       "id": "modules_dungeonpages_dungeoninspector",
@@ -1597,31 +1489,31 @@
       "file_type": "code",
       "norm_label": "dungeoninspector()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1126"
+      "source_location": "L993"
     },
     {
-      "id": "modules_dungeonpages_ghostcard",
-      "label": "GhostCard()",
+      "id": "modules_dungeonpages_ghostpill",
+      "label": "GhostPill()",
       "_callable": true,
       "_origin": "ast",
       "community": 1,
       "community_name": "dungeonpages.lua",
       "file_type": "code",
-      "norm_label": "ghostcard()",
+      "norm_label": "ghostpill()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L653"
+      "source_location": "L579"
     },
     {
-      "id": "modules_dungeonpages_gridlayout",
-      "label": "GridLayout()",
+      "id": "modules_dungeonpages_headstatfits",
+      "label": "HeadStatFits()",
       "_callable": true,
       "_origin": "ast",
       "community": 1,
       "community_name": "dungeonpages.lua",
       "file_type": "code",
-      "norm_label": "gridlayout()",
+      "norm_label": "headstatfits()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L540"
+      "source_location": "L366"
     },
     {
       "id": "modules_dungeonpages_hintfits",
@@ -1633,7 +1525,7 @@
       "file_type": "code",
       "norm_label": "hintfits()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L843"
+      "source_location": "L754"
     },
     {
       "id": "modules_dungeonpages_hovereyebrow",
@@ -1645,7 +1537,7 @@
       "file_type": "code",
       "norm_label": "hovereyebrow()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L308"
+      "source_location": "L277"
     },
     {
       "id": "modules_dungeonpages_instanceitem",
@@ -1657,19 +1549,19 @@
       "file_type": "code",
       "norm_label": "instanceitem()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1407"
+      "source_location": "L1242"
     },
     {
-      "id": "modules_dungeonpages_metaline",
-      "label": "MetaLine()",
+      "id": "modules_dungeonpages_layoutpills",
+      "label": "LayoutPills()",
       "_callable": true,
       "_origin": "ast",
       "community": 1,
       "community_name": "dungeonpages.lua",
       "file_type": "code",
-      "norm_label": "metaline()",
+      "norm_label": "layoutpills()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L400"
+      "source_location": "L598"
     },
     {
       "id": "modules_dungeonpages_mincontentwidth",
@@ -1681,7 +1573,7 @@
       "file_type": "code",
       "norm_label": "mincontentwidth()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L200"
+      "source_location": "L169"
     },
     {
       "id": "modules_dungeonpages_mylevel",
@@ -1693,7 +1585,7 @@
       "file_type": "code",
       "norm_label": "mylevel()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L145"
+      "source_location": "L114"
     },
     {
       "id": "modules_dungeonpages_note",
@@ -1705,19 +1597,19 @@
       "file_type": "code",
       "norm_label": "note()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L729"
+      "source_location": "L636"
     },
     {
-      "id": "modules_dungeonpages_placegrid",
-      "label": "PlaceGrid()",
+      "id": "modules_dungeonpages_pilledge",
+      "label": "PillEdge()",
       "_callable": true,
       "_origin": "ast",
       "community": 1,
       "community_name": "dungeonpages.lua",
       "file_type": "code",
-      "norm_label": "placegrid()",
+      "norm_label": "pilledge()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L670"
+      "source_location": "L270"
     },
     {
       "id": "modules_dungeonpages_sectionhead",
@@ -1729,19 +1621,7 @@
       "file_type": "code",
       "norm_label": "sectionhead()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L709"
-    },
-    {
-      "id": "modules_dungeonpages_sourcebody",
-      "label": "SourceBody()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "dungeonpages.lua",
-      "file_type": "code",
-      "norm_label": "sourcebody()",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L998"
+      "source_location": "L616"
     },
     {
       "id": "modules_dungeonpages_summonrow",
@@ -1753,7 +1633,7 @@
       "file_type": "code",
       "norm_label": "summonrow()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1433"
+      "source_location": "L1268"
     },
     {
       "id": "modules_dungeonpages_textwidth",
@@ -1765,7 +1645,7 @@
       "file_type": "code",
       "norm_label": "textwidth()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L260"
+      "source_location": "L229"
     },
     {
       "id": "modules_dungeonpages_tooltip",
@@ -1777,7 +1657,7 @@
       "file_type": "code",
       "norm_label": "tooltip()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L267"
+      "source_location": "L236"
     },
     {
       "id": "modules_dungeonpages_weintcodex_dungeonpages_pagebudget",
@@ -1789,7 +1669,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.dungeonpages.pagebudget()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L243"
+      "source_location": "L212"
     },
     {
       "id": "modules_dungeonpages_weintcodex_dungeonpages_show",
@@ -1801,7 +1681,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.dungeonpages.show()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1532"
+      "source_location": "L1367"
     },
     {
       "id": "core_ui_weintcodex_label",
@@ -2080,6 +1960,102 @@
       "source_location": "L190"
     },
     {
+      "id": "core_navigation_inspectorinput",
+      "label": "InspectorInput()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "WeintCodex.CreateButton",
+      "file_type": "code",
+      "norm_label": "inspectorinput()",
+      "source_file": "core/navigation.lua",
+      "source_location": "L1187"
+    },
+    {
+      "id": "core_ui_drawborder",
+      "label": "DrawBorder()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "WeintCodex.CreateButton",
+      "file_type": "code",
+      "norm_label": "drawborder()",
+      "source_file": "core/ui.lua",
+      "source_location": "L223"
+    },
+    {
+      "id": "core_ui_weintcodex_chip",
+      "label": "WeintCodex.Chip()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "WeintCodex.CreateButton",
+      "file_type": "code",
+      "norm_label": "weintcodex.chip()",
+      "source_file": "core/ui.lua",
+      "source_location": "L733"
+    },
+    {
+      "id": "core_ui_weintcodex_createbutton",
+      "label": "WeintCodex.CreateButton()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "WeintCodex.CreateButton",
+      "file_type": "code",
+      "norm_label": "weintcodex.createbutton()",
+      "source_file": "core/ui.lua",
+      "source_location": "L780"
+    },
+    {
+      "id": "core_ui_weintcodex_createsegmentedcontrol",
+      "label": "WeintCodex.CreateSegmentedControl()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "WeintCodex.CreateButton",
+      "file_type": "code",
+      "norm_label": "weintcodex.createsegmentedcontrol()",
+      "source_file": "core/ui.lua",
+      "source_location": "L867"
+    },
+    {
+      "id": "core_ui_weintcodex_cutcorners",
+      "label": "WeintCodex.CutCorners()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "WeintCodex.CreateButton",
+      "file_type": "code",
+      "norm_label": "weintcodex.cutcorners()",
+      "source_file": "core/ui.lua",
+      "source_location": "L267"
+    },
+    {
+      "id": "core_ui_weintcodex_showexportdialog",
+      "label": "WeintCodex.ShowExportDialog()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "WeintCodex.CreateButton",
+      "file_type": "code",
+      "norm_label": "weintcodex.showexportdialog()",
+      "source_file": "core/ui.lua",
+      "source_location": "L1851"
+    },
+    {
+      "id": "core_ui_weintcodex_statusdot",
+      "label": "WeintCodex.StatusDot()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "WeintCodex.CreateButton",
+      "file_type": "code",
+      "norm_label": "weintcodex.statusdot()",
+      "source_file": "core/ui.lua",
+      "source_location": "L712"
+    },
+    {
       "id": "core_access_weintcodex_access_init",
       "label": "WeintCodex.Access.Init()",
       "_callable": true,
@@ -2102,6 +2078,18 @@
       "norm_label": "onevent()",
       "source_file": "core/main.lua",
       "source_location": "L156"
+    },
+    {
+      "id": "core_names_weintcodex_names_me",
+      "label": "WeintCodex.Names.Me()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "companion.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.names.me()",
+      "source_file": "core/names.lua",
+      "source_location": "L99"
     },
     {
       "id": "modules_companion_boundcommunityid",
@@ -2344,28 +2332,16 @@
       "source_location": "L72"
     },
     {
-      "id": "core_navigation_weintcodex_navigation_activatefirst",
-      "label": "WeintCodex.Navigation.ActivateFirst()",
+      "id": "core_navigation_ellipsis",
+      "label": "Ellipsis()",
       "_callable": true,
       "_origin": "ast",
       "community": 13,
       "community_name": "groupcheck.lua",
       "file_type": "code",
-      "norm_label": "weintcodex.navigation.activatefirst()",
+      "norm_label": "ellipsis()",
       "source_file": "core/navigation.lua",
-      "source_location": "L979"
-    },
-    {
-      "id": "core_ui_weintcodex_createscrollarea",
-      "label": "WeintCodex.CreateScrollArea()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 13,
-      "community_name": "groupcheck.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.createscrollarea()",
-      "source_file": "core/ui.lua",
-      "source_location": "L1240"
+      "source_location": "L2651"
     },
     {
       "id": "core_ui_weintcodex_truncate",
@@ -2378,18 +2354,6 @@
       "norm_label": "weintcodex.truncate()",
       "source_file": "core/ui.lua",
       "source_location": "L467"
-    },
-    {
-      "id": "core_ui_weintcodex_utf8sub",
-      "label": "WeintCodex.Utf8Sub()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 13,
-      "community_name": "groupcheck.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.utf8sub()",
-      "source_file": "core/ui.lua",
-      "source_location": "L424"
     },
     {
       "id": "modules_groupcheck_after",
@@ -2733,7 +2697,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 15,
-      "community_name": "RefreshMatDisplay",
+      "community_name": "search.lua",
       "file_type": "code",
       "norm_label": "open()",
       "source_file": "core/main.lua",
@@ -2745,7 +2709,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 15,
-      "community_name": "RefreshMatDisplay",
+      "community_name": "search.lua",
       "file_type": "code",
       "norm_label": "buildindex()",
       "source_file": "core/search.lua",
@@ -2757,7 +2721,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 15,
-      "community_name": "RefreshMatDisplay",
+      "community_name": "search.lua",
       "file_type": "code",
       "norm_label": "filter()",
       "source_file": "core/search.lua",
@@ -2769,7 +2733,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 15,
-      "community_name": "RefreshMatDisplay",
+      "community_name": "search.lua",
       "file_type": "code",
       "norm_label": "getrow()",
       "source_file": "core/search.lua",
@@ -2781,7 +2745,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 15,
-      "community_name": "RefreshMatDisplay",
+      "community_name": "search.lua",
       "file_type": "code",
       "norm_label": "goto()",
       "source_file": "core/search.lua",
@@ -2793,7 +2757,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 15,
-      "community_name": "RefreshMatDisplay",
+      "community_name": "search.lua",
       "file_type": "code",
       "norm_label": "rendermatches()",
       "source_file": "core/search.lua",
@@ -2805,7 +2769,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 15,
-      "community_name": "RefreshMatDisplay",
+      "community_name": "search.lua",
       "file_type": "code",
       "norm_label": "weintcodex.search.closedropdown()",
       "source_file": "core/search.lua",
@@ -2817,7 +2781,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 15,
-      "community_name": "RefreshMatDisplay",
+      "community_name": "search.lua",
       "file_type": "code",
       "norm_label": "weintcodex.search.onfocusgained()",
       "source_file": "core/search.lua",
@@ -2829,7 +2793,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 15,
-      "community_name": "RefreshMatDisplay",
+      "community_name": "search.lua",
       "file_type": "code",
       "norm_label": "weintcodex.search.onfocuslost()",
       "source_file": "core/search.lua",
@@ -2841,131 +2805,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 15,
-      "community_name": "RefreshMatDisplay",
+      "community_name": "search.lua",
       "file_type": "code",
       "norm_label": "weintcodex.search.ontextchanged()",
       "source_file": "core/search.lua",
       "source_location": "L262"
-    },
-    {
-      "id": "modules_dialog_create",
-      "label": "Create()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "RefreshMatDisplay",
-      "file_type": "code",
-      "norm_label": "create()",
-      "source_file": "modules/dialog.lua",
-      "source_location": "L21"
-    },
-    {
-      "id": "modules_dialog_createbutton",
-      "label": "CreateButton()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "RefreshMatDisplay",
-      "file_type": "code",
-      "norm_label": "createbutton()",
-      "source_file": "modules/dialog.lua",
-      "source_location": "L14"
-    },
-    {
-      "id": "modules_dialog_weintcodex_dialog_hide",
-      "label": "WeintCodex.Dialog.Hide()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "RefreshMatDisplay",
-      "file_type": "code",
-      "norm_label": "weintcodex.dialog.hide()",
-      "source_file": "modules/dialog.lua",
-      "source_location": "L112"
-    },
-    {
-      "id": "modules_dialog_weintcodex_dialog_show",
-      "label": "WeintCodex.Dialog.Show()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "RefreshMatDisplay",
-      "file_type": "code",
-      "norm_label": "weintcodex.dialog.show()",
-      "source_file": "modules/dialog.lua",
-      "source_location": "L96"
-    },
-    {
-      "id": "modules_materials_creatematframe",
-      "label": "CreateMatFrame()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "RefreshMatDisplay",
-      "file_type": "code",
-      "norm_label": "creatematframe()",
-      "source_file": "modules/materials.lua",
-      "source_location": "L69"
-    },
-    {
-      "id": "modules_materials_refreshmatdisplay",
-      "label": "RefreshMatDisplay()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "RefreshMatDisplay",
-      "file_type": "code",
-      "norm_label": "refreshmatdisplay()",
-      "source_file": "modules/materials.lua",
-      "source_location": "L204"
-    },
-    {
-      "id": "modules_materials_scancurrenttab",
-      "label": "ScanCurrentTab()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "RefreshMatDisplay",
-      "file_type": "code",
-      "norm_label": "scancurrenttab()",
-      "source_file": "modules/materials.lua",
-      "source_location": "L626"
-    },
-    {
-      "id": "modules_materials_updaterequiredmaterialsfromcache",
-      "label": "UpdateRequiredMaterialsFromCache()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "RefreshMatDisplay",
-      "file_type": "code",
-      "norm_label": "updaterequiredmaterialsfromcache()",
-      "source_file": "modules/materials.lua",
-      "source_location": "L549"
-    },
-    {
-      "id": "modules_materials_weintcodex_materials_getexportstring",
-      "label": "WeintCodex.Materials.GetExportString()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "RefreshMatDisplay",
-      "file_type": "code",
-      "norm_label": "weintcodex.materials.getexportstring()",
-      "source_file": "modules/materials.lua",
-      "source_location": "L693"
-    },
-    {
-      "id": "modules_materials_weintcodex_materials_getfullbankexportstring",
-      "label": "WeintCodex.Materials.GetFullBankExportString()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "RefreshMatDisplay",
-      "file_type": "code",
-      "norm_label": "weintcodex.materials.getfullbankexportstring()",
-      "source_file": "modules/materials.lua",
-      "source_location": "L715"
     },
     {
       "id": "modules_materials_weintcodex_materials_getitems",
@@ -2973,35 +2817,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 15,
-      "community_name": "RefreshMatDisplay",
+      "community_name": "search.lua",
       "file_type": "code",
       "norm_label": "weintcodex.materials.getitems()",
       "source_file": "modules/materials.lua",
       "source_location": "L469"
-    },
-    {
-      "id": "modules_materials_weintcodex_materials_refresh",
-      "label": "WeintCodex.Materials.Refresh()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "RefreshMatDisplay",
-      "file_type": "code",
-      "norm_label": "weintcodex.materials.refresh()",
-      "source_file": "modules/materials.lua",
-      "source_location": "L534"
-    },
-    {
-      "id": "modules_materials_weintcodex_materials_show",
-      "label": "WeintCodex.Materials.Show()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "RefreshMatDisplay",
-      "file_type": "code",
-      "norm_label": "weintcodex.materials.show()",
-      "source_file": "modules/materials.lua",
-      "source_location": "L479"
     },
     {
       "id": "github_tests_load_test_check",
@@ -3121,7 +2941,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.dungeonpages.pageheight()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L239"
+      "source_location": "L208"
     },
     {
       "id": "modules_dungeonpages_weintcodex_dungeonpages_select",
@@ -3133,7 +2953,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.dungeonpages.select()",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1508"
+      "source_location": "L1343"
     },
     {
       "id": "modules_loot_buildpattern",
@@ -3892,6 +3712,18 @@
       "source_location": "L15"
     },
     {
+      "id": "core_ui_applyverticalgradient",
+      "label": "ApplyVerticalGradient()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 29,
+      "community_name": "Oberfl\u00e4che: Aufbau und Designsprache \u201eGraphit\"",
+      "file_type": "code",
+      "norm_label": "applyverticalgradient()",
+      "source_file": "core/ui.lua",
+      "source_location": "L300"
+    },
+    {
       "id": "core_access_copyfeatures",
       "label": "CopyFeatures()",
       "_callable": true,
@@ -4264,6 +4096,126 @@
       "source_location": "L692"
     },
     {
+      "id": "core_navigation_weintcodex_resettohome",
+      "label": "WeintCodex.ResetToHome()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.resettohome()",
+      "source_file": "core/navigation.lua",
+      "source_location": "L3105"
+    },
+    {
+      "id": "core_ui_weintcodex_icon",
+      "label": "WeintCodex.Icon()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.icon()",
+      "source_file": "core/ui.lua",
+      "source_location": "L179"
+    },
+    {
+      "id": "modules_materials_creatematframe",
+      "label": "CreateMatFrame()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "creatematframe()",
+      "source_file": "modules/materials.lua",
+      "source_location": "L69"
+    },
+    {
+      "id": "modules_materials_refreshmatdisplay",
+      "label": "RefreshMatDisplay()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "refreshmatdisplay()",
+      "source_file": "modules/materials.lua",
+      "source_location": "L204"
+    },
+    {
+      "id": "modules_materials_scancurrenttab",
+      "label": "ScanCurrentTab()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "scancurrenttab()",
+      "source_file": "modules/materials.lua",
+      "source_location": "L626"
+    },
+    {
+      "id": "modules_materials_updaterequiredmaterialsfromcache",
+      "label": "UpdateRequiredMaterialsFromCache()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "updaterequiredmaterialsfromcache()",
+      "source_file": "modules/materials.lua",
+      "source_location": "L549"
+    },
+    {
+      "id": "modules_materials_weintcodex_materials_getexportstring",
+      "label": "WeintCodex.Materials.GetExportString()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.materials.getexportstring()",
+      "source_file": "modules/materials.lua",
+      "source_location": "L693"
+    },
+    {
+      "id": "modules_materials_weintcodex_materials_getfullbankexportstring",
+      "label": "WeintCodex.Materials.GetFullBankExportString()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.materials.getfullbankexportstring()",
+      "source_file": "modules/materials.lua",
+      "source_location": "L715"
+    },
+    {
+      "id": "modules_materials_weintcodex_materials_refresh",
+      "label": "WeintCodex.Materials.Refresh()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.materials.refresh()",
+      "source_file": "modules/materials.lua",
+      "source_location": "L534"
+    },
+    {
+      "id": "modules_materials_weintcodex_materials_show",
+      "label": "WeintCodex.Materials.Show()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.materials.show()",
+      "source_file": "modules/materials.lua",
+      "source_location": "L479"
+    },
+    {
       "id": "modules_sync_drawborder",
       "label": "DrawBorder()",
       "_callable": true,
@@ -4528,6 +4480,198 @@
       "source_location": "L106"
     },
     {
+      "id": "core_ui_drawhline",
+      "label": "DrawHLine()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 35,
+      "community_name": "WeintCodex.CompanionPage.Show",
+      "file_type": "code",
+      "norm_label": "drawhline()",
+      "source_file": "core/ui.lua",
+      "source_location": "L242"
+    },
+    {
+      "id": "core_ui_weintcodex_rowline",
+      "label": "WeintCodex.RowLine()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 35,
+      "community_name": "WeintCodex.CompanionPage.Show",
+      "file_type": "code",
+      "norm_label": "weintcodex.rowline()",
+      "source_file": "core/ui.lua",
+      "source_location": "L1215"
+    },
+    {
+      "id": "modules_companionpage_buildpage",
+      "label": "BuildPage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 35,
+      "community_name": "WeintCodex.CompanionPage.Show",
+      "file_type": "code",
+      "norm_label": "buildpage()",
+      "source_file": "modules/companionpage.lua",
+      "source_location": "L44"
+    },
+    {
+      "id": "modules_companionpage_stamp",
+      "label": "Stamp()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 35,
+      "community_name": "WeintCodex.CompanionPage.Show",
+      "file_type": "code",
+      "norm_label": "stamp()",
+      "source_file": "modules/companionpage.lua",
+      "source_location": "L36"
+    },
+    {
+      "id": "modules_companionpage_staterow",
+      "label": "StateRow()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 35,
+      "community_name": "WeintCodex.CompanionPage.Show",
+      "file_type": "code",
+      "norm_label": "staterow()",
+      "source_file": "modules/companionpage.lua",
+      "source_location": "L57"
+    },
+    {
+      "id": "modules_companionpage_weintcodex_companionpage_show",
+      "label": "WeintCodex.CompanionPage.Show()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 35,
+      "community_name": "WeintCodex.CompanionPage.Show",
+      "file_type": "code",
+      "norm_label": "weintcodex.companionpage.show()",
+      "source_file": "modules/companionpage.lua",
+      "source_location": "L82"
+    },
+    {
+      "id": "core_navigation_weintcodex_navigation_refreshaccount",
+      "label": "WeintCodex.Navigation.RefreshAccount()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 36,
+      "community_name": "WeintCodex.SetBreadcrumb",
+      "file_type": "code",
+      "norm_label": "weintcodex.navigation.refreshaccount()",
+      "source_file": "core/navigation.lua",
+      "source_location": "L308"
+    },
+    {
+      "id": "core_ui_spaced",
+      "label": "Spaced()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 36,
+      "community_name": "WeintCodex.SetBreadcrumb",
+      "file_type": "code",
+      "norm_label": "spaced()",
+      "source_file": "core/ui.lua",
+      "source_location": "L480"
+    },
+    {
+      "id": "core_ui_utf8charlen",
+      "label": "Utf8CharLen()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 36,
+      "community_name": "WeintCodex.SetBreadcrumb",
+      "file_type": "code",
+      "norm_label": "utf8charlen()",
+      "source_file": "core/ui.lua",
+      "source_location": "L402"
+    },
+    {
+      "id": "core_ui_weintcodex_setbreadcrumb",
+      "label": "WeintCodex.SetBreadcrumb()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 36,
+      "community_name": "WeintCodex.SetBreadcrumb",
+      "file_type": "code",
+      "norm_label": "weintcodex.setbreadcrumb()",
+      "source_file": "core/ui.lua",
+      "source_location": "L1607"
+    },
+    {
+      "id": "core_ui_weintcodex_utf8sub",
+      "label": "WeintCodex.Utf8Sub()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 36,
+      "community_name": "WeintCodex.SetBreadcrumb",
+      "file_type": "code",
+      "norm_label": "weintcodex.utf8sub()",
+      "source_file": "core/ui.lua",
+      "source_location": "L424"
+    },
+    {
+      "id": "core_ui_col",
+      "label": "Col()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 37,
+      "community_name": "Col",
+      "file_type": "code",
+      "norm_label": "col()",
+      "source_file": "core/ui.lua",
+      "source_location": "L203"
+    },
+    {
+      "id": "core_ui_weintcodex_mononumber",
+      "label": "WeintCodex.MonoNumber()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 37,
+      "community_name": "Col",
+      "file_type": "code",
+      "norm_label": "weintcodex.mononumber()",
+      "source_file": "core/ui.lua",
+      "source_location": "L525"
+    },
+    {
+      "id": "core_ui_weintcodex_pagehead",
+      "label": "WeintCodex.PageHead()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 37,
+      "community_name": "Col",
+      "file_type": "code",
+      "norm_label": "weintcodex.pagehead()",
+      "source_file": "core/ui.lua",
+      "source_location": "L627"
+    },
+    {
+      "id": "core_ui_weintcodex_pagetitle",
+      "label": "WeintCodex.PageTitle()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 37,
+      "community_name": "Col",
+      "file_type": "code",
+      "norm_label": "weintcodex.pagetitle()",
+      "source_file": "core/ui.lua",
+      "source_location": "L503"
+    },
+    {
+      "id": "core_ui_weintcodex_recolorcorners",
+      "label": "WeintCodex.RecolorCorners()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 37,
+      "community_name": "Col",
+      "file_type": "code",
+      "norm_label": "weintcodex.recolorcorners()",
+      "source_file": "core/ui.lua",
+      "source_location": "L286"
+    },
+    {
       "id": "libs_libdbicon_1_0_libdbicon_1_0_onclick",
       "label": "onClick()",
       "_callable": true,
@@ -4538,6 +4682,54 @@
       "norm_label": "onclick()",
       "source_file": "libs/LibDBIcon-1.0/LibDBIcon-1.0.lua",
       "source_location": "L177"
+    },
+    {
+      "id": "modules_dialog_create",
+      "label": "Create()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 39,
+      "community_name": "Create",
+      "file_type": "code",
+      "norm_label": "create()",
+      "source_file": "modules/dialog.lua",
+      "source_location": "L21"
+    },
+    {
+      "id": "modules_dialog_createbutton",
+      "label": "CreateButton()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 39,
+      "community_name": "Create",
+      "file_type": "code",
+      "norm_label": "createbutton()",
+      "source_file": "modules/dialog.lua",
+      "source_location": "L14"
+    },
+    {
+      "id": "modules_dialog_weintcodex_dialog_hide",
+      "label": "WeintCodex.Dialog.Hide()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 39,
+      "community_name": "Create",
+      "file_type": "code",
+      "norm_label": "weintcodex.dialog.hide()",
+      "source_file": "modules/dialog.lua",
+      "source_location": "L112"
+    },
+    {
+      "id": "modules_dialog_weintcodex_dialog_show",
+      "label": "WeintCodex.Dialog.Show()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 39,
+      "community_name": "Create",
+      "file_type": "code",
+      "norm_label": "weintcodex.dialog.show()",
+      "source_file": "modules/dialog.lua",
+      "source_location": "L96"
     },
     {
       "id": "core_names_weintcodex_names_classlabel",
@@ -4792,18 +4984,6 @@
       "source_location": "L337"
     },
     {
-      "id": "modules_encounter_tracking_weintcodex_encountertracking_getstatus",
-      "label": "WeintCodex.EncounterTracking.GetStatus()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "BuildTree",
-      "file_type": "code",
-      "norm_label": "weintcodex.encountertracking.getstatus()",
-      "source_file": "modules/encounter_tracking.lua",
-      "source_location": "L519"
-    },
-    {
       "id": "modules_raidpages_buildpage",
       "label": "BuildPage()",
       "_callable": true,
@@ -5056,18 +5236,6 @@
       "source_location": "L120"
     },
     {
-      "id": "core_names_weintcodex_names_me",
-      "label": "WeintCodex.Names.Me()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.names.me()",
-      "source_file": "core/names.lua",
-      "source_location": "L99"
-    },
-    {
       "id": "core_names_weintcodex_names_normalize",
       "label": "WeintCodex.Names.Normalize()",
       "_callable": true,
@@ -5090,18 +5258,6 @@
       "norm_label": "weintcodex.names.split()",
       "source_file": "core/names.lua",
       "source_location": "L48"
-    },
-    {
-      "id": "core_ui_weintcodex_icon",
-      "label": "WeintCodex.Icon()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.icon()",
-      "source_file": "core/ui.lua",
-      "source_location": "L179"
     },
     {
       "id": "modules_calendar_addplayers",
@@ -5330,18 +5486,6 @@
       "norm_label": "weintcodex.calendar.dump()",
       "source_file": "modules/calendar.lua",
       "source_location": "L593"
-    },
-    {
-      "id": "modules_calendar_weintcodex_calendar_show",
-      "label": "WeintCodex.Calendar.Show()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 5,
-      "community_name": "calendar.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.calendar.show()",
-      "source_file": "modules/calendar.lua",
-      "source_location": "L2053"
     },
     {
       "id": "modules_companion_weintcodex_companion_forgetlivestamp",
@@ -6232,6 +6376,18 @@
       "source_location": "L344"
     },
     {
+      "id": "modules_encounter_tracking_weintcodex_encountertracking_getstatus",
+      "label": "WeintCodex.EncounterTracking.GetStatus()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 7,
+      "community_name": "encounter_tracking.lua",
+      "file_type": "code",
+      "norm_label": "weintcodex.encountertracking.getstatus()",
+      "source_file": "modules/encounter_tracking.lua",
+      "source_location": "L519"
+    },
+    {
       "id": "modules_encounter_tracking_weintcodex_encountertracking_refreshall",
       "label": "WeintCodex.EncounterTracking.RefreshAll()",
       "_callable": true,
@@ -6568,6 +6724,18 @@
       "source_location": "L1224"
     },
     {
+      "id": "core_ui_weintcodex_createscrollarea",
+      "label": "WeintCodex.CreateScrollArea()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 8,
+      "community_name": "WeintCodex.ColorText",
+      "file_type": "code",
+      "norm_label": "weintcodex.createscrollarea()",
+      "source_file": "core/ui.lua",
+      "source_location": "L1240"
+    },
+    {
       "id": "modules_settings_buttons",
       "label": "Buttons()",
       "_callable": true,
@@ -6808,18 +6976,6 @@
       "source_location": "L55"
     },
     {
-      "id": "core_navigation_buildstrip",
-      "label": "BuildStrip()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "buildstrip()",
-      "source_file": "core/navigation.lua",
-      "source_location": "L573"
-    },
-    {
       "id": "core_ui_applysavedwindow",
       "label": "ApplySavedWindow()",
       "_callable": true,
@@ -6830,42 +6986,6 @@
       "norm_label": "applysavedwindow()",
       "source_file": "core/ui.lua",
       "source_location": "L1477"
-    },
-    {
-      "id": "core_ui_applyverticalgradient",
-      "label": "ApplyVerticalGradient()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "applyverticalgradient()",
-      "source_file": "core/ui.lua",
-      "source_location": "L300"
-    },
-    {
-      "id": "core_ui_col",
-      "label": "Col()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "col()",
-      "source_file": "core/ui.lua",
-      "source_location": "L203"
-    },
-    {
-      "id": "core_ui_drawhline",
-      "label": "DrawHLine()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "drawhline()",
-      "source_file": "core/ui.lua",
-      "source_location": "L242"
     },
     {
       "id": "core_ui_makegripline",
@@ -6928,18 +7048,6 @@
       "source_location": "L1811"
     },
     {
-      "id": "core_ui_updatecontentinsets",
-      "label": "UpdateContentInsets()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "updatecontentinsets()",
-      "source_file": "core/ui.lua",
-      "source_location": "L1760"
-    },
-    {
       "id": "core_ui_weintcodex_applywindowbehaviour",
       "label": "WeintCodex.ApplyWindowBehaviour()",
       "_callable": true,
@@ -6952,18 +7060,6 @@
       "source_location": "L1535"
     },
     {
-      "id": "core_ui_weintcodex_chip",
-      "label": "WeintCodex.Chip()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.chip()",
-      "source_file": "core/ui.lua",
-      "source_location": "L733"
-    },
-    {
       "id": "core_ui_weintcodex_classicon",
       "label": "WeintCodex.ClassIcon()",
       "_callable": true,
@@ -6974,30 +7070,6 @@
       "norm_label": "weintcodex.classicon()",
       "source_file": "core/ui.lua",
       "source_location": "L186"
-    },
-    {
-      "id": "core_ui_weintcodex_createmeter",
-      "label": "WeintCodex.CreateMeter()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.createmeter()",
-      "source_file": "core/ui.lua",
-      "source_location": "L1180"
-    },
-    {
-      "id": "core_ui_weintcodex_createsegmentedcontrol",
-      "label": "WeintCodex.CreateSegmentedControl()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.createsegmentedcontrol()",
-      "source_file": "core/ui.lua",
-      "source_location": "L867"
     },
     {
       "id": "core_ui_weintcodex_createslider",
@@ -7022,18 +7094,6 @@
       "norm_label": "weintcodex.createtoggle()",
       "source_file": "core/ui.lua",
       "source_location": "L975"
-    },
-    {
-      "id": "core_ui_weintcodex_cutcorners",
-      "label": "WeintCodex.CutCorners()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.cutcorners()",
-      "source_file": "core/ui.lua",
-      "source_location": "L267"
     },
     {
       "id": "core_ui_weintcodex_drawcorneraccents",
@@ -7096,54 +7156,6 @@
       "source_location": "L1327"
     },
     {
-      "id": "core_ui_weintcodex_mononumber",
-      "label": "WeintCodex.MonoNumber()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.mononumber()",
-      "source_file": "core/ui.lua",
-      "source_location": "L525"
-    },
-    {
-      "id": "core_ui_weintcodex_pagehead",
-      "label": "WeintCodex.PageHead()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.pagehead()",
-      "source_file": "core/ui.lua",
-      "source_location": "L627"
-    },
-    {
-      "id": "core_ui_weintcodex_pagetitle",
-      "label": "WeintCodex.PageTitle()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.pagetitle()",
-      "source_file": "core/ui.lua",
-      "source_location": "L503"
-    },
-    {
-      "id": "core_ui_weintcodex_recolorcorners",
-      "label": "WeintCodex.RecolorCorners()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.recolorcorners()",
-      "source_file": "core/ui.lua",
-      "source_location": "L286"
-    },
-    {
       "id": "core_ui_weintcodex_resetwindowsize",
       "label": "WeintCodex.ResetWindowSize()",
       "_callable": true,
@@ -7154,54 +7166,6 @@
       "norm_label": "weintcodex.resetwindowsize()",
       "source_file": "core/ui.lua",
       "source_location": "L1543"
-    },
-    {
-      "id": "core_ui_weintcodex_rowline",
-      "label": "WeintCodex.RowLine()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.rowline()",
-      "source_file": "core/ui.lua",
-      "source_location": "L1215"
-    },
-    {
-      "id": "core_ui_weintcodex_setdetailshown",
-      "label": "WeintCodex.SetDetailShown()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.setdetailshown()",
-      "source_file": "core/ui.lua",
-      "source_location": "L1767"
-    },
-    {
-      "id": "core_ui_weintcodex_setsubnavtop",
-      "label": "WeintCodex.SetSubNavTop()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.setsubnavtop()",
-      "source_file": "core/ui.lua",
-      "source_location": "L1780"
-    },
-    {
-      "id": "core_ui_weintcodex_setsubnavwidth",
-      "label": "WeintCodex.SetSubNavWidth()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "code",
-      "norm_label": "weintcodex.setsubnavwidth()",
-      "source_file": "core/ui.lua",
-      "source_location": "L1774"
     },
     {
       "id": "core_ui_weintcodex_windowbehaviour",
@@ -7227,15 +7191,16 @@
       "source_location": "L1"
     },
     {
-      "id": "modules_companionpage",
-      "label": "companionpage.lua",
+      "id": "docs_systems_raids_and_progress_von_aussen_auf_einen_boss_zeigen",
+      "label": "Von aussen auf einen Boss zeigen",
       "_origin": "ast",
       "community": 0,
       "community_name": "navigation.lua",
-      "file_type": "code",
-      "norm_label": "companionpage.lua",
-      "source_file": "modules/companionpage.lua",
-      "source_location": "L1"
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "von aussen auf einen boss zeigen",
+      "source_file": "docs/systems/raids-and-progress.md",
+      "source_location": "L153"
     },
     {
       "id": "data_dungeons",
@@ -7282,7 +7247,7 @@
       "source_location": "L1"
     },
     {
-      "id": "changelog_technisch_173",
+      "id": "changelog_technisch",
       "label": "Technisch",
       "_origin": "ast",
       "community": 1,
@@ -7291,19 +7256,19 @@
       "node_kind": "heading",
       "norm_label": "technisch",
       "source_file": "CHANGELOG.md",
-      "source_location": "L173"
+      "source_location": "L52"
     },
     {
-      "id": "claude_critical_invariants_always_relevant_keep_in_mind_for_any_change",
-      "label": "Critical invariants (always relevant, keep in mind for any change)",
+      "id": "changelog_technisch_97",
+      "label": "Technisch",
       "_origin": "ast",
       "community": 1,
       "community_name": "dungeonpages.lua",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "critical invariants (always relevant, keep in mind for any change)",
-      "source_file": "CLAUDE.md",
-      "source_location": "L52"
+      "norm_label": "technisch",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L97"
     },
     {
       "id": "docs_systems_dungeons_der_detailbereich_rechts_wo_er_passt",
@@ -7315,19 +7280,19 @@
       "node_kind": "heading",
       "norm_label": "der detailbereich rechts, wo er passt",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L308"
+      "source_location": "L221"
     },
     {
-      "id": "docs_systems_dungeons_der_dungeonkontext_steht_in_einer_zeile",
-      "label": "Der Dungeonkontext steht in einer Zeile",
+      "id": "docs_systems_dungeons_die_bosszahl_steht_an_genau_einer_stelle",
+      "label": "Die Bosszahl steht an genau einer Stelle",
       "_origin": "ast",
       "community": 1,
       "community_name": "dungeonpages.lua",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "der dungeonkontext steht in einer zeile",
+      "norm_label": "die bosszahl steht an genau einer stelle",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L266"
+      "source_location": "L197"
     },
     {
       "id": "docs_systems_dungeons_die_eigene_stufe",
@@ -7339,29 +7304,17 @@
       "node_kind": "heading",
       "norm_label": "die eigene stufe",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L427"
+      "source_location": "L320"
     },
     {
-      "id": "docs_systems_dungeons_die_herkunft_steht_in_jedem_zustand_genau_einmal_sichtbar",
-      "label": "Die Herkunft steht in jedem Zustand genau einmal sichtbar",
+      "id": "docs_systems_dungeons_die_seite_drei_fl\u00e4chen_eine_leserichtung",
+      "label": "Die Seite: drei Fl\u00e4chen, eine Leserichtung",
       "_origin": "ast",
       "community": 1,
       "community_name": "dungeonpages.lua",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "die herkunft steht in jedem zustand genau einmal sichtbar",
-      "source_file": "docs/systems/dungeons.md",
-      "source_location": "L356"
-    },
-    {
-      "id": "docs_systems_dungeons_die_seite_drei_ebenen_zwei_zust\u00e4nde",
-      "label": "Die Seite: drei Ebenen, zwei Zust\u00e4nde",
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "dungeonpages.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "die seite: drei ebenen, zwei zustande",
+      "norm_label": "die seite: drei flachen, eine leserichtung",
       "source_file": "docs/systems/dungeons.md",
       "source_location": "L164"
     },
@@ -7375,19 +7328,7 @@
       "node_kind": "heading",
       "norm_label": "die spalte lauft nicht uber, und die seite auch nicht",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L375"
-    },
-    {
-      "id": "docs_systems_dungeons_die_spaltenzahl_ist_gerechnet_nicht_gesetzt",
-      "label": "Die Spaltenzahl ist gerechnet, nicht gesetzt",
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "dungeonpages.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "die spaltenzahl ist gerechnet, nicht gesetzt",
-      "source_file": "docs/systems/dungeons.md",
-      "source_location": "L242"
+      "source_location": "L272"
     },
     {
       "id": "docs_systems_dungeons_ein_fl\u00fcgel_darf_keinen_boss_verlieren",
@@ -7399,31 +7340,7 @@
       "node_kind": "heading",
       "norm_label": "ein flugel darf keinen boss verlieren",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L420"
-    },
-    {
-      "id": "docs_systems_dungeons_karten_statt_pillen_und_warum",
-      "label": "Karten statt Pillen, und warum",
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "dungeonpages.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "karten statt pillen, und warum",
-      "source_file": "docs/systems/dungeons.md",
-      "source_location": "L219"
-    },
-    {
-      "id": "docs_systems_dungeons_zwei_zust\u00e4nde_eine_struktur",
-      "label": "Zwei Zust\u00e4nde, eine Struktur",
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "dungeonpages.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "zwei zustande, eine struktur",
-      "source_file": "docs/systems/dungeons.md",
-      "source_location": "L192"
+      "source_location": "L313"
     },
     {
       "id": "data_specs",
@@ -8225,7 +8142,7 @@
       "label": "main.lua",
       "_origin": "ast",
       "community": 15,
-      "community_name": "RefreshMatDisplay",
+      "community_name": "search.lua",
       "file_type": "code",
       "norm_label": "main.lua",
       "source_file": "core/main.lua",
@@ -8236,32 +8153,10 @@
       "label": "search.lua",
       "_origin": "ast",
       "community": 15,
-      "community_name": "RefreshMatDisplay",
+      "community_name": "search.lua",
       "file_type": "code",
       "norm_label": "search.lua",
       "source_file": "core/search.lua",
-      "source_location": "L1"
-    },
-    {
-      "id": "modules_dialog",
-      "label": "dialog.lua",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "RefreshMatDisplay",
-      "file_type": "code",
-      "norm_label": "dialog.lua",
-      "source_file": "modules/dialog.lua",
-      "source_location": "L1"
-    },
-    {
-      "id": "modules_materials",
-      "label": "materials.lua",
-      "_origin": "ast",
-      "community": 15,
-      "community_name": "RefreshMatDisplay",
-      "file_type": "code",
-      "norm_label": "materials.lua",
-      "source_file": "modules/materials.lua",
       "source_location": "L1"
     },
     {
@@ -8443,7 +8338,7 @@
       "node_kind": "heading",
       "norm_label": "die navigationsspalte selbst",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L571"
+      "source_location": "L463"
     },
     {
       "id": "docs_systems_dungeons_die_neun_von_forever",
@@ -8467,7 +8362,7 @@
       "node_kind": "heading",
       "norm_label": "die rollen",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L436"
+      "source_location": "L329"
     },
     {
       "id": "docs_systems_dungeons_die_spalte_links",
@@ -8479,7 +8374,19 @@
       "node_kind": "heading",
       "norm_label": "die spalte links",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L541"
+      "source_location": "L434"
+    },
+    {
+      "id": "docs_systems_dungeons_die_tipps_kommen_vom_bot_oder_gar_nicht",
+      "label": "Die Tipps kommen vom Bot, oder gar nicht",
+      "_origin": "ast",
+      "community": 27,
+      "community_name": "Dungeons und Rollen",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "die tipps kommen vom bot, oder gar nicht",
+      "source_file": "docs/systems/dungeons.md",
+      "source_location": "L363"
     },
     {
       "id": "docs_systems_dungeons_die_zwanzig_aus_classic",
@@ -8515,7 +8422,7 @@
       "node_kind": "heading",
       "norm_label": "dungeon: die detailkarte rollt, gekurzt wird nichts",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L500"
+      "source_location": "L393"
     },
     {
       "id": "docs_systems_dungeons_dungeons_und_rollen",
@@ -8539,7 +8446,7 @@
       "node_kind": "heading",
       "norm_label": "farben",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L513"
+      "source_location": "L406"
     },
     {
       "id": "docs_systems_dungeons_f\u00fcnf_arten_von_herkunft",
@@ -8575,7 +8482,7 @@
       "node_kind": "heading",
       "norm_label": "schlachtzug: die seite ist gedeckelt, der detailbereich nicht",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L487"
+      "source_location": "L380"
     },
     {
       "id": "docs_systems_dungeons_was_wo_sitzt",
@@ -8587,7 +8494,7 @@
       "node_kind": "heading",
       "norm_label": "was wo sitzt",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L521"
+      "source_location": "L414"
     },
     {
       "id": "docs_systems_dungeons_wilder_kampf_steht_unter_beiden_rollen",
@@ -8599,7 +8506,7 @@
       "node_kind": "heading",
       "norm_label": "\u201ewilder kampf\" steht unter beiden rollen",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L461"
+      "source_location": "L354"
     },
     {
       "id": "docs_systems_raids_and_progress",
@@ -8746,16 +8653,88 @@
       "source_location": "L1"
     },
     {
-      "id": "docs_systems_raids_and_progress_von_aussen_auf_einen_boss_zeigen",
-      "label": "Von aussen auf einen Boss zeigen",
+      "id": "docs_architecture_overview",
+      "label": "overview.md",
       "_origin": "ast",
-      "community": 28,
-      "community_name": "Schlachtz\u00fcge, Bosse und Fortschritt",
+      "community": 29,
+      "community_name": "Oberfl\u00e4che: Aufbau und Designsprache \u201eGraphit\"",
+      "file_type": "document",
+      "node_kind": "page",
+      "norm_label": "overview.md",
+      "source_file": "docs/architecture/overview.md",
+      "source_location": "L1"
+    },
+    {
+      "id": "docs_architecture_overview_das_bild",
+      "label": "Das Bild",
+      "_origin": "ast",
+      "community": 29,
+      "community_name": "Oberfl\u00e4che: Aufbau und Designsprache \u201eGraphit\"",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "von aussen auf einen boss zeigen",
-      "source_file": "docs/systems/raids-and-progress.md",
-      "source_location": "L153"
+      "norm_label": "das bild",
+      "source_file": "docs/architecture/overview.md",
+      "source_location": "L3"
+    },
+    {
+      "id": "docs_architecture_overview_der_seitenkopf",
+      "label": "Der Seitenkopf",
+      "_origin": "ast",
+      "community": 29,
+      "community_name": "Oberfl\u00e4che: Aufbau und Designsprache \u201eGraphit\"",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "der seitenkopf",
+      "source_file": "docs/architecture/overview.md",
+      "source_location": "L217"
+    },
+    {
+      "id": "docs_architecture_overview_drei_dinge_die_in_wow_anders_gel\u00f6st_werden_m\u00fcssen",
+      "label": "Drei Dinge, die in WoW anders gel\u00f6st werden m\u00fcssen",
+      "_origin": "ast",
+      "community": 29,
+      "community_name": "Oberfl\u00e4che: Aufbau und Designsprache \u201eGraphit\"",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "drei dinge, die in wow anders gelost werden mussen",
+      "source_file": "docs/architecture/overview.md",
+      "source_location": "L33"
+    },
+    {
+      "id": "docs_architecture_overview_farben_ansprechen",
+      "label": "Farben ansprechen",
+      "_origin": "ast",
+      "community": 29,
+      "community_name": "Oberfl\u00e4che: Aufbau und Designsprache \u201eGraphit\"",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "farben ansprechen",
+      "source_file": "docs/architecture/overview.md",
+      "source_location": "L237"
+    },
+    {
+      "id": "docs_architecture_overview_oberfl\u00e4che_aufbau_und_designsprache_graphit",
+      "label": "Oberfl\u00e4che: Aufbau und Designsprache \u201eGraphit\"",
+      "_origin": "ast",
+      "community": 29,
+      "community_name": "Oberfl\u00e4che: Aufbau und Designsprache \u201eGraphit\"",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "oberflache: aufbau und designsprache \u201egraphit\"",
+      "source_file": "docs/architecture/overview.md",
+      "source_location": "L1"
+    },
+    {
+      "id": "docs_architecture_overview_utf_8",
+      "label": "UTF-8",
+      "_origin": "ast",
+      "community": 29,
+      "community_name": "Oberfl\u00e4che: Aufbau und Designsprache \u201eGraphit\"",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "utf-8",
+      "source_file": "docs/architecture/overview.md",
+      "source_location": "L41"
     },
     {
       "id": "core_access",
@@ -8769,6 +8748,17 @@
       "source_location": "L1"
     },
     {
+      "id": "modules_materials",
+      "label": "materials.lua",
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "access.lua",
+      "file_type": "code",
+      "norm_label": "materials.lua",
+      "source_file": "modules/materials.lua",
+      "source_location": "L1"
+    },
+    {
       "id": "modules_sync",
       "label": "sync.lua",
       "_origin": "ast",
@@ -8778,18 +8768,6 @@
       "norm_label": "sync.lua",
       "source_file": "modules/sync.lua",
       "source_location": "L1"
-    },
-    {
-      "id": "docs_systems_dungeons_die_tipps_kommen_vom_bot_oder_gar_nicht",
-      "label": "Die Tipps kommen vom Bot, oder gar nicht",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "access.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "die tipps kommen vom bot, oder gar nicht",
-      "source_file": "docs/systems/dungeons.md",
-      "source_location": "L470"
     },
     {
       "id": "changelog",
@@ -8813,7 +8791,7 @@
       "node_kind": "heading",
       "norm_label": "[5.0.0.0] \u2013 2026-09-18",
       "source_file": "CHANGELOG.md",
-      "source_location": "L404"
+      "source_location": "L328"
     },
     {
       "id": "changelog_5_1_0_0_2026_09_20",
@@ -8825,7 +8803,7 @@
       "node_kind": "heading",
       "norm_label": "[5.1.0.0] \u2013 2026-09-20",
       "source_file": "CHANGELOG.md",
-      "source_location": "L330"
+      "source_location": "L254"
     },
     {
       "id": "changelog_5_2_0_0_2026_09_21",
@@ -8837,7 +8815,7 @@
       "node_kind": "heading",
       "norm_label": "[5.2.0.0] \u2013 2026-09-21",
       "source_file": "CHANGELOG.md",
-      "source_location": "L261"
+      "source_location": "L185"
     },
     {
       "id": "changelog_5_2_0_1_2026_09_21",
@@ -8849,7 +8827,7 @@
       "node_kind": "heading",
       "norm_label": "[5.2.0.1] \u2013 2026-09-21",
       "source_file": "CHANGELOG.md",
-      "source_location": "L221"
+      "source_location": "L145"
     },
     {
       "id": "changelog_5_2_0_2_2026_09_21",
@@ -8861,7 +8839,7 @@
       "node_kind": "heading",
       "norm_label": "[5.2.0.2] \u2013 2026-09-21",
       "source_file": "CHANGELOG.md",
-      "source_location": "L187"
+      "source_location": "L111"
     },
     {
       "id": "changelog_5_2_0_3_2026_09_21",
@@ -8873,7 +8851,7 @@
       "node_kind": "heading",
       "norm_label": "[5.2.0.3] \u2013 2026-09-21",
       "source_file": "CHANGELOG.md",
-      "source_location": "L148"
+      "source_location": "L72"
     },
     {
       "id": "changelog_5_2_0_4_2026_09_22",
@@ -8884,18 +8862,6 @@
       "file_type": "document",
       "node_kind": "heading",
       "norm_label": "[5.2.0.4] \u2013 2026-09-22",
-      "source_file": "CHANGELOG.md",
-      "source_location": "L88"
-    },
-    {
-      "id": "changelog_5_2_0_5_2026_09_22",
-      "label": "[5.2.0.5] \u2013 2026-09-22",
-      "_origin": "ast",
-      "community": 30,
-      "community_name": "Changelog",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "[5.2.0.5] \u2013 2026-09-22",
       "source_file": "CHANGELOG.md",
       "source_location": "L12"
     },
@@ -8912,7 +8878,7 @@
       "source_location": "L1"
     },
     {
-      "id": "changelog_technisch",
+      "id": "changelog_technisch_133",
       "label": "Technisch",
       "_origin": "ast",
       "community": 30,
@@ -8921,10 +8887,10 @@
       "node_kind": "heading",
       "norm_label": "technisch",
       "source_file": "CHANGELOG.md",
-      "source_location": "L128"
+      "source_location": "L133"
     },
     {
-      "id": "changelog_technisch_209",
+      "id": "changelog_technisch_172",
       "label": "Technisch",
       "_origin": "ast",
       "community": 30,
@@ -8933,10 +8899,10 @@
       "node_kind": "heading",
       "norm_label": "technisch",
       "source_file": "CHANGELOG.md",
-      "source_location": "L209"
+      "source_location": "L172"
     },
     {
-      "id": "changelog_technisch_248",
+      "id": "changelog_technisch_376",
       "label": "Technisch",
       "_origin": "ast",
       "community": 30,
@@ -8945,19 +8911,7 @@
       "node_kind": "heading",
       "norm_label": "technisch",
       "source_file": "CHANGELOG.md",
-      "source_location": "L248"
-    },
-    {
-      "id": "changelog_technisch_452",
-      "label": "Technisch",
-      "_origin": "ast",
-      "community": 30,
-      "community_name": "Changelog",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "technisch",
-      "source_file": "CHANGELOG.md",
-      "source_location": "L452"
+      "source_location": "L376"
     },
     {
       "id": "changelog_zum_client_build_1_60_1_69913",
@@ -8969,7 +8923,7 @@
       "node_kind": "heading",
       "norm_label": "zum client-build 1.60.1.69913",
       "source_file": "CHANGELOG.md",
-      "source_location": "L320"
+      "source_location": "L244"
     },
     {
       "id": "docs_systems_onboarding_changelog",
@@ -9101,7 +9055,7 @@
       "node_kind": "heading",
       "norm_label": "development workflow",
       "source_file": "CLAUDE.md",
-      "source_location": "L172"
+      "source_location": "L167"
     },
     {
       "id": "claude_role_in_the_ecosystem",
@@ -9125,7 +9079,7 @@
       "node_kind": "heading",
       "norm_label": "task routing \u2014 read only what the task needs",
       "source_file": "CLAUDE.md",
-      "source_location": "L188"
+      "source_location": "L183"
     },
     {
       "id": "claude_what_this_edition_deliberately_does_not_have",
@@ -9137,7 +9091,7 @@
       "node_kind": "heading",
       "norm_label": "what this edition deliberately does not have",
       "source_file": "CLAUDE.md",
-      "source_location": "L218"
+      "source_location": "L213"
     },
     {
       "id": "claude_what_this_is",
@@ -9150,6 +9104,29 @@
       "norm_label": "what this is",
       "source_file": "CLAUDE.md",
       "source_location": "L8"
+    },
+    {
+      "id": "modules_companionpage",
+      "label": "companionpage.lua",
+      "_origin": "ast",
+      "community": 35,
+      "community_name": "WeintCodex.CompanionPage.Show",
+      "file_type": "code",
+      "norm_label": "companionpage.lua",
+      "source_file": "modules/companionpage.lua",
+      "source_location": "L1"
+    },
+    {
+      "id": "claude_critical_invariants_always_relevant_keep_in_mind_for_any_change",
+      "label": "Critical invariants (always relevant, keep in mind for any change)",
+      "_origin": "ast",
+      "community": 36,
+      "community_name": "WeintCodex.SetBreadcrumb",
+      "file_type": "document",
+      "node_kind": "heading",
+      "norm_label": "critical invariants (always relevant, keep in mind for any change)",
+      "source_file": "CLAUDE.md",
+      "source_location": "L52"
     },
     {
       "id": "docs_architecture_overview_der_detailbereich",
@@ -9198,6 +9175,17 @@
       "norm_label": "nichts muss scrollen",
       "source_file": "docs/architecture/overview.md",
       "source_location": "L184"
+    },
+    {
+      "id": "modules_dialog",
+      "label": "dialog.lua",
+      "_origin": "ast",
+      "community": 39,
+      "community_name": "Create",
+      "file_type": "code",
+      "norm_label": "dialog.lua",
+      "source_file": "modules/dialog.lua",
+      "source_location": "L1"
     },
     {
       "id": "data_raids",
@@ -9509,90 +9497,6 @@
       "norm_label": "ui.lua",
       "source_file": "core/ui.lua",
       "source_location": "L1"
-    },
-    {
-      "id": "docs_architecture_overview",
-      "label": "overview.md",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "document",
-      "node_kind": "page",
-      "norm_label": "overview.md",
-      "source_file": "docs/architecture/overview.md",
-      "source_location": "L1"
-    },
-    {
-      "id": "docs_architecture_overview_das_bild",
-      "label": "Das Bild",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "das bild",
-      "source_file": "docs/architecture/overview.md",
-      "source_location": "L3"
-    },
-    {
-      "id": "docs_architecture_overview_der_seitenkopf",
-      "label": "Der Seitenkopf",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "der seitenkopf",
-      "source_file": "docs/architecture/overview.md",
-      "source_location": "L217"
-    },
-    {
-      "id": "docs_architecture_overview_drei_dinge_die_in_wow_anders_gel\u00f6st_werden_m\u00fcssen",
-      "label": "Drei Dinge, die in WoW anders gel\u00f6st werden m\u00fcssen",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "drei dinge, die in wow anders gelost werden mussen",
-      "source_file": "docs/architecture/overview.md",
-      "source_location": "L33"
-    },
-    {
-      "id": "docs_architecture_overview_farben_ansprechen",
-      "label": "Farben ansprechen",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "farben ansprechen",
-      "source_file": "docs/architecture/overview.md",
-      "source_location": "L237"
-    },
-    {
-      "id": "docs_architecture_overview_oberfl\u00e4che_aufbau_und_designsprache_graphit",
-      "label": "Oberfl\u00e4che: Aufbau und Designsprache \u201eGraphit\"",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "oberflache: aufbau und designsprache \u201egraphit\"",
-      "source_file": "docs/architecture/overview.md",
-      "source_location": "L1"
-    },
-    {
-      "id": "docs_architecture_overview_utf_8",
-      "label": "UTF-8",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "ui.lua",
-      "file_type": "document",
-      "node_kind": "heading",
-      "norm_label": "utf-8",
-      "source_file": "docs/architecture/overview.md",
-      "source_location": "L41"
     },
     {
       "id": "pathlib",
@@ -13541,7 +13445,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L229",
+      "source_location": "L198",
       "weight": 1.0
     },
     {
@@ -13553,31 +13457,31 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L249",
+      "source_location": "L218",
       "weight": 1.0
     },
     {
-      "source": "modules_dungeonpages_bosscard",
-      "target": "modules_dungeonpages_cardedge",
+      "source": "modules_dungeonpages_bosspill",
+      "target": "modules_dungeonpages_pilledge",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L554",
+      "source_location": "L482",
       "weight": 1.0
     },
     {
-      "source": "modules_dungeonpages_bosscard",
-      "target": "modules_dungeonpages_bosstag",
+      "source": "modules_dungeonpages_bosspill",
+      "target": "modules_dungeonpages_textwidth",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L578",
+      "source_location": "L491",
       "weight": 1.0
     },
     {
@@ -13589,19 +13493,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L211",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_detailcard",
-      "target": "modules_dungeonpages_hintfits",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L907",
+      "source_location": "L180",
       "weight": 1.0
     },
     {
@@ -13613,7 +13505,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L929",
+      "source_location": "L833",
       "weight": 1.0
     },
     {
@@ -13625,7 +13517,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L935",
+      "source_location": "L839",
       "weight": 1.0
     },
     {
@@ -13637,7 +13529,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L938",
+      "source_location": "L842",
       "weight": 1.0
     },
     {
@@ -13649,7 +13541,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1062",
+      "source_location": "L932",
       "weight": 1.0
     },
     {
@@ -13661,7 +13553,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1076",
+      "source_location": "L943",
       "weight": 1.0
     },
     {
@@ -13673,7 +13565,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1084",
+      "source_location": "L951",
       "weight": 1.0
     },
     {
@@ -13685,7 +13577,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L748",
+      "source_location": "L655",
       "weight": 1.0
     },
     {
@@ -13697,43 +13589,43 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L749",
+      "source_location": "L656",
       "weight": 1.0
     },
     {
       "source": "modules_dungeonpages_drawbosses",
-      "target": "modules_dungeonpages_bosstag",
+      "target": "modules_dungeonpages_bosspill",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L785",
+      "source_location": "L688",
       "weight": 1.0
     },
     {
       "source": "modules_dungeonpages_drawbosses",
-      "target": "modules_dungeonpages_bosscard",
+      "target": "modules_dungeonpages_contentwidth",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L793",
+      "source_location": "L692",
       "weight": 1.0
     },
     {
       "source": "modules_dungeonpages_drawbosses",
-      "target": "modules_dungeonpages_placegrid",
+      "target": "modules_dungeonpages_layoutpills",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L795",
+      "source_location": "L692",
       "weight": 1.0
     },
     {
@@ -13745,19 +13637,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L798",
+      "source_location": "L703",
       "weight": 1.0
     },
     {
       "source": "modules_dungeonpages_drawbosses",
-      "target": "modules_dungeonpages_ghostcard",
+      "target": "modules_dungeonpages_ghostpill",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L809",
+      "source_location": "L714",
       "weight": 1.0
     },
     {
@@ -13769,31 +13661,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1258",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_drawdungeon",
-      "target": "modules_dungeonpages_contentwidth",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1262",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_drawdungeon",
-      "target": "modules_dungeonpages_gridlayout",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1263",
+      "source_location": "L1101",
       "weight": 1.0
     },
     {
@@ -13805,7 +13673,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1266",
+      "source_location": "L1102",
       "weight": 1.0
     },
     {
@@ -13817,7 +13685,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1195",
+      "source_location": "L1062",
       "weight": 1.0
     },
     {
@@ -13829,7 +13697,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1205",
+      "source_location": "L1067",
       "weight": 1.0
     },
     {
@@ -13841,7 +13709,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1215",
+      "source_location": "L1072",
       "weight": 1.0
     },
     {
@@ -13853,7 +13721,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1216",
+      "source_location": "L1073",
       "weight": 1.0
     },
     {
@@ -13865,7 +13733,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1227",
+      "source_location": "L1084",
       "weight": 1.0
     },
     {
@@ -13877,7 +13745,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1229",
+      "source_location": "L1086",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_drawhead",
+      "target": "modules_dungeonpages_headstatfits",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L385",
       "weight": 1.0
     },
     {
@@ -13889,19 +13769,31 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L447",
+      "source_location": "L410",
       "weight": 1.0
     },
     {
       "source": "modules_dungeonpages_drawhead",
-      "target": "modules_dungeonpages_metaline",
+      "target": "modules_dungeonpages_mylevel",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L451",
+      "source_location": "L438",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_drawroster",
+      "target": "modules_dungeonpages_hintfits",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L900",
       "weight": 1.0
     },
     {
@@ -13913,19 +13805,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1017",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_drawroster",
-      "target": "modules_dungeonpages_sourcebody",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1024",
+      "source_location": "L902",
       "weight": 1.0
     },
     {
@@ -13937,7 +13817,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1282",
+      "source_location": "L1117",
       "weight": 1.0
     },
     {
@@ -13949,7 +13829,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1305",
+      "source_location": "L1140",
       "weight": 1.0
     },
     {
@@ -13961,7 +13841,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1347",
+      "source_location": "L1182",
       "weight": 1.0
     },
     {
@@ -13973,19 +13853,31 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1354",
+      "source_location": "L1189",
       "weight": 1.0
     },
     {
-      "source": "modules_dungeonpages_ghostcard",
-      "target": "modules_dungeonpages_cardedge",
+      "source": "modules_dungeonpages_ghostpill",
+      "target": "modules_dungeonpages_pilledge",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L658",
+      "source_location": "L584",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_headstatfits",
+      "target": "modules_dungeonpages_mincontentwidth",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L367",
       "weight": 1.0
     },
     {
@@ -13997,7 +13889,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L844",
+      "source_location": "L755",
       "weight": 1.0
     },
     {
@@ -14009,19 +13901,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L313",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_metaline",
-      "target": "modules_dungeonpages_mylevel",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L429",
+      "source_location": "L282",
       "weight": 1.0
     },
     {
@@ -14033,31 +13913,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L731",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_placegrid",
-      "target": "modules_dungeonpages_contentwidth",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L686",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_placegrid",
-      "target": "modules_dungeonpages_gridlayout",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L686",
+      "source_location": "L638",
       "weight": 1.0
     },
     {
@@ -14069,7 +13925,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L716",
+      "source_location": "L623",
       "weight": 1.0
     },
     {
@@ -14081,31 +13937,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L720",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_sourcebody",
-      "target": "modules_dungeonpages_bodyheading",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1001",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_sourcebody",
-      "target": "modules_dungeonpages_bodytext",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1002",
+      "source_location": "L627",
       "weight": 1.0
     },
     {
@@ -14117,7 +13949,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L244",
+      "source_location": "L213",
       "weight": 1.0
     },
     {
@@ -14129,7 +13961,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1541",
+      "source_location": "L1376",
       "weight": 1.0
     },
     {
@@ -15741,13 +15573,13 @@
     },
     {
       "source": "changelog_5_0_0_0_2026_09_18",
-      "target": "changelog_technisch_452",
+      "target": "changelog_technisch_376",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CHANGELOG.md",
-      "source_location": "L452",
+      "source_location": "L376",
       "weight": 1.0
     },
     {
@@ -15758,40 +15590,40 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CHANGELOG.md",
-      "source_location": "L320",
+      "source_location": "L244",
       "weight": 1.0
     },
     {
       "source": "changelog_5_2_0_1_2026_09_21",
-      "target": "changelog_technisch_248",
+      "target": "changelog_technisch_172",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CHANGELOG.md",
-      "source_location": "L248",
+      "source_location": "L172",
       "weight": 1.0
     },
     {
       "source": "changelog_5_2_0_2_2026_09_21",
-      "target": "changelog_technisch_209",
+      "target": "changelog_technisch_133",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CHANGELOG.md",
-      "source_location": "L209",
+      "source_location": "L133",
       "weight": 1.0
     },
     {
       "source": "changelog_5_2_0_3_2026_09_21",
-      "target": "changelog_technisch_173",
+      "target": "changelog_technisch_97",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CHANGELOG.md",
-      "source_location": "L173",
+      "source_location": "L97",
       "weight": 1.0
     },
     {
@@ -15802,29 +15634,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CHANGELOG.md",
-      "source_location": "L128",
-      "weight": 1.0
-    },
-    {
-      "source": "changelog_changelog",
-      "target": "changelog_5_2_0_5_2026_09_22",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "CHANGELOG.md",
-      "source_location": "L12",
-      "weight": 1.0
-    },
-    {
-      "source": "changelog_changelog",
-      "target": "changelog_5_2_0_3_2026_09_21",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "CHANGELOG.md",
-      "source_location": "L148",
+      "source_location": "L52",
       "weight": 1.0
     },
     {
@@ -15835,51 +15645,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CHANGELOG.md",
-      "source_location": "L187",
-      "weight": 1.0
-    },
-    {
-      "source": "changelog_changelog",
-      "target": "changelog_5_2_0_1_2026_09_21",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "CHANGELOG.md",
-      "source_location": "L221",
-      "weight": 1.0
-    },
-    {
-      "source": "changelog_changelog",
-      "target": "changelog_5_2_0_0_2026_09_21",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "CHANGELOG.md",
-      "source_location": "L261",
-      "weight": 1.0
-    },
-    {
-      "source": "changelog_changelog",
-      "target": "changelog_5_1_0_0_2026_09_20",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "CHANGELOG.md",
-      "source_location": "L330",
-      "weight": 1.0
-    },
-    {
-      "source": "changelog_changelog",
-      "target": "changelog_5_0_0_0_2026_09_18",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "CHANGELOG.md",
-      "source_location": "L404",
+      "source_location": "L111",
       "weight": 1.0
     },
     {
@@ -15890,7 +15656,62 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CHANGELOG.md",
-      "source_location": "L88",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "changelog_changelog",
+      "target": "changelog_5_2_0_1_2026_09_21",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CHANGELOG.md",
+      "source_location": "L145",
+      "weight": 1.0
+    },
+    {
+      "source": "changelog_changelog",
+      "target": "changelog_5_2_0_0_2026_09_21",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CHANGELOG.md",
+      "source_location": "L185",
+      "weight": 1.0
+    },
+    {
+      "source": "changelog_changelog",
+      "target": "changelog_5_1_0_0_2026_09_20",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CHANGELOG.md",
+      "source_location": "L254",
+      "weight": 1.0
+    },
+    {
+      "source": "changelog_changelog",
+      "target": "changelog_5_0_0_0_2026_09_18",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CHANGELOG.md",
+      "source_location": "L328",
+      "weight": 1.0
+    },
+    {
+      "source": "changelog_changelog",
+      "target": "changelog_5_2_0_3_2026_09_21",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CHANGELOG.md",
+      "source_location": "L72",
       "weight": 1.0
     },
     {
@@ -15912,7 +15733,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CLAUDE.md",
-      "source_location": "L172",
+      "source_location": "L167",
       "weight": 1.0
     },
     {
@@ -15923,7 +15744,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CLAUDE.md",
-      "source_location": "L188",
+      "source_location": "L183",
       "weight": 1.0
     },
     {
@@ -15934,7 +15755,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "CLAUDE.md",
-      "source_location": "L218",
+      "source_location": "L213",
       "weight": 1.0
     },
     {
@@ -19223,7 +19044,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L461",
+      "source_location": "L354",
       "weight": 1.0
     },
     {
@@ -19234,7 +19055,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L470",
+      "source_location": "L363",
       "weight": 1.0
     },
     {
@@ -19245,7 +19066,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L487",
+      "source_location": "L380",
       "weight": 1.0
     },
     {
@@ -19256,7 +19077,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L500",
+      "source_location": "L393",
       "weight": 1.0
     },
     {
@@ -19267,106 +19088,62 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L513",
+      "source_location": "L406",
       "weight": 1.0
     },
     {
-      "source": "docs_systems_dungeons_die_seite_drei_ebenen_zwei_zust\u00e4nde",
-      "target": "docs_systems_dungeons_zwei_zust\u00e4nde_eine_struktur",
+      "source": "docs_systems_dungeons_die_seite_drei_fl\u00e4chen_eine_leserichtung",
+      "target": "docs_systems_dungeons_die_bosszahl_steht_an_genau_einer_stelle",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L192",
+      "source_location": "L197",
       "weight": 1.0
     },
     {
-      "source": "docs_systems_dungeons_die_seite_drei_ebenen_zwei_zust\u00e4nde",
-      "target": "docs_systems_dungeons_karten_statt_pillen_und_warum",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/systems/dungeons.md",
-      "source_location": "L219",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_systems_dungeons_die_seite_drei_ebenen_zwei_zust\u00e4nde",
-      "target": "docs_systems_dungeons_die_spaltenzahl_ist_gerechnet_nicht_gesetzt",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/systems/dungeons.md",
-      "source_location": "L242",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_systems_dungeons_die_seite_drei_ebenen_zwei_zust\u00e4nde",
-      "target": "docs_systems_dungeons_der_dungeonkontext_steht_in_einer_zeile",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/systems/dungeons.md",
-      "source_location": "L266",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_systems_dungeons_die_seite_drei_ebenen_zwei_zust\u00e4nde",
+      "source": "docs_systems_dungeons_die_seite_drei_fl\u00e4chen_eine_leserichtung",
       "target": "docs_systems_dungeons_der_detailbereich_rechts_wo_er_passt",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L308",
+      "source_location": "L221",
       "weight": 1.0
     },
     {
-      "source": "docs_systems_dungeons_die_seite_drei_ebenen_zwei_zust\u00e4nde",
-      "target": "docs_systems_dungeons_die_herkunft_steht_in_jedem_zustand_genau_einmal_sichtbar",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/systems/dungeons.md",
-      "source_location": "L356",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_systems_dungeons_die_seite_drei_ebenen_zwei_zust\u00e4nde",
+      "source": "docs_systems_dungeons_die_seite_drei_fl\u00e4chen_eine_leserichtung",
       "target": "docs_systems_dungeons_die_spalte_l\u00e4uft_nicht_\u00fcber_und_die_seite_auch_nicht",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L375",
+      "source_location": "L272",
       "weight": 1.0
     },
     {
-      "source": "docs_systems_dungeons_die_seite_drei_ebenen_zwei_zust\u00e4nde",
+      "source": "docs_systems_dungeons_die_seite_drei_fl\u00e4chen_eine_leserichtung",
       "target": "docs_systems_dungeons_ein_fl\u00fcgel_darf_keinen_boss_verlieren",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L420",
+      "source_location": "L313",
       "weight": 1.0
     },
     {
-      "source": "docs_systems_dungeons_die_seite_drei_ebenen_zwei_zust\u00e4nde",
+      "source": "docs_systems_dungeons_die_seite_drei_fl\u00e4chen_eine_leserichtung",
       "target": "docs_systems_dungeons_die_eigene_stufe",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L427",
+      "source_location": "L320",
       "weight": 1.0
     },
     {
@@ -19404,7 +19181,7 @@
     },
     {
       "source": "docs_systems_dungeons_dungeons_und_rollen",
-      "target": "docs_systems_dungeons_die_seite_drei_ebenen_zwei_zust\u00e4nde",
+      "target": "docs_systems_dungeons_die_seite_drei_fl\u00e4chen_eine_leserichtung",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -19432,7 +19209,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L436",
+      "source_location": "L329",
+      "weight": 1.0
+    },
+    {
+      "source": "docs_systems_dungeons_dungeons_und_rollen",
+      "target": "docs_systems_dungeons_was_wo_sitzt",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/systems/dungeons.md",
+      "source_location": "L414",
       "weight": 1.0
     },
     {
@@ -19444,17 +19232,6 @@
       "confidence_score": 1.0,
       "source_file": "docs/systems/dungeons.md",
       "source_location": "L46",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_systems_dungeons_dungeons_und_rollen",
-      "target": "docs_systems_dungeons_was_wo_sitzt",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/systems/dungeons.md",
-      "source_location": "L521",
       "weight": 1.0
     },
     {
@@ -19476,7 +19253,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L541",
+      "source_location": "L434",
       "weight": 1.0
     },
     {
@@ -19487,7 +19264,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L571",
+      "source_location": "L463",
       "weight": 1.0
     },
     {
@@ -22000,57 +21777,13 @@
     },
     {
       "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_drawroster",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1016",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_drawbossdetail",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1048",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_clearrows",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L109",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_dungeoninspector",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1126",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages",
       "target": "modules_dungeonpages_drawdungeonat",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1194",
+      "source_location": "L1061",
       "weight": 1.0
     },
     {
@@ -22061,7 +21794,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1257",
+      "source_location": "L1100",
       "weight": 1.0
     },
     {
@@ -22072,29 +21805,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1281",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_instanceitem",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1407",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_summonrow",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1433",
+      "source_location": "L1116",
       "weight": 1.0
     },
     {
@@ -22105,7 +21816,29 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L145",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages",
+      "target": "modules_dungeonpages_instanceitem",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L1242",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages",
+      "target": "modules_dungeonpages_summonrow",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L1268",
       "weight": 1.0
     },
     {
@@ -22116,7 +21849,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1508",
+      "source_location": "L1343",
       "weight": 1.0
     },
     {
@@ -22127,7 +21860,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1532",
+      "source_location": "L1367",
       "weight": 1.0
     },
     {
@@ -22138,7 +21871,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L200",
+      "source_location": "L169",
       "weight": 1.0
     },
     {
@@ -22149,7 +21882,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L208",
+      "source_location": "L177",
       "weight": 1.0
     },
     {
@@ -22160,7 +21893,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L218",
+      "source_location": "L187",
       "weight": 1.0
     },
     {
@@ -22171,7 +21904,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L226",
+      "source_location": "L195",
       "weight": 1.0
     },
     {
@@ -22182,7 +21915,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L239",
+      "source_location": "L208",
       "weight": 1.0
     },
     {
@@ -22193,7 +21926,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L243",
+      "source_location": "L212",
       "weight": 1.0
     },
     {
@@ -22204,7 +21937,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L248",
+      "source_location": "L217",
       "weight": 1.0
     },
     {
@@ -22215,7 +21948,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L260",
+      "source_location": "L229",
       "weight": 1.0
     },
     {
@@ -22226,18 +21959,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L267",
+      "source_location": "L236",
       "weight": 1.0
     },
     {
       "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_cardedge",
+      "target": "modules_dungeonpages_pilledge",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L301",
+      "source_location": "L270",
       "weight": 1.0
     },
     {
@@ -22248,7 +21981,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L308",
+      "source_location": "L277",
       "weight": 1.0
     },
     {
@@ -22259,7 +21992,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L320",
+      "source_location": "L289",
       "weight": 1.0
     },
     {
@@ -22270,18 +22003,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L345",
+      "source_location": "L314",
       "weight": 1.0
     },
     {
       "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_metaline",
+      "target": "modules_dungeonpages_headstatfits",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L400",
+      "source_location": "L366",
       "weight": 1.0
     },
     {
@@ -22292,62 +22025,40 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L446",
+      "source_location": "L372",
       "weight": 1.0
     },
     {
       "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_bosstag",
+      "target": "modules_dungeonpages_bosspill",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L527",
+      "source_location": "L468",
       "weight": 1.0
     },
     {
       "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_gridlayout",
+      "target": "modules_dungeonpages_ghostpill",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L540",
+      "source_location": "L579",
       "weight": 1.0
     },
     {
       "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_bosscard",
+      "target": "modules_dungeonpages_layoutpills",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L549",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_ghostcard",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L653",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_placegrid",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L670",
+      "source_location": "L598",
       "weight": 1.0
     },
     {
@@ -22358,7 +22069,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L709",
+      "source_location": "L616",
       "weight": 1.0
     },
     {
@@ -22369,7 +22080,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L729",
+      "source_location": "L636",
       "weight": 1.0
     },
     {
@@ -22380,7 +22091,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L741",
+      "source_location": "L648",
       "weight": 1.0
     },
     {
@@ -22391,7 +22102,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L843",
+      "source_location": "L754",
       "weight": 1.0
     },
     {
@@ -22402,7 +22113,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L877",
+      "source_location": "L783",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages",
+      "target": "modules_dungeonpages_clearrows",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L87",
       "weight": 1.0
     },
     {
@@ -22413,7 +22135,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L966",
+      "source_location": "L870",
       "weight": 1.0
     },
     {
@@ -22424,18 +22146,40 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L973",
+      "source_location": "L877",
       "weight": 1.0
     },
     {
       "source": "modules_dungeonpages",
-      "target": "modules_dungeonpages_sourcebody",
+      "target": "modules_dungeonpages_drawroster",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L998",
+      "source_location": "L895",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages",
+      "target": "modules_dungeonpages_drawbossdetail",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L918",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages",
+      "target": "modules_dungeonpages_dungeoninspector",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L993",
       "weight": 1.0
     },
     {
@@ -26050,7 +25794,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L967",
+      "source_location": "L871",
       "weight": 1.0
     },
     {
@@ -26062,35 +25806,11 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L975",
+      "source_location": "L879",
       "weight": 1.0
     },
     {
-      "source": "modules_dungeonpages_bosscard",
-      "target": "core_ui_weintcodex_createsurface",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L550",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_bosscard",
-      "target": "core_ui_weintcodex_eyebrow",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L584",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_bosstag",
+      "source": "modules_dungeonpages_bosspill",
       "target": "data_roles_weintcodex_roles_hastips",
       "relation": "calls",
       "_origin": "ast",
@@ -26098,7 +25818,31 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L532",
+      "source_location": "L474",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_bosspill",
+      "target": "core_ui_weintcodex_createsurface",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L478",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_bosspill",
+      "target": "core_ui_weintcodex_upper",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L509",
       "weight": 1.0
     },
     {
@@ -26110,7 +25854,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L321",
+      "source_location": "L290",
       "weight": 1.0
     },
     {
@@ -26122,7 +25866,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L323",
+      "source_location": "L292",
       "weight": 1.0
     },
     {
@@ -26134,7 +25878,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L324",
+      "source_location": "L293",
       "weight": 1.0
     },
     {
@@ -26146,7 +25890,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L332",
+      "source_location": "L301",
       "weight": 1.0
     },
     {
@@ -26158,7 +25902,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L878",
+      "source_location": "L784",
       "weight": 1.0
     },
     {
@@ -26170,7 +25914,19 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L885",
+      "source_location": "L791",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_detailcard",
+      "target": "core_ui_weintcodex_label",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L808",
       "weight": 1.0
     },
     {
@@ -26182,19 +25938,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L909",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_detailcard",
-      "target": "core_ui_weintcodex_utf8len",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L912",
+      "source_location": "L817",
       "weight": 1.0
     },
     {
@@ -26206,7 +25950,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L925",
+      "source_location": "L829",
       "weight": 1.0
     },
     {
@@ -26218,7 +25962,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1086",
+      "source_location": "L953",
       "weight": 1.0
     },
     {
@@ -26230,7 +25974,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1104",
+      "source_location": "L971",
       "weight": 1.0
     },
     {
@@ -26242,7 +25986,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L742",
+      "source_location": "L649",
       "weight": 1.0
     },
     {
@@ -26254,7 +25998,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L743",
+      "source_location": "L650",
       "weight": 1.0
     },
     {
@@ -26266,7 +26010,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L747",
+      "source_location": "L654",
       "weight": 1.0
     },
     {
@@ -26278,7 +26022,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L749",
+      "source_location": "L656",
       "weight": 1.0
     },
     {
@@ -26290,7 +26034,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L758",
+      "source_location": "L666",
       "weight": 1.0
     },
     {
@@ -26302,19 +26046,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L765",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_drawbosses",
-      "target": "core_ui_weintcodex_utf8len",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L786",
+      "source_location": "L673",
       "weight": 1.0
     },
     {
@@ -26326,7 +26058,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1210",
+      "source_location": "L1067",
       "weight": 1.0
     },
     {
@@ -26338,7 +26070,43 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1212",
+      "source_location": "L1069",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_drawhead",
+      "target": "data_dungeons_d_levelrange",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L373",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_drawhead",
+      "target": "data_dungeons_d_hasbosses",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L374",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_drawhead",
+      "target": "data_dungeons_d_bosscount",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L375",
       "weight": 1.0
     },
     {
@@ -26350,7 +26118,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L452",
+      "source_location": "L411",
       "weight": 1.0
     },
     {
@@ -26362,7 +26130,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L462",
+      "source_location": "L414",
       "weight": 1.0
     },
     {
@@ -26374,7 +26142,19 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L463",
+      "source_location": "L415",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_drawhead",
+      "target": "data_dungeons_d_zonelabel",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L416",
       "weight": 1.0
     },
     {
@@ -26386,7 +26166,43 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L470",
+      "source_location": "L428",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_drawhead",
+      "target": "data_dungeons_d_fitslevel",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L439",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_drawhead",
+      "target": "core_ui_weintcodex_eyebrow",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L453",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_drawroster",
+      "target": "data_dungeons_d_hasbosses",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L899",
       "weight": 1.0
     },
     {
@@ -26398,7 +26214,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1022",
+      "source_location": "L908",
       "weight": 1.0
     },
     {
@@ -26410,7 +26226,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1288",
+      "source_location": "L1123",
       "weight": 1.0
     },
     {
@@ -26422,7 +26238,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1290",
+      "source_location": "L1125",
       "weight": 1.0
     },
     {
@@ -26434,7 +26250,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1292",
+      "source_location": "L1127",
       "weight": 1.0
     },
     {
@@ -26446,7 +26262,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1321",
+      "source_location": "L1156",
       "weight": 1.0
     },
     {
@@ -26458,7 +26274,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1324",
+      "source_location": "L1159",
       "weight": 1.0
     },
     {
@@ -26470,7 +26286,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1341",
+      "source_location": "L1176",
       "weight": 1.0
     },
     {
@@ -26482,7 +26298,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1343",
+      "source_location": "L1178",
       "weight": 1.0
     },
     {
@@ -26494,55 +26310,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1356",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_dungeoninspector",
-      "target": "data_dungeons_d_hasbosses",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1127",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_dungeoninspector",
-      "target": "data_dungeons_d_bosscount",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1128",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_dungeoninspector",
-      "target": "data_dungeons_d_bosssource",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1129",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_dungeoninspector",
-      "target": "data_dungeons_d_levelrange",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1130",
+      "source_location": "L1191",
       "weight": 1.0
     },
     {
@@ -26554,7 +26322,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1148",
+      "source_location": "L1015",
       "weight": 1.0
     },
     {
@@ -26566,7 +26334,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1163",
+      "source_location": "L1030",
       "weight": 1.0
     },
     {
@@ -26578,7 +26346,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1165",
+      "source_location": "L1032",
       "weight": 1.0
     },
     {
@@ -26590,11 +26358,59 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1174",
+      "source_location": "L1041",
       "weight": 1.0
     },
     {
-      "source": "modules_dungeonpages_ghostcard",
+      "source": "modules_dungeonpages_dungeoninspector",
+      "target": "data_dungeons_d_hasbosses",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L994",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_dungeoninspector",
+      "target": "data_dungeons_d_bosscount",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L995",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_dungeoninspector",
+      "target": "data_dungeons_d_bosssource",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L996",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_dungeoninspector",
+      "target": "data_dungeons_d_levelrange",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L997",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_ghostpill",
       "target": "core_ui_weintcodex_createsurface",
       "relation": "calls",
       "_origin": "ast",
@@ -26602,7 +26418,19 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L654",
+      "source_location": "L580",
+      "weight": 1.0
+    },
+    {
+      "source": "modules_dungeonpages_headstatfits",
+      "target": "core_ui_weintcodex_utf8len",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "context": "call",
+      "source_file": "modules/dungeonpages.lua",
+      "source_location": "L368",
       "weight": 1.0
     },
     {
@@ -26614,7 +26442,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L845",
+      "source_location": "L756",
       "weight": 1.0
     },
     {
@@ -26626,7 +26454,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L311",
+      "source_location": "L280",
       "weight": 1.0
     },
     {
@@ -26638,7 +26466,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1408",
+      "source_location": "L1243",
       "weight": 1.0
     },
     {
@@ -26650,79 +26478,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1409",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_metaline",
-      "target": "data_dungeons_d_zonelabel",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L403",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_metaline",
-      "target": "data_dungeons_d_levelrange",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L406",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_metaline",
-      "target": "data_dungeons_d_hasbosses",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L413",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_metaline",
-      "target": "data_dungeons_d_bosscount",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L414",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_metaline",
-      "target": "data_dungeons_d_fitslevel",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L430",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_metaline",
-      "target": "core_ui_weintcodex_colortext",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L440",
+      "source_location": "L1244",
       "weight": 1.0
     },
     {
@@ -26734,7 +26490,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L201",
+      "source_location": "L170",
       "weight": 1.0
     },
     {
@@ -26746,7 +26502,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L730",
+      "source_location": "L637",
       "weight": 1.0
     },
     {
@@ -26758,7 +26514,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L710",
+      "source_location": "L617",
       "weight": 1.0
     },
     {
@@ -26770,7 +26526,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L714",
+      "source_location": "L621",
       "weight": 1.0
     },
     {
@@ -26782,55 +26538,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L718",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_sourcebody",
-      "target": "data_sources_s_label",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1002",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_sourcebody",
-      "target": "data_sources_s_why",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1003",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_sourcebody",
-      "target": "data_dungeons_classic_d_islegacy",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1006",
-      "weight": 1.0
-    },
-    {
-      "source": "modules_dungeonpages_sourcebody",
-      "target": "data_dungeons_d_bosssource",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "context": "call",
-      "source_file": "modules/dungeonpages.lua",
-      "source_location": "L999",
+      "source_location": "L625",
       "weight": 1.0
     },
     {
@@ -26842,7 +26550,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1436",
+      "source_location": "L1271",
       "weight": 1.0
     },
     {
@@ -26854,7 +26562,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L261",
+      "source_location": "L230",
       "weight": 1.0
     },
     {
@@ -26866,7 +26574,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1526",
+      "source_location": "L1361",
       "weight": 1.0
     },
     {
@@ -26878,7 +26586,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "modules/dungeonpages.lua",
-      "source_location": "L1544",
+      "source_location": "L1379",
       "weight": 1.0
     },
     {
@@ -28658,7 +28366,7 @@
       "weight": 1.0
     },
     {
-      "source": "changelog_technisch_173",
+      "source": "changelog_technisch_133",
       "target": "core_navigation_buildcolumn",
       "relation": "references",
       "_origin": "ast",
@@ -28666,11 +28374,11 @@
       "confidence_score": 0.95,
       "context": "BuildColumn",
       "source_file": "CHANGELOG.md",
-      "source_location": "L175",
+      "source_location": "L135",
       "weight": 1.0
     },
     {
-      "source": "changelog_technisch_209",
+      "source": "changelog_technisch_97",
       "target": "core_navigation_buildcolumn",
       "relation": "references",
       "_origin": "ast",
@@ -28678,7 +28386,7 @@
       "confidence_score": 0.95,
       "context": "BuildColumn",
       "source_file": "CHANGELOG.md",
-      "source_location": "L211",
+      "source_location": "L99",
       "weight": 1.0
     },
     {
@@ -28706,7 +28414,19 @@
       "weight": 1.0
     },
     {
-      "source": "changelog_technisch_173",
+      "source": "docs_systems_dungeons_der_detailbereich_rechts_wo_er_passt",
+      "target": "modules_dungeonpages_detailcard",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "context": "DetailCard",
+      "source_file": "docs/systems/dungeons.md",
+      "source_location": "L239",
+      "weight": 1.0
+    },
+    {
+      "source": "changelog_technisch_97",
       "target": "modules_dungeonpages_drawdungeon",
       "relation": "references",
       "_origin": "ast",
@@ -28714,19 +28434,7 @@
       "confidence_score": 0.95,
       "context": "DrawDungeon",
       "source_file": "CHANGELOG.md",
-      "source_location": "L179",
-      "weight": 1.0
-    },
-    {
-      "source": "claude_critical_invariants_always_relevant_keep_in_mind_for_any_change",
-      "target": "modules_dungeonpages_drawdungeon",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.95,
-      "context": "DrawDungeon",
-      "source_file": "CLAUDE.md",
-      "source_location": "L133",
+      "source_location": "L103",
       "weight": 1.0
     },
     {
@@ -28738,7 +28446,7 @@
       "confidence_score": 0.95,
       "context": "DrawDungeon",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L320",
+      "source_location": "L243",
       "weight": 1.0
     },
     {
@@ -28750,7 +28458,7 @@
       "confidence_score": 0.95,
       "context": "DrawDungeonAt",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L349",
+      "source_location": "L256",
       "weight": 1.0
     },
     {
@@ -28790,27 +28498,27 @@
       "weight": 1.0
     },
     {
-      "source": "claude_critical_invariants_always_relevant_keep_in_mind_for_any_change",
-      "target": "modules_dungeonpages_gridlayout",
+      "source": "changelog_technisch",
+      "target": "modules_dungeonpages_headstatfits",
       "relation": "references",
       "_origin": "ast",
       "confidence": "INFERRED",
       "confidence_score": 0.95,
-      "context": "GridLayout",
-      "source_file": "CLAUDE.md",
-      "source_location": "L128",
+      "context": "HeadStatFits()",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L61",
       "weight": 1.0
     },
     {
-      "source": "changelog_5_2_0_5_2026_09_22",
-      "target": "modules_dungeonpages_gridlayout",
+      "source": "docs_systems_dungeons_die_bosszahl_steht_an_genau_einer_stelle",
+      "target": "modules_dungeonpages_headstatfits",
       "relation": "references",
       "_origin": "ast",
       "confidence": "INFERRED",
       "confidence_score": 0.95,
-      "context": "GridLayout()",
-      "source_file": "CHANGELOG.md",
-      "source_location": "L30",
+      "context": "HeadStatFits()",
+      "source_file": "docs/systems/dungeons.md",
+      "source_location": "L202",
       "weight": 1.0
     },
     {
@@ -28822,11 +28530,11 @@
       "confidence_score": 0.95,
       "context": "HintFits()",
       "source_file": "CHANGELOG.md",
-      "source_location": "L137",
+      "source_location": "L61",
       "weight": 1.0
     },
     {
-      "source": "docs_systems_dungeons_zwei_zust\u00e4nde_eine_struktur",
+      "source": "docs_systems_dungeons_die_bosszahl_steht_an_genau_einer_stelle",
       "target": "modules_dungeonpages_hintfits",
       "relation": "references",
       "_origin": "ast",
@@ -28834,7 +28542,7 @@
       "confidence_score": 0.95,
       "context": "HintFits()",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L200",
+      "source_location": "L216",
       "weight": 1.0
     },
     {
@@ -28846,11 +28554,11 @@
       "confidence_score": 0.95,
       "context": "MinContentWidth",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L348",
+      "source_location": "L255",
       "weight": 1.0
     },
     {
-      "source": "changelog_technisch_173",
+      "source": "changelog_technisch_97",
       "target": "modules_dungeonpages_mincontentwidth",
       "relation": "references",
       "_origin": "ast",
@@ -28858,7 +28566,7 @@
       "confidence_score": 0.95,
       "context": "MinContentWidth()",
       "source_file": "CHANGELOG.md",
-      "source_location": "L177",
+      "source_location": "L101",
       "weight": 1.0
     },
     {
@@ -28882,19 +28590,31 @@
       "confidence_score": 0.95,
       "context": "ParseBossImport",
       "source_file": "docs/systems/dungeons.md",
-      "source_location": "L475",
+      "source_location": "L368",
       "weight": 1.0
     },
     {
-      "source": "docs_systems_dungeons_die_spaltenzahl_ist_gerechnet_nicht_gesetzt",
-      "target": "modules_dungeonpages_placegrid",
+      "source": "changelog_technisch_133",
+      "target": "modules_dungeonpages_pilledge",
       "relation": "references",
       "_origin": "ast",
       "confidence": "INFERRED",
       "confidence_score": 0.95,
-      "context": "PlaceGrid",
-      "source_file": "docs/systems/dungeons.md",
-      "source_location": "L261",
+      "context": "PillEdge",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L141",
+      "weight": 1.0
+    },
+    {
+      "source": "changelog_technisch",
+      "target": "modules_dungeonpages_pilledge",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "context": "PillEdge()",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L65",
       "weight": 1.0
     },
     {
@@ -28934,30 +28654,6 @@
       "weight": 1.0
     },
     {
-      "source": "docs_systems_dungeons_der_detailbereich_rechts_wo_er_passt",
-      "target": "modules_dungeonpages_sourcebody",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.95,
-      "context": "SourceBody",
-      "source_file": "docs/systems/dungeons.md",
-      "source_location": "L334",
-      "weight": 1.0
-    },
-    {
-      "source": "docs_systems_dungeons_die_herkunft_steht_in_jedem_zustand_genau_einmal_sichtbar",
-      "target": "modules_dungeonpages_sourcebody",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.95,
-      "context": "SourceBody",
-      "source_file": "docs/systems/dungeons.md",
-      "source_location": "L359",
-      "weight": 1.0
-    },
-    {
       "source": "claude_critical_invariants_always_relevant_keep_in_mind_for_any_change",
       "target": "core_ui_spaced",
       "relation": "references",
@@ -28966,7 +28662,7 @@
       "confidence_score": 0.95,
       "context": "Spaced",
       "source_file": "CLAUDE.md",
-      "source_location": "L144",
+      "source_location": "L139",
       "weight": 1.0
     },
     {
@@ -29007,5 +28703,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "8fe727fe6bfa7021b4c0b26495d82118fdaa885f"
+  "built_at_commit": "8652963473fe1490d9c022f0486a266ec4a4c0fd"
 }

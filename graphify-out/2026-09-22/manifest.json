@@ -24,9 +24,9 @@
     "semantic_hash": ""
   },
   "WeintCodex.toc": {
-    "mtime": 1790083054.4431026,
-    "seen": 1790083250.1724436,
-    "ast_hash": "79d313f725e000b5513383819a443d27",
+    "mtime": 1790080913.6384451,
+    "seen": 1790081005.4401875,
+    "ast_hash": "b9751cd74accd631206cc05500f0f56c",
     "semantic_hash": ""
   },
   "core/access.lua": {
@@ -36,9 +36,9 @@
     "semantic_hash": "22cae2ced786df8a3f1a15b4634f0853"
   },
   "core/main.lua": {
-    "mtime": 1790083054.4437087,
-    "seen": 1790083250.1724458,
-    "ast_hash": "3ac36c198c50fdf10516ed3c3a5e890e",
+    "mtime": 1790080913.6385303,
+    "seen": 1790081005.4401884,
+    "ast_hash": "2ad201cce8a8b5d244fa9943a09cf28c",
     "semantic_hash": ""
   },
   "core/minimap.lua": {
@@ -78,9 +78,9 @@
     "semantic_hash": ""
   },
   "data/changelog.lua": {
-    "mtime": 1790083088.8100457,
-    "seen": 1790083250.17245,
-    "ast_hash": "04197e28087dcd5745fd4b693f6c045d",
+    "mtime": 1790080913.6386244,
+    "seen": 1790081005.4401927,
+    "ast_hash": "4458417f8855dc8199a8e4ce56b96983",
     "semantic_hash": ""
   },
   "data/companion_live.lua": {
@@ -186,9 +186,9 @@
     "semantic_hash": "3ee5c82b08a5635b1ffc679f65756408"
   },
   "modules/dungeonpages.lua": {
-    "mtime": 1790083234.3300471,
-    "seen": 1790083250.1724603,
-    "ast_hash": "a99c33513d4fbf49400cf70555efd577",
+    "mtime": 1790080895.2742164,
+    "seen": 1790081005.4402022,
+    "ast_hash": "00b418e5fc2e1d4fc1dc43170a1ea4a1",
     "semantic_hash": ""
   },
   "modules/encounter_tracking.lua": {
@@ -270,15 +270,15 @@
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1790083088.8102624,
-    "seen": 1790083250.1724677,
-    "ast_hash": "d635a6a788ee267066570d94a883ce77",
+    "mtime": 1790080938.8538148,
+    "seen": 1790081005.44021,
+    "ast_hash": "98924dc46e9b20df141ca63507a1ae7b",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1790083184.1505125,
-    "seen": 1790083250.172468,
-    "ast_hash": "4df748ce90e8826181b44a3b45bfadcd",
+    "mtime": 1789997981.3022573,
+    "seen": 1790081005.440211,
+    "ast_hash": "80fd705d7cc42267f4e8e1ded7c03587",
     "semantic_hash": ""
   },
   "README.md": {
@@ -288,9 +288,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/overview.md": {
-    "mtime": 1790083174.0273354,
-    "seen": 1790083250.1724691,
-    "ast_hash": "6ba7294e85c03ecb47ce053193edc163",
+    "mtime": 1790080982.703768,
+    "seen": 1790081005.440212,
+    "ast_hash": "436b39116ddaa8d9379f2c3f45560eb8",
     "semantic_hash": ""
   },
   "docs/development/releases.md": {
@@ -318,9 +318,9 @@
     "semantic_hash": ""
   },
   "docs/systems/dungeons.md": {
-    "mtime": 1790083166.7480514,
-    "seen": 1790083250.1724718,
-    "ast_hash": "afff337bbfad09451d2687d2d99ad548",
+    "mtime": 1790080982.6977,
+    "seen": 1790081005.4402149,
+    "ast_hash": "054492c42d295699e46ce42c6698a6bf",
     "semantic_hash": ""
   },
   "docs/systems/groupcheck.md": {

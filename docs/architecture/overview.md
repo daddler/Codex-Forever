@@ -131,9 +131,9 @@ nicht Platz, sondern Orientierung: *wo bin ich* ist auf zwei Ebenen zu
 beantworten (in welcher Instanz, an welchem Boss), und beide Antworten
 stehen damit gleichzeitig und dauerhaft da statt nacheinander in einer
 Brotkrume. Die Dungeonseite beantwortet die zweite Ebene auf der Seite
-selbst (die aktive Pille der Bosszeile) und führt in der Spalte nur
-Dungeons — eine Liste, die man auf der Seite sieht, steht nicht noch
-einmal links.
+selbst (die ausgewählte Karte im Bossraster) und führt in der Spalte
+nur Dungeons — eine Liste, die man auf der Seite sieht, steht nicht
+noch einmal links.
 
 | Feld | Wirkung |
 |---|---|

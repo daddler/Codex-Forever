@@ -9,6 +9,82 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [5.2.0.5] – 2026-09-22
+
+**Die Dungeonseite ist neu geordnet — drei Ebenen statt acht
+gleichberechtigter Einzelteile.** Titel, Metadaten, Bosszahl,
+Stufenhinweis, Herkunftsvorsatz, Bosszeile, Aufstellung und eine
+leere Detailkarte standen bis 5.2.0.4 nebeneinander, ohne dass eines
+davon wichtiger aussah als das andere. Jetzt liest sich die Seite in
+drei Stufen: **Dungeonkontext**, **Bosse**, **ergänzende Auskünfte**.
+
+**Die Bosse sind ein Raster aus Karten, keine Kette aus Pillen.** Eine
+Reihe schmaler, gerundeter Schaltflächen ist das Bild, mit dem jede
+Oberfläche „hier wechselst du die Ansicht" sagt — was der Dungeon
+*enthält*, sah damit aus wie ein Bedienelement. Eine Karte trägt die
+Nummer oben links (nur wo die Reihenfolge bekannt ist), das
+Kennzeichen oben rechts (`BESCHWÖREN` > `OPTIONAL` > `TIPPS`) und den
+Namen darunter in Lesegrösse.
+
+Wie viele Spalten das Raster bekommt, ist **gerechnet, nicht gesetzt**
+(`GridLayout()`): drei, solange eine Karte darin noch 150 px breit ist
+*und* der längste Name der gezeigten Liste ganz hineinpasst — sonst
+zwei, sonst eine. *Blackrock Depths* hat Bosse mit 26 Zeichen; in
+210 px stünden die nicht, sondern endeten in einem abgeschnittenen
+Wort. Gerechnet wird mit derselben Kennzahl wie überall (0,60 em je
+Zeichen), damit Spiel und Prüflauf dasselbe Raster bauen. Beim
+Vergrössern des Fensters rücken die Karten still nach; neu gezeichnet
+wird die Seite nur, wenn die Spaltenzahl wirklich kippt.
+
+**Der Dungeonkontext steht in einer Zeile, nicht an vier Stellen.**
+Gebiet, Stufenbereich, Gruppengrösse, Bosszahl und — wenn der Client
+eine Stufe nennt — ob sie passt. Die Kennzahl rechts oben (*BOSSE 9*)
+ist damit weg: sie stand so weit von allem anderen entfernt, dass sie
+zu keiner Auskunft mehr gehörte, und weil ihr Platz je nach Titel
+wechselte, gab es drei Rechnungen dafür, wo eine Zahl hingehört. Die
+Zeile ist ein umbrechender Absatz und keine freilaufende Zeile — bei
+offenem Detailbereich bleiben dem Kopf 232 px. Die Kennzeichnung
+darüber ist auf ein Wort zusammengezogen (*CLASSIC* / *FOREVER*); das
+Gebiet stand dort gesperrt und versal mit drin und lief aus dem Kopf
+heraus.
+
+**Die Aufstellung dominiert nicht mehr.** Sie steht als dritte Ebene
+unter den Bossen — und wo die Seite in voller Breite steht, trägt
+dieselbe Karte darunter, **woher die Bossliste stammt**, im Klartext
+statt nur im Tooltip. Ist der Detailbereich rechts offen, steht es
+dort; zweimal derselbe Absatz nebeneinander wäre keine Betonung. So
+steht die Herkunft in **jedem** Zustand der Seite genau einmal
+sichtbar.
+
+**Der ausgewählte Boss ersetzt die Übersicht nicht.** Das Raster
+bleibt stehen, die angeklickte Karte trägt einen Akzentbalken an der
+linken Kante, und der Kartenkopf darunter trägt die Einordnung
+(*BOSS 03 · SCARLET · OPTIONAL*), den Namen und rechts den Weg
+zurück — beschriftet, wo er danebenpasst, sonst als Kreuz an
+derselben Stelle.
+
+**Weggefallen: „Ein Klick auf einen Boss zeigt ihn hier".** Der
+Wegweiser aus 5.2.0.4 stand im Kopf einer Karte, die ohne Boss nichts
+anderes zu sagen hatte, und beschrieb damit vor allem ihre eigene
+Leere. Eine Karte, die Aufstellung *und* Herkunft trägt, braucht
+keine Bedienungsanleitung.
+
+**Der Detailbereich rechts hat einen zweiten Grund bekommen, zu
+weichen.** Bis 5.2.0.4 wich er nur, wenn die Seite sonst nicht ins
+Budget passte. Jetzt weicht er auch, wenn das Raster dadurch auf
+**eine** Spalte fiele, in voller Breite aber mehr bekäme: 232 px
+tragen eine Karte je Zeile, und eine Spalte ist keine Übersicht,
+sondern eine Liste. Im voreingestellten Fenster (1500 px) greift das
+nicht — dort bleiben dem Inhalt auch mit Bereich 552 px, und das sind
+drei Spalten. Ein Detailbereich **ohne Inhalt** nimmt ausserdem keine
+Breite mehr: für die Dungeons ohne Bestand und ohne Herkunft reservierte
+die Seite bisher 420 px für einen Bereich, der nichts zeigte.
+
+Gemessen (kleinstes zulässiges Fenster, 1180 × 780): schlimmster Fall
+**716 von 716 px** — die Kontextkarte füllt bis zum Rand und rollt,
+der vorgesehene Fall. Die Spalte links ist unverändert bei **642 von
+716 px**.
+
 ## [5.2.0.4] – 2026-09-22
 
 **Die Dungeonnamen in der Spalte stehen wieder vollständig da.** Das
