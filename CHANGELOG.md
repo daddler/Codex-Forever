@@ -9,6 +9,104 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [5.2.0.7] – 2026-09-22
+
+**Dieselbe Seite, anders gewichtet.** Die Informationsarchitektur aus
+5.2.0.5/5.2.0.6 bleibt unverändert — Kopfkarte, Bossraster, Kontextkarte,
+rechter Detailbereich, gerechnetes Raster. Was sich ändert, ist, wie schwer
+die drei Ebenen *aussehen*: in 5.2.0.6 war die Struktur geordnet, aber alle
+drei Flächen lasen sich noch gleich laut, und die unterste war die
+grösste — für die nachrangigste Auskunft.
+
+**Die Bosskarte ist ein Eintrag geworden, kein breiter Knopf.** Eine Zeile
+Text in einem Rahmen bleibt eine Zeile Text in einem Rahmen, egal wie sie
+gefüllt ist. Drei Dinge ändern das, und keines davon ist ein Bild: die
+Karte ist höher und in zwei Zonen geteilt (Nummer oben, Name unten,
+dazwischen Luft); die untere Zone läuft nach unten hin dunkler aus, sodass
+der Name **auf** etwas steht statt in einem Kasten zu schweben; und der
+Name steht in der Serife — der Überschriftenschrift des Addons, dieselbe
+wie der Dungeonname darüber. Auf der ausgewählten Karte ist derselbe Sockel
+akzentfarben: der Zustand färbt die Fläche, auf der der Name steht, nicht
+nur seinen Rahmen.
+
+Wie hoch eine Karte wird, ist **gerechnet wie die Spaltenzahl**: die hohe
+Karte, solange unter dem Raster noch eine Kontextkarte steht und kein
+Schlitz; im breiten Fenster wächst sie mit der Breite mit (gedeckelt, denn
+was darüber hinausginge, wäre Fläche ohne Inhalt); bei Instanzen mit sehr
+vielen Bossen fällt sie im kleinsten Fenster auf die enge Fassung zurück —
+dieselbe Karte, nur gedrängter, **keine verlorene Auskunft**.
+
+**Die Kopfkarte hat zwei Zonen.** Der Name steht grösser, der Themensatz
+steht als Spalte (62 % der Breite) statt über die ganze Fläche, und rechts
+daneben läuft die Fläche in den Akzent aus — so schwach, dass sich der Ton
+nicht als Farbe lesen lässt. Das ist die Stelle, an der in jedem Entwurf
+ein Dungeonbild steht; es gibt keines, und Licht ist das, was dieses Addon
+dort ehrlich zeichnen kann (siehe *Bilder: keine, und warum*). Das
+Tatsachenband darunter steht auf eigenem, dunklerem Grund — ein Band auf
+eigenem Grund wird überflogen, dieselben Werte auf derselben Fläche wie der
+Titel wären die vierte Textzeile. Die Stufenzelle steht dabei **rechts
+aussen für sich**: sie ist die einzige Auskunft des Bandes, die nicht vom
+Dungeon kommt, sondern von der eigenen Figur.
+
+**Der Bossabschnitt führt die Seite an.** Die Rubrik ist eine Graustufe
+heller als die Rubriken der Kontextkarte und zieht eine Haarlinie bis zum
+Herkunftsvorsatz — aus einer Zeile Text wird damit ein Abschnitt.
+
+**Und die Fläche darunter ist nur noch so gross wie ihr Inhalt.** Drei
+Ursachen, alle drei behoben:
+
+* Die Kontextkarte hatte eine **Mindesthöhe** von 160 px. Eine Karte mit
+  drei kurzen Zeilen war damit eine halbleere Fläche.
+* Texthöhen wurden gegen die Breite des **kleinsten** Fensters geschätzt.
+  Ein Absatz, der bei 652 px vier Zeilen braucht, braucht bei 1036 px zwei
+  — die Karte wurde für vier gebaut und zeichnete zwei. Das war der grösste
+  Anteil am leeren Raum. Geschätzt wird weiterhin gerechnet und nie aus der
+  Schriftmetrik des Clients gelesen, nur eben gegen die Breite, in der der
+  Text wirklich steht.
+* Besonderheiten, Aufstellung und Herkunft sind enger gesetzt: kleinere
+  Abstände, ein knapperer Innenrand, und die Herkunft steht in **zwei**
+  Zeilen statt in vier — die Rubrik neben der Quelle statt darüber.
+  Vollständig bleibt alles: welche Bäume eine Rolle tragen, steht weiter
+  ungekürzt da.
+
+Bei einem Fenster von 1702 × 1001 mit offenem Detailbereich belegt Maraudon
+damit 800 von 937 px — die Karte ist inhaltsgross, statt bis zum Rand
+gestreckt zu werden.
+
+### Technisch
+
+* `BOSS_H_TALL` (66) / `BOSS_H_MED` (46) / `BOSS_H_FLAT` (34) plus die
+  mitwachsende Fassung (`cardW × BOSS_ASPECT`, gedeckelt bei
+  `BOSS_H_WIDE` = 80). `GridCardHeight(top, rowCount, headline, reserve,
+  cardW)` wählt absteigend; „passt" heisst: unter dem Raster bleiben noch
+  `CARD_ROOM` (168 px). Das ist bewusst **nicht** `MIN_DETAIL_H` (120 px),
+  die Grenze, unter der die Seite sich im Prüflauf selbst anzeigt — wären
+  es zwei Namen für eine Zahl, müsste jede Kartenhöhe am schlimmsten Fall
+  gemessen werden. `reserve` zählt die Vollständigkeitszeile mit, die bei
+  geöffnetem Boss unter dem Raster steht.
+* `LayoutWidth()` ersetzt `MinContentWidth()` als Schätzbreite für
+  Absätze. Wo der Rahmen die Verschmälerung durch den Detailbereich in
+  derselben Runde noch nicht kennt (`SetInspector` läuft vor dem
+  Zeichnen), erkennt die Funktion das am Abstand zum Wirtsrahmen und
+  rechnet die 420 px selbst heraus — eine zu grosse Breite hiesse
+  abgeschnittener Text, und das ist die teurere Richtung.
+* `GridLayout` rechnet die Spaltenzahl weiter mit `BOSS_FIT` (12) und
+  nicht mit dem grösseren Schriftgrad der hohen Karte; dort darf der Name
+  stattdessen in eine zweite Zeile umbrechen. Eine Spalte weniger kostet
+  eine Rasterzeile mehr, und die kostet die Kontextkarte ihre Höhe.
+* `PackCells` ist die eine Packung des Tatsachenbandes, die `DrawMetaStrip`
+  und `MetaStripHeight` gemeinsam lesen — zwei Rechnungen für dieselbe
+  Packung waren zwei Gelegenheiten für ein Band, das tiefer endet als
+  seine Karte. Die Zelle mit `tail = true` wird rechts aussen gesetzt.
+* Vier neue Verlaufs-Token in `core/ui.lua` (`washNone`, `washAccent`,
+  `washAccentUp`, `washDark`) und `ApplyHorizontalGradient`. Sie sind keine
+  zweite Bedeutungsfarbe: `washAccent` **ist** der Akzent, bei 8 %
+  Deckung, und sie werden ausschliesslich mit einem Verlauf gebraucht.
+* `RolePanel.Roster(..., { compact = true })` zieht dieselben drei Zeilen
+  enger, ohne eine wegzulassen.
+* `load_test.lua` und `data_test.lua` unverändert grün; schlimmster Fall
+  im kleinsten Fenster ist Hall of Thanes mit 716 von 716 px.
+
 ## [5.2.0.6] – 2026-09-22
 
 **Die Dungeonseite bekommt die Gestalt, die 5.2.0.5 ihr geordnet hat.**

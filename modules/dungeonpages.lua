@@ -6,28 +6,43 @@
 -- Die Seite kennt zwei Zustaende und drei Ebenen. Die Ebenen stehen
 -- immer in derselben Reihenfolge, und keine davon ist dekorativ:
 --
---   1. DIE KOPFKARTE. Eine eigene Flaeche, die den Dungeon
---      aufschlaegt: Kennzeichnung (Classic oder Forever), der Name
---      in der Serife, der Themensatz in der ruhigen Kursiven, eine
---      Haarlinie - und darunter das TATSACHENBAND, in dem jede
---      Auskunft eine eigene Spalte hat (Wert oben, Rubrik darunter:
---      Gebiet, Stufen, Spieler, Bosse und, wenn der Client eine
---      Stufe nennt, ob sie passt). Bis 5.2.0.4 waren das vier
---      verstreute Flaechen, bis 5.2.0.5 eine umbrechende Satzzeile;
---      seit 5.2.0.6 eine Flaeche und ein Band, das man ueberfliegt
---      statt es zu lesen. Wie viele Spalten in eine Zeile des
---      Bandes passen, ist gerechnet wie die Spaltenzahl des
---      Bossrasters.
---   2. DIE BOSSE, als Raster aus Karten - nicht mehr als Kette aus
---      Pillen. Eine Pillenzeile liest sich wie eine zweite
---      Navigation; eine Karte mit Nummer, Namen und Kennzeichen
---      liest sich wie das, was sie ist: der Inhalt des Dungeons.
---      Wie viele Spalten das Raster bekommt, entscheidet die
---      WIRKLICHE Breite und der laengste Name der gezeigten Liste
---      (GridLayout) - drei, wo sie passen, sonst zwei, sonst eine.
---      Grosse Instanzen zeigen ihre Fluegel als Reiter darueber,
---      einen Fluegel zur Zeit, so verliert kein Fluegel einen Boss.
---   3. DIE KONTEXTKARTE, nachrangig und nie leer. Ohne Boss traegt
+--   1. DIE KOPFKARTE, und sie ist der Einstieg und nicht die erste
+--      von drei gleichen Flaechen. Zwei Zonen: oben die
+--      Kennzeichnung (Classic oder Forever), der Name in der Serife
+--      - gross genug, dass er die Seite anfuehrt -, der Themensatz
+--      in der ruhigen Kursiven, und zwar in einer SPALTE und nicht
+--      ueber die ganze Breite; die Flaeche rechts daneben traegt
+--      stattdessen einen Verlauf, der nach hinten hin violett
+--      anlaeuft. Das ist die Stelle, an der in jeder Vorlage ein
+--      Dungeonbild steht - es gibt keines (siehe unten), und Licht
+--      ist das, was dieses Addon an dieser Stelle ehrlich zeichnen
+--      kann. Unten, auf einem dunkleren Sockel und unter einer
+--      Haarlinie, das TATSACHENBAND: jede Auskunft eine eigene
+--      Spalte (Wert oben, Rubrik darunter: Gebiet, Stufen, Spieler,
+--      Bosse), und ganz rechts aussen, fuer sich, die eine Zelle,
+--      die nicht vom Dungeon kommt, sondern von der eigenen Figur -
+--      ob die Stufe passt. Bis 5.2.0.4 waren das vier verstreute
+--      Flaechen, bis 5.2.0.5 eine umbrechende Satzzeile. Wie viele
+--      Spalten in eine Zeile des Bandes passen, ist gerechnet wie
+--      die Spaltenzahl des Bossrasters.
+--   2. DIE BOSSE, als Raster aus Karten - nicht als Kette aus
+--      Pillen und nicht als Zeile in einem Rahmen. Eine Pillenzeile
+--      liest sich wie eine zweite Navigation, eine Zeile Text in
+--      einem Rahmen wie ein Eingabefeld; eine Karte mit Nummer
+--      oben, Namen unten auf einem dunkleren Sockel und einem
+--      Kennzeichen daneben liest sich wie das, was sie ist: der
+--      Inhalt des Dungeons. Dieser Abschnitt ist der schwerste der
+--      Seite, und das ist Absicht - eine Rubrik mit Linie fuehrt
+--      ihn an, das Raster darunter nimmt den Platz, den es braucht.
+--      Wie viele Spalten es bekommt, entscheidet die WIRKLICHE
+--      Breite und der laengste Name der gezeigten Liste
+--      (GridLayout) - drei, wo sie passen, sonst zwei, sonst eine;
+--      wie hoch eine Karte wird, entscheidet der Platz, den die
+--      Seite uebrig hat (GridCardHeight). Grosse Instanzen zeigen
+--      ihre Fluegel als Reiter darueber, einen Fluegel zur Zeit, so
+--      verliert kein Fluegel einen Boss.
+--   3. DIE KONTEXTKARTE, nachrangig, nie leer und nie hoeher als
+--      ihr Inhalt. Ohne Boss traegt
 --      sie ZWEI Spalten nebeneinander - BESONDERHEITEN (Fluegel,
 --      beschwoerbare Bosse, optionale Bosse, unbekannte Reihenfolge,
 --      unvollstaendige Liste, Classic-Herkunft: alles abgeleitet,
@@ -39,7 +54,10 @@
 --      er steht, wie er kommt, was die Rollen tun, mit einem Weg
 --      zurueck zur Uebersicht im Kartenkopf. Sie ist die eine
 --      Flaeche, die rollen darf - was der Bot je Rolle schickt,
---      weiss niemand vorher, und gekuerzt wird hier nichts.
+--      weiss niemand vorher, und gekuerzt wird hier nichts. Eine
+--      MINDESTHOEHE hat sie nicht mehr: passt ihr Inhalt, ist sie
+--      genau so hoch wie er, und der Rest der Seite bleibt leer
+--      statt aufgeblasen.
 --
 -- ZWEI ZUSTAENDE, EINE STRUKTUR. Ein Klick auf eine Bosskarte
 -- ersetzt die Uebersicht NICHT: das Raster bleibt stehen, die
@@ -125,11 +143,12 @@ end
 
 local PAD_X, PAD_Y, GAP = M.PAD_X, M.PAD_Y, M.GAP
 
-local CARD_PAD      = 20    -- Innenabstand der Kontextkarte
+local CARD_PAD      = 16    -- Innenabstand der Kontextkarte
 local BAR_W         = 10    -- schlanke Bildlaufleiste in der Karte
-local SECTION_H     = 22    -- Rubrikzeile "Bosse"
-local MIN_DETAIL_H  = 160   -- weniger Karte als das ist keine
-local CARD_GAP      = 12    -- Raster -> Kontextkarte
+local SECTION_H     = 26    -- Rubrikzeile "Bosse" samt Abschnittslinie
+local MIN_DETAIL_H  = 120   -- weniger Karte als das ist keine, sondern ein Schlitz
+local CARD_ROOM     = 168   -- soviel laesst das Raster der Karte, wenn es kann
+local CARD_GAP      = 14    -- Raster -> Kontextkarte
 
 -- DAS BOSSRASTER. Eine Karte traegt bis zu drei Auskuenfte: die
 -- Nummer (nur bei bekannter Reihenfolge), den Namen und ein
@@ -137,12 +156,32 @@ local CARD_GAP      = 12    -- Raster -> Kontextkarte
 -- traegt in der ganzen gezeigten Liste keine Karte eine davon, faellt
 -- die Zeile weg und die Karte wird flach - eine reservierte Zeile,
 -- die nirgends etwas enthaelt, ist Luft, die wie ein Fehler aussieht.
-local BOSS_H        = 44    -- Karte mit Kopfzeile
-local BOSS_H_FLAT   = 32    -- Karte ohne Kopfzeile
-local BOSS_GAP      = 10
+--
+-- WIE HOCH SIE WIRD, IST GERECHNET WIE DIE SPALTENZAHL - und die
+-- Rechnung steht in GridCardHeight. Die hohe Karte (66 px) ist die
+-- gemeinte: Nummer oben, Name unten auf einem dunkleren Sockel,
+-- dazwischen Luft - das ist der Unterschied zwischen einer Karte und
+-- einem breiten Knopf. Im breiten Fenster waechst sie mit der Breite
+-- mit, hoechstens aber bis BOSS_H_WIDE. Sie gilt aber nur, wo die
+-- Seite sie hergibt: ein Dungeon mit vierzehn Bossen fuellt im
+-- kleinsten Fenster fuenf Rasterzeilen, und fuenf hohe Zeilen liessen
+-- der Kontextkarte darunter einen Schlitz. Dann faellt das Raster auf
+-- die mittlere Hoehe (46 px) zurueck - dieselbe Karte, nur enger, und
+-- keine verlorene Auskunft. Die flache (34 px) steht weiter fuer die
+-- Listen ohne Nummer und ohne Kennzeichen, die also gar keine
+-- Kopfzeile haetten.
+local BOSS_H_TALL   = 66    -- Karte mit Kopfzeile und Namenssockel
+local BOSS_H_MED    = 46    -- dieselbe Karte, enger gesetzt
+local BOSS_H_FLAT   = 34    -- Karte ohne Kopfzeile
+local BOSS_H_WIDE   = 80    -- soviel, aber nicht mehr, darf sie mitwachsen
+local BOSS_ASPECT   = 0.26  -- Hoehe aus Breite (siehe GridCardHeight)
+local BOSS_GAP_X    = 12
+local BOSS_GAP_Y    = 10
 local BOSS_MIN_W    = 150   -- schmaler ist keine Karte mehr, sondern eine Pille
 local BOSS_COLS     = 3     -- mehr als drei Spalten waeren wieder eine Kette
-local BOSS_NAME     = 12    -- Schriftgrad des Namens auf der Karte
+local BOSS_NAME     = 14    -- Name auf der hohen Karte, in der Serife
+local BOSS_NAME_MED = 12    -- Name auf der engen Karte, in der Grotesk
+local BOSS_FIT      = 12    -- womit die Spaltenzahl rechnet (siehe GridLayout)
 
 --------------------------------------------------
 -- Die eigene Stufe
@@ -223,6 +262,36 @@ local function ContentWidth()
     return w
 end
 
+-- DIE BREITE, GEGEN DIE TEXTHOEHEN GESCHAETZT WERDEN. Bis 5.2.0.6 war
+-- das immer MinContentWidth() - die Breite des KLEINSTEN Fensters -,
+-- und genau daher kam der grosse leere Rest in der Kontextkarte: ein
+-- Absatz, der bei 652 px vier Zeilen braucht, braucht bei 1036 px
+-- zwei. Die Karte wurde also fuer vier Zeilen hoch gebaut und zeichnete
+-- zwei. Geschaetzt wird weiterhin mit WeintCodex.Paragraph und nie mit
+-- der Schriftmetrik des Clients - nur eben gegen die Breite, in der der
+-- Text wirklich steht. Im Prueflauf ist das dieselbe Zahl wie vorher
+-- (dort IST das Fenster das kleinste), im Spiel die wahre.
+--
+-- DIE EINE FALLE DABEI: der Inhaltsbereich wird erst schmaler, wenn
+-- der Rahmen seine Anker neu aufloest - SetInspector laeuft VOR dem
+-- Zeichnen, GetWidth() kann in derselben Runde noch die alte Zahl
+-- nennen. Dann stuende hier eine zu grosse Breite, der Text braeuchte
+-- mehr Zeilen als geschaetzt, und das Ende eines Absatzes waere
+-- abgeschnitten. Erkennbar ist der Fall am Abstand zum Wirtsrahmen:
+-- ist der Detailbereich offen und fehlen dem Inhaltsbereich noch nicht
+-- einmal dessen 372 px, dann ist die Zahl von vorhin.
+local function LayoutWidth()
+    local w = ContentWidth()
+    if inspectorShown then
+        local host = WeintCodex.ContentHost
+        local hw   = host and host:GetWidth()
+        if type(hw) == "number" and hw - w < M.DETAIL_W then
+            w = w - (M.DETAIL_W + M.DETAIL_GAP + M.PAD_X)
+        end
+    end
+    return math.max(w, MinContentWidth())
+end
+
 -- Der Inhalt zwischen den Raendern, beim kleinsten Fenster.
 local function ContentBudget()
     local limits = WeintCodex.WindowLimits or {}
@@ -253,9 +322,9 @@ function WeintCodex.DungeonPages.PageBudget()
     return ContentBudget() + PAD_Y
 end
 
--- Breite, die ein Absatz in der Detailkarte mindestens hat.
-local function BodyWidthMin()
-    return MinContentWidth() - 2 * PAD_X - 2 * CARD_PAD - BAR_W
+-- Breite, die ein Absatz in der Detailkarte hat.
+local function BodyWidth()
+    return LayoutWidth() - 2 * PAD_X - 2 * CARD_PAD - BAR_W
 end
 
 --------------------------------------------------
@@ -422,19 +491,30 @@ end
 -- NIEDRIG" in Warnfarbe. Nennt der Client keine Stufe, fehlt die
 -- Zelle ganz - nicht "Stufe 0", nicht "passt nicht".
 
-local TITLE_SIZE  = 30
+local TITLE_SIZE  = 34
+local TITLE_LINE  = TITLE_SIZE + 5
 local THEME_SIZE  = 14
 local THEME_SPACE = 2
 
-local HERO_PAD    = 22    -- Innenabstand der Kopfkarte, links/rechts
-local HERO_TOP    = 14
-local HERO_BOT    = 8
+-- WIEVIEL BREITE DER THEMENSATZ BEKOMMT. Nicht die ganze: ein Satz,
+-- der ueber die volle Kartenbreite laeuft, ist eine Zeile Fliesstext
+-- und keine Bildunterschrift. Er steht in einer Spalte links, und was
+-- rechts davon frei bleibt, traegt den Verlauf - das ist die Stelle,
+-- an der in den Vorlagen das Dungeonbild steht. Wo die Karte zu
+-- schmal fuer eine Spalte ist (offener Detailbereich, kleinstes
+-- Fenster), nimmt der Satz wieder alles.
+local THEME_SHARE = 0.62
+local THEME_MIN_W = 300
+
+local HERO_PAD    = 24    -- Innenabstand der Kopfkarte, links/rechts
+local HERO_TOP    = 16
+local HERO_BOT    = 10
 
 -- Das Tatsachenband. Wert oben, Rubrik darunter.
-local FACT_VALUE  = 14
+local FACT_VALUE  = 15
 local FACT_LABEL  = 9
-local FACT_GAP    = 20    -- Abstand zwischen zwei Zellen
-local FACT_ROW_H  = FACT_VALUE + 3 + FACT_LABEL + 2
+local FACT_GAP    = 26    -- Abstand zwischen zwei Zellen
+local FACT_ROW_H  = FACT_VALUE + 4 + FACT_LABEL + 2
 local FACT_ROW_GAP = 8
 
 local DASH = "\226\128\148"   -- Geviertstrich: "nicht bekannt", nie eine 0
@@ -490,7 +570,7 @@ local function MetaCells(dungeon)
             label, tone = "darüber", "textFaint"
         end
         cells[#cells + 1] = { value = "Stufe " .. level, label = label,
-                              tone = tone, labelTone = tone }
+                              tone = tone, labelTone = tone, tail = true }
     end
 
     return cells
@@ -507,58 +587,108 @@ local function CellWidth(cell)
     return math.max(valueW, labelW)
 end
 
--- Legt das Band ab `y` in `parent` (Breite `width`) und gibt seine
--- Hoehe zurueck. Zeilenumbruch nach Platz, nicht nach Anzahl.
-local function DrawMetaStrip(parent, y, cells, width)
-    local rowsOut, current, used = {}, {}, 0
+-- WIE DAS BAND PACKT, AN EINER STELLE - und DrawMetaStrip wie
+-- MetaStripHeight lesen dieselbe Antwort. Zwei Rechnungen fuer
+-- dieselbe Packung waren zwei Gelegenheiten, dass das gezeichnete
+-- Band hoeher wird als das gemessene, und ein Band, das einen Pixel
+-- tiefer endet als die Karte, sieht aus wie ein Fehler im Bestand.
+--
+-- DIE STUFENZELLE STEHT RECHTS AUSSEN, NICHT IN DER REIHE. Sie ist
+-- die einzige Auskunft des Bandes, die nicht vom Dungeon kommt,
+-- sondern von der eigenen Figur - und "passt/zu niedrig" ist das
+-- eine, wonach man beim Aufschlagen sucht. Am rechten Rand steht sie
+-- fuer sich; in der Reihe waere sie die fuenfte von fuenf. Passt sie
+-- in die letzte Zeile nicht mehr, faellt sie in eine eigene - lieber
+-- eine Zeile mehr als eine Auskunft im Rand.
+local function PackCells(cells, width)
+    local flow, tail = {}, nil
     for _, cell in ipairs(cells) do
-        local w = CellWidth(cell)
-        local need = (#current > 0 and FACT_GAP or 0) + w
+        cell._w = CellWidth(cell)
+        if cell.tail then tail = cell else flow[#flow + 1] = cell end
+    end
+
+    local out, current, used = {}, {}, 0
+    for _, cell in ipairs(flow) do
+        local need = (#current > 0 and FACT_GAP or 0) + cell._w
         if #current > 0 and used + need > width then
-            rowsOut[#rowsOut + 1] = current
-            current, used = {}, 0
-            need = w
+            out[#out + 1] = { cells = current, used = used }
+            current, used, need = {}, 0, cell._w
         end
-        cell._w = w
         current[#current + 1] = cell
         used = used + need
     end
-    if #current > 0 then rowsOut[#rowsOut + 1] = current end
+    if #current > 0 then out[#out + 1] = { cells = current, used = used } end
+
+    if tail then
+        local last = out[#out]
+        if last and last.used + 2 * FACT_GAP + tail._w <= width then
+            last.tail = tail
+        else
+            out[#out + 1] = { cells = { tail }, used = tail._w }
+        end
+    end
+    return out
+end
+
+-- Eine Haarlinie zwischen zwei Zellen. Sie trennt, ohne eine Kachel
+-- zu zeichnen: fuenf umrandete Kaesten waeren fuenf Bedienelemente,
+-- und bedienen laesst sich hier nichts.
+-- `anchor` ist die Ecke, von der aus gemessen wird: die Linien
+-- zwischen den gesetzten Zellen haengen links, die vor der
+-- Stufenzelle rechts - dort steht die Zelle selbst am Rand des
+-- Bandes, und der Rand des Bandes ist im Spiel die gezeichnete
+-- Breite und nicht die gerechnete.
+local function CellRule(parent, anchor, x, top)
+    local sep = parent:CreateTexture(nil, "ARTWORK")
+    sep:SetSize(1, FACT_ROW_H - 4)
+    sep:SetPoint(anchor, parent, anchor, x, top - 2)
+    sep:SetColorTexture(C.border[1], C.border[2], C.border[3], 1.0)
+end
+
+-- Eine Zelle: Wert oben in Lesegroesse, Rubrik darunter als gesperrte
+-- Versalie. `anchor` ist die Ecke, an der sie haengt - links gesetzte
+-- Zellen haengen an TOPLEFT, die Stufenzelle an TOPRIGHT.
+local function DrawCell(parent, cell, anchor, x, top)
+    local justify = (anchor == "TOPRIGHT") and "RIGHT" or "LEFT"
+
+    local value = parent:CreateFontString(nil, "OVERLAY")
+    value:SetFont(cell.mono and WeintCodex.Fonts.monoMedium
+        or WeintCodex.Fonts.sansMedium, FACT_VALUE, "")
+    value:SetJustifyH(justify)
+    value:SetWordWrap(false)
+    value:SetPoint(anchor, parent, anchor, x, top)
+    local vc = C[cell.tone or "textNormal"] or C.textNormal
+    value:SetTextColor(vc[1], vc[2], vc[3])
+    value:SetText(cell.value)
+
+    local label = WeintCodex.Eyebrow(parent, cell.label,
+        { size = FACT_LABEL, color = cell.labelTone or "textFaint",
+          justify = justify })
+    label:SetPoint(anchor, parent, anchor, x, top - FACT_VALUE - 5)
+end
+
+-- Legt das Band ab `y` in `parent` (Breite `width`) und gibt seine
+-- Hoehe zurueck.
+local function DrawMetaStrip(parent, y, cells, width)
+    local packed = PackCells(cells, width)
 
     local top = y
-    for rowIndex, row in ipairs(rowsOut) do
+    for rowIndex, row in ipairs(packed) do
         local x = 0
-        for cellIndex, cell in ipairs(row) do
+        for cellIndex, cell in ipairs(row.cells) do
             if cellIndex > 1 then
-                -- Eine Haarlinie zwischen zwei Zellen. Sie trennt,
-                -- ohne eine Kachel zu zeichnen: fuenf umrandete
-                -- Kaesten waeren fuenf Bedienelemente, und bedienen
-                -- laesst sich hier nichts.
-                local sep = parent:CreateTexture(nil, "ARTWORK")
-                sep:SetSize(1, FACT_ROW_H - 6)
-                sep:SetPoint("TOPLEFT", parent, "TOPLEFT",
-                    x - math.floor(FACT_GAP / 2), top - 3)
-                sep:SetColorTexture(C.border[1], C.border[2], C.border[3], 1.0)
+                CellRule(parent, "TOPLEFT", x - math.floor(FACT_GAP / 2), top)
             end
-
-            local value = parent:CreateFontString(nil, "OVERLAY")
-            value:SetFont(cell.mono and WeintCodex.Fonts.monoMedium
-                or WeintCodex.Fonts.sansMedium, FACT_VALUE, "")
-            value:SetJustifyH("LEFT")
-            value:SetWordWrap(false)
-            value:SetPoint("TOPLEFT", parent, "TOPLEFT", x, top)
-            local vc = C[cell.tone or "textNormal"] or C.textNormal
-            value:SetTextColor(vc[1], vc[2], vc[3])
-            value:SetText(cell.value)
-
-            local label = WeintCodex.Eyebrow(parent, cell.label,
-                { size = FACT_LABEL, color = cell.labelTone or "textFaint" })
-            label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, top - FACT_VALUE - 4)
-
+            DrawCell(parent, cell, "TOPLEFT", x, top)
             x = x + cell._w + FACT_GAP
         end
+        if row.tail then
+            CellRule(parent, "TOPRIGHT",
+                -(row.tail._w + math.floor(FACT_GAP / 2)), top)
+            DrawCell(parent, row.tail, "TOPRIGHT", 0, top)
+        end
         top = top - FACT_ROW_H
-        if rowIndex < #rowsOut then top = top - FACT_ROW_GAP end
+        if rowIndex < #packed then top = top - FACT_ROW_GAP end
     end
 
     return y - top
@@ -568,26 +698,55 @@ end
 -- ohne zu zeichnen. DrawHead braucht die Zahl, bevor die Kopfkarte
 -- steht.
 local function MetaStripHeight(cells, width)
-    local lines, used = 1, 0
-    for _, cell in ipairs(cells) do
-        local w = CellWidth(cell)
-        local need = (used > 0 and FACT_GAP or 0) + w
-        if used > 0 and used + need > width then
-            lines = lines + 1
-            used = w
-        else
-            used = used + need
-        end
-    end
+    local lines = #PackCells(cells, width)
     return lines * FACT_ROW_H + (lines - 1) * FACT_ROW_GAP
 end
 
+--------------------------------------------------
+-- DIE KOPFKARTE, ZWEI ZONEN
+--------------------------------------------------
+-- Bis 5.2.0.6 war die Kopfkarte eine Flaeche mit vier Textzeilen
+-- darauf: Kennzeichnung, Name, Themensatz, Band. Sie stand damit auf
+-- derselben Ebene wie jede andere Karte der Seite und sagte nur durch
+-- ihre Stellung, dass sie der Einstieg ist.
+--
+-- Jetzt traegt sie zwei Zonen, und die obere sieht anders aus als die
+-- untere:
+--
+--   +------------------------------------------------------------+
+--   | C L A S S I C                          .                    |
+--   | Maraudon                                  Verlauf           |
+--   | Drei Zugaenge: der orange und                 nach          |
+--   | der violette Fluegel ...                        rechts      |
+--   |------------------------------------------------------------|
+--   | Desolace   | 46-55       | 5       | 9         Stufe 10     |  <- dunkler
+--   | GEBIET     | STUFEN      | SPIELER | BOSSE     ZU NIEDRIG   |     Sockel
+--   +------------------------------------------------------------+
+--
+-- DER VERLAUF IST DAS, WAS EIN BILD WAERE. Die Vorlagen zeigen an
+-- dieser Stelle ein Dungeonbild; es gibt keines (siehe oben, WARUM
+-- HIER KEINE BILDER STEHEN), und ein geratener Texturpfad zeichnet im
+-- Spiel ein gruenes Rechteck. Was bleibt, ist Licht: die Flaeche
+-- laeuft nach rechts hin violett an, so schwach, dass sich der Ton
+-- nicht lesen laesst (C.washAccent, 8 %). Sie behauptet damit keine
+-- zweite Bedeutung neben dem einen Akzent - sie gibt dem Titel einen
+-- Raum, in dem er steht.
+--
+-- DER SOCKEL TRENNT DIE TATSACHEN VOM AUFSCHLAG. Die untere Zone ist
+-- dieselbe Karte, nur nach unten hin abgedunkelt - dazu die
+-- Haarlinie, die schon vorher da war. Ein Band auf eigenem Grund wird
+-- ueberflogen; dieselben Werte auf derselben Flaeche wie der Titel
+-- waeren die vierte Textzeile.
+
 local function DrawHead(f, dungeon)
-    local inner = MinContentWidth() - 2 * PAD_X - 2 * HERO_PAD
+    local inner = LayoutWidth() - 2 * PAD_X - 2 * HERO_PAD
+
+    local themeW = math.max(THEME_MIN_W, math.floor(inner * THEME_SHARE))
+    if themeW > inner then themeW = inner end
 
     local themeH = 0
     if dungeon.theme then
-        local cols = math.floor(inner / (THEME_SIZE * 0.60))
+        local cols = math.floor(themeW / (THEME_SIZE * 0.60))
         themeH = 8 + WeintCodex.EstimateLines(dungeon.theme, cols)
                     * (THEME_SIZE + THEME_SPACE)
     end
@@ -595,8 +754,9 @@ local function DrawHead(f, dungeon)
     local cells  = MetaCells(dungeon)
     local stripH = MetaStripHeight(cells, inner)
 
-    -- 12 Eyebrow + 6 Abstand + 34 Titel + Themensatz + 13 Trennlinie
-    local headH  = 12 + 6 + 34 + themeH + 13
+    -- 12 Eyebrow + 6 Abstand + Titelzeile + Themensatz + 12 bis zur
+    -- Trennlinie
+    local headH  = 12 + 6 + TITLE_LINE + themeH + 12
     local heroH  = HERO_TOP + headH + stripH + HERO_BOT
 
     -- Die Kopfkarte. `tone = "plain"` heisst: derselbe Kartenverlauf
@@ -609,6 +769,20 @@ local function DrawHead(f, dungeon)
     hero:SetPoint("TOPLEFT",  f, "TOPLEFT",   PAD_X, -PAD_Y)
     hero:SetPoint("TOPRIGHT", f, "TOPRIGHT", -PAD_X, -PAD_Y)
     rows[#rows + 1] = hero
+
+    -- Das Licht nach rechts. Einen Punkt innerhalb der Kante, damit es
+    -- nicht ueber die Rundung der Ecken hinauslaeuft.
+    local wash = hero:CreateTexture(nil, "BORDER")
+    wash:SetPoint("TOPLEFT",     hero, "TOPLEFT",      1, -1)
+    wash:SetPoint("BOTTOMRIGHT", hero, "BOTTOMRIGHT", -1,  1)
+    WeintCodex.ApplyHorizontalGradient(wash, "washNone", "washAccent")
+
+    -- Der Sockel unter dem Tatsachenband.
+    local plinth = hero:CreateTexture(nil, "BORDER", nil, 1)
+    plinth:SetPoint("TOPLEFT",     hero, "TOPLEFT",
+        1, -(HERO_TOP + headH - 8))
+    plinth:SetPoint("BOTTOMRIGHT", hero, "BOTTOMRIGHT", -1, 1)
+    WeintCodex.ApplyVerticalGradient(plinth, "washNone", "washDark")
 
     -- Der Akzentstreifen an der linken Kante. Er traegt Bedeutung
     -- und keine Zierde: er sagt, WO auf der Seite man ist - dieselbe
@@ -633,11 +807,11 @@ local function DrawHead(f, dungeon)
 
     if dungeon.theme then
         local themeFs = WeintCodex.Paragraph(head, dungeon.theme, {
-            width = inner, size = THEME_SIZE, spacing = THEME_SPACE,
+            width = themeW, size = THEME_SIZE, spacing = THEME_SPACE,
             color = "textDim", font = WeintCodex.Fonts.displayQuiet,
         })
-        themeFs:SetPoint("TOPLEFT",  head.Title, "BOTTOMLEFT", 0, -8)
-        themeFs:SetPoint("TOPRIGHT", head,       "TOPRIGHT",   0, 0)
+        themeFs:SetWidth(themeW)
+        themeFs:SetPoint("TOPLEFT", head.Title, "BOTTOMLEFT", 0, -8)
     end
 
     -- Die Trennlinie zwischen Aufschlag und Tatsachenband. Sie ist
@@ -645,7 +819,7 @@ local function DrawHead(f, dungeon)
     -- vierte Textzeile.
     --
     -- SIE HAENGT AN DER KOPFKARTE UND NICHT AM TEXT DARUEBER, und das
-    -- ist kein Zufall: wie hoch der Client eine 30-px-Serife
+    -- ist kein Zufall: wie hoch der Client eine 34-px-Serife
     -- tatsaechlich setzt, weiss nur er. Haengte die Linie am Titel,
     -- verschoebe eine um drei Pixel hoehere Schrift sie unter das
     -- Band - und die Kopfkarte haette einen Strich mitten durch die
@@ -654,8 +828,8 @@ local function DrawHead(f, dungeon)
     -- Prueflauf an derselben Stelle.
     local rule = hero:CreateTexture(nil, "ARTWORK")
     rule:SetHeight(1)
-    rule:SetPoint("TOPLEFT",  hero, "TOPLEFT",   HERO_PAD, -(HERO_TOP + headH - 9))
-    rule:SetPoint("TOPRIGHT", hero, "TOPRIGHT", -HERO_PAD, -(HERO_TOP + headH - 9))
+    rule:SetPoint("TOPLEFT",  hero, "TOPLEFT",   HERO_PAD, -(HERO_TOP + headH - 8))
+    rule:SetPoint("TOPRIGHT", hero, "TOPRIGHT", -HERO_PAD, -(HERO_TOP + headH - 8))
     rule:SetColorTexture(C.border[1], C.border[2], C.border[3], 1.0)
 
     local band = CreateFrame("Frame", nil, hero)
@@ -719,34 +893,120 @@ end
 -- Wie viele Spalten in `width` passen, und wie breit eine Karte
 -- darin wird. `longest` ist die Laenge des laengsten Namens der
 -- gezeigten Liste, in ZEICHEN (nicht Bytes).
+--
+-- GERECHNET WIRD MIT BOSS_FIT UND NICHT MIT DEM WIRKLICHEN
+-- SCHRIFTGRAD DES NAMENS. Der Name auf der hohen Karte ist groesser
+-- geworden (Serife, 14) und bricht dort notfalls in eine zweite
+-- Zeile - die Spaltenzahl haengt deshalb weiter an der Groesse, die
+-- die ENGE Karte setzt. Zwei Gruende: eine Spalte weniger kostet eine
+-- Rasterzeile mehr, und die kostet die Kontextkarte darunter ihre
+-- Hoehe; und ein Raster, das beim Vergroessern des Namens die Spalte
+-- verliert, waere ein Entwurf, der sich selbst im Weg steht.
 local function GridLayout(width, longest)
-    local need = 12 + longest * BOSS_NAME * 0.60 + 12
+    local need = 12 + longest * BOSS_FIT * 0.60 + 12
     for cols = BOSS_COLS, 2, -1 do
-        local w = (width - (cols - 1) * BOSS_GAP) / cols
+        local w = (width - (cols - 1) * BOSS_GAP_X) / cols
         if w >= BOSS_MIN_W and w >= need then return cols, w end
     end
     return 1, width
 end
 
+-- WELCHE DER DREI HOEHEN DAS RASTER BEKOMMT. Die hohe Karte, solange
+-- unter dem Raster noch eine Kontextkarte STEHT und kein Schlitz -
+-- gerechnet gegen den Platz, den das Fenster WIRKLICH hat.
+--
+-- ZWEI ZAHLEN, ZWEI AUFGABEN, und sie sind absichtlich nicht
+-- dieselbe: CARD_ROOM ist, was das Raster der Karte freiwillig laesst
+-- (eine Karte, die ihre zwei Rubriken zeigt, bevor sie rollt);
+-- MIN_DETAIL_H ist die Grenze, unter der die Seite sich selbst
+-- anzeigt - dort faellt sie im Prueflauf durch. Waeren es zwei Namen
+-- fuer eine Zahl, muesste jede Kartenhoehe am schlimmsten Fall
+-- gemessen werden, und der schlimmste Fall ist Scholomance mit
+-- vierzehn Bossen. Im kleinsten Fenster faellt damit genau das auf
+-- die enge Karte zurueck, was sonst unten rausfiele (Scholomance,
+-- Stratholme, Blackrock Depths); in jedem groesseren Fenster steht
+-- ueberall die hohe.
+--
+-- `reserve` ist, was zwischen Raster und Kontextkarte noch steht -
+-- die Vollstaendigkeitszeile, wenn gerade ein Boss offen ist. Ohne
+-- sie mitzurechnen waehlte die Seite eine Hoehe, die um genau diese
+-- Zeile zu gross ist, und faende es erst unten am Fensterrand heraus.
+local function GridCardHeight(top, rowCount, headline, reserve, cardW)
+    if not headline then return BOSS_H_FLAT end
+
+    local function RemainingWith(h)
+        local bottom = top - rowCount * h - (rowCount - 1) * BOSS_GAP_Y
+        return AvailableHeight() + bottom - (reserve or 0) - CARD_GAP - PAD_Y
+    end
+
+    -- IM GROSSEN FENSTER WAECHST DIE KARTE MIT, ABER NUR EIN STUECK.
+    -- Eine Karte, die dreimal so breit wie hoch ist, sieht aus wie
+    -- eine Karte; dieselbe Karte in einem 1700 px breiten Fenster
+    -- waere bei fester Hoehe fuenfmal so breit wie hoch, also wieder
+    -- ein Band. Die Hoehe folgt deshalb der Breite - gedeckelt bei
+    -- BOSS_H_WIDE, denn was darueber hinausginge, waere Flaeche ohne
+    -- Inhalt: in den Vorlagen steht dort ein Bossbild, und das gibt
+    -- es fuer Forever nicht.
+    local grown = math.min(BOSS_H_WIDE,
+        math.floor((cardW or 0) * BOSS_ASPECT))
+    if grown > BOSS_H_TALL and RemainingWith(grown) >= CARD_ROOM then
+        return grown
+    end
+    if RemainingWith(BOSS_H_TALL) >= CARD_ROOM then return BOSS_H_TALL end
+    return BOSS_H_MED
+end
+
 -- EINE KARTE, KEIN EINGABEFELD. Bis 5.2.0.5 war die Bosskarte eine
 -- flache Flaeche (surface2) mit duennem Rahmen und blassem Namen -
--- genau das Bild, das in jeder Oberflaeche ein Textfeld ist. Sie
--- traegt jetzt denselben Kartenverlauf mit 1-px-Oberkante wie jede
--- andere Flaeche des Addons (CreateSurface, tone = "plain"), und
--- der Name steht in Lesefarbe statt in Beschriftungsfarbe: was hier
--- zaehlt, ist der Boss, nicht die Karte.
+-- genau das Bild, das in jeder Oberflaeche ein Textfeld ist. 5.2.0.6
+-- gab ihr den Kartenverlauf; geblieben war eine Zeile Text in einem
+-- Rahmen, also immer noch eher ein breiter Knopf als ein Eintrag.
 --
--- DREI ZUSTAENDE, DREI TOENE - und der ausgewaehlte ist der EINE
--- Akzentton der Seite (tone = "accent", violett getoenter Verlauf
--- mit Akzent-Oberkante). Im Entwurf gibt es genau eine solche
--- Flaeche je Ansicht, und das ist sie: die Kopfkarte oben traegt
--- ihren Akzent als Kantenstreifen, nicht als Flaeche.
+-- DREI DINGE MACHEN DARAUS EINEN EINTRAG, und keines davon ist ein
+-- Bild:
+--
+--   1. HOEHE UND ZONEN. Die Nummer steht oben, der Name unten, und
+--      dazwischen ist Luft. Ein Knopf hat keine Luft, ein Eintrag
+--      schon.
+--   2. DER SOCKEL. Die untere Zone laeuft nach unten hin dunkler aus
+--      (C.washDark, 22 %). Der Name steht damit AUF etwas, statt in
+--      einem Kasten zu schweben - das ist, in den Mitteln dieses
+--      Addons, was in den Vorlagen der dunkle Verlauf ueber dem
+--      Bossbild tut. Auf der ausgewaehlten Karte ist derselbe Sockel
+--      akzentfarben (washAccentUp): der Zustand faerbt die Flaeche,
+--      auf der der Name steht, und nicht nur seinen Rahmen.
+--   3. DER NAME IN DER SERIFE. Bosskarten tragen Namen, und Namen
+--      sind in diesem Addon Ueberschriften (WeintCodex.Fonts.display,
+--      dieselbe Schrift wie der Dungeonname darueber und der
+--      Bossname in der Detailkarte darunter). Die Grotesk daneben
+--      war die Schrift der Knoepfe.
+--
+-- Was NICHT dazugekommen ist: ein zweiter Rahmen, ein Schein, eine
+-- zweite Akzentfarbe. Die Karte ist eine Flaeche, eine Kante, ein
+-- Sockel.
 local function BossCard(f, boss, height, headline)
+    local tall = headline and height >= BOSS_H_TALL
+
     local card = WeintCodex.CreateSurface(f, {
         button = true, tone = "plain",
-        radius = 10, backdrop = "bgDark", height = height,
+        radius = 12, backdrop = "bgDark", height = height,
     })
     local edge = CardEdge(card)
+
+    -- Der Sockel. Einen Punkt innerhalb der Kante, damit er die
+    -- Rundung der Ecken nicht ueberzeichnet.
+    local plinth
+    if tall then
+        -- Gut die halbe Karte hoch: der Verlauf faengt oberhalb des
+        -- Namens an und wird nach unten hin dunkel, so wie in den
+        -- Vorlagen das Bild unter dem Namen abdunkelt. Eine harte
+        -- Kante waere eine zweite Flaeche in der Karte.
+        plinth = card:CreateTexture(nil, "BORDER")
+        plinth:SetHeight(math.floor(height * 0.55))
+        plinth:SetPoint("BOTTOMLEFT",  card, "BOTTOMLEFT",   1, 1)
+        plinth:SetPoint("BOTTOMRIGHT", card, "BOTTOMRIGHT", -1, 1)
+        WeintCodex.ApplyVerticalGradient(plinth, "washNone", "washDark")
+    end
 
     -- Der aktive Zustand traegt einen Balken an der LINKEN Kante,
     -- nicht mehr eine Linie unten: die Karten stehen jetzt neben- UND
@@ -757,17 +1017,18 @@ local function BossCard(f, boss, height, headline)
     -- bleibt er trotzdem.
     local mark = card:CreateTexture(nil, "OVERLAY", nil, 3)
     mark:SetWidth(3)
-    mark:SetPoint("TOPLEFT",    card, "TOPLEFT",    0, -7)
-    mark:SetPoint("BOTTOMLEFT", card, "BOTTOMLEFT", 0,  7)
+    mark:SetPoint("TOPLEFT",    card, "TOPLEFT",    0, -8)
+    mark:SetPoint("BOTTOMLEFT", card, "BOTTOMLEFT", 0,  8)
     mark:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1.0)
     mark:Hide()
 
+    local padX = tall and 14 or 12
     local num
     if headline then
         if boss.order then
             num = card:CreateFontString(nil, "OVERLAY")
-            num:SetFont(WeintCodex.Fonts.monoBold, 10, "")
-            num:SetPoint("TOPLEFT", card, "TOPLEFT", 12, -9)
+            num:SetFont(WeintCodex.Fonts.monoBold, tall and 11 or 10, "")
+            num:SetPoint("TOPLEFT", card, "TOPLEFT", padX, tall and -12 or -9)
             num:SetText(string.format("%02d", boss.order))
         end
         local tag, tagTone = BossTag(boss)
@@ -795,22 +1056,40 @@ local function BossCard(f, boss, height, headline)
                 backdrop    = "bgCard",
                 width       = math.ceil(WeintCodex.Utf8Len(tag) * 8 * 1.15) + 14,
             })
-            chip:SetPoint("TOPRIGHT", card, "TOPRIGHT", -10, -8)
+            chip:SetPoint("TOPRIGHT", card, "TOPRIGHT", -(padX - 2), tall and -11 or -8)
         end
     end
 
+    -- DER NAME DARF UMBRECHEN, ABER NUR AUF DER HOHEN KARTE. Dort
+    -- sind zwei Zeilen vorgesehen und der Name steht unten im Kasten
+    -- (JustifyV = BOTTOM), waechst also nach oben in die freie
+    -- Flaeche. Auf der engen Karte gibt es die zweite Zeile nicht -
+    -- dort steht er einzeilig, wie die Spaltenrechnung es annimmt.
     local name = card:CreateFontString(nil, "OVERLAY")
-    name:SetFont(WeintCodex.Fonts.sansMedium, BOSS_NAME, "")
-    name:SetWordWrap(false)
     name:SetJustifyH("LEFT")
-    if headline then
-        name:SetPoint("TOPLEFT",  card, "TOPLEFT",   12, -25)
-        name:SetPoint("TOPRIGHT", card, "TOPRIGHT", -12, -25)
+    if tall then
+        name:SetFont(WeintCodex.Fonts.display, BOSS_NAME, "")
+        name:SetJustifyV("BOTTOM")
+        name:SetWordWrap(true)
+        name:SetHeight(2 * (BOSS_NAME + 2))
+        name:SetPoint("BOTTOMLEFT",  card, "BOTTOMLEFT",   padX, 10)
+        name:SetPoint("BOTTOMRIGHT", card, "BOTTOMRIGHT", -padX, 10)
     else
-        name:SetPoint("LEFT",  card, "LEFT",   12, 0)
-        name:SetPoint("RIGHT", card, "RIGHT", -12, 0)
+        name:SetFont(WeintCodex.Fonts.sansMedium, BOSS_NAME_MED, "")
+        name:SetWordWrap(false)
+        if headline then
+            name:SetPoint("TOPLEFT",  card, "TOPLEFT",   padX, -25)
+            name:SetPoint("TOPRIGHT", card, "TOPRIGHT", -padX, -25)
+        else
+            name:SetPoint("LEFT",  card, "LEFT",   padX, 0)
+            name:SetPoint("RIGHT", card, "RIGHT", -padX, 0)
+        end
     end
     name:SetText(boss.name or "?")
+
+    local nameFont = tall and WeintCodex.Fonts.display or WeintCodex.Fonts.sansMedium
+    local nameSemi = tall and WeintCodex.Fonts.displaySemi or WeintCodex.Fonts.sansSemi
+    local nameSize = tall and BOSS_NAME or BOSS_NAME_MED
 
     local active = (selectedBoss == boss.id)
     local function SetEdge(color, alpha)
@@ -821,21 +1100,30 @@ local function BossCard(f, boss, height, headline)
     local function Paint(hover)
         if active then
             card:SetTone("accent")
-            name:SetFont(WeintCodex.Fonts.sansSemi, BOSS_NAME, "")
+            if plinth then
+                WeintCodex.ApplyVerticalGradient(plinth, "washNone", "washAccentUp")
+            end
+            name:SetFont(nameSemi, nameSize, "")
             name:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
             if num then num:SetTextColor(C.accent[1], C.accent[2], C.accent[3]) end
             mark:Show()
             SetEdge(C.accent, 0.65)
         elseif hover then
             card:SetSurface("surface3")
-            name:SetFont(WeintCodex.Fonts.sansMedium, BOSS_NAME, "")
+            if plinth then
+                WeintCodex.ApplyVerticalGradient(plinth, "washNone", "washDark")
+            end
+            name:SetFont(nameFont, nameSize, "")
             name:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
             if num then num:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3]) end
             mark:Hide()
             SetEdge(C.borderStrong, 1.0)
         else
             card:SetTone("plain")
-            name:SetFont(WeintCodex.Fonts.sansMedium, BOSS_NAME, "")
+            if plinth then
+                WeintCodex.ApplyVerticalGradient(plinth, "washNone", "washDark")
+            end
+            name:SetFont(nameFont, nameSize, "")
             name:SetTextColor(C.textNormal[1], C.textNormal[2], C.textNormal[3])
             if num then num:SetTextColor(C.textFaint[1], C.textFaint[2], C.textFaint[3]) end
             mark:Hide()
@@ -879,7 +1167,7 @@ end
 
 -- Karten ins Raster legen, ab `top`. Setzt `f._relayout` und gibt
 -- das y unter dem Raster zurueck.
-local function PlaceGrid(f, cards, top, longest, height)
+local function PlaceGrid(f, cards, top, longest, height, headline, reserve)
     if #cards == 0 then return top end
 
     local function Apply(cols, cardW)
@@ -889,8 +1177,8 @@ local function PlaceGrid(f, cards, top, longest, height)
             card:SetWidth(cardW)
             card:ClearAllPoints()
             card:SetPoint("TOPLEFT", f, "TOPLEFT",
-                PAD_X + col * (cardW + BOSS_GAP),
-                top - row * (height + BOSS_GAP))
+                PAD_X + col * (cardW + BOSS_GAP_X),
+                top - row * (height + BOSS_GAP_Y))
         end
         return math.ceil(#cards / cols)
     end
@@ -899,16 +1187,21 @@ local function PlaceGrid(f, cards, top, longest, height)
     local n = Apply(cols, cardW)
     gridCols, gridLongest = cols, longest
 
+    -- Neu GEZEICHNET wird nur, wo sich das Raster wirklich aendert:
+    -- eine andere Spaltenzahl, oder eine andere Kartenhoehe, weil das
+    -- Fenster jetzt hohe Karten hergibt (oder nicht mehr). Sonst
+    -- ruecken die Karten still nach.
     f._relayout = function()
         local c, w = GridLayout(ContentWidth() - 2 * PAD_X, longest)
-        if c ~= cols then
+        local h = GridCardHeight(top, math.ceil(#cards / c), headline, reserve, w)
+        if c ~= cols or h ~= height then
             Redraw()
         else
             Apply(c, w)
         end
     end
 
-    return top - n * height - (n - 1) * BOSS_GAP
+    return top - n * height - (n - 1) * BOSS_GAP_Y
 end
 
 -- Die Rubrikzeile ueber dem Raster: links "BOSSE", rechts der
@@ -919,19 +1212,40 @@ end
 -- Kopf; "BOSSE · 9" darueber waere dieselbe Zahl ein zweites Mal auf
 -- derselben Seite.
 local function SectionHead(f, y, label, source, extraLines, badgeText)
-    local rubric = WeintCodex.Eyebrow(f, label, { color = "textDim", size = 10 })
-    rubric:SetPoint("TOPLEFT", f, "TOPLEFT", PAD_X, y - 4)
+    -- Eine Stufe heller als die Rubriken der Kontextkarte
+    -- ("Besonderheiten", "Aufstellung"): der Bossabschnitt ist der
+    -- Inhalt der Seite, jene sind sein Anhang. Die Rangfolge steht
+    -- damit im Grau und nicht in einer zweiten Farbe.
+    local rubric = WeintCodex.Eyebrow(f, label, { color = "textMuted", size = 11 })
+    rubric:SetPoint("TOPLEFT", f, "TOPLEFT", PAD_X, y - 6)
     rows[#rows + 1] = rubric
 
+    local host
     local text = badgeText or (source and S.Label(source))
     if text then
-        local host = HoverEyebrow(f, text, { color = "warningBright", size = 10, justify = "RIGHT" })
-        host:SetPoint("TOPRIGHT", f, "TOPRIGHT", -PAD_X, y - 4)
+        host = HoverEyebrow(f, text, { color = "warningBright", size = 10, justify = "RIGHT" })
+        host:SetPoint("TOPRIGHT", f, "TOPRIGHT", -PAD_X, y - 6)
         local lines = { source and S.Why(source) or nil }
         for _, extra in ipairs(extraLines or {}) do lines[#lines + 1] = extra end
         Tooltip(host, "Woher das stammt", lines)
         rows[#rows + 1] = host
     end
+
+    -- DIE ABSCHNITTSLINIE. Aus einer Rubrik wird damit ein Abschnitt:
+    -- die Linie laeuft von der Rubrik bis zum Vorsatz der Herkunft
+    -- (oder bis zum Seitenrand, wo es keinen gibt) und bindet zusammen,
+    -- was darunter als Raster steht. Sie haengt an den beiden Texten
+    -- und nicht an gerechneten Breiten - was der Client wirklich setzt,
+    -- weiss nur er.
+    local rule = f:CreateTexture(nil, "ARTWORK")
+    rule:SetHeight(1)
+    rule:SetPoint("LEFT", rubric, "RIGHT", 14, -1)
+    if host then
+        rule:SetPoint("RIGHT", host, "LEFT", -14, 0)
+    else
+        rule:SetPoint("RIGHT", f, "RIGHT", -PAD_X, 0)
+    end
+    rule:SetColorTexture(C.border[1], C.border[2], C.border[3], 1.0)
 
     return y - SECTION_H
 end
@@ -940,7 +1254,7 @@ end
 -- seiner Stelle (kein Bestand). Gibt das y darunter zurueck.
 local function Note(f, y, text, color, size)
     local fs, h = WeintCodex.Paragraph(f, text, {
-        width = MinContentWidth() - 2 * PAD_X, size = size or 12, color = color or "textDim",
+        width = LayoutWidth() - 2 * PAD_X, size = size or 12, color = color or "textDim",
     })
     fs:SetPoint("TOPLEFT",  f, "TOPLEFT",   PAD_X, y)
     fs:SetPoint("TOPRIGHT", f, "TOPRIGHT", -PAD_X, y)
@@ -1004,13 +1318,27 @@ local function DrawBosses(f, y, dungeon, bossOpen)
             local len = WeintCodex.Utf8Len(boss.name or "?")
             if len > longest then longest = len end
         end
-        local height = headline and BOSS_H or BOSS_H_FLAT
+
+        -- Erst die Spalten, dann die Zeilen, dann die Hoehe: wie hoch
+        -- eine Karte werden darf, haengt daran, wie viele Zeilen das
+        -- Raster bekommt - und die Karte muss ihre Hoehe kennen, bevor
+        -- sie gebaut wird. Was unter dem Raster noch steht, zaehlt
+        -- dabei mit (siehe GridCardHeight).
+        local reserve = 0
+        if completeness and bossOpen then
+            local cols = math.floor((LayoutWidth() - 2 * PAD_X) / (11 * 0.60))
+            reserve = 6 + WeintCodex.EstimateLines(completeness, cols) * (11 + 3)
+        end
+
+        local cols, cardW = GridLayout(ContentWidth() - 2 * PAD_X, longest)
+        local height = GridCardHeight(y, math.ceil(#shown / cols), headline,
+            reserve, cardW)
 
         local cards = {}
         for _, boss in ipairs(shown) do
             cards[#cards + 1] = BossCard(f, boss, height, headline)
         end
-        y = PlaceGrid(f, cards, y, longest, height)
+        y = PlaceGrid(f, cards, y, longest, height, headline, reserve)
 
         if completeness and bossOpen then
             y = Note(f, y - 6, completeness, "textFaint", 11)
@@ -1025,7 +1353,7 @@ local function DrawBosses(f, y, dungeon, bossOpen)
               .. "Ausschnitt." })
         local cards = {}
         for _ = 1, total do cards[#cards + 1] = GhostCard(f, BOSS_H_FLAT) end
-        y = PlaceGrid(f, cards, y, 1, BOSS_H_FLAT)
+        y = PlaceGrid(f, cards, y, 1, BOSS_H_FLAT, false)
 
         local text = total .. " Kämpfe berichtet, Namen unbekannt."
         if dungeon.partial and dungeon.partial.names then
@@ -1156,7 +1484,7 @@ local function DetailCard(f, y, opts)
         if type(w) == "number" and w > 0 then inner:SetWidth(w) end
     end)
 
-    local needed = opts.build(inner, BodyWidthMin()) or 0
+    local needed = opts.build(inner, BodyWidth()) or 0
     inner:SetHeight(math.max(1, needed))
 
     local remaining = AvailableHeight() + y - PAD_Y
@@ -1164,7 +1492,13 @@ local function DetailCard(f, y, opts)
     local bar       = sf.WCScrollBar
 
     if wanted <= remaining then
-        card:SetHeight(math.max(wanted, MIN_DETAIL_H))
+        -- SO HOCH WIE IHR INHALT, KEINEN PIXEL HOEHER. Bis 5.2.0.6
+        -- stand hier eine Mindesthoehe (160 px), und die machte aus
+        -- einer Karte mit drei kurzen Zeilen eine halbleere Flaeche.
+        -- MIN_DETAIL_H ist seither nur noch die Grenze, unterhalb
+        -- derer die Seite sich selbst anzeigt (siehe unten und
+        -- GridCardHeight) - keine Hoehe, die irgendetwas aufblaest.
+        card:SetHeight(wanted)
         if bar then bar:Hide() end
         y = y - card:GetHeight()
     else
@@ -1235,10 +1569,11 @@ end
 -- ein Fehler aussieht.
 
 local FACT_BAR_W   = 2
-local FACT_TITLE_H = 16
-local FACT_ENTRY_GAP = 9
-local COL_GUTTER   = 24
+local FACT_TITLE_H = 15
+local FACT_ENTRY_GAP = 7
+local COL_GUTTER   = 28
 local COL_MIN_W    = 210   -- schmaler als das ist keine Spalte mehr
+local COL_RUBRIC_H = 18    -- Rubrik -> erste Zeile der Spalte
 
 -- Alles, was ueber diesen Dungeon zu sagen ist, ohne dass jemand
 -- einen Boss angeklickt hat. Reihenfolge ist Rangfolge: was die
@@ -1303,10 +1638,14 @@ local function FactEntries(dungeon)
 end
 
 -- Zeichnet die Besonderheiten ab `y` und gibt das y darunter zurueck.
+-- ENG GESETZT, WEIL SIE NACHRANGIG SIND. Jede Zeile besteht aus drei
+-- Teilen, die dicht beieinander stehen: dem Farbbalken, der Zeile, um
+-- die es geht, und dem Satz dazu in einer Stufe kleiner. Was hier an
+-- Hoehe verbraucht wird, fehlt dem Bossraster darueber.
 local function DrawFacts(parent, y, entries, w)
     for _, entry in ipairs(entries) do
         local bar = parent:CreateTexture(nil, "ARTWORK")
-        bar:SetSize(FACT_BAR_W, 13)
+        bar:SetSize(FACT_BAR_W, 12)
         bar:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, y - 2)
         local bc = C[entry.tone] or C.borderStrong
         bar:SetColorTexture(bc[1], bc[2], bc[3], entry.tone and 0.9 or 1.0)
@@ -1314,11 +1653,11 @@ local function DrawFacts(parent, y, entries, w)
         local title = WeintCodex.Label(parent, entry.title,
             { color = entry.tone or "textNormal", size = 12,
               font = WeintCodex.Fonts.sansMedium })
-        title:SetPoint("TOPLEFT", parent, "TOPLEFT", 12, y)
+        title:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, y)
 
         local detail, detailH = WeintCodex.Paragraph(parent, entry.detail,
-            { width = w - 12, size = 11, spacing = 2, color = "textDim" })
-        detail:SetPoint("TOPLEFT",  parent, "TOPLEFT",  12, y - FACT_TITLE_H)
+            { width = w - 10, size = 11, spacing = 2, color = "textDim" })
+        detail:SetPoint("TOPLEFT",  parent, "TOPLEFT",  10, y - FACT_TITLE_H)
         detail:SetPoint("TOPRIGHT", parent, "TOPRIGHT",  0, y - FACT_TITLE_H)
 
         y = y - FACT_TITLE_H - detailH - FACT_ENTRY_GAP
@@ -1336,6 +1675,17 @@ end
 -- steht sie dort (DungeonInspector), und zweimal derselbe Absatz
 -- nebeneinander waere keine Betonung. So steht sie in JEDEM Zustand
 -- der Seite genau einmal sichtbar.
+--
+-- ZWEI ZEILEN, NICHT VIER. Seit 5.2.0.7 steht die Rubrik NEBEN der
+-- Quelle und nicht darueber:
+--
+--   -----------------------------------------------------------
+--   QUELLE   WoW Classic (Classic Era)
+--   Blizzard hat die Beute jedes Bosses ueberarbeitet; ...
+--
+-- Die Herkunft ist die nachrangigste Auskunft der Seite und hatte
+-- lange ihren groessten Textblock. Was sie braucht, ist, dass man sie
+-- findet - nicht, dass man sie zuerst liest.
 local function SourceFooter(parent, y, dungeon, w)
     local source = D.BossSource(dungeon)
     local label, why
@@ -1355,11 +1705,25 @@ local function SourceFooter(parent, y, dungeon, w)
     y = y - 16
 
     local rubric = WeintCodex.Eyebrow(parent, "Quelle", { color = "textFaint", size = 9 })
-    rubric:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, y)
-    y = y - 14
+    rubric:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, y + 1)
 
-    y = BodyText(parent, y, label, w, { size = 11, color = "warningBright" }) - 2
-    y = BodyText(parent, y, why,   w, { size = 11, color = "textDim" })
+    -- Der Einzug der Quelle: die gesperrte Rubrik traegt hinter jedem
+    -- Zeichen ein Leerzeichen und ist deshalb rund 1,15 em je Zeichen
+    -- breit. Gerechnet und nicht gemessen, wie jede Breite hier.
+    local indent = math.ceil(WeintCodex.Utf8Len("Quelle") * 9 * 1.15) + 14
+
+    local text = parent:CreateFontString(nil, "OVERLAY")
+    text:SetFont(WeintCodex.Fonts.sansMedium, 11, "")
+    text:SetJustifyH("LEFT")
+    text:SetWordWrap(false)
+    text:SetPoint("TOPLEFT", parent, "TOPLEFT", indent, y)
+    text:SetTextColor(C.warningBright[1], C.warningBright[2], C.warningBright[3])
+    text:SetText(label)
+    y = y - 15
+
+    if why then
+        y = BodyText(parent, y, why, w, { size = 10, color = "textFaint" })
+    end
     return y
 end
 
@@ -1388,13 +1752,13 @@ local function DrawRoster(f, y, dungeon)
                 local lY = WeintCodex.Eyebrow(left, "Besonderheiten",
                     { color = "textDim", size = 10 })
                 lY:SetPoint("TOPLEFT", left, "TOPLEFT", 0, 0)
-                local leftEnd = DrawFacts(left, -20, entries, colW)
+                local leftEnd = DrawFacts(left, -COL_RUBRIC_H, entries, colW)
 
                 local rY = WeintCodex.Eyebrow(right, "Aufstellung",
                     { color = "textDim", size = 10 })
                 rY:SetPoint("TOPLEFT", right, "TOPLEFT", 0, 0)
-                local rightEnd = WeintCodex.RolePanel.Roster(right, -20, dungeon,
-                    { width = colW })
+                local rightEnd = WeintCodex.RolePanel.Roster(right, -COL_RUBRIC_H,
+                    dungeon, { width = colW, compact = true })
 
                 local h = math.max(-leftEnd, -rightEnd)
                 left:SetHeight(math.max(1, h))
@@ -1415,13 +1779,13 @@ local function DrawRoster(f, y, dungeon)
                     local rubric = WeintCodex.Eyebrow(inner, "Besonderheiten",
                         { color = "textDim", size = 10 })
                     rubric:SetPoint("TOPLEFT", inner, "TOPLEFT", 0, 0)
-                    endY = DrawFacts(inner, -20, entries, w) - 8
+                    endY = DrawFacts(inner, -COL_RUBRIC_H, entries, w) - 6
                 end
                 local rubric = WeintCodex.Eyebrow(inner, "Aufstellung",
                     { color = "textDim", size = 10 })
                 rubric:SetPoint("TOPLEFT", inner, "TOPLEFT", 0, endY)
-                endY = WeintCodex.RolePanel.Roster(inner, endY - 20, dungeon,
-                    { width = w })
+                endY = WeintCodex.RolePanel.Roster(inner, endY - COL_RUBRIC_H,
+                    dungeon, { width = w, compact = true })
             end
 
             if not inspectorShown then

@@ -178,14 +178,40 @@ eigene Leere beschrieb — **acht Einzelteile auf einer Ebene**, von
 denen keines wichtiger aussah als das andere.
 
 Seit 5.2.0.5 hat die Seite **drei Ebenen**, und sie stehen immer in
-derselben Reihenfolge. 5.2.0.6 hat an dieser Reihenfolge nichts
-geändert — nur daran, wie schwer die drei aussehen:
+derselben Reihenfolge. Weder 5.2.0.6 noch 5.2.0.7 haben an dieser
+Reihenfolge etwas geändert — nur daran, wie schwer die drei *aussehen*:
 
 | Ebene | Trägt |
 |---|---|
-| 1 · Kopfkarte | eine **eigene Fläche** mit Akzentstreifen an der linken Kante: Kennzeichnung (`CLASSIC` / `FOREVER`), Name, Themensatz in der ruhigen Kursiven, eine Haarlinie — und darunter das **Tatsachenband**, in dem jede Auskunft eine eigene Spalte hat (Wert oben, Rubrik darunter) |
-| 2 · Bosse | ein **Raster aus Karten**: Nummer oben links (nur bei bekannter Reihenfolge), Kennzeichen als Pille oben rechts (`BESCHWÖREN` > `OPTIONAL` > `TIPPS`), Name darunter; rechts über dem Raster der Vorsatz der Herkunft mit Begründung im Tooltip; bei Flügeln Reiter darüber, **ein Flügel zur Zeit** |
-| 3 · Kontextkarte | **ohne Boss** zwei Spalten — `BESONDERHEITEN` und `AUFSTELLUNG` — und, wo die Seite in voller Breite steht, die Herkunft als Fusszeile; **mit Boss** das Berichtete: die Notiz als Aufschlag, *So kommt er*, *Wo er steht*, *Rollen* |
+| 1 · Kopfkarte | eine **eigene Fläche in zwei Zonen** mit Akzentstreifen an der linken Kante. Oben: Kennzeichnung (`CLASSIC` / `FOREVER`), der Name in der Serife (34 px), der Themensatz in der ruhigen Kursiven — als **Spalte** (62 % der Breite), nicht über die ganze Fläche; rechts daneben ein Verlauf, der nach hinten hin violett anläuft. Unten, auf einem **dunkleren Sockel** unter der Haarlinie: das **Tatsachenband**, in dem jede Auskunft eine eigene Spalte hat (Wert oben, Rubrik darunter) und die Stufenzelle **rechts aussen für sich** steht |
+| 2 · Bosse | ein **Raster aus Karten**, angeführt von einer Rubrik mit **Abschnittslinie**: Nummer oben links (nur bei bekannter Reihenfolge), Kennzeichen als Pille oben rechts (`BESCHWÖREN` > `OPTIONAL` > `TIPPS`), der Name unten auf einem dunkleren **Sockel**, in der Serife; rechts über dem Raster der Vorsatz der Herkunft mit Begründung im Tooltip; bei Flügeln Reiter darüber, **ein Flügel zur Zeit**. Der schwerste Abschnitt der Seite, und zwar absichtlich |
+| 3 · Kontextkarte | **nie höher als ihr Inhalt.** Ohne Boss zwei Spalten — `BESONDERHEITEN` und `AUFSTELLUNG`, beide eng gesetzt — und, wo die Seite in voller Breite steht, die Herkunft als **zweizeilige** Fusszeile (Rubrik *neben* der Quelle, nicht darüber); **mit Boss** das Berichtete: die Notiz als Aufschlag, *So kommt er*, *Wo er steht*, *Rollen* |
+
+#### Die Gewichtung ist der Punkt *(seit 5.2.0.7)*
+
+Die drei Ebenen sind nicht gleich schwer, und man soll es sehen:
+
+```
+KOPFKARTE      ████████████
+BOSSE          ██████████████████████████
+KONTEXTKARTE   ████████████
+QUELLE         ███
+```
+
+Drei Rechnungen tragen das, und keine davon ist ein fester Wert:
+
+* **Die Kartenhöhe wächst mit dem Platz** (`GridCardHeight`, siehe
+  unten). Wo die Seite es hergibt, ist die Bosskarte 66 bis 80 px hoch
+  statt 44 — das Raster bekommt damit rund die Hälfte der Seite.
+* **Die Kontextkarte hat keine Mindesthöhe mehr.** Bis 5.2.0.6 stand
+  dort `MIN_DETAIL_H = 160`; eine Karte mit drei kurzen Zeilen war
+  damit eine halbleere Fläche. Jetzt ist sie so hoch wie ihr Inhalt.
+* **Texthöhen werden gegen die wirkliche Breite geschätzt**
+  (`LayoutWidth`). Vorher rechnete die Seite jeden Absatz gegen die
+  Breite des *kleinsten* Fensters: ein Absatz, der bei 652 px vier
+  Zeilen braucht, braucht bei 1036 px zwei — die Karte wurde für vier
+  gebaut und zeichnete zwei. Das war der grösste Teil des leeren
+  Raums unten.
 
 ### Warum eine Fläche und nicht nur Abstand
 
@@ -311,7 +337,7 @@ Eine Karte sieht aus wie ein Gegenstand:
 
 Die **Kopfzeile** gibt es nur, wo sie etwas trägt. Trägt in der ganzen
 gezeigten Liste keine Karte eine Nummer (`orderKnown = false`) und
-kein Kennzeichen, sind alle Karten flach (32 statt 44 px) — und zwar
+kein Kennzeichen, sind alle Karten flach (34 px statt 66) — und zwar
 **alle**, damit das Raster eine Zeilenhöhe hat und nicht zwei. Eine
 reservierte Zeile, die nirgends etwas enthält, ist Luft, die wie ein
 Fehler aussieht.
@@ -339,6 +365,51 @@ Der **ausgewählte** Boss trägt seit 5.2.0.6 `tone = "accent"`: den
 violett getönten Verlauf mit Akzent-Oberkante und Akzentrand, dazu
 weiterhin den Balken an der linken Kante. Er ist damit die **eine**
 Akzentfläche der Ansicht, wie der Entwurf es vorsieht.
+
+#### Und seit 5.2.0.7 auch nicht mehr wie ein breiter Knopf
+
+Eine Zeile Text in einem Rahmen bleibt eine Zeile Text in einem
+Rahmen, egal wie sie gefüllt ist. Drei Dinge machen daraus einen
+Eintrag — und keines davon ist ein Bild:
+
+* **Höhe und Zonen.** Die Nummer steht oben, der Name unten,
+  dazwischen ist Luft. Ein Knopf hat keine Luft, ein Eintrag schon.
+* **Der Sockel.** Die untere Zone läuft nach unten hin dunkler aus
+  (`C.washDark`, 22 %). Der Name steht damit *auf* etwas, statt in
+  einem Kasten zu schweben — das ist, in den Mitteln dieses Addons,
+  was in den Vorlagen der dunkle Verlauf über dem Bossbild tut. Auf
+  der ausgewählten Karte ist derselbe Sockel akzentfarben
+  (`C.washAccentUp`): der Zustand färbt die Fläche, auf der der Name
+  steht, nicht nur seinen Rahmen.
+* **Der Name in der Serife** (`Fonts.display`, 14 px). Bosskarten
+  tragen Namen, und Namen sind in diesem Addon Überschriften —
+  dieselbe Schrift wie der Dungeonname darüber und der Bossname in
+  der Detailkarte darunter. Die Grotesk daneben war die Schrift der
+  Knöpfe. Auf der hohen Karte darf er in eine **zweite Zeile**
+  umbrechen; die Spaltenrechnung bleibt trotzdem bei der Größe der
+  engen Karte (`BOSS_FIT`), sonst kostete ein grösserer Name eine
+  Rasterspalte.
+
+Dazugekommen ist damit **kein** zweiter Rahmen, kein Schein und keine
+zweite Akzentfarbe.
+
+#### Die Kartenhöhe ist gerechnet wie die Spaltenzahl *(seit 5.2.0.7)*
+
+`GridCardHeight(top, rowCount, headline, reserve, cardW)` wählt
+absteigend, und der erste Wert, der passt, gewinnt:
+
+| Höhe | Wann |
+|---|---|
+| `cardW × 0,26`, höchstens **80 px** | im breiten Fenster: eine Karte, die fünfmal so breit wie hoch ist, wäre wieder ein Band |
+| **66 px** (`BOSS_H_TALL`) | der Regelfall |
+| **46 px** (`BOSS_H_MED`) | wo die hohe Karte der Kontextkarte darunter nur noch einen Schlitz liesse — im kleinsten Fenster trifft das Scholomance (14 Bosse), Stratholme und Blackrock Depths |
+| **34 px** (`BOSS_H_FLAT`) | Listen ohne Nummer *und* ohne Kennzeichen; die Karte hat dann gar keine Kopfzeile |
+
+„Passt" heisst: unter dem Raster bleiben noch `CARD_ROOM` (168 px) für
+die Kontextkarte. Das ist **nicht** dieselbe Zahl wie `MIN_DETAIL_H`
+(120 px), unter der die Seite sich im Prüflauf selbst anzeigt — wären
+es zwei Namen für eine Zahl, müsste jede Kartenhöhe am schlimmsten
+Fall gemessen werden, und der schlimmste Fall ist Scholomance.
 
 ### Die Spaltenzahl ist gerechnet, nicht gesetzt
 
@@ -468,7 +539,7 @@ einmal in voller Breite. **Drei** Dinge entscheiden das, alle
 gerechnet:
 
 1. **Sie passt nicht.** Viele Bosse, viele Flügelreiter — dann bliebe
-   der Kontextkarte nicht einmal ihre Mindesthöhe von 160 px. Gemessen
+   der Kontextkarte nicht einmal `MIN_DETAIL_H` (120 px). Gemessen
    wird mit derselben Rechnung, mit der `load_test.lua` das Budget
    prüft (`PageHeight()` gegen `PageBudget()`), damit hier kein Fall
    entsteht, den der Prüflauf nicht ohnehin durchspielt.
@@ -502,8 +573,9 @@ direkt auf die detailbereich-bewusste Zahl.
 
 Ist der Detailbereich offen, steht sie dort. Steht die Seite in voller
 Breite, trägt sie die Kontextkarte als **Fusszeile** unter beiden
-Spalten (`SourceFooter` in `modules/dungeonpages.lua`) — Rubrik,
-Vorsatz mit Quelle, `Why()`-Satz, drei Zeilen unter einer Haarlinie.
+Spalten (`SourceFooter` in `modules/dungeonpages.lua`) — die Rubrik
+`QUELLE` **neben** der Quelle und der `Why()`-Satz darunter, zwei
+Zeilen unter einer Haarlinie.
 Zweimal derselbe Absatz nebeneinander wäre keine Betonung; keinmal
 wäre der Zustand vor 5.2.0.3, in dem die Begründung nur im Tooltip
 eines Vorsatzes stand, den niemand findet, der nicht ohnehin vermutet,

@@ -142,12 +142,24 @@ local function SpecSummary(role)
     return table.concat(parts, "  ·  ")
 end
 
+-- `opts.compact` ZIEHT DIESELBEN DREI ZEILEN ENGER, OHNE EINE
+-- WEGZULASSEN. Die Aufstellung ist auf der Dungeonseite nachrangig:
+-- sie steht neben den Besonderheiten unter dem Bossraster, und was
+-- dort an Hoehe draufgeht, fehlt dem Raster darueber. Gekuerzt wird
+-- deshalb der Abstand und der Schriftgrad - nie der Bestand: welche
+-- Baeume eine Rolle tragen, steht in beiden Fassungen vollstaendig da.
 function WeintCodex.RolePanel.Roster(parent, y, instance, opts)
     opts = opts or {}
     local x     = opts.x or 0
     local right = opts.right or 0
     local width = opts.width or 300
     local frame = WeintCodex.Roles.Frame(instance and instance.size)
+
+    local compact  = opts.compact and true or false
+    local rowGap   = compact and 7 or ROSTER_ROW_GAP
+    local nameSize = compact and 13 or 14
+    local specSize = compact and 11 or 12
+    local specTop  = compact and 19 or 22
 
     -- Ohne Rahmen steht der Grund da, nicht eine Zahl aus einem
     -- anderen Spiel.
@@ -160,7 +172,7 @@ function WeintCodex.RolePanel.Roster(parent, y, instance, opts)
             { width = width, size = 12, color = "textDim" })
         why:SetPoint("TOPLEFT",  parent, "TOPLEFT",  x, y)
         why:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -right, y)
-        y = y - why:GetHeight() - ROSTER_ROW_GAP
+        y = y - why:GetHeight() - rowGap
     end
 
     for _, role in ipairs(WeintCodex.Roles.ORDER) do
@@ -175,7 +187,7 @@ function WeintCodex.RolePanel.Roster(parent, y, instance, opts)
         bar:SetColorTexture(bc[1], bc[2], bc[3], 0.9)
 
         local name = WeintCodex.Label(parent, WeintCodex.Roles.Label(role),
-            { color = tone, size = 14, font = WeintCodex.Fonts.sansSemi })
+            { color = tone, size = nameSize, font = WeintCodex.Fonts.sansSemi })
         name:SetPoint("TOPLEFT", parent, "TOPLEFT", x + 14, y)
 
         -- Die Plaetze: bekannt oder ausdruecklich nicht. Mono, weil
@@ -195,11 +207,12 @@ function WeintCodex.RolePanel.Roster(parent, y, instance, opts)
         end
 
         local specs, specH = WeintCodex.Paragraph(parent, SpecSummary(role),
-            { width = width - 14, size = 12, color = "textMuted" })
-        specs:SetPoint("TOPLEFT",  parent, "TOPLEFT",  x + 14, y - 22)
-        specs:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -right,  y - 22)
+            { width = width - 14, size = specSize, spacing = compact and 2 or 3,
+              color = "textMuted" })
+        specs:SetPoint("TOPLEFT",  parent, "TOPLEFT",  x + 14, y - specTop)
+        specs:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -right,  y - specTop)
 
-        y = y - 22 - specH - ROSTER_ROW_GAP
+        y = y - specTop - specH - rowGap
     end
 
     return y

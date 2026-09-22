@@ -120,6 +120,19 @@ local C = {
     hairline     = {0.149, 0.149, 0.180, 1.0},  -- 26262E
     hairlineSoft = {0.118, 0.118, 0.145, 1.0},  -- 1E1E25
     borderGlow   = {0.486, 0.424, 1.000, 0.30},
+
+    -- ATMOSPHAERE. Vier Werte, die keine Farbe sind, sondern Tiefe: sie
+    -- liegen so tief, dass sie sich nicht als Ton lesen lassen, und
+    -- stehen deshalb nicht neben dem einen Akzent, sondern unter ihm.
+    -- `washAccent` IST der Akzent, nur fast durchsichtig - eine
+    -- Kopfflaeche, die nach hinten hin violett anlaeuft, behauptet
+    -- keine zweite Bedeutung, sie gibt der Flaeche einen Raum.
+    -- Gebraucht werden sie nur mit einem Verlauf (ApplyVertical/
+    -- HorizontalGradient), nie als Flaechenfarbe.
+    washNone     = {0.486, 0.424, 1.000, 0.00},
+    washAccent   = {0.486, 0.424, 1.000, 0.08},
+    washAccentUp = {0.486, 0.424, 1.000, 0.16},
+    washDark     = {0.000, 0.000, 0.000, 0.22},
     headerBg     = {0.031, 0.031, 0.039, 1.0},  -- 08080A - Insets (Suchfeld)
     accentDot    = {0.486, 0.424, 1.000, 1.0},
 
@@ -305,6 +318,23 @@ local function ApplyVerticalGradient(tex, topCol, bottomCol)
         CreateColor(t[1], t[2], t[3], t[4] or 1.0))
 end
 WeintCodex.ApplyVerticalGradient = ApplyVerticalGradient
+
+-- CSS `linear-gradient(90deg, a, b)` -> links a, rechts b.
+-- WoW `SetGradient("HORIZONTAL", min, max)` -> min links, max rechts.
+--
+-- Wofuer es das braucht: eine Flaeche, die nach einer Seite hin
+-- anlaeuft, ist das einzige Mittel dieses Addons, Atmosphaere zu
+-- zeichnen. Bilder gibt es fuer Forever keine (siehe
+-- modules/dungeonpages.lua), und ein geratener Texturpfad zeichnet im
+-- Spiel ein gruenes Rechteck.
+local function ApplyHorizontalGradient(tex, leftCol, rightCol)
+    local l, r = Col(leftCol), Col(rightCol)
+    tex:SetTexture(WHITE)
+    tex:SetGradient("HORIZONTAL",
+        CreateColor(l[1], l[2], l[3], l[4] or 1.0),
+        CreateColor(r[1], r[2], r[3], r[4] or 1.0))
+end
+WeintCodex.ApplyHorizontalGradient = ApplyHorizontalGradient
 
 --------------------------------------------------
 -- Karte
