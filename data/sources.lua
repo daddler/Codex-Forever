@@ -165,6 +165,19 @@ function S.Label(source)
     return PREFIX[source.kind] .. " · " .. source.label
 end
 
+-- Nur der Vorsatz, ohne die Quelle dahinter. Für Flächen, auf denen
+-- beides nebeneinander keinen Platz hat und getrennt steht: der
+-- Detailbereich der Dungeonseite führt die ART in einer
+-- Kennzahlenzeile ("Herkunft: Aus Classic") und die QUELLE mit der
+-- Begründung darunter. `S.Label` in eine solche Zeile zu schreiben
+-- hiesse, sie über die Beschriftung daneben laufen zu lassen -
+-- Kennzahlenzeilen brechen nicht um (InspectorRows in
+-- core/navigation.lua).
+function S.Prefix(source)
+    if not S.IsValid(source) then return nil end
+    return PREFIX[source.kind]
+end
+
 -- Der lange Satz darunter: WARUM das hier nicht feststeht. Er ist
 -- der eigentliche Zweck dieser Datei - ein Hinweis "vorläufig" ohne
 -- Begründung ist eine Fussnote, die niemand liest.

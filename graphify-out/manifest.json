@@ -13,21 +13,21 @@
   },
   ".github/tests/load_test.lua": {
     "mtime": 1790079500.172061,
-    "seen": 1790081005.4401858,
+    "seen": 1790094695.2660127,
     "ast_hash": "81b71c9ab9a91b82f5bece1c2ef94ea4",
-    "semantic_hash": ""
+    "semantic_hash": "81b71c9ab9a91b82f5bece1c2ef94ea4"
   },
   ".github/tests/wow_stub.lua": {
     "mtime": 1789997512.1251874,
-    "seen": 1790081005.4401867,
+    "seen": 1790094695.2660136,
     "ast_hash": "26f0b58202d01c446f36e8ba27eea4ec",
-    "semantic_hash": ""
+    "semantic_hash": "26f0b58202d01c446f36e8ba27eea4ec"
   },
   "WeintCodex.toc": {
-    "mtime": 1790083054.4431026,
-    "seen": 1790083250.1724436,
-    "ast_hash": "79d313f725e000b5513383819a443d27",
-    "semantic_hash": ""
+    "mtime": 1790085889.176908,
+    "seen": 1790094695.2660146,
+    "ast_hash": "3664cad22acc28ae01b55d70dbd34704",
+    "semantic_hash": "3664cad22acc28ae01b55d70dbd34704"
   },
   "core/access.lua": {
     "mtime": 1789991314.1388493,
@@ -36,10 +36,10 @@
     "semantic_hash": "22cae2ced786df8a3f1a15b4634f0853"
   },
   "core/main.lua": {
-    "mtime": 1790083054.4437087,
-    "seen": 1790083250.1724458,
-    "ast_hash": "3ac36c198c50fdf10516ed3c3a5e890e",
-    "semantic_hash": ""
+    "mtime": 1790085889.1774623,
+    "seen": 1790094695.2660162,
+    "ast_hash": "98f7e9e380b08e97c3d779d68ce9b581",
+    "semantic_hash": "98f7e9e380b08e97c3d779d68ce9b581"
   },
   "core/minimap.lua": {
     "mtime": 1789991314.1391437,
@@ -55,9 +55,9 @@
   },
   "core/navigation.lua": {
     "mtime": 1790080723.9384775,
-    "seen": 1790081005.4401903,
+    "seen": 1790094695.2660182,
     "ast_hash": "1eab27a5afa3e1d5077a0c235dfe31fa",
-    "semantic_hash": ""
+    "semantic_hash": "1eab27a5afa3e1d5077a0c235dfe31fa"
   },
   "core/onboarding.lua": {
     "mtime": 1789991314.1391437,
@@ -73,15 +73,15 @@
   },
   "core/ui.lua": {
     "mtime": 1790079500.172061,
-    "seen": 1790081005.440192,
+    "seen": 1790094695.2660198,
     "ast_hash": "14bec5debee579df13f9149585f2823a",
-    "semantic_hash": ""
+    "semantic_hash": "14bec5debee579df13f9149585f2823a"
   },
   "data/changelog.lua": {
-    "mtime": 1790083088.8100457,
-    "seen": 1790083250.17245,
-    "ast_hash": "04197e28087dcd5745fd4b693f6c045d",
-    "semantic_hash": ""
+    "mtime": 1790085903.8185103,
+    "seen": 1790094695.2660203,
+    "ast_hash": "4524e2000eb92441b64d6ae6c2bfe182",
+    "semantic_hash": "4524e2000eb92441b64d6ae6c2bfe182"
   },
   "data/companion_live.lua": {
     "mtime": 1789991314.1397202,
@@ -114,10 +114,10 @@
     "semantic_hash": "4bc7f7bda742ce68ca5eef9eda00b803"
   },
   "data/sources.lua": {
-    "mtime": 1789991314.1397202,
-    "seen": 1790081005.4401963,
-    "ast_hash": "814642957c064292a8afb40f9cfc4c45",
-    "semantic_hash": "814642957c064292a8afb40f9cfc4c45"
+    "mtime": 1790085815.696338,
+    "seen": 1790094695.2660232,
+    "ast_hash": "38de62f67b4d23e8ec24f3568a89fb0e",
+    "semantic_hash": "38de62f67b4d23e8ec24f3568a89fb0e"
   },
   "data/specs.lua": {
     "mtime": 1789991314.1397202,
@@ -186,10 +186,10 @@
     "semantic_hash": "3ee5c82b08a5635b1ffc679f65756408"
   },
   "modules/dungeonpages.lua": {
-    "mtime": 1790083234.3300471,
-    "seen": 1790083250.1724603,
-    "ast_hash": "a99c33513d4fbf49400cf70555efd577",
-    "semantic_hash": ""
+    "mtime": 1790094193.5377786,
+    "seen": 1790094695.2660291,
+    "ast_hash": "b96680724cc344adfcca4a0fb20766b9",
+    "semantic_hash": "b96680724cc344adfcca4a0fb20766b9"
   },
   "modules/encounter_tracking.lua": {
     "mtime": 1789991314.1454244,
@@ -223,9 +223,9 @@
   },
   "modules/rolepanel.lua": {
     "mtime": 1790080023.7405598,
-    "seen": 1790081005.4402053,
+    "seen": 1790094695.2660322,
     "ast_hash": "f033ee93677bf9c13869a0591ce9e1b7",
-    "semantic_hash": ""
+    "semantic_hash": "f033ee93677bf9c13869a0591ce9e1b7"
   },
   "modules/settings.lua": {
     "mtime": 1789991314.1454244,
@@ -247,122 +247,122 @@
   },
   ".github/tests/README.md": {
     "mtime": 1789991314.1384368,
-    "seen": 1790081005.4402077,
+    "seen": 1790094695.2660344,
     "ast_hash": "5753443de4452a3e0c846c88c278044d",
-    "semantic_hash": ""
+    "semantic_hash": "5753443de4452a3e0c846c88c278044d"
   },
   ".github/workflows/ci.yml": {
     "mtime": 1789991314.1385663,
-    "seen": 1790081005.4402084,
+    "seen": 1790094695.2660348,
     "ast_hash": "bff1abf94df706e7d1c8579df24745d7",
-    "semantic_hash": ""
+    "semantic_hash": "bff1abf94df706e7d1c8579df24745d7"
   },
   ".github/workflows/manual-release.yml": {
     "mtime": 1789991314.1388493,
-    "seen": 1790081005.440209,
+    "seen": 1790094695.2660356,
     "ast_hash": "100535d9fd1da66f6a70321b53042bab",
-    "semantic_hash": ""
+    "semantic_hash": "100535d9fd1da66f6a70321b53042bab"
   },
   ".github/workflows/release.yml": {
     "mtime": 1789991314.1388493,
-    "seen": 1790081005.4402096,
+    "seen": 1790094695.266036,
     "ast_hash": "be407aed5d753c8cd850d9129c153595",
-    "semantic_hash": ""
+    "semantic_hash": "be407aed5d753c8cd850d9129c153595"
   },
   "CHANGELOG.md": {
-    "mtime": 1790083088.8102624,
-    "seen": 1790083250.1724677,
-    "ast_hash": "d635a6a788ee267066570d94a883ce77",
-    "semantic_hash": ""
+    "mtime": 1790085946.4451473,
+    "seen": 1790094695.2660365,
+    "ast_hash": "7ae4b90bb28384797a870b04198005cc",
+    "semantic_hash": "7ae4b90bb28384797a870b04198005cc"
   },
   "CLAUDE.md": {
     "mtime": 1790083184.1505125,
-    "seen": 1790083250.172468,
+    "seen": 1790094695.266037,
     "ast_hash": "4df748ce90e8826181b44a3b45bfadcd",
-    "semantic_hash": ""
+    "semantic_hash": "4df748ce90e8826181b44a3b45bfadcd"
   },
   "README.md": {
     "mtime": 1789991314.1388493,
-    "seen": 1790081005.4402113,
+    "seen": 1790094695.2660375,
     "ast_hash": "7d060ad99cc0df846e0f1e39e7f131d9",
-    "semantic_hash": ""
+    "semantic_hash": "7d060ad99cc0df846e0f1e39e7f131d9"
   },
   "docs/architecture/overview.md": {
-    "mtime": 1790083174.0273354,
-    "seen": 1790083250.1724691,
-    "ast_hash": "6ba7294e85c03ecb47ce053193edc163",
-    "semantic_hash": ""
+    "mtime": 1790085977.1045194,
+    "seen": 1790094695.266038,
+    "ast_hash": "da1ae3f3bb1d1fff8ba9757b8714d87b",
+    "semantic_hash": "da1ae3f3bb1d1fff8ba9757b8714d87b"
   },
   "docs/development/releases.md": {
     "mtime": 1789991314.139941,
-    "seen": 1790081005.4402125,
+    "seen": 1790094695.266039,
     "ast_hash": "b6dd0a8b818b3a445d3113cdeafe71f3",
-    "semantic_hash": ""
+    "semantic_hash": "b6dd0a8b818b3a445d3113cdeafe71f3"
   },
   "docs/invariants/data-integrity.md": {
     "mtime": 1789991314.139941,
-    "seen": 1790081005.440213,
+    "seen": 1790094695.2660394,
     "ast_hash": "62a267a2ea93fe858e8ff849664d5140",
-    "semantic_hash": ""
+    "semantic_hash": "62a267a2ea93fe858e8ff849664d5140"
   },
   "docs/systems/character.md": {
     "mtime": 1789991314.139941,
-    "seen": 1790081005.4402134,
+    "seen": 1790094695.2660396,
     "ast_hash": "bdbdb50ca160e20eba0b07bbbe1216f1",
-    "semantic_hash": ""
+    "semantic_hash": "bdbdb50ca160e20eba0b07bbbe1216f1"
   },
   "docs/systems/companion-bridge.md": {
     "mtime": 1789991314.1401029,
-    "seen": 1790081005.4402142,
+    "seen": 1790094695.26604,
     "ast_hash": "f80c2e1bbde00bc758a0b2245baf3a3c",
-    "semantic_hash": ""
+    "semantic_hash": "f80c2e1bbde00bc758a0b2245baf3a3c"
   },
   "docs/systems/dungeons.md": {
-    "mtime": 1790083166.7480514,
-    "seen": 1790083250.1724718,
-    "ast_hash": "afff337bbfad09451d2687d2d99ad548",
-    "semantic_hash": ""
+    "mtime": 1790086214.4349933,
+    "seen": 1790094695.2660406,
+    "ast_hash": "9ea960d290a5233cd7548e0d441fc461",
+    "semantic_hash": "9ea960d290a5233cd7548e0d441fc461"
   },
   "docs/systems/groupcheck.md": {
     "mtime": 1789991314.1401029,
-    "seen": 1790081005.4402153,
+    "seen": 1790094695.266041,
     "ast_hash": "49007f71997bd5bdc045ca68c0292b33",
-    "semantic_hash": ""
+    "semantic_hash": "49007f71997bd5bdc045ca68c0292b33"
   },
   "docs/systems/onboarding-changelog.md": {
     "mtime": 1789991314.1401029,
-    "seen": 1790081005.440216,
+    "seen": 1790094695.2660415,
     "ast_hash": "b0db3e165d68155467dff61049d758c2",
-    "semantic_hash": ""
+    "semantic_hash": "b0db3e165d68155467dff61049d758c2"
   },
   "docs/systems/raids-and-progress.md": {
     "mtime": 1789991314.1401029,
-    "seen": 1790081005.4402165,
+    "seen": 1790094695.2660425,
     "ast_hash": "bad2b6b0ac979965a210692eea78a9d1",
-    "semantic_hash": ""
+    "semantic_hash": "bad2b6b0ac979965a210692eea78a9d1"
   },
   "media/fonts/IBMPlex-LICENSE.txt": {
     "mtime": 1789991314.1404152,
-    "seen": 1790081005.440217,
+    "seen": 1790094695.266043,
     "ast_hash": "4d4949dda4b23922e334f0cbf6179065",
-    "semantic_hash": ""
+    "semantic_hash": "4d4949dda4b23922e334f0cbf6179065"
   },
   "media/fonts/Newsreader-LICENSE.txt": {
     "mtime": 1789991314.1416152,
-    "seen": 1790081005.4402175,
+    "seen": 1790094695.2660434,
     "ast_hash": "18b1799c268d8ac577c6aa8597f5b404",
-    "semantic_hash": ""
+    "semantic_hash": "18b1799c268d8ac577c6aa8597f5b404"
   },
   "media/button.png": {
     "mtime": 1789991314.1404152,
-    "seen": 1790081005.4402184,
+    "seen": 1790094695.266044,
     "ast_hash": "4f89a923157fd8415a0f0639b93b3d64",
-    "semantic_hash": ""
+    "semantic_hash": "4f89a923157fd8415a0f0639b93b3d64"
   },
   "media/logo.png": {
     "mtime": 1789991314.1438682,
-    "seen": 1790081005.4402192,
+    "seen": 1790094695.2660444,
     "ast_hash": "bd49bc9df4095680c36b0ed9c498a36a",
-    "semantic_hash": ""
+    "semantic_hash": "bd49bc9df4095680c36b0ed9c498a36a"
   }
 }

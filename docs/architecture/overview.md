@@ -111,11 +111,14 @@ zeigen gibt.
 Bedienung.** Was man umstellen kann, steht dort, wo man es sieht — die
 einzige Ausnahme sind Knöpfe, die woanders hinführen.
 
-**Nicht jede Seite hat einen.** Die Dungeonseite verzichtet auf ihn:
-neben Listenspalte und Detailbereich blieben dem Inhalt beim kleinsten
-Fenster 212 px, und die Seite wurde zur schmalsten von vier Flächen.
-Sie trägt stattdessen alles selbst, in voller Breite, mit **einer**
-Detailkarte, die rollen darf (siehe `docs/systems/dungeons.md`).
+**Nicht jede Seite hat ihn immer.** Die Dungeonseite entscheidet das
+**je Zeichnung**, nicht ein für alle Mal: sie zeichnet sich zuerst mit
+Bereich, misst sich gegen ihr eigenes Budget und fällt in die volle
+Breite zurück, wenn die Seite dann nicht passt, wenn das Bossraster auf
+eine Spalte zusammenfiele oder wenn der Bereich nichts zu zeigen hätte.
+Seine Auskünfte trägt in dem Fall die Kontextkarte im Seitenkörper, es
+geht also keine verloren (siehe `docs/systems/dungeons.md`, Abschnitt
+*Der Detailbereich rechts, wo er passt*).
 
 ### Die Unternavigation
 
@@ -219,6 +222,11 @@ Fläche der Seite, die rollen darf.
 `WeintCodex.PageHead(parent, opts)` ist der **einzige** Ort, an dem ein
 Seitenkopf entsteht. Vorher baute ihn jede Seite selbst, und im selben
 Stand standen drei Titelformen nebeneinander.
+
+**`parent` muss nicht der Inhaltsbereich sein.** Der Kopf hängt sich mit
+`x`/`y` in das, was man ihm gibt — die Dungeonseite legt ihn seit
+5.2.0.6 in eine Kopfkarte (`CreateSurface`) und bekommt damit denselben
+Titel auf einer eigenen Fläche, ohne eine zweite Kopfform zu bauen.
 
 ```lua
 local head = WeintCodex.PageHead(f, {

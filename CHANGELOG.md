@@ -9,6 +9,122 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [5.2.0.6] – 2026-09-22
+
+**Die Dungeonseite bekommt die Gestalt, die 5.2.0.5 ihr geordnet hat.**
+Die Informationsarchitektur aus 5.2.0.5 bleibt unverändert — Kopf, Bosse,
+Kontextkarte, rechter Detailbereich, gerechnetes Raster. Was sich ändert,
+ist die *Gewichtung*: die drei Ebenen sahen bis hierher gleich schwer aus,
+weil alle drei auf demselben Grund standen und nur Abstand sie trennte.
+
+**Der Dungeonkontext steht auf einer eigenen Fläche.** Eine Kopfkarte mit
+dem Kartenverlauf des Addons (`CreateSurface`, `tone = "plain"`), einem
+Akzentstreifen an der linken Kante und, in ihr, dem gewohnten Seitenkopf:
+Kennzeichnung, Name in der Serife, Themensatz in der ruhigen Kursiven. Sie
+ist die eine Fläche der Seite, die eine *Überschrift* trägt statt eines
+Bestands — dass sie einen eigenen Grund hat, sagt genau das. Der
+Akzentstreifen ist dasselbe Zeichen, das in der Spalte links am
+ausgewählten Dungeon steht und auf der ausgewählten Bosskarte: drei
+Stellen, ein Zeichen.
+
+**Aus der Tatsachenzeile ist ein Tatsachenband geworden.** Bis 5.2.0.5
+stand *„Desolace · Stufe 46 – 55 · 5 Spieler · 9 Bosse · Deine Stufe 10 ·
+zu niedrig"* als umbrechender Absatz da. Das ist ein **Satz**, und ein Satz
+wird gelesen, nicht überflogen — wer wissen will, ob seine Stufe passt,
+sucht die Auskunft zwischen vier anderen heraus. Jetzt trägt jede Tatsache
+eine eigene Spalte: oben der Wert in Lesegrösse, darunter die Rubrik als
+gesperrte Versalie (`GEBIET`, `STUFEN`, `SPIELER`, `BOSSE`). Das ist
+dieselbe Form wie die Kennzahlen im Seitenkopf der anderen Seiten
+(`WeintCodex.PageHead`, `stats`) — nur von links nach rechts gelesen statt
+von rechts nach links gesetzt, weil es hier fünf sind und keine zwei.
+
+Wie viele Zellen in eine Zeile des Bandes passen, ist **gerechnet wie die
+Spaltenzahl des Bossrasters**: jede Zelle ist so breit wie ihr breiterer
+der beiden Texte, was nicht mehr in die Zeile passt, fällt in die nächste.
+Eine feste Spaltenzahl gibt es nicht, und abgeschnitten wird nichts.
+
+Die fünf Formulierungen der Bosszahl bleiben, sie stehen nur anders:
+`9 · BOSSE`, `4 / 9 · BOSSE BENANNT`, `9 · KÄMPFE · NAMEN OFFEN`,
+`— · QUELLEN WIDERSPRECHEN SICH`, `— · BOSSE UNBEKANNT`. Keine davon ist
+eine `0`. Die Stufenzelle ist die einzige, die von der eigenen Figur
+abhängt, und sie färbt beide Zeilen; nennt der Client keine Stufe, **fehlt
+sie ganz**.
+
+**Die Bosskarten sehen aus wie Karten.** Bis 5.2.0.5 waren sie eine flache
+Fläche (`surface2`) mit dünnem Rahmen und blassem Namen — genau das Bild,
+das in jeder Oberfläche ein *Textfeld* ist. Sie tragen jetzt denselben
+Kartenverlauf mit 1-px-Oberkante wie jede andere Fläche des Addons, und der
+Name steht in Lesefarbe statt in Beschriftungsfarbe: was hier zählt, ist
+der Boss, nicht die Karte. Das Kennzeichen (`BESCHWÖREN`, `OPTIONAL`,
+`TIPPS`) ist eine Pille (`WeintCodex.Chip`) statt einer frei schwebenden
+Versalie; ihre Breite wird gerechnet und nicht gemessen, damit sie im
+Prüflauf und im Spiel dieselbe ist.
+
+Der **ausgewählte** Boss trägt den Akzentton der Seite (`tone = "accent"`:
+violett getönter Verlauf, Akzent-Oberkante, Akzentrand) und nicht mehr nur
+einen Balken. Er ist damit die eine Akzentfläche der Ansicht, wie der
+Entwurf es vorsieht — die Kopfkarte trägt ihren Akzent als Kantenstreifen,
+nicht als Fläche.
+
+**Die Kontextkarte hat zwei Spalten.** Links `BESONDERHEITEN`, rechts
+`AUFSTELLUNG`, getrennt durch eine Haarlinie. Bis 5.2.0.5 war das eine
+schmale Säule Text in einer breiten Karte, mit viel Fläche rechts daneben,
+die nichts tat.
+
+Was unter *Besonderheiten* steht, ist **abgeleitet und nicht erfunden**:
+wie viele Flügel die Instanz hat, wie viele Bosse nur auf Beschwörung
+erscheinen, wie viele neben dem Hauptweg stehen, ob die Reihenfolge bekannt
+ist, ob die Liste vollständig ist, ob der Dungeon aus Classic stammt. Ein
+Satz über „viel Laufweg" oder „schwierige Trashpacks" wäre zu jedem Dungeon
+dieser Welt zu schreiben und zu keinem belegt; hier steht er nicht. Liegt
+zu einem Dungeon keine einzige dieser Auskünfte vor, **fällt die Spalte
+weg** und die Aufstellung nimmt die volle Breite.
+
+Die Karte trägt deshalb keinen eigenen Titel mehr: ein Titel „Aufstellung"
+über einer Spalte „Aufstellung" wäre dasselbe Wort zweimal, und die Zeile
+dafür wäre Luft.
+
+**Die Herkunft ist eine Fusszeile geworden.** Bis 5.2.0.5 standen dort zwei
+Zwischentitel und zwei Absätze — die grösste zusammenhängende Textfläche
+der Seite für die nachrangigste Auskunft, die sie hat. Jetzt sind es drei
+Zeilen unter einer Haarlinie: Rubrik, Vorsatz mit Quelle, Begründung.
+Verloren geht nichts, und die Regel bleibt dieselbe wie seit 5.2.0.3: ist
+der Detailbereich rechts offen, steht sie dort; steht die Seite in voller
+Breite, steht sie hier. **In jedem Zustand genau einmal sichtbar.**
+
+Dieselbe Regel gilt seit dieser Fassung für die Vollständigkeitszeile
+(*„14 Kämpfe sind bekannt, ihre Reihenfolge nicht"*): ohne ausgewählten
+Boss trägt sie die Spalte *Besonderheiten*, mit ausgewähltem Boss gibt es
+die Spalte nicht — dann steht sie unter dem Raster.
+
+**Der geöffnete Boss trägt seinen Namen in der Überschriftenschrift.** Bis
+5.2.0.5 stand er in der Grotesk — derselben Schrift wie auf den
+Bosskarten, den Rollenzeilen und den Knöpfen; der Name des geöffneten
+Bosses sah damit aus wie eine weitere Beschriftung und nicht wie der Titel
+dessen, was darunter steht. Seine Notiz ist vom Abschnitt *„Dazu"* zum
+**Aufschlag** geworden: der eine Satz, der sagt, *was* dieser Boss ist,
+steht direkt unter seinem Namen, in derselben ruhigen Kursiven wie der
+Themensatz des Dungeons oben.
+
+**Der rechte Detailbereich führt die Herkunft als Kennzahl.** `HERKUNFT ·
+Aus Classic` in der Kennzahlenliste (neu: `S.Prefix()` in
+`data/sources.lua`), die Quelle und der Warum-Satz darunter — statt Vorsatz
+und Quelle zusammengezogen in einem Absatz und die Art nirgends auf einen
+Blick. Kennzahlenzeilen brechen nicht um (`InspectorRows`), deshalb steht
+dort der kurze Vorsatz und nicht das ganze `S.Label()`.
+
+**Keine Bilder, und der Grund ist unverändert.** Die Referenzentwürfe zu
+dieser Fassung zeigen Dungeon- und Bossbilder. Es gibt sie nicht: Blizzard
+hat für Forever kein Kartenmaterial veröffentlicht, im Beta-Client liegt
+für vier der neun Instanzen überhaupt welches, und es gehört Blizzard. Ein
+geratener Texturpfad zeichnet im Spiel ein grünes Rechteck. Die Atmosphäre
+kommt deshalb aus Fläche, Kante, Schrift und dem einen Akzent — und `wo`
+ein Boss steht, sagt weiterhin `boss.position` in Worten.
+
+**Gemessen:** schlimmster Fall der Seite unverändert **716 von 716 px**
+(die Kontextkarte füllt bis zum Rand und rollt — der vorgesehene Fall), die
+Spalte links unverändert **642 von 716 px**.
+
 ## [5.2.0.5] – 2026-09-22
 
 **Die Dungeonseite ist neu geordnet — drei Ebenen statt acht
