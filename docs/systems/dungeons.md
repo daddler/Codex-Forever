@@ -176,13 +176,47 @@ nach unten:
 | Fläche | Trägt |
 |---|---|
 | Spalte links | **nur Dungeons**, nach Stufenabschnitt; unten die Übersicht der beschwörbaren Bosse |
-| Kopf | Name (das Zentrum), Stufenbereich · Gruppengrösse · Bosszahl, der Themensatz in der Serife; rechts, ob die eigene Stufe passt |
+| Kopf | Name (das Zentrum), Stufenbereich · Gruppengrösse, der Themensatz in der Serife; rechts die **Bosszahl als Kennzahl**, wo sie hinpasst, darunter, ob die eigene Stufe passt |
 | Bosszeile | eine **Pille je Boss**: Nummer (nur bei bekannter Reihenfolge), Name, Kennzeichen (`BESCHWÖREN` > `OPTIONAL` > `TIPPS`); rechts der Vorsatz der Herkunft mit Begründung im Tooltip; bei Flügeln Reiter darüber, **ein Flügel zur Zeit** |
 | Detailkarte | ohne Boss die **Aufstellung**, mit Boss das Berichtete: *So kommt er*, *Wo er steht*, *Dazu*, *Rollen* |
 
 Ein Klick auf eine Pille öffnet den Boss in der Karte, ein zweiter
 Klick (oder das `×`) schliesst ihn; ein zweiter Klick auf den offenen
 Dungeon in der Spalte führt ebenfalls zur Aufstellung zurück.
+
+**Dieselben Bausteine wie die Schlachtzugseite, nicht ähnliche.** Der
+Kopf ist `WeintCodex.PageHead` mit derselben Kennzahl rechts wie in
+`modules/raidpages.lua`; der Detailbereich ist
+`Navigation.SetInspector`; die Spalte ist `Navigation.BuildSidebar`
+mit derselben zweiten Zeile; der Rand der Pillen kommt aus
+`WeintCodex.DrawBorder` (`core/ui.lua`), mit dem auch `Chip` und
+`CreateButton` umrandet sind. Wo der Dungeonbereich etwas anders macht
+— keine gespeicherte ID, keine Bosse in der Spalte, eine rollende
+Karte statt einer Liste —, steht der Grund daneben.
+
+### Die Bosszahl steht an genau einer Stelle
+
+Sie ist dreimal verfügbar — als Kennzahl im Kopf, als Zeile *Bosse* im
+Detailbereich, als Rubrik `BOSSE · 7` über den Pillen — und **dreimal
+dasselbe ist keine Betonung, sondern Lärm**. Welche Stelle es wird,
+entscheidet der Platz, gerechnet und nicht gehofft (`HeadStatFits()`
+in `modules/dungeonpages.lua`):
+
+| Lage | Wo die Zahl steht |
+|---|---|
+| Titel lässt rechts `64 + 16` px frei | **Kennzahl** im Kopf, wie beim Schlachtzug |
+| passt nicht, Detailbereich offen | dessen Zeile *Bosse* — die Faktenzeile trägt sie **nicht** |
+| passt nicht, kein Detailbereich | zurück in die **Faktenzeile** |
+
+Warum überhaupt gerechnet wird: mit offenem Detailbereich bleiben dem
+Inhalt 296 px, dem Kopf also 232. Ein Kennzahlenblock ist 64 px breit
+und rechtsbündig; ein Titel wie *Temple of Atal'Hakkar* in 30 px liefe
+ihm ungebremst darunter. Geschätzt wird mit derselben Kennzahl wie
+überall (0,60 em je Zeichen, `WeintCodex.Paragraph`), damit Spiel und
+Prüflauf dieselbe Seite bauen. Denselben Test macht `HintFits()` für
+den Wegweiser im Kopf der Aufstellungskarte (*„Ein Klick auf einen
+Boss zeigt ihn hier"*): in einer 192 px schmalen Karte steht lieber
+kein Satz als einer im Titel.
 
 ### Der Detailbereich rechts, wo er passt
 
@@ -241,7 +275,7 @@ Neunundzwanzig Instanzen mit Stufenzeile wären **1334 px** in einer
 Spalte von **716** (kleinstes zulässiges Fenster). **Stufenabschnitte**
 (`DungeonData.Brackets()`) lösen das: genau einer ist offen, fünf
 Abschnitte, 4 – 7 Instanzen je Abschnitt. Gemessener schlimmster
-Fall: **612 von 716 px**, 104 px frei — seit die Bosse nicht mehr in
+Fall: **642 von 716 px**, 74 px frei — seit die Bosse nicht mehr in
 der Spalte stehen, für jeden Dungeon gleich.
 
 Die Seite hat ihr eigenes Budget (`DungeonPages.PageBudget()`), und
@@ -412,10 +446,16 @@ Ein anklickbarer Gruppenkopf ist **kein Eintrag**: er landet in
 Index, mit dem eine Seite ihren aktiven Eintrag markiert
 (`ActivateIndex`), und die Markierung sässe eine Zeile daneben.
 
-Die zweite Zeile eines Dungeoneintrags ist sein **Stufenbereich** — das
-ist es, wonach man in einer Liste von neunundzwanzig Dungeons sucht.
-Die neun Dungeons von Forever tragen rechts das Kennzeichen
-**FOREVER**, damit man sie zwischen den zwanzig klassischen findet.
+Die zweite Zeile eines Dungeoneintrags trägt **beides**: aus welchem
+Spiel er ist und für welche Stufen er gedacht ist — *Forever · Stufe
+13 – 18*, *Classic · Stufe 17 – 26*. Bis 5.2.0.3 stand die Herkunft
+als gesperrtes Kennzeichen `FOREVER` rechts in der Zeile und nahm der
+Beschriftung rund **70 der 176 px**; sichtbar war das als
+abgeschnittener Name („Temple of Atal'Hakk…"). Der Name ist aber das,
+wonach man in einer Liste von neunundzwanzig Dungeons sucht, und er
+bekommt deshalb die ganze Breite. Siehe
+`docs/architecture/overview.md`, Abschnitt *Die Unternavigation*.
+
 Das Kennzeichen an einer Boss-Pille sagt, was für einer es ist:
 **BESCHWÖREN** schlägt **OPTIONAL** schlägt **TIPPS**, weil „steht ohne
 Zutun gar nicht da" die dringendere Auskunft ist.

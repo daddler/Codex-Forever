@@ -138,10 +138,10 @@ einmal links.
 | Feld | Wirkung |
 |---|---|
 | `label` | Beschriftung (Pflicht) |
-| `status` | zweite Zeile — **Text oder** `{ text = , color = }` |
+| `status` | zweite Zeile — **Text oder** `{ text = , color = }`; versal, **nicht gesperrt**, auf die Spaltenbreite beschnitten, kein Umbruch |
 | `indent` | zweite Ebene: kleiner, eingerückt, mit Führungslinie |
 | `dot` | Statuspunkt links (nur mit `indent`) |
-| `mark` / `markColor` | Kennzeichen rechts, mono und gesperrt |
+| `mark` / `markColor` | Kennzeichen rechts, mono und gesperrt — **es kostet die Beschriftung Breite** |
 | `portrait` | Bild links |
 | `accentColor` | dauerhafter Streifen am linken Rand |
 | `isGroup` | nicht anklickbare Zwischenüberschrift |
@@ -152,6 +152,34 @@ Lua indiziert einen String ohne Fehler, `("10er").text` ist `nil`, die
 Zeile wurde also 44 px hoch gebaut und blieb **leer**. Kein Fehler,
 keine Meldung, nur eine Auskunft, die nie ankam. Beide Formen sind
 jetzt erlaubt.
+
+**Die zweite Zeile ist seit 5.2.0.4 nicht mehr gesperrt**, und das ist
+eine Unterscheidung, keine Kosmetik: gesperrte Versalien sind in
+dieser Oberfläche die Form einer **Rubrik** (Eyebrow,
+Abschnittstitel, Gruppenkopf). Was in der zweiten Zeile steht, ist
+keine Rubrik, sondern ein **Wert** — ein Stufenbereich, eine
+Gruppengrösse. „S T U F E   1 3   –   1 8" liest sich als Muster und
+ist doppelt so breit wie nötig; eine lange zweite Zeile lief gesperrt
+über die 176 px der Zeile hinaus und rechts aus der Spalte heraus,
+sichtbar abgeschnitten, ohne dass etwas fehlschlug. Es ist derselbe
+Fehler, den 5.2.0.2 am **Gruppenkopf** behoben hat — er stand nur an
+zwei Stellen. Die Zeile hat jetzt eine gesetzte Breite und
+`SetWordWrap(false)` und hellt beim aktiven Eintrag mit auf; einen
+**eigenen** Farbton (Warnung, Erfolg) behält sie dabei, weil der eine
+Bedeutung trägt und keine Auswahl.
+
+`mark` ist aus demselben Grund mit Vorsicht zu setzen: das Kennzeichen
+steht rechts, und die Beschriftung endet davor. Ein gesperrtes
+`FOREVER` nahm rund **70 der 176 px** — die Dungeonspalte schnitt
+damit jeden Namen ab, der länger war als „Hall of Thanes". Wo die
+Auskunft in die zweite Zeile passt, gehört sie dorthin.
+
+**Gruppenköpfe bekommen oben mehr Luft als unten**
+(`SUBNAV_GROUP_TOP` 12, `SUBNAV_GROUP_BOT` 2): ein Zwischentitel
+gehört zu dem, was unter ihm steht. `MeasureSidebar` rechnet mit
+denselben Konstanten — stünden die Zahlen an zwei Stellen, liefe eine
+davon irgendwann nach, und das Ergebnis wäre eine Spalte, die still
+überläuft.
 
 ### Nichts muss scrollen
 
@@ -174,7 +202,7 @@ gegeneinander:
 | `Navigation.MeasureSidebar(items)` | wie hoch eine Liste **würde**, ohne sie zu bauen |
 
 Stand heute: Navigationsspalte 604 von 684 px, Unternavigation im
-schlimmsten Fall (Dungeons, grösster Stufenabschnitt) 612 von 716 px. Der
+schlimmsten Fall (Dungeons, grösster Stufenabschnitt) 642 von 716 px. Der
 Prüflauf verlangt zusätzlich **Luft für einen weiteren Eintrag** — ohne
 das fällt erst der Eintrag auf, der schon nicht mehr passt, und dann
 ist die Frage nicht mehr „passt er?", sondern „was werfen wir raus?".

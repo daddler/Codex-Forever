@@ -9,6 +9,66 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [5.2.0.4] – 2026-09-22
+
+**Die Dungeonnamen in der Spalte stehen wieder vollständig da.** Das
+gesperrte Kennzeichen *FOREVER* am rechten Rand nahm der Beschriftung
+rund **70 der 176 px**, die eine Zeile hat — sichtbar war das als
+abgeschnittener Name („Temple of Atal'Hakk…", „Alcaz Island Priso…").
+Der Name ist aber das, wonach man in einer Liste von neunundzwanzig
+Dungeons sucht; er bekommt die ganze Breite, und die zweite Zeile
+trägt beides: *Forever · Stufe 13 – 18* oder *Classic · Stufe 17 – 26*.
+
+**Die zweite Zeile ist nicht mehr gesperrt geschrieben.** Gesperrte
+Versalien sind in dieser Oberfläche die Form einer **Rubrik** —
+Eyebrow, Abschnittstitel, Gruppenkopf. Ein Stufenbereich ist keine
+Rubrik, sondern ein Wert: „S T U F E   1 3   –   1 8" liest sich als
+Muster und ist doppelt so breit wie nötig, und eine lange zweite Zeile
+lief rechts aus der Spalte heraus, ohne dass etwas fehlschlug. Die
+Zeile ist jetzt auf die Spaltenbreite beschnitten, bricht nicht um und
+hellt beim ausgewählten Eintrag mit auf. Das ist derselbe Fehler, den
+5.2.0.2 am **Gruppenkopf** behoben hat — er stand nur an zwei Stellen.
+
+**Die Stufenabschnitte haben Luft bekommen**, und zwar oben mehr als
+unten: ein Zwischentitel gehört zu dem, was unter ihm steht. Kosten:
+6 px je Abschnitt, gemessen **642 statt 612 von 716 px**, 74 px frei
+(gefordert sind 60).
+
+**Die Bosszahl steht als Kennzahl rechts im Kopf**, wie im Kopf der
+Schlachtzugseite — aber an genau *einer* Stelle, und welche das ist,
+entscheidet der Platz. Mit offenem Detailbereich bleiben dem Kopf
+232 px; ein Kennzahlenblock ist 64 px breit und rechtsbündig, ein
+Titel wie „Temple of Atal'Hakkar" in 30 px liefe ihm darunter. Passt
+sie daneben, steht sie dort (4 Dungeons in voller Breite, dazu die
+kurznamigen); passt sie nicht, trägt sie der Detailbereich als Zeile
+*Bosse* — und die Faktenzeile trägt sie dann **nicht** noch einmal.
+Dreimal dieselbe Zahl auf einer Seite ist keine Betonung, sondern
+Lärm.
+
+Dazu: die Aufstellungskarte sagt im Kopf, was als Nächstes zu tun ist
+(*„Ein Klick auf einen Boss zeigt ihn hier"*) — dort, wo Platz dafür
+ist und wo es etwas anzuklicken gibt.
+
+### Technisch
+
+`core/navigation.lua`: `SUBNAV_GROUP_TOP`/`SUBNAV_GROUP_BOT` lösen die
+an vier Stellen eingetragene `8` ab; `MeasureSidebar` rechnet mit
+denselben Konstanten, und `load_test.lua` hält beide gegeneinander.
+Die Statuszeile bekommt eine gesetzte Breite und `SetWordWrap(false)`
+statt sich auf ihre Textlänge zu verlassen, und merkt sich ihren
+Grundton (`_statusTone`/`_statusHot`), damit ein eigener Farbton
+(Warnung, Erfolg) beim Aktivieren **nicht** überschrieben wird.
+`modules/dungeonpages.lua`: `HeadStatFits()` und `HintFits()`
+entscheiden mit derselben Schätzung wie `WeintCodex.Paragraph`
+(0,60 em je Zeichen), ob Kennzahl bzw. Wegweiser hinpassen — gerechnet
+gegen die **schmalste** mögliche Breite, damit Spiel und Prüflauf
+dieselbe Seite bauen. `PillEdge()` ruft jetzt
+`WeintCodex.DrawBorder()` aus `core/ui.lua` auf, statt dessen vier
+Kanten selbst nachzubauen; die Akzentlinie der aktiven Pille liegt
+dafür auf `OVERLAY`/3 statt `ARTWORK`, damit die Unterkante des
+Rahmens sie nicht zudeckt (unter den Eckmasken auf Unterebene 6 bleibt
+sie).
+
 ## [5.2.0.3] – 2026-09-21
 
 **Die Dungeonseite zeigt jetzt denselben rechten Detailbereich wie die

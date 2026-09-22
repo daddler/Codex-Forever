@@ -13,8 +13,11 @@
 -- Seither ist es EINE Seite in voller Breite, und sie liest sich von
 -- oben nach unten:
 --
---   1. DER KOPF. Name, Stufenbereich, Gruppengroesse, Bosszahl -
---      und rechts, ob die eigene Stufe passt.
+--   1. DER KOPF. Name, darunter Stufenbereich und Gruppengroesse,
+--      darunter der Themensatz - und rechts die Bosszahl als
+--      Kennzahl, wo sie neben den Titel passt, darunter, ob die
+--      eigene Stufe passt. Wo sie nicht hinpasst, traegt der
+--      Detailbereich sie (siehe DrawHead).
 --   2. DIE BOSSE, als Zeile nummerierter Pillen. Ein Klick oeffnet
 --      den Boss darunter, ein zweiter schliesst ihn. Grosse
 --      Instanzen zeigen ihre Fluegel als Reiter darueber, einen
@@ -35,6 +38,18 @@
 -- zeichnet die Seite sich zuerst mit Bereich, misst sich selbst gegen
 -- ihr eigenes Budget und faellt bei Ueberlauf auf die volle Breite
 -- ohne Bereich zurueck (siehe DrawDungeon/DrawDungeonAt).
+--
+-- DASS SICH DAS WIE DIE SCHLACHTZUGSEITE ANFUEHLT, IST DER PUNKT,
+-- und es ist keine Behauptung, sondern dieselben Bausteine:
+-- derselbe Seitenkopf mit derselben Kennzahl rechts
+-- (WeintCodex.PageHead), derselbe rechte Detailbereich
+-- (Navigation.SetInspector), dieselbe Listenspalte mit derselben
+-- zweiten Zeile (Navigation.BuildSidebar), derselbe Rahmen fuer
+-- Anklickbares (WeintCodex.DrawBorder aus core/ui.lua, mit dem auch
+-- Chip und Knopf umrandet sind). Wo der Dungeonbereich etwas anders
+-- macht - keine gespeicherte ID, keine Bosse in der Spalte, eine
+-- rollende Karte statt einer Liste -, steht der Grund daneben. Eine
+-- zweite Oberflaechensprache ist es nicht.
 --
 -- WAS SICH NICHT GEAENDERT HAT, weil es keine Frage der Form ist:
 --
@@ -240,29 +255,21 @@ end
 -- ausgewaehlte Pille mit dem dunklen Seitenhintergrund (surface2 auf
 -- bgDark ist nur ein Hauch heller) - nichts sagt "das hier ist ein
 -- Knopf, kein Fliesstext". Die Eckmasken der Pille (WeintCodex.CutCorners,
--- Layer OVERLAY) zeichnen sich ueber die eckigen Enden dieser Linien
--- und runden sie damit mit, ohne dass die Kontur das selbst tun muss.
-local function PillEdge(pill)
-    local top = pill:CreateTexture(nil, "ARTWORK")
-    top:SetHeight(1)
-    top:SetPoint("TOPLEFT", pill, "TOPLEFT", 0, 0)
-    top:SetPoint("TOPRIGHT", pill, "TOPRIGHT", 0, 0)
-    local bottom = pill:CreateTexture(nil, "ARTWORK")
-    bottom:SetHeight(1)
-    bottom:SetPoint("BOTTOMLEFT", pill, "BOTTOMLEFT", 0, 0)
-    bottom:SetPoint("BOTTOMRIGHT", pill, "BOTTOMRIGHT", 0, 0)
-    local left = pill:CreateTexture(nil, "ARTWORK")
-    left:SetWidth(1)
-    left:SetPoint("TOPLEFT", pill, "TOPLEFT", 0, 0)
-    left:SetPoint("BOTTOMLEFT", pill, "BOTTOMLEFT", 0, 0)
-    local right = pill:CreateTexture(nil, "ARTWORK")
-    right:SetWidth(1)
-    right:SetPoint("TOPRIGHT", pill, "TOPRIGHT", 0, 0)
-    right:SetPoint("BOTTOMRIGHT", pill, "BOTTOMRIGHT", 0, 0)
-    for _, t in ipairs({ top, bottom, left, right }) do
-        t:SetColorTexture(C.border[1], C.border[2], C.border[3], 0.9)
-    end
-    return top, bottom, left, right
+-- OVERLAY, Unterebene 6) zeichnen sich ueber die eckigen Enden dieser
+-- Linien und runden sie damit mit, ohne dass die Kontur das selbst tun
+-- muss.
+--
+-- SIE KOMMT AUS core/ui.lua und ist keine eigene Nachbildung mehr.
+-- WeintCodex.DrawBorder zieht denselben Rahmen, mit dem auch der Chip
+-- und der Danger-Knopf umrandet sind, gibt seine vier Kanten zum
+-- Umfaerben zurueck und haengt sie - wie jede andere Kante im Addon -
+-- zwei Punkte weit auf, sodass sie mit der Pille mitwaechst. Hier
+-- stand bis 5.2.0.3 eine zeilenweise gleiche Zweitfassung davon;
+-- zwei Rahmenimplementierungen sind zwei Gelegenheiten, dass eine
+-- davon beim naechsten Palettenwechsel stehen bleibt.
+local function PillEdge(pill, alpha)
+    return WeintCodex.DrawBorder(pill,
+        C.border[1], C.border[2], C.border[3], alpha or 0.9, 1)
 end
 
 -- Ein Eyebrow, den man ueberfahren kann: fuer den Vorsatz der
@@ -327,8 +334,40 @@ end
 --------------------------------------------------
 -- Der Name ist das Zentrum. Darunter eine Zeile Tatsachen, darunter
 -- - in der ruhigen Serife - der eine Satz, der sagt, was das fuer
--- ein Ort ist. Rechts oben, falls der Client eine Stufe nennt, ob
--- sie passt. Sonst nichts: kein Kennzahlenblock, keine Metadaten.
+-- ein Ort ist. Rechts oben die Bosszahl als Kennzahl, so wie im Kopf
+-- der Schlachtzugseite (modules/raidpages.lua), und darunter, falls
+-- der Client eine Stufe nennt, ob sie passt.
+--
+-- DIE BOSSZAHL STEHT AN GENAU EINER STELLE, und welche das ist,
+-- entscheidet der Platz - gerechnet, nicht gehofft:
+--
+--   1. Als KENNZAHL rechts im Kopf, wenn der Titel daneben noch
+--      Platz laesst. Das ist der Normalfall in voller Breite und
+--      das Bild, das die Schlachtzugseite zeigt.
+--   2. In der FAKTENZEILE, wenn die Kennzahl nicht danebenpasst und
+--      auch der Detailbereich sie nicht traegt.
+--   3. GAR NICHT im Kopf, wenn der Detailbereich offen ist: der
+--      fuehrt "Bosse" ohnehin als Zeile, und die Rubrik ueber den
+--      Pillen sagt es ein drittes Mal. Dreimal dieselbe Zahl auf
+--      einer Seite ist keine Betonung, sondern Laerm.
+--
+-- Warum ueberhaupt gerechnet wird: mit offenem Detailbereich bleiben
+-- dem Inhalt 296 px, dem Kopf also 232. Ein Kennzahlenblock ist
+-- 64 px breit und rechtsbuendig - ein Titel wie "Temple of
+-- Atal'Hakkar" in 30 px liefe ihm ungebremst darunter. Geschaetzt
+-- wird mit derselben Kennzahl wie ueberall (0,60 em je Zeichen,
+-- WeintCodex.Paragraph), damit Spiel und Prueflauf dieselbe Seite
+-- bauen.
+
+local TITLE_SIZE = 30
+local STAT_W     = 64   -- PageHead: Vorgabebreite eines Kennzahlenblocks
+local STAT_GAP   = 16
+
+local function HeadStatFits(dungeon)
+    local avail = MinContentWidth() - 2 * PAD_X
+    local title = WeintCodex.Utf8Len(dungeon.name or "") * TITLE_SIZE * 0.60
+    return (avail - title) >= (STAT_W + STAT_GAP)
+end
 
 local function DrawHead(f, dungeon)
     local range = D.LevelRange(dungeon)
@@ -338,12 +377,28 @@ local function DrawHead(f, dungeon)
     local facts = {}
     facts[#facts + 1] = range and ("Stufe " .. range) or "Stufenbereich noch nicht bekannt"
     facts[#facts + 1] = dungeon.size .. " Spieler"
-    if named and total and named < total then
-        facts[#facts + 1] = named .. " von " .. total .. " Bossen bekannt"
-    elseif named then
-        facts[#facts + 1] = named .. (named == 1 and " Boss" or " Bosse")
-    elseif total then
-        facts[#facts + 1] = total .. " Kämpfe"
+
+    -- Die Zahl steht NUR da, wo es sie gibt. Eine 0 waere keine leere
+    -- Auskunft, sondern eine falsche - und "4/9" ist eine dritte, die
+    -- weder "4 Bosse" noch "9 Bosse" ist.
+    local stats = {}
+    if HeadStatFits(dungeon) then
+        if named and total and named < total then
+            stats[1] = { key = "bosses", label = "Bosse",
+                value = named .. "/" .. total, tone = "textNormal" }
+        elseif named then
+            stats[1] = { key = "bosses", label = "Bosse", value = named, tone = "textNormal" }
+        elseif total then
+            stats[1] = { key = "bosses", label = "Kämpfe", value = total, tone = "textDim" }
+        end
+    elseif not inspectorShown then
+        if named and total and named < total then
+            facts[#facts + 1] = named .. " von " .. total .. " Bossen bekannt"
+        elseif named then
+            facts[#facts + 1] = named .. (named == 1 and " Boss" or " Bosse")
+        elseif total then
+            facts[#facts + 1] = total .. " Kämpfe"
+        end
     end
 
     -- Hoehe aus den Teilen, nicht geraten: Eyebrow, Titel, Fakten -
@@ -360,11 +415,12 @@ local function DrawHead(f, dungeon)
         eyebrow   = (D.IsLegacy(dungeon) and "Classic · " or "Dungeon · ")
                  .. (D.ZoneLabel(dungeon) or ""),
         title     = dungeon.name,
-        titleSize = 30,
+        titleSize = TITLE_SIZE,
         sub       = table.concat(facts, "   ·   "),
         subSize   = 13,
         subColor  = range and "textMuted" or "textFaint",
         height    = baseH + themeH,
+        stats     = stats,
     })
     rows[#rows + 1] = head
 
@@ -390,8 +446,12 @@ local function DrawHead(f, dungeon)
         else
             text, tone = "Deine Stufe " .. level .. " · darüber", "textFaint"
         end
+        -- UNTER der Kennzahl, nicht neben ihr: beide stehen rechts
+        -- oben, und nebeneinander waere die eine ueber der anderen
+        -- gezeichnet. Ohne Kennzahl rueckt der Hinweis nach oben in
+        -- die Ecke, die dann frei ist.
         local chip = WeintCodex.Eyebrow(head, text, { color = tone, size = 10, justify = "RIGHT" })
-        chip:SetPoint("TOPRIGHT", head, "TOPRIGHT", 0, -1)
+        chip:SetPoint("TOPRIGHT", head, "TOPRIGHT", 0, stats[1] and -50 or -1)
     end
 
     return -(PAD_Y + head.Height)
@@ -419,7 +479,7 @@ local function BossPill(f, dungeon, boss)
         button = true, tone = "flat", surface = "surface2",
         radius = 8, backdrop = "bgDark", height = PILL_H,
     })
-    local edgeT, edgeB, edgeL, edgeR = PillEdge(pill)
+    local edge = PillEdge(pill)
 
     local x = 12
     local num
@@ -455,7 +515,13 @@ local function BossPill(f, dungeon, boss)
 
     -- Der aktive Zustand: hellere Flaeche, heller Name, Akzentlinie
     -- unten. Derselbe Wortschatz wie in der Navigationsspalte.
-    local line = pill:CreateTexture(nil, "ARTWORK")
+    --
+    -- Die Linie liegt UEBER der Randkante (OVERLAY, Unterebene 3,
+    -- statt ARTWORK): der Rahmen aus core/ui.lua zeichnet auf
+    -- OVERLAY, und seine Unterkante laege sonst genau auf der Linie,
+    -- die den ausgewaehlten Boss ausweist. Unter den Eckmasken
+    -- (Unterebene 6) bleibt sie trotzdem.
+    local line = pill:CreateTexture(nil, "OVERLAY", nil, 3)
     line:SetHeight(2)
     line:SetPoint("BOTTOMLEFT",  pill, "BOTTOMLEFT",   8, 0)
     line:SetPoint("BOTTOMRIGHT", pill, "BOTTOMRIGHT", -8, 0)
@@ -464,7 +530,7 @@ local function BossPill(f, dungeon, boss)
 
     local active = (selectedBoss == boss.id)
     local function SetEdge(color, alpha)
-        for _, t in ipairs({ edgeT, edgeB, edgeL, edgeR }) do
+        for _, t in ipairs(edge) do
             t:SetColorTexture(color[1], color[2], color[3], alpha)
         end
     end
@@ -679,6 +745,20 @@ local function DrawBosses(f, y, dungeon)
     end
 end
 
+-- Passt neben den Titel einer Detailkarte noch ein Hinweis, ohne
+-- ihn zu ueberlagern? Gerechnet mit derselben Kennzahl wie jede
+-- andere Textbreite hier (0,60 em je Zeichen), und gegen die
+-- SCHMALSTE Breite, die die Karte haben kann - mit offenem
+-- Detailbereich sind das 192 px, und da passt neben "Aufstellung"
+-- kein Satz mehr. Dann steht lieber keiner da als einer im Titel.
+local function HintFits(title, titleSize, hint, hintSize)
+    local inner = MinContentWidth() - 2 * PAD_X - 2 * CARD_PAD
+    local need  = WeintCodex.Utf8Len(title or "") * titleSize * 0.60
+                + 16
+                + WeintCodex.Utf8Len(hint or "") * hintSize * 0.60
+    return inner >= need
+end
+
 --------------------------------------------------
 -- 3. Die Detailkarte
 --------------------------------------------------
@@ -690,6 +770,10 @@ end
 --
 -- opts:
 --   eyebrow, title, titleFont, titleSize
+--   hint               eine Zeile rechts neben dem Titel: was als
+--                      NAECHSTES zu tun ist. Sie kostet keine Hoehe -
+--                      aber Breite, und ob die da ist, entscheidet
+--                      der Aufrufer mit HintFits().
 --   onClose            Schliessen-Knopf rechts oben
 --   build(inner, w)    zeichnet den Koerper in `inner`, `w` ist die
 --                      kleinste Breite; gibt die Hoehe zurueck
@@ -715,6 +799,18 @@ local function DetailCard(f, y, opts)
     title:SetPoint("TOPLEFT", card, "TOPLEFT", CARD_PAD, headY)
     title:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
     title:SetText(opts.title or "")
+
+    -- DER WEGWEISER, den die Schlachtzugseite als eigene Karte hat
+    -- ("Bosse - ein Klick auf einen davon zeigt hier ..."). Hier ist
+    -- er eine Zeile im Kartenkopf: die Seite hat drei Flaechen, und
+    -- eine vierte nur fuer einen Satz waere eine zu viel.
+    if opts.hint then
+        local hint = WeintCodex.Label(card, opts.hint,
+            { color = "textFaint", size = 12, justify = "RIGHT" })
+        hint:SetPoint("TOPRIGHT", card, "TOPRIGHT", -CARD_PAD, headY - 3)
+        hint:SetWordWrap(false)
+    end
+
     headY = headY - titleSize - 8
 
     if opts.onClose then
@@ -794,11 +890,20 @@ end
 
 -- Kein Kennzeichen im Kopf: die Zeilen sagen die Plaetze selbst, und
 -- "1 Tank · 1 Heiler · 3 DD" darueber sagte dasselbe noch einmal.
+local ROSTER_HINT = "Ein Klick auf einen Boss zeigt ihn hier"
+
 local function DrawRoster(f, y, dungeon)
+    -- Der Wegweiser steht nur da, wo er stimmt UND wo er hinpasst:
+    -- ohne Bossliste gibt es nichts anzuklicken, und in einer 192 px
+    -- schmalen Karte gaebe es nichts zu lesen.
+    local hint = (D.HasBosses(dungeon)
+        and HintFits("Aufstellung", 15, ROSTER_HINT, 12)) and ROSTER_HINT or nil
+
     return DetailCard(f, y, {
         title      = "Aufstellung",
         titleFont  = WeintCodex.Fonts.sansSemi,
         titleSize  = 15,
+        hint       = hint,
         build = function(inner, w)
             local endY = WeintCodex.RolePanel.Roster(inner, 0, dungeon, { width = w })
             return -endY
@@ -1123,15 +1228,26 @@ end
 -- Stufenabschnitte als Koepfe, darunter die Instanzen des offenen
 -- Abschnitts. So sucht man einen Dungeon: nach Stufe, nicht nach
 -- Namen. Bosse stehen hier NICHT mehr - sie stehen auf der Seite,
--- wo Platz fuer sie ist. Die Spalte passt damit immer (612 von 716
+-- wo Platz fuer sie ist. Die Spalte passt damit immer (642 von 716
 -- px im groessten Abschnitt), und load_test.lua misst es nach.
 
+-- ZWEI ZEILEN, UND DIE ZWEITE TRAEGT BEIDES. Bis 5.2.0.3 stand die
+-- Herkunft ("FOREVER") als gesperrtes Kennzeichen rechts in der
+-- Zeile - und nahm der Beschriftung rund 70 der 176 px, die sie hat.
+-- Sichtbar war das als abgeschnittener Name: "Temple of Atal'Hakk…",
+-- "Alcaz Island Priso…". Der Name ist aber das, wonach man in dieser
+-- Spalte sucht; er bekommt die ganze Breite, und die zweite Zeile
+-- sagt in einem Zug, aus welchem Spiel der Dungeon ist und fuer
+-- welche Stufen er gedacht ist.
 local function InstanceItem(f, dungeon)
+    local kind  = D.IsLegacy(dungeon) and "Classic" or "Forever"
+    local range = D.LevelRange(dungeon)
+
     return {
         label  = dungeon.name,
-        status = D.LevelRange(dungeon),
-        mark   = (not D.IsLegacy(dungeon)) and "Forever" or nil,
-        markColor = "textFaint",
+        -- Ohne Stufenbereich steht nur die Herkunft da. "Stufe ?"
+        -- waere eine Auskunft, die niemand hat.
+        status = range and (kind .. " · Stufe " .. range) or kind,
         onClick = function()
             local changed = (selectedId ~= dungeon.id)
             selectedId  = dungeon.id
@@ -1152,7 +1268,7 @@ end
 local function SummonRow(f)
     return {
         label   = "Beschwörbare Zusatzbosse",
-        status  = tostring(#D.AllSummonable()) .. " im ganzen Spiel",
+        status  = "Übersicht · " .. tostring(#D.AllSummonable()) .. " im Spiel",
         onClick = function()
             showSummons  = true
             selectedBoss = nil

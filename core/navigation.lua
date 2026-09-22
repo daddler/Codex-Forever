@@ -404,10 +404,19 @@ end
 -- Felder eines Eintrags:
 --
 --   label        Beschriftung (Pflicht)
---   status       Zweite Zeile: Text ODER { text = , color = }
+--   status       Zweite Zeile: Text ODER { text = , color = }.
+--                Versal, aber NICHT gesperrt: sie traegt einen WERT
+--                ("Stufe 13 - 18"), keine Rubrik. Sie wird auf die
+--                Spaltenbreite beschnitten und bricht nicht um.
 --   indent       zweite Ebene, kleiner und eingerueckt
 --   dot          Statuspunkt links (Farbtoken) - nur mit indent
---   mark         Kennzeichen rechts, mono und gesperrt
+--   mark         Kennzeichen rechts, mono und gesperrt. ES KOSTET
+--                DIE BESCHRIFTUNG BREITE: das Kennzeichen steht
+--                rechts, und der Text endet davor. Ein gesperrtes
+--                "FOREVER" nimmt rund 70 der 176 px, die eine Zeile
+--                hat - lange Namen ("Temple of Atal'Hakkar") waren
+--                damit abgeschnitten. Wo die Auskunft in die zweite
+--                Zeile passt, gehoert sie dorthin.
 --   markColor    dessen Farbton (Vorgabe textFaint)
 --   portrait     Bild links
 --   accentColor  dauerhafter Streifen am linken Rand
@@ -435,6 +444,20 @@ local SUBNAV_CHILD_H  = 28   -- eingerueckter Eintrag (zweite Ebene)
 local SUBNAV_GROUP_H  = 26
 local SUBNAV_TITLE_H  = 26
 local SUBNAV_GAP      = 2
+
+-- LUFT UM EINEN GRUPPENKOPF, und zwar oben mehr als unten: ein
+-- Zwischentitel gehoert zu dem, was UNTER ihm steht. Stand oben
+-- derselbe Abstand wie unten (bis 5.2.0.3 beides aus derselben 8),
+-- sah die Spalte aus wie eine Reihe gleich wichtiger Zeilen - und
+-- die Stufenabschnitte der Dungeonseite verloren genau die
+-- Gliederung, fuer die es sie gibt.
+--
+-- Wer hier etwas aendert, aendert MeasureSidebar mit: der Prueflauf
+-- haelt beide gegeneinander, und die Spalte darf dabei nicht ueber
+-- ihr Budget wachsen (fuenf Abschnitte kosten je 6 px mehr als
+-- vorher, gemessen 642 statt 612 von 716 px).
+local SUBNAV_GROUP_TOP = 12
+local SUBNAV_GROUP_BOT = 2
 
 local subNavUsed = 0
 
@@ -491,7 +514,7 @@ function WeintCodex.Navigation.MeasureSidebar(items)
     local h = WeintCodex.Metrics.PAD_Y + SUBNAV_TITLE_H
     for _, it in ipairs(items or {}) do
         if it.isGroup then
-            h = h + SUBNAV_GROUP_H + 8
+            h = h + SUBNAV_GROUP_TOP + SUBNAV_GROUP_H + SUBNAV_GROUP_BOT
         elseif it.indent then
             h = h + SUBNAV_CHILD_H + SUBNAV_GAP
         elseif it.status ~= nil then
@@ -610,8 +633,8 @@ local function BuildColumn(sectionTitle, items)
             if itemDef.onClick then
                 local gbtn = CreateFrame("Button", nil, col)
                 gbtn:SetHeight(SUBNAV_GROUP_H)
-                gbtn:SetPoint("TOPLEFT",  col, "TOPLEFT",   pad, offsetY - 8)
-                gbtn:SetPoint("TOPRIGHT", col, "TOPRIGHT", -pad, offsetY - 8)
+                gbtn:SetPoint("TOPLEFT",  col, "TOPLEFT",   pad, offsetY - SUBNAV_GROUP_TOP)
+                gbtn:SetPoint("TOPRIGHT", col, "TOPRIGHT", -pad, offsetY - SUBNAV_GROUP_TOP)
                 WeintCodex.CutCorners(gbtn, 6, "bgDark")
 
                 -- Ohne sichtbares Zeichen sieht ein Gruppenkopf aus wie
@@ -659,7 +682,7 @@ local function BuildColumn(sectionTitle, items)
                 local prefix = WeintCodex.Eyebrow(host, "Stufe",
                     { color = itemDef.labelColor or tone })
                 if host == col then
-                    prefix:SetPoint("TOPLEFT", col, "TOPLEFT", pad + 11 + lblX, offsetY - 8)
+                    prefix:SetPoint("TOPLEFT", col, "TOPLEFT", pad + 11 + lblX, offsetY - SUBNAV_GROUP_TOP)
                 else
                     prefix:SetPoint("LEFT", host, "LEFT", lblX, 0)
                 end
@@ -676,7 +699,7 @@ local function BuildColumn(sectionTitle, items)
                 local lbl = WeintCodex.Eyebrow(host, itemDef.label or "",
                     { color = itemDef.labelColor or tone })
                 if host == col then
-                    lbl:SetPoint("TOPLEFT", col, "TOPLEFT", pad + 11 + lblX, offsetY - 8)
+                    lbl:SetPoint("TOPLEFT", col, "TOPLEFT", pad + 11 + lblX, offsetY - SUBNAV_GROUP_TOP)
                 else
                     lbl:SetPoint("LEFT", host, "LEFT", lblX, 0)
                 end
@@ -697,7 +720,7 @@ local function BuildColumn(sectionTitle, items)
                 table.insert(sidebarGroups, cnt)
             end
 
-            offsetY = offsetY - SUBNAV_GROUP_H - 8
+            offsetY = offsetY - SUBNAV_GROUP_TOP - SUBNAV_GROUP_H - SUBNAV_GROUP_BOT
         else
             local child     = itemDef.indent == true
             local hasStatus = itemDef.status ~= nil and not child
@@ -819,13 +842,37 @@ local function BuildColumn(sectionTitle, items)
                     statusText = tostring(itemDef.status)
                 end
 
+                -- DIE ZWEITE ZEILE IST NICHT GESPERRT, und das ist eine
+                -- Unterscheidung, keine Kosmetik: gesperrte Versalien
+                -- sind in dieser Oberflaeche die Form einer RUBRIK
+                -- (Eyebrow, Abschnittstitel, Gruppenkopf). Was hier
+                -- steht, ist keine Rubrik, sondern ein WERT - ein
+                -- Stufenbereich, eine Gruppengroesse.
+                -- "S T U F E   1 3   -   1 8" liest sich als Muster
+                -- und ist doppelt so breit wie noetig.
+                --
+                -- Die Breite ist gesetzt und der Umbruch aus: ohne
+                -- beides lief eine lange zweite Zeile gesperrt ueber
+                -- die 176 px der Zeile hinaus und rechts aus der
+                -- Spalte heraus - sichtbar abgeschnitten, ohne dass
+                -- etwas fehlschlug. Derselbe Fehler wie beim
+                -- Gruppenkopf, den 5.2.0.2 schon behoben hat.
                 local st = btn:CreateFontString(nil, "OVERLAY")
                 st:SetFont(WeintCodex.Fonts.mono, 9, "")
                 st:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 0, -3)
+                st:SetWidth(SUBNAV_COL_W - 2 * pad - textX - 12)
+                st:SetWordWrap(false)
+                st:SetJustifyH("LEFT")
                 local sc = C[statusColor or "textFaint"] or C.textFaint
                 st:SetTextColor(sc[1], sc[2], sc[3])
-                st:SetText(WeintCodex.Spaced(WeintCodex.Upper(statusText or "")))
-                btn._statusLbl = st
+                st:SetText(WeintCodex.Upper(statusText or ""))
+                btn._statusLbl  = st
+                btn._statusTone = sc
+                -- Ohne eigenen Farbton hellt die Zeile beim aktiven
+                -- Eintrag auf. MIT eigenem Farbton nicht: der traegt
+                -- dann eine Bedeutung (Warnung, Erfolg), und die darf
+                -- sich durch eine Auswahl nicht aendern.
+                btn._statusHot  = C[statusColor] or C.textMuted
             end
 
             local function SetActive(self, on)
@@ -836,12 +883,25 @@ local function BuildColumn(sectionTitle, items)
                     self._label:SetFont(WeintCodex.Fonts.sansMedium, self._labelSize, "")
                     self._accent:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1.0)
                     self._accent:Show()
+                    -- Die zweite Zeile hellt mit auf. Sie ist die
+                    -- Begruendung der Auswahl ("Stufe 13 - 18"), und
+                    -- ein ausgewaehlter Eintrag, dessen Unterzeile so
+                    -- blass bleibt wie die der anderen, sieht halb
+                    -- ausgewaehlt aus.
+                    if self._statusLbl then
+                        local hot = self._statusHot
+                        self._statusLbl:SetTextColor(hot[1], hot[2], hot[3])
+                    end
                     for _, t in pairs(self._corners or {}) do t:Show() end
                 else
                     self._bg:SetColorTexture(0, 0, 0, 0)
                     self._label:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3])
                     self._label:SetFont(WeintCodex.Fonts.sans, self._labelSize, "")
                     BaselineAccent()
+                    if self._statusLbl then
+                        local base = self._statusTone
+                        self._statusLbl:SetTextColor(base[1], base[2], base[3])
+                    end
                     for _, t in pairs(self._corners or {}) do t:Hide() end
                 end
             end
@@ -895,7 +955,8 @@ function WeintCodex.Navigation.UpdateSidebarStatus(index, status)
     if not (btn and btn._statusLbl and status) then return end
     local sc = C[status.color or "textFaint"] or C.textFaint
     btn._statusLbl:SetTextColor(sc[1], sc[2], sc[3])
-    btn._statusLbl:SetText(WeintCodex.Spaced(WeintCodex.Upper(status.text or "")))
+    btn._statusLbl:SetText(WeintCodex.Upper(status.text or ""))
+    btn._statusTone = sc
 end
 
 -- FUER DEN KOPFLOSEN PRUEFLAUF, und nur dafuer. Seit die
