@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
         {
+        version = "5.2.1.1",
+        date    = "23.09.2026",
+        notes   = {
+            "|cff7C6CFFDas Update ist jetzt kleiner.|r Die Dungeon-Bilder sparen sich unnötige, nie angezeigte Zusatzstufen - ohne dass sich an der Darstellung etwas ändert.",
+        },
+    },
+    {
         version = "5.2.1.0",
         date    = "23.09.2026",
         notes   = {

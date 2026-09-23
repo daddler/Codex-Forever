@@ -9,6 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [5.2.1.1] – 2026-09-23
+
+**Das Update ist jetzt kleiner.** Die Dungeon-Bilder sparen sich
+unnötige, nie angezeigte Zusatzstufen für Distanzansichten, die eine
+UI-Kachel fester Größe ohnehin nie anfordert. An der Darstellung
+ändert sich nichts.
+
+### Technisch
+
+`.github/scripts/make_artwork.py` schreibt BLP2/DXT1 jetzt ohne
+Mipmap-Kette (nur Stufe 0, `hasMips = 0`); die 49 bestehenden Dateien
+unter `media/dungeons/` und `media/logo.blp` wurden entsprechend neu
+gepackt, Stufe 0 bytegleich zum Original. Ausserdem schliessen beide
+Release-Workflows `graphify-out/` (generierte Wissensgraph-Reports)
+und die ungenutzten `media/logo.png`/`media/logo.blp` vom Addon-ZIP
+aus – zusammen gut 10 MB, die nie zum Client gehörten.
+
 ## [5.2.1.0] – 2026-09-23
 
 **Vier weitere klassische Dungeons bekommen ihr eigenes Gesicht.** Ruins of
