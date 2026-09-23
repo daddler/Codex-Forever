@@ -242,7 +242,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.art.boss()",
       "source_file": "data/artwork.lua",
-      "source_location": "L128"
+      "source_location": "L153"
     },
     {
       "id": "data_artwork_weintcodex_art_dungeon",
@@ -254,7 +254,7 @@
       "file_type": "code",
       "norm_label": "weintcodex.art.dungeon()",
       "source_file": "data/artwork.lua",
-      "source_location": "L122"
+      "source_location": "L147"
     },
     {
       "id": "data_dungeons_classic_d_allclassic",
@@ -3698,7 +3698,7 @@
       "file_type": "code",
       "norm_label": "dxt1_blocks()",
       "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L65"
+      "source_location": "L70"
     },
     {
       "id": "github_scripts_make_artwork_main",
@@ -3710,7 +3710,7 @@
       "file_type": "code",
       "norm_label": "main()",
       "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L114"
+      "source_location": "L119"
     },
     {
       "id": "github_scripts_make_artwork_mip_chain",
@@ -3722,7 +3722,7 @@
       "file_type": "code",
       "norm_label": "mip_chain()",
       "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L84"
+      "source_location": "L89"
     },
     {
       "id": "github_scripts_make_artwork_write_blp",
@@ -3734,7 +3734,7 @@
       "file_type": "code",
       "norm_label": "write_blp()",
       "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L95"
+      "source_location": "L100"
     },
     {
       "id": "github_scripts_release_notes_changelog_lua_version",
@@ -8618,29 +8618,7 @@
       "source_location": "L1"
     },
     {
-      "id": "github_scripts_make_artwork_rationale_66",
-      "label": "Eine Stufe als rohe DXT1-Bloecke. ImageMagick komprimiert, der 128 Byte grosse\u2026",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "make_artwork.py",
-      "file_type": "rationale",
-      "norm_label": "eine stufe als rohe dxt1-bloecke. imagemagick komprimiert, der 128 byte grosse...",
-      "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L66"
-    },
-    {
-      "id": "github_scripts_make_artwork_rationale_85",
-      "label": "Die Kette, die media/logo.blp auch hat: halbieren, bis die Breite 4 erreicht\u2026",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "make_artwork.py",
-      "file_type": "rationale",
-      "norm_label": "die kette, die media/logo.blp auch hat: halbieren, bis die breite 4 erreicht...",
-      "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L85"
-    },
-    {
-      "id": "github_scripts_make_artwork_rationale_96",
+      "id": "github_scripts_make_artwork_rationale_101",
       "label": "BLP2, Typ 1, Kodierung 2 (DXT), ohne Alpha, mit Mipmaps. Kopf: 148 Byte, danach\u2026",
       "_origin": "ast",
       "community": 21,
@@ -8648,7 +8626,29 @@
       "file_type": "rationale",
       "norm_label": "blp2, typ 1, kodierung 2 (dxt), ohne alpha, mit mipmaps. kopf: 148 byte, danach...",
       "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L96"
+      "source_location": "L101"
+    },
+    {
+      "id": "github_scripts_make_artwork_rationale_71",
+      "label": "Eine Stufe als rohe DXT1-Bloecke. ImageMagick komprimiert, der 128 Byte grosse\u2026",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "make_artwork.py",
+      "file_type": "rationale",
+      "norm_label": "eine stufe als rohe dxt1-bloecke. imagemagick komprimiert, der 128 byte grosse...",
+      "source_file": ".github/scripts/make_artwork.py",
+      "source_location": "L71"
+    },
+    {
+      "id": "github_scripts_make_artwork_rationale_90",
+      "label": "Die Kette, die media/logo.blp auch hat: halbieren, bis die Breite 4 erreicht\u2026",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "make_artwork.py",
+      "file_type": "rationale",
+      "norm_label": "die kette, die media/logo.blp auch hat: halbieren, bis die breite 4 erreicht...",
+      "source_file": ".github/scripts/make_artwork.py",
+      "source_location": "L90"
     },
     {
       "id": "github_scripts_release_notes",
@@ -15789,7 +15789,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L140",
+      "source_location": "L145",
       "weight": 1.0
     },
     {
@@ -15801,7 +15801,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L140",
+      "source_location": "L145",
       "weight": 1.0
     },
     {
@@ -15813,7 +15813,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L143",
+      "source_location": "L148",
       "weight": 1.0
     },
     {
@@ -21755,7 +21755,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "data/artwork.lua",
-      "source_location": "L122",
+      "source_location": "L147",
       "weight": 1.0
     },
     {
@@ -21766,7 +21766,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "data/artwork.lua",
-      "source_location": "L128",
+      "source_location": "L153",
       "weight": 1.0
     },
     {
@@ -23531,13 +23531,24 @@
     },
     {
       "source": "github_scripts_make_artwork",
+      "target": "github_scripts_make_artwork_write_blp",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".github/scripts/make_artwork.py",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "github_scripts_make_artwork",
       "target": "github_scripts_make_artwork_main",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L114",
+      "source_location": "L119",
       "weight": 1.0
     },
     {
@@ -23548,7 +23559,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L65",
+      "source_location": "L70",
       "weight": 1.0
     },
     {
@@ -23559,18 +23570,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L84",
-      "weight": 1.0
-    },
-    {
-      "source": "github_scripts_make_artwork",
-      "target": "github_scripts_make_artwork_write_blp",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L95",
+      "source_location": "L89",
       "weight": 1.0
     },
     {
@@ -27842,36 +27842,36 @@
       "weight": 1.0
     },
     {
-      "source": "github_scripts_make_artwork_rationale_66",
-      "target": "github_scripts_make_artwork_dxt1_blocks",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L66",
-      "weight": 1.0
-    },
-    {
-      "source": "github_scripts_make_artwork_rationale_85",
-      "target": "github_scripts_make_artwork_mip_chain",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L85",
-      "weight": 1.0
-    },
-    {
-      "source": "github_scripts_make_artwork_rationale_96",
+      "source": "github_scripts_make_artwork_rationale_101",
       "target": "github_scripts_make_artwork_write_blp",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": ".github/scripts/make_artwork.py",
-      "source_location": "L96",
+      "source_location": "L101",
+      "weight": 1.0
+    },
+    {
+      "source": "github_scripts_make_artwork_rationale_71",
+      "target": "github_scripts_make_artwork_dxt1_blocks",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".github/scripts/make_artwork.py",
+      "source_location": "L71",
+      "weight": 1.0
+    },
+    {
+      "source": "github_scripts_make_artwork_rationale_90",
+      "target": "github_scripts_make_artwork_mip_chain",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": ".github/scripts/make_artwork.py",
+      "source_location": "L90",
       "weight": 1.0
     },
     {
@@ -36129,5 +36129,5 @@
       "source_file": "media/button.png"
     }
   ],
-  "built_at_commit": "5d35967bb7b74b36001bb99d20dddb4d5761ccb8"
+  "built_at_commit": "2e74eb4ea2fac19186457eaf1d8b53e9a09a85c5"
 }

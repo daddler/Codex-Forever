@@ -22,11 +22,11 @@
 
 WeintCodex_ChangelogData = {
         {
-        version = "5.2.0.9",
+        version = "5.2.1.0",
         date    = "23.09.2026",
         notes   = {
-            "|cff7C6CFFRagefire Chasm ist jetzt bebildert.|r Der Dungeon zeigt ein eigenes Header-Artwork und jeder Boss seine eigene Darstellung.",
-            "|cff7C6CFFDas Artwork-System unterstützt jetzt mehrere bebilderte Dungeons.|r Weitere Dungeons können ohne eigene UI-Sonderlogik ergänzt werden.",
+            "|cff7C6CFFVier weitere klassische Dungeons sind jetzt bebildert.|r Ruins of Lordaeron, Wailing Caverns, The Deadmines und Shadowfang Keep zeigen jeweils ein eigenes Header-Artwork und eigene Bossdarstellungen.",
+            "|cff7C6CFFDas Dungeon-Artwork-System ist weiter ausgebaut.|r Neue Dungeons werden über dieselbe gemeinsame Struktur eingebunden, ohne eigene UI-Sonderlogik pro Dungeon.",
         },
     },
     {

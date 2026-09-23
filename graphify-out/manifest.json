@@ -6,10 +6,10 @@
     "semantic_hash": "ae3b3617c9c6ebddc025a7bba0882bfd"
   },
   ".github/tests/data_test.lua": {
-    "mtime": 1790164799.2482486,
-    "seen": 1790165582.991248,
-    "ast_hash": "ccda78afad2442a78b9753de35a7c163",
-    "semantic_hash": "ccda78afad2442a78b9753de35a7c163"
+    "mtime": 1790170606.7347565,
+    "seen": 1790171219.770439,
+    "ast_hash": "e019413507b36536cafd83402844d402",
+    "semantic_hash": ""
   },
   ".github/tests/load_test.lua": {
     "mtime": 1790079500.172061,
@@ -24,9 +24,9 @@
     "semantic_hash": "26f0b58202d01c446f36e8ba27eea4ec"
   },
   "WeintCodex.toc": {
-    "mtime": 1790166796.831815,
-    "seen": 1790167904.4431884,
-    "ast_hash": "435757f1dc9567e22b6dcf27242c5688",
+    "mtime": 1790170929.0187445,
+    "seen": 1790171219.770442,
+    "ast_hash": "f59dc5ef4fb4cf0025b2481f4856312f",
     "semantic_hash": ""
   },
   "core/access.lua": {
@@ -36,9 +36,9 @@
     "semantic_hash": "22cae2ced786df8a3f1a15b4634f0853"
   },
   "core/main.lua": {
-    "mtime": 1790166796.832585,
-    "seen": 1790167904.4431908,
-    "ast_hash": "a87fcb4119880378e5b709a3b7c04475",
+    "mtime": 1790170933.376404,
+    "seen": 1790171219.7704432,
+    "ast_hash": "e536db6bf1b615b78f07f49ca7a0684d",
     "semantic_hash": ""
   },
   "core/minimap.lua": {
@@ -78,9 +78,9 @@
     "semantic_hash": "6e04ae4da08220242caf1453aa3682ff"
   },
   "data/changelog.lua": {
-    "mtime": 1790166957.4402466,
-    "seen": 1790167904.4431968,
-    "ast_hash": "98e6a3aa1c505eef220b4678c243128b",
+    "mtime": 1790171043.5864973,
+    "seen": 1790171219.7704482,
+    "ast_hash": "ea788fe093ed77b8912a2a4ab349a04b",
     "semantic_hash": ""
   },
   "data/companion_live.lua": {
@@ -270,16 +270,16 @@
     "semantic_hash": "be407aed5d753c8cd850d9129c153595"
   },
   "CHANGELOG.md": {
-    "mtime": 1790166994.3008437,
-    "seen": 1790167904.4432166,
-    "ast_hash": "507a9a5bff0cc9279c60ef9837ca910d",
+    "mtime": 1790171075.3130312,
+    "seen": 1790171219.7704651,
+    "ast_hash": "1d4d1309c75d51ec4b47a9b60bca9d21",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
-    "mtime": 1790164916.256909,
-    "seen": 1790165582.9912724,
-    "ast_hash": "24de5fa8fa65caea51d451c156ab3c25",
-    "semantic_hash": "24de5fa8fa65caea51d451c156ab3c25"
+    "mtime": 1790170606.7355347,
+    "seen": 1790171219.7704656,
+    "ast_hash": "22706d51b37f4f83e97ab4ae70c38ba8",
+    "semantic_hash": ""
   },
   "README.md": {
     "mtime": 1789991314.1388493,
@@ -288,8 +288,8 @@
     "semantic_hash": "7d060ad99cc0df846e0f1e39e7f131d9"
   },
   "docs/architecture/overview.md": {
-    "mtime": 1790164934.8845146,
-    "seen": 1790165582.991273,
+    "mtime": 1790170606.7353392,
+    "seen": 1790171219.7704666,
     "ast_hash": "f228c55923ea4365116aec4336e93840",
     "semantic_hash": "f228c55923ea4365116aec4336e93840"
   },
@@ -318,10 +318,10 @@
     "semantic_hash": "f80c2e1bbde00bc758a0b2245baf3a3c"
   },
   "docs/systems/dungeons.md": {
-    "mtime": 1790164904.7895446,
-    "seen": 1790165582.9912734,
-    "ast_hash": "d72d99d61fbc6911e05bb587ed1b1821",
-    "semantic_hash": "d72d99d61fbc6911e05bb587ed1b1821"
+    "mtime": 1790170606.7350936,
+    "seen": 1790171219.7704692,
+    "ast_hash": "0d48bfb093b7c8d277079fa9c11bc6d1",
+    "semantic_hash": ""
   },
   "docs/systems/groupcheck.md": {
     "mtime": 1789991314.1401029,
@@ -366,15 +366,15 @@
     "semantic_hash": "bd49bc9df4095680c36b0ed9c498a36a"
   },
   ".github/scripts/make_artwork.py": {
-    "mtime": 1790165027.1318452,
-    "seen": 1790165582.9912417,
-    "ast_hash": "a9f8528462cbbcf282be0bd7cbe224ea",
-    "semantic_hash": "a9f8528462cbbcf282be0bd7cbe224ea"
+    "mtime": 1790170606.7345762,
+    "seen": 1790171219.7704325,
+    "ast_hash": "1a8523bb30f085d3337233804ef0ee10",
+    "semantic_hash": ""
   },
   "data/artwork.lua": {
-    "mtime": 1790164576.419039,
-    "seen": 1790165582.9912565,
-    "ast_hash": "7b4be0cbde2084259db31bec103375b3",
-    "semantic_hash": "7b4be0cbde2084259db31bec103375b3"
+    "mtime": 1790170606.7338512,
+    "seen": 1790171219.7704477,
+    "ast_hash": "33ca6da9080527cbe8e2941c5d5f6ae3",
+    "semantic_hash": ""
   }
 }

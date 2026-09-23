@@ -56,12 +56,13 @@
 -- mit Mipmaps abgelegt - 175 KB je Bild statt 2,3 MB. Der Ausschnitt
 -- steht je Datei darunter.
 --
--- HALL OF THANES UND RAGEFIRE CHASM SIND DIE ERSTEN BEIDEN BEBILDERTEN
--- DUNGEON. Das ist kein Zwischenstand, der aufzufuellen waere:
--- Material gibt es fuer diese beiden, und fuer die anderen
--- siebenundzwanzig gibt es keines. Eine Seite ohne Eintrag sieht aus
--- wie vor 5.2.0.7 (siehe WeintCodex.Artwork, Punkt 1) - es braucht
--- dafuer keine Zeile hier und keine Fallunterscheidung dort.
+-- HALL OF THANES, RAGEFIRE CHASM, RUINS OF LORDAERON, WAILING CAVERNS,
+-- THE DEADMINES UND SHADOWFANG KEEP SIND DIE ERSTEN SECHS BEBILDERTEN
+-- DUNGEONS. Eine Seite ohne Eintrag sieht aus wie vor 5.2.0.7 (siehe WeintCodex.Artwork, Punkt 1)
+-- - es braucht dafuer keine Zeile hier und keine Fallunterscheidung dort.
+--
+-- Material gibt es fuer diese fünf; die anderen Dungeons bleiben
+-- ohne Artwork, bis eigenes Material vorliegt.
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -129,6 +130,178 @@ WeintCodex.Artworks = {
             },
             bazzalan = {
                 file = ART .. "ragefire_chasm/bazzalan",
+                w = 1024, h = 256, focusX = 0.58,
+            },
+        },
+    },
+
+    ruins_of_lordaeron = {
+        header = {
+            file = ART .. "ruins_of_lordaeron/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            witherfang = {
+                file = ART .. "ruins_of_lordaeron/witherfang",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            the_abandoned = {
+                file = ART .. "ruins_of_lordaeron/the_abandoned",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            the_butcher = {
+                file = ART .. "ruins_of_lordaeron/the_butcher",
+                w = 1024, h = 256, focusX = 0.58,
+            },
+            lordaeron_captain = {
+                file = ART .. "ruins_of_lordaeron/lordaeron_captain",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            bjork = {
+                file = ART .. "ruins_of_lordaeron/bjork",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            rathmael = {
+                file = ART .. "ruins_of_lordaeron/rathmael",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            viktor_the_vile = {
+                file = ART .. "ruins_of_lordaeron/viktor_the_vile",
+                w = 1024, h = 256, focusX = 0.58,
+            },
+        },
+    },
+
+    the_deadmines = {
+        -- Schnitte aus den gelieferten Originalen; alle 4:1 auf 1024x256.
+        header = {
+            file = ART .. "the_deadmines/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            rhahkzor = {
+                file = ART .. "the_deadmines/rhahkzor",
+                w = 1024, h = 256, focusX = 0.58,
+            },
+            miner_johnson = {
+                file = ART .. "the_deadmines/miner_johnson",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            sneeds_shredder = {
+                file = ART .. "the_deadmines/sneeds_shredder",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            gilnid = {
+                file = ART .. "the_deadmines/gilnid",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            mr_smite = {
+                file = ART .. "the_deadmines/mr_smite",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            captain_greenskin = {
+                file = ART .. "the_deadmines/captain_greenskin",
+                w = 1024, h = 256, focusX = 0.58,
+            },
+            edwin_vancleef = {
+                file = ART .. "the_deadmines/edwin_vancleef",
+                w = 1024, h = 256, focusX = 0.62,
+            },
+            cookie = {
+                file = ART .. "the_deadmines/cookie",
+                w = 1024, h = 256, focusX = 0.58,
+            },
+        },
+    },
+
+    shadowfang_keep = {
+        -- Header aus header(4).png (1983x793): x 0, y 69, 1983x496.
+        -- Bossbilder: x 0, y 0, 1672x418.
+        header = {
+            file = ART .. "shadowfang_keep/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            rethilgore = {
+                file = ART .. "shadowfang_keep/rethilgore",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            razorclaw = {
+                file = ART .. "shadowfang_keep/razorclaw",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            baron_silverlaine = {
+                file = ART .. "shadowfang_keep/baron_silverlaine",
+                w = 1024, h = 256, focusX = 0.62,
+            },
+            commander_springvale = {
+                file = ART .. "shadowfang_keep/commander_springvale",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            odo = {
+                file = ART .. "shadowfang_keep/odo",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            deathsworn_captain = {
+                file = ART .. "shadowfang_keep/deathsworn_captain",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            fenrus = {
+                file = ART .. "shadowfang_keep/fenrus",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            wolf_master_nandos = {
+                file = ART .. "shadowfang_keep/wolf_master_nandos",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            archmage_arugal = {
+                file = ART .. "shadowfang_keep/archmage_arugal",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+        },
+    },
+
+    wailing_caverns = {
+        -- Schnitt aus header(2).png (1672x941): x 0, y 240, 1672x418.
+        header = {
+            file = ART .. "wailing_caverns/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            lady_anacondra = {
+                file = ART .. "wailing_caverns/lady_anacondra",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            lord_cobrahn = {
+                file = ART .. "wailing_caverns/lord_cobrahn",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            kresh = {
+                file = ART .. "wailing_caverns/kresh",
+                w = 1024, h = 256, focusX = 0.58,
+            },
+            lord_pythas = {
+                file = ART .. "wailing_caverns/lord_pythas",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            skum = {
+                file = ART .. "wailing_caverns/skum",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            lord_serpentis = {
+                file = ART .. "wailing_caverns/lord_serpentis",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            verdan = {
+                file = ART .. "wailing_caverns/verdan",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            deviate_faerie_dragon = {
+                file = ART .. "wailing_caverns/deviate_faerie_dragon",
+                w = 1024, h = 256, focusX = 0.62,
+            },
+            mutanus = {
+                file = ART .. "wailing_caverns/mutanus",
                 w = 1024, h = 256, focusX = 0.58,
             },
         },

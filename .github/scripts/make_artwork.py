@@ -7,7 +7,7 @@ skalieren, als BLP2/DXT1 mit Mipmaps ablegen.
 Der Ordner enthält die Originale unter den Namen, die unten in JOBS
 stehen; geschrieben wird nach media/dungeons/<dungeon>/.
 
-**Warum es das gibt.** Was in media/ liegt, sind zehn Binärdateien,
+**Warum es das gibt.** Was in media/ liegt, sind siebenundvierzig Binärdateien,
 und aus einer Binärdatei geht nicht hervor, welcher Ausschnitt eines
 Originals sie ist. Ohne dieses Skript wäre "das Motiv sitzt zwei
 Pixel zu hoch" eine Aufgabe, die jemand von vorn löst. Die
@@ -16,7 +16,7 @@ damit sie auch ohne das Skript lesbar sind.
 
 **Warum BLP2/DXT1 und nicht PNG.** WoW lädt PNG nicht. Bleiben BLP und
 TGA: ein unkomprimiertes TGA wäre in dieser Grösse 768 KB je Bild
-(3,8 MB für fünf), BLP2/DXT1 ist 171 KB je Bild (1,7 MB für zehn) bei
+(8,2 MB für siebenundvierzig), BLP2/DXT1 ist 171 KB je Bild bei
 einer mittleren Abweichung von rund 2 von 255 Helligkeitsstufen. DXT1
 und nicht DXT5, weil die Bilder undurchsichtig sind - DXT5 kostete das
 Doppelte und brächte nur einen Alphakanal, den keines von ihnen hat.
@@ -62,6 +62,43 @@ JOBS = [
     ("dungeons/ragefire_chasm/taragaman",          "ragefire_chasm/taragaman.png",          (200,  40, 1300, 325)),
     ("dungeons/ragefire_chasm/jergosh",            "ragefire_chasm/jergosh.png",            (200,   0, 1300, 325)),
     ("dungeons/ragefire_chasm/bazzalan",           "ragefire_chasm/bazzalan.png",           (200,   0, 1300, 325)),
+    ("dungeons/ruins_of_lordaeron/header",             "ruins_of_lordaeron/header.png",             (  0,  69, 1983, 496)),
+    ("dungeons/ruins_of_lordaeron/witherfang",         "ruins_of_lordaeron/witherfang.png",         (200,  90, 1300, 325)),
+    ("dungeons/ruins_of_lordaeron/the_abandoned",      "ruins_of_lordaeron/the_abandoned.png",      (200,  80, 1300, 325)),
+    ("dungeons/ruins_of_lordaeron/the_butcher",        "ruins_of_lordaeron/the_butcher.png",        (200,  70, 1300, 325)),
+    ("dungeons/ruins_of_lordaeron/lordaeron_captain",  "ruins_of_lordaeron/lordaeron_captain.png",  (200,  60, 1300, 325)),
+    ("dungeons/ruins_of_lordaeron/bjork",              "ruins_of_lordaeron/bjork.png",              (200,  60, 1300, 325)),
+    ("dungeons/ruins_of_lordaeron/rathmael",           "ruins_of_lordaeron/rathmael.png",           (200,  70, 1300, 325)),
+    ("dungeons/ruins_of_lordaeron/viktor_the_vile",    "ruins_of_lordaeron/viktor_the_vile.png",    (200,  70, 1300, 325)),
+    ("dungeons/wailing_caverns/header",                "wailing_caverns/header.png",                (  0, 240, 1672, 418)),
+    ("dungeons/wailing_caverns/lady_anacondra",        "wailing_caverns/lady_anacondra.png",        (200,   0, 1300, 325)),
+    ("dungeons/wailing_caverns/lord_cobrahn",          "wailing_caverns/lord_cobrahn.png",          (200,   0, 1300, 325)),
+    ("dungeons/wailing_caverns/kresh",                 "wailing_caverns/kresh.png",                 (200,  80, 1300, 325)),
+    ("dungeons/wailing_caverns/lord_pythas",           "wailing_caverns/lord_pythas.png",           (200,   0, 1300, 325)),
+    ("dungeons/wailing_caverns/skum",                  "wailing_caverns/skum.png",                  (200,  70, 1300, 325)),
+    ("dungeons/wailing_caverns/lord_serpentis",        "wailing_caverns/lord_serpentis.png",        (200,   0, 1300, 325)),
+    ("dungeons/wailing_caverns/verdan",                "wailing_caverns/verdan.png",                (200,  70, 1300, 325)),
+    ("dungeons/wailing_caverns/deviate_faerie_dragon","wailing_caverns/deviate_faerie_dragon.png",(200,  80, 1300, 325)),
+    ("dungeons/wailing_caverns/mutanus",               "wailing_caverns/mutanus.png",               (  0, 250, 1672, 418)),
+    ("dungeons/the_deadmines/header",                   "the_deadmines/header.png",                   (  0,  69, 1983, 496)),
+    ("dungeons/the_deadmines/rhahkzor",                 "the_deadmines/rhahkzor.png",                 (200,  40, 1300, 325)),
+    ("dungeons/the_deadmines/miner_johnson",            "the_deadmines/miner_johnson.png",            (200,  50, 1300, 325)),
+    ("dungeons/the_deadmines/sneeds_shredder",          "the_deadmines/sneeds_shredder.png",          (200,  40, 1300, 325)),
+    ("dungeons/the_deadmines/gilnid",                   "the_deadmines/gilnid.png",                   (200,  40, 1300, 325)),
+    ("dungeons/the_deadmines/mr_smite",                 "the_deadmines/mr_smite.png",                 (200,  20, 1300, 325)),
+    ("dungeons/the_deadmines/captain_greenskin",        "the_deadmines/captain_greenskin.png",        (200,  40, 1300, 325)),
+    ("dungeons/the_deadmines/edwin_vancleef",           "the_deadmines/edwin_vancleef.png",           (200,  20, 1300, 325)),
+    ("dungeons/the_deadmines/cookie",                   "the_deadmines/cookie.png",                   (  0, 250, 1672, 418)),
+    ("dungeons/shadowfang_keep/header",                 "shadowfang_keep/header.png",                 (  0,  69, 1983, 496)),
+    ("dungeons/shadowfang_keep/rethilgore",              "shadowfang_keep/rethilgore.png",              (  0,   0, 1672, 418)),
+    ("dungeons/shadowfang_keep/razorclaw",               "shadowfang_keep/razorclaw.png",               (  0,   0, 1672, 418)),
+    ("dungeons/shadowfang_keep/baron_silverlaine",       "shadowfang_keep/baron_silverlaine.png",       (  0,   0, 1672, 418)),
+    ("dungeons/shadowfang_keep/commander_springvale",    "shadowfang_keep/commander_springvale.png",    (  0,   0, 1672, 418)),
+    ("dungeons/shadowfang_keep/odo",                      "shadowfang_keep/odo.png",                      (  0,   0, 1672, 418)),
+    ("dungeons/shadowfang_keep/deathsworn_captain",      "shadowfang_keep/deathsworn_captain.png",      (  0,   0, 1672, 418)),
+    ("dungeons/shadowfang_keep/fenrus",                  "shadowfang_keep/fenrus.png",                  (  0,   0, 1672, 418)),
+    ("dungeons/shadowfang_keep/wolf_master_nandos",       "shadowfang_keep/wolf_master_nandos.png",       (  0,   0, 1672, 418)),
+    ("dungeons/shadowfang_keep/archmage_arugal",          "shadowfang_keep/archmage_arugal.png",          (  0,   0, 1672, 418)),
 ]
 
 TARGET_W, TARGET_H = 1024, 256

@@ -158,9 +158,14 @@ Bild.
 
 **Eigenes Material fällt unter keinen der beiden Gründe.** Seit 5.2.0.7
 trägt die Hall of Thanes fünf eigene Artworks. Ragefire Chasm ist der
-zweite bebilderte Dungeon mit einem Header und vier Bosskarten. Sie liegen
-unter `media/dungeons/`, und die einzige Stelle, die sie
-kennt, ist `data/artwork.lua`.
+zweite bebilderte Dungeon mit einem Header und vier Bosskarten; Ruins of
+Lordaeron der dritte mit einem Header und sieben Bosskarten; Wailing
+Caverns der vierte mit einem Header und neun Bosskarten (einschliesslich
+des seltenen Deviate Faerie Dragon); The Deadmines der fünfte mit einem Header
+und acht Bosskarten; Shadowfang Keep der sechste mit einem Header und neun
+Bosskarten. Sie liegen unter
+`media/dungeons/`, und die einzige Stelle, die sie kennt, ist
+`data/artwork.lua`.
 
 **Was ein Bild hier nicht ist: eine Auskunft.** So sieht der Boss im
 Client nicht aus, so sieht die Instanz im Client nicht aus, und keine
@@ -170,7 +175,7 @@ bleiben `community`, mit Bild wie ohne. Alles, was die Seite behauptet
 (wie viele Bosse, in welcher Reihenfolge, wo einer steht), steht
 weiter in `data/dungeons.lua` und trägt dort seine Herkunft.
 
-**Der Rückfall ist der Normalfall.** Siebenundzwanzig der
+**Der Rückfall ist der Normalfall.** Dreiundzwanzig der
 neunundzwanzig Instanzen haben kein Artwork. `WeintCodex.Art.Dungeon`
 und `.Boss` geben dort `nil` zurück, `WeintCodex.Artwork` zeichnet bei
 `nil` nichts, und die Seite sieht aus wie vor 5.2.0.7 — ohne eine

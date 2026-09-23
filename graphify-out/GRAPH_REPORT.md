@@ -1,9 +1,9 @@
 # Graph Report - Codex-Forever  (2026-09-23)
 
 ## Corpus Check
-- 56 files · ~168,139 words
+- 56 files · ~168,381 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 35 file(s) not represented in the graph (top: .tga 12, .ttf 10, .blp 7)
+- Unclassified: 40 file(s) not represented in the graph (top: .blp 12, .tga 12, .ttf 10)
 
 ## Summary
 - 1021 nodes · 2011 edges · 58 communities (43 shown, 15 thin omitted)
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5d35967b`
+- Built from commit: `2e74eb4e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -74,18 +74,18 @@
 5. `CreateCalendarFrame()` - 20 edges
 6. `WeintCodex.Eyebrow()` - 19 edges
 7. `WeintCodex.Access.Can()` - 19 edges
-8. `Col()` - 17 edges
-9. `WeintCodex.CreateSurface()` - 17 edges
+8. `WeintCodex.CreateSurface()` - 17 edges
+9. `Col()` - 17 edges
 10. `WeintCodex.Access.Print()` - 16 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `[5.2.0.5] – 2026-09-22` --references--> `GridLayout()`  [INFERRED]
   CHANGELOG.md → modules/dungeonpages.lua
-- `Die Spaltenzahl ist gerechnet, nicht gesetzt` --references--> `PlaceGrid()`  [INFERRED]
-  docs/systems/dungeons.md → modules/dungeonpages.lua
 - `Technisch` --references--> `HintFits()`  [INFERRED]
   CHANGELOG.md → modules/dungeonpages.lua
 - `Zwei Zustände, eine Struktur` --references--> `HintFits()`  [INFERRED]
+  docs/systems/dungeons.md → modules/dungeonpages.lua
+- `Die Spaltenzahl ist gerechnet, nicht gesetzt` --references--> `PlaceGrid()`  [INFERRED]
   docs/systems/dungeons.md → modules/dungeonpages.lua
 - `Technisch` --references--> `BuildColumn()`  [INFERRED]
   CHANGELOG.md → core/navigation.lua
@@ -182,7 +182,7 @@ Nodes (10): Open(), BuildIndex(), Filter(), GetRow(), GoTo(), RenderMatches(), W
 
 ### Community 21 - "make_artwork.py"
 Cohesion: 0.18
-Nodes (13): dxt1_blocks(), main(), mip_chain(), Aus einem Original-Artwork die Addon-Fassung machen: zuschneiden, skalieren,…, Eine Stufe als rohe DXT1-Bloecke. ImageMagick komprimiert, der 128 Byte grosse…, Die Kette, die media/logo.blp auch hat: halbieren, bis die Breite 4 erreicht…, BLP2, Typ 1, Kodierung 2 (DXT), ohne Alpha, mit Mipmaps. Kopf: 148 Byte, danach…, write_blp() (+5 more)
+Nodes (13): dxt1_blocks(), main(), mip_chain(), Aus einem Original-Artwork die Addon-Fassung machen: zuschneiden, skalieren,…, BLP2, Typ 1, Kodierung 2 (DXT), ohne Alpha, mit Mipmaps. Kopf: 148 Byte, danach…, Eine Stufe als rohe DXT1-Bloecke. ImageMagick komprimiert, der 128 Byte grosse…, Die Kette, die media/logo.blp auch hat: halbieren, bis die Breite 4 erreicht…, write_blp() (+5 more)
 
 ### Community 22 - "release_notes.py"
 Cohesion: 0.22
@@ -281,7 +281,7 @@ Nodes (3): getAnchors(), onEnter(), onEnterCompartment()
   media/logo.png · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **96 isolated node(s):** `Beschwörbare Zusatzbosse`, `Bilder: keine, und warum`, `Die Navigationsspalte selbst`, `Die neun von Forever`, `Die Spalte links` (+91 more)
+- **96 isolated node(s):** `Der Ausrüstungsstand an die Companion (`modules/companion.lua`)`, `Der vierte Zustand ist mit 5.1.0.0 dazugekommen`, `Die Ausrüstung (`modules/charakter.lua`)`, `Die Bosslisten (`data/raids.lua`, `data/dungeons.lua`)`, `Die Materialien (`modules/materials.lua`)` (+91 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 284 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **15 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -291,11 +291,11 @@ _Questions this graph is uniquely positioned to answer:_
 - **What is the exact relationship between `Purple/Gold/Green Accent Palette` and `Wide Transparent PNG Banner Format`?**
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
 - **Why does `Die Seite: drei Ebenen, zwei Zustände` connect `Die Seite: drei Ebenen, zwei Zustände` to `dungeonpages.lua`, `5.2.0.6 — Die Gestalt zur Ordnung`, `Dungeons und Rollen`, `5.0.0.0 — WeintCodex für Forever`?**
-  _High betweenness centrality (0.132) - this node is a cross-community bridge._
+  _High betweenness centrality (0.146) - this node is a cross-community bridge._
 - **Why does `load_test.lua — Ladeprüfung gegen die Client-Attrappe` connect `load_test.lua — Ladeprüfung gegen die Client-Attrappe` to `Workflow „Addon packen und ans Release hängen" (Job build)`, `WeintCodex.Paragraph / EstimateLines (geschätzte Texthöhen)`, `data_test.lua — Datentabellen und Fassungsangaben`, `5.0.0.0 — WeintCodex für Forever`, `Kopflose Prüfläufe`?**
-  _High betweenness centrality (0.115) - this node is a cross-community bridge._
-- **Why does `Kopflose Prüfläufe` connect `Kopflose Prüfläufe` to `WeintCodex — Forever Edition`, `data_test.lua — Datentabellen und Fassungsangaben`, `load_test.lua — Ladeprüfung gegen die Client-Attrappe`?**
-  _High betweenness centrality (0.114) - this node is a cross-community bridge._
+  _High betweenness centrality (0.126) - this node is a cross-community bridge._
+- **Why does `Ein Flügel darf keinen Boss verlieren` connect `5.0.0.0 — WeintCodex für Forever` to `load_test.lua — Ladeprüfung gegen die Client-Attrappe`, `Die Seite: drei Ebenen, zwei Zustände`?**
+  _High betweenness centrality (0.112) - this node is a cross-community bridge._
 - **Are the 31 inferred relationships involving `WeintCodex.ColorText()` (e.g. with `Row()` and `Warn()`) actually correct?**
   _`WeintCodex.ColorText()` has 31 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 11 inferred relationships involving `WeintCodex.Navigation.SetInspector()` (e.g. with `WeintCodex.SetDetailShown()` and `CreateCalendarFrame()`) actually correct?**
