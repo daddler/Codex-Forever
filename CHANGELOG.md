@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [5.2.1.0] – 2026-09-23
+
+**Vier weitere klassische Dungeons bekommen ihr eigenes Gesicht.** Ruins of
+Lordaeron, Wailing Caverns, The Deadmines und Shadowfang Keep zeigen jeweils
+ein eigenes Header-Artwork und individuell bebilderte Bosskarten.
+
+**Das Artwork-System wächst weiter.** Neue Dungeons werden über dieselbe
+zentrale Struktur eingebunden, ohne eigene UI-Sonderlogik pro Dungeon.
+
 ## [5.2.0.9] – 2026-09-23
 
 **Ragefire Chasm bekommt ein eigenes Gesicht.** Der Dungeon-Header verwendet
