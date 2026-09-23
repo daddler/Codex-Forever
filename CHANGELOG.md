@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [5.2.0.8] – 2026-09-23
+
+**Hall of Thanes bekommt ein eigenes Gesicht.** Der Dungeon-Header verwendet
+nun ein eigenes Artwork und auch die vier Bosskarten sind individuell
+bebildert. Die Bilder werden über die neue Artwork-Struktur des Addons
+eingebunden und können damit künftig auch für weitere Dungeons verwendet
+werden.
+
+**Die Darstellung bleibt funktional.** Artwork liegt hinter einer dunklen
+Überlagerung, sodass Namen, Nummern und Dungeoninformationen weiterhin
+lesbar bleiben. Dungeons ohne eigenes Artwork fallen sauber auf die bisherige
+Darstellung zurück.
+
 ## [5.2.0.7] – 2026-09-22
 
 **Dieselbe Seite, anders gewichtet.** Die Informationsarchitektur aus

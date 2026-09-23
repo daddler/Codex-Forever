@@ -193,6 +193,7 @@ into modules that no longer exist. A green run means "it loads", never
 | Leere Tabellen, `unknown ≠ 0`, Leerzustände | `docs/invariants/data-integrity.md` |
 | Schlachtzüge, Bosslisten, Lockouts, Fortschritt, Herkunft einer Liste | `docs/systems/raids-and-progress.md` |
 | Dungeons (Forever **und** Classic), Stufenbereiche, Bosslisten, Flügel, beschwörbare Zusatzbosse, Rollen | `docs/systems/dungeons.md` |
+| Artwork, `data/artwork.lua`, `WeintCodex.Artwork`, `media/dungeons/` | `docs/systems/dungeons.md`, Abschnitt *Bilder: kein Spielmaterial, eigenes schon* |
 | Herkunft eines Eintrags, `data/sources.lua`, `release`/`announced`/`beta`/`community`/`classic` | `docs/systems/dungeons.md`, Abschnitt *Fünf Arten von Herkunft* |
 | Charakterseite, Twinks, Ausrüstungsstand | `docs/systems/character.md` |
 | Gruppencheck | `docs/systems/groupcheck.md` |
@@ -226,6 +227,6 @@ Do not add these back without a stated reason that survives the question
 | Sockelsteine, Verzauberungen, Umschmieden, Tempo-Schwellen | Hingen an `data/spec_profiles.lua`, `gems.lua`, `enchants.lua`, `breakpoints.lua` aus MoP. Keine davon sagt über Forever etwas aus. |
 | BiS-Listen | Setzen Bosslisten und Beute voraus — beides unveröffentlicht. |
 | WeakAuras | Für Forever zunächst nicht unterstützt. |
-| Karten- und Bossbilder | Blizzard hat für Forever keine Dungeonkarten veröffentlicht (im Beta-Client liegt für vier der neun Instanzen überhaupt Material), und das Material gehört Blizzard. Ein geratener Texturpfad zeichnet im Spiel ein grünes Rechteck. `boss.position` sagt stattdessen in Worten, wo einer steht. |
+| Karten- und Bossbilder **aus dem Spiel** | Blizzard hat für Forever keine Dungeonkarten veröffentlicht (im Beta-Client liegt für vier der neun Instanzen überhaupt Material), und das Material gehört Blizzard. Ein geratener Texturpfad zeichnet im Spiel ein grünes Rechteck. **Eigenes** Artwork fällt unter keinen der beiden Gründe: seit 5.2.0.7 trägt die Hall of Thanes fünf eigene Bilder (`media/dungeons/`, `data/artwork.lua`) — sie behaupten nichts über das Spiel, und ein bebilderter Dungeon ist kein besser belegter. `boss.position` sagt weiter in Worten, wo einer steht. |
 | Academy, WeintTV, Rotationshelfer | Brauchen ein auswertbares Kampflog. Ob Forever eines hergibt, ist nicht bestätigt — siehe `../Companion-Forever/docs/systems/forever-data.md`, letzter Abschnitt. |
 | Ausrüstungs-Alarm, Einkaufsliste, Sockelfenster-Hilfe | Hätten ohne Verzauberungen und Sockel nichts zu melden. |

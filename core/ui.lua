@@ -133,6 +133,23 @@ local C = {
     washAccent   = {0.486, 0.424, 1.000, 0.08},
     washAccentUp = {0.486, 0.424, 1.000, 0.16},
     washDark     = {0.000, 0.000, 0.000, 0.22},
+
+    -- DER SCHLEIER UEBER EINEM BILD. Seit 5.2.0.7 kann eine Flaeche ein
+    -- Artwork tragen (WeintCodex.Artwork). Ein Bild ist heller und
+    -- unruhiger als jede Flaeche dieses Addons, und darauf muss
+    -- derselbe Text stehen wie sonst - diese vier Werte sind, was ihn
+    -- dort haelt. Sie sind SCHWARZ und nicht violett: der Akzent
+    -- traegt Bedeutung, ein Schleier traegt keine, und ein violett
+    -- eingefaerbtes Bild waere eine zweite Aussage neben dem einen
+    -- Akzent. `artNone` ist ihr gemeinsamer Nullpunkt - wer von
+    -- `washNone` aus verliefe, mischte auf dem Weg Violett hinein.
+    artNone      = {0.000, 0.000, 0.000, 0.00},
+    artTop       = {0.000, 0.000, 0.000, 0.43},  -- Nummer, Kennzeichen
+    artLeft      = {0.000, 0.000, 0.000, 0.67},  -- Name auf der Bosskarte
+    artDeep      = {0.000, 0.000, 0.000, 0.84},  -- Kopfkarte: vier Zeilen Text
+    artFoot      = {0.000, 0.000, 0.000, 0.66},  -- Sockel unter dem Namen
+    artFade      = {0.000, 0.000, 0.000, 0.92},  -- Bild laeuft in die Karte aus
+
     headerBg     = {0.031, 0.031, 0.039, 1.0},  -- 08080A - Insets (Suchfeld)
     accentDot    = {0.486, 0.424, 1.000, 1.0},
 
@@ -323,10 +340,12 @@ WeintCodex.ApplyVerticalGradient = ApplyVerticalGradient
 -- WoW `SetGradient("HORIZONTAL", min, max)` -> min links, max rechts.
 --
 -- Wofuer es das braucht: eine Flaeche, die nach einer Seite hin
--- anlaeuft, ist das einzige Mittel dieses Addons, Atmosphaere zu
--- zeichnen. Bilder gibt es fuer Forever keine (siehe
--- modules/dungeonpages.lua), und ein geratener Texturpfad zeichnet im
--- Spiel ein gruenes Rechteck.
+-- anlaeuft, ist das Mittel, mit dem dieses Addon Atmosphaere
+-- zeichnet, wo kein Bild da ist - und da ist fast nirgends eines
+-- (siehe WeintCodex.Artwork weiter unten und
+-- modules/dungeonpages.lua). Ein geratener Texturpfad zeichnet im
+-- Spiel ein gruenes Rechteck; gezeichnet wird deshalb nur, was in
+-- data/artwork.lua steht und im Ordner liegt.
 local function ApplyHorizontalGradient(tex, leftCol, rightCol)
     local l, r = Col(leftCol), Col(rightCol)
     tex:SetTexture(WHITE)
@@ -335,6 +354,162 @@ local function ApplyHorizontalGradient(tex, leftCol, rightCol)
         CreateColor(r[1], r[2], r[3], r[4] or 1.0))
 end
 WeintCodex.ApplyHorizontalGradient = ApplyHorizontalGradient
+
+--------------------------------------------------
+-- Artwork
+--------------------------------------------------
+-- DER EINE BAUSTEIN FUER BILDER, und es soll kein zweiter daneben
+-- entstehen. Wer eine Flaeche bebildert, ruft WeintCodex.Artwork auf
+-- und bekommt Bild UND Schleier - beides gehoert zusammen, weil ein
+-- Bild ohne Schleier den Text darauf unlesbar macht und ein Schleier
+-- ohne Bild nichts verdeckt.
+--
+-- DREI DINGE, DIE DIESER BAUSTEIN GARANTIERT:
+--
+--   1. KEIN BILD OHNE EINTRAG. `art = nil` heisst: es gibt keines,
+--      und die Funktion gibt nil zurueck, ohne irgendetwas zu
+--      zeichnen. Die Flaeche sieht dann aus wie vorher. Das ist der
+--      Rueckfall, auf den sich jede Seite verlassen kann - und der
+--      Grund, dass ein Dungeon ohne Artwork nicht anders behandelt
+--      werden muss als einer mit.
+--   2. KEINE VERZERRUNG. Ein Bild in einen Kasten anderer Form zu
+--      spannen, staucht Gesichter. CoverCoords rechnet stattdessen
+--      den AUSSCHNITT aus, der den Kasten fuellt: die kuerzere Seite
+--      wird beschnitten, die laengere ganz genutzt, und beschnitten
+--      wird um einen Fokuspunkt herum (`focusX`/`focusY`, Vorgabe
+--      Mitte). Weil der Kasten seine Groesse erst im Spiel kennt,
+--      haengt die Rechnung an OnSizeChanged UND laesst sich mit der
+--      gerechneten Breite vorab setzen - so bauen Spiel und
+--      Prueflauf dieselbe Seite.
+--   3. KEIN GERATENER PFAD. `art.file` kommt aus data/artwork.lua,
+--      und was dort steht, liegt im Ordner - data_test.lua prueft
+--      genau das. Ein Pfad, den niemand geprueft hat, zeichnet im
+--      Spiel ein gruenes Rechteck, und das sieht aus wie ein Bild.
+--------------------------------------------------
+
+-- Welcher Ausschnitt des Bildes den Kasten fuellt, ohne zu verzerren.
+-- Gibt die vier Werte zurueck, die SetTexCoord erwartet.
+function WeintCodex.CoverCoords(texW, texH, boxW, boxH, focusX, focusY)
+    if type(texW) ~= "number" or type(texH) ~= "number"
+        or type(boxW) ~= "number" or type(boxH) ~= "number"
+        or texW <= 0 or texH <= 0 or boxW <= 0 or boxH <= 0 then
+        return 0, 1, 0, 1
+    end
+
+    local box, tex = boxW / boxH, texW / texH
+    local u, v = 1, 1
+    if box > tex then
+        v = tex / box            -- Kasten breiter als das Bild: Hoehe beschneiden
+    elseif box < tex then
+        u = box / tex            -- Kasten hoeher als das Bild: Breite beschneiden
+    end
+
+    local left = (focusX or 0.5) - u / 2
+    if left < 0 then left = 0 elseif left > 1 - u then left = 1 - u end
+    local top = (focusY or 0.5) - v / 2
+    if top < 0 then top = 0 elseif top > 1 - v then top = 1 - v end
+
+    return left, left + u, top, top + v
+end
+
+-- `art`  : Eintrag aus data/artwork.lua ({ file, w, h, focusX, focusY })
+--          oder nil - dann passiert nichts.
+-- `opts` : { width, height   = gerechnete Kastenmasse (Pflicht, damit der
+--                              Prueflauf denselben Ausschnitt sieht),
+--            band            = nur die obersten n px der Flaeche tragen
+--                              das Bild; ohne Angabe die ganze,
+--            dim             = Helligkeit 0..1 (Vorgabe 1),
+--            inset           = Abstand zur Kante (Vorgabe 1, wegen der
+--                              runden Ecken),
+--            layer, sublevel,
+--            top, foot       = Hoehe der beiden waagerechten Schleier,
+--            left            = Farbton des senkrechten Schleiers,
+--            footTone        = Farbton unten (Vorgabe artFoot) }
+function WeintCodex.Artwork(frame, art, opts)
+    if not art or not art.file then return nil end
+    opts = opts or {}
+
+    local inset  = opts.inset or 1
+    local layer  = opts.layer or "BACKGROUND"
+    local sub    = opts.sublevel or 1
+    local band   = opts.band
+    local focusX = opts.focusX or art.focusX or 0.5
+    local focusY = opts.focusY or art.focusY or 0.5
+
+    -- Ein Stueck der Flaeche, `offset` px unter ihrer Oberkante und
+    -- `height` px hoch. Ohne `height` reicht es bis zur Unterkante.
+    local function Region(sublevel, offset, height)
+        local t = frame:CreateTexture(nil, layer, nil, sublevel)
+        local y = -(inset + (offset or 0))
+        t:SetPoint("TOPLEFT",  frame, "TOPLEFT",   inset, y)
+        t:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -inset, y)
+        if height then
+            t:SetHeight(height)
+        else
+            t:SetPoint("BOTTOMLEFT",  frame, "BOTTOMLEFT",   inset, inset)
+            t:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -inset, inset)
+        end
+        return t
+    end
+
+    -- Ein Stueck am unteren Ende des Bildes. Traegt die Flaeche das
+    -- Bild nur als Band, haengt es am Bandende; sonst am Kartenfuss.
+    local function Foot(sublevel, height)
+        if band then return Region(sublevel, band - height, height) end
+        local t = frame:CreateTexture(nil, layer, nil, sublevel)
+        t:SetHeight(height)
+        t:SetPoint("BOTTOMLEFT",  frame, "BOTTOMLEFT",   inset, inset)
+        t:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -inset, inset)
+        return t
+    end
+
+    -- WoW kennt nur Backslashes im Texturpfad; data/artwork.lua schreibt
+    -- sie als Schraegstrich, damit der Eintrag lesbar bleibt und der
+    -- Prueflauf daraus einen Dateinamen machen kann.
+    local file = string.gsub(tostring(art.file), "/", "\\")
+    local tex  = Region(sub, 0, band)
+    tex:SetTexture(MEDIA .. file)
+    local dim = opts.dim or 1.0
+    tex:SetVertexColor(dim, dim, dim, 1.0)
+
+    -- Oben gedaempft: dort stehen Nummer und Kennzeichen.
+    if opts.top then
+        ApplyVerticalGradient(Region(sub + 1, 0, opts.top), "artTop", "artNone")
+    end
+    -- Unten deutlich dunkler: dort steht der Name.
+    if opts.foot then
+        ApplyVerticalGradient(Foot(sub + 2, opts.foot),
+            "artNone", opts.footTone or "artFoot")
+    end
+    -- Nach links hin ruhig: dort steht alles, was gelesen werden muss.
+    if opts.left then
+        ApplyHorizontalGradient(Region(sub + 3, 0, band), opts.left, "artNone")
+    end
+
+    local function Fit(w, h)
+        h = band or h
+        if type(w) ~= "number" or type(h) ~= "number" or w <= 0 or h <= 0 then return end
+        tex:SetTexCoord(WeintCodex.CoverCoords(art.w, art.h, w, h, focusX, focusY))
+    end
+    Fit(opts.width, opts.height)
+
+    -- Im Spiel kennt der Rahmen seine Breite erst, wenn er sie hat -
+    -- und sie aendert sich mit dem Fenster, ohne dass die Seite neu
+    -- gezeichnet wird (siehe PlaceGrid). Der Ausschnitt haengt
+    -- deshalb an der WIRKLICHEN Groesse; die gerechnete oben ist die,
+    -- mit der der Prueflauf arbeitet.
+    if frame.HookScript then
+        frame:HookScript("OnSizeChanged", function(_, w, h) Fit(w, h) end)
+    end
+
+    return {
+        texture = tex,
+        Fit     = Fit,
+        Dim     = function(value)
+            tex:SetVertexColor(value, value, value, 1.0)
+        end,
+    }
+end
 
 --------------------------------------------------
 -- Karte

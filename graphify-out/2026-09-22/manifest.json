@@ -72,10 +72,10 @@
     "semantic_hash": "ece052d36d5860084b43bfb3f5315630"
   },
   "core/ui.lua": {
-    "mtime": 1790079500.172061,
-    "seen": 1790094695.2660198,
-    "ast_hash": "14bec5debee579df13f9149585f2823a",
-    "semantic_hash": "14bec5debee579df13f9149585f2823a"
+    "mtime": 1790097732.186742,
+    "seen": 1790098878.2458634,
+    "ast_hash": "12e896e390ae4cd2feb2a7b09d452e2b",
+    "semantic_hash": "12e896e390ae4cd2feb2a7b09d452e2b"
   },
   "data/changelog.lua": {
     "mtime": 1790085903.8185103,
@@ -186,10 +186,10 @@
     "semantic_hash": "3ee5c82b08a5635b1ffc679f65756408"
   },
   "modules/dungeonpages.lua": {
-    "mtime": 1790094193.5377786,
-    "seen": 1790094695.2660291,
-    "ast_hash": "b96680724cc344adfcca4a0fb20766b9",
-    "semantic_hash": "b96680724cc344adfcca4a0fb20766b9"
+    "mtime": 1790098486.696624,
+    "seen": 1790098878.245878,
+    "ast_hash": "5492dacd998fd348f979bc8d6c01613b",
+    "semantic_hash": "5492dacd998fd348f979bc8d6c01613b"
   },
   "modules/encounter_tracking.lua": {
     "mtime": 1789991314.1454244,
@@ -222,10 +222,10 @@
     "semantic_hash": "2003d98f8ea79eaa8220e2872a5de08e"
   },
   "modules/rolepanel.lua": {
-    "mtime": 1790080023.7405598,
-    "seen": 1790094695.2660322,
-    "ast_hash": "f033ee93677bf9c13869a0591ce9e1b7",
-    "semantic_hash": "f033ee93677bf9c13869a0591ce9e1b7"
+    "mtime": 1790097750.0201929,
+    "seen": 1790098878.2458835,
+    "ast_hash": "c9bcab5fb566845d82bae1ef8532706b",
+    "semantic_hash": "c9bcab5fb566845d82bae1ef8532706b"
   },
   "modules/settings.lua": {
     "mtime": 1789991314.1454244,
@@ -318,10 +318,10 @@
     "semantic_hash": "f80c2e1bbde00bc758a0b2245baf3a3c"
   },
   "docs/systems/dungeons.md": {
-    "mtime": 1790086214.4349933,
-    "seen": 1790094695.2660406,
-    "ast_hash": "9ea960d290a5233cd7548e0d441fc461",
-    "semantic_hash": "9ea960d290a5233cd7548e0d441fc461"
+    "mtime": 1790098411.5341568,
+    "seen": 1790098878.2458873,
+    "ast_hash": "e6623be5c462fd3509048770bb2960d1",
+    "semantic_hash": "e6623be5c462fd3509048770bb2960d1"
   },
   "docs/systems/groupcheck.md": {
     "mtime": 1789991314.1401029,

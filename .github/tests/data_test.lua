@@ -780,6 +780,73 @@ for _, key in ipairs(EXPECTED_FEATURES) do
 end
 
 --------------------------------------------------
+-- Artwork: kein Pfad ohne Datei
+--------------------------------------------------
+-- DIESE PRUEFUNG IST DER GANZE GRUND, WARUM data/artwork.lua EINE
+-- TABELLE IST UND KEIN VERSTREUTER AUFRUF. Ein Texturpfad, hinter dem
+-- nichts liegt, wirft im Spiel keinen Fehler - er zeichnet ein
+-- gruenes Rechteck, und ein gruenes Rechteck sieht aus wie ein Bild,
+-- das eben so aussieht. Eine umbenannte Datei, ein Tippfehler, eine
+-- Datei, die beim Zusammenpacken des Addons fehlt: alle drei faende
+-- sonst erst ein Spieler.
+--
+-- Geprueft wird ausserdem, dass die Masse dastehen. Der Prueflauf hat
+-- keinen Client, der eine Textur vermessen koennte, und ohne Masse
+-- rechnet WeintCodex.CoverCoords keinen Ausschnitt, sondern nimmt das
+-- ganze Bild - also genau die Verzerrung, die nicht passieren soll.
+
+Section("Artwork")
+
+Check(type(WeintCodex.Artworks) == "table", "data/artwork.lua ist geladen")
+Check(type(WeintCodex.Art) == "table" and type(WeintCodex.Art.Boss) == "function",
+    "WeintCodex.Art.Dungeon/Boss sind da")
+
+local function CheckArt(entry, what)
+    Check(type(entry.file) == "string" and entry.file ~= "",
+        what .. " nennt eine Datei")
+    Check(type(entry.w) == "number" and entry.w > 0
+        and type(entry.h) == "number" and entry.h > 0,
+        what .. " nennt seine Masse")
+
+    -- WoW sucht sich die Endung selbst; hier muss eine davon liegen.
+    local found = nil
+    for _, ext in ipairs({ ".blp", ".tga" }) do
+        local file = io.open(ROOT .. "/media/" .. tostring(entry.file) .. ext, "rb")
+        if file then file:close(); found = ext end
+    end
+    Check(found ~= nil, what .. ": media/" .. tostring(entry.file) .. " liegt im Ordner")
+end
+
+local artDungeons = 0
+for dungeonId, entry in pairs(WeintCodex.Artworks or {}) do
+    artDungeons = artDungeons + 1
+    Check(WeintCodex.DungeonData.Get(dungeonId) ~= nil,
+        "Artwork " .. dungeonId .. " gehoert zu einem Dungeon, den es gibt")
+    if entry.header then CheckArt(entry.header, dungeonId .. " (Kopf)") end
+    for bossId, art in pairs(entry.bosses or {}) do
+        local dungeon = WeintCodex.DungeonData.Get(dungeonId)
+        local known = false
+        for _, boss in ipairs(dungeon and dungeon.bosses or {}) do
+            if boss.id == bossId then known = true end
+        end
+        Check(known, "Artwork " .. dungeonId .. "/" .. bossId
+            .. " gehoert zu einem Boss, den es gibt")
+        CheckArt(art, dungeonId .. "/" .. bossId)
+    end
+end
+
+-- Kein Soll. Bebildert ist, wofuer es Material gibt (ein Dungeon von
+-- neunundzwanzig); alle anderen zeichnen sich wie vorher. Geprueft
+-- wird nur, dass die Zugriffsfunktionen fuer den unbebilderten Fall
+-- nil liefern - das IST der Rueckfall.
+Check(WeintCodex.Art.Dungeon("maraudon") == nil,
+    "ein Dungeon ohne Artwork liefert nil und keine leere Tabelle")
+Check(WeintCodex.Art.Boss("hall_of_thanes", "gibtesnicht") == nil,
+    "ein Boss ohne Artwork liefert nil")
+Check(WeintCodex.Art.Dungeon(nil) == nil, "ohne Kennung liefert nil")
+print("  --    " .. artDungeons .. " Dungeon(s) mit Artwork")
+
+--------------------------------------------------
 
 print("")
 if failures == 0 then

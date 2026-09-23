@@ -132,9 +132,17 @@ local inspectorShown = false
 local gridCols       = 0
 local gridLongest    = 0
 
+-- Welche Karte welches Bild traegt. Eine NEBENTABELLE und kein Feld
+-- auf der Karte: die Client-Attrappe des Prueflaufs beantwortet jeden
+-- unbekannten Feldzugriff mit einer Funktion, ein `card.WCArt` waere
+-- dort also nie nil und die Abfrage "hat diese Karte ein Bild?"
+-- immer wahr. Was hier drinsteht, hat jemand hineingeschrieben.
+local cardArt = {}
+
 local function ClearRows()
     for _, row in ipairs(rows) do row:Hide() end
     wipe(rows)
+    wipe(cardArt)
 end
 
 --------------------------------------------------
@@ -182,6 +190,24 @@ local BOSS_COLS     = 3     -- mehr als drei Spalten waeren wieder eine Kette
 local BOSS_NAME     = 14    -- Name auf der hohen Karte, in der Serife
 local BOSS_NAME_MED = 12    -- Name auf der engen Karte, in der Grotesk
 local BOSS_FIT      = 12    -- womit die Spaltenzahl rechnet (siehe GridLayout)
+
+-- WIE HELL EIN BILD STEHEN DARF. Nicht heller, denn darauf steht
+-- Text; und beim Ueberfahren nur eine Spur heller, weil der Hover
+-- dieses Addons eine Stufe ist und kein Aufblitzen - dieselbe
+-- Zurueckhaltung wie bei surface3 gegenueber der ruhenden Flaeche.
+local ART_DIM       = 0.78   -- Bosskarte, ruhend und ausgewaehlt
+local ART_DIM_HOVER = 0.95   -- Bosskarte, ueberfahren
+local ART_DIM_HERO  = 0.72   -- Kopfkarte: darauf stehen vier Zeilen
+
+-- Im Kopf der Kontextkarte steht dasselbe Motiv noch einmal, und es
+-- reicht ein Stueck UNTER den Kopf hinaus: ein Band, das genau am
+-- Titel endet, waere bei voller Seitenbreite 20:1 - ein Streifen, auf
+-- dem nichts zu erkennen ist. Die 44 px kosten nichts (das Bild liegt
+-- unter dem, was ohnehin da steht) und machen daraus einen
+-- Ausschnitt, in dem der Boss zu sehen ist. Dunkler als auf der
+-- Karte, weil darunter weitergelesen wird.
+local ART_BLEED      = 44
+local ART_DIM_DETAIL = 0.70
 
 --------------------------------------------------
 -- Die eigene Stufe
@@ -770,6 +796,30 @@ local function DrawHead(f, dungeon)
     hero:SetPoint("TOPRIGHT", f, "TOPRIGHT", -PAD_X, -PAD_Y)
     rows[#rows + 1] = hero
 
+    -- DAS BILD, WENN ES EINES GIBT - UND SONST GAR NICHTS. Bis
+    -- 5.2.0.6 stand hier nur der Verlauf weiter unten, und der
+    -- Kommentar darueber sagte, warum: es gab kein Material. Fuer
+    -- die Hall of Thanes gibt es seit 5.2.0.7 eigenes (siehe
+    -- data/artwork.lua), fuer die anderen achtundzwanzig Instanzen
+    -- nicht. `Art.Dungeon` gibt dort nil zurueck, `WeintCodex.
+    -- Artwork` zeichnet dann nichts, und die Kopfkarte sieht aus wie
+    -- vorher: Verlauf, Sockel, Akzentkante. Eine Fallunterscheidung
+    -- braucht es dafuer nicht - das ist der Punkt.
+    --
+    -- DER SCHLEIER IST NICHT DEKORATION, SONDERN DIE BEDINGUNG. Links
+    -- stehen Kennzeichnung, Name und Themensatz, und die muessen auf
+    -- einem Bild genauso gut lesbar sein wie auf einer Flaeche;
+    -- darum laeuft der Schleier von links nach rechts aus und nicht
+    -- umgekehrt. Unten liegt das Tatsachenband, darum der Sockel -
+    -- er ist so hoch wie das Band samt seiner Linie.
+    WeintCodex.Artwork(hero, WeintCodex.Art.Dungeon(dungeon.id), {
+        width  = LayoutWidth() - 2 * PAD_X,
+        height = heroH,
+        dim    = ART_DIM_HERO,
+        left   = "artDeep",
+        foot   = stripH + HERO_BOT + 18,
+    })
+
     -- Das Licht nach rechts. Einen Punkt innerhalb der Kante, damit es
     -- nicht ueber die Rundung der Ecken hinauslaeuft.
     local wash = hero:CreateTexture(nil, "BORDER")
@@ -984,7 +1034,26 @@ end
 -- Was NICHT dazugekommen ist: ein zweiter Rahmen, ein Schein, eine
 -- zweite Akzentfarbe. Die Karte ist eine Flaeche, eine Kante, ein
 -- Sockel.
-local function BossCard(f, boss, height, headline)
+-- DAS BILD IST DIE VIERTE MOEGLICHKEIT UND NICHT DIE ERSTE. Was oben
+-- steht, gilt unveraendert: eine Karte ohne Bild ist eine Karte, und
+-- sie bleibt genau die, die sie in 5.2.0.6 geworden ist. Wo es ein
+-- eigenes Motiv gibt (data/artwork.lua - fuer einen von
+-- neunundzwanzig Dungeons), legt es sich DAHINTER, nicht darueber:
+--
+--   * Der Text bleibt, wo er war, in derselben Schrift, in
+--     derselben Groesse.
+--   * Der Sockel bleibt der Sockel. Er wird nicht ersetzt, sondern
+--     bekommt unter sich einen zweiten, dunkleren Verlauf - der
+--     ausgewaehlte Zustand faerbt weiter GENAU DENSELBEN Sockel
+--     akzentfarben, also sieht Auswahl auf der bebilderten Karte
+--     genauso aus wie auf jeder anderen.
+--   * Der Balken links, die Randkante, das Kennzeichen: unveraendert.
+--
+-- UND UNTER BOSS_H_MED GAR NICHT. Eine flache Karte ist 34 px hoch
+-- und bis zu 425 px breit; ein Bild darin waere ein 12:1-Streifen,
+-- auf dem nichts zu erkennen ist. Ein Streifen, der nichts zeigt,
+-- ist kein Bild, sondern Unruhe hinter einem Namen.
+local function BossCard(f, boss, height, headline, dungeon, cardW)
     local tall = headline and height >= BOSS_H_TALL
 
     local card = WeintCodex.CreateSurface(f, {
@@ -992,6 +1061,20 @@ local function BossCard(f, boss, height, headline)
         radius = 12, backdrop = "bgDark", height = height,
     })
     local edge = CardEdge(card)
+
+    local art
+    if height >= BOSS_H_MED then
+        art = WeintCodex.Artwork(card,
+            WeintCodex.Art.Boss(dungeon and dungeon.id, boss.id), {
+                width  = cardW,
+                height = height,
+                dim    = ART_DIM,
+                top    = math.floor(height * 0.45),
+                left   = "artLeft",
+                foot   = math.floor(height * 0.62),
+            })
+    end
+    if art then cardArt[card] = art end
 
     -- Der Sockel. Einen Punkt innerhalb der Kante, damit er die
     -- Rundung der Ecken nicht ueberzeichnet.
@@ -1098,6 +1181,7 @@ local function BossCard(f, boss, height, headline)
         end
     end
     local function Paint(hover)
+        if art then art.Dim(hover and not active and ART_DIM_HOVER or ART_DIM) end
         if active then
             card:SetTone("accent")
             if plinth then
@@ -1175,6 +1259,10 @@ local function PlaceGrid(f, cards, top, longest, height, headline, reserve)
             local col = (index - 1) % cols
             local row = math.floor((index - 1) / cols)
             card:SetWidth(cardW)
+            -- Aendert sich die Kartenbreite, aendert sich der
+            -- Ausschnitt des Bildes mit - sonst zeigte eine breitere
+            -- Karte denselben Streifen gestaucht (WeintCodex.Artwork).
+            if cardArt[card] then cardArt[card].Fit(cardW, height) end
             card:ClearAllPoints()
             card:SetPoint("TOPLEFT", f, "TOPLEFT",
                 PAD_X + col * (cardW + BOSS_GAP_X),
@@ -1336,7 +1424,7 @@ local function DrawBosses(f, y, dungeon, bossOpen)
 
         local cards = {}
         for _, boss in ipairs(shown) do
-            cards[#cards + 1] = BossCard(f, boss, height, headline)
+            cards[#cards + 1] = BossCard(f, boss, height, headline, dungeon, cardW)
         end
         y = PlaceGrid(f, cards, y, longest, height, headline, reserve)
 
@@ -1470,6 +1558,32 @@ local function DetailCard(f, y, opts)
     end
 
     local headH = -headY
+
+    -- DIE BRUECKE ZWISCHEN KARTE UND KARTE. Wer eine Bosskarte
+    -- anklickt, soll hier dasselbe Motiv wiederfinden - sonst ist die
+    -- Auswahl ein Sprung und keine Vertiefung. Das Bild steht
+    -- deshalb HINTER dem Kopf dieser Karte, in derselben Sprache wie
+    -- auf dem Raster: Ausschnitt gerechnet, Schleier nach links,
+    -- unten in die Karte auslaufend.
+    --
+    -- ES KOSTET KEINEN PIXEL. Die Karte wird dadurch nicht hoeher und
+    -- ihr Koerper nicht kuerzer - das Bild liegt auf der BACKGROUND-
+    -- Ebene unter allem, was hier ohnehin stand, und laeuft unterhalb
+    -- des Kopfes fast schwarz aus. Der Detailbereich bleibt damit
+    -- genau der, der er war; gaebe es dafuer eine eigene Bildzeile,
+    -- waere es ein Umbau, und einer haette das Hoehenbudget der Seite
+    -- neu zu beweisen (siehe MIN_DETAIL_H).
+    --
+    -- Ohne Eintrag passiert hier nichts (WeintCodex.Artwork gibt dann
+    -- nil zurueck), und die Karte sieht aus wie vorher.
+    WeintCodex.Artwork(card, opts.art, {
+        width    = ContentWidth() - 2 * PAD_X,
+        band     = headH + ART_BLEED,
+        dim      = ART_DIM_DETAIL,
+        left     = "artLeft",
+        foot     = headH + ART_BLEED,
+        footTone = "artFade",
+    })
 
     -- Der Koerper. Breite im Spiel aus dem Rahmen, im Prueflauf aus
     -- dem Budget; die Schaetzung der Absaetze rechnet immer mit dem
@@ -1830,6 +1944,7 @@ local function DrawBossDetail(f, y, dungeon, boss)
     return DetailCard(f, y, {
         eyebrow   = table.concat(parts, " · "),
         title     = boss.name or "?",
+        art       = WeintCodex.Art.Boss(dungeon.id, boss.id),
         -- DER BOSSNAME STEHT IN DERSELBEN SCHRIFT WIE DER
         -- DUNGEONNAME, nur kleiner: beides sind Ueberschriften eines
         -- Bestands, und die Ueberschriftenschrift dieses Addons ist

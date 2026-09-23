@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "5.2.0.8",
+        date    = "23.09.2026",
+        notes   = {
+            "|cff7C6CFFHall of Thanes ist jetzt bebildert.|r Der Dungeon zeigt ein eigenes Header-Artwork und jeder Boss seine eigene Darstellung.",
+            "|cff7C6CFFDie Dungeon-Bilder geben den Einträgen mehr Atmosphäre.|r Die Informationen bleiben dabei unverändert und weiterhin klar lesbar.",
+        },
+    },
+    {
         version = "5.2.0.7",
         date    = "22.09.2026",
         notes   = {

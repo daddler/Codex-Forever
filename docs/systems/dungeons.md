@@ -132,19 +132,21 @@ verwechselt: Forever hat keine Rufsteine freigeschaltet und keinen
 automatischen Gruppenfinder — Spieler beschwört nur der Hexenmeister, mit
 zwei Helfern vor Ort. Das steht in `DungeonData.SUMMONING`.
 
-## Bilder: keine, und warum
+## Bilder: kein Spielmaterial, eigenes schon
 
 Nach einem Kompendium mit Bildern wurde ausdrücklich gefragt. Die
-ehrliche Antwort steht als Kommentar *Warum hier keine Bilder stehen*
-in `modules/dungeonpages.lua` und hat zwei voneinander unabhängige
-Teile:
+Antwort hat sich mit 5.2.0.7 geändert — aber nicht in dem Teil, in dem
+sie „nein" sagt.
 
-1. **Es gibt sie nicht.** Blizzard hat für Forever keine Dungeonkarten
+**Blizzards Material bleibt draussen, und zwar aus zwei voneinander
+unabhängigen Gründen:**
+
+1. **Es gibt es nicht.** Blizzard hat für Forever keine Dungeonkarten
    veröffentlicht. Im Beta-Client liegt für **vier** der neun Instanzen
    überhaupt Kartenmaterial (Hall of Thanes, Ruins of Lordaeron,
    Excavation Site, City of Dalaran), für fünf nicht. Ein Kompendium mit
    fünf leeren Rahmen ist keines.
-2. **Sie gehören nicht uns.** Das Material ist Blizzards Eigentum. Es in
+2. **Es gehört nicht uns.** Das Material ist Blizzards Eigentum. Es in
    ein öffentliches Repository zu legen, wäre unabhängig von 1. keine
    Option.
 
@@ -154,8 +156,75 @@ Projekt, und ein geratener Pfad zeichnet im Spiel ein grünes Rechteck.
 Eine Fehlermeldung, die wie ein Bild aussieht, ist schlimmer als kein
 Bild.
 
-**Was stattdessen geht:** `boss.position` sagt, **wo** ein Boss steht.
-„Patrouilliert den ersten langen Gang auf einer sehr weiten Route",
+**Eigenes Material fällt unter keinen der beiden Gründe.** Seit 5.2.0.7
+trägt die Hall of Thanes fünf eigene Artworks: eines hinter der
+Kopfkarte, vier hinter den Bosskarten. Sie liegen in
+`media/dungeons/hall_of_thanes/`, und die einzige Stelle, die sie
+kennt, ist `data/artwork.lua`.
+
+**Was ein Bild hier nicht ist: eine Auskunft.** So sieht der Boss im
+Client nicht aus, so sieht die Instanz im Client nicht aus, und keine
+Zeile von `data/artwork.lua` sagt etwas darüber. Ein bebilderter
+Dungeon ist deshalb **kein besser belegter** — die Hall of Thanes
+bleibt `community`, mit Bild wie ohne. Alles, was die Seite behauptet
+(wie viele Bosse, in welcher Reihenfolge, wo einer steht), steht
+weiter in `data/dungeons.lua` und trägt dort seine Herkunft.
+
+**Der Rückfall ist der Normalfall.** Achtundzwanzig der
+neunundzwanzig Instanzen haben kein Artwork. `WeintCodex.Art.Dungeon`
+und `.Boss` geben dort `nil` zurück, `WeintCodex.Artwork` zeichnet bei
+`nil` nichts, und die Seite sieht aus wie vor 5.2.0.7 — ohne eine
+einzige Fallunterscheidung in `modules/dungeonpages.lua`. Das ist der
+Grund für diesen Zuschnitt: ein Dungeon mit Bild und einer ohne
+durchlaufen denselben Code.
+
+**Kein Pfad ohne Datei.** Ein Texturpfad, hinter dem nichts liegt,
+wirft im Spiel keinen Fehler, sondern zeichnet ein grünes Rechteck —
+und das sieht aus wie ein Bild, das eben so aussieht.
+`data_test.lua` prüft deshalb jede Zeile von `data/artwork.lua` gegen
+den Ordner: Datei da, Masse genannt, Dungeon- und Bosskennung
+vorhanden.
+
+**Verzerrt wird nichts.** Ein Bild in einen Kasten anderer Form zu
+spannen, staucht Gesichter. `WeintCodex.CoverCoords` rechnet
+stattdessen den Ausschnitt aus, der den Kasten füllt: die kürzere
+Seite wird beschnitten, die längere ganz genutzt, beschnitten wird um
+einen Fokuspunkt herum (`focusX`, bei allen fünf rechts der Mitte,
+weil links Nummer und Name stehen). Gerechnet wird mit der Breite, die
+die Seite ohnehin kennt — und zusätzlich bei `OnSizeChanged` mit der
+wirklichen, weil das Raster beim Vergrössern des Fensters umbricht,
+ohne neu zu zeichnen.
+
+**Der Schleier ist die Bedingung, nicht die Zierde.** Ein Bild ist
+heller und unruhiger als jede Fläche dieses Addons, und darauf steht
+derselbe Text wie sonst. `WeintCodex.Artwork` legt deshalb immer
+Bild **und** Schleier: oben gedämpft (Nummer, Kennzeichen), nach links
+hin ruhig (Name, Titel, Themensatz), unten deutlich dunkler (der
+Sockel, auf dem der Name steht). Die vier Werte dafür (`artTop`,
+`artLeft`, `artDeep`, `artFoot`, `artFade`) stehen in `core/ui.lua`
+wie jeder andere Farbwert, und sie sind **schwarz**: der Akzent trägt
+Bedeutung, ein Schleier trägt keine.
+
+**Zustände bleiben Zustände.** Der ausgewählte Boss färbt weiter genau
+denselben Sockel akzentfarben (`washAccentUp`), trägt weiter den
+Balken links und die Akzentkante; Überfahren hebt das Bild um eine
+Stufe an (0,78 → 0,95) und sonst nichts. Kein Aufblitzen, kein
+Glühen — dieselbe Zurückhaltung wie bei `surface3`.
+
+**Unter `BOSS_H_MED` gar nicht.** Eine flache Karte ist 34 px hoch und
+bis zu 425 px breit; ein Bild darin wäre ein 12:1-Streifen, auf dem
+nichts zu erkennen ist — Unruhe hinter einem Namen, kein Bild.
+
+**Und die Kontextkarte trägt dasselbe Motiv noch einmal**, hinter
+ihrem Kopf, 44 px über den Titel hinaus auslaufend. Das ist die
+Brücke zwischen Auswahl und Detail — und es kostet keinen Pixel: das
+Bild liegt auf der `BACKGROUND`-Ebene unter allem, was dort ohnehin
+stand. Eine eigene Bildzeile wäre ein Umbau, und einer hätte das
+Höhenbudget der Seite neu zu beweisen.
+
+**Was stattdessen geht, gilt unverändert** — und zwar gerade dort, wo
+jetzt ein Bild steht: `boss.position` sagt, **wo** ein Boss steht, und
+das sagt kein Artwork. „Patrouilliert den ersten langen Gang auf einer sehr weiten Route",
 „allein in der Kammer der Verzauberung", „Endkammer, zusammen mit zwei
 Steingolems". Das ist die Auskunft, für die man sonst auf ein Bild
 schaut, und sie lässt sich belegen — und sie steht auf der Bosskarte an

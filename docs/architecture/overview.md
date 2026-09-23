@@ -79,7 +79,8 @@ damit als ungültige UTF-8-Folge wieder heraus.
 ```
 
 * **`core/ui.lua`** baut die Flächen und die Bausteine (Karte, Knopf,
-  Schalter, Regler, Chip, Statuspunkt, Seitenkopf, Absatz, Bildlauf).
+  Schalter, Regler, Chip, Statuspunkt, Seitenkopf, Absatz, Bildlauf,
+  Artwork).
 * **`core/navigation.lua`** füllt die Navigationsspalte, verteilt die
   Klicks auf die Module (`SwitchTo`), zeichnet die Startseite
   (`ShowHome`) und stellt den Detailbereich bereit (`SetInspector`).
@@ -87,6 +88,33 @@ damit als ungültige UTF-8-Folge wieder heraus.
   rechnen gegen dessen Grösse. Ob rechts ein Detailbereich steht oder
   links eine Unternavigation, verändert nur die Grösse dieser Fläche —
   die Module merken davon nichts.
+
+### Bilder
+
+`WeintCodex.Artwork(frame, art, opts)` ist der **einzige** Baustein,
+der ein Bild zeichnet, und es soll kein zweiter daneben entstehen. Er
+liefert Bild **und** Schleier — beides gehört zusammen, weil ein Bild
+ohne Schleier den Text darauf unlesbar macht.
+
+* `art = nil` heisst: es gibt keines. Die Funktion zeichnet nichts und
+  gibt `nil` zurück. Das ist der Rückfall, auf den sich jede Seite
+  verlässt — eine Fläche ohne Bild sieht aus wie vorher, ohne
+  Fallunterscheidung beim Aufrufer.
+* `WeintCodex.CoverCoords` rechnet den Ausschnitt, der den Kasten
+  füllt, **ohne zu verzerren**: die kürzere Seite wird beschnitten, um
+  `focusX`/`focusY` herum. Gerechnet wird mit der Breite, die die
+  Seite kennt, und zusätzlich bei `OnSizeChanged` mit der wirklichen.
+* Die Pfade stehen **ausschliesslich** in `data/artwork.lua`, und
+  `data_test.lua` prüft jede Zeile gegen `media/`. Ein Pfad ohne Datei
+  zeichnet im Spiel ein grünes Rechteck, und das sieht aus wie ein
+  Bild.
+* Die Schleiertöne (`artNone`, `artTop`, `artLeft`, `artDeep`,
+  `artFoot`, `artFade`) stehen wie jeder Farbwert in `core/ui.lua` und
+  sind **schwarz** — der Akzent trägt Bedeutung, ein Schleier trägt
+  keine.
+
+Wer sie in Betrieb sehen will: `docs/systems/dungeons.md`, Abschnitt
+*Bilder: kein Spielmaterial, eigenes schon*.
 
 ### Der Detailbereich
 

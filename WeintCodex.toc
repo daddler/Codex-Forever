@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 5.2.0.7
+## Version: 5.2.0.8
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -73,6 +73,14 @@ data/dungeons.lua
 # (WeintCodex.DungeonData) und muessen sie vorfinden.
 #
 data/dungeons_classic.lua
+
+#
+# data/artwork.lua steht NACH den Dungeondateien, weil es sie mit
+# ihren Kennungen anspricht - gelesen wird es aber erst von
+# modules/dungeonpages.lua. Es traegt keine Spielauskunft, nur
+# Bildpfade; was ein Bild NICHT behauptet, steht in der Datei.
+#
+data/artwork.lua
 data/specs.lua
 
 #
