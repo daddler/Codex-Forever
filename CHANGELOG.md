@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [5.2.0.9] – 2026-09-23
+
+**Ragefire Chasm bekommt ein eigenes Gesicht.** Der Dungeon-Header verwendet
+nun ein eigenes Artwork und auch die vier Bosskarten sind individuell
+bebildert.
+
+**Das Artwork-System wächst mit.** Ragefire Chasm ist der zweite bebilderte
+Dungeon und verwendet dieselbe zentrale Artwork-Struktur wie Hall of Thanes.
+Weitere Dungeons können damit ergänzt werden, ohne die Dungeon-UI selbst
+anzupassen.
+
 ## [5.2.0.8] – 2026-09-23
 
 **Hall of Thanes bekommt ein eigenes Gesicht.** Der Dungeon-Header verwendet

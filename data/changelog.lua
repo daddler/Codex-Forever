@@ -21,6 +21,14 @@
 --------------------------------------------------
 
 WeintCodex_ChangelogData = {
+        {
+        version = "5.2.0.9",
+        date    = "23.09.2026",
+        notes   = {
+            "|cff7C6CFFRagefire Chasm ist jetzt bebildert.|r Der Dungeon zeigt ein eigenes Header-Artwork und jeder Boss seine eigene Darstellung.",
+            "|cff7C6CFFDas Artwork-System unterstützt jetzt mehrere bebilderte Dungeons.|r Weitere Dungeons können ohne eigene UI-Sonderlogik ergänzt werden.",
+        },
+    },
     {
         version = "5.2.0.8",
         date    = "23.09.2026",

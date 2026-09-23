@@ -157,20 +157,20 @@ Eine Fehlermeldung, die wie ein Bild aussieht, ist schlimmer als kein
 Bild.
 
 **Eigenes Material fällt unter keinen der beiden Gründe.** Seit 5.2.0.7
-trägt die Hall of Thanes fünf eigene Artworks: eines hinter der
-Kopfkarte, vier hinter den Bosskarten. Sie liegen in
-`media/dungeons/hall_of_thanes/`, und die einzige Stelle, die sie
+trägt die Hall of Thanes fünf eigene Artworks. Ragefire Chasm ist der
+zweite bebilderte Dungeon mit einem Header und vier Bosskarten. Sie liegen
+unter `media/dungeons/`, und die einzige Stelle, die sie
 kennt, ist `data/artwork.lua`.
 
 **Was ein Bild hier nicht ist: eine Auskunft.** So sieht der Boss im
 Client nicht aus, so sieht die Instanz im Client nicht aus, und keine
 Zeile von `data/artwork.lua` sagt etwas darüber. Ein bebilderter
-Dungeon ist deshalb **kein besser belegter** — die Hall of Thanes
-bleibt `community`, mit Bild wie ohne. Alles, was die Seite behauptet
+Dungeon ist deshalb **kein besser belegter** — die bebilderten Dungeons
+bleiben `community`, mit Bild wie ohne. Alles, was die Seite behauptet
 (wie viele Bosse, in welcher Reihenfolge, wo einer steht), steht
 weiter in `data/dungeons.lua` und trägt dort seine Herkunft.
 
-**Der Rückfall ist der Normalfall.** Achtundzwanzig der
+**Der Rückfall ist der Normalfall.** Siebenundzwanzig der
 neunundzwanzig Instanzen haben kein Artwork. `WeintCodex.Art.Dungeon`
 und `.Boss` geben dort `nil` zurück, `WeintCodex.Artwork` zeichnet bei
 `nil` nichts, und die Seite sieht aus wie vor 5.2.0.7 — ohne eine
@@ -189,7 +189,7 @@ vorhanden.
 spannen, staucht Gesichter. `WeintCodex.CoverCoords` rechnet
 stattdessen den Ausschnitt aus, der den Kasten füllt: die kürzere
 Seite wird beschnitten, die längere ganz genutzt, beschnitten wird um
-einen Fokuspunkt herum (`focusX`, bei allen fünf rechts der Mitte,
+einen Fokuspunkt herum (`focusX`, bei den Artworks leicht rechts der Mitte,
 weil links Nummer und Name stehen). Gerechnet wird mit der Breite, die
 die Seite ohnehin kennt — und zusätzlich bei `OnSizeChanged` mit der
 wirklichen, weil das Raster beim Vergrössern des Fensters umbricht,

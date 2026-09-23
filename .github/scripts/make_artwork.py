@@ -7,7 +7,7 @@ skalieren, als BLP2/DXT1 mit Mipmaps ablegen.
 Der Ordner enthält die Originale unter den Namen, die unten in JOBS
 stehen; geschrieben wird nach media/dungeons/<dungeon>/.
 
-**Warum es das gibt.** Was in media/ liegt, sind fünf Binärdateien,
+**Warum es das gibt.** Was in media/ liegt, sind zehn Binärdateien,
 und aus einer Binärdatei geht nicht hervor, welcher Ausschnitt eines
 Originals sie ist. Ohne dieses Skript wäre "das Motiv sitzt zwei
 Pixel zu hoch" eine Aufgabe, die jemand von vorn löst. Die
@@ -16,7 +16,7 @@ damit sie auch ohne das Skript lesbar sind.
 
 **Warum BLP2/DXT1 und nicht PNG.** WoW lädt PNG nicht. Bleiben BLP und
 TGA: ein unkomprimiertes TGA wäre in dieser Grösse 768 KB je Bild
-(3,8 MB für fünf), BLP2/DXT1 ist 171 KB je Bild (860 KB für fünf) bei
+(3,8 MB für fünf), BLP2/DXT1 ist 171 KB je Bild (1,7 MB für zehn) bei
 einer mittleren Abweichung von rund 2 von 255 Helligkeitsstufen. DXT1
 und nicht DXT5, weil die Bilder undurchsichtig sind - DXT5 kostete das
 Doppelte und brächte nur einen Alphakanal, den keines von ihnen hat.
@@ -52,11 +52,16 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 # immer 1024x256 (Zweierpotenz, sonst laedt der Client die Textur
 # nicht).
 JOBS = [
-    ("dungeons/hall_of_thanes/header",             "header.png",             (  0,  69, 1983, 496)),
-    ("dungeons/hall_of_thanes/faldrim_anvilmar",   "faldrim_anvilmar.png",   (  0,   8, 1300, 325)),
-    ("dungeons/hall_of_thanes/magmatus",           "magmatus.png",           (  0, 110, 1300, 325)),
-    ("dungeons/hall_of_thanes/plunder",            "plunder.png",            (100,  40, 1300, 325)),
-    ("dungeons/hall_of_thanes/durgen_dirgehammer", "durgen_dirgehammer.png", (100,  25, 1400, 350)),
+    ("dungeons/hall_of_thanes/header",             "hall_of_thanes/header.png",             (  0,  69, 1983, 496)),
+    ("dungeons/hall_of_thanes/faldrim_anvilmar",   "hall_of_thanes/faldrim_anvilmar.png",   (  0,   8, 1300, 325)),
+    ("dungeons/hall_of_thanes/magmatus",           "hall_of_thanes/magmatus.png",           (  0, 110, 1300, 325)),
+    ("dungeons/hall_of_thanes/plunder",            "hall_of_thanes/plunder.png",            (100,  40, 1300, 325)),
+    ("dungeons/hall_of_thanes/durgen_dirgehammer", "hall_of_thanes/durgen_dirgehammer.png", (100,  25, 1400, 350)),
+    ("dungeons/ragefire_chasm/header",             "ragefire_chasm/header.png",             (  0,  69, 1983, 496)),
+    ("dungeons/ragefire_chasm/oggleflint",         "ragefire_chasm/oggleflint.png",         (200,  80, 1300, 325)),
+    ("dungeons/ragefire_chasm/taragaman",          "ragefire_chasm/taragaman.png",          (200,  40, 1300, 325)),
+    ("dungeons/ragefire_chasm/jergosh",            "ragefire_chasm/jergosh.png",            (200,   0, 1300, 325)),
+    ("dungeons/ragefire_chasm/bazzalan",           "ragefire_chasm/bazzalan.png",           (200,   0, 1300, 325)),
 ]
 
 TARGET_W, TARGET_H = 1024, 256

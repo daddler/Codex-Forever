@@ -24,10 +24,10 @@
     "semantic_hash": "26f0b58202d01c446f36e8ba27eea4ec"
   },
   "WeintCodex.toc": {
-    "mtime": 1790166796.831815,
-    "seen": 1790167904.4431884,
-    "ast_hash": "435757f1dc9567e22b6dcf27242c5688",
-    "semantic_hash": ""
+    "mtime": 1790164582.016049,
+    "seen": 1790165582.991251,
+    "ast_hash": "f7cb9cf6c8bde179d80a96c20c1e90b7",
+    "semantic_hash": "f7cb9cf6c8bde179d80a96c20c1e90b7"
   },
   "core/access.lua": {
     "mtime": 1789991314.1388493,
@@ -36,10 +36,10 @@
     "semantic_hash": "22cae2ced786df8a3f1a15b4634f0853"
   },
   "core/main.lua": {
-    "mtime": 1790166796.832585,
-    "seen": 1790167904.4431908,
-    "ast_hash": "a87fcb4119880378e5b709a3b7c04475",
-    "semantic_hash": ""
+    "mtime": 1790100383.3752599,
+    "seen": 1790165582.9912524,
+    "ast_hash": "1e0b1f1ec401432c83bcba7537602d72",
+    "semantic_hash": "1e0b1f1ec401432c83bcba7537602d72"
   },
   "core/minimap.lua": {
     "mtime": 1789991314.1391437,
@@ -78,10 +78,10 @@
     "semantic_hash": "6e04ae4da08220242caf1453aa3682ff"
   },
   "data/changelog.lua": {
-    "mtime": 1790166957.4402466,
-    "seen": 1790167904.4431968,
-    "ast_hash": "98e6a3aa1c505eef220b4678c243128b",
-    "semantic_hash": ""
+    "mtime": 1790100383.3753674,
+    "seen": 1790165582.9912574,
+    "ast_hash": "47d47a9bfa43a2f84649789c84b3bb4b",
+    "semantic_hash": "47d47a9bfa43a2f84649789c84b3bb4b"
   },
   "data/companion_live.lua": {
     "mtime": 1789991314.1397202,
@@ -270,10 +270,10 @@
     "semantic_hash": "be407aed5d753c8cd850d9129c153595"
   },
   "CHANGELOG.md": {
-    "mtime": 1790166994.3008437,
-    "seen": 1790167904.4432166,
-    "ast_hash": "507a9a5bff0cc9279c60ef9837ca910d",
-    "semantic_hash": ""
+    "mtime": 1790100417.9702032,
+    "seen": 1790165582.991272,
+    "ast_hash": "1de7f516cebceca1ee54e69878915fda",
+    "semantic_hash": "1de7f516cebceca1ee54e69878915fda"
   },
   "CLAUDE.md": {
     "mtime": 1790164916.256909,

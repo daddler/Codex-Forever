@@ -56,10 +56,10 @@
 -- mit Mipmaps abgelegt - 175 KB je Bild statt 2,3 MB. Der Ausschnitt
 -- steht je Datei darunter.
 --
--- HALL OF THANES IST DER ERSTE UND VORERST EINZIGE BEBILDERTE
+-- HALL OF THANES UND RAGEFIRE CHASM SIND DIE ERSTEN BEIDEN BEBILDERTEN
 -- DUNGEON. Das ist kein Zwischenstand, der aufzufuellen waere:
--- Material gibt es fuer diesen einen, und fuer die anderen
--- achtundzwanzig gibt es keines. Eine Seite ohne Eintrag sieht aus
+-- Material gibt es fuer diese beiden, und fuer die anderen
+-- siebenundzwanzig gibt es keines. Eine Seite ohne Eintrag sieht aus
 -- wie vor 5.2.0.7 (siehe WeintCodex.Artwork, Punkt 1) - es braucht
 -- dafuer keine Zeile hier und keine Fallunterscheidung dort.
 --------------------------------------------------
@@ -105,6 +105,31 @@ WeintCodex.Artworks = {
             durgen_dirgehammer = {
                 file = ART .. "hall_of_thanes/durgen_dirgehammer",
                 w = 1024, h = 256, focusX = 0.60,
+            },
+        },
+    },
+
+    ragefire_chasm = {
+        header = {
+            file = ART .. "ragefire_chasm/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            oggleflint = {
+                file = ART .. "ragefire_chasm/oggleflint",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            taragaman = {
+                file = ART .. "ragefire_chasm/taragaman",
+                w = 1024, h = 256, focusX = 0.62,
+            },
+            jergosh = {
+                file = ART .. "ragefire_chasm/jergosh",
+                w = 1024, h = 256, focusX = 0.60,
+            },
+            bazzalan = {
+                file = ART .. "ragefire_chasm/bazzalan",
+                w = 1024, h = 256, focusX = 0.58,
             },
         },
     },

@@ -835,7 +835,7 @@ for dungeonId, entry in pairs(WeintCodex.Artworks or {}) do
     end
 end
 
--- Kein Soll. Bebildert ist, wofuer es Material gibt (ein Dungeon von
+-- Kein Soll. Bebildert ist, wofuer es Material gibt (zwei Dungeons von
 -- neunundzwanzig); alle anderen zeichnen sich wie vorher. Geprueft
 -- wird nur, dass die Zugriffsfunktionen fuer den unbebilderten Fall
 -- nil liefern - das IST der Rueckfall.
