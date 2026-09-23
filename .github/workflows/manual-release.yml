@@ -51,15 +51,25 @@ jobs:
         run: |
           mkdir WeintCodex
 
+          # graphify-out: generierte Wissensgraph-Reports, kein
+          # Spielinhalt - dieselbe Begruendung wie bei docs/.
+          # media/logo.png und media/logo.blp: nirgends im Addon
+          # geladen (nur README.md bindet logo.png fuers GitHub-
+          # Vorschaubild ein, unabhaengig vom ZIP) und die Companion
+          # bringt ihr eigenes Logo mit (core/resources.py drueben) -
+          # beide sind hier totes Gewicht.
           rsync -a \
             --exclude=".git" \
             --exclude=".github" \
             --exclude=".gitignore" \
             --exclude="docs" \
+            --exclude="graphify-out" \
             --exclude="CLAUDE.md" \
             --exclude="README.md" \
             --exclude="LICENSE" \
             --exclude="WeintCodex" \
+            --exclude="media/logo.png" \
+            --exclude="media/logo.blp" \
             ./ WeintCodex/
 
           # CHANGELOG.md bleibt ausdruecklich DRIN. WeintCompanion liest

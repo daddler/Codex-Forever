@@ -53,7 +53,10 @@
 -- aus den Originalen 1983x793 bzw. 1672x941, mit einem von Hand
 -- gesetzten 4:1-Ausschnitt (das Motiv RECHTS der Mitte, weil links
 -- Nummer und Name stehen), auf 1024x256 skaliert und als BLP2/DXT1
--- mit Mipmaps abgelegt - 175 KB je Bild statt 2,3 MB. Der Ausschnitt
+-- OHNE Mipmaps abgelegt - rund 128 KB je Bild statt 2,3 MB. Ohne
+-- Mipmaps, weil jedes Bild in einer UI-Kachel fester Groesse steht
+-- und nie aus der Distanz gesehen wird; die Kette bis Breite 4 kostete
+-- pro Bild rund 43 KB, die kein Frame je anfordert. Der Ausschnitt
 -- steht je Datei darunter.
 --
 -- HALL OF THANES, RAGEFIRE CHASM, RUINS OF LORDAERON, WAILING CAVERNS,

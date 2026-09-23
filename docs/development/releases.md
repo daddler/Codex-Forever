@@ -78,9 +78,12 @@ Der Ordner im ZIP **muss** `WeintCodex` heissen und eine
 (`core/installer.py` drüben). Der Workflow prüft das mit einem
 `test -f`, bevor er packt.
 
-Draussen bleiben: `.git`, `.github`, `.gitignore`, `docs`, `CLAUDE.md`,
-`README.md`, `LICENSE`. Ein Testlauf und eine Entwicklerdokumentation
-gehören nicht in den Addon-Ordner eines Spielers.
+Draussen bleiben: `.git`, `.github`, `.gitignore`, `docs`, `graphify-out`,
+`CLAUDE.md`, `README.md`, `LICENSE`, `media/logo.png`, `media/logo.blp`.
+Ein Testlauf, eine Entwicklerdokumentation und generierte Wissensgraph-
+Reports gehören nicht in den Addon-Ordner eines Spielers; die beiden
+Logo-Dateien laedt ohnehin nichts im Addon (nur README.md fuers
+GitHub-Vorschaubild, unabhaengig vom ZIP).
 
 **`CHANGELOG.md` bleibt ausdrücklich drin.** WeintCompanion liest sie
 aus dem *installierten* Addon-Ordner (`core/changelog_source.py` drüben,

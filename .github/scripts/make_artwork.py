@@ -1,6 +1,6 @@
 """
 Aus einem Original-Artwork die Addon-Fassung machen: zuschneiden,
-skalieren, als BLP2/DXT1 mit Mipmaps ablegen.
+skalieren, als BLP2/DXT1 ohne Mipmaps ablegen.
 
     python3 .github/scripts/make_artwork.py ~/Bilder/hall_of_thanes
 
@@ -16,12 +16,16 @@ damit sie auch ohne das Skript lesbar sind.
 
 **Warum BLP2/DXT1 und nicht PNG.** WoW lädt PNG nicht. Bleiben BLP und
 TGA: ein unkomprimiertes TGA wäre in dieser Grösse 768 KB je Bild
-(8,2 MB für siebenundvierzig), BLP2/DXT1 ist 171 KB je Bild bei
+(8,2 MB für siebenundvierzig), BLP2/DXT1 ist rund 128 KB je Bild bei
 einer mittleren Abweichung von rund 2 von 255 Helligkeitsstufen. DXT1
 und nicht DXT5, weil die Bilder undurchsichtig sind - DXT5 kostete das
 Doppelte und brächte nur einen Alphakanal, den keines von ihnen hat.
-Dieselbe Kodierung wie media/logo.blp, und dieselbe Mipmap-Kette
-(hinunter bis zur Breite 4).
+
+**Warum ohne Mipmaps.** Jedes Bild steht in einer UI-Kachel fester
+Grösse (keine Kamera, keine Distanz) - Mipmaps waren hier nie mehr als
+eine vorgerechnete Kette kleinerer Kopien, die nie ein Frame anfordert.
+Das sparte, ueber alle Bilder, rund 2 MB im ZIP. Gespeichert wird nur
+noch Stufe 0, `hasMips` bleibt 0.
 
 **Warum die Ausschnitte 4:1 sind.** Die Kästen, in denen die Bilder
 stehen, sind breit und flach: eine Bosskarte ist im grossen Fenster
@@ -123,34 +127,19 @@ def dxt1_blocks(image, workdir):
         return handle.read()[128:]
 
 
-def mip_chain(image):
-    """Die Kette, die media/logo.blp auch hat: halbieren, bis die
-    Breite 4 erreicht ist."""
-    levels = [image]
-    width, height = image.size
-    while width > 4:
-        width, height = max(1, width // 2), max(1, height // 2)
-        levels.append(image.resize((width, height), Image.LANCZOS))
-    return levels
-
-
-def write_blp(path, levels, width, height):
-    """BLP2, Typ 1, Kodierung 2 (DXT), ohne Alpha, mit Mipmaps.
-    Kopf: 148 Byte, danach die Stufen hintereinander."""
+def write_blp(path, level0, width, height):
+    """BLP2, Typ 1, Kodierung 2 (DXT), ohne Alpha, ohne Mipmaps - nur
+    Stufe 0. Kopf: 148 Byte, danach die eine Stufe."""
     offsets, sizes = [0] * 16, [0] * 16
-    cursor, blob = 148, b""
-    for index, data in enumerate(levels[:16]):
-        offsets[index], sizes[index] = cursor, len(data)
-        cursor += len(data)
-        blob += data
+    offsets[0], sizes[0] = 148, len(level0)
 
-    header = struct.pack("<4sIBBBBII", b"BLP2", 1, 2, 0, 0, 1, width, height)
+    header = struct.pack("<4sIBBBBII", b"BLP2", 1, 2, 0, 0, 0, width, height)
     header += struct.pack("<16I", *offsets) + struct.pack("<16I", *sizes)
     assert len(header) == 148
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "wb") as handle:
-        handle.write(header + blob)
+        handle.write(header + level0)
 
 
 def main():
@@ -179,10 +168,10 @@ def main():
                          .resize((TARGET_W, TARGET_H), Image.LANCZOS)
 
         with tempfile.TemporaryDirectory() as workdir:
-            levels = [dxt1_blocks(level, workdir) for level in mip_chain(scaled)]
+            level0 = dxt1_blocks(scaled, workdir)
 
         path = os.path.join(REPO, "media", target + ".blp")
-        write_blp(path, levels, TARGET_W, TARGET_H)
+        write_blp(path, level0, TARGET_W, TARGET_H)
         print("%-46s %7d B  (%s, %dx%d)"
               % (target + ".blp", os.path.getsize(path), filename, crop_w, crop_h))
 
