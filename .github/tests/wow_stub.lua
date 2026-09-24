@@ -91,7 +91,43 @@ function Methods:Show() self._shown = true  end
 function Methods:Hide() self._shown = false end
 function Methods:SetShown(v) self._shown = v and true or false end
 
-function Methods:SetText(text) self._text = text end
+-- OHNE SCHRIFT KEIN TEXT. Der Client bricht SetText auf einem
+-- FontString ohne Schrift ab ("Font not set"). Bis 6.0.0.3 liess die
+-- Attrappe das durchgehen - und die Schadensanzeige brach im Spiel beim
+-- Aufbau ab, weil ein Knopf seinen Text vor seiner Schrift bekam. Eine
+-- Schrift hat ein FontString, wenn er mit Vorlage angelegt wurde oder
+-- SetFont/SetFontObject bekam.
+local function RequireFont(self, method)
+    if self._type == "FontString" and not self._font then
+        error("FontString:" .. method .. "(): Font not set", 3)
+    end
+end
+
+function Methods:SetText(text)
+    RequireFont(self, "SetText")
+    self._text = text
+end
+function Methods:SetFormattedText(fmt, ...)
+    RequireFont(self, "SetFormattedText")
+    self._text = string.format(fmt, ...)
+end
+function Methods:SetFont(path, size, flags)
+    self._font = path ~= nil
+    return self._font
+end
+function Methods:SetFontObject(obj) self._font = obj ~= nil end
+function Methods:GetFont()
+    if self._font then return "Fonts\\FRIZQT__.TTF", 12, "" end
+end
+
+-- Attribute werden gemerkt (Kopfrahmen, geschuetzte Knoepfe).
+function Methods:SetAttribute(key, value)
+    self._attrs = self._attrs or {}
+    self._attrs[key] = value
+end
+function Methods:GetAttribute(key)
+    return self._attrs and self._attrs[key]
+end
 
 -- Die Textbreite waechst mit dem Text. Bis 5.2.0.0 antwortete die
 -- Attrappe mit festen 100 px - eine Bosszeile aus Pillen, deren
@@ -110,15 +146,27 @@ function Methods:GetStringHeight() return 12  end
 function Methods:GetVerticalScroll()      return 0 end
 function Methods:GetVerticalScrollRange() return 0 end
 
+-- Texturen und Schriftzeilen koennen im Client nichts anlegen; die
+-- Methode gibt es dort nicht. Bis 6.0.0.4 konnten sie es hier - und der
+-- Chat haengte seinen Rand an eine Textur, was im Spiel abbrach.
+local function RequireFrame(self, method)
+    if self._type == "Texture" or self._type == "FontString" then
+        error("attempt to call method '" .. method .. "' (a nil value) on a " .. self._type, 3)
+    end
+end
+
 function Methods:CreateTexture(_, layer)
+    RequireFrame(self, "CreateTexture")
     local tex = NewObject("Texture")
     tex._parent = self
     return tex
 end
 
-function Methods:CreateFontString(_, layer)
+function Methods:CreateFontString(_, layer, inherits)
+    RequireFrame(self, "CreateFontString")
     local fs = NewObject("FontString")
     fs._parent = self
+    fs._font = inherits ~= nil
     return fs
 end
 
@@ -258,6 +306,19 @@ function M.Install()
         -- die mit dem echten Fehler nichts zu tun hat.
         if type(template) == "string" and template:find("ScrollFrame", 1, true) then
             frame.ScrollBar = NewObject("Slider", name and (name .. "ScrollBar"))
+        end
+
+        -- Ein Gruppen-Kopfrahmen ordnet seine Knoepfe beim Zeigen an und
+        -- liest dafuer das Attribut "point" - ohne Rueckfall: fehlt es,
+        -- bricht der Client in SecureGroupHeaders.lua ab (gemeldet aus
+        -- dem Beta-Client zu 6.0.0.3).
+        if type(template) == "string" and template:find("SecureGroupHeaderTemplate", 1, true) then
+            frame.Show = function(self)
+                if type(self:GetAttribute("point")) ~= "string" then
+                    error("SecureGroupHeaders.lua:79: attempt to index local 'point' (a nil value)", 2)
+                end
+                self._shown = true
+            end
         end
 
         if name then

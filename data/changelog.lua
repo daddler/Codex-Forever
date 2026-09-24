@@ -22,6 +22,17 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.0.0.4",
+        date    = "24.09.2026",
+        notes   = {
+            "|cff7C6CFFGruppen- und Schlachtzugsrahmen erscheinen.|r Beim Einloggen brach ihr Aufbau mit einer Fehlermeldung ab.",
+            "|cff7C6CFFDie Schadensanzeige öffnet sich.|r Ihr Fenster brach beim Aufbau ab, und im Chat stand eine Fehlermeldung.",
+            "|cff7C6CFFDie Taschen zeigen ihre Gegenstände.|r Die Plätze standen da, aber leer. Unten im Fenster steht jetzt, wie viele Plätze belegt sind.",
+            "|cff7C6CFFDer Chat bekommt seinen Stil wirklich.|r Sein Umbau brach beim Start ab; die Knöpfe am Rand und die Rahmen der Reiter blieben stehen.",
+            "|cff7C6CFFÜber der Minikarte stehen Gebiet und Uhrzeit nur noch einmal.|r Die Kopfleiste des Spiels verschwindet, solange die eigenen Texte an sind.",
+        },
+    },
+    {
         version = "6.0.0.3",
         date    = "24.09.2026",
         notes   = {

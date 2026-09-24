@@ -106,14 +106,31 @@ local function CreateSlot()
     d.ilvl:SetPoint("TOPLEFT", btn, "TOPLEFT", 2, -2)
     d.quality = K.Border(top, 1, 1, 1, 1, 1, "OVERLAY")
     d.quality:SetShown(false)
-    -- Der Steinrahmen des Knopfs weg; das Symbol beschnitten.
+    -- Der Steinrahmen des Knopfs weg; das Symbol beschnitten und auf die
+    -- volle Flaeche gezogen. Die Maske der Vorlage ist fuer 37 px gebaut;
+    -- auf einem anders grossen Knopf blieb das Symbol in 6.0.0.3 im Spiel
+    -- unsichtbar - EllesmereUI nimmt sie aus demselben Grund ab.
     local normal = btn.GetNormalTexture and btn:GetNormalTexture()
     if normal then normal:SetAlpha(0) end
     local icon = btn.icon or btn.Icon
-    if type(icon) == "table" and icon.SetTexCoord then icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
+    if type(icon) ~= "table" or not icon.SetTexture then icon = nil end
+    if icon then
+        if icon.SetTexCoord then icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
+        icon:ClearAllPoints()
+        icon:SetAllPoints(btn)
+        local mask = btn.IconMask
+        if type(mask) == "table" and icon.RemoveMaskTexture then
+            pcall(icon.RemoveMaskTexture, icon, mask)
+            if mask.Hide then mask:Hide() end
+        end
+    end
     if type(btn.IconBorder) == "table" then btn.IconBorder:SetAlpha(0) end
+    for _, k in ipairs({ "NewItemTexture", "BattlepayItemTexture", "flash" }) do
+        local r = btn[k]
+        if type(r) == "table" and r.SetAlpha then r:SetAlpha(0) end
+    end
     holder:Hide()
-    return { holder = holder, button = btn, d = d }
+    return { holder = holder, button = btn, d = d, icon = icon }
 end
 
 local function EnsurePool()
@@ -158,6 +175,12 @@ local function PaintSlot(s, bag, slot)
     local tex = info and info.iconFileID or nil
     if btn.SetItemButtonTexture then btn:SetItemButtonTexture(tex)
     elseif _G.SetItemButtonTexture then _G.SetItemButtonTexture(btn, tex) end
+    -- Zusaetzlich unmittelbar: das Symbol zeigen, auch wenn die Vorlage
+    -- des Clients es anders verwaltet als erwartet.
+    if s.icon then
+        s.icon:SetTexture(tex)
+        s.icon:SetShown(tex ~= nil)
+    end
     local count = info and info.stackCount or 0
     if btn.SetItemButtonCount then btn:SetItemButtonCount(count)
     elseif _G.SetItemButtonCount then _G.SetItemButtonCount(btn, count) end
@@ -198,6 +221,8 @@ local function PaintSlot(s, bag, slot)
         if type(r) == "number" then d.ilvl:SetTextColor(r, g, b, 1) end
     end
     s.holder:Show()
+    btn:Show()
+    return info ~= nil
 end
 
 --------------------------------------------------
@@ -210,6 +235,7 @@ function BG.Refresh()
     local size, sp, cols = Opt("slotSize"), Opt("spacing"), Opt("columns")
     local n = 0
     local missing = 0
+    local filled = 0
     for _, bag in ipairs(BagIDs()) do
         for slot = 1, NumSlots(bag) do
             n = n + 1
@@ -221,7 +247,7 @@ function BG.Refresh()
                 local row = math.floor((n - 1) / cols)
                 s.holder:SetPoint("TOPLEFT", grid, "TOPLEFT", col * (size + sp), -row * (size + sp))
                 K.SetFont(s.d.ilvl, math.max(8, math.floor(size * 0.3)))
-                PaintSlot(s, bag, slot)
+                if PaintSlot(s, bag, slot) then filled = filled + 1 end
             else
                 missing = missing + 1
             end
@@ -240,10 +266,16 @@ function BG.Refresh()
 
     if missing > 0 then
         note:SetText(missing .. " Plätze erscheinen nach dem Kampf.")
-        note:Show()
+        note:SetTextColor(unpack(C.warningBright))
     else
-        note:Hide()
+        -- Belegt laut Client. Steht hier eine Zahl, aber die Plaetze sind
+        -- leer, liefert das Spiel die Gegenstaende und nur das Zeichnen
+        -- scheitert - fuer eine Fehlermeldung aus dem Spiel Gold wert.
+        note:SetFormattedText("%d von %d Plätzen belegt", filled, n)
+        note:SetTextColor(unpack(C.textMuted))
     end
+    note:Show()
+    BG._filled = filled
 end
 
 local function Build()

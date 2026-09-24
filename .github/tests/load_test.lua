@@ -1196,7 +1196,7 @@ do
         _G.UnitIsPlayer = function() return true end
         stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
         local p = NP.plates["nameplate1"]
-        assert(p and p.friendly, "keine freundliche Plakette")
+        assert(p and p._friendly, "keine freundliche Plakette")
         stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
         blizzPlate.IsForbidden = function() return true end
         stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
@@ -1280,10 +1280,12 @@ do
         -- Rucksack + vier Taschen, je vier Plaetze (Reagenzientasche gibt es
         -- in der Attrappe nicht).
         assert(BG.UsedSlots() == 20, "falsche Zahl Plaetze: " .. tostring(BG.UsedSlots()))
+        -- Belegt ist, was der Client meldet: je Tasche Platz 1.
+        assert(BG._filled == 5, "falsche Zahl belegter Plaetze: " .. tostring(BG._filled))
         BG.Close()
         _G.C_Container = nil
     end)
-    Check(ok, "Taschen: 20 Plaetze aus fuenf Taschen" .. (ok and "" or (": " .. tostring(err))))
+    Check(ok, "Taschen: 20 Plaetze aus fuenf Taschen, 5 belegt" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Schadensanzeige: ohne Messung ein Satz, mit Messung Balken.
