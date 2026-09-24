@@ -12,7 +12,7 @@ WeintCodex = WeintCodex or {}
 -- "v" plus diese Zahl sein. Die CI prueft alle vier gegeneinander und
 -- bricht sonst ab - siehe .github/scripts/release_notes.py und
 -- docs/development/releases.md.
-WeintCodex.Version = "6.0.0.3"
+WeintCodex.Version = "6.0.0.4"
 
 SLASH_WEINTCODEX1 = "/wc"
 SLASH_WEINTCODEX2 = "/weintcodex"

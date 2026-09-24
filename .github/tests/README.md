@@ -192,6 +192,24 @@ etwas, das nichts auslöst. `Click`, `Enter` und `Leave` stellen die
 Skripte jetzt zu, und `load_test.lua` prüft ausdrücklich, dass ein Klick
 wirklich eine Seite zeichnet (`DungeonPages.PageHeight() > 0`).
 
+## Die Attrappe lehnt ab, was der Client ablehnt (seit 6.0.0.4)
+
+Der erste Test der Oberfläche im Beta-Client fand drei Fehler, die der
+Lauf grün hatte durchgehen lassen – alle drei, weil die Attrappe etwas
+erlaubte, was der Client verbietet. Sie wirft jetzt denselben Fehler:
+
+* `SetText`/`SetFormattedText` auf einem FontString **ohne Schrift**
+  („Font not set“). Eine Schrift hat er, wenn er mit Vorlage angelegt
+  wurde oder `SetFont`/`SetFontObject` bekam. Regel für neuen Code:
+  Schrift direkt nach `CreateFontString`, nie erst in einem späteren
+  `Layout`.
+* `Show()` eines `SecureGroupHeaderTemplate` ohne Attribut `point` –
+  der Client liest es beim Anordnen ohne Rückfall.
+* `CreateTexture`/`CreateFontString` auf einer **Textur** oder
+  Schriftzeile – die Methode gibt es dort nicht.
+
+`SetAttribute`/`GetAttribute` merken sich jetzt ihre Werte.
+
 ## Was der Lauf seit 5.2.0.0 zusätzlich misst
 
 * **Jede** der 29 Dungeoninstanzen in **jedem** Flügel gegen das Budget

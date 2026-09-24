@@ -259,6 +259,11 @@ local function Style(b)
     c.status = host:CreateFontString(nil, "OVERLAY")
     c.status:SetPoint("CENTER", c, "CENTER", 0, -6)
     c.status:SetWordWrap(false)
+    -- Schrift sofort: der Kopfrahmen setzt die Einheit (und damit den
+    -- ersten Text) womoeglich, bevor Layout gelaufen ist - und Text ohne
+    -- Schrift ist im Client ein Fehler.
+    K.SetFont(c.name, Opt("nameSize"))
+    K.SetFont(c.status, math.max(8, Opt("nameSize") - 1))
     c.raid = host:CreateTexture(nil, "OVERLAY")
     c.raid:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
     c.raid:SetSize(14, 14)
@@ -321,6 +326,27 @@ local function Children(header, max)
     return out
 end
 
+-- Wie der Kopfrahmen seine Knoepfe reiht. MUSS vor dem ersten Show()
+-- stehen: der Client liest "point" beim Anordnen ohne Rueckfall, und ohne
+-- das Attribut bricht er in SecureGroupHeaders.lua ab (so geschehen in
+-- 6.0.0.3 - die Gruppenrahmen kamen nie zustande).
+local function LayoutAttributes(kind, h)
+    local sp = Opt(kind .. "Spacing")
+    if kind == "raid" then
+        h:SetAttribute("point", "TOP")
+        h:SetAttribute("xOffset", 0)
+        h:SetAttribute("yOffset", -sp)
+        h:SetAttribute("columnSpacing", sp)
+        h:SetAttribute("columnAnchorPoint", "LEFT")
+    else
+        local horiz = Opt("partyHorizontal")
+        h:SetAttribute("point", horiz and "LEFT" or "TOP")
+        h:SetAttribute("xOffset", horiz and sp or 0)
+        h:SetAttribute("yOffset", horiz and 0 or -sp)
+        h:SetAttribute("showPlayer", Opt("partyShowPlayer") and true or false)
+    end
+end
+
 local function Configure(kind)
     local hd = headers[kind]
     if not hd then return end
@@ -332,23 +358,13 @@ local function Configure(kind)
         b:Layout(w, ht)
         b:Refresh()
     end
+    LayoutAttributes(kind, h)
     if kind == "raid" then
-        h:SetAttribute("point", "TOP")
-        h:SetAttribute("yOffset", -sp)
-        h:SetAttribute("columnSpacing", sp)
-        h:SetAttribute("columnAnchorPoint", "LEFT")
         hd.anchor:SetSize(8 * w + 7 * sp, 5 * ht + 4 * sp)
+    elseif Opt("partyHorizontal") then
+        hd.anchor:SetSize(5 * w + 4 * sp, ht)
     else
-        local horiz = Opt("partyHorizontal")
-        h:SetAttribute("point", horiz and "LEFT" or "TOP")
-        h:SetAttribute("xOffset", horiz and sp or 0)
-        h:SetAttribute("yOffset", horiz and 0 or -sp)
-        h:SetAttribute("showPlayer", Opt("partyShowPlayer") and true or false)
-        if horiz then
-            hd.anchor:SetSize(5 * w + 4 * sp, ht)
-        else
-            hd.anchor:SetSize(w, 5 * ht + 4 * sp)
-        end
+        hd.anchor:SetSize(w, 5 * ht + 4 * sp)
     end
     h:ClearAllPoints()
     h:SetPoint("TOPLEFT", hd.anchor, "TOPLEFT", 0, 0)
@@ -375,6 +391,8 @@ local function CreateHeader(kind)
         h:SetAttribute("showSolo", false)
         max = 5
     end
+
+    LayoutAttributes(kind, h)
 
     -- Alle Knoepfe JETZT anlegen (ausserhalb des Kampfes): ohne
     -- initialConfigFunction koennte ein im Kampf angelegter Knopf weder
@@ -411,7 +429,27 @@ local UNIT_EVENTS = {
     UNIT_POWER_UPDATE = true, UNIT_MAXPOWER = true, UNIT_DISPLAYPOWER = true,
 }
 
+-- Neue Knoepfe nachziehen. Ob der Kopfrahmen beim Anmelden wirklich alle
+-- Knoepfe auf Vorrat anlegt (auch allein, ohne Gruppe), ist auf Forever
+-- nicht geprueft. Legt er einen erst beim Beitritt an, haette der kein
+-- Aussehen - klickbar, aber unsichtbar. Deshalb nach jeder Aenderung der
+-- Gruppe: alle Knoepfe einrichten (wer schon eingerichtet ist, bleibt
+-- unberuehrt). Einen Takt spaeter, damit der Kopfrahmen zuerst dran war;
+-- im Kampf erst danach.
+local function RestyleLater()
+    local function run()
+        K.AfterCombat(function()
+            for kind in pairs(headers) do Configure(kind) end
+            Remap()
+        end)
+    end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, run) else run() end
+end
+
 local function OnEvent(_, event, unit)
+    if event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" then
+        RestyleLater()
+    end
     if event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD"
        or event == "RAID_TARGET_UPDATE" then
         Remap()

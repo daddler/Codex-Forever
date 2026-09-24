@@ -38,6 +38,17 @@ local function Hide(r)
     if type(r) == "table" and r.SetAlpha then r:SetAlpha(0) end
 end
 
+-- Alle Texturen eines Rahmens, ausser den genannten. Die Namen der
+-- Reiter-Teile wechseln zwischen den Clients; die Regionen selbst nicht.
+local function HideTextures(frame, keep)
+    if type(frame) ~= "table" or not frame.GetRegions then return end
+    for _, r in ipairs({ frame:GetRegions() }) do
+        if type(r) == "table" and r.GetObjectType and r:GetObjectType() == "Texture" and not keep[r] then
+            r:SetAlpha(0)
+        end
+    end
+end
+
 local function SkinFrame(cf)
     if type(cf) ~= "table" or done[cf] then return done[cf] end
     local name = cf.GetName and cf:GetName()
@@ -73,9 +84,12 @@ local function SkinFrame(cf)
             d.editParts[#d.editParts + 1] = _G[name .. "EditBox" .. suffix] or d.edit[suffix]
         end
         d.editBg = d.edit:CreateTexture(nil, "BACKGROUND")
-        d.editBg:SetPoint("TOPLEFT", d.edit, "TOPLEFT", 2, -2)
-        d.editBg:SetPoint("BOTTOMRIGHT", d.edit, "BOTTOMRIGHT", -2, 2)
-        d.editBorder = K.Border(d.editBg, 1, 0, 0, 0, 1, "BORDER")
+        d.editBg:SetAllPoints(d.edit)
+        -- Der Rand haengt am Eingabefeld selbst: eine Textur kann keine
+        -- Texturen anlegen (in 6.0.0.3 brach der Chat genau daran ab).
+        d.editBorder = K.Border(d.edit, 1, 0, 0, 0, 1, "BORDER")
+        d.editKeep = { [d.editBg] = true, [d.editBorder.top] = true, [d.editBorder.bottom] = true,
+                       [d.editBorder.left] = true, [d.editBorder.right] = true }
     end
 
     d.buttonFrame = _G[name .. "ButtonFrame"]
@@ -102,12 +116,15 @@ local function ApplyFrame(cf, d)
             "ActiveLeft", "ActiveMiddle", "ActiveRight" }) do
             Hide(d[suffix])
         end
+        -- Das Aufleuchten bei neuen Fluesternachrichten bleibt.
+        HideTextures(d.tab, { [d.tab.glow or false] = true, [d.tab.conversationIcon or false] = true })
         local fs = d.tab.Text or (d.tab.GetFontString and d.tab:GetFontString())
         if fs then K.SetFont(fs, 11) end
     end
 
     if d.edit and Opt("editBoxSkin") then
         for _, r in ipairs(d.editParts) do Hide(r) end
+        HideTextures(d.edit, d.editKeep)
         local s = WeintCodex.Colors.surface1
         d.editBg:SetColorTexture(s[1], s[2], s[3], 0.9)
         local b = WeintCodex.Colors.borderStrong
@@ -127,10 +144,10 @@ local function ApplyFrame(cf, d)
         end)
     end
 
-    if d.buttonFrame and Opt("hideButtons") then
-        d.buttonFrame:SetAlpha(0)
-        if d.buttonFrame.EnableMouse then d.buttonFrame:EnableMouse(false) end
-    end
+    -- Versteckt, nicht nur durchsichtig: das Spiel blendet die Knopfleiste
+    -- beim Ueberfahren selbst wieder ein (in 6.0.0.3 blieben die Knoepfe
+    -- deshalb sichtbar).
+    if d.buttonFrame and Opt("hideButtons") then K.HideBlizzard(d.buttonFrame, true) end
 end
 
 local function ApplyAll()
@@ -141,12 +158,9 @@ local function ApplyAll()
     end
     if Opt("hideButtons") then
         for _, n in ipairs({ "ChatFrameMenuButton", "ChatFrameChannelButton", "QuickJoinToastButton",
-            "ChatFrameToggleVoiceDeafenButton", "ChatFrameToggleVoiceMuteButton" }) do
-            local b = _G[n]
-            if type(b) == "table" and b.SetAlpha then
-                b:SetAlpha(0)
-                if b.EnableMouse then b:EnableMouse(false) end
-            end
+            "ChatFrameToggleVoiceDeafenButton", "ChatFrameToggleVoiceMuteButton",
+            "TextToSpeechButtonFrame", "TextToSpeechButton" }) do
+            K.HideBlizzard(n, true)
         end
     end
 end

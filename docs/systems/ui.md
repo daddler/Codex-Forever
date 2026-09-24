@@ -264,3 +264,19 @@ ihre Ereignisse, und die Geometrie des Questpfeils wird nachgerechnet.
 
 **Ein grüner Lauf heißt „es lädt und rechnet“, nicht „es sieht richtig
 aus“.** Wie die Plakette im Spiel wirkt, sagt er nicht.
+
+Der erste Test im Beta-Client (6.0.0.3) brach drei Module ab, obwohl
+der Lauf grün war: Text vor Schrift (Schadensanzeige), Gruppenkopf ohne
+`point` vor `Show()` (Gruppenrahmen), Rand an einer Textur (Chat). Die
+Attrappe lehnt alle drei seit 6.0.0.4 ab – siehe
+`.github/tests/README.md`. Für neuen Code in `ui/` heißt das: **Schrift
+direkt nach `CreateFontString`**, Attribute eines Kopfrahmens vor dem
+ersten `Show()`, `UIKit.Border` nur an Rahmen.
+
+Die Taschen zeigten im selben Test leere Plätze. Behoben ist das nach
+dem Vorbild von EllesmereUI (Symbolmaske ab, Symbol auf den ganzen
+Knopf, Knopf und Symbol ausdrücklich zeigen), **im Spiel geprüft ist
+es nicht**. Die Zeile „X von Y Plätzen belegt“ unten im Fenster trennt
+beim nächsten Test die beiden möglichen Ursachen: steht dort eine Zahl
+über null und die Plätze sind leer, liefert der Client die Gegenstände
+und nur das Zeichnen scheitert.

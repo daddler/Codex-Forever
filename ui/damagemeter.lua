@@ -76,7 +76,8 @@ local function ModeInfo(key)
     return MODES[1]
 end
 
-local win, header, modeBtn, sessionBtn, rows, empty
+local win, header, modeBtn, sessionBtn, empty
+local rows = {}
 
 local function Row(i)
     local r = CreateFrame("Frame", nil, win)
@@ -91,10 +92,12 @@ local function Row(i)
     host:SetAllPoints(r)
     host:SetFrameLevel((r.bar:GetFrameLevel() or 1) + 2)
     r.name = host:CreateFontString(nil, "OVERLAY")
+    K.SetFont(r.name, 11)
     r.name:SetPoint("LEFT", r, "LEFT", 4, 0)
     r.name:SetJustifyH("LEFT")
     r.name:SetWordWrap(false)
     r.amount = host:CreateFontString(nil, "OVERLAY")
+    K.SetFont(r.amount, 11)
     r.amount:SetPoint("RIGHT", r, "RIGHT", -4, 0)
     r.amount:SetJustifyH("RIGHT")
     r:Hide()
@@ -223,6 +226,10 @@ local function HeaderButton(parent, onClick)
     local b = CreateFrame("Button", nil, parent)
     b:SetHeight(20)
     b.text = b:CreateFontString(nil, "OVERLAY")
+    -- Schrift VOR jedem Text: SetText ohne Schrift bricht im Client ab.
+    -- Genau daran scheiterte in 6.0.0.3 der Aufbau des ganzen Fensters
+    -- ("Leeren" bekam seinen Text vor seiner Schrift).
+    K.SetFont(b.text, 11)
     b.text:SetPoint("LEFT", b, "LEFT", 0, 0)
     b.text:SetTextColor(unpack(C.textBright))
     if b.RegisterForClicks then b:RegisterForClicks("LeftButtonUp", "RightButtonUp") end
@@ -285,12 +292,12 @@ local function Build()
     K.SetFont(reset.text, 10)
 
     empty = win:CreateFontString(nil, "OVERLAY")
+    K.SetFont(empty, 11)
     empty:SetPoint("TOPLEFT", win, "TOPLEFT", 8, -32)
     empty:SetJustifyH("LEFT")
     empty:SetTextColor(unpack(C.textDim))
     empty:Hide()
 
-    rows = {}
     win.WCShowForUnlock = function() end
     K.RegisterMover(win, "damagemeter", "Schadensanzeige",
         { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20, y = 300 })

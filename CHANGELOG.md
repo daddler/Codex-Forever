@@ -9,6 +9,53 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.0.0.4] – 2026-09-24
+
+Erster Test der Oberfläche im Beta-Client, und was dabei zerbrach.
+
+**Gruppen- und Schlachtzugsrahmen erscheinen.** Beim Einloggen brach ihr
+Aufbau mit einer Fehlermeldung ab.
+
+**Die Schadensanzeige öffnet sich.** Ihr Fenster brach beim Aufbau ab,
+und im Chat stand eine Fehlermeldung.
+
+**Die Taschen zeigen ihre Gegenstände.** Die Plätze standen da, aber
+leer. Unten im Fenster steht jetzt, wie viele Plätze belegt sind.
+
+**Der Chat bekommt seinen Stil wirklich.** Sein Umbau brach beim Start
+ab; die Knöpfe am Rand und die Rahmen der Reiter blieben stehen.
+
+**Über der Minikarte stehen Gebiet und Uhrzeit nur noch einmal.** Die
+Kopfleiste des Spiels verschwindet, solange die eigenen Texte an sind.
+
+### Technisch
+
+Drei Fehlerklassen, die die Client-Attrappe durchgelassen hat und die
+sie jetzt ablehnt wie der Client:
+
+- `SetText`/`SetFormattedText` auf einem FontString ohne Schrift
+  („Font not set“). Daran scheiterte der Aufbau der Schadensanzeige
+  (`ui/damagemeter.lua`); dieselbe Lücke hatten die Gruppenknöpfe.
+- `Show()` eines `SecureGroupHeaderTemplate` ohne Attribut `point`
+  (`SecureGroupHeaders.lua:79`, gemeldet aus dem Beta-Client).
+  `ui/groupframes.lua` setzt die Anordnung jetzt vor dem ersten `Show()`.
+- `CreateTexture`/`CreateFontString` auf einer Textur. `ui/chat.lua`
+  hängte den Rand der Eingabezeile an eine Textur.
+
+Taschen: Die Symbolmaske der Vorlage wird abgenommen und das Symbol auf
+den ganzen Knopf gezogen, Knopf und Symbol werden ausdrücklich gezeigt
+(wie in EllesmereUI). Ob das die leeren Plätze behebt, ist im Spiel
+nicht geprüft; die Zeile „X von Y Plätzen belegt“ zeigt beim nächsten
+Test, ob der Client die Gegenstände liefert. Chat: Knöpfe am Rand und
+Knopfleiste werden über `UIKit.HideBlizzard` versteckt statt
+durchsichtig gemacht (das Spiel blendet sie selbst wieder ein);
+Reiter-Texturen werden über `GetRegions()` gefunden statt über Namen.
+Gruppenrahmen: Nach jeder Gruppenänderung werden noch nicht
+eingerichtete Knöpfe außerhalb des Kampfes nachgezogen – ob der
+Kopfrahmen allein beim Anmelden wirklich alle Knöpfe auf Vorrat anlegt,
+ist nicht geprüft. `p.friendly` auf Plaketten heißt jetzt `p._friendly` (Attrappen-Regel
+für eigene Felder).
+
 ## [6.0.0.3] – 2026-09-24
 
 **Die WeintCodex-Oberfläche ist jetzt für alle eingeschaltet.** Der

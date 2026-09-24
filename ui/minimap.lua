@@ -109,6 +109,22 @@ local function Apply()
             if b.EnableMouse then b:EnableMouse(not Opt("hideZoomButtons")) end
         end
     end
+    -- Die Kopfleiste des Spiels ueber der Karte (Gebiet, Uhrzeit) stand in
+    -- 6.0.0.3 doppelt neben unseren Texten. Sie geht, soweit unsere
+    -- Texte ihren Teil uebernehmen.
+    local cluster = _G.MinimapCluster
+    local function Fade(f, off)
+        if type(f) ~= "table" or not f.SetAlpha then return end
+        f:SetAlpha(off and 0 or 1)
+        if f.EnableMouse then f:EnableMouse(not off) end
+    end
+    if type(cluster) == "table" then
+        Fade(cluster.BorderTop, square and Opt("zoneText"))
+        Fade(cluster.ZoneTextButton, Opt("zoneText"))
+    end
+    Fade(_G.MinimapZoneTextButton, Opt("zoneText"))
+    Fade(_G.TimeManagerClockButton, Opt("clock"))
+
     local cal = _G.GameTimeFrame
     if type(cal) == "table" and cal.SetAlpha then
         cal:SetAlpha(Opt("hideCalendar") and 0 or 1)

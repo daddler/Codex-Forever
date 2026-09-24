@@ -236,7 +236,7 @@ local function LayoutFriendly(p)
 end
 
 local function Layout(p)
-    if p.friendly then return LayoutFriendly(p) end
+    if p._friendly then return LayoutFriendly(p) end
     p.health:Show()
     p:SetSize(S.width, S.height)
 
@@ -369,7 +369,7 @@ end
 local function FillTexts(p, onlyHealth)
     local unit = p.unit
     if not unit then return end
-    if p.friendly then
+    if p._friendly then
         if onlyHealth then return end
         local t = p.texts.top
         t:SetText(_G.UnitName and (_G.UnitName(unit)))
@@ -438,7 +438,7 @@ local function BarColor(p)
     local unit = p.unit
     local function C3(c) return c.r, c.g, c.b end
 
-    if p.friendly then
+    if p._friendly then
         if S.friendlyClassColor and K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(unit), false) then
             local _, class = _G.UnitClass(unit)
             class = K.Plain(class)
@@ -501,7 +501,7 @@ local anyTarget = false
 local function UpdateTarget(p)
     if not p.unit then return end
     local isTarget = IsUnit(p.unit, "target")
-    p.ring:SetShown(S.targetRing and isTarget and not p.friendly)
+    p.ring:SetShown(S.targetRing and isTarget and not p._friendly)
     p:SetScale(isTarget and (S.targetScale / 100) or 1)
     if anyTarget and not isTarget then
         p:SetAlpha(S.nonTargetAlpha / 100)
@@ -530,7 +530,7 @@ local function FullUpdate(p)
     UpdateColor(p)
     UpdateTarget(p)
     UpdateRaidIcon(p)
-    if p.friendly then return end
+    if p._friendly then return end
     if S.castEnabled then p.cast:Update() else p.cast:Hide() end
 end
 
@@ -549,7 +549,7 @@ local function Attach(unit)
     if friendly and not S.friendlyEnabled then return end
 
     local p = table.remove(pool) or Build(nameplate)
-    p.friendly = friendly
+    p._friendly = friendly
     p:SetParent(nameplate)
     p:ClearAllPoints()
     p:SetPoint("CENTER", nameplate, "CENTER", 0, 0)
@@ -571,7 +571,7 @@ local function Detach(unit)
     p.cast:Stop(false)
     p.cast:SetUnit(nil)
     p.auras:SetUnit(nil)
-    p.unit, p.nameplate, p.friendly = nil, nil, nil
+    p.unit, p.nameplate, p._friendly = nil, nil, nil
     p:Hide()
     p:SetParent(hidden)
     pool[#pool + 1] = p
