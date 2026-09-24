@@ -133,7 +133,7 @@ end
 local missing = 0
 local checked = 0
 
-for _, folder in ipairs({ "core", "data", "modules" }) do
+for _, folder in ipairs({ "core", "data", "modules", "ui" }) do
     local files = ListLua(folder)
     if files then
         for _, file in ipairs(files) do
@@ -243,6 +243,7 @@ end
 
 ScanFolder("core")
 ScanFolder("modules")
+ScanFolder("ui")
 
 --------------------------------------------------
 -- 5. Jede Seite laesst sich zeichnen
@@ -676,6 +677,254 @@ end
 Check(SameColor(C.accent, C.purple), "accent und purple sind derselbe Ton")
 Check(SameColor(C.accent, C.violet), "accent und violet sind derselbe Ton")
 Check(SameColor(C.accent, C.brandA), "der Markenverlauf traegt den Akzent")
+
+--------------------------------------------------
+-- 7. Die optionale Oberflaeche (ui/)
+--------------------------------------------------
+-- Drei Fragen, die ohne Spiel sonst niemand stellt:
+--
+--   * Laesst sich jede Einstellungsseite bauen? Die Seiten entstehen
+--     erst beim ersten Oeffnen - ein Tippfehler darin bricht nicht beim
+--     Laden, sondern beim Klick.
+--   * Laufen die Module, wenn der Spieler sie einschaltet? Die
+--     Attrappe spielt dafuer eine Plakette, einen Treffer, einen Zauber
+--     und einen Zielwechsel durch.
+--   * Rechnet der Questpfeil richtig herum? Die Achsen der
+--     Weltkoordinaten sind der Fehler, den man erst im Spiel saehe - als
+--     Pfeil, der nach links zeigt, wenn das Ziel rechts liegt.
+
+Section("Optionale Oberflaeche")
+
+local K  = WeintCodex.UIKit
+local UO = WeintCodex.UIOptions
+local QA = WeintCodex.UIQuestArrow
+
+Check(type(K) == "table" and type(UO) == "table", "UIKit und UIOptions sind geladen")
+for _, key in ipairs({ "general", "nameplates", "unitframes", "questarrow", "comfort" }) do
+    Check(K.Module(key) ~= nil, "Modul '" .. key .. "' ist angemeldet")
+end
+
+-- Ausgeschaltet heisst ausgeschaltet: nach dem Anmelden laeuft kein
+-- ui-Modul, solange der Hauptschalter aus ist.
+Check(K.UIEnabled() == false, "Hauptschalter steht nach dem ersten Laden auf aus")
+Check(not K.IsActive("nameplates") and not K.IsActive("unitframes"),
+    "ohne Hauptschalter laeuft weder Plakette noch Einheitenrahmen")
+Check(K.IsActive("questarrow"), "der Questpfeil laeuft auch ohne Hauptschalter")
+
+-- Gespeichert wird in DER Tabelle aus der .toc, und nur die Abweichung.
+K.Set("nameplates", "width", 180)
+Check(WeintCodex_SavedData.ui.modules.nameplates.width == 180,
+    "eine Einstellung landet in WeintCodex_SavedData.ui")
+K.Set("nameplates", "width", 140)
+Check(WeintCodex_SavedData.ui.modules.nameplates.width == nil,
+    "der Standardwert wird nicht gespeichert")
+
+-- Jede Seite jedes Moduls bauen.
+for _, key in ipairs(K.order) do
+    local m = K.Module(key)
+    for i, page in ipairs(m.pages) do
+        local ok, err = pcall(UO.Show, key, i)
+        local widgets = ok and #UO.CurrentWidgets() or 0
+        if ok and widgets > 0 then
+            print("  ok    Seite " .. key .. "/" .. page.key .. " (" .. widgets .. " Elemente)")
+        else
+            failures = failures + 1
+            print("  FEHL  Seite " .. key .. "/" .. page.key .. ": "
+                .. (ok and "keine Bedienelemente" or tostring(err)))
+        end
+    end
+end
+
+-- Jede Auswahlliste oeffnet ihre Liste, jeder Schalter schaltet, und
+-- danach steht alles wieder, wie es war (zweimal klicken).
+do
+    local ok, err = pcall(function()
+        for _, key in ipairs(K.order) do
+            for i in ipairs(K.Module(key).pages) do
+                UO.Show(key, i)
+                for _, w in ipairs(UO.CurrentWidgets()) do
+                    if w._button then w._button:Click() end
+                end
+            end
+        end
+    end)
+    Check(ok, "jede Auswahlliste laesst sich oeffnen" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Einschalten wie ein Spieler: Hauptschalter an, dann so tun, als sei
+-- neu geladen (die Module starten beim Anmelden).
+K.SetUIEnabled(true)
+Check(K.ReloadPending(), "der Hauptschalter verlangt ein Neuladen")
+Check(K.WantsActive("nameplates") and K.WantsActive("unitframes"),
+    "nach dem Neuladen liefen Plaketten und Einheitenrahmen")
+
+-- Eine Welt mit einer feindlichen Plakette und einem Ziel.
+local blizzPlate = stub.NewObject("Frame", "NamePlate1")
+blizzPlate.UnitFrame = stub.NewObject("Frame")
+blizzPlate.namePlateUnitToken = "nameplate1"
+_G.C_NamePlate = {
+    GetNamePlateForUnit = function(unit) return unit == "nameplate1" and blizzPlate or nil end,
+    GetNamePlates = function() return {} end,
+}
+_G.UnitCanAttack = function() return true end
+_G.UnitExists = function() return true end
+_G.UnitHealth = function() return 640 end
+_G.UnitHealthMax = function() return 1000 end
+_G.UnitIsUnit = function(a, b) return a == "nameplate1" and b == "target" end
+_G.UnitReaction = function() return 2 end
+_G.UnitClassification = function() return "elite" end
+_G.UnitAffectingCombat = function() return true end
+_G.UnitIsPlayer = function() return false end
+_G.UnitPower = function() return 50 end
+_G.UnitPowerMax = function() return 100 end
+_G.UnitPowerType = function() return 0, "MANA" end
+_G.UnitCastingInfo = function(unit)
+    if unit == "nameplate1" then
+        return "Schattenblitz", "Schattenblitz", 136197, 1000, 3000, false, 7, true, 686
+    end
+end
+
+for _, key in ipairs({ "nameplates", "unitframes" }) do
+    K.Activate(key)
+    Check(K.IsActive(key), "Modul '" .. key .. "' startet gegen die Attrappe")
+end
+
+do
+    local NP = WeintCodex.UINameplates
+    local ok, err = pcall(function()
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        assert(NP.plates["nameplate1"], "keine Plakette angelegt")
+        stub.FireEvent("UNIT_HEALTH", "nameplate1")
+        stub.FireEvent("UNIT_SPELLCAST_START", "nameplate1")
+        stub.FireEvent("UNIT_SPELLCAST_INTERRUPTED", "nameplate1")
+        stub.FireEvent("PLAYER_TARGET_CHANGED")
+        stub.FireEvent("RAID_TARGET_UPDATE")
+        -- Jede Einstellung einmal umlegen: OnSetting baut alle Plaketten neu.
+        K.Set("nameplates", "textCenter", "healthBoth")
+        K.Set("nameplates", "raidMarker", "left")
+        K.Set("general", "barStyle", "gradient")
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        assert(NP.plates["nameplate1"] == nil, "Plakette nicht freigegeben")
+    end)
+    Check(ok, "Plakette: anlegen, Treffer, Zauber, Zielwechsel, freigeben"
+        .. (ok and "" or (": " .. tostring(err))))
+    Check(blizzPlate.UnitFrame._scripts ~= nil, "die Blizzard-Plakette bleibt an ihrem Platz")
+end
+
+do
+    local ok, err = pcall(function()
+        stub.FireEvent("PLAYER_TARGET_CHANGED")
+        stub.FireEvent("UNIT_HEALTH", "player")
+        stub.FireEvent("UNIT_POWER_UPDATE", "player")
+        stub.FireEvent("UNIT_AURA", "target")
+        stub.FireEvent("UNIT_SPELLCAST_START", "target")
+        K.Set("unitframes", "player_right", "healthBoth")
+        assert(K.SetUnlocked(true), "Entsperren verweigert")
+        K.SetUnlocked(false)
+    end)
+    Check(ok, "Einheitenrahmen: Zielwechsel, Treffer, Kraft, Auren, Entsperren"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Komfort: alles an, dann die Ereignisse, auf die es hoert.
+do
+    local ok, err = pcall(function()
+        for _, feature in ipairs({ "autoRepair", "sellJunk", "fastLoot", "deleteFill",
+            "skipCinematics", "hideErrorsInCombat", "combatAlert", "fps", "durability", "mapCoords" }) do
+            K.Set("comfort", feature, true)
+        end
+        for _, e in ipairs({ "MERCHANT_SHOW", "LOOT_READY", "DELETE_ITEM_CONFIRM",
+            "CINEMATIC_START", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED",
+            "UPDATE_INVENTORY_DURABILITY" }) do
+            stub.FireEvent(e)
+        end
+    end)
+    Check(ok, "Komfort: jede Funktion an, jedes Ereignis zugestellt"
+        .. (ok and "" or (": " .. tostring(err))))
+    Check(WeintCodex.UIComfort.LowestDurability() == nil,
+        "ohne Auskunft des Clients ist die Haltbarkeit unbekannt, nicht 0")
+end
+
+-- Questpfeil: die Rechnung.
+do
+    local function Near(a, b) return math.abs(a - b) < 1e-6 end
+    local d, r = QA.Solve(0, 0, 10, 0, 0)
+    Check(Near(d, 10) and Near(r, 0), "Ziel im Norden, Blick nach Norden: geradeaus")
+    d, r = QA.Solve(0, 0, 0, 10, 0)
+    Check(Near(r, math.pi / 2), "Ziel im Westen, Blick nach Norden: Pfeil nach links")
+    d, r = QA.Solve(0, 0, 0, -10, 0)
+    Check(Near(r, -math.pi / 2), "Ziel im Osten, Blick nach Norden: Pfeil nach rechts")
+    d, r = QA.Solve(0, 0, 10, 0, math.pi / 2)
+    Check(Near(r, -math.pi / 2), "Ziel im Norden, Blick nach Westen: Pfeil nach rechts")
+    d, r = QA.Solve(0, 0, -10, 0, 0)
+    Check(Near(math.abs(r), math.pi), "Ziel im Sueden: Pfeil zeigt zurueck")
+    local _, noFacing = QA.Solve(0, 0, 3, 4, nil)
+    Check(noFacing == nil, "ohne Blickrichtung keine Pfeildrehung")
+    Check(select(1, QA.Solve(0, 0, 3, 4, 0)) == 5, "Entfernung ist der Satz des Pythagoras")
+    Check(QA.Compass(0) == "Norden" and QA.Compass(math.pi / 2) == "Westen"
+        and QA.Compass(-math.pi / 2) == "Osten", "Himmelsrichtungen zaehlen gegen den Uhrzeigersinn")
+    Check(QA.FormatDistance(40, "game") == "40 m", "Spieleinheit heisst m, wie im deutschen Client")
+    Check(QA.FormatDistance(40, "metric") == "37 m", "echte Meter rechnen mit 0,9144")
+    Check(QA.FormatDistance(40, "yards") == "40 yd", "Yards auf Wunsch")
+    Check(QA.FormatDistance(1234, "game") == "1,2 km", "ab 1000 in km, mit Dezimalkomma")
+end
+
+-- Questpfeil: der ganze Weg vom ausgewaehlten Ziel bis zur Anzeige.
+-- Die Karte der Attrappe: 1000 x 1000 Einheiten, oben ist Norden,
+-- links ist Westen - wie im Spiel.
+do
+    _G.CreateVector2D = function(x, y) return { x = x, y = y } end
+    _G.C_Map = {
+        GetBestMapForUnit = function() return 1 end,
+        GetPlayerMapPosition = function() return { x = 0.5, y = 0.5 } end,
+        GetWorldPosFromMapPos = function(_, v)
+            return 0, { x = 1000 - v.y * 1000, y = 1000 - v.x * 1000 }
+        end,
+    }
+    _G.GetPlayerFacing = function() return 0 end
+    local tracked = 42
+    _G.C_SuperTrack = { GetSuperTrackedQuestID = function() return tracked end }
+    _G.C_QuestLog = {
+        GetTitleForQuestID = function() return "Die verlorene Axt" end,
+        GetQuestsOnMap = function() return { { questID = 42, x = 0.5, y = 0.4 } } end,
+    }
+    QA.Update(true)
+    Check(QA.frame:IsShown() and QA.texts.dist:GetText() == "100 m",
+        "ausgewaehlte Quest 100 Einheiten noerdlich: 100 m")
+    Check(QA.texts.title:GetText() == "Die verlorene Axt", "der Questname steht darueber")
+
+    _G.C_Map.GetPlayerMapPosition = function() return nil end
+    QA.Update(true)
+    Check(QA.texts.dist:GetText() == "Position unbekannt",
+        "ohne Spielerposition: unbekannt, nicht 0 m")
+
+    _G.C_Map.GetPlayerMapPosition = function() return { x = 0.5, y = 0.5 } end
+    _G.C_QuestLog.GetQuestsOnMap = function() return {} end
+    QA.Update(true)
+    Check(QA.texts.dist:GetText() == "Ort unbekannt",
+        "Quest ohne Ort auf der Karte: Ort unbekannt")
+
+    tracked = 0
+    QA.Update(true)
+    Check(not QA.frame:IsShown(), "nichts ausgewaehlt: kein Pfeil")
+end
+
+-- Und die Seite im Hauptfenster, die hierher fuehrt.
+do
+    -- Ansicht 4 ausdruecklich waehlen: SwitchTo schlaegt die zuletzt
+    -- gewaehlte auf, und das ist im Prueflauf die erste.
+    local ok, err = pcall(function()
+        WeintCodex.Navigation.SwitchTo("settings")
+        WeintCodex.Navigation.ActivateIndex(4)
+        -- Die Brotkrume ist versal und gesperrt (SetBreadcrumb).
+        local crumb = WeintCodex.Breadcrumb:GetText() or ""
+        local want = WeintCodex.Spaced(WeintCodex.Upper("Oberfläche"))
+        assert(crumb:find(want, 1, true),
+            "Brotkrume zeigt nicht die Ansicht Oberflaeche: " .. tostring(crumb))
+    end)
+    Check(ok, "Einstellungsseite mit Ansicht 'Oberflaeche' zeichnet"
+        .. (ok and "" or (": " .. tostring(err))))
+end
 
 --------------------------------------------------
 

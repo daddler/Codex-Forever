@@ -165,6 +165,55 @@ local C = {
 WeintCodex.Colors = C
 
 --------------------------------------------------
+-- Farben der Spielwelt (optionale Oberflaeche, ui/)
+--------------------------------------------------
+-- Namensplaketten und Einheitenrahmen faerben nicht die Oberflaeche,
+-- sondern die WELT: wer ist feindlich, wer neutral, wer gehoert schon
+-- jemand anderem. Diese Farben sind deshalb KEIN Teil von "Graphit" und
+-- stehen neben der Palette, nicht in ihr - ein Feind ist rot, weil jeder
+-- WoW-Spieler ihn so liest, nicht weil der Entwurf es sagt.
+--
+-- Sie stehen trotzdem HIER und nirgends sonst (Regel aus CLAUDE.md: jeder
+-- Farbwert lebt in core/ui.lua). Die Module unter ui/ holen sich ihre
+-- Vorgaben mit WeintCodex.UIKit.ColorDefault(name) und speichern, was der
+-- Spieler daraus macht, als { r, g, b } in seinen Einstellungen.
+--
+-- Zwei Ausnahmen tragen bewusst die Bedeutung des Akzents, weil sie genau
+-- das sind, wofuer er steht: `cast` ist Fortschritt, `targetRing` ist der
+-- Fokusrahmen. Boss und Elite sind deshalb ausdruecklich NICHT violett
+-- (die Vorlage faerbt sie so) - eine violette Plakette laese sich als
+-- "ausgewaehlt" statt als "gefaehrlich".
+--------------------------------------------------
+
+WeintCodex.GameColors = {
+    enemyInCombat = {0.800, 0.180, 0.180, 1.0},
+    hostile       = {0.450, 0.125, 0.110, 1.0},   -- Feind, der (noch) nicht kaempft
+    neutral       = {0.850, 0.720, 0.220, 1.0},
+    tapped        = {0.500, 0.500, 0.500, 1.0},
+    friendly      = {0.300, 0.780, 0.420, 1.0},
+    boss          = {0.860, 0.400, 0.120, 1.0},
+    elite         = {0.620, 0.220, 0.460, 1.0},
+    focus         = {0.250, 0.700, 0.850, 1.0},
+    target        = {0.460, 0.890, 0.580, 1.0},
+
+    tankAggro     = {0.204, 0.780, 0.482, 1.0},
+    tankLosing    = {0.941, 0.651, 0.227, 1.0},
+    dpsAggro      = {1.000, 0.500, 0.000, 1.0},
+    dpsNear       = {0.941, 0.651, 0.227, 1.0},
+
+    cast          = {0.486, 0.424, 1.000, 1.0},   -- = Akzent: Fortschritt
+    castLocked    = {0.450, 0.450, 0.480, 1.0},   -- nicht unterbrechbar
+    castFailed    = {0.800, 0.100, 0.100, 1.0},
+    targetRing    = {0.486, 0.424, 1.000, 1.0},   -- = Akzent: Fokusrahmen
+
+    plateBg       = {0.100, 0.100, 0.118, 1.0},
+    plateBorder   = {0.000, 0.000, 0.000, 1.0},
+    healthFallback= {0.240, 0.720, 0.360, 1.0},
+    powerFallback = {0.300, 0.500, 0.900, 1.0},
+    comboPoint    = {1.000, 0.820, 0.000, 1.0},
+}
+
+--------------------------------------------------
 -- Schriften
 --------------------------------------------------
 -- Drei Familien, drei Aufgaben - dieselbe Aufteilung wie in der Companion
@@ -1609,6 +1658,329 @@ function WeintCodex.CreateCard(parent, opts)
         if titleStr then titleStr:SetText(text) end
     end
     return card
+end
+
+--------------------------------------------------
+-- Auswahlliste
+--------------------------------------------------
+-- Seit dem optionalen Oberflaechenpaket (ui/) gibt es Einstellungen mit
+-- mehr als zwei Zustaenden (welcher Text in welcher Ecke einer Plakette
+-- steht). Ein Schalter kann das nicht, und UIDropDownMenu bringt nicht
+-- nur die Blizzard-Optik mit, sondern ist im modernen Client eine der
+-- bekanntesten Quellen fuer Taint.
+--
+-- Aufbau wie der Regler: Beschriftung oben links, das Bedienelement
+-- darunter in voller Breite. Die Liste selbst gibt es EINMAL fuer alle
+-- Auswahlfelder - es kann ohnehin nur eine offen sein, und ein Rahmen je
+-- Feld waere eine Sammlung, die nur waechst (WoW gibt Frames nie frei).
+--
+-- opts: { label=, items = { {value=, text=}, ... } | function() end,
+--         get=, set=function(value) end, width=,
+--         disabled=function() end, disabledHint= }
+--------------------------------------------------
+
+local ARROW_TEX = MEDIA .. "ui\\arrow"
+local dropMenu, dropCatcher
+
+local function EnsureDropMenu()
+    if dropMenu then return dropMenu end
+
+    -- Ein unsichtbarer Vollbildfaenger hinter der Liste: ein Klick
+    -- daneben schliesst sie, wie jede Liste im Spiel.
+    dropCatcher = CreateFrame("Button", nil, UIParent)
+    dropCatcher:SetAllPoints(UIParent)
+    dropCatcher:SetFrameStrata("FULLSCREEN_DIALOG")
+    dropCatcher:Hide()
+
+    dropMenu = CreateFrame("Frame", nil, UIParent)
+    dropMenu:SetFrameStrata("FULLSCREEN_DIALOG")
+    dropMenu:SetFrameLevel(dropCatcher:GetFrameLevel() + 10)
+    dropMenu:EnableMouse(true)
+    dropMenu:Hide()
+    local bg = dropMenu:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(dropMenu)
+    bg:SetColorTexture(unpack(C.surface2))
+    DrawBorder(dropMenu, C.borderStrong[1], C.borderStrong[2], C.borderStrong[3], 1, 1)
+    dropMenu._buttons = {}
+
+    dropCatcher:SetScript("OnClick", function()
+        dropMenu:Hide()
+    end)
+    dropMenu:SetScript("OnHide", function() dropCatcher:Hide() end)
+    return dropMenu
+end
+
+local function OpenDropMenu(owner, items, current, onPick)
+    local menu = EnsureDropMenu()
+    local ITEM_H = 24
+    local width = math.max(120, owner:GetWidth() or 120)
+
+    for i, item in ipairs(items) do
+        local b = menu._buttons[i]
+        if not b then
+            b = CreateFrame("Button", nil, menu)
+            b:SetHeight(ITEM_H)
+            local hl = b:CreateTexture(nil, "BACKGROUND")
+            hl:SetAllPoints(b)
+            hl:SetColorTexture(1, 1, 1, 0)
+            b._hl = hl
+            local mark = b:CreateTexture(nil, "ARTWORK")
+            mark:SetSize(3, ITEM_H - 8)
+            mark:SetPoint("LEFT", b, "LEFT", 0, 0)
+            mark:SetColorTexture(unpack(C.accent))
+            b._mark = mark
+            local t = b:CreateFontString(nil, "OVERLAY")
+            t:SetFont(F.sans, 12, "")
+            t:SetPoint("LEFT", b, "LEFT", 12, 0)
+            t:SetPoint("RIGHT", b, "RIGHT", -8, 0)
+            t:SetJustifyH("LEFT")
+            t:SetWordWrap(false)
+            b._text = t
+            b:SetScript("OnEnter", function(self) self._hl:SetColorTexture(1, 1, 1, 0.06) end)
+            b:SetScript("OnLeave", function(self) self._hl:SetColorTexture(1, 1, 1, 0) end)
+            menu._buttons[i] = b
+        end
+        b:ClearAllPoints()
+        b:SetPoint("TOPLEFT",  menu, "TOPLEFT",  1, -1 - (i - 1) * ITEM_H)
+        b:SetPoint("TOPRIGHT", menu, "TOPRIGHT", -1, -1 - (i - 1) * ITEM_H)
+        b._text:SetText(item.text or tostring(item.value))
+        local selected = (item.value == current)
+        b._text:SetTextColor(unpack(selected and C.textBright or C.textMuted))
+        if selected then b._mark:Show() else b._mark:Hide() end
+        b:SetScript("OnClick", function()
+            menu:Hide()
+            onPick(item.value)
+        end)
+        b:Show()
+    end
+    for i = #items + 1, #menu._buttons do menu._buttons[i]:Hide() end
+
+    menu:SetSize(width, #items * ITEM_H + 2)
+    menu:ClearAllPoints()
+    menu:SetPoint("TOPLEFT", owner, "BOTTOMLEFT", 0, -2)
+    -- Die Liste gehoert zum Fenster, aus dem sie kommt: ist das skaliert
+    -- (das Einstellungsfenster hat einen eigenen Regler), muss sie es auch
+    -- sein, sonst stuende sie zu klein neben ihrem Feld.
+    if owner.GetEffectiveScale and UIParent.GetEffectiveScale then
+        local ok, s = pcall(function()
+            return owner:GetEffectiveScale() / UIParent:GetEffectiveScale()
+        end)
+        if ok and type(s) == "number" and s > 0 then menu:SetScale(s) end
+    end
+    dropCatcher:Show()
+    menu:Show()
+end
+
+function WeintCodex.CreateDropdown(parent, opts)
+    opts = opts or {}
+
+    local row = CreateFrame("Frame", nil, parent)
+    row:SetHeight(opts.height or 52)
+    if opts.width then row:SetWidth(opts.width) end
+
+    local label = row:CreateFontString(nil, "OVERLAY")
+    label:SetFont(F.sans, 13, "")
+    label:SetPoint("TOPLEFT", row, "TOPLEFT", 0, -2)
+    label:SetPoint("RIGHT", row, "RIGHT", 0, 0)
+    label:SetJustifyH("LEFT")
+    label:SetWordWrap(false)
+    label:SetText(opts.label or "")
+
+    local btn = CreateFrame("Button", nil, row)
+    btn:SetHeight(26)
+    btn:SetPoint("BOTTOMLEFT",  row, "BOTTOMLEFT",  0, 2)
+    btn:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 2)
+    local bg = btn:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(btn)
+
+    local value = btn:CreateFontString(nil, "OVERLAY")
+    value:SetFont(F.sans, 12, "")
+    value:SetPoint("LEFT",  btn, "LEFT",  10, 0)
+    value:SetPoint("RIGHT", btn, "RIGHT", -26, 0)
+    value:SetJustifyH("LEFT")
+    value:SetWordWrap(false)
+
+    local chevron = btn:CreateTexture(nil, "OVERLAY")
+    chevron:SetTexture(ARROW_TEX)
+    chevron:SetSize(10, 10)
+    chevron:SetPoint("RIGHT", btn, "RIGHT", -9, 0)
+    if chevron.SetRotation then chevron:SetRotation(math.pi) end
+
+    local function Items()
+        local items = opts.items
+        if type(items) == "function" then items = items() end
+        return items or {}
+    end
+
+    local function Disabled()
+        return opts.disabled and opts.disabled() and true or false
+    end
+
+    local hovered = false
+    local function Paint()
+        local off = Disabled()
+        local s = (hovered and not off) and C.borderStrong or C.surface3
+        bg:SetColorTexture(s[1], s[2], s[3], 1.0)
+        label:SetTextColor(unpack(off and C.textDim or C.textMuted))
+        value:SetTextColor(unpack(off and C.textFaint or C.textNormal))
+        chevron:SetVertexColor(unpack(off and C.textGhost or C.textDim))
+    end
+
+    row.Sync = function()
+        local current = opts.get and opts.get()
+        local text = (opts.disabled and Disabled() and opts.disabledHint) or nil
+        if not text then
+            for _, item in ipairs(Items()) do
+                if item.value == current then text = item.text break end
+            end
+        end
+        -- Ein gespeicherter Wert, den die Liste nicht (mehr) kennt, wird
+        -- genannt statt verschwiegen - ein leeres Feld saehe aus wie "aus".
+        value:SetText(text or tostring(current or "–"))
+        Paint()
+    end
+
+    btn:SetScript("OnEnter", function(self)
+        hovered = true
+        Paint()
+        if opts.tooltip then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(opts.tooltip, 1, 1, 1, 1, true)
+            GameTooltip:Show()
+        end
+    end)
+    btn:SetScript("OnLeave", function()
+        hovered = false
+        Paint()
+        GameTooltip:Hide()
+    end)
+    btn:SetScript("OnClick", function(self)
+        if Disabled() then return end
+        OpenDropMenu(self, Items(), opts.get and opts.get(), function(v)
+            if opts.set then opts.set(v) end
+            row.Sync()
+            if opts.onChange then opts.onChange(v) end
+        end)
+    end)
+
+    row._button = btn
+    row:SetScript("OnShow", function(self) self.Sync() end)
+    row.Sync()
+    return row
+end
+
+--------------------------------------------------
+-- Farbfeld
+--------------------------------------------------
+-- Aufbau wie der Schalter: das Bedienelement links (34 x 16, dieselbe
+-- Groesse wie die Schalterbahn), die Beschriftung daneben. Zwei Zeilen,
+-- die in derselben Liste stehen, sollen sich nicht in der Form
+-- unterscheiden, nur im Inhalt.
+--
+-- Das Farbfeld zeigt die gespeicherte Farbe - das ist der eine Ort in
+-- diesem Addon, an dem eine Flaeche eine Farbe traegt, die NICHT aus
+-- `C` kommt, sondern vom Spieler.
+--
+-- opts: { label=, description=, get=function() return {r=,g=,b=} end,
+--         set=function(r, g, b) end, width=, disabled=function() end }
+--------------------------------------------------
+
+local function OpenColorPicker(r, g, b, onChange)
+    local cpf = _G.ColorPickerFrame
+    if not cpf then return false end
+
+    local prev = { r, g, b }
+    local function Current()
+        if cpf.GetColorRGB then return cpf:GetColorRGB() end
+        return r, g, b
+    end
+
+    -- Der moderne Client (10.2.5+) hat eine Einrichtungsfunktion; der
+    -- aeltere Weg ueber Felder bleibt als Rueckfall, weil niemand weiss,
+    -- welchen Stand der Forever-Client an dieser Stelle hat.
+    if cpf.SetupColorPickerAndShow then
+        cpf:SetupColorPickerAndShow({
+            r = r, g = g, b = b,
+            hasOpacity = false,
+            swatchFunc = function() onChange(Current()) end,
+            cancelFunc = function() onChange(prev[1], prev[2], prev[3]) end,
+        })
+        return true
+    end
+
+    cpf.func = function() onChange(Current()) end
+    cpf.cancelFunc = function() onChange(prev[1], prev[2], prev[3]) end
+    cpf.hasOpacity = false
+    if cpf.SetColorRGB then cpf:SetColorRGB(r, g, b) end
+    if _G.ShowUIPanel then _G.ShowUIPanel(cpf) else cpf:Show() end
+    return true
+end
+
+function WeintCodex.CreateColorSwatch(parent, opts)
+    opts = opts or {}
+
+    local row = CreateFrame("Button", nil, parent)
+    row:SetHeight(opts.height or 34)
+    if opts.width then row:SetWidth(opts.width) end
+
+    local hover = row:CreateTexture(nil, "BACKGROUND")
+    hover:SetAllPoints(row)
+    hover:SetColorTexture(1, 1, 1, 0)
+
+    local frameTex = row:CreateTexture(nil, "ARTWORK")
+    frameTex:SetSize(34, 16)
+    frameTex:SetPoint("LEFT", row, "LEFT", 0, 0)
+    frameTex:SetColorTexture(unpack(C.borderStrong))
+
+    local swatch = row:CreateTexture(nil, "OVERLAY")
+    swatch:SetPoint("TOPLEFT", frameTex, "TOPLEFT", 1, -1)
+    swatch:SetPoint("BOTTOMRIGHT", frameTex, "BOTTOMRIGHT", -1, 1)
+    swatch:SetTexture(WHITE)
+
+    local label = row:CreateFontString(nil, "OVERLAY")
+    label:SetFont(F.sans, 13, "")
+    label:SetPoint("LEFT", row, "LEFT", 46, 0)
+    label:SetPoint("RIGHT", row, "RIGHT", -8, 0)
+    label:SetJustifyH("LEFT")
+    label:SetWordWrap(false)
+    label:SetText(opts.label or "")
+
+    local function Disabled()
+        return opts.disabled and opts.disabled() and true or false
+    end
+
+    row.Sync = function()
+        local col = opts.get and opts.get() or {}
+        local off = Disabled()
+        swatch:SetVertexColor(col.r or 1, col.g or 1, col.b or 1, off and 0.35 or 1)
+        label:SetTextColor(unpack(off and C.textDim or C.textMuted))
+    end
+
+    row:SetScript("OnEnter", function(self)
+        if Disabled() then return end
+        hover:SetColorTexture(1, 1, 1, 0.03)
+        if opts.tooltip then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(opts.tooltip, 1, 1, 1, 1, true)
+            GameTooltip:Show()
+        end
+    end)
+    row:SetScript("OnLeave", function()
+        hover:SetColorTexture(1, 1, 1, 0)
+        GameTooltip:Hide()
+    end)
+    row:SetScript("OnClick", function()
+        if Disabled() then return end
+        local col = opts.get and opts.get() or {}
+        OpenColorPicker(col.r or 1, col.g or 1, col.b or 1, function(r, g, b)
+            if opts.set then opts.set(r, g, b) end
+            row.Sync()
+        end)
+    end)
+
+    row:SetScript("OnShow", function(self) self.Sync() end)
+    row.Sync()
+    return row
 end
 
 WeintCodex.SetSolidBg = SetSolidBg

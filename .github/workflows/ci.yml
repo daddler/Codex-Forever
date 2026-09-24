@@ -30,7 +30,7 @@ jobs:
       - name: Syntax jeder Lua-Datei
         run: |
           fehler=0
-          for f in $(find core data modules .github/tests -name '*.lua' | sort); do
+          for f in $(find core data modules ui .github/tests -name '*.lua' | sort); do
             if ! luac5.1 -p "$f"; then
               echo "::error file=$f::Syntaxfehler"
               fehler=1

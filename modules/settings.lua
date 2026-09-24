@@ -546,6 +546,59 @@ local function ViewAccess(y)
 end
 
 --------------------------------------------------
+-- Abschnitt: Oberflaeche (ui/)
+--------------------------------------------------
+-- Die optionale Oberflaeche hat ihr eigenes Fenster (ui/options.lua) -
+-- wer an Namensplaketten dreht, will die Spielwelt dabei sehen. Diese
+-- Ansicht ist der Ort, an dem man erfaehrt, DASS es sie gibt: der
+-- Hauptschalter, der Questpfeil und der Weg ins Fenster.
+
+local function ViewInterface(y)
+    local K = WeintCodex.UIKit
+
+    y = Group(y, "WeintCodex-Oberfläche",
+        "Ein eigenes, schlichtes Interface für Namensplaketten und"
+        .. " Einheitenrahmen — ganz freiwillig. Solange es aus ist, zeigt"
+        .. " das Spiel seine eigenen, und WeintCodex fasst keinen"
+        .. " Blizzard-Rahmen an.")
+
+    y = Toggle(y, {
+        label = "WeintCodex-Oberfläche verwenden",
+        description = "Wirkt nach dem Neuladen (/reload).",
+        get = function() return K.UIEnabled() end,
+        set = function(on) K.SetUIEnabled(on) end,
+    })
+
+    y = Spacer(y, 8)
+    y = Group(y, "Komfort",
+        "Diese Funktionen hängen nicht an der Oberfläche — du kannst sie"
+        .. " auch ohne sie benutzen.")
+
+    y = Toggle(y, {
+        label = "Questpfeil",
+        description = "Zeigt zur ausgewählten Quest oder Kartenmarkierung, mit Entfernung.",
+        get = function() return K.ModuleEnabled("questarrow") end,
+        set = function(on) K.SetModuleEnabled("questarrow", on) end,
+    })
+
+    y = Buttons(y, {
+        { text = "Einstellungen der Oberfläche öffnen", kind = "primary",
+          tooltip = "Namensplaketten, Einheitenrahmen, Questpfeil und alle"
+              .. " Komfortfunktionen (/wcui).",
+          onClick = function() WeintCodex.UIOptions.Show() end },
+    })
+
+    if K.ReloadPending() then
+        y = Note(y, "Eine Änderung wartet auf das Neuladen der Oberfläche.", "warningBright")
+        y = Buttons(y, {
+            { text = "Jetzt neu laden", onClick = function() WeintCodex.UIOptions.ReloadNow() end },
+        })
+    end
+
+    return y
+end
+
+--------------------------------------------------
 -- Seitenaufbau
 --------------------------------------------------
 
@@ -559,6 +612,9 @@ local VIEWS = {
     { key = "zugriff",  label = "Zugriff & Daten",   title = "Zugriff & Daten",
       sub = "Zugriffsprofil und Zustand der Companion-Brücke.",
       render = ViewAccess },
+    { key = "oberflaeche", label = "Oberfläche",     title = "Oberfläche & Komfort",
+      sub = "Das optionale Interface von WeintCodex und die Komfortfunktionen.",
+      render = ViewInterface },
 }
 
 local function ViewByKey(key)

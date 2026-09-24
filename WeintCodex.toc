@@ -116,3 +116,21 @@ modules/settings.lua
 # Zuletzt: die Suche baut ihren Index aus allem darueber.
 #
 core/search.lua
+
+#
+# DIE OPTIONALE OBERFLAECHE (ui/). Steht NACH allem anderen, weil sie
+# nichts von WeintCodex braucht ausser core/ui.lua und core/main.lua -
+# und weil nichts darueber von ihr abhaengen darf: wer sie nie
+# einschaltet, soll dasselbe Addon haben wie vorher.
+#
+# ui/kit.lua zuerst (Speicher, Modulregister, Verschieben), dann der
+# gemeinsame Zauberbalken, dann die Module, zuletzt das Fenster - es
+# baut seine Seitenleiste aus dem, was sich bis dahin angemeldet hat.
+#
+ui/kit.lua
+ui/castbar.lua
+ui/nameplates.lua
+ui/unitframes.lua
+ui/questarrow.lua
+ui/comfort.lua
+ui/options.lua

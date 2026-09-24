@@ -148,6 +148,16 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   `.github/tests/load_test.lua` holds them to it. A second meaning-bearing
   colour is how the previous edition ended up with "amber carries meaning,
   purple carries light".
+- **The optional UI (`ui/`) is off until the player turns it on, and
+  while off it touches no Blizzard frame.** Nameplates and unit frames
+  (`group = "ui"`) run only with the master switch *and* their own
+  switch, and change only after a reload; the comfort modules
+  (`group = "qol"`: quest arrow, comfort helpers) never depend on the
+  master switch. Layout and defaults follow EllesmereUI, but **no code
+  or media from it** — its licence is "all rights reserved". Game-world
+  colours live in `core/ui.lua` as `WeintCodex.GameColors`. Values from
+  the 12.x client may be *secret*: `type(x) == "nil"` instead of
+  `x == nil`, no `a or b` on client values. Details: `docs/systems/ui.md`.
 - **Every colour value lives in `core/ui.lua`.** It is the translation of
   the Companion's `gui/theme/tokens.py`. A hex value anywhere else is a
   surface that gets missed when the palette changes.
@@ -157,7 +167,7 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
 - **`WeintCodex.toc` load order is the only dependency mechanism.** A
   module can only reference `WeintCodex.Other` if `other.lua` loads
   earlier; a new file must be added to the `.toc` (libraries → core →
-  data → modules) or it silently won't load. `load_test.lua` catches
+  data → modules → ui) or it silently won't load. `load_test.lua` catches
   both mistakes.
 - **The addon folder must be named `WeintCodex` and the TOC
   `WeintCodex.toc`.** The Companion's installer looks for exactly that
@@ -174,7 +184,7 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
 No build step. Before pushing:
 
 ```bash
-luac5.1 -p $(find core data modules -name '*.lua')   # Syntax
+luac5.1 -p $(find core data modules ui -name '*.lua')   # Syntax
 lua5.1 .github/tests/load_test.lua .                 # lädt das Addon?
 lua5.1 .github/tests/data_test.lua .                 # Daten + Fassungen
 ```
@@ -210,6 +220,7 @@ into modules that no longer exist. A green run means "it loads", never
 | Charakterzuordnung, WeintAdmin-Backup | `../Companion-Forever/docs/character-links-and-admin-bridge.md` |
 | Companion-Authentifizierung/Token | `../Companion-Forever/docs/companion-auth.md` |
 | Welche Spieldaten fehlen und warum | `../Companion-Forever/docs/systems/forever-data.md` |
+| Optionale Oberfläche (`ui/`): Namensplaketten, Einheitenrahmen, Questpfeil, Komfort, `/wcui`, `WeintCodex.GameColors`, geheime Werte (12.x) | `docs/systems/ui.md` |
 
 Cross-repo tasks (something touches Codex **and** Companion **and/or**
 Bot): read this table's Companion-doc pointers first — they are the

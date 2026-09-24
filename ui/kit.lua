@@ -1,0 +1,599 @@
+--------------------------------------------------
+-- WeintCodex :: Oberflaeche - Fundament
+--------------------------------------------------
+-- Das optionale Oberflaechenpaket. Alles unter ui/ ist ZUSATZ: wer es nie
+-- einschaltet, hat dasselbe WeintCodex wie vorher, und kein Blizzard-
+-- Rahmen wird angefasst.
+--
+-- ZWEI ARTEN VON MODULEN, und der Unterschied ist die ganze Idee:
+--
+--   group = "ui"    Namensplaketten, Einheitenrahmen. Sie ERSETZEN
+--                   Blizzard-Rahmen und laufen nur, wenn der Hauptschalter
+--                   "WeintCodex-Oberflaeche" an ist UND das Modul selbst.
+--                   Aendern verlangt ein Neuladen: einen ersetzten
+--                   Blizzard-Rahmen sauber zurueckzugeben ist im laufenden
+--                   Spiel nicht zu haben, ohne Taint zu riskieren.
+--   group = "qol"   Questpfeil, Komfortfunktionen. Sie haengen NICHT am
+--                   Hauptschalter - wer die Oberflaeche nicht will, soll
+--                   den Pfeil trotzdem haben koennen. Sie schalten sofort.
+--
+-- VORBILD UND GRENZE. Aufbau, Funktionsumfang und Voreinstellungen folgen
+-- EllesmereUI (Stand 9.2.6). Uebernommen sind Ideen, Optionsnamen und
+-- Zahlen, KEIN Code und KEINE Grafik: die Vorlage steht unter "all rights
+-- reserved". Farben und Schriften sind die von WeintCodex.
+--
+-- SPEICHER. Ausschliesslich WeintCodex_SavedData.ui - dieselbe Tabelle,
+-- die in der .toc steht (Regel aus CLAUDE.md). Gespeichert wird nur, was
+-- vom Standard abweicht; der Standard steht beim Modul. Ein Modul, dessen
+-- Voreinstellung sich aendert, zieht damit bei allen nach, die den Wert nie
+-- angefasst haben.
+--------------------------------------------------
+
+WeintCodex = WeintCodex or {}
+WeintCodex.UIKit = {}
+
+local K = WeintCodex.UIKit
+local C = WeintCodex.Colors
+local F = WeintCodex.Fonts
+
+local modules, order = {}, {}
+K.modules, K.order = modules, order
+
+--------------------------------------------------
+-- Geheime Werte
+--------------------------------------------------
+-- Ab Client 12.0 liefert das Spiel im Kampf viele Einheitenwerte als
+-- "secret": sie lassen sich an StatusBar:SetValue und FontString:SetText
+-- weiterreichen, aber nicht vergleichen und nicht rechnen - ein `<` darauf
+-- ist ein Lua-Fehler. Forever laeuft nach allem, was bekannt ist, auf
+-- diesem Unterbau. Jede Stelle, die einen Wert VERGLEICHT, fragt vorher.
+--------------------------------------------------
+
+function K.IsSecret(v)
+    local f = _G.issecretvalue
+    return f ~= nil and f(v) and true or false
+end
+
+-- Ein Wert, mit dem Lua rechnen darf - oder nil, wenn nicht.
+function K.Plain(v)
+    if K.IsSecret(v) then return nil end
+    return v
+end
+
+-- Ein Wahrheitswert, der geheim sein koennte, als `true`/`false`. Geheim
+-- zaehlt als `fallback` - der Aufrufer sagt, welcher Irrtum der billigere ist.
+function K.Bool(v, fallback)
+    if K.IsSecret(v) then return fallback and true or false end
+    return v and true or false
+end
+
+--------------------------------------------------
+-- Speicher
+--------------------------------------------------
+
+local function Root()
+    local sv = WeintCodex.SavedData
+    if not sv then return nil end
+    sv.ui = sv.ui or {}
+    local ui = sv.ui
+    ui.modules   = ui.modules or {}
+    ui.positions = ui.positions or {}
+    return ui
+end
+
+function K.Root() return Root() end
+
+-- Die gespeicherten Abweichungen eines Moduls (nie nil, sobald SavedData
+-- steht; davor eine leere Tabelle, die nie gespeichert wird - gelesen wird
+-- davor nur der Standard).
+local EMPTY = {}
+local function Store(key)
+    local ui = Root()
+    if not ui then return EMPTY end
+    ui.modules[key] = ui.modules[key] or {}
+    return ui.modules[key]
+end
+
+local function CopyValue(v)
+    if type(v) ~= "table" then return v end
+    local out = {}
+    for k, x in pairs(v) do out[k] = x end
+    return out
+end
+
+-- Farbvorgabe aus core/ui.lua als { r, g, b }.
+function K.ColorDefault(name)
+    local col = (WeintCodex.GameColors and WeintCodex.GameColors[name])
+        or C[name] or C.textNormal
+    return { r = col[1], g = col[2], b = col[3] }
+end
+
+function K.Get(moduleKey, key)
+    local v = Store(moduleKey)[key]
+    if v ~= nil then return v end
+    local m = modules[moduleKey]
+    return m and m.defaults and m.defaults[key]
+end
+
+function K.Set(moduleKey, key, value)
+    local m = modules[moduleKey]
+    local store = Store(moduleKey)
+    local default = m and m.defaults and m.defaults[key]
+
+    -- Gleich dem Standard -> Eintrag entfernen. Sonst hielte die Datei
+    -- einen Wert fest, der beim naechsten Standardwechsel nicht mitzoege.
+    local same = (value == default)
+    if not same and type(value) == "table" and type(default) == "table" then
+        same = true
+        for k, x in pairs(value) do
+            if default[k] ~= x then same = false break end
+        end
+    end
+    store[key] = (not same) and CopyValue(value) or nil
+
+    if m and m.OnSetting then
+        local ok, err = pcall(m.OnSetting, key, value)
+        if not ok then K.Report(moduleKey, err) end
+    end
+    K.Fire("setting", moduleKey, key)
+end
+
+-- Farbe: immer eine frische Tabelle zurueck, nie die gespeicherte -
+-- ein Aufrufer, der darin schreibt, schriebe sonst am Speicher vorbei in
+-- ihn hinein.
+function K.GetColor(moduleKey, key)
+    local c = K.Get(moduleKey, key)
+    if type(c) ~= "table" then return { r = 1, g = 1, b = 1 } end
+    return { r = c.r or 1, g = c.g or 1, b = c.b or 1 }
+end
+
+function K.ResetModule(moduleKey)
+    local ui = Root()
+    if not ui then return end
+    local enabled = ui.modules[moduleKey] and ui.modules[moduleKey].enabled
+    ui.modules[moduleKey] = { enabled = enabled }
+    local m = modules[moduleKey]
+    if m and m.OnSetting then pcall(m.OnSetting, "*") end
+    K.Fire("setting", moduleKey, "*")
+end
+
+--------------------------------------------------
+-- Hauptschalter
+--------------------------------------------------
+
+function K.UIEnabled()
+    local ui = Root()
+    return ui ~= nil and ui.enabled == true
+end
+
+-- Wird der Hauptschalter umgelegt, ist ein Neuladen faellig (siehe oben).
+function K.SetUIEnabled(on)
+    local ui = Root()
+    if not ui then return end
+    ui.enabled = on and true or false
+    K.MarkReload()
+    K.Fire("setting", "general", "enabled")
+end
+
+function K.ModuleEnabled(moduleKey)
+    local m = modules[moduleKey]
+    if not m then return false end
+    local v = Store(moduleKey).enabled
+    if v == nil then v = m.defaultEnabled ~= false end
+    return v and true or false
+end
+
+-- Laeuft das Modul in DIESER Sitzung? Fuer ui-Module ist das der Stand
+-- beim Anmelden, nicht der gespeicherte - der gilt erst nach dem Neuladen.
+function K.IsActive(moduleKey)
+    local m = modules[moduleKey]
+    return m ~= nil and m._active == true
+end
+
+-- Wuerde das Modul nach dem naechsten Laden laufen?
+function K.WantsActive(moduleKey)
+    local m = modules[moduleKey]
+    if not m then return false end
+    if m.group == "ui" and not K.UIEnabled() then return false end
+    return K.ModuleEnabled(moduleKey)
+end
+
+local reloadPending = false
+function K.MarkReload() reloadPending = true K.Fire("reload") end
+function K.ReloadPending() return reloadPending end
+
+function K.SetModuleEnabled(moduleKey, on)
+    local m = modules[moduleKey]
+    if not m then return end
+    Store(moduleKey).enabled = on and true or false
+
+    if m.group == "ui" or m.reload then
+        K.MarkReload()
+    elseif on then
+        K.Activate(moduleKey)
+    else
+        K.Deactivate(moduleKey)
+    end
+    K.Fire("setting", moduleKey, "enabled")
+end
+
+--------------------------------------------------
+-- Modulregister
+--------------------------------------------------
+-- def = {
+--   key, group = "ui"|"qol", title, description, order,
+--   defaults = { ... }, defaultEnabled = true|false,
+--   Enable = function() end,   -- beim Anmelden bzw. beim Einschalten
+--   Disable = function() end,  -- nur qol: beim Ausschalten
+--   OnSetting = function(key, value) end,
+--   pages = { { key, label, build = function(B) end }, ... },
+--   preview = function(parent) return frame, height end,  -- optional
+--   status = function() return text, tone end,             -- optional
+-- }
+--------------------------------------------------
+
+function K.Register(def)
+    assert(type(def) == "table" and def.key, "UIKit.Register: key fehlt")
+    def.defaults = def.defaults or {}
+    def.pages = def.pages or {}
+    if not modules[def.key] then order[#order + 1] = def.key end
+    modules[def.key] = def
+    table.sort(order, function(a, b)
+        return (modules[a].order or 100) < (modules[b].order or 100)
+    end)
+    return def
+end
+
+function K.Module(key) return modules[key] end
+
+-- Ein Fehler in einem Modul darf die anderen nicht mitnehmen. Gemeldet
+-- wird er trotzdem - einmal, in den Chat, mit dem Modulnamen: still
+-- verschluckt saehe er aus wie ein Modul, das nichts tut.
+local reported = {}
+function K.Report(moduleKey, err)
+    local key = tostring(moduleKey) .. tostring(err)
+    if reported[key] then return end
+    reported[key] = true
+    print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " "
+        .. WeintCodex.ColorText("warning", "Oberfläche/" .. tostring(moduleKey)
+        .. ": ") .. tostring(err))
+end
+
+function K.Activate(moduleKey)
+    local m = modules[moduleKey]
+    if not m or m._active then return end
+    if m.Enable then
+        local ok, err = pcall(m.Enable)
+        if not ok then K.Report(moduleKey, err) return end
+    end
+    m._active = true
+    K.Fire("active", moduleKey)
+end
+
+function K.Deactivate(moduleKey)
+    local m = modules[moduleKey]
+    if not m or not m._active then return end
+    if m.Disable then
+        local ok, err = pcall(m.Disable)
+        if not ok then K.Report(moduleKey, err) end
+    end
+    m._active = false
+    K.Fire("active", moduleKey)
+end
+
+--------------------------------------------------
+-- Rueckrufe (fuer das Einstellungsfenster)
+--------------------------------------------------
+
+local listeners = {}
+function K.Listen(fn) listeners[#listeners + 1] = fn end
+function K.Fire(kind, ...)
+    for _, fn in ipairs(listeners) do pcall(fn, kind, ...) end
+end
+
+--------------------------------------------------
+-- Kampfsperre
+--------------------------------------------------
+-- Geschuetzte Rahmen (Einheitenrahmen, Blizzard-Rahmen, die wir
+-- verstecken) duerfen im Kampf weder bewegt noch umgehaengt werden. Was
+-- in den Kampf faellt, wird danach nachgeholt statt verworfen.
+--------------------------------------------------
+
+local afterCombat = {}
+function K.InCombat()
+    return _G.InCombatLockdown ~= nil and _G.InCombatLockdown() and true or false
+end
+
+function K.AfterCombat(fn)
+    if not K.InCombat() then
+        fn()
+        return
+    end
+    afterCombat[#afterCombat + 1] = fn
+end
+
+--------------------------------------------------
+-- Schriften und Balken
+--------------------------------------------------
+-- In der Spielwelt gilt eine Ausnahme von der Regel "kein OUTLINE" aus
+-- core/ui.lua: das Fenster steht auf einer ruhigen, dunklen Flaeche, eine
+-- Namensplakette ueber Gras, Schnee und Zauberwirkungen. Ohne Kontur ist
+-- sie dort nicht lesbar. Die Kontur ist deshalb einstellbar und
+-- standardmaessig duenn.
+--------------------------------------------------
+
+function K.FontPath()
+    local choice = K.Get("general", "font")
+    if choice == "game" then
+        return _G.STANDARD_TEXT_FONT or F.sansSemi
+    elseif choice == "plex" then
+        return F.sansMedium
+    end
+    return F.sansSemi
+end
+
+function K.FontFlags()
+    local o = K.Get("general", "outline")
+    if o == "none" then return "" end
+    if o == "thick" then return "THICKOUTLINE" end
+    return "OUTLINE"
+end
+
+function K.SetFont(fs, size)
+    if not (fs and fs.SetFont) then return end
+    fs:SetFont(K.FontPath(), size or 11, K.FontFlags())
+    -- Mit Kontur braucht es keinen Schatten; ohne Kontur ist er das
+    -- Einzige, was den Text vom Hintergrund trennt.
+    if fs.SetShadowOffset then
+        if K.FontFlags() == "" then
+            fs:SetShadowOffset(1, -1)
+            fs:SetShadowColor(0, 0, 0, 1)
+        else
+            fs:SetShadowOffset(0, 0)
+        end
+    end
+end
+
+K.BAR_TEXTURE = "Interface\\Buttons\\WHITE8X8"
+K.ARROW_TEXTURE = "Interface\\AddOns\\WeintCodex\\media\\ui\\arrow"
+
+-- Flach oder mit leichtem Verlauf. Der Verlauf ist eine Helligkeitsstufe
+-- derselben Farbe, keine zweite Farbe.
+function K.PaintBar(bar, r, g, b)
+    local tex = bar.GetStatusBarTexture and bar:GetStatusBarTexture()
+    if not tex then return end
+    -- Jeder Treffer faerbt neu ein, die Farbe aendert sich fast nie. Der
+    -- Verlauf legt je Aufruf zwei Farbobjekte an - bei zwanzig Plaketten
+    -- im Kampf ist das Muell fuer den Speicherbereiniger ohne jeden Nutzen.
+    -- r/g/b stammen immer aus Einstellungen oder Klassenfarben, nie aus
+    -- einem geheimen Wert; der Vergleich ist also erlaubt.
+    local style = K.Get("general", "barStyle")
+    if bar._wcR == r and bar._wcG == g and bar._wcB == b and bar._wcStyle == style then return end
+    bar._wcR, bar._wcG, bar._wcB, bar._wcStyle = r, g, b, style
+    if style == "gradient" and tex.SetGradient
+       and _G.CreateColor then
+        tex:SetVertexColor(1, 1, 1, 1)
+        tex:SetGradient("VERTICAL",
+            _G.CreateColor(r * 0.72, g * 0.72, b * 0.72, 1),
+            _G.CreateColor(r, g, b, 1))
+    else
+        if tex.SetGradient and _G.CreateColor and tex._wcGradient then
+            tex:SetGradient("VERTICAL", _G.CreateColor(1, 1, 1, 1), _G.CreateColor(1, 1, 1, 1))
+        end
+        tex:SetVertexColor(r, g, b, 1)
+    end
+    tex._wcGradient = (K.Get("general", "barStyle") == "gradient") or nil
+end
+
+-- 1-px-Rahmen um einen Frame, in vier Texturen. Liefert ein Objekt mit
+-- SetColor/Show/Hide - Namensplakette und Einheitenrahmen teilen ihn.
+function K.Border(frame, size, r, g, b, a, layer)
+    size = size or 1
+    local o = {}
+    local function Edge()
+        local t = frame:CreateTexture(nil, layer or "BORDER")
+        t:SetColorTexture(r or 0, g or 0, b or 0, a or 1)
+        return t
+    end
+    o.top, o.bottom, o.left, o.right = Edge(), Edge(), Edge(), Edge()
+    function o:SetSize(s)
+        self.top:ClearAllPoints()
+        self.top:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", -s, 0)
+        self.top:SetPoint("BOTTOMRIGHT", frame, "TOPRIGHT", s, 0)
+        self.top:SetHeight(s)
+        self.bottom:ClearAllPoints()
+        self.bottom:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", -s, 0)
+        self.bottom:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT", s, 0)
+        self.bottom:SetHeight(s)
+        self.left:ClearAllPoints()
+        self.left:SetPoint("TOPRIGHT", frame, "TOPLEFT", 0, 0)
+        self.left:SetPoint("BOTTOMRIGHT", frame, "BOTTOMLEFT", 0, 0)
+        self.left:SetWidth(s)
+        self.right:ClearAllPoints()
+        self.right:SetPoint("TOPLEFT", frame, "TOPRIGHT", 0, 0)
+        self.right:SetPoint("BOTTOMLEFT", frame, "BOTTOMRIGHT", 0, 0)
+        self.right:SetWidth(s)
+    end
+    function o:SetColor(cr, cg, cb, ca)
+        for _, t in ipairs({ self.top, self.bottom, self.left, self.right }) do
+            t:SetColorTexture(cr, cg, cb, ca or 1)
+        end
+    end
+    function o:SetShown(v)
+        for _, t in ipairs({ self.top, self.bottom, self.left, self.right }) do
+            if v then t:Show() else t:Hide() end
+        end
+    end
+    o:SetSize(size)
+    return o
+end
+
+--------------------------------------------------
+-- Verschieben ("Rahmen entsperren")
+--------------------------------------------------
+-- Das Gegenstueck zum Entsperrmodus der Vorlage, auf das Noetige
+-- reduziert: jeder bewegliche Rahmen bekommt eine Flaeche mit seinem
+-- Namen, die sich ziehen laesst. Rechtsklick setzt ihn zurueck.
+--
+-- Geschuetzte Rahmen (Einheitenrahmen) lassen sich im Kampf nicht
+-- bewegen - das Entsperren wird dann verweigert, nicht halb ausgefuehrt.
+--------------------------------------------------
+
+local movers = {}
+local unlocked = false
+
+local function SavePosition(key, frame)
+    local ui = Root()
+    if not ui then return end
+    local point, _, relPoint, x, y = frame:GetPoint(1)
+    if not point then return end
+    ui.positions[key] = {
+        point = point, relPoint = relPoint or point,
+        x = math.floor((x or 0) + 0.5), y = math.floor((y or 0) + 0.5),
+    }
+end
+
+function K.ApplyPosition(key)
+    local m = movers[key]
+    if not m then return end
+    local ui = Root()
+    local pos = ui and ui.positions[key] or m.default
+    local frame = m.frame
+    local function apply()
+        frame:ClearAllPoints()
+        frame:SetPoint(pos.point, UIParent, pos.relPoint or pos.point, pos.x or 0, pos.y or 0)
+    end
+    if m.secure then K.AfterCombat(apply) else apply() end
+end
+
+function K.RegisterMover(frame, key, label, default, opts)
+    opts = opts or {}
+    local m = movers[key] or {}
+    m.frame, m.label, m.default = frame, label, default
+    m.secure = opts.secure and true or false
+    movers[key] = m
+
+    if not m.overlay then
+        local ov = CreateFrame("Button", nil, UIParent)
+        ov:SetFrameStrata("DIALOG")
+        ov:SetAllPoints(frame)
+        ov:EnableMouse(true)
+        ov:RegisterForDrag("LeftButton")
+        if ov.RegisterForClicks then ov:RegisterForClicks("RightButtonUp") end
+        local bg = ov:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints(ov)
+        bg:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.22)
+        K.Border(ov, 1, C.accent[1], C.accent[2], C.accent[3], 0.9, "ARTWORK")
+        local t = ov:CreateFontString(nil, "OVERLAY")
+        t:SetFont(F.sansSemi, 11, "OUTLINE")
+        t:SetPoint("CENTER", ov, "CENTER", 0, 0)
+        t:SetTextColor(unpack(C.textBright))
+        t:SetText(label)
+        ov:SetScript("OnDragStart", function()
+            if m.secure and K.InCombat() then return end
+            frame:SetMovable(true)
+            frame:StartMoving()
+        end)
+        ov:SetScript("OnDragStop", function()
+            frame:StopMovingOrSizing()
+            SavePosition(key, frame)
+            -- StartMoving haengt den Rahmen an den naechstgelegenen Punkt
+            -- des Bildschirms um; gespeichert ist er jetzt, und neu
+            -- angelegt wird er aus dem Gespeicherten.
+            K.ApplyPosition(key)
+        end)
+        ov:SetScript("OnClick", function(_, button)
+            if button ~= "RightButton" then return end
+            local ui = Root()
+            if ui then ui.positions[key] = nil end
+            K.ApplyPosition(key)
+        end)
+        ov:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(label, 1, 1, 1)
+            GameTooltip:AddLine("Ziehen zum Verschieben, Rechtsklick setzt zurück.", 0.7, 0.7, 0.75, true)
+            GameTooltip:Show()
+        end)
+        ov:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        ov:Hide()
+        m.overlay = ov
+    end
+
+    m.enabled = true
+    K.ApplyPosition(key)
+    if unlocked then m.overlay:Show() end
+end
+
+-- Ein Rahmen, dessen Modul aus ist, soll im Entsperrmodus nicht als
+-- leere Flaeche herumstehen.
+function K.SetMoverEnabled(key, on)
+    local m = movers[key]
+    if not m then return end
+    m.enabled = on and true or false
+    if unlocked and m.enabled then m.overlay:Show() else m.overlay:Hide() end
+end
+
+function K.IsUnlocked() return unlocked end
+
+function K.SetUnlocked(on)
+    if on and K.InCombat() then
+        print(WeintCodex.ColorText("accent", "[WeintCodex]")
+            .. " Im Kampf lassen sich Rahmen nicht verschieben.")
+        return false
+    end
+    unlocked = on and true or false
+    for _, m in pairs(movers) do
+        if unlocked and m.enabled then
+            -- Ein Rahmen, der gerade nichts zeigt (kein Ziel, keine Quest),
+            -- hat trotzdem einen Platz - den soll man sehen koennen.
+            if m.frame.WCShowForUnlock then m.frame:WCShowForUnlock(true) end
+            m.overlay:Show()
+        else
+            if m.frame.WCShowForUnlock then m.frame:WCShowForUnlock(false) end
+            m.overlay:Hide()
+        end
+    end
+    K.Fire("unlock", unlocked)
+    return true
+end
+
+function K.ResetAllPositions()
+    local ui = Root()
+    if not ui then return end
+    wipe(ui.positions)
+    for key in pairs(movers) do K.ApplyPosition(key) end
+end
+
+--------------------------------------------------
+-- Einmal-Ereignisse
+--------------------------------------------------
+-- PLAYER_LOGIN: SavedData stehen seit ADDON_LOADED (core/main.lua); die
+-- Einheiten gibt es erst jetzt. Hier werden die Module gestartet.
+--------------------------------------------------
+
+local boot = CreateFrame("Frame")
+boot:RegisterEvent("PLAYER_LOGIN")
+boot:RegisterEvent("PLAYER_REGEN_ENABLED")
+boot:RegisterEvent("PLAYER_REGEN_DISABLED")
+boot:SetScript("OnEvent", function(_, event)
+    if event == "PLAYER_REGEN_DISABLED" then
+        -- Entsperrt in den Kampf: die Flaechen verschwinden, statt einen
+        -- geschuetzten Rahmen halb gezogen stehen zu lassen.
+        if unlocked then K.SetUnlocked(false) end
+        return
+    end
+    if event == "PLAYER_REGEN_ENABLED" then
+        local queue = afterCombat
+        afterCombat = {}
+        for _, fn in ipairs(queue) do
+            local ok, err = pcall(fn)
+            if not ok then K.Report("kampf", err) end
+        end
+        return
+    end
+
+    -- PLAYER_LOGIN
+    for _, key in ipairs(order) do
+        if K.WantsActive(key) then K.Activate(key) end
+    end
+end)

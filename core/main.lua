@@ -131,6 +131,18 @@ SlashCmdList["WEINTCODEX"] = function(msg)
         return
     end
 
+    -- Die optionale Oberflaeche (ui/options.lua). /wcui fuehrt ebenfalls
+    -- dorthin; hier steht sie, damit /wc der eine Befehl bleibt, den man
+    -- sich merken muss.
+    if verb == "ui" or verb == "oberflaeche" or verb == "oberfläche" then
+        if WeintCodex.UIOptions then WeintCodex.UIOptions.Show("general") end
+        return
+    end
+    if verb == "pfeil" or verb == "questpfeil" then
+        if WeintCodex.UIOptions then WeintCodex.UIOptions.Show("questarrow") end
+        return
+    end
+
     -- Einfuehrung erneut aufrufen
     if verb == "tour" or verb == "einfuehrung" or verb == "einführung" then
         if WeintCodex.Onboarding and WeintCodex.Onboarding.ShowTour then
