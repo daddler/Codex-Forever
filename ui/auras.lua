@@ -52,6 +52,14 @@ local function Note(step, err)
     K.Report("auren", step .. ": " .. tostring(err))
 end
 
+-- Welcher Weg gilt: "auto" (Container, wo es ihn gibt), "engine" (nur
+-- Container) oder "legacy" (selbst lesen). Umschaltbar im laufenden
+-- Spiel (Namensplaketten -> Auren -> Weg): in 6.1.0.0 blieben die Symbole
+-- im Beta-Client unsichtbar, ohne dass ein Schritt einen Fehler meldete -
+-- mit dem Schalter laesst sich in EINER Sitzung pruefen, welcher Weg geht.
+A.mode = "auto"
+local objects = setmetatable({}, { __mode = "k" })
+
 local engine   -- nil = noch nicht geprueft
 function A.EngineAvailable()
     if engine ~= nil then return engine end
@@ -85,12 +93,60 @@ function A.StatusText()
             .. (stats.probeError and (" (" .. stats.probeError .. ")") or "")
     end
     if stats.legacy > 0 then parts[#parts + 1] = string.format("%d über den alten Weg", stats.legacy) end
+    if stats.autoFallback then parts[#parts + 1] = "Container zeigte nichts – liest selbst" end
+    if stats.verified then parts[#parts + 1] = "Container zeigt Symbole" end
     for step, err in pairs(stats.errors) do parts[#parts + 1] = step .. ": " .. err end
     return table.concat(parts, " · ")
 end
 
 -- Fuer den Prueflauf: den Weg neu bestimmen lassen.
 function A._ResetEngineProbe() engine = nil end
+
+-- Wie viele Auren nennt das Spiel fuer diese Einheit? Nur gezaehlt, kein
+-- Feld gelesen - so beruehrt es keinen geheimen Wert. nil = nicht lesbar.
+local function ApiCount(unit, filter)
+    local cu = _G.C_UnitAuras
+    if not (cu and cu.GetAuraDataByIndex) then return nil, "keine Schnittstelle" end
+    local n = 0
+    local ok, err = pcall(function()
+        for i = 1, 40 do
+            local a = cu.GetAuraDataByIndex(unit, i, filter)
+            if type(a) == "nil" then break end
+            n = n + 1
+        end
+    end)
+    if not ok then return nil, "Fehler: " .. tostring(err) end
+    return n
+end
+
+-- Sichtbare Symbole eines Objekts. Beim Container sind das Rahmen in der
+-- Groesse eines Symbols irgendwo unter ihm (wie tief er sie ablegt, sagt
+-- das Spiel nicht).
+local function Visible(obj)
+    if obj.buttons then
+        local total, shown = 0, 0
+        for _, b in ipairs(obj.buttons) do
+            total = total + 1
+            if b:IsShown() then shown = shown + 1 end
+        end
+        return total, shown
+    end
+    local size = obj.opts.size
+    local total, shown = 0, 0
+    local function Walk(f, depth)
+        if depth > 3 or not f.GetChildren then return end
+        for _, ch in ipairs({ f:GetChildren() }) do
+            local w = ch.GetWidth and ch:GetWidth()
+            if type(w) == "number" and math.abs(w - size) <= 1 then
+                total = total + 1
+                if ch:IsVisible() then shown = shown + 1 end
+            end
+            Walk(ch, depth + 1)
+        end
+    end
+    Walk(obj.frame, 1)
+    return total, shown
+end
 
 --------------------------------------------------
 -- Ein Symbol
@@ -170,7 +226,11 @@ local function BuildEngine(self, minimal)
     -- anspringt - ohne Anker beim ersten Anlass blieb der Container leer
     -- (so beschreibt es EllesmereUI; bei uns bis 6.0.0.5 ohne Anker).
     c:SetPoint("CENTER", self.parent, "CENTER", 0, 0)
-    c:SetSize(1, 1)
+    -- Die volle Groesse der Gruppe, nicht 1 x 1: ordnet der Container
+    -- seine Symbole innerhalb seiner Flaeche an (oder beschneidet er an
+    -- ihr), blieb bis 6.1.0.0 kein Platz fuer ein einziges Symbol.
+    c:SetSize(self:Extent())
+    if c.SetClipsChildren then pcall(c.SetClipsChildren, c, false) end
     Call(c, { "SetFlowLayoutAnchorPoint", "SetAuraLayoutAnchorPoint" }, o.anchor)
     Call(c, { "SetFlowLayoutGrowthDirection", "SetAuraLayoutGrowthDirection" },
         FlowDir(o.growth), FlowDir(o.growthV))
@@ -322,9 +382,46 @@ local function Normalize(opts)
     return o
 end
 
+-- Breite und Hoehe, die alle Symbole zusammen brauchen.
+function Obj:Extent()
+    local o = self.opts
+    local rows = math.ceil(o.max / o.perRow)
+    local step = o.size + o.spacing
+    return math.max(1, math.min(o.max, o.perRow) * step), math.max(1, rows * step)
+end
+
+-- "Automatisch" merkt sich, wenn der Container nachweislich nichts zeigt
+-- (siehe AutoCheck) - dann liest es selbst, fuer alle.
+local engineBroken = false
+
+local function UseEngine()
+    if A.mode == "legacy" then return false end
+    if A.mode == "auto" and engineBroken then return false end
+    return A.EngineAvailable()
+end
+
 function A.Create(parent, opts)
     local self = setmetatable({ parent = parent, opts = Normalize(opts), points = {} }, Obj)
-    self.engine = A.EngineAvailable()
+    objects[self] = true
+    self:Build()
+    return self
+end
+
+-- Den Rahmen (neu) anlegen, nach dem gerade gueltigen Weg. Ein alter
+-- Rahmen wird still gelegt; Anker, Sichtbarkeit und Einheit gehen auf den
+-- neuen ueber.
+function Obj:Build()
+    local old = self.frame
+    if old then
+        old:Hide()
+        if self.engine then pcall(old.SetUnit, old, "none") end
+        if self.events then
+            self.events:UnregisterAllEvents()
+            self.events:SetScript("OnUpdate", nil)
+        end
+    end
+    self.buttons, self.events, self.ticker = nil, nil, nil
+    self.engine = UseEngine()
     if self.engine then
         local ok, c = pcall(BuildEngine, self)
         if not (ok and c) then
@@ -341,8 +438,8 @@ function A.Create(parent, opts)
     end
     if not self.engine then
         stats.legacy = stats.legacy + 1
-        self.frame = CreateFrame("Frame", nil, parent)
-        self.frame:SetSize(1, 1)
+        self.frame = CreateFrame("Frame", nil, self.parent)
+        self.frame:SetSize(self:Extent())
         self.buttons = {}
         self.events = CreateFrame("Frame")
         self.events:SetScript("OnEvent", function() self:Refresh() end)
@@ -356,7 +453,20 @@ function A.Create(parent, opts)
             end
         end
     end
-    return self
+    if old then
+        local c = self.frame
+        if #self.points > 0 then c:ClearAllPoints() end
+        for _, p in ipairs(self.points) do c:SetPoint(unpack(p)) end
+        if self.shown == false then c:Hide() end
+        self:SetUnit(self.unit)
+    end
+end
+
+function A.SetMode(mode)
+    if mode ~= "engine" and mode ~= "legacy" then mode = "auto" end
+    if mode == A.mode then return end
+    A.mode = mode
+    for obj in pairs(objects) do obj:Build() end
 end
 
 function Obj:SetPoint(...)
@@ -381,6 +491,7 @@ function Obj:SetUnit(unit)
         if not ok then Note("SetUnit", err) end
         ok, err = pcall(self.frame.UpdateAllAuras, self.frame)
         if not ok then Note("UpdateAllAuras", err) end
+        self:AutoCheck()
         return
     end
     self.events:UnregisterAllEvents()
@@ -392,10 +503,51 @@ function Obj:SetUnit(unit)
     self:Refresh()
 end
 
+-- SELBSTHEILUNG ("Automatisch"). Nennt das Spiel fuer eine Einheit Auren,
+-- und der Container zeigt einen Augenblick spaeter keine einzige, dann
+-- geht der Container-Weg auf diesem Client nicht - WeintCodex liest ab da
+-- selbst, fuer alle Symbole, und sagt es einmal im Chat. Zeigt er welche,
+-- ist der Weg bestaetigt und die Pruefung ruht. So muss niemand im Beta-
+-- Client einen Schalter finden, um Debuffs zu sehen.
+local verdict      -- nil = offen, "ok" oder "broken"
+local pending = setmetatable({}, { __mode = "k" })
+function Obj:AutoCheck()
+    if A.mode ~= "auto" or verdict or not self.engine or not self.unit or pending[self] then return end
+    if not (_G.C_Timer and _G.C_Timer.After) then return end
+    pending[self] = true
+    _G.C_Timer.After(0.6, function()
+        pending[self] = nil
+        if A.mode ~= "auto" or verdict or not self.engine or not self.unit then return end
+        if not self.frame:IsVisible() then return end
+        local n = ApiCount(self.unit, self.opts.filter)
+        if type(n) ~= "number" or n == 0 then return end
+        local _, shown = Visible(self)
+        if shown > 0 then
+            verdict = "ok"
+            stats.verified = true
+            return
+        end
+        verdict = "broken"
+        engineBroken = true
+        stats.autoFallback = true
+        K.Report("auren", "Der Container des Spiels zeigt keine Symbole, obwohl das Spiel "
+            .. n .. " Auren nennt – WeintCodex liest sie ab jetzt selbst.")
+        for obj in pairs(objects) do obj:Build() end
+    end)
+end
+
+-- Fuer den Prueflauf.
+function A._ResetVerdict()
+    verdict, engineBroken = nil, false
+    stats.autoFallback, stats.verified = nil, nil
+    for k in pairs(pending) do pending[k] = nil end
+end
+
 -- Alles neu lesen (Zielwechsel: dafuer gibt es kein UNIT_AURA).
 function Obj:Refresh()
     if self.engine then
         pcall(self.frame.UpdateAllAuras, self.frame)
+        self:AutoCheck()
         return
     end
     local unit, o = self.unit, self.opts
@@ -432,6 +584,7 @@ function Obj:ApplyLayout(opts)
     local new = Normalize(opts)
     self.opts = new
     if not self.engine then
+        self.frame:SetSize(self:Extent())
         for _, b in ipairs(self.buttons) do
             b:SetSize(new.size, new.size)
             K.SetFont(b.count, math.max(8, math.floor(new.size * 0.5)))
@@ -462,4 +615,38 @@ function Obj:ApplyLayout(opts)
     for _, p in ipairs(self.points) do c:SetPoint(unpack(p)) end
     if self.shown == false then c:Hide() end
     self:SetUnit(self.unit)
+end
+
+--------------------------------------------------
+-- Nachsehen: was steht wirklich da? (/wcui auren)
+--------------------------------------------------
+-- Fuer den Beta-Client. "Keine Debuffs" hat mehrere moegliche Gruende -
+-- das Spiel liefert keine, der Container legt keine Symbole an, oder er
+-- legt sie an und sie sind nicht zu sehen. Diese Zeilen trennen die drei.
+--------------------------------------------------
+
+function A.Inspect()
+    local out = { "Auren: Weg " .. A.mode .. " · " .. A.StatusText() }
+    local target = _G.UnitExists and K.Bool(_G.UnitExists("target"), false)
+    if not target then
+        out[#out + 1] = "Kein Ziel gewählt – mit einem Gegner als Ziel noch einmal /wcui auren."
+        return out
+    end
+    local function Said(filter)
+        local n, why = ApiCount("target", filter)
+        return type(n) == "number" and tostring(n) or why
+    end
+    out[#out + 1] = "Das Spiel nennt am Ziel: " .. Said("HARMFUL") .. " Debuffs, davon eigene: " .. Said("HARMFUL|PLAYER")
+    for obj in pairs(objects) do
+        local u = obj.unit
+        if u and (u == "target" or K.Bool(_G.UnitIsUnit and _G.UnitIsUnit(u, "target"), false)) then
+            local total, shown = Visible(obj)
+            local w, h = obj.frame:GetWidth(), obj.frame:GetHeight()
+            out[#out + 1] = string.format("%s [%s]: %s, %d Symbole, %d gezeigt, Rahmen %s, %dx%d",
+                u, obj.opts.filter, obj.engine and "Container" or "alter Weg", total, shown,
+                (obj.frame.IsVisible and obj.frame:IsVisible()) and "sichtbar" or "unsichtbar",
+                math.floor((type(w) == "number" and w or 0) + 0.5), math.floor((type(h) == "number" and h or 0) + 0.5))
+        end
+    end
+    return out
 end

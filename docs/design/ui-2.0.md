@@ -1,6 +1,7 @@
 # WeintCodex UI 2.0 – Konzept
 
-Stand: Richtung abgestimmt (nach 6.0.0.6), Phase 1 gebaut (6.1.0.0).
+Stand: Richtung abgestimmt (nach 6.0.0.6), Phase 1 gebaut (6.1.0.0),
+Phase 2 gebaut (6.2.0.0).
 Bildlicher Entwurf:
 Design-Canvas „WeintCodex UI 2.0“ (sechs Ansichten: Kampf, Unterwegs,
 Gestaltungsmodus, Einstellungen, Taschen/Tooltip/Mitteilungen,
@@ -142,7 +143,13 @@ Testmodus geprüft werden kann.
    Flächen, Schadensanzeige in Ruhe zusammengeklappt. Stand im Detail:
    `docs/systems/ui.md`, Abschnitt „UI 2.0, Phase 1“.
 2. **Cockpit.** Spieler, Ziel, ZdZ, Fokus, Zauberbalken, Kombopunkte,
-   Plaketten, Aktionsleisten nach dem Entwurf.
+   Plaketten, Aktionsleisten nach dem Entwurf. **Gebaut in 6.2.0.0, im
+   Spiel ungeprüft:** Rahmen mit Maus-Hervorhebung und getöntem Grund,
+   Stufe in Schwierigkeitsfarbe, Porträt-Rückfall, Kombopunkte als
+   Segmente, Hinrichtungsmarke, kurze Tastenkürzel, Schadensanzeige nach
+   Inhalt; dazu die Selbstheilung der Auren. Offen: Auren am Zielrahmen
+   nach eigen/fremd getrennt (der Container kennt nur Filter; eigene
+   und alle Debuffs in zwei Reihen hieße doppelte Symbole).
 3. **Bedienung.** Gestaltungsmodus mit Einstellkarte, Einstellungsfenster
    mit Suche, Profile und Profil-Code.
 4. **Rand.** Minikarte, Questliste, Chat, Infoleiste mit Levelhilfe,

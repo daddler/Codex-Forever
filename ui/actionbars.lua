@@ -42,6 +42,7 @@ local defaults = {
     borderColor  = K.ColorDefault("plateBorder"),
     hotkeys      = true,
     hotkeySize   = 11,
+    shortHotkeys = true,     -- "Maustaste 4" -> "M4", "s-1" -> "S1"
     macroNames   = false,
     countSize    = 12,
     rangeColor   = true,
@@ -139,6 +140,46 @@ local function IsEmpty(b)
     return not K.Bool(_G.HasAction(action), true)
 end
 
+-- Kurze Tastenkuerzel. Das Spiel schreibt die Belegung aus ("Maustaste 4",
+-- "s-1") und schneidet sie auf einem 40-px-Knopf ab ("Mau...", im Beta-
+-- Test gesehen). Die Reihenfolge zaehlt: erst ganze Namen, dann Teile.
+local HOTKEY_SUBS = {
+    { "Mittlere Maustaste", "M3" },
+    { "Maustaste%s*", "M" },
+    { "Mausrad[%s%a]*[Hh]och", "MU" }, { "Mausrad[%s%a]*[Oo]ben", "MU" },
+    { "Mausrad[%s%a]*[Rr]unter", "MD" }, { "Mausrad[%s%a]*[Uu]nten", "MD" },
+    { "Num[%s%-]*[Pp]ad%s*", "N" }, { "Ziffernblock%s*", "N" },
+    { "Leertaste", "Lt" }, { "Rücktaste", "Rt" },
+    { "SHIFT%-", "S" }, { "STRG%-", "C" }, { "CTRL%-", "C" }, { "ALT%-", "A" },
+    { "^s%-", "S" }, { "^c%-", "C" }, { "^a%-", "A" },
+    { "([SCA])s%-", "%1S" }, { "([SCA])c%-", "%1C" }, { "([SCA])a%-", "%1A" },
+}
+function AB.ShortHotkey(text)
+    if type(text) ~= "string" or text == "" then return text end
+    if _G.RANGE_INDICATOR and text == _G.RANGE_INDICATOR then return text end
+    for _, sub in ipairs(HOTKEY_SUBS) do text = text:gsub(sub[1], sub[2]) end
+    return text
+end
+
+local function ShortenHotkey(b)
+    local d = skinned[b]
+    local hk = d and d.hotkey
+    if not hk or not Opt("shortHotkeys") then return end
+    local t = hk:GetText()
+    if type(t) ~= "string" then return end
+    local short = AB.ShortHotkey(t)
+    if short ~= t then hk:SetText(short) end
+end
+
+local hotkeyHooked = {}
+local function HookHotkeys(b)
+    if hotkeyHooked[b] or not _G.hooksecurefunc then return end
+    if type(b.UpdateHotkeys) == "function" then
+        hotkeyHooked[b] = true
+        _G.hooksecurefunc(b, "UpdateHotkeys", ShortenHotkey)
+    end
+end
+
 local function Apply(b, d)
     d.border:SetShown(Opt("border"))
     local c = K.GetColor(KEY, "borderColor")
@@ -155,6 +196,8 @@ local function Apply(b, d)
     end
     if d.count then K.SetFont(d.count, Opt("countSize")) end
     if d.name then d.name:SetAlpha(Opt("macroNames") and 1 or 0) end
+    HookHotkeys(b)
+    ShortenHotkey(b)
 end
 
 local function SkinAll()
@@ -255,6 +298,10 @@ local function Enable()
             _G.hooksecurefunc(emf, "ExitEditMode", function() K.AfterCombat(Place) end)
         end
     end
+    -- Aeltere Clients setzen die Tastenkuerzel ueber eine globale Funktion.
+    if _G.hooksecurefunc and _G.ActionButton_UpdateHotkeys then
+        _G.hooksecurefunc("ActionButton_UpdateHotkeys", function(b) ShortenHotkey(b) end)
+    end
     if _G.hooksecurefunc and _G.ActionButton_UpdateRangeIndicator then
         _G.hooksecurefunc("ActionButton_UpdateRangeIndicator", OnRange)
     end
@@ -292,6 +339,9 @@ K.Register({
             B:Row({ type = "toggle", label = "Tastenkürzel", key = "hotkeys" },
                   { type = "slider", label = "Größe der Tastenkürzel", key = "hotkeySize", min = 8, max = 18, step = 1, format = px,
                     disabled = function() return not K.Get(KEY, "hotkeys") end })
+            B:Row({ type = "toggle", label = "Kurze Tastenkürzel", key = "shortHotkeys",
+                    description = "„M4“ statt „Maustaste 4“, „S1“ statt „s-1“." },
+                  { type = "empty" })
             B:Row({ type = "toggle", label = "Makronamen", key = "macroNames" },
                   { type = "slider", label = "Größe der Stapelzahl", key = "countSize", min = 8, max = 20, step = 1, format = px })
             B:Section("Anordnung")

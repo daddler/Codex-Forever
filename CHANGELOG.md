@@ -9,6 +9,48 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.2.0.0] – 2026-09-24
+
+UI 2.0, Phase 2: das Cockpit – und ein neuer Anlauf bei den Debuffs.
+
+**Debuffs: WeintCodex hilft sich jetzt selbst.** Nennt das Spiel Auren am Gegner und die Symbole erscheinen trotzdem nicht, liest WeintCodex sie selbst und sagt es einmal im Chat. /wcui auren zeigt mit einem Gegner als Ziel, was das Spiel meldet und was davon zu sehen ist; unter Namensplaketten → Auren lässt sich der Weg auch von Hand wählen.
+
+**Spieler- und Zielrahmen reagieren wie die Plaketten.** Die Maus hellt sie auf, fehlendes Leben ist dunkel in der Balkenfarbe, und die Stufe des Ziels steht in der Farbe ihrer Schwierigkeit, Elite mit „+“. Ein Porträt ohne Modell zeigt das Bild statt eines schwarzen Kästchens.
+
+**Kombopunkte als fünf einzelne Segmente** mittig unter der Figur.
+
+**Kurze Tastenkürzel auf den Aktionsknöpfen:** „M4“ statt „Maustaste 4“, „S1“ statt „s-1“.
+
+**Die Schadensanzeige ist so hoch wie ihr Inhalt.** Keine leere schwarze Fläche mehr unter einer einzigen Zeile.
+
+**Hinrichtungsmarke auf Wunsch:** ein fester Strich im Plakettenbalken zeigt, ab wann Hinrichten wirkt (Namensplaketten → Allgemein).
+
+### Technisch
+
+- Auren: Der Container war 1 × 1 groß – ordnet oder beschneidet er seine
+  Symbole innerhalb seiner Fläche, blieb kein Platz. Jetzt so groß wie
+  alle Symbole zusammen, `SetClipsChildren(false)`. Weg umschaltbar im
+  laufenden Spiel (`UIAuras.SetMode`: auto / engine / legacy).
+  Selbstheilung in „Automatisch“: nennt `GetAuraDataByIndex` Auren (nur
+  gezählt, kein Feld gelesen) und der Container zeigt 0,6 s später keine,
+  wird für alle Objekte auf den alten Weg umgebaut und einmal gemeldet.
+  `/wcui auren`: Weg, Zustand, was das Spiel am Ziel nennt, und je
+  Objekt angelegte/gezeigte Symbole und Rahmengröße. **Im Spiel
+  ungeprüft.**
+- Kombopunkte: fünf Balken mit Bereich i-1..i, alle mit demselben Stand –
+  kein Vergleich mit einem geheimen Wert.
+- Einheitenrahmen: `tintedBg`, `hover`, Stufe über `LevelParts`
+  (Schwierigkeitsfarbe, `+` für Elite, `??` unbekannt); 3D-Porträt setzt
+  die Kamera bei `OnModelLoaded` und fällt ohne Modelldatei auf das Bild
+  zurück.
+- Aktionsleisten: `AB.ShortHotkey`, Haken an `UpdateHotkeys`.
+- Schadensanzeige: `fitRows`.
+- Plaketten: `executeMark`/`executeAt` (fester Strich, keine Rechnung mit
+  dem Leben).
+- `load_test.lua`: Kombosegmente, Stufe, Tastenkürzel, Höhe der
+  Schadensanzeige, Hinrichtungsmarke, Auren-Weg und Selbstheilung. Die
+  Attrappe merkt sich Bereich und Stand von Balken.
+
 ## [6.1.0.0] – 2026-09-24
 
 UI 2.0, erster Teil: das Fundament aus dem neuen Konzept

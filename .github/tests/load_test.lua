@@ -1315,6 +1315,45 @@ do
         assert(#o.buttons == 2, "alter Weg haelt sich nicht an max (" .. #o.buttons .. ")")
     end)
     Check(ok, "Auren ueber GetAuraDataByIndex, hoechstens max" .. (ok and "" or (": " .. tostring(err))))
+
+    -- Der Weg laesst sich im laufenden Spiel umschalten, und /wcui auren
+    -- sagt, was das Spiel nennt und was davon zu sehen ist. Der Container
+    -- ist so gross wie seine Symbole (bis 6.1.0.0: 1 x 1).
+    _G.C_AddOns = { IsAddOnLoaded = function() return true end, LoadAddOn = function() end }
+    _G.AnchorUtil = { FlowDirection = { Left = 1, Right = 2, Up = 3, Down = 4 } }
+    A._ResetEngineProbe()
+    ok, err = pcall(function()
+        local o = A.Create(UIParent, { filter = "HARMFUL", max = 5, size = 20, spacing = 2 })
+        assert(o.engine, "Container erwartet")
+        assert(o.frame:GetWidth() == 110 and o.frame:GetHeight() == 22,
+            "Container nicht so gross wie seine Symbole: " .. o.frame:GetWidth() .. "x" .. o.frame:GetHeight())
+        o:SetPoint("BOTTOMLEFT", UIParent, "TOPLEFT", 0, 3)
+        o:SetUnit("target")
+        A.SetMode("legacy")
+        assert(not o.engine and o.buttons and #o.buttons == 3, "Umschalten auf den alten Weg liest nicht neu")
+        local lines = A.Inspect()
+        local joined = table.concat(lines, " | ")
+        assert(joined:find("nennt am Ziel: 3", 1, true) and joined:find("alter Weg, 3 Symbole, 3 gezeigt", 1, true),
+            "Auskunft unvollstaendig: " .. joined)
+        A.SetMode("auto")
+        assert(o.engine, "zurueck auf Automatisch nimmt den Container nicht")
+        -- Selbstheilung: das Spiel nennt 3 Auren, der Container zeigt
+        -- keine -> ab jetzt selbst lesen, einmal gemeldet.
+        local oldAfter = _G.C_Timer.After
+        _G.C_Timer.After = function(_, fn) fn() end
+        A._ResetVerdict()
+        o:Refresh()
+        _G.C_Timer.After = oldAfter
+        assert(not o.engine and A.stats.autoFallback and #o.buttons == 3,
+            "Container ohne Symbole: kein Rueckfall auf den alten Weg")
+        assert(A.StatusText():find("liest selbst", 1, true), "Rueckfall nicht im Zustand: " .. A.StatusText())
+        A._ResetVerdict()
+        A.SetMode("legacy") A.SetMode("auto")
+    end)
+    Check(ok, "Auren: Weg umschaltbar, Container in voller Groesse, /wcui auren gibt Auskunft"
+        .. (ok and "" or (": " .. tostring(err))))
+    _G.C_AddOns, _G.AnchorUtil = nil, nil
+    A._ResetEngineProbe()
     _G.C_UnitAuras = nil
 end
 
@@ -1715,6 +1754,55 @@ do
         if party then party:Show() end
     end)
     Check(ok, "Testmodus: Band, Beispielziel, Beispielgruppe, Schadensanzeige 'Beispiel', endet im Kampf"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- UI 2.0, Phase 2: das Cockpit im Einzelnen.
+do
+    local UF = WeintCodex.UIUnitFrames
+    local AB = WeintCodex.UIActionBars
+    local DM = WeintCodex.UIDamageMeter
+    local NP = WeintCodex.UINameplates
+    local ok, err = pcall(function()
+        -- Kombopunkte: fuenf Segmente, alle mit demselben Stand, jedes von
+        -- i-1 bis i - kein Vergleich mit dem (womoeglich geheimen) Stand.
+        local tf = UF.frames.target
+        tf:SetCombo(3, 5)
+        local pips = tf._combo.pips
+        assert(#pips == 5 and tf._combo:IsShown(), "fuenf Segmente erwartet: " .. #pips)
+        for i, pip in ipairs(pips) do
+            assert(pip._min == i - 1 and pip._max == i and pip._value == 3,
+                "Segment " .. i .. " falsch: " .. tostring(pip._min) .. "-" .. tostring(pip._max) .. " = " .. tostring(pip._value))
+        end
+        -- Stufe in Schwierigkeitsfarbe, Elite mit +.
+        local oldLevel, oldCls = _G.UnitLevel, _G.UnitClassification
+        _G.UnitLevel = function() return 23 end
+        _G.UnitClassification = function() return "elite" end
+        assert(UF.LevelParts("target") == "23+", "Elite ohne +")
+        _G.UnitLevel = function() return -1 end
+        assert(UF.LevelParts("target") == "??", "unbekannte Stufe nicht ??")
+        _G.UnitLevel, _G.UnitClassification = oldLevel, oldCls
+        -- Kurze Tastenkuerzel.
+        assert(AB.ShortHotkey("Maustaste 4") == "M4" and AB.ShortHotkey("s-1") == "S1"
+            and AB.ShortHotkey("c-s-2") == "CS2" and AB.ShortHotkey("Mausrad hoch") == "MU"
+            and AB.ShortHotkey("E") == "E", "Tastenkuerzel nicht gekuerzt")
+        -- Schadensanzeige: so hoch wie ihre Zeilen.
+        DM.ShowTest(true)
+        local h5 = DM.Window(1).frame:GetHeight()
+        DM.ShowTest(false)
+        _G.C_DamageMeter = nil
+        DM.Refresh()
+        local hEmpty = DM.Window(1).frame:GetHeight()
+        assert(h5 > hEmpty, "Hoehe folgt dem Inhalt nicht: " .. h5 .. " / " .. hEmpty)
+        -- Plakette: Hinrichtungsmarke bei 20 % der Breite.
+        K.Set("nameplates", "executeMark", true)
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        local p = NP.plates["nameplate1"]
+        assert(p.exec:IsShown(), "Hinrichtungsmarke fehlt")
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        K.Set("nameplates", "executeMark", false)
+    end)
+    Check(ok, "Cockpit: Kombosegmente ohne Vergleich, Stufe 23+/??, kurze Tastenkuerzel, Schadensanzeige nach Inhalt, Hinrichtungsmarke"
         .. (ok and "" or (": " .. tostring(err))))
 end
 
