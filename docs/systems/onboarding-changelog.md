@@ -9,12 +9,24 @@
 
 ## Die Einführung
 
-Elf Seiten in fünf Kapiteln: *Erste Schritte*, *Der Abend*, *Dein
-Charakter*, *Die Gilde*, *System*.
+Vierzehn Seiten in sechs Kapiteln: *Erste Schritte*, *Der Abend*,
+*Dein Charakter*, *Die Gilde*, *Oberfläche & Komfort* (seit 6.0.0.0),
+*System*.
 
 `TOUR_EDITION` steht auf `1`. Wird die Tour neu geschrieben, steigt die
 Zahl — und alle bekommen sie noch einmal, auch wer das Addon seit
-Jahren benutzt.
+Jahren benutzt. Das Kapitel *Oberfläche & Komfort* hat sie **nicht**
+erhöht: es ist eine Ergänzung, keine Neufassung, und wer schon länger
+dabei ist, erfährt von der Oberfläche über das Update-Popup und die
+Frage beim Einloggen. Zwölf bekannte Seiten ein zweites Mal
+durchzuklicken, um zwei neue zu lesen, wäre der Weg, die Tour
+ungelesen wegzuklicken.
+
+**Nach der Einführung kommt einmal je Konto die Frage**, ob die
+WeintCodex-Oberfläche verwendet werden soll (`ui/welcome.lua`, über
+`Onboarding.OnClosed`). Das Kapitel erklärt deshalb nur, was es gibt
+und wo man es später einschaltet – das „Ja/Nein“ steht nicht in der
+Tour. Details: `docs/systems/ui.md`.
 
 **Eine Seite mit `feature` wird ausgelassen**, wenn das Zugriffsprofil
 den Bereich nicht freigibt. Sonst bewirbt die Tour Bereiche, die der
