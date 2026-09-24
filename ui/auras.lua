@@ -21,6 +21,11 @@
 --     Symbole verstecken, nicht den Rahmen.
 --
 -- Gewaehlt wird einmal, beim ersten Bedarf, und fuer alle gleich.
+--
+-- RESTZEIT ALS ZAHL (opts.timer): oben links am Symbol, wie in
+-- EllesmereUI. Im Engine-Weg zaehlt das Spiel selbst (SetDurationText),
+-- auch geheime Werte. Im alten Weg ein Takt je Objekt, zehnmal je
+-- Sekunde, nur solange ein Symbol mit Ablauf zu sehen ist.
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -57,7 +62,7 @@ function A._ResetEngineProbe() engine = nil end
 -- Ein Symbol
 --------------------------------------------------
 
-local function StyleIcon(button, size)
+local function StyleIcon(button, size, o)
     local icon = button:CreateTexture(nil, "ARTWORK")
     icon:SetAllPoints(button)
     if icon.SetTexCoord then icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
@@ -82,7 +87,22 @@ local function StyleIcon(button, size)
     -- Die Schrift MUSS stehen, bevor das Spiel die Zahl setzt: eine
     -- FontString ohne Schrift ist in SetText ein harter Fehler.
     K.SetFont(count, math.max(8, math.floor(size * 0.5)))
-    return icon, cd, count
+
+    local dur = K.NewText(top, math.max(9, math.floor(size * 0.46)))
+    dur:SetPoint("TOPLEFT", button, "TOPLEFT", -3, 4)
+    dur:SetJustifyH("LEFT")
+    dur:SetShown(o and o.timer and true or false)
+    return icon, cd, count, dur
+end
+
+-- Restzeit in Worten des Spiels: Sekunden als Zahl, ab einer Minute "2m",
+-- ab einer Stunde "1h". Nur fuer offene Zahlen.
+function A.FormatRemaining(sec)
+    if type(sec) ~= "number" or sec <= 0 then return "" end
+    if sec >= 3600 then return string.format("%dh", math.floor(sec / 3600 + 0.5)) end
+    if sec >= 60 then return string.format("%dm", math.floor(sec / 60 + 0.5)) end
+    if sec < 3 then return (string.format("%.1f", sec):gsub("%.", ",")) end
+    return string.format("%d", math.floor(sec + 0.5))
 end
 
 --------------------------------------------------
@@ -126,11 +146,12 @@ local function BuildEngine(self)
         layout = { elementWidth = size, elementHeight = size,
                    elementSpacing = o.spacing, lineSpacing = o.spacing },
         initializeFrame = function(button)
-            local icon, cd, count = StyleIcon(button, size)
+            local icon, cd, count, dur = StyleIcon(button, size, o)
             pcall(button.SetMouseClickEnabled, button, false)
             pcall(button.SetIcon, button, icon)
             pcall(button.SetDurationCooldown, button, cd)
             pcall(button.SetApplicationCount, button, count, {})
+            if o.timer then pcall(button.SetDurationText, button, dur, {}) end
         end,
     })
     return c
@@ -154,7 +175,7 @@ end
 local function LegacyButton(self)
     local b = CreateFrame("Frame", nil, self.frame)
     b:SetSize(self.opts.size, self.opts.size)
-    b.icon, b.cd, b.count = StyleIcon(b, self.opts.size)
+    b.icon, b.cd, b.count, b.dur = StyleIcon(b, self.opts.size, self.opts)
     b:Hide()
     return b
 end
@@ -170,20 +191,46 @@ local function PaintLegacy(b, unit, aura)
         b.count:SetText((type(n) == "number" and n > 1) and tostring(n) or "")
     end
     b.cd:Hide()
+    b._exp, b._durObj = nil, nil
     if cu and cu.GetAuraDuration and type(id) ~= "nil" and b.cd.SetCooldownFromDurationObject then
         local dur = cu.GetAuraDuration(unit, id)
         if type(dur) ~= "nil" then
             b.cd:SetCooldownFromDurationObject(dur)
             b.cd:Show()
+            b._durObj = dur
         end
     else
         local d, e = K.Plain(aura.duration), K.Plain(aura.expirationTime)
         if type(d) == "number" and type(e) == "number" and d > 0 then
             b.cd:SetCooldown(e - d, d)
             b.cd:Show()
+            b._exp = e
         end
     end
+    b.dur:SetText("")
     b:Show()
+end
+
+-- Die Zahl eines Symbols im alten Weg. Offene Zahlen rechnet Lua; eine
+-- geheime Restzeit (Dauerobjekt) formatiert der Client selbst.
+local function TickLegacy(b)
+    if b._exp and _G.GetTime then
+        b.dur:SetText(A.FormatRemaining(b._exp - _G.GetTime()))
+    elseif b._durObj and b._durObj.GetRemainingDuration then
+        local ok, rem = pcall(b._durObj.GetRemainingDuration, b._durObj)
+        if ok and type(rem) ~= "nil" then
+            local plain = K.Plain(rem)
+            if type(plain) == "number" then
+                b.dur:SetText(A.FormatRemaining(plain))
+            else
+                b.dur:SetFormattedText("%.0f", rem)
+            end
+        else
+            b.dur:SetText("")
+        end
+    else
+        b.dur:SetText("")
+    end
 end
 
 local function AuraAt(unit, i, filter)
@@ -239,6 +286,15 @@ function A.Create(parent, opts)
         self.buttons = {}
         self.events = CreateFrame("Frame")
         self.events:SetScript("OnEvent", function() self:Refresh() end)
+        local acc = 0
+        self.ticker = function(_, el)
+            acc = acc + (el or 0)
+            if acc < 0.1 then return end
+            acc = 0
+            for _, b in ipairs(self.buttons) do
+                if b:IsShown() then TickLegacy(b) end
+            end
+        end
     end
     return self
 end
@@ -301,6 +357,9 @@ function Obj:Refresh()
         if not ok then K.Report("auren", err) end
     end
     for i = shown + 1, #self.buttons do self.buttons[i]:Hide() end
+    -- Die Zahlen laufen nur, solange es etwas zu zaehlen gibt.
+    self.events:SetScript("OnUpdate", (o.timer and shown > 0) and self.ticker or nil)
+    if o.timer then for i = 1, shown do TickLegacy(self.buttons[i]) end end
 end
 
 -- Groesse, Anzahl oder Filter geaendert. Die Engine kennt fuer die Groesse
@@ -314,13 +373,15 @@ function Obj:ApplyLayout(opts)
         for _, b in ipairs(self.buttons) do
             b:SetSize(new.size, new.size)
             K.SetFont(b.count, math.max(8, math.floor(new.size * 0.5)))
+            K.SetFont(b.dur, math.max(9, math.floor(new.size * 0.46)))
+            b.dur:SetShown(new.timer and true or false)
         end
         self:Refresh()
         return
     end
     if old.size == new.size and old.spacing == new.spacing and old.filter == new.filter
        and old.anchor == new.anchor and old.growth == new.growth and old.growthV == new.growthV
-       and old.perRow == new.perRow then
+       and old.perRow == new.perRow and (old.timer and true or false) == (new.timer and true or false) then
         pcall(self.frame.SetAuraGroupMaxFrameCount, self.frame, "wc", new.max)
         return
     end

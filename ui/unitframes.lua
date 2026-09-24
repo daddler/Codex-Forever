@@ -81,6 +81,8 @@ for _, u in ipairs(UNITS) do
     defaults[u .. "_left"]    = s.left
     defaults[u .. "_right"]   = s.right
     defaults[u .. "_portrait"] = s.portrait or "none"
+    -- Das Ziel spiegelt den Spieler: Portraet rechts (wie in EllesmereUI).
+    defaults[u .. "_portraitRight"] = (u == "target")
     if s.cast then defaults[u .. "_cast"] = true end
 end
 
@@ -290,9 +292,9 @@ local function Create(unit)
         local size = Opt("auraSize")
         f._auras = {
             HARMFUL = WeintCodex.UIAuras.Create(f, { filter = "HARMFUL", max = 8, size = size,
-                spacing = 3, anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = 8 }),
+                spacing = 3, anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = 8, timer = true }),
             HELPFUL = WeintCodex.UIAuras.Create(f, { filter = "HELPFUL", max = 8, size = size,
-                spacing = 3, anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = 8 }),
+                spacing = 3, anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = 8, timer = true }),
         }
         f._auras.HARMFUL:SetUnit(unit)
         f._auras.HELPFUL:SetUnit(unit)
@@ -360,10 +362,11 @@ function Frame:Layout()
     -- so breit wie eingestellt.
     local pf = self._portrait
     local inset = 0
+    local right = Opt(u .. "_portraitRight")
     if Opt(u .. "_portrait") ~= "none" then
         inset = total + 1
         pf:ClearAllPoints()
-        pf:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0)
+        pf:SetPoint(right and "TOPRIGHT" or "TOPLEFT", self, right and "TOPRIGHT" or "TOPLEFT", 0, 0)
         pf:SetSize(total, total)
         pf:Show()
         self:UpdatePortrait()
@@ -372,8 +375,8 @@ function Frame:Layout()
     end
 
     self.health:ClearAllPoints()
-    self.health:SetPoint("TOPLEFT", self, "TOPLEFT", inset, 0)
-    self.health:SetPoint("TOPRIGHT", self, "TOPRIGHT", 0, 0)
+    self.health:SetPoint("TOPLEFT", self, "TOPLEFT", right and 0 or inset, 0)
+    self.health:SetPoint("TOPRIGHT", self, "TOPRIGHT", right and -inset or 0, 0)
     self.health:SetHeight(h)
     self.power:ClearAllPoints()
     self.power:SetPoint("TOPLEFT", self.health, "BOTTOMLEFT", 0, -1)
@@ -527,7 +530,7 @@ function Frame:LayoutAuras()
     for _, r in ipairs(rows) do
         local obj = r[1]
         obj:ApplyLayout({ filter = r[2], max = 8, size = size, spacing = 3,
-            anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = 8 })
+            anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = 8, timer = true })
         obj:ClearAllPoints()
         obj:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, r[3])
     end
@@ -722,6 +725,9 @@ local function UnitPage(u)
                     { value = "3d",   text = "3D-Modell" },
                     { value = "2d",   text = "Bild" },
                     { value = "none", text = "Keins" } } })
+        B:Row({ type = "toggle", label = "Porträt rechts", key = u .. "_portraitRight",
+                disabled = function() return off() or K.Get(KEY, u .. "_portrait") == "none" end },
+              { type = "empty" })
         B:Row({ type = "slider", label = "Breite", key = u .. "_width", min = 60, max = 320, step = 1, format = px, disabled = off },
               { type = "slider", label = "Höhe", key = u .. "_height", min = 10, max = 80, step = 1, format = px, disabled = off })
         B:Row({ type = "toggle", label = "Kraftleiste", key = u .. "_power", disabled = off },

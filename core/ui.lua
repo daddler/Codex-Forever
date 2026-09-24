@@ -211,6 +211,7 @@ WeintCodex.GameColors = {
     healthFallback= {0.240, 0.720, 0.360, 1.0},
     powerFallback = {0.300, 0.500, 0.900, 1.0},
     comboPoint    = {1.000, 0.820, 0.000, 1.0},
+    questObjective= {1.000, 0.867, 0.400, 1.0},   -- "8/10" neben dem Namen
 }
 
 --------------------------------------------------

@@ -27,8 +27,13 @@ Messart und eigenem Zeitraum, dazu Kampfdauer in der Kopfzeile und
 Knöpfe für neues Fenster, Leeren und Einstellungen. Pro Sekunde steht
 jetzt eine runde Zahl statt vieler Nachkommastellen.
 
+**Namensplaketten zeigen deinen Questfortschritt und die Restzeit deiner
+Debuffs.** Gehört ein Gegner zu einer deiner Quests, steht links vom
+Namen, wie weit du bist, etwa „8/10“. Über jedem Debuff-Symbol stehen
+die verbleibenden Sekunden.
+
 **Spieler, Ziel und Fokus zeigen ein Porträt.** Als 3D-Modell oder Bild,
-einstellbar je Rahmen.
+einstellbar je Rahmen; beim Ziel rechts, gespiegelt zum Spieler.
 
 **Minikarte und Chat aufgeräumt.** Koordinaten und Uhrzeit oben in der
 Karte, das Gebiet unten; die Knöpfe des Spiels stehen bei Karte und Chat
@@ -58,6 +63,14 @@ behalten willst.
   gespeichert (`w1mode` … `w4session`), `CreateAbbreviateConfig` für
   runde Zahlen, `GetSessionDurationSeconds` für die Kampfdauer, eigene
   Symbole `media/ui/icon_*.tga`.
+- Plaketten: Questfortschritt aus `C_TooltipInfo.GetUnit` (Zeilen
+  `QuestTitle`/`QuestObjective`, nur Quests aus dem eigenen Log über
+  `C_QuestLog.IsOnQuest`, geheime Werte = unbekannt, ohne lesbaren Stand
+  ein „!“ statt einer geratenen Zahl, nicht in Instanzen, je Einheit
+  zwischengespeichert bis `QUEST_LOG_UPDATE`). Symbole 24 px mit
+  Restzeit: `ui/auras.lua` registriert im Engine-Weg
+  `SetDurationText` (das Spiel zählt, auch geheime Werte), im alten Weg
+  ein Takt je Objekt.
 - Neu: `ui/questtracker.lua` (Fläche hinter `ObjectiveTrackerFrame`,
   Höhe aus der untersten sichtbaren Zeile). Einheitenrahmen mit Porträt
   (`PlayerModel` bzw. `SetPortraitTexture`), Spieler- und Zielrahmen

@@ -1278,6 +1278,48 @@ do
     _G.C_UnitAuras = nil
 end
 
+-- Questfortschritt auf der Plakette: aus den Tooltipdaten, nur eigene
+-- Quests, nichts Geratenes.
+do
+    local NP = WeintCodex.UINameplates
+    local ok, err = pcall(function()
+        _G.Enum = _G.Enum or {}
+        _G.Enum.TooltipDataLineType = { QuestTitle = 17, QuestObjective = 8 }
+        local lines = {
+            { type = 17, id = 500 },
+            { type = 8, completed = false, numFulfilled = 8, numRequired = 10, leftText = "Ohr eines Kultisten: 8/10" },
+        }
+        _G.C_TooltipInfo = { GetUnit = function() return { lines = lines } end }
+        _G.C_QuestLog = _G.C_QuestLog or {}
+        local onQuest = true
+        _G.C_QuestLog.IsOnQuest = function() return onQuest end
+        assert(NP.QuestProgress("nameplate1") == "8/10", "8/10 erwartet: " .. tostring(NP.QuestProgress("nameplate1")))
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        local p = NP.plates["nameplate1"]
+        assert(p.quest:IsShown() and p.quest:GetText() == "8/10", "Plakette zeigt den Stand nicht")
+        onQuest = false
+        assert(NP.QuestProgress("nameplate1") == nil, "Quest eines anderen zaehlt nicht")
+        onQuest = true
+        lines[2].completed = true
+        assert(NP.QuestProgress("nameplate1") == nil, "erledigtes Ziel zaehlt nicht")
+        lines[2] = { type = 8, completed = false, leftText = "Gebiet gesaeubert: 40 %" }
+        assert(NP.QuestProgress("nameplate1") == "40%", "Gebietsquest in Prozent")
+        lines[2] = { type = 8, completed = false }
+        assert(NP.QuestProgress("nameplate1") == "!", "ohne lesbaren Stand: markiert, nicht geraten")
+        -- Questlog geaendert: neu gelesen.
+        lines[2] = { type = 8, completed = false, numFulfilled = 9, numRequired = 10 }
+        stub.FireEvent("QUEST_LOG_UPDATE")
+        assert(p.quest:GetText() == "9/10", "nach Questlog-Aenderung nicht neu gelesen")
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        _G.C_TooltipInfo, _G.C_QuestLog.IsOnQuest = nil, nil
+    end)
+    Check(ok, "Plakette: Questfortschritt 8/10, nur eigene, Prozent, nichts geraten"
+        .. (ok and "" or (": " .. tostring(err))))
+    Check(WeintCodex.UIAuras.FormatRemaining(7.2) == "7" and WeintCodex.UIAuras.FormatRemaining(125) == "2m"
+        and WeintCodex.UIAuras.FormatRemaining(1.44) == "1,4" and WeintCodex.UIAuras.FormatRemaining(-1) == "",
+        "Restzeit am Symbol: 7 / 2m / 1,4 / abgelaufen leer")
+end
+
 -- Freundliche Plaketten, und die Sperre in Instanzen.
 do
     local NP = WeintCodex.UINameplates

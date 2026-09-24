@@ -94,8 +94,13 @@ local defaults = {
     -- ein Muster, keine Auskunft.
     auraEnabled = true,
     auraOnlyMine = true,
-    auraSize = 22,
+    auraSize = 24,
     auraMax = 5,
+    auraTimer = true,          -- Restzeit oben links am Symbol
+
+    -- Questfortschritt links vom Namen ("8/10"), wenn der Gegner zu einer
+    -- deiner Quests gehoert - aus dem Tooltip des Spiels, nur draussen.
+    questProgress = true,
 
     -- Freundliche Plaketten: nur der Name, in Klassenfarbe (Vorlage:
     -- friendlyNameOnly = true, classColorFriendly = true). In Instanzen
@@ -204,7 +209,10 @@ local function Build(parent)
     p.cast = CB.Create(p)
     p.auras = WeintCodex.UIAuras.Create(p, { filter = "HARMFUL|PLAYER", max = defaults.auraMax,
         size = defaults.auraSize, spacing = 2, anchor = "BOTTOMLEFT", growth = "RIGHT",
-        growthV = "UP", perRow = defaults.auraMax })
+        growthV = "UP", perRow = defaults.auraMax, timer = defaults.auraTimer })
+    p.quest = K.NewText(textHost, 13)
+    p.quest:SetJustifyH("RIGHT")
+    p.quest:Hide()
     return p
 end
 
@@ -230,6 +238,7 @@ local function LayoutFriendly(p)
     t:SetJustifyH("CENTER")
     p.cast:Hide()
     p.auras:SetShown(false)
+    p.quest:Hide()
     p.raid:ClearAllPoints()
     p.raid:SetSize(S.raidMarkerSize, S.raidMarkerSize)
     p.raid:SetPoint("BOTTOM", t, "TOP", 0, 2)
@@ -283,7 +292,15 @@ local function Layout(p)
 
     -- Auren ueber dem Namen, linksbuendig.
     p.auras:ApplyLayout({ filter = AuraFilter(), max = S.auraMax, size = S.auraSize,
-        spacing = 2, anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = S.auraMax })
+        spacing = 2, anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = S.auraMax,
+        timer = S.auraTimer })
+    -- Questfortschritt links neben der Namenszeile, ausserhalb des Balkens:
+    -- so ueberdeckt er weder Namen noch Stufe.
+    K.SetFont(p.quest, S.nameSize + 2)
+    p.quest:ClearAllPoints()
+    p.quest:SetPoint("BOTTOMRIGHT", p, "TOPLEFT", -2, 2)
+    local qc = WeintCodex.GameColors.questObjective
+    p.quest:SetTextColor(qc[1], qc[2], qc[3], 1)
     p.auras:ClearAllPoints()
     p.auras:SetPoint("BOTTOMLEFT", p, "TOPLEFT", 0, (S.textTop ~= "none" and S.nameSize or 0) + 8)
     p.auras:SetShown(S.auraEnabled)
@@ -524,12 +541,91 @@ local function UpdateRaidIcon(p)
     end
 end
 
+--------------------------------------------------
+-- Questfortschritt
+--------------------------------------------------
+-- Gehoert der Gegner zu einer deiner Quests, steht links vom Namen, wie
+-- weit du bist ("8/10", bei Gebietsquests "40%"). Die Auskunft kommt aus
+-- den Tooltipdaten des Spiels (C_TooltipInfo.GetUnit): eine Zeile
+-- "Questziel" traegt erledigt/noetig, eine Zeile "Questtitel" davor die
+-- Quest. Nur Quests aus DEINEM Questlog zaehlen (C_QuestLog.IsOnQuest) -
+-- sonst stuende das Ziel eines Gruppenmitglieds da. Geheime Werte
+-- zaehlen als "unbekannt": dann steht nichts, statt einer geratenen Zahl.
+--
+-- Je Einheit einmal gelesen; neu bei jeder Aenderung des Questlogs. In
+-- Instanzen nicht (dort gibt es keine Questgegner, und der Tooltip waere
+-- je Plakette Arbeit ohne Ertrag).
+
+local questCache = {}   -- [unit] = Text oder false
+
+function NP.QuestProgress(unit)
+    local ti = _G.C_TooltipInfo
+    local LT = _G.Enum and _G.Enum.TooltipDataLineType
+    if not (ti and ti.GetUnit and LT and LT.QuestObjective) then return nil end
+    local ok, info = pcall(ti.GetUnit, unit)
+    if not ok or type(info) ~= "table" or type(info.lines) ~= "table" then return nil end
+    local ql = _G.C_QuestLog
+    local questID
+    for _, line in ipairs(info.lines) do
+        local kind = K.Plain(line.type)
+        if kind == LT.QuestTitle then
+            local id = K.Plain(line.id)
+            questID = type(id) == "number" and id or nil
+        elseif kind == LT.QuestObjective then
+            local mine = not questID or not (ql and ql.IsOnQuest) or K.Bool(ql.IsOnQuest(questID), true)
+            local done = K.Plain(line.completed)
+            local have, need = K.Plain(line.numFulfilled), K.Plain(line.numRequired)
+            local text = K.Plain(line.leftText)
+            if type(text) ~= "string" then text = nil end
+            if done == nil and type(have) == "number" and type(need) == "number" then done = have >= need end
+            if mine and done == false then
+                local pct = text and text:match("(%d+)%s*%%")
+                if pct then return pct .. "%" end
+                if type(have) == "number" and type(need) == "number" and need > 0 then
+                    return have .. "/" .. need
+                end
+                local a, b = nil, nil
+                if text then a, b = text:match("(%d+)%s*/%s*(%d+)") end
+                if a then return a .. "/" .. b end
+                -- Ein Questgegner ohne lesbaren Stand: markieren, nicht raten.
+                return "!"
+            end
+        end
+    end
+    return nil
+end
+
+local function InInstance()
+    if not _G.IsInInstance then return false end
+    local inside, kind = _G.IsInInstance()
+    return K.Bool(inside, false) and kind ~= "none"
+end
+
+local function UpdateQuest(p)
+    if p._friendly or not S.questProgress or not p.unit or InInstance() then
+        p.quest:Hide()
+        return
+    end
+    local text = questCache[p.unit]
+    if text == nil then
+        text = NP.QuestProgress(p.unit) or false
+        questCache[p.unit] = text
+    end
+    if text then
+        p.quest:SetText(text)
+        p.quest:Show()
+    else
+        p.quest:Hide()
+    end
+end
+
 local function FullUpdate(p)
     UpdateHealth(p)
     FillTexts(p, false)
     UpdateColor(p)
     UpdateTarget(p)
     UpdateRaidIcon(p)
+    UpdateQuest(p)
     if p._friendly then return end
     if S.castEnabled then p.cast:Update() else p.cast:Hide() end
 end
@@ -569,6 +665,7 @@ local function Detach(unit)
     local p = plates[unit]
     if not p then return end
     plates[unit] = nil
+    questCache[unit] = nil
     Restore(p.nameplate)
     p.cast:Stop(false)
     p.cast:SetUnit(nil)
@@ -628,6 +725,10 @@ local function OnEvent(_, event, unit)
         return
     elseif event == "RAID_TARGET_UPDATE" then
         for _, p in pairs(plates) do UpdateRaidIcon(p) end
+        return
+    elseif event == "QUEST_LOG_UPDATE" or event == "UNIT_QUEST_LOG_CHANGED" then
+        wipe(questCache)
+        for _, p in pairs(plates) do UpdateQuest(p) end
         return
     end
 
@@ -740,6 +841,7 @@ local function Enable()
     for _, e in ipairs({
         "NAME_PLATE_UNIT_ADDED", "NAME_PLATE_UNIT_REMOVED", "UNIT_FACTION",
         "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED", "RAID_TARGET_UPDATE",
+        "QUEST_LOG_UPDATE", "UNIT_QUEST_LOG_CHANGED",
     }) do Register(events, e) end
     for e in pairs(UNIT_EVENTS) do Register(events, e) end
     for e in pairs(CAST_EVENTS) do Register(events, e) end
@@ -882,6 +984,13 @@ K.Register({
             B:Row({ type = "slider", label = "Symbolgröße", key = "auraSize", min = 14, max = 40, step = 1, format = px, disabled = off },
                   { type = "slider", label = "Höchstens", key = "auraMax", min = 1, max = 10, step = 1,
                     format = function(v) return tostring(v) end, disabled = off })
+            B:Row({ type = "toggle", label = "Restzeit am Symbol", key = "auraTimer", disabled = off,
+                    description = "Die verbleibenden Sekunden oben links." },
+                  { type = "empty" })
+            B:Section("Quests")
+            B:Row({ type = "toggle", label = "Questfortschritt neben dem Namen", key = "questProgress",
+                    description = "„8/10“, wenn der Gegner zu einer deiner Quests gehört. Nicht in Dungeons." },
+                  { type = "empty" })
             B:Note("Auf dem neuen Client liest das Spiel die Auren selbst und reicht sie an die Plakette – WeintCodex sieht sie dabei nicht. Deshalb gibt es hier keine Liste einzelner Zauber zum Ein- und Ausblenden.")
         end },
         { key = "freundlich", label = "Freundlich", build = function(B)
