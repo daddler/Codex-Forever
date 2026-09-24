@@ -751,6 +751,51 @@ do
     Check(ok, "jede Auswahlliste laesst sich oeffnen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Die Frage beim Einloggen. Sie darf nicht UEBER der Einfuehrung
+-- erscheinen (die steht im Prueflauf seit PLAYER_LOGIN da, weil der
+-- Speicher frisch ist), sondern erst, wenn diese weg ist - und beide
+-- Antworten muessen tun, was sie sagen.
+do
+    local WL = WeintCodex.UIWelcome
+    local ok, err = pcall(function()
+        assert(WeintCodex.Onboarding.IsShowing(), "Einfuehrung steht nicht (Voraussetzung)")
+        WL.MaybeAsk()
+        assert(not WL.IsShown(), "Frage erscheint ueber der Einfuehrung")
+
+        -- Einfuehrung wegklicken: jetzt kommt die Frage.
+        WeintCodex.Onboarding.Dismiss()
+        assert(WL.IsShown(), "nach der Einfuehrung kommt keine Frage")
+
+        -- "Nein": nichts eingeschaltet, Hinweis auf die Einstellungen, nie wieder fragen.
+        WL.Button("no"):Click()
+        assert(not K.UIEnabled(), "Nein hat die Oberflaeche eingeschaltet")
+        assert(WeintCodex_SavedData.ui.asked == true, "Nein wird nicht gemerkt")
+        assert(WL.BodyText():find("Einstellungen", 1, true)
+            and WL.BodyText():find("/wcui", 1, true),
+            "Nein nennt nicht, wo man es spaeter einschaltet")
+        WL.Button("settings"):Click()
+        assert(not WL.IsShown(), "Einstellungen oeffnen schliesst die Frage nicht")
+        assert((WeintCodex.Breadcrumb:GetText() or ""):find(
+            WeintCodex.Spaced(WeintCodex.Upper("Oberfläche")), 1, true),
+            "Einstellungen oeffnen landet nicht auf der Ansicht Oberflaeche")
+        WL.MaybeAsk()
+        assert(not WL.IsShown(), "nach Nein wird erneut gefragt")
+
+        -- "Ja": Hauptschalter an, Neuladen wird angeboten.
+        WL.Ask()
+        WL.Button("yes"):Click()
+        assert(K.UIEnabled(), "Ja schaltet die Oberflaeche nicht ein")
+        assert(WL.Button("reload") and WL.Button("later"), "Ja bietet kein Neuladen an")
+        WL.Button("later"):Click()
+        assert(not WL.IsShown(), "Spaeter schliesst die Frage nicht")
+
+        -- Zurueck auf den Ausgangszustand fuer die Pruefungen darunter.
+        K.SetUIEnabled(false)
+    end)
+    Check(ok, "Frage beim Einloggen: erst nach der Einfuehrung, Nein und Ja tun, was sie sagen"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Einschalten wie ein Spieler: Hauptschalter an, dann so tun, als sei
 -- neu geladen (die Module starten beim Anmelden).
 K.SetUIEnabled(true)

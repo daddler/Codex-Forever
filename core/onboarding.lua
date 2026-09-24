@@ -329,6 +329,8 @@ end
 -- nicht bei jedem Login erneut erscheint.
 --------------------------------------------------
 
+local closedListeners = {}
+
 local function Dismiss()
     if overlay then overlay:Hide() end
 
@@ -337,7 +339,25 @@ local function Dismiss()
         sd.onboarding = sd.onboarding or {}
         sd.onboarding.lastSeenVersion = WeintCodex.Version
     end
+
+    -- Wer nach der Einfuehrung etwas fragen will (die optionale
+    -- Oberflaeche, ui/welcome.lua), fragt danach - nicht darueber.
+    for _, fn in ipairs(closedListeners) do pcall(fn) end
 end
+
+-- Steht die Einfuehrung oder das Changelog-Popup gerade sichtbar da?
+-- IsVisible und nicht IsShown: das Popup liegt im Hauptfenster, und wird
+-- das geschlossen, ist das Popup weg, ohne selbst versteckt zu sein.
+function WeintCodex.Onboarding.IsShowing()
+    return overlay ~= nil and overlay:IsVisible() and true or false
+end
+
+function WeintCodex.Onboarding.OnClosed(fn)
+    closedListeners[#closedListeners + 1] = fn
+end
+
+-- Das Popup schliessen, als haette der Spieler es weggeklickt.
+WeintCodex.Onboarding.Dismiss = Dismiss
 
 --------------------------------------------------
 -- Gemeinsames Fenster fuer Tour und Changelog-Popup

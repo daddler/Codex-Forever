@@ -729,6 +729,17 @@ function WeintCodex.Settings.Show()
     WeintCodex.Navigation.ActivateIndex(index)
 end
 
+-- Die Einstellungen mit einer bestimmten Ansicht oeffnen (etwa
+-- "oberflaeche" aus der Frage beim Einloggen, ui/welcome.lua).
+function WeintCodex.Settings.Open(viewKey)
+    if viewKey then currentView = ViewByKey(viewKey).key end
+    local main = WeintCodex.MainFrame
+    if main and not main:IsShown() then main:Show() end
+    if WeintCodex.Navigation and WeintCodex.Navigation.GoToTab then
+        WeintCodex.Navigation.GoToTab("settings")
+    end
+end
+
 -- Neu zeichnen, ohne die Reiterleiste anzufassen: eine Schaltflaeche, deren
 -- Beschriftung von einem Zustand abhaengt ("Weggeklicktes vergessen (3)",
 -- "Helfer schliessen"), muss nach dem Klick neu gesetzt werden.

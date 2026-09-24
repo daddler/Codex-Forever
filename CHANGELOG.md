@@ -9,6 +9,66 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.0.0.0] – 2026-09-24
+
+**WeintCodex bringt jetzt ein eigenes Interface mit – ganz freiwillig.**
+Namensplaketten und Einheitenrahmen im Stil von WeintCodex,
+einstellbar in einem eigenen Fenster (`/wcui`, oder `/wc ui`). Beim
+ersten Einloggen fragt WeintCodex, ob du es verwenden möchtest. Bei
+„Nein“ bleibt alles, wie das Spiel es zeigt, und du kannst es jederzeit
+in den Einstellungen von WeintCodex unter „Oberfläche“ nachholen.
+
+**Gegnerische Namensplaketten zeigen auf einen Blick, woran du bist.**
+Farbe nach Lage (im Kampf, noch nicht im Kampf, neutral, von anderen
+markiert, Boss, Elite), die Stufe links, das Leben rechts, dazu ein
+Zauberbalken, der zeigt, ob sich der Zauber unterbrechen lässt, und ein
+Rahmen um dein Ziel. Jeder Textplatz ist frei belegbar; eine Vorschau im
+Einstellungsfenster zeigt jede Änderung sofort.
+
+**Spieler, Ziel, Ziel des Ziels, Fokus und Begleiter bekommen schlichte
+Rahmen.** Mit Zauberbalken, den Buffs und Debuffs deines Ziels und
+Kombopunkten für Schurken und Druiden in Katzengestalt. Mit „Rahmen
+entsperren“ ziehst du alles an seinen Platz; Rechtsklick setzt zurück.
+
+**Ein Questpfeil zeigt dir den Weg zur ausgewählten Quest.** Wähle eine
+Quest im Questlog oder setze eine Kartenmarkierung – der Pfeil zeigt die
+Richtung, darunter stehen Entfernung und ungefähre Ankunftszeit. „m“ ist
+dabei dieselbe Einheit, die das Spiel bei Zauberreichweiten „Meter“
+nennt; echte Meter oder Yards lassen sich einstellen. In Dungeons steht
+„Position unbekannt“, weil das Spiel dort keine Position nennt. Der Pfeil
+funktioniert auch ohne das neue Interface (`/wc pfeil`).
+
+**Kleine Helfer für den Alltag, jeder einzeln zuschaltbar.** Automatisch
+reparieren (wahlweise aus der Gildenbank), graue Gegenstände verkaufen,
+schneller plündern, Löschbestätigung ausfüllen, Filmsequenzen
+überspringen, Fehlermeldungen im Kampf ausblenden, Kampfhinweis,
+Bildrate, Haltbarkeitswarnung und Koordinaten auf der Weltkarte. Alle
+sind von Haus aus aus, und keiner hängt am neuen Interface.
+
+**WeintCodex erkennt den Forever-Client unter einer weiteren Kennung.**
+Damit sollte das Addon in der Addon-Liste nicht mehr als „veraltet“
+erscheinen.
+
+### Technisch
+
+Neuer Ordner `ui/` (lädt nach `modules/`): `kit.lua` (Speicher unter
+`WeintCodex_SavedData.ui`, nur Abweichungen vom Standard; Modulregister;
+Hauptschalter; Kampfsperre; Verschieben), `castbar.lua`, `nameplates.lua`,
+`unitframes.lua`, `questarrow.lua`, `comfort.lua`, `options.lua`,
+`welcome.lua`. Aufbau, Optionsnamen und Voreinstellungen folgen
+EllesmereUI 9.2.6 – **kein Code und keine Grafik daraus** (Lizenz „all
+rights reserved“); der Questpfeil entsteht aus
+`.github/scripts/make_ui_media.py`. Werte des 12.x-Clients werden als
+möglicherweise geheim behandelt (`type(x) == "nil"`, kein `a or b`,
+`SetFormattedText`, Dauerobjekte für Zauberbalken). Neu in
+`core/ui.lua`: `CreateDropdown`, `CreateColorSwatch`,
+`WeintCodex.GameColors`. `## Interface` nennt zusätzlich `16001`.
+`load_test.lua` baut jede Einstellungsseite, lässt Plaketten,
+Einheitenrahmen und Komfortfunktionen gegen die Attrappe laufen, rechnet
+die Geometrie des Questpfeils nach und spielt die Frage beim Einloggen
+in beiden Antworten durch. Nichts davon ist im echten Client geprüft.
+Details: `docs/systems/ui.md`.
+
 ## [5.2.1.1] – 2026-09-23
 
 **Das Update ist jetzt kleiner.** Die Dungeon-Bilder sparen sich

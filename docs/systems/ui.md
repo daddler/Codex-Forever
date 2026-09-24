@@ -132,12 +132,9 @@ hinein – dieselbe Einordnung wie `community` in `data/sources.lua`:
   jedes Addon, auch WeintCodex – eine Einstellung, die nach dem
   Neuladen „weg“ ist, ist dann kein Fehler dieses Addons.
 * Die Vorlage erkennt Forever an der Schnittstellennummer **16001**
-  („1.60+“) und führt sie in ihrer `.toc` neben 120000.
-  `WeintCodex.toc` nennt bisher nur 120000 – als Vermutung, wie der
-  Kommentar dort sagt. Stimmt der Bericht, erscheint WeintCodex auf
-  Forever als „veraltet“. Die Änderung ist eine Zeile und hier
-  **nicht** vorgenommen, weil sie das ganze Addon betrifft, nicht nur
-  die Oberfläche.
+  („1.60+“) und führt sie in ihrer `.toc` neben 120000. Seit 6.0.0.0
+  steht sie auch in `WeintCodex.toc` – neben 120000, für den Fall, dass
+  der Bericht nicht stimmt.
 
 ## Was es (noch) nicht gibt
 
@@ -150,6 +147,24 @@ eigenes Projekt ist oder auf Forever nicht belegt:
 | Auren auf Plaketten | Die Auren-API ist ab 12.1 für Addons mit harten Fehlern belegt (`RequiresUnitAuraAccess`), und nichts davon ist auf Forever geprüft. |
 | Gruppen- und Schlachtzugsrahmen | Brauchen Secure-Snippets, die im Beta-Client fehlen. |
 | Aktionsleisten, Minikarte, Chat, Taschen, Schadensanzeige | Je ein eigenes Modul in der Größe dieses ganzen Pakets. |
+
+## Die Frage beim Einloggen (`ui/welcome.lua`)
+
+Einmal je Konto fragt WeintCodex, ob die Oberfläche verwendet werden
+soll – **nach** der Einführung bzw. dem Changelog-Popup, nie darüber
+(`Onboarding.OnClosed`, `Onboarding.IsShowing`), und nie im Kampf.
+
+* **Ja** → Hauptschalter an, Angebot „Jetzt neu laden“ / „Später“.
+* **Nein** → nichts wird angefasst, und der Hinweis, wo man es später
+  einschaltet (Einstellungen → „Oberfläche“, `/wcui`), im Fenster und im
+  Chat. Ein „Nein“ ohne diesen Satz wirkte endgültig, obwohl es das nicht
+  ist.
+* ESC ist **keine** Antwort: die Frage kommt beim nächsten Einloggen
+  wieder.
+
+Gemerkt wird `ui.asked`. Wer die Oberfläche vorher schon über `/wcui`
+eingeschaltet hat, wird nicht gefragt. Speichert der Beta-Client die
+SavedVariables nicht (siehe oben), kommt die Frage wieder.
 
 ## Prüfen
 

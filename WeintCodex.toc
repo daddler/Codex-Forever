@@ -1,12 +1,19 @@
-## Interface: 120000
+## Interface: 120000, 16001
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 5.2.1.1
+## Version: 6.0.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
 # ZUR SCHNITTSTELLENNUMMER OBEN: SIE IST EINE VERMUTUNG, KEIN WISSEN.
+#
+# SEIT 6.0.0.0 STEHEN ZWEI NUMMERN DORT. 16001 kommt aus einem Bericht
+# ueber den Beta-Client, nicht aus ihm selbst: EllesmereUI erkennt
+# Forever an genau dieser Nummer ("1.60+", Spieltyp "camelot") und
+# fuehrt sie in seiner .toc neben den 12.x-Nummern. Der Client laedt ein
+# Addon, wenn EINE der Nummern passt - 120000 bleibt deshalb stehen, fuer
+# den Fall, dass der Bericht nicht stimmt.
 #
 # World of Warcraft: Forever erscheint am 4. November 2026 und laeuft
 # nach allem, was bekannt ist, auf der modernen Client-Fassung. 120000
@@ -134,3 +141,7 @@ ui/unitframes.lua
 ui/questarrow.lua
 ui/comfort.lua
 ui/options.lua
+
+# Die Frage beim ersten Einloggen ("WeintCodex-Oberflaeche verwenden?").
+# Zuletzt, weil sie auf das Fenster und die Einstellungsseite verweist.
+ui/welcome.lua

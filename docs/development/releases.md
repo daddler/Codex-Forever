@@ -122,7 +122,7 @@ das Popup im Spiel liest ihn nicht.
 ## Vor dem Commit
 
 ```bash
-luac5.1 -p $(find core data modules -name '*.lua')
+luac5.1 -p $(find core data modules ui -name '*.lua')
 lua5.1 .github/tests/load_test.lua .
 lua5.1 .github/tests/data_test.lua .
 ```
@@ -133,7 +133,9 @@ Antworten gibt, sagt keiner dieser Läufe.
 
 ## Die Schnittstellennummer
 
-`## Interface: 120000` in der `.toc` ist eine **benannte Vermutung**:
+`## Interface: 120000, 16001` in der `.toc` ist eine **benannte Vermutung**
+(16001 seit 6.0.0.0, aus einem Bericht über den Beta-Client, siehe
+Kommentar in der `.toc`):
 Forever ist nicht erschienen, und die Nummer des Clients ist nicht
 belegt. Stimmt sie nicht, erscheint das Addon in der Liste als
 „veraltet" und lädt nur mit gesetztem Haken bei *Veraltete AddOns
