@@ -92,6 +92,12 @@ end
 function Methods:SetAlpha(a) self._alpha = tonumber(a) or self._alpha end
 function Methods:GetAlpha() return self._alpha or 1 end
 
+-- Balken merken sich Bereich und Stand (Kombosegmente pruefen sie).
+function Methods:SetMinMaxValues(a, b) self._min, self._max = a, b end
+function Methods:GetMinMaxValues() return self._min or 0, self._max or 1 end
+function Methods:SetValue(v) self._value = v end
+function Methods:GetValue() return self._value or 0 end
+
 function Methods:Show() self._shown = true  end
 function Methods:Hide() self._shown = false end
 function Methods:SetShown(v) self._shown = v and true or false end

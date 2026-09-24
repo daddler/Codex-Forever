@@ -50,6 +50,7 @@ local defaults = {
     showTime  = true,
     hideBlizzard = true,
     bgAlpha   = 85,
+    fitRows   = true,      -- Fenster so hoch wie die gezeigten Zeilen
     -- Je Fenster Messart und Zeitraum (flach gespeichert: UIKit.Set
     -- vergleicht Tabellen nur eine Ebene tief).
     w1mode = "DamageDone",  w1session = "Current",
@@ -245,10 +246,19 @@ local function Amount(fs, src, mode)
     end
 end
 
+-- Das Fenster so hoch wie das, was es zeigt (im Beta-Test: eine Zeile
+-- und darunter acht leere). Fest auf "Balken" Zeilen, wenn abgeschaltet.
+function Win:Fit(rows)
+    local h = Opt("barHeight")
+    local n = Opt("fitRows") and math.max(1, math.min(rows, Opt("bars"))) or Opt("bars")
+    self.frame:SetHeight(24 + n * (h + 1) + 3)
+end
+
 function Win:ShowEmpty(text)
     for _, r in ipairs(self.rows) do r:Hide() end
     self.empty:SetText(text)
     self.empty:Show()
+    self:Fit(2)   -- zwei Zeilen Platz fuer den Satz
 end
 
 function Win:Refresh()
@@ -330,6 +340,7 @@ function Win:Refresh()
             r:Hide()
         end
     end
+    self:Fit(count)
 end
 
 function Win:CycleMode(back)
@@ -571,6 +582,9 @@ K.Register({
             B:Row({ type = "slider", label = "Deckkraft des Hintergrunds", key = "bgAlpha", min = 0, max = 100, step = 5,
                     format = function(v) return string.format("%d %%", v) end },
                   { type = "toggle", label = "Kampfdauer in der Kopfzeile", key = "showTime" })
+            B:Row({ type = "toggle", label = "Höhe nach Inhalt", key = "fitRows",
+                    description = "So hoch wie die gezeigten Zeilen, statt immer Platz für alle Balken." },
+                  { type = "empty" })
             B:Section("Zahlen")
             B:Row({ type = "dropdown", label = "Rechts im Balken", key = "numbers", items = {
                         { value = "both",  text = "Gesamt (pro Sekunde)" },

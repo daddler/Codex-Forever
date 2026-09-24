@@ -58,6 +58,8 @@ local defaults = {
     nameSize      = 12,
     textSize      = 12,
     castHeight    = 14,
+    tintedBg      = true,      -- Grund in der dunklen Balkenfarbe
+    hover         = true,      -- Maus darueber hellt auf
     -- Der eigene Zauberbalken mittig ueber den Leisten, die Kombopunkte
     -- mittig unter der Figur (Cockpit). Aus: beides am Rahmen wie bisher.
     playerCastCentered = true,
@@ -144,12 +146,29 @@ local function HealthColor(unit)
     return c.r, c.g, c.b
 end
 
+-- Stufe wie auf der Plakette: in der Farbe der Schwierigkeit, Elite mit
+-- "+". Eine Stufe, die der Client nicht nennt (Boss, geheim), ist "??" in
+-- Rot - nie eine 0.
+local function LevelParts(unit)
+    local lvl = K.Plain(_G.UnitLevel and _G.UnitLevel(unit))
+    if type(lvl) ~= "number" or lvl < 0 then return "??", 1, 0.2, 0.2 end
+    local text = tostring(lvl)
+    local cls = K.Plain(_G.UnitClassification and _G.UnitClassification(unit))
+    if cls == "elite" or cls == "rareelite" or cls == "worldboss" then text = text .. "+" end
+    local r, g, b = 1, 0.82, 0
+    if _G.GetCreatureDifficultyColor then
+        local c = _G.GetCreatureDifficultyColor(lvl)
+        if type(c) == "table" and type(K.Plain(c.r)) == "number" then r, g, b = c.r, c.g, c.b end
+    end
+    return text, r, g, b
+end
+UF.LevelParts = LevelParts
+
 local function NameText(unit, kind)
     local name = _G.UnitName and (_G.UnitName(unit))
     if kind == "levelname" then
-        local lvl = K.Plain(_G.UnitLevel and _G.UnitLevel(unit))
-        local lt = (type(lvl) == "number" and lvl >= 0) and tostring(lvl) or "??"
-        return lt, name
+        local lt, r, g, b = LevelParts(unit)
+        return string.format("|cff%02x%02x%02x%s|r", r * 255, g * 255, b * 255, lt), name
     end
     return nil, name
 end
@@ -256,6 +275,15 @@ local function Create(unit)
     f.border = K.Border(f, 1, 0, 0, 0, 1, "BORDER")
     f._shadow = K.Glow(f, { spread = 6, shadow = true })
 
+    -- Maus darueber: der Lebensbalken hellt auf wie auf der Plakette.
+    local GC = WeintCodex.GameColors
+    local hf = health:CreateTexture(nil, "OVERLAY", nil, 1)
+    hf:SetAllPoints(health)
+    hf:SetColorTexture(GC.hoverFill[1], GC.hoverFill[2], GC.hoverFill[3], GC.hoverFill[4])
+    if hf.SetBlendMode then hf:SetBlendMode("ADD") end
+    hf:Hide()
+    f._hover = hf
+
     -- Portraet links im Rahmen: als 3D-Modell (wie in EllesmereUI) oder
     -- als Bild. Beides zeichnet der Client; Lua reicht nur die Einheit.
     local pf = CreateFrame("Frame", nil, f)
@@ -269,6 +297,12 @@ local function Create(unit)
     if okModel and type(model) == "table" then
         model:SetAllPoints(pf)
         pf.model = model
+        -- Kamera erst setzen, wenn das Modell geladen ist - vorher wirkt
+        -- sie auf nichts, und das Portraet bleibt schwarz.
+        pcall(model.SetScript, model, "OnModelLoaded", function(m)
+            if m.SetPortraitZoom then m:SetPortraitZoom(1) end
+            if m.SetCamDistanceScale then m:SetCamDistanceScale(1) end
+        end)
     end
     pf:Hide()
     f._portrait = pf
@@ -295,18 +329,14 @@ local function Create(unit)
     end
 
     if unit == "target" then
-        -- Kombopunkte: EIN Statusbalken mit Trennstrichen statt fuenf
-        -- Einzelteilen - SetValue nimmt auch einen geheimen Wert, ein
-        -- Vergleich "Punkt 3 an?" nicht.
-        local cp = K.NewBar(f)
+        -- Kombopunkte: fuenf einzelne Segmente mit Luft dazwischen (UI 2.0).
+        -- Jedes ist ein eigener Balken von i-1 bis i, und ALLE bekommen
+        -- denselben Stand per SetValue: Segment 3 ist voll, sobald der Stand
+        -- 3 erreicht - ohne dass Lua den (womoeglich geheimen) Stand je mit
+        -- 3 vergleicht.
+        local cp = CreateFrame("Frame", nil, f)
         cp:SetHeight(5)
-        local col = WeintCodex.GameColors.comboPoint
-        local tex = cp:GetStatusBarTexture()
-        if tex then tex:SetVertexColor(col[1], col[2], col[3], 1) end
-        local cbg = cp:CreateTexture(nil, "BACKGROUND")
-        cbg:SetAllPoints(cp)
-        cbg:SetColorTexture(0, 0, 0, 0.6)
-        cp.ticks = {}
+        cp.pips = {}
         cp:Hide()
         f._combo = cp
 
@@ -326,6 +356,7 @@ local function Create(unit)
     for k, v in pairs(Frame) do f[k] = v end
 
     f:SetScript("OnEnter", function(self)
+        if Opt("hover") then self._hover:Show() end
         if _G.UnitFrame_OnEnter then
             _G.UnitFrame_OnEnter(self)
         elseif _G.GameTooltip_SetDefaultAnchor then
@@ -335,6 +366,7 @@ local function Create(unit)
         end
     end)
     f:SetScript("OnLeave", function(self)
+        self._hover:Hide()
         if _G.UnitFrame_OnLeave then _G.UnitFrame_OnLeave(self) else GameTooltip:Hide() end
     end)
 
@@ -365,6 +397,22 @@ function Frame:UpdatePortrait()
         pf.model:SetUnit(u)
         if pf.model.SetPortraitZoom then pf.model:SetPortraitZoom(1) end
         if pf.model.SetCamDistanceScale then pf.model:SetCamDistanceScale(1) end
+        -- Ohne Modelldatei (im Beta-Client beim Ziel gesehen: ein schwarzes
+        -- Kaestchen) das Bild statt des Modells. Einen Augenblick spaeter:
+        -- das Modell laedt nicht sofort.
+        local me, token = self, (self._portraitToken or 0) + 1
+        self._portraitToken = token
+        if _G.C_Timer and _G.C_Timer.After and pf.model.GetModelFileID then
+            _G.C_Timer.After(0.4, function()
+                if me._portraitToken ~= token or not pf.model:IsShown() then return end
+                local id = K.Plain(pf.model:GetModelFileID())
+                if type(id) ~= "number" or id <= 0 then
+                    pf.model:Hide()
+                    pf.tex:Show()
+                    if _G.SetPortraitTexture then _G.SetPortraitTexture(pf.tex, u) end
+                end
+            end)
+        end
     else
         if pf.model then pf.model:Hide() end
         pf.tex:Show()
@@ -409,6 +457,7 @@ function Frame:Layout()
 
     local bg = K.GetColor(KEY, "bgColor")
     self.healthBg:SetColorTexture(bg.r, bg.g, bg.b, 1)
+    self._bgR = nil
     self.powerBg:SetColorTexture(bg.r * 0.7, bg.g * 0.7, bg.b * 0.7, 1)
     self.border:SetShown(Opt("showBorder"))
     local bc = K.GetColor(KEY, "borderColor")
@@ -454,10 +503,24 @@ function Frame:Layout()
             cp:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 3)
             cp:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT", 0, 3)
         end
-        cp._max = nil   -- Trennstriche neu setzen: die Breite hat sich geaendert
+        cp._max = nil   -- Segmente neu verteilen: die Breite hat sich geaendert
     end
 
     if self._auras then self:LayoutAuras() end
+end
+
+-- Grund unter dem fehlenden Leben: dunkler Ton der Balkenfarbe (wie die
+-- Plakette), sonst die eingestellte Hintergrundfarbe.
+local TINT = 0.22
+function Frame:PaintBg(r, g, b)
+    local bg = K.GetColor(KEY, "bgColor")
+    local br, bgg, bb = bg.r, bg.g, bg.b
+    if Opt("tintedBg") then
+        br, bgg, bb = br * (1 - TINT) + r * TINT, bgg * (1 - TINT) + g * TINT, bb * (1 - TINT) + b * TINT
+    end
+    if self._bgR == br and self._bgG == bgg and self._bgB == bb then return end
+    self._bgR, self._bgG, self._bgB = br, bgg, bb
+    self.healthBg:SetColorTexture(br, bgg, bb, 1)
 end
 
 function Frame:Refresh()
@@ -468,7 +531,9 @@ function Frame:Refresh()
     if type(max) ~= "nil" then self.health:SetMinMaxValues(0, max) end
     local cur = _G.UnitHealth and _G.UnitHealth(u)
     if type(cur) ~= "nil" then self.health:SetValue(cur) end
-    K.PaintBar(self.health, HealthColor(u))
+    local hr, hg, hb = HealthColor(u)
+    K.PaintBar(self.health, hr, hg, hb)
+    self:PaintBg(hr, hg, hb)
 
     if Opt(u .. "_power") then
         local pmax = _G.UnitPowerMax and _G.UnitPowerMax(u)
@@ -530,34 +595,49 @@ function Frame:UpdateCombo()
         if type(m) == "number" and m > 0 then max = m end
     end
     if type(cur) == "nil" then cp:Hide() return end
-    cp:SetMinMaxValues(0, max)
-    cp:SetValue(cur)
-    self:ComboTicks(max)
-    cp:Show()
+    self:SetCombo(cur, max)
 end
 
-function Frame:ComboTicks(max)
+local PIP_GAP = 3
+
+-- Die Segmente fuer `max` Punkte anlegen und verteilen - einmal je
+-- Hoechstwert und nach jedem Layout (die Breite kann sich geaendert haben).
+function Frame:ComboPips(max)
     local cp = self._combo
-    -- Trennstriche einmal je Hoechstwert (und nach jedem Layout) setzen.
-    if cp._max ~= max then
-        cp._max = max
-        for _, t in ipairs(cp.ticks) do t:Hide() end
-        local w = cp:GetWidth()
-        if type(w) ~= "number" or w <= 0 then w = self:GetWidth() or 200 end
-        for i = 1, max - 1 do
-            local t = cp.ticks[i]
-            if not t then
-                t = cp:CreateTexture(nil, "OVERLAY")
-                t:SetColorTexture(0, 0, 0, 1)
-                t:SetWidth(2)
-                cp.ticks[i] = t
+    if cp._max == max then return end
+    cp._max = max
+    local w = cp:GetWidth()
+    if type(w) ~= "number" or w <= 0 then w = self:GetWidth() or 200 end
+    local pw = (w - PIP_GAP * (max - 1)) / max
+    local col = WeintCodex.GameColors.comboPoint
+    for i = 1, math.max(max, #cp.pips) do
+        local pip = cp.pips[i]
+        if i <= max then
+            if not pip then
+                pip = K.NewBar(cp)
+                local bg = pip:CreateTexture(nil, "BACKGROUND")
+                bg:SetAllPoints(pip)
+                bg:SetColorTexture(0, 0, 0, 0.6)
+                pip._border = K.Border(pip, 1, 0, 0, 0, 1, "BORDER")
+                cp.pips[i] = pip
             end
-            t:ClearAllPoints()
-            t:SetPoint("TOP", cp, "TOPLEFT", w * i / max, 0)
-            t:SetPoint("BOTTOM", cp, "BOTTOMLEFT", w * i / max, 0)
-            t:Show()
+            pip:SetMinMaxValues(i - 1, i)
+            K.PaintBar(pip, col[1], col[2], col[3])
+            pip:ClearAllPoints()
+            pip:SetPoint("TOPLEFT", cp, "TOPLEFT", (i - 1) * (pw + PIP_GAP), 0)
+            pip:SetPoint("BOTTOMLEFT", cp, "BOTTOMLEFT", (i - 1) * (pw + PIP_GAP), 0)
+            pip:SetWidth(pw)
+            pip:Show()
+        elseif pip then
+            pip:Hide()
         end
     end
+end
+
+function Frame:SetCombo(cur, max)
+    self:ComboPips(max)
+    for i = 1, max do self._combo.pips[i]:SetValue(cur) end
+    self._combo:Show()
 end
 
 --------------------------------------------------
@@ -653,6 +733,7 @@ function Frame:ShowTest(on)
         self.health:SetMinMaxValues(0, 1)
         self.health:SetValue(t.hp)
         K.PaintBar(self.health, TestColor(t))
+        self:PaintBg(TestColor(t))
         if Opt(u .. "_power") then
             self.power:SetMinMaxValues(0, 1)
             self.power:SetValue(t.power or 1)
@@ -673,10 +754,7 @@ function Frame:ShowTest(on)
         if self._portrait.model then self._portrait.model:Hide() end
         if self._cast and Opt(u .. "_cast") then self._cast:ShowPreview(true) end
         if self._combo and Opt("comboPoints") and UsesCombo() then
-            self._combo:SetMinMaxValues(0, 5)
-            self._combo:SetValue(3)
-            self:ComboTicks(5)
-            self._combo:Show()
+            self:SetCombo(3, 5)
         end
     else
         self._testShown = nil
@@ -911,6 +989,9 @@ local pages = {
         B:Row({ type = "toggle", label = "Rand anzeigen", key = "showBorder" },
               { type = "color", label = "Randfarbe", key = "borderColor",
                 disabled = function() return not K.Get(KEY, "showBorder") end })
+        B:Row({ type = "toggle", label = "Grund in der Balkenfarbe", key = "tintedBg",
+                description = "Fehlendes Leben dunkel in der Farbe des Balkens statt im Hintergrund." },
+              { type = "toggle", label = "Maus hebt hervor", key = "hover" })
         B:Section("Schrift")
         B:Row({ type = "slider", label = "Größe links", key = "nameSize", min = 8, max = 20, step = 1, format = px },
               { type = "slider", label = "Größe rechts", key = "textSize", min = 8, max = 20, step = 1, format = px })

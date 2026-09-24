@@ -54,6 +54,8 @@ local defaults = {
     shadow      = true,        -- weicher Schatten unter dem Balken
     targetStyle = "glow",      -- glow | ring | both | none
     hover       = true,        -- Maus darueber hellt auf
+    executeMark = false,       -- fester Strich bei executeAt % im Balken
+    executeAt   = 20,
 
     enemyInCombat = K.ColorDefault("enemyInCombat"),
     hostile       = K.ColorDefault("hostile"),
@@ -215,6 +217,16 @@ local function Build(parent)
     hf:Hide()
     p.hoverFill = hf
 
+    -- Hinrichtungsmarke: ein fester Strich im Balken. Keine Rechnung mit
+    -- dem Leben (das kann geheim sein) - der Strich steht, der Balken
+    -- laeuft an ihm vorbei.
+    local ex = health:CreateTexture(nil, "OVERLAY", nil, 2)
+    local ec = GC.executeMark
+    ex:SetColorTexture(ec[1], ec[2], ec[3], ec[4])
+    ex:SetWidth(1)
+    ex:Hide()
+    p.exec = ex
+
     -- Texte liegen auf einem eigenen Rahmen ueber dem Balken, damit der
     -- Rand sie nicht ueberdeckt.
     local textHost = CreateFrame("Frame", nil, p)
@@ -276,6 +288,7 @@ local function LayoutFriendly(p)
     p.glowWide:SetShown(false)
     p.hoverGlow:SetShown(false)
     p.hoverFill:Hide()
+    p.exec:Hide()
     for _, m in ipairs(p.marks) do m:Hide() end
     for _, slot in ipairs(SLOTS) do p.texts[slot]:Hide() end
     local t = p.texts.top
@@ -311,6 +324,10 @@ local function Layout(p)
             m:SetPoint("LEFT", p.health, "RIGHT", 2, 0)
         end
     end
+    p.exec:ClearAllPoints()
+    p.exec:SetPoint("TOP", p.health, "TOPLEFT", S.width * S.executeAt / 100, 0)
+    p.exec:SetPoint("BOTTOM", p.health, "BOTTOMLEFT", S.width * S.executeAt / 100, 0)
+    p.exec:SetShown(S.executeMark)
     p.border:SetShown(S.showBorder)
     local bc = S.borderColor or defaults.borderColor
     p.border:SetColor(bc.r, bc.g, bc.b, 1)
@@ -1055,6 +1072,11 @@ K.Register({
                         { value = "none", text = "Gar nicht" } } },
                   { type = "toggle", label = "Maus hebt hervor", key = "hover",
                     description = "Die Plakette unter der Maus hellt auf und kommt nach vorn." })
+            B:Section("Hinrichtungsmarke",
+                "Ein fester Strich im Balken zeigt, ab wann Fähigkeiten wie Hinrichten wirken.")
+            B:Row({ type = "toggle", label = "Anzeigen", key = "executeMark" },
+                  { type = "slider", label = "Bei", key = "executeAt", min = 5, max = 50, step = 5, format = pct,
+                    disabled = function() return not K.Get(KEY, "executeMark") end })
             B:Section("Fläche")
             B:Row({ type = "toggle", label = "Weicher Schatten", key = "shadow" },
                   { type = "toggle", label = "Grund in der Gegnerfarbe", key = "tintedBg",
@@ -1141,7 +1163,15 @@ K.Register({
                     description = "„8/10“, wenn der Gegner zu einer deiner Quests gehört. Nicht in Dungeons." },
                   { type = "empty" })
             B:Note("Auf dem neuen Client liest das Spiel die Auren selbst und reicht sie an die Plakette – WeintCodex sieht sie dabei nicht. Deshalb gibt es hier keine Liste einzelner Zauber zum Ein- und Ausblenden.")
-            B:Section("Zustand")
+            B:Section("Zustand",
+                "Gilt für alle Auren: Plaketten, Zielrahmen, Gruppe. Wirkt sofort. Erscheinen keine Debuffs, hier den anderen Weg wählen und mit einem Gegner als Ziel /wcui auren eingeben – die Zeilen im Chat sagen, woran es liegt.")
+            B:Row({ type = "dropdown", label = "Weg", items = {
+                        { value = "auto",   text = "Automatisch" },
+                        { value = "engine", text = "Container des Spiels" },
+                        { value = "legacy", text = "Selbst lesen (alter Weg)" } },
+                    get = function() return WeintCodex.UIAuras.mode end,
+                    set = function(v) WeintCodex.UIAuras.SetMode(v) end },
+                  { type = "empty" })
             B:Note(WeintCodex.UIAuras.StatusText())
         end },
         { key = "freundlich", label = "Freundlich", build = function(B)

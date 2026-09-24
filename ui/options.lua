@@ -733,5 +733,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         WeintCodex.UITestMode.Toggle()
         return
     end
+    if msg == "auren" or msg == "auras" then
+        for _, line in ipairs(WeintCodex.UIAuras.Inspect()) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+        return
+    end
     O.Toggle()
 end

@@ -22,6 +22,18 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.2.0.0",
+        date    = "24.09.2026",
+        notes   = {
+            "|cff7C6CFFDebuffs: WeintCodex hilft sich jetzt selbst.|r Nennt das Spiel Auren am Gegner und die Symbole erscheinen trotzdem nicht, liest WeintCodex sie selbst und sagt es einmal im Chat. /wcui auren zeigt mit einem Gegner als Ziel, was das Spiel meldet und was davon zu sehen ist; unter Namensplaketten → Auren lässt sich der Weg auch von Hand wählen.",
+            "|cff7C6CFFSpieler- und Zielrahmen reagieren wie die Plaketten.|r Die Maus hellt sie auf, fehlendes Leben ist dunkel in der Balkenfarbe, und die Stufe des Ziels steht in der Farbe ihrer Schwierigkeit, Elite mit „+“. Ein Porträt ohne Modell zeigt das Bild statt eines schwarzen Kästchens.",
+            "|cff7C6CFFKombopunkte als fünf einzelne Segmente|r mittig unter der Figur.",
+            "|cff7C6CFFKurze Tastenkürzel auf den Aktionsknöpfen:|r „M4“ statt „Maustaste 4“, „S1“ statt „s-1“.",
+            "|cff7C6CFFDie Schadensanzeige ist so hoch wie ihr Inhalt.|r Keine leere schwarze Fläche mehr unter einer einzigen Zeile.",
+            "|cff7C6CFFHinrichtungsmarke auf Wunsch:|r ein fester Strich im Plakettenbalken zeigt, ab wann Hinrichten wirkt (Namensplaketten → Allgemein).",
+        },
+    },
+    {
         version = "6.1.0.0",
         date    = "24.09.2026",
         notes   = {

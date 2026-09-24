@@ -322,7 +322,46 @@ Band „Testmodus – Beispieldaten“ mit „Beenden“. Beginnt ein Kampf,
 endet er. Auren zeigt er **nicht**: die liest das Spiel selbst,
 Beispielauren ließen sich nur vortäuschen.
 
-**Was noch fehlt (Phase 2 ff.):** Kachel auf allen Flächen (Chat,
+## UI 2.0, Phase 2 (seit 6.2.0.0): Cockpit
+
+**Im Spiel ungeprüft.** Einheitenrahmen wie die Plaketten: Maus hellt
+den Lebensbalken auf (`hover`), Grund in der dunklen Balkenfarbe
+(`tintedBg`), Stufe über `UIUnitFrames.LevelParts` (Farbe der
+Schwierigkeit, `+` für Elite, `??` wenn unbekannt). Das 3D-Porträt
+setzt die Kamera bei `OnModelLoaded`; hat das Modell 0,4 s nach
+`SetUnit` keine Datei (`GetModelFileID`), steht das Bild da – im
+Beta-Test war es beim Ziel ein schwarzes Kästchen.
+
+Kombopunkte sind fünf Balken, Segment *i* mit dem Bereich *i-1 … i*; alle
+bekommen denselben Stand. Voll ist, was erreicht ist – ohne dass Lua
+den (womöglich geheimen) Stand je vergleicht.
+
+Plaketten: Hinrichtungsmarke (`executeMark`, `executeAt`) als fester
+Strich. Aktionsleisten: kurze Tastenkürzel (`UIActionBars.ShortHotkey`,
+Haken an `UpdateHotkeys`). Schadensanzeige: Höhe nach den gezeigten
+Zeilen (`fitRows`).
+
+### Auren: Größe, Weg, Selbstheilung, Auskunft
+
+Bis 6.1.0.0 blieben Debuffs im Beta-Client unsichtbar, ohne Fehler.
+Seit 6.2.0.0:
+
+* Der Container ist so groß wie alle Symbole (`Obj:Extent`), nicht
+  1 × 1, und beschneidet nicht (`SetClipsChildren(false)`).
+* Der Weg ist im laufenden Spiel umschaltbar (`UIAuras.SetMode`,
+  Namensplaketten → Auren → Weg): Automatisch, Container, selbst lesen.
+  Jedes Objekt baut sich dabei neu (`Obj:Build`) und behält Anker,
+  Sichtbarkeit und Einheit.
+* **Selbstheilung** in „Automatisch“: 0,6 s nach `SetUnit`/`Refresh`
+  zählt `GetAuraDataByIndex`, wie viele Auren das Spiel nennt (nur
+  gezählt, kein Feld gelesen). Nennt es welche und der Container zeigt
+  keine (sichtbare Rahmen in Symbolgröße unter ihm), liest WeintCodex ab
+  da selbst – für alle Objekte, einmal im Chat gemeldet. Zeigt er
+  welche, ist der Weg bestätigt.
+* `/wcui auren` (mit Ziel): Weg, Zustand, was das Spiel am Ziel nennt,
+  und je Objekt angelegte und gezeigte Symbole mit Rahmengröße.
+
+**Was noch fehlt (Phase 3 ff.):** Kachel auf allen Flächen (Chat,
 Minikarte, Taschen), Schadensanzeige in Ruhe auf die Kopfzeile
 zusammenklappen (jetzt: nur leiser), Chat-Hintergrund in Ruhe,
 Gestaltungsmodus mit Einstellkarte, Infoleiste, Levelhilfe.

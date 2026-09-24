@@ -225,6 +225,7 @@ WeintCodex.GameColors = {
     targetGlow    = {0.486, 0.424, 1.000, 0.85},  -- = Akzent: Leuchten des Ziels
     targetMark    = {1.000, 1.000, 1.000, 1.00},  -- Zielmarken links und rechts
     plateName     = {0.840, 0.840, 0.870, 1.00},  -- Name auf der Plakette; hell nur Ziel und Maus
+    executeMark   = {1.000, 1.000, 1.000, 0.75},  -- Hinrichtungsmarke im Balken
 }
 
 --------------------------------------------------
