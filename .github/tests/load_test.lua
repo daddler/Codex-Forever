@@ -704,12 +704,17 @@ for _, key in ipairs({ "general", "nameplates", "unitframes", "questarrow", "com
     Check(K.Module(key) ~= nil, "Modul '" .. key .. "' ist angemeldet")
 end
 
--- Ausgeschaltet heisst ausgeschaltet: nach dem Anmelden laeuft kein
--- ui-Modul, solange der Hauptschalter aus ist.
-Check(K.UIEnabled() == false, "Hauptschalter steht nach dem ersten Laden auf aus")
-Check(not K.IsActive("nameplates") and not K.IsActive("unitframes"),
-    "ohne Hauptschalter laeuft weder Plakette noch Einheitenrahmen")
-Check(K.IsActive("questarrow"), "der Questpfeil laeuft auch ohne Hauptschalter")
+-- SEIT 6.0.0.3: DIE OBERFLAECHE IST FUER ALLE AN (UIKit.OPT_IN = false),
+-- weil der Forever-Beta-Client keine Einstellungen speichert. Nach dem
+-- Anmelden laeuft deshalb jedes ui-Modul - und zwar gegen die Attrappe,
+-- ohne einen einzigen Fehler (K.Report meldete ihn im Chat, und
+-- K.IsActive bliebe false).
+Check(K.OPT_IN == false, "Hauptschalter ausgesetzt (OPT_IN = false) - bis der Client speichert")
+Check(K.UIEnabled() == true, "ohne OPT_IN ist die Oberflaeche an")
+for _, key in ipairs({ "nameplates", "unitframes", "groupframes", "actionbars",
+    "minimap", "chat", "bags", "damagemeter", "questarrow", "comfort" }) do
+    Check(K.IsActive(key), "Modul '" .. key .. "' laeuft nach dem Anmelden")
+end
 
 -- Gespeichert wird in DER Tabelle aus der .toc, und nur die Abweichung.
 K.Set("nameplates", "width", 180)
@@ -718,6 +723,16 @@ Check(WeintCodex_SavedData.ui.modules.nameplates.width == 180,
 K.Set("nameplates", "width", 140)
 Check(WeintCodex_SavedData.ui.modules.nameplates.width == nil,
     "der Standardwert wird nicht gespeichert")
+-- Die Falle aus 6.0.0.0 bis 6.0.0.2: `x and false or nil` ist nil. Ein
+-- Schalter, der von "an" auf "aus" geht, muss als false im Speicher
+-- stehen - sonst laesst sich keine eingeschaltete Option abschalten.
+K.Set("nameplates", "targetRing", false)
+Check(WeintCodex_SavedData.ui.modules.nameplates.targetRing == false
+    and K.Get("nameplates", "targetRing") == false,
+    "ein Schalter laesst sich von an auf aus stellen (false wird gespeichert)")
+K.Set("nameplates", "targetRing", true)
+Check(WeintCodex_SavedData.ui.modules.nameplates.targetRing == nil,
+    "zurueck auf den Standard: der Eintrag verschwindet")
 
 -- Jede Seite jedes Moduls bauen.
 for _, key in ipairs(K.order) do
@@ -749,6 +764,19 @@ do
         end
     end)
     Check(ok, "jede Auswahlliste laesst sich oeffnen" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- AB HIER BIS ZUM "EINSCHALTEN WIE EIN SPIELER" MIT OPT_IN = true: die
+-- Frage beim Einloggen ruht, bleibt aber geprueft - sie muss mit einer
+-- einzigen Zeile in ui/kit.lua zurueckkommen koennen.
+do
+    local WL = WeintCodex.UIWelcome
+    local sd = WeintCodex.SavedData
+    sd.ui.asked = nil
+    WL.MaybeAsk()
+    Check(not WL.IsShown(), "ohne OPT_IN fragt WeintCodex nie, auch nicht ungefragt")
+    K.OPT_IN = true
+    Check(K.UIEnabled() == false, "mit OPT_IN liest der Hauptschalter wieder den Speicher (aus)")
 end
 
 -- Die Frage beim Einloggen. Sie darf nicht UEBER der Einfuehrung
@@ -809,6 +837,7 @@ do
         ipairs = true, pairs = true, pcall = true, print = true, type = true,
         tostring = true, select = true, unpack = true, wipe = true, assert = true,
         setmetatable = true, math = true, string = true, table = true,
+        date = true,
     }
     local bad, checked = {}, 0
     local pipe = io.popen and io.popen('ls "' .. ROOT .. '/ui" 2>/dev/null')
@@ -958,12 +987,16 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
--- Einschalten wie ein Spieler: Hauptschalter an, dann so tun, als sei
--- neu geladen (die Module starten beim Anmelden).
+-- Mit OPT_IN: der Hauptschalter verlangt ein Neuladen und schaltet die
+-- ui-Module fuer das naechste Laden ein. Danach zurueck auf den Stand der
+-- Fassung (OPT_IN = false).
 K.SetUIEnabled(true)
-Check(K.ReloadPending(), "der Hauptschalter verlangt ein Neuladen")
+Check(K.ReloadPending(), "mit OPT_IN verlangt der Hauptschalter ein Neuladen")
 Check(K.WantsActive("nameplates") and K.WantsActive("unitframes"),
     "nach dem Neuladen liefen Plaketten und Einheitenrahmen")
+K.SetUIEnabled(false)
+K.OPT_IN = false
+Check(K.UIEnabled() and K.WantsActive("groupframes"), "OPT_IN zurueck auf false: wieder alles an")
 
 -- Eine Welt mit einer feindlichen Plakette und einem Ziel.
 local blizzPlate = stub.NewObject("Frame", "NamePlate1")
@@ -1115,6 +1148,178 @@ do
     QA.Update(true)
     Check(not QA.frame:IsShown(), "nichts ausgewaehlt: kein Pfeil")
 end
+
+-- DIE MODULE AUS 6.0.0.3 gegen die Attrappe: jedes einmal mit Daten,
+-- nicht nur geladen.
+do
+    local A = WeintCodex.UIAuras
+
+    -- Auren, Engine-Weg: der Auren-Container des Spiels (12.1).
+    _G.C_AddOns = { IsAddOnLoaded = function() return true end, LoadAddOn = function() end }
+    _G.AnchorUtil = { FlowDirection = { Left = 1, Right = 2, Up = 3, Down = 4 } }
+    A._ResetEngineProbe()
+    local ok, err = pcall(function()
+        assert(A.EngineAvailable(), "Container nicht erkannt")
+        local o = A.Create(UIParent, { filter = "HARMFUL|PLAYER", max = 4, size = 20 })
+        assert(o.engine, "Engine-Weg nicht genommen")
+        o:SetPoint("CENTER", UIParent, "CENTER")
+        o:SetUnit("target")
+        o:Refresh()
+        o:ApplyLayout({ filter = "HARMFUL", max = 4, size = 26 })
+        o:SetUnit(nil)
+    end)
+    Check(ok, "Auren ueber den Container des Spiels" .. (ok and "" or (": " .. tostring(err))))
+    _G.C_AddOns, _G.AnchorUtil = nil, nil
+    A._ResetEngineProbe()
+
+    -- Auren, alter Weg: gelesen, gekappt bei max.
+    _G.C_UnitAuras = { GetAuraDataByIndex = function(_, i)
+        if i <= 3 then
+            return { icon = 136197, applications = 2, duration = 10, expirationTime = 20, auraInstanceID = i }
+        end
+    end }
+    ok, err = pcall(function()
+        local o = A.Create(UIParent, { max = 2 })
+        assert(not o.engine, "ohne Container darf der Engine-Weg nicht gewaehlt werden")
+        o:SetUnit("target")
+        assert(#o.buttons == 2, "alter Weg haelt sich nicht an max (" .. #o.buttons .. ")")
+    end)
+    Check(ok, "Auren ueber GetAuraDataByIndex, hoechstens max" .. (ok and "" or (": " .. tostring(err))))
+    _G.C_UnitAuras = nil
+end
+
+-- Freundliche Plaketten, und die Sperre in Instanzen.
+do
+    local NP = WeintCodex.UINameplates
+    local ok, err = pcall(function()
+        _G.UnitCanAttack = function() return false end
+        _G.UnitIsPlayer = function() return true end
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        local p = NP.plates["nameplate1"]
+        assert(p and p.friendly, "keine freundliche Plakette")
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        blizzPlate.IsForbidden = function() return true end
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        assert(NP.plates["nameplate1"] == nil, "gesperrte Plakette wurde trotzdem uebernommen")
+        blizzPlate.IsForbidden = nil
+        _G.UnitCanAttack = function() return true end
+        _G.UnitIsPlayer = function() return false end
+    end)
+    Check(ok, "freundliche Plakette; gesperrte (Instanz) bleibt die des Spiels"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Gruppenrahmen: ein Knopf, wie ihn der Kopfrahmen einrichtet.
+do
+    local GF = WeintCodex.UIGroupFrames
+    local ok, err = pcall(function()
+        _G.UnitInRange = function() return false, true end
+        _G.UnitThreatSituation = function() return 3 end
+        local b = CreateFrame("Button", nil, UIParent)
+        GF._Style(b)
+        b._scripts.OnAttributeChanged(b, "unit", "party1")
+        assert(b._wcUnit == "party1", "Einheit nicht uebernommen")
+        b:Layout(120, 44)
+        stub.FireEvent("UNIT_HEALTH", "party1")
+        stub.FireEvent("UNIT_THREAT_SITUATION_UPDATE", "party1")
+        b:UpdateRange()
+        K.Set("groupframes", "statusText", "deficit")
+        b:Refresh()
+        _G.UnitInRange, _G.UnitThreatSituation = nil, nil
+    end)
+    Check(ok, "Gruppenrahmen: Einheit, Leben, Aggro, Reichweite" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Aktionsleisten, Minikarte, Chat.
+do
+    local ok, err = pcall(function()
+        local b = CreateFrame("CheckButton", "ActionButton1", UIParent)
+        b.icon = b:CreateTexture()
+        b.HotKey = b:CreateFontString()
+        b.Count = b:CreateFontString()
+        b.Name = b:CreateFontString()
+        WeintCodex.UIActionBars.SkinAll()
+        assert(WeintCodex.UIActionBars.skinned[b], "Knopf nicht umgestaltet")
+        K.Set("actionbars", "hotkeys", false)
+    end)
+    Check(ok, "Aktionsleisten: Knopf des Spiels umgestaltet" .. (ok and "" or (": " .. tostring(err))))
+
+    ok, err = pcall(function()
+        K.Set("minimap", "square", false)
+        assert(_G.GetMinimapShape() == "ROUND", "runde Karte meldet nicht ROUND")
+        K.Set("minimap", "square", true)
+        assert(_G.GetMinimapShape() == "SQUARE", "eckige Karte meldet nicht SQUARE")
+    end)
+    Check(ok, "Minikarte: eckig/rund, GetMinimapShape fuer Addon-Knoepfe" .. (ok and "" or (": " .. tostring(err))))
+
+    ok, err = pcall(function()
+        CreateFrame("ScrollingMessageFrame", "ChatFrame1", UIParent)
+        CreateFrame("Button", "ChatFrame1Tab", UIParent)
+        CreateFrame("EditBox", "ChatFrame1EditBox", UIParent)
+        WeintCodex.UIChat.ApplyAll()
+        K.Set("chat", "editBoxTop", true)
+    end)
+    Check(ok, "Chat: Fenster, Reiter, Eingabezeile" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Taschen: alle Plaetze aller Taschen, als Knoepfe des Spiels.
+do
+    local BG = WeintCodex.UIBags
+    local ok, err = pcall(function()
+        _G.C_Container = {
+            GetContainerNumSlots = function() return 4 end,
+            GetContainerItemInfo = function(bag, slot)
+                if slot == 1 then
+                    return { iconFileID = 134400, stackCount = 3, quality = bag == 0 and 0 or 3,
+                             hyperlink = "|Hitem:1|h", itemID = 1 }
+                end
+            end,
+        }
+        BG.Open()
+        BG.Refresh()
+        -- Rucksack + vier Taschen, je vier Plaetze (Reagenzientasche gibt es
+        -- in der Attrappe nicht).
+        assert(BG.UsedSlots() == 20, "falsche Zahl Plaetze: " .. tostring(BG.UsedSlots()))
+        BG.Close()
+        _G.C_Container = nil
+    end)
+    Check(ok, "Taschen: 20 Plaetze aus fuenf Taschen" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Schadensanzeige: ohne Messung ein Satz, mit Messung Balken.
+do
+    local DM = WeintCodex.UIDamageMeter
+    local ok, err = pcall(function()
+        DM.Refresh()
+        assert(DM.RowsShown() == 0 and DM.EmptyText()
+            and DM.EmptyText():find("nicht zur Verf", 1, true),
+            "ohne C_DamageMeter keine Auskunft (oder leere Balken)")
+        _G.Enum = _G.Enum or {}
+        _G.Enum.DamageMeterType = { DamageDone = 0, HealingDone = 1, DamageTaken = 2,
+            Interrupts = 5, Dispels = 6, Deaths = 7 }
+        _G.Enum.DamageMeterSessionType = { Current = 0, Overall = 1 }
+        _G.C_DamageMeter = { GetCombatSessionFromType = function()
+            return { combatSources = {
+                { name = "Testchar", classFilename = "WARRIOR", totalAmount = 12000, amountPerSecond = 400 },
+                { name = "Zweiter", classFilename = "MAGE", totalAmount = 8000, amountPerSecond = 260 },
+            } }
+        end }
+        DM.Refresh()
+        assert(DM.RowsShown() == 2, "zwei Quellen, " .. DM.RowsShown() .. " Balken")
+        _G.C_DamageMeter.GetCombatSessionFromType = function() return { combatSources = {} } end
+        DM.Refresh()
+        assert(DM.RowsShown() == 0 and DM.EmptyText() == "Noch nichts gemessen.",
+            "leere Sitzung zeigt keine Auskunft")
+        _G.C_DamageMeter = nil
+    end)
+    Check(ok, "Schadensanzeige: unbekannt / Balken / leer" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.
+-- Sie rollt nie - also muss sie passen, mit Luft fuer einen weiteren.
+Check((UO._sidebarUsed or 9999) + 40 <= UO.HEIGHT,
+    "Seitenleiste des Einstellungsfensters: " .. tostring(UO._sidebarUsed)
+    .. " von " .. tostring(UO.HEIGHT) .. " px, Luft fuer einen weiteren Eintrag")
 
 -- Und die Seite im Hauptfenster, die hierher fuehrt.
 do

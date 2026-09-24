@@ -148,16 +148,22 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   `.github/tests/load_test.lua` holds them to it. A second meaning-bearing
   colour is how the previous edition ended up with "amber carries meaning,
   purple carries light".
-- **The optional UI (`ui/`) is off until the player turns it on, and
-  while off it touches no Blizzard frame.** Nameplates and unit frames
-  (`group = "ui"`) run only with the master switch *and* their own
-  switch, and change only after a reload; the comfort modules
-  (`group = "qol"`: quest arrow, comfort helpers) never depend on the
-  master switch. Layout and defaults follow EllesmereUI, but **no code
-  or media from it** — its licence is "all rights reserved". Game-world
-  colours live in `core/ui.lua` as `WeintCodex.GameColors`. Values from
-  the 12.x client may be *secret*: `type(x) == "nil"` instead of
-  `x == nil`, no `a or b` on client values. Details: `docs/systems/ui.md`.
+- **The UI (`ui/`) is built opt-in, and opt-in is suspended since
+  6.0.0.3.** The Forever beta client does not persist SavedVariables, so
+  a choice would be forgotten on every reload: `K.OPT_IN = false` in
+  `ui/kit.lua` makes `UIKit.UIEnabled()` always true, silences the login
+  question (`ui/welcome.lua`) and replaces the master switch with a note.
+  Flipping that **one** line back to `true` restores the full opt-in flow;
+  `load_test.lua` tests both states. UI modules (`group = "ui"`) replace
+  Blizzard frames and change only after a reload; comfort modules
+  (`group = "qol"`) never depend on the master switch. Layout and defaults
+  follow EllesmereUI, but **no code or media from it** — its licence is
+  "all rights reserved". Game-world colours live in `core/ui.lua` as
+  `WeintCodex.GameColors`. Values from the 12.x client may be *secret*:
+  `type(x) == "nil"` instead of `x == nil`, no `a or b` on client values;
+  auras go through `ui/auras.lua` (engine AuraContainer where available),
+  damage numbers through `C_DamageMeter` (no combat log for addons),
+  chat messages are never rewritten. Details: `docs/systems/ui.md`.
 - **Reloading is protected on Forever.** `ReloadUI()`/`C_UI.Reload()`
   from addon code is blocked (`ADDON_ACTION_BLOCKED`, measured on the
   beta client). Every reload button goes through
@@ -226,7 +232,7 @@ into modules that no longer exist. A green run means "it loads", never
 | Charakterzuordnung, WeintAdmin-Backup | `../Companion-Forever/docs/character-links-and-admin-bridge.md` |
 | Companion-Authentifizierung/Token | `../Companion-Forever/docs/companion-auth.md` |
 | Welche Spieldaten fehlen und warum | `../Companion-Forever/docs/systems/forever-data.md` |
-| Optionale Oberfläche (`ui/`): Namensplaketten, Einheitenrahmen, Questpfeil, Komfort, `/wcui`, `WeintCodex.GameColors`, geheime Werte (12.x) | `docs/systems/ui.md` |
+| Oberfläche (`ui/`): Plaketten, Einheiten-/Gruppenrahmen, Aktionsleisten, Minikarte, Chat, Taschen, Schadensanzeige, Auren, Questpfeil, Komfort, `/wcui`, `OPT_IN`, `WeintCodex.GameColors`, geheime Werte (12.x) | `docs/systems/ui.md` |
 
 Cross-repo tasks (something touches Codex **and** Companion **and/or**
 Bot): read this table's Companion-doc pointers first — they are the

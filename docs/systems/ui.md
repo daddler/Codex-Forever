@@ -1,22 +1,51 @@
-# Die optionale Oberfläche (`ui/`)
+# Die WeintCodex-Oberfläche (`ui/`)
 
 ## Was sie ist
 
-Ein eigenes, schlichtes Interface **zusätzlich** zu WeintCodex:
-Namensplaketten, Einheitenrahmen, ein Questpfeil und eine Handvoll
-Komfortfunktionen, eingestellt in einem eigenen Fenster (`/wcui`,
+Ein eigenes, schlichtes Interface zusätzlich zu WeintCodex:
+Namensplaketten (Gegner und Freunde, mit Debuffs), Einheitenrahmen,
+Gruppen- und Schlachtzugsrahmen, Aktionsleisten, Minikarte, Chat,
+Taschen, Schadensanzeige, ein Questpfeil und eine Handvoll
+Komfortfunktionen – eingestellt in einem eigenen Fenster (`/wcui`,
 `/wc ui`, oder in den Einstellungen des Hauptfensters unter
 „Oberfläche“).
 
-**Sie ist freiwillig, und das ist die wichtigste Eigenschaft.** Nach dem
-Einspielen ist der Hauptschalter aus. Solange er aus ist, fasst
-WeintCodex keinen einzigen Blizzard-Rahmen an.
+## Freiwillig – und seit 6.0.0.3 vorübergehend nicht (`UIKit.OPT_IN`)
+
+Gebaut ist sie **freiwillig**: Hauptschalter, Frage beim Einloggen
+(`ui/welcome.lua`), und solange der Schalter aus ist, fasst WeintCodex
+keinen Blizzard-Rahmen an.
+
+Das setzt voraus, dass der Client die Wahl speichert. Der
+Forever-Beta-Client tut das nicht (6.0.0.1 gemeldet, 6.0.0.2 bestätigt:
+auch „Mit Esc schließen“ überlebt kein `/reload`). Eine Wahl, die nach
+jedem Neuladen vergessen ist, ist keine. **Seit 6.0.0.3 ist die
+Oberfläche deshalb für alle an.**
+
+Die Rückkehr ist **eine Zeile**: `K.OPT_IN = false` in `ui/kit.lua` auf
+`true`. Dann gilt ohne jede weitere Änderung wieder:
+
+| Stelle | mit `OPT_IN = true` | mit `OPT_IN = false` (jetzt) |
+|---|---|---|
+| `UIKit.UIEnabled()` | liest den gespeicherten Hauptschalter | immer `true` |
+| Frage beim Einloggen | nach der Einführung, einmal je Konto | kommt nie |
+| Hauptschalter in `/wcui` | Schalter oben rechts und auf „Allgemein“ | Hinweis „derzeit für alle an“ |
+| Einstellungen → Oberfläche | Schalter | derselbe Hinweis |
+| Einführung, Kapitel „Oberfläche & Komfort“ | „ganz freiwillig“ | „derzeit für alle eingeschaltet“ |
+
+Alle Stellen fragen `K.OPT_IN` zur Laufzeit; `load_test.lua` prüft beide
+Zustände (die Frage und ihre Antworten laufen mit `OPT_IN = true` durch).
+**Wann umschalten:** sobald Einstellungen → Diagnose → „Speichern“ nach
+einem `/reload` „gespeichert“ meldet (`WeintCodex.SaveHealth()`).
+
+Einzelne Module lassen sich in `/wcui` weiterhin abschalten – das gilt,
+solange der Client nicht speichert, ebenfalls nur bis zum Neuladen.
 
 ## Zwei Arten von Modulen
 
 | Gruppe | Module | Hängt am Hauptschalter? | Umschalten |
 |---|---|---|---|
-| `ui` | Namensplaketten, Einheitenrahmen | **ja** | nach dem Neuladen |
+| `ui` | Namensplaketten, Einheitenrahmen, Gruppenrahmen, Aktionsleisten, Minikarte, Chat, Taschen, Schadensanzeige | **ja** (derzeit immer an) | nach dem Neuladen |
 | `qol` | Questpfeil, Komfort | **nein** | sofort |
 
 Der Unterschied ist Absicht: wer die Oberfläche nicht will, soll den
@@ -152,19 +181,27 @@ Chat, dass `/reload` zu tippen ist.
 Klick wäre genau der blockierte Fall. `load_test.lua` sucht in `core/`,
 `modules/` und `ui/` nach `ReloadUI(` und `C_UI.Reload` und schlägt an.
 
-## Was es (noch) nicht gibt
+## Die Module seit 6.0.0.3 – und ihre Grenzen
 
-Aus der Vorlage bewusst **nicht** übernommen, weil jedes davon ein
-eigenes Projekt ist oder auf Forever nicht belegt:
+Jedes Modul ist so gebaut, wie der 12.x-Unterbau es Addons erlaubt. Wo
+das weniger ist als bei der Vorlage, steht es hier und auf der
+Einstellungsseite des Moduls.
 
-| Nicht vorhanden | Warum |
-|---|---|
-| Freundliche Plaketten | In Instanzen für Addons gesperrt; ein Ersatz nur draußen wäre ein Rahmen, der je nach Ort anders aussieht. |
-| Auren auf Plaketten | Die Auren-API ist ab 12.1 für Addons mit harten Fehlern belegt (`RequiresUnitAuraAccess`), und nichts davon ist auf Forever geprüft. |
-| Gruppen- und Schlachtzugsrahmen | Brauchen Secure-Snippets, die im Beta-Client fehlen. |
-| Aktionsleisten, Minikarte, Chat, Taschen, Schadensanzeige | Je ein eigenes Modul in der Größe dieses ganzen Pakets. |
+| Modul | Was es tut | Grenze, und warum |
+|---|---|---|
+| Auren (`ui/auras.lua`) | **ein** Baustein für Plaketten, Zielrahmen, Gruppenrahmen | 12.1: Addons lesen Auren nicht mehr selbst. Wo es den **Auren-Container** des Spiels gibt (`CreateFrame("AuraContainer", …)`), füllt das Spiel die Symbole – ohne geheime Werte in Lua. Sonst `GetAuraDataByIndex` in `pcall`. Keine Liste einzelner Zauber zum Filtern: das Spiel zeigt Lua die Auren nicht. |
+| Freundliche Plaketten | Name in Klassenfarbe, wahlweise mit Balken | In Instanzen sind sie für Addons gesperrt (`IsForbidden`) – dort bleiben die des Spiels. |
+| Gruppen-/Schlachtzugsrahmen (`ui/groupframes.lua`) | zwei `SecureGroupHeader`, Klassenfarbe, Leben, Reichweite, Aggro, bannbare Debuffs | Ohne Secure Snippets gebaut (fehlen laut Vorlage im Beta-Client): kein `initialConfigFunction`, alle Knöpfe beim Anmelden per `startingIndex` angelegt und außerhalb des Kampfes eingerichtet. Die Seitenleiste des Spiels (Markierungen, Bereitschaftscheck) verschwindet mit den Schlachtzugsrahmen. **Auf Forever ungeprüft.** |
+| Aktionsleisten (`ui/actionbars.lua`) | die Knöpfe des Spiels umgestaltet: flach, Rand, Schrift, rote Schicht außer Reichweite, Greifen weg | **Keine eigenen Leisten**: Umblättern bei Haltung/Gestalt/Fahrzeug braucht Secure Snippets. Lage und Größe: Bearbeitungsmodus des Spiels. Reichweite als eigene Schicht, damit die Färbung des Spiels (keine Kraft, nicht benutzbar) erhalten bleibt. |
+| Minikarte (`ui/minimap.lua`) | eckig, Rand, Mausrad-Zoom, Gebiet, Koordinaten, Uhrzeit | Lage: Bearbeitungsmodus. Die Kompass-*Textur* wird versteckt, nie ihr Elternrahmen (Kampfhilfen lesen daraus die Blickrichtung). `GetMinimapShape` meldet `SQUARE` für Addon-Knöpfe. |
+| Chat (`ui/chat.lua`) | Schrift, Hintergrund, flache Reiter, Eingabezeile, Randknöpfe weg | **Keine veränderten Nachrichten** (Kanalnamen, Links, Zeitstempel): Nachrichten können im Kampf geheim sein, ein `gsub` darauf ist ein Fehler, und ein Fehler in `AddMessage` verschluckt die Nachricht. |
+| Taschen (`ui/bags.lua`) | alle Taschen in einem Raster, Suche, Sortieren, Gold, Gegenstandsstufe, Qualitätsrand | Knöpfe sind `ContainerFrameItemButtonTemplate` (Benutzen/Verkaufen macht das Spiel); **nie im Kampf angelegt** (sonst „tainted“), deshalb 180 auf Vorrat beim Anmelden. Öffnen folgt den Taschen des Spiels (Haken an `Show`/`Hide`, nicht an `OnShow` – die feuern im versteckten Elternrahmen nie). Die Bank bleibt die des Spiels. |
+| Schadensanzeige (`ui/damagemeter.lua`) | Schaden, Heilung, erlittener Schaden, Unterbrechungen, Bannungen, Tode; aktuell/gesamt | Addons bekommen ab 12.0 kein Kampflog: die Zahlen kommen aus `C_DamageMeter` (die Messung des Spiels), Blizzards Fenster geht aus (`damageMeterEnabled = 0`). Fehlt die Messung, steht das im Fenster – keine Nullen. |
 
 ## Die Frage beim Einloggen (`ui/welcome.lua`)
+
+**Ruht seit 6.0.0.3** (siehe oben, `OPT_IN`). Beschrieben ist, wie sie
+arbeitet, wenn `OPT_IN` wieder `true` ist.
 
 Einmal je Konto fragt WeintCodex, ob die Oberfläche verwendet werden
 soll – **nach** der Einführung bzw. dem Changelog-Popup, nie darüber
@@ -208,6 +245,14 @@ gespeichert wurde.
 `load_test.lua` prüft zusätzlich per `luac -l`, dass keine Datei unter
 `ui/` versehentlich eine globale Variable liest oder schreibt – genau
 so war die Sperre gegen die Schleife beim ersten Versuch wirkungslos.
+
+## Die Falle `x and false or nil`
+
+Bis 6.0.0.2 stand in `UIKit.Set`: `store[key] = (not same) and CopyValue(value) or nil`.
+Für `value == false` ist das `nil` – ein Schalter, der standardmäßig an
+ist, ließ sich **nie** abschalten, in keinem Modul. Gefunden hat es der
+Test der Minikarte („eckig“ aus). `load_test.lua` prüft seitdem
+ausdrücklich, dass `false` gespeichert wird.
 
 ## Prüfen
 

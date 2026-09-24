@@ -1,10 +1,14 @@
 --------------------------------------------------
 -- WeintCodex :: Oberflaeche - Namensplaketten
 --------------------------------------------------
--- Eigene Plaketten fuer GEGNER. Freundliche Plaketten bleiben die des
--- Spiels - in Instanzen sind sie fuer Addons ohnehin gesperrt
--- ("forbidden"), und ein Ersatz, der nur draussen greift, waere ein
--- Rahmen, der je nach Ort anders aussieht.
+-- Eigene Plaketten fuer Gegner - und seit 6.0.0.3 fuer Freunde (nur der
+-- Name in Klassenfarbe, wahlweise mit Balken). In Instanzen sind
+-- freundliche Plaketten fuer Addons gesperrt ("forbidden"); dort bleiben
+-- die des Spiels. Das ist der eine Ort, an dem die Plakette je nach Ort
+-- anders aussieht, und die Einstellungsseite sagt es.
+--
+-- Auren ueber gegnerischen Plaketten kommen aus ui/auras.lua (Auren-
+-- Container des Spiels, wo es ihn gibt).
 --
 -- WIE. Die Plakette ist ein eigener Rahmen, der an der Blizzard-Plakette
 -- haengt (SetParent: Abstandsskalierung und Sichtbarkeit erbt er so
@@ -83,6 +87,24 @@ local defaults = {
     castShield  = true,
     castColor   = K.ColorDefault("cast"),
     castLocked  = K.ColorDefault("castLocked"),
+
+    -- Auren ueber der Plakette (Vorlage: debuffSlot "top", Symbol 26,
+    -- maxDebuffs 5). Von Haus aus nur die eigenen - auf einer Plakette,
+    -- die zwanzig Spieler gleichzeitig bearbeiten, waeren alle Debuffs
+    -- ein Muster, keine Auskunft.
+    auraEnabled = true,
+    auraOnlyMine = true,
+    auraSize = 22,
+    auraMax = 5,
+
+    -- Freundliche Plaketten: nur der Name, in Klassenfarbe (Vorlage:
+    -- friendlyNameOnly = true, classColorFriendly = true). In Instanzen
+    -- gesperrt das Spiel sie fuer Addons - dort bleiben die des Spiels.
+    friendlyEnabled = true,
+    friendlyHealth = false,
+    friendlyClassColor = true,
+    friendlyNameSize = 12,
+    friendlyColor = K.ColorDefault("friendly"),
 }
 
 local S = {}   -- aufgeloeste Einstellungen, neu gelesen bei jeder Aenderung
@@ -180,10 +202,42 @@ local function Build(parent)
     p.raid = raid
 
     p.cast = CB.Create(p)
+    p.auras = WeintCodex.UIAuras.Create(p, { filter = "HARMFUL|PLAYER", max = defaults.auraMax,
+        size = defaults.auraSize, spacing = 2, anchor = "BOTTOMLEFT", growth = "RIGHT",
+        growthV = "UP", perRow = defaults.auraMax })
     return p
 end
 
+local function AuraFilter()
+    return S.auraOnlyMine and "HARMFUL|PLAYER" or "HARMFUL"
+end
+
+-- Nur Name: kein Balken, kein Rand, der Name in der Mitte. Freundliche
+-- Plaketten brauchen keine Lebenspunkte, um lesbar zu sein - und wer sie
+-- will, schaltet den Balken zu.
+local function LayoutFriendly(p)
+    local bar = S.friendlyHealth
+    p:SetSize(S.width, bar and S.height or 1)
+    if bar then p.health:Show() else p.health:Hide() end
+    p.border:SetShown(bar and S.showBorder)
+    p.ring:SetShown(false)
+    for _, slot in ipairs(SLOTS) do p.texts[slot]:Hide() end
+    local t = p.texts.top
+    K.SetFont(t, S.friendlyNameSize)
+    t:ClearAllPoints()
+    if bar then t:SetPoint("BOTTOM", p, "TOP", 0, 3) else t:SetPoint("CENTER", p, "CENTER", 0, 0) end
+    t:SetWidth(S.width + 40)
+    t:SetJustifyH("CENTER")
+    p.cast:Hide()
+    p.auras:SetShown(false)
+    p.raid:ClearAllPoints()
+    p.raid:SetSize(S.raidMarkerSize, S.raidMarkerSize)
+    p.raid:SetPoint("BOTTOM", t, "TOP", 0, 2)
+end
+
 local function Layout(p)
+    if p.friendly then return LayoutFriendly(p) end
+    p.health:Show()
     p:SetSize(S.width, S.height)
 
     local bgc = S.bgColor or defaults.bgColor
@@ -226,6 +280,13 @@ local function Layout(p)
     else
         raid:SetPoint("BOTTOMLEFT", p, "TOPRIGHT", -S.raidMarkerSize * 0.5, 2)
     end
+
+    -- Auren ueber dem Namen, linksbuendig.
+    p.auras:ApplyLayout({ filter = AuraFilter(), max = S.auraMax, size = S.auraSize,
+        spacing = 2, anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = S.auraMax })
+    p.auras:ClearAllPoints()
+    p.auras:SetPoint("BOTTOMLEFT", p, "TOPLEFT", 0, (S.textTop ~= "none" and S.nameSize or 0) + 8)
+    p.auras:SetShown(S.auraEnabled)
 
     local cast = p.cast
     cast:ClearAllPoints()
@@ -308,6 +369,23 @@ end
 local function FillTexts(p, onlyHealth)
     local unit = p.unit
     if not unit then return end
+    if p.friendly then
+        if onlyHealth then return end
+        local t = p.texts.top
+        t:SetText(_G.UnitName and (_G.UnitName(unit)))
+        local r, g, b = 1, 1, 1
+        local c = S.friendlyColor
+        if c then r, g, b = c.r, c.g, c.b end
+        if S.friendlyClassColor and K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(unit), false) then
+            local _, class = _G.UnitClass(unit)
+            class = K.Plain(class)
+            local cc = class and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
+            if cc then r, g, b = cc.r, cc.g, cc.b end
+        end
+        t:SetTextColor(r, g, b, 1)
+        t:Show()
+        return
+    end
     local kinds = { top = S.textTop, left = S.textLeft, right = S.textRight, center = S.textCenter }
     local pctText, numText
     for slot, kind in pairs(kinds) do
@@ -359,6 +437,16 @@ end
 local function BarColor(p)
     local unit = p.unit
     local function C3(c) return c.r, c.g, c.b end
+
+    if p.friendly then
+        if S.friendlyClassColor and K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(unit), false) then
+            local _, class = _G.UnitClass(unit)
+            class = K.Plain(class)
+            local cc = class and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
+            if cc then return cc.r, cc.g, cc.b end
+        end
+        return C3(S.friendlyColor)
+    end
 
     if K.Bool(_G.UnitIsTapDenied and _G.UnitIsTapDenied(unit), false) then
         return C3(S.tapped)
@@ -413,7 +501,7 @@ local anyTarget = false
 local function UpdateTarget(p)
     if not p.unit then return end
     local isTarget = IsUnit(p.unit, "target")
-    p.ring:SetShown(S.targetRing and isTarget)
+    p.ring:SetShown(S.targetRing and isTarget and not p.friendly)
     p:SetScale(isTarget and (S.targetScale / 100) or 1)
     if anyTarget and not isTarget then
         p:SetAlpha(S.nonTargetAlpha / 100)
@@ -442,6 +530,7 @@ local function FullUpdate(p)
     UpdateColor(p)
     UpdateTarget(p)
     UpdateRaidIcon(p)
+    if p.friendly then return end
     if S.castEnabled then p.cast:Update() else p.cast:Hide() end
 end
 
@@ -453,16 +542,21 @@ local function Attach(unit)
     if not (_G.C_NamePlate and _G.C_NamePlate.GetNamePlateForUnit) then return end
     local nameplate = _G.C_NamePlate.GetNamePlateForUnit(unit)
     if not nameplate then return end
-    -- Nur Gegner. Freundliche bleiben die des Spiels (siehe oben).
-    if not K.Bool(_G.UnitCanAttack and _G.UnitCanAttack("player", unit), false) then return end
+    -- In Instanzen sind freundliche Plaketten fuer Addons gesperrt
+    -- ("forbidden"): dann bleiben die des Spiels, ohne Fehler.
+    if nameplate.IsForbidden and nameplate:IsForbidden() then return end
+    local friendly = not K.Bool(_G.UnitCanAttack and _G.UnitCanAttack("player", unit), false)
+    if friendly and not S.friendlyEnabled then return end
 
     local p = table.remove(pool) or Build(nameplate)
+    p.friendly = friendly
     p:SetParent(nameplate)
     p:ClearAllPoints()
     p:SetPoint("CENTER", nameplate, "CENTER", 0, 0)
     p.unit, p.nameplate = unit, nameplate
     p.cast:SetUnit(unit)
     Layout(p)
+    if not friendly then p.auras:SetUnit(S.auraEnabled and unit or nil) end
     Suppress(nameplate)
     plates[unit] = p
     FullUpdate(p)
@@ -476,7 +570,8 @@ local function Detach(unit)
     Restore(p.nameplate)
     p.cast:Stop(false)
     p.cast:SetUnit(nil)
-    p.unit, p.nameplate = nil, nil
+    p.auras:SetUnit(nil)
+    p.unit, p.nameplate, p.friendly = nil, nil, nil
     p:Hide()
     p:SetParent(hidden)
     pool[#pool + 1] = p
@@ -693,7 +788,7 @@ local function px(v) return string.format("%d px", v) end
 K.Register({
     key = KEY, group = "ui", order = 10,
     title = "Namensplaketten",
-    description = "Eigene Plaketten für Gegner: Farben nach Lage, Stufe, Zauberbalken, Zielrahmen. Freundliche Plaketten bleiben die des Spiels.",
+    description = "Eigene Plaketten: Gegner mit Farben nach Lage, Stufe, Debuffs, Zauberbalken und Zielrahmen; Freunde als Name in Klassenfarbe.",
     defaults = defaults,
     Enable = Enable,
     OnSetting = OnSetting,
@@ -775,6 +870,31 @@ K.Register({
                         { value = "none",     text = "Aus" } } },
                   { type = "slider", label = "Größe", key = "raidMarkerSize", min = 12, max = 40, step = 1, format = px,
                     disabled = function() return K.Get(KEY, "raidMarker") == "none" end })
+        end },
+        { key = "auren", label = "Auren", build = function(B)
+            local off = function() return not K.Get(KEY, "auraEnabled") end
+            B:Section("Debuffs über der Plakette")
+            B:Row({ type = "toggle", label = "Debuffs anzeigen", key = "auraEnabled" },
+                  { type = "toggle", label = "Nur meine", key = "auraOnlyMine", disabled = off,
+                    description = "Aus: alle Debuffs, auch die anderer Spieler." })
+            B:Row({ type = "slider", label = "Symbolgröße", key = "auraSize", min = 14, max = 40, step = 1, format = px, disabled = off },
+                  { type = "slider", label = "Höchstens", key = "auraMax", min = 1, max = 10, step = 1,
+                    format = function(v) return tostring(v) end, disabled = off })
+            B:Note("Auf dem neuen Client liest das Spiel die Auren selbst und reicht sie an die Plakette – WeintCodex sieht sie dabei nicht. Deshalb gibt es hier keine Liste einzelner Zauber zum Ein- und Ausblenden.")
+        end },
+        { key = "freundlich", label = "Freundlich", build = function(B)
+            local off = function() return not K.Get(KEY, "friendlyEnabled") end
+            B:Section("Freundliche Plaketten",
+                "In Dungeons und Schlachtzügen sperrt das Spiel freundliche Plaketten für Addons – dort bleiben die des Spiels.")
+            B:Row({ type = "toggle", label = "WeintCodex-Plaketten auch für Freunde", key = "friendlyEnabled" },
+                  { type = "toggle", label = "Mit Lebensbalken", key = "friendlyHealth", disabled = off,
+                    description = "Aus: nur der Name." })
+            B:Row({ type = "toggle", label = "Spieler in Klassenfarbe", key = "friendlyClassColor", disabled = off },
+                  { type = "color", label = "Farbe sonst", key = "friendlyColor", disabled = off })
+            B:Row({ type = "slider", label = "Schriftgröße", key = "friendlyNameSize", min = 8, max = 20, step = 1, format = px, disabled = off },
+                  { type = "empty" })
+            B:Row(CVarToggle("Freundliche Spieler zeigen", "nameplateShowFriends", "1", "0"),
+                  CVarToggle("Freundliche NPCs zeigen", "nameplateShowFriendlyNPCs", "1", "0"))
         end },
         { key = "zauber", label = "Zauberbalken", build = function(B)
             local off = function() return not K.Get(KEY, "castEnabled") end

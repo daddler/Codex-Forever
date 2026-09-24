@@ -9,6 +9,61 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.0.0.3] – 2026-09-24
+
+**Die WeintCodex-Oberfläche ist jetzt für alle eingeschaltet.** Der
+Forever-Client speichert Addon-Einstellungen derzeit nicht über ein
+Neuladen hinweg – eine Wahl „an“ oder „aus“ wäre danach vergessen.
+Sobald er wieder speichert, wird sie wieder freiwillig. Einzelne Teile
+schaltest du mit `/wcui` ab.
+
+**Gruppen- und Schlachtzugsrahmen im Stil von WeintCodex.** Klassenfarbe,
+Name, Leben in Prozent oder fehlendes Leben, abgeblendet außer
+Reichweite, roter Rand bei Aggro und die Debuffs, die du bannen kannst.
+
+**Debuffs über gegnerischen Plaketten, und freundliche Plaketten.** Deine
+Debuffs stehen über dem Gegner; Freunde zeigen ihren Namen in
+Klassenfarbe. In Dungeons und Schlachtzügen bleiben die freundlichen
+Plaketten die des Spiels – das Spiel sperrt sie dort für Addons.
+
+**Aktionsleisten, Minikarte und Chat im Stil von WeintCodex.** Flache
+Knöpfe mit feinem Rand und roter Schicht außer Reichweite; eine eckige
+Minikarte mit Mausrad-Zoom, Koordinaten und Uhrzeit; Chatfenster mit
+eigener Schrift, ruhigem Hintergrund und schlichter Eingabezeile.
+
+**Alle Taschen in einem Fenster.** Suche, Sortieren, Gold,
+Gegenstandsstufe auf Ausrüstung und Rand in Qualitätsfarbe. Benutzen,
+Anlegen und Verkaufen funktionieren wie gewohnt.
+
+**Eine Schadensanzeige.** Schaden, Heilung, erlittener Schaden,
+Unterbrechungen, Bannungen und Tode, für den laufenden Kampf oder die
+ganze Sitzung – gemessen vom Spiel selbst.
+
+**Optionen, die von Haus aus an sind, lassen sich jetzt ausschalten.**
+Vorher sprangen sie beim nächsten Lesen wieder auf „an“.
+
+### Technisch
+
+`UIKit.OPT_IN = false` (`ui/kit.lua`): `UIEnabled()` ist immer wahr, die
+Frage beim Einloggen ruht, der Hauptschalter wird zum Hinweis; eine
+Zeile zurück auf `true` stellt alles wieder her (`load_test.lua` prüft
+beide Zustände). Neue Module: `ui/auras.lua` (Auren-Container des
+Spiels, sonst `GetAuraDataByIndex`), `ui/groupframes.lua`
+(`SecureGroupHeaderTemplate` ohne Secure Snippets: alle Knöpfe per
+`startingIndex` beim Anmelden angelegt, außerhalb des Kampfes
+eingerichtet), `ui/actionbars.lua` (Blizzard-Knöpfe umgestaltet, keine
+eigenen Leisten), `ui/minimap.lua`, `ui/chat.lua` (keine veränderten
+Nachrichten – geheime Chatzeilen), `ui/bags.lua`
+(`ContainerFrameItemButtonTemplate`, Vorrat von 180 außerhalb des
+Kampfes, Öffnen über Haken an `Show`/`Hide` der Blizzard-Taschen),
+`ui/damagemeter.lua` (`C_DamageMeter`, `damageMeterEnabled = 0`).
+Nameplates: freundliche Plaketten (nicht in gesperrten Instanzen) und
+Debuffs; Zielauren im Einheitenrahmen laufen über `ui/auras.lua`;
+`UIKit.HideBlizzard` ist jetzt gemeinsam. Fehler behoben:
+`UIKit.Set` speicherte `false` nie (`x and false or nil`),
+`UIKit.SetFont` stürzte an einem Feld ab, das keine Schriftzeile ist.
+Nichts davon ist im echten Client geprüft.
+
 ## [6.0.0.2] – 2026-09-24
 
 **Die Frage zur WeintCodex-Oberfläche kommt nach einem Neuladen nicht

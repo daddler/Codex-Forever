@@ -579,18 +579,32 @@ end
 local function ViewInterface(y)
     local K = WeintCodex.UIKit
 
-    y = Group(y, "WeintCodex-Oberfläche",
-        "Ein eigenes, schlichtes Interface für Namensplaketten und"
-        .. " Einheitenrahmen — ganz freiwillig. Solange es aus ist, zeigt"
-        .. " das Spiel seine eigenen, und WeintCodex fasst keinen"
-        .. " Blizzard-Rahmen an.")
+    if K.OPT_IN then
+        y = Group(y, "WeintCodex-Oberfläche",
+            "Ein eigenes, schlichtes Interface für Namensplaketten und"
+            .. " Einheitenrahmen — ganz freiwillig. Solange es aus ist, zeigt"
+            .. " das Spiel seine eigenen, und WeintCodex fasst keinen"
+            .. " Blizzard-Rahmen an.")
 
-    y = Toggle(y, {
-        label = "WeintCodex-Oberfläche verwenden",
-        description = "Wirkt nach dem Neuladen (/reload).",
-        get = function() return K.UIEnabled() end,
-        set = function(on) K.SetUIEnabled(on) end,
-    })
+        y = Toggle(y, {
+            label = "WeintCodex-Oberfläche verwenden",
+            description = "Wirkt nach dem Neuladen (/reload).",
+            get = function() return K.UIEnabled() end,
+            set = function(on) K.SetUIEnabled(on) end,
+        })
+    else
+        -- Hauptschalter ausgesetzt (UIKit.OPT_IN, ui/kit.lua): der Client
+        -- speichert keine Einstellungen, also ist die Oberflaeche an.
+        y = Group(y, "WeintCodex-Oberfläche",
+            "Plaketten, Einheiten- und Gruppenrahmen, Aktionsleisten,"
+            .. " Minikarte, Chat, Taschen und Schadensanzeige im Stil von"
+            .. " WeintCodex.")
+        y = Note(y, "Die Oberfläche ist derzeit für alle eingeschaltet. Der"
+            .. " Forever-Beta-Client speichert Addon-Einstellungen nicht über"
+            .. " ein Neuladen hinweg — eine Wahl „an“ oder „aus“ wäre nach"
+            .. " jedem /reload vergessen. Sobald der Client wieder speichert,"
+            .. " kommt der Schalter zurück.", "textMuted")
+    end
 
     y = Spacer(y, 8)
     y = Group(y, "Komfort",

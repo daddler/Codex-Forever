@@ -1,6 +1,13 @@
 --------------------------------------------------
 -- WeintCodex :: Oberflaeche - die Frage beim Einloggen
 --------------------------------------------------
+-- SEIT 6.0.0.3 RUHT DIESE DATEI. Die Frage setzt voraus, dass der Client
+-- die Antwort speichert; der Forever-Beta-Client tut das nicht. Solange
+-- UIKit.OPT_IN (ui/kit.lua) false ist, fragt MaybeAsk nie, und die
+-- Oberflaeche ist fuer alle an. Die Datei bleibt vollstaendig und
+-- geprueft (load_test.lua spielt sie mit OPT_IN = true durch), damit sie
+-- mit einer einzigen Zeile zurueckkommt.
+--------------------------------------------------
 -- Einmal je Konto fragt WeintCodex: "Moechtest du die WeintCodex-
 -- Oberflaeche verwenden?" Die Oberflaeche ist freiwillig, und wer nicht
 -- gefragt wird, erfaehrt nie, dass es sie gibt - ein Schalter, den
@@ -251,6 +258,9 @@ end
 -- Fragen, wenn es noch nicht geschehen ist und gerade nichts anderes
 -- davor steht.
 function WL.MaybeAsk()
+    -- Ohne OPT_IN gibt es nichts zu fragen: die Oberflaeche ist fuer alle
+    -- an, bis der Client wieder speichert (UIKit.OPT_IN, ui/kit.lua).
+    if not K.OPT_IN then return end
     if Asked() or K.UIEnabled() then return end
     if reloadSession then return end   -- siehe unten: keine Schleife nach /reload
     if dimmer and dimmer:IsShown() then return end

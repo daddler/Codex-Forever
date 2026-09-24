@@ -22,6 +22,19 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.0.0.3",
+        date    = "24.09.2026",
+        notes   = {
+            "|cff7C6CFFDie WeintCodex-Oberfläche ist jetzt für alle eingeschaltet.|r Der Forever-Client speichert Addon-Einstellungen derzeit nicht über ein Neuladen hinweg – eine Wahl „an“ oder „aus“ wäre danach vergessen. Sobald er wieder speichert, wird sie wieder freiwillig. Einzelne Teile schaltest du mit /wcui ab.",
+            "|cff7C6CFFGruppen- und Schlachtzugsrahmen im Stil von WeintCodex.|r Klassenfarbe, Name, Leben in Prozent oder fehlendes Leben, abgeblendet außer Reichweite, roter Rand bei Aggro und die Debuffs, die du bannen kannst.",
+            "|cff7C6CFFDebuffs über gegnerischen Plaketten, und freundliche Plaketten.|r Deine Debuffs stehen über dem Gegner; Freunde zeigen ihren Namen in Klassenfarbe. In Dungeons und Schlachtzügen bleiben die freundlichen Plaketten die des Spiels – das Spiel sperrt sie dort für Addons.",
+            "|cff7C6CFFAktionsleisten, Minikarte und Chat im Stil von WeintCodex.|r Flache Knöpfe mit feinem Rand und roter Schicht außer Reichweite; eine eckige Minikarte mit Mausrad-Zoom, Koordinaten und Uhrzeit; Chatfenster mit eigener Schrift, ruhigem Hintergrund und schlichter Eingabezeile.",
+            "|cff7C6CFFAlle Taschen in einem Fenster.|r Suche, Sortieren, Gold, Gegenstandsstufe auf Ausrüstung und Rand in Qualitätsfarbe. Benutzen, Anlegen und Verkaufen funktionieren wie gewohnt.",
+            "|cff7C6CFFEine Schadensanzeige.|r Schaden, Heilung, erlittener Schaden, Unterbrechungen, Bannungen und Tode, für den laufenden Kampf oder die ganze Sitzung – gemessen vom Spiel selbst.",
+            "|cff7C6CFFOptionen, die von Haus aus an sind, lassen sich jetzt ausschalten.|r Vorher sprangen sie beim nächsten Lesen wieder auf „an“.",
+        },
+    },
+    {
         version = "6.0.0.2",
         date    = "24.09.2026",
         notes   = {

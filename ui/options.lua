@@ -33,6 +33,10 @@ local F = WeintCodex.Fonts
 
 local W, H     = 1000, 680
 local SIDE_W   = 224
+-- Seitenleiste: seit 6.0.0.3 elf Eintraege. 38 hoch, 40 Schritt - der
+-- Prueflauf haelt die belegte Hoehe gegen die Fensterhoehe (nichts in der
+-- Seitenleiste darf rollen muessen).
+local SIDE_ROW_H, SIDE_ROW_STEP = 38, 40
 local HEAD_H   = 96
 local TABS_H   = 38
 local FOOT_H   = 58
@@ -44,6 +48,7 @@ local CONTENT_W = W - SIDE_W - PAD * 2 - SCROLL_W
 local CELL_W    = math.floor((CONTENT_W - GAP) / 2)
 
 O.CONTENT_W, O.CELL_W = CONTENT_W, CELL_W
+O.HEIGHT = H
 
 local GROUPS = {
     { key = "general", label = "Allgemein" },
@@ -59,7 +64,11 @@ local GROUPS = {
 K.Register({
     key = "general", group = "general", order = 0,
     title = "WeintCodex-Oberfläche",
-    description = "Ein eigenes, schlichtes Interface zusätzlich zu WeintCodex — ganz freiwillig. Aus bleibt alles, wie das Spiel es zeigt; die Komfortfunktionen gehen trotzdem.",
+    -- Die Beschreibung haengt an UIKit.OPT_IN (ui/kit.lua): solange der
+    -- Client keine Einstellungen speichert, ist die Oberflaeche fuer alle an.
+    description = K.OPT_IN
+        and "Ein eigenes, schlichtes Interface zusätzlich zu WeintCodex — ganz freiwillig. Aus bleibt alles, wie das Spiel es zeigt; die Komfortfunktionen gehen trotzdem."
+        or "Das Interface von WeintCodex: Plaketten, Rahmen, Leisten, Karte, Chat, Taschen und Schadensanzeige. Jedes Modul lässt sich einzeln abschalten.",
     defaults = {
         font = "plexsemi",
         outline = "thin",
@@ -82,14 +91,21 @@ K.Register({
     pages = {
         { key = "allgemein", label = "Allgemein", build = function(B)
             B:Section("Hauptschalter")
-            B:Row({ type = "toggle", label = "WeintCodex-Oberfläche verwenden",
-                    description = "Namensplaketten und Einheitenrahmen von WeintCodex statt der des Spiels. Wirkt nach dem Neuladen.",
-                    get = function() return K.UIEnabled() end,
-                    set = function(on) K.SetUIEnabled(on) end },
-                  { type = "button", label = "Rahmen entsperren",
-                    text = function() return K.IsUnlocked() and "Rahmen sperren" or "Rahmen entsperren" end,
-                    onClick = function() K.SetUnlocked(not K.IsUnlocked()) end })
-            B:Note("Die Komfortfunktionen links unter „Komfort“ — Questpfeil, Reparieren, Schrott verkaufen und Co. — hängen nicht an diesem Schalter. Du kannst sie ohne die Oberfläche benutzen.")
+            local unlock = { type = "button", label = "Rahmen entsperren",
+                text = function() return K.IsUnlocked() and "Rahmen sperren" or "Rahmen entsperren" end,
+                onClick = function() K.SetUnlocked(not K.IsUnlocked()) end }
+            if K.OPT_IN then
+                B:Row({ type = "toggle", label = "WeintCodex-Oberfläche verwenden",
+                        description = "Namensplaketten und Einheitenrahmen von WeintCodex statt der des Spiels. Wirkt nach dem Neuladen.",
+                        get = function() return K.UIEnabled() end,
+                        set = function(on) K.SetUIEnabled(on) end },
+                      unlock)
+                B:Note("Die Komfortfunktionen links unter „Komfort“ — Questpfeil, Reparieren, Schrott verkaufen und Co. — hängen nicht an diesem Schalter. Du kannst sie ohne die Oberfläche benutzen.")
+            else
+                B:Row(unlock, { type = "empty" })
+                B:Note("Die WeintCodex-Oberfläche ist derzeit für alle eingeschaltet. Der Forever-Beta-Client speichert Addon-Einstellungen nicht über ein Neuladen hinweg – eine Wahl „an“ oder „aus“ wäre nach jedem /reload vergessen. Sobald der Client wieder speichert, kommt der Hauptschalter zurück.")
+                B:Note("Einzelne Module schaltest du links ab (Schalter oben rechts). Auch das gilt, solange der Client nicht speichert, nur bis zum nächsten Neuladen.")
+            end
             B:Section("Schrift und Balken",
                 "Gilt für Namensplaketten, Einheitenrahmen und die Hinweise auf dem Bildschirm — nicht für das WeintCodex-Fenster.")
             B:Row({ type = "dropdown", label = "Schrift", key = "font", items = {
@@ -122,6 +138,7 @@ function O.ModuleStatus(key)
     if not m then return "", "textDim" end
     if key == "general" then
         if K.ReloadPending() then return "Neu laden nötig", "warning" end
+        if not K.OPT_IN then return "an (derzeit immer)", "success" end
         return K.UIEnabled() and "an" or "aus", K.UIEnabled() and "success" or "textDim"
     end
     local wants, active = K.WantsActive(key), K.IsActive(key)
@@ -457,7 +474,11 @@ function O.HeadToggle(key)
     if headToggles[key] ~= nil then return headToggles[key] or nil end
     local m = K.Module(key)
     local opts
-    if key == "general" then
+    if key == "general" and not K.OPT_IN then
+        -- Kein Hauptschalter, solange er nichts schalten kann.
+        headToggles[key] = false
+        return nil
+    elseif key == "general" then
         opts = {
             label = "Oberfläche an",
             get = function() return K.UIEnabled() end,
@@ -509,7 +530,7 @@ local function BuildSidebar()
                 local m = K.Module(key)
                 local row = CreateFrame("Button", nil, sidebar)
                 row:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 8, y)
-                row:SetSize(SIDE_W - 16, 42)
+                row:SetSize(SIDE_W - 16, SIDE_ROW_H)
                 row.bg = row:CreateTexture(nil, "BACKGROUND")
                 row.bg:SetAllPoints(row)
                 row.strip = row:CreateTexture(nil, "ARTWORK")
@@ -518,7 +539,7 @@ local function BuildSidebar()
                 row.strip:SetWidth(3)
                 row.strip:SetColorTexture(unpack(C.accent))
                 row.label = Label(row, F.sansSemi, 13, "textMuted")
-                row.label:SetPoint("TOPLEFT", row, "TOPLEFT", 14, -7)
+                row.label:SetPoint("TOPLEFT", row, "TOPLEFT", 14, -5)
                 row.label:SetText(key == "general" and "Allgemein" or m.title)
                 row.status = Label(row, F.mono, 9, "textDim")
                 row.status:SetPoint("TOPLEFT", row.label, "BOTTOMLEFT", 0, -3)
@@ -526,7 +547,7 @@ local function BuildSidebar()
                 row.status:SetWordWrap(false)
                 row:SetScript("OnClick", function() O.Select(key) end)
                 sideRows[key] = row
-                y = y - 44
+                y = y - SIDE_ROW_STEP
             end
         end
     end

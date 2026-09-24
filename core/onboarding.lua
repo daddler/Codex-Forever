@@ -257,24 +257,38 @@ local TOUR_STEPS = {
     -- kein "Ja/Nein", sondern nur der Weg, falls man es spaeter will.
     --------------------------------------------------
 
+    -- Die Seite gibt es in zwei Fassungen, je nachdem, ob die Oberflaeche
+    -- freiwillig ist (UIKit.OPT_IN, ui/kit.lua). Die Tour steht in
+    -- core/ und laedt vor ui/ - deshalb wird der Text erst beim Zeigen
+    -- gewaehlt (body als Funktion, siehe RenderTourStep).
     { chapter = "Oberfläche & Komfort", icon = ICON .. "INV_Misc_Spyglass_03",
       title = "Die WeintCodex-Oberfläche",
-      body =
-        "WeintCodex bringt auf Wunsch ein eigenes, schlichtes Interface mit: "
-        .. E("Namensplaketten für Gegner") .. " und " .. E("Einheitenrahmen")
-        .. " für dich, dein Ziel, das Ziel deines Ziels, deinen Fokus und "
-        .. "deinen Begleiter — im Stil von WeintCodex.\n\n"
-        .. E("Sie ist ganz freiwillig.") .. " Solange sie aus ist, zeigt das "
-        .. "Spiel seine eigenen Rahmen, und WeintCodex fasst keinen davon an. "
-        .. "Beim ersten Mal fragt WeintCodex dich gleich nach dieser "
-        .. "Einführung, ob du sie verwenden möchtest.\n\n"
-        .. "Einschalten, einstellen oder wieder ausschalten kannst du sie "
-        .. "jederzeit: unter " .. A("Einstellungen") .. " → " .. A("Oberfläche")
-        .. " oder direkt mit " .. A("/wcui") .. ". Sie startet nach dem "
-        .. "Neuladen, weil sie Rahmen des Spiels ersetzt.\n\n"
-        .. "Mit " .. A("Rahmen entsperren") .. " ziehst du Einheitenrahmen, "
-        .. "Questpfeil und Hinweise an ihren Platz; ein Rechtsklick setzt "
-        .. "einen Rahmen zurück." },
+      body = function()
+        local K = WeintCodex.UIKit
+        local optIn = K and K.OPT_IN
+        local intro = "WeintCodex bringt ein eigenes, schlichtes Interface mit: "
+            .. E("Namensplaketten") .. ", " .. E("Einheiten- und Gruppenrahmen")
+            .. ", Aktionsleisten, Minikarte, Chat, Taschen und eine "
+            .. E("Schadensanzeige") .. " — im Stil von WeintCodex.\n\n"
+        local middle
+        if optIn then
+            middle = E("Sie ist ganz freiwillig.") .. " Solange sie aus ist, zeigt das "
+                .. "Spiel seine eigenen Rahmen, und WeintCodex fasst keinen davon an. "
+                .. "Beim ersten Mal fragt WeintCodex dich gleich nach dieser "
+                .. "Einführung, ob du sie verwenden möchtest.\n\n"
+                .. "Einschalten, einstellen oder wieder ausschalten kannst du sie "
+                .. "jederzeit: unter " .. A("Einstellungen") .. " → " .. A("Oberfläche")
+                .. " oder direkt mit " .. A("/wcui") .. ".\n\n"
+        else
+            middle = E("Sie ist derzeit für alle eingeschaltet.") .. " Der Forever-Client "
+                .. "speichert Addon-Einstellungen noch nicht über ein Neuladen hinweg — "
+                .. "eine Wahl „an“ oder „aus“ wäre danach vergessen. Einstellen und "
+                .. "einzelne Teile abschalten kannst du mit " .. A("/wcui") .. ".\n\n"
+        end
+        return intro .. middle
+            .. "Mit " .. A("Rahmen entsperren") .. " ziehst du Rahmen, Fenster und "
+            .. "Hinweise an ihren Platz; ein Rechtsklick setzt einen zurück."
+      end },
 
     { chapter = "Oberfläche & Komfort", icon = ICON .. "Ability_Tracking",
       title = "Questpfeil und kleine Helfer",
@@ -569,7 +583,14 @@ local function RenderTourStep()
         .. WeintCodex.ColorText("textDim", "  ·  Schritt " .. currentStep
             .. " von " .. #visibleSteps))
 
-    SetBody(step.body)
+    -- `body` darf eine Funktion sein: dann haengt der Text an etwas, das
+    -- erst beim Zeigen feststeht (Kapitel "Oberflaeche & Komfort").
+    local body = step.body
+    if type(body) == "function" then
+        local ok, text = pcall(body)
+        body = ok and text or ""
+    end
+    SetBody(body)
 
     ClearButtons()
 

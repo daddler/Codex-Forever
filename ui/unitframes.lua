@@ -85,35 +85,9 @@ end
 
 local function Opt(key) return K.Get(KEY, key) end
 
---------------------------------------------------
--- Blizzard-Rahmen verstecken
---------------------------------------------------
-
-local hiddenParent = CreateFrame("Frame")
-hiddenParent:Hide()
-local hooked = {}
-
-local function HideBlizzard(frame)
-    if type(frame) == "string" then frame = _G[frame] end
-    if not frame then return end
-    if frame.IsForbidden and frame:IsForbidden() then return end
-    local function apply()
-        if frame.UnregisterAllEvents then frame:UnregisterAllEvents() end
-        frame:Hide()
-        frame:SetParent(hiddenParent)
-    end
-    K.AfterCombat(apply)
-    -- Der Bearbeitungsmodus des Spiels haengt seine Rahmen gelegentlich
-    -- selbst wieder ein. Dann eben noch einmal - nach dem Kampf.
-    if not hooked[frame] and _G.hooksecurefunc then
-        hooked[frame] = true
-        _G.hooksecurefunc(frame, "SetParent", function(self, parent)
-            if parent ~= hiddenParent then K.AfterCombat(function()
-                self:SetParent(hiddenParent)
-            end) end
-        end)
-    end
-end
+-- Blizzard-Rahmen verstecken: UIKit.HideBlizzard (ui/kit.lua), dieselbe
+-- Stelle fuer Einheiten-, Gruppen- und alle anderen ersetzten Rahmen.
+local HideBlizzard = K.HideBlizzard
 
 local BLIZZARD = {
     player = { "PlayerFrame" },
@@ -293,7 +267,17 @@ local function Create(unit)
         cp:Hide()
         f._combo = cp
 
-        f._auras = { HARMFUL = {}, HELPFUL = {} }
+        -- Buffs und Debuffs ueber dem Rahmen: der gemeinsame Baustein
+        -- (ui/auras.lua), derselbe wie auf Plaketten und Gruppenrahmen.
+        local size = Opt("auraSize")
+        f._auras = {
+            HARMFUL = WeintCodex.UIAuras.Create(f, { filter = "HARMFUL", max = 8, size = size,
+                spacing = 3, anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = 8 }),
+            HELPFUL = WeintCodex.UIAuras.Create(f, { filter = "HELPFUL", max = 8, size = size,
+                spacing = 3, anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = 8 }),
+        }
+        f._auras.HARMFUL:SetUnit(unit)
+        f._auras.HELPFUL:SetUnit(unit)
     end
 
     for k, v in pairs(Frame) do f[k] = v end
@@ -476,112 +460,32 @@ end
 -- Der Blizzard-Zielrahmen zeigt Buffs und Debuffs. Wer ihn ersetzt und
 -- sie weglaesst, nimmt dem Spieler etwas weg - also zeigt dieser hier
 -- sie auch, oberhalb des Rahmens: eine Reihe Debuffs, darueber eine
--- Reihe Buffs.
---
--- Dauer und Stapelzahl koennen ab 12.0 geheim sein. Die Restzeit laeuft
--- dann ueber ein Dauerobjekt (C_UnitAuras.GetAuraDuration), die Zahl
--- ueber GetAuraApplicationDisplayCount. Fehlt beides, gibt es das
--- Symbol ohne Uhr - lieber das als eine falsche.
+-- Reihe Buffs. Gelesen und gezeichnet wird ueber ui/auras.lua (Auren-
+-- Container des Spiels, wo es ihn gibt).
 --------------------------------------------------
-
-local MAX_AURAS = 8
-
-local function AuraButton(parent)
-    local b = CreateFrame("Frame", nil, parent)
-    b.icon = b:CreateTexture(nil, "ARTWORK")
-    b.icon:SetAllPoints(b)
-    if b.icon.SetTexCoord then b.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
-    b.border = K.Border(b, 1, 0, 0, 0, 1, "OVERLAY")
-    b.cd = CreateFrame("Cooldown", nil, b, "CooldownFrameTemplate")
-    b.cd:SetAllPoints(b)
-    if b.cd.SetHideCountdownNumbers then b.cd:SetHideCountdownNumbers(true) end
-    if b.cd.SetDrawEdge then b.cd:SetDrawEdge(false) end
-    b.count = b:CreateFontString(nil, "OVERLAY")
-    b.count:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", 1, -1)
-    b:Hide()
-    return b
-end
 
 function Frame:LayoutAuras()
     local size = Opt("auraSize")
     local y0 = (self._combo and 10 or 3)
-    for filterIdx, filter in ipairs({ "HARMFUL", "HELPFUL" }) do
-        local list = self._auras[filter]
-        for i = 1, MAX_AURAS do
-            local b = list[i] or AuraButton(self)
-            list[i] = b
-            b:SetSize(size, size)
-            K.SetFont(b.count, math.max(8, math.floor(size * 0.5)))
-            b:ClearAllPoints()
-            b:SetPoint("BOTTOMLEFT", self, "TOPLEFT",
-                (i - 1) * (size + 3), y0 + (filterIdx - 1) * (size + 3))
-        end
+    local debuffFilter = Opt("onlyOwnDebuffs") and "HARMFUL|PLAYER" or "HARMFUL"
+    local rows = {
+        { self._auras.HARMFUL, debuffFilter, y0 },
+        { self._auras.HELPFUL, "HELPFUL", y0 + size + 3 },
+    }
+    for _, r in ipairs(rows) do
+        local obj = r[1]
+        obj:ApplyLayout({ filter = r[2], max = 8, size = size, spacing = 3,
+            anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = 8 })
+        obj:ClearAllPoints()
+        obj:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, r[3])
     end
-end
-
-local function AuraAt(unit, i, filter)
-    local cu = _G.C_UnitAuras
-    if cu and cu.GetAuraDataByIndex then return cu.GetAuraDataByIndex(unit, i, filter) end
-    if _G.UnitAura then
-        local name, icon, count, _, duration, expiration = _G.UnitAura(unit, i, filter)
-        if type(name) ~= "nil" then
-            return { icon = icon, applications = count, duration = duration, expirationTime = expiration }
-        end
-    end
-    return nil
-end
-
-local function PaintAura(b, unit, aura)
-    b.icon:SetTexture(aura.icon)
-    local cu = _G.C_UnitAuras
-    local id = aura.auraInstanceID
-
-    if cu and cu.GetAuraApplicationDisplayCount and type(id) ~= "nil" then
-        b.count:SetText(cu.GetAuraApplicationDisplayCount(unit, id, 2, 99))
-    else
-        local n = K.Plain(aura.applications)
-        b.count:SetText((type(n) == "number" and n > 1) and tostring(n) or "")
-    end
-
-    b.cd:Hide()
-    if cu and cu.GetAuraDuration and type(id) ~= "nil" and b.cd.SetCooldownFromDurationObject then
-        local dur = cu.GetAuraDuration(unit, id)
-        if type(dur) ~= "nil" then
-            b.cd:SetCooldownFromDurationObject(dur)
-            b.cd:Show()
-        end
-    else
-        local d, e = K.Plain(aura.duration), K.Plain(aura.expirationTime)
-        if type(d) == "number" and type(e) == "number" and d > 0 then
-            b.cd:SetCooldown(e - d, d)
-            b.cd:Show()
-        end
-    end
-    b:Show()
 end
 
 function Frame:UpdateAuras()
-    local on = Opt("targetAuras") and K.Bool(_G.UnitExists and _G.UnitExists(self.unit), false)
-    for _, filter in ipairs({ "HARMFUL", "HELPFUL" }) do
-        local list = self._auras[filter]
-        local query = filter
-        if filter == "HARMFUL" and Opt("onlyOwnDebuffs") then query = "HARMFUL|PLAYER" end
-        local shown = 0
-        if on then
-            local ok, err = pcall(function()
-                for i = 1, 40 do
-                    if shown >= MAX_AURAS then break end
-                    local aura = AuraAt(self.unit, i, query)
-                    if not aura then break end
-                    shown = shown + 1
-                    PaintAura(list[shown], self.unit, aura)
-                end
-            end)
-            if not ok then K.Report(KEY, err) end
-        end
-        for i = shown + 1, MAX_AURAS do
-            if list[i] then list[i]:Hide() end
-        end
+    local on = Opt("targetAuras") and true or false
+    for _, obj in pairs(self._auras) do
+        obj:SetShown(on)
+        if on then obj:Refresh() end
     end
 end
 
@@ -675,7 +579,7 @@ local function OnEvent(_, event, unit)
         end
         if unit == "player" and frames.target then frames.target:UpdateCombo() end
     elseif event == "UNIT_AURA" then
-        if f._auras then f:UpdateAuras() end
+        -- Die Auren melden sich selbst (Container bzw. eigenes UNIT_AURA).
     else
         local kind = CAST[event]
         if kind and f._cast and Opt(unit .. "_cast") then
@@ -721,7 +625,7 @@ local function Enable()
 
     for _, e in ipairs({
         "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED", "UNIT_TARGET", "UNIT_PET",
-        "PLAYER_ENTERING_WORLD", "RAID_TARGET_UPDATE", "UNIT_AURA", "UPDATE_SHAPESHIFT_FORM",
+        "PLAYER_ENTERING_WORLD", "RAID_TARGET_UPDATE", "UPDATE_SHAPESHIFT_FORM",
     }) do Register(e) end
     for e in pairs(HEALTH) do Register(e) end
     for e in pairs(POWER) do Register(e) end

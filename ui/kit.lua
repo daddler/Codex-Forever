@@ -129,7 +129,16 @@ function K.Set(moduleKey, key, value)
             if default[k] ~= x then same = false break end
         end
     end
-    store[key] = (not same) and CopyValue(value) or nil
+    -- Kein `(not same) and CopyValue(value) or nil`: fuer value == false
+    -- ergibt das nil, und ein Schalter, der von "an" (Standard) auf "aus"
+    -- gestellt wird, waere nie gespeichert worden. Genau so war es bis
+    -- 6.0.0.3 - keine standardmaessig eingeschaltete Option liess sich
+    -- abschalten.
+    if same then
+        store[key] = nil
+    else
+        store[key] = CopyValue(value)
+    end
 
     if m and m.OnSetting then
         local ok, err = pcall(m.OnSetting, key, value)
@@ -161,13 +170,37 @@ end
 -- Hauptschalter
 --------------------------------------------------
 
+-- DER HAUPTSCHALTER IST SEIT 6.0.0.3 AUSGESETZT - UND BEREIT FUER DIE
+-- RUECKKEHR.
+--
+-- Die Oberflaeche war freiwillig: Frage beim Einloggen (ui/welcome.lua),
+-- Hauptschalter in /wcui und in den Einstellungen. Das setzt voraus, dass
+-- der Client die Antwort speichert. Der Forever-Beta-Client tut das nicht
+-- (gemeldet mit 6.0.0.1, bestaetigt mit 6.0.0.2: auch "Mit Esc schliessen"
+-- ueberlebt kein /reload). Eine Wahl, die nach jedem Neuladen vergessen
+-- ist, ist keine - also ist die Oberflaeche jetzt fuer alle an.
+--
+-- K.OPT_IN ist die EINE Stelle, an der das zurueckgedreht wird. Steht es
+-- auf true, gilt wieder alles von vorher, ohne weitere Aenderung:
+--   * K.UIEnabled() liest wieder den gespeicherten Hauptschalter,
+--   * die Frage beim Einloggen kommt wieder (ui/welcome.lua),
+--   * der Hauptschalter in /wcui und in den Einstellungen ist wieder
+--     bedienbar, die Einfuehrung spricht wieder von "freiwillig".
+-- Alle drei Stellen fragen K.OPT_IN, und load_test.lua prueft beide
+-- Zustaende. Wann umschalten: sobald WeintCodex.SaveHealth() nach einem
+-- /reload "ok" meldet (Einstellungen -> Diagnose -> Speichern).
+K.OPT_IN = false
+
 function K.UIEnabled()
+    if not K.OPT_IN then return true end
     local ui = Root()
     return ui ~= nil and ui.enabled == true
 end
 
 -- Wird der Hauptschalter umgelegt, ist ein Neuladen faellig (siehe oben).
+-- Ohne OPT_IN gibt es nichts umzulegen.
 function K.SetUIEnabled(on)
+    if not K.OPT_IN then return end
     local ui = Root()
     if not ui then return end
     ui.enabled = on and true or false
@@ -340,7 +373,10 @@ function K.FontFlags()
 end
 
 function K.SetFont(fs, size)
-    if not (fs and fs.SetFont) then return end
+    -- type() und nicht nur `fs and`: ein Feld, das es nicht gibt oder das
+    -- etwas anderes ist als eine Schriftzeile, soll uebersprungen werden,
+    -- nicht beim Indizieren abstuerzen.
+    if type(fs) ~= "table" or type(fs.SetFont) ~= "function" then return end
     fs:SetFont(K.FontPath(), size or 11, K.FontFlags())
     -- Mit Kontur braucht es keinen Schatten; ohne Kontur ist er das
     -- Einzige, was den Text vom Hintergrund trennt.
@@ -426,6 +462,43 @@ function K.Border(frame, size, r, g, b, a, layer)
     end
     o:SetSize(size)
     return o
+end
+
+--------------------------------------------------
+-- Blizzard-Rahmen verstecken
+--------------------------------------------------
+-- Ein ersetzter Blizzard-Rahmen zieht in einen versteckten Rahmen um und
+-- verliert seine Ereignisse - einmal, nie im Kampf. Der Bearbeitungsmodus
+-- des Spiels haengt seine Rahmen gelegentlich selbst wieder ein; dann
+-- eben noch einmal, nach dem Kampf. Zurueck bekommt man ihn mit einem
+-- Neuladen, nachdem das Modul abgeschaltet wurde.
+--
+-- keepEvents: nur verstecken, Ereignisse behalten (fuer Rahmen, deren
+-- Ereignisse andere Teile des Spiels mitbenutzen).
+--------------------------------------------------
+
+local hiddenParent = CreateFrame("Frame")
+hiddenParent:Hide()
+K.hiddenParent = hiddenParent
+local hookedParents = {}
+
+function K.HideBlizzard(frame, keepEvents)
+    if type(frame) == "string" then frame = _G[frame] end
+    if type(frame) ~= "table" then return end
+    if frame.IsForbidden and frame:IsForbidden() then return end
+    K.AfterCombat(function()
+        if not keepEvents and frame.UnregisterAllEvents then frame:UnregisterAllEvents() end
+        frame:Hide()
+        frame:SetParent(hiddenParent)
+    end)
+    if not hookedParents[frame] and _G.hooksecurefunc then
+        hookedParents[frame] = true
+        _G.hooksecurefunc(frame, "SetParent", function(self, parent)
+            if parent ~= hiddenParent then
+                K.AfterCombat(function() self:SetParent(hiddenParent) end)
+            end
+        end)
+    end
 end
 
 --------------------------------------------------

@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.0.0.2
+## Version: 6.0.0.3
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -130,14 +130,22 @@ core/search.lua
 # und weil nichts darueber von ihr abhaengen darf: wer sie nie
 # einschaltet, soll dasselbe Addon haben wie vorher.
 #
-# ui/kit.lua zuerst (Speicher, Modulregister, Verschieben), dann der
-# gemeinsame Zauberbalken, dann die Module, zuletzt das Fenster - es
-# baut seine Seitenleiste aus dem, was sich bis dahin angemeldet hat.
+# ui/kit.lua zuerst (Speicher, Modulregister, Verschieben), dann die
+# gemeinsamen Bausteine (Auren, Zauberbalken), dann die Module, zuletzt
+# das Fenster - es baut seine Seitenleiste aus dem, was sich bis dahin
+# angemeldet hat.
 #
 ui/kit.lua
+ui/auras.lua
 ui/castbar.lua
 ui/nameplates.lua
 ui/unitframes.lua
+ui/groupframes.lua
+ui/actionbars.lua
+ui/minimap.lua
+ui/chat.lua
+ui/bags.lua
+ui/damagemeter.lua
 ui/questarrow.lua
 ui/comfort.lua
 ui/options.lua
