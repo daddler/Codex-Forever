@@ -108,10 +108,14 @@ local frames = {}
 UF.frames = frames
 
 local function PowerColor(unit)
-    local _, token = _G.UnitPowerType and _G.UnitPowerType(unit)
-    token = K.Plain(token)
-    local c = token and _G.PowerBarColor and _G.PowerBarColor[token]
-    if c then return c.r, c.g, c.b end
+    local ptype, token
+    if _G.UnitPowerType then ptype, token = _G.UnitPowerType(unit) end
+    token, ptype = K.Plain(token), K.Plain(ptype)
+    local pbc = _G.PowerBarColor
+    -- Erst ueber den Namen ("ENERGY"), dann ueber die Nummer: in 6.0.0.5
+    -- fand der Name keine Farbe, und die Energie des Schurken stand blau da.
+    local c = pbc and ((token and pbc[token]) or (type(ptype) == "number" and pbc[ptype]))
+    if type(c) == "table" and c.r then return c.r, c.g, c.b end
     local d = K.ColorDefault("powerFallback")
     return d.r, d.g, d.b
 end

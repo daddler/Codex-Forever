@@ -38,10 +38,25 @@ local K = WeintCodex.UIKit
 -- Welcher Weg?
 --------------------------------------------------
 
+-- Was der Baustein im Spiel tatsaechlich tut - fuer /wcui und fuer
+-- Fehlermeldungen aus dem Beta-Client. In 6.0.0.5 zeigten Plaketten und
+-- Zielrahmen im Spiel KEINE Auren, und der Grund war von aussen nicht zu
+-- sehen: jeder Schritt lief in pcall, und ein Fehlschlag verschwand still.
+-- Jetzt wird der erste Fehlschlag je Schritt gemerkt und einmal gemeldet.
+local stats = { engine = nil, built = 0, minimal = 0, legacy = 0, errors = {} }
+A.stats = stats
+
+local function Note(step, err)
+    if err == nil or stats.errors[step] then return end
+    stats.errors[step] = tostring(err)
+    K.Report("auren", step .. ": " .. tostring(err))
+end
+
 local engine   -- nil = noch nicht geprueft
 function A.EngineAvailable()
     if engine ~= nil then return engine end
     engine = false
+    stats.engine = false
     local ca = _G.C_AddOns
     if not (ca and _G.AnchorUtil and _G.AnchorUtil.FlowDirection) then return false end
     if ca.IsAddOnLoaded and ca.LoadAddOn and not ca.IsAddOnLoaded("Blizzard_AuraContainer") then
@@ -51,8 +66,27 @@ function A.EngineAvailable()
     if ok and type(probe) == "table" and type(probe.AddAuraGroup) == "function" then
         probe:Hide()
         engine = true
+        stats.engine = true
+    elseif not ok then
+        stats.probeError = tostring(probe)
     end
     return engine
+end
+
+-- In Worten, fuer die Einstellungsseite.
+function A.StatusText()
+    if stats.engine == nil then return "Noch keine Auren angelegt." end
+    local parts = {}
+    if stats.engine then
+        parts[#parts + 1] = string.format("Auren-Container des Spiels: %d angelegt", stats.built)
+        if stats.minimal > 0 then parts[#parts + 1] = string.format("%d davon vereinfacht", stats.minimal) end
+    else
+        parts[#parts + 1] = "Auren-Container des Spiels nicht verfügbar"
+            .. (stats.probeError and (" (" .. stats.probeError .. ")") or "")
+    end
+    if stats.legacy > 0 then parts[#parts + 1] = string.format("%d über den alten Weg", stats.legacy) end
+    for step, err in pairs(stats.errors) do parts[#parts + 1] = step .. ": " .. err end
+    return table.concat(parts, " · ")
 end
 
 -- Fuer den Prueflauf: den Weg neu bestimmen lassen.
@@ -128,9 +162,14 @@ local function Call(obj, names, ...)
     return false
 end
 
-local function BuildEngine(self)
+local function BuildEngine(self, minimal)
     local o = self.opts
     local c = CreateFrame("AuraContainer", nil, self.parent, "CustomAuraContainerTemplate")
+    -- Anker und Groesse VOR der ersten Gruppe: das Spiel arbeitet seine
+    -- Auren in einem OnUpdate ab, das nur fuer einen zeichenbaren Rahmen
+    -- anspringt - ohne Anker beim ersten Anlass blieb der Container leer
+    -- (so beschreibt es EllesmereUI; bei uns bis 6.0.0.5 ohne Anker).
+    c:SetPoint("CENTER", self.parent, "CENTER", 0, 0)
     c:SetSize(1, 1)
     Call(c, { "SetFlowLayoutAnchorPoint", "SetAuraLayoutAnchorPoint" }, o.anchor)
     Call(c, { "SetFlowLayoutGrowthDirection", "SetAuraLayoutGrowthDirection" },
@@ -146,12 +185,26 @@ local function BuildEngine(self)
         layout = { elementWidth = size, elementHeight = size,
                    elementSpacing = o.spacing, lineSpacing = o.spacing },
         initializeFrame = function(button)
+            if minimal then
+                -- Zweiter Versuch: nur Symbol und Uhr, nichts darum herum.
+                local icon = button:CreateTexture(nil, "ARTWORK")
+                icon:SetAllPoints(button)
+                local okI, errI = pcall(button.SetIcon, button, icon)
+                if not okI then Note("SetIcon", errI) end
+                return
+            end
             local icon, cd, count, dur = StyleIcon(button, size, o)
             pcall(button.SetMouseClickEnabled, button, false)
-            pcall(button.SetIcon, button, icon)
-            pcall(button.SetDurationCooldown, button, cd)
-            pcall(button.SetApplicationCount, button, count, {})
-            if o.timer then pcall(button.SetDurationText, button, dur, {}) end
+            local okI, errI = pcall(button.SetIcon, button, icon)
+            if not okI then Note("SetIcon", errI) end
+            local okC, errC = pcall(button.SetDurationCooldown, button, cd)
+            if not okC then Note("SetDurationCooldown", errC) end
+            local okA, errA = pcall(button.SetApplicationCount, button, count, {})
+            if not okA then Note("SetApplicationCount", errA) end
+            if o.timer then
+                local okD, errD = pcall(button.SetDurationText, button, dur, {})
+                if not okD then Note("SetDurationText", errD) end
+            end
         end,
     })
     return c
@@ -274,13 +327,20 @@ function A.Create(parent, opts)
     self.engine = A.EngineAvailable()
     if self.engine then
         local ok, c = pcall(BuildEngine, self)
+        if not (ok and c) then
+            Note("AddAuraGroup", c)
+            ok, c = pcall(BuildEngine, self, true)
+            if ok and c then stats.minimal = stats.minimal + 1 else Note("AddAuraGroup (vereinfacht)", c) end
+        end
         if ok and c then
             self.frame = c
+            stats.built = stats.built + 1
         else
             self.engine = false
         end
     end
     if not self.engine then
+        stats.legacy = stats.legacy + 1
         self.frame = CreateFrame("Frame", nil, parent)
         self.frame:SetSize(1, 1)
         self.buttons = {}
@@ -317,8 +377,10 @@ end
 function Obj:SetUnit(unit)
     self.unit = unit
     if self.engine then
-        pcall(self.frame.SetUnit, self.frame, unit or "none")
-        pcall(self.frame.UpdateAllAuras, self.frame)
+        local ok, err = pcall(self.frame.SetUnit, self.frame, unit or "none")
+        if not ok then Note("SetUnit", err) end
+        ok, err = pcall(self.frame.UpdateAllAuras, self.frame)
+        if not ok then Note("UpdateAllAuras", err) end
         return
     end
     self.events:UnregisterAllEvents()
@@ -386,10 +448,17 @@ function Obj:ApplyLayout(opts)
         return
     end
     local ok, c = pcall(BuildEngine, self)
-    if not (ok and c) then return end
+    if not (ok and c) then
+        Note("AddAuraGroup", c)
+        ok, c = pcall(BuildEngine, self, true)
+        if not (ok and c) then return end
+    end
     self.frame:Hide()
     pcall(self.frame.SetUnit, self.frame, "none")
     self.frame = c
+    -- Der neue Container steht schon mittig (BuildEngine); die Anker des
+    -- Aufrufers ersetzen das, nicht ergaenzen es.
+    if #self.points > 0 then c:ClearAllPoints() end
     for _, p in ipairs(self.points) do c:SetPoint(unpack(p)) end
     if self.shown == false then c:Hide() end
     self:SetUnit(self.unit)

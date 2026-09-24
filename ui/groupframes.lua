@@ -187,10 +187,12 @@ function Btn:Refresh()
         if type(pmax) ~= "nil" then c.power:SetMinMaxValues(0, pmax) end
         local p = _G.UnitPower and _G.UnitPower(unit)
         if type(p) ~= "nil" then c.power:SetValue(p) end
-        local _, token = _G.UnitPowerType and _G.UnitPowerType(unit)
-        token = K.Plain(token)
-        local pc = token and _G.PowerBarColor and _G.PowerBarColor[token]
-        if pc then K.PaintBar(c.power, pc.r, pc.g, pc.b) end
+        local ptype, token
+        if _G.UnitPowerType then ptype, token = _G.UnitPowerType(unit) end
+        token, ptype = K.Plain(token), K.Plain(ptype)
+        local pbc = _G.PowerBarColor
+        local pc = pbc and ((token and pbc[token]) or (type(ptype) == "number" and pbc[ptype]))
+        if type(pc) == "table" and pc.r then K.PaintBar(c.power, pc.r, pc.g, pc.b) end
     end
 
     c.name:SetText(_G.UnitName and (_G.UnitName(unit)))

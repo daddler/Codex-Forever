@@ -22,6 +22,18 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.0.0.6",
+        date    = "24.09.2026",
+        notes   = {
+            "|cff7C6CFFDebuffs auf Namensplaketten und am Zielrahmen sollten jetzt erscheinen.|r Bisher blieben sie unsichtbar. Klappt es noch nicht, meldet WeintCodex im Chat einmal, woran es scheitert – unter /wcui → Namensplaketten → Auren steht dasselbe.",
+            "|cff7C6CFFDie Questliste ohne goldenes Banner.|r Kopfzeilen hell in der Schrift von WeintCodex, dahinter die dunkle Fläche.",
+            "|cff7C6CFFChatreiter lesbar.|r Die Namen werden nicht mehr abgeschnitten, der aktive Reiter ist hell und unterstrichen.",
+            "|cff7C6CFFDer Questpfeil steht ganz oben.|r Er lag mitten in den roten Fehlermeldungen des Spiels.",
+            "|cff7C6CFFAufgeräumte Minikarte.|r Tageszeit-Symbol und WeintCodex-Knopf stehen mit den anderen Knöpfen in der Spalte links, statt auf der Karte zu liegen.",
+            "|cff7C6CFFEnergie ist gelb.|r Die Kraftleiste nahm bei manchen Klassen die falsche Farbe. Leere Aktionsplätze sind nur noch angedeutet.",
+        },
+    },
+    {
         version = "6.0.0.5",
         date    = "24.09.2026",
         notes   = {

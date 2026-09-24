@@ -103,6 +103,8 @@ end
 -- der Minikarte neu (MinimapCluster:Layout); danach setzt ein Haken sie
 -- wieder in die Spalte.
 
+local laying = false
+
 local function ColumnButtons()
     local cl = _G.MinimapCluster
     local list, seen = {}, {}
@@ -123,16 +125,33 @@ local function ColumnButtons()
     add(type(cl) == "table" and cl.InstanceDifficulty or nil)
     add(_G.MiniMapInstanceDifficulty)
     add(_G.ExpansionLandingPageMinimapButton)
+    -- Der eigene Knopf (LibDBIcon): am Kartenrand laege er auf dem
+    -- Gebietsstreifen.
+    add(_G.LibDBIcon10_WeintCodex)
     return list
 end
 
-local laying = false
+-- Das Spiel setzt manche Knoepfe nach uns wieder an ihren alten Platz
+-- (6.0.0.5: die Tageszeit-Sonne auf der Karte). Jeder Knopf der Spalte
+-- meldet deshalb, wenn ihn jemand anderes verschiebt - dann ordnen wir
+-- einen Takt spaeter neu. Eigene Verschiebungen (laying) zaehlen nicht.
+local watched = {}
+local function Watch(b)
+    if watched[b] or not _G.hooksecurefunc then return end
+    watched[b] = true
+    _G.hooksecurefunc(b, "SetPoint", function()
+        if laying then return end
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, MM.LayoutButtons) end
+    end)
+end
+
 function MM.LayoutButtons()
     local mm = _G.Minimap
     if laying or type(mm) ~= "table" or not frame or not Opt("buttonColumn") then return end
     laying = true
     local y = 0
     for _, b in ipairs(ColumnButtons()) do
+        Watch(b)
         b:ClearAllPoints()
         b:SetPoint("TOPRIGHT", mm, "TOPLEFT", -4, -y)
         local h = b.GetHeight and b:GetHeight() or 20

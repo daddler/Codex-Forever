@@ -207,7 +207,7 @@ local function Build(parent)
     p.raid = raid
 
     p.cast = CB.Create(p)
-    p.auras = WeintCodex.UIAuras.Create(p, { filter = "HARMFUL|PLAYER", max = defaults.auraMax,
+    p.auras = WeintCodex.UIAuras.Create(p, { filter = "HARMFUL|INCLUDE_NAME_PLATE_ONLY|PLAYER", max = defaults.auraMax,
         size = defaults.auraSize, spacing = 2, anchor = "BOTTOMLEFT", growth = "RIGHT",
         growthV = "UP", perRow = defaults.auraMax, timer = defaults.auraTimer })
     p.quest = K.NewText(textHost, 13)
@@ -216,8 +216,11 @@ local function Build(parent)
     return p
 end
 
+-- INCLUDE_NAME_PLATE_ONLY: dieselbe Filtermarke wie Blizzards eigene
+-- Plaketten - sonst fehlen Debuffs, die das Spiel nur fuer Plaketten
+-- vorsieht. Reihenfolge fest (das Spiel vergleicht Filter als Text).
 local function AuraFilter()
-    return S.auraOnlyMine and "HARMFUL|PLAYER" or "HARMFUL"
+    return S.auraOnlyMine and "HARMFUL|INCLUDE_NAME_PLATE_ONLY|PLAYER" or "HARMFUL|INCLUDE_NAME_PLATE_ONLY"
 end
 
 -- Nur Name: kein Balken, kein Rand, der Name in der Mitte. Freundliche
@@ -992,6 +995,8 @@ K.Register({
                     description = "„8/10“, wenn der Gegner zu einer deiner Quests gehört. Nicht in Dungeons." },
                   { type = "empty" })
             B:Note("Auf dem neuen Client liest das Spiel die Auren selbst und reicht sie an die Plakette – WeintCodex sieht sie dabei nicht. Deshalb gibt es hier keine Liste einzelner Zauber zum Ein- und Ausblenden.")
+            B:Section("Zustand")
+            B:Note(WeintCodex.UIAuras.StatusText())
         end },
         { key = "freundlich", label = "Freundlich", build = function(B)
             local off = function() return not K.Get(KEY, "friendlyEnabled") end

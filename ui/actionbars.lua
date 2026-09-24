@@ -128,10 +128,24 @@ local function Skin(b)
     return d
 end
 
+-- Leerer Platz? Nur fuer Knoepfe mit Aktionsnummer; Begleiter- und
+-- Haltungsknoepfe gelten als belegt.
+local function IsEmpty(b)
+    local action = b.action
+    if type(action) ~= "number" and b.GetAttribute then action = b:GetAttribute("action") end
+    action = K.Plain(action)
+    if type(action) ~= "number" or not _G.HasAction then return false end
+    return not K.Bool(_G.HasAction(action), true)
+end
+
 local function Apply(b, d)
     d.border:SetShown(Opt("border"))
     local c = K.GetColor(KEY, "borderColor")
-    d.border:SetColor(c.r, c.g, c.b, 1)
+    -- Leere Plaetze nur angedeutet: zwoelf schwarze Kaesten je Leiste
+    -- sahen in 6.0.0.5 nach Baustelle aus.
+    local empty = IsEmpty(b)
+    d.border:SetColor(c.r, c.g, c.b, empty and 0.35 or 1)
+    d.bg:SetColorTexture(0, 0, 0, empty and 0.15 or 0.5)
     if d.hotkey then
         K.SetFont(d.hotkey, Opt("hotkeySize"))
         d.hotkey:SetAlpha(Opt("hotkeys") and 1 or 0)

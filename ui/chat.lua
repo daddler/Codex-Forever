@@ -128,8 +128,9 @@ local function ApplyFrame(cf, d)
         -- Das Aufleuchten bei neuen Fluesternachrichten bleibt.
         HideTextures(d.tab, { [d.tab.glow or false] = true, [d.tab.conversationIcon or false] = true,
                               [d.line or false] = true })
-        local fs = d.tab.Text or (d.tab.GetFontString and d.tab:GetFontString())
-        if fs then K.SetFont(fs, 11) end
+        -- Die Schrift des Reiters bleibt die des Spiels: es misst die
+        -- Reiterbreite an ihr, und eine andere Schrift schnitt die Namen
+        -- ab ("Allge...", 6.0.0.5). Gefaerbt wird nur (UpdateTabs).
     end
 
     if d.edit and Opt("editBoxSkin") then
@@ -180,7 +181,7 @@ local function UpdateTabs()
             d.line:SetShown(on)
             local fs = d.tab.Text or (d.tab.GetFontString and d.tab:GetFontString())
             if type(fs) == "table" and fs.SetTextColor then
-                fs:SetTextColor(unpack(on and C.textBright or C.textMuted))
+                fs:SetTextColor(unpack(on and C.textBright or C.textNormal))
             end
         end
     end

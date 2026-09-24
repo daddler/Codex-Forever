@@ -9,6 +9,54 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.0.0.6] – 2026-09-24
+
+Dritter Test im Beta-Client.
+
+**Debuffs auf Namensplaketten und am Zielrahmen sollten jetzt
+erscheinen.** Bisher blieben sie unsichtbar. Klappt es noch nicht,
+meldet WeintCodex im Chat einmal, woran es scheitert – unter /wcui →
+Namensplaketten → Auren steht dasselbe.
+
+**Die Questliste ohne goldenes Banner.** Kopfzeilen hell in der Schrift
+von WeintCodex, dahinter die dunkle Fläche.
+
+**Chatreiter lesbar.** Die Namen werden nicht mehr abgeschnitten, der
+aktive Reiter ist hell und unterstrichen.
+
+**Der Questpfeil steht ganz oben.** Er lag mitten in den roten
+Fehlermeldungen des Spiels.
+
+**Aufgeräumte Minikarte.** Tageszeit-Symbol und WeintCodex-Knopf stehen
+mit den anderen Knöpfen in der Spalte links, statt auf der Karte zu
+liegen.
+
+**Energie ist gelb.** Die Kraftleiste nahm bei manchen Klassen die
+falsche Farbe. Leere Aktionsplätze sind nur noch angedeutet.
+
+### Technisch
+
+- Auren: Im Spiel erschienen weder auf Plaketten noch am Zielrahmen
+  Symbole; die Ursache war von außen nicht zu sehen, weil jeder Schritt
+  in `pcall` lief. Wahrscheinlichster Grund (nach EllesmereUI): der
+  Container bekam seinen Anker erst nach `AddAuraGroup`, das Spiel
+  arbeitet Auren aber nur für einen zeichenbaren Rahmen ab. Jetzt
+  `SetPoint` vor der ersten Gruppe; scheitert `AddAuraGroup`, folgt ein
+  vereinfachter Versuch; jeder erste Fehlschlag je Schritt geht einmal
+  in den Chat und steht in `UIAuras.StatusText()` (Seite „Auren“).
+  Plaketten filtern mit `INCLUDE_NAME_PLATE_ONLY` wie Blizzard.
+  `load_test.lua` stellt den Container jetzt nach: `initializeFrame`
+  läuft, Anker vor der Gruppe, Fehlschlag gemeldet. **Im Spiel ungeprüft.**
+- Questliste: alle Texturen der Kopfzeilen über `GetRegions()` statt
+  einer mit geratenem Namen; Kopfzeilen in der WeintCodex-Schrift.
+- Chat: Reiterschrift bleibt die des Spiels (es misst die Breite daran).
+- Minikarte: Knöpfe der Spalte melden fremdes `SetPoint` (Haken), dann
+  wird neu geordnet; `LibDBIcon10_WeintCodex` gehört dazu.
+- Questpfeil: Standardplatz oben (`y = -8`) statt in `UIErrorsFrame`.
+- Kraftfarbe über den Namen **und** die Nummer der Kraftart
+  (Einheiten- und Gruppenrahmen). Leere Aktionsplätze mit 35 % Rand und
+  15 % Grund (`HasAction`).
+
 ## [6.0.0.5] – 2026-09-24
 
 Zweiter Test im Beta-Client, und der Abgleich mit EllesmereUI.

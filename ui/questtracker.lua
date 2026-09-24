@@ -45,17 +45,40 @@ end
 
 -- Hintergrundtexturen des Spiels durchsichtig machen: das Banner oben
 -- und die Kopfzeilen der einzelnen Abschnitte (Quests, Erfolge ...).
+-- ALLE Texturen der Kopfzeile, nicht eine mit Namen: in 6.0.0.5 hiess
+-- das Banner auf Forever anders als erwartet und blieb stehen. Knoepfe
+-- (Einklappen) sind Rahmen, keine Texturen, und bleiben; Text ebenso.
+local function FadeTextures(frame)
+    if type(frame) ~= "table" or not frame.GetRegions then return end
+    for _, r in ipairs({ frame:GetRegions() }) do
+        if type(r) == "table" and r.GetObjectType and r:GetObjectType() == "Texture" and r.SetAlpha then
+            r:SetAlpha(0)
+        end
+    end
+end
+
 local function HideArt(t)
     if not Opt("hideBanner") then return end
-    local function fade(r)
-        if type(r) == "table" and r.SetAlpha then r:SetAlpha(0) end
-    end
-    local h = t.Header
-    if type(h) == "table" then fade(h.Background) end
+    FadeTextures(t.Header)
+    FadeTextures(t)
     for _, child in ipairs({ t:GetChildren() }) do
-        local ch = type(child) == "table" and child.Header
-        if type(ch) == "table" then fade(ch.Background) end
+        if type(child) == "table" then FadeTextures(child.Header) end
     end
+    -- Kopfzeilen in der Schrift von WeintCodex, hell statt gold.
+    local function title(h)
+        local fs = type(h) == "table" and (h.Text or h.Title)
+        if type(fs) == "table" and fs.SetTextColor then
+            K.SetFont(fs, 13)
+            fs:SetTextColor(unpack(C.textBright))
+        end
+    end
+    title(t.Header)
+    for _, child in ipairs({ t:GetChildren() }) do
+        if type(child) == "table" then title(child.Header) end
+    end
+    -- Der Hintergrund des ganzen Rahmens (Bearbeitungsmodus-Rahmen).
+    local ns = t.NineSlice
+    if type(ns) == "table" and ns.SetAlpha then ns:SetAlpha(0) end
 end
 
 -- Die Unterkante des untersten sichtbaren Teils (Bildschirmkoordinaten).

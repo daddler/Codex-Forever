@@ -1259,6 +1259,46 @@ do
         o:SetUnit(nil)
     end)
     Check(ok, "Auren ueber den Container des Spiels" .. (ok and "" or (": " .. tostring(err))))
+
+    -- Der Container wie im Spiel: AddAuraGroup ruft initializeFrame fuer
+    -- jeden Knopf, und der Knopf nimmt Symbol, Uhr, Zahl und Restzeit an.
+    -- Einmal scheitert der erste Aufbau - dann muss der vereinfachte
+    -- greifen und der Fehlschlag in A.StatusText stehen.
+    ok, err = pcall(function()
+        local realCreate = _G.CreateFrame
+        local failNext = false
+        local registered = {}
+        _G.CreateFrame = function(kind, name, parent, template)
+            local f = realCreate(kind, name, parent, template)
+            if kind == "AuraContainer" then
+                f.AddAuraGroup = function(self, key, filter, spec)
+                    if failNext then failNext = false error("Testfehler im Initialisierer") end
+                    local b = realCreate("Button", nil, self)
+                    b.SetIcon = function(_, t) registered.icon = t end
+                    b.SetDurationCooldown = function(_, c) registered.cd = c end
+                    b.SetApplicationCount = function(_, fs) registered.count = fs; fs:SetText("3") end
+                    b.SetDurationText = function(_, fs) registered.dur = fs; fs:SetText("7") end
+                    spec.initializeFrame(b)
+                    self._anchoredBeforeGroup = self._anchored
+                end
+                local sp = f.SetPoint
+                f.SetPoint = function(self, ...) self._anchored = true return sp(self, ...) end
+            end
+            return f
+        end
+        local o = A.Create(UIParent, { filter = "HARMFUL", max = 4, size = 24, timer = true })
+        assert(o.engine and o.frame._anchoredBeforeGroup, "Container nicht vor der ersten Gruppe verankert")
+        assert(registered.icon and registered.cd and registered.count and registered.dur,
+            "Knopf hat nicht alles angemeldet")
+        failNext = true
+        local o2 = A.Create(UIParent, { filter = "HARMFUL", max = 4, size = 24 })
+        assert(o2.engine, "nach einem Fehlschlag kein vereinfachter Container")
+        assert(A.stats.minimal >= 1 and A.StatusText():find("Testfehler", 1, true),
+            "Fehlschlag nicht gemeldet: " .. A.StatusText())
+        _G.CreateFrame = realCreate
+    end)
+    Check(ok, "Auren-Container: vor der Gruppe verankert, Knopf angemeldet, Fehlschlag gemeldet"
+        .. (ok and "" or (": " .. tostring(err))))
     _G.C_AddOns, _G.AnchorUtil = nil, nil
     A._ResetEngineProbe()
 
@@ -1388,10 +1428,12 @@ do
         K.Set("minimap", "square", true)
         assert(_G.GetMinimapShape() == "SQUARE", "eckige Karte meldet nicht SQUARE")
         -- Knopfspalte: was es gibt, kommt hinein; was fehlt, faellt heraus.
+        local base = #WeintCodex.UIMinimap.ColumnButtons()
+        assert(_G.LibDBIcon10_WeintCodex == nil or base == 1, "der eigene Knopf gehoert in die Spalte")
         _G.MinimapCluster.Tracking = CreateFrame("Frame", nil, _G.MinimapCluster)
         _G.GameTimeFrame = CreateFrame("Button", "GameTimeFrame", _G.MinimapCluster)
         local list = WeintCodex.UIMinimap.ColumnButtons()
-        assert(#list == 2, "Knopfspalte: " .. #list .. " statt 2 Knoepfe")
+        assert(#list == base + 2, "Knopfspalte: " .. #list .. " statt " .. (base + 2) .. " Knoepfe")
         WeintCodex.UIMinimap.LayoutButtons()
         _G.MinimapCluster.Tracking, _G.GameTimeFrame = nil, nil
     end)
