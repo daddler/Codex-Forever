@@ -796,6 +796,28 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Die Einfuehrung erklaert die Oberflaeche: jede Seite zeichnet, und
+-- das Kapitel ist da. (Nach der Frage oben, damit Dismiss hier nicht
+-- noch einmal fragt.)
+do
+    local O = WeintCodex.Onboarding
+    local ok, err = pcall(function()
+        O.ShowTour()
+        local steps = O.TourSteps()
+        local found = {}
+        for i, step in ipairs(steps) do
+            O.RenderStep(i)
+            found[step.title] = true
+        end
+        assert(found["Die WeintCodex-Oberfläche"], "Seite zur Oberflaeche fehlt")
+        assert(found["Questpfeil und kleine Helfer"], "Seite zum Questpfeil fehlt")
+        O.Dismiss()
+        assert(not WeintCodex.UIWelcome.IsShown(), "nach Nein fragt die Einfuehrung erneut")
+    end)
+    Check(ok, "Einfuehrung: jede Seite zeichnet, Kapitel 'Oberflaeche & Komfort' ist da"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Einschalten wie ein Spieler: Hauptschalter an, dann so tun, als sei
 -- neu geladen (die Module starten beim Anmelden).
 K.SetUIEnabled(true)

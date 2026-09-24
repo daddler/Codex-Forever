@@ -249,6 +249,53 @@ local TOUR_STEPS = {
         .. "dürfen zusammen hinein." },
 
     --------------------------------------------------
+    -- OBERFLAECHE UND KOMFORT
+    --
+    -- Seit 6.0.0.0. Die Seiten erklaeren, was es gibt und wo man es
+    -- einschaltet - die Frage selbst ("verwenden?") stellt ui/welcome.lua
+    -- direkt NACH der Einfuehrung, einmal je Konto. Deshalb steht hier
+    -- kein "Ja/Nein", sondern nur der Weg, falls man es spaeter will.
+    --------------------------------------------------
+
+    { chapter = "Oberfläche & Komfort", icon = ICON .. "INV_Misc_Spyglass_03",
+      title = "Die WeintCodex-Oberfläche",
+      body =
+        "WeintCodex bringt auf Wunsch ein eigenes, schlichtes Interface mit: "
+        .. E("Namensplaketten für Gegner") .. " und " .. E("Einheitenrahmen")
+        .. " für dich, dein Ziel, das Ziel deines Ziels, deinen Fokus und "
+        .. "deinen Begleiter — im Stil von WeintCodex.\n\n"
+        .. E("Sie ist ganz freiwillig.") .. " Solange sie aus ist, zeigt das "
+        .. "Spiel seine eigenen Rahmen, und WeintCodex fasst keinen davon an. "
+        .. "Beim ersten Mal fragt WeintCodex dich gleich nach dieser "
+        .. "Einführung, ob du sie verwenden möchtest.\n\n"
+        .. "Einschalten, einstellen oder wieder ausschalten kannst du sie "
+        .. "jederzeit: unter " .. A("Einstellungen") .. " → " .. A("Oberfläche")
+        .. " oder direkt mit " .. A("/wcui") .. ". Sie startet nach dem "
+        .. "Neuladen, weil sie Rahmen des Spiels ersetzt.\n\n"
+        .. "Mit " .. A("Rahmen entsperren") .. " ziehst du Einheitenrahmen, "
+        .. "Questpfeil und Hinweise an ihren Platz; ein Rechtsklick setzt "
+        .. "einen Rahmen zurück." },
+
+    { chapter = "Oberfläche & Komfort", icon = ICON .. "Ability_Tracking",
+      title = "Questpfeil und kleine Helfer",
+      body =
+        "Klicke im Questlog auf eine Quest oder setze auf der Weltkarte eine "
+        .. "Markierung — dann zeigt dir ein " .. E("Pfeil") .. " die Richtung, "
+        .. "darunter stehen Entfernung und ungefähre Ankunftszeit. Grün "
+        .. "heißt: du läufst genau darauf zu.\n\n"
+        .. E("\"m\" ist die Einheit des Spiels") .. " — dieselbe, die es bei "
+        .. "Zauberreichweiten \"Meter\" nennt. In Dungeons nennt das Spiel "
+        .. "keine Position; dort steht \"Position unbekannt\" statt einer "
+        .. "Zahl.\n\n"
+        .. "Dazu gibt es kleine Helfer: automatisch reparieren, graue "
+        .. "Gegenstände verkaufen, schneller plündern, Kampfhinweis, "
+        .. "Haltbarkeitswarnung und einiges mehr. " .. E("Jeder ist einzeln "
+        .. "zuschaltbar und von Haus aus aus.") .. "\n\n"
+        .. "Pfeil und Helfer brauchen die Oberfläche nicht. Du findest sie in "
+        .. A("/wcui") .. " unter " .. A("Komfort") .. "; " .. A("/wc pfeil")
+        .. " führt direkt zum Pfeil." },
+
+    --------------------------------------------------
     -- SYSTEM
     --------------------------------------------------
 
@@ -554,6 +601,14 @@ local function RenderTourStep()
         local skipBtn = AddButton("Später (/wc tour)", 150, Dismiss, "ghost")
         skipBtn:SetPoint("BOTTOMLEFT", window, "BOTTOMLEFT", 16, 20)
     end
+end
+
+-- Fuer den Prueflauf: die gezeigten Seiten und eine einzelne davon
+-- zeichnen. Ohne das liefe im Test nur die erste Seite je durch.
+function WeintCodex.Onboarding.TourSteps() return visibleSteps end
+function WeintCodex.Onboarding.RenderStep(i)
+    currentStep = i
+    RenderTourStep()
 end
 
 function WeintCodex.Onboarding.ShowTour()
