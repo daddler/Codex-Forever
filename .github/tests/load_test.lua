@@ -915,6 +915,28 @@ do
     Check(drawn, "Diagnose zeigt den Speicherzustand")
 end
 
+-- TEXT NUR MIT SCHRIFT. Jede Textzeile der Oberflaeche entsteht ueber
+-- UIKit.NewText, das die Schrift sofort setzt. "Font not set" kam aus dem
+-- Beta-Client zweimal: 6.0.0.3 beim Aufbau der Schadensanzeige, 6.0.0.4
+-- siebenfach beim Angreifen (Zauberbalken einer frischen Plakette).
+do
+    local offenders = {}
+    local pipe = io.popen and io.popen('ls "' .. ROOT .. '/ui" 2>/dev/null')
+    if pipe then
+        for name in pipe:lines() do
+            if name:match("%.lua$") and name ~= "kit.lua" then
+                local h = io.open(ROOT .. "/ui/" .. name, "r")
+                local code = h:read("*a"):gsub("%-%-[^\n]*", "")
+                h:close()
+                if code:find("CreateFontString%s*%(") then offenders[#offenders + 1] = name end
+            end
+        end
+        pipe:close()
+    end
+    Check(#offenders == 0, "Textzeilen in ui/ nur ueber UIKit.NewText (Schrift sofort)"
+        .. (#offenders == 0 and "" or (": " .. table.concat(offenders, ", "))))
+end
+
 -- NEULADEN IST AUF FOREVER GESCHUETZT. ReloadUI()/C_UI.Reload() aus
 -- Addon-Code endet im Beta-Client in ADDON_ACTION_BLOCKED - gemeldet mit
 -- 6.0.0.0 vom Knopf "Jetzt neu laden" der Frage beim Einloggen, und
@@ -1147,6 +1169,74 @@ do
     tracked = 0
     QA.Update(true)
     Check(not QA.frame:IsShown(), "nichts ausgewaehlt: kein Pfeil")
+
+    -- Ziele erfuellt: der Pfeil fuehrt zur Abgabe und sagt es.
+    tracked = 42
+    _G.C_QuestLog.GetQuestsOnMap = function() return { { questID = 42, x = 0.5, y = 0.4 } } end
+    _G.C_QuestLog.IsComplete = function(id) return id == 42 end
+    QA.Update(true)
+    Check(QA.texts.title:GetText() == "Abgeben: Die verlorene Axt", "erfuellte Quest: Abgeben davor")
+    _G.C_QuestLog.IsComplete = nil
+
+    -- Die naechste Quest: die naechstgelegene aus dem Questlog, ohne die
+    -- abgegebene, auf Wunsch ohne erfuellte.
+    _G.C_QuestLog.GetNumQuestLogEntries = function() return 4 end
+    local log = { { questID = 42 }, { isHeader = true }, { questID = 7 }, { questID = 9 } }
+    _G.C_QuestLog.GetInfo = function(i) return log[i] end
+    _G.C_QuestLog.GetQuestsOnMap = function() return {
+        { questID = 42, x = 0.5, y = 0.49 }, { questID = 7, x = 0.5, y = 0.2 }, { questID = 9, x = 0.5, y = 0.45 } } end
+    Check(QA.NearestQuest(42) == 9, "naechste Quest: die naechstgelegene, ohne die abgegebene")
+    _G.C_QuestLog.IsComplete = function(id) return id == 9 end
+    Check(QA.NearestQuest(42, true) == 7, "naechste Quest ohne erfuellte")
+    _G.C_QuestLog.IsComplete = nil
+    local picked
+    _G.C_SuperTrack.SetSuperTrackedQuestID = function(id) picked = id end
+    local after = _G.C_Timer.After
+    _G.C_Timer.After = function(_, fn) fn() end
+    stub.FireEvent("SUPER_TRACKING_CHANGED")
+    stub.FireEvent("QUEST_TURNED_IN", 42)
+    _G.C_Timer.After = after
+    Check(picked == 9, "abgegeben: der Pfeil waehlt die naechste Quest (" .. tostring(picked) .. ")")
+
+    -- Als Geist: zur Leiche, ohne Auswahl.
+    tracked = 0
+    _G.UnitIsGhost = function() return true end
+    _G.C_DeathInfo = { GetCorpseMapPosition = function() return { x = 0.5, y = 0.3 } end }
+    QA.Update(true)
+    Check(QA.frame:IsShown() and QA.texts.title:GetText() == "Deine Leiche"
+        and QA.texts.dist:GetText() == "200 m", "als Geist: 200 m zur Leiche")
+    _G.C_DeathInfo.GetCorpseMapPosition = function() return nil end
+    QA.Update(true)
+    Check(QA.texts.dist:GetText() == "Ort unbekannt", "Leiche ohne Ort: unbekannt, nicht 0 m")
+    _G.UnitIsGhost, _G.C_DeathInfo = nil, nil
+    QA.Update(true)
+    Check(not QA.frame:IsShown(), "wiederbelebt und nichts ausgewaehlt: kein Pfeil")
+end
+
+-- Questpfeil: die 3D-Ansichten und die Farbe.
+do
+    local idx, l, r, t, b = QA.Frame(0)
+    Check(idx == 0 and l == 0 and r == 0.125 and t == 0 and b == 0.125, "geradeaus: Ansicht 0, oben links")
+    idx = QA.Frame(math.pi / 2)
+    Check(idx == 16, "90 Grad links: Ansicht 16")
+    idx = QA.Frame(-math.pi / 2)
+    Check(idx == 48, "90 Grad rechts: Ansicht 48")
+    idx = QA.Frame(math.pi * 2 - 0.01)
+    Check(idx == 0, "knapp unter 360 Grad: wieder Ansicht 0")
+    local C = WeintCodex.Colors
+    local r0, g0 = QA.CourseColor(0)
+    local r1, g1 = QA.CourseColor(math.pi)
+    local rm, gm = QA.CourseColor(math.pi / 2)
+    local function Eq(a, b) return math.abs(a - b) < 1e-9 end
+    Check(Eq(r0, C.successBright[1]) and Eq(g0, C.successBright[2]), "geradeaus gruen")
+    Check(Eq(r1, C.dangerBright[1]) and Eq(g1, C.dangerBright[2]), "entgegengesetzt rot")
+    Check(Eq(rm, C.warningBright[1]) and Eq(gm, C.warningBright[2]), "quer gelb")
+    local h = io.open(ROOT .. "/media/ui/arrow3d.tga", "rb")
+    local head = h and h:read(18)
+    if h then h:close() end
+    local w = head and (head:byte(13) + head:byte(14) * 256)
+    local hh = head and (head:byte(15) + head:byte(16) * 256)
+    Check(w == 512 and hh == 512, "arrow3d.tga ist 512 x 512 (8 x 8 Ansichten)")
 end
 
 -- DIE MODULE AUS 6.0.0.3 gegen die Attrappe: jedes einmal mit Daten,
@@ -1241,6 +1331,12 @@ do
         WeintCodex.UIActionBars.SkinAll()
         assert(WeintCodex.UIActionBars.skinned[b], "Knopf nicht umgestaltet")
         K.Set("actionbars", "hotkeys", false)
+        -- Mikromenue und Taschenleiste: fehlt eines, bleibt das andere.
+        CreateFrame("Frame", "BagsBar", UIParent)
+        WeintCodex.UIActionBars.Place()
+        CreateFrame("Frame", "MicroMenuContainer", UIParent)
+        WeintCodex.UIActionBars.Place()
+        _G.BagsBar, _G.MicroMenuContainer = nil, nil
     end)
     Check(ok, "Aktionsleisten: Knopf des Spiels umgestaltet" .. (ok and "" or (": " .. tostring(err))))
 
@@ -1249,17 +1345,28 @@ do
         assert(_G.GetMinimapShape() == "ROUND", "runde Karte meldet nicht ROUND")
         K.Set("minimap", "square", true)
         assert(_G.GetMinimapShape() == "SQUARE", "eckige Karte meldet nicht SQUARE")
+        -- Knopfspalte: was es gibt, kommt hinein; was fehlt, faellt heraus.
+        _G.MinimapCluster.Tracking = CreateFrame("Frame", nil, _G.MinimapCluster)
+        _G.GameTimeFrame = CreateFrame("Button", "GameTimeFrame", _G.MinimapCluster)
+        local list = WeintCodex.UIMinimap.ColumnButtons()
+        assert(#list == 2, "Knopfspalte: " .. #list .. " statt 2 Knoepfe")
+        WeintCodex.UIMinimap.LayoutButtons()
+        _G.MinimapCluster.Tracking, _G.GameTimeFrame = nil, nil
     end)
-    Check(ok, "Minikarte: eckig/rund, GetMinimapShape fuer Addon-Knoepfe" .. (ok and "" or (": " .. tostring(err))))
+    Check(ok, "Minikarte: eckig/rund, GetMinimapShape, Knopfspalte" .. (ok and "" or (": " .. tostring(err))))
 
     ok, err = pcall(function()
         CreateFrame("ScrollingMessageFrame", "ChatFrame1", UIParent)
         CreateFrame("Button", "ChatFrame1Tab", UIParent)
         CreateFrame("EditBox", "ChatFrame1EditBox", UIParent)
+        local qj = CreateFrame("Button", "QuickJoinToastButton", UIParent)
+        _G.FCF_GetCurrentChatFrame = function() return _G.ChatFrame1 end
         WeintCodex.UIChat.ApplyAll()
+        assert(qj:GetParent() == _G.WeintCodexChatButtons, "Freunde-Knopf steht nicht in der Spalte")
         K.Set("chat", "editBoxTop", true)
+        _G.FCF_GetCurrentChatFrame = nil
     end)
-    Check(ok, "Chat: Fenster, Reiter, Eingabezeile" .. (ok and "" or (": " .. tostring(err))))
+    Check(ok, "Chat: Fenster, Reiter, Eingabezeile, Knopfspalte" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Taschen: alle Plaetze aller Taschen, als Knoepfe des Spiels.
@@ -1288,6 +1395,30 @@ do
     Check(ok, "Taschen: 20 Plaetze aus fuenf Taschen, 5 belegt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Questliste: eigene Flaeche hinter der Zielverfolgung, so hoch wie ihr
+-- Inhalt; ohne Inhalt keine leere Flaeche.
+do
+    local QT = WeintCodex.UIQuestTracker
+    local ok, err = pcall(function()
+        local t = CreateFrame("Frame", "ObjectiveTrackerFrame", UIParent)
+        t.Header = CreateFrame("Frame", nil, t)
+        t.Header.Background = t.Header:CreateTexture()
+        t.GetTop = function() return 800 end
+        local mod = CreateFrame("Frame", nil, t)
+        mod.GetBottom = function() return 600 end
+        t.GetChildren = function() return t.Header, mod end
+        K.Module("questtracker").Enable()
+        local p = QT.Panel()
+        assert(p and p:IsShown(), "Flaeche fehlt")
+        assert(p:GetHeight() == 200 + 16, "Hoehe folgt dem Inhalt: " .. tostring(p:GetHeight()))
+        mod.GetBottom = function() return nil end
+        QT.Apply()
+        assert(not p:IsShown(), "ohne messbaren Inhalt keine leere Flaeche")
+        _G.ObjectiveTrackerFrame = nil
+    end)
+    Check(ok, "Questliste: Flaeche so hoch wie der Inhalt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Schadensanzeige: ohne Messung ein Satz, mit Messung Balken.
 do
     local DM = WeintCodex.UIDamageMeter
@@ -1308,13 +1439,31 @@ do
         end }
         DM.Refresh()
         assert(DM.RowsShown() == 2, "zwei Quellen, " .. DM.RowsShown() .. " Balken")
+        assert(DM.AmountText(1, 1) == "12,0K (400)", "Zahl im Balken: " .. tostring(DM.AmountText(1, 1)))
+        -- Die Zahl aus dem Beta-Client (6.0.0.4): pro Sekunde ungerundet.
+        assert(DM.Format(16.826086956522) == "17", "16,83 pro Sekunde: " .. DM.Format(16.826086956522))
+        assert(DM.Format(1234567) == "1,23M" and DM.Format(0.4) == "0", "Stufen K/M, unter 1 ist 0")
+        -- Weitere Fenster: oeffnen, eigene Messart, schliessen ruecken auf.
+        DM.AddWindow()
+        DM.AddWindow()
+        assert(DM.WindowCount() == 3, "drei Fenster: " .. DM.WindowCount())
+        assert(DM.RowsShown(2) == 2 and DM.Window(2):Mode().key == "HealingDone", "Fenster 2 misst Heilung")
+        DM.Window(3):CycleMode()
+        local third = DM.Window(3):Mode().key
+        DM.RemoveWindow(2)
+        assert(DM.WindowCount() == 2 and DM.Window(2):Mode().key == third, "Fenster 3 rueckt auf Platz 2")
+        assert(not DM.Window(3).frame:IsShown(), "das dritte Fenster ist weg")
+        DM.RemoveWindow(1)
+        assert(DM.WindowCount() == 2, "das erste Fenster laesst sich nicht schliessen")
+        DM.RemoveWindow(2)
+        K.Set("damagemeter", "w2mode", nil)
         _G.C_DamageMeter.GetCombatSessionFromType = function() return { combatSources = {} } end
         DM.Refresh()
         assert(DM.RowsShown() == 0 and DM.EmptyText() == "Noch nichts gemessen.",
             "leere Sitzung zeigt keine Auskunft")
         _G.C_DamageMeter = nil
     end)
-    Check(ok, "Schadensanzeige: unbekannt / Balken / leer" .. (ok and "" or (": " .. tostring(err))))
+    Check(ok, "Schadensanzeige: unbekannt / Balken / Zahlen / Fenster / leer" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.

@@ -45,7 +45,7 @@ solange der Client nicht speichert, ebenfalls nur bis zum Neuladen.
 
 | Gruppe | Module | Hängt am Hauptschalter? | Umschalten |
 |---|---|---|---|
-| `ui` | Namensplaketten, Einheitenrahmen, Gruppenrahmen, Aktionsleisten, Minikarte, Chat, Taschen, Schadensanzeige | **ja** (derzeit immer an) | nach dem Neuladen |
+| `ui` | Namensplaketten, Einheitenrahmen, Gruppenrahmen, Aktionsleisten, Minikarte, Chat, Taschen, Schadensanzeige, Questliste | **ja** (derzeit immer an) | nach dem Neuladen |
 | `qol` | Questpfeil, Komfort | **nein** | sofort |
 
 Der Unterschied ist Absicht: wer die Oberfläche nicht will, soll den
@@ -86,7 +86,7 @@ weil sie genau das sind, wofür er steht.
 | `ui/kit.lua` | Speicher, Modulregister, Hauptschalter, Kampfsperre, Schrift, Balken, Rahmen, **Verschieben** |
 | `ui/castbar.lua` | **ein** Zauberbalken für Plaketten und Einheitenrahmen |
 | `ui/nameplates.lua` | Gegnerplaketten |
-| `ui/unitframes.lua` | Spieler, Ziel, Ziel des Ziels, Fokus, Begleiter |
+| `ui/unitframes.lua` | Spieler, Ziel, Ziel des Ziels, Fokus, Begleiter; Porträt als 3D-Modell oder Bild |
 | `ui/questarrow.lua` | Questpfeil |
 | `ui/comfort.lua` | Komfortfunktionen |
 | `ui/options.lua` | das Einstellungsfenster und das Modul „Allgemein“ |
@@ -192,11 +192,13 @@ Einstellungsseite des Moduls.
 | Auren (`ui/auras.lua`) | **ein** Baustein für Plaketten, Zielrahmen, Gruppenrahmen | 12.1: Addons lesen Auren nicht mehr selbst. Wo es den **Auren-Container** des Spiels gibt (`CreateFrame("AuraContainer", …)`), füllt das Spiel die Symbole – ohne geheime Werte in Lua. Sonst `GetAuraDataByIndex` in `pcall`. Keine Liste einzelner Zauber zum Filtern: das Spiel zeigt Lua die Auren nicht. |
 | Freundliche Plaketten | Name in Klassenfarbe, wahlweise mit Balken | In Instanzen sind sie für Addons gesperrt (`IsForbidden`) – dort bleiben die des Spiels. |
 | Gruppen-/Schlachtzugsrahmen (`ui/groupframes.lua`) | zwei `SecureGroupHeader`, Klassenfarbe, Leben, Reichweite, Aggro, bannbare Debuffs | Ohne Secure Snippets gebaut (fehlen laut Vorlage im Beta-Client): kein `initialConfigFunction`, alle Knöpfe beim Anmelden per `startingIndex` angelegt und außerhalb des Kampfes eingerichtet. Die Seitenleiste des Spiels (Markierungen, Bereitschaftscheck) verschwindet mit den Schlachtzugsrahmen. **Auf Forever ungeprüft.** |
-| Aktionsleisten (`ui/actionbars.lua`) | die Knöpfe des Spiels umgestaltet: flach, Rand, Schrift, rote Schicht außer Reichweite, Greifen weg | **Keine eigenen Leisten**: Umblättern bei Haltung/Gestalt/Fahrzeug braucht Secure Snippets. Lage und Größe: Bearbeitungsmodus des Spiels. Reichweite als eigene Schicht, damit die Färbung des Spiels (keine Kraft, nicht benutzbar) erhalten bleibt. |
-| Minikarte (`ui/minimap.lua`) | eckig, Rand, Mausrad-Zoom, Gebiet, Koordinaten, Uhrzeit | Lage: Bearbeitungsmodus. Die Kompass-*Textur* wird versteckt, nie ihr Elternrahmen (Kampfhilfen lesen daraus die Blickrichtung). `GetMinimapShape` meldet `SQUARE` für Addon-Knöpfe. |
-| Chat (`ui/chat.lua`) | Schrift, Hintergrund, flache Reiter, Eingabezeile, Randknöpfe weg | **Keine veränderten Nachrichten** (Kanalnamen, Links, Zeitstempel): Nachrichten können im Kampf geheim sein, ein `gsub` darauf ist ein Fehler, und ein Fehler in `AddMessage` verschluckt die Nachricht. |
+| Aktionsleisten (`ui/actionbars.lua`) | die Knöpfe des Spiels umgestaltet: flach, Rand, Schrift, rote Schicht außer Reichweite, Greifen weg; seit 6.0.0.5 Mikromenü klein unten links, Taschenleiste unten rechts | **Keine eigenen Leisten**: Umblättern bei Haltung/Gestalt/Fahrzeug braucht Secure Snippets. Lage und Größe der Leisten: Bearbeitungsmodus des Spiels. Reichweite als eigene Schicht, damit die Färbung des Spiels (keine Kraft, nicht benutzbar) erhalten bleibt. Mikromenü und Taschenleiste sind nicht geschützt und werden nach jedem Anordnen des Bearbeitungsmodus (`ApplySystemAnchor`, `ExitEditMode`) und nie im Kampf gesetzt – ob das den Bearbeitungsmodus auf Forever unberührt lässt, ist **ungeprüft**; „Wie im Spiel“ schaltet es ab. |
+| Minikarte (`ui/minimap.lua`) | eckig, Rand, Mausrad-Zoom; Koordinaten oben links, Uhr oben rechts, Gebiet unten auf einem Streifen; Knöpfe des Spiels (Verfolgung, Kalender, Post, Schwierigkeit) in einer Spalte links | Knopfnamen wechseln zwischen den Clients – was fehlt, fällt heraus. Die Spalte wird nach `MinimapCluster:Layout` neu gesetzt. | Lage: Bearbeitungsmodus. Die Kompass-*Textur* wird versteckt, nie ihr Elternrahmen (Kampfhilfen lesen daraus die Blickrichtung). `GetMinimapShape` meldet `SQUARE` für Addon-Knöpfe. |
+| Chat (`ui/chat.lua`) | Schrift, Hintergrund über Reiter und Text, flache Reiter (aktiver hell mit Strich), Eingabezeile, Knöpfe des Spiels in einer Spalte links (oder weg) | **Keine veränderten Nachrichten** (Kanalnamen, Links, Zeitstempel): Nachrichten können im Kampf geheim sein, ein `gsub` darauf ist ein Fehler, und ein Fehler in `AddMessage` verschluckt die Nachricht. |
 | Taschen (`ui/bags.lua`) | alle Taschen in einem Raster, Suche, Sortieren, Gold, Gegenstandsstufe, Qualitätsrand | Knöpfe sind `ContainerFrameItemButtonTemplate` (Benutzen/Verkaufen macht das Spiel); **nie im Kampf angelegt** (sonst „tainted“), deshalb 180 auf Vorrat beim Anmelden. Öffnen folgt den Taschen des Spiels (Haken an `Show`/`Hide`, nicht an `OnShow` – die feuern im versteckten Elternrahmen nie). Die Bank bleibt die des Spiels. |
-| Schadensanzeige (`ui/damagemeter.lua`) | Schaden, Heilung, erlittener Schaden, Unterbrechungen, Bannungen, Tode; aktuell/gesamt | Addons bekommen ab 12.0 kein Kampflog: die Zahlen kommen aus `C_DamageMeter` (die Messung des Spiels), Blizzards Fenster geht aus (`damageMeterEnabled = 0`). Fehlt die Messung, steht das im Fenster – keine Nullen. |
+| Schadensanzeige (`ui/damagemeter.lua`) | bis zu vier Fenster, je mit eigener Messart (Schaden, Heilung, erlittener Schaden, Unterbrechungen, Bannungen, Tode) und eigenem Zeitraum; Kopfzeile mit Kampfdauer und Symbolknöpfen | Addons bekommen ab 12.0 kein Kampflog: die Zahlen kommen aus `C_DamageMeter` (die Messung des Spiels), Blizzards Fenster geht aus (`damageMeterEnabled = 0`). Fehlt die Messung, steht das im Fenster – keine Nullen. Zahlen über `CreateAbbreviateConfig` (K/M/B, darunter ganze Zahlen): ohne sie gibt `AbbreviateNumbers` Werte unter 1000 ungerundet heraus („16.826086956522“, 6.0.0.4). Fenster flach gespeichert (`w1mode` …), weil `UIKit.Set` Tabellen nur eine Ebene tief vergleicht. |
+| Questliste (`ui/questtracker.lua`) | eigene Fläche hinter der Zielverfolgung des Spiels, goldenes Banner weg, Höhe folgt dem Inhalt | Die Liste bleibt Blizzards (taint-empfindlich: Questgegenstände im Kampf); nur ein eigener Rahmen dahinter und durchsichtige Hintergrundtexturen. |
+| Questpfeil (`ui/questarrow.lua`) | 3D-Pfeil aus 64 vorgerechneten Ansichten (`media/ui/arrow3d.tga`, erzeugt von `make_ui_media.py`), Farbe grün → gelb → rot nach Abweichung; als Geist zur Leiche (`C_DeathInfo`); nach dem Abgeben die nächstgelegene Quest (`C_SuperTrack`), wahlweise schon bei erfüllten Zielen | Kein Modell im Spiel, sondern Bilder: ein `PlayerModel` ließe sich nicht zuverlässig drehen und färben. Leiche und nächste Quest nur, wo das Spiel einen Ort nennt – sonst „Ort unbekannt“, nie 0 m. |
 
 ## Die Frage beim Einloggen (`ui/welcome.lua`)
 
@@ -272,6 +274,14 @@ Attrappe lehnt alle drei seit 6.0.0.4 ab – siehe
 `.github/tests/README.md`. Für neuen Code in `ui/` heißt das: **Schrift
 direkt nach `CreateFontString`**, Attribute eines Kopfrahmens vor dem
 ersten `Show()`, `UIKit.Border` nur an Rahmen.
+
+Im zweiten Test (6.0.0.4) kam „Font not set“ siebenfach beim Angreifen:
+eine frische Plakette verband ihren Zauberbalken mit dem Gegner, bevor
+dessen Schrift stand. Seit 6.0.0.5 entsteht **jede** Textzeile in `ui/`
+über `UIKit.NewText`, das die Schrift sofort setzt; `load_test.lua`
+verbietet `CreateFontString` außerhalb von `ui/kit.lua`. `UIKit.SetFont`
+lässt eine Zeile nie ohne Schrift zurück (meldet der Client `false`,
+folgt die Schrift des Spiels).
 
 Die Taschen zeigten im selben Test leere Plätze. Behoben ist das nach
 dem Vorbild von EllesmereUI (Symbolmaske ab, Symbol auf den ganzen

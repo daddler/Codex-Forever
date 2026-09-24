@@ -168,7 +168,7 @@ end
 local alert, fpsFrame, durFrame
 
 local function Text(frame, size)
-    local fs = frame:CreateFontString(nil, "OVERLAY")
+    local fs = K.NewText(frame)
     fs:SetPoint("CENTER", frame, "CENTER", 0, 0)
     K.SetFont(fs, size)
     return fs
@@ -326,7 +326,7 @@ local function EnsureCoords()
     coords:SetSize(360, 18)
     coords:SetPoint("BOTTOM", wm.ScrollContainer or wm, "BOTTOM", 0, 6)
     coords:SetFrameStrata("HIGH")
-    coords.text = coords:CreateFontString(nil, "OVERLAY")
+    coords.text = K.NewText(coords)
     coords.text:SetPoint("CENTER", coords, "CENTER", 0, 0)
     local acc = 0
     coords:SetScript("OnUpdate", function(self, el)

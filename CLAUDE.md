@@ -161,6 +161,9 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   "all rights reserved". Game-world colours live in `core/ui.lua` as
   `WeintCodex.GameColors`. Values from the 12.x client may be *secret*:
   `type(x) == "nil"` instead of `x == nil`, no `a or b` on client values;
+  every text line in `ui/` comes from `UIKit.NewText` (font set at
+  creation – "Font not set" broke two releases; `load_test.lua` bans
+  `CreateFontString` outside `ui/kit.lua`);
   auras go through `ui/auras.lua` (engine AuraContainer where available),
   damage numbers through `C_DamageMeter` (no combat log for addons),
   chat messages are never rewritten. Details: `docs/systems/ui.md`.
@@ -232,7 +235,7 @@ into modules that no longer exist. A green run means "it loads", never
 | Charakterzuordnung, WeintAdmin-Backup | `../Companion-Forever/docs/character-links-and-admin-bridge.md` |
 | Companion-Authentifizierung/Token | `../Companion-Forever/docs/companion-auth.md` |
 | Welche Spieldaten fehlen und warum | `../Companion-Forever/docs/systems/forever-data.md` |
-| Oberfläche (`ui/`): Plaketten, Einheiten-/Gruppenrahmen, Aktionsleisten, Minikarte, Chat, Taschen, Schadensanzeige, Auren, Questpfeil, Komfort, `/wcui`, `OPT_IN`, `WeintCodex.GameColors`, geheime Werte (12.x) | `docs/systems/ui.md` |
+| Oberfläche (`ui/`): Plaketten, Einheiten-/Gruppenrahmen, Aktionsleisten, Minikarte, Chat, Taschen, Schadensanzeige, Questliste, Auren, Questpfeil, Komfort, `/wcui`, `OPT_IN`, `WeintCodex.GameColors`, geheime Werte (12.x), `UIKit.NewText` | `docs/systems/ui.md` |
 
 Cross-repo tasks (something touches Codex **and** Companion **and/or**
 Bot): read this table's Companion-doc pointers first — they are the

@@ -39,13 +39,13 @@ local LABELS = {
 -- Masse je Rahmen. Vorlage: Ziel 181 breit, Leben 46 + Kraft 6;
 -- Ziel des Ziels 101 breit.
 local SHAPE = {
-    player       = { w = 181, h = 46, p = 6, power = true,  cast = true,  left = "levelname", right = "healthPercent",
+    player       = { w = 220, h = 46, p = 6, power = true,  cast = true,  left = "name",      right = "healthPercent", portrait = "3d",
                      pos = { point = "BOTTOM", relPoint = "BOTTOM", x = -317, y = 171 } },
-    target       = { w = 181, h = 46, p = 6, power = true,  cast = true,  left = "levelname", right = "healthPercent",
+    target       = { w = 220, h = 46, p = 6, power = true,  cast = true,  left = "levelname", right = "healthPercent", portrait = "3d",
                      pos = { point = "BOTTOM", relPoint = "BOTTOM", x = 317, y = 171 } },
     targettarget = { w = 101, h = 22, p = 0, power = false, cast = false, left = "name", right = "none",
                      pos = { point = "BOTTOM", relPoint = "BOTTOM", x = 357, y = 233 } },
-    focus        = { w = 150, h = 28, p = 4, power = true,  cast = true,  left = "name", right = "healthPercent",
+    focus        = { w = 150, h = 28, p = 4, power = true,  cast = true,  left = "name", right = "healthPercent", portrait = "2d",
                      pos = { point = "BOTTOM", relPoint = "BOTTOM", x = -317, y = 300 } },
     pet          = { w = 101, h = 22, p = 4, power = true,  cast = false, left = "name", right = "healthPercent",
                      pos = { point = "BOTTOM", relPoint = "BOTTOM", x = -357, y = 233 } },
@@ -80,6 +80,7 @@ for _, u in ipairs(UNITS) do
     defaults[u .. "_powerHeight"] = math.max(4, s.p)
     defaults[u .. "_left"]    = s.left
     defaults[u .. "_right"]   = s.right
+    defaults[u .. "_portrait"] = s.portrait or "none"
     if s.cast then defaults[u .. "_cast"] = true end
 end
 
@@ -227,13 +228,30 @@ local function Create(unit)
 
     f.border = K.Border(f, 1, 0, 0, 0, 1, "BORDER")
 
+    -- Portraet links im Rahmen: als 3D-Modell (wie in EllesmereUI) oder
+    -- als Bild. Beides zeichnet der Client; Lua reicht nur die Einheit.
+    local pf = CreateFrame("Frame", nil, f)
+    pf.bg = pf:CreateTexture(nil, "BACKGROUND")
+    pf.bg:SetAllPoints(pf)
+    pf.bg:SetColorTexture(0, 0, 0, 1)
+    pf.tex = pf:CreateTexture(nil, "ARTWORK")
+    pf.tex:SetAllPoints(pf)
+    pf.tex:SetTexCoord(0.15, 0.85, 0.15, 0.85)
+    local okModel, model = pcall(CreateFrame, "PlayerModel", nil, pf)
+    if okModel and type(model) == "table" then
+        model:SetAllPoints(pf)
+        pf.model = model
+    end
+    pf:Hide()
+    f._portrait = pf
+
     local textHost = CreateFrame("Frame", nil, f)
     textHost:SetAllPoints(health)
     textHost:SetFrameLevel(health:GetFrameLevel() + 3)
-    f.left = textHost:CreateFontString(nil, "OVERLAY")
+    f.left = K.NewText(textHost)
     f.left:SetJustifyH("LEFT")
     f.left:SetWordWrap(false)
-    f.right = textHost:CreateFontString(nil, "OVERLAY")
+    f.right = K.NewText(textHost)
     f.right:SetJustifyH("RIGHT")
     f.right:SetWordWrap(false)
 
@@ -310,6 +328,25 @@ local function Create(unit)
     return f
 end
 
+function Frame:UpdatePortrait()
+    local pf, u = self._portrait, self.unit
+    local kind = Opt(u .. "_portrait")
+    if kind == "none" or not K.Bool(_G.UnitExists and _G.UnitExists(u), false) then return end
+    -- Ausser Sichtweite zeigt das Modell nichts; dann das Bild.
+    local visible = K.Bool(_G.UnitIsVisible and _G.UnitIsVisible(u), true)
+    if kind == "3d" and pf.model and visible then
+        pf.tex:Hide()
+        pf.model:Show()
+        pf.model:SetUnit(u)
+        if pf.model.SetPortraitZoom then pf.model:SetPortraitZoom(1) end
+        if pf.model.SetCamDistanceScale then pf.model:SetCamDistanceScale(1) end
+    else
+        if pf.model then pf.model:Hide() end
+        pf.tex:Show()
+        if _G.SetPortraitTexture then _G.SetPortraitTexture(pf.tex, u) end
+    end
+end
+
 function Frame:Layout()
     local u = self.unit
     local w, h = Opt(u .. "_width"), Opt(u .. "_height")
@@ -319,8 +356,23 @@ function Frame:Layout()
 
     K.AfterCombat(function() self:SetSize(w, total) end)
 
+    -- Mit Portraet beginnen die Balken rechts davon; der Rahmen bleibt
+    -- so breit wie eingestellt.
+    local pf = self._portrait
+    local inset = 0
+    if Opt(u .. "_portrait") ~= "none" then
+        inset = total + 1
+        pf:ClearAllPoints()
+        pf:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0)
+        pf:SetSize(total, total)
+        pf:Show()
+        self:UpdatePortrait()
+    else
+        pf:Hide()
+    end
+
     self.health:ClearAllPoints()
-    self.health:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0)
+    self.health:SetPoint("TOPLEFT", self, "TOPLEFT", inset, 0)
     self.health:SetPoint("TOPRIGHT", self, "TOPRIGHT", 0, 0)
     self.health:SetHeight(h)
     self.power:ClearAllPoints()
@@ -340,10 +392,10 @@ function Frame:Layout()
     K.SetFont(self.right, Opt("textSize"))
     self.left:ClearAllPoints()
     self.left:SetPoint("LEFT", self.health, "LEFT", 5, 0)
-    self.left:SetWidth(math.max(20, w * 0.62))
+    self.left:SetWidth(math.max(20, (w - inset) * 0.62))
     self.right:ClearAllPoints()
     self.right:SetPoint("RIGHT", self.health, "RIGHT", -5, 0)
-    self.right:SetWidth(math.max(20, w * 0.4))
+    self.right:SetWidth(math.max(20, (w - inset) * 0.4))
 
     if self._cast then
         self._cast:ClearAllPoints()
@@ -516,9 +568,12 @@ end
 
 local events = CreateFrame("Frame")
 
-local function RefreshUnit(unit)
+local function RefreshUnit(unit, portrait)
     local f = frames[unit]
-    if f and f:IsShown() then f:Refresh() end
+    if f and f:IsShown() then
+        f:Refresh()
+        if portrait then f:UpdatePortrait() end
+    end
 end
 
 local HEALTH = { UNIT_HEALTH = true, UNIT_MAXHEALTH = true, UNIT_CONNECTION = true }
@@ -534,20 +589,23 @@ local CAST = {
 
 local function OnEvent(_, event, unit)
     if event == "PLAYER_TARGET_CHANGED" then
-        RefreshUnit("target")
-        RefreshUnit("targettarget")
+        RefreshUnit("target", true)
+        RefreshUnit("targettarget", true)
         return
     elseif event == "PLAYER_FOCUS_CHANGED" then
-        RefreshUnit("focus")
+        RefreshUnit("focus", true)
         return
     elseif event == "UNIT_TARGET" then
-        if unit == "target" then RefreshUnit("targettarget") end
+        if unit == "target" then RefreshUnit("targettarget", true) end
         return
     elseif event == "UNIT_PET" then
-        if unit == "player" then RefreshUnit("pet") end
+        if unit == "player" then RefreshUnit("pet", true) end
+        return
+    elseif event == "UNIT_PORTRAIT_UPDATE" or event == "UNIT_MODEL_CHANGED" then
+        if unit and frames[unit] then RefreshUnit(unit, true) end
         return
     elseif event == "PLAYER_ENTERING_WORLD" or event == "RAID_TARGET_UPDATE" then
-        for u in pairs(frames) do RefreshUnit(u) end
+        for u in pairs(frames) do RefreshUnit(u, event == "PLAYER_ENTERING_WORLD") end
         return
     elseif event == "UPDATE_SHAPESHIFT_FORM" then
         if frames.target then frames.target:UpdateCombo() end
@@ -626,6 +684,7 @@ local function Enable()
     for _, e in ipairs({
         "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED", "UNIT_TARGET", "UNIT_PET",
         "PLAYER_ENTERING_WORLD", "RAID_TARGET_UPDATE", "UPDATE_SHAPESHIFT_FORM",
+        "UNIT_PORTRAIT_UPDATE", "UNIT_MODEL_CHANGED",
     }) do Register(e) end
     for e in pairs(HEALTH) do Register(e) end
     for e in pairs(POWER) do Register(e) end
@@ -659,7 +718,10 @@ local function UnitPage(u)
         B:Section(LABELS[u])
         B:Row({ type = "toggle", label = "Rahmen anzeigen", key = u .. "_enabled", reload = true,
                 description = "Ersetzt den Blizzard-Rahmen. Wirkt nach dem Neuladen." },
-              { type = "empty" })
+              { type = "dropdown", label = "Porträt", key = u .. "_portrait", disabled = off, items = {
+                    { value = "3d",   text = "3D-Modell" },
+                    { value = "2d",   text = "Bild" },
+                    { value = "none", text = "Keins" } } })
         B:Row({ type = "slider", label = "Breite", key = u .. "_width", min = 60, max = 320, step = 1, format = px, disabled = off },
               { type = "slider", label = "Höhe", key = u .. "_height", min = 10, max = 80, step = 1, format = px, disabled = off })
         B:Row({ type = "toggle", label = "Kraftleiste", key = u .. "_power", disabled = off },

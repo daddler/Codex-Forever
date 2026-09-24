@@ -24,6 +24,19 @@
 -- "0 m". Ohne Blickrichtung, aber mit Position, gibt es die Entfernung
 -- und eine Himmelsrichtung in Worten statt des Pfeils.
 --
+-- DER PFEIL IST DREIDIMENSIONAL, aber kein Modell: media/ui/arrow3d.tga
+-- haelt 64 vorgerechnete Ansichten eines facettierten Pfeils (von hinten
+-- oben gesehen, erzeugt von .github/scripts/make_ui_media.py). Gezeigt
+-- wird die Ansicht, die dem Winkel am naechsten liegt (QA.Frame). Die
+-- Farbe laeuft mit der Abweichung von Gruen (geradeaus) ueber Gelb (quer)
+-- nach Rot (entgegengesetzt).
+--
+-- DER PFEIL DENKT MIT. Als Geist zeigt er zur eigenen Leiche, ohne dass
+-- man etwas auswaehlt (C_DeathInfo). Ist die verfolgte Quest abgegeben,
+-- waehlt er die naechstgelegene Quest aus dem Questlog und verfolgt sie
+-- (C_SuperTrack) - wahlweise schon, sobald ihre Ziele erfuellt sind,
+-- statt erst zur Abgabe zu fuehren.
+--
 -- METER. Das Spiel rechnet in Yards. Der deutsche Client nennt dieselbe
 -- Einheit "Meter" (eine Zauberreichweite von 40 Yards steht dort als
 -- "40 m Reichweite"), OHNE umzurechnen. Der Pfeil folgt dem: "m" heisst
@@ -42,12 +55,20 @@ local KEY = "questarrow"
 local defaults = {
     scale      = 100,
     units      = "game",   -- game | metric | yards
+    style      = "3d",     -- 3d | flat
     showTitle  = true,
     showEta    = true,
     colorByCourse = true,
     hideInCombat  = false,
     arriveDistance = 5,
+    corpse     = true,     -- als Geist zur Leiche
+    autoNext   = true,     -- nach dem Abgeben die naechste Quest
+    onComplete = "turnin", -- turnin | next: was nach erfuellten Zielen kommt
 }
+
+local SHEET = "Interface\\AddOns\\WeintCodex\\media\\ui\\arrow3d"
+local SHEET_GRID = 8                 -- 8 x 8 Ansichten
+local SHEET_FRAMES = SHEET_GRID * SHEET_GRID
 
 --------------------------------------------------
 -- Rechnung (rein, ohne Client - fuer den Prueflauf)
@@ -82,6 +103,28 @@ function QA.Solve(pN, pW, tN, tW, facing)
     local rotation = nil
     if type(facing) == "number" then rotation = Norm(bearing - facing) end
     return dist, rotation, Norm(bearing)
+end
+
+-- Welche der 64 Ansichten zeigt den Winkel? Ansicht i ist um i*360/64
+-- Grad gegen den Uhrzeigersinn gedreht, wie die Rotation. Liefert den
+-- Index (0-63) und die Texturkoordinaten links, rechts, oben, unten.
+function QA.Frame(rotation)
+    local step = TWO_PI / SHEET_FRAMES
+    local idx = math.floor((rotation % TWO_PI) / step + 0.5) % SHEET_FRAMES
+    local col, row = idx % SHEET_GRID, math.floor(idx / SHEET_GRID)
+    local u = 1 / SHEET_GRID
+    return idx, col * u, (col + 1) * u, row * u, (row + 1) * u
+end
+
+-- Farbe nach Abweichung: 0 = geradeaus (gruen), pi/2 = quer (gelb),
+-- pi = entgegengesetzt (rot). Die drei Farben kommen aus core/ui.lua.
+local function Mix(a, b, t)
+    return a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, a[3] + (b[3] - a[3]) * t
+end
+function QA.CourseColor(rotation)
+    local t = math.min(1, math.abs(Norm(rotation)) / math.pi)
+    if t <= 0.5 then return Mix(C.successBright, C.warningBright, t * 2) end
+    return Mix(C.warningBright, C.dangerBright, (t - 0.5) * 2)
 end
 
 -- Himmelsrichtung in Worten, fuer den Fall ohne Blickrichtung. Die
@@ -174,7 +217,38 @@ end
 --   "none"     nichts ausgewaehlt
 --   "ok"       Ziel bekannt
 --   "unknown"  ausgewaehlt, aber der Client nennt keinen Ort
+-- Die eigene Leiche, solange man Geist ist. Das Spiel nennt ihre Lage
+-- auf einer bestimmten Karte; gesucht wird auf der eigenen und ihren
+-- Elternkarten (die Leiche liegt oft im Nachbargebiet).
+local function CorpseTarget(playerMap)
+    if not K.Get(KEY, "corpse") then return nil end
+    if not (_G.UnitIsGhost and K.Bool(_G.UnitIsGhost("player"), false)) then return nil end
+    local di, cm = _G.C_DeathInfo, _G.C_Map
+    if not (di and di.GetCorpseMapPosition) or not playerMap then return "unknown" end
+    local map = playerMap
+    for _ = 1, 4 do
+        local ok, pos = pcall(di.GetCorpseMapPosition, map)
+        if ok and pos then
+            local x, y = pos.x, pos.y
+            if pos.GetXY then x, y = pos:GetXY() end
+            if type(x) == "number" and type(y) == "number" then return "ok", map, x, y end
+        end
+        local info = cm and cm.GetMapInfo and cm.GetMapInfo(map)
+        map = info and info.parentMapID
+        if not map or map == 0 then break end
+    end
+    return "unknown"
+end
+
+local function IsComplete(questID)
+    local ql = _G.C_QuestLog
+    return ql and ql.IsComplete and K.Bool(ql.IsComplete(questID), false) or false
+end
+
 local function ResolveTarget(playerMap)
+    local cs, cmap, cx, cy = CorpseTarget(playerMap)
+    if cs then return cs, cmap, cx, cy, "Deine Leiche", "corpse" end
+
     local st = _G.C_SuperTrack
     if not st then return "none" end
 
@@ -191,9 +265,52 @@ local function ResolveTarget(playerMap)
     local questID = st.GetSuperTrackedQuestID and st.GetSuperTrackedQuestID()
     if not questID or questID == 0 then return "none" end
     local title = QuestTitle(questID) or "Quest"
+    -- Ziele erfuellt: der Ort ist jetzt der, an dem man abgibt (das Spiel
+    -- verlegt Wegpunkt und Markierung dorthin).
+    if IsComplete(questID) then title = "Abgeben: " .. title end
     local mapID, x, y = QuestLocation(questID, playerMap)
-    if not mapID then return "unknown", nil, nil, nil, title end
-    return "ok", mapID, x, y, title
+    if not mapID then return "unknown", nil, nil, nil, title, "quest" end
+    return "ok", mapID, x, y, title, "quest"
+end
+
+--------------------------------------------------
+-- Die naechste Quest
+--------------------------------------------------
+-- Die naechstgelegene Quest im Questlog, die einen Ort auf dem eigenen
+-- Kontinent hat. `skip` wird ausgelassen (die gerade abgegebene), mit
+-- `incompleteOnly` auch alle, deren Ziele schon erfuellt sind.
+
+function QA.NearestQuest(skip, incompleteOnly)
+    local ql = _G.C_QuestLog
+    if not (ql and ql.GetNumQuestLogEntries and ql.GetInfo) then return nil end
+    local playerMap, px, py = PlayerMapPos()
+    if not playerMap then return nil end
+    local pc, pN, pW = ToWorld(playerMap, px, py)
+    if not pc then return nil end
+    local best, bestDist
+    for i = 1, (ql.GetNumQuestLogEntries() or 0) do
+        local info = ql.GetInfo(i)
+        local id = info and info.questID
+        if id and id ~= 0 and id ~= skip and not info.isHeader and not info.isHidden
+           and not (incompleteOnly and IsComplete(id)) then
+            local mapID, x, y = QuestLocation(id, playerMap)
+            if mapID then
+                local tc, tN, tW = ToWorld(mapID, x, y)
+                if tc == pc then
+                    local d = QA.Solve(pN, pW, tN, tW, nil)
+                    if not bestDist or d < bestDist then best, bestDist = id, d end
+                end
+            end
+        end
+    end
+    return best, bestDist
+end
+
+local function TrackNext(skip, incompleteOnly)
+    local st = _G.C_SuperTrack
+    if not (st and st.SetSuperTrackedQuestID) then return end
+    local id = QA.NearestQuest(skip, incompleteOnly)
+    if id then pcall(st.SetSuperTrackedQuestID, id) end
 end
 
 --------------------------------------------------
@@ -201,6 +318,22 @@ end
 --------------------------------------------------
 
 local frame, arrow, title, dist, eta
+
+local function Is3D() return K.Get(KEY, "style") ~= "flat" end
+
+-- Den Pfeil auf einen Winkel stellen: im 3D-Stil die passende Ansicht,
+-- flach die gedrehte Pfeilform.
+local function PointArrow(rotation)
+    if Is3D() then
+        local _, l, r, t, b = QA.Frame(rotation)
+        arrow:SetRotation(0)
+        arrow:SetTexCoord(l, r, t, b)
+    else
+        arrow:SetTexCoord(0, 1, 0, 1)
+        arrow:SetRotation(rotation)
+    end
+end
+
 
 local function Build()
     frame = CreateFrame("Frame", "WeintCodexQuestArrow", UIParent)
@@ -213,15 +346,15 @@ local function Build()
     arrow:SetSize(52, 52)
     arrow:SetPoint("TOP", frame, "TOP", 0, -14)
 
-    title = frame:CreateFontString(nil, "OVERLAY")
+    title = K.NewText(frame)
     title:SetPoint("BOTTOM", arrow, "TOP", 0, 2)
     title:SetWidth(260)
     title:SetWordWrap(false)
 
-    dist = frame:CreateFontString(nil, "OVERLAY")
+    dist = K.NewText(frame)
     dist:SetPoint("TOP", arrow, "BOTTOM", 0, -2)
 
-    eta = frame:CreateFontString(nil, "OVERLAY")
+    eta = K.NewText(frame)
     eta:SetPoint("TOP", dist, "BOTTOM", 0, -1)
 
     -- Fuer den Prueflauf: was der Pfeil gerade anzeigt.
@@ -234,7 +367,8 @@ local function Build()
             title:SetText("Questpfeil")
             dist:SetText("120 m")
             eta:SetText("")
-            arrow:SetRotation(0)
+            PointArrow(0)
+            arrow:SetVertexColor(unpack(C.successBright))
             arrow:Show()
             self:Show()
         else
@@ -246,6 +380,13 @@ end
 local function ApplyStyle()
     if not frame then return end
     frame:SetScale((K.Get(KEY, "scale") or 100) / 100)
+    if Is3D() then
+        arrow:SetTexture(SHEET)
+        arrow:SetSize(72, 72)
+    else
+        arrow:SetTexture(K.ARROW_TEXTURE)
+        arrow:SetSize(52, 52)
+    end
     K.SetFont(title, 12)
     K.SetFont(dist, 14)
     K.SetFont(eta, 10)
@@ -256,9 +397,9 @@ end
 
 local lastYards, lastTime
 
-local function SetArrowColor(onCourse)
-    if K.Get(KEY, "colorByCourse") and onCourse then
-        arrow:SetVertexColor(unpack(C.successBright))
+local function SetArrowColor(rotation)
+    if K.Get(KEY, "colorByCourse") then
+        arrow:SetVertexColor(QA.CourseColor(rotation))
     else
         arrow:SetVertexColor(unpack(C.textBright))
     end
@@ -274,8 +415,8 @@ local function Target(playerMap, force)
     if not force and cache.at >= 0 and cache.map == playerMap and (now - cache.at) < 1 then
         return cache
     end
-    local status, mapID, tx, ty, name = ResolveTarget(playerMap)
-    cache.at, cache.map, cache.status, cache.title = now, playerMap, status, name
+    local status, mapID, tx, ty, name, kind = ResolveTarget(playerMap)
+    cache.at, cache.map, cache.status, cache.title, cache.kind = now, playerMap, status, name, kind
     cache.tc, cache.tN, cache.tW = nil, nil, nil
     if status == "ok" then cache.tc, cache.tN, cache.tW = ToWorld(mapID, tx, ty) end
     return cache
@@ -338,15 +479,15 @@ function QA.Update(force)
 
     if yards <= (K.Get(KEY, "arriveDistance") or 5) then
         arrow:Hide()
-        dist:SetText("Am Ziel")
+        dist:SetText(t.kind == "corpse" and "Bei deiner Leiche" or "Am Ziel")
         frame:Show()
         return
     end
 
     dist:SetText(QA.FormatDistance(yards, K.Get(KEY, "units")))
     if rotation then
-        arrow:SetRotation(rotation)
-        SetArrowColor(math.abs(rotation) < math.rad(15))
+        PointArrow(rotation)
+        SetArrowColor(rotation)
         arrow:Show()
     else
         arrow:Hide()
@@ -401,7 +542,36 @@ local function Refresh()
     end
 end
 
-local function OnEvent()
+-- Die Quest, die gerade verfolgt wird - damit beim Abgeben klar ist, ob
+-- es DIE war (dann die naechste waehlen) oder irgendeine andere.
+local tracked
+local advanced = {}   -- [questID] = true: nach erfuellten Zielen schon weitergeschaltet
+
+local function Later(fn)
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.3, fn) else fn() end
+end
+
+local function OnEvent(_, event, questID)
+    local st = _G.C_SuperTrack
+    local current = st and st.GetSuperTrackedQuestID and st.GetSuperTrackedQuestID()
+    if current == 0 then current = nil end
+
+    if event == "QUEST_TURNED_IN" or event == "QUEST_REMOVED" then
+        -- Abgegeben (oder abgebrochen): war es die verfolgte Quest, und
+        -- verfolgt das Spiel jetzt nichts mehr oder sie noch, geht es
+        -- zur naechsten.
+        if K.Get(KEY, "autoNext") and questID and questID == tracked
+           and (not current or current == questID) then
+            Later(function() TrackNext(questID, false) Refresh() end)
+        end
+    elseif event == "QUEST_LOG_UPDATE" and current and K.Get(KEY, "onComplete") == "next"
+           and not advanced[current] and IsComplete(current) then
+        advanced[current] = true
+        local done = current
+        Later(function() TrackNext(done, true) Refresh() end)
+    end
+    tracked = current or tracked
+    if event == "SUPER_TRACKING_CHANGED" then tracked = current end
     Refresh()
 end
 
@@ -418,6 +588,8 @@ local function Enable()
         "USER_WAYPOINT_UPDATED", "ZONE_CHANGED", "ZONE_CHANGED_NEW_AREA",
         "ZONE_CHANGED_INDOORS", "PLAYER_ENTERING_WORLD", "WAYPOINT_UPDATE",
         "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED",
+        "QUEST_TURNED_IN", "QUEST_REMOVED",
+        "PLAYER_DEAD", "PLAYER_ALIVE", "PLAYER_UNGHOST", "CORPSE_POSITION_UPDATE",
     }) do pcall(events.RegisterEvent, events, e) end
     events:SetScript("OnEvent", OnEvent)
     -- K.Activate setzt _active erst nach Enable; der erste Stand kommt
@@ -460,11 +632,24 @@ K.Register({
             B:Row({ type = "toggle", label = "Name der Quest", key = "showTitle" },
                   { type = "toggle", label = "Ankunftszeit", key = "showEta",
                     description = "Aus der tatsächlichen Annäherung der letzten Sekunden." })
-            B:Row({ type = "toggle", label = "Grün, wenn auf Kurs", key = "colorByCourse",
-                    description = "Weniger als 15° Abweichung." },
-                  { type = "toggle", label = "Im Kampf ausblenden", key = "hideInCombat" })
+            B:Row({ type = "dropdown", label = "Pfeil", key = "style", items = {
+                        { value = "3d",   text = "Dreidimensional" },
+                        { value = "flat", text = "Flach" } } },
+                  { type = "toggle", label = "Farbe nach Richtung", key = "colorByCourse",
+                    description = "Grün geradeaus, gelb quer, rot in die falsche Richtung." })
+            B:Row({ type = "toggle", label = "Im Kampf ausblenden", key = "hideInCombat" },
+                  { type = "empty" })
             B:Row({ type = "slider", label = "„Am Ziel“ ab", key = "arriveDistance", min = 2, max = 30, step = 1,
                     format = function(v) return string.format("%d m", v) end },
+                  { type = "empty" })
+            B:Section("Mitdenken")
+            B:Row({ type = "toggle", label = "Als Geist zur Leiche", key = "corpse",
+                    description = "Nach dem Tod zeigt der Pfeil von selbst zu deiner Leiche." },
+                  { type = "toggle", label = "Nach dem Abgeben weiter", key = "autoNext",
+                    description = "Die nächstgelegene Quest aus deinem Questlog wird ausgewählt." })
+            B:Row({ type = "dropdown", label = "Wenn die Ziele erfüllt sind", key = "onComplete", items = {
+                        { value = "turnin", text = "Zur Abgabe führen" },
+                        { value = "next",   text = "Gleich zur nächsten Quest" } } },
                   { type = "empty" })
             B:Section("So benutzt du ihn")
             B:Note("Klicke im Questlog oder in der Zielverfolgung auf eine Quest, um sie auszuwählen — oder setze auf der Weltkarte eine Markierung. Der Pfeil erscheint, sobald etwas ausgewählt ist, und verschwindet wieder, wenn nichts ausgewählt ist.")

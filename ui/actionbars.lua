@@ -20,6 +20,14 @@
 --
 -- Texturen an geschuetzten Knoepfen umzufaerben ist erlaubt, auch im
 -- Kampf; die Knoepfe selbst werden nie angefasst.
+--
+-- MIKROMENUE UND TASCHENLEISTE sind die Ausnahme vom "nicht verschieben":
+-- keine geschuetzten Rahmen, und ihre Lage ist, was die Oberflaeche von
+-- EllesmereUI ausmacht (Menue klein unten links, Taschen unten rechts).
+-- Gesetzt wird nur, wenn der Bearbeitungsmodus des Spiels sie gerade
+-- selbst angeordnet hat (danach per Haken) und nie im Kampf. Ob das den
+-- Bearbeitungsmodus auf Forever unberuehrt laesst, ist nicht geprueft -
+-- deshalb abschaltbar ("Wie im Spiel").
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -38,6 +46,9 @@ local defaults = {
     countSize    = 12,
     rangeColor   = true,
     hideEndCaps  = true,
+    microMenu    = "left",   -- left | game
+    microScale   = 85,
+    bagsBar      = "right",  -- right | game
 }
 
 local function Opt(k) return K.Get(KEY, k) end
@@ -162,8 +173,54 @@ local function OnRange(self, checksRange, inRange)
     d.range:SetShown(Opt("rangeColor") and checks and not inR)
 end
 
+--------------------------------------------------
+-- Mikromenue und Taschenleiste
+--------------------------------------------------
+
+local function Frame(...)
+    for _, n in ipairs({ ... }) do
+        local f = _G[n]
+        if type(f) == "table" and f.SetPoint and not (f.IsForbidden and f:IsForbidden()) then return f end
+    end
+    return nil
+end
+
+local placing = false
+local function Place()
+    if placing or K.InCombat() then return end
+    placing = true
+    local micro = Frame("MicroMenuContainer", "MicroMenu")
+    if micro and Opt("microMenu") == "left" then
+        micro:SetScale((Opt("microScale") or 85) / 100)
+        micro:ClearAllPoints()
+        micro:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 4, 4)
+    end
+    local bags = Frame("BagsBar")
+    if bags and Opt("bagsBar") == "right" then
+        bags:ClearAllPoints()
+        bags:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -4, 4)
+    end
+    placing = false
+end
+AB.Place = Place
+
 local function Enable()
     SkinAll()
+    K.AfterCombat(Place)
+    -- Der Bearbeitungsmodus setzt beide beim Laden eines Layouts und beim
+    -- Verlassen neu; danach wieder an unseren Platz.
+    if _G.hooksecurefunc then
+        for _, names in ipairs({ { "MicroMenuContainer", "MicroMenu" }, { "BagsBar" } }) do
+            local f = Frame(unpack(names))
+            if f and type(f.ApplySystemAnchor) == "function" then
+                _G.hooksecurefunc(f, "ApplySystemAnchor", function() K.AfterCombat(Place) end)
+            end
+        end
+        local emf = _G.EditModeManagerFrame
+        if type(emf) == "table" and type(emf.ExitEditMode) == "function" then
+            _G.hooksecurefunc(emf, "ExitEditMode", function() K.AfterCombat(Place) end)
+        end
+    end
     if _G.hooksecurefunc and _G.ActionButton_UpdateRangeIndicator then
         _G.hooksecurefunc("ActionButton_UpdateRangeIndicator", OnRange)
     end
@@ -174,7 +231,10 @@ local function Enable()
         "UPDATE_SHAPESHIFT_FORMS", "PET_BAR_UPDATE", "ACTIONBAR_SLOT_CHANGED" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
-    ev:SetScript("OnEvent", function() SkinAll() end)
+    ev:SetScript("OnEvent", function(_, event)
+        SkinAll()
+        if event == "PLAYER_ENTERING_WORLD" then K.AfterCombat(Place) end
+    end)
 end
 
 local function px(v) return string.format("%d px", v) end
@@ -185,7 +245,7 @@ K.Register({
     description = "Die Knöpfe des Spiels im Stil von WeintCodex: flach, mit feinem Rand, eigener Schrift und rotem Symbol außer Reichweite.",
     defaults = defaults,
     Enable = Enable,
-    OnSetting = function() if K.IsActive(KEY) then SkinAll() end end,
+    OnSetting = function() if K.IsActive(KEY) then SkinAll() K.AfterCombat(Place) end end,
     pages = {
         { key = "allgemein", label = "Allgemein", build = function(B)
             B:Section("Knöpfe")
@@ -200,6 +260,18 @@ K.Register({
                     disabled = function() return not K.Get(KEY, "hotkeys") end })
             B:Row({ type = "toggle", label = "Makronamen", key = "macroNames" },
                   { type = "slider", label = "Größe der Stapelzahl", key = "countSize", min = 8, max = 20, step = 1, format = px })
+            B:Section("Anordnung")
+            B:Row({ type = "dropdown", label = "Mikromenü", key = "microMenu", reload = true, items = {
+                        { value = "left", text = "Klein unten links" },
+                        { value = "game", text = "Wie im Spiel" } } },
+                  { type = "slider", label = "Größe des Mikromenüs", key = "microScale", min = 60, max = 120, step = 5,
+                    format = function(v) return string.format("%d %%", v) end,
+                    disabled = function() return K.Get(KEY, "microMenu") ~= "left" end })
+            B:Row({ type = "dropdown", label = "Taschenleiste", key = "bagsBar", reload = true, items = {
+                        { value = "right", text = "Unten rechts" },
+                        { value = "game",  text = "Wie im Spiel" } } },
+                  { type = "empty" })
+            B:Note("Solange hier nicht „Wie im Spiel“ steht, bestimmt WeintCodex den Platz von Mikromenü und Taschenleiste – auch nach dem Bearbeitungsmodus.")
             B:Section("Lage und Größe")
             B:Note("Wo die Leisten stehen, wie groß sie sind und wie viele es gibt, stellst du im Bearbeitungsmodus des Spiels ein (Esc → Bearbeitungsmodus). Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt.")
         end },

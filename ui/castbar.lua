@@ -68,12 +68,12 @@ function CB.Create(parent)
     if icon.SetTexCoord then icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
     f._icon = icon
 
-    local text = sb:CreateFontString(nil, "OVERLAY")
+    local text = K.NewText(sb)
     text:SetJustifyH("LEFT")
     text:SetWordWrap(false)
     f._text = text
 
-    local timer = sb:CreateFontString(nil, "OVERLAY")
+    local timer = K.NewText(sb)
     timer:SetJustifyH("RIGHT")
     f._timer = timer
 

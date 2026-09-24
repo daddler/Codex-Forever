@@ -23,8 +23,8 @@ local KEY = "chat"
 
 local defaults = {
     fontSize    = 13,
-    bgAlpha     = 45,       -- Prozent
-    hideButtons = true,
+    bgAlpha     = 70,       -- Prozent
+    buttons     = "column", -- column | hide | game: die Knoepfe des Spiels
     flatTabs    = true,
     editBoxSkin = true,
     editBoxTop  = false,
@@ -58,8 +58,9 @@ local function SkinFrame(cf)
     -- Der eigene Grund liegt hinter dem Text; die Blizzard-Texturen des
     -- Fensterhintergrunds werden unsichtbar (nicht versteckt: das Spiel
     -- blendet sie beim Ueberfahren selbst wieder ein).
+    -- Der Grund reicht ueber die Reiter: Reiter und Text sind eine Flaeche.
     d.bg = cf:CreateTexture(nil, "BACKGROUND", nil, -8)
-    d.bg:SetPoint("TOPLEFT", cf, "TOPLEFT", -4, 4)
+    d.bg:SetPoint("TOPLEFT", cf, "TOPLEFT", -4, 28)
     d.bg:SetPoint("BOTTOMRIGHT", cf, "BOTTOMRIGHT", 4, -4)
     for _, suffix in ipairs({ "Background", "TopLeftTexture", "TopRightTexture", "BottomLeftTexture",
         "BottomRightTexture", "TopTexture", "BottomTexture", "LeftTexture", "RightTexture" }) do
@@ -69,6 +70,14 @@ local function SkinFrame(cf)
     d.tab = _G[name .. "Tab"]
     if type(d.tab) ~= "table" then d.tab = nil end
     if d.tab then
+        -- Der aktive Reiter bekommt einen Strich darunter.
+        d.line = d.tab:CreateTexture(nil, "OVERLAY")
+        d.line:SetHeight(2)
+        d.line:SetPoint("BOTTOMLEFT", d.tab, "BOTTOMLEFT", 6, 2)
+        d.line:SetPoint("BOTTOMRIGHT", d.tab, "BOTTOMRIGHT", -6, 2)
+        local a = WeintCodex.Colors.accent
+        d.line:SetColorTexture(a[1], a[2], a[3], 1)
+        d.line:Hide()
         for _, suffix in ipairs({ "Left", "Middle", "Right", "SelectedLeft", "SelectedMiddle",
             "SelectedRight", "HighlightLeft", "HighlightMiddle", "HighlightRight",
             "ActiveLeft", "ActiveMiddle", "ActiveRight" }) do
@@ -117,7 +126,8 @@ local function ApplyFrame(cf, d)
             Hide(d[suffix])
         end
         -- Das Aufleuchten bei neuen Fluesternachrichten bleibt.
-        HideTextures(d.tab, { [d.tab.glow or false] = true, [d.tab.conversationIcon or false] = true })
+        HideTextures(d.tab, { [d.tab.glow or false] = true, [d.tab.conversationIcon or false] = true,
+                              [d.line or false] = true })
         local fs = d.tab.Text or (d.tab.GetFontString and d.tab:GetFontString())
         if fs then K.SetFont(fs, 11) end
     end
@@ -146,8 +156,76 @@ local function ApplyFrame(cf, d)
 
     -- Versteckt, nicht nur durchsichtig: das Spiel blendet die Knopfleiste
     -- beim Ueberfahren selbst wieder ein (in 6.0.0.3 blieben die Knoepfe
-    -- deshalb sichtbar).
-    if d.buttonFrame and Opt("hideButtons") then K.HideBlizzard(d.buttonFrame, true) end
+    -- deshalb sichtbar). Die Knoepfe, die zaehlen, stehen dann in der
+    -- Spalte (siehe unten).
+    if d.buttonFrame and Opt("buttons") ~= "game" then K.HideBlizzard(d.buttonFrame, true) end
+end
+
+-- Reiter: flach, der aktive hell mit Strich, die anderen gedaempft.
+local function CurrentFrame()
+    if _G.FCF_GetCurrentChatFrame then
+        local ok, f = pcall(_G.FCF_GetCurrentChatFrame)
+        if ok and f then return f end
+    end
+    return _G.SELECTED_CHAT_FRAME or _G.DEFAULT_CHAT_FRAME
+end
+
+local function UpdateTabs()
+    if not Opt("flatTabs") then return end
+    local cur = CurrentFrame()
+    local C = WeintCodex.Colors
+    for cf, d in pairs(done) do
+        if d.tab and d.line then
+            local on = (cf == cur)
+            d.line:SetShown(on)
+            local fs = d.tab.Text or (d.tab.GetFontString and d.tab:GetFontString())
+            if type(fs) == "table" and fs.SetTextColor then
+                fs:SetTextColor(unpack(on and C.textBright or C.textMuted))
+            end
+        end
+    end
+end
+CH.UpdateTabs = UpdateTabs
+
+--------------------------------------------------
+-- Knopfspalte
+--------------------------------------------------
+-- Freunde, Sprachkanaele, Menue: eine schmale Spalte links neben dem
+-- Chat statt ueber den Rand verteilt - so ordnet es auch EllesmereUI.
+-- Die Knoepfe bleiben die des Spiels; nur ihr Platz aendert sich.
+
+local COLUMN_BUTTONS = { "QuickJoinToastButton", "ChatFrameChannelButton", "ChatFrameMenuButton",
+    "TextToSpeechButtonFrame", "ChatFrameToggleVoiceDeafenButton", "ChatFrameToggleVoiceMuteButton" }
+local column
+
+local function LayoutColumn()
+    local cf = _G.ChatFrame1
+    if type(cf) ~= "table" then return end
+    if not column then
+        column = CreateFrame("Frame", "WeintCodexChatButtons", UIParent)
+        column.bg = column:CreateTexture(nil, "BACKGROUND")
+        column.bg:SetAllPoints(column)
+    end
+    local bg = WeintCodex.Colors.bgDark
+    column.bg:SetColorTexture(bg[1], bg[2], bg[3], (Opt("bgAlpha") or 70) / 100)
+    column:ClearAllPoints()
+    column:SetPoint("TOPRIGHT", cf, "TOPLEFT", -6, 28)
+    column:SetPoint("BOTTOMRIGHT", cf, "BOTTOMLEFT", -6, -4)
+    column:SetWidth(26)
+    local y = 4
+    for _, n in ipairs(COLUMN_BUTTONS) do
+        local b = _G[n]
+        if type(b) == "table" and b.SetParent and not (b.IsForbidden and b:IsForbidden()) then
+            b:SetParent(column)
+            b:ClearAllPoints()
+            b:SetPoint("TOP", column, "TOP", 0, -y)
+            if b.SetScale then b:SetScale(0.75) end
+            local h = b.GetHeight and b:GetHeight() or 24
+            if type(h) ~= "number" or h <= 0 or h > 60 then h = 24 end
+            y = y + h * 0.75 + 4
+        end
+    end
+    column:Show()
 end
 
 local function ApplyAll()
@@ -156,13 +234,13 @@ local function ApplyAll()
         local d = SkinFrame(cf)
         if d then ApplyFrame(cf, d) end
     end
-    if Opt("hideButtons") then
-        for _, n in ipairs({ "ChatFrameMenuButton", "ChatFrameChannelButton", "QuickJoinToastButton",
-            "ChatFrameToggleVoiceDeafenButton", "ChatFrameToggleVoiceMuteButton",
-            "TextToSpeechButtonFrame", "TextToSpeechButton" }) do
-            K.HideBlizzard(n, true)
-        end
+    local mode = Opt("buttons")
+    if mode == "hide" then
+        for _, n in ipairs(COLUMN_BUTTONS) do K.HideBlizzard(n, true) end
+    elseif mode == "column" then
+        K.AfterCombat(LayoutColumn)
     end
+    UpdateTabs()
 end
 CH.ApplyAll = ApplyAll
 
@@ -174,6 +252,10 @@ local function Enable()
     end
     if _G.hooksecurefunc and _G.FCF_OpenNewWindow then
         _G.hooksecurefunc("FCF_OpenNewWindow", function() ApplyAll() end)
+    end
+    -- Reiterwechsel: das Spiel faerbt die Reiter selbst neu, danach wir.
+    for _, fn in ipairs({ "FCF_Tab_OnClick", "FCFDock_SelectWindow", "FCFTab_UpdateColors" }) do
+        if _G.hooksecurefunc and _G[fn] then _G.hooksecurefunc(fn, UpdateTabs) end
     end
 end
 
@@ -193,7 +275,10 @@ K.Register({
                   { type = "slider", label = "Deckkraft des Hintergrunds", key = "bgAlpha", min = 0, max = 100, step = 5,
                     format = function(v) return string.format("%d %%", v) end })
             B:Row({ type = "toggle", label = "Flache Reiter", key = "flatTabs", reload = true },
-                  { type = "toggle", label = "Knöpfe am Rand ausblenden", key = "hideButtons", reload = true })
+                  { type = "dropdown", label = "Knöpfe des Spiels", key = "buttons", reload = true, items = {
+                        { value = "column", text = "In einer Spalte links" },
+                        { value = "hide",   text = "Ausblenden" },
+                        { value = "game",   text = "Wie im Spiel" } } })
             B:Section("Eingabezeile")
             B:Row({ type = "toggle", label = "Eingabezeile im WeintCodex-Stil", key = "editBoxSkin", reload = true },
                   { type = "toggle", label = "Über dem Chat statt darunter", key = "editBoxTop",

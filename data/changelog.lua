@@ -22,6 +22,18 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.0.0.5",
+        date    = "24.09.2026",
+        notes   = {
+            "|cff7C6CFFKeine Fehlermeldung „Font not set“ mehr beim Angreifen.|r Sie kam, wenn ein Gegner schon zauberte, während seine Namensplakette erschien.",
+            "|cff7C6CFFDer Questpfeil ist dreidimensional und zeigt mit der Farbe, wie gut du liegst.|r Grün geradeaus, gelb quer, rot in die falsche Richtung. Als Geist zeigt er von selbst zu deiner Leiche, und nach dem Abgeben wählt er die nächstgelegene Quest aus deinem Questlog – wenn du willst, schon sobald die Ziele erfüllt sind.",
+            "|cff7C6CFFDie Schadensanzeige kann bis zu vier Fenster.|r Jedes mit eigener Messart und eigenem Zeitraum, dazu Kampfdauer in der Kopfzeile und Knöpfe für neues Fenster, Leeren und Einstellungen. Pro Sekunde steht jetzt eine runde Zahl statt vieler Nachkommastellen.",
+            "|cff7C6CFFSpieler, Ziel und Fokus zeigen ein Porträt.|r Als 3D-Modell oder Bild, einstellbar je Rahmen.",
+            "|cff7C6CFFMinikarte und Chat aufgeräumt.|r Koordinaten und Uhrzeit oben in der Karte, das Gebiet unten; die Knöpfe des Spiels stehen bei Karte und Chat in einer Spalte am Rand. Der aktive Chatreiter ist hell und unterstrichen.",
+            "|cff7C6CFFMikromenü unten links, Taschenleiste unten rechts, die Questliste auf eigener Fläche.|r Jeweils abschaltbar, wenn du die Anordnung des Spiels behalten willst.",
+        },
+    },
+    {
         version = "6.0.0.4",
         date    = "24.09.2026",
         notes   = {

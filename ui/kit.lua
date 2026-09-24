@@ -372,12 +372,23 @@ function K.FontFlags()
     return "OUTLINE"
 end
 
+-- Die Schrift des Spiels als letzter Rueckfall: sie ist immer geladen.
+local FALLBACK_FONT = "Fonts\\FRIZQT__.TTF"
+
 function K.SetFont(fs, size)
     -- type() und nicht nur `fs and`: ein Feld, das es nicht gibt oder das
     -- etwas anderes ist als eine Schriftzeile, soll uebersprungen werden,
     -- nicht beim Indizieren abstuerzen.
     if type(fs) ~= "table" or type(fs.SetFont) ~= "function" then return end
-    fs:SetFont(K.FontPath(), size or 11, K.FontFlags())
+    -- SetFont meldet false, wenn die Datei nicht geladen werden konnte -
+    -- und dann hat die Zeile KEINE Schrift mehr. Jedes spaetere SetText
+    -- bricht ab, auch das des Spiels auf dessen eigenen Knoepfen. Also
+    -- nie ohne Schrift zuruecklassen.
+    local ok = fs:SetFont(K.FontPath(), size or 11, K.FontFlags())
+    if ok == false then
+        ok = fs:SetFont(_G.STANDARD_TEXT_FONT or FALLBACK_FONT, size or 11, K.FontFlags())
+        if ok == false then fs:SetFont(FALLBACK_FONT, size or 11, "") end
+    end
     -- Mit Kontur braucht es keinen Schatten; ohne Kontur ist er das
     -- Einzige, was den Text vom Hintergrund trennt.
     if fs.SetShadowOffset then
@@ -388,6 +399,17 @@ function K.SetFont(fs, size)
             fs:SetShadowOffset(0, 0)
         end
     end
+end
+
+-- Jede Textzeile der Oberflaeche entsteht HIER, mit Schrift. Text ohne
+-- Schrift ist im Client ein Fehler ("Font not set"), und bis 6.0.0.5
+-- bekam manche Zeile ihre Schrift erst in einem spaeteren Layout - wer
+-- vorher schrieb (ein Zauberbalken, dessen Gegner schon zauberte), brach
+-- ab. load_test.lua verbietet CreateFontString ausserhalb dieser Datei.
+function K.NewText(parent, size, layer, sublevel)
+    local fs = parent:CreateFontString(nil, layer or "OVERLAY", nil, sublevel)
+    K.SetFont(fs, size or 11)
+    return fs
 end
 
 K.BAR_TEXTURE = "Interface\\Buttons\\WHITE8X8"
@@ -557,7 +579,7 @@ function K.RegisterMover(frame, key, label, default, opts)
         bg:SetAllPoints(ov)
         bg:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.22)
         K.Border(ov, 1, C.accent[1], C.accent[2], C.accent[3], 0.9, "ARTWORK")
-        local t = ov:CreateFontString(nil, "OVERLAY")
+        local t = K.NewText(ov, 11)
         t:SetFont(F.sansSemi, 11, "OUTLINE")
         t:SetPoint("CENTER", ov, "CENTER", 0, 0)
         t:SetTextColor(unpack(C.textBright))

@@ -1,9 +1,11 @@
 --------------------------------------------------
 -- WeintCodex :: Oberflaeche - Schadensanzeige
 --------------------------------------------------
--- Ein Fenster mit Balken: wer wie viel Schaden gemacht, geheilt, erlitten
--- hat, wer unterbrochen, gebannt hat, wer gestorben ist - fuer den
--- laufenden Kampf oder die ganze Sitzung.
+-- Bis zu vier Fenster mit Balken: wer wie viel Schaden gemacht, geheilt,
+-- erlitten hat, wer unterbrochen, gebannt hat, wer gestorben ist - jedes
+-- Fenster mit eigener Messart und eigenem Zeitraum (dieser Kampf oder
+-- die ganze Sitzung). Das Plus in der Kopfzeile oeffnet ein weiteres,
+-- das Kreuz schliesst es wieder.
 --
 -- DIE ZAHLEN ZAEHLT DAS SPIEL, NICHT WEINTCODEX. Ab Client 12.0 bekommen
 -- Addons kein Kampflog mehr (COMBAT_LOG_EVENT_UNFILTERED); dafuer misst
@@ -17,6 +19,12 @@
 -- durchgereicht (SetValue, AbbreviateNumbers, SetFormattedText), Lua
 -- rechnet nie damit.
 --
+-- ZAHLEN. AbbreviateNumbers ohne Einstellung gibt Werte unter 1000
+-- ungerundet heraus - in 6.0.0.4 stand deshalb "387 (16.826086956522)"
+-- im Fenster. Die Stufen (K, M, B, darunter ganze Zahlen) kommen jetzt
+-- ueber CreateAbbreviateConfig; der Client rundet selbst, auch geheime
+-- Werte.
+--
 -- Gibt es C_DamageMeter nicht, steht das im Fenster - keine leeren
 -- Balken, keine Nullen.
 --------------------------------------------------
@@ -27,32 +35,41 @@ WeintCodex.UIDamageMeter = {}
 local DM = WeintCodex.UIDamageMeter
 local K  = WeintCodex.UIKit
 local C  = WeintCodex.Colors
-local F  = WeintCodex.Fonts
 local KEY = "damagemeter"
+local MAX_WINDOWS = 4
+local MEDIA = "Interface\\AddOns\\WeintCodex\\media\\ui\\"
 
 local defaults = {
-    width     = 240,
+    windows   = 1,
+    width     = 260,
     bars      = 8,
     barHeight = 18,
-    mode      = "DamageDone",
-    session   = "Current",
     classColor = true,
-    perSecond = true,
+    numbers   = "both",    -- both | total | rate
+    rank      = true,
+    showTime  = true,
     hideBlizzard = true,
-    bgAlpha   = 80,
+    bgAlpha   = 85,
+    -- Je Fenster Messart und Zeitraum (flach gespeichert: UIKit.Set
+    -- vergleicht Tabellen nur eine Ebene tief).
+    w1mode = "DamageDone",  w1session = "Current",
+    w2mode = "HealingDone", w2session = "Current",
+    w3mode = "DamageTaken", w3session = "Current",
+    w4mode = "Interrupts",  w4session = "Overall",
 }
 
 local function Opt(k) return K.Get(KEY, k) end
+local function Count() return math.max(1, math.min(MAX_WINDOWS, Opt("windows") or 1)) end
 
 -- Die Messarten, in der Reihenfolge des Umschaltens. Was der Client
 -- nicht kennt (Enum fehlt), faellt heraus.
 local MODES = {
-    { key = "DamageDone",   label = "Schaden",          rate = true },
-    { key = "HealingDone",  label = "Heilung",          rate = true },
+    { key = "DamageDone",   label = "Schaden",            rate = true },
+    { key = "HealingDone",  label = "Heilung",            rate = true },
     { key = "DamageTaken",  label = "Erlittener Schaden", rate = true },
-    { key = "Interrupts",   label = "Unterbrechungen",  count = true },
-    { key = "Dispels",      label = "Bannungen",        count = true },
-    { key = "Deaths",       label = "Tode",             deaths = true },
+    { key = "Interrupts",   label = "Unterbrechungen",    count = true },
+    { key = "Dispels",      label = "Bannungen",          count = true },
+    { key = "Deaths",       label = "Tode",               deaths = true },
 }
 
 local function Available()
@@ -76,11 +93,88 @@ local function ModeInfo(key)
     return MODES[1]
 end
 
-local win, header, modeBtn, sessionBtn, empty
-local rows = {}
+--------------------------------------------------
+-- Zahlen
+--------------------------------------------------
 
-local function Row(i)
-    local r = CreateFrame("Frame", nil, win)
+local abbrevOpts
+local function AbbrevOptions()
+    if abbrevOpts ~= nil then return abbrevOpts or nil end
+    abbrevOpts = false
+    if _G.CreateAbbreviateConfig then
+        local ok, cfg = pcall(_G.CreateAbbreviateConfig, {
+            { breakpoint = 1000000000, abbreviation = "B", significandDivisor = 10000000, fractionDivisor = 100, abbreviationIsGlobal = false },
+            { breakpoint = 1000000,    abbreviation = "M", significandDivisor = 10000,    fractionDivisor = 100, abbreviationIsGlobal = false },
+            { breakpoint = 1000,       abbreviation = "K", significandDivisor = 100,      fractionDivisor = 10,  abbreviationIsGlobal = false },
+            { breakpoint = 1,          abbreviation = "",  significandDivisor = 1,        fractionDivisor = 1,   abbreviationIsGlobal = false },
+        })
+        if ok and cfg then abbrevOpts = { config = cfg } end
+    end
+    return abbrevOpts or nil
+end
+
+-- Eine Zahl kurz. Offene Zahlen rechnet Lua selbst (dieselben Stufen),
+-- geheime gehen an den Client.
+function DM.Format(v)
+    if type(v) == "nil" then return "" end
+    local plain = K.Plain(v)
+    if type(plain) == "number" then
+        local a = math.abs(plain)
+        local s
+        if a >= 1e9 then s = string.format("%.2fB", plain / 1e9)
+        elseif a >= 1e6 then s = string.format("%.2fM", plain / 1e6)
+        elseif a >= 1e3 then s = string.format("%.1fK", plain / 1e3)
+        else s = string.format("%d", math.floor(plain + 0.5)) end
+        return (s:gsub("%.", ","))
+    end
+    local abbr = _G.AbbreviateNumbers
+    if not abbr then return "" end
+    local opts = AbbrevOptions()
+    if opts then
+        local ok, s = pcall(abbr, v, opts)
+        if ok then return s end
+    end
+    return abbr(v)
+end
+
+local function Clock(secs)
+    secs = math.floor(secs + 0.5)
+    return string.format("%d:%02d", math.floor(secs / 60), secs % 60)
+end
+
+--------------------------------------------------
+-- Ein Fenster
+--------------------------------------------------
+
+local windows = {}      -- [i] = Fenster
+local Win = {}
+
+local function MoverKey(i) return i == 1 and "damagemeter" or ("damagemeter" .. i) end
+
+local function IconButton(parent, icon, tip, onClick)
+    local b = CreateFrame("Button", nil, parent)
+    b:SetSize(16, 16)
+    b.tex = b:CreateTexture(nil, "ARTWORK")
+    b.tex:SetAllPoints(b)
+    b.tex:SetTexture(MEDIA .. icon)
+    b.tex:SetVertexColor(unpack(C.textMuted))
+    if b.RegisterForClicks then b:RegisterForClicks("LeftButtonUp", "RightButtonUp") end
+    b:SetScript("OnClick", onClick)
+    b:SetScript("OnEnter", function(self)
+        self.tex:SetVertexColor(unpack(C.textBright))
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(tip, 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    b:SetScript("OnLeave", function(self)
+        self.tex:SetVertexColor(unpack(C.textMuted))
+        GameTooltip:Hide()
+    end)
+    return b
+end
+
+local function Row(w)
+    local r = CreateFrame("Frame", nil, w.frame)
     r.bar = CreateFrame("StatusBar", nil, r)
     r.bar:SetAllPoints(r)
     r.bar:SetStatusBarTexture(K.BAR_TEXTURE)
@@ -91,97 +185,113 @@ local function Row(i)
     local host = CreateFrame("Frame", nil, r)
     host:SetAllPoints(r)
     host:SetFrameLevel((r.bar:GetFrameLevel() or 1) + 2)
-    r.name = host:CreateFontString(nil, "OVERLAY")
-    K.SetFont(r.name, 11)
+    r.name = K.NewText(host, 11)
     r.name:SetPoint("LEFT", r, "LEFT", 4, 0)
     r.name:SetJustifyH("LEFT")
     r.name:SetWordWrap(false)
-    r.amount = host:CreateFontString(nil, "OVERLAY")
-    K.SetFont(r.amount, 11)
+    r.amount = K.NewText(host, 11)
     r.amount:SetPoint("RIGHT", r, "RIGHT", -4, 0)
     r.amount:SetJustifyH("RIGHT")
     r:Hide()
     return r
 end
 
-local function Layout()
-    if not win then return end
+function Win:Mode() return ModeInfo(Opt("w" .. self.index .. "mode")) end
+function Win:Session() return Opt("w" .. self.index .. "session") == "Overall" and "Overall" or "Current" end
+
+function Win:Layout()
     local w, n, h = Opt("width"), Opt("bars"), Opt("barHeight")
-    win:SetSize(w, 26 + n * (h + 1) + 4)
+    local f = self.frame
+    f:SetSize(w, 24 + n * (h + 1) + 3)
     local bg = C.bgDark
-    win.bg:SetColorTexture(bg[1], bg[2], bg[3], (Opt("bgAlpha") or 80) / 100)
-    for i = 1, math.max(n, #rows) do
-        local r = rows[i] or Row(i)
-        rows[i] = r
+    f.bg:SetColorTexture(bg[1], bg[2], bg[3], (Opt("bgAlpha") or 85) / 100)
+    for i = 1, math.max(n, #self.rows) do
+        local r = self.rows[i] or Row(self)
+        self.rows[i] = r
         r:ClearAllPoints()
-        r:SetPoint("TOPLEFT", win, "TOPLEFT", 2, -(26 + (i - 1) * (h + 1)))
-        r:SetPoint("TOPRIGHT", win, "TOPRIGHT", -2, -(26 + (i - 1) * (h + 1)))
+        r:SetPoint("TOPLEFT", f, "TOPLEFT", 2, -(24 + (i - 1) * (h + 1)))
+        r:SetPoint("TOPRIGHT", f, "TOPRIGHT", -2, -(24 + (i - 1) * (h + 1)))
         r:SetHeight(h)
         K.SetFont(r.name, math.max(8, math.floor(h * 0.6)))
         K.SetFont(r.amount, math.max(8, math.floor(h * 0.6)))
         r.name:SetWidth(w * 0.55)
         if i > n then r:Hide() end
     end
-    K.SetFont(modeBtn.text, 11)
-    K.SetFont(sessionBtn.text, 10)
-    K.SetFont(empty, 11)
-    empty:SetWidth(w - 16)
+    self.empty:SetWidth(w - 16)
+    self.close:SetShown(self.index > 1)
+    self.plus:SetShown(Count() < MAX_WINDOWS)
+    -- Die Knoepfe rechts reihen sich von aussen nach innen.
+    local anchor, x = self.header, -4
+    for _, b in ipairs({ self.close, self.gear, self.reset, self.plus }) do
+        if b:IsShown() then
+            b:ClearAllPoints()
+            b:SetPoint("RIGHT", anchor, anchor == self.header and "RIGHT" or "LEFT", x, 0)
+            anchor, x = b, -4
+        end
+    end
+    self.session:ClearAllPoints()
+    self.session:SetPoint("RIGHT", anchor, anchor == self.header and "RIGHT" or "LEFT", -8, 0)
 end
 
 local function Amount(fs, src, mode)
-    local total = src.totalAmount
-    if mode.deaths then fs:SetText("") return end
-    if type(total) == "nil" then fs:SetText("") return end
-    local abbr = _G.AbbreviateNumbers
-    if mode.count or not Opt("perSecond") or type(src.amountPerSecond) == "nil" then
-        if abbr then fs:SetText(abbr(total))
-        elseif type(K.Plain(total)) == "number" then fs:SetText(tostring(total))
-        else fs:SetText("") end
-        return
-    end
-    if abbr then
-        fs:SetFormattedText("%s (%s)", abbr(total), abbr(src.amountPerSecond))
-    elseif type(K.Plain(total)) == "number" then
-        fs:SetText(tostring(total))
+    if mode.deaths or type(src.totalAmount) == "nil" then fs:SetText("") return end
+    local fmt = Opt("numbers")
+    local rate = src.amountPerSecond
+    if mode.count or type(rate) == "nil" or fmt == "total" then
+        fs:SetText(DM.Format(src.totalAmount))
+    elseif fmt == "rate" then
+        fs:SetText(DM.Format(rate))
     else
-        fs:SetText("")
+        fs:SetFormattedText("%s (%s)", DM.Format(src.totalAmount), DM.Format(rate))
     end
 end
 
-function DM.Refresh()
-    if not win or not win:IsShown() then return end
-    local mode = ModeInfo(Opt("mode"))
-    modeBtn.text:SetText(mode.label)
-    sessionBtn.text:SetText(Opt("session") == "Overall" and "Gesamt" or "Aktuell")
+function Win:ShowEmpty(text)
+    for _, r in ipairs(self.rows) do r:Hide() end
+    self.empty:SetText(text)
+    self.empty:Show()
+end
+
+function Win:Refresh()
+    local f = self.frame
+    if not f:IsShown() then return end
+    local mode = self:Mode()
+    local session = self:Session()
+    self.session.text:SetText(session == "Overall" and "Gesamt" or "Aktuell")
+
+    local title = mode.label
+    local cdm = _G.C_DamageMeter
+    if Opt("showTime") and Available() and cdm.GetSessionDurationSeconds then
+        local ok, secs = pcall(cdm.GetSessionDurationSeconds, _G.Enum.DamageMeterSessionType[session])
+        secs = ok and K.Plain(secs)
+        if type(secs) == "number" and secs > 0 then title = title .. "  " .. Clock(secs) end
+    end
+    self.title:SetText(title)
 
     if not Available() then
-        for _, r in ipairs(rows) do r:Hide() end
-        empty:SetText("Die Schadensmessung des Spiels steht auf diesem Client nicht zur Verfügung.")
-        empty:Show()
+        self:ShowEmpty("Die Schadensmessung des Spiels steht auf diesem Client nicht zur Verfügung.")
         return
     end
 
     local e = _G.Enum
-    local st = e.DamageMeterSessionType[Opt("session")] or e.DamageMeterSessionType.Current
+    local st = e.DamageMeterSessionType[session] or e.DamageMeterSessionType.Current
     local mt = e.DamageMeterType[mode.key]
-    local ok, session = pcall(_G.C_DamageMeter.GetCombatSessionFromType, st, mt)
-    local sources = ok and session and session.combatSources or nil
+    local ok, data = pcall(cdm.GetCombatSessionFromType, st, mt)
+    local sources = ok and data and data.combatSources or nil
 
     local n = Opt("bars")
     local count = sources and math.min(#sources, n) or 0
     if count == 0 then
-        for _, r in ipairs(rows) do r:Hide() end
-        empty:SetText(ok and "Noch nichts gemessen." or "Die Messung hat nicht geantwortet.")
-        empty:Show()
+        self:ShowEmpty(ok and "Noch nichts gemessen." or "Die Messung hat nicht geantwortet.")
         return
     end
-    empty:Hide()
+    self.empty:Hide()
 
     -- Die Liste kommt absteigend sortiert: der erste Eintrag ist der
     -- volle Balken (auch wenn Lua seinen Wert nicht sehen darf).
     local maxAmt = sources[1].totalAmount
     for i = 1, n do
-        local r = rows[i]
+        local r = self.rows[i]
         local src = sources[i]
         if r and src and i <= count then
             if mode.deaths or type(maxAmt) == "nil" then
@@ -201,10 +311,12 @@ function DM.Refresh()
                 cr, cg, cb = cc.r, cc.g, cc.b
             end
             K.PaintBar(r.bar, cr, cg, cb)
-            if type(src.name) ~= "nil" then
+            if type(src.name) == "nil" then
+                r.name:SetFormattedText("%d.", i)
+            elseif Opt("rank") then
                 r.name:SetFormattedText("%d. %s", i, src.name)
             else
-                r.name:SetFormattedText("%d.", i)
+                r.name:SetFormattedText("%s", src.name)
             end
             Amount(r.amount, src, mode)
             r:Show()
@@ -214,94 +326,154 @@ function DM.Refresh()
     end
 end
 
--- Fuer den Prueflauf: wie viele Balken stehen, und was steht statt ihrer.
-function DM.RowsShown()
-    local n = 0
-    for _, r in ipairs(rows or {}) do if r:IsShown() then n = n + 1 end end
-    return n
-end
-function DM.EmptyText() return empty and empty:IsShown() and empty:GetText() or nil end
-
-local function HeaderButton(parent, onClick)
-    local b = CreateFrame("Button", nil, parent)
-    b:SetHeight(20)
-    b.text = b:CreateFontString(nil, "OVERLAY")
-    -- Schrift VOR jedem Text: SetText ohne Schrift bricht im Client ab.
-    -- Genau daran scheiterte in 6.0.0.3 der Aufbau des ganzen Fensters
-    -- ("Leeren" bekam seinen Text vor seiner Schrift).
-    K.SetFont(b.text, 11)
-    b.text:SetPoint("LEFT", b, "LEFT", 0, 0)
-    b.text:SetTextColor(unpack(C.textBright))
-    if b.RegisterForClicks then b:RegisterForClicks("LeftButtonUp", "RightButtonUp") end
-    b:SetScript("OnClick", onClick)
-    return b
-end
-
-local function CycleMode(_, button)
+function Win:CycleMode(back)
     local list = Modes()
-    local cur = Opt("mode")
+    local cur = self:Mode().key
     local idx = 1
     for i, m in ipairs(list) do if m.key == cur then idx = i end end
-    idx = idx + ((button == "RightButton") and -1 or 1)
+    idx = idx + (back and -1 or 1)
     if idx > #list then idx = 1 elseif idx < 1 then idx = #list end
-    K.Set(KEY, "mode", list[idx].key)
-    DM.Refresh()
+    K.Set(KEY, "w" .. self.index .. "mode", list[idx].key)
+    self:Refresh()
 end
 
-local function Build()
-    win = CreateFrame("Frame", "WeintCodexDamageMeter", UIParent)
-    win:SetFrameStrata("MEDIUM")
-    win:SetClampedToScreen(true)
-    win.bg = win:CreateTexture(nil, "BACKGROUND")
-    win.bg:SetAllPoints(win)
-    WeintCodex.DrawBorder(win, C.border[1], C.border[2], C.border[3], 1, 1)
+local function CreateWindow(i)
+    local w = setmetatable({ index = i, rows = {} }, { __index = Win })
+    local f = CreateFrame("Frame", i == 1 and "WeintCodexDamageMeter" or ("WeintCodexDamageMeter" .. i), UIParent)
+    w.frame = f
+    f:SetFrameStrata("MEDIUM")
+    f:SetClampedToScreen(true)
+    f.bg = f:CreateTexture(nil, "BACKGROUND")
+    f.bg:SetAllPoints(f)
+    WeintCodex.DrawBorder(f, C.border[1], C.border[2], C.border[3], 1, 1)
 
-    header = CreateFrame("Frame", nil, win)
-    header:SetPoint("TOPLEFT", win, "TOPLEFT", 6, -3)
-    header:SetPoint("TOPRIGHT", win, "TOPRIGHT", -6, -3)
-    header:SetHeight(20)
+    local header = CreateFrame("Frame", nil, f)
+    header:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
+    header:SetPoint("TOPRIGHT", f, "TOPRIGHT", -1, -1)
+    header:SetHeight(21)
+    local hb = header:CreateTexture(nil, "BACKGROUND")
+    hb:SetAllPoints(header)
+    local s2 = C.surface2
+    hb:SetColorTexture(s2[1], s2[2], s2[3], 1)
+    w.header = header
 
-    modeBtn = HeaderButton(header, CycleMode)
-    modeBtn:SetPoint("LEFT", header, "LEFT", 0, 0)
-    modeBtn:SetWidth(140)
-    modeBtn:SetScript("OnEnter", function(self)
+    -- Der Titel ist der Schalter fuer die Messart.
+    local tb = CreateFrame("Button", nil, header)
+    tb:SetPoint("LEFT", header, "LEFT", 6, 0)
+    tb:SetSize(150, 20)
+    if tb.RegisterForClicks then tb:RegisterForClicks("LeftButtonUp", "RightButtonUp") end
+    w.title = K.NewText(tb, 11)
+    w.title:SetPoint("LEFT", tb, "LEFT", 0, 0)
+    w.title:SetTextColor(unpack(C.textBright))
+    tb:SetScript("OnClick", function(_, button) w:CycleMode(button == "RightButton") end)
+    tb:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:SetText("Messart", 1, 1, 1)
         GameTooltip:AddLine("Linksklick: nächste, Rechtsklick: vorige.", 0.7, 0.7, 0.75, true)
         GameTooltip:Show()
     end)
-    modeBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    tb:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-    sessionBtn = HeaderButton(header, function()
-        K.Set(KEY, "session", Opt("session") == "Overall" and "Current" or "Overall")
-        DM.Refresh()
+    local sb = CreateFrame("Button", nil, header)
+    sb:SetSize(48, 20)
+    sb.text = K.NewText(sb, 10)
+    sb.text:SetPoint("RIGHT", sb, "RIGHT", 0, 0)
+    sb.text:SetTextColor(unpack(C.textMuted))
+    sb:SetScript("OnClick", function()
+        K.Set(KEY, "w" .. w.index .. "session", w:Session() == "Overall" and "Current" or "Overall")
+        w:Refresh()
     end)
-    sessionBtn:SetWidth(60)
-    sessionBtn.text:SetTextColor(unpack(C.textMuted))
+    w.session = sb
 
-    local reset = HeaderButton(header, function()
+    w.plus = IconButton(header, "icon_plus", "Weiteres Fenster", function() DM.AddWindow() end)
+    w.reset = IconButton(header, "icon_reset", "Alle Messungen leeren", function()
         local cdm = _G.C_DamageMeter
         if cdm and cdm.ResetAllCombatSessions then pcall(cdm.ResetAllCombatSessions) end
         DM.Refresh()
     end)
-    reset:SetWidth(46)
-    reset.text:SetText("Leeren")
-    reset.text:SetTextColor(unpack(C.textMuted))
-    reset:SetPoint("RIGHT", header, "RIGHT", 0, 0)
-    sessionBtn:SetPoint("RIGHT", reset, "LEFT", -8, 0)
-    K.SetFont(reset.text, 10)
+    w.gear = IconButton(header, "icon_gear", "Einstellungen", function()
+        local O = WeintCodex.UIOptions
+        if O and O.Show then O.Show(KEY) end
+    end)
+    w.close = IconButton(header, "icon_close", "Fenster schließen", function() DM.RemoveWindow(w.index) end)
 
-    empty = win:CreateFontString(nil, "OVERLAY")
-    K.SetFont(empty, 11)
-    empty:SetPoint("TOPLEFT", win, "TOPLEFT", 8, -32)
-    empty:SetJustifyH("LEFT")
-    empty:SetTextColor(unpack(C.textDim))
-    empty:Hide()
+    w.empty = K.NewText(f, 11)
+    w.empty:SetPoint("TOPLEFT", f, "TOPLEFT", 8, -30)
+    w.empty:SetJustifyH("LEFT")
+    w.empty:SetTextColor(unpack(C.textDim))
+    w.empty:Hide()
 
-    win.WCShowForUnlock = function() end
-    K.RegisterMover(win, "damagemeter", "Schadensanzeige",
-        { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20, y = 300 })
-    Layout()
+    f.WCShowForUnlock = function() end
+    local width = Opt("width") or 260
+    K.RegisterMover(f, MoverKey(i), i == 1 and "Schadensanzeige" or ("Schadensanzeige " .. i),
+        { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20 - (i - 1) * (width + 8), y = 300 })
+    windows[i] = w
+    return w
+end
+
+-- Die Fenster auf den gespeicherten Stand bringen: so viele zeigen wie
+-- eingestellt, die uebrigen verstecken (und ihre Verschiebeflaeche).
+local function Sync()
+    local n = Count()
+    for i = 1, MAX_WINDOWS do
+        local w = windows[i]
+        if i <= n then
+            w = w or CreateWindow(i)
+            w.frame:Show()
+            K.SetMoverEnabled(MoverKey(i), true)
+        elseif w then
+            w.frame:Hide()
+            K.SetMoverEnabled(MoverKey(i), false)
+        end
+    end
+    for i = 1, n do windows[i]:Layout() end
+end
+
+function DM.Refresh()
+    for i = 1, Count() do
+        local w = windows[i]
+        if w then w:Refresh() end
+    end
+end
+
+function DM.AddWindow()
+    local n = Count()
+    if n >= MAX_WINDOWS then return end
+    K.Set(KEY, "windows", n + 1)
+    Sync()
+    DM.Refresh()
+end
+
+-- Fenster i schliessen: die dahinter ruecken mit ihren Einstellungen auf.
+function DM.RemoveWindow(i)
+    local n = Count()
+    if i <= 1 or i > n then return end
+    for j = i, n - 1 do
+        K.Set(KEY, "w" .. j .. "mode", Opt("w" .. (j + 1) .. "mode"))
+        K.Set(KEY, "w" .. j .. "session", Opt("w" .. (j + 1) .. "session"))
+    end
+    K.Set(KEY, "windows", n - 1)
+    Sync()
+    DM.Refresh()
+end
+
+-- Fuer den Prueflauf.
+function DM.WindowCount() return Count() end
+function DM.Window(i) return windows[i or 1] end
+function DM.RowsShown(i)
+    local w = windows[i or 1]
+    local n = 0
+    for _, r in ipairs(w and w.rows or {}) do if r:IsShown() then n = n + 1 end end
+    return n
+end
+function DM.EmptyText(i)
+    local w = windows[i or 1]
+    return w and w.empty:IsShown() and w.empty:GetText() or nil
+end
+function DM.AmountText(i, row)
+    local w = windows[i or 1]
+    local r = w and w.rows[row or 1]
+    return r and r.amount:GetText() or nil
 end
 
 --------------------------------------------------
@@ -320,8 +492,7 @@ local function OnTick(_, el)
 end
 
 local function Enable()
-    Build()
-    win:Show()
+    Sync()
     if Opt("hideBlizzard") then
         local set = (_G.C_CVar and _G.C_CVar.SetCVar) or _G.SetCVar
         if set then pcall(set, "damageMeterEnabled", "0") end
@@ -344,30 +515,54 @@ end
 
 local function px(v) return string.format("%d px", v) end
 
+local function ModeItems()
+    local items = {}
+    for _, m in ipairs(MODES) do items[#items + 1] = { value = m.key, text = m.label } end
+    return items
+end
+local SESSION_ITEMS = { { value = "Current", text = "Dieser Kampf" }, { value = "Overall", text = "Ganze Sitzung" } }
+
 K.Register({
     key = KEY, group = "ui", order = 55,
     title = "Schadensanzeige",
-    description = "Schaden, Heilung, erlittener Schaden, Unterbrechungen, Bannungen und Tode als Balken – gemessen vom Spiel selbst.",
+    description = "Schaden, Heilung, erlittener Schaden, Unterbrechungen, Bannungen und Tode als Balken – bis zu vier Fenster, gemessen vom Spiel selbst.",
     defaults = defaults,
     Enable = Enable,
-    OnSetting = function() if win then Layout() DM.Refresh() end end,
+    OnSetting = function()
+        if windows[1] then Sync() DM.Refresh() end
+    end,
     pages = {
         { key = "allgemein", label = "Allgemein", build = function(B)
             B:Section("Fenster")
-            B:Row({ type = "slider", label = "Breite", key = "width", min = 160, max = 420, step = 2, format = px },
-                  { type = "slider", label = "Balken", key = "bars", min = 3, max = 25, step = 1,
-                    format = function(v) return tostring(v) end })
-            B:Row({ type = "slider", label = "Balkenhöhe", key = "barHeight", min = 12, max = 30, step = 1, format = px },
-                  { type = "slider", label = "Deckkraft des Hintergrunds", key = "bgAlpha", min = 0, max = 100, step = 5,
-                    format = function(v) return string.format("%d %%", v) end })
-            B:Section("Anzeige")
+            B:Row({ type = "slider", label = "Anzahl Fenster", key = "windows", min = 1, max = MAX_WINDOWS, step = 1,
+                    format = function(v) return tostring(v) end },
+                  { type = "slider", label = "Breite", key = "width", min = 160, max = 420, step = 2, format = px })
+            B:Row({ type = "slider", label = "Balken", key = "bars", min = 3, max = 25, step = 1,
+                    format = function(v) return tostring(v) end },
+                  { type = "slider", label = "Balkenhöhe", key = "barHeight", min = 12, max = 30, step = 1, format = px })
+            B:Row({ type = "slider", label = "Deckkraft des Hintergrunds", key = "bgAlpha", min = 0, max = 100, step = 5,
+                    format = function(v) return string.format("%d %%", v) end },
+                  { type = "toggle", label = "Kampfdauer in der Kopfzeile", key = "showTime" })
+            B:Section("Zahlen")
+            B:Row({ type = "dropdown", label = "Rechts im Balken", key = "numbers", items = {
+                        { value = "both",  text = "Gesamt (pro Sekunde)" },
+                        { value = "total", text = "Nur Gesamt" },
+                        { value = "rate",  text = "Nur pro Sekunde" } } },
+                  { type = "toggle", label = "Platz vor dem Namen", key = "rank" })
             B:Row({ type = "toggle", label = "Klassenfarben", key = "classColor" },
-                  { type = "toggle", label = "Pro Sekunde in Klammern", key = "perSecond" })
-            B:Row({ type = "toggle", label = "Anzeige des Spiels ausblenden", key = "hideBlizzard", reload = true,
-                    description = "Die Messung läuft weiter – nur Blizzards Fenster geht aus." },
-                  { type = "empty" })
+                  { type = "toggle", label = "Anzeige des Spiels ausblenden", key = "hideBlizzard", reload = true,
+                    description = "Die Messung läuft weiter – nur Blizzards Fenster geht aus." })
             B:Section("Bedienung")
-            B:Note("Klick auf die Messart schaltet weiter (Rechtsklick zurück), „Aktuell/Gesamt“ wechselt zwischen diesem Kampf und der ganzen Sitzung, „Leeren“ setzt alles zurück. Verschieben: „Rahmen entsperren“.")
+            B:Note("Klick auf die Messart schaltet weiter (Rechtsklick zurück), „Aktuell/Gesamt“ wechselt zwischen diesem Kampf und der ganzen Sitzung. In der Kopfzeile: Plus öffnet ein weiteres Fenster, der Kreis leert alle Messungen, das Zahnrad öffnet diese Seite, das Kreuz schließt ein zusätzliches Fenster. Verschieben: „Rahmen entsperren“.")
+        end },
+        { key = "fenster", label = "Je Fenster", build = function(B)
+            for i = 1, MAX_WINDOWS do
+                B:Section(i == 1 and "Fenster 1" or ("Fenster " .. i))
+                B:Row({ type = "dropdown", label = "Messart", key = "w" .. i .. "mode", items = ModeItems(),
+                        disabled = function() return i > Count() end },
+                      { type = "dropdown", label = "Zeitraum", key = "w" .. i .. "session", items = SESSION_ITEMS,
+                        disabled = function() return i > Count() end })
+            end
             B:Note("Die Zahlen misst das Spiel selbst – Addons bekommen auf dem neuen Client kein Kampflog mehr. Sie stimmen deshalb mit Blizzards eigener Anzeige überein.")
         end },
     },

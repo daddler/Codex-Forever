@@ -191,7 +191,7 @@ local function Build(parent)
     textHost:SetFrameLevel(health:GetFrameLevel() + 3)
     p.texts = {}
     for _, slot in ipairs(SLOTS) do
-        local fs = textHost:CreateFontString(nil, "OVERLAY")
+        local fs = K.NewText(textHost)
         fs:SetWordWrap(false)
         p.texts[slot] = fs
     end
@@ -554,8 +554,10 @@ local function Attach(unit)
     p:ClearAllPoints()
     p:SetPoint("CENTER", nameplate, "CENTER", 0, 0)
     p.unit, p.nameplate = unit, nameplate
-    p.cast:SetUnit(unit)
+    -- Erst einrichten, dann verbinden: SetUnit zeichnet sofort, wenn der
+    -- Gegner schon zaubert.
     Layout(p)
+    p.cast:SetUnit(unit)
     if not friendly then p.auras:SetUnit(S.auraEnabled and unit or nil) end
     Suppress(nameplate)
     plates[unit] = p

@@ -77,7 +77,7 @@ local function StyleIcon(button, size)
     top:SetFrameLevel((cd:GetFrameLevel() or 1) + 2)
     top:EnableMouse(false)
     K.Border(top, 1, 0, 0, 0, 1, "OVERLAY")
-    local count = top:CreateFontString(nil, "OVERLAY")
+    local count = K.NewText(top)
     count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 2, -1)
     -- Die Schrift MUSS stehen, bevor das Spiel die Zahl setzt: eine
     -- FontString ohne Schrift ist in SetText ein harter Fehler.

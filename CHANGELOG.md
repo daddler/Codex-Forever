@@ -9,6 +9,62 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.0.0.5] – 2026-09-24
+
+Zweiter Test im Beta-Client, und der Abgleich mit EllesmereUI.
+
+**Keine Fehlermeldung „Font not set“ mehr beim Angreifen.** Sie kam, wenn
+ein Gegner schon zauberte, während seine Namensplakette erschien.
+
+**Der Questpfeil ist dreidimensional und zeigt mit der Farbe, wie gut du
+liegst.** Grün geradeaus, gelb quer, rot in die falsche Richtung. Als
+Geist zeigt er von selbst zu deiner Leiche, und nach dem Abgeben wählt
+er die nächstgelegene Quest aus deinem Questlog – wenn du willst, schon
+sobald die Ziele erfüllt sind.
+
+**Die Schadensanzeige kann bis zu vier Fenster.** Jedes mit eigener
+Messart und eigenem Zeitraum, dazu Kampfdauer in der Kopfzeile und
+Knöpfe für neues Fenster, Leeren und Einstellungen. Pro Sekunde steht
+jetzt eine runde Zahl statt vieler Nachkommastellen.
+
+**Spieler, Ziel und Fokus zeigen ein Porträt.** Als 3D-Modell oder Bild,
+einstellbar je Rahmen.
+
+**Minikarte und Chat aufgeräumt.** Koordinaten und Uhrzeit oben in der
+Karte, das Gebiet unten; die Knöpfe des Spiels stehen bei Karte und Chat
+in einer Spalte am Rand. Der aktive Chatreiter ist hell und
+unterstrichen.
+
+**Mikromenü unten links, Taschenleiste unten rechts, die Questliste auf
+eigener Fläche.** Jeweils abschaltbar, wenn du die Anordnung des Spiels
+behalten willst.
+
+### Technisch
+
+- „Font not set“ (7x, BugGrabber mit geheimem Stack): `ui/nameplates.lua`
+  verband in `Attach` den Zauberbalken (`p.cast:SetUnit`) vor `Layout`;
+  zaubert der Gegner schon, schrieb der Balken Text ohne Schrift. Die
+  Klasse ist geschlossen: `UIKit.NewText` setzt die Schrift beim
+  Anlegen, `load_test.lua` verbietet `CreateFontString` außerhalb von
+  `ui/kit.lua`, und `UIKit.SetFont` fällt bei `false` auf die Schrift
+  des Spiels zurück.
+- Questpfeil: `media/ui/arrow3d.tga` (8×8 Ansichten, 512×512, erzeugt
+  von `.github/scripts/make_ui_media.py` – kleiner Rasterer ohne
+  Bibliothek), `QA.Frame`, `QA.CourseColor`, `QA.NearestQuest`;
+  Leiche über `C_DeathInfo.GetCorpseMapPosition` (eigene Karte und
+  Elternkarten), nächste Quest über `C_SuperTrack.SetSuperTrackedQuestID`
+  nach `QUEST_TURNED_IN`/`QUEST_REMOVED`.
+- Schadensanzeige neu geschrieben: bis zu vier Fenster, flach
+  gespeichert (`w1mode` … `w4session`), `CreateAbbreviateConfig` für
+  runde Zahlen, `GetSessionDurationSeconds` für die Kampfdauer, eigene
+  Symbole `media/ui/icon_*.tga`.
+- Neu: `ui/questtracker.lua` (Fläche hinter `ObjectiveTrackerFrame`,
+  Höhe aus der untersten sichtbaren Zeile). Einheitenrahmen mit Porträt
+  (`PlayerModel` bzw. `SetPortraitTexture`), Spieler- und Zielrahmen
+  220 px breit. Mikromenü/Taschenleiste in `ui/actionbars.lua`, gesetzt
+  nach `ApplySystemAnchor`/`ExitEditMode`, nie im Kampf – auf Forever
+  ungeprüft, ob das den Bearbeitungsmodus unberührt lässt.
+
 ## [6.0.0.4] – 2026-09-24
 
 Erster Test der Oberfläche im Beta-Client, und was dabei zerbrach.
