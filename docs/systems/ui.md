@@ -1,5 +1,9 @@
 # Die WeintCodex-Oberfläche (`ui/`)
 
+> Die Neugestaltung (UI 2.0: Cockpit, Raster, Kachel, Ruhe/Kampf,
+> Gestaltungsmodus) ist in `docs/design/ui-2.0.md` geplant. Dieses
+> Dokument beschreibt den **gebauten** Stand.
+
 ## Was sie ist
 
 Ein eigenes, schlichtes Interface zusätzlich zu WeintCodex:

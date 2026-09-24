@@ -235,6 +235,7 @@ into modules that no longer exist. A green run means "it loads", never
 | Charakterzuordnung, WeintAdmin-Backup | `../Companion-Forever/docs/character-links-and-admin-bridge.md` |
 | Companion-Authentifizierung/Token | `../Companion-Forever/docs/companion-auth.md` |
 | Welche Spieldaten fehlen und warum | `../Companion-Forever/docs/systems/forever-data.md` |
+| Neugestaltung der Oberfläche (UI 2.0): Cockpit, Raster, Kachel, Ruhe/Kampf, Gestaltungsmodus, Phasen | `docs/design/ui-2.0.md` |
 | Oberfläche (`ui/`): Plaketten, Einheiten-/Gruppenrahmen, Aktionsleisten, Minikarte, Chat, Taschen, Schadensanzeige, Questliste, Auren, Questpfeil, Komfort, `/wcui`, `OPT_IN`, `WeintCodex.GameColors`, geheime Werte (12.x), `UIKit.NewText` | `docs/systems/ui.md` |
 
 Cross-repo tasks (something touches Codex **and** Companion **and/or**
