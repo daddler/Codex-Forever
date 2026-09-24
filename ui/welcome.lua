@@ -34,6 +34,11 @@ local F  = WeintCodex.Fonts
 
 local WIN_W, WIN_H = 500, 300
 
+-- Ist diese Sitzung ein /reload? Gesetzt beim ersten PLAYER_ENTERING_WORLD
+-- (siehe unten). Steht hier oben, weil MaybeAsk sie liest - ein `local`
+-- unterhalb der Funktion waere darin eine (leere) globale Variable.
+local reloadSession = false
+
 local dimmer, win, eyebrow, title, body
 local buttons = {}
 
@@ -157,6 +162,12 @@ local function SetText(eb, t, text)
     eyebrow:SetText(WeintCodex.Spaced(WeintCodex.Upper(eb)))
     title:SetText(t)
     body:SetText(text)
+    -- Das Fenster waechst mit dem Text: oben Rubrik und Titel (rund 90 px),
+    -- unten die Knopfzeile (rund 80 px). Mit fester Hoehe liefe ein
+    -- laengerer Absatz unter die Knoepfe.
+    local ok, h = pcall(body.GetStringHeight, body)
+    if not ok or type(h) ~= "number" then h = 0 end
+    win:SetHeight(math.max(WIN_H, math.ceil(h) + 176))
 end
 
 --------------------------------------------------
@@ -187,6 +198,9 @@ ShowYes = function()
         "Die Oberfläche ist eingeschaltet.",
         "Sie startet nach dem Neuladen — sie ersetzt Rahmen des Spiels, und das"
         .. " geht nur beim Laden.\n\n"
+        .. "Ändert sich nach dem Neuladen nichts, hat der Client die Einstellung"
+        .. " nicht gespeichert — ein bekannter Fehler der Forever-Beta. Dann"
+        .. " schalte sie mit /wcui erneut ein und lade noch einmal neu.\n\n"
         .. "Einstellen, verschieben oder wieder ausschalten: /wcui, oder in den"
         .. " Einstellungen von WeintCodex unter „Oberfläche“.")
     SetButtons({
@@ -238,6 +252,7 @@ end
 -- davor steht.
 function WL.MaybeAsk()
     if Asked() or K.UIEnabled() then return end
+    if reloadSession then return end   -- siehe unten: keine Schleife nach /reload
     if dimmer and dimmer:IsShown() then return end
     if WeintCodex.Onboarding and WeintCodex.Onboarding.IsShowing
        and WeintCodex.Onboarding.IsShowing() then
@@ -264,18 +279,38 @@ if WeintCodex.Onboarding and WeintCodex.Onboarding.OnClosed then
     WeintCodex.Onboarding.OnClosed(function() WL.MaybeAsk() end)
 end
 
+-- NACH EINEM /reload WIRD NICHT GEFRAGT, nur beim echten Einloggen.
+--
+-- Mit 6.0.0.1 gemeldet: "Ja, verwenden" -> "Jetzt neu laden" -> die
+-- Frage kam wieder, immer wieder. Der Forever-Beta-Client hatte die
+-- Antwort nicht gespeichert (siehe WeintCodex.SaveHealth in
+-- core/main.lua). Speichern kann dieses Addon nicht erzwingen - aber die
+-- Schleife darf es nicht bauen: wer gerade neu geladen hat, hat die
+-- Frage fast immer eben beantwortet. Beim naechsten echten Einloggen
+-- kommt sie wieder, falls die Antwort verloren ging.
+
+function WL.IsReloadSession() return reloadSession end
+
+local hooked = false
 local ev = CreateFrame("Frame")
-ev:RegisterEvent("PLAYER_LOGIN")
-ev:SetScript("OnEvent", function()
-    -- Das Einfuehrungs-Popup wird im selben Ereignis geoeffnet; einen
-    -- Augenblick warten, damit es sicher steht, bevor gefragt wird.
-    if _G.C_Timer and _G.C_Timer.After then
-        _G.C_Timer.After(1.5, WL.MaybeAsk)
-    end
+ev:RegisterEvent("PLAYER_ENTERING_WORLD")
+ev:SetScript("OnEvent", function(_, _, isInitialLogin, isReloadingUi)
+    -- Nur das erste PLAYER_ENTERING_WORLD einer Sitzung traegt eins der
+    -- beiden Flags; Zonenwechsel tragen keins.
+    if not (isInitialLogin or isReloadingUi) then return end
+    reloadSession = isReloadingUi and true or false
+
     -- Schliesst jemand das Hauptfenster samt Popup, ohne das Popup selbst
     -- wegzuklicken, soll die Frage trotzdem kommen.
     local main = WeintCodex.MainFrame
-    if main and main.HookScript then
+    if not hooked and main and main.HookScript then
+        hooked = true
         main:HookScript("OnHide", function() WL.MaybeAsk() end)
+    end
+
+    -- Das Einfuehrungs-Popup wird beim Anmelden geoeffnet; einen
+    -- Augenblick warten, damit es sicher steht, bevor gefragt wird.
+    if not reloadSession and _G.C_Timer and _G.C_Timer.After then
+        _G.C_Timer.After(1.5, WL.MaybeAsk)
     end
 end)

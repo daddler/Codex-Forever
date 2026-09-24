@@ -796,6 +796,96 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- KEINE VERSEHENTLICHEN GLOBALEN in ui/. Mit 6.0.0.1 stand ein `local`
+-- unterhalb der Funktion, die es liest - darin war es eine globale
+-- Variable, immer nil, und die Sperre gegen die Frageschleife wirkte nie.
+-- luac sieht das: jede Schreibung einer globalen Variable ausser
+-- WeintCodex und SLASH_* ist ein Fehler, jede Lesung eines Namens, den
+-- weder Lua noch WoW kennt, ebenso.
+do
+    local ALLOWED_GET = {
+        WeintCodex = true, _G = true, CreateFrame = true, UIParent = true,
+        GameTooltip = true, SlashCmdList = true,
+        ipairs = true, pairs = true, pcall = true, print = true, type = true,
+        tostring = true, select = true, unpack = true, wipe = true, assert = true,
+        setmetatable = true, math = true, string = true, table = true,
+    }
+    local bad, checked = {}, 0
+    local pipe = io.popen and io.popen('ls "' .. ROOT .. '/ui" 2>/dev/null')
+    if pipe then
+        for name in pipe:lines() do
+            if name:match("%.lua$") then
+                local lst = io.popen('luac5.1 -l -p "' .. ROOT .. '/ui/' .. name .. '" 2>/dev/null')
+                local out = lst and lst:read("*a") or ""
+                if lst then lst:close() end
+                if out ~= "" then
+                    checked = checked + 1
+                    for op, g in out:gmatch("([SG]ETGLOBAL)[^\n]-; ([%w_]+)") do
+                        local okName = (op == "SETGLOBAL")
+                            and (g == "WeintCodex" or g:match("^SLASH_"))
+                            or ALLOWED_GET[g]
+                        if not okName then bad[#bad + 1] = "ui/" .. name .. ": " .. op .. " " .. g end
+                    end
+                end
+            end
+        end
+        pipe:close()
+    end
+    if checked == 0 then
+        print("  --    luac5.1 nicht verfuegbar, Globalenpruefung uebersprungen")
+    else
+        Check(#bad == 0, checked .. " Dateien in ui/ ohne versehentliche globale Variable"
+            .. (#bad == 0 and "" or (": " .. table.concat(bad, ", "))))
+    end
+end
+
+-- DIE SCHLEIFE AUS 6.0.0.1: "Ja" -> neu laden -> der Beta-Client hat
+-- nicht gespeichert -> dieselbe Frage wieder. Speichern kann das Addon
+-- nicht erzwingen; es darf aber nach einem /reload nicht erneut fragen,
+-- und es muss sagen koennen, ob der Client gespeichert hat.
+do
+    local WL = WeintCodex.UIWelcome
+    local sd = WeintCodex.SavedData
+    local ok, err = pcall(function()
+        sd.saveProbe = nil
+        stub.FireEvent("PLAYER_ENTERING_WORLD", false, true)
+        assert(WeintCodex.SaveHealth() == "unknown", "ohne Stempel ist Speichern unbekannt, nicht ok")
+        assert(WL.IsReloadSession(), "Neuladen nicht erkannt")
+
+        sd.ui.asked = nil
+        WL.MaybeAsk()
+        assert(not WL.IsShown(), "nach /reload wird wieder gefragt (die Schleife)")
+
+        sd.saveProbe = time() - 3600
+        stub.FireEvent("PLAYER_ENTERING_WORLD", false, true)
+        assert(WeintCodex.SaveHealth() == "failed", "veralteter Stempel nach /reload nicht erkannt")
+
+        sd.saveProbe = time() - 5
+        stub.FireEvent("PLAYER_ENTERING_WORLD", false, true)
+        assert(WeintCodex.SaveHealth() == "ok", "frischer Stempel nicht als gespeichert erkannt")
+
+        sd.saveProbe = nil
+        stub.FireEvent("PLAYER_LOGOUT")
+        assert(type(sd.saveProbe) == "number", "PLAYER_LOGOUT setzt keinen Stempel")
+
+        -- Echtes Einloggen: dann darf (und soll) wieder gefragt werden.
+        stub.FireEvent("PLAYER_ENTERING_WORLD", true, false)
+        assert(not WL.IsReloadSession(), "Einloggen als Neuladen gewertet")
+        WL.MaybeAsk()
+        assert(WL.IsShown(), "beim Einloggen wird nicht gefragt, obwohl die Antwort fehlt")
+        WL.Button("no"):Click()
+        WL.Button("ok"):Click()
+    end)
+    Check(ok, "keine Frageschleife nach /reload; Speicherpruefung erkennt ok/verloren/unbekannt"
+        .. (ok and "" or (": " .. tostring(err))))
+    -- Die Einstellungsseite nennt den Zustand (Ansicht Diagnose).
+    local drawn = pcall(function()
+        WeintCodex.Navigation.SwitchTo("settings")
+        WeintCodex.Navigation.ActivateIndex(2)
+    end)
+    Check(drawn, "Diagnose zeigt den Speicherzustand")
+end
+
 -- NEULADEN IST AUF FOREVER GESCHUETZT. ReloadUI()/C_UI.Reload() aus
 -- Addon-Code endet im Beta-Client in ADDON_ACTION_BLOCKED - gemeldet mit
 -- 6.0.0.0 vom Knopf "Jetzt neu laden" der Frage beim Einloggen, und

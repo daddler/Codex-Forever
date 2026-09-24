@@ -408,6 +408,18 @@ local function ViewDiagnose(y)
     })
 
     y = Spacer(y, 8)
+    y = Group(y, "Speichern",
+        "Ob der Client beim letzten Neuladen gespeichert hat. Die Forever-Beta"
+        .. " schreibt Addon-Einstellungen nicht immer – dann gehen Änderungen"
+        .. " beim Neuladen verloren, ohne dass WeintCodex etwas dafür kann.")
+
+    local health = WeintCodex.SaveHealth and WeintCodex.SaveHealth() or "unknown"
+    y = Info(y, "Letztes Neuladen", ({
+        ok      = WeintCodex.ColorText("success", "gespeichert"),
+        failed  = WeintCodex.ColorText("warning", "NICHT gespeichert (Fehler des Clients)"),
+    })[health] or WeintCodex.ColorText("textDim", "unbekannt – in dieser Sitzung nicht neu geladen oder erste Prüfung"))
+
+    y = Spacer(y, 8)
     y = Group(y, "Spieldaten",
         "Was WeintCodex über Forever weiß — und was nicht.")
 

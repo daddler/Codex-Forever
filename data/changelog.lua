@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.0.0.2",
+        date    = "24.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Frage zur WeintCodex-Oberfläche kommt nach einem Neuladen nicht mehr wieder.|r Sie erscheint nur noch beim Einloggen. Vorher konnte sie nach „Ja, verwenden“ und „Jetzt neu laden“ in einer Schleife wiederkehren.",
+            "|cff7C6CFFWeintCodex sagt dir, wenn der Client nicht gespeichert hat.|r Die Forever-Beta speichert Addon-Einstellungen beim Neuladen nicht immer. Passiert das, steht es im Chat – und unter Einstellungen → Diagnose steht, ob das letzte Neuladen gespeichert hat.",
+        },
+    },
+    {
         version = "6.0.0.1",
         date    = "24.09.2026",
         notes   = {

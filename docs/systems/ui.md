@@ -179,8 +179,35 @@ soll – **nach** der Einführung bzw. dem Changelog-Popup, nie darüber
   wieder.
 
 Gemerkt wird `ui.asked`. Wer die Oberfläche vorher schon über `/wcui`
-eingeschaltet hat, wird nicht gefragt. Speichert der Beta-Client die
-SavedVariables nicht (siehe oben), kommt die Frage wieder.
+eingeschaltet hat, wird nicht gefragt.
+
+**Nach einem `/reload` wird nie automatisch gefragt, nur beim echten
+Einloggen** (`PLAYER_ENTERING_WORLD` mit `isReloadingUi`). Mit 6.0.0.1
+gemeldet: „Ja“ → „Jetzt neu laden“ → dieselbe Frage, in einer Schleife.
+Der Beta-Client hatte die Antwort nicht gespeichert. Erzwingen kann das
+Addon das Speichern nicht – aber wer gerade neu geladen hat, hat die
+Frage fast immer eben beantwortet. Beim nächsten echten Einloggen kommt
+sie wieder, falls die Antwort verloren ging.
+
+### Hat der Client gespeichert? (`WeintCodex.SaveHealth`)
+
+`core/main.lua` schreibt bei `PLAYER_LOGOUT` (kommt vor dem Schreiben,
+auch beim Neuladen) die Uhrzeit nach `saveProbe`. Nach einem Neuladen
+muss sie Sekunden alt sein; ist sie älter als fünf Minuten, stammt die
+Datei aus einer früheren Sitzung – der Client hat nicht geschrieben. Dann
+steht im Chat, dass die Änderungen verloren sind und dass das ein Fehler
+der Beta ist. Fehlt der Stempel ganz (erste Sitzung mit dieser Fassung),
+heißt das „unbekannt“, nicht „in Ordnung“. Die Einstellungsseite zeigt
+den Zustand unter *Diagnose → Speichern*.
+
+Grenze: Schreibt der Client **nie**, entsteht auch nie ein Stempel, und
+der Zustand bleibt „unbekannt“. Dann bleibt nur der Hinweis im
+Fragefenster, dass eine Einstellung, die nach dem Neuladen fehlt, nicht
+gespeichert wurde.
+
+`load_test.lua` prüft zusätzlich per `luac -l`, dass keine Datei unter
+`ui/` versehentlich eine globale Variable liest oder schreibt – genau
+so war die Sperre gegen die Schleife beim ersten Versuch wirkungslos.
 
 ## Prüfen
 

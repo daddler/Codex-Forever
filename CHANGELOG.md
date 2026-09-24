@@ -9,6 +9,31 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.0.0.2] – 2026-09-24
+
+**Die Frage zur WeintCodex-Oberfläche kommt nach einem Neuladen nicht
+mehr wieder.** Sie erscheint nur noch beim Einloggen. Vorher konnte sie
+nach „Ja, verwenden“ und „Jetzt neu laden“ in einer Schleife
+wiederkehren.
+
+**WeintCodex sagt dir, wenn der Client nicht gespeichert hat.** Die
+Forever-Beta speichert Addon-Einstellungen beim Neuladen nicht immer.
+Passiert das, steht es im Chat – und unter Einstellungen → Diagnose
+steht, ob das letzte Neuladen gespeichert hat.
+
+### Technisch
+
+Ursache der Schleife: Der Beta-Client hatte `WeintCodex_SavedData`
+beim Neuladen nicht geschrieben (Antwort und Hauptschalter fehlten
+danach beide); im Addon selbst verwirft nichts diese Werte.
+`ui/welcome.lua` fragt nach `PLAYER_ENTERING_WORLD` mit
+`isReloadingUi` nicht mehr automatisch. Der erste Versuch dieser Sperre
+war wirkungslos (ein `local` unterhalb der Funktion, die ihn liest – dort
+eine immer leere globale Variable); `load_test.lua` prüft jetzt per
+`luac -l` jede Datei unter `ui/` auf versehentliche Globale.
+`core/main.lua`: `WeintCodex.SaveHealth()` aus einem Zeitstempel, den
+`PLAYER_LOGOUT` schreibt (`ok`/`failed`/`unknown`).
+
 ## [6.0.0.1] – 2026-09-24
 
 **„Jetzt neu laden“ funktioniert auf Forever.** Der Knopf nach der Frage

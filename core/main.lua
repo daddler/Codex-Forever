@@ -12,7 +12,7 @@ WeintCodex = WeintCodex or {}
 -- "v" plus diese Zahl sein. Die CI prueft alle vier gegeneinander und
 -- bricht sonst ab - siehe .github/scripts/release_notes.py und
 -- docs/development/releases.md.
-WeintCodex.Version = "6.0.0.1"
+WeintCodex.Version = "6.0.0.2"
 
 SLASH_WEINTCODEX1 = "/wc"
 SLASH_WEINTCODEX2 = "/weintcodex"
@@ -301,6 +301,51 @@ local function OnEvent(self, event, addonName)
     print("|cff7C6CFF[WeintCodex]|r |cff34C77Bv" .. WeintCodex.Version
         .. "|r geladen. |cff8A8A98/wc zum Öffnen, /wc einstellungen für die Optionen.|r")
 end
+
+--------------------------------------------------
+-- Hat der Client beim letzten Neuladen gespeichert?
+--------------------------------------------------
+-- Der Forever-Beta-Client schreibt SavedVariables laut EllesmereUI nur
+-- manchmal. Mit 6.0.0.1 gemeldet: "WeintCodex-Oberflaeche verwenden? Ja"
+-- und neu laden - danach war die Antwort weg und die Frage kam wieder.
+-- Ohne diese Pruefung sieht das aus wie ein Fehler des Addons.
+--
+-- Beim Abmelden bzw. Neuladen (PLAYER_LOGOUT kommt vor dem Schreiben)
+-- steht die Uhrzeit in SavedData. Nach einem NEULADEN muss sie Sekunden
+-- alt sein. Ist sie viel aelter, stammt die Datei aus einer frueheren
+-- Sitzung: der Client hat nicht geschrieben. Fehlt sie ganz, weiss
+-- niemand etwas (erste Sitzung mit dieser Fassung) - "unbekannt", nicht
+-- "in Ordnung" und nicht "kaputt".
+
+local SAVE_STALE_AFTER = 300   -- Sekunden; ein Neuladen dauert keine fuenf Minuten
+
+local saveHealth = "unknown"   -- "ok" | "failed" | "unknown"
+function WeintCodex.SaveHealth() return saveHealth end
+
+local saveProbe = CreateFrame("Frame")
+saveProbe:RegisterEvent("PLAYER_LOGOUT")
+saveProbe:RegisterEvent("PLAYER_ENTERING_WORLD")
+saveProbe:SetScript("OnEvent", function(_, event, isInitialLogin, isReloadingUi)
+    local sd = WeintCodex.SavedData
+    if not sd then return end
+    if event == "PLAYER_LOGOUT" then
+        sd.saveProbe = time()
+        return
+    end
+    if not isReloadingUi then return end
+    local stamp = sd.saveProbe
+    if type(stamp) ~= "number" then
+        saveHealth = "unknown"
+    elseif time() - stamp > SAVE_STALE_AFTER then
+        saveHealth = "failed"
+        print("|cff7C6CFF[WeintCodex]|r |cffF0A63ADer Client hat die Einstellungen"
+            .. " beim letzten Neuladen nicht gespeichert.|r Das ist ein bekannter"
+            .. " Fehler der Forever-Beta, kein Fehler von WeintCodex – was du vor"
+            .. " dem Neuladen geändert hast, ist verloren.")
+    else
+        saveHealth = "ok"
+    end
+end)
 
 local loader = CreateFrame("Frame")
 loader:RegisterEvent("ADDON_LOADED")
