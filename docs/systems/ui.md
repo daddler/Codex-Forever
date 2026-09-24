@@ -140,7 +140,7 @@ hinein – dieselbe Einordnung wie `community` in `data/sources.lua`:
 
 Auf Forever ist `Reload()` für Addons gesperrt: `ReloadUI()` oder
 `C_UI.Reload()` aus Lua endet in `ADDON_ACTION_BLOCKED` (im Beta-Client
-gemessen, 6.0.0.0). Erlaubt ist nur, was der Spieler selbst auslöst.
+gemeldet mit 6.0.0.0, behoben in 6.0.0.1). Erlaubt ist nur, was der Spieler selbst auslöst.
 Jeder „Neu laden“-Knopf – hier, in den Einstellungen, bei den
 Materialien und auf der Anmeldeseite – geht deshalb über
 `WeintCodex.AttachReload` (`core/ui.lua`): ein unsichtbarer

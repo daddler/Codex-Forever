@@ -1989,7 +1989,7 @@ end
 -- AUF FOREVER IST NEULADEN GESCHUETZT. ReloadUI() bzw. C_UI.Reload() aus
 -- Addon-Code endet dort in ADDON_ACTION_BLOCKED ("hat versucht die
 -- geschuetzte Funktion 'Reload()' aufzurufen") - im Beta-Client
--- gemessen (6.0.0.0), nicht vermutet. Erlaubt ist, was der Spieler
+-- gemeldet (6.0.0.0, behoben in 6.0.0.1), nicht vermutet. Erlaubt ist, was der Spieler
 -- selbst ausloest: ein Klick auf einen Aktionsknopf, der das Makro
 -- "/reload" ausfuehrt. Dieselbe Loesung verwendet EllesmereUI auf
 -- Forever.

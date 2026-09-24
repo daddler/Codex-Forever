@@ -9,6 +9,28 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.0.0.1] – 2026-09-24
+
+**„Jetzt neu laden“ funktioniert auf Forever.** Der Knopf nach der Frage
+zur WeintCodex-Oberfläche und der im Einstellungsfenster meldeten
+vorher nur, dass eine geschützte Funktion blockiert wurde – jetzt laden
+sie neu.
+
+**Auch „Synchronisation starten“ und „Anmeldungen abrufen“ laden wieder
+neu.** Beide Knöpfe hatten denselben Fehler.
+
+### Technisch
+
+Neuladen ist auf Forever für Addons geschützt: `ReloadUI()` bzw.
+`C_UI.Reload()` aus Lua endet in `ADDON_ACTION_BLOCKED` (im Beta-Client
+gemeldet). Alle fünf Neuladeknöpfe gehen jetzt über
+`WeintCodex.AttachReload` (`core/ui.lua`): ein unsichtbarer
+`InsecureActionButton` über dem sichtbaren Knopf führt das Makro
+`/reload` aus, ausgelöst vom Klick selbst; im Kampf wird er erst danach
+scharf und verweist bis dahin auf `/reload`. `UIOptions.ReloadNow`
+entfällt. `load_test.lua` schlägt bei jedem direkten Aufruf von
+`ReloadUI`/`C_UI.Reload` in `core/`, `modules/` und `ui/` an.
+
 ## [6.0.0.0] – 2026-09-24
 
 **WeintCodex bringt jetzt ein eigenes Interface mit – ganz freiwillig.**
@@ -49,11 +71,6 @@ sind von Haus aus aus, und keiner hängt am neuen Interface.
 Damit sollte das Addon in der Addon-Liste nicht mehr als „veraltet“
 erscheinen.
 
-**Knöpfe, die die Oberfläche neu laden, funktionieren jetzt auf
-Forever.** Das betrifft auch „Synchronisation starten“ bei den
-Materialien und „Anmeldungen abrufen“ auf der Anmeldeseite – sie
-meldeten vorher nur, dass eine geschützte Funktion blockiert wurde.
-
 ### Technisch
 
 Neuer Ordner `ui/` (lädt nach `modules/`): `kit.lua` (Speicher unter
@@ -67,11 +84,7 @@ rights reserved“); der Questpfeil entsteht aus
 möglicherweise geheim behandelt (`type(x) == "nil"`, kein `a or b`,
 `SetFormattedText`, Dauerobjekte für Zauberbalken). Neu in
 `core/ui.lua`: `CreateDropdown`, `CreateColorSwatch`,
-`WeintCodex.GameColors`. `## Interface` nennt zusätzlich `16001`. Neuladen ist auf Forever
-geschützt (`ADDON_ACTION_BLOCKED` für `Reload()`): alle Knöpfe laden
-jetzt über `WeintCodex.AttachReload` neu – ein `InsecureActionButton`
-mit dem Makro `/reload`, ausgelöst vom Klick selbst; `load_test.lua`
-verbietet jeden direkten Aufruf von `ReloadUI`/`C_UI.Reload`.
+`WeintCodex.GameColors`. `## Interface` nennt zusätzlich `16001`.
 `load_test.lua` baut jede Einstellungsseite, lässt Plaketten,
 Einheitenrahmen und Komfortfunktionen gegen die Attrappe laufen, rechnet
 die Geometrie des Questpfeils nach und spielt die Frage beim Einloggen
