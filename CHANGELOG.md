@@ -49,6 +49,11 @@ sind von Haus aus aus, und keiner hängt am neuen Interface.
 Damit sollte das Addon in der Addon-Liste nicht mehr als „veraltet“
 erscheinen.
 
+**Knöpfe, die die Oberfläche neu laden, funktionieren jetzt auf
+Forever.** Das betrifft auch „Synchronisation starten“ bei den
+Materialien und „Anmeldungen abrufen“ auf der Anmeldeseite – sie
+meldeten vorher nur, dass eine geschützte Funktion blockiert wurde.
+
 ### Technisch
 
 Neuer Ordner `ui/` (lädt nach `modules/`): `kit.lua` (Speicher unter
@@ -62,7 +67,11 @@ rights reserved“); der Questpfeil entsteht aus
 möglicherweise geheim behandelt (`type(x) == "nil"`, kein `a or b`,
 `SetFormattedText`, Dauerobjekte für Zauberbalken). Neu in
 `core/ui.lua`: `CreateDropdown`, `CreateColorSwatch`,
-`WeintCodex.GameColors`. `## Interface` nennt zusätzlich `16001`.
+`WeintCodex.GameColors`. `## Interface` nennt zusätzlich `16001`. Neuladen ist auf Forever
+geschützt (`ADDON_ACTION_BLOCKED` für `Reload()`): alle Knöpfe laden
+jetzt über `WeintCodex.AttachReload` neu – ein `InsecureActionButton`
+mit dem Makro `/reload`, ausgelöst vom Klick selbst; `load_test.lua`
+verbietet jeden direkten Aufruf von `ReloadUI`/`C_UI.Reload`.
 `load_test.lua` baut jede Einstellungsseite, lässt Plaketten,
 Einheitenrahmen und Komfortfunktionen gegen die Attrappe laufen, rechnet
 die Geometrie des Questpfeils nach und spielt die Frage beim Einloggen

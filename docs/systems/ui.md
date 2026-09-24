@@ -136,6 +136,22 @@ hinein – dieselbe Einordnung wie `community` in `data/sources.lua`:
   steht sie auch in `WeintCodex.toc` – neben 120000, für den Fall, dass
   der Bericht nicht stimmt.
 
+## Neuladen ist geschützt
+
+Auf Forever ist `Reload()` für Addons gesperrt: `ReloadUI()` oder
+`C_UI.Reload()` aus Lua endet in `ADDON_ACTION_BLOCKED` (im Beta-Client
+gemessen, 6.0.0.0). Erlaubt ist nur, was der Spieler selbst auslöst.
+Jeder „Neu laden“-Knopf – hier, in den Einstellungen, bei den
+Materialien und auf der Anmeldeseite – geht deshalb über
+`WeintCodex.AttachReload` (`core/ui.lua`): ein unsichtbarer
+`InsecureActionButton` über dem sichtbaren Knopf führt das Makro
+`/reload` aus. Im Kampf wird er erst danach scharf und sagt bis dahin im
+Chat, dass `/reload` zu tippen ist.
+
+**Es gibt keine Funktion, die „jetzt neu lädt“.** Jeder Aufruf ohne
+Klick wäre genau der blockierte Fall. `load_test.lua` sucht in `core/`,
+`modules/` und `ui/` nach `ReloadUI(` und `C_UI.Reload` und schlägt an.
+
 ## Was es (noch) nicht gibt
 
 Aus der Vorlage bewusst **nicht** übernommen, weil jedes davon ein

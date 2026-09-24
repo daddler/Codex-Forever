@@ -112,16 +112,36 @@ local function Build()
 end
 
 -- Ein Satz Knoepfe unten rechts, von rechts nach links gesetzt.
+-- Jeder Knopf wird EINMAL gebaut und danach nur gezeigt oder versteckt:
+-- WoW gibt Frames nie frei, und der Neuladeknopf bekommt seine Attribute
+-- nur ausserhalb des Kampfes - ein neuer je Anzeige waere beides.
+local byKey = {}
+
 local function SetButtons(defs)
     for _, b in ipairs(buttons) do b:Hide() end
     wipe(buttons)
     local anchor
     for i = #defs, 1, -1 do
         local d = defs[i]
-        local b = WeintCodex.CreateButton(win, {
-            text = d.text, kind = d.kind or "secondary", height = 34, size = 12,
-            backdrop = "surface2", onClick = d.onClick,
-        })
+        local b = byKey[d.key]
+        if not b then
+            if d.reload then
+                -- Neuladen ist auf Forever geschuetzt: der Klick selbst
+                -- fuehrt "/reload" aus (UIKit.ReloadButton).
+                b = K.ReloadButton(win, {
+                    text = d.text, height = 34, size = 12, backdrop = "surface2",
+                    onClick = d.onClick,
+                })
+            else
+                b = WeintCodex.CreateButton(win, {
+                    text = d.text, kind = d.kind or "secondary", height = 34, size = 12,
+                    backdrop = "surface2", onClick = d.onClick,
+                })
+            end
+            byKey[d.key] = b
+        end
+        b:ClearAllPoints()
+        b:Show()
         if anchor then
             b:SetPoint("RIGHT", anchor, "LEFT", -10, 0)
         else
@@ -174,11 +194,8 @@ ShowYes = function()
             Close()
             Say("Die Oberfläche startet beim nächsten Neuladen (/reload).")
         end },
-        { key = "reload", text = "Jetzt neu laden", kind = "primary", onClick = function()
+        { key = "reload", text = "Jetzt neu laden", reload = true, onClick = function()
             Close()
-            if WeintCodex.UIOptions and WeintCodex.UIOptions.ReloadNow then
-                WeintCodex.UIOptions.ReloadNow()
-            end
         end },
     })
 end

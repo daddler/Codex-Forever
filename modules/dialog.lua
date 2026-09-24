@@ -71,15 +71,16 @@ local function Create()
     textLabel:SetFont(WeintCodex.Fonts.sans, 12, "")
     textLabel:SetTextColor(.92,.92,.92)
 
+    -- Neuladen ist auf Forever geschuetzt: ReloadUI() aus Addon-Code wird
+    -- blockiert. Der Klick fuehrt "/reload" als Makro aus
+    -- (WeintCodex.AttachReload, core/ui.lua).
     local sync = CreateButton(
         window,
         "Synchronisation starten",
         220,
-        function()
-            overlay:Hide()
-            ReloadUI()
-        end
+        nil
     )
+    WeintCodex.AttachReload(sync, function() overlay:Hide() end)
     sync:SetPoint("BOTTOM",0,48)
 
     local later = CreateButton(

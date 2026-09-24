@@ -565,6 +565,30 @@ function K.ResetAllPositions()
 end
 
 --------------------------------------------------
+-- Neu laden per Knopf
+--------------------------------------------------
+-- Neuladen ist auf Forever geschuetzt; der Knopf fuehrt "/reload" als
+-- Makro aus, ausgeloest vom Klick selbst. Die Begruendung steht bei
+-- WeintCodex.AttachReload in core/ui.lua - hier nur die Form, die das
+-- Oberflaechenpaket braucht.
+--
+-- opts: wie WeintCodex.CreateButton (text, kind, height, size,
+--       backdrop, tooltip), dazu onClick = was VOR dem Neuladen noch
+--       geschehen soll.
+--------------------------------------------------
+
+function K.ReloadButton(parent, opts)
+    opts = opts or {}
+    local b = WeintCodex.CreateButton(parent, {
+        text = opts.text or "Jetzt neu laden", kind = opts.kind or "primary",
+        height = opts.height, size = opts.size, backdrop = opts.backdrop,
+        tooltip = opts.tooltip,
+    })
+    WeintCodex.AttachReload(b, opts.onClick)
+    return b
+end
+
+--------------------------------------------------
 -- Einmal-Ereignisse
 --------------------------------------------------
 -- PLAYER_LOGIN: SavedData stehen seit ADDON_LOADED (core/main.lua); die

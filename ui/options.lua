@@ -55,11 +55,6 @@ local GROUPS = {
 -- Modul "Allgemein" (Hauptschalter, Schrift, Balken)
 --------------------------------------------------
 
-local function ReloadNow()
-    if _G.C_UI and _G.C_UI.Reload then _G.C_UI.Reload()
-    elseif _G.ReloadUI then _G.ReloadUI() end
-end
-O.ReloadNow = ReloadNow
 
 K.Register({
     key = "general", group = "general", order = 0,
@@ -638,9 +633,10 @@ function O.Build()
     })
     resetBtn:SetPoint("LEFT", unlockBtn, "RIGHT", 8, 0)
 
-    reloadBtn = WeintCodex.CreateButton(footer, {
-        text = "Jetzt neu laden", kind = "primary", height = 30, size = 11, backdrop = "surface1",
-        onClick = ReloadNow,
+    -- Neuladen ist auf Forever geschuetzt: der Knopf fuehrt "/reload" als
+    -- Makro aus, ausgeloest vom Klick selbst (UIKit.ReloadButton).
+    reloadBtn = K.ReloadButton(footer, {
+        text = "Jetzt neu laden", height = 30, size = 11, backdrop = "surface1",
     })
     reloadBtn:SetPoint("RIGHT", footer, "RIGHT", -PAD, 0)
     reloadNote = Label(footer, F.sans, 11, "warningBright")

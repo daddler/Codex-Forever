@@ -146,15 +146,26 @@ end
 local function Buttons(y, defs)
     local x, lineH = 0, 0
     for _, def in ipairs(defs) do
-        local b = WeintCodex.CreateButton(body, {
-            text     = def.text,
-            kind     = def.kind or "secondary",
-            height   = 30,
-            size     = 11,
-            tooltip  = def.tooltip,
-            backdrop = "bgDark",
-            onClick  = def.onClick,
-        })
+        local b
+        if def.reload and WeintCodex.UIKit then
+            -- Neuladen ist auf Forever geschuetzt; der Knopf fuehrt
+            -- "/reload" als Makro aus (ui/kit.lua, UIKit.ReloadButton).
+            b = WeintCodex.UIKit.ReloadButton(body, {
+                text = def.text, height = 30, size = 11,
+                tooltip = def.tooltip, backdrop = "bgDark",
+                onClick = def.onClick,
+            })
+        else
+            b = WeintCodex.CreateButton(body, {
+                text     = def.text,
+                kind     = def.kind or "secondary",
+                height   = 30,
+                size     = 11,
+                tooltip  = def.tooltip,
+                backdrop = "bgDark",
+                onClick  = def.onClick,
+            })
+        end
         local w = b:GetWidth()
         if x > 0 and (x + w) > ROW_W_MAX then
             y = y - lineH - 8
@@ -591,7 +602,7 @@ local function ViewInterface(y)
     if K.ReloadPending() then
         y = Note(y, "Eine Änderung wartet auf das Neuladen der Oberfläche.", "warningBright")
         y = Buttons(y, {
-            { text = "Jetzt neu laden", onClick = function() WeintCodex.UIOptions.ReloadNow() end },
+            { text = "Jetzt neu laden", reload = true },
         })
     end
 

@@ -31,6 +31,7 @@ WeintCodex_ChangelogData = {
             "|cff7C6CFFEin Questpfeil zeigt dir den Weg zur ausgewählten Quest.|r Wähle eine Quest im Questlog oder setze eine Kartenmarkierung – der Pfeil zeigt die Richtung, darunter stehen Entfernung und ungefähre Ankunftszeit. Er funktioniert auch ohne das neue Interface.",
             "|cff7C6CFFKleine Helfer für den Alltag, jeder einzeln zuschaltbar.|r Automatisch reparieren, graue Gegenstände verkaufen, schneller plündern, Löschbestätigung ausfüllen, Filmsequenzen überspringen, Kampfhinweis, Bildrate, Haltbarkeitswarnung und Koordinaten auf der Weltkarte. Alle sind von Haus aus aus.",
             "|cff7C6CFFWeintCodex erkennt den Forever-Client unter einer weiteren Kennung.|r Damit sollte das Addon in der Addon-Liste nicht mehr als „veraltet“ erscheinen.",
+            "|cff7C6CFFKnöpfe, die die Oberfläche neu laden, funktionieren jetzt auf Forever.|r Das betrifft auch „Synchronisation starten“ bei den Materialien und „Anmeldungen abrufen“ – sie meldeten vorher nur, dass eine geschützte Funktion blockiert wurde.",
         },
     },
         {

@@ -442,7 +442,10 @@ local function CreateRaidFrame()
         self:SetSurface("surface2")
         GameTooltip:Hide()
     end)
-    reloadBtn:SetScript("OnClick", function() ReloadUI() end)
+    -- Neuladen ist auf Forever geschuetzt: ReloadUI() aus Addon-Code wird
+    -- blockiert. Der Klick fuehrt "/reload" als Makro aus
+    -- (WeintCodex.AttachReload, core/ui.lua).
+    WeintCodex.AttachReload(reloadBtn)
 
     clearBtn = WeintCodex.CreateCard(WeintCodex.TitleBarActions, { width = 96, height = 30, buttonStyle = true })
     clearBtn:SetPoint("TOPRIGHT", WeintCodex.TitleBarActions, "TOPRIGHT", 0, -11)

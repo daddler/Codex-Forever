@@ -158,6 +158,12 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   colours live in `core/ui.lua` as `WeintCodex.GameColors`. Values from
   the 12.x client may be *secret*: `type(x) == "nil"` instead of
   `x == nil`, no `a or b` on client values. Details: `docs/systems/ui.md`.
+- **Reloading is protected on Forever.** `ReloadUI()`/`C_UI.Reload()`
+  from addon code is blocked (`ADDON_ACTION_BLOCKED`, measured on the
+  beta client). Every reload button goes through
+  `WeintCodex.AttachReload` (a `/reload` macro on an
+  `InsecureActionButton`, triggered by the click itself);
+  `load_test.lua` fails on any direct call.
 - **Every colour value lives in `core/ui.lua`.** It is the translation of
   the Companion's `gui/theme/tokens.py`. A hex value anywhere else is a
   surface that gets missed when the palette changes.

@@ -796,6 +796,56 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- NEULADEN IST AUF FOREVER GESCHUETZT. ReloadUI()/C_UI.Reload() aus
+-- Addon-Code endet im Beta-Client in ADDON_ACTION_BLOCKED - gemeldet mit
+-- 6.0.0.0 vom Knopf "Jetzt neu laden" der Frage beim Einloggen, und
+-- derselbe Fehler steckte seit Langem in zwei aelteren Knoepfen. Erlaubt
+-- ist nur der Klick auf einen Makroknopf (WeintCodex.AttachReload).
+--
+-- Zwei Pruefungen: kein direkter Aufruf irgendwo im Code (Kommentare
+-- ausgenommen), und die Knoepfe, die neu laden, tun es ueber den
+-- Makroknopf, ohne selbst etwas Geschuetztes aufzurufen.
+do
+    local offenders = {}
+    for _, folder in ipairs({ "core", "modules", "ui" }) do
+        local pipe = io.popen and io.popen('ls "' .. ROOT .. "/" .. folder .. '" 2>/dev/null')
+        if pipe then
+            for name in pipe:lines() do
+                if name:match("%.lua$") then
+                    local h = io.open(ROOT .. "/" .. folder .. "/" .. name, "r")
+                    local code = h:read("*a"):gsub("%-%-[^\n]*", "")
+                    h:close()
+                    if code:find("ReloadUI%s*%(") or code:find("C_UI%.Reload") then
+                        offenders[#offenders + 1] = folder .. "/" .. name
+                    end
+                end
+            end
+            pipe:close()
+        end
+    end
+    Check(#offenders == 0, "kein direkter Aufruf von ReloadUI/C_UI.Reload"
+        .. (#offenders == 0 and "" or (": " .. table.concat(offenders, ", "))))
+
+    local blocked = 0
+    _G.ReloadUI = function() blocked = blocked + 1 end
+    _G.C_UI = { Reload = function() blocked = blocked + 1 end }
+    local WL = WeintCodex.UIWelcome
+    local ok, err = pcall(function()
+        WL.Ask()
+        WL.Button("yes"):Click()
+        local btn = WL.Button("reload")
+        assert(btn and btn._reloadOverlay, "Neuladeknopf ohne Makroknopf")
+        assert(btn._reloadOverlay._armed, "Makroknopf nicht scharf")
+        btn:Click()
+        btn._reloadOverlay:Click()
+        assert(not WL.IsShown(), "Klick auf Neuladen schliesst die Frage nicht")
+        K.SetUIEnabled(false)
+    end)
+    Check(ok and blocked == 0, "Neuladen laeuft ueber den Makroknopf, nie ueber eine geschuetzte Funktion"
+        .. (ok and "" or (": " .. tostring(err))))
+    _G.ReloadUI, _G.C_UI = nil, nil
+end
+
 -- Die Einfuehrung erklaert die Oberflaeche: jede Seite zeichnet, und
 -- das Kapitel ist da. (Nach der Frage oben, damit Dismiss hier nicht
 -- noch einmal fragt.)

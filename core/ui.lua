@@ -1983,6 +1983,92 @@ function WeintCodex.CreateColorSwatch(parent, opts)
     return row
 end
 
+--------------------------------------------------
+-- Neu laden per Klick
+--------------------------------------------------
+-- AUF FOREVER IST NEULADEN GESCHUETZT. ReloadUI() bzw. C_UI.Reload() aus
+-- Addon-Code endet dort in ADDON_ACTION_BLOCKED ("hat versucht die
+-- geschuetzte Funktion 'Reload()' aufzurufen") - im Beta-Client
+-- gemessen (6.0.0.0), nicht vermutet. Erlaubt ist, was der Spieler
+-- selbst ausloest: ein Klick auf einen Aktionsknopf, der das Makro
+-- "/reload" ausfuehrt. Dieselbe Loesung verwendet EllesmereUI auf
+-- Forever.
+--
+-- AttachReload legt deshalb ueber einen vorhandenen Knopf einen
+-- unsichtbaren InsecureActionButton, der den Klick als Makro ausfuehrt.
+-- Der Knopf darunter behaelt Aussehen und Hover; sein eigenes OnClick
+-- kommt nicht mehr an (der obere faengt den Klick), `onClick` laeuft
+-- stattdessen VOR dem Neuladen.
+--
+-- Die Attribute werden einmal gesetzt und nie geaendert. Schreiben kann
+-- man sie nur ausserhalb des Kampfes; wer den Knopf im Kampf bekommt,
+-- bekommt ihn scharf, sobald der Kampf vorbei ist, und bis dahin einen
+-- Hinweis im Chat statt eines blockierten Aufrufs.
+--
+-- Es gibt bewusst KEINE Funktion "jetzt neu laden" zum Aufrufen: jeder
+-- Aufruf ohne Klick waere genau der blockierte Fall.
+--------------------------------------------------
+
+WeintCodex.RELOAD_HINT = "Zum Übernehmen /reload in den Chat eingeben."
+
+local function ReloadHint()
+    print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. WeintCodex.RELOAD_HINT)
+end
+
+local function ArmReload(ov)
+    ov:SetAttribute("useOnKeyDown", false)
+    ov:SetAttribute("type", "macro")
+    ov:SetAttribute("macrotext", "/reload")
+    ov._armed = true
+end
+
+function WeintCodex.AttachReload(button, onClick)
+    local ok, ov = pcall(CreateFrame, "Button", nil, button, "InsecureActionButtonTemplate")
+    if not ok or not ov then
+        -- Ohne die Vorlage gibt es keinen erlaubten Weg. Dann sagt der
+        -- Knopf, was zu tun ist, statt einen Fehler auszuloesen.
+        button:SetScript("OnClick", function()
+            if onClick then onClick() end
+            ReloadHint()
+        end)
+        return nil
+    end
+
+    ov:SetAllPoints(button)
+    ov:SetFrameLevel((button:GetFrameLevel() or 1) + 5)
+    -- Nur beim Loslassen, und das Attribut sagt es auch: ungesetzt folgt
+    -- der Klick der Spieleinstellung "beim Druecken ausloesen", und die
+    -- liefert ein Knopf, der nur auf Loslassen hoert, nie.
+    if ov.RegisterForClicks then ov:RegisterForClicks("AnyUp") end
+
+    if InCombatLockdown and InCombatLockdown() then
+        local waiter = CreateFrame("Frame")
+        waiter:RegisterEvent("PLAYER_REGEN_ENABLED")
+        waiter:SetScript("OnEvent", function(self)
+            self:UnregisterAllEvents()
+            ArmReload(ov)
+        end)
+    else
+        ArmReload(ov)
+    end
+
+    -- Maus und Tooltip an den sichtbaren Knopf darunter weiterreichen.
+    ov:SetScript("OnEnter", function()
+        local f = button:GetScript("OnEnter")
+        if f then f(button) end
+    end)
+    ov:SetScript("OnLeave", function()
+        local f = button:GetScript("OnLeave")
+        if f then f(button) end
+    end)
+    ov:HookScript("OnClick", function()
+        if onClick then onClick() end
+        if not ov._armed then ReloadHint() end
+    end)
+    button._reloadOverlay = ov
+    return ov
+end
+
 WeintCodex.SetSolidBg = SetSolidBg
 WeintCodex.DrawBorder = DrawBorder
 WeintCodex.SetBorder  = DrawBorder
