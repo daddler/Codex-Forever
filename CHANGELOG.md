@@ -9,6 +9,58 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.1.0.0] – 2026-09-24
+
+UI 2.0, erster Teil: das Fundament aus dem neuen Konzept
+(`docs/design/ui-2.0.md`) und die neuen Namensplaketten.
+
+**Die Oberfläche hat ein neues Gesicht.** Balken mit leichtem Glanz,
+weiche Schatten statt harter Kanten und eine schmale Schrift, die Namen
+und Zahlen mehr Platz lässt.
+
+**Namensplaketten, die auf dich reagieren.** Die Maus hellt eine
+Plakette auf, dein Ziel leuchtet und trägt Marken links und rechts, alle
+anderen treten zurück. Fehlendes Leben ist dunkel in der Farbe des
+Gegners statt schwarz.
+
+**Spieler und Ziel stehen spiegelbildlich um die Bildschirmmitte.**
+Kombopunkte und dein Zauberbalken liegen mittig darunter, die Gruppe
+links neben dir, die Schadensanzeige unten rechts.
+
+**Außerhalb des Kampfes wird es ruhig.** Ohne Ziel und bei vollem Leben
+treten Spielerrahmen und Leisten zurück. Ein Ziel, ein Treffer oder die
+Maus holen sie sofort zurück – einstellbar unter /wcui, Reiter „Ruhe und
+Kampf“.
+
+**Testmodus: alles auf einen Blick.** /wcui test zeigt Ziel, Fokus, eine
+Beispielgruppe, Zauberbalken und Schadensanzeige mit Beispielwerten –
+ohne Gruppe und ohne Kampf.
+
+### Technisch
+
+- Konzept und Entwurf der Neugestaltung: `docs/design/ui-2.0.md`.
+- Stil: `UIKit.NewBar` (Glanztextur `media/ui/bar`, Lichtkante,
+  Stilwechsel erreicht alle Balken), `UIKit.Glow` (Neunteiler aus
+  `media/ui/glow`/`glow_wide`, ohne `SetTextureSliceMargins` aus),
+  `UIKit.Kachel`; Schalter „Weiche Schatten“. Neue Farbwerte nur in
+  `core/ui.lua` (`GameColors.shadow`, `targetGlow`, `hoverFill` …).
+- Schrift: IBM Plex Sans Condensed (OFL) als `Fonts.hud*`, Standard der
+  Spielwelt; die breite Plex bleibt wählbar.
+- Plaketten: 150 × 14, `targetStyle` (Leuchten und Marken / Rand /
+  beides / nichts) statt `targetRing`, `hover` über
+  `UPDATE_MOUSEOVER_UNIT` mit Takt nur während einer Hervorhebung,
+  `tintedBg`, `shadow`; `nonTargetAlpha` 70, `targetScale` 110.
+- `ui/layout.lua`: alle Standardpositionen an einer Stelle
+  (`UIKit.Layout`); Einheitenrahmen 200 × 31, eigene Plätze für
+  Kombopunkte und eigenen Zauberbalken.
+- `ui/presence.lua`: Ruhe/Bereit/Kampf, nur `SetAlpha`; Spieler,
+  Aktionsleisten, Schadensanzeige angemeldet.
+- `ui/testmode.lua`: Beispieldaten mit Band und „Beispiel“ in der
+  Schadensanzeige; endet bei Kampfbeginn.
+- `load_test.lua`: Cockpit spiegelbildlich, Stil 2.0, Plaketten 2.0
+  (Ziel, Maus, 70 %), Ruhe/Kampf, Testmodus. Die Attrappe merkt sich
+  `SetAlpha`. **Nichts davon ist im Spiel geprüft.**
+
 ## [6.0.0.6] – 2026-09-24
 
 Dritter Test im Beta-Client.

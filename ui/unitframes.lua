@@ -18,8 +18,9 @@
 -- GetComboPoints("player", "target"), wie es Blizzards eigener
 -- klassischer Kombopunktrahmen tut.
 --
--- Positionen und Masse der Voreinstellung folgen dem Forever-Grundlayout
--- der Vorlage (Spieler links, Ziel rechts, je 317 px von der Mitte).
+-- Positionen: ui/layout.lua (das Cockpit aus docs/design/ui-2.0.md) -
+-- Spieler und Ziel als Spiegelbild um die Mittelachse, Kombopunkte und
+-- der eigene Zauberbalken mittig darunter.
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -36,20 +37,16 @@ local LABELS = {
     focus = "Fokus", pet = "Begleiter",
 }
 
--- Masse je Rahmen. Vorlage: Ziel 181 breit, Leben 46 + Kraft 6;
--- Ziel des Ziels 101 breit.
+-- Masse je Rahmen (UI 2.0): Spieler und Ziel 200 breit, Leben 24 +
+-- Kraft 6 - im Grundmass des Spiels so gross wie im Entwurf 272 x 42 px.
 local SHAPE = {
-    player       = { w = 220, h = 46, p = 6, power = true,  cast = true,  left = "name",      right = "healthPercent", portrait = "3d",
-                     pos = { point = "BOTTOM", relPoint = "BOTTOM", x = -317, y = 171 } },
-    target       = { w = 220, h = 46, p = 6, power = true,  cast = true,  left = "levelname", right = "healthPercent", portrait = "3d",
-                     pos = { point = "BOTTOM", relPoint = "BOTTOM", x = 317, y = 171 } },
-    targettarget = { w = 101, h = 22, p = 0, power = false, cast = false, left = "name", right = "none",
-                     pos = { point = "BOTTOM", relPoint = "BOTTOM", x = 357, y = 233 } },
-    focus        = { w = 150, h = 28, p = 4, power = true,  cast = true,  left = "name", right = "healthPercent", portrait = "2d",
-                     pos = { point = "BOTTOM", relPoint = "BOTTOM", x = -317, y = 300 } },
-    pet          = { w = 101, h = 22, p = 4, power = true,  cast = false, left = "name", right = "healthPercent",
-                     pos = { point = "BOTTOM", relPoint = "BOTTOM", x = -357, y = 233 } },
+    player       = { w = 200, h = 24, p = 6, power = true,  cast = true,  left = "name",      right = "healthPercent", portrait = "3d" },
+    target       = { w = 200, h = 24, p = 6, power = true,  cast = true,  left = "levelname", right = "healthPercent", portrait = "3d" },
+    targettarget = { w = 90,  h = 18, p = 0, power = false, cast = false, left = "name", right = "healthPercent" },
+    focus        = { w = 130, h = 18, p = 3, power = true,  cast = true,  left = "name", right = "healthPercent", portrait = "2d" },
+    pet          = { w = 90,  h = 16, p = 3, power = true,  cast = false, left = "name", right = "healthPercent" },
 }
+for u, s in pairs(SHAPE) do s.pos = K.Layout("uf_" .. u) end
 
 local defaults = {
     classColor    = true,
@@ -58,9 +55,13 @@ local defaults = {
     bgColor       = K.ColorDefault("plateBg"),
     showBorder    = true,
     borderColor   = K.ColorDefault("plateBorder"),
-    nameSize      = 12,        -- Vorlage: leftTextSize 12
+    nameSize      = 12,
     textSize      = 12,
-    castHeight    = 16,
+    castHeight    = 14,
+    -- Der eigene Zauberbalken mittig ueber den Leisten, die Kombopunkte
+    -- mittig unter der Figur (Cockpit). Aus: beides am Rahmen wie bisher.
+    playerCastCentered = true,
+    comboCentered      = true,
     castIcon      = true,
     castTimer     = true,
     castColor     = K.ColorDefault("cast"),
@@ -208,6 +209,28 @@ end
 
 local Frame = {}
 
+-- Eigene Plaetze im Cockpit (ui/layout.lua) fuer den Zauberbalken des
+-- Spielers und die Kombopunkte: ungeschuetzte Rahmen, die nur eine
+-- Position tragen. Balken und Punkte bleiben Kinder ihres Einheiten-
+-- rahmens (sichtbar nur mit ihm) und werden an den Platz gehaengt.
+local holders = {}
+local HOLDER = {
+    uf_playercast = { label = "Eigener Zauberbalken", w = 186 },
+    uf_combo      = { label = "Kombopunkte", w = 111, h = 6 },
+}
+local function Holder(key)
+    local hf = holders[key]
+    if hf then return hf end
+    local def = HOLDER[key]
+    hf = CreateFrame("Frame", nil, UIParent)
+    hf:SetSize(def.w, def.h or 14)
+    hf.WCShowForUnlock = function() end
+    K.RegisterMover(hf, key, def.label, K.Layout(key))
+    holders[key] = hf
+    return hf
+end
+UF.Holder = Holder
+
 local function Create(unit)
     local name = "WeintCodexUF_" .. unit
     local f = CreateFrame("Button", name, UIParent, "SecureUnitButtonTemplate")
@@ -218,21 +241,20 @@ local function Create(unit)
     if f.RegisterForClicks then f:RegisterForClicks("AnyUp") end
     f:SetFrameStrata("LOW")
 
-    local health = CreateFrame("StatusBar", nil, f)
-    health:SetStatusBarTexture(K.BAR_TEXTURE)
+    local health = K.NewBar(f)
     f.health = health
     local hbg = health:CreateTexture(nil, "BACKGROUND")
     hbg:SetAllPoints(health)
     f.healthBg = hbg
 
-    local power = CreateFrame("StatusBar", nil, f)
-    power:SetStatusBarTexture(K.BAR_TEXTURE)
+    local power = K.NewBar(f, true)
     f.power = power
     local pbg = power:CreateTexture(nil, "BACKGROUND")
     pbg:SetAllPoints(power)
     f.powerBg = pbg
 
     f.border = K.Border(f, 1, 0, 0, 0, 1, "BORDER")
+    f._shadow = K.Glow(f, { spread = 6, shadow = true })
 
     -- Portraet links im Rahmen: als 3D-Modell (wie in EllesmereUI) oder
     -- als Bild. Beides zeichnet der Client; Lua reicht nur die Einheit.
@@ -276,11 +298,8 @@ local function Create(unit)
         -- Kombopunkte: EIN Statusbalken mit Trennstrichen statt fuenf
         -- Einzelteilen - SetValue nimmt auch einen geheimen Wert, ein
         -- Vergleich "Punkt 3 an?" nicht.
-        local cp = CreateFrame("StatusBar", nil, f)
-        cp:SetStatusBarTexture(K.BAR_TEXTURE)
+        local cp = K.NewBar(f)
         cp:SetHeight(5)
-        cp:SetPoint("BOTTOMLEFT", f, "TOPLEFT", 0, 3)
-        cp:SetPoint("BOTTOMRIGHT", f, "TOPRIGHT", 0, 3)
         local col = WeintCodex.GameColors.comboPoint
         local tex = cp:GetStatusBarTexture()
         if tex then tex:SetVertexColor(col[1], col[2], col[3], 1) end
@@ -406,14 +425,36 @@ function Frame:Layout()
 
     if self._cast then
         self._cast:ClearAllPoints()
-        self._cast:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -4)
-        self._cast:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", 0, -4)
+        if u == "player" and Opt("playerCastCentered") then
+            local hf = Holder("uf_playercast")
+            hf:SetHeight(Opt("castHeight"))
+            self._cast:SetPoint("TOPLEFT", hf, "TOPLEFT", 0, 0)
+            self._cast:SetPoint("TOPRIGHT", hf, "TOPRIGHT", 0, 0)
+        else
+            self._cast:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -4)
+            self._cast:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", 0, -4)
+        end
         self._cast:ApplyStyle({
             height = Opt("castHeight"), icon = Opt("castIcon"), timer = Opt("castTimer"),
             cast = K.GetColor(KEY, "castColor"), locked = K.GetColor(KEY, "castLocked"),
             bg = bg, border = Opt("showBorder"),
         })
         if not Opt(u .. "_cast") then self._cast:Hide() end
+    end
+
+    if self._combo then
+        local cp = self._combo
+        cp:ClearAllPoints()
+        if Opt("comboCentered") then
+            local hf = Holder("uf_combo")
+            cp:SetPoint("TOPLEFT", hf, "TOPLEFT", 0, 0)
+            cp:SetPoint("BOTTOMRIGHT", hf, "BOTTOMRIGHT", 0, 0)
+        else
+            cp:SetHeight(5)
+            cp:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 3)
+            cp:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT", 0, 3)
+        end
+        cp._max = nil   -- Trennstriche neu setzen: die Breite hat sich geaendert
     end
 
     if self._auras then self:LayoutAuras() end
@@ -471,6 +512,7 @@ end
 
 function Frame:UpdateCombo()
     local cp = self._combo
+    if self._testShown then return end
     if not Opt("comboPoints") or not UsesCombo()
        or not K.Bool(_G.UnitExists and _G.UnitExists("target"), false) then
         cp:Hide()
@@ -490,12 +532,18 @@ function Frame:UpdateCombo()
     if type(cur) == "nil" then cp:Hide() return end
     cp:SetMinMaxValues(0, max)
     cp:SetValue(cur)
+    self:ComboTicks(max)
+    cp:Show()
+end
 
-    -- Trennstriche einmal je Hoechstwert setzen.
+function Frame:ComboTicks(max)
+    local cp = self._combo
+    -- Trennstriche einmal je Hoechstwert (und nach jedem Layout) setzen.
     if cp._max ~= max then
         cp._max = max
         for _, t in ipairs(cp.ticks) do t:Hide() end
-        local w = self:GetWidth() or 181
+        local w = cp:GetWidth()
+        if type(w) ~= "number" or w <= 0 then w = self:GetWidth() or 200 end
         for i = 1, max - 1 do
             local t = cp.ticks[i]
             if not t then
@@ -510,7 +558,6 @@ function Frame:UpdateCombo()
             t:Show()
         end
     end
-    cp:Show()
 end
 
 --------------------------------------------------
@@ -525,7 +572,7 @@ end
 
 function Frame:LayoutAuras()
     local size = Opt("auraSize")
-    local y0 = (self._combo and 10 or 3)
+    local y0 = (self._combo and not Opt("comboCentered")) and 10 or 3
     local debuffFilter = Opt("onlyOwnDebuffs") and "HARMFUL|PLAYER" or "HARMFUL"
     local rows = {
         { self._auras.HARMFUL, debuffFilter, y0 },
@@ -566,6 +613,85 @@ function Frame:WCShowForUnlock(on)
             if _G.RegisterUnitWatch and u ~= "player" then _G.RegisterUnitWatch(self) end
             self:Refresh()
         end
+    end)
+end
+
+--------------------------------------------------
+-- Testmodus: Beispielwerte statt einer Einheit
+--------------------------------------------------
+-- ui/testmode.lua. Die Namen sind erfunden; Balken und Texte bekommen
+-- feste Werte, bis der Testmodus endet. Nur ausserhalb des Kampfes: die
+-- Rahmen sind geschuetzt (Zeigen, UnitWatch).
+--------------------------------------------------
+
+local TEST = {
+    target       = { name = "Kobold-Geomant", level = "23", color = "enemyInCombat", hp = 0.58, power = 0.7, ptoken = "MANA" },
+    targettarget = { name = "Brunhild", class = "WARRIOR", hp = 0.72 },
+    focus        = { name = "Liora", class = "PRIEST", hp = 1, power = 0.76, ptoken = "MANA" },
+    pet          = { name = "Wolf", color = "friendly", hp = 0.8, power = 0.5, ptoken = "FOCUS" },
+}
+
+local function TestColor(t)
+    local cc = t.class and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[t.class]
+    if cc then return cc.r, cc.g, cc.b end
+    local c = K.ColorDefault(t.color or "healthFallback")
+    return c.r, c.g, c.b
+end
+
+function Frame:ShowTest(on)
+    local u = self.unit
+    if u == "player" then
+        if self._cast and Opt("player_cast") then self._cast:ShowPreview(on) end
+        return
+    end
+    local t = TEST[u]
+    if not t then return end
+    if on then
+        self._testShown = true
+        if _G.UnregisterUnitWatch then _G.UnregisterUnitWatch(self) end
+        self:Show()
+        self.health:SetMinMaxValues(0, 1)
+        self.health:SetValue(t.hp)
+        K.PaintBar(self.health, TestColor(t))
+        if Opt(u .. "_power") then
+            self.power:SetMinMaxValues(0, 1)
+            self.power:SetValue(t.power or 1)
+            local pc = t.ptoken and _G.PowerBarColor and _G.PowerBarColor[t.ptoken]
+            if type(pc) ~= "table" or not pc.r then pc = K.ColorDefault("powerFallback") end
+            K.PaintBar(self.power, pc.r, pc.g, pc.b)
+        end
+        local left = Opt(u .. "_left")
+        if left == "levelname" then
+            self.left:SetFormattedText("%s  %s", t.level or "??", t.name)
+        elseif left ~= "none" then
+            self.left:SetText(t.name)
+        else
+            self.left:SetText("")
+        end
+        local right = Opt(u .. "_right")
+        if right == "none" then self.right:SetText("") else self.right:SetFormattedText("%d%%", t.hp * 100) end
+        if self._portrait.model then self._portrait.model:Hide() end
+        if self._cast and Opt(u .. "_cast") then self._cast:ShowPreview(true) end
+        if self._combo and Opt("comboPoints") and UsesCombo() then
+            self._combo:SetMinMaxValues(0, 5)
+            self._combo:SetValue(3)
+            self:ComboTicks(5)
+            self._combo:Show()
+        end
+    else
+        self._testShown = nil
+        if self._cast then self._cast:ShowPreview(false) end
+        if _G.RegisterUnitWatch then _G.RegisterUnitWatch(self) end
+        if not K.Bool(_G.UnitExists and _G.UnitExists(u), false) then self:Hide() end
+        self:Refresh()
+        self:UpdatePortrait()
+        if self._combo then self:UpdateCombo() end
+    end
+end
+
+function UF.ShowTest(on)
+    K.AfterCombat(function()
+        for _, f in pairs(frames) do f:ShowTest(on) end
     end)
 end
 
@@ -679,6 +805,9 @@ local function Build()
         HideBlizzard("PlayerCastingBarFrame")
         HideBlizzard("CastingBarFrame")
     end
+    -- Ruhe und Kampf (ui/presence.lua): der Spielerrahmen tritt ausserhalb
+    -- des Kampfes zurueck, der Begleiter mit ihm.
+    WeintCodex.UIPresence.Register("player", function() return { frames.player, frames.pet } end, "fade_player")
 end
 
 local function Enable()
@@ -747,6 +876,12 @@ local function UnitPage(u)
                     and { type = "toggle", label = "Blizzard-Zauberleiste ersetzen", key = "replacePlayerCast", reload = true,
                           disabled = function() return off() or not K.Get(KEY, "player_cast") end }
                     or { type = "empty" })
+            if u == "player" then
+                B:Row({ type = "toggle", label = "Mittig über den Leisten", key = "playerCastCentered",
+                        disabled = function() return off() or not K.Get(KEY, "player_cast") end,
+                        description = "Aus: direkt unter dem Spielerrahmen." },
+                      { type = "empty" })
+            end
         end
         if u == "target" then
             B:Section("Auren und Kombopunkte")
@@ -757,6 +892,10 @@ local function UnitPage(u)
                     disabled = function() return off() or not K.Get(KEY, "targetAuras") end },
                   { type = "toggle", label = "Kombopunkte", key = "comboPoints", disabled = off,
                     description = "Schurken und Druiden in Katzengestalt." })
+            B:Row({ type = "toggle", label = "Kombopunkte mittig", key = "comboCentered",
+                    disabled = function() return off() or not K.Get(KEY, "comboPoints") end,
+                    description = "Unter der Figur statt über dem Zielrahmen." },
+                  { type = "empty" })
         end
     end }
 end

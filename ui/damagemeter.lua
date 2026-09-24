@@ -175,9 +175,8 @@ end
 
 local function Row(w)
     local r = CreateFrame("Frame", nil, w.frame)
-    r.bar = CreateFrame("StatusBar", nil, r)
+    r.bar = K.NewBar(r)
     r.bar:SetAllPoints(r)
-    r.bar:SetStatusBarTexture(K.BAR_TEXTURE)
     r.bg = r:CreateTexture(nil, "BACKGROUND")
     r.bg:SetAllPoints(r)
     local s = C.surface2
@@ -266,18 +265,25 @@ function Win:Refresh()
         secs = ok and K.Plain(secs)
         if type(secs) == "number" and secs > 0 then title = title .. "  " .. Clock(secs) end
     end
-    self.title:SetText(title)
-
-    if not Available() then
-        self:ShowEmpty("Die Schadensmessung des Spiels steht auf diesem Client nicht zur Verfügung.")
-        return
+    local ok, sources
+    if DM._test then
+        -- Testmodus (ui/testmode.lua): Beispielzeilen, und die Kopfzeile
+        -- sagt es - Beispielzahlen duerfen nie wie gemessene aussehen.
+        self.title:SetText(mode.label .. "  0:42  " .. WeintCodex.ColorText("textMuted", "Beispiel"))
+        ok, sources = true, DM.TEST_SOURCES
+    else
+        self.title:SetText(title)
+        if not Available() then
+            self:ShowEmpty("Die Schadensmessung des Spiels steht auf diesem Client nicht zur Verfügung.")
+            return
+        end
+        local e = _G.Enum
+        local st = e.DamageMeterSessionType[session] or e.DamageMeterSessionType.Current
+        local mt = e.DamageMeterType[mode.key]
+        local data
+        ok, data = pcall(cdm.GetCombatSessionFromType, st, mt)
+        sources = ok and data and data.combatSources or nil
     end
-
-    local e = _G.Enum
-    local st = e.DamageMeterSessionType[session] or e.DamageMeterSessionType.Current
-    local mt = e.DamageMeterType[mode.key]
-    local ok, data = pcall(cdm.GetCombatSessionFromType, st, mt)
-    local sources = ok and data and data.combatSources or nil
 
     local n = Opt("bars")
     local count = sources and math.min(#sources, n) or 0
@@ -346,6 +352,7 @@ local function CreateWindow(i)
     f.bg = f:CreateTexture(nil, "BACKGROUND")
     f.bg:SetAllPoints(f)
     WeintCodex.DrawBorder(f, C.border[1], C.border[2], C.border[3], 1, 1)
+    f.shadow = K.Glow(f, { spread = 7, shadow = true })
 
     local header = CreateFrame("Frame", nil, f)
     header:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
@@ -406,7 +413,7 @@ local function CreateWindow(i)
     f.WCShowForUnlock = function() end
     local width = Opt("width") or 260
     K.RegisterMover(f, MoverKey(i), i == 1 and "Schadensanzeige" or ("Schadensanzeige " .. i),
-        { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20 - (i - 1) * (width + 8), y = 300 })
+        K.Layout("damagemeter", -(i - 1) * (width + 8), 0))
     windows[i] = w
     return w
 end
@@ -491,8 +498,29 @@ local function OnTick(_, el)
     DM.Refresh()
 end
 
+-- Beispielzeilen fuer den Testmodus. Namen und Zahlen sind erfunden und
+-- stehen nur da, solange der Testmodus laeuft.
+DM.TEST_SOURCES = {
+    { name = "Varek",    classFilename = "ROGUE",   totalAmount = 4940, amountPerSecond = 118 },
+    { name = "Tamsin",   classFilename = "MAGE",    totalAmount = 4370, amountPerSecond = 104 },
+    { name = "Orwen",    classFilename = "HUNTER",  totalAmount = 3650, amountPerSecond = 87 },
+    { name = "Brunhild", classFilename = "WARRIOR", totalAmount = 2180, amountPerSecond = 52 },
+    { name = "Liora",    classFilename = "PRIEST",  totalAmount = 380,  amountPerSecond = 9 },
+}
+
+function DM.ShowTest(on)
+    DM._test = on and true or nil
+    DM.Refresh()
+end
+
 local function Enable()
     Sync()
+    -- Ruhe und Kampf (ui/presence.lua): ausserhalb des Kampfes leiser.
+    WeintCodex.UIPresence.Register("damage", function()
+        local out = {}
+        for i = 1, Count() do if windows[i] then out[#out + 1] = windows[i].frame end end
+        return out
+    end, "fade_damage")
     if Opt("hideBlizzard") then
         local set = (_G.C_CVar and _G.C_CVar.SetCVar) or _G.SetCVar
         if set then pcall(set, "damageMeterEnabled", "0") end

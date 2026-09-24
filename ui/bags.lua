@@ -290,6 +290,7 @@ local function Build()
     bg:SetAllPoints(win)
     bg:SetColorTexture(unpack(C.bgDark))
     WeintCodex.DrawBorder(win, C.border[1], C.border[2], C.border[3], 1, 1)
+    K.Glow(win, { spread = 10, shadow = true })
     if type(_G.UISpecialFrames) == "table" then table.insert(_G.UISpecialFrames, "WeintCodexBags") end
 
     local title = K.NewText(win)
@@ -357,8 +358,7 @@ local function Build()
         end
     end)
     win.WCShowForUnlock = function(self, on) if on then self:Show() end end
-    K.RegisterMover(win, "bags", "Taschen",
-        { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20, y = 110 })
+    K.RegisterMover(win, "bags", "Taschen", K.Layout("bags"))
 end
 
 function BG.Toggle()

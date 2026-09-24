@@ -355,14 +355,19 @@ end
 -- standardmaessig duenn.
 --------------------------------------------------
 
+-- Seit 6.1.0.0 ist die schmale Plex (Condensed) der Standard: Namen und
+-- Zahlen auf Plaketten und Rahmen brauchen Breite, nicht Hoehe. Wer die
+-- breite Plex von vorher will, stellt sie unter Allgemein ein.
 function K.FontPath()
     local choice = K.Get("general", "font")
     if choice == "game" then
-        return _G.STANDARD_TEXT_FONT or F.sansSemi
+        return _G.STANDARD_TEXT_FONT or F.hudSemi
     elseif choice == "plex" then
         return F.sansMedium
+    elseif choice == "plexsemi" then
+        return F.sansSemi
     end
-    return F.sansSemi
+    return F.hudSemi
 end
 
 function K.FontFlags()
@@ -412,8 +417,161 @@ function K.NewText(parent, size, layer, sublevel)
     return fs
 end
 
-K.BAR_TEXTURE = "Interface\\Buttons\\WHITE8X8"
-K.ARROW_TEXTURE = "Interface\\AddOns\\WeintCodex\\media\\ui\\arrow"
+K.MEDIA = "Interface\\AddOns\\WeintCodex\\media\\ui\\"
+K.BAR_TEXTURE = "Interface\\Buttons\\WHITE8X8"     -- flach, und fuer Flaechen
+K.GLOSS_TEXTURE = K.MEDIA .. "bar"                     -- Balken mit Glanz (Standard)
+K.GLOW_TEXTURE = K.MEDIA .. "glow"                     -- weicher Schein, 8 px
+K.GLOW_WIDE_TEXTURE = K.MEDIA .. "glow_wide"           -- weicher Schein, 24 px
+K.MARK_TEXTURE = K.MEDIA .. "targetmark"               -- Zielmarke der Plakette
+K.ARROW_TEXTURE = K.MEDIA .. "arrow"
+
+--------------------------------------------------
+-- Stil 2.0: Balken, Schein, Kachel
+--------------------------------------------------
+-- docs/design/ui-2.0.md, Grundsatz 3: jede Flaeche ist dieselbe Kachel,
+-- jeder Balken hat denselben Glanz. Die Module bauen Balken und Flaechen
+-- nur noch hier - eine zweite Formensprache entsteht sonst von selbst.
+--------------------------------------------------
+
+-- Welche Textur ein Balken traegt. "glanz" (Standard): die eigene
+-- Verlaufstextur; "flat": eine Farbe; "gradient": die Stufe von vorher.
+function K.BarTexture()
+    local style = K.Get("general", "barStyle")
+    if style == "flat" or style == "gradient" then return K.BAR_TEXTURE end
+    return K.GLOSS_TEXTURE
+end
+
+-- Jeder Balken der Oberflaeche entsteht HIER: mit Textur und einer feinen
+-- Lichtkante oben. Schwach gemerkt, damit ein Wechsel des Balkenstils sie
+-- alle erreicht (K.RestyleBars), ohne dass jemand sie festhaelt.
+local bars = setmetatable({}, { __mode = "k" })
+
+local function BarLight(sb)
+    local l = sb._wcLight
+    if not l then return end
+    local c = WeintCodex.GameColors.barLight
+    l:SetColorTexture(c[1], c[2], c[3], c[4])
+    if K.Get("general", "barStyle") == "flat" then l:Hide() else l:Show() end
+end
+
+function K.NewBar(parent, noLight)
+    local sb = CreateFrame("StatusBar", nil, parent)
+    sb:SetStatusBarTexture(K.BarTexture())
+    if not noLight then
+        local l = sb:CreateTexture(nil, "OVERLAY", nil, -1)
+        l:SetPoint("TOPLEFT", sb, "TOPLEFT", 0, 0)
+        l:SetPoint("TOPRIGHT", sb, "TOPRIGHT", 0, 0)
+        l:SetHeight(1)
+        sb._wcLight = l
+        BarLight(sb)
+    end
+    bars[sb] = true
+    return sb
+end
+
+function K.RestyleBars()
+    local tex = K.BarTexture()
+    for sb in pairs(bars) do
+        sb:SetStatusBarTexture(tex)
+        -- Neue Textur, neue Farbe: der Zwischenspeicher in PaintBar gilt
+        -- nicht mehr.
+        sb._wcR, sb._wcStyle = nil, nil
+        BarLight(sb)
+    end
+end
+
+-- Ob der Client Neunteiler aus EINER Textur kann (SetTextureSliceMargins).
+-- Ohne ihn waere der Schein ein gestrecktes Rechteck mit breiigen Kanten -
+-- dann lieber keiner, und die Flaechen behalten ihren schwarzen Rand.
+K.canSlice = nil
+
+-- Weicher Schein um einen Rahmen: schwarz als Schatten, im Akzent als
+-- Leuchten, weiss unter der Maus. `spread` = wie weit er nach aussen
+-- reicht. Liefert { tex, SetColor, SetShown, SetSpread, ok }.
+--
+-- Der Schein ist INNEN voll deckend (dort liegt der Rahmen darueber). Er
+-- muss deshalb UNTER dem Rahmen liegen: auf dem Rahmen selbst in der
+-- untersten Ebene, oder auf einem Rahmen darunter (opts.host).
+--
+-- opts.shadow = true: ein Schatten, den der Schalter "Weiche Schatten"
+-- (Allgemein) mit abschaltet.
+local shadows = setmetatable({}, { __mode = "k" })
+
+function K.ShadowsOn()
+    return K.Get("general", "shadows") ~= false
+end
+
+function K.ApplyShadows()
+    for o in pairs(shadows) do o:SetShown(o._want) end
+end
+
+function K.Glow(frame, opts)
+    opts = opts or {}
+    local host = opts.host or frame
+    local wide = opts.wide and true or false
+    local margin = wide and 24 or 8
+    local t = host:CreateTexture(nil, opts.layer or "BACKGROUND", nil, opts.sublevel or -8)
+    t:SetTexture(wide and K.GLOW_WIDE_TEXTURE or K.GLOW_TEXTURE)
+    local ok = type(t.SetTextureSliceMargins) == "function"
+        and pcall(t.SetTextureSliceMargins, t, margin, margin, margin, margin)
+    if ok and t.SetTextureSliceMode and _G.Enum and _G.Enum.UITextureSliceMode then
+        pcall(t.SetTextureSliceMode, t, _G.Enum.UITextureSliceMode.Stretched)
+    end
+    if K.canSlice == nil then K.canSlice = ok and true or false end
+    if opts.blend and t.SetBlendMode then t:SetBlendMode(opts.blend) end
+
+    local o = { tex = t, ok = ok and true or false }
+    function o:SetSpread(s)
+        t:ClearAllPoints()
+        t:SetPoint("TOPLEFT", frame, "TOPLEFT", -s, s)
+        t:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", s, -s)
+    end
+    function o:SetColor(r, g, b, a) t:SetVertexColor(r, g, b, a or 1) end
+    function o:SetShown(v)
+        self._want = v and true or false
+        if v and self.ok and (not self._isShadow or K.ShadowsOn()) then t:Show() else t:Hide() end
+    end
+    if opts.shadow then
+        o._isShadow = true
+        shadows[o] = true
+    end
+    o:SetSpread(opts.spread or margin)
+    local c = opts.color or WeintCodex.GameColors.shadow
+    o:SetColor(c[1], c[2], c[3], c[4])
+    o:SetShown(opts.shown ~= false)
+    return o
+end
+
+-- Die Kachel (Grundsatz 3): Graphit 88 %, 1 px Schwarz, Lichtkante oben,
+-- weicher Schatten. opts = { alpha = 0..1, shadow = px (0 = keiner),
+-- border = false }.
+function K.Kachel(frame, opts)
+    opts = opts or {}
+    local GC = WeintCodex.GameColors
+    local o = {}
+    local f = GC.kachelFill
+    o.bg = frame:CreateTexture(nil, "BACKGROUND", nil, -7)
+    o.bg:SetAllPoints(frame)
+    o.bg:SetColorTexture(f[1], f[2], f[3], opts.alpha or f[4])
+    local l = GC.lightEdge
+    o.light = frame:CreateTexture(nil, "BORDER", nil, 1)
+    o.light:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
+    o.light:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
+    o.light:SetHeight(1)
+    o.light:SetColorTexture(l[1], l[2], l[3], l[4])
+    o.border = K.Border(frame, 1, 0, 0, 0, 1, "BORDER")
+    if opts.border == false then o.border:SetShown(false) end
+    if (opts.shadow or 6) > 0 then
+        o.shadow = K.Glow(frame, { spread = opts.shadow or 6, shadow = true })
+    end
+    function o:SetAlpha(a) self.bg:SetAlpha(1) local c = GC.kachelFill self.bg:SetColorTexture(c[1], c[2], c[3], a) end
+    function o:SetShown(v)
+        if v then self.bg:Show() self.light:Show() else self.bg:Hide() self.light:Hide() end
+        self.border:SetShown(v)
+        if self.shadow then self.shadow:SetShown(v) end
+    end
+    return o
+end
 
 -- Flach oder mit leichtem Verlauf. Der Verlauf ist eine Helligkeitsstufe
 -- derselben Farbe, keine zweite Farbe.

@@ -208,7 +208,8 @@ erlaubte, was der Client verbietet. Sie wirft jetzt denselben Fehler:
 * `CreateTexture`/`CreateFontString` auf einer **Textur** oder
   Schriftzeile – die Methode gibt es dort nicht.
 
-`SetAttribute`/`GetAttribute` merken sich jetzt ihre Werte.
+`SetAttribute`/`GetAttribute` merken sich jetzt ihre Werte, seit 6.1.0.0
+auch `SetAlpha`/`GetAlpha` (Ruhe und Kampf, abgedunkelte Plaketten).
 
 ## Was der Lauf seit 5.2.0.0 zusätzlich misst
 

@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.0.0.6
+## Version: 6.1.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -130,12 +130,15 @@ core/search.lua
 # und weil nichts darueber von ihr abhaengen darf: wer sie nie
 # einschaltet, soll dasselbe Addon haben wie vorher.
 #
-# ui/kit.lua zuerst (Speicher, Modulregister, Verschieben), dann die
-# gemeinsamen Bausteine (Auren, Zauberbalken), dann die Module, zuletzt
-# das Fenster - es baut seine Seitenleiste aus dem, was sich bis dahin
-# angemeldet hat.
+# ui/kit.lua zuerst (Speicher, Modulregister, Verschieben, Stil), dann
+# wo alles steht (layout) und Ruhe/Kampf (presence), dann die gemeinsamen
+# Bausteine (Auren, Zauberbalken), dann die Module, dann der Testmodus,
+# zuletzt das Fenster - es baut seine Seitenleiste aus dem, was sich bis
+# dahin angemeldet hat.
 #
 ui/kit.lua
+ui/layout.lua
+ui/presence.lua
 ui/auras.lua
 ui/castbar.lua
 ui/nameplates.lua
@@ -149,6 +152,7 @@ ui/damagemeter.lua
 ui/questtracker.lua
 ui/questarrow.lua
 ui/comfort.lua
+ui/testmode.lua
 ui/options.lua
 
 # Die Frage beim ersten Einloggen ("WeintCodex-Oberflaeche verwenden?").

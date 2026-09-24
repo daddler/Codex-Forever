@@ -338,6 +338,96 @@ def render_arrow_sheet():
     return size, sheet
 
 
+# --------------------------------------------------------------------
+# Stil der Oberflaeche 2.0 (docs/design/ui-2.0.md): Balkenglanz, weicher
+# Schein und Zielmarke. Alle drei weiss bzw. grau - gefaerbt wird im
+# Spiel per SetVertexColor, damit jede Farbe in core/ui.lua bleibt.
+# --------------------------------------------------------------------
+
+# Balken: senkrechter Verlauf, oben hell, unten dunkler. Ein Statusbalken
+# MULTIPLIZIERT seine Farbe mit der Textur - heller als die Farbe geht
+# also nicht; der Glanz entsteht aus dem Abstand zwischen oben und unten.
+BAR_W, BAR_H = 128, 32
+BAR_TOP, BAR_KNEE, BAR_BOTTOM = 1.00, 0.88, 0.70
+BAR_KNEE_AT = 0.45
+
+
+def render_bar():
+    pixels = []
+    for y in range(BAR_H):
+        t = (y + 0.5) / BAR_H
+        if t <= BAR_KNEE_AT:
+            v = BAR_TOP + (BAR_KNEE - BAR_TOP) * (t / BAR_KNEE_AT)
+        else:
+            v = BAR_KNEE + (BAR_BOTTOM - BAR_KNEE) * ((t - BAR_KNEE_AT) / (1 - BAR_KNEE_AT))
+        c = round(255 * v)
+        pixels.extend([(c, c, c, 255)] * BAR_W)
+    return pixels
+
+
+# Schein: ein weich auslaufendes Rechteck. Im Spiel als Neunteiler
+# (SetTextureSliceMargins mit FEATHER) um einen Rahmen gelegt - schwarz
+# ist es ein Schatten, im Akzent das Leuchten des Ziels, weiss der
+# Schein unter der Maus.
+def render_glow(size, feather):
+    pixels = []
+    for y in range(size):
+        for x in range(size):
+            dx = max(0.0, feather - (x + 0.5), (x + 0.5) - (size - feather))
+            dy = max(0.0, feather - (y + 0.5), (y + 0.5) - (size - feather))
+            d = math.hypot(dx, dy) / feather          # 0 innen, 1 am Rand
+            a = max(0.0, 1.0 - d)
+            a = a * a * (3 - 2 * a)                   # weiches Auslaufen
+            pixels.append((255, 255, 255, round(255 * a)))
+    return pixels
+
+
+# Zielmarke: zwei gestaffelte Winkel, die auf den Balken zeigen (Spitze
+# rechts; die rechte Marke ist dieselbe Datei, gespiegelt). Aussen
+# halbdurchsichtig, innen voll, mit schwarzer Kontur - die Kontur bleibt
+# beim Faerben schwarz.
+MARK = 32
+MARK_OUTER = [(2, 5), (10, 5), (19, 16), (10, 27), (2, 27), (11, 16)]
+MARK_INNER = [(12, 5), (20, 5), (29, 16), (20, 27), (12, 27), (21, 16)]
+MARK_OUTLINE = 1.4
+
+
+def seg_dist(px_, py_, ax, ay, bx, by):
+    vx, vy = bx - ax, by - ay
+    t = ((px_ - ax) * vx + (py_ - ay) * vy) / (vx * vx + vy * vy)
+    t = max(0.0, min(1.0, t))
+    return math.hypot(px_ - (ax + t * vx), py_ - (ay + t * vy))
+
+
+def near_polygon(x, y, poly, r):
+    n = len(poly)
+    return any(seg_dist(x, y, *poly[i], *poly[(i + 1) % n]) <= r for i in range(n))
+
+
+def render_mark():
+    pixels = []
+    step = 1.0 / SAMPLES
+    for py in range(MARK):
+        for px in range(MARK):
+            fill_a, line = 0.0, 0
+            for sy in range(SAMPLES):
+                for sx in range(SAMPLES):
+                    x = px + (sx + 0.5) * step
+                    y = py + (sy + 0.5) * step
+                    if inside_polygon(x, y, MARK_INNER):
+                        fill_a += 1.0
+                    elif inside_polygon(x, y, MARK_OUTER):
+                        fill_a += 0.55
+                    elif near_polygon(x, y, MARK_INNER, MARK_OUTLINE) or near_polygon(x, y, MARK_OUTER, MARK_OUTLINE):
+                        line += 1
+            n = SAMPLES * SAMPLES
+            fa, la = fill_a / n, line / n
+            a = min(1.0, fa + la)
+            c = round(255 * (fa / a)) if a > 0 else 0
+            pixels.append((c, c, c, round(255 * a)))
+    return pixels
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     target = os.path.join(OUT, "arrow.tga")
@@ -348,6 +438,14 @@ def main():
                      ("icon_reset", icon_reset), ("icon_gear", icon_gear)):
         target = os.path.join(OUT, name + ".tga")
         write_tga(target, ICON, ICON, render_shape(ICON, fn))
+        print("geschrieben:", os.path.relpath(target, ROOT))
+
+    for name, w, h, pixels in (("bar", BAR_W, BAR_H, render_bar()),
+                               ("glow", 32, 32, render_glow(32, 8)),
+                               ("glow_wide", 64, 64, render_glow(64, 24)),
+                               ("targetmark", MARK, MARK, render_mark())):
+        target = os.path.join(OUT, name + ".tga")
+        write_tga(target, w, h, pixels)
         print("geschrieben:", os.path.relpath(target, ROOT))
 
     size, sheet = render_arrow_sheet()

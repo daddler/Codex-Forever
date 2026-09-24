@@ -37,15 +37,23 @@ local KEY = "nameplates"
 -- Voreinstellungen (Zahlen nach EllesmereUI 9.2.6, Forever-Zweig)
 --------------------------------------------------
 
+-- Seit 6.1.0.0 (UI 2.0, docs/design/ui-2.0.md): 150 x 14, Tiefe ueber
+-- einen weichen Schatten statt eines harten Rahmens, Grund im dunklen Ton
+-- der Gegnerfarbe. Das Ziel bekommt Leuchten und Zielmarken, die Maus
+-- hellt eine Plakette auf (wie Plater), und mit Ziel treten die anderen
+-- auf 70 % zurueck.
 local defaults = {
-    width  = 140,
-    height = 17,               -- Vorlage: healthBarHeight 17
-    targetScale    = 100,      -- Prozent
-    nonTargetAlpha = 100,      -- Prozent; 100 = nichts abblenden
+    width  = 150,
+    height = 14,
+    targetScale    = 110,      -- Prozent
+    nonTargetAlpha = 70,       -- Prozent; 100 = nichts abblenden
     showBorder  = true,
     borderColor = K.ColorDefault("plateBorder"),
     bgColor     = K.ColorDefault("plateBg"),
-    targetRing  = true,
+    tintedBg    = true,        -- Grund im dunklen Ton der Balkenfarbe
+    shadow      = true,        -- weicher Schatten unter dem Balken
+    targetStyle = "glow",      -- glow | ring | both | none
+    hover       = true,        -- Maus darueber hellt auf
 
     enemyInCombat = K.ColorDefault("enemyInCombat"),
     hostile       = K.ColorDefault("hostile"),
@@ -73,7 +81,7 @@ local defaults = {
     textLeft   = "level",
     textRight  = "healthPercent",
     textCenter = "none",
-    nameSize = 11,
+    nameSize = 12,
     textSize = 10,
     levelColor = true,
     eliteMark  = true,
@@ -81,7 +89,7 @@ local defaults = {
     raidMarkerSize = 20,
 
     castEnabled = true,
-    castHeight  = 17,          -- Vorlage: castBarHeight 17
+    castHeight  = 14,
     castIcon    = true,
     castTimer   = true,
     castShield  = true,
@@ -94,7 +102,7 @@ local defaults = {
     -- ein Muster, keine Auskunft.
     auraEnabled = true,
     auraOnlyMine = true,
-    auraSize = 24,
+    auraSize = 22,
     auraMax = 5,
     auraTimer = true,          -- Restzeit oben links am Symbol
 
@@ -174,9 +182,8 @@ local function Build(parent)
     local p = CreateFrame("Frame", nil, parent or UIParent)
     p:SetSize(defaults.width, defaults.height)
 
-    local health = CreateFrame("StatusBar", nil, p)
+    local health = K.NewBar(p)
     health:SetAllPoints(p)
-    health:SetStatusBarTexture(K.BAR_TEXTURE)
     health:SetMinMaxValues(0, 1)
     health:SetValue(1)
     p.health = health
@@ -188,6 +195,25 @@ local function Build(parent)
     p.border = K.Border(health, 1, 0, 0, 0, 1, "BORDER")
     p.ring = K.Border(health, 2, 1, 1, 1, 1, "OVERLAY")
     p.ring:SetShown(false)
+
+    -- Tiefe statt Rahmen. Alle Scheine haengen am Plakettenrahmen selbst
+    -- (unter dem Balken, der ein Kindrahmen ist) und reichen ueber ihn
+    -- hinaus. Ohne Neunteiler im Client bleiben sie aus (K.Glow).
+    local GC = WeintCodex.GameColors
+    p.shadow = K.Glow(health, { host = p, spread = 5, color = GC.shadow })
+    p.glowWide = K.Glow(health, { host = p, wide = true, spread = 16, sublevel = -7,
+        color = { GC.targetGlow[1], GC.targetGlow[2], GC.targetGlow[3], 0.35 }, shown = false })
+    p.glow = K.Glow(health, { host = p, spread = 7, sublevel = -6, color = GC.targetGlow, shown = false })
+    p.hoverGlow = K.Glow(health, { host = p, spread = 6, sublevel = -5, color = GC.hoverGlow, shown = false })
+
+    -- Maus darueber: der Balken hellt auf. Additiv, damit jede Farbe
+    -- heller wird statt weisslich.
+    local hf = health:CreateTexture(nil, "OVERLAY", nil, 1)
+    hf:SetAllPoints(health)
+    hf:SetColorTexture(GC.hoverFill[1], GC.hoverFill[2], GC.hoverFill[3], GC.hoverFill[4])
+    if hf.SetBlendMode then hf:SetBlendMode("ADD") end
+    hf:Hide()
+    p.hoverFill = hf
 
     -- Texte liegen auf einem eigenen Rahmen ueber dem Balken, damit der
     -- Rand sie nicht ueberdeckt.
@@ -205,6 +231,19 @@ local function Build(parent)
     raid:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
     raid:Hide()
     p.raid = raid
+
+    -- Zielmarken: zwei gestaffelte Winkel links und rechts, die auf den
+    -- Balken zeigen. Eine Datei, rechts gespiegelt.
+    p.marks = {}
+    for i, side in ipairs({ "left", "right" }) do
+        local m = textHost:CreateTexture(nil, "OVERLAY")
+        m:SetTexture(K.MARK_TEXTURE)
+        if side == "right" then m:SetTexCoord(1, 0, 0, 1) end
+        local c = GC.targetMark
+        m:SetVertexColor(c[1], c[2], c[3], c[4])
+        m:Hide()
+        p.marks[i] = m
+    end
 
     p.cast = CB.Create(p)
     p.auras = WeintCodex.UIAuras.Create(p, { filter = "HARMFUL|INCLUDE_NAME_PLATE_ONLY|PLAYER", max = defaults.auraMax,
@@ -232,6 +271,12 @@ local function LayoutFriendly(p)
     if bar then p.health:Show() else p.health:Hide() end
     p.border:SetShown(bar and S.showBorder)
     p.ring:SetShown(false)
+    p.shadow:SetShown(bar and S.shadow)
+    p.glow:SetShown(false)
+    p.glowWide:SetShown(false)
+    p.hoverGlow:SetShown(false)
+    p.hoverFill:Hide()
+    for _, m in ipairs(p.marks) do m:Hide() end
     for _, slot in ipairs(SLOTS) do p.texts[slot]:Hide() end
     local t = p.texts.top
     K.SetFont(t, S.friendlyNameSize)
@@ -254,6 +299,18 @@ local function Layout(p)
 
     local bgc = S.bgColor or defaults.bgColor
     p.bg:SetColorTexture(bgc.r, bgc.g, bgc.b, 1)
+    p._bgR = nil
+    p.shadow:SetShown(S.shadow)
+    local ms = math.floor(S.height * 1.35 + 0.5)
+    for i, m in ipairs(p.marks) do
+        m:SetSize(ms, ms)
+        m:ClearAllPoints()
+        if i == 1 then
+            m:SetPoint("RIGHT", p.health, "LEFT", -2, 0)
+        else
+            m:SetPoint("LEFT", p.health, "RIGHT", 2, 0)
+        end
+    end
     p.border:SetShown(S.showBorder)
     local bc = S.borderColor or defaults.borderColor
     p.border:SetColor(bc.r, bc.g, bc.b, 1)
@@ -430,7 +487,9 @@ local function FillTexts(p, onlyHealth)
                 -- Kein `or ""`: ein Wahrheitstest auf einem geheimen Namen
                 -- (Schlachtfelder) waere ein Fehler, SetText(nil) nicht.
                 fs:SetText(_G.UnitName and (_G.UnitName(unit)))
-                fs:SetTextColor(1, 1, 1, 1)
+                -- Ruhiger Ton; hell nur Ziel und Maus (UpdateTarget).
+                local c = p._hl and WeintCodex.Colors.textBright or WeintCodex.GameColors.plateName
+                fs:SetTextColor(c[1], c[2], c[3], 1)
             elseif kind == "level" then
                 local text, r, g, b = LevelText(unit)
                 fs:SetText(text)
@@ -511,27 +570,88 @@ local function BarColor(p)
     return C3(S.hostile)
 end
 
+-- Der Grund unter dem fehlenden Leben: ein dunkler Ton der Balkenfarbe
+-- statt Schwarz. So bleibt auch eine fast leere Plakette als "Feind" oder
+-- "Neutral" lesbar.
+local TINT = 0.22
+local function PaintBg(p, r, g, b)
+    local bgc = S.bgColor or defaults.bgColor
+    local br, bgg, bb = bgc.r, bgc.g, bgc.b
+    if S.tintedBg then
+        br, bgg, bb = br * (1 - TINT) + r * TINT, bgg * (1 - TINT) + g * TINT, bb * (1 - TINT) + b * TINT
+    end
+    if p._bgR == br and p._bgG == bgg and p._bgB == bb then return end
+    p._bgR, p._bgG, p._bgB = br, bgg, bb
+    p.bg:SetColorTexture(br, bgg, bb, 1)
+end
+
 local function UpdateColor(p)
     if not p.unit then return end
     local r, g, b = BarColor(p)
     K.PaintBar(p.health, r, g, b)
+    if not p._friendly then PaintBg(p, r, g, b) end
 end
 
 local anyTarget = false
+local hovered            -- die Plakette unter der Maus, oder nil
+
+-- Ziel, Maus und Abdunkeln in einem: alle drei haengen voneinander ab (die
+-- Maus holt eine abgedunkelte Plakette nach vorn, das Ziel leuchtet statt
+-- aufzuhellen).
 local function UpdateTarget(p)
     if not p.unit then return end
-    local isTarget = IsUnit(p.unit, "target")
-    p.ring:SetShown(S.targetRing and isTarget and not p._friendly)
+    local isTarget = IsUnit(p.unit, "target") and not p._friendly
+    local isHover = (hovered == p) and S.hover and not p._friendly
+    local style = S.targetStyle
+    local glow = isTarget and (style == "glow" or style == "both")
+    p.ring:SetShown(isTarget and (style == "ring" or style == "both"))
+    p.glow:SetShown(glow)
+    p.glowWide:SetShown(glow)
+    for _, m in ipairs(p.marks) do m:SetShown(glow) end
+    p.hoverFill:SetShown(isHover and not isTarget)
+    p.hoverGlow:SetShown(isHover and not isTarget)
+
+    p._hl = (isTarget or isHover) or nil
+    if not p._friendly and S.textTop == "name" then
+        local c = p._hl and WeintCodex.Colors.textBright or WeintCodex.GameColors.plateName
+        p.texts.top:SetTextColor(c[1], c[2], c[3], 1)
+    end
+
     p:SetScale(isTarget and (S.targetScale / 100) or 1)
-    if anyTarget and not isTarget then
+    if anyTarget and not isTarget and not isHover then
         p:SetAlpha(S.nonTargetAlpha / 100)
     else
         p:SetAlpha(1)
     end
-    -- Ziel oben: sonst liegt die ausgewaehlte Plakette halb unter der
-    -- naechsten.
-    if p.SetFrameLevel then p:SetFrameLevel(isTarget and 20 or 5) end
+    -- Ziel oben, dann die unter der Maus: sonst liegt die ausgewaehlte
+    -- Plakette halb unter der naechsten.
+    if p.SetFrameLevel then p:SetFrameLevel(isTarget and 20 or (isHover and 15 or 5)) end
 end
+
+-- Die Maus: das Spiel meldet, WENN eine Einheit unter die Maus kommt
+-- (UPDATE_MOUSEOVER_UNIT), aber nicht, wenn sie wieder geht. Solange eine
+-- Plakette hervorgehoben ist, fragt ein Takt zehnmal je Sekunde nach.
+local hoverTicker = CreateFrame("Frame")
+local hoverAcc = 0
+local function SetHovered(p)
+    if hovered == p then return end
+    local old = hovered
+    hovered = p
+    if old then UpdateTarget(old) end
+    if p then UpdateTarget(p) end
+    if p then
+        hoverAcc = 0
+        hoverTicker:SetScript("OnUpdate", function(_, el)
+            hoverAcc = hoverAcc + (el or 0)
+            if hoverAcc < 0.1 then return end
+            hoverAcc = 0
+            if not (hovered and hovered.unit and IsUnit(hovered.unit, "mouseover")) then SetHovered(nil) end
+        end)
+    else
+        hoverTicker:SetScript("OnUpdate", nil)
+    end
+end
+NP.SetHovered = SetHovered
 
 local function UpdateRaidIcon(p)
     if not p.unit or S.raidMarker == "none" then p.raid:Hide() return end
@@ -669,6 +789,7 @@ local function Detach(unit)
     if not p then return end
     plates[unit] = nil
     questCache[unit] = nil
+    if hovered == p then SetHovered(nil) end
     Restore(p.nameplate)
     p.cast:Stop(false)
     p.cast:SetUnit(nil)
@@ -728,6 +849,15 @@ local function OnEvent(_, event, unit)
         return
     elseif event == "RAID_TARGET_UPDATE" then
         for _, p in pairs(plates) do UpdateRaidIcon(p) end
+        return
+    elseif event == "UPDATE_MOUSEOVER_UNIT" then
+        local found
+        if S.hover and K.Bool(_G.UnitExists and _G.UnitExists("mouseover"), false) then
+            for _, p in pairs(plates) do
+                if not p._friendly and IsUnit(p.unit, "mouseover") then found = p break end
+            end
+        end
+        SetHovered(found)
         return
     elseif event == "QUEST_LOG_UPDATE" or event == "UNIT_QUEST_LOG_CHANGED" then
         wipe(questCache)
@@ -825,7 +955,16 @@ function NP.RefreshPreview()
     end
     local c = S.eliteColoring and S.elite or S.enemyInCombat
     K.PaintBar(p.health, c.r, c.g, c.b)
-    p.ring:SetShown(S.targetRing)
+    PaintBg(p, c.r, c.g, c.b)
+    -- Die Vorschau zeigt die Plakette als Ziel: so sieht man, was die
+    -- Einstellungen zu Leuchten, Marken und Rand tun.
+    local style = S.targetStyle
+    local glow = style == "glow" or style == "both"
+    p.ring:SetShown(style == "ring" or style == "both")
+    p.glow:SetShown(glow)
+    p.glowWide:SetShown(glow)
+    for _, m in ipairs(p.marks) do m:SetShown(glow) end
+    p:SetScale(S.targetScale / 100)
     if S.raidMarker ~= "none" and _G.SetRaidTargetIconTexture then
         _G.SetRaidTargetIconTexture(p.raid, 8)
         p.raid:Show()
@@ -844,7 +983,7 @@ local function Enable()
     for _, e in ipairs({
         "NAME_PLATE_UNIT_ADDED", "NAME_PLATE_UNIT_REMOVED", "UNIT_FACTION",
         "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED", "RAID_TARGET_UPDATE",
-        "QUEST_LOG_UPDATE", "UNIT_QUEST_LOG_CHANGED",
+        "QUEST_LOG_UPDATE", "UNIT_QUEST_LOG_CHANGED", "UPDATE_MOUSEOVER_UNIT",
     }) do Register(events, e) end
     for e in pairs(UNIT_EVENTS) do Register(events, e) end
     for e in pairs(CAST_EVENTS) do Register(events, e) end
@@ -909,10 +1048,17 @@ K.Register({
             B:Row({ type = "slider", label = "Größe des Ziels", key = "targetScale", min = 100, max = 150, step = 5, format = pct },
                   { type = "slider", label = "Deckkraft der anderen", key = "nonTargetAlpha", min = 30, max = 100, step = 5, format = pct,
                     tooltip = "Wie sichtbar die übrigen Plaketten sind, solange du ein Ziel hast." })
-            B:Row({ type = "toggle", label = "Zielrahmen", key = "targetRing",
-                    description = "Ein Rahmen im Akzent um die Plakette deines Ziels." },
-                  { type = "empty" })
-            B:Section("Rahmen")
+            B:Row({ type = "dropdown", label = "Ziel hervorheben", key = "targetStyle", items = {
+                        { value = "glow", text = "Leuchten und Zielmarken" },
+                        { value = "ring", text = "Weißer Rand" },
+                        { value = "both", text = "Beides" },
+                        { value = "none", text = "Gar nicht" } } },
+                  { type = "toggle", label = "Maus hebt hervor", key = "hover",
+                    description = "Die Plakette unter der Maus hellt auf und kommt nach vorn." })
+            B:Section("Fläche")
+            B:Row({ type = "toggle", label = "Weicher Schatten", key = "shadow" },
+                  { type = "toggle", label = "Grund in der Gegnerfarbe", key = "tintedBg",
+                    description = "Fehlendes Leben dunkel in der Farbe des Balkens statt schwarz." })
             B:Row({ type = "toggle", label = "Rand anzeigen", key = "showBorder" },
                   { type = "color", label = "Randfarbe", key = "borderColor",
                     disabled = function() return not K.Get(KEY, "showBorder") end })

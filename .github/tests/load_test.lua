@@ -720,18 +720,18 @@ end
 K.Set("nameplates", "width", 180)
 Check(WeintCodex_SavedData.ui.modules.nameplates.width == 180,
     "eine Einstellung landet in WeintCodex_SavedData.ui")
-K.Set("nameplates", "width", 140)
+K.Set("nameplates", "width", 150)
 Check(WeintCodex_SavedData.ui.modules.nameplates.width == nil,
     "der Standardwert wird nicht gespeichert")
 -- Die Falle aus 6.0.0.0 bis 6.0.0.2: `x and false or nil` ist nil. Ein
 -- Schalter, der von "an" auf "aus" geht, muss als false im Speicher
 -- stehen - sonst laesst sich keine eingeschaltete Option abschalten.
-K.Set("nameplates", "targetRing", false)
-Check(WeintCodex_SavedData.ui.modules.nameplates.targetRing == false
-    and K.Get("nameplates", "targetRing") == false,
+K.Set("nameplates", "hover", false)
+Check(WeintCodex_SavedData.ui.modules.nameplates.hover == false
+    and K.Get("nameplates", "hover") == false,
     "ein Schalter laesst sich von an auf aus stellen (false wird gespeichert)")
-K.Set("nameplates", "targetRing", true)
-Check(WeintCodex_SavedData.ui.modules.nameplates.targetRing == nil,
+K.Set("nameplates", "hover", true)
+Check(WeintCodex_SavedData.ui.modules.nameplates.hover == nil,
     "zurueck auf den Standard: der Eintrag verschwindet")
 
 -- Jede Seite jedes Moduls bauen.
@@ -1360,6 +1360,58 @@ do
         "Restzeit am Symbol: 7 / 2m / 1,4 / abgelaufen leer")
 end
 
+-- Plaketten 2.0: Ziel leuchtet mit Marken, die Maus hellt auf, die
+-- anderen treten zurueck - und die Maus holt eine zurueckgetretene nach
+-- vorn.
+do
+    local NP = WeintCodex.UINameplates
+    local ok, err = pcall(function()
+        local isTarget, mouse = {}, nil
+        local oldIsUnit, oldExists = _G.UnitIsUnit, _G.UnitExists
+        _G.UnitIsUnit = function(a, b)
+            if b == "target" then return isTarget[a] == true end
+            if b == "mouseover" then return mouse == a end
+            return a == b
+        end
+        _G.UnitExists = function(u) if u == "mouseover" then return mouse ~= nil end return true end
+        local plate2 = stub.NewObject("Frame", "NamePlate2")
+        plate2.UnitFrame = stub.NewObject("Frame")
+        local oldGet = _G.C_NamePlate.GetNamePlateForUnit
+        _G.C_NamePlate.GetNamePlateForUnit = function(unit)
+            if unit == "nameplate2" then return plate2 end
+            return oldGet(unit)
+        end
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate2")
+        local a, b = NP.plates["nameplate1"], NP.plates["nameplate2"]
+        assert(a and b, "zwei Plaketten erwartet")
+        isTarget.nameplate1 = true
+        stub.FireEvent("PLAYER_TARGET_CHANGED")
+        assert(a.glow.tex:IsShown() and a.marks[1]:IsShown() and a.marks[2]:IsShown(), "Ziel ohne Leuchten und Marken")
+        assert(not b.glow.tex:IsShown() and not b.marks[1]:IsShown(), "Nicht-Ziel leuchtet")
+        assert(math.abs(b:GetAlpha() - 0.7) < 0.001, "Nicht-Ziel nicht auf 70 %: " .. tostring(b:GetAlpha()))
+        assert(a:GetAlpha() == 1, "Ziel abgedunkelt")
+        mouse = "nameplate2"
+        stub.FireEvent("UPDATE_MOUSEOVER_UNIT")
+        assert(b.hoverFill:IsShown() and b.hoverGlow.tex:IsShown(), "Maus hellt nicht auf")
+        assert(b:GetAlpha() == 1, "Maus holt die Plakette nicht nach vorn")
+        mouse = nil
+        NP.SetHovered(nil)
+        assert(not b.hoverFill:IsShown() and math.abs(b:GetAlpha() - 0.7) < 0.001, "Maus weg: Hervorhebung bleibt")
+        K.Set("nameplates", "targetStyle", "ring")
+        stub.FireEvent("PLAYER_TARGET_CHANGED")
+        assert(not a.glow.tex:IsShown() and a.ring.top:IsShown(), "Zielstil 'Rand' greift nicht")
+        K.Set("nameplates", "targetStyle", "glow")
+        isTarget.nameplate1 = nil
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate2")
+        _G.UnitIsUnit, _G.UnitExists = oldIsUnit, oldExists
+        _G.C_NamePlate.GetNamePlateForUnit = oldGet
+    end)
+    Check(ok, "Plakette 2.0: Ziel leuchtet mit Marken, Maus hellt auf, andere auf 70 %"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Freundliche Plaketten, und die Sperre in Instanzen.
 do
     local NP = WeintCodex.UINameplates
@@ -1548,6 +1600,122 @@ do
         _G.C_DamageMeter = nil
     end)
     Check(ok, "Schadensanzeige: unbekannt / Balken / Zahlen / Fenster / leer" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- UI 2.0, Phase 1: das Cockpit steht spiegelbildlich, die Gruppe links
+-- daneben, jeder bewegliche Rahmen hat einen Platz in ui/layout.lua.
+do
+    local L = K.LAYOUT
+    local M = K.LAYOUT_METRICS
+    Check(L.uf_player.x == -L.uf_target.x and L.uf_player.y == L.uf_target.y
+        and L.uf_player.point == "BOTTOMRIGHT" and L.uf_target.point == "BOTTOMLEFT",
+        "Cockpit: Spieler und Ziel spiegelbildlich um die Mittelachse")
+    Check(L.gf_party.x <= L.uf_player.x - M.unitWidth and L.uf_targettarget.x >= L.uf_target.x + M.unitWidth,
+        "Cockpit: Gruppe links neben dem Spieler, Ziel des Ziels rechts neben dem Ziel")
+    Check(K.Get("unitframes", "player_width") == M.unitWidth and K.Get("unitframes", "target_width") == M.unitWidth,
+        "Cockpit: Rahmenbreite und Layout rechnen mit derselben Zahl")
+    Check(not pcall(K.Layout, "gibtsnicht"), "ein Rahmen ohne Platz im Layout faellt auf")
+end
+
+-- Stil 2.0: Balken bekommen die Glanztextur, ein Stilwechsel erreicht sie.
+do
+    local ok, err = pcall(function()
+        assert(K.Module("general").defaults.barStyle == "glanz", "Standard ist der Glanz")
+        K.Set("general", "barStyle", "glanz")
+        assert(K.BarTexture() == K.GLOSS_TEXTURE, "Glanz ist die eigene Textur")
+        local sb = K.NewBar(UIParent)
+        assert(sb._wcLight, "Balken ohne Lichtkante")
+        K.Set("general", "barStyle", "flat")
+        assert(K.BarTexture() == K.BAR_TEXTURE, "flach ist die Flaechentextur")
+        K.Set("general", "barStyle", "glanz")
+        local g = K.Glow(UIParent, { spread = 5 })
+        assert(g.tex and g.ok, "Schein nicht angelegt")
+        local kachel = K.Kachel(stub.NewObject("Frame"))
+        assert(kachel.bg and kachel.border and kachel.shadow, "Kachel unvollstaendig")
+        assert(K.FontPath() == WeintCodex.Fonts.hudSemi, "Standardschrift ist Plex Sans Condensed")
+    end)
+    Check(ok, "Stil 2.0: Glanzbalken, Lichtkante, Schein, Kachel, schmale Schrift"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Ruhe und Kampf: ohne Ziel und bei vollem Leben treten Spielerrahmen und
+-- Schadensanzeige zurueck; Ziel, Kampf und Testmodus holen sie zurueck.
+do
+    local P = WeintCodex.UIPresence
+    local UF = WeintCodex.UIUnitFrames
+    local DM = WeintCodex.UIDamageMeter
+    local ok, err = pcall(function()
+        assert(P.elements.player and P.elements.mainbar and P.elements.bars and P.elements.damage,
+            "nicht alle Elemente angemeldet")
+        local target, combat = false, false
+        local oldExists, oldHealth, oldMax, oldCombat = _G.UnitExists, _G.UnitHealth, _G.UnitHealthMax, _G.InCombatLockdown
+        local oldAffecting = _G.UnitAffectingCombat
+        _G.UnitAffectingCombat = function() return combat end
+        _G.UnitExists = function(u) if u == "target" then return target end return true end
+        _G.UnitHealth = function() return 100 end
+        _G.UnitHealthMax = function() return 100 end
+        _G.InCombatLockdown = function() return combat end
+        assert(P.Compute() == "ruhe", "ohne Ziel bei vollem Leben: " .. P.Compute())
+        P.Evaluate(true)
+        P.Apply(true)
+        local player = UF.frames.player
+        assert(math.abs(player:GetAlpha() - 0.35) < 0.001, "Spielerrahmen in Ruhe: " .. tostring(player:GetAlpha()))
+        assert(math.abs(DM.Window(1).frame:GetAlpha() - 0.45) < 0.001, "Schadensanzeige in Ruhe")
+        target = true
+        P.Evaluate(true)
+        P.Apply(true)
+        assert(P.State() == "bereit" and player:GetAlpha() == 1, "mit Ziel nicht voll")
+        target = false
+        _G.UnitHealth = function() return 60 end
+        assert(P.Compute() == "bereit", "angeschlagen ist nicht Ruhe")
+        _G.UnitHealth = function() return nil end
+        assert(P.Compute() == "bereit", "unbekanntes Leben zaehlt nicht als voll")
+        _G.UnitHealth = function() return 100 end
+        P.Evaluate(true)
+        P.Force("test", true)
+        assert(player:GetAlpha() == 1, "Testmodus zeigt nicht alles voll")
+        P.Force("test", false)
+        assert(math.abs(player:GetAlpha() - 0.35) < 0.001, "nach dem Testmodus nicht zurueck in Ruhe")
+        K.Set("general", "presence", false)
+        assert(player:GetAlpha() == 1, "abgeschaltet: trotzdem leiser")
+        K.Set("general", "presence", true)
+        combat = true
+        stub.FireEvent("PLAYER_REGEN_DISABLED")
+        assert(P.State() == "kampf" and player:GetAlpha() == 1, "im Kampf nicht sofort voll")
+        combat = false
+        _G.UnitExists, _G.UnitHealth, _G.UnitHealthMax, _G.InCombatLockdown = oldExists, oldHealth, oldMax, oldCombat
+        _G.UnitAffectingCombat = oldAffecting
+    end)
+    Check(ok, "Ruhe und Kampf: Ruhe leiser, Ziel/Kampf/Testmodus voll, Unbekannt ist nicht Ruhe"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Testmodus: Beispieldaten, als solche gekennzeichnet, und wieder weg.
+do
+    local T = WeintCodex.UITestMode
+    local UF = WeintCodex.UIUnitFrames
+    local DM = WeintCodex.UIDamageMeter
+    local ok, err = pcall(function()
+        local party = _G.WeintCodexPartyHeader
+        if party then party:Hide() end
+        T.Set(true)
+        assert(T.IsOn() and _G.WeintCodexTestBanner and _G.WeintCodexTestBanner:IsShown(), "kein Band 'Testmodus'")
+        local tf = UF.frames.target
+        assert(tf:IsShown() and tf.left:GetText():find("Kobold", 1, true), "Zielrahmen ohne Beispiel: " .. tostring(tf.left:GetText()))
+        assert(DM.Window(1).title:GetText():find("Beispiel", 1, true), "Schadensanzeige sagt nicht 'Beispiel'")
+        assert(DM.RowsShown() == 5, "fuenf Beispielzeilen erwartet: " .. DM.RowsShown())
+        local shownTest = 0
+        for _, b in ipairs(WeintCodex.UIGroupFrames.buttons) do
+            if b._wcTest and b:IsShown() then shownTest = shownTest + 1 end
+        end
+        assert(shownTest == 5, "fuenf Beispielknoepfe der Gruppe erwartet: " .. shownTest)
+        stub.FireEvent("PLAYER_REGEN_DISABLED")
+        assert(not T.IsOn() and not _G.WeintCodexTestBanner:IsShown(), "Kampf beendet den Testmodus nicht")
+        assert(not DM._test, "Schadensanzeige bleibt im Beispiel")
+        if party then party:Show() end
+    end)
+    Check(ok, "Testmodus: Band, Beispielziel, Beispielgruppe, Schadensanzeige 'Beispiel', endet im Kampf"
+        .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.

@@ -69,13 +69,15 @@ K.Register({
     description = K.OPT_IN
         and "Ein eigenes, schlichtes Interface zusätzlich zu WeintCodex — ganz freiwillig. Aus bleibt alles, wie das Spiel es zeigt; die Komfortfunktionen gehen trotzdem."
         or "Das Interface von WeintCodex: Plaketten, Rahmen, Leisten, Karte, Chat, Taschen und Schadensanzeige. Jedes Modul lässt sich einzeln abschalten.",
-    defaults = {
-        font = "plexsemi",
-        outline = "thin",
-        barStyle = "flat",
-        windowScale = 100,
-    },
+    defaults = (function()
+        local d = { font = "cond", outline = "thin", barStyle = "glanz", shadows = true, windowScale = 100 }
+        -- Ruhe und Kampf (ui/presence.lua): dort definiert, hier gespeichert.
+        for k, v in pairs(WeintCodex.UIPresence.DEFAULTS) do d[k] = v end
+        return d
+    end)(),
     OnSetting = function(key)
+        if key == "barStyle" or key == "*" then K.RestyleBars() end
+        if key == "shadows" or key == "*" then K.ApplyShadows() end
         if key == "windowScale" then
             if O.frame then O.frame:SetScale((K.Get("general", "windowScale") or 100) / 100) end
             return
@@ -109,22 +111,47 @@ K.Register({
             B:Section("Schrift und Balken",
                 "Gilt für Namensplaketten, Einheitenrahmen und die Hinweise auf dem Bildschirm — nicht für das WeintCodex-Fenster.")
             B:Row({ type = "dropdown", label = "Schrift", key = "font", items = {
-                        { value = "plexsemi", text = "IBM Plex Sans (WeintCodex)" },
-                        { value = "plex",     text = "IBM Plex Sans, leichter" },
+                        { value = "cond",     text = "IBM Plex Sans Condensed (WeintCodex)" },
+                        { value = "plexsemi", text = "IBM Plex Sans, breit" },
+                        { value = "plex",     text = "IBM Plex Sans, breit und leichter" },
                         { value = "game",     text = "Schrift des Spiels" } } },
                   { type = "dropdown", label = "Kontur", key = "outline", items = {
                         { value = "none",  text = "Keine (mit Schatten)" },
                         { value = "thin",  text = "Dünn" },
                         { value = "thick", text = "Dick" } } })
             B:Row({ type = "dropdown", label = "Balken", key = "barStyle", items = {
+                        { value = "glanz",    text = "Mit Glanz (WeintCodex)" },
                         { value = "flat",     text = "Flach" },
                         { value = "gradient", text = "Mit leichtem Verlauf" } } },
+                  { type = "toggle", label = "Weiche Schatten", key = "shadows",
+                    description = "Rahmen, Leisten und Fenster heben sich mit einem Schatten von der Spielwelt ab." })
+            B:Section("Testmodus",
+                "Zeigt Ziel, Fokus, Gruppe, Zauberbalken und Schadensanzeige mit Beispielwerten – so siehst du alles auf einem Bildschirm, ohne Gruppe und ohne Kampf. Auch mit /wcui test.")
+            B:Row({ type = "button", label = "Beispieldaten",
+                    text = function() return WeintCodex.UITestMode.IsOn() and "Testmodus beenden" or "Testmodus starten" end,
+                    onClick = function() WeintCodex.UITestMode.Toggle() end },
                   { type = "empty" })
             B:Section("Dieses Fenster")
             B:Row({ type = "slider", label = "Größe", key = "windowScale", min = 70, max = 130, step = 5,
                     format = function(v) return string.format("%d %%", v) end },
                   { type = "button", label = "Positionen", text = "Alle Positionen zurücksetzen",
                     onClick = function() K.ResetAllPositions() end })
+        end },
+        { key = "ruhe", label = "Ruhe und Kampf", build = function(B)
+            local off = function() return not K.Get("general", "presence") end
+            local function pct(v) return string.format("%d %%", v) end
+            B:Section("Die Oberfläche tritt zurück",
+                "Ohne Ziel, bei vollem Leben und außerhalb des Kampfes werden Rahmen und Leisten leiser. Ein Ziel, ein Treffer oder die Maus holen sie sofort zurück.")
+            B:Row({ type = "toggle", label = "Ruhe außerhalb des Kampfes", key = "presence" },
+                  { type = "slider", label = "Nachlauf", key = "presenceDelay", min = 0, max = 15, step = 1, disabled = off,
+                    format = function(v) return string.format("%d s", v) end,
+                    tooltip = "So lange bleibt nach dem Kampf alles sichtbar." })
+            B:Section("Deckkraft in Ruhe")
+            B:Row({ type = "slider", label = "Spielerrahmen", key = "fade_player", min = 0, max = 100, step = 5, format = pct, disabled = off },
+                  { type = "slider", label = "Schadensanzeige", key = "fade_damage", min = 0, max = 100, step = 5, format = pct, disabled = off })
+            B:Row({ type = "slider", label = "Aktionsleiste 1", key = "fade_mainbar", min = 0, max = 100, step = 5, format = pct, disabled = off },
+                  { type = "slider", label = "Weitere Leisten", key = "fade_bars", min = 0, max = 100, step = 5, format = pct, disabled = off })
+            B:Note("Ausgeblendete Leisten bleiben benutzbar: Tastenkürzel wirken immer, und die Maus zeigt sie wieder.")
         end },
     },
 })
@@ -700,6 +727,10 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
     msg = (msg or ""):lower()
     if msg == "entsperren" or msg == "unlock" then
         K.SetUnlocked(not K.IsUnlocked())
+        return
+    end
+    if msg == "test" then
+        WeintCodex.UITestMode.Toggle()
         return
     end
     O.Toggle()

@@ -141,6 +141,7 @@ function Setup()
     panel.bg = panel:CreateTexture(nil, "BACKGROUND")
     panel.bg:SetAllPoints(panel)
     border = K.Border(panel, 1, 0, 0, 0, 1, "BORDER")
+    K.Glow(panel, { spread = 7, shadow = true })
     panel:Hide()
 
     if _G.hooksecurefunc then

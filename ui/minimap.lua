@@ -242,6 +242,13 @@ local function Enable()
     frame:SetAllPoints(mm)
     frame:SetFrameLevel((mm:GetFrameLevel() or 1) + 5)
     border = K.Border(mm, 1, 0, 0, 0, 1, "OVERLAY")
+    -- Der Schatten liegt auf einem eigenen Rahmen UNTER der Karte: auf ihr
+    -- selbst deckte seine volle Mitte die Karte zu.
+    local under = CreateFrame("Frame", nil, mm:GetParent() or UIParent)
+    under:SetAllPoints(mm)
+    under:SetFrameStrata(mm:GetFrameStrata() or "LOW")
+    under:SetFrameLevel(math.max(0, (mm:GetFrameLevel() or 1) - 1))
+    K.Glow(mm, { host = under, spread = 8, shadow = true })
 
     strip = frame:CreateTexture(nil, "BACKGROUND")
     strip:SetPoint("BOTTOMLEFT", mm, "BOTTOMLEFT", 0, 0)

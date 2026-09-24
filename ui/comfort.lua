@@ -199,8 +199,7 @@ local function EnsureAlert()
             self:Hide()
         end
     end
-    K.RegisterMover(alert, "combatalert", "Kampfhinweis",
-        { point = "CENTER", relPoint = "CENTER", x = 0, y = 220 })
+    K.RegisterMover(alert, "combatalert", "Kampfhinweis", K.Layout("combatalert"))
     return alert
 end
 
@@ -244,8 +243,7 @@ local function EnsureFps()
     fpsFrame.WCShowForUnlock = function(self, on)
         if on then self:Show() elseif not On("fps") then self:Hide() end
     end
-    K.RegisterMover(fpsFrame, "fps", "Bildrate",
-        { point = "TOPLEFT", relPoint = "TOPLEFT", x = 12, y = -12 })
+    K.RegisterMover(fpsFrame, "fps", "Bildrate", K.Layout("fps"))
     return fpsFrame
 end
 
@@ -265,8 +263,7 @@ local function EnsureDurability()
             QoL.UpdateDurability()
         end
     end
-    K.RegisterMover(durFrame, "durability", "Haltbarkeit",
-        { point = "TOP", relPoint = "TOP", x = 0, y = -90 })
+    K.RegisterMover(durFrame, "durability", "Haltbarkeit", K.Layout("durability"))
     return durFrame
 end
 

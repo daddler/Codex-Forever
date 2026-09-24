@@ -22,6 +22,17 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.1.0.0",
+        date    = "24.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Oberfläche hat ein neues Gesicht.|r Balken mit leichtem Glanz, weiche Schatten statt harter Kanten und eine schmale Schrift, die Namen und Zahlen mehr Platz lässt.",
+            "|cff7C6CFFNamensplaketten, die auf dich reagieren.|r Die Maus hellt eine Plakette auf, dein Ziel leuchtet und trägt Marken links und rechts, alle anderen treten zurück. Fehlendes Leben ist dunkel in der Farbe des Gegners statt schwarz.",
+            "|cff7C6CFFSpieler und Ziel stehen spiegelbildlich um die Bildschirmmitte.|r Kombopunkte und dein Zauberbalken liegen mittig darunter, die Gruppe links neben dir, die Schadensanzeige unten rechts.",
+            "|cff7C6CFFAußerhalb des Kampfes wird es ruhig.|r Ohne Ziel und bei vollem Leben treten Spielerrahmen und Leisten zurück. Ein Ziel, ein Treffer oder die Maus holen sie sofort zurück – einstellbar unter /wcui, Reiter „Ruhe und Kampf“.",
+            "|cff7C6CFFTestmodus: alles auf einen Blick.|r /wcui test zeigt Ziel, Fokus, eine Beispielgruppe, Zauberbalken und Schadensanzeige mit Beispielwerten – ohne Gruppe und ohne Kampf.",
+        },
+    },
+    {
         version = "6.0.0.6",
         date    = "24.09.2026",
         notes   = {

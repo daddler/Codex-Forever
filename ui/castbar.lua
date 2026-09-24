@@ -58,8 +58,7 @@ function CB.Create(parent)
     bg:SetAllPoints(f)
     f._bg = bg
 
-    local sb = CreateFrame("StatusBar", nil, f)
-    sb:SetStatusBarTexture(K.BAR_TEXTURE)
+    local sb = K.NewBar(f)
     sb:SetMinMaxValues(0, 1)
     sb:SetValue(0)
     f._bar = sb
@@ -84,6 +83,7 @@ function CB.Create(parent)
     f._lockAlpha = 0
 
     f._border = K.Border(f, 1, 0, 0, 0, 1, "BORDER")
+    f._shadow = K.Glow(f, { spread = 4, shadow = true })
 
     for k, v in pairs(Bar) do f[k] = v end
     f:SetScript("OnUpdate", f.OnTick)

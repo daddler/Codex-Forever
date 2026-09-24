@@ -116,10 +116,11 @@ local function Skin(b)
         d.range:Hide()
     end
 
-    d.bg = b:CreateTexture(nil, "BACKGROUND", nil, -8)
+    d.bg = b:CreateTexture(nil, "BACKGROUND", nil, -7)
     d.bg:SetAllPoints(b)
     d.bg:SetColorTexture(0, 0, 0, 0.5)
     d.border = K.Border(b, 1, 0, 0, 0, 1, "OVERLAY")
+    d.shadow = K.Glow(b, { spread = 3, shadow = true })
 
     d.hotkey = Region(b, "HotKey")
     d.count  = Region(b, "Count")
@@ -145,6 +146,8 @@ local function Apply(b, d)
     -- sahen in 6.0.0.5 nach Baustelle aus.
     local empty = IsEmpty(b)
     d.border:SetColor(c.r, c.g, c.b, empty and 0.35 or 1)
+    -- Leere Plaetze werfen keinen Schatten: sie sollen kaum auffallen.
+    if d.shadow then d.shadow:SetShown(not empty) end
     d.bg:SetColorTexture(0, 0, 0, empty and 0.15 or 0.5)
     if d.hotkey then
         K.SetFont(d.hotkey, Opt("hotkeySize"))
@@ -218,9 +221,26 @@ local function Place()
 end
 AB.Place = Place
 
+-- Ruhe und Kampf (ui/presence.lua): Leiste 1 und die weiteren Leisten
+-- getrennt - wer in Ruhe nur die Hauptleiste sehen will, soll es koennen.
+local MAIN_BARS = { "MainMenuBar", "MainActionBar" }
+local OTHER_BARS = { "MultiBarBottomLeft", "MultiBarBottomRight", "MultiBarRight", "MultiBarLeft",
+    "MultiBar5", "MultiBar6", "MultiBar7", "StanceBar", "PetActionBar" }
+local function Named(list)
+    return function()
+        local out = {}
+        for _, n in ipairs(list) do
+            if type(_G[n]) == "table" then out[#out + 1] = _G[n] end
+        end
+        return out
+    end
+end
+
 local function Enable()
     SkinAll()
     K.AfterCombat(Place)
+    WeintCodex.UIPresence.Register("mainbar", Named(MAIN_BARS), "fade_mainbar")
+    WeintCodex.UIPresence.Register("bars", Named(OTHER_BARS), "fade_bars")
     -- Der Bearbeitungsmodus setzt beide beim Laden eines Layouts und beim
     -- Verlassen neu; danach wieder an unseren Platz.
     if _G.hooksecurefunc then

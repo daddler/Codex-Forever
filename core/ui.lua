@@ -212,6 +212,19 @@ WeintCodex.GameColors = {
     powerFallback = {0.300, 0.500, 0.900, 1.0},
     comboPoint    = {1.000, 0.820, 0.000, 1.0},
     questObjective= {1.000, 0.867, 0.400, 1.0},   -- "8/10" neben dem Namen
+
+    -- UI 2.0 (docs/design/ui-2.0.md): Tiefe statt Rahmen. Keine davon ist
+    -- eine Bedeutungsfarbe - Schatten schwarz, Licht weiss; das Leuchten
+    -- des Ziels ist `targetRing`, also der Akzent.
+    kachelFill    = {0.047, 0.047, 0.059, 0.88},  -- = bgDark, 88 % deckend
+    shadow        = {0.000, 0.000, 0.000, 0.60},  -- weicher Schatten unter jeder Flaeche
+    lightEdge     = {1.000, 1.000, 1.000, 0.06},  -- Lichtkante oben an der Kachel
+    barLight      = {1.000, 1.000, 1.000, 0.16},  -- Lichtkante oben am Balken
+    hoverFill     = {1.000, 1.000, 1.000, 0.17},  -- Balken unter der Maus: heller
+    hoverGlow     = {1.000, 1.000, 1.000, 0.40},  -- ... und ein weisser Schein
+    targetGlow    = {0.486, 0.424, 1.000, 0.85},  -- = Akzent: Leuchten des Ziels
+    targetMark    = {1.000, 1.000, 1.000, 1.00},  -- Zielmarken links und rechts
+    plateName     = {0.840, 0.840, 0.870, 1.00},  -- Name auf der Plakette; hell nur Ziel und Maus
 }
 
 --------------------------------------------------
@@ -225,6 +238,9 @@ WeintCodex.GameColors = {
 --   sans     IBM Plex Sans   alles Bedienbare. Eine Beschriftung steht
 --                            dreissigmal und soll dicht und ruhig sein.
 --   mono     IBM Plex Mono   Zahlen, Kennzahlen, Rubriken (Eyebrow).
+--   hud      IBM Plex Sans   nur die Oberflaeche in der Spielwelt (ui/):
+--            Condensed       Plaketten, Rahmen, Leisten. Dieselbe Familie,
+--                            schmaler geschnitten (OFL wie der Rest).
 --
 -- `serif`/`serifBold` bleiben als Namen bestehen und zeigen auf die
 -- Display-Schrift - sie sind in der Vorgaengerfassung auf die Grotesk
@@ -236,6 +252,11 @@ WeintCodex.Fonts = {
     sansMedium  = MEDIA .. "fonts\\IBMPlexSans-Medium.ttf",
     sansSemi    = MEDIA .. "fonts\\IBMPlexSans-SemiBold.ttf",
     sansBold    = MEDIA .. "fonts\\IBMPlexSans-Bold.ttf",
+    -- In der Spielwelt (ui/): schmal, mit klaren Ziffern - Namen und Zahlen
+    -- auf Plaketten und Rahmen brauchen Breite, nicht Hoehe.
+    hud         = MEDIA .. "fonts\\IBMPlexSansCondensed-Medium.ttf",
+    hudSemi     = MEDIA .. "fonts\\IBMPlexSansCondensed-SemiBold.ttf",
+    hudBold     = MEDIA .. "fonts\\IBMPlexSansCondensed-Bold.ttf",
     mono        = MEDIA .. "fonts\\IBMPlexMono-Regular.ttf",
     monoMedium  = MEDIA .. "fonts\\IBMPlexMono-Medium.ttf",
     monoBold    = MEDIA .. "fonts\\IBMPlexMono-SemiBold.ttf",

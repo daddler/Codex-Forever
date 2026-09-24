@@ -71,9 +71,13 @@ usw.) stehen jeweils mit „Vorlage:“ am Wert.
 **Übernommen sind Ideen, Optionsnamen und Zahlen – kein Code und keine
 Grafik.** EllesmereUI steht unter einer eigenen Lizenz mit „all rights
 reserved“. Seine Texturen, seine Schrift (Expressway, ein kommerzieller
-Font) und sein Code gehören nicht in dieses Repository. Die einzige
-neue Grafik, der Questpfeil, entsteht aus
-`.github/scripts/make_ui_media.py`.
+Font) und sein Code gehören nicht in dieses Repository. Eigene Grafiken
+– Questpfeil, Balkenglanz (`bar`), weicher Schein (`glow`,
+`glow_wide`), Zielmarke (`targetmark`), Symbole – entstehen aus
+`.github/scripts/make_ui_media.py`, alle weiß bzw. grau und im Spiel
+eingefärbt. Die schmale Schrift der Spielwelt ist **IBM Plex Sans
+Condensed** (OFL, dieselbe Familie wie der Rest; `WeintCodex.Fonts.hud*`)
+– sie übernimmt die Rolle, die Expressway bei der Vorlage hat.
 
 Farben und Schriften sind die von WeintCodex („Graphit“). Die
 Spielweltfarben (feindlich, neutral, Boss …) stehen als
@@ -87,7 +91,10 @@ weil sie genau das sind, wofür er steht.
 
 | Datei | Aufgabe |
 |---|---|
-| `ui/kit.lua` | Speicher, Modulregister, Hauptschalter, Kampfsperre, Schrift, Balken, Rahmen, **Verschieben** |
+| `ui/kit.lua` | Speicher, Modulregister, Hauptschalter, Kampfsperre, Schrift, **Stil 2.0** (`NewBar`, `Glow`, `Kachel`), Rahmen, **Verschieben** |
+| `ui/layout.lua` | **wo alles steht**: die Standardpositionen aller beweglichen Rahmen (`UIKit.LAYOUT`, `UIKit.Layout`) |
+| `ui/presence.lua` | **Ruhe, Bereit, Kampf**: Deckkraft außerhalb des Kampfes |
+| `ui/testmode.lua` | **Testmodus**: Beispieldaten für Ziel, Fokus, Gruppe, Zauberbalken, Schadensanzeige |
 | `ui/castbar.lua` | **ein** Zauberbalken für Plaketten und Einheitenrahmen |
 | `ui/nameplates.lua` | Gegnerplaketten |
 | `ui/unitframes.lua` | Spieler, Ziel, Ziel des Ziels, Fokus, Begleiter; Porträt als 3D-Modell oder Bild |
@@ -254,6 +261,71 @@ gespeichert wurde.
 `load_test.lua` prüft zusätzlich per `luac -l`, dass keine Datei unter
 `ui/` versehentlich eine globale Variable liest oder schreibt – genau
 so war die Sperre gegen die Schleife beim ersten Versuch wirkungslos.
+
+## UI 2.0, Phase 1 (seit 6.1.0.0)
+
+Das Konzept steht in `docs/design/ui-2.0.md` (mit Entwurf). Gebaut ist
+Phase 1 – **im Spiel ungeprüft**.
+
+**Stil.** Jeder Balken entsteht über `UIKit.NewBar` (Glanztextur,
+Lichtkante oben, gemerkt für den Wechsel des Balkenstils); `Allgemein →
+Balken` hat „Mit Glanz“ (Standard), „Flach“ und „Mit leichtem Verlauf“.
+`UIKit.Glow` legt einen weichen Schein um einen Rahmen – schwarz als
+Schatten, im Akzent als Leuchten des Ziels, weiß unter der Maus. Er ist
+ein Neunteiler aus **einer** Textur (`SetTextureSliceMargins`); fehlt
+das im Client, bleibt er aus (`UIKit.canSlice`), statt als gestrecktes
+Rechteck zu erscheinen. Der Schein ist innen voll deckend und muss
+deshalb **unter** seinem Rahmen liegen (unterste Ebene des Rahmens oder
+`opts.host` darunter – bei der Minikarte ein eigener Rahmen unter der
+Karte). Schatten hängen am Schalter „Weiche Schatten“ (Allgemein).
+`UIKit.Kachel` ist die eine Fläche aus dem Konzept (Graphit 88 %, Rand,
+Lichtkante, Schatten); in Phase 1 trägt sie nur das Band des
+Testmodus, die übrigen Flächen bekommen Schatten und Glanz.
+
+**Plaketten 2.0.** 150 × 14, weicher Schatten statt harter Kante, Grund
+im dunklen Ton der Balkenfarbe (`tintedBg`). Die Maus hellt eine
+Plakette auf (additive Fläche + weißer Schein, volle Deckkraft, nach
+vorn). Erkannt über `UPDATE_MOUSEOVER_UNIT`; das Verlassen meldet das
+Spiel nicht, deshalb fragt ein Takt zehnmal je Sekunde nach, **nur**
+solange eine Plakette hervorgehoben ist. Das Ziel: 110 %, Leuchten
+(`targetGlow` = Akzent) und zwei Zielmarken (`targetmark`, rechts
+gespiegelt); wahlweise weißer Rand, beides oder nichts
+(`targetStyle`). Mit Ziel treten alle anderen auf 70 % zurück.
+
+**Layout.** `ui/layout.lua` hält jede Standardposition; Module fragen
+`UIKit.Layout(schlüssel)`, ein unbekannter Schlüssel ist ein Fehler
+(fällt im Prüflauf auf). Gerechnet im Grundmaß des Spiels (UIParent
+768 hoch). Spieler und Ziel (200 × 31) spiegelbildlich 100 Einheiten
+neben der Mittelachse; Kombopunkte und eigener Zauberbalken haben
+eigene Plätze mittig darunter (`uf_combo`, `uf_playercast`, abschaltbar:
+„Kombopunkte mittig“, „Mittig über den Leisten“). Die Gruppe steht
+links neben dem Spielerrahmen, die Schadensanzeige unten rechts.
+
+**Ruhe, Bereit, Kampf.** `ui/presence.lua` bestimmt den Zustand
+(Kampf; Bereit = Ziel, laufender Zauber oder Leben nicht voll; sonst
+Ruhe nach einem Nachlauf von 4 s). Unbekanntes Leben (geheim) zählt als
+„nicht voll“. Module melden Rahmen an (`UIPresence.Register`): Spieler
+und Begleiter, Aktionsleiste 1, alle weiteren Leisten, Schadensanzeige.
+**Nur Deckkraft** – im Kampf auch an geschützten Rahmen erlaubt; eine
+Leiste auf 0 % bleibt klickbar, Tastenkürzel wirken. Die Maus holt ein
+Element zurück (Haken an `OnEnter`/`OnLeave` der Knöpfe). Testmodus und
+Entsperren erzwingen volle Deckkraft (`UIPresence.Force(grund, an)`).
+Einstellungen: Modul „Allgemein“, Reiter „Ruhe und Kampf“.
+
+**Testmodus** (`/wcui test`, oder Allgemein → Testmodus). Ziel, Ziel des
+Ziels, Fokus und Begleiter mit Beispielwerten (UnitWatch aus, danach
+wieder an), laufende Zauberbalken, drei Kombopunkte (nur Schurke und
+Druide), fünf ungeschützte Beispielknöpfe am Platz der Gruppe (nur
+allein – eine echte Gruppe zeigt sich selbst), fünf Zeilen in der
+Schadensanzeige mit „Beispiel“ in der Kopfzeile. Oben mittig steht ein
+Band „Testmodus – Beispieldaten“ mit „Beenden“. Beginnt ein Kampf,
+endet er. Auren zeigt er **nicht**: die liest das Spiel selbst,
+Beispielauren ließen sich nur vortäuschen.
+
+**Was noch fehlt (Phase 2 ff.):** Kachel auf allen Flächen (Chat,
+Minikarte, Taschen), Schadensanzeige in Ruhe auf die Kopfzeile
+zusammenklappen (jetzt: nur leiser), Chat-Hintergrund in Ruhe,
+Gestaltungsmodus mit Einstellkarte, Infoleiste, Levelhilfe.
 
 ## Die Falle `x and false or nil`
 

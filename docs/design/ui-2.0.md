@@ -1,10 +1,11 @@
 # WeintCodex UI 2.0 – Konzept
 
-Stand: Entwurf zur Abstimmung (nach 6.0.0.6). Bildlicher Entwurf:
+Stand: Richtung abgestimmt (nach 6.0.0.6), Phase 1 gebaut (6.1.0.0).
+Bildlicher Entwurf:
 Design-Canvas „WeintCodex UI 2.0“ (sechs Ansichten: Kampf, Unterwegs,
 Gestaltungsmodus, Einstellungen, Taschen/Tooltip/Mitteilungen,
-Bausteine). Nichts hiervon ist gebaut, bis die jeweilige Phase unten
-abgehakt ist.
+Bausteine, Namensplaketten 2.0). Gebaut ist nur, was bei der Phase unten
+als gebaut steht.
 
 ## Warum neu und nicht weiter flicken
 
@@ -134,6 +135,12 @@ Testmodus geprüft werden kann.
 
 1. **Fundament.** Kachel, Balkentextur, Plex Sans Condensed, zentrale
    Layout-Tabelle, Testdaten (Solo/Gruppe/Schlachtzug), Ruhe/Bereit/Kampf.
+   **Gebaut in 6.1.0.0, im Spiel ungeprüft** – dazu vorgezogen aus
+   Phase 2 die Namensplaketten 2.0 (Maus hellt auf wie bei Plater, Ziel
+   mit Leuchten und Zielmarken, andere auf 70 %; Entwurf: Ansicht 7).
+   Noch offen daraus: Testdaten für den Schlachtzug, Kachel auf allen
+   Flächen, Schadensanzeige in Ruhe zusammengeklappt. Stand im Detail:
+   `docs/systems/ui.md`, Abschnitt „UI 2.0, Phase 1“.
 2. **Cockpit.** Spieler, Ziel, ZdZ, Fokus, Zauberbalken, Kombopunkte,
    Plaketten, Aktionsleisten nach dem Entwurf.
 3. **Bedienung.** Gestaltungsmodus mit Einstellkarte, Einstellungsfenster

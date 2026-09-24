@@ -578,11 +578,10 @@ end
 local function Enable()
     if not frame then
         Build()
-        K.RegisterMover(frame, "questarrow", "Questpfeil",
-            -- Ganz oben: darunter schreibt das Spiel seine roten Fehler
-            -- ("Fähigkeit ist noch nicht bereit"), in 6.0.0.5 mitten in
-            -- den Pfeil.
-            { point = "TOP", relPoint = "TOP", x = 0, y = -8 })
+        -- Ganz oben (ui/layout.lua): darunter schreibt das Spiel seine
+        -- roten Fehler ("Fähigkeit ist noch nicht bereit"), in 6.0.0.5
+        -- mitten in den Pfeil.
+        K.RegisterMover(frame, "questarrow", "Questpfeil", K.Layout("questarrow"))
     end
     K.SetMoverEnabled("questarrow", true)
     ApplyStyle()

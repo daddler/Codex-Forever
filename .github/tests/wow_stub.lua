@@ -87,6 +87,11 @@ function Methods:SetSize(w, h)
     self._height = tonumber(h) or self._height
 end
 
+-- Deckkraft wird gemerkt: Ruhe/Kampf und das Abdunkeln der Plaketten
+-- pruefen sie.
+function Methods:SetAlpha(a) self._alpha = tonumber(a) or self._alpha end
+function Methods:GetAlpha() return self._alpha or 1 end
+
 function Methods:Show() self._shown = true  end
 function Methods:Hide() self._shown = false end
 function Methods:SetShown(v) self._shown = v and true or false end

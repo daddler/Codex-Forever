@@ -34,7 +34,7 @@ local KEY = "groupframes"
 
 local defaults = {
     partyEnabled = true,
-    partyWidth = 120, partyHeight = 44, partySpacing = 6,
+    partyWidth = 120, partyHeight = 40, partySpacing = 4,
     partyShowPlayer = true,
     partyHorizontal = false,
     raidEnabled = true,
@@ -220,6 +220,7 @@ end
 
 -- Reichweite: der einzige Wert, der ohne Ereignis kommt (siehe Takt).
 function Btn:UpdateRange()
+    if self._wcTest then return end   -- Beispielknopf: Deckkraft setzt der Testmodus
     local c, unit = self._wc, self._wcUnit
     if not unit or not _G.UnitInRange then c:SetAlpha(1) return end
     local out = (Opt("rangeAlpha") or 45) / 100
@@ -243,11 +244,10 @@ local function Style(b)
     b._wc = c
     c.bg = c:CreateTexture(nil, "BACKGROUND")
     c.bg:SetAllPoints(c)
-    c.health = CreateFrame("StatusBar", nil, c)
-    c.health:SetStatusBarTexture(K.BAR_TEXTURE)
-    c.power = CreateFrame("StatusBar", nil, c)
-    c.power:SetStatusBarTexture(K.BAR_TEXTURE)
+    c.health = K.NewBar(c)
+    c.power = K.NewBar(c, true)
     c.border = K.Border(c, 1, 0, 0, 0, 1, "BORDER")
+    c.shadow = K.Glow(c, { spread = 4, shadow = true })
     local danger = WeintCodex.Colors.danger
     c.aggro = K.Border(c, 2, danger[1], danger[2], danger[3], 1, "OVERLAY")
     c.aggro:SetShown(false)
@@ -409,14 +409,90 @@ local function CreateHeader(kind)
     headers[kind] = { header = h, anchor = anchor, max = max }
     K.RegisterMover(anchor, kind == "raid" and "gf_raid" or "gf_party",
         isRaid and "Schlachtzug" or "Gruppe",
-        { point = "TOPLEFT", relPoint = "TOPLEFT", x = 20, y = isRaid and -260 or -300 },
-        { secure = true })
+        K.Layout(isRaid and "gf_raid" or "gf_party"), { secure = true })
 
     Configure(kind)
 
     if _G.RegisterStateDriver then
         _G.RegisterStateDriver(h, "visibility", isRaid and "[group:raid] show; hide"
             or "[group:party,nogroup:raid] show; hide")
+    end
+end
+
+--------------------------------------------------
+-- Testmodus: eine Beispielgruppe
+--------------------------------------------------
+-- ui/testmode.lua. Die echten Knoepfe gehoeren dem Kopfrahmen und zeigen
+-- nur, wer wirklich in der Gruppe ist. Fuer den Testmodus stehen fuenf
+-- ungeschuetzte Knoepfe mit demselben Aussehen an derselben Stelle -
+-- solange man allein ist (sonst zeigt die echte Gruppe sich selbst).
+--------------------------------------------------
+
+local TEST_PARTY = {
+    { name = "Brunhild", class = "WARRIOR", hp = 0.72, ptoken = "RAGE", power = 0.35, aggro = true },
+    { name = "Liora",    class = "PRIEST",  hp = 1.00, ptoken = "MANA", power = 0.76 },
+    { name = "Tamsin",   class = "MAGE",    hp = 0.45, ptoken = "MANA", power = 0.40 },
+    { name = "Orwen",    class = "HUNTER",  hp = 0.88, ptoken = "MANA", power = 0.90, out = true },
+    { name = "Kaelen",   class = "PALADIN", dead = true },
+}
+local testButtons = {}
+
+local function TestButton(i)
+    local b = testButtons[i]
+    if b then return b end
+    b = CreateFrame("Button", nil, UIParent)
+    b._wcTest = true
+    Style(b)
+    -- Kein Klickziel: ein Beispielknopf waehlt niemanden aus.
+    b:EnableMouse(false)
+    testButtons[i] = b
+    return b
+end
+
+function GF.ShowTest(on)
+    local hd = headers.party
+    for i = 1, #TEST_PARTY do
+        local b = testButtons[i]
+        if b then b:Hide() end
+    end
+    if not on or not hd or (hd.header.IsVisible and hd.header:IsVisible()) then return end
+    local w, ht, sp = Opt("partyWidth"), Opt("partyHeight"), Opt("partySpacing")
+    local horiz = Opt("partyHorizontal")
+    for i, t in ipairs(TEST_PARTY) do
+        local b = TestButton(i)
+        local c = b._wc
+        b:SetSize(w, ht)
+        b:Layout(w, ht)
+        b:ClearAllPoints()
+        if horiz then
+            b:SetPoint("TOPLEFT", hd.anchor, "TOPLEFT", (i - 1) * (w + sp), 0)
+        else
+            b:SetPoint("TOPLEFT", hd.anchor, "TOPLEFT", 0, -(i - 1) * (ht + sp))
+        end
+        c.health:SetMinMaxValues(0, 1)
+        c.health:SetValue(t.dead and 0 or t.hp)
+        local cc = _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[t.class]
+        if Opt("classColor") and cc then
+            K.PaintBar(c.health, cc.r, cc.g, cc.b)
+        else
+            local hc = K.GetColor(KEY, "healthColor")
+            K.PaintBar(c.health, hc.r, hc.g, hc.b)
+        end
+        c.power:SetMinMaxValues(0, 1)
+        c.power:SetValue(t.power or 0)
+        local pc = t.ptoken and _G.PowerBarColor and _G.PowerBarColor[t.ptoken]
+        if type(pc) == "table" and pc.r then K.PaintBar(c.power, pc.r, pc.g, pc.b) end
+        c.name:SetText(t.name)
+        if t.dead then
+            c.status:SetText("Tot")
+        elseif Opt("statusText") == "percent" then
+            c.status:SetFormattedText("%d%%", t.hp * 100)
+        else
+            c.status:SetText("")
+        end
+        c.aggro:SetShown(Opt("aggroBorder") and t.aggro or false)
+        c:SetAlpha(t.out and (Opt("rangeAlpha") or 45) / 100 or 1)
+        b:Show()
     end
 end
 
