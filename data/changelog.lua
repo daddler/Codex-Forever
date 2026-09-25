@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.0.9",
+        date    = "25.09.2026",
+        notes   = {
+            "|cff7C6CFFChat: Reiter sichtbar, keine Bildlaufleiste.|r Die Reiter sind wieder zu sehen – die WeintCodex-Fläche lag über ihnen statt darunter. Die halbdurchsichtige Bildlaufleiste und der Pfeil nach unten am rechten Rand sind weg; blättern geht mit dem Mausrad (abschaltbar).",
+            "|cff7C6CFFTooltip im neuen Design.|r Die Hinweisfenster sind eine Kachel wie der Rest der Oberfläche. Spielernamen stehen in Klassenfarbe, der Rand leuchtet in Klassenfarbe bzw. bei Gegenständen ab „selten“ in ihrer Qualität, der Lebensbalken ist flach und angedockt. Einstellbar unter Allgemein → Tooltip.",
+            "|cff7C6CFFMinikarte ohne leeren Platz.|r Die Karte rückt nach oben, wo die ausgeblendete Kopfleiste des Spiels stand. Eine zweite Koordinatenzeile, die nicht von WeintCodex stammt, wird ausgeblendet.",
+        },
+    },
+    {
         version = "6.3.0.8",
         date    = "25.09.2026",
         notes   = {

@@ -9,6 +9,36 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.0.9] – 2026-09-25
+
+**Chat: Reiter sichtbar, keine Bildlaufleiste.** Die Reiter sind wieder zu sehen – die WeintCodex-Fläche lag über ihnen statt darunter. Die halbdurchsichtige Bildlaufleiste und der Pfeil nach unten am rechten Rand sind weg; blättern geht mit dem Mausrad (abschaltbar).
+
+**Tooltip im neuen Design.** Die Hinweisfenster sind eine Kachel wie der Rest der Oberfläche. Spielernamen stehen in Klassenfarbe, der Rand leuchtet in Klassenfarbe bzw. bei Gegenständen ab „selten“ in ihrer Qualität, der Lebensbalken ist flach und angedockt. Einstellbar unter Allgemein → Tooltip.
+
+**Minikarte ohne leeren Platz.** Die Karte rückt nach oben, wo die ausgeblendete Kopfleiste des Spiels stand. Eine zweite Koordinatenzeile, die nicht von WeintCodex stammt, wird ausgeblendet.
+
+### Technisch
+
+- Chat: die Kachel liegt auf einem eigenen Kindrahmen eine Stufe unter
+  Chatrahmen und Reiter (`SetFrameLevel(min(cf, tab) - 1)`). Auf dem
+  Chatrahmen selbst deckte sie die Reiter, die eine Stufe tiefer stehen.
+  `hideScrollBar`: `ScrollBar`, `ScrollToBottomButton` auf Alpha 0 per
+  `SetAlpha`-Haken, keine Maus.
+- Neu: `ui/tooltip.lua` (`WeintCodex.UITooltip`), Einstellungen beim
+  Modul „general“ (Seite „Tooltip“) – ein eigenes Modul hätte die
+  Seitenleiste überfüllt. Kachel als Kindrahmen unter dem Tooltip,
+  `NineSlice` auf Alpha 0, `TooltipDataProcessor.AddTooltipPostCall` für
+  Einheit (Klassenfarbe, nur bei offenem `unit`/`class`) und Gegenstand
+  (Qualität ≥ 2). `GameTooltipStatusBar` flach, 5 px, mit Rand. Kein
+  Text wird gelesen.
+- Minikarte: `atTop` setzt `Minimap` an `MinimapCluster` TOPRIGHT
+  (Haken auf `SetPoint` holt sie zurück). `hideOtherCoords`: sucht im
+  Kartenbereich (drei Ebenen) Schriften, die wie Koordinaten aussehen und
+  nicht von WeintCodex sind, und blendet sie aus; in der ersten Minute
+  alle fünf Sekunden.
+- `load_test.lua`: Bildlaufleiste, Tooltip, Minikarte oben, fremde
+  Koordinaten.
+
 ## [6.3.0.8] – 2026-09-25
 
 **Der Zauberbalken im neuen Kleid.** Der Zaubername steht wieder da (das Spiel lieferte einen leeren Anzeigetext). Der eigene Zauberbalken in der Mitte ist größer (20 px hoch, 240 breit, einstellbar), das Symbol steht abgesetzt mit eigenem Rand, eine helle Kante läuft am Ende der Füllung mit, und rot am Ende zeigt die Latenz: ab da darfst du den nächsten Zauber schon drücken.

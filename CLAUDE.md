@@ -238,7 +238,7 @@ into modules that no longer exist. A green run means "it loads", never
 | Companion-Authentifizierung/Token | `../Companion-Forever/docs/companion-auth.md` |
 | Welche Spieldaten fehlen und warum | `../Companion-Forever/docs/systems/forever-data.md` |
 | Neugestaltung der Oberfläche (UI 2.0): Cockpit, Raster, Kachel, Ruhe/Kampf, Gestaltungsmodus, Phasen | `docs/design/ui-2.0.md` |
-| Oberfläche (`ui/`): Plaketten, Einheiten-/Gruppenrahmen, Aktionsleisten, Minikarte, Chat, Taschen, Schadensanzeige, Questliste, Auren, Questpfeil, Komfort, `/wcui`, `OPT_IN`, `WeintCodex.GameColors`, geheime Werte (12.x), `UIKit.NewText`, `UIKit.NewBar`/`Glow`/`Kachel`, Layout-Tabelle, Ruhe/Kampf, Testmodus | `docs/systems/ui.md` |
+| Oberfläche (`ui/`): Plaketten, Einheiten-/Gruppenrahmen, Aktionsleisten, Minikarte, Chat, Tooltip, Taschen, Schadensanzeige, Questliste, Auren, Questpfeil, Komfort, `/wcui`, `OPT_IN`, `WeintCodex.GameColors`, geheime Werte (12.x), `UIKit.NewText`, `UIKit.NewBar`/`Glow`/`Kachel`, Layout-Tabelle, Ruhe/Kampf, Testmodus | `docs/systems/ui.md` |
 
 Cross-repo tasks (something touches Codex **and** Companion **and/or**
 Bot): read this table's Companion-doc pointers first — they are the

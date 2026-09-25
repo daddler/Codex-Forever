@@ -39,6 +39,10 @@ local defaults = {
     -- Haltbarkeit, Bildrate, Latenz. Beim Schreiben legt sich die
     -- Eingabezeile darueber (wie bei ElvUI).
     infoBar     = true,
+    -- Die Bildlaufleiste und der "nach unten"-Knopf am rechten Rand:
+    -- halbdurchsichtige Striche, die im Beta-Test stoerten (6.3.0.8).
+    -- Blaettern geht weiter mit dem Mausrad.
+    hideScrollBar = true,
 }
 local INFO_H = 22
 
@@ -48,6 +52,26 @@ local PAD = 6       -- Rand der Kachel um den Text
 local function Opt(k) return K.Get(KEY, k) end
 
 local done = {}       -- [chatframe] = unsere Teile
+
+local function name_of(f) return (f.GetName and f:GetName()) or "" end
+
+-- Teile des Spiels, die unsichtbar bleiben sollen, auch wenn das Spiel
+-- sie beim Ueberfahren wieder einblendet.
+local keepHooked, keepGuard = {}, false
+local function KeepHidden(r)
+    if not keepHooked[r] and _G.hooksecurefunc then
+        keepHooked[r] = true
+        _G.hooksecurefunc(r, "SetAlpha", function(self)
+            if keepGuard or not Opt("hideScrollBar") then return end
+            keepGuard = true
+            self:SetAlpha(0)
+            keepGuard = false
+        end)
+    end
+    keepGuard = true
+    r:SetAlpha(0)
+    keepGuard = false
+end
 
 local function Hide(r)
     if type(r) == "table" and r.SetAlpha then r:SetAlpha(0) end
@@ -74,15 +98,20 @@ local function SkinFrame(cf)
     -- Fensterhintergrunds werden unsichtbar (nicht versteckt: das Spiel
     -- blendet sie beim Ueberfahren selbst wieder ein).
     -- Der Grund reicht ueber die Reiter: Reiter und Text sind eine Flaeche.
-    d.bg = cf:CreateTexture(nil, "BACKGROUND", nil, -7)
+    -- Auf einem eigenen Rahmen UNTER Chat und Reitern: auf dem Chatrahmen
+    -- selbst lag die Flaeche ueber den Reitern (die eine Stufe tiefer
+    -- stehen) - im Beta-Test waren sie deshalb unsichtbar (6.3.0.7).
+    d.back = CreateFrame("Frame", nil, cf)
+    local host = d.back
+    d.bg = host:CreateTexture(nil, "BACKGROUND", nil, -7)
     d.bg:SetPoint("TOPLEFT", cf, "TOPLEFT", -PAD, TAB_H + 4)
     d.bg:SetPoint("BOTTOMRIGHT", cf, "BOTTOMRIGHT", PAD, -PAD)
     -- Reiterzeile: etwas dunkler, darunter eine feine Linie.
-    d.strip = cf:CreateTexture(nil, "BACKGROUND", nil, -6)
+    d.strip = host:CreateTexture(nil, "BACKGROUND", nil, -6)
     d.strip:SetPoint("TOPLEFT", d.bg, "TOPLEFT", 0, 0)
     d.strip:SetPoint("TOPRIGHT", d.bg, "TOPRIGHT", 0, 0)
     d.strip:SetHeight(TAB_H)
-    d.hair = cf:CreateTexture(nil, "BACKGROUND", nil, -5)
+    d.hair = host:CreateTexture(nil, "BACKGROUND", nil, -5)
     d.hair:SetPoint("TOPLEFT", d.strip, "BOTTOMLEFT", 0, 0)
     d.hair:SetPoint("TOPRIGHT", d.strip, "BOTTOMRIGHT", 0, 0)
     d.hair:SetHeight(1)
@@ -90,7 +119,7 @@ local function SkinFrame(cf)
     -- sie reicht ueber die Reiter).
     d.edges = {}
     for i = 1, 4 do
-        local t = cf:CreateTexture(nil, "BORDER")
+        local t = host:CreateTexture(nil, "BORDER")
         t:SetColorTexture(0, 0, 0, 1)
         d.edges[i] = t
     end
@@ -106,7 +135,7 @@ local function SkinFrame(cf)
     d.edges[4]:SetPoint("TOPLEFT", d.bg, "TOPRIGHT", 0, 0)
     d.edges[4]:SetPoint("BOTTOMLEFT", d.bg, "BOTTOMRIGHT", 0, 0)
     d.edges[4]:SetWidth(1)
-    d.shadow = K.Glow(d.bg, { host = cf, spread = 7, shadow = true })
+    d.shadow = K.Glow(d.bg, { host = host, spread = 7, shadow = true })
     for _, suffix in ipairs({ "Background", "TopLeftTexture", "TopRightTexture", "BottomLeftTexture",
         "BottomRightTexture", "TopTexture", "BottomTexture", "LeftTexture", "RightTexture" }) do
         Hide(_G[name .. suffix])
@@ -153,7 +182,21 @@ local function SkinFrame(cf)
     return d
 end
 
+-- Frame-Stufe einer Flaeche, oder nil, wenn der Client sie nicht offen nennt.
+local function Level(f)
+    local v = f and f.GetFrameLevel and K.Plain(f:GetFrameLevel())
+    return type(v) == "number" and v or nil
+end
+
 local function ApplyFrame(cf, d)
+    -- Die Flaeche eine Stufe unter Chat und Reiter (ein Kind darf tiefer
+    -- stehen als sein Elternrahmen).
+    local low = Level(cf) or 1
+    local tl = Level(d.tab)
+    if tl and tl < low then low = tl end
+    d.back:SetFrameStrata(cf.GetFrameStrata and cf:GetFrameStrata() or "LOW")
+    d.back:SetFrameLevel(math.max(0, low - 1))
+    d.back:SetAllPoints(cf)
     local path = K.FontPath()
     -- Chat ohne Kontur: lange Zeilen lesen sich mit Schatten ruhiger.
     cf:SetFont(path, Opt("fontSize"), "")
@@ -210,6 +253,16 @@ local function ApplyFrame(cf, d)
                 d.edit:SetPoint("TOPRIGHT", cf, "BOTTOMRIGHT", PAD, -PAD - 2)
             end
         end)
+    end
+
+    if Opt("hideScrollBar") then
+        for _, part in ipairs({ cf.ScrollBar, cf.ScrollToBottomButton, _G[name_of(cf) .. "ScrollToBottomButton"],
+            d.buttonFrame and d.buttonFrame.ScrollToBottomButton or nil }) do
+            if type(part) == "table" and part.SetAlpha and not (part.IsForbidden and part:IsForbidden()) then
+                KeepHidden(part)
+                if part.EnableMouse then pcall(part.EnableMouse, part, false) end
+            end
+        end
     end
 
     -- Versteckt, nicht nur durchsichtig: das Spiel blendet die Knopfleiste
@@ -581,6 +634,9 @@ K.Register({
                         { value = "game",   text = "Wie im Spiel" } } })
             B:Row({ type = "toggle", label = "Reiter immer sichtbar", key = "tabsVisible", reload = true,
                     description = "Das Spiel blendet die Reiter aus, wenn die Maus nicht über dem Chat ist." },
+                  { type = "empty" })
+            B:Row({ type = "toggle", label = "Bildlaufleiste ausblenden", key = "hideScrollBar", reload = true,
+                    description = "Die Leiste und der Pfeil nach unten am rechten Rand. Blättern geht mit dem Mausrad." },
                   { type = "empty" })
             B:Section("Infozeile")
             B:Row({ type = "toggle", label = "Infozeile unter dem Chat", key = "infoBar",

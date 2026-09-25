@@ -73,6 +73,8 @@ K.Register({
         local d = { font = "cond", outline = "thin", barStyle = "glanz", shadows = true, windowScale = 100 }
         -- Ruhe und Kampf (ui/presence.lua): dort definiert, hier gespeichert.
         for k, v in pairs(WeintCodex.UIPresence.DEFAULTS) do d[k] = v end
+        -- Tooltip (ui/tooltip.lua): ebenso.
+        for k, v in pairs(WeintCodex.UITooltip.DEFAULTS) do d[k] = v end
         return d
     end)(),
     OnSetting = function(key)
@@ -152,6 +154,15 @@ K.Register({
             B:Row({ type = "slider", label = "Aktionsleiste 1", key = "fade_mainbar", min = 0, max = 100, step = 5, format = pct, disabled = off },
                   { type = "slider", label = "Weitere Leisten", key = "fade_bars", min = 0, max = 100, step = 5, format = pct, disabled = off })
             B:Note("Ausgeblendete Leisten bleiben benutzbar: Tastenkürzel wirken immer, und die Maus zeigt sie wieder.")
+        end },
+        { key = "tooltip", label = "Tooltip", build = function(B)
+            local off = function() return not K.Get("general", "tooltipStyle") end
+            B:Section("Tooltip", "Die Hinweisfenster des Spiels als Kachel statt mit dem Blizzard-Rahmen.")
+            B:Row({ type = "toggle", label = "Tooltip im WeintCodex-Stil", key = "tooltipStyle", reload = true },
+                  { type = "toggle", label = "Lebensbalken flach", key = "tooltipHealth", reload = true, disabled = off })
+            B:Row({ type = "toggle", label = "Spielername in Klassenfarbe", key = "tooltipClassName", disabled = off },
+                  { type = "toggle", label = "Rand in Klassen- und Qualitätsfarbe", key = "tooltipBorder", disabled = off,
+                    description = "Spieler in ihrer Klassenfarbe, Gegenstände ab „selten“ in ihrer Qualität." })
         end },
     },
 })

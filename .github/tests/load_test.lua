@@ -2222,6 +2222,81 @@ do
     Check(ok, "Zauberbalken: Name, Kante, Latenz, Symbol abgesetzt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.0.9: Chat-Reiter ueber der Flaeche, Bildlaufleiste weg, Tooltip als
+-- Kachel, Minikarte oben, fremde Koordinaten weg.
+do
+    local ok, err = pcall(function()
+        -- Chat: die Flaeche liegt unter dem Chatrahmen (und damit unter
+        -- den Reitern), nicht auf ihm.
+        local cf = _G.ChatFrame1
+        local sbar = stub.NewObject("Frame")
+        cf.ScrollBar = sbar
+        cf.GetFrameLevel = function() return 5 end
+        WeintCodex.UIChat.ApplyAll()
+        assert(sbar:GetAlpha() == 0, "Bildlaufleiste sichtbar")
+        cf.ScrollBar = nil
+    end)
+    Check(ok, "Chat: Bildlaufleiste weg" .. (ok and "" or (": " .. tostring(err))))
+
+    ok, err = pcall(function()
+        local T = WeintCodex.UITooltip
+        local tt = CreateFrame("GameTooltip", "WCTestTooltip", UIParent)
+        local ns = stub.NewObject("Frame")
+        tt.NineSlice = ns
+        local bd = T.Style(tt)
+        assert(bd and ns:GetAlpha() == 0, "Blizzard-Rahmen des Tooltips sichtbar")
+        -- Spieler: Name und Rand in Klassenfarbe; unbekannte Einheit: nichts.
+        local oldGT, oldLine = _G.GameTooltip, _G.GameTooltipTextLeft1
+        local line = stub.NewObject("FontString")
+        local col
+        line.SetTextColor = function(_, r, g, b) col = { r, g, b } end
+        _G.GameTooltip, _G.GameTooltipTextLeft1 = tt, line
+        local oldIsP, oldClass = _G.UnitIsPlayer, _G.UnitClass
+        _G.UnitIsPlayer = function() return true end
+        _G.UnitClass = function() return "Krieger", "WARRIOR" end
+        _G.RAID_CLASS_COLORS = _G.RAID_CLASS_COLORS or {}
+        _G.RAID_CLASS_COLORS.WARRIOR = _G.RAID_CLASS_COLORS.WARRIOR or { r = 0.78, g = 0.61, b = 0.43 }
+        tt.GetUnit = function() return "Aloha", "mouseover" end
+        T.OnUnit(tt)
+        assert(col and math.abs(col[1] - _G.RAID_CLASS_COLORS.WARRIOR.r) < 0.01, "Name nicht in Klassenfarbe")
+        col = nil
+        tt.GetUnit = function() return nil, nil end
+        T.OnUnit(tt)
+        assert(col == nil, "Farbe ohne bekannte Einheit")
+        _G.GameTooltip, _G.GameTooltipTextLeft1 = oldGT, oldLine
+        _G.UnitIsPlayer, _G.UnitClass = oldIsP, oldClass
+    end)
+    Check(ok, "Tooltip: Kachel statt Blizzard-Rahmen, Klassenfarbe nur bei bekannter Einheit" .. (ok and "" or (": " .. tostring(err))))
+
+    ok, err = pcall(function()
+        local MM = WeintCodex.UIMinimap
+        assert(MM.LooksLikeCoords("56.3, 30.6") and MM.LooksLikeCoords("56, 31"), "Koordinaten nicht erkannt")
+        assert(not MM.LooksLikeCoords("7:15") and not MM.LooksLikeCoords("Saldeans Farm") and not MM.LooksLikeCoords("15 min"),
+            "Uhrzeit/Gebiet als Koordinaten erkannt")
+        local cl = _G.MinimapCluster or CreateFrame("Frame", "MinimapCluster", UIParent)
+        _G.MinimapCluster = cl
+        local other = stub.NewObject("FontString")
+        other.GetObjectType = function() return "FontString" end
+        other.GetText = function() return "56.3, 30.6" end
+        local zoneFs = stub.NewObject("FontString")
+        zoneFs.GetObjectType = function() return "FontString" end
+        zoneFs.GetText = function() return "Saldeans Farm" end
+        cl.GetRegions = function() return other, zoneFs end
+        local n = MM.HideOtherCoords()
+        assert(n == 1 and other:GetAlpha() == 0 and zoneFs:GetAlpha() ~= 0, "fremde Koordinaten: " .. tostring(n))
+        cl.GetRegions = nil
+        -- Karte oben im Bereich.
+        local mm = _G.Minimap
+        if mm then
+            local pt
+            mm.SetPoint = function(_, p, rel, rp, x, y) pt = { p, rel, rp, x, y } end
+            MM.PlaceMap()
+            assert(pt and pt[1] == "TOPRIGHT" and pt[2] == cl and pt[5] == -6, "Karte nicht oben")
+        end
+    end)
+    Check(ok, "Minikarte: oben im Bereich, fremde Koordinaten weg" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.
 -- Sie rollt nie - also muss sie passen, mit Luft fuer einen weiteren.
 Check((UO._sidebarUsed or 9999) + 40 <= UO.HEIGHT,

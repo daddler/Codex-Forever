@@ -45,6 +45,13 @@ local defaults = {
     wheelZoom   = true,
     hideZoomButtons = true,
     hideCalendar = false,
+    -- Seit 6.3.0.9 (Beta-Test: "sehr viel verschwendeter Platz nach
+    -- oben"): die Karte sitzt oben in ihrem Bereich, wo die ausgeblendete
+    -- Kopfleiste des Spiels stand.
+    atTop       = true,
+    -- Fremde Koordinaten an der Karte (Beta-Test: "2x Koordinaten") -
+    -- WeintCodex zeigt sie selbst, eine zweite Zeile ist doppelt.
+    hideOtherCoords = true,
 }
 
 local function Opt(k) return K.Get(KEY, k) end
@@ -162,6 +169,84 @@ function MM.LayoutButtons()
 end
 MM.ColumnButtons = ColumnButtons
 
+--------------------------------------------------
+-- Karte nach oben
+--------------------------------------------------
+-- Die Karte haengt im Bereich des Spiels (MinimapCluster) unter dessen
+-- Kopfleiste. Die Kopfleiste blendet WeintCodex aus (Gebiet und Uhr
+-- stehen auf der Karte) - der Platz blieb leer. Die Karte ist kein
+-- geschuetzter Rahmen; das Spiel setzt sie beim Anordnen neu, ein Haken
+-- holt sie einen Takt spaeter zurueck.
+
+local placingMap = false
+function MM.PlaceMap()
+    local mm, cl = _G.Minimap, _G.MinimapCluster
+    if placingMap or type(mm) ~= "table" or type(cl) ~= "table" or not Opt("atTop") then return end
+    placingMap = true
+    -- Steht das Gebiet ueber der Karte, braucht es seine Zeile.
+    local top = (Opt("zoneText") and not Opt("zoneInside")) and 22 or 6
+    mm:ClearAllPoints()
+    mm:SetPoint("TOPRIGHT", cl, "TOPRIGHT", -6, -top)
+    placingMap = false
+end
+
+local mapHooked = false
+local function HookMap()
+    local mm = _G.Minimap
+    if mapHooked or type(mm) ~= "table" or not _G.hooksecurefunc then return end
+    mapHooked = true
+    _G.hooksecurefunc(mm, "SetPoint", function()
+        if placingMap or not Opt("atTop") then return end
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, MM.PlaceMap) end
+    end)
+end
+
+--------------------------------------------------
+-- Fremde Koordinaten
+--------------------------------------------------
+-- Eine zweite Koordinatenzeile an der Karte ("56.3, 30.6") stammt nicht
+-- von WeintCodex - vom Spiel oder einem anderen Addon. Gesucht wird nur
+-- im Kartenbereich (MinimapCluster, Minimap, drei Ebenen tief) nach einer
+-- Schrift, die genau wie Koordinaten aussieht; gefunden, wird sie
+-- unsichtbar. Eigene Schriften zaehlen nicht.
+
+local foreign = {}
+MM.foreignCoords = foreign
+local COORD_PATTERN = "^%s*%d+[%.,]?%d*%s*[,·/|]%s*%d+[%.,]?%d*%s*$"
+
+function MM.LooksLikeCoords(text)
+    text = K.Plain(text)
+    return type(text) == "string" and text:find(COORD_PATTERN) ~= nil
+end
+
+function MM.HideOtherCoords()
+    if not Opt("hideOtherCoords") then return 0 end
+    local found = 0
+    local mine = { [zone or false] = true, [coords or false] = true, [clock or false] = true }
+    local seen = {}
+    local function Check(r)
+        if mine[r] or foreign[r] or type(r) ~= "table" then return end
+        if not (r.GetObjectType and r:GetObjectType() == "FontString" and r.GetText) then return end
+        local ok, text = pcall(r.GetText, r)
+        if ok and MM.LooksLikeCoords(text) then
+            foreign[r] = true
+            r:SetAlpha(0)
+            found = found + 1
+        end
+    end
+    local function Walk(f, depth)
+        if type(f) ~= "table" or seen[f] or depth > 3 or (f.IsForbidden and f:IsForbidden()) then return end
+        seen[f] = true
+        if f.GetRegions then for _, r in ipairs({ f:GetRegions() }) do Check(r) end end
+        if f.GetChildren then for _, ch in ipairs({ f:GetChildren() }) do Walk(ch, depth + 1) end end
+    end
+    pcall(Walk, _G.MinimapCluster, 0)
+    pcall(Walk, _G.Minimap, 0)
+    -- Schon gefundene bleiben unsichtbar, auch wenn ihr Besitzer sie neu setzt.
+    for r in pairs(foreign) do if r.SetAlpha then r:SetAlpha(0) end end
+    return found
+end
+
 local function Apply()
     local mm = _G.Minimap
     if type(mm) ~= "table" then return end
@@ -231,6 +316,8 @@ local function Apply()
     K.SetFont(coords, 10)
     K.SetFont(clock, 10)
     zone:SetWidth(size - 8)
+    HookMap()
+    MM.PlaceMap()
     UpdateTexts()
 end
 
@@ -275,12 +362,19 @@ local function Enable()
         self:SetZoom(z)
     end)
 
-    local acc = 1
+    local acc, scans, scanAcc = 1, 0, 0
     frame:SetScript("OnUpdate", function(_, el)
         acc = acc + (el or 0)
         if acc < 0.5 then return end
+        scanAcc = scanAcc + acc
         acc = 0
         UpdateTexts()
+        -- Fremde Koordinaten entstehen oft erst nach dem Laden: in der
+        -- ersten Minute alle fuenf Sekunden nachsehen, danach nicht mehr.
+        if scans < 12 and scanAcc >= 5 then
+            scanAcc, scans = 0, scans + 1
+            MM.HideOtherCoords()
+        end
     end)
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "ZONE_CHANGED", "ZONE_CHANGED_INDOORS", "ZONE_CHANGED_NEW_AREA", "PLAYER_ENTERING_WORLD" }) do
@@ -328,6 +422,10 @@ K.Register({
                     description = "In Instanzen nennt das Spiel keine Position – dann steht ein Strich." },
                   { type = "toggle", label = "Koordinaten mit Nachkommastelle", key = "coordDecimals",
                     disabled = function() return not K.Get(KEY, "coords") end })
+            B:Row({ type = "toggle", label = "Andere Koordinaten ausblenden", key = "hideOtherCoords", reload = true,
+                    description = "Eine zweite Koordinatenzeile an der Karte, die nicht von WeintCodex stammt (Spiel oder anderes Addon)." },
+                  { type = "toggle", label = "Karte oben im Bereich", key = "atTop", reload = true,
+                    description = "Die Karte rückt nach oben, wo die ausgeblendete Kopfleiste des Spiels stand." })
             B:Row({ type = "toggle", label = "Uhrzeit", key = "clock" },
                   { type = "toggle", label = "Kalenderknopf ausblenden", key = "hideCalendar" })
             B:Section("Bedienung")

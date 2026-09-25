@@ -417,6 +417,12 @@ offen herausgibt – Ziele und Treffer nennt es nicht). Chat: Reiter per
 `SetAlpha`-Haken sichtbar, Infozeile darunter (ElvUI-Datenleiste,
 Eingabezeile legt sich darüber). Taschenleiste im Stil der Aktionsknöpfe.
 
+**6.3.0.9:** Chat-Kachel auf eigenem Rahmen unter den Reitern (sie lag
+darüber), Bildlaufleiste aus. Tooltip (`ui/tooltip.lua`, Einstellungen
+beim Modul „general“): Kachel, Klassen-/Qualitätsfarbe, flacher
+Lebensbalken, kein Text gelesen. Minikarte oben im Bereich, fremde
+Koordinaten ausgeblendet.
+
 **Was noch fehlt (Phase 3 ff.):** Kachel auf allen Flächen (Chat,
 Minikarte, Taschen), Schadensanzeige in Ruhe auf die Kopfzeile
 zusammenklappen (jetzt: nur leiser), Chat-Hintergrund in Ruhe,
