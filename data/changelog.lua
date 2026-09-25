@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.0.8",
+        date    = "25.09.2026",
+        notes   = {
+            "|cff7C6CFFMikromenü und Taschenleiste nur bei Maus darüber.|r Unter Aktionsleisten → Anordnung stellst du beide auf „Nur bei Maus darüber“: unsichtbar, bis die Maus in die Nähe kommt, dann blenden sie weich ein. Anklicken geht auch unsichtbar.",
+        },
+    },
+    {
         version = "6.3.0.7",
         date    = "25.09.2026",
         notes   = {

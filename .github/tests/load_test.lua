@@ -2167,6 +2167,28 @@ do
         _G.BagsBar, _G.MainMenuBarBackpackButton = nil, nil
     end)
     Check(ok, "Taschenleiste: flach, ohne goldenen Rand, mit Flaeche" .. (ok and "" or (": " .. tostring(err))))
+
+    -- 6.3.0.8: Mikromenue und Taschenleiste nur bei Maus darueber.
+    ok, err = pcall(function()
+        local micro = CreateFrame("Frame", "MicroMenuContainer", UIParent)
+        local bags = CreateFrame("Frame", "BagsBar", UIParent)
+        local over = false
+        micro.IsMouseOver = function() return over end
+        bags.IsMouseOver = function() return false end
+        K.Set("actionbars", "microShow", "mouseover")
+        K.Set("actionbars", "bagsShow", "mouseover")
+        AB.UpdateMouseover()
+        assert(micro:GetAlpha() == 0 and bags:GetAlpha() == 0, "ohne Maus sichtbar")
+        over = true
+        AB._fadeStep(nil, 1)   -- ein langer Schritt: ganz eingeblendet
+        assert(micro:GetAlpha() == 1 and bags:GetAlpha() == 0, "Maus ueber dem Mikromenue blendet nicht ein")
+        K.Set("actionbars", "microShow", "always")
+        K.Set("actionbars", "bagsShow", "always")
+        AB.UpdateMouseover()
+        assert(micro:GetAlpha() == 1 and bags:GetAlpha() == 1, "zurueck auf Immer bleibt unsichtbar")
+        _G.MicroMenuContainer, _G.BagsBar = nil, nil
+    end)
+    Check(ok, "Mikromenue und Taschenleiste: nur bei Maus darueber" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.

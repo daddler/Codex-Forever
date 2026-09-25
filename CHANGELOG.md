@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.0.8] – 2026-09-25
+
+**Mikromenü und Taschenleiste nur bei Maus darüber.** Unter Aktionsleisten → Anordnung stellst du beide auf „Nur bei Maus darüber“: unsichtbar, bis die Maus in die Nähe kommt, dann blenden sie weich ein. Anklicken geht auch unsichtbar.
+
+### Technisch
+
+- Aktionsleisten: `microShow`, `bagsShow` (`always` | `mouseover`) über
+  dieselbe Blende wie die Leisten (`Faded()` sammelt Leisten, Mikromenü,
+  Taschenleiste samt Fläche). Mausprüfung mit 6 px Luft
+  (`IsMouseOver(6, -6, -6, 6)`). Zurück auf „Immer“: Mikromenü und
+  Taschen bekommen Alpha 1 von hier (sie hängen nicht an „Ruhe und
+  Kampf“).
+- `load_test.lua`: aus, Maus darüber, zurück auf „Immer“.
+
 ## [6.3.0.7] – 2026-09-25
 
 **Schadensanzeige: Aufschlüsselung wie bei Details.** Klick auf einen Namen in der Schadensanzeige öffnet daneben ein eigenes Fenster: Gesamt, je Sekunde, Anteil und Rang, darunter jeder Zauber mit Balken, Summe, Wert je Sekunde und Anteil. Oben schaltest du zwischen Schaden, Heilung und erlittenem Schaden desselben Spielers um, die Pfeile blättern zum nächsten. Es läuft im Kampf live mit; Esc oder ein zweiter Klick schließt.

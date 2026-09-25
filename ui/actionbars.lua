@@ -93,6 +93,8 @@ local defaults = {
     -- Bearbeitungsmodus des Spiels bestimmt alles.
     layout       = "wc",     -- wc | game
     bagsSkin     = true,     -- Taschenleiste wie die Aktionsknoepfe (6.3.0.7)
+    microShow    = "always", -- always | mouseover (6.3.0.8)
+    bagsShow     = "always", -- always | mouseover
     editBar      = 1,        -- welche Leiste die Einstellungsseite zeigt
 }
 -- Je Leiste flach gespeichert (UIKit.Set vergleicht Tabellen nur eine
@@ -619,28 +621,67 @@ AB.UpdateBackdrops = UpdateBackdrops
 -- Zauber zieht). Nur Deckkraft - die Knoepfe bleiben benutzbar, auch im
 -- Kampf. Solche Leisten nimmt "Ruhe und Kampf" aus (ui/presence.lua).
 
+-- Ein Rahmen des Spiels unter einem seiner Namen (je nach Clientstand).
+local function Frame(...)
+    for _, n in ipairs({ ... }) do
+        local f = _G[n]
+        if type(f) == "table" and f.SetPoint and not (f.IsForbidden and f:IsForbidden()) then return f end
+    end
+    return nil
+end
+
 local fader = CreateFrame("Frame")
 local fadeAlpha = {}
-local function MouseOver(bar)
-    local ok, v = pcall(bar.IsMouseOver, bar)
+-- Etwas Luft um die Flaeche: sonst muss die Maus eine unsichtbare Leiste
+-- auf den Pixel genau treffen.
+local HOVER_MARGIN = 6
+local function MouseOver(f)
+    local m = HOVER_MARGIN
+    local ok, v = pcall(f.IsMouseOver, f, m, -m, -m, m)
     return ok and K.Bool(v, false) or false
+end
+
+-- Mikromenue und Taschenleiste koennen dasselbe (6.3.0.8). Keine
+-- geschuetzten Rahmen, und "Ruhe und Kampf" blendet sie nicht - beim
+-- Zurueckschalten auf "Immer" stellt WeintCodex sie selbst wieder voll.
+local EXTRA = {
+    { key = "microShow", frames = { "MicroMenuContainer", "MicroMenu" } },
+    { key = "bagsShow",  frames = { "BagsBar" } },
+}
+
+-- Alles, was gerade "nur bei Maus darueber" steht: { Rahmen, Zusatzflaeche }.
+local function Faded()
+    local list = {}
+    for i, entry in ipairs(BAR_BUTTONS) do
+        local bar = BarFrame(entry)
+        if bar then
+            list[#list + 1] = { frame = bar, on = BO(i, "show") == "mouseover", extra = AB.backdrops[bar], bar = true }
+        end
+    end
+    for _, e in ipairs(EXTRA) do
+        local f = Frame(unpack(e.frames))
+        if f then
+            list[#list + 1] = { frame = f, on = Opt(e.key) == "mouseover",
+                extra = e.key == "bagsShow" and AB.bagsBackdrop or nil }
+        end
+    end
+    return list
 end
 
 local function FadeStep(_, elapsed)
     local any = false
-    for i, entry in ipairs(BAR_BUTTONS) do
-        local bar = BarFrame(entry)
-        if bar and BO(i, "show") == "mouseover" then
+    for _, t in ipairs(Faded()) do
+        if t.on then
             any = true
-            local bd = AB.backdrops[bar]
-            local over = gridShown or MouseOver(bar) or (bd and bd:IsShown() and MouseOver(bd))
-            local cur = fadeAlpha[bar] or 0
+            local f = t.frame
+            local over = (t.bar and gridShown) or MouseOver(f) or (t.extra and t.extra:IsShown() and MouseOver(t.extra))
+            local cur = fadeAlpha[f] or 0
             local target = over and 1 or 0
             local step = (elapsed or 0.1) * 6
             if cur < target then cur = math.min(target, cur + step) elseif cur > target then cur = math.max(target, cur - step) end
-            if cur ~= fadeAlpha[bar] then
-                fadeAlpha[bar] = cur
-                bar:SetAlpha(cur)
+            if cur ~= fadeAlpha[f] then
+                fadeAlpha[f] = cur
+                f:SetAlpha(cur)
             end
         end
     end
@@ -649,20 +690,21 @@ end
 
 local function UpdateMouseover()
     local any = false
-    for i, entry in ipairs(BAR_BUTTONS) do
-        local bar = BarFrame(entry)
-        if bar then
-            if BO(i, "show") == "mouseover" then
-                any = true
-            elseif fadeAlpha[bar] then
-                fadeAlpha[bar] = nil
-            end
+    for _, t in ipairs(Faded()) do
+        if t.on then
+            any = true
+        elseif fadeAlpha[t.frame] then
+            fadeAlpha[t.frame] = nil
+            -- Leisten gibt "Ruhe und Kampf" ihre Deckkraft zurueck, die
+            -- anderen bekommen sie hier.
+            if not t.bar then t.frame:SetAlpha(1) end
         end
     end
     fader:SetScript("OnUpdate", any and FadeStep or nil)
     if any then FadeStep(nil, 0) end
 end
 AB.UpdateMouseover = UpdateMouseover
+AB._fadeStep = FadeStep   -- fuer den Prueflauf
 
 function AB.IsMouseoverBar(bar)
     for i, entry in ipairs(BAR_BUTTONS) do
@@ -760,13 +802,6 @@ AB.Arrange = Arrange
 -- Mikromenue und Taschenleiste
 --------------------------------------------------
 
-local function Frame(...)
-    for _, n in ipairs({ ... }) do
-        local f = _G[n]
-        if type(f) == "table" and f.SetPoint and not (f.IsForbidden and f:IsForbidden()) then return f end
-    end
-    return nil
-end
 
 local placing = false
 local function Place()
@@ -930,6 +965,12 @@ K.Register({
                   { type = "slider", label = "Größe des Mikromenüs", key = "microScale", min = 60, max = 120, step = 5,
                     format = function(v) return string.format("%d %%", v) end,
                     disabled = function() return K.Get(KEY, "microMenu") ~= "left" end })
+            B:Row({ type = "dropdown", label = "Mikromenü sichtbar", key = "microShow", items = {
+                        { value = "always",    text = "Immer" },
+                        { value = "mouseover", text = "Nur bei Maus darüber" } } },
+                  { type = "dropdown", label = "Taschenleiste sichtbar", key = "bagsShow", items = {
+                        { value = "always",    text = "Immer" },
+                        { value = "mouseover", text = "Nur bei Maus darüber" } } })
             B:Row({ type = "dropdown", label = "Taschenleiste", key = "bagsBar", reload = true, items = {
                         { value = "right", text = "Unten rechts" },
                         { value = "game",  text = "Wie im Spiel" } } },
