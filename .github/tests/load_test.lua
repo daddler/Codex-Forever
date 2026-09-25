@@ -1537,7 +1537,11 @@ do
         local qj = CreateFrame("Button", "QuickJoinToastButton", UIParent)
         _G.FCF_GetCurrentChatFrame = function() return _G.ChatFrame1 end
         WeintCodex.UIChat.ApplyAll()
+        assert(qj:GetParent() == _G.WeintCodexChatTabRow, "Freunde-Knopf steht nicht in der Reiterzeile")
+        assert(_G.CHAT_FRAME_TAB_NORMAL_NOMOUSE_ALPHA == 0.75, "Reiter werden weiter ausgeblendet")
+        K.Set("chat", "buttons", "column")
         assert(qj:GetParent() == _G.WeintCodexChatButtons, "Freunde-Knopf steht nicht in der Spalte")
+        K.Set("chat", "buttons", "tabrow")
         K.Set("chat", "editBoxTop", true)
         _G.FCF_GetCurrentChatFrame = nil
     end)
@@ -1614,7 +1618,7 @@ do
         end }
         DM.Refresh()
         assert(DM.RowsShown() == 2, "zwei Quellen, " .. DM.RowsShown() .. " Balken")
-        assert(DM.AmountText(1, 1) == "12,0K (400)", "Zahl im Balken: " .. tostring(DM.AmountText(1, 1)))
+        assert(DM.AmountText(1, 1) == "12,0K (400)  60%", "Zahl im Balken: " .. tostring(DM.AmountText(1, 1)))
         -- Die Zahl aus dem Beta-Client (6.0.0.4): pro Sekunde ungerundet.
         assert(DM.Format(16.826086956522) == "17", "16,83 pro Sekunde: " .. DM.Format(16.826086956522))
         assert(DM.Format(1234567) == "1,23M" and DM.Format(0.4) == "0", "Stufen K/M, unter 1 ist 0")
@@ -1804,6 +1808,131 @@ do
     end)
     Check(ok, "Cockpit: Kombosegmente ohne Vergleich, Stufe 23+/??, kurze Tastenkuerzel, Schadensanzeige nach Inhalt, Hinrichtungsmarke"
         .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- UI 2.0, 6.3.0.0: Antworten auf den vierten Beta-Test.
+do
+    local UF = WeintCodex.UIUnitFrames
+    local NP = WeintCodex.UINameplates
+    local DM = WeintCodex.UIDamageMeter
+    local E  = WeintCodex.UIEditMode
+    local T  = WeintCodex.UITestMode
+    local ok, err = pcall(function()
+        -- Zielrahmen zeichnet sich beim Erscheinen (war: weisser Balken).
+        local oldName, oldExists = _G.UnitName, _G.UnitExists
+        _G.UnitName = function() return "Himmelshuepfer" end
+        _G.UnitExists = function() return true end
+        local tf = UF.frames.target
+        tf.left:SetText("")
+        tf._scripts.OnShow(tf)
+        assert(tf.left:GetText():find("Himmelshuepfer", 1, true), "Zielrahmen beim Erscheinen leer: " .. tostring(tf.left:GetText()))
+        _G.UnitName, _G.UnitExists = oldName, oldExists
+
+        -- Plakette: die Debuff-Symbole des Spiels haengen an unserer Plakette.
+        local af = stub.NewObject("Frame")
+        af._parent = blizzPlate.UnitFrame
+        blizzPlate.UnitFrame.AurasFrame = af
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        local p = NP.plates["nameplate1"]
+        assert(af:GetParent() == p, "Symbole des Spiels nicht an der Plakette")
+        K.Set("nameplates", "auraSource", "own")
+        assert(af:GetParent() ~= p, "eigene Symbole gewaehlt, die des Spiels haengen noch dran")
+        K.Set("nameplates", "auraSource", "game")
+        assert(af:GetParent() == p, "zurueck auf die des Spiels greift nicht")
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        assert(af:GetParent() == blizzPlate.UnitFrame, "Symbole nicht an die Plakette des Spiels zurueckgegeben")
+        blizzPlate.UnitFrame.AurasFrame = nil
+
+        -- Schadensanzeige: eigene Zeile immer da, mit echtem Rang.
+        _G.Enum = _G.Enum or {}
+        _G.Enum.DamageMeterType = { DamageDone = 0, HealingDone = 1, DamageTaken = 2, Interrupts = 5, Dispels = 6, Deaths = 7 }
+        _G.Enum.DamageMeterSessionType = { Current = 0, Overall = 1 }
+        local srcs = {}
+        for i = 1, 5 do srcs[i] = { name = "Spieler" .. i, classFilename = "MAGE", totalAmount = 600 - i * 100,
+            amountPerSecond = 10, sourceGUID = "G" .. i, isLocalPlayer = (i == 5) } end
+        local spellsAsked
+        _G.C_DamageMeter = {
+            GetCombatSessionFromType = function() return { combatSources = srcs } end,
+            GetCombatSessionFromID = function() return { combatSources = srcs } end,
+            GetAvailableCombatSessions = function() return { { sessionID = 11, name = "Kobold" }, { sessionID = 12 } } end,
+            GetCombatSessionSourceFromType = function(_, _, guid)
+                spellsAsked = guid
+                return { combatSpells = { { spellID = 1, totalAmount = 60 }, { spellID = 2, totalAmount = 40 } } }
+            end,
+        }
+        K.Set("damagemeter", "bars", 3)
+        DM.Refresh()
+        local w = DM.Window(1)
+        assert(DM.RowsShown() == 3, "drei Zeilen erwartet")
+        assert(w.rows[3].name:GetText() == "5. Spieler5", "eigene Zeile nicht angeheftet: " .. tostring(w.rows[3].name:GetText()))
+        assert(w.rows[3].own:IsShown() and not w.rows[1].own:IsShown(), "eigene Zeile nicht markiert")
+        DM.ShowTooltip(w, w.rows[1])
+        assert(spellsAsked == "G1", "Tooltip fragt die Zauber nicht ab")
+        w:CycleSession()        -- Gesamt
+        w:CycleSession()        -- neuester frueherer Kampf (12)
+        assert(w:Session() == 12 and w:SessionLabel() == "Kampf −1", "frueherer Kampf: " .. tostring(w:Session()) .. " " .. w:SessionLabel())
+        w:CycleSession()
+        assert(w:Session() == 11 and w:SessionLabel() == "Kobold", "Name des Kampfes fehlt: " .. w:SessionLabel())
+        w:CycleSession()
+        assert(w:Session() == "Current", "Reihe laeuft nicht zurueck auf Aktuell")
+        K.Set("damagemeter", "bars", 8)
+        _G.C_DamageMeter = nil
+        DM.Refresh()
+
+        -- Gestaltungsmodus: Fenster zu, Leiste, Testdaten, Pfeiltasten,
+        -- Esc, Fenster wieder auf.
+        UO.Show("general")
+        K.SetUnlocked(true)
+        local bar = _G.WeintCodexDesignBar
+        assert(bar and bar:IsShown() and not UO.frame:IsShown(), "Leiste fehlt oder Fenster noch offen")
+        assert(T.IsOn(), "Testdaten nicht an")
+        K.SelectMover("uf_player")
+        local y0 = K.LAYOUT.uf_player.y
+        bar._scripts.OnKeyDown(bar, "UP")
+        local pos = K.MoverPosition("uf_player")
+        assert(pos.y == y0 + 1, "Pfeiltaste schiebt nicht: " .. tostring(pos.y))
+        bar._scripts.OnKeyDown(bar, "ESCAPE")
+        assert(not K.IsUnlocked() and not bar:IsShown() and not T.IsOn() and UO.frame:IsShown(),
+            "Esc beendet nicht sauber")
+        K.ResetAllPositions()
+        UO.frame:Hide()
+        assert(E.ModuleFor("uf_target") == "unitframes" and E.ModuleFor("damagemeter2") == "damagemeter",
+            "Doppelklick findet die Einstellungsseite nicht")
+        -- Einrasten: nah an der Mitte -> auf die Achse, sonst aufs 8er-Raster.
+        K.SetUnlocked(true)
+        local fake = { GetLeft = function() return 395 end, GetBottom = function() return 51 end,
+                       GetWidth = function() return 10 end, GetHeight = function() return 10 end }
+        local dx, dy = E.SnapOffset(fake)
+        assert(dx == 400 - 400 and dy == -3, "Einrasten: " .. dx .. ", " .. dy)
+        fake.GetLeft = function() return 103 end
+        dx = E.SnapOffset(fake)
+        assert(dx == 1, "Raster: " .. dx)
+        K.SetUnlocked(false)
+    end)
+    Check(ok, "6.3: Zielrahmen beim Erscheinen, Symbole des Spiels, Schadensanzeige wie Details, Gestaltungsmodus"
+        .. (ok and "" or (": " .. tostring(err))))
+
+    -- Aktionsleisten: leere Plaetze weg, beim Ziehen eines Zaubers da.
+    ok, err = pcall(function()
+        local b = CreateFrame("CheckButton", "ActionButton2", UIParent)
+        b.icon = b:CreateTexture()
+        b.HotKey = b:CreateFontString()
+        b.action = 5
+        local oldHas = _G.HasAction
+        _G.HasAction = function() return false end
+        WeintCodex.UIActionBars.SkinAll()
+        assert(b:GetAlpha() == 0, "leerer Platz sichtbar")
+        stub.FireEvent("ACTIONBAR_SHOWGRID")
+        assert(b:GetAlpha() == 1, "beim Ziehen bleibt der Platz unsichtbar")
+        stub.FireEvent("ACTIONBAR_HIDEGRID")
+        assert(b:GetAlpha() == 0, "nach dem Ziehen nicht wieder weg")
+        _G.HasAction = function() return true end
+        WeintCodex.UIActionBars.SkinAll()
+        assert(b:GetAlpha() == 1, "belegter Platz unsichtbar")
+        _G.HasAction = oldHas
+        _G.ActionButton2 = nil
+    end)
+    Check(ok, "Aktionsleisten: leere Plaetze aus, beim Ziehen sichtbar" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.

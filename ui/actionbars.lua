@@ -43,6 +43,14 @@ local defaults = {
     hotkeys      = true,
     hotkeySize   = 11,
     shortHotkeys = true,     -- "Maustaste 4" -> "M4", "s-1" -> "S1"
+    -- Seit 6.3.0.0 (Beta-Test: "gefaellt mir noch gar nicht"): leere Plaetze
+    -- weg statt Kaesten mit Tastenzahl, flache Hervorhebung, Schatten am
+    -- Symbol, Abklingzahl in der WeintCodex-Schrift, kein Reichweitenpunkt.
+    emptySlots   = "hide",   -- hide | faint | game
+    iconShade    = true,
+    cooldownFont = true,
+    cooldownSize = 16,
+    hideRangeDot = true,
     macroNames   = false,
     countSize    = 12,
     rangeColor   = true,
@@ -123,6 +131,42 @@ local function Skin(b)
     d.border = K.Border(b, 1, 0, 0, 0, 1, "OVERLAY")
     d.shadow = K.Glow(b, { spread = 3, shadow = true })
 
+    -- Tiefe: unten am Symbol ein leichter Schatten - die Stapelzahl steht
+    -- darauf lesbar, und das Symbol wirkt nicht mehr wie ausgeschnitten.
+    if icon then
+        d.shade = b:CreateTexture(nil, "ARTWORK", nil, 2)
+        d.shade:SetPoint("BOTTOMLEFT", icon, "BOTTOMLEFT", 0, 0)
+        d.shade:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 0, 0)
+        d.shade:SetHeight(18)
+        d.shade:SetTexture(K.BAR_TEXTURE)
+        local c = WeintCodex.GameColors.iconShade
+        if d.shade.SetGradient and _G.CreateColor then
+            d.shade:SetGradient("VERTICAL", _G.CreateColor(c[1], c[2], c[3], c[4]), _G.CreateColor(c[1], c[2], c[3], 0))
+        else
+            d.shade:SetVertexColor(c[1], c[2], c[3], c[4] * 0.5)
+        end
+    end
+
+    -- Hervorhebung, gedrueckt, aktiv: flach statt der Glanzrahmen des Spiels.
+    local GC = WeintCodex.GameColors
+    local hl = b.GetHighlightTexture and b:GetHighlightTexture()
+    if hl and hl.SetColorTexture then
+        hl:SetColorTexture(GC.hoverFill[1], GC.hoverFill[2], GC.hoverFill[3], GC.hoverFill[4])
+        if icon then hl:ClearAllPoints() hl:SetAllPoints(icon) end
+    end
+    local pushed = b.GetPushedTexture and b:GetPushedTexture()
+    if pushed and pushed.SetColorTexture then
+        pushed:SetColorTexture(0, 0, 0, 0.35)
+        if icon then pushed:ClearAllPoints() pushed:SetAllPoints(icon) end
+    end
+    local checked = b.GetCheckedTexture and b:GetCheckedTexture()
+    if checked and checked.SetColorTexture then
+        local a = WeintCodex.Colors.accent
+        checked:SetColorTexture(a[1], a[2], a[3], 0.35)
+        if icon then checked:ClearAllPoints() checked:SetAllPoints(icon) end
+    end
+    d.cooldown = Region(b, "cooldown") or Region(b, "Cooldown")
+
     d.hotkey = Region(b, "HotKey")
     d.count  = Region(b, "Count")
     d.name   = Region(b, "Name")
@@ -167,6 +211,12 @@ local function ShortenHotkey(b)
     if not hk or not Opt("shortHotkeys") then return end
     local t = hk:GetText()
     if type(t) ~= "string" then return end
+    -- Der Punkt ohne Tastenbelegung zeigt Reichweite - das tut schon die
+    -- rote Schicht ueber dem Symbol.
+    if Opt("hideRangeDot") and _G.RANGE_INDICATOR and t == _G.RANGE_INDICATOR then
+        hk:SetText("")
+        return
+    end
     local short = AB.ShortHotkey(t)
     if short ~= t then hk:SetText(short) end
 end
@@ -180,13 +230,49 @@ local function HookHotkeys(b)
     end
 end
 
+-- Die Abklingzahl in der WeintCodex-Schrift. Ein Schriftobjekt fuer alle
+-- Knoepfe: das Spiel setzt die Zahl selbst, man sagt ihm nur, womit.
+local cdFont
+local function CooldownFont()
+    if not _G.CreateFont then return nil end
+    cdFont = cdFont or _G.CreateFont("WeintCodexCooldownFont")
+    if cdFont and cdFont.SetFont then
+        cdFont:SetFont(K.FontPath(), Opt("cooldownSize") or 16, "OUTLINE")
+    end
+    return cdFont
+end
+
+-- Leere Plaetze. Zieht man einen Zauber (das Spiel meldet
+-- ACTIONBAR_SHOWGRID), erscheinen sie, damit man ihn ablegen kann.
+local gridShown = false
+local function ApplyEmpty(b, d, empty)
+    local mode = Opt("emptySlots")
+    if mode == "game" then
+        if d._hiddenEmpty then b:SetAlpha(1) d._hiddenEmpty = nil end
+        return
+    end
+    if mode == "hide" and empty and not gridShown then
+        b:SetAlpha(0)
+        d._hiddenEmpty = true
+    else
+        if d._hiddenEmpty then b:SetAlpha(1) d._hiddenEmpty = nil end
+    end
+end
+AB.GridShown = function() return gridShown end
+
 local function Apply(b, d)
     d.border:SetShown(Opt("border"))
     local c = K.GetColor(KEY, "borderColor")
     -- Leere Plaetze nur angedeutet: zwoelf schwarze Kaesten je Leiste
     -- sahen in 6.0.0.5 nach Baustelle aus.
     local empty = IsEmpty(b)
+    ApplyEmpty(b, d, empty)
     d.border:SetColor(c.r, c.g, c.b, empty and 0.35 or 1)
+    if d.shade then d.shade:SetShown(Opt("iconShade") and not empty) end
+    if d.cooldown and d.cooldown.SetCountdownFont and Opt("cooldownFont") then
+        local fo = CooldownFont()
+        if fo then pcall(d.cooldown.SetCountdownFont, d.cooldown, "WeintCodexCooldownFont") end
+    end
     -- Leere Plaetze werfen keinen Schatten: sie sollen kaum auffallen.
     if d.shadow then d.shadow:SetShown(not empty) end
     d.bg:SetColorTexture(0, 0, 0, empty and 0.15 or 0.5)
@@ -309,10 +395,13 @@ local function Enable()
     -- Haltungen), bekommen ihr Aussehen beim naechsten Aktualisieren.
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "UPDATE_BONUS_ACTIONBAR",
-        "UPDATE_SHAPESHIFT_FORMS", "PET_BAR_UPDATE", "ACTIONBAR_SLOT_CHANGED" }) do
+        "UPDATE_SHAPESHIFT_FORMS", "PET_BAR_UPDATE", "ACTIONBAR_SLOT_CHANGED",
+        "ACTIONBAR_SHOWGRID", "ACTIONBAR_HIDEGRID" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
     ev:SetScript("OnEvent", function(_, event)
+        if event == "ACTIONBAR_SHOWGRID" then gridShown = true
+        elseif event == "ACTIONBAR_HIDEGRID" then gridShown = false end
         SkinAll()
         if event == "PLAYER_ENTERING_WORLD" then K.AfterCombat(Place) end
     end)
@@ -335,6 +424,18 @@ K.Register({
                     disabled = function() return not K.Get(KEY, "border") end })
             B:Row({ type = "toggle", label = "Symbol rot außer Reichweite", key = "rangeColor" },
                   { type = "toggle", label = "Greifen an den Enden ausblenden", key = "hideEndCaps", reload = true })
+            B:Section("Aussehen")
+            B:Row({ type = "dropdown", label = "Leere Plätze", key = "emptySlots", items = {
+                        { value = "hide",  text = "Ausblenden (beim Ziehen sichtbar)" },
+                        { value = "faint", text = "Nur angedeutet" },
+                        { value = "game",  text = "Wie im Spiel" } } },
+                  { type = "toggle", label = "Schatten am Symbol", key = "iconShade" })
+            B:Row({ type = "toggle", label = "Abklingzahl in WeintCodex-Schrift", key = "cooldownFont", reload = true },
+                  { type = "slider", label = "Größe der Abklingzahl", key = "cooldownSize", min = 10, max = 24, step = 1, format = px,
+                    disabled = function() return not K.Get(KEY, "cooldownFont") end })
+            B:Row({ type = "toggle", label = "Reichweitenpunkt ausblenden", key = "hideRangeDot",
+                    description = "Der Punkt auf Knöpfen ohne Taste – die rote Schicht zeigt die Reichweite schon." },
+                  { type = "empty" })
             B:Section("Texte")
             B:Row({ type = "toggle", label = "Tastenkürzel", key = "hotkeys" },
                   { type = "slider", label = "Größe der Tastenkürzel", key = "hotkeySize", min = 8, max = 18, step = 1, format = px,
@@ -357,7 +458,7 @@ K.Register({
                   { type = "empty" })
             B:Note("Solange hier nicht „Wie im Spiel“ steht, bestimmt WeintCodex den Platz von Mikromenü und Taschenleiste – auch nach dem Bearbeitungsmodus.")
             B:Section("Lage und Größe")
-            B:Note("Wo die Leisten stehen, wie groß sie sind und wie viele es gibt, stellst du im Bearbeitungsmodus des Spiels ein (Esc → Bearbeitungsmodus). Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt.")
+            B:Note("Wo die Leisten stehen, wie groß sie sind, wie viele es gibt und wie weit die Knöpfe auseinanderstehen („Symbolabstand“), stellst du im Bearbeitungsmodus des Spiels ein (Esc → Bearbeitungsmodus). Tipp: Symbolabstand 2 bis 4 wirkt am ruhigsten. Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt.")
         end },
     },
 })

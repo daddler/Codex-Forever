@@ -51,6 +51,9 @@ local defaults = {
     hideBlizzard = true,
     bgAlpha   = 85,
     fitRows   = true,      -- Fenster so hoch wie die gezeigten Zeilen
+    classIcons = true,     -- Klassensymbol vor dem Balken
+    showPercent = true,    -- Anteil am Ganzen, wo die Zahlen offen sind
+    pinSelf   = true,      -- die eigene Zeile immer zeigen (wie Details)
     -- Je Fenster Messart und Zeitraum (flach gespeichert: UIKit.Set
     -- vergleicht Tabellen nur eine Ebene tief).
     w1mode = "DamageDone",  w1session = "Current",
@@ -176,17 +179,34 @@ end
 
 local function Row(w)
     local r = CreateFrame("Frame", nil, w.frame)
+    r.icon = r:CreateTexture(nil, "ARTWORK")
+    r.icon:SetPoint("TOPLEFT", r, "TOPLEFT", 0, 0)
+    r.icon:SetPoint("BOTTOMLEFT", r, "BOTTOMLEFT", 0, 0)
     r.bar = K.NewBar(r)
-    r.bar:SetAllPoints(r)
+    r.bar:SetPoint("TOPRIGHT", r, "TOPRIGHT", 0, 0)
+    r.bar:SetPoint("BOTTOMRIGHT", r, "BOTTOMRIGHT", 0, 0)
     r.bg = r:CreateTexture(nil, "BACKGROUND")
-    r.bg:SetAllPoints(r)
+    r.bg:SetAllPoints(r.bar)
     local s = C.surface2
     r.bg:SetColorTexture(s[1], s[2], s[3], 0.8)
+    -- Die eigene Zeile: ein Strich im Akzent am linken Rand ("das bist du"
+    -- ist eine Auswahl, keine Wertung).
+    r.own = r:CreateTexture(nil, "OVERLAY", nil, 3)
+    r.own:SetPoint("TOPLEFT", r.bar, "TOPLEFT", 0, 0)
+    r.own:SetPoint("BOTTOMLEFT", r.bar, "BOTTOMLEFT", 0, 0)
+    r.own:SetWidth(2)
+    local a = C.accent
+    r.own:SetColorTexture(a[1], a[2], a[3], 1)
+    r.own:Hide()
+    -- Maus: Aufschluesselung nach Zaubern (wie Details).
+    r:EnableMouse(true)
+    r:SetScript("OnEnter", function(self) DM.ShowTooltip(w, self) end)
+    r:SetScript("OnLeave", function() GameTooltip:Hide() end)
     local host = CreateFrame("Frame", nil, r)
     host:SetAllPoints(r)
     host:SetFrameLevel((r.bar:GetFrameLevel() or 1) + 2)
     r.name = K.NewText(host, 11)
-    r.name:SetPoint("LEFT", r, "LEFT", 4, 0)
+    r.name:SetPoint("LEFT", r.bar, "LEFT", 5, 0)
     r.name:SetJustifyH("LEFT")
     r.name:SetWordWrap(false)
     r.amount = K.NewText(host, 11)
@@ -197,7 +217,64 @@ local function Row(w)
 end
 
 function Win:Mode() return ModeInfo(Opt("w" .. self.index .. "mode")) end
-function Win:Session() return Opt("w" .. self.index .. "session") == "Overall" and "Overall" or "Current" end
+-- Zeitraum: "Current", "Overall" oder die Nummer eines frueheren Kampfes
+-- (C_DamageMeter.GetAvailableCombatSessions). Fruehere Kaempfe gelten nur
+-- in dieser Sitzung - gespeichert wird nur "Aktuell" oder "Gesamt".
+function Win:Session()
+    if self._sessionID then return self._sessionID end
+    return Opt("w" .. self.index .. "session") == "Overall" and "Overall" or "Current"
+end
+
+-- Fruehere Kaempfe, neuester zuerst. Leer, wenn der Client sie nicht nennt.
+function DM.Sessions()
+    local cdm = _G.C_DamageMeter
+    if not (cdm and cdm.GetAvailableCombatSessions) then return {} end
+    local ok, list = pcall(cdm.GetAvailableCombatSessions)
+    if not ok or type(list) ~= "table" then return {} end
+    local out = {}
+    for i = #list, 1, -1 do
+        local sess = list[i]
+        local id = type(sess) == "table" and K.Plain(sess.sessionID or sess.combatSessionID) or K.Plain(sess)
+        if type(id) == "number" then
+            local name = type(sess) == "table" and K.Plain(sess.name) or nil
+            local dur = type(sess) == "table" and K.Plain(sess.durationSeconds) or nil
+            out[#out + 1] = { id = id, name = type(name) == "string" and name or nil,
+                              dur = type(dur) == "number" and dur or nil }
+        end
+    end
+    return out
+end
+
+-- Die Reihe zum Durchschalten: Aktuell, Gesamt, dann fruehere Kaempfe.
+function Win:CycleSession(back)
+    local seq = { "Current", "Overall" }
+    for _, sess in ipairs(DM.Sessions()) do seq[#seq + 1] = sess.id end
+    local cur, idx = self:Session(), 1
+    for i, v in ipairs(seq) do if v == cur then idx = i end end
+    idx = idx + (back and -1 or 1)
+    if idx > #seq then idx = 1 elseif idx < 1 then idx = #seq end
+    local v = seq[idx]
+    if type(v) == "number" then
+        self._sessionID = v
+    else
+        self._sessionID = nil
+        K.Set(KEY, "w" .. self.index .. "session", v)
+    end
+    self:Refresh()
+end
+
+function Win:SessionLabel()
+    local sess = self:Session()
+    if sess == "Overall" then return "Gesamt" end
+    if sess == "Current" then return "Aktuell" end
+    for i, info in ipairs(DM.Sessions()) do
+        if info.id == sess then
+            if info.name then return WeintCodex.Truncate and WeintCodex.Truncate(info.name, 14) or info.name end
+            return "Kampf −" .. i
+        end
+    end
+    return "Früher"
+end
 
 function Win:Layout()
     local w, n, h = Opt("width"), Opt("bars"), Opt("barHeight")
@@ -233,18 +310,48 @@ function Win:Layout()
     self.session:SetPoint("RIGHT", anchor, anchor == self.header and "RIGHT" or "LEFT", -8, 0)
 end
 
-local function Amount(fs, src, mode)
+-- Anteil in Prozent - nur mit offenen Zahlen. Eine geheime Summe heisst
+-- "kein Anteil", nicht 0 %.
+local function Share(src, total)
+    local v, t = K.Plain(src.totalAmount), K.Plain(total)
+    if type(v) ~= "number" or type(t) ~= "number" or t <= 0 then return nil end
+    return v / t * 100
+end
+DM.Share = Share
+
+local function Amount(fs, src, mode, pct)
     if mode.deaths or type(src.totalAmount) == "nil" then fs:SetText("") return end
     local fmt = Opt("numbers")
     local rate = src.amountPerSecond
+    local tail = (pct and Opt("showPercent")) and string.format("  %d%%", math.floor(pct + 0.5)) or ""
     if mode.count or type(rate) == "nil" or fmt == "total" then
-        fs:SetText(DM.Format(src.totalAmount))
+        fs:SetFormattedText("%s%s", DM.Format(src.totalAmount), tail)
     elseif fmt == "rate" then
-        fs:SetText(DM.Format(rate))
+        fs:SetFormattedText("%s%s", DM.Format(rate), tail)
     else
-        fs:SetFormattedText("%s (%s)", DM.Format(src.totalAmount), DM.Format(rate))
+        fs:SetFormattedText("%s (%s)%s", DM.Format(src.totalAmount), DM.Format(rate), tail)
     end
 end
+
+-- Klassensymbol aus dem Bild des Spiels (alle Klassen auf einem Blatt).
+local CLASS_SHEET = "Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES"
+local function ClassIcon(tex, class)
+    local tc = class and _G.CLASS_ICON_TCOORDS and _G.CLASS_ICON_TCOORDS[class]
+    if not tc then tex:Hide() return false end
+    tex:SetTexture(CLASS_SHEET)
+    tex:SetTexCoord(tc[1], tc[2], tc[3], tc[4])
+    tex:Show()
+    return true
+end
+
+-- Ist diese Zeile der Spieler selbst? Nur offene Werte werden verglichen.
+local function IsMe(src)
+    if K.Bool(src.isLocalPlayer, false) then return true end
+    local g, me = K.Plain(src.sourceGUID), K.Plain(_G.UnitGUID and _G.UnitGUID("player"))
+    if type(g) == "string" and type(me) == "string" then return g == me end
+    return false
+end
+DM.IsMe = IsMe
 
 -- Das Fenster so hoch wie das, was es zeigt (im Beta-Test: eine Zeile
 -- und darunter acht leere). Fest auf "Balken" Zeilen, wenn abgeschaltet.
@@ -266,14 +373,16 @@ function Win:Refresh()
     if not f:IsShown() then return end
     local mode = self:Mode()
     local session = self:Session()
-    self.session.text:SetText(session == "Overall" and "Gesamt" or "Aktuell")
+    self.session.text:SetText(self:SessionLabel())
 
     local title = mode.label
     local cdm = _G.C_DamageMeter
-    if Opt("showTime") and Available() and cdm.GetSessionDurationSeconds then
+    if Opt("showTime") and Available() and cdm.GetSessionDurationSeconds and type(session) == "string" then
         local ok, secs = pcall(cdm.GetSessionDurationSeconds, _G.Enum.DamageMeterSessionType[session])
         secs = ok and K.Plain(secs)
-        if type(secs) == "number" and secs > 0 then title = title .. "  " .. Clock(secs) end
+        -- Nur eine plausible Kampfdauer: im Beta-Test stand hier
+        -- "70889:57" - der Client meldete etwas anderes als die Dauer.
+        if type(secs) == "number" and secs > 0 and secs < 6 * 3600 then title = title .. "  " .. Clock(secs) end
     end
     local ok, sources
     if DM._test then
@@ -287,16 +396,39 @@ function Win:Refresh()
             self:ShowEmpty("Die Schadensmessung des Spiels steht auf diesem Client nicht zur Verfügung.")
             return
         end
-        local e = _G.Enum
-        local st = e.DamageMeterSessionType[session] or e.DamageMeterSessionType.Current
-        local mt = e.DamageMeterType[mode.key]
         local data
-        ok, data = pcall(cdm.GetCombatSessionFromType, st, mt)
-        sources = ok and data and data.combatSources or nil
+        ok, data = DM.Fetch(session, mode.key)
+        sources = ok and type(data) == "table" and data.combatSources or nil
+        self._total = ok and type(data) == "table" and data.totalAmount or nil
+    end
+    if DM._test then
+        local t = 0
+        for _, src in ipairs(sources) do t = t + src.totalAmount end
+        self._total = t
+    elseif type(self._total) == "nil" and sources then
+        -- Keine Summe vom Client: selbst zusammenzaehlen, wenn alles offen ist.
+        local t = 0
+        for _, src in ipairs(sources) do
+            local v = K.Plain(src.totalAmount)
+            if type(v) ~= "number" then t = nil break end
+            t = t + v
+        end
+        self._total = t
     end
 
     local n = Opt("bars")
     local count = sources and math.min(#sources, n) or 0
+    -- Die eigene Zeile immer: steht man nicht unter den ersten n, nimmt
+    -- sie den letzten Platz ein - mit ihrem echten Rang.
+    local order = {}
+    for i = 1, count do order[i] = i end
+    if Opt("pinSelf") and sources and #sources > n and n > 1 then
+        local mine
+        for i = 1, n do if IsMe(sources[i]) then mine = i break end end
+        if not mine then
+            for i = n + 1, #sources do if IsMe(sources[i]) then order[n] = i break end end
+        end
+    end
     if count == 0 then
         self:ShowEmpty(ok and "Noch nichts gemessen." or "Die Messung hat nicht geantwortet.")
         return
@@ -306,10 +438,19 @@ function Win:Refresh()
     -- Die Liste kommt absteigend sortiert: der erste Eintrag ist der
     -- volle Balken (auch wenn Lua seinen Wert nicht sehen darf).
     local maxAmt = sources[1].totalAmount
+    local h = Opt("barHeight")
     for i = 1, n do
         local r = self.rows[i]
-        local src = sources[i]
+        local rank = order[i]
+        local src = rank and sources[rank]
         if r and src and i <= count then
+            r._src, r._rank = src, rank
+            local icon = Opt("classIcons") and ClassIcon(r.icon, K.Plain(src.classFilename))
+            if not icon then r.icon:Hide() end
+            r.icon:SetWidth(h)
+            r.bar:SetPoint("TOPLEFT", r, "TOPLEFT", icon and (h + 1) or 0, 0)
+            r.bar:SetPoint("BOTTOMLEFT", r, "BOTTOMLEFT", icon and (h + 1) or 0, 0)
+            r.own:SetShown(IsMe(src))
             if mode.deaths or type(maxAmt) == "nil" then
                 r.bar:SetMinMaxValues(0, 1)
                 r.bar:SetValue(1)
@@ -328,19 +469,111 @@ function Win:Refresh()
             end
             K.PaintBar(r.bar, cr, cg, cb)
             if type(src.name) == "nil" then
-                r.name:SetFormattedText("%d.", i)
+                r.name:SetFormattedText("%d.", rank)
             elseif Opt("rank") then
-                r.name:SetFormattedText("%d. %s", i, src.name)
+                r.name:SetFormattedText("%d. %s", rank, src.name)
             else
                 r.name:SetFormattedText("%s", src.name)
             end
-            Amount(r.amount, src, mode)
+            Amount(r.amount, src, mode, Share(src, self._total))
             r:Show()
         elseif r then
+            r._src = nil
             r:Hide()
         end
     end
     self:Fit(count)
+end
+
+-- Die Daten eines Zeitraums fuer eine Messart. Liefert ok, Daten.
+function DM.Fetch(session, modeKey)
+    local cdm, e = _G.C_DamageMeter, _G.Enum
+    local mt = e.DamageMeterType[modeKey]
+    if type(session) == "number" then
+        if not cdm.GetCombatSessionFromID then return false, nil end
+        return pcall(cdm.GetCombatSessionFromID, session, mt)
+    end
+    local st = e.DamageMeterSessionType[session] or e.DamageMeterSessionType.Current
+    return pcall(cdm.GetCombatSessionFromType, st, mt)
+end
+
+-- Die Zauber eines Eintrags, groesste zuerst. Leer, wo der Client sie
+-- nicht herausgibt.
+function DM.Spells(session, modeKey, guid)
+    local cdm, e = _G.C_DamageMeter, _G.Enum
+    if not (cdm and e and e.DamageMeterType) or type(guid) == "nil" then return {} end
+    local mt = e.DamageMeterType[modeKey]
+    local ok, data
+    if type(session) == "number" and cdm.GetCombatSessionSourceFromID then
+        ok, data = pcall(cdm.GetCombatSessionSourceFromID, session, mt, guid)
+    elseif type(session) == "string" and cdm.GetCombatSessionSourceFromType then
+        local st = e.DamageMeterSessionType[session] or e.DamageMeterSessionType.Current
+        ok, data = pcall(cdm.GetCombatSessionSourceFromType, st, mt, guid)
+    end
+    local list = ok and type(data) == "table" and (data.combatSpells or data.spells) or nil
+    return type(list) == "table" and list or {}
+end
+
+local function SpellName(id)
+    if type(id) == "nil" then return nil end
+    local cs = _G.C_Spell
+    if cs and cs.GetSpellName then
+        local ok, n = pcall(cs.GetSpellName, id)
+        if ok and type(n) ~= "nil" then return n end
+    end
+    if _G.GetSpellInfo then
+        local ok, n = pcall(_G.GetSpellInfo, id)
+        if ok and type(n) ~= "nil" then return n end
+    end
+    return nil
+end
+
+local function SpellIcon(id)
+    local cs = _G.C_Spell
+    if type(id) ~= "nil" and cs and cs.GetSpellTexture then
+        local ok, t = pcall(cs.GetSpellTexture, id)
+        if ok and type(t) ~= "nil" then return t end
+    end
+    return nil
+end
+
+-- Tooltip einer Zeile: Summe, pro Sekunde, Anteil, dann die Zauber.
+function DM.ShowTooltip(w, r)
+    local src = r._src
+    if not src then return end
+    local mode = w:Mode()
+    GameTooltip:SetOwner(r, "ANCHOR_LEFT")
+    pcall(GameTooltip.SetText, GameTooltip, src.name or "?", 1, 1, 1)
+    local muted = C.textMuted
+    pcall(GameTooltip.AddLine, GameTooltip, mode.label .. " · " .. w:SessionLabel(), muted[1], muted[2], muted[3])
+    if not mode.deaths then
+        pcall(GameTooltip.AddDoubleLine, GameTooltip, "Gesamt", DM.Format(src.totalAmount), 1, 1, 1, 1, 1, 1)
+        if mode.rate and type(src.amountPerSecond) ~= "nil" then
+            pcall(GameTooltip.AddDoubleLine, GameTooltip, "Pro Sekunde", DM.Format(src.amountPerSecond), 1, 1, 1, 1, 1, 1)
+        end
+        local pct = Share(src, w._total)
+        if pct then
+            GameTooltip:AddDoubleLine("Anteil", string.format("%d%%", math.floor(pct + 0.5)), 1, 1, 1, 1, 1, 1)
+        end
+    end
+    local spells = DM._test and {} or DM.Spells(w:Session(), mode.key, src.sourceGUID)
+    if #spells > 0 then
+        GameTooltip:AddLine(" ")
+        for i = 1, math.min(8, #spells) do
+            local sp = spells[i]
+            local name = SpellName(sp.spellID) or "?"
+            local icon = SpellIcon(sp.spellID)
+            local pct = Share(sp, src.totalAmount)
+            local right = DM.Format(sp.totalAmount)
+            if pct then right = string.format("%s  %d%%", right, math.floor(pct + 0.5)) end
+            local left = name
+            if type(icon) ~= "nil" and type(K.Plain(icon)) ~= "nil" then left = string.format("|T%s:14:14:0:0:64:64:5:59:5:59|t %s", tostring(icon), name) end
+            pcall(GameTooltip.AddDoubleLine, GameTooltip, left, right, 0.93, 0.93, 0.95, 1, 1, 1)
+        end
+    elseif not mode.deaths and not DM._test then
+        GameTooltip:AddLine("Zauber nennt der Client hier nicht.", muted[1], muted[2], muted[3], true)
+    end
+    GameTooltip:Show()
 end
 
 function Win:CycleMode(back)
@@ -393,14 +626,19 @@ local function CreateWindow(i)
     tb:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
     local sb = CreateFrame("Button", nil, header)
-    sb:SetSize(48, 20)
+    sb:SetSize(70, 20)
     sb.text = K.NewText(sb, 10)
     sb.text:SetPoint("RIGHT", sb, "RIGHT", 0, 0)
     sb.text:SetTextColor(unpack(C.textMuted))
-    sb:SetScript("OnClick", function()
-        K.Set(KEY, "w" .. w.index .. "session", w:Session() == "Overall" and "Current" or "Overall")
-        w:Refresh()
+    if sb.RegisterForClicks then sb:RegisterForClicks("LeftButtonUp", "RightButtonUp") end
+    sb:SetScript("OnClick", function(_, button) w:CycleSession(button == "RightButton") end)
+    sb:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText("Zeitraum", 1, 1, 1)
+        GameTooltip:AddLine("Aktueller Kampf, ganze Sitzung, frühere Kämpfe. Linksklick: weiter, Rechtsklick: zurück.", 0.7, 0.7, 0.75, true)
+        GameTooltip:Show()
     end)
+    sb:SetScript("OnLeave", function() GameTooltip:Hide() end)
     w.session = sb
 
     w.plus = IconButton(header, "icon_plus", "Weiteres Fenster", function() DM.AddWindow() end)
@@ -512,7 +750,7 @@ end
 -- Beispielzeilen fuer den Testmodus. Namen und Zahlen sind erfunden und
 -- stehen nur da, solange der Testmodus laeuft.
 DM.TEST_SOURCES = {
-    { name = "Varek",    classFilename = "ROGUE",   totalAmount = 4940, amountPerSecond = 118 },
+    { name = "Varek",    classFilename = "ROGUE",   totalAmount = 4940, amountPerSecond = 118, isLocalPlayer = true },
     { name = "Tamsin",   classFilename = "MAGE",    totalAmount = 4370, amountPerSecond = 104 },
     { name = "Orwen",    classFilename = "HUNTER",  totalAmount = 3650, amountPerSecond = 87 },
     { name = "Brunhild", classFilename = "WARRIOR", totalAmount = 2180, amountPerSecond = 52 },
@@ -584,7 +822,12 @@ K.Register({
                   { type = "toggle", label = "Kampfdauer in der Kopfzeile", key = "showTime" })
             B:Row({ type = "toggle", label = "Höhe nach Inhalt", key = "fitRows",
                     description = "So hoch wie die gezeigten Zeilen, statt immer Platz für alle Balken." },
-                  { type = "empty" })
+                  { type = "toggle", label = "Klassensymbole", key = "classIcons" })
+            B:Row({ type = "toggle", label = "Anteil in Prozent", key = "showPercent",
+                    description = "Nur wo der Client die Zahlen offen nennt – im Kampf oft erst danach." },
+                  { type = "toggle", label = "Eigene Zeile immer zeigen", key = "pinSelf",
+                    description = "Stehst du nicht unter den ersten Plätzen, nimmt deine Zeile den letzten Platz ein – mit deinem Rang." })
+            B:Note("Maus über einer Zeile: die Zauber dieses Spielers mit Anteil. Klick auf den Zeitraum (oben rechts): aktueller Kampf, ganze Sitzung und frühere Kämpfe.")
             B:Section("Zahlen")
             B:Row({ type = "dropdown", label = "Rechts im Balken", key = "numbers", items = {
                         { value = "both",  text = "Gesamt (pro Sekunde)" },

@@ -694,6 +694,13 @@ end
 
 local movers = {}
 local unlocked = false
+local selected           -- Schluessel des angewaehlten Rahmens (Gestaltungsmodus)
+K.movers = movers
+
+-- Einrasten (ui/editmode.lua setzt es): nach dem Ziehen die linke untere
+-- Ecke aufs Raster, die Mitte auf die Mittelachse, wenn sie nahe ist.
+-- Liefert die Verschiebung dx, dy in Einheiten von UIParent.
+K.SnapOffset = nil
 
 local function SavePosition(key, frame)
     local ui = Root()
@@ -736,7 +743,8 @@ function K.RegisterMover(frame, key, label, default, opts)
         local bg = ov:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints(ov)
         bg:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.22)
-        K.Border(ov, 1, C.accent[1], C.accent[2], C.accent[3], 0.9, "ARTWORK")
+        ov.bg = bg
+        ov.edge = K.Border(ov, 1, C.accent[1], C.accent[2], C.accent[3], 0.9, "ARTWORK")
         local t = K.NewText(ov, 11)
         t:SetFont(F.sansSemi, 11, "OUTLINE")
         t:SetPoint("CENTER", ov, "CENTER", 0, 0)
@@ -750,11 +758,29 @@ function K.RegisterMover(frame, key, label, default, opts)
         ov:SetScript("OnDragStop", function()
             frame:StopMovingOrSizing()
             SavePosition(key, frame)
+            -- Einrasten: die gespeicherte Stelle um den Rest zum Raster bzw.
+            -- zur Mittelachse verschieben (derselbe Anker, nur genauer).
+            local ui = Root()
+            local pos = ui and ui.positions[key]
+            if pos and K.SnapOffset then
+                local ok, dx, dy = pcall(K.SnapOffset, frame)
+                if ok and type(dx) == "number" and type(dy) == "number" then
+                    pos.x = math.floor(pos.x + dx + 0.5)
+                    pos.y = math.floor(pos.y + dy + 0.5)
+                end
+            end
             -- StartMoving haengt den Rahmen an den naechstgelegenen Punkt
             -- des Bildschirms um; gespeichert ist er jetzt, und neu
             -- angelegt wird er aus dem Gespeicherten.
             K.ApplyPosition(key)
+            K.SelectMover(key)
         end)
+        ov:SetScript("OnMouseDown", function(_, button)
+            if button == "LeftButton" then K.SelectMover(key) end
+        end)
+        if ov.SetScript then
+            ov:SetScript("OnDoubleClick", function() K.Fire("moverOpen", key) end)
+        end
         ov:SetScript("OnClick", function(_, button)
             if button ~= "RightButton" then return end
             local ui = Root()
@@ -764,7 +790,7 @@ function K.RegisterMover(frame, key, label, default, opts)
         ov:SetScript("OnEnter", function(self)
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
             GameTooltip:SetText(label, 1, 1, 1)
-            GameTooltip:AddLine("Ziehen zum Verschieben, Rechtsklick setzt zurück.", 0.7, 0.7, 0.75, true)
+            GameTooltip:AddLine("Ziehen verschiebt, Pfeiltasten schieben genau (Umschalt: 8). Doppelklick: Einstellungen. Rechtsklick: zurück an den Standardplatz.", 0.7, 0.7, 0.75, true)
             GameTooltip:Show()
         end)
         ov:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -786,6 +812,49 @@ function K.SetMoverEnabled(key, on)
     if unlocked and m.enabled then m.overlay:Show() else m.overlay:Hide() end
 end
 
+-- Angewaehlt: heller Grund, weisser Rand. Genau einer.
+local function PaintMover(key)
+    local m = movers[key]
+    local ov = m and m.overlay
+    if not (ov and ov.bg) then return end
+    local on = (key == selected)
+    local a = C.accent
+    ov.bg:SetColorTexture(a[1], a[2], a[3], on and 0.4 or 0.22)
+    if on then ov.edge:SetColor(1, 1, 1, 1) else ov.edge:SetColor(a[1], a[2], a[3], 0.9) end
+end
+
+function K.SelectMover(key)
+    local old = selected
+    selected = key
+    if old then PaintMover(old) end
+    if key then PaintMover(key) end
+    K.Fire("moverSelect", key)
+end
+
+function K.SelectedMover() return selected end
+
+-- Den angewaehlten Rahmen um dx, dy verschieben (Pfeiltasten).
+function K.NudgeMover(dx, dy)
+    local m = selected and movers[selected]
+    if not m or (m.secure and K.InCombat()) then return false end
+    local ui = Root()
+    if not ui then return false end
+    local cur = ui.positions[selected] or m.default
+    ui.positions[selected] = { point = cur.point, relPoint = cur.relPoint or cur.point,
+        x = (cur.x or 0) + dx, y = (cur.y or 0) + dy }
+    K.ApplyPosition(selected)
+    K.Fire("moverSelect", selected)
+    return true
+end
+
+-- Wo der Rahmen gerade steht, fuer die Anzeige im Gestaltungsmodus.
+function K.MoverPosition(key)
+    local m = movers[key]
+    if not m then return nil end
+    local ui = Root()
+    return (ui and ui.positions[key]) or m.default, m.label
+end
+
 function K.IsUnlocked() return unlocked end
 
 function K.SetUnlocked(on)
@@ -795,6 +864,7 @@ function K.SetUnlocked(on)
         return false
     end
     unlocked = on and true or false
+    if not unlocked then K.SelectMover(nil) end
     for _, m in pairs(movers) do
         if unlocked and m.enabled then
             -- Ein Rahmen, der gerade nichts zeigt (kein Ziel, keine Quest),

@@ -637,6 +637,16 @@ function A.Inspect()
         return type(n) == "number" and tostring(n) or why
     end
     out[#out + 1] = "Das Spiel nennt am Ziel: " .. Said("HARMFUL") .. " Debuffs, davon eigene: " .. Said("HARMFUL|PLAYER")
+    -- Die Plakette des Ziels, wenn sie die Symbole des Spiels traegt.
+    local NP = WeintCodex.UINameplates
+    if NP and NP.plates and NP.GameAuraInfo then
+        for unit in pairs(NP.plates) do
+            if K.Bool(_G.UnitIsUnit and _G.UnitIsUnit(unit, "target"), false) then
+                local info = NP.GameAuraInfo(unit)
+                if info then out[#out + 1] = "Plakette " .. unit .. ": " .. info end
+            end
+        end
+    end
     for obj in pairs(objects) do
         local u = obj.unit
         if u and (u == "target" or K.Bool(_G.UnitIsUnit and _G.UnitIsUnit(u, "target"), false)) then
@@ -650,3 +660,34 @@ function A.Inspect()
     end
     return out
 end
+
+--------------------------------------------------
+-- Einmal je Sitzung von selbst nachsehen (Beta)
+--------------------------------------------------
+-- Drei Fassungen lang blieben die Debuffs im Beta-Client unsichtbar, und
+-- die Auskunft von /wcui auren kam nie an. Solange der Weg nicht
+-- bestaetigt ist, schreibt WeintCodex sie deshalb EINMAL je Sitzung von
+-- selbst in den Chat: vier Sekunden nach Kampfbeginn mit einem Ziel - dann
+-- stehen die ersten eigenen Debuffs. A.AUTO_REPORT = false schaltet das ab,
+-- sobald die Frage beantwortet ist.
+--------------------------------------------------
+
+A.AUTO_REPORT = true
+local reported = false
+local watch = CreateFrame("Frame")
+watch:RegisterEvent("PLAYER_REGEN_DISABLED")
+watch:SetScript("OnEvent", function()
+    if reported or not A.AUTO_REPORT or verdict == "ok" then return end
+    if not (_G.C_Timer and _G.C_Timer.After) then return end
+    _G.C_Timer.After(4, function()
+        if reported or verdict == "ok" then return end
+        if not K.Bool(_G.UnitExists and _G.UnitExists("target"), false) then return end
+        if not K.Bool(_G.UnitCanAttack and _G.UnitCanAttack("player", "target"), false) then return end
+        reported = true
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " "
+            .. WeintCodex.ColorText("warning", "Auren-Prüfung") .. " (einmal je Sitzung, für die Fehlersuche – bitte als Screenshot schicken):")
+        for _, line in ipairs(A.Inspect()) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+    end)
+end)

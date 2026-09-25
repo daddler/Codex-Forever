@@ -21,14 +21,23 @@ local CH = WeintCodex.UIChat
 local K  = WeintCodex.UIKit
 local KEY = "chat"
 
+-- Seit 6.3.0.0 (UI 2.0): der Chat ist EINE Kachel - Reiterzeile oben mit
+-- feiner Linie, Text darunter, die Eingabezeile buendig angedockt. Die
+-- Reiter bleiben sichtbar (das Spiel blendete sie aus, bis die Maus kam -
+-- im Beta-Test "komisch, nicht clean"), die Knoepfe des Spiels stehen
+-- klein rechts in der Reiterzeile statt in einer eigenen Spalte.
 local defaults = {
     fontSize    = 13,
-    bgAlpha     = 70,       -- Prozent
-    buttons     = "column", -- column | hide | game: die Knoepfe des Spiels
+    bgAlpha     = 60,       -- Prozent
+    buttons     = "tabrow", -- tabrow | column | hide | game: die Knoepfe des Spiels
     flatTabs    = true,
+    tabsVisible = true,     -- Reiter nicht ausblenden, wenn die Maus weg ist
     editBoxSkin = true,
     editBoxTop  = false,
 }
+
+local TAB_H = 24    -- Hoehe der Reiterzeile ueber dem Text
+local PAD = 6       -- Rand der Kachel um den Text
 
 local function Opt(k) return K.Get(KEY, k) end
 
@@ -59,9 +68,39 @@ local function SkinFrame(cf)
     -- Fensterhintergrunds werden unsichtbar (nicht versteckt: das Spiel
     -- blendet sie beim Ueberfahren selbst wieder ein).
     -- Der Grund reicht ueber die Reiter: Reiter und Text sind eine Flaeche.
-    d.bg = cf:CreateTexture(nil, "BACKGROUND", nil, -8)
-    d.bg:SetPoint("TOPLEFT", cf, "TOPLEFT", -4, 28)
-    d.bg:SetPoint("BOTTOMRIGHT", cf, "BOTTOMRIGHT", 4, -4)
+    d.bg = cf:CreateTexture(nil, "BACKGROUND", nil, -7)
+    d.bg:SetPoint("TOPLEFT", cf, "TOPLEFT", -PAD, TAB_H + 4)
+    d.bg:SetPoint("BOTTOMRIGHT", cf, "BOTTOMRIGHT", PAD, -PAD)
+    -- Reiterzeile: etwas dunkler, darunter eine feine Linie.
+    d.strip = cf:CreateTexture(nil, "BACKGROUND", nil, -6)
+    d.strip:SetPoint("TOPLEFT", d.bg, "TOPLEFT", 0, 0)
+    d.strip:SetPoint("TOPRIGHT", d.bg, "TOPRIGHT", 0, 0)
+    d.strip:SetHeight(TAB_H)
+    d.hair = cf:CreateTexture(nil, "BACKGROUND", nil, -5)
+    d.hair:SetPoint("TOPLEFT", d.strip, "BOTTOMLEFT", 0, 0)
+    d.hair:SetPoint("TOPRIGHT", d.strip, "BOTTOMRIGHT", 0, 0)
+    d.hair:SetHeight(1)
+    -- Rand um die ganze Kachel (an der Grundflaeche, nicht am Chatrahmen:
+    -- sie reicht ueber die Reiter).
+    d.edges = {}
+    for i = 1, 4 do
+        local t = cf:CreateTexture(nil, "BORDER")
+        t:SetColorTexture(0, 0, 0, 1)
+        d.edges[i] = t
+    end
+    d.edges[1]:SetPoint("BOTTOMLEFT", d.bg, "TOPLEFT", -1, 0)
+    d.edges[1]:SetPoint("BOTTOMRIGHT", d.bg, "TOPRIGHT", 1, 0)
+    d.edges[1]:SetHeight(1)
+    d.edges[2]:SetPoint("TOPLEFT", d.bg, "BOTTOMLEFT", -1, 0)
+    d.edges[2]:SetPoint("TOPRIGHT", d.bg, "BOTTOMRIGHT", 1, 0)
+    d.edges[2]:SetHeight(1)
+    d.edges[3]:SetPoint("TOPRIGHT", d.bg, "TOPLEFT", 0, 0)
+    d.edges[3]:SetPoint("BOTTOMRIGHT", d.bg, "BOTTOMLEFT", 0, 0)
+    d.edges[3]:SetWidth(1)
+    d.edges[4]:SetPoint("TOPLEFT", d.bg, "TOPRIGHT", 0, 0)
+    d.edges[4]:SetPoint("BOTTOMLEFT", d.bg, "BOTTOMRIGHT", 0, 0)
+    d.edges[4]:SetWidth(1)
+    d.shadow = K.Glow(d.bg, { host = cf, spread = 7, shadow = true })
     for _, suffix in ipairs({ "Background", "TopLeftTexture", "TopRightTexture", "BottomLeftTexture",
         "BottomRightTexture", "TopTexture", "BottomTexture", "LeftTexture", "RightTexture" }) do
         Hide(_G[name .. suffix])
@@ -116,8 +155,13 @@ local function ApplyFrame(cf, d)
         cf:SetShadowOffset(1, -1)
         cf:SetShadowColor(0, 0, 0, 1)
     end
-    local bg = WeintCodex.Colors.bgDark
-    d.bg:SetColorTexture(bg[1], bg[2], bg[3], (Opt("bgAlpha") or 45) / 100)
+    local a = (Opt("bgAlpha") or 60) / 100
+    local fill = WeintCodex.GameColors.kachelFill
+    d.bg:SetColorTexture(fill[1], fill[2], fill[3], a)
+    local panel = WeintCodex.Colors.bgPanel
+    d.strip:SetColorTexture(panel[1], panel[2], panel[3], math.min(1, a + 0.15))
+    local hair = WeintCodex.Colors.border
+    d.hair:SetColorTexture(hair[1], hair[2], hair[3], 1)
 
     if d.tab and Opt("flatTabs") then
         for _, suffix in ipairs({ "Left", "Middle", "Right", "SelectedLeft", "SelectedMiddle",
@@ -143,14 +187,16 @@ local function ApplyFrame(cf, d)
         d.editBg:Show()
         K.SetFont(d.edit, Opt("fontSize"))
         if d.edit.header then K.SetFont(d.edit.header, Opt("fontSize")) end
+        -- Buendig an der Kachel: gleiche Breite, direkt darunter (bzw.
+        -- ueber der Reiterzeile).
         K.AfterCombat(function()
             d.edit:ClearAllPoints()
             if Opt("editBoxTop") then
-                d.edit:SetPoint("BOTTOMLEFT", cf, "TOPLEFT", -5, 24)
-                d.edit:SetPoint("BOTTOMRIGHT", cf, "TOPRIGHT", 5, 24)
+                d.edit:SetPoint("BOTTOMLEFT", cf, "TOPLEFT", -PAD, TAB_H + 6)
+                d.edit:SetPoint("BOTTOMRIGHT", cf, "TOPRIGHT", PAD, TAB_H + 6)
             else
-                d.edit:SetPoint("TOPLEFT", cf, "BOTTOMLEFT", -5, -4)
-                d.edit:SetPoint("TOPRIGHT", cf, "BOTTOMRIGHT", 5, -4)
+                d.edit:SetPoint("TOPLEFT", cf, "BOTTOMLEFT", -PAD, -PAD - 2)
+                d.edit:SetPoint("TOPRIGHT", cf, "BOTTOMRIGHT", PAD, -PAD - 2)
             end
         end)
     end
@@ -181,7 +227,7 @@ local function UpdateTabs()
             d.line:SetShown(on)
             local fs = d.tab.Text or (d.tab.GetFontString and d.tab:GetFontString())
             if type(fs) == "table" and fs.SetTextColor then
-                fs:SetTextColor(unpack(on and C.textBright or C.textNormal))
+                fs:SetTextColor(unpack(on and C.textBright or C.textMuted))
             end
         end
     end
@@ -197,7 +243,35 @@ CH.UpdateTabs = UpdateTabs
 
 local COLUMN_BUTTONS = { "QuickJoinToastButton", "ChatFrameChannelButton", "ChatFrameMenuButton",
     "TextToSpeechButtonFrame", "ChatFrameToggleVoiceDeafenButton", "ChatFrameToggleVoiceMuteButton" }
-local column
+local column, tabrow
+
+-- Die Knoepfe klein rechts in der Reiterzeile, von rechts nach links.
+local function LayoutTabRow()
+    local cf = _G.ChatFrame1
+    if type(cf) ~= "table" then return end
+    if not tabrow then tabrow = CreateFrame("Frame", "WeintCodexChatTabRow", UIParent) end
+    tabrow:ClearAllPoints()
+    tabrow:SetPoint("TOPRIGHT", cf, "TOPRIGHT", PAD - 2, TAB_H + 2)
+    tabrow:SetSize(120, TAB_H - 2)
+    tabrow:SetFrameStrata(cf:GetFrameStrata() or "LOW")
+    tabrow:SetFrameLevel((cf:GetFrameLevel() or 1) + 5)
+    local x = 0
+    for _, n in ipairs(COLUMN_BUTTONS) do
+        local b = _G[n]
+        if type(b) == "table" and b.SetParent and not (b.IsForbidden and b:IsForbidden()) then
+            local scale = 0.62
+            b:SetParent(tabrow)
+            b:ClearAllPoints()
+            b:SetPoint("RIGHT", tabrow, "RIGHT", -x / scale, 0)
+            if b.SetScale then b:SetScale(scale) end
+            local w = b.GetWidth and b:GetWidth() or 24
+            if type(w) ~= "number" or w <= 0 or w > 60 then w = 24 end
+            x = x + w * scale + 3
+        end
+    end
+    tabrow:Show()
+end
+CH.LayoutTabRow = LayoutTabRow
 
 local function LayoutColumn()
     local cf = _G.ChatFrame1
@@ -240,6 +314,15 @@ local function ApplyAll()
         for _, n in ipairs(COLUMN_BUTTONS) do K.HideBlizzard(n, true) end
     elseif mode == "column" then
         K.AfterCombat(LayoutColumn)
+    elseif mode == "tabrow" then
+        K.AfterCombat(LayoutTabRow)
+    end
+    -- Reiter sichtbar lassen: das Spiel blendet sie nach ein paar Sekunden
+    -- ohne Maus auf diese Werte ab. Nur Zahlen, die sein Chatcode liest.
+    if Opt("tabsVisible") then
+        _G.CHAT_FRAME_TAB_SELECTED_NOMOUSE_ALPHA = 1
+        _G.CHAT_FRAME_TAB_NORMAL_NOMOUSE_ALPHA = 0.75
+        _G.CHAT_FRAME_TAB_ALERTING_NOMOUSE_ALPHA = 1
     end
     UpdateTabs()
 end
@@ -277,9 +360,13 @@ K.Register({
                     format = function(v) return string.format("%d %%", v) end })
             B:Row({ type = "toggle", label = "Flache Reiter", key = "flatTabs", reload = true },
                   { type = "dropdown", label = "Knöpfe des Spiels", key = "buttons", reload = true, items = {
+                        { value = "tabrow", text = "Klein in der Reiterzeile" },
                         { value = "column", text = "In einer Spalte links" },
                         { value = "hide",   text = "Ausblenden" },
                         { value = "game",   text = "Wie im Spiel" } } })
+            B:Row({ type = "toggle", label = "Reiter immer sichtbar", key = "tabsVisible", reload = true,
+                    description = "Das Spiel blendet die Reiter aus, wenn die Maus nicht über dem Chat ist." },
+                  { type = "empty" })
             B:Section("Eingabezeile")
             B:Row({ type = "toggle", label = "Eingabezeile im WeintCodex-Stil", key = "editBoxSkin", reload = true },
                   { type = "toggle", label = "Über dem Chat statt darunter", key = "editBoxTop",
