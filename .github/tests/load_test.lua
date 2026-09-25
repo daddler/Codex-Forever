@@ -2056,6 +2056,14 @@ do
         local ext = CreateFrame("Frame", nil, UIParent)
         ext.GetLeft = function() return 300 end
         ext.GetBottom = function() return 120 end
+        local lastPoint
+        ext.SetPoint = function(_, p, rel, rp, x, y) lastPoint = { p, rel, rp, x, y } end
+        local oldHook, oldTimer = _G.hooksecurefunc, _G.C_Timer
+        _G.hooksecurefunc = function(obj, name, fn)
+            local orig = obj[name]
+            obj[name] = function(...) local r = orig(...) fn(...) return r end
+        end
+        _G.C_Timer = { After = function(_, fn) fn() end }
         K.RegisterMover(ext, "ab_test", "Testleiste", nil, { secure = true, external = true,
             onReset = function() resets = resets + 1 end })
         assert(resets == 1, "ohne Platz nicht dem Spiel ueberlassen")
@@ -2063,6 +2071,12 @@ do
         assert(K.NudgeMover(0, 8), "Leiste laesst sich nicht schieben")
         local pos = K.MoverPosition("ab_test")
         assert(pos.point == "BOTTOMLEFT" and pos.x == 300 and pos.y == 128, "Leiste springt: " .. tostring(pos.x) .. "," .. tostring(pos.y))
+        -- Das Spiel setzt die Leiste neu (verwalteter Bereich unten): sie
+        -- kommt an ihren Platz zurueck (Beta-Test 6.3.0.4: Leiste 2 wanderte).
+        ext:SetPoint("BOTTOM", UIParent, "BOTTOM", 40, 90)
+        assert(lastPoint[1] == "BOTTOMLEFT" and lastPoint[4] == 300 and lastPoint[5] == 128,
+            "Leiste bleibt, wo das Spiel sie hinsetzt: " .. tostring(lastPoint[1]) .. " " .. tostring(lastPoint[4]))
+        _G.hooksecurefunc, _G.C_Timer = oldHook, oldTimer
         K.SelectMover(nil)
         K.Root().positions["ab_test"] = nil
         K.movers["ab_test"] = nil

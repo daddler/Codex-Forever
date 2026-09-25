@@ -743,8 +743,10 @@ function K.ApplyPosition(key)
         return
     end
     local function apply()
+        m.applying = true
         frame:ClearAllPoints()
         frame:SetPoint(pos.point, UIParent, pos.relPoint or pos.point, pos.x or 0, pos.y or 0)
+        m.applying = false
     end
     if m.secure then K.AfterCombat(apply) else apply() end
 end
@@ -759,6 +761,29 @@ function K.RegisterMover(frame, key, label, default, opts)
     -- (onReset).
     m.external = opts.external and true or false
     m.onReset = opts.onReset
+    -- Das Spiel setzt fremde Rahmen auch ausserhalb des Bearbeitungsmodus
+    -- neu: Leiste 2 und 3 stehen in einem Bereich, den es selbst ordnet,
+    -- sobald sich unten etwas aendert (Erfahrungsleiste). Im Beta-Test
+    -- wanderte Leiste 2 so alle paar Minuten ein Stueck zur Seite (6.3.0.4).
+    -- Jeder fremde Anker bringt ihn deshalb zurueck an seinen Platz - einen
+    -- Augenblick spaeter, nicht mitten in der Anordnung des Spiels.
+    if m.external and not m.pointHooked and _G.hooksecurefunc then
+        m.pointHooked = true
+        local function Back()
+            if m.applying or m.returning then return end
+            local ui = Root()
+            if not (ui and ui.positions[key]) then return end
+            m.returning = true
+            local function go()
+                m.returning = false
+                K.AfterCombat(function() K.ApplyPosition(key) end)
+            end
+            if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, go) else go() end
+        end
+        for _, method in ipairs({ "SetPoint", "SetPointBase" }) do
+            if type(frame[method]) == "function" then _G.hooksecurefunc(frame, method, Back) end
+        end
+    end
     movers[key] = m
 
     if not m.overlay then

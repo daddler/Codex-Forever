@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.0.5",
+        date    = "25.09.2026",
+        notes   = {
+            "|cff7C6CFFVerschobene Aktionsleisten bleiben, wo du sie hinstellst.|r Leiste 2 und 3 stehen im Spiel in einem Bereich, den das Spiel selbst ordnet, sobald sich unten etwas ändert – etwa die Erfahrungsleiste. Dabei rückte es eine verschobene Leiste alle paar Minuten ein Stück zur Seite. Jetzt kommt sie jedes Mal sofort an ihren Platz zurück.",
+        },
+    },
+    {
         version = "6.3.0.4",
         date    = "25.09.2026",
         notes   = {

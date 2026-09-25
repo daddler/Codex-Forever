@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.0.5] – 2026-09-25
+
+**Verschobene Aktionsleisten bleiben, wo du sie hinstellst.** Leiste 2 und 3 stehen im Spiel in einem Bereich, den das Spiel selbst ordnet, sobald sich unten etwas ändert – etwa die Erfahrungsleiste. Dabei rückte es eine verschobene Leiste alle paar Minuten ein Stück zur Seite. Jetzt kommt sie jedes Mal sofort an ihren Platz zurück.
+
+### Technisch
+
+- `UIKit.RegisterMover(…, { external = true })`: Haken auf `SetPoint` und
+  `SetPointBase` des fremden Rahmens. Setzt das Spiel einen Rahmen mit
+  eigenem Platz neu (verwalteter Bereich unten, `UIParent_ManageFramePositions`),
+  setzt WeintCodex ihn einen Augenblick später zurück (`C_Timer.After(0)`,
+  nie im Kampf). `m.applying` verhindert, dass der eigene Anker den Haken
+  auslöst. Vorher kam er nur nach `ApplySystemAnchor` zurück.
+- `load_test.lua`: ein fremder Anker bringt die Leiste zurück.
+
 ## [6.3.0.4] – 2026-09-25
 
 **Aktionsleisten einstellen wie bei EllesmereUI.** Unter Oberfläche → Aktionsleisten → Leisten stellst du für jede Leiste Symbolgröße, Abstand, Knöpfe je Reihe und Anzahl ein, dazu die Fläche und „Nur bei Maus darüber“. Verschieben geht im Gestaltungsmodus, ein Doppelklick auf eine Leiste öffnet ihre Einstellungen, Rechtsklick gibt sie dem Bearbeitungsmodus des Spiels zurück. Leisten ohne belegten Knopf bekommen keine leere Fläche mehr.
