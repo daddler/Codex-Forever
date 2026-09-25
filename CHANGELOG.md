@@ -9,6 +9,53 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.0.0] – 2026-09-25
+
+Antworten auf den vierten Beta-Test.
+
+**Der Zielrahmen ist beim Anklicken sofort gefüllt.** Manchmal erschien er als weißer Balken ohne Namen – er wurde sichtbar, bevor er seine Werte bekam.
+
+**Debuffs auf den Namensplaketten kommen jetzt vom Spiel selbst.** WeintCodex hängt die Debuff-Symbole der Plakette des Spiels an die eigene Plakette. Die eigenen Symbole bleiben unter Namensplaketten → Auren wählbar. Beim ersten Kampf mit einem Ziel schreibt WeintCodex einmal eine kurze Auren-Prüfung in den Chat – ein Screenshot davon hilft bei der Fehlersuche.
+
+**Der Chat ist eine ruhige Fläche.** Reiterzeile oben mit feiner Linie, die Reiter bleiben sichtbar, die Knöpfe des Spiels stehen klein rechts in der Reiterzeile, die Eingabezeile sitzt bündig darunter.
+
+**Die Schadensanzeige kann mehr.** Klassensymbole, Anteil in Prozent, deine eigene Zeile immer sichtbar und markiert, Maus über einer Zeile zeigt die Zauber dieses Spielers, und der Zeitraum schaltet auch auf frühere Kämpfe. Die unsinnige Kampfdauer („70889:57“) ist weg.
+
+**Rahmen verschieben im Gestaltungsmodus.** Das Einstellungsfenster schließt sich von selbst, oben erscheint eine Leiste mit Testdaten, Raster, Einrasten, Zurücksetzen und „Fertig“. Rahmen anklicken, mit den Pfeiltasten genau schieben (Umschalt: 8), Doppelklick öffnet seine Einstellungen, Esc beendet – und das Fenster ist wieder da.
+
+**Aktionsleisten ohne leere Kästen.** Leere Plätze sind weg und erscheinen nur, wenn du einen Zauber ziehst. Flache Hervorhebung, ein leichter Schatten am Symbol, die Abklingzahl in der WeintCodex-Schrift, kein Reichweitenpunkt mehr.
+
+### Technisch
+
+- Einheitenrahmen: `RefreshUnit` zeichnet, sobald die Einheit existiert
+  (nicht erst, wenn der Rahmen sichtbar ist), und `OnShow` zeichnet noch
+  einmal. Ursache des weißen Zielrahmens: UnitWatch zeigt den Rahmen erst
+  nach `PLAYER_TARGET_CHANGED`.
+- Plaketten: `auraSource` (`game` Standard, `own`). `game` hängt
+  `UnitFrame.AurasFrame` (bzw. `BuffFrame`) der Plakette des Spiels an
+  unsere, meldet am UnitFrame nur `UNIT_AURA` wieder an, holt den Rahmen
+  per Haken zurück, wenn das Spiel Anker oder Elternrahmen neu setzt, und
+  gibt ihn beim Freigeben mit den ursprünglichen Ankern zurück.
+  `gameAuraScale`. `UIAuras.AUTO_REPORT`: einmal je Sitzung vier
+  Sekunden nach Kampfbeginn mit Ziel die Zeilen von `/wcui auren`
+  (solange der Container-Weg nicht bestätigt ist); jetzt mit der
+  Plakette des Ziels. **Im Spiel ungeprüft.**
+- Chat: Kachel über Reiter und Text (Grund, Reiterzeile, Linie, Rand,
+  Schatten), `buttons = "tabrow"`, `tabsVisible` setzt
+  `CHAT_FRAME_TAB_*_NOMOUSE_ALPHA`, Eingabezeile bündig.
+- Schadensanzeige: `classIcons` (`CLASS_ICON_TCOORDS`), `showPercent`
+  (nur offene Zahlen; Summe vom Client oder selbst gezählt), `pinSelf`
+  (`isLocalPlayer`/GUID), Tooltip mit `GetCombatSessionSourceFromType/
+  FromID` → `combatSpells`, Zeitraum über `GetAvailableCombatSessions`
+  (`GetCombatSessionFromID`), Kampfdauer nur unter sechs Stunden.
+- Gestaltungsmodus (`ui/editmode.lua`): Leiste, Raster, Einrasten
+  (`UIKit.SnapOffset`), Auswahl, `UIKit.NudgeMover`, Doppelklick →
+  Einstellungsseite, Esc; Fenster zu und wieder auf.
+- Aktionsleisten: `emptySlots` (ausblenden, beim Ziehen über
+  `ACTIONBAR_SHOWGRID` sichtbar), `iconShade`, Hervorhebung/gedrückt/
+  aktiv flach, `cooldownFont` (`SetCountdownFont`), `hideRangeDot`.
+- `load_test.lua`: alle sechs Punkte.
+
 ## [6.2.0.0] – 2026-09-24
 
 UI 2.0, Phase 2: das Cockpit – und ein neuer Anlauf bei den Debuffs.

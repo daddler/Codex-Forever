@@ -369,6 +369,13 @@ local function Create(unit)
         self._hover:Hide()
         if _G.UnitFrame_OnLeave then _G.UnitFrame_OnLeave(self) else GameTooltip:Hide() end
     end)
+    -- Erscheint der Rahmen (UnitWatch: neues Ziel, Fokus, Begleiter),
+    -- zeichnet er sich sofort - nicht erst beim naechsten Ereignis.
+    f:HookScript("OnShow", function(self)
+        if self._testShown then return end
+        self:Refresh()
+        self:UpdatePortrait()
+    end)
 
     -- Ziel des Ziels meldet keine eigenen Ereignisse: der Client nennt
     -- seine Lebenspunkte nur auf Nachfrage. Fuenfmal je Sekunde, und nur
@@ -779,9 +786,16 @@ end
 
 local events = CreateFrame("Frame")
 
+-- NICHT nur, wenn der Rahmen schon zu sehen ist: beim Zielwechsel zeigt
+-- der Client den Rahmen (UnitWatch) erst NACH PLAYER_TARGET_CHANGED. Bis
+-- 6.2.0.0 blieb der gerade erschienene Zielrahmen deshalb manchmal leer -
+-- ein weisser Balken ohne Namen (im Beta-Test gesehen). Gezeichnet wird
+-- jetzt immer, wenn es die Einheit gibt, und beim Erscheinen noch einmal
+-- (OnShow, siehe Create).
 local function RefreshUnit(unit, portrait)
     local f = frames[unit]
-    if f and f:IsShown() then
+    if not f then return end
+    if f:IsShown() or K.Bool(_G.UnitExists and _G.UnitExists(unit), false) then
         f:Refresh()
         if portrait then f:UpdatePortrait() end
     end

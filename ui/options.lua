@@ -93,8 +93,8 @@ K.Register({
     pages = {
         { key = "allgemein", label = "Allgemein", build = function(B)
             B:Section("Hauptschalter")
-            local unlock = { type = "button", label = "Rahmen entsperren",
-                text = function() return K.IsUnlocked() and "Rahmen sperren" or "Rahmen entsperren" end,
+            local unlock = { type = "button", label = "Gestaltungsmodus",
+                text = function() return K.IsUnlocked() and "Gestaltung beenden" or "Rahmen verschieben" end,
                 onClick = function() K.SetUnlocked(not K.IsUnlocked()) end }
             if K.OPT_IN then
                 B:Row({ type = "toggle", label = "WeintCodex-Oberfläche verwenden",
@@ -364,7 +364,7 @@ local function SyncChrome()
         row.label:SetTextColor(unpack(active and C.textBright or C.textMuted))
     end
     if headToggle then headToggle:Sync() end
-    unlockBtn:SetText(K.IsUnlocked() and "Rahmen sperren" or "Rahmen entsperren")
+    unlockBtn:SetText(K.IsUnlocked() and "Gestaltung beenden" or "Gestaltungsmodus")
     if K.ReloadPending() then
         reloadBtn:Show()
         reloadNote:Show()
@@ -665,8 +665,8 @@ function O.Build()
     fbg:SetColorTexture(unpack(C.surface1))
 
     unlockBtn = WeintCodex.CreateButton(footer, {
-        text = "Rahmen entsperren", kind = "secondary", height = 30, size = 11, backdrop = "surface1",
-        tooltip = "Zeigt alle beweglichen Rahmen als Flächen, die sich ziehen lassen. Rechtsklick auf eine Fläche setzt sie zurück.",
+        text = "Gestaltungsmodus", kind = "secondary", height = 30, size = 11, backdrop = "surface1",
+        tooltip = "Schließt dieses Fenster und zeigt alle beweglichen Rahmen mit Beispieldaten, Raster und Einrasten. „Fertig“ oben (oder Esc) bringt dich hierher zurück.",
         onClick = function() K.SetUnlocked(not K.IsUnlocked()) SyncChrome() end,
     })
     unlockBtn:SetPoint("LEFT", footer, "LEFT", PAD, 0)

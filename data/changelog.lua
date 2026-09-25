@@ -22,6 +22,18 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.0.0",
+        date    = "25.09.2026",
+        notes   = {
+            "|cff7C6CFFDer Zielrahmen ist beim Anklicken sofort gefüllt.|r Manchmal erschien er als weißer Balken ohne Namen – er wurde sichtbar, bevor er seine Werte bekam.",
+            "|cff7C6CFFDebuffs auf den Namensplaketten kommen jetzt vom Spiel selbst.|r WeintCodex hängt die Debuff-Symbole der Plakette des Spiels an die eigene Plakette. Die eigenen Symbole bleiben unter Namensplaketten → Auren wählbar. Beim ersten Kampf mit einem Ziel schreibt WeintCodex einmal eine kurze Auren-Prüfung in den Chat – ein Screenshot davon hilft bei der Fehlersuche.",
+            "|cff7C6CFFDer Chat ist eine ruhige Fläche.|r Reiterzeile oben mit feiner Linie, die Reiter bleiben sichtbar, die Knöpfe des Spiels stehen klein rechts in der Reiterzeile, die Eingabezeile sitzt bündig darunter.",
+            "|cff7C6CFFDie Schadensanzeige kann mehr.|r Klassensymbole, Anteil in Prozent, deine eigene Zeile immer sichtbar und markiert, Maus über einer Zeile zeigt die Zauber dieses Spielers, und der Zeitraum schaltet auch auf frühere Kämpfe. Die unsinnige Kampfdauer („70889:57“) ist weg.",
+            "|cff7C6CFFRahmen verschieben im Gestaltungsmodus.|r Das Einstellungsfenster schließt sich von selbst, oben erscheint eine Leiste mit Testdaten, Raster, Einrasten, Zurücksetzen und „Fertig“. Rahmen anklicken, mit den Pfeiltasten genau schieben (Umschalt: 8), Doppelklick öffnet seine Einstellungen, Esc beendet – und das Fenster ist wieder da.",
+            "|cff7C6CFFAktionsleisten ohne leere Kästen.|r Leere Plätze sind weg und erscheinen nur, wenn du einen Zauber ziehst. Flache Hervorhebung, ein leichter Schatten am Symbol, die Abklingzahl in der WeintCodex-Schrift, kein Reichweitenpunkt mehr.",
+        },
+    },
+    {
         version = "6.2.0.0",
         date    = "24.09.2026",
         notes   = {

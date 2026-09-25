@@ -1,7 +1,7 @@
 # WeintCodex UI 2.0 – Konzept
 
 Stand: Richtung abgestimmt (nach 6.0.0.6), Phase 1 gebaut (6.1.0.0),
-Phase 2 gebaut (6.2.0.0).
+Phase 2 gebaut (6.2.0.0), Teile von Phase 3 und 4 (6.3.0.0).
 Bildlicher Entwurf:
 Design-Canvas „WeintCodex UI 2.0“ (sechs Ansichten: Kampf, Unterwegs,
 Gestaltungsmodus, Einstellungen, Taschen/Tooltip/Mitteilungen,
@@ -151,7 +151,11 @@ Testmodus geprüft werden kann.
    nach eigen/fremd getrennt (der Container kennt nur Filter; eigene
    und alle Debuffs in zwei Reihen hieße doppelte Symbole).
 3. **Bedienung.** Gestaltungsmodus mit Einstellkarte, Einstellungsfenster
-   mit Suche, Profile und Profil-Code.
+   mit Suche, Profile und Profil-Code. **Teilweise gebaut in 6.3.0.0:**
+   Gestaltungsmodus mit Leiste (Testdaten, Raster, Einrasten,
+   Zurücksetzen, Fertig), Auswahl, Pfeiltasten, Doppelklick öffnet die
+   Einstellungsseite des Rahmens, Fenster schließt und öffnet sich selbst.
+   Offen: Einstellkarte direkt am Rahmen, Suche, Profile, Profil-Code.
 4. **Rand.** Minikarte, Questliste, Chat, Infoleiste mit Levelhilfe,
    Taschen mit Bereichen, Tooltip, Mitteilungen.
 5. **Komfort.** Wellen 1–3 oben.

@@ -95,6 +95,7 @@ weil sie genau das sind, wofür er steht.
 | `ui/layout.lua` | **wo alles steht**: die Standardpositionen aller beweglichen Rahmen (`UIKit.LAYOUT`, `UIKit.Layout`) |
 | `ui/presence.lua` | **Ruhe, Bereit, Kampf**: Deckkraft außerhalb des Kampfes |
 | `ui/testmode.lua` | **Testmodus**: Beispieldaten für Ziel, Fokus, Gruppe, Zauberbalken, Schadensanzeige |
+| `ui/editmode.lua` | **Gestaltungsmodus**: Leiste, Raster, Einrasten, Pfeiltasten, Doppelklick zu den Einstellungen |
 | `ui/castbar.lua` | **ein** Zauberbalken für Plaketten und Einheitenrahmen |
 | `ui/nameplates.lua` | Gegnerplaketten |
 | `ui/unitframes.lua` | Spieler, Ziel, Ziel des Ziels, Fokus, Begleiter; Porträt als 3D-Modell oder Bild |
@@ -360,6 +361,33 @@ Seit 6.2.0.0:
   welche, ist der Weg bestätigt.
 * `/wcui auren` (mit Ziel): Weg, Zustand, was das Spiel am Ziel nennt,
   und je Objekt angelegte und gezeigte Symbole mit Rahmengröße.
+
+## 6.3.0.0: Antworten auf den vierten Beta-Test
+
+**Im Spiel ungeprüft.**
+
+* **Weißer Zielrahmen.** UnitWatch zeigt den Rahmen erst *nach*
+  `PLAYER_TARGET_CHANGED`; `RefreshUnit` zeichnete nur sichtbare Rahmen.
+  Jetzt: zeichnen, sobald die Einheit existiert, und bei `OnShow`.
+* **Debuffs auf Plaketten: die Symbole des Spiels.** `auraSource =
+  "game"` hängt den Aurenrahmen der Plakette des Spiels
+  (`UnitFrame.AurasFrame`/`BuffFrame`) an unsere Plakette; am
+  Blizzard-UnitFrame bleibt nur `UNIT_AURA` angemeldet. Setzt das Spiel
+  Anker oder Elternrahmen zurück, holt ein Haken ihn wieder her; beim
+  Freigeben geht er mit seinen ursprünglichen Ankern zurück. Die eigenen
+  Symbole (`own`) bleiben wählbar, bis klar ist, warum sie im Beta-Client
+  nicht erschienen. Einmal je Sitzung (`UIAuras.AUTO_REPORT`) schreibt
+  WeintCodex die Auren-Prüfung in den Chat.
+* **Chat** als eine Kachel: Reiterzeile mit Linie, Reiter bleiben
+  sichtbar (`CHAT_FRAME_TAB_*_NOMOUSE_ALPHA`), Knöpfe klein in der
+  Reiterzeile, Eingabe bündig.
+* **Schadensanzeige** wie Details, soweit die Messung des Spiels es
+  hergibt: Klassensymbol, Anteil (nur mit offenen Zahlen), eigene Zeile
+  angeheftet und markiert, Tooltip mit Zaubern, frühere Kämpfe.
+* **Gestaltungsmodus** (`ui/editmode.lua`) statt „Rahmen entsperren“:
+  siehe `docs/design/ui-2.0.md`, Phase 3.
+* **Aktionsleisten**: leere Plätze aus (beim Ziehen sichtbar), flache
+  Zustände, Schatten am Symbol, Abklingzahl in eigener Schrift.
 
 **Was noch fehlt (Phase 3 ff.):** Kachel auf allen Flächen (Chat,
 Minikarte, Taschen), Schadensanzeige in Ruhe auf die Kopfzeile
