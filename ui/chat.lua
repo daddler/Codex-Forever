@@ -574,20 +574,7 @@ CH.info = function() return info end
 -- Chat dieses Clients stimmen nicht. Diese Zeilen sagen, was wirklich da
 -- ist: Reiter, ihr Elternrahmen, Deckkraft, Stufe, Lage.
 
-local function Describe(f)
-    if type(f) ~= "table" then return "fehlt" end
-    local function P(v) v = K.Plain(v) return type(v) == "number" and string.format("%.2f", v) or tostring(v) end
-    local ok, out = pcall(function()
-        local parent = f.GetParent and f:GetParent()
-        local pname = parent and parent.GetName and parent:GetName() or (parent and "(ohne Namen)" or "keiner")
-        local ea = f.GetEffectiveAlpha and f:GetEffectiveAlpha()
-        return string.format("gezeigt %s, sichtbar %s, Alpha %s (wirksam %s), %s/%s, links %s oben %s, Eltern %s",
-            tostring(K.Bool(f:IsShown(), false)), tostring(K.Bool(f:IsVisible(), false)),
-            P(f:GetAlpha()), P(ea), tostring(f.GetFrameStrata and f:GetFrameStrata()),
-            P(f.GetFrameLevel and f:GetFrameLevel()), P(f.GetLeft and f:GetLeft()), P(f.GetTop and f:GetTop()), pname)
-    end)
-    return ok and out or ("nicht lesbar: " .. tostring(out))
-end
+local Describe = K.Describe
 CH.Describe = Describe
 
 function CH.Inspect()

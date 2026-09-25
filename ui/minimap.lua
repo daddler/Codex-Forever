@@ -113,6 +113,7 @@ end
 -- wieder in die Spalte.
 
 local laying = false
+local bag, flyout   -- Sammelknopf und seine Liste, siehe unten
 
 -- Die Knoepfe des Spiels in der Spalte links neben der Karte.
 local function ColumnButtons()
@@ -134,9 +135,13 @@ local function ColumnButtons()
     add(type(cl) == "table" and cl.InstanceDifficulty or nil)
     add(_G.MiniMapInstanceDifficulty)
     add(_G.ExpansionLandingPageMinimapButton)
-    -- Ohne Sammelknopf stehen die Addon-Knoepfe mit in der Spalte.
+    -- Ohne Sammelknopf stehen die Addon-Knoepfe mit in der Spalte; wer
+    -- noch in der (dann versteckten) Liste haengt, kommt an die Karte zurueck.
     if not Opt("addonBag") then
-        for _, b in ipairs(MM.AddonButtons()) do add(b) end
+        for _, b in ipairs(MM.AddonButtons()) do
+            if flyout and b:GetParent() == flyout then b:SetParent(_G.Minimap) end
+            add(b)
+        end
     end
     return list
 end
@@ -202,11 +207,38 @@ end
 -- Die Tageszeit (Sonne/Mond, zugleich der Kalender): unten rechts an der
 -- Karte, ueber dem Gebietsstreifen (Beta-Test: "mitten drin", "gerne unten
 -- rechts"). Welcher Rahmen das ist, heisst je nach Client anders.
+-- 6.3.1.1 blieb sie trotz dreier Namen in der Mitte; deshalb zusaetzlich
+-- die Kinder von Karte und Kartenbereich nach einem Namen mit "GameTime"
+-- oder "DayNight" durchsehen. Wer es dann noch nicht ist, zeigt
+-- /wcui maus (Maus ueber die Sonne halten).
+local TIME_NAMES = { "GameTime", "DayNight" }
+local function TimeName(f)
+    local ok, n = pcall(function()
+        return (f.GetDebugName and f:GetDebugName()) or (f.GetName and f:GetName())
+    end)
+    if not ok or type(n) ~= "string" then return false end
+    for _, pat in ipairs(TIME_NAMES) do
+        if n:find(pat, 1, true) then return true end
+    end
+    return false
+end
+
 function MM.TimeButton()
     local cl, mm = _G.MinimapCluster, _G.Minimap
+    local function usable(f)
+        return type(f) == "table" and f.SetPoint and not (f.IsForbidden and f:IsForbidden())
+    end
     for _, f in ipairs({ _G.GameTimeFrame, type(cl) == "table" and cl.GameTimeFrame or nil,
         type(mm) == "table" and mm.GameTimeFrame or nil }) do
-        if type(f) == "table" and f.SetPoint and not (f.IsForbidden and f:IsForbidden()) then return f end
+        if usable(f) then return f end
+    end
+    for _, host in ipairs({ mm, cl }) do
+        if type(host) == "table" and host.GetChildren then
+            local ok, kids = pcall(function() return { host:GetChildren() } end)
+            for _, ch in ipairs(ok and kids or {}) do
+                if usable(ch) and TimeName(ch) then return ch end
+            end
+        end
     end
     return nil
 end
@@ -258,7 +290,6 @@ MM.ColumnButtons = ColumnButtons
 -- Addons zusammenfasst"). Das Zeichen ist gezeichnet (neun Punkte), keine
 -- Grafik des Spiels - ein geratener Pfad waere ein gruenes Rechteck.
 
-local bag, flyout
 local BAG_PER_ROW, BAG_CELL = 4, 30
 
 local function BuildBag()
@@ -315,9 +346,17 @@ function MM.LayoutBag()
     flyout:SetPoint("BOTTOMRIGHT", bag, "TOPRIGHT", 0, 4)
     flyout:SetSize(cols * BAG_CELL + 8, rows * BAG_CELL + 8)
     local inset = (BAG_CELL - 26) / 2
+    -- Addon-Knoepfe setzen ihre Schicht selbst (LibDBIcon: MEDIUM). Unter
+    -- der Kachel der Liste (DIALOG) lagen sie dann hinter deren dunkler
+    -- Flaeche (Beta-Test: "alles sehr abgedunkelt") - also dieselbe
+    -- Schicht wie die Liste, zwei Stufen darueber.
+    local strata = flyout.GetFrameStrata and flyout:GetFrameStrata()
+    local level = K.Plain(flyout.GetFrameLevel and flyout:GetFrameLevel())
     for i, b in ipairs(list) do
         Watch(b)
         if b:GetParent() ~= flyout then b:SetParent(flyout) end
+        if type(strata) == "string" and b.SetFrameStrata then b:SetFrameStrata(strata) end
+        if type(level) == "number" and b.SetFrameLevel then b:SetFrameLevel(level + 2) end
         b:ClearAllPoints()
         local c, r = (i - 1) % BAG_PER_ROW, math.floor((i - 1) / BAG_PER_ROW)
         b:SetPoint("TOPLEFT", flyout, "TOPLEFT", 4 + c * BAG_CELL + inset, -4 - r * BAG_CELL - inset)

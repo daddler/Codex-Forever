@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.1.2",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFAddon-Knöpfe in voller Helligkeit.|r In der aufgeklappten Kachel des Sammelknopfs lagen die Knöpfe hinter deren dunkler Fläche; jetzt liegen sie darüber.",
+            "|cff7C6CFFTageszeit wird breiter gesucht.|r Heißt sie in diesem Client anders als erwartet, findet WeintCodex sie jetzt auch über die Rahmen an der Minikarte.",
+            "|cff7C6CFFNeu: /wcui maus.|r Maus über ein Ding am Bildschirm halten und /wcui maus abschicken: Der Chat nennt Name, Elternrahmen und Anker aller Rahmen darunter.",
+        },
+    },
+    {
         version = "6.3.1.1",
         date    = "26.09.2026",
         notes   = {

@@ -361,6 +361,12 @@ Seit 6.2.0.0:
   welche, ist der Weg bestätigt.
 * `/wcui auren` (mit Ziel): Weg, Zustand, was das Spiel am Ziel nennt,
   und je Objekt angelegte und gezeigte Symbole mit Rahmengröße.
+* `/wcui chat`: Chatfenster, eigene Fläche, Reiter, Knöpfe, Eingabe- und
+  Infozeile in je einer Zeile (`K.Describe`).
+* `/wcui maus` (seit 6.3.1.2): Maus über ein Ding halten und abschicken –
+  jeder Rahmen aus `GetMouseFoci` mit `GetDebugName`, Elternkette und
+  Ankern. Für Rahmen, die im Beta-Client anders heißen als angenommen
+  (die Tageszeit an der Minikarte blieb drei Fassungen lang unauffindbar).
 
 ## 6.3.0.0: Antworten auf den vierten Beta-Test
 

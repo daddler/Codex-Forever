@@ -912,6 +912,91 @@ function K.ReloadButton(parent, opts)
 end
 
 --------------------------------------------------
+-- Nachsehen: was ist dieser Rahmen?
+--------------------------------------------------
+-- Im Beta-Client heissen Rahmen oft anders, als WeintCodex annimmt
+-- (Tageszeit auf der Minikarte: drei Fassungen lang nicht gefunden).
+-- K.Describe beschreibt einen Rahmen in einer Zeile, K.InspectMouse alle
+-- Rahmen unter der Maus samt Elternkette und Ankern (/wcui maus). Alles
+-- in pcall: auch geschuetzte oder geheime Rahmen duerfen hier nichts
+-- ausloesen.
+--------------------------------------------------
+
+local function Num(v)
+    v = K.Plain(v)
+    return type(v) == "number" and string.format("%.2f", v) or tostring(v)
+end
+
+local function NameOf(f)
+    if type(f) ~= "table" then return "keiner" end
+    local ok, n = pcall(function()
+        return (f.GetDebugName and f:GetDebugName()) or (f.GetName and f:GetName())
+    end)
+    if ok and type(n) == "string" and n ~= "" then return n end
+    return "(ohne Namen)"
+end
+K.NameOf = NameOf
+
+function K.Describe(f)
+    if type(f) ~= "table" then return "fehlt" end
+    local ok, out = pcall(function()
+        local parent = f.GetParent and f:GetParent()
+        local pname = parent and NameOf(parent) or "keiner"
+        local ea = f.GetEffectiveAlpha and f:GetEffectiveAlpha()
+        return string.format("gezeigt %s, sichtbar %s, Alpha %s (wirksam %s), %s/%s, links %s oben %s, Eltern %s",
+            tostring(K.Bool(f:IsShown(), false)), tostring(K.Bool(f:IsVisible(), false)),
+            Num(f:GetAlpha()), Num(ea), tostring(f.GetFrameStrata and f:GetFrameStrata()),
+            Num(f.GetFrameLevel and f:GetFrameLevel()), Num(f.GetLeft and f:GetLeft()), Num(f.GetTop and f:GetTop()), pname)
+    end)
+    return ok and out or ("nicht lesbar: " .. tostring(out))
+end
+
+local function Anchors(f)
+    local ok, out = pcall(function()
+        local n = f.GetNumPoints and K.Plain(f:GetNumPoints())
+        if type(n) ~= "number" or n < 1 then return "keine Anker" end
+        local parts = {}
+        for i = 1, math.min(n, 4) do
+            local p, rel, rp, x, y = f:GetPoint(i)
+            parts[#parts + 1] = string.format("%s an %s %s (%s, %s)", tostring(p), NameOf(rel), tostring(rp), Num(x), Num(y))
+        end
+        return table.concat(parts, "; ")
+    end)
+    return ok and out or "Anker nicht lesbar"
+end
+
+function K.InspectMouse()
+    local foci = {}
+    if type(_G.GetMouseFoci) == "function" then
+        local ok, t = pcall(_G.GetMouseFoci)
+        if ok and type(t) == "table" then foci = t end
+    elseif type(_G.GetMouseFocus) == "function" then
+        local ok, f = pcall(_G.GetMouseFocus)
+        if ok and type(f) == "table" then foci = { f } end
+    end
+    local out = {}
+    for _, f in ipairs(foci) do
+        if #out >= 12 then break end
+        if type(f) == "table" and not (f.IsForbidden and f:IsForbidden()) then
+            local chain, p = {}, f.GetParent and f:GetParent()
+            for _ = 1, 5 do
+                if type(p) ~= "table" then break end
+                chain[#chain + 1] = NameOf(p)
+                p = p.GetParent and p:GetParent()
+            end
+            local kind = f.GetObjectType and f:GetObjectType()
+            out[#out + 1] = NameOf(f) .. " (" .. tostring(kind) .. "): " .. K.Describe(f)
+            out[#out + 1] = "   Eltern: " .. (#chain > 0 and table.concat(chain, " < ") or "keine")
+                .. " · Anker: " .. Anchors(f)
+        end
+    end
+    if #out == 0 then
+        out[1] = "Unter der Maus liegt kein Rahmen. Maus über das Ding halten und den Befehl mit Enter abschicken."
+    end
+    return out
+end
+
+--------------------------------------------------
 -- Einmal-Ereignisse
 --------------------------------------------------
 -- PLAYER_LOGIN: SavedData stehen seit ADDON_LOADED (core/main.lua); die

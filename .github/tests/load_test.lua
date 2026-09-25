@@ -2334,6 +2334,48 @@ do
         assert(WeintCodex.UIChat.Inspect()[1]:find("Chatfenster 1", 1, true), "/wcui chat ohne Auskunft")
     end)
     Check(ok, "Minikarte: Sammelknopf fuer Addons, Wegpunkte bleiben, Tageszeit unten rechts" .. (ok and "" or (": " .. tostring(err))))
+
+    -- 6.3.1.2: Addon-Knoepfe liegen in der Schicht ihrer Liste (sonst
+    -- dunkelt deren Kachel sie ab), die Tageszeit wird auch unter anderem
+    -- Namen gefunden, /wcui maus beschreibt die Rahmen unter der Maus.
+    ok, err = pcall(function()
+        local MM, K = WeintCodex.UIMinimap, WeintCodex.UIKit
+        local mm = _G.Minimap
+        local addonBtn = CreateFrame("Button", "LibDBIcon10_TestAddon", mm)
+        local strata
+        addonBtn.SetFrameStrata = function(_, v) strata = v end
+        local oldKids = mm.GetChildren
+        mm.GetChildren = function() return addonBtn end
+        local _, flyout = MM.Bag()
+        flyout.GetFrameStrata = function() return "DIALOG" end
+        MM.LayoutBag()
+        assert(addonBtn:GetParent() == flyout, "Addon-Knopf nicht in der Liste")
+        assert(strata == "DIALOG", "Addon-Knopf liegt unter der Kachel der Liste")
+        -- Ohne Sammelknopf zurueck an die Karte.
+        K.Set("minimap", "addonBag", false)
+        MM.ColumnButtons()
+        assert(addonBtn:GetParent() == mm, "Addon-Knopf bleibt in der versteckten Liste haengen")
+        K.Set("minimap", "addonBag", nil)
+        -- Tageszeit unter anderem Namen, als Kind des Kartenbereichs.
+        local cl = _G.MinimapCluster
+        local sun = CreateFrame("Button", nil, cl)
+        sun.GetDebugName = function() return "MinimapCluster.DayNightFrame" end
+        local oldCl = cl.GetChildren
+        cl.GetChildren = function() return sun end
+        mm.GetChildren = function() return end
+        assert(MM.TimeButton() == sun, "Tageszeit unter anderem Namen nicht gefunden")
+        cl.GetChildren, mm.GetChildren = oldCl, oldKids
+        _G.LibDBIcon10_TestAddon = nil
+        -- /wcui maus
+        local oldFoci = _G.GetMouseFoci
+        _G.GetMouseFoci = function() return { sun } end
+        local lines = K.InspectMouse()
+        assert(lines[1]:find("DayNightFrame", 1, true), "/wcui maus nennt den Rahmen nicht")
+        _G.GetMouseFoci = function() return {} end
+        assert(K.InspectMouse()[1]:find("kein Rahmen", 1, true), "/wcui maus ohne Rahmen stumm")
+        _G.GetMouseFoci = oldFoci
+    end)
+    Check(ok, "Minikarte: Addon-Knoepfe hell, Tageszeit unter anderem Namen, /wcui maus" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.

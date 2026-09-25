@@ -9,6 +9,28 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.1.2] – 2026-09-26
+
+**Addon-Knöpfe in voller Helligkeit.** In der aufgeklappten Kachel des Sammelknopfs lagen die Knöpfe hinter deren dunkler Fläche; jetzt liegen sie darüber.
+
+**Tageszeit wird breiter gesucht.** Heißt sie in diesem Client anders als erwartet, findet WeintCodex sie jetzt auch über die Rahmen an der Minikarte.
+
+**Neu: /wcui maus.** Maus über ein Ding am Bildschirm halten und /wcui maus abschicken: Der Chat nennt Name, Elternrahmen und Anker aller Rahmen darunter.
+
+### Technisch
+
+- Minikarte: Addon-Knöpfe setzen ihre Schicht selbst (LibDBIcon: `MEDIUM`);
+  unter der Liste (`DIALOG`) lag deren Kachel über ihnen. `MM.LayoutBag`
+  gibt ihnen Schicht und Stufe + 2 der Liste. Ist `addonBag` aus, hängt
+  `ColumnButtons` sie von der versteckten Liste zurück an die Karte.
+- `MM.TimeButton` sucht nach den drei Namen zusätzlich die Kinder von
+  `Minimap` und `MinimapCluster` nach „GameTime“/„DayNight“ im Namen
+  (`GetDebugName`).
+- `K.Describe` (aus `ui/chat.lua` nach `ui/kit.lua` gezogen, nennt
+  Elternrahmen jetzt per `GetDebugName`) und `K.InspectMouse` für
+  `/wcui maus`: alle Rahmen aus `GetMouseFoci` mit Elternkette und Ankern,
+  alles in `pcall`.
+
 ## [6.3.1.1] – 2026-09-26
 
 **Ein Knopf für alle Addons an der Minikarte.** Unten links neben der Minikarte sitzt ein Knopf mit neun Punkten; ein Klick klappt alle Addon-Knöpfe in einer Kachel auf, ein zweiter klappt sie wieder zu. Kartenmarkierungen anderer Addons (Wegpunkte, Fundorte) bleiben auf der Karte. Abschaltbar unter Minikarte → „Addon-Knöpfe sammeln“.

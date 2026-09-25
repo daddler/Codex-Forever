@@ -750,6 +750,12 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    if msg == "maus" or msg == "mouse" then
+        for _, line in ipairs(K.InspectMouse()) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+        return
+    end
     if msg == "auren" or msg == "auras" then
         for _, line in ipairs(WeintCodex.UIAuras.Inspect()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
