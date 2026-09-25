@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.0.3",
+        date    = "25.09.2026",
+        notes   = {
+            "|cff7C6CFFJede Aktionsleiste steht auf einer eigenen Fläche.|r Eine dunkle Kachel mit feinem Rand hinter den Knöpfen, die jeder Anordnung aus dem Bearbeitungsmodus folgt. Tastenkürzel oben rechts, Stapelzahl unten rechts, die Blätterpfeile neben Leiste 1 sind weg (Umblättern weiter mit Umschalt+Mausrad). Beides unter Aktionsleisten → Leisten abschaltbar.",
+            "|cff7C6CFFKeine Auren-Prüfung mehr im Chat.|r Die Debuffs auf den Plaketten sind bestätigt; /wcui auren gibt die Auskunft weiter auf Wunsch und sagt ehrlich „nicht messbar“, wo das Spiel die Symbole geheim hält.",
+        },
+    },
+    {
         version = "6.3.0.2",
         date    = "25.09.2026",
         notes   = {

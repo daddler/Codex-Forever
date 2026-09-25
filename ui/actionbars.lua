@@ -58,6 +58,11 @@ local defaults = {
     microMenu    = "left",   -- left | game
     microScale   = 85,
     bagsBar      = "right",  -- right | game
+    -- Seit 6.3.0.3 (Beta-Test: "sieht nach wenig aus - bei ElvUI richtig
+    -- schick"): eine Kachel hinter jeder Leiste, die Blaetterpfeile der
+    -- Hauptleiste weg, Tastenkuerzel oben rechts, Stapelzahl unten rechts.
+    barBackdrop  = true,
+    hidePaging   = true,
 }
 
 local function Opt(k) return K.Get(KEY, k) end
@@ -215,6 +220,25 @@ local function Skin(b)
     d.hotkey = Region(b, "HotKey")
     d.count  = Region(b, "Count")
     d.name   = Region(b, "Name")
+    -- Feste Plaetze: Taste oben rechts, Stapel unten rechts, Makroname
+    -- unten mittig - jeder Knopf gleich, auch auf Begleiter- und
+    -- Haltungsleiste.
+    if not K.InCombat() then
+        if d.hotkey and d.hotkey.ClearAllPoints then
+            d.hotkey:ClearAllPoints()
+            d.hotkey:SetPoint("TOPRIGHT", b, "TOPRIGHT", -2, -3)
+            if d.hotkey.SetJustifyH then d.hotkey:SetJustifyH("RIGHT") end
+        end
+        if d.count and d.count.ClearAllPoints then
+            d.count:ClearAllPoints()
+            d.count:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -2, 3)
+        end
+        if d.name and d.name.ClearAllPoints then
+            d.name:ClearAllPoints()
+            d.name:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT", 2, 3)
+            d.name:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -2, 3)
+        end
+    end
     skinned[b] = d
     return d
 end
@@ -365,6 +389,120 @@ local function OnRange(self, checksRange, inRange)
 end
 
 --------------------------------------------------
+-- Flaeche hinter jeder Leiste
+--------------------------------------------------
+-- Was ElvUI-Leisten "schick" macht, ist vor allem das: die Knoepfe stehen
+-- auf einer gemeinsamen Flaeche, statt einzeln im Bild zu schwimmen. Die
+-- Kachel haengt an der Leiste (blendet mit ihr ab, Ruhe und Kampf) und ist
+-- an ihrer linken oberen und rechten unteren Taste verankert - so folgt sie
+-- jeder Anordnung aus dem Bearbeitungsmodus. Gemessen wird nur ausserhalb
+-- des Kampfes; laesst der Client nicht messen, bleibt die Flaeche weg.
+
+local BAR_BUTTONS = {
+    { bars = { "MainMenuBar", "MainActionBar" }, family = "ActionButton", n = 12 },
+    { bars = { "MultiBarBottomLeft" }, family = "MultiBarBottomLeftButton", n = 12 },
+    { bars = { "MultiBarBottomRight" }, family = "MultiBarBottomRightButton", n = 12 },
+    { bars = { "MultiBarRight" }, family = "MultiBarRightButton", n = 12 },
+    { bars = { "MultiBarLeft" }, family = "MultiBarLeftButton", n = 12 },
+    { bars = { "MultiBar5" }, family = "MultiBar5Button", n = 12 },
+    { bars = { "MultiBar6" }, family = "MultiBar6Button", n = 12 },
+    { bars = { "MultiBar7" }, family = "MultiBar7Button", n = 12 },
+    { bars = { "StanceBar" }, family = "StanceButton", n = 10 },
+    { bars = { "PetActionBar" }, family = "PetActionButton", n = 10 },
+}
+local BACKDROP_PAD = 4
+AB.backdrops = {}
+
+local function Num(f, method)
+    local ok, v = pcall(f[method], f)
+    v = ok and K.Plain(v) or nil
+    return type(v) == "number" and v or nil
+end
+
+-- Linke obere und rechte untere Taste der sichtbaren Knoepfe; nil, wenn
+-- es keine gibt oder die Anordnung kein Raster ist.
+local function Corners(entry)
+    local list = {}
+    for i = 1, entry.n do
+        local b = _G[entry.family .. i]
+        if type(b) == "table" and b.IsShown and b:IsShown() then
+            local l, t = Num(b, "GetLeft"), Num(b, "GetTop")
+            local r, bt = Num(b, "GetRight"), Num(b, "GetBottom")
+            if not (l and t and r and bt) then return nil end
+            list[#list + 1] = { b = b, l = l, t = t, r = r, bt = bt }
+        end
+    end
+    if #list == 0 then return nil end
+    local minL, maxT, maxR, minB = math.huge, -math.huge, -math.huge, math.huge
+    for _, e in ipairs(list) do
+        minL, maxT = math.min(minL, e.l), math.max(maxT, e.t)
+        maxR, minB = math.max(maxR, e.r), math.min(minB, e.bt)
+    end
+    local tl, br
+    for _, e in ipairs(list) do
+        if math.abs(e.l - minL) <= 1 and math.abs(e.t - maxT) <= 1 then tl = e.b end
+        if math.abs(e.r - maxR) <= 1 and math.abs(e.bt - minB) <= 1 then br = e.b end
+    end
+    return tl, br
+end
+
+local function UpdateBackdrops()
+    if K.InCombat() then return end
+    local on = Opt("barBackdrop")
+    for _, entry in ipairs(BAR_BUTTONS) do
+        local bar
+        for _, n in ipairs(entry.bars) do
+            if type(_G[n]) == "table" then bar = _G[n] break end
+        end
+        if bar and not (bar.IsForbidden and bar:IsForbidden()) then
+            local bd = AB.backdrops[bar]
+            local tl, br
+            if on then tl, br = Corners(entry) end
+            if tl and br then
+                if not bd then
+                    bd = CreateFrame("Frame", nil, bar)
+                    bd.kachel = K.Kachel(bd, { shadow = 6 })
+                    AB.backdrops[bar] = bd
+                end
+                local lvl = Num(bar, "GetFrameLevel") or 1
+                bd:SetFrameLevel(math.max(0, lvl))
+                bd:ClearAllPoints()
+                bd:SetPoint("TOPLEFT", tl, "TOPLEFT", -BACKDROP_PAD, BACKDROP_PAD)
+                bd:SetPoint("BOTTOMRIGHT", br, "BOTTOMRIGHT", BACKDROP_PAD, -BACKDROP_PAD)
+                bd:Show()
+            elseif bd then
+                bd:Hide()
+            end
+        end
+    end
+end
+AB.UpdateBackdrops = UpdateBackdrops
+
+-- Die Blaetterpfeile und die Seitenzahl der Hauptleiste. Umblaettern geht
+-- weiter ueber die Tasten des Spiels (Umschalt+Mausrad, Umschalt+1..6).
+local function HidePaging()
+    if not Opt("hidePaging") then return end
+    local main = _G.MainActionBar or _G.MainMenuBar
+    local parts = {
+        main and main.ActionBarPageNumber, _G.ActionBarUpButton, _G.ActionBarDownButton,
+        _G.MainMenuBarPageNumber, _G.MainMenuBarArtFrame and _G.MainMenuBarArtFrame.PageNumber,
+    }
+    for i = 1, 5 do
+        local f = parts[i]
+        if type(f) == "table" and f.SetAlpha and not (f.IsForbidden and f:IsForbidden()) then
+            KeepHidden(f)
+            if f.EnableMouse and not K.InCombat() then pcall(f.EnableMouse, f, false) end
+        end
+    end
+end
+AB.HidePaging = HidePaging
+
+local function Arrange()
+    UpdateBackdrops()
+    HidePaging()
+end
+
+--------------------------------------------------
 -- Mikromenue und Taschenleiste
 --------------------------------------------------
 
@@ -413,6 +551,7 @@ end
 local function Enable()
     SkinAll()
     K.AfterCombat(Place)
+    K.AfterCombat(Arrange)
     WeintCodex.UIPresence.Register("mainbar", Named(MAIN_BARS), "fade_mainbar")
     WeintCodex.UIPresence.Register("bars", Named(OTHER_BARS), "fade_bars")
     -- Der Bearbeitungsmodus setzt beide beim Laden eines Layouts und beim
@@ -426,7 +565,7 @@ local function Enable()
         end
         local emf = _G.EditModeManagerFrame
         if type(emf) == "table" and type(emf.ExitEditMode) == "function" then
-            _G.hooksecurefunc(emf, "ExitEditMode", function() K.AfterCombat(Place) end)
+            _G.hooksecurefunc(emf, "ExitEditMode", function() K.AfterCombat(Place) K.AfterCombat(Arrange) end)
         end
     end
     -- Aeltere Clients setzen die Tastenkuerzel ueber eine globale Funktion.
@@ -448,7 +587,7 @@ local function Enable()
         if event == "ACTIONBAR_SHOWGRID" then gridShown = true
         elseif event == "ACTIONBAR_HIDEGRID" then gridShown = false end
         SkinAll()
-        if event == "PLAYER_ENTERING_WORLD" then K.AfterCombat(Place) end
+        if event == "PLAYER_ENTERING_WORLD" then K.AfterCombat(Place) K.AfterCombat(Arrange) end
     end)
 end
 
@@ -460,7 +599,7 @@ K.Register({
     description = "Die Knöpfe des Spiels im Stil von WeintCodex: flach, mit feinem Rand, eigener Schrift und rotem Symbol außer Reichweite.",
     defaults = defaults,
     Enable = Enable,
-    OnSetting = function() if K.IsActive(KEY) then SkinAll() K.AfterCombat(Place) end end,
+    OnSetting = function() if K.IsActive(KEY) then SkinAll() K.AfterCombat(Place) K.AfterCombat(Arrange) end end,
     pages = {
         { key = "allgemein", label = "Allgemein", build = function(B)
             B:Section("Knöpfe")
@@ -469,6 +608,11 @@ K.Register({
                     disabled = function() return not K.Get(KEY, "border") end })
             B:Row({ type = "toggle", label = "Symbol rot außer Reichweite", key = "rangeColor" },
                   { type = "toggle", label = "Greifen an den Enden ausblenden", key = "hideEndCaps", reload = true })
+            B:Section("Leisten")
+            B:Row({ type = "toggle", label = "Fläche hinter jeder Leiste", key = "barBackdrop",
+                    description = "Die Knöpfe stehen auf einer gemeinsamen dunklen Fläche mit feinem Rand." },
+                  { type = "toggle", label = "Blätterpfeile ausblenden", key = "hidePaging", reload = true,
+                    description = "Pfeile und Seitenzahl neben Leiste 1. Umblättern geht weiter mit Umschalt+Mausrad." })
             B:Section("Aussehen")
             B:Row({ type = "dropdown", label = "Leere Plätze", key = "emptySlots", items = {
                         { value = "hide",  text = "Ausblenden (beim Ziehen sichtbar)" },
@@ -503,7 +647,7 @@ K.Register({
                   { type = "empty" })
             B:Note("Solange hier nicht „Wie im Spiel“ steht, bestimmt WeintCodex den Platz von Mikromenü und Taschenleiste – auch nach dem Bearbeitungsmodus.")
             B:Section("Lage und Größe")
-            B:Note("Wo die Leisten stehen, wie groß sie sind, wie viele es gibt und wie weit die Knöpfe auseinanderstehen („Symbolabstand“), stellst du im Bearbeitungsmodus des Spiels ein (Esc → Bearbeitungsmodus). Tipp: Symbolabstand 2 bis 4 wirkt am ruhigsten. Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt.")
+            B:Note("Wo die Leisten stehen, wie groß sie sind, wie viele es gibt und wie weit die Knöpfe auseinanderstehen („Symbolabstand“), stellst du im Bearbeitungsmodus des Spiels ein (Esc → Bearbeitungsmodus). Tipp: alle Leisten auf dieselbe Symbolgröße und Symbolabstand 2 – dann stehen die Flächen bündig übereinander. Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt.")
         end },
     },
 })

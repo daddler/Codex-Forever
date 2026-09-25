@@ -1986,6 +1986,42 @@ do
     end)
     Check(ok, "Aktionsleisten: ein Rahmen, der des Spiels bleibt weg" .. (ok and "" or (": " .. tostring(err))))
 
+    -- 6.3.0.3: Flaeche hinter der Leiste, verankert an linker oberer und
+    -- rechter unterer Taste; Blaetterpfeile weg.
+    ok, err = pcall(function()
+        local AB = WeintCodex.UIActionBars
+        local bar = CreateFrame("Frame", "MultiBarBottomLeft", UIParent)
+        local pos = { { 100, 200 }, { 140, 200 }, { 100, 160 }, { 140, 160 } }
+        for i, xy in ipairs(pos) do
+            local b = CreateFrame("CheckButton", "MultiBarBottomLeftButton" .. i, bar)
+            b.GetLeft = function() return xy[1] end
+            b.GetTop = function() return xy[2] end
+            b.GetRight = function() return xy[1] + 36 end
+            b.GetBottom = function() return xy[2] - 36 end
+        end
+        AB.UpdateBackdrops()
+        local bd = AB.backdrops[bar]
+        assert(bd and bd:IsShown(), "keine Flaeche hinter der Leiste")
+        assert(bd:GetParent() == bar, "Flaeche blendet nicht mit der Leiste ab")
+        K.Set("actionbars", "barBackdrop", false)
+        AB.UpdateBackdrops()
+        assert(not bd:IsShown(), "Flaeche bleibt trotz Schalter")
+        K.Set("actionbars", "barBackdrop", true)
+        -- Geheime Lage: keine Flaeche statt eines Fehlers.
+        _G.MultiBarBottomLeftButton2.GetLeft = function() error("Can't measure restricted regions") end
+        AB.UpdateBackdrops()
+        assert(not bd:IsShown(), "Flaeche trotz unmessbarer Knoepfe")
+        for i = 1, 4 do _G["MultiBarBottomLeftButton" .. i] = nil end
+        _G.MultiBarBottomLeft = nil
+        AB.backdrops[bar] = nil
+
+        local up = CreateFrame("Button", "ActionBarUpButton", UIParent)
+        AB.HidePaging()
+        assert(up:GetAlpha() == 0, "Blaetterpfeil sichtbar")
+        _G.ActionBarUpButton = nil
+    end)
+    Check(ok, "Aktionsleisten: Flaeche hinter der Leiste, Blaetterpfeile weg" .. (ok and "" or (": " .. tostring(err))))
+
     -- 6.3.0.2: die Auren-Pruefung uebersteht geheime Breiten und verbotene
     -- Knoepfe (im Beta-Client: "secret number", "forbidden object").
     ok, err = pcall(function()

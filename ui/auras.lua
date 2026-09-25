@@ -115,13 +115,20 @@ local function ApiCount(unit, filter)
             n = n + 1
         end
     end)
-    if not ok then return nil, "Fehler: " .. tostring(err) end
+    if not ok then
+        -- Im Kampf haelt das Spiel Auren vor Addons geheim (Beta-Test
+        -- 6.3.0.2: "Auras cannot be accessed when secret").
+        if tostring(err):find("secret", 1, true) then return nil, "im Kampf geheim" end
+        return nil, "Fehler: " .. tostring(err)
+    end
     return n
 end
 
 -- Sichtbare Symbole eines Objekts. Beim Container sind das Rahmen in der
 -- Groesse eines Symbols irgendwo unter ihm (wie tief er sie ablegt, sagt
--- das Spiel nicht).
+-- das Spiel nicht). nil, wenn der Client die Knoepfe nicht messen laesst:
+-- "nicht messbar" ist nicht "keine sichtbar" - sonst schaltete die
+-- Selbstpruefung auf den alten Weg, der im Kampf gar nichts lesen darf.
 local function Visible(obj)
     if obj.buttons then
         local total, shown = 0, 0
@@ -132,7 +139,7 @@ local function Visible(obj)
         return total, shown
     end
     local size = obj.opts.size
-    local total, shown = 0, 0
+    local total, shown, unknown = 0, 0, false
     local function Walk(f, depth)
         if depth > 3 or not f.GetChildren then return end
         for _, ch in ipairs({ f:GetChildren() }) do
@@ -140,9 +147,10 @@ local function Visible(obj)
             -- verboten ("forbidden object") oder mit geheimer Breite. Beides
             -- zaehlt als "nicht messbar", nicht als Fehler (6.3.0.2).
             local forbidden = ch.IsForbidden and ch:IsForbidden()
-            if not forbidden then
+            if forbidden then unknown = true else
                 local ok, w = pcall(ch.GetWidth, ch)
                 w = ok and K.Plain(w) or nil
+                if type(w) ~= "number" then unknown = true end
                 if type(w) == "number" and math.abs(w - size) <= 1 then
                     total = total + 1
                     local okV, vis = pcall(ch.IsVisible, ch)
@@ -152,7 +160,8 @@ local function Visible(obj)
             end
         end
     end
-    Walk(obj.frame, 1)
+    if not pcall(Walk, obj.frame, 1) then unknown = true end
+    if unknown and shown == 0 then return nil end
     return total, shown
 end
 
@@ -530,6 +539,7 @@ function Obj:AutoCheck()
         local n = ApiCount(self.unit, self.opts.filter)
         if type(n) ~= "number" or n == 0 then return end
         local _, shown = Visible(self)
+        if type(shown) ~= "number" then return end   -- nicht messbar: kein Urteil
         if shown > 0 then
             verdict = "ok"
             stats.verified = true
@@ -662,6 +672,11 @@ function A.Inspect()
             -- als "?" da, statt die ganze Pruefung abzubrechen (6.3.0.2).
             local ok, line = pcall(function()
                 local total, shown = Visible(obj)
+                if type(shown) ~= "number" then
+                    return string.format("%s [%s]: %s, Symbole nicht messbar (das Spiel hält sie geheim), Rahmen %s",
+                        u, obj.opts.filter, obj.engine and "Container" or "alter Weg",
+                        K.Bool(obj.frame.IsVisible and obj.frame:IsVisible(), false) and "sichtbar" or "unsichtbar")
+                end
                 local w, h = K.Plain(obj.frame:GetWidth()), K.Plain(obj.frame:GetHeight())
                 local function Px(v) return type(v) == "number" and tostring(math.floor(v + 0.5)) or "?" end
                 return string.format("%s [%s]: %s, %d Symbole, %d gezeigt, Rahmen %s, %sx%s",
@@ -686,7 +701,9 @@ end
 -- sobald die Frage beantwortet ist.
 --------------------------------------------------
 
-A.AUTO_REPORT = true
+-- Seit 6.3.0.3 aus: die Plaketten zeigen die Symbole des Spiels, und im
+-- Kampf kann die Pruefung ohnehin nichts lesen. /wcui auren bleibt.
+A.AUTO_REPORT = false
 local reported = false
 local watch = CreateFrame("Frame")
 watch:RegisterEvent("PLAYER_REGEN_DISABLED")

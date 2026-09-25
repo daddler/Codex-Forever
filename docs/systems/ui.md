@@ -393,6 +393,14 @@ Seit 6.2.0.0:
 * **Aktionsleisten**: leere Plätze aus (beim Ziehen sichtbar), flache
   Zustände, Schatten am Symbol, Abklingzahl in eigener Schrift.
 
+**6.3.0.1–6.3.0.3 (Beta-Test):** Plaketten-Auren an ihrem Platz statt
+umgehängt (kein `GetPoint` auf eingeschränkte Rahmen); Aktionsleisten mit
+einem Rahmen (`NormalTexture` per Haken unsichtbar), Fläche hinter jeder
+Leiste (`barBackdrop`), Blätterpfeile weg. **Gemessen im Beta-Client:**
+`C_UnitAuras.GetAuraDataByIndex` ist im Kampf für Addon-Code gesperrt –
+ein eigenes Lesen der Auren (der „alte Weg“) kann im Kampf nichts; die
+Knöpfe des AuraContainers sind verboten oder haben geheime Breiten.
+
 **Was noch fehlt (Phase 3 ff.):** Kachel auf allen Flächen (Chat,
 Minikarte, Taschen), Schadensanzeige in Ruhe auf die Kopfzeile
 zusammenklappen (jetzt: nur leiser), Chat-Hintergrund in Ruhe,

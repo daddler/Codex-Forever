@@ -9,6 +9,29 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.0.3] – 2026-09-25
+
+**Jede Aktionsleiste steht auf einer eigenen Fläche.** Eine dunkle Kachel mit feinem Rand hinter den Knöpfen, die jeder Anordnung aus dem Bearbeitungsmodus folgt. Tastenkürzel oben rechts, Stapelzahl unten rechts, die Blätterpfeile neben Leiste 1 sind weg (Umblättern weiter mit Umschalt+Mausrad). Beides unter Aktionsleisten → Leisten abschaltbar.
+
+**Keine Auren-Prüfung mehr im Chat.** Die Debuffs auf den Plaketten sind bestätigt; /wcui auren gibt die Auskunft weiter auf Wunsch und sagt ehrlich „nicht messbar“, wo das Spiel die Symbole geheim hält.
+
+### Technisch
+
+- Aktionsleisten: `barBackdrop` – `UIKit.Kachel` auf einem Rahmen, der
+  Kind der Leiste ist (blendet mit Ruhe/Kampf ab) und an der linken
+  oberen und rechten unteren sichtbaren Taste verankert wird
+  (`AB.UpdateBackdrops`, nur außerhalb des Kampfes, bei Weltbetreten und
+  nach dem Bearbeitungsmodus). Unmessbare Knöpfe → keine Fläche.
+  `hidePaging` (`AB.HidePaging`, über `AB.KeepHidden`). HotKey/Count/Name
+  an festen Plätzen.
+- Auren: Beta-Test zeigt, dass `C_UnitAuras.GetAuraDataByIndex` im Kampf
+  für Addon-Code gesperrt ist („Auras cannot be accessed when secret“) –
+  der alte Weg (eigenes Lesen) kann im Kampf nichts. `Visible` gibt `nil`
+  statt „0 sichtbar“, wenn der Client die Container-Knöpfe nicht messen
+  lässt; die Selbstprüfung urteilt dann nicht (vorher hätte sie auf den
+  alten Weg umschalten können). `UIAuras.AUTO_REPORT = false`.
+- `load_test.lua`: Fläche, Schalter, unmessbare Knöpfe, Blätterpfeile.
+
 ## [6.3.0.2] – 2026-09-25
 
 **Aktionsleisten mit einem Rahmen.** Der innere Rahmen des Spiels um jedes Symbol bleibt weg – das Spiel hatte ihn bei jedem Aktualisieren neu gesetzt. Das Symbol füllt den Knopf, darum liegt nur noch eine feine Kante.
