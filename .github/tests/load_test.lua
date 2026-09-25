@@ -1828,20 +1828,44 @@ do
         assert(tf.left:GetText():find("Himmelshuepfer", 1, true), "Zielrahmen beim Erscheinen leer: " .. tostring(tf.left:GetText()))
         _G.UnitName, _G.UnitExists = oldName, oldExists
 
-        -- Plakette: die Debuff-Symbole des Spiels haengen an unserer Plakette.
+        -- Plakette: die Debuff-Symbole des Spiels bleiben an ihrem Platz
+        -- sichtbar, der Rest der Spielplakette wird ausgeblendet. Kein
+        -- Anker wird gelesen (6.3.0.0: "Can't measure restricted regions").
+        local uf = blizzPlate.UnitFrame
         local af = stub.NewObject("Frame")
-        af._parent = blizzPlate.UnitFrame
-        blizzPlate.UnitFrame.AurasFrame = af
+        af._parent = uf
+        local hp = stub.NewObject("Frame")
+        local nameFs = stub.NewObject("FontString")
+        uf.AurasFrame = af
+        uf.GetChildren = function() return af, hp end
+        uf.GetRegions = function() return nameFs end
+        local measured = false
+        af.GetPoint = function() measured = true error("Can't measure restricted regions") end
+        af.GetNumPoints = function() measured = true return 1 end
+        local oldHook = _G.hooksecurefunc
+        _G.hooksecurefunc = function(obj, name, fn)
+            local orig = obj[name]
+            obj[name] = function(...) local r = orig(...) fn(...) return r end
+        end
         stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
         local p = NP.plates["nameplate1"]
-        assert(af:GetParent() == p, "Symbole des Spiels nicht an der Plakette")
+        assert(p, "Plakette nicht angelegt")
+        assert(not measured, "Anker der Spiel-Symbole gelesen - im Beta-Client verboten")
+        assert(af:GetParent() == uf, "Symbole des Spiels umgehaengt")
+        assert(uf:GetAlpha() == 1 and af:GetAlpha() == 1, "Symbole des Spiels unsichtbar")
+        assert(hp:GetAlpha() == 0 and nameFs:GetAlpha() == 0, "Rest der Spielplakette sichtbar")
+        hp:SetAlpha(1)   -- das Spiel setzt zurueck ...
+        assert(hp:GetAlpha() == 0, "Spiel blendet seine Plakette wieder ein")
+        assert(NP.GameAuraInfo("nameplate1"):find("sichtbar an ihrem Platz", 1, true), "Auren-Pruefung: " .. tostring(NP.GameAuraInfo("nameplate1")))
         K.Set("nameplates", "auraSource", "own")
-        assert(af:GetParent() ~= p, "eigene Symbole gewaehlt, die des Spiels haengen noch dran")
+        assert(uf:GetAlpha() == 0 and af:GetParent() ~= uf, "eigene Symbole gewaehlt, die des Spiels stehen noch da")
+        assert(hp:GetAlpha() == 1, "Teile der Spielplakette nicht zurueckgesetzt")
         K.Set("nameplates", "auraSource", "game")
-        assert(af:GetParent() == p, "zurueck auf die des Spiels greift nicht")
+        assert(af:GetParent() == uf and uf:GetAlpha() == 1 and hp:GetAlpha() == 0, "zurueck auf die des Spiels greift nicht")
         stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
-        assert(af:GetParent() == blizzPlate.UnitFrame, "Symbole nicht an die Plakette des Spiels zurueckgegeben")
-        blizzPlate.UnitFrame.AurasFrame = nil
+        assert(af:GetParent() == uf and uf:GetAlpha() == 1 and hp:GetAlpha() == 1, "Spielplakette nicht zurueckgegeben")
+        _G.hooksecurefunc = oldHook
+        uf.AurasFrame, uf.GetChildren, uf.GetRegions = nil, nil, nil
 
         -- Schadensanzeige: eigene Zeile immer da, mit echtem Rang.
         _G.Enum = _G.Enum or {}

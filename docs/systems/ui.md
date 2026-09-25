@@ -370,11 +370,15 @@ Seit 6.2.0.0:
   `PLAYER_TARGET_CHANGED`; `RefreshUnit` zeichnete nur sichtbare Rahmen.
   Jetzt: zeichnen, sobald die Einheit existiert, und bei `OnShow`.
 * **Debuffs auf Plaketten: die Symbole des Spiels.** `auraSource =
-  "game"` hängt den Aurenrahmen der Plakette des Spiels
-  (`UnitFrame.AurasFrame`/`BuffFrame`) an unsere Plakette; am
-  Blizzard-UnitFrame bleibt nur `UNIT_AURA` angemeldet. Setzt das Spiel
-  Anker oder Elternrahmen zurück, holt ein Haken ihn wieder her; beim
-  Freigeben geht er mit seinen ursprünglichen Ankern zurück. Die eigenen
+  "game"` lässt den Aurenrahmen der Plakette des Spiels
+  (`UnitFrame.AurasFrame`/`BuffFrame`) **an seinem Platz**: der
+  Blizzard-UnitFrame bleibt sichtbar, alle seine anderen Kinder und
+  Regionen gehen auf Alpha 0 (ein `hooksecurefunc`-Haken auf `SetAlpha`
+  hält sie dort); am UnitFrame bleibt nur `UNIT_AURA` angemeldet.
+  **Nie Anker lesen:** 6.3.0.0 hängte den Rahmen an unsere Plakette und
+  merkte sich dafür `GetPoint` – im Beta-Client ein Fehler („Can't
+  measure restricted regions“), und umgehängt zeichnete er einen weißen
+  Balken über den Namen (6.3.0.1). Die eigenen
   Symbole (`own`) bleiben wählbar, bis klar ist, warum sie im Beta-Client
   nicht erschienen. Einmal je Sitzung (`UIAuras.AUTO_REPORT`) schreibt
   WeintCodex die Auren-Prüfung in den Chat.

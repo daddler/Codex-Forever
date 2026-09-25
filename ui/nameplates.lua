@@ -104,8 +104,9 @@ local defaults = {
     -- ein Muster, keine Auskunft.
     auraEnabled = true,
     -- Woher die Symbole kommen. "game": die Debuff-Symbole der Plakette des
-    -- Spiels, an die WeintCodex-Plakette gehaengt - das Spiel pflegt sie
-    -- selbst, auch mit geheimen Werten. "own": die eigenen Symbole
+    -- Spiels an ihrem Platz, der Rest der Spielplakette ausgeblendet (seit
+    -- 6.3.0.1; vorher umgehaengt) - das Spiel pflegt sie selbst, auch mit
+    -- geheimen Werten. "own": die eigenen Symbole
     -- (ui/auras.lua). Seit 6.3.0.0 ist "game" der Standard: mit den
     -- eigenen erschienen im Beta-Client in drei Fassungen keine Debuffs.
     auraSource = "game",
@@ -140,9 +141,11 @@ end
 
 local hidden = CreateFrame("Frame")
 hidden:Hide()
-local parked = {}    -- [Blizzard-Kindrahmen] = urspruenglicher Elternrahmen
-local anchors = {}   -- [Blizzard-Aurenrahmen] = seine urspruenglichen Anker
-local borrowed = {}  -- [Blizzard-Aurenrahmen] = WeintCodex-Plakette, die ihn traegt
+local parked = {}    -- [Blizzard-Aurenrahmen] = urspruenglicher Elternrahmen
+local dimmed = {}    -- [Teil der Blizzard-Plakette] = seine Deckkraft vorher
+local partsOf = {}   -- [Blizzard-Plakette] = { Teile, die WeintCodex ausgeblendet hat }
+local inPlace = {}   -- [Blizzard-Aurenrahmen] = true, solange seine Symbole gelten
+local dimHooked = {} -- [Teil] = true: Haken gesetzt (nie ein Feld am Blizzard-Rahmen)
 
 local function AurasOf(uf)
     local auras = uf.AurasFrame
@@ -151,57 +154,105 @@ local function AurasOf(uf)
     return auras
 end
 
--- Die Symbole des Spiels ueber die eigene Plakette legen. Das Spiel darf
--- sie weiter anordnen; setzt es Anker oder Elternrahmen zurueck, holt ein
--- Haken sie wieder her.
-local placing = false
-local function PlaceBorrowed(auras)
-    local p = borrowed[auras]
-    if not p or placing then return end
-    placing = true
-    if auras:GetParent() ~= p then auras:SetParent(p) end
-    auras:ClearAllPoints()
-    auras:SetPoint("BOTTOMLEFT", p, "TOPLEFT", 0, (S.textTop ~= "none" and S.nameSize or 0) + 6)
+-- Die Symbole des Spiels bleiben, wo das Spiel sie hinsetzt. 6.3.0.0 hat
+-- sie an die WeintCodex-Plakette umgehaengt und sich dafuer ihre Anker
+-- gemerkt - im Beta-Client ist das Auslesen verboten ("Can't measure
+-- restricted regions"), und umgehaengt zeichnete der Rahmen einen weissen
+-- Balken ueber den Namen. Jetzt bleibt die Plakette des Spiels sichtbar,
+-- und WeintCodex blendet alles an ihr aus AUSSER den Symbolen. Kein Anker
+-- wird gelesen oder gesetzt, kein Elternrahmen gewechselt.
+local guard = false
+local function Dim(part)
+    if dimmed[part] then return end
+    local a = K.Plain(part.GetAlpha and part:GetAlpha())
+    dimmed[part] = type(a) == "number" and a or 1
+    if not dimHooked[part] and _G.hooksecurefunc then
+        dimHooked[part] = true
+        -- Setzt das Spiel die Deckkraft zurueck, gilt der neue Wert fuer
+        -- spaeter, sichtbar bleibt der Teil trotzdem nicht.
+        _G.hooksecurefunc(part, "SetAlpha", function(self, v)
+            if guard or not dimmed[self] then return end
+            local plain = K.Plain(v)
+            if type(plain) == "number" then dimmed[self] = plain end
+            guard = true
+            self:SetAlpha(0)
+            guard = false
+        end)
+    end
+    guard = true
+    part:SetAlpha(0)
+    guard = false
+end
+
+local function Undim(uf)
+    local list = partsOf[uf]
+    if not list then return end
+    partsOf[uf] = nil
+    for _, part in ipairs(list) do
+        local a = dimmed[part]
+        dimmed[part] = nil
+        if a then
+            guard = true
+            part:SetAlpha(a)
+            guard = false
+        end
+    end
+end
+
+-- Alle Teile der Blizzard-Plakette ausser den Symbolen. nil, wenn der
+-- Client die Frage nicht beantwortet - dann bleibt es beim Ausblenden
+-- der ganzen Plakette.
+local function OtherParts(uf, auras)
+    local ok, list = pcall(function()
+        local out = {}
+        for _, ch in ipairs({ uf:GetChildren() }) do
+            if ch ~= auras and type(ch) == "table" and ch.SetAlpha then out[#out + 1] = ch end
+        end
+        for _, rg in ipairs({ uf:GetRegions() }) do
+            if type(rg) == "table" and rg.SetAlpha then out[#out + 1] = rg end
+        end
+        return out
+    end)
+    if ok then return list end
+    return nil
+end
+
+local function ShowGameAuras(uf, auras)
+    local parts = OtherParts(uf, auras)
+    if not parts then return false end
+    Undim(uf)
+    for _, part in ipairs(parts) do Dim(part) end
+    partsOf[uf] = parts
+    if parked[auras] then
+        auras:SetParent(parked[auras])
+        parked[auras] = nil
+    end
     auras:SetScale((S.gameAuraScale or 100) / 100)
     auras:SetAlpha(1)
     auras:Show()
-    placing = false
-end
-NP.PlaceBorrowed = PlaceBorrowed
-
-local hookedAuras = {}
-local function Borrow(auras, p)
-    if not anchors[auras] then
-        local list = {}
-        for i = 1, (auras.GetNumPoints and auras:GetNumPoints() or 0) do list[i] = { auras:GetPoint(i) } end
-        anchors[auras] = list
-    end
-    parked[auras] = parked[auras] or auras:GetParent()
-    borrowed[auras] = p
-    if not hookedAuras[auras] and _G.hooksecurefunc then
-        hookedAuras[auras] = true
-        _G.hooksecurefunc(auras, "SetPoint", function(self) if borrowed[self] and not placing then PlaceBorrowed(self) end end)
-        _G.hooksecurefunc(auras, "SetParent", function(self) if borrowed[self] and not placing then PlaceBorrowed(self) end end)
-    end
-    PlaceBorrowed(auras)
+    uf:SetAlpha(1)
+    inPlace[auras] = true
+    return true
 end
 
 local function Suppress(nameplate, unit, p)
     local uf = nameplate and nameplate.UnitFrame
     if type(uf) ~= "table" then return end
     if uf.IsForbidden and uf:IsForbidden() then return end
-    uf:SetAlpha(0)
     local auras = AurasOf(uf)
     local useGame = auras and p and not p._friendly and S.auraEnabled and S.auraSource == "game"
-    if useGame then
-        Borrow(auras, p)
-    elseif auras then
-        -- Die Auren der Blizzard-Plakette sind Knoepfe mit Tooltip: bei
-        -- Alpha 0 waeren sie eine unsichtbare Tooltipfalle ueber jeder
-        -- Plakette. Sie ziehen in einen versteckten Rahmen um.
-        borrowed[auras] = nil
-        parked[auras] = parked[auras] or auras:GetParent()
-        auras:SetParent(hidden)
+        and ShowGameAuras(uf, auras)
+    if not useGame then
+        Undim(uf)
+        uf:SetAlpha(0)
+        if auras then
+            -- Die Auren der Blizzard-Plakette sind Knoepfe mit Tooltip: bei
+            -- Alpha 0 waeren sie eine unsichtbare Tooltipfalle ueber jeder
+            -- Plakette. Sie ziehen in einen versteckten Rahmen um.
+            inPlace[auras] = nil
+            parked[auras] = parked[auras] or auras:GetParent()
+            auras:SetParent(hidden)
+        end
     end
     -- Die Blizzard-Plakette arbeitet sonst unsichtbar weiter, bei jedem
     -- Treffer. Der Client meldet sie beim naechsten Zuweisen einer
@@ -220,14 +271,13 @@ local function Restore(nameplate)
     local uf = nameplate and nameplate.UnitFrame
     if type(uf) ~= "table" then return end
     if uf.IsForbidden and uf:IsForbidden() then return end
+    Undim(uf)
     local auras = AurasOf(uf)
-    if auras and parked[auras] then
-        borrowed[auras] = nil
-        auras:SetParent(parked[auras])
-        parked[auras] = nil
-        if anchors[auras] and #anchors[auras] > 0 then
-            auras:ClearAllPoints()
-            for _, pt in ipairs(anchors[auras]) do auras:SetPoint(unpack(pt)) end
+    if auras then
+        inPlace[auras] = nil
+        if parked[auras] then
+            auras:SetParent(parked[auras])
+            parked[auras] = nil
         end
         auras:SetScale(1)
     end
@@ -249,7 +299,7 @@ function NP.GameAuraInfo(unit)
         end
     end
     Walk(auras, 1)
-    return string.format("Symbole des Spiels: %s, %d sichtbare Knöpfe", borrowed[auras] and "angehängt" or "nicht angehängt", shown)
+    return string.format("Symbole des Spiels: %s, %d sichtbare Knöpfe", inPlace[auras] and "sichtbar an ihrem Platz" or "ausgeblendet", shown)
 end
 
 --------------------------------------------------
@@ -1241,7 +1291,7 @@ K.Register({
                         { value = "own",  text = "Eigene von WeintCodex" } } },
                   { type = "slider", label = "Größe der Symbole des Spiels", key = "gameAuraScale", min = 60, max = 160, step = 5,
                     format = pct, disabled = function() return off() or K.Get(KEY, "auraSource") ~= "game" end })
-            B:Note("„Die des Spiels“ hängt die Debuff-Symbole der Plakette des Spiels an die WeintCodex-Plakette – das Spiel pflegt sie selbst. Die eigenen Symbole (mit Restzeit oben links) zeigten im Beta-Client bisher keine Debuffs; sie bleiben wählbar, bis klar ist, woran es liegt.")
+            B:Note("„Die des Spiels“ zeigt die Debuff-Symbole der Plakette des Spiels an ihrem Platz über der WeintCodex-Plakette – das Spiel pflegt sie selbst, WeintCodex blendet nur den Rest der Spielplakette aus. Die eigenen Symbole (mit Restzeit oben links) zeigten im Beta-Client bisher keine Debuffs; sie bleiben wählbar, bis klar ist, woran es liegt.")
             B:Row({ type = "toggle", label = "Debuffs anzeigen", key = "auraEnabled" },
                   { type = "toggle", label = "Nur meine", key = "auraOnlyMine", disabled = own,
                     description = "Aus: alle Debuffs, auch die anderer Spieler (nur eigene Symbole)." })

@@ -9,6 +9,25 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.0.1] – 2026-09-25
+
+**Debuffs stehen an ihrem Platz, ohne Lua-Fehler.** Die Debuff-Symbole der Plakette des Spiels bleiben, wo das Spiel sie hinsetzt – WeintCodex blendet nur den Rest der Spielplakette aus. Der weiße Balken über dem Namen und der Fehler „Can't measure restricted regions“ sind weg.
+
+### Technisch
+
+- Plaketten, `auraSource = "game"`: kein Umhängen mehr. 6.3.0.0 las die
+  Anker des Aurenrahmens (`GetPoint`) – im Beta-Client verboten
+  („Can't measure restricted regions“, Taint), und umgehängt zeichnete er
+  einen weißen Balken. Jetzt bleibt der Blizzard-UnitFrame sichtbar
+  (Alpha 1), alle Kinder und Regionen außer dem Aurenrahmen gehen auf
+  Alpha 0; setzt das Spiel eine Deckkraft zurück, blendet ein
+  `hooksecurefunc`-Haken wieder aus und merkt sich den neuen Wert fürs
+  Zurückgeben. Kein Anker wird gelesen oder gesetzt. Beantwortet der
+  Client `GetChildren`/`GetRegions` nicht, bleibt es beim Ausblenden der
+  ganzen Plakette (wie `own`).
+- `load_test.lua`: kein Ankerlesen, Symbole bleiben am UnitFrame, Rest
+  ausgeblendet, Rückgabe beim Freigeben und beim Wechsel auf `own`.
+
 ## [6.3.0.0] – 2026-09-25
 
 Antworten auf den vierten Beta-Test.

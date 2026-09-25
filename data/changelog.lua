@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.0.1",
+        date    = "25.09.2026",
+        notes   = {
+            "|cff7C6CFFDebuffs stehen an ihrem Platz, ohne Lua-Fehler.|r Die Debuff-Symbole der Plakette des Spiels bleiben, wo das Spiel sie hinsetzt – WeintCodex blendet nur den Rest der Spielplakette aus. Der weiße Balken über dem Namen und der Fehler „Can't measure restricted regions“ sind weg.",
+        },
+    },
+    {
         version = "6.3.0.0",
         date    = "25.09.2026",
         notes   = {
