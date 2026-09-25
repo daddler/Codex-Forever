@@ -54,18 +54,51 @@ function CB.Create(parent)
     f:SetHeight(14)
     f:Hide()
 
-    local bg = f:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints(f)
-    f._bg = bg
-
     local sb = K.NewBar(f)
     sb:SetMinMaxValues(0, 1)
     sb:SetValue(0)
     f._bar = sb
 
-    local icon = f:CreateTexture(nil, "ARTWORK")
+    -- Grund nur unter dem Balken: das Symbol steht seit 6.3.0.8 abgesetzt
+    -- daneben, mit eigenem Rand (Beta-Test: "muss schoener sein").
+    local bg = sb:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(sb)
+    f._bg = bg
+
+    local iconHost = CreateFrame("Frame", nil, f)
+    f._iconHost = iconHost
+    local icon = iconHost:CreateTexture(nil, "ARTWORK")
+    icon:SetAllPoints(iconHost)
     if icon.SetTexCoord then icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
     f._icon = icon
+    f._iconBorder = K.Border(iconHost, 1, 0, 0, 0, 1, "BORDER")
+
+    -- Helle Kante am Ende der Fuellung. Sie haengt an der Fuelltextur
+    -- selbst und laeuft deshalb auch mit, wenn der Client den Balken
+    -- abspielt (SetTimerDuration) - ohne dass Lua einen Wert sieht.
+    local GC = WeintCodex.GameColors
+    local spark = sb:CreateTexture(nil, "OVERLAY", nil, 2)
+    local sc = GC.castSpark
+    spark:SetColorTexture(sc[1], sc[2], sc[3], sc[4])
+    spark:SetWidth(2)
+    if spark.SetBlendMode then spark:SetBlendMode("ADD") end
+    local fill = sb.GetStatusBarTexture and sb:GetStatusBarTexture()
+    if fill then
+        spark:SetPoint("TOP", fill, "TOPRIGHT", 0, 0)
+        spark:SetPoint("BOTTOM", fill, "BOTTOMRIGHT", 0, 0)
+    end
+    spark:Hide()
+    f._spark = spark
+
+    -- Latenz beim eigenen Zauber: der Teil am Ende, in dem man den
+    -- naechsten schon druecken darf. Nur mit offenen Zeiten.
+    local lat = sb:CreateTexture(nil, "ARTWORK", nil, 1)
+    local lc = GC.castLatency
+    lat:SetColorTexture(lc[1], lc[2], lc[3], lc[4])
+    lat:SetPoint("TOPRIGHT", sb, "TOPRIGHT", 0, 0)
+    lat:SetPoint("BOTTOMRIGHT", sb, "BOTTOMRIGHT", 0, 0)
+    lat:Hide()
+    f._latency = lat
 
     local text = K.NewText(sb)
     text:SetJustifyH("LEFT")
@@ -82,7 +115,7 @@ function CB.Create(parent)
     f._lock = K.Border(sb, 1, 1, 1, 1, 0.9, "OVERLAY")
     f._lockAlpha = 0
 
-    f._border = K.Border(f, 1, 0, 0, 0, 1, "BORDER")
+    f._border = K.Border(sb, 1, 0, 0, 0, 1, "BORDER")
     f._shadow = K.Glow(f, { spread = 4, shadow = true })
 
     for k, v in pairs(Bar) do f[k] = v end
@@ -95,15 +128,17 @@ function Bar:ApplyStyle(style)
     local h = style.height or 14
     self:SetHeight(h)
 
-    self._icon:ClearAllPoints()
+    local host = self._iconHost
+    host:ClearAllPoints()
     self._bar:ClearAllPoints()
     if style.icon then
-        self._icon:SetSize(h, h)
-        self._icon:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0)
-        self._icon:Show()
-        self._bar:SetPoint("TOPLEFT", self, "TOPLEFT", h + 1, 0)
+        -- Abgesetzt: eigener Rand, 3 px Luft (beide Raender liegen aussen).
+        host:SetSize(h, h)
+        host:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0)
+        host:Show()
+        self._bar:SetPoint("TOPLEFT", self, "TOPLEFT", h + 3, 0)
     else
-        self._icon:Hide()
+        host:Hide()
         self._bar:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0)
     end
     self._bar:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", 0, 0)
@@ -121,6 +156,7 @@ function Bar:ApplyStyle(style)
     local b = style.bg or { r = 0.1, g = 0.1, b = 0.12 }
     self._bg:SetColorTexture(b.r, b.g, b.b, 0.9)
     self._border:SetShown(style.border ~= false)
+    self._iconBorder:SetShown(style.border ~= false)
 end
 
 --------------------------------------------------
@@ -200,12 +236,16 @@ function Bar:Update()
     self._icon:SetTexture(texture)
     -- Kein `text or name`: ein Wahrheitstest auf einem geheimen Text
     -- waere ein Fehler, `type` nicht.
-    if type(text) ~= "nil" then self._text:SetText(text) else self._text:SetText(name) end
+    -- Der Name des Zaubers, nicht der Anzeigetext: im Beta-Client kam der
+    -- Anzeigetext leer an, und der Balken stand ohne Namen da (6.3.0.7).
+    self._text:SetText(name)
     self:PaintInterrupt(notInt)
 
     -- Fortschritt: modern ueber das Dauerobjekt, sonst gerechnet - aber nur
     -- mit Zahlen, mit denen gerechnet werden darf.
     self._duration, self._startMS, self._endMS = nil, nil, nil
+    self._spark:Show()
+    self:ShowLatency(channel, startMS, endMS)
     local dur = Duration(unit, channel)
     if dur and self._bar.SetTimerDuration then
         self._bar:SetMinMaxValues(0, 1)
@@ -222,10 +262,27 @@ function Bar:Update()
             -- gerade an", und das weiss hier niemand.
             self._bar:SetMinMaxValues(0, 1)
             self._bar:SetValue(1)
+            self._spark:Hide()
         end
     end
     self._elapsed = 1
     self:Show()
+end
+
+-- Latenz (nur mit style.latency, also beim eigenen Zauber, und nur mit
+-- offenen Zeiten): Anteil der Weltlatenz an der Zauberdauer, rechts.
+function Bar:ShowLatency(channel, startMS, endMS)
+    local lat = self._latency
+    lat:Hide()
+    if channel or not (self._style and self._style.latency) or not _G.GetNetStats then return end
+    local s, e = K.Plain(startMS), K.Plain(endMS)
+    if type(s) ~= "number" or type(e) ~= "number" or e <= s then return end
+    local ok, _, _, home, world = pcall(_G.GetNetStats)
+    local ms = ok and (K.Plain(world) or K.Plain(home)) or nil
+    local w = K.Plain(self._bar:GetWidth())
+    if type(ms) ~= "number" or ms <= 0 or type(w) ~= "number" or w <= 0 then return end
+    lat:SetWidth(math.max(1, math.min(w, w * ms / (e - s))))
+    lat:Show()
 end
 
 -- Ende des Zaubers. `failed`: unterbrochen oder fehlgeschlagen - dann
@@ -241,6 +298,8 @@ function Bar:Stop(failed)
         self._bar:SetValue(1)
         self._text:SetText("Unterbrochen")
         self._timer:SetText("")
+        self._spark:Hide()
+        self._latency:Hide()
         self._holding = true
         local me = self
         if _G.C_Timer and _G.C_Timer.After then
@@ -301,5 +360,7 @@ function Bar:ShowPreview(on)
     self._bar:SetMinMaxValues(0, 1)
     self._bar:SetValue(0.6)
     self:PaintInterrupt(false)
+    self._spark:Show()
+    self._latency:Hide()
     self:Show()
 end

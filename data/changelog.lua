@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.3.0.8",
         date    = "25.09.2026",
         notes   = {
+            "|cff7C6CFFDer Zauberbalken im neuen Kleid.|r Der Zaubername steht wieder da (das Spiel lieferte einen leeren Anzeigetext). Der eigene Zauberbalken in der Mitte ist größer (20 px hoch, 240 breit, einstellbar), das Symbol steht abgesetzt mit eigenem Rand, eine helle Kante läuft am Ende der Füllung mit, und rot am Ende zeigt die Latenz: ab da darfst du den nächsten Zauber schon drücken.",
             "|cff7C6CFFMikromenü und Taschenleiste nur bei Maus darüber.|r Unter Aktionsleisten → Anordnung stellst du beide auf „Nur bei Maus darüber“: unsichtbar, bis die Maus in die Nähe kommt, dann blenden sie weich ein. Anklicken geht auch unsichtbar.",
         },
     },

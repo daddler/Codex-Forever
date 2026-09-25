@@ -11,6 +11,8 @@ nicht zusammen.
 
 ## [6.3.0.8] – 2026-09-25
 
+**Der Zauberbalken im neuen Kleid.** Der Zaubername steht wieder da (das Spiel lieferte einen leeren Anzeigetext). Der eigene Zauberbalken in der Mitte ist größer (20 px hoch, 240 breit, einstellbar), das Symbol steht abgesetzt mit eigenem Rand, eine helle Kante läuft am Ende der Füllung mit, und rot am Ende zeigt die Latenz: ab da darfst du den nächsten Zauber schon drücken.
+
 **Mikromenü und Taschenleiste nur bei Maus darüber.** Unter Aktionsleisten → Anordnung stellst du beide auf „Nur bei Maus darüber“: unsichtbar, bis die Maus in die Nähe kommt, dann blenden sie weich ein. Anklicken geht auch unsichtbar.
 
 ### Technisch
@@ -21,7 +23,16 @@ nicht zusammen.
   (`IsMouseOver(6, -6, -6, 6)`). Zurück auf „Immer“: Mikromenü und
   Taschen bekommen Alpha 1 von hier (sie hängen nicht an „Ruhe und
   Kampf“).
-- `load_test.lua`: aus, Maus darüber, zurück auf „Immer“.
+- Zauberbalken (`ui/castbar.lua`): Text = Zaubername (`UnitCastingInfo`
+  Wert 1), nicht der Anzeigetext (Wert 2 kam im Beta-Client leer).
+  Symbol auf eigenem Rahmen mit Rand, 3 px abgesetzt; Grund und Rand nur
+  am Balken. Kante (`castSpark`) an der Füllung verankert, läuft also
+  auch mit `SetTimerDuration`. Latenz (`castLatency`, `style.latency`):
+  Weltlatenz aus `GetNetStats` im Verhältnis zur Zauberdauer, nur mit
+  offenen Zeiten, nicht bei Kanalzaubern. Einheitenrahmen:
+  `playerCastHeight` 20, `playerCastWidth` 240, `playerCastLatency`.
+- `load_test.lua`: Mikromenü/Taschen aus, Maus darüber, zurück auf
+  „Immer“; Zauberbalken mit Name, Kante, Latenz.
 
 ## [6.3.0.7] – 2026-09-25
 

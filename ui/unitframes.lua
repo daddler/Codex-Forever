@@ -58,6 +58,12 @@ local defaults = {
     nameSize      = 12,
     textSize      = 12,
     castHeight    = 14,
+    -- Der eigene Zauberbalken in der Mitte ist das, worauf man beim
+    -- Zaubern schaut: groesser als die an Ziel und Fokus, mit Latenz
+    -- (seit 6.3.0.8; im Beta-Test "muss schoener sein").
+    playerCastHeight = 20,
+    playerCastWidth  = 240,
+    playerCastLatency = true,
     tintedBg      = true,      -- Grund in der dunklen Balkenfarbe
     hover         = true,      -- Maus darueber hellt auf
     -- Der eigene Zauberbalken mittig ueber den Leisten, die Kombopunkte
@@ -481,9 +487,10 @@ function Frame:Layout()
 
     if self._cast then
         self._cast:ClearAllPoints()
-        if u == "player" and Opt("playerCastCentered") then
+        local centered = (u == "player" and Opt("playerCastCentered"))
+        if centered then
             local hf = Holder("uf_playercast")
-            hf:SetHeight(Opt("castHeight"))
+            hf:SetSize(Opt("playerCastWidth"), Opt("playerCastHeight"))
             self._cast:SetPoint("TOPLEFT", hf, "TOPLEFT", 0, 0)
             self._cast:SetPoint("TOPRIGHT", hf, "TOPRIGHT", 0, 0)
         else
@@ -491,7 +498,9 @@ function Frame:Layout()
             self._cast:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", 0, -4)
         end
         self._cast:ApplyStyle({
-            height = Opt("castHeight"), icon = Opt("castIcon"), timer = Opt("castTimer"),
+            height = centered and Opt("playerCastHeight") or Opt("castHeight"),
+            latency = (u == "player") and Opt("playerCastLatency"),
+            icon = Opt("castIcon"), timer = Opt("castTimer"),
             cast = K.GetColor(KEY, "castColor"), locked = K.GetColor(KEY, "castLocked"),
             bg = bg, border = Opt("showBorder"),
         })
@@ -1010,8 +1019,13 @@ local pages = {
         B:Row({ type = "slider", label = "Größe links", key = "nameSize", min = 8, max = 20, step = 1, format = px },
               { type = "slider", label = "Größe rechts", key = "textSize", min = 8, max = 20, step = 1, format = px })
         B:Section("Zauberbalken")
-        B:Row({ type = "slider", label = "Höhe", key = "castHeight", min = 8, max = 30, step = 1, format = px },
+        B:Row({ type = "slider", label = "Höhe (Ziel, Fokus)", key = "castHeight", min = 8, max = 30, step = 1, format = px },
               { type = "toggle", label = "Zaubersymbol", key = "castIcon" })
+        B:Row({ type = "slider", label = "Höhe (eigener, mittig)", key = "playerCastHeight", min = 10, max = 36, step = 1, format = px },
+              { type = "slider", label = "Breite (eigener, mittig)", key = "playerCastWidth", min = 120, max = 400, step = 4, format = px })
+        B:Row({ type = "toggle", label = "Latenz am eigenen Zauber", key = "playerCastLatency",
+                description = "Rot am Ende: ab da darfst du den nächsten Zauber schon drücken." },
+              { type = "empty" })
         B:Row({ type = "toggle", label = "Restzeit", key = "castTimer" }, { type = "empty" })
         B:Row({ type = "color", label = "Unterbrechbar", key = "castColor" },
               { type = "color", label = "Nicht unterbrechbar", key = "castLocked" })

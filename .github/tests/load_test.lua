@@ -2189,6 +2189,37 @@ do
         _G.MicroMenuContainer, _G.BagsBar = nil, nil
     end)
     Check(ok, "Mikromenue und Taschenleiste: nur bei Maus darueber" .. (ok and "" or (": " .. tostring(err))))
+
+    -- 6.3.0.8: Zauberbalken - Name statt (leerem) Anzeigetext, Kante,
+    -- Latenz beim eigenen Zauber, Symbol abgesetzt.
+    ok, err = pcall(function()
+        local CB = WeintCodex.UICastBar
+        local cb = CB.Create(UIParent)
+        cb:ApplyStyle({ height = 20, icon = true, timer = true, latency = true })
+        cb.GetWidth = function() return 240 end
+        cb._bar.GetWidth = function() return 217 end
+        cb:SetUnit("player")
+        local oldCast, oldNet, oldDur = _G.UnitCastingInfo, _G.GetNetStats, _G.UnitCastingDuration
+        _G.UnitCastingInfo = function() return "Ruhestein", "", "icon", 1000, 11000, false, "x", false end
+        _G.GetNetStats = function() return 0, 0, 50, 100 end
+        _G.UnitCastingDuration = nil
+        cb:Update()
+        assert(cb._text:GetText() == "Ruhestein", "Zaubername fehlt: " .. tostring(cb._text:GetText()))
+        assert(cb._spark:IsShown(), "keine Kante am Ende der Fuellung")
+        assert(cb._latency:IsShown(), "keine Latenz beim eigenen Zauber")
+        -- 100 ms von 10 s auf 217 px: gut 2 px.
+        local lw = cb._latency:GetWidth()
+        assert(type(lw) ~= "number" or (lw > 1.5 and lw < 3), "Latenzbreite: " .. tostring(lw))
+        cb:Stop(true)
+        assert(not cb._spark:IsShown() and not cb._latency:IsShown(), "Kante/Latenz bleiben nach Abbruch")
+        -- Ohne rechenbare Zeiten: keine Latenz (nichts geraten).
+        _G.UnitCastingInfo = function() return "Feuerball", nil, "icon", nil, nil, false, "x", false end
+        cb._holding = nil
+        cb:Update()
+        assert(not cb._latency:IsShown(), "Latenz ohne Zeiten")
+        _G.UnitCastingInfo, _G.GetNetStats, _G.UnitCastingDuration = oldCast, oldNet, oldDur
+    end)
+    Check(ok, "Zauberbalken: Name, Kante, Latenz, Symbol abgesetzt" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.

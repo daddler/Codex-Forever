@@ -227,6 +227,8 @@ WeintCodex.GameColors = {
     plateName     = {0.840, 0.840, 0.870, 1.00},  -- Name auf der Plakette; hell nur Ziel und Maus
     executeMark   = {1.000, 1.000, 1.000, 0.75},  -- Hinrichtungsmarke im Balken
     iconShade     = {0.000, 0.000, 0.000, 0.45},  -- Schatten unten am Aktionssymbol
+    castSpark     = {1.000, 1.000, 1.000, 0.85},  -- helle Kante am Ende der Fuellung
+    castLatency   = {0.800, 0.100, 0.100, 0.40},  -- = castFailed, halb: Latenz am Ende des eigenen Zaubers
 }
 
 --------------------------------------------------
