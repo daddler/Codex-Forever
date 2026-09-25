@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.1.3",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Chat-Reiter sind wieder zu sehen.|r Die dunkle Fläche des Chats lag über „Allgemein“ und „Kampflog“ und hat sie fast ganz verdeckt; jetzt liegt sie darunter.",
+            "|cff7C6CFF/wcui maus sieht mehr.|r Neben den Rahmen, die auf die Maus reagieren, nennt der Befehl jetzt auch Bilder und Rahmen ohne Mausklick unter dem Zeiger, samt Bilddatei.",
+        },
+    },
+    {
         version = "6.3.1.2",
         date    = "26.09.2026",
         notes   = {

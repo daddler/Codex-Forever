@@ -9,6 +9,28 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.1.3] – 2026-09-26
+
+**Die Chat-Reiter sind wieder zu sehen.** Die dunkle Fläche des Chats lag über „Allgemein“ und „Kampflog“ und hat sie fast ganz verdeckt; jetzt liegt sie darunter.
+
+**/wcui maus sieht mehr.** Neben den Rahmen, die auf die Maus reagieren, nennt der Befehl jetzt auch Bilder und Rahmen ohne Mausklick unter dem Zeiger, samt Bilddatei.
+
+### Technisch
+
+- Chat: Die eigene Fläche (`d.back`, Kind des Chatrahmens) stand seit
+  6.3.0.9 in `LOW` eine Stufe unter den Reitern. `/wcui chat` im
+  Beta-Test zeigte sie auf `LOW/5` (Stufe des Chatrahmens), die Reiter auf
+  `LOW/2`: Das Spiel hebt die Stufe, und die Reiterzeile (`d.strip`, Alpha
+  bis 0,75) lag über den Reitern. `CH.PinBack` setzt sie jetzt in die
+  Schicht `BACKGROUND`, hält sie mit `SetFixedFrameStrata`/
+  `SetFixedFrameLevel` und setzt sie nach jedem `SetFrameStrata` des
+  Chatrahmens neu.
+- `K.UnderCursor`: alle sichtbaren Rahmen aus `EnumerateFrames` und deren
+  Texturen, die die Mausposition überdecken, nach Fläche sortiert (die
+  kleinsten zuerst), mit Atlas oder Bilddatei. `/wcui maus` zeigt die
+  ersten zehn. Anlass: Über der Tageszeit-Sonne meldete `GetMouseFoci`
+  nur `Minimap`.
+
 ## [6.3.1.2] – 2026-09-26
 
 **Addon-Knöpfe in voller Helligkeit.** In der aufgeklappten Kachel des Sammelknopfs lagen die Knöpfe hinter deren dunkler Fläche; jetzt liegen sie darüber.

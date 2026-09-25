@@ -367,6 +367,11 @@ Seit 6.2.0.0:
   jeder Rahmen aus `GetMouseFoci` mit `GetDebugName`, Elternkette und
   Ankern. Für Rahmen, die im Beta-Client anders heißen als angenommen
   (die Tageszeit an der Minikarte blieb drei Fassungen lang unauffindbar).
+  Seit 6.3.1.3 zusätzlich `K.UnderCursor`: alles Sichtbare unter dem
+  Zeiger, auch Texturen und Rahmen ohne Mausannahme, die kleinsten zuerst.
+* **Chatfläche in `BACKGROUND`** (6.3.1.3): als Kind des Chatrahmens in
+  `LOW` hob das Spiel sie auf dessen Stufe, über die Reiter. Eine Schicht
+  tiefer liegt sie unabhängig von jeder Stufe darunter.
 
 ## 6.3.0.0: Antworten auf den vierten Beta-Test
 

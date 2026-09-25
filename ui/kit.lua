@@ -990,10 +990,95 @@ function K.InspectMouse()
                 .. " · Anker: " .. Anchors(f)
         end
     end
+    -- Was keine Maus annimmt (Texturen, Rahmen ohne Mausklick), steht nicht
+    -- in GetMouseFoci - die Tageszeit-Sonne im Beta-Test meldete dort nur
+    -- "Minimap". Deshalb alle sichtbaren Rahmen und ihre Texturen, die die
+    -- Mausposition ueberdecken, die kleinsten zuerst.
+    local hits = K.UnderCursor()
+    if #hits > 0 then
+        out[#out + 1] = "Alles unter der Maus, das Kleinste zuerst:"
+        for i = 1, math.min(#hits, 10) do out[#out + 1] = "   " .. hits[i].line end
+    end
     if #out == 0 then
         out[1] = "Unter der Maus liegt kein Rahmen. Maus über das Ding halten und den Befehl mit Enter abschicken."
     end
     return out
+end
+
+-- Liegt die Mausposition in der Flaeche von r? Koordinaten von Rahmen und
+-- Texturen stehen in ihrer wirksamen Skalierung, die Maus in Bildpunkten.
+local function Covers(r, cx, cy, scale)
+    local ok, hit, area = pcall(function()
+        local s = K.Plain(r.GetEffectiveScale and r:GetEffectiveScale())
+        if type(s) ~= "number" or s <= 0 then s = scale end
+        local l, rt = K.Plain(r:GetLeft()), K.Plain(r:GetRight())
+        local t, b = K.Plain(r:GetTop()), K.Plain(r:GetBottom())
+        if type(l) ~= "number" or type(rt) ~= "number" or type(t) ~= "number" or type(b) ~= "number" then
+            return false, 0
+        end
+        local x, y = cx / s, cy / s
+        return x >= l and x <= rt and y >= b and y <= t, (rt - l) * (t - b)
+    end)
+    return ok and hit or false, ok and area or 0
+end
+
+local function TextureOf(r)
+    local ok, v = pcall(function()
+        local atlas = r.GetAtlas and r:GetAtlas()
+        if type(atlas) == "string" and atlas ~= "" then return "Atlas " .. atlas end
+        local tex = r.GetTexture and r:GetTexture()
+        if type(tex) == "string" or type(tex) == "number" then return "Bild " .. tostring(tex) end
+        return nil
+    end)
+    return ok and v or nil
+end
+
+function K.UnderCursor()
+    local hits = {}
+    if type(_G.EnumerateFrames) ~= "function" or type(_G.GetCursorPosition) ~= "function" then return hits end
+    local cx, cy = _G.GetCursorPosition()
+    cx, cy = K.Plain(cx), K.Plain(cy)
+    if type(cx) ~= "number" or type(cy) ~= "number" then return hits end
+    local skip = { [_G.UIParent or false] = true, [_G.WorldFrame or false] = true }
+    local f = _G.EnumerateFrames()
+    local guard = 0
+    while f and guard < 50000 do
+        guard = guard + 1
+        local ok, usable = pcall(function()
+            return not skip[f] and not (f.IsForbidden and f:IsForbidden()) and K.Bool(f:IsVisible(), false)
+        end)
+        if ok and usable then
+            local scale = K.Plain(f.GetEffectiveScale and f:GetEffectiveScale())
+            if type(scale) ~= "number" or scale <= 0 then scale = 1 end
+            local hit, area = Covers(f, cx, cy, scale)
+            if hit then
+                local kind = f.GetObjectType and f:GetObjectType()
+                hits[#hits + 1] = { area = area, line = string.format("%s (%s, %s/%s, Maus %s)",
+                    NameOf(f), tostring(kind), tostring(f.GetFrameStrata and f:GetFrameStrata()),
+                    Num(f.GetFrameLevel and f:GetFrameLevel()),
+                    tostring(K.Bool(f.IsMouseEnabled and f:IsMouseEnabled(), false))) }
+                local rok, regions = pcall(function() return { f:GetRegions() } end)
+                for _, r in ipairs(rok and regions or {}) do
+                    local vok, vis = pcall(function()
+                        return r:GetObjectType() == "Texture" and K.Bool(r:IsVisible(), false)
+                    end)
+                    if vok and vis then
+                        local rhit, rarea = Covers(r, cx, cy, scale)
+                        local tex = TextureOf(r)
+                        if rhit and tex then
+                            local rname = NameOf(r)
+                            if rname == "(ohne Namen)" then rname = "Textur in " .. NameOf(f) end
+                            hits[#hits + 1] = { area = rarea, line = rname .. ": " .. tex }
+                        end
+                    end
+                end
+            end
+        end
+        local nok, nxt = pcall(_G.EnumerateFrames, f)
+        f = nok and nxt or nil
+    end
+    table.sort(hits, function(a, b) return a.area < b.area end)
+    return hits
 end
 
 --------------------------------------------------

@@ -182,20 +182,29 @@ local function SkinFrame(cf)
     return d
 end
 
--- Frame-Stufe einer Flaeche, oder nil, wenn der Client sie nicht offen nennt.
-local function Level(f)
-    local v = f and f.GetFrameLevel and K.Plain(f:GetFrameLevel())
-    return type(v) == "number" and v or nil
+-- Die Flaeche liegt in der Schicht BACKGROUND, unter Chat und Reitern
+-- (beide LOW). 6.3.0.9 setzte sie in LOW eine Stufe unter die Reiter -
+-- das Spiel hob sie wieder auf die Stufe des Chatrahmens (/wcui chat im
+-- Beta-Test: Flaeche LOW/5, Reiter LOW/2), und ihre dunkle Reiterzeile
+-- lag ueber den Reitern ("weggedunkelt"). Eine Schicht tiefer gewinnt
+-- unabhaengig von jeder Stufe; SetFixedFrameStrata haelt sie dort, auch
+-- wenn das Spiel die Schicht des Chatrahmens neu setzt.
+local function PinBack(d)
+    if d.back.SetFixedFrameStrata then pcall(d.back.SetFixedFrameStrata, d.back, false) end
+    if d.back.SetFixedFrameLevel then pcall(d.back.SetFixedFrameLevel, d.back, false) end
+    d.back:SetFrameStrata("BACKGROUND")
+    d.back:SetFrameLevel(1)
+    if d.back.SetFixedFrameStrata then pcall(d.back.SetFixedFrameStrata, d.back, true) end
+    if d.back.SetFixedFrameLevel then pcall(d.back.SetFixedFrameLevel, d.back, true) end
 end
+CH.PinBack = PinBack
 
 local function ApplyFrame(cf, d)
-    -- Die Flaeche eine Stufe unter Chat und Reiter (ein Kind darf tiefer
-    -- stehen als sein Elternrahmen).
-    local low = Level(cf) or 1
-    local tl = Level(d.tab)
-    if tl and tl < low then low = tl end
-    d.back:SetFrameStrata(cf.GetFrameStrata and cf:GetFrameStrata() or "LOW")
-    d.back:SetFrameLevel(math.max(0, low - 1))
+    PinBack(d)
+    if not d.pinHooked and _G.hooksecurefunc and cf.SetFrameStrata then
+        d.pinHooked = true
+        _G.hooksecurefunc(cf, "SetFrameStrata", function() PinBack(d) end)
+    end
     d.back:SetAllPoints(cf)
     local path = K.FontPath()
     -- Chat ohne Kontur: lange Zeilen lesen sich mit Schatten ruhiger.

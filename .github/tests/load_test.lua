@@ -2376,6 +2376,52 @@ do
         _G.GetMouseFoci = oldFoci
     end)
     Check(ok, "Minikarte: Addon-Knoepfe hell, Tageszeit unter anderem Namen, /wcui maus" .. (ok and "" or (": " .. tostring(err))))
+
+    -- 6.3.1.3: Die Chatflaeche liegt eine Schicht unter den Reitern (das
+    -- Spiel hob sie in LOW auf die Stufe des Chatrahmens, ueber die
+    -- Reiter); /wcui maus findet auch Texturen ohne Mausannahme.
+    ok, err = pcall(function()
+        local K = WeintCodex.UIKit
+        local strata, fixed = nil, nil
+        local back = {
+            SetFrameStrata = function(_, v) strata = v end,
+            SetFrameLevel = function() end,
+            SetFixedFrameStrata = function(_, v) fixed = v end,
+        }
+        WeintCodex.UIChat.PinBack({ back = back })
+        assert(strata == "BACKGROUND" and fixed == true, "Chatflaeche nicht unter den Reitern")
+
+        local function Box(name, l, b, size, extra)
+            local o = {
+                GetName = function() return name end,
+                GetLeft = function() return l end, GetRight = function() return l + size end,
+                GetBottom = function() return b end, GetTop = function() return b + size end,
+                GetEffectiveScale = function() return 1 end,
+                IsVisible = function() return true end, IsShown = function() return true end,
+                GetAlpha = function() return 1 end,
+            }
+            for k, v in pairs(extra or {}) do o[k] = v end
+            return o
+        end
+        local sun = Box("SunTexture", 90, 90, 20, {
+            GetObjectType = function() return "Texture" end,
+            GetTexture = function() return "Interface\\Sun" end,
+        })
+        local map = Box("TestMap", 0, 0, 200, {
+            GetObjectType = function() return "Frame" end,
+            GetRegions = function() return sun end,
+            IsMouseEnabled = function() return false end,
+        })
+        local oldEnum, oldCursor = _G.EnumerateFrames, _G.GetCursorPosition
+        _G.EnumerateFrames = function(f) if f == nil then return map end return nil end
+        _G.GetCursorPosition = function() return 100, 100 end
+        local hits = K.UnderCursor()
+        assert(#hits == 2 and hits[1].line:find("Interface", 1, true), "Textur unter der Maus nicht gefunden")
+        _G.GetCursorPosition = function() return 300, 300 end
+        assert(#K.UnderCursor() == 0, "Rahmen neben der Maus gemeldet")
+        _G.EnumerateFrames, _G.GetCursorPosition = oldEnum, oldCursor
+    end)
+    Check(ok, "Chat: Flaeche unter den Reitern; /wcui maus findet Texturen" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.
