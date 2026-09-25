@@ -2104,6 +2104,71 @@ do
     Check(ok, "Auren-Pruefung: geheime Breite und verbotene Knoepfe brechen nichts ab" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.0.7: Aufschluesselung wie Details, Infozeile unter dem Chat,
+-- Taschenleiste im Stil der Aktionsknoepfe.
+do
+    local DM = WeintCodex.UIDamageMeter
+    local ok, err = pcall(function()
+        DM.ShowTest(true)
+        local w = DM.Window(1)
+        local r1, r2 = w.rows[1], w.rows[2]
+        assert(r1._src and r1._scripts.OnMouseUp, "Zeile ohne Klick")
+        r1._scripts.OnMouseUp(r1, "LeftButton")
+        local bd = DM.Breakdown()
+        assert(bd and bd.frame:IsShown(), "Aufschluesselung geht nicht auf")
+        assert(bd.name:GetText() == "Varek", "falscher Spieler: " .. tostring(bd.name:GetText()))
+        assert(bd.stats[4].value:GetText() == "1 / 5", "Rang: " .. tostring(bd.stats[4].value:GetText()))
+        assert(bd.stats[3].value:GetText() == "32%", "Anteil: " .. tostring(bd.stats[3].value:GetText()))
+        assert(bd.rows[1]:IsShown() and bd.rows[4]:IsShown() and not bd.rows[5]:IsShown(), "Zauberzeilen")
+        -- 2100 von 4940 in 42 s: "2.100 (50)  43%" in welcher Schreibweise auch immer.
+        local amt = bd.rows[1].amount:GetText() or ""
+        assert(amt:find("43%", 1, true) and amt:find("(", 1, true), "Zauberzeile ohne Anteil/je Sekunde: " .. amt)
+        DM.StepBreakdown(1)
+        assert(bd.name:GetText() == "Tamsin", "Pfeil blaettert nicht: " .. tostring(bd.name:GetText()))
+        assert(bd.prev:IsShown(), "Pfeil zurueck fehlt")
+        -- Noch einmal auf den gezeigten Spieler: zu.
+        r2._scripts.OnMouseUp(r2, "LeftButton")
+        assert(not bd.frame:IsShown(), "zweiter Klick schliesst nicht")
+        DM.ShowTest(false)
+    end)
+    Check(ok, "Schadensanzeige: Aufschluesselung per Klick (Kennzahlen, Zauber, Blaettern)"
+        .. (ok and "" or (": " .. tostring(err))))
+
+    local CH = WeintCodex.UIChat
+    ok, err = pcall(function()
+        local oldMoney, oldFree = _G.GetMoney, _G.C_Container
+        _G.GetMoney = function() return 1234567 end
+        _G.C_Container = { GetContainerNumFreeSlots = function(bag) return bag == 0 and 5 or 2 end }
+        CH.ApplyAll()
+        local info = CH.info()
+        assert(info and info:IsShown(), "keine Infozeile")
+        assert(CH.Money():find("123", 1, true) and CH.Money():find("45 s", 1, true), "Gold: " .. CH.Money())
+        assert(CH.FreeSlots() == 13, "freie Plaetze: " .. tostring(CH.FreeSlots()))
+        _G.C_Container = { GetContainerNumFreeSlots = function() return setmetatable({}, {}) end }
+        local oldSecret = _G.issecretvalue
+        _G.issecretvalue = function(v) return type(v) == "table" and getmetatable(v) ~= nil end
+        assert(CH.FreeSlots() == nil, "geheime Zahl als Taschenplaetze gezaehlt")
+        _G.issecretvalue = oldSecret
+        _G.GetMoney, _G.C_Container = oldMoney, oldFree
+    end)
+    Check(ok, "Chat: Infozeile (Gold, Taschen, Unbekanntes bleibt unbekannt)" .. (ok and "" or (": " .. tostring(err))))
+
+    local AB = WeintCodex.UIActionBars
+    ok, err = pcall(function()
+        local bar = CreateFrame("Frame", "BagsBar", UIParent)
+        local b = CreateFrame("Button", "MainMenuBarBackpackButton", bar)
+        b.icon = b:CreateTexture()
+        local border = b:CreateTexture()
+        b.IconBorder = border
+        AB.SkinBags()
+        assert(AB.skinned[b], "Rucksack nicht umgestaltet")
+        assert(border:GetAlpha() == 0, "goldener Rand bleibt")
+        assert(AB.bagsBackdrop and AB.bagsBackdrop:IsShown(), "keine Flaeche hinter den Taschen")
+        _G.BagsBar, _G.MainMenuBarBackpackButton = nil, nil
+    end)
+    Check(ok, "Taschenleiste: flach, ohne goldenen Rand, mit Flaeche" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.
 -- Sie rollt nie - also muss sie passen, mit Luft fuer einen weiteren.
 Check((UO._sidebarUsed or 9999) + 40 <= UO.HEIGHT,

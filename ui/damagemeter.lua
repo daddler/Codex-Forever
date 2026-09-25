@@ -70,8 +70,8 @@ local function Count() return math.max(1, math.min(MAX_WINDOWS, Opt("windows") o
 local MODES = {
     { key = "DamageDone",   label = "Schaden",            rate = true },
     { key = "HealingDone",  label = "Heilung",            rate = true },
-    { key = "DamageTaken",  label = "Erlittener Schaden", rate = true },
-    { key = "Interrupts",   label = "Unterbrechungen",    count = true },
+    { key = "DamageTaken",  label = "Erlittener Schaden", short = "Erlitten", rate = true },
+    { key = "Interrupts",   label = "Unterbrechungen",    short = "Unterbr.", count = true },
     { key = "Dispels",      label = "Bannungen",          count = true },
     { key = "Deaths",       label = "Tode",               deaths = true },
 }
@@ -202,6 +202,10 @@ local function Row(w)
     r:EnableMouse(true)
     r:SetScript("OnEnter", function(self) DM.ShowTooltip(w, self) end)
     r:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    -- Klick: Aufschluesselung dieses Spielers (wie Details).
+    r:SetScript("OnMouseUp", function(self, button)
+        if button == "LeftButton" and self._src then DM.OpenBreakdown(w, self._src) end
+    end)
     local host = CreateFrame("Frame", nil, r)
     host:SetAllPoints(r)
     host:SetFrameLevel((r.bar:GetFrameLevel() or 1) + 2)
@@ -573,8 +577,399 @@ function DM.ShowTooltip(w, r)
     elseif not mode.deaths and not DM._test then
         GameTooltip:AddLine("Zauber nennt der Client hier nicht.", muted[1], muted[2], muted[3], true)
     end
+    local a = C.accent
+    GameTooltip:AddLine("Klick: Aufschlüsselung", a[1], a[2], a[3])
     GameTooltip:Show()
 end
+
+--------------------------------------------------
+-- Aufschluesselung (Klick auf einen Namen, wie Details)
+--------------------------------------------------
+-- Ein eigenes Fenster neben der Schadensanzeige: wer, wie viel, wie viel
+-- je Sekunde, welcher Anteil, welcher Rang - und darunter jeder Zauber mit
+-- Balken, Summe, Anteil und Wert je Sekunde. Oben die Messarten zum
+-- Umschalten (Schaden, Heilung, erlittener Schaden ... desselben
+-- Spielers), Pfeile blaettern zum naechsten Spieler der Liste. Es folgt
+-- dem Takt der Anzeige, also live im Kampf. Esc oder X schliesst.
+--
+-- Was der Client nicht herausgibt, steht nicht da: keine Zauber ->
+-- ein Satz, keine Dauer -> kein "je Sekunde" beim Zauber. Ziele,
+-- Treffer, kritische Treffer nennt C_DamageMeter nach allem, was bekannt
+-- ist, nicht - deshalb gibt es sie hier nicht.
+
+local BD_W, BD_ROW, BD_MAX = 340, 20, 12
+local bd
+
+-- Dieselbe Person in einer anderen Liste: ueber die GUID, sonst den Namen.
+local function SameSource(a, guid, name)
+    local g = K.Plain(a.sourceGUID)
+    if type(guid) == "string" and type(g) == "string" then return g == guid end
+    local n = K.Plain(a.name)
+    return type(name) == "string" and type(n) == "string" and n == name
+end
+
+local function SessionSeconds(session)
+    local cdm = _G.C_DamageMeter
+    if DM._test then return 42 end
+    if not (cdm and cdm.GetSessionDurationSeconds and type(session) == "string") then return nil end
+    local ok, secs = pcall(cdm.GetSessionDurationSeconds, _G.Enum.DamageMeterSessionType[session])
+    secs = ok and K.Plain(secs) or nil
+    if type(secs) == "number" and secs > 0 and secs < 6 * 3600 then return secs end
+    return nil
+end
+
+local function Stat(parent, label)
+    local c = CreateFrame("Frame", nil, parent)
+    c:SetSize((BD_W - 24) / 4, 34)
+    c.value = K.NewText(c, 14)
+    c.value:SetPoint("TOPLEFT", c, "TOPLEFT", 0, 0)
+    c.value:SetTextColor(unpack(C.textBright))
+    c.label = K.NewText(c, 10)
+    c.label:SetPoint("TOPLEFT", c.value, "BOTTOMLEFT", 0, -2)
+    c.label:SetTextColor(unpack(C.textDim))
+    c.label:SetText(label)
+    return c
+end
+
+local function SpellRow(parent)
+    local r = CreateFrame("Frame", nil, parent)
+    r:SetHeight(BD_ROW)
+    r.icon = r:CreateTexture(nil, "ARTWORK")
+    r.icon:SetSize(BD_ROW, BD_ROW)
+    r.icon:SetPoint("LEFT", r, "LEFT", 0, 0)
+    if r.icon.SetTexCoord then r.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
+    r.bar = K.NewBar(r)
+    r.bar:SetPoint("TOPLEFT", r, "TOPLEFT", BD_ROW + 2, 0)
+    r.bar:SetPoint("BOTTOMRIGHT", r, "BOTTOMRIGHT", 0, 0)
+    r.bg = r:CreateTexture(nil, "BACKGROUND")
+    r.bg:SetAllPoints(r.bar)
+    local s = C.surface2
+    r.bg:SetColorTexture(s[1], s[2], s[3], 0.8)
+    local host = CreateFrame("Frame", nil, r)
+    host:SetAllPoints(r)
+    host:SetFrameLevel((r.bar:GetFrameLevel() or 1) + 2)
+    r.name = K.NewText(host, 11)
+    r.name:SetPoint("LEFT", r.bar, "LEFT", 5, 0)
+    r.name:SetPoint("RIGHT", r.bar, "RIGHT", -120, 0)
+    r.name:SetJustifyH("LEFT")
+    r.name:SetWordWrap(false)
+    r.amount = K.NewText(host, 11)
+    r.amount:SetPoint("RIGHT", r.bar, "RIGHT", -4, 0)
+    r.amount:SetJustifyH("RIGHT")
+    r:EnableMouse(true)
+    r:SetScript("OnEnter", function(self)
+        if type(self._spell) == "nil" or not GameTooltip.SetSpellByID then return end
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        pcall(GameTooltip.SetSpellByID, GameTooltip, self._spell)
+        GameTooltip:Show()
+    end)
+    r:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    r:Hide()
+    return r
+end
+
+local function BuildBreakdown()
+    if bd then return bd end
+    local f = CreateFrame("Frame", "WeintCodexDamageBreakdown", UIParent)
+    f:SetSize(BD_W, 200)
+    f:SetFrameStrata("MEDIUM")
+    f:SetClampedToScreen(true)
+    f:EnableMouse(true)
+    f.kachel = K.Kachel(f, { shadow = 8 })
+    bd = { frame = f, rows = {}, tabs = {} }
+
+    bd.icon = f:CreateTexture(nil, "ARTWORK")
+    bd.icon:SetSize(24, 24)
+    bd.icon:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -12)
+    bd.name = K.NewText(f, 15)
+    bd.name:SetPoint("TOPLEFT", bd.icon, "TOPRIGHT", 8, 1)
+    bd.name:SetPoint("RIGHT", f, "RIGHT", -84, 0)
+    bd.name:SetJustifyH("LEFT")
+    bd.name:SetWordWrap(false)
+    bd.sub = K.NewText(f, 10)
+    bd.sub:SetPoint("TOPLEFT", bd.name, "BOTTOMLEFT", 0, -2)
+    bd.sub:SetTextColor(unpack(C.textMuted))
+
+    bd.close = IconButton(f, "icon_close", "Schließen", function() f:Hide() end)
+    bd.close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -10, -12)
+    local function Arrow(text, tip, dir)
+        local b = CreateFrame("Button", nil, f)
+        b:SetSize(20, 20)
+        b.text = K.NewText(b, 16)
+        b.text:SetPoint("CENTER", b, "CENTER", 0, 1)
+        b.text:SetText(text)
+        b.text:SetTextColor(unpack(C.textMuted))
+        b:SetScript("OnClick", function() DM.StepBreakdown(dir) end)
+        b:SetScript("OnEnter", function(self)
+            self.text:SetTextColor(unpack(C.textBright))
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(tip, 1, 1, 1)
+            GameTooltip:Show()
+        end)
+        b:SetScript("OnLeave", function(self)
+            self.text:SetTextColor(unpack(C.textMuted))
+            GameTooltip:Hide()
+        end)
+        return b
+    end
+    bd.next = Arrow("›", "Nächster in der Liste", 1)
+    bd.next:SetPoint("RIGHT", bd.close, "LEFT", -8, 0)
+    bd.prev = Arrow("‹", "Voriger in der Liste", -1)
+    bd.prev:SetPoint("RIGHT", bd.next, "LEFT", -2, 0)
+
+    -- Kennzahlen in einer Reihe.
+    bd.stats = {}
+    for i, label in ipairs({ "Gesamt", "Je Sekunde", "Anteil", "Rang" }) do
+        local c = Stat(f, label)
+        if i == 1 then
+            c:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -48)
+        else
+            c:SetPoint("TOPLEFT", bd.stats[i - 1], "TOPRIGHT", 0, 0)
+        end
+        bd.stats[i] = c
+    end
+
+    -- Messarten als flache Reiter.
+    bd.tabRow = CreateFrame("Frame", nil, f)
+    bd.tabRow:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -90)
+    bd.tabRow:SetPoint("TOPRIGHT", f, "TOPRIGHT", -12, -90)
+    bd.tabRow:SetHeight(20)
+    local line = bd.tabRow:CreateTexture(nil, "BACKGROUND")
+    line:SetPoint("BOTTOMLEFT", bd.tabRow, "BOTTOMLEFT", 0, 0)
+    line:SetPoint("BOTTOMRIGHT", bd.tabRow, "BOTTOMRIGHT", 0, 0)
+    line:SetHeight(1)
+    line:SetColorTexture(C.border[1], C.border[2], C.border[3], 1)
+
+    bd.list = CreateFrame("Frame", nil, f)
+    bd.list:SetPoint("TOPLEFT", bd.tabRow, "BOTTOMLEFT", 0, -8)
+    bd.list:SetPoint("TOPRIGHT", bd.tabRow, "BOTTOMRIGHT", 0, -8)
+    bd.list:SetHeight(BD_MAX * (BD_ROW + 2))
+    for i = 1, BD_MAX do
+        local r = SpellRow(bd.list)
+        r:SetPoint("TOPLEFT", bd.list, "TOPLEFT", 0, -(i - 1) * (BD_ROW + 2))
+        r:SetPoint("TOPRIGHT", bd.list, "TOPRIGHT", 0, -(i - 1) * (BD_ROW + 2))
+        bd.rows[i] = r
+    end
+    bd.note = K.NewText(f, 11)
+    bd.note:SetJustifyH("LEFT")
+    bd.note:SetWidth(BD_W - 24)
+    bd.note:SetTextColor(unpack(C.textDim))
+
+    f:SetScript("OnHide", function() bd.guid, bd.name_ = nil, nil end)
+    -- Esc schliesst, wie jedes Fenster des Spiels.
+    if type(_G.UISpecialFrames) == "table" then table.insert(_G.UISpecialFrames, "WeintCodexDamageBreakdown") end
+    f:Hide()
+    return bd
+end
+
+local function PaintTabs()
+    for _, t in ipairs(bd.tabs) do
+        local on = (t._mode == bd.mode)
+        t.text:SetTextColor(unpack(on and C.textBright or C.textMuted))
+        t.line:SetShown(on)
+    end
+end
+
+local function BuildTabs()
+    for _, t in ipairs(bd.tabs) do t:Hide() end
+    local x = 0
+    local i = 0
+    for _, m in ipairs(Modes()) do
+        if not m.deaths then
+            i = i + 1
+            local t = bd.tabs[i]
+            if not t then
+                t = CreateFrame("Button", nil, bd.tabRow)
+                t:SetHeight(20)
+                t.text = K.NewText(t, 11)
+                t.text:SetPoint("CENTER", t, "CENTER", 0, 1)
+                t.line = t:CreateTexture(nil, "ARTWORK")
+                t.line:SetPoint("BOTTOMLEFT", t, "BOTTOMLEFT", 0, 0)
+                t.line:SetPoint("BOTTOMRIGHT", t, "BOTTOMRIGHT", 0, 0)
+                t.line:SetHeight(2)
+                t.line:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                t:SetScript("OnClick", function(self)
+                    bd.mode = self._mode
+                    DM.RefreshBreakdown()
+                end)
+                bd.tabs[i] = t
+            end
+            t._mode = m.key
+            -- Kurz: "Erlittener Schaden" passt sonst nicht in die Reihe.
+            t.text:SetText(m.short or m.label)
+            local w = K.Plain(t.text:GetStringWidth())
+            t:SetWidth((type(w) == "number" and w or 50) + 14)
+            t:ClearAllPoints()
+            t:SetPoint("LEFT", bd.tabRow, "LEFT", x, 0)
+            x = x + t:GetWidth() + 4
+            t:Show()
+        end
+    end
+    PaintTabs()
+end
+
+-- Neben das Fenster, auf die Seite mit mehr Platz.
+local function Place(w)
+    local f = bd.frame
+    local wf = w.frame
+    f:ClearAllPoints()
+    local cx = K.Plain(wf.GetCenter and select(1, wf:GetCenter()))
+    local uw = K.Plain(UIParent:GetWidth())
+    if type(cx) == "number" and type(uw) == "number" and cx > uw / 2 then
+        f:SetPoint("BOTTOMRIGHT", wf, "BOTTOMLEFT", -10, 0)
+    else
+        f:SetPoint("BOTTOMLEFT", wf, "BOTTOMRIGHT", 10, 0)
+    end
+end
+
+-- Die Liste der aktuellen Messart (Test oder Client), mit Summe.
+local function SourcesFor(session, modeKey)
+    if DM._test then
+        local t = 0
+        for _, s in ipairs(DM.TEST_SOURCES) do t = t + s.totalAmount end
+        return DM.TEST_SOURCES, t
+    end
+    if not Available() then return nil, nil end
+    local ok, data = DM.Fetch(session, modeKey)
+    if not (ok and type(data) == "table" and type(data.combatSources) == "table") then return nil, nil end
+    local total = data.totalAmount
+    if type(total) == "nil" then
+        local t = 0
+        for _, src in ipairs(data.combatSources) do
+            local v = K.Plain(src.totalAmount)
+            if type(v) ~= "number" then t = nil break end
+            t = t + v
+        end
+        total = t
+    end
+    return data.combatSources, total
+end
+
+function DM.RefreshBreakdown()
+    if not (bd and bd.frame:IsShown() and bd.win) then return end
+    local w = bd.win
+    local session = w:Session()
+    local mode = ModeInfo(bd.mode)
+    PaintTabs()
+    local sources, total = SourcesFor(session, mode.key)
+    local src, rank
+    for i, s in ipairs(sources or {}) do
+        if SameSource(s, bd.guid, bd.name_) then src, rank = s, i break end
+    end
+    bd.sources, bd.rank = sources, rank
+
+    -- Kopf
+    local class = src and K.Plain(src.classFilename) or bd.class
+    if not ClassIcon(bd.icon, class) then bd.icon:Hide() end
+    if src and type(src.name) ~= "nil" then bd.name:SetFormattedText("%s", src.name)
+    elseif bd.name_ then bd.name:SetText(bd.name_) end
+    local cc = class and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
+    if cc then bd.name:SetTextColor(cc.r, cc.g, cc.b) else bd.name:SetTextColor(unpack(C.textBright)) end
+    bd.sub:SetText(mode.label .. " · " .. w:SessionLabel() .. (DM._test and "  ·  Beispiel" or ""))
+
+    -- Kennzahlen
+    local st = bd.stats
+    if src then
+        st[1].value:SetText(DM.Format(src.totalAmount))
+        if mode.rate and type(src.amountPerSecond) ~= "nil" then st[2].value:SetText(DM.Format(src.amountPerSecond))
+        else st[2].value:SetText("–") end
+        local pct = Share(src, total)
+        st[3].value:SetText(pct and string.format("%d%%", math.floor(pct + 0.5)) or "–")
+        st[4].value:SetText(string.format("%d / %d", rank, #sources))
+    else
+        for i = 1, 4 do st[i].value:SetText("–") end
+    end
+
+    -- Zauber
+    local spells = {}
+    if src then
+        spells = DM._test and (DM.TEST_SPELLS[rank] or {}) or DM.Spells(session, mode.key, src.sourceGUID)
+    end
+    local secs = SessionSeconds(session)
+    local r, g, b = C.info[1], C.info[2], C.info[3]
+    if cc then r, g, b = cc.r, cc.g, cc.b end
+    local shown = math.min(#spells, BD_MAX)
+    local top = spells[1] and spells[1].totalAmount
+    for i = 1, BD_MAX do
+        local row = bd.rows[i]
+        local sp = spells[i]
+        if sp and i <= shown then
+            row._spell = sp.spellID
+            local icon = SpellIcon(sp.spellID)
+            if type(icon) ~= "nil" then row.icon:SetTexture(icon) row.icon:Show() else row.icon:Hide() end
+            row.name:SetText(SpellName(sp.spellID) or "?")
+            if type(top) ~= "nil" then row.bar:SetMinMaxValues(0, top) end
+            if type(sp.totalAmount) ~= "nil" then row.bar:SetValue(sp.totalAmount) else row.bar:SetValue(0) end
+            K.PaintBar(row.bar, r, g, b)
+            local pct = Share(sp, src.totalAmount)
+            local rate = sp.amountPerSecond
+            local v = K.Plain(sp.totalAmount)
+            local rateText
+            if type(rate) ~= "nil" then rateText = DM.Format(rate)
+            elseif secs and type(v) == "number" then rateText = DM.Format(v / secs) end
+            local parts = DM.Format(sp.totalAmount)
+            if rateText then parts = string.format("%s (%s)", parts, rateText) end
+            if pct then parts = string.format("%s  %d%%", parts, math.floor(pct + 0.5)) end
+            row.amount:SetText(parts)
+            row:Show()
+        else
+            row._spell = nil
+            row:Hide()
+        end
+    end
+    local listH = shown * (BD_ROW + 2)
+    bd.list:SetHeight(math.max(1, listH))
+    bd.note:ClearAllPoints()
+    bd.note:SetPoint("TOPLEFT", bd.list, "TOPLEFT", 0, -listH - (shown > 0 and 6 or 0))
+    if not src then
+        bd.note:SetText("In dieser Messart steht " .. (bd.name_ or "dieser Spieler") .. " nicht auf der Liste.")
+    elseif shown == 0 then
+        bd.note:SetText(mode.deaths and "" or "Zauber nennt der Client hier nicht.")
+    elseif #spells > shown then
+        bd.note:SetText(string.format("und %d weitere Zauber", #spells - shown))
+    else
+        bd.note:SetText("")
+    end
+    local noteH = (bd.note:GetText() or "") ~= "" and 18 or 0
+    bd.frame:SetHeight(90 + 20 + 8 + listH + noteH + 12)
+    bd.prev:SetShown(rank ~= nil and rank > 1)
+    bd.next:SetShown(rank ~= nil and sources ~= nil and rank < #sources)
+end
+
+-- Einen Spieler aufschluesseln. Noch einmal auf denselben: zu.
+function DM.OpenBreakdown(w, src)
+    if not src then return end
+    BuildBreakdown()
+    local guid, name = K.Plain(src.sourceGUID), K.Plain(src.name)
+    if type(guid) ~= "string" then guid = nil end
+    if type(name) ~= "string" then name = nil end
+    if bd.frame:IsShown() and bd.win == w and SameSource(src, bd.guid, bd.name_) then
+        bd.frame:Hide()
+        return
+    end
+    bd.win, bd.guid, bd.name_ = w, guid, name
+    bd.class = K.Plain(src.classFilename)
+    bd.mode = w:Mode().key
+    if w:Mode().deaths then bd.mode = "DamageDone" end
+    BuildTabs()
+    Place(w)
+    bd.frame:Show()
+    DM.RefreshBreakdown()
+end
+
+-- Zum naechsten oder vorigen Spieler der Liste.
+function DM.StepBreakdown(dir)
+    if not (bd and bd.sources and bd.rank) then return end
+    local s = bd.sources[bd.rank + dir]
+    if not s then return end
+    local guid, name = K.Plain(s.sourceGUID), K.Plain(s.name)
+    bd.guid = type(guid) == "string" and guid or nil
+    bd.name_ = type(name) == "string" and name or nil
+    bd.class = K.Plain(s.classFilename)
+    DM.RefreshBreakdown()
+end
+
+function DM.Breakdown() return bd end
 
 function Win:CycleMode(back)
     local list = Modes()
@@ -690,6 +1085,7 @@ function DM.Refresh()
         local w = windows[i]
         if w then w:Refresh() end
     end
+    DM.RefreshBreakdown()
 end
 
 function DM.AddWindow()
@@ -755,6 +1151,15 @@ DM.TEST_SOURCES = {
     { name = "Orwen",    classFilename = "HUNTER",  totalAmount = 3650, amountPerSecond = 87 },
     { name = "Brunhild", classFilename = "WARRIOR", totalAmount = 2180, amountPerSecond = 52 },
     { name = "Liora",    classFilename = "PRIEST",  totalAmount = 380,  amountPerSecond = 9 },
+}
+
+-- Zauber zu den Beispielzeilen (nach Rang), ebenso erfunden.
+DM.TEST_SPELLS = {
+    { { spellID = 1752, totalAmount = 2100 }, { spellID = 2098, totalAmount = 1540 }, { spellID = 1943, totalAmount = 900 }, { spellID = 6603, totalAmount = 400 } },
+    { { spellID = 133, totalAmount = 2600 }, { spellID = 2136, totalAmount = 1100 }, { spellID = 2120, totalAmount = 670 } },
+    { { spellID = 75, totalAmount = 1800 }, { spellID = 3044, totalAmount = 1300 }, { spellID = 1978, totalAmount = 550 } },
+    { { spellID = 78, totalAmount = 1200 }, { spellID = 6603, totalAmount = 980 } },
+    { { spellID = 585, totalAmount = 380 } },
 }
 
 function DM.ShowTest(on)

@@ -411,6 +411,12 @@ nach einem fremden Verschieben wurde genau dieser Aufruf blockiert
 (`ADDON_ACTION_BLOCKED`, Beta-Test 6.3.0.5). Verschieben: Bearbeitungsmodus
 des Spiels.
 
+**6.3.0.7:** Schadensanzeige mit Aufschlüsselung per Klick (Kennzahlen,
+Zauber mit Balken, Messart-Reiter, Blättern; nur was `C_DamageMeter`
+offen herausgibt – Ziele und Treffer nennt es nicht). Chat: Reiter per
+`SetAlpha`-Haken sichtbar, Infozeile darunter (ElvUI-Datenleiste,
+Eingabezeile legt sich darüber). Taschenleiste im Stil der Aktionsknöpfe.
+
 **Was noch fehlt (Phase 3 ff.):** Kachel auf allen Flächen (Chat,
 Minikarte, Taschen), Schadensanzeige in Ruhe auf die Kopfzeile
 zusammenklappen (jetzt: nur leiser), Chat-Hintergrund in Ruhe,

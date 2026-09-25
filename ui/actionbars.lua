@@ -92,6 +92,7 @@ local defaults = {
     -- die Leisten im Bearbeitungsmodus des Spiels. "game": wie bisher, der
     -- Bearbeitungsmodus des Spiels bestimmt alles.
     layout       = "wc",     -- wc | game
+    bagsSkin     = true,     -- Taschenleiste wie die Aktionsknoepfe (6.3.0.7)
     editBar      = 1,        -- welche Leiste die Einstellungsseite zeigt
 }
 -- Je Leiste flach gespeichert (UIKit.Set vergleicht Tabellen nur eine
@@ -692,8 +693,62 @@ local function HidePaging()
 end
 AB.HidePaging = HidePaging
 
+--------------------------------------------------
+-- Taschenleiste
+--------------------------------------------------
+-- Die Taschenplaetze unten rechts im Stil der Aktionsknoepfe: flach,
+-- beschnittene Symbole, ein Rand, eine Flaeche dahinter - statt der
+-- goldenen Rahmen des Spiels (Beta-Test 6.3.0.6). Die Knoepfe bleiben die
+-- des Spiels (Tasche oeffnen, Taschen ziehen); keine geschuetzten Rahmen.
+
+local BAG_BUTTONS = { "MainMenuBarBackpackButton", "CharacterBag0Slot", "CharacterBag1Slot",
+    "CharacterBag2Slot", "CharacterBag3Slot", "CharacterReagentBag0Slot" }
+AB.BAG_BUTTONS = BAG_BUTTONS
+
+local function SkinBags()
+    if not Opt("bagsSkin") then return end
+    local bar = _G.BagsBar
+    for _, n in ipairs(BAG_BUTTONS) do
+        local b = _G[n]
+        if type(b) == "table" and not (b.IsForbidden and b:IsForbidden()) then
+            local fresh = not skinned[b]
+            local d = Skin(b)
+            if d then
+                if fresh then
+                    -- Der Qualitaetsrand der Tasche und der goldene Rahmen.
+                    for _, key in ipairs({ "IconBorder", "IconOverlay" }) do
+                        local r = Region(b, key)
+                        if r and r.SetAlpha then KeepHidden(r) end
+                    end
+                    -- Offene Tasche: flach im Akzent statt gelbem Leuchten.
+                    local hl = Region(b, "SlotHighlightTexture")
+                    if hl and hl.SetColorTexture then
+                        local a = WeintCodex.Colors.accent
+                        hl:SetColorTexture(a[1], a[2], a[3], 0.35)
+                        if d.icon then hl:ClearAllPoints() hl:SetAllPoints(d.icon) end
+                    end
+                end
+                Apply(b, d)
+            end
+        end
+    end
+    if type(bar) == "table" and not (bar.IsForbidden and bar:IsForbidden()) then
+        if not AB.bagsBackdrop then
+            local bd = CreateFrame("Frame", nil, bar)
+            bd.kachel = K.Kachel(bd, { shadow = 6 })
+            bd:SetPoint("TOPLEFT", bar, "TOPLEFT", -BACKDROP_PAD, BACKDROP_PAD)
+            bd:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", BACKDROP_PAD, -BACKDROP_PAD)
+            bd:SetFrameLevel(math.max(0, Num(bar, "GetFrameLevel") or 1))
+            AB.bagsBackdrop = bd
+        end
+        AB.bagsBackdrop:SetShown(Opt("barBackdrop") and true or false)
+    end
+end
+AB.SkinBags = SkinBags
+
 local function Arrange()
     LayoutAll()
+    SkinBags()
     SkinAll()
     UpdateBackdrops()
     HidePaging()
@@ -878,7 +933,8 @@ K.Register({
             B:Row({ type = "dropdown", label = "Taschenleiste", key = "bagsBar", reload = true, items = {
                         { value = "right", text = "Unten rechts" },
                         { value = "game",  text = "Wie im Spiel" } } },
-                  { type = "empty" })
+                  { type = "toggle", label = "Taschenleiste im WeintCodex-Stil", key = "bagsSkin", reload = true,
+                    description = "Flache Taschenplätze mit feinem Rand statt der goldenen Rahmen." })
             B:Note("Solange hier nicht „Wie im Spiel“ steht, bestimmt WeintCodex den Platz von Mikromenü und Taschenleiste – auch nach dem Bearbeitungsmodus.")
             B:Section("Lage und Größe")
             B:Note("Größe, Abstand und Anzahl der Knöpfe stellst du je Leiste auf der Seite „Leisten“ ein. Verschieben geht im Bearbeitungsmodus des Spiels (Esc → Bearbeitungsmodus). Welche Leisten es überhaupt gibt, bestimmt das Spiel (Esc → Optionen → Aktionsleisten). Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt – WeintCodex ordnet die Knöpfe des Spiels.")

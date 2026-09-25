@@ -9,6 +9,34 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.0.7] – 2026-09-25
+
+**Schadensanzeige: Aufschlüsselung wie bei Details.** Klick auf einen Namen in der Schadensanzeige öffnet daneben ein eigenes Fenster: Gesamt, je Sekunde, Anteil und Rang, darunter jeder Zauber mit Balken, Summe, Wert je Sekunde und Anteil. Oben schaltest du zwischen Schaden, Heilung und erlittenem Schaden desselben Spielers um, die Pfeile blättern zum nächsten. Es läuft im Kampf live mit; Esc oder ein zweiter Klick schließt.
+
+**Der Chat im neuen Kleid.** Die Reiter bleiben sichtbar – das Spiel hatte sie trotz Einstellung ausgeblendet. Unter dem Chat steht eine Infozeile wie bei ElvUI: Uhrzeit, Gold, freie Taschenplätze, Haltbarkeit, Bildrate und Latenz; beim Schreiben liegt die Eingabezeile darüber. Klick auf die Uhrzeit öffnet den Kalender, auf Gold oder Taschen die Taschen.
+
+**Taschenleiste im Stil der Aktionsleisten.** Die Taschenplätze unten rechts sind flach mit feinem Rand und stehen auf einer Fläche, wie die Aktionsleisten – die goldenen Rahmen sind weg.
+
+### Technisch
+
+- Schadensanzeige: `DM.OpenBreakdown(w, src)` (Zeile `OnMouseUp`),
+  `DM.RefreshBreakdown` im Takt von `DM.Refresh`, `DM.StepBreakdown`.
+  Spieler über GUID, sonst Namen wiedergefunden (`SameSource`), damit der
+  Wechsel der Messart denselben Spieler zeigt. Zauber über
+  `DM.Spells`; je Sekunde aus `amountPerSecond` des Zaubers, sonst aus
+  der Kampfdauer (nur offene Werte). `UISpecialFrames` für Esc.
+  Beispielzauber `DM.TEST_SPELLS` für den Testmodus.
+- Chat: Haken auf `SetAlpha` jedes Reiters (die `CHAT_FRAME_TAB_*_NOMOUSE_ALPHA`-
+  Werte wirkten im Beta-Client nicht). Infozeile `WeintCodexChatInfo`
+  (`infoBar`): `GetMoney`, `C_Container.GetContainerNumFreeSlots`,
+  `GetInventoryItemDurability`, `GetFramerate`, `GetNetStats` – geheim
+  oder fehlend → „–“. Die Eingabezeile von Fenster 1 liegt darüber und
+  blendet sie beim Schreiben aus.
+- Aktionsleisten: `bagsSkin` – die Taschenknöpfe durch dieselbe
+  Umgestaltung wie die Aktionsknöpfe, `IconBorder` aus, offene Tasche
+  flach im Akzent, Kachel hinter `BagsBar`.
+- `load_test.lua`: Aufschlüsselung, Infozeile, Taschenleiste.
+
 ## [6.3.0.6] – 2026-09-25
 
 **Aktionsleisten verschiebst du wieder im Bearbeitungsmodus des Spiels.** Das Spiel stapelt Leiste 2, Haltungs- und Begleiterleiste auch im Kampf selbst neu, etwa wenn dein Begleiter verschwindet – nachdem WeintCodex die Leisten verschoben hatte, blockierte das Spiel diesen eigenen Schritt und meldete einen Fehler. Verschieben geht jetzt nur noch im Bearbeitungsmodus des Spiels (Esc → Bearbeitungsmodus); dort verschobene Leisten lässt das Spiel an ihrem Platz. Größe, Abstand, Reihen und Anzahl der Knöpfe stellst du weiter unter Aktionsleisten → Leisten ein.

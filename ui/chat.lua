@@ -34,7 +34,13 @@ local defaults = {
     tabsVisible = true,     -- Reiter nicht ausblenden, wenn die Maus weg ist
     editBoxSkin = true,
     editBoxTop  = false,
+    -- Seit 6.3.0.7 (Beta-Test: "noch nicht gut, ElvUI-Style"): eine
+    -- Infozeile unter dem Chat - Uhrzeit, Gold, freie Taschenplaetze,
+    -- Haltbarkeit, Bildrate, Latenz. Beim Schreiben legt sich die
+    -- Eingabezeile darueber (wie bei ElvUI).
+    infoBar     = true,
 }
+local INFO_H = 22
 
 local TAB_H = 24    -- Hoehe der Reiterzeile ueber dem Text
 local PAD = 6       -- Rand der Kachel um den Text
@@ -194,6 +200,11 @@ local function ApplyFrame(cf, d)
             if Opt("editBoxTop") then
                 d.edit:SetPoint("BOTTOMLEFT", cf, "TOPLEFT", -PAD, TAB_H + 6)
                 d.edit:SetPoint("BOTTOMRIGHT", cf, "TOPRIGHT", PAD, TAB_H + 6)
+            elseif Opt("infoBar") then
+                -- Genau ueber der Infozeile: beim Schreiben ersetzt sie sie.
+                d.edit:SetPoint("TOPLEFT", cf, "BOTTOMLEFT", -PAD, -PAD - 2)
+                d.edit:SetPoint("TOPRIGHT", cf, "BOTTOMRIGHT", PAD, -PAD - 2)
+                d.edit:SetHeight(INFO_H)
             else
                 d.edit:SetPoint("TOPLEFT", cf, "BOTTOMLEFT", -PAD, -PAD - 2)
                 d.edit:SetPoint("TOPRIGHT", cf, "BOTTOMRIGHT", PAD, -PAD - 2)
@@ -206,6 +217,39 @@ local function ApplyFrame(cf, d)
     -- deshalb sichtbar). Die Knoepfe, die zaehlen, stehen dann in der
     -- Spalte (siehe unten).
     if d.buttonFrame and Opt("buttons") ~= "game" then K.HideBlizzard(d.buttonFrame, true) end
+end
+
+-- Reiter sichtbar halten. Das Spiel blendet sie ein paar Sekunden nach
+-- der Maus aus; die Werte dafuer (CHAT_FRAME_TAB_*_NOMOUSE_ALPHA) setzt
+-- ApplyAll, aber im Beta-Test waren die Reiter trotzdem weg (6.3.0.6) -
+-- der Client liest sie offenbar nicht mehr. Ein Haken auf SetAlpha haelt
+-- jeden Reiter bei mindestens seiner Deckkraft.
+local tabHooked, tabGuard = {}, false
+local function TabFloor(tab)
+    for cf, d in pairs(done) do
+        if d.tab == tab then
+            local cur = _G.SELECTED_CHAT_FRAME
+            if _G.FCF_GetCurrentChatFrame then
+                local ok, f = pcall(_G.FCF_GetCurrentChatFrame)
+                if ok and f then cur = f end
+            end
+            return cf == cur and 1 or 0.8
+        end
+    end
+    return 0.8
+end
+local function KeepTabVisible(tab)
+    if tabHooked[tab] or not _G.hooksecurefunc then return end
+    tabHooked[tab] = true
+    _G.hooksecurefunc(tab, "SetAlpha", function(self, a)
+        if tabGuard or not Opt("tabsVisible") then return end
+        local want = TabFloor(self)
+        local plain = K.Plain(a)
+        if type(plain) == "number" and plain >= want then return end
+        tabGuard = true
+        self:SetAlpha(want)
+        tabGuard = false
+    end)
 end
 
 -- Reiter: flach, der aktive hell mit Strich, die anderen gedaempft.
@@ -228,6 +272,11 @@ local function UpdateTabs()
             local fs = d.tab.Text or (d.tab.GetFontString and d.tab:GetFontString())
             if type(fs) == "table" and fs.SetTextColor then
                 fs:SetTextColor(unpack(on and C.textBright or C.textMuted))
+            end
+            if Opt("tabsVisible") and d.tab:IsShown() then
+                tabGuard = true
+                d.tab:SetAlpha(on and 1 or 0.8)
+                tabGuard = false
             end
         end
     end
@@ -303,6 +352,167 @@ local function LayoutColumn()
     column:Show()
 end
 
+--------------------------------------------------
+-- Infozeile unter dem Chat
+--------------------------------------------------
+-- Wie die Datenleiste von ElvUI: eine schmale Kachel unter dem Chat mit
+-- dem, was man zwischendurch wissen will. Links Uhrzeit und Gold, rechts
+-- Taschen, Haltbarkeit, Bildrate und Latenz. Jeder Wert nur, wenn der
+-- Client ihn offen nennt - sonst "–", nie eine erfundene Null. Klick auf
+-- Uhrzeit: Kalender, auf Gold oder Taschen: alle Taschen.
+--
+-- Die Eingabezeile legt sich beim Schreiben darueber und verdeckt sie;
+-- steht sie immer offen (Chatstil "klassisch"), bleibt die Infozeile weg.
+
+local info
+local function Money()
+    local m = K.Plain(_G.GetMoney and _G.GetMoney())
+    if type(m) ~= "number" then return "–" end
+    local g = math.floor(m / 10000)
+    local sv = math.floor((m % 10000) / 100)
+    local big = (_G.BreakUpLargeNumbers and _G.BreakUpLargeNumbers(g)) or tostring(g)
+    return WeintCodex.ColorText("gold", big) .. " g  " .. sv .. " s"
+end
+CH.Money = Money
+
+local function FreeSlots()
+    local cc = _G.C_Container
+    local fn = cc and cc.GetContainerNumFreeSlots or _G.GetContainerNumFreeSlots
+    if not fn then return nil end
+    local free, any = 0, false
+    for bag = 0, 4 do
+        local ok, n = pcall(fn, bag)
+        n = ok and K.Plain(n) or nil
+        if type(n) == "number" then free, any = free + n, true end
+    end
+    return any and free or nil
+end
+CH.FreeSlots = FreeSlots
+
+local function Durability()
+    if not _G.GetInventoryItemDurability then return nil end
+    local low
+    for slot = 1, 19 do
+        local ok, cur, max = pcall(_G.GetInventoryItemDurability, slot)
+        cur, max = ok and K.Plain(cur) or nil, ok and K.Plain(max) or nil
+        if type(cur) == "number" and type(max) == "number" and max > 0 then
+            local pct = cur / max * 100
+            if not low or pct < low then low = pct end
+        end
+    end
+    return low
+end
+CH.Durability = Durability
+
+local function InfoCell(parent, onClick, tip)
+    local b = CreateFrame("Button", nil, parent)
+    b:SetHeight(INFO_H)
+    b.text = K.NewText(b, 11)
+    b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
+    b.text:SetTextColor(unpack(WeintCodex.Colors.textMuted))
+    if onClick then b:SetScript("OnClick", onClick) end
+    b:SetScript("OnEnter", function(self)
+        self.text:SetTextColor(unpack(WeintCodex.Colors.textBright))
+        if tip then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(tip, 1, 1, 1)
+            GameTooltip:Show()
+        end
+    end)
+    b:SetScript("OnLeave", function(self)
+        self.text:SetTextColor(unpack(WeintCodex.Colors.textMuted))
+        GameTooltip:Hide()
+    end)
+    return b
+end
+
+local function Set(cell, text)
+    cell.text:SetText(text)
+    local w = cell.text.GetStringWidth and K.Plain(cell.text:GetStringWidth())
+    cell:SetWidth((type(w) == "number" and w or 40) + 12)
+end
+
+function CH.UpdateInfoBar()
+    if not info then return end
+    local dim = WeintCodex.ColorText
+    local h
+    if _G.date then
+        local ok, t = pcall(_G.date, "%H:%M")
+        if ok then h = t end
+    end
+    Set(info.clock, h or "–")
+    Set(info.money, Money())
+    local free = FreeSlots()
+    Set(info.bags, free and (dim("textDim", "Taschen ") .. free) or (dim("textDim", "Taschen ") .. "–"))
+    local dur = Durability()
+    if dur then
+        local tone = dur < 20 and "danger" or (dur < 50 and "warning" or nil)
+        local v = string.format("%d%%", math.floor(dur + 0.5))
+        Set(info.dur, dim("textDim", "Rüstung ") .. (tone and dim(tone, v) or v))
+    else
+        Set(info.dur, dim("textDim", "Rüstung ") .. "–")
+    end
+    local fps = K.Plain(_G.GetFramerate and _G.GetFramerate())
+    Set(info.fps, type(fps) == "number" and (string.format("%d", math.floor(fps + 0.5)) .. dim("textDim", " fps")) or "–")
+    local lat
+    if _G.GetNetStats then
+        local ok, _, _, home, world = pcall(_G.GetNetStats)
+        home, world = ok and K.Plain(home) or nil, ok and K.Plain(world) or nil
+        lat = type(world) == "number" and world or (type(home) == "number" and home or nil)
+    end
+    Set(info.ms, type(lat) == "number" and (tostring(lat) .. dim("textDim", " ms")) or "–")
+end
+
+local function BuildInfoBar()
+    local cf = _G.ChatFrame1
+    if type(cf) ~= "table" then return end
+    if not info then
+        info = CreateFrame("Frame", "WeintCodexChatInfo", UIParent)
+        info.kachel = K.Kachel(info, { shadow = 6 })
+        local function Bags() if _G.ToggleAllBags then _G.ToggleAllBags() end end
+        info.clock = InfoCell(info, function() if _G.ToggleCalendar then pcall(_G.ToggleCalendar) end end, "Kalender")
+        info.money = InfoCell(info, Bags, "Taschen öffnen")
+        info.bags = InfoCell(info, Bags, "Freie Taschenplätze")
+        info.dur = InfoCell(info, nil, "Niedrigste Haltbarkeit deiner Ausrüstung")
+        info.fps = InfoCell(info, nil, "Bildrate")
+        info.ms = InfoCell(info, nil, "Latenz (Welt)")
+        info.clock:SetPoint("LEFT", info, "LEFT", 2, 0)
+        info.money:SetPoint("LEFT", info.clock, "RIGHT", 2, 0)
+        info.ms:SetPoint("RIGHT", info, "RIGHT", -2, 0)
+        info.fps:SetPoint("RIGHT", info.ms, "LEFT", -2, 0)
+        info.dur:SetPoint("RIGHT", info.fps, "LEFT", -2, 0)
+        info.bags:SetPoint("RIGHT", info.dur, "LEFT", -2, 0)
+        local acc = 0
+        info:SetScript("OnUpdate", function(_, el)
+            acc = acc + (el or 0)
+            if acc < 1 then return end
+            acc = 0
+            CH.UpdateInfoBar()
+        end)
+        for _, e in ipairs({ "PLAYER_MONEY", "BAG_UPDATE", "UPDATE_INVENTORY_DURABILITY", "PLAYER_ENTERING_WORLD" }) do
+            pcall(info.RegisterEvent, info, e)
+        end
+        info:SetScript("OnEvent", function() CH.UpdateInfoBar() end)
+        -- Die Eingabezeile ersetzt sie beim Schreiben.
+        local eb = _G.ChatFrame1EditBox
+        if type(eb) == "table" and eb.HookScript then
+            eb:HookScript("OnShow", function() if Opt("infoBar") then info:SetAlpha(0) end end)
+            eb:HookScript("OnHide", function() if Opt("infoBar") then info:SetAlpha(1) end end)
+        end
+    end
+    info:ClearAllPoints()
+    info:SetPoint("TOPLEFT", cf, "BOTTOMLEFT", -PAD, -PAD - 2)
+    info:SetPoint("TOPRIGHT", cf, "BOTTOMRIGHT", PAD, -PAD - 2)
+    info:SetHeight(INFO_H)
+    info:SetFrameStrata(cf:GetFrameStrata() or "LOW")
+    local eb = _G.ChatFrame1EditBox
+    local always = type(eb) == "table" and eb.IsShown and eb:IsShown() and not (eb.HasFocus and eb:HasFocus())
+    info:SetAlpha(always and 0 or 1)
+    info:Show()
+    CH.UpdateInfoBar()
+end
+CH.info = function() return info end
+
 local function ApplyAll()
     for i = 1, (_G.NUM_CHAT_WINDOWS or 10) do
         local cf = _G["ChatFrame" .. i]
@@ -317,6 +527,7 @@ local function ApplyAll()
     elseif mode == "tabrow" then
         K.AfterCombat(LayoutTabRow)
     end
+    if Opt("infoBar") then BuildInfoBar() elseif info then info:Hide() end
     -- Reiter sichtbar lassen: das Spiel blendet sie nach ein paar Sekunden
     -- ohne Maus auf diese Werte ab. Nur Zahlen, die sein Chatcode liest.
     if Opt("tabsVisible") then
@@ -324,7 +535,11 @@ local function ApplyAll()
         _G.CHAT_FRAME_TAB_NORMAL_NOMOUSE_ALPHA = 0.75
         _G.CHAT_FRAME_TAB_ALERTING_NOMOUSE_ALPHA = 1
     end
+    for _, d in pairs(done) do
+        if d.tab then KeepTabVisible(d.tab) end
+    end
     UpdateTabs()
+    CH.UpdateInfoBar()
 end
 CH.ApplyAll = ApplyAll
 
@@ -366,6 +581,10 @@ K.Register({
                         { value = "game",   text = "Wie im Spiel" } } })
             B:Row({ type = "toggle", label = "Reiter immer sichtbar", key = "tabsVisible", reload = true,
                     description = "Das Spiel blendet die Reiter aus, wenn die Maus nicht über dem Chat ist." },
+                  { type = "empty" })
+            B:Section("Infozeile")
+            B:Row({ type = "toggle", label = "Infozeile unter dem Chat", key = "infoBar",
+                    description = "Uhrzeit, Gold, freie Taschenplätze, Haltbarkeit, Bildrate und Latenz. Beim Schreiben liegt die Eingabezeile darüber." },
                   { type = "empty" })
             B:Section("Eingabezeile")
             B:Row({ type = "toggle", label = "Eingabezeile im WeintCodex-Stil", key = "editBoxSkin", reload = true },
