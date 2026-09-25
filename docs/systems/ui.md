@@ -401,12 +401,15 @@ Leiste (`barBackdrop`), Blätterpfeile weg. **Gemessen im Beta-Client:**
 ein eigenes Lesen der Auren (der „alte Weg“) kann im Kampf nichts; die
 Knöpfe des AuraContainers sind verboten oder haben geheime Breiten.
 
-**6.3.0.4: Leisten wie EllesmereUI.** WeintCodex ordnet die Knöpfe des
-Spiels je Leiste (Größe, Abstand, je Reihe, Anzahl, Fläche, Maus
-darüber); Leisten im Gestaltungsmodus verschiebbar
-(`RegisterMover` mit `external`). Nur außerhalb des Kampfes, Knöpfe an
-ihrer eigenen Leiste verankert. Taint im Kampf ist **nicht geprüft**;
-`layout = "game"` schaltet alles ab.
+**6.3.0.4–6.3.0.6: Leisten wie EllesmereUI, soweit es geht.** WeintCodex
+ordnet die Knöpfe des Spiels je Leiste (Größe, Abstand, je Reihe, Anzahl,
+Fläche, Maus darüber) – nur außerhalb des Kampfes, Knöpfe an ihrer
+eigenen Leiste verankert; `layout = "game"` schaltet das ab. **Leisten
+verschiebt WeintCodex nicht:** das Spiel stapelt die unteren Leisten in
+Standardlage auch im Kampf selbst (`UpdateBottomActionBarPositions`), und
+nach einem fremden Verschieben wurde genau dieser Aufruf blockiert
+(`ADDON_ACTION_BLOCKED`, Beta-Test 6.3.0.5). Verschieben: Bearbeitungsmodus
+des Spiels.
 
 **Was noch fehlt (Phase 3 ff.):** Kachel auf allen Flächen (Chat,
 Minikarte, Taschen), Schadensanzeige in Ruhe auf die Kopfzeile

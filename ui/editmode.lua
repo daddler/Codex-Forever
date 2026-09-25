@@ -270,7 +270,7 @@ end
 
 -- Welche Einstellungsseite zu welchem Rahmen gehoert.
 local MODULE_OF = {
-    uf_ = "unitframes", gf_ = "groupframes", ab_ = "actionbars", damagemeter = "damagemeter", bags = "bags",
+    uf_ = "unitframes", gf_ = "groupframes", damagemeter = "damagemeter", bags = "bags",
     questarrow = "questarrow", combatalert = "comfort", fps = "comfort", durability = "comfort",
 }
 function E.ModuleFor(key)
@@ -285,14 +285,6 @@ function E.OpenSettings(key)
     reopen = false
     K.SetUnlocked(false)
     local O = WeintCodex.UIOptions
-    -- Eine Aktionsleiste: gleich ihre Seite, mit ihr ausgewaehlt.
-    local digits = key and key:match("^ab_(%d+)$")
-    local bar = digits and (digits + 0)
-    if bar then
-        K.Set("actionbars", "editBar", bar)
-        if O and O.Show then O.Show(mod, 2) end
-        return
-    end
     if O and O.Show then O.Show(mod) end
 end
 

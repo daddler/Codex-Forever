@@ -9,6 +9,26 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.0.6] – 2026-09-25
+
+**Aktionsleisten verschiebst du wieder im Bearbeitungsmodus des Spiels.** Das Spiel stapelt Leiste 2, Haltungs- und Begleiterleiste auch im Kampf selbst neu, etwa wenn dein Begleiter verschwindet – nachdem WeintCodex die Leisten verschoben hatte, blockierte das Spiel diesen eigenen Schritt und meldete einen Fehler. Verschieben geht jetzt nur noch im Bearbeitungsmodus des Spiels (Esc → Bearbeitungsmodus); dort verschobene Leisten lässt das Spiel an ihrem Platz. Größe, Abstand, Reihen und Anzahl der Knöpfe stellst du weiter unter Aktionsleisten → Leisten ein.
+
+### Technisch
+
+- Beta-Test: `ADDON_ACTION_BLOCKED` in `SetPointBase`, aufgerufen aus
+  `EditModeManager:UpdateBottomActionBarPositions` ← `PetActionBar:Update`
+  (Begleiterleiste verschwindet im Kampf). Das Spiel stapelt die unteren
+  Leisten in Standardlage selbst, auch im Kampf; nach dem Verschieben
+  durch WeintCodex (6.3.0.4) und dem Anker-Haken (6.3.0.5) lief dieser
+  Aufruf verunreinigt.
+- Zurückgenommen: Aktionsleisten im Gestaltungsmodus (`ab_<n>`), der
+  `SetPoint`/`SetPointBase`-Haken und `RegisterMover`-Option `external`.
+  `ui/kit.lua` steht wieder wie in 6.3.0.0.
+- Bleibt: die Anordnung der Knöpfe je Leiste (`layout = "wc"`) – ob auch
+  sie im Kampf etwas blockieren lässt, ist nicht geprüft; `layout =
+  "game"` schaltet sie ab.
+- `load_test.lua`: keine Aktionsleiste im Gestaltungsmodus.
+
 ## [6.3.0.5] – 2026-09-25
 
 **Verschobene Aktionsleisten bleiben, wo du sie hinstellst.** Leiste 2 und 3 stehen im Spiel in einem Bereich, den das Spiel selbst ordnet, sobald sich unten etwas ändert – etwa die Erfahrungsleiste. Dabei rückte es eine verschobene Leiste alle paar Minuten ein Stück zur Seite. Jetzt kommt sie jedes Mal sofort an ihren Platz zurück.

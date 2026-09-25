@@ -8,14 +8,13 @@
 --     Gestalt, Fahrzeug) "Secure Snippets". Dem Forever-Beta-Client fehlt
 --     laut EllesmereUI der Uebersetzer dafuer (loadstring_untainted) -
 --     dort laufen deren Leisten nur eingeschraenkt.
---   * Lage und Groesse der Leisten verwaltet eigentlich der
---     Bearbeitungsmodus des Spiels. Seit 6.3.0.4 ordnet WeintCodex die
---     Knoepfe trotzdem selbst an und verschiebt Leisten, die man im
---     Gestaltungsmodus zieht - nur ausserhalb des Kampfes, Knoepfe an ihrer
---     eigenen Leiste verankert. Ob das im Beta-Client Taint erzeugt, ist
---     NICHT geprueft; "Wer ordnet die Knoepfe: Bearbeitungsmodus des
---     Spiels" schaltet die Anordnung ab, Rechtsklick im Gestaltungsmodus
---     gibt eine Leiste dem Spiel zurueck.
+--   * Wo die Leisten STEHEN, bestimmt der Bearbeitungsmodus des Spiels -
+--     es stapelt die unteren Leisten auch im Kampf neu, und ein fremder
+--     Eingriff laesst genau diesen Aufruf blockieren (Beta-Test 6.3.0.5).
+--     Seit 6.3.0.4 ordnet WeintCodex aber die KNOEPFE jeder Leiste selbst
+--     an (Groesse, Abstand, Reihen, Anzahl) - nur ausserhalb des Kampfes,
+--     an ihrer eigenen Leiste verankert. "Wer ordnet die Knoepfe:
+--     Bearbeitungsmodus des Spiels" schaltet das ab.
 --
 -- Was bleibt, ist, was man sieht und was sicher ist: flache Knoepfe mit
 -- 1-px-Rand statt der Steinrahmen, beschnittene Symbole, Tastenkuerzel
@@ -89,8 +88,8 @@ local defaults = {
 
     -- Seit 6.3.0.4 (Beta-Test: "so einstellen koennen wie bei
     -- EllesmereUI"): WeintCodex ordnet die Knoepfe jeder Leiste selbst an -
-    -- Symbolgroesse, Abstand, Knoepfe je Reihe, Anzahl - und die Leisten
-    -- lassen sich im Gestaltungsmodus verschieben. "game": wie bisher, der
+    -- Symbolgroesse, Abstand, Knoepfe je Reihe, Anzahl. Verschoben werden
+    -- die Leisten im Bearbeitungsmodus des Spiels. "game": wie bisher, der
     -- Bearbeitungsmodus des Spiels bestimmt alles.
     layout       = "wc",     -- wc | game
     editBar      = 1,        -- welche Leiste die Einstellungsseite zeigt
@@ -703,35 +702,6 @@ end
 AB.Arrange = Arrange
 
 --------------------------------------------------
--- Leisten im Gestaltungsmodus verschieben
---------------------------------------------------
--- Ohne eigenen Platz stellt der Bearbeitungsmodus des Spiels die Leiste
--- hin. Wer sie im Gestaltungsmodus zieht, gibt ihr einen - dann setzt
--- WeintCodex sie nach jedem Eingreifen des Spiels wieder dorthin.
--- Rechtsklick gibt sie dem Spiel zurueck.
-
-local function RegisterBarMovers()
-    for i, entry in ipairs(BAR_BUTTONS) do
-        local bar = BarFrame(entry)
-        if bar then
-            local key = "ab_" .. i
-            K.RegisterMover(bar, key, entry.label, nil, {
-                secure = true, external = true,
-                onReset = function()
-                    if type(bar.ApplySystemAnchor) == "function" then pcall(bar.ApplySystemAnchor, bar) end
-                end,
-            })
-            if _G.hooksecurefunc and type(bar.ApplySystemAnchor) == "function" then
-                _G.hooksecurefunc(bar, "ApplySystemAnchor", function()
-                    local ui = K.Root()
-                    if ui and ui.positions[key] then K.AfterCombat(function() K.ApplyPosition(key) end) end
-                end)
-            end
-        end
-    end
-end
-
---------------------------------------------------
 -- Mikromenue und Taschenleiste
 --------------------------------------------------
 
@@ -785,7 +755,13 @@ local function Enable()
     K.AfterCombat(Arrange)
     WeintCodex.UIPresence.Register("mainbar", Named(MAIN_BARS), "fade_mainbar")
     WeintCodex.UIPresence.Register("bars", Named(OTHER_BARS), "fade_bars")
-    RegisterBarMovers()
+    -- Verschieben ist Sache des Bearbeitungsmodus des Spiels. 6.3.0.4/.5
+    -- haben die Leisten auch im Gestaltungsmodus verschoben - das Spiel
+    -- stapelt Leiste 2, Haltungs- und Begleiterleiste aber im Kampf selbst
+    -- neu (Begleiter weg), und nach dem Eingriff von WeintCodex wurde dieser
+    -- Aufruf blockiert (ADDON_ACTION_BLOCKED, SetPointBase in
+    -- UpdateBottomActionBarPositions, Beta-Test). Eine im Bearbeitungsmodus
+    -- verschobene Leiste laesst das Spiel an ihrem Platz.
     -- Ordnet das Spiel eine Leiste neu (Bearbeitungsmodus, Anzahl der
     -- Knoepfe), ordnet WeintCodex sie danach wieder.
     if _G.hooksecurefunc then
@@ -802,14 +778,6 @@ local function Enable()
             end
         end
     end
-    -- Im Gestaltungsmodus nur Leisten, die das Spiel gerade zeigt.
-    K.Listen(function(kind, on)
-        if kind ~= "unlock" or not on then return end
-        for i, entry in ipairs(BAR_BUTTONS) do
-            local bar = BarFrame(entry)
-            K.SetMoverEnabled("ab_" .. i, bar and bar.IsShown and bar:IsShown() and true or false)
-        end
-    end)
     -- Der Bearbeitungsmodus setzt beide beim Laden eines Layouts und beim
     -- Verlassen neu; danach wieder an unseren Platz.
     if _G.hooksecurefunc then
@@ -913,7 +881,7 @@ K.Register({
                   { type = "empty" })
             B:Note("Solange hier nicht „Wie im Spiel“ steht, bestimmt WeintCodex den Platz von Mikromenü und Taschenleiste – auch nach dem Bearbeitungsmodus.")
             B:Section("Lage und Größe")
-            B:Note("Größe, Abstand und Anzahl der Knöpfe stellst du je Leiste auf der Seite „Leisten“ ein, verschieben geht im Gestaltungsmodus. Welche Leisten es überhaupt gibt, bestimmt das Spiel (Esc → Optionen → Aktionsleisten). Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt – WeintCodex ordnet die Knöpfe des Spiels.")
+            B:Note("Größe, Abstand und Anzahl der Knöpfe stellst du je Leiste auf der Seite „Leisten“ ein. Verschieben geht im Bearbeitungsmodus des Spiels (Esc → Bearbeitungsmodus). Welche Leisten es überhaupt gibt, bestimmt das Spiel (Esc → Optionen → Aktionsleisten). Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt – WeintCodex ordnet die Knöpfe des Spiels.")
         end },
         { key = "leisten", label = "Leisten", build = function(B)
             local game = function() return K.Get(KEY, "layout") ~= "wc" end
@@ -931,8 +899,8 @@ K.Register({
             B:Row({ type = "dropdown", label = "Wer ordnet die Knöpfe", key = "layout", items = {
                         { value = "wc",   text = "WeintCodex (je Leiste)" },
                         { value = "game", text = "Bearbeitungsmodus des Spiels" } } },
-                  { type = "button", label = "Leisten verschieben", text = "Gestaltungsmodus",
-                    onClick = function() K.SetUnlocked(true) end })
+                  { type = "empty" })
+            B:Note("Verschieben: im Bearbeitungsmodus des Spiels (Esc → Bearbeitungsmodus). Eine dort verschobene Leiste lässt das Spiel an ihrem Platz; WeintCodex ordnet nur die Knöpfe darin. Im eigenen Gestaltungsmodus verschiebt WeintCodex die Leisten nicht – das Spiel stapelt sie im Kampf selbst neu und blockiert jeden fremden Eingriff.")
             local items = {}
             for i, e in ipairs(BAR_BUTTONS) do items[i] = { value = i, text = e.label } end
             B:Section("Leiste")

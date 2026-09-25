@@ -702,26 +702,9 @@ K.movers = movers
 -- Liefert die Verschiebung dx, dy in Einheiten von UIParent.
 K.SnapOffset = nil
 
--- Wo ein Rahmen steht, als linke untere Ecke relativ zu UIParent - fuer
--- Rahmen, die der Bearbeitungsmodus des Spiels an ANDERE Rahmen haengt
--- (Leiste 2 an Leiste 1): deren Anker taugt nicht als Platz. Die Ecke ist
--- in den Einheiten des Rahmens (dieselben, in denen SetPoint rechnet).
-local function AbsolutePosition(frame)
-    local ok, l, b = pcall(function() return frame:GetLeft(), frame:GetBottom() end)
-    l, b = ok and K.Plain(l) or nil, ok and K.Plain(b) or nil
-    if type(l) ~= "number" or type(b) ~= "number" then return nil end
-    return { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = math.floor(l + 0.5), y = math.floor(b + 0.5) }
-end
-
 local function SavePosition(key, frame)
     local ui = Root()
     if not ui then return end
-    local m = movers[key]
-    if m and m.external then
-        local pos = AbsolutePosition(frame)
-        if pos then ui.positions[key] = pos end
-        return
-    end
     local point, _, relPoint, x, y = frame:GetPoint(1)
     if not point then return end
     ui.positions[key] = {
@@ -736,17 +719,9 @@ function K.ApplyPosition(key)
     local ui = Root()
     local pos = ui and ui.positions[key] or m.default
     local frame = m.frame
-    -- Fremde Rahmen (Aktionsleisten): ohne eigenen Platz stellt sie der
-    -- Bearbeitungsmodus des Spiels hin, nicht WeintCodex.
-    if not pos then
-        if m.external and m.onReset then K.AfterCombat(m.onReset) end
-        return
-    end
     local function apply()
-        m.applying = true
         frame:ClearAllPoints()
         frame:SetPoint(pos.point, UIParent, pos.relPoint or pos.point, pos.x or 0, pos.y or 0)
-        m.applying = false
     end
     if m.secure then K.AfterCombat(apply) else apply() end
 end
@@ -756,34 +731,6 @@ function K.RegisterMover(frame, key, label, default, opts)
     local m = movers[key] or {}
     m.frame, m.label, m.default = frame, label, default
     m.secure = opts.secure and true or false
-    -- external: ein Rahmen des Spiels, den sonst der Bearbeitungsmodus
-    -- stellt. Kein Standardplatz; Rechtsklick gibt ihn dem Spiel zurueck
-    -- (onReset).
-    m.external = opts.external and true or false
-    m.onReset = opts.onReset
-    -- Das Spiel setzt fremde Rahmen auch ausserhalb des Bearbeitungsmodus
-    -- neu: Leiste 2 und 3 stehen in einem Bereich, den es selbst ordnet,
-    -- sobald sich unten etwas aendert (Erfahrungsleiste). Im Beta-Test
-    -- wanderte Leiste 2 so alle paar Minuten ein Stueck zur Seite (6.3.0.4).
-    -- Jeder fremde Anker bringt ihn deshalb zurueck an seinen Platz - einen
-    -- Augenblick spaeter, nicht mitten in der Anordnung des Spiels.
-    if m.external and not m.pointHooked and _G.hooksecurefunc then
-        m.pointHooked = true
-        local function Back()
-            if m.applying or m.returning then return end
-            local ui = Root()
-            if not (ui and ui.positions[key]) then return end
-            m.returning = true
-            local function go()
-                m.returning = false
-                K.AfterCombat(function() K.ApplyPosition(key) end)
-            end
-            if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, go) else go() end
-        end
-        for _, method in ipairs({ "SetPoint", "SetPointBase" }) do
-            if type(frame[method]) == "function" then _G.hooksecurefunc(frame, method, Back) end
-        end
-    end
     movers[key] = m
 
     if not m.overlay then
@@ -893,8 +840,6 @@ function K.NudgeMover(dx, dy)
     local ui = Root()
     if not ui then return false end
     local cur = ui.positions[selected] or m.default
-    if not cur and m.external then cur = AbsolutePosition(m.frame) end
-    if not cur then return false end
     ui.positions[selected] = { point = cur.point, relPoint = cur.relPoint or cur.point,
         x = (cur.x or 0) + dx, y = (cur.y or 0) + dy }
     K.ApplyPosition(selected)
@@ -907,9 +852,7 @@ function K.MoverPosition(key)
     local m = movers[key]
     if not m then return nil end
     local ui = Root()
-    local pos = (ui and ui.positions[key]) or m.default
-    if not pos and m.external then pos = AbsolutePosition(m.frame) end
-    return pos, m.label
+    return (ui and ui.positions[key]) or m.default, m.label
 end
 
 function K.IsUnlocked() return unlocked end
