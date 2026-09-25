@@ -8,8 +8,14 @@
 --     Gestalt, Fahrzeug) "Secure Snippets". Dem Forever-Beta-Client fehlt
 --     laut EllesmereUI der Uebersetzer dafuer (loadstring_untainted) -
 --     dort laufen deren Leisten nur eingeschraenkt.
---   * Lage und Groesse der Leisten verwaltet der Bearbeitungsmodus des
---     Spiels. Wer sie von aussen verschiebt, bekommt Taint.
+--   * Lage und Groesse der Leisten verwaltet eigentlich der
+--     Bearbeitungsmodus des Spiels. Seit 6.3.0.4 ordnet WeintCodex die
+--     Knoepfe trotzdem selbst an und verschiebt Leisten, die man im
+--     Gestaltungsmodus zieht - nur ausserhalb des Kampfes, Knoepfe an ihrer
+--     eigenen Leiste verankert. Ob das im Beta-Client Taint erzeugt, ist
+--     NICHT geprueft; "Wer ordnet die Knoepfe: Bearbeitungsmodus des
+--     Spiels" schaltet die Anordnung ab, Rechtsklick im Gestaltungsmodus
+--     gibt eine Leiste dem Spiel zurueck.
 --
 -- Was bleibt, ist, was man sieht und was sicher ist: flache Knoepfe mit
 -- 1-px-Rand statt der Steinrahmen, beschnittene Symbole, Tastenkuerzel
@@ -37,6 +43,23 @@ local AB = WeintCodex.UIActionBars
 local K  = WeintCodex.UIKit
 local KEY = "actionbars"
 
+-- Die Leisten des Spiels, je mit ihren Knoepfen. `size`, `perRow`: die
+-- Voreinstellung, wenn WeintCodex die Leiste anordnet (Leiste 4 und 5
+-- stehen im Spiel senkrecht am rechten Rand - so bleiben sie).
+local BAR_BUTTONS = {
+    { bars = { "MainActionBar", "MainMenuBar" }, family = "ActionButton", n = 12, label = "Leiste 1", size = 40, perRow = 12 },
+    { bars = { "MultiBarBottomLeft" }, family = "MultiBarBottomLeftButton", n = 12, label = "Leiste 2", size = 36, perRow = 12 },
+    { bars = { "MultiBarBottomRight" }, family = "MultiBarBottomRightButton", n = 12, label = "Leiste 3", size = 36, perRow = 12 },
+    { bars = { "MultiBarRight" }, family = "MultiBarRightButton", n = 12, label = "Leiste 4", size = 34, perRow = 1 },
+    { bars = { "MultiBarLeft" }, family = "MultiBarLeftButton", n = 12, label = "Leiste 5", size = 34, perRow = 1 },
+    { bars = { "MultiBar5" }, family = "MultiBar5Button", n = 12, label = "Leiste 6", size = 34, perRow = 12 },
+    { bars = { "MultiBar6" }, family = "MultiBar6Button", n = 12, label = "Leiste 7", size = 34, perRow = 12 },
+    { bars = { "MultiBar7" }, family = "MultiBar7Button", n = 12, label = "Leiste 8", size = 34, perRow = 12 },
+    { bars = { "StanceBar" }, family = "StanceButton", n = 10, label = "Haltungen", size = 30, perRow = 10 },
+    { bars = { "PetActionBar" }, family = "PetActionButton", n = 10, label = "Begleiter", size = 30, perRow = 10 },
+}
+AB.BARS = BAR_BUTTONS
+
 local defaults = {
     border       = true,
     borderColor  = K.ColorDefault("plateBorder"),
@@ -63,7 +86,25 @@ local defaults = {
     -- Hauptleiste weg, Tastenkuerzel oben rechts, Stapelzahl unten rechts.
     barBackdrop  = true,
     hidePaging   = true,
+
+    -- Seit 6.3.0.4 (Beta-Test: "so einstellen koennen wie bei
+    -- EllesmereUI"): WeintCodex ordnet die Knoepfe jeder Leiste selbst an -
+    -- Symbolgroesse, Abstand, Knoepfe je Reihe, Anzahl - und die Leisten
+    -- lassen sich im Gestaltungsmodus verschieben. "game": wie bisher, der
+    -- Bearbeitungsmodus des Spiels bestimmt alles.
+    layout       = "wc",     -- wc | game
+    editBar      = 1,        -- welche Leiste die Einstellungsseite zeigt
 }
+-- Je Leiste flach gespeichert (UIKit.Set vergleicht Tabellen nur eine
+-- Ebene tief): b1_size, b1_spacing, b1_perRow, b1_count, b1_backdrop, b1_show.
+for i, e in ipairs(BAR_BUTTONS) do
+    defaults["b" .. i .. "_size"] = e.size
+    defaults["b" .. i .. "_spacing"] = 2
+    defaults["b" .. i .. "_perRow"] = e.perRow
+    defaults["b" .. i .. "_count"] = e.n
+    defaults["b" .. i .. "_backdrop"] = true
+    defaults["b" .. i .. "_show"] = "always"   -- always | mouseover
+end
 
 local function Opt(k) return K.Get(KEY, k) end
 
@@ -315,6 +356,12 @@ end
 -- ACTIONBAR_SHOWGRID), erscheinen sie, damit man ihn ablegen kann.
 local gridShown = false
 local function ApplyEmpty(b, d, empty)
+    -- Jenseits der eingestellten Anzahl: immer unsichtbar.
+    if AB.cut and AB.cut[b] then
+        b:SetAlpha(0)
+        d._hiddenEmpty = true
+        return
+    end
     local mode = Opt("emptySlots")
     if mode == "game" then
         if d._hiddenEmpty then b:SetAlpha(1) d._hiddenEmpty = nil end
@@ -389,29 +436,104 @@ local function OnRange(self, checksRange, inRange)
 end
 
 --------------------------------------------------
+-- Anordnung je Leiste (wie EllesmereUI)
+--------------------------------------------------
+-- Eigene Leisten gehen auf Forever nicht (Umblaettern braucht Secure
+-- Snippets, siehe oben). Die Knoepfe des Spiels lassen sich aber
+-- ausserhalb des Kampfes neu anordnen: Groesse, Abstand, Knoepfe je Reihe,
+-- Anzahl. Sie bleiben Kinder ihrer Leiste und an ihr verankert (sicher an
+-- sicher) - das Umblaettern bei Haltung und Gestalt bleibt beim Spiel.
+-- Ordnet das Spiel eine Leiste neu (Bearbeitungsmodus), ordnet WeintCodex
+-- sie danach wieder. Nie im Kampf.
+--
+-- Knoepfe jenseits der eingestellten Anzahl sind unsichtbar und taub
+-- (Alpha 0, keine Maus); ihre Tasten wirken weiter, wie im Spiel.
+
+local cut = {}        -- [Knopf] = true: jenseits der eingestellten Anzahl
+AB.cut = cut
+local BACKDROP_PAD = 4
+AB.backdrops = {}
+
+local function BO(i, k) return Opt("b" .. i .. "_" .. k) end
+local function WCLayout() return Opt("layout") == "wc" end
+
+local function BarFrame(entry)
+    for _, n in ipairs(entry.bars) do
+        local f = _G[n]
+        if type(f) == "table" and not (f.IsForbidden and f:IsForbidden()) then return f end
+    end
+    return nil
+end
+AB.BarFrame = BarFrame
+
+local function Clamp(v, lo, hi)
+    if type(v) ~= "number" then return lo end
+    return math.max(lo, math.min(hi, math.floor(v + 0.5)))
+end
+
+local laying = false
+local function LayoutBar(i, entry)
+    if K.InCombat() then return end
+    local bar = BarFrame(entry)
+    if not bar then return end
+    if not WCLayout() then
+        for k = 1, entry.n do
+            local b = _G[entry.family .. k]
+            if type(b) == "table" and cut[b] then
+                cut[b] = nil
+                pcall(b.EnableMouse, b, true)
+            end
+        end
+        return
+    end
+    local size = Clamp(BO(i, "size"), 16, 80)
+    local gap = Clamp(BO(i, "spacing"), 0, 20)
+    local count = Clamp(BO(i, "count"), 1, entry.n)
+    local perRow = Clamp(BO(i, "perRow"), 1, count)
+    for k = 1, entry.n do
+        local b = _G[entry.family .. k]
+        if type(b) == "table" and not (b.IsForbidden and b:IsForbidden()) then
+            if k <= count then
+                if cut[b] then
+                    cut[b] = nil
+                    pcall(b.EnableMouse, b, true)
+                end
+                local col, row = (k - 1) % perRow, math.floor((k - 1) / perRow)
+                pcall(function()
+                    b:SetSize(size, size)
+                    b:ClearAllPoints()
+                    b:SetPoint("TOPLEFT", bar, "TOPLEFT", col * (size + gap), -row * (size + gap))
+                end)
+            else
+                cut[b] = true
+                pcall(b.EnableMouse, b, false)
+                b:SetAlpha(0)
+            end
+        end
+    end
+    local rows = math.ceil(count / perRow)
+    pcall(bar.SetSize, bar, perRow * (size + gap) - gap, rows * (size + gap) - gap)
+end
+
+local function LayoutAll()
+    if laying or K.InCombat() then return end
+    laying = true
+    for i, entry in ipairs(BAR_BUTTONS) do LayoutBar(i, entry) end
+    laying = false
+end
+AB.LayoutAll = LayoutAll
+
+--------------------------------------------------
 -- Flaeche hinter jeder Leiste
 --------------------------------------------------
 -- Was ElvUI-Leisten "schick" macht, ist vor allem das: die Knoepfe stehen
 -- auf einer gemeinsamen Flaeche, statt einzeln im Bild zu schwimmen. Die
--- Kachel haengt an der Leiste (blendet mit ihr ab, Ruhe und Kampf) und ist
--- an ihrer linken oberen und rechten unteren Taste verankert - so folgt sie
--- jeder Anordnung aus dem Bearbeitungsmodus. Gemessen wird nur ausserhalb
--- des Kampfes; laesst der Client nicht messen, bleibt die Flaeche weg.
-
-local BAR_BUTTONS = {
-    { bars = { "MainMenuBar", "MainActionBar" }, family = "ActionButton", n = 12 },
-    { bars = { "MultiBarBottomLeft" }, family = "MultiBarBottomLeftButton", n = 12 },
-    { bars = { "MultiBarBottomRight" }, family = "MultiBarBottomRightButton", n = 12 },
-    { bars = { "MultiBarRight" }, family = "MultiBarRightButton", n = 12 },
-    { bars = { "MultiBarLeft" }, family = "MultiBarLeftButton", n = 12 },
-    { bars = { "MultiBar5" }, family = "MultiBar5Button", n = 12 },
-    { bars = { "MultiBar6" }, family = "MultiBar6Button", n = 12 },
-    { bars = { "MultiBar7" }, family = "MultiBar7Button", n = 12 },
-    { bars = { "StanceBar" }, family = "StanceButton", n = 10 },
-    { bars = { "PetActionBar" }, family = "PetActionButton", n = 10 },
-}
-local BACKDROP_PAD = 4
-AB.backdrops = {}
+-- Kachel haengt an der Leiste (blendet mit ihr ab, Ruhe und Kampf).
+-- Ordnet WeintCodex die Leiste, liegt sie auf der Leiste selbst (die dann
+-- genau so gross ist wie ihre Knoepfe); sonst an ihrer linken oberen und
+-- rechten unteren Taste - gemessen nur ausserhalb des Kampfes. Eine Leiste
+-- ohne belegten Knopf bekommt keine Flaeche, solange leere Plaetze
+-- ausgeblendet sind (ein dunkler Kasten ohne Inhalt, Beta-Test 6.3.0.3).
 
 local function Num(f, method)
     local ok, v = pcall(f[method], f)
@@ -425,7 +547,7 @@ local function Corners(entry)
     local list = {}
     for i = 1, entry.n do
         local b = _G[entry.family .. i]
-        if type(b) == "table" and b.IsShown and b:IsShown() then
+        if type(b) == "table" and not cut[b] and b.IsShown and b:IsShown() then
             local l, t = Num(b, "GetLeft"), Num(b, "GetTop")
             local r, bt = Num(b, "GetRight"), Num(b, "GetBottom")
             if not (l and t and r and bt) then return nil end
@@ -446,38 +568,112 @@ local function Corners(entry)
     return tl, br
 end
 
+local function HasContent(entry)
+    for k = 1, entry.n do
+        local b = _G[entry.family .. k]
+        if type(b) == "table" and not cut[b] and not IsEmpty(b) then return true end
+    end
+    return false
+end
+
+-- Im Kampf nur zeigen oder verbergen (die Flaeche ist ein eigener,
+-- ungeschuetzter Rahmen); verankert wird ausserhalb.
 local function UpdateBackdrops()
-    if K.InCombat() then return end
-    local on = Opt("barBackdrop")
-    for _, entry in ipairs(BAR_BUTTONS) do
-        local bar
-        for _, n in ipairs(entry.bars) do
-            if type(_G[n]) == "table" then bar = _G[n] break end
-        end
-        if bar and not (bar.IsForbidden and bar:IsForbidden()) then
+    local combat = K.InCombat()
+    for i, entry in ipairs(BAR_BUTTONS) do
+        local bar = BarFrame(entry)
+        if bar then
             local bd = AB.backdrops[bar]
-            local tl, br
-            if on then tl, br = Corners(entry) end
-            if tl and br then
-                if not bd then
-                    bd = CreateFrame("Frame", nil, bar)
-                    bd.kachel = K.Kachel(bd, { shadow = 6 })
-                    AB.backdrops[bar] = bd
+            local want = Opt("barBackdrop") and BO(i, "backdrop")
+            if want and Opt("emptySlots") == "hide" and not gridShown and not HasContent(entry) then want = false end
+            if want and not combat then
+                local tl, br
+                if not WCLayout() then
+                    tl, br = Corners(entry)
+                    if not (tl and br) then want = false end
                 end
-                local lvl = Num(bar, "GetFrameLevel") or 1
-                bd:SetFrameLevel(math.max(0, lvl))
-                bd:ClearAllPoints()
-                bd:SetPoint("TOPLEFT", tl, "TOPLEFT", -BACKDROP_PAD, BACKDROP_PAD)
-                bd:SetPoint("BOTTOMRIGHT", br, "BOTTOMRIGHT", BACKDROP_PAD, -BACKDROP_PAD)
-                bd:Show()
-            elseif bd then
-                bd:Hide()
+                if want then
+                    if not bd then
+                        bd = CreateFrame("Frame", nil, bar)
+                        bd.kachel = K.Kachel(bd, { shadow = 6 })
+                        AB.backdrops[bar] = bd
+                    end
+                    local lvl = Num(bar, "GetFrameLevel") or 1
+                    bd:SetFrameLevel(math.max(0, lvl))
+                    bd:ClearAllPoints()
+                    bd:SetPoint("TOPLEFT", tl or bar, "TOPLEFT", -BACKDROP_PAD, BACKDROP_PAD)
+                    bd:SetPoint("BOTTOMRIGHT", br or bar, "BOTTOMRIGHT", BACKDROP_PAD, -BACKDROP_PAD)
+                    bd._anchored = true
+                end
             end
+            if bd then bd:SetShown(want and bd._anchored and true or false) end
         end
     end
 end
 AB.UpdateBackdrops = UpdateBackdrops
 
+--------------------------------------------------
+-- Nur bei Maus darueber
+--------------------------------------------------
+-- Die Leiste ist unsichtbar, bis die Maus ueber ihr steht (oder man einen
+-- Zauber zieht). Nur Deckkraft - die Knoepfe bleiben benutzbar, auch im
+-- Kampf. Solche Leisten nimmt "Ruhe und Kampf" aus (ui/presence.lua).
+
+local fader = CreateFrame("Frame")
+local fadeAlpha = {}
+local function MouseOver(bar)
+    local ok, v = pcall(bar.IsMouseOver, bar)
+    return ok and K.Bool(v, false) or false
+end
+
+local function FadeStep(_, elapsed)
+    local any = false
+    for i, entry in ipairs(BAR_BUTTONS) do
+        local bar = BarFrame(entry)
+        if bar and BO(i, "show") == "mouseover" then
+            any = true
+            local bd = AB.backdrops[bar]
+            local over = gridShown or MouseOver(bar) or (bd and bd:IsShown() and MouseOver(bd))
+            local cur = fadeAlpha[bar] or 0
+            local target = over and 1 or 0
+            local step = (elapsed or 0.1) * 6
+            if cur < target then cur = math.min(target, cur + step) elseif cur > target then cur = math.max(target, cur - step) end
+            if cur ~= fadeAlpha[bar] then
+                fadeAlpha[bar] = cur
+                bar:SetAlpha(cur)
+            end
+        end
+    end
+    if not any then fader:SetScript("OnUpdate", nil) end
+end
+
+local function UpdateMouseover()
+    local any = false
+    for i, entry in ipairs(BAR_BUTTONS) do
+        local bar = BarFrame(entry)
+        if bar then
+            if BO(i, "show") == "mouseover" then
+                any = true
+            elseif fadeAlpha[bar] then
+                fadeAlpha[bar] = nil
+            end
+        end
+    end
+    fader:SetScript("OnUpdate", any and FadeStep or nil)
+    if any then FadeStep(nil, 0) end
+end
+AB.UpdateMouseover = UpdateMouseover
+
+function AB.IsMouseoverBar(bar)
+    for i, entry in ipairs(BAR_BUTTONS) do
+        if BarFrame(entry) == bar then return BO(i, "show") == "mouseover" end
+    end
+    return false
+end
+
+--------------------------------------------------
+-- Blaetterpfeile
+--------------------------------------------------
 -- Die Blaetterpfeile und die Seitenzahl der Hauptleiste. Umblaettern geht
 -- weiter ueber die Tasten des Spiels (Umschalt+Mausrad, Umschalt+1..6).
 local function HidePaging()
@@ -498,8 +694,41 @@ end
 AB.HidePaging = HidePaging
 
 local function Arrange()
+    LayoutAll()
+    SkinAll()
     UpdateBackdrops()
     HidePaging()
+    UpdateMouseover()
+end
+AB.Arrange = Arrange
+
+--------------------------------------------------
+-- Leisten im Gestaltungsmodus verschieben
+--------------------------------------------------
+-- Ohne eigenen Platz stellt der Bearbeitungsmodus des Spiels die Leiste
+-- hin. Wer sie im Gestaltungsmodus zieht, gibt ihr einen - dann setzt
+-- WeintCodex sie nach jedem Eingreifen des Spiels wieder dorthin.
+-- Rechtsklick gibt sie dem Spiel zurueck.
+
+local function RegisterBarMovers()
+    for i, entry in ipairs(BAR_BUTTONS) do
+        local bar = BarFrame(entry)
+        if bar then
+            local key = "ab_" .. i
+            K.RegisterMover(bar, key, entry.label, nil, {
+                secure = true, external = true,
+                onReset = function()
+                    if type(bar.ApplySystemAnchor) == "function" then pcall(bar.ApplySystemAnchor, bar) end
+                end,
+            })
+            if _G.hooksecurefunc and type(bar.ApplySystemAnchor) == "function" then
+                _G.hooksecurefunc(bar, "ApplySystemAnchor", function()
+                    local ui = K.Root()
+                    if ui and ui.positions[key] then K.AfterCombat(function() K.ApplyPosition(key) end) end
+                end)
+            end
+        end
+    end
 end
 
 --------------------------------------------------
@@ -542,7 +771,9 @@ local function Named(list)
     return function()
         local out = {}
         for _, n in ipairs(list) do
-            if type(_G[n]) == "table" then out[#out + 1] = _G[n] end
+            local f = _G[n]
+            -- "Nur bei Maus darueber" blendet selbst.
+            if type(f) == "table" and not AB.IsMouseoverBar(f) then out[#out + 1] = f end
         end
         return out
     end
@@ -554,6 +785,31 @@ local function Enable()
     K.AfterCombat(Arrange)
     WeintCodex.UIPresence.Register("mainbar", Named(MAIN_BARS), "fade_mainbar")
     WeintCodex.UIPresence.Register("bars", Named(OTHER_BARS), "fade_bars")
+    RegisterBarMovers()
+    -- Ordnet das Spiel eine Leiste neu (Bearbeitungsmodus, Anzahl der
+    -- Knoepfe), ordnet WeintCodex sie danach wieder.
+    if _G.hooksecurefunc then
+        for _, entry in ipairs(BAR_BUTTONS) do
+            local bar = BarFrame(entry)
+            if bar then
+                for _, m in ipairs({ "UpdateGridLayout", "Layout" }) do
+                    if type(bar[m]) == "function" then
+                        _G.hooksecurefunc(bar, m, function()
+                            if not laying and WCLayout() then K.AfterCombat(Arrange) end
+                        end)
+                    end
+                end
+            end
+        end
+    end
+    -- Im Gestaltungsmodus nur Leisten, die das Spiel gerade zeigt.
+    K.Listen(function(kind, on)
+        if kind ~= "unlock" or not on then return end
+        for i, entry in ipairs(BAR_BUTTONS) do
+            local bar = BarFrame(entry)
+            K.SetMoverEnabled("ab_" .. i, bar and bar.IsShown and bar:IsShown() and true or false)
+        end
+    end)
     -- Der Bearbeitungsmodus setzt beide beim Laden eines Layouts und beim
     -- Verlassen neu; danach wieder an unseren Platz.
     if _G.hooksecurefunc then
@@ -587,6 +843,7 @@ local function Enable()
         if event == "ACTIONBAR_SHOWGRID" then gridShown = true
         elseif event == "ACTIONBAR_HIDEGRID" then gridShown = false end
         SkinAll()
+        UpdateBackdrops()
         if event == "PLAYER_ENTERING_WORLD" then K.AfterCombat(Place) K.AfterCombat(Arrange) end
     end)
 end
@@ -599,7 +856,16 @@ K.Register({
     description = "Die Knöpfe des Spiels im Stil von WeintCodex: flach, mit feinem Rand, eigener Schrift und rotem Symbol außer Reichweite.",
     defaults = defaults,
     Enable = Enable,
-    OnSetting = function() if K.IsActive(KEY) then SkinAll() K.AfterCombat(Place) K.AfterCombat(Arrange) end end,
+    OnSetting = function(key)
+        if not K.IsActive(KEY) or key == "editBar" then return end
+        SkinAll()
+        K.AfterCombat(Place)
+        K.AfterCombat(Arrange)
+        -- Von "Maus darueber" zurueck: die Leiste gehoert wieder "Ruhe und Kampf".
+        if type(key) == "string" and key:find("_show", 1, true) and WeintCodex.UIPresence.Apply then
+            WeintCodex.UIPresence.Apply(true)
+        end
+    end,
     pages = {
         { key = "allgemein", label = "Allgemein", build = function(B)
             B:Section("Knöpfe")
@@ -647,7 +913,43 @@ K.Register({
                   { type = "empty" })
             B:Note("Solange hier nicht „Wie im Spiel“ steht, bestimmt WeintCodex den Platz von Mikromenü und Taschenleiste – auch nach dem Bearbeitungsmodus.")
             B:Section("Lage und Größe")
-            B:Note("Wo die Leisten stehen, wie groß sie sind, wie viele es gibt und wie weit die Knöpfe auseinanderstehen („Symbolabstand“), stellst du im Bearbeitungsmodus des Spiels ein (Esc → Bearbeitungsmodus). Tipp: alle Leisten auf dieselbe Symbolgröße und Symbolabstand 2 – dann stehen die Flächen bündig übereinander. Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt.")
+            B:Note("Größe, Abstand und Anzahl der Knöpfe stellst du je Leiste auf der Seite „Leisten“ ein, verschieben geht im Gestaltungsmodus. Welche Leisten es überhaupt gibt, bestimmt das Spiel (Esc → Optionen → Aktionsleisten). Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt – WeintCodex ordnet die Knöpfe des Spiels.")
+        end },
+        { key = "leisten", label = "Leisten", build = function(B)
+            local game = function() return K.Get(KEY, "layout") ~= "wc" end
+            local function Sel() return K.Get(KEY, "editBar") or 1 end
+            local function Bar() return BAR_BUTTONS[Sel()] or BAR_BUTTONS[1] end
+            -- Die Regler gelten der gewaehlten Leiste: sie lesen und
+            -- schreiben b<n>_<wert>.
+            local function Per(k, extra)
+                local spec = extra or {}
+                spec.get = function() return K.Get(KEY, "b" .. Sel() .. "_" .. k) end
+                spec.set = function(v) K.Set(KEY, "b" .. Sel() .. "_" .. k, v) end
+                return spec
+            end
+            B:Section("Anordnung")
+            B:Row({ type = "dropdown", label = "Wer ordnet die Knöpfe", key = "layout", items = {
+                        { value = "wc",   text = "WeintCodex (je Leiste)" },
+                        { value = "game", text = "Bearbeitungsmodus des Spiels" } } },
+                  { type = "button", label = "Leisten verschieben", text = "Gestaltungsmodus",
+                    onClick = function() K.SetUnlocked(true) end })
+            local items = {}
+            for i, e in ipairs(BAR_BUTTONS) do items[i] = { value = i, text = e.label } end
+            B:Section("Leiste")
+            B:Row({ type = "dropdown", label = "Leiste", key = "editBar", items = items },
+                  Per("show", { type = "dropdown", label = "Sichtbar", items = {
+                        { value = "always",    text = "Immer (Ruhe und Kampf)" },
+                        { value = "mouseover", text = "Nur bei Maus darüber" } } }))
+            B:Row(Per("size", { type = "slider", label = "Symbolgröße", min = 16, max = 64, step = 1, format = px, disabled = game }),
+                  Per("spacing", { type = "slider", label = "Abstand", min = 0, max = 12, step = 1, format = px, disabled = game }))
+            B:Row(Per("perRow", { type = "slider", label = "Knöpfe je Reihe", min = 1, max = 12, step = 1,
+                        format = function(v) return tostring(v) end, disabled = game }),
+                  Per("count", { type = "slider", label = "Anzahl Knöpfe", min = 1, max = 12, step = 1,
+                        format = function(v) return tostring(math.min(v, Bar().n)) end, disabled = game }))
+            B:Row(Per("backdrop", { type = "toggle", label = "Fläche hinter der Leiste",
+                        disabled = function() return not K.Get(KEY, "barBackdrop") end }),
+                  { type = "empty" })
+            B:Note("Tipp: Knöpfe je Reihe 1 macht eine Leiste senkrecht, 6 bei 12 Knöpfen zwei Reihen. Die Tasten jenseits der Anzahl wirken weiter, ihre Knöpfe sind nur ausgeblendet. Umordnen geht nur außerhalb des Kampfes.")
         end },
     },
 })

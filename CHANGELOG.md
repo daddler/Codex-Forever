@@ -9,6 +9,30 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.0.4] – 2026-09-25
+
+**Aktionsleisten einstellen wie bei EllesmereUI.** Unter Oberfläche → Aktionsleisten → Leisten stellst du für jede Leiste Symbolgröße, Abstand, Knöpfe je Reihe und Anzahl ein, dazu die Fläche und „Nur bei Maus darüber“. Verschieben geht im Gestaltungsmodus, ein Doppelklick auf eine Leiste öffnet ihre Einstellungen, Rechtsklick gibt sie dem Bearbeitungsmodus des Spiels zurück. Leisten ohne belegten Knopf bekommen keine leere Fläche mehr.
+
+### Technisch
+
+- `ui/actionbars.lua`: `layout` (`wc` Standard, `game`). Je Leiste flach
+  `b<n>_size|spacing|perRow|count|backdrop|show`. `AB.LayoutAll` setzt
+  außerhalb des Kampfes Größe und Anker der Knöpfe (an ihrer eigenen
+  Leiste) und schneidet die Leiste auf ihre Knöpfe zu; Knöpfe jenseits der
+  Anzahl: Alpha 0, keine Maus (`AB.cut`). Haken auf `UpdateGridLayout`/
+  `Layout` ordnen nach dem Spiel neu. „Nur bei Maus darüber“: eigene
+  Blende, solche Leisten nimmt `UIPresence` aus. Fläche: bei eigener
+  Anordnung auf der Leiste, sonst gemessen; ohne belegten Knopf keine.
+- `UIKit.RegisterMover(…, { external = true, onReset })`: Rahmen, die sonst
+  der Bearbeitungsmodus stellt – kein Standardplatz, Position als linke
+  untere Ecke zu UIParent, Rechtsklick → `onReset`
+  (`ApplySystemAnchor`). Leisten als `ab_<n>` im Gestaltungsmodus,
+  Doppelklick öffnet ihre Seite.
+- **Ungeprüft im Spiel**, vor allem: ob das Anordnen der Knöpfe des Spiels
+  Taint im Kampf erzeugt.
+- `load_test.lua`: Anordnung, Zuschnitt, ausgeblendete Knöpfe, Maus
+  darüber, fremde Rahmen im Gestaltungsmodus, Seite „Leisten“.
+
 ## [6.3.0.3] – 2026-09-25
 
 **Jede Aktionsleiste steht auf einer eigenen Fläche.** Eine dunkle Kachel mit feinem Rand hinter den Knöpfen, die jeder Anordnung aus dem Bearbeitungsmodus folgt. Tastenkürzel oben rechts, Stapelzahl unten rechts, die Blätterpfeile neben Leiste 1 sind weg (Umblättern weiter mit Umschalt+Mausrad). Beides unter Aktionsleisten → Leisten abschaltbar.

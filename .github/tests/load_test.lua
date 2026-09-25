@@ -2007,10 +2007,79 @@ do
         AB.UpdateBackdrops()
         assert(not bd:IsShown(), "Flaeche bleibt trotz Schalter")
         K.Set("actionbars", "barBackdrop", true)
-        -- Geheime Lage: keine Flaeche statt eines Fehlers.
+        -- Ordnet das Spiel: Flaeche an den gemessenen Ecken; geheime Lage
+        -- -> keine Flaeche statt eines Fehlers.
+        K.Set("actionbars", "layout", "game")
+        AB.UpdateBackdrops()
+        assert(bd:IsShown(), "Flaeche fehlt, wenn das Spiel ordnet")
         _G.MultiBarBottomLeftButton2.GetLeft = function() error("Can't measure restricted regions") end
         AB.UpdateBackdrops()
         assert(not bd:IsShown(), "Flaeche trotz unmessbarer Knoepfe")
+        K.Set("actionbars", "layout", "wc")
+
+        -- 6.3.0.4: WeintCodex ordnet je Leiste - Groesse, Abstand, je Reihe,
+        -- Anzahl; jenseits der Anzahl unsichtbar und taub.
+        for i = 1, 4 do _G["MultiBarBottomLeftButton" .. i].GetLeft = nil end
+        local sizes, pts, mouse = {}, {}, {}
+        for i = 1, 4 do
+            local b = _G["MultiBarBottomLeftButton" .. i]
+            b.SetSize = function(_, w, h) sizes[i] = w end
+            b.SetPoint = function(_, p, rel, rp, x, y) pts[i] = { p, rel, rp, x, y } end
+            b.EnableMouse = function(_, on) mouse[i] = on end
+        end
+        local barW, barH
+        bar.SetSize = function(_, w, h) barW, barH = w, h end
+        K.Set("actionbars", "b2_size", 30)
+        K.Set("actionbars", "b2_spacing", 4)
+        K.Set("actionbars", "b2_perRow", 2)
+        K.Set("actionbars", "b2_count", 3)
+        AB.LayoutAll()
+        assert(sizes[1] == 30 and sizes[3] == 30, "Symbolgroesse nicht gesetzt")
+        assert(pts[2][2] == bar and pts[2][4] == 34 and pts[2][5] == 0, "zweiter Knopf falsch: " .. tostring(pts[2] and pts[2][4]))
+        assert(pts[3][4] == 0 and pts[3][5] == -34, "zweite Reihe falsch")
+        assert(AB.cut[_G.MultiBarBottomLeftButton4] and mouse[4] == false, "Knopf jenseits der Anzahl nicht ausgeblendet")
+        assert(barW == 64 and barH == 64, "Leiste nicht auf ihre Knoepfe zugeschnitten: " .. tostring(barW) .. "x" .. tostring(barH))
+        K.Set("actionbars", "b2_count", 12)
+        AB.LayoutAll()
+        assert(not AB.cut[_G.MultiBarBottomLeftButton4] and mouse[4] == true, "Knopf kommt nicht zurueck")
+        for _, k in ipairs({ "b2_size", "b2_spacing", "b2_perRow", "b2_count" }) do K.Set("actionbars", k, nil) end
+
+        -- Nur bei Maus darueber: aus "Ruhe und Kampf" heraus.
+        K.Set("actionbars", "b2_show", "mouseover")
+        assert(AB.IsMouseoverBar(bar), "Leiste nicht als 'Maus darueber' erkannt")
+        K.Set("actionbars", "b2_show", nil)
+        assert(not AB.IsMouseoverBar(bar), "Leiste bleibt 'Maus darueber'")
+
+        -- Fremder Rahmen im Gestaltungsmodus: ohne eigenen Platz stellt ihn
+        -- das Spiel; Pfeiltaste gibt ihm einen, von seiner jetzigen Ecke aus.
+        local resets = 0
+        local ext = CreateFrame("Frame", nil, UIParent)
+        ext.GetLeft = function() return 300 end
+        ext.GetBottom = function() return 120 end
+        K.RegisterMover(ext, "ab_test", "Testleiste", nil, { secure = true, external = true,
+            onReset = function() resets = resets + 1 end })
+        assert(resets == 1, "ohne Platz nicht dem Spiel ueberlassen")
+        K.SelectMover("ab_test")
+        assert(K.NudgeMover(0, 8), "Leiste laesst sich nicht schieben")
+        local pos = K.MoverPosition("ab_test")
+        assert(pos.point == "BOTTOMLEFT" and pos.x == 300 and pos.y == 128, "Leiste springt: " .. tostring(pos.x) .. "," .. tostring(pos.y))
+        K.SelectMover(nil)
+        K.Root().positions["ab_test"] = nil
+        K.movers["ab_test"] = nil
+
+        -- Die Seite "Leisten" baut sich, und ihre Regler folgen der Auswahl.
+        local reported
+        local oldReport = K.Report
+        K.Report = function(_, msg) reported = msg end
+        WeintCodex.UIOptions.Show("actionbars", 2)
+        K.Set("actionbars", "editBar", 9)
+        WeintCodex.UIOptions.frame:Hide()
+        K.Set("actionbars", "editBar", nil)
+        K.Report = oldReport
+        assert(not reported, "Seite 'Leisten' bricht ab: " .. tostring(reported))
+
+        -- Doppelklick im Gestaltungsmodus oeffnet die Seite der Leiste.
+        assert(WeintCodex.UIEditMode.ModuleFor("ab_2") == "actionbars", "Leiste ohne Einstellungsseite")
         for i = 1, 4 do _G["MultiBarBottomLeftButton" .. i] = nil end
         _G.MultiBarBottomLeft = nil
         AB.backdrops[bar] = nil

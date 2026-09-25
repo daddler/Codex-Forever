@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.0.4",
+        date    = "25.09.2026",
+        notes   = {
+            "|cff7C6CFFAktionsleisten einstellen wie bei EllesmereUI.|r Unter Oberfläche → Aktionsleisten → Leisten stellst du für jede Leiste Symbolgröße, Abstand, Knöpfe je Reihe und Anzahl ein, dazu die Fläche und „Nur bei Maus darüber“. Verschieben geht im Gestaltungsmodus, ein Doppelklick auf eine Leiste öffnet ihre Einstellungen, Rechtsklick gibt sie dem Bearbeitungsmodus des Spiels zurück. Leisten ohne belegten Knopf bekommen keine leere Fläche mehr.",
+        },
+    },
+    {
         version = "6.3.0.3",
         date    = "25.09.2026",
         notes   = {
