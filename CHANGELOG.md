@@ -9,6 +9,25 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.0.2] – 2026-09-25
+
+**Aktionsleisten mit einem Rahmen.** Der innere Rahmen des Spiels um jedes Symbol bleibt weg – das Spiel hatte ihn bei jedem Aktualisieren neu gesetzt. Das Symbol füllt den Knopf, darum liegt nur noch eine feine Kante.
+
+**/wcui auren funktioniert wieder.** Die Auren-Prüfung brach an Werten ab, die das Spiel geheim hält, und schrieb dabei Lua-Fehler – jetzt steht dort „?“.
+
+### Technisch
+
+- Aktionsleisten: `NormalTexture` (und `SlotArt`, `SlotBackground`,
+  `IconMask`, `Border` …) über `AB.KeepHidden` – ein
+  `hooksecurefunc`-Haken auf `SetAlpha` und auf `SetNormalAtlas`/
+  `SetNormalTexture` des Knopfs hält sie auf Alpha 0. Symbol und
+  Abklingspirale auf die ganze Knopffläche (nur außerhalb des Kampfes).
+- Auren-Prüfung: die Knöpfe des AuraContainers sind im Beta-Client
+  verboten oder haben geheime Breiten („secret number“, „forbidden
+  object“) – `IsForbidden`, `pcall`, `UIKit.Plain`; je Objekt eine Zeile,
+  auch wenn sie nicht lesbar ist. `/wcui auren` brach daran ab.
+- `load_test.lua`: beide Fälle.
+
 ## [6.3.0.1] – 2026-09-25
 
 **Debuffs stehen an ihrem Platz, ohne Lua-Fehler.** Die Debuff-Symbole der Plakette des Spiels bleiben, wo das Spiel sie hinsetzt – WeintCodex blendet nur den Rest der Spielplakette aus. Der weiße Balken über dem Namen und der Fehler „Can't measure restricted regions“ sind weg.

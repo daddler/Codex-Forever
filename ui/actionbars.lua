@@ -91,22 +91,62 @@ local function Region(b, key)
     return nil
 end
 
+-- Ein Teil des Spiels, der unsichtbar bleiben soll, auch wenn das Spiel
+-- seine Deckkraft neu setzt.
+local hiddenParts, keepGuard = {}, false
+local function KeepHidden(r)
+    if not hiddenParts[r] then
+        hiddenParts[r] = true
+        if _G.hooksecurefunc and type(r.SetAlpha) == "function" then
+            _G.hooksecurefunc(r, "SetAlpha", function(self)
+                if keepGuard then return end
+                keepGuard = true
+                self:SetAlpha(0)
+                keepGuard = false
+            end)
+        end
+    end
+    keepGuard = true
+    r:SetAlpha(0)
+    keepGuard = false
+end
+AB.KeepHidden = KeepHidden
+
 local function Skin(b)
     if skinned[b] then return skinned[b] end
     if b.IsForbidden and b:IsForbidden() then return nil end
     local d = {}
 
-    -- Der Steinrahmen: nicht entfernen (das Spiel setzt ihn bei jedem
-    -- Aktualisieren neu), sondern unsichtbar machen.
-    local normal = b.GetNormalTexture and b:GetNormalTexture()
-    if normal then normal:SetAlpha(0) end
+    -- Der Symbolrahmen des Spiels ("UI-HUD-ActionBar-IconFrame"): nicht
+    -- entfernen, sondern unsichtbar halten. Bis 6.3.0.1 nur einmal auf
+    -- Alpha 0 gesetzt - das Spiel setzt ihn bei jedem Aktualisieren neu
+    -- (SetNormalAtlas), und im Beta-Test stand er als zweiter, innerer
+    -- Rahmen wieder da. Jetzt haelt ein Haken ihn unsichtbar.
+    local function HideNormal()
+        local normal = b.GetNormalTexture and b:GetNormalTexture()
+        if normal then KeepHidden(normal) end
+        if type(b.NormalTexture) == "table" then KeepHidden(b.NormalTexture) end
+    end
+    HideNormal()
+    if _G.hooksecurefunc then
+        for _, m in ipairs({ "SetNormalAtlas", "SetNormalTexture" }) do
+            if type(b[m]) == "function" then _G.hooksecurefunc(b, m, HideNormal) end
+        end
+    end
     for _, key in ipairs({ "SlotArt", "SlotBackground", "IconMask", "Border", "FloatingBG", "RightDivider", "BottomDivider" }) do
         local r = Region(b, key)
-        if r and r.SetAlpha then r:SetAlpha(0) end
+        if r and r.SetAlpha then KeepHidden(r) end
     end
     local icon = Region(b, "icon") or Region(b, "Icon")
     if icon then
         if icon.SetTexCoord then icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
+        -- Das Symbol fuellt den Knopf: der moderne Client setzt es ein paar
+        -- Pixel nach innen, und der dunkle Streifen dazwischen wirkte wie
+        -- ein zweiter Rahmen. Der eine Rahmen liegt ueber dem Rand.
+        if not K.InCombat() then
+            icon:ClearAllPoints()
+            icon:SetAllPoints(b)
+        end
         -- Die runde Maske des modernen Clients weg: sonst bleibt das
         -- beschnittene Symbol trotzdem rund.
         local mask = Region(b, "IconMask")
@@ -166,6 +206,11 @@ local function Skin(b)
         if icon then checked:ClearAllPoints() checked:SetAllPoints(icon) end
     end
     d.cooldown = Region(b, "cooldown") or Region(b, "Cooldown")
+    -- Die Abklingspirale deckt das ganze Symbol, nicht den alten Einsatz.
+    if d.cooldown and icon and not K.InCombat() and d.cooldown.ClearAllPoints then
+        d.cooldown:ClearAllPoints()
+        d.cooldown:SetAllPoints(icon)
+    end
 
     d.hotkey = Region(b, "HotKey")
     d.count  = Region(b, "Count")

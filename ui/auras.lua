@@ -136,12 +136,20 @@ local function Visible(obj)
     local function Walk(f, depth)
         if depth > 3 or not f.GetChildren then return end
         for _, ch in ipairs({ f:GetChildren() }) do
-            local w = ch.GetWidth and ch:GetWidth()
-            if type(w) == "number" and math.abs(w - size) <= 1 then
-                total = total + 1
-                if ch:IsVisible() then shown = shown + 1 end
+            -- Die Knoepfe des Containers gehoeren dem Spiel: im Beta-Client
+            -- verboten ("forbidden object") oder mit geheimer Breite. Beides
+            -- zaehlt als "nicht messbar", nicht als Fehler (6.3.0.2).
+            local forbidden = ch.IsForbidden and ch:IsForbidden()
+            if not forbidden then
+                local ok, w = pcall(ch.GetWidth, ch)
+                w = ok and K.Plain(w) or nil
+                if type(w) == "number" and math.abs(w - size) <= 1 then
+                    total = total + 1
+                    local okV, vis = pcall(ch.IsVisible, ch)
+                    if okV and K.Bool(vis, false) then shown = shown + 1 end
+                end
+                Walk(ch, depth + 1)
             end
-            Walk(ch, depth + 1)
         end
     end
     Walk(obj.frame, 1)
@@ -650,12 +658,18 @@ function A.Inspect()
     for obj in pairs(objects) do
         local u = obj.unit
         if u and (u == "target" or K.Bool(_G.UnitIsUnit and _G.UnitIsUnit(u, "target"), false)) then
-            local total, shown = Visible(obj)
-            local w, h = obj.frame:GetWidth(), obj.frame:GetHeight()
-            out[#out + 1] = string.format("%s [%s]: %s, %d Symbole, %d gezeigt, Rahmen %s, %dx%d",
-                u, obj.opts.filter, obj.engine and "Container" or "alter Weg", total, shown,
-                (obj.frame.IsVisible and obj.frame:IsVisible()) and "sichtbar" or "unsichtbar",
-                math.floor((type(w) == "number" and w or 0) + 0.5), math.floor((type(h) == "number" and h or 0) + 0.5))
+            -- Eine Zeile je Objekt; was der Client nicht beantwortet, steht
+            -- als "?" da, statt die ganze Pruefung abzubrechen (6.3.0.2).
+            local ok, line = pcall(function()
+                local total, shown = Visible(obj)
+                local w, h = K.Plain(obj.frame:GetWidth()), K.Plain(obj.frame:GetHeight())
+                local function Px(v) return type(v) == "number" and tostring(math.floor(v + 0.5)) or "?" end
+                return string.format("%s [%s]: %s, %d Symbole, %d gezeigt, Rahmen %s, %sx%s",
+                    u, obj.opts.filter, obj.engine and "Container" or "alter Weg", total, shown,
+                    K.Bool(obj.frame.IsVisible and obj.frame:IsVisible(), false) and "sichtbar" or "unsichtbar",
+                    Px(w), Px(h))
+            end)
+            out[#out + 1] = ok and line or (u .. ": nicht lesbar (" .. tostring(line) .. ")")
         end
     end
     return out

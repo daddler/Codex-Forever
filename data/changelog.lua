@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.0.2",
+        date    = "25.09.2026",
+        notes   = {
+            "|cff7C6CFFAktionsleisten mit einem Rahmen.|r Der innere Rahmen des Spiels um jedes Symbol bleibt weg – das Spiel hatte ihn bei jedem Aktualisieren neu gesetzt. Das Symbol füllt den Knopf, darum liegt nur noch eine feine Kante.",
+            "|cff7C6CFF/wcui auren funktioniert wieder.|r Die Auren-Prüfung brach an Werten ab, die das Spiel geheim hält, und schrieb dabei Lua-Fehler – jetzt steht dort „?“.",
+        },
+    },
+    {
         version = "6.3.0.1",
         date    = "25.09.2026",
         notes   = {

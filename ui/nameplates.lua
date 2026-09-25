@@ -294,11 +294,14 @@ function NP.GameAuraInfo(unit)
     local function Walk(f, depth)
         if depth > 4 or not f.GetChildren then return end
         for _, ch in ipairs({ f:GetChildren() }) do
-            if ch.IsVisible and ch:IsVisible() and ch.GetObjectType and ch:GetObjectType() ~= "Frame" then shown = shown + 1 end
-            Walk(ch, depth + 1)
+            if not (ch.IsForbidden and ch:IsForbidden()) then
+                local ok, vis = pcall(ch.IsVisible, ch)
+                if ok and K.Bool(vis, false) and ch.GetObjectType and ch:GetObjectType() ~= "Frame" then shown = shown + 1 end
+                Walk(ch, depth + 1)
+            end
         end
     end
-    Walk(auras, 1)
+    pcall(Walk, auras, 1)
     return string.format("Symbole des Spiels: %s, %d sichtbare Knöpfe", inPlace[auras] and "sichtbar an ihrem Platz" or "ausgeblendet", shown)
 end
 

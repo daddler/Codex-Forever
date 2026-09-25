@@ -1957,6 +1957,59 @@ do
         _G.ActionButton2 = nil
     end)
     Check(ok, "Aktionsleisten: leere Plaetze aus, beim Ziehen sichtbar" .. (ok and "" or (": " .. tostring(err))))
+
+    -- 6.3.0.2: der Symbolrahmen des Spiels bleibt weg, auch wenn das Spiel
+    -- ihn neu setzt; das Symbol fuellt den Knopf.
+    ok, err = pcall(function()
+        local oldHook = _G.hooksecurefunc
+        _G.hooksecurefunc = function(obj, name, fn)
+            local orig = obj[name]
+            obj[name] = function(...) local r = orig(...) fn(...) return r end
+        end
+        local b = CreateFrame("CheckButton", "ActionButton3", UIParent)
+        b.icon = b:CreateTexture()
+        local normal = b:CreateTexture()
+        b.GetNormalTexture = function() return normal end
+        b.SetNormalAtlas = function() normal:SetAlpha(1) end
+        b.action = 6
+        local oldHas = _G.HasAction
+        _G.HasAction = function() return true end
+        WeintCodex.UIActionBars.SkinAll()
+        assert(normal:GetAlpha() == 0, "Symbolrahmen des Spiels sichtbar")
+        b:SetNormalAtlas("UI-HUD-ActionBar-IconFrame")
+        assert(normal:GetAlpha() == 0, "Symbolrahmen nach SetNormalAtlas wieder da (innerer Rahmen)")
+        normal:SetAlpha(1)
+        assert(normal:GetAlpha() == 0, "Symbolrahmen nach SetAlpha wieder da")
+        _G.HasAction = oldHas
+        _G.hooksecurefunc = oldHook
+        _G.ActionButton3 = nil
+    end)
+    Check(ok, "Aktionsleisten: ein Rahmen, der des Spiels bleibt weg" .. (ok and "" or (": " .. tostring(err))))
+
+    -- 6.3.0.2: die Auren-Pruefung uebersteht geheime Breiten und verbotene
+    -- Knoepfe (im Beta-Client: "secret number", "forbidden object").
+    ok, err = pcall(function()
+        local A = WeintCodex.UIAuras
+        local obj = A.Create(UIParent, { filter = "HARMFUL", max = 3, size = 20 })
+        local secretBtn = stub.NewObject("Button")
+        secretBtn.GetWidth = function() return setmetatable({}, { __sub = function() error("attempt to perform arithmetic on a secret number value") end }) end
+        local forbiddenBtn = stub.NewObject("Button")
+        forbiddenBtn.IsForbidden = function() return true end
+        forbiddenBtn.GetWidth = function() error("Attempt to access forbidden object") end
+        obj.frame.GetChildren = function() return secretBtn, forbiddenBtn end
+        local oldExists, oldIsUnit = _G.UnitExists, _G.UnitIsUnit
+        _G.UnitExists = function() return true end
+        _G.UnitIsUnit = function() return true end
+        obj:SetUnit("target")
+        local oldButtons = obj.buttons
+        obj.buttons = nil          -- Container-Weg: Kinder ablaufen
+        local lines = A.Inspect()
+        obj.buttons = oldButtons
+        _G.UnitExists, _G.UnitIsUnit = oldExists, oldIsUnit
+        obj:SetUnit(nil)
+        assert(#lines >= 2, "Auren-Pruefung zu kurz")
+    end)
+    Check(ok, "Auren-Pruefung: geheime Breite und verbotene Knoepfe brechen nichts ab" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.
