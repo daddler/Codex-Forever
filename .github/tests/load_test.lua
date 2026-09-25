@@ -1519,12 +1519,14 @@ do
         K.Set("minimap", "square", true)
         assert(_G.GetMinimapShape() == "SQUARE", "eckige Karte meldet nicht SQUARE")
         -- Knopfspalte: was es gibt, kommt hinein; was fehlt, faellt heraus.
+        -- Der eigene Knopf (LibDBIcon) steht seit 6.3.1.1 im Sammelknopf,
+        -- die Tageszeit unten rechts an der Karte - beide nicht in der Spalte.
         local base = #WeintCodex.UIMinimap.ColumnButtons()
-        assert(_G.LibDBIcon10_WeintCodex == nil or base == 1, "der eigene Knopf gehoert in die Spalte")
+        assert(base == 0, "Spalte ohne Knoepfe des Spiels hat " .. base .. " Eintraege")
         _G.MinimapCluster.Tracking = CreateFrame("Frame", nil, _G.MinimapCluster)
         _G.GameTimeFrame = CreateFrame("Button", "GameTimeFrame", _G.MinimapCluster)
         local list = WeintCodex.UIMinimap.ColumnButtons()
-        assert(#list == base + 2, "Knopfspalte: " .. #list .. " statt " .. (base + 2) .. " Knoepfe")
+        assert(#list == base + 1, "Knopfspalte: " .. #list .. " statt " .. (base + 1) .. " Knoepfe")
         WeintCodex.UIMinimap.LayoutButtons()
         _G.MinimapCluster.Tracking, _G.GameTimeFrame = nil, nil
     end)
@@ -2296,32 +2298,42 @@ do
     end)
     Check(ok, "Minikarte: oben im Bereich, fremde Koordinaten weg" .. (ok and "" or (": " .. tostring(err))))
 
-    -- 6.3.1.0: jeder kleine Knopf auf der Karte kommt in die Spalte, auch
-    -- ohne Namen auf der Liste; die Zoomknoepfe nicht.
+    -- 6.3.1.1: Addon-Knoepfe (LibDBIcon) in den Sammelknopf, andere kleine
+    -- Knoepfe auf der Karte (Wegpunkte) bleiben; Tageszeit unten rechts.
     ok, err = pcall(function()
         local MM = WeintCodex.UIMinimap
         local mm = _G.Minimap
-        local addonBtn = CreateFrame("Button", nil, mm)
-        addonBtn.GetObjectType = function() return "Button" end
-        addonBtn.GetWidth = function() return 31 end
-        addonBtn.GetHeight = function() return 31 end
-        local big = CreateFrame("Button", nil, mm)
-        big.GetObjectType = function() return "Button" end
-        big.GetWidth = function() return 200 end
-        big.GetHeight = function() return 200 end
+        local addonBtn = CreateFrame("Button", "LibDBIcon10_TestAddon", mm)
+        local pin = CreateFrame("Button", "HBDPin1", mm)
         local oldKids = mm.GetChildren
-        mm.GetChildren = function() return addonBtn, big end
-        local found, bigFound = false, false
-        for _, b in ipairs(MM.ColumnButtons()) do
+        mm.GetChildren = function() return addonBtn, pin end
+        local found, pinFound = false, false
+        for _, b in ipairs(MM.AddonButtons()) do
             if b == addonBtn then found = true end
-            if b == big then bigFound = true end
+            if b == pin then pinFound = true end
         end
+        assert(found, "Addon-Knopf nicht erkannt")
+        assert(not pinFound, "Kartenmarkierung als Addon-Knopf eingesammelt")
+        MM.LayoutBag()
+        local bag, flyout = MM.Bag()
+        assert(bag and bag:IsShown(), "kein Sammelknopf")
+        assert(addonBtn:GetParent() == flyout, "Addon-Knopf nicht im Sammelknopf")
+        assert(not flyout:IsShown(), "Liste steht offen")
+        bag._scripts.OnClick(bag)
+        assert(flyout:IsShown(), "Klick klappt nicht auf")
+        bag._scripts.OnClick(bag)
+        for _, b in ipairs(MM.ColumnButtons()) do assert(b ~= addonBtn, "Addon-Knopf zusaetzlich in der Spalte") end
         mm.GetChildren = oldKids
-        assert(found, "Addon-Knopf auf der Karte nicht in der Spalte")
-        assert(not bigFound, "grosser Rahmen als Knopf behandelt")
+        -- Tageszeit unten rechts an der Karte.
+        local gt = CreateFrame("Button", "GameTimeFrame", UIParent)
+        local pt
+        gt.SetPoint = function(_, p, rel, rp, x, y) pt = { p, rel, rp, x, y } end
+        MM.LayoutButtons()
+        assert(pt and pt[1] == "BOTTOMRIGHT" and pt[2] == mm and pt[3] == "BOTTOMRIGHT", "Tageszeit nicht unten rechts")
+        _G.GameTimeFrame, _G.LibDBIcon10_TestAddon, _G.HBDPin1 = nil, nil, nil
         assert(WeintCodex.UIChat.Inspect()[1]:find("Chatfenster 1", 1, true), "/wcui chat ohne Auskunft")
     end)
-    Check(ok, "Minikarte: alle kleinen Knoepfe in die Spalte; /wcui chat antwortet" .. (ok and "" or (": " .. tostring(err))))
+    Check(ok, "Minikarte: Sammelknopf fuer Addons, Wegpunkte bleiben, Tageszeit unten rechts" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.

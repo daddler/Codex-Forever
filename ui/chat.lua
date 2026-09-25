@@ -604,6 +604,40 @@ function CH.Inspect()
         if type(fs) ~= "table" then fs = nil end
         local text = fs and fs.GetText and K.Plain(fs:GetText())
         out[#out + 1] = "Reiter 1 Text: " .. tostring(text) .. " · Schrift " .. (fs and Describe(fs) or "fehlt")
+        if fs and fs.GetTextColor then
+            local ok, r, g, b, a = pcall(fs.GetTextColor, fs)
+            if ok then
+                out[#out + 1] = string.format("Reiter 1 Textfarbe: %.2f %.2f %.2f %.2f",
+                    K.Plain(r) or -1, K.Plain(g) or -1, K.Plain(b) or -1, K.Plain(a) or -1)
+            end
+        end
+        -- Eine laufende Blendanimation aendert, was man sieht, aber nicht
+        -- GetAlpha - und eine beschneidende Andockleiste versteckt Reiter,
+        -- die IsVisible fuer sichtbar haelt.
+        local function Anims(f)
+            if not (f and f.GetAnimationGroups) then return "keine Abfrage" end
+            local ok, groups = pcall(function() return { f:GetAnimationGroups() } end)
+            if not ok then return "nicht lesbar" end
+            local n, playing = 0, 0
+            for _, g in ipairs(groups) do
+                n = n + 1
+                if g.IsPlaying and K.Bool(g:IsPlaying(), false) then playing = playing + 1 end
+            end
+            return string.format("%d, davon laufend %d", n, playing)
+        end
+        out[#out + 1] = "Reiter 1 Animationen: " .. Anims(tab) .. " · Text: " .. Anims(fs)
+        local dock = _G.GeneralDockManager
+        local function Clips(f)
+            if not (f and f.DoesClipChildren) then return "?" end
+            local ok, v = pcall(f.DoesClipChildren, f)
+            return ok and tostring(K.Bool(v, false)) or "?"
+        end
+        out[#out + 1] = "Beschneidet: Andockleiste " .. Clips(dock) .. ", Chatfenster " .. Clips(cf)
+            .. ", Reiter-Elternrahmen " .. Clips(tab.GetParent and tab:GetParent())
+        local b = K.Plain(tab.GetBottom and tab:GetBottom())
+        local r = K.Plain(tab.GetRight and tab:GetRight())
+        out[#out + 1] = "Reiter 1 unten " .. tostring(b) .. ", rechts " .. tostring(r)
+            .. " · Andockleiste unten " .. tostring(dock and K.Plain(dock:GetBottom()))
     end
     for i = 2, 4 do
         local t = _G["ChatFrame" .. i .. "Tab"]

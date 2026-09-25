@@ -52,6 +52,8 @@ local defaults = {
     -- Fremde Koordinaten an der Karte (Beta-Test: "2x Koordinaten") -
     -- WeintCodex zeigt sie selbst, eine zweite Zeile ist doppelt.
     hideOtherCoords = true,
+    -- Alle Addon-Knoepfe hinter einem Knopf unten links (6.3.1.1).
+    addonBag    = true,
 }
 
 local function Opt(k) return K.Get(KEY, k) end
@@ -112,6 +114,7 @@ end
 
 local laying = false
 
+-- Die Knoepfe des Spiels in der Spalte links neben der Karte.
 local function ColumnButtons()
     local cl = _G.MinimapCluster
     local list, seen = {}, {}
@@ -124,7 +127,6 @@ local function ColumnButtons()
     end
     add(type(cl) == "table" and cl.Tracking or nil)
     add(_G.MiniMapTracking)
-    add(_G.GameTimeFrame)
     local ind = type(cl) == "table" and cl.IndicatorFrame or nil
     add(type(ind) == "table" and ind.MailFrame or nil)
     add(_G.MiniMapMailFrame)
@@ -132,36 +134,54 @@ local function ColumnButtons()
     add(type(cl) == "table" and cl.InstanceDifficulty or nil)
     add(_G.MiniMapInstanceDifficulty)
     add(_G.ExpansionLandingPageMinimapButton)
-    -- Der eigene Knopf (LibDBIcon): am Kartenrand laege er auf dem
-    -- Gebietsstreifen.
-    add(_G.LibDBIcon10_WeintCodex)
-    -- Alles andere, was als kleiner Knopf auf der Karte oder in ihrem
-    -- Bereich sitzt: Knoepfe anderer Addons (LibDBIcon), und die des
-    -- Spiels, die hier keinen festen Namen haben. Seit 6.3.1.0 - im
-    -- Beta-Test lagen die Tageszeit-Sonne und ein Addon-Knopf mitten auf
-    -- der Karte, weil sie auf keiner Liste standen.
+    -- Ohne Sammelknopf stehen die Addon-Knoepfe mit in der Spalte.
+    if not Opt("addonBag") then
+        for _, b in ipairs(MM.AddonButtons()) do add(b) end
+    end
+    return list
+end
+
+--------------------------------------------------
+-- Addon-Knoepfe
+--------------------------------------------------
+-- Knoepfe anderer Addons an der Karte sind fast immer LibDBIcon-Knoepfe
+-- ("LibDBIcon10_<Name>"). Nur die werden gesammelt: die breitere Suche
+-- aus 6.3.1.0 (jeder kleine Knopf auf der Karte) haette auch
+-- Kartenmarkierungen anderer Addons erwischt - Wegpunkte und Fundorte sind
+-- ebenfalls kleine Knoepfe auf der Minikarte, und die gehoeren auf sie.
+
+function MM.AddonButtons()
+    local list, seen = {}, {}
+    local function add(b)
+        if type(b) == "table" and not seen[b] and b.SetPoint and not (b.IsForbidden and b:IsForbidden()) then
+            seen[b] = true
+            list[#list + 1] = b
+        end
+    end
+    local ls = _G.LibStub
+    if type(ls) == "table" and ls.GetLibrary then
+        local ok, lib = pcall(ls.GetLibrary, ls, "LibDBIcon-1.0", true)
+        if ok and type(lib) == "table" and type(lib.objects) == "table" then
+            for _, b in pairs(lib.objects) do add(b) end
+        end
+    end
     local mm = _G.Minimap
-    local skip = { [frame or false] = true, [mm or false] = true }
-    if type(mm) == "table" then
-        for _, z in ipairs({ mm.ZoomIn, mm.ZoomOut, _G.MinimapZoomIn, _G.MinimapZoomOut, mm.ZoomHitArea }) do
-            if type(z) == "table" then skip[z] = true end
+    if type(mm) == "table" and mm.GetChildren then
+        local ok, kids = pcall(function() return { mm:GetChildren() } end)
+        for _, ch in ipairs(ok and kids or {}) do
+            local n = type(ch) == "table" and ch.GetName and ch:GetName()
+            if type(n) == "string" and n:find("^LibDBIcon10_") then add(ch) end
         end
     end
-    local function Small(f)
-        if skip[f] or not (f.GetObjectType and f:GetObjectType() == "Button") then return false end
-        if not K.Bool(f.IsShown and f:IsShown(), false) then return false end
-        local w, h = K.Plain(f.GetWidth and f:GetWidth()), K.Plain(f.GetHeight and f:GetHeight())
-        return type(w) == "number" and type(h) == "number" and w >= 10 and w <= 48 and h >= 10 and h <= 48
+    -- Im Addon selbst ausgeblendete Knoepfe (Hide) bleiben draussen.
+    local shown = {}
+    for _, b in ipairs(list) do
+        if not b.IsShown or K.Bool(b:IsShown(), true) then shown[#shown + 1] = b end
     end
-    for _, parent in ipairs({ mm, type(cl) == "table" and cl or nil, _G.MinimapBackdrop,
-        type(cl) == "table" and cl.MinimapContainer or nil }) do
-        if type(parent) == "table" and parent.GetChildren then
-            local ok, kids = pcall(function() return { parent:GetChildren() } end)
-            for _, ch in ipairs(ok and kids or {}) do
-                if type(ch) == "table" and not (ch.IsForbidden and ch:IsForbidden()) and Small(ch) then add(ch) end
-            end
-        end
-    end
+    list = shown
+    table.sort(list, function(x, y)
+        return tostring(x.GetName and x:GetName() or "") < tostring(y.GetName and y:GetName() or "")
+    end)
     return list
 end
 
@@ -179,10 +199,35 @@ local function Watch(b)
     end)
 end
 
+-- Die Tageszeit (Sonne/Mond, zugleich der Kalender): unten rechts an der
+-- Karte, ueber dem Gebietsstreifen (Beta-Test: "mitten drin", "gerne unten
+-- rechts"). Welcher Rahmen das ist, heisst je nach Client anders.
+function MM.TimeButton()
+    local cl, mm = _G.MinimapCluster, _G.Minimap
+    for _, f in ipairs({ _G.GameTimeFrame, type(cl) == "table" and cl.GameTimeFrame or nil,
+        type(mm) == "table" and mm.GameTimeFrame or nil }) do
+        if type(f) == "table" and f.SetPoint and not (f.IsForbidden and f:IsForbidden()) then return f end
+    end
+    return nil
+end
+
 function MM.LayoutButtons()
     local mm = _G.Minimap
-    if laying or type(mm) ~= "table" or not frame or not Opt("buttonColumn") then return end
+    if laying or type(mm) ~= "table" or not frame then return end
     laying = true
+    local tb = MM.TimeButton()
+    if tb and not Opt("hideCalendar") then
+        Watch(tb)
+        tb:ClearAllPoints()
+        local up = (Opt("zoneText") and Opt("zoneInside")) and 22 or 3
+        tb:SetPoint("BOTTOMRIGHT", mm, "BOTTOMRIGHT", -3, up)
+    end
+    MM.LayoutBag()
+    if not Opt("buttonColumn") then
+        laying = false
+        return
+    end
+
     -- Von oben nach unten; reicht die Hoehe der Karte nicht, beginnt links
     -- daneben eine zweite Spalte.
     local limit = Opt("size") or 200
@@ -204,6 +249,81 @@ function MM.LayoutButtons()
     laying = false
 end
 MM.ColumnButtons = ColumnButtons
+
+--------------------------------------------------
+-- Sammelknopf
+--------------------------------------------------
+-- Ein Knopf unten links neben der Karte; ein Klick klappt eine Kachel mit
+-- allen Addon-Knoepfen auf (Beta-Test: "ein Symbol unten links, das alle
+-- Addons zusammenfasst"). Das Zeichen ist gezeichnet (neun Punkte), keine
+-- Grafik des Spiels - ein geratener Pfad waere ein gruenes Rechteck.
+
+local bag, flyout
+local BAG_PER_ROW, BAG_CELL = 4, 30
+
+local function BuildBag()
+    if bag then return end
+    local mm = _G.Minimap
+    bag = CreateFrame("Button", "WeintCodexMinimapAddons", mm)
+    bag:SetSize(22, 22)
+    bag.kachel = K.Kachel(bag, { shadow = 4 })
+    bag.dots = {}
+    for i = 0, 8 do
+        local d = bag:CreateTexture(nil, "ARTWORK")
+        d:SetSize(3, 3)
+        d:SetPoint("CENTER", bag, "CENTER", ((i % 3) - 1) * 5, (1 - math.floor(i / 3)) * 5)
+        bag.dots[#bag.dots + 1] = d
+    end
+    local function Tint(col)
+        for _, d in ipairs(bag.dots) do d:SetColorTexture(col[1], col[2], col[3], 1) end
+    end
+    Tint(C.textMuted)
+    bag:SetScript("OnEnter", function(self)
+        Tint(C.textBright)
+        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+        GameTooltip:SetText("Addons", 1, 1, 1)
+        GameTooltip:AddLine("Klick: alle Addon-Knöpfe der Minikarte", 0.7, 0.7, 0.75, true)
+        GameTooltip:Show()
+    end)
+    bag:SetScript("OnLeave", function() Tint(C.textMuted) GameTooltip:Hide() end)
+    flyout = CreateFrame("Frame", "WeintCodexMinimapAddonList", bag)
+    flyout:SetFrameStrata("DIALOG")
+    flyout.kachel = K.Kachel(flyout, { shadow = 6 })
+    flyout:Hide()
+    bag:SetScript("OnClick", function()
+        flyout:SetShown(not flyout:IsShown())
+        MM.LayoutBag()
+    end)
+end
+
+function MM.LayoutBag()
+    local mm = _G.Minimap
+    if type(mm) ~= "table" then return end
+    if not Opt("addonBag") then
+        if bag then bag:Hide() end
+        return
+    end
+    BuildBag()
+    bag:ClearAllPoints()
+    bag:SetPoint("BOTTOMRIGHT", mm, "BOTTOMLEFT", -4, 0)
+    local list = MM.AddonButtons()
+    bag:SetShown(#list > 0)
+    -- Die Kachel waechst ueber dem Knopf nach oben, rechtsbuendig mit ihm.
+    local rows = math.max(1, math.ceil(#list / BAG_PER_ROW))
+    local cols = math.max(1, math.min(BAG_PER_ROW, #list))
+    flyout:ClearAllPoints()
+    flyout:SetPoint("BOTTOMRIGHT", bag, "TOPRIGHT", 0, 4)
+    flyout:SetSize(cols * BAG_CELL + 8, rows * BAG_CELL + 8)
+    local inset = (BAG_CELL - 26) / 2
+    for i, b in ipairs(list) do
+        Watch(b)
+        if b:GetParent() ~= flyout then b:SetParent(flyout) end
+        b:ClearAllPoints()
+        local c, r = (i - 1) % BAG_PER_ROW, math.floor((i - 1) / BAG_PER_ROW)
+        b:SetPoint("TOPLEFT", flyout, "TOPLEFT", 4 + c * BAG_CELL + inset, -4 - r * BAG_CELL - inset)
+    end
+end
+MM.Bag = function() return bag, flyout end
 
 --------------------------------------------------
 -- Karte nach oben
@@ -471,8 +591,9 @@ K.Register({
             B:Row({ type = "toggle", label = "Zoom mit dem Mausrad", key = "wheelZoom" },
                   { type = "toggle", label = "Zoomknöpfe ausblenden", key = "hideZoomButtons" })
             B:Row({ type = "toggle", label = "Knöpfe in einer Spalte links", key = "buttonColumn", reload = true,
-                    description = "Verfolgung, Kalender, Post und Schwierigkeit neben der Karte statt auf ihrem Rand." },
-                  { type = "empty" })
+                    description = "Verfolgung, Post und Schwierigkeit neben der Karte statt auf ihrem Rand." },
+                  { type = "toggle", label = "Addon-Knöpfe sammeln", key = "addonBag", reload = true,
+                    description = "Ein Knopf unten links neben der Karte klappt alle Addon-Knöpfe auf." })
             B:Note("Wo die Minikarte steht, stellst du im Bearbeitungsmodus des Spiels ein (Esc → Bearbeitungsmodus).")
         end },
     },

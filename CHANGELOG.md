@@ -9,6 +9,30 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.1.1] – 2026-09-26
+
+**Ein Knopf für alle Addons an der Minikarte.** Unten links neben der Minikarte sitzt ein Knopf mit neun Punkten; ein Klick klappt alle Addon-Knöpfe in einer Kachel auf, ein zweiter klappt sie wieder zu. Kartenmarkierungen anderer Addons (Wegpunkte, Fundorte) bleiben auf der Karte. Abschaltbar unter Minikarte → „Addon-Knöpfe sammeln“.
+
+**Tageszeit unten rechts.** Die Tageszeit-Sonne (zugleich der Kalender) steht unten rechts in der Karte, über dem Gebietsstreifen.
+
+**Genauere Chat-Prüfung.** /wcui chat nennt jetzt auch Textfarbe, laufende Blendanimationen und ob die Andockleiste ihre Reiter abschneidet.
+
+### Technisch
+
+- Minikarte: `addonBag` – `MM.AddonButtons` sammelt nur LibDBIcon-Knöpfe
+  (`LibStub("LibDBIcon-1.0").objects` und Kinder der Karte namens
+  `LibDBIcon10_*`), gezeigte, nach Namen sortiert, und hängt sie in eine
+  Kachel über dem Sammelknopf (vier je Reihe). Die breite Suche aus
+  6.3.1.0 (jeder kleine Knopf) ist zurückgenommen: sie hätte
+  Kartenmarkierungen anderer Addons eingesammelt. `MM.TimeButton`
+  (`GameTimeFrame`, sonst `MinimapCluster.GameTimeFrame`) unten rechts in
+  der Karte, nicht mehr in der Spalte.
+- `/wcui chat`: Textfarbe von Reiter 1, Animationsgruppen (laufend?) von
+  Reiter und Text, `DoesClipChildren` von Andockleiste, Chatfenster und
+  Elternrahmen, Unterkanten.
+- `load_test.lua`: Sammelknopf (Addon-Knopf hinein, Wegpunkt nicht, Klick
+  klappt auf), Tageszeit unten rechts, Spalte ohne beides.
+
 ## [6.3.1.0] – 2026-09-26
 
 **Minikarte: alle Knöpfe neben die Karte.** Die Tageszeit-Sonne und Knöpfe anderer Addons lagen mitten auf der Karte, weil sie auf keiner festen Liste standen. Jetzt kommt jeder kleine Knopf auf oder an der Karte in die Spalte links daneben – reicht die Höhe nicht, in eine zweite Spalte.

@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.1.1",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFEin Knopf für alle Addons an der Minikarte.|r Unten links neben der Minikarte sitzt ein Knopf mit neun Punkten; ein Klick klappt alle Addon-Knöpfe in einer Kachel auf, ein zweiter klappt sie wieder zu. Kartenmarkierungen anderer Addons (Wegpunkte, Fundorte) bleiben auf der Karte. Abschaltbar unter Minikarte → „Addon-Knöpfe sammeln“.",
+            "|cff7C6CFFTageszeit unten rechts.|r Die Tageszeit-Sonne (zugleich der Kalender) steht unten rechts in der Karte, über dem Gebietsstreifen.",
+            "|cff7C6CFFGenauere Chat-Prüfung.|r /wcui chat nennt jetzt auch Textfarbe, laufende Blendanimationen und ob die Andockleiste ihre Reiter abschneidet.",
+        },
+    },
+    {
         version = "6.3.1.0",
         date    = "26.09.2026",
         notes   = {
