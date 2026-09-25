@@ -9,6 +9,27 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.1.0] – 2026-09-26
+
+**Minikarte: alle Knöpfe neben die Karte.** Die Tageszeit-Sonne und Knöpfe anderer Addons lagen mitten auf der Karte, weil sie auf keiner festen Liste standen. Jetzt kommt jeder kleine Knopf auf oder an der Karte in die Spalte links daneben – reicht die Höhe nicht, in eine zweite Spalte.
+
+**Chat-Prüfung.** /wcui chat schreibt in den Chat, was WeintCodex über Chatfenster, Reiter, Knöpfe und Eingabezeile sieht. Die Reiter blieben im Beta-Test unsichtbar, und ohne diese Auskunft wäre jeder weitere Versuch geraten.
+
+### Technisch
+
+- Minikarte: `ColumnButtons` nimmt außer der festen Liste jeden
+  gezeigten `Button` von 10–48 px unter `Minimap`, `MinimapCluster`,
+  `MinimapBackdrop` und `MinimapCluster.MinimapContainer` auf (ohne
+  Zoomknöpfe und eigene Rahmen). Mehrspaltig, wenn die Kartenhöhe nicht
+  reicht. In der ersten Minute alle fünf Sekunden neu (Addons legen
+  Knöpfe spät an).
+- Chat: `UIChat.Inspect` / `/wcui chat` – Zustand von Chatfenster 1,
+  eigener Fläche, Reitern 1–4, Andockleiste, Knöpfen, Knopfleiste,
+  Eingabezeile und Infozeile (gezeigt, sichtbar, Alpha, wirksames Alpha,
+  Schicht/Stufe, Lage, Elternrahmen).
+- `load_test.lua`: Addon-Knopf in der Spalte, großer Rahmen nicht;
+  `/wcui chat` antwortet.
+
 ## [6.3.0.9] – 2026-09-25
 
 **Chat: Reiter sichtbar, keine Bildlaufleiste.** Die Reiter sind wieder zu sehen – die WeintCodex-Fläche lag über ihnen statt darunter. Die halbdurchsichtige Bildlaufleiste und der Pfeil nach unten am rechten Rand sind weg; blättern geht mit dem Mausrad (abschaltbar).

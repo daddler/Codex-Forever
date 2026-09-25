@@ -135,6 +135,33 @@ local function ColumnButtons()
     -- Der eigene Knopf (LibDBIcon): am Kartenrand laege er auf dem
     -- Gebietsstreifen.
     add(_G.LibDBIcon10_WeintCodex)
+    -- Alles andere, was als kleiner Knopf auf der Karte oder in ihrem
+    -- Bereich sitzt: Knoepfe anderer Addons (LibDBIcon), und die des
+    -- Spiels, die hier keinen festen Namen haben. Seit 6.3.1.0 - im
+    -- Beta-Test lagen die Tageszeit-Sonne und ein Addon-Knopf mitten auf
+    -- der Karte, weil sie auf keiner Liste standen.
+    local mm = _G.Minimap
+    local skip = { [frame or false] = true, [mm or false] = true }
+    if type(mm) == "table" then
+        for _, z in ipairs({ mm.ZoomIn, mm.ZoomOut, _G.MinimapZoomIn, _G.MinimapZoomOut, mm.ZoomHitArea }) do
+            if type(z) == "table" then skip[z] = true end
+        end
+    end
+    local function Small(f)
+        if skip[f] or not (f.GetObjectType and f:GetObjectType() == "Button") then return false end
+        if not K.Bool(f.IsShown and f:IsShown(), false) then return false end
+        local w, h = K.Plain(f.GetWidth and f:GetWidth()), K.Plain(f.GetHeight and f:GetHeight())
+        return type(w) == "number" and type(h) == "number" and w >= 10 and w <= 48 and h >= 10 and h <= 48
+    end
+    for _, parent in ipairs({ mm, type(cl) == "table" and cl or nil, _G.MinimapBackdrop,
+        type(cl) == "table" and cl.MinimapContainer or nil }) do
+        if type(parent) == "table" and parent.GetChildren then
+            local ok, kids = pcall(function() return { parent:GetChildren() } end)
+            for _, ch in ipairs(ok and kids or {}) do
+                if type(ch) == "table" and not (ch.IsForbidden and ch:IsForbidden()) and Small(ch) then add(ch) end
+            end
+        end
+    end
     return list
 end
 
@@ -156,14 +183,23 @@ function MM.LayoutButtons()
     local mm = _G.Minimap
     if laying or type(mm) ~= "table" or not frame or not Opt("buttonColumn") then return end
     laying = true
-    local y = 0
+    -- Von oben nach unten; reicht die Hoehe der Karte nicht, beginnt links
+    -- daneben eine zweite Spalte.
+    local limit = Opt("size") or 200
+    local x, y, colW = 0, 0, 0
     for _, b in ipairs(ColumnButtons()) do
         Watch(b)
-        b:ClearAllPoints()
-        b:SetPoint("TOPRIGHT", mm, "TOPLEFT", -4, -y)
-        local h = b.GetHeight and b:GetHeight() or 20
+        local h = K.Plain(b.GetHeight and b:GetHeight())
+        local w = K.Plain(b.GetWidth and b:GetWidth())
         if type(h) ~= "number" or h <= 0 or h > 60 then h = 20 end
+        if type(w) ~= "number" or w <= 0 or w > 60 then w = 20 end
+        if y > 0 and y + h > limit then
+            x, y, colW = x + colW + 2, 0, 0
+        end
+        b:ClearAllPoints()
+        b:SetPoint("TOPRIGHT", mm, "TOPLEFT", -4 - x, -y)
         y = y + h + 2
+        colW = math.max(colW, w)
     end
     laying = false
 end
@@ -318,6 +354,7 @@ local function Apply()
     zone:SetWidth(size - 8)
     HookMap()
     MM.PlaceMap()
+    MM.LayoutButtons()
     UpdateTexts()
 end
 
@@ -374,6 +411,8 @@ local function Enable()
         if scans < 12 and scanAcc >= 5 then
             scanAcc, scans = 0, scans + 1
             MM.HideOtherCoords()
+            -- Addons legen ihre Kartenknoepfe oft erst spaeter an.
+            MM.LayoutButtons()
         end
     end)
     local ev = CreateFrame("Frame")

@@ -2295,6 +2295,33 @@ do
         end
     end)
     Check(ok, "Minikarte: oben im Bereich, fremde Koordinaten weg" .. (ok and "" or (": " .. tostring(err))))
+
+    -- 6.3.1.0: jeder kleine Knopf auf der Karte kommt in die Spalte, auch
+    -- ohne Namen auf der Liste; die Zoomknoepfe nicht.
+    ok, err = pcall(function()
+        local MM = WeintCodex.UIMinimap
+        local mm = _G.Minimap
+        local addonBtn = CreateFrame("Button", nil, mm)
+        addonBtn.GetObjectType = function() return "Button" end
+        addonBtn.GetWidth = function() return 31 end
+        addonBtn.GetHeight = function() return 31 end
+        local big = CreateFrame("Button", nil, mm)
+        big.GetObjectType = function() return "Button" end
+        big.GetWidth = function() return 200 end
+        big.GetHeight = function() return 200 end
+        local oldKids = mm.GetChildren
+        mm.GetChildren = function() return addonBtn, big end
+        local found, bigFound = false, false
+        for _, b in ipairs(MM.ColumnButtons()) do
+            if b == addonBtn then found = true end
+            if b == big then bigFound = true end
+        end
+        mm.GetChildren = oldKids
+        assert(found, "Addon-Knopf auf der Karte nicht in der Spalte")
+        assert(not bigFound, "grosser Rahmen als Knopf behandelt")
+        assert(WeintCodex.UIChat.Inspect()[1]:find("Chatfenster 1", 1, true), "/wcui chat ohne Auskunft")
+    end)
+    Check(ok, "Minikarte: alle kleinen Knoepfe in die Spalte; /wcui chat antwortet" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.

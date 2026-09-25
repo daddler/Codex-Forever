@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.1.0",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFMinikarte: alle Knöpfe neben die Karte.|r Die Tageszeit-Sonne und Knöpfe anderer Addons lagen mitten auf der Karte, weil sie auf keiner festen Liste standen. Jetzt kommt jeder kleine Knopf auf oder an der Karte in die Spalte links daneben – reicht die Höhe nicht, in eine zweite Spalte.",
+            "|cff7C6CFFChat-Prüfung.|r /wcui chat schreibt in den Chat, was WeintCodex über Chatfenster, Reiter, Knöpfe und Eingabezeile sieht. Die Reiter blieben im Beta-Test unsichtbar, und ohne diese Auskunft wäre jeder weitere Versuch geraten.",
+        },
+    },
+    {
         version = "6.3.0.9",
         date    = "25.09.2026",
         notes   = {

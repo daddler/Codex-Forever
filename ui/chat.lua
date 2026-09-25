@@ -566,6 +566,60 @@ local function BuildInfoBar()
 end
 CH.info = function() return info end
 
+--------------------------------------------------
+-- Nachsehen: /wcui chat
+--------------------------------------------------
+-- Im Beta-Client blieben die Reiter in drei Fassungen unsichtbar, und die
+-- Knoepfe standen links statt in der Reiterzeile - die Annahmen ueber den
+-- Chat dieses Clients stimmen nicht. Diese Zeilen sagen, was wirklich da
+-- ist: Reiter, ihr Elternrahmen, Deckkraft, Stufe, Lage.
+
+local function Describe(f)
+    if type(f) ~= "table" then return "fehlt" end
+    local function P(v) v = K.Plain(v) return type(v) == "number" and string.format("%.2f", v) or tostring(v) end
+    local ok, out = pcall(function()
+        local parent = f.GetParent and f:GetParent()
+        local pname = parent and parent.GetName and parent:GetName() or (parent and "(ohne Namen)" or "keiner")
+        local ea = f.GetEffectiveAlpha and f:GetEffectiveAlpha()
+        return string.format("gezeigt %s, sichtbar %s, Alpha %s (wirksam %s), %s/%s, links %s oben %s, Eltern %s",
+            tostring(K.Bool(f:IsShown(), false)), tostring(K.Bool(f:IsVisible(), false)),
+            P(f:GetAlpha()), P(ea), tostring(f.GetFrameStrata and f:GetFrameStrata()),
+            P(f.GetFrameLevel and f:GetFrameLevel()), P(f.GetLeft and f:GetLeft()), P(f.GetTop and f:GetTop()), pname)
+    end)
+    return ok and out or ("nicht lesbar: " .. tostring(out))
+end
+CH.Describe = Describe
+
+function CH.Inspect()
+    local out = {}
+    local cf = _G.ChatFrame1
+    out[#out + 1] = "Chatfenster 1: " .. Describe(cf)
+    local d = cf and done[cf]
+    out[#out + 1] = "Unsere Fläche: " .. (d and d.back and Describe(d.back) or "fehlt")
+    local tab = _G.ChatFrame1Tab
+    out[#out + 1] = "Reiter 1: " .. Describe(tab)
+    if type(tab) == "table" then
+        local fs = tab.Text
+        if type(fs) ~= "table" and tab.GetFontString then fs = tab:GetFontString() end
+        if type(fs) ~= "table" then fs = nil end
+        local text = fs and fs.GetText and K.Plain(fs:GetText())
+        out[#out + 1] = "Reiter 1 Text: " .. tostring(text) .. " · Schrift " .. (fs and Describe(fs) or "fehlt")
+    end
+    for i = 2, 4 do
+        local t = _G["ChatFrame" .. i .. "Tab"]
+        if type(t) == "table" then out[#out + 1] = "Reiter " .. i .. ": " .. Describe(t) end
+    end
+    out[#out + 1] = "Andockleiste: " .. Describe(_G.GeneralDockManager)
+    for _, n in ipairs(COLUMN_BUTTONS) do
+        if type(_G[n]) == "table" then out[#out + 1] = n .. ": " .. Describe(_G[n]) end
+    end
+    out[#out + 1] = "Knopfleiste des Spiels: " .. Describe(d and d.buttonFrame)
+    local eb = _G.ChatFrame1EditBox
+    out[#out + 1] = "Eingabezeile: " .. Describe(eb)
+    out[#out + 1] = "Infozeile: " .. (info and Describe(info) or "nicht angelegt")
+    return out
+end
+
 local function ApplyAll()
     for i = 1, (_G.NUM_CHAT_WINDOWS or 10) do
         local cf = _G["ChatFrame" .. i]
