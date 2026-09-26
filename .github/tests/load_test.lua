@@ -1672,33 +1672,35 @@ do
     Check(ok, "Chat: Eingabezeile erst mit Enter" .. (ok and "" or (": " .. tostring(err))))
 end
 
--- 6.3.2.6: Markierungen an der Plakette - offen: eigenes Symbol; geheim:
--- die Markierung des Spiels bleibt sichtbar und kommt an unsere Stelle.
+-- 6.3.2.7: Markierungen - auch mit geheimem Index, als Bild aus einem
+-- formatierten Text (der Client setzt die Zahl ein, Lua sieht sie nie).
 do
     local NP = WeintCodex.UINameplates
     local ok, err = pcall(function()
-        local oldIdx, oldSecret, oldSet = _G.GetRaidTargetIndex, _G.issecretvalue, _G.SetRaidTargetIconTexture
-        local uf = blizzPlate.UnitFrame
-        local rf = stub.NewObject("Frame")
-        local placed
-        rf.SetPoint = function(_, pt) placed = pt end
-        uf.RaidTargetFrame = rf
-        _G.SetRaidTargetIconTexture = function() end
+        local oldIdx, oldSecret = _G.GetRaidTargetIndex, _G.issecretvalue
         _G.GetRaidTargetIndex = function() return 8 end
         stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
         local p = NP.plates["nameplate1"]
         stub.FireEvent("RAID_TARGET_UPDATE")
-        assert(p.raid:IsShown(), "Totenkopf nicht an der Plakette")
+        assert(p.raid:IsShown() and tostring(p.raid:GetText()):find("RaidTargetingIcon_8", 1, true),
+            "Totenkopf nicht an der Plakette: " .. tostring(p.raid:GetText()))
         local secret = setmetatable({}, {})
         _G.issecretvalue = function(v) return v == secret end
         _G.GetRaidTargetIndex = function() return secret end
+        -- Die Attrappe formatiert keine geheimen Werte; im Client tut es
+        -- SetFormattedText. Hier zaehlt: gezeigt, und kein Rechnen damit.
+        local fmt = p.raid.SetFormattedText
+        local got
+        p.raid.SetFormattedText = function(self, f, v) got = v self:SetText("x") end
         stub.FireEvent("RAID_TARGET_UPDATE")
-        assert(not p.raid:IsShown(), "geheimer Index als eigenes Symbol gezeichnet")
-        assert(rf:GetAlpha() ~= 0 and placed, "Markierung des Spiels nicht sichtbar oder nicht an unserer Stelle")
+        assert(p.raid:IsShown() and got == secret, "geheime Markierung nicht gezeigt")
         assert(NP.raidInfo:find("geheim", 1, true), "Auskunft fehlt")
-        _G.GetRaidTargetIndex, _G.issecretvalue, _G.SetRaidTargetIconTexture = oldIdx, oldSecret, oldSet
+        p.raid.SetFormattedText = fmt
+        _G.GetRaidTargetIndex = function() return nil end
+        stub.FireEvent("RAID_TARGET_UPDATE")
+        assert(not p.raid:IsShown(), "Markierung bleibt ohne Markierung stehen")
+        _G.GetRaidTargetIndex, _G.issecretvalue = oldIdx, oldSecret
         stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
-        uf.RaidTargetFrame = nil
     end)
     Check(ok, "Plaketten: Markierung offen und geheim" .. (ok and "" or (": " .. tostring(err))))
 end

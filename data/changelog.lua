@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.2.7",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFMarkierungen wirklich sichtbar.|r Totenkopf, Kreuz und Co. erscheinen jetzt an Namensplaketten, am Ziel-, Fokus- und Spielerrahmen und in der Gruppe – auch wenn der Client verschlüsselt, welche Markierung ein Gegner trägt.",
+        },
+    },
+    {
         version = "6.3.2.6",
         date    = "26.09.2026",
         notes   = {

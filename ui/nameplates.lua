@@ -422,9 +422,7 @@ local function Build(parent)
         p.texts[slot] = fs
     end
 
-    local raid = textHost:CreateTexture(nil, "OVERLAY")
-    raid:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
-    raid:Hide()
+    local raid = K.NewRaidIcon(textHost, defaults.raidMarkerSize)
     p.raid = raid
 
     -- Zielmarken: zwei gestaffelte Winkel links und rechts, die auf den
@@ -486,7 +484,7 @@ local function LayoutFriendly(p)
     p.auras:SetShown(false)
     p.quest:Hide()
     p.raid:ClearAllPoints()
-    p.raid:SetSize(S.raidMarkerSize, S.raidMarkerSize)
+    K.SetRaidIconSize(p.raid, S.raidMarkerSize)
     p.raid:SetPoint("BOTTOM", t, "TOP", 0, 2)
 end
 
@@ -556,7 +554,7 @@ local function Layout(p)
 
     local raid = p.raid
     raid:ClearAllPoints()
-    raid:SetSize(S.raidMarkerSize, S.raidMarkerSize)
+    K.SetRaidIconSize(raid, S.raidMarkerSize)
     raid:SetPoint(NP.RaidAnchor(p))
 
     -- Auren ueber dem Namen, linksbuendig.
@@ -894,68 +892,15 @@ local function SetHovered(p)
 end
 NP.SetHovered = SetHovered
 
--- Die Markierung des Spiels an seiner eigenen Plakette.
-local function GameRaidFrame(p)
-    local uf = p.nameplate and p.nameplate.UnitFrame
-    local rf = type(uf) == "table" and uf.RaidTargetFrame
-    if type(rf) ~= "table" or not rf.SetAlpha or (rf.IsForbidden and rf:IsForbidden()) then return nil end
-    return rf
-end
-
--- Ein einzelnes Teil wieder zeigen (Gegenstueck zu Dim).
-local function UndimPart(part)
-    local a = dimmed[part]
-    if not a then return end
-    dimmed[part] = nil
-    guard = true
-    part:SetAlpha(a)
-    guard = false
-end
-
--- Die Markierung (Totenkopf, Kreuz ...). Offen lesbar: unser Symbol, in
--- Groesse und Lage wie eingestellt. Nennt der Client den Index nur
--- geheim (12.x), kann Lua ihn nicht in ein Symbol uebersetzen - dann
--- bleibt die Markierung des Spiels an seiner Plakette sichtbar (sie
--- zeichnet das Spiel selbst) und wird an unsere Stelle gesetzt. Gesetzt,
--- nie gelesen, in pcall. Geht nur, solange die Plakette des Spiels
--- sichtbar ist (Debuffs: "die des Spiels", der Standard).
+-- Die Markierung (Totenkopf, Kreuz ...), auch mit geheimem Index - siehe
+-- UIKit.ShowRaidIndex. 6.3.2.6 liess dafuer die Markierung des Spiels
+-- stehen; im Beta-Test blieb auch die unsichtbar.
 NP.raidInfo = "noch keine Markierung gesehen"
--- Wieder ausblenden - aber nur, wenn die Plakette des Spiels gerade Teil
--- fuer Teil ausgeblendet ist. Sonst gehoert sie dem Spiel (freundliche
--- Plakette ohne WeintCodex) und behaelt ihre Markierung.
-local function ReDim(p, rf)
-    local uf = p.nameplate and p.nameplate.UnitFrame
-    if rf and uf and partsOf[uf] then Dim(rf) end
-end
 local function UpdateRaidIcon(p)
-    local rf = GameRaidFrame(p)
-    if not p.unit or S.raidMarker == "none" then
-        p.raid:Hide()
-        ReDim(p, rf)
-        return
-    end
-    local raw = _G.GetRaidTargetIndex and _G.GetRaidTargetIndex(p.unit)
-    local idx = K.Plain(raw)
-    if type(idx) == "number" and idx > 0 and _G.SetRaidTargetIconTexture then
-        _G.SetRaidTargetIconTexture(p.raid, idx)
-        p.raid:Show()
-        ReDim(p, rf)
-        NP.raidInfo = "offen lesbar (" .. idx .. "), eigenes Symbol"
-    elseif type(raw) ~= "nil" and K.IsSecret(raw) then
-        p.raid:Hide()
-        if rf then
-            UndimPart(rf)
-            pcall(function()
-                rf:ClearAllPoints()
-                rf:SetPoint(NP.RaidAnchor(p))
-            end)
-            NP.raidInfo = "geheim – die Markierung des Spiels steht an ihrer Stelle"
-        else
-            NP.raidInfo = "geheim, und die Plakette des Spiels hat keine Markierung"
-        end
-    else
-        p.raid:Hide()
-        ReDim(p, rf)
+    if not p.unit or S.raidMarker == "none" then p.raid:Hide() return end
+    local shown, secret = K.ShowRaidIcon(p.raid, p.unit)
+    if shown then
+        NP.raidInfo = secret and "geheim, als Bild aus dem Text gezeigt" or "offen lesbar, gezeigt"
     end
 end
 NP.UpdateRaidIcon = UpdateRaidIcon
@@ -1331,12 +1276,7 @@ function NP.RefreshPreview()
     p.glowWide:SetShown(glow)
     for _, m in ipairs(p.marks) do m:SetShown(glow) end
     p:SetScale(S.targetScale / 100)
-    if S.raidMarker ~= "none" and _G.SetRaidTargetIconTexture then
-        _G.SetRaidTargetIconTexture(p.raid, 8)
-        p.raid:Show()
-    else
-        p.raid:Hide()
-    end
+    if S.raidMarker ~= "none" then K.ShowRaidIndex(p.raid, 8) else p.raid:Hide() end
     if S.castEnabled then p.cast:ShowPreview(true) else p.cast:ShowPreview(false) end
 end
 

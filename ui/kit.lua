@@ -915,6 +915,52 @@ function K.ReloadButton(parent, opts)
 end
 
 --------------------------------------------------
+-- Zielmarkierungen (Totenkopf, Kreuz ...)
+--------------------------------------------------
+-- Der Beta-Client (12.x) nennt den Index der Markierung GEHEIM (/wcui
+-- auren im Beta-Test: "Markierung geheim"). SetRaidTargetIconTexture
+-- rechnet mit ihm (Kacheln einer Sammeldatei) - mit einem geheimen Wert
+-- darf Lua das nicht, das Symbol blieb aus. Ein Text dagegen darf ihn
+-- formatieren: "|T...UI-RaidTargetingIcon_%d:gross|t" setzt der Client
+-- selbst zusammen, und die Einzeldateien je Markierung liefert das Spiel
+-- (dieselben wie {rt8} im Chat). Eine Schriftzeile statt einer Textur -
+-- sie zeigt ein Bild, ohne dass Lua die Zahl je sieht.
+--------------------------------------------------
+
+function K.NewRaidIcon(parent, size)
+    local fs = K.NewText(parent, 10, "OVERLAY")
+    fs._raidSize = size or 16
+    fs:Hide()
+    return fs
+end
+
+function K.SetRaidIconSize(fs, size)
+    fs._raidSize = size or fs._raidSize or 16
+    if fs.SetSize then fs:SetSize(fs._raidSize, fs._raidSize) end
+end
+
+-- Zeigt die Markierung fuer einen Index (offen oder geheim). false, wenn
+-- es keine gibt oder der Client den Text ablehnt.
+function K.ShowRaidIndex(fs, idx)
+    if type(idx) == "nil" then fs:Hide() return false end
+    local plain = K.Plain(idx)
+    if not K.IsSecret(idx) and (type(plain) ~= "number" or plain < 1 or plain > 8) then
+        fs:Hide()
+        return false
+    end
+    local n = fs._raidSize or 16
+    local ok = pcall(fs.SetFormattedText, fs,
+        "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_%d:" .. n .. ":" .. n .. "|t", idx)
+    if ok then fs:Show() else fs:Hide() end
+    return ok
+end
+
+function K.ShowRaidIcon(fs, unit)
+    local idx = unit and _G.GetRaidTargetIndex and _G.GetRaidTargetIndex(unit)
+    return K.ShowRaidIndex(fs, idx), K.IsSecret(idx)
+end
+
+--------------------------------------------------
 -- Nachsehen: was ist dieser Rahmen?
 --------------------------------------------------
 -- Im Beta-Client heissen Rahmen oft anders, als WeintCodex annimmt

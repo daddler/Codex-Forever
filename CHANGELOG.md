@@ -9,6 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.2.7] – 2026-09-26
+
+**Markierungen wirklich sichtbar.** Totenkopf, Kreuz und Co. erscheinen jetzt an Namensplaketten, am Ziel-, Fokus- und Spielerrahmen und in der Gruppe – auch wenn der Client verschlüsselt, welche Markierung ein Gegner trägt.
+
+### Technisch
+
+- `/wcui auren` im Beta-Test: „Markierung geheim“. `GetRaidTargetIndex`
+  ist im 12.x-Client geheim; `SetRaidTargetIconTexture` rechnet mit dem
+  Index (Kachel der Sammeldatei) und darf das nicht. Die Ausweichlösung
+  aus 6.3.2.6 (Markierung des Spiels stehen lassen) blieb ebenfalls
+  unsichtbar und ist entfernt.
+- Neu `UIKit.NewRaidIcon`/`ShowRaidIcon`/`ShowRaidIndex`: eine
+  Schriftzeile mit `|TInterface\TargetingFrame\UI-RaidTargetingIcon_%d:n:n|t`
+  über `SetFormattedText` – der Client setzt die (geheime) Zahl ein,
+  Lua sieht sie nie; die Einzeldateien sind dieselben wie `{rt8}` im
+  Chat. Genutzt von Plaketten, Einheiten- und Gruppenrahmen.
+
 ## [6.3.2.6] – 2026-09-26
 
 **Markierungen an der Namensplakette.** Totenkopf, Kreuz und die übrigen Zielmarkierungen stehen oben rechts an der Plakette (Größe und Lage unter Namensplaketten → Texte). Verschlüsselt der Client die Markierung, zeigt WeintCodex an derselben Stelle die Markierung des Spiels.

@@ -229,13 +229,7 @@ function Btn:Refresh()
     self:UpdateRole()
     self:UpdateReady()
 
-    local idx = K.Plain(_G.GetRaidTargetIndex and _G.GetRaidTargetIndex(unit))
-    if type(idx) == "number" and idx > 0 and _G.SetRaidTargetIconTexture then
-        _G.SetRaidTargetIconTexture(c.raid, idx)
-        c.raid:Show()
-    else
-        c.raid:Hide()
-    end
+    K.ShowRaidIcon(c.raid, unit)
     self:UpdateThreat()
 end
 
@@ -373,12 +367,9 @@ local function Style(b)
     -- Schrift ist im Client ein Fehler.
     K.SetFont(c.name, Opt("nameSize"))
     K.SetFont(c.status, math.max(8, Opt("nameSize") - 1))
-    c.raid = host:CreateTexture(nil, "OVERLAY")
-    c.raid:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
-    c.raid:SetSize(14, 14)
+    c.raid = K.NewRaidIcon(host, 14)
     -- Oben rechts: oben links stehen Rolle und Krone.
     c.raid:SetPoint("TOPRIGHT", c, "TOPRIGHT", -2, -2)
-    c.raid:Hide()
 
     -- Heilung und Schild in einer Klammer ueber dem Lebensbalken.
     c.clip = CreateFrame("Frame", nil, c)

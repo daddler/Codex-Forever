@@ -329,11 +329,8 @@ local function Create(unit)
     f.right:SetJustifyH("RIGHT")
     f.right:SetWordWrap(false)
 
-    f.raid = textHost:CreateTexture(nil, "OVERLAY")
-    f.raid:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
-    f.raid:SetSize(18, 18)
+    f.raid = K.NewRaidIcon(textHost, 18)
     f.raid:SetPoint("CENTER", f, "TOP", 0, 2)
-    f.raid:Hide()
 
     if unit == "player" then
         -- Oben links an der Ecke, halb ueber dem Rahmen; ein schwarzer
@@ -605,13 +602,7 @@ function Frame:Refresh()
     Fill(self.left, u, Opt(u .. "_left"))
     Fill(self.right, u, Opt(u .. "_right"))
 
-    local idx = K.Plain(_G.GetRaidTargetIndex and _G.GetRaidTargetIndex(u))
-    if type(idx) == "number" and idx > 0 and _G.SetRaidTargetIconTexture then
-        _G.SetRaidTargetIconTexture(self.raid, idx)
-        self.raid:Show()
-    else
-        self.raid:Hide()
-    end
+    K.ShowRaidIcon(self.raid, u)
 
     if self._cast and Opt(u .. "_cast") then self._cast:Update() end
     if self._combo then self:UpdateCombo() end
