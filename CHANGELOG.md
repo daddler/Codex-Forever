@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.2.0] – 2026-09-26
+
+**Haltungsleiste passt sich an.** Sie ist so breit wie die Haltungen deiner Klasse und wächst mit, wenn du eine neue lernst – keine leere Fläche mehr neben zwei Knöpfen. Größe, Abstand, Anordnung, Fläche und „nur bei Maus“ stellst du wie bei jeder Leiste unter Aktionsleisten → Leisten → „Haltungen“ ein.
+
+### Technisch
+
+- `LayoutBar`: für `StanceButton` begrenzt `GetNumShapeshiftForms()` die
+  Zahl der Plätze (nur, wenn der Client eine Zahl > 0 nennt; sonst gilt
+  die Einstellung). `UPDATE_SHAPESHIFT_FORMS` ordnet nach dem Kampf neu.
+
 ## [6.3.1.9] – 2026-09-26
 
 **Name in der Namensplakette.** Unter Namensplaketten → Texte → „Name steht“: über der Plakette, im Balken links mit Stufe davor oder im Balken mittig. Die Textplätze darunter lassen sich weiter einzeln belegen, neu auch mit „Stufe und Name“.

@@ -493,6 +493,13 @@ local function LayoutBar(i, entry)
     local size = Clamp(BO(i, "size"), 16, 80)
     local gap = Clamp(BO(i, "spacing"), 0, 20)
     local count = Clamp(BO(i, "count"), 1, entry.n)
+    -- Haltungen: so viele Plaetze, wie die Klasse Haltungen hat - sonst
+    -- ragt die Flaeche weit ueber die zwei, drei Knoepfe hinaus. Kennt der
+    -- Client die Zahl nicht (oder 0), bleibt die Einstellung.
+    if entry.family == "StanceButton" and _G.GetNumShapeshiftForms then
+        local forms = K.Plain(_G.GetNumShapeshiftForms())
+        if type(forms) == "number" and forms > 0 then count = math.min(count, forms) end
+    end
     local perRow = Clamp(BO(i, "perRow"), 1, count)
     for k = 1, entry.n do
         local b = _G[entry.family .. k]
@@ -905,6 +912,8 @@ local function Enable()
         SkinAll()
         UpdateBackdrops()
         if event == "PLAYER_ENTERING_WORLD" then K.AfterCombat(Place) K.AfterCombat(Arrange) end
+        -- Neue Haltung gelernt: die Haltungsleiste waechst mit.
+        if event == "UPDATE_SHAPESHIFT_FORMS" then K.AfterCombat(Arrange) end
     end)
 end
 

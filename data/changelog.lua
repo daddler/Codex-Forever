@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.2.0",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFHaltungsleiste passt sich an.|r Sie ist so breit wie die Haltungen deiner Klasse und wächst mit, wenn du eine neue lernst – keine leere Fläche mehr neben zwei Knöpfen. Größe, Abstand, Anordnung, Fläche und „nur bei Maus“ stellst du wie bei jeder Leiste unter Aktionsleisten → Leisten → „Haltungen“ ein.",
+        },
+    },
+    {
         version = "6.3.1.9",
         date    = "26.09.2026",
         notes   = {

@@ -1636,6 +1636,29 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.2.0: Haltungsleiste so breit wie die Haltungen der Klasse.
+do
+    local AB = WeintCodex.UIActionBars
+    local ok, err = pcall(function()
+        local bar = CreateFrame("Frame", "StanceBar", UIParent)
+        local w
+        bar.SetSize = function(_, x) w = x end
+        for k = 1, 10 do CreateFrame("CheckButton", "StanceButton" .. k, bar) end
+        local oldForms = _G.GetNumShapeshiftForms
+        _G.GetNumShapeshiftForms = function() return 2 end
+        K.Set("actionbars", "layout", "wc")
+        AB.LayoutAll()
+        local size, gap = K.Get("actionbars", "b9_size"), K.Get("actionbars", "b9_spacing")
+        assert(w == 2 * (size + gap) - gap, "Haltungsleiste nicht so breit wie zwei Haltungen: " .. tostring(w))
+        assert(_G.StanceButton3:GetAlpha() == 0, "dritter Platz ohne Haltung sichtbar")
+        _G.GetNumShapeshiftForms = oldForms
+        K.Set("actionbars", "layout", nil)
+        _G.StanceBar = nil
+        for k = 1, 10 do _G["StanceButton" .. k] = nil end
+    end)
+    Check(ok, "Haltungsleiste so breit wie die Haltungen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.1.9: Name im Balken (Voreinstellung), Debuffs links/mittig/rechts.
 do
     local NP = WeintCodex.UINameplates
