@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.2.6] – 2026-09-26
+
+**Deine Bedrohung an der Namensplakette.** Rechts neben dem Balken steht in Prozent, wie viel Bedrohung du auf diesem Gegner hast – 100 % heißt: du hast die Aggro. Gelb kurz davor, rot mit Aggro; als Tank grün, solange du sie hältst. Nur im Kampf und solange du auf seiner Liste stehst. Einstellbar unter Namensplaketten → Farben → Bedrohung.
+
+### Technisch
+
+- Plaketten: `threatText` (right | topleft | none), Wert aus
+  `UnitDetailedThreatSituation("player", unit)` (skalierter Anteil) in
+  `pcall`; geheim geht er nur an `SetFormattedText`. Kein Wert (nicht auf
+  der Liste) oder offen 0 → nichts angezeigt. Farbe aus dem Status wie die
+  Bedrohungsfarben des Balkens (Rolle aus `UnitGroupRolesAssigned`), bei
+  geheimem Status weiß. Aktualisiert bei `UNIT_THREAT_LIST_UPDATE` und
+  `UNIT_THREAT_SITUATION_UPDATE`.
+
 ## [6.3.2.5] – 2026-09-26
 
 **Auf wen der Gegner zaubert.** Der Zauberbalken auf Namensplaketten, am Ziel- und am Fokusrahmen nennt rechts das Ziel des Zaubers: „» Dich“ in Rot, wenn er auf dich geht, andere Spieler in ihrer Klassenfarbe. Wechselt der Gegner mitten im Zauber das Ziel, wechselt die Anzeige mit. Abschaltbar bei den Zauberbalken der Plaketten und Rahmen.

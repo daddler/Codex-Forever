@@ -71,6 +71,10 @@ local defaults = {
     target             = K.ColorDefault("target"),
     classColorPlayers  = true,
     threatColors = false,       -- Vorlage: tankHasAggroEnabled = false
+    -- Eigene Bedrohung in Prozent an der Plakette (Beta-Test 6.3.2.5:
+    -- "wie viel Threat ich gerade habe"). none | topleft | right. Rechts:
+    -- oben links kollidiert mit langen Namen und den Symbolen des Spiels.
+    threatText = "right",
     tankAggro  = K.ColorDefault("tankAggro"),
     tankLosing = K.ColorDefault("tankLosing"),
     dpsAggro   = K.ColorDefault("dpsAggro"),
@@ -442,6 +446,8 @@ local function Build(parent)
     p.quest = K.NewText(textHost, 13)
     p.quest:SetJustifyH("RIGHT")
     p.quest:Hide()
+    p.threat = K.NewText(textHost, 10)
+    p.threat:Hide()
     return p
 end
 
@@ -559,6 +565,16 @@ local function Layout(p)
         perRow = S.auraMax, timer = S.auraTimer })
     -- Questfortschritt links neben der Namenszeile, ausserhalb des Balkens:
     -- so ueberdeckt er weder Namen noch Stufe.
+    K.SetFont(p.threat, S.textSize)
+    p.threat:ClearAllPoints()
+    if S.threatText == "right" then
+        -- Rechts neben dem Balken, hinter der Zielmarke.
+        p.threat:SetPoint("LEFT", p, "RIGHT", math.floor(S.height * 1.35 + 0.5) + 4, 0)
+        p.threat:SetJustifyH("LEFT")
+    else
+        p.threat:SetPoint("BOTTOMLEFT", p, "TOPLEFT", 1, 2)
+        p.threat:SetJustifyH("LEFT")
+    end
     K.SetFont(p.quest, S.nameSize + 2)
     p.quest:ClearAllPoints()
     p.quest:SetPoint("BOTTOMRIGHT", p, "TOPLEFT", -2, 2)
@@ -965,6 +981,37 @@ local function UpdateQuest(p)
     end
 end
 
+-- Deine Bedrohung auf diesem Gegner in Prozent (100 % = du hast oder
+-- bekommst die Aggro). Nur solange du auf seiner Liste stehst. Der Wert
+-- kann geheim sein: er geht nur an SetFormattedText. Die Farbe folgt der
+-- Lage wie die Bedrohungsfarben des Balkens - als Tank gruen, solange du
+-- sie haeltst; sonst gelb kurz davor, rot mit Aggro.
+local function UpdateThreatText(p)
+    local fs = p.threat
+    if p._friendly or S.threatText == "none" or not p.unit or not _G.UnitDetailedThreatSituation then
+        fs:Hide()
+        return
+    end
+    local ok, _, status, scaled = pcall(_G.UnitDetailedThreatSituation, "player", p.unit)
+    if not ok or type(scaled) == "nil" then fs:Hide() return end
+    local plain = K.Plain(scaled)
+    if type(plain) == "number" and plain <= 0 then fs:Hide() return end
+    fs:SetFormattedText("%d%%", scaled)
+    local st = K.Plain(status)
+    local c
+    if type(st) == "number" then
+        local tank = K.Plain(_G.UnitGroupRolesAssigned and _G.UnitGroupRolesAssigned("player")) == "TANK"
+        if tank then
+            c = (st == 3 and S.tankAggro) or (st == 2 and S.tankLosing) or S.dpsAggro
+        else
+            c = (st >= 2 and S.dpsAggro) or (st == 1 and S.dpsNear) or nil
+        end
+    end
+    if c then fs:SetTextColor(c.r, c.g, c.b, 1) else fs:SetTextColor(1, 1, 1, 1) end
+    fs:Show()
+end
+NP.UpdateThreatText = UpdateThreatText
+
 local function FullUpdate(p)
     UpdateHealth(p)
     FillTexts(p, false)
@@ -972,6 +1019,7 @@ local function FullUpdate(p)
     UpdateTarget(p)
     UpdateRaidIcon(p)
     UpdateQuest(p)
+    UpdateThreatText(p)
     if p._friendly then return end
     if S.castEnabled then p.cast:Update() else p.cast:Hide() end
 end
@@ -1054,8 +1102,8 @@ local UNIT_EVENTS = {
     UNIT_LEVEL = function(p) FillTexts(p, false) end,
     UNIT_CLASSIFICATION_CHANGED = function(p) FillTexts(p, false) UpdateColor(p) end,
     UNIT_FLAGS = function(p) UpdateColor(p) end,
-    UNIT_THREAT_SITUATION_UPDATE = function(p) UpdateColor(p) end,
-    UNIT_THREAT_LIST_UPDATE = function(p) UpdateColor(p) end,
+    UNIT_THREAT_SITUATION_UPDATE = function(p) UpdateColor(p) UpdateThreatText(p) end,
+    UNIT_THREAT_LIST_UPDATE = function(p) UpdateColor(p) UpdateThreatText(p) end,
 }
 
 local CAST_EVENTS = {
@@ -1206,6 +1254,13 @@ function NP.RefreshPreview()
             end
             fs:Show()
         end
+    end
+    if S.threatText ~= "none" then
+        p.threat:SetText("84%")
+        p.threat:SetTextColor(S.dpsNear.r, S.dpsNear.g, S.dpsNear.b, 1)
+        p.threat:Show()
+    else
+        p.threat:Hide()
     end
     local c = S.eliteColoring and S.elite or S.enemyInCombat
     K.PaintBar(p.health, c.r, c.g, c.b)
@@ -1390,7 +1445,11 @@ K.Register({
             B:Section("Bedrohung",
                 "Ob du Tank bist, liest WeintCodex aus der zugewiesenen Gruppenrolle. Ohne zugewiesene Rolle gelten die Farben für Schaden und Heilung.")
             B:Row({ type = "toggle", label = "Bedrohungsfarben", key = "threatColors" },
-                  { type = "empty" })
+                  { type = "dropdown", label = "Bedrohung in %", key = "threatText", items = {
+                        { value = "right",   text = "Rechts neben dem Balken" },
+                        { value = "topleft", text = "Oben links" },
+                        { value = "none",    text = "Aus" } },
+                    description = "Deine Bedrohung auf diesem Gegner; 100 % heißt: du hast die Aggro. Nur im Kampf und solange du auf seiner Liste stehst." })
             local noThreat = function() return not K.Get(KEY, "threatColors") end
             B:Row({ type = "color", label = "Tank: hält die Aggro", key = "tankAggro", disabled = noThreat },
                   { type = "color", label = "Tank: verliert sie", key = "tankLosing", disabled = noThreat })

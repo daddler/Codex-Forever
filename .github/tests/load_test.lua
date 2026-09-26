@@ -1672,6 +1672,34 @@ do
     Check(ok, "Chat: Eingabezeile erst mit Enter" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.2.6: Bedrohung in Prozent an der Plakette.
+do
+    local NP = WeintCodex.UINameplates
+    local ok, err = pcall(function()
+        local old = _G.UnitDetailedThreatSituation
+        local scaled, status = 84, 1
+        _G.UnitDetailedThreatSituation = function() return false, status, scaled, 90, 1000 end
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        local p = NP.plates["nameplate1"]
+        stub.FireEvent("UNIT_THREAT_LIST_UPDATE", "nameplate1")
+        assert(p.threat:IsShown() and p.threat:GetText() == "84%", "Bedrohung fehlt: " .. tostring(p.threat:GetText()))
+        scaled = nil
+        stub.FireEvent("UNIT_THREAT_LIST_UPDATE", "nameplate1")
+        assert(not p.threat:IsShown(), "Bedrohung ohne Liste gezeigt")
+        scaled = 0
+        stub.FireEvent("UNIT_THREAT_LIST_UPDATE", "nameplate1")
+        assert(not p.threat:IsShown(), "0 % als Bedrohung gezeigt")
+        K.Set("nameplates", "threatText", "none")
+        scaled = 100
+        NP.UpdateThreatText(p)
+        assert(not p.threat:IsShown(), "abgeschaltet und trotzdem da")
+        K.Set("nameplates", "threatText", nil)
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        _G.UnitDetailedThreatSituation = old
+    end)
+    Check(ok, "Plaketten: Bedrohung in Prozent" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.5: Zauberbalken nennt das Ziel des Zaubers ("» Dich" rot).
 do
     local ok, err = pcall(function()
