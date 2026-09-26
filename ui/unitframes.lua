@@ -347,6 +347,12 @@ local function Create(unit)
         st.shade:SetVertexColor(0, 0, 0, 0.9)
         st.icon = st:CreateTexture(nil, "ARTWORK", nil, 2)
         st.icon:SetAllPoints(st)
+        -- Ruhe als Schrift "zZ" (Beta-Test: "statt Mond ein zZ, das ist
+        -- einfacher") - scharf in jeder Groesse, keine Grafik noetig.
+        st.text = K.NewText(st, 13, "OVERLAY")
+        st.text:SetPoint("CENTER", st, "CENTER", 1, 0)
+        st.text:SetText("zZ")
+        st.text:Hide()
         -- Im Kampf pulsiert es leicht.
         local ag = st.CreateAnimationGroup and st:CreateAnimationGroup()
         if type(ag) == "table" and ag.CreateAnimation then
@@ -941,11 +947,21 @@ function UF.UpdateState()
         st:Hide()
         return
     end
-    local tex = K.MEDIA .. (which == "combat" and "icon_combat" or "icon_rest")
-    st.icon:SetTexture(tex)
-    st.shade:SetTexture(tex)
     local c = WeintCodex.GameColors[which == "combat" and "stateCombat" or "stateRest"]
-    st.icon:SetVertexColor(c[1], c[2], c[3], 1)
+    if which == "combat" then
+        local tex = K.MEDIA .. "icon_combat"
+        st.icon:SetTexture(tex)
+        st.shade:SetTexture(tex)
+        st.icon:SetVertexColor(c[1], c[2], c[3], 1)
+        st.icon:Show()
+        st.shade:Show()
+        st.text:Hide()
+    else
+        st.icon:Hide()
+        st.shade:Hide()
+        st.text:SetTextColor(c[1], c[2], c[3], 1)
+        st.text:Show()
+    end
     st:Show()
     if st.pulse then
         if which == "combat" then
@@ -1053,7 +1069,7 @@ local function UnitPage(u)
                     or { type = "empty" })
             if u == "player" then
                 B:Row({ type = "toggle", label = "Symbol für Kampf und Ruhe", key = "player_stateIcon", disabled = off,
-                        description = "Gekreuzte Schwerter im Kampf, eine Mondsichel beim Ausruhen (Gasthaus, Stadt)." },
+                        description = "Gekreuzte Schwerter im Kampf, „zZ“ beim Ausruhen (Gasthaus, Stadt)." },
                       { type = "empty" })
                 B:Row({ type = "toggle", label = "Mittig über den Leisten", key = "playerCastCentered",
                         disabled = function() return off() or not K.Get(KEY, "player_cast") end,

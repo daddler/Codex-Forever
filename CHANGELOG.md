@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.2.2] – 2026-09-26
+
+**„zZ“ statt Mond.** Beim Ausruhen im Gasthaus oder in der Stadt zeigt der Spielerrahmen jetzt ein schlichtes „zZ“.
+
+### Technisch
+
+- Ruhe als Text (`UIKit.NewText`, 13 px, Farbe `stateRest`) statt der
+  Grafik `icon_rest.tga`; die Grafik und ihre Form in `make_ui_media.py`
+  sind entfernt. Kampf bleibt `icon_combat.tga`.
+
 ## [6.3.2.1] – 2026-09-26
 
 **Kampf und Ruhe am Spielerrahmen.** Oben links am Rahmen: gekreuzte Schwerter im Kampf (leicht pulsierend), eine Mondsichel beim Ausruhen im Gasthaus oder in der Stadt. Abschaltbar unter Einheitenrahmen → Spieler.

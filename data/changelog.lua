@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.2.2",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFF„zZ“ statt Mond.|r Beim Ausruhen im Gasthaus oder in der Stadt zeigt der Spielerrahmen jetzt ein schlichtes „zZ“.",
+        },
+    },
+    {
         version = "6.3.2.1",
         date    = "26.09.2026",
         notes   = {

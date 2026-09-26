@@ -187,13 +187,6 @@ def icon_combat(x, y):
     return _sword(u1, v1) or _sword(u2, v2)
 
 
-def icon_rest(x, y):
-    # Eine Mondsichel: "erholt" (Gasthaus, Stadt).
-    outer = math.hypot(x + 0.08, y) <= 0.70
-    cut = math.hypot(x - 0.26, y + 0.22) <= 0.58
-    return outer and not cut
-
-
 # ------------------------------------------------------------------
 # Der 3D-Pfeil: ein facettierter Pfeil (Grat in der Mitte), von hinten
 # oben gesehen, in 64 Drehungen. Ein kleiner Rasterer mit Tiefenpuffer
@@ -459,7 +452,7 @@ def main():
 
     for name, fn in (("icon_plus", icon_plus), ("icon_close", icon_close),
                      ("icon_reset", icon_reset), ("icon_gear", icon_gear),
-                     ("icon_combat", icon_combat), ("icon_rest", icon_rest)):
+                     ("icon_combat", icon_combat)):
         target = os.path.join(OUT, name + ".tga")
         write_tga(target, ICON, ICON, render_shape(ICON, fn))
         print("geschrieben:", os.path.relpath(target, ROOT))
