@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.1.5",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFNeuer Erfahrungsbalken.|r Schmal, im Stil der Oberfläche, mit erholter Erfahrung als blasser Verlängerung. Auf Höchststufe zeigt er den beobachteten Ruf. Die goldene Leiste des Spiels ist weg.",
+            "|cff7C6CFFNur bei Maus darüber.|r Der Balken kann unsichtbar bleiben, bis die Maus darauf zeigt; die Zahlen stehen wahlweise immer, bei Maus darüber oder nie im Balken.",
+            "|cff7C6CFFTempo je Stunde.|r Die Maus über dem Balken zeigt Werte, was bis zur nächsten Stufe fehlt, erholte Erfahrung und – sobald in dieser Sitzung Erfahrung dazukam – Erfahrung je Stunde samt Schätzung bis zum Aufstieg. Einstellbar unter Aktionsleisten → Erfahrung.",
+        },
+    },
+    {
         version = "6.3.1.4",
         date    = "26.09.2026",
         notes   = {

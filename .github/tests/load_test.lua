@@ -1479,6 +1479,77 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.1.5: Erfahrungsbalken im Stil der Oberflaeche (Reiter der
+-- Aktionsleisten): Werte, erholt, Ruf auf Hoechststufe, nur bei Maus,
+-- Tempo erst mit gemessener Erfahrung, Leiste des Spiels unsichtbar.
+do
+    local XB = WeintCodex.UIXPBar
+    local ok, err = pcall(function()
+        local saved = { _G.UnitXP, _G.UnitXPMax, _G.GetXPExhaustion, _G.UnitLevel, _G.GetMaxLevelForPlayerExpansion,
+                        _G.GetTime, _G.C_Reputation }
+        local xp, level, now = 1200, 15, 1000
+        _G.UnitXP = function() return xp end
+        _G.UnitXPMax = function() return 5000 end
+        _G.GetXPExhaustion = function() return 2500 end
+        _G.UnitLevel = function() return level end
+        _G.GetMaxLevelForPlayerExpansion = function() return 60 end
+        _G.GetTime = function() return now end
+        assert(K.Module("actionbars").defaults.xpEnabled == true, "Erfahrung haengt nicht an den Aktionsleisten")
+        local f = XB.Frame()
+        assert(f, "kein Erfahrungsbalken")
+        XB.Update()
+        assert(XB.Mode() == "xp" and f:IsShown(), "Balken zeigt keine Erfahrung")
+        local lo, hi = f.bar:GetMinMaxValues()
+        assert(hi == 5000 and f.bar:GetValue() == 1200, "Balkenwerte falsch")
+        assert(f.rest:GetValue() == 3700, "erholte Erfahrung nicht dahinter: " .. tostring(f.rest:GetValue()))
+        assert(XB.Label():find("24", 1, true), "Anteil fehlt im Text: " .. tostring(XB.Label()))
+        -- Tempo: erst nach gemessener Erfahrung und einer Minute.
+        XB._session.start, XB._session.gained, XB._session.lastXP, XB._session.lastMax = nil, 0, nil, nil
+        XB.Track()
+        assert(XB.Rate() == nil, "Tempo ohne gemessene Erfahrung")
+        xp, now = 2200, 1000 + 1800
+        XB.Track()
+        local perHour, eta = XB.Rate()
+        assert(perHour == 2000 and math.abs(eta - 2800 / 2000 * 3600) < 0.01, "Tempo falsch: " .. tostring(perHour))
+        -- Stufenaufstieg zaehlt den Rest der alten Stufe.
+        xp, now = 300, now + 60
+        XB.Track()
+        assert(XB._session.gained == 1000 + 2800 + 300, "Stufenaufstieg falsch gezaehlt: " .. XB._session.gained)
+        -- Hoechststufe: Ruf oder gar nichts - nie ein leerer Balken.
+        level = 60
+        _G.C_Reputation = { GetWatchedFactionData = function() return nil end }
+        XB.Update()
+        assert(XB.Mode() == nil and not f:IsShown(), "leerer Balken auf Hoechststufe")
+        _G.C_Reputation = { GetWatchedFactionData = function()
+            return { name = "Sturmwind", currentReactionThreshold = 3000, nextReactionThreshold = 9000,
+                     currentStanding = 4500, reaction = 5 }
+        end }
+        XB.Update()
+        assert(XB.Mode() == "rep" and f:IsShown() and f.bar:GetValue() == 1500, "Ruf auf Hoechststufe fehlt")
+        -- Nur bei Maus darueber.
+        K.Set("actionbars", "xpShow", "mouseover")
+        f.IsMouseOver = function() return false end
+        for _ = 1, 10 do XB._fadeStep(nil, 0.1) end
+        assert(f:GetAlpha() == 0, "Balken bleibt ohne Maus sichtbar")
+        f.IsMouseOver = function() return true end
+        for _ = 1, 10 do XB._fadeStep(nil, 0.1) end
+        assert(f:GetAlpha() == 1, "Maus holt den Balken nicht zurueck")
+        K.Set("actionbars", "xpShow", nil)
+        assert(f:GetAlpha() == 1, "zurueck auf Immer: Balken bleibt unsichtbar")
+        -- Leiste des Spiels: unsichtbar, keine Maus.
+        local game = CreateFrame("Frame", "MainStatusTrackingBarContainer", UIParent)
+        local mouse = true
+        game.EnableMouse = function(_, v) mouse = v end
+        XB.HideGameBars()
+        assert(game:GetAlpha() == 0 and mouse == false, "Leiste des Spiels bleibt sichtbar")
+        _G.MainStatusTrackingBarContainer = nil
+        _G.UnitXP, _G.UnitXPMax, _G.GetXPExhaustion, _G.UnitLevel, _G.GetMaxLevelForPlayerExpansion,
+            _G.GetTime, _G.C_Reputation = unpack(saved, 1, 7)
+    end)
+    Check(ok, "Erfahrungsbalken: Werte, erholt, Tempo, Ruf auf Hoechststufe, nur bei Maus"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Freundliche Plaketten, und die Sperre in Instanzen.
 do
     local NP = WeintCodex.UINameplates

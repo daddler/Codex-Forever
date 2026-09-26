@@ -9,6 +9,33 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.1.5] – 2026-09-26
+
+**Neuer Erfahrungsbalken.** Schmal, im Stil der Oberfläche, mit erholter Erfahrung als blasser Verlängerung. Auf Höchststufe zeigt er den beobachteten Ruf. Die goldene Leiste des Spiels ist weg.
+
+**Nur bei Maus darüber.** Der Balken kann unsichtbar bleiben, bis die Maus darauf zeigt; die Zahlen stehen wahlweise immer, bei Maus darüber oder nie im Balken.
+
+**Tempo je Stunde.** Die Maus über dem Balken zeigt Werte, was bis zur nächsten Stufe fehlt, erholte Erfahrung und – sobald in dieser Sitzung Erfahrung dazukam – Erfahrung je Stunde samt Schätzung bis zum Aufstieg. Einstellbar unter Aktionsleisten → Erfahrung.
+
+### Technisch
+
+- Neu `ui/xpbar.lua` (`WeintCodex.UIXPBar`), geladen nach
+  `ui/actionbars.lua`: hängt Standardwerte (`xp*`), den Reiter
+  „Erfahrung“, das Einschalten und die Einstellungen an das Modul
+  „Aktionsleisten“. Ein eigener Eintrag hätte die Seitenleiste des
+  Einstellungsfensters überfüllt (`load_test.lua`: 664 von 680 px).
+- Balken aus `UIKit.NewBar` auf einer Kachel, Farben `xpBar`/`xpRested`
+  (= Akzent: Fortschritt, wie `cast`) in `core/ui.lua`, Platz `xpbar` in
+  `ui/layout.lua`, verschiebbar im Gestaltungsmodus.
+- Erfahrung nur, wenn der Client sie nennt und es welche gibt; auf
+  Höchststufe oder bei gesperrter Erfahrung der beobachtete Ruf
+  (`C_Reputation.GetWatchedFactionData`, sonst `GetWatchedFactionInfo`),
+  ohne ihn kein Balken. Tempo erst nach gemessener Erfahrung und einer
+  Minute Sitzung; ein Aufstieg zählt den Rest der alten Stufe mit.
+- Die Leiste des Spiels (`MainStatusTrackingBarContainer` u. a.) wird
+  nur unsichtbar (`KeepHidden`) und nimmt keine Maus mehr; verschoben
+  oder umgehängt wird sie nicht (Bearbeitungsmodus, vgl. 6.3.0.6).
+
 ## [6.3.1.4] – 2026-09-26
 
 **Keine Namensplakette mehr am falschen Gegner.** Manchmal blieb eine Plakette eingefroren stehen – mit Namen, Leben und Zielleuchten eines anderen Gegners – und wanderte an den nächsten. Das ist behoben.

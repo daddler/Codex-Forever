@@ -50,6 +50,7 @@ K.LAYOUT = {
     gf_raid         = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 20, y = -260 },
 
     -- Rand
+    xpbar           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 4 },
     damagemeter     = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -12, y = 52 },
     bags            = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20, y = 110 },
     questarrow      = { point = "TOP",         relPoint = "TOP", x = 0, y = -8 },

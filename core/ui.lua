@@ -205,6 +205,8 @@ WeintCodex.GameColors = {
     castLocked    = {0.450, 0.450, 0.480, 1.0},   -- nicht unterbrechbar
     castFailed    = {0.800, 0.100, 0.100, 1.0},
     targetRing    = {0.486, 0.424, 1.000, 1.0},   -- = Akzent: Fokusrahmen
+    xpBar         = {0.486, 0.424, 1.000, 1.0},   -- = Akzent: Fortschritt (wie `cast`)
+    xpRested      = {0.486, 0.424, 1.000, 0.30},  -- erholte Erfahrung: derselbe, blass
 
     plateBg       = {0.100, 0.100, 0.118, 1.0},
     plateBorder   = {0.000, 0.000, 0.000, 1.0},

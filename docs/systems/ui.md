@@ -369,6 +369,12 @@ Seit 6.2.0.0:
   (die Tageszeit an der Minikarte blieb drei Fassungen lang unauffindbar).
   Seit 6.3.1.3 zusätzlich `K.UnderCursor`: alles Sichtbare unter dem
   Zeiger, auch Texturen und Rahmen ohne Mausannahme, die kleinsten zuerst.
+* **Erfahrungsbalken** (6.3.1.5, `ui/xpbar.lua`): Reiter „Erfahrung“ der
+  Aktionsleisten, keine eigene Zeile in der Seitenleiste. Erfahrung mit
+  erholter Verlängerung; auf Höchststufe der beobachtete Ruf, ohne ihn
+  kein Balken (kein gemessenes Nichts). Tempo je Stunde nur aus in dieser
+  Sitzung gemessener Erfahrung, als Schätzung benannt. Die Leiste des
+  Spiels bleibt, wo sie ist, nur unsichtbar und ohne Maus.
 * **Tageszeit = `MinimapCluster.DielFrame`** (6.3.1.4, gemessen mit
   `/wcui maus`): kein Knopf, nimmt keine Maus an.
 * **Reiterleiste in `MEDIUM`** (6.3.1.4, Verdacht): `GeneralDockManager`

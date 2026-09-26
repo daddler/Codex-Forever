@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.3.1.4
+## Version: 6.3.1.5
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -145,6 +145,7 @@ ui/nameplates.lua
 ui/unitframes.lua
 ui/groupframes.lua
 ui/actionbars.lua
+ui/xpbar.lua
 ui/minimap.lua
 ui/chat.lua
 ui/bags.lua
