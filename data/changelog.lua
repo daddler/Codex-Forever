@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.2.9",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFRollensymbole gut lesbar.|r Schild, Kreuz, Schwert und Krone in den Gruppenrahmen stehen jetzt größer auf einer kleinen dunklen Plakette, statt auf der Klassenfarbe unterzugehen; das Schwert ist kräftiger gezeichnet.",
+        },
+    },
+    {
         version = "6.3.2.8",
         date    = "26.09.2026",
         notes   = {

@@ -272,7 +272,7 @@ function Btn:UpdateRole()
     if r then
         c.leader:SetPoint("LEFT", c.role, "RIGHT", 1, 0)
     else
-        c.leader:SetPoint("TOPLEFT", c, "TOPLEFT", 2, -2)
+        c.leader:SetPoint("TOPLEFT", c, "TOPLEFT", 1, -1)
     end
     c.leader:SetShown(lead and true or false)
 end
@@ -336,6 +336,29 @@ function Btn:UpdateRange()
     c:SetAlpha(inRange and 1 or out)
 end
 
+-- Eine kleine Plakette: dunkler Grund, 1 px Rand, Symbol darauf. Kennt
+-- SetTexture/SetVertexColor wie eine Textur, damit der Rest sie so
+-- behandeln kann.
+local BADGE, BADGE_ICON = 15, 13
+local function Badge(parent)
+    local f = CreateFrame("Frame", nil, parent)
+    f:SetSize(BADGE, BADGE)
+    f:SetFrameLevel((parent:GetFrameLevel() or 1) + 1)
+    local bg = f:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(f)
+    local k = WeintCodex.GameColors.kachelFill
+    bg:SetColorTexture(k[1], k[2], k[3], 0.9)
+    K.Border(f, 1, 0, 0, 0, 1, "BORDER")
+    f.icon = f:CreateTexture(nil, "ARTWORK")
+    f.icon:SetSize(BADGE_ICON, BADGE_ICON)
+    f.icon:SetPoint("CENTER", f, "CENTER", 0, 0)
+    function f:SetTexture(t) self.icon:SetTexture(t) end
+    function f:SetVertexColor(r, g, b, a) self.icon:SetVertexColor(r, g, b, a) end
+    f:Hide()
+    return f
+end
+GF._Badge = Badge
+
 local function Style(b)
     if b._wc then return end
     -- Alles Sichtbare haengt an einem ungeschuetzten Kindrahmen. Den darf
@@ -390,16 +413,15 @@ local function Style(b)
     c.heal:Hide()
     c.absorb:Hide()
 
-    c.role = host:CreateTexture(nil, "OVERLAY")
-    c.role:SetSize(11, 11)
-    c.role:SetPoint("TOPLEFT", c, "TOPLEFT", 2, -2)
-    c.role:Hide()
-    c.leader = host:CreateTexture(nil, "OVERLAY")
-    c.leader:SetSize(11, 11)
+    -- Rolle und Krone auf einer kleinen dunklen Plakette: direkt auf der
+    -- Klassenfarbe gingen sie unter (Beta-Test 6.3.2.4: "sehr
+    -- undurchsichtig, schwer zu erkennen").
+    c.role = Badge(host)
+    c.role:SetPoint("TOPLEFT", c, "TOPLEFT", 1, -1)
+    c.leader = Badge(host)
     c.leader:SetTexture(K.MEDIA .. "icon_leader")
     local lc = WeintCodex.GameColors.leader
     c.leader:SetVertexColor(lc[1], lc[2], lc[3], 1)
-    c.leader:Hide()
     c.ready = host:CreateTexture(nil, "OVERLAY", nil, 2)
     c.ready:SetSize(18, 18)
     c.ready:SetPoint("CENTER", c, "CENTER", 0, 0)
@@ -646,7 +668,7 @@ function GF.ShowTest(on)
         end
         c.role:SetShown(r and true or false)
         c.leader:ClearAllPoints()
-        if r then c.leader:SetPoint("LEFT", c.role, "RIGHT", 1, 0) else c.leader:SetPoint("TOPLEFT", c, "TOPLEFT", 2, -2) end
+        if r then c.leader:SetPoint("LEFT", c.role, "RIGHT", 1, 0) else c.leader:SetPoint("TOPLEFT", c, "TOPLEFT", 1, -1) end
         c.leader:SetShown((t.leader and Opt("leaderIcon")) and true or false)
         if t.res then
             c.status:SetText("Wird belebt")

@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.2.9] – 2026-09-26
+
+**Rollensymbole gut lesbar.** Schild, Kreuz, Schwert und Krone in den Gruppenrahmen stehen jetzt größer auf einer kleinen dunklen Plakette, statt auf der Klassenfarbe unterzugehen; das Schwert ist kräftiger gezeichnet.
+
+### Technisch
+
+- Gruppenrahmen: `Badge` (15 px, Grund `kachelFill` 90 %, 1 px Rand,
+  Symbol 13 px statt 11 px) für Rolle und Krone; verhält sich nach außen
+  wie eine Textur (`SetTexture`/`SetVertexColor`).
+- `icon_dps` mit breiterer Klinge, Parierstange und Griff
+  (`make_ui_media.py`).
+
 ## [6.3.2.8] – 2026-09-26
 
 **Im Dungeon nur seine Quests.** Betrittst du einen Dungeon, zeigt die Questliste nur noch die Quests dieses Dungeons; beim Verlassen ist alles wieder wie vorher. Abschaltbar unter Questliste → „Nur Quests des Dungeons“.

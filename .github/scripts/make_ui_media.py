@@ -199,9 +199,14 @@ def icon_tank(x, y):
 
 
 def icon_dps(x, y):
-    # Ein Schwert, Spitze oben rechts.
+    # Ein Schwert, Spitze oben rechts - kraeftiger als die gekreuzten
+    # (klein auf dem Gruppenrahmen war die schmale Klinge kaum zu sehen).
     a = 0.7071
-    return _sword((x - y) * a, (x + y) * a)
+    u, v = (x - y) * a, (x + y) * a
+    blade = -0.40 <= u <= 0.74 and abs(v) <= 0.15 - max(0.0, u - 0.50) * 0.6
+    guard = -0.52 <= u <= -0.36 and abs(v) <= 0.40
+    grip = -0.84 <= u <= -0.52 and abs(v) <= 0.11
+    return blade or guard or grip
 
 
 def icon_leader(x, y):
