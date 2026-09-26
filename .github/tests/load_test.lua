@@ -1612,6 +1612,18 @@ do
         assert(W.HidesAtlas("UI-Character-Info-Warrior-BG") and W.HidesAtlas("UI-Character-Info-Druid-BG"),
             "Klassenhintergrund nicht erkannt")
         assert(not W.HidesAtlas("UI-Character-Info-RaceBG") and not W.HidesAtlas(nil), "zu viel erkannt")
+        -- 6.3.1.8: Reiter rechts, Balkenrahmen, Zustand fuer /wcui fenster.
+        assert(W.HidesAtlas("common-sidetab-selected") and W.HidesAtlas("common-stat-bar-BG")
+            and not W.HidesAtlas("common-stat-bar-white"), "Reiter/Balken falsch erkannt")
+        local tab = CreateFrame("Button", "CharacterFrameModeTab1", UIParent)
+        tab.SelectedTexture = tab:CreateTexture()
+        tab.SelectedTexture:Show()
+        W.SkinModeTabs()
+        _G.CharacterFrameModeTab1 = nil
+        local runs = W.stats.runs
+        W.Inner()
+        assert(W.stats.runs == runs + 1, "Laeufe nicht gezaehlt")
+        assert(W.Status():find("Läufe", 1, true), "Zustand fehlt")
         _G.TestCharFrame, _G.TestCharFrameHeadSlot = nil, nil
 
         -- /wcui fenster: ohne Fenster unter der Maus ein Satz.

@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.1.8",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFReiter rechts am Charakterfenster im neuen Stil.|r Kleine Kacheln statt Goldrahmen, der gewählte mit Rand im Akzent, unter der Maus heller.",
+            "|cff7C6CFFRuf und Fertigkeiten ohne Holz.|r Die Balken sind flach mit feinem Rand, die Trennlinien zwischen den Spalten und über den Listen sind weg.",
+            "|cff7C6CFF/wcui fenster sagt mehr.|r Die Ausgabe nennt jetzt die Fassung von WeintCodex, wie oft das Fenster gestaltet wurde, und markiert Bilder, die eigentlich weg sein sollten.",
+        },
+    },
+    {
         version = "6.3.1.7",
         date    = "26.09.2026",
         notes   = {

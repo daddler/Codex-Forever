@@ -9,6 +9,29 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.1.8] – 2026-09-26
+
+**Reiter rechts am Charakterfenster im neuen Stil.** Kleine Kacheln statt Goldrahmen, der gewählte mit Rand im Akzent, unter der Maus heller.
+
+**Ruf und Fertigkeiten ohne Holz.** Die Balken sind flach mit feinem Rand, die Trennlinien zwischen den Spalten und über den Listen sind weg.
+
+**/wcui fenster sagt mehr.** Die Ausgabe nennt jetzt die Fassung von WeintCodex, wie oft das Fenster gestaltet wurde, und markiert Bilder, die eigentlich weg sein sollten.
+
+### Technisch
+
+- Im Beta-Test zeigte 6.3.1.7 im Charakterfenster keine Wirkung. Ob die
+  Fassung nicht ankam, die zweite Stufe nicht lief oder das Spiel die
+  Deckkraft zurücksetzt, ist aus dem Bild nicht zu sagen. `W.stats`
+  (Läufe, ausgeblendet, „ohne Wirkung“ = Alpha nach dem Setzen nicht 0,
+  letzter Fehler) und `W.Status()` stehen jetzt in `/wcui fenster`,
+  dazu die Fassung und je Atlas „SOLLTE WEG SEIN“, wenn `W.HidesAtlas`
+  ihn trifft und er trotzdem sichtbar ist.
+- Neue Muster aus `/wcui fenster` auf Ruf und Fertigkeiten:
+  `common-sidetab*`, `common-stat-bar-BG`, `common-framedivider`,
+  `UI-Character-Info-ScrollLine*`. Balken bekommen einen flachen Grund
+  (`plateBg`) und 1 px Rand; `CharacterFrameModeTab1..` eine Kachel,
+  deren Rand dem `SelectedTexture` folgt.
+
 ## [6.3.1.7] – 2026-09-26
 
 **Charakterfenster auch innen im neuen Stil.** Holz- und Steinhintergründe, der Klassenhintergrund hinter den Werten, die Holzbalken der Kopfzeilen, die Streifen hinter den Werten und die Metallrahmen der Ausrüstungsplätze sind weg; die Plätze sind flach mit feinem Rand wie die Aktionsknöpfe. Die Bühne des Modells bleibt.

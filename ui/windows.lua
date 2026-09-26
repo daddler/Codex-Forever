@@ -45,10 +45,18 @@ local DECOR = { "NineSlice", "Bg", "Background", "TopTileStreaks", "Inset", "Ins
 local done = {}
 W.done = done
 
+-- Was die zweite Stufe tut, fuer /wcui fenster (6.3.1.8: im Beta-Test
+-- blieb 6.3.1.7 ohne sichtbare Wirkung, und ohne Zahlen ist nicht zu
+-- unterscheiden, ob sie nicht lief, nichts fand oder das Spiel die
+-- Deckkraft zuruecksetzt).
+local stats = { runs = 0, hidden = 0, stuck = 0, last = nil, err = nil }
+W.stats = stats
+
 local function Hide(r)
     if type(r) ~= "table" or not r.SetAlpha or (r.IsForbidden and r:IsForbidden()) then return end
     local AB = WeintCodex.UIActionBars
     if AB and AB.KeepHidden then AB.KeepHidden(r) else r:SetAlpha(0) end
+    if K.Plain(r:GetAlpha()) ~= 0 then stats.stuck = stats.stuck + 1 end
 end
 
 -- Alle Texturen direkt an einem Rahmen (nicht an seinen Kindern).
@@ -142,7 +150,11 @@ W.HIDE_ATLAS = {
     "^UI%-Character%-Info%-Line%-Bounce",    -- Streifen hinter den Werten
     "^UI%-Character%-Info%-GearSlot",        -- Metallrahmen der Plaetze
     "^UI%-Character%-Info%-Divider",
+    "^UI%-Character%-Info%-ScrollLine",      -- Linien ueber/unter Listen
     "^common%-insideframe",
+    "^common%-framedivider",                 -- senkrechte Trennlinie
+    "^common%-stat%-bar%-BG",                -- Rahmen der Ruf-/Fertigkeitsbalken
+    "^common%-sidetab",                      -- Goldrahmen der Reiter rechts
 }
 local KEEP_ATLAS = { "RaceBG" }
 
@@ -160,6 +172,20 @@ end
 -- Alle Texturen mit einem dieser Atlanten, bis in die Tiefe. Zeilen einer
 -- Liste legt das Spiel beim Blaettern neu an - deshalb laeuft das bei
 -- jedem Zeigen und, solange das Fenster offen ist, zweimal je Sekunde.
+-- Balken in Ruf und Fertigkeiten: statt des Rahmens des Spiels ein
+-- flacher Grund mit 1 px Rand, wie jeder Balken der Oberflaeche.
+local barDone = {}
+local function FlatBar(bar)
+    if type(bar) ~= "table" or barDone[bar] or not bar.CreateTexture then return end
+    barDone[bar] = true
+    local bg = bar:CreateTexture(nil, "BACKGROUND", nil, -8)
+    bg:SetAllPoints(bar)
+    local c = WeintCodex.GameColors.plateBg
+    bg:SetColorTexture(c[1], c[2], c[3], 1)
+    K.Border(bar, 1, 0, 0, 0, 1, "OVERLAY")
+end
+
+local seen = setmetatable({}, { __mode = "k" })
 local function HideByAtlas(f, depth)
     if depth > 8 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
     local rok, regions = pcall(function() return { f:GetRegions() } end)
@@ -168,7 +194,14 @@ local function HideByAtlas(f, depth)
             if r:GetObjectType() ~= "Texture" then return nil end
             return r.GetAtlas and r:GetAtlas()
         end)
-        if ok and W.HidesAtlas(atlas) then Hide(r) end
+        if ok and W.HidesAtlas(atlas) then
+            Hide(r)
+            if not seen[r] then
+                seen[r] = true
+                stats.hidden = stats.hidden + 1
+            end
+            if atlas:find("^common%-stat%-bar%-BG") then FlatBar(f) end
+        end
     end
     local cok, kids = pcall(function() return { f:GetChildren() } end)
     for _, ch in ipairs(cok and kids or {}) do HideByAtlas(ch, depth + 1) end
@@ -194,7 +227,35 @@ local function SkinSlots(f)
 end
 W.SkinSlots = SkinSlots
 
+-- Die Reiter rechts am Charakterfenster (CharacterFrameModeTab1..):
+-- eine kleine Kachel statt des Goldrahmens, der gewaehlte mit Rand im
+-- Akzent, unter der Maus heller.
+local tabDone = {}
+local function SkinModeTabs()
+    for i = 1, 10 do
+        local tab = _G["CharacterFrameModeTab" .. i]
+        if type(tab) == "table" and not (tab.IsForbidden and tab:IsForbidden()) then
+            local d = tabDone[tab]
+            if not d then
+                d = { kachel = K.Kachel(tab, { shadow = 3 }) }
+                local hl = tab:CreateTexture(nil, "HIGHLIGHT")
+                hl:SetAllPoints(tab)
+                local h = WeintCodex.GameColors.hoverFill
+                hl:SetColorTexture(h[1], h[2], h[3], h[4])
+                tabDone[tab] = d
+            end
+            local sel = tab.SelectedTexture
+            local on = type(sel) == "table" and sel.IsShown and K.Bool(sel:IsShown(), false)
+            local c = on and C.accent or { 0, 0, 0 }
+            d.kachel.border:SetColor(c[1], c[2], c[3], 1)
+        end
+    end
+end
+W.SkinModeTabs = SkinModeTabs
+
 function W.Inner()
+    stats.runs = stats.runs + 1
+    stats.last = _G.GetTime and K.Plain(_G.GetTime()) or nil
     for _, n in ipairs(W.WINDOWS) do
         local f = _G[n]
         if type(f) == "table" and done[f] then
@@ -202,6 +263,15 @@ function W.Inner()
             SkinSlots(f)
         end
     end
+    SkinModeTabs()
+end
+
+function W.Status()
+    local now = _G.GetTime and K.Plain(_G.GetTime()) or nil
+    local ago = (type(now) == "number" and type(stats.last) == "number") and string.format("vor %d s", now - stats.last) or "nie"
+    return string.format("Fenster-Stil %s · innen: %d Läufe (zuletzt %s), %d Bilder ausgeblendet, %d ohne Wirkung%s",
+        Opt("windowSkin") and "an" or "aus", stats.runs, ago, stats.hidden, stats.stuck,
+        stats.err and (" · Fehler: " .. tostring(stats.err)) or "")
 end
 
 function W.Apply()
@@ -227,12 +297,12 @@ boot:RegisterEvent("PLAYER_LOGIN")
 boot:SetScript("OnEvent", function()
     if not K.UIEnabled() or not Opt("windowSkin") then return end
     local ok, err = pcall(W.Apply)
-    if not ok then K.Report("fenster", err) end
+    if not ok then stats.err = err K.Report("fenster", err) end
     local cf = _G.CharacterFrame
     if type(cf) == "table" and cf.HookScript then
         cf:HookScript("OnShow", function()
             local ok2, err2 = pcall(W.Apply)
-            if not ok2 then K.Report("fenster", err2) end
+            if not ok2 then stats.err = err2 K.Report("fenster", err2) end
         end)
         -- Solange es offen ist: neue Zeilen (Blaettern, Reiterwechsel)
         -- zweimal je Sekunde nachziehen. Geschlossen laeuft nichts.
@@ -245,7 +315,7 @@ boot:SetScript("OnEvent", function()
             if acc < 0.5 then return end
             acc = 0
             local ok3, err3 = pcall(W.Inner)
-            if not ok3 then K.Report("fenster", err3) end
+            if not ok3 then stats.err = err3 K.Report("fenster", err3) end
         end)
     end
 end)

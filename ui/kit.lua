@@ -1056,7 +1056,14 @@ function K.InspectWindow()
         out[1] = "Unter der Maus liegt kein Fenster. Maus über das Fenster halten und den Befehl mit Enter abschicken."
         return out
     end
-    out[1] = "Fenster: " .. NameOf(top)
+    -- Fassung vorneweg: ein Test mit einer alten Fassung sieht genauso aus
+    -- wie ein Fehler in der neuen (Beta-Test 6.3.1.7: "nichts geaendert").
+    out[1] = "WeintCodex " .. tostring(WeintCodex.Version) .. " · Fenster: " .. NameOf(top)
+    local W = WeintCodex.UIWindows
+    if W and W.Status then
+        local ok, line = pcall(W.Status)
+        if ok and line then out[#out + 1] = line end
+    end
     local groups, list = {}, {}
     local function Walk(f, depth)
         if depth > 6 or (f.IsForbidden and f:IsForbidden()) then return end
@@ -1090,7 +1097,12 @@ function K.InspectWindow()
     table.sort(list, function(a, b) return a.area > b.area end)
     for i = 1, math.min(#list, 16) do
         local g = list[i]
-        out[#out + 1] = string.format("   %s · %d× · in %s", g.key, g.n, g.owner)
+        local mark = ""
+        local atlas = g.key:match("^Atlas (.+)$")
+        if atlas and W and W.HidesAtlas and W.HidesAtlas(atlas) then
+            mark = " · SOLLTE WEG SEIN"
+        end
+        out[#out + 1] = string.format("   %s · %d× · in %s%s", g.key, g.n, g.owner, mark)
     end
     if #list == 0 then out[#out + 1] = "   keine sichtbaren Bilder" end
     return out
