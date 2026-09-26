@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.2.3",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFKein Lua-Fehler mehr in der Gruppe.|r Wechselte ein Gruppenmitglied oder dessen Begleiter die Fraktion, meldeten die Namensplaketten einen Fehler („unit tokens are not allowed“). Behoben.",
+        },
+    },
+    {
         version = "6.3.2.2",
         date    = "26.09.2026",
         notes   = {

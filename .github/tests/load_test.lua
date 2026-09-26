@@ -1672,6 +1672,29 @@ do
     Check(ok, "Chat: Eingabezeile erst mit Enter" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.2.3: UNIT_FACTION fuer Gruppenkennungen ("partypet4") fragt nicht
+-- nach einer Plakette - der Client wirft dort einen Fehler.
+do
+    local NP = WeintCodex.UINameplates
+    local ok, err = pcall(function()
+        local oldGet = _G.C_NamePlate.GetNamePlateForUnit
+        _G.C_NamePlate.GetNamePlateForUnit = function(unit)
+            if not tostring(unit):find("^nameplate") then
+                error("Raid<n>/Party<n> unit tokens are not allowed for this call.")
+            end
+            return oldGet(unit)
+        end
+        stub.FireEvent("UNIT_FACTION", "partypet4")
+        stub.FireEvent("UNIT_FACTION", "raid12")
+        stub.FireEvent("UNIT_FACTION", "nameplate1")
+        assert(NP.IsPlateToken("nameplate12") and not NP.IsPlateToken("party1") and not NP.IsPlateToken(nil),
+            "Plakettenkennung falsch erkannt")
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        _G.C_NamePlate.GetNamePlateForUnit = oldGet
+    end)
+    Check(ok, "Plaketten: UNIT_FACTION fuer Gruppenkennungen ohne Fehler" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.1: Spielerrahmen mit Stufe und Symbol fuer Kampf/Ruhe.
 do
     local ok, err = pcall(function()

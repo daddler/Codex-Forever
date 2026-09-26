@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.2.3] – 2026-09-26
+
+**Kein Lua-Fehler mehr in der Gruppe.** Wechselte ein Gruppenmitglied oder dessen Begleiter die Fraktion, meldeten die Namensplaketten einen Fehler („unit tokens are not allowed“). Behoben.
+
+### Technisch
+
+- `UNIT_FACTION` kommt für jede Einheit; der Behandler fragte
+  `C_NamePlate.GetNamePlateForUnit` auch mit `partypet4`, und der
+  Beta-Client wirft bei Gruppen-/Schlachtzugskennungen („Raid<n>/Party<n>
+  unit tokens are not allowed“, 14× in BugSack). Jetzt nur für
+  `nameplateN` (`NP.IsPlateToken`), und der Aufruf steht in `pcall` –
+  auch in `Attach`.
+
 ## [6.3.2.2] – 2026-09-26
 
 **„zZ“ statt Mond.** Beim Ausruhen im Gasthaus oder in der Stadt zeigt der Spielerrahmen jetzt ein schlichtes „zZ“.

@@ -985,12 +985,18 @@ end
 -- alte - die blieb sichtbar an der Plakette des Spiels haengen, bekam nie
 -- wieder ein Update und wanderte mit ihr zum naechsten Gegner (Beta-Test:
 -- "Geiferzahn" mit 20 % und Zielleuchten ueber einem unberuehrten Vogel).
+-- Nur "nameplate1".."nameplateN" duerfen an GetNamePlateForUnit.
+local function IsPlateToken(unit)
+    return type(unit) == "string" and unit:find("^nameplate%d+$") ~= nil
+end
+NP.IsPlateToken = IsPlateToken
+
 local Detach
 local function Attach(unit)
-    if not (_G.C_NamePlate and _G.C_NamePlate.GetNamePlateForUnit) then return end
+    if not (_G.C_NamePlate and _G.C_NamePlate.GetNamePlateForUnit) or not IsPlateToken(unit) then return end
     if plates[unit] then Detach(unit) end
-    local nameplate = _G.C_NamePlate.GetNamePlateForUnit(unit)
-    if not nameplate then return end
+    local okNp, nameplate = pcall(_G.C_NamePlate.GetNamePlateForUnit, unit)
+    if not okNp or not nameplate then return end
     local prev = byPlate[nameplate]
     if prev and plates[prev] then Detach(prev) end
     -- In Instanzen sind freundliche Plaketten fuer Addons gesperrt
@@ -1068,10 +1074,16 @@ local function OnEvent(_, event, unit)
         return
     elseif event == "UNIT_FACTION" then
         -- Wird ein Freund zum Feind (oder umgekehrt), wechselt die Plakette.
-        if unit and _G.C_NamePlate and _G.C_NamePlate.GetNamePlateForUnit
-           and _G.C_NamePlate.GetNamePlateForUnit(unit) then
-            Detach(unit)
-            Attach(unit)
+        -- UNIT_FACTION kommt fuer JEDE Einheit (auch "partypet4"), und
+        -- GetNamePlateForUnit wirft bei Gruppen- und Schlachtzugskennungen
+        -- einen Fehler (Beta-Test 6.3.2.2, 14x). Gefragt wird nur fuer
+        -- "nameplateN".
+        if IsPlateToken(unit) and _G.C_NamePlate and _G.C_NamePlate.GetNamePlateForUnit then
+            local ok, np = pcall(_G.C_NamePlate.GetNamePlateForUnit, unit)
+            if ok and np then
+                Detach(unit)
+                Attach(unit)
+            end
         end
         return
     elseif event == "PLAYER_TARGET_CHANGED" or event == "PLAYER_FOCUS_CHANGED" then
