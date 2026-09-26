@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.2.8] – 2026-09-26
+
+**Questpfeil in Dungeons aus.** In Dungeons, Schlachtzügen, auf Schlachtfeldern und in Arenen verschwindet der Pfeil – dort nennt das Spiel ohnehin keine Position. Draußen ist er sofort wieder da. Abschaltbar unter Questpfeil → „In Dungeons ausblenden“.
+
+### Technisch
+
+- `ui/questarrow.lua`: `hideInInstance` (Standard an), `QA.InInstance()`
+  aus `IsInInstance()` (Art ≠ „none“; geheim → Wahrheitswert, sonst
+  „nicht in einer Instanz“). Geprüft in `QA.Update`, das bei
+  `PLAYER_ENTERING_WORLD` und Gebietswechseln ohnehin läuft. Als Geist
+  steht man draußen – der Weg zur Leiche bleibt.
+
 ## [6.3.2.7] – 2026-09-26
 
 **Markierungen wirklich sichtbar.** Totenkopf, Kreuz und Co. erscheinen jetzt an Namensplaketten, am Ziel-, Fokus- und Spielerrahmen und in der Gruppe – auch wenn der Client verschlüsselt, welche Markierung ein Gegner trägt.

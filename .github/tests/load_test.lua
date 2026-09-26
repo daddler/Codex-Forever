@@ -1672,6 +1672,21 @@ do
     Check(ok, "Chat: Eingabezeile erst mit Enter" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.2.8: Questpfeil in Instanzen aus.
+do
+    local ok, err = pcall(function()
+        local QA = WeintCodex.UIQuestArrow
+        local old = _G.IsInInstance
+        _G.IsInInstance = function() return true, "party" end
+        assert(QA.InInstance(), "Dungeon nicht erkannt")
+        _G.IsInInstance = function() return false, "none" end
+        assert(not QA.InInstance(), "offene Welt als Instanz erkannt")
+        _G.IsInInstance = old
+        assert(K.Get("questarrow", "hideInInstance") == true, "Pfeil in Dungeons nicht standardmaessig aus")
+    end)
+    Check(ok, "Questpfeil: in Dungeons aus" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.7: Markierungen - auch mit geheimem Index, als Bild aus einem
 -- formatierten Text (der Client setzt die Zahl ein, Lua sieht sie nie).
 do

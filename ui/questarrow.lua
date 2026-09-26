@@ -60,6 +60,10 @@ local defaults = {
     showEta    = true,
     colorByCourse = true,
     hideInCombat  = false,
+    -- In Dungeons, Schlachtzuegen, Schlachtfeldern und Arenen aus (Beta-Test
+    -- 6.3.2.7). Dort nennt das Spiel ohnehin keine Position - der Pfeil
+    -- stand nur als "Position unbekannt" im Bild.
+    hideInInstance = true,
     arriveDistance = 5,
     corpse     = true,     -- als Geist zur Leiche
     autoNext   = true,     -- nach dem Abgeben die naechste Quest
@@ -422,10 +426,21 @@ local function Target(playerMap, force)
     return cache
 end
 
+-- In einer Instanz (Dungeon, Schlachtzug, Schlachtfeld, Arena,
+-- Szenario)? Die offene Welt ist "none".
+function QA.InInstance()
+    if not _G.IsInInstance then return false end
+    local inside, kind = _G.IsInInstance()
+    kind = K.Plain(kind)
+    if type(kind) == "string" then return kind ~= "none" end
+    return K.Bool(inside, false)
+end
+
 function QA.Update(force)
     if not frame or frame._unlock then return end
     if not K.IsActive(KEY) then frame:Hide() return end
     if K.Get(KEY, "hideInCombat") and K.InCombat() then frame:Hide() return end
+    if K.Get(KEY, "hideInInstance") and QA.InInstance() then frame:Hide() return end
 
     local playerMap, px, py = PlayerMapPos()
     local t = Target(playerMap, force)
@@ -640,7 +655,8 @@ K.Register({
                   { type = "toggle", label = "Farbe nach Richtung", key = "colorByCourse",
                     description = "Grün geradeaus, gelb quer, rot in die falsche Richtung." })
             B:Row({ type = "toggle", label = "Im Kampf ausblenden", key = "hideInCombat" },
-                  { type = "empty" })
+                  { type = "toggle", label = "In Dungeons ausblenden", key = "hideInInstance",
+                    description = "Auch in Schlachtzügen, auf Schlachtfeldern und in Arenen. Dort nennt das Spiel keine Position." })
             B:Row({ type = "slider", label = "„Am Ziel“ ab", key = "arriveDistance", min = 2, max = 30, step = 1,
                     format = function(v) return string.format("%d m", v) end },
                   { type = "empty" })
@@ -655,7 +671,7 @@ K.Register({
                   { type = "empty" })
             B:Section("So benutzt du ihn")
             B:Note("Klicke im Questlog oder in der Zielverfolgung auf eine Quest, um sie auszuwählen — oder setze auf der Weltkarte eine Markierung. Der Pfeil erscheint, sobald etwas ausgewählt ist, und verschwindet wieder, wenn nichts ausgewählt ist.")
-            B:Note("In Dungeons nennt das Spiel Addons keine Position. Dort steht „Position unbekannt“ statt einer Zahl.")
+            B:Note("In Dungeons nennt das Spiel Addons keine Position. Deshalb ist der Pfeil dort aus; wer ihn trotzdem will, sieht „Position unbekannt“ statt einer Zahl.")
             B:Note("„m“ ist die Spieleinheit, die der deutsche Client auch in Zauberreichweiten „Meter“ nennt. Echte Meter sind etwa 9 % weniger.")
         end },
     },
