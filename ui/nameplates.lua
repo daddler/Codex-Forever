@@ -348,7 +348,8 @@ function NP.GameAuraInfo(unit)
         end
     end
     pcall(Walk, auras, 1)
-    return string.format("Symbole des Spiels: %s, %d sichtbare Knöpfe · Ausrichtung %s", inPlace[auras] and "sichtbar an ihrem Platz" or "ausgeblendet", shown, NP.gameAlign)
+    return string.format("Symbole des Spiels: %s, %d sichtbare Knöpfe · Ausrichtung %s · Markierung %s",
+        inPlace[auras] and "sichtbar an ihrem Platz" or "ausgeblendet", shown, NP.gameAlign, NP.raidInfo)
 end
 
 --------------------------------------------------
@@ -489,6 +490,16 @@ local function LayoutFriendly(p)
     p.raid:SetPoint("BOTTOM", t, "TOP", 0, 2)
 end
 
+-- Wo die Markierung steht - fuer unser Symbol und fuer die Markierung
+-- des Spiels, wenn der Index geheim ist (UpdateRaidIcon).
+function NP.RaidAnchor(p)
+    local pos = S.raidMarker
+    if pos == "top" then return "BOTTOM", p.texts.top, "TOP", 0, 2 end
+    if pos == "left" then return "RIGHT", p, "LEFT", -4, 0 end
+    if pos == "right" then return "LEFT", p, "RIGHT", 4, 0 end
+    return "BOTTOMLEFT", p, "TOPRIGHT", -(S.raidMarkerSize or 20) * 0.5, 2
+end
+
 local function Layout(p)
     if p._friendly then return LayoutFriendly(p) end
     p.health:Show()
@@ -546,16 +557,7 @@ local function Layout(p)
     local raid = p.raid
     raid:ClearAllPoints()
     raid:SetSize(S.raidMarkerSize, S.raidMarkerSize)
-    local pos = S.raidMarker
-    if pos == "top" then
-        raid:SetPoint("BOTTOM", t.top, "TOP", 0, 2)
-    elseif pos == "left" then
-        raid:SetPoint("RIGHT", p, "LEFT", -4, 0)
-    elseif pos == "right" then
-        raid:SetPoint("LEFT", p, "RIGHT", 4, 0)
-    else
-        raid:SetPoint("BOTTOMLEFT", p, "TOPRIGHT", -S.raidMarkerSize * 0.5, 2)
-    end
+    raid:SetPoint(NP.RaidAnchor(p))
 
     -- Auren ueber dem Namen, linksbuendig.
     local align = S.auraAlign or "left"
@@ -892,16 +894,71 @@ local function SetHovered(p)
 end
 NP.SetHovered = SetHovered
 
+-- Die Markierung des Spiels an seiner eigenen Plakette.
+local function GameRaidFrame(p)
+    local uf = p.nameplate and p.nameplate.UnitFrame
+    local rf = type(uf) == "table" and uf.RaidTargetFrame
+    if type(rf) ~= "table" or not rf.SetAlpha or (rf.IsForbidden and rf:IsForbidden()) then return nil end
+    return rf
+end
+
+-- Ein einzelnes Teil wieder zeigen (Gegenstueck zu Dim).
+local function UndimPart(part)
+    local a = dimmed[part]
+    if not a then return end
+    dimmed[part] = nil
+    guard = true
+    part:SetAlpha(a)
+    guard = false
+end
+
+-- Die Markierung (Totenkopf, Kreuz ...). Offen lesbar: unser Symbol, in
+-- Groesse und Lage wie eingestellt. Nennt der Client den Index nur
+-- geheim (12.x), kann Lua ihn nicht in ein Symbol uebersetzen - dann
+-- bleibt die Markierung des Spiels an seiner Plakette sichtbar (sie
+-- zeichnet das Spiel selbst) und wird an unsere Stelle gesetzt. Gesetzt,
+-- nie gelesen, in pcall. Geht nur, solange die Plakette des Spiels
+-- sichtbar ist (Debuffs: "die des Spiels", der Standard).
+NP.raidInfo = "noch keine Markierung gesehen"
+-- Wieder ausblenden - aber nur, wenn die Plakette des Spiels gerade Teil
+-- fuer Teil ausgeblendet ist. Sonst gehoert sie dem Spiel (freundliche
+-- Plakette ohne WeintCodex) und behaelt ihre Markierung.
+local function ReDim(p, rf)
+    local uf = p.nameplate and p.nameplate.UnitFrame
+    if rf and uf and partsOf[uf] then Dim(rf) end
+end
 local function UpdateRaidIcon(p)
-    if not p.unit or S.raidMarker == "none" then p.raid:Hide() return end
-    local idx = K.Plain(_G.GetRaidTargetIndex and _G.GetRaidTargetIndex(p.unit))
+    local rf = GameRaidFrame(p)
+    if not p.unit or S.raidMarker == "none" then
+        p.raid:Hide()
+        ReDim(p, rf)
+        return
+    end
+    local raw = _G.GetRaidTargetIndex and _G.GetRaidTargetIndex(p.unit)
+    local idx = K.Plain(raw)
     if type(idx) == "number" and idx > 0 and _G.SetRaidTargetIconTexture then
         _G.SetRaidTargetIconTexture(p.raid, idx)
         p.raid:Show()
+        ReDim(p, rf)
+        NP.raidInfo = "offen lesbar (" .. idx .. "), eigenes Symbol"
+    elseif type(raw) ~= "nil" and K.IsSecret(raw) then
+        p.raid:Hide()
+        if rf then
+            UndimPart(rf)
+            pcall(function()
+                rf:ClearAllPoints()
+                rf:SetPoint(NP.RaidAnchor(p))
+            end)
+            NP.raidInfo = "geheim – die Markierung des Spiels steht an ihrer Stelle"
+        else
+            NP.raidInfo = "geheim, und die Plakette des Spiels hat keine Markierung"
+        end
     else
         p.raid:Hide()
+        ReDim(p, rf)
     end
 end
+NP.UpdateRaidIcon = UpdateRaidIcon
 
 --------------------------------------------------
 -- Questfortschritt

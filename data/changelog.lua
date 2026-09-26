@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.3.2.6",
         date    = "26.09.2026",
         notes   = {
+            "|cff7C6CFFMarkierungen an der Namensplakette.|r Totenkopf, Kreuz und die übrigen Zielmarkierungen stehen oben rechts an der Plakette (Größe und Lage unter Namensplaketten → Texte). Verschlüsselt der Client die Markierung, zeigt WeintCodex an derselben Stelle die Markierung des Spiels.",
             "|cff7C6CFFDeine Bedrohung an der Namensplakette.|r Rechts neben dem Balken steht in Prozent, wie viel Bedrohung du auf diesem Gegner hast – 100 % heißt: du hast die Aggro. Gelb kurz davor, rot mit Aggro; als Tank grün, solange du sie hältst. Nur im Kampf und solange du auf seiner Liste stehst. Einstellbar unter Namensplaketten → Farben → Bedrohung.",
         },
     },

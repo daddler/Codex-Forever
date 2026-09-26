@@ -1672,6 +1672,37 @@ do
     Check(ok, "Chat: Eingabezeile erst mit Enter" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.2.6: Markierungen an der Plakette - offen: eigenes Symbol; geheim:
+-- die Markierung des Spiels bleibt sichtbar und kommt an unsere Stelle.
+do
+    local NP = WeintCodex.UINameplates
+    local ok, err = pcall(function()
+        local oldIdx, oldSecret, oldSet = _G.GetRaidTargetIndex, _G.issecretvalue, _G.SetRaidTargetIconTexture
+        local uf = blizzPlate.UnitFrame
+        local rf = stub.NewObject("Frame")
+        local placed
+        rf.SetPoint = function(_, pt) placed = pt end
+        uf.RaidTargetFrame = rf
+        _G.SetRaidTargetIconTexture = function() end
+        _G.GetRaidTargetIndex = function() return 8 end
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        local p = NP.plates["nameplate1"]
+        stub.FireEvent("RAID_TARGET_UPDATE")
+        assert(p.raid:IsShown(), "Totenkopf nicht an der Plakette")
+        local secret = setmetatable({}, {})
+        _G.issecretvalue = function(v) return v == secret end
+        _G.GetRaidTargetIndex = function() return secret end
+        stub.FireEvent("RAID_TARGET_UPDATE")
+        assert(not p.raid:IsShown(), "geheimer Index als eigenes Symbol gezeichnet")
+        assert(rf:GetAlpha() ~= 0 and placed, "Markierung des Spiels nicht sichtbar oder nicht an unserer Stelle")
+        assert(NP.raidInfo:find("geheim", 1, true), "Auskunft fehlt")
+        _G.GetRaidTargetIndex, _G.issecretvalue, _G.SetRaidTargetIconTexture = oldIdx, oldSecret, oldSet
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        uf.RaidTargetFrame = nil
+    end)
+    Check(ok, "Plaketten: Markierung offen und geheim" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.6: Bedrohung in Prozent an der Plakette.
 do
     local NP = WeintCodex.UINameplates

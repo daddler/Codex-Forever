@@ -11,6 +11,8 @@ nicht zusammen.
 
 ## [6.3.2.6] – 2026-09-26
 
+**Markierungen an der Namensplakette.** Totenkopf, Kreuz und die übrigen Zielmarkierungen stehen oben rechts an der Plakette (Größe und Lage unter Namensplaketten → Texte). Verschlüsselt der Client die Markierung, zeigt WeintCodex an derselben Stelle die Markierung des Spiels.
+
 **Deine Bedrohung an der Namensplakette.** Rechts neben dem Balken steht in Prozent, wie viel Bedrohung du auf diesem Gegner hast – 100 % heißt: du hast die Aggro. Gelb kurz davor, rot mit Aggro; als Tank grün, solange du sie hältst. Nur im Kampf und solange du auf seiner Liste stehst. Einstellbar unter Namensplaketten → Farben → Bedrohung.
 
 ### Technisch
@@ -22,6 +24,14 @@ nicht zusammen.
   Bedrohungsfarben des Balkens (Rolle aus `UnitGroupRolesAssigned`), bei
   geheimem Status weiß. Aktualisiert bei `UNIT_THREAT_LIST_UPDATE` und
   `UNIT_THREAT_SITUATION_UPDATE`.
+- Markierungen: Das eigene Symbol gab es seit 6.0; es braucht den Index
+  offen (`SetRaidTargetIconTexture` rechnet mit ihm). Ist
+  `GetRaidTargetIndex` geheim, wird die Markierung des Spiels
+  (`UnitFrame.RaidTargetFrame`) nicht mehr mit ausgeblendet und per
+  `NP.RaidAnchor` an unsere Stelle gesetzt (gesetzt, nie gelesen, in
+  `pcall`). Das geht, solange die Plakette des Spiels Teil für Teil
+  ausgeblendet ist (Debuffs „die des Spiels“, Standard). `/wcui auren`
+  nennt, welcher Weg griff.
 
 ## [6.3.2.5] – 2026-09-26
 
