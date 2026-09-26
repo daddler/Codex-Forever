@@ -68,7 +68,9 @@ local defaults = {
     -- Seit 6.3.0.0 (Beta-Test: "gefaellt mir noch gar nicht"): leere Plaetze
     -- weg statt Kaesten mit Tastenzahl, flache Hervorhebung, Schatten am
     -- Symbol, Abklingzahl in der WeintCodex-Schrift, kein Reichweitenpunkt.
-    emptySlots   = "hide",   -- hide | faint | game
+    -- Seit 6.3.1.9 "faint": leere Plaetze sichtbar, aber zurueckgenommen
+    -- (Beta-Test: "die einzelnen Tasten auch sehen, statt nur beim Ziehen").
+    emptySlots   = "faint",  -- hide | faint | game
     iconShade    = true,
     cooldownFont = true,
     cooldownSize = 16,
@@ -385,7 +387,7 @@ local function Apply(b, d)
     -- sahen in 6.0.0.5 nach Baustelle aus.
     local empty = IsEmpty(b)
     ApplyEmpty(b, d, empty)
-    d.border:SetColor(c.r, c.g, c.b, empty and 0.35 or 1)
+    d.border:SetColor(c.r, c.g, c.b, empty and 0.6 or 1)
     if d.shade then d.shade:SetShown(Opt("iconShade") and not empty) end
     if d.cooldown and d.cooldown.SetCountdownFont and Opt("cooldownFont") then
         local fo = CooldownFont()
@@ -393,7 +395,7 @@ local function Apply(b, d)
     end
     -- Leere Plaetze werfen keinen Schatten: sie sollen kaum auffallen.
     if d.shadow then d.shadow:SetShown(not empty) end
-    d.bg:SetColorTexture(0, 0, 0, empty and 0.15 or 0.5)
+    d.bg:SetColorTexture(0, 0, 0, empty and 0.35 or 0.5)
     if d.hotkey then
         K.SetFont(d.hotkey, Opt("hotkeySize"))
         d.hotkey:SetAlpha(Opt("hotkeys") and 1 or 0)
@@ -940,7 +942,7 @@ K.Register({
             B:Section("Aussehen")
             B:Row({ type = "dropdown", label = "Leere Plätze", key = "emptySlots", items = {
                         { value = "hide",  text = "Ausblenden (beim Ziehen sichtbar)" },
-                        { value = "faint", text = "Nur angedeutet" },
+                        { value = "faint", text = "Sichtbar, zurückgenommen" },
                         { value = "game",  text = "Wie im Spiel" } } },
                   { type = "toggle", label = "Schatten am Symbol", key = "iconShade" })
             B:Row({ type = "toggle", label = "Abklingzahl in WeintCodex-Schrift", key = "cooldownFont", reload = true },

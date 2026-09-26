@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.1.9",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFName in der Namensplakette.|r Unter Namensplaketten → Texte → „Name steht“: über der Plakette, im Balken links mit Stufe davor oder im Balken mittig. Die Textplätze darunter lassen sich weiter einzeln belegen, neu auch mit „Stufe und Name“.",
+            "|cff7C6CFFDebuffs links, mittig oder rechts.|r Unter Namensplaketten → Auren → Ausrichtung. Bei den Symbolen des Spiels ist das ein Versuch – /wcui auren sagt, ob das Spiel es annimmt.",
+            "|cff7C6CFFLeere Aktionsplätze sichtbar.|r Die Plätze einer Leiste stehen jetzt auch leer dezent da, nicht erst beim Ziehen eines Zaubers. Wie bisher einstellbar unter Aktionsleisten → Leere Plätze.",
+        },
+    },
+    {
         version = "6.3.1.8",
         date    = "26.09.2026",
         notes   = {

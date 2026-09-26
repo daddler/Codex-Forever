@@ -1636,6 +1636,31 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.1.9: Name im Balken (Voreinstellung), Debuffs links/mittig/rechts.
+do
+    local NP = WeintCodex.UINameplates
+    local ok, err = pcall(function()
+        NP.SetNamePlace("above")
+        assert(NP.NamePlace() == "above", "Voreinstellung 'ueber der Plakette' nicht erkannt")
+        NP.SetNamePlace("left")
+        assert(K.Get("nameplates", "textTop") == "none" and K.Get("nameplates", "textLeft") == "levelName",
+            "Name nicht in den Balken gesetzt")
+        assert(NP.NamePlace() == "left", "Voreinstellung nicht wiedererkannt")
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        local p = NP.plates["nameplate1"]
+        assert(p and p.texts.left:IsShown(), "Stufe und Name nicht im Balken")
+        assert(p.texts.left:GetWidth() > p.texts.right:GetWidth(), "Name hat nicht den meisten Platz")
+        K.Set("nameplates", "textRight", "healthNumber")
+        assert(NP.NamePlace() == "custom", "eigene Belegung nicht erkannt")
+        NP.SetNamePlace("above")
+        K.Set("nameplates", "auraAlign", "right")
+        assert(K.Get("nameplates", "auraAlign") == "right", "Ausrichtung nicht gespeichert")
+        K.Set("nameplates", "auraAlign", nil)
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+    end)
+    Check(ok, "Plaketten: Name im Balken, Debuffs ausrichten" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Freundliche Plaketten, und die Sperre in Instanzen.
 do
     local NP = WeintCodex.UINameplates
@@ -2138,6 +2163,10 @@ do
         b.action = 5
         local oldHas = _G.HasAction
         _G.HasAction = function() return false end
+        -- Seit 6.3.1.9 sind leere Plaetze standardmaessig sichtbar.
+        WeintCodex.UIActionBars.SkinAll()
+        assert(b:GetAlpha() == 1, "leerer Platz im Standard unsichtbar")
+        K.Set("actionbars", "emptySlots", "hide")
         WeintCodex.UIActionBars.SkinAll()
         assert(b:GetAlpha() == 0, "leerer Platz sichtbar")
         stub.FireEvent("ACTIONBAR_SHOWGRID")
@@ -2147,6 +2176,7 @@ do
         _G.HasAction = function() return true end
         WeintCodex.UIActionBars.SkinAll()
         assert(b:GetAlpha() == 1, "belegter Platz unsichtbar")
+        K.Set("actionbars", "emptySlots", nil)
         _G.HasAction = oldHas
         _G.ActionButton2 = nil
     end)

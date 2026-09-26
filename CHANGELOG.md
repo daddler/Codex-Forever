@@ -9,6 +9,32 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.1.9] – 2026-09-26
+
+**Name in der Namensplakette.** Unter Namensplaketten → Texte → „Name steht“: über der Plakette, im Balken links mit Stufe davor oder im Balken mittig. Die Textplätze darunter lassen sich weiter einzeln belegen, neu auch mit „Stufe und Name“.
+
+**Debuffs links, mittig oder rechts.** Unter Namensplaketten → Auren → Ausrichtung. Bei den Symbolen des Spiels ist das ein Versuch – /wcui auren sagt, ob das Spiel es annimmt.
+
+**Leere Aktionsplätze sichtbar.** Die Plätze einer Leiste stehen jetzt auch leer dezent da, nicht erst beim Ziehen eines Zaubers. Wie bisher einstellbar unter Aktionsleisten → Leere Plätze.
+
+### Technisch
+
+- Plaketten: Textart `levelName` (Stufe in ihrer Farbe vor dem Namen,
+  `SetFormattedText`, der Name darf geheim sein). „Name steht“ ist eine
+  Voreinstellung über `textTop/Left/Center/Right` (`NP.NamePlace`,
+  `NP.SetNamePlace`), kein eigener gespeicherter Wert. Steht ein Name
+  links oder rechts im Balken, bekommt diese Seite 70 % der Breite; die
+  Mitte schrumpft auf 55 %, wenn links oder rechts Text steht. Das
+  Aufhellen bei Ziel/Maus gilt jedem Platz mit Namen, nicht nur oben.
+- `auraAlign` (left | center | right). Eigene Symbole: Anker und
+  Wachstumsrichtung; mittig steht der Block, weniger Symbole als Plätze
+  beginnen links in ihm. Symbole des Spiels: links unverändert; sonst
+  wird `AurasFrame.DebuffListFrame` an Mitte bzw. rechte Kante gesetzt
+  (nur gesetzt, nie gelesen, in `pcall`) – ob die Liste so heißt und mit
+  dem Inhalt wächst, ist nicht gemessen; `/wcui auren` nennt das Ergebnis.
+- Aktionsleisten: `emptySlots` Standard `faint` statt `hide`; leere
+  Plätze deutlicher (Rand 60 %, Grund 35 %).
+
 ## [6.3.1.8] – 2026-09-26
 
 **Reiter rechts am Charakterfenster im neuen Stil.** Kleine Kacheln statt Goldrahmen, der gewählte mit Rand im Akzent, unter der Maus heller.

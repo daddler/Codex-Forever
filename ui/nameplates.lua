@@ -115,6 +115,9 @@ local defaults = {
     auraSize = 22,
     auraMax = 5,
     auraTimer = true,          -- Restzeit oben links am Symbol
+    -- Ausrichtung der Debuffs ueber der Plakette (Beta-Test 6.3.1.8:
+    -- "mittig, rechts, links - Stand jetzt nur links").
+    auraAlign = "left",        -- left | center | right
 
     -- Questfortschritt links vom Namen ("8/10"), wenn der Gegner zu einer
     -- deiner Quests gehoert - aus dem Tooltip des Spiels, nur draussen.
@@ -217,6 +220,32 @@ local function OtherParts(uf, auras)
     return nil
 end
 
+-- Ausrichtung der Symbole des Spiels (6.3.1.9). Links laesst sie, wo
+-- das Spiel sie hinsetzt - kein Anker wird angefasst. Mitte und rechts
+-- setzen die Debuff-Liste (DebuffListFrame, im 11.x-Client eine
+-- Layout-Liste, die sich ihrem Inhalt anpasst) an die Mitte bzw. rechte
+-- Kante des Aurenrahmens. Gelesen wird nichts (GetPoint ist verboten),
+-- nur gesetzt, in pcall. Ob die Liste auf Forever so heisst und mit dem
+-- Inhalt waechst, ist nicht gemessen - /wcui auren nennt das Ergebnis.
+local movedList = setmetatable({}, { __mode = "k" })
+NP.gameAlign = "noch nicht versucht"
+local function AlignGameAuras(auras)
+    local align = S.auraAlign or "left"
+    local list = auras.DebuffListFrame
+    if type(list) ~= "table" or not list.SetPoint or (list.IsProtected and list:IsProtected()) then
+        if align ~= "left" then NP.gameAlign = "die Debuff-Liste des Spiels heißt hier anders" end
+        return
+    end
+    if align == "left" and not movedList[list] then return end
+    local pt = (align == "right" and "BOTTOMRIGHT") or (align == "center" and "BOTTOM") or "BOTTOMLEFT"
+    local ok, err = pcall(function()
+        list:ClearAllPoints()
+        list:SetPoint(pt, auras, pt, 0, 0)
+    end)
+    movedList[list] = true
+    NP.gameAlign = ok and ("gesetzt: " .. pt) or ("vom Spiel abgelehnt: " .. tostring(err))
+end
+
 local function ShowGameAuras(uf, auras)
     local parts = OtherParts(uf, auras)
     if not parts then return false end
@@ -230,6 +259,7 @@ local function ShowGameAuras(uf, auras)
     auras:SetScale((S.gameAuraScale or 100) / 100)
     auras:SetAlpha(1)
     auras:Show()
+    AlignGameAuras(auras)
     uf:SetAlpha(1)
     inPlace[auras] = true
     return true
@@ -302,7 +332,7 @@ function NP.GameAuraInfo(unit)
         end
     end
     pcall(Walk, auras, 1)
-    return string.format("Symbole des Spiels: %s, %d sichtbare Knöpfe", inPlace[auras] and "sichtbar an ihrem Platz" or "ausgeblendet", shown)
+    return string.format("Symbole des Spiels: %s, %d sichtbare Knöpfe · Ausrichtung %s", inPlace[auras] and "sichtbar an ihrem Platz" or "ausgeblendet", shown, NP.gameAlign)
 end
 
 --------------------------------------------------
@@ -479,14 +509,20 @@ local function Layout(p)
     t.top:SetPoint("BOTTOM", p, "TOP", 0, 3)
     t.top:SetWidth(S.width + 20)
     t.top:SetJustifyH("CENTER")
+    -- Steht der Name im Balken, bekommt seine Seite den meisten Platz;
+    -- die Zahl daneben braucht wenig.
+    local function IsName(k) return k == "name" or k == "levelName" end
+    local leftShare = IsName(S.textLeft) and 0.7 or (IsName(S.textRight) and 0.3 or 0.5)
     t.left:SetPoint("LEFT", p, "LEFT", 4, 0)
-    t.left:SetWidth(S.width * 0.5 - 6)
+    t.left:SetWidth(S.width * leftShare - 6)
     t.left:SetJustifyH("LEFT")
     t.right:SetPoint("RIGHT", p, "RIGHT", -3, 0)
-    t.right:SetWidth(S.width * 0.5 - 6)
+    t.right:SetWidth(S.width * (1 - leftShare) - 6)
     t.right:SetJustifyH("RIGHT")
     t.center:SetPoint("CENTER", p, "CENTER", 0, 0)
-    t.center:SetWidth(S.width - 8)
+    -- Mit Texten links und rechts nur die Mitte, sonst ueberlappen sie.
+    local sides = (S.textLeft ~= "none" and 1 or 0) + (S.textRight ~= "none" and 1 or 0)
+    t.center:SetWidth(sides > 0 and S.width * 0.55 or S.width - 8)
     t.center:SetJustifyH("CENTER")
 
     local raid = p.raid
@@ -504,9 +540,11 @@ local function Layout(p)
     end
 
     -- Auren ueber dem Namen, linksbuendig.
+    local align = S.auraAlign or "left"
+    local anchor = align == "right" and "BOTTOMRIGHT" or "BOTTOMLEFT"
     p.auras:ApplyLayout({ filter = AuraFilter(), max = S.auraMax, size = S.auraSize,
-        spacing = 2, anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = S.auraMax,
-        timer = S.auraTimer })
+        spacing = 2, anchor = anchor, growth = align == "right" and "LEFT" or "RIGHT", growthV = "UP",
+        perRow = S.auraMax, timer = S.auraTimer })
     -- Questfortschritt links neben der Namenszeile, ausserhalb des Balkens:
     -- so ueberdeckt er weder Namen noch Stufe.
     K.SetFont(p.quest, S.nameSize + 2)
@@ -515,7 +553,16 @@ local function Layout(p)
     local qc = WeintCodex.GameColors.questObjective
     p.quest:SetTextColor(qc[1], qc[2], qc[3], 1)
     p.auras:ClearAllPoints()
-    p.auras:SetPoint("BOTTOMLEFT", p, "TOPLEFT", 0, (S.textTop ~= "none" and S.nameSize or 0) + 8)
+    local auraY = (S.textTop ~= "none" and S.nameSize or 0) + 8
+    if align == "right" then
+        p.auras:SetPoint("BOTTOMRIGHT", p, "TOPRIGHT", 0, auraY)
+    elseif align == "center" then
+        -- Der Block (Platz fuer alle Symbole) mittig; weniger Symbole als
+        -- Plaetze beginnen links in ihm.
+        p.auras:SetPoint("BOTTOM", p, "TOP", 0, auraY)
+    else
+        p.auras:SetPoint("BOTTOMLEFT", p, "TOPLEFT", 0, auraY)
+    end
     p.auras:SetShown(S.auraEnabled and S.auraSource == "own")
 
     local cast = p.cast
@@ -647,6 +694,15 @@ local function FillTexts(p, onlyHealth)
                 local text, r, g, b = LevelText(unit)
                 fs:SetText(text)
                 fs:SetTextColor(r, g, b, 1)
+            elseif kind == "levelName" then
+                -- Stufe in ihrer Farbe vor dem Namen, beides in einer
+                -- Zeile. SetFormattedText: der Name kann geheim sein.
+                local text, r, g, b = LevelText(unit)
+                local hex = string.format("%02x%02x%02x", math.floor(r * 255 + 0.5),
+                    math.floor(g * 255 + 0.5), math.floor(b * 255 + 0.5))
+                fs:SetFormattedText("|cff" .. hex .. "%s|r  %s", text or "", _G.UnitName and (_G.UnitName(unit)))
+                local c = p._hl and WeintCodex.Colors.textBright or WeintCodex.GameColors.plateName
+                fs:SetTextColor(c[1], c[2], c[3], 1)
             end
             fs:Show()
         end
@@ -765,9 +821,11 @@ local function UpdateTarget(p)
     p.hoverGlow:SetShown(isHover and not isTarget)
 
     p._hl = (isTarget or isHover) or nil
-    if not p._friendly and S.textTop == "name" then
+    if not p._friendly then
         local c = p._hl and WeintCodex.Colors.textBright or WeintCodex.GameColors.plateName
-        p.texts.top:SetTextColor(c[1], c[2], c[3], 1)
+        for slot, kind in pairs({ top = S.textTop, left = S.textLeft, right = S.textRight, center = S.textCenter }) do
+            if kind == "name" or kind == "levelName" then p.texts[slot]:SetTextColor(c[1], c[2], c[3], 1) end
+        end
     end
 
     p:SetScale(isTarget and (S.targetScale / 100) or 1)
@@ -1104,6 +1162,7 @@ function NP.RefreshPreview()
         name = "Kobold-Tunnelgräber", level = S.eliteMark and "14+" or "14",
         healthPercent = "64%", healthNumber = "1,2 Tsd", healthBoth = "1,2 Tsd  64%",
     }
+    sample.levelName = sample.level .. "  " .. sample.name
     for slot, kind in pairs(kinds) do
         local fs = p.texts[slot]
         if kind == "none" then
@@ -1192,6 +1251,7 @@ end
 local SLOT_ITEMS = {
     { value = "none",          text = "Nichts" },
     { value = "name",          text = "Name" },
+    { value = "levelName",     text = "Stufe und Name" },
     { value = "level",         text = "Stufe" },
     { value = "healthPercent", text = "Leben in %" },
     { value = "healthNumber",  text = "Leben als Zahl" },
@@ -1200,6 +1260,35 @@ local SLOT_ITEMS = {
 
 local function pct(v) return string.format("%d %%", v) end
 local function px(v) return string.format("%d px", v) end
+
+-- "Name steht": eine Voreinstellung fuer die vier Textplaetze (Beta-Test:
+-- "den Namen auch in die Plakette statt darueber setzen").
+local NAME_PRESETS = {
+    above  = { textTop = "name", textLeft = "level",     textCenter = "none", textRight = "healthPercent" },
+    left   = { textTop = "none", textLeft = "levelName", textCenter = "none", textRight = "healthPercent" },
+    center = { textTop = "none", textLeft = "level",     textCenter = "name", textRight = "healthPercent" },
+}
+local NAME_PLACES = {
+    { value = "above",  text = "Über der Plakette" },
+    { value = "left",   text = "Im Balken, links (mit Stufe)" },
+    { value = "center", text = "Im Balken, mittig" },
+    { value = "custom", text = "Eigene Belegung" },
+}
+function NP.NamePlace()
+    for place, preset in pairs(NAME_PRESETS) do
+        local same = true
+        for k, v in pairs(preset) do
+            if K.Get(KEY, k) ~= v then same = false break end
+        end
+        if same then return place end
+    end
+    return "custom"
+end
+function NP.SetNamePlace(place)
+    local preset = NAME_PRESETS[place]
+    if not preset then return end
+    for k, v in pairs(preset) do K.Set(KEY, k, v) end
+end
 
 K.Register({
     key = KEY, group = "ui", order = 10,
@@ -1279,6 +1368,11 @@ K.Register({
                   { type = "color", label = "Kurz davor", key = "dpsNear", disabled = noThreat })
         end },
         { key = "texte", label = "Texte", build = function(B)
+            B:Section("Name")
+            B:Row({ type = "dropdown", label = "Name steht", items = NAME_PLACES,
+                    get = NP.NamePlace, set = NP.SetNamePlace,
+                    description = "Stellt die Textplätze unten passend ein; dort lässt sich alles weiter einzeln belegen." },
+                  { type = "empty" })
             B:Section("Textplätze")
             B:Row({ type = "dropdown", label = "Oben", key = "textTop", items = SLOT_ITEMS },
                   { type = "dropdown", label = "Mitte", key = "textCenter", items = SLOT_ITEMS })
@@ -1317,7 +1411,11 @@ K.Register({
                     format = function(v) return tostring(v) end, disabled = own })
             B:Row({ type = "toggle", label = "Restzeit am Symbol", key = "auraTimer", disabled = own,
                     description = "Die verbleibenden Sekunden oben links." },
-                  { type = "empty" })
+                  { type = "dropdown", label = "Ausrichtung", key = "auraAlign", disabled = off, items = {
+                        { value = "left",   text = "Links" },
+                        { value = "center", text = "Mittig" },
+                        { value = "right",  text = "Rechts" } },
+                    description = "Bei den Symbolen des Spiels ein Versuch: ob es klappt, sagt /wcui auren." })
             B:Section("Quests")
             B:Row({ type = "toggle", label = "Questfortschritt neben dem Namen", key = "questProgress",
                     description = "„8/10“, wenn der Gegner zu einer deiner Quests gehört. Nicht in Dungeons." },
