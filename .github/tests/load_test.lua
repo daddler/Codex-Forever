@@ -1636,6 +1636,29 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.2.0: Eingabezeile erst mit Enter (Chatstil des Spiels); zurueck
+-- nur, was WeintCodex selbst umgestellt hat.
+do
+    local ok, err = pcall(function()
+        local CH = WeintCodex.UIChat
+        local style = "classic"
+        local oldC = _G.C_CVar
+        _G.C_CVar = { GetCVar = function(n) if n == "chatStyle" then return style end end,
+                      SetCVar = function(n, v) if n == "chatStyle" then style = v end end }
+        CH.ApplyChatStyle()
+        assert(style == "im", "Chatstil nicht auf 'Erst mit Enter'")
+        K.Set("chat", "editOnEnter", false)
+        CH.ApplyChatStyle()
+        assert(style == "classic", "Chatstil nicht zurueckgestellt")
+        style = "im"
+        CH.ApplyChatStyle()
+        assert(style == "im", "fremde Einstellung des Spielers ueberschrieben")
+        K.Set("chat", "editOnEnter", nil)
+        _G.C_CVar = oldC
+    end)
+    Check(ok, "Chat: Eingabezeile erst mit Enter" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.0: Haltungsleiste so breit wie die Haltungen der Klasse.
 do
     local AB = WeintCodex.UIActionBars

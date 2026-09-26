@@ -43,6 +43,10 @@ local defaults = {
     -- halbdurchsichtige Striche, die im Beta-Test stoerten (6.3.0.8).
     -- Blaettern geht weiter mit dem Mausrad.
     hideScrollBar = true,
+    -- Die Eingabezeile erst mit Enter (Beta-Test 6.3.2.0: "soll erst
+    -- kommen, wenn man auf Enter drueckt"). Das ist die Einstellung
+    -- "Chatstil" des Spiels (CVar chatStyle: "im" statt "classic").
+    editOnEnter = true,
 }
 local INFO_H = 22
 
@@ -706,8 +710,42 @@ local function ApplyAll()
 end
 CH.ApplyAll = ApplyAll
 
+-- Chatstil des Spiels. Kein eigenes Verstecken der Eingabezeile: sie traegt
+-- auch geschuetzte Befehle (/cast, /target), und ein Addon, das an ihrem
+-- Zeigen und Verbergen dreht, riskiert, dass das Spiel sie sperrt. Die
+-- Einstellung des Spiels leistet genau das Gewuenschte. Sie steht in der
+-- Konfiguration des Spiels, nicht in den Addon-Daten - bleibt also auch
+-- in der Beta ueber das Neuladen hinweg. Zurueckgestellt wird nur, was
+-- WeintCodex in dieser Sitzung selbst umgestellt hat.
+local styleBefore
+local function GetCVar(name)
+    if _G.C_CVar and _G.C_CVar.GetCVar then return _G.C_CVar.GetCVar(name) end
+    if _G.GetCVar then return _G.GetCVar(name) end
+    return nil
+end
+local function SetCVar(name, value)
+    local fn = (_G.C_CVar and _G.C_CVar.SetCVar) or _G.SetCVar
+    if fn then return pcall(fn, name, value) end
+    return false
+end
+function CH.ApplyChatStyle()
+    if K.InCombat() then K.AfterCombat(CH.ApplyChatStyle) return end
+    local cur = GetCVar("chatStyle")
+    if type(cur) ~= "string" then return end
+    if Opt("editOnEnter") then
+        if cur ~= "im" then
+            styleBefore = styleBefore or cur
+            SetCVar("chatStyle", "im")
+        end
+    elseif styleBefore and cur == "im" then
+        SetCVar("chatStyle", styleBefore)
+        styleBefore = nil
+    end
+end
+
 local function Enable()
     ApplyAll()
+    CH.ApplyChatStyle()
     -- Fluesterfenster und neue Reiter legt das Spiel spaeter an.
     if _G.hooksecurefunc and _G.FCF_OpenTemporaryWindow then
         _G.hooksecurefunc("FCF_OpenTemporaryWindow", function() ApplyAll() end)
@@ -729,7 +767,7 @@ K.Register({
     description = "Die Chatfenster im Stil von WeintCodex: eigene Schrift, ruhiger Grund, flache Reiter, schlichte Eingabezeile.",
     defaults = defaults,
     Enable = Enable,
-    OnSetting = function() if K.IsActive(KEY) then ApplyAll() end end,
+    OnSetting = function() if K.IsActive(KEY) then ApplyAll() CH.ApplyChatStyle() end end,
     pages = {
         { key = "allgemein", label = "Allgemein", build = function(B)
             B:Section("Fenster")
@@ -753,6 +791,9 @@ K.Register({
                     description = "Uhrzeit, Gold, freie Taschenplätze, Haltbarkeit, Bildrate und Latenz. Beim Schreiben liegt die Eingabezeile darüber." },
                   { type = "empty" })
             B:Section("Eingabezeile")
+            B:Row({ type = "toggle", label = "Erst mit Enter zeigen", key = "editOnEnter",
+                    description = "Stellt den Chatstil des Spiels auf „Instant Messenger“: die Zeile erscheint beim Schreiben und geht danach wieder. Gilt womöglich erst nach /reload." },
+                  { type = "empty" })
             B:Row({ type = "toggle", label = "Eingabezeile im WeintCodex-Stil", key = "editBoxSkin", reload = true },
                   { type = "toggle", label = "Über dem Chat statt darunter", key = "editBoxTop",
                     disabled = function() return not K.Get(KEY, "editBoxSkin") end })

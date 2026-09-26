@@ -11,6 +11,8 @@ nicht zusammen.
 
 ## [6.3.2.0] – 2026-09-26
 
+**Eingabezeile erst mit Enter.** Die Zeile zum Schreiben erscheint erst, wenn du Enter drückst, und verschwindet danach wieder; darunter bleibt die Infozeile frei. Abschaltbar unter Chat → Eingabezeile.
+
 **Haltungsleiste passt sich an.** Sie ist so breit wie die Haltungen deiner Klasse und wächst mit, wenn du eine neue lernst – keine leere Fläche mehr neben zwei Knöpfen. Größe, Abstand, Anordnung, Fläche und „nur bei Maus“ stellst du wie bei jeder Leiste unter Aktionsleisten → Leisten → „Haltungen“ ein.
 
 ### Technisch
@@ -18,6 +20,12 @@ nicht zusammen.
 - `LayoutBar`: für `StanceButton` begrenzt `GetNumShapeshiftForms()` die
   Zahl der Plätze (nur, wenn der Client eine Zahl > 0 nennt; sonst gilt
   die Einstellung). `UPDATE_SHAPESHIFT_FORMS` ordnet nach dem Kampf neu.
+- Chat: `editOnEnter` (Standard an) setzt die CVar `chatStyle` auf `im`
+  – die Einstellung „Chatstil“ des Spiels, kein eigenes Verstecken der
+  Eingabezeile (sie trägt geschützte Befehle). Außerhalb des Kampfes;
+  ausgeschaltet stellt sie nur zurück, was WeintCodex in dieser Sitzung
+  selbst geändert hat. Die CVar steht in der Konfiguration des Spiels und
+  übersteht deshalb auch in der Beta das Neuladen.
 
 ## [6.3.1.9] – 2026-09-26
 
