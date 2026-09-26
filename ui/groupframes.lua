@@ -55,6 +55,13 @@ local defaults = {
     debuffSize  = 16,
     debuffMax   = 3,
     onlyDispellable = true,
+    -- Seit 6.3.2.4 (Beta-Test: "muss etwas detaillierter werden"):
+    healPrediction = true,   -- eingehende Heilung als heller Balken hinter dem Leben
+    absorbs     = true,      -- Schilde als weisser Balken dahinter
+    roleIcon    = true,      -- Tank / Heiler / Schaden oben links
+    leaderIcon  = true,      -- Krone beim Gruppenleiter
+    readyCheck  = true,      -- Haken / Kreuz / ? beim Bereitschaftscheck
+    hitFlash    = true,      -- kurzes rotes Aufblitzen bei einem Treffer
 }
 
 local function Opt(k) return K.Get(KEY, k) end
@@ -92,6 +99,15 @@ end
 local function StatusText(fs, unit)
     if _G.UnitIsConnected and not K.Bool(_G.UnitIsConnected(unit), true) then
         fs:SetText("Offline") return
+    end
+    -- Was gleich passiert, vor dem Zustand: "Tot" allein verschweigt,
+    -- dass schon jemand wiederbelebt.
+    if K.Bool(_G.UnitHasIncomingResurrection and _G.UnitHasIncomingResurrection(unit), false) then
+        fs:SetText("Wird belebt") return
+    end
+    local sm = _G.C_IncomingSummon
+    if sm and sm.HasIncomingSummon and K.Bool(sm.HasIncomingSummon(unit), false) then
+        fs:SetText("Beschwörung") return
     end
     if K.Bool(_G.UnitIsGhost and _G.UnitIsGhost(unit), false) then fs:SetText("Geist") return end
     if K.Bool(_G.UnitIsDead and _G.UnitIsDead(unit), false) then fs:SetText("Tot") return end
@@ -157,6 +173,17 @@ function Btn:Layout(w, h)
     c.name:SetWidth(math.max(20, w - 8))
     c.status:SetWidth(math.max(20, w - 8))
 
+    -- Heilung und Schild: so breit wie der Lebensbalken, links an der
+    -- Kante seiner Fuellung. Wie weit sie reichen, rechnet der Client
+    -- (Wert / Hoechstwert) - Lua addiert nie geheime Zahlen. Was ueber
+    -- den Balken hinausragt, schneidet die Klammer ab.
+    c.clip:ClearAllPoints()
+    c.clip:SetAllPoints(c.health)
+    for _, bar in ipairs({ c.heal, c.absorb }) do bar:SetWidth(math.max(1, w)) end
+    local hc, ac = WeintCodex.GameColors.healPredict, WeintCodex.GameColors.absorb
+    c.heal:SetStatusBarColor(hc[1], hc[2], hc[3], hc[4])
+    c.absorb:SetStatusBarColor(ac[1], ac[2], ac[3], ac[4])
+
     local size = Opt("debuffSize")
     c.debuffs:ApplyLayout({ filter = Opt("onlyDispellable") and "HARMFUL|RAID" or "HARMFUL",
         max = Opt("debuffMax"), size = size, spacing = 1, anchor = "BOTTOMRIGHT",
@@ -198,6 +225,10 @@ function Btn:Refresh()
     c.name:SetText(_G.UnitName and (_G.UnitName(unit)))
     StatusText(c.status, unit)
 
+    self:UpdatePrediction()
+    self:UpdateRole()
+    self:UpdateReady()
+
     local idx = K.Plain(_G.GetRaidTargetIndex and _G.GetRaidTargetIndex(unit))
     if type(idx) == "number" and idx > 0 and _G.SetRaidTargetIconTexture then
         _G.SetRaidTargetIconTexture(c.raid, idx)
@@ -206,6 +237,82 @@ function Btn:Refresh()
         c.raid:Hide()
     end
     self:UpdateThreat()
+end
+
+function Btn:UpdatePrediction()
+    local c, unit = self._wc, self._wcUnit
+    if not unit then return end
+    local max = _G.UnitHealthMax and _G.UnitHealthMax(unit)
+    local function Fill(bar, on, value)
+        if not on or type(max) == "nil" or type(value) == "nil" then bar:Hide() return end
+        bar:SetMinMaxValues(0, max)
+        bar:SetValue(value)
+        bar:Show()
+    end
+    Fill(c.heal, Opt("healPrediction"), _G.UnitGetIncomingHeals and _G.UnitGetIncomingHeals(unit))
+    Fill(c.absorb, Opt("absorbs"), _G.UnitGetTotalAbsorbs and _G.UnitGetTotalAbsorbs(unit))
+end
+
+local ROLE = {
+    TANK    = { tex = "icon_tank",   color = "roleTank" },
+    HEALER  = { tex = "icon_plus",   color = "roleHeal" },
+    DAMAGER = { tex = "icon_dps",    color = "roleDps" },
+}
+
+-- Rolle oben links, Krone daneben. Keine Rolle (nicht zugewiesen): kein
+-- Symbol - nie ein geratenes.
+function Btn:UpdateRole()
+    local c, unit = self._wc, self._wcUnit
+    local role = unit and Opt("roleIcon") and K.Plain(_G.UnitGroupRolesAssigned and _G.UnitGroupRolesAssigned(unit))
+    local r = type(role) == "string" and ROLE[role]
+    if r then
+        c.role:SetTexture(K.MEDIA .. r.tex)
+        local col = WeintCodex.GameColors[r.color]
+        c.role:SetVertexColor(col[1], col[2], col[3], 1)
+        c.role:Show()
+    else
+        c.role:Hide()
+    end
+    local lead = unit and Opt("leaderIcon") and K.Bool(_G.UnitIsGroupLeader and _G.UnitIsGroupLeader(unit), false)
+    c.leader:ClearAllPoints()
+    if r then
+        c.leader:SetPoint("LEFT", c.role, "RIGHT", 1, 0)
+    else
+        c.leader:SetPoint("TOPLEFT", c, "TOPLEFT", 2, -2)
+    end
+    c.leader:SetShown(lead and true or false)
+end
+
+-- Bereitschaftscheck: Haken, Kreuz oder "?" in der Mitte. Nach dem Ende
+-- bleibt das Ergebnis ein paar Sekunden stehen.
+local readyDone = false
+function Btn:UpdateReady()
+    local c, unit = self._wc, self._wcUnit
+    local st = unit and Opt("readyCheck") and K.Plain(_G.GetReadyCheckStatus and _G.GetReadyCheckStatus(unit))
+    c.readyText:Hide()
+    if st == "ready" or st == "notready" then
+        c.ready:SetTexture(K.MEDIA .. (st == "ready" and "icon_check" or "icon_close"))
+        local col = WeintCodex.GameColors[st == "ready" and "readyYes" or "readyNo"]
+        c.ready:SetVertexColor(col[1], col[2], col[3], 1)
+        c.ready:Show()
+    elseif st == "waiting" then
+        c.ready:Hide()
+        local col = WeintCodex.GameColors.readyWait
+        c.readyText:SetTextColor(col[1], col[2], col[3], 1)
+        c.readyText:Show()
+    elseif not readyDone then
+        c.ready:Hide()
+    end
+end
+
+-- Ein Treffer: der Knopf blitzt kurz rot auf. UNIT_COMBAT nennt nur, DASS
+-- getroffen wurde; die Zahl wird nicht gelesen (sie kann geheim sein).
+function Btn:Flash()
+    local c = self._wc
+    if not Opt("hitFlash") then return end
+    c.flash:SetAlpha(1)
+    c.flash:SetShown(true)
+    c._flashLeft = 0.35
 end
 
 function Btn:UpdateThreat()
@@ -269,8 +376,54 @@ local function Style(b)
     c.raid = host:CreateTexture(nil, "OVERLAY")
     c.raid:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
     c.raid:SetSize(14, 14)
-    c.raid:SetPoint("TOPLEFT", c, "TOPLEFT", 2, -2)
+    -- Oben rechts: oben links stehen Rolle und Krone.
+    c.raid:SetPoint("TOPRIGHT", c, "TOPRIGHT", -2, -2)
     c.raid:Hide()
+
+    -- Heilung und Schild in einer Klammer ueber dem Lebensbalken.
+    c.clip = CreateFrame("Frame", nil, c)
+    if c.clip.SetClipsChildren then pcall(c.clip.SetClipsChildren, c.clip, true) end
+    c.clip:SetFrameLevel((c.health:GetFrameLevel() or 1) + 1)
+    local fill = c.health:GetStatusBarTexture()
+    c.heal = K.NewBar(c.clip, true)
+    c.absorb = K.NewBar(c.clip, true)
+    if fill then
+        c.heal:SetPoint("TOPLEFT", fill, "TOPRIGHT", 0, 0)
+        c.heal:SetPoint("BOTTOMLEFT", fill, "BOTTOMRIGHT", 0, 0)
+    end
+    local healFill = c.heal:GetStatusBarTexture()
+    if healFill then
+        c.absorb:SetPoint("TOPLEFT", healFill, "TOPRIGHT", 0, 0)
+        c.absorb:SetPoint("BOTTOMLEFT", healFill, "BOTTOMRIGHT", 0, 0)
+    end
+    c.heal:Hide()
+    c.absorb:Hide()
+
+    c.role = host:CreateTexture(nil, "OVERLAY")
+    c.role:SetSize(11, 11)
+    c.role:SetPoint("TOPLEFT", c, "TOPLEFT", 2, -2)
+    c.role:Hide()
+    c.leader = host:CreateTexture(nil, "OVERLAY")
+    c.leader:SetSize(11, 11)
+    c.leader:SetTexture(K.MEDIA .. "icon_leader")
+    local lc = WeintCodex.GameColors.leader
+    c.leader:SetVertexColor(lc[1], lc[2], lc[3], 1)
+    c.leader:Hide()
+    c.ready = host:CreateTexture(nil, "OVERLAY", nil, 2)
+    c.ready:SetSize(18, 18)
+    c.ready:SetPoint("CENTER", c, "CENTER", 0, 0)
+    c.ready:Hide()
+    c.readyText = K.NewText(host, 16, "OVERLAY")
+    c.readyText:SetPoint("CENTER", c, "CENTER", 0, 0)
+    c.readyText:SetText("?")
+    c.readyText:Hide()
+    -- Treffer: eine rote Flaeche ueber dem Knopf, die ausklingt. Kein
+    -- Rand - den roten Rand hat schon die Aggro.
+    c.flash = host:CreateTexture(nil, "OVERLAY", nil, -1)
+    c.flash:SetAllPoints(c)
+    local fc = WeintCodex.GameColors.hitFlash
+    c.flash:SetColorTexture(fc[1], fc[2], fc[3], fc[4])
+    c.flash:SetShown(false)
     c.debuffs = WeintCodex.UIAuras.Create(host, { filter = "HARMFUL|RAID", max = 3, size = 16,
         spacing = 1, anchor = "BOTTOMRIGHT", growth = "LEFT", growthV = "UP", perRow = 3 })
 
@@ -429,11 +582,12 @@ end
 --------------------------------------------------
 
 local TEST_PARTY = {
-    { name = "Brunhild", class = "WARRIOR", hp = 0.72, ptoken = "RAGE", power = 0.35, aggro = true },
-    { name = "Liora",    class = "PRIEST",  hp = 1.00, ptoken = "MANA", power = 0.76 },
-    { name = "Tamsin",   class = "MAGE",    hp = 0.45, ptoken = "MANA", power = 0.40 },
-    { name = "Orwen",    class = "HUNTER",  hp = 0.88, ptoken = "MANA", power = 0.90, out = true },
-    { name = "Kaelen",   class = "PALADIN", dead = true },
+    { name = "Brunhild", class = "WARRIOR", hp = 0.72, ptoken = "RAGE", power = 0.35, aggro = true,
+      role = "TANK", leader = true, absorb = 0.12 },
+    { name = "Liora",    class = "PRIEST",  hp = 1.00, ptoken = "MANA", power = 0.76, role = "HEALER" },
+    { name = "Tamsin",   class = "MAGE",    hp = 0.45, ptoken = "MANA", power = 0.40, role = "DAMAGER", heal = 0.25 },
+    { name = "Orwen",    class = "HUNTER",  hp = 0.88, ptoken = "MANA", power = 0.90, out = true, role = "DAMAGER" },
+    { name = "Kaelen",   class = "PALADIN", dead = true, role = "DAMAGER", res = true },
 }
 local testButtons = {}
 
@@ -483,7 +637,29 @@ function GF.ShowTest(on)
         local pc = t.ptoken and _G.PowerBarColor and _G.PowerBarColor[t.ptoken]
         if type(pc) == "table" and pc.r then K.PaintBar(c.power, pc.r, pc.g, pc.b) end
         c.name:SetText(t.name)
-        if t.dead then
+        for _, pair in ipairs({ { c.heal, "healPrediction", t.heal }, { c.absorb, "absorbs", t.absorb } }) do
+            local bar, key, v = pair[1], pair[2], pair[3]
+            if v and Opt(key) then
+                bar:SetMinMaxValues(0, 1)
+                bar:SetValue(v)
+                bar:Show()
+            else
+                bar:Hide()
+            end
+        end
+        local r = t.role and Opt("roleIcon") and ROLE[t.role]
+        if r then
+            c.role:SetTexture(K.MEDIA .. r.tex)
+            local col = WeintCodex.GameColors[r.color]
+            c.role:SetVertexColor(col[1], col[2], col[3], 1)
+        end
+        c.role:SetShown(r and true or false)
+        c.leader:ClearAllPoints()
+        if r then c.leader:SetPoint("LEFT", c.role, "RIGHT", 1, 0) else c.leader:SetPoint("TOPLEFT", c, "TOPLEFT", 2, -2) end
+        c.leader:SetShown((t.leader and Opt("leaderIcon")) and true or false)
+        if t.res then
+            c.status:SetText("Wird belebt")
+        elseif t.dead then
             c.status:SetText("Tot")
         elseif Opt("statusText") == "percent" then
             c.status:SetFormattedText("%d%%", t.hp * 100)
@@ -505,6 +681,12 @@ local UNIT_EVENTS = {
     UNIT_HEALTH = true, UNIT_MAXHEALTH = true, UNIT_NAME_UPDATE = true,
     UNIT_CONNECTION = true, UNIT_FLAGS = true,
     UNIT_POWER_UPDATE = true, UNIT_MAXPOWER = true, UNIT_DISPLAYPOWER = true,
+    INCOMING_RESURRECT_CHANGED = true, INCOMING_SUMMON_CHANGED = true,
+}
+-- Nur ein Teil des Knopfs: kein ganzes Refresh je Heilzauber.
+local PART_EVENTS = {
+    UNIT_HEAL_PREDICTION = "UpdatePrediction", UNIT_ABSORB_AMOUNT_CHANGED = "UpdatePrediction",
+    UNIT_COMBAT = "combat",
 }
 
 -- Neue Knoepfe nachziehen. Ob der Kopfrahmen beim Anmelden wirklich alle
@@ -524,7 +706,7 @@ local function RestyleLater()
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, run) else run() end
 end
 
-local function OnEvent(_, event, unit)
+local function OnEvent(_, event, unit, ...)
     if event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" then
         RestyleLater()
     end
@@ -539,6 +721,39 @@ local function OnEvent(_, event, unit)
         if list then for _, b in ipairs(list) do b:UpdateThreat() end end
         return
     end
+    if event == "READY_CHECK" or event == "READY_CHECK_CONFIRM" or event == "READY_CHECK_FINISHED"
+       or event == "PARTY_LEADER_CHANGED" or event == "PLAYER_ROLES_ASSIGNED" then
+        readyDone = (event == "READY_CHECK_FINISHED")
+        for _, b in ipairs(allButtons) do
+            if b:IsShown() then b:UpdateRole() b:UpdateReady() end
+        end
+        if readyDone then
+            -- Das Ergebnis bleibt kurz stehen, dann ist Ruhe.
+            local function clear()
+                readyDone = false
+                for _, b in ipairs(allButtons) do if b._wc then b._wc.ready:Hide() b._wc.readyText:Hide() end end
+            end
+            if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(6, clear) else clear() end
+        end
+        return
+    end
+    local part = PART_EVENTS[event]
+    if part then
+        local list = unit and byUnit[unit]
+        if not list then return end
+        for _, b in ipairs(list) do
+            if b:IsShown() then
+                if part == "combat" then
+                    -- UNIT_COMBAT(unit, action, ...): nur "WOUND" ist ein Treffer.
+                    local action = select(1, ...)
+                    if K.Plain(action) == "WOUND" then b:Flash() end
+                else
+                    b[part](b)
+                end
+            end
+        end
+        return
+    end
     local list = unit and byUnit[unit]
     if not list then return end
     for _, b in ipairs(list) do
@@ -549,6 +764,19 @@ end
 local ticker = CreateFrame("Frame")
 local acc = 0
 local function OnTick(_, el)
+    -- Aufblitzen ausklingen lassen (jedes Bild, nur wo es laeuft).
+    for _, b in ipairs(allButtons) do
+        local c = b._wc
+        if c and c._flashLeft then
+            c._flashLeft = c._flashLeft - (el or 0)
+            if c._flashLeft <= 0 then
+                c._flashLeft = nil
+                c.flash:SetShown(false)
+            else
+                c.flash:SetAlpha(c._flashLeft / 0.35)
+            end
+        end
+    end
     acc = acc + (el or 0)
     if acc < 0.25 then return end
     acc = 0
@@ -572,8 +800,10 @@ local function Enable()
         Remap()
     end)
     for e in pairs(UNIT_EVENTS) do pcall(events.RegisterEvent, events, e) end
+    for e in pairs(PART_EVENTS) do pcall(events.RegisterEvent, events, e) end
     for _, e in ipairs({ "GROUP_ROSTER_UPDATE", "PLAYER_ENTERING_WORLD", "RAID_TARGET_UPDATE",
-        "UNIT_THREAT_SITUATION_UPDATE" }) do pcall(events.RegisterEvent, events, e) end
+        "UNIT_THREAT_SITUATION_UPDATE", "READY_CHECK", "READY_CHECK_CONFIRM", "READY_CHECK_FINISHED",
+        "PARTY_LEADER_CHANGED", "PLAYER_ROLES_ASSIGNED" }) do pcall(events.RegisterEvent, events, e) end
     events:SetScript("OnEvent", OnEvent)
     ticker:SetScript("OnUpdate", OnTick)
 end
@@ -593,7 +823,7 @@ local function px(v) return string.format("%d px", v) end
 K.Register({
     key = KEY, group = "ui", order = 25,
     title = "Gruppenrahmen",
-    description = "Gruppe und Schlachtzug als schlichte Kacheln: Klassenfarbe, Name, Leben, Reichweite, Aggro und bannbare Debuffs.",
+    description = "Gruppe und Schlachtzug als schlichte Kacheln: Klassenfarbe, Name, Leben, eingehende Heilung, Schilde, Rolle, Reichweite, Aggro und bannbare Debuffs.",
     defaults = defaults,
     Enable = Enable,
     OnSetting = OnSetting,
@@ -626,6 +856,19 @@ K.Register({
                   { type = "slider", label = "Höchstens", key = "debuffMax", min = 1, max = 6, step = 1,
                     format = function(v) return tostring(v) end,
                     disabled = function() return not K.Get(KEY, "debuffs") end })
+            B:Section("Mehr im Rahmen")
+            B:Row({ type = "toggle", label = "Eingehende Heilung", key = "healPrediction",
+                    description = "Ein heller grüner Balken hinter dem Leben: so weit reichen Heilungen, die gerade gewirkt werden." },
+                  { type = "toggle", label = "Schilde", key = "absorbs",
+                    description = "Ein weißer Balken dahinter: wie viel Schaden Schilde noch abfangen." })
+            B:Row({ type = "toggle", label = "Rollensymbol", key = "roleIcon",
+                    description = "Schild, Kreuz oder Schwert oben links – nur, wenn eine Rolle zugewiesen ist." },
+                  { type = "toggle", label = "Krone beim Gruppenleiter", key = "leaderIcon" })
+            B:Row({ type = "toggle", label = "Bereitschaftscheck", key = "readyCheck",
+                    description = "Haken, Kreuz oder „?“ in der Mitte; das Ergebnis bleibt ein paar Sekunden stehen." },
+                  { type = "toggle", label = "Aufblitzen bei Treffern", key = "hitFlash",
+                    description = "Der Knopf blitzt kurz rot auf, wenn jemand getroffen wird." })
+            B:Note("Wer gerade wiederbelebt oder beschworen wird, steht unter dem Namen („Wird belebt“, „Beschwörung“). Schaden, der erst noch kommt, kennt das Spiel nicht – das Aufblitzen zeigt Treffer in dem Moment, in dem sie landen.")
         end },
         { key = "gruppe", label = "Gruppe", build = function(B)
             local off = function() return not K.Get(KEY, "partyEnabled") end

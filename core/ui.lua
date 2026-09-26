@@ -205,6 +205,17 @@ WeintCodex.GameColors = {
     castLocked    = {0.450, 0.450, 0.480, 1.0},   -- nicht unterbrechbar
     castFailed    = {0.800, 0.100, 0.100, 1.0},
     targetRing    = {0.486, 0.424, 1.000, 1.0},   -- = Akzent: Fokusrahmen
+    -- Gruppenrahmen (6.3.2.4)
+    healPredict   = {0.300, 0.900, 0.420, 0.45},  -- eingehende Heilung hinter dem Leben
+    absorb        = {1.000, 1.000, 1.000, 0.35},  -- Schilde
+    roleTank      = {0.380, 0.620, 1.000, 1.0},
+    roleHeal      = {0.360, 0.880, 0.460, 1.0},
+    roleDps       = {0.950, 0.380, 0.320, 1.0},
+    leader        = {1.000, 0.820, 0.200, 1.0},   -- Krone beim Gruppenleiter
+    readyYes      = {0.300, 0.900, 0.420, 1.0},
+    readyNo       = {0.950, 0.250, 0.250, 1.0},
+    readyWait     = {1.000, 0.820, 0.200, 1.0},
+    hitFlash      = {1.000, 0.180, 0.120, 0.35},  -- Gruppenknopf blitzt bei einem Treffer
     stateCombat   = {0.900, 0.220, 0.200, 1.0},   -- Symbol "im Kampf" am Spielerrahmen
     stateRest     = {0.560, 0.760, 1.000, 1.0},   -- Symbol "erholt" (Gasthaus, Stadt)
     xpBar         = {0.486, 0.424, 1.000, 1.0},   -- = Akzent: Fortschritt (wie `cast`)

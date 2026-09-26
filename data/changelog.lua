@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.2.4",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFGruppenrahmen mit mehr Einblick.|r Eingehende Heilung als heller grüner Balken hinter dem Leben, Schilde als weißer Balken, ein Rollensymbol (Schild, Kreuz, Schwert) und eine Krone beim Gruppenleiter.",
+            "|cff7C6CFFBereitschaftscheck im Rahmen.|r Haken, Kreuz oder „?“ mitten im Knopf; das Ergebnis bleibt ein paar Sekunden stehen.",
+            "|cff7C6CFFTreffer und Wiederbelebung.|r Wer getroffen wird, blitzt kurz rot auf; wer gerade wiederbelebt oder beschworen wird, steht unter dem Namen. Alles einzeln abschaltbar unter Gruppenrahmen → Allgemein.",
+        },
+    },
+    {
         version = "6.3.2.3",
         date    = "26.09.2026",
         notes   = {

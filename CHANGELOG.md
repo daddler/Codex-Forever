@@ -9,6 +9,34 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.2.4] – 2026-09-26
+
+**Gruppenrahmen mit mehr Einblick.** Eingehende Heilung als heller grüner Balken hinter dem Leben, Schilde als weißer Balken, ein Rollensymbol (Schild, Kreuz, Schwert) und eine Krone beim Gruppenleiter.
+
+**Bereitschaftscheck im Rahmen.** Haken, Kreuz oder „?“ mitten im Knopf; das Ergebnis bleibt ein paar Sekunden stehen.
+
+**Treffer und Wiederbelebung.** Wer getroffen wird, blitzt kurz rot auf; wer gerade wiederbelebt oder beschworen wird, steht unter dem Namen. Alles einzeln abschaltbar unter Gruppenrahmen → Allgemein.
+
+### Technisch
+
+- Heilung/Schild: zwei Balken (`UIKit.NewBar`) so breit wie der
+  Lebensbalken, links an der Kante seiner Füllung bzw. der Heilfüllung,
+  in einer Klammer (`SetClipsChildren`) über dem Lebensbalken. Wert und
+  Höchstwert gehen unverändert an den Client (`UnitGetIncomingHeals`,
+  `UnitGetTotalAbsorbs`, `UnitHealthMax`) – Lua rechnet nie mit
+  geheimen Zahlen. Ohne Wert kein Balken.
+- Rolle aus `UnitGroupRolesAssigned` (ohne zugewiesene Rolle kein
+  Symbol), Krone aus `UnitIsGroupLeader`, Bereitschaft aus
+  `GetReadyCheckStatus`; Zielmarkierung wandert nach oben rechts.
+- Status: `UnitHasIncomingResurrection` → „Wird belebt“,
+  `C_IncomingSummon.HasIncomingSummon` → „Beschwörung“, vor „Tot“.
+- Treffer: `UNIT_COMBAT` mit Aktion `WOUND` (die Zahl wird nicht
+  gelesen) lässt eine rote Fläche 0,35 s ausklingen. Ob der Beta-Client
+  `UNIT_COMBAT` an Addons gibt, ist nicht gemessen.
+- Eigene Grafiken `icon_tank`, `icon_dps`, `icon_leader`, `icon_check`
+  (`make_ui_media.py`); Heiler nutzt `icon_plus`, „nicht bereit“
+  `icon_close`. Farben in `core/ui.lua`. `K.Border` kann jetzt `SetAlpha`.
+
 ## [6.3.2.3] – 2026-09-26
 
 **Kein Lua-Fehler mehr in der Gruppe.** Wechselte ein Gruppenmitglied oder dessen Begleiter die Fraktion, meldeten die Namensplaketten einen Fehler („unit tokens are not allowed“). Behoben.

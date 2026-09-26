@@ -187,6 +187,45 @@ def icon_combat(x, y):
     return _sword(u1, v1) or _sword(u2, v2)
 
 
+def icon_tank(x, y):
+    # Ein Schild: oben gerade, unten spitz.
+    if y < -0.62 or y > 0.78 or abs(x) > 0.62:
+        return False
+    if y <= 0.1:
+        return True
+    # Untere Haelfte laeuft zur Spitze bei y = 0.78 zu.
+    half = 0.62 * (0.78 - y) / 0.68
+    return abs(x) <= half
+
+
+def icon_dps(x, y):
+    # Ein Schwert, Spitze oben rechts.
+    a = 0.7071
+    return _sword((x - y) * a, (x + y) * a)
+
+
+def icon_leader(x, y):
+    # Eine Krone: Band unten, drei Zacken oben.
+    if 0.25 <= y <= 0.55 and abs(x) <= 0.72:
+        return True
+    if -0.55 <= y < 0.25 and abs(x) <= 0.72:
+        for cx in (-0.62, 0.0, 0.62):
+            # Zacke: Dreieck mit Spitze bei y = -0.55
+            half = 0.26 * (y + 0.55) / 0.80
+            if abs(x - cx) <= half:
+                return True
+    return False
+
+
+def icon_check(x, y):
+    # Ein Haken.
+    def seg(px_, py_, ax, ay, bx, by, r):
+        vx, vy = bx - ax, by - ay
+        t = max(0.0, min(1.0, ((px_ - ax) * vx + (py_ - ay) * vy) / (vx * vx + vy * vy)))
+        return math.hypot(px_ - (ax + t * vx), py_ - (ay + t * vy)) <= r
+    return seg(x, y, -0.62, 0.02, -0.18, 0.46, 0.14) or seg(x, y, -0.18, 0.46, 0.66, -0.50, 0.14)
+
+
 # ------------------------------------------------------------------
 # Der 3D-Pfeil: ein facettierter Pfeil (Grat in der Mitte), von hinten
 # oben gesehen, in 64 Drehungen. Ein kleiner Rasterer mit Tiefenpuffer
@@ -452,7 +491,9 @@ def main():
 
     for name, fn in (("icon_plus", icon_plus), ("icon_close", icon_close),
                      ("icon_reset", icon_reset), ("icon_gear", icon_gear),
-                     ("icon_combat", icon_combat)):
+                     ("icon_combat", icon_combat), ("icon_tank", icon_tank),
+                     ("icon_dps", icon_dps), ("icon_leader", icon_leader),
+                     ("icon_check", icon_check)):
         target = os.path.join(OUT, name + ".tga")
         write_tga(target, ICON, ICON, render_shape(ICON, fn))
         print("geschrieben:", os.path.relpath(target, ROOT))

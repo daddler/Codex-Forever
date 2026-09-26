@@ -640,6 +640,9 @@ function K.Border(frame, size, r, g, b, a, layer)
             if v then t:Show() else t:Hide() end
         end
     end
+    function o:SetAlpha(v)
+        for _, t in ipairs({ self.top, self.bottom, self.left, self.right }) do t:SetAlpha(v) end
+    end
     o:SetSize(size)
     return o
 end

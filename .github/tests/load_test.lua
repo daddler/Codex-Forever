@@ -1823,6 +1823,48 @@ do
     Check(ok, "Gruppenrahmen: Einheit, Leben, Aggro, Reichweite" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.2.4: Gruppenrahmen mit eingehender Heilung, Schild, Rolle, Krone,
+-- Bereitschaftscheck, Wiederbelebung und Aufblitzen bei Treffern.
+do
+    local GF = WeintCodex.UIGroupFrames
+    local ok, err = pcall(function()
+        local saved = { _G.UnitGetIncomingHeals, _G.UnitGetTotalAbsorbs, _G.UnitGroupRolesAssigned,
+                        _G.UnitIsGroupLeader, _G.GetReadyCheckStatus, _G.UnitHasIncomingResurrection }
+        _G.UnitGetIncomingHeals = function() return 200 end
+        _G.UnitGetTotalAbsorbs = function() return nil end
+        _G.UnitGroupRolesAssigned = function() return "HEALER" end
+        _G.UnitIsGroupLeader = function() return true end
+        local ready = "waiting"
+        _G.GetReadyCheckStatus = function() return ready end
+        local b = CreateFrame("Button", nil, UIParent)
+        GF._Style(b)
+        b._scripts.OnAttributeChanged(b, "unit", "party2")
+        b:Layout(120, 44)
+        b:Show()
+        local c = b._wc
+        b:Refresh()
+        assert(c.heal:IsShown() and c.heal:GetValue() == 200, "eingehende Heilung fehlt")
+        assert(not c.absorb:IsShown(), "Schild ohne Wert gezeigt")
+        assert(c.role:IsShown() and c.leader:IsShown(), "Rolle oder Krone fehlt")
+        assert(c.readyText:IsShown() and not c.ready:IsShown(), "Bereitschaft 'wartet' ohne ?")
+        ready = "ready"
+        b:UpdateReady()
+        assert(c.ready:IsShown() and not c.readyText:IsShown(), "Bereit ohne Haken")
+        _G.UnitGroupRolesAssigned = function() return "NONE" end
+        b:UpdateRole()
+        assert(not c.role:IsShown(), "Rolle geraten, obwohl keine zugewiesen ist")
+        _G.UnitHasIncomingResurrection = function() return true end
+        b:Refresh()
+        assert(c.status:GetText() == "Wird belebt", "Wiederbelebung nicht genannt: " .. tostring(c.status:GetText()))
+        b:Flash()
+        assert(c._flashLeft, "Treffer blitzt nicht")
+        _G.UnitGetIncomingHeals, _G.UnitGetTotalAbsorbs, _G.UnitGroupRolesAssigned,
+            _G.UnitIsGroupLeader, _G.GetReadyCheckStatus, _G.UnitHasIncomingResurrection = unpack(saved, 1, 6)
+    end)
+    Check(ok, "Gruppenrahmen: Heilung, Schild, Rolle, Krone, Bereitschaft, Wiederbelebung, Treffer"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Aktionsleisten, Minikarte, Chat.
 do
     local ok, err = pcall(function()
