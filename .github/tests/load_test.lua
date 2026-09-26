@@ -1592,6 +1592,13 @@ do
         local p = QT.Panel()
         assert(p and p:IsShown(), "Flaeche fehlt")
         assert(p:GetHeight() == 200 + 16, "Hoehe folgt dem Inhalt: " .. tostring(p:GetHeight()))
+        -- 6.3.1.4: Deckkraft 0 % = gar keine Flaeche (auch kein Rand/Schatten).
+        K.Set("questtracker", "bgAlpha", 0)
+        QT.Apply()
+        assert(not p:IsShown(), "Deckkraft 0 % laesst Rand und Schatten stehen")
+        K.Set("questtracker", "bgAlpha", nil)
+        QT.Apply()
+        assert(p:IsShown(), "Flaeche kommt nicht zurueck")
         mod.GetBottom = function() return nil end
         QT.Apply()
         assert(not p:IsShown(), "ohne messbaren Inhalt keine leere Flaeche")
@@ -2422,6 +2429,35 @@ do
         _G.EnumerateFrames, _G.GetCursorPosition = oldEnum, oldCursor
     end)
     Check(ok, "Chat: Flaeche unter den Reitern; /wcui maus findet Texturen" .. (ok and "" or (": " .. tostring(err))))
+
+    -- 6.3.1.4: Die Tageszeit heisst im Beta-Client MinimapCluster.DielFrame;
+    -- Addon-Knoepfe in der Liste bleiben voll deckend.
+    ok, err = pcall(function()
+        local MM = WeintCodex.UIMinimap
+        local cl, mm = _G.MinimapCluster, _G.Minimap
+        local diel = CreateFrame("Frame", nil, cl)
+        cl.DielFrame = diel
+        assert(MM.TimeButton() == diel, "DielFrame nicht als Tageszeit erkannt")
+        cl.DielFrame = nil
+        local addonBtn = CreateFrame("Button", "LibDBIcon10_TestAddon", mm)
+        local alpha
+        addonBtn.SetAlpha = function(_, a) alpha = a end
+        local oldKids = mm.GetChildren
+        mm.GetChildren = function() return addonBtn end
+        alpha = 0.3
+        MM.LayoutBag()
+        assert(alpha == 1, "Addon-Knopf in der Liste nicht voll deckend")
+        mm.GetChildren = oldKids
+        _G.LibDBIcon10_TestAddon = nil
+        -- Andockleiste der Chat-Reiter eine Schicht ueber den Chat.
+        local oldDock = _G.GeneralDockManager
+        local dstrata
+        _G.GeneralDockManager = { SetFrameStrata = function(_, v) dstrata = v end }
+        WeintCodex.UIChat.RaiseDock()
+        assert(dstrata == "MEDIUM", "Reiterleiste nicht ueber dem Chat")
+        _G.GeneralDockManager = oldDock
+    end)
+    Check(ok, "Minikarte: DielFrame als Tageszeit, Addon-Knoepfe voll deckend; Chat-Reiter oben" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.

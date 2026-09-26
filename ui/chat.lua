@@ -52,6 +52,7 @@ local PAD = 6       -- Rand der Kachel um den Text
 local function Opt(k) return K.Get(KEY, k) end
 
 local done = {}       -- [chatframe] = unsere Teile
+local RaiseDock
 
 local function name_of(f) return (f.GetName and f:GetName()) or "" end
 
@@ -322,6 +323,30 @@ local function CurrentFrame()
     end
     return _G.SELECTED_CHAT_FRAME or _G.DEFAULT_CHAT_FRAME
 end
+
+-- Die Andockleiste (und mit ihr die Reiter) eine Schicht ueber den Chat.
+-- Im Beta-Test blieben die Reiter auch mit der Flaeche in BACKGROUND
+-- unsichtbar (6.3.1.3), bei Deckkraft 1 und sichtbarem Text. Sie stehen in
+-- LOW auf Stufe 2, das Chatfenster in LOW auf Stufe 5: alles, was das
+-- Fenster ueber seinen Rand hinaus zeichnet, liegt ueber ihnen. In MEDIUM
+-- liegen sie ueber allem aus LOW. Ein Verdacht, keine Messung - /wcui maus
+-- ueber der Reiterzeile zeigt, was dort wirklich liegt.
+local dockHooked, dockGuard = false, false
+function RaiseDock()
+    local dock = _G.GeneralDockManager
+    if type(dock) ~= "table" or not dock.SetFrameStrata or (dock.IsForbidden and dock:IsForbidden()) then return end
+    dockGuard = true
+    dock:SetFrameStrata("MEDIUM")
+    dockGuard = false
+    if not dockHooked and _G.hooksecurefunc then
+        dockHooked = true
+        _G.hooksecurefunc(dock, "SetFrameStrata", function(_, v)
+            if dockGuard or v == "MEDIUM" or not Opt("flatTabs") then return end
+            RaiseDock()
+        end)
+    end
+end
+CH.RaiseDock = function() return RaiseDock() end
 
 local function UpdateTabs()
     if not Opt("flatTabs") then return end
@@ -675,6 +700,7 @@ local function ApplyAll()
     for _, d in pairs(done) do
         if d.tab then KeepTabVisible(d.tab) end
     end
+    if Opt("flatTabs") then RaiseDock() end
     UpdateTabs()
     CH.UpdateInfoBar()
 end

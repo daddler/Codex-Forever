@@ -997,7 +997,7 @@ function K.InspectMouse()
     local hits = K.UnderCursor()
     if #hits > 0 then
         out[#out + 1] = "Alles unter der Maus, das Kleinste zuerst:"
-        for i = 1, math.min(#hits, 10) do out[#out + 1] = "   " .. hits[i].line end
+        for i = 1, math.min(#hits, 18) do out[#out + 1] = "   " .. hits[i].line end
     end
     if #out == 0 then
         out[1] = "Unter der Maus liegt kein Rahmen. Maus über das Ding halten und den Befehl mit Enter abschicken."
@@ -1053,22 +1053,34 @@ function K.UnderCursor()
             local hit, area = Covers(f, cx, cy, scale)
             if hit then
                 local kind = f.GetObjectType and f:GetObjectType()
-                hits[#hits + 1] = { area = area, line = string.format("%s (%s, %s/%s, Maus %s)",
+                hits[#hits + 1] = { area = area, line = string.format("%s (%s, %s/%s, Maus %s, Alpha %s)",
                     NameOf(f), tostring(kind), tostring(f.GetFrameStrata and f:GetFrameStrata()),
                     Num(f.GetFrameLevel and f:GetFrameLevel()),
-                    tostring(K.Bool(f.IsMouseEnabled and f:IsMouseEnabled(), false))) }
+                    tostring(K.Bool(f.IsMouseEnabled and f:IsMouseEnabled(), false)),
+                    Num(f.GetEffectiveAlpha and f:GetEffectiveAlpha())) }
                 local rok, regions = pcall(function() return { f:GetRegions() } end)
                 for _, r in ipairs(rok and regions or {}) do
-                    local vok, vis = pcall(function()
-                        return r:GetObjectType() == "Texture" and K.Bool(r:IsVisible(), false)
+                    -- Durchsichtige (Alpha 0) fallen weg: jeder Reiter traegt ein
+                    -- Dutzend ausgeblendeter Texturen.
+                    local vok, rtype = pcall(function()
+                        if K.Plain(r:GetAlpha()) == 0 then return nil end
+                        return K.Bool(r:IsVisible(), false) and r:GetObjectType() or nil
                     end)
-                    if vok and vis then
+                    if vok and (rtype == "Texture" or rtype == "FontString") then
                         local rhit, rarea = Covers(r, cx, cy, scale)
-                        local tex = TextureOf(r)
-                        if rhit and tex then
+                        if rhit then
+                            local what
+                            if rtype == "Texture" then
+                                what = TextureOf(r) or "Farbfläche"
+                            else
+                                local tok, txt = pcall(function() return K.Plain(r:GetText()) end)
+                                what = "Text „" .. (tok and type(txt) == "string" and txt or "?") .. "“"
+                            end
                             local rname = NameOf(r)
-                            if rname == "(ohne Namen)" then rname = "Textur in " .. NameOf(f) end
-                            hits[#hits + 1] = { area = rarea, line = rname .. ": " .. tex }
+                            if rname == "(ohne Namen)" then rname = rtype .. " in " .. NameOf(f) end
+                            local lok, layer = pcall(function() return r:GetDrawLayer() end)
+                            hits[#hits + 1] = { area = rarea, line = rname .. ": " .. what
+                                .. " (" .. tostring(lok and layer or "?") .. ", Alpha " .. Num(r.GetAlpha and r:GetAlpha()) .. ")" }
                         end
                     end
                 end

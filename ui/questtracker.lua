@@ -110,7 +110,9 @@ function QT.Apply()
     local top, bottom = t:GetTop(), ContentBottom(t)
     if type(top) == "number" and type(bottom) == "number" and top > bottom then
         panel:SetHeight(top - bottom + 2 * pad)
-        panel:SetShown(t:IsVisible())
+        -- 0 % heisst: gar keine Flaeche, auch kein Rand und kein Schatten
+        -- (Beta-Test: "komplett transparent").
+        panel:SetShown(t:IsVisible() and (Opt("bgAlpha") or 75) > 0)
     else
         -- Nichts zu verfolgen (oder die Groesse unbekannt): keine leere
         -- Flaeche.
@@ -184,7 +186,7 @@ K.Register({
                   { type = "slider", label = "Innenabstand", key = "padding", min = 0, max = 20, step = 1, format = px })
             B:Row({ type = "toggle", label = "Rand", key = "border" },
                   { type = "toggle", label = "Goldenes Banner ausblenden", key = "hideBanner", reload = true })
-            B:Note("Die Liste selbst bleibt die des Spiels: Quests anklicken, verfolgen und Questgegenstände benutzen funktionieren wie gewohnt. Wo sie steht und wie hoch sie sein darf, stellst du im Bearbeitungsmodus ein.")
+            B:Note("Deckkraft 0 % blendet die Fläche ganz aus, samt Rand und Schatten. Die Liste selbst bleibt die des Spiels: Quests anklicken, verfolgen und Questgegenstände benutzen funktionieren wie gewohnt. Wo sie steht und wie hoch sie sein darf, stellst du im Bearbeitungsmodus ein.")
         end },
     },
 })

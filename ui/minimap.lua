@@ -114,6 +114,7 @@ end
 
 local laying = false
 local bag, flyout   -- Sammelknopf und seine Liste, siehe unten
+local KeepOpaque
 
 -- Die Knoepfe des Spiels in der Spalte links neben der Karte.
 local function ColumnButtons()
@@ -207,11 +208,15 @@ end
 -- Die Tageszeit (Sonne/Mond, zugleich der Kalender): unten rechts an der
 -- Karte, ueber dem Gebietsstreifen (Beta-Test: "mitten drin", "gerne unten
 -- rechts"). Welcher Rahmen das ist, heisst je nach Client anders.
+-- Im Beta-Client (12.x) ist es MinimapCluster.DielFrame ("diel" = den
+-- Tageslauf betreffend; /wcui maus im Beta-Test, Atlas
+-- UI-HUD-Minimap-DayCycle). Er nimmt keine Maus an - GetMouseFoci nannte
+-- nur die Karte.
 -- 6.3.1.1 blieb sie trotz dreier Namen in der Mitte; deshalb zusaetzlich
 -- die Kinder von Karte und Kartenbereich nach einem Namen mit "GameTime"
 -- oder "DayNight" durchsehen. Wer es dann noch nicht ist, zeigt
 -- /wcui maus (Maus ueber die Sonne halten).
-local TIME_NAMES = { "GameTime", "DayNight" }
+local TIME_NAMES = { "GameTime", "DayNight", "Diel" }
 local function TimeName(f)
     local ok, n = pcall(function()
         return (f.GetDebugName and f:GetDebugName()) or (f.GetName and f:GetName())
@@ -228,8 +233,8 @@ function MM.TimeButton()
     local function usable(f)
         return type(f) == "table" and f.SetPoint and not (f.IsForbidden and f:IsForbidden())
     end
-    for _, f in ipairs({ _G.GameTimeFrame, type(cl) == "table" and cl.GameTimeFrame or nil,
-        type(mm) == "table" and mm.GameTimeFrame or nil }) do
+    for _, f in ipairs({ type(cl) == "table" and cl.DielFrame or nil, _G.GameTimeFrame,
+        type(cl) == "table" and cl.GameTimeFrame or nil, type(mm) == "table" and mm.GameTimeFrame or nil }) do
         if usable(f) then return f end
     end
     for _, host in ipairs({ mm, cl }) do
@@ -327,6 +332,29 @@ local function BuildBag()
     end)
 end
 
+-- 6.3.1.2 hob die Knoepfe ueber die Kachel, und sie blieben im Beta-Test
+-- trotzdem dunkel. Naechster Verdacht: Addon-Knoepfe blenden sich selbst
+-- ab (LibDBIcon: "nur bei Maus ueber der Karte"), und die Maus steht in
+-- der Liste nicht ueber der Karte. In der Liste bleiben sie deshalb voll
+-- deckend; ausserhalb (Sammelknopf aus) gilt wieder, was das Addon will.
+local opaqueHooked, opaqueGuard = {}, false
+function KeepOpaque(b)
+    if not b.SetAlpha then return end
+    if not opaqueHooked[b] and _G.hooksecurefunc then
+        opaqueHooked[b] = true
+        _G.hooksecurefunc(b, "SetAlpha", function(self, a)
+            if opaqueGuard or not flyout or self:GetParent() ~= flyout then return end
+            if K.Plain(a) == 1 then return end
+            opaqueGuard = true
+            self:SetAlpha(1)
+            opaqueGuard = false
+        end)
+    end
+    opaqueGuard = true
+    b:SetAlpha(1)
+    opaqueGuard = false
+end
+
 function MM.LayoutBag()
     local mm = _G.Minimap
     if type(mm) ~= "table" then return end
@@ -357,6 +385,7 @@ function MM.LayoutBag()
         if b:GetParent() ~= flyout then b:SetParent(flyout) end
         if type(strata) == "string" and b.SetFrameStrata then b:SetFrameStrata(strata) end
         if type(level) == "number" and b.SetFrameLevel then b:SetFrameLevel(level + 2) end
+        KeepOpaque(b)
         b:ClearAllPoints()
         local c, r = (i - 1) % BAG_PER_ROW, math.floor((i - 1) / BAG_PER_ROW)
         b:SetPoint("TOPLEFT", flyout, "TOPLEFT", 4 + c * BAG_CELL + inset, -4 - r * BAG_CELL - inset)

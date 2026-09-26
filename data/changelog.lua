@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.1.4",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFTageszeit unten rechts in der Minikarte.|r Die Sonne heißt in diesem Client anders als in allen bisherigen; jetzt wird sie gefunden und sitzt über dem Gebietsstreifen.",
+            "|cff7C6CFFQuestliste ganz ohne Fläche.|r Deckkraft 0 % unter Questliste blendet die Fläche samt Rand und Schatten aus.",
+            "|cff7C6CFFAddon-Knöpfe und Chat-Reiter.|r Addon-Knöpfe in der Kachel des Sammelknopfs bleiben voll deckend, und die Reiterzeile des Chats liegt eine Schicht über dem Chatfenster. /wcui maus nennt jetzt auch Texte, Farbflächen und die Deckkraft unter dem Zeiger.",
+        },
+    },
+    {
         version = "6.3.1.3",
         date    = "26.09.2026",
         notes   = {

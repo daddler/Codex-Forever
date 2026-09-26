@@ -9,6 +9,32 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.1.4] – 2026-09-26
+
+**Tageszeit unten rechts in der Minikarte.** Die Sonne heißt in diesem Client anders als in allen bisherigen; jetzt wird sie gefunden und sitzt über dem Gebietsstreifen.
+
+**Questliste ganz ohne Fläche.** Deckkraft 0 % unter Questliste blendet die Fläche samt Rand und Schatten aus.
+
+**Addon-Knöpfe und Chat-Reiter.** Addon-Knöpfe in der Kachel des Sammelknopfs bleiben voll deckend, und die Reiterzeile des Chats liegt eine Schicht über dem Chatfenster. /wcui maus nennt jetzt auch Texte, Farbflächen und die Deckkraft unter dem Zeiger.
+
+### Technisch
+
+- Minikarte: Die Tageszeit ist im Beta-Client `MinimapCluster.DielFrame`
+  (Atlas `UI-HUD-Minimap-DayCycle`, keine Mausannahme – deshalb nannte
+  `GetMouseFoci` nur `Minimap`). `MM.TimeButton` prüft ihn zuerst, die
+  Namenssuche kennt zusätzlich „Diel“.
+- Addon-Knöpfe in der Liste: `KeepOpaque` hält sie auf Alpha 1 (Haken
+  auf `SetAlpha`, nur solange die Liste ihr Elternrahmen ist). Verdacht:
+  LibDBIcon blendet Knöpfe ab, wenn die Maus nicht über der Karte steht.
+  Nicht gemessen.
+- Chat: `RaiseDock` setzt `GeneralDockManager` in die Schicht `MEDIUM`
+  (Haken auf `SetFrameStrata`). Die Reiter blieben mit der Fläche in
+  `BACKGROUND` unsichtbar; das Chatfenster steht in `LOW` drei Stufen über
+  ihnen. Ebenfalls ein Verdacht, keine Messung.
+- `K.UnderCursor`: auch `FontString`s (mit Text), Farbflächen, Zeichenebene
+  und Deckkraft; Regionen mit Alpha 0 fallen weg; bis zu 18 Zeilen.
+- Questliste: `bgAlpha = 0` blendet `WeintCodexQuestPanel` ganz aus.
+
 ## [6.3.1.3] – 2026-09-26
 
 **Die Chat-Reiter sind wieder zu sehen.** Die dunkle Fläche des Chats lag über „Allgemein“ und „Kampflog“ und hat sie fast ganz verdeckt; jetzt liegt sie darunter.

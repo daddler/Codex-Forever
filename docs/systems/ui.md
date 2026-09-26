@@ -369,6 +369,10 @@ Seit 6.2.0.0:
   (die Tageszeit an der Minikarte blieb drei Fassungen lang unauffindbar).
   Seit 6.3.1.3 zusätzlich `K.UnderCursor`: alles Sichtbare unter dem
   Zeiger, auch Texturen und Rahmen ohne Mausannahme, die kleinsten zuerst.
+* **Tageszeit = `MinimapCluster.DielFrame`** (6.3.1.4, gemessen mit
+  `/wcui maus`): kein Knopf, nimmt keine Maus an.
+* **Reiterleiste in `MEDIUM`** (6.3.1.4, Verdacht): `GeneralDockManager`
+  eine Schicht über dem Chatfenster.
 * **Chatfläche in `BACKGROUND`** (6.3.1.3): als Kind des Chatrahmens in
   `LOW` hob das Spiel sie auf dessen Stufe, über die Reiter. Eine Schicht
   tiefer liegt sie unabhängig von jeder Stufe darunter.
