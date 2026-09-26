@@ -11,6 +11,8 @@ nicht zusammen.
 
 ## [6.3.2.8] – 2026-09-26
 
+**Im Dungeon nur seine Quests.** Betrittst du einen Dungeon, zeigt die Questliste nur noch die Quests dieses Dungeons; beim Verlassen ist alles wieder wie vorher. Abschaltbar unter Questliste → „Nur Quests des Dungeons“.
+
 **Questpfeil in Dungeons aus.** In Dungeons, Schlachtzügen, auf Schlachtfeldern und in Arenen verschwindet der Pfeil – dort nennt das Spiel ohnehin keine Position. Draußen ist er sofort wieder da. Abschaltbar unter Questpfeil → „In Dungeons ausblenden“.
 
 ### Technisch
@@ -20,6 +22,16 @@ nicht zusammen.
   „nicht in einer Instanz“). Geprüft in `QA.Update`, das bei
   `PLAYER_ENTERING_WORLD` und Gebietswechseln ohnehin läuft. Als Geist
   steht man draußen – der Weg zur Leiche bleibt.
+- `ui/questtracker.lua`: `dungeonOnly` (Standard an). Beim Betreten
+  einer Instanz (party/raid/scenario, `PLAYER_ENTERING_WORLD`,
+  `ZONE_CHANGED_NEW_AREA`, 2 s später, nach dem Kampf) werden alle
+  verfolgten Quests, die nicht zum Dungeon gehören, aus der Verfolgung
+  genommen (`C_QuestLog.RemoveQuestWatch`) und die des Dungeons
+  aufgenommen. Zum Dungeon gehört, was im Questlog unter der Kopfzeile
+  mit dem Namen der Instanz (`GetInstanceInfo`) steht oder `isOnMap`
+  trägt. Beim Verlassen wird genau das Geänderte zurückgenommen.
+  Gemerkt in `WeintCodex_SavedData.ui.questWatch` – solange die Beta
+  nichts speichert, geht es bei einem Neuladen im Dungeon verloren.
 
 ## [6.3.2.7] – 2026-09-26
 

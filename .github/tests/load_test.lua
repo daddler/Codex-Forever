@@ -1672,6 +1672,48 @@ do
     Check(ok, "Chat: Eingabezeile erst mit Enter" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.2.8: Im Dungeon verfolgt die Questliste nur dessen Quests; beim
+-- Verlassen kommt genau das zurueck, was geaendert wurde.
+do
+    local ok, err = pcall(function()
+        local QT = WeintCodex.UIQuestTracker
+        local oldQL, oldInst, oldInfo = _G.C_QuestLog, _G.IsInInstance, _G.GetInstanceInfo
+        local log = {
+            { isHeader = true, title = "Westfall" },
+            { questID = 1, title = "Pastete" },
+            { questID = 2, title = "Eintopf" },
+            { isHeader = true, title = "Die Todesminen" },
+            { questID = 3, title = "Rote Seide" },
+            { questID = 4, title = "Der Defias-Bruder" },
+            { isHeader = true, title = "Dämmerwald" },
+            { questID = 5, title = "Nachtwache", isOnMap = true },
+        }
+        local watched = { 1, 2, 3 }
+        local function has(id) for _, w in ipairs(watched) do if w == id then return true end end return false end
+        _G.C_QuestLog = {
+            GetNumQuestLogEntries = function() return #log end,
+            GetInfo = function(i) return log[i] end,
+            GetNumQuestWatches = function() return #watched end,
+            GetQuestIDForQuestWatchIndex = function(i) return watched[i] end,
+            AddQuestWatch = function(id) if not has(id) then watched[#watched + 1] = id end end,
+            RemoveQuestWatch = function(id)
+                for i, w in ipairs(watched) do if w == id then table.remove(watched, i) return end end
+            end,
+        }
+        _G.GetInstanceInfo = function() return "Die Todesminen", "party" end
+        _G.IsInInstance = function() return true, "party" end
+        QT.CheckDungeon()
+        table.sort(watched)
+        assert(table.concat(watched, ",") == "3,4,5", "im Dungeon falsch verfolgt: " .. table.concat(watched, ","))
+        _G.IsInInstance = function() return false, "none" end
+        QT.CheckDungeon()
+        table.sort(watched)
+        assert(table.concat(watched, ",") == "1,2,3", "nach dem Dungeon nicht zurueck: " .. table.concat(watched, ","))
+        _G.C_QuestLog, _G.IsInInstance, _G.GetInstanceInfo = oldQL, oldInst, oldInfo
+    end)
+    Check(ok, "Questliste: im Dungeon nur dessen Quests, danach alles zurueck" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.8: Questpfeil in Instanzen aus.
 do
     local ok, err = pcall(function()

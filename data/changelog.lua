@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.3.2.8",
         date    = "26.09.2026",
         notes   = {
+            "|cff7C6CFFIm Dungeon nur seine Quests.|r Betrittst du einen Dungeon, zeigt die Questliste nur noch die Quests dieses Dungeons; beim Verlassen ist alles wieder wie vorher. Abschaltbar unter Questliste → „Nur Quests des Dungeons“.",
             "|cff7C6CFFQuestpfeil in Dungeons aus.|r In Dungeons, Schlachtzügen, auf Schlachtfeldern und in Arenen verschwindet der Pfeil – dort nennt das Spiel ohnehin keine Position. Draußen ist er sofort wieder da. Abschaltbar unter Questpfeil → „In Dungeons ausblenden“.",
         },
     },
