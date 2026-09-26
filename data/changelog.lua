@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.1.7",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFCharakterfenster auch innen im neuen Stil.|r Holz- und Steinhintergründe, der Klassenhintergrund hinter den Werten, die Holzbalken der Kopfzeilen, die Streifen hinter den Werten und die Metallrahmen der Ausrüstungsplätze sind weg; die Plätze sind flach mit feinem Rand wie die Aktionsknöpfe. Die Bühne des Modells bleibt.",
+        },
+    },
+    {
         version = "6.3.1.6",
         date    = "26.09.2026",
         notes   = {

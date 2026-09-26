@@ -1598,6 +1598,20 @@ do
         assert(cf.Bg:GetAlpha() == 0 and edge:GetAlpha() == 0, "Holz und Metall bleiben stehen")
         assert(icon:GetAlpha() ~= 0, "Inhalt des Fensters ausgeblendet")
         assert(W.done[cf] and W.done[cf].kachel, "keine Kachel unter dem Fenster")
+        -- 6.3.1.7: das Innere nach Atlas; die Buehne des Modells bleibt.
+        local statBg, raceBg, title = slot:CreateTexture(), slot:CreateTexture(), slot:CreateTexture()
+        statBg.GetAtlas = function() return "UI-Character-Info-Stat-BG" end
+        raceBg.GetAtlas = function() return "UI-Character-Info-RaceBG-Overlay" end
+        title.GetAtlas = function() return "UI-Character-Info-Title" end
+        for _, t in ipairs({ statBg, raceBg, title }) do t.GetObjectType = function() return "Texture" end end
+        slot.GetRegions = function() return statBg, raceBg, title end
+        cf.GetChildren = function() return slot end
+        W.HideByAtlas(cf)
+        assert(statBg:GetAlpha() == 0 and title:GetAlpha() == 0, "Holz im Inneren bleibt stehen")
+        assert(raceBg:GetAlpha() ~= 0, "Buehne des Modells ausgeblendet")
+        assert(W.HidesAtlas("UI-Character-Info-Warrior-BG") and W.HidesAtlas("UI-Character-Info-Druid-BG"),
+            "Klassenhintergrund nicht erkannt")
+        assert(not W.HidesAtlas("UI-Character-Info-RaceBG") and not W.HidesAtlas(nil), "zu viel erkannt")
         _G.TestCharFrame, _G.TestCharFrameHeadSlot = nil, nil
 
         -- /wcui fenster: ohne Fenster unter der Maus ein Satz.

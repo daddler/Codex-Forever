@@ -372,7 +372,9 @@ Seit 6.2.0.0:
 * **Fenster des Spiels** (6.3.1.6, `ui/windows.lua`): Charakterfenster
   und Teilfenster, erste Stufe nur die Hülle (Schmuck der Vorlage weg,
   Kachel darunter). Inhalte werden nie angefasst. Was innen noch nach
-  Holz aussieht, nennt `/wcui fenster`.
+  Holz aussieht, nennt `/wcui fenster`. Seit 6.3.1.7 zweite Stufe:
+  `W.HIDE_ATLAS` blendet die dort gemessenen Atlanten aus (Muster, nie
+  Inhalte; `RaceBG` bleibt), die Plätze bekommen einen 1-px-Rand.
 * **Tageszeit-Ecke** (6.3.1.6): `dayCorner` der Minikarte.
 * **LibDBIcon friert Schichten ein** (6.3.1.6): vor `SetFrameStrata`
   erst `SetFixedFrameStrata(false)`, sonst wirkt es nicht.

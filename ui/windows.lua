@@ -6,7 +6,9 @@
 -- das neue Design Einheit gebieten"): Kachel statt Holz und Metall, ohne
 -- das runde Portraet, der Titel in unserer Schrift.
 --
--- ERSTE STUFE, BEWUSST NUR DIE HUELLE. Wie die Fenster dieses Clients
+-- ERSTE STUFE (6.3.1.6) WAR NUR DIE HUELLE; die zweite (6.3.1.7, unten)
+-- blendet im Inneren aus, was /wcui fenster im Beta-Test benannt hat.
+-- Urspruenglich: Wie die Fenster dieses Clients
 -- innen aufgebaut sind, hat niemand gemessen. Ausgeblendet werden deshalb
 -- nur Teile, die in der Fenstervorlage des Spiels Schmuck sind
 -- (NineSlice, Bg, Inset, Portraet) - nie Inhalte: Plaetze, Balken,
@@ -123,6 +125,85 @@ function W.Skin(f, panel)
     return d
 end
 
+--------------------------------------------------
+-- Zweite Stufe: das Innere, nach Namen (6.3.1.7)
+--------------------------------------------------
+-- /wcui fenster im Beta-Test nannte, was im Charakterfenster nach Holz
+-- und Stein aussieht - alles Atlanten des Spiels mit sprechenden Namen.
+-- Ausgeblendet wird genau das, jeweils als Muster (Klassenhintergrund:
+-- "UI-Character-Info-Warrior-BG" gibt es je Klasse). Der Hintergrund der
+-- Modellszene (RaceBG) bleibt: er ist die Buehne des Modells, kein Rahmen.
+W.HIDE_ATLAS = {
+    "^UI%-Character%-Info%-General%-BG",     -- linke Haelfte
+    "^UI%-Character%-Info%-Stat%-BG",        -- rechte Haelfte
+    "^UI%-Character%-Info%-Stat%-StoneBG",
+    "^UI%-Character%-Info%-%a+%-BG$",        -- Klassenhintergrund der Werte
+    "^UI%-Character%-Info%-Title",           -- Holzbalken "Allgemein" usw.
+    "^UI%-Character%-Info%-Line%-Bounce",    -- Streifen hinter den Werten
+    "^UI%-Character%-Info%-GearSlot",        -- Metallrahmen der Plaetze
+    "^UI%-Character%-Info%-Divider",
+    "^common%-insideframe",
+}
+local KEEP_ATLAS = { "RaceBG" }
+
+function W.HidesAtlas(atlas)
+    if type(atlas) ~= "string" then return false end
+    for _, k in ipairs(KEEP_ATLAS) do
+        if atlas:find(k, 1, true) then return false end
+    end
+    for _, pat in ipairs(W.HIDE_ATLAS) do
+        if atlas:find(pat) then return true end
+    end
+    return false
+end
+
+-- Alle Texturen mit einem dieser Atlanten, bis in die Tiefe. Zeilen einer
+-- Liste legt das Spiel beim Blaettern neu an - deshalb laeuft das bei
+-- jedem Zeigen und, solange das Fenster offen ist, zweimal je Sekunde.
+local function HideByAtlas(f, depth)
+    if depth > 8 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
+    local rok, regions = pcall(function() return { f:GetRegions() } end)
+    for _, r in ipairs(rok and regions or {}) do
+        local ok, atlas = pcall(function()
+            if r:GetObjectType() ~= "Texture" then return nil end
+            return r.GetAtlas and r:GetAtlas()
+        end)
+        if ok and W.HidesAtlas(atlas) then Hide(r) end
+    end
+    local cok, kids = pcall(function() return { f:GetChildren() } end)
+    for _, ch in ipairs(cok and kids or {}) do HideByAtlas(ch, depth + 1) end
+end
+W.HideByAtlas = function(f) HideByAtlas(f, 0) end
+
+-- Ausruestungsplaetze: flach wie die Aktionsknoepfe, 1 px schwarzer Rand.
+-- Erkannt am Namen (Character...Slot), nicht an einer Liste: welche Plaetze
+-- es gibt, sagt der Client.
+local slotDone = {}
+local function SkinSlots(f)
+    local ok, kids = pcall(function() return { f:GetChildren() } end)
+    for _, ch in ipairs(ok and kids or {}) do
+        local n = type(ch) == "table" and ch.GetName and ch:GetName()
+        if type(n) == "string" and n:find("^Character[%a%d]+Slot$") and not slotDone[ch] then
+            slotDone[ch] = true
+            local normal = ch.GetNormalTexture and ch:GetNormalTexture()
+            if type(normal) == "table" then Hide(normal) end
+            K.Border(ch, 1, 0, 0, 0, 1, "OVERLAY")
+        end
+        if type(ch) == "table" then SkinSlots(ch) end
+    end
+end
+W.SkinSlots = SkinSlots
+
+function W.Inner()
+    for _, n in ipairs(W.WINDOWS) do
+        local f = _G[n]
+        if type(f) == "table" and done[f] then
+            HideByAtlas(f, 0)
+            SkinSlots(f)
+        end
+    end
+end
+
 function W.Apply()
     if not Opt("windowSkin") then return end
     for _, n in ipairs(W.WINDOWS) do
@@ -136,6 +217,7 @@ function W.Apply()
         local f = _G[n]
         if type(f) == "table" and not done[f] then W.Skin(f, true) end
     end
+    W.Inner()
 end
 
 -- Die Fenster legt das Spiel beim Anmelden an; manche Teilfenster erst
@@ -151,6 +233,19 @@ boot:SetScript("OnEvent", function()
         cf:HookScript("OnShow", function()
             local ok2, err2 = pcall(W.Apply)
             if not ok2 then K.Report("fenster", err2) end
+        end)
+        -- Solange es offen ist: neue Zeilen (Blaettern, Reiterwechsel)
+        -- zweimal je Sekunde nachziehen. Geschlossen laeuft nichts.
+        -- Ein eigener Kindrahmen, kein Skript am Fenster des Spiels: er
+        -- laeuft nur, solange das Fenster sichtbar ist.
+        local watch = CreateFrame("Frame", nil, cf)
+        local acc = 0
+        watch:SetScript("OnUpdate", function(_, elapsed)
+            acc = acc + (elapsed or 0)
+            if acc < 0.5 then return end
+            acc = 0
+            local ok3, err3 = pcall(W.Inner)
+            if not ok3 then K.Report("fenster", err3) end
         end)
     end
 end)

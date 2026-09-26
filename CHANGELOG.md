@@ -9,6 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.1.7] – 2026-09-26
+
+**Charakterfenster auch innen im neuen Stil.** Holz- und Steinhintergründe, der Klassenhintergrund hinter den Werten, die Holzbalken der Kopfzeilen, die Streifen hinter den Werten und die Metallrahmen der Ausrüstungsplätze sind weg; die Plätze sind flach mit feinem Rand wie die Aktionsknöpfe. Die Bühne des Modells bleibt.
+
+### Technisch
+
+- `ui/windows.lua`: `W.HIDE_ATLAS` – Atlasmuster aus `/wcui fenster`
+  im Beta-Test (`UI-Character-Info-General-BG`, `-Stat-BG`,
+  `-Stat-StoneBG`, `-<Klasse>-BG`, `-Title`, `-Line-Bounce*`,
+  `-GearSlot`, `-Divider`, `common-insideframe`); `RaceBG` bleibt.
+  `HideByAtlas` läuft bei jedem Zeigen und, solange das Fenster offen
+  ist, zweimal je Sekunde über einen eigenen Kindrahmen (neue
+  Listenzeilen beim Blättern und Reiterwechsel), kein Skript am Fenster
+  des Spiels.
+- Ausrüstungsplätze (`Character…Slot`, am Namen erkannt): Normaltextur
+  unsichtbar, 1 px schwarzer Rand.
+
 ## [6.3.1.6] – 2026-09-26
 
 **Charakterfenster im neuen Stil.** Das Fenster hinter Taste C – mit Ruf, Fertigkeiten, PvP und Abzeichen – steht auf einer Kachel statt auf Holz und Metall, ohne das runde Porträt, der Titel in der Schrift der Oberfläche. Erste Stufe: die Hülle; das Innere folgt.
