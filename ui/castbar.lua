@@ -44,7 +44,8 @@ end
 --------------------------------------------------
 -- style = { height, icon = bool, timer = bool, fontSize,
 --           cast = {r,g,b}, locked = {r,g,b}, failed = {r,g,b},
---           bg = {r,g,b}, shield = bool }
+--           bg = {r,g,b}, shield = bool,
+--           target = bool }  -- Ziel des Zaubers rechts im Balken (6.3.2.5)
 --------------------------------------------------
 
 local Bar = {}
@@ -109,6 +110,13 @@ function CB.Create(parent)
     timer:SetJustifyH("RIGHT")
     f._timer = timer
 
+    -- Auf wen der Zauber geht (Beta-Test: "Ziel ist wichtig").
+    local tgt = K.NewText(sb)
+    tgt:SetJustifyH("RIGHT")
+    tgt:SetWordWrap(false)
+    tgt:Hide()
+    f._target = tgt
+
     -- Nicht unterbrechbar: ein heller Rahmen um den Balken. Keine
     -- Schildgrafik - ein geratener Texturpfad waere im Spiel ein gruenes
     -- Rechteck, und eine eigene Schildform liest sich bei 14 px nicht.
@@ -146,11 +154,12 @@ function Bar:ApplyStyle(style)
     local fs = style.fontSize or math.max(8, math.floor(h * 0.62))
     K.SetFont(self._text, fs)
     K.SetFont(self._timer, fs)
-    self._text:ClearAllPoints()
-    self._text:SetPoint("LEFT", self._bar, "LEFT", 4, 0)
-    self._text:SetPoint("RIGHT", self._bar, "RIGHT", style.timer and -34 or -4, 0)
+    K.SetFont(self._target, fs)
     self._timer:ClearAllPoints()
     self._timer:SetPoint("RIGHT", self._bar, "RIGHT", -4, 0)
+    self._target:ClearAllPoints()
+    self._target:SetPoint("RIGHT", self._bar, "RIGHT", style.timer and -34 or -4, 0)
+    self:AnchorText()
     if style.timer then self._timer:Show() else self._timer:Hide() end
 
     local b = style.bg or { r = 0.1, g = 0.1, b = 0.12 }
@@ -165,6 +174,54 @@ end
 
 function Bar:SetUnit(unit)
     self._unit = unit
+end
+
+-- Der Zaubername endet vor dem Ziel, sonst vor der Zeit.
+function Bar:AnchorText()
+    local style = self._style or {}
+    self._text:ClearAllPoints()
+    self._text:SetPoint("LEFT", self._bar, "LEFT", 4, 0)
+    if self._target:IsShown() then
+        self._text:SetPoint("RIGHT", self._target, "LEFT", -4, 0)
+    else
+        self._text:SetPoint("RIGHT", self._bar, "RIGHT", style.timer and -34 or -4, 0)
+    end
+end
+
+-- Ziel des Zaubers: das Ziel der zaubernden Einheit ("nameplate3target").
+-- Das Spiel nennt kein eigenes Zauberziel; das Ziel der Einheit ist, was
+-- auch Plater und ElvUI zeigen, und bei Gegnern fast immer dasselbe.
+-- Du selbst: "Dich" in Rot. Spieler in Klassenfarbe. Der Name kann
+-- geheim sein - er geht nur an SetText, verglichen wird er nie.
+function Bar:UpdateTarget()
+    local style = self._style
+    local unit = self._unit
+    local tgt = self._target
+    local tu = unit and (unit .. "target")
+    if not (style and style.target) or not tu or not self:IsShown()
+       or not K.Bool(_G.UnitExists and _G.UnitExists(tu), false) then
+        if tgt:IsShown() then tgt:Hide() self:AnchorText() end
+        return
+    end
+    -- Die Breite des Ziels: hoechstens gut ein Drittel des Balkens.
+    local w = K.Plain(self._bar:GetWidth())
+    if type(w) == "number" and w > 0 then tgt:SetWidth(math.max(24, w * 0.38)) end
+    if K.Bool(_G.UnitIsUnit and _G.UnitIsUnit(tu, "player"), false) then
+        tgt:SetText("» Dich")
+        local c = WeintCodex.GameColors.castTargetMe
+        tgt:SetTextColor(c[1], c[2], c[3], 1)
+    else
+        tgt:SetFormattedText("» %s", _G.UnitName and (_G.UnitName(tu)) or "")
+        local r, g, b = 1, 1, 1
+        if K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(tu), false) then
+            local _, class = _G.UnitClass(tu)
+            class = K.Plain(class)
+            local cc = class and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
+            if cc then r, g, b = cc.r, cc.g, cc.b end
+        end
+        tgt:SetTextColor(r, g, b, 1)
+    end
+    if not tgt:IsShown() then tgt:Show() self:AnchorText() end
 end
 
 local function Color(style, key, fallbackName)
@@ -267,6 +324,7 @@ function Bar:Update()
     end
     self._elapsed = 1
     self:Show()
+    self:UpdateTarget()
 end
 
 -- Latenz (nur mit style.latency, also beim eigenen Zauber, und nur mit
@@ -298,6 +356,8 @@ function Bar:Stop(failed)
         self._bar:SetValue(1)
         self._text:SetText("Unterbrochen")
         self._timer:SetText("")
+        self._target:Hide()
+        self:AnchorText()
         self._spark:Hide()
         self._latency:Hide()
         self._holding = true
@@ -357,6 +417,15 @@ function Bar:ShowPreview(on)
     self._icon:SetTexture("Interface\\Icons\\Spell_Shadow_ShadowBolt")
     self._text:SetText("Schattenblitz")
     self._timer:SetText("1.4")
+    if self._style and self._style.target then
+        self._target:SetText("» Dich")
+        local c = WeintCodex.GameColors.castTargetMe
+        self._target:SetTextColor(c[1], c[2], c[3], 1)
+        self._target:Show()
+    else
+        self._target:Hide()
+    end
+    self:AnchorText()
     self._bar:SetMinMaxValues(0, 1)
     self._bar:SetValue(0.6)
     self:PaintInterrupt(false)

@@ -94,6 +94,7 @@ local defaults = {
     castHeight  = 14,
     castIcon    = true,
     castTimer   = true,
+    castTarget  = true,        -- auf wen der Zauber geht, rechts im Balken
     castShield  = true,
     castColor   = K.ColorDefault("cast"),
     castLocked  = K.ColorDefault("castLocked"),
@@ -583,7 +584,7 @@ local function Layout(p)
     cast:ApplyStyle({
         height = S.castHeight, icon = S.castIcon, timer = S.castTimer,
         shield = S.castShield, cast = S.castColor, locked = S.castLocked,
-        bg = S.bgColor, border = S.showBorder,
+        bg = S.bgColor, border = S.showBorder, target = S.castTarget,
     })
 end
 
@@ -1114,6 +1115,12 @@ local function OnEvent(_, event, unit)
     local p = unit and plates[unit]
     if not p then return end
 
+    -- Der Gegner wechselt mitten im Zauber sein Ziel: das Ziel im Balken mit.
+    if event == "UNIT_TARGET" then
+        if not p._friendly and p.cast:IsShown() then p.cast:UpdateTarget() end
+        return
+    end
+
     local handler = UNIT_EVENTS[event]
     if handler then handler(p) return end
 
@@ -1230,7 +1237,7 @@ local function Enable()
     for _, e in ipairs({
         "NAME_PLATE_UNIT_ADDED", "NAME_PLATE_UNIT_REMOVED", "UNIT_FACTION",
         "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED", "RAID_TARGET_UPDATE",
-        "QUEST_LOG_UPDATE", "UNIT_QUEST_LOG_CHANGED", "UPDATE_MOUSEOVER_UNIT",
+        "QUEST_LOG_UPDATE", "UNIT_QUEST_LOG_CHANGED", "UPDATE_MOUSEOVER_UNIT", "UNIT_TARGET",
     }) do Register(events, e) end
     for e in pairs(UNIT_EVENTS) do Register(events, e) end
     for e in pairs(CAST_EVENTS) do Register(events, e) end
@@ -1476,6 +1483,9 @@ K.Register({
                   { type = "slider", label = "Höhe", key = "castHeight", min = 8, max = 30, step = 1, format = px, disabled = off })
             B:Row({ type = "toggle", label = "Zaubersymbol", key = "castIcon", disabled = off },
                   { type = "toggle", label = "Restzeit", key = "castTimer", disabled = off })
+            B:Row({ type = "toggle", label = "Ziel des Zaubers", key = "castTarget", disabled = off,
+                    description = "Rechts im Balken, auf wen der Gegner zaubert – „Dich“ in Rot, Spieler in Klassenfarbe." },
+                  { type = "empty" })
             B:Section("Unterbrechen")
             B:Row({ type = "color", label = "Unterbrechbar", key = "castColor", disabled = off },
                   { type = "color", label = "Nicht unterbrechbar", key = "castLocked", disabled = off })

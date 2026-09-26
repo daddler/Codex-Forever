@@ -1672,6 +1672,36 @@ do
     Check(ok, "Chat: Eingabezeile erst mit Enter" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.2.5: Zauberbalken nennt das Ziel des Zaubers ("» Dich" rot).
+do
+    local ok, err = pcall(function()
+        local CB = WeintCodex.UICastBar
+        local saved = { _G.UnitCastingInfo, _G.UnitExists, _G.UnitIsUnit, _G.UnitName, _G.UnitIsPlayer, _G.UnitClass }
+        _G.UnitCastingInfo = function() return "Frostblitz", nil, 135846, 1000, 3000, false, nil, false end
+        _G.UnitExists = function() return true end
+        local me = true
+        _G.UnitIsUnit = function(a, b) return me and a == "nameplate9target" and b == "player" end
+        _G.UnitName = function(u) if u == "nameplate9target" then return "Liora" end return "Gegner" end
+        _G.UnitIsPlayer = function() return true end
+        _G.UnitClass = function() return "Priester", "PRIEST" end
+        local bar = CB.Create(UIParent)
+        bar:ApplyStyle({ height = 14, timer = true, target = true })
+        bar:SetUnit("nameplate9")
+        bar:Update()
+        assert(bar._target:IsShown() and bar._target:GetText() == "» Dich", "Ziel 'Dich' fehlt: " .. tostring(bar._target:GetText()))
+        me = false
+        bar:UpdateTarget()
+        assert(bar._target:GetText() == "» Liora", "Zielname fehlt: " .. tostring(bar._target:GetText()))
+        bar:Stop(true)
+        assert(not bar._target:IsShown(), "Ziel bleibt bei 'Unterbrochen' stehen")
+        bar:ApplyStyle({ height = 14, timer = true, target = false })
+        bar:Update()
+        assert(not bar._target:IsShown(), "Ziel trotz abgeschalteter Einstellung")
+        _G.UnitCastingInfo, _G.UnitExists, _G.UnitIsUnit, _G.UnitName, _G.UnitIsPlayer, _G.UnitClass = unpack(saved, 1, 6)
+    end)
+    Check(ok, "Zauberbalken: Ziel des Zaubers" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.3: UNIT_FACTION fuer Gruppenkennungen ("partypet4") fragt nicht
 -- nach einer Plakette - der Client wirft dort einen Fehler.
 do

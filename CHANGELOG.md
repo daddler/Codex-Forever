@@ -9,6 +9,24 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.2.5] – 2026-09-26
+
+**Auf wen der Gegner zaubert.** Der Zauberbalken auf Namensplaketten, am Ziel- und am Fokusrahmen nennt rechts das Ziel des Zaubers: „» Dich“ in Rot, wenn er auf dich geht, andere Spieler in ihrer Klassenfarbe. Wechselt der Gegner mitten im Zauber das Ziel, wechselt die Anzeige mit. Abschaltbar bei den Zauberbalken der Plaketten und Rahmen.
+
+### Technisch
+
+- `ui/castbar.lua`: `style.target`, `Bar:UpdateTarget` (Ziel der
+  zaubernden Einheit, `<unit>target`), `Bar:AnchorText` (der Zaubername
+  endet vor dem Ziel). Das Spiel nennt kein eigenes Zauberziel – das
+  Ziel der Einheit ist bei Gegnern fast immer dasselbe; Plater und ElvUI
+  zeigen dasselbe. Der Name kann geheim sein und geht nur an
+  `SetFormattedText`; „Dich“ über `UnitIsUnit`. Höchstens 38 % der
+  Balkenbreite. Bei „Unterbrochen“ verschwindet es.
+- Plaketten: `castTarget` (Standard an), `UNIT_TARGET` zieht das Ziel
+  während des Zaubers nach. Einheitenrahmen: `castTarget` für Ziel und
+  Fokus (beim eigenen Zauber nicht – das Ziel steht im Zielrahmen).
+  Farbe `castTargetMe` in `core/ui.lua`.
+
 ## [6.3.2.4] – 2026-09-26
 
 **Gruppenrahmen mit mehr Einblick.** Eingehende Heilung als heller grüner Balken hinter dem Leben, Schilde als weißer Balken, ein Rollensymbol (Schild, Kreuz, Schwert) und eine Krone beim Gruppenleiter.

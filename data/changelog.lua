@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.2.5",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFAuf wen der Gegner zaubert.|r Der Zauberbalken auf Namensplaketten, am Ziel- und am Fokusrahmen nennt rechts das Ziel des Zaubers: „» Dich“ in Rot, wenn er auf dich geht, andere Spieler in ihrer Klassenfarbe. Wechselt der Gegner mitten im Zauber das Ziel, wechselt die Anzeige mit. Abschaltbar bei den Zauberbalken der Plaketten und Rahmen.",
+        },
+    },
+    {
         version = "6.3.2.4",
         date    = "26.09.2026",
         notes   = {

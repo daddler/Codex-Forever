@@ -72,6 +72,7 @@ local defaults = {
     comboCentered      = true,
     castIcon      = true,
     castTimer     = true,
+    castTarget    = true,     -- Ziel des Zaubers bei Ziel und Fokus
     castColor     = K.ColorDefault("cast"),
     castLocked    = K.ColorDefault("castLocked"),
     replacePlayerCast = true,
@@ -542,6 +543,9 @@ function Frame:Layout()
             icon = Opt("castIcon"), timer = Opt("castTimer"),
             cast = K.GetColor(KEY, "castColor"), locked = K.GetColor(KEY, "castLocked"),
             bg = bg, border = Opt("showBorder"),
+            -- Beim eigenen Zauber waere das Ziel das eigene Ziel - das
+            -- steht schon im Zielrahmen.
+            target = (u ~= "player") and Opt("castTarget"),
         })
         if not Opt(u .. "_cast") then self._cast:Hide() end
     end
@@ -870,6 +874,8 @@ local function OnEvent(_, event, unit)
         return
     elseif event == "UNIT_TARGET" then
         if unit == "target" then RefreshUnit("targettarget", true) end
+        local f = unit and frames[unit]
+        if f and f._cast and f._cast:IsShown() then f._cast:UpdateTarget() end
         return
     elseif event == "UNIT_PET" then
         if unit == "player" then RefreshUnit("pet", true) end
@@ -1119,7 +1125,9 @@ local pages = {
         B:Row({ type = "toggle", label = "Latenz am eigenen Zauber", key = "playerCastLatency",
                 description = "Rot am Ende: ab da darfst du den nächsten Zauber schon drücken." },
               { type = "empty" })
-        B:Row({ type = "toggle", label = "Restzeit", key = "castTimer" }, { type = "empty" })
+        B:Row({ type = "toggle", label = "Restzeit", key = "castTimer" },
+              { type = "toggle", label = "Ziel des Zaubers (Ziel, Fokus)", key = "castTarget",
+                description = "Auf wen der Gegner zaubert – „Dich“ in Rot." })
         B:Row({ type = "color", label = "Unterbrechbar", key = "castColor" },
               { type = "color", label = "Nicht unterbrechbar", key = "castLocked" })
         B:Note("Position: oben rechts im Fenster auf „Rahmen entsperren“ klicken und die Rahmen an ihren Platz ziehen.")

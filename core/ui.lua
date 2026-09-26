@@ -204,6 +204,7 @@ WeintCodex.GameColors = {
     cast          = {0.486, 0.424, 1.000, 1.0},   -- = Akzent: Fortschritt
     castLocked    = {0.450, 0.450, 0.480, 1.0},   -- nicht unterbrechbar
     castFailed    = {0.800, 0.100, 0.100, 1.0},
+    castTargetMe  = {1.000, 0.300, 0.260, 1.0},   -- "» Dich": der Zauber geht auf dich
     targetRing    = {0.486, 0.424, 1.000, 1.0},   -- = Akzent: Fokusrahmen
     -- Gruppenrahmen (6.3.2.4)
     healPredict   = {0.300, 0.900, 0.420, 0.45},  -- eingehende Heilung hinter dem Leben
