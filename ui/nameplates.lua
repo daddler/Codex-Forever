@@ -310,6 +310,8 @@ end
 --------------------------------------------------
 
 local pool, plates = {}, {}
+-- [Plakette des Spiels] = Einheit, der unsere Plakette dort gehoert.
+local byPlate = {}
 NP.plates = plates
 
 local SLOTS = { "top", "left", "right", "center" }
@@ -908,10 +910,20 @@ end
 -- Zuweisen und Freigeben
 --------------------------------------------------
 
+-- Jede Einheit und jede Plakette des Spiels traegt hoechstens eine von
+-- uns. Kam ADDED doppelt (Neuladen: die Schleife in Enable UND das
+-- Ereignis) oder ohne REMOVED dazwischen, ueberschrieb plates[unit] die
+-- alte - die blieb sichtbar an der Plakette des Spiels haengen, bekam nie
+-- wieder ein Update und wanderte mit ihr zum naechsten Gegner (Beta-Test:
+-- "Geiferzahn" mit 20 % und Zielleuchten ueber einem unberuehrten Vogel).
+local Detach
 local function Attach(unit)
     if not (_G.C_NamePlate and _G.C_NamePlate.GetNamePlateForUnit) then return end
+    if plates[unit] then Detach(unit) end
     local nameplate = _G.C_NamePlate.GetNamePlateForUnit(unit)
     if not nameplate then return end
+    local prev = byPlate[nameplate]
+    if prev and plates[prev] then Detach(prev) end
     -- In Instanzen sind freundliche Plaketten fuer Addons gesperrt
     -- ("forbidden"): dann bleiben die des Spiels, ohne Fehler.
     if nameplate.IsForbidden and nameplate:IsForbidden() then return end
@@ -931,14 +943,16 @@ local function Attach(unit)
     if not friendly then p.auras:SetUnit((S.auraEnabled and S.auraSource == "own") and unit or nil) end
     Suppress(nameplate, unit, p)
     plates[unit] = p
+    byPlate[nameplate] = unit
     FullUpdate(p)
     p:Show()
 end
 
-local function Detach(unit)
+function Detach(unit)
     local p = plates[unit]
     if not p then return end
     plates[unit] = nil
+    if p.nameplate and byPlate[p.nameplate] == unit then byPlate[p.nameplate] = nil end
     questCache[unit] = nil
     if hovered == p then SetHovered(nil) end
     Restore(p.nameplate)

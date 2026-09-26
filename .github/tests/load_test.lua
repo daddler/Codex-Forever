@@ -1451,6 +1451,34 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.1.4: Keine verwaiste Plakette. ADDED doppelt (Neuladen) oder eine
+-- Plakette des Spiels, die ohne REMOVED an eine andere Einheit geht, liess
+-- die alte sichtbar und eingefroren an ihr haengen.
+do
+    local NP = WeintCodex.UINameplates
+    local ok, err = pcall(function()
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        local first = NP.plates["nameplate1"]
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        local second = NP.plates["nameplate1"]
+        assert(first and second, "keine Plakette")
+        assert(first == second or not first:IsShown(), "doppeltes ADDED laesst eine alte Plakette stehen")
+        -- Dieselbe Plakette des Spiels geht an nameplate7, ohne REMOVED.
+        local oldGet = _G.C_NamePlate.GetNamePlateForUnit
+        _G.C_NamePlate.GetNamePlateForUnit = function(unit)
+            if unit == "nameplate7" or unit == "nameplate1" then return blizzPlate end
+            return oldGet(unit)
+        end
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate7")
+        assert(NP.plates["nameplate1"] == nil, "alte Einheit haengt noch an der Plakette des Spiels")
+        assert(not second:IsShown() or NP.plates["nameplate7"] == second, "verwaiste Plakette sichtbar")
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate7")
+        _G.C_NamePlate.GetNamePlateForUnit = oldGet
+    end)
+    Check(ok, "Plaketten: keine verwaiste Plakette bei doppeltem ADDED oder wiederverwendeter Plakette"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Freundliche Plaketten, und die Sperre in Instanzen.
 do
     local NP = WeintCodex.UINameplates

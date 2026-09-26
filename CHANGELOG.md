@@ -11,6 +11,8 @@ nicht zusammen.
 
 ## [6.3.1.4] – 2026-09-26
 
+**Keine Namensplakette mehr am falschen Gegner.** Manchmal blieb eine Plakette eingefroren stehen – mit Namen, Leben und Zielleuchten eines anderen Gegners – und wanderte an den nächsten. Das ist behoben.
+
 **Tageszeit unten rechts in der Minikarte.** Die Sonne heißt in diesem Client anders als in allen bisherigen; jetzt wird sie gefunden und sitzt über dem Gebietsstreifen.
 
 **Questliste ganz ohne Fläche.** Deckkraft 0 % unter Questliste blendet die Fläche samt Rand und Schatten aus.
@@ -34,6 +36,12 @@ nicht zusammen.
 - `K.UnderCursor`: auch `FontString`s (mit Text), Farbflächen, Zeichenebene
   und Deckkraft; Regionen mit Alpha 0 fallen weg; bis zu 18 Zeilen.
 - Questliste: `bgAlpha = 0` blendet `WeintCodexQuestPanel` ganz aus.
+- Plaketten: `Attach` löst vorher ab, was schon an derselben Einheit
+  (`plates[unit]`) oder an derselben Plakette des Spiels (`byPlate`) hängt.
+  Bisher überschrieb ein zweites `NAME_PLATE_UNIT_ADDED` (Neuladen: die
+  Schleife in `Enable` und das Ereignis) den Eintrag, und die alte
+  Plakette blieb sichtbar, ohne Updates, an der Plakette des Spiels – die
+  das Spiel dem nächsten Gegner gibt.
 
 ## [6.3.1.3] – 2026-09-26
 
