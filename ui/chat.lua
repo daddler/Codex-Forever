@@ -43,9 +43,8 @@ local defaults = {
     -- halbdurchsichtige Striche, die im Beta-Test stoerten (6.3.0.8).
     -- Blaettern geht weiter mit dem Mausrad.
     hideScrollBar = true,
-    -- Die Eingabezeile erst mit Enter (Beta-Test 6.3.2.0: "soll erst
-    -- kommen, wenn man auf Enter drueckt"). Das ist die Einstellung
-    -- "Chatstil" des Spiels (CVar chatStyle: "im" statt "classic").
+    -- Die Eingabezeile erst mit Enter (Beta-Test 6.3.2.0), siehe
+    -- CH.UpdateEditState.
     editOnEnter = true,
 }
 local INFO_H = 22
@@ -584,22 +583,16 @@ local function BuildInfoBar()
             pcall(info.RegisterEvent, info, e)
         end
         info:SetScript("OnEvent", function() CH.UpdateInfoBar() end)
-        -- Die Eingabezeile ersetzt sie beim Schreiben.
-        local eb = _G.ChatFrame1EditBox
-        if type(eb) == "table" and eb.HookScript then
-            eb:HookScript("OnShow", function() if Opt("infoBar") then info:SetAlpha(0) end end)
-            eb:HookScript("OnHide", function() if Opt("infoBar") then info:SetAlpha(1) end end)
-        end
+        -- Die Eingabezeile ersetzt sie beim Schreiben (CH.UpdateEditState).
+        CH.HookEdit(_G.ChatFrame1EditBox)
     end
     info:ClearAllPoints()
     info:SetPoint("TOPLEFT", cf, "BOTTOMLEFT", -PAD, -PAD - 2)
     info:SetPoint("TOPRIGHT", cf, "BOTTOMRIGHT", PAD, -PAD - 2)
     info:SetHeight(INFO_H)
     info:SetFrameStrata(cf:GetFrameStrata() or "LOW")
-    local eb = _G.ChatFrame1EditBox
-    local always = type(eb) == "table" and eb.IsShown and eb:IsShown() and not (eb.HasFocus and eb:HasFocus())
-    info:SetAlpha(always and 0 or 1)
     info:Show()
+    CH.UpdateEditState()
     CH.UpdateInfoBar()
 end
 CH.info = function() return info end
@@ -703,49 +696,76 @@ local function ApplyAll()
     end
     for _, d in pairs(done) do
         if d.tab then KeepTabVisible(d.tab) end
+        if d.edit then CH.HookEdit(d.edit) end
     end
     if Opt("flatTabs") then RaiseDock() end
     UpdateTabs()
     CH.UpdateInfoBar()
+    CH.UpdateEditState()
 end
 CH.ApplyAll = ApplyAll
 
--- Chatstil des Spiels. Kein eigenes Verstecken der Eingabezeile: sie traegt
--- auch geschuetzte Befehle (/cast, /target), und ein Addon, das an ihrem
--- Zeigen und Verbergen dreht, riskiert, dass das Spiel sie sperrt. Die
--- Einstellung des Spiels leistet genau das Gewuenschte. Sie steht in der
--- Konfiguration des Spiels, nicht in den Addon-Daten - bleibt also auch
--- in der Beta ueber das Neuladen hinweg. Zurueckgestellt wird nur, was
--- WeintCodex in dieser Sitzung selbst umgestellt hat.
-local styleBefore
-local function GetCVar(name)
-    if _G.C_CVar and _G.C_CVar.GetCVar then return _G.C_CVar.GetCVar(name) end
-    if _G.GetCVar then return _G.GetCVar(name) end
-    return nil
+-- Die Eingabezeile erst beim Schreiben (Beta-Test 6.3.2.0: "soll erst
+-- kommen, wenn man auf Enter drueckt"). 6.3.2.0 stellte dafuer den
+-- Chatstil des Spiels um (CVar chatStyle) - im Beta-Client ohne Wirkung:
+-- die inaktive Zeile stand weiter halbdurchsichtig da (so zeigt sie der
+-- klassische Stil). Jetzt nur Deckkraft: nicht geschrieben = 0, beim
+-- Schreiben = 1. Gezeigt und verborgen wird sie weiter vom Spiel - sie
+-- traegt geschuetzte Befehle (/cast, /target), daran dreht kein Addon.
+-- Die Infozeile darunter ist sichtbar, solange nicht geschrieben wird.
+local editGuard, editHooked = false, {}
+local function Writing(eb)
+    return K.Bool(eb:IsShown(), false) and K.Bool(eb.HasFocus and eb:HasFocus(), false)
 end
-local function SetCVar(name, value)
-    local fn = (_G.C_CVar and _G.C_CVar.SetCVar) or _G.SetCVar
-    if fn then return pcall(fn, name, value) end
-    return false
-end
-function CH.ApplyChatStyle()
-    if K.InCombat() then K.AfterCombat(CH.ApplyChatStyle) return end
-    local cur = GetCVar("chatStyle")
-    if type(cur) ~= "string" then return end
-    if Opt("editOnEnter") then
-        if cur ~= "im" then
-            styleBefore = styleBefore or cur
-            SetCVar("chatStyle", "im")
+CH.Writing = Writing
+
+local editFaded = {}
+function CH.UpdateEditState()
+    for eb in pairs(editHooked) do
+        local writing = Writing(eb)
+        editGuard = true
+        if Opt("editOnEnter") then
+            eb:SetAlpha(writing and 1 or 0)
+        elseif editFaded[eb] then
+            eb:SetAlpha(1)
         end
-    elseif styleBefore and cur == "im" then
-        SetCVar("chatStyle", styleBefore)
-        styleBefore = nil
+        editFaded[eb] = Opt("editOnEnter") or nil
+        editGuard = false
+    end
+    if info and Opt("infoBar") then
+        local eb = _G.ChatFrame1EditBox
+        local covered
+        if type(eb) ~= "table" then
+            covered = false
+        elseif Opt("editOnEnter") then
+            covered = Writing(eb)
+        else
+            covered = K.Bool(eb:IsShown(), false)
+        end
+        info:SetAlpha(covered and 0 or 1)
+    end
+end
+
+function CH.HookEdit(eb)
+    if type(eb) ~= "table" or editHooked[eb] or not eb.HookScript then return end
+    editHooked[eb] = true
+    for _, s in ipairs({ "OnShow", "OnHide", "OnEditFocusGained", "OnEditFocusLost" }) do
+        pcall(eb.HookScript, eb, s, function() CH.UpdateEditState() end)
+    end
+    -- Das Spiel setzt die Deckkraft der Zeile selbst (klassisch: 0,35,
+    -- wenn nicht geschrieben wird) - danach gilt wieder unsere.
+    if _G.hooksecurefunc then
+        _G.hooksecurefunc(eb, "SetAlpha", function(self)
+            if editGuard or not Opt("editOnEnter") or Writing(self) then return end
+            editGuard = true
+            self:SetAlpha(0)
+            editGuard = false
+        end)
     end
 end
 
 local function Enable()
     ApplyAll()
-    CH.ApplyChatStyle()
     -- Fluesterfenster und neue Reiter legt das Spiel spaeter an.
     if _G.hooksecurefunc and _G.FCF_OpenTemporaryWindow then
         _G.hooksecurefunc("FCF_OpenTemporaryWindow", function() ApplyAll() end)
@@ -767,7 +787,7 @@ K.Register({
     description = "Die Chatfenster im Stil von WeintCodex: eigene Schrift, ruhiger Grund, flache Reiter, schlichte Eingabezeile.",
     defaults = defaults,
     Enable = Enable,
-    OnSetting = function() if K.IsActive(KEY) then ApplyAll() CH.ApplyChatStyle() end end,
+    OnSetting = function() if K.IsActive(KEY) then ApplyAll() end end,
     pages = {
         { key = "allgemein", label = "Allgemein", build = function(B)
             B:Section("Fenster")
@@ -792,7 +812,7 @@ K.Register({
                   { type = "empty" })
             B:Section("Eingabezeile")
             B:Row({ type = "toggle", label = "Erst mit Enter zeigen", key = "editOnEnter",
-                    description = "Stellt den Chatstil des Spiels auf „Instant Messenger“: die Zeile erscheint beim Schreiben und geht danach wieder. Gilt womöglich erst nach /reload." },
+                    description = "Die Zeile ist unsichtbar, bis du Enter drückst, und geht nach dem Abschicken wieder. Solange steht dort die Infozeile." },
                   { type = "empty" })
             B:Row({ type = "toggle", label = "Eingabezeile im WeintCodex-Stil", key = "editBoxSkin", reload = true },
                   { type = "toggle", label = "Über dem Chat statt darunter", key = "editBoxTop",

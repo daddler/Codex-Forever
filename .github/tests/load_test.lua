@@ -1636,27 +1636,64 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
--- 6.3.2.0: Eingabezeile erst mit Enter (Chatstil des Spiels); zurueck
--- nur, was WeintCodex selbst umgestellt hat.
+-- 6.3.2.1: Eingabezeile erst mit Enter - nur Deckkraft: unsichtbar, bis
+-- geschrieben wird (auch wenn das Spiel sie auf 0,35 setzt); die Infozeile
+-- steht so lange darunter.
 do
     local ok, err = pcall(function()
         local CH = WeintCodex.UIChat
-        local style = "classic"
-        local oldC = _G.C_CVar
-        _G.C_CVar = { GetCVar = function(n) if n == "chatStyle" then return style end end,
-                      SetCVar = function(n, v) if n == "chatStyle" then style = v end end }
-        CH.ApplyChatStyle()
-        assert(style == "im", "Chatstil nicht auf 'Erst mit Enter'")
+        local oldHook = _G.hooksecurefunc
+        _G.hooksecurefunc = function(obj, name, fn)
+            local orig = obj[name]
+            obj[name] = function(...) local r = orig(...) fn(...) return r end
+        end
+        local eb = CreateFrame("EditBox", "TestChatEditBox", UIParent)
+        local focus = false
+        eb.HasFocus = function() return focus end
+        eb:Show()
+        CH.HookEdit(eb)
+        CH.UpdateEditState()
+        assert(eb:GetAlpha() == 0, "Eingabezeile ohne Schreiben sichtbar")
+        eb:SetAlpha(0.35)
+        assert(eb:GetAlpha() == 0, "Spiel setzt die Zeile wieder halbdurchsichtig")
+        focus = true
+        CH.UpdateEditState()
+        assert(eb:GetAlpha() == 1, "beim Schreiben unsichtbar")
+        focus = false
+        CH.UpdateEditState()
+        assert(eb:GetAlpha() == 0, "nach dem Schreiben sichtbar")
         K.Set("chat", "editOnEnter", false)
-        CH.ApplyChatStyle()
-        assert(style == "classic", "Chatstil nicht zurueckgestellt")
-        style = "im"
-        CH.ApplyChatStyle()
-        assert(style == "im", "fremde Einstellung des Spielers ueberschrieben")
+        CH.UpdateEditState()
+        assert(eb:GetAlpha() == 1, "ausgeschaltet bleibt die Zeile unsichtbar")
         K.Set("chat", "editOnEnter", nil)
-        _G.C_CVar = oldC
+        _G.hooksecurefunc = oldHook
+        _G.TestChatEditBox = nil
     end)
     Check(ok, "Chat: Eingabezeile erst mit Enter" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.3.2.1: Spielerrahmen mit Stufe und Symbol fuer Kampf/Ruhe.
+do
+    local ok, err = pcall(function()
+        local UF = WeintCodex.UIUnitFrames
+        assert(K.Get("unitframes", "player_left") == "levelname", "Spielerrahmen ohne Stufe")
+        local st = UF.StateIcon()
+        assert(st, "kein Symbol am Spielerrahmen")
+        local oldCombat, oldRest = _G.UnitAffectingCombat, _G.IsResting
+        local combat, rest = true, true
+        _G.UnitAffectingCombat = function() return combat end
+        _G.IsResting = function() return rest end
+        UF.UpdateState()
+        assert(st:IsShown() and st._which == "combat", "Kampf geht nicht vor Ruhe")
+        combat = false
+        UF.UpdateState()
+        assert(st:IsShown() and st._which == "rest", "Ruhe ohne Symbol")
+        rest = false
+        UF.UpdateState()
+        assert(not st:IsShown(), "Symbol bleibt ohne Kampf und Ruhe")
+        _G.UnitAffectingCombat, _G.IsResting = oldCombat, oldRest
+    end)
+    Check(ok, "Spielerrahmen: Stufe, Symbol fuer Kampf und Ruhe" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.3.2.0: Haltungsleiste so breit wie die Haltungen der Klasse.

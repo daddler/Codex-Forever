@@ -171,6 +171,29 @@ def icon_gear(x, y):
     return r <= outer
 
 
+def _sword(u, v):
+    # Ein Schwert entlang u (Spitze bei +u): Klinge, Parierstange, Griff.
+    blade = -0.42 <= u <= 0.72 and abs(v) <= 0.085 - max(0.0, u - 0.56) * 0.5
+    guard = -0.50 <= u <= -0.40 and abs(v) <= 0.26
+    grip = -0.78 <= u <= -0.50 and abs(v) <= 0.06
+    return blade or guard or grip
+
+
+def icon_combat(x, y):
+    # Zwei gekreuzte Schwerter (Spitzen oben): "im Kampf".
+    a = 0.7071
+    u1, v1 = (x - y) * a, (x + y) * a       # Spitze oben rechts
+    u2, v2 = (-x - y) * a, (-x + y) * a     # Spitze oben links
+    return _sword(u1, v1) or _sword(u2, v2)
+
+
+def icon_rest(x, y):
+    # Eine Mondsichel: "erholt" (Gasthaus, Stadt).
+    outer = math.hypot(x + 0.08, y) <= 0.70
+    cut = math.hypot(x - 0.26, y + 0.22) <= 0.58
+    return outer and not cut
+
+
 # ------------------------------------------------------------------
 # Der 3D-Pfeil: ein facettierter Pfeil (Grat in der Mitte), von hinten
 # oben gesehen, in 64 Drehungen. Ein kleiner Rasterer mit Tiefenpuffer
@@ -435,7 +458,8 @@ def main():
     print("geschrieben:", os.path.relpath(target, ROOT))
 
     for name, fn in (("icon_plus", icon_plus), ("icon_close", icon_close),
-                     ("icon_reset", icon_reset), ("icon_gear", icon_gear)):
+                     ("icon_reset", icon_reset), ("icon_gear", icon_gear),
+                     ("icon_combat", icon_combat), ("icon_rest", icon_rest)):
         target = os.path.join(OUT, name + ".tga")
         write_tga(target, ICON, ICON, render_shape(ICON, fn))
         print("geschrieben:", os.path.relpath(target, ROOT))

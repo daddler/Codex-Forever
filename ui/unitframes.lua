@@ -40,7 +40,7 @@ local LABELS = {
 -- Masse je Rahmen (UI 2.0): Spieler und Ziel 200 breit, Leben 24 +
 -- Kraft 6 - im Grundmass des Spiels so gross wie im Entwurf 272 x 42 px.
 local SHAPE = {
-    player       = { w = 200, h = 24, p = 6, power = true,  cast = true,  left = "name",      right = "healthPercent", portrait = "3d" },
+    player       = { w = 200, h = 24, p = 6, power = true,  cast = true,  left = "levelname", right = "healthPercent", portrait = "3d" },
     target       = { w = 200, h = 24, p = 6, power = true,  cast = true,  left = "levelname", right = "healthPercent", portrait = "3d" },
     targettarget = { w = 90,  h = 18, p = 0, power = false, cast = false, left = "name", right = "healthPercent" },
     focus        = { w = 130, h = 18, p = 3, power = true,  cast = true,  left = "name", right = "healthPercent", portrait = "2d" },
@@ -94,6 +94,11 @@ for _, u in ipairs(UNITS) do
     defaults[u .. "_portraitRight"] = (u == "target")
     if s.cast then defaults[u .. "_cast"] = true end
 end
+
+-- Symbol fuer Kampf und Ruhe am Spielerrahmen (Beta-Test 6.3.2.0: "ein
+-- Symbol, wenn man im Kampf ist, im Ruhemodus (Gasthaus)"). Eigene
+-- Grafiken (make_ui_media.py), keine des Spiels.
+defaults.player_stateIcon = true
 
 local function Opt(key) return K.Get(KEY, key) end
 
@@ -328,6 +333,34 @@ local function Create(unit)
     f.raid:SetSize(18, 18)
     f.raid:SetPoint("CENTER", f, "TOP", 0, 2)
     f.raid:Hide()
+
+    if unit == "player" then
+        -- Oben links an der Ecke, halb ueber dem Rahmen; ein schwarzer
+        -- Schatten darunter, damit es auf jedem Portraet lesbar bleibt.
+        local st = CreateFrame("Frame", nil, f)
+        st:SetSize(18, 18)
+        st:SetPoint("CENTER", f, "TOPLEFT", 2, -2)
+        st:SetFrameLevel(textHost:GetFrameLevel() + 2)
+        st.shade = st:CreateTexture(nil, "ARTWORK", nil, 1)
+        st.shade:SetPoint("TOPLEFT", st, "TOPLEFT", 1, -1)
+        st.shade:SetPoint("BOTTOMRIGHT", st, "BOTTOMRIGHT", 1, -1)
+        st.shade:SetVertexColor(0, 0, 0, 0.9)
+        st.icon = st:CreateTexture(nil, "ARTWORK", nil, 2)
+        st.icon:SetAllPoints(st)
+        -- Im Kampf pulsiert es leicht.
+        local ag = st.CreateAnimationGroup and st:CreateAnimationGroup()
+        if type(ag) == "table" and ag.CreateAnimation then
+            local a = ag:CreateAnimation("Alpha")
+            if type(a) == "table" then
+                if a.SetFromAlpha then a:SetFromAlpha(1) a:SetToAlpha(0.45) end
+                if a.SetDuration then a:SetDuration(0.6) end
+                if ag.SetLooping then ag:SetLooping("BOUNCE") end
+                st.pulse = ag
+            end
+        end
+        st:Hide()
+        f._state = st
+    end
 
     if SHAPE[unit].cast then
         f._cast = CB.Create(f)
@@ -840,9 +873,14 @@ local function OnEvent(_, event, unit)
         return
     elseif event == "PLAYER_ENTERING_WORLD" or event == "RAID_TARGET_UPDATE" then
         for u in pairs(frames) do RefreshUnit(u, event == "PLAYER_ENTERING_WORLD") end
+        UF.UpdateState()
         return
     elseif event == "UPDATE_SHAPESHIFT_FORM" then
         if frames.target then frames.target:UpdateCombo() end
+        return
+    elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED"
+        or event == "PLAYER_UPDATE_RESTING" then
+        UF.UpdateState()
         return
     end
 
@@ -884,6 +922,41 @@ local function Register(name)
     return pcall(events.RegisterEvent, events, name)
 end
 
+-- Kampf vor Ruhe: wer im Gasthaus kaempft, soll das sehen.
+function UF.UpdateState()
+    local f = frames.player
+    local st = f and f._state
+    if not st then return end
+    local which
+    if Opt("player_stateIcon") then
+        if K.Bool(_G.UnitAffectingCombat and _G.UnitAffectingCombat("player"), false) then
+            which = "combat"
+        elseif K.Bool(_G.IsResting and _G.IsResting(), false) then
+            which = "rest"
+        end
+    end
+    st._which = which
+    if not which then
+        if st.pulse and st.pulse.Stop then st.pulse:Stop() end
+        st:Hide()
+        return
+    end
+    local tex = K.MEDIA .. (which == "combat" and "icon_combat" or "icon_rest")
+    st.icon:SetTexture(tex)
+    st.shade:SetTexture(tex)
+    local c = WeintCodex.GameColors[which == "combat" and "stateCombat" or "stateRest"]
+    st.icon:SetVertexColor(c[1], c[2], c[3], 1)
+    st:Show()
+    if st.pulse then
+        if which == "combat" then
+            if st.pulse.Play then st.pulse:Play() end
+        elseif st.pulse.Stop then
+            st.pulse:Stop()
+        end
+    end
+end
+UF.StateIcon = function() return frames.player and frames.player._state end
+
 --------------------------------------------------
 -- Modul
 --------------------------------------------------
@@ -922,6 +995,7 @@ local function Enable()
         "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED", "UNIT_TARGET", "UNIT_PET",
         "PLAYER_ENTERING_WORLD", "RAID_TARGET_UPDATE", "UPDATE_SHAPESHIFT_FORM",
         "UNIT_PORTRAIT_UPDATE", "UNIT_MODEL_CHANGED",
+        "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "PLAYER_UPDATE_RESTING",
     }) do Register(e) end
     for e in pairs(HEALTH) do Register(e) end
     for e in pairs(POWER) do Register(e) end
@@ -978,6 +1052,9 @@ local function UnitPage(u)
                           disabled = function() return off() or not K.Get(KEY, "player_cast") end }
                     or { type = "empty" })
             if u == "player" then
+                B:Row({ type = "toggle", label = "Symbol für Kampf und Ruhe", key = "player_stateIcon", disabled = off,
+                        description = "Gekreuzte Schwerter im Kampf, eine Mondsichel beim Ausruhen (Gasthaus, Stadt)." },
+                      { type = "empty" })
                 B:Row({ type = "toggle", label = "Mittig über den Leisten", key = "playerCastCentered",
                         disabled = function() return off() or not K.Get(KEY, "player_cast") end,
                         description = "Aus: direkt unter dem Spielerrahmen." },

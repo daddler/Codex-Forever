@@ -9,6 +9,28 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.2.1] – 2026-09-26
+
+**Kampf und Ruhe am Spielerrahmen.** Oben links am Rahmen: gekreuzte Schwerter im Kampf (leicht pulsierend), eine Mondsichel beim Ausruhen im Gasthaus oder in der Stadt. Abschaltbar unter Einheitenrahmen → Spieler.
+
+**Deine Stufe im Spielerrahmen.** Vor dem Namen, wie beim Ziel.
+
+**Eingabezeile wirklich erst mit Enter.** Die halbdurchsichtige Leiste unter dem Chat ist weg, solange du nicht schreibst; dort steht die Infozeile.
+
+### Technisch
+
+- Chat: 6.3.2.0 stellte die CVar `chatStyle` auf `im` – im Beta-Client
+  ohne Wirkung, die inaktive Zeile stand weiter mit 0,35 Deckkraft da.
+  Jetzt nur Deckkraft (`CH.UpdateEditState`, `CH.HookEdit`): nicht
+  geschrieben = 0 (ein Haken auf `SetAlpha` hält das gegen das Spiel),
+  beim Schreiben = 1; die Infozeile umgekehrt. Gezeigt und verborgen
+  wird die Zeile weiter vom Spiel, die CVar wird nicht mehr angefasst.
+- Spielerrahmen: Standardtext links `levelname`; `player_stateIcon` mit
+  eigenen Grafiken `icon_combat`/`icon_rest` (`make_ui_media.py`),
+  Farben `stateCombat`/`stateRest` in `core/ui.lua`. Kampf
+  (`UnitAffectingCombat`) geht vor Ruhe (`IsResting`); Ereignisse
+  `PLAYER_REGEN_*`, `PLAYER_UPDATE_RESTING`.
+
 ## [6.3.2.0] – 2026-09-26
 
 **Debuffs mittig und rechts über der Plakette.** Bei „mittig“ standen die Symbole des Spiels unter der Namensplakette; jetzt stehen sie darüber, über dem Namen.

@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.2.1",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFKampf und Ruhe am Spielerrahmen.|r Oben links am Rahmen: gekreuzte Schwerter im Kampf (leicht pulsierend), eine Mondsichel beim Ausruhen im Gasthaus oder in der Stadt. Abschaltbar unter Einheitenrahmen → Spieler.",
+            "|cff7C6CFFDeine Stufe im Spielerrahmen.|r Vor dem Namen, wie beim Ziel.",
+            "|cff7C6CFFEingabezeile wirklich erst mit Enter.|r Die halbdurchsichtige Leiste unter dem Chat ist weg, solange du nicht schreibst; dort steht die Infozeile.",
+        },
+    },
+    {
         version = "6.3.2.0",
         date    = "26.09.2026",
         notes   = {
