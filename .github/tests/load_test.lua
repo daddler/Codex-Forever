@@ -1699,10 +1699,24 @@ do
         K.Set("nameplates", "textRight", "healthNumber")
         assert(NP.NamePlace() == "custom", "eigene Belegung nicht erkannt")
         NP.SetNamePlace("above")
-        K.Set("nameplates", "auraAlign", "right")
-        assert(K.Get("nameplates", "auraAlign") == "right", "Ausrichtung nicht gespeichert")
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        -- 6.3.2.0: Symbole des Spiels mittig UEBER unserer Plakette (an den
+        -- Aurenrahmen gesetzt standen sie im Beta-Test darunter).
+        local uf = blizzPlate.UnitFrame
+        local oldAuras = uf.AurasFrame
+        uf.AurasFrame = stub.NewObject("Frame")
+        local list = stub.NewObject("Frame")
+        uf.AurasFrame.DebuffListFrame = list
+        local pt
+        list.SetPoint = function(_, a, rel, b, x, y) pt = { a, rel, b, x, y } end
+        K.Set("nameplates", "auraAlign", "center")
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        local plate = NP.plates["nameplate1"]
+        assert(pt and pt[1] == "BOTTOM" and pt[2] == plate and pt[3] == "TOP" and pt[5] > 0,
+            "Symbole des Spiels nicht mittig ueber der Plakette")
         K.Set("nameplates", "auraAlign", nil)
         stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        uf.AurasFrame = oldAuras
     end)
     Check(ok, "Plaketten: Name im Balken, Debuffs ausrichten" .. (ok and "" or (": " .. tostring(err))))
 end

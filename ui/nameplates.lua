@@ -223,13 +223,18 @@ end
 -- Ausrichtung der Symbole des Spiels (6.3.1.9). Links laesst sie, wo
 -- das Spiel sie hinsetzt - kein Anker wird angefasst. Mitte und rechts
 -- setzen die Debuff-Liste (DebuffListFrame, im 11.x-Client eine
--- Layout-Liste, die sich ihrem Inhalt anpasst) an die Mitte bzw. rechte
--- Kante des Aurenrahmens. Gelesen wird nichts (GetPoint ist verboten),
+-- Layout-Liste, die sich ihrem Inhalt anpasst) mittig bzw. rechts ueber
+-- die WeintCodex-Plakette (seit 6.3.2.0, siehe unten). Gelesen wird nichts (GetPoint ist verboten),
 -- nur gesetzt, in pcall. Ob die Liste auf Forever so heisst und mit dem
 -- Inhalt waechst, ist nicht gemessen - /wcui auren nennt das Ergebnis.
 local movedList = setmetatable({}, { __mode = "k" })
 NP.gameAlign = "noch nicht versucht"
-local function AlignGameAuras(auras)
+-- 6.3.2.0: an UNSERE Plakette, nicht an den Aurenrahmen des Spiels. An
+-- dessen Unterkante gesetzt standen die Symbole im Beta-Test UNTER der
+-- Plakette - der Rahmen reicht offenbar bis unter sie, und seine Masse
+-- lassen sich nicht lesen. Unsere Plakette kennen wir: die Symbole
+-- stehen ueber ihr, ueber dem Namen, wenn er oben steht.
+local function AlignGameAuras(auras, p)
     local align = S.auraAlign or "left"
     local list = auras.DebuffListFrame
     if type(list) ~= "table" or not list.SetPoint or (list.IsProtected and list:IsProtected()) then
@@ -237,16 +242,22 @@ local function AlignGameAuras(auras)
         return
     end
     if align == "left" and not movedList[list] then return end
+    if type(p) ~= "table" then return end
     local pt = (align == "right" and "BOTTOMRIGHT") or (align == "center" and "BOTTOM") or "BOTTOMLEFT"
+    local rel = (align == "right" and "TOPRIGHT") or (align == "center" and "TOP") or "TOPLEFT"
+    -- Der Versatz gilt im Massstab der Liste (Groesse der Symbole des
+    -- Spiels), gemeint ist er im Massstab der Plakette.
+    local scale = (S.gameAuraScale or 100) / 100
+    local y = ((S.textTop ~= "none" and S.nameSize or 0) + 6) / scale
     local ok, err = pcall(function()
         list:ClearAllPoints()
-        list:SetPoint(pt, auras, pt, 0, 0)
+        list:SetPoint(pt, p, rel, 0, y)
     end)
     movedList[list] = true
     NP.gameAlign = ok and ("gesetzt: " .. pt) or ("vom Spiel abgelehnt: " .. tostring(err))
 end
 
-local function ShowGameAuras(uf, auras)
+local function ShowGameAuras(uf, auras, p)
     local parts = OtherParts(uf, auras)
     if not parts then return false end
     Undim(uf)
@@ -259,7 +270,7 @@ local function ShowGameAuras(uf, auras)
     auras:SetScale((S.gameAuraScale or 100) / 100)
     auras:SetAlpha(1)
     auras:Show()
-    AlignGameAuras(auras)
+    AlignGameAuras(auras, p)
     uf:SetAlpha(1)
     inPlace[auras] = true
     return true
@@ -271,7 +282,7 @@ local function Suppress(nameplate, unit, p)
     if uf.IsForbidden and uf:IsForbidden() then return end
     local auras = AurasOf(uf)
     local useGame = auras and p and not p._friendly and S.auraEnabled and S.auraSource == "game"
-        and ShowGameAuras(uf, auras)
+        and ShowGameAuras(uf, auras, p)
     if not useGame then
         Undim(uf)
         uf:SetAlpha(0)

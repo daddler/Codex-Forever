@@ -11,6 +11,8 @@ nicht zusammen.
 
 ## [6.3.2.0] – 2026-09-26
 
+**Debuffs mittig und rechts über der Plakette.** Bei „mittig“ standen die Symbole des Spiels unter der Namensplakette; jetzt stehen sie darüber, über dem Namen.
+
 **Eingabezeile erst mit Enter.** Die Zeile zum Schreiben erscheint erst, wenn du Enter drückst, und verschwindet danach wieder; darunter bleibt die Infozeile frei. Abschaltbar unter Chat → Eingabezeile.
 
 **Haltungsleiste passt sich an.** Sie ist so breit wie die Haltungen deiner Klasse und wächst mit, wenn du eine neue lernst – keine leere Fläche mehr neben zwei Knöpfen. Größe, Abstand, Anordnung, Fläche und „nur bei Maus“ stellst du wie bei jeder Leiste unter Aktionsleisten → Leisten → „Haltungen“ ein.
@@ -20,6 +22,11 @@ nicht zusammen.
 - `LayoutBar`: für `StanceButton` begrenzt `GetNumShapeshiftForms()` die
   Zahl der Plätze (nur, wenn der Client eine Zahl > 0 nennt; sonst gilt
   die Einstellung). `UPDATE_SHAPESHIFT_FORMS` ordnet nach dem Kampf neu.
+- Plaketten: `AlignGameAuras` setzt `DebuffListFrame` an die
+  WeintCodex-Plakette (`BOTTOM` → `TOP`, rechts `BOTTOMRIGHT` →
+  `TOPRIGHT`), über dem Namen, Versatz im Maßstab der Symbole des
+  Spiels. 6.3.1.9 setzte sie an die Unterkante des Aurenrahmens des
+  Spiels – der reicht bis unter die Plakette.
 - Chat: `editOnEnter` (Standard an) setzt die CVar `chatStyle` auf `im`
   – die Einstellung „Chatstil“ des Spiels, kein eigenes Verstecken der
   Eingabezeile (sie trägt geschützte Befehle). Außerhalb des Kampfes;

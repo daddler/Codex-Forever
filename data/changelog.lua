@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.3.2.0",
         date    = "26.09.2026",
         notes   = {
+            "|cff7C6CFFDebuffs mittig und rechts über der Plakette.|r Bei „mittig“ standen die Symbole des Spiels unter der Namensplakette; jetzt stehen sie darüber, über dem Namen.",
             "|cff7C6CFFEingabezeile erst mit Enter.|r Die Zeile zum Schreiben erscheint erst, wenn du Enter drückst, und verschwindet danach wieder; darunter bleibt die Infozeile frei. Abschaltbar unter Chat → Eingabezeile.",
             "|cff7C6CFFHaltungsleiste passt sich an.|r Sie ist so breit wie die Haltungen deiner Klasse und wächst mit, wenn du eine neue lernst – keine leere Fläche mehr neben zwei Knöpfen. Größe, Abstand, Anordnung, Fläche und „nur bei Maus“ stellst du wie bei jeder Leiste unter Aktionsleisten → Leisten → „Haltungen“ ein.",
         },
