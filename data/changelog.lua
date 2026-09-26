@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.3.1.6",
+        date    = "26.09.2026",
+        notes   = {
+            "|cff7C6CFFCharakterfenster im neuen Stil.|r Das Fenster hinter Taste C – mit Ruf, Fertigkeiten, PvP und Abzeichen – steht auf einer Kachel statt auf Holz und Metall, ohne das runde Porträt, der Titel in der Schrift der Oberfläche. Erste Stufe: die Hülle; das Innere folgt.",
+            "|cff7C6CFFTageszeit in jeder Ecke.|r Unter Minikarte wählst du, ob die Tageszeit unten rechts, unten links, oben rechts oder oben links in der Karte sitzt.",
+            "|cff7C6CFFAddon-Knöpfe hell, zweiter Anlauf.|r Die Knöpfe anderer Addons froren ihre Zeichenebene ein und blieben so unter der dunklen Kachel; jetzt liegen sie darüber.",
+            "|cff7C6CFFNeu: /wcui fenster.|r Maus über ein Fenster halten und abschicken: Der Chat nennt die größten Bilder darin.",
+        },
+    },
+    {
         version = "6.3.1.5",
         date    = "26.09.2026",
         notes   = {

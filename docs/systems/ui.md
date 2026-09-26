@@ -369,6 +369,13 @@ Seit 6.2.0.0:
   (die Tageszeit an der Minikarte blieb drei Fassungen lang unauffindbar).
   Seit 6.3.1.3 zusätzlich `K.UnderCursor`: alles Sichtbare unter dem
   Zeiger, auch Texturen und Rahmen ohne Mausannahme, die kleinsten zuerst.
+* **Fenster des Spiels** (6.3.1.6, `ui/windows.lua`): Charakterfenster
+  und Teilfenster, erste Stufe nur die Hülle (Schmuck der Vorlage weg,
+  Kachel darunter). Inhalte werden nie angefasst. Was innen noch nach
+  Holz aussieht, nennt `/wcui fenster`.
+* **Tageszeit-Ecke** (6.3.1.6): `dayCorner` der Minikarte.
+* **LibDBIcon friert Schichten ein** (6.3.1.6): vor `SetFrameStrata`
+  erst `SetFixedFrameStrata(false)`, sonst wirkt es nicht.
 * **Erfahrungsbalken** (6.3.1.5, `ui/xpbar.lua`): Reiter „Erfahrung“ der
   Aktionsleisten, keine eigene Zeile in der Seitenleiste. Erfahrung mit
   erholter Verlängerung; auf Höchststufe der beobachtete Ruf, ohne ihn

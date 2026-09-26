@@ -1,0 +1,156 @@
+--------------------------------------------------
+-- WeintCodex :: Oberflaeche - Fenster des Spiels
+--------------------------------------------------
+-- Das Charakterfenster (Taste C) mit seinen Reitern Ruf, Fertigkeiten,
+-- PvP und Abzeichen im Stil der Oberflaeche (Beta-Test: "auch hier soll
+-- das neue Design Einheit gebieten"): Kachel statt Holz und Metall, ohne
+-- das runde Portraet, der Titel in unserer Schrift.
+--
+-- ERSTE STUFE, BEWUSST NUR DIE HUELLE. Wie die Fenster dieses Clients
+-- innen aufgebaut sind, hat niemand gemessen. Ausgeblendet werden deshalb
+-- nur Teile, die in der Fenstervorlage des Spiels Schmuck sind
+-- (NineSlice, Bg, Inset, Portraet) - nie Inhalte: Plaetze, Balken,
+-- Listen und Modell bleiben unberuehrt. Was danach noch nach Holz
+-- aussieht, nennt /wcui fenster (Maus ueber das Fenster).
+--
+-- Nur Aussehen, nur Deckkraft: nichts wird versteckt, umgehaengt oder
+-- verschoben. Die Einstellung liegt beim Modul "general" (Seite
+-- "Fenster"), wie der Tooltip - die Seitenleiste ist voll.
+--------------------------------------------------
+
+WeintCodex = WeintCodex or {}
+WeintCodex.UIWindows = {}
+
+local W = WeintCodex.UIWindows
+local K = WeintCodex.UIKit
+local C = WeintCodex.Colors
+
+W.DEFAULTS = {
+    windowSkin = true,
+}
+
+local function Opt(k) return K.Get("general", k) end
+
+-- Fenster und ihre Teilfenster. Was der Client nicht kennt, faellt heraus.
+W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame" }
+W.PANELS  = { "PaperDollFrame", "ReputationFrame", "SkillFrame", "TokenFrame", "PVPFrame", "HonorFrame",
+              "CharacterStatsPane" }
+
+-- Schmuck in der Fenstervorlage des Spiels, als Schluessel am Rahmen.
+local DECOR = { "NineSlice", "Bg", "Background", "TopTileStreaks", "Inset", "InsetBg",
+                "PortraitContainer", "PortraitFrame", "portrait", "TitleBg", "TopBorder" }
+
+local done = {}
+W.done = done
+
+local function Hide(r)
+    if type(r) ~= "table" or not r.SetAlpha or (r.IsForbidden and r:IsForbidden()) then return end
+    local AB = WeintCodex.UIActionBars
+    if AB and AB.KeepHidden then AB.KeepHidden(r) else r:SetAlpha(0) end
+end
+
+-- Alle Texturen direkt an einem Rahmen (nicht an seinen Kindern).
+local function HideOwnTextures(f)
+    if type(f) ~= "table" or not f.GetRegions then return end
+    local ok, regions = pcall(function() return { f:GetRegions() } end)
+    for _, r in ipairs(ok and regions or {}) do
+        local tok, isTex = pcall(function() return r:GetObjectType() == "Texture" end)
+        if tok and isTex then Hide(r) end
+    end
+end
+
+-- Ein Schmuckteil: ist es ein Rahmen, seine Texturen (und die seiner
+-- NineSlice); ist es eine Textur, sie selbst.
+local function HideDecor(part)
+    if type(part) ~= "table" then return end
+    local ok, kind = pcall(function() return part:GetObjectType() end)
+    if not ok then return end
+    if kind == "Texture" then
+        Hide(part)
+    else
+        HideOwnTextures(part)
+        if type(part.NineSlice) == "table" then HideOwnTextures(part.NineSlice) end
+        if type(part.Bg) == "table" then Hide(part.Bg) end
+        if type(part.portrait) == "table" then Hide(part.portrait) end
+    end
+end
+
+local function HideDecorOf(f)
+    for _, key in ipairs(DECOR) do HideDecor(f[key]) end
+    local name = f.GetName and f:GetName()
+    if type(name) == "string" then
+        for _, suffix in ipairs({ "Bg", "Inset", "InsetRight", "InsetLeft", "Portrait", "TitleBg" }) do
+            HideDecor(_G[name .. suffix])
+        end
+    end
+end
+
+local function StyleTitle(f)
+    local title = (type(f.TitleContainer) == "table" and f.TitleContainer.TitleText) or f.TitleText
+        or (f.GetName and f:GetName() and _G[f:GetName() .. "TitleText"])
+    if type(title) == "table" and title.SetTextColor then
+        K.SetFont(title, 13)
+        title:SetTextColor(unpack(C.textBright))
+    end
+end
+
+-- Ein Fenster: Schmuck weg, eine Kachel darunter, Titel in unserer
+-- Schrift. `panel` = Teilfenster in einem anderen Fenster: keine eigene
+-- Kachel, nur der Schmuck weg.
+function W.Skin(f, panel)
+    if type(f) ~= "table" or done[f] or (f.IsForbidden and f:IsForbidden()) then return done[f] end
+    local d = {}
+    done[f] = d
+    HideDecorOf(f)
+    if not panel then
+        HideOwnTextures(f)
+        d.kachel = K.Kachel(f, { alpha = 0.94, shadow = 8 })
+        StyleTitle(f)
+    end
+    -- Innenflaechen (Inset): etwas heller als die Kachel, damit Spalten
+    -- lesbar getrennt bleiben.
+    for _, key in ipairs({ "Inset", "InsetRight", "InsetLeft" }) do
+        local inset = f[key]
+        if type(inset) ~= "table" and f.GetName and f:GetName() then inset = _G[f:GetName() .. key] end
+        if type(inset) == "table" and inset.CreateTexture and not d[key] then
+            local t = inset:CreateTexture(nil, "BACKGROUND", nil, -8)
+            t:SetAllPoints(inset)
+            local s = C.surface1
+            t:SetColorTexture(s[1], s[2], s[3], 0.45)
+            d[key] = t
+        end
+    end
+    return d
+end
+
+function W.Apply()
+    if not Opt("windowSkin") then return end
+    for _, n in ipairs(W.WINDOWS) do
+        local f = _G[n]
+        -- Ein Teilfenster eines schon gestalteten Fensters bekommt keine
+        -- zweite Kachel.
+        local parent = type(f) == "table" and f.GetParent and f:GetParent()
+        W.Skin(f, parent and done[parent] and true or false)
+    end
+    for _, n in ipairs(W.PANELS) do
+        local f = _G[n]
+        if type(f) == "table" and not done[f] then W.Skin(f, true) end
+    end
+end
+
+-- Die Fenster legt das Spiel beim Anmelden an; manche Teilfenster erst
+-- beim ersten Oeffnen. Deshalb auch bei jedem Zeigen des Charakterfensters.
+local boot = CreateFrame("Frame")
+boot:RegisterEvent("PLAYER_LOGIN")
+boot:SetScript("OnEvent", function()
+    if not K.UIEnabled() or not Opt("windowSkin") then return end
+    local ok, err = pcall(W.Apply)
+    if not ok then K.Report("fenster", err) end
+    local cf = _G.CharacterFrame
+    if type(cf) == "table" and cf.HookScript then
+        cf:HookScript("OnShow", function()
+            local ok2, err2 = pcall(W.Apply)
+            if not ok2 then K.Report("fenster", err2) end
+        end)
+    end
+end)

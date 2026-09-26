@@ -75,6 +75,8 @@ K.Register({
         for k, v in pairs(WeintCodex.UIPresence.DEFAULTS) do d[k] = v end
         -- Tooltip (ui/tooltip.lua): ebenso.
         for k, v in pairs(WeintCodex.UITooltip.DEFAULTS) do d[k] = v end
+        -- Fenster des Spiels (ui/windows.lua): ebenso.
+        for k, v in pairs(WeintCodex.UIWindows.DEFAULTS) do d[k] = v end
         return d
     end)(),
     OnSetting = function(key)
@@ -155,7 +157,7 @@ K.Register({
                   { type = "slider", label = "Weitere Leisten", key = "fade_bars", min = 0, max = 100, step = 5, format = pct, disabled = off })
             B:Note("Ausgeblendete Leisten bleiben benutzbar: Tastenkürzel wirken immer, und die Maus zeigt sie wieder.")
         end },
-        { key = "tooltip", label = "Tooltip", build = function(B)
+        { key = "tooltip", label = "Tooltip & Fenster", build = function(B)
             local off = function() return not K.Get("general", "tooltipStyle") end
             B:Section("Tooltip", "Die Hinweisfenster des Spiels als Kachel statt mit dem Blizzard-Rahmen.")
             B:Row({ type = "toggle", label = "Tooltip im WeintCodex-Stil", key = "tooltipStyle", reload = true },
@@ -163,6 +165,10 @@ K.Register({
             B:Row({ type = "toggle", label = "Spielername in Klassenfarbe", key = "tooltipClassName", disabled = off },
                   { type = "toggle", label = "Rand in Klassen- und Qualitätsfarbe", key = "tooltipBorder", disabled = off,
                     description = "Spieler in ihrer Klassenfarbe, Gegenstände ab „selten“ in ihrer Qualität." })
+            B:Section("Fenster", "Das Charakterfenster (C) mit Ruf, Fertigkeiten, PvP und Abzeichen als Kachel statt Holz und Metall.")
+            B:Row({ type = "toggle", label = "Fenster im WeintCodex-Stil", key = "windowSkin", reload = true },
+                  { type = "empty" })
+            B:Note("Erste Stufe: nur die Hülle des Fensters. Was darin noch nach Holz aussieht, nennt /wcui fenster – Maus über das Fenster halten und abschicken.")
         end },
     },
 })
@@ -746,6 +752,12 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
     end
     if msg == "chat" then
         for _, line in ipairs(WeintCodex.UIChat.Inspect()) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+        return
+    end
+    if msg == "fenster" or msg == "window" then
+        for _, line in ipairs(K.InspectWindow()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
         end
         return

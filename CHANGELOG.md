@@ -9,6 +9,36 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.3.1.6] – 2026-09-26
+
+**Charakterfenster im neuen Stil.** Das Fenster hinter Taste C – mit Ruf, Fertigkeiten, PvP und Abzeichen – steht auf einer Kachel statt auf Holz und Metall, ohne das runde Porträt, der Titel in der Schrift der Oberfläche. Erste Stufe: die Hülle; das Innere folgt.
+
+**Tageszeit in jeder Ecke.** Unter Minikarte wählst du, ob die Tageszeit unten rechts, unten links, oben rechts oder oben links in der Karte sitzt.
+
+**Addon-Knöpfe hell, zweiter Anlauf.** Die Knöpfe anderer Addons froren ihre Zeichenebene ein und blieben so unter der dunklen Kachel; jetzt liegen sie darüber.
+
+**Neu: /wcui fenster.** Maus über ein Fenster halten und abschicken: Der Chat nennt die größten Bilder darin.
+
+### Technisch
+
+- Neu `ui/windows.lua` (`WeintCodex.UIWindows`), Einstellung
+  `windowSkin` beim Modul „general“ (Seite „Tooltip & Fenster“).
+  `W.Skin` macht nur Schmuck der Fenstervorlage durchsichtig
+  (`NineSlice`, `Bg`, `Inset`, Porträt, eigene Texturen des obersten
+  Rahmens; `KeepHidden`) und legt eine Kachel darunter; Teilfenster
+  (`ReputationFrame`, `SkillFrame`, `TokenFrame`, PvP …) verlieren nur
+  ihren Schmuck. Inhalte (Plätze, Balken, Listen, Modell) bleiben
+  unberührt. Die Namen der Teilfenster auf Forever sind nicht gemessen.
+- Minikarte: `dayCorner` (vier Ecken); oben rückt die Tageszeit unter
+  Uhrzeit bzw. Koordinaten.
+- Sammelknopf: LibDBIcon setzt `SetFixedFrameStrata`/`-Level` (MEDIUM/8);
+  `SetFrameStrata` wirkte deshalb nicht, und die Liste in `DIALOG` lag
+  über den Knöpfen. Die Liste steht jetzt in `MEDIUM` auf Stufe 1, die
+  Knöpfe werden vor dem Setzen gelöst.
+- `K.InspectWindow` (`/wcui fenster`): oberstes Fenster unter der Maus,
+  sichtbare Texturen bis Tiefe 6, nach Bild zusammengefasst, größte
+  Fläche zuerst.
+
 ## [6.3.1.5] – 2026-09-26
 
 **Neuer Erfahrungsbalken.** Schmal, im Stil der Oberfläche, mit erholter Erfahrung als blasser Verlängerung. Auf Höchststufe zeigt er den beobachteten Ruf. Die goldene Leiste des Spiels ist weg.

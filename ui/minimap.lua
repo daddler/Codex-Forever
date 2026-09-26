@@ -45,6 +45,9 @@ local defaults = {
     wheelZoom   = true,
     hideZoomButtons = true,
     hideCalendar = false,
+    -- Ecke der Tageszeit in der Karte (Beta-Test 6.3.1.5: "selbst
+    -- entscheiden, ob rechts oder links, unten oder oben").
+    dayCorner   = "BOTTOMRIGHT",
     -- Seit 6.3.0.9 (Beta-Test: "sehr viel verschwendeter Platz nach
     -- oben"): die Karte sitzt oben in ihrem Bereich, wo die ausgeblendete
     -- Kopfleiste des Spiels stand.
@@ -256,8 +259,18 @@ function MM.LayoutButtons()
     if tb and not Opt("hideCalendar") then
         Watch(tb)
         tb:ClearAllPoints()
-        local up = (Opt("zoneText") and Opt("zoneInside")) and 22 or 3
-        tb:SetPoint("BOTTOMRIGHT", mm, "BOTTOMRIGHT", -3, up)
+        local corner = Opt("dayCorner") or "BOTTOMRIGHT"
+        local x = corner:find("RIGHT", 1, true) and -3 or 3
+        local y
+        if corner:find("BOTTOM", 1, true) then
+            -- Ueber dem Gebietsstreifen.
+            y = (Opt("zoneText") and Opt("zoneInside")) and 22 or 3
+        else
+            -- Unter Uhrzeit (rechts) bzw. Koordinaten (links).
+            local text = corner:find("RIGHT", 1, true) and Opt("clock") or Opt("coords")
+            y = text and -18 or -3
+        end
+        tb:SetPoint(corner, mm, corner, x, y)
     end
     MM.LayoutBag()
     if not Opt("buttonColumn") then
@@ -323,7 +336,12 @@ local function BuildBag()
     end)
     bag:SetScript("OnLeave", function() Tint(C.textMuted) GameTooltip:Hide() end)
     flyout = CreateFrame("Frame", "WeintCodexMinimapAddonList", bag)
-    flyout:SetFrameStrata("DIALOG")
+    -- MEDIUM, tief: LibDBIcon friert seine Knoepfe auf MEDIUM/8 ein
+    -- (SetFixedFrameStrata/-Level). Eine Liste in DIALOG lag deshalb mit
+    -- ihrer dunklen Flaeche ueber ihnen, auch nachdem 6.3.1.2 ihre Schicht
+    -- "gesetzt" hatte - das Spiel ignoriert das bei eingefrorenen Rahmen.
+    flyout:SetFrameStrata("MEDIUM")
+    flyout:SetFrameLevel(1)
     flyout.kachel = K.Kachel(flyout, { shadow = 6 })
     flyout:Hide()
     bag:SetScript("OnClick", function()
@@ -383,6 +401,9 @@ function MM.LayoutBag()
     for i, b in ipairs(list) do
         Watch(b)
         if b:GetParent() ~= flyout then b:SetParent(flyout) end
+        -- Eingefrorene Schicht erst loesen, sonst wirkt das Setzen nicht.
+        if b.SetFixedFrameStrata then pcall(b.SetFixedFrameStrata, b, false) end
+        if b.SetFixedFrameLevel then pcall(b.SetFixedFrameLevel, b, false) end
         if type(strata) == "string" and b.SetFrameStrata then b:SetFrameStrata(strata) end
         if type(level) == "number" and b.SetFrameLevel then b:SetFrameLevel(level + 2) end
         KeepOpaque(b)
@@ -655,6 +676,12 @@ K.Register({
                     description = "Die Karte rückt nach oben, wo die ausgeblendete Kopfleiste des Spiels stand." })
             B:Row({ type = "toggle", label = "Uhrzeit", key = "clock" },
                   { type = "toggle", label = "Kalenderknopf ausblenden", key = "hideCalendar" })
+            B:Row({ type = "dropdown", label = "Tageszeit in der Ecke", key = "dayCorner", items = {
+                        { value = "BOTTOMRIGHT", text = "Unten rechts" },
+                        { value = "BOTTOMLEFT",  text = "Unten links" },
+                        { value = "TOPRIGHT",    text = "Oben rechts" },
+                        { value = "TOPLEFT",     text = "Oben links" } } },
+                  { type = "empty" })
             B:Section("Bedienung")
             B:Row({ type = "toggle", label = "Zoom mit dem Mausrad", key = "wheelZoom" },
                   { type = "toggle", label = "Zoomknöpfe ausblenden", key = "hideZoomButtons" })

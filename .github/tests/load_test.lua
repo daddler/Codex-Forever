@@ -1550,6 +1550,66 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.3.1.6: Tageszeit in waehlbarer Ecke; LibDBIcon-Knoepfe mit
+-- eingefrorener Schicht werden geloest; das Charakterfenster verliert
+-- seinen Schmuck, nicht seinen Inhalt; /wcui fenster fasst zusammen.
+do
+    local ok, err = pcall(function()
+        local MM = WeintCodex.UIMinimap
+        local cl, mm = _G.MinimapCluster, _G.Minimap
+        local diel = CreateFrame("Frame", nil, cl)
+        local pt
+        diel.SetPoint = function(_, p, rel, rp, x, y) pt = { p, rel, rp, x, y } end
+        cl.DielFrame = diel
+        K.Set("minimap", "dayCorner", "TOPLEFT")
+        MM.LayoutButtons()
+        assert(pt and pt[1] == "TOPLEFT" and pt[3] == "TOPLEFT" and pt[4] > 0 and pt[5] < 0, "Tageszeit nicht oben links")
+        K.Set("minimap", "dayCorner", nil)
+        MM.LayoutButtons()
+        assert(pt[1] == "BOTTOMRIGHT" and pt[4] < 0 and pt[5] > 0, "Tageszeit nicht zurueck unten rechts")
+        cl.DielFrame = nil
+        -- Eingefrorene Schicht loesen, bevor sie gesetzt wird.
+        local btn = CreateFrame("Button", "LibDBIcon10_Frozen", mm)
+        local unfrozen, strataAfter = nil, nil
+        btn.SetFixedFrameStrata = function(_, v) unfrozen = (v == false) end
+        btn.SetFrameStrata = function(_, v) if unfrozen then strataAfter = v end end
+        local oldKids = mm.GetChildren
+        mm.GetChildren = function() return btn end
+        local _, flyout = MM.Bag()
+        flyout.GetFrameStrata = function() return "MEDIUM" end
+        MM.LayoutBag()
+        assert(strataAfter == "MEDIUM", "eingefrorene Schicht des Addon-Knopfs nicht geloest")
+        mm.GetChildren = oldKids
+        _G.LibDBIcon10_Frozen = nil
+
+        -- Charakterfenster: Schmuck (Bg, NineSlice, Inset) weg, Inhalt bleibt.
+        local W = WeintCodex.UIWindows
+        local cf = CreateFrame("Frame", "TestCharFrame", UIParent)
+        cf.Bg = cf:CreateTexture()
+        cf.NineSlice = CreateFrame("Frame", nil, cf)
+        local edge = cf.NineSlice:CreateTexture()
+        cf.NineSlice.GetRegions = function() return edge end
+        cf.GetRegions = function() return cf.Bg end
+        local slot = CreateFrame("Button", "TestCharFrameHeadSlot", cf)
+        local icon = slot:CreateTexture()
+        cf.Bg.GetObjectType = function() return "Texture" end
+        edge.GetObjectType = function() return "Texture" end
+        W.Skin(cf)
+        assert(cf.Bg:GetAlpha() == 0 and edge:GetAlpha() == 0, "Holz und Metall bleiben stehen")
+        assert(icon:GetAlpha() ~= 0, "Inhalt des Fensters ausgeblendet")
+        assert(W.done[cf] and W.done[cf].kachel, "keine Kachel unter dem Fenster")
+        _G.TestCharFrame, _G.TestCharFrameHeadSlot = nil, nil
+
+        -- /wcui fenster: ohne Fenster unter der Maus ein Satz.
+        local oldFoci = _G.GetMouseFoci
+        _G.GetMouseFoci = function() return {} end
+        assert(K.InspectWindow()[1]:find("kein Fenster", 1, true), "/wcui fenster ohne Fenster stumm")
+        _G.GetMouseFoci = oldFoci
+    end)
+    Check(ok, "Tageszeit in waehlbarer Ecke, eingefrorene Addon-Knoepfe, Charakterfenster ohne Holz"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Freundliche Plaketten, und die Sperre in Instanzen.
 do
     local NP = WeintCodex.UINameplates

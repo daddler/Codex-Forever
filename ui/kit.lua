@@ -1033,6 +1033,69 @@ local function TextureOf(r)
     return ok and v or nil
 end
 
+-- /wcui fenster: das oberste Fenster unter der Maus (bis unter UIParent)
+-- und alles Sichtbare darin, nach Bild zusammengefasst, das Groesste
+-- zuerst. So heisst, was im Fenster eines Clients nach Holz aussieht.
+function K.InspectWindow()
+    local out = {}
+    local focus
+    if type(_G.GetMouseFoci) == "function" then
+        local ok, t = pcall(_G.GetMouseFoci)
+        if ok and type(t) == "table" then focus = t[1] end
+    elseif type(_G.GetMouseFocus) == "function" then
+        local ok, f = pcall(_G.GetMouseFocus)
+        if ok then focus = f end
+    end
+    local top = focus
+    for _ = 1, 20 do
+        local ok, p = pcall(function() return top:GetParent() end)
+        if not ok or type(p) ~= "table" or p == _G.UIParent or p == _G.WorldFrame then break end
+        top = p
+    end
+    if type(top) ~= "table" or top == _G.WorldFrame or top == _G.UIParent then
+        out[1] = "Unter der Maus liegt kein Fenster. Maus über das Fenster halten und den Befehl mit Enter abschicken."
+        return out
+    end
+    out[1] = "Fenster: " .. NameOf(top)
+    local groups, list = {}, {}
+    local function Walk(f, depth)
+        if depth > 6 or (f.IsForbidden and f:IsForbidden()) then return end
+        local vok, vis = pcall(function() return K.Bool(f:IsVisible(), false) end)
+        if not vok or not vis then return end
+        local rok, regions = pcall(function() return { f:GetRegions() } end)
+        for _, r in ipairs(rok and regions or {}) do
+            local ok, info = pcall(function()
+                if r:GetObjectType() ~= "Texture" or not K.Bool(r:IsVisible(), false) then return nil end
+                if K.Plain(r:GetAlpha()) == 0 then return nil end
+                local w, h = K.Plain(r:GetWidth()), K.Plain(r:GetHeight())
+                if type(w) ~= "number" or type(h) ~= "number" then return nil end
+                return { key = TextureOf(r) or "Farbfläche", area = w * h, owner = NameOf(f) }
+            end)
+            if ok and info then
+                local g = groups[info.key]
+                if not g then
+                    g = { key = info.key, n = 0, area = 0, owner = info.owner }
+                    groups[info.key] = g
+                    list[#list + 1] = g
+                end
+                g.n, g.area = g.n + 1, g.area + info.area
+            end
+        end
+        local cok, kids = pcall(function() return { f:GetChildren() } end)
+        for _, ch in ipairs(cok and kids or {}) do
+            if type(ch) == "table" then Walk(ch, depth + 1) end
+        end
+    end
+    Walk(top, 0)
+    table.sort(list, function(a, b) return a.area > b.area end)
+    for i = 1, math.min(#list, 16) do
+        local g = list[i]
+        out[#out + 1] = string.format("   %s · %d× · in %s", g.key, g.n, g.owner)
+    end
+    if #list == 0 then out[#out + 1] = "   keine sichtbaren Bilder" end
+    return out
+end
+
 function K.UnderCursor()
     local hits = {}
     if type(_G.EnumerateFrames) ~= "function" or type(_G.GetCursorPosition) ~= "function" then return hits end
