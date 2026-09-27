@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.4.1.1",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager mit Luft.|r Die eckigen Symbole überlappten sich; jetzt bleiben 2 px zwischen ihnen, auch wenn du den Abstand im Bearbeitungsmodus änderst.",
+            "|cff7C6CFFNeu-laden-Knöpfe ohne Fehlermeldung.|r Ein Klick auf „Neu laden“ meldete „hat versucht die geschützte Funktion RunMacroText() aufzurufen“ und lud nicht neu.",
+        },
+    },
+    {
         version = "6.4.1.0",
         date    = "27.09.2026",
         notes   = {

@@ -9,6 +9,24 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.4.1.1] – 2026-09-27
+
+**Abklingzeitmanager mit Luft.** Die eckigen Symbole überlappten sich; jetzt bleiben 2 px zwischen ihnen, auch wenn du den Abstand im Bearbeitungsmodus änderst.
+
+**Neu-laden-Knöpfe ohne Fehlermeldung.** Ein Klick auf „Neu laden“ meldete „hat versucht die geschützte Funktion RunMacroText() aufzurufen“ und lud nicht neu.
+
+### Technisch
+
+- `ui/cooldowns.lua`: das Spiel setzt die Symbole 4 px enger als
+  eingestellt (`GetAdditionalPaddingOffset`), weil die runde Maske Luft
+  lässt. Bild, Abdeckung und Reichweiten-Schatten rücken um
+  `CD.Inset(viewer) = ceil((8 - iconPadding) / 2)` ein, Grund und Rand
+  sitzen am eingerückten Bild; neu gesetzt bei jedem Holen aus dem Vorrat.
+- `core/ui.lua`, `AttachReload`: `SecureActionButtonTemplate` statt
+  `InsecureActionButtonTemplate` (ADDON_ACTION_FORBIDDEN auf
+  `RunMacroText`, gemeldet aus dem Beta-Client). Im Kampf erst danach
+  angelegt; kein Feld am geschützten Knopf (`WeintCodex.ReloadArmed`).
+
 ## [6.4.1.0] – 2026-09-27
 
 **Abklingzeitmanager im WeintCodex-Stil.** Eckige Symbole mit Rand wie auf den Aktionsleisten, ohne den runden Rahmen des Spiels, Abklingzahlen und Stapel in der WeintCodex-Schrift, flache Buff-Balken. Einstellungen: /wcui abklingzeiten (Reiter der Erinnerungen).

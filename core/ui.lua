@@ -2038,7 +2038,15 @@ end
 -- Forever.
 --
 -- AttachReload legt deshalb ueber einen vorhandenen Knopf einen
--- unsichtbaren InsecureActionButton, der den Klick als Makro ausfuehrt.
+-- unsichtbaren SecureActionButton, der den Klick als Makro ausfuehrt.
+--
+-- 6.4.1.1: bis dahin ein InsecureActionButton. Der darf im Beta-Client
+-- kein Makro mehr ausfuehren - "ADDON_ACTION_FORBIDDEN ... RunMacroText()"
+-- (gemeldet, nicht vermutet): die Vorlage heisst nicht umsonst "unsicher",
+-- ein Klick darauf laeuft im Namen des Addons. Die sichere Vorlage fuehrt
+-- den Klick im Namen des Spielers aus. Sie ist geschuetzt: angelegt,
+-- verankert und scharf gemacht wird sie nur ausserhalb des Kampfes, und
+-- es wird kein Feld an ihr geschrieben (gemerkt wird in `armed`).
 -- Der Knopf darunter behaelt Aussehen und Hover; sein eigenes OnClick
 -- kommt nicht mehr an (der obere faengt den Klick), `onClick` laeuft
 -- stattdessen VOR dem Neuladen.
@@ -2058,15 +2066,36 @@ local function ReloadHint()
     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. WeintCodex.RELOAD_HINT)
 end
 
+local armed = setmetatable({}, { __mode = "k" })
+
 local function ArmReload(ov)
     ov:SetAttribute("useOnKeyDown", false)
     ov:SetAttribute("type", "macro")
     ov:SetAttribute("macrotext", "/reload")
-    ov._armed = true
+    armed[ov] = true
 end
 
+-- Fuer den Prueflauf und fuer Hinweise: ist der Knopf scharf?
+function WeintCodex.ReloadArmed(ov) return armed[ov] == true end
+
 function WeintCodex.AttachReload(button, onClick)
-    local ok, ov = pcall(CreateFrame, "Button", nil, button, "InsecureActionButtonTemplate")
+    -- Im Kampf laesst sich ein geschuetzter Knopf weder anlegen noch
+    -- verankern: bis dahin ein Hinweis, danach der Makroknopf.
+    if InCombatLockdown and InCombatLockdown() then
+        button:SetScript("OnClick", function()
+            if onClick then onClick() end
+            ReloadHint()
+        end)
+        local waiter = CreateFrame("Frame")
+        waiter:RegisterEvent("PLAYER_REGEN_ENABLED")
+        waiter:SetScript("OnEvent", function(self)
+            self:UnregisterAllEvents()
+            WeintCodex.AttachReload(button, onClick)
+        end)
+        return nil
+    end
+
+    local ok, ov = pcall(CreateFrame, "Button", nil, button, "SecureActionButtonTemplate")
     if not ok or not ov then
         -- Ohne die Vorlage gibt es keinen erlaubten Weg. Dann sagt der
         -- Knopf, was zu tun ist, statt einen Fehler auszuloesen.
@@ -2083,17 +2112,7 @@ function WeintCodex.AttachReload(button, onClick)
     -- der Klick der Spieleinstellung "beim Druecken ausloesen", und die
     -- liefert ein Knopf, der nur auf Loslassen hoert, nie.
     if ov.RegisterForClicks then ov:RegisterForClicks("AnyUp") end
-
-    if InCombatLockdown and InCombatLockdown() then
-        local waiter = CreateFrame("Frame")
-        waiter:RegisterEvent("PLAYER_REGEN_ENABLED")
-        waiter:SetScript("OnEvent", function(self)
-            self:UnregisterAllEvents()
-            ArmReload(ov)
-        end)
-    else
-        ArmReload(ov)
-    end
+    ArmReload(ov)
 
     -- Maus und Tooltip an den sichtbaren Knopf darunter weiterreichen.
     ov:SetScript("OnEnter", function()
@@ -2106,7 +2125,7 @@ function WeintCodex.AttachReload(button, onClick)
     end)
     ov:HookScript("OnClick", function()
         if onClick then onClick() end
-        if not ov._armed then ReloadHint() end
+        if not armed[ov] then ReloadHint() end
     end)
     button._reloadOverlay = ov
     return ov

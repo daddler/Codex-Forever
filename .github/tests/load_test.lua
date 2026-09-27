@@ -976,7 +976,9 @@ do
         WL.Button("yes"):Click()
         local btn = WL.Button("reload")
         assert(btn and btn._reloadOverlay, "Neuladeknopf ohne Makroknopf")
-        assert(btn._reloadOverlay._armed, "Makroknopf nicht scharf")
+        assert(WeintCodex.ReloadArmed(btn._reloadOverlay), "Makroknopf nicht scharf")
+        assert(btn._reloadOverlay._template == "SecureActionButtonTemplate",
+            "Makroknopf nicht sicher - InsecureActionButton darf kein Makro ausfuehren (6.4.1.1)")
         btn:Click()
         btn._reloadOverlay:Click()
         assert(not WL.IsShown(), "Klick auf Neuladen schliesst die Frage nicht")
@@ -1963,6 +1965,15 @@ do
         local d = CD.skinned[item2]
         viewer:OnAcquireItemFrame(item2)
         assert(CD.skinned[item2] == d, "Symbol doppelt umgestaltet")
+        -- 6.4.1.1: eckige Symbole ueberlappten - das Spiel setzt sie 4 px
+        -- enger als eingestellt. Einzug so, dass 2 px Luft bleiben.
+        assert(CD.Inset({ iconPadding = 2 }) == 3, "Einzug beim Standardabstand")
+        assert(CD.Inset({ iconPadding = 8 }) == 1, "Einzug bei grossem Abstand")
+        assert(CD.Inset({}) == 3, "Einzug ohne Antwort des Spiels")
+        for _, pad in ipairs({ 0, 2, 4, 6 }) do
+            local gap = (pad - 4) + 2 * CD.Inset({ iconPadding = pad }) - 2
+            assert(gap >= 2, "Symbole ueberlappen bei Abstand " .. pad .. ": " .. gap .. " px")
+        end
         -- Kein Feld am Rahmen des Spiels geschrieben.
         for k in pairs(item2) do
             assert(k:sub(1, 1) == "_" or ({ Icon = 1, GetRegions = 1, Cooldown = 1, ChargeCount = 1 })[k], "Feld am Symbol des Spiels geschrieben: " .. k)

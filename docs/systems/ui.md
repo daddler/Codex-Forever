@@ -185,7 +185,8 @@ gemeldet mit 6.0.0.0, behoben in 6.0.0.1). Erlaubt ist nur, was der Spieler selb
 Jeder „Neu laden“-Knopf – hier, in den Einstellungen, bei den
 Materialien und auf der Anmeldeseite – geht deshalb über
 `WeintCodex.AttachReload` (`core/ui.lua`): ein unsichtbarer
-`InsecureActionButton` über dem sichtbaren Knopf führt das Makro
+`SecureActionButton` (bis 6.4.1.0 `InsecureActionButton` – der darf im
+Beta-Client kein Makro mehr ausführen, `ADDON_ACTION_FORBIDDEN`) über dem sichtbaren Knopf führt das Makro
 `/reload` aus. Im Kampf wird er erst danach scharf und sagt bis dahin im
 Chat, dass `/reload` zu tippen ist.
 

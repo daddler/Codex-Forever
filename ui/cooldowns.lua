@@ -146,12 +146,73 @@ local function ApplyFonts(item, d)
     end
 end
 
-local function SkinIconItem(item)
+-- ABSTAND. Das Spiel setzt seine Symbole 4 px enger, als der Abstand im
+-- Bearbeitungsmodus sagt (CooldownViewerMixin:GetAdditionalPaddingOffset):
+-- die runde Maske laesst am Rand Luft, die Symbole sollen sich optisch
+-- beruehren. Eckig und bis zum Rand gefuellt, ueberlappten sie
+-- (Beta-Test 6.4.1.0). Das Bild ruecken wir deshalb nach innen, so dass
+-- zwischen zwei Raendern 2 px bleiben:
+--   Luecke = (Abstand - 4) + 2 * Einzug - 2 * Rand  =>  Einzug = (8 - Abstand) / 2
+-- Den Abstand liest die Anzeige des Spiels selbst (iconPadding, nur
+-- gelesen); ohne Antwort gilt der Standard des Spiels.
+local GAP, RIM = 2, 1
+function CD.Inset(viewer)
+    local pad = type(viewer) == "table" and K.Plain(viewer.iconPadding) or nil
+    if type(pad) ~= "number" then pad = 2 end
+    return math.max(RIM, math.ceil((GAP + 2 * RIM + 4 - pad) / 2))
+end
+
+-- Rand um eine Flaeche (Textur), nicht um einen Rahmen: das Symbol sitzt
+-- eingerueckt im Rahmen des Spiels.
+local function Rim(host, region)
+    local r = {}
+    for _, side in ipairs({ "top", "bottom", "left", "right" }) do
+        local t = host:CreateTexture(nil, "OVERLAY", nil, 7)
+        t:SetColorTexture(0, 0, 0, 1)
+        r[side] = t
+    end
+    r.top:SetPoint("BOTTOMLEFT", region, "TOPLEFT", -RIM, 0)
+    r.top:SetPoint("BOTTOMRIGHT", region, "TOPRIGHT", RIM, 0)
+    r.top:SetHeight(RIM)
+    r.bottom:SetPoint("TOPLEFT", region, "BOTTOMLEFT", -RIM, 0)
+    r.bottom:SetPoint("TOPRIGHT", region, "BOTTOMRIGHT", RIM, 0)
+    r.bottom:SetHeight(RIM)
+    r.left:SetPoint("TOPRIGHT", region, "TOPLEFT", 0, 0)
+    r.left:SetPoint("BOTTOMRIGHT", region, "BOTTOMLEFT", 0, 0)
+    r.left:SetWidth(RIM)
+    r.right:SetPoint("TOPLEFT", region, "TOPRIGHT", 0, 0)
+    r.right:SetPoint("BOTTOMLEFT", region, "BOTTOMRIGHT", 0, 0)
+    r.right:SetWidth(RIM)
+    return r
+end
+
+-- Bild, Abdeckung und Reichweiten-Schatten auf die eingerueckte Flaeche.
+local function PlaceInset(item, d, inset)
+    if d.inset == inset then return end
+    d.inset = inset
+    for _, part in ipairs({ item.Icon, item.Cooldown, item.OutOfRange }) do
+        if type(part) == "table" and part.ClearAllPoints then
+            pcall(function()
+                part:ClearAllPoints()
+                part:SetPoint("TOPLEFT", item, "TOPLEFT", inset, -inset)
+                part:SetPoint("BOTTOMRIGHT", item, "BOTTOMRIGHT", -inset, inset)
+            end)
+        end
+    end
+end
+
+local function SkinIconItem(item, viewer)
     local d = { kind = "icon" }
     Unmask(item.Icon)
     HideDecor(item)
-    d.bg, d.border = IconFrame(item)
+    if type(item.Icon) == "table" then
+        d.bg = item:CreateTexture(nil, "BACKGROUND", nil, -8)
+        d.bg:SetAllPoints(item.Icon)
+        d.bg:SetColorTexture(0, 0, 0, 1)
+        d.rim = Rim(item, item.Icon)
+    end
     StyleCooldown(item.Cooldown)
+    PlaceInset(item, d, CD.Inset(viewer))
     return d
 end
 
@@ -181,14 +242,14 @@ end
 
 -- Ein Symbol oder Balken des Spiels, einmal je Rahmen (das Spiel nimmt sie
 -- aus einem Vorrat und gibt sie wieder zurueck).
-function CD.SkinItem(item)
+function CD.SkinItem(item, viewer)
     if type(item) ~= "table" then return end
     if item.IsForbidden and item:IsForbidden() then return end
     local d = skinned[item]
     if not d then
         local ok, res = pcall(function()
             if type(item.Bar) == "table" then return SkinBarItem(item) end
-            return SkinIconItem(item)
+            return SkinIconItem(item, viewer)
         end)
         if not ok then
             CD.state = "Symbol nicht umgestaltet: " .. tostring(res)
@@ -196,6 +257,9 @@ function CD.SkinItem(item)
         end
         d = res
         skinned[item] = d
+    elseif d.kind == "icon" then
+        -- Aus dem Vorrat zurueck, womoeglich mit neuem Abstand.
+        PlaceInset(item, d, CD.Inset(viewer))
     end
     ApplyFonts(item, d)
 end
@@ -230,10 +294,10 @@ function CD.SkinAll()
             CD.found[#CD.found + 1] = name
             if not hooked[v] and _G.hooksecurefunc and type(v.OnAcquireItemFrame) == "function" then
                 hooked[v] = true
-                _G.hooksecurefunc(v, "OnAcquireItemFrame", function(_, item) CD.SkinItem(item) end)
+                _G.hooksecurefunc(v, "OnAcquireItemFrame", function(viewer, item) CD.SkinItem(item, viewer) end)
             end
             for _, item in ipairs(ItemsOf(v)) do
-                CD.SkinItem(item)
+                CD.SkinItem(item, v)
                 items = items + 1
             end
         end

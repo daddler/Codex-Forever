@@ -317,6 +317,7 @@ function M.Install()
     G.CreateFrame = function(kind, name, parent, template)
         local frame = NewObject(kind or "Frame", name)
         frame._parent = parent
+        frame._template = template   -- welche Vorlage (Pruefung des Neuladeknopfs)
 
         -- UIPanelScrollFrameTemplate bringt eine Bildlaufleiste mit. Im
         -- modernen Client haengt sie als Feld am Rahmen, in Classic als
