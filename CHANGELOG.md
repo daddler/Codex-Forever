@@ -9,6 +9,32 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.4.0.0] – 2026-09-27
+
+**Neu: Erinnerungen.** Was früher WeakAuras konnte, soweit das Spiel es heute noch erlaubt: WeintCodex erinnert dich vor dem Kampf an fehlende Buffs, an Waffen ohne (oder mit bald ablaufender) Verzauberung und an einen fehlenden Begleiter.
+
+**Procs und Abklingzeiten als Symbole.** Eigene Buffs und Procs erscheinen groß über dem Cockpit, solange sie laufen; wichtige Fähigkeiten stehen darunter als Leiste mit Abklingzeit. Verschiebbar im Gestaltungsmodus.
+
+**Deine Regeln.** Unter Erinnerungen → Regeln legst du selbst an, was beobachtet wird – Zauber mit Namen oder ID. „Für meine Klasse“ schlägt vor, was ohne Zauber geht (Waffe, Begleiter).
+
+**Was nicht geht, ehrlich:** Im Kampf verschlüsselt das Spiel viele Werte. Symbole und Uhren zeigen, was es herausgibt; Erinnerungen ruhen dort, statt zu raten.
+
+### Technisch
+
+- Neu `ui/reminders.lua` (`WeintCodex.UIReminders`, Modul „Erinnerungen“):
+  Regeln `buff`, `weapon`, `pet`, `proc`, `cooldown` in den Einstellungen
+  des Moduls (`rules`; nil = Vorschläge der Klasse). Auren über
+  `C_UnitAuras.GetPlayerAuraBySpellID` bzw. `GetAuraDataBySpellName`
+  (Rückfall `AuraUtil.FindAuraByName`), alles in `pcall`; geheim oder ohne
+  Auskunft = „weiß nicht“. Abklingzeit über
+  `C_Spell.GetSpellCooldownDuration` (Dauerobjekt), sonst
+  `C_Spell.GetSpellCooldown` unverändert an `SetCooldown`.
+- Plätze `reminders`, `procs`, `cooldowns` in `ui/layout.lua`.
+- Einstellungs-Baukasten: Zellen `input` und `custom`; Seitenleiste 36
+  statt 40 px je Eintrag (zwölf Module, Luft für eins mehr).
+- CLAUDE.md: Zeile „WeakAuras“ neu gefasst – das Addon bleibt
+  unerreichbar, die Erinnerungen bauen nach, was 12.x zulässt.
+
 ## [6.3.2.9] – 2026-09-26
 
 **Rollensymbole gut lesbar.** Schild, Kreuz, Schwert und Krone in den Gruppenrahmen stehen jetzt größer auf einer kleinen dunklen Plakette, statt auf der Klassenfarbe unterzugehen; das Schwert ist kräftiger gezeichnet.

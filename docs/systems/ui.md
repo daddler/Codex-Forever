@@ -369,6 +369,20 @@ Seit 6.2.0.0:
   (die Tageszeit an der Minikarte blieb drei Fassungen lang unauffindbar).
   Seit 6.3.1.3 zusätzlich `K.UnderCursor`: alles Sichtbare unter dem
   Zeiger, auch Texturen und Rahmen ohne Mausannahme, die kleinsten zuerst.
+* **Erinnerungen** (6.4.0.0, `ui/reminders.lua`, eigenes Modul): ein
+  Regelwerk aus kleinen Tabellen – `buff` (Buff fehlt), `weapon` (Waffe
+  ohne/mit ablaufender Verzauberung, `GetWeaponEnchantInfo`), `pet`
+  (Begleiter war da und ist weg), `proc` (Symbol, solange ein eigener
+  Buff läuft), `cooldown` (Symbol mit Abklingzeit). Zauber nennt der
+  Spieler (Name oder ID, `R.Resolve`); Vorschläge je Klasse nur ohne
+  Zauber-ID (Waffe, Begleiter). Erinnerungen ruhen im Kampf (einstellbar):
+  dort nennt der Client Auren oft geheim, und eine geheime Aura ist
+  „weiß nicht“, nie „fehlt“. Procs und Abklingzeiten bekommen Werte
+  durchgereicht (Dauerobjekt, sonst `SetCooldown` mit dem Wert, wie er
+  kommt); entschieden wird im Kampf nichts. Der Regel-Editor nutzt zwei
+  neue Zellen im Einstellungs-Baukasten: `input` (Eingabefeld) und
+  `custom` (frei gebaut, feste Höhe). Die Seitenleiste wurde dafür von
+  40 auf 36 px je Eintrag verdichtet.
 * **Fenster des Spiels** (6.3.1.6, `ui/windows.lua`): Charakterfenster
   und Teilfenster, erste Stufe nur die Hülle (Schmuck der Vorlage weg,
   Kachel darunter). Inhalte werden nie angefasst. Was innen noch nach

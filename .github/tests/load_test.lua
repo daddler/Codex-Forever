@@ -1672,6 +1672,108 @@ do
     Check(ok, "Chat: Eingabezeile erst mit Enter" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.4.0.0: Erinnerungen - Regeln, Vorschlaege, fehlende Buffs, Waffe,
+-- Begleiter, Procs, Abklingzeiten, Regel-Editor.
+do
+    local ok, err = pcall(function()
+        local R = WeintCodex.UIReminders
+        local saved = { _G.UnitClass, _G.C_UnitAuras, _G.C_Spell, _G.GetWeaponEnchantInfo,
+                        _G.GetInventoryItemID, _G.C_Item, _G.UnitExists, _G.InCombatLockdown, _G.issecretvalue }
+        -- Vorschlaege ohne Zauber-ID.
+        assert(#R.Suggestions("ROGUE") == 2 and R.Suggestions("ROGUE")[1].kind == "weapon", "Schurke ohne Waffengift-Vorschlag")
+        assert(#R.Suggestions("HUNTER") == 1 and R.Suggestions("HUNTER")[1].kind == "pet", "Jaeger ohne Begleiter-Vorschlag")
+        assert(#R.Suggestions("WARRIOR") == 0, "Vorschlag mit geratener Zauber-ID")
+
+        -- Zauber aufloesen: Name oder ID.
+        _G.C_Spell = {
+            GetSpellInfo = function(k)
+                if k == "Kampfschrei" or k == 6673 then return { name = "Kampfschrei", spellID = 6673, iconID = 132333 } end
+                if k == "Blutrausch" or k == 2687 then return { name = "Blutrausch", spellID = 2687, iconID = 132277 } end
+                return nil
+            end,
+            GetSpellCooldown = function() return { startTime = 100, duration = 60, isOnGCD = false } end,
+        }
+        local sp = R.Resolve("6673")
+        assert(sp and sp.id == 6673 and sp.name == "Kampfschrei", "ID nicht aufgeloest")
+        assert(R.Resolve("Unbekannt").id == nil, "Unbekannter Zauber bekommt eine ID")
+
+        -- Regeln setzen: Buff fehlt, Waffe, Begleiter, Proc, Abklingzeit.
+        R.SetRules({ { kind = "buff", spell = "Kampfschrei" }, { kind = "weapon", hand = "main" }, { kind = "pet" },
+                     { kind = "proc", spell = "Kampfschrei" }, { kind = "cooldown", spell = "Blutrausch" } })
+        local hasBuff = false
+        _G.C_UnitAuras = { GetPlayerAuraBySpellID = function(id)
+            if hasBuff and id == 6673 then return { icon = 132333, applications = 0, duration = 120, expirationTime = 200 } end
+            return nil
+        end, GetAuraDataBySpellName = function() return nil end }
+        _G.GetInventoryItemID = function() return 1234 end
+        _G.C_Item = { GetItemInfoInstant = function() return 1234, "Waffe", "Schwert", "INVTYPE_WEAPON", 1, 2, 7 end }
+        local enchanted, expMs = false, 0
+        _G.GetWeaponEnchantInfo = function() return enchanted, expMs, 0, 0, false, 0, 0, 0 end
+        local pet = true
+        _G.UnitExists = function(u) if u == "pet" then return pet end return true end
+        _G.InCombatLockdown = function() return false end
+
+        local function texts()
+            local t = {}
+            for _, a in ipairs(R.Active()) do t[#t + 1] = a.text end
+            return table.concat(t, " | ")
+        end
+        R.Check({ kind = "pet" })        -- Begleiter einmal gesehen
+        pet = false
+        local now = texts()
+        assert(now:find("Kampfschrei fehlt", 1, true), "fehlender Buff nicht erinnert: " .. now)
+        assert(now:find("ohne Verzauberung", 1, true), "Waffe ohne Verzauberung nicht erinnert: " .. now)
+        assert(now:find("Begleiter fehlt", 1, true), "fehlender Begleiter nicht erinnert: " .. now)
+        hasBuff, enchanted, expMs, pet = true, true, 2 * 60000, true
+        now = texts()
+        assert(not now:find("Kampfschrei", 1, true), "Buff da und trotzdem erinnert")
+        assert(now:find("noch 2 min", 1, true), "ablaufende Waffe nicht erinnert: " .. now)
+        -- Im Kampf ruhen die Erinnerungen (Standard).
+        _G.InCombatLockdown = function() return true end
+        assert(#R.Active() == 0, "Erinnerung im Kampf trotz Einstellung")
+        _G.InCombatLockdown = function() return false end
+        -- Geheim: keine Erinnerung, kein Raten.
+        local secret = setmetatable({}, {})
+        _G.issecretvalue = function(v) return v == secret end
+        _G.C_UnitAuras.GetPlayerAuraBySpellID = function() return secret end
+        assert(R.PlayerAura({ spell = "Kampfschrei" }) == nil, "geheime Aura als bekannt behandelt")
+        _G.issecretvalue = saved[9]
+        _G.C_UnitAuras.GetPlayerAuraBySpellID = function(id) if id == 6673 then return { icon = 132333, duration = 120, expirationTime = 200 } end end
+
+        -- Symbole: Proc sichtbar, Abklingzeit sichtbar.
+        R.UpdateAll()
+        assert(R.Banner() and R.Banner():IsShown(), "Erinnerungskachel nicht sichtbar")
+        local procRow, cdRow = R.Rows()
+        assert(procRow:IsShown() and procRow.icons[1]:IsShown(), "laufender Buff ohne Symbol")
+        assert(cdRow:IsShown() and cdRow.icons[1]:IsShown(), "Abklingzeit ohne Symbol")
+        local cdArgs
+        cdRow.icons[1].cd.SetCooldown = function(_, a, b) cdArgs = { a, b } end
+        R.UpdateCooldowns()
+        assert(cdArgs and cdArgs[1] == 100 and cdArgs[2] == 60, "Abklingzeit nicht an die Uhr")
+        _G.C_UnitAuras.GetPlayerAuraBySpellID = function() return nil end
+        R.UpdateProcs()
+        assert(not procRow:IsShown(), "Symbol bleibt, obwohl der Buff weg ist")
+
+        -- Editor: Regel hinzufuegen und entfernen.
+        local before = #R.Rules()
+        R.draft.kind, R.draft.spell = "buff", ""
+        assert(not R.AddDraft(), "Regel ohne Zauber angelegt")
+        R.draft.spell = " Blutrausch "
+        assert(R.AddDraft() and #R.Rules() == before + 1 and R.Rules()[before + 1].spell == "Blutrausch", "Regel nicht angelegt")
+        R.RemoveRule(before + 1)
+        assert(#R.Rules() == before, "Regel nicht entfernt")
+        local list = R.BuildRuleList(UIParent, 400)
+        list.Sync()
+        assert(list.rows[1]:IsShown() and list.rows[1].text:GetText():find("Kampfschrei", 1, true), "Regelliste leer")
+        assert(R.RuleText({ kind = "buff", spell = "Gibtsnicht" }):find("unbekannt", 1, true), "unbekannter Zauber nicht markiert")
+
+        K.Set("reminders", "rules", nil)
+        _G.UnitClass, _G.C_UnitAuras, _G.C_Spell, _G.GetWeaponEnchantInfo,
+            _G.GetInventoryItemID, _G.C_Item, _G.UnitExists, _G.InCombatLockdown = unpack(saved, 1, 8)
+    end)
+    Check(ok, "Erinnerungen: Regeln, fehlende Buffs, Waffe, Begleiter, Editor" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.8: Im Dungeon verfolgt die Questliste nur dessen Quests; beim
 -- Verlassen kommt genau das zurueck, was geaendert wurde.
 do
@@ -2985,7 +3087,7 @@ do
     Check(ok, "Minikarte: DielFrame als Tageszeit, Addon-Knoepfe voll deckend; Chat-Reiter oben" .. (ok and "" or (": " .. tostring(err))))
 end
 
--- Die Seitenleiste des Einstellungsfensters traegt jetzt elf Eintraege.
+-- Die Seitenleiste des Einstellungsfensters traegt jetzt zwoelf Eintraege.
 -- Sie rollt nie - also muss sie passen, mit Luft fuer einen weiteren.
 Check((UO._sidebarUsed or 9999) + 40 <= UO.HEIGHT,
     "Seitenleiste des Einstellungsfensters: " .. tostring(UO._sidebarUsed)

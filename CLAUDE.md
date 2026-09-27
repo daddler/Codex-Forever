@@ -238,7 +238,7 @@ into modules that no longer exist. A green run means "it loads", never
 | Companion-Authentifizierung/Token | `../Companion-Forever/docs/companion-auth.md` |
 | Welche Spieldaten fehlen und warum | `../Companion-Forever/docs/systems/forever-data.md` |
 | Neugestaltung der Oberfläche (UI 2.0): Cockpit, Raster, Kachel, Ruhe/Kampf, Gestaltungsmodus, Phasen | `docs/design/ui-2.0.md` |
-| Oberfläche (`ui/`): Plaketten, Einheiten-/Gruppenrahmen, Aktionsleisten, Erfahrungsbalken, Charakterfenster, Minikarte, Chat, Tooltip, Taschen, Schadensanzeige, Questliste, Auren, Questpfeil, Komfort, `/wcui`, `OPT_IN`, `WeintCodex.GameColors`, geheime Werte (12.x), `UIKit.NewText`, `UIKit.NewBar`/`Glow`/`Kachel`, Layout-Tabelle, Ruhe/Kampf, Testmodus | `docs/systems/ui.md` |
+| Oberfläche (`ui/`): Plaketten, Einheiten-/Gruppenrahmen, Aktionsleisten, Erfahrungsbalken, Charakterfenster, Erinnerungen, Minikarte, Chat, Tooltip, Taschen, Schadensanzeige, Questliste, Auren, Questpfeil, Komfort, `/wcui`, `OPT_IN`, `WeintCodex.GameColors`, geheime Werte (12.x), `UIKit.NewText`, `UIKit.NewBar`/`Glow`/`Kachel`, Layout-Tabelle, Ruhe/Kampf, Testmodus | `docs/systems/ui.md` |
 
 Cross-repo tasks (something touches Codex **and** Companion **and/or**
 Bot): read this table's Companion-doc pointers first — they are the
@@ -255,7 +255,7 @@ Do not add these back without a stated reason that survives the question
 | Simmen, Statgewichte, Zielausrüstung | Es gibt keinen Sim für Forever. |
 | Sockelsteine, Verzauberungen, Umschmieden, Tempo-Schwellen | Hingen an `data/spec_profiles.lua`, `gems.lua`, `enchants.lua`, `breakpoints.lua` aus MoP. Keine davon sagt über Forever etwas aus. |
 | BiS-Listen | Setzen Bosslisten und Beute voraus — beides unveröffentlicht. |
-| WeakAuras | Für Forever zunächst nicht unterstützt. |
+| WeakAuras (das Addon, Import von Strings) | Für Forever nicht unterstützt – WeakAuras selbst ist für 12.x eingestellt. Was davon noch geht, bauen die **Erinnerungen** nach (`ui/reminders.lua`, seit 6.4.0.0): fehlende Buffs, Waffe und Begleiter außerhalb des Kampfes, eigene Procs und Abklingzeiten als Symbole. Nur vom Spieler genannte Zauber, keine eingebaute Zauberliste; im Kampf nur Anzeige, keine Bedingungen auf geheimen Werten. |
 | Karten- und Bossbilder **aus dem Spiel** | Blizzard hat für Forever keine Dungeonkarten veröffentlicht (im Beta-Client liegt für vier der neun Instanzen überhaupt Material), und das Material gehört Blizzard. Ein geratener Texturpfad zeichnet im Spiel ein grünes Rechteck. **Eigenes** Artwork fällt unter keinen der beiden Gründe: seit 5.2.0.7 trägt die Hall of Thanes fünf eigene Bilder; Ragefire Chasm ist der zweite, Ruins of Lordaeron der dritte, Wailing Caverns der vierte und The Deadmines der fünfte und Shadowfang Keep der sechste bebilderte Dungeon (`media/dungeons/`, `data/artwork.lua`) — sie behaupten nichts über das Spiel, und ein bebilderter Dungeon ist kein besser belegter. `boss.position` sagt weiter in Worten, wo einer steht. |
 | Academy, WeintTV, Rotationshelfer | Brauchen ein auswertbares Kampflog. Ob Forever eines hergibt, ist nicht bestätigt — siehe `../Companion-Forever/docs/systems/forever-data.md`, letzter Abschnitt. |
 | Ausrüstungs-Alarm, Einkaufsliste, Sockelfenster-Hilfe | Hätten ohne Verzauberungen und Sockel nichts zu melden. |

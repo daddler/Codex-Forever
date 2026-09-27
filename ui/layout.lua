@@ -50,6 +50,11 @@ K.LAYOUT = {
     gf_raid         = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 20, y = -260 },
 
     -- Rand
+    -- Erinnerungen (ui/reminders.lua): die Hinweise oben, die Symbole
+    -- ueber dem Cockpit - Procs zuoberst, darunter die Abklingzeiten.
+    reminders       = { point = "TOP",         relPoint = "TOP", x = 0, y = -130 },
+    procs           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 268 },
+    cooldowns       = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 228 },
     xpbar           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 4 },
     damagemeter     = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -12, y = 52 },
     bags            = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20, y = 110 },

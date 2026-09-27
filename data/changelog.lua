@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.4.0.0",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFNeu: Erinnerungen.|r Was früher WeakAuras konnte, soweit das Spiel es heute noch erlaubt: WeintCodex erinnert dich vor dem Kampf an fehlende Buffs, an Waffen ohne (oder mit bald ablaufender) Verzauberung und an einen fehlenden Begleiter.",
+            "|cff7C6CFFProcs und Abklingzeiten als Symbole.|r Eigene Buffs und Procs erscheinen groß über dem Cockpit, solange sie laufen; wichtige Fähigkeiten stehen darunter als Leiste mit Abklingzeit. Verschiebbar im Gestaltungsmodus.",
+            "|cff7C6CFFDeine Regeln.|r Unter Erinnerungen → Regeln legst du selbst an, was beobachtet wird – Zauber mit Namen oder ID. „Für meine Klasse“ schlägt vor, was ohne Zauber geht (Waffe, Begleiter).",
+            "|cff7C6CFFWas nicht geht, ehrlich:|r Im Kampf verschlüsselt das Spiel viele Werte. Symbole und Uhren zeigen, was es herausgibt; Erinnerungen ruhen dort, statt zu raten.",
+        },
+    },
+    {
         version = "6.3.2.9",
         date    = "26.09.2026",
         notes   = {

@@ -36,7 +36,9 @@ local SIDE_W   = 224
 -- Seitenleiste: seit 6.0.0.3 elf Eintraege. 38 hoch, 40 Schritt - der
 -- Prueflauf haelt die belegte Hoehe gegen die Fensterhoehe (nichts in der
 -- Seitenleiste darf rollen muessen).
-local SIDE_ROW_H, SIDE_ROW_STEP = 38, 40
+-- 36/34 statt 40/38 seit 6.4.0.0: zwoelf Module (Erinnerungen) und
+-- trotzdem Luft fuer eins mehr (load_test.lua).
+local SIDE_ROW_H, SIDE_ROW_STEP = 34, 36
 local HEAD_H   = 96
 local TABS_H   = 38
 local FOOT_H   = 58
@@ -327,6 +329,48 @@ function Builder:Cell(spec)
         })
         b:SetPoint("BOTTOMLEFT", w, "BOTTOMLEFT", 0, 2)
         w.Sync = function() b:SetText(label()) end
+    elseif t == "input" then
+        -- Ein Eingabefeld (Erinnerungen: Zauber mit Namen oder ID).
+        -- Uebernommen wird bei jeder Eingabe - kein Enter noetig.
+        w = CreateFrame("Frame", nil, parent)
+        w:SetSize(CELL_W, 52)
+        local lbl = K.NewText(w)
+        lbl:SetFont(F.sans, 13, "")
+        lbl:SetPoint("TOPLEFT", w, "TOPLEFT", 0, -2)
+        lbl:SetTextColor(unpack(C.textMuted))
+        lbl:SetText(spec.label or "")
+        local eb = CreateFrame("EditBox", nil, w)
+        eb:SetSize(CELL_W, 26)
+        eb:SetPoint("BOTTOMLEFT", w, "BOTTOMLEFT", 0, 2)
+        eb:SetAutoFocus(false)
+        if eb.SetTextInsets then eb:SetTextInsets(8, 8, 0, 0) end
+        K.SetFont(eb, 12)
+        local bg = eb:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints(eb)
+        bg:SetColorTexture(unpack(C.bgDark))
+        K.Border(eb, 1, 0, 0, 0, 1, "BORDER")
+        eb:SetScript("OnTextChanged", function(self, user)
+            if user then rawSet(self:GetText()) end
+        end)
+        eb:SetScript("OnEnterPressed", function(self) set(self:GetText()) self:ClearFocus() end)
+        eb:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+        w._edit = eb
+        w.Sync = function()
+            if not (eb.HasFocus and eb:HasFocus()) then eb:SetText(get() or "") end
+            local off = disabled and disabled() and true or false
+            w:SetAlpha(off and 0.35 or 1)
+            eb:EnableMouse(not off)
+        end
+        w.Sync()
+    elseif t == "custom" then
+        -- Frei gebaut (Erinnerungen: die Liste der Regeln). spec.create
+        -- liefert einen Rahmen mit Sync; die Hoehe steht fest, damit die
+        -- Seite nicht springt.
+        w = spec.create(parent, CONTENT_W)
+        if w then
+            w:SetSize(CONTENT_W, spec.height or 100)
+            if w.Sync then w.Sync() end
+        end
     end
     if w then self.widgets[#self.widgets + 1] = w end
     return w
