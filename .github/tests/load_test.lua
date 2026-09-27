@@ -2017,8 +2017,30 @@ do
         assert(not W.IsDark(col[name][1], col[name][2], col[name][3]), "Pergament-Schrift bleibt dunkel")
         assert(col[gold][1] == 1 and col[gold][2] == 0.82, "farbige Schrift umgefaerbt")
         _G.SpellBookFrame = nil
+
+        -- 6.4.1.3: grosse Bilder (Pergament, Talent-Landschaften) nach
+        -- Flaeche; Talentfenster ueber den Namen gefunden.
+        local tf = stub.NewObject("Frame", "ForeverTalentFrame")
+        tf._width, tf._height = 1000, 600
+        _G.ForeverTalentFrame = tf   -- benannte Rahmen sind im Client global
+        local art, icon2, own = stub.NewObject("Texture"), stub.NewObject("Texture"), nil
+        art._width, art._height = 330, 560
+        icon2._width, icon2._height = 36, 36
+        local tree = stub.NewObject("Frame")
+        tree.GetRegions = function() return art, icon2 end
+        tf.GetChildren = function() return tree end
+        assert(W.Adopt(tf), "Talentfenster nicht aufgenommen")
+        assert(W.done[tf] and W.done[tf].kachel, "Talentfenster ohne Kachel")
+        own = W.done[tf].kachel.bg
+        tf.GetRegions = function() return own end
+        W.Inner()
+        assert(art:GetAlpha() == 0, "Hintergrundbild des Talentbaums bleibt")
+        assert(icon2:GetAlpha() == 1, "Talentsymbol ausgeblendet")
+        assert(own:GetAlpha() == 1, "eigene Kachel ausgeblendet")
+        assert(not W.Adopt(stub.NewObject("Frame", "MailFrame")), "fremdes Fenster aufgenommen")
+        _G.ForeverTalentFrame = nil
     end)
-    Check(ok, "Zauberbuch: Pergament weg, Schrift hell, Symbole eckig" .. (ok and "" or (": " .. tostring(err))))
+    Check(ok, "Zauberbuch und Talente: Pergament weg, Schrift hell, Symbole eckig" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.3.2.8: Im Dungeon verfolgt die Questliste nur dessen Quests; beim

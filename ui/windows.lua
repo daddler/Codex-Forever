@@ -44,7 +44,26 @@ W.DEFAULTS = {
 local function Opt(k) return K.Get("general", k) end
 
 -- Fenster und ihre Teilfenster. Was der Client nicht kennt, faellt heraus.
-W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "SpellBookFrame" }
+W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "SpellBookFrame",
+              "PlayerTalentFrame", "TalentFrame", "ClassTalentFrame" }
+
+-- Zauberbuch und Talente (6.4.1.3): ihre Hintergruende heissen im
+-- Forever-Client anders als im Quelltext des Spiels (Beta-Test 6.4.1.2:
+-- das Pergament blieb). Dort werden deshalb zusaetzlich GROSSE Bilder
+-- ausgeblendet - erkannt an der Flaeche, nicht am Namen: Pergament,
+-- Buchseiten, die Landschaften hinter den Talentbaeumen. Symbole, Pfeile,
+-- Reiter und Knoepfe sind klein und bleiben. Gefunden werden die Fenster
+-- auch ueber ihren Namen, wenn der nicht in der Liste steht (Haken auf
+-- ShowUIPanel).
+local LARGE_PATTERNS = { "Spell", "Talent" }
+function W.WantsLarge(name)
+    if type(name) ~= "string" then return false end
+    for _, pat in ipairs(LARGE_PATTERNS) do
+        if name:find(pat, 1, true) then return true end
+    end
+    return false
+end
+W.LARGE_SHARE = 0.15   -- ab diesem Anteil an der Fensterflaeche ist ein Bild Hintergrund
 W.PANELS  = { "PaperDollFrame", "ReputationFrame", "SkillFrame", "TokenFrame", "PVPFrame", "HonorFrame",
               "CharacterStatsPane" }
 
@@ -54,6 +73,8 @@ local DECOR = { "NineSlice", "Bg", "Background", "TopTileStreaks", "Inset", "Ins
 
 local done = {}
 W.done = done
+local own = setmetatable({}, { __mode = "k" })   -- unsere eigenen Flaechen
+W.own = own
 
 -- Was die zweite Stufe tut, fuer /wcui fenster (6.3.1.8: im Beta-Test
 -- blieb 6.3.1.7 ohne sichtbare Wirkung, und ohne Zahlen ist nicht zu
@@ -125,6 +146,8 @@ function W.Skin(f, panel)
     if not panel then
         HideOwnTextures(f)
         d.kachel = K.Kachel(f, { alpha = 0.94, shadow = 8 })
+        own[d.kachel.bg], own[d.kachel.light] = true, true
+        if d.kachel.shadow and d.kachel.shadow.tex then own[d.kachel.shadow.tex] = true end
         StyleTitle(f)
     end
     -- Innenflaechen (Inset): etwas heller als die Kachel, damit Spalten
@@ -137,6 +160,7 @@ function W.Skin(f, panel)
             t:SetAllPoints(inset)
             local s = C.surface1
             t:SetColorTexture(s[1], s[2], s[3], 0.45)
+            own[t] = true
             d[key] = t
         end
     end
@@ -360,6 +384,37 @@ local function SkinSpellItems(f, depth)
 end
 W.SkinSpellItems = function(f) SkinSpellItems(f, 0) end
 
+-- Grosse Bilder im Fenster (siehe LARGE_PATTERNS). Nur sichtbare, nur
+-- Texturen, nie unsere eigenen.
+local function HideLarge(f, limit, depth)
+    if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
+    local rok, regions = pcall(function() return { f:GetRegions() } end)
+    for _, r in ipairs(rok and regions or {}) do
+        if not own[r] then
+            local ok, big = pcall(function()
+                if r:GetObjectType() ~= "Texture" then return false end
+                if not K.Bool(r:IsShown(), false) or K.Plain(r:GetAlpha()) == 0 then return false end
+                local w, h = K.Plain(r:GetWidth()), K.Plain(r:GetHeight())
+                return type(w) == "number" and type(h) == "number" and w * h >= limit
+            end)
+            if ok and big then
+                Hide(r)
+                if not seen[r] then
+                    seen[r] = true
+                    stats.hidden = stats.hidden + 1
+                end
+            end
+        end
+    end
+    local cok, kids = pcall(function() return { f:GetChildren() } end)
+    for _, ch in ipairs(cok and kids or {}) do HideLarge(ch, limit, depth + 1) end
+end
+function W.HideLarge(f)
+    local w, h = K.Plain(f:GetWidth()), K.Plain(f:GetHeight())
+    if type(w) ~= "number" or type(h) ~= "number" or w * h <= 0 then return end
+    HideLarge(f, w * h * W.LARGE_SHARE, 0)
+end
+
 function W.Inner()
     stats.runs = stats.runs + 1
     stats.last = _G.GetTime and K.Plain(_G.GetTime()) or nil
@@ -368,9 +423,10 @@ function W.Inner()
         if type(f) == "table" and done[f] then
             HideByAtlas(f, 0)
             SkinSlots(f)
-            if n == "PlayerSpellsFrame" or n == "SpellBookFrame" then
+            if W.WantsLarge(n) then
                 SkinSpellItems(f, 0)
                 LightenText(f, 0)
+                W.HideLarge(f)
             end
         end
     end
@@ -431,6 +487,27 @@ end
 
 function W.HookAll()
     for _, n in ipairs(W.WINDOWS) do HookWindow(_G[n]) end
+end
+
+-- Ein Fenster des Spiels, das in keiner Liste steht, aber nach Zauberbuch
+-- oder Talenten heisst: aufnehmen, gestalten, beobachten.
+function W.Adopt(f)
+    if type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) or not f.GetName then return false end
+    local ok, name = pcall(f.GetName, f)
+    if not ok or not W.WantsLarge(name) then return false end
+    local known = false
+    for _, n in ipairs(W.WINDOWS) do if n == name then known = true break end end
+    if not known then W.WINDOWS[#W.WINDOWS + 1] = name end
+    HookWindow(f)
+    Run(W.Apply)
+    return true
+end
+
+if _G.hooksecurefunc and type(_G.ShowUIPanel) == "function" then
+    _G.hooksecurefunc("ShowUIPanel", function(f)
+        if not K.UIEnabled() or not Opt("windowSkin") then return end
+        W.Adopt(f)
+    end)
 end
 
 local boot = CreateFrame("Frame")

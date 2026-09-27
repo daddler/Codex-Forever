@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.4.1.3",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFZauberbuch ohne Pergament, Talente ohne Landschaften.|r Große Hintergrundbilder beider Fenster verschwinden, darunter liegt die WeintCodex-Kachel. Symbole, Pfeile, Reiter und die farbigen Rahmen der Talente bleiben.",
+        },
+    },
+    {
         version = "6.4.1.2",
         date    = "27.09.2026",
         notes   = {

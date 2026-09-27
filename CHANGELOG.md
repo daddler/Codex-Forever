@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.4.1.3] – 2026-09-27
+
+**Zauberbuch ohne Pergament, Talente ohne Landschaften.** Große Hintergrundbilder beider Fenster verschwinden, darunter liegt die WeintCodex-Kachel. Symbole, Pfeile, Reiter und die farbigen Rahmen der Talente bleiben.
+
+### Technisch
+
+- `ui/windows.lua`: Im Beta-Test blieb das Pergament – der Forever-Client
+  nennt es anders als der Quelltext des Spiels. In Fenstern, deren Name
+  „Spell“ oder „Talent“ enthält, verschwinden zusätzlich Texturen ab
+  15 % der Fensterfläche (`W.HideLarge`); eigene Flächen (Kachel,
+  Schatten, Innenflächen) sind in `W.own` ausgenommen.
+- Fenster über den Namen finden (`W.Adopt`, Haken auf `ShowUIPanel`),
+  dazu `PlayerTalentFrame`, `TalentFrame`, `ClassTalentFrame` in der
+  Liste.
+- **Im Spiel ungeprüft.**
+
 ## [6.4.1.2] – 2026-09-27
 
 **Zauberbuch im WeintCodex-Stil.** Kachel statt Pergament, Titel und Schrift hell, Zaubersymbole eckig mit dem Rand der Aktionsleisten statt der runden und goldenen Zierrahmen.

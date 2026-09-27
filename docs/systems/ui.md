@@ -416,7 +416,10 @@ Seit 6.2.0.0:
   Atlanten weg, Zaubersymbole eckig (erkannt an `Button.Icon`/`Border`/
   `IconMask`), dunkle Schrift hell (`W.IsDark`, Haken auf
   `SetTextColor`). Der Forever-Client sieht anders aus als der Quelltext
-  des Spiels – was bleibt, nennt `/wcui fenster`.
+  des Spiels – was bleibt, nennt `/wcui fenster`. Seit 6.4.1.3 zusätzlich
+  große Bilder nach Fläche (≥ 15 % des Fensters, `W.HideLarge`) in
+  Fenstern mit „Spell“/„Talent“ im Namen, gefunden auch über
+  `ShowUIPanel` (`W.Adopt`); eigene Flächen stehen in `W.own`.
 * **Tageszeit-Ecke** (6.3.1.6): `dayCorner` der Minikarte.
 * **LibDBIcon friert Schichten ein** (6.3.1.6): vor `SetFrameStrata`
   erst `SetFixedFrameStrata(false)`, sonst wirkt es nicht.
