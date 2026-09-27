@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.4.0.2] – 2026-09-27
+
+**„Für meine Klasse“ ergänzt nur noch.** Selbst angelegte Regeln bleiben stehen; gibt es für deine Klasse keine Vorschläge, sagt der Knopf das, statt die Liste zu leeren.
+
+**Kalender neben der Karte.** Der Kalenderknopf verdeckt die Uhrzeit nicht mehr, er steht jetzt links in der Knopfspalte unter der Verfolgung.
+
+### Technisch
+
+- `ui/reminders.lua`: `R.AddSuggestions` ergänzt fehlende Vorschläge
+  (gleiche Art, Hand, Zauber zählt als vorhanden) statt `R.SetRules`
+  mit der Vorschlagsliste – beim Krieger (keine Vorschläge) war die
+  Liste danach leer. Rückmeldung im Chat.
+- `ui/minimap.lua`: `GameTimeFrame` in `ColumnButtons` (nach der
+  Verfolgung), außer bei „Kalenderknopf ausblenden“ oder wenn er selbst
+  die Tageszeit ist.
+
 ## [6.4.0.1] – 2026-09-27
 
 **Erinnerungen direkt öffnen.** /wcui erinnerungen springt sofort zu den Erinnerungen; läuft noch eine ältere Fassung, sagt der Befehl das.

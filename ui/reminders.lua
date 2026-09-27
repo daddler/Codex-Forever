@@ -117,6 +117,33 @@ function R.AddRule(rule)
     R.SetRules(list)
 end
 
+-- Vorschlaege ERGAENZEN, nie ersetzen: in 6.4.0.1 loeschte "Für meine
+-- Klasse" beim Krieger (keine Vorschlaege) den selbst angelegten
+-- Schlachtruf. Was schon da ist (gleiche Art, gleiche Hand), kommt nicht
+-- doppelt. Gibt zurueck, wie viele neu dazukamen und wie viele die Klasse
+-- ueberhaupt hat.
+local function SameRule(a, b)
+    return a.kind == b.kind and a.hand == b.hand and a.spell == b.spell
+end
+
+function R.AddSuggestions(class)
+    local sugg = R.Suggestions(class)
+    local list = CopyRules(R.Rules())
+    local added = 0
+    for _, s in ipairs(sugg) do
+        local found = false
+        for _, r in ipairs(list) do
+            if SameRule(r, s) then found = true break end
+        end
+        if not found then
+            list[#list + 1] = s
+            added = added + 1
+        end
+    end
+    if added > 0 then R.SetRules(list) end
+    return added, #sugg
+end
+
 function R.RemoveRule(i)
     local list = CopyRules(R.Rules())
     table.remove(list, i)
@@ -655,8 +682,19 @@ K.Register({
                   { type = "button", label = "Hinzufügen", text = "Regel hinzufügen",
                     onClick = function() R.AddDraft() end })
             B:Row({ type = "button", label = "Vorschläge", text = "Für meine Klasse",
-                    tooltip = "Ersetzt die Regeln durch die Vorschläge für deine Klasse (Waffe, Begleiter).",
-                    onClick = function() R.SetRules(R.Suggestions()) end },
+                    tooltip = "Ergänzt die Vorschläge für deine Klasse (Waffe, Begleiter). Eigene Regeln bleiben.",
+                    onClick = function()
+                        local added, total = R.AddSuggestions()
+                        local line
+                        if total == 0 then
+                            line = "Für deine Klasse gibt es keine Vorschläge ohne Zauber – lege Buffs selbst an (Name oder ID)."
+                        elseif added == 0 then
+                            line = "Die Vorschläge für deine Klasse stehen schon in der Liste."
+                        else
+                            line = added == 1 and "Ein Vorschlag ergänzt." or string.format("%d Vorschläge ergänzt.", added)
+                        end
+                        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+                    end },
                   { type = "empty" })
         end },
         { key = "anzeige", label = "Anzeige", build = function(B)

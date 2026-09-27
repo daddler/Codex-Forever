@@ -132,6 +132,16 @@ local function ColumnButtons()
     end
     add(type(cl) == "table" and cl.Tracking or nil)
     add(_G.MiniMapTracking)
+    -- Der Kalender stand oben rechts auf der Karte und verdeckte die
+    -- Uhrzeit (Beta-Test 6.4.0.1) - er kommt unter die Verfolgung. Nicht,
+    -- wenn er ausgeblendet ist, und nicht, wenn er zugleich die Tageszeit
+    -- ist (aeltere Clients): die hat ihre Ecke auf der Karte.
+    if not Opt("hideCalendar") then
+        local tb = MM.TimeButton()
+        for _, cal in ipairs({ _G.GameTimeFrame, type(cl) == "table" and cl.GameTimeFrame or nil }) do
+            if cal ~= tb then add(cal) end
+        end
+    end
     local ind = type(cl) == "table" and cl.IndicatorFrame or nil
     add(type(ind) == "table" and ind.MailFrame or nil)
     add(_G.MiniMapMailFrame)

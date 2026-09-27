@@ -1689,6 +1689,14 @@ do
         assert(#R.Suggestions() == 2, "Klasse des Spielers nicht erkannt")
         _G.UnitClass = oldClass
 
+        -- 6.4.0.2: "Für meine Klasse" ergaenzt, statt eigene Regeln zu loeschen.
+        R.SetRules({ { kind = "buff", spell = "Schlachtruf" } })
+        local added, total = R.AddSuggestions("WARRIOR")
+        assert(added == 0 and total == 0 and #R.Rules() == 1, "Vorschlaege loeschen eigene Regeln (Krieger)")
+        added = R.AddSuggestions("ROGUE")
+        assert(added == 2 and #R.Rules() == 3 and R.Rules()[1].spell == "Schlachtruf", "Vorschlaege nicht ergaenzt")
+        assert(R.AddSuggestions("ROGUE") == 0 and #R.Rules() == 3, "Vorschlaege doppelt ergaenzt")
+
         -- Zauber aufloesen: Name oder ID.
         _G.C_Spell = {
             GetSpellInfo = function(k)

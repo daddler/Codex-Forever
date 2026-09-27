@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.4.0.2",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFF„Für meine Klasse“ ergänzt nur noch.|r Selbst angelegte Regeln bleiben stehen; gibt es für deine Klasse keine Vorschläge, sagt der Knopf das, statt die Liste zu leeren.",
+            "|cff7C6CFFKalender neben der Karte.|r Der Kalenderknopf verdeckt die Uhrzeit nicht mehr, er steht jetzt links in der Knopfspalte unter der Verfolgung.",
+        },
+    },
+    {
         version = "6.4.0.1",
         date    = "27.09.2026",
         notes   = {
