@@ -9,11 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [6.5.0.1] – 2026-09-27
+## [6.5.0.0] – 2026-09-27
 
-**Mehr Addon-Knöpfe im Sammelknopf der Minikarte.** Auch Addons mit eigenem Kartenknopf kommen jetzt hinein, und Knöpfe, die ein Addon erst spät anlegt, ebenfalls.
+**Beute im Dungeonkompendium.** Für Hall of Thanes, Ragefire Chasm, Wailing Caverns, Ruins of Lordaeron, The Deadmines, Shadowfang Keep und Blackfathom Deeps zeigt jeder Boss, was er fallen lässt – mit dem Tooltip des Spiels und Umschalt+Klick in den Chat.
 
-**Fehlt trotzdem eines?** `/wcui addons` zeigt, was gefunden wurde, was an der Karte hängt und was nur im Addon-Menü des Spiels steht.
+**Quests zu jedem dieser Dungeons.** Wo sie beginnen, was zu tun ist, wo man sie abgibt und was sie bringen – nur für deine Fraktion, die andere wird gezählt.
+
+**Unbestätigt, und so gekennzeichnet.** Die Angaben stammen aus Beta-Berichten, nicht aus dem Client. Die Erfahrung ist ein beobachteter Wert; Namen und Werte der Gegenstände nennt dein Spiel selbst.
+
+**Mehr Addon-Knöpfe im Sammelknopf der Minikarte.** Auch Addons mit eigenem Kartenknopf kommen hinein, und Knöpfe, die ein Addon erst spät anlegt, ebenfalls. Fehlt trotzdem eines, zeigt `/wcui addons`, was gefunden wurde und was nur im Addon-Menü des Spiels steht.
+
+**Die Reiter Primär und Sekundär im Talentfenster sehen wieder aus wie Reiter.** Sie trugen einen Rand mitten auf der Schrift statt ihrer Kachel.
 
 ### Technisch
 
@@ -27,19 +33,13 @@ nicht zusammen.
 - `/wcui addons` (`MM.InspectAddons`): gefundene Knöpfe, im Addon
   ausgeblendete, übrige Rahmen an der Karte, Einträge im Addon-Menü des
   Spiels (`AddonCompartmentFrame`).
-- Es gab keine Grenze von zwei Knöpfen; die Liste kannte bisher nur
-  LibDBIcon.
-
-## [6.5.0.0] – 2026-09-27
-
-**Beute im Dungeonkompendium.** Für Hall of Thanes, Ragefire Chasm, Wailing Caverns, Ruins of Lordaeron, The Deadmines, Shadowfang Keep und Blackfathom Deeps zeigt jeder Boss, was er fallen lässt – mit dem Tooltip des Spiels und Umschalt+Klick in den Chat.
-
-**Quests zu jedem dieser Dungeons.** Wo sie beginnen, was zu tun ist, wo man sie abgibt und was sie bringen – nur für deine Fraktion, die andere wird gezählt.
-
-**Unbestätigt, und so gekennzeichnet.** Die Angaben stammen aus Beta-Berichten, nicht aus dem Client. Die Erfahrung ist ein beobachteter Wert; Namen und Werte der Gegenstände nennt dein Spiel selbst.
-
-### Technisch
-
+- Minikarte: Es gab keine Grenze von zwei Knöpfen; die Liste kannte
+  bisher nur LibDBIcon.
+- `ui/windows.lua`: Ein Reiter ist nur dann ein Bildreiter, wenn er keine
+  sichtbare Beschriftung hat (`W.HasLabel`) und sein Bild sichtbar ist
+  und etwas zeigt (`W.ShowsPicture`). Die Textreiter im Talentfenster
+  tragen ein leeres, verstecktes `.Icon`; 6.4.1.7 hatte jedes `.Icon`
+  genommen.
 - Neu: `data/dungeon_journal.lua` (`WeintCodex.DungeonJournal`): 153
   Gegenstände an 52 Gegnern, 50 Quests, Herkunft `community`.
   Zugriff `Loot/Others/Quests/Has`.

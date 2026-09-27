@@ -364,7 +364,7 @@ Seit 6.2.0.0:
   und je Objekt angelegte und gezeigte Symbole mit Rahmengröße.
 * `/wcui chat`: Chatfenster, eigene Fläche, Reiter, Knöpfe, Eingabe- und
   Infozeile in je einer Zeile (`K.Describe`).
-* `/wcui addons` (seit 6.5.0.1): was der Sammelknopf der Minikarte
+* `/wcui addons` (seit 6.5.0.0): was der Sammelknopf der Minikarte
   gefunden hat, im Addon ausgeblendete Knöpfe, übrige benannte Rahmen an
   der Karte und die Einträge im Addon-Menü des Spiels. Der Sammelknopf
   nimmt LibDBIcon-Knöpfe und eigene Knöpfe mit einem Namen wie
@@ -435,6 +435,11 @@ Seit 6.2.0.0:
   `UIPanelButtonTemplate`-Knöpfe als Kachel, `RedButton-*`/
   `common-dropdown-a-button` entsättigt, Porträt-Rahmen ganz aus, Werte
   im Charakterfenster (`Label` vor `Value`) ohne Überlappung.
+  6.5.0.0: Bildreiter nur ohne sichtbare Beschriftung und mit einem
+  Bild, das sichtbar ist und etwas zeigt (`W.HasLabel`,
+  `W.ShowsPicture`). Die Textreiter „Primär“/„Sekundär“ im Talentfenster
+  haben dieselbe Vorlage mit leerem, verstecktem `.Icon` – als Bildreiter
+  genommen, trugen sie einen Rand mitten auf der Schrift.
 * **Tageszeit-Ecke** (6.3.1.6): `dayCorner` der Minikarte.
 * **LibDBIcon friert Schichten ein** (6.3.1.6): vor `SetFrameStrata`
   erst `SetFixedFrameStrata(false)`, sonst wirkt es nicht.

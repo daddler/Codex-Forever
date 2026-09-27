@@ -2119,6 +2119,34 @@ do
         tc = { 0.25, 0, 0.25, 0.25, 0.5, 0, 0.5, 0.25 }   -- das Spiel setzt neu
         W.SkinTabSystems(cat)
         assert(math.abs(tc[1] - 0.275) < 1e-6, "neuer Ausschnitt des Spiels nicht geschnitten")
+        -- 6.5.0.0: Textreiter mit leerem, verstecktem .Icon (Talentfenster:
+        -- Primaer/Sekundaer) bleiben Textreiter mit Kachel.
+        local tt = stub.NewObject("Frame")
+        tt.AddTab = function() end
+        local prim = stub.NewObject("Button")
+        prim.Left, prim.Middle, prim.Right = stub.NewObject("Texture"), stub.NewObject("Texture"), stub.NewObject("Texture")
+        prim.Icon = stub.NewObject("Texture")
+        prim.Icon.GetObjectType = function() return "Texture" end
+        prim.Icon.GetTexture = function() return nil end
+        prim.Icon:Hide()
+        prim.Text = stub.NewObject("FontString")
+        prim.Text._text = "Primär"
+        prim.isSelected = true
+        tt.tabs = { prim }
+        W.SkinTabSystems(tt)
+        local pd = W.TabSkin[prim]
+        assert(pd and pd.kachel and not pd.icon, "Textreiter mit leerem Bild als Bildreiter behandelt")
+        assert(prim.Text:GetAlpha() ~= 0, "Beschriftung des Textreiters ausgeblendet")
+        -- Auch mit gesetztem Bild: eine sichtbare Beschriftung entscheidet.
+        local sec = stub.NewObject("Button")
+        sec.Icon = stub.NewObject("Texture")
+        sec.Icon.GetObjectType = function() return "Texture" end
+        sec.Icon.GetTexture = function() return 135274 end
+        sec.Text = stub.NewObject("FontString")
+        sec.Text._text = "Sekundär"
+        assert(W.TabIcon(sec) == nil, "sichtbare Beschriftung ignoriert")
+        sec.Text._text = ""
+        assert(W.TabIcon(sec) == sec.Icon, "Bildreiter ohne Beschriftung nicht erkannt")
         -- Knopf "Aenderungen anwenden" (UIPanelButtonTemplate).
         local apply = stub.NewObject("Button")
         apply.Left, apply.Middle, apply.Right = stub.NewObject("Texture"), stub.NewObject("Texture"), stub.NewObject("Texture")
@@ -3368,7 +3396,7 @@ do
     end)
     Check(ok, "Minikarte: Sammelknopf fuer Addons, Wegpunkte bleiben, Tageszeit unten rechts" .. (ok and "" or (": " .. tostring(err))))
 
-    -- 6.5.0.1: eigene Knoepfe ohne LibDBIcon kommen ueber ihren Namen in
+    -- 6.5.0.0: eigene Knoepfe ohne LibDBIcon kommen ueber ihren Namen in
     -- die Liste und bleiben drin, auch wenn sie keine Kinder der Karte
     -- mehr sind; Knoepfe des Spiels nicht; /wcui addons zaehlt sie.
     ok, err = pcall(function()

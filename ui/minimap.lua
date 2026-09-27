@@ -168,7 +168,7 @@ end
 -- Knopf auf der Karte) haette auch Kartenmarkierungen anderer Addons
 -- erwischt - Wegpunkte und Fundorte sind ebenfalls kleine Knoepfe auf der
 -- Minikarte, und die gehoeren auf sie.
--- 6.5.0.1 (Beta-Test: "3 Addons aktiv, nur 2 in der Liste"): Addons mit
+-- 6.5.0.0 (Beta-Test: "3 Addons aktiv, nur 2 in der Liste"): Addons mit
 -- eigenem Knopf statt LibDBIcon nennen ihn fast immer "<Addon>MinimapButton"
 -- - die kommen ueber ihren Namen dazu, nie ueber ihre Groesse. Knoepfe des
 -- Spiels heissen aehnlich (ExpansionLandingPageMinimapButton) und fallen

@@ -550,19 +550,52 @@ local tabSkin = setmetatable({}, { __mode = "k" })
 -- groesste Textur ohne Atlas; ihr Rahmen und Schein des Spiels
 -- (spellbook-Tab-Frame-*) gehen, ein Rand INNEN am Bild trennt die
 -- Nachbarn und zeigt die Wahl.
+-- Ein Bild zaehlt nur, wenn es sichtbar ist und etwas zeigt. Die Reiter
+-- "Primaer"/"Sekundaer" im Talentfenster haben dieselbe Vorlage und damit
+-- ein .Icon - leer und versteckt. 6.4.1.7 nahm es trotzdem: keine Kachel,
+-- der Rand um ein unsichtbares Bild mitten auf dem Text (Beta-Test 6.5.0.0).
+local function ShowsPicture(r)
+    local ok, yes = pcall(function()
+        if r:GetObjectType() ~= "Texture" then return false end
+        if r.IsShown and not K.Bool(r:IsShown(), true) then return false end
+        local tex = K.Plain(r.GetTexture and r:GetTexture())
+        local atlas = K.Plain(r.GetAtlas and r:GetAtlas())
+        local hasTex = (type(tex) == "number" and tex > 0) or (type(tex) == "string" and tex ~= "")
+        return hasTex or (type(atlas) == "string" and atlas ~= "")
+    end)
+    return ok and yes == true
+end
+W.ShowsPicture = ShowsPicture
+
+-- Eine sichtbare Beschriftung macht den Reiter zum Textreiter, egal was
+-- er sonst traegt.
+local function HasLabel(tab)
+    local ok, yes = pcall(function()
+        local fs = tab.Text
+        if type(fs) ~= "table" and tab.GetFontString then fs = tab:GetFontString() end
+        if type(fs) ~= "table" or not fs.GetText then return false end
+        if fs.IsShown and not K.Bool(fs:IsShown(), true) then return false end
+        local a = K.Plain(fs.GetAlpha and fs:GetAlpha())
+        if type(a) == "number" and a <= 0 then return false end
+        local t = K.Plain(fs:GetText())
+        return type(t) == "string" and t:find("%S") ~= nil
+    end)
+    return ok and yes == true
+end
+W.HasLabel = HasLabel
+
 local function TabIcon(tab)
+    if HasLabel(tab) then return nil end
     -- Gemessen im Beta-Client (/wcui maus, 6.4.1.7): der Reiter traegt
     -- sein Bild als .Icon.
     local key = tab.Icon
-    if type(key) == "table" and key.GetObjectType then
-        local ok, kind = pcall(key.GetObjectType, key)
-        if ok and kind == "Texture" then return key end
-    end
+    if type(key) == "table" and key.GetObjectType and ShowsPicture(key) then return key end
     local best, area = nil, 0
     local ok, regions = pcall(function() return { tab:GetRegions() } end)
     for _, r in ipairs(ok and regions or {}) do
         local tok, a = pcall(function()
             if r:GetObjectType() ~= "Texture" then return 0 end
+            if r.IsShown and not K.Bool(r:IsShown(), true) then return 0 end
             local atlas = K.Plain(r.GetAtlas and r:GetAtlas())
             if type(atlas) == "string" and atlas ~= "" then return 0 end
             if type(K.Plain(r:GetTexture())) ~= "number" then return 0 end

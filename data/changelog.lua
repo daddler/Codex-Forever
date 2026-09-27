@@ -22,20 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
-        version = "6.5.0.1",
-        date    = "27.09.2026",
-        notes   = {
-            "|cff7C6CFFMehr Addon-Knöpfe im Sammelknopf der Minikarte.|r Auch Addons mit eigenem Kartenknopf kommen jetzt hinein, und Knöpfe, die ein Addon erst spät anlegt, ebenfalls.",
-            "|cff7C6CFFFehlt trotzdem eines?|r /wcui addons zeigt, was gefunden wurde, was an der Karte hängt und was nur im Addon-Menü des Spiels steht.",
-        },
-    },
-    {
         version = "6.5.0.0",
         date    = "27.09.2026",
         notes   = {
             "|cff7C6CFFBeute im Dungeonkompendium.|r Für Hall of Thanes, Ragefire Chasm, Wailing Caverns, Ruins of Lordaeron, The Deadmines, Shadowfang Keep und Blackfathom Deeps zeigt jeder Boss, was er fallen lässt – mit dem Tooltip des Spiels und Umschalt+Klick in den Chat.",
             "|cff7C6CFFQuests zu jedem dieser Dungeons.|r Wo sie beginnen, was zu tun ist, wo man sie abgibt und was sie bringen – nur für deine Fraktion, die andere wird gezählt.",
             "|cff7C6CFFUnbestätigt, und so gekennzeichnet.|r Die Angaben stammen aus Beta-Berichten, nicht aus dem Client. Die Erfahrung ist ein beobachteter Wert; Namen und Werte der Gegenstände nennt dein Spiel selbst.",
+            "|cff7C6CFFMehr Addon-Knöpfe im Sammelknopf der Minikarte.|r Auch Addons mit eigenem Kartenknopf kommen hinein, und Knöpfe, die ein Addon erst spät anlegt, ebenfalls. Fehlt trotzdem eines, zeigt /wcui addons, was gefunden wurde und was nur im Addon-Menü des Spiels steht.",
+            "|cff7C6CFFDie Reiter Primär und Sekundär im Talentfenster sehen wieder aus wie Reiter.|r Sie trugen einen Rand mitten auf der Schrift statt ihrer Kachel.",
         },
     },
     {
