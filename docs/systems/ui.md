@@ -398,6 +398,24 @@ Seit 6.2.0.0:
   und `AnchorAuraContainer` – nie ein Feld am Rahmen des Spiels (dessen
   Code liefe sonst unsicher und scheiterte an geheimen Werten). Stand:
   `/wcui auren`. Im Spiel ungeprüft.
+* **Aurenleisten über Spieler- und Zielrahmen** (6.6.0.1, **Test**,
+  `player_auraBars`/`target_auraBars`): `UIAuras.Create(..., { bar = {
+  width, height } })` – eine Leiste je Aura, Symbol links, Restzeit
+  rechts, Stapel am Symbol. Im Container-Weg bindet `BindBar` eine
+  Dauerleiste an den Aurenknopf (`SetDurationBar`/…; die Optionen sind als
+  `CustomAuraButtonDurationBarOptions` dokumentiert, die Methode nicht –
+  was griff, steht in `/wcui auren`). Den Zaubernamen gibt der Container
+  nicht heraus; nur der alte Weg liest ihn. **Erwartung:** im Kampf leer,
+  wie die eigenen Symbole – ein Aurenbehälter aus Addon-Code läuft
+  „unsicher“, und geheime Werte gibt das Spiel nur unberührtem Code
+  (`SetTimerDuration`: „AllowedWhenUntainted“). Verlässlich im Kampf:
+  die verfolgten Leisten des Abklingzeitmanagers (eigene Buffs und
+  DoTs), im Bearbeitungsmodus über den Zielrahmen gelegt.
+* **Name beim Einloggen** (6.6.0.1): ohne Namen („Unbekannt“) zeichnet
+  der Rahmen bis zu zehnmal je Sekunde nach; nach `PLAYER_ENTERING_WORLD`
+  setzen alle Rahmen ihre Texte nach 1 und 4 s geleert neu
+  (`UF.RedrawTexts`) – eine beim ersten Setzen noch nicht geladene
+  Schrift zeichnete sonst nichts.
 * **Erinnerungen** (6.4.0.0, `ui/reminders.lua`, eigenes Modul): ein
   Regelwerk aus kleinen Tabellen – `buff` (Buff fehlt), `weapon` (Waffe
   ohne/mit ablaufender Verzauberung, `GetWeaponEnchantInfo`), `pet`

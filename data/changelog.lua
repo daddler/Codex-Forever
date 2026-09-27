@@ -29,6 +29,8 @@ WeintCodex_ChangelogData = {
             "|cff7C6CFFZurück zum Codex, aufgeräumt.|r Oben in der Mitte der Karte steht eine Leiste im Stil des Codex: wer markiert ist, wo, und der Knopf zurück. Sie verdeckt keinen Knopf des Spiels mehr.",
             "|cff7C6CFFLehrer: Waffenkarte repariert.|r Stand, Kosten und „Karte“ stehen wieder in der Waffenkarte statt daneben.",
             "|cff7C6CFFErfahrung aus Quests im Balken.|r Ein grünes Stück zeigt, wie weit der Erfahrungsbalken käme, wenn du jetzt alle fertigen Quests abgibst; die Maus darüber nennt die Summe, deinen Stand danach – oder die nächste Stufe – und was alle Quests im Log zusammen bringen.",
+            "|cff7C6CFFDein Name steht wieder auf dem Spielerrahmen.|r Beim Einloggen blieb er manchmal leer – jetzt zeichnet der Rahmen nach, bis das Spiel ihn kennt.",
+            "|cff7C6CFFAurenleisten über Spieler- und Zielrahmen (Test).|r Leisten mit Restzeit wie bei ElvUI. Im Kampf gibt das Spiel Addons vermutlich keine Auren heraus – dann bleiben sie dort leer; bitte prüfen und /wcui auren schicken.",
             "|cff7C6CFFKein Fehler mehr beim Umstellen der Questpriorität im Kampf.|r WeintCodex stellt die Weltkarte nicht mehr selbst ein und wählt keine Quest mehr für das Spiel aus – der Questpfeil merkt sich seine Wahl selbst. „Zurück zum Codex“ legt den Codex über die Karte; sie schließt du wie gewohnt mit Esc oder M. Im Kampf öffnet der Kartenknopf die Weltkarte nicht.",
         },
     },

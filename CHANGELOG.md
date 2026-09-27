@@ -19,6 +19,10 @@ nicht zusammen.
 
 **Erfahrung aus Quests im Balken.** Ein grünes Stück zeigt, wie weit der Erfahrungsbalken käme, wenn du jetzt alle fertigen Quests abgibst; die Maus darüber nennt die Summe, deinen Stand danach – oder die nächste Stufe – und was alle Quests im Log zusammen bringen.
 
+**Dein Name steht wieder auf dem Spielerrahmen.** Beim Einloggen blieb er manchmal leer – jetzt zeichnet der Rahmen nach, bis das Spiel ihn kennt.
+
+**Aurenleisten über Spieler- und Zielrahmen (Test).** Leisten mit Restzeit wie bei ElvUI. Im Kampf gibt das Spiel Addons vermutlich keine Auren heraus – dann bleiben sie dort leer; bitte prüfen und /wcui auren schicken.
+
 **Kein Fehler mehr beim Umstellen der Questpriorität im Kampf.** WeintCodex stellt die Weltkarte nicht mehr selbst ein und wählt keine Quest mehr für das Spiel aus – der Questpfeil merkt sich seine Wahl selbst. „Zurück zum Codex“ legt den Codex über die Karte; sie schließt du wie gewohnt mit Esc oder M. Im Kampf öffnet der Kartenknopf die Weltkarte nicht.
 
 ### Technisch
@@ -29,6 +33,14 @@ nicht zusammen.
   Rand/Verlauf/Kern, pulsierender Schein (AnimationGroup, ADD),
   Namensschild; Leiste `WeintCodexQuestMapBar` oben mittig mit
   Markenzeichen, Zone, Name und Knopf „Zurück zum Codex“.
+- `ui/unitframes.lua`: Name ohne Wert („Unbekannt“) → Wiederholversuch
+  (höchstens zehnmal, je Sekunde); nach `PLAYER_ENTERING_WORLD`
+  `UF.RedrawTexts` nach 1 und 4 s. Aurenleisten `player_auraBars`/
+  `target_auraBars` (Filter, Anzahl, Höhe), am Ziel über zwei Symbolreihen.
+- `ui/auras.lua`: Leistenform (`opts.bar`), `StyleBar`, `BindBar`
+  (Dauerleiste des Aurenknopfs, Name der Methode wird probiert und in
+  `/wcui auren` genannt), alter Weg mit Name und Restzeit.
+  `GameColors.auraBarDebuff`/`auraBarBuff`.
 - `ui/xpbar.lua`: `XB.QuestXP()` (je Quest `GetQuestLogRewardXP`,
   abgabebereit über `C_QuestLog.ReadyForTurnIn`/`IsComplete`), dritte
   Balkenschicht `frame.quest` in `GameColors.xpQuest`, Tooltipzeilen,

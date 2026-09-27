@@ -95,6 +95,11 @@ function A.StatusText()
     if stats.legacy > 0 then parts[#parts + 1] = string.format("%d über den alten Weg", stats.legacy) end
     if stats.autoFallback then parts[#parts + 1] = "Container zeigte nichts – liest selbst" end
     if stats.verified then parts[#parts + 1] = "Container zeigt Symbole" end
+    if stats.barBinder then
+        parts[#parts + 1] = "Leisten: Dauer über " .. stats.barBinder
+    elseif stats.barBinder == false then
+        parts[#parts + 1] = "Leisten: das Spiel bindet keine Dauerleiste (nur Restzeit als Zahl)"
+    end
     for step, err in pairs(stats.errors) do parts[#parts + 1] = step .. ": " .. err end
     return table.concat(parts, " · ")
 end
@@ -138,7 +143,7 @@ local function Visible(obj)
         end
         return total, shown
     end
-    local size = obj.opts.size
+    local size = obj.opts.bar and obj.opts.bar.width or obj.opts.size
     local total, shown, unknown = 0, 0, false
     local function Walk(f, depth)
         if depth > 3 or not f.GetChildren then return end
@@ -202,6 +207,81 @@ local function StyleIcon(button, size, o)
     return icon, cd, count, dur
 end
 
+-- EINE LEISTE (6.6.0.1, Beta-Test: "Leisten wie bei ElvUI, wie lange die
+-- Debuffs noch laufen"). Symbol links, Dauerleiste rechts, Restzeit in der
+-- Leiste, Stapel am Symbol. Im Container-Weg fuellt das Spiel die Leiste
+-- selbst (Dauerleiste des Aurenknopfs, siehe BindBar) - Lua sieht dabei
+-- keinen Wert. Den Namen des Zaubers gibt der Container nicht heraus;
+-- er steht nur im alten Weg (ausserhalb des Kampfes lesbar).
+local function StyleBar(button, o)
+    local h = o.bar.height
+    local icon = button:CreateTexture(nil, "ARTWORK")
+    icon:SetPoint("TOPLEFT", button, "TOPLEFT", 0, 0)
+    icon:SetSize(h, h)
+    if icon.SetTexCoord then icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
+
+    local back = button:CreateTexture(nil, "BACKGROUND")
+    back:SetPoint("TOPLEFT", icon, "TOPRIGHT", 1, 0)
+    back:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 0, 0)
+    local bg = WeintCodex.GameColors.plateBg
+    back:SetColorTexture(bg[1], bg[2], bg[3], 0.85)
+
+    local bar = K.NewBar(button)
+    bar:SetPoint("TOPLEFT", icon, "TOPRIGHT", 1, 0)
+    bar:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 0, 0)
+    bar:SetMinMaxValues(0, 1)
+    bar:SetValue(1)
+    local c = (o.filter or ""):find("HELPFUL", 1, true) and WeintCodex.GameColors.auraBarBuff
+        or WeintCodex.GameColors.auraBarDebuff
+    K.PaintBar(bar, c[1], c[2], c[3])
+
+    local top = CreateFrame("Frame", nil, button)
+    top:SetAllPoints(button)
+    top:SetFrameLevel((bar:GetFrameLevel() or 1) + 2)
+    top:EnableMouse(false)
+    K.Border(top, 1, 0, 0, 0, 1, "OVERLAY")
+    local count = K.NewText(top)
+    count:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 1, -1)
+    K.SetFont(count, math.max(8, math.floor(h * 0.55)))
+    local dur = K.NewText(top, math.max(9, math.floor(h * 0.6)))
+    dur:SetPoint("RIGHT", button, "RIGHT", -4, 0)
+    dur:SetJustifyH("RIGHT")
+    local name = K.NewText(top, math.max(9, math.floor(h * 0.6)))
+    name:SetPoint("LEFT", icon, "RIGHT", 5, 0)
+    name:SetPoint("RIGHT", dur, "LEFT", -4, 0)
+    name:SetJustifyH("LEFT")
+    name:SetWordWrap(false)
+    return icon, bar, count, dur, name
+end
+
+-- Die Dauerleiste an den Aurenknopf des Containers binden. Die Schnittstelle
+-- ist im Beta-Client nicht dokumentiert, nur ihre Optionen
+-- (CustomAuraButtonDurationBarOptions: interpolation, direction) - deshalb
+-- werden die naheliegenden Namen der Reihe nach versucht, und was gegriffen
+-- hat, steht in /wcui auren.
+local BAR_BINDERS = { "SetDurationBar", "SetDurationStatusBar", "SetDurationTimerBar" }
+local function BindBar(button, bar)
+    local opts = {}
+    local E = _G.Enum
+    if E and E.StatusBarTimerDirection and E.StatusBarTimerDirection.RemainingTime then
+        opts.direction = E.StatusBarTimerDirection.RemainingTime
+    end
+    for _, n in ipairs(BAR_BINDERS) do
+        if type(button[n]) == "function" then
+            local ok, err = pcall(button[n], button, bar, opts)
+            if not ok then ok = pcall(button[n], button, bar) end
+            if ok then
+                if not stats.barBinder then stats.barBinder = n end
+                return true
+            end
+            Note(n, err)
+        end
+    end
+    stats.barBinder = stats.barBinder or false
+    return false
+end
+A.BAR_BINDERS = BAR_BINDERS
+
 -- Restzeit in Worten des Spiels: Sekunden als Zahl, ab einer Minute "2m",
 -- ab einer Stunde "1h". Nur fuer offene Zahlen.
 function A.FormatRemaining(sec)
@@ -251,17 +331,30 @@ local function BuildEngine(self, minimal)
     Call(c, { "SetFlowLayoutAnchorPoint", "SetAuraLayoutAnchorPoint" }, o.anchor)
     Call(c, { "SetFlowLayoutGrowthDirection", "SetAuraLayoutGrowthDirection" },
         FlowDir(o.growth), FlowDir(o.growthV))
-    Call(c, { "SetFlowLayoutMaximumLineSize", "SetAuraLayoutRowWidth" },
-        o.perRow * (o.size + o.spacing))
-
     local size = o.size
+    local ew = o.bar and o.bar.width or size
+    Call(c, { "SetFlowLayoutMaximumLineSize", "SetAuraLayoutRowWidth" },
+        o.perRow * (ew + o.spacing))
+
     local sort = _G.AuraContainerSortMethod and _G.AuraContainerSortMethod.Default or nil
     c:AddAuraGroup("wc", o.filter, {
         maxFrameCount = o.max,
         sortMethod = sort,
-        layout = { elementWidth = size, elementHeight = size,
+        layout = { elementWidth = ew, elementHeight = size,
                    elementSpacing = o.spacing, lineSpacing = o.spacing },
         initializeFrame = function(button)
+            if o.bar and not minimal then
+                local icon, bar, count, dur = StyleBar(button, o)
+                pcall(button.SetMouseClickEnabled, button, false)
+                local okI, errI = pcall(button.SetIcon, button, icon)
+                if not okI then Note("SetIcon", errI) end
+                BindBar(button, bar)
+                local okA, errA = pcall(button.SetApplicationCount, button, count, {})
+                if not okA then Note("SetApplicationCount", errA) end
+                local okD, errD = pcall(button.SetDurationText, button, dur, {})
+                if not okD then Note("SetDurationText", errD) end
+                return
+            end
             if minimal then
                 -- Zweiter Versuch: nur Symbol und Uhr, nichts darum herum.
                 local icon = button:CreateTexture(nil, "ARTWORK")
@@ -294,6 +387,12 @@ end
 local function Place(self, frame, i)
     local o = self.opts
     local step = o.size + o.spacing
+    if o.bar then
+        frame:ClearAllPoints()
+        local dy = (o.growthV == "DOWN") and -1 or 1
+        frame:SetPoint(o.anchor, self.frame, o.anchor, 0, (i - 1) * step * dy)
+        return
+    end
     local col = (i - 1) % o.perRow
     local row = math.floor((i - 1) / o.perRow)
     local dx = (o.growth == "LEFT") and -1 or 1
@@ -304,6 +403,15 @@ end
 
 local function LegacyButton(self)
     local b = CreateFrame("Frame", nil, self.frame)
+    if self.opts.bar then
+        b:SetSize(self.opts.bar.width, self.opts.bar.height)
+        b.icon, b._bar, b.count, b.dur, b._name = StyleBar(b, self.opts)
+        -- Eine Uhr gibt es an der Leiste nicht; PaintLegacy braucht nur ihre Form.
+        b.cd = { Hide = function() end, Show = function() end, SetCooldown = function() end,
+                 SetCooldownFromDurationObject = function() end }
+        b:Hide()
+        return b
+    end
     b:SetSize(self.opts.size, self.opts.size)
     b.icon, b.cd, b.count, b.dur = StyleIcon(b, self.opts.size, self.opts)
     b:Hide()
@@ -338,6 +446,21 @@ local function PaintLegacy(b, unit, aura)
         end
     end
     b.dur:SetText("")
+    if b._bar then
+        -- Name: nur hier, der alte Weg liest ihn (ausserhalb des Kampfes).
+        b._name:SetText(type(aura.name) == "string" and aura.name or "")
+        b._bar:SetMinMaxValues(0, 1)
+        b._bar:SetValue(1)
+        b._dur = nil
+        if b._durObj and b._bar.SetTimerDuration then
+            local E = _G.Enum
+            local dir = E and E.StatusBarTimerDirection and E.StatusBarTimerDirection.RemainingTime
+            pcall(b._bar.SetTimerDuration, b._bar, b._durObj, nil, dir)
+        elseif b._exp then
+            local d = K.Plain(aura.duration)
+            if type(d) == "number" and d > 0 then b._dur = d end
+        end
+    end
     b:Show()
 end
 
@@ -345,7 +468,9 @@ end
 -- geheime Restzeit (Dauerobjekt) formatiert der Client selbst.
 local function TickLegacy(b)
     if b._exp and _G.GetTime then
-        b.dur:SetText(A.FormatRemaining(b._exp - _G.GetTime()))
+        local rem = b._exp - _G.GetTime()
+        b.dur:SetText(A.FormatRemaining(rem))
+        if b._bar and b._dur then b._bar:SetValue(math.max(0, math.min(1, rem / b._dur))) end
     elseif b._durObj and b._durObj.GetRemainingDuration then
         local ok, rem = pcall(b._durObj.GetRemainingDuration, b._durObj)
         if ok and type(rem) ~= "nil" then
@@ -396,6 +521,11 @@ local function Normalize(opts)
     o.growth  = o.growth or "RIGHT"
     o.growthV = o.growthV or "UP"
     o.perRow  = math.max(1, o.perRow or o.max)
+    -- Leisten: eine je Zeile, so hoch wie die Leiste.
+    if o.bar then
+        o.bar = { width = o.bar.width or 200, height = o.bar.height or 18 }
+        o.size, o.perRow = o.bar.height, 1
+    end
     return o
 end
 
@@ -404,6 +534,7 @@ function Obj:Extent()
     local o = self.opts
     local rows = math.ceil(o.max / o.perRow)
     local step = o.size + o.spacing
+    if o.bar then return o.bar.width, math.max(1, o.max * step) end
     return math.max(1, math.min(o.max, o.perRow) * step), math.max(1, rows * step)
 end
 
@@ -603,18 +734,28 @@ function Obj:ApplyLayout(opts)
     self.opts = new
     if not self.engine then
         self.frame:SetSize(self:Extent())
+        -- Leisten und Symbole tauschen die Knoepfe nicht: bei anderer Form neu anlegen.
+        if (old.bar and true or false) ~= (new.bar and true or false)
+           or (new.bar and (old.bar.width ~= new.bar.width or old.bar.height ~= new.bar.height)) then
+            for _, b in ipairs(self.buttons) do b:Hide() end
+            self.buttons = {}
+        end
         for _, b in ipairs(self.buttons) do
-            b:SetSize(new.size, new.size)
-            K.SetFont(b.count, math.max(8, math.floor(new.size * 0.5)))
-            K.SetFont(b.dur, math.max(9, math.floor(new.size * 0.46)))
-            b.dur:SetShown(new.timer and true or false)
+            if not new.bar then
+                b:SetSize(new.size, new.size)
+                K.SetFont(b.count, math.max(8, math.floor(new.size * 0.5)))
+                K.SetFont(b.dur, math.max(9, math.floor(new.size * 0.46)))
+                b.dur:SetShown(new.timer and true or false)
+            end
         end
         self:Refresh()
         return
     end
     if old.size == new.size and old.spacing == new.spacing and old.filter == new.filter
        and old.anchor == new.anchor and old.growth == new.growth and old.growthV == new.growthV
-       and old.perRow == new.perRow and (old.timer and true or false) == (new.timer and true or false) then
+       and old.perRow == new.perRow and (old.timer and true or false) == (new.timer and true or false)
+       and (old.bar and old.bar.width) == (new.bar and new.bar.width)
+       and (old.bar and old.bar.height) == (new.bar and new.bar.height) then
         pcall(self.frame.SetAuraGroupMaxFrameCount, self.frame, "wc", new.max)
         return
     end

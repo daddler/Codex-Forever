@@ -1333,6 +1333,40 @@ do
         assert(o.engine and o.frame._anchoredBeforeGroup, "Container nicht vor der ersten Gruppe verankert")
         assert(registered.icon and registered.cd and registered.count and registered.dur,
             "Knopf hat nicht alles angemeldet")
+        -- 6.6.0.1: Leisten. Der Knopf bekommt eine Dauerleiste (sofern das
+        -- Spiel eine annimmt), Symbol, Zahl und Restzeit; die Gruppe ist so
+        -- breit wie die Leiste.
+        local barSpec, boundBar
+        local realAdd
+        registered = {}
+        local ob = A.Create(UIParent, { filter = "HARMFUL|PLAYER", max = 3, bar = { width = 180, height = 16 } })
+        assert(ob.engine, "Leisten nicht ueber den Container")
+        local ew, eh = ob:Extent()
+        assert(ew == 180 and eh == 3 * 18, "Leistenflaeche falsch: " .. ew .. "x" .. eh)
+        assert(registered.icon and registered.count and registered.dur and not registered.cd,
+            "Leistenknopf nicht vollstaendig angemeldet")
+        -- Mit Dauerleiste des Spiels:
+        local testCreate = _G.CreateFrame
+        _G.CreateFrame = function(kind, name, parent, template)
+            local f = realCreate(kind, name, parent, template)
+            if kind == "AuraContainer" then
+                f.AddAuraGroup = function(self, key, filter, spec)
+                    barSpec = spec
+                    local b = realCreate("Button", nil, self)
+                    b.SetIcon = function() end
+                    b.SetApplicationCount = function() end
+                    b.SetDurationText = function() end
+                    b.SetDurationBar = function(_, bar) boundBar = bar end
+                    spec.initializeFrame(b)
+                end
+            end
+            return f
+        end
+        A.Create(UIParent, { filter = "HARMFUL", max = 2, bar = { width = 150, height = 14 } })
+        assert(boundBar and barSpec.layout.elementWidth == 150 and barSpec.layout.elementHeight == 14,
+            "Dauerleiste nicht gebunden oder Groesse falsch")
+        assert(A.StatusText():find("Leisten: Dauer über SetDurationBar", 1, true), "Stand der Leisten fehlt: " .. A.StatusText())
+        _G.CreateFrame = testCreate
         failNext = true
         local o2 = A.Create(UIParent, { filter = "HARMFUL", max = 4, size = 24 })
         assert(o2.engine, "nach einem Fehlschlag kein vereinfachter Container")
@@ -1358,6 +1392,29 @@ do
         assert(#o.buttons == 2, "alter Weg haelt sich nicht an max (" .. #o.buttons .. ")")
     end)
     Check(ok, "Auren ueber GetAuraDataByIndex, hoechstens max" .. (ok and "" or (": " .. tostring(err))))
+
+    -- 6.6.0.1: Leisten im alten Weg - Name (nur hier lesbar), Restzeit,
+    -- Leiste laeuft mit der Zeit leer.
+    local keepUA = _G.C_UnitAuras
+    _G.C_UnitAuras = { GetAuraDataByIndex = function(_, i)
+        if i <= 2 then
+            return { name = "Verwunden", icon = 136197, applications = 1, duration = 10, expirationTime = 20, auraInstanceID = i }
+        end
+    end }
+    ok, err = pcall(function()
+        local oldTime = _G.GetTime
+        _G.GetTime = function() return 15 end
+        local o = A.Create(UIParent, { max = 4, bar = { width = 200, height = 16 }, timer = true })
+        o:SetUnit("target")
+        assert(#o.buttons == 2, "Leisten: " .. #o.buttons)
+        local b = o.buttons[1]
+        assert(b._bar and b._name:GetText() == "Verwunden", "Leiste ohne Namen")
+        assert(math.abs(b._bar:GetValue() - 0.5) < 1e-6, "Leiste nicht zur Haelfte leer: " .. tostring(b._bar:GetValue()))
+        assert(b.dur:GetText() == "5", "Restzeit: " .. tostring(b.dur:GetText()))
+        _G.GetTime = oldTime
+    end)
+    _G.C_UnitAuras = keepUA
+    Check(ok, "Aurenleisten im alten Weg: Name, Restzeit, Leiste" .. (ok and "" or (": " .. tostring(err))))
 
     -- Der Weg laesst sich im laufenden Spiel umschalten, und /wcui auren
     -- sagt, was das Spiel nennt und was davon zu sehen ist. Der Container
@@ -2966,6 +3023,44 @@ do
         assert(K.FontPath() == WeintCodex.Fonts.hudSemi, "Standardschrift ist Plex Sans Condensed")
     end)
     Check(ok, "Stil 2.0: Glanzbalken, Lichtkante, Schein, Kachel, schmale Schrift"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.6.0.1: Name auf dem Spielerrahmen beim Einloggen. Kennt der Client ihn
+-- noch nicht ("Unbekannt"), zeichnet der Rahmen nach, bis er da ist.
+do
+    local UF = WeintCodex.UIUnitFrames
+    local ok, err = pcall(function()
+        local f = UF.frames.player
+        assert(f, "kein Spielerrahmen")
+        local oldName, oldAfter = _G.UnitName, _G.C_Timer.After
+        local later = {}
+        _G.C_Timer.After = function(_, fn) later[#later + 1] = fn end
+        _G.UNKNOWNOBJECT = "Unbekannt"
+        _G.UnitName = function() return "Unbekannt" end
+        f:Show()
+        f:Refresh()
+        local kind = WeintCodex.UIKit.Get("unitframes", "player_left")
+        assert(#later == 1, "ohne Namen kein Wiederholversuch (" .. #later .. ", Textplatz " .. tostring(kind) .. ")")
+        _G.UnitName = function() return "Aloha" end
+        later[1]()
+        local shown = f.left:GetText() or ""
+        assert(shown:find("Aloha", 1, true), "Name nach dem Wiederholversuch fehlt: " .. shown)
+        -- Nach dem Einloggen: Texte geleert und neu gesetzt.
+        f.left:SetText("")
+        UF.RedrawTexts()
+        assert((f.left:GetText() or ""):find("Aloha", 1, true), "RedrawTexts setzt den Namen nicht")
+        _G.UnitName, _G.C_Timer.After = oldName, oldAfter
+        -- 6.6.0.1: Aurenleisten ueber Spieler- und Zielrahmen (Test).
+        for _, u in ipairs({ "player", "target" }) do
+            local fr = UF.frames[u]
+            assert(fr and fr._auraBars and fr._auraBars.opts.bar, u .. ": keine Aurenleisten")
+            assert(fr._auraBars.opts.bar.width == WeintCodex.UIKit.Get("unitframes", u .. "_width"),
+                u .. ": Leisten nicht so breit wie der Rahmen")
+        end
+        assert(UF.frames.target._auraBars.opts.filter == "HARMFUL|PLAYER", "Ziel: nicht die eigenen Debuffs")
+    end)
+    Check(ok, "Spielerrahmen: Name kommt nach, wenn der Client ihn beim Einloggen noch nicht kennt"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

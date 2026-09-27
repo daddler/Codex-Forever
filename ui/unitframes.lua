@@ -89,6 +89,16 @@ local defaults = {
     targetAuraGap    = 3,
     auraSize      = 20,
     onlyOwnDebuffs = false,
+    -- Aurenleisten ueber Spieler- und Zielrahmen (6.6.0.1, Beta-Test "wie
+    -- bei ElvUI"). TEST: eigene Leisten sind ein eigener Aurenbehaelter,
+    -- und dem gibt der Client im Kampf vermutlich nichts heraus (wie den
+    -- eigenen Symbolen, 6.3.0.2). Stand in /wcui auren.
+    player_auraBars       = true,
+    player_auraBarsFilter = "HARMFUL",
+    target_auraBars       = true,
+    target_auraBarsFilter = "HARMFUL|PLAYER",
+    auraBarsMax           = 5,
+    auraBarsHeight        = 16,
 }
 for _, u in ipairs(UNITS) do
     local s = SHAPE[u]
@@ -185,8 +195,14 @@ local function LevelParts(unit)
 end
 UF.LevelParts = LevelParts
 
+-- Ein Name, den der Client noch nicht kennt ("Unbekannt" beim Einloggen),
+-- zaehlt als keiner - dann zeichnet der Rahmen einen Takt spaeter nach.
 local function NameText(unit, kind)
     local name = _G.UnitName and (_G.UnitName(unit))
+    local plain = K.Plain(name)
+    if type(plain) == "string" and (plain == "" or plain == _G.UNKNOWNOBJECT or plain == _G.UNKNOWN) then
+        name = nil
+    end
     if kind == "levelname" then
         local lt, r, g, b = LevelParts(unit)
         return string.format("|cff%02x%02x%02x%s|r", r * 255, g * 255, b * 255, lt), name
@@ -220,9 +236,11 @@ local function Fill(fs, unit, kind)
     if kind == "name" then
         local _, name = NameText(unit, kind)
         fs:SetText(name)
+        return type(name) ~= "nil"
     elseif kind == "levelname" then
         local lvl, name = NameText(unit, kind)
         if type(name) ~= "nil" then fs:SetFormattedText("%s  %s", lvl, name) else fs:SetText(lvl) end
+        return type(name) ~= "nil"
     elseif kind == "power" then
         local cur = _G.UnitPower and _G.UnitPower(unit)
         if type(cur) ~= "nil" and _G.AbbreviateNumbers then
@@ -378,6 +396,14 @@ local function Create(unit)
     if SHAPE[unit].cast then
         f._cast = CB.Create(f)
         f._cast:SetUnit(unit)
+    end
+
+    -- Aurenleisten (Test, siehe Standardwerte).
+    if unit == "player" or unit == "target" then
+        f._auraBars = WeintCodex.UIAuras.Create(f, { filter = Opt(unit .. "_auraBarsFilter") or "HARMFUL",
+            max = Opt("auraBarsMax") or 5, spacing = 2, anchor = "BOTTOMLEFT", growthV = "UP",
+            bar = { width = Opt(unit .. "_width") or 200, height = Opt("auraBarsHeight") or 16 } })
+        f._auraBars:SetUnit(unit)
     end
 
     if unit == "target" then
@@ -572,6 +598,30 @@ function Frame:Layout()
     end
 
     if self._auras then self:LayoutAuras() end
+    if self._auraBars then self:LayoutAuraBars() end
+end
+
+-- Die Leisten ueber dem Rahmen. Am Ziel stehen darueber noch die Symbole;
+-- die Leisten beginnen deshalb ueber zwei Symbolreihen (wie viele Reihen
+-- der Behaelter des Spiels gerade zeigt, verraet er nicht).
+function Frame:LayoutAuraBars()
+    local u = self.unit
+    local bars = self._auraBars
+    local on = Opt(u .. "_auraBars") and true or false
+    local h = Opt("auraBarsHeight") or 16
+    bars:ApplyLayout({ filter = Opt(u .. "_auraBarsFilter") or "HARMFUL", max = Opt("auraBarsMax") or 5,
+        spacing = 2, anchor = "BOTTOMLEFT", growthV = "UP",
+        bar = { width = Opt(u .. "_width") or 200, height = h } })
+    local y = 4
+    if u == "target" then
+        y = UF.AuraBaseY(self)
+        if Opt("targetAuras") then y = y + 2 * ((Opt("auraSize") or 20) + 3) + 2 end
+    elseif self._combo then
+        y = y + 7
+    end
+    bars:ClearAllPoints()
+    bars:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, y)
+    bars:SetShown(on)
 end
 
 -- Grund unter dem fehlenden Leben: dunkler Ton der Balkenfarbe (wie die
@@ -608,8 +658,29 @@ function Frame:Refresh()
         K.PaintBar(self.power, PowerColor(u))
     end
 
-    Fill(self.left, u, Opt(u .. "_left"))
-    Fill(self.right, u, Opt(u .. "_right"))
+    -- NAME BEIM EINLOGGEN (6.6.0.1, Beta-Test: "manchmal ist mein Name
+    -- nicht auf meinem Spielerfenster"). Der Name wird nur beim Aufbau und
+    -- bei UNIT_NAME_UPDATE gesetzt, die Lebensanzeige daneben bei jedem
+    -- Treffer. Kennt der Client den Namen noch nicht, oder ist die eigene
+    -- Schrift beim ersten Setzen noch nicht geladen, blieb er leer, bis
+    -- zufaellig UNIT_NAME_UPDATE kam. Jetzt: ohne Namen ein Wiederholversuch,
+    -- und nach dem Einloggen zeichnen alle Rahmen ihre Texte zweimal neu
+    -- (UF.RedrawTexts), mit geleertem Text, damit gleicher Text neu gesetzt wird.
+    local okL = Fill(self.left, u, Opt(u .. "_left"))
+    local okR = Fill(self.right, u, Opt(u .. "_right"))
+    if okL == false or okR == false then
+        -- Hoechstens zehnmal je Einheit, einmal je Sekunde.
+        self._nameTries = (self._nameTries or 0) + 1
+        if not self._nameRetry and self._nameTries <= 10 and _G.C_Timer and _G.C_Timer.After then
+            self._nameRetry = true
+            _G.C_Timer.After(1, function()
+                self._nameRetry = nil
+                if self:IsShown() then self:Refresh() end
+            end)
+        end
+    else
+        self._nameTries = 0
+    end
 
     K.ShowRaidIcon(self.raid, u)
 
@@ -1063,12 +1134,27 @@ local events = CreateFrame("Frame")
 -- ein weisser Balken ohne Namen (im Beta-Test gesehen). Gezeichnet wird
 -- jetzt immer, wenn es die Einheit gibt, und beim Erscheinen noch einmal
 -- (OnShow, siehe Create).
+-- Alle Texte leeren und neu setzen: eine Schrift, die beim ersten SetText
+-- noch nicht geladen war, zeichnet sonst nichts, und derselbe Text noch
+-- einmal gesetzt aendert nichts.
+function UF.RedrawTexts()
+    for _, f in pairs(frames) do
+        if f.left and f.right and f:IsShown() then
+            f.left:SetText("")
+            f.right:SetText("")
+            f:Refresh()
+        end
+    end
+end
+
 local function RefreshUnit(unit, portrait)
     local f = frames[unit]
     if not f then return end
     if f:IsShown() or K.Bool(_G.UnitExists and _G.UnitExists(unit), false) then
         f:Refresh()
         if portrait then f:UpdatePortrait() end
+        -- Zielwechsel: fuer das neue Ziel gibt es kein UNIT_AURA.
+        if portrait and f._auraBars then f._auraBars:Refresh() end
     end
 end
 
@@ -1105,6 +1191,10 @@ local function OnEvent(_, event, unit)
     elseif event == "PLAYER_ENTERING_WORLD" or event == "RAID_TARGET_UPDATE" then
         for u in pairs(frames) do RefreshUnit(u, event == "PLAYER_ENTERING_WORLD") end
         UF.UpdateState()
+        if event == "PLAYER_ENTERING_WORLD" and _G.C_Timer and _G.C_Timer.After then
+            _G.C_Timer.After(1, UF.RedrawTexts)
+            _G.C_Timer.After(4, UF.RedrawTexts)
+        end
         return
     elseif event == "UPDATE_SHAPESHIFT_FORM" then
         if frames.target then frames.target:UpdateCombo() end
@@ -1333,6 +1423,19 @@ local function UnitPage(u)
                     disabled = function() return off() or not K.Get(KEY, "comboPoints") end,
                     description = "Unter der Figur statt über dem Zielrahmen." },
                   { type = "empty" })
+        end
+        if u == "player" or u == "target" then
+            B:Section("Aurenleisten (Test)", "Leisten mit Restzeit über dem Rahmen, wie bei ElvUI. Im Kampf gibt das Spiel Addons vermutlich keine Auren heraus – dann bleiben sie dort leer. Bitte im Kampf prüfen; /wcui auren nennt den Stand.")
+            local noBars = function() return off() or not K.Get(KEY, u .. "_auraBars") end
+            B:Row({ type = "toggle", label = "Aurenleisten", key = u .. "_auraBars", disabled = off },
+                  { type = "dropdown", label = "Zeigen", key = u .. "_auraBarsFilter", disabled = noBars,
+                    items = u == "player" and {
+                        { value = "HARMFUL", text = "Debuffs auf dir" },
+                        { value = "HELPFUL", text = "Buffs" } } or {
+                        { value = "HARMFUL|PLAYER", text = "Eigene Debuffs" },
+                        { value = "HARMFUL", text = "Alle Debuffs" } } })
+            B:Row({ type = "slider", label = "Anzahl", key = "auraBarsMax", min = 1, max = 10, step = 1, disabled = noBars },
+                  { type = "slider", label = "Höhe", key = "auraBarsHeight", min = 10, max = 28, step = 1, format = px, disabled = noBars })
         end
     end }
 end

@@ -223,6 +223,8 @@ WeintCodex.GameColors = {
     xpBar         = {0.486, 0.424, 1.000, 1.0},   -- = Akzent: Fortschritt (wie `cast`)
     xpRested      = {0.486, 0.424, 1.000, 0.30},  -- erholte Erfahrung: derselbe, blass
     xpQuest       = {0.204, 0.780, 0.482, 0.70},  -- Erfahrung abgabebereiter Quests: Erfolgsgruen
+    auraBarDebuff = {0.780, 0.250, 0.250, 1.0},   -- Aurenleiste: Debuff
+    auraBarBuff   = {0.260, 0.560, 0.860, 1.0},   -- Aurenleiste: Buff
 
     plateBg       = {0.100, 0.100, 0.118, 1.0},
     plateBorder   = {0.000, 0.000, 0.000, 1.0},
