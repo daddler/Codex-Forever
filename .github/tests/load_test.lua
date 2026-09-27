@@ -1787,6 +1787,72 @@ do
     Check(ok, "Erinnerungen: Regeln, fehlende Buffs, Waffe, Begleiter, Editor" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.4.0.3: Debuffs am Zielrahmen - der Aurenbehaelter des Zielrahmens des
+-- Spiels haengt ueber unserem, alles andere an ihm unsichtbar und ohne Maus.
+do
+    local ok, err = pcall(function()
+        local UF = WeintCodex.UIUnitFrames
+        assert(UF.frames.target, "kein Zielrahmen gebaut")
+        -- Ohne Zielrahmen des Spiels (Attrappe): eigene Symbole, benannt.
+        assert(UF.gameAuraState:find("eigene Symbole", 1, true), "Rueckfall ohne Auskunft: " .. tostring(UF.gameAuraState))
+
+        local tf = stub.NewObject("Frame", "TargetFrame")
+        local content = stub.NewObject("Frame")
+        local ctx = stub.NewObject("Frame")
+        local auras = stub.NewObject("AuraContainer")
+        local container, tot, portraitTex = stub.NewObject("Frame"), stub.NewObject("Button"), stub.NewObject("Texture")
+        local main, ping = stub.NewObject("Frame"), stub.NewObject("Frame")
+        tf.TargetFrameContent, content.TargetFrameContentContextual, ctx.Auras = content, ctx, auras
+        tf.GetChildren = function() return container, content, tot end
+        tf.GetRegions = function() return portraitTex end
+        content.GetChildren = function() return main, ctx end
+        ctx.GetChildren = function() return ping, auras end
+        local mouse = {}
+        for _, f in ipairs({ tf, content, ctx, auras, container, tot, main, ping }) do
+            f.EnableMouse = function(self, on) mouse[self] = on end
+        end
+        local cfg = {}
+        auras.SetFlowLayoutMirroredVertically = function(_, v) cfg.mirror = v end
+        auras.SetNumConstrainedFlowLayoutLines = function(_, v) cfg.constrained = v end
+        auras.SetFlowLayoutMaximumLineSize = function(_, v) cfg.line = v end
+        local anchor
+        auras.SetPoint = function(_, pt, rel, relPt) anchor = { pt, rel, relPt } end
+        tf.ConfigureAuraContainer = function() cfg.mirror = false cfg.constrained = 2 end
+        tf.AnchorAuraContainer = function() anchor = { "TOPLEFT", tf, "BOTTOMLEFT" } end
+
+        local oldTF, oldHook = _G.TargetFrame, _G.hooksecurefunc
+        _G.TargetFrame = tf
+        _G.hooksecurefunc = function(obj, name, fn)
+            local orig = obj[name]
+            obj[name] = function(...) local r = orig(...) fn(...) return r end
+        end
+        K.Set("unitframes", "targetAuraSource", "game")
+        assert(UF._SetupGameAuras(), "Weg des Spiels nicht genommen: " .. tostring(UF.gameAuraState))
+        assert(auras:GetAlpha() == 1, "Symbole des Spiels unsichtbar")
+        assert(container:GetAlpha() == 0 and tot:GetAlpha() == 0 and main:GetAlpha() == 0
+            and ping:GetAlpha() == 0 and portraitTex:GetAlpha() == 0, "Rest des Zielrahmens des Spiels sichtbar")
+        assert(mouse[tf] == false and mouse[tot] == false and mouse[ping] == false, "unsichtbarer Rahmen faengt Klicks")
+        assert(mouse[auras] == nil, "Symbole ohne Maus - kein Tooltip")
+        assert(cfg.mirror == true and cfg.constrained == 0 and cfg.line, "Behaelter nicht eingestellt")
+        assert(anchor[1] == "BOTTOMLEFT" and anchor[2] == UF.frames.target and anchor[3] == "TOPLEFT", "Behaelter nicht ueber dem Zielrahmen")
+        -- Das Spiel stellt neu ein und setzt neu an: unsere Werte gewinnen.
+        tf:ConfigureAuraContainer()
+        tf:AnchorAuraContainer()
+        assert(cfg.mirror == true and cfg.constrained == 0, "Spiel stellt den Behaelter zurueck")
+        assert(anchor[2] == UF.frames.target, "Spiel setzt den Behaelter zurueck an seinen Rahmen")
+        -- Ausgeschaltet: Behaelter weg, eigene Symbole ebenfalls.
+        K.Set("unitframes", "targetAuras", false)
+        assert(not auras:IsShown(), "Symbole trotz Aus")
+        K.Set("unitframes", "targetAuras", true)
+        assert(auras:IsShown(), "Symbole kommen nicht zurueck")
+        for _, obj in pairs(UF.frames.target._auras) do
+            assert(not obj.frame:IsShown(), "eigene Symbole zusaetzlich zu denen des Spiels")
+        end
+        _G.TargetFrame, _G.hooksecurefunc = oldTF, oldHook
+    end)
+    Check(ok, "Zielrahmen: Auren des Spiels ueber dem Rahmen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.8: Im Dungeon verfolgt die Questliste nur dessen Quests; beim
 -- Verlassen kommt genau das zurueck, was geaendert wurde.
 do

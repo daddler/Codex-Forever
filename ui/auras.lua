@@ -654,6 +654,8 @@ function A.Inspect()
         local n, why = ApiCount("target", filter)
         return type(n) == "number" and tostring(n) or why
     end
+    local UF = WeintCodex.UIUnitFrames
+    if UF and UF.gameAuraState then out[#out + 1] = "Zielrahmen: " .. UF.gameAuraState end
     out[#out + 1] = "Das Spiel nennt am Ziel: " .. Said("HARMFUL") .. " Debuffs, davon eigene: " .. Said("HARMFUL|PLAYER")
     -- Die Plakette des Ziels, wenn sie die Symbole des Spiels traegt.
     local NP = WeintCodex.UINameplates

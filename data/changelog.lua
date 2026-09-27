@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.4.0.3",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFDebuffs über dem Zielrahmen – auch im Kampf.|r Der Zielrahmen zeigt jetzt die Symbole des Spiels, dieselben wie auf der Namensplakette. Die eigenen Symbole blieben im Kampf leer, weil der Client Auren dort nur an seine eigenen Symbole herausgibt. Umschalten und Größe: Einheitenrahmen → Ziel.",
+        },
+    },
+    {
         version = "6.4.0.2",
         date    = "27.09.2026",
         notes   = {

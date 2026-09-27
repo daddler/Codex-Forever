@@ -369,6 +369,16 @@ Seit 6.2.0.0:
   (die Tageszeit an der Minikarte blieb drei Fassungen lang unauffindbar).
   Seit 6.3.1.3 zusätzlich `K.UnderCursor`: alles Sichtbare unter dem
   Zeiger, auch Texturen und Rahmen ohne Mausannahme, die kleinsten zuerst.
+* **Debuffs am Zielrahmen: die Symbole des Spiels** (6.4.0.3,
+  `targetAuraSource`). Eigene Symbole bleiben im Kampf leer (siehe
+  6.3.0.2). Der Zielrahmen des Spiels bleibt deshalb am Leben, alles an
+  ihm auf Alpha 0 und ohne Maus außer seinem Aurenbehälter
+  (`TargetFrameContent.TargetFrameContentContextual.Auras`); der hängt
+  über unserem Zielrahmen. Eingestellt wird nur über Methoden des
+  Behälters in `hooksecurefunc`-Haken hinter `ConfigureAuraContainer`
+  und `AnchorAuraContainer` – nie ein Feld am Rahmen des Spiels (dessen
+  Code liefe sonst unsicher und scheiterte an geheimen Werten). Stand:
+  `/wcui auren`. Im Spiel ungeprüft.
 * **Erinnerungen** (6.4.0.0, `ui/reminders.lua`, eigenes Modul): ein
   Regelwerk aus kleinen Tabellen – `buff` (Buff fehlt), `weapon` (Waffe
   ohne/mit ablaufender Verzauberung, `GetWeaponEnchantInfo`), `pet`

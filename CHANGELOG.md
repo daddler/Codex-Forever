@@ -9,6 +9,24 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.4.0.3] – 2026-09-27
+
+**Debuffs über dem Zielrahmen – auch im Kampf.** Der Zielrahmen zeigt jetzt die Symbole des Spiels, dieselben wie auf der Namensplakette. Die eigenen Symbole blieben im Kampf leer, weil der Client Auren dort nur an seine eigenen Symbole herausgibt. Umschalten und Größe: Einheitenrahmen → Ziel.
+
+### Technisch
+
+- `ui/unitframes.lua`: `targetAuraSource = "game"` (neu, Standard) lässt
+  den Zielrahmen des Spiels am Leben und blendet alles an ihm aus außer
+  `TargetFrameContent.TargetFrameContentContextual.Auras` (Aurenbehälter
+  laut 12.x-Quelltext); keine Maus, kein Feld am Blizzard-Rahmen
+  geschrieben. `hooksecurefunc` auf `ConfigureAuraContainer`
+  (nach oben wachsen, keine verkürzten Reihen, Reihenbreite = unser
+  Rahmen) und `AnchorAuraContainer` (über unserem Zielrahmen). Geschützt
+  im Kampf → nach dem Kampf. Fehlt der Behälter: wie bisher versteckt,
+  eigene Symbole. `targetGameScale` für die Größe.
+- `/wcui auren` nennt den Stand (`UF.gameAuraState`).
+- **Im Spiel ungeprüft**, ob der Forever-Client den Behälter so nennt.
+
 ## [6.4.0.2] – 2026-09-27
 
 **„Für meine Klasse“ ergänzt nur noch.** Selbst angelegte Regeln bleiben stehen; gibt es für deine Klasse keine Vorschläge, sagt der Knopf das, statt die Liste zu leeren.

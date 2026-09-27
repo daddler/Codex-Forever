@@ -78,6 +78,11 @@ local defaults = {
     replacePlayerCast = true,
     comboPoints   = true,
     targetAuras   = true,
+    -- Woher die Symbole am Zielrahmen kommen: "game" (der Aurenbehaelter
+    -- des Zielrahmens des Spiels, auch im Kampf) oder "own" (eigene
+    -- Symbole ueber ui/auras.lua - im Kampf leer, gemessen 6.3.0.2).
+    targetAuraSource = "game",
+    targetGameScale  = 100,
     auraSize      = 20,
     onlyOwnDebuffs = false,
 }
@@ -700,7 +705,13 @@ end
 -- Container des Spiels, wo es ihn gibt).
 --------------------------------------------------
 
+local UseGameAuras   -- siehe "Auren des Spiels am Zielrahmen"
+
 function Frame:LayoutAuras()
+    if UseGameAuras() then
+        UF.ConfigureGameAuras()
+        UF.AnchorGameAuras()
+    end
     local size = Opt("auraSize")
     local y0 = (self._combo and not Opt("comboCentered")) and 10 or 3
     local debuffFilter = Opt("onlyOwnDebuffs") and "HARMFUL|PLAYER" or "HARMFUL"
@@ -719,11 +730,188 @@ end
 
 function Frame:UpdateAuras()
     local on = Opt("targetAuras") and true or false
+    local game = UseGameAuras()
     for _, obj in pairs(self._auras) do
-        obj:SetShown(on)
-        if on then obj:Refresh() end
+        obj:SetShown(on and not game)
+        if on and not game then obj:Refresh() end
+    end
+    if game then UF.ShowGameAuras(on) end
+end
+
+--------------------------------------------------
+-- Auren des Spiels am Zielrahmen (6.4.0.3)
+--------------------------------------------------
+-- Eigene Symbole bleiben im Kampf leer: dort sperrt der Client Addons das
+-- Lesen von Auren (gemessen 6.3.0.2), und die Knoepfe eines eigenen
+-- Aurenbehaelters sind verboten. Die Debuffs auf den Plaketten sind
+-- deshalb schon die Symbole des Spiels. Beim Zielrahmen geht dasselbe:
+-- der Zielrahmen des Spiels traegt einen Aurenbehaelter
+-- (TargetFrame.TargetFrameContent.TargetFrameContentContextual.Auras,
+-- TargetFrame.lua im 12.x-Quelltext), den das Spiel selbst fuellt.
+--
+-- Bei targetAuraSource = "game" bleibt der Zielrahmen des Spiels deshalb
+-- am Leben: alles an ihm unsichtbar ausser dem Behaelter, ohne Maus, und
+-- der Behaelter haengt ueber UNSEREM Zielrahmen. Kein Feld am Rahmen des
+-- Spiels wird geschrieben - Blizzard-Code, der einen von uns gesetzten
+-- Wert liest, liefe unsicher weiter und scheiterte an geheimen Werten.
+-- Gesetzt wird nur ueber Methoden des Behaelters, NACH dem Spiel
+-- (hooksecurefunc auf ConfigureAuraContainer/AnchorAuraContainer):
+--   * Wachsen nach oben (wie "Buffs oben" im Bearbeitungsmodus),
+--   * keine verkuerzten Reihen neben dem (unsichtbaren) Ziel des Ziels,
+--   * Reihenbreite = Breite unseres Zielrahmens.
+-- Ob der Forever-Client den Behaelter so nennt, ist nicht gemessen -
+-- /wcui auren nennt UF.gameAuraState. Fehlt er, wird der Zielrahmen des
+-- Spiels wie bisher ganz versteckt und es gelten die eigenen Symbole.
+
+UF.gameAuraState = "nicht verwendet"
+local gameAuras        -- der Behaelter, wenn der Weg steht
+local gameHooked = false
+local anchoringGame = false
+
+UseGameAuras = function()
+    return gameAuras ~= nil and Opt("targetAuraSource") == "game"
+end
+
+-- Behaelter und der Weg dorthin (Zielrahmen -> Inhalt -> Kontext -> Auren).
+local function FindGameAuras()
+    local tf = _G.TargetFrame
+    if type(tf) ~= "table" then return nil, "kein Zielrahmen des Spiels" end
+    if tf.IsForbidden and tf:IsForbidden() then return nil, "Zielrahmen des Spiels verboten" end
+    local content = tf.TargetFrameContent
+    local ctx = type(content) == "table" and content.TargetFrameContentContextual or nil
+    local auras = type(ctx) == "table" and ctx.Auras or nil
+    if type(auras) ~= "table" or type(auras.SetPoint) ~= "function" then
+        return nil, "Aurenbehälter des Spiels nicht gefunden"
+    end
+    if auras.IsForbidden and auras:IsForbidden() then return nil, "Aurenbehälter des Spiels verboten" end
+    return { tf, content, ctx, auras }
+end
+
+local function KeepHiddenPart(r)
+    local AB = WeintCodex.UIActionBars
+    if AB and AB.KeepHidden then AB.KeepHidden(r) else r:SetAlpha(0) end
+end
+
+-- Alles an `parent` unsichtbar ausser `keep` (Kinder und Flaechen).
+local function DimAllBut(parent, keep)
+    for _, ch in ipairs({ parent:GetChildren() }) do
+        if ch ~= keep and type(ch) == "table" and ch.SetAlpha then KeepHiddenPart(ch) end
+    end
+    for _, rg in ipairs({ parent:GetRegions() }) do
+        if type(rg) == "table" and rg.SetAlpha then KeepHiddenPart(rg) end
     end
 end
+
+-- Keine Maus fuer den ganzen Zielrahmen des Spiels ausser dem Behaelter:
+-- ein unsichtbarer Rahmen, der Klicks faengt, waere eine Falle. Nur
+-- ausserhalb des Kampfes (Build laeuft dort) - Rahmen und Ziel des Ziels
+-- sind geschuetzt.
+local function NoMouse(f, keep)
+    if f == keep or type(f) ~= "table" then return end
+    if f.EnableMouse then pcall(f.EnableMouse, f, false) end
+    local ok, kids = pcall(function() return { f:GetChildren() } end)
+    if ok then
+        for _, ch in ipairs(kids) do NoMouse(ch, keep) end
+    end
+end
+
+local function Call(obj, name, ...)
+    local fn = obj[name]
+    if type(fn) ~= "function" then return false end
+    return pcall(fn, obj, ...)
+end
+
+-- Masse unseres Rahmens im Massstab des Behaelters.
+local function Ratio(f)
+    local a = K.Plain(gameAuras.GetEffectiveScale and gameAuras:GetEffectiveScale())
+    local b = K.Plain(f.GetEffectiveScale and f:GetEffectiveScale())
+    if type(a) ~= "number" or type(b) ~= "number" or a <= 0 then return 1 end
+    return b / a
+end
+
+-- Ist der Behaelter geschuetzt, darf er im Kampf nicht angefasst werden
+-- (das waere "Aktion blockiert", kein abfangbarer Fehler) - dann nach dem
+-- Kampf.
+local function Locked()
+    return K.Bool(_G.InCombatLockdown and _G.InCombatLockdown(), false)
+        and gameAuras.IsProtected and K.Bool(gameAuras:IsProtected(), false)
+end
+
+-- Nach ConfigureAuraContainer des Spiels: nach oben wachsen, volle Reihen.
+local ConfigureGameAuras
+ConfigureGameAuras = function()
+    local f = frames.target
+    if not (gameAuras and f) then return end
+    if Locked() then K.AfterCombat(ConfigureGameAuras) return end
+    Call(gameAuras, "SetScale", (Opt("targetGameScale") or 100) / 100)
+    Call(gameAuras, "SetFlowLayoutMirroredVertically", true)
+    Call(gameAuras, "SetNumConstrainedFlowLayoutLines", 0)
+    local w = K.Plain(f:GetWidth())
+    if type(w) == "number" and w > 0 then
+        Call(gameAuras, "SetFlowLayoutMaximumLineSize", w * Ratio(f))
+    end
+    if not Opt("targetAuras") then Call(gameAuras, "Hide") end
+end
+UF.ConfigureGameAuras = ConfigureGameAuras
+
+function UF.AnchorGameAuras()
+    local f = frames.target
+    if anchoringGame or not (gameAuras and f) then return end
+    if Locked() then K.AfterCombat(UF.AnchorGameAuras) return end
+    anchoringGame = true
+    local y = (f._combo and not Opt("comboCentered")) and 10 or 3
+    local ok, err = pcall(function()
+        gameAuras:ClearAllPoints()
+        gameAuras:SetPoint("BOTTOMLEFT", f, "TOPLEFT", 0, y * Ratio(f))
+    end)
+    anchoringGame = false
+    UF.gameAuraState = ok and "Symbole des Spiels über dem Zielrahmen"
+        or ("vom Spiel abgelehnt: " .. tostring(err))
+end
+
+function UF.ShowGameAuras(on)
+    if not gameAuras or Locked() then return end
+    if on then Call(gameAuras, "Show") else Call(gameAuras, "Hide") end
+end
+
+-- Aufgerufen aus Build, ausserhalb des Kampfes. true = der Weg steht, der
+-- Zielrahmen des Spiels darf NICHT versteckt werden.
+local function SetupGameAuras()
+    if Opt("targetAuraSource") ~= "game" then
+        UF.gameAuraState = "eigene Symbole gewählt"
+        return false
+    end
+    local path, why = FindGameAuras()
+    if not path then
+        UF.gameAuraState = why .. " – eigene Symbole"
+        return false
+    end
+    local tf, content, ctx, auras = path[1], path[2], path[3], path[4]
+    local ok, err = pcall(function()
+        DimAllBut(tf, content)
+        DimAllBut(content, ctx)
+        DimAllBut(ctx, auras)
+        NoMouse(tf, auras)
+    end)
+    if not ok then
+        UF.gameAuraState = "Zielrahmen des Spiels nicht auszublenden (" .. tostring(err) .. ") – eigene Symbole"
+        return false
+    end
+    gameAuras = auras
+    if not gameHooked and _G.hooksecurefunc then
+        gameHooked = true
+        if type(tf.ConfigureAuraContainer) == "function" then
+            _G.hooksecurefunc(tf, "ConfigureAuraContainer", ConfigureGameAuras)
+        end
+        if type(tf.AnchorAuraContainer) == "function" then
+            _G.hooksecurefunc(tf, "AnchorAuraContainer", UF.AnchorGameAuras)
+        end
+    end
+    ConfigureGameAuras()
+    UF.AnchorGameAuras()
+    return true
+end
+UF._SetupGameAuras = SetupGameAuras   -- fuer den Prueflauf
 
 --------------------------------------------------
 -- Entsperrmodus: einen Rahmen ohne Einheit trotzdem zeigen
@@ -984,7 +1172,10 @@ local function Build()
             if u ~= "player" and _G.RegisterUnitWatch then
                 K.AfterCombat(function() _G.RegisterUnitWatch(f) end)
             end
-            for _, b in ipairs(BLIZZARD[u] or {}) do HideBlizzard(b) end
+            local keepGame = (u == "target") and SetupGameAuras()
+            for _, b in ipairs(BLIZZARD[u] or {}) do
+                if not (keepGame and b == "TargetFrame") then HideBlizzard(b) end
+            end
             f:Refresh()
         end
     end
@@ -1076,11 +1267,21 @@ local function UnitPage(u)
         end
         if u == "target" then
             B:Section("Auren und Kombopunkte")
+            local noAuras = function() return off() or not K.Get(KEY, "targetAuras") end
+            local notOwn = function() return noAuras() or K.Get(KEY, "targetAuraSource") ~= "own" end
+            local notGame = function() return noAuras() or K.Get(KEY, "targetAuraSource") ~= "game" end
             B:Row({ type = "toggle", label = "Buffs und Debuffs", key = "targetAuras", disabled = off },
-                  { type = "slider", label = "Symbolgröße", key = "auraSize", min = 14, max = 36, step = 1, format = px,
-                    disabled = function() return off() or not K.Get(KEY, "targetAuras") end })
+                  { type = "dropdown", label = "Symbole", key = "targetAuraSource", reload = true, disabled = noAuras,
+                    items = {
+                        { value = "game", text = "Des Spiels (auch im Kampf)" },
+                        { value = "own",  text = "Eigene (im Kampf leer)" } },
+                    description = "Im Kampf gibt der Client Auren nur an seine eigenen Symbole heraus – wie auf den Plaketten." })
+            B:Row({ type = "slider", label = "Größe (Spiel)", key = "targetGameScale", min = 60, max = 200, step = 5,
+                    format = function(v) return string.format("%d %%", v) end, disabled = notGame },
+                  { type = "slider", label = "Symbolgröße (eigene)", key = "auraSize", min = 14, max = 36, step = 1, format = px,
+                    disabled = notOwn })
             B:Row({ type = "toggle", label = "Nur eigene Debuffs", key = "onlyOwnDebuffs",
-                    disabled = function() return off() or not K.Get(KEY, "targetAuras") end },
+                    disabled = notOwn },
                   { type = "toggle", label = "Kombopunkte", key = "comboPoints", disabled = off,
                     description = "Schurken und Druiden in Katzengestalt." })
             B:Row({ type = "toggle", label = "Kombopunkte mittig", key = "comboCentered",
