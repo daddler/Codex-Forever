@@ -420,6 +420,10 @@ Seit 6.2.0.0:
   große Bilder nach Fläche (≥ 15 % des Fensters, `W.HideLarge`) in
   Fenstern mit „Spell“/„Talent“ im Namen, gefunden auch über
   `ShowUIPanel` (`W.Adopt`); eigene Flächen stehen in `W.own`.
+  6.4.1.4 („nur schwarz ist langweilig“): `windowArt` – Talent-
+  Landschaften gedämpft statt weg, Schein in der Klassenfarbe oben in
+  jedem gestalteten Fenster; Goldschmuck nach den gemessenen Atlanten
+  weg, Zustandsrahmen der Talente bleiben.
 * **Tageszeit-Ecke** (6.3.1.6): `dayCorner` der Minikarte.
 * **LibDBIcon friert Schichten ein** (6.3.1.6): vor `SetFrameStrata`
   erst `SetFixedFrameStrata(false)`, sonst wirkt es nicht.

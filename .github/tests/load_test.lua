@@ -1990,6 +1990,9 @@ do
         local W = WeintCodex.UIWindows
         assert(W.HidesAtlas("spellbook-background-evergreen-left"), "Pergament des Zauberbuchs bleibt")
         assert(W.HidesAtlas("spellbook-item-backplate"), "Schatten hinter Zaubern bleibt")
+        assert(W.HidesAtlas("Talents-Main-Ring-c60") and W.HidesAtlas("spellbook-Tab-Frame-C60"), "Goldschmuck (gemessen) bleibt")
+        assert(not W.HidesAtlas("spellbook-Tab-Frame-Glow-C60"), "Schein des gewaehlten Reiters ausgeblendet")
+        assert(not W.HidesAtlas("talents-node-square-green"), "Zustandsrahmen der Talente ausgeblendet")
         assert(not W.HidesAtlas("spellbook-item-needtrainer-shadow"), "Lehrer-Hinweis ausgeblendet - der traegt Bedeutung")
         assert(W.IsDark(0.25, 0.18, 0.11) and not W.IsDark(1, 0.82, 0) and not W.IsDark(0.1, 1, 0.1), "hell/dunkel falsch")
 
@@ -2020,6 +2023,11 @@ do
 
         -- 6.4.1.3: grosse Bilder (Pergament, Talent-Landschaften) nach
         -- Flaeche; Talentfenster ueber den Namen gefunden.
+        local oldHookW = _G.hooksecurefunc
+        _G.hooksecurefunc = function(obj, name, fn)
+            local orig = obj[name]
+            obj[name] = function(...) local r = orig(...) fn(...) return r end
+        end
         local tf = stub.NewObject("Frame", "ForeverTalentFrame")
         tf._width, tf._height = 1000, 600
         _G.ForeverTalentFrame = tf   -- benannte Rahmen sind im Client global
@@ -2034,9 +2042,34 @@ do
         own = W.done[tf].kachel.bg
         tf.GetRegions = function() return own end
         W.Inner()
-        assert(art:GetAlpha() == 0, "Hintergrundbild des Talentbaums bleibt")
+        -- 6.4.1.4: Landschaften gedaempft statt weg ("nur schwarz ist langweilig").
+        local tone = WeintCodex.GameColors.artTone
+        assert(W.toned[art] and art:GetAlpha() == tone[4], "Landschaft des Talentbaums nicht gedaempft")
+        art:SetAlpha(1)   -- das Spiel setzt zurueck ...
+        assert(W.toned[art] and art:GetAlpha() == tone[4], "Spiel hebt die Daempfung auf")
         assert(icon2:GetAlpha() == 1, "Talentsymbol ausgeblendet")
         assert(own:GetAlpha() == 1, "eigene Kachel ausgeblendet")
+        -- Ohne "Stimmung": weg, wie 6.4.1.3.
+        K.Set("general", "windowArt", false)
+        local art2 = stub.NewObject("Texture")
+        art2._width, art2._height = 330, 560
+        tree.GetRegions = function() return art, icon2, art2 end
+        W.Inner()
+        assert(art2:GetAlpha() == 0 and not W.toned[art2], "ohne Stimmung bleibt die Landschaft")
+        K.Set("general", "windowArt", nil)
+        -- Schein in der Klassenfarbe: nur mit Antwort des Spiels.
+        local oldUC, oldRCC = _G.UnitClass, _G.RAID_CLASS_COLORS
+        _G.UnitClass = function() return "Krieger", "WARRIOR", 1 end
+        _G.RAID_CLASS_COLORS = { WARRIOR = { r = 0.78, g = 0.61, b = 0.43 } }
+        local d2 = {}
+        W.AddGlow(stub.NewObject("Frame"), d2)
+        assert(d2.glow and W.own[d2.glow], "kein Schein in der Klassenfarbe")
+        _G.RAID_CLASS_COLORS = nil
+        local d3 = {}
+        W.AddGlow(stub.NewObject("Frame"), d3)
+        assert(not d3.glow, "Schein ohne Klassenfarbe geraten")
+        _G.UnitClass, _G.RAID_CLASS_COLORS = oldUC, oldRCC
+        _G.hooksecurefunc = oldHookW
         assert(not W.Adopt(stub.NewObject("Frame", "MailFrame")), "fremdes Fenster aufgenommen")
         _G.ForeverTalentFrame = nil
     end)

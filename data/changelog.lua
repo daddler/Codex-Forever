@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.4.1.4",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFStimmung statt Schwarz.|r Oben in Charakterfenster, Zauberbuch und Talenten ein Schein in deiner Klassenfarbe; die Landschaften hinter den Talentbäumen bleiben – gedämpft, damit Symbole und Schrift vorne stehen. Abschaltbar: /wcui → Tooltip & Fenster.",
+            "|cff7C6CFFKein Goldschmuck mehr.|r Goldrahmen der Zauberbuch-Reiter, Ringe um die Spezialisierungen, Goldlinien und der Goldkasten der Talentpunkte sind weg. Was etwas anzeigt – gewählter Reiter, verfügbare und volle Talente – bleibt.",
+        },
+    },
+    {
         version = "6.4.1.3",
         date    = "27.09.2026",
         notes   = {

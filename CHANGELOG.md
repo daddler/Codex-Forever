@@ -9,6 +9,27 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.4.1.4] – 2026-09-27
+
+**Stimmung statt Schwarz.** Oben in Charakterfenster, Zauberbuch und Talenten ein Schein in deiner Klassenfarbe; die Landschaften hinter den Talentbäumen bleiben – gedämpft, damit Symbole und Schrift vorne stehen. Abschaltbar: /wcui → Tooltip & Fenster.
+
+**Kein Goldschmuck mehr.** Goldrahmen der Zauberbuch-Reiter, Ringe um die Spezialisierungen, Goldlinien und der Goldkasten der Talentpunkte sind weg. Was etwas anzeigt – gewählter Reiter, verfügbare und volle Talente – bleibt.
+
+### Technisch
+
+- `ui/windows.lua`: `windowArt` (Standard an). Große Bilder unter
+  `PlayerSpellsFrame.TalentsFrame` (bzw. einem Fenster mit „Talent“ im
+  Namen) werden gedämpft statt ausgeblendet (`Tone`: Entsättigung 0,6,
+  Farbe und Deckkraft aus `GameColors.artTone`, Haken auf `SetAlpha`);
+  das Pergament des Zauberbuchs bleibt weg. `W.AddGlow`: Verlauf in der
+  Klassenfarbe (`RAID_CLASS_COLORS`), 260 px, Deckkraft
+  `GameColors.windowGlow`; ohne Antwort des Spiels kein Schein.
+- Gemessen mit `/wcui fenster` (Beta-Test 6.4.1.3) und ausgeblendet:
+  `spellbook-Tab-Frame-C60`, `Talents-Main-Ring-*`, `Talents-divider-*`,
+  `Talents-small-divider-*`, `Talents-Square-Box-*`. Bleiben: Schein des
+  gewählten Reiters, `talents-node-square-*` (Zustand), Schatten, Glanz.
+- **Im Spiel ungeprüft.**
+
 ## [6.4.1.3] – 2026-09-27
 
 **Zauberbuch ohne Pergament, Talente ohne Landschaften.** Große Hintergrundbilder beider Fenster verschwinden, darunter liegt die WeintCodex-Kachel. Symbole, Pfeile, Reiter und die farbigen Rahmen der Talente bleiben.

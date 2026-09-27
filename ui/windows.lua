@@ -39,6 +39,9 @@ local C = WeintCodex.Colors
 
 W.DEFAULTS = {
     windowSkin = true,
+    -- 6.4.1.4: Talent-Landschaften gedaempft statt weg, Schein in der
+    -- Klassenfarbe oben in jedem Fenster ("nur schwarz ist langweilig").
+    windowArt  = true,
 }
 
 local function Opt(k) return K.Get("general", k) end
@@ -148,6 +151,7 @@ function W.Skin(f, panel)
         d.kachel = K.Kachel(f, { alpha = 0.94, shadow = 8 })
         own[d.kachel.bg], own[d.kachel.light] = true, true
         if d.kachel.shadow and d.kachel.shadow.tex then own[d.kachel.shadow.tex] = true end
+        W.AddGlow(f, d)
         StyleTitle(f)
     end
     -- Innenflaechen (Inset): etwas heller als die Kachel, damit Spalten
@@ -196,6 +200,12 @@ W.HIDE_ATLAS = {
     "^spellbook%-list%-backplate",
     "^spellbook%-item%-backplate",           -- Schatten hinter jedem Zauber
     "^UI%-HUD%-RotationHelper%-SpellbookDivider",
+    -- Gemessen im Beta-Client mit /wcui fenster (6.4.1.3): Goldschmuck.
+    "^spellbook%-Tab%-Frame%-C60$",          -- Goldrahmen der Kategorie-Reiter (der Schein bleibt: er zeigt die Wahl)
+    "^Talents%-Main%-Ring",                  -- Goldring um die Spezialisierungen
+    "^Talents%-divider",                     -- Goldlinien links/rechts
+    "^Talents%-small%-divider",
+    "^Talents%-Square%-Box",                 -- Goldkasten "Unverteilte Talentpunkte"
 }
 local KEEP_ATLAS = { "RaceBG" }
 
@@ -386,11 +396,38 @@ W.SkinSpellItems = function(f) SkinSpellItems(f, 0) end
 
 -- Grosse Bilder im Fenster (siehe LARGE_PATTERNS). Nur sichtbare, nur
 -- Texturen, nie unsere eigenen.
-local function HideLarge(f, limit, depth)
+-- Ein Bild des Spiels gedaempft statt ausgeblendet: entsaettigt, dunkler,
+-- halb durchsichtig - Stimmung ohne Konkurrenz zur Schrift. Setzt das
+-- Spiel die Deckkraft neu, zieht ein Haken nach.
+local toned = setmetatable({}, { __mode = "k" })
+local toneGuard = false
+local function Tone(r)
+    if toned[r] then return end
+    toned[r] = true
+    local t = WeintCodex.GameColors.artTone
+    if r.SetDesaturation then pcall(r.SetDesaturation, r, 0.6)
+    elseif r.SetDesaturated then pcall(r.SetDesaturated, r, true) end
+    if r.SetVertexColor then r:SetVertexColor(t[1], t[2], t[3]) end
+    toneGuard = true
+    r:SetAlpha(t[4])
+    toneGuard = false
+    if _G.hooksecurefunc then
+        _G.hooksecurefunc(r, "SetAlpha", function(self)
+            if toneGuard then return end
+            toneGuard = true
+            self:SetAlpha(t[4])
+            toneGuard = false
+        end)
+    end
+end
+W.toned = toned
+
+local function HideLarge(f, limit, depth, toneRoot, tone)
     if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
+    tone = tone or (toneRoot ~= nil and f == toneRoot)
     local rok, regions = pcall(function() return { f:GetRegions() } end)
     for _, r in ipairs(rok and regions or {}) do
-        if not own[r] then
+        if not own[r] and not toned[r] then
             local ok, big = pcall(function()
                 if r:GetObjectType() ~= "Texture" then return false end
                 if not K.Bool(r:IsShown(), false) or K.Plain(r:GetAlpha()) == 0 then return false end
@@ -398,7 +435,7 @@ local function HideLarge(f, limit, depth)
                 return type(w) == "number" and type(h) == "number" and w * h >= limit
             end)
             if ok and big then
-                Hide(r)
+                if tone then Tone(r) else Hide(r) end
                 if not seen[r] then
                     seen[r] = true
                     stats.hidden = stats.hidden + 1
@@ -407,12 +444,51 @@ local function HideLarge(f, limit, depth)
         end
     end
     local cok, kids = pcall(function() return { f:GetChildren() } end)
-    for _, ch in ipairs(cok and kids or {}) do HideLarge(ch, limit, depth + 1) end
+    for _, ch in ipairs(cok and kids or {}) do HideLarge(ch, limit, depth + 1, toneRoot, tone) end
 end
+-- Pergament des Zauberbuchs: weg (entsaettigt waere es graues Papier).
+-- Landschaften hinter den Talentbaeumen: gedaempft, wenn windowArt an ist.
 function W.HideLarge(f)
     local w, h = K.Plain(f:GetWidth()), K.Plain(f:GetHeight())
     if type(w) ~= "number" or type(h) ~= "number" or w * h <= 0 then return end
-    HideLarge(f, w * h * W.LARGE_SHARE, 0)
+    local toneRoot
+    if Opt("windowArt") then
+        local name = f.GetName and f:GetName()
+        if type(f.TalentsFrame) == "table" then toneRoot = f.TalentsFrame
+        elseif type(name) == "string" and name:find("Talent", 1, true) then toneRoot = f end
+    end
+    HideLarge(f, w * h * W.LARGE_SHARE, 0, toneRoot, false)
+end
+
+-- Schein in der Klassenfarbe oben im Fenster, nach unten auslaufend: das
+-- Fenster gehoert dem Charakter. Die Farbe nennt das Spiel
+-- (RAID_CLASS_COLORS); ohne Antwort bleibt der Schein aus.
+local function ClassRGB()
+    local _, class = nil, nil
+    if _G.UnitClass then _, class = _G.UnitClass("player") end
+    class = K.Plain(class)
+    local cc = type(class) == "string" and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
+    if type(cc) ~= "table" then return nil end
+    return cc.r, cc.g, cc.b
+end
+
+function W.AddGlow(f, d)
+    if d.glow or not Opt("windowArt") or not f.CreateTexture then return end
+    local r, g, b = ClassRGB()
+    if not r then return end
+    local a = WeintCodex.GameColors.windowGlow[4]
+    local t = f:CreateTexture(nil, "BACKGROUND", nil, -6)
+    t:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
+    t:SetPoint("TOPRIGHT", f, "TOPRIGHT", -1, -1)
+    t:SetHeight(260)
+    t:SetColorTexture(1, 1, 1, 1)
+    if t.SetGradient and _G.CreateColor then
+        t:SetGradient("VERTICAL", _G.CreateColor(r, g, b, 0), _G.CreateColor(r, g, b, a))
+    else
+        t:SetColorTexture(r, g, b, a * 0.4)
+    end
+    own[t] = true
+    d.glow = t
 end
 
 function W.Inner()
