@@ -868,6 +868,21 @@ Gegenstände) und die **Quests je Dungeon** (50).
   verschwiegen –, darunter „Weitere Beute“. Beides liegt in den Karten,
   die rollen dürfen (siehe *Nichts muss scrollen*); Umschalt+Klick auf
   einen Gegenstand legt den Link in den Chat.
+* **Questgeber auf der Weltkarte** *(seit 6.5.1.0)*. `J.PLACES[questId]`
+  = `{ map, x, y, who, item }` für 33 Quests; die Dungeonkarte zeigt
+  darunter „Questgeber auf der Karte zeigen“ (bzw. „Fundort auf der
+  Karte“, wenn die Quest mit einem Gegenstand beginnt). Ein Klick öffnet
+  die Weltkarte auf der Zone und setzt eine **eigene** Marke
+  (`modules/questmap.lua`, `WeintCodex.QuestMap`) – kein
+  `C_Map.SetUserWaypoint`, das laut Beta-Berichten nicht verlässlich
+  setzt. Die Marke hängt an der Fläche der Karte (`GetCanvas`), gleicht
+  deren Zoom aus, zeigt sich nur auf ihrer Zone und geht per Rechtsklick
+  weg. Kartennummern sind die von **Classic** (Westfalen 1436, nicht 52),
+  die Lagen die aus Classic – Herkunft `community`, Tooltip sagt
+  „unbestätigt“. Ohne Ort bleiben Geber im Dungeon, Quests aus Beute und
+  *The Glowing Shard* (der Bericht nennt dort Falla Sagewind, die nicht
+  die Geberin ist). `data_test.lua` prüft, dass jeder Ort an einer Quest
+  des Journals hängt.
 * **Kein Bild aus dem Spiel.** Die Vorlage brachte Bilder mit
   (Porträts, Dungeonbilder, Wappen) – Blizzard-Material bzw. davon
   abgeleitet, deshalb nicht übernommen (siehe *Bilder*).
@@ -879,7 +894,8 @@ Gegenstände) und die **Quests je Dungeon** (50).
 | `data/sources.lua` | Herkunftsmodell: `KINDS`, `IsValid/IsConfirmed/Label/Prefix/Why/Weaker` |
 | `data/dungeons.lua` | Die neun von Forever + `All/Get/HasBosses/BossesComplete/OrderKnown/BossSource/BossCount/SummonableBosses/LevelRange/ZoneLabel/FitsLevel` |
 | `data/dungeons_classic.lua` | Die zwanzig aus Classic + `AllClassic/AllInstances/IsLegacy/AllSummonable/Brackets/BracketIndexOf/Wings/BossesInWing` |
-| `data/dungeon_journal.lua` | Beute je Boss und Quests je Dungeon (sieben Dungeons) + `Loot/Others/Quests/Has` |
+| `data/dungeon_journal.lua` | Beute je Boss und Quests je Dungeon (sieben Dungeons), Orte der Questgeber (`PLACES`) + `Loot/Others/Quests/Has/Place` |
+| `modules/questmap.lua` | Marke des Questgebers auf der Weltkarte: `Show/Place/Clear/MapName` |
 | `data/roles.lua` | Rollenmodell: Labels, Farben, `Frame`, `Specs`, `Tips`, `HasTips` |
 | `modules/rolepanel.lua` | Darstellung: `Card`/`BossCards`/`InstanceBlocks`/`BossBlocks` (Schlachtzug), `Roster`/`BossRoleRows` (Dungeon) |
 | `modules/dungeonpages.lua` | Die Seite: Kopfkarte mit Tatsachenband, Bossraster, Kontextkarte, Spalte, Übersicht der beschwörbaren Bosse |

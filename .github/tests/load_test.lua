@@ -2201,6 +2201,58 @@ do
     Check(ok, "Dungeonseite: Beute je Boss, Quests je Dungeon, Namen vom Client" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.5.1.0: Questgeber auf der Weltkarte - Link je Quest mit bekannter
+-- Lage, Klick oeffnet die Karte auf der Zone und setzt eine Marke.
+do
+    local ok, err = pcall(function()
+        local DP, J, QM = WeintCodex.DungeonPages, WeintCodex.DungeonJournal, WeintCodex.QuestMap
+        assert(J.Place(214) and J.Place(214).map == 1436, "Lage von Scout Riell fehlt")
+        assert(J.Place(6981) == nil, "The Glowing Shard mit Lage eines Nicht-Gebers")
+        for id, p in pairs(J.PLACES) do
+            assert(type(p.map) == "number" and p.x > 0 and p.x < 1 and p.y > 0 and p.y < 1 and type(p.who) == "string",
+                "Lage " .. id .. " unvollstaendig")
+        end
+        DP.Select("the_deadmines", nil)
+        WeintCodex.Navigation.SwitchTo("dungeons")
+        assert(DP.mapLinks == 5, "Kartenlinks in The Deadmines: " .. tostring(DP.mapLinks) .. " statt 5")
+        DP.Select("hall_of_thanes", nil)
+        WeintCodex.Navigation.SwitchTo("dungeons")
+        assert(DP.mapLinks == 1, "Fundort der Dark Iron Map ohne Link")
+
+        -- Weltkarte als Attrappe.
+        local oldWM, oldOpen = _G.WorldMapFrame, _G.OpenWorldMap
+        local wm = CreateFrame("Frame", "WorldMapFrame", UIParent)
+        _G.WorldMapFrame = wm
+        wm:Hide()
+        local mapID = 1453
+        wm.GetMapID = function() return mapID end
+        wm.SetMapID = function(_, id) mapID = id end
+        local canvas = CreateFrame("Frame", nil, wm)
+        canvas._width, canvas._height = 1000, 600
+        wm.GetCanvas = function() return canvas end
+        _G.OpenWorldMap = function(id) wm:Show() mapID = id end
+        assert(QM.Show(J.Place(214), "Red Silk Bandanas"), "Marke nicht gesetzt")
+        assert(wm:IsShown() and mapID == 1436, "Weltkarte nicht auf Westfalen geoeffnet")
+        local pin = QM.Pin()
+        assert(pin and pin:IsShown(), "keine Marke auf der Karte")
+        local pt
+        pin.SetPoint = function(_, p, rel, rp, x, y) pt = { p, rel, rp, x, y } end
+        QM.Place()
+        assert(pt and pt[2] == canvas and math.abs(pt[4] - 566.7) < 0.01 and math.abs(pt[5] + 284.1) < 0.01,
+            "Marke an falscher Stelle: " .. tostring(pt and pt[4]) .. ", " .. tostring(pt and pt[5]))
+        mapID = 1453
+        QM.Place()
+        assert(not pin:IsShown(), "Marke auf der falschen Zone")
+        mapID = 1436
+        QM.Place()
+        assert(pin:IsShown(), "Marke kommt beim Zurueckwechseln nicht wieder")
+        pin._scripts.OnClick(pin, "RightButton")
+        assert(not pin:IsShown() and QM.Target() == nil, "Rechtsklick entfernt die Marke nicht")
+        _G.WorldMapFrame, _G.OpenWorldMap = oldWM, oldOpen
+    end)
+    Check(ok, "Dungeonseite: Questgeber auf der Weltkarte" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.8: Im Dungeon verfolgt die Questliste nur dessen Quests; beim
 -- Verlassen kommt genau das zurueck, was geaendert wurde.
 do

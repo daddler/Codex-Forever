@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.5.0.0
+## Version: 6.5.1.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -109,6 +109,8 @@ modules/charakter.lua
 modules/encounter_tracking.lua
 modules/rolepanel.lua
 modules/raidpages.lua
+# Questgeber auf der Weltkarte (6.5.1.0); das Kompendium ruft es beim Klick.
+modules/questmap.lua
 modules/dungeonpages.lua
 modules/signup.lua
 modules/calendar.lua

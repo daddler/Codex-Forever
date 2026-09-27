@@ -864,6 +864,7 @@ do
         "Journal traegt eine gueltige Herkunft der Art community")
     local function IsId(v) return type(v) == "number" and v > 0 and v == math.floor(v) end
     local items, quests, dungeons = 0, 0, 0
+    local allQuests = {}
     for dungeonId, entry in pairs(J.DATA) do
         dungeons = dungeons + 1
         local dungeon = D.Get(dungeonId)
@@ -897,6 +898,7 @@ do
             Check(IsId(q.id), tag .. ": Nummer")
             Check(not qseen[q.id], tag .. " nur einmal")
             qseen[q.id] = true
+            allQuests[q.id] = true
             Check(type(q.name) == "string" and q.name ~= "", tag .. ": Name")
             Check(type(q.level) == "number" and type(q.requires) == "number" and q.requires <= q.level,
                 tag .. ": Stufe und Mindeststufe")
@@ -914,7 +916,19 @@ do
     Check(#J.Quests("gibtesnicht") == 0, "Dungeon ohne Journal liefert keine Quests")
     local horde = J.Quests("ragefire_chasm", "alliance")
     Check(#horde == 0, "Fraktionsfilter: Ragefire Chasm hat keine Allianzquest")
-    print("  --    " .. dungeons .. " Dungeon(s), " .. items .. " Gegenstaende, " .. quests .. " Quests")
+    -- 6.5.1.0: Orte auf der Weltkarte nur fuer Quests, die es gibt.
+    local places = 0
+    for id, p in pairs(J.PLACES or {}) do
+        places = places + 1
+        local tag = "Ort der Quest " .. tostring(id)
+        Check(allQuests[id] == true, tag .. ": Quest im Journal")
+        Check(IsId(p.map), tag .. ": Kartennummer")
+        Check(type(p.x) == "number" and type(p.y) == "number" and p.x > 0 and p.x < 1 and p.y > 0 and p.y < 1,
+            tag .. ": Lage 0..1")
+        Check(type(p.who) == "string" and p.who ~= "", tag .. ": wer dort steht")
+    end
+    print("  --    " .. dungeons .. " Dungeon(s), " .. items .. " Gegenstaende, " .. quests .. " Quests, "
+        .. places .. " Orte")
 end
 
 --------------------------------------------------

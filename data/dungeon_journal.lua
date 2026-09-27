@@ -864,6 +864,73 @@ J.DATA = {
     },
 }
 
+--------------------------------------------------
+-- Orte auf der Weltkarte (seit 6.5.1.0)
+--------------------------------------------------
+-- Wo eine Quest beginnt, als Punkt auf der Weltkarte: Karte (UiMapID)
+-- und Lage 0..1 auf ihr. HERKUNFT wie oben (`community`): dieselben
+-- Beta-Berichte. Die Kartennummern sind die von Classic (Westfalen 1436,
+-- Sturmwind 1453 ...), nicht die des heutigen Spiels (52, 84) - so
+-- berichtet, und die Berichte stammen von einem Addon, das im Beta-Client
+-- mit genau diesen Nummern lief. Die Lagen sind die bekannten aus Classic;
+-- ob Forever jeden Geber an denselben Fleck stellt, ist nicht geprueft.
+-- Deshalb sagt die Marke auf der Karte "unbestaetigt".
+--
+-- `who` ist, wer (oder was) an dem Punkt steht. `item = true`: die Quest
+-- beginnt mit einem Gegenstand, der Punkt ist sein Fundort.
+-- Nicht jede Quest hat einen Punkt: Geber im Dungeon, Quests aus Beute
+-- und Geber, deren Lage nicht berichtet ist, bleiben ohne. The Glowing
+-- Shard (6981) bleibt bewusst ohne: der Bericht nennt Falla Sagewind in
+-- Donnerfels - die ist nicht der Geber, die Quest beginnt mit Beute.
+
+J.PLACES = {
+    -- Hall of Thanes
+    [96393] = { map = 1426, x = 0.7620, y = 0.6080, who = "Dark Iron Spies", item = true },
+    -- Ruins of Lordaeron
+    [92401] = { map = 1421, x = 0.4450, y = 0.4300, who = "Tabitha Heartweaver" },
+    [92421] = { map = 1458, x = 0.5790, y = 0.8950, who = "Morbin Lightbane" },
+    [95216] = { map = 1458, x = 0.4650, y = 0.7160, who = "Theodore Griffs" },
+    [92422] = { map = 1420, x = 0.6520, y = 0.6020, who = "Deathguard Kristof" },
+    -- The Deadmines
+    [214]   = { map = 1436, x = 0.5667, y = 0.4735, who = "Scout Riell" },
+    [168]   = { map = 1453, x = 0.6680, y = 0.4380, who = "Wilder Thistlenettle" },
+    [167]   = { map = 1453, x = 0.6680, y = 0.4380, who = "Wilder Thistlenettle" },
+    [2040]  = { map = 1453, x = 0.6300, y = 0.3400, who = "Shoni the Shilent" },
+    [166]   = { map = 1436, x = 0.5640, y = 0.4750, who = "Gryan Stoutmantle" },
+    -- Ragefire Chasm
+    [5723]  = { map = 1456, x = 0.7040, y = 0.3220, who = "Rahauro" },
+    [5722]  = { map = 1456, x = 0.7040, y = 0.3220, who = "Rahauro" },
+    [5728]  = { map = 1454, x = 0.3200, y = 0.3780, who = "Thrall" },
+    [5761]  = { map = 1454, x = 0.4960, y = 0.5060, who = "Neeru Fireblade" },
+    [5725]  = { map = 1458, x = 0.5620, y = 0.9260, who = "Varimathras" },
+    -- Blackfathom Deeps
+    [971]   = { map = 1455, x = 0.5083, y = 0.0561, who = "Gerrig Bonegrip" },
+    [1275]  = { map = 1439, x = 0.3830, y = 0.4310, who = "Gershala Nightwhisper" },
+    [1198]  = { map = 1457, x = 0.5500, y = 0.2400, who = "Dawnwatcher Shaedlass" },
+    [1199]  = { map = 1457, x = 0.5500, y = 0.2400, who = "Argent Guard Manados" },
+    [6563]  = { map = 1440, x = 0.1200, y = 0.3400, who = "Je'neu Sancrea" },
+    [6562]  = { map = 1442, x = 0.4720, y = 0.6420, who = "Tsunaman" },
+    [6565]  = { map = 1440, x = 0.1200, y = 0.3400, who = "Je'neu Sancrea" },
+    [6921]  = { map = 1440, x = 0.1200, y = 0.3400, who = "Je'neu Sancrea" },
+    -- Wailing Caverns
+    [1486]  = { map = 1413, x = 0.4660, y = 0.3630, who = "Nalpak" },
+    [1487]  = { map = 1413, x = 0.4660, y = 0.3570, who = "Ebru" },
+    [962]   = { map = 1456, x = 0.2300, y = 0.2100, who = "Apothecary Zamah" },
+    [1491]  = { map = 1413, x = 0.6280, y = 0.3670, who = "Mebok Mizzyrix" },
+    [959]   = { map = 1413, x = 0.6390, y = 0.3830, who = "Crane Operator Bigglefuzz" },
+    [914]   = { map = 1456, x = 0.7530, y = 0.3130, who = "Nara Wildmane" },
+    -- Shadowfang Keep
+    [1098]  = { map = 1421, x = 0.4340, y = 0.4090, who = "High Executor Hadrec" },
+    [1740]  = { map = 1413, x = 0.4930, y = 0.5720, who = "Doan Karhan" },
+    [1013]  = { map = 1458, x = 0.5370, y = 0.5450, who = "Keeper Bel'dugur" },
+    [1014]  = { map = 1421, x = 0.4420, y = 0.3980, who = "Dalar Dawnweaver" },
+}
+
+-- Ort einer Quest auf der Weltkarte, oder nil.
+function J.Place(questId)
+    return J.PLACES[questId]
+end
+
 -- Beute eines Bosses (Liste, leer wenn keine berichtet ist).
 function J.Loot(dungeonId, bossId)
     local d = J.DATA[dungeonId]

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.5.1.0",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFQuestgeber auf der Weltkarte.|r Unter einer Quest im Dungeonkompendium öffnet ein Klick die Weltkarte auf der richtigen Zone und markiert, wo die Quest beginnt – bei 33 Quests. Rechtsklick auf die Marke entfernt sie.",
+            "|cff7C6CFFDie Lage ist unbestätigt.|r Sie stammt aus Beta-Berichten und folgt den bekannten Orten aus Classic; der Tooltip der Marke sagt das.",
+        },
+    },
+    {
         version = "6.5.0.0",
         date    = "27.09.2026",
         notes   = {

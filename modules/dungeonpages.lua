@@ -1843,6 +1843,50 @@ local function Thousands(n)
     return s
 end
 
+-- "Auf der Karte": oeffnet die Weltkarte auf der Zone des Gebers (bzw.
+-- dem Fundort des Startgegenstands) und setzt dort eine Marke
+-- (modules/questmap.lua). Nur wo J.PLACES eine Lage kennt.
+local MAP_LINK_H = 18
+local function MapLink(parent, y, place, q)
+    local QM = WeintCodex.QuestMap
+    if not QM then return y end
+    WeintCodex.DungeonPages.mapLinks = (WeintCodex.DungeonPages.mapLinks or 0) + 1
+    local text = place.item and ("Fundort auf der Karte: " .. place.who) or "Questgeber auf der Karte zeigen"
+    local b = CreateFrame("Button", nil, parent)
+    b:SetHeight(MAP_LINK_H)
+    b:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, y)
+    local mark = b:CreateTexture(nil, "ARTWORK")
+    mark:SetSize(7, 7)
+    mark:SetPoint("LEFT", b, "LEFT", 2, 0)
+    mark:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+    if mark.SetRotation then pcall(mark.SetRotation, mark, math.pi / 4) end
+    local fs = WeintCodex.Label(b, text, { size = 11, color = "accent", font = WeintCodex.Fonts.sansMedium })
+    fs:SetPoint("LEFT", mark, "RIGHT", 7, 0)
+    fs:SetWordWrap(false)
+    b:SetWidth(20 + WeintCodex.Utf8Len(text) * 6.5)
+    b.place, b.quest = place, q
+    b:SetScript("OnEnter", function(self)
+        fs:SetTextColor(C.accentBright[1], C.accentBright[2], C.accentBright[3], 1)
+        local gt = _G.GameTooltip
+        if not gt then return end
+        gt:SetOwner(self, "ANCHOR_RIGHT")
+        gt:SetText(self.place.who, C.textBright[1], C.textBright[2], C.textBright[3])
+        local zone = QM.MapName(self.place.map)
+        if zone then gt:AddLine(zone, C.textNormal[1], C.textNormal[2], C.textNormal[3]) end
+        gt:AddLine("Klick: Weltkarte mit Marke öffnen. Lage aus Beta-Berichten – unbestätigt.",
+            C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
+        gt:Show()
+    end)
+    b:SetScript("OnLeave", function()
+        fs:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
+        if _G.GameTooltip then _G.GameTooltip:Hide() end
+    end)
+    b:SetScript("OnClick", function(self)
+        QM.Show(self.place, QuestTitle(self.quest))
+    end)
+    return y - MAP_LINK_H - 2
+end
+
 local function DrawQuest(inner, y, w, q)
     local title = WeintCodex.Label(inner, QuestTitle(q), { size = 13, color = "textBright",
         font = WeintCodex.Fonts.sansSemi })
@@ -1862,11 +1906,14 @@ local function DrawQuest(inner, y, w, q)
 
     y = BodyText(inner, y, q.objective, w, { size = 12, color = "textNormal" }) - 2
     y = BodyText(inner, y, "Beginnt: " .. q.giver, w, { size = 11, color = "textMuted" })
+    local place = J.Place and J.Place(q.id)
+    if place and not place.item then y = MapLink(inner, y, place, q) end
     y = BodyText(inner, y, "Abgabe: " .. q.turnin, w, { size = 11, color = "textMuted" })
 
     if q.startItem then
         y = ItemRow(inner, y - 2, w, q.startItem[1], q.startItem[2], nil, 1, "Beginnt mit:")
     end
+    if place and place.item then y = MapLink(inner, y, place, q) end
 
     local rew = {}
     if q.xp then rew[#rew + 1] = Thousands(q.xp) .. " EP (beobachtet)" end
@@ -2415,6 +2462,7 @@ end
 local function DrawDungeonAt(f, dungeon, withInspector)
     ClearRows()
     WeintCodex.DungeonPages.itemRows = 0   -- fuer den Prueflauf: Gegenstandszeilen dieser Runde
+    WeintCodex.DungeonPages.mapLinks = 0   -- und Kartenlinks
     f._relayout = nil
     gridCols, gridLongest = 0, 0
 

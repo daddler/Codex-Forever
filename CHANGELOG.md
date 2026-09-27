@@ -9,6 +9,25 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.5.1.0] – 2026-09-27
+
+**Questgeber auf der Weltkarte.** Unter einer Quest im Dungeonkompendium öffnet ein Klick die Weltkarte auf der richtigen Zone und markiert, wo die Quest beginnt – bei 33 Quests. Rechtsklick auf die Marke entfernt sie.
+
+**Die Lage ist unbestätigt.** Sie stammt aus Beta-Berichten und folgt den bekannten Orten aus Classic; der Tooltip der Marke sagt das.
+
+### Technisch
+
+- `data/dungeon_journal.lua`: `J.PLACES[questId] = { map, x, y, who, item }`
+  (33 Orte, Classic-Kartennummern), `J.Place`.
+- Neu: `modules/questmap.lua` (`WeintCodex.QuestMap`): Weltkarte öffnen
+  (`OpenWorldMap`, dann einige Takte `SetMapID`), eigene Marke auf
+  `WorldMapFrame:GetCanvas()`, Zoom ausgeglichen, nur auf ihrer Zone,
+  Rechtsklick entfernt sie. Kein `C_Map.SetUserWaypoint`.
+- `modules/dungeonpages.lua`: Link „Questgeber auf der Karte zeigen“
+  bzw. „Fundort auf der Karte“ je Quest mit bekanntem Ort.
+- `data_test.lua`: jeder Ort an einer Quest des Journals, Lage 0..1.
+- **Im Spiel ungeprüft.**
+
 ## [6.5.0.0] – 2026-09-27
 
 **Beute im Dungeonkompendium.** Für Hall of Thanes, Ragefire Chasm, Wailing Caverns, Ruins of Lordaeron, The Deadmines, Shadowfang Keep und Blackfathom Deeps zeigt jeder Boss, was er fallen lässt – mit dem Tooltip des Spiels und Umschalt+Klick in den Chat.
