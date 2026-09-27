@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.0.4",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFAurenleisten wieder entfernt.|r Im Kampf gibt das Spiel Addons weder die Auren des Ziels noch deine eigenen heraus – die Leisten verschwanden genau dann, wenn du sie brauchst. Leisten mit Restzeit im Kampf bekommst du über die verfolgten Leisten des Abklingzeitmanagers; am Zielrahmen zeigen weiter die Symbole des Spiels deine Debuffs.",
+        },
+    },
+    {
         version = "6.6.0.3",
         date    = "27.09.2026",
         notes   = {

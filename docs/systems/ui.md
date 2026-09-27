@@ -398,28 +398,23 @@ Seit 6.2.0.0:
   und `AnchorAuraContainer` – nie ein Feld am Rahmen des Spiels (dessen
   Code liefe sonst unsicher und scheiterte an geheimen Werten). Stand:
   `/wcui auren`. Im Spiel ungeprüft.
-* **Aurenleisten über dem Spielerrahmen** (6.6.0.1; seit 6.6.0.2 immer
-  über den alten Weg, seit 6.6.0.3 nur noch am Spieler; **Test**,
-  `player_auraBars`, `player_auraBarsFilter` = `HELPFUL`/`HARMFUL`):
-  `UIAuras.Create(..., { bar = { width, height } })` – eine Leiste je
-  Aura, Symbol links, Zaubername, Restzeit rechts, Stapel am Symbol.
-  `Normalize` setzt bei Leisten immer `timer = true`. **Gemessen (Beta):**
-  - 6.6.0.1: der Container des Spiels legt Leistenknöpfe an und nimmt
-    `SetDurationBar` an, zeigt aber auch außerhalb des Kampfes keine
-    Leiste; mit „Selbst lesen“ erscheinen dieselben Buffs sofort. Deshalb
-    gibt `UseEngine` für `o.bar` immer `false`; der Container-Code für
-    Leisten ist entfernt.
-  - 6.6.0.2: am **Ziel** liefert `GetAuraDataByIndex` im Kampf nur
-    „Auras cannot be accessed when secret“ (`/wcui auren`: „im Kampf
-    geheim“, Leisten „0 Symbole“). Leisten über dem Zielrahmen blieben
-    also genau dann leer, wenn man sie braucht – ausgebaut. Am Ziel
-    bleiben die Symbole des Spiels.
-  Die Leiste läuft über `SetTimerDuration` mit dem Dauerobjekt aus
-  `GetAuraDuration`, sonst aus offenen Zahlen in `TickLegacy`. **Offen:**
-  ob der Client die **eigenen** Auren im Kampf herausgibt; `/wcui auren`
-  nennt dafür „Das Spiel nennt an dir“ und die Zeile `player [...]`.
-  Geht auch das nicht, bleiben nur die verfolgten Leisten des
-  Abklingzeitmanagers (eigene Buffs und DoTs).
+* **Aurenleisten (Restzeit als Leiste, „wie bei ElvUI“) – nicht machbar,
+  ausgebaut in 6.6.0.4.** Drei Fassungen lang im Beta-Client gemessen:
+  - 6.6.0.1, Container des Spiels (`AuraContainer`, Dauerleiste über
+    `SetDurationBar`): Knöpfe angelegt, Leiste gebunden, aber auch
+    außerhalb des Kampfes **keine** Leiste gezeigt.
+  - 6.6.0.2, selbst lesen (`GetAuraDataByIndex`): außerhalb des Kampfes
+    einwandfrei (Name, Restzeit, Leiste). Am **Ziel** im Kampf: „Auras
+    cannot be accessed when secret“.
+  - 6.6.0.3, nur am Spieler: auch die **eigenen** Auren im Kampf
+    gesperrt – „Auras cannot be accessed when secret while tainted by
+    'WeintCodex'“.
+  Leisten wären also genau dann leer, wenn man sie braucht. Die Symbole
+  des Spiels am Zielrahmen funktionieren, weil der Code des Spiels
+  untainted liest. Leisten mit Restzeit im Kampf gibt es nur über die
+  verfolgten Leisten des Abklingzeitmanagers (eigene Buffs und DoTs, im
+  Bearbeitungsmodus platzierbar). `ui/auras.lua` ist wieder auf dem Stand
+  von 6.4.0.3.
 * **Questpfeil: Höhe** (6.6.0.1, `showHeight`, `worldMarker`). Die Karte
   ist flach; die einzige Höhe, die der Client nennt, steckt in der
   Navigation des Spiels (`C_Navigation`): Luftlinie im Raum

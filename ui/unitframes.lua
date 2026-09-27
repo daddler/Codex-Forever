@@ -89,16 +89,6 @@ local defaults = {
     targetAuraGap    = 3,
     auraSize      = 20,
     onlyOwnDebuffs = false,
-    -- Aurenleisten ueber dem Spielerrahmen (6.6.0.1, Beta-Test "wie bei
-    -- ElvUI"; seit 6.6.0.3 nur noch am Spieler, siehe Frame.Create).
-    -- TEST: ob der Client die eigenen Auren im Kampf herausgibt, ist
-    -- ungeprueft. Stand in /wcui auren. Buffs zuerst: beim Leveln traegt
-    -- man sie staendig, Debuffs selten (und die Einstellung ueberlebt im
-    -- Beta-Client kein Neuladen).
-    player_auraBars       = true,
-    player_auraBarsFilter = "HELPFUL",
-    auraBarsMax           = 5,
-    auraBarsHeight        = 16,
 }
 for _, u in ipairs(UNITS) do
     local s = SHAPE[u]
@@ -398,17 +388,6 @@ local function Create(unit)
         f._cast:SetUnit(unit)
     end
 
-    -- Aurenleisten (Test, siehe Standardwerte). Nur am Spieler: die Auren
-    -- des Ziels gibt das Spiel Addons im Kampf nicht heraus ("Auras cannot
-    -- be accessed when secret", Beta-Test 6.6.0.2) - Leisten dort blieben
-    -- genau dann leer, wenn man sie braucht.
-    if unit == "player" then
-        f._auraBars = WeintCodex.UIAuras.Create(f, { filter = Opt(unit .. "_auraBarsFilter") or "HARMFUL",
-            max = Opt("auraBarsMax") or 5, spacing = 2, anchor = "BOTTOMLEFT", growthV = "UP",
-            bar = { width = Opt(unit .. "_width") or 200, height = Opt("auraBarsHeight") or 16 } })
-        f._auraBars:SetUnit(unit)
-    end
-
     if unit == "target" then
         -- Kombopunkte: fuenf einzelne Segmente mit Luft dazwischen (UI 2.0).
         -- Jedes ist ein eigener Balken von i-1 bis i, und ALLE bekommen
@@ -601,25 +580,6 @@ function Frame:Layout()
     end
 
     if self._auras then self:LayoutAuras() end
-    if self._auraBars then self:LayoutAuraBars() end
-end
-
--- Die Leisten ueber dem Spielerrahmen (ueber den Kombopunkten, wenn es sie gibt).
-function Frame:LayoutAuraBars()
-    local u = self.unit
-    local bars = self._auraBars
-    local on = Opt(u .. "_auraBars") and true or false
-    local h = Opt("auraBarsHeight") or 16
-    bars:ApplyLayout({ filter = Opt(u .. "_auraBarsFilter") or "HARMFUL", max = Opt("auraBarsMax") or 5,
-        spacing = 2, anchor = "BOTTOMLEFT", growthV = "UP",
-        bar = { width = Opt(u .. "_width") or 200, height = h } })
-    local y = 4
-    if self._combo then
-        y = y + 7
-    end
-    bars:ClearAllPoints()
-    bars:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, y)
-    bars:SetShown(on)
 end
 
 -- Grund unter dem fehlenden Leben: dunkler Ton der Balkenfarbe (wie die
@@ -1151,8 +1111,6 @@ local function RefreshUnit(unit, portrait)
     if f:IsShown() or K.Bool(_G.UnitExists and _G.UnitExists(unit), false) then
         f:Refresh()
         if portrait then f:UpdatePortrait() end
-        -- Zielwechsel: fuer das neue Ziel gibt es kein UNIT_AURA.
-        if portrait and f._auraBars then f._auraBars:Refresh() end
     end
 end
 
@@ -1421,17 +1379,6 @@ local function UnitPage(u)
                     disabled = function() return off() or not K.Get(KEY, "comboPoints") end,
                     description = "Unter der Figur statt über dem Zielrahmen." },
                   { type = "empty" })
-        end
-        if u == "player" then
-            B:Section("Aurenleisten (Test)", "Leisten mit Restzeit über dem Spielerrahmen, wie bei ElvUI. Ob das Spiel sie im Kampf füllt, ist noch nicht geprüft; /wcui auren nennt den Stand. Am Ziel gibt es keine: dessen Auren hält das Spiel im Kampf vor Addons geheim.")
-            local noBars = function() return off() or not K.Get(KEY, u .. "_auraBars") end
-            B:Row({ type = "toggle", label = "Aurenleisten", key = u .. "_auraBars", disabled = off },
-                  { type = "dropdown", label = "Zeigen", key = u .. "_auraBarsFilter", disabled = noBars,
-                    items = {
-                        { value = "HARMFUL", text = "Debuffs auf dir" },
-                        { value = "HELPFUL", text = "Buffs" } } })
-            B:Row({ type = "slider", label = "Anzahl", key = "auraBarsMax", min = 1, max = 10, step = 1, disabled = noBars },
-                  { type = "slider", label = "Höhe", key = "auraBarsHeight", min = 10, max = 28, step = 1, format = px, disabled = noBars })
         end
     end }
 end

@@ -1359,15 +1359,6 @@ do
         assert(o.engine and o.frame._anchoredBeforeGroup, "Container nicht vor der ersten Gruppe verankert")
         assert(registered.icon and registered.cd and registered.count and registered.dur,
             "Knopf hat nicht alles angemeldet")
-        -- 6.6.0.2: Leisten lesen immer selbst, auch wenn der Container da
-        -- ist - er hat sie auf Forever angelegt, aber nie gefuellt.
-        local ob = A.Create(UIParent, { filter = "HARMFUL|PLAYER", max = 3, bar = { width = 180, height = 16 } })
-        assert(not ob.engine, "Leisten ueber den Container (zeigt auf Forever nichts)")
-        assert(ob.opts.timer, "Leisten ohne Restzeit")
-        local ew, eh = ob:Extent()
-        assert(ew == 180 and eh == 3 * 18, "Leistenflaeche falsch: " .. ew .. "x" .. eh)
-        local testCreate = _G.CreateFrame
-        _G.CreateFrame = testCreate
         failNext = true
         local o2 = A.Create(UIParent, { filter = "HARMFUL", max = 4, size = 24 })
         assert(o2.engine, "nach einem Fehlschlag kein vereinfachter Container")
@@ -1393,29 +1384,6 @@ do
         assert(#o.buttons == 2, "alter Weg haelt sich nicht an max (" .. #o.buttons .. ")")
     end)
     Check(ok, "Auren ueber GetAuraDataByIndex, hoechstens max" .. (ok and "" or (": " .. tostring(err))))
-
-    -- 6.6.0.1: Leisten im alten Weg - Name (nur hier lesbar), Restzeit,
-    -- Leiste laeuft mit der Zeit leer.
-    local keepUA = _G.C_UnitAuras
-    _G.C_UnitAuras = { GetAuraDataByIndex = function(_, i)
-        if i <= 2 then
-            return { name = "Verwunden", icon = 136197, applications = 1, duration = 10, expirationTime = 20, auraInstanceID = i }
-        end
-    end }
-    ok, err = pcall(function()
-        local oldTime = _G.GetTime
-        _G.GetTime = function() return 15 end
-        local o = A.Create(UIParent, { max = 4, bar = { width = 200, height = 16 } })
-        o:SetUnit("target")
-        assert(#o.buttons == 2, "Leisten: " .. #o.buttons)
-        local b = o.buttons[1]
-        assert(b._bar and b._name:GetText() == "Verwunden", "Leiste ohne Namen")
-        assert(math.abs(b._bar:GetValue() - 0.5) < 1e-6, "Leiste nicht zur Haelfte leer: " .. tostring(b._bar:GetValue()))
-        assert(b.dur:GetText() == "5", "Restzeit: " .. tostring(b.dur:GetText()))
-        _G.GetTime = oldTime
-    end)
-    _G.C_UnitAuras = keepUA
-    Check(ok, "Aurenleisten im alten Weg: Name, Restzeit, Leiste" .. (ok and "" or (": " .. tostring(err))))
 
     -- Der Weg laesst sich im laufenden Spiel umschalten, und /wcui auren
     -- sagt, was das Spiel nennt und was davon zu sehen ist. Der Container
@@ -3052,14 +3020,10 @@ do
         UF.RedrawTexts()
         assert((f.left:GetText() or ""):find("Aloha", 1, true), "RedrawTexts setzt den Namen nicht")
         _G.UnitName, _G.C_Timer.After = oldName, oldAfter
-        -- 6.6.0.1: Aurenleisten (Test). Seit 6.6.0.3 nur am Spieler - die
-        -- Auren des Ziels haelt das Spiel im Kampf geheim.
-        local fr = UF.frames.player
-        assert(fr and fr._auraBars and fr._auraBars.opts.bar, "Spieler: keine Aurenleisten")
-        assert(fr._auraBars.opts.bar.width == WeintCodex.UIKit.Get("unitframes", "player_width"),
-            "Spieler: Leisten nicht so breit wie der Rahmen")
-        assert(fr._auraBars.opts.filter == "HELPFUL", "Spieler: Leisten zeigen nicht die Buffs")
-        assert(not UF.frames.target._auraBars, "Ziel hat Aurenleisten (im Kampf geheim)")
+        -- 6.6.0.4: Aurenleisten wieder ausgebaut - der Client gibt Addons
+        -- im Kampf weder die Auren des Ziels noch die eigenen heraus.
+        assert(not UF.frames.player._auraBars and not UF.frames.target._auraBars,
+            "Aurenleisten zurueck (im Kampf geheim, Beta-Test 6.6.0.3)")
     end)
     Check(ok, "Spielerrahmen: Name kommt nach, wenn der Client ihn beim Einloggen noch nicht kennt"
         .. (ok and "" or (": " .. tostring(err))))
