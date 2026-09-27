@@ -751,20 +751,53 @@ end
 -- legt sie an und sie sind nicht zu sehen. Diese Zeilen trennen die drei.
 --------------------------------------------------
 
+-- Eine Zeile je Objekt; was der Client nicht beantwortet, steht als "?"
+-- da, statt die ganze Pruefung abzubrechen (6.3.0.2).
+local function InspectLine(obj)
+    local u = obj.unit
+    local ok, line = pcall(function()
+        local total, shown = Visible(obj)
+        local way = obj.engine and "Container" or "alter Weg"
+        if obj.opts.bar then way = way .. ", Leisten" end
+        if type(shown) ~= "number" then
+            return string.format("%s [%s]: %s, Symbole nicht messbar (das Spiel hält sie geheim), Rahmen %s",
+                u, obj.opts.filter, way,
+                K.Bool(obj.frame.IsVisible and obj.frame:IsVisible(), false) and "sichtbar" or "unsichtbar")
+        end
+        local w, h = K.Plain(obj.frame:GetWidth()), K.Plain(obj.frame:GetHeight())
+        local function Px(v) return type(v) == "number" and tostring(math.floor(v + 0.5)) or "?" end
+        return string.format("%s [%s]: %s, %d Symbole, %d gezeigt, Rahmen %s, %sx%s",
+            u, obj.opts.filter, way, total, shown,
+            K.Bool(obj.frame.IsVisible and obj.frame:IsVisible(), false) and "sichtbar" or "unsichtbar",
+            Px(w), Px(h))
+    end)
+    return ok and line or (u .. ": nicht lesbar (" .. tostring(line) .. ")")
+end
+
 function A.Inspect()
     local out = { "Auren: Weg " .. A.mode .. " · " .. A.StatusText() }
+    local function Said(unit, filter)
+        local n, why = ApiCount(unit, filter)
+        return type(n) == "number" and tostring(n) or why
+    end
+    -- Die Leisten ueber dem Spielerrahmen (6.6.0.3): liest das Spiel die
+    -- eigenen Auren im Kampf heraus? Das ist die offene Frage.
+    for obj in pairs(objects) do
+        if obj.unit == "player" and obj.opts.bar then
+            out[#out + 1] = "Das Spiel nennt an dir: " .. Said("player", "HELPFUL") .. " Buffs, "
+                .. Said("player", "HARMFUL") .. " Debuffs"
+            out[#out + 1] = InspectLine(obj)
+        end
+    end
     local target = _G.UnitExists and K.Bool(_G.UnitExists("target"), false)
     if not target then
         out[#out + 1] = "Kein Ziel gewählt – mit einem Gegner als Ziel noch einmal /wcui auren."
         return out
     end
-    local function Said(filter)
-        local n, why = ApiCount("target", filter)
-        return type(n) == "number" and tostring(n) or why
-    end
     local UF = WeintCodex.UIUnitFrames
     if UF and UF.gameAuraState then out[#out + 1] = "Zielrahmen: " .. UF.gameAuraState end
-    out[#out + 1] = "Das Spiel nennt am Ziel: " .. Said("HARMFUL") .. " Debuffs, davon eigene: " .. Said("HARMFUL|PLAYER")
+    out[#out + 1] = "Das Spiel nennt am Ziel: " .. Said("target", "HARMFUL") .. " Debuffs, davon eigene: "
+        .. Said("target", "HARMFUL|PLAYER")
     -- Die Plakette des Ziels, wenn sie die Symbole des Spiels traegt.
     local NP = WeintCodex.UINameplates
     if NP and NP.plates and NP.GameAuraInfo then
@@ -777,24 +810,8 @@ function A.Inspect()
     end
     for obj in pairs(objects) do
         local u = obj.unit
-        if u and (u == "target" or K.Bool(_G.UnitIsUnit and _G.UnitIsUnit(u, "target"), false)) then
-            -- Eine Zeile je Objekt; was der Client nicht beantwortet, steht
-            -- als "?" da, statt die ganze Pruefung abzubrechen (6.3.0.2).
-            local ok, line = pcall(function()
-                local total, shown = Visible(obj)
-                if type(shown) ~= "number" then
-                    return string.format("%s [%s]: %s, Symbole nicht messbar (das Spiel hält sie geheim), Rahmen %s",
-                        u, obj.opts.filter, obj.engine and "Container" or "alter Weg",
-                        K.Bool(obj.frame.IsVisible and obj.frame:IsVisible(), false) and "sichtbar" or "unsichtbar")
-                end
-                local w, h = K.Plain(obj.frame:GetWidth()), K.Plain(obj.frame:GetHeight())
-                local function Px(v) return type(v) == "number" and tostring(math.floor(v + 0.5)) or "?" end
-                return string.format("%s [%s]: %s, %d Symbole, %d gezeigt, Rahmen %s, %sx%s",
-                    u, obj.opts.filter, obj.engine and "Container" or "alter Weg", total, shown,
-                    K.Bool(obj.frame.IsVisible and obj.frame:IsVisible(), false) and "sichtbar" or "unsichtbar",
-                    Px(w), Px(h))
-            end)
-            out[#out + 1] = ok and line or (u .. ": nicht lesbar (" .. tostring(line) .. ")")
+        if u and u ~= "player" and (u == "target" or K.Bool(_G.UnitIsUnit and _G.UnitIsUnit(u, "target"), false)) then
+            out[#out + 1] = InspectLine(obj)
         end
     end
     return out

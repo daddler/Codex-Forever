@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.0.3",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFAurenleisten nur noch über deinem Spielerrahmen.|r Die Auren des Ziels hält das Spiel im Kampf vor Addons geheim – Leisten über dem Ziel blieben genau dann leer. Dort zeigen weiter die Symbole des Spiels deine Debuffs.",
+            "|cff7C6CFFAurenleisten zeigen zuerst deine Buffs.|r Umschaltbar auf die Debuffs auf dir.",
+        },
+    },
+    {
         version = "6.6.0.2",
         date    = "27.09.2026",
         notes   = {

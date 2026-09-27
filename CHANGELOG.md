@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.0.3] – 2026-09-27
+
+**Aurenleisten nur noch über deinem Spielerrahmen.** Die Auren des Ziels hält das Spiel im Kampf vor Addons geheim – Leisten über dem Ziel blieben genau dann leer. Dort zeigen weiter die Symbole des Spiels deine Debuffs.
+
+**Aurenleisten zeigen zuerst deine Buffs.** Umschaltbar auf die Debuffs auf dir.
+
 ## [6.6.0.2] – 2026-09-27
 
 **Aurenleisten zeigen sich.** Über Spieler- und Zielrahmen stehen die Leisten jetzt wirklich – mit Zaubername, Restzeit und einer Leiste, die mit der Zeit leerläuft. Die Einstellung „Weg“ bei den Auren spielt dafür keine Rolle mehr.

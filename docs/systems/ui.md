@@ -398,21 +398,27 @@ Seit 6.2.0.0:
   und `AnchorAuraContainer` – nie ein Feld am Rahmen des Spiels (dessen
   Code liefe sonst unsicher und scheiterte an geheimen Werten). Stand:
   `/wcui auren`. Im Spiel ungeprüft.
-* **Aurenleisten über Spieler- und Zielrahmen** (6.6.0.1, seit 6.6.0.2
-  immer über den alten Weg; **Test**, `player_auraBars`/`target_auraBars`):
+* **Aurenleisten über dem Spielerrahmen** (6.6.0.1; seit 6.6.0.2 immer
+  über den alten Weg, seit 6.6.0.3 nur noch am Spieler; **Test**,
+  `player_auraBars`, `player_auraBarsFilter` = `HELPFUL`/`HARMFUL`):
   `UIAuras.Create(..., { bar = { width, height } })` – eine Leiste je
   Aura, Symbol links, Zaubername, Restzeit rechts, Stapel am Symbol.
-  `Normalize` setzt bei Leisten immer `timer = true` (6.6.0.1 fehlte das:
-  Leisten ohne Zeit, stehend). **Gemessen (Beta, 6.6.0.1):** der Container
-  des Spiels legt die Leistenknöpfe an und nimmt `SetDurationBar` an,
-  zeigt aber auch außerhalb des Kampfes keine einzige Leiste – dieselben
-  Buffs erscheinen mit „Selbst lesen“ sofort. Deshalb gibt `UseEngine`
-  für `o.bar` immer `false`, unabhängig vom eingestellten Weg; der
-  Container-Code für Leisten (`BindBar`) ist entfernt. Die Leiste läuft
-  über `SetTimerDuration` mit dem Dauerobjekt aus `GetAuraDuration`,
-  sonst aus offenen Zahlen in `TickLegacy`. **Offen:** ob der alte Weg im
-  Kampf liest – für Auren des Ziels nachweislich nicht, für die eigenen
-  ungeprüft. Verlässlich im Kampf bleiben die verfolgten Leisten des
+  `Normalize` setzt bei Leisten immer `timer = true`. **Gemessen (Beta):**
+  - 6.6.0.1: der Container des Spiels legt Leistenknöpfe an und nimmt
+    `SetDurationBar` an, zeigt aber auch außerhalb des Kampfes keine
+    Leiste; mit „Selbst lesen“ erscheinen dieselben Buffs sofort. Deshalb
+    gibt `UseEngine` für `o.bar` immer `false`; der Container-Code für
+    Leisten ist entfernt.
+  - 6.6.0.2: am **Ziel** liefert `GetAuraDataByIndex` im Kampf nur
+    „Auras cannot be accessed when secret“ (`/wcui auren`: „im Kampf
+    geheim“, Leisten „0 Symbole“). Leisten über dem Zielrahmen blieben
+    also genau dann leer, wenn man sie braucht – ausgebaut. Am Ziel
+    bleiben die Symbole des Spiels.
+  Die Leiste läuft über `SetTimerDuration` mit dem Dauerobjekt aus
+  `GetAuraDuration`, sonst aus offenen Zahlen in `TickLegacy`. **Offen:**
+  ob der Client die **eigenen** Auren im Kampf herausgibt; `/wcui auren`
+  nennt dafür „Das Spiel nennt an dir“ und die Zeile `player [...]`.
+  Geht auch das nicht, bleiben nur die verfolgten Leisten des
   Abklingzeitmanagers (eigene Buffs und DoTs).
 * **Questpfeil: Höhe** (6.6.0.1, `showHeight`, `worldMarker`). Die Karte
   ist flach; die einzige Höhe, die der Client nennt, steckt in der

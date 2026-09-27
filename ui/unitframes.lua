@@ -89,14 +89,14 @@ local defaults = {
     targetAuraGap    = 3,
     auraSize      = 20,
     onlyOwnDebuffs = false,
-    -- Aurenleisten ueber Spieler- und Zielrahmen (6.6.0.1, Beta-Test "wie
-    -- bei ElvUI"). TEST: eigene Leisten sind ein eigener Aurenbehaelter,
-    -- und dem gibt der Client im Kampf vermutlich nichts heraus (wie den
-    -- eigenen Symbolen, 6.3.0.2). Stand in /wcui auren.
+    -- Aurenleisten ueber dem Spielerrahmen (6.6.0.1, Beta-Test "wie bei
+    -- ElvUI"; seit 6.6.0.3 nur noch am Spieler, siehe Frame.Create).
+    -- TEST: ob der Client die eigenen Auren im Kampf herausgibt, ist
+    -- ungeprueft. Stand in /wcui auren. Buffs zuerst: beim Leveln traegt
+    -- man sie staendig, Debuffs selten (und die Einstellung ueberlebt im
+    -- Beta-Client kein Neuladen).
     player_auraBars       = true,
-    player_auraBarsFilter = "HARMFUL",
-    target_auraBars       = true,
-    target_auraBarsFilter = "HARMFUL|PLAYER",
+    player_auraBarsFilter = "HELPFUL",
     auraBarsMax           = 5,
     auraBarsHeight        = 16,
 }
@@ -398,8 +398,11 @@ local function Create(unit)
         f._cast:SetUnit(unit)
     end
 
-    -- Aurenleisten (Test, siehe Standardwerte).
-    if unit == "player" or unit == "target" then
+    -- Aurenleisten (Test, siehe Standardwerte). Nur am Spieler: die Auren
+    -- des Ziels gibt das Spiel Addons im Kampf nicht heraus ("Auras cannot
+    -- be accessed when secret", Beta-Test 6.6.0.2) - Leisten dort blieben
+    -- genau dann leer, wenn man sie braucht.
+    if unit == "player" then
         f._auraBars = WeintCodex.UIAuras.Create(f, { filter = Opt(unit .. "_auraBarsFilter") or "HARMFUL",
             max = Opt("auraBarsMax") or 5, spacing = 2, anchor = "BOTTOMLEFT", growthV = "UP",
             bar = { width = Opt(unit .. "_width") or 200, height = Opt("auraBarsHeight") or 16 } })
@@ -601,9 +604,7 @@ function Frame:Layout()
     if self._auraBars then self:LayoutAuraBars() end
 end
 
--- Die Leisten ueber dem Rahmen. Am Ziel stehen darueber noch die Symbole;
--- die Leisten beginnen deshalb ueber zwei Symbolreihen (wie viele Reihen
--- der Behaelter des Spiels gerade zeigt, verraet er nicht).
+-- Die Leisten ueber dem Spielerrahmen (ueber den Kombopunkten, wenn es sie gibt).
 function Frame:LayoutAuraBars()
     local u = self.unit
     local bars = self._auraBars
@@ -613,10 +614,7 @@ function Frame:LayoutAuraBars()
         spacing = 2, anchor = "BOTTOMLEFT", growthV = "UP",
         bar = { width = Opt(u .. "_width") or 200, height = h } })
     local y = 4
-    if u == "target" then
-        y = UF.AuraBaseY(self)
-        if Opt("targetAuras") then y = y + 2 * ((Opt("auraSize") or 20) + 3) + 2 end
-    elseif self._combo then
+    if self._combo then
         y = y + 7
     end
     bars:ClearAllPoints()
@@ -1424,16 +1422,14 @@ local function UnitPage(u)
                     description = "Unter der Figur statt über dem Zielrahmen." },
                   { type = "empty" })
         end
-        if u == "player" or u == "target" then
-            B:Section("Aurenleisten (Test)", "Leisten mit Restzeit über dem Rahmen, wie bei ElvUI. Im Kampf gibt das Spiel Addons vermutlich keine Auren heraus – dann bleiben sie dort leer. Bitte im Kampf prüfen; /wcui auren nennt den Stand.")
+        if u == "player" then
+            B:Section("Aurenleisten (Test)", "Leisten mit Restzeit über dem Spielerrahmen, wie bei ElvUI. Ob das Spiel sie im Kampf füllt, ist noch nicht geprüft; /wcui auren nennt den Stand. Am Ziel gibt es keine: dessen Auren hält das Spiel im Kampf vor Addons geheim.")
             local noBars = function() return off() or not K.Get(KEY, u .. "_auraBars") end
             B:Row({ type = "toggle", label = "Aurenleisten", key = u .. "_auraBars", disabled = off },
                   { type = "dropdown", label = "Zeigen", key = u .. "_auraBarsFilter", disabled = noBars,
-                    items = u == "player" and {
+                    items = {
                         { value = "HARMFUL", text = "Debuffs auf dir" },
-                        { value = "HELPFUL", text = "Buffs" } } or {
-                        { value = "HARMFUL|PLAYER", text = "Eigene Debuffs" },
-                        { value = "HARMFUL", text = "Alle Debuffs" } } })
+                        { value = "HELPFUL", text = "Buffs" } } })
             B:Row({ type = "slider", label = "Anzahl", key = "auraBarsMax", min = 1, max = 10, step = 1, disabled = noBars },
                   { type = "slider", label = "Höhe", key = "auraBarsHeight", min = 10, max = 28, step = 1, format = px, disabled = noBars })
         end

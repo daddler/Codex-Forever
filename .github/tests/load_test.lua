@@ -3052,14 +3052,14 @@ do
         UF.RedrawTexts()
         assert((f.left:GetText() or ""):find("Aloha", 1, true), "RedrawTexts setzt den Namen nicht")
         _G.UnitName, _G.C_Timer.After = oldName, oldAfter
-        -- 6.6.0.1: Aurenleisten ueber Spieler- und Zielrahmen (Test).
-        for _, u in ipairs({ "player", "target" }) do
-            local fr = UF.frames[u]
-            assert(fr and fr._auraBars and fr._auraBars.opts.bar, u .. ": keine Aurenleisten")
-            assert(fr._auraBars.opts.bar.width == WeintCodex.UIKit.Get("unitframes", u .. "_width"),
-                u .. ": Leisten nicht so breit wie der Rahmen")
-        end
-        assert(UF.frames.target._auraBars.opts.filter == "HARMFUL|PLAYER", "Ziel: nicht die eigenen Debuffs")
+        -- 6.6.0.1: Aurenleisten (Test). Seit 6.6.0.3 nur am Spieler - die
+        -- Auren des Ziels haelt das Spiel im Kampf geheim.
+        local fr = UF.frames.player
+        assert(fr and fr._auraBars and fr._auraBars.opts.bar, "Spieler: keine Aurenleisten")
+        assert(fr._auraBars.opts.bar.width == WeintCodex.UIKit.Get("unitframes", "player_width"),
+            "Spieler: Leisten nicht so breit wie der Rahmen")
+        assert(fr._auraBars.opts.filter == "HELPFUL", "Spieler: Leisten zeigen nicht die Buffs")
+        assert(not UF.frames.target._auraBars, "Ziel hat Aurenleisten (im Kampf geheim)")
     end)
     Check(ok, "Spielerrahmen: Name kommt nach, wenn der Client ihn beim Einloggen noch nicht kennt"
         .. (ok and "" or (": " .. tostring(err))))
