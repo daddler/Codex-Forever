@@ -51,6 +51,9 @@ local tabs = {
 
     { id = "charakter",  icon = ICON_PATH .. "nav_charakter",  label = "Charakter",
       group = "Charakter" },
+    -- Seit 6.6.0.0: was der Klassenlehrer lehrt (modules/trainer.lua).
+    -- Ohne feature: dieselbe Auskunft, die jeder Lehrer im Spiel gibt.
+    { id = "lehrer",     icon = ICON_PATH .. "nav_lehrer",     label = "Lehrer" },
 
     { id = "materialien", icon = ICON_PATH .. "nav_materialien", label = "Materialien",
       group = "Gilde", feature = "materials.view" },
@@ -2369,6 +2372,10 @@ function WeintCodex.Navigation.SwitchTo(tabId)
     elseif tabId == "charakter" then
         if WeintCodex.Charakter and WeintCodex.Charakter.Show then
             WeintCodex.Charakter.Show()
+        end
+    elseif tabId == "lehrer" then
+        if WeintCodex.Trainer and WeintCodex.Trainer.Show then
+            WeintCodex.Trainer.Show()
         end
     elseif tabId == "materialien" then
         if WeintCodex.Materials and WeintCodex.Materials.Show then

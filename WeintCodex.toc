@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.5.1.2
+## Version: 6.6.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -91,6 +91,8 @@ data/dungeon_journal.lua
 #
 data/artwork.lua
 data/specs.lua
+# Was der Klassenlehrer lehrt (6.6.0.0); gelesen von modules/trainer.lua.
+data/trainer.lua
 
 #
 # data/roles.lua steht NACH data/specs.lua: es liest die Talentbaeume,
@@ -106,6 +108,7 @@ data/roles.lua
 # Schlachtzuege zeichnen ihre Rollen mit demselben Baustein.
 #
 modules/charakter.lua
+modules/trainer.lua
 modules/encounter_tracking.lua
 modules/rolepanel.lua
 modules/raidpages.lua

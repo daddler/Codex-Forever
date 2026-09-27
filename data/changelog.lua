@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.0.0",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFNeu: Lehrer.|r Was dir dein Klassenlehrer jetzt beibringt, was dafür noch fehlt, was in den nächsten Stufen kommt – und was das alles kostet. Unter Charakter in der Seitenleiste.",
+            "|cff7C6CFFWaffenfertigkeiten mit Weg dorthin.|r Welche Waffen du lernen kannst und welcher Waffenmeister sie lehrt – ein Klick zeigt ihn auf der Weltkarte.",
+            "|cff7C6CFFWas du kannst, sagt dein Spiel.|r Stufen und Kosten stammen aus Beta-Berichten und sind als unbestätigt gekennzeichnet; ob ein Zauber schon gelernt ist, fragt WeintCodex deinen Client.",
+        },
+    },
+    {
         version = "6.5.1.2",
         date    = "27.09.2026",
         notes   = {

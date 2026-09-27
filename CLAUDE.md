@@ -222,7 +222,7 @@ into modules that no longer exist. A green run means "it loads", never
 | Dungeons (Forever **und** Classic), Stufenbereiche, Bosslisten, Flügel, beschwörbare Zusatzbosse, Rollen, Beute und Quests (`data/dungeon_journal.lua`), Questgeber auf der Weltkarte (`modules/questmap.lua`) | `docs/systems/dungeons.md` |
 | Artwork, `data/artwork.lua`, `WeintCodex.Artwork`, `media/dungeons/` | `docs/systems/dungeons.md`, Abschnitt *Bilder: kein Spielmaterial, eigenes schon* |
 | Herkunft eines Eintrags, `data/sources.lua`, `release`/`announced`/`beta`/`community`/`classic` | `docs/systems/dungeons.md`, Abschnitt *Fünf Arten von Herkunft* |
-| Charakterseite, Twinks, Ausrüstungsstand | `docs/systems/character.md` |
+| Charakterseite, Twinks, Ausrüstungsstand, Lehrer (`modules/trainer.lua`, `data/trainer.lua`) | `docs/systems/character.md` |
 | Gruppencheck | `docs/systems/groupcheck.md` |
 | Companion-Sync allgemein (Inbox/Outbound, `ProcessInbox`) | `docs/systems/companion-bridge.md` |
 | Onboarding-Tour, Update-Changelog-Popup | `docs/systems/onboarding-changelog.md` |

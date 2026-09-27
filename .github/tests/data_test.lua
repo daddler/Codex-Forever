@@ -855,6 +855,59 @@ print("  --    " .. artDungeons .. " Dungeon(s) mit Artwork")
 -- Client gelesen.
 
 print("")
+print("== Lehrer")
+-- 6.6.0.0: Klassenlehrer und Waffenmeister. Jede Nummer eine ganze Zahl
+-- (der Client fragt mit ihr), jede Stufe 1..60, jede Voraussetzung eine
+-- Nummer, jeder Meister lehrt nur Fertigkeiten, die es gibt. Herkunft
+-- community - die Daten stammen aus einem Addon und aus Beobachtung.
+do
+    local T = WeintCodex.TrainerData
+    Check(T ~= nil, "data/trainer.lua geladen")
+    Check(WeintCodex.Sources.IsValid(T.SOURCE) and T.SOURCE.kind == "community",
+        "Lehrerdaten tragen eine gueltige Herkunft der Art community")
+    local function IsId(v) return type(v) == "number" and v > 0 and v == math.floor(v) end
+    local total = 0
+    for _, class in ipairs({ "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "SHAMAN", "MAGE", "WARLOCK", "DRUID" }) do
+        local c = T.CLASSES[class]
+        Check(c ~= nil and next(c.spells) ~= nil, class .. ": Zauber hinterlegt")
+        local bad = 0
+        for level, list in pairs(c and c.spells or {}) do
+            if not (IsId(level) and level <= 60) then bad = bad + 1 end
+            for _, sp in ipairs(list) do
+                total = total + 1
+                if not (IsId(sp.id) and type(sp.cost) == "number" and sp.cost >= 0) then bad = bad + 1 end
+                for _, r in ipairs(sp.requiredIds or {}) do if not IsId(r) then bad = bad + 1 end end
+                if sp.requiredTalentId and not IsId(sp.requiredTalentId) then bad = bad + 1 end
+                if sp.faction and sp.faction ~= "Alliance" and sp.faction ~= "Horde" then bad = bad + 1 end
+            end
+        end
+        for _, chain in ipairs(c and c.ranks or {}) do
+            for _, id in ipairs(chain) do if not IsId(id) then bad = bad + 1 end end
+        end
+        Check(bad == 0, class .. ": Stufen, Nummern, Kosten und Voraussetzungen wohlgeformt (" .. bad .. " Fehler)")
+    end
+    local badW = 0
+    for id, w in pairs(T.WEAPONS) do
+        if not (IsId(id) and type(w.order) == "number" and next(w.classes) ~= nil) then badW = badW + 1 end
+    end
+    for npc, m in pairs(T.MASTERS) do
+        if not (IsId(npc) and IsId(m.map) and m.x > 0 and m.x < 100 and m.y > 0 and m.y < 100
+                and (m.faction == "Alliance" or m.faction == "Horde")) then badW = badW + 1 end
+        for _, t in ipairs(m.teaches) do if not T.WEAPONS[t] then badW = badW + 1 end end
+    end
+    Check(badW == 0, "Waffenfertigkeiten und Meister wohlgeformt (" .. badW .. " Fehler)")
+    -- Jede Fertigkeit hat in jeder Fraktion mindestens einen Meister.
+    local orphan = 0
+    for id in pairs(T.WEAPONS) do
+        for _, f in ipairs({ "Alliance", "Horde" }) do
+            if #T.MastersFor(id, f) == 0 then orphan = orphan + 1 end
+        end
+    end
+    Check(orphan == 0, "jede Waffenfertigkeit hat in beiden Fraktionen einen Meister (" .. orphan .. " ohne)")
+    print("  --    " .. total .. " Lehrereintraege, " .. (function() local n = 0 for _ in pairs(T.MASTERS) do n = n + 1 end return n end)() .. " Waffenmeister")
+end
+
+print("")
 print("== Dungeon-Journal")
 do
     local J = WeintCodex.DungeonJournal

@@ -9,6 +9,33 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.0.0] – 2026-09-27
+
+**Neu: Lehrer.** Was dir dein Klassenlehrer jetzt beibringt, was dafür noch fehlt, was in den nächsten Stufen kommt – und was das alles kostet. Unter Charakter in der Seitenleiste.
+
+**Waffenfertigkeiten mit Weg dorthin.** Welche Waffen du lernen kannst und welcher Waffenmeister sie lehrt – ein Klick zeigt ihn auf der Weltkarte.
+
+**Was du kannst, sagt dein Spiel.** Stufen und Kosten stammen aus Beta-Berichten und sind als unbestätigt gekennzeichnet; ob ein Zauber schon gelernt ist, fragt WeintCodex deinen Client.
+
+### Technisch
+
+- Neu: `data/trainer.lua` (`WeintCodex.TrainerData`): 1406 Lehrereinträge
+  der neun Klassen, Rangketten, 14 Waffenfertigkeiten, 8 Waffenmeister.
+  Herkunft `community`, übernommen aus *What's Training?* (Forever-Fassung,
+  MIT-Lizenz, Lizenztext im Dateikopf); nur Daten.
+- Neu: `modules/trainer.lua` (`WeintCodex.Trainer`): Einordnung über den
+  Client (`C_SpellBook`, `IsPlayerSpell`), ersetzte Ränge zählen als
+  gelernt; Seite mit zwei rollenden Karten (Zauber, Waffen) und
+  Zusammenfassung im Detailbereich. Tierausbildung ohne Zustand.
+- Navigation: Eintrag „Lehrer“ (Symbol `media/icons/nav_lehrer.tga`,
+  eigenes Buch), Suche, `/wc lehrer`. Die Spalte ist damit voll
+  (644/684 px, 40 px Luft).
+- `modules/questmap.lua`: `QM.Show(place, quest, line)` – `line` ersetzt
+  die Tooltipzeile der Marke (Waffenmeister: „Lehrt: …“).
+- Nicht übernommen: Grimoires, Rufrabatte, Ignorierliste, Einbindung ins
+  Zauberbuch.
+- **Im Spiel ungeprüft.**
+
 ## [6.5.1.2] – 2026-09-27
 
 **Die Weltkarte liegt vorn.** Zeigst du einen Questgeber auf der Karte, geht der Codex so lange zu – die Karte liegt nicht mehr dahinter.

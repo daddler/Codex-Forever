@@ -117,8 +117,9 @@ local function BuildPin(canvas)
         if not (gt and target) then return end
         gt:SetOwner(self, "ANCHOR_RIGHT")
         gt:SetText(target.who, C.textBright[1], C.textBright[2], C.textBright[3])
-        if target.quest then
-            gt:AddLine((target.item and "Fundort für: " or "Beginnt: ") .. target.quest, C.textNormal[1], C.textNormal[2], C.textNormal[3], true)
+        local what = target.line or (target.quest and ((target.item and "Fundort für: " or "Beginnt: ") .. target.quest))
+        if what then
+            gt:AddLine(what, C.textNormal[1], C.textNormal[2], C.textNormal[3], true)
         end
         gt:AddLine("Lage aus Beta-Berichten – unbestätigt.", C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
         gt:AddLine("Rechtsklick: Marke entfernen", C.textMuted[1], C.textMuted[2], C.textMuted[3])
@@ -229,10 +230,12 @@ end
 
 -- Weltkarte auf der Zone oeffnen und die Marke setzen. `place` aus
 -- J.PLACES, `questName` fuer Tooltip und Meldung.
-function QM.Show(place, questName)
+-- `line` ersetzt die Zeile "Beginnt: <Quest>" im Tooltip der Marke
+-- (Lehrer: "Lehrt: Dolche").
+function QM.Show(place, questName, line)
     if type(place) ~= "table" or type(place.map) ~= "number" then return false end
     target = { map = place.map, x = place.x, y = place.y, who = place.who,
-               item = place.item, quest = questName }
+               item = place.item, quest = questName, line = line }
     EnsureDriver()
     -- Der Codex liegt ueber der Karte: er geht zu, der Knopf holt ihn zurueck.
     local main = WeintCodex.MainFrame

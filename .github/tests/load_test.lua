@@ -2275,6 +2275,66 @@ do
     Check(ok, "Dungeonseite: Questgeber auf der Weltkarte" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.6.0.0: Lehrer - was gelernt ist, fragt die Seite den Client; der
+-- Bestand sagt nur, was es gibt.
+do
+    local ok, err = pcall(function()
+        local TR, T = WeintCodex.Trainer, WeintCodex.TrainerData
+        local known = { [6673] = true, [78] = true, [772] = true }
+        local oldIPS, oldLvl, oldRace, oldFac, oldMoney =
+            _G.IsPlayerSpell, _G.UnitLevel, _G.UnitRace, _G.UnitFactionGroup, _G.GetMoney
+        _G.IsPlayerSpell = function(id) return known[id] == true end
+        _G.UnitLevel = function() return 10 end
+        _G.UnitRace = function() return "Mensch", "Human", 1 end
+        _G.UnitFactionGroup = function() return "Alliance" end
+        _G.GetMoney = function() return 150 end
+        local function In(cat, key, id)
+            for _, sp in ipairs(cat.sections[key]) do if sp.id == id then return true end end
+            return false
+        end
+        local cat = TR.Categorize()
+        assert(In(cat, "known", 6673), "gelernter Schlachtruf nicht als gelernt")
+        assert(In(cat, "now", 100), "Sturmangriff (Stufe 4) nicht jetzt lernbar")
+        assert(In(cat, "now", 284), "Heldenhafter Stoss Rang 2 trotz Rang 1 nicht lernbar")
+        assert(In(cat, "soon", 5242), "Stufe 12 nicht unter den naechsten Stufen")
+        assert(In(cat, "later", 285), "Stufe 16 nicht unter Spaeter")
+        assert(In(cat, "talent", 23893), "Blutdurst Rang ohne Talent nicht erkannt")
+        -- Ohne Rang 1 fehlt die Vorstufe.
+        known[78] = nil
+        cat = TR.Categorize()
+        assert(In(cat, "missing", 284), "fehlende Vorstufe nicht erkannt")
+        -- Hoeherer Rang ersetzt den niedrigeren: Schlachtruf Rang 2 bekannt
+        -- -> Rang 1 gilt als gelernt, auch wenn der Client ihn nicht mehr meldet.
+        known[6673], known[5242] = nil, true
+        cat = TR.Categorize()
+        assert(In(cat, "known", 6673), "ersetzter Rang nicht als gelernt")
+        assert(cat.total.now > 0 and TR.Money(cat.total.now) ~= "—", "Kosten fehlen")
+        assert(TR.Money(12345) == "1 G 23 S 45 K" and TR.Money(nil) == "—", "Geldformat: " .. TR.Money(12345))
+        -- Waffen: gelernt / lernbar / ab Stufe 20, Meister der eigenen Fraktion.
+        known[201] = true
+        local ws = TR.WeaponState()
+        local byId = {}
+        for _, w in ipairs(ws) do byId[w.id] = w end
+        assert(byId[201].key == "known" and byId[1180].key == "now" and byId[200].key == "later", "Waffenzustand falsch")
+        assert(#byId[1180].masters == 3, "Dolchmeister der Allianz (Bixi, Woo Ping, Ilyenia): " .. #byId[1180].masters)
+        -- Jaeger: Tierausbildung ohne Zustand, nie als "nicht gelernt".
+        local oldClass = _G.UnitClass
+        _G.UnitClass = function() return "Jäger", "HUNTER" end
+        cat = TR.Categorize()
+        assert(#cat.sections.pet == 45, "Tierausbildung: " .. #cat.sections.pet)
+        for _, sp in ipairs(cat.sections.known) do assert(not sp.pet, "Tierfaehigkeit als gelernt") end
+        _G.UnitClass = oldClass
+        -- Die Seite: Zauber und Waffen gezeichnet, Karte je Waffenmeister.
+        WeintCodex.Navigation.SwitchTo("lehrer")
+        assert(TR.Page() and TR.Page():IsShown(), "Lehrerseite nicht offen")
+        assert((TR.drawnRows or 0) > 5, "zu wenige Zeilen: " .. tostring(TR.drawnRows))
+        assert((TR.mapButtons or 0) > 0, "kein Kartenknopf fuer Waffenmeister")
+        _G.IsPlayerSpell, _G.UnitLevel, _G.UnitRace, _G.UnitFactionGroup, _G.GetMoney =
+            oldIPS, oldLvl, oldRace, oldFac, oldMoney
+    end)
+    Check(ok, "Lehrer: Faecher, Raenge, Talente, Waffen, Tierausbildung, Seite" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.8: Im Dungeon verfolgt die Questliste nur dessen Quests; beim
 -- Verlassen kommt genau das zurueck, was geaendert wurde.
 do

@@ -42,6 +42,7 @@ local PAGES = {
     { id = "kalender",    label = "Kalender" },
     { id = "gruppe",      label = "Gruppencheck" },
     { id = "charakter",   label = "Charakter" },
+    { id = "lehrer",      label = "Lehrer" },
     { id = "materialien", label = "Materialien" },
     { id = "import",      label = "Import" },
     { id = "companion",   label = "Companion" },

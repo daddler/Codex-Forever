@@ -104,3 +104,50 @@ der übernächste Login.
 Sortiert wird alphabetisch: `pairs()` über eine Tabelle hat keine
 Reihenfolge, und eine Liste, die zwischen zwei Aufrufen springt, liest
 sich wie ein Fehler.
+
+## Lehrer *(seit 6.6.0.0)*
+
+Eigener Eintrag „Lehrer“ in der Navigation (Gruppe Charakter,
+`modules/trainer.lua`, `WeintCodex.Trainer`), nach dem Vorbild des Addons
+*What's Training?*: welche Zauber der Klassenlehrer jetzt lehrt, was fehlt,
+was in den nächsten Stufen kommt, was es kostet – und wo man welche
+Waffenfertigkeit lernt.
+
+**Zwei Bestände, nie vermischt.**
+
+* **Was es gibt** steht in `data/trainer.lua` (`WeintCodex.TrainerData`):
+  je Klasse Zauber mit Stufe, Kosten (Kupfer), `requiredIds` (Vorstufe),
+  `requiredTalentId`, `race`/`faction`-Beschränkung und `pet` (Tier-
+  ausbildung des Jägers); `ranks` für Fähigkeiten, deren höherer Rang den
+  niedrigeren ersetzt; `WEAPONS` und `MASTERS` (Waffenmeister mit Karte
+  und Lage). Herkunft **`community`**: übernommen aus *What's Training?*
+  (Forever-Fassung 11.0.0-beta7, MIT-Lizenz – der Lizenztext steht im Kopf
+  der Datei, wie die Lizenz es verlangt). Nur Daten, kein Code, keine
+  Bilder.
+* **Ob etwas gelernt ist**, fragt die Seite den Client
+  (`C_SpellBook.IsSpellKnown/IsSpellInSpellBook`, `IsPlayerSpell`). Ein
+  ersetzter niedrigerer Rang zählt als gelernt (`ranks`), weil der Client
+  ihn nicht mehr meldet.
+
+**Fächer** (`TR.SECTIONS`): Jetzt lernbar · Vorstufe fehlt · Nächste
+Stufen (bis zwei über der eigenen) · Später · Braucht ein Talent ·
+Tierausbildung · Gelernt (standardmäßig eingeklappt, Knopf „Gelernte
+zeigen“). Kosten über dem eigenen Gold stehen in Jetzt lernbar rot.
+
+**Tierausbildung ohne Zustand.** Ob der Begleiter eine Fähigkeit kennt,
+sagt nur der Tierausbilder; die Seite behauptet weder „gelernt“ noch
+„fehlt“ (`unknown ≠ false`).
+
+**Waffenfertigkeiten**: gelernt / lernbar / ab Stufe N, darunter die
+Waffenmeister der eigenen Fraktion mit Knopf „Karte“ – derselbe Weg wie
+die Questgeber im Dungeonkompendium (`WeintCodex.QuestMap.Show`, dritter
+Parameter ersetzt die Tooltipzeile: „Lehrt: Dolche“).
+
+**Nicht übernommen:** Hexenmeister-Grimoires (der Client sagt nicht, ob
+der Begleiter sie kann), Rufrabatte beim Lehrer, die Ignorierliste (der
+Beta-Client speichert nichts über ein Neuladen), die Einbindung ins
+Zauberbuch des Spiels (Taint-Risiko an geschützten Reitern).
+
+**Die Navigationsspalte ist damit voll**: 644 von 684 px, genau die
+40 px Luft, die `load_test.lua` verlangt. Ein weiterer Eintrag braucht
+vorher eine Entscheidung, was zusammengelegt wird.
