@@ -447,6 +447,17 @@ Seit 6.2.0.0:
   neue Zellen im Einstellungs-Baukasten: `input` (Eingabefeld) und
   `custom` (frei gebaut, feste Höhe). Die Seitenleiste wurde dafür von
   40 auf 36 px je Eintrag verdichtet.
+  **Regeln gelten je Klasse** (6.6.0.5, Beta-Test: Schlachtruf-Erinnerung
+  auf dem Jäger – die Einstellungen sind accountweit). Neue Regeln tragen
+  `class` (die Klasse, auf der sie angelegt wurden) oder `R.ALL` („Alle
+  Klassen“, Auswahl „Gilt für“ im Editor); Vorschläge tragen ihre Klasse.
+  `R.Applies`/`R.Here` filtern Erinnerungen, Procs und Abklingzeiten.
+  Regeln von vorher (ohne `class`) entscheidet der Client: ein Zauber
+  gilt, wenn der Charakter ihn kennt (`WeintCodex.Trainer.Known`); einer,
+  den er nicht kennt oder nicht auflösen kann, gilt nicht – außer der
+  Client kann gar nicht fragen („weiß nicht“ ≠ „gilt nicht“). Waffe gilt
+  nur, wo sie Vorschlag der Klasse ist, Begleiter überall. Die Liste
+  zeigt alle Regeln, fremde blass mit „(hier aus)“.
 * **Fenster des Spiels** (6.3.1.6, `ui/windows.lua`): Charakterfenster
   und Teilfenster, erste Stufe nur die Hülle (Schmuck der Vorlage weg,
   Kachel darunter). Inhalte werden nie angefasst. Was innen noch nach

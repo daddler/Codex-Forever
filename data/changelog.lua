@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.0.5",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFErinnerungen gelten je Klasse.|r Eine Regel gilt jetzt für die Klasse, auf der du sie anlegst – der Schlachtruf deines Kriegers erinnert deinen Jäger nicht mehr. Für Buffs, die andere geben, wählst du „Alle Klassen“. Regeln aus der Zeit davor gelten dort, wo der Charakter den Zauber kennt; fremde stehen blass mit „(hier aus)“ in der Liste.",
+        },
+    },
+    {
         version = "6.6.0.4",
         date    = "27.09.2026",
         notes   = {

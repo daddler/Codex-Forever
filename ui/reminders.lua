@@ -83,14 +83,76 @@ end
 -- Vorschlaege je Klasse - nur, was ohne Zauber-ID geht.
 function R.Suggestions(class)
     class = class or PlayerClass()
+    local out = {}
     if class == "ROGUE" then
-        return { { kind = "weapon", hand = "main" }, { kind = "weapon", hand = "off" } }
+        out = { { kind = "weapon", hand = "main" }, { kind = "weapon", hand = "off" } }
     elseif class == "SHAMAN" then
-        return { { kind = "weapon", hand = "main" } }
+        out = { { kind = "weapon", hand = "main" } }
     elseif class == "HUNTER" or class == "WARLOCK" then
-        return { { kind = "pet" } }
+        out = { { kind = "pet" } }
     end
-    return {}
+    for _, r in ipairs(out) do r.class = class end
+    return out
+end
+
+--------------------------------------------------
+-- Fuer wen gilt eine Regel?
+--------------------------------------------------
+-- 6.6.0.5, Beta-Test: "Ich habe auf meinen Jaeger eingeloggt und bekomme
+-- weiterhin den Reminder, meinen Schlachtruf zu setzen." Die Einstellungen
+-- gelten fuer den ganzen Account - eine Regel des Kriegers erinnerte also
+-- jeden Twink. Seitdem traegt jede neue Regel die Klasse, auf der sie
+-- angelegt wurde (`class`), oder R.ALL ("alle Klassen", etwa fuer einen
+-- Buff, den andere geben).
+--
+-- Regeln von vorher haben keine Klasse. Fuer sie entscheidet, was der
+-- Client sagt: ein Zauber gilt, wenn der Charakter ihn kennt; einer, den
+-- er nicht kennt (oder der sich nicht einmal aufloesen laesst - Namen
+-- loest der Client nur fuer bekannte Zauber auf), gilt nicht. Waffe gilt,
+-- wo sie Vorschlag der Klasse ist; Begleiter ueberall (er erinnert erst,
+-- wenn einer da war). Kann der Client gar nicht sagen, was bekannt ist,
+-- gilt die Regel - "weiss nicht" ist nicht "gilt nicht".
+R.ALL = "*"
+
+local function CanAskSpells()
+    local sb = _G.C_SpellBook
+    local TR = WeintCodex.Trainer
+    return ((sb and (sb.IsSpellKnown or sb.IsSpellInSpellBook)) or _G.IsPlayerSpell or _G.IsSpellKnown)
+        and TR and TR.Known and true or false
+end
+
+-- true / false / nil (der Client kann es nicht sagen).
+local function SpellKnown(id)
+    if not CanAskSpells() then return nil end
+    return WeintCodex.Trainer.Known(id)
+end
+R._SpellKnown = SpellKnown
+
+function R.Applies(rule, class)
+    if rule.class == R.ALL then return true end
+    class = class or PlayerClass()
+    if rule.class then return class == nil or rule.class == class end
+    if R.NeedsSpell(rule.kind) then
+        local sp = R.Resolve(rule.spell)
+        local id = sp and sp.id
+        if not id then return not CanAskSpells() end
+        return SpellKnown(id) ~= false
+    elseif rule.kind == "weapon" then
+        for _, sg in ipairs(R.Suggestions(class)) do
+            if sg.kind == "weapon" and sg.hand == rule.hand then return true end
+        end
+        return false
+    end
+    return true
+end
+
+-- Die Regeln, die fuer diesen Charakter gelten.
+function R.Here()
+    local out = {}
+    for _, rule in ipairs(R.Rules()) do
+        if R.Applies(rule) then out[#out + 1] = rule end
+    end
+    return out
 end
 
 function R.Rules()
@@ -123,7 +185,10 @@ end
 -- doppelt. Gibt zurueck, wie viele neu dazukamen und wie viele die Klasse
 -- ueberhaupt hat.
 local function SameRule(a, b)
+    -- Eine alte Regel ohne Klasse zaehlt als dieselbe (sonst kaeme die
+    -- Waffe des Schurken doppelt).
     return a.kind == b.kind and a.hand == b.hand and a.spell == b.spell
+        and (a.class == b.class or a.class == nil or b.class == nil)
 end
 
 function R.AddSuggestions(class)
@@ -288,7 +353,7 @@ function R.Active()
     local where = Opt("where")
     if where == "group" and not InGroup() then return out end
     if where == "instance" and not InInstance() then return out end
-    for _, rule in ipairs(R.Rules()) do
+    for _, rule in ipairs(R.Here()) do
         if rule.kind == "buff" or rule.kind == "weapon" or rule.kind == "pet" then
             local hit = R.Check(rule)
             if hit then out[#out + 1] = hit end
@@ -427,7 +492,7 @@ function R.UpdateProcs()
     if not procRow then return end
     local shown = {}
     if Opt("showProcs") then
-        for _, rule in ipairs(R.Rules()) do
+        for _, rule in ipairs(R.Here()) do
             if rule.kind == "proc" then
                 local aura = procRow._unlock and { icon = 136116 } or R.PlayerAura(rule)
                 if type(aura) == "table" then shown[#shown + 1] = { rule = rule, aura = aura } end
@@ -484,7 +549,7 @@ function R.UpdateCooldowns()
     if not cdRow then return end
     local list = {}
     if Opt("showCooldowns") then
-        for _, rule in ipairs(R.Rules()) do
+        for _, rule in ipairs(R.Here()) do
             if rule.kind == "cooldown" then
                 local sp = R.Resolve(rule.spell)
                 if sp and sp.id then list[#list + 1] = sp end
@@ -563,10 +628,25 @@ end
 --------------------------------------------------
 
 -- Was im Formular "Regel hinzufuegen" steht (nicht gespeichert).
-local draft = { kind = "buff", spell = "", hand = "main" }
+local draft = { kind = "buff", spell = "", hand = "main", scope = "class" }
 R.draft = draft
 
+-- Fuer wen: "alle Klassen", "nur Krieger" oder - alte Regel - offen.
+function R.ScopeText(rule)
+    if rule.class == R.ALL then return "alle Klassen" end
+    if rule.class then return "nur " .. (WeintCodex.Names.ClassLabel(rule.class) or rule.class) end
+    return nil
+end
+
 function R.RuleText(rule)
+    local text = R.BaseRuleText(rule)
+    local scope = R.ScopeText(rule)
+    if scope then text = text .. "  ·  " .. scope end
+    if not R.Applies(rule) then text = text .. "  (hier aus)" end
+    return text
+end
+
+function R.BaseRuleText(rule)
     local kind = KIND_TEXT[rule.kind] or rule.kind
     if R.NeedsSpell(rule.kind) then
         local sp = R.Resolve(rule.spell)
@@ -588,6 +668,7 @@ function R.AddDraft()
     elseif draft.kind == "weapon" then
         rule.hand = draft.hand
     end
+    rule.class = draft.scope == "all" and R.ALL or PlayerClass()
     R.AddRule(rule)
     draft.spell = ""
     return true
@@ -636,6 +717,7 @@ function R.BuildRuleList(parent, width)
             local rule = rules[i]
             if rule then
                 row.text:SetText(R.RuleText(rule))
+                row.text:SetTextColor(unpack(R.Applies(rule) and C.textNormal or C.textDim))
                 local sp = R.NeedsSpell(rule.kind) and R.Resolve(rule.spell)
                 if sp and sp.icon then row.icon:SetTexture(sp.icon) row.icon:Show() else row.icon:Hide() end
                 row:Show()
@@ -665,7 +747,7 @@ K.Register({
     OnSetting = function() R.UpdateAll() end,
     pages = {
         { key = "regeln", label = "Regeln", build = function(B)
-            B:Section("Deine Regeln", "Jede Regel ist eine Erinnerung oder ein Symbol. Zauber nennst du mit Namen oder ID – eine eingebaute Liste gibt es nicht.")
+            B:Section("Deine Regeln", "Jede Regel ist eine Erinnerung oder ein Symbol. Zauber nennst du mit Namen oder ID – eine eingebaute Liste gibt es nicht. Eine Regel gilt für die Klasse, auf der du sie anlegst, oder für alle; was hier nicht gilt, steht blass.")
             B:Row({ type = "custom", height = 8 * 26 + 6, create = function(parent, width)
                         return R.BuildRuleList(parent, width)
                     end }, nil)
@@ -679,8 +761,12 @@ K.Register({
                         { value = "main", text = "Haupthand" }, { value = "off", text = "Nebenhand" } },
                     get = function() return draft.hand end, set = function(v) draft.hand = v DraftChanged() end,
                     disabled = function() return draft.kind ~= "weapon" end },
-                  { type = "button", label = "Hinzufügen", text = "Regel hinzufügen",
-                    onClick = function() R.AddDraft() end })
+                  { type = "dropdown", label = "Gilt für", items = {
+                        { value = "class", text = "Nur diese Klasse" }, { value = "all", text = "Alle Klassen" } },
+                    get = function() return draft.scope end, set = function(v) draft.scope = v DraftChanged() end })
+            B:Row({ type = "button", label = "Hinzufügen", text = "Regel hinzufügen",
+                    onClick = function() R.AddDraft() end },
+                  { type = "empty" })
             B:Row({ type = "button", label = "Vorschläge", text = "Für meine Klasse",
                     tooltip = "Ergänzt die Vorschläge für deine Klasse (Waffe, Begleiter). Eigene Regeln bleiben.",
                     onClick = function()

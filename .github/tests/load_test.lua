@@ -1802,7 +1802,7 @@ do
         assert(R.Resolve("Unbekannt").id == nil, "Unbekannter Zauber bekommt eine ID")
 
         -- Regeln setzen: Buff fehlt, Waffe, Begleiter, Proc, Abklingzeit.
-        R.SetRules({ { kind = "buff", spell = "Kampfschrei" }, { kind = "weapon", hand = "main" }, { kind = "pet" },
+        R.SetRules({ { kind = "buff", spell = "Kampfschrei" }, { kind = "weapon", hand = "main", class = R.ALL }, { kind = "pet" },
                      { kind = "proc", spell = "Kampfschrei" }, { kind = "cooldown", spell = "Blutrausch" } })
         local hasBuff = false
         _G.C_UnitAuras = { GetPlayerAuraBySpellID = function(id)
@@ -1870,6 +1870,36 @@ do
         list.Sync()
         assert(list.rows[1]:IsShown() and list.rows[1].text:GetText():find("Kampfschrei", 1, true), "Regelliste leer")
         assert(R.RuleText({ kind = "buff", spell = "Gibtsnicht" }):find("unbekannt", 1, true), "unbekannter Zauber nicht markiert")
+
+        -- 6.6.0.5: Regeln gelten fuer eine Klasse ("Schlachtruf-Erinnerung
+        -- auf dem Jaeger"). Buff sicher fehlend, damit nur die Klasse zaehlt.
+        _G.C_UnitAuras = { GetPlayerAuraBySpellID = function() return nil end,
+                           GetAuraDataBySpellName = function() return nil end }
+        local oldIPS = _G.IsPlayerSpell
+        _G.UnitClass = function() return "Jäger", "HUNTER", 3 end
+        R.SetRules({ { kind = "buff", spell = "Kampfschrei", class = "WARRIOR" } })
+        assert(#R.Active() == 0, "Kriegerregel erinnert den Jaeger")
+        assert(R.RuleText(R.Rules()[1]):find("(hier aus)", 1, true), "fremde Regel nicht als aus markiert")
+        R.SetRules({ { kind = "buff", spell = "Kampfschrei", class = R.ALL } })
+        assert(#R.Active() == 1 and R.RuleText(R.Rules()[1]):find("alle Klassen", 1, true), "Regel fuer alle gilt nicht")
+        -- Alte Regel ohne Klasse: gilt, wenn der Charakter den Zauber kennt.
+        local knows = false
+        _G.IsPlayerSpell = function() return knows end
+        R.SetRules({ { kind = "buff", spell = "Kampfschrei" }, { kind = "buff", spell = "Gibtsnicht" },
+                     { kind = "weapon", hand = "main" } })
+        assert(#R.Active() == 0, "alte Regeln gelten trotz unbekanntem Zauber / fremder Waffe: " .. #R.Active())
+        knows = true
+        assert(#R.Active() == 1, "alte Regel mit bekanntem Zauber gilt nicht")
+        -- Neue Regeln tragen die Klasse, "Alle Klassen" das Sternchen.
+        R.SetRules({})
+        R.draft.kind, R.draft.spell, R.draft.scope = "buff", "Kampfschrei", "class"
+        R.AddDraft()
+        R.draft.spell, R.draft.scope = "Blutrausch", "all"
+        R.AddDraft()
+        assert(R.Rules()[1].class == "HUNTER" and R.Rules()[2].class == R.ALL, "neue Regel ohne Klasse")
+        R.draft.scope = "class"
+        assert(R.Suggestions("ROGUE")[1].class == "ROGUE", "Vorschlag ohne Klasse")
+        _G.IsPlayerSpell = oldIPS
 
         K.Set("reminders", "rules", nil)
         _G.UnitClass, _G.C_UnitAuras, _G.C_Spell, _G.GetWeaponEnchantInfo,
