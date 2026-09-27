@@ -1191,6 +1191,39 @@ do
     -- Karte 100 -> 75 Hoehenunterschied; verdeckt -> Hinweis; Zielmarke
     -- am Bildschirmpunkt des Ziels.
     Check(QA.Height(125, 100) == 75 and QA.Height(90, 100) == nil, "Hoehe aus Luftlinie und Kartenabstand")
+    -- 6.6.0.8: hoeher oder tiefer - nur aus der eigenen Hoehe, nie geraten.
+    do
+        local ok, err = pcall(function()
+            QA.ResetHeight()
+            assert(QA.TrackHeight(nil, 40) == nil, "ohne eigene Hoehe eine Richtung")
+            -- Ziel auf Hoehe 100: bei z = 60 ist der Unterschied 40.
+            QA.TrackHeight(60, 40)
+            assert(QA.TrackHeight(61, 39) == nil, "unter 3 Einheiten schon entschieden")
+            assert(QA.TrackHeight(70, 30) == "up", "Ziel hoeher nicht erkannt")
+            QA.ResetHeight()
+            -- Ziel auf Hoehe 20: bei z = 60 ist der Unterschied 40, steigt man, waechst er.
+            QA.TrackHeight(60, 40)
+            assert(QA.TrackHeight(70, 50) == "down", "Ziel tiefer nicht erkannt")
+            QA.ResetHeight()
+            -- Rauschen (Verhaeltnis passt nicht): keine Richtung.
+            QA.TrackHeight(60, 40)
+            assert(QA.TrackHeight(70, 40) == nil, "Rauschen als Richtung gedeutet")
+            QA.ResetHeight()
+            -- UnitPosition mit z = 0: "nicht gefuehrt", bis es sich bewegt.
+            local oldUP = _G.UnitPosition
+            local z = 0
+            _G.UnitPosition = function() return 1, 2, z, 0 end
+            QA._ResetZ()
+            assert(QA.PlayerZ() == nil, "z = 0 als Hoehe genommen")
+            z = 12.5
+            assert(QA.PlayerZ() == 12.5, "echte Hoehe nicht gelesen")
+            local lines = table.concat(QA.Inspect(), " | ")
+            assert(lines:find("Höhe 12.5", 1, true), "/wcui pfeil ohne Hoehe: " .. lines)
+            _G.UnitPosition = oldUP
+            QA._ResetZ()
+        end)
+        Check(ok, "Questpfeil: hoeher oder tiefer nur aus der eigenen Hoehe, /wcui pfeil" .. (ok and "" or (": " .. tostring(err))))
+    end
     local navFrame = CreateFrame("Frame", nil, UIParent)
     _G.Enum = _G.Enum or {}
     _G.Enum.NavigationState = { Invalid = 0, Occluded = 1, InRange = 2, Disabled = 3 }

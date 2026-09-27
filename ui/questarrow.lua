@@ -51,6 +51,14 @@
 -- dazu, ob das Ziel verdeckt ist (Occluded). Daraus:
 --   * Hoehenunterschied = Wurzel(Luftlinie^2 - Abstand auf der Karte^2).
 --     WIE GROSS, nicht in welche Richtung - das verraet der Client nicht.
+--   * HOEHER ODER TIEFER (6.6.0.8, Beta-Test: "sagt mir nicht, ob nach
+--     oben oder unten"). Nur, wenn der Client die eigene Hoehe nennt
+--     (dritter Wert von UnitPosition - im normalen Spiel immer 0, auf
+--     Forever ungeprueft, /wcui pfeil sagt es). Dann: steigt man und der
+--     Unterschied schrumpft, liegt das Ziel hoeher; waechst er, tiefer
+--     (QA.TrackHeight). Ohne eigene Hoehe bleibt es bei "wie gross" -
+--     nie geraten. Erst mit der Richtung kippt ein kleiner Pfeil neben
+--     dem grossen nach oben oder unten.
 --   * "verdeckt": Hoehle, Gebaeude oder hinter einem Hang.
 --   * Eine Zielmarke im Raum (QA.marker) am Bildschirmpunkt des Ziels:
 --     sie steht oben am Berg oder unten am Hoehleneingang, wo das Ziel ist.
@@ -402,6 +410,39 @@ function QA.Height(dist3d, flat)
     return math.sqrt(dist3d * dist3d - flat * flat)
 end
 
+-- Die eigene Hoehe, wenn der Client sie nennt (nil sonst). UnitPosition
+-- liefert y, x, z; ein z von genau 0 ist im normalen Spiel "nicht
+-- gefuehrt" - zaehlt deshalb erst, wenn es sich einmal von 0 bewegt hat.
+local zSeen = false
+function QA.PlayerZ()
+    if not _G.UnitPosition then return nil end
+    local ok, _, _, z = pcall(_G.UnitPosition, "player")
+    z = ok and K.Plain(z) or nil
+    if type(z) ~= "number" then return nil end
+    if z ~= 0 then zSeen = true end
+    return zSeen and z or nil
+end
+QA._ResetZ = function() zSeen = false end
+
+-- Hoeher oder tiefer? Liegt das Ziel auf Hoehe H, ist der Unterschied
+-- |H - z|. Steigt z um dz und der Unterschied faellt um ungefaehr dz,
+-- liegt das Ziel hoeher ("up"); steigt er um ungefaehr dz, tiefer
+-- ("down"). Erst ab 3 Einheiten Hoehenaenderung, und nur wenn das
+-- Verhaeltnis passt (Kartenort und Navigationspunkt rauschen).
+local anchor, sign
+function QA.TrackHeight(z, dh)
+    if type(z) ~= "number" or type(dh) ~= "number" then return sign end
+    if not anchor then anchor = { z = z, dh = dh } return sign end
+    local dz = z - anchor.z
+    if math.abs(dz) < 3 then return sign end
+    local r = (anchor.dh - dh) / dz
+    if r > 0.5 and r < 1.5 then sign = "up"
+    elseif r < -0.5 and r > -1.5 then sign = "down" end
+    anchor = { z = z, dh = dh }
+    return sign
+end
+function QA.ResetHeight() anchor, sign = nil, nil end
+
 local marker
 local function BuildMarker()
     marker = CreateFrame("Frame", "WeintCodexQuestArrowMarker", UIParent)
@@ -482,6 +523,16 @@ local function Build()
 
     height = K.NewText(frame)
     height:SetPoint("TOP", eta, "BOTTOM", 0, -1)
+
+    -- Kleiner Pfeil rechts neben dem grossen: nach oben = Ziel hoeher,
+    -- nach unten = tiefer. Nur, wenn die Richtung bekannt ist.
+    local updown = frame:CreateTexture(nil, "ARTWORK")
+    updown:SetTexture(K.ARROW_TEXTURE)
+    updown:SetSize(18, 18)
+    updown:SetPoint("LEFT", arrow, "RIGHT", 2, 0)
+    updown:SetVertexColor(unpack(C.accentBright))
+    updown:Hide()
+    QA.updown = updown
 
     -- Fuer den Prueflauf: was der Pfeil gerade anzeigt.
     QA.frame, QA.arrow = frame, arrow
@@ -578,6 +629,7 @@ function QA.Update(force)
     title:SetText(showTitle and name or "")
     eta:SetText("")
     height:SetText("")
+    if QA.updown then QA.updown:Hide() end
 
     -- Zuerst die eigene Position: ohne sie laesst sich auch der Ort der
     -- Quest nicht suchen (er haengt an der Karte, auf der man steht), und
@@ -627,10 +679,17 @@ function QA.Update(force)
         if K.Get(KEY, "showHeight") then
             local parts = {}
             local dh = QA.Height(nav.dist, yards)
+            local dir = QA.TrackHeight(QA.PlayerZ(), dh)
             -- Erst in der Naehe verlaesslich: Kartenort und Navigationspunkt
             -- liegen auf Entfernung nicht genau aufeinander.
             if dh and dh >= 8 and yards <= 300 then
-                parts[#parts + 1] = "Höhenunterschied ≈ " .. QA.FormatDistance(dh, units)
+                local word = (dir == "up" and " höher") or (dir == "down" and " tiefer") or ""
+                parts[#parts + 1] = (word ~= "" and "Ziel " or "Höhenunterschied ") .. "≈ "
+                    .. QA.FormatDistance(dh, units) .. word
+                if dir and QA.updown then
+                    QA.updown:SetRotation(dir == "up" and 0 or math.pi)
+                    QA.updown:Show()
+                end
             end
             if nav.occluded and nav.dist <= 150 then
                 parts[#parts + 1] = "verdeckt – Höhle, Gebäude oder Hang?"
@@ -697,6 +756,7 @@ end
 local events = CreateFrame("Frame")
 local function Refresh()
     lastYards, lastTime, QA._speed = nil, nil, nil
+    QA.ResetHeight()
     QA.Update(true)
     if frame and frame:IsShown() and not frame._unlock then
         ticker:SetScript("OnUpdate", OnTick)
@@ -740,6 +800,33 @@ local function OnEvent(_, event, questID)
     tracked = current or tracked
     if event == "SUPER_TRACKING_CHANGED" then tracked = current end
     Refresh()
+end
+
+-- /wcui pfeil: was der Client fuer die Hoehe hergibt.
+function QA.Inspect()
+    local out = {}
+    local function N(v) v = K.Plain(v) return type(v) == "number" and string.format("%.1f", v) or "–" end
+    if _G.UnitPosition then
+        local ok, y, x, z = pcall(_G.UnitPosition, "player")
+        if ok then
+            out[#out + 1] = "Eigene Position (UnitPosition): y " .. N(y) .. ", x " .. N(x) .. ", Höhe " .. N(z)
+                .. (K.Plain(z) == 0 and " – 0 heißt meist: der Client nennt keine Höhe" or "")
+        else
+            out[#out + 1] = "UnitPosition: Fehler (" .. tostring(y) .. ")"
+        end
+    else
+        out[#out + 1] = "UnitPosition: gibt es nicht"
+    end
+    local n = QA.Nav()
+    if not n then
+        out[#out + 1] = "Navigation des Spiels: kein Ziel (Quest im Questlog verfolgen oder Kartenmarkierung setzen)"
+    else
+        out[#out + 1] = string.format("Navigation: Luftlinie %s, verdeckt %s, auf dem Bildschirm %s",
+            N(n.dist), n.occluded and "ja" or "nein", n.onScreen and "ja" or "nein")
+    end
+    out[#out + 1] = "Richtung der Höhe: " .. ((sign == "up" and "höher") or (sign == "down" and "tiefer")
+        or "unbekannt – erst, wenn der Client die eigene Höhe nennt und du bergauf oder bergab gehst")
+    return out
 end
 
 local function Enable()
@@ -813,7 +900,7 @@ K.Register({
                     format = function(v) return string.format("%d m", v) end },
                   { type = "empty" })
             B:Row({ type = "toggle", label = "Höhenunterschied", key = "showHeight",
-                    description = "Aus der Navigation des Spiels: wie viel höher oder tiefer das Ziel liegt – die Richtung verrät der Client nicht – und ob es verdeckt ist (Höhle, Gebäude)." },
+                    description = "Aus der Navigation des Spiels: wie viel höher oder tiefer das Ziel liegt und ob es verdeckt ist (Höhle, Gebäude). Ob höher oder tiefer, nur wenn der Client deine eigene Höhe nennt – /wcui pfeil sagt es." },
                   { type = "toggle", label = "Zielmarke im Raum", key = "worldMarker",
                     description = "Eine Nadel genau am Ziel, auf dem Berg oder am Höhleneingang. Nur für die Quest, die das Spiel verfolgt, und für Kartenmarkierungen." })
             B:Section("Mitdenken")

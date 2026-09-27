@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.0.8",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFQuestpfeil: höher oder tiefer.|r Nennt das Spiel deine eigene Höhe, erkennt der Pfeil beim Bergauf- oder Bergabgehen, ob das Ziel über oder unter dir liegt – „Ziel ≈ 25 m höher“ und ein kleiner Pfeil nach oben oder unten. Ob dein Spiel die Höhe nennt, sagt /wcui pfeil.",
+        },
+    },
+    {
         version = "6.6.0.7",
         date    = "27.09.2026",
         notes   = {

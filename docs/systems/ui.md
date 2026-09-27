@@ -436,6 +436,19 @@ Seit 6.2.0.0:
   Navigation (Kartenmarkierung oder vom Spiel verfolgte Quest, nicht
   `QA.Chosen`); zeigt das Spiel seine eigene Marke (`SuperTrackedFrame`),
   bleibt unsere weg.
+  **Höher oder tiefer** (6.6.0.8, Beta-Test: „sagt nicht, ob nach oben
+  oder unten; der Pfeil bewegt sich nur links/rechts“): die Richtung
+  steckt weder in der Navigation noch auf der Karte. Einziger Weg: die
+  eigene Höhe (`UnitPosition`, dritter Wert). Im normalen Spiel ist sie
+  immer 0 – `QA.PlayerZ` nimmt sie deshalb erst, wenn sie sich einmal von
+  0 bewegt hat. Dann `QA.TrackHeight`: steigt man um dz und der
+  Unterschied fällt um ≈ dz, liegt das Ziel höher, wächst er, tiefer
+  (erst ab 3 Einheiten, Verhältnis 0,5–1,5, sonst Rauschen). Mit Richtung
+  „Ziel ≈ 25 m höher“ und ein kleiner Pfeil (`QA.updown`) neben dem
+  großen, nach oben oder unten; ohne bleibt es bei „Höhenunterschied ≈
+  25 m“. Der große Pfeil kippt nicht: seine 64 Ansichten sind nur
+  Himmelsrichtungen, und ohne sichere Richtung wäre ein Kippen geraten.
+  `/wcui pfeil` nennt, was der Client hergibt.
 * **Name beim Einloggen** (6.6.0.1): ohne Namen („Unbekannt“) zeichnet
   der Rahmen bis zu zehnmal je Sekunde nach; nach `PLAYER_ENTERING_WORLD`
   setzen alle Rahmen ihre Texte nach 1 und 4 s geleert neu
