@@ -99,7 +99,7 @@ weil sie genau das sind, wofür er steht.
 | `ui/castbar.lua` | **ein** Zauberbalken für Plaketten und Einheitenrahmen |
 | `ui/nameplates.lua` | Gegnerplaketten |
 | `ui/unitframes.lua` | Spieler, Ziel, Ziel des Ziels, Fokus, Begleiter; Porträt als 3D-Modell oder Bild |
-| `ui/setup.lua` | **Einrichtung beim ersten Mal**: legt einmal das Layout „WeintCodex“ im Bearbeitungsmodus des Spiels an, danach neu laden (`/wcui einrichten`) |
+| `ui/setup.lua` | **Einrichtung beim ersten Mal**: stellt alles – Layout „WeintCodex“ im Bearbeitungsmodus mit jedem Rahmen des Spiels an festem Platz (`K.GAME_LAYOUT`), Chatfenster, einige Spieleinstellungen, eigene Rahmen –, danach neu laden (`/wcui einrichten`, prüfen: `/wcui einrichten pruefen`) |
 | `ui/gamegroup.lua` | **Gruppenrahmen des Spiels im WeintCodex-Stil** (Standard seit 6.6.0.9): nur sie zeigen HoTs, Buffs, Schilde und Debuffs im Kampf |
 | `ui/clickcast.lua` | **Klickzauber**: Maustaste + Zusatztaste wirkt einen Zauber auf die Einheit des Rahmens (Reiter der Gruppenrahmen) |
 | `ui/questarrow.lua` | Questpfeil |
@@ -461,27 +461,48 @@ Seit 6.2.0.0:
   Schrift zeichnete sonst nichts.
 * **Einrichtung beim ersten Mal** (6.6.1.1, `ui/setup.lua`, Beta-Test:
   „Fenster direkt voreingestellt wie bei Ellesmere, ein Reload packt alles
-  an seinen Platz“). Eigene Rahmen brauchen nichts – ihre Plätze kommen aus
-  `ui/layout.lua`. Die Rahmen des Spiels stellt dessen Bearbeitungsmodus;
-  dafür legt `ES.Apply` über `C_EditMode` einmal ein Layout „WeintCodex“
-  an – seit 6.6.1.2 als Kopie des **aktiven** Layouts (`ES.Base`; ist das
-  schon „WeintCodex“, das erste andere eigene, sonst die Vorlage aus
-  `EditModePresetLayoutManager:GetCopyOfPresetLayouts`). 6.6.1.1 kopierte
-  „Modern“: Aktionsleisten und Questliste sprangen auf Forevers
-  Standardplätze (Beta-Test: Leisten unten links). Das Fenster nennt die
-  Grundlage. Dann setzt in `ES.Adjust` die Gruppe schlachtzugsartig
-  (`UseRaidStylePartyFrames` = 1), `DisplayBorder` = 0 für Gruppe und
-  Schlachtzug und beide an `gf_party`/`gf_raid`, speichert mit
-  `SaveLayouts` (bisherige Layouts bleiben) und macht es aktiv (Index =
-  Zahl der Vorlagen + Platz). Danach bietet das Fenster **Neu laden**
-  (`K.ReloadButton`) – erst dann stellt das Spiel alles nach dem Layout und
-  liest es frisch vom Server, statt „von WeintCodex berührt“. Gefragt wird
-  beim ersten echten Einloggen (nie nach `/reload`, nie über der
-  Einführung, nie im Kampf), solange es kein Layout „WeintCodex“ gibt –
-  das liegt auf dem Server und überlebt vergessene SavedVariables. Fehlt
-  `C_EditMode` oder die Gruppe im Layout, sagt das Fenster den Grund und
-  die Handgriffe. Auch als Knopf unter Gruppenrahmen → Allgemein und mit
-  `/wcui einrichten`. Im Spiel ungeprüft.
+  an seinen Platz“; seit 6.6.1.3: „WeintCodex soll erstmal ALLES komplett
+  einstellen“ – der Chat blieb, wo das vorherige UI ihn hatte). `ES.Apply`
+  macht vier Dinge:
+  1. **Layout „WeintCodex“** über `C_EditMode`, als Kopie der **Vorlage**
+     des Spiels (`ES.Base`: erste aus
+     `EditModePresetLayoutManager:GetCopyOfPresetLayouts`; nur ohne Vorlage
+     das aktive eigene Layout, nie „WeintCodex“ selbst). Darauf setzt
+     `ES.Adjust` **jeden** Eintrag aus `K.GAME_LAYOUT` (`ui/layout.lua`) an
+     einen festen Platz (`isInDefaultPosition = false`): Aktionsleisten
+     1–5, Haltungs-/Besessenheits-/Begleiterleiste, Fahrzeug verlassen,
+     Zusatzfähigkeit, Abklingzeitmanager (Wichtig, Hilfreich, Buffs),
+     Begegnungsleiste, Minikarte, Buffs, Debuffs, Questliste, Boss- und
+     Arenarahmen, Tooltip, Taschenleiste, Mikromenü, Chat (samt Größe
+     `K.CHAT_SIZE` über `WidthHundreds`/`WidthTensAndOnes`/…), Gruppe
+     (schlachtzugsartig, ohne Rand) und Schlachtzug. Einstellungen nur
+     nach Namen aus dem Setting-Enum des Systems und nur rohe Werte
+     (Schalter, Richtung, Chatmaße) – Schieberegler speichert das Spiel
+     umgerechnet, die bleiben auf der Vorlage. Geschichte: 6.6.1.1
+     kopierte „Modern“ ohne feste Plätze (Leisten sprangen nach unten
+     links), 6.6.1.2 das aktive Layout (Chat blieb bei EllesmereUI).
+     Systeme, die im Layout fehlen, nennt das Fenster.
+  2. **Chatfenster** zurück auf Allgemein + Kampflog
+     (`FCF_ResetChatWindows`).
+  3. **Spieleinstellungen** `ES.CVARS` (Chatstil `im` für die Infozeile,
+     Flüstern im Chat, Klassenfarben im Chat, Leisten sperren, keine
+     Tutorials) – nur, wenn `GetCVar` sie kennt; unbekannte nennt das
+     Fenster. Die UI-Skalierung bleibt unberührt.
+  4. **Eigene Rahmen** auf ihre Standardplätze (`K.ResetAllPositions`).
+  Dafür rückte das Cockpit (6.6.1.3): unten Mitte Leiste 1 (18), 2 (66),
+  3 (110), darüber die Reihe Haltungen links/Begleiter rechts (154);
+  Zauberbalken und Kombopunkte zwischen Spieler und Ziel, der
+  Begleiterrahmen links neben den Spieler, die Gruppe höher (440), die
+  Schadensanzeige neben Leiste 4/5. Alles gerechnet, nicht gesehen.
+  Danach **Neu laden** (`K.ReloadButton`). `/wcui einrichten pruefen`
+  (`ES.Check`) misst danach je Rahmen den Ankerpunkt in dessen eigenen
+  Einheiten gegen `K.GAME_LAYOUT` (±3), nennt das aktive Layout, die
+  Chatgröße und abweichende Einstellungen. Gefragt wird beim ersten
+  echten Einloggen (nie nach `/reload`, nie über der Einführung, nie im
+  Kampf), solange es kein Layout „WeintCodex“ gibt – das liegt auf dem
+  Server und überlebt vergessene SavedVariables. Auch als Knopf unter
+  Gruppenrahmen → Allgemein und mit `/wcui einrichten`. Im Spiel
+  ungeprüft.
 * **Gruppenrahmen des Spiels** (6.6.0.9, `ui/gamegroup.lua`, Einstellung
   `groupframes.source` = `game` | `own`, Standard `game`). Beta-Test:
   „Schilde, Buffs, HoTs werden im Gruppenframe nicht angezeigt“. Die

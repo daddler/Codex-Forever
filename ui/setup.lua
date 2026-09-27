@@ -5,23 +5,31 @@
 -- Fenster direkt voreingestellt sein wie bei Ellesmere. Ein Reload danach
 -- packt alle Fenster auf die richtige Position. Danach kann man immer noch
 -- im Bearbeitungs- oder Gestaltungsmodus verschieben."
+-- Beta-Test 6.6.1.2: "wcui einrichten nimmt nicht alle Sachen mit.
+-- Chatfenster bleibt zB so, wie das vorherige UI es eingestellt hatte.
+-- WeintCodex soll erstmal ALLES komplett einstellen."
 --
--- ZWEI ARTEN VON FENSTERN. Die eigenen Rahmen von WeintCodex stehen ohne
--- Zutun richtig: ihre Standardplaetze kommen aus ui/layout.lua. Die Rahmen
--- des Spiels (seit 6.6.0.9 vor allem Gruppe und Schlachtzug) stellt der
--- Bearbeitungsmodus des Spiels - und dessen Layouts gehoeren dem Spiel.
--- Dafuer legt WeintCodex EINMAL ein eigenes Layout "WeintCodex" an:
---   * Grundlage ist das Layout, das der Spieler gerade nutzt (seit
---     6.6.1.2, siehe ES.Base) - alles ausser Gruppe und Schlachtzug
---     bleibt, wo es war,
---   * Gruppenrahmen schlachtzugsartig (nur die zeigen HoTs), ohne
---     Blizzards Rahmenlinien (den Rand zeichnet WeintCodex),
---   * Gruppe und Schlachtzug an den Plaetzen der WeintCodex-Kacheln
---     (ui/layout.lua, gf_party / gf_raid),
--- und macht es zum aktiven Layout. Danach NEU LADEN - zwei Gruende: erst
--- dann stellt das Spiel alles nach dem neuen Layout, und erst dann liest
--- es das Layout frisch vom Server. Bis dahin gilt es als "von WeintCodex
--- beruehrt", und das Spiel koennte im Kampf Aktionen sperren.
+-- WAS DIE EINRICHTUNG STELLT (seit 6.6.1.3):
+--   1. Die Rahmen des Spiels. Die stellt der Bearbeitungsmodus, und seine
+--      Layouts gehoeren dem Spiel. WeintCodex legt EIN eigenes Layout
+--      "WeintCodex" an: Grundlage ist die Vorlage des Spiels ("Modern"),
+--      nie mehr das Layout eines anderen Addons - 6.6.1.2 kopierte das
+--      aktive Layout, und damit blieb der Chat, wo EllesmereUI ihn hatte.
+--      Darauf setzt es JEDEN Rahmen aus K.GAME_LAYOUT (ui/layout.lua) an
+--      einen festen Platz - fest heisst: nie "Standardplatz", denn den
+--      rechnet das Spiel (6.6.1.1: die Vorlage stellte die Aktionsleisten
+--      unten links). Gruppe schlachtzugsartig, ohne Blizzards Linien.
+--   2. Die Chatfenster: zurueck auf Allgemein und Kampflog
+--      (FCF_ResetChatWindows, derselbe Knopf wie in den Einstellungen des
+--      Spiels) - Reiter und Kanaele eines frueheren Addons verschwinden.
+--   3. Wenige Spieleinstellungen, die die Oberflaeche voraussetzt (CVARS).
+--      Jede wird nur gesetzt, wenn der Client sie kennt.
+--   4. Die eigenen Rahmen auf ihre Standardplaetze (ui/layout.lua).
+-- Die Skalierung der Oberflaeche bleibt, wie sie ist: das ist eine Frage
+-- von Bildschirm und Augen, nicht vom Aussehen.
+-- Danach NEU LADEN - erst dann stellt das Spiel alles nach dem neuen
+-- Layout und liest es frisch vom Server. Bis dahin gilt es als "von
+-- WeintCodex beruehrt", und das Spiel koennte im Kampf Aktionen sperren.
 --
 -- WOHER WEISS WEINTCODEX, DASS ES SCHON EINGERICHTET IST? Am Layout
 -- selbst: gibt es eins namens "WeintCodex", fragt nichts mehr. Das liegt
@@ -29,8 +37,8 @@
 -- SavedVariables vergisst.
 --
 -- Ob C_EditMode im Forever-Client genauso heisst und funktioniert, ist
--- ungeprueft. Fehlt etwas, sagt das Fenster es und nennt die Handgriffe
--- im Bearbeitungsmodus - nie ein stilles "fertig".
+-- ungeprueft. Fehlt etwas, sagt das Fenster es - nie ein stilles "fertig".
+-- Was nach dem Neuladen wirklich wo steht, sagt /wcui einrichten pruefen.
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -93,65 +101,94 @@ end
 local function SetSetting(sys, setting, value)
     if type(setting) ~= "number" then return false end
     sys.settings = sys.settings or {}
-    for _, s in ipairs(sys.settings) do
-        if s.setting == setting then s.value = value return true end
+    for _, st in ipairs(sys.settings) do
+        if st.setting == setting then st.value = value return true end
     end
     sys.settings[#sys.settings + 1] = { setting = setting, value = value }
     return true
 end
 
-local function Anchor(sys, key)
-    local p = K.LAYOUT[key]
-    if not p then return end
-    sys.anchorInfo = { point = p.point, relativeTo = "UIParent", relativePoint = p.relPoint,
-                       offsetX = p.x, offsetY = p.y }
-    sys.isInDefaultPosition = false
+-- Der Platz eines Eintrags aus K.GAME_LAYOUT (oder, mit `from`, der Platz
+-- eines eigenen Rahmens aus K.LAYOUT).
+local function Target(e)
+    local p = e.from and K.LAYOUT[e.from] or e
+    return { point = p.point, relPoint = p.relPoint or p.point, x = p.x, y = p.y }
+end
+ES.Target = Target
+
+-- Welche Enums zu welchem System gehoeren (Indizes und Einstellungen).
+local INDICES = {
+    ActionBar = "EditModeActionBarSystemIndices", UnitFrame = "EditModeUnitFrameSystemIndices",
+    AuraFrame = "EditModeAuraFrameSystemIndices", CooldownViewer = "EditModeCooldownViewerSystemIndices",
+}
+local SETTINGS = {
+    ActionBar = "EditModeActionBarSetting", UnitFrame = "EditModeUnitFrameSetting",
+    ChatFrame = "EditModeChatFrameSetting",
+}
+
+local function EnumTable(name)
+    local E = _G.Enum
+    local t = type(E) == "table" and name and E[name]
+    return type(t) == "table" and t or nil
 end
 
--- Die Systeme des Layouts auf WeintCodex stellen. Gibt zurueck, was
--- gesetzt wurde (fuer Auskunft und Prueflauf).
-function ES.Adjust(systems)
-    local E = _G.Enum or {}
-    local SYS = E.EditModeSystem and E.EditModeSystem.UnitFrame
-    local IDX = E.EditModeUnitFrameSystemIndices or {}
-    local SET = E.EditModeUnitFrameSetting or {}
-    local done = {}
+-- Das System eines Eintrags im Layout, oder nil.
+local function Find(systems, e)
+    local S = EnumTable("EditModeSystem")
+    local sysId = S and S[e.sys]
+    if type(sysId) ~= "number" then return nil end
+    local idx
+    if e.idx then
+        local I = EnumTable(INDICES[e.sys])
+        idx = I and I[e.idx]
+        if type(idx) ~= "number" then return nil end
+    end
     for _, sys in ipairs(systems or {}) do
-        if sys.system == SYS and sys.systemIndex == IDX.Party then
-            if SetSetting(sys, SET.UseRaidStylePartyFrames, 1) then done.raidStyle = true end
-            if SetSetting(sys, SET.DisplayBorder, 0) then done.partyBorder = true end
-            Anchor(sys, "gf_party")
-            done.party = true
-        elseif sys.system == SYS and sys.systemIndex == IDX.Raid then
-            if SetSetting(sys, SET.DisplayBorder, 0) then done.raidBorder = true end
-            Anchor(sys, "gf_raid")
-            done.raid = true
+        if sys.system == sysId and (not e.idx or sys.systemIndex == idx) then return sys end
+    end
+    return nil
+end
+
+-- Alle Rahmen aus K.GAME_LAYOUT ins Layout schreiben. Gibt zurueck, was
+-- gesetzt wurde ({ [key] = true }) und was im Layout fehlt (Namen).
+function ES.Adjust(systems)
+    local done, missing = {}, {}
+    for _, e in ipairs(K.GAME_LAYOUT) do
+        local sys = Find(systems, e)
+        if sys then
+            local t = Target(e)
+            sys.anchorInfo = { point = t.point, relativeTo = "UIParent", relativePoint = t.relPoint,
+                               offsetX = t.x, offsetY = t.y }
+            sys.isInDefaultPosition = false
+            local SE = EnumTable(SETTINGS[e.sys])
+            for name, value in pairs(e.set or {}) do
+                if SetSetting(sys, SE and SE[name], value) then done[e.key .. "." .. name] = true end
+            end
+            done[e.key] = true
+        else
+            missing[#missing + 1] = e.label
         end
     end
-    return done
+    return done, missing
 end
 
--- WORAUF WIRD AUFGEBAUT? Auf dem Layout, das der Spieler gerade nutzt -
--- nur Gruppe und Schlachtzug aendern sich. 6.6.1.1 nahm die Vorlage
--- "Modern" des Spiels: Aktionsleisten und Questliste sprangen auf die
--- Standardplaetze von Forever (Beta-Test: Leisten unten links statt
--- mittig). Ist das aktive Layout schon "WeintCodex" (neu einrichten),
--- zaehlt das erste andere eigene Layout, sonst die Vorlage.
+-- WORAUF WIRD AUFGEBAUT? Auf der Vorlage des Spiels ("Modern", die erste)
+-- - sie traegt jedes System mit gueltigen Einstellungen, und was WeintCodex
+-- nicht stellt, steht dann dort, wo das Spiel es hinstellt, nicht dort,
+-- wo ein frueheres Addon es liess. Nur wenn der Client keine Vorlage
+-- nennt, das aktive eigene Layout (nie "WeintCodex" selbst).
 -- Gibt das Layout und seinen Namen zurueck.
 function ES.Base(info, presets)
+    local p = presets and presets[1]
+    if type(p) == "table" and type(p.systems) == "table" then return p, p.layoutName end
     local nPre = presets and #presets or 2
     local active = tonumber(info.activeLayout) or 0
-    if active > nPre then
-        local l = info.layouts[active - nPre]
-        if l and l.layoutName ~= ES.LAYOUT_NAME and type(l.systems) == "table" then return l, l.layoutName end
-        for _, o in ipairs(info.layouts) do
-            if o.layoutName ~= ES.LAYOUT_NAME and type(o.systems) == "table" then return o, o.layoutName end
-        end
-        local p = presets and presets[1]
-        return p, p and p.layoutName
+    local l = info.layouts[active - nPre]
+    if l and l.layoutName ~= ES.LAYOUT_NAME and type(l.systems) == "table" then return l, l.layoutName end
+    for _, o in ipairs(info.layouts) do
+        if o.layoutName ~= ES.LAYOUT_NAME and type(o.systems) == "table" then return o, o.layoutName end
     end
-    local p = presets and (presets[active] or presets[1])
-    return p, p and p.layoutName
+    return nil
 end
 
 function ES.BaseName()
@@ -162,8 +199,7 @@ function ES.BaseName()
 end
 
 -- Das Layout anlegen und aktiv setzen. true oder false, Grund.
-function ES.Apply()
-    if K.InCombat() then return false, "im Kampf" end
+local function ApplyLayout(report)
     local info, why = Layouts()
     if not info then return false, why end
     local presets = Presets()
@@ -172,12 +208,15 @@ function ES.Apply()
 
     local layout = Copy(base)
     layout.layoutName = ES.LAYOUT_NAME
-    local LT = _G.Enum and _G.Enum.EditModeLayoutType
+    local LT = EnumTable("EditModeLayoutType")
     layout.layoutType = LT and LT.Account or layout.layoutType
-    local done = ES.Adjust(layout.systems)
+    local done, missing = ES.Adjust(layout.systems)
     if not done.party then return false, "Gruppenrahmen im Layout nicht gefunden" end
+    local n = 0
+    for _, e in ipairs(K.GAME_LAYOUT) do if done[e.key] then n = n + 1 end end
+    report.frames, report.missing = n, missing
 
-    -- Ein altes "WeintCodex" (von einem abgebrochenen Versuch) ersetzen.
+    -- Ein altes "WeintCodex" (von einem frueheren Einrichten) ersetzen.
     local slot
     for i, l in ipairs(info.layouts) do
         if l.layoutName == ES.LAYOUT_NAME then slot = i end
@@ -192,6 +231,152 @@ function ES.Apply()
     if em.SetActiveLayout then pcall(em.SetActiveLayout, info.activeLayout) end
     ES.done = done
     return true
+end
+
+-- Chatfenster zurueck auf den Stand des Spiels: Allgemein und Kampflog.
+local function ResetChat()
+    local fn = _G.FCF_ResetChatWindows
+    if type(fn) ~= "function" then return false end
+    return (pcall(fn))
+end
+
+-- Spieleinstellungen, die die Oberflaeche voraussetzt - jede mit Grund.
+ES.CVARS = {
+    -- Eingabezeile nur beim Schreiben: darunter liegt die Infozeile.
+    { name = "chatStyle", value = "im" },
+    -- Gefluestertes im Chat, statt dass Reiter aufspringen.
+    { name = "whisperMode", value = "inline" },
+    -- Namen im Chat in Klassenfarbe (0 = Farbe NICHT abschalten).
+    { name = "chatClassColorOverride", value = "0" },
+    -- Knoepfe nicht versehentlich aus der Leiste ziehen (Umschalt zieht).
+    { name = "lockActionBars", value = "1" },
+    -- Keine Tutorial-Fenster ueber den Rahmen.
+    { name = "showTutorials", value = "0" },
+}
+
+local function GetCVarValue(name)
+    local cv = _G.C_CVar
+    local fn = (cv and cv.GetCVar) or _G.GetCVar
+    if type(fn) ~= "function" then return nil end
+    local ok, v = pcall(fn, name)
+    return ok and v or nil
+end
+
+-- Gibt zurueck, wie viele gesetzt wurden, und die unbekannten.
+local function ApplyCVars()
+    local cv = _G.C_CVar
+    local set = (cv and cv.SetCVar) or _G.SetCVar
+    local n, unknown = 0, {}
+    for _, c in ipairs(ES.CVARS) do
+        if type(GetCVarValue(c.name)) ~= "string" or type(set) ~= "function" then
+            unknown[#unknown + 1] = c.name
+        elseif pcall(set, c.name, c.value) then
+            n = n + 1
+        else
+            unknown[#unknown + 1] = c.name
+        end
+    end
+    return n, unknown
+end
+
+-- Alles einrichten. true oder false, Grund; ES.report sagt, was geschah.
+function ES.Apply()
+    if K.InCombat() then return false, "im Kampf" end
+    local report = {}
+    ES.report = report
+    local ok, why = ApplyLayout(report)
+    if not ok then return false, why end
+    report.chat = ResetChat()
+    report.cvars, report.unknownCVars = ApplyCVars()
+    report.own = pcall(K.ResetAllPositions)
+    return true
+end
+
+--------------------------------------------------
+-- Pruefen: steht alles, wo es stehen soll?
+--------------------------------------------------
+-- Nach dem Neuladen: /wcui einrichten pruefen. Misst je Rahmen den Punkt,
+-- an dem er haengen soll, in seinen eigenen Einheiten (so rechnet auch
+-- SetPoint) und vergleicht mit dem Platz aus K.GAME_LAYOUT.
+
+local function Num(f, m)
+    if type(f) ~= "table" or type(f[m]) ~= "function" then return nil end
+    local ok, v = pcall(f[m], f)
+    v = ok and K.Plain(v) or nil
+    return type(v) == "number" and v or nil
+end
+
+local function PointXY(f, point)
+    local l, r, t, b = Num(f, "GetLeft"), Num(f, "GetRight"), Num(f, "GetTop"), Num(f, "GetBottom")
+    if not (l and r and t and b) then return nil end
+    local x = point:find("LEFT") and l or (point:find("RIGHT") and r or (l + r) / 2)
+    local y = point:find("TOP") and t or (point:find("BOTTOM") and b or (t + b) / 2)
+    return x, y
+end
+
+local function FrameOf(e)
+    for _, n in ipairs(e.frames or {}) do
+        local f = _G[n]
+        if type(f) == "table" and type(f.GetLeft) == "function" then return f end
+    end
+    return nil
+end
+
+-- Zeilen fuer den Chat: je Rahmen "passt", "weicht ab (Ist ...)" oder
+-- "nicht messbar"; zuerst, welches Layout aktiv ist.
+function ES.Check()
+    local out = {}
+    local info = Layouts()
+    if info then
+        local presets = Presets()
+        local nPre = presets and #presets or 2
+        local active = tonumber(info.activeLayout) or 0
+        local l = active > nPre and info.layouts[active - nPre]
+        local name = l and l.layoutName or (presets and presets[active] and presets[active].layoutName)
+        out[#out + 1] = "Aktives Layout: " .. tostring(name or "?")
+            .. (name == ES.LAYOUT_NAME and "" or " – nicht „WeintCodex“, /wcui einrichten")
+    else
+        out[#out + 1] = "Layouts nicht lesbar."
+    end
+    local ui = _G.UIParent
+    local good, bad, unknown = 0, {}, {}
+    for _, e in ipairs(K.GAME_LAYOUT) do
+        local f = FrameOf(e)
+        local t = Target(e)
+        local fx, fy = f and PointXY(f, t.point)
+        local ux, uy = PointXY(ui, t.relPoint)
+        local fs, us = Num(f, "GetEffectiveScale"), Num(ui, "GetEffectiveScale")
+        local shown = f and Num(f, "GetWidth")
+        if not (fx and ux and fs and us and fs > 0) or not shown or shown <= 0 then
+            unknown[#unknown + 1] = e.label
+        else
+            local dx = fx - ux * us / fs
+            local dy = fy - uy * us / fs
+            if math.abs(dx - t.x) <= 3 and math.abs(dy - t.y) <= 3 then
+                good = good + 1
+            else
+                bad[#bad + 1] = string.format("%s: soll %s %d/%d, ist %d/%d", e.label, t.point, t.x, t.y,
+                    math.floor(dx + 0.5), math.floor(dy + 0.5))
+            end
+        end
+    end
+    out[#out + 1] = string.format("%d Rahmen am Platz, %d daneben, %d nicht messbar (versteckt oder nicht da).",
+        good, #bad, #unknown)
+    for _, line in ipairs(bad) do out[#out + 1] = line end
+    if #unknown > 0 then out[#out + 1] = "Nicht messbar: " .. table.concat(unknown, ", ") end
+    local cf = _G.ChatFrame1
+    local w, h = Num(cf, "GetWidth"), Num(cf, "GetHeight")
+    if w and h then
+        out[#out + 1] = string.format("Chatgröße: soll %d × %d, ist %d × %d", K.CHAT_SIZE.w, K.CHAT_SIZE.h,
+            math.floor(w + 0.5), math.floor(h + 0.5))
+    end
+    for _, c in ipairs(ES.CVARS) do
+        local v = GetCVarValue(c.name)
+        if type(v) == "string" and v ~= c.value then
+            out[#out + 1] = "Einstellung " .. c.name .. ": soll " .. c.value .. ", ist " .. v
+        end
+    end
+    return out
 end
 
 --------------------------------------------------
@@ -289,23 +474,25 @@ local ShowDone, ShowFailed
 
 local function ShowQuestion()
     local baseName = ES.BaseName()
-    local basis = baseName and ("Grundlage ist dein Layout „" .. tostring(baseName) .. "“ – Aktionsleisten und alles"
-        .. " andere bleiben, wo sie sind; nur Gruppe und Schlachtzug ändern sich.")
-        or "Welches Layout du gerade nutzt, sagt das Spiel nicht – dann baut WeintCodex auf der Vorlage des Spiels auf."
     SetText("Einrichtung",
         "WeintCodex einrichten?",
-        "WeintCodex legt im Bearbeitungsmodus des Spiels ein Layout „WeintCodex“ an: Gruppe und Schlachtzug als"
-        .. " schlachtzugsartige Rahmen mit HoTs, Buffs und Schilden, ohne Blizzards Linien, an den Plätzen von"
-        .. " WeintCodex. " .. basis .. "\n\n"
-        .. "Danach einmal neu laden. Verschieben kannst du hinterher alles: eigene Rahmen im Gestaltungsmodus,"
-        .. " die des Spiels im Bearbeitungsmodus. Dein bisheriges Layout bleibt erhalten und lässt sich dort"
-        .. " jederzeit wieder wählen.")
+        "WeintCodex stellt die ganze Oberfläche auf seinen Stand:\n"
+        .. "•  Alle Rahmen des Spiels an feste Plätze – Aktionsleisten, Chat, Minikarte, Buffs, Questliste,"
+        .. " Taschen, Menü, Gruppe (schlachtzugsartig, mit HoTs und Schilden) und Schlachtzug. Dafür entsteht im"
+        .. " Bearbeitungsmodus das Layout „WeintCodex“ auf Grundlage "
+        .. (baseName and ("der Vorlage „" .. tostring(baseName) .. "“") or "der Vorlage des Spiels")
+        .. ", nicht deines bisherigen Layouts.\n"
+        .. "•  Chatfenster zurück auf „Allgemein“ und „Kampflog“ – eigene Reiter verschwinden.\n"
+        .. "•  Einige Spieleinstellungen (Chatstil, Flüstern im Chat, Leisten sperren, keine Tutorials).\n"
+        .. "•  Die eigenen WeintCodex-Rahmen auf ihre Standardplätze.\n\n"
+        .. "Die Skalierung der Oberfläche bleibt, wie du sie hast. Danach einmal neu laden. Dein bisheriges"
+        .. " Layout bleibt im Bearbeitungsmodus wählbar; verschieben kannst du hinterher alles.")
     SetButtons({
         { key = "later", text = "Später", kind = "secondary", onClick = function()
             Close()
             Say("Einrichten geht jederzeit mit /wcui einrichten.")
         end },
-        { key = "apply", text = "Einrichten", kind = "primary", onClick = function()
+        { key = "apply", text = "Alles einrichten", kind = "primary", onClick = function()
             local ok, why = ES.Apply()
             if ok then ShowDone() else ShowFailed(why) end
         end },
@@ -313,10 +500,24 @@ local function ShowQuestion()
 end
 
 ShowDone = function()
+    local r = ES.report or {}
+    local lines = {
+        "•  " .. tostring(r.frames or 0) .. " Rahmen des Spiels im Layout „WeintCodex“ gesetzt, das Layout ist aktiv.",
+    }
+    if r.missing and #r.missing > 0 then
+        lines[#lines + 1] = "•  Nicht im Layout des Spiels gefunden: " .. table.concat(r.missing, ", ") .. "."
+    end
+    lines[#lines + 1] = r.chat and "•  Chatfenster zurückgesetzt."
+        or "•  Chatfenster NICHT zurückgesetzt (der Client kennt FCF_ResetChatWindows nicht)."
+    lines[#lines + 1] = "•  " .. tostring(r.cvars or 0) .. " Spieleinstellungen gesetzt"
+        .. ((r.unknownCVars and #r.unknownCVars > 0) and (", unbekannt: " .. table.concat(r.unknownCVars, ", ")) or "")
+        .. "."
+    lines[#lines + 1] = r.own and "•  Eigene Rahmen auf ihren Standardplätzen."
+        or "•  Eigene Rahmen NICHT zurückgesetzt."
     SetText("Einrichtung",
         "Fertig – jetzt neu laden",
-        "Das Layout „WeintCodex“ ist angelegt und aktiv. Nach dem Neuladen stehen alle Fenster an ihrem Platz."
-        .. "\n\nBis dahin bitte nicht in den Kampf: das Spiel stellt erst nach dem Neuladen alles sauber.")
+        table.concat(lines, "\n") .. "\n\nErst nach dem Neuladen steht alles an seinem Platz – bis dahin bitte nicht"
+        .. " in den Kampf. Danach zeigt /wcui einrichten pruefen, ob jeder Rahmen dort steht, wo er soll.")
     SetButtons({
         { key = "reload", text = "Jetzt neu laden", reload = true },
     })

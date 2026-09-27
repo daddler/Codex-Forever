@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.1.3] – 2026-09-27
+
+**Einrichtung stellt jetzt alles.** Jeder Rahmen des Spiels bekommt seinen festen Platz – Aktionsleisten, Chat, Minikarte, Buffs, Questliste, Taschen, Menü, Gruppe –, egal was ein früheres Addon eingestellt hatte. Dazu Chatfenster zurück auf Allgemein und Kampflog, einige Spieleinstellungen und die eigenen Rahmen auf ihre Plätze. Einmal /wcui einrichten, neu laden, und /wcui einrichten pruefen zeigt, ob alles sitzt.
+
 ## [6.6.1.2] – 2026-09-27
 
 **Einrichtung behält deine Leisten.** Das Layout „WeintCodex“ baut jetzt auf deinem bisherigen Layout auf – Aktionsleisten, Questliste und alles andere bleiben, wo sie waren; nur Gruppe und Schlachtzug ändern sich. Wer schon eingerichtet hat: /wcui einrichten noch einmal ausführen.

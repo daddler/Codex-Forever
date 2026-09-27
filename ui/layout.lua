@@ -8,9 +8,11 @@
 --
 -- DAS COCKPIT. Was im Kampf zaehlt, liegt um die Bildschirmmitte:
 -- Spieler- und Zielrahmen als Spiegelbild, je 100 Einheiten links und
--- rechts der Mittelachse; darunter mittig Kombopunkte und der eigene
--- Zauberbalken, darunter die Aktionsleisten des Spiels. Die Gruppe steht
--- links neben dem Spielerrahmen, die Schadensanzeige unten rechts.
+-- rechts der Mittelachse; zwischen beiden der eigene Zauberbalken und
+-- darueber die Kombopunkte (seit 6.6.1.3 - darunter brauchen drei
+-- Aktionsleisten und die Reihe fuer Haltungen und Begleiter den Platz).
+-- Die Gruppe steht links neben dem Spielerrahmen, die Schadensanzeige
+-- unten rechts neben den senkrechten Leisten.
 --
 -- EINHEITEN. Gerechnet ist fuer das Grundmass des Spiels: UIParent ist
 -- 768 Einheiten hoch (Skalierung aus). Der Entwurf ist in 1080 px
@@ -40,13 +42,15 @@ K.LAYOUT = {
     uf_target       = { point = "BOTTOMLEFT",  relPoint = "BOTTOM", x = AXIS,  y = COCKPIT_Y },
     uf_targettarget = { point = "TOPLEFT",     relPoint = "BOTTOM", x = AXIS + UF_W + 6, y = COCKPIT_Y + UF_H },
     uf_focus        = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -AXIS, y = COCKPIT_Y + UF_H + 10 },
-    uf_pet          = { point = "TOPRIGHT",    relPoint = "BOTTOM", x = -AXIS, y = COCKPIT_Y - 6 },
-    uf_combo        = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 165 },
-    uf_playercast   = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 138 },
+    -- Begleiter links neben dem Spieler, Spiegelbild zum Ziel des Ziels
+    -- (bis 6.6.1.2 darunter - dort steht jetzt die Begleiterleiste).
+    uf_pet          = { point = "TOPRIGHT",    relPoint = "BOTTOM", x = -(AXIS + UF_W + 6), y = COCKPIT_Y + UF_H },
+    uf_combo        = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = COCKPIT_Y + 25 },
+    uf_playercast   = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = COCKPIT_Y + 3 },
 
     -- Gruppe links neben dem Spielerrahmen; der Schlachtzug braucht die
     -- Breite und steht oben links.
-    gf_party        = { point = "TOPRIGHT",    relPoint = "BOTTOM", x = -(AXIS + UF_W + 18), y = 373 },
+    gf_party        = { point = "TOPRIGHT",    relPoint = "BOTTOM", x = -(AXIS + UF_W + 18), y = 440 },
     gf_raid         = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 20, y = -260 },
 
     -- Rand
@@ -56,12 +60,109 @@ K.LAYOUT = {
     procs           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 268 },
     cooldowns       = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 228 },
     xpbar           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 4 },
-    damagemeter     = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -12, y = 52 },
+    damagemeter     = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -86, y = 52 },
     bags            = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20, y = 110 },
     questarrow      = { point = "TOP",         relPoint = "TOP", x = 0, y = -8 },
     combatalert     = { point = "CENTER",      relPoint = "CENTER", x = 0, y = 220 },
     fps             = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -12 },
     durability      = { point = "TOP",         relPoint = "TOP", x = 0, y = -90 },
+}
+
+--------------------------------------------------
+-- Die Rahmen des Spiels
+--------------------------------------------------
+-- Seit 6.6.1.3 stellt die Einrichtung (ui/setup.lua) JEDEN Rahmen des
+-- Spiels, den WeintCodex nicht ersetzt, selbst - Beta-Test: "Chatfenster
+-- bleibt so, wie das vorherige UI es eingestellt hatte. WeintCodex soll
+-- erstmal ALLES komplett einstellen." Grundlage ist die Vorlage des
+-- Spiels; was hier nicht steht (Sprechkopf, Beute, Haltbarkeit, die
+-- ersetzten Einheitenrahmen), bleibt auf deren Platz.
+--
+-- UNTEN MITTE, von unten nach oben (Hoehen in Einheiten, Knopfgroessen
+-- aus ui/actionbars.lua, je 4 Einheiten Kachel ringsum):
+--   4-14 Erfahrung · 18-58 Leiste 1 (40) · 66-102 Leiste 2 (36)
+--   110-146 Leiste 3 (36) · 154-184 Haltungen links, Begleiter rechts
+--   189-220 Spieler und Ziel, dazwischen Zauberbalken und Kombopunkte
+-- RECHTS: Minikarte oben, darunter die Questliste; am Rand senkrecht
+-- Leiste 4 und 5; unten Taschenleiste, darueber die Schadensanzeige.
+-- LINKS: Chat unten (Infozeile darunter, Mikromenue ganz unten), Gruppe
+-- darueber links neben dem Spieler.
+-- Alle Masse sind gerechnet, nicht im Spiel gesehen - wer etwas
+-- ueberlappen sieht, meldet es, und es wird hier korrigiert.
+--
+-- sys/idx: Namen aus Enum.EditModeSystem und dem Enum der Indizes des
+-- Systems; set: Einstellungen nach Namen aus dessen Setting-Enum (nur
+-- Schalter und Werte, die das Spiel roh speichert); from: Platz aus
+-- K.LAYOUT; frames: wie der Rahmen im Spiel heisst (fuer die Pruefung).
+local BAR1_Y, BAR2_Y, BAR3_Y, ROW_Y = 18, 66, 110, 154
+local EDGE = 4            -- Abstand zum Bildschirmrand unten/rechts
+local SIDE_W = 34 + 4     -- eine senkrechte Leiste samt Luft
+local TRACK_X = -(EDGE + 2 * SIDE_W + 10)
+K.CHAT_SIZE = { w = 400, h = 160 }
+
+K.GAME_LAYOUT = {
+    { key = "bar1", label = "Aktionsleiste 1", sys = "ActionBar", idx = "MainBar",
+      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = BAR1_Y,
+      set = { HideBarArt = 1, HideBarScrolling = 1 }, frames = { "MainActionBar", "MainMenuBar" } },
+    { key = "bar2", label = "Aktionsleiste 2", sys = "ActionBar", idx = "Bar2",
+      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = BAR2_Y, frames = { "MultiBarBottomLeft" } },
+    { key = "bar3", label = "Aktionsleiste 3", sys = "ActionBar", idx = "Bar3",
+      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = BAR3_Y, frames = { "MultiBarBottomRight" } },
+    { key = "bar4", label = "Aktionsleiste 4", sys = "ActionBar", idx = "RightBar1",
+      point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -EDGE, y = 60,
+      set = { Orientation = 1 }, frames = { "MultiBarRight" } },
+    { key = "bar5", label = "Aktionsleiste 5", sys = "ActionBar", idx = "RightBar2",
+      point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -(EDGE + SIDE_W), y = 60,
+      set = { Orientation = 1 }, frames = { "MultiBarLeft" } },
+    { key = "stance", label = "Haltungsleiste", sys = "ActionBar", idx = "StanceBar",
+      point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -4, y = ROW_Y, frames = { "StanceBar" } },
+    { key = "possess", label = "Besessenheitsleiste", sys = "ActionBar", idx = "PossessActionBar",
+      point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -4, y = ROW_Y, frames = { "PossessActionBar" } },
+    { key = "pet", label = "Begleiterleiste", sys = "ActionBar", idx = "PetActionBar",
+      point = "BOTTOMLEFT", relPoint = "BOTTOM", x = 4, y = ROW_Y, frames = { "PetActionBar" } },
+    { key = "vehicle", label = "Fahrzeug verlassen", sys = "VehicleLeaveButton",
+      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = ROW_Y, frames = { "MainMenuBarVehicleLeaveButton" } },
+    { key = "extra", label = "Zusatzfähigkeit", sys = "ExtraAbilities",
+      point = "BOTTOMLEFT", relPoint = "BOTTOM", x = AXIS + UF_W + 10, y = COCKPIT_Y + UF_H + 10,
+      frames = { "ExtraAbilityContainer" } },
+    { key = "essential", label = "Abklingzeiten: Wichtig", sys = "CooldownViewer", idx = "Essential",
+      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 316, frames = { "EssentialCooldownViewer" } },
+    { key = "utility", label = "Abklingzeiten: Hilfreich", sys = "CooldownViewer", idx = "Utility",
+      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 366, frames = { "UtilityCooldownViewer" } },
+    { key = "bufficon", label = "Abklingzeiten: Buffs", sys = "CooldownViewer", idx = "BuffIcon",
+      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 406, frames = { "BuffIconCooldownViewer" } },
+    { key = "encounter", label = "Begegnungsleiste", sys = "EncounterBar",
+      point = "TOP", relPoint = "TOP", x = 0, y = -170, frames = { "EncounterBar" } },
+
+    { key = "minimap", label = "Minikarte", sys = "Minimap",
+      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -12, y = -12, frames = { "MinimapCluster" } },
+    { key = "buffs", label = "Buffs", sys = "AuraFrame", idx = "BuffFrame",
+      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -270, y = -12, frames = { "BuffFrame" } },
+    { key = "debuffs", label = "Debuffs", sys = "AuraFrame", idx = "DebuffFrame",
+      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -270, y = -110, frames = { "DebuffFrame" } },
+    { key = "tracker", label = "Questliste", sys = "ObjectiveTracker",
+      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = TRACK_X, y = -262, frames = { "ObjectiveTrackerFrame" } },
+    { key = "boss", label = "Bossrahmen", sys = "UnitFrame", idx = "Boss",
+      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = TRACK_X - 270, y = -262, frames = { "BossTargetFrameContainer" } },
+    { key = "arena", label = "Arenarahmen", sys = "UnitFrame", idx = "Arena",
+      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = TRACK_X - 270, y = -262, frames = { "CompactArenaFrame", "ArenaEnemyFramesContainer" } },
+    { key = "tooltip", label = "Tooltip", sys = "HudTooltip",
+      point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = TRACK_X, y = 240, frames = { "GameTooltipDefaultContainer" } },
+    { key = "bags", label = "Taschenleiste", sys = "Bags",
+      point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -EDGE, y = EDGE, frames = { "BagsBar" } },
+
+    { key = "micro", label = "Mikromenü", sys = "MicroMenu",
+      point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = EDGE, y = EDGE, frames = { "MicroMenuContainer", "MicroMenu" } },
+    { key = "chat", label = "Chat", sys = "ChatFrame",
+      point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = 14, y = 72, frames = { "ChatFrame1" },
+      set = { WidthHundreds = math.floor(K.CHAT_SIZE.w / 100), WidthTensAndOnes = K.CHAT_SIZE.w % 100,
+              HeightHundreds = math.floor(K.CHAT_SIZE.h / 100), HeightTensAndOnes = K.CHAT_SIZE.h % 100 } },
+    -- Gruppe schlachtzugsartig (nur die zeigen HoTs), ohne Blizzards
+    -- Linien - den Rand zeichnet WeintCodex (ui/gamegroup.lua).
+    { key = "party", label = "Gruppe", sys = "UnitFrame", idx = "Party", from = "gf_party",
+      set = { UseRaidStylePartyFrames = 1, DisplayBorder = 0 }, frames = { "CompactPartyFrame", "PartyFrame" } },
+    { key = "raid", label = "Schlachtzug", sys = "UnitFrame", idx = "Raid", from = "gf_raid",
+      set = { DisplayBorder = 0 }, frames = { "CompactRaidFrameContainer" } },
 }
 
 -- Eine frische Kopie: wer sie veraendert (weitere Fenster der

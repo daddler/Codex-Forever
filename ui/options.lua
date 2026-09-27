@@ -842,6 +842,12 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         WeintCodex.UISetup.Show()
         return
     end
+    if msg == "einrichten pruefen" or msg == "einrichten prüfen" or msg == "setup check" then
+        for _, line in ipairs(WeintCodex.UISetup.Check()) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+        return
+    end
     if msg == "gruppe" or msg == "group" then
         for _, line in ipairs(WeintCodex.UIGameGroup.Inspect()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)

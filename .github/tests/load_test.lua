@@ -1902,24 +1902,33 @@ do
         local ES = WeintCodex.UISetup
         assert(ES, "ui/setup.lua nicht geladen")
         local oldEM, oldPM, oldEnum = _G.C_EditMode, _G.EditModePresetLayoutManager, _G.Enum
+        local oldCV, oldReset = _G.C_CVar, _G.FCF_ResetChatWindows
         _G.Enum = setmetatable({
-            EditModeSystem = { UnitFrame = 3, ActionBar = 0 },
+            EditModeSystem = { ActionBar = 0, UnitFrame = 3, ChatFrame = 8, Minimap = 2 },
+            EditModeActionBarSystemIndices = { MainBar = 1, Bar2 = 2, RightBar1 = 4 },
+            EditModeActionBarSetting = { Orientation = 0, HideBarArt = 6 },
             EditModeUnitFrameSystemIndices = { Player = 1, Target = 2, Party = 4, Raid = 5 },
             EditModeUnitFrameSetting = { UseRaidStylePartyFrames = 4, DisplayBorder = 12 },
+            EditModeChatFrameSetting = { WidthHundreds = 0, WidthTensAndOnes = 1, HeightHundreds = 2, HeightTensAndOnes = 3 },
             EditModeLayoutType = { Preset = 0, Account = 1, Character = 2 },
         }, { __index = oldEnum })
+        local function Sys(system, idx, extra)
+            local t = { system = system, systemIndex = idx, settings = {}, isInDefaultPosition = true,
+                        anchorInfo = { point = "BOTTOMLEFT", relativeTo = "UIParent", relativePoint = "BOTTOMLEFT", offsetX = 0, offsetY = 0 } }
+            for k, v in pairs(extra or {}) do t[k] = v end
+            return t
+        end
         local modern = { layoutName = "Modern", layoutType = 0, systems = {
-            { system = 0, systemIndex = 1, settings = {}, anchorInfo = { point = "BOTTOM" } },
-            { system = 3, systemIndex = 4, settings = { { setting = 4, value = 0 } }, isInDefaultPosition = true },
-            { system = 3, systemIndex = 5, settings = {} },
+            Sys(0, 1), Sys(0, 2), Sys(0, 4), Sys(8, 0), Sys(2, 0),
+            Sys(3, 4, { settings = { { setting = 4, value = 0 } } }), Sys(3, 5),
         } }
         _G.EditModePresetLayoutManager = { GetCopyOfPresetLayouts = function() return { modern, { layoutName = "Klassisch", systems = {} } } end }
-        -- Das aktive Layout des Spielers: Leiste 1 mittig (6.6.1.2 - vorher
-        -- sprang sie mit der Vorlage "Modern" nach unten links).
+        -- Das aktive Layout des Spielers stammt von einem anderen Addon:
+        -- der Chat steht dort, wo es ihn hinstellte. Seit 6.6.1.3 zaehlt
+        -- das nicht mehr - Grundlage ist die Vorlage, jeder Rahmen fest.
         local elle = { layoutName = "EllesmereUI Forever v4", layoutType = 1, systems = {
-            { system = 0, systemIndex = 1, settings = {}, anchorInfo = { point = "BOTTOM", relativePoint = "BOTTOM", offsetX = 0, offsetY = 80 } },
-            { system = 3, systemIndex = 4, settings = {} },
-            { system = 3, systemIndex = 5, settings = {} },
+            Sys(0, 1), Sys(8, 0, { anchorInfo = { point = "TOPLEFT", relativePoint = "TOPLEFT", offsetX = 900, offsetY = -40 } }),
+            Sys(3, 4), Sys(3, 5),
         } }
         local stored = { activeLayout = 3, layouts = { elle } }
         local saved, active
@@ -1928,36 +1937,65 @@ do
             SaveLayouts = function(info) saved = info end,
             SetActiveLayout = function(i) active = i end,
         }
+        local cvars = { chatStyle = "classic", whisperMode = "popout", lockActionBars = "0" }
+        _G.C_CVar = {
+            GetCVar = function(n) return cvars[n] end,
+            SetCVar = function(n, v) if cvars[n] == nil then error("unbekannt") end cvars[n] = v end,
+        }
+        local chatReset = 0
+        _G.FCF_ResetChatWindows = function() chatReset = chatReset + 1 end
         assert(ES.HasLayout() == false, "Layout vor der Einrichtung schon da")
+        assert(ES.BaseName() == "Modern", "Grundlage nicht die Vorlage des Spiels")
         local okA, why = ES.Apply()
         assert(okA, "Einrichten schlug fehl: " .. tostring(why))
         local l = saved and saved.layouts[2]
         assert(l and l.layoutName == "WeintCodex" and l.layoutType == 1, "Layout nicht angelegt")
         assert(saved.layouts[1].layoutName == "EllesmereUI Forever v4", "bisheriges Layout ueberschrieben")
         assert(saved.activeLayout == 4 and active == 4, "Layout nicht aktiv (2 Vorlagen + 2)")
-        local party = l.systems[2]
-        local rs, bd
-        for _, st in ipairs(party.settings) do
-            if st.setting == 4 then rs = st.value end
-            if st.setting == 12 then bd = st.value end
+        local function Get(system, idx)
+            for _, sy in ipairs(l.systems) do if sy.system == system and sy.systemIndex == idx then return sy end end
         end
-        assert(rs == 1 and bd == 0, "Gruppe nicht schlachtzugsartig oder mit Rand")
+        local function Setting(sy, id)
+            for _, st in ipairs(sy.settings) do if st.setting == id then return st.value end end
+        end
+        local party = Get(3, 4)
+        assert(Setting(party, 4) == 1 and Setting(party, 12) == 0, "Gruppe nicht schlachtzugsartig oder mit Rand")
         local want = K.LAYOUT.gf_party
         assert(party.anchorInfo.point == want.point and party.anchorInfo.offsetX == want.x
             and party.isInDefaultPosition == false, "Gruppe nicht am WeintCodex-Platz")
-        assert(l.systems[3].anchorInfo and l.systems[3].anchorInfo.relativePoint == K.LAYOUT.gf_raid.relPoint,
-            "Schlachtzug nicht am WeintCodex-Platz")
-        assert(l.systems[1].anchorInfo.offsetY == 80 and l.systems[1].anchorInfo.point == "BOTTOM",
-            "Aktionsleiste nicht aus dem aktiven Layout uebernommen")
-        assert(#elle.systems[2].settings == 0, "Layout des Spielers veraendert statt kopiert")
-        -- Neu einrichten, waehrend "WeintCodex" aktiv ist: wieder auf dem
-        -- Layout des Spielers, nicht auf sich selbst oder der Vorlage.
+        assert(Get(3, 5).anchorInfo.relativePoint == K.LAYOUT.gf_raid.relPoint, "Schlachtzug nicht am WeintCodex-Platz")
+        -- Jeder Rahmen fest gesetzt, keiner auf dem Standardplatz des Spiels.
+        local function Entry(key) for _, e in ipairs(K.GAME_LAYOUT) do if e.key == key then return e end end end
+        for _, pair in ipairs({ { 0, 1, "bar1" }, { 0, 2, "bar2" }, { 0, 4, "bar4" }, { 8, 0, "chat" }, { 2, 0, "minimap" } }) do
+            local sy, e = Get(pair[1], pair[2]), Entry(pair[3])
+            assert(sy.isInDefaultPosition == false and sy.anchorInfo.point == e.point
+                and sy.anchorInfo.offsetX == e.x and sy.anchorInfo.offsetY == e.y, e.label .. " nicht am WeintCodex-Platz")
+        end
+        local chat = Get(8, 0)
+        assert(Setting(chat, 0) * 100 + Setting(chat, 1) == K.CHAT_SIZE.w
+            and Setting(chat, 2) * 100 + Setting(chat, 3) == K.CHAT_SIZE.h, "Chatgroesse nicht gesetzt")
+        assert(Setting(Get(0, 1), 6) == 1 and Setting(Get(0, 4), 0) == 1, "Leisteneinstellungen nicht gesetzt")
+        assert(elle.systems[2].anchorInfo.offsetX == 900, "Layout des Spielers veraendert statt kopiert")
+        -- Was das Layout der Vorlage nicht traegt, nennt der Bericht.
+        local r = ES.report
+        assert(r.frames == 7 and #r.missing == #K.GAME_LAYOUT - 7, "Bericht zaehlt die Rahmen falsch: " .. tostring(r.frames))
+        assert(chatReset == 1 and r.chat, "Chatfenster nicht zurueckgesetzt")
+        assert(cvars.chatStyle == "im" and cvars.whisperMode == "inline" and cvars.lockActionBars == "1", "Spieleinstellungen nicht gesetzt")
+        assert(r.cvars == 3 and #r.unknownCVars == #ES.CVARS - 3, "unbekannte Einstellungen nicht ehrlich gemeldet")
+        assert(r.own, "eigene Rahmen nicht zurueckgesetzt")
+        -- Neu einrichten: wieder auf der Vorlage, nie auf sich selbst.
         local again = { activeLayout = 4, layouts = { elle, l } }
         local b2, n2 = ES.Base(again, _G.EditModePresetLayoutManager.GetCopyOfPresetLayouts())
-        assert(b2 == elle and n2 == "EllesmereUI Forever v4", "Neu einrichten baut nicht auf dem Layout des Spielers auf")
-        assert(select(2, ES.Base({ activeLayout = 1, layouts = {} }, { modern })) == "Modern", "ohne eigenes Layout nicht die Vorlage")
-        -- Danach gibt es das Layout - es wird nicht mehr gefragt.
+        assert(b2 == modern and n2 == "Modern", "Neu einrichten baut nicht auf der Vorlage auf")
+        -- Ohne Vorlage: das eigene Layout des Spielers, nie "WeintCodex".
+        assert(select(2, ES.Base(again, nil)) == "EllesmereUI Forever v4", "ohne Vorlage kein Rueckfall aufs eigene Layout")
+        assert(ES.Base({ activeLayout = 3, layouts = { l } }, nil) == nil, "baut auf sich selbst auf")
+        -- Pruefen laeuft und nennt das aktive Layout.
         stored = saved
+        local lines = ES.Check()
+        assert(lines[1]:find("WeintCodex", 1, true) and lines[2]:find("Rahmen am Platz", 1, true), "Pruefung sagt nichts")
+        _G.C_CVar, _G.FCF_ResetChatWindows = oldCV, oldReset
+        -- Danach gibt es das Layout - es wird nicht mehr gefragt.
         assert(ES.HasLayout() == true, "Layout danach nicht erkannt")
         ES._ResetAsked()
         ES.MaybeAsk()
@@ -1967,8 +2005,10 @@ do
         ES._ResetAsked()
         ES.MaybeAsk()
         assert(ES.IsShown() and ES.Button("apply") and ES.Button("later"), "Einrichtungsfenster nicht gezeigt")
+        assert(ES.BodyText():find("Chatfenster", 1, true), "Frage nennt den Chat nicht")
         ES.Button("apply"):Click()
         assert(ES.Button("reload") and ES.BodyText():find("Neuladen", 1, true), "nach dem Einrichten kein Neuladen angeboten")
+        assert(ES.BodyText():find("Nicht im Layout", 1, true), "fehlende Rahmen verschwiegen")
         -- Im Kampf nie; ohne C_EditMode ehrlich gescheitert.
         local oldCombat = _G.InCombatLockdown
         _G.InCombatLockdown = function() return true end
@@ -1983,7 +2023,7 @@ do
         ES.Button("close"):Click()
         _G.C_EditMode, _G.EditModePresetLayoutManager, _G.Enum = oldEM, oldPM, oldEnum
     end)
-    Check(ok, "Einrichtung: Layout WeintCodex angelegt, aktiv, Gruppe schlachtzugsartig am Platz, danach neu laden"
+    Check(ok, "Einrichtung: alle Rahmen des Spiels fest auf der Vorlage, Chat, Spieleinstellungen, danach neu laden"
         .. (ok and "" or (": " .. tostring(err))))
 end
 
