@@ -1846,7 +1846,10 @@ end
 -- "Auf der Karte": oeffnet die Weltkarte auf der Zone des Gebers (bzw.
 -- dem Fundort des Startgegenstands) und setzt dort eine Marke
 -- (modules/questmap.lua). Nur wo J.PLACES eine Lage kennt.
-local MAP_LINK_H = 18
+-- 6.5.1.1 (Beta-Test: "sehr unscheinbar"): ein Knopf mit Flaeche und
+-- Rand im gedaempften Akzent statt einer Textzeile - er ist die eine
+-- Handlung in der Questkachel.
+local MAP_LINK_H = 24
 local function MapLink(parent, y, place, q)
     local QM = WeintCodex.QuestMap
     if not QM then return y end
@@ -1855,18 +1858,26 @@ local function MapLink(parent, y, place, q)
     local b = CreateFrame("Button", nil, parent)
     b:SetHeight(MAP_LINK_H)
     b:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, y)
+    local bg = b:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(b)
+    local function Paint(hover)
+        local s = hover and C.accentDim or C.surface3
+        bg:SetColorTexture(s[1], s[2], s[3], 1)
+    end
+    Paint(false)
+    WeintCodex.DrawSlimBorder(b, "accentDim", 1, 1)
     local mark = b:CreateTexture(nil, "ARTWORK")
-    mark:SetSize(7, 7)
-    mark:SetPoint("LEFT", b, "LEFT", 2, 0)
-    mark:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+    mark:SetSize(8, 8)
+    mark:SetPoint("LEFT", b, "LEFT", 10, 0)
+    mark:SetColorTexture(C.accentBright[1], C.accentBright[2], C.accentBright[3], 1)
     if mark.SetRotation then pcall(mark.SetRotation, mark, math.pi / 4) end
-    local fs = WeintCodex.Label(b, text, { size = 11, color = "accent", font = WeintCodex.Fonts.sansMedium })
-    fs:SetPoint("LEFT", mark, "RIGHT", 7, 0)
+    local fs = WeintCodex.Label(b, text, { size = 12, color = "textBright", font = WeintCodex.Fonts.sansSemi })
+    fs:SetPoint("LEFT", mark, "RIGHT", 8, 0)
     fs:SetWordWrap(false)
-    b:SetWidth(20 + WeintCodex.Utf8Len(text) * 6.5)
+    b:SetWidth(40 + math.ceil(WeintCodex.Utf8Len(text) * 12 * 0.56))
     b.place, b.quest = place, q
     b:SetScript("OnEnter", function(self)
-        fs:SetTextColor(C.accentBright[1], C.accentBright[2], C.accentBright[3], 1)
+        Paint(true)
         local gt = _G.GameTooltip
         if not gt then return end
         gt:SetOwner(self, "ANCHOR_RIGHT")
@@ -1878,17 +1889,17 @@ local function MapLink(parent, y, place, q)
         gt:Show()
     end)
     b:SetScript("OnLeave", function()
-        fs:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
+        Paint(false)
         if _G.GameTooltip then _G.GameTooltip:Hide() end
     end)
     b:SetScript("OnClick", function(self)
         QM.Show(self.place, QuestTitle(self.quest))
     end)
-    return y - MAP_LINK_H - 2
+    return y - MAP_LINK_H - 6
 end
 
-local function DrawQuest(inner, y, w, q)
-    local title = WeintCodex.Label(inner, QuestTitle(q), { size = 13, color = "textBright",
+local function DrawQuestBody(inner, y, w, q)
+    local title = WeintCodex.Label(inner, QuestTitle(q), { size = 14, color = "textBright",
         font = WeintCodex.Fonts.sansSemi })
     title:SetPoint("TOPLEFT", inner, "TOPLEFT", 0, y)
     -- Breite statt eines zweiten Ankers: "RIGHT" an der Flaeche haengt
@@ -1897,8 +1908,8 @@ local function DrawQuest(inner, y, w, q)
     title:SetWordWrap(false)
     local meta = "Stufe " .. q.level .. " · ab " .. q.requires
     local metaFs = WeintCodex.Label(inner, meta, { size = 11, color = "textDim", justify = "RIGHT" })
-    metaFs:SetPoint("TOPRIGHT", inner, "TOPRIGHT", 0, y - 1)
-    y = y - 18
+    metaFs:SetPoint("TOPRIGHT", inner, "TOPRIGHT", 0, y - 2)
+    y = y - 20
 
     local tags = { FACTION_TEXT[q.faction] or "" }
     if q.class then tags[#tags + 1] = CLASS_TEXT[q.class] or q.class end
@@ -1907,13 +1918,13 @@ local function DrawQuest(inner, y, w, q)
     y = BodyText(inner, y, q.objective, w, { size = 12, color = "textNormal" }) - 2
     y = BodyText(inner, y, "Beginnt: " .. q.giver, w, { size = 11, color = "textMuted" })
     local place = J.Place and J.Place(q.id)
-    if place and not place.item then y = MapLink(inner, y, place, q) end
+    if place and not place.item then y = MapLink(inner, y - 4, place, q) end
     y = BodyText(inner, y, "Abgabe: " .. q.turnin, w, { size = 11, color = "textMuted" })
 
     if q.startItem then
         y = ItemRow(inner, y - 2, w, q.startItem[1], q.startItem[2], nil, 1, "Beginnt mit:")
     end
-    if place and place.item then y = MapLink(inner, y, place, q) end
+    if place and place.item then y = MapLink(inner, y - 4, place, q) end
 
     local rew = {}
     if q.xp then rew[#rew + 1] = Thousands(q.xp) .. " EP (beobachtet)" end
@@ -1936,7 +1947,32 @@ local function DrawQuest(inner, y, w, q)
     for _, r in ipairs(q.followRewards or {}) do
         y = ItemRow(inner, y, w, r[1], r[2], nil, 3)
     end
-    return y - 14
+    return y
+end
+
+-- JEDE QUEST IN IHRER KACHEL (6.5.1.1, Beta-Test: "die Quests sind
+-- nacheinander weg, man erkennt nicht, wann eine neue beginnt"): eine
+-- Flaeche eine Stufe heller als die Karte, ein Haarlinienrand, Luft
+-- dazwischen. Gezeichnet wird in einen Innenrahmen mit Abstand; die
+-- Hoehe steht erst danach fest und wird dann gesetzt.
+local QUEST_PAD, QUEST_GAP = 10, 10
+local function DrawQuest(inner, y, w, q)
+    local tile = CreateFrame("Frame", nil, inner)
+    tile:SetPoint("TOPLEFT",  inner, "TOPLEFT",  0, y)
+    tile:SetPoint("TOPRIGHT", inner, "TOPRIGHT", 0, y)
+    local bg = tile:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(tile)
+    bg:SetColorTexture(C.surface2[1], C.surface2[2], C.surface2[3], 1)
+    WeintCodex.DrawSlimBorder(tile, "borderStrong", 1, 1)
+    local body = CreateFrame("Frame", nil, tile)
+    body:SetPoint("TOPLEFT",  tile, "TOPLEFT",  QUEST_PAD, -QUEST_PAD)
+    body:SetPoint("TOPRIGHT", tile, "TOPRIGHT", -QUEST_PAD, -QUEST_PAD)
+    local endY = DrawQuestBody(body, 0, w - 2 * QUEST_PAD, q)
+    local h = -endY + 2 * QUEST_PAD
+    body:SetHeight(-endY)
+    tile:SetHeight(h)
+    WeintCodex.DungeonPages.questTiles = (WeintCodex.DungeonPages.questTiles or 0) + 1
+    return y - h - QUEST_GAP
 end
 
 -- Quests und weitere Beute eines Dungeons, unter der Aufstellung.
@@ -2463,6 +2499,7 @@ local function DrawDungeonAt(f, dungeon, withInspector)
     ClearRows()
     WeintCodex.DungeonPages.itemRows = 0   -- fuer den Prueflauf: Gegenstandszeilen dieser Runde
     WeintCodex.DungeonPages.mapLinks = 0   -- und Kartenlinks
+    WeintCodex.DungeonPages.questTiles = 0
     f._relayout = nil
     gridCols, gridLongest = 0, 0
 

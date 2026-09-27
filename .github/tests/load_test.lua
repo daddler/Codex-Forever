@@ -2215,6 +2215,10 @@ do
         DP.Select("the_deadmines", nil)
         WeintCodex.Navigation.SwitchTo("dungeons")
         assert(DP.mapLinks == 5, "Kartenlinks in The Deadmines: " .. tostring(DP.mapLinks) .. " statt 5")
+        -- 6.5.1.1: jede Quest in ihrer Kachel (sieben in The Deadmines).
+        assert(DP.questTiles == #J.Quests("the_deadmines", nil) or DP.questTiles == #J.Quests("the_deadmines", "alliance"),
+            "Questkacheln: " .. tostring(DP.questTiles))
+        assert(DP.questTiles > 0, "keine Questkachel")
         DP.Select("hall_of_thanes", nil)
         WeintCodex.Navigation.SwitchTo("dungeons")
         assert(DP.mapLinks == 1, "Fundort der Dark Iron Map ohne Link")

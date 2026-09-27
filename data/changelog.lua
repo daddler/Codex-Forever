@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.5.1.1",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFJede Quest in ihrer eigenen Kachel.|r Im Dungeonkompendium ist auf einen Blick zu sehen, wo eine Quest endet und die nächste beginnt.",
+            "|cff7C6CFFDer Kartenknopf fällt auf.|r „Questgeber auf der Karte zeigen“ ist jetzt ein Knopf mit Fläche und Rand statt einer kleinen Textzeile.",
+        },
+    },
+    {
         version = "6.5.1.0",
         date    = "27.09.2026",
         notes   = {

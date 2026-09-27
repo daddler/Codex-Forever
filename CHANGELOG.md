@@ -9,6 +9,21 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.5.1.1] – 2026-09-27
+
+**Jede Quest in ihrer eigenen Kachel.** Im Dungeonkompendium ist auf einen Blick zu sehen, wo eine Quest endet und die nächste beginnt.
+
+**Der Kartenknopf fällt auf.** „Questgeber auf der Karte zeigen“ ist jetzt ein Knopf mit Fläche und Rand statt einer kleinen Textzeile.
+
+### Technisch
+
+- `modules/dungeonpages.lua`: `DrawQuest` zeichnet in eine Kachel
+  (`surface2`, Rand `borderStrong`, 10 px Innenabstand, 10 px Luft
+  dazwischen); der Inhalt steht in `DrawQuestBody`. `MapLink` ist ein
+  24 px hoher Knopf (`surface3`, Rand `accentDim`, unter der Maus
+  `accentDim`-Fläche). Titel 14 statt 13.
+- Rückmeldung aus dem Beta-Test: Link „sehr unscheinbar“, Quests „nacheinander weg“.
+
 ## [6.5.1.0] – 2026-09-27
 
 **Questgeber auf der Weltkarte.** Unter einer Quest im Dungeonkompendium öffnet ein Klick die Weltkarte auf der richtigen Zone und markiert, wo die Quest beginnt – bei 33 Quests. Rechtsklick auf die Marke entfernt sie.
