@@ -3094,6 +3094,22 @@ do
         UF.RedrawTexts()
         assert((f.left:GetText() or ""):find("Aloha", 1, true), "RedrawTexts setzt den Namen nicht")
         _G.UnitName, _G.C_Timer.After = oldName, oldAfter
+        -- 6.6.0.6: eingehende Heilung und Schilde auch an Spieler und Ziel.
+        local oldHeal, oldAbs, oldMax = _G.UnitGetIncomingHeals, _G.UnitGetTotalAbsorbs, _G.UnitHealthMax
+        _G.UnitHealthMax = function() return 1000 end
+        _G.UnitGetIncomingHeals = function() return 250 end
+        _G.UnitGetTotalAbsorbs = nil
+        for _, u in ipairs({ "player", "target" }) do
+            local fr = UF.frames[u]
+            fr:UpdatePrediction()
+            assert(fr._heal:IsShown() and fr._heal:GetValue() == 250, u .. ": eingehende Heilung fehlt")
+            assert(not fr._absorb:IsShown(), u .. ": Schild ohne Antwort des Clients gezeigt")
+        end
+        WeintCodex.UIKit.Set("unitframes", "healPrediction", false)
+        UF.frames.player:UpdatePrediction()
+        assert(not UF.frames.player._heal:IsShown(), "Heilung trotz ausgeschalteter Einstellung")
+        WeintCodex.UIKit.Set("unitframes", "healPrediction", true)
+        _G.UnitGetIncomingHeals, _G.UnitGetTotalAbsorbs, _G.UnitHealthMax = oldHeal, oldAbs, oldMax
         -- 6.6.0.4: Aurenleisten wieder ausgebaut - der Client gibt Addons
         -- im Kampf weder die Auren des Ziels noch die eigenen heraus.
         assert(not UF.frames.player._auraBars and not UF.frames.target._auraBars,

@@ -11,6 +11,8 @@ nicht zusammen.
 
 ## [6.6.0.6] – 2026-09-27
 
+**Eingehende Heilung an Spieler und Ziel.** Wie in den Gruppenrahmen zeigt ein heller grüner Balken hinter dem Leben, wie weit gerade gewirkte Heilungen reichen, ein weißer dahinter die Schilde. Beides abschaltbar unter Einheitenrahmen → Allgemein.
+
 **Erinnerung bei knapper Munition.** Neue Regel „Munition knapp“: WeintCodex liest, was im Munitionsplatz steckt, und erinnert unter einer Menge, die du festlegst (ohne Angabe 200) – und wenn sie ganz verschossen ist. „Für meine Klasse“ legt sie beim Jäger gleich mit an.
 
 **Erinnerung bei knappem Vorrat.** Neue Regel „Vorrat knapp“ für jeden Gegenstand, den du nennst (Name oder ID): Tränke, Reagenzien, Essen – mit eigener Mindestmenge.

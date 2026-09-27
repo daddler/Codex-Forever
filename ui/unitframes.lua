@@ -65,6 +65,10 @@ local defaults = {
     playerCastWidth  = 240,
     playerCastLatency = true,
     tintedBg      = true,      -- Grund in der dunklen Balkenfarbe
+    -- Eingehende Heilung und Schilde hinter dem Leben (6.6.0.6, Beta-Test:
+    -- "auch beim Spieler- und Zielrahmen" - wie in den Gruppenrahmen).
+    healPrediction = true,
+    absorbs        = true,
     hover         = true,      -- Maus darueber hellt auf
     -- Der eigene Zauberbalken mittig ueber den Leisten, die Kombopunkte
     -- mittig unter der Figur (Cockpit). Aus: beides am Rahmen wie bisher.
@@ -295,6 +299,31 @@ local function Create(unit)
     hbg:SetAllPoints(health)
     f.healthBg = hbg
 
+    -- Heilung und Schild in einer Klammer ueber dem Lebensbalken (wie in
+    -- den Gruppenrahmen): links an der Kante der Fuellung, so breit wie
+    -- der Balken; wie weit sie reichen, rechnet der Client (Wert /
+    -- Hoechstwert) - Lua addiert nie geheime Zahlen. Was ueber den
+    -- Balken hinausragt, schneidet die Klammer ab.
+    local clip = CreateFrame("Frame", nil, f)
+    if clip.SetClipsChildren then pcall(clip.SetClipsChildren, clip, true) end
+    clip:SetAllPoints(health)
+    clip:SetFrameLevel((health:GetFrameLevel() or 1) + 1)
+    f._predClip = clip
+    local fill = health:GetStatusBarTexture()
+    f._heal = K.NewBar(clip, true)
+    f._absorb = K.NewBar(clip, true)
+    if fill then
+        f._heal:SetPoint("TOPLEFT", fill, "TOPRIGHT", 0, 0)
+        f._heal:SetPoint("BOTTOMLEFT", fill, "BOTTOMRIGHT", 0, 0)
+    end
+    local healFill = f._heal:GetStatusBarTexture()
+    if healFill then
+        f._absorb:SetPoint("TOPLEFT", healFill, "TOPRIGHT", 0, 0)
+        f._absorb:SetPoint("BOTTOMLEFT", healFill, "BOTTOMRIGHT", 0, 0)
+    end
+    f._heal:Hide()
+    f._absorb:Hide()
+
     local power = K.NewBar(f, true)
     f.power = power
     local pbg = power:CreateTexture(nil, "BACKGROUND")
@@ -516,6 +545,11 @@ function Frame:Layout()
     self.health:SetPoint("TOPLEFT", self, "TOPLEFT", right and 0 or inset, 0)
     self.health:SetPoint("TOPRIGHT", self, "TOPRIGHT", right and -inset or 0, 0)
     self.health:SetHeight(h)
+    local hw = math.max(1, w - inset)
+    for _, bar in ipairs({ self._heal, self._absorb }) do bar:SetWidth(hw) end
+    local hc, ac = WeintCodex.GameColors.healPredict, WeintCodex.GameColors.absorb
+    self._heal:SetStatusBarColor(hc[1], hc[2], hc[3], hc[4])
+    self._absorb:SetStatusBarColor(ac[1], ac[2], ac[3], ac[4])
     self.power:ClearAllPoints()
     self.power:SetPoint("TOPLEFT", self.health, "BOTTOMLEFT", 0, -1)
     self.power:SetPoint("TOPRIGHT", self.health, "BOTTOMRIGHT", 0, -1)
@@ -596,6 +630,20 @@ function Frame:PaintBg(r, g, b)
     self.healthBg:SetColorTexture(br, bgg, bb, 1)
 end
 
+-- Eingehende Heilung und Schilde. Keine Antwort des Clients: kein Balken.
+function Frame:UpdatePrediction()
+    local u = self.unit
+    local max = _G.UnitHealthMax and _G.UnitHealthMax(u)
+    local function Show(bar, on, value)
+        if not on or type(max) == "nil" or type(value) == "nil" then bar:Hide() return end
+        bar:SetMinMaxValues(0, max)
+        bar:SetValue(value)
+        bar:Show()
+    end
+    Show(self._heal, Opt("healPrediction"), _G.UnitGetIncomingHeals and _G.UnitGetIncomingHeals(u))
+    Show(self._absorb, Opt("absorbs"), _G.UnitGetTotalAbsorbs and _G.UnitGetTotalAbsorbs(u))
+end
+
 function Frame:Refresh()
     local u = self.unit
     if not K.Bool(_G.UnitExists and _G.UnitExists(u), false) and not self._unlockShown then return end
@@ -607,6 +655,7 @@ function Frame:Refresh()
     local hr, hg, hb = HealthColor(u)
     K.PaintBar(self.health, hr, hg, hb)
     self:PaintBg(hr, hg, hb)
+    self:UpdatePrediction()
 
     if Opt(u .. "_power") then
         local pmax = _G.UnitPowerMax and _G.UnitPowerMax(u)
@@ -995,6 +1044,8 @@ function Frame:WCShowForUnlock(on)
             self:Show()
             self.health:SetMinMaxValues(0, 1)
             self.health:SetValue(1)
+            self._heal:Hide()
+            self._absorb:Hide()
             self.left:SetText(LABELS[u])
         else
             if _G.RegisterUnitWatch and u ~= "player" then _G.RegisterUnitWatch(self) end
@@ -1012,7 +1063,8 @@ end
 --------------------------------------------------
 
 local TEST = {
-    target       = { name = "Kobold-Geomant", level = "23", color = "enemyInCombat", hp = 0.58, power = 0.7, ptoken = "MANA" },
+    target       = { name = "Kobold-Geomant", level = "23", color = "enemyInCombat", hp = 0.58, power = 0.7, ptoken = "MANA",
+                     heal = 0.14, absorb = 0.08 },
     targettarget = { name = "Brunhild", class = "WARRIOR", hp = 0.72 },
     focus        = { name = "Liora", class = "PRIEST", hp = 1, power = 0.76, ptoken = "MANA" },
     pet          = { name = "Wolf", color = "friendly", hp = 0.8, power = 0.5, ptoken = "FOCUS" },
@@ -1041,6 +1093,16 @@ function Frame:ShowTest(on)
         self.health:SetValue(t.hp)
         K.PaintBar(self.health, TestColor(t))
         self:PaintBg(TestColor(t))
+        for _, pair in ipairs({ { self._heal, "healPrediction", t.heal }, { self._absorb, "absorbs", t.absorb } }) do
+            local bar, key, v = pair[1], pair[2], pair[3]
+            if v and Opt(key) then
+                bar:SetMinMaxValues(0, 1)
+                bar:SetValue(v)
+                bar:Show()
+            else
+                bar:Hide()
+            end
+        end
         if Opt(u .. "_power") then
             self.power:SetMinMaxValues(0, 1)
             self.power:SetValue(t.power or 1)
@@ -1116,6 +1178,7 @@ end
 
 local HEALTH = { UNIT_HEALTH = true, UNIT_MAXHEALTH = true, UNIT_CONNECTION = true }
 local POWER = { UNIT_POWER_UPDATE = true, UNIT_POWER_FREQUENT = true, UNIT_MAXPOWER = true, UNIT_DISPLAYPOWER = true }
+local PREDICTION = { UNIT_HEAL_PREDICTION = true, UNIT_ABSORB_AMOUNT_CHANGED = true }
 local FULL = { UNIT_NAME_UPDATE = true, UNIT_LEVEL = true, UNIT_FACTION = true, UNIT_FLAGS = true }
 local CAST = {
     UNIT_SPELLCAST_START = "update", UNIT_SPELLCAST_CHANNEL_START = "update",
@@ -1172,6 +1235,8 @@ local function OnEvent(_, event, unit)
 
     if HEALTH[event] or FULL[event] then
         f:Refresh()
+    elseif PREDICTION[event] then
+        f:UpdatePrediction()
     elseif POWER[event] then
         if Opt(unit .. "_power") then
             local pmax = _G.UnitPowerMax and _G.UnitPowerMax(unit)
@@ -1288,6 +1353,7 @@ local function Enable()
         "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "PLAYER_UPDATE_RESTING",
     }) do Register(e) end
     for e in pairs(HEALTH) do Register(e) end
+    for e in pairs(PREDICTION) do Register(e) end
     for e in pairs(POWER) do Register(e) end
     for e in pairs(FULL) do Register(e) end
     for e in pairs(CAST) do Register(e) end
@@ -1397,6 +1463,10 @@ local pages = {
         B:Row({ type = "toggle", label = "Grund in der Balkenfarbe", key = "tintedBg",
                 description = "Fehlendes Leben dunkel in der Farbe des Balkens statt im Hintergrund." },
               { type = "toggle", label = "Maus hebt hervor", key = "hover" })
+        B:Row({ type = "toggle", label = "Eingehende Heilung", key = "healPrediction",
+                description = "Ein heller grüner Balken hinter dem Leben: so weit reichen Heilungen, die gerade gewirkt werden." },
+              { type = "toggle", label = "Schilde", key = "absorbs",
+                description = "Ein weißer Balken dahinter: wie viel Schaden Schilde noch abfangen." })
         B:Section("Schrift")
         B:Row({ type = "slider", label = "Größe links", key = "nameSize", min = 8, max = 20, step = 1, format = px },
               { type = "slider", label = "Größe rechts", key = "textSize", min = 8, max = 20, step = 1, format = px })

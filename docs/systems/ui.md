@@ -334,6 +334,13 @@ setzt die Kamera bei `OnModelLoaded`; hat das Modell 0,4 s nach
 `SetUnit` keine Datei (`GetModelFileID`), steht das Bild da – im
 Beta-Test war es beim Ziel ein schwarzes Kästchen.
 
+Eingehende Heilung und Schilde (6.6.0.6, `healPrediction`, `absorbs`,
+Reiter Allgemein): wie in den Gruppenrahmen zwei Balken in einer
+Klammer (`_predClip`) über dem Lebensbalken, links an der Kante seiner
+Füllung, so breit wie er (`Frame:UpdatePrediction`,
+`UNIT_HEAL_PREDICTION`/`UNIT_ABSORB_AMOUNT_CHANGED`). Werte gehen
+ungeprüft an `SetValue` – auch geheime; keine Antwort heißt kein Balken.
+
 Kombopunkte sind fünf Balken, Segment *i* mit dem Bereich *i-1 … i*; alle
 bekommen denselben Stand. Voll ist, was erreicht ist – ohne dass Lua
 den (womöglich geheimen) Stand je vergleicht.
