@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.4.0.4",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFSymbole am Zielrahmen einstellbar.|r Links- oder rechtsbündig, Abstand zum Rahmen und Größe – die Größe jetzt scharf statt hochskaliert. Einheitenrahmen → Ziel.",
+        },
+    },
+    {
         version = "6.4.0.3",
         date    = "27.09.2026",
         notes   = {

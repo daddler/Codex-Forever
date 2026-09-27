@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.4.0.4] – 2026-09-27
+
+**Symbole am Zielrahmen einstellbar.** Links- oder rechtsbündig, Abstand zum Rahmen und Größe – die Größe jetzt scharf statt hochskaliert. Einheitenrahmen → Ziel.
+
+### Technisch
+
+- `ui/unitframes.lua`: `targetAuraAlign` (left/right) und `targetAuraGap`
+  (px) für beide Wege. Symbole des Spiels: rechtsbündig über
+  `SetFlowLayoutAnchorPoint("BOTTOMRIGHT")` und
+  `SetFlowLayoutGrowthDirection(Left, Up)` nach
+  `SetFlowLayoutMirroredVertically` (das setzt den Anker auf BOTTOMLEFT
+  zurück). Größe über `SetSmall/LargeAuraSize` (Ausgangswerte des Spiels
+  gemerkt), `SetScale` nur als Rückfall.
+- `UF.AuraBaseY`: Abstand plus Kombopunkte, nur wenn sie über dem Rahmen
+  stehen und eingeschaltet sind.
+
 ## [6.4.0.3] – 2026-09-27
 
 **Debuffs über dem Zielrahmen – auch im Kampf.** Der Zielrahmen zeigt jetzt die Symbole des Spiels, dieselben wie auf der Namensplakette. Die eigenen Symbole blieben im Kampf leer, weil der Client Auren dort nur an seine eigenen Symbole herausgibt. Umschalten und Größe: Einheitenrahmen → Ziel.

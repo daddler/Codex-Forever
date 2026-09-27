@@ -1840,6 +1840,33 @@ do
         tf:AnchorAuraContainer()
         assert(cfg.mirror == true and cfg.constrained == 0, "Spiel stellt den Behaelter zurueck")
         assert(anchor[2] == UF.frames.target, "Spiel setzt den Behaelter zurueck an seinen Rahmen")
+        -- 6.4.0.4: rechtsbuendig, Abstand, Groesse ueber die Symbolgroessen.
+        local oldAU = _G.AnchorUtil
+        _G.AnchorUtil = { FlowDirection = { Left = 1, Right = 2, Up = 3, Down = 4 } }
+        local flow = {}
+        auras.SetFlowLayoutAnchorPoint = function(_, p) flow.anchor = p end
+        auras.SetFlowLayoutGrowthDirection = function(_, h, v) flow.h, flow.v = h, v end
+        local sizes = { 17, 21 }
+        auras.GetSmallAuraSize = function() return sizes[1] end
+        auras.GetLargeAuraSize = function() return sizes[2] end
+        auras.SetSmallAuraSize = function(_, v) sizes[1] = v end
+        auras.SetLargeAuraSize = function(_, v) sizes[2] = v end
+        local lastY
+        auras.SetPoint = function(_, pt, rel, relPt, x, y) anchor = { pt, rel, relPt } lastY = y end
+        K.Set("unitframes", "targetAuraAlign", "right")
+        assert(flow.anchor == "BOTTOMRIGHT" and flow.h == 1 and flow.v == 3, "rechtsbuendig: Fluss nicht von rechts")
+        assert(anchor[1] == "BOTTOMRIGHT" and anchor[3] == "TOPRIGHT", "rechtsbuendig: Behaelter nicht rechts")
+        K.Set("unitframes", "targetAuraGap", 12)
+        assert(lastY == 12, "Abstand nicht uebernommen: " .. tostring(lastY))
+        K.Set("unitframes", "targetGameScale", 200)
+        assert(sizes[1] == 34 and sizes[2] == 42, "Groesse nicht ueber die Symbolgroessen: " .. sizes[1] .. "/" .. sizes[2])
+        K.Set("unitframes", "targetGameScale", 100)
+        assert(sizes[1] == 17 and sizes[2] == 21, "Groesse kommt nicht zurueck")
+        K.Set("unitframes", "targetAuraAlign", "left")
+        assert(flow.anchor == "BOTTOMLEFT" and flow.h == 2 and anchor[1] == "BOTTOMLEFT", "zurueck auf linksbuendig greift nicht")
+        K.Set("unitframes", "targetAuraGap", nil)
+        _G.AnchorUtil = oldAU
+
         -- Ausgeschaltet: Behaelter weg, eigene Symbole ebenfalls.
         K.Set("unitframes", "targetAuras", false)
         assert(not auras:IsShown(), "Symbole trotz Aus")

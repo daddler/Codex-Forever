@@ -83,6 +83,10 @@ local defaults = {
     -- Symbole ueber ui/auras.lua - im Kampf leer, gemessen 6.3.0.2).
     targetAuraSource = "game",
     targetGameScale  = 100,
+    -- Lage der Symbole ueber dem Zielrahmen (Beta-Test 6.4.0.3: "optional
+    -- einstellbar"): links- oder rechtsbuendig, Abstand zum Rahmen.
+    targetAuraAlign  = "left",
+    targetAuraGap    = 3,
     auraSize      = 20,
     onlyOwnDebuffs = false,
 }
@@ -707,13 +711,22 @@ end
 
 local UseGameAuras   -- siehe "Auren des Spiels am Zielrahmen"
 
+-- Unterkante der Symbole ueber dem Rahmen: der eingestellte Abstand, bei
+-- Kombopunkten ueber dem Rahmen (nicht mittig) zusaetzlich deren Hoehe.
+function UF.AuraBaseY(f)
+    local gap = Opt("targetAuraGap") or 3
+    return gap + ((f._combo and Opt("comboPoints") and not Opt("comboCentered")) and 7 or 0)
+end
+
 function Frame:LayoutAuras()
     if UseGameAuras() then
         UF.ConfigureGameAuras()
         UF.AnchorGameAuras()
     end
     local size = Opt("auraSize")
-    local y0 = (self._combo and not Opt("comboCentered")) and 10 or 3
+    local y0 = UF.AuraBaseY(self)
+    local right = Opt("targetAuraAlign") == "right"
+    local pt, rel = right and "BOTTOMRIGHT" or "BOTTOMLEFT", right and "TOPRIGHT" or "TOPLEFT"
     local debuffFilter = Opt("onlyOwnDebuffs") and "HARMFUL|PLAYER" or "HARMFUL"
     local rows = {
         { self._auras.HARMFUL, debuffFilter, y0 },
@@ -722,9 +735,9 @@ function Frame:LayoutAuras()
     for _, r in ipairs(rows) do
         local obj = r[1]
         obj:ApplyLayout({ filter = r[2], max = 8, size = size, spacing = 3,
-            anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = 8, timer = true })
+            anchor = pt, growth = right and "LEFT" or "RIGHT", growthV = "UP", perRow = 8, timer = true })
         obj:ClearAllPoints()
-        obj:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, r[3])
+        obj:SetPoint(pt, self, rel, 0, r[3])
     end
 end
 
@@ -766,6 +779,7 @@ end
 UF.gameAuraState = "nicht verwendet"
 local gameAuras        -- der Behaelter, wenn der Weg steht
 local gameHooked = false
+local gameSizes        -- { klein, gross } des Spiels, bevor wir sie aendern
 local anchoringGame = false
 
 UseGameAuras = function()
@@ -843,8 +857,33 @@ ConfigureGameAuras = function()
     local f = frames.target
     if not (gameAuras and f) then return end
     if Locked() then K.AfterCombat(ConfigureGameAuras) return end
-    Call(gameAuras, "SetScale", (Opt("targetGameScale") or 100) / 100)
+    -- Groesse ueber die Symbolgroessen des Behaelters (scharf), nicht ueber
+    -- SetScale. Die Ausgangsgroessen des Spiels einmal gemerkt.
+    if not gameSizes then
+        local okS, small = Call(gameAuras, "GetSmallAuraSize")
+        local okL, large = Call(gameAuras, "GetLargeAuraSize")
+        small, large = K.Plain(small), K.Plain(large)
+        if okS and okL and type(small) == "number" and type(large) == "number" and small > 0 and large > 0 then
+            gameSizes = { small, large }
+        end
+    end
+    local scale = (Opt("targetGameScale") or 100) / 100
+    if gameSizes then
+        Call(gameAuras, "SetSmallAuraSize", math.floor(gameSizes[1] * scale + 0.5))
+        Call(gameAuras, "SetLargeAuraSize", math.floor(gameSizes[2] * scale + 0.5))
+    else
+        Call(gameAuras, "SetScale", scale)
+    end
     Call(gameAuras, "SetFlowLayoutMirroredVertically", true)
+    -- Rechtsbuendig: von rechts nach links, jede Reihe endet am rechten Rand.
+    -- SetFlowLayoutMirroredVertically setzt den Ankerpunkt auf BOTTOMLEFT,
+    -- darum danach.
+    local FD = _G.AnchorUtil and _G.AnchorUtil.FlowDirection
+    if FD then
+        local right = Opt("targetAuraAlign") == "right"
+        Call(gameAuras, "SetFlowLayoutAnchorPoint", right and "BOTTOMRIGHT" or "BOTTOMLEFT")
+        Call(gameAuras, "SetFlowLayoutGrowthDirection", right and FD.Left or FD.Right, FD.Up)
+    end
     Call(gameAuras, "SetNumConstrainedFlowLayoutLines", 0)
     local w = K.Plain(f:GetWidth())
     if type(w) == "number" and w > 0 then
@@ -859,10 +898,11 @@ function UF.AnchorGameAuras()
     if anchoringGame or not (gameAuras and f) then return end
     if Locked() then K.AfterCombat(UF.AnchorGameAuras) return end
     anchoringGame = true
-    local y = (f._combo and not Opt("comboCentered")) and 10 or 3
+    local y = UF.AuraBaseY(f)
+    local right = Opt("targetAuraAlign") == "right"
     local ok, err = pcall(function()
         gameAuras:ClearAllPoints()
-        gameAuras:SetPoint("BOTTOMLEFT", f, "TOPLEFT", 0, y * Ratio(f))
+        gameAuras:SetPoint(right and "BOTTOMRIGHT" or "BOTTOMLEFT", f, right and "TOPRIGHT" or "TOPLEFT", 0, y * Ratio(f))
     end)
     anchoringGame = false
     UF.gameAuraState = ok and "Symbole des Spiels über dem Zielrahmen"
@@ -1280,6 +1320,11 @@ local function UnitPage(u)
                     format = function(v) return string.format("%d %%", v) end, disabled = notGame },
                   { type = "slider", label = "Symbolgröße (eigene)", key = "auraSize", min = 14, max = 36, step = 1, format = px,
                     disabled = notOwn })
+            B:Row({ type = "dropdown", label = "Ausrichtung", key = "targetAuraAlign", disabled = noAuras, items = {
+                        { value = "left",  text = "Linksbündig" },
+                        { value = "right", text = "Rechtsbündig" } } },
+                  { type = "slider", label = "Abstand zum Rahmen", key = "targetAuraGap", min = 0, max = 30, step = 1,
+                    format = px, disabled = noAuras })
             B:Row({ type = "toggle", label = "Nur eigene Debuffs", key = "onlyOwnDebuffs",
                     disabled = notOwn },
                   { type = "toggle", label = "Kombopunkte", key = "comboPoints", disabled = off,
