@@ -27,9 +27,10 @@
 -- aber gehoeren einer Klasse (gelernt aus den Erinnerungen, 6.6.0.5).
 -- Die Belegung wird deshalb je Klasse gespeichert.
 --
--- KEINE EINGEBAUTE ZAUBERLISTE. Wie bei den Erinnerungen nennt der
--- Spieler die Zauber selbst - niemand hier hat die Zauber des
--- Forever-Clients gelesen.
+-- KEINE EINGEBAUTE ZAUBERLISTE. Niemand hier hat die Zauber des
+-- Forever-Clients gelesen - die Tafel zeigt, was das Zauberbuch des
+-- Charakters nennt, und getippt wird nichts (Beta-Test: "einfach
+-- auswaehlen").
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -68,6 +69,7 @@ CC.ACTIONS = {
 CC.DEFAULTS = {
     clickUnitFrames = true,   -- auch Spieler, Ziel, Fokus, ...
     clickTooltip    = true,   -- Belegung im Tooltip
+    clickHelpfulOnly = true,  -- Tafel: nur hilfreiche Zauber
 }
 
 local function Opt(k) return K.Get(KEY, k) end
@@ -250,19 +252,102 @@ end
 -- Einstellungen: Reiter "Klickzauber" der Gruppenrahmen
 --------------------------------------------------
 
-local draft = { button = 1, mod = "shift-", action = "spell", spell = "" }
+--------------------------------------------------
+-- Das Zauberbuch (6.6.0.7, Beta-Test: "nichts manuell eingeben - die
+-- Zauber einfach in einer Liste auswaehlen")
+--------------------------------------------------
+-- Was im Zauberbuch steht, sagt der Client - keine eigene Liste. Je Name
+-- einmal (Raenge: der Name wirkt den hoechsten), ohne passive Zauber,
+-- ohne Gilden- und versteckte Reiter. "Nur hilfreiche": fragt den Client
+-- (C_Spell.IsSpellHelpful / IsHelpfulSpell); kann er es nicht sagen,
+-- bleibt der Zauber drin - "weiss nicht" ist nicht "schaedlich".
+
+local function Helpful(id, name)
+    local cs = _G.C_Spell
+    local f = (cs and cs.IsSpellHelpful) or _G.IsHelpfulSpell
+    if not f then return nil end
+    local ok, v = pcall(f, (cs and cs.IsSpellHelpful) and id or name)
+    if not ok then return nil end
+    return K.Bool(v, nil)
+end
+
+local function Add(out, seen, id, name, icon)
+    name = K.Plain(name)
+    if type(name) ~= "string" or name == "" or seen[name] then return end
+    seen[name] = true
+    out[#out + 1] = { id = K.Plain(id), name = name, icon = K.Plain(icon) }
+end
+
+function CC.Spellbook(helpfulOnly)
+    local out, seen = {}, {}
+    local sb = _G.C_SpellBook
+    local E = _G.Enum
+    local bank = E and E.SpellBookSpellBank and E.SpellBookSpellBank.Player
+    local SPELL = E and E.SpellBookItemType and E.SpellBookItemType.Spell
+    if sb and sb.GetNumSpellBookSkillLines and sb.GetSpellBookSkillLineInfo and sb.GetSpellBookItemInfo then
+        local okN, n = pcall(sb.GetNumSpellBookSkillLines)
+        for line = 1, (okN and K.Plain(n) or 0) do
+            local okL, info = pcall(sb.GetSpellBookSkillLineInfo, line)
+            if okL and type(info) == "table" and not K.Bool(info.isGuild, false)
+               and not K.Bool(info.shouldHide, false) and not ((K.Plain(info.offSpecID) or 0) > 0) then
+                local first = K.Plain(info.itemIndexOffset) or 0
+                for slot = first + 1, first + (K.Plain(info.numSpellBookItems) or 0) do
+                    local okI, it = pcall(sb.GetSpellBookItemInfo, slot, bank)
+                    if okI and type(it) == "table" and not K.Bool(it.isPassive, false)
+                       and (SPELL == nil or K.Plain(it.itemType) == SPELL) then
+                        Add(out, seen, it.spellID, it.name, it.iconID)
+                    end
+                end
+            end
+        end
+    elseif _G.GetNumSpellTabs and _G.GetSpellTabInfo and _G.GetSpellBookItemName then
+        for tab = 1, K.Plain(_G.GetNumSpellTabs()) or 0 do
+            local _, _, offset, count = _G.GetSpellTabInfo(tab)
+            offset, count = K.Plain(offset) or 0, K.Plain(count) or 0
+            for slot = offset + 1, offset + count do
+                local kind, id = nil, nil
+                if _G.GetSpellBookItemInfo then kind, id = _G.GetSpellBookItemInfo(slot, "spell") end
+                local passive = _G.IsPassiveSpell and K.Bool(_G.IsPassiveSpell(slot, "spell"), false)
+                if (kind == nil or K.Plain(kind) == "SPELL") and not passive then
+                    local name = _G.GetSpellBookItemName(slot, "spell")
+                    local icon = _G.GetSpellTexture and _G.GetSpellTexture(slot, "spell")
+                    Add(out, seen, id, name, icon)
+                end
+            end
+        end
+    end
+    if helpfulOnly then
+        local keep = {}
+        for _, sp in ipairs(out) do
+            if Helpful(sp.id, sp.name) ~= false then keep[#keep + 1] = sp end
+        end
+        out = keep
+    end
+    table.sort(out, function(a, b) return a.name < b.name end)
+    return out
+end
+
+-- Welche Taste bekommt den naechsten Klick in der Tafel.
+local draft = { button = 1, mod = "shift-" }
 CC.draft = draft
 
-function CC.AddDraft()
-    local b = { button = draft.button, mod = draft.mod, action = draft.action }
-    if b.action == "spell" then
-        local text = (draft.spell or ""):gsub("^%s+", ""):gsub("%s+$", "")
-        if text == "" then return false, "Zauber fehlt" end
-        b.spell = text
+-- Ein Klick in der Tafel: legt Zauber (oder Ziel/Menue) auf die Taste.
+function CC.Pick(action, spell)
+    local b = { button = draft.button, mod = draft.mod, action = action }
+    if action == "spell" then
+        if type(spell) ~= "string" or spell == "" then return false end
+        b.spell = spell
     end
     CC.Add(b)
-    draft.spell = ""
     return true
+end
+
+-- Was liegt gerade auf der Taste, die oben gewaehlt ist?
+function CC.Current()
+    for _, b in ipairs(CC.Bindings()) do
+        if b.button == draft.button and b.mod == draft.mod then return b end
+    end
+    return nil
 end
 
 local LIST_ROWS = 10
@@ -303,7 +388,7 @@ function CC.BuildList(parent, width)
     w.empty = K.NewText(w, 12)
     w.empty:SetPoint("TOPLEFT", w, "TOPLEFT", 4, -6)
     w.empty:SetWidth(math.max(100, width - 8))
-    w.empty:SetText("Noch nichts belegt. Unten Taste und Zauber wählen – zum Beispiel Umschalt + Links: dein kleiner Heilzauber.")
+    w.empty:SetText("Noch nichts belegt. Unten Taste wählen und einen Zauber anklicken – zum Beispiel Umschalt + Links: dein kleiner Heilzauber.")
     w.empty:SetTextColor(unpack(C.textDim))
     w.Sync = function()
         local list = CC.Bindings()
@@ -327,6 +412,96 @@ function CC.BuildList(parent, width)
     return w
 end
 
+
+-- DIE ZAUBERTAFEL: oben die gewaehlte Taste in Worten, darunter "Ziel
+-- waehlen", "Menue" und die Symbole aus dem Zauberbuch als Raster. Ein
+-- Klick legt, was er trifft, auf die Taste; was dort schon liegt, ist
+-- im Akzent umrandet. Die Hoehe steht fest (die Seite springt nicht):
+-- PICK_ROWS Reihen, was darueber hinausgeht, wird gezaehlt und genannt.
+local TILE, TILE_GAP, PICK_ROWS = 30, 4, 6
+CC.PICK_ROWS = PICK_ROWS
+local SPECIAL = {
+    { action = "target", name = "Ziel wählen", icon = K.MEDIA .. "targetmark" },
+    { action = "menu",   name = "Menü",        icon = K.MEDIA .. "icon_gear" },
+}
+
+function CC.PickerHeight() return 22 + PICK_ROWS * (TILE + TILE_GAP) + 16 end
+
+function CC.BuildPicker(parent, width)
+    local w = CreateFrame("Frame", nil, parent)
+    local perRow = math.max(4, math.floor((width + TILE_GAP) / (TILE + TILE_GAP)))
+    local cap = perRow * PICK_ROWS
+    w.perRow, w.tiles = perRow, {}
+    w.head = K.NewText(w, 12)
+    w.head:SetPoint("TOPLEFT", w, "TOPLEFT", 0, 0)
+    w.head:SetWidth(width)
+    w.head:SetJustifyH("LEFT")
+    w.more = K.NewText(w, 11)
+    w.more:SetPoint("TOPLEFT", w, "TOPLEFT", 0, -(22 + PICK_ROWS * (TILE + TILE_GAP)))
+    w.more:SetWidth(width)
+    w.more:SetJustifyH("LEFT")
+    w.more:SetTextColor(unpack(C.textDim))
+    local function Tile(i)
+        local t = CreateFrame("Button", nil, w)
+        t:SetSize(TILE, TILE)
+        local col, row = (i - 1) % perRow, math.floor((i - 1) / perRow)
+        t:SetPoint("TOPLEFT", w, "TOPLEFT", col * (TILE + TILE_GAP), -(22 + row * (TILE + TILE_GAP)))
+        t.bg = t:CreateTexture(nil, "BACKGROUND")
+        t.bg:SetAllPoints(t)
+        t.bg:SetColorTexture(unpack(C.surface2))
+        t.icon = t:CreateTexture(nil, "ARTWORK")
+        t.icon:SetPoint("TOPLEFT", t, "TOPLEFT", 1, -1)
+        t.icon:SetPoint("BOTTOMRIGHT", t, "BOTTOMRIGHT", -1, 1)
+        t.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        t.ring = K.Border(t, 2, C.accent[1], C.accent[2], C.accent[3], 1, "OVERLAY")
+        t:SetScript("OnClick", function(self)
+            local e = self.entry
+            if e then CC.Pick(e.action or "spell", e.name) end
+        end)
+        t:SetScript("OnEnter", function(self)
+            local e = self.entry
+            if not e then return end
+            local tip = _G.GameTooltip
+            tip:SetOwner(self, "ANCHOR_TOP")
+            if e.id and tip.SetSpellByID then tip:SetSpellByID(e.id) else tip:SetText(e.name, 1, 1, 1) end
+            local a = C.accent
+            tip:AddLine("Klick: auf " .. CC.KeyText(draft) .. " legen", a[1], a[2], a[3])
+            tip:Show()
+        end)
+        t:SetScript("OnLeave", function() _G.GameTooltip:Hide() end)
+        return t
+    end
+    w.Sync = function()
+        local cur = CC.Current()
+        w.head:SetText(CC.KeyText(draft) .. ":  " .. (cur and CC.ActionText(cur) or "frei")
+            .. "   –   Klick auf einen Zauber legt ihn auf diese Taste.")
+        local entries = {}
+        for _, e in ipairs(SPECIAL) do entries[#entries + 1] = e end
+        local book = CC.Spellbook(Opt("clickHelpfulOnly"))
+        for _, sp in ipairs(book) do entries[#entries + 1] = sp end
+        for i = 1, math.min(#entries, cap) do
+            local t = w.tiles[i] or Tile(i)
+            w.tiles[i] = t
+            local e = entries[i]
+            t.entry = e
+            t.icon:SetTexture(e.icon)
+            local on = cur and ((e.action and cur.action == e.action)
+                or (not e.action and cur.action == "spell" and cur.spell == e.name))
+            t.ring:SetShown(on and true or false)
+            t:Show()
+        end
+        for i = #entries + 1, #w.tiles do w.tiles[i]:Hide() end
+        if #book == 0 then
+            w.more:SetText("Im Zauberbuch steht noch nichts, das der Client nennt – nach dem Einloggen noch einmal öffnen.")
+        elseif #entries > cap then
+            w.more:SetText(string.format("… und %d weitere – „Nur hilfreiche Zauber“ kürzt die Tafel.", #entries - cap))
+        else
+            w.more:SetText("")
+        end
+    end
+    return w
+end
+
 local function DraftChanged() K.Fire("setting", KEY, "clickDraft") end
 
 function CC.BuildPage(B)
@@ -337,24 +512,16 @@ function CC.BuildPage(B)
     B:Row({ type = "custom", height = LIST_ROWS * 26 + 18, create = function(parent, width)
                 return CC.BuildList(parent, width)
             end }, nil)
-    B:Section("Neue Belegung")
+    B:Section("Neue Belegung", "Erst die Taste wählen, dann den Zauber anklicken.")
     B:Row({ type = "dropdown", label = "Maustaste", items = CC.BUTTONS,
             get = function() return draft.button end, set = function(v) draft.button = v DraftChanged() end },
           { type = "dropdown", label = "Zusatztaste", items = CC.MODS,
             get = function() return draft.mod end, set = function(v) draft.mod = v DraftChanged() end })
-    B:Row({ type = "dropdown", label = "Aktion", items = CC.ACTIONS,
-            get = function() return draft.action end, set = function(v) draft.action = v DraftChanged() end },
-          { type = "input", label = "Zauber (Name oder ID)",
-            get = function() return draft.spell end, set = function(v) draft.spell = v end,
-            disabled = function() return draft.action ~= "spell" end })
-    B:Row({ type = "button", label = "Hinzufügen", text = "Belegen",
-            tooltip = "Dieselbe Taste noch einmal belegt ersetzt die alte Belegung.",
-            onClick = function()
-                local ok, why = CC.AddDraft()
-                if not ok and why then
-                    print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Nicht belegt: " .. why .. ".")
-                end
-            end },
+    B:Row({ type = "custom", height = CC.PickerHeight(), create = function(parent, width)
+                return CC.BuildPicker(parent, width)
+            end }, nil)
+    B:Row({ type = "toggle", label = "Nur hilfreiche Zauber", key = "clickHelpfulOnly",
+            description = "Heilungen, Buffs, Bannen – was man auf Verbündete wirkt." },
           { type = "empty" })
     B:Section("Wo")
     B:Row({ type = "toggle", label = "Auch Einheitenrahmen", key = "clickUnitFrames",

@@ -11,7 +11,7 @@ nicht zusammen.
 
 ## [6.6.0.7] – 2026-09-27
 
-**Klickzauber.** Zauber auf Maustasten legen und mit einem Klick auf einen Rahmen wirken – Gruppe, Schlachtzug, Spieler, Ziel –, ohne die Einheit erst anzuwählen. Zum Beispiel Umschalt + Links: kleiner Heilzauber. Einstellen unter Gruppenrahmen → Klickzauber; die Belegung gilt je Klasse, und die Maus über einem Rahmen zeigt, was welche Taste tut.
+**Klickzauber.** Zauber auf Maustasten legen und mit einem Klick auf einen Rahmen wirken – Gruppe, Schlachtzug, Spieler, Ziel –, ohne die Einheit erst anzuwählen. Taste wählen, Zauber aus deinem Zauberbuch anklicken – nichts tippen. Einstellen unter Gruppenrahmen → Klickzauber; die Belegung gilt je Klasse, und die Maus über einem Rahmen zeigt, was welche Taste tut.
 
 ## [6.6.0.6] – 2026-09-27
 

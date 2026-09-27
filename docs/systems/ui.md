@@ -444,6 +444,16 @@ Seit 6.2.0.0:
 * **Klickzauber** (6.6.0.7, `ui/clickcast.lua`, Beta-Test „wie VuhDo,
   Clique, Healbot – einfach“): eine Belegung ist Maustaste (1–5) +
   Zusatztaste (ohne/Umschalt/Strg/Alt) → Zauber, Ziel wählen oder Menü.
+  **Nichts wird eingetippt** (Beta-Test: „einfach die Zauber auswählen“):
+  die **Zaubertafel** (`CC.BuildPicker`) zeigt „Ziel wählen“, „Menü“ und
+  die Symbole aus dem Zauberbuch als Raster; ein Klick legt sie auf die
+  oben gewählte Taste, die aktuelle Belegung ist im Akzent umrandet.
+  `CC.Spellbook` liest `C_SpellBook` (Rückfall: `GetSpellTabInfo`), je
+  Name einmal (der Name wirkt den höchsten Rang), ohne passive Zauber,
+  Gilden-, versteckte und Nebenspezialisierungs-Reiter; „Nur hilfreiche
+  Zauber“ (`clickHelpfulOnly`) fragt `C_Spell.IsSpellHelpful` – ohne
+  Antwort bleibt der Zauber drin. Feste Höhe, sechs Reihen; was nicht
+  passt, wird gezählt.
   Umgesetzt **nur** über Klick-Attribute der geschützten Knöpfe
   (`shift-type1` = `spell`, `shift-spell1` = Name); der Client zaubert
   beim Klick, Lua ist nicht beteiligt. Gilt für jeden Knopf aus
@@ -460,7 +470,7 @@ Seit 6.2.0.0:
   Belegung (`HookScript("OnEnter")`). **Nicht möglich:** Tastatur-Tasten
   beim Drüberfahren (brauchen Snippets, die dem Forever-Client fehlen,
   oder Tastenbelegungen, die im Kampf gesperrt sind) und Kombinationen
-  mehrerer Zusatztasten. Keine eingebaute Zauberliste. Im Spiel ungeprüft.
+  mehrerer Zusatztasten. Keine eingebaute Zauberliste – die Tafel zeigt, was das Zauberbuch nennt. Im Spiel ungeprüft.
 * **Erinnerungen** (6.4.0.0, `ui/reminders.lua`, eigenes Modul): ein
   Regelwerk aus kleinen Tabellen – `buff` (Buff fehlt), `weapon` (Waffe
   ohne/mit ablaufender Verzauberung, `GetWeaponEnchantInfo`), `pet`

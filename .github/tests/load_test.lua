@@ -1781,10 +1781,10 @@ do
         local frames = { f1, f2 }
         CC.Frames = function() return frames end
         CC.SetBindings({})
-        CC.draft.button, CC.draft.mod, CC.draft.action, CC.draft.spell = 1, "shift-", "spell", " Blitzheilung "
-        assert(CC.AddDraft(), "Belegung nicht angelegt")
-        CC.draft.button, CC.draft.mod, CC.draft.spell = 2, "", "Erneuerung"
-        assert(CC.AddDraft(), "zweite Belegung nicht angelegt")
+        CC.draft.button, CC.draft.mod = 1, "shift-"
+        assert(CC.Pick("spell", "Blitzheilung"), "Belegung nicht angelegt")
+        CC.draft.button, CC.draft.mod = 2, ""
+        assert(CC.Pick("spell", "Erneuerung"), "zweite Belegung nicht angelegt")
         for _, f in ipairs(frames) do
             assert(f:GetAttribute("shift-type1") == "spell" and f:GetAttribute("shift-spell1") == "Blitzheilung",
                 "Umschalt + Links nicht belegt")
@@ -1793,11 +1793,11 @@ do
         end
         assert(f1:GetAttribute("*type1") == "target", "Grundeinstellung des Rahmens angefasst")
         -- Dieselbe Taste ersetzt, Leerer Zauber wird abgelehnt.
-        CC.draft.button, CC.draft.mod, CC.draft.spell = 1, "shift-", "Heilen"
-        CC.AddDraft()
+        CC.draft.button, CC.draft.mod = 1, "shift-"
+        CC.Pick("spell", "Heilen")
         assert(#CC.Bindings() == 2 and f1:GetAttribute("shift-spell1") == "Heilen", "gleiche Taste nicht ersetzt")
-        CC.draft.spell = "  "
-        assert(not CC.AddDraft(), "Belegung ohne Zauber angelegt")
+        assert(CC.Current() and CC.Current().spell == "Heilen", "Belegung der gewaehlten Taste nicht erkannt")
+        assert(not CC.Pick("spell", ""), "Belegung ohne Zauber angelegt")
         -- Tooltip-Zeilen, Tastentext.
         local lines = CC.TooltipLines()
         assert(#lines == 2 and lines[1][1] == "Umschalt + Links" and lines[1][2] == "Heilen", "Tooltip-Zeilen falsch")
@@ -1817,6 +1817,50 @@ do
         _G.InCombatLockdown = function() return false end
         CC.Apply()
         assert(f1:GetAttribute("shift-spell1") == "Heilen", "nach dem Kampf nicht nachgeholt")
+        -- Zauberbuch: je Name einmal (Raenge), ohne passive, ohne Gilde;
+        -- "nur hilfreiche" fragt den Client, "weiss nicht" bleibt drin.
+        local oldSB, oldEnum, oldCS = _G.C_SpellBook, _G.Enum, _G.C_Spell
+        _G.Enum = setmetatable({ SpellBookSpellBank = { Player = 0 }, SpellBookItemType = { Spell = 1, Flyout = 4 } },
+            { __index = oldEnum })
+        local book = {
+            [1] = { spellID = 2050, name = "Geringes Heilen", iconID = 1, itemType = 1 },
+            [2] = { spellID = 2052, name = "Geringes Heilen", iconID = 1, itemType = 1 },
+            [3] = { spellID = 585, name = "Göttliche Pein", iconID = 2, itemType = 1 },
+            [4] = { spellID = 9, name = "Passiv", iconID = 3, itemType = 1, isPassive = true },
+            [5] = { spellID = 10, name = "Flugmenue", iconID = 4, itemType = 4 },
+            [6] = { spellID = 11, name = "Gildenzauber", iconID = 5, itemType = 1 },
+        }
+        _G.C_SpellBook = {
+            GetNumSpellBookSkillLines = function() return 2 end,
+            GetSpellBookSkillLineInfo = function(i)
+                if i == 1 then return { itemIndexOffset = 0, numSpellBookItems = 5 } end
+                return { itemIndexOffset = 5, numSpellBookItems = 1, isGuild = true }
+            end,
+            GetSpellBookItemInfo = function(slot) return book[slot] end,
+        }
+        _G.C_Spell = { IsSpellHelpful = function(id) return id ~= 585 end }
+        local all = CC.Spellbook(false)
+        assert(#all == 2 and all[1].name == "Geringes Heilen" and all[2].name == "Göttliche Pein",
+            "Zauberbuch falsch gelesen: " .. #all)
+        local helpful = CC.Spellbook(true)
+        assert(#helpful == 1 and helpful[1].name == "Geringes Heilen", "Pein als hilfreich gelistet")
+        _G.C_Spell = {}
+        assert(#CC.Spellbook(true) == 2, "ohne Antwort des Clients Zauber versteckt")
+        -- Die Tafel: Klick auf ein Symbol legt den Zauber auf die Taste.
+        local picker = CC.BuildPicker(UIParent, 500)
+        picker.Sync()
+        assert(picker.tiles[1].entry.action == "target" and picker.tiles[3].entry.name == "Geringes Heilen",
+            "Tafel ohne Ziel/Menue oder Zauber")
+        CC.draft.button, CC.draft.mod = 3, "alt-"
+        picker.tiles[3]:Click()
+        assert(f1:GetAttribute("alt-type3") == "spell" and f1:GetAttribute("alt-spell3") == "Geringes Heilen",
+            "Klick in der Tafel belegt die Taste nicht")
+        picker.Sync()
+        assert(picker.tiles[3].ring.top:IsShown() and not picker.tiles[4].ring.top:IsShown(), "Belegung in der Tafel nicht markiert")
+        picker.tiles[1]:Click()
+        assert(f1:GetAttribute("alt-type3") == "target" and f1:GetAttribute("alt-spell3") == nil, "Ziel waehlen nicht gelegt")
+        CC.Remove(#CC.Bindings())
+        _G.C_SpellBook, _G.Enum, _G.C_Spell = oldSB, oldEnum, oldCS
         -- "Standard" der Gruppenrahmen loescht die Zauber nicht.
         K.ResetModule("groupframes")
         assert(#CC.Bindings() == 1, "Standard der Gruppenrahmen loescht die Belegung")
