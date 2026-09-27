@@ -17,6 +17,8 @@ nicht zusammen.
 
 **Lehrer: Waffenkarte repariert.** Stand, Kosten und „Karte“ stehen wieder in der Waffenkarte statt daneben.
 
+**Kein Fehler mehr beim Umstellen der Questpriorität im Kampf.** WeintCodex stellt die Weltkarte nicht mehr selbst ein und wählt keine Quest mehr für das Spiel aus – der Questpfeil merkt sich seine Wahl selbst. „Zurück zum Codex“ legt den Codex über die Karte; sie schließt du wie gewohnt mit Esc oder M. Im Kampf öffnet der Kartenknopf die Weltkarte nicht.
+
 ### Technisch
 
 - Neu: `media/ui/pin.tga`, `dot.tga`, `halo.tga` – eigene Grafiken
@@ -25,6 +27,15 @@ nicht zusammen.
   Rand/Verlauf/Kern, pulsierender Schein (AnimationGroup, ADD),
   Namensschild; Leiste `WeintCodexQuestMapBar` oben mittig mit
   Markenzeichen, Zone, Name und Knopf „Zurück zum Codex“.
+- ADDON_ACTION_BLOCKED `Button:SetPassThroughButtons()` (Beta-Test, im
+  Kampf beim Umstellen der Questpriorität): `QuestDataProvider:RefreshAllData`
+  liest die Kartennummer der Weltkarte, und die hatte WeintCodex seit
+  6.5.1.0 selbst geschrieben (`WorldMapFrame:SetMapID`, Lua-`OpenWorldMap`,
+  `HideUIPanel`). Jetzt nur `C_Map.OpenWorldMap` (die Karte stellt ihre
+  Zone im eigenen Ereignis `WORLD_MAP_OPEN` ein), nicht im Kampf, und kein
+  Schließen durch das Addon. Der Questpfeil wählt die nächste Quest nur
+  noch für sich (`QA.Chosen`) statt über `C_SuperTrack.SetSuperTrackedQuestID`.
+  `load_test.lua` sucht in `core/`, `modules/`, `ui/` nach solchen Aufrufen.
 - `modules/trainer.lua`: Detailbereich vor dem Messen setzen (er macht die
   Fläche schmaler – vorher lag alles Rechtsbündige der Waffenkarte im
   Detailbereich); bei Größenänderung neu zeichnen.

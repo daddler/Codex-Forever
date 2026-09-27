@@ -937,6 +937,36 @@ do
         .. (#offenders == 0 and "" or (": " .. table.concat(offenders, ", "))))
 end
 
+-- WELTKARTE UND QUESTVERFOLGUNG NICHT BERUEHREN (6.6.0.1). Was das Addon
+-- in die Weltkarte (SetMapID, OpenWorldMap, Oeffnen/Schliessen ueber
+-- Show-/HideUIPanel) oder in die Questverfolgung (SetSuperTrackedQuestID)
+-- schreibt, lesen Blizzards Questmarken spaeter mit - und im Kampf
+-- blockiert das Spiel dann SetPassThroughButtons (Beta-Test). Erlaubt ist
+-- nur C_Map.OpenWorldMap (die Karte stellt ihre Zone selbst ein).
+do
+    local offenders = {}
+    for _, dir in ipairs({ "core", "modules", "ui" }) do
+        local pipe = io.popen and io.popen('ls "' .. ROOT .. '/' .. dir .. '" 2>/dev/null')
+        if pipe then
+            for name in pipe:lines() do
+                if name:match("%.lua$") then
+                    local h = io.open(ROOT .. "/" .. dir .. "/" .. name, "r")
+                    local code = h:read("*a"):gsub("%-%-[^\n]*", "")
+                    h:close()
+                    code = code:gsub("C_Map%.OpenWorldMap", ""):gsub("cm%.OpenWorldMap", "")
+                    for _, pat in ipairs({ "SetMapID", "SetSuperTrackedQuestID", "OpenWorldMap",
+                                           "UIPanel%s*%(%s*WorldMapFrame", "UIPanel,%s*wm" }) do
+                        if code:find(pat) then offenders[#offenders + 1] = dir .. "/" .. name .. " (" .. pat .. ")" end
+                    end
+                end
+            end
+            pipe:close()
+        end
+    end
+    Check(#offenders == 0, "Weltkarte und Questverfolgung bleiben unberuehrt"
+        .. (#offenders == 0 and "" or (": " .. table.concat(offenders, ", "))))
+end
+
 -- NEULADEN IST AUF FOREVER GESCHUETZT. ReloadUI()/C_UI.Reload() aus
 -- Addon-Code endet im Beta-Client in ADDON_ACTION_BLOCKED - gemeldet mit
 -- 6.0.0.0 vom Knopf "Jetzt neu laden" der Frage beim Einloggen, und
@@ -1198,7 +1228,18 @@ do
     stub.FireEvent("SUPER_TRACKING_CHANGED")
     stub.FireEvent("QUEST_TURNED_IN", 42)
     _G.C_Timer.After = after
-    Check(picked == 9, "abgegeben: der Pfeil waehlt die naechste Quest (" .. tostring(picked) .. ")")
+    -- 6.6.0.1: die Wahl bleibt beim Pfeil - C_SuperTrack aus dem Addon
+    -- beruehrt Blizzards Questverfolgung (ADDON_ACTION_BLOCKED im Kampf).
+    Check(QA.Chosen == 9 and picked == nil, "abgegeben: der Pfeil waehlt die naechste Quest selbst ("
+        .. tostring(QA.Chosen) .. "), ohne C_SuperTrack (" .. tostring(picked) .. ")")
+    QA.Update(true)
+    Check(QA.frame:IsShown(), "der Pfeil zeigt auf seine eigene Wahl")
+    local oldGet = _G.C_SuperTrack.GetSuperTrackedQuestID
+    _G.C_SuperTrack.GetSuperTrackedQuestID = function() return 7 end
+    stub.FireEvent("SUPER_TRACKING_CHANGED")
+    Check(QA.Chosen == nil, "waehlt der Spieler selbst, gilt seine Wahl")
+    _G.C_SuperTrack.GetSuperTrackedQuestID = oldGet
+    QA.Chosen = nil
 
     -- Als Geist: zur Leiche, ohne Auswahl.
     tracked = 0
@@ -2230,14 +2271,26 @@ do
         wm:Hide()
         local mapID = 1453
         wm.GetMapID = function() return mapID end
-        wm.SetMapID = function(_, id) mapID = id end
+        -- 6.6.0.1: WeintCodex schreibt die Zone der Weltkarte nie selbst -
+        -- sonst blockiert das Spiel ihre Questmarken im Kampf.
+        local wrote = 0
+        wm.SetMapID = function(_, id) wrote = wrote + 1 mapID = id end
         local canvas = CreateFrame("Frame", nil, wm)
         canvas._width, canvas._height = 1000, 600
         wm.GetCanvas = function() return canvas end
-        _G.OpenWorldMap = function(id) wm:Show() mapID = id end
+        local luaOpen = 0
+        _G.OpenWorldMap = function() luaOpen = luaOpen + 1 end
+        local oldCMap = _G.C_Map
+        _G.C_Map = setmetatable({ OpenWorldMap = function(id) wm:Show() mapID = id end }, { __index = oldCMap })
+        -- Im Kampf: keine Karte, aber die Marke steht bereit.
+        local oldICL = _G.InCombatLockdown
+        _G.InCombatLockdown = function() return true end
+        assert(QM.Show(J.Place(214), "Red Silk Bandanas") and not wm:IsShown(), "im Kampf die Weltkarte geoeffnet")
+        _G.InCombatLockdown = oldICL
         local main = WeintCodex.MainFrame
         main:Show()
         assert(QM.Show(J.Place(214), "Red Silk Bandanas"), "Marke nicht gesetzt")
+        assert(wrote == 0 and luaOpen == 0, "Zone der Weltkarte selbst gesetzt (SetMapID " .. wrote .. ", OpenWorldMap " .. luaOpen .. ")")
         -- 6.5.1.2: Codex geht zu, auf der Karte steht der Weg zurueck.
         assert(not main:IsShown(), "Codex liegt weiter ueber der Karte")
         local back = QM.BackButton()
@@ -2259,21 +2312,26 @@ do
         mapID = 1436
         QM.Place()
         assert(pin:IsShown(), "Marke kommt beim Zurueckwechseln nicht wieder")
+        -- Zurueck: der Codex kommt ueber die Karte; die Karte schliesst
+        -- WeintCodex nicht selbst (HideUIPanel aus dem Addon, s. o.).
+        local hid = 0
         local oldHide = _G.HideUIPanel
-        _G.HideUIPanel = function(f) f:Hide() end
+        _G.HideUIPanel = function() hid = hid + 1 end
         back.button._scripts.OnClick(back.button)
-        assert(main:IsShown() and not wm:IsShown(), "Zurueck: Codex nicht offen oder Karte nicht zu")
+        assert(main:IsShown() and hid == 0, "Zurueck: Codex nicht offen oder Karte selbst geschlossen")
         assert(not back:IsShown() and not QM.FromCodex(), "Knopf bleibt nach dem Zurueck")
         _G.HideUIPanel = oldHide
         -- Karte ohne offenen Codex: kein Rueckweg angeboten.
         main:Hide()
+        wm:Hide()
         QM.Show(J.Place(214), "Red Silk Bandanas")
         assert(not back:IsShown(), "Zurueck-Knopf ohne Codex")
         wm:Show()
         QM.Place()
         pin._scripts.OnClick(pin, "RightButton")
         assert(not pin:IsShown() and QM.Target() == nil, "Rechtsklick entfernt die Marke nicht")
-        _G.WorldMapFrame, _G.OpenWorldMap = oldWM, oldOpen
+        _G.WorldMapFrame, _G.OpenWorldMap, _G.C_Map = oldWM, oldOpen, oldCMap
+        assert(wrote == 0, "Zone der Weltkarte selbst gesetzt")
     end)
     Check(ok, "Dungeonseite: Questgeber auf der Weltkarte" .. (ok and "" or (": " .. tostring(err))))
 end

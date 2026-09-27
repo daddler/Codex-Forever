@@ -894,6 +894,17 @@ Gegenstände) und die **Quests je Dungeon** (50).
   Namensschild. „Zurück zum Codex“ ist eine Leiste oben mittig auf der
   Karte (Markenzeichen, Zone, Name, Knopf) – oben links lag der Knopf auf
   dem Kartenknopf des Spiels.
+* **Die Weltkarte gehört dem Spiel** *(seit 6.6.0.1)*. WeintCodex ruft
+  weder `WorldMapFrame:SetMapID` noch das Lua-`OpenWorldMap` noch
+  `Show/HideUIPanel` für die Karte auf: die Kartennummer, die das Addon
+  schreibt, lesen Blizzards Questmarken (`QuestDataProvider:RefreshAllData`)
+  bei jeder Änderung der Questverfolgung, und im Kampf blockierte das Spiel
+  dann `SetPassThroughButtons` (Beta-Test). Geöffnet wird nur über
+  `C_Map.OpenWorldMap` (Ereignis `WORLD_MAP_OPEN`, die Karte stellt ihre
+  Zone selbst ein), nie im Kampf; „Zurück zum Codex“ legt den Codex über
+  die offene Karte. Fehlt `C_Map.OpenWorldMap`, steht die Marke bereit und
+  der Spieler öffnet die Karte selbst. `load_test.lua` sucht nach solchen
+  Aufrufen.
 * **Jede Quest eine Kachel** *(seit 6.5.1.1)*: Fläche `surface2`, Rand
   `borderStrong`, Luft dazwischen – ohne sie liefen die Quests als ein
   Textblock ineinander (Beta-Test). Der Kartenlink ist ein Knopf

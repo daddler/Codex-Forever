@@ -33,9 +33,15 @@
 --
 -- DER PFEIL DENKT MIT. Als Geist zeigt er zur eigenen Leiche, ohne dass
 -- man etwas auswaehlt (C_DeathInfo). Ist die verfolgte Quest abgegeben,
--- waehlt er die naechstgelegene Quest aus dem Questlog und verfolgt sie
--- (C_SuperTrack) - wahlweise schon, sobald ihre Ziele erfuellt sind,
--- statt erst zur Abgabe zu fuehren.
+-- waehlt er die naechstgelegene Quest aus dem Questlog - wahlweise schon,
+-- sobald ihre Ziele erfuellt sind, statt erst zur Abgabe zu fuehren.
+-- SEIT 6.6.0.1 NUR FUER SICH SELBST (QA.Chosen), nicht mehr ueber
+-- C_SuperTrack.SetSuperTrackedQuestID: ein Aufruf aus dem Addon laesst
+-- Blizzards Questverfolgung und die Questmarken der Weltkarte "von
+-- WeintCodex beruehrt" weiterlaufen, und im Kampf blockiert das Spiel dann
+-- SetPassThroughButtons (Beta-Test, ADDON_ACTION_BLOCKED beim Umstellen
+-- der Questprioritaet). Waehlt der Spieler selbst eine Quest, gilt wieder
+-- seine Wahl.
 --
 -- METER. Das Spiel rechnet in Yards. Der deutsche Client nennt dieselbe
 -- Einheit "Meter" (eine Zauberreichweite von 40 Yards steht dort als
@@ -266,7 +272,7 @@ local function ResolveTarget(playerMap)
         end
     end
 
-    local questID = st.GetSuperTrackedQuestID and st.GetSuperTrackedQuestID()
+    local questID = QA.Chosen or (st.GetSuperTrackedQuestID and st.GetSuperTrackedQuestID())
     if not questID or questID == 0 then return "none" end
     local title = QuestTitle(questID) or "Quest"
     -- Ziele erfuellt: der Ort ist jetzt der, an dem man abgibt (das Spiel
@@ -310,11 +316,9 @@ function QA.NearestQuest(skip, incompleteOnly)
     return best, bestDist
 end
 
+-- Die Wahl bleibt beim Pfeil (QA.Chosen) - kein C_SuperTrack, siehe oben.
 local function TrackNext(skip, incompleteOnly)
-    local st = _G.C_SuperTrack
-    if not (st and st.SetSuperTrackedQuestID) then return end
-    local id = QA.NearestQuest(skip, incompleteOnly)
-    if id then pcall(st.SetSuperTrackedQuestID, id) end
+    QA.Chosen = QA.NearestQuest(skip, incompleteOnly)
 end
 
 --------------------------------------------------
@@ -568,8 +572,12 @@ end
 
 local function OnEvent(_, event, questID)
     local st = _G.C_SuperTrack
-    local current = st and st.GetSuperTrackedQuestID and st.GetSuperTrackedQuestID()
-    if current == 0 then current = nil end
+    local game = st and st.GetSuperTrackedQuestID and st.GetSuperTrackedQuestID()
+    if game == 0 then game = nil end
+    -- Waehlt der Spieler selbst eine Quest, gilt seine Wahl. Loescht das
+    -- Spiel die Verfolgung (abgegeben), bleibt die des Pfeils.
+    if event == "SUPER_TRACKING_CHANGED" and game then QA.Chosen = nil end
+    local current = QA.Chosen or game
 
     if event == "QUEST_TURNED_IN" or event == "QUEST_REMOVED" then
         -- Abgegeben (oder abgebrochen): war es die verfolgte Quest, und

@@ -16,12 +16,17 @@
 -- der Spieler die Zone, verschwindet sie und kommt beim Zurueckwechseln
 -- wieder. Rechtsklick auf die Marke entfernt sie.
 --
--- ZURUECK ZUM CODEX (6.5.1.2; seit 6.6.0.1 eine Kachel oben in der Mitte, Beta-Test: "die Karte bleibt hinter dem
--- WeintCodex"): der Codex geht beim Klick zu, auf der Karte steht ein
--- Knopf, der die Karte schliesst und den Codex auf derselben Seite
--- wieder oeffnet - fuer den naechsten Questgeber. Der Knopf zeigt sich
--- nur, wenn die Karte aus dem Codex geoeffnet wurde; schliesst der
--- Spieler die Karte anders (M, Esc), ist er beim naechsten Mal weg.
+-- ZURUECK ZUM CODEX (6.5.1.2, Beta-Test: "die Karte bleibt hinter dem
+-- WeintCodex"): der Codex geht zu, sobald die Karte offen ist; oben auf
+-- der Karte steht eine Leiste, deren Knopf den Codex auf derselben Seite
+-- wieder oeffnet - UEBER der Karte, die offen bleibt (seit 6.6.0.1; sie
+-- selbst zu schliessen hiesse, sie zu beruehren, siehe OpenMap). Die
+-- Leiste zeigt sich nur, wenn die Karte aus dem Codex geoeffnet wurde.
+--
+-- DIE WELTKARTE GEHOERT DEM SPIEL (6.6.0.1). WeintCodex stellt ihre Zone
+-- nicht ein und schliesst sie nicht: was ein Addon dort schreibt, lesen
+-- Blizzards Questmarken spaeter, und im Kampf blockiert das Spiel dann
+-- SetPassThroughButtons. load_test.lua sucht nach solchen Aufrufen.
 --
 -- Die Lagen stehen in data/dungeon_journal.lua (J.PLACES) und sind
 -- `community` - die Marke sagt das im Tooltip.
@@ -222,16 +227,19 @@ function QM.Place()
 end
 
 -- Karte zu, Codex auf - auf der Seite, auf der er zuging.
+-- Codex zurueck - UEBER die Karte, die offen bleibt (Esc/M schliesst sie
+-- wie immer). Seit 6.6.0.1 schliesst WeintCodex die Weltkarte nicht mehr
+-- selbst: HideUIPanel aus dem Addon laesst ihr Schliessen "von WeintCodex
+-- beruehrt" ablaufen, und was dabei geschrieben wird, lesen ihre
+-- Questmarken spaeter im Kampf (siehe OpenMap).
 function QM.Back()
     fromCodex = false
     if back then back:Hide() end
-    local wm = _G.WorldMapFrame
-    if type(wm) == "table" and wm.IsShown and wm:IsShown() then
-        local ok = type(_G.HideUIPanel) == "function" and pcall(_G.HideUIPanel, wm)
-        if not ok or wm:IsShown() then pcall(wm.Hide, wm) end
-    end
     local main = WeintCodex.MainFrame
-    if type(main) == "table" and main.Show then main:Show() end
+    if type(main) == "table" and main.Show then
+        main:Show()
+        if main.Raise then main:Raise() end
+    end
 end
 
 -- DIE LEISTE "ZURUECK" (6.6.0.1, Beta-Test: der lila Kasten oben links
@@ -326,21 +334,25 @@ local function EnsureDriver()
     end)
 end
 
+-- DIE WELTKARTE OEFFNEN, OHNE SIE ZU BERUEHREN (6.6.0.1). Bis 6.6.0.0
+-- stellte WeintCodex die Zone selbst ein (WorldMapFrame:SetMapID, Lua-
+-- OpenWorldMap). Damit galt die Kartennummer der Weltkarte als "von
+-- WeintCodex geschrieben"; Blizzards Questmarken lesen sie bei jeder
+-- Aenderung der Questverfolgung (QuestDataProvider:RefreshAllData), und
+-- im Kampf blockierte das Spiel dann SetPassThroughButtons
+-- (ADDON_ACTION_BLOCKED, Beta-Test: beim Umstellen der Questprioritaet).
+-- Jetzt nur noch C_Map.OpenWorldMap: der Client meldet WORLD_MAP_OPEN,
+-- und die Weltkarte stellt die Zone in ihrem eigenen Ereignis ein. Im
+-- Kampf gar nicht. Ohne C_Map.OpenWorldMap setzt WeintCodex nur die Marke;
+-- die Karte oeffnet der Spieler selbst.
 local function OpenMap(mapID)
-    local wm = _G.WorldMapFrame
-    if type(wm) ~= "table" then return false end
-    if not (wm.IsShown and wm:IsShown()) then
-        if type(_G.OpenWorldMap) == "function" then
-            pcall(_G.OpenWorldMap, mapID)
-        elseif _G.C_Map and type(_G.C_Map.OpenWorldMap) == "function" then
-            pcall(_G.C_Map.OpenWorldMap, mapID)
-        elseif type(_G.ShowUIPanel) == "function" then
-            pcall(_G.ShowUIPanel, wm)
-        end
-    end
-    if type(wm.SetMapID) == "function" then pcall(wm.SetMapID, wm, mapID) end
-    return wm.IsShown and wm:IsShown() and true or false
+    if _G.InCombatLockdown and _G.InCombatLockdown() then return false, "combat" end
+    local cm = _G.C_Map
+    if not (cm and type(cm.OpenWorldMap) == "function") then return false, "api" end
+    local ok = pcall(cm.OpenWorldMap, mapID)
+    return ok and true or false
 end
+QM._OpenMap = OpenMap
 
 -- Weltkarte auf der Zone oeffnen und die Marke setzen. `place` aus
 -- J.PLACES, `questName` fuer Tooltip und Meldung.
@@ -351,38 +363,48 @@ function QM.Show(place, questName, line)
     target = { map = place.map, x = place.x, y = place.y, who = place.who,
                item = place.item, quest = questName, line = line }
     EnsureDriver()
-    -- Der Codex liegt ueber der Karte: er geht zu, der Knopf holt ihn zurueck.
+    local zone = QM.MapName(place.map)
+    local asked, why = OpenMap(place.map)
+    if not asked then
+        if why == "combat" then
+            Say("Im Kampf öffnet WeintCodex die Weltkarte nicht. Die Marke steht bereit: " .. place.who
+                .. (zone and (" (" .. zone .. ")") or "") .. " – Karte nach dem Kampf öffnen.")
+        else
+            Say("Die Marke steht bereit: " .. place.who .. (zone and (" (" .. zone .. ")") or "")
+                .. ". Öffne die Weltkarte (M) und wähle die Zone.")
+        end
+        return true
+    end
+    -- Die Karte oeffnet sich im Ereignis des Clients, also gleich oder einen
+    -- Takt spaeter. Erst wenn sie da ist, geht der Codex zu - sonst stuende
+    -- der Spieler vor gar nichts.
     local main = WeintCodex.MainFrame
     local codexOpen = type(main) == "table" and main.IsShown and main:IsShown()
-    local opened = OpenMap(place.map)
-    if opened and codexOpen then
-        main:Hide()
-        fromCodex = true
-        local b = EnsureBack()
-        if b then FillBack() b:Show() end
-    end
-    -- Das Spiel stellt beim Oeffnen kurz die zuletzt gezeigte Zone wieder
-    -- her; ein paar Takte lang die Zone nachsetzen.
-    if _G.C_Timer and _G.C_Timer.After then
-        for _, d in ipairs({ 0.05, 0.15, 0.3, 0.6 }) do
-            _G.C_Timer.After(d, function()
-                if not target or target.map ~= place.map then return end
-                local wm = _G.WorldMapFrame
-                if CurrentMap() ~= place.map and type(wm) == "table" and type(wm.SetMapID) == "function" then
-                    pcall(wm.SetMapID, wm, place.map)
-                end
-                QM.Place()
-            end)
+    local handled = false
+    local function Arrived()
+        if handled or not target or target.map ~= place.map then return end
+        local wm = _G.WorldMapFrame
+        if not (type(wm) == "table" and wm.IsShown and wm:IsShown()) then return end
+        handled = true
+        if codexOpen then
+            main:Hide()
+            fromCodex = true
+            local b = EnsureBack()
+            if b then FillBack() b:Show() end
         end
-    end
-    QM.Place()
-    local zone = QM.MapName(place.map)
-    if opened then
+        QM.Place()
         Say("Auf der Karte: " .. place.who .. (zone and (" (" .. zone .. ")") or "")
-            .. ". Rechtsklick auf die Marke entfernt sie" .. (fromCodex and ", „Zurück zum Codex“ oben links auf der Karte bringt dich zurück." or "."))
-    else
-        Say("Die Weltkarte ließ sich nicht öffnen – die Marke steht auf der Karte, sobald du sie öffnest ("
-            .. (zone or "Zone " .. place.map) .. ").")
+            .. ". Rechtsklick auf die Marke entfernt sie" .. (fromCodex and "; „Zurück zum Codex“ oben auf der Karte bringt dich zurück." or "."))
+    end
+    Arrived()
+    if _G.C_Timer and _G.C_Timer.After then
+        for _, d in ipairs({ 0.05, 0.15, 0.3, 0.6 }) do _G.C_Timer.After(d, Arrived) end
+        _G.C_Timer.After(0.8, function()
+            if not handled and target and target.map == place.map then
+                Say("Die Weltkarte hat sich nicht geöffnet. Die Marke steht bereit: " .. place.who
+                    .. (zone and (" (" .. zone .. ")") or "") .. " – öffne die Karte selbst (M).")
+            end
+        end)
     end
     return true
 end
