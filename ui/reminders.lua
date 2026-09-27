@@ -73,7 +73,10 @@ function R.NeedsSpell(kind)
 end
 
 local function PlayerClass()
-    local _, class = _G.UnitClass and _G.UnitClass("player")
+    -- Nicht `_G.UnitClass and _G.UnitClass(...)`: das `and` kappt auf EINEN
+    -- Rueckgabewert, die Klasse (der zweite) kam nie an.
+    if not _G.UnitClass then return nil end
+    local _, class = _G.UnitClass("player")
     return K.Plain(class)
 end
 

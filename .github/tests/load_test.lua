@@ -1683,6 +1683,11 @@ do
         assert(#R.Suggestions("ROGUE") == 2 and R.Suggestions("ROGUE")[1].kind == "weapon", "Schurke ohne Waffengift-Vorschlag")
         assert(#R.Suggestions("HUNTER") == 1 and R.Suggestions("HUNTER")[1].kind == "pet", "Jaeger ohne Begleiter-Vorschlag")
         assert(#R.Suggestions("WARRIOR") == 0, "Vorschlag mit geratener Zauber-ID")
+        -- Ohne Angabe: die Klasse des Spielers (zweiter Rueckgabewert).
+        local oldClass = _G.UnitClass
+        _G.UnitClass = function() return "Schurkin", "ROGUE", 4 end
+        assert(#R.Suggestions() == 2, "Klasse des Spielers nicht erkannt")
+        _G.UnitClass = oldClass
 
         -- Zauber aufloesen: Name oder ID.
         _G.C_Spell = {

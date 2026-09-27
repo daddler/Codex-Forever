@@ -800,6 +800,15 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    -- Direkt zu einem Modul, ohne die Seitenleiste zu suchen.
+    if msg == "erinnerungen" or msg == "reminders" then
+        if not K.Module("reminders") then
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Die Erinnerungen sind nicht geladen – läuft WeintCodex 6.4.0.0 oder neuer? Gerade: " .. tostring(WeintCodex.Version))
+            return
+        end
+        O.Show("reminders")
+        return
+    end
     if msg == "fenster" or msg == "window" then
         for _, line in ipairs(K.InspectWindow()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)

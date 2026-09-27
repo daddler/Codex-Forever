@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.4.0.1",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFErinnerungen direkt öffnen.|r /wcui erinnerungen springt sofort zu den Erinnerungen; läuft noch eine ältere Fassung, sagt der Befehl das.",
+            "|cff7C6CFFVorschläge für deine Klasse repariert.|r „Für meine Klasse“ erkannte die Klasse nicht und schlug deshalb für niemanden etwas vor.",
+        },
+    },
+    {
         version = "6.4.0.0",
         date    = "27.09.2026",
         notes   = {

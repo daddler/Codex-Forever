@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.4.0.1] – 2026-09-27
+
+**Erinnerungen direkt öffnen.** /wcui erinnerungen springt sofort zu den Erinnerungen; läuft noch eine ältere Fassung, sagt der Befehl das.
+
+**Vorschläge für deine Klasse repariert.** „Für meine Klasse“ erkannte die Klasse nicht und schlug deshalb für niemanden etwas vor.
+
+### Technisch
+
+- `ui/reminders.lua`: `local _, class = _G.UnitClass and _G.UnitClass("player")`
+  – das `and` kappt auf einen Rückgabewert, die Klasse (der zweite) kam
+  nie an. Jetzt erst prüfen, dann rufen.
+- `/wcui erinnerungen` (`O.Show("reminders")`), mit Hinweis auf die
+  Fassung, falls das Modul fehlt.
+
 ## [6.4.0.0] – 2026-09-27
 
 **Neu: Erinnerungen.** Was früher WeakAuras konnte, soweit das Spiel es heute noch erlaubt: WeintCodex erinnert dich vor dem Kampf an fehlende Buffs, an Waffen ohne (oder mit bald ablaufender) Verzauberung und an einen fehlenden Begleiter.
