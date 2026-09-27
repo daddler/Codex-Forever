@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.4.1.6] – 2026-09-27
+
+**Kategorien im Zauberbuch aufgeräumt.** Die Bilder oben stoßen nicht mehr aneinander, der goldene Schein ist weg; die gewählte Kategorie trägt einen Rand im Akzent.
+
+### Technisch
+
+- `ui/windows.lua`: Reiter mit Bild statt Text (größte Textur ohne
+  Atlas, `W.TabIcon`) bekommen keine Kachel, sondern einen Rand innen am
+  Bild – 1 px schwarz, gewählt 2 px im Akzent; `spellbook-Tab-Frame-*`
+  (Rahmen und Schein) weg, bei jedem Takt neu, weil das Spiel den Schein
+  beim Wechsel wieder zeigt. `IsSelected` ohne Antwort lässt das Feld
+  `isSelected` gelten.
+- **Im Spiel ungeprüft.**
+
 ## [6.4.1.5] – 2026-09-27
 
 **Klassenschein deutlicher.** Oben in Charakterfenster, Zauberbuch und Talenten jetzt gut zu sehen statt nur zu ahnen.

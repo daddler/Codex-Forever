@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.4.1.6",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFKategorien im Zauberbuch aufgeräumt.|r Die Bilder oben stoßen nicht mehr aneinander, der goldene Schein ist weg; die gewählte Kategorie trägt einen Rand im Akzent.",
+        },
+    },
+    {
         version = "6.4.1.5",
         date    = "27.09.2026",
         notes   = {

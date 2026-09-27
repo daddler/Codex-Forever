@@ -544,30 +544,111 @@ W.Grey = function(f) Grey(f, 0) end
 local TAB_PARTS = { "Left", "Middle", "Right", "LeftActive", "MiddleActive", "RightActive",
                     "LeftHighlight", "MiddleHighlight", "RightHighlight" }
 local tabSkin = setmetatable({}, { __mode = "k" })
+-- Reiter mit Bild statt Text (Kategorien im Zauberbuch des Forever-
+-- Clients, Beta-Test 6.4.1.5: die Bilder stiessen aneinander, der
+-- gewaehlte trug Goldschein UND unseren Rand). Das Bild ist die
+-- groesste Textur ohne Atlas; ihr Rahmen und Schein des Spiels
+-- (spellbook-Tab-Frame-*) gehen, ein Rand INNEN am Bild trennt die
+-- Nachbarn und zeigt die Wahl.
+local function TabIcon(tab)
+    local best, area = nil, 0
+    local ok, regions = pcall(function() return { tab:GetRegions() } end)
+    for _, r in ipairs(ok and regions or {}) do
+        local tok, a = pcall(function()
+            if r:GetObjectType() ~= "Texture" then return 0 end
+            local atlas = K.Plain(r.GetAtlas and r:GetAtlas())
+            if type(atlas) == "string" and atlas ~= "" then return 0 end
+            if type(K.Plain(r:GetTexture())) ~= "number" then return 0 end
+            local w, h = K.Plain(r:GetWidth()), K.Plain(r:GetHeight())
+            if type(w) ~= "number" or type(h) ~= "number" then return 0 end
+            return w * h
+        end)
+        if tok and a > area then best, area = r, a end
+    end
+    return best
+end
+W.TabIcon = TabIcon
+
+local function InnerRim(host, region)
+    local r = {}
+    for _, side in ipairs({ "top", "bottom", "left", "right" }) do
+        local t = host:CreateTexture(nil, "OVERLAY", nil, 7)
+        own[t] = true
+        r[side] = t
+    end
+    function r:Set(width, c)
+        self.top:ClearAllPoints()
+        self.top:SetPoint("TOPLEFT", region, "TOPLEFT", 0, 0)
+        self.top:SetPoint("TOPRIGHT", region, "TOPRIGHT", 0, 0)
+        self.top:SetHeight(width)
+        self.bottom:ClearAllPoints()
+        self.bottom:SetPoint("BOTTOMLEFT", region, "BOTTOMLEFT", 0, 0)
+        self.bottom:SetPoint("BOTTOMRIGHT", region, "BOTTOMRIGHT", 0, 0)
+        self.bottom:SetHeight(width)
+        self.left:ClearAllPoints()
+        self.left:SetPoint("TOPLEFT", region, "TOPLEFT", 0, 0)
+        self.left:SetPoint("BOTTOMLEFT", region, "BOTTOMLEFT", 0, 0)
+        self.left:SetWidth(width)
+        self.right:ClearAllPoints()
+        self.right:SetPoint("TOPRIGHT", region, "TOPRIGHT", 0, 0)
+        self.right:SetPoint("BOTTOMRIGHT", region, "BOTTOMRIGHT", 0, 0)
+        self.right:SetWidth(width)
+        for _, t in ipairs({ self.top, self.bottom, self.left, self.right }) do
+            t:SetColorTexture(c[1], c[2], c[3], 1)
+        end
+    end
+    return r
+end
+
+local function HideTabArt(tab)
+    local ok, regions = pcall(function() return { tab:GetRegions() } end)
+    for _, r in ipairs(ok and regions or {}) do
+        local aok, atlas = pcall(function() return K.Plain(r.GetAtlas and r:GetAtlas()) end)
+        if aok and type(atlas) == "string" and atlas:find("^spellbook%-Tab%-Frame") then Hide(r) end
+    end
+end
+
 local function SkinTab(tab)
     local d = tabSkin[tab]
     if not d then
         for _, k in ipairs(TAB_PARTS) do Hide(tab[k]) end
-        d = { kachel = K.Kachel(tab, { shadow = 0 }) }
-        own[d.kachel.bg], own[d.kachel.light] = true, true
-        -- Eine Stufe heller als die Fensterkachel, sonst verschwindet er darin.
-        local s1 = C.surface1
-        d.kachel.bg:SetColorTexture(s1[1], s1[2], s1[3], 0.95)
+        local icon = TabIcon(tab)
+        if icon then
+            HideTabArt(tab)
+            if icon.SetTexCoord then icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
+            d = { icon = icon, rim = InnerRim(tab, icon) }
+        else
+            d = { kachel = K.Kachel(tab, { shadow = 0 }) }
+            own[d.kachel.bg], own[d.kachel.light] = true, true
+            -- Eine Stufe heller als die Fensterkachel, sonst verschwindet er darin.
+            local s1 = C.surface1
+            d.kachel.bg:SetColorTexture(s1[1], s1[2], s1[3], 0.95)
+        end
         local hl = tab:CreateTexture(nil, "HIGHLIGHT")
-        hl:SetAllPoints(tab)
+        hl:SetAllPoints(d.icon or tab)
         local h = WeintCodex.GameColors.hoverFill
         hl:SetColorTexture(h[1], h[2], h[3], h[4] * 0.5)
         own[hl] = true
         tabSkin[tab] = d
     end
+    if d.icon then HideTabArt(tab) end   -- Schein des Spiels kommt beim Wechsel wieder
     local on = tab.isSelected
     if type(tab.IsSelected) == "function" then
         local ok, v = pcall(tab.IsSelected, tab)
-        if ok then on = v end
+        if ok and type(v) ~= "nil" then on = v end
     end
-    local c = K.Bool(on, false) and C.accent or { 0, 0, 0 }
-    d.kachel.border:SetColor(c[1], c[2], c[3], 1)
+    on = K.Bool(on, false)
+    local c = on and C.accent or { 0, 0, 0 }
+    if d.rim then
+        if d.sel ~= on then
+            d.sel = on
+            d.rim:Set(on and 2 or 1, c)
+        end
+    else
+        d.kachel.border:SetColor(c[1], c[2], c[3], 1)
+    end
 end
+W.TabSkin = tabSkin
 
 local function SkinTabSystems(f, depth)
     if depth > 8 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end

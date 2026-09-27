@@ -2085,6 +2085,25 @@ do
         tabs.tabs = { t1, t2 }
         W.SkinTabSystems(tabs)
         assert(t1.Middle:GetAlpha() == 0 and t1.MiddleActive:GetAlpha() == 0, "Goldreiter sichtbar")
+        -- 6.4.1.6: Reiter mit Bild (Zauberbuch-Kategorien): kein Goldschein,
+        -- Rand innen am Bild, gewaehlter im Akzent.
+        local cat = stub.NewObject("Frame")
+        cat.AddTab = function() end
+        local it = stub.NewObject("Button")
+        local pic, frameArt, glow = stub.NewObject("Texture"), stub.NewObject("Texture"), stub.NewObject("Texture")
+        pic._width, pic._height = 36, 36
+        pic.GetTexture = function() return 135274 end
+        frameArt.GetAtlas = function() return "spellbook-Tab-Frame-C60" end
+        glow.GetAtlas = function() return "spellbook-Tab-Frame-Glow-C60" end
+        glow.GetTexture = function() return 999 end
+        it.GetRegions = function() return pic, frameArt, glow end
+        it.isSelected = true
+        cat.tabs = { it }
+        W.SkinTabSystems(cat)
+        local td = W.TabSkin[it]
+        assert(td and td.icon == pic and not td.kachel, "Bildreiter nicht als solcher erkannt")
+        assert(frameArt:GetAlpha() == 0 and glow:GetAlpha() == 0, "Goldrahmen/-schein am Bildreiter")
+        assert(td.sel == true, "gewaehlter Bildreiter ohne Akzent")
         -- Knopf "Aenderungen anwenden" (UIPanelButtonTemplate).
         local apply = stub.NewObject("Button")
         apply.Left, apply.Middle, apply.Right = stub.NewObject("Texture"), stub.NewObject("Texture"), stub.NewObject("Texture")
