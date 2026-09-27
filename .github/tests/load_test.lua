@@ -86,6 +86,12 @@ Check(type(_G.WeintCodex_SavedData) == "table",
 Check(WeintCodex.SavedData == _G.WeintCodex_SavedData,
     "WeintCodex.SavedData zeigt auf die gespeicherte Tabelle, nicht auf eine Kopie")
 
+-- Seit 6.6.0.9 nimmt die Gruppe standardmaessig die Rahmen des Spiels
+-- (ui/gamegroup.lua). Die Pruefungen der eigenen Kacheln weiter unten
+-- brauchen die eigenen: vor dem Einloggen umstellen. Die Rahmen des Spiels
+-- prueft ein eigener Abschnitt.
+WeintCodex.UIKit.Set("groupframes", "source", "own")
+
 -- PLAYER_LOGIN dazu: dort melden sich Charakter und Twinkliste an die
 -- Companion, die Rosternamen werden aufgeloest und die Einfuehrung
 -- prueft, ob sie sich zeigen muss. Vier Wege, die im Spiel bei JEDEM
@@ -1794,6 +1800,55 @@ do
         _G.TestChatEditBox = nil
     end)
     Check(ok, "Chat: Eingabezeile erst mit Enter" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.6.0.9: Gruppenrahmen des Spiels im WeintCodex-Stil - nur sie zeigen
+-- HoTs, Buffs und Schilde im Kampf. Standard, eigene Kacheln waehlbar.
+do
+    local ok, err = pcall(function()
+        local GG = WeintCodex.UIGameGroup
+        assert(GG, "ui/gamegroup.lua nicht geladen")
+        assert(K.Module("groupframes").defaults.source == "game", "Standard ist nicht der Rahmen des Spiels")
+        -- Ein Rahmen, wie das Spiel ihn anlegt.
+        local f = CreateFrame("Button", "CompactPartyFrameMember1", UIParent)
+        _G.CompactPartyFrameMember1 = f
+        local parts = {
+            healthBar = CreateFrame("StatusBar", nil, f), powerBar = CreateFrame("StatusBar", nil, f),
+            background = f:CreateTexture(), name = f:CreateFontString(), statusText = f:CreateFontString(),
+            horizTopBorder = f:CreateTexture(),
+        }
+        local icon = f:CreateTexture()
+        local coords
+        icon.SetTexCoord = function(_, ...) coords = { ... } end
+        parts.buffFrames = { { icon = icon } }
+        -- Die Teile als Felder, wie das Spiel sie setzt (WeintCodex liest sie nur).
+        for k, v in pairs(parts) do rawset(f, k, v) end
+        local barTex
+        parts.healthBar.SetStatusBarTexture = function(_, t) barTex = t end
+        assert(#GG.Frames() >= 1, "Rahmen des Spiels nicht gefunden")
+        assert(GG.Style(f), "Stil nicht angewendet")
+        assert(barTex == K.BarTexture(), "Lebensbalken ohne WeintCodex-Textur")
+        assert(coords and math.abs(coords[1] - 0.08) < 1e-6, "Aurensymbol nicht beschnitten")
+        assert(GG.styled[f] and GG.styled[f].border, "kein Rand")
+        assert(parts.horizTopBorder:GetAlpha() == 0, "Rahmenlinie des Spiels noch sichtbar")
+        -- Wiederholbar (das Spiel richtet neu ein): kein zweiter Rand.
+        local b1 = GG.styled[f].border
+        GG.Style(f)
+        assert(GG.styled[f].border == b1, "zweiter Rand beim Neueinrichten")
+        -- Klickzauber greift auch auf die Rahmen des Spiels.
+        GG.active = true
+        local CC = WeintCodex.UIClickCast
+        local found = false
+        for _, x in ipairs(CC.Frames()) do if x == f then found = true end end
+        assert(found, "Klickzauber kennt die Rahmen des Spiels nicht")
+        GG.active = nil
+        local lines = table.concat(GG.Inspect(), " | ")
+        assert(lines:find("gefunden", 1, true), "/wcui gruppe ohne Auskunft: " .. lines)
+        _G.CompactPartyFrameMember1 = nil
+        GG.styled[f] = nil
+    end)
+    Check(ok, "Gruppenrahmen des Spiels: gefunden, im WeintCodex-Stil, Klickzauber, /wcui gruppe"
+        .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.6.0.7: Klickzauber - Maustaste + Zusatztaste wirkt einen Zauber auf

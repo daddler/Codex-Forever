@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.0.9",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFGruppenrahmen mit HoTs, Buffs und Schilden.|r Die Gruppe und der Schlachtzug nutzen jetzt die Rahmen des Spiels im WeintCodex-Stil – nur sie zeigen HoTs, Buffs, Schilde und bannbare Debuffs auch im Kampf. Lage und Größe im Bearbeitungsmodus des Spiels; in der Gruppe dort „Schlachtzugsartige Gruppenrahmen“ einschalten. Die eigenen Kacheln gibt es weiter unter Gruppenrahmen → Rahmen.",
+            "|cff7C6CFFKlickzauber auch auf den Rahmen des Spiels.|r Deine Belegung wirkt auf die neuen Gruppen- und Schlachtzugsrahmen genauso.",
+        },
+    },
+    {
         version = "6.6.0.8",
         date    = "27.09.2026",
         notes   = {

@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.0.9] – 2026-09-27
+
+**Gruppenrahmen mit HoTs, Buffs und Schilden.** Die Gruppe und der Schlachtzug nutzen jetzt die Rahmen des Spiels im WeintCodex-Stil – nur sie zeigen HoTs, Buffs, Schilde und bannbare Debuffs auch im Kampf. Lage und Größe im Bearbeitungsmodus des Spiels; in der Gruppe dort „Schlachtzugsartige Gruppenrahmen“ einschalten. Die eigenen Kacheln gibt es weiter unter Gruppenrahmen → Rahmen.
+
+**Klickzauber auch auf den Rahmen des Spiels.** Deine Belegung wirkt auf die neuen Gruppen- und Schlachtzugsrahmen genauso.
+
 ## [6.6.0.8] – 2026-09-27
 
 **Questpfeil: höher oder tiefer.** Nennt das Spiel deine eigene Höhe, erkennt der Pfeil beim Bergauf- oder Bergabgehen, ob das Ziel über oder unter dir liegt – „Ziel ≈ 25 m höher“ und ein kleiner Pfeil nach oben oder unten. Ob dein Spiel die Höhe nennt, sagt /wcui pfeil.

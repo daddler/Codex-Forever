@@ -99,6 +99,7 @@ weil sie genau das sind, wofür er steht.
 | `ui/castbar.lua` | **ein** Zauberbalken für Plaketten und Einheitenrahmen |
 | `ui/nameplates.lua` | Gegnerplaketten |
 | `ui/unitframes.lua` | Spieler, Ziel, Ziel des Ziels, Fokus, Begleiter; Porträt als 3D-Modell oder Bild |
+| `ui/gamegroup.lua` | **Gruppenrahmen des Spiels im WeintCodex-Stil** (Standard seit 6.6.0.9): nur sie zeigen HoTs, Buffs, Schilde und Debuffs im Kampf |
 | `ui/clickcast.lua` | **Klickzauber**: Maustaste + Zusatztaste wirkt einen Zauber auf die Einheit des Rahmens (Reiter der Gruppenrahmen) |
 | `ui/questarrow.lua` | Questpfeil |
 | `ui/comfort.lua` | Komfortfunktionen |
@@ -454,6 +455,27 @@ Seit 6.2.0.0:
   setzen alle Rahmen ihre Texte nach 1 und 4 s geleert neu
   (`UF.RedrawTexts`) – eine beim ersten Setzen noch nicht geladene
   Schrift zeichnete sonst nichts.
+* **Gruppenrahmen des Spiels** (6.6.0.9, `ui/gamegroup.lua`, Einstellung
+  `groupframes.source` = `game` | `own`, Standard `game`). Beta-Test:
+  „Schilde, Buffs, HoTs werden im Gruppenframe nicht angezeigt“. Die
+  eigenen Kacheln hatten nie Buffs/HoTs, und Debuffs laufen über
+  `ui/auras.lua` – im Kampf von Forever gesperrt (siehe Aurenleisten).
+  Eigene Rahmen können das grundsätzlich nicht; die des Spiels schon.
+  Deshalb bleiben `CompactPartyFrame`/`CompactRaidFrameContainer` an, und
+  `GG.Style` zeichnet jeden Rahmen neu (Balkentextur, dunkler Grund,
+  Blizzards Linien weg, 1-px-Rand, WeintCodex-Schrift, Aurensymbole
+  beschnitten) – nur Methoden, keine Felder; neue Rahmen über
+  `hooksecurefunc` auf `DefaultCompactUnitFrameSetup`/
+  `DefaultCompactMiniFrameSetup`/`CompactUnitFrame_SetUpFrame`, dazu nach
+  `GROUP_ROSTER_UPDATE`. Lage und Größe: Bearbeitungsmodus des Spiels.
+  In der Gruppe braucht es „Schlachtzugsartige Gruppenrahmen“ – WeintCodex
+  schaltet das nicht selbst um (Einstellungen des Bearbeitungsmodus aus
+  einem Addon machen ihn unsicher), sondern sagt es einmal im Chat
+  (`EditModeManagerFrame:UseRaidStylePartyFrames`). Der Klickzauber legt
+  seine Attribute auch auf diese Rahmen (`CC.Frames`). `/wcui gruppe`
+  nennt, was gefunden und gestaltet ist. Der Prüflauf stellt vor dem
+  Einloggen auf `own`, damit die Prüfungen der eigenen Kacheln bleiben.
+  Im Spiel ungeprüft.
 * **Klickzauber** (6.6.0.7, `ui/clickcast.lua`, Beta-Test „wie VuhDo,
   Clique, Healbot – einfach“): eine Belegung ist Maustaste (1–5) +
   Zusatztaste (ohne/Umschalt/Strg/Alt) → Zauber, Ziel wählen oder Menü.

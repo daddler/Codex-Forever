@@ -184,6 +184,10 @@ end
 -- Jeder Rahmen, der eine Einheit zeigt.
 function CC.Frames()
     local out = {}
+    local GG = WeintCodex.UIGameGroup
+    if GG and GG.active then
+        for _, f in ipairs(GG.Frames()) do out[#out + 1] = f end
+    end
     local GF = WeintCodex.UIGroupFrames
     if GF and GF.buttons then
         for _, b in ipairs(GF.buttons) do out[#out + 1] = b end

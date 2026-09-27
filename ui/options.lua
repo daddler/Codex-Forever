@@ -838,6 +838,12 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    if msg == "gruppe" or msg == "group" then
+        for _, line in ipairs(WeintCodex.UIGameGroup.Inspect()) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+        return
+    end
     if msg == "pfeil" or msg == "arrow" then
         for _, line in ipairs(WeintCodex.UIQuestArrow.Inspect()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)

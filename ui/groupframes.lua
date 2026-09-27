@@ -33,6 +33,11 @@ local K  = WeintCodex.UIKit
 local KEY = "groupframes"
 
 local defaults = {
+    -- Welche Rahmen (6.6.0.9, Beta-Test: "Schilde, Buffs, HoTs werden nicht
+    -- angezeigt"): "game" = die des Spiels im WeintCodex-Stil
+    -- (ui/gamegroup.lua) - nur sie zeigen Auren im Kampf; "own" = die
+    -- eigenen Kacheln dieses Moduls, ohne Auren im Kampf.
+    source = "game",
     partyEnabled = true,
     partyWidth = 120, partyHeight = 40, partySpacing = 4,
     partyShowPlayer = true,
@@ -799,6 +804,10 @@ local function OnTick(_, el)
 end
 
 local function Enable()
+    if Opt("source") == "game" then
+        WeintCodex.UIGameGroup.Enable()
+        return
+    end
     K.AfterCombat(function()
         if Opt("partyEnabled") then
             CreateHeader("party")
@@ -836,12 +845,19 @@ local function px(v) return string.format("%d px", v) end
 K.Register({
     key = KEY, group = "ui", order = 25,
     title = "Gruppenrahmen",
-    description = "Gruppe und Schlachtzug als schlichte Kacheln: Klassenfarbe, Name, Leben, eingehende Heilung, Schilde, Rolle, Reichweite, Aggro und bannbare Debuffs – dazu Klickzauber: Zauber auf Maustasten.",
+    description = "Gruppe und Schlachtzug: die Rahmen des Spiels im WeintCodex-Stil – mit HoTs, Buffs, Schilden und Debuffs auch im Kampf – oder eigene Kacheln. Dazu Klickzauber: Zauber auf Maustasten.",
     defaults = defaults,
     Enable = Enable,
     OnSetting = OnSetting,
     pages = {
         { key = "allgemein", label = "Allgemein", build = function(B)
+            B:Section("Welche Rahmen")
+            B:Row({ type = "dropdown", label = "Rahmen", key = "source", reload = true, items = {
+                        { value = "game", text = "Des Spiels im WeintCodex-Stil" },
+                        { value = "own",  text = "Eigene Kacheln" } },
+                    description = "Nur die Rahmen des Spiels zeigen HoTs, Buffs, Schilde und Debuffs auch im Kampf – Forever gibt sie Addons dort nicht heraus. Lage und Größe dann im Bearbeitungsmodus des Spiels." },
+                  { type = "empty" })
+            B:Note("Die folgenden Einstellungen gelten für die eigenen Kacheln; bei den Rahmen des Spiels wirken Rand und Schriftgröße.")
             B:Section("Farben und Rahmen")
             B:Row({ type = "toggle", label = "Klassenfarbe", key = "classColor" },
                   { type = "color", label = "Lebensbalken sonst", key = "healthColor" })
