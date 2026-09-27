@@ -2096,13 +2096,16 @@ do
         frameArt.GetAtlas = function() return "spellbook-Tab-Frame-C60" end
         glow.GetAtlas = function() return "spellbook-Tab-Frame-Glow-C60" end
         glow.GetTexture = function() return 999 end
-        it.GetRegions = function() return pic, frameArt, glow end
+        local backdrop = stub.NewObject("Texture")   -- dunkle Flaeche hinter dem Bild (gemessen)
+        it.GetRegions = function() return pic, frameArt, glow, backdrop end
         it.isSelected = true
         cat.tabs = { it }
         W.SkinTabSystems(cat)
         local td = W.TabSkin[it]
         assert(td and td.icon == pic and not td.kachel, "Bildreiter nicht als solcher erkannt")
         assert(frameArt:GetAlpha() == 0 and glow:GetAlpha() == 0, "Goldrahmen/-schein am Bildreiter")
+        assert(backdrop:GetAlpha() == 0, "dunkle Flaeche hinter dem Bild bleibt (Balken)")
+        assert(pic:GetAlpha() == 1, "Bild des Reiters ausgeblendet")
         assert(td.sel == true, "gewaehlter Bildreiter ohne Akzent")
         -- 6.4.1.7: Schnitt relativ zum Ausschnitt des Spiels (Klassenbild
         -- aus einem Bogen: 0..0,25), und neu, wenn das Spiel ihn zuruecksetzt.

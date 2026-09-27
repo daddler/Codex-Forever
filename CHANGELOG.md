@@ -9,6 +9,21 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.4.1.8] – 2026-09-27
+
+**Keine wandernden Balken mehr im Zauberbuch.** Die dunkle Fläche hinter den Kategorie-Bildern ist weg – sie schaute seitlich heraus, wo ein Reiter breiter war als sein Bild.
+
+### Technisch
+
+- Gemessen mit `/wcui maus` (Beta-Test 6.4.1.7): der Kategorie-Reiter
+  trägt sein Bild als `.Icon` und dahinter eine Farbfläche
+  (`FileData ID 0`, BACKGROUND), die den ganzen Reiter füllt. Die Breite
+  folgt der (leeren) Beschriftung, und der gewählte Reiter hat eine andere
+  Schrift – daher „wanderte“ der Balken. `ui/windows.lua`: am Bildreiter
+  wird jede Textur außer dem Bild und unseren eigenen ausgeblendet; das
+  Bild wird bevorzugt über `.Icon` gefunden.
+- **Im Spiel ungeprüft.**
+
 ## [6.4.1.7] – 2026-09-27
 
 **Klassenbild im Zauberbuch ohne Balken.** Die dunklen Streifen links und rechts am Klassen-Reiter sind weg; alle Kategorie-Bilder sind gleich zugeschnitten.

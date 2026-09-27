@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.4.1.8",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFKeine wandernden Balken mehr im Zauberbuch.|r Die dunkle Fläche hinter den Kategorie-Bildern ist weg – sie schaute seitlich heraus, wo ein Reiter breiter war als sein Bild.",
+        },
+    },
+    {
         version = "6.4.1.7",
         date    = "27.09.2026",
         notes   = {

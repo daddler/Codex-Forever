@@ -551,6 +551,13 @@ local tabSkin = setmetatable({}, { __mode = "k" })
 -- (spellbook-Tab-Frame-*) gehen, ein Rand INNEN am Bild trennt die
 -- Nachbarn und zeigt die Wahl.
 local function TabIcon(tab)
+    -- Gemessen im Beta-Client (/wcui maus, 6.4.1.7): der Reiter traegt
+    -- sein Bild als .Icon.
+    local key = tab.Icon
+    if type(key) == "table" and key.GetObjectType then
+        local ok, kind = pcall(key.GetObjectType, key)
+        if ok and kind == "Texture" then return key end
+    end
     local best, area = nil, 0
     local ok, regions = pcall(function() return { tab:GetRegions() } end)
     for _, r in ipairs(ok and regions or {}) do
@@ -634,11 +641,20 @@ local function CropRelative(tex, d)
 end
 W.CropRelative = CropRelative
 
-local function HideTabArt(tab)
+-- Alles am Bildreiter ausser dem Bild und unseren Flaechen: Goldrahmen,
+-- Goldschein und die dunkle Flaeche dahinter. Die Flaeche fuellt den
+-- ganzen Reiter, und der ist so breit wie seine (leere) Beschriftung -
+-- der gewaehlte Reiter hat eine andere Schrift, also eine andere Breite.
+-- Wo er breiter war als sein Bild, sah man sie als Balken links und
+-- rechts, mal an diesem, mal an jenem Reiter (Beta-Test 6.4.1.7, mit
+-- /wcui maus gemessen: "FileData ID 0 (BACKGROUND)").
+local function HideTabArt(tab, icon)
     local ok, regions = pcall(function() return { tab:GetRegions() } end)
     for _, r in ipairs(ok and regions or {}) do
-        local aok, atlas = pcall(function() return K.Plain(r.GetAtlas and r:GetAtlas()) end)
-        if aok and type(atlas) == "string" and atlas:find("^spellbook%-Tab%-Frame") then Hide(r) end
+        if r ~= icon and not own[r] then
+            local tok, isTex = pcall(function() return r:GetObjectType() == "Texture" end)
+            if tok and isTex then Hide(r) end
+        end
     end
 end
 
@@ -648,7 +664,6 @@ local function SkinTab(tab)
         for _, k in ipairs(TAB_PARTS) do Hide(tab[k]) end
         local icon = TabIcon(tab)
         if icon then
-            HideTabArt(tab)
             d = { icon = icon, rim = InnerRim(tab, icon) }
         else
             d = { kachel = K.Kachel(tab, { shadow = 0 }) }
@@ -665,7 +680,7 @@ local function SkinTab(tab)
         tabSkin[tab] = d
     end
     if d.icon then
-        HideTabArt(tab)   -- Schein des Spiels kommt beim Wechsel wieder
+        HideTabArt(tab, d.icon)   -- Schein des Spiels kommt beim Wechsel wieder
         CropRelative(d.icon, d)
     end
     local on = tab.isSelected
