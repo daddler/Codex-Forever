@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.4.1.2",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFZauberbuch im WeintCodex-Stil.|r Kachel statt Pergament, Titel und Schrift hell, Zaubersymbole eckig mit dem Rand der Aktionsleisten statt der runden und goldenen Zierrahmen.",
+        },
+    },
+    {
         version = "6.4.1.1",
         date    = "27.09.2026",
         notes   = {

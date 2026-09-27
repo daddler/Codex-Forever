@@ -411,6 +411,12 @@ Seit 6.2.0.0:
   Holz aussieht, nennt `/wcui fenster`. Seit 6.3.1.7 zweite Stufe:
   `W.HIDE_ATLAS` blendet die dort gemessenen Atlanten aus (Muster, nie
   Inhalte; `RaceBG` bleibt), die Plätze bekommen einen 1-px-Rand.
+* **Zauberbuch** (6.4.1.2): dieselbe Fensterhülle wie das
+  Charakterfenster (`PlayerSpellsFrame`/`SpellBookFrame`), Pergament-
+  Atlanten weg, Zaubersymbole eckig (erkannt an `Button.Icon`/`Border`/
+  `IconMask`), dunkle Schrift hell (`W.IsDark`, Haken auf
+  `SetTextColor`). Der Forever-Client sieht anders aus als der Quelltext
+  des Spiels – was bleibt, nennt `/wcui fenster`.
 * **Tageszeit-Ecke** (6.3.1.6): `dayCorner` der Minikarte.
 * **LibDBIcon friert Schichten ein** (6.3.1.6): vor `SetFrameStrata`
   erst `SetFixedFrameStrata(false)`, sonst wirkt es nicht.

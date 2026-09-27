@@ -9,6 +9,26 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.4.1.2] – 2026-09-27
+
+**Zauberbuch im WeintCodex-Stil.** Kachel statt Pergament, Titel und Schrift hell, Zaubersymbole eckig mit dem Rand der Aktionsleisten statt der runden und goldenen Zierrahmen.
+
+### Technisch
+
+- `ui/windows.lua`: `PlayerSpellsFrame` und `SpellBookFrame` in
+  `W.WINDOWS`; Atlanten `spellbook-background*`, `-corner*`, `-divider`,
+  `-list-backplate`, `-item-backplate` und der Trenner der Rotationshilfe
+  ausgeblendet (Lehrer-Schatten, Glyphen, Hervorhebungen bleiben).
+  Zauber erkannt an `Button.Icon`/`Border`/`IconMask`: Rahmen weg, Maske
+  ab, 1-px-Rand am Bild. Dunkle Schrift (Helligkeit < 0,4) wird
+  `textNormal`, ein Haken auf `SetTextColor` hält sie hell; farbige
+  Schrift bleibt.
+- Fenster werden jetzt auch nach dem Nachladen eines Teils des Spiels
+  (`ADDON_LOADED`, das Zauberbuch lädt beim ersten Öffnen) gestaltet, je
+  Fenster mit eigenem Takt, solange es offen ist.
+- **Im Spiel ungeprüft** – der Screenshot aus dem Forever-Client sieht
+  anders aus als das Zauberbuch im Quelltext des Spiels.
+
 ## [6.4.1.1] – 2026-09-27
 
 **Abklingzeitmanager mit Luft.** Die eckigen Symbole überlappten sich; jetzt bleiben 2 px zwischen ihnen, auch wenn du den Abstand im Bearbeitungsmodus änderst.

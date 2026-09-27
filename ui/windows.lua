@@ -15,6 +15,16 @@
 -- Listen und Modell bleiben unberuehrt. Was danach noch nach Holz
 -- aussieht, nennt /wcui fenster (Maus ueber das Fenster).
 --
+-- 6.4.1.2: auch das Zauberbuch (Beta-Test: "auch hier soll das UI
+-- einheitlich mit WeintCodex sein"). Wie es im Forever-Client heisst und
+-- aufgebaut ist, hat niemand gemessen - der Screenshot sieht anders aus
+-- als das Zauberbuch im Quelltext des Spiels. Deshalb dieselbe Vorsicht:
+-- beide Namen des Spiels (PlayerSpellsFrame, SpellBookFrame), die Atlanten
+-- des Quelltexts als Muster, und was allgemein gilt, allgemein: dunkle
+-- Schrift fuer Pergament wird auf der dunklen Kachel hell, Zaubersymbole
+-- bekommen den eckigen Rand der Aktionsleisten. Was danach noch nach
+-- Pergament aussieht, nennt /wcui fenster.
+--
 -- Nur Aussehen, nur Deckkraft: nichts wird versteckt, umgehaengt oder
 -- verschoben. Die Einstellung liegt beim Modul "general" (Seite
 -- "Fenster"), wie der Tooltip - die Seitenleiste ist voll.
@@ -34,7 +44,7 @@ W.DEFAULTS = {
 local function Opt(k) return K.Get("general", k) end
 
 -- Fenster und ihre Teilfenster. Was der Client nicht kennt, faellt heraus.
-W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame" }
+W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "SpellBookFrame" }
 W.PANELS  = { "PaperDollFrame", "ReputationFrame", "SkillFrame", "TokenFrame", "PVPFrame", "HonorFrame",
               "CharacterStatsPane" }
 
@@ -155,6 +165,13 @@ W.HIDE_ATLAS = {
     "^common%-framedivider",                 -- senkrechte Trennlinie
     "^common%-stat%-bar%-BG",                -- Rahmen der Ruf-/Fertigkeitsbalken
     "^common%-sidetab",                      -- Goldrahmen der Reiter rechts
+    -- Zauberbuch (Blizzard_PlayerSpells, Quelltext des Spiels 12.x):
+    "^spellbook%-background",                -- Pergament, Buchseiten, Band
+    "^spellbook%-corner",                    -- Eselsohr zum Blaettern
+    "^spellbook%-divider",
+    "^spellbook%-list%-backplate",
+    "^spellbook%-item%-backplate",           -- Schatten hinter jedem Zauber
+    "^UI%-HUD%-RotationHelper%-SpellbookDivider",
 }
 local KEEP_ATLAS = { "RaceBG" }
 
@@ -253,6 +270,96 @@ local function SkinModeTabs()
 end
 W.SkinModeTabs = SkinModeTabs
 
+-- Schrift fuer Pergament (dunkelbraun, SPELLBOOK_FONT_COLOR) ist auf der
+-- dunklen Kachel unlesbar. Jede dunkle Schriftzeile im Fenster wird hell;
+-- setzt das Spiel sie wieder dunkel, zieht ein Haken nach. Helle und
+-- farbige Schrift (Gold, Gruen, Rot) bleibt, wie sie ist - sie traegt
+-- Bedeutung.
+local function IsDark(r, g, b)
+    r, g, b = K.Plain(r), K.Plain(g), K.Plain(b)
+    if type(r) ~= "number" or type(g) ~= "number" or type(b) ~= "number" then return false end
+    return (0.299 * r + 0.587 * g + 0.114 * b) < 0.4
+end
+W.IsDark = IsDark
+
+local lit = setmetatable({}, { __mode = "k" })
+local litGuard = false
+local function Lighten(fs)
+    if lit[fs] then return end
+    local ok, r, g, b = pcall(fs.GetTextColor, fs)
+    if not ok or not IsDark(r, g, b) then return end
+    lit[fs] = true
+    local c = C.textNormal
+    litGuard = true
+    fs:SetTextColor(c[1], c[2], c[3])
+    litGuard = false
+    if _G.hooksecurefunc then
+        _G.hooksecurefunc(fs, "SetTextColor", function(self, nr, ng, nb)
+            if litGuard or not IsDark(nr, ng, nb) then return end
+            litGuard = true
+            self:SetTextColor(c[1], c[2], c[3])
+            litGuard = false
+        end)
+    end
+end
+
+local function LightenText(f, depth)
+    if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
+    local rok, regions = pcall(function() return { f:GetRegions() } end)
+    for _, r in ipairs(rok and regions or {}) do
+        local ok, isText = pcall(function() return r:GetObjectType() == "FontString" end)
+        if ok and isText then Lighten(r) end
+    end
+    local cok, kids = pcall(function() return { f:GetChildren() } end)
+    for _, ch in ipairs(cok and kids or {}) do LightenText(ch, depth + 1) end
+end
+W.LightenText = function(f) LightenText(f, 0) end
+
+-- Zaubersymbole im Zauberbuch (SpellBookItemTemplate: Button mit Icon,
+-- Border und IconMask): Zierrahmen weg, Maske ab (Passive waren rund),
+-- 1 px schwarzer Rand wie auf den Aktionsleisten. Erkannt an diesen drei
+-- Teilen, nicht an einem Namen - die Eintraege legt das Spiel beim
+-- Blaettern neu an.
+local spellDone = setmetatable({}, { __mode = "k" })
+local function SkinSpellButton(b)
+    if spellDone[b] then return end
+    spellDone[b] = true
+    Hide(b.Border)
+    local icon = b.Icon
+    if type(b.IconMask) == "table" and icon.RemoveMaskTexture then pcall(icon.RemoveMaskTexture, icon, b.IconMask) end
+    if icon.SetTexCoord then icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
+    local border = K.Border(b, 1, 0, 0, 0, 1, "OVERLAY")
+    if border.top and border.top.SetDrawLayer then
+        for _, t in ipairs({ border.top, border.bottom, border.left, border.right }) do
+            t:ClearAllPoints()
+        end
+        -- Rand am Bild, nicht am Knopf: der Knopf ist groesser als das Bild.
+        border.top:SetPoint("BOTTOMLEFT", icon, "TOPLEFT", -1, 0)
+        border.top:SetPoint("BOTTOMRIGHT", icon, "TOPRIGHT", 1, 0)
+        border.top:SetHeight(1)
+        border.bottom:SetPoint("TOPLEFT", icon, "BOTTOMLEFT", -1, 0)
+        border.bottom:SetPoint("TOPRIGHT", icon, "BOTTOMRIGHT", 1, 0)
+        border.bottom:SetHeight(1)
+        border.left:SetPoint("TOPRIGHT", icon, "TOPLEFT", 0, 0)
+        border.left:SetPoint("BOTTOMRIGHT", icon, "BOTTOMLEFT", 0, 0)
+        border.left:SetWidth(1)
+        border.right:SetPoint("TOPLEFT", icon, "TOPRIGHT", 0, 0)
+        border.right:SetPoint("BOTTOMLEFT", icon, "BOTTOMRIGHT", 0, 0)
+        border.right:SetWidth(1)
+    end
+end
+
+local function SkinSpellItems(f, depth)
+    if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
+    local b = f.Button
+    if type(b) == "table" and type(b.Icon) == "table" and type(b.Border) == "table" and b.Icon.SetTexCoord then
+        pcall(SkinSpellButton, b)
+    end
+    local cok, kids = pcall(function() return { f:GetChildren() } end)
+    for _, ch in ipairs(cok and kids or {}) do SkinSpellItems(ch, depth + 1) end
+end
+W.SkinSpellItems = function(f) SkinSpellItems(f, 0) end
+
 function W.Inner()
     stats.runs = stats.runs + 1
     stats.last = _G.GetTime and K.Plain(_G.GetTime()) or nil
@@ -261,6 +368,10 @@ function W.Inner()
         if type(f) == "table" and done[f] then
             HideByAtlas(f, 0)
             SkinSlots(f)
+            if n == "PlayerSpellsFrame" or n == "SpellBookFrame" then
+                SkinSpellItems(f, 0)
+                LightenText(f, 0)
+            end
         end
     end
     SkinModeTabs()
@@ -291,31 +402,45 @@ function W.Apply()
 end
 
 -- Die Fenster legt das Spiel beim Anmelden an; manche Teilfenster erst
--- beim ersten Oeffnen. Deshalb auch bei jedem Zeigen des Charakterfensters.
+-- beim ersten Oeffnen, das Zauberbuch erst beim ersten Druecken von P
+-- (Blizzard_PlayerSpells laedt bei Bedarf). Deshalb: beim Anmelden, bei
+-- jedem nachgeladenen Teil des Spiels und bei jedem Zeigen eines Fensters.
+local hookedWin = {}
+local function Run(fn)
+    local ok, err = pcall(fn)
+    if not ok then stats.err = err K.Report("fenster", err) end
+end
+
+local function HookWindow(f)
+    if type(f) ~= "table" or hookedWin[f] or not f.HookScript or (f.IsForbidden and f:IsForbidden()) then return end
+    hookedWin[f] = true
+    f:HookScript("OnShow", function() Run(W.Apply) end)
+    -- Solange es offen ist: neue Zeilen (Blaettern, Reiterwechsel)
+    -- zweimal je Sekunde nachziehen. Geschlossen laeuft nichts.
+    -- Ein eigener Kindrahmen, kein Skript am Fenster des Spiels: er
+    -- laeuft nur, solange das Fenster sichtbar ist.
+    local watch = CreateFrame("Frame", nil, f)
+    local acc = 0
+    watch:SetScript("OnUpdate", function(_, elapsed)
+        acc = acc + (elapsed or 0)
+        if acc < 0.5 then return end
+        acc = 0
+        Run(W.Inner)
+    end)
+end
+
+function W.HookAll()
+    for _, n in ipairs(W.WINDOWS) do HookWindow(_G[n]) end
+end
+
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
-boot:SetScript("OnEvent", function()
+boot:RegisterEvent("ADDON_LOADED")
+boot:SetScript("OnEvent", function(_, event, name)
     if not K.UIEnabled() or not Opt("windowSkin") then return end
-    local ok, err = pcall(W.Apply)
-    if not ok then stats.err = err K.Report("fenster", err) end
-    local cf = _G.CharacterFrame
-    if type(cf) == "table" and cf.HookScript then
-        cf:HookScript("OnShow", function()
-            local ok2, err2 = pcall(W.Apply)
-            if not ok2 then stats.err = err2 K.Report("fenster", err2) end
-        end)
-        -- Solange es offen ist: neue Zeilen (Blaettern, Reiterwechsel)
-        -- zweimal je Sekunde nachziehen. Geschlossen laeuft nichts.
-        -- Ein eigener Kindrahmen, kein Skript am Fenster des Spiels: er
-        -- laeuft nur, solange das Fenster sichtbar ist.
-        local watch = CreateFrame("Frame", nil, cf)
-        local acc = 0
-        watch:SetScript("OnUpdate", function(_, elapsed)
-            acc = acc + (elapsed or 0)
-            if acc < 0.5 then return end
-            acc = 0
-            local ok3, err3 = pcall(W.Inner)
-            if not ok3 then stats.err = err3 K.Report("fenster", err3) end
-        end)
-    end
+    if event == "ADDON_LOADED" and not (type(name) == "string" and name:find("^Blizzard_")) then return end
+    -- Vor dem Anmelden gibt es nichts zu gestalten; PLAYER_LOGIN kommt noch.
+    if event == "ADDON_LOADED" and not (_G.IsLoggedIn and K.Bool(_G.IsLoggedIn(), false)) then return end
+    Run(W.Apply)
+    W.HookAll()
 end)

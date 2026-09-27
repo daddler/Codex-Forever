@@ -1983,6 +1983,44 @@ do
     Check(ok, "Abklingzeitmanager: Symbole und Balken im WeintCodex-Stil" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.4.1.2: Zauberbuch im Stil der Oberflaeche - Pergament weg, dunkle
+-- Schrift hell, Zaubersymbole eckig mit Rand.
+do
+    local ok, err = pcall(function()
+        local W = WeintCodex.UIWindows
+        assert(W.HidesAtlas("spellbook-background-evergreen-left"), "Pergament des Zauberbuchs bleibt")
+        assert(W.HidesAtlas("spellbook-item-backplate"), "Schatten hinter Zaubern bleibt")
+        assert(not W.HidesAtlas("spellbook-item-needtrainer-shadow"), "Lehrer-Hinweis ausgeblendet - der traegt Bedeutung")
+        assert(W.IsDark(0.25, 0.18, 0.11) and not W.IsDark(1, 0.82, 0) and not W.IsDark(0.1, 1, 0.1), "hell/dunkel falsch")
+
+        local book = stub.NewObject("Frame", "SpellBookFrame")
+        local item = stub.NewObject("Frame")
+        local btn = stub.NewObject("Button")
+        local icon, border, mask = stub.NewObject("Texture"), stub.NewObject("Texture"), stub.NewObject("MaskTexture")
+        local removed
+        icon.RemoveMaskTexture = function(_, m) removed = m end
+        btn.Icon, btn.Border, btn.IconMask = icon, border, mask
+        item.Button = btn
+        local name, gold = stub.NewObject("FontString"), stub.NewObject("FontString")
+        name._font, gold._font = true, true
+        local col = { [name] = { 0.25, 0.18, 0.11 }, [gold] = { 1, 0.82, 0 } }
+        for fs, c in pairs(col) do
+            fs.GetTextColor = function() return c[1], c[2], c[3], 1 end
+            fs.SetTextColor = function(_, r, g, b) col[fs] = { r, g, b } end
+        end
+        item.GetRegions = function() return name, gold end
+        book.GetChildren = function() return item end
+        W.SkinSpellItems(book)
+        W.LightenText(book)
+        assert(border:GetAlpha() == 0, "Zierrahmen des Zaubers sichtbar")
+        assert(removed == mask, "runde Maske am Zaubersymbol")
+        assert(not W.IsDark(col[name][1], col[name][2], col[name][3]), "Pergament-Schrift bleibt dunkel")
+        assert(col[gold][1] == 1 and col[gold][2] == 0.82, "farbige Schrift umgefaerbt")
+        _G.SpellBookFrame = nil
+    end)
+    Check(ok, "Zauberbuch: Pergament weg, Schrift hell, Symbole eckig" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.8: Im Dungeon verfolgt die Questliste nur dessen Quests; beim
 -- Verlassen kommt genau das zurueck, was geaendert wurde.
 do
