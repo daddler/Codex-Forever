@@ -2069,6 +2069,38 @@ do
         W.AddGlow(stub.NewObject("Frame"), d3)
         assert(not d3.glow, "Schein ohne Klassenfarbe geraten")
         _G.UnitClass, _G.RAID_CLASS_COLORS = oldUC, oldRCC
+
+        -- 6.4.1.5: Gold an Bedienelementen.
+        assert(W.Desaturates("RedButton-Exit") and W.Desaturates("common-dropdown-a-button"), "rote/gelbe Knoepfe bleiben farbig")
+        assert(not W.Desaturates("talents-node-square-green"), "Talentzustand entfaerbt")
+        -- Reiter: Kachel, gewaehlter mit Akzent.
+        local tabs = stub.NewObject("Frame")
+        tabs.AddTab = function() end
+        local t1, t2 = stub.NewObject("Button"), stub.NewObject("Button")
+        for _, t in ipairs({ t1, t2 }) do
+            t.Left, t.Middle, t.Right = stub.NewObject("Texture"), stub.NewObject("Texture"), stub.NewObject("Texture")
+            t.MiddleActive = stub.NewObject("Texture")
+        end
+        t1.isSelected, t2.isSelected = true, false
+        tabs.tabs = { t1, t2 }
+        W.SkinTabSystems(tabs)
+        assert(t1.Middle:GetAlpha() == 0 and t1.MiddleActive:GetAlpha() == 0, "Goldreiter sichtbar")
+        -- Knopf "Aenderungen anwenden" (UIPanelButtonTemplate).
+        local apply = stub.NewObject("Button")
+        apply.Left, apply.Middle, apply.Right = stub.NewObject("Texture"), stub.NewObject("Texture"), stub.NewObject("Texture")
+        local host = stub.NewObject("Frame")
+        host.GetChildren = function() return apply end
+        W.SkinPanelButtons(host)
+        assert(apply.Middle:GetAlpha() == 0, "Goldknopf sichtbar")
+        -- Werte: Name endet vor der Zahl.
+        local stat = stub.NewObject("Frame")
+        stat.Label, stat.Value = stub.NewObject("FontString"), stub.NewObject("FontString")
+        local anchored
+        stat.Label.SetPoint = function(_, pt, rel) if pt == "RIGHT" then anchored = rel end end
+        local pane = stub.NewObject("Frame")
+        pane.GetChildren = function() return stat end
+        W.FitStats(pane)
+        assert(anchored == stat.Value, "Name des Wertes laeuft in die Zahl")
         _G.hooksecurefunc = oldHookW
         assert(not W.Adopt(stub.NewObject("Frame", "MailFrame")), "fremdes Fenster aufgenommen")
         _G.ForeverTalentFrame = nil

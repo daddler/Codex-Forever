@@ -9,6 +9,27 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.4.1.5] – 2026-09-27
+
+**Klassenschein deutlicher.** Oben in Charakterfenster, Zauberbuch und Talenten jetzt gut zu sehen statt nur zu ahnen.
+
+**Reiter und Knöpfe ohne Gold.** „Primär/Sekundär“ und „Änderungen anwenden“ als Kachel, der gewählte Reiter mit Rand im Akzent; Schließen- und Pfeilknöpfe grau statt rot und gelb. Das runde Symbol oben links im Talentfenster ist weg.
+
+**Werte lesbar.** Im Charakterfenster läuft ein langer Name wie „Bewegungsgeschwindigkeit“ nicht mehr in die Zahl, er wird davor gekürzt.
+
+### Technisch
+
+- `GameColors.windowGlow` 0,22 → 0,40.
+- `ui/windows.lua`, dritte Stufe: Reiter des `TabSystem` (Teile
+  Left/Middle/Right, *Active, *Highlight ausgeblendet, Kachel, Rand im
+  Akzent nach `IsSelected`), Knöpfe der Vorlage `UIPanelButtonTemplate`
+  (Left/Middle/Right und Glanz weg, Kachel), Atlanten `RedButton-*` und
+  `common-dropdown-a-button` entsättigt, Porträt-Rahmen als Ganzes
+  ausgeblendet (`PortraitContainer`/`PortraitFrame`/`PortraitButton`).
+- Werte im Charakterfenster: `Label` rechts an `Value` verankert, ohne
+  Umbruch.
+- **Im Spiel ungeprüft.**
+
 ## [6.4.1.4] – 2026-09-27
 
 **Stimmung statt Schwarz.** Oben in Charakterfenster, Zauberbuch und Talenten ein Schein in deiner Klassenfarbe; die Landschaften hinter den Talentbäumen bleiben – gedämpft, damit Symbole und Schrift vorne stehen. Abschaltbar: /wcui → Tooltip & Fenster.

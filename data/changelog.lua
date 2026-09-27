@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.4.1.5",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFKlassenschein deutlicher.|r Oben in Charakterfenster, Zauberbuch und Talenten jetzt gut zu sehen statt nur zu ahnen.",
+            "|cff7C6CFFReiter und Knöpfe ohne Gold.|r „Primär/Sekundär“ und „Änderungen anwenden“ als Kachel, der gewählte Reiter mit Rand im Akzent; Schließen- und Pfeilknöpfe grau statt rot und gelb. Das runde Symbol oben links im Talentfenster ist weg.",
+            "|cff7C6CFFWerte lesbar.|r Im Charakterfenster läuft ein langer Name wie „Bewegungsgeschwindigkeit“ nicht mehr in die Zahl, er wird davor gekürzt.",
+        },
+    },
+    {
         version = "6.4.1.4",
         date    = "27.09.2026",
         notes   = {

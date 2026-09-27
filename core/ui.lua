@@ -243,7 +243,7 @@ WeintCodex.GameColors = {
     -- Schein in der Klassenfarbe oben im Fenster (nur die Deckkraft steht
     -- hier; die Farbe ist die der Klasse).
     artTone       = {0.600, 0.580, 0.650, 0.45},
-    windowGlow    = {1.000, 1.000, 1.000, 0.22},
+    windowGlow    = {1.000, 1.000, 1.000, 0.40},   -- 6.4.1.5: 0.22 war kaum zu sehen (Beta-Test)
     hoverGlow     = {1.000, 1.000, 1.000, 0.40},  -- ... und ein weisser Schein
     targetGlow    = {0.486, 0.424, 1.000, 0.85},  -- = Akzent: Leuchten des Ziels
     targetMark    = {1.000, 1.000, 1.000, 1.00},  -- Zielmarken links und rechts

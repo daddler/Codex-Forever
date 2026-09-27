@@ -72,7 +72,7 @@ W.PANELS  = { "PaperDollFrame", "ReputationFrame", "SkillFrame", "TokenFrame", "
 
 -- Schmuck in der Fenstervorlage des Spiels, als Schluessel am Rahmen.
 local DECOR = { "NineSlice", "Bg", "Background", "TopTileStreaks", "Inset", "InsetBg",
-                "PortraitContainer", "PortraitFrame", "portrait", "TitleBg", "TopBorder" }
+                "PortraitContainer", "PortraitFrame", "PortraitButton", "portrait", "TitleBg", "TopBorder" }
 
 local done = {}
 W.done = done
@@ -119,8 +119,16 @@ local function HideDecor(part)
     end
 end
 
+-- Portraet-Rahmen ganz ausblenden, nicht nur ihre Texturen: im
+-- Talentfenster blieb das runde Symbol oben links stehen (Beta-Test
+-- 6.4.1.4) - es liegt tiefer als eine Textur des Rahmens.
+local WHOLE = { PortraitContainer = true, PortraitFrame = true, PortraitButton = true }
+
 local function HideDecorOf(f)
-    for _, key in ipairs(DECOR) do HideDecor(f[key]) end
+    for _, key in ipairs(DECOR) do
+        HideDecor(f[key])
+        if WHOLE[key] and type(f[key]) == "table" and f[key].GetObjectType then Hide(f[key]) end
+    end
     local name = f.GetName and f:GetName()
     if type(name) == "string" then
         for _, suffix in ipairs({ "Bg", "Inset", "InsetRight", "InsetLeft", "Portrait", "TitleBg" }) do
@@ -491,6 +499,144 @@ function W.AddGlow(f, d)
     d.glow = t
 end
 
+--------------------------------------------------
+-- Dritte Stufe: Bedienelemente (6.4.1.5)
+--------------------------------------------------
+-- Was neben der Kachel noch nach Gold aussah (Beta-Test 6.4.1.4): Reiter
+-- ("Primaer/Sekundaer"), Knoepfe ("Aenderungen anwenden"), die gelben
+-- Pfeilknoepfe und die roten Schliessen-Knoepfe.
+
+-- Rot und Gelb des Spiels an Knoepfen werden grau: die Form bleibt, die
+-- Bedeutung (schliessen, aufklappen) auch.
+local DESAT_ATLAS = { "^[Rr]ed[Bb]utton%-", "^common%-dropdown%-a%-button" }
+local desat = setmetatable({}, { __mode = "k" })
+function W.Desaturates(atlas)
+    if type(atlas) ~= "string" then return false end
+    for _, pat in ipairs(DESAT_ATLAS) do
+        if atlas:find(pat) then return true end
+    end
+    return false
+end
+
+local function Grey(f, depth)
+    if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
+    local rok, regions = pcall(function() return { f:GetRegions() } end)
+    for _, r in ipairs(rok and regions or {}) do
+        if not desat[r] then
+            local ok, atlas = pcall(function()
+                if r:GetObjectType() ~= "Texture" then return nil end
+                return r.GetAtlas and r:GetAtlas()
+            end)
+            if ok and W.Desaturates(K.Plain(atlas)) and r.SetDesaturated then
+                desat[r] = true
+                r:SetDesaturated(true)
+            end
+        end
+    end
+    local cok, kids = pcall(function() return { f:GetChildren() } end)
+    for _, ch in ipairs(cok and kids or {}) do Grey(ch, depth + 1) end
+end
+W.Grey = function(f) Grey(f, 0) end
+
+-- Reiter einer Reiterleiste (TabSystem des Spiels: .tabs, jeder mit
+-- Left/Middle/Right, *Active und *Highlight): eine kleine Kachel, der
+-- gewaehlte mit Rand im Akzent - wie die Reiter am Charakterfenster.
+local TAB_PARTS = { "Left", "Middle", "Right", "LeftActive", "MiddleActive", "RightActive",
+                    "LeftHighlight", "MiddleHighlight", "RightHighlight" }
+local tabSkin = setmetatable({}, { __mode = "k" })
+local function SkinTab(tab)
+    local d = tabSkin[tab]
+    if not d then
+        for _, k in ipairs(TAB_PARTS) do Hide(tab[k]) end
+        d = { kachel = K.Kachel(tab, { shadow = 0 }) }
+        own[d.kachel.bg], own[d.kachel.light] = true, true
+        -- Eine Stufe heller als die Fensterkachel, sonst verschwindet er darin.
+        local s1 = C.surface1
+        d.kachel.bg:SetColorTexture(s1[1], s1[2], s1[3], 0.95)
+        local hl = tab:CreateTexture(nil, "HIGHLIGHT")
+        hl:SetAllPoints(tab)
+        local h = WeintCodex.GameColors.hoverFill
+        hl:SetColorTexture(h[1], h[2], h[3], h[4] * 0.5)
+        own[hl] = true
+        tabSkin[tab] = d
+    end
+    local on = tab.isSelected
+    if type(tab.IsSelected) == "function" then
+        local ok, v = pcall(tab.IsSelected, tab)
+        if ok then on = v end
+    end
+    local c = K.Bool(on, false) and C.accent or { 0, 0, 0 }
+    d.kachel.border:SetColor(c[1], c[2], c[3], 1)
+end
+
+local function SkinTabSystems(f, depth)
+    if depth > 8 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
+    if type(f.tabs) == "table" and type(f.AddTab) == "function" then
+        for _, tab in ipairs(f.tabs) do
+            if type(tab) == "table" and tab.CreateTexture then pcall(SkinTab, tab) end
+        end
+    end
+    local cok, kids = pcall(function() return { f:GetChildren() } end)
+    for _, ch in ipairs(cok and kids or {}) do SkinTabSystems(ch, depth + 1) end
+end
+W.SkinTabSystems = function(f) SkinTabSystems(f, 0) end
+
+-- Knoepfe der Vorlage UIPanelButtonTemplate (Left/Middle/Right, Text):
+-- flache Kachel, heller unter der Maus. Zustaende (gedrueckt, gesperrt)
+-- tauschen die Bilder des Spiels - die bleiben unsichtbar, der Text zeigt
+-- den gesperrten Zustand weiter grau.
+local btnSkin = setmetatable({}, { __mode = "k" })
+local function SkinPanelButton(b)
+    if btnSkin[b] then return end
+    btnSkin[b] = true
+    for _, k in ipairs({ "Left", "Middle", "Right" }) do Hide(b[k]) end
+    local hl = b.GetHighlightTexture and b:GetHighlightTexture()
+    if type(hl) == "table" then Hide(hl) end
+    local d = K.Kachel(b, { shadow = 0 })
+    own[d.bg], own[d.light] = true, true
+    local s1 = C.surface1
+    d.bg:SetColorTexture(s1[1], s1[2], s1[3], 0.95)
+    local mine = b:CreateTexture(nil, "HIGHLIGHT")
+    mine:SetAllPoints(b)
+    local h = WeintCodex.GameColors.hoverFill
+    mine:SetColorTexture(h[1], h[2], h[3], h[4] * 0.5)
+    own[mine] = true
+end
+
+local function SkinPanelButtons(f, depth)
+    if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
+    local ok, isButton = pcall(function() return f:GetObjectType() == "Button" end)
+    if ok and isButton and type(f.Left) == "table" and type(f.Middle) == "table" and type(f.Right) == "table"
+       and not (type(f.LeftActive) == "table") and f.CreateTexture then
+        pcall(SkinPanelButton, f)
+    end
+    local cok, kids = pcall(function() return { f:GetChildren() } end)
+    for _, ch in ipairs(cok and kids or {}) do SkinPanelButtons(ch, depth + 1) end
+end
+W.SkinPanelButtons = function(f) SkinPanelButtons(f, 0) end
+
+-- Werte im Charakterfenster: Name links, Zahl rechts. Blizzard laesst den
+-- Namen frei laufen - "Bewegungsgeschwindigkeit" lief in "125%" hinein
+-- (Beta-Test 6.4.1.4). Der Name endet jetzt vor der Zahl und wird dort
+-- gekuerzt. Erkannt an Label und Value, nicht an einer Liste.
+local statDone = setmetatable({}, { __mode = "k" })
+local function FitStats(f, depth)
+    if depth > 8 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
+    local label, value = f.Label, f.Value
+    if not statDone[f] and type(label) == "table" and type(value) == "table"
+       and label.SetPoint and value.GetObjectType then
+        statDone[f] = true
+        pcall(function()
+            label:SetPoint("RIGHT", value, "LEFT", -6, 0)
+            if label.SetWordWrap then label:SetWordWrap(false) end
+            if label.SetJustifyH then label:SetJustifyH("LEFT") end
+        end)
+    end
+    local cok, kids = pcall(function() return { f:GetChildren() } end)
+    for _, ch in ipairs(cok and kids or {}) do FitStats(ch, depth + 1) end
+end
+W.FitStats = function(f) FitStats(f, 0) end
+
 function W.Inner()
     stats.runs = stats.runs + 1
     stats.last = _G.GetTime and K.Plain(_G.GetTime()) or nil
@@ -499,6 +645,10 @@ function W.Inner()
         if type(f) == "table" and done[f] then
             HideByAtlas(f, 0)
             SkinSlots(f)
+            Grey(f, 0)
+            SkinTabSystems(f, 0)
+            SkinPanelButtons(f, 0)
+            if n == "CharacterFrame" then FitStats(f, 0) end
             if W.WantsLarge(n) then
                 SkinSpellItems(f, 0)
                 LightenText(f, 0)

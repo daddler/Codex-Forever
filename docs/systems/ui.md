@@ -424,6 +424,10 @@ Seit 6.2.0.0:
   Landschaften gedämpft statt weg, Schein in der Klassenfarbe oben in
   jedem gestalteten Fenster; Goldschmuck nach den gemessenen Atlanten
   weg, Zustandsrahmen der Talente bleiben.
+  6.4.1.5, dritte Stufe: Bedienelemente – Reiter (`TabSystem`) und
+  `UIPanelButtonTemplate`-Knöpfe als Kachel, `RedButton-*`/
+  `common-dropdown-a-button` entsättigt, Porträt-Rahmen ganz aus, Werte
+  im Charakterfenster (`Label` vor `Value`) ohne Überlappung.
 * **Tageszeit-Ecke** (6.3.1.6): `dayCorner` der Minikarte.
 * **LibDBIcon friert Schichten ein** (6.3.1.6): vor `SetFrameStrata`
   erst `SetFixedFrameStrata(false)`, sonst wirkt es nicht.
