@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.1.1] – 2026-09-27
+
+**Einrichtung mit einem Klick.** Beim ersten Einloggen stellt WeintCodex die Oberfläche für dich ein – wie EllesmereUI: ein eigenes Layout „WeintCodex“ im Bearbeitungsmodus mit schlachtzugsartigen Gruppenrahmen an den richtigen Plätzen, dann einmal neu laden. Verschieben geht danach wie gewohnt. Jederzeit wieder mit /wcui einrichten oder unter Gruppenrahmen → Allgemein.
+
 ## [6.6.1.0] – 2026-09-27
 
 **Gruppenrahmen wie die eigenen Kacheln.** Die Rahmen des Spiels tragen jetzt Klassenfarbe statt Grün, den Namen oben mittig, den Zustand in der Mitte, Grund, Rand und Schatten der Kacheln – die Überschrift „Gruppe“ und Blizzards Linien sind weg. HoTs, Buffs und Schilde zeigt weiter das Spiel. Tote und Getrennte bleiben grau.

@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.6.1.0
+## Version: 6.6.1.1
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -173,3 +173,4 @@ ui/editmode.lua
 # Die Frage beim ersten Einloggen ("WeintCodex-Oberflaeche verwenden?").
 # Zuletzt, weil sie auf das Fenster und die Einstellungsseite verweist.
 ui/welcome.lua
+ui/setup.lua

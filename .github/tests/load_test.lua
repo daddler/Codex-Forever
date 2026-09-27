@@ -1895,6 +1895,83 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.6.1.1: Einrichtung beim ersten Mal - ein eigenes Layout "WeintCodex"
+-- im Bearbeitungsmodus, danach neu laden (wie EllesmereUI).
+do
+    local ok, err = pcall(function()
+        local ES = WeintCodex.UISetup
+        assert(ES, "ui/setup.lua nicht geladen")
+        local oldEM, oldPM, oldEnum = _G.C_EditMode, _G.EditModePresetLayoutManager, _G.Enum
+        _G.Enum = setmetatable({
+            EditModeSystem = { UnitFrame = 3, ActionBar = 0 },
+            EditModeUnitFrameSystemIndices = { Player = 1, Target = 2, Party = 4, Raid = 5 },
+            EditModeUnitFrameSetting = { UseRaidStylePartyFrames = 4, DisplayBorder = 12 },
+            EditModeLayoutType = { Preset = 0, Account = 1, Character = 2 },
+        }, { __index = oldEnum })
+        local modern = { layoutName = "Modern", layoutType = 0, systems = {
+            { system = 0, systemIndex = 1, settings = {}, anchorInfo = { point = "BOTTOM" } },
+            { system = 3, systemIndex = 4, settings = { { setting = 4, value = 0 } }, isInDefaultPosition = true },
+            { system = 3, systemIndex = 5, settings = {} },
+        } }
+        _G.EditModePresetLayoutManager = { GetCopyOfPresetLayouts = function() return { modern, { layoutName = "Klassisch", systems = {} } } end }
+        local stored = { activeLayout = 3, layouts = { { layoutName = "EllesmereUI Forever v4", layoutType = 1, systems = {} } } }
+        local saved, active
+        _G.C_EditMode = {
+            GetLayouts = function() return stored end,
+            SaveLayouts = function(info) saved = info end,
+            SetActiveLayout = function(i) active = i end,
+        }
+        assert(ES.HasLayout() == false, "Layout vor der Einrichtung schon da")
+        local okA, why = ES.Apply()
+        assert(okA, "Einrichten schlug fehl: " .. tostring(why))
+        local l = saved and saved.layouts[2]
+        assert(l and l.layoutName == "WeintCodex" and l.layoutType == 1, "Layout nicht angelegt")
+        assert(saved.layouts[1].layoutName == "EllesmereUI Forever v4", "bisheriges Layout ueberschrieben")
+        assert(saved.activeLayout == 4 and active == 4, "Layout nicht aktiv (2 Vorlagen + 2)")
+        local party = l.systems[2]
+        local rs, bd
+        for _, st in ipairs(party.settings) do
+            if st.setting == 4 then rs = st.value end
+            if st.setting == 12 then bd = st.value end
+        end
+        assert(rs == 1 and bd == 0, "Gruppe nicht schlachtzugsartig oder mit Rand")
+        local want = K.LAYOUT.gf_party
+        assert(party.anchorInfo.point == want.point and party.anchorInfo.offsetX == want.x
+            and party.isInDefaultPosition == false, "Gruppe nicht am WeintCodex-Platz")
+        assert(l.systems[3].anchorInfo and l.systems[3].anchorInfo.relativePoint == K.LAYOUT.gf_raid.relPoint,
+            "Schlachtzug nicht am WeintCodex-Platz")
+        assert(modern.systems[2].settings[1].value == 0, "Vorlage des Spiels veraendert statt kopiert")
+        -- Danach gibt es das Layout - es wird nicht mehr gefragt.
+        stored = saved
+        assert(ES.HasLayout() == true, "Layout danach nicht erkannt")
+        ES._ResetAsked()
+        ES.MaybeAsk()
+        assert(not ES.IsShown(), "gefragt, obwohl eingerichtet")
+        -- Ohne Layout: das Fenster fragt; "Einrichten" fuehrt zu "neu laden".
+        stored = { activeLayout = 1, layouts = {} }
+        ES._ResetAsked()
+        ES.MaybeAsk()
+        assert(ES.IsShown() and ES.Button("apply") and ES.Button("later"), "Einrichtungsfenster nicht gezeigt")
+        ES.Button("apply"):Click()
+        assert(ES.Button("reload") and ES.BodyText():find("Neuladen", 1, true), "nach dem Einrichten kein Neuladen angeboten")
+        -- Im Kampf nie; ohne C_EditMode ehrlich gescheitert.
+        local oldCombat = _G.InCombatLockdown
+        _G.InCombatLockdown = function() return true end
+        assert(select(2, ES.Apply()) == "im Kampf", "im Kampf eingerichtet")
+        _G.InCombatLockdown = oldCombat
+        _G.C_EditMode = nil
+        local okF, whyF = ES.Apply()
+        assert(not okF and tostring(whyF):find("C_EditMode", 1, true), "ohne C_EditMode kein Grund")
+        ES.Show()
+        ES.Button("apply"):Click()
+        assert(ES.Button("close") and ES.BodyText():find("von Hand", 1, true), "Scheitern ohne Handgriffe")
+        ES.Button("close"):Click()
+        _G.C_EditMode, _G.EditModePresetLayoutManager, _G.Enum = oldEM, oldPM, oldEnum
+    end)
+    Check(ok, "Einrichtung: Layout WeintCodex angelegt, aktiv, Gruppe schlachtzugsartig am Platz, danach neu laden"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.6.0.7: Klickzauber - Maustaste + Zusatztaste wirkt einen Zauber auf
 -- die Einheit des Rahmens. Nur Klick-Attribute, je Klasse gespeichert.
 do

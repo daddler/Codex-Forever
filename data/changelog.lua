@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.1.1",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFEinrichtung mit einem Klick.|r Beim ersten Einloggen stellt WeintCodex die Oberfläche für dich ein – wie EllesmereUI: ein eigenes Layout „WeintCodex“ im Bearbeitungsmodus mit schlachtzugsartigen Gruppenrahmen an den richtigen Plätzen, dann einmal neu laden. Verschieben geht danach wie gewohnt. Jederzeit wieder mit /wcui einrichten oder unter Gruppenrahmen → Allgemein.",
+        },
+    },
+    {
         version = "6.6.1.0",
         date    = "27.09.2026",
         notes   = {

@@ -218,7 +218,7 @@ local function HintRaidStyle()
     if not inGroup or inRaid or GG.RaidStyleParty() ~= false then return end
     hinted = true
     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Für HoTs, Buffs und Schilde in der Gruppe: "
-        .. "Bearbeitungsmodus öffnen → Gruppenrahmen → „Schlachtzugsartige Gruppenrahmen verwenden“ einschalten.")
+        .. "/wcui einrichten – oder von Hand im Bearbeitungsmodus → Gruppenrahmen → „Schlachtzugsartige Gruppenrahmen verwenden“.")
 end
 
 local pending = false

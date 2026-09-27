@@ -99,6 +99,7 @@ weil sie genau das sind, wofür er steht.
 | `ui/castbar.lua` | **ein** Zauberbalken für Plaketten und Einheitenrahmen |
 | `ui/nameplates.lua` | Gegnerplaketten |
 | `ui/unitframes.lua` | Spieler, Ziel, Ziel des Ziels, Fokus, Begleiter; Porträt als 3D-Modell oder Bild |
+| `ui/setup.lua` | **Einrichtung beim ersten Mal**: legt einmal das Layout „WeintCodex“ im Bearbeitungsmodus des Spiels an, danach neu laden (`/wcui einrichten`) |
 | `ui/gamegroup.lua` | **Gruppenrahmen des Spiels im WeintCodex-Stil** (Standard seit 6.6.0.9): nur sie zeigen HoTs, Buffs, Schilde und Debuffs im Kampf |
 | `ui/clickcast.lua` | **Klickzauber**: Maustaste + Zusatztaste wirkt einen Zauber auf die Einheit des Rahmens (Reiter der Gruppenrahmen) |
 | `ui/questarrow.lua` | Questpfeil |
@@ -455,6 +456,26 @@ Seit 6.2.0.0:
   setzen alle Rahmen ihre Texte nach 1 und 4 s geleert neu
   (`UF.RedrawTexts`) – eine beim ersten Setzen noch nicht geladene
   Schrift zeichnete sonst nichts.
+* **Einrichtung beim ersten Mal** (6.6.1.1, `ui/setup.lua`, Beta-Test:
+  „Fenster direkt voreingestellt wie bei Ellesmere, ein Reload packt alles
+  an seinen Platz“). Eigene Rahmen brauchen nichts – ihre Plätze kommen aus
+  `ui/layout.lua`. Die Rahmen des Spiels stellt dessen Bearbeitungsmodus;
+  dafür legt `ES.Apply` über `C_EditMode` einmal ein Layout „WeintCodex“
+  an (Kopie der Vorlage „Modern“ aus
+  `EditModePresetLayoutManager:GetCopyOfPresetLayouts`, sonst das aktive
+  Layout), setzt in `ES.Adjust` die Gruppe schlachtzugsartig
+  (`UseRaidStylePartyFrames` = 1), `DisplayBorder` = 0 für Gruppe und
+  Schlachtzug und beide an `gf_party`/`gf_raid`, speichert mit
+  `SaveLayouts` (bisherige Layouts bleiben) und macht es aktiv (Index =
+  Zahl der Vorlagen + Platz). Danach bietet das Fenster **Neu laden**
+  (`K.ReloadButton`) – erst dann stellt das Spiel alles nach dem Layout und
+  liest es frisch vom Server, statt „von WeintCodex berührt“. Gefragt wird
+  beim ersten echten Einloggen (nie nach `/reload`, nie über der
+  Einführung, nie im Kampf), solange es kein Layout „WeintCodex“ gibt –
+  das liegt auf dem Server und überlebt vergessene SavedVariables. Fehlt
+  `C_EditMode` oder die Gruppe im Layout, sagt das Fenster den Grund und
+  die Handgriffe. Auch als Knopf unter Gruppenrahmen → Allgemein und mit
+  `/wcui einrichten`. Im Spiel ungeprüft.
 * **Gruppenrahmen des Spiels** (6.6.0.9, `ui/gamegroup.lua`, Einstellung
   `groupframes.source` = `game` | `own`, Standard `game`). Beta-Test:
   „Schilde, Buffs, HoTs werden im Gruppenframe nicht angezeigt“. Die

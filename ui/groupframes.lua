@@ -857,7 +857,11 @@ K.Register({
                         { value = "own",  text = "Eigene Kacheln" } },
                     description = "Nur die Rahmen des Spiels zeigen HoTs, Buffs, Schilde und Debuffs auch im Kampf – Forever gibt sie Addons dort nicht heraus. Lage und Größe dann im Bearbeitungsmodus des Spiels." },
                   { type = "empty" })
-            B:Note("Die folgenden Einstellungen gelten für die eigenen Kacheln; bei den Rahmen des Spiels wirken Rand und Schriftgröße.")
+            B:Row({ type = "button", label = "Rahmen des Spiels", text = "Einrichten",
+                    tooltip = "Legt das Layout „WeintCodex“ im Bearbeitungsmodus an: schlachtzugsartige Gruppenrahmen, ohne Blizzards Linien, an den WeintCodex-Plätzen. Danach neu laden. Auch mit /wcui einrichten.",
+                    onClick = function() WeintCodex.UISetup.Show() end },
+                  { type = "empty" })
+            B:Note("Die folgenden Einstellungen gelten für die eigenen Kacheln; bei den Rahmen des Spiels wirken Rand, Farben und Schriftgröße.")
             B:Section("Farben und Rahmen")
             B:Row({ type = "toggle", label = "Klassenfarbe", key = "classColor" },
                   { type = "color", label = "Lebensbalken sonst", key = "healthColor" })
