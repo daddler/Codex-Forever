@@ -1914,7 +1914,14 @@ do
             { system = 3, systemIndex = 5, settings = {} },
         } }
         _G.EditModePresetLayoutManager = { GetCopyOfPresetLayouts = function() return { modern, { layoutName = "Klassisch", systems = {} } } end }
-        local stored = { activeLayout = 3, layouts = { { layoutName = "EllesmereUI Forever v4", layoutType = 1, systems = {} } } }
+        -- Das aktive Layout des Spielers: Leiste 1 mittig (6.6.1.2 - vorher
+        -- sprang sie mit der Vorlage "Modern" nach unten links).
+        local elle = { layoutName = "EllesmereUI Forever v4", layoutType = 1, systems = {
+            { system = 0, systemIndex = 1, settings = {}, anchorInfo = { point = "BOTTOM", relativePoint = "BOTTOM", offsetX = 0, offsetY = 80 } },
+            { system = 3, systemIndex = 4, settings = {} },
+            { system = 3, systemIndex = 5, settings = {} },
+        } }
+        local stored = { activeLayout = 3, layouts = { elle } }
         local saved, active
         _G.C_EditMode = {
             GetLayouts = function() return stored end,
@@ -1940,7 +1947,15 @@ do
             and party.isInDefaultPosition == false, "Gruppe nicht am WeintCodex-Platz")
         assert(l.systems[3].anchorInfo and l.systems[3].anchorInfo.relativePoint == K.LAYOUT.gf_raid.relPoint,
             "Schlachtzug nicht am WeintCodex-Platz")
-        assert(modern.systems[2].settings[1].value == 0, "Vorlage des Spiels veraendert statt kopiert")
+        assert(l.systems[1].anchorInfo.offsetY == 80 and l.systems[1].anchorInfo.point == "BOTTOM",
+            "Aktionsleiste nicht aus dem aktiven Layout uebernommen")
+        assert(#elle.systems[2].settings == 0, "Layout des Spielers veraendert statt kopiert")
+        -- Neu einrichten, waehrend "WeintCodex" aktiv ist: wieder auf dem
+        -- Layout des Spielers, nicht auf sich selbst oder der Vorlage.
+        local again = { activeLayout = 4, layouts = { elle, l } }
+        local b2, n2 = ES.Base(again, _G.EditModePresetLayoutManager.GetCopyOfPresetLayouts())
+        assert(b2 == elle and n2 == "EllesmereUI Forever v4", "Neu einrichten baut nicht auf dem Layout des Spielers auf")
+        assert(select(2, ES.Base({ activeLayout = 1, layouts = {} }, { modern })) == "Modern", "ohne eigenes Layout nicht die Vorlage")
         -- Danach gibt es das Layout - es wird nicht mehr gefragt.
         stored = saved
         assert(ES.HasLayout() == true, "Layout danach nicht erkannt")

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.1.2",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFEinrichtung behält deine Leisten.|r Das Layout „WeintCodex“ baut jetzt auf deinem bisherigen Layout auf – Aktionsleisten, Questliste und alles andere bleiben, wo sie waren; nur Gruppe und Schlachtzug ändern sich. Wer schon eingerichtet hat: /wcui einrichten noch einmal ausführen.",
+        },
+    },
+    {
         version = "6.6.1.1",
         date    = "27.09.2026",
         notes   = {

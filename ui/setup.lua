@@ -11,8 +11,9 @@
 -- des Spiels (seit 6.6.0.9 vor allem Gruppe und Schlachtzug) stellt der
 -- Bearbeitungsmodus des Spiels - und dessen Layouts gehoeren dem Spiel.
 -- Dafuer legt WeintCodex EINMAL ein eigenes Layout "WeintCodex" an:
---   * Grundlage ist das Layout "Modern" des Spiels (nicht das gerade
---     aktive: das eines anderen Addons soll hier nicht mitkommen),
+--   * Grundlage ist das Layout, das der Spieler gerade nutzt (seit
+--     6.6.1.2, siehe ES.Base) - alles ausser Gruppe und Schlachtzug
+--     bleibt, wo es war,
 --   * Gruppenrahmen schlachtzugsartig (nur die zeigen HoTs), ohne
 --     Blizzards Rahmenlinien (den Rand zeichnet WeintCodex),
 --   * Gruppe und Schlachtzug an den Plaetzen der WeintCodex-Kacheln
@@ -130,19 +131,44 @@ function ES.Adjust(systems)
     return done
 end
 
+-- WORAUF WIRD AUFGEBAUT? Auf dem Layout, das der Spieler gerade nutzt -
+-- nur Gruppe und Schlachtzug aendern sich. 6.6.1.1 nahm die Vorlage
+-- "Modern" des Spiels: Aktionsleisten und Questliste sprangen auf die
+-- Standardplaetze von Forever (Beta-Test: Leisten unten links statt
+-- mittig). Ist das aktive Layout schon "WeintCodex" (neu einrichten),
+-- zaehlt das erste andere eigene Layout, sonst die Vorlage.
+-- Gibt das Layout und seinen Namen zurueck.
+function ES.Base(info, presets)
+    local nPre = presets and #presets or 2
+    local active = tonumber(info.activeLayout) or 0
+    if active > nPre then
+        local l = info.layouts[active - nPre]
+        if l and l.layoutName ~= ES.LAYOUT_NAME and type(l.systems) == "table" then return l, l.layoutName end
+        for _, o in ipairs(info.layouts) do
+            if o.layoutName ~= ES.LAYOUT_NAME and type(o.systems) == "table" then return o, o.layoutName end
+        end
+        local p = presets and presets[1]
+        return p, p and p.layoutName
+    end
+    local p = presets and (presets[active] or presets[1])
+    return p, p and p.layoutName
+end
+
+function ES.BaseName()
+    local info = Layouts()
+    if not info then return nil end
+    local _, name = ES.Base(info, Presets())
+    return name
+end
+
 -- Das Layout anlegen und aktiv setzen. true oder false, Grund.
 function ES.Apply()
     if K.InCombat() then return false, "im Kampf" end
     local info, why = Layouts()
     if not info then return false, why end
     local presets = Presets()
-    local base = presets and presets[1]
-    if not (base and type(base.systems) == "table") then
-        -- Ohne die Vorlage des Spiels: das aktive Layout als Grundlage.
-        local idx = (info.activeLayout or 0) - (presets and #presets or 2)
-        base = info.layouts[idx]
-    end
-    if not (base and type(base.systems) == "table") then return false, "keine Grundlage (Vorlage des Spiels fehlt)" end
+    local base = ES.Base(info, presets)
+    if not (base and type(base.systems) == "table") then return false, "keine Grundlage (kein Layout lesbar)" end
 
     local layout = Copy(base)
     layout.layoutName = ES.LAYOUT_NAME
@@ -262,11 +288,15 @@ end
 local ShowDone, ShowFailed
 
 local function ShowQuestion()
+    local baseName = ES.BaseName()
+    local basis = baseName and ("Grundlage ist dein Layout „" .. tostring(baseName) .. "“ – Aktionsleisten und alles"
+        .. " andere bleiben, wo sie sind; nur Gruppe und Schlachtzug ändern sich.")
+        or "Welches Layout du gerade nutzt, sagt das Spiel nicht – dann baut WeintCodex auf der Vorlage des Spiels auf."
     SetText("Einrichtung",
         "WeintCodex einrichten?",
-        "WeintCodex stellt die Oberfläche einmal für dich ein: Spieler, Ziel, Leisten und Anzeigen an ihren Platz,"
-        .. " dazu ein eigenes Layout „WeintCodex“ im Bearbeitungsmodus des Spiels – Gruppe und Schlachtzug als"
-        .. " schlachtzugsartige Rahmen mit HoTs, Buffs und Schilden, ohne Blizzards Linien.\n\n"
+        "WeintCodex legt im Bearbeitungsmodus des Spiels ein Layout „WeintCodex“ an: Gruppe und Schlachtzug als"
+        .. " schlachtzugsartige Rahmen mit HoTs, Buffs und Schilden, ohne Blizzards Linien, an den Plätzen von"
+        .. " WeintCodex. " .. basis .. "\n\n"
         .. "Danach einmal neu laden. Verschieben kannst du hinterher alles: eigene Rahmen im Gestaltungsmodus,"
         .. " die des Spiels im Bearbeitungsmodus. Dein bisheriges Layout bleibt erhalten und lässt sich dort"
         .. " jederzeit wieder wählen.")

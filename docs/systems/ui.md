@@ -450,7 +450,10 @@ Seit 6.2.0.0:
   großen, nach oben oder unten; ohne bleibt es bei „Höhenunterschied ≈
   25 m“. Der große Pfeil kippt nicht: seine 64 Ansichten sind nur
   Himmelsrichtungen, und ohne sichere Richtung wäre ein Kippen geraten.
-  `/wcui pfeil` nennt, was der Client hergibt.
+  `/wcui pfeil` nennt, was der Client hergibt. **Gemessen (6.6.1.1,
+  Beta):** `UnitPosition` liefert auf Forever Höhe 0.0 – die Richtung
+  bleibt also unbekannt, der Pfeil nennt nur die Größe. Der Code bleibt
+  und greift von selbst, falls ein späterer Client die Höhe nennt.
 * **Name beim Einloggen** (6.6.0.1): ohne Namen („Unbekannt“) zeichnet
   der Rahmen bis zu zehnmal je Sekunde nach; nach `PLAYER_ENTERING_WORLD`
   setzen alle Rahmen ihre Texte nach 1 und 4 s geleert neu
@@ -461,9 +464,12 @@ Seit 6.2.0.0:
   an seinen Platz“). Eigene Rahmen brauchen nichts – ihre Plätze kommen aus
   `ui/layout.lua`. Die Rahmen des Spiels stellt dessen Bearbeitungsmodus;
   dafür legt `ES.Apply` über `C_EditMode` einmal ein Layout „WeintCodex“
-  an (Kopie der Vorlage „Modern“ aus
-  `EditModePresetLayoutManager:GetCopyOfPresetLayouts`, sonst das aktive
-  Layout), setzt in `ES.Adjust` die Gruppe schlachtzugsartig
+  an – seit 6.6.1.2 als Kopie des **aktiven** Layouts (`ES.Base`; ist das
+  schon „WeintCodex“, das erste andere eigene, sonst die Vorlage aus
+  `EditModePresetLayoutManager:GetCopyOfPresetLayouts`). 6.6.1.1 kopierte
+  „Modern“: Aktionsleisten und Questliste sprangen auf Forevers
+  Standardplätze (Beta-Test: Leisten unten links). Das Fenster nennt die
+  Grundlage. Dann setzt in `ES.Adjust` die Gruppe schlachtzugsartig
   (`UseRaidStylePartyFrames` = 1), `DisplayBorder` = 0 für Gruppe und
   Schlachtzug und beide an `gf_party`/`gf_raid`, speichert mit
   `SaveLayouts` (bisherige Layouts bleiben) und macht es aktiv (Index =

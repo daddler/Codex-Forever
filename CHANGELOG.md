@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.1.2] – 2026-09-27
+
+**Einrichtung behält deine Leisten.** Das Layout „WeintCodex“ baut jetzt auf deinem bisherigen Layout auf – Aktionsleisten, Questliste und alles andere bleiben, wo sie waren; nur Gruppe und Schlachtzug ändern sich. Wer schon eingerichtet hat: /wcui einrichten noch einmal ausführen.
+
 ## [6.6.1.1] – 2026-09-27
 
 **Einrichtung mit einem Klick.** Beim ersten Einloggen stellt WeintCodex die Oberfläche für dich ein – wie EllesmereUI: ein eigenes Layout „WeintCodex“ im Bearbeitungsmodus mit schlachtzugsartigen Gruppenrahmen an den richtigen Plätzen, dann einmal neu laden. Verschieben geht danach wie gewohnt. Jederzeit wieder mit /wcui einrichten oder unter Gruppenrahmen → Allgemein.
