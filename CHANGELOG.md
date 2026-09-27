@@ -23,6 +23,8 @@ nicht zusammen.
 
 **Aurenleisten über Spieler- und Zielrahmen (Test).** Leisten mit Restzeit wie bei ElvUI. Im Kampf gibt das Spiel Addons vermutlich keine Auren heraus – dann bleiben sie dort leer; bitte prüfen und /wcui auren schicken.
 
+**Der Questpfeil kennt die Höhe.** In der Nähe nennt er den Höhenunterschied zum Ziel und ob es verdeckt ist – in einer Höhle, einem Gebäude oder hinter einem Hang. Eine Nadel steht genau am Ziel im Raum, oben am Berg oder unten am Höhleneingang.
+
 **Kein Fehler mehr beim Umstellen der Questpriorität im Kampf.** WeintCodex stellt die Weltkarte nicht mehr selbst ein und wählt keine Quest mehr für das Spiel aus – der Questpfeil merkt sich seine Wahl selbst. „Zurück zum Codex“ legt den Codex über die Karte; sie schließt du wie gewohnt mit Esc oder M. Im Kampf öffnet der Kartenknopf die Weltkarte nicht.
 
 ### Technisch
@@ -41,6 +43,10 @@ nicht zusammen.
   (Dauerleiste des Aurenknopfs, Name der Methode wird probiert und in
   `/wcui auren` genannt), alter Weg mit Name und Restzeit.
   `GameColors.auraBarDebuff`/`auraBarBuff`.
+- `ui/questarrow.lua`: `QA.Nav()` (C_Navigation: Luftlinie, Occluded,
+  Bildschirmpunkt), `QA.Height()`, Zeile `height` unter dem Pfeil,
+  Zielmarke `QA.marker` am Navigationspunkt; nur bei gleichem Ziel wie die
+  Navigation des Spiels. Schalter `showHeight`, `worldMarker`.
 - `ui/xpbar.lua`: `XB.QuestXP()` (je Quest `GetQuestLogRewardXP`,
   abgabebereit über `C_QuestLog.ReadyForTurnIn`/`IsComplete`), dritte
   Balkenschicht `frame.quest` in `GameColors.xpQuest`, Tooltipzeilen,

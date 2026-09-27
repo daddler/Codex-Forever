@@ -43,6 +43,22 @@
 -- der Questprioritaet). Waehlt der Spieler selbst eine Quest, gilt wieder
 -- seine Wahl.
 --
+-- HOEHE (6.6.0.1, Beta-Test: "der Pfeil muss unterschiedliche Hoehen
+-- erkennen - Hoehle oder Berg"). Die Karte ist flach: Questorte haben dort
+-- nur x und y. Die einzige Hoehe, die der Client einem Addon nennt, ist die
+-- der Navigation zum verfolgten Ziel (C_Navigation): die Luftlinie im Raum
+-- (GetDistance) und ein Punkt auf dem Bildschirm genau am Ziel (GetFrame),
+-- dazu, ob das Ziel verdeckt ist (Occluded). Daraus:
+--   * Hoehenunterschied = Wurzel(Luftlinie^2 - Abstand auf der Karte^2).
+--     WIE GROSS, nicht in welche Richtung - das verraet der Client nicht.
+--   * "verdeckt": Hoehle, Gebaeude oder hinter einem Hang.
+--   * Eine Zielmarke im Raum (QA.marker) am Bildschirmpunkt des Ziels:
+--     sie steht oben am Berg oder unten am Hoehleneingang, wo das Ziel ist.
+-- Nur, wenn der Pfeil auf dasselbe Ziel zeigt wie die Navigation des
+-- Spiels (Kartenmarkierung oder vom Spiel verfolgte Quest) - bei einer
+-- eigenen Wahl des Pfeils (QA.Chosen) zeigt die Navigation woandershin.
+-- Zeigt das Spiel seine eigene Marke (SuperTrackedFrame), bleibt unsere weg.
+--
 -- METER. Das Spiel rechnet in Yards. Der deutsche Client nennt dieselbe
 -- Einheit "Meter" (eine Zauberreichweite von 40 Yards steht dort als
 -- "40 m Reichweite"), OHNE umzurechnen. Der Pfeil folgt dem: "m" heisst
@@ -71,6 +87,8 @@ local defaults = {
     -- stand nur als "Position unbekannt" im Bild.
     hideInInstance = true,
     arriveDistance = 5,
+    showHeight  = true,    -- Hoehenunterschied und "verdeckt" (6.6.0.1)
+    worldMarker = true,    -- Zielmarke im Raum am Ort des Ziels (6.6.0.1)
     corpse     = true,     -- als Geist zur Leiche
     autoNext   = true,     -- nach dem Abgeben die naechste Quest
     onComplete = "turnin", -- turnin | next: was nach erfuellten Zielen kommt
@@ -268,19 +286,22 @@ local function ResolveTarget(playerMap)
         if wp and wp.uiMapID and wp.position then
             local x, y = wp.position.x, wp.position.y
             if wp.position.GetXY then x, y = wp.position:GetXY() end
-            return "ok", wp.uiMapID, x, y, "Kartenmarkierung"
+            return "ok", wp.uiMapID, x, y, "Kartenmarkierung", "waypoint", true
         end
     end
 
-    local questID = QA.Chosen or (st.GetSuperTrackedQuestID and st.GetSuperTrackedQuestID())
+    local game = st.GetSuperTrackedQuestID and st.GetSuperTrackedQuestID()
+    local questID = QA.Chosen or game
     if not questID or questID == 0 then return "none" end
+    -- Die Navigation des Spiels fuehrt zur Quest, die das SPIEL verfolgt.
+    local nav = (questID == game)
     local title = QuestTitle(questID) or "Quest"
     -- Ziele erfuellt: der Ort ist jetzt der, an dem man abgibt (das Spiel
     -- verlegt Wegpunkt und Markierung dorthin).
     if IsComplete(questID) then title = "Abgeben: " .. title end
     local mapID, x, y = QuestLocation(questID, playerMap)
     if not mapID then return "unknown", nil, nil, nil, title, "quest" end
-    return "ok", mapID, x, y, title, "quest"
+    return "ok", mapID, x, y, title, "quest", nav
 end
 
 --------------------------------------------------
@@ -325,7 +346,7 @@ end
 -- Anzeige
 --------------------------------------------------
 
-local frame, arrow, title, dist, eta
+local frame, arrow, title, dist, eta, height
 
 local function Is3D() return K.Get(KEY, "style") ~= "flat" end
 
@@ -342,6 +363,100 @@ local function PointArrow(rotation)
     end
 end
 
+
+--------------------------------------------------
+-- Navigation des Spiels: Hoehe und Zielmarke
+--------------------------------------------------
+
+-- { frame, dist (Luftlinie, Yards), occluded, onScreen } oder nil.
+function QA.Nav()
+    local cn = _G.C_Navigation
+    if not (cn and cn.GetDistance) then return nil end
+    local out = {}
+    local ok, d = pcall(cn.GetDistance)
+    d = ok and K.Plain(d) or nil
+    if type(d) ~= "number" or d <= 0 then return nil end
+    out.dist = d
+    if cn.GetTargetState then
+        local okS, st = pcall(cn.GetTargetState)
+        st = okS and K.Plain(st) or nil
+        local E = _G.Enum and _G.Enum.NavigationState
+        local occ = (E and E.Occluded) or 1
+        out.occluded = (st == occ)
+    end
+    if cn.GetFrame then
+        local okF, f = pcall(cn.GetFrame)
+        if okF and type(f) == "table" then out.frame = f end
+    end
+    local valid = cn.HasValidScreenPosition and select(2, pcall(cn.HasValidScreenPosition))
+    local clamped = cn.WasClampedToScreen and select(2, pcall(cn.WasClampedToScreen))
+    out.onScreen = K.Bool(valid, false) and not K.Bool(clamped, false)
+    return out
+end
+
+-- Hoehenunterschied aus Luftlinie und Abstand auf der Karte (beide Yards).
+-- nil, wenn die Luftlinie kuerzer ist (Kartenort und Navigationspunkt
+-- liegen nicht genau aufeinander) - dann ist nichts zu sagen.
+function QA.Height(dist3d, flat)
+    if type(dist3d) ~= "number" or type(flat) ~= "number" or dist3d <= flat then return nil end
+    return math.sqrt(dist3d * dist3d - flat * flat)
+end
+
+local marker
+local function BuildMarker()
+    marker = CreateFrame("Frame", "WeintCodexQuestArrowMarker", UIParent)
+    marker:SetSize(22, 30)
+    marker:SetFrameStrata("LOW")
+    marker:EnableMouse(false)
+    local UI = "Interface\\AddOns\\WeintCodex\\media\\ui\\"
+    local halo = marker:CreateTexture(nil, "BACKGROUND")
+    halo:SetTexture(UI .. "halo")
+    halo:SetSize(36, 36)
+    halo:SetPoint("CENTER", marker, "BOTTOM", 0, 2)
+    halo:SetVertexColor(C.accentBright[1], C.accentBright[2], C.accentBright[3], 0.7)
+    if halo.SetBlendMode then halo:SetBlendMode("ADD") end
+    local rim = marker:CreateTexture(nil, "ARTWORK", nil, 1)
+    rim:SetTexture(UI .. "pin")
+    rim:SetAllPoints(marker)
+    rim:SetVertexColor(C.bgPanel[1], C.bgPanel[2], C.bgPanel[3], 1)
+    local fill = marker:CreateTexture(nil, "ARTWORK", nil, 2)
+    fill:SetTexture(UI .. "pin")
+    fill:SetPoint("TOPLEFT", marker, "TOPLEFT", 2, -2)
+    fill:SetPoint("BOTTOMRIGHT", marker, "BOTTOMRIGHT", -2, 4)
+    fill:SetVertexColor(C.accentBright[1], C.accentBright[2], C.accentBright[3], 1)
+    marker.label = K.NewText(marker, 11)
+    marker.label:SetPoint("BOTTOM", marker, "TOP", 0, 2)
+    marker.label:SetTextColor(unpack(C.textBright))
+    marker:Hide()
+    QA.marker = marker
+end
+
+-- Die Zielmarke an den Bildschirmpunkt des Ziels. Die Spitze steht auf
+-- dem Punkt. Verdeckt: halb durchsichtig.
+local function PlaceMarker(n, text)
+    if not K.Get(KEY, "worldMarker") or not n or not n.frame or not n.onScreen then
+        if marker then marker:Hide() end
+        return false
+    end
+    local own = _G.SuperTrackedFrame
+    if type(own) == "table" and own.IsVisible and K.Bool(own:IsVisible(), false) then
+        if marker then marker:Hide() end
+        return false
+    end
+    if not marker then BuildMarker() end
+    if marker._to ~= n.frame then
+        marker:ClearAllPoints()
+        if not pcall(marker.SetPoint, marker, "BOTTOM", n.frame, "CENTER", 0, 0) then
+            marker:Hide()
+            return false
+        end
+        marker._to = n.frame
+    end
+    marker:SetAlpha(n.occluded and 0.5 or 1)
+    marker.label:SetText(text or "")
+    marker:Show()
+    return true
+end
 
 local function Build()
     frame = CreateFrame("Frame", "WeintCodexQuestArrow", UIParent)
@@ -365,9 +480,12 @@ local function Build()
     eta = K.NewText(frame)
     eta:SetPoint("TOP", dist, "BOTTOM", 0, -1)
 
+    height = K.NewText(frame)
+    height:SetPoint("TOP", eta, "BOTTOM", 0, -1)
+
     -- Fuer den Prueflauf: was der Pfeil gerade anzeigt.
     QA.frame, QA.arrow = frame, arrow
-    QA.texts = { title = title, dist = dist, eta = eta }
+    QA.texts = { title = title, dist = dist, eta = eta, height = height }
 
     frame.WCShowForUnlock = function(self, on)
         self._unlock = on and true or nil
@@ -398,9 +516,11 @@ local function ApplyStyle()
     K.SetFont(title, 12)
     K.SetFont(dist, 14)
     K.SetFont(eta, 10)
+    K.SetFont(height, 10)
     title:SetTextColor(unpack(C.textNormal))
     dist:SetTextColor(unpack(C.textBright))
     eta:SetTextColor(unpack(C.textMuted))
+    height:SetTextColor(unpack(C.infoBright))
 end
 
 local lastYards, lastTime
@@ -423,8 +543,9 @@ local function Target(playerMap, force)
     if not force and cache.at >= 0 and cache.map == playerMap and (now - cache.at) < 1 then
         return cache
     end
-    local status, mapID, tx, ty, name, kind = ResolveTarget(playerMap)
+    local status, mapID, tx, ty, name, kind, nav = ResolveTarget(playerMap)
     cache.at, cache.map, cache.status, cache.title, cache.kind = now, playerMap, status, name, kind
+    cache.nav = nav and true or false
     cache.tc, cache.tN, cache.tW = nil, nil, nil
     if status == "ok" then cache.tc, cache.tN, cache.tW = ToWorld(mapID, tx, ty) end
     return cache
@@ -441,6 +562,8 @@ function QA.InInstance()
 end
 
 function QA.Update(force)
+    -- Die Zielmarke zeigt sich nur, wenn dieser Durchlauf sie setzt.
+    if marker then marker:Hide() end
     if not frame or frame._unlock then return end
     if not K.IsActive(KEY) then frame:Hide() return end
     if K.Get(KEY, "hideInCombat") and K.InCombat() then frame:Hide() return end
@@ -454,6 +577,7 @@ function QA.Update(force)
     local showTitle = K.Get(KEY, "showTitle")
     title:SetText(showTitle and name or "")
     eta:SetText("")
+    height:SetText("")
 
     -- Zuerst die eigene Position: ohne sie laesst sich auch der Ort der
     -- Quest nicht suchen (er haengt an der Karte, auf der man steht), und
@@ -495,6 +619,26 @@ function QA.Update(force)
 
     local facing = _G.GetPlayerFacing and K.Plain(_G.GetPlayerFacing())
     local yards, rotation, bearing = QA.Solve(pN, pW, tN, tW, facing)
+
+    -- Hoehe und Zielmarke aus der Navigation des Spiels (siehe Kopf).
+    local nav = t.nav and QA.Nav() or nil
+    if nav then
+        local units = K.Get(KEY, "units")
+        if K.Get(KEY, "showHeight") then
+            local parts = {}
+            local dh = QA.Height(nav.dist, yards)
+            -- Erst in der Naehe verlaesslich: Kartenort und Navigationspunkt
+            -- liegen auf Entfernung nicht genau aufeinander.
+            if dh and dh >= 8 and yards <= 300 then
+                parts[#parts + 1] = "Höhenunterschied ≈ " .. QA.FormatDistance(dh, units)
+            end
+            if nav.occluded and nav.dist <= 150 then
+                parts[#parts + 1] = "verdeckt – Höhle, Gebäude oder Hang?"
+            end
+            height:SetText(table.concat(parts, " · "))
+        end
+        PlaceMarker(nav, QA.FormatDistance(nav.dist, units))
+    end
 
     if yards <= (K.Get(KEY, "arriveDistance") or 5) then
         arrow:Hide()
@@ -668,6 +812,10 @@ K.Register({
             B:Row({ type = "slider", label = "„Am Ziel“ ab", key = "arriveDistance", min = 2, max = 30, step = 1,
                     format = function(v) return string.format("%d m", v) end },
                   { type = "empty" })
+            B:Row({ type = "toggle", label = "Höhenunterschied", key = "showHeight",
+                    description = "Aus der Navigation des Spiels: wie viel höher oder tiefer das Ziel liegt – die Richtung verrät der Client nicht – und ob es verdeckt ist (Höhle, Gebäude)." },
+                  { type = "toggle", label = "Zielmarke im Raum", key = "worldMarker",
+                    description = "Eine Nadel genau am Ziel, auf dem Berg oder am Höhleneingang. Nur für die Quest, die das Spiel verfolgt, und für Kartenmarkierungen." })
             B:Section("Mitdenken")
             B:Row({ type = "toggle", label = "Als Geist zur Leiche", key = "corpse",
                     description = "Nach dem Tod zeigt der Pfeil von selbst zu deiner Leiche." },

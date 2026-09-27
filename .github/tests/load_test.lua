@@ -1187,6 +1187,32 @@ do
         "ausgewaehlte Quest 100 Einheiten noerdlich: 100 m")
     Check(QA.texts.title:GetText() == "Die verlorene Axt", "der Questname steht darueber")
 
+    -- 6.6.0.1: Hoehe aus der Navigation des Spiels. Luftlinie 125, auf der
+    -- Karte 100 -> 75 Hoehenunterschied; verdeckt -> Hinweis; Zielmarke
+    -- am Bildschirmpunkt des Ziels.
+    Check(QA.Height(125, 100) == 75 and QA.Height(90, 100) == nil, "Hoehe aus Luftlinie und Kartenabstand")
+    local navFrame = CreateFrame("Frame", nil, UIParent)
+    _G.Enum = _G.Enum or {}
+    _G.Enum.NavigationState = { Invalid = 0, Occluded = 1, InRange = 2, Disabled = 3 }
+    _G.C_Navigation = { GetDistance = function() return 125 end, GetTargetState = function() return 1 end,
+                        GetFrame = function() return navFrame end, HasValidScreenPosition = function() return true end,
+                        WasClampedToScreen = function() return false end }
+    QA.Update(true)
+    local ht = QA.texts.height:GetText() or ""
+    Check(ht:find("Höhenunterschied ≈ 75 m", 1, true) and ht:find("verdeckt", 1, true),
+        "Hoehenunterschied und verdeckt: " .. ht)
+    Check(QA.marker and QA.marker:IsShown() and QA.marker:GetAlpha() == 0.5, "Zielmarke im Raum fehlt oder nicht halb durchsichtig")
+    -- Eigene Wahl des Pfeils: die Navigation zeigt woandershin - keine Hoehe.
+    QA.Chosen = 42
+    tracked = 7
+    QA.Update(true)
+    Check((QA.texts.height:GetText() or "") == "" and not QA.marker:IsShown(),
+        "Hoehe einer anderen Quest angezeigt")
+    QA.Chosen, tracked = nil, 42
+    _G.C_Navigation = nil
+    QA.Update(true)
+    Check((QA.texts.height:GetText() or "") == "" and not QA.marker:IsShown(), "ohne Navigation keine Hoehe")
+
     _G.C_Map.GetPlayerMapPosition = function() return nil end
     QA.Update(true)
     Check(QA.texts.dist:GetText() == "Position unbekannt",

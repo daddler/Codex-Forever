@@ -411,6 +411,19 @@ Seit 6.2.0.0:
   (`SetTimerDuration`: „AllowedWhenUntainted“). Verlässlich im Kampf:
   die verfolgten Leisten des Abklingzeitmanagers (eigene Buffs und
   DoTs), im Bearbeitungsmodus über den Zielrahmen gelegt.
+* **Questpfeil: Höhe** (6.6.0.1, `showHeight`, `worldMarker`). Die Karte
+  ist flach; die einzige Höhe, die der Client nennt, steckt in der
+  Navigation des Spiels (`C_Navigation`): Luftlinie im Raum
+  (`GetDistance`), ein Bildschirmpunkt genau am Ziel (`GetFrame`) und
+  `Occluded`. Daraus der Höhenunterschied √(Luftlinie² − Kartenabstand²) –
+  nur seine Größe, die Richtung nennt der Client nicht, und erst ab 8 m
+  und bis 300 m Kartenabstand –, „verdeckt – Höhle, Gebäude oder Hang?“
+  bis 150 m, und eine Zielmarke im Raum (`QA.marker`, eigene Nadel aus
+  `media/ui/pin`) am Bildschirmpunkt des Ziels: sie steht auf dem Berg
+  oder am Höhleneingang. Nur, wenn der Pfeil dasselbe Ziel hat wie die
+  Navigation (Kartenmarkierung oder vom Spiel verfolgte Quest, nicht
+  `QA.Chosen`); zeigt das Spiel seine eigene Marke (`SuperTrackedFrame`),
+  bleibt unsere weg.
 * **Name beim Einloggen** (6.6.0.1): ohne Namen („Unbekannt“) zeichnet
   der Rahmen bis zu zehnmal je Sekunde nach; nach `PLAYER_ENTERING_WORLD`
   setzen alle Rahmen ihre Texte nach 1 und 4 s geleert neu
