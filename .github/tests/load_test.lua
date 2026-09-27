@@ -2235,7 +2235,13 @@ do
         canvas._width, canvas._height = 1000, 600
         wm.GetCanvas = function() return canvas end
         _G.OpenWorldMap = function(id) wm:Show() mapID = id end
+        local main = WeintCodex.MainFrame
+        main:Show()
         assert(QM.Show(J.Place(214), "Red Silk Bandanas"), "Marke nicht gesetzt")
+        -- 6.5.1.2: Codex geht zu, auf der Karte steht der Weg zurueck.
+        assert(not main:IsShown(), "Codex liegt weiter ueber der Karte")
+        local back = QM.BackButton()
+        assert(back and back:IsShown() and QM.FromCodex(), "kein Knopf zurueck zum Codex")
         assert(wm:IsShown() and mapID == 1436, "Weltkarte nicht auf Westfalen geoeffnet")
         local pin = QM.Pin()
         assert(pin and pin:IsShown(), "keine Marke auf der Karte")
@@ -2250,6 +2256,18 @@ do
         mapID = 1436
         QM.Place()
         assert(pin:IsShown(), "Marke kommt beim Zurueckwechseln nicht wieder")
+        local oldHide = _G.HideUIPanel
+        _G.HideUIPanel = function(f) f:Hide() end
+        back._scripts.OnClick(back)
+        assert(main:IsShown() and not wm:IsShown(), "Zurueck: Codex nicht offen oder Karte nicht zu")
+        assert(not back:IsShown() and not QM.FromCodex(), "Knopf bleibt nach dem Zurueck")
+        _G.HideUIPanel = oldHide
+        -- Karte ohne offenen Codex: kein Rueckweg angeboten.
+        main:Hide()
+        QM.Show(J.Place(214), "Red Silk Bandanas")
+        assert(not back:IsShown(), "Zurueck-Knopf ohne Codex")
+        wm:Show()
+        QM.Place()
         pin._scripts.OnClick(pin, "RightButton")
         assert(not pin:IsShown() and QM.Target() == nil, "Rechtsklick entfernt die Marke nicht")
         _G.WorldMapFrame, _G.OpenWorldMap = oldWM, oldOpen

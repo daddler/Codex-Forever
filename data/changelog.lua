@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.5.1.2",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Weltkarte liegt vorn.|r Zeigst du einen Questgeber auf der Karte, geht der Codex so lange zu – die Karte liegt nicht mehr dahinter.",
+            "|cff7C6CFFZurück zum Codex mit einem Klick.|r Oben links auf der Karte bringt dich ein Knopf auf dieselbe Seite zurück, zum nächsten Questgeber.",
+        },
+    },
+    {
         version = "6.5.1.1",
         date    = "27.09.2026",
         notes   = {

@@ -16,6 +16,13 @@
 -- der Spieler die Zone, verschwindet sie und kommt beim Zurueckwechseln
 -- wieder. Rechtsklick auf die Marke entfernt sie.
 --
+-- ZURUECK ZUM CODEX (6.5.1.2, Beta-Test: "die Karte bleibt hinter dem
+-- WeintCodex"): der Codex geht beim Klick zu, auf der Karte steht ein
+-- Knopf, der die Karte schliesst und den Codex auf derselben Seite
+-- wieder oeffnet - fuer den naechsten Questgeber. Der Knopf zeigt sich
+-- nur, wenn die Karte aus dem Codex geoeffnet wurde; schliesst der
+-- Spieler die Karte anders (M, Esc), ist er beim naechsten Mal weg.
+--
 -- Die Lagen stehen in data/dungeon_journal.lua (J.PLACES) und sind
 -- `community` - die Marke sagt das im Tooltip.
 --------------------------------------------------
@@ -27,7 +34,8 @@ local QM = WeintCodex.QuestMap
 local C  = WeintCodex.Colors
 
 local target      -- { map, x, y, who, item, quest }
-local pin, driver
+local pin, driver, back
+local fromCodex = false
 
 local function Say(text)
     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. text)
@@ -155,12 +163,45 @@ function QM.Place()
     return true
 end
 
+-- Karte zu, Codex auf - auf der Seite, auf der er zuging.
+function QM.Back()
+    fromCodex = false
+    if back then back:Hide() end
+    local wm = _G.WorldMapFrame
+    if type(wm) == "table" and wm.IsShown and wm:IsShown() then
+        local ok = type(_G.HideUIPanel) == "function" and pcall(_G.HideUIPanel, wm)
+        if not ok or wm:IsShown() then pcall(wm.Hide, wm) end
+    end
+    local main = WeintCodex.MainFrame
+    if type(main) == "table" and main.Show then main:Show() end
+end
+
+local function EnsureBack()
+    if back then return back end
+    local wm = _G.WorldMapFrame
+    if type(wm) ~= "table" then return nil end
+    back = WeintCodex.CreateButton(wm, { kind = "primary", text = "Zurück zum Codex",
+        height = 30, radius = 0, onClick = function() QM.Back() end })
+    local area = wm.ScrollContainer or wm
+    back:SetPoint("TOPLEFT", area, "TOPLEFT", 12, -12)
+    local lvl = Plain(wm.GetFrameLevel and wm:GetFrameLevel())
+    back:SetFrameLevel(math.min(9500, (type(lvl) == "number" and lvl or 0) + 3000))
+    back:Hide()
+    return back
+end
+QM.BackButton = function() return back end
+
 -- Taktgeber als Kind der Weltkarte: laeuft nur, solange sie offen ist.
 local function EnsureDriver()
     if driver then return end
     local wm = _G.WorldMapFrame
     if type(wm) ~= "table" then return end
     driver = CreateFrame("Frame", nil, wm)
+    -- Karte anders geschlossen (M, Esc): kein Rueckweg mehr anbieten.
+    driver:SetScript("OnHide", function()
+        fromCodex = false
+        if back then back:Hide() end
+    end)
     local acc = 0
     driver:SetScript("OnUpdate", function(_, el)
         acc = acc + (el or 0)
@@ -193,7 +234,16 @@ function QM.Show(place, questName)
     target = { map = place.map, x = place.x, y = place.y, who = place.who,
                item = place.item, quest = questName }
     EnsureDriver()
+    -- Der Codex liegt ueber der Karte: er geht zu, der Knopf holt ihn zurueck.
+    local main = WeintCodex.MainFrame
+    local codexOpen = type(main) == "table" and main.IsShown and main:IsShown()
     local opened = OpenMap(place.map)
+    if opened and codexOpen then
+        main:Hide()
+        fromCodex = true
+        local b = EnsureBack()
+        if b then b:Show() end
+    end
     -- Das Spiel stellt beim Oeffnen kurz die zuletzt gezeigte Zone wieder
     -- her; ein paar Takte lang die Zone nachsetzen.
     if _G.C_Timer and _G.C_Timer.After then
@@ -212,7 +262,7 @@ function QM.Show(place, questName)
     local zone = QM.MapName(place.map)
     if opened then
         Say("Auf der Karte: " .. place.who .. (zone and (" (" .. zone .. ")") or "")
-            .. ". Rechtsklick auf die Marke entfernt sie.")
+            .. ". Rechtsklick auf die Marke entfernt sie" .. (fromCodex and ", „Zurück zum Codex“ oben links auf der Karte bringt dich zurück." or "."))
     else
         Say("Die Weltkarte ließ sich nicht öffnen – die Marke steht auf der Karte, sobald du sie öffnest ("
             .. (zone or "Zone " .. place.map) .. ").")
@@ -227,4 +277,5 @@ function QM.Clear()
 end
 
 function QM.Target() return target end
+function QM.FromCodex() return fromCodex end
 function QM.Pin() return pin end

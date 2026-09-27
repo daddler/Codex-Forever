@@ -883,6 +883,11 @@ Gegenstände) und die **Quests je Dungeon** (50).
   *The Glowing Shard* (der Bericht nennt dort Falla Sagewind, die nicht
   die Geberin ist). `data_test.lua` prüft, dass jeder Ort an einer Quest
   des Journals hängt.
+* **Karte vorn, Weg zurück** *(seit 6.5.1.2)*: Der Kartenknopf schließt
+  den Codex (sonst lag die Karte dahinter); auf der Karte steht oben
+  links „Zurück zum Codex“ (`QM.Back`), das die Karte schließt und den
+  Codex auf derselben Seite öffnet. Nur wenn die Karte aus dem Codex
+  kam; anders geschlossen, ist der Knopf weg.
 * **Jede Quest eine Kachel** *(seit 6.5.1.1)*: Fläche `surface2`, Rand
   `borderStrong`, Luft dazwischen – ohne sie liefen die Quests als ein
   Textblock ineinander (Beta-Test). Der Kartenlink ist ein Knopf

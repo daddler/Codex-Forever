@@ -9,6 +9,21 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.5.1.2] – 2026-09-27
+
+**Die Weltkarte liegt vorn.** Zeigst du einen Questgeber auf der Karte, geht der Codex so lange zu – die Karte liegt nicht mehr dahinter.
+
+**Zurück zum Codex mit einem Klick.** Oben links auf der Karte bringt dich ein Knopf auf dieselbe Seite zurück, zum nächsten Questgeber.
+
+### Technisch
+
+- `modules/questmap.lua`: `QM.Show` schließt den offenen Codex
+  (`WeintCodex.MainFrame:Hide()`, Seite bleibt) und zeigt auf der
+  Weltkarte „Zurück zum Codex“ (`WeintCodex.CreateButton`, primär).
+  `QM.Back` schließt die Karte (`HideUIPanel`) und öffnet den Codex.
+  Wird die Karte anders geschlossen, verschwindet der Knopf
+  (`OnHide` des Taktgebers).
+
 ## [6.5.1.1] – 2026-09-27
 
 **Jede Quest in ihrer eigenen Kachel.** Im Dungeonkompendium ist auf einen Blick zu sehen, wo eine Quest endet und die nächste beginnt.
