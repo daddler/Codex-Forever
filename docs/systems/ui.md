@@ -482,7 +482,12 @@ Seit 6.2.0.0:
   Spiel grau. Haken auf `CompactUnitFrame_UpdateHealthColor` und
   `CompactUnitFrame_UpdateAll`. Heißen die Rahmen anders, sucht
   `GG.Frames` in `CompactPartyFrame`/`CompactRaidFrameContainer` nach
-  Kindern mit `healthBar`. Der Prüflauf stellt vor dem
+  Kindern mit `healthBar`. Außerdem (gemessen: 10 Rahmen gefunden und
+  gestaltet, aber „sieht aus wie Blizzard“) wie die Kacheln: Name oben
+  mittig (16 px Einzug links/rechts wegen des Rollensymbols), Zustand in
+  der Mitte, Grund `bgColor`, Rand `borderColor`, Schatten, Trenner
+  `horizDivider` weg; `GG.StyleContainers` blendet Überschrift
+  (`title`) und Rahmen (`borderFrame`) der Behälter aus. Der Prüflauf stellt vor dem
   Einloggen auf `own`, damit die Prüfungen der eigenen Kacheln bleiben.
   Im Spiel ungeprüft.
 * **Klickzauber** (6.6.0.7, `ui/clickcast.lua`, Beta-Test „wie VuhDo,

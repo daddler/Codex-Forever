@@ -130,30 +130,64 @@ function GG.Style(f)
         local hb, pb = f.healthBar, f.powerBar
         if type(hb) == "table" and hb.SetStatusBarTexture then hb:SetStatusBarTexture(tex) end
         if type(pb) == "table" and pb.SetStatusBarTexture then pb:SetStatusBarTexture(tex) end
+        -- Grund in der Hintergrundfarbe der Kacheln (Einstellung der Gruppenrahmen).
         local bg = f.background
         if type(bg) == "table" and bg.SetColorTexture then
-            local c = WeintCodex.GameColors.plateBg
-            bg:SetColorTexture(c[1], c[2], c[3], 1)
+            local c = K.GetColor(KEY, "bgColor")
+            bg:SetColorTexture(c.r, c.g, c.b, 1)
         end
-        for _, k in ipairs({ "horizTopBorder", "horizBottomBorder", "vertLeftBorder", "vertRightBorder" }) do
+        -- Blizzards Linien und Trenner weg (6.6.1.1: "sieht nicht aus wie
+        -- bei meinem Krieger").
+        for _, k in ipairs({ "horizTopBorder", "horizBottomBorder", "vertLeftBorder", "vertRightBorder",
+                             "horizDivider" }) do
             Hide(f[k])
         end
+        -- Texte wie auf den Kacheln: Name oben mittig, Zustand in der Mitte,
+        -- WeintCodex-Schrift, hell. Nur Methoden an den Texten des Spiels.
         local size = Opt("nameSize") or 11
-        if type(f.name) == "table" and f.name.SetFont then K.SetFont(f.name, size) end
-        if type(f.statusText) == "table" and f.statusText.SetFont then K.SetFont(f.statusText, math.max(8, size - 1)) end
+        local name, st = f.name, f.statusText
+        if type(name) == "table" and name.SetFont then
+            K.SetFont(name, size)
+            name:ClearAllPoints()
+            name:SetPoint("TOPLEFT", f, "TOPLEFT", 16, -4)
+            name:SetPoint("TOPRIGHT", f, "TOPRIGHT", -16, -4)
+            if name.SetJustifyH then name:SetJustifyH("CENTER") end
+            if name.SetShadowOffset then name:SetShadowOffset(1, -1) end
+        end
+        if type(st) == "table" and st.SetFont then
+            K.SetFont(st, math.max(8, size - 1))
+            st:ClearAllPoints()
+            st:SetPoint("CENTER", f, "CENTER", 0, -6)
+            if st.SetJustifyH then st:SetJustifyH("CENTER") end
+        end
         GG.Color(f)
         Crop(f.buffFrames)
         Crop(f.debuffFrames)
         Crop(f.dispelDebuffFrames)
         local s = styled[f]
         if not s then
-            s = { border = K.Border(f, 1, 0, 0, 0, 1, "OVERLAY") }
+            s = { border = K.Border(f, 1, 0, 0, 0, 1, "OVERLAY"),
+                  shadow = K.Glow(f, { spread = 4, shadow = true }) }
             styled[f] = s
         end
+        local bc = K.GetColor(KEY, "borderColor")
+        s.border:SetColor(bc.r, bc.g, bc.b, 1)
         s.border:SetShown(Opt("showBorder") and true or false)
     end)
     if not ok then K.Report("gruppe", err) end
     return ok
+end
+
+-- Die Behaelter des Spiels: Ueberschrift ("Gruppe") und Rahmen weg - die
+-- Kacheln stehen fuer sich, wie die eigenen.
+function GG.StyleContainers()
+    for _, name in ipairs({ "CompactPartyFrame", "CompactRaidFrameContainer" }) do
+        local box = _G[name]
+        if type(box) == "table" and not (box.IsForbidden and box:IsForbidden()) then
+            Hide(box.title)
+            Hide(box.borderFrame)
+        end
+    end
 end
 
 function GG.StyleAll()
@@ -193,6 +227,7 @@ local function Later()
     pending = true
     local function run()
         pending = false
+        GG.StyleContainers()
         GG.StyleAll()
         HintRaidStyle()
         local CC = WeintCodex.UIClickCast

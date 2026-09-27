@@ -1831,6 +1831,21 @@ do
         assert(coords and math.abs(coords[1] - 0.08) < 1e-6, "Aurensymbol nicht beschnitten")
         assert(GG.styled[f] and GG.styled[f].border, "kein Rand")
         assert(parts.horizTopBorder:GetAlpha() == 0, "Rahmenlinie des Spiels noch sichtbar")
+        -- 6.6.1.1: Name oben mittig wie auf den Kacheln, Ueberschrift weg.
+        local namePts = {}
+        parts.name.SetPoint = function(_, p) namePts[#namePts + 1] = p end
+        local just
+        parts.name.SetJustifyH = function(_, j) just = j end
+        GG.Style(f)
+        assert(namePts[1] == "TOPLEFT" and namePts[2] == "TOPRIGHT" and just == "CENTER", "Name nicht oben mittig")
+        local oldCPF = _G.CompactPartyFrame
+        local box0 = CreateFrame("Frame", nil, UIParent)
+        local title = box0:CreateFontString()
+        rawset(box0, "title", title)
+        _G.CompactPartyFrame = box0
+        GG.StyleContainers()
+        assert(title:GetAlpha() == 0, "Ueberschrift 'Gruppe' noch sichtbar")
+        _G.CompactPartyFrame = oldCPF
         -- Wiederholbar (das Spiel richtet neu ein): kein zweiter Rand.
         local b1 = GG.styled[f].border
         GG.Style(f)

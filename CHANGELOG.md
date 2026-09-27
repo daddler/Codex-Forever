@@ -11,7 +11,7 @@ nicht zusammen.
 
 ## [6.6.1.0] – 2026-09-27
 
-**Gruppenrahmen in Klassenfarbe.** Die Rahmen des Spiels färben deine Gruppe jetzt in Klassenfarbe wie die eigenen Kacheln, statt alles grün zu zeigen. Tote und Getrennte bleiben grau.
+**Gruppenrahmen wie die eigenen Kacheln.** Die Rahmen des Spiels tragen jetzt Klassenfarbe statt Grün, den Namen oben mittig, den Zustand in der Mitte, Grund, Rand und Schatten der Kacheln – die Überschrift „Gruppe“ und Blizzards Linien sind weg. HoTs, Buffs und Schilde zeigt weiter das Spiel. Tote und Getrennte bleiben grau.
 
 ## [6.6.0.9] – 2026-09-27
 
