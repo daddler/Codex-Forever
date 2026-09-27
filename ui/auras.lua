@@ -95,11 +95,6 @@ function A.StatusText()
     if stats.legacy > 0 then parts[#parts + 1] = string.format("%d über den alten Weg", stats.legacy) end
     if stats.autoFallback then parts[#parts + 1] = "Container zeigte nichts – liest selbst" end
     if stats.verified then parts[#parts + 1] = "Container zeigt Symbole" end
-    if stats.barBinder then
-        parts[#parts + 1] = "Leisten: Dauer über " .. stats.barBinder
-    elseif stats.barBinder == false then
-        parts[#parts + 1] = "Leisten: das Spiel bindet keine Dauerleiste (nur Restzeit als Zahl)"
-    end
     for step, err in pairs(stats.errors) do parts[#parts + 1] = step .. ": " .. err end
     return table.concat(parts, " · ")
 end
@@ -209,10 +204,9 @@ end
 
 -- EINE LEISTE (6.6.0.1, Beta-Test: "Leisten wie bei ElvUI, wie lange die
 -- Debuffs noch laufen"). Symbol links, Dauerleiste rechts, Restzeit in der
--- Leiste, Stapel am Symbol. Im Container-Weg fuellt das Spiel die Leiste
--- selbst (Dauerleiste des Aurenknopfs, siehe BindBar) - Lua sieht dabei
--- keinen Wert. Den Namen des Zaubers gibt der Container nicht heraus;
--- er steht nur im alten Weg (ausserhalb des Kampfes lesbar).
+-- Leiste, Stapel am Symbol, Name des Zaubers. Leisten lesen immer selbst
+-- (alter Weg, siehe UseEngine): der Container des Spiels hat sie auf
+-- Forever angelegt, aber nie gefuellt (Beta-Test 6.6.0.1).
 local function StyleBar(button, o)
     local h = o.bar.height
     local icon = button:CreateTexture(nil, "ARTWORK")
@@ -253,34 +247,6 @@ local function StyleBar(button, o)
     name:SetWordWrap(false)
     return icon, bar, count, dur, name
 end
-
--- Die Dauerleiste an den Aurenknopf des Containers binden. Die Schnittstelle
--- ist im Beta-Client nicht dokumentiert, nur ihre Optionen
--- (CustomAuraButtonDurationBarOptions: interpolation, direction) - deshalb
--- werden die naheliegenden Namen der Reihe nach versucht, und was gegriffen
--- hat, steht in /wcui auren.
-local BAR_BINDERS = { "SetDurationBar", "SetDurationStatusBar", "SetDurationTimerBar" }
-local function BindBar(button, bar)
-    local opts = {}
-    local E = _G.Enum
-    if E and E.StatusBarTimerDirection and E.StatusBarTimerDirection.RemainingTime then
-        opts.direction = E.StatusBarTimerDirection.RemainingTime
-    end
-    for _, n in ipairs(BAR_BINDERS) do
-        if type(button[n]) == "function" then
-            local ok, err = pcall(button[n], button, bar, opts)
-            if not ok then ok = pcall(button[n], button, bar) end
-            if ok then
-                if not stats.barBinder then stats.barBinder = n end
-                return true
-            end
-            Note(n, err)
-        end
-    end
-    stats.barBinder = stats.barBinder or false
-    return false
-end
-A.BAR_BINDERS = BAR_BINDERS
 
 -- Restzeit in Worten des Spiels: Sekunden als Zahl, ab einer Minute "2m",
 -- ab einer Stunde "1h". Nur fuer offene Zahlen.
@@ -332,29 +298,16 @@ local function BuildEngine(self, minimal)
     Call(c, { "SetFlowLayoutGrowthDirection", "SetAuraLayoutGrowthDirection" },
         FlowDir(o.growth), FlowDir(o.growthV))
     local size = o.size
-    local ew = o.bar and o.bar.width or size
     Call(c, { "SetFlowLayoutMaximumLineSize", "SetAuraLayoutRowWidth" },
-        o.perRow * (ew + o.spacing))
+        o.perRow * (size + o.spacing))
 
     local sort = _G.AuraContainerSortMethod and _G.AuraContainerSortMethod.Default or nil
     c:AddAuraGroup("wc", o.filter, {
         maxFrameCount = o.max,
         sortMethod = sort,
-        layout = { elementWidth = ew, elementHeight = size,
+        layout = { elementWidth = size, elementHeight = size,
                    elementSpacing = o.spacing, lineSpacing = o.spacing },
         initializeFrame = function(button)
-            if o.bar and not minimal then
-                local icon, bar, count, dur = StyleBar(button, o)
-                pcall(button.SetMouseClickEnabled, button, false)
-                local okI, errI = pcall(button.SetIcon, button, icon)
-                if not okI then Note("SetIcon", errI) end
-                BindBar(button, bar)
-                local okA, errA = pcall(button.SetApplicationCount, button, count, {})
-                if not okA then Note("SetApplicationCount", errA) end
-                local okD, errD = pcall(button.SetDurationText, button, dur, {})
-                if not okD then Note("SetDurationText", errD) end
-                return
-            end
             if minimal then
                 -- Zweiter Versuch: nur Symbol und Uhr, nichts darum herum.
                 local icon = button:CreateTexture(nil, "ARTWORK")
@@ -455,7 +408,13 @@ local function PaintLegacy(b, unit, aura)
         if b._durObj and b._bar.SetTimerDuration then
             local E = _G.Enum
             local dir = E and E.StatusBarTimerDirection and E.StatusBarTimerDirection.RemainingTime
-            pcall(b._bar.SetTimerDuration, b._bar, b._durObj, nil, dir)
+            local okT = pcall(b._bar.SetTimerDuration, b._bar, b._durObj, nil, dir)
+            if not okT then
+                -- Kann die Leiste das Dauerobjekt nicht selbst abspielen,
+                -- fuellt TickLegacy sie aus offenen Zahlen (wenn es welche gibt).
+                local d = K.Plain(aura.duration)
+                if type(d) == "number" and d > 0 then b._dur = d end
+            end
         elseif b._exp then
             local d = K.Plain(aura.duration)
             if type(d) == "number" and d > 0 then b._dur = d end
@@ -477,6 +436,7 @@ local function TickLegacy(b)
             local plain = K.Plain(rem)
             if type(plain) == "number" then
                 b.dur:SetText(A.FormatRemaining(plain))
+                if b._bar and b._dur then b._bar:SetValue(math.max(0, math.min(1, plain / b._dur))) end
             else
                 b.dur:SetFormattedText("%.0f", rem)
             end
@@ -525,6 +485,9 @@ local function Normalize(opts)
     if o.bar then
         o.bar = { width = o.bar.width or 200, height = o.bar.height or 18 }
         o.size, o.perRow = o.bar.height, 1
+        -- Eine Leiste ohne Restzeit ist nur ein Name: die Zeit laeuft immer
+        -- mit (6.6.0.2 - vorher fehlte das und die Leisten standen still).
+        o.timer = true
     end
     return o
 end
@@ -542,7 +505,11 @@ end
 -- (siehe AutoCheck) - dann liest es selbst, fuer alle.
 local engineBroken = false
 
-local function UseEngine()
+local function UseEngine(o)
+    -- Leisten lesen immer selbst: der Container des Spiels hat auf Forever
+    -- ausserhalb des Kampfes keine einzige Leiste gezeigt (Beta-Test 6.6.0.1,
+    -- Weg "Container" gegen "Selbst lesen" bei denselben Buffs).
+    if o and o.bar then return false end
     if A.mode == "legacy" then return false end
     if A.mode == "auto" and engineBroken then return false end
     return A.EngineAvailable()
@@ -569,7 +536,7 @@ function Obj:Build()
         end
     end
     self.buttons, self.events, self.ticker = nil, nil, nil
-    self.engine = UseEngine()
+    self.engine = UseEngine(self.opts)
     if self.engine then
         local ok, c = pcall(BuildEngine, self)
         if not (ok and c) then

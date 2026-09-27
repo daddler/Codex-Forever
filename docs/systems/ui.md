@@ -398,19 +398,22 @@ Seit 6.2.0.0:
   und `AnchorAuraContainer` – nie ein Feld am Rahmen des Spiels (dessen
   Code liefe sonst unsicher und scheiterte an geheimen Werten). Stand:
   `/wcui auren`. Im Spiel ungeprüft.
-* **Aurenleisten über Spieler- und Zielrahmen** (6.6.0.1, **Test**,
-  `player_auraBars`/`target_auraBars`): `UIAuras.Create(..., { bar = {
-  width, height } })` – eine Leiste je Aura, Symbol links, Restzeit
-  rechts, Stapel am Symbol. Im Container-Weg bindet `BindBar` eine
-  Dauerleiste an den Aurenknopf (`SetDurationBar`/…; die Optionen sind als
-  `CustomAuraButtonDurationBarOptions` dokumentiert, die Methode nicht –
-  was griff, steht in `/wcui auren`). Den Zaubernamen gibt der Container
-  nicht heraus; nur der alte Weg liest ihn. **Erwartung:** im Kampf leer,
-  wie die eigenen Symbole – ein Aurenbehälter aus Addon-Code läuft
-  „unsicher“, und geheime Werte gibt das Spiel nur unberührtem Code
-  (`SetTimerDuration`: „AllowedWhenUntainted“). Verlässlich im Kampf:
-  die verfolgten Leisten des Abklingzeitmanagers (eigene Buffs und
-  DoTs), im Bearbeitungsmodus über den Zielrahmen gelegt.
+* **Aurenleisten über Spieler- und Zielrahmen** (6.6.0.1, seit 6.6.0.2
+  immer über den alten Weg; **Test**, `player_auraBars`/`target_auraBars`):
+  `UIAuras.Create(..., { bar = { width, height } })` – eine Leiste je
+  Aura, Symbol links, Zaubername, Restzeit rechts, Stapel am Symbol.
+  `Normalize` setzt bei Leisten immer `timer = true` (6.6.0.1 fehlte das:
+  Leisten ohne Zeit, stehend). **Gemessen (Beta, 6.6.0.1):** der Container
+  des Spiels legt die Leistenknöpfe an und nimmt `SetDurationBar` an,
+  zeigt aber auch außerhalb des Kampfes keine einzige Leiste – dieselben
+  Buffs erscheinen mit „Selbst lesen“ sofort. Deshalb gibt `UseEngine`
+  für `o.bar` immer `false`, unabhängig vom eingestellten Weg; der
+  Container-Code für Leisten (`BindBar`) ist entfernt. Die Leiste läuft
+  über `SetTimerDuration` mit dem Dauerobjekt aus `GetAuraDuration`,
+  sonst aus offenen Zahlen in `TickLegacy`. **Offen:** ob der alte Weg im
+  Kampf liest – für Auren des Ziels nachweislich nicht, für die eigenen
+  ungeprüft. Verlässlich im Kampf bleiben die verfolgten Leisten des
+  Abklingzeitmanagers (eigene Buffs und DoTs).
 * **Questpfeil: Höhe** (6.6.0.1, `showHeight`, `worldMarker`). Die Karte
   ist flach; die einzige Höhe, die der Client nennt, steckt in der
   Navigation des Spiels (`C_Navigation`): Luftlinie im Raum

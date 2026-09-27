@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.0.2",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFAurenleisten zeigen sich.|r Über Spieler- und Zielrahmen stehen die Leisten jetzt wirklich – mit Zaubername, Restzeit und einer Leiste, die mit der Zeit leerläuft. Die Einstellung „Weg“ bei den Auren spielt dafür keine Rolle mehr.",
+        },
+    },
+    {
         version = "6.6.0.1",
         date    = "27.09.2026",
         notes   = {

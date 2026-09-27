@@ -1359,39 +1359,14 @@ do
         assert(o.engine and o.frame._anchoredBeforeGroup, "Container nicht vor der ersten Gruppe verankert")
         assert(registered.icon and registered.cd and registered.count and registered.dur,
             "Knopf hat nicht alles angemeldet")
-        -- 6.6.0.1: Leisten. Der Knopf bekommt eine Dauerleiste (sofern das
-        -- Spiel eine annimmt), Symbol, Zahl und Restzeit; die Gruppe ist so
-        -- breit wie die Leiste.
-        local barSpec, boundBar
-        local realAdd
-        registered = {}
+        -- 6.6.0.2: Leisten lesen immer selbst, auch wenn der Container da
+        -- ist - er hat sie auf Forever angelegt, aber nie gefuellt.
         local ob = A.Create(UIParent, { filter = "HARMFUL|PLAYER", max = 3, bar = { width = 180, height = 16 } })
-        assert(ob.engine, "Leisten nicht ueber den Container")
+        assert(not ob.engine, "Leisten ueber den Container (zeigt auf Forever nichts)")
+        assert(ob.opts.timer, "Leisten ohne Restzeit")
         local ew, eh = ob:Extent()
         assert(ew == 180 and eh == 3 * 18, "Leistenflaeche falsch: " .. ew .. "x" .. eh)
-        assert(registered.icon and registered.count and registered.dur and not registered.cd,
-            "Leistenknopf nicht vollstaendig angemeldet")
-        -- Mit Dauerleiste des Spiels:
         local testCreate = _G.CreateFrame
-        _G.CreateFrame = function(kind, name, parent, template)
-            local f = realCreate(kind, name, parent, template)
-            if kind == "AuraContainer" then
-                f.AddAuraGroup = function(self, key, filter, spec)
-                    barSpec = spec
-                    local b = realCreate("Button", nil, self)
-                    b.SetIcon = function() end
-                    b.SetApplicationCount = function() end
-                    b.SetDurationText = function() end
-                    b.SetDurationBar = function(_, bar) boundBar = bar end
-                    spec.initializeFrame(b)
-                end
-            end
-            return f
-        end
-        A.Create(UIParent, { filter = "HARMFUL", max = 2, bar = { width = 150, height = 14 } })
-        assert(boundBar and barSpec.layout.elementWidth == 150 and barSpec.layout.elementHeight == 14,
-            "Dauerleiste nicht gebunden oder Groesse falsch")
-        assert(A.StatusText():find("Leisten: Dauer über SetDurationBar", 1, true), "Stand der Leisten fehlt: " .. A.StatusText())
         _G.CreateFrame = testCreate
         failNext = true
         local o2 = A.Create(UIParent, { filter = "HARMFUL", max = 4, size = 24 })
@@ -1430,7 +1405,7 @@ do
     ok, err = pcall(function()
         local oldTime = _G.GetTime
         _G.GetTime = function() return 15 end
-        local o = A.Create(UIParent, { max = 4, bar = { width = 200, height = 16 }, timer = true })
+        local o = A.Create(UIParent, { max = 4, bar = { width = 200, height = 16 } })
         o:SetUnit("target")
         assert(#o.buttons == 2, "Leisten: " .. #o.buttons)
         local b = o.buttons[1]
