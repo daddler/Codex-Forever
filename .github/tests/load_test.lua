@@ -835,7 +835,7 @@ do
         WeintCodex = true, _G = true, CreateFrame = true, UIParent = true,
         GameTooltip = true, SlashCmdList = true,
         ipairs = true, pairs = true, pcall = true, print = true, type = true,
-        tostring = true, select = true, unpack = true, wipe = true, assert = true,
+        tostring = true, tonumber = true, select = true, unpack = true, wipe = true, assert = true,
         setmetatable = true, math = true, string = true, table = true,
         date = true,
     }
@@ -1772,7 +1772,8 @@ do
                         _G.GetInventoryItemID, _G.C_Item, _G.UnitExists, _G.InCombatLockdown, _G.issecretvalue }
         -- Vorschlaege ohne Zauber-ID.
         assert(#R.Suggestions("ROGUE") == 2 and R.Suggestions("ROGUE")[1].kind == "weapon", "Schurke ohne Waffengift-Vorschlag")
-        assert(#R.Suggestions("HUNTER") == 1 and R.Suggestions("HUNTER")[1].kind == "pet", "Jaeger ohne Begleiter-Vorschlag")
+        assert(#R.Suggestions("HUNTER") == 2 and R.Suggestions("HUNTER")[1].kind == "pet"
+            and R.Suggestions("HUNTER")[2].kind == "ammo", "Jaeger ohne Begleiter- und Munitions-Vorschlag")
         assert(#R.Suggestions("WARRIOR") == 0, "Vorschlag mit geratener Zauber-ID")
         -- Ohne Angabe: die Klasse des Spielers (zweiter Rueckgabewert).
         local oldClass = _G.UnitClass
@@ -1900,6 +1901,49 @@ do
         R.draft.scope = "class"
         assert(R.Suggestions("ROGUE")[1].class == "ROGUE", "Vorschlag ohne Klasse")
         _G.IsPlayerSpell = oldIPS
+
+        -- 6.6.0.6: Munition und Vorrat. Munition = Platz 0; leer, nachdem
+        -- welche drin war = 0. Ohne Antwort des Clients: keine Erinnerung.
+        local oldInvID, oldInvCount, oldItem = _G.GetInventoryItemID, _G.GetInventoryItemCount, _G.C_Item
+        local ammoId, ammoN, bag = 2512, 150, { [2512] = 0, [118] = 3 }
+        _G.GetInventoryItemID = function(_, slot) if slot == 0 then return ammoId end return 1234 end
+        _G.GetInventoryItemCount = function(_, slot) if slot == 0 then return ammoN end return 1 end
+        _G.C_Item = { GetItemCount = function(id) return bag[id] end,
+                      GetItemInfoInstant = function(k)
+                          if k == 118 or k == "Schwacher Heiltrank" then return 118, "Trank", "", "", 134829 end
+                      end,
+                      GetItemInfo = function(id) if id == 118 then return "Schwacher Heiltrank" end end }
+        R._ammoSeen(false)
+        R.SetRules({ { kind = "ammo", min = 200, class = "HUNTER" } })
+        local a = R.Active()
+        assert(#a == 1 and a[1].text == "Munition knapp: noch 150", "Munition knapp nicht erinnert: " .. (a[1] and a[1].text or "-"))
+        ammoN = 500
+        assert(#R.Active() == 0, "genug Munition und trotzdem erinnert")
+        ammoId = nil
+        a = R.Active()
+        assert(#a == 1 and a[1].text == "Munition leer", "verschossene Munition nicht erinnert")
+        R._ammoSeen(false)
+        assert(#R.Active() == 0, "ohne je gesehene Munition erinnert (weiss nicht ist nicht leer)")
+        -- Vorrat: Name oder ID, Mindestmenge.
+        R.SetRules({ { kind = "item", item = "Schwacher Heiltrank", min = 5, class = R.ALL } })
+        a = R.Active()
+        assert(#a == 1 and a[1].text == "Schwacher Heiltrank: noch 3", "Vorrat knapp nicht erinnert: " .. (a[1] and a[1].text or "-"))
+        bag[118] = 0
+        assert(R.Active()[1].text == "Schwacher Heiltrank fehlt", "leerer Vorrat nicht erinnert")
+        R.SetRules({ { kind = "item", item = "Gibtsnicht", min = 5, class = R.ALL } })
+        assert(#R.Active() == 0, "unbekannter Gegenstand als 0 behandelt")
+        -- Editor: Menge pruefen, Standard 200 fuer Munition.
+        R.SetRules({})
+        R.draft.kind, R.draft.min = "ammo", ""
+        assert(R.AddDraft() and R.Rules()[1].min == 200, "Munition ohne Standardmenge")
+        R.draft.kind, R.draft.spell, R.draft.min = "item", "118", "abc"
+        assert(not R.AddDraft(), "Menge 'abc' angenommen")
+        R.draft.spell, R.draft.min = "118", "10"
+        assert(R.AddDraft() and R.Rules()[2].item == "118" and R.Rules()[2].min == 10, "Vorratsregel nicht angelegt")
+        assert(R.RuleText(R.Rules()[2]):find("Schwacher Heiltrank unter 10", 1, true), "Vorratsregel ohne Namen: " .. R.RuleText(R.Rules()[2]))
+        R.draft.kind, R.draft.spell, R.draft.min = "buff", "", ""
+        _G.GetInventoryItemID, _G.GetInventoryItemCount, _G.C_Item = oldInvID, oldInvCount, oldItem
+        R._ammoSeen(false)
 
         K.Set("reminders", "rules", nil)
         _G.UnitClass, _G.C_UnitAuras, _G.C_Spell, _G.GetWeaponEnchantInfo,

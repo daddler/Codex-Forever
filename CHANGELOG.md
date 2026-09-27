@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.0.6] – 2026-09-27
+
+**Erinnerung bei knapper Munition.** Neue Regel „Munition knapp“: WeintCodex liest, was im Munitionsplatz steckt, und erinnert unter einer Menge, die du festlegst (ohne Angabe 200) – und wenn sie ganz verschossen ist. „Für meine Klasse“ legt sie beim Jäger gleich mit an.
+
+**Erinnerung bei knappem Vorrat.** Neue Regel „Vorrat knapp“ für jeden Gegenstand, den du nennst (Name oder ID): Tränke, Reagenzien, Essen – mit eigener Mindestmenge.
+
 ## [6.6.0.5] – 2026-09-27
 
 **Erinnerungen gelten je Klasse.** Eine Regel gilt jetzt für die Klasse, auf der du sie anlegst – der Schlachtruf deines Kriegers erinnert deinen Jäger nicht mehr. Für Buffs, die andere geben, wählst du „Alle Klassen“. Regeln aus der Zeit davor gelten dort, wo der Charakter den Zauber kennt; fremde stehen blass mit „(hier aus)“ in der Liste.

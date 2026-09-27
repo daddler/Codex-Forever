@@ -458,6 +458,17 @@ Seit 6.2.0.0:
   Client kann gar nicht fragen („weiß nicht“ ≠ „gilt nicht“). Waffe gilt
   nur, wo sie Vorschlag der Klasse ist, Begleiter überall. Die Liste
   zeigt alle Regeln, fremde blass mit „(hier aus)“.
+  **Munition und Vorrat** (6.6.0.6, Beta-Test „Erinnerung bei zu wenig
+  Munition“): `ammo` liest den Munitionsplatz (Platz 0,
+  `GetInventoryItemID`/`GetInventoryItemCount`); ist er leer, nachdem
+  Munition drin war, zählt dieselbe Sorte in den Taschen („Munition
+  leer“). Nie gesehen oder keine Antwort: keine Erinnerung – „weiß
+  nicht“ ist nicht „0 übrig“. `item` nennt einen Gegenstand (Name oder
+  ID, `R.ResolveItem`; Namen löst der Client nur für schon gesehene
+  Gegenstände auf) und zählt mit `C_Item.GetItemCount`. Mindestmenge
+  `min`, ohne Angabe 200 (Munition) bzw. 1 (Vorrat). Vorschlag für
+  Jäger: Begleiter und Munition. Ob der Forever-Client den
+  Munitionsplatz so führt, ist im Spiel ungeprüft.
 * **Fenster des Spiels** (6.3.1.6, `ui/windows.lua`): Charakterfenster
   und Teilfenster, erste Stufe nur die Hülle (Schmuck der Vorlage weg,
   Kachel darunter). Inhalte werden nie angefasst. Was innen noch nach

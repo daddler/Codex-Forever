@@ -14,6 +14,8 @@
 --   pet       "Begleiter fehlt"        - er war da und ist weg
 --   proc      Symbol, solange ein eigener Buff/Proc laeuft
 --   cooldown  Symbol mit Abklingzeit einer Faehigkeit
+--   ammo      "Munition knapp"         - angelegte Munition unter der Menge
+--   item      "Vorrat knapp"           - ein Gegenstand unter der Menge
 --
 -- WAS GEHT UND WAS NICHT. Ausserhalb des Kampfes ist alles lesbar -
 -- Erinnerungen sind deshalb zuverlaessig. Im Kampf kann der Client Auren
@@ -62,6 +64,8 @@ R.KINDS = {
     { value = "pet",      text = "Begleiter fehlt" },
     { value = "proc",     text = "Buff/Proc anzeigen" },
     { value = "cooldown", text = "Abklingzeit anzeigen" },
+    { value = "ammo",     text = "Munition knapp" },
+    { value = "item",     text = "Vorrat knapp (Gegenstand)" },
 }
 local KIND_TEXT = {}
 for _, k in ipairs(R.KINDS) do KIND_TEXT[k.value] = k.text end
@@ -71,6 +75,12 @@ R.KIND_TEXT = KIND_TEXT
 function R.NeedsSpell(kind)
     return kind == "buff" or kind == "proc" or kind == "cooldown"
 end
+
+-- Braucht die Art einen Gegenstand / eine Mindestmenge? (6.6.0.6)
+function R.NeedsItem(kind) return kind == "item" end
+function R.NeedsAmount(kind) return kind == "ammo" or kind == "item" end
+-- Ohne Angabe: ein Stapel Pfeile/Kugeln (200), bei Vorrat "gar keiner mehr".
+R.DEFAULT_MIN = { ammo = 200, item = 1 }
 
 local function PlayerClass()
     -- Nicht `_G.UnitClass and _G.UnitClass(...)`: das `and` kappt auf EINEN
@@ -88,7 +98,9 @@ function R.Suggestions(class)
         out = { { kind = "weapon", hand = "main" }, { kind = "weapon", hand = "off" } }
     elseif class == "SHAMAN" then
         out = { { kind = "weapon", hand = "main" } }
-    elseif class == "HUNTER" or class == "WARLOCK" then
+    elseif class == "HUNTER" then
+        out = { { kind = "pet" }, { kind = "ammo", min = R.DEFAULT_MIN.ammo } }
+    elseif class == "WARLOCK" then
         out = { { kind = "pet" } }
     end
     for _, r in ipairs(out) do r.class = class end
@@ -187,7 +199,7 @@ end
 local function SameRule(a, b)
     -- Eine alte Regel ohne Klasse zaehlt als dieselbe (sonst kaeme die
     -- Waffe des Schurken doppelt).
-    return a.kind == b.kind and a.hand == b.hand and a.spell == b.spell
+    return a.kind == b.kind and a.hand == b.hand and a.spell == b.spell and a.item == b.item
         and (a.class == b.class or a.class == nil or b.class == nil)
 end
 
@@ -308,6 +320,83 @@ local function HasWeapon(hand)
     return classID == nil or classID == 2   -- 2 = Waffe
 end
 
+--------------------------------------------------
+-- Munition und Vorrat (6.6.0.6, Beta-Test: "Erinnerung, wenn ich zu
+-- wenig Munition habe")
+--------------------------------------------------
+-- Auch hier keine eingebaute Liste: die Munition ist, was im
+-- Munitionsplatz steckt (Platz 0), ein Vorrat der Gegenstand, den der
+-- Spieler nennt. Was der Client nicht beantwortet, ist "weiss nicht" -
+-- keine Erinnerung, nie "0 uebrig".
+
+-- Gegenstand: Name oder ID -> { id, name, icon } oder nil. Namen kennt
+-- der Client nur fuer Gegenstaende, die er schon gesehen hat.
+function R.ResolveItem(text)
+    if type(text) ~= "string" or text == "" then return nil end
+    text = text:gsub("^%s+", ""):gsub("%s+$", "")
+    local key = text:match("^%d+$") and (text + 0) or text
+    local ci = _G.C_Item
+    local instant = (ci and ci.GetItemInfoInstant) or _G.GetItemInfoInstant
+    local id, icon
+    if instant then
+        local ok, i, _, _, _, ic = pcall(instant, key)
+        if ok then id, icon = K.Plain(i), K.Plain(ic) end
+    end
+    if type(key) == "number" then id = id or key end
+    local name
+    local info = (ci and ci.GetItemInfo) or _G.GetItemInfo
+    if info and id then
+        local ok, n = pcall(info, id)
+        if ok then name = K.Plain(n) end
+    end
+    return { id = id, name = name or (type(key) == "string" and key or nil), icon = icon }
+end
+
+-- Wie viele traegt der Spieler? Zahl oder nil (weiss nicht).
+local function ItemCount(id)
+    if not id then return nil end
+    local ci = _G.C_Item
+    local count = (ci and ci.GetItemCount) or _G.GetItemCount
+    if not count then return nil end
+    local ok, n = pcall(count, id)
+    n = ok and K.Plain(n) or nil
+    return type(n) == "number" and n or nil
+end
+
+local AMMO_SLOT = 0
+local ammoSeen     -- die zuletzt angelegte Munition
+R._ammoSeen = function(v) if v ~= nil then ammoSeen = v or nil end return ammoSeen end
+
+-- Angelegte Munition: id, Anzahl - oder nil (kein Platz, nichts gesehen).
+-- Ist der Platz leer, nachdem Munition drin war, zaehlt dieselbe Sorte in
+-- den Taschen (verschossen: 0).
+function R.Ammo()
+    if not _G.GetInventoryItemID then return nil end
+    local ok, id = pcall(_G.GetInventoryItemID, "player", AMMO_SLOT)
+    id = ok and K.Plain(id) or nil
+    if id then
+        ammoSeen = id
+        local n
+        if _G.GetInventoryItemCount then
+            local okC, c = pcall(_G.GetInventoryItemCount, "player", AMMO_SLOT)
+            n = okC and K.Plain(c) or nil
+        end
+        if type(n) ~= "number" then n = ItemCount(id) end
+        return id, n
+    end
+    if ammoSeen then return ammoSeen, ItemCount(ammoSeen) or 0 end
+    return nil
+end
+
+local function ItemIcon(id)
+    if not id then return nil end
+    local ci = _G.C_Item
+    local f = (ci and ci.GetItemIconByID) or _G.GetItemIcon
+    if not f then return nil end
+    local ok, ic = pcall(f, id)
+    return ok and K.Plain(ic) or nil
+end
+
 -- Eine Erinnerung: { text, icon } oder nil.
 function R.Check(rule)
     local kind = rule.kind
@@ -341,6 +430,22 @@ function R.Check(rule)
             return nil
         end
         return { text = "Begleiter fehlt" }
+    elseif kind == "ammo" then
+        local id, n = R.Ammo()
+        if not id or type(n) ~= "number" then return nil end
+        local min = tonumber(rule.min) or R.DEFAULT_MIN.ammo
+        if n >= min then return nil end
+        if n == 0 then return { text = "Munition leer", icon = ItemIcon(id) } end
+        return { text = string.format("Munition knapp: noch %d", n), icon = ItemIcon(id) }
+    elseif kind == "item" then
+        local it = R.ResolveItem(rule.item)
+        local n = it and ItemCount(it.id)
+        if type(n) ~= "number" then return nil end
+        local min = tonumber(rule.min) or R.DEFAULT_MIN.item
+        if n >= min then return nil end
+        local name = it.name or rule.item or "?"
+        if n == 0 then return { text = name .. " fehlt", icon = it.icon or ItemIcon(it.id) } end
+        return { text = string.format("%s: noch %d", name, n), icon = it.icon or ItemIcon(it.id) }
     end
     return nil
 end
@@ -354,7 +459,8 @@ function R.Active()
     if where == "group" and not InGroup() then return out end
     if where == "instance" and not InInstance() then return out end
     for _, rule in ipairs(R.Here()) do
-        if rule.kind == "buff" or rule.kind == "weapon" or rule.kind == "pet" then
+        local k = rule.kind
+        if k == "buff" or k == "weapon" or k == "pet" or k == "ammo" or k == "item" then
             local hit = R.Check(rule)
             if hit then out[#out + 1] = hit end
         end
@@ -596,7 +702,8 @@ local function Enable()
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED", "PLAYER_REGEN_DISABLED",
         "UNIT_AURA", "UNIT_PET", "UNIT_INVENTORY_CHANGED", "GROUP_ROSTER_UPDATE", "ZONE_CHANGED_NEW_AREA",
-        "SPELL_UPDATE_COOLDOWN", "SPELL_UPDATE_CHARGES", "READY_CHECK", "PLAYER_MOUNT_DISPLAY_CHANGED" }) do
+        "SPELL_UPDATE_COOLDOWN", "SPELL_UPDATE_CHARGES", "READY_CHECK", "PLAYER_MOUNT_DISPLAY_CHANGED",
+        "BAG_UPDATE_DELAYED" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
     ev:SetScript("OnEvent", function(_, event, unit)
@@ -628,7 +735,7 @@ end
 --------------------------------------------------
 
 -- Was im Formular "Regel hinzufuegen" steht (nicht gespeichert).
-local draft = { kind = "buff", spell = "", hand = "main", scope = "class" }
+local draft = { kind = "buff", spell = "", hand = "main", scope = "class", min = "" }
 R.draft = draft
 
 -- Fuer wen: "alle Klassen", "nur Krieger" oder - alte Regel - offen.
@@ -655,6 +762,13 @@ function R.BaseRuleText(rule)
         return kind .. ": " .. tostring(name) .. known
     elseif rule.kind == "weapon" then
         return kind .. " (" .. WeaponText(rule.hand) .. ")"
+    elseif rule.kind == "ammo" then
+        return string.format("Munition knapp: unter %d", tonumber(rule.min) or R.DEFAULT_MIN.ammo)
+    elseif rule.kind == "item" then
+        local it = R.ResolveItem(rule.item)
+        local name = it and it.name or rule.item or "?"
+        local known = it and it.id and "" or "  (unbekannt)"
+        return string.format("Vorrat knapp: %s unter %d", tostring(name), tonumber(rule.min) or R.DEFAULT_MIN.item) .. known
     end
     return kind
 end
@@ -667,10 +781,24 @@ function R.AddDraft()
         rule.spell = text
     elseif draft.kind == "weapon" then
         rule.hand = draft.hand
+    elseif R.NeedsItem(draft.kind) then
+        local text = (draft.spell or ""):gsub("^%s+", ""):gsub("%s+$", "")
+        if text == "" then return false, "Gegenstand fehlt" end
+        rule.item = text
+    end
+    if R.NeedsAmount(draft.kind) then
+        local m = (draft.min or ""):gsub("%s", "")
+        if m ~= "" then
+            local n = tonumber(m)
+            if not n or n < 1 or n ~= math.floor(n) then return false, "Menge ist keine ganze Zahl" end
+            rule.min = n
+        else
+            rule.min = R.DEFAULT_MIN[draft.kind]
+        end
     end
     rule.class = draft.scope == "all" and R.ALL or PlayerClass()
     R.AddRule(rule)
-    draft.spell = ""
+    draft.spell, draft.min = "", ""
     return true
 end
 
@@ -718,7 +846,8 @@ function R.BuildRuleList(parent, width)
             if rule then
                 row.text:SetText(R.RuleText(rule))
                 row.text:SetTextColor(unpack(R.Applies(rule) and C.textNormal or C.textDim))
-                local sp = R.NeedsSpell(rule.kind) and R.Resolve(rule.spell)
+                local sp = (R.NeedsSpell(rule.kind) and R.Resolve(rule.spell))
+                    or (R.NeedsItem(rule.kind) and R.ResolveItem(rule.item))
                 if sp and sp.icon then row.icon:SetTexture(sp.icon) row.icon:Show() else row.icon:Hide() end
                 row:Show()
             else
@@ -754,9 +883,9 @@ K.Register({
             B:Section("Neue Regel")
             B:Row({ type = "dropdown", label = "Art", items = R.KINDS,
                     get = function() return draft.kind end, set = function(v) draft.kind = v DraftChanged() end },
-                  { type = "input", label = "Zauber (Name oder ID)",
+                  { type = "input", label = "Zauber oder Gegenstand (Name oder ID)",
                     get = function() return draft.spell end, set = function(v) draft.spell = v end,
-                    disabled = function() return not R.NeedsSpell(draft.kind) end })
+                    disabled = function() return not (R.NeedsSpell(draft.kind) or R.NeedsItem(draft.kind)) end })
             B:Row({ type = "dropdown", label = "Hand (bei Waffe)", items = {
                         { value = "main", text = "Haupthand" }, { value = "off", text = "Nebenhand" } },
                     get = function() return draft.hand end, set = function(v) draft.hand = v DraftChanged() end,
@@ -764,11 +893,18 @@ K.Register({
                   { type = "dropdown", label = "Gilt für", items = {
                         { value = "class", text = "Nur diese Klasse" }, { value = "all", text = "Alle Klassen" } },
                     get = function() return draft.scope end, set = function(v) draft.scope = v DraftChanged() end })
-            B:Row({ type = "button", label = "Hinzufügen", text = "Regel hinzufügen",
-                    onClick = function() R.AddDraft() end },
-                  { type = "empty" })
+            B:Row({ type = "input", label = "Mindestmenge (Munition: 200, Vorrat: 1)",
+                    get = function() return draft.min end, set = function(v) draft.min = v end,
+                    disabled = function() return not R.NeedsAmount(draft.kind) end },
+                  { type = "button", label = "Hinzufügen", text = "Regel hinzufügen",
+                    onClick = function()
+                        local ok, why = R.AddDraft()
+                        if not ok and why then
+                            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Regel nicht angelegt: " .. why .. ".")
+                        end
+                    end })
             B:Row({ type = "button", label = "Vorschläge", text = "Für meine Klasse",
-                    tooltip = "Ergänzt die Vorschläge für deine Klasse (Waffe, Begleiter). Eigene Regeln bleiben.",
+                    tooltip = "Ergänzt die Vorschläge für deine Klasse (Waffe, Begleiter, Munition). Eigene Regeln bleiben.",
                     onClick = function()
                         local added, total = R.AddSuggestions()
                         local line
