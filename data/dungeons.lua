@@ -199,6 +199,11 @@ WeintCodex_Dungeons = {
             {
                 id   = "the_butcher",
                 name = "The Butcher",
+                -- 6.5.0.0: die Beta-Berichte zu Beute und Quests fuehren
+                -- an dieser Stelle "The Baron" (Quest "Abominable
+                -- Creatures": Kopf des Barons) und keinen Butcher -
+                -- dieselbe Monstrositaet, zwei Namen.
+                nameAlt = "The Baron",
                 position = "Am Ende des ersten Gangs, in der ersten Biegung.",
             },
             {

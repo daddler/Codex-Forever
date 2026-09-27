@@ -2142,6 +2142,37 @@ do
     Check(ok, "Zauberbuch und Talente: Pergament weg, Schrift hell, Symbole eckig" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.5.0.0: Beute je Boss und Quests je Dungeon auf der Dungeonseite.
+do
+    local ok, err = pcall(function()
+        local DP = WeintCodex.DungeonPages
+        -- Boss mit drei berichteten Gegenstaenden.
+        DP.Select("hall_of_thanes", "faldrim_anvilmar")
+        WeintCodex.Navigation.SwitchTo("dungeons")
+        assert(DP.itemRows == 3, "Beute von Faldrim Anvilmar: " .. tostring(DP.itemRows) .. " Zeilen statt 3")
+        -- Der Client kennt die Gegenstaende noch nicht: angefragt und nachgezogen.
+        assert(DP.pendingItems[270227], "unbekannter Gegenstand nicht zum Nachladen vorgemerkt")
+        local row = DP.pendingItems[270227][1]
+        assert(row.label:GetText() == "Ephemeral Choker", "Rueckfallname fehlt: " .. tostring(row.label:GetText()))
+        local oldCI = _G.C_Item
+        _G.C_Item = { GetItemInfo = function(id)
+            if id == 270227 then return "Vergaenglicher Halsreif", "|Hitem:270227|h", 3, nil, nil, nil, nil, nil, nil, 135 end
+        end }
+        DP.itemEvents:GetScript("OnEvent")(DP.itemEvents, "GET_ITEM_INFO_RECEIVED", 270227, true)
+        assert(row.label:GetText() == "Vergaenglicher Halsreif", "Name des Clients nicht nachgezogen")
+        _G.C_Item = oldCI
+        -- Dungeon ohne Boss: Quests mit ihren Belohnungen.
+        DP.Select("hall_of_thanes", nil)
+        WeintCodex.Navigation.SwitchTo("dungeons")
+        assert(DP.itemRows > 0, "keine Questbelohnungen auf der Dungeonseite")
+        -- Ein Dungeon ohne Journal zeichnet keine einzige Gegenstandszeile.
+        DP.Select("maraudon", nil)
+        WeintCodex.Navigation.SwitchTo("dungeons")
+        assert(DP.itemRows == 0, "Gegenstandszeilen in einem Dungeon ohne Journal")
+    end)
+    Check(ok, "Dungeonseite: Beute je Boss, Quests je Dungeon, Namen vom Client" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.8: Im Dungeon verfolgt die Questliste nur dessen Quests; beim
 -- Verlassen kommt genau das zurueck, was geaendert wurde.
 do

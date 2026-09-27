@@ -1653,6 +1653,293 @@ local function BodyText(inner, y, text, width, opts)
 end
 
 --------------------------------------------------
+-- Beute und Quests (6.5.0.0, data/dungeon_journal.lua)
+--------------------------------------------------
+-- NAME, FARBE UND BILD FRAGT DIE SEITE DEN CLIENT. Der Bestand kennt
+-- den englischen Namen und die berichtete Qualitaet - das ist der
+-- Rueckfall, solange der Client den Gegenstand noch nicht geladen hat
+-- (dann kommt GET_ITEM_INFO_RECEIVED, und die Zeile zieht nach). Was
+-- ein Gegenstand kann, steht nirgends im Bestand: das sagt der
+-- Tooltip des Spiels, mit Vergleich zur eigenen Ausruestung.
+-- Umschalt+Klick legt den Link in die Chatzeile, wie ueberall im Spiel.
+
+local J = WeintCodex.DungeonJournal
+local ITEM_ROW_H = 22
+local JOURNAL_RUBRIC_H = 18   -- wie COL_RUBRIC_H unten (dort erst spaeter definiert)
+local QUESTION_ICON = "Interface\\Icons\\INV_Misc_QuestionMark"
+
+local pendingItems = {}   -- [itemID] = { Zeilen, die auf den Client warten }
+
+local function ItemInfo(id)
+    local name, link, quality, icon
+    local ci = _G.C_Item
+    if ci and ci.GetItemInfo then
+        local ok, n, l, q, _, _, _, _, _, _, tex = pcall(ci.GetItemInfo, id)
+        if ok then name, link, quality, icon = n, l, q, tex end
+    elseif _G.GetItemInfo then
+        local ok, n, l, q, _, _, _, _, _, _, tex = pcall(_G.GetItemInfo, id)
+        if ok then name, link, quality, icon = n, l, q, tex end
+    end
+    if type(icon) == "nil" then
+        if ci and ci.GetItemIconByID then
+            local ok, tex = pcall(ci.GetItemIconByID, id)
+            if ok then icon = tex end
+        elseif _G.GetItemIcon then
+            local ok, tex = pcall(_G.GetItemIcon, id)
+            if ok then icon = tex end
+        end
+    end
+    return name, link, quality, icon
+end
+
+local function QualityRGB(q)
+    local t = _G.ITEM_QUALITY_COLORS and type(q) == "number" and _G.ITEM_QUALITY_COLORS[q]
+    if type(t) == "table" and type(t.r) == "number" then return t.r, t.g, t.b end
+    return C.textNormal[1], C.textNormal[2], C.textNormal[3]
+end
+
+local function PaintItemRow(row)
+    local name, _, quality, icon = ItemInfo(row.itemID)
+    row.label:SetText(type(name) == "string" and name or row.fallbackName)
+    local q = type(quality) == "number" and quality or row.fallbackQuality
+    row.label:SetTextColor(QualityRGB(q))
+    row.icon:SetTexture(icon or QUESTION_ICON)
+    return type(name) == "string"
+end
+
+WeintCodex.DungeonPages.pendingItems = pendingItems
+local itemEvents = CreateFrame("Frame")
+WeintCodex.DungeonPages.itemEvents = itemEvents
+itemEvents:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+itemEvents:SetScript("OnEvent", function(_, _, itemID)
+    local list = pendingItems[itemID]
+    if not list then return end
+    pendingItems[itemID] = nil
+    for _, row in ipairs(list) do
+        if row:IsShown() then PaintItemRow(row) end
+    end
+end)
+
+-- Eine Gegenstandszeile: Bild, Name in Qualitaetsfarbe, Platz rechts.
+local function ItemRow(parent, y, w, id, name, slot, quality, prefix)
+    WeintCodex.DungeonPages.itemRows = (WeintCodex.DungeonPages.itemRows or 0) + 1
+    local row = CreateFrame("Button", nil, parent)
+    row:SetHeight(ITEM_ROW_H)
+    row:SetPoint("TOPLEFT",  parent, "TOPLEFT",  0, y)
+    row:SetPoint("TOPRIGHT", parent, "TOPRIGHT", 0, y)
+    row.itemID, row.fallbackName, row.fallbackQuality = id, name, quality
+
+    local hl = row:CreateTexture(nil, "HIGHLIGHT")
+    hl:SetAllPoints(row)
+    hl:SetColorTexture(C.textBright[1], C.textBright[2], C.textBright[3], 0.06)
+
+    row.icon = row:CreateTexture(nil, "ARTWORK")
+    row.icon:SetSize(18, 18)
+    row.icon:SetPoint("LEFT", row, "LEFT", 2, 0)
+    row.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+    local slotText
+    if slot then
+        slotText = WeintCodex.Label(row, slot, { size = 11, color = "textFaint", justify = "RIGHT" })
+        slotText:SetPoint("RIGHT", row, "RIGHT", -2, 0)
+    end
+    row.label = WeintCodex.Label(row, name, { size = 12, font = WeintCodex.Fonts.sansMedium })
+    row.label:SetPoint("LEFT", row.icon, "RIGHT", 8, 0)
+    if slotText then row.label:SetPoint("RIGHT", slotText, "LEFT", -8, 0) end
+    row.label:SetWordWrap(false)
+    if prefix then
+        local pre = WeintCodex.Label(row, prefix, { size = 11, color = "textFaint" })
+        pre:SetPoint("LEFT", row.icon, "RIGHT", 8, 0)
+        row.label:ClearAllPoints()
+        row.label:SetPoint("LEFT", pre, "RIGHT", 4, 0)
+        if slotText then row.label:SetPoint("RIGHT", slotText, "LEFT", -8, 0) end
+    end
+
+    if not PaintItemRow(row) then
+        pendingItems[id] = pendingItems[id] or {}
+        table.insert(pendingItems[id], row)
+        local ci = _G.C_Item
+        if ci and ci.RequestLoadItemDataByID then pcall(ci.RequestLoadItemDataByID, id) end
+    end
+
+    row:SetScript("OnEnter", function(self)
+        if not _G.GameTooltip then return end
+        _G.GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        if _G.GameTooltip.SetItemByID then
+            _G.GameTooltip:SetItemByID(self.itemID)
+        else
+            _G.GameTooltip:SetText(self.fallbackName)
+        end
+        _G.GameTooltip:Show()
+    end)
+    row:SetScript("OnLeave", function()
+        if _G.GameTooltip then _G.GameTooltip:Hide() end
+    end)
+    row:SetScript("OnClick", function(self)
+        local _, link = ItemInfo(self.itemID)
+        if link and _G.IsModifiedClick and _G.IsModifiedClick("CHATLINK") and _G.ChatEdit_InsertLink then
+            _G.ChatEdit_InsertLink(link)
+        end
+    end)
+    return y - ITEM_ROW_H
+end
+
+-- Herkunft einer Journal-Auskunft, eine Zeile, klein.
+local function JournalSource(inner, y, w)
+    local label = S.Label(J.SOURCE)
+    if not label then return y end
+    return BodyText(inner, y - 2, label, w, { size = 10, color = "warningBright" })
+end
+
+-- Beute eines Bosses. Gibt y zurueck, unveraendert, wenn keine berichtet ist.
+local function DrawLoot(inner, y, w, dungeon, boss)
+    local loot = J and J.Loot(dungeon.id, boss.id) or {}
+    if #loot == 0 then return y end
+    y = BodyHeading(inner, y, "Beute")
+    for _, e in ipairs(loot) do
+        y = ItemRow(inner, y, w, e[1], e[2], e[3], e[4], e.from and (e.from .. ":") or nil)
+    end
+    y = JournalSource(inner, y - 4, w)
+    return y - 14
+end
+
+local FACTION_TEXT = { alliance = "Allianz", horde = "Horde", both = "Beide Fraktionen" }
+local CLASS_TEXT = { WARLOCK = "Nur Hexenmeister" }
+
+local function PlayerFaction()
+    local f = _G.UnitFactionGroup and _G.UnitFactionGroup("player")
+    f = type(f) == "string" and f:lower() or nil
+    if f == "alliance" or f == "horde" then return f end
+    return nil
+end
+
+local function QuestTitle(q)
+    local ql = _G.C_QuestLog
+    if ql and ql.GetTitleForQuestID then
+        local ok, t = pcall(ql.GetTitleForQuestID, q.id)
+        if ok and type(t) == "string" and t ~= "" then return t end
+    end
+    return q.name
+end
+
+local function Money(copper)
+    local g = math.floor(copper / 10000)
+    local sv = math.floor((copper % 10000) / 100)
+    local c = copper % 100
+    local parts = {}
+    if g > 0 then parts[#parts + 1] = g .. " Gold" end
+    if sv > 0 then parts[#parts + 1] = sv .. " Silber" end
+    if c > 0 then parts[#parts + 1] = c .. " Kupfer" end
+    return table.concat(parts, " ")
+end
+
+local function Thousands(n)
+    local s = tostring(n)
+    while true do
+        local r, k = s:gsub("^(%d+)(%d%d%d)", "%1.%2")
+        s = r
+        if k == 0 then break end
+    end
+    return s
+end
+
+local function DrawQuest(inner, y, w, q)
+    local title = WeintCodex.Label(inner, QuestTitle(q), { size = 13, color = "textBright",
+        font = WeintCodex.Fonts.sansSemi })
+    title:SetPoint("TOPLEFT", inner, "TOPLEFT", 0, y)
+    -- Breite statt eines zweiten Ankers: "RIGHT" an der Flaeche haengt
+    -- auch die Hoehe an deren Mitte.
+    title:SetWidth(math.max(60, w - 120))
+    title:SetWordWrap(false)
+    local meta = "Stufe " .. q.level .. " · ab " .. q.requires
+    local metaFs = WeintCodex.Label(inner, meta, { size = 11, color = "textDim", justify = "RIGHT" })
+    metaFs:SetPoint("TOPRIGHT", inner, "TOPRIGHT", 0, y - 1)
+    y = y - 18
+
+    local tags = { FACTION_TEXT[q.faction] or "" }
+    if q.class then tags[#tags + 1] = CLASS_TEXT[q.class] or q.class end
+    y = BodyText(inner, y, table.concat(tags, " · "), w, { size = 10, color = "textFaint" }) - 2
+
+    y = BodyText(inner, y, q.objective, w, { size = 12, color = "textNormal" }) - 2
+    y = BodyText(inner, y, "Beginnt: " .. q.giver, w, { size = 11, color = "textMuted" })
+    y = BodyText(inner, y, "Abgabe: " .. q.turnin, w, { size = 11, color = "textMuted" })
+
+    if q.startItem then
+        y = ItemRow(inner, y - 2, w, q.startItem[1], q.startItem[2], nil, 1, "Beginnt mit:")
+    end
+
+    local rew = {}
+    if q.xp then rew[#rew + 1] = Thousands(q.xp) .. " EP (beobachtet)" end
+    if q.money then rew[#rew + 1] = Money(q.money) end
+    for _, r in ipairs(q.reputation or {}) do rew[#rew + 1] = r[1] .. " +" .. r[2] end
+    if #rew > 0 then
+        y = BodyText(inner, y - 2, "Belohnung: " .. table.concat(rew, " · "), w, { size = 11, color = "textMuted" })
+    end
+    if q.rewards and #q.rewards > 0 then
+        if q.choice and #q.rewards > 1 then
+            y = BodyText(inner, y - 2, "Eine davon zur Wahl:", w, { size = 10, color = "textFaint" })
+        end
+        for _, r in ipairs(q.rewards) do
+            y = ItemRow(inner, y, w, r[1], r[2], nil, r[3])
+        end
+    end
+    if q.note then
+        y = BodyText(inner, y - 4, q.note, w, { size = 11, color = "textDim" })
+    end
+    for _, r in ipairs(q.followRewards or {}) do
+        y = ItemRow(inner, y, w, r[1], r[2], nil, 3)
+    end
+    return y - 14
+end
+
+-- Quests und weitere Beute eines Dungeons, unter der Aufstellung.
+-- Nur die eigene Fraktion (und "beide"); die andere wird gezaehlt,
+-- nicht verschwiegen.
+local function DrawJournal(inner, y, w, dungeon)
+    if not (J and J.Has(dungeon.id)) then return y end
+    local faction = PlayerFaction()
+    local quests = J.Quests(dungeon.id, faction)
+    local all = J.Quests(dungeon.id)
+    local others = J.Others(dungeon.id)
+    if #all == 0 and #others == 0 then return y end
+
+    local rule = inner:CreateTexture(nil, "ARTWORK")
+    rule:SetHeight(1)
+    rule:SetPoint("TOPLEFT",  inner, "TOPLEFT",  0, y - 6)
+    rule:SetPoint("TOPRIGHT", inner, "TOPRIGHT", 0, y - 6)
+    rule:SetColorTexture(C.border[1], C.border[2], C.border[3], 1.0)
+    y = y - 18
+
+    if #all > 0 then
+        local rubric = WeintCodex.Eyebrow(inner, "Quests", { color = "textDim", size = 10 })
+        rubric:SetPoint("TOPLEFT", inner, "TOPLEFT", 0, y)
+        y = y - JOURNAL_RUBRIC_H
+        for _, q in ipairs(quests) do y = DrawQuest(inner, y, w, q) end
+        local hidden = #all - #quests
+        if hidden > 0 then
+            local other = faction == "alliance" and "Horde" or "Allianz"
+            y = BodyText(inner, y, hidden .. (hidden == 1 and " Quest" or " Quests") .. " nur für die " .. other
+                .. " ausgeblendet.", w, { size = 10, color = "textFaint" }) - 8
+        end
+    end
+
+    if #others > 0 then
+        local rubric = WeintCodex.Eyebrow(inner, "Weitere Beute", { color = "textDim", size = 10 })
+        rubric:SetPoint("TOPLEFT", inner, "TOPLEFT", 0, y)
+        y = y - JOURNAL_RUBRIC_H
+        for _, grp in ipairs(others) do
+            y = BodyText(inner, y, grp.name, w, { size = 11, color = "textMuted" })
+            for _, e in ipairs(grp.items) do
+                y = ItemRow(inner, y, w, e[1], e[2], e[3], e[4])
+            end
+            y = y - 6
+        end
+    end
+
+    return JournalSource(inner, y, w)
+end
+
+--------------------------------------------------
 -- 3a. Ohne Boss: Besonderheiten, Aufstellung, Herkunft
 --------------------------------------------------
 -- DREI AUSKUENFTE IN ZWEI SPALTEN, NICHT EINE UNTER DER ANDEREN.
@@ -1902,6 +2189,8 @@ local function DrawRoster(f, y, dungeon)
                     dungeon, { width = w, compact = true })
             end
 
+            endY = DrawJournal(inner, endY, w, dungeon)
+
             if not inspectorShown then
                 endY = SourceFooter(inner, endY - 4, dungeon, w)
             end
@@ -2003,6 +2292,8 @@ local function DrawBossDetail(f, y, dungeon, boss)
                 y = BodyHeading(inner, y, "Wo er steht")
                 y = BodyText(inner, y, boss.position, w) - 14
             end
+
+            y = DrawLoot(inner, y, w, dungeon, boss)
 
             y = BodyHeading(inner, y, "Rollen")
             y = WeintCodex.RolePanel.BossRoleRows(inner, y, boss, { width = w })
@@ -2123,6 +2414,7 @@ end
 -- Breite.
 local function DrawDungeonAt(f, dungeon, withInspector)
     ClearRows()
+    WeintCodex.DungeonPages.itemRows = 0   -- fuer den Prueflauf: Gegenstandszeilen dieser Runde
     f._relayout = nil
     gridCols, gridLongest = 0, 0
 

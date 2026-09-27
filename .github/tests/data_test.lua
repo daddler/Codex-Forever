@@ -847,6 +847,77 @@ Check(WeintCodex.Art.Dungeon(nil) == nil, "ohne Kennung liefert nil")
 print("  --    " .. artDungeons .. " Dungeon(s) mit Artwork")
 
 --------------------------------------------------
+-- Dungeon-Journal: Beute und Quests (6.5.0.0)
+--------------------------------------------------
+-- Jede Beute haengt an einem Boss, den es gibt - sonst stuende sie an
+-- keiner Karte, still. Jede Nummer ist eine ganze Zahl (der Client
+-- fragt mit ihr). Herkunft: community, nie beta - niemand hier hat den
+-- Client gelesen.
+
+print("")
+print("== Dungeon-Journal")
+do
+    local J = WeintCodex.DungeonJournal
+    local D = WeintCodex.DungeonData
+    Check(J ~= nil, "data/dungeon_journal.lua geladen")
+    Check(WeintCodex.Sources.IsValid(J.SOURCE) and J.SOURCE.kind == "community",
+        "Journal traegt eine gueltige Herkunft der Art community")
+    local function IsId(v) return type(v) == "number" and v > 0 and v == math.floor(v) end
+    local items, quests, dungeons = 0, 0, 0
+    for dungeonId, entry in pairs(J.DATA) do
+        dungeons = dungeons + 1
+        local dungeon = D.Get(dungeonId)
+        Check(dungeon ~= nil, "Journal-Dungeon " .. dungeonId .. " gibt es")
+        local bossIds = {}
+        for _, b in ipairs(dungeon and dungeon.bosses or {}) do bossIds[b.id] = true end
+        for bossId, list in pairs(entry.loot or {}) do
+            Check(bossIds[bossId] == true, "Beute " .. dungeonId .. "/" .. bossId .. " haengt an einem Boss, den es gibt")
+            local seen = {}
+            for _, e in ipairs(list) do
+                items = items + 1
+                Check(IsId(e[1]), "Beute " .. dungeonId .. "/" .. bossId .. ": Gegenstandsnummer " .. tostring(e[1]))
+                Check(type(e[2]) == "string" and e[2] ~= "", "Beute " .. tostring(e[1]) .. " hat einen Namen")
+                Check(type(e[3]) == "string" and e[3] ~= "", "Beute " .. tostring(e[1]) .. " hat einen Platz")
+                Check(type(e[4]) == "number" and e[4] >= 0 and e[4] <= 7, "Beute " .. tostring(e[1]) .. " hat eine Qualitaet")
+                Check(not seen[e[1]], "Beute " .. tostring(e[1]) .. " nur einmal an " .. bossId)
+                seen[e[1]] = true
+            end
+        end
+        for _, grp in ipairs(entry.others or {}) do
+            Check(type(grp.name) == "string" and grp.name ~= "", "Weitere Beute in " .. dungeonId .. " nennt ihren Gegner")
+            for _, e in ipairs(grp.items or {}) do
+                items = items + 1
+                Check(IsId(e[1]), "Weitere Beute " .. dungeonId .. ": Nummer " .. tostring(e[1]))
+            end
+        end
+        local qseen = {}
+        for _, q in ipairs(entry.quests or {}) do
+            quests = quests + 1
+            local tag = "Quest " .. tostring(q.id) .. " (" .. dungeonId .. ")"
+            Check(IsId(q.id), tag .. ": Nummer")
+            Check(not qseen[q.id], tag .. " nur einmal")
+            qseen[q.id] = true
+            Check(type(q.name) == "string" and q.name ~= "", tag .. ": Name")
+            Check(type(q.level) == "number" and type(q.requires) == "number" and q.requires <= q.level,
+                tag .. ": Stufe und Mindeststufe")
+            Check(q.faction == "both" or q.faction == "alliance" or q.faction == "horde", tag .. ": Fraktion")
+            for _, k in ipairs({ "giver", "objective", "turnin" }) do
+                Check(type(q[k]) == "string" and q[k] ~= "", tag .. ": " .. k)
+            end
+            Check(q.xp == nil or IsId(q.xp), tag .. ": Erfahrung ist eine Zahl oder fehlt")
+            for _, r in ipairs(q.rewards or {}) do
+                Check(IsId(r[1]), tag .. ": Belohnung " .. tostring(r[1]))
+            end
+        end
+    end
+    Check(#J.Loot("hall_of_thanes", "gibtesnicht") == 0, "Boss ohne Beute liefert eine leere Liste")
+    Check(#J.Quests("gibtesnicht") == 0, "Dungeon ohne Journal liefert keine Quests")
+    local horde = J.Quests("ragefire_chasm", "alliance")
+    Check(#horde == 0, "Fraktionsfilter: Ragefire Chasm hat keine Allianzquest")
+    print("  --    " .. dungeons .. " Dungeon(s), " .. items .. " Gegenstaende, " .. quests .. " Quests")
+end
+
+--------------------------------------------------
 
 print("")
 if failures == 0 then

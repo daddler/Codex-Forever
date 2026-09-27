@@ -832,6 +832,46 @@ jeher so; `Roles.Tone()` ist nur die eine Stelle, an der es jetzt
 steht, damit es nicht an zweien halb steht. Der violette Akzent bleibt
 unangetastet (siehe `core/ui.lua`).
 
+## Beute und Quests *(seit 6.5.0.0)*
+
+`data/dungeon_journal.lua` (`WeintCodex.DungeonJournal`) trägt für die
+**sieben** Dungeons, zu denen Beta-Berichte vorliegen – Hall of Thanes,
+Ragefire Chasm, Wailing Caverns, Ruins of Lordaeron, The Deadmines,
+Shadowfang Keep, Blackfathom Deeps – die **Beute je Boss** (153
+Gegenstände) und die **Quests je Dungeon** (50).
+
+* **Herkunft `community`** (`J.SOURCE`), wie die Forever-Bosslisten:
+  zusammengetragen aus öffentlichen Beta-Berichten, nicht aus dem
+  Client. Die Beute mischt beobachtete Forever-Gegenstände mit aus
+  Classic übernommenen Zuordnungen; welche welche ist, sagen die Berichte
+  nicht je Gegenstand. Keine Dropchance, keine Werte – die nennt der
+  Tooltip des Clients.
+* **Namen vom Client, Rückfall englisch.** Gegenstandsname, Farbe und
+  Bild fragt die Seite ab (`C_Item.GetItemInfo`, `GetItemIconByID`), die
+  Questtitel über `C_QuestLog.GetTitleForQuestID`. Kennt der Client einen
+  Gegenstand noch nicht, fordert sie ihn an und zieht bei
+  `GET_ITEM_INFO_RECEIVED` nach. Die Texte (Geber, Ziel, Hinweis) sind
+  deutsch; Orte mit belegtem deutschem Namen deutsch, NPC und Unterorte
+  englisch.
+* **Erfahrung ist beobachtet** (`xp`), keine Angabe des Clients – die
+  Seite schreibt „EP (beobachtet)“.
+* **Zuordnung zu den eigenen Bossen.** Jede Beute hängt an einer
+  Bosskennung aus `data/dungeons*.lua` (`data_test.lua` prüft das).
+  Abweichungen: *The Baron* der Berichte ist unser *The Butcher*
+  (`nameAlt`); *Sneed* gehört zum Kampf *Sneed's Shredder* (`from`);
+  *Fel Steed / Shadow Charger* und *Arugal's Voidwalker* in Shadowfang
+  Keep sind keine eigenen Bosse hier und stehen unter „Weitere Beute“
+  (`others`).
+* **Wo es steht.** Bosskarte: Abschnitt „Beute“ unter „Wo er steht“.
+  Dungeonkarte ohne Boss: „Quests“ unter der Aufstellung – nur die
+  eigene Fraktion und „beide“, die andere wird gezählt statt
+  verschwiegen –, darunter „Weitere Beute“. Beides liegt in den Karten,
+  die rollen dürfen (siehe *Nichts muss scrollen*); Umschalt+Klick auf
+  einen Gegenstand legt den Link in den Chat.
+* **Kein Bild aus dem Spiel.** Die Vorlage brachte Bilder mit
+  (Porträts, Dungeonbilder, Wappen) – Blizzard-Material bzw. davon
+  abgeleitet, deshalb nicht übernommen (siehe *Bilder*).
+
 ## Was wo sitzt
 
 | Datei | Aufgabe |
@@ -839,6 +879,7 @@ unangetastet (siehe `core/ui.lua`).
 | `data/sources.lua` | Herkunftsmodell: `KINDS`, `IsValid/IsConfirmed/Label/Prefix/Why/Weaker` |
 | `data/dungeons.lua` | Die neun von Forever + `All/Get/HasBosses/BossesComplete/OrderKnown/BossSource/BossCount/SummonableBosses/LevelRange/ZoneLabel/FitsLevel` |
 | `data/dungeons_classic.lua` | Die zwanzig aus Classic + `AllClassic/AllInstances/IsLegacy/AllSummonable/Brackets/BracketIndexOf/Wings/BossesInWing` |
+| `data/dungeon_journal.lua` | Beute je Boss und Quests je Dungeon (sieben Dungeons) + `Loot/Others/Quests/Has` |
 | `data/roles.lua` | Rollenmodell: Labels, Farben, `Frame`, `Specs`, `Tips`, `HasTips` |
 | `modules/rolepanel.lua` | Darstellung: `Card`/`BossCards`/`InstanceBlocks`/`BossBlocks` (Schlachtzug), `Roster`/`BossRoleRows` (Dungeon) |
 | `modules/dungeonpages.lua` | Die Seite: Kopfkarte mit Tatsachenband, Bossraster, Kontextkarte, Spalte, Übersicht der beschwörbaren Bosse |

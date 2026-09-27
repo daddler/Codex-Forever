@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.5.0.0",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFBeute im Dungeonkompendium.|r Für Hall of Thanes, Ragefire Chasm, Wailing Caverns, Ruins of Lordaeron, The Deadmines, Shadowfang Keep und Blackfathom Deeps zeigt jeder Boss, was er fallen lässt – mit dem Tooltip des Spiels und Umschalt+Klick in den Chat.",
+            "|cff7C6CFFQuests zu jedem dieser Dungeons.|r Wo sie beginnen, was zu tun ist, wo man sie abgibt und was sie bringen – nur für deine Fraktion, die andere wird gezählt.",
+            "|cff7C6CFFUnbestätigt, und so gekennzeichnet.|r Die Angaben stammen aus Beta-Berichten, nicht aus dem Client. Die Erfahrung ist ein beobachteter Wert; Namen und Werte der Gegenstände nennt dein Spiel selbst.",
+        },
+    },
+    {
         version = "6.4.1.8",
         date    = "27.09.2026",
         notes   = {

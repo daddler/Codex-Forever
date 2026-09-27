@@ -9,6 +9,30 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.5.0.0] – 2026-09-27
+
+**Beute im Dungeonkompendium.** Für Hall of Thanes, Ragefire Chasm, Wailing Caverns, Ruins of Lordaeron, The Deadmines, Shadowfang Keep und Blackfathom Deeps zeigt jeder Boss, was er fallen lässt – mit dem Tooltip des Spiels und Umschalt+Klick in den Chat.
+
+**Quests zu jedem dieser Dungeons.** Wo sie beginnen, was zu tun ist, wo man sie abgibt und was sie bringen – nur für deine Fraktion, die andere wird gezählt.
+
+**Unbestätigt, und so gekennzeichnet.** Die Angaben stammen aus Beta-Berichten, nicht aus dem Client. Die Erfahrung ist ein beobachteter Wert; Namen und Werte der Gegenstände nennt dein Spiel selbst.
+
+### Technisch
+
+- Neu: `data/dungeon_journal.lua` (`WeintCodex.DungeonJournal`): 153
+  Gegenstände an 52 Gegnern, 50 Quests, Herkunft `community`.
+  Zugriff `Loot/Others/Quests/Has`.
+- `data/dungeons.lua`: *The Butcher* trägt `nameAlt = "The Baron"`
+  (so heißt er in den Berichten zu Beute und Quests).
+- `modules/dungeonpages.lua`: Abschnitt „Beute“ in der Bosskarte,
+  „Quests“ und „Weitere Beute“ in der Dungeonkarte; Name, Farbe und Bild
+  vom Client (`C_Item`, `GET_ITEM_INFO_RECEIVED`), Rückfall englisch.
+- `data_test.lua`: jede Beute an einem vorhandenen Boss, jede Nummer
+  eine ganze Zahl, jede Quest mit Geber, Ziel, Abgabe, Fraktion.
+- Bilder der Vorlage (Porträts, Dungeonbilder, Wappen) sind
+  Blizzard-Material und nicht übernommen.
+- **Im Spiel ungeprüft.**
+
 ## [6.4.1.8] – 2026-09-27
 
 **Keine wandernden Balken mehr im Zauberbuch.** Die dunkle Fläche hinter den Kategorie-Bildern ist weg – sie schaute seitlich heraus, wo ein Reiter breiter war als sein Bild.
