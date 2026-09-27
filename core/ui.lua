@@ -218,6 +218,7 @@ WeintCodex.GameColors = {
     readyWait     = {1.000, 0.820, 0.200, 1.0},
     hitFlash      = {1.000, 0.180, 0.120, 0.35},  -- Gruppenknopf blitzt bei einem Treffer
     stateCombat   = {0.900, 0.220, 0.200, 1.0},   -- Symbol "im Kampf" am Spielerrahmen
+    cooldownBar   = {0.850, 0.550, 0.250, 1.0},   -- Buff-Balken des Abklingzeitmanagers
     stateRest     = {0.560, 0.760, 1.000, 1.0},   -- Symbol "erholt" (Gasthaus, Stadt)
     xpBar         = {0.486, 0.424, 1.000, 1.0},   -- = Akzent: Fortschritt (wie `cast`)
     xpRested      = {0.486, 0.424, 1.000, 0.30},  -- erholte Erfahrung: derselbe, blass

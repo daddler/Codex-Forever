@@ -305,6 +305,15 @@ function M.Install()
     G.MinimapCluster = NewObject("Frame", "MinimapCluster")
     G.MinimapBackdrop = NewObject("Frame", "MinimapBackdrop")
 
+    -- Schriftobjekte (Abklingzahl der Aktionsleisten und des
+    -- Abklingzeitmanagers). Im Client gibt es CreateFont immer; ohne es
+    -- lief der Weg dorthin hier nie.
+    G.CreateFont = function(name)
+        local f = NewObject("Font", name)
+        if name then G[name] = f end
+        return f
+    end
+
     G.CreateFrame = function(kind, name, parent, template)
         local frame = NewObject(kind or "Frame", name)
         frame._parent = parent

@@ -1880,6 +1880,98 @@ do
     Check(ok, "Zielrahmen: Auren des Spiels ueber dem Rahmen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.4.1.0: Abklingzeitmanager des Spiels im WeintCodex-Stil (Reiter der
+-- Erinnerungen): eckig, ohne Schmuck, eigene Schrift - Daten bleiben die
+-- des Spiels.
+do
+    local ok, err = pcall(function()
+        local CD = WeintCodex.UICooldowns
+        local m = K.Module("reminders")
+        assert(CD and CD.PAGE and m.pages[CD.PAGE].key == "abklingzeitmanager", "kein Reiter Abklingzeitmanager an den Erinnerungen")
+        assert(not K.Module("cooldowns"), "eigener Eintrag in der vollen Seitenleiste")
+
+        local function IconItem()
+            local item = stub.NewObject("Frame")
+            local icon = stub.NewObject("Texture")
+            local mask = stub.NewObject("MaskTexture")
+            local masks = { mask }
+            icon.GetNumMaskTextures = function() return #masks end
+            icon.GetMaskTexture = function(_, i) return masks[i] end
+            icon.RemoveMaskTexture = function(_, mt) for i, x in ipairs(masks) do if x == mt then table.remove(masks, i) end end end
+            local overlay = stub.NewObject("Texture")
+            overlay.GetAtlas = function() return "UI-HUD-CoolDownManager-IconOverlay" end
+            local oor = stub.NewObject("Texture")
+            oor.GetAtlas = function() return "UI-CooldownManager-OORshadow" end
+            item.Icon = icon
+            item.GetRegions = function() return icon, overlay, oor end
+            local cd = stub.NewObject("Cooldown")
+            local got = {}
+            cd.SetSwipeTexture = function(_, t) got.swipe = t end
+            cd.SetCountdownFont = function(_, f) got.font = f end
+            item.Cooldown = cd
+            item.ChargeCount = { Current = stub.NewObject("FontString") }
+            return item, masks, overlay, oor, got
+        end
+        local item1, masks1, overlay1, oor1, got1 = IconItem()
+        local acquired = {}
+        local viewer = stub.NewObject("Frame", "EssentialCooldownViewer")
+        viewer.OnAcquireItemFrame = function(self, item) acquired[#acquired + 1] = item end
+        viewer.itemFramePool = { EnumerateActive = function()
+            local i = 0
+            return function() i = i + 1 if i == 1 then return item1 end end
+        end }
+
+        -- Buff-Balken.
+        local barItem = stub.NewObject("Frame")
+        local iconFrame = stub.NewObject("Frame")
+        iconFrame.Icon = stub.NewObject("Texture")
+        iconFrame.Applications = stub.NewObject("FontString")
+        local bar = stub.NewObject("StatusBar")
+        bar.BarBG, bar.Pip = stub.NewObject("Texture"), stub.NewObject("Texture")
+        bar.Name, bar.Duration = stub.NewObject("FontString"), stub.NewObject("FontString")
+        local barTex
+        bar.SetStatusBarTexture = function(_, t) barTex = t end
+        barItem.Icon, barItem.Bar = iconFrame, bar
+        local barViewer = stub.NewObject("Frame", "BuffBarCooldownViewer")
+        barViewer.OnAcquireItemFrame = function() end
+        barViewer.itemFramePool = { EnumerateActive = function()
+            local i = 0
+            return function() i = i + 1 if i == 1 then return barItem end end
+        end }
+
+        local oldE, oldB, oldHook = _G.EssentialCooldownViewer, _G.BuffBarCooldownViewer, _G.hooksecurefunc
+        _G.EssentialCooldownViewer, _G.BuffBarCooldownViewer = viewer, barViewer
+        _G.hooksecurefunc = function(obj, name, fn)
+            local orig = obj[name]
+            obj[name] = function(...) local r = orig(...) fn(...) return r end
+        end
+        CD.SkinAll()
+        assert(CD.state:find("2 Anzeigen", 1, true), "Anzeigen nicht gefunden: " .. tostring(CD.state))
+        assert(#masks1 == 0, "runde Maske noch am Symbol")
+        assert(overlay1:GetAlpha() == 0, "Rahmenschmuck des Spiels sichtbar")
+        assert(oor1:GetAlpha() == 1, "Ausser-Reichweite-Schatten versteckt - der traegt Bedeutung")
+        assert(got1.swipe and got1.font == "WeintCodexCooldownManagerFont", "Abdeckung oder Schrift nicht gesetzt")
+        assert(item1.ChargeCount.Current._font, "Ladungen ohne Schrift")
+        assert(bar.BarBG:GetAlpha() == 0 and bar.Pip:GetAlpha() == 0, "Balkenschmuck des Spiels sichtbar")
+        assert(barTex, "Balken ohne Textur der Oberflaeche")
+        assert(bar.Name._font and bar.Duration._font, "Balkentexte ohne Schrift")
+        -- Ein neues Symbol aus dem Vorrat: per Haken, genau einmal umgestaltet.
+        local item2, masks2, overlay2 = IconItem()
+        viewer:OnAcquireItemFrame(item2)
+        assert(acquired[1] == item2, "Haken verschluckt den Aufruf des Spiels")
+        assert(#masks2 == 0 and overlay2:GetAlpha() == 0, "neues Symbol nicht umgestaltet")
+        local d = CD.skinned[item2]
+        viewer:OnAcquireItemFrame(item2)
+        assert(CD.skinned[item2] == d, "Symbol doppelt umgestaltet")
+        -- Kein Feld am Rahmen des Spiels geschrieben.
+        for k in pairs(item2) do
+            assert(k:sub(1, 1) == "_" or ({ Icon = 1, GetRegions = 1, Cooldown = 1, ChargeCount = 1 })[k], "Feld am Symbol des Spiels geschrieben: " .. k)
+        end
+        _G.EssentialCooldownViewer, _G.BuffBarCooldownViewer, _G.hooksecurefunc = oldE, oldB, oldHook
+    end)
+    Check(ok, "Abklingzeitmanager: Symbole und Balken im WeintCodex-Stil" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.8: Im Dungeon verfolgt die Questliste nur dessen Quests; beim
 -- Verlassen kommt genau das zurueck, was geaendert wurde.
 do

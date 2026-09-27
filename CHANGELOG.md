@@ -9,6 +9,28 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.4.1.0] – 2026-09-27
+
+**Abklingzeitmanager im WeintCodex-Stil.** Eckige Symbole mit Rand wie auf den Aktionsleisten, ohne den runden Rahmen des Spiels, Abklingzahlen und Stapel in der WeintCodex-Schrift, flache Buff-Balken. Einstellungen: /wcui abklingzeiten (Reiter der Erinnerungen).
+
+**Zählwerk und Zauberauswahl bleiben die des Spiels.** Im Kampf nennt der Client Abklingzeiten und Buffs nur seinem eigenen Manager – ein nachgebauter bliebe dort leer.
+
+### Technisch
+
+- Neu: `ui/cooldowns.lua` (`WeintCodex.UICooldowns`), Reiter
+  „Abklingzeitmanager“ des Moduls `reminders` (die Seitenleiste ist voll).
+  Gestaltet die vier Anzeigen des Spiels (`Essential`/`Utility`/
+  `BuffIcon`/`BuffBarCooldownViewer`): Maske vom Symbol
+  (`RemoveMaskTexture`), Schmuck-Atlanten ausgeblendet (Außer-Reichweite-
+  Schatten bleibt), eckige Abdeckung, `SetCountdownFont`, Balkentextur.
+  Neue Symbole per `hooksecurefunc` auf `OnAcquireItemFrame`; kein Feld
+  am Rahmen des Spiels geschrieben.
+- Schalter für die CVar `cooldownViewerEnabled`, Knopf auf
+  `CooldownViewerSettings:TogglePanel()`.
+- `/wcui abklingzeiten`. Farbe `cooldownBar` in `core/ui.lua`.
+- Attrappe: `CreateFont`.
+- **Im Spiel ungeprüft.**
+
 ## [6.4.0.4] – 2026-09-27
 
 **Symbole am Zielrahmen einstellbar.** Links- oder rechtsbündig, Abstand zum Rahmen und Größe – die Größe jetzt scharf statt hochskaliert. Einheitenrahmen → Ziel.

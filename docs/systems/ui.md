@@ -369,6 +369,17 @@ Seit 6.2.0.0:
   (die Tageszeit an der Minikarte blieb drei Fassungen lang unauffindbar).
   Seit 6.3.1.3 zusätzlich `K.UnderCursor`: alles Sichtbare unter dem
   Zeiger, auch Texturen und Rahmen ohne Mausannahme, die kleinsten zuerst.
+* **Abklingzeitmanager** (6.4.1.0, `ui/cooldowns.lua`, Reiter der
+  Erinnerungen, `/wcui abklingzeiten`): gestaltet die Anzeigen des
+  Spiels um, zählt nicht selbst. Im Kampf gibt der Client Abklingzeiten
+  und Auren nur dem geschützten Manager heraus; ein eigener bliebe leer
+  (wie die eigenen Zielrahmen-Symbole). Maske ab, Schmuck-Atlanten
+  weg, eckige Abdeckung, WeintCodex-Schrift, Balkentextur; neue Symbole
+  über `hooksecurefunc(viewer, "OnAcquireItemFrame")`. Auswahl der
+  Zauber und Lage bleiben beim Spiel (Auswahlfenster, Bearbeitungsmodus):
+  dort werden sie gespeichert, und Einstellungen des Bearbeitungsmodus
+  aus Addon-Code machen ihn unsicher. Kein eigener Eintrag in der
+  Seitenleiste – sie ist voll (Test „Nichts muss scrollen“).
 * **Debuffs am Zielrahmen: die Symbole des Spiels** (6.4.0.3,
   `targetAuraSource`). Eigene Symbole bleiben im Kampf leer (siehe
   6.3.0.2). Der Zielrahmen des Spiels bleibt deshalb am Leben, alles an

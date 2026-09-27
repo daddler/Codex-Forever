@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.4.1.0",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager im WeintCodex-Stil.|r Eckige Symbole mit Rand wie auf den Aktionsleisten, ohne den runden Rahmen des Spiels, Abklingzahlen und Stapel in der WeintCodex-Schrift, flache Buff-Balken. Einstellungen: /wcui abklingzeiten (Reiter der Erinnerungen).",
+            "|cff7C6CFFZählwerk und Zauberauswahl bleiben die des Spiels.|r Im Kampf nennt der Client Abklingzeiten und Buffs nur seinem eigenen Manager – ein nachgebauter bliebe dort leer.",
+        },
+    },
+    {
         version = "6.4.0.4",
         date    = "27.09.2026",
         notes   = {

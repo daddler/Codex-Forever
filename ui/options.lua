@@ -809,6 +809,15 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         O.Show("reminders")
         return
     end
+    if msg == "abklingzeiten" or msg == "abklingzeitmanager" or msg == "cdm" then
+        local CD = WeintCodex.UICooldowns
+        if not (CD and CD.PAGE) then
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Der Abklingzeitmanager ist nicht geladen – läuft WeintCodex 6.4.1.0 oder neuer? Gerade: " .. tostring(WeintCodex.Version))
+            return
+        end
+        O.Show("reminders", CD.PAGE)
+        return
+    end
     if msg == "fenster" or msg == "window" then
         for _, line in ipairs(K.InspectWindow()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
