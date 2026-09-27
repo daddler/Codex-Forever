@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.4.1.7",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFKlassenbild im Zauberbuch ohne Balken.|r Die dunklen Streifen links und rechts am Klassen-Reiter sind weg; alle Kategorie-Bilder sind gleich zugeschnitten.",
+        },
+    },
+    {
         version = "6.4.1.6",
         date    = "27.09.2026",
         notes   = {

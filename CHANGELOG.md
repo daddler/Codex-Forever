@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.4.1.7] – 2026-09-27
+
+**Klassenbild im Zauberbuch ohne Balken.** Die dunklen Streifen links und rechts am Klassen-Reiter sind weg; alle Kategorie-Bilder sind gleich zugeschnitten.
+
+### Technisch
+
+- `ui/windows.lua`, `W.CropRelative`: Reiter-Bilder werden relativ zum
+  Ausschnitt des Spiels geschnitten (10 % je Seite) statt absolut
+  (0,08..0,92). Das Klassenbild kommt aus einem Bogen bzw. Atlas, dessen
+  Ausschnitt das Spiel bei jeder Auffrischung neu setzt – der absolute
+  Schnitt ging verloren, die dunklen Ränder des Bildes blieben. Geschnitten
+  wird neu, sobald das Spiel den Ausschnitt ändert.
+- **Im Spiel ungeprüft.**
+
 ## [6.4.1.6] – 2026-09-27
 
 **Kategorien im Zauberbuch aufgeräumt.** Die Bilder oben stoßen nicht mehr aneinander, der goldene Schein ist weg; die gewählte Kategorie trägt einen Rand im Akzent.

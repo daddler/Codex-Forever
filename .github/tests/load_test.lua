@@ -2104,6 +2104,18 @@ do
         assert(td and td.icon == pic and not td.kachel, "Bildreiter nicht als solcher erkannt")
         assert(frameArt:GetAlpha() == 0 and glow:GetAlpha() == 0, "Goldrahmen/-schein am Bildreiter")
         assert(td.sel == true, "gewaehlter Bildreiter ohne Akzent")
+        -- 6.4.1.7: Schnitt relativ zum Ausschnitt des Spiels (Klassenbild
+        -- aus einem Bogen: 0..0,25), und neu, wenn das Spiel ihn zuruecksetzt.
+        local tc = { 0, 0, 0, 0.25, 0.25, 0, 0.25, 0.25 }
+        pic.GetTexCoord = function() return unpack(tc) end
+        pic.SetTexCoord = function(_, l, r, t, b) tc = { l, t, l, b, r, t, r, b } end
+        W.SkinTabSystems(cat)
+        assert(math.abs(tc[1] - 0.025) < 1e-6 and math.abs(tc[5] - 0.225) < 1e-6, "Klassenbild nicht relativ geschnitten: " .. tc[1] .. ".." .. tc[5])
+        W.SkinTabSystems(cat)
+        assert(math.abs(tc[1] - 0.025) < 1e-6, "doppelt geschnitten")
+        tc = { 0.25, 0, 0.25, 0.25, 0.5, 0, 0.5, 0.25 }   -- das Spiel setzt neu
+        W.SkinTabSystems(cat)
+        assert(math.abs(tc[1] - 0.275) < 1e-6, "neuer Ausschnitt des Spiels nicht geschnitten")
         -- Knopf "Aenderungen anwenden" (UIPanelButtonTemplate).
         local apply = stub.NewObject("Button")
         apply.Left, apply.Middle, apply.Right = stub.NewObject("Texture"), stub.NewObject("Texture"), stub.NewObject("Texture")

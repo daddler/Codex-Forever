@@ -600,6 +600,40 @@ local function InnerRim(host, region)
     return r
 end
 
+-- Rand vom Bild schneiden, RELATIV zum Ausschnitt, den das Spiel setzt.
+-- 6.4.1.6 setzte ihn absolut (0,08..0,92) - beim Klassen-Reiter kommt das
+-- Bild aber aus einem Bogen mit vielen Bildern (bzw. einem Atlas), und das
+-- Spiel setzt seinen Ausschnitt bei jeder Auffrischung neu: unser Schnitt
+-- war weg, die dunklen Raender des Bildes blieben als Balken links und
+-- rechts (Beta-Test 6.4.1.6). Jetzt: den Ausschnitt des Spiels lesen, 10 %
+-- je Seite abziehen, und neu schneiden, sobald das Spiel ihn aendert.
+local CROP = 0.10
+local function CropRelative(tex, d)
+    if not (tex.GetTexCoord and tex.SetTexCoord) then return end
+    local ok, a, b, c, e, f, g, h, i = pcall(tex.GetTexCoord, tex)
+    if not ok then return end
+    a, b, c, e = K.Plain(a), K.Plain(b), K.Plain(c), K.Plain(e)
+    f, g, h, i = K.Plain(f), K.Plain(g), K.Plain(h), K.Plain(i)
+    -- Einzeln pruefen: ipairs haelt beim ersten nil an und liesse alles durch.
+    if type(a) ~= "number" or type(b) ~= "number" or type(c) ~= "number" or type(e) ~= "number"
+       or type(f) ~= "number" or type(g) ~= "number" or type(h) ~= "number" or type(i) ~= "number" then
+        return
+    end
+    -- UL(a,b) LL(c,e) UR(f,g) LR(h,i)
+    local l, r = math.min(a, c), math.max(f, h)
+    local t, btm = math.min(b, g), math.max(e, i)
+    local last = d.tc
+    if last and math.abs(l - last[1]) < 1e-4 and math.abs(r - last[2]) < 1e-4
+       and math.abs(t - last[3]) < 1e-4 and math.abs(btm - last[4]) < 1e-4 then
+        return   -- noch unser Schnitt
+    end
+    local dx, dy = (r - l) * CROP, (btm - t) * CROP
+    local nl, nr, nt, nb = l + dx, r - dx, t + dy, btm - dy
+    tex:SetTexCoord(nl, nr, nt, nb)
+    d.tc = { nl, nr, nt, nb }
+end
+W.CropRelative = CropRelative
+
 local function HideTabArt(tab)
     local ok, regions = pcall(function() return { tab:GetRegions() } end)
     for _, r in ipairs(ok and regions or {}) do
@@ -615,7 +649,6 @@ local function SkinTab(tab)
         local icon = TabIcon(tab)
         if icon then
             HideTabArt(tab)
-            if icon.SetTexCoord then icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
             d = { icon = icon, rim = InnerRim(tab, icon) }
         else
             d = { kachel = K.Kachel(tab, { shadow = 0 }) }
@@ -631,7 +664,10 @@ local function SkinTab(tab)
         own[hl] = true
         tabSkin[tab] = d
     end
-    if d.icon then HideTabArt(tab) end   -- Schein des Spiels kommt beim Wechsel wieder
+    if d.icon then
+        HideTabArt(tab)   -- Schein des Spiels kommt beim Wechsel wieder
+        CropRelative(d.icon, d)
+    end
     local on = tab.isSelected
     if type(tab.IsSelected) == "function" then
         local ok, v = pcall(tab.IsSelected, tab)
