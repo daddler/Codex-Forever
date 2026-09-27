@@ -42,6 +42,7 @@ local defaults = {
     xpShow       = "always",  -- always | mouseover
     xpText       = "hover",   -- hover | always | never
     xpRested     = true,
+    xpQuests     = true,     -- Erfahrung abgabebereiter Quests (6.6.0.1)
     xpReputation = true,
     xpHideGame   = true,
 }
@@ -80,6 +81,37 @@ function XB.Experience()
     if not cur or not max or max <= 0 then return nil end
     local rested = _G.GetXPExhaustion and Num(_G.GetXPExhaustion()) or nil
     return { cur = cur, max = max, rested = rested, level = level }
+end
+
+-- ERFAHRUNG AUS QUESTS (6.6.0.1, Beta-Test: "sehen, wie viel EP ich
+-- habe, wenn ich alle Quests abgebe"). Je Quest im Questlog die
+-- Belohnung, die der Client nennt (GetQuestLogRewardXP) - getrennt nach
+-- abgabebereit (Ziele erfuellt) und allen. Kennt der Client die Funktion
+-- nicht, gibt es die Auskunft nicht (nil) - nie eine 0.
+-- { ready = EP, readyCount = n, all = EP, allCount = n } oder nil.
+function XB.QuestXP()
+    local ql = _G.C_QuestLog
+    local reward = _G.GetQuestLogRewardXP
+    if not (ql and ql.GetNumQuestLogEntries and ql.GetInfo and type(reward) == "function") then return nil end
+    local out = { ready = 0, readyCount = 0, all = 0, allCount = 0 }
+    local ok = pcall(function()
+        for i = 1, (Num(ql.GetNumQuestLogEntries()) or 0) do
+            local info = ql.GetInfo(i)
+            local id = type(info) == "table" and Num(info.questID)
+            if id and id > 0 and not info.isHeader and not info.isHidden then
+                local okX, xp = pcall(reward, id)
+                xp = okX and Num(xp) or nil
+                if xp and xp > 0 then
+                    out.all, out.allCount = out.all + xp, out.allCount + 1
+                    local done = false
+                    if ql.ReadyForTurnIn then done = K.Bool(ql.ReadyForTurnIn(id), false) end
+                    if not done and ql.IsComplete then done = K.Bool(ql.IsComplete(id), false) end
+                    if done then out.ready, out.readyCount = out.ready + xp, out.readyCount + 1 end
+                end
+            end
+        end
+    end)
+    return ok and out or nil
 end
 
 -- Beobachteter Ruf: { name, cur, max, reaction } oder nil.
@@ -158,6 +190,8 @@ function XB.Label()
         if Opt("rested") and xp.rested and xp.rested > 0 then
             s = s .. "  ·  erholt " .. (tostring(Pct(math.min(xp.rested, xp.max * 1.5), xp.max)):gsub("%.", ",")) .. " %"
         end
+        local q = Opt("quests") and XB.QuestXP() or nil
+        if q and q.ready > 0 then s = s .. "  ·  Quests +" .. Short(q.ready) end
         return s
     elseif mode == "rep" then
         local r = XB.Reputation()
@@ -199,12 +233,22 @@ function XB.Update()
         local rc = GC.xpRested
         frame.rest:SetStatusBarColor(rc[1], rc[2], rc[3], rc[4])
         frame.rest:SetShown((rest or 0) > 0)
+        -- Abgabebereite Quests: gruenes Stueck vom Stand bis dorthin, wo
+        -- man nach der Abgabe stuende (bis zum Ende der Stufe).
+        local q = Opt("quests") and XB.QuestXP() or nil
+        local gain = q and q.ready or 0
+        frame.quest:SetMinMaxValues(0, xp.max)
+        frame.quest:SetValue(math.min(xp.max, xp.cur + gain))
+        local qc = GC.xpQuest
+        frame.quest:SetStatusBarColor(qc[1], qc[2], qc[3], qc[4])
+        frame.quest:SetShown(gain > 0)
     else
         local r = XB.Reputation()
         frame.bar:SetMinMaxValues(0, r.max)
         frame.bar:SetValue(r.cur)
         K.PaintBar(frame.bar, RepColor(r.reaction))
         frame.rest:Hide()
+        frame.quest:Hide()
     end
     frame.text:SetText(XB.Label() or "")
     frame.text:SetShown(TextShown() and true or false)
@@ -250,6 +294,28 @@ local function ShowTooltip(self)
         GT:AddDoubleLine("Bis zur nächsten Stufe", Short(xp.max - xp.cur), 0.7, 0.7, 0.75, 1, 1, 1)
         if xp.rested and xp.rested > 0 then
             GT:AddDoubleLine("Erholt", Short(xp.rested), 0.7, 0.7, 0.75, 1, 1, 1)
+        end
+        local q = Opt("quests") and XB.QuestXP() or nil
+        if q and q.allCount > 0 then
+            local GC = WeintCodex.GameColors
+            local g = GC.xpQuest
+            GT:AddLine(" ")
+            if q.readyCount > 0 then
+                GT:AddDoubleLine("Abgabebereit (" .. q.readyCount .. (q.readyCount == 1 and " Quest)" or " Quests)"),
+                    "+" .. Short(q.ready) .. " EP", 0.7, 0.7, 0.75, g[1], g[2], g[3])
+                local after = xp.cur + q.ready
+                if after >= xp.max then
+                    GT:AddDoubleLine("Nach der Abgabe", "Stufe " .. ((xp.level or 0) + 1) .. " · +" .. Short(after - xp.max) .. " EP",
+                        0.7, 0.7, 0.75, g[1], g[2], g[3])
+                else
+                    GT:AddDoubleLine("Nach der Abgabe", Short(after) .. " / " .. Short(xp.max) .. "  ·  "
+                        .. (tostring(Pct(after, xp.max)):gsub("%.", ",")) .. " %", 0.7, 0.7, 0.75, 1, 1, 1)
+                end
+            else
+                GT:AddDoubleLine("Abgabebereit", "keine Quest", 0.7, 0.7, 0.75, 0.6, 0.6, 0.65)
+            end
+            GT:AddDoubleLine("Alle Quests im Log (" .. q.allCount .. ")", "+" .. Short(q.all) .. " EP",
+                0.7, 0.7, 0.75, 1, 1, 1)
         end
         local perHour, eta = XB.Rate()
         if perHour then
@@ -305,9 +371,12 @@ local function Build()
     frame.rest = K.NewBar(frame, true)
     frame.rest:SetPoint("TOPLEFT", frame, "TOPLEFT", 1, -1)
     frame.rest:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -1, 1)
+    frame.quest = K.NewBar(frame, true)
+    frame.quest:SetAllPoints(frame.rest)
+    frame.quest:SetFrameLevel((frame.rest:GetFrameLevel() or 1) + 1)
     frame.bar = K.NewBar(frame)
     frame.bar:SetAllPoints(frame.rest)
-    frame.bar:SetFrameLevel((frame.rest:GetFrameLevel() or 1) + 1)
+    frame.bar:SetFrameLevel((frame.rest:GetFrameLevel() or 1) + 2)
     frame.text = K.NewText(frame.bar, 10, "OVERLAY")
     frame.text:SetPoint("CENTER", frame, "CENTER", 0, 0)
     frame:EnableMouse(true)
@@ -347,7 +416,8 @@ function XB.Enable()
     K.RegisterMover(frame, MOVER, "Erfahrung", K.Layout(MOVER))
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_XP_UPDATE", "PLAYER_LEVEL_UP", "UPDATE_EXHAUSTION",
-                         "UPDATE_FACTION", "DISABLE_XP_GAIN", "ENABLE_XP_GAIN" }) do
+                         "UPDATE_FACTION", "DISABLE_XP_GAIN", "ENABLE_XP_GAIN",
+                         "QUEST_LOG_UPDATE", "QUEST_TURNED_IN", "QUEST_ACCEPTED", "QUEST_REMOVED" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
     ev:SetScript("OnEvent", function(_, event)
@@ -378,6 +448,8 @@ function XB.BuildPage(B)
                 { value = "always", text = "Immer" },
                 { value = "never", text = "Nie" } } })
     B:Section("Inhalt")
+    B:Row({ type = "toggle", label = "Erfahrung abgabebereiter Quests", key = "xpQuests", disabled = off,
+            description = "Grünes Stück im Balken: so weit käme er, wenn du jetzt alle fertigen Quests abgibst. Die Werte nennt der Client." })
     B:Row({ type = "toggle", label = "Erholte Erfahrung zeigen", key = "xpRested", disabled = off },
           { type = "toggle", label = "Ruf auf Höchststufe", key = "xpReputation", disabled = off,
             description = "Zeigt den beobachteten Ruf, sobald es keine Erfahrung mehr gibt. Ohne beobachteten Ruf verschwindet der Balken." })

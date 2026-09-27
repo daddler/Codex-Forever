@@ -1546,6 +1546,28 @@ do
         assert(hi == 5000 and f.bar:GetValue() == 1200, "Balkenwerte falsch")
         assert(f.rest:GetValue() == 3700, "erholte Erfahrung nicht dahinter: " .. tostring(f.rest:GetValue()))
         assert(XB.Label():find("24", 1, true), "Anteil fehlt im Text: " .. tostring(XB.Label()))
+        -- 6.6.0.1: Erfahrung aus Quests - abgabebereit gruen im Balken,
+        -- ohne die Funktion des Clients keine Auskunft (nie 0).
+        local oldQL, oldRX = _G.C_QuestLog, _G.GetQuestLogRewardXP
+        _G.GetQuestLogRewardXP = nil
+        assert(XB.QuestXP() == nil, "Quest-EP ohne Auskunft des Clients")
+        local qlog = { { questID = 1 }, { isHeader = true }, { questID = 2 }, { questID = 3 } }
+        _G.C_QuestLog = { GetNumQuestLogEntries = function() return #qlog end,
+                          GetInfo = function(i) return qlog[i] end,
+                          ReadyForTurnIn = function(id) return id ~= 3 end }
+        _G.GetQuestLogRewardXP = function(id) return ({ [1] = 800, [2] = 450, [3] = 1000 })[id] end
+        local q = XB.QuestXP()
+        assert(q.ready == 1250 and q.readyCount == 2 and q.all == 2250 and q.allCount == 3,
+            "Quest-EP falsch: " .. tostring(q.ready) .. "/" .. tostring(q.all))
+        XB.Update()
+        assert(f.quest:IsShown() and f.quest:GetValue() == 1200 + 1250, "gruenes Stueck fehlt: " .. tostring(f.quest:GetValue()))
+        -- Reicht es fuer den Aufstieg, laeuft der Balken voll (nicht drueber).
+        _G.GetQuestLogRewardXP = function() return 3000 end
+        XB.Update()
+        assert(f.quest:GetValue() == 5000, "Aufstieg: gruenes Stueck laeuft ueber")
+        _G.C_QuestLog, _G.GetQuestLogRewardXP = oldQL, oldRX
+        XB.Update()
+        assert(not f.quest:IsShown(), "gruenes Stueck ohne Quests")
         -- Tempo: erst nach gemessener Erfahrung und einer Minute.
         XB._session.start, XB._session.gained, XB._session.lastXP, XB._session.lastMax = nil, 0, nil, nil
         XB.Track()

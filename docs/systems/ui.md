@@ -449,6 +449,13 @@ Seit 6.2.0.0:
   kein Balken (kein gemessenes Nichts). Tempo je Stunde nur aus in dieser
   Sitzung gemessener Erfahrung, als Schätzung benannt. Die Leiste des
   Spiels bleibt, wo sie ist, nur unsichtbar und ohne Maus.
+  Seit 6.6.0.1 (`xpQuests`): ein grünes Stück (`GameColors.xpQuest`) vom
+  Stand bis dorthin, wo man nach Abgabe aller abgabebereiten Quests
+  stünde (höchstens bis zum Ende der Stufe); der Tooltip nennt die Summe,
+  den Stand danach oder „Stufe N+1 · +Rest“ und die Summe aller Quests im
+  Log. Werte je Quest von `GetQuestLogRewardXP(questID)`, abgabebereit
+  über `C_QuestLog.ReadyForTurnIn`/`IsComplete`. Fehlt die Funktion, gibt
+  es kein Stück und keine Zeile – nie eine 0.
 * **Tageszeit = `MinimapCluster.DielFrame`** (6.3.1.4, gemessen mit
   `/wcui maus`): kein Knopf, nimmt keine Maus an.
 * **Reiterleiste in `MEDIUM`** (6.3.1.4, Verdacht): `GeneralDockManager`

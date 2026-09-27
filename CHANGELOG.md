@@ -17,6 +17,8 @@ nicht zusammen.
 
 **Lehrer: Waffenkarte repariert.** Stand, Kosten und „Karte“ stehen wieder in der Waffenkarte statt daneben.
 
+**Erfahrung aus Quests im Balken.** Ein grünes Stück zeigt, wie weit der Erfahrungsbalken käme, wenn du jetzt alle fertigen Quests abgibst; die Maus darüber nennt die Summe, deinen Stand danach – oder die nächste Stufe – und was alle Quests im Log zusammen bringen.
+
 **Kein Fehler mehr beim Umstellen der Questpriorität im Kampf.** WeintCodex stellt die Weltkarte nicht mehr selbst ein und wählt keine Quest mehr für das Spiel aus – der Questpfeil merkt sich seine Wahl selbst. „Zurück zum Codex“ legt den Codex über die Karte; sie schließt du wie gewohnt mit Esc oder M. Im Kampf öffnet der Kartenknopf die Weltkarte nicht.
 
 ### Technisch
@@ -27,6 +29,10 @@ nicht zusammen.
   Rand/Verlauf/Kern, pulsierender Schein (AnimationGroup, ADD),
   Namensschild; Leiste `WeintCodexQuestMapBar` oben mittig mit
   Markenzeichen, Zone, Name und Knopf „Zurück zum Codex“.
+- `ui/xpbar.lua`: `XB.QuestXP()` (je Quest `GetQuestLogRewardXP`,
+  abgabebereit über `C_QuestLog.ReadyForTurnIn`/`IsComplete`), dritte
+  Balkenschicht `frame.quest` in `GameColors.xpQuest`, Tooltipzeilen,
+  Schalter `xpQuests`. Ohne Funktion des Clients keine Auskunft.
 - ADDON_ACTION_BLOCKED `Button:SetPassThroughButtons()` (Beta-Test, im
   Kampf beim Umstellen der Questpriorität): `QuestDataProvider:RefreshAllData`
   liest die Kartennummer der Weltkarte, und die hatte WeintCodex seit
