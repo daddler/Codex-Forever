@@ -836,7 +836,7 @@ local function px(v) return string.format("%d px", v) end
 K.Register({
     key = KEY, group = "ui", order = 25,
     title = "Gruppenrahmen",
-    description = "Gruppe und Schlachtzug als schlichte Kacheln: Klassenfarbe, Name, Leben, eingehende Heilung, Schilde, Rolle, Reichweite, Aggro und bannbare Debuffs.",
+    description = "Gruppe und Schlachtzug als schlichte Kacheln: Klassenfarbe, Name, Leben, eingehende Heilung, Schilde, Rolle, Reichweite, Aggro und bannbare Debuffs – dazu Klickzauber: Zauber auf Maustasten.",
     defaults = defaults,
     Enable = Enable,
     OnSetting = OnSetting,

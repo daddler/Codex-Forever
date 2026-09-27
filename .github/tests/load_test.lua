@@ -1763,6 +1763,73 @@ do
     Check(ok, "Chat: Eingabezeile erst mit Enter" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.6.0.7: Klickzauber - Maustaste + Zusatztaste wirkt einen Zauber auf
+-- die Einheit des Rahmens. Nur Klick-Attribute, je Klasse gespeichert.
+do
+    local ok, err = pcall(function()
+        local CC = WeintCodex.UIClickCast
+        assert(CC, "ui/clickcast.lua nicht geladen")
+        local gm = K.Module("groupframes")
+        local page = false
+        for _, pg in ipairs(gm.pages) do if pg.key == "klickzauber" then page = true end end
+        assert(page, "kein Reiter Klickzauber an den Gruppenrahmen")
+        local oldClass, oldCombat, oldFrames = _G.UnitClass, _G.InCombatLockdown, CC.Frames
+        _G.UnitClass = function() return "Priesterin", "PRIEST", 5 end
+        _G.InCombatLockdown = function() return false end
+        local f1, f2 = CreateFrame("Button"), CreateFrame("Button")
+        f1:SetAttribute("*type1", "target")
+        local frames = { f1, f2 }
+        CC.Frames = function() return frames end
+        CC.SetBindings({})
+        CC.draft.button, CC.draft.mod, CC.draft.action, CC.draft.spell = 1, "shift-", "spell", " Blitzheilung "
+        assert(CC.AddDraft(), "Belegung nicht angelegt")
+        CC.draft.button, CC.draft.mod, CC.draft.spell = 2, "", "Erneuerung"
+        assert(CC.AddDraft(), "zweite Belegung nicht angelegt")
+        for _, f in ipairs(frames) do
+            assert(f:GetAttribute("shift-type1") == "spell" and f:GetAttribute("shift-spell1") == "Blitzheilung",
+                "Umschalt + Links nicht belegt")
+            assert(f:GetAttribute("type2") == "spell" and f:GetAttribute("spell2") == "Erneuerung",
+                "Rechts nicht belegt")
+        end
+        assert(f1:GetAttribute("*type1") == "target", "Grundeinstellung des Rahmens angefasst")
+        -- Dieselbe Taste ersetzt, Leerer Zauber wird abgelehnt.
+        CC.draft.button, CC.draft.mod, CC.draft.spell = 1, "shift-", "Heilen"
+        CC.AddDraft()
+        assert(#CC.Bindings() == 2 and f1:GetAttribute("shift-spell1") == "Heilen", "gleiche Taste nicht ersetzt")
+        CC.draft.spell = "  "
+        assert(not CC.AddDraft(), "Belegung ohne Zauber angelegt")
+        -- Tooltip-Zeilen, Tastentext.
+        local lines = CC.TooltipLines()
+        assert(#lines == 2 and lines[1][1] == "Umschalt + Links" and lines[1][2] == "Heilen", "Tooltip-Zeilen falsch")
+        -- Entfernen raeumt die Attribute weg; "Rechts" faellt aufs Menue zurueck.
+        CC.Remove(2)
+        assert(f1:GetAttribute("type2") == nil and f1:GetAttribute("spell2") == nil, "entfernte Belegung haengt noch")
+        -- Je Klasse: der Krieger sieht die Belegung der Priesterin nicht.
+        _G.UnitClass = function() return "Krieger", "WARRIOR", 1 end
+        assert(#CC.Bindings() == 0, "Belegung einer anderen Klasse gilt")
+        CC.Apply()
+        assert(f1:GetAttribute("shift-type1") == nil, "Belegung der Priesterin am Krieger")
+        _G.UnitClass = function() return "Priesterin", "PRIEST", 5 end
+        -- Im Kampf: nichts anfassen, danach nachholen.
+        _G.InCombatLockdown = function() return true end
+        assert(CC.Apply() == false, "im Kampf Attribute gesetzt")
+        assert(f1:GetAttribute("shift-type1") == nil, "im Kampf Attribute gesetzt")
+        _G.InCombatLockdown = function() return false end
+        CC.Apply()
+        assert(f1:GetAttribute("shift-spell1") == "Heilen", "nach dem Kampf nicht nachgeholt")
+        -- "Standard" der Gruppenrahmen loescht die Zauber nicht.
+        K.ResetModule("groupframes")
+        assert(#CC.Bindings() == 1, "Standard der Gruppenrahmen loescht die Belegung")
+        CC.SetBindings({})
+        K.Set("clickcast", "bindings", nil)
+        CC.Frames = oldFrames
+        CC.Apply()
+        _G.UnitClass, _G.InCombatLockdown = oldClass, oldCombat
+    end)
+    Check(ok, "Klickzauber: Taste + Zauber an die Rahmen, ersetzen, entfernen, je Klasse, Kampfsperre"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.4.0.0: Erinnerungen - Regeln, Vorschlaege, fehlende Buffs, Waffe,
 -- Begleiter, Procs, Abklingzeiten, Regel-Editor.
 do

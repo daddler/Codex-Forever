@@ -99,6 +99,7 @@ weil sie genau das sind, wofür er steht.
 | `ui/castbar.lua` | **ein** Zauberbalken für Plaketten und Einheitenrahmen |
 | `ui/nameplates.lua` | Gegnerplaketten |
 | `ui/unitframes.lua` | Spieler, Ziel, Ziel des Ziels, Fokus, Begleiter; Porträt als 3D-Modell oder Bild |
+| `ui/clickcast.lua` | **Klickzauber**: Maustaste + Zusatztaste wirkt einen Zauber auf die Einheit des Rahmens (Reiter der Gruppenrahmen) |
 | `ui/questarrow.lua` | Questpfeil |
 | `ui/comfort.lua` | Komfortfunktionen |
 | `ui/options.lua` | das Einstellungsfenster und das Modul „Allgemein“ |
@@ -440,6 +441,26 @@ Seit 6.2.0.0:
   setzen alle Rahmen ihre Texte nach 1 und 4 s geleert neu
   (`UF.RedrawTexts`) – eine beim ersten Setzen noch nicht geladene
   Schrift zeichnete sonst nichts.
+* **Klickzauber** (6.6.0.7, `ui/clickcast.lua`, Beta-Test „wie VuhDo,
+  Clique, Healbot – einfach“): eine Belegung ist Maustaste (1–5) +
+  Zusatztaste (ohne/Umschalt/Strg/Alt) → Zauber, Ziel wählen oder Menü.
+  Umgesetzt **nur** über Klick-Attribute der geschützten Knöpfe
+  (`shift-type1` = `spell`, `shift-spell1` = Name); der Client zaubert
+  beim Klick, Lua ist nicht beteiligt. Gilt für jeden Knopf aus
+  `UIGroupFrames.buttons` und – abschaltbar (`clickUnitFrames`) –
+  `UIUnitFrames.frames`. `CC.ApplyTo` merkt sich, was es gesetzt hat,
+  und löscht genau das beim nächsten Mal; dann greifen wieder `*type1`
+  (Ziel) und `*type2` (Menü) der Rahmen. Attribute nur außerhalb des
+  Kampfes (`K.AfterCombat`). Gespeichert **je Klasse** unter dem eigenen
+  Speicher `clickcast.bindings` – nicht im Modul der Gruppenrahmen, damit
+  „Standard“ dort nicht alle Zauber löscht; die Schalter
+  (`clickUnitFrames`, `clickTooltip`) und der Reiter „Klickzauber“ hängen
+  an den Gruppenrahmen, weil die Seitenleiste des Einstellungsfensters
+  keinen Eintrag mehr fasst. Der Tooltip eines Rahmens nennt die
+  Belegung (`HookScript("OnEnter")`). **Nicht möglich:** Tastatur-Tasten
+  beim Drüberfahren (brauchen Snippets, die dem Forever-Client fehlen,
+  oder Tastenbelegungen, die im Kampf gesperrt sind) und Kombinationen
+  mehrerer Zusatztasten. Keine eingebaute Zauberliste. Im Spiel ungeprüft.
 * **Erinnerungen** (6.4.0.0, `ui/reminders.lua`, eigenes Modul): ein
   Regelwerk aus kleinen Tabellen – `buff` (Buff fehlt), `weapon` (Waffe
   ohne/mit ablaufender Verzauberung, `GetWeaponEnchantInfo`), `pet`
