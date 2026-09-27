@@ -888,6 +888,12 @@ Gegenstände) und die **Quests je Dungeon** (50).
   links „Zurück zum Codex“ (`QM.Back`), das die Karte schließt und den
   Codex auf derselben Seite öffnet. Nur wenn die Karte aus dem Codex
   kam; anders geschlossen, ist der Knopf weg.
+* **Marke und Leiste** *(seit 6.6.0.1, Beta-Test „anfängermäßig“)*: Die
+  Marke ist eine Stecknadel aus eigenen Grafiken (`media/ui/pin`, `dot`,
+  `halo`) mit der Spitze auf dem Ort, pulsierendem Schein und
+  Namensschild. „Zurück zum Codex“ ist eine Leiste oben mittig auf der
+  Karte (Markenzeichen, Zone, Name, Knopf) – oben links lag der Knopf auf
+  dem Kartenknopf des Spiels.
 * **Jede Quest eine Kachel** *(seit 6.5.1.1)*: Fläche `surface2`, Rand
   `borderStrong`, Luft dazwischen – ohne sie liefen die Quests als ein
   Textblock ineinander (Beta-Test). Der Kartenlink ist ein Knopf

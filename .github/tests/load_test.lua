@@ -2242,13 +2242,16 @@ do
         assert(not main:IsShown(), "Codex liegt weiter ueber der Karte")
         local back = QM.BackButton()
         assert(back and back:IsShown() and QM.FromCodex(), "kein Knopf zurueck zum Codex")
+        -- 6.6.0.1: Leiste mit Namen, Nadel mit Spitze auf dem Ort.
+        assert(back.title:GetText() == "Scout Riell", "Leiste nennt den Markierten nicht")
+        assert(back.button and back.button._scripts.OnClick, "Leiste ohne Knopf")
         assert(wm:IsShown() and mapID == 1436, "Weltkarte nicht auf Westfalen geoeffnet")
         local pin = QM.Pin()
         assert(pin and pin:IsShown(), "keine Marke auf der Karte")
         local pt
         pin.SetPoint = function(_, p, rel, rp, x, y) pt = { p, rel, rp, x, y } end
         QM.Place()
-        assert(pt and pt[2] == canvas and math.abs(pt[4] - 566.7) < 0.01 and math.abs(pt[5] + 284.1) < 0.01,
+        assert(pt and pt[1] == "BOTTOM" and pt[2] == canvas and math.abs(pt[4] - 566.7) < 0.01 and math.abs(pt[5] + 284.1) < 0.01,
             "Marke an falscher Stelle: " .. tostring(pt and pt[4]) .. ", " .. tostring(pt and pt[5]))
         mapID = 1453
         QM.Place()
@@ -2258,7 +2261,7 @@ do
         assert(pin:IsShown(), "Marke kommt beim Zurueckwechseln nicht wieder")
         local oldHide = _G.HideUIPanel
         _G.HideUIPanel = function(f) f:Hide() end
-        back._scripts.OnClick(back)
+        back.button._scripts.OnClick(back.button)
         assert(main:IsShown() and not wm:IsShown(), "Zurueck: Codex nicht offen oder Karte nicht zu")
         assert(not back:IsShown() and not QM.FromCodex(), "Knopf bleibt nach dem Zurueck")
         _G.HideUIPanel = oldHide
@@ -2329,6 +2332,19 @@ do
         assert(TR.Page() and TR.Page():IsShown(), "Lehrerseite nicht offen")
         assert((TR.drawnRows or 0) > 5, "zu wenige Zeilen: " .. tostring(TR.drawnRows))
         assert((TR.mapButtons or 0) > 0, "kein Kartenknopf fuer Waffenmeister")
+        -- 6.6.0.1: erst der Detailbereich, dann gemessen - er macht die
+        -- Flaeche schmaler, und die Karten muessen die schmale Breite nehmen.
+        local nav = WeintCodex.Navigation
+        local oldInsp = nav.SetInspector
+        local pg = TR.Page()
+        pg._width = 1400
+        nav.SetInspector = function(...) pg._width = 900 return oldInsp(...) end
+        TR.Show()
+        nav.SetInspector = oldInsp
+        local M = WeintCodex.Metrics
+        local want = math.floor((900 - 2 * M.PAD_X - M.GAP) * 0.56)
+        assert(pg.SpellCard:GetWidth() == want, "Karten vor dem Detailbereich gemessen: "
+            .. tostring(pg.SpellCard:GetWidth()) .. " statt " .. want)
         _G.IsPlayerSpell, _G.UnitLevel, _G.UnitRace, _G.UnitFactionGroup, _G.GetMoney =
             oldIPS, oldLvl, oldRace, oldFac, oldMoney
     end)

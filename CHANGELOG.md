@@ -9,6 +9,26 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.0.1] – 2026-09-27
+
+**Neue Marke auf der Weltkarte.** Eine Stecknadel mit pulsierendem Schein und Namensschild statt der kleinen Raute – auf Pergament und Gelände schnell zu finden.
+
+**Zurück zum Codex, aufgeräumt.** Oben in der Mitte der Karte steht eine Leiste im Stil des Codex: wer markiert ist, wo, und der Knopf zurück. Sie verdeckt keinen Knopf des Spiels mehr.
+
+**Lehrer: Waffenkarte repariert.** Stand, Kosten und „Karte“ stehen wieder in der Waffenkarte statt daneben.
+
+### Technisch
+
+- Neu: `media/ui/pin.tga`, `dot.tga`, `halo.tga` – eigene Grafiken
+  (Stecknadel, Kreis, weicher Schein), kein Spielmaterial.
+- `modules/questmap.lua`: Nadel mit Spitze auf dem Ort (`BOTTOM`),
+  Rand/Verlauf/Kern, pulsierender Schein (AnimationGroup, ADD),
+  Namensschild; Leiste `WeintCodexQuestMapBar` oben mittig mit
+  Markenzeichen, Zone, Name und Knopf „Zurück zum Codex“.
+- `modules/trainer.lua`: Detailbereich vor dem Messen setzen (er macht die
+  Fläche schmaler – vorher lag alles Rechtsbündige der Waffenkarte im
+  Detailbereich); bei Größenänderung neu zeichnen.
+
 ## [6.6.0.0] – 2026-09-27
 
 **Neu: Lehrer.** Was dir dein Klassenlehrer jetzt beibringt, was dafür noch fehlt, was in den nächsten Stufen kommt – und was das alles kostet. Unter Charakter in der Seitenleiste.

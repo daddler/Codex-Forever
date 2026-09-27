@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.0.1",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFNeue Marke auf der Weltkarte.|r Eine Stecknadel mit pulsierendem Schein und Namensschild statt der kleinen Raute – auf Pergament und Gelände schnell zu finden.",
+            "|cff7C6CFFZurück zum Codex, aufgeräumt.|r Oben in der Mitte der Karte steht eine Leiste im Stil des Codex: wer markiert ist, wo, und der Knopf zurück. Sie verdeckt keinen Knopf des Spiels mehr.",
+            "|cff7C6CFFLehrer: Waffenkarte repariert.|r Stand, Kosten und „Karte“ stehen wieder in der Waffenkarte statt daneben.",
+        },
+    },
+    {
         version = "6.6.0.0",
         date    = "27.09.2026",
         notes   = {

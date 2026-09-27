@@ -254,6 +254,16 @@ local function BuildPage()
     wt:SetPoint("TOPLEFT", weaponCard, "TOPLEFT", 20, -16)
     f.WeaponScroll, f.WeaponBody = WeintCodex.CreateScrollArea(weaponCard, 20, -46, 300, 260, true)
 
+    -- Aendert sich die Breite (Fenster gezogen, Detailbereich auf/zu),
+    -- neu zeichnen - die Zeilen haengen an gemessenen Breiten.
+    f:SetScript("OnSizeChanged", function(self, width)
+        width = Plain(width)
+        if self:IsShown() and type(width) == "number" and type(self.drawnWidth) == "number"
+           and math.abs(width - self.drawnWidth) > 2 then
+            TR.Redraw()
+        end
+    end)
+
     page = f
     return f
 end
@@ -479,6 +489,12 @@ function TR.Show()
     end
     f.KnownButton:SetText(showKnown and "Gelernte ausblenden" or ("Gelernte zeigen (" .. #cat.sections.known .. ")"))
 
+    -- ERST der Detailbereich, DANN messen (6.6.0.1): der Detailbereich
+    -- macht die Inhaltsflaeche schmaler. Umgekehrt stand in 6.6.0.0 alles,
+    -- was rechtsbuendig in der Waffenkarte haengt (Stand, Kosten, "Karte"),
+    -- ausserhalb der Karte im Detailbereich (Beta-Test).
+    WeintCodex.Navigation.SetInspector(InspectorBlocks(state, cat, weapons))
+
     -- Breite teilen: die Zauber bekommen gut die Haelfte.
     local total = Plain(f:GetWidth())
     if type(total) == "number" and total > 400 then
@@ -498,8 +514,7 @@ function TR.Show()
     TR.drawnRows, TR.mapButtons = 0, 0
     DrawSpells(f.SpellBody, sw - 14, cat, state)
     DrawWeapons(f.WeaponBody, ww - 14, weapons)
-
-    WeintCodex.Navigation.SetInspector(InspectorBlocks(state, cat, weapons))
+    f.drawnWidth = total
 end
 
 function TR.ShowKnown(v) showKnown = v and true or false end
