@@ -1842,6 +1842,35 @@ do
         for _, x in ipairs(CC.Frames()) do if x == f then found = true end end
         assert(found, "Klickzauber kennt die Rahmen des Spiels nicht")
         GG.active = nil
+        -- 6.6.1.0: Klassenfarbe statt des Gruens des Spiels, nur per Methode.
+        local col
+        parts.healthBar.SetStatusBarColor = function(_, r, g, b) col = { r, g, b } end
+        rawset(f, "unit", "party1")
+        local oUP, oUC, oRCC, oCon, oDead = _G.UnitIsPlayer, _G.UnitClass, _G.RAID_CLASS_COLORS, _G.UnitIsConnected, _G.UnitIsDeadOrGhost
+        _G.UnitIsPlayer = function() return true end
+        _G.UnitClass = function() return "Priesterin", "PRIEST", 5 end
+        _G.RAID_CLASS_COLORS = { PRIEST = { r = 1, g = 1, b = 1 } }
+        _G.UnitIsConnected = function() return true end
+        _G.UnitIsDeadOrGhost = function() return false end
+        GG.Color(f)
+        assert(col and col[1] == 1 and col[2] == 1 and col[3] == 1, "keine Klassenfarbe")
+        assert(rawget(parts.healthBar, "r") == nil, "Feld am Balken des Spiels geschrieben")
+        _G.UnitIsDeadOrGhost = function() return true end
+        col = nil
+        GG.Color(f)
+        assert(col == nil, "Tote umgefaerbt (das Spiel zeigt sie grau)")
+        _G.UnitIsPlayer, _G.UnitClass, _G.RAID_CLASS_COLORS, _G.UnitIsConnected, _G.UnitIsDeadOrGhost = oUP, oUC, oRCC, oCon, oDead
+        -- Anders benannt: im Behaelter des Spiels gefunden.
+        local box = CreateFrame("Frame", nil, UIParent)
+        local odd = CreateFrame("Button", nil, box)
+        rawset(odd, "healthBar", CreateFrame("StatusBar", nil, odd))
+        box.GetChildren = function() return odd end
+        local oldBox = _G.CompactPartyFrame
+        _G.CompactPartyFrame = box
+        local seen = false
+        for _, x in ipairs(GG.Frames()) do if x == odd then seen = true end end
+        assert(seen, "Rahmen im Behaelter nicht gefunden")
+        _G.CompactPartyFrame = oldBox
         local lines = table.concat(GG.Inspect(), " | ")
         assert(lines:find("gefunden", 1, true), "/wcui gruppe ohne Auskunft: " .. lines)
         _G.CompactPartyFrameMember1 = nil

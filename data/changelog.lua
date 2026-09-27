@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.1.0",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFGruppenrahmen in Klassenfarbe.|r Die Rahmen des Spiels färben deine Gruppe jetzt in Klassenfarbe wie die eigenen Kacheln, statt alles grün zu zeigen. Tote und Getrennte bleiben grau.",
+        },
+    },
+    {
         version = "6.6.0.9",
         date    = "27.09.2026",
         notes   = {

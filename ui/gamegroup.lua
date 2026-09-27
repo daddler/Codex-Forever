@@ -61,7 +61,50 @@ function GG.Frames()
     for g = 1, 8 do
         for m = 1, 5 do add(_G["CompactRaidGroup" .. g .. "Member" .. m]) end
     end
+    -- Heissen die Rahmen im Forever-Client anders: in den Behaeltern des
+    -- Spiels suchen, was einen Lebensbalken hat (6.6.1.0).
+    local function walk(parent, depth)
+        if depth > 3 or type(parent) ~= "table" or not parent.GetChildren then return end
+        if parent.IsForbidden and parent:IsForbidden() then return end
+        local ok, kids = pcall(function() return { parent:GetChildren() } end)
+        if not ok then return end
+        for _, ch in ipairs(kids) do
+            if type(ch) == "table" and type(ch.healthBar) == "table" then add(ch) else walk(ch, depth + 1) end
+        end
+    end
+    walk(_G.CompactPartyFrame, 1)
+    walk(_G.CompactRaidFrameContainer, 1)
     return out
+end
+
+-- Klassenfarbe wie auf den eigenen Kacheln (6.6.1.0, Beta-Test: "sieht
+-- nicht so aus wie bei meinem Krieger" - das Spiel faerbt ohne seine
+-- Einstellung "Klassenfarben anzeigen" alles gruen). Nur ueber die
+-- Methode des Balkens; die Zwischenablage des Spiels (healthBar.r/g/b)
+-- bleibt unberuehrt - aendert das Spiel die Farbe (offline, tot), setzt
+-- es sie selbst, und der Haken faerbt danach wieder ein.
+function GG.Color(f)
+    if type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
+    local hb = f.healthBar
+    if type(hb) ~= "table" or not hb.SetStatusBarColor then return end
+    local unit = f.displayedUnit
+    if type(unit) ~= "string" then unit = f.unit end
+    if type(unit) ~= "string" then return end
+    if not K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(unit), false) then return end
+    if not K.Bool(_G.UnitIsConnected and _G.UnitIsConnected(unit), true) then return end
+    if K.Bool(_G.UnitIsDeadOrGhost and _G.UnitIsDeadOrGhost(unit), false) then return end
+    local r, g, b
+    if Opt("classColor") then
+        local _, class = _G.UnitClass(unit)
+        class = K.Plain(class)
+        local cc = class and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
+        if cc then r, g, b = cc.r, cc.g, cc.b end
+    end
+    if not r then
+        local c = K.GetColor(KEY, "healthColor")
+        r, g, b = c.r, c.g, c.b
+    end
+    pcall(hb.SetStatusBarColor, hb, r, g, b)
 end
 
 local function Hide(r)
@@ -98,6 +141,7 @@ function GG.Style(f)
         local size = Opt("nameSize") or 11
         if type(f.name) == "table" and f.name.SetFont then K.SetFont(f.name, size) end
         if type(f.statusText) == "table" and f.statusText.SetFont then K.SetFont(f.statusText, math.max(8, size - 1)) end
+        GG.Color(f)
         Crop(f.buffFrames)
         Crop(f.debuffFrames)
         Crop(f.dispelDebuffFrames)
@@ -166,6 +210,14 @@ function GG.Enable()
         for _, fn in ipairs({ "DefaultCompactUnitFrameSetup", "DefaultCompactMiniFrameSetup", "CompactUnitFrame_SetUpFrame" }) do
             if type(_G[fn]) == "function" then
                 _G.hooksecurefunc(fn, function(f) GG.Style(f) end)
+                GG.hooks = (GG.hooks or 0) + 1
+            end
+        end
+        -- Das Spiel faerbt bei jedem Einheitenwechsel neu ein.
+        for _, fn in ipairs({ "CompactUnitFrame_UpdateHealthColor", "CompactUnitFrame_UpdateAll" }) do
+            if type(_G[fn]) == "function" then
+                _G.hooksecurefunc(fn, function(f) GG.Color(f) end)
+                GG.hooks = (GG.hooks or 0) + 1
             end
         end
     end
@@ -184,7 +236,12 @@ function GG.Inspect()
     local frames = GG.Frames()
     local n = 0
     for _ in pairs(styled) do n = n + 1 end
-    out[#out + 1] = string.format("Rahmen des Spiels gefunden: %d, im WeintCodex-Stil: %d", #frames, n)
+    out[#out + 1] = string.format("Rahmen des Spiels gefunden: %d, im WeintCodex-Stil: %d, Haken ins Spiel: %d",
+        #frames, n, GG.hooks or 0)
+    if frames[1] then
+        local ok, name = pcall(frames[1].GetName, frames[1])
+        out[#out + 1] = "Erster Rahmen: " .. tostring(ok and name or "?")
+    end
     local rs = GG.RaidStyleParty()
     out[#out + 1] = "Schlachtzugsartige Gruppenrahmen: "
         .. (rs == true and "an" or rs == false and "aus – dann zeigt die Gruppe keine HoTs" or "unbekannt")

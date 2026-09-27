@@ -473,7 +473,16 @@ Seit 6.2.0.0:
   einem Addon machen ihn unsicher), sondern sagt es einmal im Chat
   (`EditModeManagerFrame:UseRaidStylePartyFrames`). Der Klickzauber legt
   seine Attribute auch auf diese Rahmen (`CC.Frames`). `/wcui gruppe`
-  nennt, was gefunden und gestaltet ist. Der Prüflauf stellt vor dem
+  nennt, was gefunden und gestaltet ist (dazu die Zahl der Haken und den
+  Namen des ersten Rahmens). **Seit 6.6.1.0** (Beta-Test: „sieht nicht so
+  aus wie bei meinem Krieger“ – alles grün): `GG.Color` färbt Spieler in
+  Klassenfarbe (`classColor`, sonst `healthColor`), nur über
+  `healthBar:SetStatusBarColor` – die Zwischenwerte des Spiels
+  (`healthBar.r/g/b`) bleiben unberührt, Tote und Getrennte behält das
+  Spiel grau. Haken auf `CompactUnitFrame_UpdateHealthColor` und
+  `CompactUnitFrame_UpdateAll`. Heißen die Rahmen anders, sucht
+  `GG.Frames` in `CompactPartyFrame`/`CompactRaidFrameContainer` nach
+  Kindern mit `healthBar`. Der Prüflauf stellt vor dem
   Einloggen auf `own`, damit die Prüfungen der eigenen Kacheln bleiben.
   Im Spiel ungeprüft.
 * **Klickzauber** (6.6.0.7, `ui/clickcast.lua`, Beta-Test „wie VuhDo,

@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.1.0] – 2026-09-27
+
+**Gruppenrahmen in Klassenfarbe.** Die Rahmen des Spiels färben deine Gruppe jetzt in Klassenfarbe wie die eigenen Kacheln, statt alles grün zu zeigen. Tote und Getrennte bleiben grau.
+
 ## [6.6.0.9] – 2026-09-27
 
 **Gruppenrahmen mit HoTs, Buffs und Schilden.** Die Gruppe und der Schlachtzug nutzen jetzt die Rahmen des Spiels im WeintCodex-Stil – nur sie zeigen HoTs, Buffs, Schilde und bannbare Debuffs auch im Kampf. Lage und Größe im Bearbeitungsmodus des Spiels; in der Gruppe dort „Schlachtzugsartige Gruppenrahmen“ einschalten. Die eigenen Kacheln gibt es weiter unter Gruppenrahmen → Rahmen.
