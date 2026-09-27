@@ -3368,6 +3368,40 @@ do
     end)
     Check(ok, "Minikarte: Sammelknopf fuer Addons, Wegpunkte bleiben, Tageszeit unten rechts" .. (ok and "" or (": " .. tostring(err))))
 
+    -- 6.5.0.1: eigene Knoepfe ohne LibDBIcon kommen ueber ihren Namen in
+    -- die Liste und bleiben drin, auch wenn sie keine Kinder der Karte
+    -- mehr sind; Knoepfe des Spiels nicht; /wcui addons zaehlt sie.
+    ok, err = pcall(function()
+        local MM = WeintCodex.UIMinimap
+        local mm = _G.Minimap
+        local own = CreateFrame("Button", "TestAddonMinimapButton", mm)
+        local game = CreateFrame("Button", "ExpansionLandingPageMinimapButton", mm)
+        local pin = CreateFrame("Button", "HBDPin2", mm)
+        assert(MM.LooksLikeAddonButton("Foo_MiniMapButton") and MM.LooksLikeAddonButton("LibDBIcon10_Bar"), "Name nicht erkannt")
+        assert(not MM.LooksLikeAddonButton("MiniMapTracking") and not MM.LooksLikeAddonButton("HBDPin2"), "falscher Name erkannt")
+        local oldKids = mm.GetChildren
+        mm.GetChildren = function() return own, game, pin end
+        local function Has(b)
+            for _, x in ipairs(MM.AddonButtons()) do if x == b then return true end end
+            return false
+        end
+        assert(Has(own), "eigener Knopf nicht erkannt")
+        assert(not Has(game) and not Has(pin), "Spielknopf oder Markierung eingesammelt")
+        MM.LayoutBag()
+        mm.GetChildren = function() return end
+        assert(Has(own), "Knopf aus der Liste gefallen, nachdem er in die Kachel kam")
+        local lines = MM.InspectAddons()
+        assert(lines[1]:find("Addon-Knöpfe in der Liste", 1, true), "/wcui addons ohne Auskunft")
+        local named = false
+        for _, l in ipairs(lines) do if l:find("TestAddonMinimapButton", 1, true) then named = true end end
+        assert(named, "/wcui addons nennt den Knopf nicht")
+        own:Hide()
+        assert(not Has(own), "ausgeblendeter Knopf in der Liste")
+        mm.GetChildren = oldKids
+        _G.TestAddonMinimapButton, _G.ExpansionLandingPageMinimapButton, _G.HBDPin2 = nil, nil, nil
+    end)
+    Check(ok, "Minikarte: eigene Addon-Knoepfe ueber den Namen, bleiben in der Liste, /wcui addons" .. (ok and "" or (": " .. tostring(err))))
+
     -- 6.3.1.2: Addon-Knoepfe liegen in der Schicht ihrer Liste (sonst
     -- dunkelt deren Kachel sie ab), die Tageszeit wird auch unter anderem
     -- Namen gefunden, /wcui maus beschreibt die Rahmen unter der Maus.

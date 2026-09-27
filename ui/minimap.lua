@@ -164,16 +164,44 @@ end
 -- Addon-Knoepfe
 --------------------------------------------------
 -- Knoepfe anderer Addons an der Karte sind fast immer LibDBIcon-Knoepfe
--- ("LibDBIcon10_<Name>"). Nur die werden gesammelt: die breitere Suche
--- aus 6.3.1.0 (jeder kleine Knopf auf der Karte) haette auch
--- Kartenmarkierungen anderer Addons erwischt - Wegpunkte und Fundorte sind
--- ebenfalls kleine Knoepfe auf der Minikarte, und die gehoeren auf sie.
+-- ("LibDBIcon10_<Name>"). Die breitere Suche aus 6.3.1.0 (jeder kleine
+-- Knopf auf der Karte) haette auch Kartenmarkierungen anderer Addons
+-- erwischt - Wegpunkte und Fundorte sind ebenfalls kleine Knoepfe auf der
+-- Minikarte, und die gehoeren auf sie.
+-- 6.5.0.1 (Beta-Test: "3 Addons aktiv, nur 2 in der Liste"): Addons mit
+-- eigenem Knopf statt LibDBIcon nennen ihn fast immer "<Addon>MinimapButton"
+-- - die kommen ueber ihren Namen dazu, nie ueber ihre Groesse. Knoepfe des
+-- Spiels heissen aehnlich (ExpansionLandingPageMinimapButton) und fallen
+-- ueber ihren Anfang heraus. Einmal gefundene Knoepfe merkt sich die Liste:
+-- in der Kachel sind sie keine Kinder der Karte mehr.
+
+local NOT_ADDON = { "Minimap", "MiniMap", "ExpansionLandingPage", "GarrisonLandingPage",
+    "GameTimeFrame", "TimeManager", "QueueStatus", "WeintCodex", "HybridMinimap" }
+
+function MM.LooksLikeAddonButton(name)
+    if type(name) ~= "string" then return false end
+    if name:find("^LibDBIcon10_") then return true end
+    for _, p in ipairs(NOT_ADDON) do
+        if name:sub(1, #p) == p then return false end
+    end
+    -- Rahmennamen sind Bezeichner, kein Anzeigetext: lower ist hier sicher.
+    local low = name:lower()
+    return low:find("mini_?map_?button") ~= nil or low:find("button_?mini_?map") ~= nil
+end
+
+local known = setmetatable({}, { __mode = "k" })
+
+local function FrameName(f)
+    local ok, n = pcall(function() return f.GetName and f:GetName() end)
+    return ok and type(n) == "string" and n or nil
+end
 
 function MM.AddonButtons()
     local list, seen = {}, {}
     local function add(b)
         if type(b) == "table" and not seen[b] and b.SetPoint and not (b.IsForbidden and b:IsForbidden()) then
             seen[b] = true
+            known[b] = true
             list[#list + 1] = b
         end
     end
@@ -184,14 +212,15 @@ function MM.AddonButtons()
             for _, b in pairs(lib.objects) do add(b) end
         end
     end
-    local mm = _G.Minimap
-    if type(mm) == "table" and mm.GetChildren then
-        local ok, kids = pcall(function() return { mm:GetChildren() } end)
-        for _, ch in ipairs(ok and kids or {}) do
-            local n = type(ch) == "table" and ch.GetName and ch:GetName()
-            if type(n) == "string" and n:find("^LibDBIcon10_") then add(ch) end
+    for _, host in ipairs({ _G.Minimap, _G.MinimapBackdrop, _G.MinimapCluster }) do
+        if type(host) == "table" and host.GetChildren then
+            local ok, kids = pcall(function() return { host:GetChildren() } end)
+            for _, ch in ipairs(ok and kids or {}) do
+                if type(ch) == "table" and MM.LooksLikeAddonButton(FrameName(ch)) then add(ch) end
+            end
         end
     end
+    for b in pairs(known) do add(b) end
     -- Im Addon selbst ausgeblendete Knoepfe (Hide) bleiben draussen.
     local shown = {}
     for _, b in ipairs(list) do
@@ -199,10 +228,75 @@ function MM.AddonButtons()
     end
     list = shown
     table.sort(list, function(x, y)
-        return tostring(x.GetName and x:GetName() or "") < tostring(y.GetName and y:GetName() or "")
+        return tostring(FrameName(x) or "") < tostring(FrameName(y) or "")
     end)
     return list
 end
+
+-- /wcui addons: was die Liste gefunden hat, und was sie warum nicht nimmt.
+-- Ein Addon ohne Kartenknopf (nur im Addon-Menue des Spiels) oder mit
+-- einem Knopf unter anderem Namen steht sonst einfach nicht da - von
+-- aussen sieht das aus wie "nur zwei werden angezeigt".
+function MM.InspectAddons()
+    local out = {}
+    local list = MM.AddonButtons()
+    out[#out + 1] = string.format("Addon-Knöpfe in der Liste: %d", #list)
+    for _, b in ipairs(list) do out[#out + 1] = "   " .. tostring(FrameName(b) or "(ohne Namen)") end
+    local ls = _G.LibStub
+    if type(ls) == "table" and ls.GetLibrary then
+        local ok, lib = pcall(ls.GetLibrary, ls, "LibDBIcon-1.0", true)
+        if ok and type(lib) == "table" and type(lib.objects) == "table" then
+            for name, b in pairs(lib.objects) do
+                if type(b) == "table" and b.IsShown and not K.Bool(b:IsShown(), true) then
+                    out[#out + 1] = "   ausgeblendet im Addon selbst: " .. tostring(name)
+                end
+            end
+        end
+    end
+    local inList = {}
+    for _, b in ipairs(list) do inList[b] = true end
+    local others = {}
+    for _, host in ipairs({ _G.Minimap, _G.MinimapBackdrop, _G.MinimapCluster }) do
+        if type(host) == "table" and host.GetChildren then
+            local ok, kids = pcall(function() return { host:GetChildren() } end)
+            for _, ch in ipairs(ok and kids or {}) do
+                local n = type(ch) == "table" and not inList[ch] and FrameName(ch)
+                if n and #others < 20 then others[#others + 1] = n end
+            end
+        end
+    end
+    if #others > 0 then
+        out[#out + 1] = "Weitere Rahmen an der Karte (nicht eingesammelt):"
+        out[#out + 1] = "   " .. table.concat(others, ", ")
+    end
+    local ac = _G.AddonCompartmentFrame
+    local reg = type(ac) == "table" and ac.registeredAddons
+    if type(reg) == "table" and #reg > 0 then
+        local names = {}
+        for i = 1, math.min(#reg, 20) do
+            local e = reg[i]
+            names[#names + 1] = type(e) == "table" and tostring(e.text or e.name or "?") or "?"
+        end
+        out[#out + 1] = "Im Addon-Menü des Spiels: " .. table.concat(names, ", ")
+    end
+    return out
+end
+
+-- LibDBIcon meldet jeden neuen Knopf. Ohne das kam ein Addon, das seinen
+-- Knopf erst nach der ersten Minute anlegt, nie in die Liste.
+local iconHooked = false
+local function HookNewIcons()
+    if iconHooked then return end
+    local ls = _G.LibStub
+    if type(ls) ~= "table" or not ls.GetLibrary then return end
+    local ok, lib = pcall(ls.GetLibrary, ls, "LibDBIcon-1.0", true)
+    if not (ok and type(lib) == "table" and type(lib.RegisterCallback) == "function") then return end
+    iconHooked = true
+    pcall(lib.RegisterCallback, MM, "LibDBIcon_IconCreated", function()
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, MM.LayoutButtons) end
+    end)
+end
+MM.HookNewIcons = HookNewIcons
 
 -- Das Spiel setzt manche Knoepfe nach uns wieder an ihren alten Platz
 -- (6.0.0.5: die Tageszeit-Sonne auf der Karte). Jeder Knopf der Spalte
@@ -650,6 +744,7 @@ local function Enable()
     if _G.hooksecurefunc and type(emf) == "table" and type(emf.ExitEditMode) == "function" then
         _G.hooksecurefunc(emf, "ExitEditMode", function() MM.LayoutButtons() end)
     end
+    HookNewIcons()
     Apply()
 end
 

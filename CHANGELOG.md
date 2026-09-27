@@ -9,6 +9,27 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.5.0.1] – 2026-09-27
+
+**Mehr Addon-Knöpfe im Sammelknopf der Minikarte.** Auch Addons mit eigenem Kartenknopf kommen jetzt hinein, und Knöpfe, die ein Addon erst spät anlegt, ebenfalls.
+
+**Fehlt trotzdem eines?** `/wcui addons` zeigt, was gefunden wurde, was an der Karte hängt und was nur im Addon-Menü des Spiels steht.
+
+### Technisch
+
+- `ui/minimap.lua`: `MM.AddonButtons` nimmt neben LibDBIcon auch Kinder
+  von `Minimap`, `MinimapBackdrop` und `MinimapCluster`, deren Name wie
+  ein Kartenknopf aussieht (`MM.LooksLikeAddonButton`: `…MinimapButton`,
+  Knöpfe des Spiels über ihren Anfang ausgeschlossen). Gefundene Knöpfe
+  bleiben gemerkt, auch wenn sie in der Kachel keine Kinder der Karte mehr
+  sind. `LibDBIcon_IconCreated` ordnet neu, statt nur in der ersten Minute
+  nachzusehen.
+- `/wcui addons` (`MM.InspectAddons`): gefundene Knöpfe, im Addon
+  ausgeblendete, übrige Rahmen an der Karte, Einträge im Addon-Menü des
+  Spiels (`AddonCompartmentFrame`).
+- Es gab keine Grenze von zwei Knöpfen; die Liste kannte bisher nur
+  LibDBIcon.
+
 ## [6.5.0.0] – 2026-09-27
 
 **Beute im Dungeonkompendium.** Für Hall of Thanes, Ragefire Chasm, Wailing Caverns, Ruins of Lordaeron, The Deadmines, Shadowfang Keep und Blackfathom Deeps zeigt jeder Boss, was er fallen lässt – mit dem Tooltip des Spiels und Umschalt+Klick in den Chat.

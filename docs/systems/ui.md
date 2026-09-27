@@ -364,6 +364,13 @@ Seit 6.2.0.0:
   und je Objekt angelegte und gezeigte Symbole mit Rahmengröße.
 * `/wcui chat`: Chatfenster, eigene Fläche, Reiter, Knöpfe, Eingabe- und
   Infozeile in je einer Zeile (`K.Describe`).
+* `/wcui addons` (seit 6.5.0.1): was der Sammelknopf der Minikarte
+  gefunden hat, im Addon ausgeblendete Knöpfe, übrige benannte Rahmen an
+  der Karte und die Einträge im Addon-Menü des Spiels. Der Sammelknopf
+  nimmt LibDBIcon-Knöpfe und eigene Knöpfe mit einem Namen wie
+  `<Addon>MinimapButton` (`MM.LooksLikeAddonButton`), nie „jeden kleinen
+  Knopf“ – das wären auch Wegpunkte. Ein Addon, das nur im Addon-Menü
+  steht, hat keinen Kartenknopf und fehlt deshalb zu Recht.
 * `/wcui maus` (seit 6.3.1.2): Maus über ein Ding halten und abschicken –
   jeder Rahmen aus `GetMouseFoci` mit `GetDebugName`, Elternkette und
   Ankern. Für Rahmen, die im Beta-Client anders heißen als angenommen

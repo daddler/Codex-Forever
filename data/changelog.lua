@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.5.0.1",
+        date    = "27.09.2026",
+        notes   = {
+            "|cff7C6CFFMehr Addon-Knöpfe im Sammelknopf der Minikarte.|r Auch Addons mit eigenem Kartenknopf kommen jetzt hinein, und Knöpfe, die ein Addon erst spät anlegt, ebenfalls.",
+            "|cff7C6CFFFehlt trotzdem eines?|r /wcui addons zeigt, was gefunden wurde, was an der Karte hängt und was nur im Addon-Menü des Spiels steht.",
+        },
+    },
+    {
         version = "6.5.0.0",
         date    = "27.09.2026",
         notes   = {

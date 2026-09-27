@@ -832,6 +832,12 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    if msg == "addons" then
+        for _, line in ipairs(WeintCodex.UIMinimap.InspectAddons()) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+        return
+    end
     if msg == "auren" or msg == "auras" then
         for _, line in ipairs(WeintCodex.UIAuras.Inspect()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
