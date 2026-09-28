@@ -504,6 +504,10 @@ Seit 6.2.0.0:
   Zauberbalken und Kombopunkte zwischen Spieler und Ziel, der
   Begleiterrahmen links neben den Spieler, die Gruppe höher (440), die
   Schadensanzeige neben Leiste 4/5. Alles gerechnet, nicht gesehen.
+  6.6.1.4 nach dem Beta-Test: der Zauberbalken war 240 breit und lag auf
+  Spieler und Ziel – jetzt `K.LAYOUT_METRICS.castWidth` = 2 × Achse − 12
+  (188); die Schadensanzeige steht wieder oben links (12/−36), weitere
+  Fenster reihen sich vom Rand weg an (links verankert nach rechts).
   Danach **Neu laden** (`K.ReloadButton`). `/wcui einrichten pruefen`
   (`ES.Check`; in 6.6.1.3 brach sie ab – `local fx, fy = f and
   PointXY(…)` schneidet den zweiten Wert ab; der Prüflauf gibt dem Chat

@@ -1056,8 +1056,12 @@ local function CreateWindow(i)
 
     f.WCShowForUnlock = function() end
     local width = Opt("width") or 260
+    -- Weitere Fenster reihen sich vom Rand weg an: links verankert nach
+    -- rechts, rechts verankert nach links (seit 6.6.1.4 steht die Anzeige
+    -- oben links - nach links liefe das zweite Fenster aus dem Bild).
+    local dir = K.LAYOUT.damagemeter.point:find("LEFT") and 1 or -1
     K.RegisterMover(f, MoverKey(i), i == 1 and "Schadensanzeige" or ("Schadensanzeige " .. i),
-        K.Layout("damagemeter", -(i - 1) * (width + 8), 0))
+        K.Layout("damagemeter", dir * (i - 1) * (width + 8), 0))
     windows[i] = w
     return w
 end

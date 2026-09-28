@@ -3492,6 +3492,12 @@ do
     Check(K.Get("unitframes", "player_width") == M.unitWidth and K.Get("unitframes", "target_width") == M.unitWidth,
         "Cockpit: Rahmenbreite und Layout rechnen mit derselben Zahl")
     Check(not pcall(K.Layout, "gibtsnicht"), "ein Rahmen ohne Platz im Layout faellt auf")
+    -- 6.6.1.4: der eigene Zauberbalken steht zwischen Spieler und Ziel -
+    -- 240 breit lag er auf beiden (Beta-Test).
+    local cw = K.Get("unitframes", "playerCastWidth")
+    Check(cw <= 2 * M.axis - 8 and L.uf_playercast.point == "BOTTOM" and L.uf_playercast.x == 0
+        and L.uf_playercast.y >= M.cockpitY and L.uf_playercast.y + K.Get("unitframes", "playerCastHeight") <= M.cockpitY + M.unitHeight,
+        "Cockpit: Zauberbalken passt zwischen Spieler und Ziel (" .. tostring(cw) .. ")")
 end
 
 -- Stil 2.0: Balken bekommen die Glanztextur, ein Stilwechsel erreicht sie.

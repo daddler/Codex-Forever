@@ -11,8 +11,11 @@
 -- rechts der Mittelachse; zwischen beiden der eigene Zauberbalken und
 -- darueber die Kombopunkte (seit 6.6.1.3 - darunter brauchen drei
 -- Aktionsleisten und die Reihe fuer Haltungen und Begleiter den Platz).
--- Die Gruppe steht links neben dem Spielerrahmen, die Schadensanzeige
--- unten rechts neben den senkrechten Leisten.
+-- Der Zauberbalken ist so breit wie die Luecke zwischen beiden
+-- (K.LAYOUT_METRICS.castWidth; 6.6.1.3 hatte 240 und lag auf beiden
+-- Rahmen). Die Gruppe steht links neben dem Spielerrahmen, die
+-- Schadensanzeige oben links (Beta-Test 6.6.1.4: "erstmal nach oben
+-- links wieder").
 --
 -- EINHEITEN. Gerechnet ist fuer das Grundmass des Spiels: UIParent ist
 -- 768 Einheiten hoch (Skalierung aus). Der Entwurf ist in 1080 px
@@ -34,6 +37,7 @@ local UF_W, UF_H = 200, 31   -- Spieler/Ziel: 24 Leben + 1 + 6 Kraft
 
 K.LAYOUT_METRICS = {
     axis = AXIS, cockpitY = COCKPIT_Y, unitWidth = UF_W, unitHeight = UF_H,
+    castWidth = 2 * AXIS - 12,   -- 6 Einheiten Luft zu Spieler und Ziel
 }
 
 K.LAYOUT = {
@@ -60,7 +64,7 @@ K.LAYOUT = {
     procs           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 268 },
     cooldowns       = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 228 },
     xpbar           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 4 },
-    damagemeter     = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -86, y = 52 },
+    damagemeter     = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -36 },
     bags            = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20, y = 110 },
     questarrow      = { point = "TOP",         relPoint = "TOP", x = 0, y = -8 },
     combatalert     = { point = "CENTER",      relPoint = "CENTER", x = 0, y = 220 },
@@ -84,9 +88,9 @@ K.LAYOUT = {
 --   110-146 Leiste 3 (36) · 154-184 Haltungen links, Begleiter rechts
 --   189-220 Spieler und Ziel, dazwischen Zauberbalken und Kombopunkte
 -- RECHTS: Minikarte oben, darunter die Questliste; am Rand senkrecht
--- Leiste 4 und 5; unten Taschenleiste, darueber die Schadensanzeige.
+-- Leiste 4 und 5; unten die Taschenleiste.
 -- LINKS: Chat unten (Infozeile darunter, Mikromenue ganz unten), Gruppe
--- darueber links neben dem Spieler.
+-- darueber links neben dem Spieler, oben die Schadensanzeige.
 -- Alle Masse sind gerechnet, nicht im Spiel gesehen - wer etwas
 -- ueberlappen sieht, meldet es, und es wird hier korrigiert.
 --

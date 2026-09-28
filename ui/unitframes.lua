@@ -62,7 +62,8 @@ local defaults = {
     -- Zaubern schaut: groesser als die an Ziel und Fokus, mit Latenz
     -- (seit 6.3.0.8; im Beta-Test "muss schoener sein").
     playerCastHeight = 20,
-    playerCastWidth  = 240,
+    -- Zwischen Spieler und Ziel (ui/layout.lua), nicht darueber hinaus.
+    playerCastWidth  = K.LAYOUT_METRICS.castWidth,
     playerCastLatency = true,
     tintedBg      = true,      -- Grund in der dunklen Balkenfarbe
     -- Eingehende Heilung und Schilde hinter dem Leben (6.6.0.6, Beta-Test:
@@ -267,7 +268,7 @@ local Frame = {}
 -- rahmens (sichtbar nur mit ihm) und werden an den Platz gehaengt.
 local holders = {}
 local HOLDER = {
-    uf_playercast = { label = "Eigener Zauberbalken", w = 186 },
+    uf_playercast = { label = "Eigener Zauberbalken", w = K.LAYOUT_METRICS.castWidth },
     uf_combo      = { label = "Kombopunkte", w = 111, h = 6 },
 }
 local function Holder(key)
