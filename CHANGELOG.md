@@ -13,7 +13,7 @@ nicht zusammen.
 
 **Gespräche im WeintCodex-Stil.** Questgeber, Gastwirte, Questtexte und Bücher stehen auf der dunklen Kachel statt auf Pergament, mit heller Schrift.
 
-**Einrichtung lässt deine Plätze in Ruhe.** Deine WeintCodex-Rahmen bleiben, wo du sie hingezogen hast, und der Abklingzeitmanager behält die Plätze aus deinem bisherigen Layout. /wcui einrichten pruefen funktioniert jetzt, und die Questliste rutscht unter den Knopf „Issue Reporter“. Der eigene Zauberbalken passt zwischen Spieler- und Zielrahmen, und die Schadensanzeige steht wieder oben links.
+**Einrichtung lässt deine Plätze in Ruhe.** Deine WeintCodex-Rahmen bleiben, wo du sie hingezogen hast, und der Abklingzeitmanager behält die Plätze aus deinem bisherigen Layout. /wcui einrichten pruefen funktioniert jetzt, und die Questliste rutscht unter den Knopf „Issue Reporter“. Der eigene Zauberbalken passt zwischen Spieler- und Zielrahmen, und die Schadensanzeige steht wieder oben links. Die Questliste schließt rechts bündig mit der Minikarte ab (nach /wcui einrichten).
 
 ## [6.6.1.3] – 2026-09-27
 

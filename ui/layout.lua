@@ -87,8 +87,9 @@ K.LAYOUT = {
 --   4-14 Erfahrung · 18-58 Leiste 1 (40) · 66-102 Leiste 2 (36)
 --   110-146 Leiste 3 (36) · 154-184 Haltungen links, Begleiter rechts
 --   189-220 Spieler und Ziel, dazwischen Zauberbalken und Kombopunkte
--- RECHTS: Minikarte oben, darunter die Questliste; am Rand senkrecht
--- Leiste 4 und 5; unten die Taschenleiste.
+-- RECHTS: Minikarte oben, darunter buendig die Questliste; am Rand
+-- senkrecht Leiste 4 und 5 (liegen unter einer langen Questliste, wenn
+-- beide an sind); unten die Taschenleiste.
 -- LINKS: Chat unten (Infozeile darunter, Mikromenue ganz unten), Gruppe
 -- darueber links neben dem Spieler, oben die Schadensanzeige.
 -- Alle Masse sind gerechnet, nicht im Spiel gesehen - wer etwas
@@ -101,7 +102,14 @@ K.LAYOUT = {
 local BAR1_Y, BAR2_Y, BAR3_Y, ROW_Y = 18, 66, 110, 154
 local EDGE = 4            -- Abstand zum Bildschirmrand unten/rechts
 local SIDE_W = 34 + 4     -- eine senkrechte Leiste samt Luft
-local TRACK_X = -(EDGE + 2 * SIDE_W + 10)
+-- Minikarte und Questliste schliessen rechts buendig ab (Beta-Test
+-- 6.6.1.4: "zu weit eingerueckt" - bis dahin stand die Liste links neben
+-- Leiste 4 und 5). Die Karte haengt 6 Einheiten innerhalb ihres Bereichs
+-- (ui/minimap.lua, MM.PlaceMap), die Flaeche der Questliste ragt 8 ueber
+-- die Liste hinaus (ui/questtracker.lua, Standard "padding").
+local MINIMAP_X = -12
+local MAP_INSET, TRACK_PAD = 6, 8
+local TRACK_X = MINIMAP_X - MAP_INSET - TRACK_PAD   -- Flaeche endet, wo die Karte endet
 -- Unter der Minikarte haengt im Beta-Client der Knopf "Issue Reporter"
 -- samt Kaefer - bei -262 lag er auf der Questliste (Beta-Test 6.6.1.3).
 local TRACK_Y = -305
@@ -144,7 +152,7 @@ K.GAME_LAYOUT = {
       point = "TOP", relPoint = "TOP", x = 0, y = -170, frames = { "EncounterBar" } },
 
     { key = "minimap", label = "Minikarte", sys = "Minimap",
-      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -12, y = -12, frames = { "MinimapCluster" } },
+      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = MINIMAP_X, y = -12, frames = { "MinimapCluster" } },
     { key = "buffs", label = "Buffs", sys = "AuraFrame", idx = "BuffFrame",
       point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -270, y = -12, frames = { "BuffFrame" } },
     { key = "debuffs", label = "Debuffs", sys = "AuraFrame", idx = "DebuffFrame",

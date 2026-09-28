@@ -508,6 +508,10 @@ Seit 6.2.0.0:
   Spieler und Ziel – jetzt `K.LAYOUT_METRICS.castWidth` = 2 × Achse − 12
   (188); die Schadensanzeige steht wieder oben links (12/−36), weitere
   Fenster reihen sich vom Rand weg an (links verankert nach rechts).
+  Die Questliste schließt rechts bündig mit der Minikarte ab („zu weit
+  eingerückt“): `TRACK_X` = Kartenbereich (−12) − Einzug der Karte (6)
+  − Fläche der Liste (8). Leiste 4 und 5 liegen dann unter einer langen
+  Questliste, wenn beide an sind.
   Danach **Neu laden** (`K.ReloadButton`). `/wcui einrichten pruefen`
   (`ES.Check`; in 6.6.1.3 brach sie ab – `local fx, fy = f and
   PointXY(…)` schneidet den zweiten Wert ab; der Prüflauf gibt dem Chat
