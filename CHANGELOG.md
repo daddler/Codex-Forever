@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.1.5] – 2026-09-28
+
+**Abklingzeiten wie eine WeakAura.** Unter dem Charakter nur noch deine Fähigkeiten und wie lange ihre Wirkung läuft – kleiner, ohne doppelte Symbole und ohne lange Buffs wie Ausdauer. Einmal /wcui einrichten, dann neu laden; die Buff-Anzeigen des Spiels lassen sich im Bearbeitungsmodus wieder einschalten.
+
 ## [6.6.1.4] – 2026-09-28
 
 **Gespräche im WeintCodex-Stil.** Questgeber, Gastwirte, Questtexte und Bücher stehen auf der dunklen Kachel statt auf Pergament, mit heller Schrift.

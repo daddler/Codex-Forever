@@ -512,6 +512,19 @@ Seit 6.2.0.0:
   eingerückt“): `TRACK_X` = Kartenbereich (−12) − Einzug der Karte (6)
   − Fläche der Liste (8). Leiste 4 und 5 liegen dann unter einer langen
   Questliste, wenn beide an sind.
+  6.6.1.5, Abklingzeitmanager „wie eine WeakAura unter dem Charakter,
+  aber kleiner, nichts doppelt, keine Buffs wie Ausdauer – nur die
+  Fähigkeiten oder deren Laufzeiten“: „Wichtig“ und „Hilfreich“ bekommen
+  `display = { IconSize = 80 }` – Prozent, wie der Bearbeitungsmodus sie
+  zeigt; `ES.RawValue` rechnet über dessen eigene Reglerbeschreibung
+  (`EditModeSettingDisplayInfoManager`: `ConvertValue`, sonst (Wert −
+  Minimum) / Schritt, nur im Bereich des Reglers, sonst bleibt die
+  Vorlage und das Fenster sagt es). Die Buff-Anzeigen des Spiels
+  („Buffs“, „Buffleisten“) stehen auf `VisibleSetting` =
+  `CooldownViewerVisibleSetting.Hidden` (`enum` in `K.GAME_LAYOUT`) –
+  sie zeigten die Laufzeiten, die die Symbole von „Wichtig“ schon
+  tragen, ein zweites Mal. `ES.KeepPersonal` übernimmt seitdem nur noch
+  den **Platz** (`anchorInfo`), nicht Größe und Sichtbarkeit.
   Danach **Neu laden** (`K.ReloadButton`). `/wcui einrichten pruefen`
   (`ES.Check`; in 6.6.1.3 brach sie ab – `local fx, fy = f and
   PointXY(…)` schneidet den zweiten Wert ab; der Prüflauf gibt dem Chat

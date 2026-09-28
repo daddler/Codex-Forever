@@ -125,7 +125,7 @@ local INDICES = {
 }
 local SETTINGS = {
     ActionBar = "EditModeActionBarSetting", UnitFrame = "EditModeUnitFrameSetting",
-    ChatFrame = "EditModeChatFrameSetting",
+    ChatFrame = "EditModeChatFrameSetting", CooldownViewer = "EditModeCooldownViewerSetting",
 }
 
 local function EnumTable(name)
@@ -151,6 +151,41 @@ local function Find(systems, e)
     return nil
 end
 
+-- Schieberegler speichert der Bearbeitungsmodus nicht als angezeigten
+-- Wert (80 %), sondern umgerechnet. Die Umrechnung steht in seiner
+-- eigenen Beschreibung des Reglers (EditModeSettingDisplayInfoManager):
+-- erst seine Funktion, sonst (Wert - Minimum) / Schritt. Nur ein Wert im
+-- Bereich des Reglers zaehlt; sonst nil - dann bleibt die Vorlage.
+function ES.RawValue(sysId, setting, display)
+    local M = _G.EditModeSettingDisplayInfoManager
+    if type(M) ~= "table" or type(setting) ~= "number" then return nil end
+    local list = type(M.systemSettingDisplayInfo) == "table" and M.systemSettingDisplayInfo[sysId] or nil
+    if type(list) ~= "table" and type(M.GetSystemSettingDisplayInfo) == "function" then
+        local ok, l = pcall(M.GetSystemSettingDisplayInfo, M, sysId)
+        list = ok and l or nil
+    end
+    for _, info in ipairs(type(list) == "table" and list or {}) do
+        if type(info) == "table" and info.setting == setting then
+            local lo, hi, step = info.minValue, info.maxValue, info.stepSize
+            local maxRaw = (type(lo) == "number" and type(hi) == "number" and type(step) == "number" and step > 0)
+                and (hi - lo) / step or nil
+            local function InRange(v)
+                return type(v) == "number" and v >= 0 and (not maxRaw or v <= maxRaw)
+            end
+            if type(info.ConvertValue) == "function" then
+                local ok, v = pcall(info.ConvertValue, info, display, false)
+                if ok and InRange(v) then return v end
+            end
+            if maxRaw then
+                local v = (display - lo) / step
+                if InRange(v) then return v end
+            end
+            return nil
+        end
+    end
+    return nil
+end
+
 -- Alle Rahmen aus K.GAME_LAYOUT ins Layout schreiben. Gibt zurueck, was
 -- gesetzt wurde ({ [key] = true }) und was im Layout fehlt (Namen).
 function ES.Adjust(systems)
@@ -165,6 +200,15 @@ function ES.Adjust(systems)
             local SE = EnumTable(SETTINGS[e.sys])
             for name, value in pairs(e.set or {}) do
                 if SetSetting(sys, SE and SE[name], value) then done[e.key .. "." .. name] = true end
+            end
+            for name, value in pairs(e.display or {}) do
+                local raw = ES.RawValue(sys.system, SE and SE[name], value)
+                if type(raw) == "number" and SetSetting(sys, SE[name], raw) then done[e.key .. "." .. name] = true end
+            end
+            for name, pair in pairs(e.enum or {}) do
+                local EN = EnumTable(pair[1])
+                local v = EN and EN[pair[2]]
+                if type(v) == "number" and SetSetting(sys, SE and SE[name], v) then done[e.key .. "." .. name] = true end
             end
             done[e.key] = true
         else
@@ -231,8 +275,10 @@ function ES.PersonalSource(info, presets)
     return nil
 end
 
--- Alle Systeme des Abklingzeitmanagers aus `source` uebernehmen (samt
--- Einstellungen). Gibt die Zahl und den Namen der Quelle zurueck.
+-- Die PLAETZE aller Systeme des Abklingzeitmanagers aus `source`
+-- uebernehmen - Groesse und Sichtbarkeit stellt WeintCodex (seit
+-- 6.6.1.5; vorher kam alles mit, auch die doppelte Buff-Anzeige).
+-- Gibt die Zahl und den Namen der Quelle zurueck.
 function ES.KeepPersonal(systems, source)
     if not source then return 0, nil end
     local S = EnumTable("EditModeSystem")
@@ -242,10 +288,9 @@ function ES.KeepPersonal(systems, source)
     for _, from in ipairs(source.systems) do
         if from.system == cdm then
             for _, to in ipairs(systems) do
-                if to.system == cdm and to.systemIndex == from.systemIndex then
-                    local c = Copy(from)
-                    for k in pairs(to) do to[k] = nil end
-                    for k, v in pairs(c) do to[k] = v end
+                if to.system == cdm and to.systemIndex == from.systemIndex and type(from.anchorInfo) == "table" then
+                    to.anchorInfo = Copy(from.anchorInfo)
+                    to.isInDefaultPosition = from.isInDefaultPosition
                     n = n + 1
                 end
             end
@@ -549,6 +594,8 @@ local function ShowQuestion()
         .. (baseName and ("der Vorlage „" .. tostring(baseName) .. "“") or "der Vorlage des Spiels")
         .. ", nicht deines bisherigen Layouts.\n"
         .. "•  Chatfenster zurück auf „Allgemein“ und „Kampflog“ – eigene Reiter verschwinden.\n"
+        .. "•  Abklingzeitmanager kleiner, nur Fähigkeiten und ihre Laufzeiten – die Buff-Anzeigen des Spiels"
+        .. " (Ausdauer und Co.) aus.\n"
         .. "•  Einige Spieleinstellungen (Chatstil, Flüstern im Chat, Leisten sperren, keine Tutorials).\n\n"
         .. "Was du selbst gebaut hast, bleibt: die Plätze des Abklingzeitmanagers, deine verschobenen"
         .. " WeintCodex-Rahmen und die Skalierung der Oberfläche. Danach einmal neu laden. Dein bisheriges"
@@ -578,6 +625,11 @@ ShowDone = function()
     lines[#lines + 1] = "•  " .. tostring(r.cvars or 0) .. " Spieleinstellungen gesetzt"
         .. ((r.unknownCVars and #r.unknownCVars > 0) and (", unbekannt: " .. table.concat(r.unknownCVars, ", ")) or "")
         .. "."
+    local d = ES.done or {}
+    local size = d["essential.IconSize"] and "Symbole auf 80 %" or "Größe NICHT gesetzt (Regler des Spiels unbekannt)"
+    local buffs = (d["bufficon.VisibleSetting"] and "Buff-Anzeigen des Spiels aus")
+        or "Buff-Anzeigen NICHT ausgeschaltet (Einstellung unbekannt)"
+    lines[#lines + 1] = "•  Abklingzeitmanager: " .. size .. ", " .. buffs .. "."
     if (r.kept or 0) > 0 then
         lines[#lines + 1] = "•  Abklingzeitmanager: " .. tostring(r.kept) .. " Plätze aus „" .. tostring(r.keptFrom)
             .. "“ übernommen."

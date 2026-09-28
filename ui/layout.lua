@@ -140,14 +140,32 @@ K.GAME_LAYOUT = {
     { key = "extra", label = "Zusatzfähigkeit", sys = "ExtraAbilities",
       point = "BOTTOMLEFT", relPoint = "BOTTOM", x = AXIS + UF_W + 10, y = COCKPIT_Y + UF_H + 10,
       frames = { "ExtraAbilityContainer" } },
-    -- personal: Standardplatz nur, wenn das bisherige Layout keinen nennt
-    -- (ui/setup.lua, ES.KeepPersonal).
+    -- ABKLINGZEITMANAGER wie eine WeakAura unter dem Charakter (Beta-Test
+    -- 6.6.1.4: "etwas kleiner, nicht doppelte Informationen, Ausdauer-
+    -- Buffs, Debuffs brauchen nicht angezeigt werden - einzig die
+    -- Faehigkeiten oder deren Laufzeiten"). Die Symbole von "Wichtig" und
+    -- "Hilfreich" zeigen selbst, wie lange ihre Wirkung noch laeuft; die
+    -- Buff-Anzeigen des Spiels zeigten dieselben Laufzeiten ein zweites
+    -- Mal und dazu lange Buffs wie Ausdauer - sie sind aus (im
+    -- Bearbeitungsmodus wieder einschaltbar). Beide Symbolreihen auf 80 %.
+    -- personal: der PLATZ kommt aus dem bisherigen Layout, wenn es einen
+    -- nennt (ui/setup.lua, ES.KeepPersonal); Groesse und Sichtbarkeit
+    -- stellt WeintCodex.
+    -- display: Werte, wie der Bearbeitungsmodus sie anzeigt (Prozent);
+    -- ui/setup.lua rechnet sie in den gespeicherten Wert um.
+    -- enum: { Name des Enums, Eintrag } fuer Auswahllisten.
     { key = "essential", label = "Abklingzeiten: Wichtig", sys = "CooldownViewer", idx = "Essential", personal = true,
-      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 316, frames = { "EssentialCooldownViewer" } },
+      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 316, frames = { "EssentialCooldownViewer" },
+      display = { IconSize = 80 } },
     { key = "utility", label = "Abklingzeiten: Hilfreich", sys = "CooldownViewer", idx = "Utility", personal = true,
-      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 366, frames = { "UtilityCooldownViewer" } },
+      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 366, frames = { "UtilityCooldownViewer" },
+      display = { IconSize = 80 } },
     { key = "bufficon", label = "Abklingzeiten: Buffs", sys = "CooldownViewer", idx = "BuffIcon", personal = true,
-      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 406, frames = { "BuffIconCooldownViewer" } },
+      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 406, frames = { "BuffIconCooldownViewer" },
+      enum = { VisibleSetting = { "CooldownViewerVisibleSetting", "Hidden" } } },
+    { key = "buffbar", label = "Abklingzeiten: Buffleisten", sys = "CooldownViewer", idx = "BuffBar", personal = true,
+      point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -(AXIS + UF_W + 10), y = 316, frames = { "BuffBarCooldownViewer" },
+      enum = { VisibleSetting = { "CooldownViewerVisibleSetting", "Hidden" } } },
     { key = "encounter", label = "Begegnungsleiste", sys = "EncounterBar",
       point = "TOP", relPoint = "TOP", x = 0, y = -170, frames = { "EncounterBar" } },
 

@@ -2044,7 +2044,13 @@ do
         -- 6.6.1.4: der Abklingzeitmanager kommt aus dem bisherigen Layout.
         _G.Enum.EditModeSystem.CooldownViewer = 20
         _G.Enum.EditModeCooldownViewerSystemIndices = { Essential = 0, Utility = 1, BuffIcon = 2, BuffBar = 3 }
+        _G.Enum.EditModeCooldownViewerSetting = { IconSize = 3, VisibleSetting = 6 }
+        _G.Enum.CooldownViewerVisibleSetting = { Always = 0, InCombat = 1, Hidden = 2 }
+        local oldDI = _G.EditModeSettingDisplayInfoManager
+        _G.EditModeSettingDisplayInfoManager = { systemSettingDisplayInfo = {
+            [20] = { { setting = 3, minValue = 50, maxValue = 200, stepSize = 10 } } } }
         table.insert(modern.systems, Sys(20, 0))
+        table.insert(modern.systems, Sys(20, 2))
         table.insert(modern.systems, Sys(20, 3))
         local mine = { point = "TOPLEFT", relativeTo = "UIParent", relativePoint = "TOPLEFT", offsetX = 111, offsetY = -222 }
         table.insert(elle.systems, Sys(20, 0, { anchorInfo = mine, isInDefaultPosition = false,
@@ -2055,12 +2061,27 @@ do
         local wc = saved.layouts[2]
         local ess
         for _, sy in ipairs(wc.systems) do if sy.system == 20 and sy.systemIndex == 0 then ess = sy end end
-        assert(ess.anchorInfo.offsetX == 111 and ess.settings[1].value == 7, "Abklingzeitmanager nicht uebernommen")
+        assert(ess.anchorInfo.offsetX == 111, "Platz des Abklingzeitmanagers nicht uebernommen")
+        -- 6.6.1.5: nur der Platz kommt mit; Groesse 80 % (Regler 50-200 in
+        -- Zehnern -> 3), die Buff-Anzeigen des Spiels aus.
+        local function SetOf(sy, id) for _, st in ipairs(sy.settings) do if st.setting == id then return st.value end end end
+        assert(SetOf(ess, 1) == nil and SetOf(ess, 3) == 3, "Groesse nicht umgerechnet oder fremde Einstellung mitgekommen")
+        local bi
+        for _, sy in ipairs(wc.systems) do if sy.system == 20 and sy.systemIndex == 2 then bi = sy end end
+        assert(SetOf(bi, 6) == 2, "Buff-Anzeige des Spiels nicht aus")
         assert(ES.report.kept == 2 and ES.report.keptFrom == "EllesmereUI Forever v4", "Uebernahme nicht gemeldet")
+        assert(ES.RawValue(20, 3, 500) == nil and ES.RawValue(99, 3, 80) == nil, "Wert ausserhalb des Reglers gesetzt")
+        _G.EditModeSettingDisplayInfoManager = oldDI
         -- Erneut, waehrend "WeintCodex" aktiv ist und nie verschoben wurde:
         -- wieder aus dem Layout davor. Hat der Spieler verschoben: seins.
-        local essE = Entry("essential")
-        ess.anchorInfo = { point = essE.point, relativeTo = "UIParent", relativePoint = essE.relPoint, offsetX = essE.x, offsetY = essE.y }
+        for _, key in ipairs({ "essential", "utility", "bufficon", "buffbar" }) do
+            local e = Entry(key)
+            for _, sy in ipairs(wc.systems) do
+                if sy.system == 20 and sy.systemIndex == _G.Enum.EditModeCooldownViewerSystemIndices[e.idx] then
+                    sy.anchorInfo = { point = e.point, relativeTo = "UIParent", relativePoint = e.relPoint, offsetX = e.x, offsetY = e.y }
+                end
+            end
+        end
         assert(ES.PersonalSource({ activeLayout = 4, layouts = { elle, wc } }, { modern, {} }) == elle, "unberuehrt: nicht aus dem Layout davor")
         ess.anchorInfo = { point = "CENTER", offsetX = 5, offsetY = 5 }
         assert(ES.PersonalSource({ activeLayout = 4, layouts = { elle, wc } }, { modern, {} }) == wc, "verschoben: nicht die eigenen Plaetze")

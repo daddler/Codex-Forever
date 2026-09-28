@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.1.5",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeiten wie eine WeakAura.|r Unter dem Charakter nur noch deine Fähigkeiten und wie lange ihre Wirkung läuft – kleiner, ohne doppelte Symbole und ohne lange Buffs wie Ausdauer. Einmal /wcui einrichten, dann neu laden; die Buff-Anzeigen des Spiels lassen sich im Bearbeitungsmodus wieder einschalten.",
+        },
+    },
+    {
         version = "6.6.1.4",
         date    = "28.09.2026",
         notes   = {
