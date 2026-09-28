@@ -71,7 +71,8 @@ function Methods:GetName()        return self._name end
 function Methods:GetWidth()       return self._width end
 function Methods:GetHeight()      return self._height end
 function Methods:GetScale()       return 1.0 end
-function Methods:GetFrameLevel()  return 1 end
+function Methods:GetFrameLevel()  return self._level or 1 end
+function Methods:SetFrameLevel(l) self._level = l end
 function Methods:GetFrameStrata() return "MEDIUM" end
 function Methods:IsShown()        return self._shown and true or false end
 function Methods:IsVisible()      return self._shown and true or false end

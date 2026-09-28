@@ -4476,6 +4476,20 @@ do
         assert(normal:GetAlpha() == 0, "Holzknopf in der Leiste bleibt")
         W.Inner()
         assert(tile:GetAlpha() == 1, "Kartenkachel nach dem Takt ausgeblendet")
+        -- 6.6.3.1: weicher Rand ueber der Karte, unter ihren Knoepfen; die
+        -- Kacheln selbst bleiben unberuehrt.
+        local o = W.softOverlay[canvas]
+        assert(o and o.LEFT and o.RIGHT and o.TOP and o.BOTTOM and W.own[o.TOP], "kein weicher Rand um die Karte")
+        canvas:SetFrameLevel(5)
+        local pinBtn = stub.NewObject("Button")
+        pinBtn:SetFrameLevel(40)
+        map.overlayFrames = { pinBtn }
+        assert(W.MapOverlayLevel(map) == 39, "Rand nicht direkt unter den Knoepfen der Karte")
+        pinBtn:SetFrameLevel(5)
+        assert(W.MapOverlayLevel(map) == 105, "Knoepfe unter der Karte: Rand nicht darueber")
+        W.SoftMap(map)
+        assert(W.softOverlay[canvas] == o and o._level == 105, "Rand doppelt angelegt oder Ebene nicht gesetzt")
+        assert(table.concat(W.SoftReport(map), " "):find("Weicher Rand (Karte): Ebene 105", 1, true), "Bericht ohne Kartenrand")
         _G.WorldMapFrame = nil
 
         local cf = stub.NewObject("Frame")

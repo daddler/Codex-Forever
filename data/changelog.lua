@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.6.3.1",
         date    = "28.09.2026",
         notes   = {
+            "|cff7C6CFFDie Karte läuft weich in den Rahmen aus.|r Wie beim Charakterbild endet die Weltkarte (M) nicht mehr mit harter Kante: an allen vier Seiten geht sie in einem weichen Verlauf in das Fenster über. Die Knöpfe auf der Karte bleiben klar, die Karte selbst bleibt unverändert.",
             "|cff7C6CFFAlles in deiner Klassenfarbe.|r Die Farbe von WeintCodex ist jetzt überall die deiner Klasse: das WeintCodex-Fenster und die Einstellungen, Knöpfe, gewählte Reiter und Einträge, Überschriften, Zauber- und Erfahrungsbalken, Zielleuchten, Chatmeldungen, sogar diese Hervorhebung hier. Grün, Rot, Gold und Blau bleiben, weil sie etwas bedeuten. Unter Allgemein → „Farbe der Oberfläche“ gibt es das Lila zurück.",
         },
     },

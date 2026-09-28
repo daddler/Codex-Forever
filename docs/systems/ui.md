@@ -1193,6 +1193,21 @@ Funktion je Rahmen oder Fläche. Wer eine Liste braucht, nimmt
 `W.Regions`/`W.Children` mit eigenem `key`; wer eine Liste über einen
 Aufruf hinaus behalten will, kopiert sie.
 
+**Weicher Rand um die Karte (6.6.3.1).** Beta-Test: „Alles, was das
+Spiel mitbringt und nicht geändert wird, soll genauso weich gezeichnet
+werden wie beim Charakterfenster“. Die Karte ist – anders als das
+Modellbild – hell; deshalb keine Maske auf ihren Kacheln, sondern
+`W.SoftOverlay(window, area, level)`: ein eigener Rahmen über dem
+Kartenausschnitt (`ScrollContainer`) mit vier Verläufen in `bgDark`
+(48 px, `W.SOFT_OVERLAY`), die nach innen ausblenden. An den Kartenbildern
+ändert sich nichts (die Weltkarte ist empfindlich, 6.6.0.1), neue Kacheln
+beim Zoomen sind von selbst mit drin, die Maus geht durch. Ebene
+(`W.MapOverlayLevel`): direkt unter dem niedrigsten Knopf der Karte
+(`overlayFrames` des Spiels), wenn der über der Karte liegt, sonst 100
+über ihr – `/wcui fenster` nennt „Weicher Rand (Karte): Ebene …, Karte …,
+Knöpfe ab …“. Marken am Rand verblassen mit. Nebenbei: der Knopf der
+Seitenleiste (`SidePanelToggle`) trug noch `MapCornerShadow-Right`.
+
 **Alles in Klassenfarbe (6.6.3.1).** Beta-Test: „das komplette Design
 immer auf die Klasse basierend – teils ist das ja schon, aber das sollte
 überall komplett sein“. Der Akzent **ist** jetzt die Klassenfarbe:

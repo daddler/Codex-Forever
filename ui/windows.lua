@@ -1406,6 +1406,9 @@ end
 -- die Maske haengt - und auf welchen Ebenen die Bilder liegen.
 function W.SoftReport(f)
     local out = {}
+    local sc = type(f) == "table" and f.ScrollContainer
+    local o = sc and W.softOverlay and W.softOverlay[sc]
+    if o and o._report then out[#out + 1] = o._report end
     for _, host in ipairs(softRoot[f] or {}) do
         local e = soft[host]
         out[#out + 1] = string.format("   Weicher Rand: %d Teile, %s", #e.parts,
@@ -1486,6 +1489,102 @@ local function SkinNavBar(nav)
 end
 W.SkinNavBar = SkinNavBar
 
+--------------------------------------------------
+-- Weicher Rand um Inhalte des Spiels (6.6.3.1)
+--------------------------------------------------
+-- Beta-Test: "Alles, was das Spiel mitbringt und nicht geaendert wird,
+-- soll genauso weich gezeichnet werden wie beim Charakterfenster" -
+-- zuerst die Karte (M). Anders als das Modellbild (fast schwarz am Rand,
+-- deshalb dort eine Maske) ist die Karte hell: ein Verlauf in der Farbe
+-- des Fensters, der nach innen ausblendet, laesst sie weich in den Rahmen
+-- uebergehen. Er liegt in einem eigenen Rahmen UEBER der Karte - an den
+-- Kartenbildern selbst aendert sich nichts (die Weltkarte ist empfindlich,
+-- 6.6.0.1), und neue Kacheln beim Zoomen sind von selbst mit drin.
+-- Ebene: ueber Kacheln und Marken, unter den Knoepfen auf der Karte
+-- (overlayFrames des Spiels) - sonst verschwaenden die in der Ecke im
+-- Schatten. /wcui fenster nennt die Ebenen.
+W.SOFT_OVERLAY = 48
+local softOverlay = setmetatable({}, { __mode = "k" })
+W.softOverlay = softOverlay
+
+local function OverlayEdge(o, side, c, size)
+    local t = o:CreateTexture(nil, "OVERLAY", nil, 7)
+    if side == "LEFT" or side == "RIGHT" then
+        t:SetPoint("TOP" .. side, o, "TOP" .. side, 0, 0)
+        t:SetPoint("BOTTOM" .. side, o, "BOTTOM" .. side, 0, 0)
+        t:SetWidth(size)
+    else
+        t:SetPoint(side .. "LEFT", o, side .. "LEFT", 0, 0)
+        t:SetPoint(side .. "RIGHT", o, side .. "RIGHT", 0, 0)
+        t:SetHeight(size)
+    end
+    t:SetColorTexture(1, 1, 1, 1)
+    if t.SetGradient and _G.CreateColor then
+        local solid, clear = _G.CreateColor(c[1], c[2], c[3], 1), _G.CreateColor(c[1], c[2], c[3], 0)
+        -- HORIZONTAL: erste Farbe links; VERTICAL: erste Farbe unten.
+        if side == "LEFT" then t:SetGradient("HORIZONTAL", solid, clear)
+        elseif side == "RIGHT" then t:SetGradient("HORIZONTAL", clear, solid)
+        elseif side == "TOP" then t:SetGradient("VERTICAL", clear, solid)
+        else t:SetGradient("VERTICAL", solid, clear) end
+    else
+        t:SetColorTexture(c[1], c[2], c[3], 0.5)
+    end
+    own[t] = true
+    return t
+end
+
+-- Ein weicher Rand ueber `area`, als Kind von `window`, auf Ebene `level`.
+function W.SoftOverlay(window, area, level, size)
+    local o = softOverlay[area]
+    if not o then
+        o = CreateFrame("Frame", nil, window)
+        o:SetAllPoints(area)
+        if o.EnableMouse then o:EnableMouse(false) end
+        local c = WeintCodex.Colors.bgDark
+        for _, side in ipairs({ "LEFT", "RIGHT", "TOP", "BOTTOM" }) do
+            o[side] = OverlayEdge(o, side, c, size or W.SOFT_OVERLAY)
+        end
+        softOverlay[area] = o
+    end
+    local ok, strata = pcall(area.GetFrameStrata, area)
+    if ok and type(strata) == "string" and o.SetFrameStrata then o:SetFrameStrata(strata) end
+    if type(level) == "number" and o._level ~= level then
+        o._level = level
+        o:SetFrameLevel(level)
+    end
+    return o
+end
+
+local function LevelOf(fr)
+    if type(fr) ~= "table" or not fr.GetFrameLevel then return nil end
+    local ok, l = pcall(fr.GetFrameLevel, fr)
+    l = ok and K.Plain(l) or nil
+    return type(l) == "number" and l or nil
+end
+
+-- Ebene fuer den Rand der Karte: direkt unter dem niedrigsten Knopf auf
+-- der Karte, wenn der ueber der Karte liegt; sonst 100 ueber der Karte.
+function W.MapOverlayLevel(map)
+    local base = LevelOf(map.ScrollContainer) or 1
+    local low
+    for _, fr in ipairs(type(map.overlayFrames) == "table" and map.overlayFrames or {}) do
+        local l = LevelOf(fr)
+        if l and (not low or l < low) then low = l end
+    end
+    local level = (low and low - 1 > base) and (low - 1) or math.min(base + 100, 9999)
+    return level, base, low
+end
+
+function W.SoftMap(map)
+    local sc = map.ScrollContainer
+    if type(sc) ~= "table" or not sc.GetFrameLevel then return nil end
+    local level, base, low = W.MapOverlayLevel(map)
+    local o = W.SoftOverlay(map, sc, level)
+    o._report = string.format("   Weicher Rand (Karte): Ebene %d, Karte %d, Knöpfe ab %s",
+        level, base, low and tostring(low) or "–")
+    return o
+end
+
 function W.SkinMap(f)
     if type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return nil end
     local d = done[f]
@@ -1505,9 +1604,12 @@ function W.SkinMap(f)
         W.AddGlow(f, d)
     end
     SkinNavBar(f.NavBar)
-    -- Innen: nur nach Namen, nie nach Flaeche (siehe oben).
+    if Opt("windowArt") then W.SoftMap(f) end
+    -- Innen: nur nach Namen, nie nach Flaeche (siehe oben). Der Knopf der
+    -- Seitenleiste trug noch einen Eckschatten (6.6.3.1, /wcui fenster:
+    -- "MapCornerShadow-Right ... SOLLTE WEG SEIN").
     local qm = f.QuestMapFrame or _G.QuestMapFrame
-    for _, part in ipairs({ f.BorderFrame, f.OverscrollBG, qm, _G.QuestScrollFrame }) do
+    for _, part in ipairs({ f.BorderFrame, f.OverscrollBG, qm, _G.QuestScrollFrame, f.SidePanelToggle }) do
         if type(part) == "table" then HideByAtlas(part, 0) end
     end
     Grey(f, 0)
