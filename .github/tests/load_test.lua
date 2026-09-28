@@ -2218,22 +2218,38 @@ do
         picker.Sync()
         assert(picker.tiles[1].entry.action == "target" and picker.tiles[3].entry.name == "Geringes Heilen",
             "Tafel ohne Ziel/Menue oder Zauber")
+        -- Raenge: der Klick oeffnet die Liste am Symbol, die Wahl legt den
+        -- Rang ("Name(Rang 1)"); "Hoechster" legt nur den Namen.
+        local oldOpen, menu = WeintCodex.OpenDropMenu, nil
+        WeintCodex.OpenDropMenu = function(owner, items, current, onPick)
+            menu = { owner = owner, items = items, current = current, pick = onPick }
+        end
         CC.draft.button, CC.draft.mod = 3, "alt-"
         picker.tiles[3]:Click()
+        assert(menu and menu.owner == picker.tiles[3] and #menu.items == 3 and menu.items[2].value == "Rang 1"
+            and menu.current == nil, "Rangliste oeffnet nicht am Symbol")
+        assert(f1:GetAttribute("alt-type3") == nil, "Taste belegt, bevor ein Rang gewaehlt ist")
+        menu.pick("")
         assert(f1:GetAttribute("alt-type3") == "spell" and f1:GetAttribute("alt-spell3") == "Geringes Heilen",
             "Klick in der Tafel belegt die Taste nicht")
         picker.Sync()
         assert(picker.tiles[3].ring.top:IsShown() and not picker.tiles[4].ring.top:IsShown(), "Belegung in der Tafel nicht markiert")
-        -- Rang: ohne = hoechster (nur der Name), sonst "Name(Rang 1)".
-        assert(not CC.RankDisabled() and #CC.RankItems() == 3, "Rangauswahl fehlt")
-        assert(CC.SetRank("Rang 1") and f1:GetAttribute("alt-spell3") == "Geringes Heilen(Rang 1)",
-            "Rang nicht ins Attribut")
+        menu = nil
+        picker.tiles[3]:Click()
+        assert(menu.current == "", "Hoechster Rang in der Liste nicht markiert")
+        menu.pick("Rang 1")
+        assert(f1:GetAttribute("alt-spell3") == "Geringes Heilen(Rang 1)", "Rang nicht ins Attribut")
         assert(CC.ActionText(CC.Current()) == "Geringes Heilen (Rang 1)", "Rang nicht genannt")
-        CC.SetRank("")
+        menu = nil
+        picker.tiles[3]:Click()
+        assert(menu.current == "Rang 1", "gewaehlter Rang in der Liste nicht markiert")
+        menu.pick("")
         assert(f1:GetAttribute("alt-spell3") == "Geringes Heilen" and CC.Current().rank == nil, "zurueck auf hoechsten geht nicht")
-        CC.draft.button, CC.draft.mod = 1, "shift-"
-        assert(CC.RankDisabled() and CC.RankHint() == "nur ein Rang im Zauberbuch", "Heilen ohne Raenge waehlbar")
-        CC.draft.button, CC.draft.mod = 3, "alt-"
+        -- Ein Rang: keine Liste, sofort gelegt.
+        menu = nil
+        picker.tiles[4]:Click()
+        assert(menu == nil and f1:GetAttribute("alt-spell3") == "Göttliche Pein", "Zauber ohne Raenge fragt nach")
+        WeintCodex.OpenDropMenu = oldOpen
         picker.tiles[1]:Click()
         assert(f1:GetAttribute("alt-type3") == "target" and f1:GetAttribute("alt-spell3") == nil, "Ziel waehlen nicht gelegt")
         CC.Remove(#CC.Bindings())

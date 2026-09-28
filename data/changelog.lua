@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.2.1",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFRänge direkt am Zauber.|r Klickst du in der Zaubertafel der Klickzauber auf einen Zauber mit mehreren Rängen, klappt am Symbol die Liste der Ränge auf – „Höchster Rang“ steigt mit, jeder andere bleibt fest. Zauber mit nur einem Rang liegen wie bisher sofort auf der Taste.",
+        },
+    },
+    {
         version = "6.6.2.0",
         date    = "28.09.2026",
         notes   = {

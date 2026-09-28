@@ -629,15 +629,17 @@ Seit 6.2.0.0:
   beim Drüberfahren (brauchen Snippets, die dem Forever-Client fehlen,
   oder Tastenbelegungen, die im Kampf gesperrt sind) und Kombinationen
   mehrerer Zusatztasten. Keine eingebaute Zauberliste – die Tafel zeigt, was das Zauberbuch nennt. Im Spiel ungeprüft.
-  **Ränge** (6.6.2.0, Beta-Test: „die einzelnen Ränge auswählen und
-  nicht immer den höchsten“): ein Klick in der Tafel legt den Zauber
-  **ohne** Rang – der Client wirkt den höchsten, ein neu gelernter greift
-  von selbst. Die Auswahl „Rang“ unter der Tafel (`CC.RankItems`,
-  `CC.SetRank`) legt einen kleineren fest; gespeichert wird der Text des
-  Zauberbuchs (`rank = "Rang 3"`), das Attribut heißt dann
-  `Erneuerung(Rang 3)` (`CC.SpellAttr`) – die Makro-Schreibweise.
-  Gesperrt, solange die Taste keinen Zauber trägt oder das Zauberbuch
-  nur einen Rang nennt. Ob der Forever-Client im Zauberbuch alle Ränge
+  **Ränge** (6.6.2.0, seit 6.6.2.1 als Liste am Symbol; Beta-Test:
+  „die einzelnen Ränge auswählen und nicht immer den höchsten“, dann
+  „ein Dropdown mit den Rängen, wenn ich den Zauber wähle“): hat ein
+  Zauber mehrere Ränge, öffnet der Klick in der Tafel
+  (`CC.PickSpell`) die Liste von `WeintCodex.OpenDropMenu` am Symbol –
+  „Höchster Rang – steigt mit“ legt ihn **ohne** Rang (der Client wirkt
+  den höchsten, ein neu gelernter greift von selbst), jeder andere
+  Eintrag genau diesen Rang. Ein Zauber mit einem Rang wird sofort
+  gelegt. Gespeichert wird der Text des Zauberbuchs
+  (`rank = "Rang 3"`), das Attribut heißt dann `Erneuerung(Rang 3)`
+  (`CC.SpellAttr`) – die Makro-Schreibweise. Ob der Forever-Client
   herausgibt und `Name(Rang N)` im Attribut annimmt: ungeprüft.
 * **Erinnerungen** (6.4.0.0, `ui/reminders.lua`, eigenes Modul): ein
   Regelwerk aus kleinen Tabellen – `buff` (Buff fehlt), `weapon` (Waffe

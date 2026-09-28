@@ -27,13 +27,15 @@
 -- aber gehoeren einer Klasse (gelernt aus den Erinnerungen, 6.6.0.5).
 -- Die Belegung wird deshalb je Klasse gespeichert.
 --
--- RAENGE (6.6.2.0, Beta-Test: "die einzelnen Raenge auswaehlen und nicht
--- immer den hoechsten"). Ein Klick in der Tafel legt den Zauber ohne Rang
--- auf die Taste - der Client wirkt dann den hoechsten, und ein neu
--- gelernter Rang greift von selbst. Wer einen kleineren will (Mana
--- sparen), waehlt ihn darunter; gespeichert wird der Rang so, wie das
--- Zauberbuch ihn nennt ("Rang 3"), und als Attribut steht dann
--- "Erneuerung(Rang 3)" - dieselbe Schreibweise wie in einem Makro.
+-- RAENGE (6.6.2.0/6.6.2.1, Beta-Test: "die einzelnen Raenge auswaehlen
+-- und nicht immer den hoechsten", dann: "ein Dropdown mit den Raengen,
+-- wenn ich den Zauber waehle"). Hat ein Zauber mehrere Raenge, oeffnet
+-- der Klick in der Tafel eine Liste am Symbol: "Hoechster Rang" legt ihn
+-- ohne Rang auf die Taste - der Client wirkt dann den hoechsten, und ein
+-- neu gelernter greift von selbst -, ein fester Rang (Mana sparen) legt
+-- genau den. Gespeichert wird der Rang so, wie das Zauberbuch ihn nennt
+-- ("Rang 3"), als Attribut steht dann "Erneuerung(Rang 3)" - dieselbe
+-- Schreibweise wie in einem Makro.
 --
 -- KEINE EINGEBAUTE ZAUBERLISTE. Niemand hier hat die Zauber des
 -- Forever-Clients gelesen - die Tafel zeigt, was das Zauberbuch des
@@ -384,11 +386,13 @@ local draft = { button = 1, mod = "shift-" }
 CC.draft = draft
 
 -- Ein Klick in der Tafel: legt Zauber (oder Ziel/Menue) auf die Taste.
-function CC.Pick(action, spell)
+-- rank: "Rang 3" wie im Zauberbuch; nil oder "" = der hoechste.
+function CC.Pick(action, spell, rank)
     local b = { button = draft.button, mod = draft.mod, action = action }
     if action == "spell" then
         if type(spell) ~= "string" or spell == "" then return false end
         b.spell = spell
+        if type(rank) == "string" and rank ~= "" then b.rank = rank end
     end
     CC.Add(b)
     return true
@@ -410,37 +414,26 @@ function CC.Ranks(name)
     return {}
 end
 
--- Rang des Zaubers auf der gewaehlten Taste; nil oder "" = der hoechste.
-function CC.SetRank(rank)
-    local cur = CC.Current()
-    if not (cur and cur.action == "spell") then return false end
-    if rank == "" then rank = nil end
-    CC.Add({ button = cur.button, mod = cur.mod, action = "spell", spell = cur.spell, rank = rank })
-    return true
-end
-
--- Die Auswahl "Rang" unter der Tafel.
-function CC.RankItems()
-    local items = { { value = "", text = "Höchster – steigt mit" } }
-    local cur = CC.Current()
-    if cur and cur.action == "spell" then
-        for _, r in ipairs(CC.Ranks(cur.spell)) do
-            items[#items + 1] = { value = r.rank, text = r.rank }
-        end
+-- Die Liste, die ein Klick auf einen Zauber mit mehreren Raengen
+-- oeffnet: "Hoechster" (der Name allein, steigt mit) und jeder Rang.
+function CC.RankItems(name)
+    local items = { { value = "", text = "Höchster Rang – steigt mit" } }
+    for _, r in ipairs(CC.Ranks(name)) do
+        items[#items + 1] = { value = r.rank, text = r.rank }
     end
     return items
 end
 
-function CC.RankHint()
+-- Klick auf ein Zaubersymbol: ein Rang -> sofort auf die Taste, mehrere
+-- -> erst die Liste am Symbol, die Wahl legt ihn dann.
+function CC.PickSpell(owner, e)
+    local ranks = e.ranks or {}
+    local open = WeintCodex.OpenDropMenu
+    if #ranks < 2 or not open then return CC.Pick("spell", e.name) end
     local cur = CC.Current()
-    if not (cur and cur.action == "spell") then return "erst einen Zauber wählen" end
-    return "nur ein Rang im Zauberbuch"
-end
-
-function CC.RankDisabled()
-    local cur = CC.Current()
-    if not (cur and cur.action == "spell") then return true end
-    return #CC.Ranks(cur.spell) < 2 and not cur.rank
+    local current = (cur and cur.action == "spell" and cur.spell == e.name) and (cur.rank or "") or nil
+    open(owner, CC.RankItems(e.name), current, function(v) CC.Pick("spell", e.name, v) end, 190)
+    return true
 end
 
 local LIST_ROWS = 10
@@ -549,7 +542,8 @@ function CC.BuildPicker(parent, width)
         t.ring = K.Border(t, 2, C.accent[1], C.accent[2], C.accent[3], 1, "OVERLAY")
         t:SetScript("OnClick", function(self)
             local e = self.entry
-            if e then CC.Pick(e.action or "spell", e.name) end
+            if not e then return end
+            if e.action then CC.Pick(e.action) else CC.PickSpell(self, e) end
         end)
         t:SetScript("OnEnter", function(self)
             local e = self.entry
@@ -562,7 +556,7 @@ function CC.BuildPicker(parent, width)
             local ranks = e.ranks or {}
             if #ranks > 1 then
                 local d = C.textMuted
-                tip:AddLine(string.format("%d Ränge – kleineren darunter unter „Rang“ wählen", #ranks), d[1], d[2], d[3])
+                tip:AddLine(string.format("%d Ränge – Klick öffnet die Auswahl", #ranks), d[1], d[2], d[3])
             end
             tip:Show()
         end)
@@ -618,14 +612,9 @@ function CC.BuildPage(B)
     B:Row({ type = "custom", height = CC.PickerHeight(), create = function(parent, width)
                 return CC.BuildPicker(parent, width)
             end }, nil)
-    B:Row({ type = "dropdown", label = "Rang", items = CC.RankItems,
-            get = function() local cur = CC.Current() return cur and cur.rank or "" end,
-            set = function(v) CC.SetRank(v) end,
-            disabled = CC.RankDisabled,
-            disabledHint = CC.RankHint,
-            tooltip = "Rang des Zaubers auf der gewählten Taste. „Höchster“ wirkt immer deinen besten und steigt mit, wenn du einen neuen lernst." },
-          { type = "toggle", label = "Nur hilfreiche Zauber", key = "clickHelpfulOnly",
-            description = "Heilungen, Buffs, Bannen – was man auf Verbündete wirkt." })
+    B:Row({ type = "toggle", label = "Nur hilfreiche Zauber", key = "clickHelpfulOnly",
+            description = "Heilungen, Buffs, Bannen – was man auf Verbündete wirkt." },
+          { type = "empty" })
     B:Section("Wo")
     B:Row({ type = "toggle", label = "Auch Einheitenrahmen", key = "clickUnitFrames",
             description = "Spieler, Ziel, Fokus, Ziel des Ziels und Begleiter – nicht nur Gruppe und Schlachtzug." },

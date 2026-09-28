@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.2.1] – 2026-09-28
+
+**Ränge direkt am Zauber.** Klickst du in der Zaubertafel der Klickzauber auf einen Zauber mit mehreren Rängen, klappt am Symbol die Liste der Ränge auf – „Höchster Rang“ steigt mit, jeder andere bleibt fest. Zauber mit nur einem Rang liegen wie bisher sofort auf der Taste.
+
 ## [6.6.2.0] – 2026-09-28
 
 **Klickzauber mit Rang.** Unter der Zaubertafel wählst du für die belegte Taste einen Rang – zum Beispiel einen kleinen Heilzauber, der Mana spart. Ohne Wahl wirkt die Taste wie bisher den höchsten Rang und steigt mit, wenn du einen neuen lernst.

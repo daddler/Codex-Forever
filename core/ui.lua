@@ -1763,10 +1763,10 @@ local function EnsureDropMenu()
     return dropMenu
 end
 
-local function OpenDropMenu(owner, items, current, onPick)
+local function OpenDropMenu(owner, items, current, onPick, minWidth)
     local menu = EnsureDropMenu()
     local ITEM_H = 24
-    local width = math.max(120, owner:GetWidth() or 120)
+    local width = math.max(minWidth or 120, owner:GetWidth() or 120)
 
     for i, item in ipairs(items) do
         local b = menu._buttons[i]
@@ -1820,9 +1820,15 @@ local function OpenDropMenu(owner, items, current, onPick)
         end)
         if ok and type(s) == "number" and s > 0 then menu:SetScale(s) end
     end
+    -- Unten am Bildschirm (die Zaubertafel der Klickzauber) klappt eine
+    -- lange Liste sonst ueber den Rand.
+    if menu.SetClampedToScreen then menu:SetClampedToScreen(true) end
     dropCatcher:Show()
     menu:Show()
 end
+-- Dieselbe Liste an einem beliebigen Knopf (Klickzauber: Raenge eines
+-- Zaubers direkt am Symbol). items = { { value=, text= }, ... }
+WeintCodex.OpenDropMenu = OpenDropMenu
 
 function WeintCodex.CreateDropdown(parent, opts)
     opts = opts or {}
@@ -1881,9 +1887,7 @@ function WeintCodex.CreateDropdown(parent, opts)
 
     row.Sync = function()
         local current = opts.get and opts.get()
-        local hint = opts.disabledHint
-        if type(hint) == "function" then hint = hint() end
-        local text = (opts.disabled and Disabled() and hint) or nil
+        local text = (opts.disabled and Disabled() and opts.disabledHint) or nil
         if not text then
             for _, item in ipairs(Items()) do
                 if item.value == current then text = item.text break end
