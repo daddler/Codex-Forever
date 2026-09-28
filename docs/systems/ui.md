@@ -1193,6 +1193,31 @@ Funktion je Rahmen oder Fläche. Wer eine Liste braucht, nimmt
 `W.Regions`/`W.Children` mit eigenem `key`; wer eine Liste über einen
 Aufruf hinaus behalten will, kopiert sie.
 
+**Alles in Klassenfarbe (6.6.3.1).** Beta-Test: „das komplette Design
+immer auf die Klasse basierend – teils ist das ja schon, aber das sollte
+überall komplett sein“. Der Akzent **ist** jetzt die Klassenfarbe:
+`WeintCodex.SetAccent(r, g, b)` in `core/ui.lua` schreibt jeden Ton, der
+aus dem Violett abgeleitet ist, an Ort und Stelle um – gefunden nach
+**Wert** beim Laden (`WeintCodex.AccentSlots`: Grund, hell, gedämpft,
+tief, Kartenkopf; in `Colors` **und** `GameColors`, Deckkraft bleibt).
+Weil die Tabellen dieselben bleiben, sieht jede Stelle die neue Farbe:
+WeintCodex-Fenster, Einstellungen, Knöpfe (primär mit dunkler Schrift –
+lesbar auch auf Weiß oder Gelb), Reiter, Überschriften, Zauber- und
+Erfahrungsbalken (`cast`, `xpBar`), Zielring und -leuchten, Texte.
+Gesetzt beim Laden der Datei (`WeintCodex.ApplyClassAccent`, die Klasse
+kennt der Client dann schon) und noch einmal bei `PLAYER_LOGIN`
+(`UIKit.ResetHighlight`), dann mit der Einstellung
+(`general.highlight = "accent"` → exakt das alte Violett). Farbcodes in
+Texten: `WeintCodex.AC` statt `|cff7C6CFF`; die Changelog-Daten behalten
+`|cff7C6CFF` (Stilregel, `release_notes.py`) und werden beim Zeigen
+umgefärbt. `UIKit.Highlight()` ist seitdem schlicht der Akzent.
+Bleibt, wie es ist: Grün, Rot, Gold, Blau (Bedeutung) und die Farben der
+Spielwelt, die nicht aus dem Akzent kommen. Bekannte Kosten: bei Jäger
+und Mönch liegt der Akzent nahe am Erfolgsgrün, beim Todesritter nahe am
+Fehlerrot, beim Druiden nahe am Warn-Gold, beim Schamanen nahe am
+Hinweis-Blau; bei Priestern ist er weiß und hebt sich von normalem Text
+kaum ab.
+
 **Rahmen in Klassenfarbe** (6.6.2.3, Beta-Test: „statt der lila Rahmen
 überall lieber Rahmen in der Farbe der Klasse“): `UIKit.Highlight()`
 liefert die Klassenfarbe des Charakters (`RAID_CLASS_COLORS`, vom

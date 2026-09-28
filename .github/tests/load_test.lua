@@ -4739,29 +4739,62 @@ do
     Check(ok7, "Kategorien im Charakterfenster: Titel mittig zwischen auslaufenden Zierlinien"
         .. (ok7 and "" or (": " .. tostring(err7))))
 
-    -- 6.6.2.4: Rahmen und Hervorhebungen in Klassenfarbe - oder im Akzent.
+    -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett
+    -- auf Wunsch. Es bleibt ein Akzent (accent = purple = violet = brandA).
     local ok4, err4 = pcall(function()
+        local C, GC = WeintCodex.Colors, WeintCodex.GameColors
         local oldUC, oldRCC = _G.UnitClass, _G.RAID_CLASS_COLORS
+        local function Near(a, b) return math.abs(a - b) < 1e-6 end
         _G.UnitClass = function() return "Jäger", "HUNTER", 3 end
         _G.RAID_CLASS_COLORS = { HUNTER = { r = 0.67, g = 0.83, b = 0.45 } }
         K.ResetHighlight()
         local h = K.Highlight()
-        assert(h[1] == 0.67 and h[2] == 0.83 and h[3] == 0.45, "keine Klassenfarbe")
+        assert(h == C.accent and Near(h[1], 0.67) and Near(h[2], 0.83) and Near(h[3], 0.45), "Akzent nicht in Klassenfarbe")
+        for _, k in ipairs({ "purple", "violet", "brandA", "accentDot" }) do
+            assert(Near(C[k][1], 0.67) and Near(C[k][3], 0.45), k .. " nicht mitgezogen")
+        end
+        for _, k in ipairs({ "cast", "xpBar", "targetRing", "targetGlow" }) do
+            assert(Near(GC[k][1], 0.67), "Spielfarbe " .. k .. " nicht mitgezogen")
+        end
+        assert(Near(GC.targetGlow[4], 0.85) and Near(C.washAccent[4], 0.08), "Deckkraft abgeleiteter Toene verloren")
+        assert(C.accentBright[2] > C.accent[2] and C.accentDim[2] < C.accent[2], "helle/gedaempfte Stufe nicht abgeleitet")
+        assert(Near(C.green[1], 0.204) and Near(C.red[1], 0.957), "Zustandsfarbe veraendert")
+        assert(WeintCodex.AC == "|cffABD473", "Farbcode fuer Texte: " .. tostring(WeintCodex.AC))
         K.Set("general", "highlight", "accent")
         K.ResetHighlight()
-        assert(K.Highlight() == WeintCodex.Colors.accent, "Akzent laesst sich nicht waehlen")
+        assert(Near(C.accent[1], 0.486) and Near(C.purpleDim[1], 0.318) and WeintCodex.AC == "|cff7C6CFF",
+            "Violett laesst sich nicht waehlen")
         K.Set("general", "highlight", nil)
         _G.RAID_CLASS_COLORS = nil
         K.ResetHighlight()
-        assert(K.Highlight() == WeintCodex.Colors.accent, "ohne Klassenfarbe nicht der Akzent")
-        _G.RAID_CLASS_COLORS = { HUNTER = { r = 0.67, g = 0.83, b = 0.45 } }
-        assert(K.Highlight()[1] == 0.67, "unbekannte Klasse wurde gemerkt")
+        assert(Near(C.accent[1], 0.486), "ohne Klassenfarbe nicht Violett")
         _G.UnitClass, _G.RAID_CLASS_COLORS = oldUC, oldRCC
         K.ResetHighlight()
-        -- Der Akzent selbst bleibt unberuehrt (eine Bedeutungsfarbe).
-        assert(WeintCodex.Colors.accent[1] ~= 0.67, "Akzent veraendert")
     end)
-    Check(ok4, "Rahmen und Hervorhebungen: Klassenfarbe, wahlweise Akzent" .. (ok4 and "" or (": " .. tostring(err4))))
+    Check(ok4, "Akzent in der Klassenfarbe, im ganzen Addon, wahlweise Violett" .. (ok4 and "" or (": " .. tostring(err4))))
+    -- Kein fester Violett-Farbcode im Code: er bliebe Violett, waehrend
+    -- alles andere die Klassenfarbe traegt. Nur die Changelog-Daten
+    -- behalten ihn (Stilregel), sie werden beim Zeigen umgefaerbt.
+    do
+        local hits = {}
+        for line in toc:gmatch("[^\r\n]+") do
+            local file = line:match("^%s*([%w_/]+%.lua)%s*$")
+            if file and file ~= "data/changelog.lua" then
+                local h = io.open(ROOT .. "/" .. file, "r")
+                local src = h and h:read("*a") or ""
+                if h then h:close() end
+                local n = 0
+                for code in src:gmatch("|cff(%x%x%x%x%x%x)") do
+                    if code:upper() == "7C6CFF" then n = n + 1 end
+                end
+                -- Kommentare, die den Code nennen, zaehlen nicht.
+                for _ in src:gmatch("%-%-[^\n]*|cff7C6CFF") do n = n - 1 end
+                if n > 0 then hits[#hits + 1] = file .. " (" .. n .. ")" end
+            end
+        end
+        Check(#hits == 0, "kein fester Violett-Farbcode in Texten (WeintCodex.AC)"
+            .. (#hits == 0 and "" or (": " .. table.concat(hits, ", "))))
+    end
 
     -- 6.6.2.2: Plaketten nach NPC - Zaubernde und eigene Farben.
     local ok3, err3 = pcall(function()

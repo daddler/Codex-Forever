@@ -72,7 +72,8 @@ K.Register({
         and "Ein eigenes, schlichtes Interface zusätzlich zu WeintCodex — ganz freiwillig. Aus bleibt alles, wie das Spiel es zeigt; die Komfortfunktionen gehen trotzdem."
         or "Das Interface von WeintCodex: Plaketten, Rahmen, Leisten, Karte, Chat, Taschen und Schadensanzeige. Jedes Modul lässt sich einzeln abschalten.",
     defaults = (function()
-        -- highlight: Rahmen und Hervorhebungen in Klassenfarbe (6.6.2.4).
+        -- highlight: die Farbe der Oberflaeche - Klasse (Standard) oder
+        -- Violett (6.6.2.4 nur Rahmen, seit 6.6.3.1 der ganze Akzent).
         local d = { font = "cond", outline = "thin", barStyle = "glanz", shadows = true, windowScale = 100,
                     highlight = "class" }
         -- Ruhe und Kampf (ui/presence.lua): dort definiert, hier gespeichert.
@@ -133,10 +134,10 @@ K.Register({
                         { value = "gradient", text = "Mit leichtem Verlauf" } } },
                   { type = "toggle", label = "Weiche Schatten", key = "shadows",
                     description = "Rahmen, Leisten und Fenster heben sich mit einem Schatten von der Spielwelt ab." })
-            B:Row({ type = "dropdown", label = "Rahmen und Hervorhebungen", key = "highlight", reload = true, items = {
+            B:Row({ type = "dropdown", label = "Farbe der Oberfläche", key = "highlight", reload = true, items = {
                         { value = "class",  text = "In der Farbe deiner Klasse" },
                         { value = "accent", text = "WeintCodex-Lila" } },
-                    description = "Gewählte Reiter, Zielleuchten der Plaketten, deine Zeile in der Schadensanzeige, Rahmen im Gestaltungsmodus." },
+                    tooltip = "Die eine Farbe, die WeintCodex überall trägt: Fenster, Einstellungen, gewählte Reiter, Rahmen, Zielleuchten, Zauber- und Erfahrungsbalken, Überschriften, Texte. Grün, Rot, Gold und Blau bleiben – sie bedeuten etwas (fertig, Fehler, Warnung, Hinweis)." },
                   { type = "empty" })
             B:Section("Testmodus",
                 "Zeigt Ziel, Fokus, Gruppe, Zauberbalken und Schadensanzeige mit Beispielwerten – so siehst du alles auf einem Bildschirm, ohne Gruppe und ohne Kampf. Auch mit /wcui test.")

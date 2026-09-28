@@ -592,7 +592,7 @@ end
 
 function WeintCodex.Calendar.Dump()
     local function say(line)
-        print("|cff7C6CFF[WeintCodex Kalender]|r " .. line)
+        print(WeintCodex.AC .. "[WeintCodex Kalender]|r " .. line)
     end
 
     local _, myRealm = WeintCodex.Names.Me()
@@ -646,7 +646,7 @@ function WeintCodex.Calendar.Dump()
                     (p.lineup ~= "" and p.lineup) or "-",
                     invited and InviteNameFor(p, myRealm) or "(keine Einladung)",
                     WeintCodex.Signup.IsResolved(p) and ""
-                        or "|cff7C6CFF(kein Charaktername)|r"))
+                        or WeintCodex.AC .. "(kein Charaktername)|r"))
             end
         end
     end
@@ -1061,7 +1061,7 @@ local function CreateCalendarFrame()
             f.CreateBtnLbl:SetText("|cffffffff"
                 .. WeintCodex.Icon("Interface\\RaidFrame\\ReadyCheck-Ready", 16)
                 .. "  Eintrag speichern|r")
-            f.StatusText:SetText("|cff7C6CFF" .. total
+            f.StatusText:SetText(WeintCodex.AC .. total
                 .. " Einladung(en) abgeschickt. Der Client gibt die "
                 .. "Einladungsliste nicht her, also kurz warten und "
                 .. "dann speichern.|r")
@@ -1151,13 +1151,13 @@ local function CreateCalendarFrame()
 
         if waiting then
             if draft.resendCount then
-                f.StatusText:SetText("|cff7C6CFF"
+                f.StatusText:SetText(WeintCodex.AC
                     .. WeintCodex.Icon("Interface\\Icons\\INV_Misc_PocketWatch_01", 14)
                     .. " Es wird einzeln nachgefragt … "
                     .. #confirmed .. " von " .. total .. " bestätigt, "
                     .. #missing .. " offen.|r")
             else
-                f.StatusText:SetText("|cff7C6CFF"
+                f.StatusText:SetText(WeintCodex.AC
                     .. WeintCodex.Icon("Interface\\Icons\\INV_Misc_PocketWatch_01", 14)
                     .. " Der Server bestätigt die Einladungen … "
                     .. #confirmed .. " von " .. total .. ".|r")
@@ -1174,7 +1174,7 @@ local function CreateCalendarFrame()
         -- wenn ein Name faelschlich qualifiziert wurde.
         local _, myRealm = WeintCodex.Names.Me()
 
-        f.StatusText:SetText("|cff7C6CFF" .. #confirmed .. " von " .. total
+        f.StatusText:SetText(WeintCodex.AC .. #confirmed .. " von " .. total
             .. " bestätigt.|r\n|cffF46366Nicht gefunden:|r "
             .. table.concat(missing, ", ")
             .. "\n|cff8A8A98"
@@ -1222,7 +1222,7 @@ local function CreateCalendarFrame()
             SaveIngameCalendarEvent(draft, function(success, msg)
                 if success then
                     if #skipped > 0 then
-                        msg = msg .. "\n|cff7C6CFFOhne Charakternamen ("
+                        msg = msg .. "\n" .. WeintCodex.AC .. "Ohne Charakternamen ("
                             .. #skipped .. "), nicht eingeladen:|r "
                             .. table.concat(skipped, ", ")
                             .. "\n|cff8A8A98In Discord nachtragen: "
@@ -1240,10 +1240,10 @@ local function CreateCalendarFrame()
                             .. table.concat(benched, ", ")
                     end
                     f.StatusText:SetText("|cff34C77B" .. msg .. "|r")
-                    print("|cff7C6CFF[WeintCodex Kalender]|r |cff34C77B" ..
+                    print(WeintCodex.AC .. "[WeintCodex Kalender]|r |cff34C77B" ..
                         "Eintrag '" .. draft.title .. "' gespeichert.|r")
                     if #skipped > 0 then
-                        print("|cff7C6CFF[WeintCodex Kalender]|r |cffF46366"
+                        print(WeintCodex.AC .. "[WeintCodex Kalender]|r |cffF46366"
                             .. #skipped .. " Anmeldung(en) ohne "
                             .. "Charakternamen uebersprungen:|r "
                             .. table.concat(skipped, ", "))
@@ -1375,7 +1375,7 @@ local function CreateCalendarFrame()
             return
         end
 
-        f.StatusText:SetText("|cff7C6CFF" .. WeintCodex.Icon("Interface\\Icons\\INV_Misc_PocketWatch_01", 14) .. " Entwurf wird angelegt...|r")
+        f.StatusText:SetText(WeintCodex.AC .. WeintCodex.Icon("Interface\\Icons\\INV_Misc_PocketWatch_01", 14) .. " Entwurf wird angelegt...|r")
 
         ------------------------------------------------
         -- Erster Klick: Entwurf anlegen und einladen
@@ -1399,19 +1399,19 @@ local function CreateCalendarFrame()
         draft.benched = benched
         f.Draft = draft
 
-        print("|cff7C6CFF[WeintCodex Kalender]|r |cff34C77B" ..
+        print(WeintCodex.AC .. "[WeintCodex Kalender]|r |cff34C77B" ..
             "Entwurf '" .. title .. "' angelegt, " .. #invitePlayers ..
             " Einladung(en) abgeschickt. Zum Speichern erneut klicken.|r")
 
         if #skipped > 0 then
-            print("|cff7C6CFF[WeintCodex Kalender]|r |cffF46366"
+            print(WeintCodex.AC .. "[WeintCodex Kalender]|r |cffF46366"
                 .. #skipped .. " Anmeldung(en) ohne "
                 .. "Charakternamen uebersprungen:|r "
                 .. table.concat(skipped, ", "))
         end
 
         if #benched > 0 then
-            print("|cff7C6CFF[WeintCodex Kalender]|r |cff8A8A98"
+            print(WeintCodex.AC .. "[WeintCodex Kalender]|r |cff8A8A98"
                 .. #benched .. " nicht in der Aufstellung, keine "
                 .. "Einladung:|r " .. table.concat(benched, ", "))
         end
@@ -1934,7 +1934,7 @@ RefreshPlayerPreview = function(f, raidData)
         end
 
         if item.invited and not resolved then
-            classLbl:SetText("|cff7C6CFFkein Charakter|r")
+            classLbl:SetText(WeintCodex.AC .. "kein Charakter|r")
         elseif label then
             classLbl:SetText(WeintCodex.ColorText(colorName or "textDim", label))
         else
@@ -1963,7 +1963,7 @@ RefreshPlayerPreview = function(f, raidData)
 
     if unresolved > 0 then
         countText = countText ..
-            "  |cff7C6CFF" .. unresolved .. " ohne Charakter|r"
+            "  " .. WeintCodex.AC .. unresolved .. " ohne Charakter|r"
     end
 
     if excluded > 0 then

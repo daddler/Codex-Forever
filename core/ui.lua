@@ -263,6 +263,107 @@ WeintCodex.GameColors = {
 }
 
 --------------------------------------------------
+-- Der Akzent in der Klassenfarbe (6.6.3.1)
+--------------------------------------------------
+-- Beta-Test: "das komplette Design immer auf die Klasse basierend - teils
+-- ist das ja schon, aber das sollte ueberall komplett sein". Bis 6.6.3.0
+-- trugen nur Rahmen und Hervorhebungen der Spieloberflaeche die
+-- Klassenfarbe (UIKit.Highlight); WeintCodex-Fenster, Einstellungen,
+-- Zauber- und Erfahrungsbalken, Questpfeil und Texte blieben Violett.
+-- Jetzt IST der Akzent die Klassenfarbe: jeder Ton oben, der aus dem
+-- Violett abgeleitet ist, wird an Ort und Stelle umgerechnet - die
+-- Tabellen bleiben dieselben, also sieht jede Stelle, die sie nennt, die
+-- neue Farbe. Es bleibt EIN Akzent (load_test.lua haelt accent = purple
+-- = violet = brandA), er hat nur die Farbe der Klasse.
+-- Abgeleitet wird nach Wert, nicht nach Namen: was Violett war, wird
+-- Klasse (Deckkraft bleibt); die helle, gedaempfte und tiefe Stufe
+-- werden aus der Klassenfarbe genauso hell, gedaempft und tief.
+-- Die Zustandsfarben (gruen, rot, gold, blau) bleiben - sie tragen
+-- Bedeutung, und die hat mit der Klasse nichts zu tun.
+-- "|cff7C6CFF" in Texten: WeintCodex.AC (die Farbe als Farbcode).
+-- Wer Violett will: Allgemein -> "Farbe der Oberflaeche" -> WeintCodex-Lila
+-- (UIKit schaltet nach dem Laden der Einstellungen zurueck).
+local VIOLET = {
+    base   = { 0.486, 0.424, 1.000 },
+    bright = { 0.545, 0.482, 1.000 },
+    dim    = { 0.318, 0.275, 0.667 },
+    deep   = { 0.365, 0.310, 0.878 },
+    card   = { 0.090, 0.086, 0.122 },
+}
+local function Same(t, v)
+    return math.abs(t[1] - v[1]) < 0.002 and math.abs(t[2] - v[2]) < 0.002 and math.abs(t[3] - v[3]) < 0.002
+end
+-- Einmal beim Laden: welche Eintraege sind welche Stufe des Akzents.
+local accentSlots = {}
+for _, tbl in ipairs({ C, WeintCodex.GameColors }) do
+    for _, t in pairs(tbl) do
+        if type(t) == "table" and type(t[1]) == "number" then
+            for kind, v in pairs(VIOLET) do
+                if Same(t, v) then accentSlots[#accentSlots + 1] = { t = t, kind = kind } break end
+            end
+        end
+    end
+end
+WeintCodex.AccentSlots = accentSlots
+
+local function Mix(a, b, k) return a + (b - a) * k end
+
+-- Den Akzent auf r, g, b setzen (0-1). Liefert, ob etwas gesetzt wurde.
+-- tones: fertige Stufen statt abgeleiteter (Violett: genau die alten Werte).
+function WeintCodex.SetAccent(r, g, b, tones)
+    if type(r) ~= "number" or type(g) ~= "number" or type(b) ~= "number" then return false end
+    local tone = tones or {
+        base   = { r, g, b },
+        bright = { Mix(r, 1, 0.12), Mix(g, 1, 0.12), Mix(b, 1, 0.12) },
+        dim    = { r * 0.65, g * 0.65, b * 0.65 },
+        deep   = { r * 0.80, g * 0.80, b * 0.80 },
+        card   = { Mix(0.090, r, 0.05), Mix(0.090, g, 0.05), Mix(0.110, b, 0.05) },
+    }
+    for _, slot in ipairs(accentSlots) do
+        local v = tone[slot.kind]
+        slot.t[1], slot.t[2], slot.t[3] = v[1], v[2], v[3]
+    end
+    WeintCodex.AccentHex = string.format("%02X%02X%02X",
+        math.floor(r * 255 + 0.5), math.floor(g * 255 + 0.5), math.floor(b * 255 + 0.5))
+    WeintCodex.AC = "|cff" .. WeintCodex.AccentHex
+    return true
+end
+
+-- Der Farbcode des Violetts, wie ihn die Changelog-Daten tragen -
+-- zusammengesetzt, damit die Pruefung auf feste Farbcodes ihn nicht zaehlt.
+WeintCodex.VIOLET_CODE = "|cff" .. "7C6CFF"
+
+function WeintCodex.SetVioletAccent()
+    local v = VIOLET.base
+    return WeintCodex.SetAccent(v[1], v[2], v[3], VIOLET)
+end
+
+-- Die Farbe der eigenen Klasse, wie das Spiel sie nennt; nil ohne Antwort.
+function WeintCodex.ClassRGB()
+    if type(_G.UnitClass) ~= "function" then return nil end
+    local ok, _, class = pcall(_G.UnitClass, "player")
+    if not ok or type(class) ~= "string" then return nil end
+    local cc
+    if _G.C_ClassColor and _G.C_ClassColor.GetClassColor then
+        local cok, col = pcall(_G.C_ClassColor.GetClassColor, class)
+        if cok and type(col) == "table" then cc = col end
+    end
+    if not cc and type(_G.RAID_CLASS_COLORS) == "table" then cc = _G.RAID_CLASS_COLORS[class] end
+    if type(cc) ~= "table" or type(cc.r) ~= "number" then return nil end
+    return cc.r, cc.g, cc.b
+end
+
+-- Beim Laden: Klassenfarbe, sonst Violett. Die Klasse kennt der Client
+-- schon, wenn die Dateien des Addons laufen.
+function WeintCodex.ApplyClassAccent()
+    local r, g, b = WeintCodex.ClassRGB()
+    if r then WeintCodex.accentFromClass = WeintCodex.SetAccent(r, g, b)
+    else WeintCodex.accentFromClass = false WeintCodex.SetVioletAccent() end
+    return WeintCodex.accentFromClass
+end
+WeintCodex.ApplyClassAccent()
+
+--------------------------------------------------
 -- Schriften
 --------------------------------------------------
 -- Drei Familien, drei Aufgaben - dieselbe Aufteilung wie in der Companion

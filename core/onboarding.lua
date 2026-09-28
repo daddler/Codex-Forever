@@ -683,6 +683,9 @@ function WeintCodex.Onboarding.ShowChangelog(entries)
                 "Version " .. entry.version .. (entry.date and (" (" .. entry.date .. ")") or "")))
         end
         for _, note in ipairs(entry.notes) do
+            -- Die Hervorhebung steht in den Daten als Violett (7C6CFF);
+            -- gezeigt wird sie im Akzent - seit 6.6.3.1 der Klassenfarbe.
+            note = note:gsub(WeintCodex.VIOLET_CODE, WeintCodex.AC or WeintCodex.VIOLET_CODE)
             table.insert(lines, "• " .. note)
         end
         table.insert(lines, "")

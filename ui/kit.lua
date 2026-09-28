@@ -102,35 +102,22 @@ local function CopyValue(v)
 end
 
 -- RAHMEN UND HERVORHEBUNGEN (6.6.2.4, Beta-Test: "statt der lila Rahmen
--- ueberall lieber Rahmen in der Farbe der Klasse"). Gewaehlter Reiter,
--- Zielleuchten der Plaketten, eigene Zeile der Schadensanzeige, Rahmen
--- im Gestaltungsmodus: in der Klassenfarbe des Charakters (RAID_CLASS_COLORS,
--- das Spiel nennt sie) - oder, mit "general.highlight = accent", im Akzent
--- wie bisher. Der Akzent selbst (core/ui.lua) bleibt, was er ist: das
--- Fenster von WeintCodex, Texte und Fortschritt (Zauber-, Erfahrungsbalken)
--- tragen ihn weiter. Die Farbe steht fest, sobald der Client die Klasse
--- nennt; ein Wechsel der Einstellung gilt nach dem Neuladen.
-local highlight
+-- ueberall lieber Rahmen in der Farbe der Klasse"). Seit 6.6.3.1 ist der
+-- Akzent selbst die Klassenfarbe (core/ui.lua, WeintCodex.SetAccent) -
+-- im ganzen Addon, nicht nur in Rahmen. K.Highlight ist damit der Akzent;
+-- der Name bleibt, weil ihn Dutzende Stellen rufen.
+-- "general.highlight = accent" schaltet auf Violett zurueck. Die
+-- Einstellungen gibt es erst nach dem Laden (ADDON_LOADED); bis dahin
+-- steht die Klassenfarbe, und die Oberflaeche baut sich erst danach auf.
+-- Ein Wechsel gilt nach dem Neuladen.
 function K.Highlight()
-    if highlight then return highlight end
-    local acc = WeintCodex.Colors.accent
-    if K.Get("general", "highlight") == "accent" then
-        highlight = acc
-        return acc
-    end
-    local class
-    if _G.UnitClass then
-        local ok, _, c = pcall(_G.UnitClass, "player")
-        class = ok and K.Plain(c) or nil
-    end
-    local cc = type(class) == "string" and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
-    if type(cc) == "table" and type(cc.r) == "number" then
-        highlight = { cc.r, cc.g, cc.b, 1 }
-        return highlight
-    end
-    return acc   -- Klasse (noch) unbekannt: nicht merken, beim naechsten Mal fragen
+    return WeintCodex.Colors.accent
 end
-function K.ResetHighlight() highlight = nil end
+
+function K.ResetHighlight()
+    if K.Get("general", "highlight") == "accent" then WeintCodex.SetVioletAccent()
+    else WeintCodex.ApplyClassAccent() end
+end
 
 -- Farbvorgabe aus core/ui.lua als { r, g, b }.
 function K.ColorDefault(name)
@@ -1414,7 +1401,9 @@ boot:SetScript("OnEvent", function(_, event)
         return
     end
 
-    -- PLAYER_LOGIN
+    -- PLAYER_LOGIN. Zuerst der Akzent: Klassenfarbe oder, so eingestellt,
+    -- Violett - bevor die Module ihre Flaechen faerben.
+    K.ResetHighlight()
     for _, key in ipairs(order) do
         if K.WantsActive(key) then K.Activate(key) end
     end

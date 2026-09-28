@@ -12,7 +12,7 @@ WeintCodex = WeintCodex or {}
 -- "v" plus diese Zahl sein. Die CI prueft alle vier gegeneinander und
 -- bricht sonst ab - siehe .github/scripts/release_notes.py und
 -- docs/development/releases.md.
-WeintCodex.Version = "6.6.3.0"
+WeintCodex.Version = "6.6.3.1"
 
 SLASH_WEINTCODEX1 = "/wc"
 SLASH_WEINTCODEX2 = "/weintcodex"
@@ -303,7 +303,7 @@ local function OnEvent(self, event, addonName)
         WeintCodex.ResetToHome()
     end
 
-    print("|cff7C6CFF[WeintCodex]|r |cff34C77Bv" .. WeintCodex.Version
+    print(WeintCodex.AC .. "[WeintCodex]|r |cff34C77Bv" .. WeintCodex.Version
         .. "|r geladen. |cff8A8A98/wc zum Öffnen, /wc einstellungen für die Optionen.|r")
 end
 
@@ -343,7 +343,7 @@ saveProbe:SetScript("OnEvent", function(_, event, isInitialLogin, isReloadingUi)
         saveHealth = "unknown"
     elseif time() - stamp > SAVE_STALE_AFTER then
         saveHealth = "failed"
-        print("|cff7C6CFF[WeintCodex]|r |cffF0A63ADer Client hat die Einstellungen"
+        print(WeintCodex.AC .. "[WeintCodex]|r |cffF0A63ADer Client hat die Einstellungen"
             .. " beim letzten Neuladen nicht gespeichert.|r Das ist ein bekannter"
             .. " Fehler der Forever-Beta, kein Fehler von WeintCodex – was du vor"
             .. " dem Neuladen geändert hast, ist verloren.")

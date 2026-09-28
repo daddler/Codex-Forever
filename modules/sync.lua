@@ -537,10 +537,10 @@ function WeintCodex.Sync.ShowImportDialog()
     helpText:SetTextColor(C.textNormal[1], C.textNormal[2], C.textNormal[3])
     helpText:SetText(
         "Führe im Discord-Bot einen Exportbefehl aus und füge den generierten String unten ein.\n\n" ..
-        "|cff7C6CFFBossnotizen:|r  /export boss        ->  WCIMPORT:BOSS:...\n" ..
+        WeintCodex.AC .. "Bossnotizen:|r  /export boss        ->  WCIMPORT:BOSS:...\n" ..
         "|cff4EA8F5Raid Mi:|r      /export raidwed     ->  WCIMPORT:RAIDWED:...\n" ..
         "|cff4EA8F5Raid Do:|r      /export raidthu     ->  WCIMPORT:RAIDTHU:...\n" ..
-        "|cff7C6CFFMaterialien:|r  /export mat         ->  WCIMPORT:MAT:...\n\n" ..
+        WeintCodex.AC .. "Materialien:|r  /export mat         ->  WCIMPORT:MAT:...\n\n" ..
         "Mehrere Zeilen dürfen zusammen hier hinein — sie werden nacheinander gelesen."
     )
 
@@ -675,7 +675,7 @@ function WeintCodex.Sync.ShowImportDialog()
                 lines[#lines+1] = "|cff4EA8F5" .. WeintCodex.Icon("Interface\\Icons\\Ability_Warrior_BattleShout", 14) .. "|r  Donnerstag-Raid: " .. sd.raidThursday.date .. "   (" .. (sd.raidThursday.players and #sd.raidThursday.players or 0) .. " Spieler)"
             end
             if sd.materialData and sd.materialData.date and sd.materialData.date ~= "" then
-                lines[#lines+1] = "|cff7C6CFF" .. WeintCodex.Icon("Interface\\Icons\\INV_Crate_01", 14) .. "|r  Materialien:     " .. sd.materialData.date .. "   (" .. (sd.materialData.items and #sd.materialData.items or 0) .. " Einträge)"
+                lines[#lines+1] = WeintCodex.AC .. WeintCodex.Icon("Interface\\Icons\\INV_Crate_01", 14) .. "|r  Materialien:     " .. sd.materialData.date .. "   (" .. (sd.materialData.items and #sd.materialData.items or 0) .. " Einträge)"
             end
         end
         if #lines == 0 then
@@ -703,7 +703,7 @@ function WeintCodex.Sync.ShowImportDialog()
             editBox:SetText("")
             UpdateHistory()
             C_Timer.After(0.8, function()
-                print("|cff7C6CFF[WeintCodex]|r |cff34C77B" .. msg .. "|r")
+                print(WeintCodex.AC .. "[WeintCodex]|r |cff34C77B" .. msg .. "|r")
             end)
         else
             f.StatusText:SetText("|cffF46366" .. WeintCodex.Icon("Interface\\RaidFrame\\ReadyCheck-NotReady", 14) .. " Fehler: " .. msg .. "|r")
@@ -718,8 +718,8 @@ end
 function WeintCodex.Sync.QuickImport(str)
     local ok, msg = WeintCodex.Sync.ProcessImportText(str)
     if ok then
-        print("|cff7C6CFF[WeintCodex Import]|r |cff34C77B" .. msg .. "|r")
+        print(WeintCodex.AC .. "[WeintCodex Import]|r |cff34C77B" .. msg .. "|r")
     else
-        print("|cff7C6CFF[WeintCodex Import]|r |cffF46366Fehler: " .. msg .. "|r")
+        print(WeintCodex.AC .. "[WeintCodex Import]|r |cffF46366Fehler: " .. msg .. "|r")
     end
 end
