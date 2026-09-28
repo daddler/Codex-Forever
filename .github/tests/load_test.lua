@@ -4423,6 +4423,27 @@ do
         W.SkinSideTabs(win)
         assert(gold1:GetAlpha() == 0 and W.SideTabs[tab1] and W.SideTabs[tab2], "Seitenreiter nicht gestaltet")
         assert(W.SideTabs[tab1].on == true and W.SideTabs[tab2].on == false, "gewaehlter Reiter nicht erkannt")
+        -- 6.6.2.2: tragen ALLE das Zeichen, trennt es nichts - dann keiner
+        -- (Beta-Test: alle vier im Akzent). Heller Rahmen trennt eindeutig.
+        tab2.GetChecked = function() return true end
+        gold1.GetVertexColor = function() return 1, 1, 1 end
+        gold2.GetVertexColor = function() return 1, 1, 1 end
+        W.SkinSideTabs(win)
+        assert(not W.SideTabs[tab1].on and not W.SideTabs[tab2].on, "alle Reiter gewaehlt")
+        gold2.GetVertexColor = function() return 0.5, 0.5, 0.5 end
+        W.SkinSideTabs(win)
+        assert(W.SideTabs[tab1].on and not W.SideTabs[tab2].on and W.SideTabs[tab1].why == "frameLight",
+            "hellerer Rahmen entscheidet nicht")
+        local rep = W.SideTabReport(win)
+        assert(#rep == 2 and rep[1]:find("GEWÄHLT", 1, true), "Bericht der Seitenreiter fehlt")
+        for _, a in ipairs({ "groupfinder-button-cover-hover", "groupfinder-background", "UI-Frame-PortraitMetal-CornerTopLeft",
+                             "_UI-Frame-TopTileStreaks", "common-search-border-middle", "MapCornerShadow-Right" }) do
+            assert(W.HidesAtlas(a), "bleibt sichtbar: " .. a)
+        end
+        assert(W.TonesAtlas("groupfinder-button-questing") and not W.TonesAtlas("groupfinder-button-cover"),
+            "Kategoriebild weg statt gedaempft")
+        assert(not W.HidesAtlas("UI-LFG-RoleIcon-DPS") and not W.HidesAtlas("UI-QuestPoi-QuestNumber"), "Symbol ausgeblendet")
+        assert(W.Desaturates("QuestCollapse-Hide-Up"), "brauner Pfeilknopf bleibt braun")
         -- Communitys: Reiter ueber ihren Namen, Innenflaechen tiefer im Fenster.
         local comm = stub.NewObject("Frame")
         local chatTab, bg = stub.NewObject("CheckButton"), stub.NewObject("Texture")

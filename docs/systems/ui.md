@@ -970,3 +970,39 @@ meldete `/wcui fenster` „common-sidetab · SOLLTE WEG SEIN“.
 Für die Communitys lag keine Messung vor: Liste links (grüne Auswahl,
 Wappen), Mitgliederliste und Bildlaufleisten tragen Bilder, deren Namen
 erst `/wcui fenster` über dem Fenster nennt. Im Spiel ungeprüft.
+
+## Seitenreiter, Dungeonbrowser, Nachträge *(6.6.2.2)*
+
+**Welcher Seitenreiter gewählt ist** (`W.SideSignals`,
+`W.PickSelected`): 6.6.2.1 nahm das erste Zeichen, das ein Reiter trug –
+im Berufefenster trugen es alle vier, alle vier standen im Akzent
+(Beta-Test). Jetzt wird jedes Zeichen für die ganze Reihe (Reiter mit
+demselben Elternrahmen) gelesen, und es zählt nur eines, das die Reihe
+**trennt**: `GetChecked`, `SelectedTexture`, ein „select“-Atlas,
+gesperrt (`IsEnabled`), dann eindeutig hellster Goldrahmen
+(`GetVertexColor`, entsättigt zählt dunkel) oder hellstes Bild. Trennt
+keines, ist **keiner** markiert. `/wcui fenster` nennt die Zeichen je
+Reiter (`W.SideTabReport`) – so ist beim nächsten Test zu sehen, woran
+der Forever-Client den gewählten erkennt, falls keines trennt.
+
+**Suche nach Gruppe** (Dungeonbrowser; im Forever-Client
+`LFGParentFrame`, gemessen, im Quelltext des Spiels `PVEFrame` – beide
+in `W.WINDOWS`). Gemessen und umgesetzt: Metallrahmen und
+`UI-Frame-PortraitMetal-*`, `_UI-Frame-TopTileStreaks`, der Marmor der
+Liste (Bild 374155 am `LFGListingFrame`, `W.OWN_BG`),
+`common-insideframe`, `groupfinder-background`,
+`groupfinder-roles-background`, die Goldrahmen der Kategorien
+(`groupfinder-button-cover*` → 1 px Rand); die Kategoriebilder
+(`groupfinder-button-questing/-battlegrounds/-custom-pve`) gedämpft
+statt weg; die Reiter rechts (`common-sidetab`) wie bei den Berufen.
+Rollensymbole bleiben.
+
+**Nachträge Questlog** (Messung über der Questliste): Goldrand des
+Suchfelds (`common-search-border-*` → flach), Schatten am Knopf der
+Seitenleiste (`MapCornerShadow-*`) weg, braune Pfeilknöpfe
+(`QuestCollapse-*`) und die Pfeile/Bahnen der schmalen
+Bildlaufleisten (`minimal-scrollbar-*`, überall) grau. Questmarken,
+Häkchen und Symbole bleiben.
+
+**Gilde & Communitys**: das Wappen oben links (`PortraitOverlay`) ist
+weg. Liste links (grüne Auswahl) und Chat-Eingabe sind ungemessen.

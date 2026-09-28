@@ -58,7 +58,10 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               "GossipFrame", "QuestFrame", "ItemTextFrame", "MerchantFrame",
               -- 6.6.2.1: Berufe (Blizzard_Professions) und Gilde & Communitys
               -- (Blizzard_Communities), beide erst beim ersten Oeffnen geladen.
-              "ProfessionsFrame", "CommunitiesFrame" }
+              "ProfessionsFrame", "CommunitiesFrame",
+              -- 6.6.2.2: "Suche nach Gruppe" (Dungeonbrowser). Im Forever-Client
+              -- LFGParentFrame (gemessen), im Quelltext des Spiels PVEFrame.
+              "LFGParentFrame", "PVEFrame" }
 
 -- GESPRAECHE (6.6.1.4, Beta-Test: "die normale Interaktion von
 -- Questgebern, Gastwirten etc. muss angeglichen werden"). Gespraech,
@@ -95,11 +98,14 @@ function W.WantsLarge(name)
     return false
 end
 W.LARGE_SHARE = 0.15   -- ab diesem Anteil an der Fensterflaeche ist ein Bild Hintergrund
+-- Teilfenster, deren eigene Bilder der Grund sind (gemessen, 6.6.2.2):
+-- die Liste im Dungeonbrowser liegt auf Marmor (Bild 374155).
+W.OWN_BG = { "LFGListingFrame" }
 W.PANELS  = { "PaperDollFrame", "ReputationFrame", "SkillFrame", "TokenFrame", "PVPFrame", "HonorFrame",
               "CharacterStatsPane" }
 
 -- Schmuck in der Fenstervorlage des Spiels, als Schluessel am Rahmen.
-local DECOR = { "NineSlice", "Bg", "Background", "TopTileStreaks", "Inset", "InsetBg",
+local DECOR = { "NineSlice", "Bg", "Background", "TopTileStreaks", "Inset", "InsetBg", "PortraitOverlay",
                 "PortraitContainer", "PortraitFrame", "PortraitButton", "portrait", "TitleBg", "TopBorder" }
 
 local done = {}
@@ -150,7 +156,9 @@ end
 -- Portraet-Rahmen ganz ausblenden, nicht nur ihre Texturen: im
 -- Talentfenster blieb das runde Symbol oben links stehen (Beta-Test
 -- 6.4.1.4) - es liegt tiefer als eine Textur des Rahmens.
-local WHOLE = { PortraitContainer = true, PortraitFrame = true, PortraitButton = true }
+-- 6.6.2.2: PortraitOverlay - das Gildenwappen oben links an Gilde &
+-- Communitys (Beta-Test: blieb stehen).
+local WHOLE = { PortraitContainer = true, PortraitFrame = true, PortraitButton = true, PortraitOverlay = true }
 
 local function HideDecorOf(f)
     for _, key in ipairs(DECOR) do
@@ -256,12 +264,22 @@ W.HIDE_ATLAS = {
     "^Profession%-ProgressBar%-",            -- Balken: Rahmen und Grund (flach ersetzt)
     "^Profession%-square%-frame",            -- Goldrahmen ums Symbol (1 px Rand statt)
     "^Profession%-Background%-Overview",
+    -- 6.6.2.2, gemessen: Dungeonbrowser ("Suche nach Gruppe") und Questlog.
+    "^UI%-Frame%-PortraitMetal",             -- Metallecke am Portrait
+    "^_?UI%-Frame%-TopTileStreaks",          -- Streifen unter dem Titel
+    "^groupfinder%-background",              -- Grund der Liste
+    "^groupfinder%-roles%-background",       -- Grund der Rollenwahl
+    "^groupfinder%-button%-cover",           -- Goldrahmen um die Kategorien (1 px Rand statt)
+    "^common%-search%-border",               -- Goldrand um das Suchfeld (flach statt)
+    "^MapCornerShadow",                      -- Schatten am Knopf der Seitenleiste
 }
 -- Gedaempft statt weg (mit "Stimmung statt Schwarz"): die Karten der
 -- Berufsuebersicht tragen je Beruf ein Bild - das zeigt, welcher es ist.
-W.TONE_ATLAS = { "^Profession%-overview%-card" }
+-- Ebenso die Bilder der Kategorien im Dungeonbrowser (Quests & Zonen,
+-- Schlachtfelder, Benutzerdefiniert) - 6.6.2.2.
+W.TONE_ATLAS = { "^Profession%-overview%-card", "^groupfinder%-button%-" }
 function W.TonesAtlas(atlas)
-    if type(atlas) ~= "string" then return false end
+    if type(atlas) ~= "string" or W.HidesAtlas(atlas) then return false end
     for _, pat in ipairs(W.TONE_ATLAS) do
         if atlas:find(pat) then return true end
     end
@@ -320,7 +338,8 @@ local function HideByAtlas(f, depth)
                 stats.hidden = stats.hidden + 1
             end
             if atlas:find("^common%-stat%-bar%-BG") or atlas:find("^Profession%-ProgressBar%-BG") then FlatBar(f) end
-            if atlas:find("^Profession%-square%-frame") then W.EdgeBorder(f) end
+            if atlas:find("^Profession%-square%-frame") or atlas:find("^groupfinder%-button%-cover") then W.EdgeBorder(f) end
+            if atlas:find("^common%-search%-border") then FlatBar(f) end
         elseif ok and W.TonesAtlas(atlas) then
             if Opt("windowArt") then W.Tone(r) else Hide(r) end
             if not seen[r] then
@@ -609,7 +628,11 @@ end
 
 -- Rot und Gelb des Spiels an Knoepfen werden grau: die Form bleibt, die
 -- Bedeutung (schliessen, aufklappen) auch.
-local DESAT_ATLAS = { "^[Rr]ed[Bb]utton%-", "^common%-dropdown%-a%-button" }
+-- 6.6.2.2: die braunen Pfeilknoepfe am Questlog (Seitenleiste auf/zu).
+-- Dazu die goldenen Pfeile und Bahnen der schmalen Bildlaufleisten
+-- (!minimal-scrollbar-*, gemessen am Questlog) - Gilde & Communitys hat drei.
+local DESAT_ATLAS = { "^[Rr]ed[Bb]utton%-", "^common%-dropdown%-a%-button", "^QuestCollapse%-",
+                      "^!?minimal%-scrollbar" }
 local desat = setmetatable({}, { __mode = "k" })
 function W.Desaturates(atlas)
     if type(atlas) ~= "string" then return false end
@@ -1106,24 +1129,85 @@ local function IsSideTab(b)
     return false
 end
 
--- Gewaehlt? Was das Spiel dafuer anbietet, der Reihe nach.
-local function SideSelected(tab)
+-- GEWAEHLT? 6.6.2.1 nahm das erste Zeichen, das einer der Reiter trug -
+-- im Berufefenster trugen es alle vier, und alle vier standen im Akzent
+-- (Beta-Test). Seit 6.6.2.2: jedes Zeichen wird fuer die ganze Reihe
+-- gelesen, und es zaehlt nur eines, das die Reihe TRENNT (nicht keiner,
+-- nicht alle). Trennt keines, ist keiner markiert - lieber keine Auskunft
+-- als eine falsche. /wcui fenster nennt die Zeichen je Reiter.
+local function Shown(t)
+    return type(t) == "table" and t.IsShown and K.Bool(t:IsShown(), false) or false
+end
+
+local function Brightness(t)
+    if type(t) ~= "table" or not t.GetVertexColor then return nil end
+    local ok, r, g, b = pcall(t.GetVertexColor, t)
+    r, g, b = K.Plain(r), K.Plain(g), K.Plain(b)
+    if not ok or type(r) ~= "number" or type(g) ~= "number" or type(b) ~= "number" then return nil end
+    local desat = t.IsDesaturated and K.Bool(t:IsDesaturated(), false)
+    return math.floor((r + g + b) * 100 + 0.5) - (desat and 1000 or 0)
+end
+
+function W.SideSignals(tab)
+    local sig = {}
     if type(tab.GetChecked) == "function" then
         local ok, v = pcall(tab.GetChecked, tab)
-        if ok and K.Bool(v, false) then return true end
+        if ok then sig.checked = K.Bool(v, false) end
     end
     local sel = tab.SelectedTexture or tab.Selected
-    if type(sel) == "table" and sel.IsShown and K.Bool(sel:IsShown(), false) then return true end
+    if type(sel) == "table" and sel.IsShown then sig.selTex = Shown(sel) end
+    if type(tab.IsEnabled) == "function" then
+        local ok, v = pcall(tab.IsEnabled, tab)
+        if ok and type(K.Plain(v)) ~= "nil" then sig.disabled = not K.Bool(v, true) end
+    end
     local ok, regions = pcall(function() return { tab:GetRegions() } end)
     for _, r in ipairs(ok and regions or {}) do
         local a = SideTabAtlas(r)
-        if a and a:lower():find("select", 1, true) and r.IsShown and K.Bool(r:IsShown(), false) then return true end
+        if a and a:lower():find("select", 1, true) then sig.selAtlas = Shown(r) or sig.selAtlas or false end
+        if a == "common-sidetab" then sig.frameLight = Brightness(r) end
     end
-    return false
+    local icon = tab.Icon or tab.icon
+    if type(icon) ~= "table" then icon = TabIcon(tab) end
+    sig.iconLight = Brightness(icon)
+    return sig
+end
+
+local FLAG_ORDER = { "checked", "selTex", "selAtlas", "disabled" }
+local LIGHT_ORDER = { "frameLight", "iconLight" }
+
+-- Welcher Reiter einer Reihe ist gewaehlt? Liefert ihn (oder nil) und das
+-- Zeichen, das es entschieden hat.
+function W.PickSelected(tabs, signals)
+    for _, key in ipairs(FLAG_ORDER) do
+        local yes, known = {}, 0
+        for _, t in ipairs(tabs) do
+            local v = signals[t][key]
+            if type(v) == "boolean" then
+                known = known + 1
+                if v then yes[#yes + 1] = t end
+            end
+        end
+        if known == #tabs and #yes == 1 then return yes[1], key end
+    end
+    -- Heller als alle anderen (Rahmen oder Bild), eindeutig.
+    for _, key in ipairs(LIGHT_ORDER) do
+        local best, bestV, second = nil, nil, nil
+        local known = 0
+        for _, t in ipairs(tabs) do
+            local v = signals[t][key]
+            if type(v) == "number" then
+                known = known + 1
+                if not bestV or v > bestV then second, best, bestV = bestV, t, v
+                elseif not second or v > second then second = v end
+            end
+        end
+        if known == #tabs and #tabs > 1 and bestV and second and bestV > second then return best, key end
+    end
+    return nil, nil
 end
 
 local function SkinSideTab(tab)
-    if type(tab) ~= "table" or not tab.CreateTexture or (tab.IsForbidden and tab:IsForbidden()) then return end
+    if type(tab) ~= "table" or not tab.CreateTexture or (tab.IsForbidden and tab:IsForbidden()) then return nil end
     local d = sideDone[tab]
     if not d then
         local ok, regions = pcall(function() return { tab:GetRegions() } end)
@@ -1140,30 +1224,77 @@ local function SkinSideTab(tab)
         own[hl] = true
         sideDone[tab] = d
     end
-    local on = SideSelected(tab)
-    if d.on ~= on then
-        d.on = on
-        local c = on and C.accent or { 0, 0, 0 }
-        d.kachel.border:SetColor(c[1], c[2], c[3], 1)
-    end
+    return d
 end
 
-local function SkinSideTabs(f, depth)
+local function CollectSideTabs(f, depth, out)
     if depth > 6 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
     if depth == 0 then
         for _, key in ipairs(SIDE_KEYS) do
-            if type(f[key]) == "table" then SkinSideTab(f[key]) end
+            if type(f[key]) == "table" then out[#out + 1] = f[key] end
         end
     end
     local cok, kids = pcall(function() return { f:GetChildren() } end)
     for _, ch in ipairs(cok and kids or {}) do
         if type(ch) == "table" then
-            if sideDone[ch] or IsSideTab(ch) then SkinSideTab(ch) end
-            SkinSideTabs(ch, depth + 1)
+            if sideDone[ch] or IsSideTab(ch) then out[#out + 1] = ch end
+            CollectSideTabs(ch, depth + 1, out)
         end
     end
 end
-W.SkinSideTabs = function(f) SkinSideTabs(f, 0) end
+
+local function SkinSideTabs(f)
+    local found, seenTab = {}, {}
+    CollectSideTabs(f, 0, found)
+    -- Reihen: Reiter mit demselben Elternrahmen.
+    local groups, order = {}, {}
+    for _, tab in ipairs(found) do
+        if not seenTab[tab] and SkinSideTab(tab) then
+            seenTab[tab] = true
+            local ok, p = pcall(tab.GetParent, tab)
+            p = ok and p or tab
+            if not groups[p] then groups[p] = {} order[#order + 1] = p end
+            table.insert(groups[p], tab)
+        end
+    end
+    for _, p in ipairs(order) do
+        local tabs = groups[p]
+        local signals = {}
+        for _, t in ipairs(tabs) do signals[t] = W.SideSignals(t) end
+        local pick, why = W.PickSelected(tabs, signals)
+        for _, t in ipairs(tabs) do
+            local d = sideDone[t]
+            local on = (t == pick)
+            d.signals, d.why = signals[t], on and why or nil
+            if d.on ~= on then
+                d.on = on
+                local c = on and C.accent or { 0, 0, 0 }
+                d.kachel.border:SetColor(c[1], c[2], c[3], 1)
+            end
+        end
+    end
+    return found
+end
+W.SkinSideTabs = SkinSideTabs
+
+-- Fuer /wcui fenster: je Reiter seine Zeichen.
+function W.SideTabReport(f)
+    local out = {}
+    local found = {}
+    CollectSideTabs(f, 0, found)
+    for i, tab in ipairs(found) do
+        local d = sideDone[tab]
+        local sig = (d and d.signals) or W.SideSignals(tab)
+        local parts = {}
+        for _, key in ipairs({ "checked", "selTex", "selAtlas", "disabled", "frameLight", "iconLight" }) do
+            if type(sig[key]) ~= "nil" then parts[#parts + 1] = key .. "=" .. tostring(sig[key]) end
+        end
+        out[#out + 1] = string.format("   Reiter %d: %s%s", i, table.concat(parts, " "),
+            (d and d.on) and (" · GEWÄHLT (" .. tostring(d.why) .. ")") or "")
+        if i >= 8 then break end
+    end
+    return out
+end
 
 -- Innenflaechen tiefer im Fenster (InsetFrameTemplate: Bg + NineSlice),
 -- etwa Liste, Chat und Mitglieder der Communitys: der Rahmen weg, eine
@@ -1205,10 +1336,12 @@ function W.Inner()
             Grey(f, 0)
             SkinTabSystems(f, 0)
             SkinPanelButtons(f, 0)
-            SkinSideTabs(f, 0)
+            SkinSideTabs(f)
             -- Innenflaechen tiefer im Fenster nur dort, wo sie gemessen
             -- zu sehen waren - die schon gestalteten Fenster bleiben, wie sie sind.
-            if n == "CommunitiesFrame" or n == "ProfessionsFrame" then SkinInsets(f, 0) end
+            if n == "CommunitiesFrame" or n == "ProfessionsFrame" or n == "LFGParentFrame" or n == "PVEFrame" then
+                SkinInsets(f, 0)
+            end
             if n == "CharacterFrame" then
                 FitStats(f, 0)
                 if Opt("windowArt") then W.SoftenModel(f) end
@@ -1250,6 +1383,13 @@ function W.Apply()
         if type(f) == "table" and not done[f] then W.Skin(f, true) end
     end
     if type(_G[W.MAP]) == "table" and Opt("mapSkin") then W.SkinMap(_G[W.MAP]) end
+    for _, n in ipairs(W.OWN_BG) do
+        local f = _G[n]
+        if type(f) == "table" and not done[f] then
+            W.Skin(f, true)
+            HideOwnTextures(f)
+        end
+    end
     W.Inner()
 end
 
