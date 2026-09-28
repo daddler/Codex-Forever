@@ -686,6 +686,15 @@ Seit 6.2.0.0:
   Speicher (`collectgarbage("count")` davor/danach, nach unten ungenau,
   wenn die Bereinigung mittendrin läuft) und Zeit; der Bericht nennt das
   Wachstum des Addons und die acht größten Erzeuger je Sekunde.
+  Erste Messung im Beta-Test (6.6.1.8, im Kampf): 402 KB/s gemessen,
+  davon **Aktionsleisten 354 KB/s** bei 89 Aufrufen/s – das Einblenden
+  „nur bei Maus darüber“ baute jedes Bild eine frische Liste aus ~14
+  Tabellen (`Faded`). Seit 6.6.1.9 gemerkt (neu nur in
+  `UpdateMouseover`, die Flächen werden beim Prüfen nachgeschlagen);
+  `load_test.lua` misst mit dem echten Speicherzähler, dass 300 Bilder
+  unter 30 KB bleiben (vorher 141 KB im Prüflauf). Zweiter: **Questpfeil**
+  28 KB/s – seitdem fünfmal je Sekunde ein ganzer Durchlauf, dazwischen
+  dreht `QA.Turn` nur den Pfeil aus den gemerkten Punkten (`QA._aim`).
 * **Gespräche** (6.6.1.4, Beta-Test: „die normale Interaktion von
   Questgebern, Gastwirten etc. muss angeglichen werden“): `GossipFrame`,
   `QuestFrame`, `ItemTextFrame` (`W.DIALOGS`) bekommen die Fensterhülle,

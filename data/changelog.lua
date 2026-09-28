@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.1.9",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFDeutlich weniger Speicher.|r Die Messung hat es gezeigt: fast neun Zehntel des Wegwerf-Speichers kamen vom Einblenden der Aktionsleisten bei Maus darüber – bei jedem Bild. Das ist behoben, und der Questpfeil rechnet nur noch fünfmal je Sekunde alles neu; dazwischen dreht er sich nur.",
+        },
+    },
+    {
         version = "6.6.1.8",
         date    = "28.09.2026",
         notes   = {

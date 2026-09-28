@@ -589,6 +589,25 @@ end
 -- einmal je Sekunde neu gesucht - GetQuestsOnMap legt bei jedem Aufruf
 -- eine Tabelle an, und zwanzigmal je Sekunde waere das reiner Muell.
 local cache = { at = -1 }
+-- Zwischen zwei ganzen Durchlaeufen dreht sich nur der Pfeil (6.6.1.9):
+-- die Blickrichtung aendert sich jedes Bild, die eigene Position kaum.
+-- Ein ganzer Durchlauf fragt Karte, Weltposition, Navigation ab und
+-- setzt Texte - zwanzigmal je Sekunde waren das im Beta-Test 28 KB/s
+-- Wegwerf-Speicher. Jetzt fuenfmal ganz, dazwischen nur der Winkel aus
+-- den gemerkten Punkten (reine Rechnung, keine neuen Tabellen).
+local aim = { ok = false }
+QA._aim = aim
+function QA.Turn()
+    if not aim.ok or not (arrow and arrow:IsShown()) then return false end
+    local facing = _G.GetPlayerFacing and K.Plain(_G.GetPlayerFacing())
+    if type(facing) ~= "number" then return false end
+    local _, rotation = QA.Solve(aim.pN, aim.pW, aim.tN, aim.tW, facing)
+    if not rotation then return false end
+    PointArrow(rotation)
+    SetArrowColor(rotation)
+    return true
+end
+
 local function Target(playerMap, force)
     local now = _G.GetTime and _G.GetTime() or 0
     if not force and cache.at >= 0 and cache.map == playerMap and (now - cache.at) < 1 then
@@ -613,6 +632,7 @@ function QA.InInstance()
 end
 
 function QA.Update(force)
+    aim.ok = false
     -- Die Zielmarke zeigt sich nur, wenn dieser Durchlauf sie setzt.
     if marker then marker:Hide() end
     if not frame or frame._unlock then return end
@@ -671,6 +691,7 @@ function QA.Update(force)
 
     local facing = _G.GetPlayerFacing and K.Plain(_G.GetPlayerFacing())
     local yards, rotation, bearing = QA.Solve(pN, pW, tN, tW, facing)
+    aim.ok, aim.pN, aim.pW, aim.tN, aim.tW = false, pN, pW, tN, tW
 
     -- Hoehe und Zielmarke aus der Navigation des Spiels (siehe Kopf).
     local nav = t.nav and QA.Nav() or nil
@@ -711,6 +732,7 @@ function QA.Update(force)
         PointArrow(rotation)
         SetArrowColor(rotation)
         arrow:Show()
+        aim.ok = true
     else
         arrow:Hide()
         dist:SetText(QA.FormatDistance(yards, K.Get(KEY, "units")) .. " · " .. QA.Compass(bearing))
@@ -738,16 +760,22 @@ end
 -- Takt und Ereignisse
 --------------------------------------------------
 -- Der Pfeil muss der Kamera folgen, und fuer die Blickrichtung gibt es
--- kein Ereignis. Zwanzigmal je Sekunde, und nur solange etwas
--- ausgewaehlt ist - ohne Ziel laeuft der Takt nicht.
+-- kein Ereignis. Zwanzigmal je Sekunde dreht sich der Pfeil, fuenfmal
+-- wird alles neu bestimmt (QA.Turn) - und nur solange etwas ausgewaehlt
+-- ist; ohne Ziel laeuft der Takt nicht.
 
 local ticker = CreateFrame("Frame")
-local acc = 0
+local acc, full = 0, 0
+QA.FULL_EVERY = 0.2
 local function OnTick(_, elapsed)
     acc = acc + (elapsed or 0)
     if acc < 0.05 then return end
+    full = full + acc
     acc = 0
-    QA.Update()
+    if full >= QA.FULL_EVERY or not QA.Turn() then
+        full = 0
+        QA.Update()
+    end
     -- Auswahl weg (oder im Kampf ausgeblendet): der Takt steht, bis ein
     -- Ereignis ihn wieder anwirft.
     if not (frame and frame:IsShown()) then ticker:SetScript("OnUpdate", nil) end

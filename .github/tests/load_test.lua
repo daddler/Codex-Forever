@@ -3715,6 +3715,36 @@ do
     Check(ok, "Speicher: Messung je Teil, Ereignisse gesammelt, Zauber gemerkt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.6.1.9: /wcui speicher im Beta-Test - die Aktionsleisten machten 350
+-- von 400 KB/s, weil das Einblenden bei Maus darueber jedes Bild eine
+-- frische Liste baute. Gemessen mit dem echten Speicherzaehler von Lua:
+-- 300 Bilder duerfen kaum Speicher belegen.
+do
+    local ok, err = pcall(function()
+        local AB = WeintCodex.UIActionBars
+        if type(_G.MultiBarBottomLeft) ~= "table" then CreateFrame("Frame", "MultiBarBottomLeft", UIParent) end
+        K.Set("actionbars", "b2_show", "mouseover")
+        AB.UpdateMouseover()
+        AB._fadeStep(nil, 0.016)
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local before = collectgarbage("count")
+        for _ = 1, 300 do AB._fadeStep(nil, 0.016) end
+        local grew = collectgarbage("count") - before
+        collectgarbage("restart")
+        K.Set("actionbars", "b2_show", "always")
+        AB.UpdateMouseover()
+        assert(grew < 30, string.format("300 Bilder Einblenden belegen %.0f KB", grew))
+        -- Questpfeil: zwischen den ganzen Durchlaeufen dreht sich nur der Pfeil.
+        local QA = WeintCodex.UIQuestArrow
+        local aim = QA._aim
+        aim.ok = false
+        assert(QA.Turn() == false, "Pfeil gedreht ohne gemerkte Punkte")
+    end)
+    Check(ok, "Speicher: Aktionsleisten blenden ohne neue Tabellen je Bild, Questpfeil dreht zwischendurch nur"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Ruhe und Kampf: ohne Ziel und bei vollem Leben treten Spielerrahmen und
 -- Schadensanzeige zurueck; Ziel, Kampf und Testmodus holen sie zurueck.
 do

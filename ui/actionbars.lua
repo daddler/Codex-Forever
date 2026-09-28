@@ -690,31 +690,45 @@ local EXTRA = {
 }
 
 -- Alles, was gerade "nur bei Maus darueber" steht: { Rahmen, Zusatzflaeche }.
+-- GEMERKT, nicht bei jedem Bild neu gebaut (6.6.1.9): FadeStep laeuft
+-- jede Bildwiederholung, und die frische Liste aus ~14 Tabellen machte
+-- im Beta-Test 350 KB/s Wegwerf-Speicher - 88 % des ganzen Addons
+-- (/wcui speicher). Neu gebaut wird sie in UpdateMouseover, wenn sich
+-- eine Einstellung aendert; die Flaeche hinter einer Leiste entsteht
+-- spaeter und wird deshalb erst beim Pruefen nachgeschlagen.
+local faded
 local function Faded()
     local list = {}
     for i, entry in ipairs(BAR_BUTTONS) do
         local bar = BarFrame(entry)
         if bar then
-            list[#list + 1] = { frame = bar, on = BO(i, "show") == "mouseover", extra = AB.backdrops[bar], bar = true }
+            list[#list + 1] = { frame = bar, on = BO(i, "show") == "mouseover", bar = true }
         end
     end
     for _, e in ipairs(EXTRA) do
         local f = Frame(unpack(e.frames))
         if f then
-            list[#list + 1] = { frame = f, on = Opt(e.key) == "mouseover",
-                extra = e.key == "bagsShow" and AB.bagsBackdrop or nil }
+            list[#list + 1] = { frame = f, on = Opt(e.key) == "mouseover", bags = e.key == "bagsShow" }
         end
     end
     return list
 end
 
+local function Extra(t)
+    if t.bar then return AB.backdrops[t.frame] end
+    if t.bags then return AB.bagsBackdrop end
+    return nil
+end
+
 local function FadeStep(_, elapsed)
     local any = false
-    for _, t in ipairs(Faded()) do
+    faded = faded or Faded()
+    for _, t in ipairs(faded) do
         if t.on then
             any = true
             local f = t.frame
-            local over = (t.bar and gridShown) or MouseOver(f) or (t.extra and t.extra:IsShown() and MouseOver(t.extra))
+            local extra = Extra(t)
+            local over = (t.bar and gridShown) or MouseOver(f) or (extra and extra:IsShown() and MouseOver(extra))
             local cur = fadeAlpha[f] or 0
             local target = over and 1 or 0
             local step = (elapsed or 0.1) * 6
@@ -731,7 +745,8 @@ FadeStep = K.Measured("Aktionsleisten", FadeStep)
 
 local function UpdateMouseover()
     local any = false
-    for _, t in ipairs(Faded()) do
+    faded = Faded()
+    for _, t in ipairs(faded) do
         if t.on then
             any = true
         elseif fadeAlpha[t.frame] then
