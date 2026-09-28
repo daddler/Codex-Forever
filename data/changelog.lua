@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.3.0",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFÜberschriften in Charakter, Ruf und Fertigkeiten fallen auf.|r Größerer Titel mit Schatten, dahinter ein weicher Lichthof in deiner Klassenfarbe, links und rechts eine Raute mit dunklem Kern, ein kleiner Punkt und eine leuchtende Linie. Zu lange Titel werden etwas kleiner, damit nichts über die Spalte ragt.",
+        },
+    },
+    {
         version = "6.6.2.9",
         date    = "28.09.2026",
         notes   = {

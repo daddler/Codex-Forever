@@ -473,31 +473,76 @@ local function HeaderIcon(f)
     return nil
 end
 
-local function Flourish(f, c)
-    local line = f:CreateTexture(nil, "ARTWORK", nil, 1)
-    line:SetHeight(1)
-    line:SetColorTexture(1, 1, 1, 1)
-    local dot = f:CreateTexture(nil, "ARTWORK", nil, 2)
-    dot:SetSize(5, 5)
-    dot:SetColorTexture(c[1], c[2], c[3], 0.9)
-    if dot.SetRotation then pcall(dot.SetRotation, dot, math.pi / 4) end
-    own[line], own[dot] = true, true
-    return line, dot
+-- Dritte Fassung (6.6.3.0, Beta-Test: "kann das alles noch etwas
+-- auffaelliger? das ist noch zu wenig"): Titel 14 pt mit Schatten, hinter
+-- ihm ein weicher Lichthof in der Hervorhebung; je Seite eine Raute mit
+-- dunklem Kern, ein kleiner Punkt davor und die Linie mit einem Schein
+-- darunter. Passt ein langer Titel nicht in die Spalte, wird er 12 pt und
+-- die kleinen Punkte gehen (W.FitHeader, jeder Durchlauf).
+W.HEADER_SIZE, W.HEADER_SIZE_SMALL, W.HEADER_HALO = 14, 12, 0.28
+
+local function Diamond(f, size, c, a, sub)
+    local t = f:CreateTexture(nil, "ARTWORK", nil, sub)
+    t:SetSize(size, size)
+    t:SetColorTexture(c[1], c[2], c[3], a)
+    if t.SetRotation then pcall(t.SetRotation, t, math.pi / 4) end
+    own[t] = true
+    return t
 end
 
-local function Fade(line, c, outward)
-    if _G.CreateColor and line.SetGradient then
-        local solid = _G.CreateColor(c[1], c[2], c[3], W.HEADER_ALPHA)
+local function Fade(t, c, alpha, outward)
+    if _G.CreateColor and t.SetGradient then
+        t:SetColorTexture(1, 1, 1, 1)
+        local solid = _G.CreateColor(c[1], c[2], c[3], alpha)
         local clear = _G.CreateColor(c[1], c[2], c[3], 0)
-        if outward == "LEFT" then line:SetGradient("HORIZONTAL", clear, solid)
-        else line:SetGradient("HORIZONTAL", solid, clear) end
+        if outward == "LEFT" then t:SetGradient("HORIZONTAL", clear, solid)
+        else t:SetGradient("HORIZONTAL", solid, clear) end
     else
-        line:SetColorTexture(c[1], c[2], c[3], W.HEADER_ALPHA * 0.5)
+        t:SetColorTexture(c[1], c[2], c[3], alpha * 0.5)
     end
 end
 
--- Titel und Linien an einen Balken legen. Traegt die Kopfzeile mehrere
--- (Ruf: zwei), gilt der breiteste.
+-- Eine Seite: Linie (1 px) mit Schein (3 px), Punkt, Raute mit Kern.
+local function Side(f, c, outward)
+    local e = {}
+    e.glow = f:CreateTexture(nil, "ARTWORK", nil, 0)
+    e.glow:SetHeight(3)
+    Fade(e.glow, c, 0.3, outward)
+    e.line = f:CreateTexture(nil, "ARTWORK", nil, 1)
+    e.line:SetHeight(1)
+    Fade(e.line, c, 0.95, outward)
+    local dark = C.surface1
+    e.pip = Diamond(f, 3, c, 0.85, 2)
+    e.dot = Diamond(f, 7, c, 1, 2)
+    e.hole = Diamond(f, 2, dark, 1, 3)
+    own[e.glow], own[e.line] = true, true
+    return e
+end
+
+-- Abstaende vom Rand des Titels: Raute, Punkt, Linie.
+local DOT_AT, PIP_AT, LINE_AT = 6, 15, 19
+
+local function PlaceSide(e, fs, beam, sign, stop)
+    local edge = sign < 0 and "LEFT" or "RIGHT"
+    for _, t in ipairs({ e.dot, e.hole, e.pip, e.line, e.glow }) do t:ClearAllPoints() end
+    e.dot:SetPoint("CENTER", fs, edge, sign * (W.HEADER_GAP + DOT_AT - 6), 0)
+    e.hole:SetPoint("CENTER", e.dot, "CENTER", 0, 0)
+    e.pip:SetPoint("CENTER", fs, edge, sign * (W.HEADER_GAP + PIP_AT - 6), 0)
+    local inner = sign * (W.HEADER_GAP + LINE_AT - 6)
+    if sign < 0 then
+        e.line:SetPoint("RIGHT", fs, "LEFT", inner, 0)
+        e.line:SetPoint("LEFT", beam, "LEFT", W.HEADER_INSET, 0)
+    else
+        e.line:SetPoint("LEFT", fs, "RIGHT", inner, 0)
+        if stop then e.line:SetPoint("RIGHT", stop, "LEFT", -6, 0)
+        else e.line:SetPoint("RIGHT", beam, "RIGHT", -W.HEADER_INSET, 0) end
+    end
+    e.glow:SetPoint("LEFT", e.line, "LEFT", 0, 0)
+    e.glow:SetPoint("RIGHT", e.line, "RIGHT", 0, 0)
+end
+
+-- Titel und Verzierung an einen Balken legen. Traegt die Kopfzeile
+-- mehrere (Ruf: zwei), gilt der breiteste.
 local function Place(d, beam)
     local fs = d.title
     pcall(function()
@@ -505,23 +550,14 @@ local function Place(d, beam)
         fs:ClearAllPoints()
         fs:SetPoint("CENTER", beam, "CENTER", 0, 0)
     end)
-    d.leftDot:ClearAllPoints()
-    d.leftDot:SetPoint("RIGHT", fs, "LEFT", -W.HEADER_GAP, 0)
-    d.left:ClearAllPoints()
-    d.left:SetPoint("RIGHT", d.leftDot, "LEFT", -2, 0)
-    d.left:SetPoint("LEFT", beam, "LEFT", W.HEADER_INSET, 0)
-    d.rightDot:ClearAllPoints()
-    d.rightDot:SetPoint("LEFT", fs, "RIGHT", W.HEADER_GAP, 0)
-    d.right:ClearAllPoints()
-    d.right:SetPoint("LEFT", d.rightDot, "RIGHT", 2, 0)
-    if d.icon then
-        d.right:SetPoint("RIGHT", d.icon, "LEFT", -6, 0)
-    else
-        d.right:SetPoint("RIGHT", beam, "RIGHT", -W.HEADER_INSET, 0)
-    end
+    PlaceSide(d.l, fs, beam, -1)
+    PlaceSide(d.r, fs, beam, 1, d.icon)
+    d.halo:ClearAllPoints()
+    d.halo:SetPoint("CENTER", fs, "CENTER", 0, 0)
     d.hover:ClearAllPoints()
     d.hover:SetAllPoints(beam)
     d.beam = beam
+    d.fitW = nil
 end
 
 local function WidthOf(r)
@@ -530,26 +566,57 @@ local function WidthOf(r)
     return type(w) == "number" and w or 0
 end
 
+local function TextWidth(fs)
+    local ok, w = pcall(fs.GetStringWidth, fs)
+    w = ok and K.Plain(w) or nil
+    return type(w) == "number" and w or 0
+end
+
+-- Passt der Titel samt Verzierung in den Balken? Sonst kleiner, dann
+-- ohne Punkte. Der Lichthof ist so breit wie der Titel plus Rand.
+function W.FitHeader(d)
+    local tw, bw = TextWidth(d.title), WidthOf(d.beam)
+    if tw <= 0 or bw <= 0 or (d.fitW == tw and d.fitB == bw) then return end
+    local need = function(w) return w + 2 * (W.HEADER_GAP + LINE_AT + 12) end
+    local avail = bw - 2 * W.HEADER_INSET
+    if not d.small and need(tw) > avail then
+        d.small = true
+        pcall(K.SetFont, d.title, W.HEADER_SIZE_SMALL)
+        tw = TextWidth(d.title)
+    end
+    local pips = need(tw) <= avail
+    d.l.pip:SetShown(pips)
+    d.r.pip:SetShown(pips)
+    d.halo:SetSize(math.min(tw + 60, bw), 26)
+    d.fitW, d.fitB = TextWidth(d.title), bw
+end
+
 function W.Header(f, beam)
     if type(f) ~= "table" or not f.CreateTexture or type(beam) ~= "table" then return nil end
     local d = headerDone[f]
     if d then
         if beam ~= d.beam and WidthOf(beam) > WidthOf(d.beam) then Place(d, beam) end
+        W.FitHeader(d)
         return d
     end
     local fs = HeaderTitle(f)
     if not fs then return nil end
     d = { title = fs, icon = HeaderIcon(f) }
     pcall(function()
-        K.SetFont(fs, 12)
+        K.SetFont(fs, W.HEADER_SIZE)
         local t = C.textBright
         fs:SetTextColor(t[1], t[2], t[3], 1)
+        if fs.SetShadowOffset then fs:SetShadowOffset(1, -1) end
+        if fs.SetShadowColor then fs:SetShadowColor(0, 0, 0, 0.9) end
     end)
     local c = K.Highlight()
-    d.left, d.leftDot = Flourish(f, c)
-    d.right, d.rightDot = Flourish(f, c)
-    Fade(d.left, c, "LEFT")
-    Fade(d.right, c, "RIGHT")
+    -- Lichthof: der weiche Schein der Oberflaeche (glow_wide), gedehnt.
+    d.halo = f:CreateTexture(nil, "BORDER", nil, 1)
+    d.halo:SetTexture(K.GLOW_WIDE_TEXTURE)
+    d.halo:SetVertexColor(c[1], c[2], c[3], W.HEADER_HALO)
+    own[d.halo] = true
+    d.l = Side(f, c, "LEFT")
+    d.r = Side(f, c, "RIGHT")
     -- Kopfzeilen, die man klickt (Ruf, Fertigkeiten): heller unter der
     -- Maus - der Grund des Spiels, der das zeigte, ist weg.
     d.hover = f:CreateTexture(nil, "HIGHLIGHT")
@@ -558,6 +625,7 @@ function W.Header(f, beam)
     own[d.hover] = true
     Place(d, beam)
     headerDone[f] = d
+    W.FitHeader(d)
     return d
 end
 

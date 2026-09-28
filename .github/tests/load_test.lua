@@ -4686,11 +4686,30 @@ do
         W.HideByAtlas(pane)
         local d = W.Headers[head]
         assert(beam:GetAlpha() == 0, "Holzbalken bleibt")
-        -- 6.6.2.8: Zierlinie statt Block - Titel mittig, Linien und Rauten
-        -- links und rechts, kein Band.
-        assert(d and d.left and d.right and d.leftDot and d.rightDot and d.title == title and not d.band,
-            "Kopfzeile ohne Zierlinie")
-        assert(W.own[d.left] and W.own[d.rightDot], "Zierlinie als fremdes Bild behandelt")
+        -- 6.6.2.8: Zierlinie statt Block. 6.6.3.0: auffaelliger - Lichthof,
+        -- Raute mit Kern, Punkt, Linie mit Schein je Seite.
+        assert(d and d.l and d.r and d.halo and d.title == title and not d.band, "Kopfzeile ohne Zierlinie")
+        for _, e in ipairs({ d.l, d.r }) do
+            assert(e.line and e.glow and e.dot and e.hole and e.pip and W.own[e.line] and W.own[e.dot],
+                "Seite der Zierlinie unvollstaendig")
+        end
+        assert(W.own[d.halo], "Lichthof als fremdes Bild behandelt")
+        -- Zu langer Titel: kleiner, ohne Punkte.
+        local long = stub.NewObject("Frame")
+        local lbeam = stub.NewObject("Texture")
+        lbeam.GetAtlas = function() return "UI-Character-Info-Title" end
+        lbeam._width = 180
+        local ltitle = stub.NewObject("FontString")
+        ltitle._text = "Primäre Eigenschaften"
+        local tw = 160
+        ltitle.GetStringWidth = function() return tw end
+        ltitle.SetFont = function(self, _, size) if size == W.HEADER_SIZE_SMALL then tw = 130 end return true end
+        long.Title = ltitle
+        long.GetRegions = function() return lbeam, ltitle end
+        local ld = W.Header(long, lbeam)
+        assert(ld.small and not ld.l.pip:IsShown(), "zu langer Titel ragt ueber die Spalte")
+        local short = W.Headers[head]
+        assert(not short.small, "kurzer Titel verkleinert")
         W.HideByAtlas(pane)
         assert(W.Headers[head] == d, "Band doppelt angelegt")
         assert(W.HeaderAtlas("UI-Character-Info-Title") and not W.HeaderAtlas("UI-Character-Info-StatTab"),

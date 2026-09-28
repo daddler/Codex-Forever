@@ -1142,6 +1142,14 @@ Text; links und rechts je eine 1-px-Linie, die vom Titel nach außen
 ausläuft (`UIKit.Highlight()`, 70 % am Titel, 0 am Rand, 10 px Abstand
 zum Balkenende), am Titel je eine 5-px-Raute (`W.HEADER_GAP`,
 `W.HEADER_INSET`, `W.HEADER_ALPHA`). Kein Grund, kein Block.
+**Dritte Fassung (6.6.3.0**, Beta-Test: „noch etwas auffälliger, das ist
+noch zu wenig“): Titel 14 pt mit Schatten; dahinter ein Lichthof
+(`glow_wide`, gedehnt, Hervorhebung, 28 %, `W.HEADER_HALO`); je Seite
+eine 7-px-Raute mit dunklem Kern, ein 3-px-Punkt und die Linie (95 % am
+Titel) über einem 3-px-Schein (30 %). `W.FitHeader` prüft bei jedem
+Durchlauf, ob Titel und Verzierung in den Balken passen: sonst 12 pt
+(`W.HEADER_SIZE_SMALL`), und passt es dann noch nicht, gehen die Punkte –
+„Primäre Eigenschaften“ ragte im Nachbau sonst bis in die Bildlaufleiste.
 Erkannt in `HideByAtlas` am Atlas (`W.HEADER_ATLAS`) – jede Kopfzeile, die
 ihn trägt, in jedem gestalteten Fenster. Der Text des Spiels bleibt (kein
 `SetText` auf fremde Zeilen). `/wcui fenster` nennt „Kategorien: N (…)“.

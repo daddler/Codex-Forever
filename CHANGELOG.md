@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.3.0] – 2026-09-28
+
+**Überschriften in Charakter, Ruf und Fertigkeiten fallen auf.** Größerer Titel mit Schatten, dahinter ein weicher Lichthof in deiner Klassenfarbe, links und rechts eine Raute mit dunklem Kern, ein kleiner Punkt und eine leuchtende Linie. Zu lange Titel werden etwas kleiner, damit nichts über die Spalte ragt.
+
 ## [6.6.2.9] – 2026-09-28
 
 **Ruf und Fertigkeiten mit derselben Zierlinie.** Die Überschriften der Ruf- und Fertigkeitenliste tragen jetzt dasselbe Design wie die Werte im Charakterfenster: Titel mittig, feine Linien mit Rauten in deiner Klassenfarbe. Das Zeichen zum Auf- und Zuklappen bleibt rechts, unter der Maus wird die Zeile heller.
