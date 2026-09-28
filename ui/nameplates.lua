@@ -65,6 +65,10 @@ local defaults = {
     boss          = K.ColorDefault("boss"),
     elite         = K.ColorDefault("elite"),
     eliteColoring = true,
+    -- 6.6.2.2: Zaubernde eigens (ui/npccolors.lua) - wer unterbrochen
+    -- werden will, soll auffallen.
+    casterColoring = true,
+    caster         = K.ColorDefault("caster"),
     focusColorEnabled  = true,  -- Vorlage: true
     focus              = K.ColorDefault("focus"),
     targetColorEnabled = false, -- Vorlage: false
@@ -770,6 +774,14 @@ local function BarColor(p)
     if S.targetColorEnabled and IsUnit(unit, "target") then return C3(S.target) end
     if S.focusColorEnabled and IsUnit(unit, "focus") then return C3(S.focus) end
 
+    -- Eigene Farbe fuer genau diesen NPC (6.6.2.2) - vor allem anderen,
+    -- was der Spieler nicht ausdruecklich gewaehlt hat.
+    local NC = WeintCodex.UINpcColors
+    if NC then
+        local r, g, b = NC.RuleColor(p)
+        if r then return r, g, b end
+    end
+
     if S.classColorPlayers and K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(unit), false) then
         local _, class = _G.UnitClass(unit)
         class = K.Plain(class)
@@ -801,6 +813,9 @@ local function BarColor(p)
     local cls = K.Plain(_G.UnitClassification and _G.UnitClassification(unit))
     local lvl = K.Plain(_G.UnitLevel and _G.UnitLevel(unit))
     if cls == "worldboss" or lvl == -1 then return C3(S.boss) end
+    -- Zaubernde vor Elite: "muss unterbrochen werden" ist die dringendere
+    -- Auskunft.
+    if S.casterColoring and p._caster then return C3(S.caster) end
     if S.eliteColoring and (cls == "elite" or cls == "rareelite") then return C3(S.elite) end
 
     if inCombat or not S.darkenOOC then return C3(S.enemyInCombat) end
@@ -1062,6 +1077,9 @@ local function Attach(unit)
     p:ClearAllPoints()
     p:SetPoint("CENTER", nameplate, "CENTER", 0, 0)
     p.unit, p.nameplate = unit, nameplate
+    -- Welcher NPC (Kennung, Name, zaubert?) - einmal beim Erscheinen.
+    local NC = WeintCodex.UINpcColors
+    if NC and not friendly then NC.Identify(p, unit) end
     -- Erst einrichten, dann verbinden: SetUnit zeichnet sofort, wenn der
     -- Gegner schon zaubert.
     Layout(p)
@@ -1086,6 +1104,7 @@ function Detach(unit)
     p.cast:SetUnit(nil)
     p.auras:SetUnit(nil)
     p.unit, p.nameplate, p._friendly = nil, nil, nil
+    p._npcID, p._npcName, p._caster = nil, nil, nil
     p:Hide()
     p:SetParent(hidden)
     pool[#pool + 1] = p
@@ -1175,6 +1194,12 @@ local function OnEvent(_, event, unit)
     if handler then handler(p) return end
 
     local cast = CAST_EVENTS[event]
+    -- Wer einen Zauber mit Zauberzeit beginnt, zaehlt ab jetzt als
+    -- Zaubernder (6.6.2.2) - auch ohne Zauberbalken.
+    if (event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START") and not p._friendly then
+        local NC = WeintCodex.UINpcColors
+        if NC and NC.SawCast(p) then UpdateColor(p) end
+    end
     if cast and S.castEnabled then
         if cast == "update" then
             p.cast:Update()
@@ -1304,6 +1329,11 @@ local function Enable()
             if unit then Attach(unit) end
         end
     end
+end
+
+-- Farben aller Plaketten neu (NPC-Regeln geaendert).
+function NP.RecolorAll()
+    for _, p in pairs(plates) do UpdateColor(p) end
 end
 
 local function OnSetting()

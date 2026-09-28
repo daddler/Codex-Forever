@@ -194,6 +194,10 @@ WeintCodex.GameColors = {
     boss          = {0.860, 0.400, 0.120, 1.0},
     elite         = {0.620, 0.220, 0.460, 1.0},
     focus         = {0.250, 0.700, 0.850, 1.0},
+    -- 6.6.2.2: Plaketten nach NPC (ui/npccolors.lua). Zaubernde blau -
+    -- sichtbar anders als Fokus (Tuerkis), Elite (Violett) und Feind (Rot).
+    caster        = {0.231, 0.431, 0.941, 1.0},
+    npcCustom     = {0.950, 0.400, 0.750, 1.0},   -- erste Farbe einer eigenen NPC-Regel
     target        = {0.460, 0.890, 0.580, 1.0},
 
     tankAggro     = {0.204, 0.780, 0.482, 1.0},
@@ -2003,6 +2007,8 @@ function WeintCodex.CreateColorSwatch(parent, opts)
     label:SetJustifyH("LEFT")
     label:SetWordWrap(false)
     label:SetText(opts.label or "")
+    -- Beschriftung nachtraeglich (Liste der NPC-Farben, 6.6.2.2).
+    row.SetLabel = function(_, text) label:SetText(text or "") end
 
     local function Disabled()
         return opts.disabled and opts.disabled() and true or false

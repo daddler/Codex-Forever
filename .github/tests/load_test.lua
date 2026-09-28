@@ -4462,6 +4462,77 @@ do
     end)
     Check(ok2, "Berufe und Gilde & Communitys: Metall, Goldrahmen, Seitenreiter, Innenflaechen"
         .. (ok2 and "" or (": " .. tostring(err2))))
+
+    -- 6.6.2.2: Plaketten nach NPC - Zaubernde und eigene Farben.
+    local ok3, err3 = pcall(function()
+        local NC, NP = WeintCodex.UINpcColors, WeintCodex.UINameplates
+        local GC = WeintCodex.GameColors
+        assert(NC.NpcID("Creature-0-1-2-3-12345-0000ABCD") == 12345, "Kennung aus der GUID")
+        assert(NC.NpcID("Player-1-0ABC") == nil and NC.NpcID(nil) == nil, "Spieler als NPC gelesen")
+        local saved = { _G.UnitGUID, _G.UnitName, _G.UnitClass, _G.UnitPowerType, _G.UnitPowerMax, _G.UnitIsPlayer }
+        local guid, name, class, ptype = "Creature-0-1-2-3-12345-0000ABCD", "Kobold-Geomant", "MAGE", 0
+        _G.UnitGUID = function() return guid end
+        _G.UnitName = function() return name end
+        _G.UnitClass = function() return "Magier", class end
+        _G.UnitPowerType = function() return ptype end
+        _G.UnitPowerMax = function() return ptype == 0 and 300 or 0 end
+        _G.UnitIsPlayer = function() return false end
+        K.Set("npccolors", "rules", nil)
+        -- Die Farbe, die der Balken zuletzt bekam (die Attrappe hat keine
+        -- Textur am Balken, PaintBar kaeme sonst nicht bis zum Merken).
+        local oldPaint, painted = K.PaintBar, {}
+        K.PaintBar = function(bar, r, g, b) painted[bar] = { r, g, b } return oldPaint(bar, r, g, b) end
+        local function Col(pl) return painted[pl.health] or {} end
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        local p = NP.plates["nameplate1"]
+        assert(p and p._npcID == 12345 and p._caster, "Magier nicht als Zaubernder erkannt")
+        assert(Col(p)[1] == GC.caster[1] and Col(p)[3] == GC.caster[3], "Zaubernder nicht blau")
+        assert(NC.Seen()[12345] and NC.Seen()[12345].n == "Kobold-Geomant", "NPC nicht gemerkt")
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        -- Krieger ohne Mana: erst normal, nach dem ersten Zauber blau - und
+        -- beim naechsten Mal gleich.
+        guid, name, class, ptype = "Creature-0-1-2-3-777-0000ABCD", "Kobold-Arbeiter", "WARRIOR", 1
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        p = NP.plates["nameplate1"]
+        assert(not p._caster and Col(p)[1] ~= GC.caster[1], "Nahkaempfer als Zaubernder")
+        stub.FireEvent("UNIT_SPELLCAST_START", "nameplate1")
+        assert(p._caster and Col(p)[1] == GC.caster[1], "gesehener Zauber faerbt nicht")
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        p = NP.plates["nameplate1"]
+        assert(p._caster, "gesehener Zauber nicht gemerkt")
+        -- Eigene Regel: Suche, anlegen, Farbe gilt vor "Zaubernde".
+        local hits = NC.Search("kobold")
+        assert(#hits == 2 and hits[1].name == "Kobold-Arbeiter", "Suche: " .. #hits)
+        assert(#NC.Search("arbeiter") == 1 and not NC.Search("arbeiter")[1].prefix, "Suche mitten im Namen")
+        local rule = NC.Add(777, "Kobold-Arbeiter")
+        assert(rule and NC.Add(777, "Kobold-Arbeiter") and #NC.Rules() == 1, "Regel doppelt angelegt")
+        assert(Col(p)[1] == GC.npcCustom[1], "eigene Farbe gilt nicht")
+        NC.SetColor(777, "Kobold-Arbeiter", 0.1, 0.9, 0.2)
+        assert(Col(p)[2] == 0.9, "geaenderte Farbe gilt nicht")
+        -- Ueber den Namen: jeder mit genau diesem Namen.
+        NC.Remove(1)
+        NC.Add(nil, "  Kobold-Arbeiter ")
+        assert(NC.Rules()[1].name == "Kobold-Arbeiter" and not NC.Rules()[1].id, "Namensregel falsch angelegt")
+        assert(Col(p)[1] == GC.npcCustom[1], "Namensregel gilt nicht")
+        assert(NC.Add(nil, "   ") == nil, "leerer Name angelegt")
+        -- Die Seite laesst sich bauen und zeigt Treffer und Regeln.
+        local sw = NC.BuildSearch(UIParent, 600)
+        NC.search.text = "kob"
+        sw.Sync()
+        assert(sw.rows[1]:IsShown() and sw.rows[2]:IsShown() and not sw.rows[3]:IsShown(), "Treffer nicht gezeigt")
+        local rw = NC.BuildRules(UIParent, 600)
+        rw.Sync()
+        assert(rw.rows[1]:IsShown() and not rw.empty:IsShown(), "Regel nicht gelistet")
+        NC.search.text = ""
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        K.Set("npccolors", "rules", nil)
+        K.Set("npccolors", "seen", nil)
+        K.PaintBar = oldPaint
+        _G.UnitGUID, _G.UnitName, _G.UnitClass, _G.UnitPowerType, _G.UnitPowerMax, _G.UnitIsPlayer = unpack(saved, 1, 6)
+    end)
+    Check(ok3, "Plaketten nach NPC: Zaubernde erkannt und gemerkt, Suche, eigene Farben"
+        .. (ok3 and "" or (": " .. tostring(err3))))
     Check(ok, "Weltkarte im WeintCodex-Stil (Karte bleibt), weicher Rand ums Modell"
         .. (ok and "" or (": " .. tostring(err))))
 

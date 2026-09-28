@@ -1006,3 +1006,36 @@ Häkchen und Symbole bleiben.
 
 **Gilde & Communitys**: das Wappen oben links (`PortraitOverlay`) ist
 weg. Liste links (grüne Auswahl) und Chat-Eingabe sind ungemessen.
+
+## Plaketten nach NPC *(6.6.2.2, `ui/npccolors.lua`)*
+
+Beta-Test: „wie bei Plater einen NPC per Namen finden und ihm eine Farbe
+geben; Voreinstellung: Caster anders als normal angreifende Gegner,
+damit man sieht, was unterbrochen werden muss.“ Reiter **NPCs** der
+Namensplaketten.
+
+* **Voreinstellung „Zaubernde“** (`casterColoring`, Farbe `caster`,
+  Standard an): erkannt an dem, was der Client sagt – NPC-Klasse Magier
+  oder Paladin (die NPC-Klassen mit Mana), Energieart Mana mit
+  Höchstwert über 0 – oder daran, dass WeintCodex ihn einen Zauber mit
+  Zauberzeit beginnen sah (`UNIT_SPELLCAST_START`/`CHANNEL_START` an
+  der Plakette, `NC.SawCast`); das merkt es sich je NPC. Sofortzauber
+  zählen nicht (die sieht nur das Kampflog).
+* **Eigene Regeln** (`npccolors.rules`, getrennt vom Modul wie die
+  Klickzauber – „Standard“ löscht sie nicht): je NPC-Kennung (aus der
+  GUID, `NC.NpcID`) oder je Name (gilt für jeden mit genau diesem
+  Namen). Gefunden wird unter den **gesehenen** NPCs (`npccolors.seen`,
+  Kennung → Name, Gebiet, zaubert; höchstens 600, die ältesten gehen;
+  ergänzt an Ort und Stelle, ohne Einstellungsereignis). Suche: Anfang
+  des Namens zuerst, dann mitten im Namen. „Ziel übernehmen“ legt das
+  aktuelle Ziel an, „Als Namen anlegen“ den getippten Namen.
+* **Rangfolge im Balken:** markiert → Ziel/Fokus (wenn eingeschaltet) →
+  **eigene Regel** → Bedrohung → neutral → Boss → **Zaubernde** → Elite
+  → Kampf/außer Kampf.
+* **Keine eingebaute NPC-Liste** (Kein Bestand ohne Herkunft): niemand
+  hier hat die NPCs von Forever gelesen.
+* Kennung, Name, Klasse und Energieart werden einmal beim Erscheinen der
+  Plakette gelesen (`NC.Identify`) und an **unserer** Plakette gemerkt
+  (`_npcID`, `_npcName`, `_caster`) – die Farbabfrage im Kampf zerlegt
+  keine GUID. Geheime Werte zählen als „unbekannt“: keine Regel, kein
+  Zaubernder.

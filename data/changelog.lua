@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.6.2.2",
         date    = "28.09.2026",
         notes   = {
+            "|cff7C6CFFPlaketten nach NPC.|r Neuer Reiter „NPCs“ bei den Namensplaketten. Gegner, die zaubern, sind jetzt blau – was unterbrochen werden muss, fällt sofort auf. Erkannt am NPC selbst oder daran, dass er schon einmal einen Zauber begonnen hat. Dazu eigene Farben: Namen eingeben, WeintCodex findet den NPC unter denen, die du schon gesehen hast, oder du übernimmst dein Ziel.",
             "|cff7C6CFFSeitenreiter zeigen die richtige Wahl.|r Bei den Berufen standen alle Reiter im Akzent. Jetzt ist nur der gewählte markiert – und wenn das Spiel nicht eindeutig sagt, welcher es ist, keiner statt aller.",
             "|cff7C6CFFSuche nach Gruppe im neuen Stil.|r Der Dungeonbrowser als Kachel statt Metall und Marmor, die Kategorien mit schlichtem Rand und gedämpften Bildern, die Reiter rechts wie bei den Berufen.",
             "|cff7C6CFFFeinschliff an Questlog und Gilde.|r Suchfeld flach, braune Pfeilknöpfe und die goldenen Bildlaufleisten grau, das Wappen oben links an Gilde & Communitys weg.",
