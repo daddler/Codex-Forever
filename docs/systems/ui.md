@@ -218,7 +218,7 @@ Einstellungsseite des Moduls.
 | Taschen (`ui/bags.lua`) | alle Taschen in einem Raster, Suche, Sortieren, Gold, Gegenstandsstufe, Qualitätsrand | Knöpfe sind `ContainerFrameItemButtonTemplate` (Benutzen/Verkaufen macht das Spiel); **nie im Kampf angelegt** (sonst „tainted“), deshalb 180 auf Vorrat beim Anmelden. Öffnen folgt den Taschen des Spiels (Haken an `Show`/`Hide`, nicht an `OnShow` – die feuern im versteckten Elternrahmen nie). Die Bank bleibt die des Spiels. |
 | Schadensanzeige (`ui/damagemeter.lua`) | bis zu vier Fenster, je mit eigener Messart (Schaden, Heilung, erlittener Schaden, Unterbrechungen, Bannungen, Tode) und eigenem Zeitraum; Kopfzeile mit Kampfdauer und Symbolknöpfen | Addons bekommen ab 12.0 kein Kampflog: die Zahlen kommen aus `C_DamageMeter` (die Messung des Spiels), Blizzards Fenster geht aus (`damageMeterEnabled = 0`). Fehlt die Messung, steht das im Fenster – keine Nullen. Zahlen über `CreateAbbreviateConfig` (K/M/B, darunter ganze Zahlen): ohne sie gibt `AbbreviateNumbers` Werte unter 1000 ungerundet heraus („16.826086956522“, 6.0.0.4). Fenster flach gespeichert (`w1mode` …), weil `UIKit.Set` Tabellen nur eine Ebene tief vergleicht. |
 | Questliste (`ui/questtracker.lua`) | eigene Fläche hinter der Zielverfolgung des Spiels, goldenes Banner weg, Höhe folgt dem Inhalt | Die Liste bleibt Blizzards (taint-empfindlich: Questgegenstände im Kampf); nur ein eigener Rahmen dahinter und durchsichtige Hintergrundtexturen. |
-| Questpfeil (`ui/questarrow.lua`) | 3D-Pfeil aus 64 vorgerechneten Ansichten (`media/ui/arrow3d.tga`, erzeugt von `make_ui_media.py`), Farbe grün → gelb → rot nach Abweichung; als Geist zur Leiche (`C_DeathInfo`); nach dem Abgeben die nächstgelegene Quest – seit 6.6.0.1 nur für den Pfeil (`QA.Chosen`), nicht mehr über `C_SuperTrack.SetSuperTrackedQuestID` (das berührte Blizzards Questverfolgung, im Kampf blockierte das Spiel dann `SetPassThroughButtons`); wählt der Spieler selbst, gilt seine Wahl –, wahlweise schon bei erfüllten Zielen | Kein Modell im Spiel, sondern Bilder: ein `PlayerModel` ließe sich nicht zuverlässig drehen und färben. Leiche und nächste Quest nur, wo das Spiel einen Ort nennt – sonst „Ort unbekannt“, nie 0 m. |
+| Questpfeil (`ui/questarrow.lua`) | 3D-Pfeil aus 64 vorgerechneten Ansichten (`media/ui/arrow3d.tga`, erzeugt von `make_ui_media.py`), Farbe grün → gelb → rot nach Abweichung; plant seit 6.6.2.7 selbst (nächstes lohnendes Ziel aus dem Questlog, siehe *Questpfeil: Planen*); als Geist zur Leiche (`C_DeathInfo`); nach dem Abgeben die nächstgelegene Quest – seit 6.6.0.1 nur für den Pfeil (`QA.Chosen`), nicht mehr über `C_SuperTrack.SetSuperTrackedQuestID` (das berührte Blizzards Questverfolgung, im Kampf blockierte das Spiel dann `SetPassThroughButtons`); wählt der Spieler selbst, gilt seine Wahl –, wahlweise schon bei erfüllten Zielen | Kein Modell im Spiel, sondern Bilder: ein `PlayerModel` ließe sich nicht zuverlässig drehen und färben. Leiche und nächste Quest nur, wo das Spiel einen Ort nennt – sonst „Ort unbekannt“, nie 0 m. |
 
 ## Die Frage beim Einloggen (`ui/welcome.lua`)
 
@@ -426,6 +426,29 @@ Seit 6.2.0.0:
   verfolgten Leisten des Abklingzeitmanagers (eigene Buffs und DoTs, im
   Bearbeitungsmodus platzierbar). `ui/auras.lua` ist wieder auf dem Stand
   von 6.4.0.3.
+* **Questpfeil: Planen** (6.6.2.7, `plan = "smart"`, Standard). Beta-Test:
+  „nicht intelligent, schickt mich immer durch die Weltgeschichte“. Bis
+  dahin folgte der Pfeil der Quest, die das **Spiel** verfolgt – und das
+  wählt sie selbst (beim Annehmen, nach dem Abgeben), ohne auf die
+  Entfernung zu schauen. Jetzt plant `QA.Plan`: jede Quest im Questlog ist
+  ein Ziel (offene am Zielgebiet, erfüllte an der Abgabe; für den
+  Vergleich der Ort der Quest selbst, nicht der Wegpunkt am
+  Gebietsausgang). Kosten = Luftlinie × `QA.Weight` (4 für 5+ Stufen über
+  dir, 1,5 für 3–4, × 3 für Gruppenquests). Weil Abgaben und Ziele gleich
+  zählen, sammelt das von selbst. Gegen Hin und Her löst ein neues Ziel
+  das alte nur ab, wenn es unter 70 % seiner Kosten **und** 40 m
+  günstiger liegt (`QA.KEEP_SHARE`, `QA.KEEP_MIN`). Neu geplant wird nach
+  Questereignissen (gesammelt, eine Abfrage je Karte) und unterwegs alle
+  5 s (`QA.PLAN_EVERY`). **Eigene Wahl** (`QA.manual`): Das Spiel meldet
+  sie genauso wie seine eigene (`SUPER_TRACKING_CHANGED`); unterschieden
+  wird an der Zeit – bis 2 s nach Annehmen, Abgeben, Abbrechen oder Laden
+  war es das Spiel (`QA.AUTO_WINDOW`), sonst der Spieler. Sie gilt bis zur
+  Abgabe; `/wcui pfeil planen` gibt sie ab, `/wcui pfeil weiter` lässt das
+  jetzige Ziel 10 Minuten aus, `/wcui pfeil` nennt die fünf günstigsten
+  Ziele mit Entfernung und Gewicht. Grenzen: Luftlinie (Wege um Berge und
+  Wasser kennt ein Addon nicht); die Höhe aus der Navigation gibt es nur,
+  wenn das geplante Ziel zufällig die Quest ist, die das Spiel verfolgt.
+  `plan = "tracked"` stellt das alte Verhalten her.
 * **Questpfeil: Höhe** (6.6.0.1, `showHeight`, `worldMarker`). Die Karte
   ist flach; die einzige Höhe, die der Client nennt, steckt in der
   Navigation des Spiels (`C_Navigation`): Luftlinie im Raum

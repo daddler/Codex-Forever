@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.6.2.7",
         date    = "28.09.2026",
         notes   = {
+            "|cff7C6CFFDer Questpfeil plant selbst.|r Statt stur der Quest zu folgen, die das Spiel gerade verfolgt – oft am anderen Ende des Gebiets –, zeigt er auf das nächste lohnende Ziel aus deinem ganzen Questlog: offene Quests an ihrem Zielgebiet, erfüllte an der Abgabe. Quests weit über deiner Stufe und Gruppenquests zählen weiter weg, und er springt nicht wegen ein paar Metern hin und her. Klickst du selbst eine Quest an, gilt sie bis zur Abgabe. /wcui pfeil weiter überspringt ein Ziel; unter Komfort → Questpfeil → „Welches Ziel“ gibt es das alte Verhalten zurück.",
             "|cff7C6CFFKategorien im Charakterfenster heben sich ab.|r „Allgemein“, „Primäre Eigenschaften“, „Waffen“ und die anderen Überschriften der Werte stehen jetzt auf einem eigenen Band mit einem Streifen in deiner Klassenfarbe, links ausgerichtet und etwas größer – die Werte darunter lesen sich als Gruppe.",
         },
     },

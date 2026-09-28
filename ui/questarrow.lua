@@ -5,10 +5,12 @@
 -- darunter die Entfernung. Haengt NICHT am Hauptschalter der Oberflaeche:
 -- er ersetzt nichts, er kommt nur dazu.
 --
--- WAS "AUSGEWAEHLT" HEISST. Die Quest, die das Spiel verfolgt
--- (C_SuperTrack - ein Klick auf eine Quest im Questlog oder in der
--- Zielverfolgung), oder die Kartenmarkierung, die man selbst gesetzt hat.
--- Der Pfeil erfindet kein Ziel: ist nichts ausgewaehlt, ist er nicht da.
+-- WAS "AUSGEWAEHLT" HEISST. Seit 6.6.2.7 plant der Pfeil selbst: das
+-- naechste lohnende Ziel aus dem Questlog (siehe "Planen" unten). Eine
+-- Kartenmarkierung oder eine Quest, die der Spieler selbst anklickt, geht
+-- vor. Der Pfeil erfindet kein Ziel: ohne Quest mit Ort und ohne
+-- Markierung ist er nicht da. Mit plan = "tracked" folgt er wie bis
+-- 6.6.2.6 nur der Quest, die das Spiel verfolgt (C_SuperTrack).
 --
 -- WIE GERECHNET WIRD. Spieler und Ziel werden aus Kartenkoordinaten in
 -- Weltkoordinaten umgerechnet (C_Map.GetWorldPosFromMapPos). Dort ist
@@ -98,6 +100,10 @@ local defaults = {
     showHeight  = true,    -- Hoehenunterschied und "verdeckt" (6.6.0.1)
     worldMarker = true,    -- Zielmarke im Raum am Ort des Ziels (6.6.0.1)
     corpse     = true,     -- als Geist zur Leiche
+    -- Welches Ziel (6.6.2.7): "smart" plant selbst - das naechste lohnende
+    -- Ziel aus dem ganzen Questlog; "tracked" folgt nur der Quest, die das
+    -- Spiel verfolgt (alles vor 6.6.2.7).
+    plan       = "smart",
     autoNext   = true,     -- nach dem Abgeben die naechste Quest
     onComplete = "turnin", -- turnin | next: was nach erfuellten Zielen kommt
 }
@@ -223,29 +229,47 @@ end
 -- Wo liegt die Quest? Zuerst der naechste Wegpunkt (fuehrt ueber
 -- Gebietsgrenzen), dann die Questmarkierung auf der Karte, auf der der
 -- Spieler steht, dann auf der Karte der Quest selbst.
-local function QuestLocation(questID, playerMap)
+-- onMap: gemerkte GetQuestsOnMap je Karte fuer einen Planungslauf (eine
+-- Abfrage je Karte statt je Quest). final: der Ort der Quest SELBST zuerst,
+-- der Wegpunkt nur ersatzweise - zum Vergleichen von Entfernungen. Der
+-- Wegpunkt liegt am Gebietsausgang und liesse eine Quest im Nachbargebiet
+-- naeher aussehen, als sie ist.
+local function OnMap(ql, mapID, onMap)
+    if not ql.GetQuestsOnMap then return nil end
+    if onMap then
+        local list = onMap[mapID]
+        if list == nil then
+            list = ql.GetQuestsOnMap(mapID) or false
+            onMap[mapID] = list
+        end
+        return list or nil
+    end
+    return ql.GetQuestsOnMap(mapID)
+end
+
+local function QuestLocation(questID, playerMap, onMap, final)
     local ql = _G.C_QuestLog
     if not ql then return nil end
 
+    local wm, wx, wy
     if ql.GetNextWaypoint then
-        local mapID, x, y = ql.GetNextWaypoint(questID)
-        if mapID and x and y then return mapID, x, y, true end
+        wm, wx, wy = ql.GetNextWaypoint(questID)
+        if not (wm and wx and wy) then wm = nil end
+        if wm and not final then return wm, wx, wy, true end
     end
 
-    local maps = { playerMap }
-    if _G.GetQuestUiMapID then
-        local qm = _G.GetQuestUiMapID(questID)
-        if qm and qm ~= 0 and qm ~= playerMap then maps[#maps + 1] = qm end
-    end
-    if ql.GetQuestsOnMap then
-        for _, mapID in ipairs(maps) do
-            for _, info in ipairs(ql.GetQuestsOnMap(mapID) or {}) do
-                if info.questID == questID and info.x and info.y then
-                    return mapID, info.x, info.y, false
-                end
+    local qm = _G.GetQuestUiMapID and _G.GetQuestUiMapID(questID)
+    if qm == 0 or qm == playerMap then qm = nil end
+    for i = 1, 2 do
+        local mapID = (i == 1) and playerMap or qm
+        local list = mapID and OnMap(ql, mapID, onMap)
+        for _, info in ipairs(list or {}) do
+            if info.questID == questID and info.x and info.y then
+                return mapID, info.x, info.y, false
             end
         end
     end
+    if wm then return wm, wx, wy, true end
     return nil
 end
 
@@ -299,7 +323,9 @@ local function ResolveTarget(playerMap)
     end
 
     local game = st.GetSuperTrackedQuestID and st.GetSuperTrackedQuestID()
-    local questID = QA.Chosen or game
+    if game == 0 then game = nil end
+    -- Selbst gewaehlt schlaegt geplant schlaegt vom Spiel gewaehlt.
+    local questID = QA.manual or QA.Chosen or game
     if not questID or questID == 0 then return "none" end
     -- Die Navigation des Spiels fuehrt zur Quest, die das SPIEL verfolgt.
     local nav = (questID == game)
@@ -348,6 +374,114 @@ end
 -- Die Wahl bleibt beim Pfeil (QA.Chosen) - kein C_SuperTrack, siehe oben.
 local function TrackNext(skip, incompleteOnly)
     QA.Chosen = QA.NearestQuest(skip, incompleteOnly)
+end
+
+--------------------------------------------------
+-- Planen (6.6.2.7)
+--------------------------------------------------
+-- Beta-Test: "nicht intelligent, schickt mich immer durch die
+-- Weltgeschichte". Bis 6.6.2.6 folgte der Pfeil der Quest, die das SPIEL
+-- verfolgt - und das Spiel waehlt sie selbst (beim Annehmen, nach dem
+-- Abgeben), ohne auf die Entfernung zu schauen. Eine erfuellte Quest
+-- fuehrte zur Abgabe ans andere Ende des Gebiets, waehrend drei offene
+-- Ziele nebenan lagen.
+-- Jetzt plant der Pfeil selbst, laufend: jede Quest im Questlog ist ein
+-- Ziel - offene an ihrem Zielgebiet, erfuellte an ihrer Abgabe. Gewaehlt
+-- wird das mit den geringsten Kosten:
+--   Kosten = Luftlinie x Gewicht
+--   Gewicht 4 fuer "rote" Quests (5+ Stufen ueber dir), 1,5 fuer orange
+--   (3-4 Stufen), x3 fuer Gruppenquests. Alles andere 1.
+-- Weil Abgaben und Ziele gleich zaehlen, sammelt das von selbst: erst was
+-- nah ist, die Abgabe, wenn man in ihrer Naehe ist.
+-- Nicht hin und her: ein neues Ziel loest das alte nur ab, wenn es
+-- deutlich guenstiger ist (QA.KEEP_SHARE und QA.KEEP_MIN).
+-- Wer selbst eine Quest anklickt, bekommt sie (QA.manual) bis zur Abgabe.
+-- Das Spiel meldet eine eigene Wahl genauso wie seine - unterschieden
+-- wird an der Zeit: kurz nach Annehmen, Abgeben oder Laden (QA.AUTO_WINDOW)
+-- war es das Spiel.
+-- Grenze: die Luftlinie. Wege um Berge oder Wasser kennt ein Addon nicht.
+QA.KEEP_SHARE, QA.KEEP_MIN = 0.7, 40
+QA.PLAN_EVERY, QA.AUTO_WINDOW = 5, 2
+QA.skipped = {}          -- [questID] = bis wann ("/wcui pfeil weiter")
+QA.plan = { list = {} }  -- letzter Lauf, fuer /wcui pfeil
+
+function QA.Smart() return K.Get(KEY, "plan") ~= "tracked" end
+
+function QA.Weight(level, playerLevel, group)
+    local w = 1
+    if type(level) == "number" and level > 0 and type(playerLevel) == "number" then
+        local diff = level - playerLevel
+        if diff >= 5 then w = 4 elseif diff >= 3 then w = 1.5 end
+    end
+    if type(group) == "number" and group > 1 then w = w * 3 end
+    return w
+end
+
+-- Das Ziel mit den geringsten Kosten; current bleibt, solange nichts
+-- deutlich Guenstigeres da ist. Liefert questID (oder nil) und schreibt
+-- die Kandidaten nach QA.plan.list (fuer /wcui pfeil).
+function QA.Plan(current)
+    local list = QA.plan.list
+    for i = #list, 1, -1 do list[i] = nil end
+    local ql = _G.C_QuestLog
+    if not (ql and ql.GetNumQuestLogEntries and ql.GetInfo) then return nil end
+    local playerMap, px, py = PlayerMapPos()
+    if not playerMap then return nil end
+    local pc, pN, pW = ToWorld(playerMap, px, py)
+    if not pc then return nil end
+    local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
+    local plevel = _G.UnitLevel and K.Plain(_G.UnitLevel("player"))
+    local onMap = {}
+    local best, bestCost, curCost
+    for i = 1, (ql.GetNumQuestLogEntries() or 0) do
+        local info = ql.GetInfo(i)
+        local id = info and info.questID
+        local until_ = id and QA.skipped[id]
+        if id and id ~= 0 and not info.isHeader and not info.isHidden
+           and not (until_ and until_ > now) then
+            local mapID, x, y = QuestLocation(id, playerMap, onMap, true)
+            if mapID then
+                local tc, tN, tW = ToWorld(mapID, x, y)
+                if tc == pc then
+                    local d = QA.Solve(pN, pW, tN, tW, nil)
+                    local w = QA.Weight(info.difficultyLevel or info.level, plevel, info.suggestedGroup)
+                    local cost = d * w
+                    list[#list + 1] = { id = id, dist = d, weight = w, cost = cost, done = IsComplete(id) }
+                    if id == current then curCost = cost end
+                    if not bestCost or cost < bestCost then best, bestCost = id, cost end
+                end
+            end
+        end
+    end
+    table.sort(list, function(a, b) return a.cost < b.cost end)
+    QA.plan.at = now
+    if curCost and best ~= current
+       and not (bestCost < curCost * QA.KEEP_SHARE and curCost - bestCost > QA.KEEP_MIN) then
+        return current
+    end
+    return best
+end
+
+-- Neu planen, wenn niemand selbst gewaehlt hat.
+function QA.Replan()
+    if not QA.Smart() or QA.manual then return end
+    QA.Chosen = QA.Plan(QA.Chosen)
+end
+
+-- "/wcui pfeil weiter": das jetzige Ziel 10 Minuten auslassen.
+function QA.Skip()
+    local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
+    local id = QA.manual or QA.Chosen
+    if id then QA.skipped[id] = now + 600 end
+    QA.manual, QA.Chosen = nil, nil
+    QA.Replan()
+    return id
+end
+
+-- "/wcui pfeil planen": die eigene Wahl aufgeben, wieder planen.
+function QA.Resume()
+    QA.manual, QA.Chosen = nil, nil
+    QA.Replan()
 end
 
 --------------------------------------------------
@@ -765,13 +899,19 @@ end
 -- ist; ohne Ziel laeuft der Takt nicht.
 
 local ticker = CreateFrame("Frame")
-local acc, full = 0, 0
+local acc, full, planAcc = 0, 0, 0
 QA.FULL_EVERY = 0.2
 local function OnTick(_, elapsed)
     acc = acc + (elapsed or 0)
     if acc < 0.05 then return end
     full = full + acc
+    planAcc = planAcc + acc
     acc = 0
+    -- Unterwegs aendert sich, was am naechsten liegt.
+    if planAcc >= QA.PLAN_EVERY then
+        planAcc = 0
+        QA.Replan()
+    end
     if full >= QA.FULL_EVERY or not QA.Turn() then
         full = 0
         QA.Update()
@@ -803,10 +943,60 @@ local function Later(fn)
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.3, fn) else fn() end
 end
 
+-- Planen nach Ereignissen: gesammelt, hoechstens einmal je halbe Sekunde.
+-- Ein haengender Merker (Zeitgeber nie gelaufen) sperrt hoechstens 2 s.
+local planPendingAt
+local function SchedulePlan()
+    local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
+    if planPendingAt and now - planPendingAt < 2 then return end
+    planPendingAt = now
+    Later(function()
+        planPendingAt = nil
+        QA.Replan()
+        Refresh()
+    end)
+end
+
+local autoAt = -math.huge   -- wann das Spiel zuletzt selbst gewaehlt haben kann
+local REPLAN = { QUEST_LOG_UPDATE = true, QUEST_POI_UPDATE = true, QUEST_ACCEPTED = true,
+                 QUEST_TURNED_IN = true, QUEST_REMOVED = true, ZONE_CHANGED = true,
+                 ZONE_CHANGED_NEW_AREA = true, PLAYER_ENTERING_WORLD = true, SUPER_TRACKING_CHANGED = true }
+local AUTO = { QUEST_ACCEPTED = true, QUEST_TURNED_IN = true, QUEST_REMOVED = true,
+               PLAYER_ENTERING_WORLD = true }
+
+local function OnSmartEvent(event, questID, game)
+    local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
+    if AUTO[event] then autoAt = now end
+    if event == "SUPER_TRACKING_CHANGED" then
+        if not game then
+            QA.manual = nil
+        elseif game ~= QA.Chosen then
+            -- Erst kurz danach entscheiden: das Spiel meldet die neue
+            -- Verfolgung womoeglich VOR dem Annehmen, das sie ausgeloest hat.
+            local changedAt = now
+            Later(function()
+                local st = _G.C_SuperTrack
+                local still = st and st.GetSuperTrackedQuestID and st.GetSuperTrackedQuestID()
+                if still ~= game or math.abs(autoAt - changedAt) <= QA.AUTO_WINDOW then return end
+                QA.manual, QA.Chosen = game, nil
+                Refresh()
+            end)
+        end
+    end
+    if (event == "QUEST_TURNED_IN" or event == "QUEST_REMOVED") and questID then
+        if questID == QA.manual then QA.manual = nil end
+        if questID == QA.Chosen then QA.Chosen = nil end
+    end
+    if REPLAN[event] then SchedulePlan() end
+    Refresh()
+end
+
 local function OnEvent(_, event, questID)
     local st = _G.C_SuperTrack
     local game = st and st.GetSuperTrackedQuestID and st.GetSuperTrackedQuestID()
     if game == 0 then game = nil end
+    if QA.Smart() then return OnSmartEvent(event, questID, game) end
+    QA.manual = nil
     -- Waehlt der Spieler selbst eine Quest, gilt seine Wahl. Loescht das
     -- Spiel die Verfolgung (abgegeben), bleibt die des Pfeils.
     if event == "SUPER_TRACKING_CHANGED" and game then QA.Chosen = nil end
@@ -855,6 +1045,22 @@ function QA.Inspect()
     end
     out[#out + 1] = "Richtung der Höhe: " .. ((sign == "up" and "höher") or (sign == "down" and "tiefer")
         or "unbekannt – erst, wenn der Client die eigene Höhe nennt und du bergauf oder bergab gehst")
+    -- Planen (6.6.2.7): wer gewaehlt hat und was zur Wahl stand.
+    if not QA.Smart() then
+        out[#out + 1] = "Ziel: nur die Quest, die das Spiel verfolgt (Einstellung „Welches Ziel“)"
+    elseif QA.manual then
+        out[#out + 1] = "Ziel: selbst gewählt – " .. (QuestTitle(QA.manual) or QA.manual)
+            .. " (bis zur Abgabe; /wcui pfeil planen gibt die Wahl ab)"
+    else
+        QA.Chosen = QA.Plan(QA.Chosen)
+        out[#out + 1] = "Ziel: geplant – " .. (QA.Chosen and (QuestTitle(QA.Chosen) or QA.Chosen) or "nichts im Questlog mit Ort")
+        for i = 1, math.min(5, #QA.plan.list) do
+            local c = QA.plan.list[i]
+            out[#out + 1] = string.format("   %d. %s%s – %s%s", i, c.done and "Abgeben: " or "",
+                tostring(QuestTitle(c.id) or c.id), QA.FormatDistance(c.dist, K.Get(KEY, "units")),
+                c.weight ~= 1 and string.format(" (× %.1f)", c.weight):gsub("%.", ",") or "")
+        end
+    end
     return out
 end
 
@@ -873,7 +1079,7 @@ local function Enable()
         "USER_WAYPOINT_UPDATED", "ZONE_CHANGED", "ZONE_CHANGED_NEW_AREA",
         "ZONE_CHANGED_INDOORS", "PLAYER_ENTERING_WORLD", "WAYPOINT_UPDATE",
         "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED",
-        "QUEST_TURNED_IN", "QUEST_REMOVED",
+        "QUEST_TURNED_IN", "QUEST_REMOVED", "QUEST_ACCEPTED",
         "PLAYER_DEAD", "PLAYER_ALIVE", "PLAYER_UNGHOST", "CORPSE_POSITION_UPDATE",
     }) do pcall(events.RegisterEvent, events, e) end
     events:SetScript("OnEvent", K.Measured("Questpfeil", OnEvent))
@@ -933,16 +1139,22 @@ K.Register({
                   { type = "toggle", label = "Zielmarke im Raum", key = "worldMarker",
                     description = "Eine Nadel genau am Ziel, auf dem Berg oder am Höhleneingang. Nur für die Quest, die das Spiel verfolgt, und für Kartenmarkierungen." })
             B:Section("Mitdenken")
+            B:Row({ type = "dropdown", label = "Welches Ziel", key = "plan", items = {
+                        { value = "smart",   text = "Selbst planen (nächstes lohnendes Ziel)" },
+                        { value = "tracked", text = "Nur die Quest, die das Spiel verfolgt" } },
+                    tooltip = "Selbst planen: aus deinem ganzen Questlog das Ziel mit dem kürzesten Weg – offene Quests an ihrem Zielgebiet, erfüllte an der Abgabe. Quests weit über deiner Stufe und Gruppenquests zählen weiter weg. Klickst du selbst eine Quest an, gilt sie bis zur Abgabe." },
+                  { type = "empty" })
             B:Row({ type = "toggle", label = "Als Geist zur Leiche", key = "corpse",
                     description = "Nach dem Tod zeigt der Pfeil von selbst zu deiner Leiche." },
                   { type = "toggle", label = "Nach dem Abgeben weiter", key = "autoNext",
-                    description = "Die nächstgelegene Quest aus deinem Questlog wird ausgewählt." })
+                    description = "Nur bei „Nur die Quest, die das Spiel verfolgt“: die nächstgelegene Quest aus deinem Questlog wird ausgewählt." })
             B:Row({ type = "dropdown", label = "Wenn die Ziele erfüllt sind", key = "onComplete", items = {
                         { value = "turnin", text = "Zur Abgabe führen" },
                         { value = "next",   text = "Gleich zur nächsten Quest" } } },
                   { type = "empty" })
             B:Section("So benutzt du ihn")
-            B:Note("Klicke im Questlog oder in der Zielverfolgung auf eine Quest, um sie auszuwählen — oder setze auf der Weltkarte eine Markierung. Der Pfeil erscheint, sobald etwas ausgewählt ist, und verschwindet wieder, wenn nichts ausgewählt ist.")
+            B:Note("Von selbst zeigt der Pfeil auf das nächste lohnende Ziel aus deinem Questlog und plant unterwegs neu. Klickst du im Questlog oder in der Zielverfolgung eine Quest an, gilt sie bis zur Abgabe; eine Kartenmarkierung gilt, solange sie steht.")
+            B:Note("/wcui pfeil zeigt, was zur Wahl stand. /wcui pfeil weiter lässt das jetzige Ziel zehn Minuten aus, /wcui pfeil planen gibt eine eigene Wahl wieder ab.")
             B:Note("In Dungeons nennt das Spiel Addons keine Position. Deshalb ist der Pfeil dort aus; wer ihn trotzdem will, sieht „Position unbekannt“ statt einer Zahl.")
             B:Note("„m“ ist die Spieleinheit, die der deutsche Client auch in Zauberreichweiten „Meter“ nennt. Echte Meter sind etwa 9 % weniger.")
         end },

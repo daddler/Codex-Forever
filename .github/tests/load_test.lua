@@ -1182,6 +1182,9 @@ do
         end,
     }
     _G.GetPlayerFacing = function() return 0 end
+    -- Dieser Block prueft das Folgen der verfolgten Quest (bis 6.6.2.6 das
+    -- einzige Verhalten); das Planen steht im Block danach.
+    K.Set("questarrow", "plan", "tracked")
     local tracked = 42
     _G.C_SuperTrack = { GetSuperTrackedQuestID = function() return tracked end }
     _G.C_QuestLog = {
@@ -1319,6 +1322,93 @@ do
     _G.UnitIsGhost, _G.C_DeathInfo = nil, nil
     QA.Update(true)
     Check(not QA.frame:IsShown(), "wiederbelebt und nichts ausgewaehlt: kein Pfeil")
+    K.Set("questarrow", "plan", "smart")
+
+    -- 6.6.2.7: der Pfeil plant selbst (Beta-Test: "schickt mich durch die
+    -- Weltgeschichte"). Spieler bei (500, 500); Norden = kleineres y.
+    local oldGT, oldUL, oldAfter = _G.GetTime, _G.UnitLevel, _G.C_Timer.After
+    local ok, err = pcall(function()
+        local now = 1000
+        _G.GetTime = function() return now end
+        _G.UnitLevel = function() return 10 end
+        _G.C_Timer.After = function(_, fn) fn() end
+        assert(QA.Weight(15, 10) == 4 and QA.Weight(13, 10) == 1.5 and QA.Weight(10, 10) == 1
+            and QA.Weight(10, 10, 3) == 3 and QA.Weight(nil, 10) == 1, "Gewichte falsch")
+        -- Spiel verfolgt 7 (weit weg, erfuellt: Abgabe im Norden, 400 m).
+        -- Offen: 9 (80 m) und 11 (60 m, aber 6 Stufen ueber dir -> 240).
+        local game = 7
+        _G.C_SuperTrack.GetSuperTrackedQuestID = function() return game end
+        local log = { { questID = 7, level = 10 }, { questID = 9, level = 10 }, { questID = 11, level = 16 } }
+        local where = { [7] = { 0.5, 0.1 }, [9] = { 0.5, 0.42 }, [11] = { 0.5, 0.44 } }
+        _G.C_QuestLog.GetNumQuestLogEntries = function() return #log end
+        _G.C_QuestLog.GetInfo = function(i) return log[i] end
+        _G.C_QuestLog.IsComplete = function(id) return id == 7 end
+        local calls = 0
+        _G.C_QuestLog.GetQuestsOnMap = function()
+            calls = calls + 1
+            local out = {}
+            for _, e in ipairs(log) do
+                local p = where[e.questID]
+                out[#out + 1] = { questID = e.questID, x = p[1], y = p[2] }
+            end
+            return out
+        end
+        QA.manual, QA.Chosen = nil, nil
+        stub.FireEvent("PLAYER_ENTERING_WORLD")
+        assert(QA.Chosen == 9, "nicht das naechste lohnende Ziel: " .. tostring(QA.Chosen))
+        calls = 0
+        QA.Replan()
+        assert(calls == 1, "Karte je Quest neu abgefragt: " .. calls)
+        QA.Update(true)
+        assert(QA.texts.dist:GetText() == "80 m", "Pfeil zeigt nicht auf das geplante Ziel: " .. tostring(QA.texts.dist:GetText()))
+        -- Nicht hin und her: 13 taucht 70 m entfernt auf - kaum naeher, 9 bleibt.
+        table.insert(log, { questID = 13, level = 10 })
+        where[13] = { 0.5, 0.43 }
+        QA.Replan()
+        assert(QA.Chosen == 9, "springt wegen 10 m zu einem anderen Ziel")
+        -- Deutlich naeher (20 m): jetzt wechselt er.
+        where[13] = { 0.5, 0.48 }
+        QA.Replan()
+        assert(QA.Chosen == 13, "deutlich naeheres Ziel nicht genommen")
+        -- Das Spiel waehlt beim Annehmen selbst: gilt NICHT als eigene Wahl.
+        stub.FireEvent("QUEST_ACCEPTED", 13)
+        game = 7
+        stub.FireEvent("SUPER_TRACKING_CHANGED")
+        assert(not QA.manual and QA.Chosen == 13, "Wahl des Spiels beim Annehmen als eigene Wahl genommen")
+        -- Auch wenn das Spiel die Verfolgung VOR dem Annehmen meldet.
+        now = now + 10
+        game = 9
+        local queued = {}
+        _G.C_Timer.After = function(_, fn) queued[#queued + 1] = fn end
+        stub.FireEvent("SUPER_TRACKING_CHANGED")
+        stub.FireEvent("QUEST_ACCEPTED", 9)
+        _G.C_Timer.After = function(_, fn) fn() end
+        assert(#queued >= 1, "Entscheidung nicht verschoben")
+        for _, fn in ipairs(queued) do fn() end
+        assert(not QA.manual, "Verfolgung vor dem Annehmen als eigene Wahl genommen")
+        game = 7
+        -- Spaeter, ohne Anlass: der Spieler hat geklickt - seine Wahl gilt.
+        now = now + 10
+        game = 11
+        stub.FireEvent("SUPER_TRACKING_CHANGED")
+        assert(QA.manual == 11, "eigene Wahl uebergangen")
+        QA.Update(true)
+        assert(QA.texts.dist:GetText() == "60 m", "Pfeil zeigt nicht auf die eigene Wahl")
+        -- Abgegeben: zurueck zum Planen.
+        table.remove(log, 3)
+        stub.FireEvent("QUEST_TURNED_IN", 11)
+        assert(not QA.manual and QA.Chosen == 13, "nach der Abgabe nicht weiter geplant: " .. tostring(QA.Chosen))
+        -- /wcui pfeil weiter: das jetzige Ziel auslassen.
+        assert(QA.Skip() == 13 and QA.Chosen == 9, "Ueberspringen waehlt nicht das naechste")
+        local lines = table.concat(QA.Inspect(), " | ")
+        assert(lines:find("Ziel: geplant", 1, true) and lines:find("Abgeben: ", 1, true), "/wcui pfeil ohne Plan: " .. lines)
+    end)
+    QA.skipped[13] = nil
+    QA.manual, QA.Chosen = nil, nil
+    _G.GetTime, _G.UnitLevel, _G.C_Timer.After = oldGT, oldUL, oldAfter
+    _G.C_QuestLog.IsComplete, _G.C_QuestLog.GetNumQuestLogEntries, _G.C_QuestLog.GetInfo = nil, nil, nil
+    Check(ok, "Questpfeil plant: naechstes lohnendes Ziel, kein Hin und Her, eigene Wahl bis zur Abgabe"
+        .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Questpfeil: die 3D-Ansichten und die Farbe.

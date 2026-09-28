@@ -875,6 +875,18 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    if msg == "pfeil weiter" or msg == "arrow skip" then
+        local QA = WeintCodex.UIQuestArrow
+        local skipped = QA.Skip()
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " "
+            .. (skipped and "Ziel für zehn Minuten ausgelassen – der Pfeil plant neu." or "Der Pfeil hat gerade kein Ziel."))
+        return
+    end
+    if msg == "pfeil planen" or msg == "arrow plan" then
+        WeintCodex.UIQuestArrow.Resume()
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Eigene Wahl abgegeben – der Pfeil plant wieder selbst.")
+        return
+    end
     if msg == "pfeil" or msg == "arrow" then
         for _, line in ipairs(WeintCodex.UIQuestArrow.Inspect()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
