@@ -27,6 +27,14 @@
 -- aber gehoeren einer Klasse (gelernt aus den Erinnerungen, 6.6.0.5).
 -- Die Belegung wird deshalb je Klasse gespeichert.
 --
+-- RAENGE (6.6.2.0, Beta-Test: "die einzelnen Raenge auswaehlen und nicht
+-- immer den hoechsten"). Ein Klick in der Tafel legt den Zauber ohne Rang
+-- auf die Taste - der Client wirkt dann den hoechsten, und ein neu
+-- gelernter Rang greift von selbst. Wer einen kleineren will (Mana
+-- sparen), waehlt ihn darunter; gespeichert wird der Rang so, wie das
+-- Zauberbuch ihn nennt ("Rang 3"), und als Attribut steht dann
+-- "Erneuerung(Rang 3)" - dieselbe Schreibweise wie in einem Makro.
+--
 -- KEINE EINGEBAUTE ZAUBERLISTE. Niemand hier hat die Zauber des
 -- Forever-Clients gelesen - die Tafel zeigt, was das Zauberbuch des
 -- Charakters nennt, und getippt wird nichts (Beta-Test: "einfach
@@ -93,7 +101,7 @@ CC._class = PlayerClass
 local function Copy(list)
     local out = {}
     for i, b in ipairs(list or {}) do
-        out[i] = { button = b.button, mod = b.mod, action = b.action, spell = b.spell }
+        out[i] = { button = b.button, mod = b.mod, action = b.action, spell = b.spell, rank = b.rank }
     end
     return out
 end
@@ -144,8 +152,18 @@ function CC.KeyText(b)
 end
 
 function CC.ActionText(b)
-    if b.action == "spell" then return b.spell or "?" end
+    if b.action == "spell" then
+        if b.rank then return (b.spell or "?") .. " (" .. b.rank .. ")" end
+        return b.spell or "?"
+    end
     return Short(CC.ACTIONS, b.action)
+end
+
+-- Was im Attribut steht: der Name (hoechster Rang) oder "Name(Rang 3)".
+function CC.SpellAttr(b)
+    if not b.spell then return nil end
+    if b.rank then return b.spell .. "(" .. b.rank .. ")" end
+    return b.spell
 end
 
 --------------------------------------------------
@@ -172,7 +190,7 @@ function CC.ApplyTo(f, list)
             keys[#keys + 1] = t
             if b.action == "spell" then
                 local s = b.mod .. "spell" .. b.button
-                f:SetAttribute(s, b.spell)
+                f:SetAttribute(s, CC.SpellAttr(b))
                 keys[#keys + 1] = s
             end
         end
@@ -261,7 +279,8 @@ end
 -- Zauber einfach in einer Liste auswaehlen")
 --------------------------------------------------
 -- Was im Zauberbuch steht, sagt der Client - keine eigene Liste. Je Name
--- einmal (Raenge: der Name wirkt den hoechsten), ohne passive Zauber,
+-- einmal, seine Raenge darunter (`ranks`, aufsteigend; `id` ist die des
+-- hoechsten - der Name wirkt ihn), ohne passive Zauber,
 -- ohne Gilden- und versteckte Reiter. "Nur hilfreiche": fragt den Client
 -- (C_Spell.IsSpellHelpful / IsHelpfulSpell); kann er es nicht sagen,
 -- bleibt der Zauber drin - "weiss nicht" ist nicht "schaedlich".
@@ -275,11 +294,40 @@ local function Helpful(id, name)
     return K.Bool(v, nil)
 end
 
-local function Add(out, seen, id, name, icon)
+-- "Rang 3" -> 3. Andere Untertitel ("Rassenfaehigkeit", "Stufe 2" einer
+-- Gestalt ohne Zahl ...) sind kein Rang.
+function CC.RankNumber(sub)
+    sub = K.Plain(sub)
+    if type(sub) ~= "string" then return nil end
+    return tonumber(sub:match("(%d+)%s*$"))
+end
+
+local function Add(out, seen, id, name, icon, sub)
     name = K.Plain(name)
-    if type(name) ~= "string" or name == "" or seen[name] then return end
-    seen[name] = true
-    out[#out + 1] = { id = K.Plain(id), name = name, icon = K.Plain(icon) }
+    if type(name) ~= "string" or name == "" then return end
+    id = K.Plain(id)
+    if type(sub) == "nil" and type(id) == "number" then
+        local cs = _G.C_Spell
+        local get = (cs and cs.GetSpellSubtext) or _G.GetSpellSubtext
+        if get then
+            local ok, v = pcall(get, id)
+            if ok then sub = v end
+        end
+    end
+    local n = CC.RankNumber(sub)
+    local sp = seen[name]
+    if not sp then
+        sp = { id = id, name = name, icon = K.Plain(icon), ranks = {}, top = n or 0 }
+        seen[name] = sp
+        out[#out + 1] = sp
+    elseif (n or 0) > sp.top then
+        sp.id, sp.top = id or sp.id, n
+    end
+    if n then
+        for _, r in ipairs(sp.ranks) do if r.n == n then return end end
+        sp.ranks[#sp.ranks + 1] = { id = id, rank = K.Plain(sub), n = n }
+        table.sort(sp.ranks, function(a, b) return a.n < b.n end)
+    end
 end
 
 function CC.Spellbook(helpfulOnly)
@@ -299,7 +347,7 @@ function CC.Spellbook(helpfulOnly)
                     local okI, it = pcall(sb.GetSpellBookItemInfo, slot, bank)
                     if okI and type(it) == "table" and not K.Bool(it.isPassive, false)
                        and (SPELL == nil or K.Plain(it.itemType) == SPELL) then
-                        Add(out, seen, it.spellID, it.name, it.iconID)
+                        Add(out, seen, it.spellID, it.name, it.iconID, it.subName)
                     end
                 end
             end
@@ -313,9 +361,9 @@ function CC.Spellbook(helpfulOnly)
                 if _G.GetSpellBookItemInfo then kind, id = _G.GetSpellBookItemInfo(slot, "spell") end
                 local passive = _G.IsPassiveSpell and K.Bool(_G.IsPassiveSpell(slot, "spell"), false)
                 if (kind == nil or K.Plain(kind) == "SPELL") and not passive then
-                    local name = _G.GetSpellBookItemName(slot, "spell")
+                    local name, sub = _G.GetSpellBookItemName(slot, "spell")
                     local icon = _G.GetSpellTexture and _G.GetSpellTexture(slot, "spell")
-                    Add(out, seen, id, name, icon)
+                    Add(out, seen, id, name, icon, sub)
                 end
             end
         end
@@ -352,6 +400,47 @@ function CC.Current()
         if b.button == draft.button and b.mod == draft.mod then return b end
     end
     return nil
+end
+
+-- Die Raenge eines Zaubers, wie das Zauberbuch sie nennt (aufsteigend).
+function CC.Ranks(name)
+    for _, sp in ipairs(CC.Spellbook(false)) do
+        if sp.name == name then return sp.ranks end
+    end
+    return {}
+end
+
+-- Rang des Zaubers auf der gewaehlten Taste; nil oder "" = der hoechste.
+function CC.SetRank(rank)
+    local cur = CC.Current()
+    if not (cur and cur.action == "spell") then return false end
+    if rank == "" then rank = nil end
+    CC.Add({ button = cur.button, mod = cur.mod, action = "spell", spell = cur.spell, rank = rank })
+    return true
+end
+
+-- Die Auswahl "Rang" unter der Tafel.
+function CC.RankItems()
+    local items = { { value = "", text = "Höchster – steigt mit" } }
+    local cur = CC.Current()
+    if cur and cur.action == "spell" then
+        for _, r in ipairs(CC.Ranks(cur.spell)) do
+            items[#items + 1] = { value = r.rank, text = r.rank }
+        end
+    end
+    return items
+end
+
+function CC.RankHint()
+    local cur = CC.Current()
+    if not (cur and cur.action == "spell") then return "erst einen Zauber wählen" end
+    return "nur ein Rang im Zauberbuch"
+end
+
+function CC.RankDisabled()
+    local cur = CC.Current()
+    if not (cur and cur.action == "spell") then return true end
+    return #CC.Ranks(cur.spell) < 2 and not cur.rank
 end
 
 local LIST_ROWS = 10
@@ -470,6 +559,11 @@ function CC.BuildPicker(parent, width)
             if e.id and tip.SetSpellByID then tip:SetSpellByID(e.id) else tip:SetText(e.name, 1, 1, 1) end
             local a = C.accent
             tip:AddLine("Klick: auf " .. CC.KeyText(draft) .. " legen", a[1], a[2], a[3])
+            local ranks = e.ranks or {}
+            if #ranks > 1 then
+                local d = C.textMuted
+                tip:AddLine(string.format("%d Ränge – kleineren darunter unter „Rang“ wählen", #ranks), d[1], d[2], d[3])
+            end
             tip:Show()
         end)
         t:SetScript("OnLeave", function() _G.GameTooltip:Hide() end)
@@ -524,9 +618,14 @@ function CC.BuildPage(B)
     B:Row({ type = "custom", height = CC.PickerHeight(), create = function(parent, width)
                 return CC.BuildPicker(parent, width)
             end }, nil)
-    B:Row({ type = "toggle", label = "Nur hilfreiche Zauber", key = "clickHelpfulOnly",
-            description = "Heilungen, Buffs, Bannen – was man auf Verbündete wirkt." },
-          { type = "empty" })
+    B:Row({ type = "dropdown", label = "Rang", items = CC.RankItems,
+            get = function() local cur = CC.Current() return cur and cur.rank or "" end,
+            set = function(v) CC.SetRank(v) end,
+            disabled = CC.RankDisabled,
+            disabledHint = CC.RankHint,
+            tooltip = "Rang des Zaubers auf der gewählten Taste. „Höchster“ wirkt immer deinen besten und steigt mit, wenn du einen neuen lernst." },
+          { type = "toggle", label = "Nur hilfreiche Zauber", key = "clickHelpfulOnly",
+            description = "Heilungen, Buffs, Bannen – was man auf Verbündete wirkt." })
     B:Section("Wo")
     B:Row({ type = "toggle", label = "Auch Einheitenrahmen", key = "clickUnitFrames",
             description = "Spieler, Ziel, Fokus, Ziel des Ziels und Begleiter – nicht nur Gruppe und Schlachtzug." },

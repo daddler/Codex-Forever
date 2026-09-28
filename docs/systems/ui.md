@@ -606,7 +606,8 @@ Seit 6.2.0.0:
   die Symbole aus dem Zauberbuch als Raster; ein Klick legt sie auf die
   oben gewählte Taste, die aktuelle Belegung ist im Akzent umrandet.
   `CC.Spellbook` liest `C_SpellBook` (Rückfall: `GetSpellTabInfo`), je
-  Name einmal (der Name wirkt den höchsten Rang), ohne passive Zauber,
+  Name einmal, die Ränge darunter (`ranks`, aus `subName`, Rückfall
+  `C_Spell.GetSpellSubtext`; nur Untertitel mit Zahl am Ende), ohne passive Zauber,
   Gilden-, versteckte und Nebenspezialisierungs-Reiter; „Nur hilfreiche
   Zauber“ (`clickHelpfulOnly`) fragt `C_Spell.IsSpellHelpful` – ohne
   Antwort bleibt der Zauber drin. Feste Höhe, sechs Reihen; was nicht
@@ -628,6 +629,16 @@ Seit 6.2.0.0:
   beim Drüberfahren (brauchen Snippets, die dem Forever-Client fehlen,
   oder Tastenbelegungen, die im Kampf gesperrt sind) und Kombinationen
   mehrerer Zusatztasten. Keine eingebaute Zauberliste – die Tafel zeigt, was das Zauberbuch nennt. Im Spiel ungeprüft.
+  **Ränge** (6.6.2.0, Beta-Test: „die einzelnen Ränge auswählen und
+  nicht immer den höchsten“): ein Klick in der Tafel legt den Zauber
+  **ohne** Rang – der Client wirkt den höchsten, ein neu gelernter greift
+  von selbst. Die Auswahl „Rang“ unter der Tafel (`CC.RankItems`,
+  `CC.SetRank`) legt einen kleineren fest; gespeichert wird der Text des
+  Zauberbuchs (`rank = "Rang 3"`), das Attribut heißt dann
+  `Erneuerung(Rang 3)` (`CC.SpellAttr`) – die Makro-Schreibweise.
+  Gesperrt, solange die Taste keinen Zauber trägt oder das Zauberbuch
+  nur einen Rang nennt. Ob der Forever-Client im Zauberbuch alle Ränge
+  herausgibt und `Name(Rang N)` im Attribut annimmt: ungeprüft.
 * **Erinnerungen** (6.4.0.0, `ui/reminders.lua`, eigenes Modul): ein
   Regelwerk aus kleinen Tabellen – `buff` (Buff fehlt), `weapon` (Waffe
   ohne/mit ablaufender Verzauberung, `GetWeaponEnchantInfo`), `pet`

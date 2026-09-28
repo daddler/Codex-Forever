@@ -1881,7 +1881,9 @@ function WeintCodex.CreateDropdown(parent, opts)
 
     row.Sync = function()
         local current = opts.get and opts.get()
-        local text = (opts.disabled and Disabled() and opts.disabledHint) or nil
+        local hint = opts.disabledHint
+        if type(hint) == "function" then hint = hint() end
+        local text = (opts.disabled and Disabled() and hint) or nil
         if not text then
             for _, item in ipairs(Items()) do
                 if item.value == current then text = item.text break end

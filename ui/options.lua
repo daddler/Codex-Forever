@@ -304,7 +304,8 @@ function Builder:Cell(spec)
     elseif t == "dropdown" then
         w = WeintCodex.CreateDropdown(parent, {
             label = spec.label, items = spec.items, width = CELL_W,
-            get = get, set = set, disabled = disabled, tooltip = spec.tooltip,
+            get = get, set = set, disabled = disabled, disabledHint = spec.disabledHint,
+            tooltip = spec.tooltip,
         })
     elseif t == "color" then
         w = WeintCodex.CreateColorSwatch(parent, {

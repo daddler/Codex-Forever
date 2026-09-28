@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.2.0",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber mit Rang.|r Unter der Zaubertafel wählst du für die belegte Taste einen Rang – zum Beispiel einen kleinen Heilzauber, der Mana spart. Ohne Wahl wirkt die Taste wie bisher den höchsten Rang und steigt mit, wenn du einen neuen lernst.",
+        },
+    },
+    {
         version = "6.6.1.9",
         date    = "28.09.2026",
         notes   = {

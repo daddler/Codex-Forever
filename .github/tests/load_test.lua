@@ -2186,8 +2186,8 @@ do
         _G.Enum = setmetatable({ SpellBookSpellBank = { Player = 0 }, SpellBookItemType = { Spell = 1, Flyout = 4 } },
             { __index = oldEnum })
         local book = {
-            [1] = { spellID = 2050, name = "Geringes Heilen", iconID = 1, itemType = 1 },
-            [2] = { spellID = 2052, name = "Geringes Heilen", iconID = 1, itemType = 1 },
+            [1] = { spellID = 2050, name = "Geringes Heilen", iconID = 1, itemType = 1, subName = "Rang 1" },
+            [2] = { spellID = 2052, name = "Geringes Heilen", iconID = 1, itemType = 1, subName = "Rang 2" },
             [3] = { spellID = 585, name = "Göttliche Pein", iconID = 2, itemType = 1 },
             [4] = { spellID = 9, name = "Passiv", iconID = 3, itemType = 1, isPassive = true },
             [5] = { spellID = 10, name = "Flugmenue", iconID = 4, itemType = 4 },
@@ -2205,6 +2205,10 @@ do
         local all = CC.Spellbook(false)
         assert(#all == 2 and all[1].name == "Geringes Heilen" and all[2].name == "Göttliche Pein",
             "Zauberbuch falsch gelesen: " .. #all)
+        assert(#all[1].ranks == 2 and all[1].ranks[1].rank == "Rang 1" and all[1].id == 2052,
+            "Raenge nicht gesammelt oder id nicht die des hoechsten")
+        assert(#all[2].ranks == 0 and CC.RankNumber("Rassenfähigkeit") == nil and CC.RankNumber("Rang 12") == 12,
+            "Untertitel falsch als Rang gelesen")
         local helpful = CC.Spellbook(true)
         assert(#helpful == 1 and helpful[1].name == "Geringes Heilen", "Pein als hilfreich gelistet")
         _G.C_Spell = {}
@@ -2220,6 +2224,16 @@ do
             "Klick in der Tafel belegt die Taste nicht")
         picker.Sync()
         assert(picker.tiles[3].ring.top:IsShown() and not picker.tiles[4].ring.top:IsShown(), "Belegung in der Tafel nicht markiert")
+        -- Rang: ohne = hoechster (nur der Name), sonst "Name(Rang 1)".
+        assert(not CC.RankDisabled() and #CC.RankItems() == 3, "Rangauswahl fehlt")
+        assert(CC.SetRank("Rang 1") and f1:GetAttribute("alt-spell3") == "Geringes Heilen(Rang 1)",
+            "Rang nicht ins Attribut")
+        assert(CC.ActionText(CC.Current()) == "Geringes Heilen (Rang 1)", "Rang nicht genannt")
+        CC.SetRank("")
+        assert(f1:GetAttribute("alt-spell3") == "Geringes Heilen" and CC.Current().rank == nil, "zurueck auf hoechsten geht nicht")
+        CC.draft.button, CC.draft.mod = 1, "shift-"
+        assert(CC.RankDisabled() and CC.RankHint() == "nur ein Rang im Zauberbuch", "Heilen ohne Raenge waehlbar")
+        CC.draft.button, CC.draft.mod = 3, "alt-"
         picker.tiles[1]:Click()
         assert(f1:GetAttribute("alt-type3") == "target" and f1:GetAttribute("alt-spell3") == nil, "Ziel waehlen nicht gelegt")
         CC.Remove(#CC.Bindings())
