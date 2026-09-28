@@ -251,7 +251,7 @@ local function Skin(b)
     end
     local checked = b.GetCheckedTexture and b:GetCheckedTexture()
     if checked and checked.SetColorTexture then
-        local a = WeintCodex.Colors.accent
+        local a = K.Highlight()
         checked:SetColorTexture(a[1], a[2], a[3], 0.35)
         if icon then checked:ClearAllPoints() checked:SetAllPoints(icon) end
     end
@@ -269,7 +269,7 @@ local function Skin(b)
         local function FlatFlash()
             if guard then return end
             guard = true
-            local a = WeintCodex.Colors.accent
+            local a = K.Highlight()
             flash:SetColorTexture(a[1], a[2], a[3], 0.3)
             if icon and not K.InCombat() then
                 flash:ClearAllPoints()
@@ -821,7 +821,7 @@ local function SkinBags()
                     -- Offene Tasche: flach im Akzent statt gelbem Leuchten.
                     local hl = Region(b, "SlotHighlightTexture")
                     if hl and hl.SetColorTexture then
-                        local a = WeintCodex.Colors.accent
+                        local a = K.Highlight()
                         hl:SetColorTexture(a[1], a[2], a[3], 0.35)
                         if d.icon then hl:ClearAllPoints() hl:SetAllPoints(d.icon) end
                     end

@@ -195,7 +195,7 @@ local function Row(w)
     r.own:SetPoint("TOPLEFT", r.bar, "TOPLEFT", 0, 0)
     r.own:SetPoint("BOTTOMLEFT", r.bar, "BOTTOMLEFT", 0, 0)
     r.own:SetWidth(2)
-    local a = C.accent
+    local a = K.Highlight()
     r.own:SetColorTexture(a[1], a[2], a[3], 1)
     r.own:Hide()
     -- Maus: Aufschluesselung nach Zaubern (wie Details).
@@ -943,7 +943,8 @@ local function TextTab(parent, onClick)
     t.line:SetPoint("BOTTOMLEFT", t, "BOTTOMLEFT", 0, 0)
     t.line:SetPoint("BOTTOMRIGHT", t, "BOTTOMRIGHT", 0, 0)
     t.line:SetHeight(2)
-    t.line:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+    local hc = K.Highlight()
+    t.line:SetColorTexture(hc[1], hc[2], hc[3], 1)
     t:SetScript("OnClick", onClick)
     return t
 end

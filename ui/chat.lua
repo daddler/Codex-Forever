@@ -153,7 +153,7 @@ local function SkinFrame(cf)
         d.line:SetHeight(2)
         d.line:SetPoint("BOTTOMLEFT", d.tab, "BOTTOMLEFT", 6, 2)
         d.line:SetPoint("BOTTOMRIGHT", d.tab, "BOTTOMRIGHT", -6, 2)
-        local a = WeintCodex.Colors.accent
+        local a = K.Highlight()
         d.line:SetColorTexture(a[1], a[2], a[3], 1)
         d.line:Hide()
         for _, suffix in ipairs({ "Left", "Middle", "Right", "SelectedLeft", "SelectedMiddle",

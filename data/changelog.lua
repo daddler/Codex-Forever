@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.6.2.3",
         date    = "28.09.2026",
         notes   = {
+            "|cff7C6CFFRahmen in deiner Klassenfarbe.|r Gewählte Reiter, das Zielleuchten der Plaketten, deine Zeile in der Schadensanzeige und die Rahmen im Gestaltungsmodus tragen jetzt die Farbe deiner Klasse statt Lila. Unter Allgemein → „Rahmen und Hervorhebungen“ lässt sich das Lila zurückholen.",
             "|cff7C6CFFVerlauf der Schadensanzeige zeigt den ganzen Kampf.|r Das Spiel nennt die Zahlen im Kampf nur verdeckt – deshalb stand bisher nur eine Säule am Ende. Jetzt zeigt der Verlauf die Summe über den Kampf: steil heißt viel Schaden, flach heißt keiner.",
             "|cff7C6CFFGilde & Communitys: Wappen zurück, Liste links neu.|r Das Gildenwappen oben links ist wieder da. Die Einträge links sind schlichte Kacheln, der gewählte im Akzent; das Wappen im Eintrag bleibt.",
             "|cff7C6CFFWeicherer Rand ums Charaktermodell.|r Der Übergang sitzt jetzt an den Kanten des Hintergrundbilds selbst und ist breiter – auch oben und rechts.",

@@ -345,7 +345,7 @@ function W.NavEntry(f, r, atlas)
     end
     if d.on ~= d.onNow then
         d.on = d.onNow
-        local c = d.on and C.accent or { 0, 0, 0 }
+        local c = d.on and K.Highlight() or { 0, 0, 0 }
         d.kachel.border:SetColor(c[1], c[2], c[3], 1)
     end
 end
@@ -428,7 +428,7 @@ local function SkinModeTabs()
             end
             local sel = tab.SelectedTexture
             local on = type(sel) == "table" and sel.IsShown and K.Bool(sel:IsShown(), false)
-            local c = on and C.accent or { 0, 0, 0 }
+            local c = on and K.Highlight() or { 0, 0, 0 }
             d.kachel.border:SetColor(c[1], c[2], c[3], 1)
         end
     end
@@ -883,7 +883,7 @@ local function SkinTab(tab)
         if ok and type(v) ~= "nil" then on = v end
     end
     on = K.Bool(on, false)
-    local c = on and C.accent or { 0, 0, 0 }
+    local c = on and K.Highlight() or { 0, 0, 0 }
     if d.rim then
         if d.sel ~= on then
             d.sel = on
@@ -1366,7 +1366,7 @@ local function SkinSideTabs(f)
             d.signals, d.why = signals[t], on and why or nil
             if d.on ~= on then
                 d.on = on
-                local c = on and C.accent or { 0, 0, 0 }
+                local c = on and K.Highlight() or { 0, 0, 0 }
                 d.kachel.border:SetColor(c[1], c[2], c[3], 1)
             end
         end

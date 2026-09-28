@@ -3426,7 +3426,7 @@ do
         WeintCodex.UIActionBars.SkinAll()
         _G.hooksecurefunc = oldHook
         assert(WeintCodex.UIActionBars.skinned[b], "Knopf nicht umgestaltet")
-        local acc = WeintCodex.Colors.accent
+        local acc = K.Highlight()
         assert(flashColor and flashColor[1] == acc[1] and flashColor[4] < 0.5, "Blinken bleibt der rote Rahmen des Spiels")
         flashColor = nil
         b.Flash:SetAtlas("UI-HUD-ActionBar-IconFrame-Flash")
@@ -4496,6 +4496,30 @@ do
     end)
     Check(ok2, "Berufe und Gilde & Communitys: Metall, Goldrahmen, Seitenreiter, Innenflaechen"
         .. (ok2 and "" or (": " .. tostring(err2))))
+
+    -- 6.6.2.4: Rahmen und Hervorhebungen in Klassenfarbe - oder im Akzent.
+    local ok4, err4 = pcall(function()
+        local oldUC, oldRCC = _G.UnitClass, _G.RAID_CLASS_COLORS
+        _G.UnitClass = function() return "Jäger", "HUNTER", 3 end
+        _G.RAID_CLASS_COLORS = { HUNTER = { r = 0.67, g = 0.83, b = 0.45 } }
+        K.ResetHighlight()
+        local h = K.Highlight()
+        assert(h[1] == 0.67 and h[2] == 0.83 and h[3] == 0.45, "keine Klassenfarbe")
+        K.Set("general", "highlight", "accent")
+        K.ResetHighlight()
+        assert(K.Highlight() == WeintCodex.Colors.accent, "Akzent laesst sich nicht waehlen")
+        K.Set("general", "highlight", nil)
+        _G.RAID_CLASS_COLORS = nil
+        K.ResetHighlight()
+        assert(K.Highlight() == WeintCodex.Colors.accent, "ohne Klassenfarbe nicht der Akzent")
+        _G.RAID_CLASS_COLORS = { HUNTER = { r = 0.67, g = 0.83, b = 0.45 } }
+        assert(K.Highlight()[1] == 0.67, "unbekannte Klasse wurde gemerkt")
+        _G.UnitClass, _G.RAID_CLASS_COLORS = oldUC, oldRCC
+        K.ResetHighlight()
+        -- Der Akzent selbst bleibt unberuehrt (eine Bedeutungsfarbe).
+        assert(WeintCodex.Colors.accent[1] ~= 0.67, "Akzent veraendert")
+    end)
+    Check(ok4, "Rahmen und Hervorhebungen: Klassenfarbe, wahlweise Akzent" .. (ok4 and "" or (": " .. tostring(err4))))
 
     -- 6.6.2.2: Plaketten nach NPC - Zaubernde und eigene Farben.
     local ok3, err3 = pcall(function()

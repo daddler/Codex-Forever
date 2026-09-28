@@ -389,10 +389,14 @@ local function Build(parent)
     -- (unter dem Balken, der ein Kindrahmen ist) und reichen ueber ihn
     -- hinaus. Ohne Neunteiler im Client bleiben sie aus (K.Glow).
     local GC = WeintCodex.GameColors
+    -- Zielleuchten in der Farbe der Hervorhebung (6.6.2.4: Klassenfarbe),
+    -- Staerke wie bisher.
+    local hc = K.Highlight()
     p.shadow = K.Glow(health, { host = p, spread = 5, color = GC.shadow })
     p.glowWide = K.Glow(health, { host = p, wide = true, spread = 16, sublevel = -7,
-        color = { GC.targetGlow[1], GC.targetGlow[2], GC.targetGlow[3], 0.35 }, shown = false })
-    p.glow = K.Glow(health, { host = p, spread = 7, sublevel = -6, color = GC.targetGlow, shown = false })
+        color = { hc[1], hc[2], hc[3], 0.35 }, shown = false })
+    p.glow = K.Glow(health, { host = p, spread = 7, sublevel = -6,
+        color = { hc[1], hc[2], hc[3], GC.targetGlow[4] }, shown = false })
     p.hoverGlow = K.Glow(health, { host = p, spread = 6, sublevel = -5, color = GC.hoverGlow, shown = false })
 
     -- Maus darueber: der Balken hellt auf. Additiv, damit jede Farbe
@@ -528,7 +532,7 @@ local function Layout(p)
     p.border:SetShown(S.showBorder)
     local bc = S.borderColor or defaults.borderColor
     p.border:SetColor(bc.r, bc.g, bc.b, 1)
-    local rc = WeintCodex.GameColors.targetRing
+    local rc = K.Highlight()
     p.ring:SetColor(rc[1], rc[2], rc[3], 1)
 
     local t = p.texts

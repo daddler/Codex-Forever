@@ -11,6 +11,8 @@ nicht zusammen.
 
 ## [6.6.2.3] – 2026-09-28
 
+**Rahmen in deiner Klassenfarbe.** Gewählte Reiter, das Zielleuchten der Plaketten, deine Zeile in der Schadensanzeige und die Rahmen im Gestaltungsmodus tragen jetzt die Farbe deiner Klasse statt Lila. Unter Allgemein → „Rahmen und Hervorhebungen“ lässt sich das Lila zurückholen.
+
 **Verlauf der Schadensanzeige zeigt den ganzen Kampf.** Das Spiel nennt die Zahlen im Kampf nur verdeckt – deshalb stand bisher nur eine Säule am Ende. Jetzt zeigt der Verlauf die Summe über den Kampf: steil heißt viel Schaden, flach heißt keiner.
 
 **Gilde & Communitys: Wappen zurück, Liste links neu.** Das Gildenwappen oben links ist wieder da. Die Einträge links sind schlichte Kacheln, der gewählte im Akzent; das Wappen im Eintrag bleibt.

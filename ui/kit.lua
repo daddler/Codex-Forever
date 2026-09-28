@@ -101,6 +101,37 @@ local function CopyValue(v)
     return out
 end
 
+-- RAHMEN UND HERVORHEBUNGEN (6.6.2.4, Beta-Test: "statt der lila Rahmen
+-- ueberall lieber Rahmen in der Farbe der Klasse"). Gewaehlter Reiter,
+-- Zielleuchten der Plaketten, eigene Zeile der Schadensanzeige, Rahmen
+-- im Gestaltungsmodus: in der Klassenfarbe des Charakters (RAID_CLASS_COLORS,
+-- das Spiel nennt sie) - oder, mit "general.highlight = accent", im Akzent
+-- wie bisher. Der Akzent selbst (core/ui.lua) bleibt, was er ist: das
+-- Fenster von WeintCodex, Texte und Fortschritt (Zauber-, Erfahrungsbalken)
+-- tragen ihn weiter. Die Farbe steht fest, sobald der Client die Klasse
+-- nennt; ein Wechsel der Einstellung gilt nach dem Neuladen.
+local highlight
+function K.Highlight()
+    if highlight then return highlight end
+    local acc = WeintCodex.Colors.accent
+    if K.Get("general", "highlight") == "accent" then
+        highlight = acc
+        return acc
+    end
+    local class
+    if _G.UnitClass then
+        local ok, _, c = pcall(_G.UnitClass, "player")
+        class = ok and K.Plain(c) or nil
+    end
+    local cc = type(class) == "string" and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
+    if type(cc) == "table" and type(cc.r) == "number" then
+        highlight = { cc.r, cc.g, cc.b, 1 }
+        return highlight
+    end
+    return acc   -- Klasse (noch) unbekannt: nicht merken, beim naechsten Mal fragen
+end
+function K.ResetHighlight() highlight = nil end
+
 -- Farbvorgabe aus core/ui.lua als { r, g, b }.
 function K.ColorDefault(name)
     local col = (WeintCodex.GameColors and WeintCodex.GameColors[name])
@@ -852,9 +883,10 @@ function K.RegisterMover(frame, key, label, default, opts)
         if ov.RegisterForClicks then ov:RegisterForClicks("RightButtonUp") end
         local bg = ov:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints(ov)
-        bg:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.22)
+        local hc = K.Highlight()
+        bg:SetColorTexture(hc[1], hc[2], hc[3], 0.22)
         ov.bg = bg
-        ov.edge = K.Border(ov, 1, C.accent[1], C.accent[2], C.accent[3], 0.9, "ARTWORK")
+        ov.edge = K.Border(ov, 1, hc[1], hc[2], hc[3], 0.9, "ARTWORK")
         local t = K.NewText(ov, 11)
         t:SetFont(F.sansSemi, 11, "OUTLINE")
         t:SetPoint("CENTER", ov, "CENTER", 0, 0)
@@ -928,7 +960,7 @@ local function PaintMover(key)
     local ov = m and m.overlay
     if not (ov and ov.bg) then return end
     local on = (key == selected)
-    local a = C.accent
+    local a = K.Highlight()
     ov.bg:SetColorTexture(a[1], a[2], a[3], on and 0.4 or 0.22)
     if on then ov.edge:SetColor(1, 1, 1, 1) else ov.edge:SetColor(a[1], a[2], a[3], 0.9) end
 end

@@ -107,7 +107,7 @@ local function BuildGrid()
         local major = ((y - cy) % (GRID_LINE * 4)) == 0
         Line(false, y, major and strong or faint, major and 0.5 or 0.28)
     end
-    local a = C.accent
+    local a = K.Highlight()
     Line(true, cx, a, 0.6)
     Line(false, cy, a, 0.35)
     grid:Hide()

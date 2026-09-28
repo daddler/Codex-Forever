@@ -72,7 +72,9 @@ K.Register({
         and "Ein eigenes, schlichtes Interface zusätzlich zu WeintCodex — ganz freiwillig. Aus bleibt alles, wie das Spiel es zeigt; die Komfortfunktionen gehen trotzdem."
         or "Das Interface von WeintCodex: Plaketten, Rahmen, Leisten, Karte, Chat, Taschen und Schadensanzeige. Jedes Modul lässt sich einzeln abschalten.",
     defaults = (function()
-        local d = { font = "cond", outline = "thin", barStyle = "glanz", shadows = true, windowScale = 100 }
+        -- highlight: Rahmen und Hervorhebungen in Klassenfarbe (6.6.2.4).
+        local d = { font = "cond", outline = "thin", barStyle = "glanz", shadows = true, windowScale = 100,
+                    highlight = "class" }
         -- Ruhe und Kampf (ui/presence.lua): dort definiert, hier gespeichert.
         for k, v in pairs(WeintCodex.UIPresence.DEFAULTS) do d[k] = v end
         -- Tooltip (ui/tooltip.lua): ebenso.
@@ -131,6 +133,11 @@ K.Register({
                         { value = "gradient", text = "Mit leichtem Verlauf" } } },
                   { type = "toggle", label = "Weiche Schatten", key = "shadows",
                     description = "Rahmen, Leisten und Fenster heben sich mit einem Schatten von der Spielwelt ab." })
+            B:Row({ type = "dropdown", label = "Rahmen und Hervorhebungen", key = "highlight", reload = true, items = {
+                        { value = "class",  text = "In der Farbe deiner Klasse" },
+                        { value = "accent", text = "WeintCodex-Lila" } },
+                    description = "Gewählte Reiter, Zielleuchten der Plaketten, deine Zeile in der Schadensanzeige, Rahmen im Gestaltungsmodus." },
+                  { type = "empty" })
             B:Section("Testmodus",
                 "Zeigt Ziel, Fokus, Gruppe, Zauberbalken und Schadensanzeige mit Beispielwerten – so siehst du alles auf einem Bildschirm, ohne Gruppe und ohne Kampf. Auch mit /wcui test.")
             B:Row({ type = "button", label = "Beispieldaten",

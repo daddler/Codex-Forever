@@ -1076,3 +1076,20 @@ des **Bildes** – die Vereinigung aller `RaceBG`-Teile (`W.Bounds`),
 gemessen bei jedem Durchlauf, solange das Fenster offen ist –, 60 px
 breit. `/wcui fenster` über dem Charakterfenster nennt, wo er sitzt
 („am Bild …“ oder „am Träger“, wenn der Client die Lage nicht kennt).
+
+**Rahmen in Klassenfarbe** (6.6.2.3, Beta-Test: „statt der lila Rahmen
+überall lieber Rahmen in der Farbe der Klasse“): `UIKit.Highlight()`
+liefert die Klassenfarbe des Charakters (`RAID_CLASS_COLORS`, vom
+Spiel) oder – mit `general.highlight = "accent"` („Rahmen und
+Hervorhebungen“ unter Allgemein) – den Akzent. Es gilt für Rahmen und
+Hervorhebungen, die „gewählt“ oder „das bist du“ sagen: gewählte Reiter
+und Einträge in den Fenstern des Spiels, Zielleuchten und Zielrahmen der
+Plaketten, der gedrückte/blinkende Aktionsknopf, die offene Tasche, der
+Strich unter dem aktiven Chatreiter, die eigene Zeile und die Reiter der
+Schadensanzeige, die Belegung in der Zaubertafel der Klickzauber, Rahmen
+und Mittellinien im Gestaltungsmodus. **Nicht**: das WeintCodex-Fenster
+und das Einstellungsfenster, Texte, Fortschritt (Zauber- und
+Erfahrungsbalken), der Questpfeil – dort bleibt der Akzent. Die Farbe
+wird beim Bauen gesetzt, ein Wechsel gilt nach dem Neuladen. Priester:
+die Klassenfarbe ist Weiß – das Zielleuchten ähnelt dann dem (schwächeren)
+Leuchten unter der Maus.

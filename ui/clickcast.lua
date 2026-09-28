@@ -539,7 +539,8 @@ function CC.BuildPicker(parent, width)
         t.icon:SetPoint("TOPLEFT", t, "TOPLEFT", 1, -1)
         t.icon:SetPoint("BOTTOMRIGHT", t, "BOTTOMRIGHT", -1, 1)
         t.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-        t.ring = K.Border(t, 2, C.accent[1], C.accent[2], C.accent[3], 1, "OVERLAY")
+        local hc = K.Highlight()
+        t.ring = K.Border(t, 2, hc[1], hc[2], hc[3], 1, "OVERLAY")
         t:SetScript("OnClick", function(self)
             local e = self.entry
             if not e then return end

@@ -147,7 +147,12 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   `violet` and `brandA` are the same colour on purpose, and
   `.github/tests/load_test.lua` holds them to it. A second meaning-bearing
   colour is how the previous edition ended up with "amber carries meaning,
-  purple carries light".
+  purple carries light". Since 6.6.2.3 the in-game UI (`ui/`) draws its
+  selection borders and highlights (chosen tab, target glow, own meter
+  row, edit-mode frames) in `UIKit.Highlight()` – the player's class
+  colour by default, the accent on request (`general.highlight`). That
+  is a replacement of the accent in that one role, not a second
+  meaning-bearing colour; the accent tokens themselves stay untouched.
 - **The UI (`ui/`) is built opt-in, and opt-in is suspended since
   6.0.0.3.** The Forever beta client does not persist SavedVariables, so
   a choice would be forgotten on every reload: `K.OPT_IN = false` in
