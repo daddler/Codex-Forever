@@ -1107,6 +1107,33 @@ sie beim nächsten Durchlauf, jedes genau einmal. Das 3D-Modell ist keine
 Textur und bleibt scharf. `/wcui fenster` nennt „Maske an N Bildern“
 oder, wenn der Client keine Maske anlegt, genau das.
 
+**Speicher und Takt der Fenster (6.6.2.6).** Beta-Test: „egal welches
+Fenster ich öffne, der Speicher geht super schnell Richtung 40 MB, kleine
+Ruckler, FPS von 90 auf 75“. Zwei Ursachen, beide in `W.Inner`:
+
+- Der Takt lief alle 0,5 s **je offenem Fenster** und darin über **jedes
+  je gestaltete Fenster**, auch geschlossene.
+- Jeder Durchlauf legte für jeden Rahmen zwei Tabellen und für jede
+  Fläche eine Funktion an (`pcall(function() return { f:GetRegions() }
+  end)`). Gemessen im Prüflauf (85 Rahmen, 595 Flächen, 20 Durchläufe):
+  **11 978 KB** Müll – der Sammler räumt ihn in Rucken weg.
+
+Jetzt:
+
+- `W.Regions(f, key, depth)` / `W.Children(f, key, depth)` liefern eine
+  **wiederverwendete** Liste je Durchlauf (`key`) und Tiefe; Prüfungen
+  sind feste Funktionen (`pcall(IsTexture, r)` legt nichts an). Derselbe
+  Prüflauf: **5,4 KB**. `load_test.lua` hält die Grenze (64 KB).
+- `W.Inner` fasst nur **offene** Fenster an (`W.Open`).
+- **Ein** Takt für alle (`W.Tick`): alle 0,3 s für 1,5 s nach dem Öffnen
+  und nach jedem Klick (`GLOBAL_MOUSE_UP`, `W.Wake`), sonst alle 2 s
+  (`W.TICK_FAST`, `W.TICK_SLOW`, `W.FAST_FOR`).
+
+Regel für jeden Durchlauf, der wiederholt läuft: keine Tabelle und keine
+Funktion je Rahmen oder Fläche. Wer eine Liste braucht, nimmt
+`W.Regions`/`W.Children` mit eigenem `key`; wer eine Liste über einen
+Aufruf hinaus behalten will, kopiert sie.
+
 **Rahmen in Klassenfarbe** (6.6.2.3, Beta-Test: „statt der lila Rahmen
 überall lieber Rahmen in der Farbe der Klasse“): `UIKit.Highlight()`
 liefert die Klassenfarbe des Charakters (`RAID_CLASS_COLORS`, vom

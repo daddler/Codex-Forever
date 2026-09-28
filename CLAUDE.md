@@ -173,7 +173,10 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   (`UIKit.Layout`) – one style, one grid (UI 2.0);
   auras go through `ui/auras.lua` (engine AuraContainer where available),
   damage numbers through `C_DamageMeter` (no combat log for addons),
-  chat messages are never rewritten. Details: `docs/systems/ui.md`.
+  chat messages are never rewritten. Anything that runs repeatedly
+  (tickers, OnUpdate) allocates no table or closure per frame or region –
+  the window pass leaked ~12 MB per 20 runs until 6.6.2.6; walk with
+  `W.Regions`/`W.Children`. Details: `docs/systems/ui.md`.
 - **Reloading is protected on Forever.** `ReloadUI()`/`C_UI.Reload()`
   from addon code is blocked (`ADDON_ACTION_BLOCKED`, measured on the
   beta client). Every reload button goes through

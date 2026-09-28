@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.2.6",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFOffene Fenster fressen keinen Speicher mehr.|r Solange ein Spielfenster offen war, wuchs der Speicher schnell an, und das Spiel ruckelte kurz, wenn es aufräumte. Das ist behoben: Nachgesehen wird nur noch in offenen Fenstern, dicht nach dem Öffnen und nach einem Klick, sonst alle zwei Sekunden.",
+        },
+    },
+    {
         version = "6.6.2.5",
         date    = "28.09.2026",
         notes   = {

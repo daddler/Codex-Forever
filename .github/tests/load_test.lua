@@ -4508,6 +4508,79 @@ do
     Check(ok2, "Berufe und Gilde & Communitys: Metall, Goldrahmen, Seitenreiter, Innenflaechen"
         .. (ok2 and "" or (": " .. tostring(err2))))
 
+    -- 6.6.2.6: der Takt der Fenster legt keinen Muell an und fasst nur
+    -- offene Fenster an (Beta-Test: Speicher Richtung 40 MB, Ruckler).
+    local ok6, err6 = pcall(function()
+        local W = WeintCodex.UIWindows
+        local function Build(name)
+            local root = stub.NewObject("Frame", name)
+            local function Fill(f, depth)
+                local regs = {}
+                for i = 1, 6 do
+                    local t = stub.NewObject("Texture")
+                    local atlas = (i == 1) and "UI-Frame-Metal-EdgeTop" or ("plain-" .. i)
+                    t.GetAtlas = function() return atlas end
+                    regs[#regs + 1] = t
+                end
+                regs[#regs + 1] = stub.NewObject("FontString")
+                f.GetRegions = function() return unpack(regs) end
+                local kids = {}
+                if depth < 3 then
+                    for i = 1, 4 do
+                        local ch = stub.NewObject("Frame")
+                        Fill(ch, depth + 1)
+                        kids[#kids + 1] = ch
+                    end
+                end
+                f.GetChildren = function() return unpack(kids) end
+            end
+            Fill(root, 0)
+            return root
+        end
+        local open, shut = Build("WCTestOpenFrame"), Build("WCTestShutFrame")
+        _G.WCTestOpenFrame, _G.WCTestShutFrame = open, shut
+        shut:Hide()
+        table.insert(W.WINDOWS, "WCTestOpenFrame")
+        table.insert(W.WINDOWS, "WCTestShutFrame")
+        W.done[open], W.done[shut] = {}, {}
+        -- Geschlossen: nichts angefasst.
+        local asked = 0
+        local g = shut.GetChildren
+        shut.GetChildren = function(...) asked = asked + 1 return g(...) end
+        for _ = 1, 3 do W.Inner() end   -- Listen und Merker anlegen
+        assert(asked == 0, "geschlossenes Fenster durchlaufen")
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do W.Inner() end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        table.remove(W.WINDOWS) table.remove(W.WINDOWS)
+        W.done[open], W.done[shut] = nil, nil
+        _G.WCTestOpenFrame, _G.WCTestShutFrame = nil, nil
+        print(string.format("    (20 Durchlaeufe ueber 85 Rahmen, 595 Flaechen: %.1f KB)", grew))
+        assert(grew < 64, string.format("Takt legt Muell an: %.1f KB in 20 Durchlaeufen", grew))
+        -- Takt: schnell nach dem Wecken, danach langsam.
+        local t = 100
+        local oldGT = _G.GetTime
+        _G.GetTime = function() return t end
+        W.tick.last = -math.huge
+        W.Wake()
+        assert(W.Tick(), "erster Lauf nach dem Oeffnen fehlt")
+        t = t + W.TICK_FAST / 2
+        assert(not W.Tick(), "Takt zu schnell")
+        t = t + W.TICK_FAST
+        assert(W.Tick(), "schneller Takt nach dem Oeffnen fehlt")
+        t = t + W.FAST_FOR + 0.1
+        W.tick.last = t - W.TICK_FAST - 0.01
+        assert(not W.Tick(), "nach der Ruhe weiter im schnellen Takt")
+        t = t + W.TICK_SLOW
+        assert(W.Tick(), "langsamer Takt fehlt")
+        _G.GetTime = oldGT
+    end)
+    Check(ok6, "Fenster-Takt: nur offene Fenster, kein Muell, schnell nach dem Oeffnen, dann langsam"
+        .. (ok6 and "" or (": " .. tostring(err6))))
+
     -- 6.6.2.4: Rahmen und Hervorhebungen in Klassenfarbe - oder im Akzent.
     local ok4, err4 = pcall(function()
         local oldUC, oldRCC = _G.UnitClass, _G.RAID_CLASS_COLORS

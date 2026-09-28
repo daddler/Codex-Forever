@@ -120,6 +120,62 @@ W.own = own
 local stats = { runs = 0, hidden = 0, stuck = 0, last = nil, err = nil }
 W.stats = stats
 
+--------------------------------------------------
+-- Listen ohne Muell (6.6.2.6)
+--------------------------------------------------
+-- Beta-Test: "egal welches Fenster ich oeffne, der Speicher geht super
+-- schnell Richtung 40 MB, kleine Ruckler, FPS von 90 auf 75". Der Takt
+-- unten lief alle 0,5 s ueber JEDES gestaltete Fenster (auch geschlossene)
+-- und legte fuer jeden Rahmen zwei neue Tabellen und fuer jede Flaeche
+-- eine neue Funktion an (pcall(function() return { f:GetRegions() } end)).
+-- Bei Hunderten Flaechen je Fenster und einem Dutzend Durchlaeufen sind
+-- das Megabyte Muell je Sekunde, und der Sammler raeumt ihn in Rucken weg.
+-- Jetzt: je Durchlauf und Tiefe EINE Liste, die wiederverwendet wird, und
+-- Pruefungen als feste Funktionen - pcall(Fn, r) legt nichts an.
+local regionPool, childPool = {}, {}
+
+local function Pack(t, ok, ...)
+    local n = 0
+    if ok then
+        n = select("#", ...)
+        for i = 1, n do t[i] = (select(i, ...)) end
+    end
+    for i = n + 1, t.n do t[i] = nil end
+    t.n = n
+    return t
+end
+
+local function Slot(pool, key, depth)
+    local p = pool[key]
+    if not p then p = {} pool[key] = p end
+    local t = p[depth]
+    if not t then t = { n = 0 } p[depth] = t end
+    return t
+end
+
+local function GetRegionsOf(f) return f:GetRegions() end
+local function GetChildrenOf(f) return f:GetChildren() end
+
+-- Flaechen bzw. Kindrahmen von f in einer wiederverwendeten Liste. key
+-- nennt den Durchlauf, depth seine Tiefe: die Liste gilt, bis derselbe
+-- Durchlauf in derselben Tiefe wieder fragt. Wer sie behalten will, kopiert.
+local function Regions(f, key, depth)
+    return Pack(Slot(regionPool, key, depth or 0), pcall(GetRegionsOf, f))
+end
+local function Children(f, key, depth)
+    return Pack(Slot(childPool, key, depth or 0), pcall(GetChildrenOf, f))
+end
+W.Regions, W.Children = Regions, Children
+
+local function IsTexture(r) return r:GetObjectType() == "Texture" end
+local function IsFontString(r) return r:GetObjectType() == "FontString" end
+local function IsButton(r) return r:GetObjectType() == "Button" end
+local function TextureAtlas(r)
+    if r:GetObjectType() ~= "Texture" then return nil end
+    return r.GetAtlas and r:GetAtlas()
+end
+local BLACK = { 0, 0, 0 }
+
 local function Hide(r)
     if type(r) ~= "table" or not r.SetAlpha or (r.IsForbidden and r:IsForbidden()) then return end
     local AB = WeintCodex.UIActionBars
@@ -130,9 +186,8 @@ end
 -- Alle Texturen direkt an einem Rahmen (nicht an seinen Kindern).
 local function HideOwnTextures(f)
     if type(f) ~= "table" or not f.GetRegions then return end
-    local ok, regions = pcall(function() return { f:GetRegions() } end)
-    for _, r in ipairs(ok and regions or {}) do
-        local tok, isTex = pcall(function() return r:GetObjectType() == "Texture" end)
+    for _, r in ipairs(Regions(f, "ownTex")) do
+        local tok, isTex = pcall(IsTexture, r)
         if tok and isTex then Hide(r) end
     end
 end
@@ -361,12 +416,8 @@ end
 local seen = setmetatable({}, { __mode = "k" })
 local function HideByAtlas(f, depth)
     if depth > 8 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
-    local rok, regions = pcall(function() return { f:GetRegions() } end)
-    for _, r in ipairs(rok and regions or {}) do
-        local ok, atlas = pcall(function()
-            if r:GetObjectType() ~= "Texture" then return nil end
-            return r.GetAtlas and r:GetAtlas()
-        end)
+    for _, r in ipairs(Regions(f, "atlas", depth)) do
+        local ok, atlas = pcall(TextureAtlas, r)
         if ok and W.HidesAtlas(atlas) then
             Hide(r)
             if not seen[r] then
@@ -385,8 +436,7 @@ local function HideByAtlas(f, depth)
             end
         end
     end
-    local cok, kids = pcall(function() return { f:GetChildren() } end)
-    for _, ch in ipairs(cok and kids or {}) do HideByAtlas(ch, depth + 1) end
+    for _, ch in ipairs(Children(f, "atlas", depth)) do HideByAtlas(ch, depth + 1) end
 end
 W.HideByAtlas = function(f) HideByAtlas(f, 0) end
 
@@ -394,9 +444,10 @@ W.HideByAtlas = function(f) HideByAtlas(f, 0) end
 -- Erkannt am Namen (Character...Slot), nicht an einer Liste: welche Plaetze
 -- es gibt, sagt der Client.
 local slotDone = {}
-local function SkinSlots(f)
-    local ok, kids = pcall(function() return { f:GetChildren() } end)
-    for _, ch in ipairs(ok and kids or {}) do
+local function SkinSlots(f, depth)
+    depth = depth or 0
+    if depth > 12 then return end
+    for _, ch in ipairs(Children(f, "slots", depth)) do
         local n = type(ch) == "table" and ch.GetName and ch:GetName()
         if type(n) == "string" and n:find("^Character[%a%d]+Slot$") and not slotDone[ch] then
             slotDone[ch] = true
@@ -404,7 +455,7 @@ local function SkinSlots(f)
             if type(normal) == "table" then Hide(normal) end
             K.Border(ch, 1, 0, 0, 0, 1, "OVERLAY")
         end
-        if type(ch) == "table" then SkinSlots(ch) end
+        if type(ch) == "table" then SkinSlots(ch, depth + 1) end
     end
 end
 W.SkinSlots = SkinSlots
@@ -428,7 +479,7 @@ local function SkinModeTabs()
             end
             local sel = tab.SelectedTexture
             local on = type(sel) == "table" and sel.IsShown and K.Bool(sel:IsShown(), false)
-            local c = on and K.Highlight() or { 0, 0, 0 }
+            local c = on and K.Highlight() or BLACK
             d.kachel.border:SetColor(c[1], c[2], c[3], 1)
         end
     end
@@ -498,16 +549,14 @@ end
 
 local function LightenText(f, depth, codes)
     if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
-    local rok, regions = pcall(function() return { f:GetRegions() } end)
-    for _, r in ipairs(rok and regions or {}) do
-        local ok, isText = pcall(function() return r:GetObjectType() == "FontString" end)
+    for _, r in ipairs(Regions(f, "light", depth)) do
+        local ok, isText = pcall(IsFontString, r)
         if ok and isText then
             Lighten(r)
             if codes then LightenCodes(r) end
         end
     end
-    local cok, kids = pcall(function() return { f:GetChildren() } end)
-    for _, ch in ipairs(cok and kids or {}) do LightenText(ch, depth + 1, codes) end
+    for _, ch in ipairs(Children(f, "light", depth)) do LightenText(ch, depth + 1, codes) end
 end
 W.LightenText = function(f, codes) LightenText(f, 0, codes) end
 
@@ -551,8 +600,7 @@ local function SkinSpellItems(f, depth)
     if type(b) == "table" and type(b.Icon) == "table" and type(b.Border) == "table" and b.Icon.SetTexCoord then
         pcall(SkinSpellButton, b)
     end
-    local cok, kids = pcall(function() return { f:GetChildren() } end)
-    for _, ch in ipairs(cok and kids or {}) do SkinSpellItems(ch, depth + 1) end
+    for _, ch in ipairs(Children(f, "spells", depth)) do SkinSpellItems(ch, depth + 1) end
 end
 W.SkinSpellItems = function(f) SkinSpellItems(f, 0) end
 
@@ -585,18 +633,19 @@ end
 W.toned = toned
 W.Tone = Tone
 
+local function IsBig(r, limit)
+    if r:GetObjectType() ~= "Texture" then return false end
+    if not K.Bool(r:IsShown(), false) or K.Plain(r:GetAlpha()) == 0 then return false end
+    local w, h = K.Plain(r:GetWidth()), K.Plain(r:GetHeight())
+    return type(w) == "number" and type(h) == "number" and w * h >= limit
+end
+
 local function HideLarge(f, limit, depth, toneRoot, tone)
     if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
     tone = tone or (toneRoot ~= nil and f == toneRoot)
-    local rok, regions = pcall(function() return { f:GetRegions() } end)
-    for _, r in ipairs(rok and regions or {}) do
+    for _, r in ipairs(Regions(f, "large", depth)) do
         if not own[r] and not toned[r] then
-            local ok, big = pcall(function()
-                if r:GetObjectType() ~= "Texture" then return false end
-                if not K.Bool(r:IsShown(), false) or K.Plain(r:GetAlpha()) == 0 then return false end
-                local w, h = K.Plain(r:GetWidth()), K.Plain(r:GetHeight())
-                return type(w) == "number" and type(h) == "number" and w * h >= limit
-            end)
+            local ok, big = pcall(IsBig, r, limit)
             if ok and big then
                 if tone then Tone(r) else Hide(r) end
                 if not seen[r] then
@@ -606,8 +655,7 @@ local function HideLarge(f, limit, depth, toneRoot, tone)
             end
         end
     end
-    local cok, kids = pcall(function() return { f:GetChildren() } end)
-    for _, ch in ipairs(cok and kids or {}) do HideLarge(ch, limit, depth + 1, toneRoot, tone) end
+    for _, ch in ipairs(Children(f, "large", depth)) do HideLarge(ch, limit, depth + 1, toneRoot, tone) end
 end
 -- Pergament des Zauberbuchs: weg (entsaettigt waere es graues Papier).
 -- Landschaften hinter den Talentbaeumen: gedaempft, wenn windowArt an ist.
@@ -681,21 +729,16 @@ end
 
 local function Grey(f, depth)
     if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
-    local rok, regions = pcall(function() return { f:GetRegions() } end)
-    for _, r in ipairs(rok and regions or {}) do
+    for _, r in ipairs(Regions(f, "grey", depth)) do
         if not desat[r] then
-            local ok, atlas = pcall(function()
-                if r:GetObjectType() ~= "Texture" then return nil end
-                return r.GetAtlas and r:GetAtlas()
-            end)
+            local ok, atlas = pcall(TextureAtlas, r)
             if ok and W.Desaturates(K.Plain(atlas)) and r.SetDesaturated then
                 desat[r] = true
                 r:SetDesaturated(true)
             end
         end
     end
-    local cok, kids = pcall(function() return { f:GetChildren() } end)
-    for _, ch in ipairs(cok and kids or {}) do Grey(ch, depth + 1) end
+    for _, ch in ipairs(Children(f, "grey", depth)) do Grey(ch, depth + 1) end
 end
 W.Grey = function(f) Grey(f, 0) end
 
@@ -715,35 +758,48 @@ local tabSkin = setmetatable({}, { __mode = "k" })
 -- "Primaer"/"Sekundaer" im Talentfenster haben dieselbe Vorlage und damit
 -- ein .Icon - leer und versteckt. 6.4.1.7 nahm es trotzdem: keine Kachel,
 -- der Rand um ein unsichtbares Bild mitten auf dem Text (Beta-Test 6.5.0.0).
+local function PictureShown(r)
+    if r:GetObjectType() ~= "Texture" then return false end
+    if r.IsShown and not K.Bool(r:IsShown(), true) then return false end
+    local tex = K.Plain(r.GetTexture and r:GetTexture())
+    local atlas = K.Plain(r.GetAtlas and r:GetAtlas())
+    local hasTex = (type(tex) == "number" and tex > 0) or (type(tex) == "string" and tex ~= "")
+    return hasTex or (type(atlas) == "string" and atlas ~= "")
+end
 local function ShowsPicture(r)
-    local ok, yes = pcall(function()
-        if r:GetObjectType() ~= "Texture" then return false end
-        if r.IsShown and not K.Bool(r:IsShown(), true) then return false end
-        local tex = K.Plain(r.GetTexture and r:GetTexture())
-        local atlas = K.Plain(r.GetAtlas and r:GetAtlas())
-        local hasTex = (type(tex) == "number" and tex > 0) or (type(tex) == "string" and tex ~= "")
-        return hasTex or (type(atlas) == "string" and atlas ~= "")
-    end)
+    local ok, yes = pcall(PictureShown, r)
     return ok and yes == true
 end
 W.ShowsPicture = ShowsPicture
 
 -- Eine sichtbare Beschriftung macht den Reiter zum Textreiter, egal was
 -- er sonst traegt.
+local function LabelShown(tab)
+    local fs = tab.Text
+    if type(fs) ~= "table" and tab.GetFontString then fs = tab:GetFontString() end
+    if type(fs) ~= "table" or not fs.GetText then return false end
+    if fs.IsShown and not K.Bool(fs:IsShown(), true) then return false end
+    local a = K.Plain(fs.GetAlpha and fs:GetAlpha())
+    if type(a) == "number" and a <= 0 then return false end
+    local t = K.Plain(fs:GetText())
+    return type(t) == "string" and t:find("%S") ~= nil
+end
 local function HasLabel(tab)
-    local ok, yes = pcall(function()
-        local fs = tab.Text
-        if type(fs) ~= "table" and tab.GetFontString then fs = tab:GetFontString() end
-        if type(fs) ~= "table" or not fs.GetText then return false end
-        if fs.IsShown and not K.Bool(fs:IsShown(), true) then return false end
-        local a = K.Plain(fs.GetAlpha and fs:GetAlpha())
-        if type(a) == "number" and a <= 0 then return false end
-        local t = K.Plain(fs:GetText())
-        return type(t) == "string" and t:find("%S") ~= nil
-    end)
+    local ok, yes = pcall(LabelShown, tab)
     return ok and yes == true
 end
 W.HasLabel = HasLabel
+
+local function IconArea(r)
+    if r:GetObjectType() ~= "Texture" then return 0 end
+    if r.IsShown and not K.Bool(r:IsShown(), true) then return 0 end
+    local atlas = K.Plain(r.GetAtlas and r:GetAtlas())
+    if type(atlas) == "string" and atlas ~= "" then return 0 end
+    if type(K.Plain(r:GetTexture())) ~= "number" then return 0 end
+    local w, h = K.Plain(r:GetWidth()), K.Plain(r:GetHeight())
+    if type(w) ~= "number" or type(h) ~= "number" then return 0 end
+    return w * h
+end
 
 local function TabIcon(tab)
     if HasLabel(tab) then return nil end
@@ -752,18 +808,8 @@ local function TabIcon(tab)
     local key = tab.Icon
     if type(key) == "table" and key.GetObjectType and ShowsPicture(key) then return key end
     local best, area = nil, 0
-    local ok, regions = pcall(function() return { tab:GetRegions() } end)
-    for _, r in ipairs(ok and regions or {}) do
-        local tok, a = pcall(function()
-            if r:GetObjectType() ~= "Texture" then return 0 end
-            if r.IsShown and not K.Bool(r:IsShown(), true) then return 0 end
-            local atlas = K.Plain(r.GetAtlas and r:GetAtlas())
-            if type(atlas) == "string" and atlas ~= "" then return 0 end
-            if type(K.Plain(r:GetTexture())) ~= "number" then return 0 end
-            local w, h = K.Plain(r:GetWidth()), K.Plain(r:GetHeight())
-            if type(w) ~= "number" or type(h) ~= "number" then return 0 end
-            return w * h
-        end)
+    for _, r in ipairs(Regions(tab, "tabIcon")) do
+        local tok, a = pcall(IconArea, r)
         if tok and a > area then best, area = r, a end
     end
     return best
@@ -843,10 +889,9 @@ W.CropRelative = CropRelative
 -- rechts, mal an diesem, mal an jenem Reiter (Beta-Test 6.4.1.7, mit
 -- /wcui maus gemessen: "FileData ID 0 (BACKGROUND)").
 local function HideTabArt(tab, icon)
-    local ok, regions = pcall(function() return { tab:GetRegions() } end)
-    for _, r in ipairs(ok and regions or {}) do
+    for _, r in ipairs(Regions(tab, "tabArt")) do
         if r ~= icon and not own[r] then
-            local tok, isTex = pcall(function() return r:GetObjectType() == "Texture" end)
+            local tok, isTex = pcall(IsTexture, r)
             if tok and isTex then Hide(r) end
         end
     end
@@ -883,7 +928,7 @@ local function SkinTab(tab)
         if ok and type(v) ~= "nil" then on = v end
     end
     on = K.Bool(on, false)
-    local c = on and K.Highlight() or { 0, 0, 0 }
+    local c = on and K.Highlight() or BLACK
     if d.rim then
         if d.sel ~= on then
             d.sel = on
@@ -902,8 +947,7 @@ local function SkinTabSystems(f, depth)
             if type(tab) == "table" and tab.CreateTexture then pcall(SkinTab, tab) end
         end
     end
-    local cok, kids = pcall(function() return { f:GetChildren() } end)
-    for _, ch in ipairs(cok and kids or {}) do SkinTabSystems(ch, depth + 1) end
+    for _, ch in ipairs(Children(f, "tabSys", depth)) do SkinTabSystems(ch, depth + 1) end
 end
 W.SkinTabSystems = function(f) SkinTabSystems(f, 0) end
 
@@ -931,13 +975,12 @@ end
 
 local function SkinPanelButtons(f, depth)
     if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
-    local ok, isButton = pcall(function() return f:GetObjectType() == "Button" end)
+    local ok, isButton = pcall(IsButton, f)
     if ok and isButton and type(f.Left) == "table" and type(f.Middle) == "table" and type(f.Right) == "table"
        and not (type(f.LeftActive) == "table") and f.CreateTexture then
         pcall(SkinPanelButton, f)
     end
-    local cok, kids = pcall(function() return { f:GetChildren() } end)
-    for _, ch in ipairs(cok and kids or {}) do SkinPanelButtons(ch, depth + 1) end
+    for _, ch in ipairs(Children(f, "panelBtn", depth)) do SkinPanelButtons(ch, depth + 1) end
 end
 W.SkinPanelButtons = function(f) SkinPanelButtons(f, 0) end
 
@@ -958,8 +1001,7 @@ local function FitStats(f, depth)
             if label.SetJustifyH then label:SetJustifyH("LEFT") end
         end)
     end
-    local cok, kids = pcall(function() return { f:GetChildren() } end)
-    for _, ch in ipairs(cok and kids or {}) do FitStats(ch, depth + 1) end
+    for _, ch in ipairs(Children(f, "stats", depth)) do FitStats(ch, depth + 1) end
 end
 W.FitStats = function(f) FitStats(f, 0) end
 
@@ -996,17 +1038,12 @@ W.soft = soft
 
 local function FindRaceBG(f, depth, out)
     if depth > 8 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
-    local rok, regions = pcall(function() return { f:GetRegions() } end)
-    for _, r in ipairs(rok and regions or {}) do
-        local ok, atlas = pcall(function()
-            if r:GetObjectType() ~= "Texture" then return nil end
-            return r.GetAtlas and r:GetAtlas()
-        end)
+    for _, r in ipairs(Regions(f, "raceBG", depth)) do
+        local ok, atlas = pcall(TextureAtlas, r)
         atlas = ok and K.Plain(atlas) or nil
         if type(atlas) == "string" and atlas:find("RaceBG", 1, true) then out[#out + 1] = r end
     end
-    local cok, kids = pcall(function() return { f:GetChildren() } end)
-    for _, ch in ipairs(cok and kids or {}) do FindRaceBG(ch, depth + 1, out) end
+    for _, ch in ipairs(Children(f, "raceBG", depth)) do FindRaceBG(ch, depth + 1, out) end
 end
 
 -- Die Maske auf jedes Bild am Modellfeld, das sie noch nicht traegt. Das
@@ -1014,10 +1051,9 @@ end
 -- haengen, neue Flaechen bekommen sie beim naechsten Durchlauf.
 local function MaskAll(e, host)
     if not e.mask then return end
-    local rok, regions = pcall(function() return { host:GetRegions() } end)
-    for _, r in ipairs(rok and regions or {}) do
+    for _, r in ipairs(Regions(host, "mask")) do
         if not own[r] and not e.masked[r] then
-            local tok, isTex = pcall(function() return r:GetObjectType() == "Texture" end)
+            local tok, isTex = pcall(IsTexture, r)
             if tok and isTex and pcall(r.AddMaskTexture, r, e.mask) then
                 e.masked[r] = true
                 e.count = e.count + 1
@@ -1028,10 +1064,11 @@ end
 
 -- Die Kanten des Bildes: kleinster linker, groesster rechter Rand usw.
 -- ueber alle Teile. nil, solange der Client noch keine Lage kennt.
+local function EdgesOf(r) return r:GetLeft(), r:GetRight(), r:GetTop(), r:GetBottom() end
 local function Bounds(list)
     local L, R, T, B
     for _, r in ipairs(list) do
-        local ok, l, rr, t, b = pcall(function() return r:GetLeft(), r:GetRight(), r:GetTop(), r:GetBottom() end)
+        local ok, l, rr, t, b = pcall(EdgesOf, r)
         l, rr, t, b = K.Plain(l), K.Plain(rr), K.Plain(t), K.Plain(b)
         if ok and type(l) == "number" and type(rr) == "number" and type(t) == "number" and type(b) == "number" then
             L = L and math.min(L, l) or l
@@ -1255,17 +1292,13 @@ local sideDone = setmetatable({}, { __mode = "k" })
 W.SideTabs = sideDone
 
 local function SideTabAtlas(r)
-    local ok, atlas = pcall(function()
-        if r:GetObjectType() ~= "Texture" then return nil end
-        return r.GetAtlas and r:GetAtlas()
-    end)
+    local ok, atlas = pcall(TextureAtlas, r)
     atlas = ok and K.Plain(atlas) or nil
     return type(atlas) == "string" and atlas:find("^common%-sidetab") and atlas or nil
 end
 
 local function IsSideTab(b)
-    local ok, regions = pcall(function() return { b:GetRegions() } end)
-    for _, r in ipairs(ok and regions or {}) do
+    for _, r in ipairs(Regions(b, "isSide")) do
         if SideTabAtlas(r) then return true end
     end
     return false
@@ -1302,8 +1335,7 @@ function W.SideSignals(tab)
         local ok, v = pcall(tab.IsEnabled, tab)
         if ok and type(K.Plain(v)) ~= "nil" then sig.disabled = not K.Bool(v, true) end
     end
-    local ok, regions = pcall(function() return { tab:GetRegions() } end)
-    for _, r in ipairs(ok and regions or {}) do
+    for _, r in ipairs(Regions(tab, "sideSig")) do
         local a = SideTabAtlas(r)
         if a and a:lower():find("select", 1, true) then sig.selAtlas = Shown(r) or sig.selAtlas or false end
         if a == "common-sidetab" then sig.frameLight = Brightness(r) end
@@ -1352,8 +1384,7 @@ local function SkinSideTab(tab)
     if type(tab) ~= "table" or not tab.CreateTexture or (tab.IsForbidden and tab:IsForbidden()) then return nil end
     local d = sideDone[tab]
     if not d then
-        local ok, regions = pcall(function() return { tab:GetRegions() } end)
-        for _, r in ipairs(ok and regions or {}) do
+        for _, r in ipairs(Regions(tab, "sideSkin")) do
             if SideTabAtlas(r) then Hide(r) end
         end
         if type(tab.Background) == "table" then Hide(tab.Background) end
@@ -1376,8 +1407,7 @@ local function CollectSideTabs(f, depth, out)
             if type(f[key]) == "table" then out[#out + 1] = f[key] end
         end
     end
-    local cok, kids = pcall(function() return { f:GetChildren() } end)
-    for _, ch in ipairs(cok and kids or {}) do
+    for _, ch in ipairs(Children(f, "sideTabs", depth)) do
         if type(ch) == "table" then
             if sideDone[ch] or IsSideTab(ch) then out[#out + 1] = ch end
             CollectSideTabs(ch, depth + 1, out)
@@ -1410,7 +1440,7 @@ local function SkinSideTabs(f)
             d.signals, d.why = signals[t], on and why or nil
             if d.on ~= on then
                 d.on = on
-                local c = on and K.Highlight() or { 0, 0, 0 }
+                local c = on and K.Highlight() or BLACK
                 d.kachel.border:SetColor(c[1], c[2], c[3], 1)
             end
         end
@@ -1465,8 +1495,7 @@ local function SkinInsets(f, depth)
             if type(f[key]) == "table" and f[key].GetObjectType then SkinInset(f[key]) end
         end
     end
-    local cok, kids = pcall(function() return { f:GetChildren() } end)
-    for _, ch in ipairs(cok and kids or {}) do SkinInsets(ch, depth + 1) end
+    for _, ch in ipairs(Children(f, "insets", depth)) do SkinInsets(ch, depth + 1) end
 end
 W.SkinInsets = function(f) SkinInsets(f, 0) end
 
@@ -1481,12 +1510,20 @@ function W.SkinCommunitiesList(f)
     if type(list.FilligreeOverlay) == "table" then HideOwnTextures(list.FilligreeOverlay) end
 end
 
+-- Nur offene Fenster (6.6.2.6): vorher lief jeder Durchlauf auch ueber
+-- alle geschlossenen, die schon einmal gestaltet waren.
+local function Open(f)
+    local ok, v = pcall(f.IsVisible, f)
+    return ok and K.Bool(v, false)
+end
+W.Open = Open
+
 function W.Inner()
     stats.runs = stats.runs + 1
     stats.last = _G.GetTime and K.Plain(_G.GetTime()) or nil
     for _, n in ipairs(W.WINDOWS) do
         local f = _G[n]
-        if type(f) == "table" and done[f] then
+        if type(f) == "table" and done[f] and Open(f) then
             HideByAtlas(f, 0)
             SkinSlots(f)
             Grey(f, 0)
@@ -1515,7 +1552,7 @@ function W.Inner()
     end
     SkinModeTabs()
     local map = _G[W.MAP]
-    if type(map) == "table" and done[map] and Opt("mapSkin") then W.SkinMap(map) end
+    if type(map) == "table" and done[map] and Opt("mapSkin") and Open(map) then W.SkinMap(map) end
 end
 
 function W.Status()
@@ -1560,23 +1597,51 @@ local function Run(fn)
     if not ok then stats.err = err K.Report("fenster", err) end
 end
 
+-- Der Takt (6.6.2.6): bis dahin zweimal je Sekunde, je offenem Fenster
+-- (zwei offene = vier Laeufe). Jetzt EIN Takt fuer alle: schnell kurz
+-- nach dem Oeffnen und nach jedem Klick (Reiterwechsel, neue Zeilen),
+-- danach nur noch alle zwei Sekunden - falls das Spiel ein Bild von sich
+-- aus zurueckholt.
+W.TICK_FAST, W.TICK_SLOW, W.FAST_FOR = 0.3, 2, 1.5
+local tick = { last = -math.huge, fastUntil = 0 }
+W.tick = tick
+
+local function Now()
+    local t = _G.GetTime and K.Plain(_G.GetTime())
+    return type(t) == "number" and t or 0
+end
+
+function W.Wake()
+    tick.fastUntil = Now() + W.FAST_FOR
+end
+
+function W.Tick()
+    local now = Now()
+    local gap = now < tick.fastUntil and W.TICK_FAST or W.TICK_SLOW
+    if now - tick.last < gap then return false end
+    tick.last = now
+    Run(W.Inner)
+    return true
+end
+
 local function HookWindow(f)
     if type(f) ~= "table" or hookedWin[f] or not f.HookScript or (f.IsForbidden and f:IsForbidden()) then return end
     hookedWin[f] = true
-    f:HookScript("OnShow", function() Run(W.Apply) end)
-    -- Solange es offen ist: neue Zeilen (Blaettern, Reiterwechsel)
-    -- zweimal je Sekunde nachziehen. Geschlossen laeuft nichts.
+    f:HookScript("OnShow", function()
+        Run(W.Apply)
+        W.Wake()
+    end)
     -- Ein eigener Kindrahmen, kein Skript am Fenster des Spiels: er
-    -- laeuft nur, solange das Fenster sichtbar ist.
+    -- laeuft nur, solange das Fenster sichtbar ist. Alle teilen W.Tick.
     local watch = CreateFrame("Frame", nil, f)
-    local acc = 0
-    watch:SetScript("OnUpdate", K.Measured("Fenster", function(_, elapsed)
-        acc = acc + (elapsed or 0)
-        if acc < 0.5 then return end
-        acc = 0
-        Run(W.Inner)
-    end))
+    watch:SetScript("OnUpdate", K.Measured("Fenster", function() W.Tick() end))
 end
+
+-- Ein Klick irgendwo: kurz schnell nachsehen. Laeuft nur etwas, solange
+-- ein Fenster offen ist (die Taktgeber sind Kinder der Fenster).
+local clicks = CreateFrame("Frame")
+pcall(clicks.RegisterEvent, clicks, "GLOBAL_MOUSE_UP")
+clicks:SetScript("OnEvent", function() W.Wake() end)
 
 local hookedShow = {}
 function W.HookAll()
