@@ -13,6 +13,8 @@ nicht zusammen.
 
 **Nur deine ausgewählten Buffs am Spielerrahmen.** Über dem Spielerrahmen stehen klein die Buffs, die du im Abklingzeitmanager des Spiels auswählst (z. B. Schild, Inneres Feuer) – auch im Kampf. Alle Buffs, auch die von anderen, stehen wieder oben rechts. Einmal /wcui einrichten, dann neu laden.
 
+**Treffer und Heilung im Rahmen.** Spieler- und Zielrahmen zeigen kurz, was gerade ankam: erlittener Schaden in kleinen roten Zahlen mit Minus, erhaltene Heilung grün mit Plus. Abschaltbar unter Einheitenrahmen → Allgemein.
+
 ## [6.6.1.6] – 2026-09-28
 
 **Buffs am Spielerrahmen.** Deine Buffs stehen direkt über deinem Spielerrahmen – auch im Kampf. Einmal /wcui einrichten, dann neu laden. Der Fokusrahmen rückt dafür nach links.

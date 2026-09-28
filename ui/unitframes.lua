@@ -70,6 +70,10 @@ local defaults = {
     -- "auch beim Spieler- und Zielrahmen" - wie in den Gruppenrahmen).
     healPrediction = true,
     absorbs        = true,
+    -- Treffer und Heilung als kleine Zahl im Rahmen von Spieler und Ziel
+    -- (6.6.1.8, Beta-Test: "in kleinen roten Zahlen mit einem Minus davor,
+    -- Heilung in Gruen mit einem Plus").
+    combatFeedback = true,
     hover         = true,      -- Maus darueber hellt auf
     -- Der eigene Zauberbalken mittig ueber den Leisten, die Kombopunkte
     -- mittig unter der Figur (Cockpit). Aus: beides am Rahmen wie bisher.
@@ -368,6 +372,29 @@ local function Create(unit)
     pf:Hide()
     f._portrait = pf
 
+    -- Treffer und Heilung (UNIT_COMBAT): eine kleine Zahl ueber dem
+    -- Portraet (ohne Portraet mitten im Lebensbalken), die nach einer
+    -- Sekunde ausblendet - so zeigt es auch der Rahmen des Spiels.
+    if unit == "player" or unit == "target" then
+        local fbHost = CreateFrame("Frame", nil, f)
+        fbHost:SetAllPoints(f)
+        fbHost:SetFrameLevel((f:GetFrameLevel() or 1) + 20)
+        f._fb = K.NewText(fbHost, 11)
+        f._fb:Hide()
+        fbHost:SetScript("OnUpdate", function(_, elapsed)
+            local left = f._fbLeft
+            if not left then return end
+            left = left - (elapsed or 0)
+            if left <= 0 then
+                f._fbLeft = nil
+                f._fb:Hide()
+            else
+                f._fbLeft = left
+                if left < UF.FEEDBACK_FADE then f._fb:SetAlpha(left / UF.FEEDBACK_FADE) end
+            end
+        end)
+    end
+
     local textHost = CreateFrame("Frame", nil, f)
     textHost:SetAllPoints(health)
     textHost:SetFrameLevel(health:GetFrameLevel() + 3)
@@ -543,6 +570,10 @@ function Frame:Layout()
     else
         pf:Hide()
     end
+    if self._fb then
+        self._fb:ClearAllPoints()
+        self._fb:SetPoint("CENTER", pf:IsShown() and pf or self.health, "CENTER", 0, 0)
+    end
 
     self.health:ClearAllPoints()
     self.health:SetPoint("TOPLEFT", self, "TOPLEFT", right and 0 or inset, 0)
@@ -631,6 +662,34 @@ function Frame:PaintBg(r, g, b)
     if self._bgR == br and self._bgG == bgg and self._bgB == bb then return end
     self._bgR, self._bgG, self._bgB = br, bgg, bb
     self.healthBg:SetColorTexture(br, bgg, bb, 1)
+end
+
+-- Treffer und Heilung als Zahl. UNIT_COMBAT(unit, action, flag, amount):
+-- "WOUND" ist erlittener Schaden, "HEAL" erhaltene Heilung; Ausweichen,
+-- Parieren usw. zeigt WeintCodex nicht. Ist die Art geheim, kann Lua
+-- nicht unterscheiden - dann keine Zahl statt einer falschen Farbe. Die
+-- Zahl selbst darf geheim sein: sie geht gekuerzt (UIDamageMeter.Format,
+-- dieselben Stufen wie die Schadensanzeige) und ueber SetFormattedText an
+-- den Client, Lua rechnet nie damit.
+UF.FEEDBACK_HOLD, UF.FEEDBACK_FADE = 1.0, 0.6
+function Frame:CombatFeedback(action, flag, amount)
+    local fs = self._fb
+    if not fs or not Opt("combatFeedback") then return end
+    local act = K.Plain(action)
+    if act ~= "WOUND" and act ~= "HEAL" then return end
+    if type(amount) == "nil" then return end
+    local plain = K.Plain(amount)
+    if type(plain) == "number" and plain <= 0 then return end
+    local DM = WeintCodex.UIDamageMeter
+    local ok, text = pcall(DM and DM.Format or tostring, amount)
+    if not ok or type(text) == "nil" then return end
+    local c = act == "WOUND" and WeintCodex.Colors.danger or WeintCodex.Colors.success
+    K.SetFont(fs, K.Plain(flag) == "CRITICAL" and 13 or 11)
+    fs:SetTextColor(c[1], c[2], c[3], 1)
+    if not pcall(fs.SetFormattedText, fs, act == "WOUND" and "-%s" or "+%s", text) then return end
+    fs:SetAlpha(1)
+    fs:Show()
+    self._fbLeft = UF.FEEDBACK_HOLD + UF.FEEDBACK_FADE
 end
 
 -- Eingehende Heilung und Schilde. Keine Antwort des Clients: kein Balken.
@@ -1191,7 +1250,7 @@ local CAST = {
     UNIT_SPELLCAST_INTERRUPTED = "failed", UNIT_SPELLCAST_FAILED = "failed",
 }
 
-local function OnEvent(_, event, unit)
+local function OnEvent(_, event, unit, ...)
     if event == "PLAYER_TARGET_CHANGED" then
         RefreshUnit("target", true)
         RefreshUnit("targettarget", true)
@@ -1238,6 +1297,8 @@ local function OnEvent(_, event, unit)
 
     if HEALTH[event] or FULL[event] then
         f:Refresh()
+    elseif event == "UNIT_COMBAT" then
+        f:CombatFeedback(...)
     elseif PREDICTION[event] then
         f:UpdatePrediction()
     elseif POWER[event] then
@@ -1353,7 +1414,7 @@ local function Enable()
         "PLAYER_TARGET_CHANGED", "PLAYER_FOCUS_CHANGED", "UNIT_TARGET", "UNIT_PET",
         "PLAYER_ENTERING_WORLD", "RAID_TARGET_UPDATE", "UPDATE_SHAPESHIFT_FORM",
         "UNIT_PORTRAIT_UPDATE", "UNIT_MODEL_CHANGED",
-        "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "PLAYER_UPDATE_RESTING",
+        "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "PLAYER_UPDATE_RESTING", "UNIT_COMBAT",
     }) do Register(e) end
     for e in pairs(HEALTH) do Register(e) end
     for e in pairs(PREDICTION) do Register(e) end
@@ -1469,7 +1530,9 @@ local pages = {
         B:Row({ type = "toggle", label = "Eingehende Heilung", key = "healPrediction",
                 description = "Ein heller grüner Balken hinter dem Leben: so weit reichen Heilungen, die gerade gewirkt werden." },
               { type = "toggle", label = "Schilde", key = "absorbs",
-                description = "Ein weißer Balken dahinter: wie viel Schaden Schilde noch abfangen." })
+                description = "Eine blaue Fläche vom rechten Rand über dem Leben: wie viel Schaden Schilde noch abfangen." })
+        B:Row({ type = "toggle", label = "Treffer und Heilung als Zahl", key = "combatFeedback",
+                description = "Spieler und Ziel: erlittener Schaden rot mit Minus, erhaltene Heilung grün mit Plus – kurz im Rahmen." })
         B:Section("Schrift")
         B:Row({ type = "slider", label = "Größe links", key = "nameSize", min = 8, max = 20, step = 1, format = px },
               { type = "slider", label = "Größe rechts", key = "textSize", min = 8, max = 20, step = 1, format = px })

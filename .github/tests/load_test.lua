@@ -3626,6 +3626,32 @@ do
         assert(not UF.frames.player._heal:IsShown(), "Heilung trotz ausgeschalteter Einstellung")
         WeintCodex.UIKit.Set("unitframes", "healPrediction", true)
         _G.UnitGetIncomingHeals, _G.UnitGetTotalAbsorbs, _G.UnitHealthMax = oldHeal, oldAbs, oldMax
+        -- 6.6.1.8: Treffer rot mit Minus, Heilung gruen mit Plus; alles
+        -- andere (Ausweichen, geheime Art, 0) zeigt nichts.
+        local pf = UF.frames.player
+        local shown
+        local oldFmt = pf._fb.SetFormattedText
+        pf._fb.SetFormattedText = function(_, fmt, v) shown = string.format(fmt, v) end
+        pf._fb:Hide()
+        pf:CombatFeedback("WOUND", "", 1234)
+        assert(pf._fb:IsShown() and shown == "-1,2K", "Treffer nicht als -1,2K: " .. tostring(shown))
+        pf:CombatFeedback("HEAL", "CRITICAL", 87)
+        assert(shown == "+87", "Heilung nicht als +87: " .. tostring(shown))
+        shown = nil
+        pf:CombatFeedback("DODGE", "", 0)
+        pf:CombatFeedback("WOUND", "", 0)
+        local oldSecret = _G.issecretvalue
+        local secret = {}
+        _G.issecretvalue = function(v) return v == secret end
+        pf:CombatFeedback(secret, "", 50)
+        _G.issecretvalue = oldSecret
+        assert(shown == nil, "Zahl fuer Ausweichen, 0 oder geheime Art gezeigt")
+        WeintCodex.UIKit.Set("unitframes", "combatFeedback", false)
+        pf:CombatFeedback("WOUND", "", 5)
+        assert(shown == nil, "Zahl trotz ausgeschalteter Einstellung")
+        WeintCodex.UIKit.Set("unitframes", "combatFeedback", true)
+        pf._fb.SetFormattedText = oldFmt
+        assert(UF.frames.target._fb and not UF.frames.focus._fb, "Zahl nur an Spieler und Ziel")
         -- 6.6.0.4: Aurenleisten wieder ausgebaut - der Client gibt Addons
         -- im Kampf weder die Auren des Ziels noch die eigenen heraus.
         assert(not UF.frames.player._auraBars and not UF.frames.target._auraBars,

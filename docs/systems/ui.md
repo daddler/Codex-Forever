@@ -542,6 +542,16 @@ Seit 6.2.0.0:
   rechten Rand her (`SetReverseFill`, Farbe `GameColors.absorbOver`,
   blau – der Lebensbalken eines Priesters ist weiß). Hinter der Füllung
   war er bei vollem Leben ganz abgeschnitten.
+* **Treffer und Heilung als Zahl** (6.6.1.7, `combatFeedback`, Beta-Test:
+  „in kleinen roten Zahlen mit einem Minus, Heilung grün mit einem
+  Plus“): Spieler- und Zielrahmen hören auf `UNIT_COMBAT`;
+  `Frame:CombatFeedback` zeigt nur `WOUND` (rot, `-`) und `HEAL` (grün,
+  `+`), kritisch zwei Punkt größer, über dem Porträt (ohne Porträt mitten
+  im Lebensbalken), 1 s stehen, 0,6 s ausblenden. Ist die Art geheim,
+  keine Zahl (Lua kann sie nicht unterscheiden); die Menge darf geheim
+  sein – gekürzt über `UIDamageMeter.Format`, gesetzt mit
+  `SetFormattedText`. Ob Forever `UNIT_COMBAT` an Addons gibt, ist
+  ungeprüft (die Gruppenkacheln blitzen damit seit 6.2).
   Danach **Neu laden** (`K.ReloadButton`). `/wcui einrichten pruefen`
   (`ES.Check`; in 6.6.1.3 brach sie ab – `local fx, fy = f and
   PointXY(…)` schneidet den zweiten Wert ab; der Prüflauf gibt dem Chat
