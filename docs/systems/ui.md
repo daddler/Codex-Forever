@@ -1133,10 +1133,15 @@ oder, wenn der Client keine Maske anlegt, genau das.
 **Kategorien (6.6.2.7).** Beta-Test: „Allgemein, Primäre Eigenschaften
 etc. stehen einfach nur in weiß da“. Die Kopfzeilen der Werte trugen den
 Holzbalken des Spiels (`UI-Character-Info-Title`, ausgeblendet seit 6.4);
-übrig blieb blanker Text. `W.Header(f, beam)` legt an die Stelle des
-Balkens ein Band (`surface2`, 95 %), links einen 3-px-Streifen und unten
-eine 1-px-Linie in `UIKit.Highlight()`; der Titel (`.Title` oder die
-einzige Schriftzeile) wird 12 pt, `textBright`, links mit 12 px Abstand.
+übrig blieb blanker Text. 6.6.2.7 legte ein dunkles Band mit Streifen
+links darunter – im Beta-Test „sieht richtig scheiße aus“: ein Block, der
+wie ein Loch im Fenster wirkt. Seit 6.6.2.8 eine **Zierlinie**
+(`W.Header(f, beam)`): der Titel (`.Title` oder die einzige
+Schriftzeile) mittig am Balken, 12 pt, `textBright`, so breit wie sein
+Text; links und rechts je eine 1-px-Linie, die vom Titel nach außen
+ausläuft (`UIKit.Highlight()`, 70 % am Titel, 0 am Rand, 10 px Abstand
+zum Balkenende), am Titel je eine 5-px-Raute (`W.HEADER_GAP`,
+`W.HEADER_INSET`, `W.HEADER_ALPHA`). Kein Grund, kein Block.
 Erkannt in `HideByAtlas` am Atlas (`W.HEADER_ATLAS`) – jede Kopfzeile, die
 ihn trägt, in jedem gestalteten Fenster. Der Text des Spiels bleibt (kein
 `SetText` auf fremde Zeilen). `/wcui fenster` nennt „Kategorien: N (…)“.

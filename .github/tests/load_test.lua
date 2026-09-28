@@ -4686,8 +4686,11 @@ do
         W.HideByAtlas(pane)
         local d = W.Headers[head]
         assert(beam:GetAlpha() == 0, "Holzbalken bleibt")
-        assert(d and d.band and d.bar and d.line and d.title == title, "Kopfzeile ohne Band")
-        assert(W.own[d.band] and W.own[d.bar], "Band als fremdes Bild behandelt")
+        -- 6.6.2.8: Zierlinie statt Block - Titel mittig, Linien und Rauten
+        -- links und rechts, kein Band.
+        assert(d and d.left and d.right and d.leftDot and d.rightDot and d.title == title and not d.band,
+            "Kopfzeile ohne Zierlinie")
+        assert(W.own[d.left] and W.own[d.rightDot], "Zierlinie als fremdes Bild behandelt")
         W.HideByAtlas(pane)
         assert(W.Headers[head] == d, "Band doppelt angelegt")
         assert(W.HeaderAtlas("UI-Character-Info-Title") and not W.HeaderAtlas("UI-Character-Info-StatTab"),
@@ -4695,7 +4698,7 @@ do
         local report = table.concat(W.HeaderReport(), "\n")
         assert(report:find("Kategorien: ", 1, true) and report:find("Allgemein", 1, true), "Bericht ohne Kategorien: " .. report)
     end)
-    Check(ok7, "Kategorien im Charakterfenster: Band mit Streifen in der Hervorhebung, Titel links"
+    Check(ok7, "Kategorien im Charakterfenster: Titel mittig zwischen auslaufenden Zierlinien"
         .. (ok7 and "" or (": " .. tostring(err7))))
 
     -- 6.6.2.4: Rahmen und Hervorhebungen in Klassenfarbe - oder im Akzent.

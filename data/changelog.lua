@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.2.8",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFKategorien im Charakterfenster als Zierlinie.|r Statt eines dunklen Balkens steht der Titel wieder mittig, links und rechts läuft je eine feine Linie in deiner Klassenfarbe nach außen aus, am Titel sitzt eine kleine Raute – gegliedert, ohne Löcher ins Fenster zu schneiden.",
+        },
+    },
+    {
         version = "6.6.2.7",
         date    = "28.09.2026",
         notes   = {

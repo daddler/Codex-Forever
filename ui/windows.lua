@@ -414,10 +414,8 @@ local edged = setmetatable({}, { __mode = "k" })
 -- gelesen werden kann - jetzt steht Allgemein, Primaere Eigenschaften
 -- einfach nur in weiss da". Die Kopfzeile trug den Holzbalken des Spiels
 -- (UI-Character-Info-Title, ausgeblendet seit 6.4); uebrig blieb der
--- blanke Text. Jetzt an seiner Stelle ein Band eine Stufe heller als die
--- Kachel, links ein Streifen und unten eine Linie in der Farbe der
--- Hervorhebung (Klasse oder Akzent), der Titel links, hell, eine Stufe
--- groesser. Erkannt am Atlas des Balkens (W.HEADER_ATLAS), nicht an einem
+-- blanke Text. Jetzt an seiner Stelle eine Zierlinie (siehe W.Header).
+-- Erkannt am Atlas des Balkens (W.HEADER_ATLAS), nicht an einem
 -- Namen - jede Kopfzeile, die ihn traegt, in jedem Fenster. Der Text des
 -- Spiels bleibt, wie er ist (kein SetText auf fremde Zeilen).
 W.HEADER_ATLAS = { "^UI%-Character%-Info%-Title" }
@@ -449,39 +447,63 @@ local function HeaderTitle(f)
     return nil
 end
 
+-- Zweite Fassung (6.6.2.8, Beta-Test zum dunklen Band mit weissem
+-- Streifen: "sieht richtig scheisse aus - Verzierungen, etwas, das sich
+-- ins Interface einarbeitet"). Kein Block mehr: der Titel steht mittig
+-- wie im Spiel, links und rechts laeuft je eine feine Linie nach aussen
+-- aus, am Titel sitzt eine kleine Raute. Farbe der Hervorhebung, aber
+-- gedaempft - eine Zierlinie, keine Markierung.
+W.HEADER_GAP, W.HEADER_INSET, W.HEADER_ALPHA = 8, 10, 0.7
+
+local function Flourish(f, fs, beam, side, c)
+    local line = f:CreateTexture(nil, "ARTWORK", nil, 1)
+    line:SetHeight(1)
+    line:SetColorTexture(1, 1, 1, 1)
+    local dot = f:CreateTexture(nil, "ARTWORK", nil, 2)
+    dot:SetSize(5, 5)
+    dot:SetColorTexture(c[1], c[2], c[3], 0.9)
+    if dot.SetRotation then pcall(dot.SetRotation, dot, math.pi / 4) end
+    local solid, clear
+    if _G.CreateColor then
+        solid = _G.CreateColor(c[1], c[2], c[3], W.HEADER_ALPHA)
+        clear = _G.CreateColor(c[1], c[2], c[3], 0)
+    end
+    if side == "LEFT" then
+        dot:SetPoint("RIGHT", fs, "LEFT", -W.HEADER_GAP, 0)
+        line:SetPoint("RIGHT", dot, "LEFT", -2, 0)
+        line:SetPoint("LEFT", beam, "LEFT", W.HEADER_INSET, 0)
+        if solid and line.SetGradient then line:SetGradient("HORIZONTAL", clear, solid) end
+    else
+        dot:SetPoint("LEFT", fs, "RIGHT", W.HEADER_GAP, 0)
+        line:SetPoint("LEFT", dot, "RIGHT", 2, 0)
+        line:SetPoint("RIGHT", beam, "RIGHT", -W.HEADER_INSET, 0)
+        if solid and line.SetGradient then line:SetGradient("HORIZONTAL", solid, clear) end
+    end
+    if not (solid and line.SetGradient) then line:SetColorTexture(c[1], c[2], c[3], W.HEADER_ALPHA * 0.5) end
+    own[line], own[dot] = true, true
+    return line, dot
+end
+
 function W.Header(f, beam)
     if type(f) ~= "table" or not f.CreateTexture or type(beam) ~= "table" then return nil end
     local d = headerDone[f]
     if d then return d end
-    d = {}
-    local s2, hl = C.surface2, K.Highlight()
-    d.band = f:CreateTexture(nil, "BACKGROUND", nil, 2)
-    d.band:SetAllPoints(beam)
-    d.band:SetColorTexture(s2[1], s2[2], s2[3], 0.95)
-    d.bar = f:CreateTexture(nil, "BORDER", nil, 2)
-    d.bar:SetPoint("TOPLEFT", beam, "TOPLEFT", 0, 0)
-    d.bar:SetPoint("BOTTOMLEFT", beam, "BOTTOMLEFT", 0, 0)
-    d.bar:SetWidth(3)
-    d.bar:SetColorTexture(hl[1], hl[2], hl[3], 1)
-    d.line = f:CreateTexture(nil, "BORDER", nil, 2)
-    d.line:SetPoint("BOTTOMLEFT", beam, "BOTTOMLEFT", 0, 0)
-    d.line:SetPoint("BOTTOMRIGHT", beam, "BOTTOMRIGHT", 0, 0)
-    d.line:SetHeight(1)
-    d.line:SetColorTexture(hl[1], hl[2], hl[3], 0.35)
-    own[d.band], own[d.bar], own[d.line] = true, true, true
     local fs = HeaderTitle(f)
-    if fs then
-        d.title = fs
-        pcall(function()
-            K.SetFont(fs, 12)
-            local t = C.textBright
-            fs:SetTextColor(t[1], t[2], t[3], 1)
-            fs:SetJustifyH("LEFT")
-            fs:ClearAllPoints()
-            fs:SetPoint("LEFT", beam, "LEFT", 12, 0)
-            fs:SetPoint("RIGHT", beam, "RIGHT", -8, 0)
-        end)
-    end
+    if not fs then return nil end
+    d = { title = fs }
+    -- Titel mittig am Balken, so breit wie sein Text: die Linien setzen
+    -- an seinen Enden an.
+    pcall(function()
+        K.SetFont(fs, 12)
+        local t = C.textBright
+        fs:SetTextColor(t[1], t[2], t[3], 1)
+        fs:SetJustifyH("CENTER")
+        fs:ClearAllPoints()
+        fs:SetPoint("CENTER", beam, "CENTER", 0, 0)
+    end)
+    local c = K.Highlight()
+    d.left, d.leftDot = Flourish(f, fs, beam, "LEFT", c)
+    d.right, d.rightDot = Flourish(f, fs, beam, "RIGHT", c)
     headerDone[f] = d
     return d
 end
