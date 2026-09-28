@@ -977,7 +977,14 @@ W.FitStats = function(f) FitStats(f, 0) end
 -- vorher (Beta-Test: "oben und rechts immer noch abgehakt"). Jetzt: an den
 -- Kanten des BILDES (die Vereinigung aller RaceBG-Teile), gemessen bei
 -- jedem Durchlauf, solange das Fenster offen ist.
+-- 6.6.2.4: sass der Rand richtig (Ausgabe "am Bild 0:0:397:464" = das
+-- ganze Modellfeld) und blieb trotzdem unsichtbar (Beta-Test: "sieht immer
+-- noch gleich aus"). Er lag auf BORDER; die Bilder des Hintergrunds liegen
+-- auf eigenen Ebenen darueber. Jetzt ganz oben am Modellfeld (OVERLAY 7) -
+-- das Modell selbst zeichnet der Client ueber alle Flaechen seines Rahmens,
+-- es wird also nicht mit ausgeblendet. /wcui fenster nennt die Ebenen.
 W.SOFT_EDGE = 60
+W.SOFT_LAYER, W.SOFT_SUBLEVEL = "OVERLAY", 7
 
 local soft = setmetatable({}, { __mode = "k" })
 W.soft = soft
@@ -998,7 +1005,7 @@ local function FindRaceBG(f, depth, out)
 end
 
 local function Edge(host, box, side, c, size)
-    local t = host:CreateTexture(nil, "BORDER", nil, 7)
+    local t = host:CreateTexture(nil, W.SOFT_LAYER, nil, W.SOFT_SUBLEVEL)
     own[t] = true
     if side == "LEFT" or side == "RIGHT" then
         t:SetPoint("TOP" .. side, box, "TOP" .. side, 0, 0)
@@ -1099,13 +1106,47 @@ function W.SoftenModel(f)
     return order
 end
 
--- Fuer /wcui fenster: wo der weiche Rand sitzt.
+-- Ebene einer Flaeche als "OVERLAY/7"; "?" ohne Antwort.
+local function LayerOf(r)
+    local ok, layer, sub = pcall(function() return r:GetDrawLayer() end)
+    layer, sub = ok and K.Plain(layer) or nil, ok and K.Plain(sub) or nil
+    if type(layer) ~= "string" then return "?" end
+    return type(sub) == "number" and (layer .. "/" .. sub) or layer
+end
+W.LayerOf = LayerOf
+
+-- Name einer Flaeche fuer den Bericht: Atlas oder Datei-Nummer.
+local function PictureOf(r)
+    local ok, atlas, file = pcall(function() return r:GetAtlas(), r:GetTexture() end)
+    atlas, file = ok and K.Plain(atlas) or nil, ok and K.Plain(file) or nil
+    if type(atlas) == "string" and atlas ~= "" then return atlas end
+    if type(file) == "number" or type(file) == "string" then return tostring(file) end
+    return "Farbe"
+end
+
+-- Fuer /wcui fenster: wo der weiche Rand sitzt, auf welcher Ebene, ob
+-- er zu sehen ist - und auf welchen Ebenen die Bilder darunter liegen.
 function W.SoftReport(f)
     local out = {}
     for _, host in ipairs(softRoot[f] or {}) do
         local e = soft[host]
         out[#out + 1] = string.format("   Weicher Rand: %d Teile, %s", #e.parts,
             e.key == "host" and "am Träger (Lage des Bildes unbekannt)" or ("am Bild " .. tostring(e.key)))
+        local top = e.TOP
+        local vok, vis = pcall(function() return top:IsVisible() end)
+        local aok, alpha = pcall(function() return top:GetAlpha() end)
+        vis, alpha = vok and K.Bool(vis, false), aok and K.Plain(alpha) or nil
+        out[#out + 1] = string.format("   Rand-Ebene %s, %s, Deckkraft %s", LayerOf(top),
+            vis and "sichtbar" or "NICHT sichtbar", type(alpha) == "number" and string.format("%.2f", alpha) or "?")
+        local rok, regions = pcall(function() return { host:GetRegions() } end)
+        local parts = {}
+        for _, r in ipairs(rok and regions or {}) do
+            local tok, isTex = pcall(function() return r:GetObjectType() == "Texture" end)
+            if tok and isTex and not own[r] and #parts < 8 then
+                parts[#parts + 1] = PictureOf(r) .. " " .. LayerOf(r)
+            end
+        end
+        if #parts > 0 then out[#out + 1] = "   Darunter: " .. table.concat(parts, ", ") end
     end
     return out
 end

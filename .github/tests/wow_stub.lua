@@ -166,12 +166,15 @@ local function RequireFrame(self, method)
     end
 end
 
-function Methods:CreateTexture(_, layer)
+function Methods:CreateTexture(_, layer, _, sublevel)
     RequireFrame(self, "CreateTexture")
     local tex = NewObject("Texture")
     tex._parent = self
+    tex._layer, tex._sublevel = layer, sublevel
     return tex
 end
+
+function Methods:GetDrawLayer() return self._layer, self._sublevel end
 
 function Methods:CreateFontString(_, layer, inherits)
     RequireFrame(self, "CreateFontString")

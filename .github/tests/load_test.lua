@@ -4399,6 +4399,11 @@ do
             "kein weicher Rand um das Modell")
         assert(race:GetAlpha() == 1, "Hintergrund des Modells ausgeblendet")
         assert(W.SoftenModel(cf) == hosts, "Rand zweimal gesucht")
+        -- 6.6.2.4: auf BORDER blieb der Rand unter den Hintergrundbildern.
+        assert(W.soft[scene].TOP:GetDrawLayer() == "OVERLAY", "weicher Rand liegt unter dem Bild")
+        local report = table.concat(W.SoftReport(cf), "\n")
+        assert(report:find("Rand-Ebene OVERLAY/7", 1, true) and report:find("Darunter: UI-Character-Info-Human-RaceBG", 1, true),
+            "Bericht ohne Ebenen: " .. report)
     end)
     -- Berufe und Gilde & Communitys (6.6.2.1).
     local ok2, err2 = pcall(function()

@@ -1077,6 +1077,18 @@ gemessen bei jedem Durchlauf, solange das Fenster offen ist –, 60 px
 breit. `/wcui fenster` über dem Charakterfenster nennt, wo er sitzt
 („am Bild …“ oder „am Träger“, wenn der Client die Lage nicht kennt).
 
+**Dritte Fassung (6.6.2.4):** Der Bericht sagte „am Bild 0:0:397:464“ –
+das ganze Modellfeld, also die richtige Stelle –, und im Spiel war
+trotzdem keine Änderung zu sehen. Der Verlauf lag auf `BORDER/7`; die
+Hintergrundbilder des Modellfelds liegen auf Ebenen darüber. Jetzt liegt
+er auf `OVERLAY/7` (`W.SOFT_LAYER`, `W.SOFT_SUBLEVEL`), der obersten
+Ebene des Modellfelds; das 3D-Modell zeichnet der Client über alle
+Flächen seines Rahmens, es läuft also nicht mit aus. `/wcui fenster`
+nennt zusätzlich die Ebene des Randes, ob er sichtbar ist und seine
+Deckkraft („Rand-Ebene …“) sowie Bild und Ebene jeder Fläche am
+Modellfeld („Darunter: …“) – bleibt der Rand unsichtbar, steht dort,
+warum.
+
 **Rahmen in Klassenfarbe** (6.6.2.3, Beta-Test: „statt der lila Rahmen
 überall lieber Rahmen in der Farbe der Klasse“): `UIKit.Highlight()`
 liefert die Klassenfarbe des Charakters (`RAID_CLASS_COLORS`, vom

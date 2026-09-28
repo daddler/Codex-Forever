@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.2.4",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFWeicher Rand ums Charaktermodell, jetzt sichtbar.|r Der Übergang saß an der richtigen Stelle, war im Spiel aber nicht zu sehen. Er liegt jetzt auf der obersten Ebene über dem Hintergrundbild, sodass das Bild an allen vier Seiten in den Rahmen ausläuft.",
+        },
+    },
+    {
         version = "6.6.2.3",
         date    = "28.09.2026",
         notes   = {

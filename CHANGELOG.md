@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.2.4] – 2026-09-28
+
+**Weicher Rand ums Charaktermodell, jetzt sichtbar.** Der Übergang saß an der richtigen Stelle, war im Spiel aber nicht zu sehen. Er liegt jetzt auf der obersten Ebene über dem Hintergrundbild, sodass das Bild an allen vier Seiten in den Rahmen ausläuft.
+
 ## [6.6.2.3] – 2026-09-28
 
 **Rahmen in deiner Klassenfarbe.** Gewählte Reiter, das Zielleuchten der Plaketten, deine Zeile in der Schadensanzeige und die Rahmen im Gestaltungsmodus tragen jetzt die Farbe deiner Klasse statt Lila. Unter Allgemein → „Rahmen und Hervorhebungen“ lässt sich das Lila zurückholen.
