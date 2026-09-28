@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.3.2",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Karte läuft jetzt wirklich weich aus.|r Der Rand war dunkel – neben dem hellen Kopf des Fensters wirkte das wieder wie eine Kante. Jetzt blendet die Karte selbst an allen vier Seiten aus, genau wie das Charakterbild, und geht in den Grund des Fensters samt Schein über. Questmarken bleiben scharf.",
+        },
+    },
+    {
         version = "6.6.3.1",
         date    = "28.09.2026",
         notes   = {

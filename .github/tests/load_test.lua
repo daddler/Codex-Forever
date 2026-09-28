@@ -4489,7 +4489,27 @@ do
         assert(W.MapOverlayLevel(map) == 105, "Knoepfe unter der Karte: Rand nicht darueber")
         W.SoftMap(map)
         assert(W.softOverlay[canvas] == o and o._level == 105, "Rand doppelt angelegt oder Ebene nicht gesetzt")
-        assert(table.concat(W.SoftReport(map), " "):find("Weicher Rand (Karte): Ebene 105", 1, true), "Bericht ohne Kartenrand")
+        assert(table.concat(W.SoftReport(map), " "):find("Weicher Rand (Karte): Verlauf, Ebene 105", 1, true), "Bericht ohne Kartenrand")
+        -- 6.6.3.2: die Kartenbilder selbst laufen aus (Maske am Ausschnitt);
+        -- Marken (klein) bleiben, der dunkle Verlauf geht weg.
+        local inner, layer = stub.NewObject("Frame"), stub.NewObject("Frame")
+        local bigTile, pin, own0 = stub.NewObject("Texture"), stub.NewObject("Texture"), stub.NewObject("Texture")
+        bigTile._width, bigTile._height = 256, 256
+        pin._width, pin._height = 20, 20
+        own0._width, own0._height = 300, 300
+        layer.GetRegions = function() return bigTile, pin end
+        inner.GetRegions = function() return own0 end
+        inner.GetChildren = function() return layer end
+        canvas.Child = inner
+        W.SoftMap(map)
+        assert(bigTile._masks and #bigTile._masks == 1, "Kachel ohne Maske")
+        assert(not pin._masks, "Marke maskiert")
+        assert(own0._masks and #own0._masks == 1, "Bild am Inhalt selbst ohne Maske")
+        assert(not o:IsShown(), "dunkler Verlauf bleibt ueber der maskierten Karte")
+        W.SoftMap(map)
+        assert(#bigTile._masks == 1, "Maske doppelt")
+        assert(table.concat(W.SoftReport(map), " "):find("Maske an 2 Bildern", 1, true), "Bericht ohne Maske")
+        canvas.Child = nil
         _G.WorldMapFrame = nil
 
         local cf = stub.NewObject("Frame")

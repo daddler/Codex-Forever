@@ -1208,6 +1208,22 @@ beim Zoomen sind von selbst mit drin, die Maus geht durch. Ebene
 Knöpfe ab …“. Marken am Rand verblassen mit. Nebenbei: der Knopf der
 Seitenleiste (`SidePanelToggle`) trug noch `MapCornerShadow-Right`.
 
+**Zweite Fassung (6.6.3.2), Maske statt Verlauf.** Beta-Test: „immer
+noch nicht nach außen weichgezeichnet“. Gemessen am Screenshot: rechts
+und unten lief der Verlauf, oben aber liegt über dem Fenster der helle
+Schein der Klassenfarbe – dunkler Kartenrand neben hellem Kopf ist
+wieder eine Kante (dieselbe Falle wie 6.6.2.4 beim Modellbild). Jetzt
+wie dort: die großen Bilder der Karte (≥ 128 × 128, `W.MAP_TILE_MIN`:
+Kacheln, erkundete Gebiete) am Inhalt (`ScrollContainer.Child`) und in
+seinen Ebenen bekommen `media/ui/softmask` (`W.SoftMap`, `MaskTiles`),
+eine Maske je Rahmen, die am **Ausschnitt** sitzt – beim Ziehen und
+Zoomen läuft die Karte unter ihr durch; neue Kacheln bekommen sie beim
+nächsten Durchlauf, jede einmal. Marken sind kleiner und bleiben scharf.
+Der dunkle Verlauf geht aus; er bleibt nur, wo der Client keine Masken
+anlegt. `/wcui fenster`: „Maske an N Bildern, darunter M Bilder am
+Ausschnitt“ – steht bei M etwas, liegt unter der Karte noch eine Fläche
+des Spiels, in die sie ausläuft.
+
 **Alles in Klassenfarbe (6.6.3.1).** Beta-Test: „das komplette Design
 immer auf die Klasse basierend – teils ist das ja schon, aber das sollte
 überall komplett sein“. Der Akzent **ist** jetzt die Klassenfarbe:

@@ -1406,9 +1406,9 @@ end
 -- die Maske haengt - und auf welchen Ebenen die Bilder liegen.
 function W.SoftReport(f)
     local out = {}
-    local sc = type(f) == "table" and f.ScrollContainer
-    local o = sc and W.softOverlay and W.softOverlay[sc]
-    if o and o._report then out[#out + 1] = o._report end
+    if type(f) == "table" and f.ScrollContainer and W.mapMask and W.mapMask.report then
+        out[#out + 1] = W.mapMask.report
+    end
     for _, host in ipairs(softRoot[f] or {}) do
         local e = soft[host]
         out[#out + 1] = string.format("   Weicher Rand: %d Teile, %s", #e.parts,
@@ -1575,13 +1575,93 @@ function W.MapOverlayLevel(map)
     return level, base, low
 end
 
+-- Zweite Fassung (6.6.3.2, Beta-Test: "immer noch nicht nach aussen
+-- weichgezeichnet"). Der Verlauf nach Fast-Schwarz lag richtig (rechts und
+-- unten zu sehen), aber oben liegt ueber dem Fenster der helle Schein der
+-- Klassenfarbe: dunkler Kartenrand neben hellem Kopf ist wieder eine
+-- Kante - dieselbe Falle wie beim Modellbild (6.6.2.5). Jetzt wie dort:
+-- die Kartenbilder SELBST laufen aus (media/ui/softmask), darunter
+-- erscheint der Grund des Fensters samt Schein. Gemeint sind nur die
+-- grossen Bilder (Kacheln, erkundete Gebiete, ab 128 x 128) in den
+-- Ebenen der Karte; Marken sind kleiner und bleiben, wie sie sind. Die
+-- Maske sitzt am Kartenausschnitt, nicht an den Kacheln - wer zieht oder
+-- zoomt, schiebt die Karte unter ihr durch. Je Rahmen eine Maske (sie
+-- gehoert dem Rahmen, dessen Bilder sie formt); neue Kacheln bekommen sie
+-- beim naechsten Durchlauf. Ohne Masken im Client: der Verlauf von 6.6.3.1.
+W.MAP_TILE_MIN = 128 * 128
+local mapMask = { masks = setmetatable({}, { __mode = "k" }), masked = setmetatable({}, { __mode = "k" }), count = 0 }
+W.mapMask = mapMask
+
+local function TileArea(r)
+    if r:GetObjectType() ~= "Texture" then return 0 end
+    local w, h = K.Plain(r:GetWidth()), K.Plain(r:GetHeight())
+    if type(w) ~= "number" or type(h) ~= "number" then return 0 end
+    return w * h
+end
+
+local function MaskFor(frame, area)
+    local m = mapMask.masks[frame]
+    if m then return m end
+    local ok, mask = pcall(frame.CreateMaskTexture, frame)
+    if not ok or type(mask) ~= "table" then return nil end
+    mask:SetTexture(W.SOFT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+    mask:SetAllPoints(area)
+    own[mask] = true
+    mapMask.masks[frame] = mask
+    return mask
+end
+
+local function MaskTiles(frame, area)
+    for _, r in ipairs(Regions(frame, "mapTiles")) do
+        if not own[r] and not mapMask.masked[r] then
+            local ok, a = pcall(TileArea, r)
+            if ok and a >= W.MAP_TILE_MIN then
+                local mask = MaskFor(frame, area)
+                if mask and pcall(r.AddMaskTexture, r, mask) then
+                    mapMask.masked[r] = true
+                    mapMask.count = mapMask.count + 1
+                end
+            end
+        end
+    end
+end
+
 function W.SoftMap(map)
     local sc = map.ScrollContainer
     if type(sc) ~= "table" or not sc.GetFrameLevel then return nil end
+    local canvas = sc.Child
+    local canMask = type(canvas) == "table" and type(canvas.CreateMaskTexture) == "function"
+    if canMask then
+        -- Kacheln liegen in den Ebenen der Karte (Kinder des Inhalts) oder
+        -- am Inhalt selbst.
+        MaskTiles(canvas, sc)
+        for _, layer in ipairs(Children(canvas, "mapLayers")) do
+            if type(layer) == "table" and layer.GetRegions and not (layer.IsForbidden and layer:IsForbidden()) then
+                MaskTiles(layer, sc)
+            end
+        end
+        local o = softOverlay[sc]
+        if o then o:Hide() end
+        -- Was noch darunter liegt (sichtbar, nicht maskiert, nicht unser):
+        -- laeuft die Karte ins Schwarze aus, steht es hier.
+        local under = 0
+        for _, r in ipairs(Regions(sc, "mapUnder")) do
+            local ok, tex = pcall(IsTexture, r)
+            if ok and tex and not own[r] and not mapMask.masked[r] and K.Bool(r:IsShown(), false)
+               and K.Plain(r:GetAlpha()) ~= 0 then
+                under = under + 1
+            end
+        end
+        mapMask.report = string.format("   Weicher Rand (Karte): Maske an %d Bildern, darunter %d Bilder am Ausschnitt",
+            mapMask.count, under)
+        return mapMask
+    end
     local level, base, low = W.MapOverlayLevel(map)
     local o = W.SoftOverlay(map, sc, level)
-    o._report = string.format("   Weicher Rand (Karte): Ebene %d, Karte %d, Knöpfe ab %s",
+    o:Show()
+    o._report = string.format("   Weicher Rand (Karte): Verlauf, Ebene %d, Karte %d, Knöpfe ab %s",
         level, base, low and tostring(low) or "–")
+    mapMask.report = o._report
     return o
 end
 
