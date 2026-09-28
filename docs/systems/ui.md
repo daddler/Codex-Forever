@@ -1145,9 +1145,18 @@ zum Balkenende), am Titel je eine 5-px-Raute (`W.HEADER_GAP`,
 Erkannt in `HideByAtlas` am Atlas (`W.HEADER_ATLAS`) – jede Kopfzeile, die
 ihn trägt, in jedem gestalteten Fenster. Der Text des Spiels bleibt (kein
 `SetText` auf fremde Zeilen). `/wcui fenster` nennt „Kategorien: N (…)“.
-Kopfzeilen **anderer** Listen (Ruf, Währungen, Berufe) tragen andere
-Bilder; welche, ist nicht gemessen – sie kommen in `W.HEADER_ATLAS`,
-sobald `/wcui fenster` sie zeigt.
+**Ruf und Fertigkeiten** (6.6.2.9, gemessen mit `/wcui fenster`): ihre
+Kopfzeilen sind Zeilen der Liste (`ReputationFrame.ScrollBox…`,
+`SkillsFrame.ScrollBox…`) mit zweimal `common-button-list-collapseExpand`
+als Grund und rechts `common-button-list-minus`/`-plus` zum Auf- und
+Zuklappen. Der Grund geht (`W.HIDE_ATLAS`), dieselbe Zierlinie kommt
+(`W.HEADER_ATLAS`), am **breitesten** der beiden Gründe; die rechte Linie
+endet 6 px vor dem Zeichen (`W.HEADER_ICON`), das bleibt und grau wird
+(`DESAT_ATLAS`). Unter der Maus eine helle Fläche (`HIGHLIGHT`), weil der
+Grund, der das zeigte, weg ist. Die Währungsliste war beim Messen leer –
+dieselbe Vorlage ist wahrscheinlich, aber ungeprüft. Unterüberschriften
+(verschachtelte Ruf-Gruppen) stehen ebenfalls mittig; die Einrückung des
+Spiels geht dabei verloren.
 
 **Speicher und Takt der Fenster (6.6.2.6).** Beta-Test: „egal welches
 Fenster ich öffne, der Speicher geht super schnell Richtung 40 MB, kleine

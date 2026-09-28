@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.2.9",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFRuf und Fertigkeiten mit derselben Zierlinie.|r Die Überschriften der Ruf- und Fertigkeitenliste tragen jetzt dasselbe Design wie die Werte im Charakterfenster: Titel mittig, feine Linien mit Rauten in deiner Klassenfarbe. Das Zeichen zum Auf- und Zuklappen bleibt rechts, unter der Maus wird die Zeile heller.",
+        },
+    },
+    {
         version = "6.6.2.8",
         date    = "28.09.2026",
         notes   = {

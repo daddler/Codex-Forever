@@ -284,6 +284,7 @@ W.HIDE_ATLAS = {
     "^UI%-Character%-Info%-Stat%-StoneBG",
     "^UI%-Character%-Info%-%a+%-BG$",        -- Klassenhintergrund der Werte
     "^UI%-Character%-Info%-Title",           -- Holzbalken "Allgemein" usw.
+    "^common%-button%-list%-collapseExpand", -- Grund der Kopfzeilen in Ruf und Fertigkeiten (6.6.2.9)
     "^UI%-Character%-Info%-Line%-Bounce",    -- Streifen hinter den Werten
     "^UI%-Character%-Info%-GearSlot",        -- Metallrahmen der Plaetze
     "^UI%-Character%-Info%-Divider",
@@ -418,7 +419,7 @@ local edged = setmetatable({}, { __mode = "k" })
 -- Erkannt am Atlas des Balkens (W.HEADER_ATLAS), nicht an einem
 -- Namen - jede Kopfzeile, die ihn traegt, in jedem Fenster. Der Text des
 -- Spiels bleibt, wie er ist (kein SetText auf fremde Zeilen).
-W.HEADER_ATLAS = { "^UI%-Character%-Info%-Title" }
+W.HEADER_ATLAS = { "^UI%-Character%-Info%-Title", "^common%-button%-list%-collapseExpand" }
 
 -- Nur offene Fenster (6.6.2.6): vorher lief jeder Durchlauf auch ueber
 -- alle geschlossenen, die schon einmal gestaltet waren.
@@ -455,7 +456,24 @@ end
 -- gedaempft - eine Zierlinie, keine Markierung.
 W.HEADER_GAP, W.HEADER_INSET, W.HEADER_ALPHA = 8, 10, 0.7
 
-local function Flourish(f, fs, beam, side, c)
+-- Ruf und Fertigkeiten (6.6.2.9, gemessen mit /wcui fenster): ihre
+-- Kopfzeilen sind Zeilen der Liste mit dem Grund
+-- "common-button-list-collapseExpand" (zweimal je Kopfzeile) und rechts
+-- dem Zeichen zum Auf- und Zuklappen ("common-button-list-minus"/"-plus").
+-- Das Zeichen bleibt - es sagt, was ein Klick tut; die rechte Linie endet
+-- vor ihm.
+W.HEADER_ICON = "^common%-button%-list%-[mp]"
+
+local function HeaderIcon(f)
+    for _, r in ipairs(Regions(f, "hdrIcon")) do
+        local ok, atlas = pcall(TextureAtlas, r)
+        atlas = ok and K.Plain(atlas) or nil
+        if type(atlas) == "string" and atlas:find(W.HEADER_ICON) then return r end
+    end
+    return nil
+end
+
+local function Flourish(f, c)
     local line = f:CreateTexture(nil, "ARTWORK", nil, 1)
     line:SetHeight(1)
     line:SetColorTexture(1, 1, 1, 1)
@@ -463,47 +481,82 @@ local function Flourish(f, fs, beam, side, c)
     dot:SetSize(5, 5)
     dot:SetColorTexture(c[1], c[2], c[3], 0.9)
     if dot.SetRotation then pcall(dot.SetRotation, dot, math.pi / 4) end
-    local solid, clear
-    if _G.CreateColor then
-        solid = _G.CreateColor(c[1], c[2], c[3], W.HEADER_ALPHA)
-        clear = _G.CreateColor(c[1], c[2], c[3], 0)
-    end
-    if side == "LEFT" then
-        dot:SetPoint("RIGHT", fs, "LEFT", -W.HEADER_GAP, 0)
-        line:SetPoint("RIGHT", dot, "LEFT", -2, 0)
-        line:SetPoint("LEFT", beam, "LEFT", W.HEADER_INSET, 0)
-        if solid and line.SetGradient then line:SetGradient("HORIZONTAL", clear, solid) end
-    else
-        dot:SetPoint("LEFT", fs, "RIGHT", W.HEADER_GAP, 0)
-        line:SetPoint("LEFT", dot, "RIGHT", 2, 0)
-        line:SetPoint("RIGHT", beam, "RIGHT", -W.HEADER_INSET, 0)
-        if solid and line.SetGradient then line:SetGradient("HORIZONTAL", solid, clear) end
-    end
-    if not (solid and line.SetGradient) then line:SetColorTexture(c[1], c[2], c[3], W.HEADER_ALPHA * 0.5) end
     own[line], own[dot] = true, true
     return line, dot
+end
+
+local function Fade(line, c, outward)
+    if _G.CreateColor and line.SetGradient then
+        local solid = _G.CreateColor(c[1], c[2], c[3], W.HEADER_ALPHA)
+        local clear = _G.CreateColor(c[1], c[2], c[3], 0)
+        if outward == "LEFT" then line:SetGradient("HORIZONTAL", clear, solid)
+        else line:SetGradient("HORIZONTAL", solid, clear) end
+    else
+        line:SetColorTexture(c[1], c[2], c[3], W.HEADER_ALPHA * 0.5)
+    end
+end
+
+-- Titel und Linien an einen Balken legen. Traegt die Kopfzeile mehrere
+-- (Ruf: zwei), gilt der breiteste.
+local function Place(d, beam)
+    local fs = d.title
+    pcall(function()
+        fs:SetJustifyH("CENTER")
+        fs:ClearAllPoints()
+        fs:SetPoint("CENTER", beam, "CENTER", 0, 0)
+    end)
+    d.leftDot:ClearAllPoints()
+    d.leftDot:SetPoint("RIGHT", fs, "LEFT", -W.HEADER_GAP, 0)
+    d.left:ClearAllPoints()
+    d.left:SetPoint("RIGHT", d.leftDot, "LEFT", -2, 0)
+    d.left:SetPoint("LEFT", beam, "LEFT", W.HEADER_INSET, 0)
+    d.rightDot:ClearAllPoints()
+    d.rightDot:SetPoint("LEFT", fs, "RIGHT", W.HEADER_GAP, 0)
+    d.right:ClearAllPoints()
+    d.right:SetPoint("LEFT", d.rightDot, "RIGHT", 2, 0)
+    if d.icon then
+        d.right:SetPoint("RIGHT", d.icon, "LEFT", -6, 0)
+    else
+        d.right:SetPoint("RIGHT", beam, "RIGHT", -W.HEADER_INSET, 0)
+    end
+    d.hover:ClearAllPoints()
+    d.hover:SetAllPoints(beam)
+    d.beam = beam
+end
+
+local function WidthOf(r)
+    local ok, w = pcall(r.GetWidth, r)
+    w = ok and K.Plain(w) or nil
+    return type(w) == "number" and w or 0
 end
 
 function W.Header(f, beam)
     if type(f) ~= "table" or not f.CreateTexture or type(beam) ~= "table" then return nil end
     local d = headerDone[f]
-    if d then return d end
+    if d then
+        if beam ~= d.beam and WidthOf(beam) > WidthOf(d.beam) then Place(d, beam) end
+        return d
+    end
     local fs = HeaderTitle(f)
     if not fs then return nil end
-    d = { title = fs }
-    -- Titel mittig am Balken, so breit wie sein Text: die Linien setzen
-    -- an seinen Enden an.
+    d = { title = fs, icon = HeaderIcon(f) }
     pcall(function()
         K.SetFont(fs, 12)
         local t = C.textBright
         fs:SetTextColor(t[1], t[2], t[3], 1)
-        fs:SetJustifyH("CENTER")
-        fs:ClearAllPoints()
-        fs:SetPoint("CENTER", beam, "CENTER", 0, 0)
     end)
     local c = K.Highlight()
-    d.left, d.leftDot = Flourish(f, fs, beam, "LEFT", c)
-    d.right, d.rightDot = Flourish(f, fs, beam, "RIGHT", c)
+    d.left, d.leftDot = Flourish(f, c)
+    d.right, d.rightDot = Flourish(f, c)
+    Fade(d.left, c, "LEFT")
+    Fade(d.right, c, "RIGHT")
+    -- Kopfzeilen, die man klickt (Ruf, Fertigkeiten): heller unter der
+    -- Maus - der Grund des Spiels, der das zeigte, ist weg.
+    d.hover = f:CreateTexture(nil, "HIGHLIGHT")
+    local h = WeintCodex.GameColors.hoverFill
+    d.hover:SetColorTexture(h[1], h[2], h[3], h[4] * 0.5)
+    own[d.hover] = true
+    Place(d, beam)
     headerDone[f] = d
     return d
 end
@@ -833,7 +886,7 @@ end
 -- Dazu die goldenen Pfeile und Bahnen der schmalen Bildlaufleisten
 -- (!minimal-scrollbar-*, gemessen am Questlog) - Gilde & Communitys hat drei.
 local DESAT_ATLAS = { "^[Rr]ed[Bb]utton%-", "^common%-dropdown%-a%-button", "^QuestCollapse%-",
-                      "^!?minimal%-scrollbar" }
+                      "^!?minimal%-scrollbar", "^common%-button%-list%-[mp]" }
 local desat = setmetatable({}, { __mode = "k" })
 function W.Desaturates(atlas)
     if type(atlas) ~= "string" then return false end

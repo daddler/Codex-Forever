@@ -4697,6 +4697,25 @@ do
             "Kopfzeilen falsch erkannt")
         local report = table.concat(W.HeaderReport(), "\n")
         assert(report:find("Kategorien: ", 1, true) and report:find("Allgemein", 1, true), "Bericht ohne Kategorien: " .. report)
+        -- 6.6.2.9: Ruf und Fertigkeiten (gemessen): Zeile der Liste mit
+        -- zweimal "common-button-list-collapseExpand" und dem Minus-Zeichen.
+        local list, row = stub.NewObject("Frame"), stub.NewObject("Button")
+        local small, wide = stub.NewObject("Texture"), stub.NewObject("Texture")
+        small.GetAtlas = function() return "common-button-list-collapseExpand" end
+        wide.GetAtlas = function() return "common-button-list-collapseExpand" end
+        small._width, wide._width = 20, 300
+        local minus = stub.NewObject("Texture")
+        minus.GetAtlas = function() return "common-button-list-minus" end
+        local name = stub.NewObject("FontString")
+        name._text = "Allianz"
+        row.GetRegions = function() return small, wide, minus, name end
+        list.GetChildren = function() return row end
+        W.HideByAtlas(list)
+        local rd = W.Headers[row]
+        assert(small:GetAlpha() == 0 and wide:GetAlpha() == 0, "Grund der Ruf-Kopfzeile bleibt")
+        assert(minus:GetAlpha() == 1, "Zeichen zum Auf- und Zuklappen ausgeblendet")
+        assert(rd and rd.title == name and rd.icon == minus and rd.beam == wide and rd.hover,
+            "Ruf-Kopfzeile nicht am breitesten Grund gestaltet")
     end)
     Check(ok7, "Kategorien im Charakterfenster: Titel mittig zwischen auslaufenden Zierlinien"
         .. (ok7 and "" or (": " .. tostring(err7))))
