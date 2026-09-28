@@ -255,6 +255,37 @@ local function Skin(b)
         checked:SetColorTexture(a[1], a[2], a[3], 0.35)
         if icon then checked:ClearAllPoints() checked:SetAllPoints(icon) end
     end
+    -- Blinken bei automatischem Angriff und Schiessen ("Flash"): das
+    -- Spiel legt einen roten Rahmen darueber, gezeichnet fuer seinen
+    -- eingerueckten Knopf - auf dem flachen Knopf sass er schief und
+    -- grob (Beta-Test 6.6.1.4, Taste 1). Stattdessen blinkt eine flache
+    -- Flaeche im Akzent ueber dem Symbol: "laeuft", wie ein gewaehlter
+    -- Knopf. Rot bleibt der Reichweite. Blinken (Zeigen/Verstecken)
+    -- steuert weiter das Spiel; setzt es das Bild neu, zieht ein Haken
+    -- nach.
+    local flash = Region(b, "Flash")
+    if flash and flash.SetColorTexture then
+        local guard = false
+        local function FlatFlash()
+            if guard then return end
+            guard = true
+            local a = WeintCodex.Colors.accent
+            flash:SetColorTexture(a[1], a[2], a[3], 0.3)
+            if icon and not K.InCombat() then
+                flash:ClearAllPoints()
+                flash:SetAllPoints(icon)
+            end
+            guard = false
+        end
+        FlatFlash()
+        if _G.hooksecurefunc then
+            for _, m in ipairs({ "SetAtlas", "SetTexture" }) do
+                if type(flash[m]) == "function" then _G.hooksecurefunc(flash, m, FlatFlash) end
+            end
+        end
+        d.flash = flash
+    end
+
     d.cooldown = Region(b, "cooldown") or Region(b, "Cooldown")
     -- Die Abklingspirale deckt das ganze Symbol, nicht den alten Einsatz.
     if d.cooldown and icon and not K.InCombat() and d.cooldown.ClearAllPoints then

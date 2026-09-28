@@ -716,6 +716,10 @@ Seit 6.2.0.0:
   siehe `docs/design/ui-2.0.md`, Phase 3.
 * **Aktionsleisten**: leere Plätze aus (beim Ziehen sichtbar), flache
   Zustände, Schatten am Symbol, Abklingzahl in eigener Schrift.
+  6.6.1.4: das Blinken bei automatischem Angriff/Schießen (`Flash`, ein
+  roter Rahmen für den eingerückten Knopf des Spiels, saß schief) ist
+  eine flache Fläche im Akzent über dem Symbol (0,3); ein Haken auf
+  `SetAtlas`/`SetTexture` hält es so. Rot bleibt der Reichweite.
 
 **6.3.0.1–6.3.0.3 (Beta-Test):** Plaketten-Auren an ihrem Platz statt
 umgehängt (kein `GetPoint` auf eingeschränkte Rahmen); Aktionsleisten mit

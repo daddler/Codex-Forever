@@ -3326,8 +3326,25 @@ do
         b.HotKey = b:CreateFontString()
         b.Count = b:CreateFontString()
         b.Name = b:CreateFontString()
+        -- 6.6.1.4: das rote Blinken bei automatischem Angriff wird flach.
+        b.Flash = b:CreateTexture()
+        local flashColor
+        b.Flash.SetColorTexture = function(_, r, g, bl, a) flashColor = { r, g, bl, a } end
+        b.Flash.SetAtlas = function() end
+        local oldHook = _G.hooksecurefunc
+        _G.hooksecurefunc = function(obj, name, fn)
+            if type(obj) ~= "table" then return oldHook(obj, name, fn) end
+            local orig = obj[name]
+            obj[name] = function(...) local r = orig(...) fn(...) return r end
+        end
         WeintCodex.UIActionBars.SkinAll()
+        _G.hooksecurefunc = oldHook
         assert(WeintCodex.UIActionBars.skinned[b], "Knopf nicht umgestaltet")
+        local acc = WeintCodex.Colors.accent
+        assert(flashColor and flashColor[1] == acc[1] and flashColor[4] < 0.5, "Blinken bleibt der rote Rahmen des Spiels")
+        flashColor = nil
+        b.Flash:SetAtlas("UI-HUD-ActionBar-IconFrame-Flash")
+        assert(flashColor, "neu gesetztes Blinken nicht wieder flach")
         K.Set("actionbars", "hotkeys", false)
         -- Mikromenue und Taschenleiste: fehlt eines, bleibt das andere.
         CreateFrame("Frame", "BagsBar", UIParent)
