@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.2.5] – 2026-09-28
+
+**Weicher Rand ums Charaktermodell, dritter Anlauf.** Das Hintergrundbild ist an seinen Rändern selbst fast schwarz, ein dunkler Übergang darüber änderte nichts. Jetzt läuft das Bild selbst an allen vier Seiten aus, und darunter erscheint der Grund des Fensters samt Schein. Deine Figur bleibt scharf.
+
 ## [6.6.2.4] – 2026-09-28
 
 **Weicher Rand ums Charaktermodell, jetzt sichtbar.** Der Übergang saß an der richtigen Stelle, war im Spiel aber nicht zu sehen. Er liegt jetzt auf der obersten Ebene über dem Hintergrundbild, sodass das Bild an allen vier Seiten in den Rahmen ausläuft.

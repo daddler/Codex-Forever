@@ -442,6 +442,26 @@ def render_glow(size, feather):
     return pixels
 
 
+# Weiche Maske ums Charaktermodell (6.6.2.5): innen voll, zu allen vier
+# Raendern hin weich auf null. Das Spiel legt sie per AddMaskTexture auf
+# die Hintergrundbilder des Modells - die Bilder laufen dann in den
+# Grund des Fensters aus, statt mit harter Kante zu enden. Grau in allen
+# Kanaelen UND im Alpha, damit es egal ist, welchen Kanal der Client
+# als Maske liest. Gestreckt auf das ganze Modellfeld (~400 x 460):
+# 22 von 128 Pixeln sind dort rund 70 px Auslauf.
+def render_softmask(size, feather):
+    def ramp(i):
+        d = min(i + 0.5, size - (i + 0.5)) / feather   # 0 am Rand, 1 innen
+        a = max(0.0, min(1.0, d))
+        return a * a * (3 - 2 * a)
+    pixels = []
+    for y in range(size):
+        for x in range(size):
+            c = round(255 * ramp(x) * ramp(y))
+            pixels.append((c, c, c, c))
+    return pixels
+
+
 # Zielmarke: zwei gestaffelte Winkel, die auf den Balken zeigen (Spitze
 # rechts; die rechte Marke ist dieselbe Datei, gespiegelt). Aussen
 # halbdurchsichtig, innen voll, mit schwarzer Kontur - die Kontur bleibt
@@ -506,7 +526,8 @@ def main():
     for name, w, h, pixels in (("bar", BAR_W, BAR_H, render_bar()),
                                ("glow", 32, 32, render_glow(32, 8)),
                                ("glow_wide", 64, 64, render_glow(64, 24)),
-                               ("targetmark", MARK, MARK, render_mark())):
+                               ("targetmark", MARK, MARK, render_mark()),
+                               ("softmask", 128, 128, render_softmask(128, 22))):
         target = os.path.join(OUT, name + ".tga")
         write_tga(target, w, h, pixels)
         print("geschrieben:", os.path.relpath(target, ROOT))

@@ -978,13 +978,18 @@ W.FitStats = function(f) FitStats(f, 0) end
 -- Kanten des BILDES (die Vereinigung aller RaceBG-Teile), gemessen bei
 -- jedem Durchlauf, solange das Fenster offen ist.
 -- 6.6.2.4: sass der Rand richtig (Ausgabe "am Bild 0:0:397:464" = das
--- ganze Modellfeld) und blieb trotzdem unsichtbar (Beta-Test: "sieht immer
--- noch gleich aus"). Er lag auf BORDER; die Bilder des Hintergrunds liegen
--- auf eigenen Ebenen darueber. Jetzt ganz oben am Modellfeld (OVERLAY 7) -
--- das Modell selbst zeichnet der Client ueber alle Flaechen seines Rahmens,
--- es wird also nicht mit ausgeblendet. /wcui fenster nennt die Ebenen.
-W.SOFT_EDGE = 60
-W.SOFT_LAYER, W.SOFT_SUBLEVEL = "OVERLAY", 7
+-- ganze Modellfeld) und blieb trotzdem unsichtbar; auch auf OVERLAY/7,
+-- sichtbar, Deckkraft 1 (gemessen). Grund, aus den Pixeln der Screenshots:
+-- das Bild ist an seinen Raendern selbst fast schwarz, ein Verlauf nach
+-- Fast-Schwarz aendert dort nichts. Hart wirkt die Kante gegen das, was
+-- daneben HELLER ist - den Schein in der Klassenfarbe oben im Fenster
+-- und die Werte rechts.
+-- 6.6.2.5: statt etwas darueberzulegen, laufen die Bilder selbst aus -
+-- eine eigene Maske (media/ui/softmask, innen voll, zu den Raendern weich
+-- auf null) auf jedem Bild des Modellfelds. Darunter liegt der Grund des
+-- Fensters samt Schein; das Bild geht in ihn ueber. Das 3D-Modell ist
+-- keine Textur und bleibt scharf.
+W.SOFT_MASK = K.MEDIA .. "softmask"
 
 local soft = setmetatable({}, { __mode = "k" })
 W.soft = soft
@@ -1004,30 +1009,21 @@ local function FindRaceBG(f, depth, out)
     for _, ch in ipairs(cok and kids or {}) do FindRaceBG(ch, depth + 1, out) end
 end
 
-local function Edge(host, box, side, c, size)
-    local t = host:CreateTexture(nil, W.SOFT_LAYER, nil, W.SOFT_SUBLEVEL)
-    own[t] = true
-    if side == "LEFT" or side == "RIGHT" then
-        t:SetPoint("TOP" .. side, box, "TOP" .. side, 0, 0)
-        t:SetPoint("BOTTOM" .. side, box, "BOTTOM" .. side, 0, 0)
-        t:SetWidth(size)
-    else
-        t:SetPoint(side .. "LEFT", box, side .. "LEFT", 0, 0)
-        t:SetPoint(side .. "RIGHT", box, side .. "RIGHT", 0, 0)
-        t:SetHeight(size)
+-- Die Maske auf jedes Bild am Modellfeld, das sie noch nicht traegt. Das
+-- Spiel tauscht die Bilder je Volk per SetTexture; die Maske bleibt dabei
+-- haengen, neue Flaechen bekommen sie beim naechsten Durchlauf.
+local function MaskAll(e, host)
+    if not e.mask then return end
+    local rok, regions = pcall(function() return { host:GetRegions() } end)
+    for _, r in ipairs(rok and regions or {}) do
+        if not own[r] and not e.masked[r] then
+            local tok, isTex = pcall(function() return r:GetObjectType() == "Texture" end)
+            if tok and isTex and pcall(r.AddMaskTexture, r, e.mask) then
+                e.masked[r] = true
+                e.count = e.count + 1
+            end
+        end
     end
-    t:SetColorTexture(1, 1, 1, 1)
-    if t.SetGradient and _G.CreateColor then
-        local solid, clear = _G.CreateColor(c[1], c[2], c[3], 1), _G.CreateColor(c[1], c[2], c[3], 0)
-        -- HORIZONTAL: erste Farbe links; VERTICAL: erste Farbe unten.
-        if side == "LEFT" then t:SetGradient("HORIZONTAL", solid, clear)
-        elseif side == "RIGHT" then t:SetGradient("HORIZONTAL", clear, solid)
-        elseif side == "TOP" then t:SetGradient("VERTICAL", clear, solid)
-        else t:SetGradient("VERTICAL", solid, clear) end
-    else
-        t:SetColorTexture(c[1], c[2], c[3], 0.5)
-    end
-    return t
 end
 
 -- Die Kanten des Bildes: kleinster linker, groesster rechter Rand usw.
@@ -1076,7 +1072,10 @@ local softRoot = setmetatable({}, { __mode = "k" })
 function W.SoftenModel(f)
     local cached = softRoot[f]
     if cached then
-        for _, host in ipairs(cached) do PlaceBox(soft[host], host) end
+        for _, host in ipairs(cached) do
+            PlaceBox(soft[host], host)
+            MaskAll(soft[host], host)
+        end
         return cached
     end
     local found = {}
@@ -1090,17 +1089,22 @@ function W.SoftenModel(f)
             table.insert(hosts[p], r)
         end
     end
-    local c = WeintCodex.GameColors.kachelFill
     for _, host in ipairs(order) do
         local e = soft[host]
         if not e then
-            e = { parts = hosts[host], box = CreateFrame("Frame", nil, host) }
-            for _, side in ipairs({ "LEFT", "RIGHT", "TOP", "BOTTOM" }) do
-                e[side] = Edge(host, e.box, side, c, W.SOFT_EDGE)
+            e = { parts = hosts[host], box = CreateFrame("Frame", nil, host),
+                  masked = setmetatable({}, { __mode = "k" }), count = 0 }
+            local mok, mask = pcall(function() return host:CreateMaskTexture() end)
+            if mok and type(mask) == "table" then
+                mask:SetTexture(W.SOFT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+                mask:SetAllPoints(e.box)
+                own[mask] = true
+                e.mask = mask
             end
             soft[host] = e
         end
         PlaceBox(e, host)
+        MaskAll(e, host)
     end
     if #order > 0 then softRoot[f] = order end
     return order
@@ -1124,20 +1128,19 @@ local function PictureOf(r)
     return "Farbe"
 end
 
--- Fuer /wcui fenster: wo der weiche Rand sitzt, auf welcher Ebene, ob
--- er zu sehen ist - und auf welchen Ebenen die Bilder darunter liegen.
+-- Fuer /wcui fenster: wo der weiche Rand sitzt, an wie vielen Bildern
+-- die Maske haengt - und auf welchen Ebenen die Bilder liegen.
 function W.SoftReport(f)
     local out = {}
     for _, host in ipairs(softRoot[f] or {}) do
         local e = soft[host]
         out[#out + 1] = string.format("   Weicher Rand: %d Teile, %s", #e.parts,
             e.key == "host" and "am Träger (Lage des Bildes unbekannt)" or ("am Bild " .. tostring(e.key)))
-        local top = e.TOP
-        local vok, vis = pcall(function() return top:IsVisible() end)
-        local aok, alpha = pcall(function() return top:GetAlpha() end)
-        vis, alpha = vok and K.Bool(vis, false), aok and K.Plain(alpha) or nil
-        out[#out + 1] = string.format("   Rand-Ebene %s, %s, Deckkraft %s", LayerOf(top),
-            vis and "sichtbar" or "NICHT sichtbar", type(alpha) == "number" and string.format("%.2f", alpha) or "?")
+        if e.mask then
+            out[#out + 1] = string.format("   Maske an %d %s", e.count, e.count == 1 and "Bild" or "Bildern")
+        else
+            out[#out + 1] = "   Maske fehlt: der Client legt keine an (CreateMaskTexture)"
+        end
         local rok, regions = pcall(function() return { host:GetRegions() } end)
         local parts = {}
         for _, r in ipairs(rok and regions or {}) do

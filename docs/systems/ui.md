@@ -73,7 +73,8 @@ Grafik.** EllesmereUI steht unter einer eigenen Lizenz mit „all rights
 reserved“. Seine Texturen, seine Schrift (Expressway, ein kommerzieller
 Font) und sein Code gehören nicht in dieses Repository. Eigene Grafiken
 – Questpfeil, Balkenglanz (`bar`), weicher Schein (`glow`,
-`glow_wide`), Zielmarke (`targetmark`), Symbole – entstehen aus
+`glow_wide`), Zielmarke (`targetmark`), Maske ums Charaktermodell
+(`softmask`), Symbole – entstehen aus
 `.github/scripts/make_ui_media.py`, alle weiß bzw. grau und im Spiel
 eingefärbt. Die schmale Schrift der Spielwelt ist **IBM Plex Sans
 Condensed** (OFL, dieselbe Familie wie der Rest; `WeintCodex.Fonts.hud*`)
@@ -1088,6 +1089,23 @@ nennt zusätzlich die Ebene des Randes, ob er sichtbar ist und seine
 Deckkraft („Rand-Ebene …“) sowie Bild und Ebene jeder Fläche am
 Modellfeld („Darunter: …“) – bleibt der Rand unsichtbar, steht dort,
 warum.
+
+**Vierte Fassung (6.6.2.5) – Maske statt Verlauf:** Auch auf
+`OVERLAY/7`, sichtbar, Deckkraft 1 (gemessen) änderte sich nichts. Die
+Pixel der Screenshots erklären es: das Bild ist an seinen Rändern selbst
+fast schwarz (Himmel), ein Verlauf nach `kachelFill` (fast schwarz)
+ändert dort nichts. Hart wirkt die Kante gegen das, was daneben **heller**
+ist – den Schein in der Klassenfarbe (`W.AddGlow`, 260 px über die ganze
+Fensterbreite, also auch unter dem Modell) und die Werte rechts. Jetzt
+laufen die Bilder selbst aus: eine eigene Maske (`media/ui/softmask.tga`,
+128 × 128, innen voll, 22 px weich auf null, erzeugt von
+`make_ui_media.py`) hängt per `AddMaskTexture` an jedem Bild des
+Modellfelds (`W.SOFT_MASK`, `MaskAll`), gestreckt auf die Kanten des
+Bildes (`W.Bounds`) – rund 70 px Auslauf. Darunter erscheint der Grund
+des Fensters samt Schein. Bilder, die das Spiel später anlegt, bekommen
+sie beim nächsten Durchlauf, jedes genau einmal. Das 3D-Modell ist keine
+Textur und bleibt scharf. `/wcui fenster` nennt „Maske an N Bildern“
+oder, wenn der Client keine Maske anlegt, genau das.
 
 **Rahmen in Klassenfarbe** (6.6.2.3, Beta-Test: „statt der lila Rahmen
 überall lieber Rahmen in der Farbe der Klasse“): `UIKit.Highlight()`

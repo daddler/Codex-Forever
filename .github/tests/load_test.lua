@@ -4395,15 +4395,21 @@ do
         scene.GetRegions = function() return race end
         cf.GetChildren = function() return scene end
         local hosts = W.SoftenModel(cf)
-        assert(#hosts == 1 and hosts[1] == scene and W.soft[scene] and W.soft[scene].LEFT and W.soft[scene].BOTTOM,
-            "kein weicher Rand um das Modell")
+        local e = W.soft[scene]
+        assert(#hosts == 1 and hosts[1] == scene and e and e.mask, "kein weicher Rand um das Modell")
         assert(race:GetAlpha() == 1, "Hintergrund des Modells ausgeblendet")
+        -- 6.6.2.5: das Bild selbst laeuft aus (Maske), statt dass ein
+        -- Verlauf nach Fast-Schwarz auf fast schwarzem Bild liegt.
+        assert(race._masks and race._masks[1] == e.mask and e.count == 1, "Maske nicht am Hintergrundbild")
+        -- Ein Bild, das das Spiel spaeter anlegt, bekommt sie beim naechsten Durchlauf - einmal.
+        local late = Tex("UI-Character-Info-Human-RaceBG", 230, 330)
+        scene.GetRegions = function() return race, late, e.mask end
         assert(W.SoftenModel(cf) == hosts, "Rand zweimal gesucht")
-        -- 6.6.2.4: auf BORDER blieb der Rand unter den Hintergrundbildern.
-        assert(W.soft[scene].TOP:GetDrawLayer() == "OVERLAY", "weicher Rand liegt unter dem Bild")
+        W.SoftenModel(cf)
+        assert(#race._masks == 1 and late._masks and #late._masks == 1 and e.count == 2, "Maske doppelt oder fehlt")
         local report = table.concat(W.SoftReport(cf), "\n")
-        assert(report:find("Rand-Ebene OVERLAY/7", 1, true) and report:find("Darunter: UI-Character-Info-Human-RaceBG", 1, true),
-            "Bericht ohne Ebenen: " .. report)
+        assert(report:find("Maske an 2 Bildern", 1, true) and report:find("Darunter: UI-Character-Info-Human-RaceBG", 1, true),
+            "Bericht ohne Maske: " .. report)
     end)
     -- Berufe und Gilde & Communitys (6.6.2.1).
     local ok2, err2 = pcall(function()

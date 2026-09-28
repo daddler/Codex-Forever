@@ -176,6 +176,18 @@ end
 
 function Methods:GetDrawLayer() return self._layer, self._sublevel end
 
+function Methods:CreateMaskTexture()
+    RequireFrame(self, "CreateMaskTexture")
+    local mask = NewObject("MaskTexture")
+    mask._parent = self
+    return mask
+end
+
+function Methods:AddMaskTexture(mask)
+    self._masks = self._masks or {}
+    table.insert(self._masks, mask)
+end
+
 function Methods:CreateFontString(_, layer, inherits)
     RequireFrame(self, "CreateFontString")
     local fs = NewObject("FontString")

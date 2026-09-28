@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.2.5",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFWeicher Rand ums Charaktermodell, dritter Anlauf.|r Das Hintergrundbild ist an seinen Rändern selbst fast schwarz, ein dunkler Übergang darüber änderte nichts. Jetzt läuft das Bild selbst an allen vier Seiten aus, und darunter erscheint der Grund des Fensters samt Schein. Deine Figur bleibt scharf.",
+        },
+    },
+    {
         version = "6.6.2.4",
         date    = "28.09.2026",
         notes   = {
