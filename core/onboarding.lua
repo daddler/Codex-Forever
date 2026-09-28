@@ -100,8 +100,9 @@ local TOUR_STEPS = {
       title = "Willkommen bei WeintCodex",
       body =
         "WeintCodex ist das Addon der Gilde für " .. E("World of Warcraft: Forever")
-        .. ": Schlachtzüge, Raidplanung, deine Charaktere, der Gruppencheck "
-        .. "vor dem Pull und die Gildenmaterialien — an einem Ort.\n\n"
+        .. ": erst fürs Leveln — dein Lehrer, deine Ausrüstung, die Dungeons "
+        .. "für deine Stufe —, später für Schlachtzüge, Raidplanung und die "
+        .. "Gildenmaterialien. Alles an einem Ort.\n\n"
         .. "Diese Einführung dauert ein paar Minuten. Du kannst sie jederzeit "
         .. "abbrechen und später mit " .. A("/wc tour") .. " erneut aufrufen — "
         .. "es geht dabei nichts verloren.\n\n"
@@ -112,10 +113,10 @@ local TOUR_STEPS = {
     { chapter = "Erste Schritte", icon = ICON .. "INV_Misc_Map_01",
       title = "So ist das Fenster aufgebaut",
       body =
-        "Links steht die Navigationsspalte, in vier Gruppen: " .. A("Raid")
-        .. " (Übersicht, Schlachtzüge, Dungeons, Anmeldung, Kalender, "
-        .. "Gruppencheck), "
-        .. A("Charakter") .. ", " .. A("Gilde") .. " (Materialien, Import) "
+        "Links steht die Navigationsspalte, in vier Gruppen: " .. A("Leveln")
+        .. " (Übersicht, Charakter, Lehrer, Dungeons, Gruppencheck), "
+        .. A("Schlachtzug") .. " (Schlachtzüge, Anmeldung, Kalender), "
+        .. A("Gilde") .. " (Materialien, Import) "
         .. "und " .. A("System") .. " (Companion, Einstellungen).\n\n"
         .. "In der Mitte steht die Seite. Rechts erscheint ein schmales Feld, "
         .. "sobald es zur Seite etwas zu sagen gibt — die Begründung zu dem, "
@@ -168,14 +169,16 @@ local TOUR_STEPS = {
     --------------------------------------------------
 
     { chapter = "Der Abend", icon = ICON .. "INV_Misc_Note_01",
-      title = "Die Übersicht beantwortet den Abend",
+      title = "Die Übersicht: was jetzt ansteht",
       body =
         "Die Startseite ist kein zweites Menü. Sie beantwortet eine Frage: "
         .. E("was ist jetzt zu tun?") .. "\n\n"
-        .. "Ganz oben steht der nächste Raid mit der Zahl der Anmeldungen. "
-        .. "Darunter drei Spalten: was an deiner Ausrüstung offen ist, welche "
-        .. "Schlachtzüge es gibt und ob du für einen davon schon eine "
-        .. "gespeicherte ID trägst, und wie es um die Gildenbank steht.\n\n"
+        .. "Ganz oben stehen deine Stufe, deine Erfahrung und die Quests, "
+        .. "die zur Abgabe bereit sind — und wie viele Zauber beim "
+        .. A("Lehrer") .. " auf dich warten. Darunter drei Spalten: was du "
+        .. "beim Lehrer noch nicht gelernt hast und ob dein Gold dafür "
+        .. "reicht, was an deiner Ausrüstung offen ist, und welche Dungeons "
+        .. "zu deiner Stufe passen.\n\n"
         .. "Ganz unten läuft eine Zeile mit dem Zustand der Brücke zu "
         .. A("WeintCompanion") .. ". Steht dort \"keine Lieferung\", ist das "
         .. "der Grund, wenn eine Seite leer bleibt." },

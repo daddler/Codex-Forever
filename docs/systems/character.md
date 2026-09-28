@@ -107,7 +107,7 @@ sich wie ein Fehler.
 
 ## Lehrer *(seit 6.6.0.0)*
 
-Eigener Eintrag „Lehrer“ in der Navigation (Gruppe Charakter,
+Eigener Eintrag „Lehrer“ in der Navigation (Gruppe Leveln,
 `modules/trainer.lua`, `WeintCodex.Trainer`), nach dem Vorbild des Addons
 *What's Training?*: welche Zauber der Klassenlehrer jetzt lehrt, was fehlt,
 was in den nächsten Stufen kommt, was es kostet – und wo man welche
@@ -132,7 +132,21 @@ Waffenfertigkeit lernt.
 **Fächer** (`TR.SECTIONS`): Jetzt lernbar · Vorstufe fehlt · Nächste
 Stufen (bis zwei über der eigenen) · Später · Braucht ein Talent ·
 Tierausbildung · Gelernt (standardmäßig eingeklappt, Knopf „Gelernte
-zeigen“). Kosten über dem eigenen Gold stehen in Jetzt lernbar rot.
+zeigen“).
+
+**Die Rechnung** *(seit 6.6.2.1, Beta-Test: „Kosten sind aufgelistet,
+aber eine Rechnung, ob man überhaupt so viel Gold besitzt“)*. Oben in der
+Zauberkarte drei Zellen: *Jetzt lernbar* (Anzahl · Kosten), *Dein Gold*,
+*Danach* bzw. *Es fehlen*; darunter eine Zeile: „Reicht für n von m“ (die
+Liste der Reihe nach gekauft – sie steht nach Stufe, wie der Lehrer sie
+anbietet), was die nächsten zwei Stufen zusammen kosten und ob das Gold
+dafür reicht, und was Waffenfertigkeiten extra kosten. In *Jetzt lernbar*
+steht ein Preis rot, sobald die **laufende Summe** das Gold übersteigt –
+nicht erst, wenn ein einzelner Zauber zu teuer ist. Der Detailbereich
+wiederholt die Rechnung mit Waffen. `TR.Budget(state, cat, weapons)`
+rechnet, `TR.Verdict(rest)` formuliert („bleiben …“/„fehlen …“), die
+Startseite nutzt beide. Meldet der Client kein Gold (`money = nil`), gibt
+es **kein Urteil** – „unbekannt“ ist nicht 0 (`unknown ≠ 0`).
 
 **Tierausbildung ohne Zustand.** Ob der Begleiter eine Fähigkeit kennt,
 sagt nur der Tierausbilder; die Seite behauptet weder „gelernt“ noch
@@ -150,4 +164,8 @@ Zauberbuch des Spiels (Taint-Risiko an geschützten Reitern).
 
 **Die Navigationsspalte ist damit voll**: 644 von 684 px, genau die
 40 px Luft, die `load_test.lua` verlangt. Ein weiterer Eintrag braucht
-vorher eine Entscheidung, was zusammengelegt wird.
+vorher eine Entscheidung, was zusammengelegt wird. Seit 6.6.2.1 steht
+der Lehrer in der Gruppe **Leveln** (Übersicht, Charakter, Lehrer,
+Dungeons, Gruppencheck); Schlachtzüge, Anmeldung und Kalender stehen in
+**Schlachtzug** darunter – gleich viele Gruppen, gleich viele Einträge,
+kein Pixel mehr.

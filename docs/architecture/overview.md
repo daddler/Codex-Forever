@@ -84,6 +84,28 @@ damit als ungültige UTF-8-Folge wieder heraus.
 * **`core/navigation.lua`** füllt die Navigationsspalte, verteilt die
   Klicks auf die Module (`SwitchTo`), zeichnet die Startseite
   (`ShowHome`) und stellt den Detailbereich bereit (`SetInspector`).
+* **Ordnung der Spalte auf Forever-Niveau** *(seit 6.6.2.1)*: vier
+  Gruppen in der Reihenfolge dessen, was ansteht – **Leveln**
+  (Übersicht, Charakter, Lehrer, Dungeons, Gruppencheck),
+  **Schlachtzug** (Schlachtzüge, Anmeldung, Kalender), **Gilde**
+  (Materialien, Import), **System** (Companion, Einstellungen). Vorher
+  stand die Gruppe „Raid“ mit Anmeldung und Kalender oben – eine
+  Ordnung aus Mists of Pandaria. Nichts ist entfernt; Anmeldung und
+  Kalender sind Lieferungen des Bots und kommen wieder, wenn geraidet
+  wird.
+* **Die Startseite** *(seit 6.6.2.1)* beantwortet das Leveln, nicht den
+  Raidabend: oben Stufe, Klasse, Erfahrung (`UIXPBar.Experience`),
+  Erholung und abgabebereite Quests (`UIXPBar.QuestXP`) mit der Zahl der
+  lernbaren Zauber und dem Knopf zum Lehrer; darunter drei Spalten –
+  **Beim Lehrer** (was noch nicht gelernt ist, mit der Rechnung gegen das
+  eigene Gold, `Navigation.HomeTrainer` über `Trainer.Budget`), **Deine
+  Ausrüstung**, **Dungeons** für die eigene Stufe
+  (`Navigation.HomeDungeons`, `DungeonData.FitsLevel`; passt keiner, der
+  nächste darüber). Nächster Raid, Anmeldungen, Schlachtzüge und
+  Gildenbank stehen nicht mehr auf der Startseite. Neu gezeichnet wird
+  nur bei offener Seite, nach Stufenaufstieg oder wenn der Client einen
+  Zaubernamen nachliefert – nicht bei jedem EP-Tick, weil jedes Zeichnen
+  die Seite neu aufbaut.
 * Die Module zeichnen ausschliesslich in `WeintCodex.ContentPanel` und
   rechnen gegen dessen Grösse. Ob rechts ein Detailbereich steht oder
   links eine Unternavigation, verändert nur die Grösse dieser Fläche —

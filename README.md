@@ -53,13 +53,14 @@ weiter und behält ihren eigenen Update-Kanal.
 
 | Bereich | Was es beantwortet |
 |---|---|
-| **Übersicht** | Was ist heute Abend zu tun? Nächster Raid, offene Ausrüstung, Schlachtzüge, Gildenbank. |
-| **Schlachtzüge** | Welche Instanzen es gibt, welche Bosse darin stehen, ob du eine gespeicherte ID trägst — und je Boss, was für Tank, Heiler und Schaden zu beachten ist. |
-| **Dungeons** | Alle neun, mit Gebiet und Stufenbereich. Passt meine Stufe? Wie ist die Gruppe aufzustellen? |
-| **Anmeldung** | Wer hat sich für Mittwoch und Donnerstag eingetragen — mit Rolle, Klasse und Notiz. |
-| **Kalender** | Der Termin, und für die Raidleitung die Ingame-Einladung. |
-| **Gruppencheck** | Trägt jeder etwas auf jedem Platz? Ist etwas zerbrochen? Wie weit liegen die Stufen auseinander? |
+| **Übersicht** | Was steht beim Leveln an? Stufe und Erfahrung, was beim Lehrer noch nicht gelernt ist (und ob das Gold reicht), offene Ausrüstung, Dungeons für deine Stufe. |
 | **Charakter** | Was angelegt ist — und welche deiner Charaktere der Bot kennen soll. |
+| **Lehrer** | Was dein Klassenlehrer jetzt lehrt, was bald kommt, was es kostet — mit Rechnung gegen dein Gold — und wo du Waffen lernst. |
+| **Dungeons** | Alle Instanzen, mit Gebiet und Stufenbereich. Passt meine Stufe? Wie ist die Gruppe aufzustellen? |
+| **Gruppencheck** | Trägt jeder etwas auf jedem Platz? Ist etwas zerbrochen? Wie weit liegen die Stufen auseinander? |
+| **Schlachtzüge** | Welche Instanzen es gibt, welche Bosse darin stehen, ob du eine gespeicherte ID trägst — und je Boss, was für Tank, Heiler und Schaden zu beachten ist. |
+| **Anmeldung** | Wer hat sich für Mittwoch und Donnerstag eingetragen — mit Rolle, Klasse und Notiz. Wichtig, sobald geraidet wird. |
+| **Kalender** | Der Termin, und für die Raidleitung die Ingame-Einladung. |
 | **Materialien** | Was in der Gildenbank liegt. |
 | **Import** | Der `WCIMPORT:`-Weg aus Discord. |
 | **Companion** | Zustand der Brücke, in Klartext. |

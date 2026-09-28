@@ -199,6 +199,50 @@ function TR.Money(copper)
 end
 
 --------------------------------------------------
+-- Die Rechnung (6.6.2.1, Beta-Test: "Kosten sind aufgelistet, aber eine
+-- Rechnung, ob man ueberhaupt so viel Gold besitzt")
+--------------------------------------------------
+-- Jetzt lernbar, dein Gold, was danach bleibt oder fehlt - und wie weit
+-- das Gold reicht, wenn man die Liste von oben nach unten kauft (sie
+-- steht nach Stufe; der Lehrer bietet sie in derselben Reihenfolge an).
+-- Dazu, was die naechsten Stufen zusammen kosten. Meldet der Client kein
+-- Gold, gibt es kein Urteil: `money = nil` ist "weiss nicht", nicht 0.
+
+function TR.Budget(state, cat, weapons)
+    state = state or PlayerState()
+    cat = cat or TR.Categorize(state)
+    local b = { money = state.money, now = cat.total.now or 0, soon = cat.total.soon or 0,
+                count = #cat.sections.now, weapons = 0, weaponCount = 0 }
+    for _, wp in ipairs(weapons or {}) do
+        if wp.key == "now" then
+            b.weapons = b.weapons + (wp.cost or 0)
+            b.weaponCount = b.weaponCount + 1
+        end
+    end
+    b.upcoming = b.now + b.soon
+    if type(b.money) == "number" then
+        b.rest = b.money - b.now                 -- < 0: so viel fehlt
+        b.restUpcoming = b.money - b.upcoming
+        -- Wie viele der jetzt lernbaren reicht das Gold, der Reihe nach?
+        local sum, n = 0, 0
+        for _, sp in ipairs(cat.sections.now) do
+            sum = sum + sp.cost
+            if sum > b.money then break end
+            n = n + 1
+        end
+        b.affordable = n
+    end
+    return b
+end
+
+-- "fehlen 40 S" / "bleiben 1 G 2 S" - fuer Zeilen und Detailbereich.
+function TR.Verdict(rest)
+    if type(rest) ~= "number" then return "—", "textFaint" end
+    if rest < 0 then return "fehlen " .. TR.Money(-rest), "dangerBright" end
+    return "bleiben " .. TR.Money(rest), "successBright"
+end
+
+--------------------------------------------------
 -- Seite
 --------------------------------------------------
 -- Zwei Karten: links die Zauber, nach Faechern, rechts die Waffen-
@@ -217,6 +261,89 @@ end
 
 local function Keep(r) rows[#rows + 1] = r return r end
 
+-- Die Rechnung oben in der Zauberkarte: drei Zellen (jetzt lernbar, dein
+-- Gold, bleibt/fehlt), darunter eine Zeile fuer die naechsten Stufen.
+local BILL_H = 58
+TR.BILL_H = BILL_H
+
+function TR.BuildBill(parent)
+    local bill = CreateFrame("Frame", nil, parent)
+    bill:SetHeight(BILL_H)
+    local bg = bill:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(bill)
+    bg:SetColorTexture(C.surface2[1], C.surface2[2], C.surface2[3], 0.7)
+    bill.cells = {}
+    for i = 1, 3 do
+        local cell = CreateFrame("Frame", nil, bill)
+        cell:SetHeight(36)
+        cell.cap = WeintCodex.Eyebrow(cell, "", { size = 9 })
+        cell.cap:SetPoint("TOPLEFT", cell, "TOPLEFT", 0, 0)
+        cell.val = WeintCodex.Label(cell, "", { size = 13, color = "textBright", font = WeintCodex.Fonts.monoBold })
+        cell.val:SetPoint("TOPLEFT", cell.cap, "BOTTOMLEFT", 0, -4)
+        bill.cells[i] = cell
+    end
+    bill.note = WeintCodex.Label(bill, "", { size = 11, color = "textDim" })
+    bill.note:SetPoint("BOTTOMLEFT", bill, "BOTTOMLEFT", 12, 6)
+    bill.note:SetPoint("BOTTOMRIGHT", bill, "BOTTOMRIGHT", -12, 6)
+    bill.note:SetWordWrap(false)
+    -- Drei gleich breite Zellen; die Breite steht erst nach dem Layout fest.
+    local function place()
+        local w = Plain(bill:GetWidth())
+        if type(w) ~= "number" or w <= 0 then return end
+        local cw = (w - 24) / 3
+        for i, cell in ipairs(bill.cells) do
+            cell:ClearAllPoints()
+            cell:SetPoint("TOPLEFT", bill, "TOPLEFT", 12 + (i - 1) * cw, -8)
+            cell:SetWidth(cw - 8)
+        end
+    end
+    bill:SetScript("OnSizeChanged", place)
+    bill.Place = place
+    return bill
+end
+
+-- Zahlen in die Rechnung. Liefert die Texte zurueck (fuer den Prueflauf).
+function TR.FillBill(bill, b, state)
+    local verdict, vColor = TR.Verdict(b.rest)
+    local cells = {
+        { "Jetzt lernbar", b.count .. " · " .. TR.Money(b.now), "textBright" },
+        { "Dein Gold", TR.Money(b.money), "textBright" },
+        { (type(b.rest) == "number" and b.rest < 0) and "Es fehlen" or "Danach",
+          type(b.rest) == "number" and TR.Money(math.abs(b.rest)) or "—",
+          vColor },
+    }
+    for i, c in ipairs(cells) do
+        local cell = bill.cells[i]
+        cell.cap:SetText(WeintCodex.Spaced and WeintCodex.Spaced(WeintCodex.Upper(c[1])) or c[1])
+        cell.val:SetText(c[2])
+        local col = C[c[3]] or C.textBright
+        cell.val:SetTextColor(col[1], col[2], col[3])
+    end
+    local note
+    if type(b.money) ~= "number" then
+        note = "Dein Gold meldet der Client gerade nicht – keine Rechnung."
+    elseif b.count == 0 and b.soon == 0 then
+        note = "Gerade gibt es nichts zu bezahlen."
+    else
+        local parts = {}
+        if b.count > 0 and b.affordable < b.count then
+            parts[#parts + 1] = string.format("Reicht für %d von %d", b.affordable, b.count)
+        end
+        if b.soon > 0 and state and state.level then
+            local v = TR.Verdict(b.restUpcoming)
+            parts[#parts + 1] = string.format("Bis Stufe %d zusammen %s – %s", state.level + SOON,
+                TR.Money(b.upcoming), v)
+        end
+        if b.weaponCount > 0 then
+            parts[#parts + 1] = "Waffen extra " .. TR.Money(b.weapons)
+        end
+        note = #parts > 0 and table.concat(parts, "  ·  ") or "Das Gold reicht für alles, was jetzt ansteht."
+    end
+    bill.note:SetText(note)
+    if bill.Place then bill.Place() end
+    return cells, note
+end
+
 local function BuildPage()
     if page then return page end
     local cp = WeintCodex.ContentPanel
@@ -225,7 +352,7 @@ local function BuildPage()
     local PAD_X, PAD_Y, GAP = WeintCodex.Metrics.PAD_X, WeintCodex.Metrics.PAD_Y, WeintCodex.Metrics.GAP
 
     f.Head = WeintCodex.PageHead(f, {
-        eyebrow = "Charakter",
+        eyebrow = "Leveln",
         title   = "Lehrer",
         sub     = "Was dir dein Klassenlehrer beibringt, was es kostet – und wo du Waffen lernst.",
         height  = 84,
@@ -244,7 +371,10 @@ local function BuildPage()
             TR.Show()
         end })
     f.KnownButton:SetPoint("TOPRIGHT", spellCard, "TOPRIGHT", -16, -12)
-    f.SpellScroll, f.SpellBody = WeintCodex.CreateScrollArea(spellCard, 20, -46, 420, 300, true)
+    f.Bill = TR.BuildBill(spellCard)
+    f.Bill:SetPoint("TOPLEFT", spellCard, "TOPLEFT", 20, -46)
+    f.Bill:SetPoint("TOPRIGHT", spellCard, "TOPRIGHT", -20, -46)
+    f.SpellScroll, f.SpellBody = WeintCodex.CreateScrollArea(spellCard, 20, -(46 + BILL_H + 10), 420, 300, true)
 
     local weaponCard = WeintCodex.CreateSurface(f, { tone = "plain", radius = 14, backdrop = "bgDark" })
     weaponCard:SetPoint("TOPLEFT",     spellCard, "TOPRIGHT", GAP, 0)
@@ -364,14 +494,23 @@ local function DrawSpells(body, w, cat, state)
                 y = y - h - 4
             end
             local lastLevel
+            local running = 0
             for _, sp in ipairs(list) do
                 if sec.byLevel and sp.level ~= lastLevel then
                     y = LevelHead(body, y, sp.level)
                     lastLevel = sp.level
                 end
-                local costColor
-                if sec.key == "now" and state.money and sp.cost > state.money then costColor = "dangerBright" end
-                y = SpellRow(body, y, w, sp, { dim = sec.key == "known", costColor = costColor })
+                -- Rot, sobald das Gold der Reihe nach nicht mehr reicht -
+                -- nicht erst, wenn ein einzelner Zauber zu teuer ist.
+                local costColor, note
+                if sec.key == "now" and state.money then
+                    running = running + sp.cost
+                    if running > state.money then
+                        costColor = "dangerBright"
+                        note = "Mit deinem Gold reicht es nicht mehr bis hierher (der Reihe nach gekauft)."
+                    end
+                end
+                y = SpellRow(body, y, w, sp, { dim = sec.key == "known", costColor = costColor, note = note })
             end
             y = y - 10
         end
@@ -447,21 +586,34 @@ local function DrawWeapons(body, w, list)
 end
 
 local function InspectorBlocks(state, cat, weapons)
-    local now = #cat.sections.now
-    local wnow = 0
-    for _, wp in ipairs(weapons) do if wp.key == "now" then wnow = wnow + 1 end end
-    local afford = state.money and cat.total.now > 0 and state.money >= cat.total.now
+    local b = TR.Budget(state, cat, weapons)
+    local verdict, vColor = TR.Verdict(b.rest)
+    local vUp, vUpColor = TR.Verdict(b.restUpcoming)
+    local withWeapons = type(b.money) == "number" and (b.money - b.now - b.weapons) or nil
+    local vW, vWColor = TR.Verdict(withWeapons)
+    local rows = {
+        { label = "Klasse", value = state.className or "—" },
+        { label = "Stufe", value = state.level and tostring(state.level) or "—" },
+    }
+    local bill = {
+        { label = "Dein Gold", value = TR.Money(b.money) },
+        { label = "Jetzt lernbar", value = b.count .. " · " .. TR.Money(b.now) },
+        { label = "Danach", value = verdict, valueColor = vColor },
+    }
+    if b.weaponCount > 0 then
+        bill[#bill + 1] = { label = "Waffen dazu", value = b.weaponCount .. " · " .. TR.Money(b.weapons) }
+        bill[#bill + 1] = { label = "Mit Waffen", value = vW, valueColor = vWColor }
+    end
+    if b.soon > 0 and state.level then
+        bill[#bill + 1] = { label = "Bis Stufe " .. (state.level + SOON), value = TR.Money(b.upcoming) }
+        bill[#bill + 1] = { label = "Danach", value = vUp, valueColor = vUpColor }
+    end
     return {
         { type = "header", text = "Beim Lehrer" },
-        { type = "rows", rows = {
-            { label = "Klasse", value = state.className or "—" },
-            { label = "Stufe", value = state.level and tostring(state.level) or "—" },
-            { label = "Gold", value = TR.Money(state.money) },
-            { label = "Jetzt lernbar", value = now .. " · " .. TR.Money(cat.total.now),
-              valueColor = now > 0 and (afford and "successBright" or "warningBright") or "textFaint" },
-            { label = "Nächste Stufen", value = tostring(#cat.sections.soon) },
-            { label = "Waffen lernbar", value = tostring(wnow) },
-        }},
+        { type = "rows", rows = rows },
+        { type = "divider" },
+        { type = "header", text = "Rechnung" },
+        { type = "rows", rows = bill },
         { type = "divider" },
         { type = "header", text = "Woher das stammt" },
         { type = "card", lines = {
@@ -479,7 +631,7 @@ function TR.Show()
     for _, child in pairs({ cp:GetChildren() }) do child:Hide() end
     local f = BuildPage()
     f:Show()
-    WeintCodex.SetBreadcrumb("Charakter", "Lehrer")
+    WeintCodex.SetBreadcrumb("Lehrer")
 
     local state = PlayerState()
     local cat = TR.Categorize(state)
@@ -488,6 +640,7 @@ function TR.Show()
         f.Head.Title:SetText(state.className and ("Lehrer · " .. state.className) or "Lehrer")
     end
     f.KnownButton:SetText(showKnown and "Gelernte ausblenden" or ("Gelernte zeigen (" .. #cat.sections.known .. ")"))
+    TR.lastBill = { TR.FillBill(f.Bill, TR.Budget(state, cat, weapons), state) }
 
     -- ERST der Detailbereich, DANN messen (6.6.0.1): der Detailbereich
     -- macht die Inhaltsflaeche schmaler. Umgekehrt stand in 6.6.0.0 alles,
@@ -502,7 +655,7 @@ function TR.Show()
     end
     local sw = (Plain(f.SpellCard:GetWidth()) or 460) - 40
     local ww = (Plain(f.WeaponCard:GetWidth()) or 340) - 40
-    local sh = (Plain(f.SpellCard:GetHeight()) or 360) - 62
+    local sh = (Plain(f.SpellCard:GetHeight()) or 360) - 62 - BILL_H - 10
     local wh = (Plain(f.WeaponCard:GetHeight()) or 360) - 62
     f.SpellScroll:SetSize(sw, math.max(60, sh))
     f.SpellBody:SetWidth(sw - 10)

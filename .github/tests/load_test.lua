@@ -2997,6 +2997,19 @@ do
         assert(In(cat, "known", 6673), "ersetzter Rang nicht als gelernt")
         assert(cat.total.now > 0 and TR.Money(cat.total.now) ~= "—", "Kosten fehlen")
         assert(TR.Money(12345) == "1 G 23 S 45 K" and TR.Money(nil) == "—", "Geldformat: " .. TR.Money(12345))
+        -- 6.6.2.1: die Rechnung. 150 Kupfer gegen die Kosten von "jetzt".
+        local b = TR.Budget(nil, cat, {})
+        assert(b.money == 150 and b.rest == 150 - b.now and b.upcoming == b.now + b.soon, "Rechnung falsch")
+        local sum, n = 0, 0
+        for _, sp in ipairs(cat.sections.now) do sum = sum + sp.cost if sum > 150 then break end n = n + 1 end
+        assert(b.affordable == n, "reicht fuer " .. tostring(b.affordable) .. " statt " .. n)
+        assert(TR.Verdict(-40) == "fehlen 40 K" and TR.Verdict(12345) == "bleiben 1 G 23 S 45 K"
+            and TR.Verdict(nil) == "—", "Urteil falsch formuliert")
+        -- Kein Gold vom Client: kein Urteil, keine 0.
+        _G.GetMoney = function() return nil end
+        local nb = TR.Budget(nil, cat, {})
+        assert(nb.money == nil and nb.rest == nil and nb.affordable == nil, "ohne Gold trotzdem gerechnet")
+        _G.GetMoney = function() return 150 end
         -- Waffen: gelernt / lernbar / ab Stufe 20, Meister der eigenen Fraktion.
         known[201] = true
         local ws = TR.WeaponState()
@@ -3016,6 +3029,21 @@ do
         assert(TR.Page() and TR.Page():IsShown(), "Lehrerseite nicht offen")
         assert((TR.drawnRows or 0) > 5, "zu wenige Zeilen: " .. tostring(TR.drawnRows))
         assert((TR.mapButtons or 0) > 0, "kein Kartenknopf fuer Waffenmeister")
+        assert(TR.lastBill and TR.lastBill[1][2][2] == TR.Money(150), "Rechnung zeigt das Gold nicht")
+        assert(TR.lastBill[1][3][1] == ((b.rest < 0) and "Es fehlen" or "Danach"), "Rechnung: bleibt/fehlt falsch")
+        -- 6.6.2.1: die Startseite fragt den Lehrer und die Dungeons.
+        local nav0 = WeintCodex.Navigation
+        local home = nav0.HomeTrainer()
+        assert(home and #home.cat.sections.now > 0 and home.budget and home.budget.money == 150,
+            "Startseite kennt den Lehrer nicht")
+        local fit = nav0.HomeDungeons(15)
+        local hot = false
+        for _, d in ipairs(fit) do if d.id == "hall_of_thanes" then hot = true end end
+        assert(hot, "Hall of Thanes (13-18) passt nicht zu Stufe 15")
+        local none, nextUp = nav0.HomeDungeons(1)
+        assert(#none == 0 and nextUp and nextUp.minLevel > 1, "ohne passenden Dungeon kein naechster")
+        assert(#nav0.HomeDungeons(nil) == 0, "ohne Stufe trotzdem Dungeons empfohlen")
+        nav0.SwitchTo("uebersicht")
         -- 6.6.0.1: erst der Detailbereich, dann gemessen - er macht die
         -- Flaeche schmaler, und die Karten muessen die schmale Breite nehmen.
         local nav = WeintCodex.Navigation

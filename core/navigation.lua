@@ -23,18 +23,37 @@ local activeTab = nil
 -- die Reihenfolge dieser Tabelle ist die Reihenfolge der Spalte.
 local ICON_PATH = "Interface\\AddOns\\WeintCodex\\media\\icons\\"
 local tabs = {
+    -- SEIT 6.6.2.1: GEORDNET NACH DEM, WAS IN FOREVER JETZT ANSTEHT.
+    -- Erst wird wochenlang gelevelt (Beta-Test: "Schlachtzugsanmeldungen
+    -- sind erstmal irrelevant"). Oben steht deshalb, was dabei hilft;
+    -- Schlachtzug und Anmeldung stehen weiter da, nur weiter unten. Die
+    -- Zahl der Gruppen und Eintraege ist dieselbe wie vorher - die Spalte
+    -- braucht keinen Pixel mehr (NavColumnHeight).
     { id = "uebersicht", icon = ICON_PATH .. "nav_uebersicht", label = "Übersicht",
-      group = "Raid" },
+      group = "Leveln" },
+    { id = "charakter",  icon = ICON_PATH .. "nav_charakter",  label = "Charakter" },
+    -- Seit 6.6.0.0: was der Klassenlehrer lehrt (modules/trainer.lua).
+    -- Ohne feature: dieselbe Auskunft, die jeder Lehrer im Spiel gibt.
+    { id = "lehrer",     icon = ICON_PATH .. "nav_lehrer",     label = "Lehrer" },
 
-    -- Die Schlachtzüge selbst: Instanzen, Bosse, ID-Fortschritt. Bewusst OHNE
-    -- feature - der Bestand steht in data/raids.lua und kommt nicht vom Bot.
-    { id = "raids",      icon = ICON_PATH .. "nav_bosse",      label = "Schlachtzüge" },
-
-    -- Die Dungeons, aus demselben Grund ohne feature: Namen, Gebiete und
-    -- Stufenbereiche stehen in data/dungeons.lua. Gildenintern sind allein
-    -- die Rollen-Tipps des Bots, und die gaten in der Seite (siehe
-    -- data/roles.lua) - der neutrale Teil bleibt damit offen.
+    -- Die Dungeons, ohne feature: Namen, Gebiete und Stufenbereiche stehen
+    -- in data/dungeons.lua. Gildenintern sind allein die Rollen-Tipps des
+    -- Bots, und die gaten in der Seite (siehe data/roles.lua) - der
+    -- neutrale Teil bleibt damit offen.
     { id = "dungeons",   icon = ICON_PATH .. "nav_dungeons",   label = "Dungeons" },
+
+    -- Bewusst OHNE feature: der Gruppencheck liest ausschliesslich die
+    -- Ausruestung der Leute, die gerade neben einem stehen. Das ist keine
+    -- gildeninterne Lieferung, sondern dieselbe Auskunft, die jeder
+    -- Client ueber "Untersuchen" ohnehin gibt. Beim Leveln: die Gruppe
+    -- fuer den Dungeon.
+    { id = "gruppe",     icon = ICON_PATH .. "nav_gruppe",     label = "Gruppencheck" },
+
+    -- Die Schlachtzuege selbst: Instanzen, Bosse, ID-Fortschritt. Bewusst
+    -- OHNE feature - der Bestand steht in data/raids.lua und kommt nicht
+    -- vom Bot.
+    { id = "raids",      icon = ICON_PATH .. "nav_bosse",      label = "Schlachtzüge",
+      group = "Schlachtzug" },
 
     -- Die Anmeldeliste dagegen ist eine gildeninterne Lieferung.
     { id = "anmeldung",  icon = ICON_PATH .. "nav_raids",      label = "Anmeldung",
@@ -42,18 +61,6 @@ local tabs = {
 
     { id = "kalender",   icon = ICON_PATH .. "nav_kalender",   label = "Kalender",
       feature = "calendar.view" },
-
-    -- Bewusst OHNE feature: der Gruppencheck liest ausschliesslich die
-    -- Ausruestung der Leute, die gerade neben einem stehen. Das ist keine
-    -- gildeninterne Lieferung, sondern dieselbe Auskunft, die jeder
-    -- Client ueber "Untersuchen" ohnehin gibt.
-    { id = "gruppe",     icon = ICON_PATH .. "nav_gruppe",     label = "Gruppencheck" },
-
-    { id = "charakter",  icon = ICON_PATH .. "nav_charakter",  label = "Charakter",
-      group = "Charakter" },
-    -- Seit 6.6.0.0: was der Klassenlehrer lehrt (modules/trainer.lua).
-    -- Ohne feature: dieselbe Auskunft, die jeder Lehrer im Spiel gibt.
-    { id = "lehrer",     icon = ICON_PATH .. "nav_lehrer",     label = "Lehrer" },
 
     { id = "materialien", icon = ICON_PATH .. "nav_materialien", label = "Materialien",
       group = "Gilde", feature = "materials.view" },
@@ -2523,72 +2530,6 @@ end
 -- Daten der Startseite
 --------------------------------------------------
 
--- Datums-Hilfe (gleiches Format wie modules/calendar.lua ParseDate())
-local function ParseYMD(dateStr)
-    if not dateStr or dateStr == "" then return nil end
-    local y, m, d = dateStr:match("(%d%d%d%d)-(%d%d)-(%d%d)")
-    if y then return tonumber(y), tonumber(m), tonumber(d) end
-    d, m, y = dateStr:match("(%d%d?)%.(%d%d?)%.(%d%d%d%d)")
-    if d then return tonumber(y), tonumber(m), tonumber(d) end
-    return nil
-end
-
-local function DateKey(y, m, d)
-    return y * 10000 + m * 100 + d
-end
-
--- Text für gesperrte Kennzahlen. Bewusst kein "0" oder "Keine": das wäre
--- eine Aussage über die Daten, obwohl der Spieler sie nicht sehen darf.
-local LOCKED_VALUE = "Gesperrt"
-
--- Naechster bevorstehender Raidtermin, oder Fallback-Text.
-local function GetNextRaidLabel()
-    if not Can("raids.view") then
-        return WeintCodex.ColorText("textFaint", LOCKED_VALUE)
-    end
-
-    local sd = WeintCodex.SavedData
-    local today = date("*t")
-    local todayKey = DateKey(today.year, today.month, today.day)
-
-    local candidates = {}
-    local function Consider(raidData, dayName)
-        if not raidData or not raidData.date then return end
-        local y, m, d = ParseYMD(raidData.date)
-        if not y then return end
-        local key = DateKey(y, m, d)
-        if key >= todayKey then
-            table.insert(candidates, { key = key, dayName = dayName, data = raidData })
-        end
-    end
-    Consider(sd and sd.raidWednesday, "Mittwoch")
-    Consider(sd and sd.raidThursday,  "Donnerstag")
-
-    if #candidates == 0 then
-        return WeintCodex.ColorText("textDim", "Keine Anmeldung")
-    end
-
-    table.sort(candidates, function(a, b) return a.key < b.key end)
-    local n = candidates[1]
-    return n.dayName .. " · " .. n.data.date
-end
-
--- Gibt nil zurueck, wenn die Anmeldungen gesperrt sind. Eine 0 waere eine
--- Luege ("niemand angemeldet"), obwohl nur die Sicht fehlt.
-local function GetSignupCount()
-    if not Can("raids.view") then return nil end
-
-    local sd = WeintCodex.SavedData
-    local total = 0
-    if sd and sd.raidWednesday and sd.raidWednesday.players then
-        total = total + #sd.raidWednesday.players
-    end
-    if sd and sd.raidThursday and sd.raidThursday.players then
-        total = total + #sd.raidThursday.players
-    end
-    return total
-end
-
 -- Anzahl Materialien unter 30% des Sollbestands (gleicher Schwellwert wie
 -- modules/materials.lua); zweiter Rueckgabewert = false wenn noch nie
 -- importiert, dritter = true wenn der Bereich gesperrt ist.
@@ -2635,19 +2576,25 @@ WeintCodex.Navigation.GoToTab = GoToTab
 --------------------------------------------------
 -- Startseite: "Was ist jetzt zu tun?"
 --------------------------------------------------
--- Die Startseite beantwortet den Abend, nicht das Menue. Aufbau von oben nach
--- unten: eine Handlungskarte zum naechsten Raid, darunter drei Spalten mit
--- dem, was offen ist (eigene Ausruestung, Schlachtzuege, Gildenbank), unten
--- eine Systemzeile zum Zustand der Companion-Bruecke.
+-- SEIT 6.6.2.1 AUF FOREVER-NIVEAU. Bis dahin beantwortete die Seite den
+-- Raidabend (naechster Raid, Anmeldungen, Schlachtzuege, Gildenbank) -
+-- eine Frage aus Mists of Pandaria. In Forever wird erst wochenlang
+-- gelevelt (Beta-Test: "Schlachtzugsanmeldungen sind erstmal
+-- irrelevant"). Aufbau von oben nach unten:
+--   * die Leiste zum Leveln: Stufe, Erfahrung, Erholung, was im Questlog
+--     zur Abgabe bereit liegt - und wie viele Zauber beim Lehrer warten;
+--   * drei Spalten: was beim Lehrer noch nicht gelernt ist (mit der
+--     Rechnung gegen das eigene Gold), die eigene Ausruestung, die
+--     Dungeons, die zur Stufe passen;
+--   * unten die Systemzeile zur Companion-Bruecke.
+-- Schlachtzuege, Anmeldung und Gildenbank haben ihre Seiten weiter - nur
+-- nicht mehr auf der Startseite.
 --
 -- Eine Liste derselben Bereiche, die links schon ausgeschrieben stehen, gibt
 -- es hier bewusst nicht: das waere "Menue statt Antwort".
 --
--- WAS DIESE SEITE FUER FOREVER NICHT TUT: sie zaehlt keine offenen Bosse und
--- keine Verzauberungsmaengel. Die Bosslisten sind nicht veroeffentlicht
--- (data/raids.lua), und Verzauberungen, Sockel und Umschmieden gibt es in
--- dieser Fassung nicht. Eine Kachel, die daraus eine Null macht, waere keine
--- leere Auskunft, sondern eine falsche.
+-- Was der Client nicht beantwortet (Stufe, Gold, Erfahrung), steht als
+-- "unbekannt" da - nie als 0 und nie als "alles gelernt".
 --------------------------------------------------
 
 local homeFrame = nil
@@ -2657,6 +2604,51 @@ local homeFrame = nil
 -- Kaestchen.
 local function Ellipsis(text, maxChars)
     return WeintCodex.Truncate(text, maxChars)
+end
+
+-- 12345 -> "12.345"
+local function Thousands(n)
+    local s = tostring(math.floor(n))
+    local out = s:reverse():gsub("(%d%d%d)", "%1."):reverse()
+    return (out:gsub("^%.", ""))
+end
+
+-- Was die Startseite vom Lehrer wissen will, an einer Stelle; nil, wenn
+-- der Client Klasse oder Stufe nicht nennt.
+function WeintCodex.Navigation.HomeTrainer()
+    local TR = WeintCodex.Trainer
+    if not (TR and TR.PlayerState and TR.Categorize) then return nil end
+    local ok, state = pcall(TR.PlayerState)
+    if not ok or not (state and state.class and state.level) then return nil end
+    local cat = TR.Categorize(state)
+    local weapons = TR.WeaponState and TR.WeaponState(state) or {}
+    local budget = TR.Budget and TR.Budget(state, cat, weapons) or nil
+    -- Naechster Zauber, wenn jetzt nichts ansteht: die kleinste Stufe
+    -- ueber der eigenen.
+    local nextLevel
+    for _, key in ipairs({ "soon", "later" }) do
+        for _, sp in ipairs(cat.sections[key]) do
+            if not nextLevel or sp.level < nextLevel then nextLevel = sp.level end
+        end
+    end
+    return { state = state, cat = cat, weapons = weapons, budget = budget, nextLevel = nextLevel }
+end
+
+-- Dungeons fuer die eigene Stufe; passt keiner, der naechste darueber.
+function WeintCodex.Navigation.HomeDungeons(level)
+    local D = WeintCodex.DungeonData
+    if not (D and type(level) == "number") then return {}, nil end
+    local all = (D.AllInstances and D.AllInstances()) or (D.All and D.All()) or {}
+    local fit, nextUp = {}, nil
+    for _, d in ipairs(all) do
+        if D.FitsLevel(d, level) then
+            fit[#fit + 1] = d
+        elseif type(d.minLevel) == "number" and d.minLevel > level
+               and (not nextUp or d.minLevel < nextUp.minLevel) then
+            nextUp = d
+        end
+    end
+    return fit, nextUp
 end
 
 function WeintCodex.ShowHome()
@@ -2694,38 +2686,39 @@ function WeintCodex.ShowHome()
     eyebrow:SetPoint("TOPLEFT", root, "TOPLEFT", PAD_X, -PAD_Y)
 
     -- Der eigene Ausruestungsstand. `nil` heisst "konnte nicht gelesen
-    -- werden" und ist etwas anderes als "nichts gefunden" - die Ueberschrift
-    -- unten unterscheidet das.
+    -- werden" und ist etwas anderes als "nichts gefunden".
     local gear
     if WeintCodex.Charakter and WeintCodex.Charakter.Snapshot then
         local ok, result = pcall(WeintCodex.Charakter.Snapshot)
         if ok then gear = result end
     end
-
     local emptySlots  = gear and #(gear.empty  or {}) or 0
     local brokenItems = gear and #(gear.broken or {}) or 0
     local openIssues  = emptySlots + brokenItems
 
-    local shortages, matKnown, matLocked = GetMaterialShortageCount()
+    local tr = WeintCodex.Navigation.HomeTrainer()
+    local learn = tr and #tr.cat.sections.now or 0
+    local budget = tr and tr.budget
 
     -- Ueberschrift benennt den Handlungsbedarf, nicht den Bereich.
     local headline
-    if not gear then
-        headline = "Willkommen zurück"
-    elseif openIssues > 0 then
+    if learn > 0 then
+        headline = learn == 1 and "Ein Zauber wartet beim Lehrer"
+                               or (learn .. " Zauber warten beim Lehrer")
+    elseif gear and openIssues > 0 then
         headline = openIssues == 1 and "Eine Sache ist noch offen"
                                    or (openIssues .. " Dinge sind noch offen")
-    elseif shortages > 0 and not matLocked then
-        headline = "Ausrüstung sitzt – die Gildenbank nicht"
+    elseif tr and gear then
+        headline = "Alles bereit – weiter leveln"
     else
-        headline = "Alles bereit"
+        headline = "Willkommen zurück"
     end
 
     local title = WeintCodex.PageTitle(root, headline)
     title:SetPoint("TOPLEFT", eyebrow, "BOTTOMLEFT", 0, -6)
 
     --------------------------------------------------
-    -- Handlungskarte: naechster Raid
+    -- Leiste: Leveln
     --------------------------------------------------
 
     local action = WeintCodex.CreateSurface(root, {
@@ -2734,37 +2727,74 @@ function WeintCodex.ShowHome()
     action:SetPoint("TOPLEFT",  root, "TOPLEFT",  PAD_X, -(PAD_Y + 76))
     action:SetPoint("TOPRIGHT", root, "TOPRIGHT", -PAD_X, -(PAD_Y + 76))
 
-    local aEyebrow = WeintCodex.Eyebrow(action, "Nächster Raid",
+    local aEyebrow = WeintCodex.Eyebrow(action, "Leveln",
         { color = "accentBright", size = 11 })
     aEyebrow:SetPoint("TOPLEFT", action, "TOPLEFT", 20, -16)
+
+    local state = tr and tr.state
+    local level = state and state.level
+    if type(level) ~= "number" then
+        local ok, v = pcall(UnitLevel, "player")
+        local K = WeintCodex.UIKit
+        if ok and K and K.Plain then v = K.Plain(v) end
+        level = ok and type(v) == "number" and v or nil
+    end
+    local className = state and state.className
+    if not className and UnitClass then
+        local ok, n = pcall(UnitClass, "player")
+        if ok and type(n) == "string" then className = n end
+    end
 
     local aTitle = action:CreateFontString(nil, "OVERLAY")
     aTitle:SetFont(WeintCodex.Fonts.sansSemi, 17, "")
     aTitle:SetPoint("TOPLEFT", aEyebrow, "BOTTOMLEFT", 0, -8)
     aTitle:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
-    aTitle:SetText(GetNextRaidLabel())
+    aTitle:SetText((level and ("Stufe " .. level) or "Stufe unbekannt")
+        .. (className and (" · " .. className) or ""))
 
-    local signups = GetSignupCount()
+    -- Erfahrung vom Erfahrungsbalken (ui/xpbar.lua) - dieselbe Auskunft,
+    -- dieselben Regeln (Hoechststufe/gesperrt = keine Leiste).
+    local XB = WeintCodex.UIXPBar
+    local xp = XB and XB.Experience and XB.Experience() or nil
+    local qxp = XB and XB.QuestXP and XB.QuestXP() or nil
+    local subParts = {}
+    if xp then
+        subParts[#subParts + 1] = string.format("%s / %s EP (%d %%)", Thousands(xp.cur), Thousands(xp.max),
+            math.floor(xp.cur / xp.max * 100))
+        if xp.rested and xp.rested > 0 then subParts[#subParts + 1] = "erholt " .. Thousands(xp.rested) end
+    end
+    if qxp and qxp.readyCount > 0 then
+        subParts[#subParts + 1] = string.format("%d %s abgabebereit (%s EP)", qxp.readyCount,
+            qxp.readyCount == 1 and "Quest" or "Quests", Thousands(qxp.ready))
+    end
     local aSub = WeintCodex.Label(action,
-        signups and "Anmeldungen liegen vor – Liste im Bereich Anmeldung"
-                or "Keine Anmeldeliste vorhanden",
+        #subParts > 0 and table.concat(subParts, "  ·  ") or "Erfahrung meldet der Client gerade nicht",
         { color = "textMuted", size = 13 })
     aSub:SetPoint("TOPLEFT", aTitle, "BOTTOMLEFT", 0, -6)
 
     local aBtn = WeintCodex.CreateButton(action, {
-        text = "Anmeldung öffnen", kind = "primary", backdrop = "accentCardTop",
-        onClick = function() GoToTab("anmeldung") end,
+        text = "Lehrer öffnen", kind = learn > 0 and "primary" or "secondary", backdrop = "accentCardTop",
+        onClick = function() GoToTab("lehrer") end,
     })
     aBtn:SetPoint("RIGHT", action, "RIGHT", -20, 0)
 
-    if signups then
+    if xp then
+        local meter = WeintCodex.CreateMeter(action, { height = 6, tone = "accent" })
+        meter:SetPoint("BOTTOMLEFT", action, "BOTTOMLEFT", 20, 16)
+        meter:SetPoint("RIGHT", aBtn, "LEFT", -140, 0)
+        local pct = xp.cur / xp.max
+        meter:HookScript("OnSizeChanged", function(self) self:SetValue(pct) end)
+        meter:SetValue(pct)
+    end
+
+    if tr then
         local nCap = action:CreateFontString(nil, "OVERLAY")
         nCap:SetFont(WeintCodex.Fonts.monoBold, 26, "")
         nCap:SetPoint("RIGHT", aBtn, "LEFT", -24, 6)
-        nCap:SetTextColor(C.textNormal[1], C.textNormal[2], C.textNormal[3])
-        nCap:SetText(tostring(signups))
-
-        local nLbl = WeintCodex.Eyebrow(action, "Angemeldet", { size = 10 })
+        local nc = learn > 0 and C.textBright or C.textDim
+        nCap:SetTextColor(nc[1], nc[2], nc[3])
+        nCap:SetText(tostring(learn))
+        local nLbl = WeintCodex.Eyebrow(action, "Lernbar", { size = 10 })
         nLbl:SetPoint("TOPRIGHT", nCap, "BOTTOMRIGHT", 0, -4)
     end
 
@@ -2776,9 +2806,7 @@ function WeintCodex.ShowHome()
     local BOTTOM  = PAD_Y + 48 + GAP   -- Platz fuer die Systemzeile
 
     -- WoW kennt keine Rasterspalten, deshalb sitzt jede in einem unsichtbaren
-    -- Traeger, dessen Breite bei jeder Groessenaenderung neu gerechnet wird -
-    -- das Fenster ist in der Groesse veraenderbar, feste Breiten waeren nach
-    -- dem ersten Ziehen am Griff falsch.
+    -- Traeger, dessen Breite bei jeder Groessenaenderung neu gerechnet wird.
     local grid = CreateFrame("Frame", nil, root)
     grid:SetPoint("TOPLEFT",     root, "TOPLEFT",      PAD_X, -COL_TOP)
     grid:SetPoint("BOTTOMRIGHT", root, "BOTTOMRIGHT", -PAD_X,  BOTTOM)
@@ -2862,11 +2890,97 @@ function WeintCodex.ShowHome()
         return y - 36
     end
 
+    -- Wie viele Zeilen passen in eine Spalte, ohne unter den Knopf zu
+    -- laufen? Die Hoehe steht beim ersten Zeichnen oft noch nicht fest -
+    -- dann gilt das kleinste Fenster (vier Zeilen).
+    local function RowsFit(card)
+        local h = card.GetHeight and card:GetHeight() or 0
+        local K = WeintCodex.UIKit
+        if K and K.Plain then h = K.Plain(h) end
+        if type(h) ~= "number" or h < 150 then return 4 end
+        return math.max(2, math.min(7, math.floor((h - 66 - 60) / 36)))
+    end
+
     --------------------------------------------------
-    -- Spalte 1: Deine Ausruestung
+    -- Spalte 1: Beim Lehrer - was noch nicht gelernt ist
     --------------------------------------------------
 
-    local prep = Column(1)
+    local TR = WeintCodex.Trainer
+    local trainer = Column(1)
+    local chip, chipTone
+    if not tr then
+        chip, chipTone = "unbekannt", "textMuted"
+    elseif learn > 0 then
+        chip, chipTone = learn .. " lernbar", (budget and type(budget.rest) == "number" and budget.rest < 0) and "danger" or "success"
+    else
+        chip, chipTone = "alles gelernt", "success"
+    end
+    CardHeader(trainer, "Beim Lehrer", chip, chipTone)
+
+    -- Die Rechnung in einer Zeile: Gold gegen Kosten.
+    local billText
+    if not tr then
+        billText = "Klasse oder Stufe meldet der Client nicht"
+    elseif not (budget and type(budget.money) == "number") then
+        billText = "Dein Gold ist unbekannt"
+    elseif learn == 0 then
+        billText = "Dein Gold " .. TR.Money(budget.money)
+    else
+        billText = "Gold " .. TR.Money(budget.money) .. " · " .. (TR.Verdict(budget.rest))
+    end
+    local billLine = WeintCodex.Eyebrow(trainer, billText,
+        { size = 10, color = (budget and type(budget.rest) == "number" and budget.rest < 0 and learn > 0) and "dangerBright" or "textDim" })
+    billLine:SetPoint("TOPLEFT", trainer, "TOPLEFT", 20, -44)
+
+    local y = -66
+    if tr then
+        local maxRows = RowsFit(trainer)
+        local list = tr.cat.sections.now
+        local shown, running = 0, 0
+        for _, sp in ipairs(list) do
+            running = running + sp.cost
+            if shown >= maxRows - ((#list > maxRows) and 1 or 0) then break end
+            local name, sub = TR.SpellInfo(sp.id)
+            local label = (name or ("Zauber " .. sp.id)) .. (sub and (" (" .. sub .. ")") or "")
+            local short = budget and type(budget.money) == "number" and running > budget.money
+            y = StateRow(trainer, y, short and "danger" or "success", Ellipsis(label, 34),
+                TR.Money(sp.cost), short and "dangerBright" or "textMuted")
+            shown = shown + 1
+        end
+        if #list > shown then
+            y = StateRow(trainer, y, nil, "… und " .. (#list - shown) .. " weitere", nil)
+        end
+        local missing = #tr.cat.sections.missing
+        if shown < maxRows and missing > 0 then
+            y = StateRow(trainer, y, "warning", missing .. " mit fehlender Vorstufe", nil)
+            shown = shown + 1
+        end
+        local wnow = budget and budget.weaponCount or 0
+        if shown < maxRows and wnow > 0 then
+            y = StateRow(trainer, y, "info", wnow == 1 and "Eine Waffenfertigkeit lernbar"
+                or (wnow .. " Waffenfertigkeiten lernbar"), TR.Money(budget.weapons), "textMuted")
+            shown = shown + 1
+        end
+        if #list == 0 and shown < maxRows then
+            y = StateRow(trainer, y, nil, tr.nextLevel and ("Nächster Zauber ab Stufe " .. tr.nextLevel)
+                or "Nichts mehr beim Lehrer", nil)
+        end
+    else
+        y = StateRow(trainer, y, nil, "Noch nichts zu sagen", nil)
+    end
+
+    local trBtn = WeintCodex.CreateButton(trainer, {
+        text = "Lehrer öffnen", kind = "secondary", backdrop = "cardBottom",
+        onClick = function() GoToTab("lehrer") end,
+    })
+    trBtn:SetPoint("BOTTOMLEFT",  trainer, "BOTTOMLEFT",  20, 16)
+    trBtn:SetPoint("BOTTOMRIGHT", trainer, "BOTTOMRIGHT", -20, 16)
+
+    --------------------------------------------------
+    -- Spalte 2: Deine Ausruestung
+    --------------------------------------------------
+
+    local prep = Column(2)
     CardHeader(prep, "Deine Ausrüstung",
         (not gear) and "unbekannt"
             or (openIssues > 0 and (openIssues .. " offen") or "vollständig"),
@@ -2877,8 +2991,7 @@ function WeintCodex.ShowHome()
         { size = 10 })
     specLine:SetPoint("TOPLEFT", prep, "TOPLEFT", 20, -44)
 
-    local y = -66
-
+    y = -66
     if not gear then
         -- Der Client hat auf die Ausruestungsfrage nicht geantwortet. Das ist
         -- etwas anderes als "alles in Ordnung", und wird auch so gesagt.
@@ -2913,142 +3026,47 @@ function WeintCodex.ShowHome()
     prepBtn:SetPoint("BOTTOMRIGHT", prep, "BOTTOMRIGHT", -20, 16)
 
     --------------------------------------------------
-    -- Spalte 2: Schlachtzuege
+    -- Spalte 3: Dungeons fuer deine Stufe
     --------------------------------------------------
-    -- Was hier NICHT steht: eine Zahl offener Bosse. Solange die Bosslisten
-    -- von Forever nicht veroeffentlicht sind, waere jede solche Zahl aus der
-    -- Luft gegriffen (siehe data/raids.lua). Stattdessen steht da, was wirklich
-    -- feststeht: welche Schlachtzuege es gibt und ob dieser Charakter fuer
-    -- einen davon schon eine gespeicherte ID traegt.
+    -- Stufenbereiche aus data/dungeons.lua (und den klassischen). Ohne
+    -- Stufe vom Client kein Urteil - "passt nicht" waere eine Behauptung.
 
-    local raids = Column(2)
-
-    local lockouts = (WeintCodex.EncounterTracking
-        and WeintCodex.EncounterTracking.SavedLockouts
-        and WeintCodex.EncounterTracking.SavedLockouts()) or {}
-
-    local knownBosses = WeintCodex.RaidData and WeintCodex.RaidData.KnownBossCount()
-
-    -- "21 bosse" und "Bosslisten hinterlegt" wäre hier zu viel
-    -- versprochen: die Listen stammen aus dem Beta-Client und sind
-    -- nicht bestätigt (siehe data/raids.lua). Der Zustand des
-    -- Bestands entscheidet deshalb über Ton UND Text - eine
-    -- vorläufige Liste bekommt nicht das Grün einer gesicherten.
-    local bossState = (WeintCodex.RaidData and WeintCodex.RaidData.BossListState
-        and WeintCodex.RaidData.BossListState()) or "none"
-
-    local BOSS_NOTE = {
-        none        = "Bosslisten noch nicht bekannt",
-        provisional = "Bosslisten vorläufig (Beta-Client)",
-        partial     = "Teils bestätigt, teils vorläufig",
-        confirmed   = "Bosslisten hinterlegt",
-    }
-
-    CardHeader(raids, "Schlachtzüge",
-        knownBosses and (knownBosses .. " bosse") or "bosse offen",
-        (bossState == "confirmed") and "success"
-            or (knownBosses and "warning" or "textMuted"))
-
-    local raidNote = WeintCodex.Eyebrow(raids,
-        BOSS_NOTE[bossState] or BOSS_NOTE.none,
-        { size = 10 })
-    raidNote:SetPoint("TOPLEFT", raids, "TOPLEFT", 20, -44)
+    local dung = Column(3)
+    local D = WeintCodex.DungeonData
+    local fit, nextUp = WeintCodex.Navigation.HomeDungeons(level)
+    CardHeader(dung, "Dungeons",
+        (not level) and "unbekannt" or (#fit > 0 and (#fit .. " passend") or "keiner passt"),
+        (not level) and "textMuted" or (#fit > 0 and "success" or "textMuted"))
+    local dLine = WeintCodex.Eyebrow(dung,
+        level and ("Für Stufe " .. level) or "Stufe unbekannt", { size = 10 })
+    dLine:SetPoint("TOPLEFT", dung, "TOPLEFT", 20, -44)
 
     y = -66
-    for _, raid in ipairs((WeintCodex.RaidData and WeintCodex.RaidData.All()) or {}) do
-        local lock = lockouts[raid.id]
-        local value, tone, dot
-        if lock then
-            value, tone, dot = "gespeichert", "warningBright", "warning"
-        elseif WeintCodex.RaidData.HasBosses(raid) then
-            value, tone, dot = "offen", "successBright", "success"
+    local maxRows = RowsFit(dung)
+    local shownD = 0
+    for _, d in ipairs(fit) do
+        if shownD >= maxRows - ((#fit > maxRows) and 1 or 0) then break end
+        y = StateRow(dung, y, "success", Ellipsis(d.name, 30), D.LevelRange(d), "textMuted")
+        shownD = shownD + 1
+    end
+    if #fit > shownD then
+        y = StateRow(dung, y, nil, "… und " .. (#fit - shownD) .. " weitere", nil)
+    end
+    if #fit == 0 and level then
+        if nextUp then
+            y = StateRow(dung, y, nil, Ellipsis("Nächster: " .. nextUp.name, 32),
+                "ab " .. nextUp.minLevel, "textMuted")
         else
-            -- Kein Punkt: unbekannt ist kein Zustand, den man einfaerbt.
-            value, tone, dot = raid.size .. "er", "textMuted", nil
-        end
-        y = StateRow(raids, y, dot,
-            Ellipsis(raid.name, 30), value, tone)
-    end
-
-    local raidBtn = WeintCodex.CreateButton(raids, {
-        text = "Schlachtzüge öffnen", kind = "secondary", backdrop = "cardBottom",
-        onClick = function() GoToTab("raids") end,
-    })
-    raidBtn:SetPoint("BOTTOMLEFT",  raids, "BOTTOMLEFT",  20, 16)
-    raidBtn:SetPoint("BOTTOMRIGHT", raids, "BOTTOMRIGHT", -20, 16)
-
-    --------------------------------------------------
-    -- Spalte 3: Gildenbank
-    --------------------------------------------------
-
-    local bank = Column(3)
-    CardHeader(bank, "Gildenbank",
-        matLocked and "gesperrt"
-            or (shortages > 0 and (shortages .. " engpässe") or (matKnown and "im soll" or "kein scan")),
-        matLocked and "textMuted" or (shortages > 0 and "danger" or "success"))
-
-    local matData = WeintCodex.SavedData and WeintCodex.SavedData.materialData
-    local scanLine = WeintCodex.Eyebrow(bank,
-        matLocked and "Keine Freigabe"
-            or (matData and matData.scanned and ("Scan " .. tostring(matData.scanned))
-                or "Noch kein Scan"),
-        { size = 10 })
-    scanLine:SetPoint("TOPLEFT", bank, "TOPLEFT", 20, -44)
-
-    y = -70
-    if matLocked then
-        StateRow(bank, y, nil, "Materialien sind für dich gesperrt", nil)
-    elseif not matKnown then
-        StateRow(bank, y, nil, "Noch nichts importiert", nil)
-    else
-        -- Die drei knappsten Posten mit Fortschrittsbalken.
-        local worst = {}
-        for _, item in ipairs((matData and matData.items) or {}) do
-            local amount = tonumber(item.count)  or 0
-            local target = tonumber(item.target) or 0
-            if target > 0 then
-                worst[#worst + 1] = { name = item.name, amount = amount,
-                                      target = target, pct = amount / target }
-            end
-        end
-        table.sort(worst, function(a, b) return a.pct < b.pct end)
-
-        for i = 1, math.min(3, #worst) do
-            local it = worst[i]
-            local tone = it.pct < 0.30 and "red" or (it.pct < 0.70 and "gold" or "green")
-            local textTone = it.pct < 0.30 and "dangerBright"
-                or (it.pct < 0.70 and "warningBright" or "successBright")
-
-            local nameLbl = WeintCodex.Label(bank, Ellipsis(it.name, 26),
-                { color = "textNormal", size = 13 })
-            nameLbl:SetPoint("TOPLEFT", bank, "TOPLEFT", 20, y)
-
-            local valLbl = bank:CreateFontString(nil, "OVERLAY")
-            valLbl:SetFont(WeintCodex.Fonts.monoBold, 10, "")
-            valLbl:SetPoint("TOPRIGHT", bank, "TOPRIGHT", -20, y - 1)
-            local vc = C[textTone]
-            valLbl:SetTextColor(vc[1], vc[2], vc[3])
-            valLbl:SetText(it.amount .. "/" .. it.target)
-
-            local meter = WeintCodex.CreateMeter(bank, { height = 6, tone = tone })
-            meter:SetPoint("TOPLEFT",  bank, "TOPLEFT",  20, y - 20)
-            meter:SetPoint("TOPRIGHT", bank, "TOPRIGHT", -20, y - 20)
-            -- Breite steht erst nach dem Layout fest; der Balken zieht nach.
-            meter:HookScript("OnSizeChanged", function(self)
-                self:SetValue(math.min(1, it.pct))
-            end)
-            meter:SetValue(math.min(1, it.pct))
-
-            y = y - 46
+            y = StateRow(dung, y, nil, "Kein Dungeon für diese Stufe", nil)
         end
     end
 
-    local bankBtn = WeintCodex.CreateButton(bank, {
-        text = "Materialien ansehen", kind = "secondary", backdrop = "cardBottom",
-        onClick = function() GoToTab("materialien") end,
+    local dungBtn = WeintCodex.CreateButton(dung, {
+        text = "Dungeons öffnen", kind = "secondary", backdrop = "cardBottom",
+        onClick = function() GoToTab("dungeons") end,
     })
-    bankBtn:SetPoint("BOTTOMLEFT",  bank, "BOTTOMLEFT",  20, 16)
-    bankBtn:SetPoint("BOTTOMRIGHT", bank, "BOTTOMRIGHT", -20, 16)
+    dungBtn:SetPoint("BOTTOMLEFT",  dung, "BOTTOMLEFT",  20, 16)
+    dungBtn:SetPoint("BOTTOMRIGHT", dung, "BOTTOMRIGHT", -20, 16)
 
     --------------------------------------------------
     -- Systemzeile
@@ -3099,9 +3117,13 @@ function WeintCodex.ShowHome()
     -- Navigationsspalte mit echtem Zustand versehen
     --------------------------------------------------
 
+    local shortages, _, matLocked = GetMaterialShortageCount()
     WeintCodex.Navigation.SetTabBadge("charakter",   openIssues > 0, "red")
     WeintCodex.Navigation.SetTabBadge("materialien", (not matLocked) and shortages > 0, "red")
     WeintCodex.Navigation.SetTabBadge("import",      queueCount > 0, "accent")
+    WeintCodex.Navigation.SetTabCount("lehrer", learn > 0 and learn or nil, "successBright")
+    local knownBosses = WeintCodex.RaidData and WeintCodex.RaidData.KnownBossCount
+        and WeintCodex.RaidData.KnownBossCount()
     if knownBosses then
         WeintCodex.Navigation.SetTabCount("raids", knownBosses)
     end
@@ -3120,4 +3142,32 @@ function WeintCodex.ResetToHome()
     activeTab = "uebersicht"
 
     WeintCodex.ShowHome()
+end
+
+-- Die Startseite zeichnet einmal beim Oeffnen. Neu nur, wenn sich das
+-- Gezeigte wirklich aendert und sie offen ist: ein Stufenaufstieg (neue
+-- Zauber beim Lehrer, andere Dungeons) oder ein Zaubername, den der
+-- Client erst nachliefert. Nicht bei jedem EP-Tick - jedes Zeichnen
+-- baut die Seite neu auf.
+do
+    local ev = CreateFrame("Frame")
+    for _, e in ipairs({ "PLAYER_LEVEL_UP", "SPELL_DATA_LOAD_RESULT", "LEARNED_SPELL_IN_SKILL_LINE" }) do
+        pcall(ev.RegisterEvent, ev, e)
+    end
+    local queued = false
+    ev:SetScript("OnEvent", function(_, event, id)
+        if event == "SPELL_DATA_LOAD_RESULT" then
+            local TR = WeintCodex.Trainer
+            if not (TR and TR.pending and TR.pending[id]) then return end
+        end
+        if queued or not (homeFrame and homeFrame:IsShown()) then return end
+        local main = WeintCodex.MainFrame
+        if type(main) == "table" and main.IsShown and not main:IsShown() then return end
+        queued = true
+        local function run()
+            queued = false
+            if homeFrame and homeFrame:IsShown() then WeintCodex.ShowHome() end
+        end
+        if C_Timer and C_Timer.After then C_Timer.After(0.5, run) else run() end
+    end)
 end

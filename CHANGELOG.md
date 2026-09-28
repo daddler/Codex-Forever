@@ -11,6 +11,12 @@ nicht zusammen.
 
 ## [6.6.2.1] – 2026-09-28
 
+**WeintCodex auf Forever-Niveau.** Die Navigation ist neu geordnet: oben steht, was beim Leveln hilft – Übersicht, Charakter, Lehrer, Dungeons, Gruppencheck. Schlachtzüge, Anmeldung und Kalender stehen darunter in einer eigenen Gruppe – weg ist nichts.
+
+**Neue Übersicht fürs Leveln.** Oben deine Stufe, Erfahrung, Erholung und die Quests, die zur Abgabe bereit sind. Darunter: was du beim Lehrer noch nicht gelernt hast, deine Ausrüstung und die Dungeons, die zu deiner Stufe passen. Die Zahl lernbarer Zauber steht auch links am Lehrer.
+
+**Lehrer rechnet mit.** Oben in der Zauberliste steht die Rechnung: was jetzt lernbar ist, dein Gold, und was danach bleibt oder fehlt – dazu, für wie viele Zauber es reicht und was die nächsten zwei Stufen zusammen kosten. Preise werden rot, sobald dein Gold der Reihe nach nicht mehr reicht.
+
 **Ränge direkt am Zauber.** Klickst du in der Zaubertafel der Klickzauber auf einen Zauber mit mehreren Rängen, klappt am Symbol die Liste der Ränge auf – „Höchster Rang“ steigt mit, jeder andere bleibt fest. Zauber mit nur einem Rang liegen wie bisher sofort auf der Taste.
 
 ## [6.6.2.0] – 2026-09-28
