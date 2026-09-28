@@ -727,6 +727,7 @@ local function FadeStep(_, elapsed)
     end
     if not any then fader:SetScript("OnUpdate", nil) end
 end
+FadeStep = K.Measured("Aktionsleisten", FadeStep)
 
 local function UpdateMouseover()
     local any = false
@@ -927,7 +928,7 @@ local function Enable()
         _G.hooksecurefunc("ActionButton_UpdateHotkeys", function(b) ShortenHotkey(b) end)
     end
     if _G.hooksecurefunc and _G.ActionButton_UpdateRangeIndicator then
-        _G.hooksecurefunc("ActionButton_UpdateRangeIndicator", OnRange)
+        _G.hooksecurefunc("ActionButton_UpdateRangeIndicator", K.Measured("Aktionsleisten", OnRange))
     end
     -- Leisten, die das Spiel spaeter anlegt oder umbaut (Bearbeitungsmodus,
     -- Haltungen), bekommen ihr Aussehen beim naechsten Aktualisieren.
@@ -937,15 +938,30 @@ local function Enable()
         "ACTIONBAR_SHOWGRID", "ACTIONBAR_HIDEGRID" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
-    ev:SetScript("OnEvent", function(_, event)
+    ev:SetScript("OnEvent", K.Measured("Aktionsleisten", function(_, event)
         if event == "ACTIONBAR_SHOWGRID" then gridShown = true
         elseif event == "ACTIONBAR_HIDEGRID" then gridShown = false end
+        -- ACTIONBAR_SLOT_CHANGED kommt oft in Schueben (Haltung, Procs,
+        -- Gegenstaende) - einmal je Fuenftelsekunde genuegt (6.6.1.8).
+        if event == "ACTIONBAR_SLOT_CHANGED" then AB.RefreshSoon() return end
         SkinAll()
         UpdateBackdrops()
         if event == "PLAYER_ENTERING_WORLD" then K.AfterCombat(Place) K.AfterCombat(Arrange) end
         -- Neue Haltung gelernt: die Haltungsleiste waechst mit.
         if event == "UPDATE_SHAPESHIFT_FORMS" then K.AfterCombat(Arrange) end
-    end)
+    end))
+end
+
+local soon = false
+function AB.RefreshSoon()
+    if soon then return end
+    soon = true
+    local function Run()
+        soon = false
+        SkinAll()
+        UpdateBackdrops()
+    end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.2, Run) else Run() end
 end
 
 local function px(v) return string.format("%d px", v) end

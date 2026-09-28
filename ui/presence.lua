@@ -176,6 +176,7 @@ local function Step(_, elapsed)
     end
     if not busy then driver:SetScript("OnUpdate", nil) end
 end
+Step = K.Measured("Ruhe und Kampf", Step)
 
 function P.Apply(instant)
     if instant then
@@ -229,7 +230,7 @@ for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_DISABLED", "PLAYER_R
     "UNIT_SPELLCAST_CHANNEL_START", "UNIT_SPELLCAST_CHANNEL_STOP" }) do
     pcall(events.RegisterEvent, events, e)
 end
-events:SetScript("OnEvent", function(_, event, unit)
+events:SetScript("OnEvent", K.Measured("Ruhe und Kampf", function(_, event, unit)
     if event:find("^UNIT_") and unit ~= "player" then return end
     if event == "PLAYER_ENTERING_WORLD" then
         -- Leisten, die das Spiel erst jetzt angelegt hat, bekommen ihre
@@ -247,7 +248,7 @@ events:SetScript("OnEvent", function(_, event, unit)
         return
     end
     P.Evaluate()
-end)
+end))
 
 K.Listen(function(kind, moduleKey, key)
     if kind == "unlock" then P.Force("unlock", moduleKey) end

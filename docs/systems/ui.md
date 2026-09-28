@@ -670,6 +670,22 @@ Seit 6.2.0.0:
   Holz aussieht, nennt `/wcui fenster`. Seit 6.3.1.7 zweite Stufe:
   `W.HIDE_ATLAS` blendet die dort gemessenen Atlanten aus (Muster, nie
   Inhalte; `RaceBG` bleibt), die Plätze bekommen einen 1-px-Rand.
+* **Speicher** (6.6.1.8, Beta-Test: „zwischen 10 und 30–40 MB, dann ein
+  Reset, ab 8 MB von vorn“). Das ist kein Leck, sondern Wegwerf-Speicher,
+  den die Bereinigung des Spiels einsammelt; die 8 MB Sockel sind Code
+  und Daten (gut 2 MB Quelltext). Was geändert wurde:
+  **Erinnerungen** sammeln Ereignisse (`R.Schedule`, ausgewertet höchstens
+  alle 0,1 s – `SPELL_UPDATE_COOLDOWN` und `UNIT_AURA` kamen im Kampf
+  mehrfach je Zauber) und merken sich aufgelöste Zauber (`R.Resolve`,
+  geleert bei `SPELLS_CHANGED`, beim Laden und bei Einstellungen);
+  **Schadensanzeige** zeichnet auf ihre Mess-Ereignisse höchstens alle
+  0,25 s neu (`DM.RefreshSoon`); **Aktionsleisten** fassen
+  `ACTIONBAR_SLOT_CHANGED` zusammen (0,2 s). Messen: `K.Measured(name,
+  fn)` legt sich um Takte und Ereignisse der oft laufenden Teile und
+  zählt nur während `/wcui speicher` (30 s): Aufrufe, neu belegter
+  Speicher (`collectgarbage("count")` davor/danach, nach unten ungenau,
+  wenn die Bereinigung mittendrin läuft) und Zeit; der Bericht nennt das
+  Wachstum des Addons und die acht größten Erzeuger je Sekunde.
 * **Gespräche** (6.6.1.4, Beta-Test: „die normale Interaktion von
   Questgebern, Gastwirten etc. muss angeglichen werden“): `GossipFrame`,
   `QuestFrame`, `ItemTextFrame` (`W.DIALOGS`) bekommen die Fensterhülle,

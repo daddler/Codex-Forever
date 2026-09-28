@@ -752,6 +752,7 @@ local function OnTick(_, elapsed)
     -- Ereignis ihn wieder anwirft.
     if not (frame and frame:IsShown()) then ticker:SetScript("OnUpdate", nil) end
 end
+OnTick = K.Measured("Questpfeil", OnTick)
 
 local events = CreateFrame("Frame")
 local function Refresh()
@@ -847,7 +848,7 @@ local function Enable()
         "QUEST_TURNED_IN", "QUEST_REMOVED",
         "PLAYER_DEAD", "PLAYER_ALIVE", "PLAYER_UNGHOST", "CORPSE_POSITION_UPDATE",
     }) do pcall(events.RegisterEvent, events, e) end
-    events:SetScript("OnEvent", OnEvent)
+    events:SetScript("OnEvent", K.Measured("Questpfeil", OnEvent))
     -- K.Activate setzt _active erst nach Enable; der erste Stand kommt
     -- deshalb einen Takt spaeter aus dem ersten Ereignis oder hier.
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, Refresh) end

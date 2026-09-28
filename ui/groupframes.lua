@@ -826,8 +826,8 @@ local function Enable()
     for _, e in ipairs({ "GROUP_ROSTER_UPDATE", "PLAYER_ENTERING_WORLD", "RAID_TARGET_UPDATE",
         "UNIT_THREAT_SITUATION_UPDATE", "READY_CHECK", "READY_CHECK_CONFIRM", "READY_CHECK_FINISHED",
         "PARTY_LEADER_CHANGED", "PLAYER_ROLES_ASSIGNED" }) do pcall(events.RegisterEvent, events, e) end
-    events:SetScript("OnEvent", OnEvent)
-    ticker:SetScript("OnUpdate", OnTick)
+    events:SetScript("OnEvent", K.Measured("Gruppenrahmen", OnEvent))
+    ticker:SetScript("OnUpdate", K.Measured("Gruppenrahmen", OnTick))
 end
 
 local function OnSetting()

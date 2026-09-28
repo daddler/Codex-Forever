@@ -459,16 +459,16 @@ function Obj:Build()
         self.frame:SetSize(self:Extent())
         self.buttons = {}
         self.events = CreateFrame("Frame")
-        self.events:SetScript("OnEvent", function() self:Refresh() end)
+        self.events:SetScript("OnEvent", K.Measured("Auren", function() self:Refresh() end))
         local acc = 0
-        self.ticker = function(_, el)
+        self.ticker = K.Measured("Auren", function(_, el)
             acc = acc + (el or 0)
             if acc < 0.1 then return end
             acc = 0
             for _, b in ipairs(self.buttons) do
                 if b:IsShown() then TickLegacy(b) end
             end
-        end
+        end)
     end
     if old then
         local c = self.frame
@@ -709,7 +709,7 @@ A.AUTO_REPORT = false
 local reported = false
 local watch = CreateFrame("Frame")
 watch:RegisterEvent("PLAYER_REGEN_DISABLED")
-watch:SetScript("OnEvent", function()
+watch:SetScript("OnEvent", K.Measured("Auren", function()
     if reported or not A.AUTO_REPORT or verdict == "ok" then return end
     if not (_G.C_Timer and _G.C_Timer.After) then return end
     _G.C_Timer.After(4, function()
@@ -723,4 +723,4 @@ watch:SetScript("OnEvent", function()
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
         end
     end)
-end)
+end))

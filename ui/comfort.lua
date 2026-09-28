@@ -180,14 +180,14 @@ local function EnsureAlert()
     alert:SetSize(220, 34)
     alert.text = Text(alert, 20)
     alert:Hide()
-    alert:SetScript("OnUpdate", function(self, el)
+    alert:SetScript("OnUpdate", K.Measured("Komfort", function(self, el)
         if self._unlock then return end
         self._t = (self._t or 0) + (el or 0)
         if self._t > 1.2 then
             local a = 1 - (self._t - 1.2) / 0.4
             if a <= 0 then self:Hide() else self:SetAlpha(a) end
         end
-    end)
+    end))
     alert.WCShowForUnlock = function(self, on)
         self._unlock = on and true or nil
         if on then
@@ -228,7 +228,7 @@ local function EnsureFps()
     fpsFrame.text = Text(fpsFrame, 11)
     fpsFrame:Hide()
     local acc = 1
-    fpsFrame:SetScript("OnUpdate", function(self, el)
+    fpsFrame:SetScript("OnUpdate", K.Measured("Komfort", function(self, el)
         acc = acc + (el or 0)
         if acc < 1 then return end
         acc = 0
@@ -239,7 +239,7 @@ local function EnsureFps()
         local tone = (fps < 30 or ms > 250) and "warning" or "textNormal"
         self.text:SetText(WeintCodex.ColorText(tone,
             string.format("%d fps · %d ms", math.floor(fps + 0.5), ms)))
-    end)
+    end))
     fpsFrame.WCShowForUnlock = function(self, on)
         if on then self:Show() elseif not On("fps") then self:Hide() end
     end
@@ -326,7 +326,7 @@ local function EnsureCoords()
     coords.text = K.NewText(coords)
     coords.text:SetPoint("CENTER", coords, "CENTER", 0, 0)
     local acc = 0
-    coords:SetScript("OnUpdate", function(self, el)
+    coords:SetScript("OnUpdate", K.Measured("Komfort", function(self, el)
         acc = acc + (el or 0)
         if acc < 0.1 then return end
         acc = 0
@@ -347,7 +347,7 @@ local function EnsureCoords()
         end
         self.text:SetText(WeintCodex.ColorText("textMuted", "Du ") .. FormatCoord(px, py)
             .. "     " .. WeintCodex.ColorText("textMuted", "Zeiger ") .. FormatCoord(cx, cy))
-    end)
+    end))
     return coords
 end
 
@@ -406,7 +406,7 @@ local function Apply()
         end
         for e in pairs(want) do pcall(events.RegisterEvent, events, e) end
     end
-    events:SetScript("OnEvent", OnEvent)
+    events:SetScript("OnEvent", K.Measured("Komfort", OnEvent))
 
     if not (active and K.Get(KEY, "hideErrorsInCombat")) then MuteErrors(false) end
 

@@ -244,14 +244,14 @@ function GG.Enable()
         hooked = true
         for _, fn in ipairs({ "DefaultCompactUnitFrameSetup", "DefaultCompactMiniFrameSetup", "CompactUnitFrame_SetUpFrame" }) do
             if type(_G[fn]) == "function" then
-                _G.hooksecurefunc(fn, function(f) GG.Style(f) end)
+                _G.hooksecurefunc(fn, K.Measured("Gruppenrahmen des Spiels", function(f) GG.Style(f) end))
                 GG.hooks = (GG.hooks or 0) + 1
             end
         end
         -- Das Spiel faerbt bei jedem Einheitenwechsel neu ein.
         for _, fn in ipairs({ "CompactUnitFrame_UpdateHealthColor", "CompactUnitFrame_UpdateAll" }) do
             if type(_G[fn]) == "function" then
-                _G.hooksecurefunc(fn, function(f) GG.Color(f) end)
+                _G.hooksecurefunc(fn, K.Measured("Gruppenrahmen des Spiels", function(f) GG.Color(f) end))
                 GG.hooks = (GG.hooks or 0) + 1
             end
         end
@@ -260,7 +260,7 @@ function GG.Enable()
     for _, e in ipairs({ "GROUP_ROSTER_UPDATE", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
-    ev:SetScript("OnEvent", Later)
+    ev:SetScript("OnEvent", K.Measured("Gruppenrahmen des Spiels", Later))
     GG.state = "Rahmen des Spiels im WeintCodex-Stil"
     Later()
 end

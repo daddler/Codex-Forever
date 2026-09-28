@@ -283,6 +283,113 @@ function K.Module(key) return modules[key] end
 -- wird er trotzdem - einmal, in den Chat, mit dem Modulnamen: still
 -- verschluckt saehe er aus wie ein Modul, das nichts tut.
 local reported = {}
+--------------------------------------------------
+-- Messen: wer erzeugt wie viel Wegwerf-Speicher? (/wcui speicher)
+--------------------------------------------------
+-- Beta-Test 6.6.1.7: "Das Addon verbraucht zwischen 10 und 30-40 MB,
+-- danach ein kleiner Reset, und es faengt ab 8 MB wieder an." Das ist
+-- kein Leck, sondern Wegwerf-Speicher: Tabellen und Texte, die bei jedem
+-- Ereignis entstehen und die die Speicherbereinigung spaeter einsammelt.
+-- Welcher Teil wie viel erzeugt, sagt der Client nicht - nur die Summe
+-- (GetAddOnMemoryUsage). K.Measured legt sich um die Takte und
+-- Ereignisse der Teile, die oft laufen, und zaehlt, solange eine Messung
+-- laeuft: Aufrufe, neu belegten Speicher (collectgarbage "count" davor
+-- und danach) und Zeit. Ohne Messung kostet die Huelle eine Abfrage.
+-- Ungenau nach unten: raeumt die Bereinigung mitten in einem Aufruf auf,
+-- zaehlt der nichts. Fuer eine Rangfolge reicht es.
+K.prof = { on = false, data = {}, started = nil }
+
+local function GcCount()
+    local f = _G.collectgarbage
+    if type(f) ~= "function" then return nil end
+    local ok, v = pcall(f, "count")
+    return ok and type(v) == "number" and v or nil
+end
+K.GcCount = GcCount
+
+local function Clock()
+    local f = _G.debugprofilestop
+    return type(f) == "function" and f() or nil
+end
+
+local function Account(name, m0, t0, ...)
+    local m1, t1 = GcCount(), Clock()
+    local e = K.prof.data[name]
+    if not e then
+        e = { calls = 0, kb = 0, ms = 0 }
+        K.prof.data[name] = e
+    end
+    e.calls = e.calls + 1
+    if m0 and m1 and m1 > m0 then e.kb = e.kb + (m1 - m0) end
+    if t0 and t1 then e.ms = e.ms + (t1 - t0) end
+    return ...
+end
+
+function K.Measured(name, fn)
+    return function(...)
+        if not K.prof.on then return fn(...) end
+        local m0, t0 = GcCount(), Clock()
+        return Account(name, m0, t0, fn(...))
+    end
+end
+
+local function AddonKB()
+    if _G.UpdateAddOnMemoryUsage then pcall(_G.UpdateAddOnMemoryUsage) end
+    local get = (_G.C_AddOns and _G.C_AddOns.GetAddOnMemoryUsage) or _G.GetAddOnMemoryUsage
+    if type(get) ~= "function" then return nil end
+    local ok, v = pcall(get, "WeintCodex")
+    return ok and type(v) == "number" and v or nil
+end
+K.AddonKB = AddonKB
+
+-- Messung starten; nach `secs` Sekunden ruft sie done(zeilen).
+function K.ProfileRun(secs, done)
+    local P = K.prof
+    wipe(P.data)
+    P.on = true
+    P.started = _G.GetTime and _G.GetTime() or 0
+    P.kb0 = AddonKB()
+    P.inCombat = K.InCombat()
+    local function Finish()
+        P.on = false
+        done(K.ProfileReport(secs))
+    end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(secs, Finish) else Finish() end
+end
+
+-- Zeilen fuer den Chat: Gesamtbild, dann die groessten Erzeuger je Sekunde.
+function K.ProfileReport(secs)
+    local P = K.prof
+    local out = {}
+    local kb1 = AddonKB()
+    out[#out + 1] = string.format("Speicher jetzt %s", type(kb1) == "number"
+        and string.format("%.1f MB", kb1 / 1024) or "unbekannt")
+    if type(P.kb0) == "number" and type(kb1) == "number" then
+        local d = kb1 - P.kb0
+        out[#out + 1] = string.format("In %d s %s um %.0f KB (%.1f KB/s)%s", secs,
+            d >= 0 and "gewachsen" or "gefallen (Bereinigung lief)", math.abs(d), d / secs,
+            P.inCombat and ", im Kampf gestartet" or "")
+    end
+    local list, sum = {}, 0
+    for name, e in pairs(P.data) do
+        list[#list + 1] = { name = name, e = e }
+        sum = sum + e.kb
+    end
+    table.sort(list, function(a, b) return a.e.kb > b.e.kb end)
+    if #list == 0 then
+        out[#out + 1] = "Kein gemessener Teil lief."
+        return out
+    end
+    if not GcCount() then out[#out + 1] = "Speicher je Teil nicht messbar (collectgarbage fehlt) – nur Zeit." end
+    out[#out + 1] = string.format("Gemessene Teile zusammen: %.1f KB/s", sum / secs)
+    for i = 1, math.min(8, #list) do
+        local e = list[i].e
+        out[#out + 1] = string.format("%d. %s: %.1f KB/s, %.0f Aufrufe/s, %.2f ms/s", i, list[i].name,
+            e.kb / secs, e.calls / secs, e.ms / secs)
+    end
+    return out
+end
+
 function K.Report(moduleKey, err)
     local key = tostring(moduleKey) .. tostring(err)
     if reported[key] then return end

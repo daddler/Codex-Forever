@@ -1092,6 +1092,14 @@ function DM.Refresh()
     DM.RefreshBreakdown()
 end
 
+local soon = false
+function DM.RefreshSoon()
+    if soon then return end
+    soon = true
+    local function Run() soon = false DM.Refresh() end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.25, Run) else Run() end
+end
+
 function DM.AddWindow()
     local n = Count()
     if n >= MAX_WINDOWS then return end
@@ -1146,6 +1154,7 @@ local function OnTick(_, el)
     acc = 0
     DM.Refresh()
 end
+OnTick = K.Measured("Schadensanzeige", OnTick)
 
 -- Beispielzeilen fuer den Testmodus. Namen und Zahlen sind erfunden und
 -- stehen nur da, solange der Testmodus laeuft.
@@ -1188,14 +1197,21 @@ local function Enable()
         "DAMAGE_METER_RESET", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
-    ev:SetScript("OnEvent", function(_, event)
+    ev:SetScript("OnEvent", K.Measured("Schadensanzeige", function(_, event)
         if event == "PLAYER_REGEN_DISABLED" then
             ticker:SetScript("OnUpdate", OnTick)
         elseif event == "PLAYER_REGEN_ENABLED" then
             ticker:SetScript("OnUpdate", nil)
         end
-        DM.Refresh()
-    end)
+        -- Die Mess-Ereignisse kommen im Kampf bei fast jedem Treffer, und
+        -- jedes Neuzeichnen holt frische Tabellen vom Client (6.6.1.8,
+        -- Speicher). Gesammelt: hoechstens alle 0,25 s.
+        if event == "DAMAGE_METER_COMBAT_SESSION_UPDATED" or event == "DAMAGE_METER_CURRENT_SESSION_UPDATED" then
+            DM.RefreshSoon()
+        else
+            DM.Refresh()
+        end
+    end))
     DM.Refresh()
 end
 

@@ -916,12 +916,12 @@ local function HookWindow(f)
     -- laeuft nur, solange das Fenster sichtbar ist.
     local watch = CreateFrame("Frame", nil, f)
     local acc = 0
-    watch:SetScript("OnUpdate", function(_, elapsed)
+    watch:SetScript("OnUpdate", K.Measured("Fenster", function(_, elapsed)
         acc = acc + (elapsed or 0)
         if acc < 0.5 then return end
         acc = 0
         Run(W.Inner)
-    end)
+    end))
 end
 
 local hookedShow = {}

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.1.8",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFWeniger Speicher im Kampf.|r Erinnerungen, Schadensanzeige und Aktionsleisten fassen Ereignisse zusammen, die im Kampf dutzendfach je Sekunde kommen, statt jedes einzeln auszuwerten. /wcui speicher misst 30 Sekunden lang, welcher Teil wie viel Speicher belegt.",
+        },
+    },
+    {
         version = "6.6.1.7",
         date    = "28.09.2026",
         notes   = {

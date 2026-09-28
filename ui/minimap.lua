@@ -713,7 +713,7 @@ local function Enable()
     end)
 
     local acc, scans, scanAcc = 1, 0, 0
-    frame:SetScript("OnUpdate", function(_, el)
+    frame:SetScript("OnUpdate", K.Measured("Minikarte", function(_, el)
         acc = acc + (el or 0)
         if acc < 0.5 then return end
         scanAcc = scanAcc + acc
@@ -727,15 +727,15 @@ local function Enable()
             -- Addons legen ihre Kartenknoepfe oft erst spaeter an.
             MM.LayoutButtons()
         end
-    end)
+    end))
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "ZONE_CHANGED", "ZONE_CHANGED_INDOORS", "ZONE_CHANGED_NEW_AREA", "PLAYER_ENTERING_WORLD" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
-    ev:SetScript("OnEvent", function(_, event)
+    ev:SetScript("OnEvent", K.Measured("Minikarte", function(_, event)
         if event == "PLAYER_ENTERING_WORLD" then MM.LayoutButtons() end
         UpdateTexts()
-    end)
+    end))
     local cl = _G.MinimapCluster
     if _G.hooksecurefunc and type(cl) == "table" and type(cl.Layout) == "function" then
         _G.hooksecurefunc(cl, "Layout", function() MM.LayoutButtons() end)

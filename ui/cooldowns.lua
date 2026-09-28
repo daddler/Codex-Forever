@@ -294,7 +294,7 @@ function CD.SkinAll()
             CD.found[#CD.found + 1] = name
             if not hooked[v] and _G.hooksecurefunc and type(v.OnAcquireItemFrame) == "function" then
                 hooked[v] = true
-                _G.hooksecurefunc(v, "OnAcquireItemFrame", function(viewer, item) CD.SkinItem(item, viewer) end)
+                _G.hooksecurefunc(v, "OnAcquireItemFrame", K.Measured("Abklingzeitmanager", function(viewer, item) CD.SkinItem(item, viewer) end))
             end
             for _, item in ipairs(ItemsOf(v)) do
                 CD.SkinItem(item, v)
@@ -355,10 +355,10 @@ function CD.Enable()
     local ev = CreateFrame("Frame")
     ev:RegisterEvent("ADDON_LOADED")
     ev:RegisterEvent("PLAYER_ENTERING_WORLD")
-    ev:SetScript("OnEvent", function(_, event, name)
+    ev:SetScript("OnEvent", K.Measured("Abklingzeitmanager", function(_, event, name)
         if event == "ADDON_LOADED" and name ~= "Blizzard_CooldownViewer" then return end
         CD.SkinAll()
-    end)
+    end))
 end
 
 local function px(v) return string.format("%d px", v) end

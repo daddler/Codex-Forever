@@ -573,16 +573,16 @@ local function BuildInfoBar()
         info.dur:SetPoint("RIGHT", info.fps, "LEFT", -2, 0)
         info.bags:SetPoint("RIGHT", info.dur, "LEFT", -2, 0)
         local acc = 0
-        info:SetScript("OnUpdate", function(_, el)
+        info:SetScript("OnUpdate", K.Measured("Chat-Infozeile", function(_, el)
             acc = acc + (el or 0)
             if acc < 1 then return end
             acc = 0
             CH.UpdateInfoBar()
-        end)
+        end))
         for _, e in ipairs({ "PLAYER_MONEY", "BAG_UPDATE", "UPDATE_INVENTORY_DURABILITY", "PLAYER_ENTERING_WORLD" }) do
             pcall(info.RegisterEvent, info, e)
         end
-        info:SetScript("OnEvent", function() CH.UpdateInfoBar() end)
+        info:SetScript("OnEvent", K.Measured("Chat-Infozeile", function() CH.UpdateInfoBar() end))
         -- Die Eingabezeile ersetzt sie beim Schreiben (CH.UpdateEditState).
         CH.HookEdit(_G.ChatFrame1EditBox)
     end

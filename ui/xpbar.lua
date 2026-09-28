@@ -276,6 +276,7 @@ local function FadeStep(_, elapsed)
     elseif fadeAlpha > target then fadeAlpha = math.max(target, fadeAlpha - step) end
     frame:SetAlpha(fadeAlpha)
 end
+FadeStep = K.Measured("Erfahrungsbalken", FadeStep)
 XB._fadeStep = FadeStep
 
 --------------------------------------------------
@@ -420,11 +421,11 @@ function XB.Enable()
                          "QUEST_LOG_UPDATE", "QUEST_TURNED_IN", "QUEST_ACCEPTED", "QUEST_REMOVED" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
-    ev:SetScript("OnEvent", function(_, event)
+    ev:SetScript("OnEvent", K.Measured("Erfahrungsbalken", function(_, event)
         if event == "PLAYER_ENTERING_WORLD" and Opt("hideGame") then XB.HideGameBars() end
         XB.Track()
         XB.Update()
-    end)
+    end))
     XB.Track()
     XB.Apply()
 end

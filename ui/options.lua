@@ -850,6 +850,13 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    if msg == "speicher" or msg == "memory" then
+        local say = function(line) print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line) end
+        if K.prof.on then say("Die Messung läuft schon.") return end
+        say("Messe 30 Sekunden, wer wie viel Speicher belegt – spiel einfach weiter, am aussagekräftigsten im Kampf.")
+        K.ProfileRun(30, function(lines) for _, line in ipairs(lines) do say(line) end end)
+        return
+    end
     if msg == "gruppe" or msg == "group" then
         for _, line in ipairs(WeintCodex.UIGameGroup.Inspect()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)

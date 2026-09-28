@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.1.8] – 2026-09-28
+
+**Weniger Speicher im Kampf.** Erinnerungen, Schadensanzeige und Aktionsleisten fassen Ereignisse zusammen, die im Kampf dutzendfach je Sekunde kommen, statt jedes einzeln auszuwerten. /wcui speicher misst 30 Sekunden lang, welcher Teil wie viel Speicher belegt.
+
 ## [6.6.1.7] – 2026-09-28
 
 **Nur deine ausgewählten Buffs am Spielerrahmen.** Über dem Spielerrahmen stehen klein die Buffs, die du im Abklingzeitmanager des Spiels auswählst (z. B. Schild, Inneres Feuer) – auch im Kampf. Alle Buffs, auch die von anderen, stehen wieder oben rechts. Einmal /wcui einrichten, dann neu laden.

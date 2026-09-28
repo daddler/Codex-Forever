@@ -231,7 +231,23 @@ end
 -- Zauber: Name oder ID -> { id, name, icon }
 --------------------------------------------------
 
+-- Aufgeloeste Zauber merken: jede Aufloesung kostet einen Text (trim),
+-- eine Abfrage beim Client (eine neue Tabelle) und das Ergebnis - und
+-- sie lief bei jedem Ereignis fuer jede Regel. Gemerkt wird nur, was der
+-- Client kennt; SPELLS_CHANGED (neu gelernt) und das Laden leeren.
+local resolved = {}
+function R.ClearCache() wipe(resolved) end
+
 function R.Resolve(text)
+    if type(text) ~= "string" or text == "" then return nil end
+    local hit = resolved[text]
+    if hit then return hit end
+    local sp = R.ResolveUncached(text)
+    if sp and sp.id then resolved[text] = sp end
+    return sp
+end
+
+function R.ResolveUncached(text)
     if type(text) ~= "string" or text == "" then return nil end
     text = text:gsub("^%s+", ""):gsub("%s+$", "")
     local key = text:match("^%d+$") and (text + 0) or text
@@ -680,6 +696,33 @@ end
 
 R.Rows = function() return procRow, cdRow end
 
+-- EREIGNISSE SAMMELN (6.6.1.8, Beta-Test: "das Addon verbraucht 10 bis
+-- 40 MB"). SPELL_UPDATE_COOLDOWN kommt im Kampf bei jedem Zauber
+-- mehrfach, UNIT_AURA bei jedem Buff - und jede Auswertung legt Tabellen
+-- an (Regeln, Zauberinfos, Auren des Clients). Jetzt merkt sich ein
+-- Ereignis nur, WAS neu zu zeichnen ist; ausgewertet wird hoechstens
+-- einmal je Zehntelsekunde.
+local pending, queued = {}, false
+local function Flush()
+    queued = false
+    local b, p, c = pending.banner, pending.procs, pending.cooldowns
+    pending.banner, pending.procs, pending.cooldowns = nil, nil, nil
+    if b then R.UpdateBanner() end
+    if p then R.UpdateProcs() end
+    if c then R.UpdateCooldowns() end
+end
+R.Flush = Flush
+
+function R.Schedule(banner, procs, cooldowns)
+    if banner then pending.banner = true end
+    if procs then pending.procs = true end
+    if cooldowns then pending.cooldowns = true end
+    if queued then return end
+    queued = true
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(R.FLUSH_DELAY, Flush) else Flush() end
+end
+R.FLUSH_DELAY = 0.1
+
 function R.UpdateAll()
     R.UpdateBanner()
     R.UpdateProcs()
@@ -706,27 +749,28 @@ local function Enable()
         "BAG_UPDATE_DELAYED" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
-    ev:SetScript("OnEvent", function(_, event, unit)
+    pcall(ev.RegisterEvent, ev, "SPELLS_CHANGED")
+    ev:SetScript("OnEvent", K.Measured("Erinnerungen", function(_, event, unit)
         if event == "UNIT_AURA" or event == "UNIT_INVENTORY_CHANGED" or event == "UNIT_PET" then
             if unit ~= "player" then return end
         end
+        if event == "SPELLS_CHANGED" or event == "PLAYER_ENTERING_WORLD" then R.ClearCache() end
         if event == "SPELL_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_CHARGES" then
-            R.UpdateCooldowns()
+            R.Schedule(false, false, true)
             return
         end
-        if event == "UNIT_AURA" then R.UpdateProcs() end
-        R.UpdateBanner()
-        if event == "PLAYER_ENTERING_WORLD" then R.UpdateCooldowns() R.UpdateProcs() end
-    end)
+        R.Schedule(true, event == "UNIT_AURA", false)
+        if event == "PLAYER_ENTERING_WORLD" then R.Schedule(true, true, true) end
+    end))
     -- Waffenverzauberungen laufen ab, ohne dass ein Ereignis kommt: ein
     -- ruhiger Takt, alle fuenf Sekunden.
     local acc = 0
-    ev:SetScript("OnUpdate", function(_, el)
+    ev:SetScript("OnUpdate", K.Measured("Erinnerungen", function(_, el)
         acc = acc + (el or 0)
         if acc < 5 then return end
         acc = 0
         R.UpdateBanner()
-    end)
+    end))
     R.UpdateAll()
 end
 
@@ -873,7 +917,7 @@ K.Register({
     description = "Fehlende Buffs, Waffenverzauberung und Begleiter vor dem Kampf; eigene Buffs, Procs und Abklingzeiten als Symbole – so weit der Client sie herausgibt.",
     defaults = defaults,
     Enable = Enable,
-    OnSetting = function() R.UpdateAll() end,
+    OnSetting = function() R.ClearCache() R.UpdateAll() end,
     pages = {
         { key = "regeln", label = "Regeln", build = function(B)
             B:Section("Deine Regeln", "Jede Regel ist eine Erinnerung oder ein Symbol. Zauber nennst du mit Namen oder ID – eine eingebaute Liste gibt es nicht. Eine Regel gilt für die Klasse, auf der du sie anlegst, oder für alle; was hier nicht gilt, steht blass.")

@@ -1293,7 +1293,7 @@ local function Enable()
     }) do Register(events, e) end
     for e in pairs(UNIT_EVENTS) do Register(events, e) end
     for e in pairs(CAST_EVENTS) do Register(events, e) end
-    events:SetScript("OnEvent", OnEvent)
+    events:SetScript("OnEvent", K.Measured("Plaketten", OnEvent))
 
     -- Plaketten, die beim Einschalten schon stehen (Neuladen mitten in
     -- der Welt), bekommen kein ADDED mehr.

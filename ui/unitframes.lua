@@ -381,7 +381,7 @@ local function Create(unit)
         fbHost:SetFrameLevel((f:GetFrameLevel() or 1) + 20)
         f._fb = K.NewText(fbHost, 11)
         f._fb:Hide()
-        fbHost:SetScript("OnUpdate", function(_, elapsed)
+        fbHost:SetScript("OnUpdate", K.Measured("Einheitenrahmen", function(_, elapsed)
             local left = f._fbLeft
             if not left then return end
             left = left - (elapsed or 0)
@@ -392,7 +392,7 @@ local function Create(unit)
                 f._fbLeft = left
                 if left < UF.FEEDBACK_FADE then f._fb:SetAlpha(left / UF.FEEDBACK_FADE) end
             end
-        end)
+        end))
     end
 
     local textHost = CreateFrame("Frame", nil, f)
@@ -501,12 +501,12 @@ local function Create(unit)
     -- solange der Rahmen zu sehen ist (versteckte Rahmen laufen nicht).
     if unit == "targettarget" then
         local acc = 0
-        f:SetScript("OnUpdate", function(self, el)
+        f:SetScript("OnUpdate", K.Measured("Einheitenrahmen", function(self, el)
             acc = acc + (el or 0)
             if acc < 0.2 then return end
             acc = 0
             self:Refresh()
-        end)
+        end))
     end
     return f
 end
@@ -1421,7 +1421,7 @@ local function Enable()
     for e in pairs(POWER) do Register(e) end
     for e in pairs(FULL) do Register(e) end
     for e in pairs(CAST) do Register(e) end
-    events:SetScript("OnEvent", OnEvent)
+    events:SetScript("OnEvent", K.Measured("Einheitenrahmen", OnEvent))
 end
 
 local function OnSetting(key)

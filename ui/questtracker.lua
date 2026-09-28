@@ -166,9 +166,9 @@ function Setup()
     end
     -- Einen Takt spaeter: das Spiel ordnet seine Liste auf dasselbe
     -- Ereignis hin erst an.
-    ev:SetScript("OnEvent", function()
+    ev:SetScript("OnEvent", K.Measured("Questliste", function()
         if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, QT.Apply) else QT.Apply() end
-    end)
+    end))
     QT.Apply()
 end
 
@@ -296,12 +296,12 @@ function StartDungeonFilter()
     for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "ZONE_CHANGED_NEW_AREA" }) do
         pcall(dungeonEvents.RegisterEvent, dungeonEvents, e)
     end
-    dungeonEvents:SetScript("OnEvent", function()
+    dungeonEvents:SetScript("OnEvent", K.Measured("Questliste", function()
         -- Das Questlog steht beim Betreten erst einen Moment spaeter; und
         -- die Verfolgung aendert sich nicht im Kampf.
         local function run() K.AfterCombat(QT.CheckDungeon) end
         if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(2, run) else run() end
-    end)
+    end))
 end
 
 local function px(v) return string.format("%d px", v) end

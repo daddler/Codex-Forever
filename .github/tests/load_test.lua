@@ -3661,6 +3661,60 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.6.1.8: Speicher messen - K.Measured zaehlt nur waehrend einer Messung,
+-- der Bericht nennt die groessten Erzeuger; Erinnerungen und
+-- Schadensanzeige sammeln haeufige Ereignisse.
+do
+    local ok, err = pcall(function()
+        local oldGc, oldClock, oldAfter = _G.collectgarbage, _G.debugprofilestop, _G.C_Timer.After
+        local mem, clock = 1000, 0
+        _G.collectgarbage = function(opt) assert(opt == "count") return mem end
+        _G.debugprofilestop = function() return clock end
+        local calls = 0
+        local fn = K.Measured("Testteil", function(a, b) calls = calls + 1 mem = mem + 5 clock = clock + 2 return a + b, "x" end)
+        assert(fn(1, 2) == 3 and not next(K.prof.data), "ohne Messung gezaehlt")
+        local later
+        _G.C_Timer.After = function(_, f) later = f end
+        local lines
+        K.ProfileRun(10, function(l) lines = l end)
+        local r1, r2 = fn(2, 3)
+        fn(1, 1)
+        assert(r1 == 5 and r2 == "x", "Rueckgabewerte verloren")
+        assert(K.prof.data.Testteil.calls == 2 and K.prof.data.Testteil.kb == 10, "Aufrufe/Speicher falsch gezaehlt")
+        later()
+        assert(not K.prof.on and lines, "Messung endet nicht")
+        local found = false
+        for _, l in ipairs(lines) do if l:find("Testteil: 1,0 KB/s", 1, true) or l:find("Testteil: 1.0 KB/s", 1, true) then found = true end end
+        assert(found, "Bericht nennt den Erzeuger nicht: " .. table.concat(lines, " | "))
+        -- Erinnerungen: viele Ereignisse, eine Auswertung.
+        local R = WeintCodex.UIReminders
+        local n, oldUC = 0, R.UpdateCooldowns
+        R.UpdateCooldowns = function() n = n + 1 end
+        R.Flush()   -- was frueher im Test angestossen wurde
+        n = 0
+        local flush
+        _G.C_Timer.After = function(_, f) flush = f end
+        for _ = 1, 20 do R.Schedule(false, false, true) end
+        flush()
+        assert(n == 1, "Abklingzeiten " .. n .. "x statt 1x ausgewertet")
+        R.UpdateCooldowns = oldUC
+        -- Aufgeloeste Zauber werden gemerkt, bis SPELLS_CHANGED leert.
+        local asked = 0
+        local oldSpell = _G.C_Spell
+        _G.C_Spell = { GetSpellInfo = function(k) asked = asked + 1 return { spellID = 17, name = "Schild", iconID = 1 } end }
+        R.ClearCache()
+        R.Resolve("Schild") R.Resolve("Schild")
+        assert(asked == 1, "Zauber " .. asked .. "x aufgeloest")
+        R.ClearCache()
+        R.Resolve("Schild")
+        assert(asked == 2, "Merkliste nicht geleert")
+        R.ClearCache()
+        _G.C_Spell = oldSpell
+        _G.collectgarbage, _G.debugprofilestop, _G.C_Timer.After = oldGc, oldClock, oldAfter
+    end)
+    Check(ok, "Speicher: Messung je Teil, Ereignisse gesammelt, Zauber gemerkt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Ruhe und Kampf: ohne Ziel und bei vollem Leben treten Spielerrahmen und
 -- Schadensanzeige zurueck; Ziel, Kampf und Testmodus holen sie zurueck.
 do

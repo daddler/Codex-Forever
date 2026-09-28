@@ -127,7 +127,7 @@ function CB.Create(parent)
     f._shadow = K.Glow(f, { spread = 4, shadow = true })
 
     for k, v in pairs(Bar) do f[k] = v end
-    f:SetScript("OnUpdate", f.OnTick)
+    f:SetScript("OnUpdate", K.Measured("Zauberbalken", f.OnTick))
     return f
 end
 

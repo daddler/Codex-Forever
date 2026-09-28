@@ -427,10 +427,10 @@ local function Enable()
         "PLAYER_MONEY", "INVENTORY_SEARCH_UPDATE", "PLAYER_REGEN_ENABLED" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
-    ev:SetScript("OnEvent", function(_, event)
+    ev:SetScript("OnEvent", K.Measured("Taschen", function(_, event)
         if event == "PLAYER_REGEN_ENABLED" then EnsurePool() end
         BG.Refresh()
-    end)
+    end))
 end
 
 local function px(v) return string.format("%d px", v) end
