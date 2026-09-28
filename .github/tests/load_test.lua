@@ -4318,7 +4318,13 @@ do
         _G.C_DamageMeter.GetCombatSessionFromType = function()
             return { combatSources = { { sourceGUID = "G2", totalAmount = setmetatable({}, {}) } } } end
         DM.Sample()
-        assert(DM.History().secret and DM.Rates("G2", "DamageDone", 5) == nil, "geheime Zahl aufgezeichnet")
+        assert(DM.History().secret and DM.Rates("G2", "DamageDone", 5) == nil, "mit geheimer Zahl gerechnet")
+        -- 6.6.2.3: geheime Summen werden trotzdem gemerkt und als Summe
+        -- ueber den Kampf gezeichnet (Balken des Spiels nehmen sie).
+        local sums, last = DM.Cumulative("G2", "DamageDone", 5)
+        assert(sums and #sums == 5 and type(last) == "table" and sums[5] == last, "geheime Summe nicht gemerkt")
+        local h, note = DM.DrawSums(sums, last, 12)
+        assert(h > 0 and note:find("verdeckt", 1, true) and DM.Breakdown().sums[5]:IsShown(), "Summe nicht gezeichnet")
         DM.StopHistory()
         _G.issecretvalue = oldSecret
 
@@ -4459,6 +4465,34 @@ do
         W.SkinInsets(comm)
         assert(bg:GetAlpha() == 0 and W.SideTabs[chatTab], "Chat-Reiter der Communitys nicht gestaltet")
         assert(W.Insets[inset] and edge:GetAlpha() == 0, "Innenflaeche der Communitys nicht gestaltet")
+        -- 6.6.2.3: Liste links - Eintraege als Kachel, gewaehlter im Akzent;
+        -- das Wappen oben links bleibt.
+        assert(W.HidesAtlas("communities-nav-button-green-normal") and not W.HidesAtlas("communities-guildbanner-background"),
+            "Eintrag bleibt gruen oder Wappen im Eintrag weg")
+        local entry = stub.NewObject("Button")
+        local normal, pressed = Tex("communities-nav-button-green-normal"), Tex("communities-nav-button-green-pressed")
+        pressed.IsShown = function() return true end
+        entry.GetRegions = function() return normal, pressed end
+        W.HideByAtlas(entry)
+        assert(normal:GetAlpha() == 0 and W.Entries[entry] and W.Entries[entry].on, "gewaehlter Eintrag nicht markiert")
+        pressed.IsShown = function() return false end
+        W.Inner()   -- neuer Durchlauf
+        W.HideByAtlas(entry)
+        assert(not W.Entries[entry].on, "Markierung bleibt nach dem Abwaehlen")
+        local cframe = stub.NewObject("Frame")
+        local portrait = stub.NewObject("Frame")
+        local emblem = stub.NewObject("Texture")
+        portrait.GetRegions = function() return emblem end
+        cframe.PortraitOverlay = portrait
+        W.Skin(cframe)
+        assert(emblem:GetAlpha() == 1, "Gildenwappen ausgeblendet")
+        -- Weicher Rand an den Kanten des Bildes, nicht des Traegers.
+        local a1, a2 = stub.NewObject("Texture"), stub.NewObject("Texture")
+        a1.GetLeft, a1.GetRight, a1.GetTop, a1.GetBottom = function() return 10 end, function() return 110 end, function() return 300 end, function() return 150 end
+        a2.GetLeft, a2.GetRight, a2.GetTop, a2.GetBottom = function() return 10 end, function() return 200 end, function() return 150 end, function() return 20 end
+        local L, R, T, B = W.Bounds({ a1, a2 })
+        assert(L == 10 and R == 200 and T == 300 and B == 20, "Kanten des Bildes falsch")
+        assert(W.Bounds({ stub.NewObject("Texture") }) == nil, "Lage geraten")
     end)
     Check(ok2, "Berufe und Gilde & Communitys: Metall, Goldrahmen, Seitenreiter, Innenflaechen"
         .. (ok2 and "" or (": " .. tostring(err2))))

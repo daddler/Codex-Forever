@@ -105,7 +105,7 @@ W.PANELS  = { "PaperDollFrame", "ReputationFrame", "SkillFrame", "TokenFrame", "
               "CharacterStatsPane" }
 
 -- Schmuck in der Fenstervorlage des Spiels, als Schluessel am Rahmen.
-local DECOR = { "NineSlice", "Bg", "Background", "TopTileStreaks", "Inset", "InsetBg", "PortraitOverlay",
+local DECOR = { "NineSlice", "Bg", "Background", "TopTileStreaks", "Inset", "InsetBg",
                 "PortraitContainer", "PortraitFrame", "PortraitButton", "portrait", "TitleBg", "TopBorder" }
 
 local done = {}
@@ -156,9 +156,9 @@ end
 -- Portraet-Rahmen ganz ausblenden, nicht nur ihre Texturen: im
 -- Talentfenster blieb das runde Symbol oben links stehen (Beta-Test
 -- 6.4.1.4) - es liegt tiefer als eine Textur des Rahmens.
--- 6.6.2.2: PortraitOverlay - das Gildenwappen oben links an Gilde &
--- Communitys (Beta-Test: blieb stehen).
-local WHOLE = { PortraitContainer = true, PortraitFrame = true, PortraitButton = true, PortraitOverlay = true }
+-- Das Gildenwappen oben links an Gilde & Communitys (PortraitOverlay)
+-- bleibt: 6.6.2.2 hatte es ausgeblendet, der Beta-Test wollte es zurueck.
+local WHOLE = { PortraitContainer = true, PortraitFrame = true, PortraitButton = true }
 
 local function HideDecorOf(f)
     for _, key in ipairs(DECOR) do
@@ -272,6 +272,10 @@ W.HIDE_ATLAS = {
     "^groupfinder%-button%-cover",           -- Goldrahmen um die Kategorien (1 px Rand statt)
     "^common%-search%-border",               -- Goldrand um das Suchfeld (flach statt)
     "^MapCornerShadow",                      -- Schatten am Knopf der Seitenleiste
+    -- 6.6.2.3, gemessen: die Eintraege der Liste links an Gilde & Communitys
+    -- (gruen, blau) - statt dessen eine kleine Kachel, der gewaehlte mit
+    -- Rand im Akzent (W.NavEntry). Das Wappen im Eintrag bleibt.
+    "^communities%-nav%-button",
 }
 -- Gedaempft statt weg (mit "Stimmung statt Schwarz"): die Karten der
 -- Berufsuebersicht tragen je Beruf ein Bild - das zeigt, welcher es ist.
@@ -314,6 +318,38 @@ local function FlatBar(bar)
     K.Border(bar, 1, 0, 0, 0, 1, "OVERLAY")
 end
 
+-- Ein Eintrag der Liste links an Gilde & Communitys: kleine Kachel statt
+-- des gruenen oder blauen Bildes. Gewaehlt ist er, wenn sein Bild "pressed"
+-- oder "select" heisst und gezeigt wird - je Durchlauf neu bestimmt.
+local entries = setmetatable({}, { __mode = "k" })
+W.Entries = entries
+function W.NavEntry(f, r, atlas)
+    if type(f) ~= "table" or not f.CreateTexture then return end
+    local d = entries[f]
+    if not d then
+        d = { kachel = K.Kachel(f, { shadow = 0 }) }
+        own[d.kachel.bg], own[d.kachel.light] = true, true
+        local s1 = C.surface1
+        d.kachel.bg:SetColorTexture(s1[1], s1[2], s1[3], 0.95)
+        local hl = f:CreateTexture(nil, "HIGHLIGHT")
+        hl:SetAllPoints(f)
+        local h = WeintCodex.GameColors.hoverFill
+        hl:SetColorTexture(h[1], h[2], h[3], h[4] * 0.5)
+        own[hl] = true
+        entries[f] = d
+    end
+    if d.run ~= stats.runs then d.run, d.onNow = stats.runs, false end
+    local low = atlas:lower()
+    if (low:find("pressed", 1, true) or low:find("select", 1, true)) and r.IsShown and K.Bool(r:IsShown(), false) then
+        d.onNow = true
+    end
+    if d.on ~= d.onNow then
+        d.on = d.onNow
+        local c = d.on and C.accent or { 0, 0, 0 }
+        d.kachel.border:SetColor(c[1], c[2], c[3], 1)
+    end
+end
+
 -- 1 px schwarzer Rand statt eines Goldrahmens (Berufssymbole), einmal.
 local edged = setmetatable({}, { __mode = "k" })
 function W.EdgeBorder(f)
@@ -340,6 +376,7 @@ local function HideByAtlas(f, depth)
             if atlas:find("^common%-stat%-bar%-BG") or atlas:find("^Profession%-ProgressBar%-BG") then FlatBar(f) end
             if atlas:find("^Profession%-square%-frame") or atlas:find("^groupfinder%-button%-cover") then W.EdgeBorder(f) end
             if atlas:find("^common%-search%-border") then FlatBar(f) end
+            if atlas:find("^communities%-nav%-button") then W.NavEntry(f, r, atlas) end
         elseif ok and W.TonesAtlas(atlas) then
             if Opt("windowArt") then W.Tone(r) else Hide(r) end
             if not seen[r] then
@@ -935,7 +972,12 @@ W.FitStats = function(f) FitStats(f, 0) end
 -- vier Kanten liegt deshalb ein Verlauf in der Farbe der Kachel, der nach
 -- innen ausblendet. Echte Unschaerfe kann der Client nicht; ein Verlauf
 -- ist, was ein Weichzeichner an einer Kante sieht.
-W.SOFT_EDGE = 44
+-- 6.6.2.3: 44 px waren zu wenig, und der Rand sass an den Kanten des
+-- Rahmens, der das Bild traegt - oben und rechts endet das Bild aber
+-- vorher (Beta-Test: "oben und rechts immer noch abgehakt"). Jetzt: an den
+-- Kanten des BILDES (die Vereinigung aller RaceBG-Teile), gemessen bei
+-- jedem Durchlauf, solange das Fenster offen ist.
+W.SOFT_EDGE = 60
 
 local soft = setmetatable({}, { __mode = "k" })
 W.soft = soft
@@ -955,16 +997,16 @@ local function FindRaceBG(f, depth, out)
     for _, ch in ipairs(cok and kids or {}) do FindRaceBG(ch, depth + 1, out) end
 end
 
-local function Edge(host, side, c, size)
+local function Edge(host, box, side, c, size)
     local t = host:CreateTexture(nil, "BORDER", nil, 7)
     own[t] = true
     if side == "LEFT" or side == "RIGHT" then
-        t:SetPoint("TOP" .. side, host, "TOP" .. side, 0, 0)
-        t:SetPoint("BOTTOM" .. side, host, "BOTTOM" .. side, 0, 0)
+        t:SetPoint("TOP" .. side, box, "TOP" .. side, 0, 0)
+        t:SetPoint("BOTTOM" .. side, box, "BOTTOM" .. side, 0, 0)
         t:SetWidth(size)
     else
-        t:SetPoint(side .. "LEFT", host, side .. "LEFT", 0, 0)
-        t:SetPoint(side .. "RIGHT", host, side .. "RIGHT", 0, 0)
+        t:SetPoint(side .. "LEFT", box, side .. "LEFT", 0, 0)
+        t:SetPoint(side .. "RIGHT", box, side .. "RIGHT", 0, 0)
         t:SetHeight(size)
     end
     t:SetColorTexture(1, 1, 1, 1)
@@ -981,34 +1023,90 @@ local function Edge(host, side, c, size)
     return t
 end
 
--- Liefert die Rahmen, die jetzt einen weichen Rand tragen (Prueflauf).
+-- Die Kanten des Bildes: kleinster linker, groesster rechter Rand usw.
+-- ueber alle Teile. nil, solange der Client noch keine Lage kennt.
+local function Bounds(list)
+    local L, R, T, B
+    for _, r in ipairs(list) do
+        local ok, l, rr, t, b = pcall(function() return r:GetLeft(), r:GetRight(), r:GetTop(), r:GetBottom() end)
+        l, rr, t, b = K.Plain(l), K.Plain(rr), K.Plain(t), K.Plain(b)
+        if ok and type(l) == "number" and type(rr) == "number" and type(t) == "number" and type(b) == "number" then
+            L = L and math.min(L, l) or l
+            R = R and math.max(R, rr) or rr
+            T = T and math.max(T, t) or t
+            B = B and math.min(B, b) or b
+        end
+    end
+    if L and R and T and B and R > L and T > B then return L, R, T, B end
+    return nil
+end
+W.Bounds = Bounds
+
+-- Der Anker (unsichtbarer Rahmen) auf die Kanten des Bildes legen; ohne
+-- Lage: der ganze Traeger.
+local function PlaceBox(e, host)
+    local L, R, T, B = Bounds(e.parts)
+    local hl, hb = K.Plain(host:GetLeft()), K.Plain(host:GetBottom())
+    local key
+    if L and type(hl) == "number" and type(hb) == "number" then
+        key = string.format("%d:%d:%d:%d", L - hl, B - hb, R - L, T - B)
+    else
+        key = "host"
+    end
+    if e.key == key then return end
+    e.key = key
+    e.box:ClearAllPoints()
+    if key == "host" then
+        e.box:SetAllPoints(host)
+    else
+        e.box:SetPoint("BOTTOMLEFT", host, "BOTTOMLEFT", L - hl, B - hb)
+        e.box:SetSize(R - L, T - B)
+    end
+end
+
 local softRoot = setmetatable({}, { __mode = "k" })
+-- Liefert die Rahmen, die jetzt einen weichen Rand tragen (Prueflauf).
 function W.SoftenModel(f)
-    -- Einmal gefunden, ist es erledigt - das Fenster fragt zweimal je
-    -- Sekunde nach, der Baum muss nicht jedes Mal durchsucht werden.
-    if softRoot[f] then return softRoot[f] end
+    local cached = softRoot[f]
+    if cached then
+        for _, host in ipairs(cached) do PlaceBox(soft[host], host) end
+        return cached
+    end
     local found = {}
     FindRaceBG(f, 0, found)
-    -- Der Rahmen, auf dem der Hintergrund liegt: dessen Kanten sind die
-    -- Kanten des Bildes (der Hintergrund fuellt die Modellszene).
-    local hosts = {}
+    -- Der Rahmen, auf dem der Hintergrund liegt.
+    local hosts, order = {}, {}
     for _, r in ipairs(found) do
         local ok, p = pcall(r.GetParent, r)
-        if ok and type(p) == "table" and p.CreateTexture then hosts[p] = true end
+        if ok and type(p) == "table" and p.CreateTexture then
+            if not hosts[p] then hosts[p] = {} order[#order + 1] = p end
+            table.insert(hosts[p], r)
+        end
     end
     local c = WeintCodex.GameColors.kachelFill
-    local out = {}
-    for host in pairs(hosts) do
-        if not soft[host] then
-            local e = {}
+    for _, host in ipairs(order) do
+        local e = soft[host]
+        if not e then
+            e = { parts = hosts[host], box = CreateFrame("Frame", nil, host) }
             for _, side in ipairs({ "LEFT", "RIGHT", "TOP", "BOTTOM" }) do
-                e[side] = Edge(host, side, c, W.SOFT_EDGE)
+                e[side] = Edge(host, e.box, side, c, W.SOFT_EDGE)
             end
             soft[host] = e
         end
-        out[#out + 1] = host
+        PlaceBox(e, host)
     end
-    if #out > 0 then softRoot[f] = out end
+    if #order > 0 then softRoot[f] = order end
+    return order
+end
+
+-- Fuer /wcui fenster: wo der weiche Rand sitzt.
+function W.SoftReport(f)
+    local out = {}
+    for _, host in ipairs(softRoot[f] or {}) do
+        local e = soft[host]
+        out[#out + 1] = string.format("   Weicher Rand: %d Teile, %s", #e.parts,
+            e.key == "host" and "am Träger (Lage des Bildes unbekannt)" or ("am Bild " .. tostring(e.key)))
+    end
     return out
 end
 
@@ -1280,8 +1378,11 @@ W.SkinSideTabs = SkinSideTabs
 -- Fuer /wcui fenster: je Reiter seine Zeichen.
 function W.SideTabReport(f)
     local out = {}
-    local found = {}
-    CollectSideTabs(f, 0, found)
+    local raw, found, seenTab = {}, {}, {}
+    CollectSideTabs(f, 0, raw)
+    for _, tab in ipairs(raw) do
+        if not seenTab[tab] then seenTab[tab] = true found[#found + 1] = tab end
+    end
     for i, tab in ipairs(found) do
         local d = sideDone[tab]
         local sig = (d and d.signals) or W.SideSignals(tab)
@@ -1325,6 +1426,17 @@ local function SkinInsets(f, depth)
 end
 W.SkinInsets = function(f) SkinInsets(f, 0) end
 
+-- Liste links an Gilde & Communitys (gemessen, 6.6.2.3): ihr Grund (Bild
+-- 593918, zehnfach) und die Goldranken in den Ecken (FilligreeOverlay).
+local listDone = setmetatable({}, { __mode = "k" })
+function W.SkinCommunitiesList(f)
+    local list = f.CommunitiesList or _G.CommunitiesFrameCommunitiesList
+    if type(list) ~= "table" or listDone[list] or (list.IsForbidden and list:IsForbidden()) then return end
+    listDone[list] = true
+    HideOwnTextures(list)
+    if type(list.FilligreeOverlay) == "table" then HideOwnTextures(list.FilligreeOverlay) end
+end
+
 function W.Inner()
     stats.runs = stats.runs + 1
     stats.last = _G.GetTime and K.Plain(_G.GetTime()) or nil
@@ -1339,6 +1451,7 @@ function W.Inner()
             SkinSideTabs(f)
             -- Innenflaechen tiefer im Fenster nur dort, wo sie gemessen
             -- zu sehen waren - die schon gestalteten Fenster bleiben, wie sie sind.
+            if n == "CommunitiesFrame" then W.SkinCommunitiesList(f) end
             if n == "CommunitiesFrame" or n == "ProfessionsFrame" or n == "LFGParentFrame" or n == "PVEFrame" then
                 SkinInsets(f, 0)
             end

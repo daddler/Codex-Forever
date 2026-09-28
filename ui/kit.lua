@@ -1270,6 +1270,12 @@ function K.InspectWindow()
         out[#out + 1] = string.format("   %s · %d× · in %s%s", g.key, g.n, g.owner, mark)
     end
     if #list == 0 then out[#out + 1] = "   keine sichtbaren Bilder" end
+    if W and W.SoftReport then
+        local ok, lines = pcall(W.SoftReport, top)
+        if ok and type(lines) == "table" then
+            for _, l in ipairs(lines) do out[#out + 1] = l end
+        end
+    end
     -- Seitenreiter (6.6.2.2): woran der gewaehlte zu erkennen ist.
     if W and W.SideTabReport then
         local ok, lines = pcall(W.SideTabReport, top)

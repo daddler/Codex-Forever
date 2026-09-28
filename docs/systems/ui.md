@@ -1039,3 +1039,40 @@ Namensplaketten.
   (`_npcID`, `_npcName`, `_caster`) – die Farbabfrage im Kampf zerlegt
   keine GUID. Geheime Werte zählen als „unbekannt“: keine Regel, kein
   Zaubernder.
+
+## Nachträge *(6.6.2.3)*
+
+**Verlauf mit geheimen Zahlen – gemessen.** Im Beta-Client kamen die
+Summen von `C_DamageMeter` im Kampf **geheim**; lesbar war erst die
+Probe nach dem Kampf. 6.6.2.1 zeichnete deshalb nur eine Säule am Ende
+(Beta-Test: „ich habe die ganze Zeit gekämpft“). Den Zuwachs je Sekunde
+kann Lua mit geheimen Werten nicht rechnen. Seit 6.6.2.3 merkt
+`DM.Sample` den Wert **so, wie er kommt** (auch geheim, Schlüssel: die
+offene GUID, sonst bei `isLocalPlayer` die eigene), und `DM.Cumulative`
+zeichnet die **Summe über den Kampf** als senkrechte Balken des Spiels
+(`SetMinMaxValues(0, letzte Summe)` / `SetValue` nehmen geheime Werte,
+wie beim Lebensbalken) – steil heißt viel, flach heißt nichts; im
+Vergleich eine zweite, schmale Säule je Abschnitt im selben Maßstab.
+Sind alle Proben offen (anderer Client, nach einem Patch), bleibt es bei
+Schaden je Sekunde (`DM.Rates`). Nebenbei: in der Aufschlüsselung
+stehen geheime Werte nirgends mehr in `a and b or c` – ausdrücklich
+verzweigt. Hinweis: „Aktuell“ und der Verlauf gelten dem **letzten**
+Kampf; wer zwischen zwei Gegnern kurz aus dem Kampf ist, beginnt einen
+neuen.
+
+**Gilde & Communitys, Liste links** (gemessen): die Einträge
+(`communities-nav-button-*`, grün/blau) werden kleine Kacheln, der
+gewählte (Bild „pressed“/„select“ gezeigt, je Durchlauf neu bestimmt,
+`W.NavEntry`) mit Rand im Akzent; das Wappen im Eintrag
+(`communities-guildbanner-*`) bleibt. Grund der Liste (Bild 593918) und
+Goldranken (`FilligreeOverlay`) weg. Das **Gildenwappen oben links**
+(`PortraitOverlay`) ist wieder da – 6.6.2.2 hatte es ausgeblendet, der
+Beta-Test wollte es zurück.
+
+**Weicher Rand ums Modell, zweite Fassung:** 6.6.2.1 legte den Verlauf
+an die Kanten des Trägers; das Bild endet oben und rechts aber vorher
+(Beta-Test: „oben und rechts abgehakt“). Jetzt sitzt er an den Kanten
+des **Bildes** – die Vereinigung aller `RaceBG`-Teile (`W.Bounds`),
+gemessen bei jedem Durchlauf, solange das Fenster offen ist –, 60 px
+breit. `/wcui fenster` über dem Charakterfenster nennt, wo er sitzt
+(„am Bild …“ oder „am Träger“, wenn der Client die Lage nicht kennt).

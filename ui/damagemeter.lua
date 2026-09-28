@@ -668,13 +668,22 @@ function DM.Sample()
             if not series then series = {} hist.v[mk] = series end
             if ok and type(data) == "table" and type(data.combatSources) == "table" then
                 for _, src in ipairs(data.combatSources) do
-                    local g, v = K.Plain(src.sourceGUID), K.Plain(src.totalAmount)
-                    if type(v) ~= "number" then
-                        hist.secret = true
-                    elseif type(g) == "string" then
+                    -- 6.6.2.3: der Wert wird so gemerkt, wie er kommt - auch
+                    -- geheim. Rechnen laesst sich damit nicht, zeichnen schon
+                    -- (DM.Cumulative). Im Beta-Client kamen die Summen im
+                    -- Kampf geheim, lesbar war erst die Probe danach.
+                    local v = src.totalAmount
+                    if type(K.Plain(v)) ~= "number" and type(v) ~= "nil" then hist.secret = true end
+                    local g = K.Plain(src.sourceGUID)
+                    if type(g) ~= "string" and K.Bool(src.isLocalPlayer, false) and _G.UnitGUID then
+                        g = K.Plain(_G.UnitGUID("player"))
+                    end
+                    if type(g) == "string" then
                         local s = series[g]
                         if not s then s = {} series[g] = s end
                         s[i] = v
+                    else
+                        hist.anonymous = true
                     end
                 end
             end
@@ -702,7 +711,13 @@ function DM.Rates(guid, modeKey, n)
     -- letzte bekannte Stand.
     local cum, last = {}, 0
     for i = 1, #T do
-        if type(s[i]) == "number" then last = s[i] end
+        local v = s[i]
+        if type(v) ~= "nil" then
+            v = K.Plain(v)
+            -- Ein geheimer Wert: kein Zuwachs je Sekunde moeglich.
+            if type(v) ~= "number" then return nil end
+            last = v
+        end
         cum[i] = last
     end
     n = math.max(1, math.min(n, #T - 1))
@@ -725,6 +740,35 @@ function DM.Rates(guid, modeKey, n)
         prev = v
     end
     return out, dur
+end
+
+-- VERLAUF MIT GEHEIMEN ZAHLEN (6.6.2.3). Den Zuwachs je Sekunde kann Lua
+-- nicht ausrechnen, wenn die Summen geheim sind - ein Balken des Spiels
+-- aber kann sie zeichnen (SetMinMaxValues/SetValue nehmen geheime Werte,
+-- genau wie beim Lebensbalken). Also: die SUMME zu jedem Zeitpunkt als
+-- Saeule, gemessen an der letzten Summe. Die Kurve steigt, wo Schaden
+-- ankam, und ist flach, wo nicht - ihre Steigung ist der Schaden je
+-- Sekunde. Liefert die Werte je Spalte (roh), die letzte Summe und die Dauer.
+function DM.Cumulative(guid, modeKey, n)
+    local T = hist.t
+    local s = type(guid) == "string" and hist.v[modeKey] and hist.v[modeKey][guid]
+    if not s or #T < 1 then return nil end
+    local last
+    local raw = {}
+    for i = 1, #T do
+        if type(s[i]) ~= "nil" then last = s[i] end
+        -- Vor dem ersten Auftauchen: nichts. Kein "last or 0" - auf einem
+        -- geheimen Wert ist schon die Wahrheitspruefung verboten.
+        if type(last) == "nil" then raw[i] = 0 else raw[i] = last end
+    end
+    if type(last) == "nil" then return nil end
+    n = math.max(1, math.min(n, #T))
+    local out = {}
+    for c = 1, n do
+        local idx = math.max(1, math.min(#T, math.floor(c * #T / n + 0.5)))
+        out[c] = raw[idx]
+    end
+    return out, last, T[#T]
 end
 
 --------------------------------------------------
@@ -957,7 +1001,7 @@ local function BuildBreakdown()
         end
     end)
     f.kachel = K.Kachel(f, { shadow = 8 })
-    bd = { frame = f, rows = {}, tabs = {}, views = {}, cols = {}, marks = {}, icons = {}, view = "spells" }
+    bd = { frame = f, rows = {}, tabs = {}, views = {}, cols = {}, marks = {}, sums = {}, sums2 = {}, icons = {}, view = "spells" }
 
     bd.icon = f:CreateTexture(nil, "ARTWORK")
     bd.icon:SetSize(24, 24)
@@ -1268,7 +1312,8 @@ local function DrawSpells(session, mode, src, rank, cmpSrc, cmpRank, secs, total
             row.name:SetText(SpellName(e.id) or "?")
             local ta = shared or topA
             if type(ta) ~= "nil" then row.bar:SetMinMaxValues(0, ta) end
-            row.bar:SetValue(e.a and type(e.a.totalAmount) ~= "nil" and e.a.totalAmount or 0)
+            -- Geheime Werte nie in "a and b or c": ausdruecklich verzweigen.
+            if e.a and type(e.a.totalAmount) ~= "nil" then row.bar:SetValue(e.a.totalAmount) else row.bar:SetValue(0) end
             K.PaintBar(row.bar, r, g, b)
             local parts
             if e.a then
@@ -1287,10 +1332,12 @@ local function DrawSpells(session, mode, src, rank, cmpSrc, cmpRank, secs, total
             if cmpSrc then
                 local tb = shared or topB
                 if type(tb) ~= "nil" then row.bar2:SetMinMaxValues(0, tb) end
-                row.bar2:SetValue(e.b and type(e.b.totalAmount) ~= "nil" and e.b.totalAmount or 0)
+                if e.b and type(e.b.totalAmount) ~= "nil" then row.bar2:SetValue(e.b.totalAmount) else row.bar2:SetValue(0) end
                 K.PaintBar(row.bar2, r2, g2, b2)
                 row.bar2:Show()
-                parts = string.format("%s  |  %s", parts, e.b and DM.Format(e.b.totalAmount) or "–")
+                local bText = "–"
+                if e.b then bText = DM.Format(e.b.totalAmount) end
+                parts = string.format("%s  |  %s", parts, bText)
             else
                 row.bar2:Hide()
             end
@@ -1357,10 +1404,14 @@ function DM.DrawGraphNow(mode, guid, name)
     if not histMode then
         return 0, "Den Verlauf zeichnet WeintCodex für Schaden und Heilung auf."
     end
+    for _, c in ipairs(bd.sums) do c:Hide() end
+    for _, c in ipairs(bd.sums2) do c:Hide() end
     local rates, dur = DM.Rates(key, mode.key, GRAPH_COLS)
     if not rates then
+        local sums, last, sdur = DM.Cumulative(key, mode.key, GRAPH_COLS)
+        if sums then return DM.DrawSums(sums, last, sdur) end
         if hist.secret then
-            return 0, "Im Kampf gibt der Client die Zahlen verdeckt heraus – einen Verlauf kann WeintCodex damit nicht aufzeichnen."
+            return 0, "Für diesen Spieler hat WeintCodex im letzten Kampf nichts aufgezeichnet – der Client nannte ihn nicht erkennbar."
         end
         return 0, "Noch kein Verlauf – WeintCodex zeichnet ihn im nächsten Kampf auf (Schaden und Heilung, einmal je Sekunde)."
     end
@@ -1406,6 +1457,63 @@ function DM.DrawGraphNow(mode, guid, name)
     bd.graph.t1:SetText(Clock(dur))
     DM.lastRates = rates
     return GRAPH_H + 30, "Letzter aufgezeichneter Kampf, " .. n .. " Abschnitte."
+end
+
+-- Saeulen als Balken des Spiels (duerfen geheime Werte zeichnen).
+local function SumBar(list, i, width)
+    local b = list[i]
+    if not b then
+        b = K.NewBar(bd.graph)
+        if b.SetOrientation then b:SetOrientation("VERTICAL") end
+        list[i] = b
+    end
+    b:SetWidth(width)
+    b:SetHeight(GRAPH_H)
+    return b
+end
+
+function DM.DrawSums(sums, last, dur)
+    local width = BD_W - 24
+    local n = #sums
+    local cw = width / n
+    local ckey = bd.cmp and bd.cmp.guid
+    local other = ckey and DM.Cumulative(ckey, ModeInfo(bd.mode).key, n) or nil
+    local r, g, b = ClassRGB(bd.class)
+    for i, v in ipairs(sums) do
+        local c = SumBar(bd.sums, i, math.max(1, (other and cw / 2 or cw) - 1))
+        c:ClearAllPoints()
+        c:SetPoint("BOTTOMLEFT", bd.graph.bg, "BOTTOMLEFT", (i - 1) * cw + 0.5, 0)
+        c:SetMinMaxValues(0, last)
+        c:SetValue(v)
+        K.PaintBar(c, r, g, b)
+        c:Show()
+    end
+    if other then
+        -- Derselbe Massstab (die Summe des Gezeigten): wer mehr hat, stoesst
+        -- oben an.
+        local r2, g2, b2 = ClassRGB(bd.cmp.class)
+        for i, v in ipairs(other) do
+            local c = SumBar(bd.sums2, i, math.max(1, cw / 2 - 1))
+            c:ClearAllPoints()
+            c:SetPoint("BOTTOMLEFT", bd.graph.bg, "BOTTOMLEFT", (i - 1) * cw + cw / 2, 0)
+            c:SetMinMaxValues(0, last)
+            c:SetValue(v)
+            K.PaintBar(c, r2, g2, b2)
+            c:Show()
+        end
+    end
+    bd.graph.peak:SetFormattedText("Summe über den Kampf · %s", DM.Format(last))
+    if other then
+        local cr, cg, cb = ClassRGB(bd.cmp.class)
+        bd.graph.legend:SetText("rechts: " .. bd.cmp.name)
+        bd.graph.legend:SetTextColor(cr, cg, cb)
+    else
+        bd.graph.legend:SetText("")
+    end
+    bd.graph.t0:SetText("0:00")
+    bd.graph.t1:SetText(Clock(dur or 0))
+    DM.lastSums = sums
+    return GRAPH_H + 30, "Der Client nennt die Zahlen im Kampf nur verdeckt – statt Schaden je Sekunde steht hier die Summe über den Kampf. Steil heißt viel, flach heißt nichts."
 end
 
 local function AuraIcon(i)
@@ -1525,7 +1633,8 @@ function DM.RefreshBreakdown()
     local st = bd.stats
     local function Fill(s, list, r)
         if not s then return { "–", "–", "–", "–" } end
-        local rate = (mode.rate and type(s.amountPerSecond) ~= "nil") and DM.Format(s.amountPerSecond) or "–"
+        local rate = "–"
+        if mode.rate and type(s.amountPerSecond) ~= "nil" then rate = DM.Format(s.amountPerSecond) end
         local pct = Share(s, total)
         return { DM.Format(s.totalAmount), rate, pct and string.format("%d%%", math.floor(pct + 0.5)) or "–",
                  r and string.format("%d / %d", r, #list) or "–" }
