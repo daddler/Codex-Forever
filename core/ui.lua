@@ -208,7 +208,10 @@ WeintCodex.GameColors = {
     targetRing    = {0.486, 0.424, 1.000, 1.0},   -- = Akzent: Fokusrahmen
     -- Gruppenrahmen (6.3.2.4)
     healPredict   = {0.300, 0.900, 0.420, 0.45},  -- eingehende Heilung hinter dem Leben
-    absorb        = {1.000, 1.000, 1.000, 0.35},  -- Schilde
+    absorb        = {1.000, 1.000, 1.000, 0.35},  -- Schilde (Gruppenkacheln, hinter dem Leben)
+    -- Schild UEBER dem Leben, vom rechten Rand her (Spieler/Ziel, 6.6.1.6):
+    -- blau, weil der Lebensbalken eines Priesters weiss ist.
+    absorbOver    = {0.450, 0.780, 1.000, 0.60},
     roleTank      = {0.380, 0.620, 1.000, 1.0},
     roleHeal      = {0.360, 0.880, 0.460, 1.0},
     roleDps       = {0.950, 0.380, 0.320, 1.0},

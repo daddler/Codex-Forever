@@ -317,11 +317,13 @@ local function Create(unit)
         f._heal:SetPoint("TOPLEFT", fill, "TOPRIGHT", 0, 0)
         f._heal:SetPoint("BOTTOMLEFT", fill, "BOTTOMRIGHT", 0, 0)
     end
-    local healFill = f._heal:GetStatusBarTexture()
-    if healFill then
-        f._absorb:SetPoint("TOPLEFT", healFill, "TOPRIGHT", 0, 0)
-        f._absorb:SetPoint("BOTTOMLEFT", healFill, "BOTTOMRIGHT", 0, 0)
-    end
+    -- Der Schild liegt UEBER dem Leben, vom rechten Rand her (seit
+    -- 6.6.1.6). Hinter der Fuellung, wie die Heilung, war er bei vollem
+    -- Leben ganz abgeschnitten - Beta-Test: "wenn ich mir ein Schild gebe,
+    -- sehe ich nichts". Wie weit er reicht, rechnet weiter der Client.
+    f._absorb:SetAllPoints(health)
+    if f._absorb.SetReverseFill then f._absorb:SetReverseFill(true) end
+    f._absorb:SetFrameLevel(clip:GetFrameLevel() + 1)
     f._heal:Hide()
     f._absorb:Hide()
 
@@ -547,8 +549,8 @@ function Frame:Layout()
     self.health:SetPoint("TOPRIGHT", self, "TOPRIGHT", right and -inset or 0, 0)
     self.health:SetHeight(h)
     local hw = math.max(1, w - inset)
-    for _, bar in ipairs({ self._heal, self._absorb }) do bar:SetWidth(hw) end
-    local hc, ac = WeintCodex.GameColors.healPredict, WeintCodex.GameColors.absorb
+    self._heal:SetWidth(hw)
+    local hc, ac = WeintCodex.GameColors.healPredict, WeintCodex.GameColors.absorbOver
     self._heal:SetStatusBarColor(hc[1], hc[2], hc[3], hc[4])
     self._absorb:SetStatusBarColor(ac[1], ac[2], ac[3], ac[4])
     self.power:ClearAllPoints()

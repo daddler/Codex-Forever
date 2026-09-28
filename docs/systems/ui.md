@@ -525,6 +525,17 @@ Seit 6.2.0.0:
   sie zeigten die Laufzeiten, die die Symbole von „Wichtig“ schon
   tragen, ein zweites Mal. `ES.KeepPersonal` übernimmt seitdem nur noch
   den **Platz** (`anchorInfo`), nicht Größe und Sichtbarkeit.
+  6.6.1.6 („ich sehe an meinem Spielerfenster nicht, ob ich gebufft bin
+  oder ein Schild habe“): eigene Buff-Symbole am Spieler kann WeintCodex
+  nicht füllen (im Kampf keine Auren für Addons, siehe *Aurenleisten*).
+  Die Buff-Anzeige des Spiels (`BuffFrame`) kann es – sie steht jetzt
+  über dem Spielerrahmen (rechts bündig mit ihm, `IconWrap` = Up,
+  `IconDirection` = Left über `enum`); der Fokus weicht nach links über
+  den Begleiter. Die Debuffs bleiben oben rechts. Schild am Spieler- und
+  Zielrahmen: `_absorb` liegt seit 6.6.1.6 **über** dem Leben, vom
+  rechten Rand her (`SetReverseFill`, Farbe `GameColors.absorbOver`,
+  blau – der Lebensbalken eines Priesters ist weiß). Hinter der Füllung
+  war er bei vollem Leben ganz abgeschnitten.
   Danach **Neu laden** (`K.ReloadButton`). `/wcui einrichten pruefen`
   (`ES.Check`; in 6.6.1.3 brach sie ab – `local fx, fy = f and
   PointXY(…)` schneidet den zweiten Wert ab; der Prüflauf gibt dem Chat

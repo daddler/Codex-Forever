@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.1.6] – 2026-09-28
+
+**Buffs am Spielerrahmen.** Deine Buffs stehen direkt über deinem Spielerrahmen – auch im Kampf. Einmal /wcui einrichten, dann neu laden. Der Fokusrahmen rückt dafür nach links.
+
+**Schilde sichtbar, auch bei vollem Leben.** Ein Schild liegt als blaue Fläche vom rechten Rand her über dem Lebensbalken von Spieler und Ziel.
+
 ## [6.6.1.5] – 2026-09-28
 
 **Abklingzeiten wie eine WeakAura.** Unter dem Charakter nur noch deine Fähigkeiten und wie lange ihre Wirkung läuft – kleiner, ohne doppelte Symbole und ohne lange Buffs wie Ausdauer. Einmal /wcui einrichten, dann neu laden; die Buff-Anzeigen des Spiels lassen sich im Bearbeitungsmodus wieder einschalten.

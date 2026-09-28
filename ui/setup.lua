@@ -126,6 +126,7 @@ local INDICES = {
 local SETTINGS = {
     ActionBar = "EditModeActionBarSetting", UnitFrame = "EditModeUnitFrameSetting",
     ChatFrame = "EditModeChatFrameSetting", CooldownViewer = "EditModeCooldownViewerSetting",
+    AuraFrame = "EditModeAuraFrameSetting",
 }
 
 local function EnumTable(name)
@@ -594,6 +595,7 @@ local function ShowQuestion()
         .. (baseName and ("der Vorlage „" .. tostring(baseName) .. "“") or "der Vorlage des Spiels")
         .. ", nicht deines bisherigen Layouts.\n"
         .. "•  Chatfenster zurück auf „Allgemein“ und „Kampflog“ – eigene Reiter verschwinden.\n"
+        .. "•  Deine Buffs über dem Spielerrahmen.\n"
         .. "•  Abklingzeitmanager kleiner, nur Fähigkeiten und ihre Laufzeiten – die Buff-Anzeigen des Spiels"
         .. " (Ausdauer und Co.) aus.\n"
         .. "•  Einige Spieleinstellungen (Chatstil, Flüstern im Chat, Leisten sperren, keine Tutorials).\n\n"

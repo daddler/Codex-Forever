@@ -45,7 +45,9 @@ K.LAYOUT = {
     uf_player       = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -AXIS, y = COCKPIT_Y },
     uf_target       = { point = "BOTTOMLEFT",  relPoint = "BOTTOM", x = AXIS,  y = COCKPIT_Y },
     uf_targettarget = { point = "TOPLEFT",     relPoint = "BOTTOM", x = AXIS + UF_W + 6, y = COCKPIT_Y + UF_H },
-    uf_focus        = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -AXIS, y = COCKPIT_Y + UF_H + 10 },
+    -- Fokus links ueber dem Begleiter (seit 6.6.1.6): ueber dem Spieler
+    -- stehen seine Buffs, Spiegelbild zu den Auren ueber dem Ziel.
+    uf_focus        = { point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -(AXIS + UF_W + 6), y = COCKPIT_Y + UF_H + 6 },
     -- Begleiter links neben dem Spieler, Spiegelbild zum Ziel des Ziels
     -- (bis 6.6.1.2 darunter - dort steht jetzt die Begleiterleiste).
     uf_pet          = { point = "TOPRIGHT",    relPoint = "BOTTOM", x = -(AXIS + UF_W + 6), y = COCKPIT_Y + UF_H },
@@ -171,8 +173,15 @@ K.GAME_LAYOUT = {
 
     { key = "minimap", label = "Minikarte", sys = "Minimap",
       point = "TOPRIGHT", relPoint = "TOPRIGHT", x = MINIMAP_X, y = -12, frames = { "MinimapCluster" } },
+    -- Buffs ueber dem Spielerrahmen (Beta-Test 6.6.1.5: "ich sehe an
+    -- meinem Spielerfenster nicht, ob ich gebufft bin oder ein Schild
+    -- habe"). Eigene Symbole kann WeintCodex nicht fuellen - im Kampf gibt
+    -- der Client Addons keine Auren (siehe "Aurenleisten"). Die Buff-
+    -- Anzeige des Spiels kann es, auch im Kampf; sie steht jetzt hier,
+    -- rechts buendig mit dem Spieler, waechst nach links und nach oben.
     { key = "buffs", label = "Buffs", sys = "AuraFrame", idx = "BuffFrame",
-      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -270, y = -12, frames = { "BuffFrame" } },
+      point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -AXIS, y = COCKPIT_Y + UF_H + 6, frames = { "BuffFrame" },
+      enum = { IconWrap = { "AuraFrameIconWrap", "Up" }, IconDirection = { "AuraFrameIconDirection", "Left" } } },
     { key = "debuffs", label = "Debuffs", sys = "AuraFrame", idx = "DebuffFrame",
       point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -270, y = -110, frames = { "DebuffFrame" } },
     { key = "tracker", label = "Questliste", sys = "ObjectiveTracker",

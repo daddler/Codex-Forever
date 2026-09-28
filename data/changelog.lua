@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.1.6",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFBuffs am Spielerrahmen.|r Deine Buffs stehen direkt über deinem Spielerrahmen – auch im Kampf. Einmal /wcui einrichten, dann neu laden. Der Fokusrahmen rückt dafür nach links.",
+            "|cff7C6CFFSchilde sichtbar, auch bei vollem Leben.|r Ein Schild liegt als blaue Fläche vom rechten Rand her über dem Lebensbalken von Spieler und Ziel.",
+        },
+    },
+    {
         version = "6.6.1.5",
         date    = "28.09.2026",
         notes   = {

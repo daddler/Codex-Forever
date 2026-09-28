@@ -3544,6 +3544,12 @@ do
     Check(trE.point == "TOPRIGHT" and mmE.point == "TOPRIGHT"
         and trE.x + K.Get("questtracker", "padding") == mmE.x - 6,
         "Rand: Questliste buendig mit der Minikarte")
+    -- 6.6.1.6: Buffs des Spiels ueber dem Spieler, der Fokus weicht nach links.
+    local buffE
+    for _, e in ipairs(K.GAME_LAYOUT) do if e.key == "buffs" then buffE = e end end
+    Check(buffE.point == "BOTTOMRIGHT" and buffE.relPoint == L.uf_player.relPoint and buffE.x == L.uf_player.x
+        and buffE.y >= M.cockpitY + M.unitHeight and L.uf_focus.x <= L.uf_player.x - M.unitWidth,
+        "Cockpit: Buffs ueber dem Spielerrahmen, Fokus daneben")
 end
 
 -- Stil 2.0: Balken bekommen die Glanztextur, ein Stilwechsel erreicht sie.
