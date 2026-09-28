@@ -24,7 +24,9 @@
 --      Spiels) - Reiter und Kanaele eines frueheren Addons verschwinden.
 --   3. Wenige Spieleinstellungen, die die Oberflaeche voraussetzt (CVARS).
 --      Jede wird nur gesetzt, wenn der Client sie kennt.
---   4. Die eigenen Rahmen auf ihre Standardplaetze (ui/layout.lua).
+--   Was der Spieler selbst gebaut hat, bleibt (seit 6.6.1.4): die Plaetze
+--   des Abklingzeitmanagers (ES.KeepPersonal) und die eigenen Rahmen von
+--   WeintCodex, die er im Gestaltungsmodus verschoben hat.
 -- Die Skalierung der Oberflaeche bleibt, wie sie ist: das ist eine Frage
 -- von Bildschirm und Augen, nicht vom Aussehen.
 -- Danach NEU LADEN - erst dann stellt das Spiel alles nach dem neuen
@@ -198,6 +200,60 @@ function ES.BaseName()
     return name
 end
 
+-- WAS DER SPIELER SELBST GEBAUT HAT, BLEIBT. Der Abklingzeitmanager ist
+-- keine Frage des Aussehens: welche Zauber er zeigt und wo, stellt jeder
+-- selbst ein (Beta-Test 6.6.1.3: "Der Abklingzeitmanager hat auch einige
+-- Sachen neu bewegt"). Seine Plaetze kommen deshalb aus dem aktiven
+-- Layout. Ist das schon "WeintCodex" und stehen dort noch die Plaetze
+-- von WeintCodex (nie verschoben), aus dem ersten anderen eigenen Layout -
+-- so kommt zurueck, was vor der ersten Einrichtung dort stand.
+local function IsPersonal(e) return e.personal == true end
+
+local function Untouched(layout)
+    for _, e in ipairs(K.GAME_LAYOUT) do
+        if IsPersonal(e) then
+            local sys = Find(layout.systems, e)
+            local a = sys and sys.anchorInfo
+            if a and not (a.offsetX == e.x and a.offsetY == e.y and a.point == e.point) then return false end
+        end
+    end
+    return true
+end
+
+function ES.PersonalSource(info, presets)
+    local nPre = presets and #presets or 2
+    local active = info.layouts[(tonumber(info.activeLayout) or 0) - nPre]
+    if not (active and type(active.systems) == "table") then return nil end
+    if active.layoutName ~= ES.LAYOUT_NAME or not Untouched(active) then return active end
+    for _, o in ipairs(info.layouts) do
+        if o.layoutName ~= ES.LAYOUT_NAME and type(o.systems) == "table" then return o end
+    end
+    return nil
+end
+
+-- Alle Systeme des Abklingzeitmanagers aus `source` uebernehmen (samt
+-- Einstellungen). Gibt die Zahl und den Namen der Quelle zurueck.
+function ES.KeepPersonal(systems, source)
+    if not source then return 0, nil end
+    local S = EnumTable("EditModeSystem")
+    local cdm = S and S.CooldownViewer
+    if type(cdm) ~= "number" then return 0, nil end
+    local n = 0
+    for _, from in ipairs(source.systems) do
+        if from.system == cdm then
+            for _, to in ipairs(systems) do
+                if to.system == cdm and to.systemIndex == from.systemIndex then
+                    local c = Copy(from)
+                    for k in pairs(to) do to[k] = nil end
+                    for k, v in pairs(c) do to[k] = v end
+                    n = n + 1
+                end
+            end
+        end
+    end
+    return n, source.layoutName
+end
+
 -- Das Layout anlegen und aktiv setzen. true oder false, Grund.
 local function ApplyLayout(report)
     local info, why = Layouts()
@@ -212,6 +268,7 @@ local function ApplyLayout(report)
     layout.layoutType = LT and LT.Account or layout.layoutType
     local done, missing = ES.Adjust(layout.systems)
     if not done.party then return false, "Gruppenrahmen im Layout nicht gefunden" end
+    report.kept, report.keptFrom = ES.KeepPersonal(layout.systems, ES.PersonalSource(info, presets))
     local n = 0
     for _, e in ipairs(K.GAME_LAYOUT) do if done[e.key] then n = n + 1 end end
     report.frames, report.missing = n, missing
@@ -288,7 +345,10 @@ function ES.Apply()
     if not ok then return false, why end
     report.chat = ResetChat()
     report.cvars, report.unknownCVars = ApplyCVars()
-    report.own = pcall(K.ResetAllPositions)
+    -- Die eigenen Rahmen bleiben, wo der Spieler sie im Gestaltungsmodus
+    -- hingezogen hat (6.6.1.3 setzte sie zurueck - Beta-Test: die
+    -- Schadensanzeige wanderte von oben links nach unten rechts). Ohne
+    -- gespeicherte Plaetze stehen sie ohnehin an ihrem Standardplatz.
     return true
 end
 
@@ -341,13 +401,18 @@ function ES.Check()
     local ui = _G.UIParent
     local good, bad, unknown = 0, {}, {}
     for _, e in ipairs(K.GAME_LAYOUT) do
+      -- Der Abklingzeitmanager steht, wo der Spieler ihn hatte - kein Soll.
+      if not IsPersonal(e) then
         local f = FrameOf(e)
         local t = Target(e)
-        local fx, fy = f and PointXY(f, t.point)
+        -- Nie "f and PointXY(...)": das `and` schneidet den zweiten
+        -- Rueckgabewert ab (6.6.1.3: fy blieb nil, die Pruefung brach ab).
+        local fx, fy
+        if f then fx, fy = PointXY(f, t.point) end
         local ux, uy = PointXY(ui, t.relPoint)
         local fs, us = Num(f, "GetEffectiveScale"), Num(ui, "GetEffectiveScale")
         local shown = f and Num(f, "GetWidth")
-        if not (fx and ux and fs and us and fs > 0) or not shown or shown <= 0 then
+        if not (fx and fy and ux and uy and fs and us and fs > 0) or not shown or shown <= 0 then
             unknown[#unknown + 1] = e.label
         else
             local dx = fx - ux * us / fs
@@ -359,6 +424,7 @@ function ES.Check()
                     math.floor(dx + 0.5), math.floor(dy + 0.5))
             end
         end
+      end
     end
     out[#out + 1] = string.format("%d Rahmen am Platz, %d daneben, %d nicht messbar (versteckt oder nicht da).",
         good, #bad, #unknown)
@@ -483,9 +549,9 @@ local function ShowQuestion()
         .. (baseName and ("der Vorlage „" .. tostring(baseName) .. "“") or "der Vorlage des Spiels")
         .. ", nicht deines bisherigen Layouts.\n"
         .. "•  Chatfenster zurück auf „Allgemein“ und „Kampflog“ – eigene Reiter verschwinden.\n"
-        .. "•  Einige Spieleinstellungen (Chatstil, Flüstern im Chat, Leisten sperren, keine Tutorials).\n"
-        .. "•  Die eigenen WeintCodex-Rahmen auf ihre Standardplätze.\n\n"
-        .. "Die Skalierung der Oberfläche bleibt, wie du sie hast. Danach einmal neu laden. Dein bisheriges"
+        .. "•  Einige Spieleinstellungen (Chatstil, Flüstern im Chat, Leisten sperren, keine Tutorials).\n\n"
+        .. "Was du selbst gebaut hast, bleibt: die Plätze des Abklingzeitmanagers, deine verschobenen"
+        .. " WeintCodex-Rahmen und die Skalierung der Oberfläche. Danach einmal neu laden. Dein bisheriges"
         .. " Layout bleibt im Bearbeitungsmodus wählbar; verschieben kannst du hinterher alles.")
     SetButtons({
         { key = "later", text = "Später", kind = "secondary", onClick = function()
@@ -512,8 +578,10 @@ ShowDone = function()
     lines[#lines + 1] = "•  " .. tostring(r.cvars or 0) .. " Spieleinstellungen gesetzt"
         .. ((r.unknownCVars and #r.unknownCVars > 0) and (", unbekannt: " .. table.concat(r.unknownCVars, ", ")) or "")
         .. "."
-    lines[#lines + 1] = r.own and "•  Eigene Rahmen auf ihren Standardplätzen."
-        or "•  Eigene Rahmen NICHT zurückgesetzt."
+    if (r.kept or 0) > 0 then
+        lines[#lines + 1] = "•  Abklingzeitmanager: " .. tostring(r.kept) .. " Plätze aus „" .. tostring(r.keptFrom)
+            .. "“ übernommen."
+    end
     SetText("Einrichtung",
         "Fertig – jetzt neu laden",
         table.concat(lines, "\n") .. "\n\nErst nach dem Neuladen steht alles an seinem Platz – bis dahin bitte nicht"

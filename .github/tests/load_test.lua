@@ -1756,6 +1756,23 @@ do
         assert(W.Status():find("Läufe", 1, true), "Zustand fehlt")
         _G.TestCharFrame, _G.TestCharFrameHeadSlot = nil, nil
 
+        -- 6.6.1.4: Gespraeche - schwarze Farbcodes im Text werden hell,
+        -- farbige bleiben; Pergament und dunkle Schrift wie im Zauberbuch.
+        assert(W.DIALOGS.GossipFrame and W.DIALOGS.QuestFrame, "Gespraech und Quest nicht dabei")
+        local lt, n = W.LightCodes("|cff000000Eine schleimige Bedrohung|r und |cffff2020rot|r")
+        assert(n == 1 and not lt:find("|cff000000", 1, true) and lt:find("|cffff2020", 1, true), "Farbcodes falsch ersetzt")
+        assert(select(2, W.LightCodes("ohne Code")) == 0 and select(2, W.LightCodes(nil)) == 0, "Text ohne Code angefasst")
+        local gf = CreateFrame("Frame", "GossipFrame", UIParent)
+        local opt = gf:CreateFontString()
+        local txt = "|cff000000Ich möchte dieses Gasthaus zu meinem Heimatort machen.|r"
+        opt.GetText = function() return txt end
+        opt.SetText = function(_, v) txt = v end
+        opt.GetObjectType = function() return "FontString" end
+        gf.GetRegions = function() return opt end
+        W.LightenText(gf, true)
+        assert(not txt:find("|cff000000", 1, true), "Gespraechsoption bleibt schwarz")
+        _G.GossipFrame = nil
+
         -- /wcui fenster: ohne Fenster unter der Maus ein Satz.
         local oldFoci = _G.GetMouseFoci
         _G.GetMouseFoci = function() return {} end
@@ -1982,7 +1999,8 @@ do
         assert(chatReset == 1 and r.chat, "Chatfenster nicht zurueckgesetzt")
         assert(cvars.chatStyle == "im" and cvars.whisperMode == "inline" and cvars.lockActionBars == "1", "Spieleinstellungen nicht gesetzt")
         assert(r.cvars == 3 and #r.unknownCVars == #ES.CVARS - 3, "unbekannte Einstellungen nicht ehrlich gemeldet")
-        assert(r.own, "eigene Rahmen nicht zurueckgesetzt")
+        -- 6.6.1.4: eigene Rahmen bleiben, wo der Spieler sie hingezogen hat.
+        assert(r.own == nil, "eigene Rahmen zurueckgesetzt")
         -- Neu einrichten: wieder auf der Vorlage, nie auf sich selbst.
         local again = { activeLayout = 4, layouts = { elle, l } }
         local b2, n2 = ES.Base(again, _G.EditModePresetLayoutManager.GetCopyOfPresetLayouts())
@@ -1990,10 +2008,63 @@ do
         -- Ohne Vorlage: das eigene Layout des Spielers, nie "WeintCodex".
         assert(select(2, ES.Base(again, nil)) == "EllesmereUI Forever v4", "ohne Vorlage kein Rueckfall aufs eigene Layout")
         assert(ES.Base({ activeLayout = 3, layouts = { l } }, nil) == nil, "baut auf sich selbst auf")
-        -- Pruefen laeuft und nennt das aktive Layout.
+        -- Pruefen laeuft und nennt das aktive Layout - auch mit Rahmen,
+        -- die eine Lage haben (6.6.1.3 brach genau dort ab: fy blieb nil).
         stored = saved
-        local lines = ES.Check()
+        local chatE = Entry("chat")
+        local cf = _G.ChatFrame1 or CreateFrame("Frame", "ChatFrame1", UIParent)
+        local oldCF = {}
+        for _, m in ipairs({ "GetLeft", "GetRight", "GetTop", "GetBottom", "GetWidth", "GetEffectiveScale" }) do oldCF[m] = cf[m] end
+        cf.GetLeft = function() return chatE.x end
+        cf.GetBottom = function() return chatE.y end
+        cf.GetRight = function() return chatE.x + 400 end
+        cf.GetTop = function() return chatE.y + 160 end
+        cf.GetWidth = function() return 400 end
+        cf.GetEffectiveScale = function() return 1 end
+        local oldUI = {}
+        for _, m in ipairs({ "GetLeft", "GetRight", "GetTop", "GetBottom", "GetEffectiveScale" }) do oldUI[m] = UIParent[m] end
+        UIParent.GetLeft = function() return 0 end
+        UIParent.GetBottom = function() return 0 end
+        UIParent.GetRight = function() return 1366 end
+        UIParent.GetTop = function() return 768 end
+        UIParent.GetEffectiveScale = function() return 1 end
+        local okC, lines = pcall(ES.Check)
+        assert(okC, "Pruefung bricht ab: " .. tostring(lines))
         assert(lines[1]:find("WeintCodex", 1, true) and lines[2]:find("Rahmen am Platz", 1, true), "Pruefung sagt nichts")
+        assert(tonumber(lines[2]:match("^(%d+) Rahmen am Platz")) >= 1, "Chat am Platz nicht erkannt")
+        cf.GetLeft = function() return chatE.x + 50 end
+        cf.GetRight = function() return chatE.x + 450 end
+        lines = ES.Check()
+        local named = false
+        for _, line in ipairs(lines) do if line:find("^Chat: soll") then named = true end end
+        assert(named, "verschobener Chat nicht genannt")
+        for m, fn in pairs(oldCF) do cf[m] = fn end
+        for m, fn in pairs(oldUI) do UIParent[m] = fn end
+
+        -- 6.6.1.4: der Abklingzeitmanager kommt aus dem bisherigen Layout.
+        _G.Enum.EditModeSystem.CooldownViewer = 20
+        _G.Enum.EditModeCooldownViewerSystemIndices = { Essential = 0, Utility = 1, BuffIcon = 2, BuffBar = 3 }
+        table.insert(modern.systems, Sys(20, 0))
+        table.insert(modern.systems, Sys(20, 3))
+        local mine = { point = "TOPLEFT", relativeTo = "UIParent", relativePoint = "TOPLEFT", offsetX = 111, offsetY = -222 }
+        table.insert(elle.systems, Sys(20, 0, { anchorInfo = mine, isInDefaultPosition = false,
+            settings = { { setting = 1, value = 7 } } }))
+        table.insert(elle.systems, Sys(20, 3, { anchorInfo = mine }))
+        stored = { activeLayout = 3, layouts = { elle } }
+        assert(ES.Apply(), "Einrichten mit Abklingzeitmanager schlug fehl")
+        local wc = saved.layouts[2]
+        local ess
+        for _, sy in ipairs(wc.systems) do if sy.system == 20 and sy.systemIndex == 0 then ess = sy end end
+        assert(ess.anchorInfo.offsetX == 111 and ess.settings[1].value == 7, "Abklingzeitmanager nicht uebernommen")
+        assert(ES.report.kept == 2 and ES.report.keptFrom == "EllesmereUI Forever v4", "Uebernahme nicht gemeldet")
+        -- Erneut, waehrend "WeintCodex" aktiv ist und nie verschoben wurde:
+        -- wieder aus dem Layout davor. Hat der Spieler verschoben: seins.
+        local essE = Entry("essential")
+        ess.anchorInfo = { point = essE.point, relativeTo = "UIParent", relativePoint = essE.relPoint, offsetX = essE.x, offsetY = essE.y }
+        assert(ES.PersonalSource({ activeLayout = 4, layouts = { elle, wc } }, { modern, {} }) == elle, "unberuehrt: nicht aus dem Layout davor")
+        ess.anchorInfo = { point = "CENTER", offsetX = 5, offsetY = 5 }
+        assert(ES.PersonalSource({ activeLayout = 4, layouts = { elle, wc } }, { modern, {} }) == wc, "verschoben: nicht die eigenen Plaetze")
+        stored = saved
         _G.C_CVar, _G.FCF_ResetChatWindows = oldCV, oldReset
         -- Danach gibt es das Layout - es wird nicht mehr gefragt.
         assert(ES.HasLayout() == true, "Layout danach nicht erkannt")

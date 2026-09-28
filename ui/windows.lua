@@ -48,7 +48,23 @@ local function Opt(k) return K.Get("general", k) end
 
 -- Fenster und ihre Teilfenster. Was der Client nicht kennt, faellt heraus.
 W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "SpellBookFrame",
-              "PlayerTalentFrame", "TalentFrame", "ClassTalentFrame" }
+              "PlayerTalentFrame", "TalentFrame", "ClassTalentFrame",
+              "GossipFrame", "QuestFrame", "ItemTextFrame", "MerchantFrame" }
+
+-- GESPRAECHE (6.6.1.4, Beta-Test: "die normale Interaktion von
+-- Questgebern, Gastwirten etc. muss angeglichen werden"). Gespraech,
+-- Questtext, Buecher und Briefe stehen im Spiel auf Pergament mit
+-- dunkelbrauner Schrift. Dieselbe Behandlung wie das Zauberbuch: das
+-- Pergament (ein grosses Bild) weg, dunkle Schrift hell - dazu die
+-- Farbcodes IM Text: die Gespraechsoptionen setzen Questnamen als
+-- |cff000000...|r in den Text, nicht als Schriftfarbe. Der Haendler hat
+-- kein Pergament; er bekommt nur die Huelle und die Knoepfe.
+W.DIALOGS = { GossipFrame = true, QuestFrame = true, ItemTextFrame = true }
+-- Teile, die beim Blaettern im offenen Fenster erscheinen (Quest
+-- annehmen -> abgeben): beim Zeigen sofort nachziehen, nicht erst mit
+-- dem Takt.
+W.SHOW_HOOKS = { "QuestFrameDetailPanel", "QuestFrameRewardPanel", "QuestFrameProgressPanel",
+                 "QuestFrameGreetingPanel" }
 
 -- Zauberbuch und Talente (6.4.1.3): ihre Hintergruende heissen im
 -- Forever-Client anders als im Quelltext des Spiels (Beta-Test 6.4.1.2:
@@ -345,17 +361,46 @@ local function Lighten(fs)
     end
 end
 
-local function LightenText(f, depth)
+-- Dunkle Farbcodes im Text hell machen. Gibt den Text und die Zahl der
+-- ersetzten Codes zurueck; helle und farbige Codes bleiben.
+local function HexOf(c)
+    return string.format("%02x%02x%02x", c[1] * 255, c[2] * 255, c[3] * 255)
+end
+function W.LightCodes(text)
+    if type(text) ~= "string" or not text:find("|c", 1, true) then return text, 0 end
+    local n = 0
+    -- Strenger als IsDark: nur fast Schwarz und Dunkelbraun. Reines Rot
+    -- ist nach Helligkeit "dunkel", traegt aber Bedeutung.
+    local out = text:gsub("|c%x%x(%x%x)(%x%x)(%x%x)", function(r, g, b)
+        if math.max(tonumber(r, 16), tonumber(g, 16), tonumber(b, 16)) < 0x50 then
+            n = n + 1
+            return "|cff" .. HexOf(C.textNormal)
+        end
+    end)
+    return out, n
+end
+
+local function LightenCodes(fs)
+    local ok, text = pcall(fs.GetText, fs)
+    if not ok then return end
+    local cok, out, n = pcall(W.LightCodes, text)
+    if cok and n > 0 then pcall(fs.SetText, fs, out) end
+end
+
+local function LightenText(f, depth, codes)
     if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
     local rok, regions = pcall(function() return { f:GetRegions() } end)
     for _, r in ipairs(rok and regions or {}) do
         local ok, isText = pcall(function() return r:GetObjectType() == "FontString" end)
-        if ok and isText then Lighten(r) end
+        if ok and isText then
+            Lighten(r)
+            if codes then LightenCodes(r) end
+        end
     end
     local cok, kids = pcall(function() return { f:GetChildren() } end)
-    for _, ch in ipairs(cok and kids or {}) do LightenText(ch, depth + 1) end
+    for _, ch in ipairs(cok and kids or {}) do LightenText(ch, depth + 1, codes) end
 end
-W.LightenText = function(f) LightenText(f, 0) end
+W.LightenText = function(f, codes) LightenText(f, 0, codes) end
 
 -- Zaubersymbole im Zauberbuch (SpellBookItemTemplate: Button mit Icon,
 -- Border und IconMask): Zierrahmen weg, Maske ab (Passive waren rund),
@@ -818,6 +863,9 @@ function W.Inner()
                 SkinSpellItems(f, 0)
                 LightenText(f, 0)
                 W.HideLarge(f)
+            elseif W.DIALOGS[n] then
+                LightenText(f, 0, true)
+                W.HideLarge(f)
             end
         end
     end
@@ -876,8 +924,26 @@ local function HookWindow(f)
     end)
 end
 
+local hookedShow = {}
 function W.HookAll()
     for _, n in ipairs(W.WINDOWS) do HookWindow(_G[n]) end
+    for _, n in ipairs(W.SHOW_HOOKS) do
+        local f = _G[n]
+        if type(f) == "table" and f.HookScript and not hookedShow[f] and not (f.IsForbidden and f:IsForbidden()) then
+            hookedShow[f] = true
+            f:HookScript("OnShow", function() Run(W.Inner) end)
+        end
+    end
+    -- Neue Gespraechsseite im offenen Fenster (anderer NPC, Option gewaehlt).
+    local g = _G.GossipFrame
+    if type(g) == "table" and not hookedShow.gossip and _G.hooksecurefunc then
+        for _, m in ipairs({ "Update", "Refresh" }) do
+            if type(g[m]) == "function" then
+                hookedShow.gossip = true
+                _G.hooksecurefunc(g, m, function() Run(W.Inner) end)
+            end
+        end
+    end
 end
 
 -- Ein Fenster des Spiels, das in keiner Liste steht, aber nach Zauberbuch

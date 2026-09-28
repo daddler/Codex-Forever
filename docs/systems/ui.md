@@ -488,14 +488,26 @@ Seit 6.2.0.0:
      Flüstern im Chat, Klassenfarben im Chat, Leisten sperren, keine
      Tutorials) – nur, wenn `GetCVar` sie kennt; unbekannte nennt das
      Fenster. Die UI-Skalierung bleibt unberührt.
-  4. **Eigene Rahmen** auf ihre Standardplätze (`K.ResetAllPositions`).
+  Was der Spieler selbst gebaut hat, bleibt (6.6.1.4, Beta-Test: „die
+  DPS- und HPS-Meter sind von oben links nach unten rechts gewandert, der
+  Abklingzeitmanager hat Sachen neu bewegt“): 6.6.1.3 setzte auch die
+  eigenen Rahmen zurück (`K.ResetAllPositions`) – das ist raus. Die
+  Systeme des Abklingzeitmanagers (`personal` in `K.GAME_LAYOUT`) kopiert
+  `ES.KeepPersonal` samt Einstellungen aus `ES.PersonalSource`: dem
+  aktiven Layout; ist das „WeintCodex“ und stehen dort noch dessen Plätze
+  (nie verschoben), aus dem ersten anderen eigenen Layout. Die Prüfung
+  misst sie nicht (kein Soll). Die Questliste steht seit 6.6.1.4 bei
+  −305 statt −262: darüber hängt im Beta-Client der Knopf „Issue
+  Reporter“.
   Dafür rückte das Cockpit (6.6.1.3): unten Mitte Leiste 1 (18), 2 (66),
   3 (110), darüber die Reihe Haltungen links/Begleiter rechts (154);
   Zauberbalken und Kombopunkte zwischen Spieler und Ziel, der
   Begleiterrahmen links neben den Spieler, die Gruppe höher (440), die
   Schadensanzeige neben Leiste 4/5. Alles gerechnet, nicht gesehen.
   Danach **Neu laden** (`K.ReloadButton`). `/wcui einrichten pruefen`
-  (`ES.Check`) misst danach je Rahmen den Ankerpunkt in dessen eigenen
+  (`ES.Check`; in 6.6.1.3 brach sie ab – `local fx, fy = f and
+  PointXY(…)` schneidet den zweiten Wert ab; der Prüflauf gibt dem Chat
+  jetzt eine Lage) misst danach je Rahmen den Ankerpunkt in dessen eigenen
   Einheiten gegen `K.GAME_LAYOUT` (±3), nennt das aktive Layout, die
   Chatgröße und abweichende Einstellungen. Gefragt wird beim ersten
   echten Einloggen (nie nach `/reload`, nie über der Einführung, nie im
@@ -610,6 +622,16 @@ Seit 6.2.0.0:
   Holz aussieht, nennt `/wcui fenster`. Seit 6.3.1.7 zweite Stufe:
   `W.HIDE_ATLAS` blendet die dort gemessenen Atlanten aus (Muster, nie
   Inhalte; `RaceBG` bleibt), die Plätze bekommen einen 1-px-Rand.
+* **Gespräche** (6.6.1.4, Beta-Test: „die normale Interaktion von
+  Questgebern, Gastwirten etc. muss angeglichen werden“): `GossipFrame`,
+  `QuestFrame`, `ItemTextFrame` (`W.DIALOGS`) bekommen die Fensterhülle,
+  das Pergament geht über `W.HideLarge`, dunkle Schrift wird hell – und
+  zusätzlich dunkle **Farbcodes im Text** (`W.LightCodes`: nur Codes mit
+  jedem Kanal < 0x50, damit Rot und Grün bleiben): die Gesprächsoptionen
+  setzen Questnamen als `|cff000000…|r` in den Text. Nachgezogen beim
+  Zeigen jedes Quest-Teilfensters (`W.SHOW_HOOKS`), nach
+  `GossipFrame:Update`/`Refresh` und im Takt des offenen Fensters.
+  `MerchantFrame` nur Hülle und Knöpfe. Im Spiel ungeprüft.
 * **Zauberbuch** (6.4.1.2): dieselbe Fensterhülle wie das
   Charakterfenster (`PlayerSpellsFrame`/`SpellBookFrame`), Pergament-
   Atlanten weg, Zaubersymbole eckig (erkannt an `Button.Icon`/`Border`/

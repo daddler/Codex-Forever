@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.1.4",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFGespräche im WeintCodex-Stil.|r Questgeber, Gastwirte, Questtexte und Bücher stehen auf der dunklen Kachel statt auf Pergament, mit heller Schrift.",
+            "|cff7C6CFFEinrichtung lässt deine Plätze in Ruhe.|r Schadensanzeige und andere WeintCodex-Rahmen bleiben, wo du sie hingezogen hast, und der Abklingzeitmanager behält die Plätze aus deinem bisherigen Layout. /wcui einrichten pruefen funktioniert jetzt, und die Questliste rutscht unter den Knopf „Issue Reporter“.",
+        },
+    },
+    {
         version = "6.6.1.3",
         date    = "27.09.2026",
         notes   = {

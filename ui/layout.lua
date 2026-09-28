@@ -98,6 +98,9 @@ local BAR1_Y, BAR2_Y, BAR3_Y, ROW_Y = 18, 66, 110, 154
 local EDGE = 4            -- Abstand zum Bildschirmrand unten/rechts
 local SIDE_W = 34 + 4     -- eine senkrechte Leiste samt Luft
 local TRACK_X = -(EDGE + 2 * SIDE_W + 10)
+-- Unter der Minikarte haengt im Beta-Client der Knopf "Issue Reporter"
+-- samt Kaefer - bei -262 lag er auf der Questliste (Beta-Test 6.6.1.3).
+local TRACK_Y = -305
 K.CHAT_SIZE = { w = 400, h = 160 }
 
 K.GAME_LAYOUT = {
@@ -125,11 +128,13 @@ K.GAME_LAYOUT = {
     { key = "extra", label = "Zusatzfähigkeit", sys = "ExtraAbilities",
       point = "BOTTOMLEFT", relPoint = "BOTTOM", x = AXIS + UF_W + 10, y = COCKPIT_Y + UF_H + 10,
       frames = { "ExtraAbilityContainer" } },
-    { key = "essential", label = "Abklingzeiten: Wichtig", sys = "CooldownViewer", idx = "Essential",
+    -- personal: Standardplatz nur, wenn das bisherige Layout keinen nennt
+    -- (ui/setup.lua, ES.KeepPersonal).
+    { key = "essential", label = "Abklingzeiten: Wichtig", sys = "CooldownViewer", idx = "Essential", personal = true,
       point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 316, frames = { "EssentialCooldownViewer" } },
-    { key = "utility", label = "Abklingzeiten: Hilfreich", sys = "CooldownViewer", idx = "Utility",
+    { key = "utility", label = "Abklingzeiten: Hilfreich", sys = "CooldownViewer", idx = "Utility", personal = true,
       point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 366, frames = { "UtilityCooldownViewer" } },
-    { key = "bufficon", label = "Abklingzeiten: Buffs", sys = "CooldownViewer", idx = "BuffIcon",
+    { key = "bufficon", label = "Abklingzeiten: Buffs", sys = "CooldownViewer", idx = "BuffIcon", personal = true,
       point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 406, frames = { "BuffIconCooldownViewer" } },
     { key = "encounter", label = "Begegnungsleiste", sys = "EncounterBar",
       point = "TOP", relPoint = "TOP", x = 0, y = -170, frames = { "EncounterBar" } },
@@ -141,11 +146,11 @@ K.GAME_LAYOUT = {
     { key = "debuffs", label = "Debuffs", sys = "AuraFrame", idx = "DebuffFrame",
       point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -270, y = -110, frames = { "DebuffFrame" } },
     { key = "tracker", label = "Questliste", sys = "ObjectiveTracker",
-      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = TRACK_X, y = -262, frames = { "ObjectiveTrackerFrame" } },
+      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = TRACK_X, y = TRACK_Y, frames = { "ObjectiveTrackerFrame" } },
     { key = "boss", label = "Bossrahmen", sys = "UnitFrame", idx = "Boss",
-      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = TRACK_X - 270, y = -262, frames = { "BossTargetFrameContainer" } },
+      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = TRACK_X - 270, y = TRACK_Y, frames = { "BossTargetFrameContainer" } },
     { key = "arena", label = "Arenarahmen", sys = "UnitFrame", idx = "Arena",
-      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = TRACK_X - 270, y = -262, frames = { "CompactArenaFrame", "ArenaEnemyFramesContainer" } },
+      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = TRACK_X - 270, y = TRACK_Y, frames = { "CompactArenaFrame", "ArenaEnemyFramesContainer" } },
     { key = "tooltip", label = "Tooltip", sys = "HudTooltip",
       point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = TRACK_X, y = 240, frames = { "GameTooltipDefaultContainer" } },
     { key = "bags", label = "Taschenleiste", sys = "Bags",

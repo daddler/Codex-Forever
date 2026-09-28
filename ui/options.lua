@@ -167,7 +167,7 @@ K.Register({
             B:Row({ type = "toggle", label = "Spielername in Klassenfarbe", key = "tooltipClassName", disabled = off },
                   { type = "toggle", label = "Rand in Klassen- und Qualitätsfarbe", key = "tooltipBorder", disabled = off,
                     description = "Spieler in ihrer Klassenfarbe, Gegenstände ab „selten“ in ihrer Qualität." })
-            B:Section("Fenster", "Charakterfenster (C), Zauberbuch und Talente (P, N) als Kachel statt Holz, Metall und Pergament.")
+            B:Section("Fenster", "Charakterfenster (C), Zauberbuch und Talente (P, N), Gespräche mit NPCs, Quests, Händler und Bücher als Kachel statt Holz, Metall und Pergament.")
             B:Row({ type = "toggle", label = "Fenster im WeintCodex-Stil", key = "windowSkin", reload = true },
                   { type = "toggle", label = "Stimmung statt Schwarz", key = "windowArt", reload = true,
                     disabled = function() return not K.Get("general", "windowSkin") end,
@@ -843,7 +843,9 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         return
     end
     if msg == "einrichten pruefen" or msg == "einrichten prüfen" or msg == "setup check" then
-        for _, line in ipairs(WeintCodex.UISetup.Check()) do
+        local ok, lines = pcall(WeintCodex.UISetup.Check)
+        if not ok then lines = { "Prüfung fehlgeschlagen: " .. tostring(lines) } end
+        for _, line in ipairs(lines) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
         end
         return
