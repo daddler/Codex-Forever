@@ -2056,6 +2056,7 @@ do
         table.insert(elle.systems, Sys(20, 0, { anchorInfo = mine, isInDefaultPosition = false,
             settings = { { setting = 1, value = 7 } } }))
         table.insert(elle.systems, Sys(20, 3, { anchorInfo = mine }))
+        table.insert(elle.systems, Sys(20, 2, { anchorInfo = mine }))   -- Buff-Symbole: bleiben am Spieler
         stored = { activeLayout = 3, layouts = { elle } }
         assert(ES.Apply(), "Einrichten mit Abklingzeitmanager schlug fehl")
         local wc = saved.layouts[2]
@@ -2068,13 +2069,19 @@ do
         assert(SetOf(ess, 1) == nil and SetOf(ess, 3) == 3, "Groesse nicht umgerechnet oder fremde Einstellung mitgekommen")
         local bi
         for _, sy in ipairs(wc.systems) do if sy.system == 20 and sy.systemIndex == 2 then bi = sy end end
-        assert(SetOf(bi, 6) == 2, "Buff-Anzeige des Spiels nicht aus")
+        -- 6.6.1.7: Buff-Symbole sichtbar, klein, ueber dem Spieler, nicht aus
+        -- dem frueheren Layout; die Buffleisten bleiben aus.
+        local bb
+        for _, sy in ipairs(wc.systems) do if sy.system == 20 and sy.systemIndex == 3 then bb = sy end end
+        assert(SetOf(bi, 6) == 0 and SetOf(bi, 3) == 1 and bi.anchorInfo.offsetX == K.LAYOUT.uf_player.x,
+            "Buff-Symbole nicht klein ueber dem Spieler")
+        assert(SetOf(bb, 6) == 2, "Buffleisten des Spiels nicht aus")
         assert(ES.report.kept == 2 and ES.report.keptFrom == "EllesmereUI Forever v4", "Uebernahme nicht gemeldet")
         assert(ES.RawValue(20, 3, 500) == nil and ES.RawValue(99, 3, 80) == nil, "Wert ausserhalb des Reglers gesetzt")
         _G.EditModeSettingDisplayInfoManager = oldDI
         -- Erneut, waehrend "WeintCodex" aktiv ist und nie verschoben wurde:
         -- wieder aus dem Layout davor. Hat der Spieler verschoben: seins.
-        for _, key in ipairs({ "essential", "utility", "bufficon", "buffbar" }) do
+        for _, key in ipairs({ "essential", "utility", "buffbar" }) do
             local e = Entry(key)
             for _, sy in ipairs(wc.systems) do
                 if sy.system == 20 and sy.systemIndex == _G.Enum.EditModeCooldownViewerSystemIndices[e.idx] then
@@ -3545,11 +3552,16 @@ do
         and trE.x + K.Get("questtracker", "padding") == mmE.x - 6,
         "Rand: Questliste buendig mit der Minikarte")
     -- 6.6.1.6: Buffs des Spiels ueber dem Spieler, der Fokus weicht nach links.
-    local buffE
-    for _, e in ipairs(K.GAME_LAYOUT) do if e.key == "buffs" then buffE = e end end
-    Check(buffE.point == "BOTTOMRIGHT" and buffE.relPoint == L.uf_player.relPoint and buffE.x == L.uf_player.x
-        and buffE.y >= M.cockpitY + M.unitHeight and L.uf_focus.x <= L.uf_player.x - M.unitWidth,
-        "Cockpit: Buffs ueber dem Spielerrahmen, Fokus daneben")
+    -- 6.6.1.7: dort nur die ausgewaehlten Buffs (Abklingzeitmanager); die
+    -- Buff-Anzeige des Spiels mit allen fremden Buffs wieder oben rechts.
+    local buffE, iconE
+    for _, e in ipairs(K.GAME_LAYOUT) do
+        if e.key == "buffs" then buffE = e elseif e.key == "bufficon" then iconE = e end
+    end
+    Check(iconE.point == "BOTTOMRIGHT" and iconE.relPoint == L.uf_player.relPoint and iconE.x == L.uf_player.x
+        and iconE.y >= M.cockpitY + M.unitHeight and not iconE.personal and buffE.point == "TOPRIGHT"
+        and L.uf_focus.x <= L.uf_player.x - M.unitWidth,
+        "Cockpit: ausgewaehlte Buffs ueber dem Spielerrahmen, alle Buffs oben rechts, Fokus daneben")
 end
 
 -- Stil 2.0: Balken bekommen die Glanztextur, ein Stilwechsel erreicht sie.

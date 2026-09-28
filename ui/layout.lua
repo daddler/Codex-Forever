@@ -147,9 +147,8 @@ K.GAME_LAYOUT = {
     -- Buffs, Debuffs brauchen nicht angezeigt werden - einzig die
     -- Faehigkeiten oder deren Laufzeiten"). Die Symbole von "Wichtig" und
     -- "Hilfreich" zeigen selbst, wie lange ihre Wirkung noch laeuft; die
-    -- Buff-Anzeigen des Spiels zeigten dieselben Laufzeiten ein zweites
-    -- Mal und dazu lange Buffs wie Ausdauer - sie sind aus (im
-    -- Bearbeitungsmodus wieder einschaltbar). Beide Symbolreihen auf 80 %.
+    -- Buffleisten des Spiels sind aus, die Buff-Symbole stehen seit
+    -- 6.6.1.7 am Spielerrahmen (unten). Beide Symbolreihen auf 80 %.
     -- personal: der PLATZ kommt aus dem bisherigen Layout, wenn es einen
     -- nennt (ui/setup.lua, ES.KeepPersonal); Groesse und Sichtbarkeit
     -- stellt WeintCodex.
@@ -162,9 +161,16 @@ K.GAME_LAYOUT = {
     { key = "utility", label = "Abklingzeiten: Hilfreich", sys = "CooldownViewer", idx = "Utility", personal = true,
       point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 366, frames = { "UtilityCooldownViewer" },
       display = { IconSize = 80 } },
-    { key = "bufficon", label = "Abklingzeiten: Buffs", sys = "CooldownViewer", idx = "BuffIcon", personal = true,
-      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 406, frames = { "BuffIconCooldownViewer" },
-      enum = { VisibleSetting = { "CooldownViewerVisibleSetting", "Hidden" } } },
+    -- "Buffs" des Abklingzeitmanagers ueber dem Spielerrahmen, rechts
+    -- buendig, klein (6.6.1.7, Beta-Test: "ausgewaehlte Buffs zeigen").
+    -- Welche Buffs, waehlt der Spieler im Fenster des Spiels - nur eigene,
+    -- und das Spiel fuellt sie auch im Kampf. Nicht `personal`: der Platz
+    -- ist Teil des Entwurfs, nicht aus einem frueheren Layout.
+    { key = "bufficon", label = "Abklingzeiten: Buffs", sys = "CooldownViewer", idx = "BuffIcon",
+      point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -AXIS, y = COCKPIT_Y + UF_H + 6, frames = { "BuffIconCooldownViewer" },
+      display = { IconSize = 60 },
+      enum = { VisibleSetting = { "CooldownViewerVisibleSetting", "Always" },
+               IconDirection = { "CooldownViewerIconDirection", "Left" } } },
     { key = "buffbar", label = "Abklingzeiten: Buffleisten", sys = "CooldownViewer", idx = "BuffBar", personal = true,
       point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -(AXIS + UF_W + 10), y = 316, frames = { "BuffBarCooldownViewer" },
       enum = { VisibleSetting = { "CooldownViewerVisibleSetting", "Hidden" } } },
@@ -173,15 +179,12 @@ K.GAME_LAYOUT = {
 
     { key = "minimap", label = "Minikarte", sys = "Minimap",
       point = "TOPRIGHT", relPoint = "TOPRIGHT", x = MINIMAP_X, y = -12, frames = { "MinimapCluster" } },
-    -- Buffs ueber dem Spielerrahmen (Beta-Test 6.6.1.5: "ich sehe an
-    -- meinem Spielerfenster nicht, ob ich gebufft bin oder ein Schild
-    -- habe"). Eigene Symbole kann WeintCodex nicht fuellen - im Kampf gibt
-    -- der Client Addons keine Auren (siehe "Aurenleisten"). Die Buff-
-    -- Anzeige des Spiels kann es, auch im Kampf; sie steht jetzt hier,
-    -- rechts buendig mit dem Spieler, waechst nach links und nach oben.
+    -- Die Buff-Anzeige des Spiels bleibt oben rechts: ueber dem Spieler
+    -- zeigte sie jeden fremden Buff (Beta-Test 6.6.1.6: "sieht scheisse
+    -- aus, saemtliche Buffs von anderen - unnoetig"). Am Spieler stehen
+    -- stattdessen nur ausgewaehlte eigene, siehe "bufficon".
     { key = "buffs", label = "Buffs", sys = "AuraFrame", idx = "BuffFrame",
-      point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -AXIS, y = COCKPIT_Y + UF_H + 6, frames = { "BuffFrame" },
-      enum = { IconWrap = { "AuraFrameIconWrap", "Up" }, IconDirection = { "AuraFrameIconDirection", "Left" } } },
+      point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -270, y = -12, frames = { "BuffFrame" } },
     { key = "debuffs", label = "Debuffs", sys = "AuraFrame", idx = "DebuffFrame",
       point = "TOPRIGHT", relPoint = "TOPRIGHT", x = -270, y = -110, frames = { "DebuffFrame" } },
     { key = "tracker", label = "Questliste", sys = "ObjectiveTracker",

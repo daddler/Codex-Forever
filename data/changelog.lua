@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.1.7",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFNur deine ausgewählten Buffs am Spielerrahmen.|r Über dem Spielerrahmen stehen klein die Buffs, die du im Abklingzeitmanager des Spiels auswählst (z. B. Schild, Inneres Feuer) – auch im Kampf. Alle Buffs, auch die von anderen, stehen wieder oben rechts. Einmal /wcui einrichten, dann neu laden.",
+        },
+    },
+    {
         version = "6.6.1.6",
         date    = "28.09.2026",
         notes   = {

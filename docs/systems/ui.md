@@ -528,10 +528,16 @@ Seit 6.2.0.0:
   6.6.1.6 („ich sehe an meinem Spielerfenster nicht, ob ich gebufft bin
   oder ein Schild habe“): eigene Buff-Symbole am Spieler kann WeintCodex
   nicht füllen (im Kampf keine Auren für Addons, siehe *Aurenleisten*).
-  Die Buff-Anzeige des Spiels (`BuffFrame`) kann es – sie steht jetzt
-  über dem Spielerrahmen (rechts bündig mit ihm, `IconWrap` = Up,
-  `IconDirection` = Left über `enum`); der Fokus weicht nach links über
-  den Begleiter. Die Debuffs bleiben oben rechts. Schild am Spieler- und
+  Die Buff-Anzeige des Spiels (`BuffFrame`) kann es – 6.6.1.6 stellte
+  sie über den Spielerrahmen; Beta-Test: „sieht scheiße aus, sämtliche
+  Buffs von anderen – unnötig“. Seit 6.6.1.7 steht sie wieder oben
+  rechts, und über dem Spieler stehen die **Buff-Symbole des
+  Abklingzeitmanagers** (`bufficon`: sichtbar, `IconSize` 60 %,
+  `IconDirection` Left, rechts bündig mit dem Spieler, nicht `personal`
+  – `ES.KeepPersonal` übernimmt nur Systeme, die `personal` tragen).
+  Welche Buffs dort erscheinen, wählt der Spieler im Abklingzeitmanager
+  des Spiels; das Spiel füllt sie auch im Kampf. Die Buffleisten bleiben
+  aus. Der Fokus weicht nach links über den Begleiter. Schild am Spieler- und
   Zielrahmen: `_absorb` liegt seit 6.6.1.6 **über** dem Leben, vom
   rechten Rand her (`SetReverseFill`, Farbe `GameColors.absorbOver`,
   blau – der Lebensbalken eines Priesters ist weiß). Hinter der Füllung

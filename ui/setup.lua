@@ -285,9 +285,16 @@ function ES.KeepPersonal(systems, source)
     local S = EnumTable("EditModeSystem")
     local cdm = S and S.CooldownViewer
     if type(cdm) ~= "number" then return 0, nil end
+    -- Nur Systeme, die K.GAME_LAYOUT `personal` nennt - die Buff-Symbole
+    -- stellt WeintCodex selbst an den Spielerrahmen (6.6.1.7).
+    local I = EnumTable(INDICES.CooldownViewer)
+    local mine = {}
+    for _, e in ipairs(K.GAME_LAYOUT) do
+        if e.sys == "CooldownViewer" and IsPersonal(e) and I and type(I[e.idx]) == "number" then mine[I[e.idx]] = true end
+    end
     local n = 0
     for _, from in ipairs(source.systems) do
-        if from.system == cdm then
+        if from.system == cdm and mine[from.systemIndex] then
             for _, to in ipairs(systems) do
                 if to.system == cdm and to.systemIndex == from.systemIndex and type(from.anchorInfo) == "table" then
                     to.anchorInfo = Copy(from.anchorInfo)
@@ -595,9 +602,8 @@ local function ShowQuestion()
         .. (baseName and ("der Vorlage „" .. tostring(baseName) .. "“") or "der Vorlage des Spiels")
         .. ", nicht deines bisherigen Layouts.\n"
         .. "•  Chatfenster zurück auf „Allgemein“ und „Kampflog“ – eigene Reiter verschwinden.\n"
-        .. "•  Deine Buffs über dem Spielerrahmen.\n"
-        .. "•  Abklingzeitmanager kleiner, nur Fähigkeiten und ihre Laufzeiten – die Buff-Anzeigen des Spiels"
-        .. " (Ausdauer und Co.) aus.\n"
+        .. "•  Abklingzeitmanager kleiner, nur Fähigkeiten und ihre Laufzeiten; seine Buff-Symbole klein über"
+        .. " dem Spielerrahmen – welche, wählst du im Abklingzeitmanager des Spiels.\n"
         .. "•  Einige Spieleinstellungen (Chatstil, Flüstern im Chat, Leisten sperren, keine Tutorials).\n\n"
         .. "Was du selbst gebaut hast, bleibt: die Plätze des Abklingzeitmanagers, deine verschobenen"
         .. " WeintCodex-Rahmen und die Skalierung der Oberfläche. Danach einmal neu laden. Dein bisheriges"
@@ -629,8 +635,8 @@ ShowDone = function()
         .. "."
     local d = ES.done or {}
     local size = d["essential.IconSize"] and "Symbole auf 80 %" or "Größe NICHT gesetzt (Regler des Spiels unbekannt)"
-    local buffs = (d["bufficon.VisibleSetting"] and "Buff-Anzeigen des Spiels aus")
-        or "Buff-Anzeigen NICHT ausgeschaltet (Einstellung unbekannt)"
+    local buffs = (d["bufficon.VisibleSetting"] and "Buff-Symbole über dem Spielerrahmen")
+        or "Buff-Symbole NICHT eingeschaltet (Einstellung unbekannt)"
     lines[#lines + 1] = "•  Abklingzeitmanager: " .. size .. ", " .. buffs .. "."
     if (r.kept or 0) > 0 then
         lines[#lines + 1] = "•  Abklingzeitmanager: " .. tostring(r.kept) .. " Plätze aus „" .. tostring(r.keptFrom)
