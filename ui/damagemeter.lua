@@ -586,18 +586,28 @@ end
 -- Aufschluesselung (Klick auf einen Namen, wie Details)
 --------------------------------------------------
 -- Ein eigenes Fenster neben der Schadensanzeige: wer, wie viel, wie viel
--- je Sekunde, welcher Anteil, welcher Rang - und darunter jeder Zauber mit
--- Balken, Summe, Anteil und Wert je Sekunde. Oben die Messarten zum
+-- je Sekunde, welcher Anteil, welcher Rang. Oben die Messarten zum
 -- Umschalten (Schaden, Heilung, erlittener Schaden ... desselben
 -- Spielers), Pfeile blaettern zum naechsten Spieler der Liste. Es folgt
 -- dem Takt der Anzeige, also live im Kampf. Esc oder X schliesst.
+--
+-- SEIT 6.6.2.1 (Beta-Test: "frei verschieben, mehr Informationen, ein
+-- Vergleich, Graphen, Auren - neben den Buffs auch Bufffood, Flaeschchen"):
+--   * Ziehen verschiebt das Fenster, es bleibt dann dort; Rechtsklick
+--     setzt es wieder neben die Anzeige.
+--   * Drei Ansichten: ZAUBER (wie bisher), VERLAUF (Wert je Sekunde ueber
+--     den letzten Kampf als Saeulen) und AUREN (Buffs des Spielers).
+--   * VERGLEICH: ein zweiter Spieler aus derselben Liste - Kennzahlen,
+--     Zauber (zweiter Balken), Verlauf (Linie) und Auren nebeneinander.
 --
 -- Was der Client nicht herausgibt, steht nicht da: keine Zauber ->
 -- ein Satz, keine Dauer -> kein "je Sekunde" beim Zauber. Ziele,
 -- Treffer, kritische Treffer nennt C_DamageMeter nach allem, was bekannt
 -- ist, nicht - deshalb gibt es sie hier nicht.
 
-local BD_W, BD_ROW, BD_MAX = 340, 20, 12
+local BD_W, BD_ROW, BD_MAX = 360, 20, 12
+local GRAPH_H, GRAPH_COLS = 96, 48
+local AURA_SIZE, AURA_GAP, AURA_MAX = 24, 3, 32
 local bd
 
 -- Dieselbe Person in einer anderen Liste: ueber die GUID, sonst den Namen.
@@ -618,6 +628,205 @@ local function SessionSeconds(session)
     return nil
 end
 
+local function Now() return K.Plain(_G.GetTime and _G.GetTime()) or 0 end
+
+local function ClassRGB(class)
+    local cc = class and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
+    if cc then return cc.r, cc.g, cc.b end
+    return C.info[1], C.info[2], C.info[3]
+end
+
+--------------------------------------------------
+-- Verlauf: Aufzeichnung im Kampf
+--------------------------------------------------
+-- C_DamageMeter nennt nur Summen, keinen Verlauf. WeintCodex liest
+-- deshalb im Kampf einmal je Sekunde die Summen von Schaden und Heilung
+-- und merkt sie sich; die Saeulen sind der Zuwachs je Zeitabschnitt.
+-- Nur der letzte Kampf, hoechstens 30 Minuten. GEHEIME ZAHLEN lassen
+-- sich nicht aufzeichnen - rechnen und vergleichen darf Lua mit ihnen
+-- nicht. Gibt der Client sie im Kampf verdeckt heraus, steht das da,
+-- statt eines leeren Graphen.
+DM.HIST_MODES = { "DamageDone", "HealingDone" }
+DM.HIST_MAX = 1800
+local hist = { t = {}, v = {}, active = false }
+function DM.History() return hist end
+
+function DM.StartHistory()
+    hist = { t = {}, v = {}, start = Now(), active = true, secret = false }
+end
+function DM.StopHistory() hist.active = false end
+
+function DM.Sample()
+    if not hist.active or not Available() or #hist.t >= DM.HIST_MAX then return end
+    local i = #hist.t + 1
+    hist.t[i] = Now() - (hist.start or 0)
+    local e = _G.Enum and _G.Enum.DamageMeterType
+    for _, mk in ipairs(DM.HIST_MODES) do
+        if not e or e[mk] ~= nil then
+            local ok, data = DM.Fetch("Current", mk)
+            local series = hist.v[mk]
+            if not series then series = {} hist.v[mk] = series end
+            if ok and type(data) == "table" and type(data.combatSources) == "table" then
+                for _, src in ipairs(data.combatSources) do
+                    local g, v = K.Plain(src.sourceGUID), K.Plain(src.totalAmount)
+                    if type(v) ~= "number" then
+                        hist.secret = true
+                    elseif type(g) == "string" then
+                        local s = series[g]
+                        if not s then s = {} series[g] = s end
+                        s[i] = v
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Wert je Sekunde in `n` gleich langen Abschnitten des aufgezeichneten
+-- Kampfes. nil, wenn es nichts gibt; sonst Liste und Dauer in Sekunden.
+function DM.Rates(guid, modeKey, n)
+    if DM._test then
+        local out, total = {}, 0
+        for _, s in ipairs(DM.TEST_SOURCES) do
+            if s.name == guid then total = s.totalAmount end
+        end
+        for c = 1, n do out[c] = total / 42 * (0.7 + 0.3 * math.sin(c / 3 + #guid)) end
+        return out, 42
+    end
+    local T = hist.t
+    local s = type(guid) == "string" and hist.v[modeKey] and hist.v[modeKey][guid]
+    if not s or #T < 2 then return nil end
+    local dur = T[#T]
+    if dur <= 0 then return nil end
+    -- Summe zu jedem Zeitpunkt: vor dem ersten Auftauchen 0, danach der
+    -- letzte bekannte Stand.
+    local cum, last = {}, 0
+    for i = 1, #T do
+        if type(s[i]) == "number" then last = s[i] end
+        cum[i] = last
+    end
+    n = math.max(1, math.min(n, #T - 1))
+    -- Zwischen zwei Proben linear: die Abschnitte fallen selten genau
+    -- auf eine Probe.
+    local out, idx = {}, 1
+    local function At(t)
+        while idx < #T and T[idx + 1] <= t do idx = idx + 1 end
+        if idx < #T and t > T[idx] then
+            local span = T[idx + 1] - T[idx]
+            if span > 0 then return cum[idx] + (cum[idx + 1] - cum[idx]) * (t - T[idx]) / span end
+        end
+        return cum[idx]
+    end
+    local prev = At(0)
+    for c = 1, n do
+        local t1 = dur * c / n
+        local v = At(t1)
+        out[c] = math.max(0, (v - prev) / (dur / n))
+        prev = v
+    end
+    return out, dur
+end
+
+--------------------------------------------------
+-- Auren: gemerkt ausserhalb des Kampfes
+--------------------------------------------------
+-- Im Kampf gibt der Client Addons die Auren anderer nicht heraus
+-- (gemessen in 6.6.0.x). Ausserhalb liest WeintCodex die Buffs der
+-- Gruppe mit, sobald sie sich aendern (gesammelt, hoechstens alle zwei
+-- Sekunden) - die Aufschluesselung zeigt also den Stand VOR dem Kampf:
+-- genau die Frage "hatte er Essen und Flaeschchen beim Pull?".
+-- Welche Buffs Essen oder Flaeschchen sind, sagt der Client nicht, und
+-- eine eigene Liste der Verbrauchsgueter von Forever gibt es nicht - es
+-- stehen alle Buffs da, mit Symbol, Restzeit und Tooltip.
+local auras = {}           -- [guid] = { at = Zeit, list = { { name, icon, id, exp } } }
+DM.auras = auras
+local dirty = {}
+
+local function GroupUnit(unit)
+    return unit == "player" or (type(unit) == "string" and (unit:find("^party%d") or unit:find("^raid%d")) and true) or false
+end
+DM.GroupUnit = GroupUnit
+
+function DM.SnapAuras(unit)
+    local cu = _G.C_UnitAuras
+    if not (cu and cu.GetAuraDataByIndex and _G.UnitGUID) then return false end
+    if _G.UnitExists and not K.Bool(_G.UnitExists(unit), false) then return false end
+    local g = K.Plain(_G.UnitGUID(unit))
+    if type(g) ~= "string" then return false end
+    local list = {}
+    for i = 1, 40 do
+        local ok, a = pcall(cu.GetAuraDataByIndex, unit, i, "HELPFUL")
+        if not ok or type(a) ~= "table" then break end
+        local name = K.Plain(a.name)
+        -- Ein geheimer Stand zaehlt nicht - der vorige bleibt.
+        if type(name) ~= "string" then return false end
+        local exp = K.Plain(a.expirationTime)
+        list[#list + 1] = { name = name, icon = K.Plain(a.icon), id = K.Plain(a.spellId),
+                            exp = type(exp) == "number" and exp or 0 }
+    end
+    auras[g] = { at = Now(), list = list }
+    return true
+end
+
+local function GroupUnits()
+    local out = { "player" }
+    local raid = _G.IsInRaid and K.Bool(_G.IsInRaid(), false)
+    local n = K.Plain(_G.GetNumGroupMembers and _G.GetNumGroupMembers()) or 0
+    if raid then
+        for i = 1, n do out[#out + 1] = "raid" .. i end
+    else
+        for i = 1, math.max(0, n - 1) do out[#out + 1] = "party" .. i end
+    end
+    return out
+end
+
+function DM.SnapAll()
+    if K.InCombat() then return end
+    local keep = {}
+    for _, u in ipairs(GroupUnits()) do
+        DM.SnapAuras(u)
+        local g = _G.UnitGUID and K.Plain(_G.UnitGUID(u))
+        if type(g) == "string" then keep[g] = true end
+    end
+    -- Wer die Gruppe verlassen hat, wird vergessen.
+    for g in pairs(auras) do if not keep[g] then auras[g] = nil end end
+end
+
+local auraQueued = false
+local function FlushAuras()
+    auraQueued = false
+    if K.InCombat() then wipe(dirty) return end
+    for u in pairs(dirty) do DM.SnapAuras(u) end
+    wipe(dirty)
+end
+function DM.AuraChanged(unit)
+    if not GroupUnit(unit) or K.InCombat() then return end
+    dirty[unit] = true
+    if auraQueued then return end
+    auraQueued = true
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(2, FlushAuras) else FlushAuras() end
+end
+DM.FlushAuras = FlushAuras
+
+-- Beispielauren fuer den Testmodus (erfunden, wie die Zeilen).
+DM.TEST_AURAS = {
+    Varek  = { { name = "Satt", icon = 136000, id = 19705, exp = 0 }, { name = "Geschwindigkeit", icon = 136047, id = 13141, exp = 0 } },
+    Tamsin = { { name = "Arkane Intelligenz", icon = 135932, id = 1459, exp = 0 } },
+}
+
+local function AurasFor(guid, name)
+    if DM._test then
+        local l = DM.TEST_AURAS[name]
+        return l and { at = Now() - 12, list = l } or nil
+    end
+    return type(guid) == "string" and auras[guid] or nil
+end
+DM.AurasFor = AurasFor
+
+--------------------------------------------------
+-- Das Fenster
+--------------------------------------------------
+
 local function Stat(parent, label)
     local c = CreateFrame("Frame", nil, parent)
     c:SetSize((BD_W - 24) / 4, 34)
@@ -628,6 +837,11 @@ local function Stat(parent, label)
     c.label:SetPoint("TOPLEFT", c.value, "BOTTOMLEFT", 0, -2)
     c.label:SetTextColor(unpack(C.textDim))
     c.label:SetText(label)
+    c.cmp = K.NewText(c, 10)
+    c.cmp:SetPoint("TOPLEFT", c.label, "BOTTOMLEFT", 0, -2)
+    c.cmp:SetWidth((BD_W - 24) / 4 - 4)
+    c.cmp:SetJustifyH("LEFT")
+    c.cmp:SetWordWrap(false)
     return c
 end
 
@@ -645,12 +859,19 @@ local function SpellRow(parent)
     r.bg:SetAllPoints(r.bar)
     local s = C.surface2
     r.bg:SetColorTexture(s[1], s[2], s[3], 0.8)
+    -- Der Vergleich: ein schmaler zweiter Balken unten in der Zeile.
+    r.bar2 = K.NewBar(r)
+    r.bar2:SetPoint("BOTTOMLEFT", r, "BOTTOMLEFT", BD_ROW + 2, 0)
+    r.bar2:SetPoint("BOTTOMRIGHT", r, "BOTTOMRIGHT", 0, 0)
+    r.bar2:SetHeight(4)
+    r.bar2:SetFrameLevel((r.bar:GetFrameLevel() or 1) + 1)
+    r.bar2:Hide()
     local host = CreateFrame("Frame", nil, r)
     host:SetAllPoints(r)
-    host:SetFrameLevel((r.bar:GetFrameLevel() or 1) + 2)
+    host:SetFrameLevel((r.bar:GetFrameLevel() or 1) + 3)
     r.name = K.NewText(host, 11)
     r.name:SetPoint("LEFT", r.bar, "LEFT", 5, 0)
-    r.name:SetPoint("RIGHT", r.bar, "RIGHT", -120, 0)
+    r.name:SetPoint("RIGHT", r.bar, "RIGHT", -140, 0)
     r.name:SetJustifyH("LEFT")
     r.name:SetWordWrap(false)
     r.amount = K.NewText(host, 11)
@@ -668,6 +889,50 @@ local function SpellRow(parent)
     return r
 end
 
+-- Kleiner Textknopf (Reiter, "Vergleich").
+local function TextTab(parent, onClick)
+    local t = CreateFrame("Button", nil, parent)
+    t:SetHeight(20)
+    t.text = K.NewText(t, 11)
+    t.text:SetPoint("CENTER", t, "CENTER", 0, 1)
+    t.line = t:CreateTexture(nil, "ARTWORK")
+    t.line:SetPoint("BOTTOMLEFT", t, "BOTTOMLEFT", 0, 0)
+    t.line:SetPoint("BOTTOMRIGHT", t, "BOTTOMRIGHT", 0, 0)
+    t.line:SetHeight(2)
+    t.line:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+    t:SetScript("OnClick", onClick)
+    return t
+end
+
+local function FitTab(t, label)
+    t.text:SetText(label)
+    local w = K.Plain(t.text:GetStringWidth())
+    t:SetWidth((type(w) == "number" and w or 50) + 14)
+end
+
+local function Line(parent)
+    local line = parent:CreateTexture(nil, "BACKGROUND")
+    line:SetPoint("BOTTOMLEFT", parent, "BOTTOMLEFT", 0, 0)
+    line:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", 0, 0)
+    line:SetHeight(1)
+    line:SetColorTexture(C.border[1], C.border[2], C.border[3], 1)
+    return line
+end
+
+DM.VIEWS = {
+    { key = "spells", label = "Zauber" },
+    { key = "graph",  label = "Verlauf" },
+    { key = "auras",  label = "Auren" },
+}
+
+local function SavePos(f)
+    local l, b = K.Plain(f:GetLeft()), K.Plain(f:GetBottom())
+    if type(l) == "number" and type(b) == "number" then
+        K.Set(KEY, "bdX", math.floor(l + 0.5))
+        K.Set(KEY, "bdY", math.floor(b + 0.5))
+    end
+end
+
 local function BuildBreakdown()
     if bd then return bd end
     local f = CreateFrame("Frame", "WeintCodexDamageBreakdown", UIParent)
@@ -675,15 +940,31 @@ local function BuildBreakdown()
     f:SetFrameStrata("MEDIUM")
     f:SetClampedToScreen(true)
     f:EnableMouse(true)
+    -- Frei verschiebbar (Beta-Test 6.6.2.0); Rechtsklick: zurueck an die
+    -- Anzeige.
+    f:SetMovable(true)
+    f:RegisterForDrag("LeftButton")
+    f:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    f:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        SavePos(self)
+    end)
+    f:SetScript("OnMouseUp", function(_, button)
+        if button == "RightButton" then
+            K.Set(KEY, "bdX", nil)
+            K.Set(KEY, "bdY", nil)
+            if bd.win then DM.PlaceBreakdown(bd.win) end
+        end
+    end)
     f.kachel = K.Kachel(f, { shadow = 8 })
-    bd = { frame = f, rows = {}, tabs = {} }
+    bd = { frame = f, rows = {}, tabs = {}, views = {}, cols = {}, marks = {}, icons = {}, view = "spells" }
 
     bd.icon = f:CreateTexture(nil, "ARTWORK")
     bd.icon:SetSize(24, 24)
     bd.icon:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -12)
     bd.name = K.NewText(f, 15)
     bd.name:SetPoint("TOPLEFT", bd.icon, "TOPRIGHT", 8, 1)
-    bd.name:SetPoint("RIGHT", f, "RIGHT", -84, 0)
+    bd.name:SetPoint("RIGHT", f, "RIGHT", -170, 0)
     bd.name:SetJustifyH("LEFT")
     bd.name:SetWordWrap(false)
     bd.sub = K.NewText(f, 10)
@@ -716,6 +997,16 @@ local function BuildBreakdown()
     bd.next:SetPoint("RIGHT", bd.close, "LEFT", -8, 0)
     bd.prev = Arrow("‹", "Voriger in der Liste", -1)
     bd.prev:SetPoint("RIGHT", bd.next, "LEFT", -2, 0)
+    -- Vergleich: ein zweiter Spieler aus derselben Liste.
+    bd.cmpBtn = TextTab(f, function(self) DM.CompareMenu(self) end)
+    bd.cmpBtn.line:SetColorTexture(C.border[1], C.border[2], C.border[3], 1)
+    bd.cmpBtn:SetPoint("RIGHT", bd.prev, "LEFT", -6, 0)
+    bd.cmpBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText("Mit einem zweiten Spieler vergleichen", 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    bd.cmpBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
     -- Kennzahlen in einer Reihe.
     bd.stats = {}
@@ -729,20 +1020,28 @@ local function BuildBreakdown()
         bd.stats[i] = c
     end
 
-    -- Messarten als flache Reiter.
+    -- Messarten als flache Reiter, darunter die Ansichten.
     bd.tabRow = CreateFrame("Frame", nil, f)
-    bd.tabRow:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -90)
-    bd.tabRow:SetPoint("TOPRIGHT", f, "TOPRIGHT", -12, -90)
     bd.tabRow:SetHeight(20)
-    local line = bd.tabRow:CreateTexture(nil, "BACKGROUND")
-    line:SetPoint("BOTTOMLEFT", bd.tabRow, "BOTTOMLEFT", 0, 0)
-    line:SetPoint("BOTTOMRIGHT", bd.tabRow, "BOTTOMRIGHT", 0, 0)
-    line:SetHeight(1)
-    line:SetColorTexture(C.border[1], C.border[2], C.border[3], 1)
+    Line(bd.tabRow)
+    bd.viewRow = CreateFrame("Frame", nil, f)
+    bd.viewRow:SetHeight(20)
+    Line(bd.viewRow)
+    local x = 0
+    for i, v in ipairs(DM.VIEWS) do
+        local t = TextTab(bd.viewRow, function(self)
+            bd.view = self._view
+            DM.RefreshBreakdown()
+        end)
+        t._view = v.key
+        FitTab(t, v.label)
+        t:SetPoint("LEFT", bd.viewRow, "LEFT", x, 0)
+        x = x + t:GetWidth() + 4
+        bd.views[i] = t
+    end
 
+    -- Ansicht Zauber
     bd.list = CreateFrame("Frame", nil, f)
-    bd.list:SetPoint("TOPLEFT", bd.tabRow, "BOTTOMLEFT", 0, -8)
-    bd.list:SetPoint("TOPRIGHT", bd.tabRow, "BOTTOMRIGHT", 0, -8)
     bd.list:SetHeight(BD_MAX * (BD_ROW + 2))
     for i = 1, BD_MAX do
         local r = SpellRow(bd.list)
@@ -750,6 +1049,35 @@ local function BuildBreakdown()
         r:SetPoint("TOPRIGHT", bd.list, "TOPRIGHT", 0, -(i - 1) * (BD_ROW + 2))
         bd.rows[i] = r
     end
+
+    -- Ansicht Verlauf
+    bd.graph = CreateFrame("Frame", nil, f)
+    bd.graph:SetHeight(GRAPH_H + 30)
+    bd.graph.bg = bd.graph:CreateTexture(nil, "BACKGROUND")
+    bd.graph.bg:SetPoint("TOPLEFT", bd.graph, "TOPLEFT", 0, -14)
+    bd.graph.bg:SetPoint("TOPRIGHT", bd.graph, "TOPRIGHT", 0, -14)
+    bd.graph.bg:SetHeight(GRAPH_H)
+    local s2 = C.surface1
+    bd.graph.bg:SetColorTexture(s2[1], s2[2], s2[3], 0.6)
+    bd.graph.peak = K.NewText(bd.graph, 10)
+    bd.graph.peak:SetPoint("TOPLEFT", bd.graph, "TOPLEFT", 0, 0)
+    bd.graph.peak:SetTextColor(unpack(C.textMuted))
+    bd.graph.legend = K.NewText(bd.graph, 10)
+    bd.graph.legend:SetPoint("TOPRIGHT", bd.graph, "TOPRIGHT", 0, 0)
+    bd.graph.legend:SetJustifyH("RIGHT")
+    bd.graph.t0 = K.NewText(bd.graph, 10)
+    bd.graph.t0:SetPoint("TOPLEFT", bd.graph.bg, "BOTTOMLEFT", 0, -3)
+    bd.graph.t0:SetTextColor(unpack(C.textDim))
+    bd.graph.t1 = K.NewText(bd.graph, 10)
+    bd.graph.t1:SetPoint("TOPRIGHT", bd.graph.bg, "BOTTOMRIGHT", 0, -3)
+    bd.graph.t1:SetTextColor(unpack(C.textDim))
+    bd.graph:Hide()
+
+    -- Ansicht Auren
+    bd.auraBox = CreateFrame("Frame", nil, f)
+    bd.auraBox:Hide()
+    bd.auraHead = { K.NewText(bd.auraBox, 11), K.NewText(bd.auraBox, 11) }
+
     bd.note = K.NewText(f, 11)
     bd.note:SetJustifyH("LEFT")
     bd.note:SetWidth(BD_W - 24)
@@ -768,6 +1096,11 @@ local function PaintTabs()
         t.text:SetTextColor(unpack(on and C.textBright or C.textMuted))
         t.line:SetShown(on)
     end
+    for _, t in ipairs(bd.views) do
+        local on = (t._view == bd.view)
+        t.text:SetTextColor(unpack(on and C.textBright or C.textMuted))
+        t.line:SetShown(on)
+    end
 end
 
 local function BuildTabs()
@@ -779,16 +1112,7 @@ local function BuildTabs()
             i = i + 1
             local t = bd.tabs[i]
             if not t then
-                t = CreateFrame("Button", nil, bd.tabRow)
-                t:SetHeight(20)
-                t.text = K.NewText(t, 11)
-                t.text:SetPoint("CENTER", t, "CENTER", 0, 1)
-                t.line = t:CreateTexture(nil, "ARTWORK")
-                t.line:SetPoint("BOTTOMLEFT", t, "BOTTOMLEFT", 0, 0)
-                t.line:SetPoint("BOTTOMRIGHT", t, "BOTTOMRIGHT", 0, 0)
-                t.line:SetHeight(2)
-                t.line:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
-                t:SetScript("OnClick", function(self)
+                t = TextTab(bd.tabRow, function(self)
                     bd.mode = self._mode
                     DM.RefreshBreakdown()
                 end)
@@ -796,9 +1120,7 @@ local function BuildTabs()
             end
             t._mode = m.key
             -- Kurz: "Erlittener Schaden" passt sonst nicht in die Reihe.
-            t.text:SetText(m.short or m.label)
-            local w = K.Plain(t.text:GetStringWidth())
-            t:SetWidth((type(w) == "number" and w or 50) + 14)
+            FitTab(t, m.short or m.label)
             t:ClearAllPoints()
             t:SetPoint("LEFT", bd.tabRow, "LEFT", x, 0)
             x = x + t:GetWidth() + 4
@@ -808,11 +1130,17 @@ local function BuildTabs()
     PaintTabs()
 end
 
--- Neben das Fenster, auf die Seite mit mehr Platz.
-local function Place(w)
+-- Neben das Fenster, auf die Seite mit mehr Platz - ausser der Spieler
+-- hat es verschoben: dann dorthin.
+function DM.PlaceBreakdown(w)
     local f = bd.frame
-    local wf = w.frame
     f:ClearAllPoints()
+    local x, y = Opt("bdX"), Opt("bdY")
+    if type(x) == "number" and type(y) == "number" then
+        f:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x, y)
+        return "saved"
+    end
+    local wf = w.frame
     local cx = K.Plain(wf.GetCenter and select(1, wf:GetCenter()))
     local uw = K.Plain(UIParent:GetWidth())
     if type(cx) == "number" and type(uw) == "number" and cx > uw / 2 then
@@ -820,6 +1148,7 @@ local function Place(w)
     else
         f:SetPoint("BOTTOMLEFT", wf, "BOTTOMRIGHT", 10, 0)
     end
+    return "beside"
 end
 
 -- Die Liste der aktuellen Messart (Test oder Client), mit Summe.
@@ -845,71 +1174,126 @@ local function SourcesFor(session, modeKey)
     return data.combatSources, total
 end
 
-function DM.RefreshBreakdown()
-    if not (bd and bd.frame:IsShown() and bd.win) then return end
-    local w = bd.win
-    local session = w:Session()
-    local mode = ModeInfo(bd.mode)
-    PaintTabs()
-    local sources, total = SourcesFor(session, mode.key)
-    local src, rank
+local function Find(sources, guid, name)
     for i, s in ipairs(sources or {}) do
-        if SameSource(s, bd.guid, bd.name_) then src, rank = s, i break end
+        if SameSource(s, guid, name) then return s, i end
     end
-    bd.sources, bd.rank = sources, rank
+    return nil, nil
+end
 
-    -- Kopf
-    local class = src and K.Plain(src.classFilename) or bd.class
-    if not ClassIcon(bd.icon, class) then bd.icon:Hide() end
-    if src and type(src.name) ~= "nil" then bd.name:SetFormattedText("%s", src.name)
-    elseif bd.name_ then bd.name:SetText(bd.name_) end
-    local cc = class and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
-    if cc then bd.name:SetTextColor(cc.r, cc.g, cc.b) else bd.name:SetTextColor(unpack(C.textBright)) end
-    bd.sub:SetText(mode.label .. " · " .. w:SessionLabel() .. (DM._test and "  ·  Beispiel" or ""))
+local function SpellsOf(session, mode, src, rank)
+    if not src then return {} end
+    if DM._test then return DM.TEST_SPELLS[rank] or {} end
+    return DM.Spells(session, mode.key, src.sourceGUID)
+end
 
-    -- Kennzahlen
-    local st = bd.stats
-    if src then
-        st[1].value:SetText(DM.Format(src.totalAmount))
-        if mode.rate and type(src.amountPerSecond) ~= "nil" then st[2].value:SetText(DM.Format(src.amountPerSecond))
-        else st[2].value:SetText("–") end
-        local pct = Share(src, total)
-        st[3].value:SetText(pct and string.format("%d%%", math.floor(pct + 0.5)) or "–")
-        st[4].value:SetText(string.format("%d / %d", rank, #sources))
+-- "+12 %": A gegen B, nur mit offenen Zahlen.
+local function Diff(a, b)
+    a, b = K.Plain(a), K.Plain(b)
+    if type(a) ~= "number" or type(b) ~= "number" or b <= 0 then return nil end
+    return string.format("%+d %%", math.floor((a - b) / b * 100 + 0.5))
+end
+DM.Diff = Diff
+
+-- Vergleich waehlen: alle offenen Namen der Liste ausser dem gezeigten.
+function DM.CompareItems()
+    local items = { { value = "", text = "Kein Vergleich" } }
+    for _, s in ipairs(bd and bd.sources or {}) do
+        local n = K.Plain(s.name)
+        if type(n) == "string" and not SameSource(s, bd.guid, bd.name_) then
+            items[#items + 1] = { value = n, text = n }
+        end
+    end
+    return items
+end
+
+function DM.SetCompare(name)
+    if not bd then return end
+    if type(name) ~= "string" or name == "" then
+        bd.cmp = nil
     else
-        for i = 1, 4 do st[i].value:SetText("–") end
+        local s = Find(bd.sources, nil, name)
+        local g = s and K.Plain(s.sourceGUID)
+        bd.cmp = { name = name, guid = type(g) == "string" and g or nil, class = s and K.Plain(s.classFilename) }
     end
+    DM.RefreshBreakdown()
+end
 
-    -- Zauber
-    local spells = {}
-    if src then
-        spells = DM._test and (DM.TEST_SPELLS[rank] or {}) or DM.Spells(session, mode.key, src.sourceGUID)
+function DM.CompareMenu(owner)
+    local open = WeintCodex.OpenDropMenu
+    if not (bd and open) then return end
+    open(owner, DM.CompareItems(), bd.cmp and bd.cmp.name or "", function(v) DM.SetCompare(v) end, 170)
+end
+
+--------------------------------------------------
+-- Die drei Ansichten
+--------------------------------------------------
+
+local function DrawSpells(session, mode, src, rank, cmpSrc, cmpRank, secs, total)
+    local spells = SpellsOf(session, mode, src, rank)
+    local other = cmpSrc and SpellsOf(session, mode, cmpSrc, cmpRank) or {}
+    -- Vergleich: die Zauber beider, zugeordnet ueber die Zauber-ID.
+    local byId, rows = {}, {}
+    for _, sp in ipairs(other) do
+        local id = K.Plain(sp.spellID)
+        if type(id) == "number" then byId[id] = sp end
     end
-    local secs = SessionSeconds(session)
-    local r, g, b = C.info[1], C.info[2], C.info[3]
-    if cc then r, g, b = cc.r, cc.g, cc.b end
-    local shown = math.min(#spells, BD_MAX)
-    local top = spells[1] and spells[1].totalAmount
+    local used = {}
+    for _, sp in ipairs(spells) do
+        local id = K.Plain(sp.spellID)
+        local b = type(id) == "number" and byId[id] or nil
+        if b then used[b] = true end
+        rows[#rows + 1] = { id = sp.spellID, a = sp, b = b }
+    end
+    if cmpSrc then
+        for _, sp in ipairs(other) do
+            if not used[sp] then rows[#rows + 1] = { id = sp.spellID, b = sp } end
+        end
+    end
+    -- Gemeinsamer Massstab, wo die Zahlen offen sind; sonst jeder seinen.
+    local topA = spells[1] and spells[1].totalAmount
+    local topB = other[1] and other[1].totalAmount
+    local pa, pb = K.Plain(topA), K.Plain(topB)
+    local shared = (type(pa) == "number" and type(pb) == "number") and math.max(pa, pb) or nil
+    local r, g, b = ClassRGB(src and K.Plain(src.classFilename) or bd.class)
+    local r2, g2, b2 = ClassRGB(bd.cmp and bd.cmp.class)
+    local shown = math.min(#rows, BD_MAX)
     for i = 1, BD_MAX do
         local row = bd.rows[i]
-        local sp = spells[i]
-        if sp and i <= shown then
-            row._spell = sp.spellID
-            local icon = SpellIcon(sp.spellID)
+        local e = rows[i]
+        if e and i <= shown then
+            row._spell = e.id
+            local icon = SpellIcon(e.id)
             if type(icon) ~= "nil" then row.icon:SetTexture(icon) row.icon:Show() else row.icon:Hide() end
-            row.name:SetText(SpellName(sp.spellID) or "?")
-            if type(top) ~= "nil" then row.bar:SetMinMaxValues(0, top) end
-            if type(sp.totalAmount) ~= "nil" then row.bar:SetValue(sp.totalAmount) else row.bar:SetValue(0) end
+            row.name:SetText(SpellName(e.id) or "?")
+            local ta = shared or topA
+            if type(ta) ~= "nil" then row.bar:SetMinMaxValues(0, ta) end
+            row.bar:SetValue(e.a and type(e.a.totalAmount) ~= "nil" and e.a.totalAmount or 0)
             K.PaintBar(row.bar, r, g, b)
-            local pct = Share(sp, src.totalAmount)
-            local rate = sp.amountPerSecond
-            local v = K.Plain(sp.totalAmount)
-            local rateText
-            if type(rate) ~= "nil" then rateText = DM.Format(rate)
-            elseif secs and type(v) == "number" then rateText = DM.Format(v / secs) end
-            local parts = DM.Format(sp.totalAmount)
-            if rateText then parts = string.format("%s (%s)", parts, rateText) end
-            if pct then parts = string.format("%s  %d%%", parts, math.floor(pct + 0.5)) end
+            local parts
+            if e.a then
+                local pct = Share(e.a, src.totalAmount)
+                local rate = e.a.amountPerSecond
+                local v = K.Plain(e.a.totalAmount)
+                local rateText
+                if type(rate) ~= "nil" then rateText = DM.Format(rate)
+                elseif secs and type(v) == "number" then rateText = DM.Format(v / secs) end
+                parts = DM.Format(e.a.totalAmount)
+                if rateText and not cmpSrc then parts = string.format("%s (%s)", parts, rateText) end
+                if pct and not cmpSrc then parts = string.format("%s  %d%%", parts, math.floor(pct + 0.5)) end
+            else
+                parts = "–"
+            end
+            if cmpSrc then
+                local tb = shared or topB
+                if type(tb) ~= "nil" then row.bar2:SetMinMaxValues(0, tb) end
+                row.bar2:SetValue(e.b and type(e.b.totalAmount) ~= "nil" and e.b.totalAmount or 0)
+                K.PaintBar(row.bar2, r2, g2, b2)
+                row.bar2:Show()
+                parts = string.format("%s  |  %s", parts, e.b and DM.Format(e.b.totalAmount) or "–")
+            else
+                row.bar2:Hide()
+            end
             row.amount:SetText(parts)
             row:Show()
         else
@@ -919,19 +1303,286 @@ function DM.RefreshBreakdown()
     end
     local listH = shown * (BD_ROW + 2)
     bd.list:SetHeight(math.max(1, listH))
-    bd.note:ClearAllPoints()
-    bd.note:SetPoint("TOPLEFT", bd.list, "TOPLEFT", 0, -listH - (shown > 0 and 6 or 0))
+    local note = ""
     if not src then
-        bd.note:SetText("In dieser Messart steht " .. (bd.name_ or "dieser Spieler") .. " nicht auf der Liste.")
+        note = "In dieser Messart steht " .. (bd.name_ or "dieser Spieler") .. " nicht auf der Liste."
     elseif shown == 0 then
-        bd.note:SetText(mode.deaths and "" or "Zauber nennt der Client hier nicht.")
-    elseif #spells > shown then
-        bd.note:SetText(string.format("und %d weitere Zauber", #spells - shown))
-    else
-        bd.note:SetText("")
+        note = mode.deaths and "" or "Zauber nennt der Client hier nicht."
+    elseif #rows > shown then
+        note = string.format("und %d weitere Zauber", #rows - shown)
     end
-    local noteH = (bd.note:GetText() or "") ~= "" and 18 or 0
-    bd.frame:SetHeight(90 + 20 + 8 + listH + noteH + 12)
+    if cmpSrc and not shared and shown > 0 then
+        note = (note ~= "" and (note .. " · ") or "") .. "Balken je Spieler für sich skaliert – die Zahlen sind im Kampf verdeckt."
+    end
+    DM.lastRows = rows
+    return listH, note
+end
+
+local function Column(i)
+    local c = bd.cols[i]
+    if not c then
+        c = bd.graph:CreateTexture(nil, "ARTWORK")
+        bd.cols[i] = c
+    end
+    return c
+end
+local function Mark(i)
+    local m = bd.marks[i]
+    if not m then
+        m = bd.graph:CreateTexture(nil, "OVERLAY")
+        m:SetHeight(2)
+        bd.marks[i] = m
+    end
+    return m
+end
+
+local function DrawGraph(mode, guid, name)
+    -- Im Kampf zeichnet die Aufschluesselung zweimal je Sekunde neu; der
+    -- Verlauf aendert sich aber nur mit einer neuen Probe. Unveraendert:
+    -- nichts neu rechnen (bis zu 1800 Proben je Spieler).
+    local sig = table.concat({ tostring(mode.key), tostring(guid), tostring(name), #hist.t,
+        tostring(hist.start), tostring(bd.cmp and bd.cmp.name), DM._test and "t" or "" }, "|")
+    if bd._gsig == sig and bd._gres then return bd._gres[1], bd._gres[2] end
+    local h, note = DM.DrawGraphNow(mode, guid, name)
+    bd._gsig, bd._gres = sig, { h, note }
+    return h, note
+end
+
+function DM.DrawGraphNow(mode, guid, name)
+    for _, c in ipairs(bd.cols) do c:Hide() end
+    for _, m in ipairs(bd.marks) do m:Hide() end
+    local key = DM._test and name or guid
+    local histMode = false
+    for _, mk in ipairs(DM.HIST_MODES) do if mk == mode.key then histMode = true end end
+    if not histMode then
+        return 0, "Den Verlauf zeichnet WeintCodex für Schaden und Heilung auf."
+    end
+    local rates, dur = DM.Rates(key, mode.key, GRAPH_COLS)
+    if not rates then
+        if hist.secret then
+            return 0, "Im Kampf gibt der Client die Zahlen verdeckt heraus – einen Verlauf kann WeintCodex damit nicht aufzeichnen."
+        end
+        return 0, "Noch kein Verlauf – WeintCodex zeichnet ihn im nächsten Kampf auf (Schaden und Heilung, einmal je Sekunde)."
+    end
+    local ckey = bd.cmp and (DM._test and bd.cmp.name or bd.cmp.guid)
+    local other = ckey and DM.Rates(ckey, mode.key, #rates) or nil
+    local peak = 0
+    for _, v in ipairs(rates) do if v > peak then peak = v end end
+    for _, v in ipairs(other or {}) do if v > peak then peak = v end end
+    local width = BD_W - 24
+    local n = #rates
+    local cw = width / n
+    local r, g, b = ClassRGB(bd.class)
+    for i, v in ipairs(rates) do
+        local c = Column(i)
+        c:ClearAllPoints()
+        local h = peak > 0 and math.max(1, v / peak * (GRAPH_H - 4)) or 1
+        c:SetPoint("BOTTOMLEFT", bd.graph.bg, "BOTTOMLEFT", (i - 1) * cw + 0.5, 0)
+        c:SetSize(math.max(1, cw - 1), h)
+        c:SetColorTexture(r, g, b, 0.85)
+        c:Show()
+    end
+    if other then
+        local r2, g2, b2 = ClassRGB(bd.cmp.class)
+        for i, v in ipairs(other) do
+            local m = Mark(i)
+            m:ClearAllPoints()
+            local y = peak > 0 and (v / peak * (GRAPH_H - 4)) or 0
+            m:SetPoint("BOTTOMLEFT", bd.graph.bg, "BOTTOMLEFT", (i - 1) * cw, math.max(0, y - 1))
+            m:SetWidth(math.max(1, cw))
+            m:SetColorTexture(r2, g2, b2, 1)
+            m:Show()
+        end
+    end
+    bd.graph.peak:SetText("Spitze " .. DM.Format(peak) .. " je Sekunde")
+    if other then
+        local cr, cg, cb = ClassRGB(bd.cmp.class)
+        bd.graph.legend:SetText("Linie: " .. bd.cmp.name)
+        bd.graph.legend:SetTextColor(cr, cg, cb)
+    else
+        bd.graph.legend:SetText("")
+    end
+    bd.graph.t0:SetText("0:00")
+    bd.graph.t1:SetText(Clock(dur))
+    DM.lastRates = rates
+    return GRAPH_H + 30, "Letzter aufgezeichneter Kampf, " .. n .. " Abschnitte."
+end
+
+local function AuraIcon(i)
+    local t = bd.icons[i]
+    if not t then
+        t = CreateFrame("Frame", nil, bd.auraBox)
+        t:SetSize(AURA_SIZE, AURA_SIZE)
+        t.tex = t:CreateTexture(nil, "ARTWORK")
+        t.tex:SetAllPoints(t)
+        if t.tex.SetTexCoord then t.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
+        K.Border(t, 1, 0, 0, 0, 1, "OVERLAY")
+        t.time = K.NewText(t, 9)
+        t.time:SetPoint("BOTTOM", t, "BOTTOM", 0, 1)
+        t:EnableMouse(true)
+        t:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            if type(self._id) == "number" and GameTooltip.SetSpellByID then
+                pcall(GameTooltip.SetSpellByID, GameTooltip, self._id)
+            else
+                GameTooltip:SetText(self._name or "?", 1, 1, 1)
+            end
+            GameTooltip:Show()
+        end)
+        t:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        bd.icons[i] = t
+    end
+    return t
+end
+
+local function Remaining(exp)
+    if type(exp) ~= "number" or exp <= 0 then return "" end
+    local left = exp - Now()
+    if left <= 0 then return "–" end
+    if left >= 3600 then return math.floor(left / 3600) .. "h" end
+    if left >= 60 then return math.floor(left / 60) .. "m" end
+    return math.floor(left) .. "s"
+end
+
+local function DrawAuras()
+    for _, t in ipairs(bd.icons) do t:Hide() end
+    local people = { { guid = bd.guid, name = bd.name_ or "?", class = bd.class } }
+    if bd.cmp then people[2] = bd.cmp end
+    local perRow = math.floor((BD_W - 24 + AURA_GAP) / (AURA_SIZE + AURA_GAP))
+    local y, n, any = 0, 0, false
+    for pi, p in ipairs(people) do
+        local head = bd.auraHead[pi]
+        local snap = AurasFor(p.guid, p.name)
+        head:ClearAllPoints()
+        head:SetPoint("TOPLEFT", bd.auraBox, "TOPLEFT", 0, -y)
+        local r, g, b = ClassRGB(p.class)
+        head:SetTextColor(r, g, b)
+        if snap then
+            any = true
+            local ago = math.max(0, Now() - (snap.at or 0))
+            head:SetText(string.format("%s · %d Buffs · Stand vor %s", p.name, #snap.list, Clock(ago)))
+            y = y + 18
+            local list = snap.list
+            for i = 1, math.min(#list, AURA_MAX) do
+                n = n + 1
+                local t = AuraIcon(n)
+                local col, row = (i - 1) % perRow, math.floor((i - 1) / perRow)
+                t:ClearAllPoints()
+                t:SetPoint("TOPLEFT", bd.auraBox, "TOPLEFT", col * (AURA_SIZE + AURA_GAP), -(y + row * (AURA_SIZE + AURA_GAP)))
+                local a = list[i]
+                t.tex:SetTexture(a.icon)
+                t._id, t._name = a.id, a.name
+                t.time:SetText(Remaining(a.exp))
+                t:Show()
+            end
+            local rows = math.ceil(math.min(#list, AURA_MAX) / perRow)
+            y = y + rows * (AURA_SIZE + AURA_GAP) + 8
+        else
+            head:SetText(p.name .. " · keine Auren gemerkt")
+            y = y + 22
+        end
+        head:Show()
+    end
+    for pi = #people + 1, #bd.auraHead do bd.auraHead[pi]:Hide() end
+    bd.auraBox:SetHeight(math.max(1, y))
+    local note = "Alle Buffs – auch Essen und Fläschchen – so, wie WeintCodex sie zuletzt außerhalb des Kampfes gesehen hat. Im Kampf gibt der Client die Auren anderer nicht heraus."
+    if not any then
+        note = "Auren merkt sich WeintCodex außerhalb des Kampfes bei Spielern deiner Gruppe."
+    end
+    return y, note
+end
+
+function DM.RefreshBreakdown()
+    if not (bd and bd.frame:IsShown() and bd.win) then return end
+    local w = bd.win
+    local session = w:Session()
+    local mode = ModeInfo(bd.mode)
+    PaintTabs()
+    local sources, total = SourcesFor(session, mode.key)
+    local src, rank = Find(sources, bd.guid, bd.name_)
+    bd.sources, bd.rank = sources, rank
+    local cmpSrc, cmpRank
+    if bd.cmp then cmpSrc, cmpRank = Find(sources, bd.cmp.guid, bd.cmp.name) end
+
+    -- Kopf
+    local class = src and K.Plain(src.classFilename) or bd.class
+    bd.class = class
+    if not ClassIcon(bd.icon, class) then bd.icon:Hide() end
+    if src and type(src.name) ~= "nil" then bd.name:SetFormattedText("%s", src.name)
+    elseif bd.name_ then bd.name:SetText(bd.name_) end
+    local cc = class and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
+    if cc then bd.name:SetTextColor(cc.r, cc.g, cc.b) else bd.name:SetTextColor(unpack(C.textBright)) end
+    bd.sub:SetText(mode.label .. " · " .. w:SessionLabel() .. (DM._test and "  ·  Beispiel" or ""))
+    if bd.cmp then
+        FitTab(bd.cmpBtn, "vs " .. (WeintCodex.Truncate and WeintCodex.Truncate(bd.cmp.name, 10) or bd.cmp.name))
+        bd.cmpBtn.text:SetTextColor(ClassRGB(bd.cmp.class))
+    else
+        FitTab(bd.cmpBtn, "Vergleich")
+        bd.cmpBtn.text:SetTextColor(unpack(C.textMuted))
+    end
+
+    -- Kennzahlen
+    local st = bd.stats
+    local function Fill(s, list, r)
+        if not s then return { "–", "–", "–", "–" } end
+        local rate = (mode.rate and type(s.amountPerSecond) ~= "nil") and DM.Format(s.amountPerSecond) or "–"
+        local pct = Share(s, total)
+        return { DM.Format(s.totalAmount), rate, pct and string.format("%d%%", math.floor(pct + 0.5)) or "–",
+                 r and string.format("%d / %d", r, #list) or "–" }
+    end
+    local va = Fill(src, sources or {}, rank)
+    for i = 1, 4 do st[i].value:SetText(va[i]) end
+    local statsH = 36
+    if bd.cmp then
+        statsH = 50
+        local vb = Fill(cmpSrc, sources or {}, cmpRank)
+        local diffs = { src and cmpSrc and Diff(src.totalAmount, cmpSrc.totalAmount),
+                        src and cmpSrc and mode.rate and Diff(src.amountPerSecond, cmpSrc.amountPerSecond) }
+        local r2, g2, b2 = ClassRGB(bd.cmp.class)
+        for i = 1, 4 do
+            st[i].cmp:SetText("vs " .. vb[i] .. (diffs[i] and ("  " .. diffs[i]) or ""))
+            st[i].cmp:SetTextColor(r2, g2, b2)
+            st[i].cmp:Show()
+        end
+    else
+        for i = 1, 4 do st[i].cmp:Hide() end
+    end
+
+    -- Reiter unter den Kennzahlen
+    local top = 48 + statsH + 6
+    bd.tabRow:ClearAllPoints()
+    bd.tabRow:SetPoint("TOPLEFT", bd.frame, "TOPLEFT", 12, -top)
+    bd.tabRow:SetPoint("TOPRIGHT", bd.frame, "TOPRIGHT", -12, -top)
+    bd.viewRow:ClearAllPoints()
+    bd.viewRow:SetPoint("TOPLEFT", bd.tabRow, "BOTTOMLEFT", 0, -4)
+    bd.viewRow:SetPoint("TOPRIGHT", bd.tabRow, "BOTTOMRIGHT", 0, -4)
+    local contentTop = top + 20 + 4 + 20 + 8
+
+    local box, h, note
+    bd.list:Hide() bd.graph:Hide() bd.auraBox:Hide()
+    if bd.view == "graph" then
+        box = bd.graph
+        h, note = DrawGraph(mode, bd.guid, bd.name_)
+    elseif bd.view == "auras" then
+        box = bd.auraBox
+        h, note = DrawAuras()
+    else
+        box = bd.list
+        h, note = DrawSpells(session, mode, src, rank, cmpSrc, cmpRank, SessionSeconds(session), total)
+    end
+    box:ClearAllPoints()
+    box:SetPoint("TOPLEFT", bd.frame, "TOPLEFT", 12, -contentTop)
+    box:SetPoint("TOPRIGHT", bd.frame, "TOPRIGHT", -12, -contentTop)
+    if h > 0 then box:Show() end
+    bd.note:ClearAllPoints()
+    bd.note:SetPoint("TOPLEFT", bd.frame, "TOPLEFT", 12, -(contentTop + h + (h > 0 and 6 or 0)))
+    bd.note:SetText(note or "")
+    local noteH = 0
+    if (note or "") ~= "" then
+        local lines = math.ceil(((WeintCodex.Utf8Len and WeintCodex.Utf8Len(note)) or #note) / 58)
+        noteH = 14 * math.max(1, lines) + 4
+    end
+    bd.frame:SetHeight(contentTop + h + noteH + 14)
     bd.prev:SetShown(rank ~= nil and rank > 1)
     bd.next:SetShown(rank ~= nil and sources ~= nil and rank < #sources)
 end
@@ -951,8 +1602,11 @@ function DM.OpenBreakdown(w, src)
     bd.class = K.Plain(src.classFilename)
     bd.mode = w:Mode().key
     if w:Mode().deaths then bd.mode = "DamageDone" end
+    -- Der Vergleich gilt einem Paar; wer jemand Neues aufschlaegt, faengt
+    -- ohne an - ausser er schlaegt den Verglichenen selbst auf.
+    if bd.cmp and SameSource(src, bd.cmp.guid, bd.cmp.name) then bd.cmp = nil end
     BuildTabs()
-    Place(w)
+    DM.PlaceBreakdown(w)
     bd.frame:Show()
     DM.RefreshBreakdown()
 end
@@ -966,6 +1620,7 @@ function DM.StepBreakdown(dir)
     bd.guid = type(guid) == "string" and guid or nil
     bd.name_ = type(name) == "string" and name or nil
     bd.class = K.Plain(s.classFilename)
+    if bd.cmp and SameSource(s, bd.cmp.guid, bd.cmp.name) then bd.cmp = nil end
     DM.RefreshBreakdown()
 end
 
@@ -1147,9 +1802,16 @@ end
 -- zusaetzlich zweimal je Sekunde gelesen, damit die Balken fliessen.
 
 local ticker = CreateFrame("Frame")
-local acc = 0
+local acc, sampleAcc = 0, 0
 local function OnTick(_, el)
-    acc = acc + (el or 0)
+    el = el or 0
+    -- Verlauf (6.6.2.1): einmal je Sekunde die Summen merken.
+    sampleAcc = sampleAcc + el
+    if sampleAcc >= 1 then
+        sampleAcc = 0
+        DM.Sample()
+    end
+    acc = acc + el
     if acc < 0.5 then return end
     acc = 0
     DM.Refresh()
@@ -1197,11 +1859,27 @@ local function Enable()
         "DAMAGE_METER_RESET", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
+    -- Auren der Gruppe (6.6.2.1): eigener Rahmen, weil UNIT_AURA sehr oft
+    -- kommt (auch fuer Plaketten) und nichts neu zeichnen soll.
+    local auraEv = CreateFrame("Frame")
+    pcall(auraEv.RegisterEvent, auraEv, "UNIT_AURA")
+    pcall(auraEv.RegisterEvent, auraEv, "GROUP_ROSTER_UPDATE")
+    auraEv:SetScript("OnEvent", function(_, event, unit)
+        if event == "UNIT_AURA" then DM.AuraChanged(unit) else DM.SnapAll() end
+    end)
+    DM.auraEvents = auraEv
     ev:SetScript("OnEvent", K.Measured("Schadensanzeige", function(_, event)
         if event == "PLAYER_REGEN_DISABLED" then
+            DM.StartHistory()
+            sampleAcc = 1   -- gleich die erste Probe
             ticker:SetScript("OnUpdate", OnTick)
         elseif event == "PLAYER_REGEN_ENABLED" then
             ticker:SetScript("OnUpdate", nil)
+            DM.Sample()
+            DM.StopHistory()
+            DM.SnapAll()
+        elseif event == "PLAYER_ENTERING_WORLD" then
+            DM.SnapAll()
         end
         -- Die Mess-Ereignisse kommen im Kampf bei fast jedem Treffer, und
         -- jedes Neuzeichnen holt frische Tabellen vom Client (6.6.1.8,
@@ -1252,7 +1930,7 @@ K.Register({
                     description = "Nur wo der Client die Zahlen offen nennt – im Kampf oft erst danach." },
                   { type = "toggle", label = "Eigene Zeile immer zeigen", key = "pinSelf",
                     description = "Stehst du nicht unter den ersten Plätzen, nimmt deine Zeile den letzten Platz ein – mit deinem Rang." })
-            B:Note("Maus über einer Zeile: die Zauber dieses Spielers mit Anteil. Klick auf den Zeitraum (oben rechts): aktueller Kampf, ganze Sitzung und frühere Kämpfe.")
+            B:Note("Maus über einer Zeile: die Zauber dieses Spielers mit Anteil. Klick auf einen Namen: Aufschlüsselung mit Zaubern, Verlauf und Auren (Buffs vor dem Kampf), dazu ein Vergleich mit einem zweiten Spieler – ziehen verschiebt sie, Rechtsklick setzt sie zurück. Klick auf den Zeitraum (oben rechts): aktueller Kampf, ganze Sitzung und frühere Kämpfe.")
             B:Section("Zahlen")
             B:Row({ type = "dropdown", label = "Rechts im Balken", key = "numbers", items = {
                         { value = "both",  text = "Gesamt (pro Sekunde)" },

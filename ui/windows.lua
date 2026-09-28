@@ -42,6 +42,12 @@ W.DEFAULTS = {
     -- 6.4.1.4: Talent-Landschaften gedaempft statt weg, Schein in der
     -- Klassenfarbe oben in jedem Fenster ("nur schwarz ist langweilig").
     windowArt  = true,
+    -- 6.6.2.1: die Weltkarte (M) einzeln abschaltbar. Die Karte war schon
+    -- einmal empfindlich (6.6.0.1: Questmarken im Kampf blockiert, weil
+    -- Addon-Code die Karte umgestellt hatte). Hier wird nur Aussehen
+    -- geaendert - sollte trotzdem "Aktion blockiert" an der Karte
+    -- auftauchen, geht sie mit einem Schalter zurueck.
+    mapSkin    = true,
 }
 
 local function Opt(k) return K.Get("general", k) end
@@ -230,6 +236,13 @@ W.HIDE_ATLAS = {
     "^Talents%-divider",                     -- Goldlinien links/rechts
     "^Talents%-small%-divider",
     "^Talents%-Square%-Box",                 -- Goldkasten "Unverteilte Talentpunkte"
+    -- Weltkarte und Questlog, gemessen im Beta-Client mit /wcui fenster
+    -- (6.6.2.1): Pergament hinter der Karte, Rahmen und Grund der
+    -- Questliste, Metallkante oben und unten.
+    "^gamepad%-mapquestlog%-bg",             -- Pergament und Vignette ausserhalb der Karte
+    "^QuestLog%-main%-background",           -- Grund der Questliste
+    "^QuestLog%-frame",                      -- Rahmen der Questliste
+    "^_UI%-Frame%-Metal%-Edge",              -- Metallkante des Fensters
 }
 local KEEP_ATLAS = { "RaceBG" }
 
@@ -847,6 +860,179 @@ local function FitStats(f, depth)
 end
 W.FitStats = function(f) FitStats(f, 0) end
 
+--------------------------------------------------
+-- Weicher Rand ums Modell (6.6.2.1)
+--------------------------------------------------
+-- Beta-Test: "ein Weichzeichner zwischen dem Charakterbild und dem Rahmen
+-- herum - das sieht zu abgehakt aus". Der Hintergrund des Modells (RaceBG,
+-- bleibt als Buehne) endet mit harter Kante an der Kachel. An jeder seiner
+-- vier Kanten liegt deshalb ein Verlauf in der Farbe der Kachel, der nach
+-- innen ausblendet. Echte Unschaerfe kann der Client nicht; ein Verlauf
+-- ist, was ein Weichzeichner an einer Kante sieht.
+W.SOFT_EDGE = 44
+
+local soft = setmetatable({}, { __mode = "k" })
+W.soft = soft
+
+local function FindRaceBG(f, depth, out)
+    if depth > 8 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
+    local rok, regions = pcall(function() return { f:GetRegions() } end)
+    for _, r in ipairs(rok and regions or {}) do
+        local ok, atlas = pcall(function()
+            if r:GetObjectType() ~= "Texture" then return nil end
+            return r.GetAtlas and r:GetAtlas()
+        end)
+        atlas = ok and K.Plain(atlas) or nil
+        if type(atlas) == "string" and atlas:find("RaceBG", 1, true) then out[#out + 1] = r end
+    end
+    local cok, kids = pcall(function() return { f:GetChildren() } end)
+    for _, ch in ipairs(cok and kids or {}) do FindRaceBG(ch, depth + 1, out) end
+end
+
+local function Edge(host, side, c, size)
+    local t = host:CreateTexture(nil, "BORDER", nil, 7)
+    own[t] = true
+    if side == "LEFT" or side == "RIGHT" then
+        t:SetPoint("TOP" .. side, host, "TOP" .. side, 0, 0)
+        t:SetPoint("BOTTOM" .. side, host, "BOTTOM" .. side, 0, 0)
+        t:SetWidth(size)
+    else
+        t:SetPoint(side .. "LEFT", host, side .. "LEFT", 0, 0)
+        t:SetPoint(side .. "RIGHT", host, side .. "RIGHT", 0, 0)
+        t:SetHeight(size)
+    end
+    t:SetColorTexture(1, 1, 1, 1)
+    if t.SetGradient and _G.CreateColor then
+        local solid, clear = _G.CreateColor(c[1], c[2], c[3], 1), _G.CreateColor(c[1], c[2], c[3], 0)
+        -- HORIZONTAL: erste Farbe links; VERTICAL: erste Farbe unten.
+        if side == "LEFT" then t:SetGradient("HORIZONTAL", solid, clear)
+        elseif side == "RIGHT" then t:SetGradient("HORIZONTAL", clear, solid)
+        elseif side == "TOP" then t:SetGradient("VERTICAL", clear, solid)
+        else t:SetGradient("VERTICAL", solid, clear) end
+    else
+        t:SetColorTexture(c[1], c[2], c[3], 0.5)
+    end
+    return t
+end
+
+-- Liefert die Rahmen, die jetzt einen weichen Rand tragen (Prueflauf).
+local softRoot = setmetatable({}, { __mode = "k" })
+function W.SoftenModel(f)
+    -- Einmal gefunden, ist es erledigt - das Fenster fragt zweimal je
+    -- Sekunde nach, der Baum muss nicht jedes Mal durchsucht werden.
+    if softRoot[f] then return softRoot[f] end
+    local found = {}
+    FindRaceBG(f, 0, found)
+    -- Der Rahmen, auf dem der Hintergrund liegt: dessen Kanten sind die
+    -- Kanten des Bildes (der Hintergrund fuellt die Modellszene).
+    local hosts = {}
+    for _, r in ipairs(found) do
+        local ok, p = pcall(r.GetParent, r)
+        if ok and type(p) == "table" and p.CreateTexture then hosts[p] = true end
+    end
+    local c = WeintCodex.GameColors.kachelFill
+    local out = {}
+    for host in pairs(hosts) do
+        if not soft[host] then
+            local e = {}
+            for _, side in ipairs({ "LEFT", "RIGHT", "TOP", "BOTTOM" }) do
+                e[side] = Edge(host, side, c, W.SOFT_EDGE)
+            end
+            soft[host] = e
+        end
+        out[#out + 1] = host
+    end
+    if #out > 0 then softRoot[f] = out end
+    return out
+end
+
+--------------------------------------------------
+-- Weltkarte (6.6.2.1)
+--------------------------------------------------
+-- Beta-Test: "auch dieses Fenster muss neu gemacht werden" (Karte &
+-- Questlog, M). Die Karte selbst - Kacheln, Symbole, Questmarken - ist
+-- Inhalt und bleibt unberuehrt: keine Suche nach grossen Bildern (die
+-- Kartenkacheln sind gross), nur Rahmen, Pergament und Holz nach Namen.
+-- Die Karte laedt das Spiel erst beim ersten Oeffnen (Blizzard_WorldMap).
+--
+-- Der Rahmen haengt nicht am Fenster, sondern an seinem Kind BorderFrame
+-- (Titel, Portraet, Metallkante); die Leiste "Welt > Oestliche
+-- Koenigreiche > ..." ist die NavBar. Beide werden wie ein Fenster des
+-- Spiels behandelt: Schmuck weg, Titel in unserer Schrift, Knoepfe der
+-- Leiste als flache Kachel. Was danach noch nach Holz aussieht, nennt
+-- /wcui fenster - seit 6.6.2.1 ohne die Kartenkacheln.
+W.MAP = "WorldMapFrame"
+
+local navDone = setmetatable({}, { __mode = "k" })
+local function SkinNavButton(b)
+    if type(b) ~= "table" or navDone[b] or not b.CreateTexture or (b.IsForbidden and b:IsForbidden()) then return end
+    navDone[b] = true
+    for _, getter in ipairs({ "GetNormalTexture", "GetPushedTexture", "GetHighlightTexture", "GetDisabledTexture" }) do
+        local t = b[getter] and b[getter](b)
+        if type(t) == "table" then Hide(t) end
+    end
+    HideOwnTextures(b)
+    local d = K.Kachel(b, { shadow = 0 })
+    own[d.bg], own[d.light] = true, true
+    local s1 = C.surface1
+    d.bg:SetColorTexture(s1[1], s1[2], s1[3], 0.95)
+    local hl = b:CreateTexture(nil, "HIGHLIGHT")
+    hl:SetAllPoints(b)
+    local h = WeintCodex.GameColors.hoverFill
+    hl:SetColorTexture(h[1], h[2], h[3], h[4] * 0.5)
+    own[hl] = true
+end
+W.SkinNavButton = SkinNavButton
+
+local function SkinNavBar(nav)
+    if type(nav) ~= "table" or (nav.IsForbidden and nav:IsForbidden()) then return end
+    if not navDone[nav] then
+        navDone[nav] = true
+        HideDecorOf(nav)
+        HideOwnTextures(nav)
+        if type(nav.overlay) == "table" then HideOwnTextures(nav.overlay) end
+        for _, key in ipairs({ "InsetBorderBottomLeft", "InsetBorderBottomRight", "InsetBorderBottom",
+                               "InsetBorderLeft", "InsetBorderRight" }) do
+            if type(nav[key]) == "table" then Hide(nav[key]) end
+        end
+    end
+    -- Die Knoepfe entstehen beim Wechseln der Zone neu.
+    SkinNavButton(nav.homeButton)
+    for _, b in ipairs(type(nav.navList) == "table" and nav.navList or {}) do
+        if b ~= nav.homeButton then SkinNavButton(b) end
+    end
+end
+W.SkinNavBar = SkinNavBar
+
+function W.SkinMap(f)
+    if type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return nil end
+    local d = done[f]
+    if not d then
+        d = {}
+        done[f] = d
+        HideOwnTextures(f)
+        local border = f.BorderFrame
+        if type(border) == "table" then
+            HideDecorOf(border)
+            HideOwnTextures(border)
+            StyleTitle(border)
+        end
+        d.kachel = K.Kachel(f, { alpha = 0.94, shadow = 8 })
+        own[d.kachel.bg], own[d.kachel.light] = true, true
+        if d.kachel.shadow and d.kachel.shadow.tex then own[d.kachel.shadow.tex] = true end
+        W.AddGlow(f, d)
+    end
+    SkinNavBar(f.NavBar)
+    -- Innen: nur nach Namen, nie nach Flaeche (siehe oben).
+    local qm = f.QuestMapFrame or _G.QuestMapFrame
+    for _, part in ipairs({ f.BorderFrame, f.OverscrollBG, qm, _G.QuestScrollFrame }) do
+        if type(part) == "table" then HideByAtlas(part, 0) end
+    end
+    Grey(f, 0)
+    if type(qm) == "table" then SkinPanelButtons(qm, 0) end
+    return d
+end
+
 function W.Inner()
     stats.runs = stats.runs + 1
     stats.last = _G.GetTime and K.Plain(_G.GetTime()) or nil
@@ -858,7 +1044,10 @@ function W.Inner()
             Grey(f, 0)
             SkinTabSystems(f, 0)
             SkinPanelButtons(f, 0)
-            if n == "CharacterFrame" then FitStats(f, 0) end
+            if n == "CharacterFrame" then
+                FitStats(f, 0)
+                if Opt("windowArt") then W.SoftenModel(f) end
+            end
             if W.WantsLarge(n) then
                 SkinSpellItems(f, 0)
                 LightenText(f, 0)
@@ -870,6 +1059,8 @@ function W.Inner()
         end
     end
     SkinModeTabs()
+    local map = _G[W.MAP]
+    if type(map) == "table" and done[map] and Opt("mapSkin") then W.SkinMap(map) end
 end
 
 function W.Status()
@@ -893,6 +1084,7 @@ function W.Apply()
         local f = _G[n]
         if type(f) == "table" and not done[f] then W.Skin(f, true) end
     end
+    if type(_G[W.MAP]) == "table" and Opt("mapSkin") then W.SkinMap(_G[W.MAP]) end
     W.Inner()
 end
 
@@ -927,6 +1119,7 @@ end
 local hookedShow = {}
 function W.HookAll()
     for _, n in ipairs(W.WINDOWS) do HookWindow(_G[n]) end
+    if Opt("mapSkin") then HookWindow(_G[W.MAP]) end
     for _, n in ipairs(W.SHOW_HOOKS) do
         local f = _G[n]
         if type(f) == "table" and f.HookScript and not hookedShow[f] and not (f.IsForbidden and f:IsForbidden()) then

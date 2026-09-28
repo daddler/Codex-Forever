@@ -790,6 +790,37 @@ Seit 6.2.0.0:
 * **Schadensanzeige** wie Details, soweit die Messung des Spiels es
   hergibt: Klassensymbol, Anteil (nur mit offenen Zahlen), eigene Zeile
   angeheftet und markiert, Tooltip mit Zaubern, frühere Kämpfe.
+  **Aufschlüsselung seit 6.6.2.1** (Beta-Test: „frei verschieben, mehr
+  Informationen, Vergleich, Graphen, Auren – auch Bufffood,
+  Fläschchen“):
+  * *Verschiebbar*: Ziehen verschiebt das Fenster, die Stelle bleibt
+    (`bdX`/`bdY`); Rechtsklick setzt es wieder neben die Anzeige
+    (`DM.PlaceBreakdown`).
+  * *Drei Ansichten* unter den Messarten: **Zauber**, **Verlauf**,
+    **Auren**.
+  * *Vergleich* (`DM.SetCompare`, Liste `DM.CompareItems`: offene Namen
+    derselben Liste): Kennzahlen mit „vs …“ und Unterschied in Prozent
+    (`DM.Diff`, nur offene Zahlen), Zauber über die Zauber-ID
+    zugeordnet mit schmalem zweitem Balken in der Klassenfarbe des
+    anderen, gemeinsamer Maßstab nur mit offenen Zahlen – sonst je
+    Spieler für sich skaliert, und das steht darunter.
+  * *Verlauf*: `C_DamageMeter` nennt nur Summen. WeintCodex liest im
+    Kampf einmal je Sekunde die Summen von Schaden und Heilung
+    (`DM.Sample`, nur der letzte Kampf, höchstens 30 Minuten) und zeigt
+    den Zuwachs je Abschnitt als 48 Säulen (`DM.Rates`, zwischen Proben
+    linear), den Verglichenen als Linie. **Geheime Zahlen lassen sich
+    nicht aufzeichnen** (Lua darf mit ihnen nicht rechnen) – gibt der
+    Client sie im Kampf verdeckt heraus, steht genau das da. Ob er es
+    auf Forever tut, ist ungeprüft.
+  * *Auren*: im Kampf gibt der Client Addons die Auren anderer nicht
+    heraus. Außerhalb liest WeintCodex die Buffs der Gruppe mit
+    (`UNIT_AURA` gesammelt, höchstens alle zwei Sekunden;
+    `DM.SnapAuras`, `DM.SnapAll` bei Gruppenwechsel und Kampfende) –
+    die Ansicht zeigt den **Stand vor dem Kampf** mit Symbol, Restzeit
+    und Tooltip, für beide Spieler im Vergleich. Welche Buffs Essen oder
+    Fläschchen sind, sagt der Client nicht, und eine Liste der
+    Verbrauchsgüter von Forever gibt es nicht – es stehen alle Buffs
+    da, keine erfundene Einordnung.
 * **Gestaltungsmodus** (`ui/editmode.lua`) statt „Rahmen entsperren“:
   siehe `docs/design/ui-2.0.md`, Phase 3.
 * **Aktionsleisten**: leere Plätze aus (beim Ziehen sichtbar), flache
@@ -876,3 +907,31 @@ es nicht**. Die Zeile „X von Y Plätzen belegt“ unten im Fenster trennt
 beim nächsten Test die beiden möglichen Ursachen: steht dort eine Zahl
 über null und die Plätze sind leer, liefert der Client die Gegenstände
 und nur das Zeichnen scheitert.
+
+## Weltkarte und weicher Rand ums Modell *(6.6.2.1)*
+
+**Weltkarte & Questlog (M)** im Stil der Oberfläche (`W.SkinMap`,
+Schalter `mapSkin` unter Tooltip & Fenster, eigens abschaltbar). Die
+Karte selbst – Kacheln, Symbole, Questmarken – ist Inhalt und bleibt:
+**keine** Suche nach großen Bildern (die Kartenkacheln sind groß), nur
+nach Namen. Weg sind: die Hülle am `BorderFrame` (Metallkante
+`_UI-Frame-Metal-Edge*`, Portrait), das Pergament außerhalb der Karte
+(`gamepad-mapquestlog-bg*` im `OverscrollBG`), Grund und Rahmen der
+Questliste (`QuestLog-main-background`, `QuestLog-frame`) – alle
+gemessen mit `/wcui fenster` im Beta-Client. Die Leiste „Welt › …“
+(`NavBar`) bekommt flache Knöpfe. Darunter eine Kachel mit Schein in
+der Klassenfarbe. Die Karte war schon einmal empfindlich (6.6.0.1:
+Questmarken im Kampf blockiert, weil Addon-Code die Karte umgestellt
+hatte) – hier ändert sich nur Aussehen (Deckkraft, eigene Flächen),
+nichts wird umgestellt, geöffnet oder verschoben. `/wcui fenster` lässt
+seit 6.6.2.1 die Kartenkacheln aus und geht tiefer (zehn Ebenen, 24
+Zeilen) – die nächste Messung nennt, was in der Questliste noch nach
+Holz aussieht (Kopfzeilen der Zonen, Suchfeld). Im Spiel ungeprüft.
+
+**Weicher Rand ums Modell** (`W.SoftenModel`, mit „Stimmung statt
+Schwarz“): der Hintergrund des Modells (`RaceBG`, bleibt als Bühne)
+endete mit harter Kante an der Kachel (Beta-Test: „zu abgehackt“). An
+seinen vier Kanten liegt ein Verlauf in der Kachelfarbe, 44 px, der
+nach innen ausblendet (`SetGradient`). Echte Unschärfe kann der Client
+nicht; ein Verlauf ist, was ein Weichzeichner an einer Kante zeigt.
+Gesucht wird einmal je Fenster, danach nicht mehr.

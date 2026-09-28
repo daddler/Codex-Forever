@@ -1221,8 +1221,16 @@ function K.InspectWindow()
         if ok and line then out[#out + 1] = line end
     end
     local groups, list = {}, {}
+    -- Die Kartenkacheln der Weltkarte sind Inhalt, keine Gestaltung - und
+    -- so gross, dass sie jede andere Zeile aus der Liste draengten
+    -- (Beta-Test 6.6.2.0). Sie werden ausgelassen, dafuer geht die Suche
+    -- tiefer (Questliste).
+    local map = _G.WorldMapFrame
+    local canvas = type(map) == "table" and map.ScrollContainer or nil
+    local skipped = false
     local function Walk(f, depth)
-        if depth > 6 or (f.IsForbidden and f:IsForbidden()) then return end
+        if depth > 10 or (f.IsForbidden and f:IsForbidden()) then return end
+        if canvas and f == canvas then skipped = true return end
         local vok, vis = pcall(function() return K.Bool(f:IsVisible(), false) end)
         if not vok or not vis then return end
         local rok, regions = pcall(function() return { f:GetRegions() } end)
@@ -1251,7 +1259,8 @@ function K.InspectWindow()
     end
     Walk(top, 0)
     table.sort(list, function(a, b) return a.area > b.area end)
-    for i = 1, math.min(#list, 16) do
+    if skipped then out[#out + 1] = "   (Kartenbild ausgelassen)" end
+    for i = 1, math.min(#list, 24) do
         local g = list[i]
         local mark = ""
         local atlas = g.key:match("^Atlas (.+)$")

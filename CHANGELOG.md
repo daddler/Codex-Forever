@@ -17,6 +17,12 @@ nicht zusammen.
 
 **Lehrer rechnet mit.** Oben in der Zauberliste steht die Rechnung: was jetzt lernbar ist, dein Gold, und was danach bleibt oder fehlt – dazu, für wie viele Zauber es reicht und was die nächsten zwei Stufen zusammen kosten. Preise werden rot, sobald dein Gold der Reihe nach nicht mehr reicht.
 
+**Weltkarte im neuen Stil.** Karte & Questlog (M) als Kachel statt Metall und Pergament, die Leiste „Welt › …“ mit flachen Knöpfen. Die Karte selbst bleibt, wie sie ist. Einzeln abschaltbar unter Tooltip & Fenster.
+
+**Aufschlüsselung der Schadensanzeige ausgebaut.** Frei verschiebbar (Rechtsklick setzt sie zurück), dazu drei Ansichten: Zauber, Verlauf – Schaden oder Heilung je Sekunde über den Kampf als Säulen – und Auren: alle Buffs samt Essen und Fläschchen, so wie sie vor dem Kampf waren. Mit „Vergleich“ stehen zwei Spieler nebeneinander: Kennzahlen, Zauber, Verlauf und Auren.
+
+**Weicher Rand ums Charaktermodell.** Der Hintergrund hinter deinem Charakter läuft an den Kanten weich in das Fenster aus, statt hart abzubrechen.
+
 **Ränge direkt am Zauber.** Klickst du in der Zaubertafel der Klickzauber auf einen Zauber mit mehreren Rängen, klappt am Symbol die Liste der Ränge auf – „Höchster Rang“ steigt mit, jeder andere bleibt fest. Zauber mit nur einem Rang liegen wie bisher sofort auf der Taste.
 
 ## [6.6.2.0] – 2026-09-28

@@ -4261,6 +4261,142 @@ do
     Check(ok, "Schadensanzeige: Aufschluesselung per Klick (Kennzahlen, Zauber, Blaettern)"
         .. (ok and "" or (": " .. tostring(err))))
 
+    -- 6.6.2.1: verschiebbar, Vergleich, Verlauf, Auren.
+    ok, err = pcall(function()
+        DM.ShowTest(true)
+        local w = DM.Window(1)
+        local r1 = w.rows[1]
+        r1._scripts.OnMouseUp(r1, "LeftButton")
+        local bd = DM.Breakdown()
+        local f = bd.frame
+        assert(f._scripts.OnDragStart and f._scripts.OnDragStop, "Aufschluesselung nicht verschiebbar")
+        K.Set("damagemeter", "bdX", 300)
+        K.Set("damagemeter", "bdY", 200)
+        assert(DM.PlaceBreakdown(w) == "saved", "verschobene Stelle vergessen")
+        f._scripts.OnMouseUp(f, "RightButton")
+        assert(K.Get("damagemeter", "bdX") == nil and DM.PlaceBreakdown(w) == "beside", "Rechtsklick setzt nicht zurueck")
+        -- Vergleich: Tamsin waehlbar, Varek (der Gezeigte) nicht.
+        local names = {}
+        for _, it in ipairs(DM.CompareItems()) do names[it.value] = true end
+        assert(names.Tamsin and not names.Varek and names[""], "Vergleichsliste falsch")
+        DM.SetCompare("Tamsin")
+        local cmp = bd.stats[1].cmp:GetText() or ""
+        assert(bd.stats[1].cmp:IsShown() and cmp:find("+13 %", 1, true), "Kennzahl ohne Vergleich: " .. cmp)
+        assert(bd.rows[1].bar2:IsShown() and (bd.rows[1].amount:GetText() or ""):find("|", 1, true),
+            "Zauber ohne zweiten Balken")
+        assert(DM.Diff(50, 100) == "-50 %" and DM.Diff(1, nil) == nil, "Unterschied falsch")
+        -- Verlauf und Auren als Ansichten.
+        bd.view = "graph"
+        DM.RefreshBreakdown()
+        assert(bd.graph:IsShown() and DM.lastRates and #DM.lastRates == 48, "Verlauf nicht gezeichnet")
+        assert(bd.marks[1] and bd.marks[1]:IsShown(), "Vergleich fehlt im Verlauf")
+        bd.view = "auras"
+        DM.RefreshBreakdown()
+        local shown = 0
+        for _, t in ipairs(bd.icons) do if t:IsShown() then shown = shown + 1 end end
+        assert(bd.auraBox:IsShown() and shown == 3, "Auren beider Spieler: " .. shown)
+        DM.SetCompare("")
+        assert(not bd.cmp and not bd.stats[1].cmp:IsShown(), "Vergleich laesst sich nicht abwaehlen")
+        bd.view = "spells"
+        f:Hide()
+        DM.ShowTest(false)
+
+        -- Aufzeichnung: offene Zahlen ja, geheime nein.
+        local oldCDM, oldTime, oldEnum = _G.C_DamageMeter, _G.GetTime, _G.Enum
+        _G.Enum = setmetatable({ DamageMeterType = { DamageDone = 0, HealingDone = 1 },
+            DamageMeterSessionType = { Current = 0, Overall = 1 } }, { __index = oldEnum })
+        local now, total = 100, 0
+        _G.GetTime = function() return now end
+        _G.C_DamageMeter = { GetCombatSessionFromType = function()
+            return { combatSources = { { sourceGUID = "G1", totalAmount = total } } } end }
+        DM.StartHistory()
+        for i = 1, 11 do now = 100 + i ; total = total + 50 ; DM.Sample() end
+        local rates, dur = DM.Rates("G1", "DamageDone", 5)
+        assert(rates and #rates == 5 and dur == 11 and math.abs(rates[3] - 50) < 1, "Verlauf je Sekunde falsch")
+        local oldSecret = _G.issecretvalue
+        _G.issecretvalue = function(v) return type(v) == "table" and getmetatable(v) ~= nil end
+        _G.C_DamageMeter.GetCombatSessionFromType = function()
+            return { combatSources = { { sourceGUID = "G2", totalAmount = setmetatable({}, {}) } } } end
+        DM.Sample()
+        assert(DM.History().secret and DM.Rates("G2", "DamageDone", 5) == nil, "geheime Zahl aufgezeichnet")
+        DM.StopHistory()
+        _G.issecretvalue = oldSecret
+
+        -- Auren merken: nur ausserhalb des Kampfes, geheimer Stand zaehlt nicht.
+        local oldUA, oldGUID, oldIC, oldExists = _G.C_UnitAuras, _G.UnitGUID, _G.InCombatLockdown, _G.UnitExists
+        _G.UnitGUID = function(u) return u == "player" and "P1" or nil end
+        _G.UnitExists = function() return true end
+        _G.InCombatLockdown = function() return false end
+        _G.C_UnitAuras = { GetAuraDataByIndex = function(_, i)
+            if i == 1 then return { name = "Satt", icon = 136000, spellId = 19705, expirationTime = 900 } end
+            if i == 2 then return { name = "Fläschchen", icon = 134806, spellId = 17628, expirationTime = 0 } end
+        end }
+        assert(DM.SnapAuras("player") and #DM.auras.P1.list == 2, "Auren nicht gemerkt")
+        assert(DM.GroupUnit("raid3") and DM.GroupUnit("party1") and not DM.GroupUnit("nameplate2"), "Gruppeneinheit falsch")
+        _G.InCombatLockdown = function() return true end
+        DM.AuraChanged("player")
+        _G.InCombatLockdown = function() return false end
+        DM.auras.P1 = nil
+        _G.C_UnitAuras, _G.UnitGUID, _G.InCombatLockdown, _G.UnitExists = oldUA, oldGUID, oldIC, oldExists
+        _G.C_DamageMeter, _G.GetTime, _G.Enum = oldCDM, oldTime, oldEnum
+    end)
+    Check(ok, "Schadensanzeige: Aufschluesselung verschiebbar, Vergleich, Verlauf, Auren"
+        .. (ok and "" or (": " .. tostring(err))))
+
+    -- 6.6.2.1: Weltkarte im Stil der Oberflaeche - die Karte selbst bleibt;
+    -- weicher Rand ums Modell im Charakterfenster.
+    ok, err = pcall(function()
+        local W = WeintCodex.UIWindows
+        local function Tex(atlas, w, h)
+            local t = stub.NewObject("Texture")
+            t.GetAtlas = function() return atlas end
+            t._width, t._height = w or 10, h or 10
+            return t
+        end
+        assert(W.HidesAtlas("QuestLog-main-background") and W.HidesAtlas("gamepad-mapquestlog-bgtile-2k")
+            and W.HidesAtlas("_UI-Frame-Metal-EdgeTop"), "Rahmen der Karte bleibt")
+        assert(not W.HidesAtlas("QuestNormal") and not W.HidesAtlas("QuestTurnin"), "Questmarke ausgeblendet")
+        local map = stub.NewObject("Frame", "WorldMapFrame")
+        _G.WorldMapFrame = map
+        map._width, map._height = 1000, 700
+        local border, nine, over, canvas, nav, home = stub.NewObject("Frame"), stub.NewObject("Frame"),
+            stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Button")
+        local edge, bgtile, tile = Tex("_UI-Frame-Metal-EdgeTop"), Tex("gamepad-mapquestlog-bgtile-2k", 900, 600),
+            Tex(nil, 256, 256)
+        nine.GetRegions = function() return edge end
+        border.NineSlice = nine
+        border.GetChildren = function() return nine end
+        over.GetRegions = function() return bgtile end
+        canvas.GetRegions = function() return tile end
+        local normal = stub.NewObject("Texture")
+        home.GetNormalTexture = function() return normal end
+        nav.homeButton, nav.navList = home, { home }
+        map.BorderFrame, map.OverscrollBG, map.ScrollContainer, map.NavBar = border, over, canvas, nav
+        map.GetChildren = function() return border, over, canvas, nav end
+        local d = W.SkinMap(map)
+        assert(d and d.kachel, "Karte ohne Kachel")
+        assert(edge:GetAlpha() == 0 and bgtile:GetAlpha() == 0, "Metallkante oder Pergament bleibt")
+        assert(tile:GetAlpha() == 1, "Kartenkachel ausgeblendet")
+        assert(normal:GetAlpha() == 0, "Holzknopf in der Leiste bleibt")
+        W.Inner()
+        assert(tile:GetAlpha() == 1, "Kartenkachel nach dem Takt ausgeblendet")
+        _G.WorldMapFrame = nil
+
+        local cf = stub.NewObject("Frame")
+        local scene = stub.NewObject("Frame")
+        local race = Tex("UI-Character-Info-Human-RaceBG", 230, 330)
+        race.GetParent = function() return scene end
+        scene.GetRegions = function() return race end
+        cf.GetChildren = function() return scene end
+        local hosts = W.SoftenModel(cf)
+        assert(#hosts == 1 and hosts[1] == scene and W.soft[scene] and W.soft[scene].LEFT and W.soft[scene].BOTTOM,
+            "kein weicher Rand um das Modell")
+        assert(race:GetAlpha() == 1, "Hintergrund des Modells ausgeblendet")
+        assert(W.SoftenModel(cf) == hosts, "Rand zweimal gesucht")
+    end)
+    Check(ok, "Weltkarte im WeintCodex-Stil (Karte bleibt), weicher Rand ums Modell"
+        .. (ok and "" or (": " .. tostring(err))))
+
     local CH = WeintCodex.UIChat
     ok, err = pcall(function()
         local oldMoney, oldFree = _G.GetMoney, _G.C_Container
