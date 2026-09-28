@@ -407,6 +407,99 @@ end
 
 -- 1 px schwarzer Rand statt eines Goldrahmens (Berufssymbole), einmal.
 local edged = setmetatable({}, { __mode = "k" })
+--------------------------------------------------
+-- Kategorien (6.6.2.7)
+--------------------------------------------------
+-- Beta-Test: "ein Design fuer die einzelnen Kategorien, damit es besser
+-- gelesen werden kann - jetzt steht Allgemein, Primaere Eigenschaften
+-- einfach nur in weiss da". Die Kopfzeile trug den Holzbalken des Spiels
+-- (UI-Character-Info-Title, ausgeblendet seit 6.4); uebrig blieb der
+-- blanke Text. Jetzt an seiner Stelle ein Band eine Stufe heller als die
+-- Kachel, links ein Streifen und unten eine Linie in der Farbe der
+-- Hervorhebung (Klasse oder Akzent), der Titel links, hell, eine Stufe
+-- groesser. Erkannt am Atlas des Balkens (W.HEADER_ATLAS), nicht an einem
+-- Namen - jede Kopfzeile, die ihn traegt, in jedem Fenster. Der Text des
+-- Spiels bleibt, wie er ist (kein SetText auf fremde Zeilen).
+W.HEADER_ATLAS = { "^UI%-Character%-Info%-Title" }
+
+-- Nur offene Fenster (6.6.2.6): vorher lief jeder Durchlauf auch ueber
+-- alle geschlossenen, die schon einmal gestaltet waren.
+local function Open(f)
+    local ok, v = pcall(f.IsVisible, f)
+    return ok and K.Bool(v, false)
+end
+W.Open = Open
+function W.HeaderAtlas(atlas)
+    if type(atlas) ~= "string" then return false end
+    for _, pat in ipairs(W.HEADER_ATLAS) do
+        if atlas:find(pat) then return true end
+    end
+    return false
+end
+
+local headerDone = setmetatable({}, { __mode = "k" })
+W.Headers = headerDone
+
+local function HeaderTitle(f)
+    if type(f.Title) == "table" and f.Title.GetText then return f.Title end
+    for _, r in ipairs(Regions(f, "hdrTitle")) do
+        local ok, isText = pcall(IsFontString, r)
+        if ok and isText then return r end
+    end
+    return nil
+end
+
+function W.Header(f, beam)
+    if type(f) ~= "table" or not f.CreateTexture or type(beam) ~= "table" then return nil end
+    local d = headerDone[f]
+    if d then return d end
+    d = {}
+    local s2, hl = C.surface2, K.Highlight()
+    d.band = f:CreateTexture(nil, "BACKGROUND", nil, 2)
+    d.band:SetAllPoints(beam)
+    d.band:SetColorTexture(s2[1], s2[2], s2[3], 0.95)
+    d.bar = f:CreateTexture(nil, "BORDER", nil, 2)
+    d.bar:SetPoint("TOPLEFT", beam, "TOPLEFT", 0, 0)
+    d.bar:SetPoint("BOTTOMLEFT", beam, "BOTTOMLEFT", 0, 0)
+    d.bar:SetWidth(3)
+    d.bar:SetColorTexture(hl[1], hl[2], hl[3], 1)
+    d.line = f:CreateTexture(nil, "BORDER", nil, 2)
+    d.line:SetPoint("BOTTOMLEFT", beam, "BOTTOMLEFT", 0, 0)
+    d.line:SetPoint("BOTTOMRIGHT", beam, "BOTTOMRIGHT", 0, 0)
+    d.line:SetHeight(1)
+    d.line:SetColorTexture(hl[1], hl[2], hl[3], 0.35)
+    own[d.band], own[d.bar], own[d.line] = true, true, true
+    local fs = HeaderTitle(f)
+    if fs then
+        d.title = fs
+        pcall(function()
+            K.SetFont(fs, 12)
+            local t = C.textBright
+            fs:SetTextColor(t[1], t[2], t[3], 1)
+            fs:SetJustifyH("LEFT")
+            fs:ClearAllPoints()
+            fs:SetPoint("LEFT", beam, "LEFT", 12, 0)
+            fs:SetPoint("RIGHT", beam, "RIGHT", -8, 0)
+        end)
+    end
+    headerDone[f] = d
+    return d
+end
+
+-- Fuer /wcui fenster: welche Kopfzeilen gestaltet sind (sichtbare).
+function W.HeaderReport()
+    local names = {}
+    for f, d in pairs(headerDone) do
+        if Open(f) and #names < 8 then
+            local text = d.title and K.Plain(d.title:GetText())
+            names[#names + 1] = type(text) == "string" and text or "?"
+        end
+    end
+    if #names == 0 then return {} end
+    table.sort(names)
+    return { string.format("   Kategorien: %d (%s)", #names, table.concat(names, ", ")) }
+end
+
 function W.EdgeBorder(f)
     if type(f) ~= "table" or edged[f] or not f.CreateTexture then return end
     edged[f] = true
@@ -428,6 +521,7 @@ local function HideByAtlas(f, depth)
             if atlas:find("^Profession%-square%-frame") or atlas:find("^groupfinder%-button%-cover") then W.EdgeBorder(f) end
             if atlas:find("^common%-search%-border") then FlatBar(f) end
             if atlas:find("^communities%-nav%-button") then W.NavEntry(f, r, atlas) end
+            if W.HeaderAtlas(atlas) then W.Header(f, r) end
         elseif ok and W.TonesAtlas(atlas) then
             if Opt("windowArt") then W.Tone(r) else Hide(r) end
             if not seen[r] then
@@ -1510,13 +1604,6 @@ function W.SkinCommunitiesList(f)
     if type(list.FilligreeOverlay) == "table" then HideOwnTextures(list.FilligreeOverlay) end
 end
 
--- Nur offene Fenster (6.6.2.6): vorher lief jeder Durchlauf auch ueber
--- alle geschlossenen, die schon einmal gestaltet waren.
-local function Open(f)
-    local ok, v = pcall(f.IsVisible, f)
-    return ok and K.Bool(v, false)
-end
-W.Open = Open
 
 function W.Inner()
     stats.runs = stats.runs + 1

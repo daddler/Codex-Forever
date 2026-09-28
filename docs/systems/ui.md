@@ -1107,6 +1107,20 @@ sie beim nächsten Durchlauf, jedes genau einmal. Das 3D-Modell ist keine
 Textur und bleibt scharf. `/wcui fenster` nennt „Maske an N Bildern“
 oder, wenn der Client keine Maske anlegt, genau das.
 
+**Kategorien (6.6.2.7).** Beta-Test: „Allgemein, Primäre Eigenschaften
+etc. stehen einfach nur in weiß da“. Die Kopfzeilen der Werte trugen den
+Holzbalken des Spiels (`UI-Character-Info-Title`, ausgeblendet seit 6.4);
+übrig blieb blanker Text. `W.Header(f, beam)` legt an die Stelle des
+Balkens ein Band (`surface2`, 95 %), links einen 3-px-Streifen und unten
+eine 1-px-Linie in `UIKit.Highlight()`; der Titel (`.Title` oder die
+einzige Schriftzeile) wird 12 pt, `textBright`, links mit 12 px Abstand.
+Erkannt in `HideByAtlas` am Atlas (`W.HEADER_ATLAS`) – jede Kopfzeile, die
+ihn trägt, in jedem gestalteten Fenster. Der Text des Spiels bleibt (kein
+`SetText` auf fremde Zeilen). `/wcui fenster` nennt „Kategorien: N (…)“.
+Kopfzeilen **anderer** Listen (Ruf, Währungen, Berufe) tragen andere
+Bilder; welche, ist nicht gemessen – sie kommen in `W.HEADER_ATLAS`,
+sobald `/wcui fenster` sie zeigt.
+
 **Speicher und Takt der Fenster (6.6.2.6).** Beta-Test: „egal welches
 Fenster ich öffne, der Speicher geht super schnell Richtung 40 MB, kleine
 Ruckler, FPS von 90 auf 75“. Zwei Ursachen, beide in `W.Inner`:

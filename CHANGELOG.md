@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.2.7] – 2026-09-28
+
+**Kategorien im Charakterfenster heben sich ab.** „Allgemein“, „Primäre Eigenschaften“, „Waffen“ und die anderen Überschriften der Werte stehen jetzt auf einem eigenen Band mit einem Streifen in deiner Klassenfarbe, links ausgerichtet und etwas größer – die Werte darunter lesen sich als Gruppe.
+
 ## [6.6.2.6] – 2026-09-28
 
 **Offene Fenster fressen keinen Speicher mehr.** Solange ein Spielfenster offen war, wuchs der Speicher schnell an, und das Spiel ruckelte kurz, wenn es aufräumte. Das ist behoben: Nachgesehen wird nur noch in offenen Fenstern, dicht nach dem Öffnen und nach einem Klick, sonst alle zwei Sekunden.

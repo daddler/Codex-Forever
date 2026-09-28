@@ -1308,6 +1308,13 @@ function K.InspectWindow()
             for _, l in ipairs(lines) do out[#out + 1] = l end
         end
     end
+    -- Kategorien (6.6.2.7): welche Kopfzeilen gestaltet sind.
+    if W and W.HeaderReport then
+        local ok, lines = pcall(W.HeaderReport)
+        if ok and type(lines) == "table" then
+            for _, l in ipairs(lines) do out[#out + 1] = l end
+        end
+    end
     -- Seitenreiter (6.6.2.2): woran der gewaehlte zu erkennen ist.
     if W and W.SideTabReport then
         local ok, lines = pcall(W.SideTabReport, top)

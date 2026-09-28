@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.2.7",
+        date    = "28.09.2026",
+        notes   = {
+            "|cff7C6CFFKategorien im Charakterfenster heben sich ab.|r „Allgemein“, „Primäre Eigenschaften“, „Waffen“ und die anderen Überschriften der Werte stehen jetzt auf einem eigenen Band mit einem Streifen in deiner Klassenfarbe, links ausgerichtet und etwas größer – die Werte darunter lesen sich als Gruppe.",
+        },
+    },
+    {
         version = "6.6.2.6",
         date    = "28.09.2026",
         notes   = {

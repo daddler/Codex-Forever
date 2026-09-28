@@ -4581,6 +4581,33 @@ do
     Check(ok6, "Fenster-Takt: nur offene Fenster, kein Muell, schnell nach dem Oeffnen, dann langsam"
         .. (ok6 and "" or (": " .. tostring(err6))))
 
+    -- 6.6.2.7: Kategorien ("Allgemein", "Primaere Eigenschaften") als Band
+    -- statt blanken Texts - erkannt am Holzbalken des Spiels.
+    local ok7, err7 = pcall(function()
+        local W = WeintCodex.UIWindows
+        local pane, head = stub.NewObject("Frame"), stub.NewObject("Frame")
+        local beam = stub.NewObject("Texture")
+        beam.GetAtlas = function() return "UI-Character-Info-Title" end
+        local title = stub.NewObject("FontString")
+        title._text = "Allgemein"
+        head.Title = title
+        head.GetRegions = function() return beam, title end
+        pane.GetChildren = function() return head end
+        W.HideByAtlas(pane)
+        local d = W.Headers[head]
+        assert(beam:GetAlpha() == 0, "Holzbalken bleibt")
+        assert(d and d.band and d.bar and d.line and d.title == title, "Kopfzeile ohne Band")
+        assert(W.own[d.band] and W.own[d.bar], "Band als fremdes Bild behandelt")
+        W.HideByAtlas(pane)
+        assert(W.Headers[head] == d, "Band doppelt angelegt")
+        assert(W.HeaderAtlas("UI-Character-Info-Title") and not W.HeaderAtlas("UI-Character-Info-StatTab"),
+            "Kopfzeilen falsch erkannt")
+        local report = table.concat(W.HeaderReport(), "\n")
+        assert(report:find("Kategorien: ", 1, true) and report:find("Allgemein", 1, true), "Bericht ohne Kategorien: " .. report)
+    end)
+    Check(ok7, "Kategorien im Charakterfenster: Band mit Streifen in der Hervorhebung, Titel links"
+        .. (ok7 and "" or (": " .. tostring(err7))))
+
     -- 6.6.2.4: Rahmen und Hervorhebungen in Klassenfarbe - oder im Akzent.
     local ok4, err4 = pcall(function()
         local oldUC, oldRCC = _G.UnitClass, _G.RAID_CLASS_COLORS
