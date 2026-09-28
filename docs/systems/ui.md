@@ -935,3 +935,38 @@ seinen vier Kanten liegt ein Verlauf in der Kachelfarbe, 44 px, der
 nach innen ausblendet (`SetGradient`). Echte Unschärfe kann der Client
 nicht; ein Verlauf ist, was ein Weichzeichner an einer Kante zeigt.
 Gesucht wird einmal je Fenster, danach nicht mehr.
+
+## Berufe, Gilde & Communitys *(6.6.2.1)*
+
+Beide Fenster lädt das Spiel erst beim ersten Öffnen
+(`Blizzard_Professions`, `Blizzard_Communities`); sie stehen jetzt in
+`W.WINDOWS` – das Berufefenster war vorher gar nicht dabei, deshalb
+meldete `/wcui fenster` „common-sidetab · SOLLTE WEG SEIN“.
+
+* **Gemessen** (Berufe, `/wcui fenster` im Beta-Client): Metallrahmen
+  in allen Schreibweisen (`!UI-Frame-Metal-*`, `_UI-Frame-Metal-*`,
+  `UI-Frame-Metal-Corner*`), `Profession-ProgressBar-*` (flacher
+  Balken wie Ruf und Fertigkeiten), `Profession-square-frame`
+  (Goldrahmen ums Berufssymbol → 1 px Rand, `W.EdgeBorder`),
+  `Profession-Background-Overview`. Die Karten der Übersicht
+  (`Profession-overview-card*`) werden **gedämpft** statt ausgeblendet
+  (`W.TONE_ATLAS`) – ihr Bild zeigt, welcher Beruf es ist; ohne
+  „Stimmung“ sind sie weg. Große Bilder (Werkbank hinter dem Rezept)
+  werden wie die Talent-Landschaften gedämpft (`LARGE_PATTERNS` um
+  „Profession“ erweitert).
+* **Seitenreiter** (`W.SkinSideTabs`): Reiter mit dem Goldrahmen
+  `common-sidetab` (ein Reiter je Beruf) und die Reiter der Communitys
+  (`ChatTab`, `RosterTab`, `GuildBenefitsTab`, `GuildInfoTab`, Bild
+  `.Background` – Namen aus dem Quelltext des Spiels, nicht gemessen)
+  werden kleine Kacheln wie am Charakterfenster; gewählt (`GetChecked`,
+  `SelectedTexture`, ein „select“-Atlas) = Rand im Akzent.
+* **Innenflächen** tiefer im Fenster (`W.SkinInsets`, Schlüssel
+  `InsetFrame`/`Inset`: Liste, Chat, Mitglieder der Communitys) – nur in
+  diesen beiden Fenstern, die schon gestalteten bleiben unberührt.
+* **Schrift**: `W.IsDark` verlangt seit 6.6.2.1 zusätzlich, dass kein
+  Farbkanal hell ist – reines Rot (fehlende Reagenzien) blieb sonst
+  nicht rot.
+
+Für die Communitys lag keine Messung vor: Liste links (grüne Auswahl,
+Wappen), Mitgliederliste und Bildlaufleisten tragen Bilder, deren Namen
+erst `/wcui fenster` über dem Fenster nennt. Im Spiel ungeprüft.

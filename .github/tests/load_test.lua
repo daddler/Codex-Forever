@@ -4394,6 +4394,53 @@ do
         assert(race:GetAlpha() == 1, "Hintergrund des Modells ausgeblendet")
         assert(W.SoftenModel(cf) == hosts, "Rand zweimal gesucht")
     end)
+    -- Berufe und Gilde & Communitys (6.6.2.1).
+    local ok2, err2 = pcall(function()
+        local W = WeintCodex.UIWindows
+        local function Tex(atlas)
+            local t = stub.NewObject("Texture")
+            t.GetAtlas = function() return atlas end
+            t._width, t._height = 10, 10
+            return t
+        end
+        for _, a in ipairs({ "!UI-Frame-Metal-EdgeLeft", "UI-Frame-Metal-CornerBottomLeft", "_UI-Frame-Metal-EdgeBottom",
+                             "Profession-ProgressBar-frame", "Profession-square-frame", "Profession-Background-Overview" }) do
+            assert(W.HidesAtlas(a), "bleibt sichtbar: " .. a)
+        end
+        assert(W.TonesAtlas("Profession-overview-card-generic-Fishing") and not W.HidesAtlas("Profession-overview-card-generic-Fishing"),
+            "Berufskarte weg statt gedaempft")
+        assert(not W.IsDark(1, 0.1, 0.1), "rote Schrift (fehlt) wird hell")
+        assert(W.WantsLarge("ProfessionsFrame"), "Berufe ohne gedaempfte Bilder")
+        -- Seitenreiter: Goldrahmen weg, Kachel, gewaehlter im Akzent.
+        local win = stub.NewObject("Frame")
+        local tab1, tab2 = stub.NewObject("CheckButton"), stub.NewObject("CheckButton")
+        local gold1, gold2 = Tex("common-sidetab"), Tex("common-sidetab")
+        tab1.GetRegions = function() return gold1 end
+        tab2.GetRegions = function() return gold2 end
+        tab1.GetChecked = function() return true end
+        tab2.GetChecked = function() return false end
+        win.GetChildren = function() return tab1, tab2 end
+        W.SkinSideTabs(win)
+        assert(gold1:GetAlpha() == 0 and W.SideTabs[tab1] and W.SideTabs[tab2], "Seitenreiter nicht gestaltet")
+        assert(W.SideTabs[tab1].on == true and W.SideTabs[tab2].on == false, "gewaehlter Reiter nicht erkannt")
+        -- Communitys: Reiter ueber ihren Namen, Innenflaechen tiefer im Fenster.
+        local comm = stub.NewObject("Frame")
+        local chatTab, bg = stub.NewObject("CheckButton"), stub.NewObject("Texture")
+        chatTab.Background = bg
+        comm.ChatTab = chatTab
+        local list, inset, nine = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Frame")
+        local edge = Tex("UI-Frame-InnerTopLeft")
+        nine.GetRegions = function() return edge end
+        inset.NineSlice = nine
+        list.InsetFrame = inset
+        comm.GetChildren = function() return list end
+        W.SkinSideTabs(comm)
+        W.SkinInsets(comm)
+        assert(bg:GetAlpha() == 0 and W.SideTabs[chatTab], "Chat-Reiter der Communitys nicht gestaltet")
+        assert(W.Insets[inset] and edge:GetAlpha() == 0, "Innenflaeche der Communitys nicht gestaltet")
+    end)
+    Check(ok2, "Berufe und Gilde & Communitys: Metall, Goldrahmen, Seitenreiter, Innenflaechen"
+        .. (ok2 and "" or (": " .. tostring(err2))))
     Check(ok, "Weltkarte im WeintCodex-Stil (Karte bleibt), weicher Rand ums Modell"
         .. (ok and "" or (": " .. tostring(err))))
 

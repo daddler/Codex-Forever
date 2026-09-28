@@ -19,6 +19,8 @@ nicht zusammen.
 
 **Weltkarte im neuen Stil.** Karte & Questlog (M) als Kachel statt Metall und Pergament, die Leiste „Welt › …“ mit flachen Knöpfen. Die Karte selbst bleibt, wie sie ist. Einzeln abschaltbar unter Tooltip & Fenster.
 
+**Berufe und Gilde & Communitys im neuen Stil.** Beide Fenster als Kachel statt Metall und Holz: Fortschrittsbalken flach, Berufssymbole mit schlichtem Rand, die Reiter am rechten Rand als kleine Kacheln – der gewählte im Akzent. Die Bilder der Berufe bleiben gedämpft sichtbar, fehlende Reagenzien bleiben rot.
+
 **Aufschlüsselung der Schadensanzeige ausgebaut.** Frei verschiebbar (Rechtsklick setzt sie zurück), dazu drei Ansichten: Zauber, Verlauf – Schaden oder Heilung je Sekunde über den Kampf als Säulen – und Auren: alle Buffs samt Essen und Fläschchen, so wie sie vor dem Kampf waren. Mit „Vergleich“ stehen zwei Spieler nebeneinander: Kennzahlen, Zauber, Verlauf und Auren.
 
 **Weicher Rand ums Charaktermodell.** Der Hintergrund hinter deinem Charakter läuft an den Kanten weich in das Fenster aus, statt hart abzubrechen.
