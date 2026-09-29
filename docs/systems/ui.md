@@ -1193,6 +1193,34 @@ Funktion je Rahmen oder Fläche. Wer eine Liste braucht, nimmt
 `W.Regions`/`W.Children` mit eigenem `key`; wer eine Liste über einen
 Aufruf hinaus behalten will, kopiert sie.
 
+**Charakterfenster, Neukonzept (6.6.4.0).** Beta-Test: kein graues
+Standardfenster über einem Bild mehr, sondern *ein* System – dunkle
+neutrale Basis + Szene der Klasse + Klassenfarbe als einziger Akzent +
+3D-Figur als Mittelpunkt + klare Hierarchie (Figur > Szene > Identität >
+Werte/Ausrüstung > Schmuck). Eigenes Modul `ui/character.lua`
+(`WeintCodex.UICharacter`, `CS.Update` aus `W.Inner`), getrennt in sieben
+Teile:
+
+| Teil | Funktion | was es tut |
+|---|---|---|
+| Layout | `CS.Layout` | Kachel → `GameColors.showcaseBase` (sehr dunkles Anthrazit); graue Innenflächen (`Inset*`) Deckkraft 0; Schein der Klasse oben auf 30 %; rechts eine Glasebene (`showcaseGlass`, Deckkraft aus dem Thema) über dem rechten Bereich (`InsetRight`, sonst Bildlauf der Werte, sonst `CharacterStatsPane`) mit 44 px weicher linker Kante über dem Auslauf der Szene und einer feinen Linie im Akzent. Folgt dem Ein-/Ausklappen. |
+| Szene | `CS.Scene`, `CS.KeepScene` | im Kasten des Modellbildes (`W.SoftenModel`, Maske von dort): Bild der Klasse `BACKGROUND/7`; Abdunklung des Spiels (RaceBG-Overlay) aus, wenn das Thema es sagt; Vignette `BORDER/1` (vier Verläufe); Ruhe hinter der Figur `BORDER/2` (dunkler Hof, **kein** Leuchten). |
+| Thema | `CS.Theme` → `WeintCodex.ClassTheme` | `data/classthemes.lua`: `DEFAULT` + Eintrag je Klasse. Anleitung für neue Klassen im Kopf der Datei. |
+| Akzent | `CS.Accent` | = `K.Highlight()` = Klassenfarbe (seit 6.6.3.1 der Akzent überall). Steht bewusst **nicht** im Thema: zweite Quelle derselben Farbe. |
+| Ausrüstung | `CS.Slots` | Plätze aus `W.SkinSlots` (`W.SlotList`, `W.SlotBorder`): leer = schwarzer Rand, Symbol grau und gedämpft; belegt = Rand im Akzent 45 %, Qualitätsrand des Spiels bleibt; Maus = Akzent voll (`HookScript`). |
+| Information | `CS.Header`, `CS.Info` | Kopf „HOLY LARENA / PRIESTERIN · STUFE 13 / Linie im Akzent“ über dem Modell, über der Figur (Ebene); Titel und `CharacterLevelText` des Spiels Deckkraft 0, solange er zu sehen ist (auf anderen Reitern zurück). Namen der Werte `textMuted` statt Gold; Zahlen, Kategorien (`W.Header`) und Bildlauf bleiben. |
+| Licht | `CS.Light`, `CS.KeepLight` | Licht der ModelScene in den Farben des Bildes (nur nach Zurücksetzen neu), Schatten unter den Füßen, darüber Dunst und Lichthauch – nur solange die Plätze höher liegen. Der warme Schein hinter der Figur aus 6.6.3.6 ist weg („keine künstlichen Glows“). |
+
+Nicht angefasst: Figur/Kamera, Plätze und ihre Funktion, die Werte des
+Spiels (keine eigene Werteanzeige, keine Reiter „Allgemein/Attribute/
+Waffen“), Reiter rechts, Knöpfe. Aus `ui/windows.lua` herausgezogen: Kopf-
+zeile, Klassenbild und Einbettung (6.6.3.5/6.6.3.6, jetzt Teile oben);
+dort bleibt der allgemeine weiche Rand (`W.SoftenModel`). Der Durchlauf
+legt nichts an (`load_test.lua`: 20 Läufe < 1 KB). `/wcui fenster` nennt
+Thema, Szene, Basis/Glas, Kopfzeile, Plätze, Licht und Ebenen.
+
+Die beiden folgenden Abschnitte sind die Vorgeschichte (6.6.3.5/6.6.3.6).
+
 **Klassenbild und Kopfzeile im Charakterfenster (6.6.3.5).** Beta-Test
 mit einem gemalten Entwurf: „atmosphärischer als das, was ich bisher
 habe“. Übernommen sind die zwei Teile, die zur Linie der übrigen Fenster

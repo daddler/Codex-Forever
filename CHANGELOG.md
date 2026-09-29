@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.4.0] – 2026-09-29
+
+**Das Charakterfenster ist neu aufgebaut.** Deine Figur steht im Mittelpunkt einer Szene statt vor einem grauen Fenster: sehr dunkle, ruhige Basis, die Szene deiner Klasse läuft zu den Rändern dunkel aus und ist hinter der Figur ruhiger, ein Schatten unter den Füßen und Dunst am Boden stellen sie hinein. Die Werte liegen rechts auf einer dunklen Glasebene über der Szene.
+
+**Name, Klasse und Stufe einmal, oben.** Dein Name steht groß über der Figur, darunter z. B. „PRIESTERIN · STUFE 13“ und eine feine Linie in deiner Klassenfarbe – nicht mehr zusätzlich rechts.
+
+**Deine Klassenfarbe als Akzent, nicht als Anstrich.** Belegte Ausrüstungsplätze tragen einen feinen Rand in deiner Klassenfarbe, unter der Maus voll; leere Plätze bleiben neutral und gedämpft. Die Namen der Werte sind ruhig grau statt gold.
+
 ## [6.6.3.6] – 2026-09-29
 
 **Deine Figur steht im Bild statt davor.** Im Charakterfenster nimmt die Figur das Licht des Hintergrunds an: gedämpftes, warmes Umgebungslicht und goldenes Hauptlicht statt neutraler Studiobeleuchtung, dazu ein warmer Schein hinter ihr, ein Schatten unter den Füßen und leichter Dunst am Boden. Nur bei Klassen mit eigenem Bild.

@@ -4543,13 +4543,24 @@ do
         local report = table.concat(W.SoftReport(cf), "\n")
         assert(report:find("Maske an 2 Bildern", 1, true) and report:find("Darunter: UI-Character-Info-Human-RaceBG", 1, true),
             "Bericht ohne Maske: " .. report)
-        -- 6.6.3.5: Klassenbild nur mit Eintrag in data/artwork.lua (der
-        -- Stub ist Krieger - keiner), sonst unveraendert.
-        assert(e.art == false and report:find("Klassenbild: keines für WARRIOR", 1, true), "Krieger bekommt ein Klassenbild")
-        local oldClass = _G.UnitClass
-        _G.UnitClass = function() return "Priesterin", "PRIEST" end
+        -- 6.6.4.0: Charakterfenster als eigenes System (ui/character.lua).
+        local CS = WeintCodex.UICharacter
+        -- Thema: DEFAULT fuer jede Klasse ohne Eintrag, PRIEST darueber.
+        local warrior, priest = WeintCodex.ClassTheme("WARRIOR"), WeintCodex.ClassTheme("PRIEST")
+        assert(warrior.art == nil and warrior.gameOverlay == true and warrior.glass == WeintCodex.ClassThemes.DEFAULT.glass,
+            "Klasse ohne Thema faellt nicht auf DEFAULT zurueck")
+        assert(priest.art and priest.art.file == "classes/priest" and priest.gameOverlay == false
+            and priest.glass == WeintCodex.ClassThemes.DEFAULT.glass and priest.light.ambient,
+            "Priester-Thema nicht ueber DEFAULT gelegt")
+        assert(WeintCodex.ClassTheme(nil).class == "DEFAULT", "ohne Klasse kein DEFAULT")
+        -- Krieger (Stub): Szene des Spiels bleibt, dasselbe Geruest.
+        local wScene = CS.Scene(e, scene, warrior)
+        CS.KeepScene(e)
+        assert(not wScene.art and race:GetAlpha() == 1 and wScene.vignette and wScene.vignette.TOP._masks,
+            "Krieger: Buehne des Spiels nicht behalten oder keine Vignette")
+
         local cf2, scene2 = stub.NewObject("Frame"), stub.NewObject("Frame")
-        local race2 = Tex("UI-Character-Info-Human-RaceBG", 230, 330)
+        local race2 = Tex("UI-Character-Info-RaceBG-Overlay", 230, 330)
         race2.GetParent = function() return scene2 end
         scene2.GetRegions = function() return race2 end
         cf2.GetChildren = function() return scene2 end
@@ -4563,77 +4574,155 @@ do
             return t
         end
         scene2._width, scene2._height = 397, 464
-        -- 6.6.3.6: Licht der Szene, gemerkt wie im Client.
         local amb, sets = { 1, 1, 1 }, 0
         scene2.SetLightAmbientColor = function(_, r, g, b) amb = { r, g, b } sets = sets + 1 end
         scene2.GetLightAmbientColor = function() return amb[1], amb[2], amb[3] end
         scene2:SetFrameLevel(10)
-        local slot = stub.NewObject("Button")
-        slot:SetFrameLevel(15)
+        local slotF = stub.NewObject("Button")
+        slotF:SetFrameLevel(15)
         local oldSlot = _G.CharacterHeadSlot
-        _G.CharacterHeadSlot = slot
+        _G.CharacterHeadSlot = slotF
         W.SoftenModel(cf2)
         local e2 = W.soft[scene2]
-        local art = e2 and e2.art
-        assert(art and W.own[art], "Priester ohne Klassenbild")
+        local s2 = CS.Scene(e2, scene2, priest)
+        local m = CS.Light(e2, scene2, priest)
+        CS.KeepScene(e2)
+        CS.KeepLight(e2)
+        local art = s2.art
+        assert(art and W.own[art], "Priester ohne Szene")
         assert(art._file == "Interface\\AddOns\\WeintCodex\\media\\classes\\priest", "falscher Pfad: " .. tostring(art._file))
         local layer, sub = art:GetDrawLayer()
-        assert(layer == "BACKGROUND" and sub == 7, "Klassenbild nicht ueber dem Grund des Spiels")
-        assert(art._masks and art._masks[1] == e2.mask, "Klassenbild laeuft nicht weich aus")
+        assert(layer == "BACKGROUND" and sub == 7 and art._masks[1] == e2.mask, "Szene falsch geschichtet oder ohne Maske")
         assert(art._coord and art._coord[1] == 0 and art._coord[2] == 1 and art._coord[3] > 0 and art._coord[4] < 1,
             "Ausschnitt verzerrt oder fehlt")
+        assert(race2:GetAlpha() == 0, "Abdunklung des Spiels bleibt ueber dem eigenen Bild")
+        race2:SetAlpha(1)
+        CS.KeepScene(e2)
+        assert(race2:GetAlpha() == 0, "Abdunklung kommt nach dem Zuruecksetzen wieder")
+        assert(s2.calm and select(2, s2.calm:GetDrawLayer()) == 2 and s2.calm._masks, "keine Ruhe hinter der Figur")
         local count = #made
-        W.SoftenModel(cf2)
-        assert(W.soft[scene2].art == art and #made == count, "Klassenbild doppelt angelegt")
-        assert(table.concat(W.SoftReport(cf2), " "):find("Klassenbild: classes/priest", 1, true), "Bericht ohne Klassenbild")
-        -- Einbettung: Licht in den Farben des Bildes, einmal gesetzt und
-        -- nur nach einem Zuruecksetzen erneut; Gegenlicht und Schatten
-        -- hinter der Figur (maskiert), Dunst darueber - unter den Plaetzen.
-        local L = WeintCodex.Art.Class("PRIEST").light
-        local m = W.soft[scene2].embed
-        assert(m and m.scene == scene2 and amb[1] == L.ambient[1] and amb[3] == L.ambient[3], "Licht der Szene nicht gesetzt")
+        CS.Scene(e2, scene2, priest)
+        CS.Light(e2, scene2, priest)
+        assert(#made == count, "Szene doppelt angelegt")
+        -- Licht: einmal, und nur nach einem Zuruecksetzen erneut.
+        local L = priest.light
+        assert(m.scene == scene2 and amb[1] == L.ambient[1] and amb[3] == L.ambient[3], "Licht der Szene nicht gesetzt")
         local setsNow = sets
-        W.SoftenModel(cf2)
+        CS.KeepLight(e2)
         assert(sets == setsNow, "Licht in jedem Durchlauf neu gesetzt")
         amb = { 1, 1, 1 }
-        W.SoftenModel(cf2)
+        CS.KeepLight(e2)
         assert(sets == setsNow + 1 and amb[2] == L.ambient[2], "Licht nach Zuruecksetzen nicht erneuert")
-        assert(m.glow and m.glow._masks and m.glow._masks[1] == W.soft[scene2].mask, "Gegenlicht ohne Maske")
-        local gl, gs = m.glow:GetDrawLayer()
-        assert(gl == "BORDER" and gs == 2 and m.shadow and select(2, m.shadow:GetDrawLayer()) == 3, "Gegenlicht/Schatten falsch geschichtet")
-        assert(m.over and m.over:GetFrameLevel() == 11 and m.over:IsShown(), "Schicht ueber der Figur nicht direkt ueber dem Modell")
-        assert(m.haze._masks and m.wash._masks, "Dunst oder Hauch ohne Maske")
-        slot:SetFrameLevel(11)
-        W.SoftenModel(cf2)
+        assert(m.shadow and select(2, m.shadow:GetDrawLayer()) == 3 and m.shadow._masks, "Schatten fehlt")
+        assert(m.over and m.over:GetFrameLevel() == 11 and m.over:IsShown() and m.haze._masks and m.wash._masks,
+            "Schicht ueber der Figur nicht direkt ueber dem Modell")
+        slotF:SetFrameLevel(11)
+        CS.KeepLight(e2)
         assert(not m.over:IsShown(), "Dunst liegt ueber den Ausruestungsplaetzen")
-        slot:SetFrameLevel(15)
-        W.SoftenModel(cf2)
+        slotF:SetFrameLevel(15)
+        CS.KeepLight(e2)
         assert(m.over:IsShown(), "Schicht kommt nicht zurueck")
-        assert(table.concat(W.SoftReport(cf2), " "):find("Einbettung: Licht an der Szene", 1, true), "Bericht ohne Einbettung")
+        local srep = table.concat(W.SoftReport(cf2), " ")
+        assert(srep:find("Szene: classes/priest, Abdunklung des Spiels aus", 1, true) and srep:find("Licht: an der Szene", 1, true),
+            "Bericht ohne Szene/Licht: " .. srep)
         _G.CharacterHeadSlot = oldSlot
-        -- Kopfzeile: "PRIESTERIN · STUFE 13", gesperrt; ohne Antwort nichts.
+        -- Warum das Thema nicht direkt am Krieger faellt: ohne Licht keine Schicht.
+        local wLight = CS.Light(e, scene, warrior)
+        assert(wLight.theme.light == nil and wLight.over, "Krieger: Dunst des DEFAULT fehlt")
+
+        -- Kopfbereich: HOLY LARENA / PRIESTERIN · STUFE 13, Titel und
+        -- Stufenzeile des Spiels unsichtbar, solange er zu sehen ist.
         local sp = WeintCodex.Spaced
-        assert(W.CharacterLine("Priesterin", 13) == sp("PRIESTERIN · STUFE 13"), "Kopfzeile falsch")
-        assert(W.CharacterLine(nil, 13) == sp("STUFE 13") and W.CharacterLine("Magier", nil) == sp("MAGIER"), "Teilwissen verloren")
-        assert(W.CharacterLine(nil, nil) == nil and W.CharacterLine("", 0) == nil, "Kopfzeile ohne Wissen")
+        assert(CS.IdentityLine("Priesterin", 13) == sp("PRIESTERIN · STUFE 13"), "Kopfzeile falsch")
+        assert(CS.IdentityLine(nil, 13) == sp("STUFE 13") and CS.IdentityLine("Magier", nil) == sp("MAGIER"), "Teilwissen verloren")
+        assert(CS.IdentityLine(nil, nil) == nil and CS.IdentityLine("", 0) == nil, "Kopfzeile ohne Wissen")
+        assert(CS.NameLine("Holy Larena") == "HOLY LARENA" and CS.NameLine("") == nil, "Name nicht versal")
+        local oldClass = _G.UnitClass
+        _G.UnitClass = function() return "Priesterin", "PRIEST" end
         local charF, paper = stub.NewObject("Frame"), stub.NewObject("Frame")
-        charF.TitleContainer = { TitleText = WeintCodex.UIKit.NewText(charF, 13) }
-        local oldPaper, oldHead = _G.PaperDollFrame, W.charHead
-        _G.PaperDollFrame, W.charHead = paper, nil
-        local head = W.CharacterHeader(charF)
+        local titleText = WeintCodex.UIKit.NewText(charF, 13)
+        titleText:SetText("Holy Larena")
+        charF.TitleContainer = { TitleText = titleText }
+        local lvlText = WeintCodex.UIKit.NewText(paper, 10)
+        local oldPaper, oldHead, oldLvl = _G.PaperDollFrame, CS.head, _G.CharacterLevelText
+        _G.PaperDollFrame, CS.head, _G.CharacterLevelText = paper, nil, lvlText
+        local head = CS.Header(charF)
         assert(head and head:GetParent() == paper, "Kopfzeile nicht am Reiter Charakter")
-        assert(head.text:GetText() == sp("PRIESTERIN · STUFE 60"), "Kopfzeile: " .. tostring(head.text:GetText()))
-        assert(W.CharacterHeader(charF) == head, "Kopfzeile doppelt")
+        assert(head.name:GetText() == "HOLY LARENA" and head.sub:GetText() == sp("PRIESTERIN · STUFE 60"),
+            "Kopfzeile: " .. tostring(head.name:GetText()) .. " / " .. tostring(head.sub:GetText()))
+        assert(titleText:GetAlpha() == 0 and lvlText:GetAlpha() == 0, "Name/Stufe doppelt (Titel des Spiels sichtbar)")
+        head:GetScript("OnHide")()
+        assert(titleText:GetAlpha() == 1 and lvlText:GetAlpha() == 1, "Titel auf anderen Reitern weg")
+        assert(CS.Header(charF) == head, "Kopfzeile doppelt")
+        head.Update(61)
+        assert(head.sub:GetText() == sp("PRIESTERIN · STUFE 61"), "Stufenaufstieg nicht uebernommen")
         local oldScene = _G.CharacterModelScene
         _G.CharacterModelScene = stub.NewObject("Frame")
         _G.CharacterModelScene:SetFrameLevel(40)
-        W.CharacterHeader(charF)
+        CS.KeepHeader(head, nil)
         assert(head:GetFrameLevel() == 43, "Kopfzeile unter der Figur")
         _G.CharacterModelScene = oldScene
-        head.Update(61)
-        assert(head.text:GetText() == sp("PRIESTERIN · STUFE 61"), "Stufenaufstieg nicht uebernommen")
-        _G.PaperDollFrame, W.charHead = oldPaper, oldHead
+        _G.PaperDollFrame, CS.head, _G.CharacterLevelText = oldPaper, oldHead, oldLvl
         _G.UnitClass = oldClass
+
+        -- Layout: dunkle Basis, keine grauen Innenflaechen, Glas rechts,
+        -- das dem rechten Bereich folgt.
+        local win = stub.NewObject("Frame")
+        local insetR = stub.NewObject("Frame")
+        win.InsetRight = insetR
+        local d = W.Skin(win)
+        assert(d and d.InsetRight, "Innenflaeche nicht gefunden")
+        local Lay = CS.Layout(win, d, priest)
+        assert(Lay.base and d.InsetRight:GetAlpha() == 0, "Basis/Innenflaeche nicht umgestellt")
+        assert(d.glow == nil or d.glow:GetAlpha() == CS.TOP_GLOW, "Schein der Klasse faerbt weiter das Fenster")
+        assert(Lay.glass and Lay.glass.name == "InsetRight" and Lay.glass.shown == true and W.own[Lay.glass.body],
+            "keine Glasebene rechts")
+        insetR:Hide()
+        CS.Layout(win, d, priest)
+        assert(Lay.glass.shown == false and not Lay.glass.body:IsShown(), "Glas bleibt bei eingeklapptem Bereich")
+        insetR:Show()
+        CS.Layout(win, d, priest)
+        assert(Lay.glass.body:IsShown(), "Glas kommt nicht zurueck")
+
+        -- Werte: Namen ruhig statt gold, einmal.
+        local label = WeintCodex.UIKit.NewText(win, 11)
+        local colored = 0
+        label.SetTextColor = function(_, r) colored = colored + 1 label._r = r end
+        W.StatLabels[#W.StatLabels + 1] = label
+        CS.Info()
+        CS.Info()
+        assert(colored == 1 and label._r == WeintCodex.Colors.textMuted[1], "Namen der Werte nicht ruhig oder mehrfach")
+
+        -- Ausruestung: leer neutral und gedaempft, belegt im Akzent (halb),
+        -- Maus im Akzent (voll).
+        local slot = stub.NewObject("Button")
+        slot.GetID = function() return 1 end
+        slot.icon = stub.NewObject("Texture")
+        local bcol
+        local border = { SetColor = function(_, r, g, b, a) bcol = { r, g, b, a } end }
+        W.SlotList[#W.SlotList + 1] = slot
+        W.SlotBorder[slot] = border
+        local oldInv = _G.GetInventoryItemTexture
+        local worn = nil
+        _G.GetInventoryItemTexture = function() return worn end
+        CS.Slots()
+        local acc = WeintCodex.UIKit.Highlight()
+        assert(CS.slotState[slot].state == "empty" and bcol[1] == 0 and bcol[4] == 1 and slot.icon:GetAlpha() == CS.SLOT_EMPTY_ICON,
+            "leerer Platz nicht neutral")
+        worn = 12345
+        CS.Slots()
+        assert(CS.slotState[slot].state == "filled" and bcol[1] == acc[1] and bcol[4] == CS.SLOT_FILLED and slot.icon:GetAlpha() == 1,
+            "belegter Platz nicht im Akzent")
+        slot:GetScript("OnLeave")   -- vorhanden
+        slot._scripts.OnEnter()
+        assert(bcol[4] == 1 and CS.slotState[slot].state == "hover", "Maus ohne vollen Akzent")
+        CS.Slots()
+        assert(CS.slotState[slot].state == "hover", "Durchlauf ueberschreibt die Maus")
+        slot._scripts.OnLeave()
+        assert(CS.slotState[slot].state == "filled" and bcol[4] == CS.SLOT_FILLED, "nach der Maus nicht zurueck")
+        _G.GetInventoryItemTexture = oldInv
+        table.remove(W.SlotList)
+        table.remove(W.StatLabels)
     end)
     -- Berufe und Gilde & Communitys (6.6.2.1).
     local ok2, err2 = pcall(function()
@@ -4794,6 +4883,35 @@ do
         _G.WCTestOpenFrame, _G.WCTestShutFrame = nil, nil
         print(string.format("    (20 Durchlaeufe ueber 85 Rahmen, 595 Flaechen: %.1f KB)", grew))
         assert(grew < 64, string.format("Takt legt Muell an: %.1f KB in 20 Durchlaeufen", grew))
+        -- 6.6.4.0: auch das Charakterfenster legt im Durchlauf nichts an.
+        do
+            local CS = WeintCodex.UICharacter
+            local cfA, hostA, inset = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Frame")
+            local bg = stub.NewObject("Texture")
+            bg.GetAtlas = function() return "UI-Character-Info-RaceBG-Overlay" end
+            bg._width, bg._height = 397, 464
+            bg.GetParent = function() return hostA end
+            hostA.GetRegions = function() return bg end
+            cfA.GetChildren = function() return hostA end
+            cfA.InsetRight = inset
+            local slotA = stub.NewObject("Button")
+            slotA.GetID = function() return 1 end
+            W.SlotList[#W.SlotList + 1] = slotA
+            local oldP, oldH = _G.PaperDollFrame, CS.head
+            _G.PaperDollFrame, CS.head = stub.NewObject("Frame"), nil
+            local dA = W.Skin(cfA)
+            for _ = 1, 3 do CS.Update(cfA, dA) end
+            collectgarbage("collect")
+            collectgarbage("stop")
+            local c0 = collectgarbage("count")
+            for _ = 1, 20 do CS.Update(cfA, dA) end
+            local cgrew = collectgarbage("count") - c0
+            collectgarbage("restart")
+            table.remove(W.SlotList)
+            _G.PaperDollFrame, CS.head = oldP, oldH
+            print(string.format("    (20 Durchlaeufe Charakterfenster: %.1f KB)", cgrew))
+            assert(cgrew < 1, string.format("Charakterfenster legt im Takt Muell an: %.1f KB", cgrew))
+        end
         -- Takt: schnell nach dem Wecken, danach langsam.
         local t = 100
         local oldGT = _G.GetTime

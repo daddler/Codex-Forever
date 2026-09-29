@@ -854,27 +854,37 @@ for token, art in pairs(WeintCodex.ClassArtworks or {}) do
     artClasses = artClasses + 1
     Check(classes[token] == true, "Klassenbild " .. tostring(token) .. " gehoert zu einer Klasse, die es gibt")
     CheckArt(art, "Klassenbild " .. tostring(token))
-    if art.light ~= nil then
-        -- Licht (6.6.3.6): Farben 0..1, sonst setzt der Client Unsinn.
-        local okLight = type(art.light) == "table"
-        for _, key in ipairs({ "ambient", "diffuse", "glow", "wash" }) do
-            local c = okLight and art.light[key]
-            if c ~= nil then
-                for i = 1, (key == "glow" or key == "wash") and 4 or 3 do
-                    okLight = okLight and type(c[i]) == "number" and c[i] >= 0 and c[i] <= 1
-                end
-            end
-        end
-        for _, key in ipairs({ "shadow", "haze" }) do
-            local v = okLight and art.light[key]
-            if v ~= nil then okLight = okLight and type(v) == "number" and v >= 0 and v <= 1 end
-        end
-        Check(okLight, "Klassenbild " .. tostring(token) .. ": Licht wohlgeformt (0..1)")
-    end
 end
 Check(WeintCodex.Art.Class("WARRIOR") == nil and WeintCodex.Art.Class(nil) == nil,
     "eine Klasse ohne Bild liefert nil")
 print("  --    " .. artClasses .. " Klasse(n) mit Bild")
+
+-- Klassen-Themen (6.6.4.0, data/classthemes.lua): nur DEFAULT und
+-- Klassen, die es gibt; eine Szene nur mit Bild; Werte 0..1.
+Check(type(WeintCodex.ClassThemes) == "table" and type(WeintCodex.ClassThemes.DEFAULT) == "table",
+    "Klassen-Themen mit DEFAULT geladen")
+local function Unit(v) return type(v) == "number" and v >= 0 and v <= 1 end
+local function Rgb(c, n)
+    if type(c) ~= "table" then return false end
+    for i = 1, n do if not Unit(c[i]) then return false end end
+    return true
+end
+for token, theme in pairs(WeintCodex.ClassThemes or {}) do
+    local what = "Thema " .. tostring(token)
+    Check(token == "DEFAULT" or classes[token] == true, what .. " ist DEFAULT oder eine Klasse, die es gibt")
+    Check(theme.scene == nil or WeintCodex.Art.Class(theme.scene) ~= nil, what .. ": Szene hat ein Bild")
+    local ok = true
+    for _, key in ipairs({ "vignette", "calm", "shadow", "haze", "glass" }) do
+        if theme[key] ~= nil and not Unit(theme[key]) then ok = false end
+    end
+    if theme.light ~= nil then
+        ok = ok and Rgb(theme.light.ambient, 3) and (theme.light.diffuse == nil or Rgb(theme.light.diffuse, 3))
+    end
+    if theme.wash ~= nil then ok = ok and Rgb(theme.wash, 4) end
+    Check(ok, what .. ": Werte wohlgeformt (0..1)")
+end
+Check(WeintCodex.ClassTheme("WARRIOR").art == nil and WeintCodex.ClassTheme("PRIEST").art ~= nil,
+    "Klasse ohne Thema: Buehne des Spiels; Priester: eigenes Bild")
 
 --------------------------------------------------
 -- Dungeon-Journal: Beute und Quests (6.5.0.0)

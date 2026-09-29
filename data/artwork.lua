@@ -325,6 +325,10 @@ WeintCodex.Artworks = {
 -- wieder unverzerrt. Zu sehen ist bei einem Modellfeld von 397x464
 -- ein Streifen von 78 % der Hoehe; focusY legt ihn fest.
 -- dim: Helligkeit, damit das Modell vor dem Bild steht.
+--
+-- Hier stehen nur die BILDER (Datei, Masse, Ausschnitt). Welche Klasse
+-- welches Bild nutzt, mit welchem Licht und welcher Atmosphaere, steht in
+-- data/classthemes.lua (6.6.4.0).
 
 WeintCodex.ClassArtworks = {
 
@@ -333,24 +337,6 @@ WeintCodex.ClassArtworks = {
     PRIEST = {
         file = "classes/priest",
         w = 1024, h = 1536, focusY = 0.55, dim = 0.9,
-        -- Einbettung der Figur (6.6.3.6, ui/windows.lua W.EmbedModel):
-        -- Licht der Szene in den Farben DIESES Bildes - Kerzen und
-        -- goldenes Licht, gedaempfte Umgebung. Die Werte gehoeren zum
-        -- Bild, nicht zur Palette (deshalb hier und nicht in core/ui.lua):
-        -- ein anderes Bild braucht anderes Licht.
-        --   ambient/diffuse  Farbe von Umgebungs- und Hauptlicht (0..1)
-        --   glow             Gegenlicht hinter der Figur (r, g, b, Deckkraft)
-        --   shadow           Deckkraft des Schattens unter den Fuessen
-        --   haze             Deckkraft des Dunsts am Boden, ueber der Figur
-        --   wash             Hauch der Lichtfarbe ueber allem (additiv)
-        light = {
-            ambient = { 0.55, 0.49, 0.41 },
-            diffuse = { 0.96, 0.82, 0.60 },
-            glow    = { 1.00, 0.78, 0.45, 0.30 },
-            shadow  = 0.60,
-            haze    = 0.45,
-            wash    = { 1.00, 0.80, 0.50, 0.05 },
-        },
     },
 }
 

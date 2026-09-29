@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.4.0",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDas Charakterfenster ist neu aufgebaut.|r Deine Figur steht im Mittelpunkt einer Szene statt vor einem grauen Fenster: sehr dunkle, ruhige Basis, die Szene deiner Klasse läuft zu den Rändern dunkel aus und ist hinter der Figur ruhiger, ein Schatten unter den Füßen und Dunst am Boden stellen sie hinein. Die Werte liegen rechts auf einer dunklen Glasebene über der Szene.",
+            "|cff7C6CFFName, Klasse und Stufe einmal, oben.|r Dein Name steht groß über der Figur, darunter z. B. „PRIESTERIN · STUFE 13“ und eine feine Linie in deiner Klassenfarbe – nicht mehr zusätzlich rechts.",
+            "|cff7C6CFFDeine Klassenfarbe als Akzent, nicht als Anstrich.|r Belegte Ausrüstungsplätze tragen einen feinen Rand in deiner Klassenfarbe, unter der Maus voll; leere Plätze bleiben neutral und gedämpft. Die Namen der Werte sind ruhig grau statt gold.",
+        },
+    },
+    {
         version = "6.6.3.6",
         date    = "29.09.2026",
         notes   = {

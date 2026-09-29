@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.6.3.6
+## Version: 6.6.4.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -90,6 +90,8 @@ data/dungeon_journal.lua
 # Bildpfade; was ein Bild NICHT behauptet, steht in der Datei.
 #
 data/artwork.lua
+# Klassen-Themen des Charakterfensters (6.6.4.0): Bild, Licht, Atmosphaere je Klasse.
+data/classthemes.lua
 data/specs.lua
 # Was der Klassenlehrer lehrt (6.6.0.0); gelesen von modules/trainer.lua.
 data/trainer.lua
@@ -168,6 +170,8 @@ ui/questarrow.lua
 ui/comfort.lua
 ui/tooltip.lua
 ui/windows.lua
+# Das Charakterfenster als Ganzes (6.6.4.0), baut auf ui/windows.lua auf.
+ui/character.lua
 ui/testmode.lua
 ui/options.lua
 ui/editmode.lua
