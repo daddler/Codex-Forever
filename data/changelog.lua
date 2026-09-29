@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.8.0.2",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Sammlung in der ruhigen Oberfläche.|r Kein Schein in deiner Klassenfarbe mehr oben im Fenster; die Vorlagen liegen auf einer Fläche mit weichem Schatten und feiner Kante in Gold, gewählte Reiter tragen Gold – wie Suche nach Gruppe, Gilde und Karte. Plätze, Klassenauswahl, Suche, Filter und Blättern bleiben, wie das Spiel sie zeigt.",
+        },
+    },
+    {
         version = "6.8.0.1",
         date    = "29.09.2026",
         notes   = {

@@ -92,7 +92,7 @@ W.EXTRA_DECOR = { GameMenuFrame = { "Border", "Header" } }
 -- 6.8.0.1, gemessen: die Reiter "Gruppen durchsuchen" (LFGBrowseFrame) und
 -- "Spielersuche" (LFGWhoListFrame) der Suche nach Gruppe - Marmor (Bild
 -- 374155), Stein (groupfinder-Stat-StoneBG), zwei Goldlinien
--- (groupfinder-ScrollLine). Als Innenflaeche findet sie ui/lfg.lua (W.Insets).
+-- (groupfinder-ScrollLine). Als Innenflaeche findet sie ui/calm.lua (W.Insets).
 W.OWN_BG_PATHS = { "WardrobeCollectionFrame.ItemsCollectionFrame", "LFGBrowseFrame", "LFGWhoListFrame" }
 W.NO_SHADOW = { GameMenuFrame = true }
 
@@ -1278,7 +1278,9 @@ local function HideTabArt(tab, icon)
     end
 end
 
-local function SkinTab(tab)
+-- `accent` (6.8.0.2): der Akzent des Fensters - Gold in einem Fenster in
+-- Gold, sonst die Klassenfarbe (wie die Seitenreiter, SkinSideTabs).
+local function SkinTab(tab, accent)
     local d = tabSkin[tab]
     if not d then
         for _, k in ipairs(TAB_PARTS) do Hide(tab[k]) end
@@ -1309,10 +1311,12 @@ local function SkinTab(tab)
         if ok and type(v) ~= "nil" then on = v end
     end
     on = K.Bool(on, false)
-    local c = on and K.Highlight() or BLACK
+    accent = accent or K.Highlight()
+    local c = on and accent or BLACK
+    d.accent = on and accent or nil
     if d.rim then
-        if d.sel ~= on then
-            d.sel = on
+        if d.sel ~= on or (on and d.rimAccent ~= accent) then
+            d.sel, d.rimAccent = on, on and accent or nil
             d.rim:Set(on and 2 or 1, c)
         end
     else
@@ -1321,14 +1325,18 @@ local function SkinTab(tab)
 end
 W.TabSkin = tabSkin
 
-local function SkinTabSystems(f, depth)
+local function SkinTabSystems(f, depth, accent)
     if depth > 8 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
+    if depth == 0 then
+        local sc = scoped[f]
+        accent = S.Accent(sc and sc.accent)
+    end
     if type(f.tabs) == "table" and type(f.AddTab) == "function" then
         for _, tab in ipairs(f.tabs) do
-            if type(tab) == "table" and tab.CreateTexture then pcall(SkinTab, tab) end
+            if type(tab) == "table" and tab.CreateTexture then pcall(SkinTab, tab, accent) end
         end
     end
-    for _, ch in ipairs(Children(f, "tabSys", depth)) do SkinTabSystems(ch, depth + 1) end
+    for _, ch in ipairs(Children(f, "tabSys", depth)) do SkinTabSystems(ch, depth + 1, accent) end
 end
 W.SkinTabSystems = function(f) SkinTabSystems(f, 0) end
 

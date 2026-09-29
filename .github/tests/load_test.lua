@@ -6678,7 +6678,7 @@ do
     -- Innenflaechen (W.Insets, nicht ueber Namen) mit Schatten und Kante in
     -- Gold, aus mit ihrer Flaeche.
     local okL, errL = pcall(function()
-        local W, S, LF = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UILFG
+        local W, S, LF = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UICalm
         local GC = WeintCodex.GameColors
         assert(LF and W.HOSTED.LFGParentFrame[1] == LF and W.HOSTED.PVEFrame[1] == LF
             and S.SCOPES.LFGParentFrame == S.CALM and S.SCOPES.PVEFrame == S.CALM, "Suche nach Gruppe nicht in Gold eingetragen")
@@ -6758,6 +6758,46 @@ do
     end)
     Check(okL, "Suche nach Gruppe: Gold, Innenflaechen mit Kante und Schatten, kein Schein der Klasse"
         .. (okL and "" or (": " .. tostring(errL))))
+
+    -- 6.8.0.2: Sammlung ("Vorlagen") in Gold - derselbe Baustein (ui/calm.lua):
+    -- die Innenflaeche WardrobeCollectionFrame.ItemsCollectionFrame (seit
+    -- 6.6.3.3 in W.OWN_BG_PATHS) bekommt Schatten und Kante in Gold, kein
+    -- Schein der Klasse; gewaehlte Reiter oben (Reitersystem) in Gold.
+    local okJ, errJ = pcall(function()
+        local W, S, CA = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UICalm
+        local GC = WeintCodex.GameColors
+        assert(W.HOSTED.CollectionsJournal and W.HOSTED.CollectionsJournal[1] == CA and S.SCOPES.CollectionsJournal == S.CALM,
+            "Sammlung nicht in Gold eingetragen")
+        local cj = stub.NewObject("Frame", "CollectionsJournal")
+        local wardrobe, items = stub.NewObject("Frame"), stub.NewObject("Frame")
+        wardrobe._parent, items._parent = cj, wardrobe
+        wardrobe.ItemsCollectionFrame = items
+        local leather = stub.NewObject("Texture")
+        items.GetRegions = function() return leather end
+        local oldWCF, oldCJ = _G.WardrobeCollectionFrame, _G.CollectionsJournal
+        _G.WardrobeCollectionFrame, _G.CollectionsJournal = wardrobe, cj
+        W.Apply()
+        assert(W.Insets[items] and leather:GetAlpha() == 0, "Vorlagen ohne Innenflaeche")
+        local glow = stub.NewObject("Texture")
+        W.done[cj] = { glow = glow }
+        S.Register()
+        CA.Update(cj)
+        W.HoldGlow(cj, "CollectionsJournal")
+        assert(CA.decks[items] and CA.decks[items].on and not glow:IsShown(), "Vorlagen ohne Kante oder mit Schein der Klasse")
+        local rep = table.concat(CA.Report(cj, {}), "\n")
+        assert(rep:find("Sammlung (Stil ruhig): 1 Innenflächen mit Kante in Gold", 1, true), "Bericht: " .. rep)
+        -- Reiter oben (Reitersystem des Spiels): der gewaehlte in Gold.
+        local sys, tab = stub.NewObject("Frame"), stub.NewObject("Button")
+        tab.IsSelected = function() return true end
+        sys.tabs, sys.AddTab = { tab }, function() end
+        cj.GetChildren = function() return sys end
+        W.SkinTabSystems(cj)
+        assert(W.TabSkin[tab] and W.TabSkin[tab].accent == GC.frameAccent, "gewaehlter Reiter nicht in Gold")
+        W.done[cj] = nil
+        _G.WardrobeCollectionFrame, _G.CollectionsJournal = oldWCF, oldCJ
+    end)
+    Check(okJ, "Sammlung: Gold, Vorlagen auf Innenflaeche mit Kante, Reiter oben in Gold, kein Schein der Klasse"
+        .. (okJ and "" or (": " .. tostring(errJ))))
 
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett
     -- auf Wunsch. Es bleibt ein Akzent (accent = purple = violet = brandA).

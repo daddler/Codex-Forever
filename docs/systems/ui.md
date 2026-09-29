@@ -2193,7 +2193,7 @@ auf der Karte; aus, wenn die Seitenleiste zu ist.
 **Unverändert:** Farben der Quests (Schwierigkeit), Ziele, Symbole,
 Häkchen zum Verfolgen, Suche, Zähler, Filter, Markierungen auf der Karte.
 
-### Suche nach Gruppe *(6.8.0.0, `ui/lfg.lua`)*
+### Suche nach Gruppe *(6.8.0.0, `ui/lfg.lua`, seit 6.8.0.2 `ui/calm.lua`)*
 
 Beta-Test: „das Fenster bitte auch noch“. **Gemessen** (`/wcui fenster`):
 `LFGParentFrame` mit `WhoListingTab`, `ListingTab`, `BrowsingTab`
@@ -2226,6 +2226,33 @@ sie in einem Unterrahmen liegen.
 Fassung 6.8.0.0 statt 6.7.10.0: ob die Companion oder ein anderes Werkzeug
 Fassungen als Text vergleicht, ist ungeprüft – „6.7.10.0“ käme dort vor
 „6.7.9.0“.
+
+### Sammlung *(6.8.0.2, `ui/calm.lua`)*
+
+Beta-Test: „Accountsammlungen bitte auch anpassen“. **Gemessen**
+(`/wcui fenster`, Reiter „Vorlagen“): `CollectionsJournal`, die Vorlagen
+in `WardrobeCollectionFrame.ItemsCollectionFrame` (Plätze
+`transmog-nav-slot-*`, der gewählte mit `transmog-nav-slot-selected`,
+`bags-roundhighlight`), `.ClassDropdown`, `.FilterButton`,
+`.PagingFrame`; kein Bild des Spiels mehr groß – der braune Verlauf war
+der Schein der Klasse.
+
+Derselbe Bedarf wie bei der Suche nach Gruppe – Fenster in Gold, Inhalt
+auf Innenflächen –, deshalb ist `ui/lfg.lua` zu **`ui/calm.lua`**
+(`WeintCodex.UICalm`) geworden: `LF.WINDOWS` nennt die Fenster und ihren
+Namen im Bericht (`LFGParentFrame`, `PVEFrame`, `CollectionsJournal`).
+Die Vorlagen sind seit 6.6.3.3 eine Innenfläche (`W.OWN_BG_PATHS`) und
+bekommen damit Schatten und Kante in Gold; der Schein der Klasse ist aus.
+
+**Reiter oben:** `SkinTab` färbte den gewählten Reiter eines
+Reitersystems immer in der Klassenfarbe; jetzt trägt er den Akzent des
+Fensters (`SkinTabSystems` holt ihn aus dem Stil) – wie die Seitenreiter.
+Ob „Gegenstände“ in der Sammlung ein solches Reitersystem ist, zeigte die
+Messung nicht; ist es eine eigene Vorlage des Spiels, bleibt sie, wie sie
+ist.
+
+**Unverändert:** Plätze samt Goldring am gewählten (Auswahl des Spiels),
+Klassenauswahl, Suche, Filter, Blättern, Seitenreiter-Symbol.
 
 ### Nächste Fenster
 

@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.8.0.2] – 2026-09-29
+
+**Die Sammlung in der ruhigen Oberfläche.** Kein Schein in deiner Klassenfarbe mehr oben im Fenster; die Vorlagen liegen auf einer Fläche mit weichem Schatten und feiner Kante in Gold, gewählte Reiter tragen Gold – wie Suche nach Gruppe, Gilde und Karte. Plätze, Klassenauswahl, Suche, Filter und Blättern bleiben, wie das Spiel sie zeigt.
+
+### Technisch
+
+- `ui/lfg.lua` heißt jetzt `ui/calm.lua` (`WeintCodex.UICalm`): „Fenster in Gold mit Innenflächen“, allgemein – Suche nach Gruppe und neu `CollectionsJournal` (gemessen: Vorlagen in `WardrobeCollectionFrame.ItemsCollectionFrame`, seit 6.6.3.3 Innenfläche). Bericht je Fenster („Sammlung (Stil ruhig): …“).
+- `SkinTabSystems`/`SkinTab`: der gewählte Reiter eines Reitersystems trägt den Akzent seines Fensters (Gold in einem Fenster in Gold) statt immer die Klassenfarbe – wie die Seitenreiter seit 6.7.5.0.
+- `load_test.lua`: Sammlung wie gemessen (Innenfläche mit Kante, kein Schein, Bericht), Reiter oben in Gold.
+
 ## [6.8.0.1] – 2026-09-29
 
 **„Gruppen durchsuchen“ und „Spielersuche“ ohne Stein.** Der graue Stein, der Marmor und die goldenen Linien über und unter der Liste sind weg; beide Reiter liegen auf derselben ruhigen Fläche mit weichem Schatten und feiner Kante in Gold wie der erste Reiter. Texte, Filter, Suche und Knöpfe bleiben, wie das Spiel sie zeigt.
