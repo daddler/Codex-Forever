@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.6.4.5
+## Version: 6.7.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -146,6 +146,8 @@ core/search.lua
 # dahin angemeldet hat.
 #
 ui/kit.lua
+# Bausteine der Designsprache fuer die Fenster des Spiels (6.7.0.0).
+ui/style.lua
 ui/layout.lua
 ui/presence.lua
 ui/auras.lua
@@ -172,6 +174,8 @@ ui/tooltip.lua
 ui/windows.lua
 # Das Charakterfenster als Ganzes (6.6.4.0), baut auf ui/windows.lua auf.
 ui/character.lua
+# Ruf im Stil S.CALM (6.7.0.0), das Muster fuer die uebrigen Fenster.
+ui/reputation.lua
 ui/testmode.lua
 ui/options.lua
 ui/editmode.lua

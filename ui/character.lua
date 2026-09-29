@@ -59,16 +59,10 @@ local function LevelOf(f)
 end
 CS.LevelOf = LevelOf
 
--- Waagerechter oder senkrechter Verlauf einer Farbe von `a0` nach `a1`.
--- VERTICAL: a0 unten, a1 oben; HORIZONTAL: a0 links, a1 rechts.
-local function Gradient(t, dir, c, a0, a1)
-    t:SetColorTexture(1, 1, 1, 1)
-    if _G.CreateColor and t.SetGradient then
-        t:SetGradient(dir, _G.CreateColor(c[1], c[2], c[3], a0), _G.CreateColor(c[1], c[2], c[3], a1))
-    else
-        t:SetColorTexture(c[1], c[2], c[3], (a0 + a1) / 2)
-    end
-end
+-- Waagerechter oder senkrechter Verlauf einer Farbe von `a0` nach `a1`
+-- (VERTICAL: a0 unten, a1 oben; HORIZONTAL: a0 links, a1 rechts). Seit
+-- 6.7.0.0 der Baustein aus ui/style.lua - derselbe fuer alle Fenster.
+local Gradient = WeintCodex.UIStyle.Gradient
 CS.Gradient = Gradient
 
 local BLACK = { 0, 0, 0 }

@@ -9,6 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.0.0] – 2026-09-29
+
+**Der Ruf im neuen Stil der Fenster.** Dunkle, ruhige Fläche wie im Charakterfenster, die Liste liegt auf einem weich auslaufenden dunklen Grund, oben ein Hauch warmes Gold. Gruppen tragen eine Raute und eine feine goldene Linie und bleiben so eingerückt wie im Spiel – Gruppen in Gruppen sind wieder als solche zu erkennen.
+
+**Die gewählte Fraktion ist auf einen Blick zu sehen.** Links ein goldener Strich, dahinter ein Hauch Gold – es ist die, die rechts in der Detailansicht steht. Unter der Maus wird jede Zeile heller.
+
+**Rufbalken mit mehr Tiefe.** Dunklere Bahn, Schatten und Lichtkante an der Füllung; Farbe und Text der Rufstufe bleiben, wie das Spiel sie zeigt.
+
+**Detailansicht als eigene dunkle Tafel.** Statt des Dialograhmens, mit größerem Fraktionsnamen und einer goldenen Trennlinie darunter. Beschreibung, Häkchen und Knöpfe bleiben unverändert.
+
+### Technisch
+
+- Neue Stil-Schicht `ui/style.lua` (`WeintCodex.UIStyle`): Akzente, Stile je Bereich (`S.SCOPES`), Verlauf, Raute, Trennlinie, weiche Fläche, Vignette, Licht von oben, Tafel, Maus, Auswahl, Balken-Veredelung, Schrift. `W.Diamond`, `W.Fade`, `W.own` und `UICharacter.Gradient` sind jetzt diese Bausteine.
+- Zweiter Akzent `GameColors.frameAccent` (gedämpftes Gold) für Fenster, die nicht der Klasse gehören; nie in derselben Fläche wie die Klassenfarbe, nicht von `SetAccent` umgerechnet.
+- `W.HideByAtlas` reicht den Stil eines Rahmens an alles darunter weiter; im Stil `S.CALM` werden Kopfzeilen `W.ListHeader` (Text bleibt stehen) und Balkenbahnen `barTrack`.
+- `ui/reputation.lua` (`WeintCodex.UIReputation`): Atmosphäre, Zeilen, Auswahl, Detailansicht, Bericht in `/wcui fenster`. Charakter, Fertigkeiten und alle anderen Fenster bleiben unverändert.
+
 ## [6.6.4.5] – 2026-09-29
 
 **Alle Klassen haben jetzt ihre Szene im Charakterfenster.** Krieger stehen in einer Waffenkammer mit Thron und Esse, Druiden in einem Hain mit Geweihtor, Magier in einer arkanen Halle unter einer Armillarsphäre, Schurken in einem nächtlichen Versteck mit Laternen, Hexenmeister vor einem grünen Portal, Paladine in einer Lichthalle vor dem Altar, Schamanen in einem Steinkreis unter dem Sturm. Jede Figur nimmt das Licht ihrer Szene an; Aufbau, Werte und deine Klassenfarbe als Akzent bleiben dieselben.

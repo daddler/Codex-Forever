@@ -1474,3 +1474,138 @@ Erfahrungsbalken), der Questpfeil – dort bleibt der Akzent. Die Farbe
 wird beim Bauen gesetzt, ein Wechsel gilt nach dem Neuladen. Priester:
 die Klassenfarbe ist Weiß – das Zielleuchten ähnelt dann dem (schwächeren)
 Leuchten unter der Maus.
+
+## Designsprache der Fenster *(6.7.0.0, `ui/style.lua`)*
+
+Beta-Test: alle von WeintCodex gestalteten Fenster des Spiels sollen
+„eindeutig nach WeintCodex aussehen“, das Charakterfenster ist die
+Referenz für Qualität, aber **nicht** die Vorlage für jedes Layout.
+Blizzard-Komponenten bleiben (Listen, Bildlauf, Knöpfe, Tooltips,
+Navigation); gestaltet wird, was sie umgibt.
+
+**Rangfolge** (jede Entscheidung wird daran gemessen): 1. Information –
+2. Interaktion – 3. Orientierung – 4. Atmosphäre – 5. Dekoration.
+Keine Information verschwindet, weil sie nicht ins Design passt; nichts
+Dekoratives liegt hinter Text.
+
+### Bestand vor dem Umbau
+
+Gemeinsam war schon da, aber verstreut: die Kachel (`K.Kachel`),
+Zierlinie der Kopfzeilen (`W.Header` mit `W.Diamond`/`W.Fade`), flache
+Balken (`FlatBar`), weiche Ränder (`W.SoftOverlay`), Zustände (Rand im
+Akzent an Reitern und Einträgen), die Basis des Charakterfensters
+(`GameColors.showcaseBase`/`showcaseGlass`) und derselbe Verlauf dreimal
+(`CS.Gradient`, `W.Fade`, `OverlayEdge`). Der Ruf lief bis 6.6.4.5 durch
+genau diese allgemeinen Schritte: Kopfzeilen mittig mit Lichthof in der
+Klassenfarbe (Einrückung verloren), Bahn `plateBg`, keine sichtbare
+Auswahl (die Streifen des Spiels hinter Zeilen sind seit 6.4 weg), die
+Detailansicht ungestaltet.
+
+### Bausteine (`WeintCodex.UIStyle`, `ui/style.lua`)
+
+Geladen direkt nach `ui/kit.lua`. `S.own` ist die Tabelle der eigenen
+Flächen (`W.own` ist dieselbe); `W.Diamond`, `W.Fade` und
+`UICharacter.Gradient` sind seit 6.7.0.0 `S.Diamond`, `S.Fade`,
+`S.Gradient`.
+
+| Baustein | Was |
+|---|---|
+| `S.Accent(kind)` | `"class"` → Klassenfarbe (`K.Highlight`), `"frame"` → `GameColors.frameAccent` |
+| `S.SCOPES`, `S.Scope`, `S.ScopeOf`, `S.Register` | Stil je Rahmen des Spiels (globaler Name → Stil) |
+| `S.Gradient`, `S.Fade`, `S.Diamond` | Verlauf, auslaufende Linie, Raute |
+| `S.Divider` / `S.PlaceDivider` | Trennlinie, in der Mitte voll, zu beiden Enden auslaufend |
+| `S.SoftPanel` | dunkle Fläche mit weichem Rand (`media/ui/softmask` als Neunteiler, 22 px) |
+| `S.Vignette` | Randabdunklung, vier Verläufe nach innen |
+| `S.TopLight` | Hauch des Akzents von oben |
+| `S.Panel` | eigenständige Tafel (Kachel in `showcaseBase`) |
+| `S.Hover` | hellere Fläche unter der Maus (Ebene `HIGHLIGHT`) |
+| `S.Selection` / `S.SetSelected` | Auswahl: 2-px-Strich links + Hauch, malt nur bei Wechsel |
+| `S.BarFinish` | Schatten und Lichtkante an der Füllung eines Balkens des Spiels |
+| `S.Title` | Größe, Farbe, Schatten einer fremden Zeile (kein `SetText`) |
+
+**Stile.** Ein Stil gilt für einen Rahmen und alles darunter:
+`W.HideByAtlas(f, depth, sc)` reicht ihn beim Abstieg weiter, ein Kind
+mit eigenem Stil überschreibt ihn. Ohne Stil verhält sich alles wie bis
+6.6.4.5.
+
+- `S.SHOWCASE` – Charakter: Klassenfarbe, Kopfzeilen mittig mit Lichthof
+  (`W.Header`). Unverändert.
+- `S.CALM` – informationslastige Fenster: Gold, Kopfzeilen als Zeile der
+  Liste (`W.ListHeader`), Balkenbahn `barTrack`.
+
+**Zwei Akzente – eine Ausnahme von „ein Akzent“.** Der Beta-Test will
+für allgemeine Fenster ein gedämpftes warmes Gold und die Klassenfarbe
+nur für Klassenbezogenes. `GameColors.frameAccent` (C1A470) ist deshalb
+ein zweiter Akzent. Regel, damit daraus nicht wird, was die
+MoP-Fassung beendet hat („Bernstein trägt Bedeutung, Lila trägt
+Licht“): **ein Bereich trägt genau einen der beiden**, und welcher,
+sagt sein Stil. Gold ist keine Ableitung des Violetts – `SetAccent`
+rechnet es nicht um (`load_test.lua` prüft das mit der Jägerfarbe).
+Status­farben (grün/rot/gold/blau) bleiben, was sie sind; `C.gold`
+(F0A63A) ist eine Zustandsfarbe und nicht dieser Akzent. **Bekannte
+Reibung:** der Ruf ist ein Reiter des Charakterfensters – die Reiter
+unten und der Titel gehören dem Fenster und bleiben in der
+Klassenfarbe, der Inhalt des Rufs ist gold. Ob das im Spiel als zwei
+Akzente in einem Fenster wirkt, entscheidet der Screenshot.
+
+### Der Ruf (`ui/reputation.lua`, erstes Fenster im Stil `S.CALM`)
+
+Aufgerufen aus `W.Inner` im Zweig des Charakterfensters, nach
+`CS.Update`. Nur wenn `ReputationFrame` sichtbar ist.
+
+- **Atmosphäre** („subtil“): auf dem **Charakterfenster selbst**
+  (`BACKGROUND -6/-5/-4`) – unter allem, was das Spiel zeichnet, also
+  nie über Titel, Knöpfen oder Text. Vignette 30 % / 44 px, Gold von
+  oben 4,5 % / 120 px, unter der Liste (`ReputationFrame.ScrollBox`) ein
+  dunkler Grund `panelWell` mit weichem Rand (8 px über die Liste
+  hinaus). Ein- und ausgeblendet mit dem Reiter (`HookScript`
+  `OnShow`/`OnHide` am Ruf, dazu jeder Durchlauf) – sonst läge der Grund
+  bis zum nächsten Takt unter der Figur.
+- **Gruppen**: `W.ListHeader` statt `W.Header`. Der Text bleibt, **wo
+  das Spiel ihn hinsetzt** (kein `ClearAllPoints`, nur linksbündig,
+  13 pt, `textBright`, Schatten) – die Einrückung verschachtelter
+  Gruppen ist wieder da. Hinter dem Text eine Raute mit dunklem Kern
+  und eine Linie in Gold (55 %), die vor dem Zeichen zum Auf- und
+  Zuklappen endet; neu gelegt, wenn sich die Breite des Textes ändert
+  (die Liste verwendet Zeilen für andere Gruppen). Kein Lichthof.
+- **Balken**: Bahn `barTrack` (dunkler als `plateBg`), an der Füllung
+  (`GetStatusBarTexture`) unten ein Schatten (30 %), oben die Lichtkante
+  aller Balken (`barLight`). Farbe, Textur und Text der Stufe bleiben die
+  des Spiels – die Farbe **ist** die Auskunft.
+- **Auswahl**: gewählt ist die Zeile, deren Name rechts in der
+  Detailansicht steht (Titel der Detailansicht = Name der Zeile). Ist sie
+  zu, ist **keine** markiert – lieber keine Auskunft als eine geratene.
+  Goldener Strich links + Hauch, am Inhalt der Zeile (`.Content`), sonst
+  an der Zeile. **Maus**: `S.Hover` an der Zeile oder ihrem Inhalt, wenn
+  einer davon ein Knopf ist; Kopfzeilen haben ihren eigenen.
+- **Detailansicht** (`ReputationFrame.ReputationDetailFrame`, sonst
+  `_G.ReputationDetailFrame`): der Dialograhmen (`Border`, `NineSlice`,
+  `Bg`, `Background`) weg, eine eigene Tafel (`S.Panel`), der Titel
+  (`Title`, `FactionName`, `Name` oder `ReputationDetailFactionName`)
+  14 pt, darunter eine goldene Trennlinie. Beschreibung, Häkchen, Knöpfe
+  unverändert. Hängt sie nicht im Charakterfenster, bekommt sie die
+  Schritte des Fensters (`HideByAtlas`, `Grey`) selbst.
+- **Gesucht über mehrere Wege**, weil nur Liste, Kopfzeilen und Balken
+  gemessen sind (6.6.2.9): Zeilen unter `ScrollBox.ScrollTarget`
+  (sonst `GetScrollTarget()`, sonst die Liste), Name über
+  `Content.Name`/`.Name`/…, sonst die erste Schriftzeile, Balken über
+  `Content.ReputationBar`/…, sonst der erste Statusbalken bis zwei
+  Ebenen tief.
+- **`/wcui fenster`** über dem Ruf: „Ruf (Stil ruhig, Akzent Gold):
+  Liste gefunden, N Zeilen (K Kopfzeilen, B mit Balken, M mit Namen)“,
+  „Ruf, gewählt: …“ und „Ruf, Detailansicht: gestaltet, im Fenster/frei,
+  Titel …, Rahmen des Spiels: n Bilder noch sichtbar“.
+- **Kein Müll im Takt**: `load_test.lua` hält 20 Durchläufe unter 1 KB
+  (gemessen 0,0 KB).
+
+Im Spiel ungeprüft: ob die Zeilen des Forever-Clients `.Content` tragen,
+wie die Detailansicht heißt und ob der Titel ihrer Zeile der Name der
+Fraktion ist – der Bericht nennt es.
+
+### Nächste Fenster
+
+Erst nach dem Screenshot vom Ruf. Vorgesehen: Fertigkeiten, Abzeichen,
+Berufe (`S.CALM`), Statistiken (`S.CALM`, noch ruhiger), PvP, Gilde
+(mittlere Atmosphäre), Talente (Klassenfarbe). Migrieren heißt: Name in
+`S.SCOPES`, ein Modul nach dem Muster von `ui/reputation.lua` nur dort,
+wo das Fenster mehr braucht als die Bausteine.

@@ -36,6 +36,9 @@ WeintCodex.UIWindows = {}
 local W = WeintCodex.UIWindows
 local K = WeintCodex.UIKit
 local C = WeintCodex.Colors
+-- Bausteine der Designsprache (6.7.0.0): ui/style.lua.
+local S = WeintCodex.UIStyle
+local scoped = S.scoped
 
 W.DEFAULTS = {
     windowSkin = true,
@@ -136,7 +139,7 @@ local DECOR = { "NineSlice", "Bg", "Background", "TopTileStreaks", "Inset", "Ins
 
 local done = {}
 W.done = done
-local own = setmetatable({}, { __mode = "k" })   -- unsere eigenen Flaechen
+local own = S.own   -- unsere eigenen Flaechen (dieselbe Tabelle wie in ui/style.lua)
 W.own = own
 
 -- Was die zweite Stufe tut, fuer /wcui fenster (6.3.1.8: im Beta-Test
@@ -240,6 +243,8 @@ end
 -- Das Gildenwappen oben links an Gilde & Communitys (PortraitOverlay)
 -- bleibt: 6.6.2.2 hatte es ausgeblendet, der Beta-Test wollte es zurueck.
 local WHOLE = { PortraitContainer = true, PortraitFrame = true, PortraitButton = true }
+
+W.Hide, W.HideDecor = Hide, HideDecor
 
 local function HideDecorOf(f)
     local fname = f.GetName and f:GetName()
@@ -409,15 +414,19 @@ end
 -- jedem Zeigen und, solange das Fenster offen ist, zweimal je Sekunde.
 -- Balken in Ruf und Fertigkeiten: statt des Rahmens des Spiels ein
 -- flacher Grund mit 1 px Rand, wie jeder Balken der Oberflaeche.
-local barDone = {}
-local function FlatBar(bar)
+-- Im Stil S.CALM (6.7.0.0) ist die Bahn dunkler (barTrack): die Farbe der
+-- Fuellung - beim Ruf die Stufe - hebt sich deutlicher ab.
+local barDone = setmetatable({}, { __mode = "k" })
+W.FlatBars = barDone
+local function FlatBar(bar, sc)
     if type(bar) ~= "table" or barDone[bar] or not bar.CreateTexture then return end
-    barDone[bar] = true
     local bg = bar:CreateTexture(nil, "BACKGROUND", nil, -8)
     bg:SetAllPoints(bar)
-    local c = WeintCodex.GameColors.plateBg
+    local c = WeintCodex.GameColors[(sc and sc.barTrack) or "plateBg"] or WeintCodex.GameColors.plateBg
     bg:SetColorTexture(c[1], c[2], c[3], 1)
+    own[bg] = true
     K.Border(bar, 1, 0, 0, 0, 1, "OVERLAY")
+    barDone[bar] = { track = bg, style = sc }
 end
 
 -- Ein Eintrag der Liste links an Gilde & Communitys: kleine Kachel statt
@@ -527,30 +536,9 @@ end
 -- die kleinen Punkte gehen (W.FitHeader, jeder Durchlauf).
 W.HEADER_SIZE, W.HEADER_SIZE_SMALL, W.HEADER_HALO = 14, 12, 0.28
 
-local function Diamond(f, size, c, a, sub)
-    local t = f:CreateTexture(nil, "ARTWORK", nil, sub)
-    t:SetSize(size, size)
-    t:SetColorTexture(c[1], c[2], c[3], a)
-    if t.SetRotation then pcall(t.SetRotation, t, math.pi / 4) end
-    own[t] = true
-    return t
-end
-
-W.Diamond = Diamond
-
-local function Fade(t, c, alpha, outward)
-    if _G.CreateColor and t.SetGradient then
-        t:SetColorTexture(1, 1, 1, 1)
-        local solid = _G.CreateColor(c[1], c[2], c[3], alpha)
-        local clear = _G.CreateColor(c[1], c[2], c[3], 0)
-        if outward == "LEFT" then t:SetGradient("HORIZONTAL", clear, solid)
-        else t:SetGradient("HORIZONTAL", solid, clear) end
-    else
-        t:SetColorTexture(c[1], c[2], c[3], alpha * 0.5)
-    end
-end
-
-W.Fade = Fade
+-- Raute und auslaufende Linie: seit 6.7.0.0 Bausteine in ui/style.lua.
+local Diamond, Fade = S.Diamond, S.Fade
+W.Diamond, W.Fade = Diamond, Fade
 
 -- Eine Seite: Linie (1 px) mit Schein (3 px), Punkt, Raute mit Kern.
 local function Side(f, c, outward)
@@ -693,14 +681,80 @@ function W.HeaderReport()
     return { string.format("   Kategorien: %d (%s)", #names, table.concat(names, ", ")) }
 end
 
+--------------------------------------------------
+-- Kopfzeile einer Liste (6.7.0.0, Stil S.CALM)
+--------------------------------------------------
+-- Im Ruf (und spaeter jeder informationslastigen Liste) steht die
+-- Kopfzeile nicht mittig mit Lichthof, sondern wie eine Zeile der Liste:
+-- der Text bleibt, WO das Spiel ihn hinsetzt - die Einrueckung sagt, dass
+-- eine Gruppe in einer anderen steckt (6.6.2.9 ging sie mittig verloren).
+-- Dahinter eine Raute mit dunklem Kern und eine feine Linie im Akzent des
+-- Stils, die vor dem Zeichen zum Auf- und Zuklappen endet. Kein Lichthof:
+-- nichts leuchtet hinter Text.
+W.LIST_HEADER_SIZE = 13
+W.LIST_LINE, W.LIST_DOT = 0.55, 0.9
+W.LIST_GAP = 8          -- Abstand Text -> Raute, Raute -> Linie
+local listHeads = setmetatable({}, { __mode = "k" })
+W.ListHeaders = listHeads
+
+-- Linie und Raute haengen am Ende des TEXTES (nicht der Zeile: die kann
+-- breiter sein als ihr Text). Neu gelegt nur, wenn sich die Breite des
+-- Textes aendert - die Liste verwendet ihre Zeilen fuer andere Gruppen.
+local function FitList(d)
+    local tw = TextWidth(d.title)
+    if d.tw == tw and d.placedBeam == d.beam then return end
+    d.tw, d.placedBeam = tw, d.beam
+    d.dot:ClearAllPoints()
+    d.dot:SetPoint("CENTER", d.title, "LEFT", tw + W.LIST_GAP + 3, 0)
+    d.hole:ClearAllPoints()
+    d.hole:SetPoint("CENTER", d.dot, "CENTER", 0, 0)
+    d.line:ClearAllPoints()
+    d.line:SetPoint("LEFT", d.dot, "CENTER", W.LIST_GAP, 0)
+    if d.icon then d.line:SetPoint("RIGHT", d.icon, "LEFT", -6, 0)
+    else d.line:SetPoint("RIGHT", d.beam, "RIGHT", -W.HEADER_INSET, 0) end
+    d.hover:ClearAllPoints()
+    d.hover:SetAllPoints(d.beam)
+end
+W.FitList = FitList
+
+function W.ListHeader(f, beam, sc)
+    if type(f) ~= "table" or not f.CreateTexture or type(beam) ~= "table" then return nil end
+    local d = listHeads[f]
+    if d then
+        if beam ~= d.beam and WidthOf(beam) > WidthOf(d.beam) then d.beam = beam end
+        FitList(d)
+        return d
+    end
+    local fs = HeaderTitle(f)
+    if not fs then return nil end
+    d = { title = fs, icon = HeaderIcon(f), beam = beam, style = sc, accent = S.Accent(sc and sc.accent) }
+    S.Title(fs, W.LIST_HEADER_SIZE, C.textBright)
+    pcall(fs.SetJustifyH, fs, "LEFT")
+    local c = d.accent
+    d.dot = Diamond(f, 6, c, W.LIST_DOT, 2)
+    d.hole = Diamond(f, 2, C.surface1, 1, 3)
+    d.line = f:CreateTexture(nil, "ARTWORK", nil, 1)
+    d.line:SetHeight(1)
+    Fade(d.line, c, W.LIST_LINE, "RIGHT")
+    own[d.line] = true
+    d.hover = S.Hover(f)
+    listHeads[f] = d
+    FitList(d)
+    return d
+end
+
 function W.EdgeBorder(f)
     if type(f) ~= "table" or edged[f] or not f.CreateTexture then return end
     edged[f] = true
     K.Border(f, 1, 0, 0, 0, 1, "OVERLAY")
 end
 
+-- `sc`: der Stil des Bereichs (ui/style.lua), von oben nach unten
+-- durchgereicht - ein Rahmen mit eigenem Stil gibt ihn an alles darunter
+-- weiter. Ohne Stil: wie bis 6.6.4.5.
 local seen = setmetatable({}, { __mode = "k" })
-local function HideByAtlas(f, depth)
+local HideByAtlas
+function HideByAtlas(f, depth, sc)
     if depth > 8 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
     for _, r in ipairs(Regions(f, "atlas", depth)) do
         local ok, atlas = pcall(TextureAtlas, r)
@@ -710,11 +764,13 @@ local function HideByAtlas(f, depth)
                 seen[r] = true
                 stats.hidden = stats.hidden + 1
             end
-            if atlas:find("^common%-stat%-bar%-BG") or atlas:find("^Profession%-ProgressBar%-BG") then FlatBar(f) end
+            if atlas:find("^common%-stat%-bar%-BG") or atlas:find("^Profession%-ProgressBar%-BG") then FlatBar(f, sc) end
             if atlas:find("^Profession%-square%-frame") or atlas:find("^groupfinder%-button%-cover") then W.EdgeBorder(f) end
             if atlas:find("^common%-search%-border") then FlatBar(f) end
             if atlas:find("^communities%-nav%-button") then W.NavEntry(f, r, atlas) end
-            if W.HeaderAtlas(atlas) then W.Header(f, r) end
+            if W.HeaderAtlas(atlas) then
+                if sc and sc.header == "list" then W.ListHeader(f, r, sc) else W.Header(f, r) end
+            end
             if atlas:find("^_?128%-RedButton%-") and W.SkinPanelButton then pcall(W.SkinPanelButton, f) end
         elseif ok and W.TonesAtlas(atlas) then
             if Opt("windowArt") then W.Tone(r) else Hide(r) end
@@ -724,9 +780,9 @@ local function HideByAtlas(f, depth)
             end
         end
     end
-    for _, ch in ipairs(Children(f, "atlas", depth)) do HideByAtlas(ch, depth + 1) end
+    for _, ch in ipairs(Children(f, "atlas", depth)) do HideByAtlas(ch, depth + 1, scoped[ch] or sc) end
 end
-W.HideByAtlas = function(f) HideByAtlas(f, 0) end
+W.HideByAtlas = function(f) HideByAtlas(f, 0, scoped[f]) end
 
 -- Ausruestungsplaetze: flach wie die Aktionsknoepfe, 1 px schwarzer Rand.
 -- Erkannt am Namen (Character...Slot), nicht an einer Liste: welche Plaetze
@@ -1534,6 +1590,8 @@ function W.SoftReport(f)
     local out = {}
     local CS = WeintCodex.UICharacter
     if CS and CS.ReportFrame then CS.ReportFrame(f, out) end
+    local RP = WeintCodex.UIReputation
+    if RP and RP.Report then RP.Report(f, out) end
     if type(f) == "table" and f.ScrollContainer and W.mapMask and W.mapMask.report then
         out[#out + 1] = W.mapMask.report
     end
@@ -2097,10 +2155,13 @@ end
 function W.Inner()
     stats.runs = stats.runs + 1
     stats.last = _G.GetTime and K.Plain(_G.GetTime()) or nil
+    -- Stile der Bereiche (ui/style.lua), bevor der erste Durchlauf eine
+    -- Kopfzeile oder einen Balken anlegt.
+    S.Register()
     for _, n in ipairs(W.WINDOWS) do
         local f = _G[n]
         if type(f) == "table" and done[f] and Open(f) then
-            HideByAtlas(f, 0)
+            HideByAtlas(f, 0, scoped[f])
             SkinSlots(f)
             Grey(f, 0)
             SkinTabSystems(f, 0)
@@ -2117,6 +2178,9 @@ function W.Inner()
                 -- Das Charakterfenster als Ganzes: ui/character.lua.
                 local CS = WeintCodex.UICharacter
                 if CS then CS.Update(f, done[f]) end
+                -- Der Reiter Ruf: erstes Fenster im Stil S.CALM (ui/reputation.lua).
+                local RP = WeintCodex.UIReputation
+                if RP then RP.Update(f) end
             end
             if W.WantsLarge(n) then
                 SkinSpellItems(f, 0)

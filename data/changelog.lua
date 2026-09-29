@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.7.0.0",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDer Ruf im neuen Stil der Fenster.|r Dunkle, ruhige Fläche wie im Charakterfenster, die Liste liegt auf einem weich auslaufenden dunklen Grund, oben ein Hauch warmes Gold. Gruppen tragen eine Raute und eine feine goldene Linie und bleiben so eingerückt wie im Spiel – Gruppen in Gruppen sind wieder als solche zu erkennen.",
+            "|cff7C6CFFDie gewählte Fraktion ist auf einen Blick zu sehen.|r Links ein goldener Strich, dahinter ein Hauch Gold – es ist die, die rechts in der Detailansicht steht. Unter der Maus wird jede Zeile heller.",
+            "|cff7C6CFFRufbalken mit mehr Tiefe.|r Dunklere Bahn, Schatten und Lichtkante an der Füllung; Farbe und Text der Rufstufe bleiben, wie das Spiel sie zeigt.",
+            "|cff7C6CFFDetailansicht als eigene dunkle Tafel.|r Statt des Dialograhmens, mit größerem Fraktionsnamen und einer goldenen Trennlinie darunter. Beschreibung, Häkchen und Knöpfe bleiben unverändert.",
+        },
+    },
+    {
         version = "6.6.4.5",
         date    = "29.09.2026",
         notes   = {
