@@ -4641,11 +4641,17 @@ do
         _G.UnitClass = function() return "Priesterin", "PRIEST" end
         local charF, paper = stub.NewObject("Frame"), stub.NewObject("Frame")
         local titleText = WeintCodex.UIKit.NewText(charF, 13)
-        titleText:SetText("Holy Larena")
+        -- 6.6.4.3: der Fenstertitel ist NICHT der Name - vom PvP-Reiter
+        -- zurueck stand "Spieler gegen Spieler" darin (Beta-Test).
+        titleText:SetText("Spieler gegen Spieler")
+        local oldPvp = _G.UnitPVPName
+        _G.UnitPVPName = function() return "Holy Larena" end
         charF.TitleContainer = { TitleText = titleText }
         local lvlText = WeintCodex.UIKit.NewText(paper, 10)
         local oldPaper, oldHead, oldLvl = _G.PaperDollFrame, CS.head, _G.CharacterLevelText
         _G.PaperDollFrame, CS.head, _G.CharacterLevelText = paper, nil, lvlText
+        local oldLvlAlpha = lvlText:GetAlpha()
+        lvlText:SetAlpha(1)
         local head = CS.Header(charF)
         assert(head and head:GetParent() == paper, "Kopfzeile nicht am Reiter Charakter")
         assert(head.name:GetText() == "HOLY LARENA" and head.sub:GetText() == sp("PRIESTERIN · STUFE 60"),
@@ -4667,13 +4673,30 @@ do
         dupText:SetText("Stufe 60, Priesterin")
         local greyBg, smallIcon = stub.NewObject("Texture"), stub.NewObject("Texture")
         greyBg._width, greyBg._height, smallIcon._width, smallIcon._height = 200, 40, 20, 20
+        local hiddenDecor = stub.NewObject("Texture")
+        hiddenDecor:SetAlpha(0)   -- vom Fensterstil schon ausgeblendet
         holder.GetRegions = function() return dupText, greyBg, smallIcon end
         dupText.GetParent = function() return holder end
         paper.GetChildren = function() return holder end
         head:Show()
         CS.KeepHeader(head, nil)
-        assert(CS.dup == dupText and dupText:GetAlpha() == 0 and greyBg:GetAlpha() == 0 and smallIcon:GetAlpha() == 1,
-            "doppelte Stufenzeile oder graue Flaeche bleibt")
+        assert(CS.dup == dupText and dupText:GetAlpha() == 0, "doppelte Stufenzeile bleibt")
+        -- 6.6.4.3: nur die Zeile - die Bilder ihres Traegers bleiben.
+        assert(greyBg:GetAlpha() == 1 and smallIcon:GetAlpha() == 1, "Erkennung zu breit: Bilder des Traegers ausgeblendet")
+        -- Zurueck geht es auf die Deckkraft von vorher, nicht auf 1.
+        local hr = head.replaced
+        hr[#hr + 1] = hiddenDecor
+        head.orig[hiddenDecor] = 0
+        head:GetScript("OnHide")()
+        assert(dupText:GetAlpha() == 1 and hiddenDecor:GetAlpha() == 0, "Zuruecksetzen zeigt Ausgeblendetes wieder")
+        hr[#hr] = nil
+        local oldCF = _G.CharacterFrame
+        _G.CharacterFrame = charF
+        local repOut = {}
+        CS.ReportFrame(charF, repOut)
+        _G.CharacterFrame = oldCF
+        local rep = table.concat(repOut, " ")
+        assert(rep:find("Ersetzt: ", 1, true) and rep:find("„Stufe 60, Priesterin“", 1, true), "Bericht ohne ersetzte Zeilen: " .. rep)
         local oldScene = _G.CharacterModelScene
         _G.CharacterModelScene = stub.NewObject("Frame")
         _G.CharacterModelScene:SetFrameLevel(40)
@@ -4681,7 +4704,8 @@ do
         assert(head:GetFrameLevel() == 43, "Kopfzeile unter der Figur")
         _G.CharacterModelScene = oldScene
         _G.PaperDollFrame, CS.head, _G.CharacterLevelText = oldPaper, oldHead, oldLvl
-        _G.UnitClass = oldClass
+        _G.UnitClass, _G.UnitPVPName = oldClass, oldPvp
+        lvlText:SetAlpha(oldLvlAlpha)
 
         -- Layout: dunkle Basis, keine grauen Innenflaechen, Glas rechts,
         -- das dem rechten Bereich folgt.

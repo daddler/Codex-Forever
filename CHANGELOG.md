@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.4.3] – 2026-09-29
+
+**Die Kopfzeile im Charakterfenster zeigt immer deinen Namen.** Nach einem Wechsel vom Reiter PvP stand dort „SPIELER GEGEN SPIELER“ – sie las den Fenstertitel statt deines Namens.
+
+**Andere Reiter bleiben, wie sie waren.** Beim Wechsel auf Ruf, Währung oder PvP kommen nur die Zeilen zurück, die die Kopfzeile ersetzt hat, und zwar so, wie sie vorher waren.
+
 ## [6.6.4.2] – 2026-09-29
 
 **Dein Name steht nur noch einmal im Charakterfenster.** Der kleine Titel des Spiels über dem Fenster ist ausgeblendet, solange die große Kopfzeile zu sehen ist; auf Ruf, Währung usw. steht er wie gewohnt.

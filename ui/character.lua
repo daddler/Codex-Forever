@@ -516,8 +516,20 @@ end
 CS.Title = Title
 
 -- Deckkraft der Zeilen des Spiels, die die Kopfzeile ersetzt.
+-- 6.6.4.3: zurueck geht jede Zeile auf die Deckkraft, die sie VOR uns
+-- hatte - nicht pauschal auf 1 (sonst kaeme auf anderen Reitern zurueck,
+-- was der Fensterstil schon ausgeblendet hatte).
+local function Replace(h, t)
+    for _, o in ipairs(h.replaced) do if o == t then return end end
+    local ok, a = pcall(t.GetAlpha, t)
+    h.orig[t] = ok and Num(a) or 1
+    h.replaced[#h.replaced + 1] = t
+end
+
 local function Replaced(h, alpha)
-    for _, t in ipairs(h.replaced) do pcall(t.SetAlpha, t, alpha) end
+    for _, t in ipairs(h.replaced) do
+        pcall(t.SetAlpha, t, alpha == 0 and 0 or (h.orig[t] or 1))
+    end
 end
 
 -- Die Zeile "Stufe 13, Priesterin" rechts oben heisst in diesem Client
@@ -526,7 +538,6 @@ end
 -- Charakter, die Stufe UND Klasse nennt. Ihr Traeger bekommt keine
 -- graue Flaeche mehr (seine grossen Bilder Deckkraft 0) - der rechte
 -- Bereich beginnt dann mit "Allgemein".
-CS.DUP_MIN_W, CS.DUP_MIN_H = 60, 14
 
 local function Mentions(fs, className, level)
     local ok, text = pcall(fs.GetText, fs)
@@ -563,18 +574,10 @@ function CS.FindDuplicate(h)
         return
     end
     CS.dup = fs
-    h.replaced[#h.replaced + 1] = fs
-    local pok, parent = pcall(fs.GetParent, fs)
-    if pok and type(parent) == "table" and parent ~= _G.PaperDollFrame then
-        for _, r in ipairs(W.Regions(parent, "identBg", 0)) do
-            local tok, kind = pcall(r.GetObjectType, r)
-            local wok, w, hh = pcall(function() return r:GetWidth(), r:GetHeight() end)
-            w, hh = wok and Num(w) or 0, wok and Num(hh) or 0
-            if tok and kind == "Texture" and not W.own[r] and w >= CS.DUP_MIN_W and hh >= CS.DUP_MIN_H then
-                h.replaced[#h.replaced + 1] = r
-            end
-        end
-    end
+    -- Nur die Zeile selbst. Bis 6.6.4.2 gingen auch alle Bilder ab 60x14
+    -- ihres Traegers mit - geraten (die graue Flaeche war der Schein) und
+    -- zu breit: ist der Traeger das Fenster, trifft das Rahmenbilder.
+    Replace(h, fs)
     Replaced(h, 0)
 end
 
@@ -611,17 +614,21 @@ function CS.Header(f)
         else line:SetPoint("LEFT", h.dot, "RIGHT", 3, 0) end
         h.lines[#h.lines + 1] = line
     end
-    h.replaced = {}
+    h.replaced, h.orig = {}, {}
     local title = Title(f)
-    if type(title) == "table" and title.SetAlpha then h.replaced[#h.replaced + 1] = title end
+    if type(title) == "table" and title.SetAlpha then Replace(h, title) end
     for _, n in ipairs(CS.REDUNDANT) do
         local t = _G[n]
-        if type(t) == "table" and t.SetAlpha then h.replaced[#h.replaced + 1] = t end
+        if type(t) == "table" and t.SetAlpha then Replace(h, t) end
     end
     function h.Update(level)
-        local title0 = Title(f)
-        local tok, text = pcall(function() return title0:GetText() end)
-        local name = CS.NameLine(tok and text or nil)
+        -- Der Name des CHARAKTERS, nicht der Titel des Fensters: den setzt
+        -- das Spiel je Reiter ("Spieler gegen Spieler" auf PvP), und beim
+        -- Zurueckwechseln stand er noch da, als die Kopfzeile ihn las
+        -- (6.6.4.3, Beta-Test). UnitPVPName = was der Reiter Charakter
+        -- selbst zeigt (mit Titel), sonst UnitName.
+        local pok, pvp = pcall(_G.UnitPVPName, "player")
+        local name = CS.NameLine(pok and pvp or nil)
         if not name then
             local nok, n = pcall(_G.UnitName, "player")
             name = CS.NameLine(nok and n or nil)
@@ -818,6 +825,16 @@ function CS.ReportFrame(f, out)
     local h = CS.head
     if h then
         out[#out + 1] = "   Doppelte Stufenzeile: " .. (CS.dup and "gefunden, ausgeblendet" or "nicht gefunden")
+        local names = {}
+        for _, t in ipairs(h.replaced) do
+            local nok, n = pcall(t.GetName, t)
+            n = nok and K.Plain(n) or nil
+            local tok, text = pcall(t.GetText, t)
+            text = tok and K.Plain(text) or nil
+            names[#names + 1] = (type(n) == "string" and n or "(ohne Namen)")
+                .. (type(text) == "string" and text ~= "" and (" „" .. text .. "“") or "")
+        end
+        out[#out + 1] = "   Ersetzt: " .. (#names > 0 and table.concat(names, ", ") or "nichts")
         local title = Title(h.frame)
         out[#out + 1] = "   Titel des Spiels: " .. (not title and "nicht gefunden"
             or (string.format("Deckkraft %s", tostring(title:GetAlpha()))))

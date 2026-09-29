@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.4.3",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Kopfzeile im Charakterfenster zeigt immer deinen Namen.|r Nach einem Wechsel vom Reiter PvP stand dort „SPIELER GEGEN SPIELER“ – sie las den Fenstertitel statt deines Namens.",
+            "|cff7C6CFFAndere Reiter bleiben, wie sie waren.|r Beim Wechsel auf Ruf, Währung oder PvP kommen nur die Zeilen zurück, die die Kopfzeile ersetzt hat, und zwar so, wie sie vorher waren.",
+        },
+    },
+    {
         version = "6.6.4.2",
         date    = "29.09.2026",
         notes   = {

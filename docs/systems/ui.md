@@ -1243,6 +1243,19 @@ unsichtbaren `CharacterStatsPane` („eingeklappt“) und wurde nie gezeichnet;
 (`CS.GLASS_TOP`) bis unter die Werte. Kopfzeile 3 px höher/enger (lag in der
 Reihe der Zoomknöpfe).
 
+**Diagnose „SPIELER GEGEN SPIELER“ (6.6.4.3).** Die Kopfzeile
+(`CS.head.name`, unsere Zeile) las den Namen aus dem **Fenstertitel** des
+Spiels (`CS.Title(CharacterFrame)`). Den setzt das Spiel je Reiter; vom
+PvP-Reiter zurück stand beim `OnShow` der Kopfzeile noch „Spieler gegen
+Spieler“ darin. Jetzt: `UnitPVPName("player")` (was der Reiter Charakter
+selbst zeigt), sonst `UnitName`; der Fenstertitel wird nur noch
+ausgeblendet, nie gelesen. Dazu zwei zu breite Stellen: `CS.FindDuplicate`
+blendete neben der Stufenzeile alle Bilder ab 60×14 ihres Trägers aus
+(geraten, entfernt), und beim Verlassen des Reiters ging alles Ersetzte
+pauschal auf Deckkraft 1 – jetzt auf die Deckkraft von vorher (`h.orig`),
+damit vom Fensterstil Ausgeblendetes aus bleibt. `/wcui fenster` nennt
+„Ersetzt: <Name> „<Text>“, …“.
+
 Die beiden folgenden Abschnitte sind die Vorgeschichte (6.6.3.5/6.6.3.6).
 
 **Klassenbild und Kopfzeile im Charakterfenster (6.6.3.5).** Beta-Test
