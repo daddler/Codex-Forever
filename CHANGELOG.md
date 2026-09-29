@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.8.0.1] – 2026-09-29
+
+**„Gruppen durchsuchen“ und „Spielersuche“ ohne Stein.** Der graue Stein, der Marmor und die goldenen Linien über und unter der Liste sind weg; beide Reiter liegen auf derselben ruhigen Fläche mit weichem Schatten und feiner Kante in Gold wie der erste Reiter. Texte, Filter, Suche und Knöpfe bleiben, wie das Spiel sie zeigt.
+
+### Technisch
+
+- Gemessen (`/wcui fenster` auf beiden Reitern): `LFGBrowseFrame` und `LFGWhoListFrame` tragen Marmor (Bild 374155), `groupfinder-Stat-StoneBG` und zwei `groupfinder-ScrollLine`; der Bericht nannte auf der Spielersuche „0 Innenflächen“. Beide stehen jetzt in `W.OWN_BG_PATHS` (eigene Bilder weg, Innenfläche wie die Sammlung) – damit findet `ui/lfg.lua` sie über `W.Insets` und gibt Schatten und Kante in Gold. Die beiden Atlanten zusätzlich in `W.HIDE_ATLAS`.
+- `load_test.lua`: beide Reiter wie gemessen – Bilder weg, Texte bleiben, Innenfläche mit Kante.
+
 ## [6.8.0.0] – 2026-09-29
 
 **„Suche nach Gruppe“ in der ruhigen Oberfläche.** Kein Schein in deiner Klassenfarbe mehr oben im Fenster, sondern ein Hauch neutrales Licht; die Flächen im Fenster tragen einen weichen Schatten und oben eine feine Kante in Gold, der gewählte Seitenreiter ebenfalls Gold – wie Spielmenü, Gilde und Karte.

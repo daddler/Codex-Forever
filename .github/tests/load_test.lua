@@ -6716,6 +6716,36 @@ do
         LF.Update(f)
         assert(not d.on and not d.shadow:IsShown(), "Kante bleibt ohne Innenflaeche")
         inset:Show()
+        -- 6.8.0.1: die Reiter "Gruppen durchsuchen" und "Spielersuche" - wie
+        -- gemessen Marmor, Stein, Goldlinien; nach W.Apply Innenflaechen, die
+        -- das Modul findet. Texte bleiben.
+        local function Tex2(atlas)
+            local t = stub.NewObject("Texture")
+            t.GetAtlas = function() return atlas end
+            return t
+        end
+        local tabs, hidden, texts = {}, {}, {}
+        for _, name in ipairs({ "LFGBrowseFrame", "LFGWhoListFrame" }) do
+            local tf = stub.NewObject("Frame", name)
+            tf._parent = f
+            local marble, stone, line = stub.NewObject("Texture"), Tex2("groupfinder-Stat-StoneBG"), Tex2("groupfinder-ScrollLine")
+            local note = stub.NewObject("FontString")
+            note._text, note._font = "Keine Gruppen gefunden.", true
+            tf.GetRegions = function() return marble, stone, line, note end
+            _G[name] = tf
+            tabs[#tabs + 1] = tf
+            for _, t in ipairs({ marble, stone, line }) do hidden[#hidden + 1] = t end
+            texts[#texts + 1] = note
+        end
+        W.Apply()
+        LF.Update(f)
+        for _, t in ipairs(hidden) do assert(t:GetAlpha() == 0, "Marmor, Stein oder Goldlinie bleibt") end
+        for _, t in ipairs(texts) do assert(t:IsShown() and t:GetAlpha() == 1, "Text der Suche ausgeblendet") end
+        for _, tf in ipairs(tabs) do
+            assert(W.Insets[tf] and LF.decks[tf] and LF.decks[tf].on, "Reiter ohne Innenflaeche oder Kante in Gold")
+        end
+        assert(LF.windows[f].decks == 3, "Innenflaechen falsch gezaehlt: " .. tostring(LF.windows[f].decks))
+        _G.LFGBrowseFrame, _G.LFGWhoListFrame = nil, nil
         for _ = 1, 3 do LF.Update(f) end
         collectgarbage("collect")
         collectgarbage("stop")

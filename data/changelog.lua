@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.8.0.1",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFF„Gruppen durchsuchen“ und „Spielersuche“ ohne Stein.|r Der graue Stein, der Marmor und die goldenen Linien über und unter der Liste sind weg; beide Reiter liegen auf derselben ruhigen Fläche mit weichem Schatten und feiner Kante in Gold wie der erste Reiter. Texte, Filter, Suche und Knöpfe bleiben, wie das Spiel sie zeigt.",
+        },
+    },
+    {
         version = "6.8.0.0",
         date    = "29.09.2026",
         notes   = {

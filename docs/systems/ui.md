@@ -2215,6 +2215,14 @@ n Innenflächen …“ – bei 0 ist es ein anderer Rahmen.
 **Unverändert:** Rollensymbole samt Ringen, Fahne, Auswahl der Rolle,
 Texte (gelb, wie das Spiel sie setzt), Knöpfe.
 
+**6.8.0.1, gemessen auf den Reitern „Gruppen durchsuchen“
+(`LFGBrowseFrame`) und „Spielersuche“ (`LFGWhoListFrame`):** Marmor (Bild
+374155), Stein (`groupfinder-Stat-StoneBG`), zwei Goldlinien
+(`groupfinder-ScrollLine`); „0 Innenflächen“ auf der Spielersuche. Beide
+in `W.OWN_BG_PATHS` (eigene Bilder weg, `SkinInset`) – danach findet das
+Modul sie über `W.Insets`. Die zwei Atlanten auch in `W.HIDE_ATLAS`, falls
+sie in einem Unterrahmen liegen.
+
 Fassung 6.8.0.0 statt 6.7.10.0: ob die Companion oder ein anderes Werkzeug
 Fassungen als Text vergleicht, ist ungeprüft – „6.7.10.0“ käme dort vor
 „6.7.9.0“.

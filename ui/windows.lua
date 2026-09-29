@@ -89,7 +89,11 @@ W.EXTRA_DECOR = { GameMenuFrame = { "Border", "Header" } }
 -- Eckverzierungen ("collections-background-*"). Die Flaeche innen wird
 -- eine Innenflaeche wie ueberall: eigene Bilder weg, etwas dunkler.
 -- Pfade statt globaler Namen: die Teilfenster haben keine.
-W.OWN_BG_PATHS = { "WardrobeCollectionFrame.ItemsCollectionFrame" }
+-- 6.8.0.1, gemessen: die Reiter "Gruppen durchsuchen" (LFGBrowseFrame) und
+-- "Spielersuche" (LFGWhoListFrame) der Suche nach Gruppe - Marmor (Bild
+-- 374155), Stein (groupfinder-Stat-StoneBG), zwei Goldlinien
+-- (groupfinder-ScrollLine). Als Innenflaeche findet sie ui/lfg.lua (W.Insets).
+W.OWN_BG_PATHS = { "WardrobeCollectionFrame.ItemsCollectionFrame", "LFGBrowseFrame", "LFGWhoListFrame" }
 W.NO_SHADOW = { GameMenuFrame = true }
 
 -- GESPRAECHE (6.6.1.4, Beta-Test: "die normale Interaktion von
@@ -396,6 +400,8 @@ W.HIDE_ATLAS = {
     "^_?UI%-Frame%-TopTileStreaks",          -- Streifen unter dem Titel
     "^groupfinder%-background",              -- Grund der Liste
     "^groupfinder%-roles%-background",       -- Grund der Rollenwahl
+    "^groupfinder%-Stat%-StoneBG",           -- 6.8.0.1: Stein unter Suche/Spielersuche
+    "^groupfinder%-ScrollLine",              -- 6.8.0.1: Goldlinien ueber und unter der Liste
     "^groupfinder%-button%-cover",           -- Goldrahmen um die Kategorien (1 px Rand statt)
     "^common%-search%-border",               -- Goldrand um das Suchfeld (flach statt)
     "^MapCornerShadow",                      -- Schatten am Knopf der Seitenleiste
