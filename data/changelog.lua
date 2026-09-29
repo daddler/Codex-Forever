@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.8.0.5",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Bäume stehen sichtbar auf dem Nebel.|r Symbol, Name und Linie jedes Baums liegen auf einem dunklen, weichen Grund, die Linie in deiner Klassenfarbe ist kräftiger, und das Licht deiner Klasse oben leuchtet jetzt durch den Nebel, statt in ihm zu verschwinden. Wolken, Funken und Talente bleiben, wie sie sind.",
+        },
+    },
+    {
         version = "6.8.0.4",
         date    = "29.09.2026",
         notes   = {

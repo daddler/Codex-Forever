@@ -177,6 +177,8 @@ end
 
 function Methods:GetDrawLayer() return self._layer, self._sublevel end
 function Methods:SetDrawLayer(layer, sublevel) self._layer, self._sublevel = layer, sublevel end
+function Methods:SetBlendMode(mode) self._blend = mode end
+function Methods:GetBlendMode() return self._blend or "BLEND" end
 
 function Methods:CreateMaskTexture()
     RequireFrame(self, "CreateMaskTexture")

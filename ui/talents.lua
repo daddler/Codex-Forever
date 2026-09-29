@@ -1,5 +1,5 @@
 --------------------------------------------------
--- WeintCodex :: Oberflaeche - Talente (6.8.0.3, 6.8.0.4)
+-- WeintCodex :: Oberflaeche - Talente (6.8.0.3 - 6.8.0.5)
 --------------------------------------------------
 -- Die Talente (PlayerSpellsFrame.TalentsFrame) in der ruhigen
 -- Informationsoberflaeche. Sie gehoeren zur Klasse: Stil
@@ -17,9 +17,14 @@
 --              und damit darueber): darunter war das Licht im Spiel nicht zu
 --              sehen. Deshalb auch kraeftiger als im Zauberbuch (TL.LIGHT_ALPHA
 --              statt GC.classLight) - es faerbt Nebel, keine dunkle Flaeche.
+--              Seit 6.8.0.5 additiv ("ADD"): auf hellgrauem Nebel war ein
+--              deckender Hauch Klassenfarbe auch mit 16 % kaum zu sehen.
 --   Baeume     die Namen der drei Baeume ("Waffen", "Furor", "Schutz")
 --              bekommen Raute und Linie in der Klassenfarbe hinter dem Text
---              - wie die Ueberschriften im Zauberbuch. Welche Zeile ein Name
+--              - wie die Ueberschriften im Zauberbuch. Seit 6.8.0.5 liegt die
+--              Zeile (Symbol, Name, Linie) auf einem dunklen weichen Grund,
+--              damit sie auf dem Nebel steht wie ein Abschnitt auf einer
+--              Flaeche; die Linie ist kraeftiger (0.9 statt 0.55). Welche Zeile ein Name
 --              ist, sagt das Spiel (GetTalentTabInfo, GetSpecializationInfo)
 --              und, wo es schweigt, data/specs.lua fuer die eigene Klasse -
 --              keine Lage. GEMESSEN (6.8.0.3): der Forever-Client liefert
@@ -43,6 +48,7 @@ WeintCodex.UITalents = {}
 local TL = WeintCodex.UITalents
 local K = WeintCodex.UIKit
 local C = WeintCodex.Colors
+local GC = WeintCodex.GameColors
 local W = WeintCodex.UIWindows
 local S = WeintCodex.UIStyle
 local RG = WeintCodex.UIRegister
@@ -56,8 +62,11 @@ TL.LIGHT_HEIGHT = 220
 TL.LIGHT_ALPHA = 0.16       -- ueber Nebel: kraeftiger als GameColors.classLight auf dunkler Flaeche
 TL.EDGE = 0.5               -- Kante oben in der Klassenfarbe
 TL.GAP = 8                  -- Text -> Raute -> Linie
-TL.LINE_WIDTH = 140         -- Linie hinter dem Namen eines Baums (laeuft aus)
-TL.LINE = 0.55
+TL.LINE_WIDTH = 200         -- Linie hinter dem Namen eines Baums (laeuft aus)
+TL.LINE = 0.9               -- ueber Nebel: 0.55 (Zauberbuch) war im Spiel nicht zu sehen (6.8.0.4)
+TL.BACK = 0.6               -- dunkler weicher Grund unter der Zeile eines Baums (Anteil an shadowSoft)
+TL.BACK_LEFT = 64           -- so weit links vom Namen: das Symbol des Baums liegt mit darauf
+TL.BACK_HALF = 20           -- halbe Hoehe des Grunds
 TL.SCANS = 30               -- so oft wird nach den Namen gesucht, bis alle da sind
 TL.DEPTH = 6
 TL.SAMPLE = 6              -- so viele Schriftzeilen nennt der Bericht, wenn kein Name passt
@@ -160,6 +169,15 @@ local function Head(fs, accent)
     S.Fade(h.line, accent, TL.LINE, "RIGHT")
     -- Nur links verankert (6.7.8.0: nie an einen Rahmen anderer Hoehe).
     h.line:SetPoint("LEFT", h.dot, "CENTER", TL.GAP, 0)
+    -- Dunkler weicher Grund unter Symbol, Name und Linie - ganz unten in
+    -- der Ebene der Raute, damit er ueber dem Nebel und unter dem Text liegt.
+    local c = GC.shadowSoft
+    h.back = S.SoftPanel(p, fs, c, TL.BACK, 0, -8, h.line)
+    h.back:SetDrawLayer("ARTWORK", -8)
+    h.back:ClearAllPoints()
+    h.back:SetPoint("TOPLEFT", fs, "LEFT", -TL.BACK_LEFT, TL.BACK_HALF)
+    h.back:SetPoint("BOTTOMRIGHT", h.line, "RIGHT", 0, -TL.BACK_HALF)
+    h.parent = p
     return h
 end
 
@@ -181,6 +199,7 @@ local function Build(tf)
     t.light:SetPoint("TOPRIGHT", tf, "TOPRIGHT", 0, 0)
     t.light:SetHeight(TL.LIGHT_HEIGHT)
     S.Gradient(t.light, "VERTICAL", accent, 0, TL.LIGHT_ALPHA)
+    if t.light.SetBlendMode then pcall(t.light.SetBlendMode, t.light, "ADD") end
     t.edge = S.Divider(tf, accent, TL.EDGE, 7)
     t.edge.l:SetDrawLayer("OVERLAY", 7)
     t.edge.r:SetDrawLayer("OVERLAY", 7)
@@ -254,8 +273,10 @@ function TL.Report(f, out)
     for _, fs in ipairs(t.order) do
         names = names .. (names == "" and "" or ", ") .. "„" .. (TextOf(fs) or "?") .. "“"
     end
-    out[#out + 1] = string.format("   %s (Stil %s): Bäume %s · Licht und Kante in der Klassenfarbe über den Wolken, Animation unberührt",
-        TL.LABEL, TL.STYLE.name, names ~= "" and names or "keine gefunden")
+    local first = t.order[1] and t.marks[t.order[1]]
+    out[#out + 1] = string.format("   %s (Stil %s): Bäume %s%s · Licht und Kante in der Klassenfarbe über den Wolken, Animation unberührt",
+        TL.LABEL, TL.STYLE.name, names ~= "" and names or "keine gefunden",
+        first and (" auf dunklem Grund (am Rahmen " .. K.NameOf(first.parent) .. ")") or "")
     if #t.order < (t.want or 0) or names == "" then
         local want = {}
         for n in pairs(t.names or {}) do want[#want + 1] = n end

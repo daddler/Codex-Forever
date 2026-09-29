@@ -6916,12 +6916,18 @@ do
         assert(#t.order == 3 and t.marks[hs[1]] and t.marks[hs[3]], "Namen der Baeume nicht gefunden: " .. #t.order)
         assert(not t.heads[rank], "Rang eines Talents als Name eines Baums")
         assert(t.marks[hs[2]].dot._parent == heads[2], "Raute nicht am Namen")
+        -- 6.8.0.4 im Spiel: Raute zu sehen, Linie und Licht nicht. Linie
+        -- kraeftig, Zeile auf dunklem Grund ueber dem Nebel, Licht additiv.
+        local h2 = t.marks[hs[2]]
+        assert(h2.back and h2.back._parent == heads[2] and h2.back:GetDrawLayer() == "ARTWORK"
+            and select(2, h2.back:GetDrawLayer()) < select(2, h2.dot:GetDrawLayer()), "Zeile eines Baums ohne dunklen Grund")
+        assert(TL.LINE >= 0.85 and t.light:GetBlendMode() == "ADD", "Linie oder Licht zu schwach fuer den Nebel")
         assert(not glow:IsShown(), "Schein der Klasse ueber den Talenten")
         for _, x in ipairs({ clouds, land, particles, green, rank, hs[1] }) do
             assert(x:IsShown() and x:GetAlpha() == 1, "Animation, Landschaft oder Talent angefasst")
         end
         local rep = table.concat(TL.Report(psf, {}), "\n")
-        assert(rep:find("Bäume „Waffen“, „Furor“, „Schutz“", 1, true), "Bericht: " .. rep)
+        assert(rep:find("Bäume „Waffen“, „Furor“, „Schutz“ auf dunklem Grund", 1, true), "Bericht: " .. rep)
         -- Gefunden ist gefunden: keine weitere Suche.
         local scans = t.scans
         for _ = 1, 5 do TL.Update(psf) end

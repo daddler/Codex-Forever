@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.8.0.5] – 2026-09-29
+
+**Die Bäume stehen sichtbar auf dem Nebel.** Symbol, Name und Linie jedes Baums liegen auf einem dunklen, weichen Grund, die Linie in deiner Klassenfarbe ist kräftiger, und das Licht deiner Klasse oben leuchtet jetzt durch den Nebel, statt in ihm zu verschwinden. Wolken, Funken und Talente bleiben, wie sie sind.
+
+### Technisch
+
+- Beta-Test 6.8.0.4: die Namen werden gefunden (`/wcui fenster`: „Bäume „Furor“, „Waffen“, „Schutz““), zu sehen war aber nur die Raute – Linie (55 %) und Licht (16 %) gingen im hellgrauen Nebel unter.
+- `ui/talents.lua`: Linie 90 %, 200 px; unter jeder Zeile eines Baums ein dunkler weicher Grund (`GC.shadowSoft`, 60 %, `ARTWORK` −8 am Rahmen des Namens, vom Symbol bis zum Ende der Linie); Licht oben additiv (`SetBlendMode("ADD")`). Bericht nennt den Rahmen, an dem die Zeilen hängen.
+- Testattrappe: `SetBlendMode`/`GetBlendMode`. `load_test.lua`: dunkler Grund unter der Raute, Linie ≥ 85 %, Licht additiv.
+
 ## [6.8.0.4] – 2026-09-29
 
 **Die Talente zeigen jetzt, was versprochen war.** Die Namen der Bäume – etwa Waffen, Furor, Schutz – tragen jetzt wirklich Raute und Linie in deiner Klassenfarbe, und das Licht deiner Klasse liegt über dem Nebel statt unsichtbar darunter. Wolken, Funken und Talente bleiben, wie sie sind.

@@ -2308,6 +2308,18 @@ Talentpunkte“, Primär/Sekundär, Suche, „Änderungen anwenden“.
   Licht 16 % über 220 px (`TL.LIGHT_ALPHA`) – über hellgrauem Nebel färbt
   `GC.classLight` (7 %) sichtbar nichts.
 
+**Nachgemessen (6.8.0.5).** Die Namen wurden gefunden („Bäume „Furor“,
+„Waffen“, „Schutz““), im Spiel zu sehen war aber nur die Raute: eine
+Linie mit 55 % und ein deckender Hauch von 16 % gehen im hellgrauen,
+bewegten Nebel unter. Seitdem liegt jede Zeile eines Baums (Symbol, Name,
+Linie) auf einem **dunklen weichen Grund** (`GC.shadowSoft` × `TL.BACK`
+= 60 %, `ARTWORK` −8 am Rahmen des Namens – über dem Nebel, unter Raute
+und Text), die Linie hat 90 % und 200 px, und das Licht oben wird
+**additiv** gezeichnet (`ADD`): es hellt den Nebel in der Klassenfarbe auf,
+statt ihn nur zu tönen. Die Animation selbst bleibt unberührt – der Grund
+deckt nur die Zeile ab, nicht die Bäume. `/wcui fenster` nennt den Rahmen,
+an dem die Zeilen hängen.
+
 ### Gespräche in Gold *(6.8.0.4, `ui/gossip.lua`)*
 
 Beta-Test (6.8.0.3, Krieger): über dem Gespräch mit einer Stadtwache lag
