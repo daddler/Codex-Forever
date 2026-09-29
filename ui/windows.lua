@@ -414,8 +414,9 @@ end
 -- jedem Zeigen und, solange das Fenster offen ist, zweimal je Sekunde.
 -- Balken in Ruf und Fertigkeiten: statt des Rahmens des Spiels ein
 -- flacher Grund mit 1 px Rand, wie jeder Balken der Oberflaeche.
--- Im Stil S.CALM (6.7.0.0) ist die Bahn dunkler (barTrack): die Farbe der
--- Fuellung - beim Ruf die Stufe - hebt sich deutlicher ab.
+-- Mit Stil (6.7.0.0, ui/style.lua) ist die Bahn dunkler (barTrack) - die
+-- Farbe der Fuellung, beim Ruf die Stufe, hebt sich deutlicher ab - und der
+-- Rand weicher (barEdge, 6.7.0.1: keine harten schwarzen Rechtecke).
 local barDone = setmetatable({}, { __mode = "k" })
 W.FlatBars = barDone
 local function FlatBar(bar, sc)
@@ -425,8 +426,8 @@ local function FlatBar(bar, sc)
     local c = WeintCodex.GameColors[(sc and sc.barTrack) or "plateBg"] or WeintCodex.GameColors.plateBg
     bg:SetColorTexture(c[1], c[2], c[3], 1)
     own[bg] = true
-    K.Border(bar, 1, 0, 0, 0, 1, "OVERLAY")
-    barDone[bar] = { track = bg, style = sc }
+    local edge = K.Border(bar, 1, 0, 0, 0, (sc and sc.barEdge) or 1, "OVERLAY")
+    barDone[bar] = { track = bg, edge = edge, style = sc }
 end
 
 -- Ein Eintrag der Liste links an Gilde & Communitys: kleine Kachel statt
@@ -682,7 +683,7 @@ function W.HeaderReport()
 end
 
 --------------------------------------------------
--- Kopfzeile einer Liste (6.7.0.0, Stil S.CALM)
+-- Kopfzeile einer Liste (6.7.0.0, Stile S.CALM und S.CHARACTER_INFO)
 --------------------------------------------------
 -- Im Ruf (und spaeter jeder informationslastigen Liste) steht die
 -- Kopfzeile nicht mittig mit Lichthof, sondern wie eine Zeile der Liste:
@@ -2178,7 +2179,7 @@ function W.Inner()
                 -- Das Charakterfenster als Ganzes: ui/character.lua.
                 local CS = WeintCodex.UICharacter
                 if CS then CS.Update(f, done[f]) end
-                -- Der Reiter Ruf: erstes Fenster im Stil S.CALM (ui/reputation.lua).
+                -- Der Reiter Ruf: erstes Fenster der Designsprache (ui/reputation.lua).
                 local RP = WeintCodex.UIReputation
                 if RP then RP.Update(f) end
             end

@@ -25,8 +25,12 @@
 -- Spiels und alles darunter (W.HideByAtlas reicht ihn nach unten durch).
 --   S.SHOWCASE  Charakter: Klassenfarbe, Kopfzeilen mittig mit Lichthof
 --               (W.Header) - das Verhalten bis 6.6.4.5, unveraendert.
---   S.CALM      alles Informationslastige: Gold, Kopfzeilen als Zeile
---               der Liste (W.ListHeader), dezente Atmosphaere.
+--   S.CALM      informationslastige Fenster, die nicht der Klasse
+--               gehoeren: Gold, Kopfzeilen als Zeile der Liste
+--               (W.ListHeader), dezente Atmosphaere. Noch in keinem Gebrauch.
+--   S.CHARACTER_INFO  dasselbe fuer die Informations-Reiter des
+--               Charakterfensters (Ruf, 6.7.0.1): Klassenfarbe statt Gold -
+--               sie gehoeren zum Charakter (Beta-Test).
 -- Ein Rahmen ohne Stil verhaelt sich wie bisher (SHOWCASE).
 --
 -- Neue Fenster migrieren: Namen in S.SCOPES eintragen, dann die
@@ -64,11 +68,14 @@ function S.Accent(kind)
 end
 
 S.SHOWCASE = { key = "showcase", name = "Bühne", accent = "class", header = "showcase" }
-S.CALM = { key = "calm", name = "ruhig", accent = "frame", header = "list", barTrack = "barTrack" }
+-- barEdge: Deckkraft des schwarzen Randes um Balken (1 = hart).
+S.CALM = { key = "calm", name = "ruhig", accent = "frame", header = "list", barTrack = "barTrack", barEdge = 0.5 }
+S.CHARACTER_INFO = { key = "charinfo", name = "ruhig, Klasse", accent = "class", header = "list",
+                     barTrack = "barTrack", barEdge = 0.5 }
 
 -- Welche Fenster (globale Namen) welchen Stil tragen. Phase 3 des
 -- Umbaus: nur der Ruf. Die anderen folgen nach dem Test im Spiel.
-S.SCOPES = { ReputationFrame = S.CALM }
+S.SCOPES = { ReputationFrame = S.CHARACTER_INFO }
 
 local scoped = setmetatable({}, { __mode = "k" })
 S.scoped = scoped
@@ -133,6 +140,18 @@ function S.Divider(host, c, alpha, sub)
     return d
 end
 
+-- Oben an `region`, `inset` px vom Rand: eine Kante aus Licht (oder
+-- Akzent), die zu beiden Seiten auslaeuft.
+function S.PlaceTop(d, region, inset)
+    inset = inset or 0
+    d.l:ClearAllPoints()
+    d.r:ClearAllPoints()
+    d.l:SetPoint("TOPLEFT", region, "TOPLEFT", inset, 0)
+    d.l:SetPoint("TOPRIGHT", region, "TOP", 0, 0)
+    d.r:SetPoint("TOPLEFT", region, "TOP", 0, 0)
+    d.r:SetPoint("TOPRIGHT", region, "TOPRIGHT", -inset, 0)
+end
+
 -- Unter `below` (Mitte), `width` breit, `gap` px darunter.
 function S.PlaceDivider(d, below, width, gap)
     if d.width == width and d.below == below then return end
@@ -155,7 +174,9 @@ end
 -- die Flaeche ist. Keine Kante, nur ein Dunkler-Werden.
 S.SOFT_TEXTURE = K.MEDIA .. "softmask"
 S.FEATHER = 22
-function S.SoftPanel(host, anchor, c, alpha, pad, sub)
+-- `corner`: optional ein zweiter Rahmen fuer die untere rechte Ecke (etwa
+-- die Bildlaufleiste neben einer Liste).
+function S.SoftPanel(host, anchor, c, alpha, pad, sub, corner)
     local t = Own(host:CreateTexture(nil, "BACKGROUND", nil, sub or -4))
     t:SetTexture(S.SOFT_TEXTURE)
     local f = S.FEATHER
@@ -166,7 +187,7 @@ function S.SoftPanel(host, anchor, c, alpha, pad, sub)
     t:SetVertexColor(c[1], c[2], c[3], alpha)
     pad = pad or f
     t:SetPoint("TOPLEFT", anchor, "TOPLEFT", -pad, pad)
-    t:SetPoint("BOTTOMRIGHT", anchor, "BOTTOMRIGHT", pad, -pad)
+    t:SetPoint("BOTTOMRIGHT", corner or anchor, "BOTTOMRIGHT", pad, -pad)
     return t
 end
 
@@ -231,6 +252,22 @@ function S.Hover(b)
     return h
 end
 
+-- Eine Hervorhebung DES SPIELS in den Akzent faerben: entsaettigt, dann
+-- getoent - Form, Zeitpunkt (Maus, Auswahl) und Deckkraftwechsel bleiben
+-- die des Spiels. Liefert, ob etwas gesetzt wurde; setzt nur, wenn die
+-- Farbe abweicht (jeder Durchlauf fragt, nichts wird angelegt).
+function S.Tint(t, c, alpha)
+    local ok, r, g, b, a = pcall(t.GetVertexColor, t)
+    r, g, b, a = K.Plain(r), K.Plain(g), K.Plain(b), K.Plain(a)
+    if ok and type(r) == "number" and math.abs(r - c[1]) < 0.01 and math.abs(g - c[2]) < 0.01
+       and math.abs(b - c[3]) < 0.01 and type(a) == "number" and math.abs(a - alpha) < 0.01 then
+        return false
+    end
+    if t.SetDesaturated then pcall(t.SetDesaturated, t, true) end
+    t:SetVertexColor(c[1], c[2], c[3], alpha)
+    return true
+end
+
 -- Gewaehlt: links ein 2-px-Strich im Akzent, dahinter ein Hauch des
 -- Akzents, der nach rechts ausblendet. Unter dem Text, nie darueber.
 S.SELECT_FILL = 0.16
@@ -267,10 +304,15 @@ end
 -- und Textur des Spiels - die Farbe IST die Auskunft) bekommt unten
 -- einen leichten Schatten und oben die Lichtkante aller Balken der
 -- Oberflaeche. Beides haengt an der Fuellung, waechst also mit ihr.
+-- `fill`: die Fuellung, wenn der Balken kein Statusbalken ist (etwa ein
+-- Rahmen mit einem Bild als Fuellung, Ruf in diesem Client).
 S.BAR_SHADE = 0.30
-function S.BarFinish(bar)
-    local ok, fill = pcall(bar.GetStatusBarTexture, bar)
-    local anchor = (ok and type(fill) == "table" and fill.GetObjectType) and fill or bar
+function S.BarFinish(bar, fill)
+    if type(fill) ~= "table" and type(bar.GetStatusBarTexture) == "function" then
+        local ok, t = pcall(bar.GetStatusBarTexture, bar)
+        fill = ok and t or nil
+    end
+    local anchor = (type(fill) == "table" and fill.GetObjectType) and fill or bar
     local o = {}
     o.shade = Own(bar:CreateTexture(nil, "ARTWORK", nil, 7))
     o.shade:SetAllPoints(anchor)

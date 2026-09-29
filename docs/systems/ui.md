@@ -1530,82 +1530,113 @@ mit eigenem Stil überschreibt ihn. Ohne Stil verhält sich alles wie bis
 
 - `S.SHOWCASE` – Charakter: Klassenfarbe, Kopfzeilen mittig mit Lichthof
   (`W.Header`). Unverändert.
-- `S.CALM` – informationslastige Fenster: Gold, Kopfzeilen als Zeile der
-  Liste (`W.ListHeader`), Balkenbahn `barTrack`.
+- `S.CALM` – informationslastige Fenster, die **nicht** der Klasse gehören:
+  Gold, Kopfzeilen als Zeile der Liste (`W.ListHeader`), Balkenbahn
+  `barTrack`, weicher Balkenrand (`barEdge`). Zurzeit in keinem Gebrauch.
+- `S.CHARACTER_INFO` *(6.7.0.1)* – dasselbe für die Informations-Reiter
+  des Charakterfensters (Ruf): **Klassenfarbe** statt Gold.
 
 **Zwei Akzente – eine Ausnahme von „ein Akzent“.** Der Beta-Test will
 für allgemeine Fenster ein gedämpftes warmes Gold und die Klassenfarbe
-nur für Klassenbezogenes. `GameColors.frameAccent` (C1A470) ist deshalb
-ein zweiter Akzent. Regel, damit daraus nicht wird, was die
+für alles, was zum Charakter gehört. `GameColors.frameAccent` (C1A470)
+ist deshalb ein zweiter Akzent. Regel, damit daraus nicht wird, was die
 MoP-Fassung beendet hat („Bernstein trägt Bedeutung, Lila trägt
 Licht“): **ein Bereich trägt genau einen der beiden**, und welcher,
 sagt sein Stil. Gold ist keine Ableitung des Violetts – `SetAccent`
 rechnet es nicht um (`load_test.lua` prüft das mit der Jägerfarbe).
 Status­farben (grün/rot/gold/blau) bleiben, was sie sind; `C.gold`
-(F0A63A) ist eine Zustandsfarbe und nicht dieser Akzent. **Bekannte
-Reibung:** der Ruf ist ein Reiter des Charakterfensters – die Reiter
-unten und der Titel gehören dem Fenster und bleiben in der
-Klassenfarbe, der Inhalt des Rufs ist gold. Ob das im Spiel als zwei
-Akzente in einem Fenster wirkt, entscheidet der Screenshot.
+(F0A63A) ist eine Zustandsfarbe und nicht dieser Akzent.
+6.7.0.0 gab dem Ruf Gold; der Screenshot zeigte die erwartete Reibung
+(Reiter und Titel in Klassenfarbe, Inhalt gold), und der Beta-Test
+entschied: **Ruf gehört zum Charakterfenster → Klassenfarbe**. Gold
+bleibt Blizzard-eigenen Teilen (gelbe Häkchen-Beschriftungen, Pfeil am
+Ausklappknopf, gelbe Füllung „Neutral“) – die sind Darstellung des
+Spiels und bleiben.
 
-### Der Ruf (`ui/reputation.lua`, erstes Fenster im Stil `S.CALM`)
+### Der Ruf (`ui/reputation.lua`, Stil `S.CHARACTER_INFO`)
 
 Aufgerufen aus `W.Inner` im Zweig des Charakterfensters, nach
-`CS.Update`. Nur wenn `ReputationFrame` sichtbar ist.
+`CS.Update`. Nur wenn `ReputationFrame` sichtbar ist. Leitbild
+(Beta-Test 6.7.0.1): *Character = Szene + Figur + Klassenfarbe; Ruf =
+Information + dezente Atmosphäre + Klassenfarbe* – kein kleines
+Charakterfenster.
 
-- **Atmosphäre** („subtil“): auf dem **Charakterfenster selbst**
-  (`BACKGROUND -6/-5/-4`) – unter allem, was das Spiel zeichnet, also
-  nie über Titel, Knöpfen oder Text. Vignette 30 % / 44 px, Gold von
-  oben 4,5 % / 120 px, unter der Liste (`ReputationFrame.ScrollBox`) ein
-  dunkler Grund `panelWell` mit weichem Rand (8 px über die Liste
-  hinaus). Ein- und ausgeblendet mit dem Reiter (`HookScript`
-  `OnShow`/`OnHide` am Ruf, dazu jeder Durchlauf) – sonst läge der Grund
-  bis zum nächsten Takt unter der Figur.
+**Gemessen (6.7.0.0, `/wcui fenster` im Beta-Client):** Zeilen unter
+`ReputationFrame.ScrollBox.ScrollTarget` mit `.Content` (11 Zeilen,
+3 Kopfzeilen, 11 Namen gefunden); Auswahl über die Detailansicht
+funktioniert; Detailansicht `ReputationFrame.ReputationDetailFrame`,
+im Fenster, Titel `.Title`, vom Dialograhmen nichts mehr sichtbar.
+**0 Balken** gefunden: `Content.ReputationBar` ist in diesem Client
+**kein Statusbalken**, seine Füllung ist das Bild
+`common-stat-bar-white`. Und an jeder Zeile liegt die Hervorhebung des
+Spiels, `Content.BackgroundHighlight` mit
+`charactercreate-customize-dropdown-linemouseover-side/-middle`
+(braun-gold, bei Maus und Auswahl).
+
+- **Flächen** *(6.7.0.1, „zu schwarz und flach“)*: 6.7.0.0 legte unter
+  die Liste einen **dunkleren** Grund – Schwarz neben Schwarz, harte
+  Kästen. Jetzt sind Bereiche eine Stufe **heller** als die Basis:
+  `GameColors.surfaceRaised` (0.068/0.070/0.082 zu 75 % über
+  `showcaseBase`), weicher Rand (`S.SoftPanel`, Neunteiler, 22 px) und
+  oben eine Lichtkante (weiß 7 %, zu beiden Seiten auslaufend,
+  `S.PlaceTop`) – `RP.Surface`. Unter Liste **und** Bildlaufleiste
+  (`ScrollBox` bis `ScrollBar`, 8 px darüber hinaus).
+- **Atmosphäre**: auf dem **Charakterfenster selbst**
+  (`BACKGROUND -6/-5/-4`) – unter allem, was das Spiel zeichnet, also nie
+  über Titel, Knöpfen oder Text. Vignette 35 % / 48 px, Licht von oben
+  **neutral** (`atmosLight`, weiß 3,5 % / 140 px – keine Farbe, die
+  Klassenfarbe gehört nur Akzenten). Ein- und ausgeblendet mit dem
+  Reiter (`HookScript` `OnShow`/`OnHide`, dazu jeder Durchlauf).
 - **Gruppen**: `W.ListHeader` statt `W.Header`. Der Text bleibt, **wo
   das Spiel ihn hinsetzt** (kein `ClearAllPoints`, nur linksbündig,
   13 pt, `textBright`, Schatten) – die Einrückung verschachtelter
-  Gruppen ist wieder da. Hinter dem Text eine Raute mit dunklem Kern
-  und eine Linie in Gold (55 %), die vor dem Zeichen zum Auf- und
-  Zuklappen endet; neu gelegt, wenn sich die Breite des Textes ändert
-  (die Liste verwendet Zeilen für andere Gruppen). Kein Lichthof.
-- **Balken**: Bahn `barTrack` (dunkler als `plateBg`), an der Füllung
-  (`GetStatusBarTexture`) unten ein Schatten (30 %), oben die Lichtkante
-  aller Balken (`barLight`). Farbe, Textur und Text der Stufe bleiben die
-  des Spiels – die Farbe **ist** die Auskunft.
-- **Auswahl**: gewählt ist die Zeile, deren Name rechts in der
-  Detailansicht steht (Titel der Detailansicht = Name der Zeile). Ist sie
-  zu, ist **keine** markiert – lieber keine Auskunft als eine geratene.
-  Goldener Strich links + Hauch, am Inhalt der Zeile (`.Content`), sonst
-  an der Zeile. **Maus**: `S.Hover` an der Zeile oder ihrem Inhalt, wenn
-  einer davon ein Knopf ist; Kopfzeilen haben ihren eigenen.
-- **Detailansicht** (`ReputationFrame.ReputationDetailFrame`, sonst
-  `_G.ReputationDetailFrame`): der Dialograhmen (`Border`, `NineSlice`,
-  `Bg`, `Background`) weg, eine eigene Tafel (`S.Panel`), der Titel
-  (`Title`, `FactionName`, `Name` oder `ReputationDetailFactionName`)
-  14 pt, darunter eine goldene Trennlinie. Beschreibung, Häkchen, Knöpfe
-  unverändert. Hängt sie nicht im Charakterfenster, bekommt sie die
-  Schritte des Fensters (`HideByAtlas`, `Grey`) selbst.
-- **Gesucht über mehrere Wege**, weil nur Liste, Kopfzeilen und Balken
-  gemessen sind (6.6.2.9): Zeilen unter `ScrollBox.ScrollTarget`
-  (sonst `GetScrollTarget()`, sonst die Liste), Name über
-  `Content.Name`/`.Name`/…, sonst die erste Schriftzeile, Balken über
-  `Content.ReputationBar`/…, sonst der erste Statusbalken bis zwei
-  Ebenen tief.
-- **`/wcui fenster`** über dem Ruf: „Ruf (Stil ruhig, Akzent Gold):
-  Liste gefunden, N Zeilen (K Kopfzeilen, B mit Balken, M mit Namen)“,
-  „Ruf, gewählt: …“ und „Ruf, Detailansicht: gestaltet, im Fenster/frei,
-  Titel …, Rahmen des Spiels: n Bilder noch sichtbar“.
-- **Kein Müll im Takt**: `load_test.lua` hält 20 Durchläufe unter 1 KB
-  (gemessen 0,0 KB).
+  Gruppen bleibt. Hinter dem Text Raute und Linie in der Klassenfarbe
+  (55 %), bis vor das Zeichen zum Auf- und Zuklappen. Kein Lichthof.
+- **Balken**: gefunden über den Schlüssel (`Content.ReputationBar`, jede
+  Art Rahmen), Füllung `RP.BarFill` (Textur eines Statusbalkens, sonst
+  das Bild `common-stat-bar-white`). Bahn `barTrack` (dunkler als die
+  Fläche), Rand schwarz 50 % statt 100 %, an der Füllung
+  (`S.BarFinish(bar, fill)`) unten Schatten 30 %, oben die Lichtkante
+  aller Balken. Farbe, Textur und Text der Stufe bleiben die des Spiels.
+- **Maus**: die Hervorhebung **des Spiels** wird entsättigt und in der
+  Klassenfarbe getönt (`S.Tint`, 55 %) – wann sie erscheint, bestimmt
+  weiter das Spiel. Geprüft wird jeden Durchlauf, gesetzt nur bei
+  Abweichung. Eine eigene Mausfläche (`S.Hover`) nur an Zeilen ohne
+  sie; Kopfzeilen haben ihre eigene.
+- **Auswahl** – der stärkste Akzent: gewählt ist die Zeile, deren Name
+  rechts in der Detailansicht steht; ist sie zu, ist **keine** markiert.
+  2-px-Strich in der Klassenfarbe links, dahinter ein Schein (16 % →
+  0), dazu die getönte Hervorhebung des Spiels.
+- **Detailansicht**: der Dialograhmen (`Border`, `NineSlice`, `Bg`,
+  `Background`) weg. **Im Fenster** dieselbe Fläche wie die Liste
+  (`RP.Surface`, 4 px über den Rand) – ein Bereich derselben Oberfläche,
+  kein zweiter schwarzer Kasten –, oben eine feine Kante in der
+  Klassenfarbe (55 %, 10 px vom Rand). Frei am Bildschirm (anderer
+  Client) eine deckende Tafel (`S.Panel`) samt `HideByAtlas`/`Grey`.
+  Titel 14 pt. Die Trennlinie unter dem Titel (6.7.0.0) ist weg – sie
+  lag zu nah an der Stufe darunter. Beschreibung, Häkchen, Knöpfe
+  unverändert.
+- **`/wcui fenster`** über dem Ruf: „Ruf (Stil ruhig, Klasse): Liste
+  gefunden, N Zeilen (K Kopfzeilen, B mit Balken, M mit Namen)“, „Ruf,
+  Balken: ‹Art›, Füllung Bild/Statusbalken/keine · Hervorhebungen des
+  Spiels getönt: n“, „Ruf, gewählt: …“, „Ruf, Detailansicht: Fläche im
+  Fenster / Tafel, frei, Titel …, Rahmen des Spiels: n Bilder noch
+  sichtbar“.
+- **Geprüft** (`load_test.lua`): Stil der Klasse, **kein Verlauf in
+  Gold** im ganzen Ruf, Balken ohne Statusbalken gefunden und veredelt,
+  Hervorhebung getönt und nicht verdoppelt, Auswahl folgt der
+  Detailansicht, nichts ausgeblendet, kein `SetText`, Titel nicht
+  verschoben, 20 Durchläufe unter 1 KB (gemessen 0,0 KB).
 
-Im Spiel ungeprüft: ob die Zeilen des Forever-Clients `.Content` tragen,
-wie die Detailansicht heißt und ob der Titel ihrer Zeile der Name der
-Fraktion ist – der Bericht nennt es.
+Im Spiel ungeprüft (6.7.0.1): wie hell die Flächen wirken, ob die
+getönte Hervorhebung bei Weiß (Priester) noch von der Auswahl zu
+unterscheiden ist.
 
 ### Nächste Fenster
 
-Erst nach dem Screenshot vom Ruf. Vorgesehen: Fertigkeiten, Abzeichen,
-Berufe (`S.CALM`), Statistiken (`S.CALM`, noch ruhiger), PvP, Gilde
-(mittlere Atmosphäre), Talente (Klassenfarbe). Migrieren heißt: Name in
+Erst nach Freigabe des Rufs. Vorgesehen: Fertigkeiten und Abzeichen
+(Reiter des Charakterfensters → `S.CHARACTER_INFO`), Berufe und
+Statistiken (`S.CALM`), PvP, Gilde (mittlere Atmosphäre), Talente
+(Klassenfarbe). Migrieren heißt: Name in
 `S.SCOPES`, ein Modul nach dem Muster von `ui/reputation.lua` nur dort,
 wo das Fenster mehr braucht als die Bausteine.

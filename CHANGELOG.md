@@ -9,6 +9,24 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.0.1] – 2026-09-29
+
+**Der Ruf trägt deine Klassenfarbe.** Er gehört zum Charakterfenster – Rauten und Linien der Gruppen, die gewählte Fraktion und die Zeile unter der Maus stehen jetzt in deiner Klasse statt in Gold. Rot beim Krieger, Grün beim Jäger, Weiß beim Priester.
+
+**Mehr Tiefe statt Schwarz.** Liste und Detailansicht liegen auf einer leicht helleren, weich auslaufenden Fläche mit einer feinen Lichtkante oben; darum herum sehr dunkles Anthrazit, eine dezente Randabdunklung und neutrales Licht von oben. Keine harten schwarzen Kästen mehr nebeneinander.
+
+**Die Detailansicht gehört zur selben Oberfläche.** Kein eigener schwarzer Kasten mehr: dieselbe Fläche wie die Liste, oben eine feine Kante in deiner Klassenfarbe.
+
+**Rufbalken mit Tiefe, jetzt wirklich.** Schatten und Lichtkante an der Füllung, eine weichere Kante um die Bahn – Farbe und Text der Rufstufe bleiben, wie das Spiel sie zeigt.
+
+### Technisch
+
+- Neuer Stil `S.CHARACTER_INFO` (Klassenfarbe, Kopfzeilen als Listenzeile) für die Informations-Reiter des Charakterfensters; `S.SCOPES.ReputationFrame` nutzt ihn. `S.CALM` (Gold) bleibt für Fenster außerhalb des Charakters, zurzeit in keinem Gebrauch.
+- Flächen: `GameColors.surfaceRaised` (heller als die Basis) statt `panelWell` (dunkler), `atmosLight` (neutral), `barTrack` dunkler, Rand der Balken weich (`barEdge`).
+- Balken gemessen: `Content.ReputationBar` ist in diesem Client kein Statusbalken, die Füllung ist das Bild `common-stat-bar-white` – 6.7.0.0 fand deshalb 0 Balken. `RP.BarFill`, `S.BarFinish(bar, fill)`.
+- Hervorhebung des Spiels (`Content.BackgroundHighlight`, `charactercreate-customize-dropdown-linemouseover-*`) entsättigt und in der Klassenfarbe getönt (`S.Tint`); eigene Mausfläche nur ohne sie.
+- Detailansicht im Fenster: `RP.Surface` statt Tafel, Kante oben in der Klassenfarbe (`S.PlaceTop`) statt Trennlinie unter dem Titel.
+
 ## [6.7.0.0] – 2026-09-29
 
 **Der Ruf im neuen Stil der Fenster.** Dunkle, ruhige Fläche wie im Charakterfenster, die Liste liegt auf einem weich auslaufenden dunklen Grund, oben ein Hauch warmes Gold. Gruppen tragen eine Raute und eine feine goldene Linie und bleiben so eingerückt wie im Spiel – Gruppen in Gruppen sind wieder als solche zu erkennen.

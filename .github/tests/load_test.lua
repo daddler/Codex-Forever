@@ -5214,7 +5214,8 @@ do
         .. (ok7 and "" or (": " .. tostring(err7))))
 
     -- 6.7.0.0: Designsprache der Fenster (ui/style.lua), der Ruf als
-    -- erstes Fenster im Stil S.CALM (ui/reputation.lua). Wichtigste Regel:
+    -- erstes Fenster (ui/reputation.lua); 6.7.0.1: in der Klassenfarbe
+    -- (Stil S.CHARACTER_INFO), Balken und Hervorhebung wie gemessen. Wichtigste Regel:
     -- keine Information geht verloren - kein SetText, keine Zeile weg,
     -- kein Titel verschoben.
     local okR, errR = pcall(function()
@@ -5260,21 +5261,41 @@ do
         local hName = Line("Classic")
         hName.ClearAllPoints = function() moved = true end
         head.GetRegions = function() return hBg, minus, hName end
-        -- Fraktionen: Inhalt mit Name und Balken (Quelltext des Spiels).
-        local function Faction(text)
+        -- Fraktionen: Inhalt mit Name und Balken. Gemessen (6.7.0.0): der
+        -- Balken ist KEIN Statusbalken, seine Fuellung das Bild
+        -- "common-stat-bar-white"; am Inhalt die Hervorhebung des Spiels.
+        -- Die zweite Zeile wie im Quelltext: Statusbalken, keine Hervorhebung.
+        local tinted = {}
+        local function Faction(text, measured)
             local row, content = stub.NewObject("Frame"), stub.NewObject("Button")
-            local bar, fill = stub.NewObject("StatusBar"), stub.NewObject("Texture")
+            local bar = stub.NewObject(measured and "Frame" or "StatusBar")
+            local fill = measured and Tex("common-stat-bar-white") or stub.NewObject("Texture")
             local track = Tex("common-stat-bar-BG")
-            bar.GetRegions = function() return track end
-            bar.GetStatusBarTexture = function() return fill end
+            if measured then
+                bar.GetRegions = function() return track, fill end
+                local bh = stub.NewObject("Frame")
+                local side, mid = Tex("charactercreate-customize-dropdown-linemouseover-side"),
+                                  Tex("charactercreate-customize-dropdown-linemouseover-middle")
+                for _, t in ipairs({ side, mid }) do
+                    t.SetDesaturated = function(self, v) self._desat = v end
+                    t.SetVertexColor = function(self, r, g, b, a) self._vc = { r, g, b, a } tinted[self] = true end
+                    t.GetVertexColor = function(self) if self._vc then return unpack(self._vc) end return 1, 1, 1, 1 end
+                end
+                bh.GetRegions = function() return side, mid end
+                content.BackgroundHighlight = bh
+                content.GetChildren = function() return bar, bh end
+            else
+                bar.GetRegions = function() return track end
+                bar.GetStatusBarTexture = function() return fill end
+                content.GetChildren = function() return bar end
+            end
             content.Name, content.ReputationBar = Line(text), bar
-            content.GetChildren = function() return bar end
             row.Content = content
             row.GetChildren = function() return content end
-            return row, bar, content.Name, track
+            return row, bar, content.Name, track, fill
         end
-        local row1, bar1, name1, track1 = Faction("Sturmwind")
-        local row2 = Faction("Eisenschmiede")
+        local row1, bar1, name1, track1, fill1 = Faction("Sturmwind", true)
+        local row2, bar2, _, _, fill2 = Faction("Eisenschmiede")
         target.GetChildren = function() return head, row1, row2 end
         list.GetChildren = function() return target end
         -- Detailansicht rechts, mit Dialograhmen.
@@ -5290,33 +5311,53 @@ do
         local oldRF = _G.ReputationFrame
         _G.ReputationFrame = rf
 
-        -- Stil durchgereicht: Kopfzeile als Listenzeile in Gold, Titel bleibt stehen.
+        -- Kein Gold im Ruf: jeder Verlauf, der hier gemalt wird, zaehlt.
+        local grad, golden = S.Gradient, 0
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == GC.frameAccent then golden = golden + 1 end
+            return grad(t, dir, c, a0, a1)
+        end
+        -- Stil durchgereicht: Kopfzeile als Listenzeile in der Klassenfarbe, Titel bleibt stehen.
         S.Register()
-        assert(S.ScopeOf(rf) == S.CALM, "Ruf ohne Stil")
+        assert(S.ScopeOf(rf) == S.CHARACTER_INFO and S.CHARACTER_INFO.accent == "class", "Ruf ohne Stil der Klasse")
         W.HideByAtlas(cf)
         local lh = W.ListHeaders[head]
         assert(lh and not W.Headers[head] and lh.title == hName and lh.icon == minus, "Ruf-Kopfzeile nicht als Listenzeile")
-        assert(lh.accent == GC.frameAccent and not lh.halo and W.own[lh.line] and W.own[lh.dot], "Ruf-Kopfzeile nicht in Gold oder mit Lichthof")
+        assert(lh.accent == K.Highlight() and not lh.halo and W.own[lh.line] and W.own[lh.dot],
+            "Ruf-Kopfzeile nicht in der Klassenfarbe oder mit Lichthof")
         assert(not moved, "Titel der Gruppe verschoben - die Einrueckung ginge verloren")
         assert(hBg:GetAlpha() == 0 and minus:GetAlpha() == 1, "Grund bleibt oder Zeichen zum Aufklappen weg")
-        assert(track1:GetAlpha() == 0 and W.FlatBars[bar1] and W.FlatBars[bar1].style == S.CALM, "Balken ohne dunkle Bahn")
+        assert(track1:GetAlpha() == 0 and W.FlatBars[bar1] and W.FlatBars[bar1].style == S.CHARACTER_INFO,
+            "Balken ohne dunkle Bahn")
 
         -- Atmosphaere unter dem Fenster, Zeilen, Balken.
         RP.Update(cf)
         local a = RP.atmos[rf]
-        assert(a and a.on and a.well and a.light and a.vignette.TOP and a.vignette.RIGHT, "Atmosphaere fehlt")
-        assert(a.well._parent == cf and a.light._parent == cf and a.vignette.TOP._parent == cf,
+        assert(a and a.on and a.list and a.list.body and a.list.edge and a.light and a.vignette.TOP and a.vignette.RIGHT,
+            "Atmosphaere oder Flaeche der Liste fehlt")
+        assert(a.list.body._parent == cf and a.light._parent == cf and a.vignette.TOP._parent == cf,
             "Atmosphaere nicht unter allem, was das Spiel zeichnet")
         local r1, r2 = RP.rows[row1], RP.rows[row2]
-        assert(r1 and r2 and r1.bar == bar1 and RP.bars[bar1] and RP.bars[bar1].fill, "Balken nicht veredelt")
-        assert(r1.hover and r1.sel and not r1.sel.on, "Maus oder Auswahl fehlt / Auswahl ohne Detailansicht")
+        assert(r1 and r2 and r1.bar == bar1 and r2.bar == bar2, "Balken nicht gefunden (auch ohne Statusbalken)")
+        assert(RP.bars[bar1].fill == fill1 and RP.bars[bar1].how == "Bild" and RP.bars[bar2].fill == fill2,
+            "Fuellung nicht veredelt")
+        -- Maus: die Hervorhebung des Spiels in der Klassenfarbe, keine zweite.
+        assert(#r1.hl == 2 and not r1.hover and r2.hover, "Hervorhebung doppelt oder fehlt")
+        local acc, nTinted = K.Highlight(), 0
+        for _ in pairs(tinted) do nTinted = nTinted + 1 end
+        assert(nTinted == 2, "Hervorhebung des Spiels nicht getoent (" .. nTinted .. " von 2)")
+        for t in pairs(tinted) do
+            assert(t._desat and t._vc[1] == acc[1] and t._vc[4] == RP.HIGHLIGHT_ALPHA, "Hervorhebung nicht in der Klassenfarbe")
+        end
+        assert(r1.sel and not r1.sel.on, "Auswahl ohne Detailansicht")
         -- Auswahl = was rechts steht.
         det:Show()
         RP.Update(cf)
         assert(RP.state.selected == "Sturmwind" and r1.sel.on and not r2.sel.on, "gewaehlte Fraktion nicht markiert")
         local dd = RP.details[det]
-        assert(dd and dd.panel and dd.divider and dd.inTree and edge:GetAlpha() == 0, "Detailansicht nicht gestaltet")
-        assert(W.own[dd.divider.l] and W.own[dd.panel.bg], "Detailtafel als fremdes Bild")
+        assert(dd and dd.inTree and dd.surface and not dd.panel and dd.line and edge:GetAlpha() == 0,
+            "Detailansicht nicht als Flaeche der Oberflaeche gestaltet")
+        assert(W.own[dd.line.l] and W.own[dd.surface.body], "Flaeche der Detailansicht als fremdes Bild")
         det.Title._text = "Eisenschmiede"
         RP.Update(cf)
         assert(r2.sel.on and not r1.sel.on, "Auswahl folgt der Detailansicht nicht")
@@ -5327,9 +5368,12 @@ do
         assert(#wrote == 0, "SetText auf einer Zeile des Spiels: " .. table.concat(wrote, ", "))
         -- Bericht.
         local rep = table.concat(RP.Report(cf, {}), "\n")
-        assert(rep:find("Ruf (Stil ruhig", 1, true) and rep:find("3 Zeilen (1 Kopfzeilen, 2 mit Balken, 3 mit Namen)", 1, true)
-            and rep:find("gewählt: „Eisenschmiede“", 1, true) and rep:find("Detailansicht: gestaltet, im Fenster", 1, true),
+        assert(rep:find("Ruf (Stil ruhig, Klasse)", 1, true) and rep:find("3 Zeilen (1 Kopfzeilen, 2 mit Balken, 3 mit Namen)", 1, true)
+            and rep:find("Balken: Frame, Füllung Bild", 1, true) and rep:find("getönt: 2", 1, true)
+            and rep:find("gewählt: „Eisenschmiede“", 1, true) and rep:find("Detailansicht: Fläche im Fenster", 1, true),
             "Bericht: " .. rep)
+        S.Gradient = grad
+        assert(golden == 0, "Gold im Ruf: " .. golden .. " Verlaeufe")
         -- Kein Muell im Takt.
         for _ = 1, 3 do RP.Update(cf) end
         collectgarbage("collect")
@@ -5342,15 +5386,15 @@ do
         assert(grew < 1, string.format("Ruf legt im Takt Muell an: %.1f KB", grew))
         -- Anderer Reiter: Atmosphaere sofort weg (Haken), und im Takt.
         rf._scripts.OnHide(rf)
-        assert(not a.on and not a.well:IsShown(), "Grund der Liste bleibt nach dem Reiterwechsel")
+        assert(not a.on and not a.list.body:IsShown(), "Flaeche der Liste bleibt nach dem Reiterwechsel")
         rf._scripts.OnShow(rf)
-        assert(a.on and a.well:IsShown(), "Atmosphaere kommt nicht zurueck")
+        assert(a.on and a.list.body:IsShown(), "Atmosphaere kommt nicht zurueck")
         rf:Hide()
         RP.Update(cf)
         assert(not a.on, "Atmosphaere ueber anderem Reiter")
         _G.ReputationFrame = oldRF
     end)
-    Check(okR, "Ruf im Stil der Fenster: Gold, Gruppen, Balken, Auswahl, Detail - nichts verloren, kein Muell"
+    Check(okR, "Ruf im Stil der Fenster: Klassenfarbe, Flaechen, Gruppen, Balken, Maus, Auswahl, Detail - nichts verloren, kein Muell"
         .. (okR and "" or (": " .. tostring(errR))))
 
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett

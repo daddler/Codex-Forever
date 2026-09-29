@@ -157,7 +157,9 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   on display). Status colours (green/red/gold/blue) never follow the class.
   **One exception since 6.7.0.0**, for restyled Blizzard windows only:
   `GameColors.frameAccent` (muted gold) is the accent of windows that do
-  not belong to the class (Reputation first). A region carries exactly
+  not belong to the class (style `S.CALM`; in no window yet – the tabs of
+  the character frame, Reputation included, carry the class colour via
+  `S.CHARACTER_INFO` since 6.7.0.1). A region carries exactly
   one of the two accents – its style (`ui/style.lua`, `S.SCOPES`) says
   which; `SetAccent` never touches the gold. Never use it in the addon's
   own pages, never next to the class colour in the same region.

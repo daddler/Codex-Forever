@@ -259,12 +259,18 @@ WeintCodex.GameColors = {
     showcaseBase  = {0.028, 0.029, 0.035, 0.97},  -- sehr dunkles Anthrazit
     showcaseGlass = {0.016, 0.017, 0.022, 1.00},  -- Glasebene, Deckkraft aus dem Thema
     -- Stil der Fenster (6.7.0.0, ui/style.lua): der Akzent der Fenster, die
-    -- nicht der Klasse gehoeren (Ruf, spaeter Berufe, Abzeichen ...) -
+    -- nicht der Klasse gehoeren (spaeter Berufe, Abzeichen ...) -
     -- gedaempftes warmes Gold, KEINE Ableitung des Violetts (SetAccent
     -- laesst es in Ruhe). Nie in derselben Flaeche wie die Klassenfarbe.
+    -- Seit 6.7.0.1 in keinem Fenster in Gebrauch: der Ruf gehoert zum
+    -- Charakter und traegt die Klassenfarbe.
     frameAccent   = {0.757, 0.643, 0.439, 1.00},  -- C1A470
-    panelWell     = {0.016, 0.017, 0.022, 0.55},  -- = showcaseGlass: Grund unter einer Liste
-    barTrack      = {0.055, 0.056, 0.066, 1.00},  -- Bahn eines Balkens des Spiels (dunkler als plateBg)
+    -- 6.7.0.1 (Beta-Test: "zu schwarz und flach"): Flaechen IN einem Fenster
+    -- liegen eine Stufe HELLER als die Basis (showcaseBase), nicht dunkler -
+    -- schwarz neben schwarz war genau die harte Kante.
+    surfaceRaised = {0.068, 0.070, 0.082, 0.75},  -- Liste, Detailansicht: leicht angehoben
+    barTrack      = {0.030, 0.031, 0.037, 1.00},  -- Bahn eines Balkens: dunkler als die Flaeche darueber
+    atmosLight    = {1.000, 1.000, 1.000, 0.035}, -- Licht von oben: neutral, ohne Farbe
     hoverGlow     = {1.000, 1.000, 1.000, 0.40},  -- ... und ein weisser Schein
     targetGlow    = {0.486, 0.424, 1.000, 0.85},  -- = Akzent: Leuchten des Ziels
     targetMark    = {1.000, 1.000, 1.000, 1.00},  -- Zielmarken links und rechts

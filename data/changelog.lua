@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.7.0.1",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDer Ruf trägt deine Klassenfarbe.|r Er gehört zum Charakterfenster – Rauten und Linien der Gruppen, die gewählte Fraktion und die Zeile unter der Maus stehen jetzt in deiner Klasse statt in Gold. Rot beim Krieger, Grün beim Jäger, Weiß beim Priester.",
+            "|cff7C6CFFMehr Tiefe statt Schwarz.|r Liste und Detailansicht liegen auf einer leicht helleren, weich auslaufenden Fläche mit einer feinen Lichtkante oben; darum herum sehr dunkles Anthrazit, eine dezente Randabdunklung und neutrales Licht von oben. Keine harten schwarzen Kästen mehr nebeneinander.",
+            "|cff7C6CFFDie Detailansicht gehört zur selben Oberfläche.|r Kein eigener schwarzer Kasten mehr: dieselbe Fläche wie die Liste, oben eine feine Kante in deiner Klassenfarbe.",
+            "|cff7C6CFFRufbalken mit Tiefe, jetzt wirklich.|r Schatten und Lichtkante an der Füllung, eine weichere Kante um die Bahn – Farbe und Text der Rufstufe bleiben, wie das Spiel sie zeigt.",
+        },
+    },
+    {
         version = "6.7.0.0",
         date    = "29.09.2026",
         notes   = {
