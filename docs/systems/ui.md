@@ -1267,6 +1267,16 @@ Grün des Akzents kommt aus dem Spiel (`RAID_CLASS_COLORS.HUNTER`) wie
 jede Klassenfarbe; `load_test.lua` prüft, dass Basis und Glas mit dem
 Jäger-Akzent neutral bleiben und das Priester-Thema unverändert ist.
 
+**Krieger, Druide, Magier, Schurke, Hexenmeister (6.6.4.5).** Wie der
+Jäger: je ein Bild (Querformat 1496×1051 → `media/classes/<klasse>.blp`,
+1024×1024, 512 KB; geladen wird nur das der eigenen Klasse), ein Eintrag
+in `ClassArtworks` mit `focusX` auf das Motiv der Mitte (Thron 0.54,
+Geweihtor 0.56, Sphäre 0.55, Treppe 0.55, Portal 0.60) und ein Thema mit
+den Tiefenwerten des Priesters und Licht nach dem Bild. Keine Zeile in
+`ui/character.lua`. Ohne Bild bleiben Paladin und Schamane (DEFAULT).
+Bekannte Reibung: die Klassenfarbe des Druiden ist Orange (Spiel), seine
+Szene grün – der Akzent bleibt trotzdem die Klassenfarbe.
+
 Die beiden folgenden Abschnitte sind die Vorgeschichte (6.6.3.5/6.6.3.6).
 
 **Klassenbild und Kopfzeile im Charakterfenster (6.6.3.5).** Beta-Test

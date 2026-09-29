@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.4.5",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFFünf weitere Klassen bekommen ihre Szene im Charakterfenster.|r Krieger stehen in einer Waffenkammer mit Thron und Esse, Druiden in einem Hain mit Geweihtor, Magier in einer arkanen Halle unter einer Armillarsphäre, Schurken in einem nächtlichen Versteck mit Laternen, Hexenmeister vor einem grünen Portal. Jede Figur nimmt das Licht ihrer Szene an; Aufbau, Werte und deine Klassenfarbe als Akzent bleiben dieselben. Paladin und Schamane behalten vorerst den Hintergrund des Spiels.",
+        },
+    },
+    {
         version = "6.6.4.4",
         date    = "29.09.2026",
         notes   = {

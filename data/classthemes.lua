@@ -118,6 +118,49 @@ WeintCodex.ClassThemes = {
         },
         wash        = { 0.80, 0.95, 0.70, 0.035 },
     },
+
+    -- 6.6.4.5: fuenf weitere Klassen. Tiefe wie Priester und Jaeger (das
+    -- Geruest), nur das Licht folgt jeweils dem Bild - gedaempfte
+    -- Umgebung, Hauptlicht in der Farbe der staerksten Lichtquelle, ein
+    -- Hauch darueber unter 4 %.
+
+    -- Waffenkammer: Esse und Kerzen, warmes Rot-Orange.
+    WARRIOR = {
+        scene = "WARRIOR", gameOverlay = false,
+        vignette = 0.60, calm = 0.30, shadow = 0.60, haze = 0.40,
+        light = { ambient = { 0.58, 0.50, 0.44 }, diffuse = { 1.00, 0.82, 0.62 } },
+        wash  = { 1.00, 0.75, 0.55, 0.035 },
+    },
+    -- Hain: Sonne durch Laub wie beim Jaeger, etwas goldener.
+    DRUID = {
+        scene = "DRUID", gameOverlay = false,
+        vignette = 0.60, calm = 0.30, shadow = 0.60, haze = 0.40,
+        light = { ambient = { 0.53, 0.57, 0.47 }, diffuse = { 0.97, 0.90, 0.72 } },
+        wash  = { 0.85, 0.95, 0.70, 0.035 },
+    },
+    -- Arkane Halle: kuehles Blau der Lichtsaeule, Kerzen nur am Rand.
+    MAGE = {
+        scene = "MAGE", gameOverlay = false,
+        vignette = 0.60, calm = 0.30, shadow = 0.60, haze = 0.40,
+        light = { ambient = { 0.50, 0.52, 0.62 }, diffuse = { 0.85, 0.87, 1.00 } },
+        wash  = { 0.70, 0.78, 1.00, 0.035 },
+    },
+    -- Nacht, Laternen: dunkle Umgebung, warmes Laternenlicht - die
+    -- dunkelste Szene, der Hauch am schwaechsten.
+    ROGUE = {
+        scene = "ROGUE", gameOverlay = false,
+        vignette = 0.60, calm = 0.25, shadow = 0.60, haze = 0.40,
+        light = { ambient = { 0.48, 0.46, 0.46 }, diffuse = { 0.95, 0.80, 0.62 } },
+        wash  = { 1.00, 0.80, 0.60, 0.03 },
+    },
+    -- Violette Flammen und gruenes Portal: Umgebung violett, Hauptlicht
+    -- blass violett (das Gruen bleibt im Bild, auf der Figur waere es krank).
+    WARLOCK = {
+        scene = "WARLOCK", gameOverlay = false,
+        vignette = 0.60, calm = 0.30, shadow = 0.60, haze = 0.40,
+        light = { ambient = { 0.52, 0.48, 0.58 }, diffuse = { 0.90, 0.82, 0.98 } },
+        wash  = { 0.75, 0.60, 0.95, 0.035 },
+    },
 }
 
 -- Das Thema einer Klasse: ihr Eintrag ueber DEFAULT gelegt, dazu `art`

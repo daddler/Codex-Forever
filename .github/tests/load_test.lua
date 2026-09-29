@@ -4546,18 +4546,18 @@ do
         -- 6.6.4.0: Charakterfenster als eigenes System (ui/character.lua).
         local CS = WeintCodex.UICharacter
         -- Thema: DEFAULT fuer jede Klasse ohne Eintrag, PRIEST darueber.
-        local warrior, priest = WeintCodex.ClassTheme("WARRIOR"), WeintCodex.ClassTheme("PRIEST")
-        assert(warrior.art == nil and warrior.gameOverlay == true and warrior.glass == WeintCodex.ClassThemes.DEFAULT.glass,
+        local paladin, priest = WeintCodex.ClassTheme("PALADIN"), WeintCodex.ClassTheme("PRIEST")
+        assert(paladin.art == nil and paladin.gameOverlay == true and paladin.glass == WeintCodex.ClassThemes.DEFAULT.glass,
             "Klasse ohne Thema faellt nicht auf DEFAULT zurueck")
         assert(priest.art and priest.art.file == "classes/priest" and priest.gameOverlay == false
             and priest.glass == WeintCodex.ClassThemes.DEFAULT.glass and priest.light.ambient,
             "Priester-Thema nicht ueber DEFAULT gelegt")
         assert(WeintCodex.ClassTheme(nil).class == "DEFAULT", "ohne Klasse kein DEFAULT")
-        -- Krieger (Stub): Szene des Spiels bleibt, dasselbe Geruest.
-        local wScene = CS.Scene(e, scene, warrior)
+        -- Paladin (seit 6.6.4.5 ohne eigenes Bild): Szene des Spiels bleibt, dasselbe Geruest.
+        local wScene = CS.Scene(e, scene, paladin)
         CS.KeepScene(e)
         assert(not wScene.art and race:GetAlpha() == 1 and wScene.vignette and wScene.vignette.TOP._masks,
-            "Krieger: Buehne des Spiels nicht behalten oder keine Vignette")
+            "Paladin: Buehne des Spiels nicht behalten oder keine Vignette")
 
         local cf2, scene2 = stub.NewObject("Frame"), stub.NewObject("Frame")
         local race2 = Tex("UI-Character-Info-RaceBG-Overlay", 230, 330)
@@ -4679,9 +4679,20 @@ do
         assert(Neutral(GCs.showcaseBase) and Neutral(GCs.showcaseGlass), "Grundflaechen nicht neutral")
         assert(hunter.wash[4] <= 0.05 and P.wash[4] <= 0.05, "Lichthauch zu stark")
         WeintCodex.UIKit.ResetHighlight()
-        -- Warum das Thema nicht direkt am Krieger faellt: ohne Licht keine Schicht.
-        local wLight = CS.Light(e, scene, warrior)
-        assert(wLight.theme.light == nil and wLight.over, "Krieger: Dunst des DEFAULT fehlt")
+        -- 6.6.4.5: Krieger, Druide, Magier, Schurke, Hexenmeister - jeder
+        -- mit eigenem Bild und eigenem Licht, alle auf demselben Geruest.
+        for _, token in ipairs({ "WARRIOR", "DRUID", "MAGE", "ROGUE", "WARLOCK" }) do
+            local t = WeintCodex.ClassTheme(token)
+            assert(t.art and t.art.file == "classes/" .. token:lower() and t.art.w == 1496 and t.art.h == 1051,
+                token .. ": falsches Bild")
+            assert(t.gameOverlay == false and t.light and t.light.ambient and t.wash and t.wash[4] <= 0.05
+                and t.glass == WeintCodex.ClassThemes.DEFAULT.glass, token .. ": Thema nicht wie Priester/Jaeger")
+        end
+        assert(WeintCodex.ClassTheme("PALADIN").art == nil and WeintCodex.ClassTheme("SHAMAN").art == nil,
+            "Paladin/Schamane ohne Bild fallen nicht auf das Spiel zurueck")
+        -- Paladin: ohne Licht keine Schicht.
+        local wLight = CS.Light(e, scene, paladin)
+        assert(wLight.theme.light == nil and wLight.over, "Paladin: Dunst des DEFAULT fehlt")
 
         -- Kopfbereich: HOLY LARENA / PRIESTERIN · STUFE 13, Titel und
         -- Stufenzeile des Spiels unsichtbar, solange er zu sehen ist.

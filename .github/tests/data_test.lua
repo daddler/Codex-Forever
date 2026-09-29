@@ -855,7 +855,7 @@ for token, art in pairs(WeintCodex.ClassArtworks or {}) do
     Check(classes[token] == true, "Klassenbild " .. tostring(token) .. " gehoert zu einer Klasse, die es gibt")
     CheckArt(art, "Klassenbild " .. tostring(token))
 end
-Check(WeintCodex.Art.Class("WARRIOR") == nil and WeintCodex.Art.Class(nil) == nil,
+Check(WeintCodex.Art.Class("PALADIN") == nil and WeintCodex.Art.Class(nil) == nil,
     "eine Klasse ohne Bild liefert nil")
 print("  --    " .. artClasses .. " Klasse(n) mit Bild")
 
@@ -883,7 +883,7 @@ for token, theme in pairs(WeintCodex.ClassThemes or {}) do
     if theme.wash ~= nil then ok = ok and Rgb(theme.wash, 4) end
     Check(ok, what .. ": Werte wohlgeformt (0..1)")
 end
-Check(WeintCodex.ClassTheme("WARRIOR").art == nil and WeintCodex.ClassTheme("PRIEST").art ~= nil,
+Check(WeintCodex.ClassTheme("PALADIN").art == nil and WeintCodex.ClassTheme("PRIEST").art ~= nil,
     "Klasse ohne Thema: Buehne des Spiels; Priester: eigenes Bild")
 
 --------------------------------------------------

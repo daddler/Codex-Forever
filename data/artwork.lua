@@ -348,6 +348,41 @@ WeintCodex.ClassArtworks = {
         file = "classes/hunter",
         w = 1496, h = 1051, focusX = 0.44, dim = 0.85,
     },
+
+    -- 6.6.4.5: fuenf weitere, alle Querformat 1496x1051, ganz. Wie beim
+    -- Jaeger zeigt das hochkante Modellfeld rund 60 % der Breite; focusX
+    -- legt das Motiv der Mitte hinter die Figur.
+
+    -- Waffenkammer/Thronsaal: Schild auf dem Thron, rote Banner,
+    -- Kronleuchter, Aexte, Esse. focusX 0.54 = der Thron.
+    WARRIOR = {
+        file = "classes/warrior",
+        w = 1496, h = 1051, focusX = 0.54, dim = 0.85,
+    },
+    -- Hain: Geweihtor, zwei Hirsche, Runensteine, Wasserfaelle, Sonne.
+    -- focusX 0.56 = das Geweihtor ueber der Treppe.
+    DRUID = {
+        file = "classes/druid",
+        w = 1496, h = 1051, focusX = 0.56, dim = 0.85,
+    },
+    -- Arkane Halle: Armillarsphaere, Lichtsaeule, schwebende Tuerme,
+    -- blaue Flammen, Buecher. focusX 0.55 = Sphaere und Lichtsaeule.
+    MAGE = {
+        file = "classes/mage",
+        w = 1496, h = 1051, focusX = 0.55, dim = 0.85,
+    },
+    -- Nacht, Diebesversteck: Treppe zu Kapuzenstatuen, schwarze Banner,
+    -- Laternen, Truhen, Dolche. focusX 0.55 = Treppe und Tor.
+    ROGUE = {
+        file = "classes/rogue",
+        w = 1496, h = 1051, focusX = 0.55, dim = 0.9,
+    },
+    -- Violette Bibliothek: gruenes Portal am Ende der Treppe, violette
+    -- Flammen, Kapuzenfiguren, Gargoyle. focusX 0.60 = das Portal.
+    WARLOCK = {
+        file = "classes/warlock",
+        w = 1496, h = 1051, focusX = 0.60, dim = 0.85,
+    },
 }
 
 --------------------------------------------------

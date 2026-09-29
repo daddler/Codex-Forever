@@ -123,6 +123,12 @@ TARGET_W, TARGET_H = 1024, 256
 CLASS_JOBS = [
     ("classes/priest", "priest.webp"),
     ("classes/hunter", "hunter.webp"),   # Querformat 1496x1051, 6.6.4.4
+    # 6.6.4.5, alle Querformat 1496x1051:
+    ("classes/warrior", "warrior.png"),
+    ("classes/druid", "druid.png"),
+    ("classes/mage", "mage.png"),
+    ("classes/rogue", "rogue.png"),
+    ("classes/warlock", "warlock.png"),
 ]
 CLASS_W, CLASS_H = 1024, 1024
 
