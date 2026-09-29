@@ -1193,6 +1193,34 @@ Funktion je Rahmen oder Fläche. Wer eine Liste braucht, nimmt
 `W.Regions`/`W.Children` mit eigenem `key`; wer eine Liste über einen
 Aufruf hinaus behalten will, kopiert sie.
 
+**Klassenbild und Kopfzeile im Charakterfenster (6.6.3.5).** Beta-Test
+mit einem gemalten Entwurf: „atmosphärischer als das, was ich bisher
+habe“. Übernommen sind die zwei Teile, die zur Linie der übrigen Fenster
+passen; der goldene Metallrahmen und Reiter statt Kategorien bewusst
+nicht (zweite Zierfarbe neben dem Akzent, eigene Werteanzeige).
+
+- *Klassenbild*: eigenes Material wie die Dungeonbilder, ein Eintrag je
+  Klasse in `WeintCodex.ClassArtworks` (`data/artwork.lua`, Zugriff
+  `WeintCodex.Art.Class(token)`; `data_test.lua` prüft Klasse und
+  Datei). `W.SoftenModel` legt es einmal je Modellfeld an: Ebene
+  `BACKGROUND/7` über den vier Hintergrundteilen des Spiels
+  (`BACKGROUND/0`, gemessen), unter dessen Abdunklung
+  (`UI-Character-Info-RaceBG-Overlay`, `BORDER/0`), im Kasten des
+  Bildes und mit **derselben Maske** – es läuft also genauso weich aus.
+  Ausschnitt über `WeintCodex.CoverCoords` mit den Maßen des Originals,
+  nur wenn sich die Lage ändert. Die Datei ist 1024x1024 (senkrecht
+  gestaucht, Zweierpotenz), 512 KB, geladen nur die eigene Klasse
+  (`make_artwork.py classes <ordner>`). Ohne Eintrag: nichts, wie
+  bisher; `/wcui fenster` nennt „Klassenbild: …“ oder „keines für …“.
+  Hängt an „Stimmung statt Schwarz“.
+- *Kopfzeile* (`W.CharacterHeader`): der Titel des Spiels (Name) in
+  16 pt; darunter unsere Zeile „PRIESTERIN · STUFE 13“ (`W.CharacterLine`,
+  versal, gesperrt, Akzent) mit Raute und zwei auslaufenden Linien. Sie
+  hängt an `PaperDollFrame`, verschwindet also auf den anderen Reitern,
+  und fragt Klasse und Stufe beim Zeigen und bei `PLAYER_LEVEL_UP` –
+  nicht im Durchlauf. Unbekanntes bleibt weg (nur „STUFE 13“, oder gar
+  keine Zeile).
+
 **Höhe der Questliste (6.6.3.4).** Beta-Test: „der Questbereich ragt bis
 ganz nach unten – kann man den nicht auf eine Höchstgröße einstellen und
 ggf. darin scrollen?“. Die Liste ist die des Spiels; ihre Höhe ist die

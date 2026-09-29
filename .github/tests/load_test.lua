@@ -4543,6 +4543,57 @@ do
         local report = table.concat(W.SoftReport(cf), "\n")
         assert(report:find("Maske an 2 Bildern", 1, true) and report:find("Darunter: UI-Character-Info-Human-RaceBG", 1, true),
             "Bericht ohne Maske: " .. report)
+        -- 6.6.3.5: Klassenbild nur mit Eintrag in data/artwork.lua (der
+        -- Stub ist Krieger - keiner), sonst unveraendert.
+        assert(e.art == false and report:find("Klassenbild: keines für WARRIOR", 1, true), "Krieger bekommt ein Klassenbild")
+        local oldClass = _G.UnitClass
+        _G.UnitClass = function() return "Priesterin", "PRIEST" end
+        local cf2, scene2 = stub.NewObject("Frame"), stub.NewObject("Frame")
+        local race2 = Tex("UI-Character-Info-Human-RaceBG", 230, 330)
+        race2.GetParent = function() return scene2 end
+        scene2.GetRegions = function() return race2 end
+        cf2.GetChildren = function() return scene2 end
+        local made = {}
+        local create = scene2.CreateTexture
+        scene2.CreateTexture = function(self, ...)
+            local t = create(self, ...)
+            t.SetTexture = function(tt, file) tt._file = file end
+            t.SetTexCoord = function(tt, ...) tt._coord = { ... } end
+            made[#made + 1] = t
+            return t
+        end
+        scene2._width, scene2._height = 397, 464
+        W.SoftenModel(cf2)
+        local e2 = W.soft[scene2]
+        local art = e2 and e2.art
+        assert(art and W.own[art], "Priester ohne Klassenbild")
+        assert(art._file == "Interface\\AddOns\\WeintCodex\\media\\classes\\priest", "falscher Pfad: " .. tostring(art._file))
+        local layer, sub = art:GetDrawLayer()
+        assert(layer == "BACKGROUND" and sub == 7, "Klassenbild nicht ueber dem Grund des Spiels")
+        assert(art._masks and art._masks[1] == e2.mask, "Klassenbild laeuft nicht weich aus")
+        assert(art._coord and art._coord[1] == 0 and art._coord[2] == 1 and art._coord[3] > 0 and art._coord[4] < 1,
+            "Ausschnitt verzerrt oder fehlt")
+        local count = #made
+        W.SoftenModel(cf2)
+        assert(W.soft[scene2].art == art and #made == count, "Klassenbild doppelt angelegt")
+        assert(table.concat(W.SoftReport(cf2), " "):find("Klassenbild: classes/priest", 1, true), "Bericht ohne Klassenbild")
+        -- Kopfzeile: "PRIESTERIN · STUFE 13", gesperrt; ohne Antwort nichts.
+        local sp = WeintCodex.Spaced
+        assert(W.CharacterLine("Priesterin", 13) == sp("PRIESTERIN · STUFE 13"), "Kopfzeile falsch")
+        assert(W.CharacterLine(nil, 13) == sp("STUFE 13") and W.CharacterLine("Magier", nil) == sp("MAGIER"), "Teilwissen verloren")
+        assert(W.CharacterLine(nil, nil) == nil and W.CharacterLine("", 0) == nil, "Kopfzeile ohne Wissen")
+        local charF, paper = stub.NewObject("Frame"), stub.NewObject("Frame")
+        charF.TitleContainer = { TitleText = WeintCodex.UIKit.NewText(charF, 13) }
+        local oldPaper, oldHead = _G.PaperDollFrame, W.charHead
+        _G.PaperDollFrame, W.charHead = paper, nil
+        local head = W.CharacterHeader(charF)
+        assert(head and head:GetParent() == paper, "Kopfzeile nicht am Reiter Charakter")
+        assert(head.text:GetText() == sp("PRIESTERIN · STUFE 60"), "Kopfzeile: " .. tostring(head.text:GetText()))
+        assert(W.CharacterHeader(charF) == head, "Kopfzeile doppelt")
+        head.Update(61)
+        assert(head.text:GetText() == sp("PRIESTERIN · STUFE 61"), "Stufenaufstieg nicht uebernommen")
+        _G.PaperDollFrame, W.charHead = oldPaper, oldHead
+        _G.UnitClass = oldClass
     end)
     -- Berufe und Gilde & Communitys (6.6.2.1).
     local ok2, err2 = pcall(function()

@@ -846,6 +846,19 @@ Check(WeintCodex.Art.Boss("hall_of_thanes", "gibtesnicht") == nil,
 Check(WeintCodex.Art.Dungeon(nil) == nil, "ohne Kennung liefert nil")
 print("  --    " .. artDungeons .. " Dungeon(s) mit Artwork")
 
+-- Klassenbilder (6.6.3.5): nur fuer Klassen, die es gibt (data/specs.lua),
+-- und nie ohne Datei.
+local classes, artClasses = {}, 0
+for _, spec in ipairs(WeintCodex_Specs or {}) do classes[spec.class] = true end
+for token, art in pairs(WeintCodex.ClassArtworks or {}) do
+    artClasses = artClasses + 1
+    Check(classes[token] == true, "Klassenbild " .. tostring(token) .. " gehoert zu einer Klasse, die es gibt")
+    CheckArt(art, "Klassenbild " .. tostring(token))
+end
+Check(WeintCodex.Art.Class("WARRIOR") == nil and WeintCodex.Art.Class(nil) == nil,
+    "eine Klasse ohne Bild liefert nil")
+print("  --    " .. artClasses .. " Klasse(n) mit Bild")
+
 --------------------------------------------------
 -- Dungeon-Journal: Beute und Quests (6.5.0.0)
 --------------------------------------------------

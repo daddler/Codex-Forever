@@ -2,10 +2,21 @@
 Aus einem Original-Artwork die Addon-Fassung machen: zuschneiden,
 skalieren, als BLP2/DXT1 ohne Mipmaps ablegen.
 
-    python3 .github/scripts/make_artwork.py ~/Bilder/hall_of_thanes
+    python3 .github/scripts/make_artwork.py ~/Bilder/dungeons
+    python3 .github/scripts/make_artwork.py classes ~/Bilder/klassen
 
 Der Ordner enthält die Originale unter den Namen, die unten in JOBS
-stehen; geschrieben wird nach media/dungeons/<dungeon>/.
+(bzw. CLASS_JOBS) stehen; geschrieben wird nach media/dungeons/<dungeon>/
+bzw. media/classes/.
+
+**Klassenbilder (6.6.3.5)** stehen hinter dem Modell im
+Charakterfenster. Sie werden NICHT zugeschnitten: das Modellfeld misst
+im Spiel rund 397x464, die Originale sind 2:3 - welcher Streifen zu
+sehen ist, rechnet `WeintCodex.CoverCoords` aus `focusY` im Spiel
+(data/artwork.lua). Gespeichert wird das ganze Bild auf 1024x1024
+(Zweierpotenz), also senkrecht gestaucht; data/artwork.lua nennt die
+Masse des ORIGINALS, damit der Ausschnitt unverzerrt bleibt. 512 KB je
+Klasse, geladen wird nur die eigene.
 
 **Warum es das gibt.** Was in media/ liegt, sind siebenundvierzig Binärdateien,
 und aus einer Binärdatei geht nicht hervor, welcher Ausschnitt eines
@@ -42,6 +53,7 @@ Gebraucht werden Pillow und ImageMagick (`magick`).
 """
 
 import os
+import shutil
 import struct
 import subprocess
 import sys
@@ -107,6 +119,12 @@ JOBS = [
 
 TARGET_W, TARGET_H = 1024, 256
 
+# Ziel, Quelldatei. Ganzes Bild, Ziel 1024x1024 (siehe oben).
+CLASS_JOBS = [
+    ("classes/priest", "priest.webp"),
+]
+CLASS_W, CLASS_H = 1024, 1024
+
 
 def dxt1_blocks(image, workdir):
     """Eine Stufe als rohe DXT1-Bloecke. ImageMagick komprimiert, der
@@ -115,6 +133,12 @@ def dxt1_blocks(image, workdir):
     png = os.path.join(workdir, "level.png")
     dds = os.path.join(workdir, "level.dds")
     image.save(png)
+    if shutil.which("magick") is None:
+        # Ohne ImageMagick: Pillow (ab 11) schreibt DXT1 selbst - gleicher
+        # 128-Byte-Kopf, gleiche Bloecke.
+        image.save(dds, pixel_format="DXT1")
+        with open(dds, "rb") as handle:
+            return handle.read()[128:]
     subprocess.run(
         ["magick", png,
          "-define", "dds:compression=dxt1",
@@ -142,7 +166,26 @@ def write_blp(path, level0, width, height):
         handle.write(header + level0)
 
 
+def classes(source_dir):
+    for target, filename in CLASS_JOBS:
+        source = os.path.join(source_dir, filename)
+        if not os.path.exists(source):
+            print("fehlt: " + source)
+            return 1
+        original = Image.open(source).convert("RGB")
+        scaled = original.resize((CLASS_W, CLASS_H), Image.LANCZOS)
+        with tempfile.TemporaryDirectory() as workdir:
+            level0 = dxt1_blocks(scaled, workdir)
+        path = os.path.join(REPO, "media", target + ".blp")
+        write_blp(path, level0, CLASS_W, CLASS_H)
+        print("%-46s %7d B  (%s, %dx%d)"
+              % (target + ".blp", os.path.getsize(path), filename, *original.size))
+    return 0
+
+
 def main():
+    if len(sys.argv) == 3 and sys.argv[1] == "classes":
+        return classes(os.path.expanduser(sys.argv[2]))
     if len(sys.argv) != 2:
         print(__doc__.strip())
         return 2

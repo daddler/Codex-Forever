@@ -689,6 +689,76 @@ function W.HeaderReport()
     return { string.format("   Kategorien: %d (%s)", #names, table.concat(names, ", ")) }
 end
 
+-- Kopfzeile des Charakterfensters (6.6.3.5, Beta-Test mit einem
+-- Entwurf: Name gross, darunter "PRIESTERIN · STUFE 13", eine Zierlinie).
+-- Der Name ist der Titel des Spiels (nur groesser); die Zeile darunter
+-- ist unsere und haengt an PaperDollFrame - auf Ruf, Waehrung usw. ist
+-- sie mit dem Reiter weg. Klasse und Stufe fragt sie beim Zeigen und
+-- beim Stufenaufstieg, nicht im Durchlauf.
+W.CHAR_TITLE_SIZE, W.CHAR_SUB_SIZE, W.CHAR_LINE = 16, 10, 70
+
+function W.CharacterLine(className, level)
+    className = K.Plain(className)
+    level = K.Plain(level)
+    local parts = {}
+    if type(className) == "string" and className ~= "" then parts[#parts + 1] = WeintCodex.Upper(className) end
+    if type(level) == "number" and level > 0 then parts[#parts + 1] = "STUFE " .. level end
+    if #parts == 0 then return nil end
+    return WeintCodex.Spaced(table.concat(parts, " · "))
+end
+
+function W.CharacterHeader(f)
+    if W.charHead or type(f) ~= "table" then return W.charHead end
+    local title = type(f.TitleContainer) == "table" and f.TitleContainer.TitleText or nil
+    local paper = _G.PaperDollFrame
+    if type(title) ~= "table" or not title.SetFont or type(paper) ~= "table" then return nil end
+    pcall(function()
+        K.SetFont(title, W.CHAR_TITLE_SIZE)
+        if title.SetShadowOffset then title:SetShadowOffset(1, -1) end
+        if title.SetShadowColor then title:SetShadowColor(0, 0, 0, 0.9) end
+    end)
+    local c = K.Highlight()
+    local h = CreateFrame("Frame", nil, paper)
+    h:SetSize(260, 24)
+    h:SetPoint("TOP", title, "BOTTOM", 0, -3)
+    pcall(function() h:SetFrameLevel(paper:GetFrameLevel() + 20) end)
+    h.text = K.NewText(h, W.CHAR_SUB_SIZE, "OVERLAY")
+    h.text:SetPoint("TOP", h, "TOP", 0, 0)
+    h.text:SetTextColor(c[1], c[2], c[3], 1)
+    -- Zierlinie: Raute mit dunklem Kern, je Seite eine auslaufende Linie.
+    h.dot = Diamond(h, 7, c, 1, 2)
+    h.dot:SetPoint("TOP", h.text, "BOTTOM", 0, -4)
+    h.hole = Diamond(h, 2, C.surface1, 1, 3)
+    h.hole:SetPoint("CENTER", h.dot, "CENTER", 0, 0)
+    h.lines = {}
+    for _, side in ipairs({ "LEFT", "RIGHT" }) do
+        local line = h:CreateTexture(nil, "ARTWORK", nil, 1)
+        h.lines[#h.lines + 1] = line
+        line:SetSize(W.CHAR_LINE, 1)
+        Fade(line, c, 0.9, side)
+        if side == "LEFT" then line:SetPoint("RIGHT", h.dot, "LEFT", -3, 0)
+        else line:SetPoint("LEFT", h.dot, "RIGHT", 3, 0) end
+        own[line] = true
+    end
+    function h.Update(level)
+        local ok, className = pcall(_G.UnitClass, "player")
+        if type(level) ~= "number" then
+            local lok, lv = pcall(_G.UnitLevel, "player")
+            level = lok and lv or nil
+        end
+        local line = W.CharacterLine(ok and className or nil, level)
+        -- Nicht h verstecken: dann kaeme kein OnShow mehr.
+        h.text:SetText(line or "")
+        for _, t in ipairs({ h.dot, h.hole, h.lines[1], h.lines[2] }) do t:SetShown(line ~= nil) end
+    end
+    h:SetScript("OnShow", function() h.Update() end)
+    h:RegisterEvent("PLAYER_LEVEL_UP")
+    h:SetScript("OnEvent", function(_, _, level) h.Update(K.Plain(level)) end)
+    h.Update()
+    W.charHead = h
+    return h
+end
+
 function W.EdgeBorder(f)
     if type(f) ~= "table" or edged[f] or not f.CreateTexture then return end
     edged[f] = true
@@ -1456,6 +1526,45 @@ local function PlaceBox(e, host)
     end
 end
 
+-- Klassenbild (6.6.3.5, Beta-Test: "atmosphaerischer"). Eigenes
+-- Material aus data/artwork.lua (WeintCodex.Art.Class) im Kasten des
+-- Bildes, ueber den vier Hintergrundteilen des Spiels (BACKGROUND/0,
+-- gemessen), unter dessen Abdunklung (RaceBG-Overlay, BORDER/0) - und
+-- mit derselben Maske, laeuft also genauso weich aus. Das 3D-Modell
+-- steht davor. Ohne Eintrag fuer die Klasse: nichts, wie bisher.
+W.CLASS_ART_LAYER, W.CLASS_ART_SUB = "BACKGROUND", 7
+
+local function ClassToken()
+    local ok, _, token = pcall(_G.UnitClass, "player")
+    token = ok and K.Plain(token) or nil
+    return type(token) == "string" and token or nil
+end
+W.ClassToken = ClassToken
+
+local function ClassArt(e, host)
+    if e.art ~= nil then return end
+    local art = WeintCodex.Art and WeintCodex.Art.Class and WeintCodex.Art.Class(ClassToken())
+    if not art then e.art = false return end
+    local t = host:CreateTexture(nil, W.CLASS_ART_LAYER, nil, W.CLASS_ART_SUB)
+    t:SetTexture("Interface\\AddOns\\WeintCodex\\media\\" .. string.gsub(art.file, "/", "\\"))
+    t:SetAllPoints(e.box)
+    local dim = art.dim or 1
+    t:SetVertexColor(dim, dim, dim, 1)
+    if e.mask then pcall(t.AddMaskTexture, t, e.mask) end
+    own[t] = true
+    e.art, e.artEntry = t, art
+end
+
+-- Ausschnitt nach der Lage des Kastens - nur wenn sie sich aendert.
+local function FitArt(e)
+    if not e.art or e.artKey == e.key then return end
+    e.artKey = e.key
+    local ok, w, h = pcall(function() return e.box:GetWidth(), e.box:GetHeight() end)
+    w, h = ok and K.Plain(w) or nil, ok and K.Plain(h) or nil
+    local a = e.artEntry
+    e.art:SetTexCoord(WeintCodex.CoverCoords(a.w, a.h, w, h, a.focusX, a.focusY))
+end
+
 local softRoot = setmetatable({}, { __mode = "k" })
 -- Liefert die Rahmen, die jetzt einen weichen Rand tragen (Prueflauf).
 function W.SoftenModel(f)
@@ -1464,6 +1573,7 @@ function W.SoftenModel(f)
         for _, host in ipairs(cached) do
             PlaceBox(soft[host], host)
             MaskAll(soft[host], host)
+            FitArt(soft[host])
         end
         return cached
     end
@@ -1491,9 +1601,11 @@ function W.SoftenModel(f)
                 e.mask = mask
             end
             soft[host] = e
+            ClassArt(e, host)
         end
         PlaceBox(e, host)
         MaskAll(e, host)
+        FitArt(e)
     end
     if #order > 0 then softRoot[f] = order end
     return order
@@ -1528,6 +1640,11 @@ function W.SoftReport(f)
         local e = soft[host]
         out[#out + 1] = string.format("   Weicher Rand: %d Teile, %s", #e.parts,
             e.key == "host" and "am Träger (Lage des Bildes unbekannt)" or ("am Bild " .. tostring(e.key)))
+        if e.art then
+            out[#out + 1] = "   Klassenbild: " .. tostring(e.artEntry.file)
+        elseif e.art == false then
+            out[#out + 1] = "   Klassenbild: keines für " .. tostring(ClassToken())
+        end
         if e.mask then
             out[#out + 1] = string.format("   Maske an %d %s", e.count, e.count == 1 and "Bild" or "Bildern")
         else
@@ -2098,6 +2215,7 @@ function W.Inner()
             end
             if n == "CharacterFrame" then
                 FitStats(f, 0)
+                W.CharacterHeader(f)
                 if Opt("windowArt") then W.SoftenModel(f) end
             end
             if W.WantsLarge(n) then

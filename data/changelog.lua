@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.3.5",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDas Charakterfenster bekommt Atmosphäre.|r Hinter deiner Figur steht ein eigenes Bild deiner Klasse – für Priester eine Kathedrale mit Lichtkreuz und Kerzen –, das zu den Rändern weich ausläuft. Klassen ohne eigenes Bild behalten den Hintergrund des Spiels; weitere folgen.",
+            "|cff7C6CFFName, Klasse und Stufe als Kopfzeile.|r Dein Name steht größer über dem Fenster, darunter in deiner Klassenfarbe z. B. „PRIESTERIN · STUFE 13“ mit einer Zierlinie – nur auf dem Reiter Charakter.",
+        },
+    },
+    {
         version = "6.6.3.4",
         date    = "29.09.2026",
         notes   = {

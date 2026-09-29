@@ -312,6 +312,31 @@ WeintCodex.Artworks = {
 }
 
 --------------------------------------------------
+-- Klassen (6.6.3.5)
+--------------------------------------------------
+-- Ein Bild je Klasse hinter dem Modell im Charakterfenster (Beta-Test:
+-- "atmosphaerischer als das, was ich bisher habe"). Eigenes Material wie
+-- die Dungeonbilder, und dieselbe Regel: eine Klasse ohne Eintrag sieht
+-- aus wie vorher (Hintergrund des Spiels, weich auslaufend).
+--
+-- w, h sind die Masse des ORIGINALS (2:3). Die Datei selbst ist
+-- 1024x1024, also senkrecht gestaucht (Zweierpotenz); weil
+-- CoverCoords mit den Massen hier rechnet, steht das Bild im Spiel
+-- wieder unverzerrt. Zu sehen ist bei einem Modellfeld von 397x464
+-- ein Streifen von 78 % der Hoehe; focusY legt ihn fest.
+-- dim: Helligkeit, damit das Modell vor dem Bild steht.
+
+WeintCodex.ClassArtworks = {
+
+    -- Kathedrale, Lichtkreuz ueber dem Altar, Kerzen, Bodenkreis.
+    -- priest.webp (1024x1536), ganz.
+    PRIEST = {
+        file = "classes/priest",
+        w = 1024, h = 1536, focusY = 0.55, dim = 0.9,
+    },
+}
+
+--------------------------------------------------
 -- Zugriff
 --------------------------------------------------
 -- Zwei Funktionen, und beide geben nil zurueck, wo es nichts gibt.
@@ -331,4 +356,9 @@ function WeintCodex.Art.Boss(dungeonId, bossId)
     local entry = WeintCodex.Artworks[dungeonId]
     if not entry or not entry.bosses then return nil end
     return entry.bosses[bossId]
+end
+
+function WeintCodex.Art.Class(classToken)
+    if type(classToken) ~= "string" then return nil end
+    return WeintCodex.ClassArtworks[classToken]
 end
