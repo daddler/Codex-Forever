@@ -126,7 +126,7 @@ local INDICES = {
 local SETTINGS = {
     ActionBar = "EditModeActionBarSetting", UnitFrame = "EditModeUnitFrameSetting",
     ChatFrame = "EditModeChatFrameSetting", CooldownViewer = "EditModeCooldownViewerSetting",
-    AuraFrame = "EditModeAuraFrameSetting",
+    AuraFrame = "EditModeAuraFrameSetting", ObjectiveTracker = "EditModeObjectiveTrackerSetting",
 }
 
 local function EnumTable(name)
@@ -157,7 +157,9 @@ end
 -- eigenen Beschreibung des Reglers (EditModeSettingDisplayInfoManager):
 -- erst seine Funktion, sonst (Wert - Minimum) / Schritt. Nur ein Wert im
 -- Bereich des Reglers zaehlt; sonst nil - dann bleibt die Vorlage.
-function ES.RawValue(sysId, setting, display)
+-- clamp: ein Wert ausserhalb des Reglers wird auf dessen Rand gesetzt
+-- (Hoehe der Questliste haengt an der Bildschirmhoehe, 6.6.3.4).
+function ES.RawValue(sysId, setting, display, clamp)
     local M = _G.EditModeSettingDisplayInfoManager
     if type(M) ~= "table" or type(setting) ~= "number" then return nil end
     local list = type(M.systemSettingDisplayInfo) == "table" and M.systemSettingDisplayInfo[sysId] or nil
@@ -180,6 +182,7 @@ function ES.RawValue(sysId, setting, display)
             if maxRaw then
                 local v = (display - lo) / step
                 if InRange(v) then return v end
+                if clamp then return math.max(0, math.min(maxRaw, math.floor(v + 0.5))) end
             end
             return nil
         end
@@ -203,7 +206,8 @@ function ES.Adjust(systems)
                 if SetSetting(sys, SE and SE[name], value) then done[e.key .. "." .. name] = true end
             end
             for name, value in pairs(e.display or {}) do
-                local raw = ES.RawValue(sys.system, SE and SE[name], value)
+                if type(value) == "function" then value = value() end
+                local raw = type(value) == "number" and ES.RawValue(sys.system, SE and SE[name], value, e.clamp) or nil
                 if type(raw) == "number" and SetSetting(sys, SE[name], raw) then done[e.key .. "." .. name] = true end
             end
             for name, pair in pairs(e.enum or {}) do

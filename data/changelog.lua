@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.6.3.4",
         date    = "29.09.2026",
         notes   = {
+            "|cff7C6CFFDie Questliste reicht nicht mehr bis zum Boden.|r Die Einrichtung gibt ihr jetzt eine Höchsthöhe – von unter der Minikarte bis über den Tooltip unten rechts; was nicht passt, blendet das Spiel aus. Sofort, ohne neue Einrichtung: Bearbeitungsmodus → Zielverfolgung → „Höhe“.",
             "|cff7C6CFFDialoge des Spiels im Stil von WeintCodex.|r Rückfragen wie „19 Sekunden bis zum Verlassen“, Einladungen oder „Gegenstand zerstören?“ stehen auf der dunklen Kachel mit dem Schein deiner Klassenfarbe statt im Diamantrahmen, die roten Knöpfe sind flach. Was die Dialoge tun, bleibt unberührt.",
         },
     },

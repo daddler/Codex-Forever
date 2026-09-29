@@ -2168,6 +2168,15 @@ do
         assert(SetOf(bb, 6) == 2, "Buffleisten des Spiels nicht aus")
         assert(ES.report.kept == 2 and ES.report.keptFrom == "EllesmereUI Forever v4", "Uebernahme nicht gemeldet")
         assert(ES.RawValue(20, 3, 500) == nil and ES.RawValue(99, 3, 80) == nil, "Wert ausserhalb des Reglers gesetzt")
+        -- 6.6.3.4: Hoehe der Questliste - aus der Bildschirmhoehe, auf den
+        -- Regler begrenzt.
+        assert(ES.RawValue(20, 3, 500, true) == 15 and ES.RawValue(20, 3, 10, true) == 0, "Begrenzen auf den Regler")
+        local oldGH = UIParent.GetHeight
+        UIParent.GetHeight = function() return 1080 end
+        assert(K.TrackerHeight() == 1080 - 305 - K.TRACKER_BOTTOM, "Hoehe der Questliste: " .. tostring(K.TrackerHeight()))
+        UIParent.GetHeight = oldGH
+        local tracker = Entry("tracker")
+        assert(tracker.display and tracker.display.Height == K.TrackerHeight and tracker.clamp, "Questliste ohne Hoehe im Layout")
         _G.EditModeSettingDisplayInfoManager = oldDI
         -- Erneut, waehrend "WeintCodex" aktiv ist und nie verschoben wurde:
         -- wieder aus dem Layout davor. Hat der Spieler verschoben: seins.

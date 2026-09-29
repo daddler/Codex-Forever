@@ -11,6 +11,8 @@ nicht zusammen.
 
 ## [6.6.3.4] – 2026-09-29
 
+**Die Questliste reicht nicht mehr bis zum Boden.** Die Einrichtung gibt ihr jetzt eine Höchsthöhe – von unter der Minikarte bis über den Tooltip unten rechts; was nicht passt, blendet das Spiel aus. Sofort, ohne neue Einrichtung: Bearbeitungsmodus → Zielverfolgung → „Höhe“.
+
 **Dialoge des Spiels im Stil von WeintCodex.** Rückfragen wie „19 Sekunden bis zum Verlassen“, Einladungen oder „Gegenstand zerstören?“ stehen auf der dunklen Kachel mit dem Schein deiner Klassenfarbe statt im Diamantrahmen, die roten Knöpfe sind flach. Was die Dialoge tun, bleibt unberührt.
 
 ## [6.6.3.3] – 2026-09-29

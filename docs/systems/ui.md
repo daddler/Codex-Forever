@@ -1193,6 +1193,21 @@ Funktion je Rahmen oder Fläche. Wer eine Liste braucht, nimmt
 `W.Regions`/`W.Children` mit eigenem `key`; wer eine Liste über einen
 Aufruf hinaus behalten will, kopiert sie.
 
+**Höhe der Questliste (6.6.3.4).** Beta-Test: „der Questbereich ragt bis
+ganz nach unten – kann man den nicht auf eine Höchstgröße einstellen und
+ggf. darin scrollen?“. Die Liste ist die des Spiels; ihre Höhe ist die
+Einstellung „Höhe“ der Zielverfolgung im Bearbeitungsmodus, und was nicht
+passt, blendet das Spiel aus. Die Einrichtung setzt sie jetzt
+(`K.GAME_LAYOUT` „tracker“, `display = { Height = K.TrackerHeight }`):
+Bildschirmhöhe − 305 (Platz unter der Karte) − `K.TRACKER_BOTTOM` (300,
+über dem Tooltip-Platz), auf den Regler begrenzt (`clamp`,
+`ES.RawValue(..., clamp)`; `display`-Werte dürfen Funktionen sein).
+**Scrollen: nein.** Die Liste trägt die Knöpfe der Questgegenstände –
+geschützte Knöpfe, die ein Addon im Kampf nicht verschieben darf; eine
+Liste in einem Bildlauf verschöbe sie. Wer die Höhe sofort will, ohne neue
+Einrichtung (die setzt auch Chat und Einstellungen neu): Bearbeitungsmodus
+→ Zielverfolgung → „Höhe“.
+
 **Dialoge (6.6.3.4).** Beta-Test: „19 Sekunden bis zum Verlassen“ soll
 auch gestaltet werden. Gemessen: Rahmen und Grund in `StaticPopup1.BG`
 (`UI-DiamondDialogBox-Border`, `UI-DialogBox-Background-Dark`), rote
