@@ -407,6 +407,13 @@ W.HIDE_ATLAS = {
     "^groupfinder%-button%-cover",           -- Goldrahmen um die Kategorien (1 px Rand statt)
     "^common%-search%-border",               -- Goldrand um das Suchfeld (flach statt)
     "^MapCornerShadow",                      -- Schatten am Knopf der Seitenleiste
+    -- 6.8.0.9, gemessen an den Questdetails der Karte
+    -- (QuestMapFrame.QuestsFrame.DetailsFrame): Pergament, der braune Balken
+    -- mit "Zurueck" und der Rahmen der Belohnungen; die Metallstriche
+    -- zwischen Abbrechen | Teilen | Ausblenden.
+    "^QuestDetailsBackgrounds",
+    "^QuestLog%-reward%-",
+    "^UI%-Frame%-BtnDiv",
     -- 6.6.2.3, gemessen: die Eintraege der Liste links an Gilde & Communitys
     -- (gruen, blau) - statt dessen eine kleine Kachel, der gewaehlte mit
     -- Rand im Akzent (W.NavEntry). Das Wappen im Eintrag bleibt.
@@ -1871,7 +1878,10 @@ end
 -- ihnen aus, zu sehen war eine harte Kante. Gemessen wird, wie weit die
 -- Tafeln rechts (Details, sonst der Questlog) in den Ausschnitt ragen;
 -- so weit endet die Maske frueher. Nur Lage, keine Namen der Karte.
-W.MAP_COVERS = { "DetailsFrame" }
+-- Pfade unter QuestMapFrame; gemessen (6.8.0.8, /wcui fenster):
+-- QuestMapFrame.QuestsFrame.DetailsFrame - 6.8.0.8 suchte nur
+-- QuestMapFrame.DetailsFrame (Quelltext des Spiels) und fand nichts.
+W.MAP_COVERS = { { "QuestsFrame", "DetailsFrame" }, { "DetailsFrame" } }
 local function EdgeOf(fr, getter)
     if type(fr) ~= "table" or type(fr[getter]) ~= "function" then return nil end
     local ok, v = pcall(fr[getter], fr)
@@ -1879,22 +1889,34 @@ local function EdgeOf(fr, getter)
     return type(v) == "number" and v or nil
 end
 
+local function CoverVisible(fr)
+    return type(fr) == "table" and fr.IsVisible and K.Bool(fr:IsVisible(), false)
+end
+
+-- Gibt die Ueberdeckung in px zurueck und merkt sich fuer den Bericht,
+-- woran sie gemessen wurde (mapMask.coverRight/-Left).
 function W.MapCut(map, sc)
+    mapMask.coverRight, mapMask.coverLeft = nil, nil
     local right = EdgeOf(sc, "GetRight")
+    local l0 = EdgeOf(sc, "GetLeft")
     if not right then return 0 end
     local qm = map.QuestMapFrame or _G.QuestMapFrame
     local left
     if type(qm) == "table" then
-        for _, key in ipairs(W.MAP_COVERS) do
-            local fr = qm[key]
-            if type(fr) == "table" and fr.IsVisible and K.Bool(fr:IsVisible(), false) then
+        for _, path in ipairs(W.MAP_COVERS) do
+            local fr = qm
+            for _, key in ipairs(path) do fr = type(fr) == "table" and fr[key] or nil end
+            if CoverVisible(fr) then
                 local l = EdgeOf(fr, "GetLeft")
                 if l and (not left or l < left) then left = l end
             end
         end
-        if not left and qm.IsVisible and K.Bool(qm:IsVisible(), false) then left = EdgeOf(qm, "GetLeft") end
+        if not left and CoverVisible(qm) then left = EdgeOf(qm, "GetLeft") end
     end
+    mapMask.coverRight, mapMask.coverLeft = right, left
     if not left or left >= right then return 0 end
+    -- Eine Tafel, die mehr als die halbe Karte deckt, ist keine Seitentafel.
+    if l0 and (right - left) > (right - l0) / 2 then return 0 end
     return math.floor(right - left + 0.5)
 end
 
@@ -1929,8 +1951,11 @@ function W.SoftMap(map)
                 under = under + 1
             end
         end
-        mapMask.report = string.format("   Weicher Rand (Karte): Maske an %d Bildern, darunter %d Bilder am Ausschnitt%s",
-            mapMask.count, under, cut > 0 and string.format(" · rechts %d px früher (Tafel über der Karte)", cut) or "")
+        mapMask.report = string.format("   Weicher Rand (Karte): Maske an %d Bildern, darunter %d Bilder am Ausschnitt · %s",
+            mapMask.count, under, cut > 0 and string.format("rechts %d px früher (Tafel über der Karte)", cut)
+                or string.format("rechts bis zum Rand (Karte rechts %s, Tafel links %s)",
+                    mapMask.coverRight and string.format("%.0f", mapMask.coverRight) or "?",
+                    mapMask.coverLeft and string.format("%.0f", mapMask.coverLeft) or "keine"))
         return mapMask
     end
     local level, base, low = W.MapOverlayLevel(map)
@@ -1942,6 +1967,7 @@ function W.SoftMap(map)
     return o
 end
 
+local mapParts = {}
 function W.SkinMap(f)
     if type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return nil end
     local d = done[f]
@@ -1969,7 +1995,11 @@ function W.SkinMap(f)
     -- 6.7.9.0: mit dem Stil des Fensters (Gold, S.CALM) - die Kategorien
     -- des Questlogs werden Abschnitte wie im Ruf statt mittig mit Lichthof.
     local sc = scoped[f]
-    for _, part in ipairs({ f.BorderFrame, f.OverscrollBG, qm, _G.QuestScrollFrame, f.SidePanelToggle }) do
+    -- Eine Liste fuer alle Durchlaeufe (6.8.0.9: vorher je Durchlauf neu).
+    mapParts[1], mapParts[2], mapParts[3], mapParts[4], mapParts[5] =
+        f.BorderFrame, f.OverscrollBG, qm, _G.QuestScrollFrame, f.SidePanelToggle
+    for i = 1, 5 do
+        local part = mapParts[i]
         if type(part) == "table" then HideByAtlas(part, 0, scoped[part] or sc) end
     end
     Grey(f, 0)

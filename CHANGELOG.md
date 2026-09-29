@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.8.0.9] – 2026-09-29
+
+**Quests an der Karte ohne Pergament.** Öffnest du eine Quest, liegt ihr Text auf derselben ruhigen Fläche mit feiner Kante in Gold wie der Questlog – ohne Pergament, ohne braunen Balken, ohne Metallstriche zwischen den Knöpfen, in heller Schrift. Farben, die etwas sagen, bleiben.
+
+**Die Karte läuft jetzt wirklich weich vor der Quest aus.** Der weiche Rand endet vor der geöffneten Quest statt unter ihr.
+
+### Technisch
+
+- 6.8.0.8 suchte die Details unter `QuestMapFrame.DetailsFrame` (Quelltext des Spiels); gemessen (`/wcui fenster`) liegen sie unter `QuestMapFrame.QuestsFrame.DetailsFrame` – gefunden wurde nichts, der Rand blieb hart. `W.MAP_COVERS` sind jetzt Pfade (`{ "QuestsFrame", "DetailsFrame" }`, `{ "DetailsFrame" }`); eine Tafel, die mehr als die halbe Karte deckt, zählt nicht. Der Bericht nennt ohne Überdeckung beide Kanten („Karte rechts …, Tafel links …“).
+- `W.HIDE_ATLAS`: `QuestDetailsBackgrounds` (Pergament), `QuestLog-reward-*` (Balken mit „Zurück“, Rahmen der Belohnungen), `UI-Frame-BtnDiv*` (Metallstriche zwischen den Knöpfen) – gemessen.
+- `ui/questlog.lua`: `QL.Details(f)`; Fläche mit Schatten und Kante in Gold unter `QuestMapDetailsScrollFrame` bis zur Bildlaufleiste, aus mit den Details; `W.LightenText` auf die Details (nur dunkle Schrift, ohne Farbcodes). Bericht: „Details auf Fläche, Schrift hell“.
+- `W.SkinMap` baute je Durchlauf eine Liste seiner Teile – jetzt eine für alle.
+- `load_test.lua`: Details wie gemessen (Pergament, Balken, Striche weg; Titel hell, Grün bleibt; Fläche, kein Müll; zu → Fläche weg); Überdeckung unter dem gemessenen Pfad.
+
 ## [6.8.0.8] – 2026-09-29
 
 **Die Karte bleibt weich, auch neben einer Quest.** Öffnest du eine Quest auf der Karte, legt sich die Beschreibung über den rechten Teil der Karte – der weiche Rand lief bisher darunter aus, zu sehen war eine harte Kante. Jetzt läuft die Karte vor der Beschreibung weich aus.

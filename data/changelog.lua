@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.8.0.9",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFQuests an der Karte ohne Pergament.|r Öffnest du eine Quest, liegt ihr Text auf derselben ruhigen Fläche mit feiner Kante in Gold wie der Questlog – ohne Pergament, ohne braunen Balken, ohne Metallstriche zwischen den Knöpfen, in heller Schrift. Farben, die etwas sagen, bleiben.",
+            "|cff7C6CFFDie Karte läuft jetzt wirklich weich vor der Quest aus.|r Der weiche Rand endet vor der geöffneten Quest statt unter ihr.",
+        },
+    },
+    {
         version = "6.8.0.8",
         date    = "29.09.2026",
         notes   = {

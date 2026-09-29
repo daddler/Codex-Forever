@@ -4527,7 +4527,9 @@ do
         local qm, details = stub.NewObject("Frame"), stub.NewObject("Frame")
         qm.GetLeft = function() return 1000 end
         details.GetLeft = function() return 880 end
-        qm.DetailsFrame = details
+        -- Gemessen (6.8.0.8): die Details liegen unter .QuestsFrame.
+        local qsF = stub.NewObject("Frame")
+        qm.QuestsFrame, qsF.DetailsFrame = qsF, details
         map.QuestMapFrame = qm
         W.SoftMap(map)
         assert(br == -120 and W.mapMask.cut == 120, "Rand laeuft unter den Questdetails aus: " .. tostring(br))
@@ -4535,6 +4537,8 @@ do
         details:Hide()
         W.SoftMap(map)
         assert(br == 0 and W.mapMask.cut == 0, "Rand bleibt verkuerzt ohne Details")
+        assert(table.concat(W.SoftReport(map), " "):find("rechts bis zum Rand (Karte rechts 1000, Tafel links 1000)", 1, true),
+            "Bericht ohne Messung: " .. table.concat(W.SoftReport(map), " "))
         br = nil
         W.SoftMap(map)
         assert(br == nil, "Maske in jedem Durchlauf neu verankert")
@@ -6817,7 +6821,7 @@ do
         for _ = 1, 3 do QL.Update(map) W.SkinMap(map) end
         assert(made == before and #tileA._masks == 1, "Questlog legt etwas auf die Karte")
         local rep = table.concat(QL.Report(map, {}), "\n")
-        assert(rep:find("Questlog (Stil ruhig): Spalte auf Fläche · Karte unberührt", 1, true), "Bericht: " .. rep)
+        assert(rep:find("Questlog (Stil ruhig): Spalte auf Fläche · Details nicht gefunden · Karte unberührt", 1, true), "Bericht: " .. rep)
         -- Seitenleiste zu: Flaeche weg.
         qsf:Hide()
         QL.Update(map)
@@ -6830,6 +6834,54 @@ do
         local grew = collectgarbage("count") - k0
         collectgarbage("restart")
         assert(grew < 1, string.format("Questlog legt im Takt Muell an: %.1f KB", grew))
+        -- 6.8.0.9: eine Quest geoeffnet (gemessen: QuestMapFrame.QuestsFrame.
+        -- DetailsFrame, Text in QuestMapDetailsScrollFrame). Pergament, Balken
+        -- und Rahmen der Belohnungen weg, Schrift hell, Text auf Flaeche.
+        local qmf, qframe, dframe = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Frame")
+        local dtext, dbar = stub.NewObject("Frame"), stub.NewObject("Frame")
+        dtext.ScrollBar = dbar
+        qmf.QuestsFrame, qframe.DetailsFrame = qframe, dframe
+        local parchment, rewardTop, divider = Tex("QuestDetailsBackgrounds"), Tex("QuestLog-reward-top-frame"),
+            Tex("UI-Frame-BtnDivMiddle")
+        local title = stub.NewObject("FontString")
+        title._text, title._font = "Geschäfte in Auberdine", true
+        title.GetTextColor = function(self) return self._r or 0.18, self._g or 0.10, self._b or 0.02 end
+        title.SetTextColor = function(self, r, g, b) self._r, self._g, self._b = r, g, b end
+        local green = stub.NewObject("FontString")
+        green._text, green._font = "Belohnung", true
+        green.GetTextColor = function() return 0.1, 1, 0.1 end
+        green.SetTextColor = function() error("Farbe mit Bedeutung ueberschrieben") end
+        dtext.GetRegions = function() return title, green end
+        dtext.GetChildren = function() return dbar end
+        dframe.GetRegions = function() return parchment, rewardTop, divider end
+        dframe.GetChildren = function() return dtext end
+        qframe.GetChildren = function() return dframe end
+        qmf.GetChildren = function() return qframe end
+        map.QuestMapFrame = qmf
+        local oldDSF = _G.QuestMapDetailsScrollFrame
+        _G.QuestMapDetailsScrollFrame = dtext
+        qsf:Hide()
+        W.SkinMap(map)
+        QL.Update(map)
+        assert(parchment:GetAlpha() == 0 and rewardTop:GetAlpha() == 0 and divider:GetAlpha() == 0, "Pergament, Balken oder Striche bleiben")
+        local dcol = QL.details[map]
+        assert(dcol and dcol.on and dcol.body._parent == map and dcol.anchor == dtext, "Questdetails nicht auf Flaeche")
+        assert(not col.on, "Spalte bleibt unter den Details")
+        assert(title._r and title._r > 0.5, "braune Schrift der Quest bleibt dunkel")
+        rep = table.concat(QL.Report(map, {}), "\n")
+        assert(rep:find("Details auf Fläche, Schrift hell", 1, true), "Bericht: " .. rep)
+        collectgarbage("collect")
+        collectgarbage("stop")
+        k0 = collectgarbage("count")
+        for _ = 1, 20 do QL.Update(map) end
+        grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Questdetails legen im Takt Muell an: %.1f KB", grew))
+        dframe:Hide()
+        QL.Update(map)
+        assert(not dcol.on and not dcol.body:IsShown(), "Flaeche der Details bleibt")
+        map.QuestMapFrame = nil
+        _G.QuestMapDetailsScrollFrame = oldDSF
         W.done[map] = nil
         _G.WorldMapFrame, _G.QuestScrollFrame = oldWM, oldQSF
     end)

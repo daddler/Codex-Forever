@@ -2202,8 +2202,24 @@ die sichtbare Tafel (`W.MAP_COVERS`, sonst `QuestMapFrame`) in den
 Ausschnitt ragt (rechter Rand des Ausschnitts minus linker Rand der
 Tafel), und alle Masken enden um so viel früher – neu verankert nur,
 wenn sich das ändert. `/wcui fenster` nennt „rechts … px früher“.
-Die Details selbst tragen noch Pergament (`QuestDetailsBackgrounds`,
-`QuestLog-reward-*`) – nicht Teil dieser Änderung.
+**Nachgemessen (6.8.0.9):** gesucht wurde unter
+`QuestMapFrame.DetailsFrame`, die Details liegen im Forever-Client unter
+`QuestMapFrame.QuestsFrame.DetailsFrame` – der Rand blieb hart.
+`W.MAP_COVERS` sind seitdem Pfade; eine Tafel, die mehr als die halbe
+Karte deckt, zählt nicht. Ohne Überdeckung nennt der Bericht beide Kanten.
+
+**Questdetails in der ruhigen Oberfläche (6.8.0.9).** Gemessen: Pergament
+`QuestDetailsBackgrounds`, Balken mit „Zurück“ `QuestLog-reward-top-frame`
+(`.BackFrame`), Rahmen der Belohnungen `QuestLog-reward-bottom/-header-top/
+-tile-vertical` (`.RewardsFrameContainer.RewardsFrame`), Metallstriche
+`UI-Frame-BtnDivMiddle` zwischen Abbrechen | Teilen | Ausblenden, Text in
+`QuestMapDetailsScrollFrame` (`.ScrollBar` minimal). Alle vier Atlanten in
+`W.HIDE_ATLAS`; `ui/questlog.lua` legt unter den Text dieselbe Fläche wie
+unter die Spalte (Schatten, Kante in Gold, Bildlaufleiste als Ecke) und
+macht dunkle Schrift hell (`W.LightenText`, ohne Farbcodes). Farbige
+Schrift (Belohnungen, Ziele erfüllt) bleibt. Titel und „Beschreibung“
+behalten die Schrift des Spiels; Raute und Linie dort erst nach Messung
+(die Schriftzeilen wandern zwischen Questfenster und Karte).
 
 ### Suche nach Gruppe *(6.8.0.0, `ui/lfg.lua`, seit 6.8.0.2 `ui/calm.lua`)*
 

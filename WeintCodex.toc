@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.8.0.8
+## Version: 6.8.0.9
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -201,7 +201,7 @@ ui/gamemenu.lua
 ui/gossip.lua
 # Haendler (6.8.0.6): Gold, Waren auf Flaeche, Geld als Innenflaeche, Reiter flach.
 ui/merchant.lua
-# Karte & Questlog (6.7.9.0): Questlog auf Flaeche, Abschnitte in Gold, Karte unberuehrt.
+# Karte & Questlog (6.7.9.0, 6.8.0.9): Questlog und Questdetails auf Flaeche, Gold, Karte unberuehrt.
 ui/questlog.lua
 # Fenster in Gold mit Innenflaechen (6.8.0.0 Suche nach Gruppe, 6.8.0.2 Sammlung).
 ui/calm.lua

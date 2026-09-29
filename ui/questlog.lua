@@ -1,5 +1,5 @@
 --------------------------------------------------
--- WeintCodex :: Oberflaeche - Karte & Questlog (6.7.9.0)
+-- WeintCodex :: Oberflaeche - Karte & Questlog (6.7.9.0, 6.8.0.9)
 --------------------------------------------------
 -- Die Weltkarte mit dem Questlog (WorldMapFrame) in der ruhigen
 -- Informationsoberflaeche, in GOLD (S.CALM) - sie gehoert nicht zur Klasse.
@@ -16,6 +16,13 @@
 --             Abschnitte wie im Ruf (Text links, Raute, Linie, Band, Gold)
 --             statt mittig mit Lichthof (ui/windows.lua, W.SkinMap).
 --   Grund     der Schein der Klasse oben ist in Gold aus (W.HoldGlow).
+--   Details   (6.8.0.9) die geoeffnete Quest (QuestMapFrame.QuestsFrame.
+--             DetailsFrame) liegt wie die Spalte auf der Flaeche mit Kante
+--             in Gold: Pergament, brauner Balken mit "Zurueck", Rahmen der
+--             Belohnungen und Metallstriche zwischen den Knoepfen weg
+--             (W.HIDE_ATLAS), braune Schrift hell (W.LightenText - Farben
+--             mit Bedeutung bleiben). Unter der Flaeche: der Text
+--             (QuestMapDetailsScrollFrame) bis zu seiner Bildlaufleiste.
 --
 -- Unveraendert: Farben der Quests (Schwierigkeit: gelb, gruen, grau - sie
 -- sagen etwas), Ziele, Symbole (Quest, Abgabe), Haekchen zum Verfolgen,
@@ -58,7 +65,15 @@ function QL.List()
     return IsFrame(l) and l or nil
 end
 
-local function Build(f, list)
+-- Die geoeffnete Quest: ihr Rahmen und ihr Text (gemessen 6.8.0.8).
+function QL.Details(f)
+    local qm = f.QuestMapFrame or _G.QuestMapFrame
+    local d = IsFrame(qm) and ((IsFrame(qm.QuestsFrame) and qm.QuestsFrame.DetailsFrame) or qm.DetailsFrame) or nil
+    local text = _G.QuestMapDetailsScrollFrame
+    return IsFrame(d) and d or nil, IsFrame(text) and text or nil
+end
+
+local function Column(f, list)
     local accent = S.Accent(QL.STYLE.accent)
     local c = GC.surfaceRaised
     local sb = list.ScrollBar
@@ -69,25 +84,44 @@ local function Build(f, list)
     col.edge = S.Under(S.Divider(f, accent, QL.EDGE, 0), -3)
     S.PlaceTop(col.edge, list, 12, QL.PAD)
     col.parts = { col.body, col.shadow, col.edge.l, col.edge.r }
-    cols[f] = col
     return col
 end
 
-function QL.Update(f)
-    local list = QL.List()
-    if not list then return nil end
-    local col = cols[f] or Build(f, list)
-    local on = Visible(list)
+local function Sync(col, on)
     if col.on ~= on then
         col.on = on
         for _, t in ipairs(col.parts) do t:SetShown(on) end
+    end
+end
+
+local details = setmetatable({}, { __mode = "k" })
+QL.details = details
+
+function QL.Update(f)
+    local list = QL.List()
+    local col
+    if list then
+        col = cols[f]
+        if not col then col = Column(f, list) cols[f] = col end
+        Sync(col, Visible(list))
+    end
+    -- Die geoeffnete Quest: Flaeche unter dem Text, Schrift hell.
+    local frame, text = QL.Details(f)
+    if frame and text then
+        local dc = details[f]
+        if not dc then dc = Column(f, text) details[f] = dc end
+        local on = Visible(frame) and Visible(text)
+        Sync(dc, on)
+        if on then W.LightenText(frame, false) end
     end
     return col
 end
 
 function QL.Report(f, out)
     local col = cols[f]
-    out[#out + 1] = string.format("   %s (Stil %s): Spalte %s · Karte unberührt (weicher Rand bleibt)", QL.LABEL, QL.STYLE.name,
-        col and (col.on and "auf Fläche" or "zu") or "nicht gefunden")
+    local dc = details[f]
+    out[#out + 1] = string.format("   %s (Stil %s): Spalte %s · Details %s · Karte unberührt (weicher Rand bleibt)", QL.LABEL, QL.STYLE.name,
+        col and (col.on and "auf Fläche" or "zu") or "nicht gefunden",
+        dc and (dc.on and "auf Fläche, Schrift hell" or "zu") or "nicht gefunden")
     return out
 end
