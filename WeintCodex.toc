@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.7.8.0
+## Version: 6.7.9.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -193,6 +193,8 @@ ui/profbook.lua
 ui/spellbook.lua
 # Gilde & Communitys (6.7.8.0): drei Spalten auf Flaechen, Gold.
 ui/community.lua
+# Spielmenue (6.7.9.0): Gold, Linie unter dem Titel, Haarlinien zwischen den Gruppen.
+ui/gamemenu.lua
 ui/testmode.lua
 ui/options.lua
 ui/editmode.lua

@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.9.0] – 2026-09-29
+
+**Das Spielmenü in der ruhigen Oberfläche.** Statt des Scheins in deiner Klassenfarbe ein Hauch Licht von oben und eine feine Kante in Gold; unter „Spielmenü“ eine Linie mit Raute, und zwischen den Gruppen – Optionen, Addons bis Makros, Ausloggen und Spiel verlassen, Zurück zum Spiel – je eine zarte Trennlinie.
+
+**Dialoge wie „20 Sekunden bis zum Verlassen“ passen dazu.** Kein Schein in der Klassenfarbe mehr über dem ganzen Dialog, sondern dasselbe ruhige Licht und dieselbe Kante in Gold. Texte, Knöpfe und was sie tun bleiben unverändert.
+
+### Technisch
+
+- Neu `ui/gamemenu.lua` (`WeintCodex.UIGameMenu`): `GameMenuFrame` in `S.CALM`, in `W.HOSTED`. Neutrales Licht (110 px), Kante oben in Gold, Linie mit Raute unter dem Titel (`.Header.Text`, sonst oberste Zeile des Kopfes), Haarlinie in jeder Lücke > 6 px zwischen sichtbaren Knöpfen – je Durchlauf an deren Lage gemessen, ohne Anlage, höchstens sechs. Schein der Klasse aus (`W.HoldGlow`). Nichts bewegt.
+- `W.SkinPopup` (`StaticPopup1..4`): statt des Scheins in der Klassenfarbe neutrales Licht (60 px) und Kante in Gold, Stil `S.CALM`.
+- `load_test.lua`: Menü mit drei Gruppen (Linien in den Lücken, eine weniger ohne Knopf), Dialog ohne Klassenfarbe.
+
 ## [6.7.8.0] – 2026-09-29
 
 **Ein bisschen Klassenfarbe im Zauberbuch.** Von oben fällt ein Hauch Licht in deiner Klassenfarbe, die Fläche mit deinen Zaubern trägt oben eine feine Kante in deiner Klasse – wie die Karten in Ruf und Fertigkeiten. Nicht mehr der große Schein über der halben Seite.

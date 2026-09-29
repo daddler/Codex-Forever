@@ -6510,6 +6510,88 @@ do
     Check(okG, "Gilde & Communitys: Gold, drei Spalten auf Flaechen, Eintrag links in Gold, kein Schein der Klasse, kein Muell"
         .. (okG and "" or (": " .. tostring(errG))))
 
+    -- 6.7.9.0: Spielmenue und Dialoge in Gold. Menue: Titel mit Linie
+    -- darunter, eine Haarlinie in jeder Luecke zwischen Gruppen von
+    -- Knoepfen (gemessen an der Lage), kein Schein der Klasse. Dialog: statt
+    -- des Scheins neutrales Licht und Kante in Gold.
+    local okM, errM = pcall(function()
+        local W, S, GM = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIGameMenu
+        local GC = WeintCodex.GameColors
+        assert(GM and W.HOSTED.GameMenuFrame and W.HOSTED.GameMenuFrame[1] == GM and S.SCOPES.GameMenuFrame == S.CALM,
+            "Spielmenue nicht in Gold am Fenster eingetragen")
+        local moved = {}
+        local menu = stub.NewObject("Frame")
+        menu.GetTop = function() return 500 end
+        local header, title = stub.NewObject("Frame"), stub.NewObject("FontString")
+        title._text, title._font = "Spielmenü", true
+        title.GetBottom = function() return 486 end
+        header.Text = title
+        menu.Header = header
+        -- Drei Gruppen: 1 | 2 3 | 4, Knoepfe 20 hoch, Luecke 12.
+        local tops = { 470, 438, 418, 386 }
+        local buttons = {}
+        for i, t in ipairs(tops) do
+            local b = stub.NewObject("Button")
+            b.GetTop, b.GetBottom = function() return t end, function() return t - 20 end
+            b.SetPoint = function() moved[#moved + 1] = i end
+            buttons[i] = b
+        end
+        menu.GetChildren = function() return header, unpack(buttons) end
+        local glow = stub.NewObject("Texture")
+        W.done[menu] = { glow = glow }
+        local grad, classy = S.Gradient, 0
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == K.Highlight() then classy = classy + 1 end
+            return grad(t, dir, c, a0, a1)
+        end
+        S.Scope(menu, S.CALM)
+        GM.Update(menu)
+        W.HoldGlow(menu, "GameMenuFrame")
+        local m = GM.menus[menu]
+        assert(m and m.light and m.edge and m.y == -20 and m.orn.dot:IsShown(), "Titel ohne Linie: " .. tostring(m and m.y))
+        -- Luecken: 450 -> 438 und 398 -> 386: Linien bei -56 und -108.
+        assert(m.groups == 2 and m.lines[1].on and m.lines[2].on and not m.lines[3].on, "Gruppen falsch: " .. tostring(m.groups))
+        assert(m.lines[1].y == -56 and m.lines[2].y == -108, "Linie nicht in der Luecke: " .. tostring(m.lines[1].y) .. "/" .. tostring(m.lines[2].y))
+        assert(not glow:IsShown() and #moved == 0, "Schein der Klasse bleibt oder Knopf bewegt")
+        -- Ein Knopf weg (anderes Menue): eine Linie weniger.
+        buttons[1]:Hide()
+        GM.Update(menu)
+        assert(m.groups == 1 and not m.lines[2].on and not m.lines[2].l:IsShown(), "Linie bleibt ohne Luecke")
+        buttons[1]:Show()
+        for _ = 1, 3 do GM.Update(menu) end
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do GM.Update(menu) W.HoldGlow(menu, "GameMenuFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        print(string.format("    (20 Durchlaeufe Spielmenue: %.1f KB)", grew))
+        assert(grew < 1, string.format("Spielmenue legt im Takt Muell an: %.1f KB", grew))
+        local rep = table.concat(GM.Report(menu, {}), "\n")
+        assert(rep:find("Spielmenü (Stil ruhig): Titel gefunden, Trennlinien 2", 1, true), "Bericht: " .. rep)
+        -- Dialog: kein Schein der Klasse, Licht neutral, Kante in Gold.
+        local pop = stub.NewObject("Frame", "StaticPopup3")
+        _G.StaticPopup3 = pop
+        local oldUC, oldRCC = _G.UnitClass, _G.RAID_CLASS_COLORS
+        _G.UnitClass = function() return "Krieger", "WARRIOR", 1 end
+        _G.RAID_CLASS_COLORS = { WARRIOR = { r = 0.78, g = 0.61, b = 0.43 } }
+        local goldy = 0
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == K.Highlight() then classy = classy + 1 end
+            if c == GC.frameAccent then goldy = goldy + 1 end
+            return grad(t, dir, c, a0, a1)
+        end
+        local d = W.SkinPopup(pop)
+        S.Gradient = grad
+        _G.UnitClass, _G.RAID_CLASS_COLORS = oldUC, oldRCC
+        _G.StaticPopup3 = nil
+        assert(d and not d.glow and d.light and d.edge and goldy > 0, "Dialog mit Schein der Klasse oder ohne Kante in Gold")
+        assert(classy == 0, "Klassenfarbe in Menue oder Dialog: " .. classy)
+        W.done[menu] = nil
+    end)
+    Check(okM, "Spielmenue und Dialoge: Gold, Linie unter dem Titel, Haarlinien zwischen Gruppen, kein Schein der Klasse"
+        .. (okM and "" or (": " .. tostring(errM))))
+
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett
     -- auf Wunsch. Es bleibt ein Akzent (accent = purple = violet = brandA).
     local ok4, err4 = pcall(function()

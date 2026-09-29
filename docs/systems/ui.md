@@ -2137,6 +2137,32 @@ Knöpfe, und innen die Mitgliederliste (`W.INSET_KEEP`, 6.6.3.3: „im
 Normalzustand“) – ihre Fläche liegt darunter, zu sehen sind Schatten und
 Kante.
 
+### Spielmenü und Dialoge *(6.7.9.0, `ui/gamemenu.lua`, `W.SkinPopup`)*
+
+Beta-Test: „die beiden Fenster auch noch machen“. **Gemessen**
+(`/wcui fenster`): `GameMenuFrame` und `StaticPopup1` zeigen nur noch
+unsere Flächen („FileData ID 0“) – Rahmen, rote Knöpfe und Grund sind
+seit 6.6.3.3/6.6.3.4 weg. Übrig war der Schein in der Klassenfarbe (im
+Menü 260 px oben, im Dialog über die ganze Fläche) – die alte Sprache.
+
+Beide gehören nicht zur Klasse: **Gold** (`S.CALM`).
+
+- **Spielmenü** (`W.HOSTED.GameMenuFrame`): Schein der Klasse aus
+  (`W.HoldGlow`), neutrales Licht (110 px), oben eine Kante in Gold (50 %);
+  unter dem Titel eine Linie mit Raute (`S.Ornament`, 6 px darunter); in
+  jeder Lücke > 6 px zwischen zwei sichtbaren Knöpfen eine Haarlinie
+  (`GC.hairline`, doppelte Deckkraft) – gemessen an der Lage, nicht an
+  Namen: das Menü baut seine Knöpfe selbst, und ein Addon kann einen
+  dazulegen. Höchstens sechs Linien, vorab angelegt; die überzähligen aus.
+- **Dialoge** (`W.SkinPopup`): statt des Scheins neutrales Licht (60 px)
+  und Kante in Gold; Stil `S.CALM` am Dialog.
+
+**Unverändert:** Knöpfe (Text, Reihenfolge, Lage, Skript), Texte der
+Dialoge, das Warnzeichen, der Countdown. Die gelbe Schrift der
+Dialogknöpfe („Jetzt verlassen“) ist die des Spiels und bleibt – anders
+als die weiße im Menü, aber umfärben hieße, eine Schrift des Spiels zu
+überschreiben, die bei jedem Dialog neu gesetzt wird.
+
 ### Nächste Fenster
 
 Vorgesehen: Berufsübersicht (nach Messung), Gilde (mittlere Atmosphäre), Talente

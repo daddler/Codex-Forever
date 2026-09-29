@@ -1372,9 +1372,12 @@ W.SkinPanelButton, W.ButtonSkin = SkinPanelButton, btnSkin
 -- geaendert werden nur Bilder - kein Skript, kein Feld am Dialog, nichts
 -- an StaticPopupDialogs. Die eigenen Bilder des Dialogs (etwa das
 -- Warnzeichen) bleiben; nur der Grund (.BG) geht.
--- Kachel ohne Schatten nach aussen; der Schein der Klasse fuellt den
--- Dialog ganz (er ist niedriger als die 260 px des Fensterscheins, der
--- sonst unten hinausragte).
+-- Kachel ohne Schatten nach aussen. Seit 6.7.9.0 in der ruhigen Sprache:
+-- Dialoge gehoeren nicht zur Klasse - statt des Scheins in der Klassenfarbe
+-- (fuellte den Dialog ganz) ein Hauch neutrales Licht von oben und oben
+-- eine feine Kante in Gold (S.CALM), wie das Spielmenue.
+W.POPUP_LIGHT = 60          -- Hoehe des Lichts von oben
+W.POPUP_EDGE = 0.5          -- Deckkraft der Kante in Gold
 W.POPUPS = { "StaticPopup1", "StaticPopup2", "StaticPopup3", "StaticPopup4" }
 local popupDone = setmetatable({}, { __mode = "k" })
 W.PopupDone = popupDone
@@ -1389,23 +1392,11 @@ function W.SkinPopup(f)
     HideByAtlas(f, 0)
     d.kachel = K.Kachel(f, { alpha = 0.96, shadow = 0 })
     own[d.kachel.bg], own[d.kachel.light] = true, true
-    if Opt("windowArt") then
-        local r, g, b = ClassRGB()
-        if r then
-            local a = WeintCodex.GameColors.windowGlow[4]
-            local t = f:CreateTexture(nil, "BACKGROUND", nil, -6)
-            t:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
-            t:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, 1)
-            t:SetColorTexture(1, 1, 1, 1)
-            if t.SetGradient and _G.CreateColor then
-                t:SetGradient("VERTICAL", _G.CreateColor(r, g, b, 0), _G.CreateColor(r, g, b, a))
-            else
-                t:SetColorTexture(r, g, b, a * 0.4)
-            end
-            own[t] = true
-            d.glow = t
-        end
-    end
+    S.Scope(f, S.CALM)
+    local l = WeintCodex.GameColors.atmosLight
+    d.light = S.TopLight(f, f, l, l[4], W.POPUP_LIGHT, -5)
+    d.edge = S.Under(S.Divider(f, S.Accent(S.CALM.accent), W.POPUP_EDGE, 0), -3)
+    S.PlaceTop(d.edge, f, 10, -1)
     local name = f.GetName and f:GetName()
     for i = 1, 4 do
         local b = (type(name) == "string" and _G[name .. "Button" .. i]) or f["button" .. i]

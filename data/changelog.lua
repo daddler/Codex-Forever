@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.7.9.0",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDas Spielmenü in der ruhigen Oberfläche.|r Statt des Scheins in deiner Klassenfarbe ein Hauch Licht von oben und eine feine Kante in Gold; unter „Spielmenü“ eine Linie mit Raute, und zwischen den Gruppen – Optionen, Addons bis Makros, Ausloggen und Spiel verlassen, Zurück zum Spiel – je eine zarte Trennlinie.",
+            "|cff7C6CFFDialoge wie „20 Sekunden bis zum Verlassen“ passen dazu.|r Kein Schein in der Klassenfarbe mehr über dem ganzen Dialog, sondern dasselbe ruhige Licht und dieselbe Kante in Gold. Texte, Knöpfe und was sie tun bleiben unverändert.",
+        },
+    },
+    {
         version = "6.7.8.0",
         date    = "29.09.2026",
         notes   = {
