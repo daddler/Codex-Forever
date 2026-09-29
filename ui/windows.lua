@@ -337,6 +337,8 @@ W.HIDE_ATLAS = {
     "^_?128%-RedButton%-",                   -- rote Knoepfe im Spielmenue (6.6.3.3)
     "^collections%-background%-",            -- Leder, Schatten, Ecken der Sammlung (6.6.3.3)
     "^!?_?UI%-Frame%-DiamondMetal%-",        -- Rahmen und Kopf des Spielmenues
+    "^UI%-DiamondDialogBox%-",               -- Rahmen der Dialoge (6.6.3.4)
+    "^UI%-DialogBox%-Background",            -- Grund der Dialoge
     -- Zauberbuch (Blizzard_PlayerSpells, Quelltext des Spiels 12.x):
     "^spellbook%-background",                -- Pergament, Buchseiten, Band
     "^spellbook%-corner",                    -- Eselsohr zum Blaettern
@@ -1238,12 +1240,22 @@ W.SkinTabSystems = function(f) SkinTabSystems(f, 0) end
 -- tauschen die Bilder des Spiels - die bleiben unsichtbar, der Text zeigt
 -- den gesperrten Zustand weiter grau.
 local btnSkin = setmetatable({}, { __mode = "k" })
-local function SkinPanelButton(b)
+-- states: auch die Zustandsbilder des Knopfs (normal, gedrueckt,
+-- gesperrt) ausblenden - Knoepfe, deren Bild eine Datei ist statt drei
+-- Teilen (Dialoge, 6.6.3.4).
+local STATE_GETTERS = { "GetNormalTexture", "GetPushedTexture", "GetDisabledTexture" }
+local function SkinPanelButton(b, states)
     if btnSkin[b] then return end
     btnSkin[b] = true
     for _, k in ipairs({ "Left", "Middle", "Right" }) do Hide(b[k]) end
     local hl = b.GetHighlightTexture and b:GetHighlightTexture()
     if type(hl) == "table" then Hide(hl) end
+    if states then
+        for _, g in ipairs(STATE_GETTERS) do
+            local ok, t = pcall(function() return b[g] and b[g](b) end)
+            if ok and type(t) == "table" then Hide(t) end
+        end
+    end
     local d = K.Kachel(b, { shadow = 0 })
     own[d.bg], own[d.light] = true, true
     local s1 = C.surface1
@@ -1256,6 +1268,62 @@ local function SkinPanelButton(b)
 end
 
 W.SkinPanelButton, W.ButtonSkin = SkinPanelButton, btnSkin
+
+--------------------------------------------------
+-- Dialoge des Spiels (6.6.3.4)
+--------------------------------------------------
+-- Beta-Test: "19 Sekunden bis zum Verlassen" soll auch gestaltet werden.
+-- Gemessen mit /wcui fenster: Rahmen und Grund in StaticPopup1.BG
+-- ("UI-DiamondDialogBox-Border", "UI-DialogBox-Background-Dark"), rote
+-- Knoepfe als Bilddateien an StaticPopup1Button1/2. Dieselben vier
+-- Dialoge tragen Bestaetigungen, die das Spiel schuetzt (Gegenstand
+-- zerstoeren, Einladung annehmen, Geist freilassen, Spiel verlassen):
+-- geaendert werden nur Bilder - kein Skript, kein Feld am Dialog, nichts
+-- an StaticPopupDialogs. Die eigenen Bilder des Dialogs (etwa das
+-- Warnzeichen) bleiben; nur der Grund (.BG) geht.
+-- Kachel ohne Schatten nach aussen; der Schein der Klasse fuellt den
+-- Dialog ganz (er ist niedriger als die 260 px des Fensterscheins, der
+-- sonst unten hinausragte).
+W.POPUPS = { "StaticPopup1", "StaticPopup2", "StaticPopup3", "StaticPopup4" }
+local popupDone = setmetatable({}, { __mode = "k" })
+W.PopupDone = popupDone
+
+function W.SkinPopup(f)
+    if type(f) ~= "table" or popupDone[f] or not f.CreateTexture or (f.IsForbidden and f:IsForbidden()) then
+        return popupDone[f]
+    end
+    local d = {}
+    popupDone[f] = d
+    HideDecor(f.BG)
+    HideByAtlas(f, 0)
+    d.kachel = K.Kachel(f, { alpha = 0.96, shadow = 0 })
+    own[d.kachel.bg], own[d.kachel.light] = true, true
+    if Opt("windowArt") then
+        local r, g, b = ClassRGB()
+        if r then
+            local a = WeintCodex.GameColors.windowGlow[4]
+            local t = f:CreateTexture(nil, "BACKGROUND", nil, -6)
+            t:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
+            t:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, 1)
+            t:SetColorTexture(1, 1, 1, 1)
+            if t.SetGradient and _G.CreateColor then
+                t:SetGradient("VERTICAL", _G.CreateColor(r, g, b, 0), _G.CreateColor(r, g, b, a))
+            else
+                t:SetColorTexture(r, g, b, a * 0.4)
+            end
+            own[t] = true
+            d.glow = t
+        end
+    end
+    local name = f.GetName and f:GetName()
+    for i = 1, 4 do
+        local b = (type(name) == "string" and _G[name .. "Button" .. i]) or f["button" .. i]
+        if type(b) == "table" and b.CreateTexture and not (b.IsForbidden and b:IsForbidden()) then
+            pcall(SkinPanelButton, b, true)
+        end
+    end
+    return d
+end
 
 local function SkinPanelButtons(f, depth)
     if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
@@ -2077,6 +2145,7 @@ function W.Apply()
         end
     end
     for _, path in ipairs(W.OWN_BG_PATHS) do W.OwnBackground(W.Resolve(path)) end
+    for _, n in ipairs(W.POPUPS) do W.SkinPopup(_G[n]) end
     W.Inner()
 end
 

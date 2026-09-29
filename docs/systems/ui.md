@@ -1193,6 +1193,20 @@ Funktion je Rahmen oder Fläche. Wer eine Liste braucht, nimmt
 `W.Regions`/`W.Children` mit eigenem `key`; wer eine Liste über einen
 Aufruf hinaus behalten will, kopiert sie.
 
+**Dialoge (6.6.3.4).** Beta-Test: „19 Sekunden bis zum Verlassen“ soll
+auch gestaltet werden. Gemessen: Rahmen und Grund in `StaticPopup1.BG`
+(`UI-DiamondDialogBox-Border`, `UI-DialogBox-Background-Dark`), rote
+Knöpfe als Bilddateien an `StaticPopup1Button1/2`. `W.SkinPopup` für
+`W.POPUPS` (`StaticPopup1`–`4`), einmal je Dialog beim Anwenden: `.BG`
+weg (nicht die eigenen Bilder des Dialogs – das Warnzeichen bleibt),
+Kachel ohne Schatten, der Schein der Klasse **über die ganze Höhe** (die
+260 px des Fensterscheins ragten unten hinaus), Knöpfe über
+`SkinPanelButton(b, true)` – mit `true` gehen auch die Zustandsbilder
+(normal, gedrückt, gesperrt). Über diese Dialoge laufen geschützte
+Bestätigungen (Gegenstand zerstören, Einladung, Geist freilassen,
+Verlassen): geändert werden nur Bilder – kein Skript, kein Feld am
+Dialog, nichts an `StaticPopupDialogs`.
+
 **Sammlung (6.6.3.3).** Beta-Test: „auch Accountsammlung soll ein
 Redesign bekommen“. Gemessen: außen Metallrahmen (`NineSlice`), Porträt,
 `TopTileStreaks`, Marmor am Fenster (Bild 374155) – `CollectionsJournal`

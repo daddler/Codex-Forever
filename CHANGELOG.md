@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.3.4] – 2026-09-29
+
+**Dialoge des Spiels im Stil von WeintCodex.** Rückfragen wie „19 Sekunden bis zum Verlassen“, Einladungen oder „Gegenstand zerstören?“ stehen auf der dunklen Kachel mit dem Schein deiner Klassenfarbe statt im Diamantrahmen, die roten Knöpfe sind flach. Was die Dialoge tun, bleibt unberührt.
+
 ## [6.6.3.3] – 2026-09-29
 
 **Die Sammlung im Stil von WeintCodex.** Das Fenster der Vorlagen trägt die dunkle Kachel mit dem Schein deiner Klassenfarbe; Metallrahmen, Porträt, Marmor und das Leder mit den Eckverzierungen hinter den Vorlagen sind weg, innen liegt eine ruhige Innenfläche.

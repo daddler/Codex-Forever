@@ -4830,6 +4830,36 @@ do
         for _, n in ipairs(W.WINDOWS) do if n == "GameMenuFrame" then found = true end end
         assert(found, "Spielmenue nicht in der Fensterliste")
     end)
+    -- 6.6.3.4: Dialoge (StaticPopup, gemessen): Grund weg, Kachel ohne
+    -- Schatten, Knoepfe flach; das Warnzeichen des Dialogs bleibt.
+    local ok9, err9 = pcall(function()
+        local W = WeintCodex.UIWindows
+        local pop = stub.NewObject("Frame", "StaticPopup1")
+        local bg = stub.NewObject("Frame")
+        local border, dark = stub.NewObject("Texture"), stub.NewObject("Texture")
+        border.GetAtlas = function() return "UI-DiamondDialogBox-Border" end
+        dark.GetAtlas = function() return "UI-DialogBox-Background-Dark" end
+        bg.GetRegions = function() return border, dark end
+        pop.BG = bg
+        local alert = stub.NewObject("Texture")
+        pop.GetRegions = function() return alert end
+        pop.GetChildren = function() return bg end
+        local b1 = stub.NewObject("Button", "StaticPopup1Button1")
+        local up, hl = stub.NewObject("Texture"), stub.NewObject("Texture")
+        b1.GetNormalTexture = function() return up end
+        b1.GetHighlightTexture = function() return hl end
+        _G.StaticPopup1, _G.StaticPopup1Button1 = pop, b1
+        W.Apply()
+        local d = W.PopupDone[pop]
+        assert(d and d.kachel and not d.kachel.shadow, "Dialog ohne Kachel oder mit Schatten")
+        assert(border:GetAlpha() == 0 and dark:GetAlpha() == 0, "Rahmen/Grund des Dialogs bleibt")
+        assert(alert:GetAlpha() == 1, "Warnzeichen des Dialogs ausgeblendet")
+        assert(W.ButtonSkin[b1] and up:GetAlpha() == 0 and hl:GetAlpha() == 0, "roter Dialogknopf bleibt")
+        W.Apply()
+        assert(W.PopupDone[pop] == d, "Dialog doppelt gestaltet")
+        _G.StaticPopup1, _G.StaticPopup1Button1 = nil, nil
+    end)
+    Check(ok9, "Dialoge: Kachel, Knoepfe flach, eigene Zeichen bleiben" .. (ok9 and "" or (": " .. tostring(err9))))
     Check(ok8, "Spielmenue: Rahmen und rote Knoepfe im WeintCodex-Stil" .. (ok8 and "" or (": " .. tostring(err8))))
     Check(ok7, "Kategorien im Charakterfenster: Titel mittig zwischen auslaufenden Zierlinien"
         .. (ok7 and "" or (": " .. tostring(err7))))

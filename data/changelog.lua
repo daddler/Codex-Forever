@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.3.4",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDialoge des Spiels im Stil von WeintCodex.|r Rückfragen wie „19 Sekunden bis zum Verlassen“, Einladungen oder „Gegenstand zerstören?“ stehen auf der dunklen Kachel mit dem Schein deiner Klassenfarbe statt im Diamantrahmen, die roten Knöpfe sind flach. Was die Dialoge tun, bleibt unberührt.",
+        },
+    },
+    {
         version = "6.6.3.3",
         date    = "29.09.2026",
         notes   = {
