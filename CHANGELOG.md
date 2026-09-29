@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.3.3] – 2026-09-29
+
+**Mitgliederliste wieder wie im Spiel.** In Gilde & Communitys trägt die Mitgliederliste wieder ihren eigenen Hintergrund statt der dunkleren Fläche von WeintCodex.
+
 ## [6.6.3.2] – 2026-09-28
 
 **Die Karte läuft jetzt wirklich weich aus.** Der Rand war dunkel – neben dem hellen Kopf des Fensters wirkte das wieder wie eine Kante. Jetzt blendet die Karte selbst an allen vier Seiten aus, genau wie das Charakterbild, und geht in den Grund des Fensters samt Schein über. Questmarken bleiben scharf.

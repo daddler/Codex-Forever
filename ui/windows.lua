@@ -1907,8 +1907,20 @@ local function SkinInset(inset)
     own[t] = true
 end
 
+-- Bleibt, wie das Spiel es zeichnet (6.6.3.3, Beta-Test: "die
+-- Mitgliederliste ist etwas verdunkelt, das kann gern wieder im
+-- Normalzustand sein"): die Mitgliederliste der Communitys.
+W.INSET_KEEP = { "MemberList" }
+local insetKeep = setmetatable({}, { __mode = "k" })
+
 local function SkinInsets(f, depth)
     if depth > 6 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
+    if depth == 0 then
+        for _, key in ipairs(W.INSET_KEEP) do
+            if type(f[key]) == "table" then insetKeep[f[key]] = true end
+        end
+    end
+    if insetKeep[f] then return end
     if depth > 0 then
         for _, key in ipairs({ "InsetFrame", "Inset" }) do
             if type(f[key]) == "table" and f[key].GetObjectType then SkinInset(f[key]) end

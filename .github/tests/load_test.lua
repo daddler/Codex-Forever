@@ -4600,6 +4600,16 @@ do
         W.SkinInsets(comm)
         assert(bg:GetAlpha() == 0 and W.SideTabs[chatTab], "Chat-Reiter der Communitys nicht gestaltet")
         assert(W.Insets[inset] and edge:GetAlpha() == 0, "Innenflaeche der Communitys nicht gestaltet")
+        -- 6.6.3.3: die Mitgliederliste bleibt, wie das Spiel sie zeichnet.
+        local members, mInset = stub.NewObject("Frame"), stub.NewObject("Frame")
+        local mBg = stub.NewObject("Texture")
+        mInset.Bg = mBg
+        members.InsetFrame = mInset
+        comm.MemberList = members
+        comm.GetChildren = function() return list, members end
+        W.SkinInsets(comm)
+        assert(not W.Insets[mInset] and mBg:GetAlpha() == 1, "Mitgliederliste verdunkelt")
+        comm.MemberList = nil
         -- 6.6.2.3: Liste links - Eintraege als Kachel, gewaehlter im Akzent;
         -- das Wappen oben links bleibt.
         assert(W.HidesAtlas("communities-nav-button-green-normal") and not W.HidesAtlas("communities-guildbanner-background"),

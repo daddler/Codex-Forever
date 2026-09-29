@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.3.3",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFMitgliederliste wieder wie im Spiel.|r In Gilde & Communitys trägt die Mitgliederliste wieder ihren eigenen Hintergrund statt der dunkleren Fläche von WeintCodex.",
+        },
+    },
+    {
         version = "6.6.3.2",
         date    = "28.09.2026",
         notes   = {

@@ -1193,6 +1193,14 @@ Funktion je Rahmen oder Fläche. Wer eine Liste braucht, nimmt
 `W.Regions`/`W.Children` mit eigenem `key`; wer eine Liste über einen
 Aufruf hinaus behalten will, kopiert sie.
 
+**Mitgliederliste bleibt (6.6.3.3).** Beta-Test: „die Mitgliederliste ist
+etwas verdunkelt, das kann gern wieder im Normalzustand sein“.
+`SkinInsets` ersetzte auch dort den Grund der Innenfläche des Spiels
+(`Bg`, `NineSlice`) durch eine eigene Fläche (`surface1`, 45 %).
+`W.INSET_KEEP = { "MemberList" }` nimmt sie aus; Liste und Chat bleiben
+gestaltet. Grau stehen weiterhin die Mitglieder, die nicht online sind –
+das färbt das Spiel so.
+
 **Weicher Rand um die Karte (6.6.3.1).** Beta-Test: „Alles, was das
 Spiel mitbringt und nicht geändert wird, soll genauso weich gezeichnet
 werden wie beim Charakterfenster“. Die Karte ist – anders als das
