@@ -2320,6 +2320,16 @@ statt ihn nur zu tönen. Die Animation selbst bleibt unberührt – der Grund
 deckt nur die Zeile ab, nicht die Bäume. `/wcui fenster` nennt den Rahmen,
 an dem die Zeilen hängen.
 
+**Nachgemessen (6.8.0.7).** Der Grund von 6.8.0.5 reichte vom Symbol
+bis zum Ende einer 200-px-Linie – rund 330 px, weit rechts über den Baum
+hinaus, als harter Balken (Beta-Test: „verrückt nach rechts“). Seitdem:
+zwei Verläufe in Schwarz (18 px von null auf 55 %, dann auf null), **feste
+Breite** `TL.ROW` = 220 px ab 64 px links vom Namen (das Symbol liegt
+darauf) – etwa die Breite eines Baums –, nur links verankert. Die Linie
+füllt, was der Name übrig lässt (`TL.LineWidth`), und endet 24 px vor dem
+Ende des Grunds. Ob ein Baum breiter oder schmaler ist, weiß das Modul
+nicht; es rechnet mit vier Talenten nebeneinander.
+
 ### Gespräche in Gold *(6.8.0.4, `ui/gossip.lua`)*
 
 Beta-Test (6.8.0.3, Krieger): über dem Gespräch mit einer Stadtwache lag

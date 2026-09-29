@@ -7004,6 +7004,16 @@ do
         assert(h2.back and h2.back._parent == heads[2] and h2.back:GetDrawLayer() == "ARTWORK"
             and select(2, h2.back:GetDrawLayer()) < select(2, h2.dot:GetDrawLayer()), "Zeile eines Baums ohne dunklen Grund")
         assert(TL.LINE >= 0.85 and t.light:GetBlendMode() == "ADD", "Linie oder Licht zu schwach fuer den Nebel")
+        -- 6.8.0.5 im Spiel: der Grund reichte bis 200 px hinter den Namen,
+        -- weit rechts ueber den Baum hinaus. Jetzt feste Breite (etwa ein
+        -- Baum), nach rechts ausblendend, die Linie endet davor.
+        local rowW = h2.backIn:GetWidth() + h2.back:GetWidth()
+        assert(rowW == TL.ROW and TL.ROW <= 240, "Grund nicht auf Baumbreite: " .. tostring(rowW))
+        assert(h2.backIn._parent == heads[2] and h2.backIn:GetDrawLayer() == "ARTWORK", "Grund links fehlt")
+        local lineEnd = 60 + 2 * TL.GAP + 3 + h2.line:GetWidth()
+        assert(h2.line:GetWidth() == TL.LineWidth(60) and lineEnd <= TL.ROW - TL.BACK_LEFT - TL.LINE_END + 1,
+            "Linie laeuft ueber den Grund hinaus: " .. tostring(h2.line:GetWidth()))
+        assert(TL.LineWidth(400) == TL.MIN_LINE, "Linie bei langem Namen nicht begrenzt")
         assert(not glow:IsShown(), "Schein der Klasse ueber den Talenten")
         for _, x in ipairs({ clouds, land, particles, green, rank, hs[1] }) do
             assert(x:IsShown() and x:GetAlpha() == 1, "Animation, Landschaft oder Talent angefasst")

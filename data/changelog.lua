@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.8.0.7",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDer dunkle Grund unter den Bäumen bleibt beim Baum.|r Er ist so breit wie ein Baum, beginnt am Symbol und läuft nach rechts weich aus, statt als Balken weit über den Baum hinaus zu reichen; die Linie hinter dem Namen endet vor ihm.",
+        },
+    },
+    {
         version = "6.8.0.6",
         date    = "29.09.2026",
         notes   = {

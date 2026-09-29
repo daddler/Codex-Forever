@@ -1,5 +1,5 @@
 --------------------------------------------------
--- WeintCodex :: Oberflaeche - Talente (6.8.0.3 - 6.8.0.5)
+-- WeintCodex :: Oberflaeche - Talente (6.8.0.3 - 6.8.0.7)
 --------------------------------------------------
 -- Die Talente (PlayerSpellsFrame.TalentsFrame) in der ruhigen
 -- Informationsoberflaeche. Sie gehoeren zur Klasse: Stil
@@ -22,9 +22,11 @@
 --   Baeume     die Namen der drei Baeume ("Waffen", "Furor", "Schutz")
 --              bekommen Raute und Linie in der Klassenfarbe hinter dem Text
 --              - wie die Ueberschriften im Zauberbuch. Seit 6.8.0.5 liegt die
---              Zeile (Symbol, Name, Linie) auf einem dunklen weichen Grund,
---              damit sie auf dem Nebel steht wie ein Abschnitt auf einer
---              Flaeche; die Linie ist kraeftiger (0.9 statt 0.55). Welche Zeile ein Name
+--              Zeile (Symbol, Name, Linie) auf einem dunklen Grund, damit sie
+--              auf dem Nebel steht wie ein Abschnitt auf einer Flaeche; die
+--              Linie ist kraeftiger (0.9 statt 0.55). Seit 6.8.0.7 hat der
+--              Grund eine feste Breite (etwa ein Baum) und blendet nach rechts
+--              aus; die Linie endet vor ihm. Welche Zeile ein Name
 --              ist, sagt das Spiel (GetTalentTabInfo, GetSpecializationInfo)
 --              und, wo es schweigt, data/specs.lua fuer die eigene Klasse -
 --              keine Lage. GEMESSEN (6.8.0.3): der Forever-Client liefert
@@ -62,11 +64,19 @@ TL.LIGHT_HEIGHT = 220
 TL.LIGHT_ALPHA = 0.16       -- ueber Nebel: kraeftiger als GameColors.classLight auf dunkler Flaeche
 TL.EDGE = 0.5               -- Kante oben in der Klassenfarbe
 TL.GAP = 8                  -- Text -> Raute -> Linie
-TL.LINE_WIDTH = 200         -- Linie hinter dem Namen eines Baums (laeuft aus)
 TL.LINE = 0.9               -- ueber Nebel: 0.55 (Zauberbuch) war im Spiel nicht zu sehen (6.8.0.4)
-TL.BACK = 0.6               -- dunkler weicher Grund unter der Zeile eines Baums (Anteil an shadowSoft)
+TL.MIN_LINE = 24            -- Linie hoechstens so kurz (sehr langer Name)
+-- Grund unter der Zeile eines Baums (6.8.0.7): FESTE Breite ab dem Symbol,
+-- so breit wie ein Baum - nicht bis zum Ende einer festen Linie. 6.8.0.5
+-- reichte er vom Symbol bis 200 px hinter den Namen und stand damit weit
+-- rechts ueber den Baum hinaus (Beta-Test: "verrueckt nach rechts").
+-- Er blendet links kurz ein und nach rechts ganz aus - kein harter Balken.
+TL.BACK = 0.55              -- Deckkraft am Symbol (Schwarz)
 TL.BACK_LEFT = 64           -- so weit links vom Namen: das Symbol des Baums liegt mit darauf
-TL.BACK_HALF = 20           -- halbe Hoehe des Grunds
+TL.BACK_HALF = 18           -- halbe Hoehe des Grunds
+TL.ROW = 220                -- Breite des Grunds ab BACK_LEFT - etwa ein Baum (vier Talente)
+TL.FADE_IN = 18             -- links: von null auf TL.BACK
+TL.LINE_END = 24            -- Linie endet so weit vor dem Ende des Grunds
 TL.SCANS = 30               -- so oft wird nach den Namen gesucht, bis alle da sind
 TL.DEPTH = 6
 TL.SAMPLE = 6              -- so viele Schriftzeilen nennt der Bericht, wenn kein Name passt
@@ -165,18 +175,22 @@ local function Head(fs, accent)
     h.hole:SetPoint("CENTER", h.dot, "CENTER", 0, 0)
     h.line = S.Own(p:CreateTexture(nil, "ARTWORK", nil, 1))
     h.line:SetHeight(1)
-    h.line:SetWidth(TL.LINE_WIDTH)
+    h.line:SetWidth(TL.MIN_LINE)
     S.Fade(h.line, accent, TL.LINE, "RIGHT")
     -- Nur links verankert (6.7.8.0: nie an einen Rahmen anderer Hoehe).
     h.line:SetPoint("LEFT", h.dot, "CENTER", TL.GAP, 0)
-    -- Dunkler weicher Grund unter Symbol, Name und Linie - ganz unten in
-    -- der Ebene der Raute, damit er ueber dem Nebel und unter dem Text liegt.
+    -- Dunkler Grund unter Symbol, Name und Linie - ganz unten in der Ebene
+    -- der Raute, damit er ueber dem Nebel und unter dem Text liegt. Zwei
+    -- Verlaeufe (links ein, rechts aus), feste Breite, nur links verankert.
     local c = GC.shadowSoft
-    h.back = S.SoftPanel(p, fs, c, TL.BACK, 0, -8, h.line)
-    h.back:SetDrawLayer("ARTWORK", -8)
-    h.back:ClearAllPoints()
-    h.back:SetPoint("TOPLEFT", fs, "LEFT", -TL.BACK_LEFT, TL.BACK_HALF)
-    h.back:SetPoint("BOTTOMRIGHT", h.line, "RIGHT", 0, -TL.BACK_HALF)
+    h.backIn = S.Own(p:CreateTexture(nil, "ARTWORK", nil, -8))
+    h.backIn:SetSize(TL.FADE_IN, TL.BACK_HALF * 2)
+    h.backIn:SetPoint("LEFT", fs, "LEFT", -TL.BACK_LEFT, 0)
+    S.Gradient(h.backIn, "HORIZONTAL", c, 0, TL.BACK)
+    h.back = S.Own(p:CreateTexture(nil, "ARTWORK", nil, -8))
+    h.back:SetSize(TL.ROW - TL.FADE_IN, TL.BACK_HALF * 2)
+    h.back:SetPoint("LEFT", h.backIn, "RIGHT", 0, 0)
+    S.Gradient(h.back, "HORIZONTAL", c, TL.BACK, 0)
     h.parent = p
     return h
 end
@@ -189,6 +203,15 @@ local function Place(h)
     h.tw = tw
     h.dot:ClearAllPoints()
     h.dot:SetPoint("CENTER", h.fs, "LEFT", tw + TL.GAP + 3, 0)
+    -- Linie bis kurz vor das Ende des Grunds: der Grund hat eine feste
+    -- Breite, die Linie fuellt, was der Name uebrig laesst.
+    h.line:SetWidth(TL.LineWidth(tw))
+end
+
+-- Breite der Linie hinter einem Namen der Breite `tw`.
+function TL.LineWidth(tw)
+    local w = TL.ROW - TL.BACK_LEFT - tw - 2 * TL.GAP - 3 - TL.LINE_END
+    return math.max(TL.MIN_LINE, math.floor(w + 0.5))
 end
 
 local function Build(tf)

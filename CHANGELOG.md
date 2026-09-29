@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.8.0.7] – 2026-09-29
+
+**Der dunkle Grund unter den Bäumen bleibt beim Baum.** Er ist so breit wie ein Baum, beginnt am Symbol und läuft nach rechts weich aus, statt als Balken weit über den Baum hinaus zu reichen; die Linie hinter dem Namen endet vor ihm.
+
+### Technisch
+
+- Beta-Test 6.8.0.6: der Grund (6.8.0.5) reichte vom Symbol bis zum Ende der 200-px-Linie – rund 330 px, weit rechts über den Baum (etwa 200 px) hinaus, dazu als harter Balken (die weiche Maske als Neunteiler bei 40 px Höhe).
+- `ui/talents.lua`: Grund aus zwei Verläufen – 18 px von null auf 55 % Schwarz, dann auf null – mit **fester** Breite `TL.ROW` (220 px ab 64 px links vom Namen), nur links verankert; Linie `TL.LineWidth(tw)` füllt, was der Name übrig lässt, und endet 24 px vor dem Ende (mindestens 24 px).
+- `load_test.lua`: Grund so breit wie `TL.ROW` (≤ 240), Linie endet vor dem Grund, Linie bei langem Namen begrenzt.
+
 ## [6.8.0.6] – 2026-09-29
 
 **Der Händler in der ruhigen Oberfläche.** Kein brauner Schein deiner Klasse mehr über den Waren; sie liegen auf einer Fläche mit weichem Schatten und feiner Kante in Gold, das Geld unten auf einer ruhigen Innenfläche statt auf Leder, und die Reiter „Händler“ und „Rückkauf“ sind flach, der gewählte in Gold. Plätze, Preise, Reparieren und Müll verkaufen bleiben, wie das Spiel sie zeigt – auch das Rot an Waren, die du nicht benutzen kannst.
