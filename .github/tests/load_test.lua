@@ -4895,6 +4895,16 @@ do
         W.SkinSideTabs(win)
         assert(W.SideTabs[tab1].on and not W.SideTabs[tab2].on and W.SideTabs[tab1].why == "frameLight",
             "hellerer Rahmen entscheidet nicht")
+        -- 6.7.5.0: der gewaehlte Reiter traegt den Akzent seines Fensters -
+        -- ohne Stil die Klassenfarbe, im Berufsfenster (S.CALM) Gold.
+        local S = WeintCodex.UIStyle
+        assert(W.SideTabs[tab1].accent == K.Highlight(), "Seitenreiter ohne Stil nicht in der Klassenfarbe")
+        S.Scope(win, S.CALM)
+        W.SkinSideTabs(win)
+        assert(W.SideTabs[tab1].accent == WeintCodex.GameColors.frameAccent, "Seitenreiter im Berufsfenster nicht in Gold")
+        S.Scope(win, nil)
+        W.SkinSideTabs(win)
+        assert(W.SideTabs[tab1].accent == K.Highlight(), "Seitenreiter bleibt Gold ohne Stil")
         local rep = W.SideTabReport(win)
         assert(#rep == 2 and rep[1]:find("GEWÄHLT", 1, true), "Bericht der Seitenreiter fehlt")
         for _, a in ipairs({ "groupfinder-button-cover-hover", "groupfinder-background", "UI-Frame-PortraitMetal-CornerTopLeft",
@@ -6063,6 +6073,146 @@ do
     end)
     Check(okS, "Statistiken als Register ohne Detailansicht: Abschnitte, Zeilen, Maus in der Klassenfarbe - Werte bleiben, kein Muell"
         .. (okS and "" or (": " .. tostring(errS))))
+
+    -- 6.7.5.0: Berufe - Rezeptseite als Register im Berufsfenster (nicht im
+    -- Charakterfenster), in GOLD. Nachgebaut wie gemessen: CraftingPage mit
+    -- Grund, RecipeList (Grund, ScrollBox, ScrollBar), Zeilen mit
+    -- Professions_Recipe_Hover/_Active, SchematicForm mit grossem Bild,
+    -- Rezeptname, Beschreibung, Zeile und Reagenz-Knopf darunter.
+    local okB, errB = pcall(function()
+        local W, S, PR = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIProfessions
+        local GC = WeintCodex.GameColors
+        assert(PR and W.HOSTED.ProfessionsFrame and W.HOSTED.ProfessionsFrame[1] == PR, "Berufe nicht am Berufsfenster eingetragen")
+        for _, tab in ipairs(W.TABS) do assert(tab ~= PR, "Berufe laufen im Charakterfenster") end
+        assert(S.SCOPES.ProfessionsFrame == S.CALM and PR.STYLE == S.CALM and S.CALM.band, "Berufe nicht in Gold mit Abschnitten")
+        local touched = {}
+        local function Box(obj, l, t, r, b)
+            obj.GetLeft, obj.GetTop = function() return l end, function() return t end
+            obj.GetRight, obj.GetBottom = function() return r end, function() return b end
+            obj.SetPoint = function() touched[#touched + 1] = "SetPoint" end
+            obj.ClearAllPoints = function() touched[#touched + 1] = "ClearAllPoints" end
+            return obj
+        end
+        local function Tex(atlas)
+            local t = stub.NewObject("Texture")
+            t.GetAtlas = function() return atlas end
+            return t
+        end
+        local function Line(text, top, bottom)
+            local fs = stub.NewObject("FontString")
+            fs._text, fs._font = text, true
+            fs.SetText = function() touched[#touched + 1] = "SetText " .. text end
+            fs.SetTextColor = function() touched[#touched + 1] = "Farbe " .. text end
+            if top then
+                fs.GetTop, fs.GetBottom = function() return top end, function() return bottom end
+                fs.GetStringHeight = function() return top - bottom end
+            end
+            return fs
+        end
+        local pf = stub.NewObject("Frame", "ProfessionsFrame")
+        local cp = stub.NewObject("Frame")
+        cp._parent, pf.CraftingPage = pf, cp
+        local pageBg = Tex("Profession-Background-Template2")
+        cp.GetRegions = function() return pageBg end
+        local rl = stub.NewObject("Frame")
+        rl._parent, cp.RecipeList = cp, rl
+        local listBg = Tex("Professions-background-summarylist")
+        rl.GetRegions = function() return listBg end
+        local list, target, sbar = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Frame")
+        rl.ScrollBox, rl.ScrollBar, list.ScrollTarget = list, sbar, target
+        rl.GetChildren = function() return list, sbar end
+        local head = stub.NewObject("Button")
+        local hBg, minus = Tex("common-button-list-collapseExpand"), Tex("common-button-list-minus")
+        hBg._width = 300
+        local hName = stub.NewObject("FontString")
+        hName._text, hName._font = "Alltägliche Mahlzeiten", true
+        head.GetRegions = function() return hBg, minus, hName end
+        local tints = {}
+        local function Recipe(name)
+            local row = stub.NewObject("Button")
+            local label = Line(name)
+            local hover, active = Tex("Professions_Recipe_Hover"), Tex("Professions_Recipe_Active")
+            for _, t in ipairs({ hover, active }) do
+                t.SetVertexColor = function(self, r) tints[self] = r end
+            end
+            row.Label = label
+            row.GetRegions = function() return hover, active, label end
+            return row, label
+        end
+        local row1, l1 = Recipe("Gewürztes Wolfsfleisch")
+        local row2, l2 = Recipe("Gebratener Eberrücken")
+        target.GetChildren = function() return head, row1, row2 end
+        list.GetChildren = function() return target end
+        -- Das Rezept.
+        local det = stub.NewObject("Frame")
+        det._parent, cp.SchematicForm = cp, det
+        det.GetTop, det.GetLeft = function() return 500 end, function() return 400 end
+        local art = Tex("Profession-background-card-Cooking")
+        local title = Line("Gewürztes Wolfsfleisch", 490, 474)
+        local desc = Line("Stellt im Laufe von 18 Sek. insgesamt 61 Gesundheit wieder her. Wer isst, muss sitzen bleiben.", 460, 420)
+        local need = Line("Benötigt: Kochfeuer", 405, 391)
+        local reagent = Box(stub.NewObject("Button"), 410, 380, 450, 350)
+        det.OutputText, det.Description = title, desc
+        det.GetRegions = function() return art, title, desc, need end
+        det.GetChildren = function() return reagent end
+        cp.GetChildren = function() return rl, det end
+        pf.GetChildren = function() return cp end
+        local oldPF = _G.ProfessionsFrame
+        _G.ProfessionsFrame = pf
+
+        -- Kein Pinselstrich in der Klassenfarbe in diesem Fenster.
+        local grad, classy = S.Gradient, 0
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == K.Highlight() then classy = classy + 1 end
+            return grad(t, dir, c, a0, a1)
+        end
+        S.Register()
+        W.HideByAtlas(pf)
+        assert(pageBg:GetAlpha() == 0 and listBg:GetAlpha() == 0 and art:GetAlpha() == 0,
+            "Grund der Seite, der Liste oder Bild hinter dem Rezept noch da")
+        local lh = W.ListHeaders[head]
+        assert(lh and lh.band and lh.accent == GC.frameAccent, "Kategorie nicht als Abschnitt in Gold")
+        PR.Update(pf)
+        local a = PR.atmos[cp]
+        assert(a and a.on and a.list and a.host == pf and not a.sigil, "Atmosphaere oder Flaeche der Rezeptliste fehlt")
+        local r1, r2 = PR.rows[row1], PR.rows[row2]
+        assert(r1 and r2 and #r1.hl == 2 and r1.sep and not r1.bar, "Rezeptzeile nicht abgesetzt oder Hervorhebung nicht gefunden")
+        local nT = 0
+        for _, r in pairs(tints) do
+            nT = nT + 1
+            assert(r == GC.frameAccent[1], "Hervorhebung des Spiels nicht in Gold getoent")
+        end
+        assert(nT == 4, "Hervorhebung des Spiels nicht getoent: " .. nT .. " von 4")
+        assert(PR.state.selected == "Gewürztes Wolfsfleisch" and r1.sel.on and not r2.sel.on, "gewaehltes Rezept nicht markiert")
+        local d = PR.details[det]
+        assert(d and d.surface and d.title == title and d.desc == desc, "Rezept nicht als Karte")
+        assert(d.db == -80 and d.yOpt == -95 and d.yOptB == -150 and d.cardBottom == -162 and d.optLine.l:IsShown(),
+            "Karte falsch: " .. tostring(d.db) .. " " .. tostring(d.yOpt) .. " " .. tostring(d.yOptB) .. " " .. tostring(d.cardBottom))
+        S.Gradient = grad
+        assert(classy == 0, "Klassenfarbe im Berufsfenster: " .. classy .. " Verlaeufe")
+        assert(#touched == 0, "Blizzard-Teile angefasst: " .. table.concat(touched, ", "))
+        for _, t in ipairs({ l1, l2, title, desc, need, reagent, hName, minus }) do
+            assert(t:IsShown() and t:GetAlpha() == 1, "Inhalt ausgeblendet")
+        end
+        local rep = table.concat(PR.Report(pf, {}), "\n")
+        assert(rep:find("Berufe (Stil ruhig): Liste gefunden, 3 Zeilen (1 Kopfzeilen, 0 mit Balken, 3 mit Namen)", 1, true)
+            and rep:find("gewählt: „Gewürztes Wolfsfleisch“", 1, true), "Bericht: " .. rep)
+        -- /wcui fenster ueber dem Berufsfenster fragt das Register (W.HOSTED).
+        local sr = table.concat(W.SoftReport(pf), "\n")
+        assert(sr:find("Berufe (Stil ruhig)", 1, true), "/wcui fenster fragt die Berufe nicht: " .. sr)
+        for _ = 1, 3 do PR.Update(pf) end
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do PR.Update(pf) end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        print(string.format("    (20 Durchlaeufe Berufe: %.1f KB)", grew))
+        assert(grew < 1, string.format("Berufe legen im Takt Muell an: %.1f KB", grew))
+        _G.ProfessionsFrame = oldPF
+    end)
+    Check(okB, "Berufe: Rezeptseite als Register im Berufsfenster, Gold statt Klassenfarbe, Grundbilder weg - nichts verloren, kein Muell"
+        .. (okB and "" or (": " .. tostring(errB))))
 
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett
     -- auf Wunsch. Es bleibt ein Akzent (accent = purple = violet = brandA).

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.7.5.0",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Rezepte deiner Berufe im neuen Stil.|r Die Rezeptliste liegt wie Ruf und Fertigkeiten auf einer ruhigen, leicht angehobenen Fläche, Kategorien wie „Alltägliche Mahlzeiten“ stehen als eigene Abschnitte mit Raute und Linie, Rezepte sind fein voneinander abgesetzt, das gewählte trägt einen schmalen Streifen. Rechts ist das Rezept eine Karte: Name oben größer in seiner Farbe, Beschreibung, darunter abgesetzt Reagenzien und was es braucht.",
+            "|cff7C6CFFBerufe tragen Gold statt deiner Klassenfarbe.|r Sie gehören nicht zu deiner Klasse – deshalb ein ruhiges Gold für Abschnitte, Linien und den gewählten Seitenreiter. Das große Bild hinter dem Rezept und die Hintergründe der Seite sind weg, hinter Text steht nichts mehr. Rangbalken, Symbole, Reagenzien und Knöpfe bleiben, wie das Spiel sie zeigt.",
+        },
+    },
+    {
         version = "6.7.4.0",
         date    = "29.09.2026",
         notes   = {

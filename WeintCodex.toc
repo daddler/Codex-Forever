@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.7.4.0
+## Version: 6.7.5.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -185,6 +185,8 @@ ui/pvp.lua
 ui/currency.lua
 # Statistiken (6.7.4.0): Register ohne Detailansicht.
 ui/statistics.lua
+# Berufe (6.7.5.0): Rezeptseite als Register im Berufsfenster, Gold.
+ui/professions.lua
 ui/testmode.lua
 ui/options.lua
 ui/editmode.lua

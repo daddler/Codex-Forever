@@ -1991,9 +1991,55 @@ Zeilen wie alle anderen (Haarlinie, Maus); eine eigene Stufe als
 Unterabschnitt hätte eine neue Regel gebraucht, die nichts Gemessenes
 trägt.
 
+### Berufe *(6.7.5.0, `ui/professions.lua`)*
+
+Beta-Test: das Berufsfenster im selben System („Einheit“). **Gemessen**
+(`/wcui fenster` auf der Seite der Kochkunst):
+
+| Teil | Weg | Bilder |
+|---|---|---|
+| Seite | `ProfessionsFrame.CraftingPage` | `Profession-Background-Template2` → weg |
+| Rezeptliste | `.RecipeList` | `Professions-background-summarylist` → weg |
+| Zeilen | `.RecipeList.ScrollBox.ScrollTarget.<Zeile>` | `Professions_Recipe_Hover` / `_Active` → in Gold getönt |
+| Bildlauf | `.RecipeList.ScrollBar` | `minimal-scrollbar-*` |
+| Rezept | `.CraftingPage.SchematicForm` | `Profession-background-card-Cooking` → weg (Bild hinter Text) |
+| Rang | `.CraftingPage.RankBar` | `Professions-skillbar-frame/-bg`, `Skillbar_Fill_Flipbook_Cooking` – unverändert |
+| Kategorien | Kopfzeilen des Spiels | bis 6.7.4.0 mittig (`W.Header`), jetzt Abschnitte |
+
+**Gold.** Berufe gehören nicht zur Klasse – der Fall, für den
+`frameAccent` seit 6.7.0.0 bereitliegt. `S.SCOPES.ProfessionsFrame =
+S.CALM` gilt für das ganze Fenster (Übersicht und Rezeptseite), und
+`S.CALM` hat seit 6.7.5.0 Band und 14 pt wie `S.CHARACTER_INFO`: dieselbe
+Sprache, nur der Akzent ist ein anderer. Damit im Fenster keine
+Klassenfarbe neben dem Gold steht, trägt auch der **gewählte
+Seitenreiter** den Akzent seines Fensters (`SkinSideTabs`, sonst
+weiterhin die Klassenfarbe).
+
+**Register außerhalb des Charakterfensters.** `cfg.host = "ProfessionsFrame"`
+trägt das Register in `W.HOSTED.ProfessionsFrame` ein statt in `W.TABS`;
+`W.Inner` ruft es, wenn das Berufsfenster offen ist, `/wcui fenster`
+darüber fragt es („Berufe, …“). Neu dafür: Pfade in `listKeys`/
+`scrollBarKeys` (`RecipeList.ScrollBox`, ohne Anlage aufgelöst),
+`highlightAtlas` (`^Professions_Recipe_`), `titleColor = false` (der
+Rezeptname behält seine Farbe – er kann die Qualität tragen).
+
+**Karte:** Titel `OutputText` (Schlüssel aus dem Quelltext des Spiels,
+ungemessen; sonst oberste Zeile), Beschreibung `Description` oder die
+längste Zeile, darunter `tail`: Reagenzien, „Benötigt: …“ als
+abgesetzter Bereich; `compact`. Nichts wird bewegt – Reagenzien sind
+Knöpfe, damit ist das Rücken ohnehin gesperrt. **Unverändert:**
+Rangbalken, Ergebnissymbol samt Qualitätsrahmen, Plätze der Reagenzien,
+Filter, Suchfeld, Knöpfe, Seitenreiter (außer der Farbe des Rahmens).
+
+**Die Übersicht** (erster Seitenreiter, eine Karte je Beruf) ist **nicht
+gemessen** – das Bild dazu kam ohne `/wcui fenster`. Sie bleibt, wie sie
+seit 6.6.2.1 ist (Hintergrund weg, Bilder der Karten gedämpft), bekommt
+aber den Stil des Fensters (Gold; Balken mit `barTrack`). Nächster
+Schritt: `/wcui fenster` über der Übersicht.
+
 ### Nächste Fenster
 
-Vorgesehen: Berufe (`S.CALM`), Gilde (mittlere Atmosphäre), Talente
+Vorgesehen: Berufsübersicht (nach Messung), Gilde (mittlere Atmosphäre), Talente
 (Klassenfarbe). Migrieren heißt: Name in
 `S.SCOPES`, ein Modul nach dem Muster von `ui/reputation.lua` nur dort,
 wo das Fenster mehr braucht als die Bausteine.

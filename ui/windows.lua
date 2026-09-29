@@ -142,6 +142,10 @@ W.done = done
 -- Reiter des Charakterfensters mit eigener Gestaltung: { Update(f), Report(f, out) }.
 -- Sie tragen sich selbst ein (ui/register.lua, ui/pvp.lua).
 W.TABS = {}
+-- Register in anderen Fenstern (6.7.5.0, Berufe): Name des Fensters ->
+-- Liste von Modulen {Update(f), Report(f, out)}. W.Inner ruft sie, wenn
+-- das Fenster offen ist.
+W.HOSTED = {}
 local own = S.own   -- unsere eigenen Flaechen (dieselbe Tabelle wie in ui/style.lua)
 W.own = own
 
@@ -374,6 +378,13 @@ W.HIDE_ATLAS = {
     "^Profession%-ProgressBar%-",            -- Balken: Rahmen und Grund (flach ersetzt)
     "^Profession%-square%-frame",            -- Goldrahmen ums Symbol (1 px Rand statt)
     "^Profession%-Background%-Overview",
+    -- 6.7.5.0, gemessen auf der Rezeptseite: Grund der Seite, Grund der
+    -- Rezeptliste und das grosse Bild hinter dem Rezept (Kochkunst: Topf
+    -- und Loeffel) - die ruhigen Flaechen des Registers ersetzen sie, und
+    -- hinter Text steht kein Bild.
+    "^Profession%-Background%-Template",
+    "^Professions%-background%-summarylist",
+    "^Profession%-background%-card%-",
     -- 6.6.2.2, gemessen: Dungeonbrowser ("Suche nach Gruppe") und Questlog.
     "^UI%-Frame%-PortraitMetal",             -- Metallecke am Portrait
     "^_?UI%-Frame%-TopTileStreaks",          -- Streifen unter dem Titel
@@ -1597,6 +1608,11 @@ function W.SoftReport(f)
     local CS = WeintCodex.UICharacter
     if CS and CS.ReportFrame then CS.ReportFrame(f, out) end
     for _, tab in ipairs(W.TABS) do tab.Report(f, out) end
+    local nok, fname = pcall(function() return f:GetName() end)
+    local hosted = nok and type(fname) == "string" and W.HOSTED[fname] or nil
+    if hosted then
+        for _, tab in ipairs(hosted) do tab.Report(f, out) end
+    end
     if type(f) == "table" and f.ScrollContainer and W.mapMask and W.mapMask.report then
         out[#out + 1] = W.mapMask.report
     end
@@ -2029,6 +2045,11 @@ local function CollectSideTabs(f, depth, out)
 end
 
 local function SkinSideTabs(f)
+    -- Der gewaehlte Reiter traegt den Akzent SEINES Fensters (6.7.5.0): im
+    -- Berufsfenster Gold (S.CALM), sonst die Klassenfarbe - ein Bereich,
+    -- ein Akzent.
+    local sc = scoped[f]
+    local accent = S.Accent(sc and sc.accent)
     local found, seenTab = {}, {}
     CollectSideTabs(f, 0, found)
     -- Reihen: Reiter mit demselben Elternrahmen.
@@ -2051,9 +2072,9 @@ local function SkinSideTabs(f)
             local d = sideDone[t]
             local on = (t == pick)
             d.signals, d.why = signals[t], on and why or nil
-            if d.on ~= on then
-                d.on = on
-                local c = on and K.Highlight() or BLACK
+            if d.on ~= on or (on and d.accent ~= accent) then
+                d.on, d.accent = on, on and accent or nil
+                local c = on and accent or BLACK
                 d.kachel.border:SetColor(c[1], c[2], c[3], 1)
             end
         end
@@ -2193,6 +2214,10 @@ function W.Inner()
                 -- Fertigkeiten) und PvP (ui/pvp.lua). Jeder prueft selbst,
                 -- ob sein Reiter offen ist.
                 for _, tab in ipairs(W.TABS) do tab.Update(f) end
+            end
+            local hosted = W.HOSTED[n]
+            if hosted then
+                for _, tab in ipairs(hosted) do tab.Update(f) end
             end
             if W.WantsLarge(n) then
                 SkinSpellItems(f, 0)

@@ -72,7 +72,10 @@ end
 
 S.SHOWCASE = { key = "showcase", name = "Bühne", accent = "class", header = "showcase" }
 -- barEdge: Deckkraft des schwarzen Randes um Balken (1 = hart).
-S.CALM = { key = "calm", name = "ruhig", accent = "frame", header = "list", barTrack = "barTrack", barEdge = 0.5 }
+-- 6.7.5.0 (Berufe, erstes Fenster in Gold): wie S.CHARACTER_INFO, nur der
+-- Akzent ist ein anderer - Abschnitte mit Band, 14 pt.
+S.CALM = { key = "calm", name = "ruhig", accent = "frame", header = "list",
+           band = true, headerSize = 14, barTrack = "barTrack", barEdge = 0.5 }
 -- band/headerSize (6.7.0.2): Kopfzeilen als eigene Sektion (S.Band), 14 pt.
 S.CHARACTER_INFO = { key = "charinfo", name = "ruhig, Klasse", accent = "class", header = "list",
                      band = true, headerSize = 14,

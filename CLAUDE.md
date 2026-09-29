@@ -157,11 +157,12 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   on display). Status colours (green/red/gold/blue) never follow the class.
   **One exception since 6.7.0.0**, for restyled Blizzard windows only:
   `GameColors.frameAccent` (muted gold) is the accent of windows that do
-  not belong to the class (style `S.CALM`; in no window yet – the tabs of
-  the character frame, Reputation included, carry the class colour via
-  `S.CHARACTER_INFO` since 6.7.0.1). A region carries exactly
+  not belong to the class (style `S.CALM`; since 6.7.5.0 the professions
+  window `ProfessionsFrame` – the tabs of the character frame carry the
+  class colour via `S.CHARACTER_INFO`). A region carries exactly
   one of the two accents – its style (`ui/style.lua`, `S.SCOPES`) says
-  which; `SetAccent` never touches the gold. Never use it in the addon's
+  which, down to the selected side tab of the window; `SetAccent` never
+  touches the gold. Never use it in the addon's
   own pages, never next to the class colour in the same region.
 - **The UI (`ui/`) is built opt-in, and opt-in is suspended since
   6.0.0.3.** The Forever beta client does not persist SavedVariables, so
@@ -256,7 +257,7 @@ into modules that no longer exist. A green run means "it loads", never
 | Companion-Authentifizierung/Token | `../Companion-Forever/docs/companion-auth.md` |
 | Welche Spieldaten fehlen und warum | `../Companion-Forever/docs/systems/forever-data.md` |
 | Neugestaltung der Oberfläche (UI 2.0): Cockpit, Raster, Kachel, Ruhe/Kampf, Gestaltungsmodus, Phasen | `docs/design/ui-2.0.md` |
-| Oberfläche (`ui/`): Plaketten (auch Farben je NPC, `ui/npccolors.lua`), Einheiten-/Gruppenrahmen (eigene und die des Spiels, `ui/gamegroup.lua`), Einrichtung beim ersten Mal (`ui/setup.lua`, Layout im Bearbeitungsmodus), Aktionsleisten, Erfahrungsbalken, Charakterfenster (`ui/character.lua`, Klassen-Themen `data/classthemes.lua`), Designsprache der Fenster des Spiels (`ui/style.lua`: Akzente, Stile je Bereich, Bausteine), Register – Liste des Spiels mit Detailkarte (`ui/register.lua`) – mit Ruf (`ui/reputation.lua`), Fertigkeiten (`ui/skills.lua`), Abzeichen/Währungen (`ui/currency.lua`) und Statistiken (`ui/statistics.lua`, ohne Detailansicht), PvP-Profil (`ui/pvp.lua`), Weltkarte & Questlog, Gesprächsfenster (Questgeber, Gastwirte, Händler), Erinnerungen, Klickzauber (`ui/clickcast.lua`), Abklingzeitmanager, Minikarte, Chat, Tooltip, Taschen, Schadensanzeige, Questliste, Auren, Questpfeil, Komfort, `/wcui`, `OPT_IN`, `WeintCodex.GameColors`, geheime Werte (12.x), `UIKit.NewText`, `UIKit.NewBar`/`Glow`/`Kachel`, Layout-Tabelle, Ruhe/Kampf, Testmodus | `docs/systems/ui.md` |
+| Oberfläche (`ui/`): Plaketten (auch Farben je NPC, `ui/npccolors.lua`), Einheiten-/Gruppenrahmen (eigene und die des Spiels, `ui/gamegroup.lua`), Einrichtung beim ersten Mal (`ui/setup.lua`, Layout im Bearbeitungsmodus), Aktionsleisten, Erfahrungsbalken, Charakterfenster (`ui/character.lua`, Klassen-Themen `data/classthemes.lua`), Designsprache der Fenster des Spiels (`ui/style.lua`: Akzente, Stile je Bereich, Bausteine), Register – Liste des Spiels mit Detailkarte (`ui/register.lua`) – mit Ruf (`ui/reputation.lua`), Fertigkeiten (`ui/skills.lua`), Abzeichen/Währungen (`ui/currency.lua`) Statistiken (`ui/statistics.lua`, ohne Detailansicht) und Berufe (`ui/professions.lua`, Rezeptseite, Gold; Register außerhalb des Charakterfensters über `W.HOSTED`), PvP-Profil (`ui/pvp.lua`), Weltkarte & Questlog, Gesprächsfenster (Questgeber, Gastwirte, Händler), Erinnerungen, Klickzauber (`ui/clickcast.lua`), Abklingzeitmanager, Minikarte, Chat, Tooltip, Taschen, Schadensanzeige, Questliste, Auren, Questpfeil, Komfort, `/wcui`, `OPT_IN`, `WeintCodex.GameColors`, geheime Werte (12.x), `UIKit.NewText`, `UIKit.NewBar`/`Glow`/`Kachel`, Layout-Tabelle, Ruhe/Kampf, Testmodus | `docs/systems/ui.md` |
 
 Cross-repo tasks (something touches Codex **and** Companion **and/or**
 Bot): read this table's Companion-doc pointers first — they are the

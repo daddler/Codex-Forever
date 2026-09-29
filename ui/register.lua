@@ -51,6 +51,13 @@
 --   listKeys      Schluessel der Liste am Fenster (Standard { "ScrollBox" })
 --   listOnly      true: das Fenster hat keine Detailansicht (Statistiken) -
 --                 nur Liste, Zeilen, Atmosphaere; keine Auswahl
+--   host          globaler Name des Fensters, in dem das Register liegt,
+--                 wenn es NICHT das Charakterfenster ist ("ProfessionsFrame"):
+--                 dann ruft W.Inner es ueber W.HOSTED[host], nicht ueber W.TABS
+--   listKeys, scrollBarKeys   duerfen Pfade sein ("RecipeList.ScrollBox")
+--   highlightAtlas  Muster der Hervorhebung des Spiels an einer Zeile
+--   titleColor    false: Titel der Karte behaelt die Farbe des Spiels
+--                 (Rezeptname in Qualitaetsfarbe); sonst hell
 --   key           Kurzname fuer die wiederverwendeten Listen (W.Regions)
 --------------------------------------------------
 
@@ -251,7 +258,13 @@ function RG.New(cfg)
     R.CFG = cfg
     RG.all[#RG.all + 1] = R
     -- Reiter des Charakterfensters: W.Inner ruft jeden (ui/windows.lua, W.TABS).
-    W.TABS[#W.TABS + 1] = R
+    -- Andere Fenster (6.7.5.0): W.Inner ruft sie ueber W.HOSTED[Name].
+    if cfg.host then
+        W.HOSTED[cfg.host] = W.HOSTED[cfg.host] or {}
+        table.insert(W.HOSTED[cfg.host], R)
+    else
+        W.TABS[#W.TABS + 1] = R
+    end
     -- Der Stil gilt ab dem ersten Durchlauf fuer das ganze Fenster (auch
     -- fuer Kopfzeilen, die W.HideByAtlas vor R.Update gestaltet).
     for _, path in ipairs(R.FRAMES) do S.SCOPES[path] = R.STYLE end
@@ -281,7 +294,7 @@ function RG.New(cfg)
     R.FILL_ATLAS = RG.FILL_ATLAS
     -- Hervorhebung des Spiels unter der Maus und an der gewaehlten Zeile
     -- (gemessen im Ruf: Content.BackgroundHighlight, braun-gold).
-    R.HIGHLIGHT_ATLAS = "^charactercreate%-customize%-dropdown%-linemouseover"
+    R.HIGHLIGHT_ATLAS = cfg.highlightAtlas or "^charactercreate%-customize%-dropdown%-linemouseover"
     R.HIGHLIGHT_ALPHA = 0.30
     R.DETAIL_BAR_KEYS = cfg.detailBarKeys or { "Bar", "StatusBar" }
     R.DETAIL_GAP = 9        -- Abstand der Linie am Balken
@@ -315,14 +328,36 @@ function RG.New(cfg)
     end
 
     R.LIST_KEYS = cfg.listKeys or { "ScrollBox" }
+    R.SCROLLBAR_KEYS = cfg.scrollBarKeys or { "ScrollBar" }
+
+    -- Schluessel oder Pfad ("RecipeList.ScrollBox") am Fenster, ohne
+    -- Anlage (find/sub statt gmatch - laeuft in jedem Durchlauf).
+    local function Path(f, path)
+        local t, i = f, 1
+        while i <= #path do
+            local j = path:find(".", i, true)
+            if not IsFrame(t) then return nil end
+            t = t[path:sub(i, j and j - 1 or -1)]
+            if not j then break end
+            i = j + 1
+        end
+        return IsFrame(t) and t or nil
+    end
+
+    local function ByPaths(f, paths)
+        for _, path in ipairs(paths) do
+            local t = Path(f, path)
+            if t then return t end
+        end
+        return nil
+    end
 
     function R.List(rf)
-        return ByKeys(rf, R.LIST_KEYS)
+        return ByPaths(rf, R.LIST_KEYS)
     end
 
     function R.ScrollBar(rf)
-        local b = rf.ScrollBar
-        return IsFrame(b) and b or nil
+        return ByPaths(rf, R.SCROLLBAR_KEYS)
     end
 
     -- Wo die Zeilen haengen: ScrollTarget (WowScrollBoxList), sonst die Liste.
@@ -869,7 +904,12 @@ function RG.New(cfg)
         -- auf dem Fortschritt): 16 pt passen nicht in einen Balken.
         if d.styledTitle and not d.titleDone then
             d.titleDone = true
-            if not (d.bar and InTree(d.title, d.bar)) then S.Title(d.title, R.DETAIL_TITLE, C.textBright) end
+            if not (d.bar and InTree(d.title, d.bar)) then
+                -- Nicht `x and false or y` - das ergibt immer y.
+                local c = C.textBright
+                if cfg.titleColor == false then c = false end
+                S.Title(d.title, R.DETAIL_TITLE, c)
+            end
         end
         R.DetailLayout(d)
         if not d.inTree then

@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.5.0] – 2026-09-29
+
+**Die Rezepte deiner Berufe im neuen Stil.** Die Rezeptliste liegt wie Ruf und Fertigkeiten auf einer ruhigen, leicht angehobenen Fläche, Kategorien wie „Alltägliche Mahlzeiten“ stehen als eigene Abschnitte mit Raute und Linie, Rezepte sind fein voneinander abgesetzt, das gewählte trägt einen schmalen Streifen. Rechts ist das Rezept eine Karte: Name oben größer in seiner Farbe, Beschreibung, darunter abgesetzt Reagenzien und was es braucht.
+
+**Berufe tragen Gold statt deiner Klassenfarbe.** Sie gehören nicht zu deiner Klasse – deshalb ein ruhiges Gold für Abschnitte, Linien und den gewählten Seitenreiter. Das große Bild hinter dem Rezept und die Hintergründe der Seite sind weg, hinter Text steht nichts mehr. Rangbalken, Symbole, Reagenzien und Knöpfe bleiben, wie das Spiel sie zeigt.
+
+### Technisch
+
+- Neu `ui/professions.lua` (`WeintCodex.UIProfessions`): `ProfessionsFrame.CraftingPage` als Register, gemessen (`/wcui fenster` auf der Kochkunst): Liste `RecipeList.ScrollBox`, Zeilen mit `Professions_Recipe_Hover/_Active`, Rezept `SchematicForm`. Stil `S.CALM` für das ganze Berufsfenster – das erste Fenster in Gold.
+- `ui/register.lua`: `host` (Register außerhalb des Charakterfensters, über `W.HOSTED` in `W.Inner` und `/wcui fenster`), Pfade in `listKeys`/`scrollBarKeys`, `highlightAtlas`, `titleColor = false`.
+- `ui/style.lua`: `S.CALM` mit Band und 14 pt wie `S.CHARACTER_INFO` – nur der Akzent unterscheidet sich.
+- `ui/windows.lua`: der gewählte Seitenreiter trägt den Akzent seines Fensters (Gold in den Berufen); ausgeblendet `Profession-Background-Template*`, `Professions-background-summarylist`, `Profession-background-card-*`.
+
 ## [6.7.4.0] – 2026-09-29
 
 **Die Statistiken im neuen Stil.** Die lange Liste liegt wie Ruf, Fertigkeiten und Abzeichen auf einer ruhigen, leicht angehobenen Fläche; „Charakter“ steht als Abschnitt mit Raute und Linie in deiner Klassenfarbe links, wo das Spiel ihn hinsetzt, die Einträge sind fein voneinander abgesetzt und leuchten unter der Maus in deiner Klasse auf. Werte, Gruppen wie „Vermögen“ und ihre Knöpfe zum Auf- und Zuklappen bleiben, wie das Spiel sie zeigt.
