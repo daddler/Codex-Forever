@@ -1221,6 +1221,34 @@ nicht (zweite Zierfarbe neben dem Akzent, eigene Werteanzeige).
   nicht im Durchlauf. Unbekanntes bleibt weg (nur „STUFE 13“, oder gar
   keine Zeile).
 
+**Einbettung der Figur (6.6.3.6).** Beta-Test (Screenshot mit dem
+Priesterbild): die Figur hell und neutral von vorn beleuchtet vor einem
+dunklen, warmen Raum – „wie auf das Bild gesetzt“. Vorgabe: Bild
+unverändert, keine neuen Dateien, Aufbau des Fensters bleibt.
+`W.EmbedModel` (einmal je Modellfeld, nur mit `light` am Klassenbild in
+`data/artwork.lua` – die Werte gehören zum Bild, nicht zur Palette):
+
+- *Licht der Szene*: `SetLightAmbientColor`/`SetLightDiffuseColor` an der
+  ModelScene (der Träger selbst oder `CharacterModelScene`). Richtung
+  bleibt die des Spiels – echtes Randlicht kann der Client nicht.
+  `W.KeepEmbed` vergleicht in jedem Durchlauf mit `GetLightAmbientColor`
+  und setzt nur nach einem Zurücksetzen (ohne Getter: jedes Mal, billig
+  und ohne Tabellen).
+- *Gegenlicht*: `halo` additiv, warm, `BORDER/2` (über der Abdunklung des
+  Spiels), auf 40 % Höhe hinter der Figur. *Kontaktschatten*: `halo`
+  schwarz, `BORDER/3`, auf Höhe der Füße (9 % über der Unterkante,
+  gemessen bei Standardkamera). Beide mit der Maske des Bildes.
+- *Über der Figur*: ein eigener Rahmen eine Ebene über dem Modell mit
+  eigener Maske – Dunst am Boden (unterstes Sechstel) und ein additiver
+  Hauch der Lichtfarbe. Nur solange die Ausrüstungsplätze
+  (`W.SLOT_NAMES`) höher liegen, sonst weggelassen – der Dunst dürfte die
+  Waffenplätze nicht verdunkeln.
+- `/wcui fenster`: „Einbettung: Licht an der Szene (N× gesetzt), Schicht
+  über der Figur auf L (Modell M, Plätze P)“. Wächst N bei offenem
+  Fenster ständig, fehlt der Getter oder das Spiel setzt zurück.
+- Kopfzeile: die Figur lag über ihr (ein Stab verdeckte das zweite E von
+  „PRIESTERIN“); `W.KeepHeaderLevel` hält sie über `CharacterModelScene`.
+
 **Höhe der Questliste (6.6.3.4).** Beta-Test: „der Questbereich ragt bis
 ganz nach unten – kann man den nicht auf eine Höchstgröße einstellen und
 ggf. darin scrollen?“. Die Liste ist die des Spiels; ihre Höhe ist die

@@ -4563,6 +4563,15 @@ do
             return t
         end
         scene2._width, scene2._height = 397, 464
+        -- 6.6.3.6: Licht der Szene, gemerkt wie im Client.
+        local amb, sets = { 1, 1, 1 }, 0
+        scene2.SetLightAmbientColor = function(_, r, g, b) amb = { r, g, b } sets = sets + 1 end
+        scene2.GetLightAmbientColor = function() return amb[1], amb[2], amb[3] end
+        scene2:SetFrameLevel(10)
+        local slot = stub.NewObject("Button")
+        slot:SetFrameLevel(15)
+        local oldSlot = _G.CharacterHeadSlot
+        _G.CharacterHeadSlot = slot
         W.SoftenModel(cf2)
         local e2 = W.soft[scene2]
         local art = e2 and e2.art
@@ -4577,6 +4586,31 @@ do
         W.SoftenModel(cf2)
         assert(W.soft[scene2].art == art and #made == count, "Klassenbild doppelt angelegt")
         assert(table.concat(W.SoftReport(cf2), " "):find("Klassenbild: classes/priest", 1, true), "Bericht ohne Klassenbild")
+        -- Einbettung: Licht in den Farben des Bildes, einmal gesetzt und
+        -- nur nach einem Zuruecksetzen erneut; Gegenlicht und Schatten
+        -- hinter der Figur (maskiert), Dunst darueber - unter den Plaetzen.
+        local L = WeintCodex.Art.Class("PRIEST").light
+        local m = W.soft[scene2].embed
+        assert(m and m.scene == scene2 and amb[1] == L.ambient[1] and amb[3] == L.ambient[3], "Licht der Szene nicht gesetzt")
+        local setsNow = sets
+        W.SoftenModel(cf2)
+        assert(sets == setsNow, "Licht in jedem Durchlauf neu gesetzt")
+        amb = { 1, 1, 1 }
+        W.SoftenModel(cf2)
+        assert(sets == setsNow + 1 and amb[2] == L.ambient[2], "Licht nach Zuruecksetzen nicht erneuert")
+        assert(m.glow and m.glow._masks and m.glow._masks[1] == W.soft[scene2].mask, "Gegenlicht ohne Maske")
+        local gl, gs = m.glow:GetDrawLayer()
+        assert(gl == "BORDER" and gs == 2 and m.shadow and select(2, m.shadow:GetDrawLayer()) == 3, "Gegenlicht/Schatten falsch geschichtet")
+        assert(m.over and m.over:GetFrameLevel() == 11 and m.over:IsShown(), "Schicht ueber der Figur nicht direkt ueber dem Modell")
+        assert(m.haze._masks and m.wash._masks, "Dunst oder Hauch ohne Maske")
+        slot:SetFrameLevel(11)
+        W.SoftenModel(cf2)
+        assert(not m.over:IsShown(), "Dunst liegt ueber den Ausruestungsplaetzen")
+        slot:SetFrameLevel(15)
+        W.SoftenModel(cf2)
+        assert(m.over:IsShown(), "Schicht kommt nicht zurueck")
+        assert(table.concat(W.SoftReport(cf2), " "):find("Einbettung: Licht an der Szene", 1, true), "Bericht ohne Einbettung")
+        _G.CharacterHeadSlot = oldSlot
         -- Kopfzeile: "PRIESTERIN · STUFE 13", gesperrt; ohne Antwort nichts.
         local sp = WeintCodex.Spaced
         assert(W.CharacterLine("Priesterin", 13) == sp("PRIESTERIN · STUFE 13"), "Kopfzeile falsch")
@@ -4590,6 +4624,12 @@ do
         assert(head and head:GetParent() == paper, "Kopfzeile nicht am Reiter Charakter")
         assert(head.text:GetText() == sp("PRIESTERIN · STUFE 60"), "Kopfzeile: " .. tostring(head.text:GetText()))
         assert(W.CharacterHeader(charF) == head, "Kopfzeile doppelt")
+        local oldScene = _G.CharacterModelScene
+        _G.CharacterModelScene = stub.NewObject("Frame")
+        _G.CharacterModelScene:SetFrameLevel(40)
+        W.CharacterHeader(charF)
+        assert(head:GetFrameLevel() == 43, "Kopfzeile unter der Figur")
+        _G.CharacterModelScene = oldScene
         head.Update(61)
         assert(head.text:GetText() == sp("PRIESTERIN · STUFE 61"), "Stufenaufstieg nicht uebernommen")
         _G.PaperDollFrame, W.charHead = oldPaper, oldHead

@@ -707,8 +707,17 @@ function W.CharacterLine(className, level)
     return WeintCodex.Spaced(table.concat(parts, " · "))
 end
 
+-- 6.6.3.6: die Figur verdeckte die Zeile (Beta-Test: der Stab ueber dem
+-- zweiten E von "PRIESTERIN") - das Modell liegt hoeher als
+-- PaperDollFrame + 20. Die Zeile bleibt jetzt ueber der Szene.
+function W.KeepHeaderLevel(h)
+    local sl, hl = W.LevelOf(_G.CharacterModelScene), W.LevelOf(h)
+    if sl and hl and hl <= sl + 2 then h:SetFrameLevel(sl + 3) end
+end
+
 function W.CharacterHeader(f)
-    if W.charHead or type(f) ~= "table" then return W.charHead end
+    if W.charHead then W.KeepHeaderLevel(W.charHead) return W.charHead end
+    if type(f) ~= "table" then return nil end
     local title = type(f.TitleContainer) == "table" and f.TitleContainer.TitleText or nil
     local paper = _G.PaperDollFrame
     if type(title) ~= "table" or not title.SetFont or type(paper) ~= "table" then return nil end
@@ -755,6 +764,7 @@ function W.CharacterHeader(f)
     h:RegisterEvent("PLAYER_LEVEL_UP")
     h:SetScript("OnEvent", function(_, _, level) h.Update(K.Plain(level)) end)
     h.Update()
+    W.KeepHeaderLevel(h)
     W.charHead = h
     return h
 end
@@ -1553,6 +1563,7 @@ local function ClassArt(e, host)
     if e.mask then pcall(t.AddMaskTexture, t, e.mask) end
     own[t] = true
     e.art, e.artEntry = t, art
+    W.EmbedModel(e, host)
 end
 
 -- Ausschnitt nach der Lage des Kastens - nur wenn sie sich aendert.
@@ -1563,6 +1574,170 @@ local function FitArt(e)
     w, h = ok and K.Plain(w) or nil, ok and K.Plain(h) or nil
     local a = e.artEntry
     e.art:SetTexCoord(WeintCodex.CoverCoords(a.w, a.h, w, h, a.focusX, a.focusY))
+    if type(w) == "number" and type(h) == "number" then W.PlaceEmbed(e, w, h) end
+end
+
+-- Einbettung der Figur (6.6.3.6, Beta-Test: "Charakter soll staerker
+-- mit der Umgebung verschmelzen, dezentes Licht aus dem Hintergrund
+-- erhalten und nicht wie auf das Bild gesetzt wirken"). Gemessen am
+-- Screenshot: die Figur hell und neutral von vorn beleuchtet vor einem
+-- dunklen, warmen Raum - genau das wirkt aufgeklebt. Vier Dinge, alle
+-- nur mit vorhandenem Material (halo, softmask) und nur mit Eintrag
+-- `light` am Klassenbild (data/artwork.lua):
+--   1. Licht der Szene in den Farben des Bildes: Umgebung gedaempft und
+--      warm, Hauptlicht golden (ModelScene:SetLightAmbientColor/
+--      SetLightDiffuseColor; Richtung bleibt die des Spiels). Jeder
+--      Durchlauf vergleicht und setzt nur, wenn das Spiel es
+--      zurueckgesetzt hat. Echtes Randlicht kann der Client nicht.
+--   2. Gegenlicht: ein warmer Schein (halo, additiv) HINTER der Figur auf
+--      Brusthoehe - ihre Kontur hebt sich ab, als kaeme Licht von hinten.
+--   3. Kontaktschatten unter den Fuessen (halo, schwarz): sie stehen auf
+--      dem Boden statt davor.
+--   4. UEBER der Figur (eigener Rahmen eine Ebene ueber dem Modell, nur
+--      wenn die Ausruestungsplaetze darueber liegen bleiben): Dunst am
+--      Boden, der die Fuesse ins Bild zieht, und ein Hauch der
+--      Lichtfarbe ueber allem - Figur und Raum bekommen denselben Ton.
+W.EMBED_OVER = setmetatable({}, { __mode = "k" })
+
+local function ModelSceneOf(host)
+    if type(host.SetLightAmbientColor) == "function" then return host end
+    local s = _G.CharacterModelScene
+    if type(s) == "table" and type(s.SetLightAmbientColor) == "function" then return s end
+    return nil
+end
+
+local function Halo(frame, layer, sub, e)
+    local t = frame:CreateTexture(nil, layer, nil, sub)
+    t:SetTexture(K.MEDIA .. "halo")
+    if e and e.mask then pcall(t.AddMaskTexture, t, e.mask) end
+    own[t] = true
+    return t
+end
+
+function W.EmbedModel(e, host)
+    local L = e.artEntry and e.artEntry.light
+    if type(L) ~= "table" or e.embed then return end
+    local m = { scene = ModelSceneOf(host), lit = 0 }
+    e.embed = m
+    -- Hinter der Figur: ueber der Abdunklung des Spiels (BORDER/0).
+    if L.glow then
+        m.glow = Halo(host, "BORDER", 2, e)
+        pcall(m.glow.SetBlendMode, m.glow, "ADD")
+        m.glow:SetVertexColor(L.glow[1], L.glow[2], L.glow[3], L.glow[4])
+    end
+    if L.shadow then
+        m.shadow = Halo(host, "BORDER", 3, e)
+        m.shadow:SetVertexColor(0, 0, 0, L.shadow)
+    end
+    -- Ueber der Figur: eigener Rahmen mit eigener Maske (eine Maske
+    -- wirkt nur in ihrem Rahmen).
+    if L.haze or L.wash then
+        local o = CreateFrame("Frame", nil, host)
+        o:SetAllPoints(e.box)
+        local mok, mask = pcall(function() return o:CreateMaskTexture() end)
+        if mok and type(mask) == "table" then
+            mask:SetTexture(W.SOFT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+            mask:SetAllPoints(e.box)
+            own[mask] = true
+        else
+            mask = nil
+        end
+        if L.haze then
+            m.haze = o:CreateTexture(nil, "ARTWORK", nil, 0)
+            m.haze:SetPoint("BOTTOMLEFT", e.box, "BOTTOMLEFT", 0, 0)
+            m.haze:SetPoint("BOTTOMRIGHT", e.box, "BOTTOMRIGHT", 0, 0)
+            local d = C.surface1
+            if _G.CreateColor and m.haze.SetGradient then
+                m.haze:SetColorTexture(1, 1, 1, 1)
+                m.haze:SetGradient("VERTICAL", _G.CreateColor(d[1], d[2], d[3], L.haze), _G.CreateColor(d[1], d[2], d[3], 0))
+            else
+                m.haze:SetColorTexture(d[1], d[2], d[3], L.haze * 0.5)
+            end
+            if mask then pcall(m.haze.AddMaskTexture, m.haze, mask) end
+            own[m.haze] = true
+        end
+        if L.wash then
+            m.wash = o:CreateTexture(nil, "ARTWORK", nil, 1)
+            m.wash:SetAllPoints(e.box)
+            m.wash:SetColorTexture(L.wash[1], L.wash[2], L.wash[3], L.wash[4])
+            pcall(m.wash.SetBlendMode, m.wash, "ADD")
+            if mask then pcall(m.wash.AddMaskTexture, m.wash, mask) end
+            own[m.wash] = true
+        end
+        m.over = o
+        W.EMBED_OVER[o] = true
+    end
+end
+
+-- Lage nach der Groesse des Kastens (nur wenn sie sich aendert):
+-- Schein auf Brusthoehe (40 % von oben), Schatten auf Hoehe der Fuesse
+-- (gemessen: rund 11 % ueber der Unterkante), Dunst im untersten Sechstel.
+W.EMBED_GLOW_Y, W.EMBED_FEET_Y, W.EMBED_HAZE_H = 0.40, 0.09, 0.17
+function W.PlaceEmbed(e, w, h)
+    local m = e.embed
+    if not m then return end
+    if m.glow then
+        m.glow:ClearAllPoints()
+        m.glow:SetSize(w * 0.8, h * 0.8)
+        m.glow:SetPoint("CENTER", e.box, "TOP", 0, -h * W.EMBED_GLOW_Y)
+    end
+    if m.shadow then
+        m.shadow:ClearAllPoints()
+        m.shadow:SetSize(w * 0.5, h * 0.08)
+        m.shadow:SetPoint("CENTER", e.box, "BOTTOM", 0, h * W.EMBED_FEET_Y)
+    end
+    if m.haze then m.haze:SetHeight(h * W.EMBED_HAZE_H) end
+end
+
+local function Num(v)
+    v = K.Plain(v)
+    return type(v) == "number" and v or nil
+end
+local function LevelOf(f)
+    if type(f) ~= "table" then return nil end
+    local ok, v = pcall(f.GetFrameLevel, f)
+    return ok and Num(v) or nil
+end
+W.LevelOf = LevelOf
+
+-- Tiefste Ebene der Ausruestungsplaetze - die Schicht ueber der Figur
+-- muss darunter bleiben, sonst verdunkelt der Dunst die Waffenplaetze.
+W.SLOT_NAMES = { "CharacterHeadSlot", "CharacterHandsSlot", "CharacterMainHandSlot", "CharacterSecondaryHandSlot" }
+local function SlotLevel()
+    local low
+    for _, n in ipairs(W.SLOT_NAMES) do
+        local l = LevelOf(_G[n])
+        if l and (not low or l < low) then low = l end
+    end
+    return low
+end
+W.SlotLevel = SlotLevel
+
+local function Close(a, b) a = Num(a) return a ~= nil and math.abs(a - b) < 0.01 end
+
+-- Jeder Durchlauf: Licht pruefen, Ebene der oberen Schicht halten.
+function W.KeepEmbed(e)
+    local m = e.embed
+    if not m then return end
+    local L = e.artEntry.light
+    local s = m.scene
+    if s and L.ambient then
+        local ok, r, g, b = pcall(s.GetLightAmbientColor, s)
+        local a = L.ambient
+        if not (ok and Close(r, a[1]) and Close(g, a[2]) and Close(b, a[3])) then
+            pcall(s.SetLightAmbientColor, s, a[1], a[2], a[3])
+            if L.diffuse then pcall(s.SetLightDiffuseColor, s, L.diffuse[1], L.diffuse[2], L.diffuse[3]) end
+            m.lit = m.lit + 1
+        end
+    end
+    if m.over then
+        local sl, slots = LevelOf(s) or LevelOf(m.over:GetParent()), SlotLevel()
+        local want = sl and sl + 1
+        local fits = want ~= nil and (slots == nil or slots > want)
+        if fits and LevelOf(m.over) ~= want then m.over:SetFrameLevel(want) end
+        if m.over:IsShown() ~= fits then m.over:SetShown(fits) end
+        m.overLevel, m.slotLevel, m.sceneLevel = want, slots, sl
+    end
 end
 
 local softRoot = setmetatable({}, { __mode = "k" })
@@ -1574,6 +1749,7 @@ function W.SoftenModel(f)
             PlaceBox(soft[host], host)
             MaskAll(soft[host], host)
             FitArt(soft[host])
+            W.KeepEmbed(soft[host])
         end
         return cached
     end
@@ -1606,6 +1782,7 @@ function W.SoftenModel(f)
         PlaceBox(e, host)
         MaskAll(e, host)
         FitArt(e)
+        W.KeepEmbed(e)
     end
     if #order > 0 then softRoot[f] = order end
     return order
@@ -1640,6 +1817,13 @@ function W.SoftReport(f)
         local e = soft[host]
         out[#out + 1] = string.format("   Weicher Rand: %d Teile, %s", #e.parts,
             e.key == "host" and "am Träger (Lage des Bildes unbekannt)" or ("am Bild " .. tostring(e.key)))
+        local m = e.embed
+        if m then
+            out[#out + 1] = string.format("   Einbettung: Licht %s (%d× gesetzt), Schicht über der Figur %s (Modell %s, Plätze %s)",
+                m.scene and "an der Szene" or "fehlt (keine ModelScene)", m.lit,
+                not m.over and "aus" or (m.over:IsShown() and ("auf " .. tostring(m.overLevel)) or "weggelassen"),
+                tostring(m.sceneLevel), tostring(m.slotLevel))
+        end
         if e.art then
             out[#out + 1] = "   Klassenbild: " .. tostring(e.artEntry.file)
         elseif e.art == false then

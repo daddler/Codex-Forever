@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.3.6",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDeine Figur steht im Bild statt davor.|r Im Charakterfenster nimmt die Figur das Licht des Hintergrunds an: gedämpftes, warmes Umgebungslicht und goldenes Hauptlicht statt neutraler Studiobeleuchtung, dazu ein warmer Schein hinter ihr, ein Schatten unter den Füßen und leichter Dunst am Boden. Nur bei Klassen mit eigenem Bild.",
+            "|cff7C6CFFDie Zeile unter deinem Namen bleibt lesbar.|r Klasse und Stufe liegen jetzt über der Figur – vorher konnte eine Waffe auf dem Rücken einen Buchstaben verdecken.",
+        },
+    },
+    {
         version = "6.6.3.5",
         date    = "29.09.2026",
         notes   = {

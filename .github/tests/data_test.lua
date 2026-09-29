@@ -854,6 +854,23 @@ for token, art in pairs(WeintCodex.ClassArtworks or {}) do
     artClasses = artClasses + 1
     Check(classes[token] == true, "Klassenbild " .. tostring(token) .. " gehoert zu einer Klasse, die es gibt")
     CheckArt(art, "Klassenbild " .. tostring(token))
+    if art.light ~= nil then
+        -- Licht (6.6.3.6): Farben 0..1, sonst setzt der Client Unsinn.
+        local okLight = type(art.light) == "table"
+        for _, key in ipairs({ "ambient", "diffuse", "glow", "wash" }) do
+            local c = okLight and art.light[key]
+            if c ~= nil then
+                for i = 1, (key == "glow" or key == "wash") and 4 or 3 do
+                    okLight = okLight and type(c[i]) == "number" and c[i] >= 0 and c[i] <= 1
+                end
+            end
+        end
+        for _, key in ipairs({ "shadow", "haze" }) do
+            local v = okLight and art.light[key]
+            if v ~= nil then okLight = okLight and type(v) == "number" and v >= 0 and v <= 1 end
+        end
+        Check(okLight, "Klassenbild " .. tostring(token) .. ": Licht wohlgeformt (0..1)")
+    end
 end
 Check(WeintCodex.Art.Class("WARRIOR") == nil and WeintCodex.Art.Class(nil) == nil,
     "eine Klasse ohne Bild liefert nil")
