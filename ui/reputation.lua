@@ -16,6 +16,10 @@
 --   6.7.0.2  Fraktionsregister und Codex-Tafel, Astrolab-Zeichen.
 --   6.7.0.3  Detailansicht als kompakte Karte, Haekchen ruecken unter die
 --            Beschreibung.
+--   6.7.2.1  Dieselbe Gliederung wie die Fertigkeiten: Name, Stufe und
+--            Balken bilden den Kopf der Karte, die Linie steht UNTER dem
+--            Balken; die Karte endet immer unter dem Inhalt (compact), auch
+--            wenn die Haekchen nicht ruecken duerfen.
 --
 -- GEMESSEN (/wcui fenster): Zeilen unter
 -- ReputationFrame.ScrollBox.ScrollTarget mit .Content; Balken
@@ -37,6 +41,8 @@ WeintCodex.UIReputation = WeintCodex.UIRegister.New({
     detailBarKeys = { "ReputationBar", "Bar", "StatusBar" },
     -- Das Zeichen des Codex: das Register der Welt.
     sigil         = true,
-    -- Name und Stufe stehen ueber dem Balken: die Linie trennt sie davon.
-    barLine       = "above",
+    -- Wie bei den Fertigkeiten: Name, Stufe und Fortschritt gehoeren
+    -- zusammen, unter dem Balken beginnt die Beschreibung.
+    barLine       = "below",
+    compact       = true,
 })

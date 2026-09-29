@@ -5399,11 +5399,17 @@ do
         assert(war._top == 310 and watch._top == 280, "Abstand der Haekchen nicht erhalten")
         assert(dd.yBar == -60 and dd.yBarB == -80 and dd.yOpt == -190 and dd.yOptB == -240, "Bereiche falsch vermessen")
         assert(dd.barLine.l:IsShown() and dd.options:IsShown() and dd.optLine.l:IsShown(), "Bereiche der Karte fehlen")
+        -- 6.7.2.1: Gliederung wie bei den Fertigkeiten - Linie UNTER dem
+        -- Balken (-80 - 9), Karte endet 12 px unter den Haekchen.
+        assert(dd.barLineY == -89, "Linie nicht unter dem Balken: " .. tostring(dd.barLineY))
+        assert(dd.cardBottom == -252, "Karte endet nicht unter den Haekchen: " .. tostring(dd.cardBottom))
         assert(#shoved == 0, "Balken der Detailansicht verschoben")
         -- Lange Beschreibung: zurueck an den Platz des Spiels, nie tiefer.
         descH = 250
         RP.Update(cf)
         assert(dd.shift == 0 and war._top == 200 and watch._top == 170, "Haekchen bei langer Beschreibung nicht zurueck")
+        -- Auch ungerueckt endet die Karte unter dem Inhalt, nicht am Rand.
+        assert(dd.cardBottom == -362, "Karte reicht ohne Ruecken bis zum Rand: " .. tostring(dd.cardBottom))
         descH = 60
         RP.Update(cf)
         assert(dd.shift == 110 and war._top == 310, "Haekchen ruecken nicht wieder hoch")

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.7.2.1",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Detailansicht im Ruf ist gegliedert wie die Fertigkeiten.|r Fraktionsname, Rufstufe und Rufbalken bilden gemeinsam den Kopf der Karte, die feine Linie in deiner Klassenfarbe steht jetzt unter dem Balken, darunter beginnt die Beschreibung. Die Farben der Rufstufen bleiben, wie das Spiel sie zeigt.",
+            "|cff7C6CFFDie Karte im Ruf endet immer unter ihrem Inhalt.|r Auch wenn „Im Krieg“, „Inaktiv“ und „Als Erfahrungsleiste anzeigen“ an ihrem gewohnten Platz bleiben, reicht die Fläche nur bis knapp unter die Optionen.",
+        },
+    },
+    {
         version = "6.7.2.0",
         date    = "29.09.2026",
         notes   = {

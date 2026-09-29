@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.2.1] – 2026-09-29
+
+**Die Detailansicht im Ruf ist gegliedert wie die Fertigkeiten.** Fraktionsname, Rufstufe und Rufbalken bilden gemeinsam den Kopf der Karte, die feine Linie in deiner Klassenfarbe steht jetzt unter dem Balken, darunter beginnt die Beschreibung. Die Farben der Rufstufen bleiben, wie das Spiel sie zeigt.
+
+**Die Karte im Ruf endet immer unter ihrem Inhalt.** Auch wenn „Im Krieg“, „Inaktiv“ und „Als Erfahrungsleiste anzeigen“ an ihrem gewohnten Platz bleiben, reicht die Fläche nur bis knapp unter die Optionen.
+
+### Technisch
+
+- `ui/reputation.lua`: `barLine = "below"` und `compact = true` – dieselben Einstellungen des Registers wie `ui/skills.lua`. Kein neuer Baustein, keine Änderung an `ui/register.lua` oder `ui/style.lua`. Ruf behält als Eigenheit nur das Codex-Zeichen und das Rücken der Häkchen.
+- `load_test.lua`: Linie unter dem Balken (−89), Karte endet unter den Häkchen – gerückt (−252) und ungerückt (−362).
+
 ## [6.7.2.0] – 2026-09-29
 
 **Das PvP-Fenster ist ein PvP-Profil.** Dein Rangsymbol steht als Mittelpunkt vor einem weichen dunklen Hof mit einem Hauch Licht; Symbol, Rang, Rangpunkte und Fortschritt liegen gemeinsam auf einer ruhigen, leicht angehobenen Fläche unter einer feinen Linie mit Raute. Die Rangpunkte sind etwas größer, ihre Farbe bleibt, wie das Spiel sie zeigt.

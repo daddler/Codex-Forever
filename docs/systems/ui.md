@@ -1786,9 +1786,9 @@ alle, `/wcui fenster` fragt alle) und seinen Stil für seine Fenster in
 | Fenster | `ReputationFrame` | `SkillsFrame`, `SkillFrame`, `CharacterFrame.SkillsFrame`/`.SkillFrame` |
 | Detailansicht | `ReputationDetailFrame` (gemessen) | Schlüssel aus älteren Fassungen, sonst **Suche**: Kind des Fensters mit dem längsten Text |
 | Titel | `.Title` (gemessen) | Schlüssel, sonst die **oberste Schriftzeile**; steht er **im Balken**, bleibt er unverändert |
-| Linie am Balken | darüber (Name/Stufe darüber) | **darunter** (Name/Fortschritt gehören zusammen) |
+| Linie am Balken | darunter (seit 6.7.2.1; vorher darüber) | **darunter** (Name/Fortschritt gehören zusammen) |
 | Unter der Beschreibung | Häkchen, rücken nach oben | was folgt (Zeilen, Knöpfe) → abgesetzter Bereich, **nichts bewegt** |
-| Karte | endet unter gerückten Häkchen | endet immer unter dem Inhalt (`compact`) |
+| Karte | endet immer unter dem Inhalt (seit 6.7.2.1; vorher nur unter gerückten Häkchen) | endet immer unter dem Inhalt (`compact`) |
 | Codex-Zeichen | ja | **nein** – kein passendes Motiv, keins erzwungen |
 
 **Fortschrittsbalken**: gefunden über Schlüssel oder – neu, für alle
@@ -1882,6 +1882,34 @@ Farbe; nur Schriftgröße von Rangpunkten und Titel.
 Symbol … · Rang … · Punkte … · Balken …“, „PvP, Rangbereich: …“, „PvP,
 Detail: … · Titel … · Belohnung … · Überschrift … · Karte endet …“ –
 fehlt etwas, steht dort „FEHLT“.
+
+**Gemessen nach 6.7.2.0 (Screenshot und `/wcui fenster`):** der Reiter
+heißt im Forever-Client `PVPRankFrame` (Teile `MainInfoFrame`,
+`MainInfoFrame.RankProgressBarDisplay` mit `NextRewardLevel`,
+`DetailFrame.Content`). Der Name fehlt in `PV.FRAMES` – 6.7.2.0 greift im
+Spiel **nicht**; die Überschrift „Nächste Belohnungen …“ bekommt nur den
+allgemeinen Stil des Charakterfensters. Offen, nicht in 6.7.2.1 behoben.
+
+### Ruf wie Fertigkeiten *(6.7.2.1)*
+
+Beta-Test: Ruf und Fertigkeiten sind gemeinsam die Vorlage der ruhigen
+Informationsoberfläche; Ruf soll nicht „besonders“ aussehen, sondern
+dieselbe Hierarchie tragen. Seit 6.7.1.0 sind beide **ein** Baustein
+(`ui/register.lua`) – verschieden waren nur drei Einstellungen. Zwei
+davon folgen jetzt den Fertigkeiten:
+
+- `barLine = "below"`: Fraktionsname, Rufstufe und Rufbalken bilden den
+  Kopf der Karte (Haupttitel → sekundäre Information → Fortschritt), die
+  Linie in der Klassenfarbe steht darunter, dann die Beschreibung.
+- `compact = true`: die Karte endet auch dann unter den Häkchen, wenn sie
+  nicht rücken dürfen (Beschreibung zu lang, Beschriftung nicht am
+  Häkchen, weiterer Knopf) – vorher reichte sie dann bis zum Rand.
+
+Bleibt Ruf-eigen: das Rücken der Häkchen unter die Beschreibung (nur der
+Ruf hat Häkchen) und das Codex-Zeichen (Astrolab, 4,5 %, unten rechts in
+der Liste). Kein neuer Baustein, keine Änderung an `ui/style.lua` oder
+`ui/register.lua`; Liste, Kopfzeilen, Auswahl, Balken und Atmosphäre sind
+seit 6.7.1.0 derselbe Code wie bei den Fertigkeiten.
 
 ### Nächste Fenster
 
