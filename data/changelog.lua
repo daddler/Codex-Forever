@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.7.0.3",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Detailansicht im Ruf ist jetzt eine kompakte Karte.|r Name, Rufstufe, Fortschritt und Beschreibung stehen oben; „Im Krieg“, „Inaktiv“ und „Als Erfahrungsleiste anzeigen“ rücken direkt unter die Beschreibung in ihren eigenen, abgesetzten Bereich, und die Karte endet kurz darunter – kein leerer schwarzer Raum mehr bis zum unteren Rand. Ist eine Beschreibung lang, bleiben die Optionen an ihrem gewohnten Platz; sie funktionieren unverändert.",
+        },
+    },
+    {
         version = "6.7.0.2",
         date    = "29.09.2026",
         notes   = {

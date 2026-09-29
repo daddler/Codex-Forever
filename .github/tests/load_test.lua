@@ -5310,13 +5310,29 @@ do
         detBar.GetRegions = function() return detFill end
         local war, watch = stub.NewObject("CheckButton"), stub.NewObject("CheckButton")
         local shoved = {}
-        for name, fr in pairs({ bar = detBar, war = war, watch = watch }) do
-            fr.SetPoint = function() shoved[#shoved + 1] = name end
-            fr.ClearAllPoints = function() shoved[#shoved + 1] = name end
-        end
-        det.GetTop = function() return 500 end
+        detBar.SetPoint = function() shoved[#shoved + 1] = "bar" end
+        detBar.ClearAllPoints = function() shoved[#shoved + 1] = "bar" end
+        det.GetTop, det.GetLeft = function() return 500 end, function() return 400 end
         detBar.GetTop, detBar.GetBottom = function() return 440 end, function() return 420 end
-        war.GetTop, watch.GetTop = function() return 200 end, function() return 170 end
+        -- 6.7.0.3: die Haekchen ruecken unter die Beschreibung - nur per
+        -- SetPoint, gemeinsam, mit den Abstaenden des Spiels.
+        for fr, t in pairs({ [war] = 200, [watch] = 170 }) do
+            fr._top = t
+            fr.GetTop = function(self) return self._top end
+            fr.GetBottom = function(self) return self._top - 20 end
+            fr.GetLeft = function() return 412 end
+            fr.SetPoint = function(self, point, rel, relPoint, x, y)
+                assert(point == "TOPLEFT" and rel == det and x == 12, "Haekchen falsch verankert")
+                self._top = 500 + y
+            end
+            local label = Line("Beschriftung")
+            fr.GetRegions = function() return label end
+        end
+        local desc = Line("Diese Hauptstadt der Allianz wird von Nachtelfen bewohnt und liegt auf der Insel Teldrassil.")
+        desc.GetTop = function() return 400 end
+        local descH = 60
+        desc.GetStringHeight = function() return descH end
+        det.GetRegions = function() return det.Title, desc end
         det.GetChildren = function() return border, detBar, war, watch end
         det:Hide()
         rf.ReputationDetailFrame = det
@@ -5377,10 +5393,44 @@ do
         assert(W.own[dd.line.l] and W.own[dd.surface.body], "Flaeche der Detailansicht als fremdes Bild")
         -- Tafel: Balken gefunden, Grenzen nach den Rahmen des Spiels.
         assert(dd.bar == detBar and RP.bars[detBar] and RP.bars[detBar].fill == detFill, "Balken der Detailansicht nicht gefunden")
-        assert(dd.yBar == -60 and dd.yBarB == -80 and dd.yOpt == -300, "Bereiche falsch vermessen")
-        assert(dd.barLine.l:IsShown() and dd.page:IsShown() and dd.options:IsShown() and dd.optLine.l:IsShown(),
-            "Bereiche der Tafel fehlen")
-        assert(#shoved == 0, "Rahmen der Detailansicht verschoben: " .. table.concat(shoved, ", "))
+        -- Beschreibung endet bei -160, Optionen 30 darunter: 110 px nach oben.
+        assert(dd.desc == desc and dd.movable and dd.shift == 110, "Optionen nicht unter die Beschreibung gerueckt: "
+            .. tostring(dd.shift) .. " " .. tostring(dd.why))
+        assert(war._top == 310 and watch._top == 280, "Abstand der Haekchen nicht erhalten")
+        assert(dd.yBar == -60 and dd.yBarB == -80 and dd.yOpt == -190 and dd.yOptB == -240, "Bereiche falsch vermessen")
+        assert(dd.barLine.l:IsShown() and dd.options:IsShown() and dd.optLine.l:IsShown(), "Bereiche der Karte fehlen")
+        assert(#shoved == 0, "Balken der Detailansicht verschoben")
+        -- Lange Beschreibung: zurueck an den Platz des Spiels, nie tiefer.
+        descH = 250
+        RP.Update(cf)
+        assert(dd.shift == 0 and war._top == 200 and watch._top == 170, "Haekchen bei langer Beschreibung nicht zurueck")
+        descH = 60
+        RP.Update(cf)
+        assert(dd.shift == 110 and war._top == 310, "Haekchen ruecken nicht wieder hoch")
+        -- Schiebt das Spiel sie zurueck, holt der naechste Durchlauf sie.
+        war._top, watch._top = 200, 170
+        RP.Update(cf)
+        assert(war._top == 310 and watch._top == 280, "vom Spiel zurueckgesetzte Haekchen bleiben unten")
+        -- Schutzregeln: ohne eigene Beschriftung oder mit weiterem Knopf ruecken sie nicht.
+        local function Guard(extra)
+            local d2 = stub.NewObject("Frame")
+            d2.GetTop, d2.GetLeft = function() return 500 end, function() return 400 end
+            local cb = stub.NewObject("CheckButton")
+            cb.GetTop, cb.GetLeft = function() return 200 end, function() return 412 end
+            if extra == "label" then
+                cb.GetRegions = function() return Line("Im Krieg") end
+                local btn = stub.NewObject("Button")
+                d2.GetChildren = function() return cb, btn end
+            else
+                d2.GetChildren = function() return cb end
+            end
+            local g = { frame = d2 }
+            RP.Options(g)
+            return g
+        end
+        local g1, g2 = Guard(nil), Guard("label")
+        assert(g1.opts and not g1.movable and g1.why == "Beschriftung nicht am Häkchen", "Haekchen ohne Beschriftung wuerde gerueckt")
+        assert(g2.opts and not g2.movable and g2.why == "weiterer Knopf in der Detailansicht", "weiterer Knopf nicht beachtet")
         det.Title._text = "Eisenschmiede"
         RP.Update(cf)
         assert(r2.sel.on and not r1.sel.on, "Auswahl folgt der Detailansicht nicht")
@@ -5394,7 +5444,8 @@ do
         assert(rep:find("Ruf (Stil ruhig, Klasse)", 1, true) and rep:find("3 Zeilen (1 Kopfzeilen, 2 mit Balken, 3 mit Namen)", 1, true)
             and rep:find("Balken: Frame, Füllung Bild", 1, true) and rep:find("getönt: 2", 1, true)
             and rep:find("gewählt: „Eisenschmiede“", 1, true) and rep:find("Detailansicht: Fläche im Fenster", 1, true)
-            and rep:find("Tafel: Balken Frame, Optionen 2 Häkchen, Bereiche: Balken -60, Beschreibung ja, Optionen -300", 1, true),
+            and rep:find("Karte: Balken Frame, Beschreibung gefunden, Optionen 2 Häkchen, Bereiche: Balken -60, Optionen -190", 1, true)
+            and rep:find("Optionen: um 110 px nach oben gerückt", 1, true),
             "Bericht: " .. rep)
         S.Gradient = grad
         assert(golden == 0, "Gold im Ruf: " .. golden .. " Verlaeufe")

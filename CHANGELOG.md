@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.0.3] – 2026-09-29
+
+**Die Detailansicht im Ruf ist jetzt eine kompakte Karte.** Name, Rufstufe, Fortschritt und Beschreibung stehen oben; „Im Krieg“, „Inaktiv“ und „Als Erfahrungsleiste anzeigen“ rücken direkt unter die Beschreibung in ihren eigenen, abgesetzten Bereich, und die Karte endet kurz darunter – kein leerer schwarzer Raum mehr bis zum unteren Rand. Ist eine Beschreibung lang, bleiben die Optionen an ihrem gewohnten Platz; sie funktionieren unverändert.
+
+### Technisch
+
+- `ui/reputation.lua`, „Die Karte“: die Häkchen der Detailansicht rücken per `SetPoint` gemeinsam unter den Text der Beschreibung (`RP.DetailDescription`: Schlüssel oder längster Text; Ende = Oberkante − `GetStringHeight`), nur nach oben, nie tiefer als das Spiel sie setzt, mit den Abständen des Spiels (`RP.Options` misst einmal vor jeder Bewegung). Nicht gerückt, wenn eine Beschriftung nicht am Häkchen hängt oder ein weiterer Knopf sichtbar ist (`d.why`). Schiebt das Spiel sie zurück, rückt der nächste Durchlauf sie wieder hin.
+- Fläche und Schatten der Karte enden unter den Optionen (`RP.PlaceCard`); die Beschreibungsfläche aus 6.7.0.2 ist weg (im Spiel nicht zu sehen).
+- `/wcui fenster`: „Ruf, Karte: …“ und „Ruf, Optionen: um N px nach oben gerückt / nicht gerückt (Grund)“.
+
 ## [6.7.0.2] – 2026-09-29
 
 **Die Detailansicht im Ruf ist eine Codex-Tafel.** Der Fraktionsname steht größer als Hauptinformation, darunter die Rufstufe. Eine feine Linie in deiner Klassenfarbe trennt sie vom Rufbalken, der mit weichem Schatten deutlicher hervortritt. Die Beschreibung liegt auf einer eigenen, leicht vertieften Fläche; „Im Krieg“, „Inaktiv“ und „Als Erfahrungsleiste anzeigen“ stehen unter einer Linie mit Raute in einem eigenen, ruhigen Optionsbereich.

@@ -272,6 +272,8 @@ function RP.Surface(host, anchor, pad, corner, sub, color)
     o.edge.r:SetDrawLayer("BACKGROUND", -3)
     S.PlaceTop(o.edge, anchor, 12)
     o.parts = { o.shadow, o.body, o.edge.l, o.edge.r }
+    -- Fuer RP.PlaceCard: Flaeche und Schatten mit ihrem Abstand zum Rand.
+    o.card = { { tex = o.body, extra = pad - RP.DETAIL_PAD }, { tex = o.shadow, extra = pad - RP.DETAIL_PAD + RP.SHADOW_PAD } }
     return o
 end
 
@@ -408,12 +410,14 @@ end
 --   Name (16 pt) / Stufe
 --   ---- Linie in der Klassenfarbe ----
 --   Balken (weicher Schatten darunter, Tiefe an der Fuellung)
---   Beschreibung auf einer leicht vertieften Flaeche
+--   Beschreibung
 --   ---- Linie mit Raute ----
---   Optionen (Haekchen) auf eigener, ruhiger Flaeche bis unten
--- Keine Zeile des Spiels wird verschoben: die Grenzen richten sich nach
--- den Rahmen des Spiels (Oberkante Balken, oberstes Haekchen), gemessen
--- in jedem Durchlauf, neu gelegt nur bei einer Aenderung.
+--   Optionen (Haekchen) auf eigener, ruhiger Flaeche
+-- Die Grenzen richten sich nach den Rahmen des Spiels (Oberkante Balken,
+-- oberstes Haekchen), gemessen in jedem Durchlauf, neu gelegt nur bei
+-- einer Aenderung. Seit 6.7.0.3 ruecken die Haekchen unter die
+-- Beschreibung (siehe "Die Karte" unten) - das einzige, was hier bewegt
+-- wird, und nur ueber SetPoint.
 
 -- Der Balken der Detailansicht: ueber den Schluessel, sonst der erste
 -- Rahmen bis zwei Ebenen tief, der die Fuellung des Rufs traegt.
@@ -447,23 +451,133 @@ local function Edge(r, method)
     return type(v) == "number" and v or nil
 end
 
--- Oberkante des obersten sichtbaren Haekchens (Optionen).
+-- Oberkante des obersten sichtbaren Haekchens (Optionen), so wie das
+-- Spiel es hinsetzt - fuer den Fall, dass die Optionen nicht ruecken.
 function RP.OptionTop(det)
-    local top
+    local top, bottom
     for _, ch in ipairs(W.Children(det, "repOpt")) do
         if IsFrame(ch) and Kind(ch) == "CheckButton" and Visible(ch) then
-            local t = Edge(ch, "GetTop")
+            local t, b = Edge(ch, "GetTop"), Edge(ch, "GetBottom")
             if t and (not top or t > top) then top = t end
+            if b and (not bottom or b < bottom) then bottom = b end
         end
     end
-    return top
+    return top, bottom
+end
+
+--------------------------------------------------
+-- Die Karte (6.7.0.3)
+--------------------------------------------------
+-- Beta-Test mit Screenshot: unter Beschreibung und Balken viel leerer
+-- Raum, die drei Haekchen kleben am unteren Rand (dort verankert sie das
+-- Spiel). Jetzt eine KARTE: Name, Stufe, Balken, Beschreibung, darunter
+-- direkt der abgesetzte Optionsbereich - und die Flaeche endet kurz unter
+-- den Optionen, statt leer bis zum Rand zu laufen.
+--
+-- Dafuer ruecken die Haekchen nach oben, unter den TEXT der Beschreibung
+-- (Oberkante minus Hoehe des Textes). Regeln, damit nichts verloren geht:
+--   * nur nach oben, nie tiefer als das Spiel sie setzt; ist die
+--     Beschreibung lang, bleiben sie, wo sie sind;
+--   * alle gemeinsam, Abstaende untereinander wie im Spiel (gemessen
+--     einmal, bevor irgendetwas bewegt wurde);
+--   * nur wenn JEDES Haekchen seine Beschriftung selbst traegt (sonst
+--     liefe der Text nicht mit) und kein weiterer Knopf in der
+--     Detailansicht sichtbar ist (etwa "Ruhm ansehen");
+--   * nur SetPoint - Skripte, Zustand, Groesse und Text bleiben die des
+--     Spiels. Schiebt das Spiel sie zurueck, rueckt der naechste Durchlauf
+--     sie wieder hin.
+-- Die Beschreibung: ueber einen Schluessel des Quelltexts, sonst die
+-- Schriftzeile mit dem laengsten Text in der Detailansicht (Name, Stufe,
+-- Balkentext und Beschriftungen sind kurz).
+RP.DESC_KEYS = { "Description", "DescriptionText", "ScrollingDescription", "Text" }
+RP.DESC_MIN = 40          -- kuerzer ist keine Beschreibung (Laenge in Bytes, nur zum Vergleich)
+RP.OPTION_SPACE = 30      -- Beschreibung -> oberstes Haekchen (Platz fuer die Linie)
+RP.OPTION_MIN_SHIFT = 8   -- kleiner lohnt sich das Ruecken nicht
+RP.CARD_BOTTOM = 12       -- so weit reicht die Karte unter das letzte Haekchen
+
+local function Longest(f, depth, skip, best, len)
+    if not f or depth > 2 then return best, len end
+    for _, r in ipairs(W.Regions(f, "repDesc", depth)) do
+        if r ~= skip and Kind(r) == "FontString" then
+            local t = TextOf(r)
+            if t and #t > len then best, len = r, #t end
+        end
+    end
+    for _, ch in ipairs(W.Children(f, "repDesc", depth)) do
+        if IsFrame(ch) and Kind(ch) ~= "CheckButton" then best, len = Longest(ch, depth + 1, skip, best, len) end
+    end
+    return best, len
+end
+
+function RP.DetailDescription(det, title)
+    for _, key in ipairs(RP.DESC_KEYS) do
+        local t = det[key]
+        if IsFrame(t) then
+            if Kind(t) == "FontString" then return t end
+            if type(t.GetFontString) == "function" then
+                local ok, fs = pcall(t.GetFontString, t)
+                if ok and IsFrame(fs) then return fs end
+            end
+        end
+    end
+    local fs, len = Longest(det, 0, title, nil, 0)
+    return (fs and len >= RP.DESC_MIN) and fs or nil
+end
+
+-- Die Haekchen einmal vermessen, BEVOR etwas bewegt wird: Lage relativ
+-- zur Detailansicht, Beschriftung, und ob etwas das Ruecken verbietet.
+function RP.Options(d)
+    local det = d.frame
+    local left, top = Edge(det, "GetLeft"), Edge(det, "GetTop")
+    if not left or not top then return nil end
+    local list, why = {}, nil
+    for _, ch in ipairs(W.Children(det, "repOptAll")) do
+        if IsFrame(ch) and Visible(ch) then
+            local kind = Kind(ch)
+            if kind == "CheckButton" then
+                local l, t, b = Edge(ch, "GetLeft"), Edge(ch, "GetTop"), Edge(ch, "GetBottom")
+                if l and t then
+                    local o = { frame = ch, x = l - left, y = t - top, yb = (b or t) - top }
+                    o.label = FirstRegion(ch, "FontString") ~= nil
+                        or (IsFrame(ch.Text) and Kind(ch.Text) == "FontString")
+                    if not o.label then why = "Beschriftung nicht am Häkchen" end
+                    list[#list + 1] = o
+                end
+            elseif kind == "Button" and ch ~= det.CloseButton then
+                why = why or "weiterer Knopf in der Detailansicht"
+            end
+        end
+    end
+    if #list == 0 then return nil end
+    local first, low = list[1].y, list[1].yb
+    for _, o in ipairs(list) do
+        if o.y > first then first = o.y end
+        if o.yb < low then low = o.yb end
+    end
+    d.opts, d.optFirst, d.optLow = list, first, low
+    d.movable, d.why = why == nil, why
+    return list
+end
+
+-- Die Haekchen um `shift` px nach oben (0 = wo das Spiel sie hatte).
+-- Legt nur neu, wenn sich das Ziel aendert oder das Spiel sie verschoben hat.
+function RP.PlaceOptions(d, shift)
+    local det, first = d.frame, d.opts[1]
+    local top, now = Edge(det, "GetTop"), Edge(first.frame, "GetTop")
+    local drift = top and now and math.abs((now - top) - (first.y + (d.shift or 0))) > 1
+    if d.shift == shift and not drift then return end
+    if d.shift == nil and shift == 0 then return end   -- nie bewegt: nichts anfassen
+    for _, o in ipairs(d.opts) do
+        o.frame:ClearAllPoints()
+        o.frame:SetPoint("TOPLEFT", det, "TOPLEFT", o.x, o.y + shift)
+    end
+    d.shift = shift
 end
 
 function RP.DetailParts(d)
     local det, accent = d.frame, Accent()
-    -- Beschreibung: leicht vertieft. Optionen: ebenso, bis unten.
+    -- Optionen: leicht vertieft, eigener Bereich unter einer Linie mit Raute.
     local c = GC.surfaceSunken
-    d.page = S.SoftPanel(det, det, c, c[4], 0, -6)
     d.options = S.SoftPanel(det, det, c, c[4], 0, -6)
     d.optLine = S.Under(S.Divider(det, accent, RP.OPTION_LINE, 0), -1)
     d.optDot = S.Diamond(det, 5, accent, 0.8, 0)
@@ -471,7 +585,7 @@ function RP.DetailParts(d)
     d.optHole = S.Diamond(det, 2, C.surface1, 1, 0)
     d.optHole:SetDrawLayer("BACKGROUND", 1)
     d.optHole:SetPoint("CENTER", d.optDot, "CENTER", 0, 0)
-    d.zones = { d.page, d.options, d.optLine.l, d.optLine.r, d.optDot, d.optHole }
+    d.zones = { d.options, d.optLine.l, d.optLine.r, d.optDot, d.optHole }
     for _, t in ipairs(d.zones) do t:Hide() end
 end
 
@@ -491,18 +605,63 @@ local function ShowZone(on, ...)
     end
 end
 
+-- Flaeche der Karte (und ihr Schatten): oben wie immer, unten bis
+-- `yBottom` (relativ zur Oberkante) oder bis zum Rand.
+function RP.PlaceCard(d, yBottom)
+    local o, det = d.surface, d.frame
+    if not o then return end
+    local pad = RP.DETAIL_PAD
+    for _, part in ipairs(o.card) do
+        local p = pad + part.extra
+        part.tex:ClearAllPoints()
+        part.tex:SetPoint("TOPLEFT", det, "TOPLEFT", -p, p)
+        if yBottom then part.tex:SetPoint("BOTTOMRIGHT", det, "TOPRIGHT", p, yBottom - p)
+        else part.tex:SetPoint("BOTTOMRIGHT", det, "BOTTOMRIGHT", p, -p) end
+    end
+end
+
+-- Wo die Beschreibung endet (relativ zur Oberkante): Oberkante des
+-- Textes minus seine Hoehe.
+local function DescBottom(d, top)
+    if not d.desc then return nil end
+    local t, h = Edge(d.desc, "GetTop"), Edge(d.desc, "GetStringHeight")
+    if not t or not h then return nil end
+    return t - h - top
+end
+
 function RP.DetailLayout(d)
     local det = d.frame
     local top = Edge(det, "GetTop")
     if not top then return end
+    if not d.desc then d.desc = RP.DetailDescription(det, d.title) end
+    if not d.opts then RP.Options(d) end
+    -- Ruecken: Ziel knapp unter dem Text der Beschreibung, nie tiefer als
+    -- das Spiel die Haekchen setzt.
+    local shift = 0
+    if d.opts and d.movable then
+        local db = DescBottom(d, top)
+        if db then
+            local up = (db - RP.OPTION_SPACE) - d.optFirst
+            if up >= RP.OPTION_MIN_SHIFT then shift = math.floor(up + 0.5) end
+        end
+        RP.PlaceOptions(d, shift)
+    end
     local barTop = d.bar and Edge(d.bar, "GetTop")
     local barBottom = d.bar and Edge(d.bar, "GetBottom")
-    local optTop = RP.OptionTop(det)
     local yBar = barTop and (barTop - top) or false
     local yBarB = barBottom and (barBottom - top) or false
-    local yOpt = optTop and (optTop - top) or false
-    if d.yBar == yBar and d.yBarB == yBarB and d.yOpt == yOpt then return end
-    d.yBar, d.yBarB, d.yOpt = yBar, yBarB, yOpt
+    local yOpt, yOptB
+    if d.opts and d.movable then
+        -- Aus der eigenen Rechnung: gleich nach SetPoint misst der Client
+        -- noch die alte Lage.
+        yOpt, yOptB = d.optFirst + shift, d.optLow + shift
+    else
+        local ot, ob = RP.OptionTop(det)
+        yOpt, yOptB = ot and (ot - top) or false, ob and (ob - top) or false
+    end
+    yOpt, yOptB = yOpt or false, yOptB or false
+    if d.yBar == yBar and d.yBarB == yBarB and d.yOpt == yOpt and d.yOptB == yOptB then return end
+    d.yBar, d.yBarB, d.yOpt, d.yOptB = yBar, yBarB, yOpt, yOptB
     local inset = RP.DETAIL_INSET
     if yBar and d.barLine then
         S.PlaceTop(d.barLine, det, inset, yBar + RP.DETAIL_GAP)
@@ -513,13 +672,15 @@ function RP.DetailLayout(d)
         S.PlaceTop(d.optLine, det, inset, yLine)
         d.optDot:ClearAllPoints()
         d.optDot:SetPoint("CENTER", det, "TOP", 0, yLine)
-        S.PlaceBand(d.options, det, 2, yLine - 1, nil)
+        -- Bereich der Optionen: von der Linie bis knapp unter das letzte
+        -- Haekchen (geruckt) bzw. bis zum Rand.
+        local moved = (d.shift or 0) > 0
+        S.PlaceBand(d.options, det, 2, yLine - 1, (moved and yOptB) and (yOptB - RP.CARD_BOTTOM + 4) or nil)
     end
     ShowZone(yLine and true or false, d.optLine.l, d.optLine.r, d.optDot, d.optHole, d.options)
-    -- Beschreibung: zwischen Balken und Optionen, nur wenn Platz ist.
-    local page = yBarB and yLine and (yBarB - yLine) > 30
-    if page then S.PlaceBand(d.page, det, inset - 4, yBarB - 6, yLine + 6) end
-    d.page:SetShown(page and true or false)
+    -- Die Karte endet unter den Optionen, wenn sie geruckt sind.
+    local moved = (d.shift or 0) > 0 and yOptB
+    RP.PlaceCard(d, moved and (yOptB - RP.CARD_BOTTOM) or nil)
 end
 
 -- Im Fenster: dieselbe angehobene Flaeche wie die Liste (ein Bereich der
@@ -640,11 +801,16 @@ function RP.Report(f, out)
         for _, ch in ipairs(W.Children(det, "repReport")) do
             if IsFrame(ch) and Kind(ch) == "CheckButton" then opts = opts + 1 end
         end
-        out[#out + 1] = string.format("   Ruf, Tafel: Balken %s, Optionen %d Häkchen, Bereiche: Balken %s, Beschreibung %s, Optionen %s",
-            d.bar and (Kind(d.bar) or "?") or "FEHLT", opts,
+        out[#out + 1] = string.format("   Ruf, Karte: Balken %s, Beschreibung %s, Optionen %d Häkchen, Bereiche: Balken %s, Optionen %s",
+            d.bar and (Kind(d.bar) or "?") or "FEHLT", d.desc and "gefunden" or "FEHLT", opts,
             d.yBar and string.format("%.0f", d.yBar) or "–",
-            (d.page and d.page:IsShown()) and "ja" or "nein",
             d.yOpt and string.format("%.0f", d.yOpt) or "–")
+        local moved
+        if not d.opts then moved = "nicht gerückt (keine Häkchen vermessen)"
+        elseif not d.movable then moved = "nicht gerückt (" .. tostring(d.why) .. ")"
+        elseif (d.shift or 0) > 0 then moved = string.format("um %d px nach oben gerückt, Karte endet darunter", d.shift)
+        else moved = "an ihrem Platz (Beschreibung lang oder unbekannt)" end
+        out[#out + 1] = "   Ruf, Optionen: " .. moved
     end
     return out
 end

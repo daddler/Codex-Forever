@@ -1706,6 +1706,60 @@ Optionen (vertiefte Fläche bis unten)
 Im Spiel ungeprüft: alle Werte (Dichte der Flächen, Sichtbarkeit des
 Zeichens, Lage der Grenzen).
 
+### Die Karte *(6.7.0.3)*
+
+Screenshot 6.7.0.2: unter Balken und Beschreibung viel leerer Raum,
+die drei Häkchen am unteren Rand – dort verankert sie das Spiel, und
+Linie und Optionsbereich richteten sich nur nach ihnen. Leer blieb der
+Raum, solange nichts rückt; deshalb rücken jetzt die Häkchen (der
+einzige Eingriff in die Lage eines Rahmens des Spiels in diesem
+Fenster):
+
+```
+Fraktionsname / Rufstufe
+──── Linie ────
+Rufbalken
+Beschreibung
+   30 px
+──── Linie mit Raute ────
+Optionen (vertiefte Fläche)
+   12 px
+Ende der Karte (Fläche + Schatten)
+```
+
+- **Beschreibung finden** (`RP.DetailDescription`): Schlüssel
+  `Description`, `DescriptionText`, `ScrollingDescription`, `Text`
+  (Schriftzeile oder Rahmen mit `GetFontString`), sonst die Schriftzeile
+  mit dem längsten Text in der Detailansicht bis zwei Ebenen tief, ohne
+  Titel und ohne Häkchen, mindestens 40 Bytes. Ende = Oberkante −
+  `GetStringHeight` – der **Text**, nicht der Rahmen, der größer sein
+  kann.
+- **Häkchen vermessen** (`RP.Options`, einmal, bevor etwas bewegt wird):
+  sichtbare `CheckButton` der Detailansicht mit Lage relativ zu ihr.
+  Gesperrt (`d.movable = false`, Grund in `d.why`), wenn eine
+  Beschriftung nicht am Häkchen hängt (Schriftzeile als eigene Fläche
+  oder `.Text`) – sie liefe sonst nicht mit – oder ein weiterer Knopf
+  (außer `CloseButton`) sichtbar ist.
+- **Rücken** (`RP.PlaceOptions`): alle gemeinsam um dieselbe Strecke,
+  `SetPoint("TOPLEFT", Detailansicht, …)` mit den gemessenen Abständen.
+  Nur nach oben (Ziel = Ende der Beschreibung − 30 px); weniger als
+  8 px lohnt nicht; ist die Beschreibung so lang, dass das Ziel tiefer
+  läge als der Platz des Spiels, kommen sie genau dorthin zurück.
+  Geprüft in jedem Durchlauf: stehen sie woanders (vom Spiel
+  zurückgesetzt), werden sie neu gelegt. Nie bewegt → nie angefasst.
+- **Karte** (`RP.PlaceCard`): Fläche und Schatten der Detailansicht
+  enden 12 px unter dem letzten Häkchen, wenn sie gerückt sind, sonst
+  am Rand. Die vertiefte Beschreibungsfläche von 6.7.0.2 ist weg (im
+  Screenshot nicht zu sehen, nur ein Kasten mehr).
+- Skripte, Zustand, Größe, Text der Häkchen: unverändert.
+- `/wcui fenster`: „Ruf, Karte: Balken …, Beschreibung gefunden/FEHLT,
+  Optionen n Häkchen, Bereiche: …“ und „Ruf, Optionen: um N px nach
+  oben gerückt, Karte endet darunter“ bzw. „nicht gerückt (Grund)“.
+
+Im Spiel ungeprüft: ob die Beschriftungen der Häkchen an ihnen hängen
+(sonst meldet der Bericht den Grund und nichts rückt) und ob
+`GetStringHeight` die Höhe des umbrochenen Textes liefert.
+
 ### Nächste Fenster
 
 Erst nach Freigabe des Rufs. Vorgesehen: Fertigkeiten und Abzeichen
