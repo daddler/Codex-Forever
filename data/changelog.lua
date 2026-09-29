@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.4.2",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDein Name steht nur noch einmal im Charakterfenster.|r Der kleine Titel des Spiels über dem Fenster ist ausgeblendet, solange die große Kopfzeile zu sehen ist; auf Ruf, Währung usw. steht er wie gewohnt.",
+            "|cff7C6CFFKeine graue Fläche mehr oben rechts.|r Der helle Schein oben im Fenster ist aus, und die Werte liegen durchgehend von oben bis unten auf der dunklen Fläche, die weich in die Szene übergeht.",
+        },
+    },
+    {
         version = "6.6.4.1",
         date    = "29.09.2026",
         notes   = {

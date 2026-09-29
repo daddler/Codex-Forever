@@ -4651,6 +4651,10 @@ do
         assert(head.name:GetText() == "HOLY LARENA" and head.sub:GetText() == sp("PRIESTERIN · STUFE 60"),
             "Kopfzeile: " .. tostring(head.name:GetText()) .. " / " .. tostring(head.sub:GetText()))
         assert(titleText:GetAlpha() == 0 and lvlText:GetAlpha() == 0, "Name/Stufe doppelt (Titel des Spiels sichtbar)")
+        head:Show()
+        titleText:SetAlpha(1)   -- das Spiel setzt den Titel neu
+        CS.KeepHeader(head, nil)
+        assert(titleText:GetAlpha() == 0, "Titel des Spiels kommt zurueck")
         head:GetScript("OnHide")()
         assert(titleText:GetAlpha() == 1 and lvlText:GetAlpha() == 1, "Titel auf anderen Reitern weg")
         assert(CS.Header(charF) == head, "Kopfzeile doppelt")
@@ -4688,7 +4692,15 @@ do
         assert(d and d.InsetRight, "Innenflaeche nicht gefunden")
         local Lay = CS.Layout(win, d, priest)
         assert(Lay.base and d.InsetRight:GetAlpha() == 0, "Basis/Innenflaeche nicht umgestellt")
-        assert(CS.TOP_GLOW == 0 and (d.glow == nil or d.glow:GetAlpha() == 0), "Schein der Klasse faerbt weiter das Fenster")
+        -- 6.6.4.2: der Schein ist versteckt und bleibt es, auch wenn ihn
+        -- etwas wieder zeigt (Beta-Test: graue Flaeche oben rechts).
+        d.glow = d.glow or win:CreateTexture()
+        d.glow:Show()
+        CS.Layout(win, d, priest)
+        assert(CS.TOP_GLOW == 0 and not d.glow:IsShown(), "Schein der Klasse faerbt weiter das Fenster")
+        d.glow:Show()
+        CS.Layout(win, d, priest)
+        assert(not d.glow:IsShown(), "Schein kommt zurueck")
         assert(Lay.glass and Lay.glass.name == "InsetRight" and Lay.glass.shown == true and W.own[Lay.glass.body],
             "keine Glasebene rechts")
         insetR:Hide()
@@ -4697,6 +4709,23 @@ do
         insetR:Show()
         CS.Layout(win, d, priest)
         assert(Lay.glass.body:IsShown(), "Glas kommt nicht zurueck")
+        -- Ohne Innenflaeche: der erste SICHTBARE Kandidat - in diesem
+        -- Client die ScrollBox der Werte, nicht der unsichtbare Pane.
+        local win2 = stub.NewObject("Frame")
+        local oldSB, oldPane = _G.CharacterStatsPaneScrollBox, _G.CharacterStatsPane
+        _G.CharacterStatsPane, _G.CharacterStatsPaneScrollBox = stub.NewObject("Frame"), stub.NewObject("Frame")
+        _G.CharacterStatsPane:Hide()
+        local rp, rn = CS.RightPane(win2)
+        assert(rp == _G.CharacterStatsPaneScrollBox and rn == "CharacterStatsPaneScrollBox", "Glas am unsichtbaren Pane: " .. tostring(rn))
+        _G.CharacterStatsPaneScrollBox:Hide()
+        local _, rn2 = CS.RightPane(win2)
+        assert(rn2 == "CharacterStatsPaneScrollBox", "ohne Sichtbares nicht der erste vorhandene")
+        _G.CharacterStatsPaneScrollBox, _G.CharacterStatsPane = oldSB, oldPane
+        -- Titel des Spiels auch unter <Name>TitleText / .TitleText.
+        local named = stub.NewObject("Frame")
+        local tt = WeintCodex.UIKit.NewText(named, 12)
+        named.TitleText = tt
+        assert(CS.Title(named) == tt, "Titel an .TitleText nicht gefunden")
 
         -- Werte: Namen ruhig statt gold, einmal.
         local label = WeintCodex.UIKit.NewText(win, 11)

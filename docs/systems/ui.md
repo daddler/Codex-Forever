@@ -1228,6 +1228,21 @@ Charakter mit Stufe und Klasse, höchstens 20 Durchläufe lang gesucht), sie
 und die großen Bilder ihres Trägers (≥ 60×14) gehen auf Deckkraft 0, solange
 der Kopfbereich zu sehen ist. `/wcui fenster`: „Doppelte Stufenzeile: …“.
 
+**Review nach Screenshot (6.6.4.2).** Gemessen an Screenshot und
+`/wcui fenster` von 6.6.4.1: (1) „Holy Larena“ stand doppelt – der Titel
+wurde nur unter `TitleContainer.TitleText` gesucht; `CS.Title` sucht jetzt
+wie `StyleTitle` (auch `.TitleText`, `<Name>TitleText`), und `CS.KeepHeader`
+hält alles Ersetzte in jedem Durchlauf auf Deckkraft 0, solange der Kopf zu
+sehen ist. (2) Die graue Fläche oben rechts war der Schein der Klasse
+(Pixel: neutralgrau 99 oben, bis 260 px auslaufend = `windowGlow` weiß 40 %
+über 260 px) – trotz Deckkraft 0; jetzt versteckt und je Durchlauf
+nachgezogen, `/wcui fenster` nennt „Schein oben“. (3) Das Glas hing am
+unsichtbaren `CharacterStatsPane` („eingeklappt“) und wurde nie gezeichnet;
+`CS.RIGHT_PANES` nimmt den ersten sichtbaren Kandidaten
+(`CharacterStatsPaneScrollBox`) und reicht von unter dem Titelbalken
+(`CS.GLASS_TOP`) bis unter die Werte. Kopfzeile 3 px höher/enger (lag in der
+Reihe der Zoomknöpfe).
+
 Die beiden folgenden Abschnitte sind die Vorgeschichte (6.6.3.5/6.6.3.6).
 
 **Klassenbild und Kopfzeile im Charakterfenster (6.6.3.5).** Beta-Test

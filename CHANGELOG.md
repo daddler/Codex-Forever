@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.4.2] – 2026-09-29
+
+**Dein Name steht nur noch einmal im Charakterfenster.** Der kleine Titel des Spiels über dem Fenster ist ausgeblendet, solange die große Kopfzeile zu sehen ist; auf Ruf, Währung usw. steht er wie gewohnt.
+
+**Keine graue Fläche mehr oben rechts.** Der helle Schein oben im Fenster ist aus, und die Werte liegen durchgehend von oben bis unten auf der dunklen Fläche, die weich in die Szene übergeht.
+
 ## [6.6.4.1] – 2026-09-29
 
 **Der rechte Bereich des Charakterfensters beginnt mit „Allgemein“.** Die doppelte Zeile mit Stufe und Klasse samt ihrer grauen Fläche ist weg – Name, Klasse und Stufe stehen nur noch einmal oben über der Figur.
