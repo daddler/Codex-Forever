@@ -4656,6 +4656,20 @@ do
         assert(CS.Header(charF) == head, "Kopfzeile doppelt")
         head.Update(61)
         assert(head.sub:GetText() == sp("PRIESTERIN · STUFE 61"), "Stufenaufstieg nicht uebernommen")
+        -- 6.6.4.1: die doppelte Stufenzeile am Inhalt finden, samt grauer
+        -- Flaeche ihres Traegers.
+        local holder = stub.NewObject("Frame")
+        local dupText = WeintCodex.UIKit.NewText(holder, 12)
+        dupText:SetText("Stufe 60, Priesterin")
+        local greyBg, smallIcon = stub.NewObject("Texture"), stub.NewObject("Texture")
+        greyBg._width, greyBg._height, smallIcon._width, smallIcon._height = 200, 40, 20, 20
+        holder.GetRegions = function() return dupText, greyBg, smallIcon end
+        dupText.GetParent = function() return holder end
+        paper.GetChildren = function() return holder end
+        head:Show()
+        CS.KeepHeader(head, nil)
+        assert(CS.dup == dupText and dupText:GetAlpha() == 0 and greyBg:GetAlpha() == 0 and smallIcon:GetAlpha() == 1,
+            "doppelte Stufenzeile oder graue Flaeche bleibt")
         local oldScene = _G.CharacterModelScene
         _G.CharacterModelScene = stub.NewObject("Frame")
         _G.CharacterModelScene:SetFrameLevel(40)
@@ -4674,7 +4688,7 @@ do
         assert(d and d.InsetRight, "Innenflaeche nicht gefunden")
         local Lay = CS.Layout(win, d, priest)
         assert(Lay.base and d.InsetRight:GetAlpha() == 0, "Basis/Innenflaeche nicht umgestellt")
-        assert(d.glow == nil or d.glow:GetAlpha() == CS.TOP_GLOW, "Schein der Klasse faerbt weiter das Fenster")
+        assert(CS.TOP_GLOW == 0 and (d.glow == nil or d.glow:GetAlpha() == 0), "Schein der Klasse faerbt weiter das Fenster")
         assert(Lay.glass and Lay.glass.name == "InsetRight" and Lay.glass.shown == true and W.own[Lay.glass.body],
             "keine Glasebene rechts")
         insetR:Hide()

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.4.1",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDer rechte Bereich des Charakterfensters beginnt mit „Allgemein“.|r Die doppelte Zeile mit Stufe und Klasse samt ihrer grauen Fläche ist weg – Name, Klasse und Stufe stehen nur noch einmal oben über der Figur.",
+            "|cff7C6CFFWeicher Übergang statt Kante.|r Kein heller Schein mehr oben im Fenster; die Werte liegen auf einer leichteren, dunklen Fläche, und zwischen Figur und Werten verläuft eine breitere dunkle Zone. Deine Klassenfarbe bleibt nur in Linien, Rauten und aktiven Zuständen.",
+        },
+    },
+    {
         version = "6.6.4.0",
         date    = "29.09.2026",
         notes   = {

@@ -109,10 +109,13 @@ function CS.Accent() return K.Highlight() end
 -- halbe Fenster). Rechts liegt eine dunkle Glasebene mit weicher linker
 -- Kante ueber dem Auslauf der Szene, an ihrer Kante eine feine Linie im
 -- Akzent: die Werte liegen UEBER der Szene, nicht in einem zweiten Fenster.
-CS.TOP_GLOW = 0.30          -- Anteil am Schein des Spiels-Fensters
-CS.GLASS_EDGE = 44          -- Breite der weichen linken Kante
+-- 6.6.4.1: 0 - der weisse Schein des Priesters lag als graue Flaeche
+-- oben ueber dem rechten Bereich (Beta-Test). Der Akzent bleibt fuer
+-- Linien, Rauten und Zustaende.
+CS.TOP_GLOW = 0
+CS.GLASS_EDGE = 80          -- Breite der weichen linken Kante (6.6.4.1: 44 war zu hart)
 CS.GLASS_PAD = 6            -- so weit ragt das Glas ueber die Werte
-CS.GLASS_LINE = 0.35        -- Deckkraft der Linie im Akzent
+CS.GLASS_LINE = 0.22        -- Deckkraft der Linie im Akzent
 
 local layout = setmetatable({}, { __mode = "k" })
 CS.layouts = layout
@@ -209,7 +212,9 @@ CS.ART_LAYER, CS.ART_SUB = "BACKGROUND", 7
 -- Lage relativ zum Kasten: Brust (Ruhe), Fuesse (Schatten, gemessen bei
 -- Standardkamera rund 11 % ueber der Unterkante), Dunst im untersten Sechstel.
 CS.CALM_Y, CS.FEET_Y, CS.HAZE_H = 0.45, 0.09, 0.17
-CS.VIGNETTE = { TOP = 0.28, BOTTOM = 0.22, LEFT = 0.22, RIGHT = 0.22 }
+-- RIGHT breiter (6.6.4.1): der Uebergang zur Glasebene ist eine weiche
+-- dunkle Zone, keine Kante.
+CS.VIGNETTE = { TOP = 0.28, BOTTOM = 0.22, LEFT = 0.22, RIGHT = 0.34 }
 
 local function Halo(frame, layer, sub, mask)
     local t = Own(frame:CreateTexture(nil, layer, nil, sub))
@@ -448,6 +453,64 @@ local function Replaced(h, alpha)
     for _, t in ipairs(h.replaced) do pcall(t.SetAlpha, t, alpha) end
 end
 
+-- Die Zeile "Stufe 13, Priesterin" rechts oben heisst in diesem Client
+-- nicht (sicher) CharacterLevelText (6.6.4.1, Beta-Test: doppelte
+-- Anzeige). Gesucht wird sie am Inhalt: eine Schriftzeile im Reiter
+-- Charakter, die Stufe UND Klasse nennt. Ihr Traeger bekommt keine
+-- graue Flaeche mehr (seine grossen Bilder Deckkraft 0) - der rechte
+-- Bereich beginnt dann mit "Allgemein".
+CS.DUP_MIN_W, CS.DUP_MIN_H = 60, 14
+
+local function Mentions(fs, className, level)
+    local ok, text = pcall(fs.GetText, fs)
+    text = ok and K.Plain(text) or nil
+    return type(text) == "string" and text:find(level, 1, true) ~= nil and text:find(className, 1, true) ~= nil
+end
+
+local function FindIdentity(f, className, level, depth)
+    if depth > 5 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return nil end
+    for _, r in ipairs(W.Regions(f, "ident", depth)) do
+        local ok, kind = pcall(r.GetObjectType, r)
+        if ok and kind == "FontString" and not W.own[r] and Mentions(r, className, level) then return r end
+    end
+    for _, ch in ipairs(W.Children(f, "ident", depth)) do
+        if ch ~= CS.head then
+            local hit = FindIdentity(ch, className, level, depth + 1)
+            if hit then return hit end
+        end
+    end
+    return nil
+end
+
+function CS.FindDuplicate(h)
+    if CS.dup ~= nil then return end
+    local cok, className = pcall(_G.UnitClass, "player")
+    local lok, level = pcall(_G.UnitLevel, "player")
+    className, level = cok and K.Plain(className) or nil, lok and Num(level) or nil
+    if type(className) ~= "string" or not level then return end
+    local fs = FindIdentity(_G.PaperDollFrame, className, tostring(level), 0)
+    if not fs then
+        -- Nicht ewig suchen: nach 20 Durchlaeufen gilt "gibt es nicht".
+        CS.dupTries = (CS.dupTries or 0) + 1
+        if CS.dupTries >= 20 then CS.dup = false end
+        return
+    end
+    CS.dup = fs
+    h.replaced[#h.replaced + 1] = fs
+    local pok, parent = pcall(fs.GetParent, fs)
+    if pok and type(parent) == "table" and parent ~= _G.PaperDollFrame then
+        for _, r in ipairs(W.Regions(parent, "identBg", 0)) do
+            local tok, kind = pcall(r.GetObjectType, r)
+            local wok, w, hh = pcall(function() return r:GetWidth(), r:GetHeight() end)
+            w, hh = wok and Num(w) or 0, wok and Num(hh) or 0
+            if tok and kind == "Texture" and not W.own[r] and w >= CS.DUP_MIN_W and hh >= CS.DUP_MIN_H then
+                h.replaced[#h.replaced + 1] = r
+            end
+        end
+    end
+    Replaced(h, 0)
+end
+
 function CS.KeepHeaderLevel(h)
     local sl, hl = LevelOf(_G.CharacterModelScene), LevelOf(h)
     if sl and hl and hl <= sl + 2 then h:SetFrameLevel(sl + 3) end
@@ -524,6 +587,7 @@ end
 -- gezeichnet) und mittig ueber dem Modell stehen.
 function CS.KeepHeader(h, box)
     CS.KeepHeaderLevel(h)
+    CS.FindDuplicate(h)
     local off = 0
     if box then
         -- Ohne Closure: das laeuft in jedem Durchlauf.
@@ -674,6 +738,7 @@ function CS.ReportFrame(f, out)
     end
     local h = CS.head
     if h then
+        out[#out + 1] = "   Doppelte Stufenzeile: " .. (CS.dup and "gefunden, ausgeblendet" or "nicht gefunden")
         out[#out + 1] = string.format("   Kopfzeile: %s ersetzt, Ebene %s (Modell %s)", tostring(#h.replaced),
             tostring(LevelOf(h)), tostring(LevelOf(_G.CharacterModelScene)))
     end

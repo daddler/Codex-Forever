@@ -1219,6 +1219,15 @@ dort bleibt der allgemeine weiche Rand (`W.SoftenModel`). Der Durchlauf
 legt nichts an (`load_test.lua`: 20 Läufe < 1 KB). `/wcui fenster` nennt
 Thema, Szene, Basis/Glas, Kopfzeile, Plätze, Licht und Ebenen.
 
+**Polishing (6.6.4.1).** Beta-Test: graue Fläche oben rechts, Name/Stufe
+doppelt. Der Schein der Klasse oben ist aus (`CS.TOP_GLOW = 0` – weiß beim
+Priester = grau); Glas leichter (0.62) mit 80 px Kante; rechte Vignette der
+Szene breiter (34 %); Akzentlinie am Glas 22 %. Die Stufenzeile des Spiels
+wird am **Inhalt** gefunden (`CS.FindDuplicate`: Schriftzeile im Reiter
+Charakter mit Stufe und Klasse, höchstens 20 Durchläufe lang gesucht), sie
+und die großen Bilder ihres Trägers (≥ 60×14) gehen auf Deckkraft 0, solange
+der Kopfbereich zu sehen ist. `/wcui fenster`: „Doppelte Stufenzeile: …“.
+
 Die beiden folgenden Abschnitte sind die Vorgeschichte (6.6.3.5/6.6.3.6).
 
 **Klassenbild und Kopfzeile im Charakterfenster (6.6.3.5).** Beta-Test

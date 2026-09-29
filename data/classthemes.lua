@@ -70,7 +70,7 @@ WeintCodex.ClassThemes = {
         haze        = 0.25,
         light       = nil,
         wash        = nil,
-        glass       = 0.80,
+        glass       = 0.62,   -- 6.6.4.1: leichter, die Szene scheint durch
     },
 
     -- Referenz (6.6.4.0): Kathedrale mit Kerzen und Lichtkreuz.
