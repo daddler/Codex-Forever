@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.7.4.0",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Statistiken im neuen Stil.|r Die lange Liste liegt wie Ruf, Fertigkeiten und Abzeichen auf einer ruhigen, leicht angehobenen Fläche; „Charakter“ steht als Abschnitt mit Raute und Linie in deiner Klassenfarbe links, wo das Spiel ihn hinsetzt, die Einträge sind fein voneinander abgesetzt und leuchten unter der Maus in deiner Klasse auf. Werte, Gruppen wie „Vermögen“ und ihre Knöpfe zum Auf- und Zuklappen bleiben, wie das Spiel sie zeigt.",
+        },
+    },
+    {
         version = "6.7.3.0",
         date    = "29.09.2026",
         notes   = {

@@ -1967,10 +1967,33 @@ also auch bei den Fertigkeiten).
 zurück (Auswahl aufgehoben), bleiben Titel und Beschreibung die zuletzt
 bestimmten; ihre Lage wird weiter je Durchlauf vermessen.
 
+### Statistiken *(6.7.4.0, `ui/statistics.lua`)*
+
+Beta-Test: das Statistikfenster im selben System. **Gemessen**
+(`/wcui fenster`): `StatisticsFrame`, Zeilen unter
+`StatisticsFrame.ScrollBox.ScrollTarget` mit
+`.Content.BackgroundHighlight` (`charactercreate-customize-dropdown-
+linemouseover-*`, dieselben Bilder wie im Ruf), Gruppenzeilen („Vermögen“)
+mit `.ToggleCollapseButton` (`Campaign_HeaderIcon_Open`), Bildlauf
+`minimal-scrollbar-*`. Die Kategorie „Charakter“ ist eine Kopfzeile des
+Spiels; ohne Stil des Bereichs stand sie bis 6.7.3.0 mittig mit Lichthof
+(`W.Header`), jetzt links als Abschnitt (`W.ListHeader`, Band).
+
+Das vierte Register und das erste **ohne Detailansicht** (`listOnly`):
+keine Suche nach einer, keine Auswahl, `/wcui fenster` sagt „nur die
+Liste“. Stil `S.CHARACTER_INFO` – ein Reiter des Charakterfensters wie
+Ruf, Fertigkeiten, PvP und Abzeichen, also Klassenfarbe, nicht das Gold
+(`S.CALM`), das hier früher vorgesehen war. **Unverändert:** Werte
+(„--“, Zahlen), Namen, Einrückung, die roten Knöpfe der Gruppen (ein
+Grauton wie beim Minus der Kopfzeilen träfe auch das Questlog, das
+dieselbe Grafik nutzt – nicht ohne Messung dort). Gruppenzeilen sind
+Zeilen wie alle anderen (Haarlinie, Maus); eine eigene Stufe als
+Unterabschnitt hätte eine neue Regel gebraucht, die nichts Gemessenes
+trägt.
+
 ### Nächste Fenster
 
-Vorgesehen: Berufe und
-Statistiken (`S.CALM`), Gilde (mittlere Atmosphäre), Talente
+Vorgesehen: Berufe (`S.CALM`), Gilde (mittlere Atmosphäre), Talente
 (Klassenfarbe). Migrieren heißt: Name in
 `S.SCOPES`, ein Modul nach dem Muster von `ui/reputation.lua` nur dort,
 wo das Fenster mehr braucht als die Bausteine.

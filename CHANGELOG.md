@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.4.0] – 2026-09-29
+
+**Die Statistiken im neuen Stil.** Die lange Liste liegt wie Ruf, Fertigkeiten und Abzeichen auf einer ruhigen, leicht angehobenen Fläche; „Charakter“ steht als Abschnitt mit Raute und Linie in deiner Klassenfarbe links, wo das Spiel ihn hinsetzt, die Einträge sind fein voneinander abgesetzt und leuchten unter der Maus in deiner Klasse auf. Werte, Gruppen wie „Vermögen“ und ihre Knöpfe zum Auf- und Zuklappen bleiben, wie das Spiel sie zeigt.
+
+### Technisch
+
+- Neu `ui/statistics.lua` (`WeintCodex.UIStatistics`): `StatisticsFrame` als viertes Register, gemessen (`/wcui fenster`): Zeilen unter `ScrollBox.ScrollTarget` mit `.Content.BackgroundHighlight` wie im Ruf, Gruppen mit `.ToggleCollapseButton`.
+- `ui/register.lua`: `listOnly` – Register ohne Detailansicht (keine Suche, keine Auswahl, Bericht „nur die Liste“).
+- `load_test.lua`: Statistiken wie gemessen.
+
 ## [6.7.3.0] – 2026-09-29
 
 **Die Abzeichen im neuen Stil.** Deine Währungen liegen wie Ruf und Fertigkeiten auf einer ruhigen, leicht angehobenen Fläche; Gruppen stehen als eigene Abschnitte mit Raute und Linie in deiner Klassenfarbe, die Einträge sind fein voneinander abgesetzt, die gewählte Währung trägt einen schmalen Streifen. Symbol, Name und Anzahl bleiben, wie das Spiel sie zeigt.

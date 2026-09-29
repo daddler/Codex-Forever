@@ -5954,6 +5954,116 @@ do
     Check(okC, "Abzeichen als Register: Leerzustand ohne Titel, Abschnitte, Auswahl, Karte - nichts verloren, kein Muell"
         .. (okC and "" or (": " .. tostring(errC))))
 
+    -- 6.7.4.0: Statistiken - Register ohne Detailansicht. Nachgebaut wie
+    -- gemessen: Kopfzeile "Charakter", Gruppenzeile "Vermoegen" mit
+    -- ToggleCollapseButton, Zeilen mit Name, Wert und der Hervorhebung des
+    -- Spiels (dieselben Bilder wie im Ruf).
+    local okS, errS = pcall(function()
+        local W, S, ST, CU = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIStatistics, WeintCodex.UICurrency
+        assert(ST and W.TABS[5] == ST and W.TABS[4] == CU and S.SCOPES.StatisticsFrame == S.CHARACTER_INFO,
+            "Statistiken nicht als Reiter eingetragen")
+        local touched = {}
+        local function Tex(atlas)
+            local t = stub.NewObject("Texture")
+            t.GetAtlas = function() return atlas end
+            return t
+        end
+        local function Line(text)
+            local fs = stub.NewObject("FontString")
+            fs._text, fs._font = text, true
+            fs.SetText = function() touched[#touched + 1] = "SetText " .. text end
+            fs.SetTextColor = function() touched[#touched + 1] = "Farbe " .. text end
+            fs.SetFont = function() touched[#touched + 1] = "Schrift " .. text end
+            fs.ClearAllPoints = function() touched[#touched + 1] = "Lage " .. text end
+            return fs
+        end
+        local cf = stub.NewObject("Frame")
+        local rf = stub.NewObject("Frame", "StatisticsFrame")
+        rf._parent = cf
+        local list, target, sbar = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Frame")
+        rf.ScrollBox, rf.ScrollBar, list.ScrollTarget = list, sbar, target
+        local head = stub.NewObject("Button")
+        local hBg, minus = Tex("common-button-list-collapseExpand"), Tex("common-button-list-minus")
+        hBg._width = 300
+        local hName = stub.NewObject("FontString")
+        hName._text, hName._font = "Charakter", true
+        head.GetRegions = function() return hBg, minus, hName end
+        local tinted = 0
+        local function Stat(name, value, toggle)
+            local row, content = stub.NewObject("Frame"), stub.NewObject("Button")
+            local n, v = Line(name), value and Line(value) or nil
+            local bh = stub.NewObject("Frame")
+            local side, mid = Tex("charactercreate-customize-dropdown-linemouseover-side"),
+                              Tex("charactercreate-customize-dropdown-linemouseover-middle")
+            for _, t in ipairs({ side, mid }) do
+                t.SetVertexColor = function() tinted = tinted + 1 end
+            end
+            bh.GetRegions = function() return side, mid end
+            content.BackgroundHighlight, content.Name = bh, n
+            content.GetRegions = function() return n, v end
+            local kids = { bh }
+            if toggle then
+                local tb = stub.NewObject("Button")
+                local icon = Tex("Campaign_HeaderIcon_Open")
+                icon.SetDesaturated = function() touched[#touched + 1] = "Knopf grau" end
+                tb.GetRegions = function() return icon end
+                row.ToggleCollapseButton = tb
+                row.GetChildren = function() return content, tb end
+            else
+                row.GetChildren = function() return content end
+            end
+            content.GetChildren = function() return unpack(kids) end
+            row.Content = content
+            return row, n, v
+        end
+        local group, gName = Stat("Vermögen", nil, true)
+        local r1, n1, v1 = Stat("Talentneuverteilungen", "--")
+        local r2, n2, v2 = Stat("Auktionserwerbungen", "2")
+        target.GetChildren = function() return head, r1, group, r2 end
+        list.GetChildren = function() return target end
+        rf.GetChildren = function() return list, sbar end
+        cf.GetChildren = function() return rf end
+        local oldSF = _G.StatisticsFrame
+        _G.StatisticsFrame = rf
+
+        S.Register()
+        W.HideByAtlas(cf)
+        local lh = W.ListHeaders[head]
+        assert(lh and lh.band and not W.Headers[head], "Kategorie nicht als Abschnitt wie im Ruf")
+        ST.Update(cf)
+        local a = ST.atmos[rf]
+        assert(a and a.on and a.list and a.list.shadow and not a.sigil, "Atmosphaere oder Flaeche der Liste fehlt")
+        for _, row in ipairs({ r1, group, r2 }) do
+            local r = ST.rows[row]
+            assert(r and r.sep and #r.hl == 2 and not r.hover and not r.bar, "Zeile nicht wie im Ruf abgesetzt")
+            assert(not r.sel.on, "Auswahl ohne Detailansicht")
+        end
+        assert(tinted == 6, "Hervorhebung des Spiels nicht getoent: " .. tinted)
+        assert(ST.state.selected == nil and ST.Detail(cf, rf) == nil, "Detailansicht erfunden")
+        assert(#touched == 0, "Blizzard-Teile angefasst: " .. table.concat(touched, ", "))
+        for _, t in ipairs({ n1, v1, n2, v2, gName, hName, minus, group.ToggleCollapseButton }) do
+            assert(t:IsShown() and t:GetAlpha() == 1, "Inhalt ausgeblendet")
+        end
+        local rep = table.concat(ST.Report(cf, {}), "\n")
+        assert(rep:find("Statistiken (Stil ruhig, Klasse): Liste gefunden, 4 Zeilen (1 Kopfzeilen, 0 mit Balken, 4 mit Namen)", 1, true)
+            and rep:find("getönt: 6", 1, true) and rep:find("nur die Liste", 1, true)
+            and not rep:find("gewählt", 1, true), "Bericht: " .. rep)
+        for _ = 1, 3 do ST.Update(cf) end
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do ST.Update(cf) end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        print(string.format("    (20 Durchlaeufe Statistiken: %.1f KB)", grew))
+        assert(grew < 1, string.format("Statistiken legen im Takt Muell an: %.1f KB", grew))
+        rf._scripts.OnHide(rf)
+        assert(not a.on and not a.list.body:IsShown(), "Flaeche bleibt nach dem Reiterwechsel")
+        _G.StatisticsFrame = oldSF
+    end)
+    Check(okS, "Statistiken als Register ohne Detailansicht: Abschnitte, Zeilen, Maus in der Klassenfarbe - Werte bleiben, kein Muell"
+        .. (okS and "" or (": " .. tostring(errS))))
+
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett
     -- auf Wunsch. Es bleibt ein Akzent (accent = purple = violet = brandA).
     local ok4, err4 = pcall(function()

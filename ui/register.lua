@@ -49,6 +49,8 @@
 --   compact       true: Karte endet immer unter dem Inhalt (sonst nur,
 --                 wenn Haekchen geruckt sind)
 --   listKeys      Schluessel der Liste am Fenster (Standard { "ScrollBox" })
+--   listOnly      true: das Fenster hat keine Detailansicht (Statistiken) -
+--                 nur Liste, Zeilen, Atmosphaere; keine Auswahl
 --   key           Kurzname fuer die wiederverwendeten Listen (W.Regions)
 --------------------------------------------------
 
@@ -338,7 +340,7 @@ function RG.New(cfg)
     -- das Kind des Fensters - nicht Liste, nicht Bildlauf - mit dem
     -- laengsten Text (die Beschreibung).
     function R.DetailFrame(rf)
-        if not rf then return nil end
+        if not rf or cfg.listOnly then return nil end
         local d = ByKeys(rf, R.DETAIL_KEYS)
         if d then return d end
         for _, n in ipairs(R.DETAIL_GLOBALS) do
@@ -929,11 +931,15 @@ function RG.New(cfg)
             L, R.STYLE.name, list and "gefunden" or "FEHLT", n, heads, bars, named)
         out[#out + 1] = string.format("   %s, Balken: %s, Füllung %s · Hervorhebungen des Spiels getönt: %d",
             L, kind or "–", how or "–", hls)
-        out[#out + 1] = string.format("   %s, gewählt: %s", L,
-            R.state.selected and ("„" .. R.state.selected .. "“") or "keine (Detailansicht zu)")
+        if not cfg.listOnly then
+            out[#out + 1] = string.format("   %s, gewählt: %s", L,
+                R.state.selected and ("„" .. R.state.selected .. "“") or "keine (Detailansicht zu)")
+        end
         local det = R.DetailFrame(rf)
         local d = det and details[det]
-        if not det then
+        if cfg.listOnly then
+            out[#out + 1] = string.format("   %s, Detailansicht: keine (das Fenster hat nur die Liste)", L)
+        elseif not det then
             out[#out + 1] = string.format("   %s, Detailansicht: nicht gefunden", L)
         elseif not d then
             out[#out + 1] = string.format("   %s, Detailansicht: %s", L, Visible(det) and "offen, noch nicht gestaltet" or "zu")
