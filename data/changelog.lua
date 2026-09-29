@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.7.2.2",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDas PvP-Fenster ist jetzt wirklich im neuen Stil.|r Bisher erkannte WeintCodex den Reiter „Spieler gegen Spieler“ nicht und ließ ihn, wie er war. Jetzt steht dein Wappen als Mittelpunkt vor einem weichen dunklen Hof, Rang, Medaillon und Rangpunkte liegen gemeinsam auf einer ruhigen, leicht angehobenen Fläche.",
+            "|cff7C6CFFRang und Belohnung rechts als Karte wie bei Ruf und Fertigkeiten.|r Der Rang oben größer, darunter eine feine Linie und die Beschreibung; „Nächste Belohnungen auf Rang …“ steht als Abschnitt mit Raute und Linie in deiner Klassenfarbe, die Belohnung auf einer eigenen, leicht vertieften Fläche. Farben und Texte des Spiels bleiben unverändert.",
+        },
+    },
+    {
         version = "6.7.2.1",
         date    = "29.09.2026",
         notes   = {

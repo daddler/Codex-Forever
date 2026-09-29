@@ -5651,6 +5651,7 @@ do
         root.GetRegions = function() return bg, tiny end
         local rankFrame = Box(stub.NewObject("Frame"), 110, 430, 250, 280)
         local icon = Box(stub.NewObject("Texture"), 140, 420, 204, 356)
+        icon._parent = Box(stub.NewObject("Frame"), 0, 100, 100, 0)
         -- Rang unter dem Balken: die Beschreibung rechts steht dem Symbol
         -- naeher - sie darf trotzdem nicht als Rang gelten.
         local rank = Line("Zivilist", 130, 285, 214, 271)
@@ -5685,6 +5686,9 @@ do
         assert(L and L.detail == det and L.icon == icon and L.rank == rank and L.points == points and L.bar == bar,
             "Profil nicht erkannt: Symbol " .. tostring(L and L.icon == icon) .. ", Rang " .. tostring(L and L.rank == rank))
         assert(L.title == title and L.reward == reward and L.head == head, "Detailansicht nicht erkannt")
+        -- Das Symbol haengt hier an einem kleinen Rahmen AUSSERHALB des
+        -- Fensters: kein Medaillon ausserhalb des Reiters.
+        assert(L.medal == nil, "Medaillon ausserhalb des Fensters")
         -- Rangbereich um Symbol, Rang, Punkte und Balken; Buehne am Symbol.
         assert(L.ax1 == 20 and L.ay1 == -80 and L.ax2 == 130 and L.ay2 == -229, "Rangbereich falsch gelegt: "
             .. tostring(L.ax1) .. "/" .. tostring(L.ay1) .. " " .. tostring(L.ax2) .. "/" .. tostring(L.ay2))
@@ -5723,6 +5727,109 @@ do
         print(string.format("    (20 Durchlaeufe PvP: %.1f KB)", grew))
         assert(grew < 1, string.format("PvP legt im Takt Muell an: %.1f KB", grew))
         _G.PVPFrame = oldPV
+
+        -- 6.7.2.1: der Reiter, wie er im Spiel GEMESSEN ist (/wcui fenster
+        -- nach 6.7.2.0, das dort nicht griff): PVPRankFrame mit
+        -- MainInfoFrame.RankProgressBarDisplay (Schein = groesstes Bild, Ring,
+        -- Wappen, NextRewardLevel mit "0") und DetailFrame.Content. Fallen:
+        -- der Schein darf nicht das Symbol sein, die "0" nicht der Rang, und
+        -- die Belohnung ist kein Knopf.
+        assert(S.SCOPES.PVPRankFrame == S.CHARACTER_INFO and PV.FRAMES[1] == "PVPRankFrame", "PVPRankFrame nicht eingetragen")
+        local function Tex(atlas, l, t, r, b)
+            local x = Box(stub.NewObject("Texture"), l, t, r, b)
+            x.GetAtlas = function() return atlas end
+            return x
+        end
+        local cf2 = stub.NewObject("Frame")
+        local root2 = Box(stub.NewObject("Frame", "PVPRankFrame"), 100, 500, 480, 50)
+        root2._parent = cf2
+        local main = Box(stub.NewObject("Frame"), 100, 490, 290, 60)
+        main._parent = root2
+        local levelBG = Tex("UI-Character-Info-Honor-LevelBG", 150, 370, 250, 270)
+        local rankName = Line("Zivilist", 150, 420, 250, 404)
+        local points2 = Line("Rangpunkte: 0 / 750", 130, 215, 270, 201)
+        main.GetRegions = function() return levelBG, rankName, points2 end
+        local medal = Box(stub.NewObject("Frame"), 120, 390, 280, 230)
+        medal._parent = main
+        main.GetChildren = function() return medal end
+        local glow = Tex("UI-Character-Info-Honor-Bar-BG-Glow", 110, 400, 290, 220)
+        local ring = Tex("UI-Character-Info-Honor-Bar-BG-Alliance", 125, 385, 275, 235)
+        local emblem = Tex("UI-Character-Info-Honor-Icon-Alliance", 165, 345, 235, 275)
+        for _, x in ipairs({ glow, ring, emblem }) do x._parent = medal end
+        medal.GetRegions = function() return glow, ring, emblem end
+        local nextLvl = Box(stub.NewObject("Frame"), 185, 250, 215, 220)
+        nextLvl._parent = medal
+        local ringTex = Tex("UI-Character-Info-Honor-RewardRing", 185, 250, 215, 220)
+        local zero = Line("0", 192, 242, 208, 228)
+        nextLvl.GetRegions = function() return ringTex, zero end
+        medal.GetChildren = function() return nextLvl end
+        local det2 = Box(stub.NewObject("Frame"), 300, 490, 470, 60)
+        det2._parent = root2
+        local content = Box(stub.NewObject("Frame"), 300, 490, 470, 60)
+        content._parent = det2
+        det2.GetChildren = function() return content end
+        local title2 = Line("Zivilist", 310, 480, 460, 464)
+        local desc2 = Line("Jede Woche wird das Limit für Rangpunkte erhöht, bis maximal 24750 für Rang 14.", 310, 450, 460, 410)
+        local rdesc = Line("Belohnungen können in der Halle des Champions in Stormwind erworben werden.", 310, 300, 460, 270)
+        content.GetRegions = function() return title2, desc2, rdesc end
+        -- Ueberschrift: eine Kopfzeile des Spiels (Text darf wie bei den
+        -- Fertigkeiten hell werden - er traegt keine Bedeutung).
+        local hf = Box(stub.NewObject("Frame"), 310, 380, 460, 362)
+        hf._parent = content
+        local hTex = Tex("UI-Character-Info-Title", 310, 380, 460, 362)
+        local hTitle = stub.NewObject("FontString")
+        hTitle._text, hTitle._font, hTitle._parent = "Nächste Belohnungen auf Rang 1", true, hf
+        hTitle.GetTop, hTitle.GetBottom = function() return 378 end, function() return 364 end
+        hTitle.GetLeft, hTitle.GetRight = function() return 320 end, function() return 450 end
+        hf.Title = hTitle
+        hf.GetRegions = function() return hTex, hTitle end
+        -- Belohnung: namenloser Rahmen (kein Knopf) mit Symbol und Name.
+        local rw = Box(stub.NewObject("Frame"), 310, 350, 460, 318)
+        rw._parent = content
+        local rIcon2 = Box(stub.NewObject("Texture"), 310, 350, 342, 318)
+        local rName2 = Line("Wappenrock der Allianz", 350, 340, 460, 326)
+        rw.GetRegions = function() return rIcon2, rName2 end
+        content.GetChildren = function() return hf, rw end
+        root2.MainInfoFrame, root2.DetailFrame = main, det2
+        root2.GetChildren = function() return main, det2 end
+        cf2.GetChildren = function() return root2 end
+        local oldRank = _G.PVPRankFrame
+        _G.PVPRankFrame = root2
+        S.Register()
+        W.HideByAtlas(cf2)
+        assert(W.ListHeaders[hf] and W.ListHeaders[hf].band, "Ueberschrift nicht wie bei den Fertigkeiten")
+        PV.Update(cf2)
+        local L2 = PV.layouts[root2]
+        assert(PV.Frame() == root2 and L2 and L2.detail == det2, "PVPRankFrame oder DetailFrame nicht gefunden")
+        assert(L2.icon == emblem, "Rangsymbol falsch: " .. tostring(L2.icon == glow and "Schein" or L2.icon))
+        assert(L2.medal == medal and L2.rank == rankName and L2.points == points2,
+            "Medaillon/Rang falsch: " .. tostring(L2.rank == zero and "„0“" or L2.rank))
+        assert(L2.title == title2 and L2.reward == rw and L2.head == hTitle, "Detailansicht nicht erkannt")
+        -- Rangbereich schliesst das Medaillon ein.
+        assert(L2.ax1 == 20 and L2.ay1 == -80 and L2.ax2 == 180 and L2.ay2 == -299, "Rangbereich falsch gelegt: "
+            .. tostring(L2.ax1) .. "/" .. tostring(L2.ay1) .. " " .. tostring(L2.ax2) .. "/" .. tostring(L2.ay2))
+        assert(L2.stage and L2.stage.target == emblem and L2.stage.size == 70, "Wappen nicht als Mittelpunkt")
+        local d2 = L2.card
+        assert(d2 and d2.yTitle == -26 and d2.yHead == -112 and d2.yReward == -140 and d2.yLow == -220
+            and d2.cardBottom == -232, "Karte falsch vermessen")
+        -- Die Kopfzeile traegt Raute und Linie selbst: kein zweites Ornament.
+        assert(d2.headStyled and not d2.rewardOrn.dot:IsShown() and d2.rewardBody:IsShown(), "Ornament doppelt oder Belohnung ohne Flaeche")
+        assert(#touched == 0, "Blizzard-Teile angefasst: " .. table.concat(touched, ", "))
+        for _, t in ipairs({ emblem, ring, glow, levelBG, rankName, points2, zero, title2, desc2, rdesc, hTitle, rIcon2, rName2 }) do
+            assert(t:IsShown() and t:GetAlpha() == 1, "Inhalt ausgeblendet")
+        end
+        local rep2 = table.concat(PV.Report(cf2, {}), "\n")
+        assert(rep2:find("Fenster PVPRankFrame", 1, true) and rep2:find("Rang „Zivilist“", 1, true)
+            and rep2:find("Überschrift „Nächste Belohnungen auf Rang 1“ (Kopfzeile)", 1, true), "Bericht: " .. rep2)
+        for _ = 1, 3 do PV.Update(cf2) end
+        collectgarbage("collect")
+        collectgarbage("stop")
+        k0 = collectgarbage("count")
+        for _ = 1, 20 do PV.Update(cf2) end
+        grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("PvP (gemessen) legt im Takt Muell an: %.1f KB", grew))
+        _G.PVPRankFrame = oldRank
     end)
     Check(okP, "PvP als Profil: Rangsymbol als Mittelpunkt, Rangbereich, Karte mit Belohnung - Farben bleiben, nichts verloren, kein Muell"
         .. (okP and "" or (": " .. tostring(errP))))

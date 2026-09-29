@@ -1886,9 +1886,29 @@ fehlt etwas, steht dort „FEHLT“.
 **Gemessen nach 6.7.2.0 (Screenshot und `/wcui fenster`):** der Reiter
 heißt im Forever-Client `PVPRankFrame` (Teile `MainInfoFrame`,
 `MainInfoFrame.RankProgressBarDisplay` mit `NextRewardLevel`,
-`DetailFrame.Content`). Der Name fehlt in `PV.FRAMES` – 6.7.2.0 greift im
-Spiel **nicht**; die Überschrift „Nächste Belohnungen …“ bekommt nur den
-allgemeinen Stil des Charakterfensters. Offen, nicht in 6.7.2.1 behoben.
+`DetailFrame.Content`). Der Name fehlte in `PV.FRAMES` – 6.7.2.0 griff im
+Spiel **nicht**; die Überschrift „Nächste Belohnungen …“ bekam nur den
+allgemeinen Stil des Charakterfensters.
+
+**6.7.2.2, auf den gemessenen Aufbau gestellt.** Sichtbare Bilder nach
+Fläche (`/wcui fenster`): der Schein `…-Honor-Bar-BG-Glow` ist das
+**größte** – die Suche nach dem größten quadratischen Bild hätte ihn als
+Rangsymbol genommen. Deshalb Schlüssel und Atlas zuerst:
+
+| Teil | 6.7.2.2 |
+|---|---|
+| Fenster | `PVPRankFrame` zuerst (danach die alten Namen) |
+| Detailansicht | `.DetailFrame`, sonst Suche |
+| Rangsymbol | Bild mit Atlas `UI-Character-Info-Honor-Icon…` (Wappen), sonst das größte |
+| Medaillon | Rahmen des Symbols (`RankProgressBarDisplay`), wenn er im Fenster hängt und höchstens 30 % groß ist – gehört in den Rangbereich (Ring und Flügel ragten sonst hinaus) |
+| Rang | nächste Zeile **mit Wort** – die „0“ in `NextRewardLevel` ist die nächste Belohnungsstufe, stand dem Wappen näher als „Zivilist“ |
+| Belohnung | Knopf mit Symbol **oder** Rahmen mit `.Icon` oder bis 80 px hoch mit Symbol und Text (das Symbol liegt in einem namenlosen Kind von `Content`, die Art ist ungemessen) |
+| Überschrift | Kopfzeile des Spiels → `W.ListHeader` (Stil des Bereichs, wie „Gegner auf gleicher Stufe“ bei den Fertigkeiten); dann **kein** zweites Ornament darüber |
+
+Nebenbei: `W.Resolve` legte mit `gmatch` in jedem Durchlauf eine Closure
+an, sobald ein Fenster über einen Pfad gesucht wurde – bei PvP immer, wenn
+der Reiter zu ist, bei den Fertigkeiten, wenn `SkillsFrame` nicht global
+ist. Jetzt mit `find`/`sub`, ohne Anlage.
 
 ### Ruf wie Fertigkeiten *(6.7.2.1)*
 

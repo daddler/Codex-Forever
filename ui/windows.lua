@@ -2108,11 +2108,17 @@ W.INSET_KEEP = { "MemberList" }
 local insetKeep = setmetatable({}, { __mode = "k" })
 
 -- "A.B.C" -> _G.A.B.C, oder nil.
+-- Ohne gmatch (6.7.2.1): die Register und das PvP-Profil fragen ihre
+-- Pfade in jedem Durchlauf, und gmatch legte dabei jedes Mal eine Closure
+-- an. Teilstuecke sind Namen, die es schon gibt - :sub legt nichts neu an.
 function W.Resolve(path)
-    local t = _G
-    for key in path:gmatch("[^%.]+") do
+    local t, i = _G, 1
+    while i <= #path do
+        local j = path:find(".", i, true)
         if type(t) ~= "table" then return nil end
-        t = t[key]
+        t = t[path:sub(i, j and j - 1 or -1)]
+        if not j then break end
+        i = j + 1
     end
     return type(t) == "table" and t or nil
 end

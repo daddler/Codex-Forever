@@ -20,18 +20,34 @@
 --                Kein Bild - eine Arena-Silhouette gibt es unter den Grafiken
 --                nicht, und keine wird erzwungen.
 --
--- NICHTS DAVON IST GEMESSEN. Wie der Forever-Client den Reiter baut, hat
--- niemand gelesen; bekannt ist nur, dass er ein Reiter des
--- Charakterfensters ist (sein Titel stand 6.6.4.3 in der Kopfzeile). Alles
--- wird deshalb ueber Lage und Form gefunden, nicht ueber Namen:
---   Detailansicht  das Kind des Fensters mit dem laengsten Text
---   Rangsymbol     das groesste etwa quadratische Bild ausserhalb davon
+-- GEMESSEN (6.7.2.1, /wcui fenster nach 6.7.2.0 - die erste Fassung griff
+-- im Spiel nicht, weil sie den Namen nicht kannte): PVPRankFrame mit
+--   MainInfoFrame                    links, Hof "UI-Character-Info-Honor-LevelBG"
+--   MainInfoFrame.RankProgressBarDisplay   Medaillon: Schein "...-Honor-Bar-BG-
+--                                    Glow" (das GROESSTE Bild), Ring "...-Honor-
+--                                    Bar-BG-Alliance", Wappen "...-Honor-Icon-
+--                                    Alliance", darin NextRewardLevel (Ring mit
+--                                    einer Zahl: "0")
+--   DetailFrame.Content              rechts: Rang, Beschreibung, Ueberschrift
+--                                    "Naechste Belohnungen auf Rang 1",
+--                                    Belohnung (Knopf mit Symbol), Text
+-- Schluessel und Atlas zuerst, sonst wie bisher ueber Lage und Form:
+--   Detailansicht  .DetailFrame, sonst das Kind mit dem laengsten Text
+--   Rangsymbol     Bild mit "UI-Character-Info-Honor-Icon", sonst das
+--                  groesste etwa quadratische Bild ausserhalb davon
+--   Medaillon      der Rahmen, der das Symbol traegt (hoechstens 30 % des
+--                  Fensters) - gehoert in den Rangbereich
 --   Rangpunkte     die Schriftzeile ausserhalb davon mit "Zahl / Zahl"
---   Rang           die Schriftzeile, die dem Symbol am naechsten steht
+--   Rang           die Schriftzeile mit WORT (keine blosse Zahl - die "0"
+--                  im Ring ist die naechste Belohnungsstufe), die dem
+--                  Symbol am naechsten steht
 --   Balken         ein Statusbalken/Balken mit Bild ausserhalb davon
 --   Titel          die oberste Schriftzeile der Detailansicht
 --   Belohnung      der Knopf mit Symbol in der Detailansicht; ihre
---                  Ueberschrift ist die Zeile direkt darueber
+--                  Ueberschrift ist die Zeile direkt darueber. Ist sie eine
+--                  Kopfzeile des Spiels, gestaltet W.ListHeader sie wie bei
+--                  den Fertigkeiten (Band, Raute, Linie) - dann kein
+--                  zweites Ornament darueber.
 -- /wcui fenster ueber dem Reiter nennt, was gefunden wurde.
 --
 -- Nur Aussehen: eigene Flaechen dahinter (auf dem Charakterfenster oder
@@ -54,7 +70,8 @@ local Visible, Kind, TextOf, InTree = RG.Visible, RG.Kind, RG.TextOf, RG.InTree
 local IsFrame, Edge = RG.IsFrame, RG.Edge
 
 PV.LABEL = "PvP"
-PV.FRAMES = { "PVPFrame", "HonorFrame", "CharacterFrame.PVPFrame", "CharacterFrame.HonorFrame" }
+PV.FRAMES = { "PVPRankFrame", "CharacterFrame.PVPRankFrame",
+              "PVPFrame", "HonorFrame", "CharacterFrame.PVPFrame", "CharacterFrame.HonorFrame" }
 PV.STYLE = S.CHARACTER_INFO
 for _, path in ipairs(PV.FRAMES) do S.SCOPES[path] = PV.STYLE end
 W.TABS[#W.TABS + 1] = PV
@@ -62,6 +79,8 @@ W.TABS[#W.TABS + 1] = PV
 PV.VIGNETTE, PV.VIGNETTE_SIZE = 0.45, 56
 PV.LIGHT_HEIGHT = 140
 PV.TORCH_SIZE = 220
+PV.DETAIL_KEYS = { "DetailFrame" }                      -- gemessen 6.7.2.1
+PV.ICON_ATLAS = "^UI%-Character%-Info%-Honor%-Icon"      -- gemessen 6.7.2.1
 PV.ICON_MIN = 40            -- kleiner ist kein Rangsymbol (px)
 PV.ICON_SHARE = 0.30        -- groesser (Anteil am Fenster) ist ein Hintergrund
 PV.POINTS = "%d+%s*/%s*%d+" -- "0 / 750" - nur die Form, kein Wort
@@ -76,6 +95,7 @@ PV.DETAIL_DECOR = { "Border", "NineSlice", "Bg", "Background" }
 PV.DESC_MIN = 40
 PV.HEAD_REACH = 40          -- so weit ueber der Belohnung darf ihre Ueberschrift stehen
 PV.REWARD_PAD = 6
+PV.REWARD_MAX = 80          -- hoechste Zeile, die als Belohnung gilt (kein Knopf)
 PV.CARD_BOTTOM = 12
 
 local layouts = setmetatable({}, { __mode = "k" })
@@ -120,6 +140,24 @@ local function Biggest(f, depth, skip, limit, best, area)
     return best, area
 end
 
+-- Erstes sichtbares Bild unter `f` (nicht unter `skip`) mit dem Atlas.
+local function FindAtlas(f, depth, skip, pattern)
+    if not f or depth > 3 then return nil end
+    for _, r in ipairs(W.Regions(f, "pvpAtlas", depth)) do
+        if Kind(r) == "Texture" and not S.own[r] and Visible(r) then
+            local a = RG.AtlasOf(r)
+            if a and a:find(pattern) then return r end
+        end
+    end
+    for _, ch in ipairs(W.Children(f, "pvpAtlas", depth)) do
+        if IsFrame(ch) and ch ~= skip and Visible(ch) then
+            local hit = FindAtlas(ch, depth + 1, skip, pattern)
+            if hit then return hit end
+        end
+    end
+    return nil
+end
+
 -- Erste sichtbare Schriftzeile unter `f` (nicht unter `skip`), deren Text
 -- das Muster traegt.
 local function FindText(f, depth, skip, pattern)
@@ -140,11 +178,17 @@ local function FindText(f, depth, skip, pattern)
 end
 
 -- Schriftzeile mit Text, deren Mitte der von `icon` am naechsten liegt
--- (senkrecht) - der Rang neben/unter dem Symbol.
+-- (senkrecht) - der Rang neben/unter dem Symbol. Eine blosse Zahl ist kein
+-- Rang (gemessen: die "0" im Ring des Medaillons).
+local function Worded(r)
+    local t = TextOf(r)
+    return t and not t:find("^%s*%d+%s*$") or false
+end
+
 local function Nearest(f, depth, skip, not1, cy, best, dist)
     if not f or depth > 3 then return best, dist end
     for _, r in ipairs(W.Regions(f, "pvpNear", depth)) do
-        if Kind(r) == "FontString" and r ~= not1 and Visible(r) and TextOf(r) then
+        if Kind(r) == "FontString" and r ~= not1 and Visible(r) and Worded(r) then
             local t, b = Edge(r, "GetTop"), Edge(r, "GetBottom")
             if t and b then
                 local d = math.abs((t + b) / 2 - cy)
@@ -174,11 +218,30 @@ local function IconOf(b)
     return nil
 end
 
+-- Ein Rahmen, der kein Knopf ist, gilt nur mit .Icon oder als kleine Zeile
+-- (hoechstens PV.REWARD_MAX hoch) mit Symbol und Text - gemessen ist nur,
+-- dass das Symbol der Belohnung in einem namenlosen Kind von
+-- DetailFrame.Content liegt, nicht welche Art Rahmen das ist.
+local function HasText(f)
+    for _, r in ipairs(W.Regions(f, "pvpBtnText")) do
+        if Kind(r) == "FontString" and TextOf(r) then return true end
+    end
+    return false
+end
+
+local function IsReward(ch)
+    local kind = Kind(ch)
+    if kind == "Button" or kind == "ItemButton" then return IconOf(ch) ~= nil end
+    local ic = ch.Icon or ch.icon
+    if IsFrame(ic) and Kind(ic) == "Texture" then return true end
+    local h = Edge(ch, "GetHeight")
+    return h ~= nil and h <= PV.REWARD_MAX and IconOf(ch) ~= nil and HasText(ch)
+end
+
 local function FindReward(f, depth, close)
     if not f or depth > 2 then return nil end
     for _, ch in ipairs(W.Children(f, "pvpReward", depth)) do
-        if IsFrame(ch) and ch ~= close and Visible(ch) and (Kind(ch) == "Button" or Kind(ch) == "ItemButton")
-           and IconOf(ch) then
+        if IsFrame(ch) and ch ~= close and Visible(ch) and IsReward(ch) then
             return ch
         end
     end
@@ -225,6 +288,12 @@ end
 function PV.Scan(L)
     local root = L.root
     if not L.detail then
+        for _, key in ipairs(PV.DETAIL_KEYS) do
+            local d = root[key]
+            if IsFrame(d) and Visible(d) then L.detail = d break end
+        end
+    end
+    if not L.detail then
         local best, blen = nil, PV.DESC_MIN - 1
         for _, ch in ipairs(W.Children(root, "pvpDetail")) do
             if IsFrame(ch) and Visible(ch) then
@@ -237,7 +306,16 @@ function PV.Scan(L)
     if not L.icon then
         local w, h = Edge(root, "GetWidth"), Edge(root, "GetHeight")
         local limit = (w and h) and w * h * PV.ICON_SHARE or nil
-        L.icon = (Biggest(root, 0, L.detail, limit, nil, 0))
+        L.icon = FindAtlas(root, 0, L.detail, PV.ICON_ATLAS) or (Biggest(root, 0, L.detail, limit, nil, 0))
+        -- Das Medaillon: der Rahmen, der das Symbol traegt - nicht das
+        -- Fenster, nicht die Detailansicht, nicht groesser als ein Symbol
+        -- sein darf.
+        local ok, p = false, nil
+        if L.icon then ok, p = pcall(L.icon.GetParent, L.icon) end
+        if ok and IsFrame(p) and p ~= root and p ~= L.detail and limit and InTree(p, root) then
+            local pw, ph = Edge(p, "GetWidth"), Edge(p, "GetHeight")
+            if pw and ph and pw * ph <= limit then L.medal = p end
+        end
     end
     if not L.points then L.points = FindText(root, 0, L.detail, PV.POINTS) end
     if not L.bar then L.bar = RG.FindBar(root, 0, L.detail) end
@@ -304,9 +382,9 @@ function PV.PlaceArea(L)
     -- Jeder Durchlauf: was bis jetzt gefunden ist (feste Plaetze, keine
     -- neue Tabelle).
     local m = L.members
-    m[1], m[2], m[3], m[4] = L.icon, L.rank, L.points, L.bar
+    m[1], m[2], m[3], m[4], m[5] = L.icon, L.rank, L.points, L.bar, L.medal
     local x1, y1, x2, y2
-    for i = 1, 4 do
+    for i = 1, 5 do
         local r = m[i]
         local l, t, rr, b
         if r then l, t, rr, b = Edge(r, "GetLeft"), Edge(r, "GetTop"), Edge(r, "GetRight"), Edge(r, "GetBottom") end
@@ -392,15 +470,24 @@ function PV.DetailLayout(L, d)
     local yReward = rt and math.floor(rt - top + 0.5) or false
     local yHead = headTop and math.floor(headTop - top + 0.5) or false
     local yLow = low and math.floor(low - top + 0.5) or false
-    if d.yTitle == yTitle and d.yReward == yReward and d.yHead == yHead and d.yLow == yLow then return end
-    d.yTitle, d.yReward, d.yHead, d.yLow = yTitle, yReward, yHead, yLow
+    -- Ist die Ueberschrift eine Kopfzeile des Spiels, traegt sie selbst
+    -- Band, Raute und Linie (W.ListHeader, wie bei den Fertigkeiten).
+    local styled = false
+    if head then
+        local ok, p = pcall(head.GetParent, head)
+        styled = ok and (W.ListHeaders[p] or W.Headers[p]) and true or false
+    end
+    if d.yTitle == yTitle and d.yReward == yReward and d.yHead == yHead and d.yLow == yLow
+       and d.headStyled == styled then return end
+    d.yTitle, d.yReward, d.yHead, d.yLow, d.headStyled = yTitle, yReward, yHead, yLow, styled
     local inset = PV.DETAIL_INSET
     -- Linie unter dem Titel (Rang).
     if yTitle then S.PlaceTop(d.titleLine, det, inset, yTitle - 7) end
     RG.ShowZone(yTitle and true or false, d.titleLine.l, d.titleLine.r)
     -- Naechste Belohnungen: Ornament ueber der Ueberschrift (sonst ueber dem
-    -- Knopf), die Belohnung selbst auf einer vertieften Flaeche.
-    local yOrn = (yHead or yReward) and ((yHead or yReward) + PV.ORNAMENT_GAP) or false
+    -- Knopf) - nicht, wenn sie als Kopfzeile schon eins traegt; die
+    -- Belohnung selbst auf einer vertieften Flaeche.
+    local yOrn = (not styled and (yHead or yReward)) and ((yHead or yReward) + PV.ORNAMENT_GAP) or false
     if yOrn then S.PlaceOrnament(d.rewardOrn, det, inset, yOrn) end
     RG.ShowZone(yOrn and true or false, d.rewardOrn.line.l, d.rewardOrn.line.r, d.rewardOrn.dot, d.rewardOrn.hole)
     if yReward and yLow then
@@ -497,14 +584,15 @@ function PV.Report(f, out)
         out[#out + 1] = string.format("   %s: noch nicht gestaltet", L_)
         return out
     end
-    out[#out + 1] = string.format("   %s, Rang: Symbol %s · Rang %s · Punkte %s · Balken %s", L_,
-        Describe(L.icon), Describe(L.rank), Describe(L.points),
+    out[#out + 1] = string.format("   %s, Rang: Symbol %s · Medaillon %s · Rang %s · Punkte %s · Balken %s", L_,
+        Describe(L.icon), L.medal and Describe(L.medal) or "–", Describe(L.rank), Describe(L.points),
         L.bar and (Describe(L.bar) .. ", Füllung " .. tostring(L.barFinish and L.barFinish.how)) or "keiner")
     out[#out + 1] = string.format("   %s, Rangbereich: %s", L_,
         L.ax1 and string.format("%.0f/%.0f bis %.0f/%.0f", L.ax1, L.ay1, L.ax2, L.ay2) or "nicht gelegt (keine Lage)")
     local d = L.card
     out[#out + 1] = string.format("   %s, Detail: %s · Titel %s · Belohnung %s · Überschrift %s · Karte endet %s", L_,
-        L.detail and Describe(L.detail) or "nicht gefunden", Describe(L.title), Describe(L.reward), Describe(L.head),
+        L.detail and Describe(L.detail) or "nicht gefunden", Describe(L.title), Describe(L.reward),
+        L.head and (Describe(L.head) .. ((d and d.headStyled) and " (Kopfzeile)" or "")) or "FEHLT",
         (d and d.cardBottom) and string.format("bei %.0f", d.cardBottom) or "am Rand")
     return out
 end

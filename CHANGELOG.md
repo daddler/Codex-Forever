@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.2.2] – 2026-09-29
+
+**Das PvP-Fenster ist jetzt wirklich im neuen Stil.** Bisher erkannte WeintCodex den Reiter „Spieler gegen Spieler“ nicht und ließ ihn, wie er war. Jetzt steht dein Wappen als Mittelpunkt vor einem weichen dunklen Hof, Rang, Medaillon und Rangpunkte liegen gemeinsam auf einer ruhigen, leicht angehobenen Fläche.
+
+**Rang und Belohnung rechts als Karte wie bei Ruf und Fertigkeiten.** Der Rang oben größer, darunter eine feine Linie und die Beschreibung; „Nächste Belohnungen auf Rang …“ steht als Abschnitt mit Raute und Linie in deiner Klassenfarbe, die Belohnung auf einer eigenen, leicht vertieften Fläche. Farben und Texte des Spiels bleiben unverändert.
+
+### Technisch
+
+- `ui/pvp.lua` auf den gemessenen Aufbau gestellt (`/wcui fenster` nach 6.7.2.0): Fenster `PVPRankFrame` (fehlte – 6.7.2.0 griff im Spiel nicht), Detailansicht `.DetailFrame`, Rangsymbol über den Atlas `UI-Character-Info-Honor-Icon…` (das größte Bild ist der Schein des Medaillons), Medaillon = Rahmen des Symbols im Fenster (in den Rangbereich), Rang nur eine Zeile mit Wort (die „0“ im Ring ist die nächste Belohnungsstufe), Belohnung auch als Rahmen ohne Knopf. Ist die Überschrift eine Kopfzeile des Spiels, gestaltet sie `W.ListHeader` wie bei den Fertigkeiten; dann kein zweites Ornament.
+- `W.Resolve` ohne `gmatch`: legte in jedem Durchlauf eine Closure an, sobald ein Fenster über einen Pfad gesucht wurde (PvP, Fertigkeiten).
+- `load_test.lua`: der gemessene Aufbau als zweiter PvP-Fall mit den drei Fallen (Schein, „0“, Rahmen statt Knopf); Medaillon außerhalb des Fensters.
+
 ## [6.7.2.1] – 2026-09-29
 
 **Die Detailansicht im Ruf ist gegliedert wie die Fertigkeiten.** Fraktionsname, Rufstufe und Rufbalken bilden gemeinsam den Kopf der Karte, die feine Linie in deiner Klassenfarbe steht jetzt unter dem Balken, darunter beginnt die Beschreibung. Die Farben der Rufstufen bleiben, wie das Spiel sie zeigt.
