@@ -2343,8 +2343,39 @@ Optionen, Sprechblase Bild 136810; `.ScrollBar` mit
   geratene Fläche.
 
 **Unverändert:** Texte, Symbole der Optionen, Farben der Quests (samt
-`W.LightCodes`), Bildlaufleiste, „Lebt wohl“. Der Händler
-(`MerchantFrame`) ist noch nicht umgestellt.
+`W.LightCodes`), Bildlaufleiste, „Lebt wohl“.
+
+### Händler in Gold *(6.8.0.6, `ui/merchant.lua`)*
+
+Beta-Test (6.8.0.4): „wenn ich beim NPC kaufe oder verkaufe, ist da noch
+das alte Design“. **Gemessen** (`/wcui fenster`): `MerchantFrame`,
+`MerchantItem1…` mit `…ItemButton`, `MerchantFrameTab1/2`
+(`uiframe-tab-left/-right`, `uiframe-activetab-left/-right`),
+`MerchantMoneyInset` (Leder, Bild 374154), `MerchantMoneyBg` (Bild
+525911, dreiteilig), `MerchantBuyBackItemItemButton`, Reparieren und
+„Müll verkaufen“ als Zaubersymbole.
+
+- **Grund:** `S.CALM` – Schein der Klasse aus, neutrales Licht, oben
+  Kante in Gold (wie das Gespräch, aus dem man meist kommt).
+- **Waren:** eine Fläche (`GC.surfaceRaised`, Schatten, Kante in Gold)
+  von `MerchantItem1` bis zur **letzten sichtbaren** Ware – Händler 10,
+  Rückkauf 12. Neu verankert nur, wenn die letzte wechselt.
+- **Geld:** `MerchantMoneyInset` wird über `W.OwnBackground` eine
+  Innenfläche, `MerchantMoneyBg` verliert seine Bilder.
+- **Reiter unten:** `W.SkinTab(tab, accent, sel)` – flach wie die Reiter
+  oben, gewählt in Gold. Ein PanelTabButton sagt nicht, ob er gewählt
+  ist; das Fenster merkt es sich (`selectedTab`, verglichen mit
+  `tab:GetID()`). Kein Feld am Reiter wird geschrieben.
+
+**Unverändert:** die Plätze selbst – samt Rot an Waren, die man nicht
+benutzen kann (das färbt das Spiel am Platz, es trägt Bedeutung) –,
+Symbole, Namen, Preise, Währungen, Reparieren, Müll verkaufen,
+Blättern, Rückkauf-Platz.
+
+**Speicher (6.8.0.6):** `K.Border` baute in `SetColor`/`SetShown`/
+`SetAlpha` bei jedem Aufruf eine Liste seiner vier Kanten. `SkinTab`
+setzt die Randfarbe in jedem Durchlauf – an jedem Reiter jedes offenen
+Fensters lief also Müll an. Die Liste wird jetzt einmal gebaut.
 
 ### Nächste Fenster
 

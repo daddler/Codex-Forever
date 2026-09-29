@@ -232,6 +232,8 @@ local function HideOwnTextures(f)
     end
 end
 
+W.HideOwnTextures = HideOwnTextures
+
 -- Ein Schmuckteil: ist es ein Rahmen, seine Texturen (und die seiner
 -- NineSlice); ist es eine Textur, sie selbst.
 local function HideDecor(part)
@@ -1280,7 +1282,10 @@ end
 
 -- `accent` (6.8.0.2): der Akzent des Fensters - Gold in einem Fenster in
 -- Gold, sonst die Klassenfarbe (wie die Seitenreiter, SkinSideTabs).
-local function SkinTab(tab, accent)
+-- `sel` (6.8.0.6): gewaehlt oder nicht, wenn der Aufrufer es weiss -
+-- Reiter unten am Fenster (PanelTabButton, etwa beim Haendler) sagen es
+-- nicht selbst; das Fenster merkt es sich (selectedTab).
+local function SkinTab(tab, accent, sel)
     local d = tabSkin[tab]
     if not d then
         for _, k in ipairs(TAB_PARTS) do Hide(tab[k]) end
@@ -1310,6 +1315,7 @@ local function SkinTab(tab, accent)
         local ok, v = pcall(tab.IsSelected, tab)
         if ok and type(v) ~= "nil" then on = v end
     end
+    if type(sel) == "boolean" then on = sel end
     on = K.Bool(on, false)
     accent = accent or K.Highlight()
     local c = on and accent or BLACK
@@ -1324,6 +1330,7 @@ local function SkinTab(tab, accent)
     end
 end
 W.TabSkin = tabSkin
+W.SkinTab = function(tab, accent, sel) return pcall(SkinTab, tab, accent, sel) end
 
 local function SkinTabSystems(f, depth, accent)
     if depth > 8 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end

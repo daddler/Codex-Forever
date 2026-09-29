@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.8.0.6] – 2026-09-29
+
+**Der Händler in der ruhigen Oberfläche.** Kein brauner Schein deiner Klasse mehr über den Waren; sie liegen auf einer Fläche mit weichem Schatten und feiner Kante in Gold, das Geld unten auf einer ruhigen Innenfläche statt auf Leder, und die Reiter „Händler“ und „Rückkauf“ sind flach, der gewählte in Gold. Plätze, Preise, Reparieren und Müll verkaufen bleiben, wie das Spiel sie zeigt – auch das Rot an Waren, die du nicht benutzen kannst.
+
+### Technisch
+
+- Neu `ui/merchant.lua` (`WeintCodex.UIMerchant`), **gemessen** (6.8.0.4, `/wcui fenster`): `MerchantFrame` in `S.CALM` (Schein der Klasse aus), neutrales Licht und Kante in Gold; Fläche von `MerchantItem1` bis zur letzten sichtbaren Ware (Händler 10, Rückkauf 12 – neu verankert nur beim Wechsel), Kante in Gold an der Fläche; `MerchantMoneyInset` (Leder, Bild 374154) über `W.OwnBackground` zur Innenfläche, `MerchantMoneyBg` (Bild 525911) ohne eigene Bilder; `MerchantFrameTab1/2` über `W.SkinTab` flach, gewählt = `MerchantFrame.selectedTab`, in Gold. Namen der Plätze und Reiter einmal gebaut.
+- `ui/windows.lua`: `SkinTab(tab, accent, sel)` – gewählt vom Aufrufer, wenn der Reiter es nicht selbst sagt (PanelTabButton); `W.SkinTab`, `W.HideOwnTextures`.
+- **Speicher:** `K.Border(...):SetColor/SetShown/SetAlpha` legten bei jedem Aufruf eine Liste an – `SkinTab` setzt die Randfarbe in jedem Durchlauf, also an jedem Reiter jedes offenen Fensters. Jetzt einmal gebaut (`o.parts`). Gefunden vom Speichertest des Händlers (5 KB je 20 Durchläufe).
+- `load_test.lua`: Händler wie gemessen – Gold, kein Schein, Fläche bis Ware 10 bzw. 12, Geld als Innenfläche, gewählter Reiter in Gold (auch nach dem Wechsel), Plätze unberührt, kein Müll.
+
 ## [6.8.0.5] – 2026-09-29
 
 **Die Bäume stehen sichtbar auf dem Nebel.** Symbol, Name und Linie jedes Baums liegen auf einem dunklen, weichen Grund, die Linie in deiner Klassenfarbe ist kräftiger, und das Licht deiner Klasse oben leuchtet jetzt durch den Nebel, statt in ihm zu verschwinden. Wolken, Funken und Talente bleiben, wie sie sind.

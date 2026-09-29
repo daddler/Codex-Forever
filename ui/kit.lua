@@ -737,6 +737,9 @@ function K.Border(frame, size, r, g, b, a, layer)
         return t
     end
     o.top, o.bottom, o.left, o.right = Edge(), Edge(), Edge(), Edge()
+    -- Einmal gebaut (6.8.0.6): SetColor laeuft im Takt (Reiter je Durchlauf,
+    -- W.SkinTab) und legte vorher bei jedem Aufruf eine Liste an.
+    o.parts = { o.top, o.bottom, o.left, o.right }
     function o:SetSize(s)
         self.top:ClearAllPoints()
         self.top:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", -s, 0)
@@ -756,17 +759,17 @@ function K.Border(frame, size, r, g, b, a, layer)
         self.right:SetWidth(s)
     end
     function o:SetColor(cr, cg, cb, ca)
-        for _, t in ipairs({ self.top, self.bottom, self.left, self.right }) do
+        for _, t in ipairs(self.parts) do
             t:SetColorTexture(cr, cg, cb, ca or 1)
         end
     end
     function o:SetShown(v)
-        for _, t in ipairs({ self.top, self.bottom, self.left, self.right }) do
+        for _, t in ipairs(self.parts) do
             if v then t:Show() else t:Hide() end
         end
     end
     function o:SetAlpha(v)
-        for _, t in ipairs({ self.top, self.bottom, self.left, self.right }) do t:SetAlpha(v) end
+        for _, t in ipairs(self.parts) do t:SetAlpha(v) end
     end
     o:SetSize(size)
     return o

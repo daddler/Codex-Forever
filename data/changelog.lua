@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.8.0.6",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDer Händler in der ruhigen Oberfläche.|r Kein brauner Schein deiner Klasse mehr über den Waren; sie liegen auf einer Fläche mit weichem Schatten und feiner Kante in Gold, das Geld unten auf einer ruhigen Innenfläche statt auf Leder, und die Reiter „Händler“ und „Rückkauf“ sind flach, der gewählte in Gold. Plätze, Preise, Reparieren und Müll verkaufen bleiben, wie das Spiel sie zeigt – auch das Rot an Waren, die du nicht benutzen kannst.",
+        },
+    },
+    {
         version = "6.8.0.5",
         date    = "29.09.2026",
         notes   = {

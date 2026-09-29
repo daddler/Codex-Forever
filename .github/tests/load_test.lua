@@ -6650,6 +6650,88 @@ do
     Check(okG, "Gespraeche: Gold, kein Schein der Klasse, Gespraech auf Flaeche, kein Muell"
         .. (okG and "" or (": " .. tostring(errG))))
 
+    -- 6.8.0.6: Haendler in Gold. Beta-Test 6.8.0.4: Schein der Klasse ueber
+    -- den Waren, Leder unter dem Geld, Reiter des Spiels. Jetzt Gold, Waren
+    -- auf Flaeche (bis zur letzten sichtbaren), Geld als Innenflaeche,
+    -- Reiter flach, der gewaehlte in Gold; die Plaetze selbst bleiben.
+    local okM, errM = pcall(function()
+        local W, S, MC, GC = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIMerchant, WeintCodex.GameColors
+        assert(MC and S.SCOPES.MerchantFrame == S.CALM and W.HOSTED.MerchantFrame and W.HOSTED.MerchantFrame[1] == MC,
+            "Haendler nicht in Gold eingetragen")
+        local mf = stub.NewObject("Frame", "MerchantFrame")
+        local saved = {}
+        local function Global(name, obj) saved[name] = _G[name] _G[name] = obj return obj end
+        Global("MerchantFrame", mf)
+        local items = {}
+        for i = 1, 12 do
+            local it = Global("MerchantItem" .. i, stub.NewObject("Frame"))
+            local slot = stub.NewObject("Texture")
+            slot.SetVertexColor = function() error("Farbe eines Platzes ueberschrieben") end
+            it.GetRegions = function() return slot end
+            it._slot = slot
+            if i > 10 then it:Hide() end
+            items[i] = it
+        end
+        local money = Global("MerchantMoneyInset", stub.NewObject("Frame"))
+        local leather = stub.NewObject("Texture")
+        money.GetRegions = function() return leather end
+        local mbg = Global("MerchantMoneyBg", stub.NewObject("Frame"))
+        local mbgTex = stub.NewObject("Texture")
+        mbg.GetRegions = function() return mbgTex end
+        local tabs = {}
+        for i = 1, 2 do
+            local tab = Global("MerchantFrameTab" .. i, stub.NewObject("Button"))
+            tab.GetID = function() return i end
+            tab.LeftActive = stub.NewObject("Texture")
+            -- PanelTabButton kennt weder isSelected noch IsSelected; die
+            -- Attrappe gaebe fuer fehlende Felder bei jedem Zugriff eine neue
+            -- Funktion zurueck (Muell, den es im Spiel nicht gibt).
+            tab.isSelected, tab.IsSelected = false, false
+            tabs[i] = tab
+        end
+        mf.selectedTab = 1
+        S.Register()
+        local glow = stub.NewObject("Texture")
+        W.done[mf] = { glow = glow }
+        local grad, gold = S.Gradient, {}
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == GC.frameAccent then gold[t] = true end
+            return grad(t, dir, c, a0, a1)
+        end
+        MC.Update(mf)
+        S.Gradient = grad
+        W.HoldGlow(mf, "MerchantFrame")
+        local m = MC.shops[mf]
+        assert(not glow:IsShown(), "Schein der Klasse ueber dem Haendler")
+        assert(gold[m.edge.l] and m.goods and m.goods.on and gold[m.goods.edge.l], "Kanten nicht in Gold")
+        assert(m.goods.last == items[10], "Flaeche nicht bis zur letzten Ware (Haendler: 10)")
+        assert(leather:GetAlpha() == 0 and mbgTex:GetAlpha() == 0 and W.Insets[money], "Geld nicht auf Innenflaeche")
+        assert(tabs[1].LeftActive:GetAlpha() == 0, "Reiter des Spiels bleibt")
+        local sk1, sk2 = W.TabSkin[tabs[1]], W.TabSkin[tabs[2]]
+        assert(sk1 and sk2 and sk1.accent == GC.frameAccent and sk2.accent == nil, "gewaehlter Reiter nicht in Gold")
+        for i = 1, 10 do assert(items[i]._slot:GetAlpha() == 1, "Platz einer Ware angefasst") end
+        -- Rueckkauf: zwoelf Plaetze, zweiter Reiter gewaehlt.
+        items[11]:Show() items[12]:Show()
+        mf.selectedTab = 2
+        MC.Update(mf)
+        assert(m.goods.last == items[12] and W.TabSkin[tabs[2]].accent == GC.frameAccent and W.TabSkin[tabs[1]].accent == nil,
+            "Rueckkauf: Flaeche oder Reiter folgt nicht")
+        local rep = table.concat(MC.Report(mf, {}), "\n")
+        assert(rep:find("Händler (Stil ruhig): Kante in Gold, kein Schein der Klasse · Waren auf Fläche · Geld auf Innenfläche · Reiter 2", 1, true),
+            "Bericht: " .. rep)
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do MC.Update(mf) W.HoldGlow(mf, "MerchantFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Haendler legt im Takt Muell an: %.1f KB", grew))
+        W.done[mf] = nil
+        for name, v in pairs(saved) do _G[name] = v end
+    end)
+    Check(okM, "Haendler: Gold, kein Schein der Klasse, Waren auf Flaeche, Geld als Innenflaeche, Reiter flach in Gold, kein Muell"
+        .. (okM and "" or (": " .. tostring(errM))))
+
     -- 6.7.9.0: Karte & Questlog in Gold. Der weiche Rand um die Karte
     -- (ausdruecklich gewuenscht) bleibt; der Questlog liegt auf einer
     -- Flaeche, seine Zonen sind Abschnitte wie im Ruf, kein Schein der Klasse.
