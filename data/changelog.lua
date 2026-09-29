@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.8.0.4",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Talente zeigen jetzt, was versprochen war.|r Die Namen der Bäume – etwa Waffen, Furor, Schutz – tragen jetzt wirklich Raute und Linie in deiner Klassenfarbe, und das Licht deiner Klasse liegt über dem Nebel statt unsichtbar darunter. Wolken, Funken und Talente bleiben, wie sie sind.",
+            "|cff7C6CFFGespräche in der ruhigen Oberfläche.|r Kein brauner Schein deiner Klasse mehr über Stadtwachen, Gastwirten und Lehrern; Begrüßung und Optionen liegen auf einer Fläche mit weichem Schatten und feiner Kante in Gold, oben am Fenster ebenfalls Gold – wie Spielmenü und Dialoge. Auch Questtexte, Bücher und Briefe tragen Gold statt deiner Klasse.",
+        },
+    },
+    {
         version = "6.8.0.3",
         date    = "29.09.2026",
         notes   = {

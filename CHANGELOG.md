@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.8.0.4] – 2026-09-29
+
+**Die Talente zeigen jetzt, was versprochen war.** Die Namen der Bäume – etwa Waffen, Furor, Schutz – tragen jetzt wirklich Raute und Linie in deiner Klassenfarbe, und das Licht deiner Klasse liegt über dem Nebel statt unsichtbar darunter. Wolken, Funken und Talente bleiben, wie sie sind.
+
+**Gespräche in der ruhigen Oberfläche.** Kein brauner Schein deiner Klasse mehr über Stadtwachen, Gastwirten und Lehrern; Begrüßung und Optionen liegen auf einer Fläche mit weichem Schatten und feiner Kante in Gold, oben am Fenster ebenfalls Gold – wie Spielmenü und Dialoge. Auch Questtexte, Bücher und Briefe tragen Gold statt deiner Klasse.
+
+### Technisch
+
+- Talente, **gemessen** (6.8.0.3, `/wcui fenster`): „Bäume keine gefunden“ – der Forever-Client nennt die Bäume über `GetTalentTabInfo` nicht. `TL.Names()` fragt jetzt `GetTalentTabInfo`, `GetSpecializationInfo` und, für die eigene Klasse, `data/specs.lua` (`WeintCodex.Specs.ForClass`); Suche bis Tiefe 6. Findet sie keinen Namen, nennt der Bericht, was gesucht wurde und woher, und bis zu sechs Schriftzeilen des Fensters – die nächste Messung sagt dann, wie die Bäume dort heißen.
+- Talente: Licht und Kante auf `OVERLAY` 6/7 des Talentfensters (über Wolken und Landschaften, unter den Talenten im Kindrahmen), Licht 16 % über 220 px statt `GC.classLight` (7 %) – im Spiel war davon nichts zu sehen.
+- Neu `ui/gossip.lua` (`WeintCodex.UIGossip`): `GossipFrame`, `QuestFrame`, `ItemTextFrame` in `S.CALM` (Schein der Klasse aus über `W.HoldGlow`), neutrales Licht und Kante in Gold; **gemessen** `GossipFrame.GreetingPanel.ScrollBox` auf der angehobenen Fläche mit Schatten und Kante in Gold, `.ScrollBar` als Ecke. Questtext und Bücher ungemessen: keine Fläche.
+- Testattrappe: `SetDrawLayer` merkt sich die Ebene. `load_test.lua`: Talente ohne `GetTalentTabInfo` (Namen aus `data/specs.lua`, fremde Klasse: Bericht mit Hinweis), Licht/Kante auf `OVERLAY`; Gespräche in Gold, Fläche, kein Schein, kein Müll.
+
 ## [6.8.0.3] – 2026-09-29
 
 **Die Talente passen zum Zauberbuch.** Statt des großen Scheins in deiner Klassenfarbe fällt ein Hauch Licht in deiner Klasse von oben, oben liegt eine feine Kante in deiner Klasse, und die Namen der Bäume – etwa Waffen, Furor, Schutz – tragen Raute und Linie wie die Überschriften im Zauberbuch.

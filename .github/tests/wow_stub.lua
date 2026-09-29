@@ -176,6 +176,7 @@ function Methods:CreateTexture(_, layer, _, sublevel)
 end
 
 function Methods:GetDrawLayer() return self._layer, self._sublevel end
+function Methods:SetDrawLayer(layer, sublevel) self._layer, self._sublevel = layer, sublevel end
 
 function Methods:CreateMaskTexture()
     RequireFrame(self, "CreateMaskTexture")

@@ -6592,6 +6592,64 @@ do
     Check(okM, "Spielmenue und Dialoge: Gold, Linie unter dem Titel, Haarlinien zwischen Gruppen, kein Schein der Klasse"
         .. (okM and "" or (": " .. tostring(errM))))
 
+    -- 6.8.0.4: Gespraeche in Gold. Beta-Test 6.8.0.3: ueber dem Gespraech lag
+    -- der Schein der Klasse (brauner Verlauf beim Krieger). Jetzt aus; Licht
+    -- und Kante in Gold, Begruessung und Optionen auf einer Flaeche.
+    local okG, errG = pcall(function()
+        local W, S, GS, GC = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIGossip, WeintCodex.GameColors
+        for _, n in ipairs({ "GossipFrame", "QuestFrame", "ItemTextFrame" }) do
+            assert(GS and S.SCOPES[n] == S.CALM and W.HOSTED[n] and W.HOSTED[n][1] == GS, n .. " nicht in Gold eingetragen")
+        end
+        local gf = stub.NewObject("Frame", "GossipFrame")
+        local panel, box, bar = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Frame")
+        gf.GreetingPanel, panel.ScrollBox, panel.ScrollBar = panel, box, bar
+        local opt = stub.NewObject("FontString")
+        opt._text, opt._font = "Das Auktionshaus", true
+        opt.SetTextColor = function() error("Farbe einer Option ueberschrieben") end
+        box.GetRegions = function() return opt end
+        panel.GetChildren = function() return box, bar end
+        gf.GetChildren = function() return panel end
+        local oldGF = _G.GossipFrame
+        _G.GossipFrame = gf
+        S.Register()
+        local glow = stub.NewObject("Texture")
+        W.done[gf] = { glow = glow }
+        local grad, gold = S.Gradient, {}
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == GC.frameAccent then gold[t] = true end
+            return grad(t, dir, c, a0, a1)
+        end
+        GS.Update(gf)
+        S.Gradient = grad
+        W.HoldGlow(gf, "GossipFrame")
+        local w = GS.windows[gf]
+        assert(not glow:IsShown(), "Schein der Klasse ueber dem Gespraech")
+        assert(w and w.light and gold[w.edge.l] and gold[w.edge.r], "Kante oben nicht in Gold")
+        assert(w.card and w.card.on and w.card.body._parent == gf and gold[w.card.edge.l], "Gespraech nicht auf Flaeche mit Kante in Gold")
+        assert(opt:IsShown() and opt:GetAlpha() == 1, "Option angefasst")
+        local rep = table.concat(GS.Report(gf, {}), "\n")
+        assert(rep:find("Gespräch (Stil ruhig): Kante in Gold, kein Schein der Klasse, Gespräch auf Fläche", 1, true), "Bericht: " .. rep)
+        box:Hide()
+        GS.Update(gf)
+        assert(not w.card.on and not w.card.body:IsShown(), "Flaeche bleibt ohne Gespraech")
+        box:Show()
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do GS.Update(gf) W.HoldGlow(gf, "GossipFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Gespraech legt im Takt Muell an: %.1f KB", grew))
+        -- Questtext (ungemessen): Gold und Kante, keine Flaeche.
+        local qf = stub.NewObject("Frame", "QuestFrame")
+        GS.Update(qf)
+        assert(GS.windows[qf] and not GS.windows[qf].card, "Questtext mit geratener Flaeche")
+        W.done[gf] = nil
+        _G.GossipFrame = oldGF
+    end)
+    Check(okG, "Gespraeche: Gold, kein Schein der Klasse, Gespraech auf Flaeche, kein Muell"
+        .. (okG and "" or (": " .. tostring(errG))))
+
     -- 6.7.9.0: Karte & Questlog in Gold. Der weiche Rand um die Karte
     -- (ausdruecklich gewuenscht) bleibt; der Questlog liegt auf einer
     -- Flaeche, seine Zonen sind Abschnitte wie im Ruf, kein Schein der Klasse.
@@ -6853,7 +6911,8 @@ do
         S.Gradient = grad
         local t = TL.frames[tf]
         assert(t and t.light and t.edge and classTex[t.light] and classTex[t.edge.l], "Licht oder Kante nicht in der Klassenfarbe")
-        assert(t.light._parent == tf, "Licht unter dem Talentfenster (von den Landschaften verdeckt)")
+        assert(t.light._parent == tf and t.light:GetDrawLayer() == "OVERLAY" and t.edge.l:GetDrawLayer() == "OVERLAY",
+            "Licht oder Kante unter den Wolken (im Spiel nicht zu sehen, 6.8.0.3)")
         assert(#t.order == 3 and t.marks[hs[1]] and t.marks[hs[3]], "Namen der Baeume nicht gefunden: " .. #t.order)
         assert(not t.heads[rank], "Rang eines Talents als Name eines Baums")
         assert(t.marks[hs[2]].dot._parent == heads[2], "Raute nicht am Namen")
@@ -6879,8 +6938,33 @@ do
         TL.Update(psf)
         W.HoldGlow(psf, "PlayerSpellsFrame")
         assert(glow:IsShown() and not t.light:IsShown(), "Schein nicht zurueck oder Licht bleibt")
-        _G.GetTalentTabInfo, _G.GetNumTalentTabs = oldInfo, oldNum
         W.done[psf] = nil
+        -- 6.8.0.4, gemessen: der Forever-Client nennt die Baeume nicht
+        -- ("Baeume keine gefunden"). Dann die eigene Klasse aus data/specs.lua.
+        local oldUC, oldSpec = _G.UnitClass, _G.GetSpecializationInfo
+        _G.GetTalentTabInfo, _G.GetSpecializationInfo = nil, nil
+        local function Fresh(class)
+            _G.UnitClass = function() return "x", class, 1 end
+            TL.frames[tf] = nil
+            for _, fs in ipairs(hs) do fs:Show() end
+            tf:Show()
+            TL.Update(psf)
+            return TL.frames[tf]
+        end
+        local t2 = Fresh("WARRIOR")
+        assert(#t2.order == 3 and t2.from[#t2.from] == "data/specs.lua", "Baeume ohne Spiel nicht aus data/specs.lua: " .. #t2.order)
+        rep = table.concat(TL.Report(psf, {}), "\n")
+        assert(rep:find("Bäume „Waffen“", 1, true) and not rep:find("gesucht", 1, true), "Bericht: " .. rep)
+        -- Andere Klasse, kein Name passt: der Bericht sagt, was gesucht wurde
+        -- und welche Schrift im Fenster steht.
+        local t3 = Fresh("MAGE")
+        assert(#t3.order == 0, "fremde Namen gefunden")
+        rep = table.concat(TL.Report(psf, {}), "\n")
+        assert(rep:find("keine gefunden", 1, true) and rep:find("gesucht: Arkan, Feuer, Frost (aus data/specs.lua)", 1, true)
+            and rep:find("„Furor“", 1, true) and not rep:find("„3“", 1, true), "Bericht ohne Hinweis: " .. rep)
+        _G.UnitClass, _G.GetSpecializationInfo = oldUC, oldSpec
+        _G.GetTalentTabInfo, _G.GetNumTalentTabs = oldInfo, oldNum
+        TL.frames[tf] = nil
     end)
     Check(okT, "Talente: Klassenfarbe, Animation unberuehrt, Baeume mit Raute und Linie, kein Schein der Klasse, kein Muell"
         .. (okT and "" or (": " .. tostring(errT))))

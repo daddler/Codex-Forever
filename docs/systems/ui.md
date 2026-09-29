@@ -741,7 +741,8 @@ Seit 6.2.0.0:
   setzen Questnamen als `|cff000000…|r` in den Text. Nachgezogen beim
   Zeigen jedes Quest-Teilfensters (`W.SHOW_HOOKS`), nach
   `GossipFrame:Update`/`Refresh` und im Takt des offenen Fensters.
-  `MerchantFrame` nur Hülle und Knöpfe. Im Spiel ungeprüft.
+  `MerchantFrame` nur Hülle und Knöpfe. Im Spiel ungeprüft. Seit 6.8.0.4
+  in Gold (`ui/gossip.lua`, siehe *Gespräche in Gold*).
 * **Zauberbuch** (6.4.1.2): dieselbe Fensterhülle wie das
   Charakterfenster (`PlayerSpellsFrame`/`SpellBookFrame`), Pergament-
   Atlanten weg, Zaubersymbole eckig (erkannt an `Button.Icon`/`Border`/
@@ -2287,6 +2288,51 @@ Klassenfarbe (`S.CHARACTER_INFO`, nur für `…TalentsFrame`), in
 **Unverändert:** Talente samt Rahmenfarben (grün, gelb, grau, gesperrt –
 sie sagen etwas), Pfeile, Symbole und Punkte je Baum, „Unverteilte
 Talentpunkte“, Primär/Sekundär, Suche, „Änderungen anwenden“.
+
+**Nachgemessen (6.8.0.4).** Im Spiel war von 6.8.0.3 nichts zu sehen:
+`/wcui fenster` meldete „Bäume keine gefunden“, und das Licht (7 %,
+`BORDER` 7) lag unter Wolken und Landschaften. Seitdem:
+
+- **Namen aus drei Quellen:** `GetTalentTabInfo`, `GetSpecializationInfo`
+  (beide ersten Rückgaben, wenn Text) und – der Forever-Client nennt die
+  Bäume über keine der beiden – die Bäume der **eigenen Klasse** aus
+  `data/specs.lua` (`WeintCodex.Specs.ForClass`, `UnitClass("player")`).
+  Die Namen dort stehen fest (siehe Kopf der Datei); geraten wird keine
+  Lage. Suche bis Tiefe 6.
+- **Bericht mit Hinweis:** findet die Suche nicht alle, nennt
+  `/wcui fenster` darunter „gesucht: … (aus …)“ und bis zu sechs
+  Schriftzeilen des Fensters samt Rahmen – dann sagt die nächste Messung,
+  wie die Bäume dort heißen.
+- **Licht und Kante über den Wolken:** `OVERLAY` 6/7 des Talentfensters.
+  Die Talente liegen in `.ButtonsParent` (Kindrahmen) und damit darüber.
+  Licht 16 % über 220 px (`TL.LIGHT_ALPHA`) – über hellgrauem Nebel färbt
+  `GC.classLight` (7 %) sichtbar nichts.
+
+### Gespräche in Gold *(6.8.0.4, `ui/gossip.lua`)*
+
+Beta-Test (6.8.0.3, Krieger): über dem Gespräch mit einer Stadtwache lag
+ein brauner Verlauf – der **Schein der Klasse** (`W.AddGlow`, 260 px). Ein
+Gespräch gehört nicht zur Klasse. **Gemessen** (`/wcui fenster`):
+`GossipFrame` mit `.GreetingPanel` (`.ScrollBox.ScrollTarget` mit den
+Optionen, Sprechblase Bild 136810; `.ScrollBar` mit
+`minimal-scrollbar-*`), `GossipFrameCloseButton`.
+
+`GossipFrame`, `QuestFrame`, `ItemTextFrame` stehen in `S.SCOPES` als
+`S.CALM` und in `W.HOSTED` (`WeintCodex.UIGossip`):
+
+- **Grund:** Schein der Klasse aus (`W.HoldGlow` – Stil in Gold), statt
+  dessen neutrales Licht (`GC.atmosLight`, 90 px) und oben eine Kante in
+  Gold – wie Spielmenü und Dialoge.
+- **Gespräch auf Fläche:** Begrüßung und Optionen
+  (`GreetingPanel.ScrollBox`) auf der angehobenen Fläche der Register
+  (`GC.surfaceRaised`) mit weichem Schatten und Kante in Gold; die
+  Bildlaufleiste ist die untere rechte Ecke. Aus, wenn die Liste zu ist.
+- **Questtext, Bücher, Briefe:** ungemessen – nur Grund und Kante, keine
+  geratene Fläche.
+
+**Unverändert:** Texte, Symbole der Optionen, Farben der Quests (samt
+`W.LightCodes`), Bildlaufleiste, „Lebt wohl“. Der Händler
+(`MerchantFrame`) ist noch nicht umgestellt.
 
 ### Nächste Fenster
 

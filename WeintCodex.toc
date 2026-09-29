@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.8.0.3
+## Version: 6.8.0.4
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -191,12 +191,14 @@ ui/professions.lua
 ui/profbook.lua
 # Zauberbuch (6.7.7.0): Flaeche, Abschnitte in der Klassenfarbe, ruhige Atmosphaere.
 ui/spellbook.lua
-# Talente (6.8.0.3): Klassenfarbe, Animation bleibt, Baeume mit Raute und Linie.
+# Talente (6.8.0.3, 6.8.0.4): Klassenfarbe, Animation bleibt, Baeume mit Raute und Linie.
 ui/talents.lua
 # Gilde & Communitys (6.7.8.0): drei Spalten auf Flaechen, Gold.
 ui/community.lua
 # Spielmenue (6.7.9.0): Gold, Linie unter dem Titel, Haarlinien zwischen den Gruppen.
 ui/gamemenu.lua
+# Gespraeche (6.8.0.4): Gespraech, Questtext, Buecher in Gold; Gespraech auf Flaeche.
+ui/gossip.lua
 # Karte & Questlog (6.7.9.0): Questlog auf Flaeche, Abschnitte in Gold, Karte unberuehrt.
 ui/questlog.lua
 # Fenster in Gold mit Innenflaechen (6.8.0.0 Suche nach Gruppe, 6.8.0.2 Sammlung).
