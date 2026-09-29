@@ -122,6 +122,7 @@ TARGET_W, TARGET_H = 1024, 256
 # Ziel, Quelldatei. Ganzes Bild, Ziel 1024x1024 (siehe oben).
 CLASS_JOBS = [
     ("classes/priest", "priest.webp"),
+    ("classes/hunter", "hunter.webp"),   # Querformat 1496x1051, 6.6.4.4
 ]
 CLASS_W, CLASS_H = 1024, 1024
 
@@ -170,8 +171,10 @@ def classes(source_dir):
     for target, filename in CLASS_JOBS:
         source = os.path.join(source_dir, filename)
         if not os.path.exists(source):
-            print("fehlt: " + source)
-            return 1
+            # Einzeln erneuern koennen: wer nur ein neues Bild hat, legt
+            # nur das in den Ordner - die anderen Dateien bleiben.
+            print("uebersprungen (kein Original): " + filename)
+            continue
         original = Image.open(source).convert("RGB")
         scaled = original.resize((CLASS_W, CLASS_H), Image.LANCZOS)
         with tempfile.TemporaryDirectory() as workdir:

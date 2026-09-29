@@ -338,6 +338,16 @@ WeintCodex.ClassArtworks = {
         file = "classes/priest",
         w = 1024, h = 1536, focusY = 0.55, dim = 0.9,
     },
+
+    -- Jaegerlager im Wald: Tor mit Geweihschaedeln und Hirschbanner,
+    -- zwei Woelfe, Wasserfall, Fackeln, nasser Steinboden (6.6.4.4).
+    -- hunter.webp (1496x1051), ganz. QUERFORMAT: das Modellfeld (hochkant,
+    -- 397x464) zeigt davon rund 60 % der Breite, die volle Hoehe;
+    -- focusX 0.44 = das Tor mit Banner hinter der Figur, beide Woelfe im Bild.
+    HUNTER = {
+        file = "classes/hunter",
+        w = 1496, h = 1051, focusX = 0.44, dim = 0.85,
+    },
 }
 
 --------------------------------------------------

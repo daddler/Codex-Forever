@@ -9,6 +9,10 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.6.4.4] – 2026-09-29
+
+**Jäger bekommen ihre eigene Szene im Charakterfenster.** Hinter deiner Figur steht ein Jägerlager im Wald – Tor mit Hirschbanner, zwei Wölfe, Wasserfall und Fackeln –, weich auslaufend wie beim Priester. Die Figur nimmt das Licht der Szene an: warme Sonne, ein Hauch Grün vom Laub, Schatten und Dunst am Boden. Aufbau und Werte bleiben dieselben; dein Grün erscheint nur in Linien, Rauten, belegten Plätzen und unter der Maus.
+
 ## [6.6.4.3] – 2026-09-29
 
 **Die Kopfzeile im Charakterfenster zeigt immer deinen Namen.** Nach einem Wechsel vom Reiter PvP stand dort „SPIELER GEGEN SPIELER“ – sie las den Fenstertitel statt deines Namens.

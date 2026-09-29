@@ -1256,6 +1256,17 @@ pauschal auf Deckkraft 1 – jetzt auf die Deckkraft von vorher (`h.orig`),
 damit vom Fensterstil Ausgeblendetes aus bleibt. `/wcui fenster` nennt
 „Ersetzt: <Name> „<Text>“, …“.
 
+**Jäger (6.6.4.4).** Zweite Klasse über dasselbe Gerüst, ohne eine Zeile
+in `ui/character.lua`: Bild `media/classes/hunter.blp` (`make_artwork.py
+classes`, Original 1496×1051 **quer**, Datei 1024×1024) und
+`ClassArtworks.HUNTER` (`focusX = 0.44`: das Modellfeld zeigt ~60 % der
+Breite, volle Höhe – Tor, Banner, beide Wölfe), Thema `ClassThemes.HUNTER`
+mit denselben Tiefenwerten wie der Priester und eigenem Licht (Umgebung
+leicht grün, Hauptlicht warmes Sonnenlicht, Hauch 3,5 % grünlich). Das
+Grün des Akzents kommt aus dem Spiel (`RAID_CLASS_COLORS.HUNTER`) wie
+jede Klassenfarbe; `load_test.lua` prüft, dass Basis und Glas mit dem
+Jäger-Akzent neutral bleiben und das Priester-Thema unverändert ist.
+
 Die beiden folgenden Abschnitte sind die Vorgeschichte (6.6.3.5/6.6.3.6).
 
 **Klassenbild und Kopfzeile im Charakterfenster (6.6.3.5).** Beta-Test

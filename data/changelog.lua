@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.6.4.4",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFJäger bekommen ihre eigene Szene im Charakterfenster.|r Hinter deiner Figur steht ein Jägerlager im Wald – Tor mit Hirschbanner, zwei Wölfe, Wasserfall und Fackeln –, weich auslaufend wie beim Priester. Die Figur nimmt das Licht der Szene an: warme Sonne, ein Hauch Grün vom Laub, Schatten und Dunst am Boden. Aufbau und Werte bleiben dieselben; dein Grün erscheint nur in Linien, Rauten, belegten Plätzen und unter der Maus.",
+        },
+    },
+    {
         version = "6.6.4.3",
         date    = "29.09.2026",
         notes   = {

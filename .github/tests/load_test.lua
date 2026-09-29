@@ -4626,6 +4626,59 @@ do
         assert(srep:find("Szene: classes/priest, Abdunklung des Spiels aus", 1, true) and srep:find("Licht: an der Szene", 1, true),
             "Bericht ohne Szene/Licht: " .. srep)
         _G.CharacterHeadSlot = oldSlot
+        -- 6.6.4.4: Jaeger - dasselbe Geruest, eigenes Bild und Licht.
+        local hunter = WeintCodex.ClassTheme("HUNTER")
+        assert(hunter.art and hunter.art.file == "classes/hunter" and hunter.gameOverlay == false
+            and hunter.glass == WeintCodex.ClassThemes.DEFAULT.glass, "Jaeger-Thema nicht ueber DEFAULT gelegt")
+        local cf3, scene3 = stub.NewObject("Frame"), stub.NewObject("Frame")
+        local race3 = Tex("UI-Character-Info-RaceBG-Overlay", 230, 330)
+        race3.GetParent = function() return scene3 end
+        scene3.GetRegions = function() return race3 end
+        cf3.GetChildren = function() return scene3 end
+        local create3 = scene3.CreateTexture
+        scene3.CreateTexture = function(self, ...)
+            local t = create3(self, ...)
+            t.SetTexture = function(tt, file) tt._file = file end
+            t.SetTexCoord = function(tt, ...) tt._coord = { ... } end
+            return t
+        end
+        scene3._width, scene3._height = 397, 464
+        W.SoftenModel(cf3)
+        local e3 = W.soft[scene3]
+        e3.box._width, e3.box._height = 397, 464   -- Modellfeld wie im Spiel gemessen
+        local s3 = CS.Scene(e3, scene3, hunter)
+        CS.Light(e3, scene3, hunter)
+        CS.KeepScene(e3)
+        assert(s3.art and s3.art._file == "Interface\\AddOns\\WeintCodex\\media\\classes\\hunter",
+            "Jaeger ohne sein Bild: " .. tostring(s3.art and s3.art._file))
+        -- Querformat im hochkanten Feld: die BREITE wird beschnitten, die
+        -- Hoehe bleibt ganz, der Ausschnitt um das Tor (focusX 0.44).
+        local c3 = s3.art._coord
+        assert(c3 and c3[1] > 0 and c3[2] < 1 and c3[3] == 0 and c3[4] == 1
+            and math.abs((c3[1] + c3[2]) / 2 - 0.44) < 0.001, "Ausschnitt des Jaegers falsch")
+        assert(s3.art._masks[1] == e3.mask and race3:GetAlpha() == 0 and s3.calm and e3.light.shadow,
+            "Jaeger nicht wie der Priester eingebettet")
+        -- Priester unveraendert (Stand 6.6.4.3).
+        local P = WeintCodex.ClassTheme("PRIEST")
+        assert(P.art.file == "classes/priest" and P.art.w == 1024 and P.art.h == 1536 and P.art.focusY == 0.55
+            and P.art.dim == 0.9 and P.vignette == 0.60 and P.calm == 0.30 and P.shadow == 0.60 and P.haze == 0.40
+            and P.light.ambient[1] == 0.58 and P.light.diffuse[1] == 0.95 and P.wash[4] == 0.04,
+            "Priester-Thema veraendert")
+        -- Gruen nur als Akzent: mit der Jaegerfarbe als Akzent bleiben
+        -- Basis und Glas neutral (r = g = b), der Lichthauch unter 5 %.
+        local GCs = WeintCodex.GameColors
+        local base0, glass0 = { unpack(GCs.showcaseBase) }, { unpack(GCs.showcaseGlass) }
+        local hc = _G.RAID_CLASS_COLORS.HUNTER
+        WeintCodex.SetAccent(hc.r, hc.g, hc.b)
+        local acc = WeintCodex.UIKit.Highlight()
+        assert(math.abs(acc[1] - hc.r) < 0.01 and math.abs(acc[2] - hc.g) < 0.01, "Akzent nicht die Jaegerfarbe")
+        for i = 1, 4 do
+            assert(GCs.showcaseBase[i] == base0[i] and GCs.showcaseGlass[i] == glass0[i], "Klassenfarbe faerbt die Grundflaechen")
+        end
+        local function Neutral(c) return math.abs(c[1] - c[2]) < 0.01 and math.abs(c[2] - c[3]) < 0.01 end
+        assert(Neutral(GCs.showcaseBase) and Neutral(GCs.showcaseGlass), "Grundflaechen nicht neutral")
+        assert(hunter.wash[4] <= 0.05 and P.wash[4] <= 0.05, "Lichthauch zu stark")
+        WeintCodex.UIKit.ResetHighlight()
         -- Warum das Thema nicht direkt am Krieger faellt: ohne Licht keine Schicht.
         local wLight = CS.Light(e, scene, warrior)
         assert(wLight.theme.light == nil and wLight.over, "Krieger: Dunst des DEFAULT fehlt")

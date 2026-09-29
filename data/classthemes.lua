@@ -31,6 +31,15 @@
 -- Flaechen zugleich. Das Fenster nutzt sie nur als Akzent (Kopfzeile,
 -- Linien, belegte und gewaehlte Plaetze, Maus) - nie als Flaechenfarbe.
 --
+-- DIE VIER GROESSEN JE KLASSE und wo sie stehen:
+--
+--   Hintergrund   `scene` hier -> Bild in WeintCodex.ClassArtworks
+--                 (data/artwork.lua: Datei, Masse, Ausschnitt, Helligkeit)
+--   Klassenfarbe  NICHT hier - aus dem Spiel, als Akzent der ganzen
+--                 Oberflaeche (siehe oben)
+--   Lichtfarbe    `light` (Umgebung/Hauptlicht der 3D-Szene) und `wash`
+--   Atmosphaere   `gameOverlay`, `vignette`, `calm`, `shadow`, `haze`, `glass`
+--
 -- WAS EIN THEMA SAGEN KANN (alle Werte 0..1, alle optional):
 --
 --   scene        Schluessel in WeintCodex.ClassArtworks, oder nil: dann
@@ -88,6 +97,26 @@ WeintCodex.ClassThemes = {
             diffuse = { 0.95, 0.86, 0.70 },
         },
         wash        = { 1.00, 0.90, 0.75, 0.04 },
+    },
+
+    -- Zweite Klasse (6.6.4.4): Jaegerlager im Wald, Sonne durch die Baeume,
+    -- Fackeln. Dieselben Werte fuer Tiefe wie beim Priester - das Geruest
+    -- bleibt gleich, nur das Licht folgt dem Bild: Umgebung ein Hauch
+    -- gruen (Laub), Hauptlicht warmes Sonnenlicht, der Hauch darueber
+    -- kaum sichtbar gruenlich. Gruen als LICHT, nicht als Flaeche - der
+    -- Akzent (Linien, Plaetze, Kopfzeile) ist die Klassenfarbe des Spiels.
+    HUNTER = {
+        scene       = "HUNTER",
+        gameOverlay = false,
+        vignette    = 0.60,
+        calm        = 0.30,
+        shadow      = 0.60,
+        haze        = 0.40,
+        light       = {
+            ambient = { 0.52, 0.57, 0.48 },
+            diffuse = { 0.96, 0.90, 0.74 },
+        },
+        wash        = { 0.80, 0.95, 0.70, 0.035 },
     },
 }
 
