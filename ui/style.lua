@@ -70,7 +70,9 @@ end
 S.SHOWCASE = { key = "showcase", name = "Bühne", accent = "class", header = "showcase" }
 -- barEdge: Deckkraft des schwarzen Randes um Balken (1 = hart).
 S.CALM = { key = "calm", name = "ruhig", accent = "frame", header = "list", barTrack = "barTrack", barEdge = 0.5 }
+-- band/headerSize (6.7.0.2): Kopfzeilen als eigene Sektion (S.Band), 14 pt.
 S.CHARACTER_INFO = { key = "charinfo", name = "ruhig, Klasse", accent = "class", header = "list",
+                     band = true, headerSize = 14,
                      barTrack = "barTrack", barEdge = 0.5 }
 
 -- Welche Fenster (globale Namen) welchen Stil tragen. Phase 3 des
@@ -142,14 +144,44 @@ end
 
 -- Oben an `region`, `inset` px vom Rand: eine Kante aus Licht (oder
 -- Akzent), die zu beiden Seiten auslaeuft.
-function S.PlaceTop(d, region, inset)
-    inset = inset or 0
+-- `y` (6.7.0.2): so weit unter/ueber der Oberkante (negativ = tiefer);
+-- `edge` = "BOTTOM" legt die Linie an die Unterkante.
+function S.PlaceTop(d, region, inset, y, edge)
+    inset, y, edge = inset or 0, y or 0, edge or "TOP"
     d.l:ClearAllPoints()
     d.r:ClearAllPoints()
-    d.l:SetPoint("TOPLEFT", region, "TOPLEFT", inset, 0)
-    d.l:SetPoint("TOPRIGHT", region, "TOP", 0, 0)
-    d.r:SetPoint("TOPLEFT", region, "TOP", 0, 0)
-    d.r:SetPoint("TOPRIGHT", region, "TOPRIGHT", -inset, 0)
+    d.l:SetPoint(edge .. "LEFT", region, edge .. "LEFT", inset, y)
+    d.l:SetPoint(edge .. "RIGHT", region, edge, 0, y)
+    d.r:SetPoint(edge .. "LEFT", region, edge, 0, y)
+    d.r:SetPoint(edge .. "RIGHT", region, edge .. "RIGHT", -inset, y)
+end
+
+-- Eine Linie in die unterste Ebene legen (unter jeden Text des Rahmens).
+function S.Under(d, sub)
+    d.l:SetDrawLayer("BACKGROUND", sub or 1)
+    d.r:SetDrawLayer("BACKGROUND", sub or 1)
+    return d
+end
+
+-- Haarlinie: neutral (GameColors.hairline), zu beiden Seiten auslaufend -
+-- trennt Zeilen und Bereiche, ohne Kaesten zu bauen.
+function S.Hairline(host, region, inset, edge, sub)
+    local h = GC.hairline
+    local d = S.Under(S.Divider(host, h, h[4], 0), sub or 1)
+    S.PlaceTop(d, region, inset, 0, edge)
+    return d
+end
+
+-- Kopfzeile als eigene Sektion (6.7.0.2): ein Hauch Licht von links, der
+-- nach rechts auslaeuft, und oben eine Haarlinie - die Gruppe beginnt
+-- sichtbar, ohne dass die Liste neu angeordnet wird.
+function S.Band(f)
+    local c = GC.sectionBand
+    local b = { fill = Own(f:CreateTexture(nil, "BACKGROUND", nil, 1)) }
+    b.fill:SetAllPoints(f)
+    S.Gradient(b.fill, "HORIZONTAL", c, c[4], 0)
+    b.line = S.Hairline(f, f, 2, "TOP", 2)
+    return b
 end
 
 -- Unter `below` (Mitte), `width` breit, `gap` px darunter.
@@ -189,6 +221,23 @@ function S.SoftPanel(host, anchor, c, alpha, pad, sub, corner)
     t:SetPoint("TOPLEFT", anchor, "TOPLEFT", -pad, pad)
     t:SetPoint("BOTTOMRIGHT", corner or anchor, "BOTTOMRIGHT", pad, -pad)
     return t
+end
+
+-- Weicher Schatten um `anchor`: dieselbe weiche Flaeche in Schwarz, weiter
+-- ausladend. Liegt UNTER der Flaeche, die er absetzt.
+function S.Shadow(host, anchor, pad, sub, corner)
+    local c = GC.shadowSoft
+    return S.SoftPanel(host, anchor, c, c[4], pad or 16, sub or -8, corner)
+end
+
+-- Eine weiche Flaeche auf zwei Hoehen innerhalb von `host` (relativ zu
+-- seiner Oberkante, negativ = tiefer), `inset` px vom Rand. Fuer Bereiche,
+-- deren Grenzen andere Rahmen vorgeben (Detailansicht).
+function S.PlaceBand(t, host, inset, yTop, yBottom)
+    t:ClearAllPoints()
+    t:SetPoint("TOPLEFT", host, "TOPLEFT", inset, yTop)
+    if yBottom then t:SetPoint("BOTTOMRIGHT", host, "TOPRIGHT", -inset, yBottom)
+    else t:SetPoint("BOTTOMRIGHT", host, "BOTTOMRIGHT", -inset, 0) end
 end
 
 -- Randabdunklung: vier Verlaeufe von Schwarz (`strength`) nach innen auf
@@ -268,13 +317,22 @@ function S.Tint(t, c, alpha)
     return true
 end
 
--- Gewaehlt: links ein 2-px-Strich im Akzent, dahinter ein Hauch des
--- Akzents, der nach rechts ausblendet. Unter dem Text, nie darueber.
-S.SELECT_FILL = 0.16
+-- Gewaehlt: links ein 2-px-Strich im Akzent, daneben ein Schein des
+-- Akzents, der nach rechts ausblendet, und die Zeile eine Spur heller.
+-- Unter dem Text, nie darueber. 6.7.0.2: der Schein reicht nur noch uebers
+-- erste Drittel (S.SELECT_SPREAD) - schmaler Streifen, kein Block.
+S.SELECT_FILL = 0.22
+S.SELECT_SPREAD = 0.35
 function S.Selection(row)
-    local s = { on = false }
+    local s = { on = false, row = row }
+    local l = GC.selectLift
+    s.lift = Own(row:CreateTexture(nil, "BACKGROUND", nil, 1))
+    s.lift:SetAllPoints(row)
+    s.lift:SetColorTexture(l[1], l[2], l[3], l[4])
+    s.lift:Hide()
     s.fill = Own(row:CreateTexture(nil, "BACKGROUND", nil, 2))
-    s.fill:SetAllPoints(row)
+    s.fill:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
+    s.fill:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 0, 0)
     s.bar = Own(row:CreateTexture(nil, "ARTWORK", nil, 7))
     s.bar:SetWidth(2)
     s.bar:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
@@ -290,9 +348,13 @@ function S.SetSelected(s, on, c)
     if s.on == on then return end
     s.on = on
     if on then
+        local ok, w = pcall(s.row.GetWidth, s.row)
+        w = ok and K.Plain(w) or nil
+        s.fill:SetWidth(math.max(60, (type(w) == "number" and w or 300) * S.SELECT_SPREAD))
         S.Gradient(s.fill, "HORIZONTAL", c, S.SELECT_FILL, 0)
         s.bar:SetColorTexture(c[1], c[2], c[3], 1)
     end
+    s.lift:SetShown(on)
     s.fill:SetShown(on)
     s.bar:SetShown(on)
 end

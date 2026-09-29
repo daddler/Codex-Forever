@@ -1632,6 +1632,80 @@ Im Spiel ungeprüft (6.7.0.1): wie hell die Flächen wirken, ob die
 getönte Hervorhebung bei Weiß (Priester) noch von der Auswahl zu
 unterscheiden ist.
 
+### Codex-Tafel und Sektionen *(6.7.0.2)*
+
+Beta-Test: „technisch sauber, lesbar – aber zu eintönig und flach“. Ziel:
+ein **Fraktionsregister / Welt-Codex** statt einer schwarzen Liste. Kein
+Neubau: dieselbe Liste des Spiels, dieselbe Detailansicht, nur neue
+eigene Flächen und Linien daneben und darunter.
+
+**Linke Seite (Register).**
+- **Gruppen als Abschnitte**: `S.Band` an jeder Kopfzeile – Licht von
+  links (`sectionBand`, weiß 5 %, nach rechts auslaufend) und oben eine
+  Haarlinie (`hairline`, weiß 5,5 %); Überschrift 14 pt
+  (`S.CHARACTER_INFO.headerSize`), Raute und Linie in der Klassenfarbe
+  wie gehabt. Einrückung des Spiels bleibt (Text nicht verschoben).
+- **Kein echter zusätzlicher Abstand zwischen Gruppen.** Die Liste
+  (`WowScrollBoxList`) ordnet ihre Zeilen selbst nach der Höhe ihrer
+  Vorlagen; mehr Abstand hieße, ihre Anordnung zu ersetzen
+  (Höhenrechner der Ansicht) – das ist Blizzard-Funktionalität und
+  bleibt. Band und Haarlinie trennen die Gruppen optisch.
+- **Fraktionen**: Haarlinie unten an jeder Zeile (10 px vom Rand), nicht
+  an Kopfzeilen.
+- **Auswahl** (der stärkste Akzent, aber kein Block): 2-px-Strich,
+  Schein 22 % → 0 nur übers erste Drittel der Zeile
+  (`S.SELECT_SPREAD`), die Zeile eine Spur heller (`selectLift`). Die
+  getönte Hervorhebung des Spiels nur noch 30 %.
+- **Rufstufen-Farben** (Neutral gelb, Freundlich grün …) bleiben die des
+  Spiels – Füllung wird nie umgefärbt, nur Schatten und Lichtkante
+  darüber.
+
+**Tiefe.** Mehrere leise Ebenen, keine davon farbig: Basis
+(`showcaseBase`) → Vignette → neutrales Licht → Schatten
+(`shadowSoft`, 16 px über die Fläche hinaus) → Liste (`surfaceRaised`,
+75 %) bzw. Detailansicht (`surfaceDetail`, eine Spur heller und
+dichter, 88 %) → vertiefte Bereiche (`surfaceSunken`). Lichtkante oben
+an Liste und Detailansicht.
+
+**Codex-Zeichen**: `media/ui/sigil.tga` (256×256, eigenes Astrolab aus
+Ringen, Teilstrichen und Kompassstern, erzeugt von
+`make_ui_media.py`), weiß mit `codexSigil` = 4,5 %, unten rechts in der
+Ecke der Liste angeschnitten (60 % gezeigt). Liegt auf dem
+Charakterfenster, unter allem, was das Spiel zeichnet.
+
+**Rechte Seite (Tafel).** Reihenfolge des Spiels, WeintCodex zieht nur
+Grenzen:
+
+```
+Fraktionsname (16 pt)
+Rufstufe
+──── Linie in der Klassenfarbe (9 px über dem Balken)
+Rufbalken (weicher Schatten, Tiefe an der Füllung)
+Beschreibung (leicht vertiefte Fläche)
+──── Linie mit Raute (14 px über dem obersten Häkchen)
+Optionen (vertiefte Fläche bis unten)
+```
+
+- Balken der Tafel: `RP.DetailBar` – Schlüssel (`ReputationBar`, `Bar`,
+  `StatusBar`), sonst der erste Rahmen bis zwei Ebenen tief, der die
+  Füllung `common-stat-bar-white` trägt oder ein Statusbalken ist.
+- Optionen: `RP.OptionTop` – Oberkante des obersten sichtbaren
+  Häkchens (`CheckButton`, gemessen: `AtWarCheckbox`).
+- `RP.DetailLayout` misst jeden Durchlauf (`GetTop`/`GetBottom`,
+  relativ zur Oberkante der Tafel) und legt nur bei Änderung neu; die
+  Beschreibungsfläche nur bei mehr als 30 px Platz. **Kein Rahmen des
+  Spiels wird verschoben oder in der Größe geändert** (`load_test.lua`
+  prüft es) – der Balken wird nicht größer, er tritt durch Schatten
+  hervor.
+- Die Rufstufe unter dem Namen ist nicht angefasst: ihr Schlüssel ist
+  ungemessen, und sie ist schon zurückgenommen.
+- `/wcui fenster`: „Ruf, Tafel: Balken ‹Art›, Optionen n Häkchen,
+  Bereiche: Balken y, Beschreibung ja/nein, Optionen y“ – fehlt ein Teil,
+  steht dort „FEHLT“ bzw. „–“.
+
+Im Spiel ungeprüft: alle Werte (Dichte der Flächen, Sichtbarkeit des
+Zeichens, Lage der Grenzen).
+
 ### Nächste Fenster
 
 Erst nach Freigabe des Rufs. Vorgesehen: Fertigkeiten und Abzeichen

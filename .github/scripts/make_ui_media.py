@@ -508,6 +508,63 @@ def render_mark():
     return pixels
 
 
+# Codex-Zeichen (6.7.0.2): ein Astrolab aus feinen Linien - Ringe,
+# Teilstriche, ein Kompassstern. Weiss mit weichem Alpha; im Spiel mit
+# ~4 % Deckkraft hinter dem Ruf ("Welt-Codex"), erst beim Hinsehen zu
+# sehen. Eigene Form, kein Spielmaterial.
+SIGIL = 256
+
+
+def render_sigil(size):
+    c = size / 2.0
+    rings = ((0.95, 1.1), (0.88, 0.8), (0.60, 0.8), (0.34, 0.8), (0.10, 0.9))
+    stroke = 0.9          # halbe Linienstaerke in Pixeln (weich auslaufend)
+
+    def line_alpha(d, w):
+        return max(0.0, min(1.0, (w + stroke - d) / stroke)) if d < w + stroke else 0.0
+
+    # Kompassstern: vier lange Spitzen, vier kurze (Umriss).
+    star = []
+    for k in range(8):
+        ang = math.pi / 2 - k * math.pi / 4
+        rr = 0.80 if k % 2 == 0 else 0.42
+        star.append((math.cos(ang) * rr, math.sin(ang) * rr))
+    inner = 0.12
+    outline = []
+    for k in range(8):
+        a0 = math.pi / 2 - k * math.pi / 4
+        tip = star[k]
+        side = (math.cos(a0 - math.pi / 8) * inner, math.sin(a0 - math.pi / 8) * inner)
+        outline.append((tip, side))
+    pixels = []
+    for y in range(size):
+        for x in range(size):
+            u, v = (x + 0.5 - c) / c, (c - (y + 0.5)) / c
+            r = math.hypot(u, v)
+            a = 0.0
+            for rad, w in rings:
+                a = max(a, 0.9 * line_alpha(abs(r - rad) * c, w * 0.5))
+            # Teilstriche zwischen den aeusseren Ringen: 32, jeder vierte lang.
+            if 0.84 <= r <= 0.97:
+                ang = math.atan2(v, u)
+                step = 2 * math.pi / 32
+                k = round(ang / step)
+                d = abs(ang - k * step) * r * c
+                if k % 4 == 0 or r >= 0.88:
+                    a = max(a, 0.8 * line_alpha(d, 0.4))
+            # Sternumriss: Spitze -> Seite -> naechste Spitze.
+            for k in range(8):
+                tip, side = outline[k]
+                nxt = outline[(k + 1) % 8][0]
+                prev_side = (math.cos(math.pi / 2 - k * math.pi / 4 + math.pi / 8) * inner,
+                             math.sin(math.pi / 2 - k * math.pi / 4 + math.pi / 8) * inner)
+                for (ax, ay), (bx, by) in ((prev_side, tip), (tip, side)):
+                    d = seg_dist(u * c, v * c, ax * c, ay * c, bx * c, by * c)
+                    a = max(a, line_alpha(d, 0.5))
+            pixels.append((255, 255, 255, round(255 * a)))
+    return pixels
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     target = os.path.join(OUT, "arrow.tga")
@@ -527,7 +584,8 @@ def main():
                                ("glow", 32, 32, render_glow(32, 8)),
                                ("glow_wide", 64, 64, render_glow(64, 24)),
                                ("targetmark", MARK, MARK, render_mark()),
-                               ("softmask", 128, 128, render_softmask(128, 22))):
+                               ("softmask", 128, 128, render_softmask(128, 22)),
+                               ("sigil", SIGIL, SIGIL, render_sigil(SIGIL))):
         target = os.path.join(OUT, name + ".tga")
         write_tga(target, w, h, pixels)
         print("geschrieben:", os.path.relpath(target, ROOT))

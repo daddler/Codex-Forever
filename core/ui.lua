@@ -271,6 +271,15 @@ WeintCodex.GameColors = {
     surfaceRaised = {0.068, 0.070, 0.082, 0.75},  -- Liste, Detailansicht: leicht angehoben
     barTrack      = {0.030, 0.031, 0.037, 1.00},  -- Bahn eines Balkens: dunkler als die Flaeche darueber
     atmosLight    = {1.000, 1.000, 1.000, 0.035}, -- Licht von oben: neutral, ohne Farbe
+    -- 6.7.0.2 (Beta-Test: "noch zu eintoenig und flach"): mehrere sehr
+    -- leise Ebenen statt einer - keine davon ist eine Farbe.
+    surfaceDetail = {0.078, 0.080, 0.094, 0.88},  -- Detailansicht: eine Spur heller und dichter als die Liste
+    surfaceSunken = {0.010, 0.011, 0.014, 0.42},  -- vertiefte Bereiche (Beschreibung, Optionen)
+    shadowSoft    = {0.000, 0.000, 0.000, 0.45},  -- weicher Schatten unter einer Flaeche
+    sectionBand   = {1.000, 1.000, 1.000, 0.050}, -- Kopfzeile einer Gruppe: Licht von links
+    hairline      = {1.000, 1.000, 1.000, 0.055}, -- Trennlinie zwischen Zeilen und Bereichen
+    selectLift    = {1.000, 1.000, 1.000, 0.025}, -- gewaehlte Zeile: eine Spur heller
+    codexSigil    = {1.000, 1.000, 1.000, 0.045}, -- Zeichen im Hintergrund: erst beim Hinsehen
     hoverGlow     = {1.000, 1.000, 1.000, 0.40},  -- ... und ein weisser Schein
     targetGlow    = {0.486, 0.424, 1.000, 0.85},  -- = Akzent: Leuchten des Ziels
     targetMark    = {1.000, 1.000, 1.000, 1.00},  -- Zielmarken links und rechts

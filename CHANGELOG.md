@@ -9,6 +9,24 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.0.2] – 2026-09-29
+
+**Die Detailansicht im Ruf ist eine Codex-Tafel.** Der Fraktionsname steht größer als Hauptinformation, darunter die Rufstufe. Eine feine Linie in deiner Klassenfarbe trennt sie vom Rufbalken, der mit weichem Schatten deutlicher hervortritt. Die Beschreibung liegt auf einer eigenen, leicht vertieften Fläche; „Im Krieg“, „Inaktiv“ und „Als Erfahrungsleiste anzeigen“ stehen unter einer Linie mit Raute in einem eigenen, ruhigen Optionsbereich.
+
+**Gruppen im Ruf sind eigene Abschnitte.** Jede Gruppe beginnt mit einer feinen Linie und einem Hauch Licht von links; die Überschrift ist etwas größer. Zwischen den Fraktionen liegen zarte Trennlinien, die Einrückung des Spiels bleibt.
+
+**Die gewählte Fraktion leuchtet dezenter, aber klar.** Schmaler Streifen und ein kurzer Schein in deiner Klassenfarbe, die Zeile eine Spur heller – kein farbiger Block mehr. Die Farben der Rufstufen (Neutral gelb, Freundlich grün …) bleiben, wie das Spiel sie zeigt.
+
+**Mehr Tiefe im Ruf.** Liste und Detailansicht liegen auf unterschiedlich dichten Flächen mit weichem Schatten; unten rechts in der Liste liegt, kaum sichtbar, ein Astrolab als Zeichen des Codex.
+
+### Technisch
+
+- `ui/style.lua`: `S.Band` (Kopfzeile als Sektion), `S.Hairline`, `S.Under`, `S.Shadow`, `S.PlaceBand`; `S.PlaceTop` mit Höhe und Kante; Auswahl mit `lift` und schmalem Schein (`S.SELECT_SPREAD`). `S.CHARACTER_INFO` mit `band`/`headerSize`.
+- `core/ui.lua`: `surfaceDetail`, `surfaceSunken`, `shadowSoft`, `sectionBand`, `hairline`, `selectLift`, `codexSigil` – alles neutral, keine Farbe.
+- `ui/reputation.lua`: Tafel der Detailansicht (`RP.DetailBar`, `RP.OptionTop`, `RP.DetailLayout`): Grenzen nach Oberkante des Balkens und des obersten Häkchens, neu gelegt nur bei Änderung; kein Rahmen des Spiels wird verschoben. Hervorhebung des Spiels 30 % statt 55 %.
+- `media/ui/sigil.tga` (256×256, erzeugt von `make_ui_media.py`): eigenes Astrolab.
+- Nicht umgesetzt: echter Abstand zwischen Gruppen – dafür müsste die Liste des Spiels anders angeordnet werden.
+
 ## [6.7.0.1] – 2026-09-29
 
 **Der Ruf trägt deine Klassenfarbe.** Er gehört zum Charakterfenster – Rauten und Linien der Gruppen, die gewählte Fraktion und die Zeile unter der Maus stehen jetzt in deiner Klasse statt in Gold. Rot beim Krieger, Grün beim Jäger, Weiß beim Priester.

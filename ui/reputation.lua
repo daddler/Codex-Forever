@@ -66,8 +66,12 @@ RP.VIGNETTE, RP.VIGNETTE_SIZE = 0.35, 48
 RP.LIGHT_HEIGHT = 140
 RP.LIST_PAD = 8          -- so weit reicht die Flaeche ueber Liste und Bildlauf
 RP.SURFACE_EDGE = 0.07   -- Lichtkante oben an einer Flaeche (weiss)
--- Detailansicht.
-RP.DETAIL_TITLE = 14
+RP.SHADOW_PAD = 16       -- weicher Schatten unter Liste und Detailansicht
+RP.SIGIL_SIZE, RP.SIGIL_SHOW = 240, 0.6   -- Codex-Zeichen: Groesse, gezeigter Teil
+RP.SEP_INSET = 10        -- Haarlinie zwischen Fraktionen, vom Rand
+-- Detailansicht (6.7.0.2: Tafel mit Bereichen - Name, Stufe | Balken,
+-- Beschreibung | Optionen).
+RP.DETAIL_TITLE = 16
 RP.DETAIL_PAD = 4
 RP.DETAIL_LINE = 0.55    -- Kante oben in der Klassenfarbe
 RP.DETAIL_INSET = 10
@@ -81,7 +85,11 @@ RP.FILL_ATLAS = "^common%-stat%-bar%-white"
 -- Hervorhebung des Spiels unter der Maus und an der gewaehlten Zeile
 -- (gemessen: Content.BackgroundHighlight, braun-gold).
 RP.HIGHLIGHT_ATLAS = "^charactercreate%-customize%-dropdown%-linemouseover"
-RP.HIGHLIGHT_ALPHA = 0.55
+RP.HIGHLIGHT_ALPHA = 0.30   -- 6.7.0.2: 0.55 wirkte als Block
+RP.DETAIL_BAR_KEYS = { "ReputationBar", "Bar", "StatusBar" }
+RP.DETAIL_GAP = 9        -- Abstand der Trennlinie ueber dem Balken
+RP.OPTION_GAP = 14       -- Abstand der Trennlinie ueber den Optionen
+RP.OPTION_LINE = 0.40    -- Deckkraft dieser Linie (Klassenfarbe)
 
 local atmos = setmetatable({}, { __mode = "k" })
 local rows = setmetatable({}, { __mode = "k" })
@@ -250,16 +258,20 @@ end
 -- Eine angehobene Flaeche: weicher Rand, oben eine Lichtkante, die zu
 -- beiden Seiten auslaeuft. Dieselbe fuer Liste und Detailansicht - zwei
 -- Bereiche derselben Oberflaeche.
-function RP.Surface(host, anchor, pad, corner, sub)
-    local c = GC.surfaceRaised
-    local o = { body = S.SoftPanel(host, anchor, c, c[4], pad, sub or -4, corner) }
+-- 6.7.0.2: mit Schatten darunter (S.Shadow) und je Bereich eigener Dichte
+-- (`color`: Liste surfaceRaised, Detailansicht surfaceDetail).
+function RP.Surface(host, anchor, pad, corner, sub, color)
+    local c = color or GC.surfaceRaised
+    sub = sub or -4
+    local o = { body = S.SoftPanel(host, anchor, c, c[4], pad, sub, corner) }
+    o.shadow = S.Shadow(host, anchor, pad + RP.SHADOW_PAD, sub - 1, corner)
     o.edge = S.Divider(host, WHITE, RP.SURFACE_EDGE, 0)
     -- Die Kante liegt auf der Flaeche selbst, ganz unten (unter allem
     -- anderen des Rahmens).
     o.edge.l:SetDrawLayer("BACKGROUND", -3)
     o.edge.r:SetDrawLayer("BACKGROUND", -3)
     S.PlaceTop(o.edge, anchor, 12)
-    o.parts = { o.body, o.edge.l, o.edge.r }
+    o.parts = { o.shadow, o.body, o.edge.l, o.edge.r }
     return o
 end
 
@@ -286,6 +298,17 @@ function RP.Atmosphere(f, rf)
     if list then
         a.list = RP.Surface(f, list, RP.LIST_PAD, RP.ScrollBar(rf))
         for _, t in ipairs(a.list.parts) do a.parts[#a.parts + 1] = t end
+        -- Codex-Zeichen (media/ui/sigil, 6.7.0.2): ein Astrolab, unten rechts
+        -- in der Ecke der Liste angeschnitten, 4,5 % - erst beim Hinsehen.
+        local g = GC.codexSigil
+        local t = S.Own(f:CreateTexture(nil, "BACKGROUND", nil, -3))
+        t:SetTexture(K.MEDIA .. "sigil")
+        t:SetVertexColor(g[1], g[2], g[3], g[4])
+        t:SetSize(RP.SIGIL_SIZE * RP.SIGIL_SHOW, RP.SIGIL_SIZE * RP.SIGIL_SHOW)
+        t:SetTexCoord(0, RP.SIGIL_SHOW, 0, RP.SIGIL_SHOW)
+        t:SetPoint("BOTTOMRIGHT", list, "BOTTOMRIGHT", 0, 0)
+        a.sigil = t
+        a.parts[#a.parts + 1] = t
     end
     atmos[rf] = a
     -- Sofort mit dem Reiter, nicht erst mit dem naechsten Takt: sonst
@@ -341,6 +364,8 @@ function RP.Row(row)
         if Kind(row) == "Button" then r.hover = S.Hover(row)
         elseif Kind(host) == "Button" then r.hover = S.Hover(host) end
     end
+    -- Fraktionen voneinander absetzen (6.7.0.2): Haarlinie unten.
+    if not header then r.sep = S.Hairline(host, host, RP.SEP_INSET, "BOTTOM", 1) end
     if r.bar then RP.FinishBar(r.bar) end
     rows[row] = r
     return r
@@ -378,6 +403,125 @@ end
 --------------------------------------------------
 -- Detailansicht
 --------------------------------------------------
+-- 6.7.0.2 (Beta-Test: "hochwertige Informations-/Codex-Tafel"). Die
+-- Reihenfolge des Spiels bleibt, WeintCodex zieht nur Grenzen:
+--   Name (16 pt) / Stufe
+--   ---- Linie in der Klassenfarbe ----
+--   Balken (weicher Schatten darunter, Tiefe an der Fuellung)
+--   Beschreibung auf einer leicht vertieften Flaeche
+--   ---- Linie mit Raute ----
+--   Optionen (Haekchen) auf eigener, ruhiger Flaeche bis unten
+-- Keine Zeile des Spiels wird verschoben: die Grenzen richten sich nach
+-- den Rahmen des Spiels (Oberkante Balken, oberstes Haekchen), gemessen
+-- in jedem Durchlauf, neu gelegt nur bei einer Aenderung.
+
+-- Der Balken der Detailansicht: ueber den Schluessel, sonst der erste
+-- Rahmen bis zwei Ebenen tief, der die Fuellung des Rufs traegt.
+local function HasFill(f)
+    for _, r in ipairs(W.Regions(f, "repDetFill")) do
+        local a = AtlasOf(r)
+        if a and a:find(RP.FILL_ATLAS) then return true end
+    end
+    return false
+end
+
+local function FindBar(f, depth)
+    if not f or depth > 2 then return nil end
+    for _, ch in ipairs(W.Children(f, "repDetBar", depth)) do
+        if IsFrame(ch) and (Kind(ch) == "StatusBar" or HasFill(ch)) then return ch end
+    end
+    for _, ch in ipairs(W.Children(f, "repDetBar", depth)) do
+        local hit = IsFrame(ch) and FindBar(ch, depth + 1)
+        if hit then return hit end
+    end
+    return nil
+end
+
+function RP.DetailBar(det)
+    return ByKeys(det, RP.DETAIL_BAR_KEYS) or FindBar(det, 0)
+end
+
+local function Edge(r, method)
+    local ok, v = pcall(r[method], r)
+    v = ok and K.Plain(v) or nil
+    return type(v) == "number" and v or nil
+end
+
+-- Oberkante des obersten sichtbaren Haekchens (Optionen).
+function RP.OptionTop(det)
+    local top
+    for _, ch in ipairs(W.Children(det, "repOpt")) do
+        if IsFrame(ch) and Kind(ch) == "CheckButton" and Visible(ch) then
+            local t = Edge(ch, "GetTop")
+            if t and (not top or t > top) then top = t end
+        end
+    end
+    return top
+end
+
+function RP.DetailParts(d)
+    local det, accent = d.frame, Accent()
+    -- Beschreibung: leicht vertieft. Optionen: ebenso, bis unten.
+    local c = GC.surfaceSunken
+    d.page = S.SoftPanel(det, det, c, c[4], 0, -6)
+    d.options = S.SoftPanel(det, det, c, c[4], 0, -6)
+    d.optLine = S.Under(S.Divider(det, accent, RP.OPTION_LINE, 0), -1)
+    d.optDot = S.Diamond(det, 5, accent, 0.8, 0)
+    d.optDot:SetDrawLayer("BACKGROUND", 0)
+    d.optHole = S.Diamond(det, 2, C.surface1, 1, 0)
+    d.optHole:SetDrawLayer("BACKGROUND", 1)
+    d.optHole:SetPoint("CENTER", d.optDot, "CENTER", 0, 0)
+    d.zones = { d.page, d.options, d.optLine.l, d.optLine.r, d.optDot, d.optHole }
+    for _, t in ipairs(d.zones) do t:Hide() end
+end
+
+function RP.DetailBarParts(d)
+    local det = d.frame
+    d.barShadow = S.Shadow(det, d.bar, 8, -5)
+    d.barLine = S.Under(S.Divider(det, Accent(), RP.DETAIL_LINE, 0), -1)
+    d.barLine.l:Hide()
+    d.barLine.r:Hide()
+    RP.FinishBar(d.bar)
+end
+
+local function ShowZone(on, ...)
+    for i = 1, select("#", ...) do
+        local t = select(i, ...)
+        if t then t:SetShown(on) end
+    end
+end
+
+function RP.DetailLayout(d)
+    local det = d.frame
+    local top = Edge(det, "GetTop")
+    if not top then return end
+    local barTop = d.bar and Edge(d.bar, "GetTop")
+    local barBottom = d.bar and Edge(d.bar, "GetBottom")
+    local optTop = RP.OptionTop(det)
+    local yBar = barTop and (barTop - top) or false
+    local yBarB = barBottom and (barBottom - top) or false
+    local yOpt = optTop and (optTop - top) or false
+    if d.yBar == yBar and d.yBarB == yBarB and d.yOpt == yOpt then return end
+    d.yBar, d.yBarB, d.yOpt = yBar, yBarB, yOpt
+    local inset = RP.DETAIL_INSET
+    if yBar and d.barLine then
+        S.PlaceTop(d.barLine, det, inset, yBar + RP.DETAIL_GAP)
+    end
+    if d.barLine then ShowZone(yBar and true or false, d.barLine.l, d.barLine.r) end
+    local yLine = yOpt and (yOpt + RP.OPTION_GAP) or false
+    if yLine then
+        S.PlaceTop(d.optLine, det, inset, yLine)
+        d.optDot:ClearAllPoints()
+        d.optDot:SetPoint("CENTER", det, "TOP", 0, yLine)
+        S.PlaceBand(d.options, det, 2, yLine - 1, nil)
+    end
+    ShowZone(yLine and true or false, d.optLine.l, d.optLine.r, d.optDot, d.optHole, d.options)
+    -- Beschreibung: zwischen Balken und Optionen, nur wenn Platz ist.
+    local page = yBarB and yLine and (yBarB - yLine) > 30
+    if page then S.PlaceBand(d.page, det, inset - 4, yBarB - 6, yLine + 6) end
+    d.page:SetShown(page and true or false)
+end
+
 -- Im Fenster: dieselbe angehobene Flaeche wie die Liste (ein Bereich der
 -- Oberflaeche, keine zweite Tafel), oben eine feine Kante in der
 -- Klassenfarbe. Frei am Bildschirm (anderer Client): eine deckende Tafel,
@@ -395,7 +539,7 @@ function RP.Detail(f, rf)
         end
         d.inTree = RP.InTree(det, f)
         if d.inTree then
-            d.surface = RP.Surface(det, det, RP.DETAIL_PAD, nil, -7)
+            d.surface = RP.Surface(det, det, RP.DETAIL_PAD, nil, -7, GC.surfaceDetail)
         else
             d.panel = S.Panel(det)
         end
@@ -405,8 +549,14 @@ function RP.Detail(f, rf)
         S.PlaceTop(d.line, det, RP.DETAIL_INSET)
         d.title = RP.DetailTitle(det)
         if d.title then S.Title(d.title, RP.DETAIL_TITLE, C.textBright) end
+        RP.DetailParts(d)
         details[det] = d
     end
+    if not d.bar then
+        d.bar = RP.DetailBar(det)
+        if d.bar then RP.DetailBarParts(d) end
+    end
+    RP.DetailLayout(d)
     -- Frei am Bildschirm: der Durchlauf ueber das Fenster erreicht sie
     -- nicht - Holz und rote Knoepfe hier.
     if not d.inTree then
@@ -486,6 +636,15 @@ function RP.Report(f, out)
         end
         out[#out + 1] = string.format("   Ruf, Detailansicht: %s, Titel %s, Rahmen des Spiels: %d Bilder noch sichtbar",
             d.inTree and "Fläche im Fenster" or "Tafel, frei", d.title and ("„" .. (TextOf(d.title) or "?") .. "“") or "FEHLT", shown)
+        local opts = 0
+        for _, ch in ipairs(W.Children(det, "repReport")) do
+            if IsFrame(ch) and Kind(ch) == "CheckButton" then opts = opts + 1 end
+        end
+        out[#out + 1] = string.format("   Ruf, Tafel: Balken %s, Optionen %d Häkchen, Bereiche: Balken %s, Beschreibung %s, Optionen %s",
+            d.bar and (Kind(d.bar) or "?") or "FEHLT", opts,
+            d.yBar and string.format("%.0f", d.yBar) or "–",
+            (d.page and d.page:IsShown()) and "ja" or "nein",
+            d.yOpt and string.format("%.0f", d.yOpt) or "–")
     end
     return out
 end

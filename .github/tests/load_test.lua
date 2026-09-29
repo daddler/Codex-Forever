@@ -5304,6 +5304,20 @@ do
         border.GetRegions = function() return edge end
         det.Border, det.Title = border, Line("Sturmwind")
         det._parent, det._width = rf, 240
+        -- 6.7.0.2: Tafel mit Bereichen. Balken (Bild als Fuellung) und zwei
+        -- Haekchen mit Lage; keiner davon darf verschoben werden.
+        local detBar, detFill = stub.NewObject("Frame"), Tex("common-stat-bar-white")
+        detBar.GetRegions = function() return detFill end
+        local war, watch = stub.NewObject("CheckButton"), stub.NewObject("CheckButton")
+        local shoved = {}
+        for name, fr in pairs({ bar = detBar, war = war, watch = watch }) do
+            fr.SetPoint = function() shoved[#shoved + 1] = name end
+            fr.ClearAllPoints = function() shoved[#shoved + 1] = name end
+        end
+        det.GetTop = function() return 500 end
+        detBar.GetTop, detBar.GetBottom = function() return 440 end, function() return 420 end
+        war.GetTop, watch.GetTop = function() return 200 end, function() return 170 end
+        det.GetChildren = function() return border, detBar, war, watch end
         det:Hide()
         rf.ReputationDetailFrame = det
         rf.GetChildren = function() return list, det end
@@ -5325,6 +5339,7 @@ do
         assert(lh and not W.Headers[head] and lh.title == hName and lh.icon == minus, "Ruf-Kopfzeile nicht als Listenzeile")
         assert(lh.accent == K.Highlight() and not lh.halo and W.own[lh.line] and W.own[lh.dot],
             "Ruf-Kopfzeile nicht in der Klassenfarbe oder mit Lichthof")
+        assert(lh.band and W.own[lh.band.fill] and W.own[lh.band.line.l], "Gruppe nicht als eigene Sektion")
         assert(not moved, "Titel der Gruppe verschoben - die Einrueckung ginge verloren")
         assert(hBg:GetAlpha() == 0 and minus:GetAlpha() == 1, "Grund bleibt oder Zeichen zum Aufklappen weg")
         assert(track1:GetAlpha() == 0 and W.FlatBars[bar1] and W.FlatBars[bar1].style == S.CHARACTER_INFO,
@@ -5350,6 +5365,8 @@ do
             assert(t._desat and t._vc[1] == acc[1] and t._vc[4] == RP.HIGHLIGHT_ALPHA, "Hervorhebung nicht in der Klassenfarbe")
         end
         assert(r1.sel and not r1.sel.on, "Auswahl ohne Detailansicht")
+        assert(r1.sep and r2.sep and RP.rows[head] and not RP.rows[head].sep, "Fraktionen nicht voneinander abgesetzt")
+        assert(a.sigil and W.own[a.sigil] and a.sigil._parent == cf and a.list.shadow, "Codex-Zeichen oder Schatten fehlt")
         -- Auswahl = was rechts steht.
         det:Show()
         RP.Update(cf)
@@ -5358,6 +5375,12 @@ do
         assert(dd and dd.inTree and dd.surface and not dd.panel and dd.line and edge:GetAlpha() == 0,
             "Detailansicht nicht als Flaeche der Oberflaeche gestaltet")
         assert(W.own[dd.line.l] and W.own[dd.surface.body], "Flaeche der Detailansicht als fremdes Bild")
+        -- Tafel: Balken gefunden, Grenzen nach den Rahmen des Spiels.
+        assert(dd.bar == detBar and RP.bars[detBar] and RP.bars[detBar].fill == detFill, "Balken der Detailansicht nicht gefunden")
+        assert(dd.yBar == -60 and dd.yBarB == -80 and dd.yOpt == -300, "Bereiche falsch vermessen")
+        assert(dd.barLine.l:IsShown() and dd.page:IsShown() and dd.options:IsShown() and dd.optLine.l:IsShown(),
+            "Bereiche der Tafel fehlen")
+        assert(#shoved == 0, "Rahmen der Detailansicht verschoben: " .. table.concat(shoved, ", "))
         det.Title._text = "Eisenschmiede"
         RP.Update(cf)
         assert(r2.sel.on and not r1.sel.on, "Auswahl folgt der Detailansicht nicht")
@@ -5370,7 +5393,8 @@ do
         local rep = table.concat(RP.Report(cf, {}), "\n")
         assert(rep:find("Ruf (Stil ruhig, Klasse)", 1, true) and rep:find("3 Zeilen (1 Kopfzeilen, 2 mit Balken, 3 mit Namen)", 1, true)
             and rep:find("Balken: Frame, Füllung Bild", 1, true) and rep:find("getönt: 2", 1, true)
-            and rep:find("gewählt: „Eisenschmiede“", 1, true) and rep:find("Detailansicht: Fläche im Fenster", 1, true),
+            and rep:find("gewählt: „Eisenschmiede“", 1, true) and rep:find("Detailansicht: Fläche im Fenster", 1, true)
+            and rep:find("Tafel: Balken Frame, Optionen 2 Häkchen, Bereiche: Balken -60, Beschreibung ja, Optionen -300", 1, true),
             "Bericht: " .. rep)
         S.Gradient = grad
         assert(golden == 0, "Gold im Ruf: " .. golden .. " Verlaeufe")
@@ -5394,7 +5418,7 @@ do
         assert(not a.on, "Atmosphaere ueber anderem Reiter")
         _G.ReputationFrame = oldRF
     end)
-    Check(okR, "Ruf im Stil der Fenster: Klassenfarbe, Flaechen, Gruppen, Balken, Maus, Auswahl, Detail - nichts verloren, kein Muell"
+    Check(okR, "Ruf im Stil der Fenster: Klassenfarbe, Flaechen, Sektionen, Balken, Maus, Auswahl, Codex-Tafel - nichts verloren, kein Muell"
         .. (okR and "" or (": " .. tostring(errR))))
 
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett

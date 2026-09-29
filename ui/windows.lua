@@ -729,7 +729,9 @@ function W.ListHeader(f, beam, sc)
     local fs = HeaderTitle(f)
     if not fs then return nil end
     d = { title = fs, icon = HeaderIcon(f), beam = beam, style = sc, accent = S.Accent(sc and sc.accent) }
-    S.Title(fs, W.LIST_HEADER_SIZE, C.textBright)
+    S.Title(fs, (sc and sc.headerSize) or W.LIST_HEADER_SIZE, C.textBright)
+    -- Die Gruppe als eigene Sektion (6.7.0.2): Licht von links, Haarlinie oben.
+    if sc and sc.band then d.band = S.Band(f) end
     pcall(fs.SetJustifyH, fs, "LEFT")
     local c = d.accent
     d.dot = Diamond(f, 6, c, W.LIST_DOT, 2)
