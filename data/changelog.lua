@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.7.8.0",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFEin bisschen Klassenfarbe im Zauberbuch.|r Von oben fällt ein Hauch Licht in deiner Klassenfarbe, die Fläche mit deinen Zaubern trägt oben eine feine Kante in deiner Klasse – wie die Karten in Ruf und Fertigkeiten. Nicht mehr der große Schein über der halben Seite.",
+            "|cff7C6CFFDie Linie hinter „Allgemein“ ist da.|r Hinter Überschriften im Zauberbuch und hinter Schmiedekunst und Bergbau in der Berufsübersicht fehlte die feine Linie nach der Raute – sie war falsch befestigt und wurde nicht gezeichnet.",
+        },
+    },
+    {
         version = "6.7.7.0",
         date    = "29.09.2026",
         notes   = {

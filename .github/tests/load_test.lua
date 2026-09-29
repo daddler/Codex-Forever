@@ -6257,7 +6257,9 @@ do
         local book, content = stub.NewObject("Frame"), stub.NewObject("Frame")
         pf.BookPage, book.ProfessionsContentFrame = book, content
         local t1 = Line("Schmiedekunst", 470, 456, "LEFT")
+        t1.GetLeft = function() return 110 end
         local c1, bg1, bar1, fill1, flare1 = Card(480, "Profession-overview-Card", t1)
+        c1.GetRight = function() return 470 end
         local unlearn = stub.NewObject("Button")
         local cross = Tex("Profession-button-red-crossmark")
         unlearn.GetRegions = function() return cross end
@@ -6294,6 +6296,14 @@ do
         assert(k1.title == t1 and k2.title == t2, "Titel der Karten nicht gefunden")
         -- Links: Raute und Linie hinter dem Text; mittig: Linie darunter.
         assert(not k1.centered and k1.dot:IsShown() and k1.line:IsShown() and not k1.orn.dot:IsShown(), "Titel links falsch")
+        -- 6.7.8.0: Linie nur links verankert, Breite bis 12 px vor den Rand
+        -- der Karte: 470 - 12 - (110 + 90 + 2 * 8 + 3).
+        assert(k1.width == 239, "Linie hinter dem Titel falsch breit: " .. tostring(k1.width))
+        local pts = {}
+        k1.line.SetPoint = function(self, p) pts[#pts + 1] = p end
+        t1.GetStringWidth = function() return 100 end
+        PB.Update(pf)
+        assert(#pts == 1 and pts[1] == "LEFT" and k1.width == 229, "Linie wieder an der Karte verankert: " .. table.concat(pts, ","))
         assert(k2.centered and not k2.dot:IsShown() and k2.orn.dot:IsShown() and k2.y == -27, "Titel mittig falsch: " .. tostring(k2.y))
         assert(k1.bar and k1.bar.how == "Statusbalken" and k2.bar, "Balken ohne Tiefe")
         S.Gradient = grad
@@ -6349,6 +6359,8 @@ do
         psf.SpellBookFrame, book.PagedSpellsFrame, paged.View1 = book, paged, view
         local head = stub.NewObject("Frame")
         local hText = Line("Allgemein")
+        hText.GetLeft = function() return 100 end
+        paged.GetRight = function() return 700 end
         head.Text = hText
         head.GetRegions = function() return hText end
         local function Spell(name)
@@ -6369,9 +6381,9 @@ do
         local glow = stub.NewObject("Texture")
         W.done[psf] = { glow = glow }
 
-        local grad, classy, goldy = S.Gradient, 0, 0
+        local grad, classy, goldy, classTex = S.Gradient, 0, 0, {}
         S.Gradient = function(t, dir, c, a0, a1)
-            if c == K.Highlight() then classy = classy + 1 end
+            if c == K.Highlight() then classy = classy + 1 classTex[t] = true end
             if c == GC.frameAccent then goldy = goldy + 1 end
             return grad(t, dir, c, a0, a1)
         end
@@ -6382,6 +6394,19 @@ do
         assert(b and b.on and b.body and b.shadow and b.host == psf and b.vignette.TOP and b.light, "Flaeche oder Atmosphaere fehlt")
         local h = SB.heads[head]
         assert(h and h.fs == hText and h.dot and h.line and b.heads == 1, "Ueberschrift nicht als Abschnitt")
+        -- 6.7.8.0: die Linie war im Spiel unsichtbar (rechts an der halben
+        -- Hoehe der Seite verankert). Jetzt: links verankert, Breite bis 16 px
+        -- vor den Rand der Seite: 700 - 16 - (100 + 120 + 2 * 8 + 3).
+        assert(h.width == 445 and h.line:IsShown(), "Linie hinter der Ueberschrift falsch: " .. tostring(h.width))
+        -- Neu gelegt (anderer Text): nur EIN Anker, links - keiner an der Seite.
+        local pts = {}
+        h.line.SetPoint = function(self, p) pts[#pts + 1] = p end
+        hText.GetStringWidth = function() return 130 end
+        SB.Update(psf)
+        assert(#pts == 1 and pts[1] == "LEFT" and h.width == 435, "Linie wieder rechts verankert: " .. table.concat(pts, ","))
+        assert(b.edge and W.own[b.edge.l], "Kante ueber der Flaeche fehlt")
+        -- Ein bisschen Klassenfarbe: Licht von oben und Kante ueber der Flaeche.
+        assert(classTex[b.light] and classTex[b.edge.l] and classTex[b.edge.r], "Licht oder Kante nicht in der Klassenfarbe")
         assert(not SB.heads[s1] and not SB.heads[s2], "Zauber als Ueberschrift gestaltet")
         assert(classy > 0 and goldy == 0, "Zauberbuch nicht in der Klassenfarbe: Klasse " .. classy .. ", Gold " .. goldy)
         assert(not glow:IsShown(), "Schein der Klasse bleibt ueber dem Zauberbuch")

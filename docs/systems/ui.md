@@ -2085,6 +2085,18 @@ sind:
   Text oder Breite sich ändern – die Seite verwendet ihre Einträge beim
   Blättern weiter.
 
+**6.7.8.0, Beta-Test „ein bisschen Klassenfarbe“:** Licht von oben in
+der Klassenfarbe (`GC.classLight`, 7 %, 180 px) statt des neutralen
+`atmosLight`, Kante über der Fläche in der Klassenfarbe (50 %) wie oben an
+den Detailkarten. Der große Schein (40 %, 260 px) bleibt aus. **Fehler
+behoben:** die Linie hinter der Überschrift war rechts an `"RIGHT"` der
+Seite verankert – der **halben Höhe** der Seite, nicht der Zeile; im Spiel
+wurde sie nicht gezeichnet (nur die Raute stand da). Jetzt nur links
+verankert, Breite gerechnet. Derselbe Fehler in `ui/profbook.lua` (Titel
+links, an der Karte). Regel: eine Linie hinter Text nie an einen Rahmen
+anderer Höhe hängen – nur an Teile derselben Zeile (so macht es
+`W.ListHeader`) oder links verankert mit gerechneter Breite.
+
 **`W.HoldGlow`** (allgemein): Fenster in Gold (`S.CALM`) tragen den Schein
 der Klasse nie – im Berufsfenster lag er seit 6.7.5.0 über dem Gold, ein
 zweiter Akzent in einem Bereich, den der Test nicht sah (er entsteht in

@@ -48,10 +48,10 @@ SB.LABEL = "Zauberbuch"
 SB.HOST = "PlayerSpellsFrame"
 SB.STYLE = S.CHARACTER_INFO
 SB.VIGNETTE, SB.VIGNETTE_SIZE = 0.35, 48
-SB.LIGHT_HEIGHT = 140
+SB.LIGHT_HEIGHT = 180       -- Licht von oben in der Klassenfarbe (GC.classLight)
 SB.PAD = 8                  -- Flaeche so weit ueber die Seite hinaus
 SB.SHADOW_PAD = 16
-SB.EDGE = 0.07
+SB.EDGE_ACCENT = 0.5        -- Kante ueber der Flaeche in der Klassenfarbe
 SB.GAP = 8                  -- Text -> Raute -> Linie (wie W.LIST_GAP)
 SB.INSET = 16               -- Linie endet so weit vor dem Rand der Seite
 SB.LINE = 0.55
@@ -62,7 +62,6 @@ S.SCOPES["PlayerSpellsFrame.SpellBookFrame"] = SB.STYLE
 W.HOSTED[SB.HOST] = W.HOSTED[SB.HOST] or {}
 table.insert(W.HOSTED[SB.HOST], SB)
 
-local WHITE = { 1, 1, 1 }
 local books = setmetatable({}, { __mode = "k" })
 local heads = setmetatable({}, { __mode = "k" })
 SB.books, SB.heads = books, heads
@@ -115,18 +114,25 @@ local function Head(entry, fs, paged, accent)
         S.Fade(h.line, accent, SB.LINE, "RIGHT")
         heads[entry] = h
     end
-    -- Die Liste verwendet ihre Eintraege weiter: neu legen, wenn Text oder
-    -- Breite sich aendern.
+    -- Die Liste verwendet ihre Eintraege weiter: neu legen, wenn Text,
+    -- Breite oder Lage sich aendern.
     local ok, tw = pcall(fs.GetStringWidth, fs)
     tw = ok and K.Plain(tw) or nil
     tw = type(tw) == "number" and tw or 0
-    if h.fs == fs and h.tw == tw and h.paged == paged then return h end
-    h.fs, h.tw, h.paged = fs, tw, paged
+    local fl, pr = RG.Edge(fs, "GetLeft"), RG.Edge(paged, "GetRight")
+    if h.fs == fs and h.tw == tw and h.fl == fl and h.pr == pr then return h end
+    h.fs, h.tw, h.fl, h.pr = fs, tw, fl, pr
     h.dot:ClearAllPoints()
     h.dot:SetPoint("CENTER", fs, "LEFT", tw + SB.GAP + 3, 0)
+    -- Nur links verankert, die Breite gerechnet (6.7.8.0): rechts an der
+    -- Seite ("RIGHT" = deren halbe Hoehe) lag das Ende nicht auf der Zeile -
+    -- die Linie war im Spiel unsichtbar.
     h.line:ClearAllPoints()
     h.line:SetPoint("LEFT", h.dot, "CENTER", SB.GAP, 0)
-    h.line:SetPoint("RIGHT", paged, "RIGHT", -SB.INSET, 0)
+    local w = (fl and pr) and (pr - SB.INSET - (fl + tw + 2 * SB.GAP + 3)) or 0
+    h.width = w > 0 and math.floor(w + 0.5) or 0
+    h.line:SetWidth(h.width)
+    h.line:SetShown(h.width > 0)
     return h
 end
 
@@ -141,14 +147,16 @@ local function Build(f, book, paged)
     local v = S.Vignette(f, book, SB.VIGNETTE, SB.VIGNETTE_SIZE, -6)
     for _, side in ipairs(S.SIDES) do b.parts[#b.parts + 1] = v[side] end
     b.vignette = v
-    local l = GC.atmosLight
-    b.light = S.TopLight(f, book, l, l[4], SB.LIGHT_HEIGHT, -5)
+    -- Ein bisschen Klassenfarbe (6.7.8.0): das Licht von oben und die Kante
+    -- ueber der Flaeche - wie die Kante oben an den Detailkarten.
+    local accent = S.Accent(SB.STYLE.accent)
+    b.light = S.TopLight(f, book, accent, GC.classLight[4], SB.LIGHT_HEIGHT, -5)
     b.parts[#b.parts + 1] = b.light
     if paged then
         local c = GC.surfaceRaised
         b.body = S.SoftPanel(f, paged, c, c[4], SB.PAD, -4)
         b.shadow = S.Shadow(f, paged, SB.PAD + SB.SHADOW_PAD, -5)
-        b.edge = S.Under(S.Divider(f, WHITE, SB.EDGE, 0), -3)
+        b.edge = S.Under(S.Divider(f, accent, SB.EDGE_ACCENT, 0), -3)
         S.PlaceTop(b.edge, paged, 12, SB.PAD)
         for _, t in ipairs({ b.body, b.shadow, b.edge.l, b.edge.r }) do b.parts[#b.parts + 1] = t end
     end

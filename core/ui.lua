@@ -271,6 +271,9 @@ WeintCodex.GameColors = {
     surfaceRaised = {0.068, 0.070, 0.082, 0.75},  -- Liste, Detailansicht: leicht angehoben
     barTrack      = {0.030, 0.031, 0.037, 1.00},  -- Bahn eines Balkens: dunkler als die Flaeche darueber
     atmosLight    = {1.000, 1.000, 1.000, 0.035}, -- Licht von oben: neutral, ohne Farbe
+    -- 6.7.8.0: Licht von oben in der Klassenfarbe (Zauberbuch, "ein bisschen
+    -- Klassenfarbe"). Nur die Deckkraft steht hier - die Farbe ist der Akzent.
+    classLight    = {1.000, 1.000, 1.000, 0.07},
     -- 6.7.0.2 (Beta-Test: "noch zu eintoenig und flach"): mehrere sehr
     -- leise Ebenen statt einer - keine davon ist eine Farbe.
     surfaceDetail = {0.078, 0.080, 0.094, 0.88},  -- Detailansicht: eine Spur heller und dichter als die Liste

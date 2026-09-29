@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.8.0] – 2026-09-29
+
+**Ein bisschen Klassenfarbe im Zauberbuch.** Von oben fällt ein Hauch Licht in deiner Klassenfarbe, die Fläche mit deinen Zaubern trägt oben eine feine Kante in deiner Klasse – wie die Karten in Ruf und Fertigkeiten. Nicht mehr der große Schein über der halben Seite.
+
+**Die Linie hinter „Allgemein“ ist da.** Hinter Überschriften im Zauberbuch und hinter Schmiedekunst und Bergbau in der Berufsübersicht fehlte die feine Linie nach der Raute – sie war falsch befestigt und wurde nicht gezeichnet.
+
+### Technisch
+
+- `ui/spellbook.lua`: Licht von oben in der Klassenfarbe (`GC.classLight`, 7 %, 180 px statt neutral 3,5 %/140 px), Kante über der Fläche in der Klassenfarbe (50 %) statt weiß.
+- `ui/spellbook.lua`, `ui/profbook.lua`: die Linie hinter einer Überschrift war links an der Raute und rechts an `"RIGHT"` der Seite bzw. Karte verankert – das ist deren **halbe Höhe**, nicht die Höhe der Zeile; im Spiel wurde sie nicht gezeichnet (Screenshot: nur die Raute). Jetzt nur links verankert, Breite gerechnet (Rand minus Einzug minus Text), neu bei geänderter Lage.
+- `load_test.lua`: Breite der Linie, nur ein Anker (links), Licht und Kante in der Klassenfarbe.
+
 ## [6.7.7.0] – 2026-09-29
 
 **Das Zauberbuch in der ruhigen Oberfläche.** Statt des großen Scheins in deiner Klassenfarbe über der halben Seite liegen deine Zauber auf derselben ruhigen, leicht angehobenen Fläche wie Ruf und Fertigkeiten, mit dezenter Randabdunklung und einem Hauch Licht. Überschriften wie „Allgemein“ tragen Raute und Linie in deiner Klassenfarbe.

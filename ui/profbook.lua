@@ -132,10 +132,11 @@ local function PlaceTitle(k)
     tw = ok and K.Plain(tw) or nil
     tw = type(tw) == "number" and tw or 0
     local top, bottom = Edge(k.frame, "GetTop"), Edge(fs, "GetBottom")
+    local fl, cr = Edge(fs, "GetLeft"), Edge(k.frame, "GetRight")
     local centered = JustifyOf(fs) == "CENTER"
     local y = (top and bottom) and math.floor(bottom - top - PB.UNDER + 0.5) or false
-    if k.tw == tw and k.centered == centered and k.y == y then return end
-    k.tw, k.centered, k.y = tw, centered, y
+    if k.tw == tw and k.centered == centered and k.y == y and k.fl == fl and k.cr == cr then return end
+    k.tw, k.centered, k.y, k.fl, k.cr = tw, centered, y, fl, cr
     k.dot:SetShown(not centered)
     k.hole:SetShown(not centered)
     k.line:SetShown(not centered)
@@ -145,9 +146,15 @@ local function PlaceTitle(k)
     else
         k.dot:ClearAllPoints()
         k.dot:SetPoint("CENTER", fs, "LEFT", tw + PB.GAP + 3, 0)
+        -- Nur links verankert, die Breite gerechnet (6.7.8.0): rechts an
+        -- der Karte ("RIGHT" = deren halbe Hoehe) lag das Ende nicht auf
+        -- der Zeile des Titels.
         k.line:ClearAllPoints()
         k.line:SetPoint("LEFT", k.dot, "CENTER", PB.GAP, 0)
-        k.line:SetPoint("RIGHT", k.frame, "RIGHT", -PB.INSET, 0)
+        local w = (fl and cr) and (cr - PB.INSET - (fl + tw + 2 * PB.GAP + 3)) or 0
+        k.width = w > 0 and math.floor(w + 0.5) or 0
+        k.line:SetWidth(k.width)
+        k.line:SetShown(k.width > 0)
     end
 end
 
