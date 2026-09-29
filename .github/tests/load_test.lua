@@ -4518,6 +4518,28 @@ do
         W.SoftMap(map)
         assert(#bigTile._masks == 1, "Maske doppelt")
         assert(table.concat(W.SoftReport(map), " "):find("Maske an 2 Bildern", 1, true), "Bericht ohne Maske")
+        -- 6.8.0.8: die Questdetails liegen ueber dem rechten Teil der Karte -
+        -- der weiche Rand endet vor ihnen, nicht unter ihnen.
+        local mask = bigTile._masks[1]
+        local br
+        mask.SetPoint = function(_, p, _, _, x) if p == "BOTTOMRIGHT" then br = x end end
+        canvas.GetRight = function() return 1000 end
+        local qm, details = stub.NewObject("Frame"), stub.NewObject("Frame")
+        qm.GetLeft = function() return 1000 end
+        details.GetLeft = function() return 880 end
+        qm.DetailsFrame = details
+        map.QuestMapFrame = qm
+        W.SoftMap(map)
+        assert(br == -120 and W.mapMask.cut == 120, "Rand laeuft unter den Questdetails aus: " .. tostring(br))
+        assert(table.concat(W.SoftReport(map), " "):find("rechts 120 px früher", 1, true), "Bericht ohne Tafel")
+        details:Hide()
+        W.SoftMap(map)
+        assert(br == 0 and W.mapMask.cut == 0, "Rand bleibt verkuerzt ohne Details")
+        br = nil
+        W.SoftMap(map)
+        assert(br == nil, "Maske in jedem Durchlauf neu verankert")
+        map.QuestMapFrame = nil
+        canvas.GetRight = nil
         canvas.Child = nil
         _G.WorldMapFrame = nil
 

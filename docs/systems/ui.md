@@ -2194,6 +2194,17 @@ auf der Karte; aus, wenn die Seitenleiste zu ist.
 **Unverändert:** Farben der Quests (Schwierigkeit), Ziele, Symbole,
 Häkchen zum Verfolgen, Suche, Zähler, Filter, Markierungen auf der Karte.
 
+**Weicher Rand neben den Questdetails (6.8.0.8).** Beta-Test: mit einer
+geöffneten Quest war der rechte Rand der Karte wieder hart. Die Details
+(`QuestMapFrame.DetailsFrame`) liegen **über** dem rechten Teil des
+Ausschnitts; die Maske lief unter ihnen aus. `W.MapCut` misst, wie weit
+die sichtbare Tafel (`W.MAP_COVERS`, sonst `QuestMapFrame`) in den
+Ausschnitt ragt (rechter Rand des Ausschnitts minus linker Rand der
+Tafel), und alle Masken enden um so viel früher – neu verankert nur,
+wenn sich das ändert. `/wcui fenster` nennt „rechts … px früher“.
+Die Details selbst tragen noch Pergament (`QuestDetailsBackgrounds`,
+`QuestLog-reward-*`) – nicht Teil dieser Änderung.
+
 ### Suche nach Gruppe *(6.8.0.0, `ui/lfg.lua`, seit 6.8.0.2 `ui/calm.lua`)*
 
 Beta-Test: „das Fenster bitte auch noch“. **Gemessen** (`/wcui fenster`):

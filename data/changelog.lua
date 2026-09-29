@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.8.0.8",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Karte bleibt weich, auch neben einer Quest.|r Öffnest du eine Quest auf der Karte, legt sich die Beschreibung über den rechten Teil der Karte – der weiche Rand lief bisher darunter aus, zu sehen war eine harte Kante. Jetzt läuft die Karte vor der Beschreibung weich aus.",
+        },
+    },
+    {
         version = "6.8.0.7",
         date    = "29.09.2026",
         notes   = {

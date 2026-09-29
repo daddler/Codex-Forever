@@ -1830,13 +1830,21 @@ local function TileArea(r)
     return w * h
 end
 
+-- Rechts endet die Maske vor dem, was die Karte ueberdeckt (6.8.0.8):
+-- `cut` px vor dem rechten Rand des Ausschnitts.
+local function PlaceMask(mask, area, cut)
+    mask:ClearAllPoints()
+    mask:SetPoint("TOPLEFT", area, "TOPLEFT", 0, 0)
+    mask:SetPoint("BOTTOMRIGHT", area, "BOTTOMRIGHT", -cut, 0)
+end
+
 local function MaskFor(frame, area)
     local m = mapMask.masks[frame]
     if m then return m end
     local ok, mask = pcall(frame.CreateMaskTexture, frame)
     if not ok or type(mask) ~= "table" then return nil end
     mask:SetTexture(W.SOFT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-    mask:SetAllPoints(area)
+    PlaceMask(mask, area, mapMask.cut or 0)
     own[mask] = true
     mapMask.masks[frame] = mask
     return mask
@@ -1857,6 +1865,39 @@ local function MaskTiles(frame, area)
     end
 end
 
+-- ZWEITE KANTE (6.8.0.8, Beta-Test: "Wenn ich eine Quest auswaehle, ist
+-- es wieder abgehackt"): die Questdetails (QuestMapFrame.DetailsFrame)
+-- liegen UEBER dem rechten Teil der Karte - der weiche Rand lief unter
+-- ihnen aus, zu sehen war eine harte Kante. Gemessen wird, wie weit die
+-- Tafeln rechts (Details, sonst der Questlog) in den Ausschnitt ragen;
+-- so weit endet die Maske frueher. Nur Lage, keine Namen der Karte.
+W.MAP_COVERS = { "DetailsFrame" }
+local function EdgeOf(fr, getter)
+    if type(fr) ~= "table" or type(fr[getter]) ~= "function" then return nil end
+    local ok, v = pcall(fr[getter], fr)
+    v = ok and K.Plain(v) or nil
+    return type(v) == "number" and v or nil
+end
+
+function W.MapCut(map, sc)
+    local right = EdgeOf(sc, "GetRight")
+    if not right then return 0 end
+    local qm = map.QuestMapFrame or _G.QuestMapFrame
+    local left
+    if type(qm) == "table" then
+        for _, key in ipairs(W.MAP_COVERS) do
+            local fr = qm[key]
+            if type(fr) == "table" and fr.IsVisible and K.Bool(fr:IsVisible(), false) then
+                local l = EdgeOf(fr, "GetLeft")
+                if l and (not left or l < left) then left = l end
+            end
+        end
+        if not left and qm.IsVisible and K.Bool(qm:IsVisible(), false) then left = EdgeOf(qm, "GetLeft") end
+    end
+    if not left or left >= right then return 0 end
+    return math.floor(right - left + 0.5)
+end
+
 function W.SoftMap(map)
     local sc = map.ScrollContainer
     if type(sc) ~= "table" or not sc.GetFrameLevel then return nil end
@@ -1865,6 +1906,11 @@ function W.SoftMap(map)
     if canMask then
         -- Kacheln liegen in den Ebenen der Karte (Kinder des Inhalts) oder
         -- am Inhalt selbst.
+        local cut = W.MapCut(map, sc)
+        if mapMask.cut ~= cut then
+            mapMask.cut = cut
+            for _, mask in pairs(mapMask.masks) do PlaceMask(mask, sc, cut) end
+        end
         MaskTiles(canvas, sc)
         for _, layer in ipairs(Children(canvas, "mapLayers")) do
             if type(layer) == "table" and layer.GetRegions and not (layer.IsForbidden and layer:IsForbidden()) then
@@ -1883,8 +1929,8 @@ function W.SoftMap(map)
                 under = under + 1
             end
         end
-        mapMask.report = string.format("   Weicher Rand (Karte): Maske an %d Bildern, darunter %d Bilder am Ausschnitt",
-            mapMask.count, under)
+        mapMask.report = string.format("   Weicher Rand (Karte): Maske an %d Bildern, darunter %d Bilder am Ausschnitt%s",
+            mapMask.count, under, cut > 0 and string.format(" · rechts %d px früher (Tafel über der Karte)", cut) or "")
         return mapMask
     end
     local level, base, low = W.MapOverlayLevel(map)

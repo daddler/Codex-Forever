@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.8.0.8] – 2026-09-29
+
+**Die Karte bleibt weich, auch neben einer Quest.** Öffnest du eine Quest auf der Karte, legt sich die Beschreibung über den rechten Teil der Karte – der weiche Rand lief bisher darunter aus, zu sehen war eine harte Kante. Jetzt läuft die Karte vor der Beschreibung weich aus.
+
+### Technisch
+
+- Beta-Test 6.8.0.6 (Karte mit Questdetails, „wieder abgehackt“): `QuestMapFrame.DetailsFrame` liegt über dem rechten Teil des Kartenausschnitts; die Maske (`W.SoftMap`, am ganzen Ausschnitt) lief unter ihm aus.
+- `ui/windows.lua`: `W.MapCut(map, sc)` misst, wie weit die Tafel rechts (sichtbare `W.MAP_COVERS` – `DetailsFrame` –, sonst `QuestMapFrame`) in den Ausschnitt ragt; die Masken enden um so viel früher (`PlaceMask`, neu verankert nur bei Änderung, auch für später angelegte Masken). Bericht: „rechts … px früher (Tafel über der Karte)“.
+- `load_test.lua`: Details über der Karte → Maske endet 120 px früher; Details zu → wieder am Rand; kein Neuverankern im Takt.
+
 ## [6.8.0.7] – 2026-09-29
 
 **Der dunkle Grund unter den Bäumen bleibt beim Baum.** Er ist so breit wie ein Baum, beginnt am Symbol und läuft nach rechts weich aus, statt als Balken weit über den Baum hinaus zu reichen; die Linie hinter dem Namen endet vor ihm.
