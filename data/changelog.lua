@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.8.0.3",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Talente passen zum Zauberbuch.|r Statt des großen Scheins in deiner Klassenfarbe fällt ein Hauch Licht in deiner Klasse von oben, oben liegt eine feine Kante in deiner Klasse, und die Namen der Bäume – etwa Waffen, Furor, Schutz – tragen Raute und Linie wie die Überschriften im Zauberbuch.",
+            "|cff7C6CFFDie Animation bleibt.|r Wolken, Funken und die Landschaften hinter den Bäumen sind unverändert, ebenso die Talente mit ihren farbigen Rahmen, die Punkte je Baum und „Änderungen anwenden“.",
+        },
+    },
+    {
         version = "6.8.0.2",
         date    = "29.09.2026",
         notes   = {

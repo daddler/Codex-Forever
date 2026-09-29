@@ -6799,6 +6799,92 @@ do
     Check(okJ, "Sammlung: Gold, Vorlagen auf Innenflaeche mit Kante, Reiter oben in Gold, kein Schein der Klasse"
         .. (okJ and "" or (": " .. tostring(errJ))))
 
+    -- 6.8.0.3: Talente - Klassenfarbe, die Animation und die Landschaften
+    -- bleiben unberuehrt; Licht und Kante in der Klassenfarbe; die Namen der
+    -- Baeume (vom Spiel, GetTalentTabInfo) mit Raute und Linie; Schein der
+    -- Klasse aus, solange die Talente offen sind.
+    local okT, errT = pcall(function()
+        local W, S, TL, SB = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UITalents, WeintCodex.UISpellBook
+        assert(TL and W.HOSTED.PlayerSpellsFrame[1] == SB and W.HOSTED.PlayerSpellsFrame[2] == TL
+            and S.SCOPES["PlayerSpellsFrame.TalentsFrame"] == S.CHARACTER_INFO, "Talente nicht eingetragen")
+        local function Tex(atlas)
+            local t = stub.NewObject("Texture")
+            t.GetAtlas = function() return atlas end
+            return t
+        end
+        local psf = stub.NewObject("Frame")
+        local tf, buttons = stub.NewObject("Frame"), stub.NewObject("Frame")
+        psf.TalentsFrame, tf.ButtonsParent = tf, buttons
+        local clouds, land, particles = Tex("talents-animations-clouds"), Tex("talent-background-warrior"),
+            Tex("talents-animations-particles")
+        local heads, hs = {}, {}
+        for i, name in ipairs({ "Waffen", "Furor", "Schutz" }) do
+            local hf = stub.NewObject("Frame")
+            local fs = stub.NewObject("FontString")
+            fs._text, fs._font, fs._parent = name, true, hf
+            fs.GetStringWidth = function() return 60 end
+            fs.SetText = function() error("Name eines Baums ueberschrieben") end
+            fs.SetTextColor = function() error("Farbe eines Baums ueberschrieben") end
+            hf.GetRegions = function() return fs end
+            heads[i], hs[i] = hf, fs
+        end
+        local node = stub.NewObject("Button")
+        local green = Tex("talents-node-square-green")
+        local rank = stub.NewObject("FontString")
+        rank._text, rank._font = "3", true
+        node.GetRegions = function() return green, rank end
+        buttons.GetChildren = function() return node end
+        tf.GetRegions = function() return clouds, land, particles end
+        tf.GetChildren = function() return heads[1], heads[2], heads[3], buttons end
+        psf.GetChildren = function() return tf end
+        local oldInfo, oldNum = _G.GetTalentTabInfo, _G.GetNumTalentTabs
+        local names = { "Waffen", "Furor", "Schutz" }
+        _G.GetNumTalentTabs = function() return 3 end
+        _G.GetTalentTabInfo = function(i) return 100 + i, names[i], "Beschreibung", 132000 end
+        local glow = stub.NewObject("Texture")
+        W.done[psf] = { glow = glow }
+        local grad, classy, classTex = S.Gradient, 0, {}
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == K.Highlight() then classy = classy + 1 classTex[t] = true end
+            return grad(t, dir, c, a0, a1)
+        end
+        TL.Update(psf)
+        W.HoldGlow(psf, "PlayerSpellsFrame")
+        S.Gradient = grad
+        local t = TL.frames[tf]
+        assert(t and t.light and t.edge and classTex[t.light] and classTex[t.edge.l], "Licht oder Kante nicht in der Klassenfarbe")
+        assert(t.light._parent == tf, "Licht unter dem Talentfenster (von den Landschaften verdeckt)")
+        assert(#t.order == 3 and t.marks[hs[1]] and t.marks[hs[3]], "Namen der Baeume nicht gefunden: " .. #t.order)
+        assert(not t.heads[rank], "Rang eines Talents als Name eines Baums")
+        assert(t.marks[hs[2]].dot._parent == heads[2], "Raute nicht am Namen")
+        assert(not glow:IsShown(), "Schein der Klasse ueber den Talenten")
+        for _, x in ipairs({ clouds, land, particles, green, rank, hs[1] }) do
+            assert(x:IsShown() and x:GetAlpha() == 1, "Animation, Landschaft oder Talent angefasst")
+        end
+        local rep = table.concat(TL.Report(psf, {}), "\n")
+        assert(rep:find("Bäume „Waffen“, „Furor“, „Schutz“", 1, true), "Bericht: " .. rep)
+        -- Gefunden ist gefunden: keine weitere Suche.
+        local scans = t.scans
+        for _ = 1, 5 do TL.Update(psf) end
+        assert(t.scans == scans, "sucht weiter, obwohl alle Namen da sind")
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do TL.Update(psf) W.HoldGlow(psf, "PlayerSpellsFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Talente legen im Takt Muell an: %.1f KB", grew))
+        -- Talente zu, Zauberbuch zu: Schein zurueck, Licht weg.
+        tf:Hide()
+        TL.Update(psf)
+        W.HoldGlow(psf, "PlayerSpellsFrame")
+        assert(glow:IsShown() and not t.light:IsShown(), "Schein nicht zurueck oder Licht bleibt")
+        _G.GetTalentTabInfo, _G.GetNumTalentTabs = oldInfo, oldNum
+        W.done[psf] = nil
+    end)
+    Check(okT, "Talente: Klassenfarbe, Animation unberuehrt, Baeume mit Raute und Linie, kein Schein der Klasse, kein Muell"
+        .. (okT and "" or (": " .. tostring(errT))))
+
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett
     -- auf Wunsch. Es bleibt ein Akzent (accent = purple = violet = brandA).
     local ok4, err4 = pcall(function()

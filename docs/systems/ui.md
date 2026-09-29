@@ -2254,6 +2254,40 @@ ist.
 **Unverändert:** Plätze samt Goldring am gewählten (Auswahl des Spiels),
 Klassenauswahl, Suche, Filter, Blättern, Seitenreiter-Symbol.
 
+### Talente *(6.8.0.3, `ui/talents.lua`)*
+
+Beta-Test: „Die Animation bei dem Talentbaum soll so bleiben, nur der Rest
+angepasst an das neue Design.“ **Gemessen** (`/wcui fenster`):
+`PlayerSpellsFrame.TalentsFrame` mit `talents-animations-clouds` (2×),
+`talent-background-warrior` (3×, seit 6.4.1.2 gedämpft),
+`talents-animations-particles` (2×), `Talents-Background-c60`,
+`Talents-inner-frame-c60`; `.ButtonsParent` mit den Talenten
+(`talents-node-square-*`, `talents-sheen-node`, `talents-arrow-head-*`).
+
+Klassenfarbe (`S.CHARACTER_INFO`, nur für `…TalentsFrame`), in
+`W.HOSTED.PlayerSpellsFrame` neben dem Zauberbuch:
+
+- **Animation und Landschaften bleiben** – nichts davon wird angefasst
+  (der Test hält Deckkraft und Sichtbarkeit fest).
+- **Licht und Kante:** ein Hauch Licht in der Klassenfarbe
+  (`GC.classLight`, 180 px) und oben eine Kante (50 %) – wie im
+  Zauberbuch. Sie liegen **auf** dem Talentfenster (`BORDER` 7, `ARTWORK`
+  7): auf dem äußeren Fenster lägen sie unter den Landschaften und wären
+  unsichtbar. Ob Wolken und Funken darüber liegen, ist ungemessen; das
+  Licht ist ein Hauch (7 %).
+- **Schein der Klasse aus**, solange die Talente offen sind
+  (`TL.GlowOff`; beim Zauberbuch schon seit 6.7.7.0).
+- **Namen der Bäume:** welche Zeile ein Name ist, sagt das Spiel –
+  `GetTalentTabInfo(i)` für `i = 1 … GetNumTalentTabs()`; beide ersten
+  Rückgaben, wenn sie Text sind (Classic: `name, …`; spätere Fassungen:
+  `id, name, …`). Gesucht bis alle gefunden sind, höchstens 30
+  Durchläufe. Raute und Linie in der Klassenfarbe hinter dem Text (Linie
+  140 px, läuft aus, nur links verankert), am Rahmen der Zeile.
+
+**Unverändert:** Talente samt Rahmenfarben (grün, gelb, grau, gesperrt –
+sie sagen etwas), Pfeile, Symbole und Punkte je Baum, „Unverteilte
+Talentpunkte“, Primär/Sekundär, Suche, „Änderungen anwenden“.
+
 ### Nächste Fenster
 
 Vorgesehen: Berufsübersicht (nach Messung), Gilde (mittlere Atmosphäre), Talente

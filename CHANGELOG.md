@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.8.0.3] – 2026-09-29
+
+**Die Talente passen zum Zauberbuch.** Statt des großen Scheins in deiner Klassenfarbe fällt ein Hauch Licht in deiner Klasse von oben, oben liegt eine feine Kante in deiner Klasse, und die Namen der Bäume – etwa Waffen, Furor, Schutz – tragen Raute und Linie wie die Überschriften im Zauberbuch.
+
+**Die Animation bleibt.** Wolken, Funken und die Landschaften hinter den Bäumen sind unverändert, ebenso die Talente mit ihren farbigen Rahmen, die Punkte je Baum und „Änderungen anwenden“.
+
+### Technisch
+
+- Neu `ui/talents.lua` (`WeintCodex.UITalents`): `PlayerSpellsFrame.TalentsFrame` in `S.CHARACTER_INFO`, in `W.HOSTED.PlayerSpellsFrame` neben dem Zauberbuch. Licht in der Klassenfarbe (`GC.classLight`, 180 px) und Kante (50 %) **auf** dem Talentfenster (`BORDER`/`ARTWORK` 7 – darunter läge es hinter den Landschaften); Schein der Klasse aus, solange die Talente offen sind (`GlowOff`). Namen der Bäume: Schriftzeilen, deren Text ein Name aus `GetTalentTabInfo` ist (beide Fassungen: `name, …` und `id, name, …`), gesucht bis alle da sind, höchstens 30 Durchläufe; Raute und Linie (140 px, nur links verankert) am Rahmen der Zeile.
+- Animation (`talents-animations-*`) und Landschaften (`talent-background-*`) unberührt.
+- `load_test.lua`: Talente wie gemessen – Licht und Kante in der Klassenfarbe auf dem Talentfenster, drei Namen gefunden (kein Rang eines Talents), Animation unberührt, Suche endet, Schein zurück bei geschlossenen Talenten.
+
 ## [6.8.0.2] – 2026-09-29
 
 **Die Sammlung in der ruhigen Oberfläche.** Kein Schein in deiner Klassenfarbe mehr oben im Fenster; die Vorlagen liegen auf einer Fläche mit weichem Schatten und feiner Kante in Gold, gewählte Reiter tragen Gold – wie Suche nach Gruppe, Gilde und Karte. Plätze, Klassenauswahl, Suche, Filter und Blättern bleiben, wie das Spiel sie zeigt.
