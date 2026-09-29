@@ -15,11 +15,15 @@ nicht zusammen.
 
 **Dialoge wie „20 Sekunden bis zum Verlassen“ passen dazu.** Kein Schein in der Klassenfarbe mehr über dem ganzen Dialog, sondern dasselbe ruhige Licht und dieselbe Kante in Gold. Texte, Knöpfe und was sie tun bleiben unverändert.
 
+**Karte & Questlog im selben Stil.** Der Questlog liegt auf einer ruhigen, leicht angehobenen Fläche mit feiner Kante in Gold; Zonen wie „Die Todesminen“ stehen links als Abschnitte mit Raute und Linie, wie im Ruf. Der weiche Rand um die Karte bleibt genau so, wie er ist, und die Farben der Quests zeigen weiter ihre Schwierigkeit.
+
 ### Technisch
 
 - Neu `ui/gamemenu.lua` (`WeintCodex.UIGameMenu`): `GameMenuFrame` in `S.CALM`, in `W.HOSTED`. Neutrales Licht (110 px), Kante oben in Gold, Linie mit Raute unter dem Titel (`.Header.Text`, sonst oberste Zeile des Kopfes), Haarlinie in jeder Lücke > 6 px zwischen sichtbaren Knöpfen – je Durchlauf an deren Lage gemessen, ohne Anlage, höchstens sechs. Schein der Klasse aus (`W.HoldGlow`). Nichts bewegt.
 - `W.SkinPopup` (`StaticPopup1..4`): statt des Scheins in der Klassenfarbe neutrales Licht (60 px) und Kante in Gold, Stil `S.CALM`.
 - `load_test.lua`: Menü mit drei Gruppen (Linien in den Lücken, eine weniger ohne Knopf), Dialog ohne Klassenfarbe.
+- Neu `ui/questlog.lua` (`WeintCodex.UIQuestLog`): `WorldMapFrame` in `S.CALM`; `QuestScrollFrame` auf der angehobenen Fläche (Schatten klein, 8 px – links liegt die Karte), Kante in Gold, aus mit der Seitenleiste. `W.SkinMap` gestaltet die Kopfzeilen mit dem Stil des Fensters (Zonen als Abschnitte wie im Ruf); `W.Inner` ruft für die Karte `W.HOSTED.WorldMapFrame` und `W.HoldGlow`. Die Karte selbst (weicher Rand, `W.SoftMap`) wird nicht berührt.
+- `load_test.lua`: Karte & Questlog – Zone als Abschnitt in Gold, Fläche an der Karte (nicht auf ihr), weicher Rand unverändert, nichts Neues auf der Karte.
 
 ## [6.7.8.0] – 2026-09-29
 

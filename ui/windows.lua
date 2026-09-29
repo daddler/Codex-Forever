@@ -1899,8 +1899,11 @@ function W.SkinMap(f)
     -- Seitenleiste trug noch einen Eckschatten (6.6.3.1, /wcui fenster:
     -- "MapCornerShadow-Right ... SOLLTE WEG SEIN").
     local qm = f.QuestMapFrame or _G.QuestMapFrame
+    -- 6.7.9.0: mit dem Stil des Fensters (Gold, S.CALM) - die Kategorien
+    -- des Questlogs werden Abschnitte wie im Ruf statt mittig mit Lichthof.
+    local sc = scoped[f]
     for _, part in ipairs({ f.BorderFrame, f.OverscrollBG, qm, _G.QuestScrollFrame, f.SidePanelToggle }) do
-        if type(part) == "table" then HideByAtlas(part, 0) end
+        if type(part) == "table" then HideByAtlas(part, 0, scoped[part] or sc) end
     end
     Grey(f, 0)
     if type(qm) == "table" then SkinPanelButtons(qm, 0) end
@@ -2257,7 +2260,16 @@ function W.Inner()
     end
     SkinModeTabs()
     local map = _G[W.MAP]
-    if type(map) == "table" and done[map] and Opt("mapSkin") and Open(map) then W.SkinMap(map) end
+    if type(map) == "table" and done[map] and Opt("mapSkin") and Open(map) then
+        W.SkinMap(map)
+        -- 6.7.9.0: auch die Karte hat gestaltete Teile (Questlog) und den
+        -- Schein der Klasse (in Gold: aus).
+        local hosted = W.HOSTED[W.MAP]
+        if hosted then
+            for _, tab in ipairs(hosted) do tab.Update(map) end
+        end
+        W.HoldGlow(map, W.MAP)
+    end
 end
 
 function W.Status()

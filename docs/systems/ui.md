@@ -2163,6 +2163,36 @@ Dialogknöpfe („Jetzt verlassen“) ist die des Spiels und bleibt – anders
 als die weiße im Menü, aber umfärben hieße, eine Schrift des Spiels zu
 überschreiben, die bei jedem Dialog neu gesetzt wird.
 
+### Karte & Questlog *(6.7.9.0, `ui/questlog.lua`)*
+
+Beta-Test: „mit der Map bitte auch. Unbedingt beibehalten werden muss
+das Weichzeichnen um die Karte herum.“ **Gemessen** (`/wcui fenster`):
+`WorldMapFrame`, `QuestScrollFrame` (`.Contents` mit Zeilen `.Display`/
+`.Checkbox`, Kopfzeilen mit `.CollapseButton` `common-button-list-minus/
+-plus`; `.ScrollBar`, `.BorderFrame` mit `QuestLog-Frame-Gradient-bottom`,
+`.SettingsDropdown`), „Weicher Rand (Karte): Maske an 27 Bildern“.
+
+**Die Karte bleibt unberührt:** keine Fläche, kein Licht, keine Vignette
+über oder unter ihr; `W.SoftMap` (Maske an den Kartenbildern, 6.6.3.2)
+unverändert. Der Test hält das fest: nach Questlog und `W.SkinMap` hat die
+Kachel der Karte weiter genau eine Maske, und auf dem Ausschnitt entsteht
+kein neues Bild.
+
+**Gold** (`S.SCOPES.WorldMapFrame = S.CALM`): `W.SkinMap` gibt den Stil
+an `HideByAtlas` weiter (bis 6.7.8.0 ohne) – die Zonen des Questlogs
+werden `W.ListHeader`-Abschnitte (Text links, Raute, Linie, Band, Gold)
+statt mittig mit Lichthof. Die Karte läuft nicht durch die allgemeine
+Schleife von `W.Inner`; der Zweig für `W.MAP` ruft jetzt auch
+`W.HOSTED.WorldMapFrame` und `W.HoldGlow` (Schein der Klasse aus).
+
+**Questlog-Spalte:** angehobene Fläche (`surfaceRaised`) unter
+`QuestScrollFrame` bis zur Bildlaufleiste, Schatten nur 8 px (links liegt
+die Karte mit ihrem weichen Rand), Kante in Gold; auf dem Fenster, nicht
+auf der Karte; aus, wenn die Seitenleiste zu ist.
+
+**Unverändert:** Farben der Quests (Schwierigkeit), Ziele, Symbole,
+Häkchen zum Verfolgen, Suche, Zähler, Filter, Markierungen auf der Karte.
+
 ### Nächste Fenster
 
 Vorgesehen: Berufsübersicht (nach Messung), Gilde (mittlere Atmosphäre), Talente

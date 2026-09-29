@@ -195,6 +195,8 @@ ui/spellbook.lua
 ui/community.lua
 # Spielmenue (6.7.9.0): Gold, Linie unter dem Titel, Haarlinien zwischen den Gruppen.
 ui/gamemenu.lua
+# Karte & Questlog (6.7.9.0): Questlog auf Flaeche, Abschnitte in Gold, Karte unberuehrt.
+ui/questlog.lua
 ui/testmode.lua
 ui/options.lua
 ui/editmode.lua

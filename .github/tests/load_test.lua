@@ -6592,6 +6592,88 @@ do
     Check(okM, "Spielmenue und Dialoge: Gold, Linie unter dem Titel, Haarlinien zwischen Gruppen, kein Schein der Klasse"
         .. (okM and "" or (": " .. tostring(errM))))
 
+    -- 6.7.9.0: Karte & Questlog in Gold. Der weiche Rand um die Karte
+    -- (ausdruecklich gewuenscht) bleibt; der Questlog liegt auf einer
+    -- Flaeche, seine Zonen sind Abschnitte wie im Ruf, kein Schein der Klasse.
+    local okQ, errQ = pcall(function()
+        local W, S, QL = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIQuestLog
+        local GC = WeintCodex.GameColors
+        assert(QL and W.HOSTED.WorldMapFrame and W.HOSTED.WorldMapFrame[1] == QL and S.SCOPES.WorldMapFrame == S.CALM,
+            "Questlog nicht in Gold an der Karte eingetragen")
+        local function Tex(atlas)
+            local t = stub.NewObject("Texture")
+            t.GetAtlas = function() return atlas end
+            return t
+        end
+        local map = stub.NewObject("Frame", "WorldMapFrame")
+        map._width, map._height = 1000, 700
+        local canvas, inner, layer = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Frame")
+        local tileA = stub.NewObject("Texture")
+        tileA._width, tileA._height = 256, 256
+        layer.GetRegions = function() return tileA end
+        inner.GetChildren = function() return layer end
+        canvas.Child = inner
+        local made = 0
+        local mk = canvas.CreateTexture
+        canvas.CreateTexture = function(self, ...) made = made + 1 return mk(self, ...) end
+        -- Questlog: eine Zone (Kopfzeile des Spiels) und eine Quest.
+        local qsf, contents, sbar = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Frame")
+        qsf.Contents, qsf.ScrollBar = contents, sbar
+        local head = stub.NewObject("Button")
+        local hBg, minus = Tex("common-button-list-collapseExpand"), Tex("common-button-list-minus")
+        hBg._width = 280
+        local hName = stub.NewObject("FontString")
+        hName._text, hName._font = "Die Todesminen", true
+        head.GetRegions = function() return hBg, minus, hName end
+        local quest = stub.NewObject("Button")
+        local qTitle = stub.NewObject("FontString")
+        qTitle._text, qTitle._font = "[18] Die Suche nach Andenken", true
+        qTitle.SetTextColor = function() error("Farbe einer Quest ueberschrieben") end
+        quest.GetRegions = function() return qTitle end
+        contents.GetChildren = function() return head, quest end
+        qsf.GetChildren = function() return contents, sbar end
+        map.ScrollContainer = canvas
+        map.GetChildren = function() return canvas, qsf end
+        local oldWM, oldQSF = _G.WorldMapFrame, _G.QuestScrollFrame
+        _G.WorldMapFrame, _G.QuestScrollFrame = map, qsf
+
+        S.Register()
+        W.SkinMap(map)
+        W.SoftMap(map)
+        local lh = W.ListHeaders[head]
+        assert(lh and lh.band and lh.accent == GC.frameAccent and not W.Headers[head], "Zone nicht als Abschnitt in Gold")
+        QL.Update(map)
+        local glow = stub.NewObject("Texture")
+        W.done[map].glow = glow
+        W.HoldGlow(map, "WorldMapFrame")
+        local col = QL.cols[map]
+        assert(col and col.on and col.body._parent == map and col.anchor == qsf, "Questlog nicht auf Flaeche")
+        assert(not glow:IsShown(), "Schein der Klasse ueber der Karte")
+        -- Die Karte bleibt: weicher Rand wie gehabt, nichts Neues auf ihr.
+        assert(tileA._masks and #tileA._masks == 1, "weicher Rand der Karte verloren")
+        local before = made
+        for _ = 1, 3 do QL.Update(map) W.SkinMap(map) end
+        assert(made == before and #tileA._masks == 1, "Questlog legt etwas auf die Karte")
+        local rep = table.concat(QL.Report(map, {}), "\n")
+        assert(rep:find("Questlog (Stil ruhig): Spalte auf Fläche · Karte unberührt", 1, true), "Bericht: " .. rep)
+        -- Seitenleiste zu: Flaeche weg.
+        qsf:Hide()
+        QL.Update(map)
+        assert(not col.on and not col.body:IsShown(), "Flaeche bleibt ohne Questlog")
+        qsf:Show()
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do QL.Update(map) W.HoldGlow(map, "WorldMapFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Questlog legt im Takt Muell an: %.1f KB", grew))
+        W.done[map] = nil
+        _G.WorldMapFrame, _G.QuestScrollFrame = oldWM, oldQSF
+    end)
+    Check(okQ, "Karte & Questlog: Gold, Questlog auf Flaeche, Zonen als Abschnitte, weicher Rand der Karte bleibt"
+        .. (okQ and "" or (": " .. tostring(errQ))))
+
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett
     -- auf Wunsch. Es bleibt ein Akzent (accent = purple = violet = brandA).
     local ok4, err4 = pcall(function()
