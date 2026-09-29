@@ -31,8 +31,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Lua 5.1 installieren
+        # Das Paketverzeichnis von Microsoft auf dem Testrechner war am
+        # 29.09.2026 nicht erreichbar (403, "no longer signed") und brach
+        # "apt-get update" ab, bevor ein Test lief. Wir brauchen daraus
+        # nichts: fremde Quellen weg, und ein Fehler beim Aktualisieren
+        # bricht nicht mehr ab. Die Installation bleibt streng - fehlt
+        # lua5.1, schlaegt der Lauf weiter fehl, statt gruen zu luegen.
         run: |
-          sudo apt-get update -qq
+          sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list /etc/apt/sources.list.d/microsoft*.list
+          sudo apt-get update -qq || echo "::warning::apt-get update mit Fehlern - installiere aus den Ubuntu-Quellen"
           sudo apt-get install -y lua5.1 >/dev/null
 
       - name: Ladetest und Datentest
