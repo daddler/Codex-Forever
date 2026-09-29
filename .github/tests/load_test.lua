@@ -4811,6 +4811,21 @@ do
         W.HideByAtlas(menu)
         assert(left:GetAlpha() == 0 and center:GetAlpha() == 0 and glow:GetAlpha() == 0, "rote Knoepfe bleiben")
         assert(W.ButtonSkin[btn], "Knopf des Spielmenues nicht flach gestaltet")
+        -- 6.6.3.3: Sammlung - Leder, Schatten, Ecken innen weg, Innenflaeche.
+        local journal = stub.NewObject("Frame", "CollectionsJournal")
+        local marble = stub.NewObject("Texture")
+        journal.GetRegions = function() return marble end
+        local items = stub.NewObject("Frame")
+        local leather, corner = stub.NewObject("Texture"), Tex("collections-background-corner")
+        items.GetRegions = function() return leather, corner end
+        _G.WardrobeCollectionFrame = { ItemsCollectionFrame = items }
+        _G.CollectionsJournal = journal
+        W.Apply()
+        assert(W.done[journal] and marble:GetAlpha() == 0, "Sammlung ohne Kachel oder Marmor bleibt")
+        assert(leather:GetAlpha() == 0 and corner:GetAlpha() == 0 and W.OwnBgDone[items] and W.Insets[items],
+            "Leder der Sammlung bleibt")
+        assert(W.HidesAtlas("collections-background-shadow-large"), "Schatten der Sammlung bleibt")
+        _G.WardrobeCollectionFrame, _G.CollectionsJournal = nil, nil
         local found = false
         for _, n in ipairs(W.WINDOWS) do if n == "GameMenuFrame" then found = true end end
         assert(found, "Spielmenue nicht in der Fensterliste")

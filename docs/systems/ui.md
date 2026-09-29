@@ -1193,6 +1193,17 @@ Funktion je Rahmen oder Fläche. Wer eine Liste braucht, nimmt
 `W.Regions`/`W.Children` mit eigenem `key`; wer eine Liste über einen
 Aufruf hinaus behalten will, kopiert sie.
 
+**Sammlung (6.6.3.3).** Beta-Test: „auch Accountsammlung soll ein
+Redesign bekommen“. Gemessen: außen Metallrahmen (`NineSlice`), Porträt,
+`TopTileStreaks`, Marmor am Fenster (Bild 374155) – `CollectionsJournal`
+in `W.WINDOWS` nimmt das mit der Kachel. Innen, unter den Vorlagen
+(`WardrobeCollectionFrame.ItemsCollectionFrame`): Leder (Bild 374154),
+Kachelmuster, Schatten und Ecken (`collections-background-*`, in
+`W.HIDE_ATLAS`). Teilfenster ohne globalen Namen stehen als Pfad in
+`W.OWN_BG_PATHS` (`W.Resolve`); `W.OwnBackground` blendet ihre eigenen
+Bilder aus und legt eine Innenfläche darunter (`SkinInset`), einmal je
+Fläche. Reiter („Gegenstände“) und der Reiter rechts sind nicht gemessen.
+
 **Spielmenü (6.6.3.3).** Beta-Test: „Redesign soll auch im Optionsmenü
 Einheit finden“. Gemessen mit `/wcui fenster`: rote Knöpfe
 (`128-RedButton-Left/Right/Highlight`, `_128-RedButton-Center` – mit

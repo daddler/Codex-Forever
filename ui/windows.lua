@@ -64,7 +64,9 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               "LFGParentFrame", "PVEFrame",
               -- 6.6.3.3: das Spielmenue (Esc), Beta-Test: "Redesign soll auch im
               -- Optionsmenue Einheit finden".
-              "GameMenuFrame" }
+              "GameMenuFrame",
+              -- 6.6.3.3: Sammlung (Blizzard_Collections, erst beim Oeffnen geladen).
+              "CollectionsJournal" }
 
 -- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
 -- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus
@@ -77,6 +79,14 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
 -- richtet seine Groesse danach; ein Bild, das ueber den Rand ragt, soll
 -- dabei nicht mitgerechnet werden koennen.
 W.EXTRA_DECOR = { GameMenuFrame = { "Border", "Header" } }
+
+-- SAMMLUNG (6.6.3.3, gemessen mit /wcui fenster): aussen Metallrahmen,
+-- Portraet, Marmor (Bild 374155) - das nimmt die Kachel. Innen, unter den
+-- Vorlagen, Leder (Bild 374154) mit Kachelmuster, Schatten und
+-- Eckverzierungen ("collections-background-*"). Die Flaeche innen wird
+-- eine Innenflaeche wie ueberall: eigene Bilder weg, etwas dunkler.
+-- Pfade statt globaler Namen: die Teilfenster haben keine.
+W.OWN_BG_PATHS = { "WardrobeCollectionFrame.ItemsCollectionFrame" }
 W.NO_SHADOW = { GameMenuFrame = true }
 
 -- GESPRAECHE (6.6.1.4, Beta-Test: "die normale Interaktion von
@@ -325,6 +335,7 @@ W.HIDE_ATLAS = {
     "^common%-stat%-bar%-BG",                -- Rahmen der Ruf-/Fertigkeitsbalken
     "^common%-sidetab",                      -- Goldrahmen der Reiter rechts
     "^_?128%-RedButton%-",                   -- rote Knoepfe im Spielmenue (6.6.3.3)
+    "^collections%-background%-",            -- Leder, Schatten, Ecken der Sammlung (6.6.3.3)
     "^!?_?UI%-Frame%-DiamondMetal%-",        -- Rahmen und Kopf des Spielmenues
     -- Zauberbuch (Blizzard_PlayerSpells, Quelltext des Spiels 12.x):
     "^spellbook%-background",                -- Pergament, Buchseiten, Band
@@ -1949,6 +1960,27 @@ end
 W.INSET_KEEP = { "MemberList" }
 local insetKeep = setmetatable({}, { __mode = "k" })
 
+-- "A.B.C" -> _G.A.B.C, oder nil.
+function W.Resolve(path)
+    local t = _G
+    for key in path:gmatch("[^%.]+") do
+        if type(t) ~= "table" then return nil end
+        t = t[key]
+    end
+    return type(t) == "table" and t or nil
+end
+
+-- Eine Flaeche, deren eigene Bilder nur Grund sind: weg, darunter eine
+-- Innenflaeche. Einmal je Flaeche.
+local ownBgDone = setmetatable({}, { __mode = "k" })
+W.OwnBgDone = ownBgDone
+function W.OwnBackground(f)
+    if type(f) ~= "table" or ownBgDone[f] or not f.CreateTexture or (f.IsForbidden and f:IsForbidden()) then return end
+    ownBgDone[f] = true
+    HideOwnTextures(f)
+    SkinInset(f)
+end
+
 local function SkinInsets(f, depth)
     if depth > 6 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
     if depth == 0 then
@@ -2044,6 +2076,7 @@ function W.Apply()
             HideOwnTextures(f)
         end
     end
+    for _, path in ipairs(W.OWN_BG_PATHS) do W.OwnBackground(W.Resolve(path)) end
     W.Inner()
 end
 

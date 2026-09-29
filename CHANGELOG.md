@@ -11,6 +11,8 @@ nicht zusammen.
 
 ## [6.6.3.3] – 2026-09-29
 
+**Die Sammlung im Stil von WeintCodex.** Das Fenster der Vorlagen trägt die dunkle Kachel mit dem Schein deiner Klassenfarbe; Metallrahmen, Porträt, Marmor und das Leder mit den Eckverzierungen hinter den Vorlagen sind weg, innen liegt eine ruhige Innenfläche.
+
 **Das Spielmenü (Esc) im Stil von WeintCodex.** Statt Diamantmetall-Rahmen und roten Knöpfen dieselbe dunkle Kachel wie jedes andere Fenster, mit dem Schein deiner Klassenfarbe oben; die Knöpfe sind flach und werden unter der Maus heller.
 
 **Mitgliederliste wieder wie im Spiel.** In Gilde & Communitys trägt die Mitgliederliste wieder ihren eigenen Hintergrund statt der dunkleren Fläche von WeintCodex.
