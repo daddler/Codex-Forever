@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.7.3.0",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Abzeichen im neuen Stil.|r Deine Währungen liegen wie Ruf und Fertigkeiten auf einer ruhigen, leicht angehobenen Fläche; Gruppen stehen als eigene Abschnitte mit Raute und Linie in deiner Klassenfarbe, die Einträge sind fein voneinander abgesetzt, die gewählte Währung trägt einen schmalen Streifen. Symbol, Name und Anzahl bleiben, wie das Spiel sie zeigt.",
+            "|cff7C6CFFDie Detailansicht der Abzeichen ist eine Karte.|r Name oben, darunter die Beschreibung, was folgt in einem eigenen, abgesetzten Bereich; die Karte endet unter ihrem Inhalt. Ist noch keine Währung gewählt, bleibt es bei der ruhigen Fläche mit dem Hinweis des Spiels.",
+        },
+    },
+    {
         version = "6.7.2.2",
         date    = "29.09.2026",
         notes   = {

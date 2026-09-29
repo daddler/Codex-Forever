@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.7.2.2
+## Version: 6.7.3.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -181,6 +181,8 @@ ui/reputation.lua
 ui/skills.lua
 # PvP-Profil (6.7.2.0): Rangsymbol als Mittelpunkt, Detailkarte mit Belohnung.
 ui/pvp.lua
+# Abzeichen (6.7.3.0): Waehrungen, das dritte Register.
+ui/currency.lua
 ui/testmode.lua
 ui/options.lua
 ui/editmode.lua

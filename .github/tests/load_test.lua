@@ -5834,6 +5834,126 @@ do
     Check(okP, "PvP als Profil: Rangsymbol als Mittelpunkt, Rangbereich, Karte mit Belohnung - Farben bleiben, nichts verloren, kein Muell"
         .. (okP and "" or (": " .. tostring(errP))))
 
+    -- 6.7.3.0: Abzeichen (Waehrungen) - das dritte Register. Gemessen nur
+    -- der Leerzustand (Liste leer, rechts ein Hinweis); danach, wie es mit
+    -- einer Waehrung aussehen duerfte: Kopfzeile wie im Ruf, Zeile mit
+    -- Symbol, Name und Anzahl (kein Balken), Detailansicht ohne bekannten
+    -- Schluessel mit Name, Beschreibung und einer Zeile darunter.
+    local okC, errC = pcall(function()
+        local W, S, CU, PV = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UICurrency, WeintCodex.UIPvP
+        assert(CU and W.TABS[4] == CU and W.TABS[3] == PV and S.SCOPES.TokenFrame == S.CHARACTER_INFO,
+            "Abzeichen nicht als Reiter eingetragen")
+        local touched = {}
+        local function Tex(atlas)
+            local t = stub.NewObject("Texture")
+            t.GetAtlas = function() return atlas end
+            return t
+        end
+        local function Line(text, top, bottom)
+            local fs = stub.NewObject("FontString")
+            fs._text, fs._font = text, true
+            fs.SetText = function() touched[#touched + 1] = "SetText " .. text end
+            if top then
+                fs.GetTop, fs.GetBottom = function() return top end, function() return bottom end
+                fs.GetStringHeight = function() return top - bottom end
+            end
+            return fs
+        end
+        local cf = stub.NewObject("Frame")
+        local rf = stub.NewObject("Frame", "TokenFrame")
+        rf._parent = cf
+        local list, target, sbar = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Frame")
+        rf.ScrollBox, rf.ScrollBar, list.ScrollTarget = list, sbar, target
+        local head = stub.NewObject("Button")
+        local hBg, minus = Tex("common-button-list-collapseExpand"), Tex("common-button-list-minus")
+        hBg._width = 300
+        local hName = Line("Spieler gegen Spieler")
+        head.GetRegions = function() return hBg, minus, hName end
+        local row, content = stub.NewObject("Frame"), stub.NewObject("Button")
+        local cName, count, cIcon = Line("Ehrenpunkte"), Line("150"), stub.NewObject("Texture")
+        count.SetTextColor = function() touched[#touched + 1] = "Farbe Anzahl" end
+        content.Name, content.Count, content.Icon = cName, count, cIcon
+        content.GetRegions = function() return cIcon, cName, count end
+        row.Content = content
+        row.GetChildren = function() return content end
+        -- Gemessen: Liste leer.
+        target.GetChildren = function() return end
+        list.GetChildren = function() return target end
+        -- Detailansicht: nur der Hinweis.
+        local det = stub.NewObject("Frame")
+        det._parent = rf
+        det.GetTop, det.GetLeft = function() return 500 end, function() return 400 end
+        -- Falle: der Hinweis steht (ausgeblendet) ueber dem Titel und ist
+        -- laenger als die Beschreibung - er darf spaeter keins von beiden sein.
+        local hint = Line("Wählt eine Währung, um ihre Details anzuzeigen.", 495, 480)
+        hint.SetFont = function() touched[#touched + 1] = "Schrift Hinweis" end
+        det.GetRegions = function() return hint end
+        rf.GetChildren = function() return list, sbar, det end
+        cf.GetChildren = function() return rf end
+        local oldTF = _G.TokenFrame
+        _G.TokenFrame = rf
+
+        S.Register()
+        W.HideByAtlas(cf)
+        CU.Update(cf)
+        local a = CU.atmos[rf]
+        assert(a and a.on and a.list and not a.sigil, "Atmosphaere oder Flaeche der Liste fehlt (kein Zeichen)")
+        local d = CU.details[det]
+        assert(d and d.surface and d.empty and not d.settled and not d.title, "Leerzustand nicht erkannt")
+        assert(CU.state.selected == nil or CU.state.selected == hint._text, "Auswahl im Leerzustand")
+        local rep = table.concat(CU.Report(cf, {}), "\n")
+        assert(rep:find("Abzeichen (Stil ruhig, Klasse): Liste gefunden, 0 Zeilen", 1, true)
+            and rep:find("Leerzustand", 1, true), "Bericht (leer): " .. rep)
+        for _ = 1, 3 do CU.Update(cf) end
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do CU.Update(cf) end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Abzeichen (leer) legen im Takt Muell an: %.1f KB", grew))
+
+        -- Mit Waehrung: Liste gefuellt, Hinweis weg, Name/Beschreibung/Zeile.
+        target.GetChildren = function() return head, row end
+        W.HideByAtlas(cf)
+        local title = Line("Ehrenpunkte", 490, 474)
+        local desc = Line("Ehre erhaltet Ihr für Siege gegen Spieler.", 460, 420)
+        local extra = Line("Höchstens 75000", 405, 391)
+        det.GetRegions = function() return hint, title, desc, extra end
+        hint:Hide()
+        CU.Update(cf)
+        local lh = W.ListHeaders[head]
+        assert(lh and lh.band and not W.Headers[head], "Gruppe nicht als Abschnitt wie im Ruf")
+        local r = CU.rows[row]
+        assert(r and not r.bar and r.sep, "Zeile falsch (Balken erfunden oder keine Trennlinie)")
+        assert(d.settled and d.title == title and d.desc == desc, "Titel/Beschreibung nach der Auswahl falsch: "
+            .. tostring(d.title and d.title._text) .. " / " .. tostring(d.desc and d.desc._text))
+        assert(CU.state.selected == "Ehrenpunkte" and r.sel.on, "gewaehlte Waehrung nicht markiert")
+        assert(d.db == -80 and d.yOpt == -95 and d.optLine.l:IsShown() and d.cardBottom == -121,
+            "Karte falsch: db " .. tostring(d.db) .. " yOpt " .. tostring(d.yOpt) .. " Ende " .. tostring(d.cardBottom))
+        assert(not d.barLine, "Linie am Balken ohne Balken")
+        assert(#touched == 0, "Blizzard-Teile angefasst: " .. table.concat(touched, ", "))
+        for _, t in ipairs({ cName, count, cIcon, title, desc, extra, hName, minus }) do
+            assert(t:IsShown() and t:GetAlpha() == 1, "Inhalt ausgeblendet")
+        end
+        rep = table.concat(CU.Report(cf, {}), "\n")
+        assert(rep:find("2 Zeilen (1 Kopfzeilen, 0 mit Balken, 2 mit Namen)", 1, true)
+            and rep:find("gewählt: „Ehrenpunkte“", 1, true) and rep:find("darunter abgesetzt ab -95", 1, true),
+            "Bericht: " .. rep)
+        for _ = 1, 3 do CU.Update(cf) end
+        collectgarbage("collect")
+        collectgarbage("stop")
+        k0 = collectgarbage("count")
+        for _ = 1, 20 do CU.Update(cf) end
+        grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        print(string.format("    (20 Durchlaeufe Abzeichen: %.1f KB)", grew))
+        assert(grew < 1, string.format("Abzeichen legen im Takt Muell an: %.1f KB", grew))
+        _G.TokenFrame = oldTF
+    end)
+    Check(okC, "Abzeichen als Register: Leerzustand ohne Titel, Abschnitte, Auswahl, Karte - nichts verloren, kein Muell"
+        .. (okC and "" or (": " .. tostring(errC))))
+
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett
     -- auf Wunsch. Es bleibt ein Akzent (accent = purple = violet = brandA).
     local ok4, err4 = pcall(function()

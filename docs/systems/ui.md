@@ -1931,10 +1931,45 @@ der Liste). Kein neuer Baustein, keine Änderung an `ui/style.lua` oder
 `ui/register.lua`; Liste, Kopfzeilen, Auswahl, Balken und Atmosphäre sind
 seit 6.7.1.0 derselbe Code wie bei den Fertigkeiten.
 
+### Abzeichen *(6.7.3.0, `ui/currency.lua`)*
+
+Beta-Test: das Währungsfenster (Reiter „Abzeichen“) im selben System.
+Das dritte Register nach Ruf und Fertigkeiten, Stil `S.CHARACTER_INFO`.
+
+**Gemessen** (`/wcui fenster`, Stufe 19 ohne Währungen): `TokenFrame`,
+Bildlauf `TokenFrame.ScrollBar` (`minimal-scrollbar-*`), rechts nur der
+Hinweis „Wählt eine Währung, um ihre Details anzuzeigen.“ **Ungemessen:**
+Schlüssel der Liste (`listKeys`: `ScrollBox`, `Container`,
+`ScrollFrame`), der Zeilen (wie im Ruf erwartet: `.Content`, `.Name`) und
+der Detailansicht (Schlüssel, globale Namen, sonst Suche nach dem Kind mit
+dem längsten Text). Kopfzeilen vermutlich dieselbe Vorlage wie im Ruf.
+
+| | Abzeichen |
+|---|---|
+| Liste | angehobene Fläche, Abschnitte (Band, Raute, Linie), Haarlinien, Auswahl – wie Ruf |
+| Zeile | Symbol, Name, Anzahl unverändert; kein Balken (keiner erfunden) |
+| Karte | Titel = oberste Zeile, Beschreibung, `tail` (was folgt; Häkchen rücken wie im Ruf, falls es welche gibt), `compact` |
+| Codex-Zeichen | nein |
+
+**Leerzustand** (neu im Register, gilt für alle): hat die Detailansicht
+höchstens **eine** sichtbare Schriftzeile (ohne Häkchen), ist nichts
+gewählt. Dann nur Fläche und Kante; Titel, Beschreibung, Balken-Linie und
+Bereiche werden erst bestimmt, wenn Inhalt da ist – vorher wäre der
+Hinweis für immer Titel (16 pt) und Beschreibung geworden. `/wcui fenster`:
+„Abzeichen, Detailansicht: Leerzustand …“. Dazu: `Longest`/`Topmost`
+zählen nur sichtbare Zeilen (ein ausgeblendeter Hinweis ist weder Titel
+noch Beschreibung); die per Suche gefundene Detailansicht gilt nur, solange
+sie sichtbar ist; `R.Options` legt erst mit dem ersten Häkchen eine
+Tabelle an (vorher: `{}` je Durchlauf in jeder Detailansicht ohne Häkchen,
+also auch bei den Fertigkeiten).
+
+**Grenze:** Kehrt eine schon gestaltete Detailansicht in den Leerzustand
+zurück (Auswahl aufgehoben), bleiben Titel und Beschreibung die zuletzt
+bestimmten; ihre Lage wird weiter je Durchlauf vermessen.
+
 ### Nächste Fenster
 
-Vorgesehen: Abzeichen (Reiter des Charakterfensters →
-`S.CHARACTER_INFO`, vermutlich ein weiteres Register), Berufe und
+Vorgesehen: Berufe und
 Statistiken (`S.CALM`), Gilde (mittlere Atmosphäre), Talente
 (Klassenfarbe). Migrieren heißt: Name in
 `S.SCOPES`, ein Modul nach dem Muster von `ui/reputation.lua` nur dort,

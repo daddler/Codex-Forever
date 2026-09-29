@@ -48,6 +48,7 @@
 --                 bekommt den abgesetzten Bereich
 --   compact       true: Karte endet immer unter dem Inhalt (sonst nur,
 --                 wenn Haekchen geruckt sind)
+--   listKeys      Schluessel der Liste am Fenster (Standard { "ScrollBox" })
 --   key           Kurzname fuer die wiederverwendeten Listen (W.Regions)
 --------------------------------------------------
 
@@ -141,11 +142,13 @@ local function InTree(t, root)
 end
 
 -- Schriftzeile mit dem laengsten Text unter `f` (bis zwei Ebenen, ohne
--- Haekchen). Laenge in Bytes - nur zum Vergleich, nie zur Anzeige.
+-- Haekchen, nur sichtbare - 6.7.3.0: ein ausgeblendeter Hinweis des
+-- Leerzustands ist keine Beschreibung). Laenge in Bytes - nur zum
+-- Vergleich, nie zur Anzeige.
 local function Longest(f, depth, skip, best, len)
     if not f or depth > 2 then return best, len end
     for _, r in ipairs(W.Regions(f, "regDesc", depth)) do
-        if r ~= skip and Kind(r) == "FontString" then
+        if r ~= skip and Kind(r) == "FontString" and Visible(r) then
             local t = TextOf(r)
             if t and #t > len then best, len = r, #t end
         end
@@ -156,11 +159,11 @@ local function Longest(f, depth, skip, best, len)
     return best, len
 end
 
--- Oberste Schriftzeile mit Text unter `f` (bis zwei Ebenen).
+-- Oberste sichtbare Schriftzeile mit Text unter `f` (bis zwei Ebenen).
 local function Topmost(f, depth, best, top)
     if not f or depth > 2 then return best, top end
     for _, r in ipairs(W.Regions(f, "regTop", depth)) do
-        if Kind(r) == "FontString" and TextOf(r) then
+        if Kind(r) == "FontString" and Visible(r) and TextOf(r) then
             local t = Edge(r, "GetTop")
             if t and (not top or t > top) then best, top = r, t end
         end
@@ -309,9 +312,10 @@ function RG.New(cfg)
         return nil
     end
 
+    R.LIST_KEYS = cfg.listKeys or { "ScrollBox" }
+
     function R.List(rf)
-        local l = rf.ScrollBox
-        return IsFrame(l) and l or nil
+        return ByKeys(rf, R.LIST_KEYS)
     end
 
     function R.ScrollBar(rf)
@@ -341,7 +345,9 @@ function RG.New(cfg)
             if IsFrame(_G[n]) then return _G[n] end
         end
         if cfg.detailSearch then
-            if R.found and R.found.root == rf then return R.found.frame end
+            -- Gemerkt, solange sichtbar: im Leerzustand kann der Hinweis in
+            -- einem eigenen Rahmen stehen, der mit der Auswahl verschwindet.
+            if R.found and R.found.root == rf and Visible(R.found.frame) then return R.found.frame end
             local list, bar = R.List(rf), R.ScrollBar(rf)
             local best, blen = nil, R.DESC_MIN - 1
             for _, ch in ipairs(W.Children(rf, "regDetail")) do
@@ -593,7 +599,9 @@ function RG.New(cfg)
         local det = d.frame
         local left, top = Edge(det, "GetLeft"), Edge(det, "GetTop")
         if not left or not top then return nil end
-        local list, why = {}, nil
+        -- Die Liste erst mit dem ersten Haekchen (6.7.3.0): ohne Haekchen
+        -- laeuft das in jedem Durchlauf, und ein {} je Durchlauf ist Muell.
+        local list, why = nil, nil
         for _, ch in ipairs(W.Children(det, "regOptAll")) do
             if IsFrame(ch) and Visible(ch) then
                 local kind = Kind(ch)
@@ -604,6 +612,7 @@ function RG.New(cfg)
                         o.label = FirstRegion(ch, "FontString") ~= nil
                             or (IsFrame(ch.Text) and Kind(ch.Text) == "FontString")
                         if not o.label then why = "Beschriftung nicht am Häkchen" end
+                        list = list or {}
                         list[#list + 1] = o
                     end
                 elseif kind == "Button" and ch ~= det.CloseButton then
@@ -611,7 +620,7 @@ function RG.New(cfg)
                 end
             end
         end
-        if #list == 0 then return nil end
+        if not list then return nil end
         local first, low = list[1].y, list[1].yb
         for _, o in ipairs(list) do
             if o.y > first then first = o.y end
@@ -785,6 +794,30 @@ function RG.New(cfg)
         R.PlaceCard(d, bottom and (bottom - R.CARD_BOTTOM) or nil)
     end
 
+    -- LEERZUSTAND (6.7.3.0, gemessen in den Abzeichen): ist nichts gewaehlt,
+    -- zeigt die Detailansicht nur einen Hinweis ("Waehlt eine Waehrung, um
+    -- ihre Details anzuzeigen."). Der ist dann zugleich oberste und laengste
+    -- Zeile - ohne diese Pruefung wuerde er Titel (16 pt) und Beschreibung
+    -- der Karte, und zwar fuer immer (beides wird einmal bestimmt). Leer
+    -- heisst: hoechstens EINE sichtbare Schriftzeile mit Text (ohne
+    -- Haekchen). Dann bleibt nur die Flaeche mit ihrer Kante; Titel,
+    -- Beschreibung und Bereiche werden erst bestimmt, wenn Inhalt da ist.
+    local function CountTexts(f, depth, n)
+        if not f or depth > 2 or n > 1 then return n end
+        for _, r in ipairs(W.Regions(f, "regEmpty", depth)) do
+            if Kind(r) == "FontString" and not S.own[r] and Visible(r) and TextOf(r) then n = n + 1 end
+        end
+        for _, ch in ipairs(W.Children(f, "regEmpty", depth)) do
+            if n > 1 then break end
+            if IsFrame(ch) and Kind(ch) ~= "CheckButton" and Visible(ch) then n = CountTexts(ch, depth + 1, n) end
+        end
+        return n
+    end
+
+    function R.Empty(det)
+        return CountTexts(det, 0, 0) <= 1
+    end
+
     -- Im Fenster: dieselbe angehobene Flaeche wie die Liste (ein Bereich
     -- der Oberflaeche), oben eine feine Kante in der Klassenfarbe. Frei am
     -- Bildschirm (anderer Client): eine deckende Tafel.
@@ -809,10 +842,22 @@ function RG.New(cfg)
             d.line.l:SetDrawLayer("BACKGROUND", -2)
             d.line.r:SetDrawLayer("BACKGROUND", -2)
             S.PlaceTop(d.line, det, R.DETAIL_INSET)
-            d.title = R.DetailTitle(det)
-            d.styledTitle = d.title and true or false
             R.DetailParts(d)
             details[det] = d
+        end
+        -- Titel erst, wenn Inhalt da ist (Leerzustand, siehe oben).
+        if not d.settled then
+            d.empty = R.Empty(det)
+            if d.empty then
+                if not d.inTree then
+                    W.HideByAtlas(det)
+                    W.Grey(det)
+                end
+                return d
+            end
+            d.settled = true
+            d.title = R.DetailTitle(det)
+            d.styledTitle = d.title and true or false
         end
         if not d.bar then
             d.bar = R.DetailBar(det)
@@ -892,6 +937,8 @@ function RG.New(cfg)
             out[#out + 1] = string.format("   %s, Detailansicht: nicht gefunden", L)
         elseif not d then
             out[#out + 1] = string.format("   %s, Detailansicht: %s", L, Visible(det) and "offen, noch nicht gestaltet" or "zu")
+        elseif not d.settled then
+            out[#out + 1] = string.format("   %s, Detailansicht: Leerzustand (nur ein Hinweis, nichts gewählt) – Fläche ja, Titel und Karte folgen mit Inhalt", L)
         else
             local shown = 0
             for _, key in ipairs(R.DETAIL_DECOR) do

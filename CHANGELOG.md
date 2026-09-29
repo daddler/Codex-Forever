@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.3.0] – 2026-09-29
+
+**Die Abzeichen im neuen Stil.** Deine Währungen liegen wie Ruf und Fertigkeiten auf einer ruhigen, leicht angehobenen Fläche; Gruppen stehen als eigene Abschnitte mit Raute und Linie in deiner Klassenfarbe, die Einträge sind fein voneinander abgesetzt, die gewählte Währung trägt einen schmalen Streifen. Symbol, Name und Anzahl bleiben, wie das Spiel sie zeigt.
+
+**Die Detailansicht der Abzeichen ist eine Karte.** Name oben, darunter die Beschreibung, was folgt in einem eigenen, abgesetzten Bereich; die Karte endet unter ihrem Inhalt. Ist noch keine Währung gewählt, bleibt es bei der ruhigen Fläche mit dem Hinweis des Spiels.
+
+### Technisch
+
+- Neu `ui/currency.lua` (`WeintCodex.UICurrency`): `TokenFrame` als drittes Register. Gemessen nur der Leerzustand (Liste leer, Hinweis rechts); Liste, Zeilen und Detailansicht über mehrere Schlüssel, dann Suche.
+- `ui/register.lua`, allgemein: **Leerzustand** – zeigt die Detailansicht nur eine Schriftzeile (Hinweis), werden Titel und Beschreibung noch nicht bestimmt (sonst wäre der Hinweis für immer Titel in 16 pt); `listKeys`; Beschreibung und Titel nur aus sichtbaren Zeilen; gefundene Detailansicht nur gemerkt, solange sichtbar; `R.Options` legt ohne Häkchen keine Tabelle mehr an (traf auch die Fertigkeiten: eine leere Tabelle je Durchlauf).
+- `load_test.lua`: Abzeichen leer und mit Währung, mit Fallen (Hinweis über dem Titel und länger als die Beschreibung).
+
 ## [6.7.2.2] – 2026-09-29
 
 **Das PvP-Fenster ist jetzt wirklich im neuen Stil.** Bisher erkannte WeintCodex den Reiter „Spieler gegen Spieler“ nicht und ließ ihn, wie er war. Jetzt steht dein Wappen als Mittelpunkt vor einem weichen dunklen Hof, Rang, Medaillon und Rangpunkte liegen gemeinsam auf einer ruhigen, leicht angehobenen Fläche.
