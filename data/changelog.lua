@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.7.2.0",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDas PvP-Fenster ist ein PvP-Profil.|r Dein Rangsymbol steht als Mittelpunkt vor einem weichen dunklen Hof mit einem Hauch Licht; Symbol, Rang, Rangpunkte und Fortschritt liegen gemeinsam auf einer ruhigen, leicht angehobenen Fläche unter einer feinen Linie mit Raute. Die Rangpunkte sind etwas größer, ihre Farbe bleibt, wie das Spiel sie zeigt.",
+            "|cff7C6CFFRang und Belohnung rechts als Karte.|r Der Rang oben groß in seiner Farbe, darunter eine feine Linie und die Beschreibung; vor „Nächste Belohnungen“ eine Linie mit Raute, die Belohnung – Symbol, Name in ihrer Qualitätsfarbe, Beschreibung – auf einer eigenen, leicht vertieften Fläche. Die Karte endet unter ihrem Inhalt.",
+            "|cff7C6CFFEtwas mehr Atmosphäre im PvP.|r Eine kräftigere Randabdunklung und unten am Rand zwei kaum sichtbare, entfernte Fackeln – kein Bild, nichts hinter Text.",
+        },
+    },
+    {
         version = "6.7.1.0",
         date    = "29.09.2026",
         notes   = {

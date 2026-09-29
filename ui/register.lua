@@ -184,7 +184,51 @@ local function ShowAtmos(a, on)
     for _, t in ipairs(a.parts) do t:SetShown(on) end
 end
 
+-- Balken finden (6.7.2.0 aus dem Register herausgeloest - auch das PvP-
+-- Fenster braucht sie): ein Statusbalken oder ein Rahmen, der die
+-- Fuellung "common-stat-bar-white" traegt (gemessen im Ruf), bis zwei
+-- Ebenen tief.
+RG.FILL_ATLAS = "^common%-stat%-bar%-white"
+
+local function HasFill(f)
+    for _, r in ipairs(W.Regions(f, "regDetFill")) do
+        local a = AtlasOf(r)
+        if a and a:find(RG.FILL_ATLAS) then return true end
+    end
+    return false
+end
+
+local function FindBar(f, depth, skip)
+    if not f or depth > 2 then return nil end
+    for _, ch in ipairs(W.Children(f, "regDetBar", depth)) do
+        if IsFrame(ch) and ch ~= skip and (Kind(ch) == "StatusBar" or HasFill(ch)) then return ch end
+    end
+    for _, ch in ipairs(W.Children(f, "regDetBar", depth)) do
+        local hit = IsFrame(ch) and ch ~= skip and FindBar(ch, depth + 1, skip)
+        if hit then return hit end
+    end
+    return nil
+end
+
+-- Die Fuellung eines Balkens: beim Statusbalken seine Textur, sonst das
+-- Bild "common-stat-bar-white" an ihm. Ohne beides: nil (dann liegt die
+-- Veredelung auf dem ganzen Balken).
+function RG.BarFill(bar)
+    if Kind(bar) == "StatusBar" and bar.GetStatusBarTexture then
+        local ok, t = pcall(bar.GetStatusBarTexture, bar)
+        if ok and IsFrame(t) then return t, "Statusbalken" end
+    end
+    for _, r in ipairs(W.Regions(bar, "regFill")) do
+        local a = AtlasOf(r)
+        if a and a:find(RG.FILL_ATLAS) then return r, "Bild" end
+    end
+    return nil, "keine"
+end
+
+-- Werkzeuge fuer andere Fenster derselben Sprache (ui/pvp.lua).
 RG.Visible, RG.Kind, RG.TextOf, RG.InTree = Visible, Kind, TextOf, InTree
+RG.IsFrame, RG.AtlasOf, RG.Edge, RG.FindBar = IsFrame, AtlasOf, Edge, FindBar
+RG.Longest, RG.Topmost, RG.ShowZone, RG.ShowAtmos = Longest, Topmost, ShowZone, ShowAtmos
 
 -- Alle Register, in der Reihenfolge ihres Anlegens. ui/windows.lua ruft
 -- jedes in jedem Durchlauf ueber das Charakterfenster (W.Inner) und im
@@ -201,6 +245,8 @@ function RG.New(cfg)
     R.STYLE = cfg.style or S.CHARACTER_INFO
     R.CFG = cfg
     RG.all[#RG.all + 1] = R
+    -- Reiter des Charakterfensters: W.Inner ruft jeden (ui/windows.lua, W.TABS).
+    W.TABS[#W.TABS + 1] = R
     -- Der Stil gilt ab dem ersten Durchlauf fuer das ganze Fenster (auch
     -- fuer Kopfzeilen, die W.HideByAtlas vor R.Update gestaltet).
     for _, path in ipairs(R.FRAMES) do S.SCOPES[path] = R.STYLE end
@@ -227,7 +273,7 @@ function RG.New(cfg)
     R.NAME_KEYS = { "Name", "Title", "Label" }
     R.BAR_KEYS = cfg.barKeys or { "StatusBar", "Bar" }
     -- Fuellung eines Balkens, der kein Statusbalken ist (gemessen im Ruf).
-    R.FILL_ATLAS = "^common%-stat%-bar%-white"
+    R.FILL_ATLAS = RG.FILL_ATLAS
     -- Hervorhebung des Spiels unter der Maus und an der gewaehlten Zeile
     -- (gemessen im Ruf: Content.BackgroundHighlight, braun-gold).
     R.HIGHLIGHT_ATLAS = "^charactercreate%-customize%-dropdown%-linemouseover"
@@ -336,28 +382,6 @@ function RG.New(cfg)
             or FirstRegion(c, "FontString") or FirstRegion(row, "FontString")
     end
 
-    -- Balken finden: ein Statusbalken oder ein Rahmen, der die Fuellung
-    -- "common-stat-bar-white" traegt, bis zwei Ebenen tief.
-    local function HasFill(f)
-        for _, r in ipairs(W.Regions(f, "regDetFill")) do
-            local a = AtlasOf(r)
-            if a and a:find(R.FILL_ATLAS) then return true end
-        end
-        return false
-    end
-
-    local function FindBar(f, depth)
-        if not f or depth > 2 then return nil end
-        for _, ch in ipairs(W.Children(f, "regDetBar", depth)) do
-            if IsFrame(ch) and (Kind(ch) == "StatusBar" or HasFill(ch)) then return ch end
-        end
-        for _, ch in ipairs(W.Children(f, "regDetBar", depth)) do
-            local hit = IsFrame(ch) and FindBar(ch, depth + 1)
-            if hit then return hit end
-        end
-        return nil
-    end
-
     -- Der Balken einer Zeile. Ueber den Schluessel jede Art von Rahmen
     -- (gemessen im Ruf: kein Statusbalken), sonst der erste Balken bis zwei
     -- Ebenen tief (6.7.1.0: auch einer mit Bild als Fuellung - die Schluessel
@@ -367,20 +391,7 @@ function RG.New(cfg)
         return ByKeys(c, R.BAR_KEYS) or ByKeys(row, R.BAR_KEYS) or FindBar(row, 0)
     end
 
-    -- Die Fuellung eines Balkens: beim Statusbalken seine Textur, sonst das
-    -- Bild "common-stat-bar-white" an ihm. Ohne beides: nil (dann liegt die
-    -- Veredelung auf dem ganzen Balken).
-    function R.BarFill(bar)
-        if Kind(bar) == "StatusBar" and bar.GetStatusBarTexture then
-            local ok, t = pcall(bar.GetStatusBarTexture, bar)
-            if ok and IsFrame(t) then return t, "Statusbalken" end
-        end
-        for _, r in ipairs(W.Regions(bar, "regFill")) do
-            local a = AtlasOf(r)
-            if a and a:find(R.FILL_ATLAS) then return r, "Bild" end
-        end
-        return nil, "keine"
-    end
+    R.BarFill = RG.BarFill
 
     R.InTree = InTree
 

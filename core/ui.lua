@@ -280,6 +280,11 @@ WeintCodex.GameColors = {
     hairline      = {1.000, 1.000, 1.000, 0.055}, -- Trennlinie zwischen Zeilen und Bereichen
     selectLift    = {1.000, 1.000, 1.000, 0.025}, -- gewaehlte Zeile: eine Spur heller
     codexSigil    = {1.000, 1.000, 1.000, 0.045}, -- Zeichen im Hintergrund: erst beim Hinsehen
+    -- 6.7.2.0 (PvP): ein Element als Mittelpunkt (S.Stage) und entfernte
+    -- Fackeln - die einzige warme Farbe, als Licht, nie als Flaeche.
+    stageShade    = {0.000, 0.000, 0.000, 0.40},  -- dunkler Hof hinter dem Mittelpunkt
+    stageLight    = {1.000, 1.000, 1.000, 0.06},  -- Hauch Licht darin
+    torchGlow     = {1.000, 0.620, 0.300, 0.055}, -- entfernte Fackel, unten am Rand
     hoverGlow     = {1.000, 1.000, 1.000, 0.40},  -- ... und ein weisser Schein
     targetGlow    = {0.486, 0.424, 1.000, 0.85},  -- = Akzent: Leuchten des Ziels
     targetMark    = {1.000, 1.000, 1.000, 1.00},  -- Zielmarken links und rechts

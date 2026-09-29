@@ -1826,11 +1826,68 @@ Zeilen und – vor allem – die Detailansicht. Steht dort „nicht
 gefunden“, sind Liste, Balken und Atmosphäre trotzdem gestaltet, nur die
 Karte fehlt; der nächste Schritt ist dann die Messung.
 
+### PvP-Profil *(6.7.2.0, `ui/pvp.lua`)*
+
+Beta-Test: der Reiter „Spieler gegen Spieler“ als hochwertiges
+PvP-Profil – Rang, Rangsymbol, Rangpunkte, nächste Belohnung; weniger
+schwarze Fläche. Kein Register (keine Liste), sondern ein Profil mit
+Mittelpunkt. Trägt sich in `W.TABS` ein, Stil `S.CHARACTER_INFO`
+(Klassenfarbe als Akzent, wie Ruf und Fertigkeiten – derselbe Reiterstreifen;
+Gold daneben wäre ein zweiter Akzent in einem Bereich).
+
+**Ungemessen.** Wie der Forever-Client den Reiter baut, hat niemand
+gelesen (kein Screenshot dazu, kein `/wcui fenster`). Gefunden wird über
+Lage und Form (`PV.Scan`, wiederholt, bis etwas gefunden ist):
+
+| Teil | Wie |
+|---|---|
+| Fenster | `PVPFrame`, `HonorFrame`, `CharacterFrame.PVPFrame`/`.HonorFrame` – der erste sichtbare |
+| Detailansicht | Kind des Fensters mit dem längsten Text (≥ 40 Bytes) |
+| Rangsymbol | größtes sichtbares, etwa quadratisches Bild (≥ 40 px, Seiten 0,75–1,33) außerhalb der Detailansicht, höchstens 30 % der Fensterfläche (sonst Hintergrund) |
+| Rangpunkte | Schriftzeile außerhalb mit „Zahl / Zahl“ (Form, kein Wort) |
+| Rang | Schriftzeile außerhalb, deren Mitte der des Symbols am nächsten ist |
+| Balken | `RG.FindBar` außerhalb der Detailansicht |
+| Titel | oberste Schriftzeile der Detailansicht |
+| Belohnung | Knopf mit `.Icon` oder etwa quadratischem Bild in der Detailansicht |
+| Überschrift | Schriftzeile höchstens 40 px über der Belohnung, die ihr am nächsten ist |
+
+**Links / Mitte:** `S.Stage` am Rangsymbol (dunkler Hof `stageShade`
+2,4 × Symbol, Hauch Licht `stageLight` 1,5 ×, auf dem Charakterfenster,
+also unter dem Symbol). Um Symbol, Rang, Rangpunkte und Balken (je
+Durchlauf vermessen, `PV.PlaceArea`) eine angehobene Fläche mit Schatten
+und Lichtkante, darüber `S.Ornament`. Rangpunkte 13 pt, **Farbe des
+Spiels** (`S.Title(fs, 13, false)`); Balken mit Tiefe, Farbe des Spiels.
+
+**Rechts:** Rahmen der Detailansicht weg, Karte (`surfaceDetail`,
+Schatten, Kante in der Klassenfarbe), Titel 16 pt **in seiner Farbe**,
+Linie darunter; Ornament über „Nächste Belohnungen“; die Belohnung von
+ihrer Oberkante bis zur tiefsten Zeile darunter auf `surfaceSunken`;
+Karte endet 12 px unter dem Inhalt. Symbol, Name (Qualitätsfarbe) und
+Text der Belohnung unverändert.
+
+**Atmosphäre:** Vignette 45 % / 56 px (Ruf 35 %), neutrales Licht,
+zwei entfernte Fackeln (`torchGlow`, warm, 5,5 %, `halo` 220 px) unten
+am linken Rand und vor der Detailansicht. Keine Arena-Silhouette: kein
+passendes Motiv unter den Grafiken, keins erzwungen.
+
+**Neue generische Bausteine** (`ui/style.lua`): `S.Stage`/`S.FitStage`,
+`S.Ornament`/`S.PlaceOrnament`, `S.PlaceRect`, `S.Title(…, false)`. Im
+Register ist dasselbe Ornament noch von Hand gebaut (Linie + Raute) –
+umstellen, wenn es dort ohnehin angefasst wird. **Blizzard-Teile:**
+Rangsymbol, Rang, Rangpunkte, Balken, Detailansicht, Titel, Texte,
+Belohnungsknopf samt Symbol und Name – alle unverändert in Lage, Text und
+Farbe; nur Schriftgröße von Rangpunkten und Titel.
+
+`/wcui fenster` über dem Reiter: „PvP (Stil …): Fenster …“, „PvP, Rang:
+Symbol … · Rang … · Punkte … · Balken …“, „PvP, Rangbereich: …“, „PvP,
+Detail: … · Titel … · Belohnung … · Überschrift … · Karte endet …“ –
+fehlt etwas, steht dort „FEHLT“.
+
 ### Nächste Fenster
 
 Vorgesehen: Abzeichen (Reiter des Charakterfensters →
 `S.CHARACTER_INFO`, vermutlich ein weiteres Register), Berufe und
-Statistiken (`S.CALM`), PvP, Gilde (mittlere Atmosphäre), Talente
+Statistiken (`S.CALM`), Gilde (mittlere Atmosphäre), Talente
 (Klassenfarbe). Migrieren heißt: Name in
 `S.SCOPES`, ein Modul nach dem Muster von `ui/reputation.lua` nur dort,
 wo das Fenster mehr braucht als die Bausteine.

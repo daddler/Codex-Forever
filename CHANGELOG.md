@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.2.0] – 2026-09-29
+
+**Das PvP-Fenster ist ein PvP-Profil.** Dein Rangsymbol steht als Mittelpunkt vor einem weichen dunklen Hof mit einem Hauch Licht; Symbol, Rang, Rangpunkte und Fortschritt liegen gemeinsam auf einer ruhigen, leicht angehobenen Fläche unter einer feinen Linie mit Raute. Die Rangpunkte sind etwas größer, ihre Farbe bleibt, wie das Spiel sie zeigt.
+
+**Rang und Belohnung rechts als Karte.** Der Rang oben groß in seiner Farbe, darunter eine feine Linie und die Beschreibung; vor „Nächste Belohnungen“ eine Linie mit Raute, die Belohnung – Symbol, Name in ihrer Qualitätsfarbe, Beschreibung – auf einer eigenen, leicht vertieften Fläche. Die Karte endet unter ihrem Inhalt.
+
+**Etwas mehr Atmosphäre im PvP.** Eine kräftigere Randabdunklung und unten am Rand zwei kaum sichtbare, entfernte Fackeln – kein Bild, nichts hinter Text.
+
+### Technisch
+
+- Neu `ui/pvp.lua` (`WeintCodex.UIPvP`): PvP-Reiter als Profil. Ungemessen – alles über Lage und Form gefunden (Detailansicht = Kind mit dem längsten Text, Rangsymbol = größtes etwa quadratisches Bild außerhalb, Rangpunkte = „Zahl / Zahl“, Rang = Zeile nächst dem Symbol, Belohnung = Knopf mit Symbol, Überschrift = Zeile direkt darüber). Nichts bewegt, keine Farbe des Spiels überschrieben; `/wcui fenster` nennt, was gefunden wurde.
+- `ui/style.lua`, generisch: `S.Stage`/`S.FitStage` (Mittelpunkt), `S.Ornament`/`S.PlaceOrnament` (Linie mit Raute), `S.PlaceRect` (Fläche nach Zahlen), `S.Title(fs, size, false)` behält die Farbe des Spiels. `core/ui.lua`: `stageShade`, `stageLight`, `torchGlow`.
+- `W.TABS` in `ui/windows.lua`: gestaltete Reiter des Charakterfensters tragen sich selbst ein (Register und PvP); `RG.FindBar`/`RG.BarFill` und weitere Werkzeuge aus dem Register herausgelöst.
+
 ## [6.7.1.0] – 2026-09-29
 
 **Die Fertigkeiten im neuen Stil.** Berufe, Sekundäre Fertigkeiten und Waffenfertigkeiten stehen als eigene Abschnitte mit Raute und Linie in deiner Klassenfarbe, die Einträge sind fein voneinander abgesetzt, die gewählte Fertigkeit trägt einen schmalen Streifen in deiner Klasse. Die Liste liegt auf einer ruhigen, leicht angehobenen Fläche wie im Ruf.

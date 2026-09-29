@@ -139,6 +139,9 @@ local DECOR = { "NineSlice", "Bg", "Background", "TopTileStreaks", "Inset", "Ins
 
 local done = {}
 W.done = done
+-- Reiter des Charakterfensters mit eigener Gestaltung: { Update(f), Report(f, out) }.
+-- Sie tragen sich selbst ein (ui/register.lua, ui/pvp.lua).
+W.TABS = {}
 local own = S.own   -- unsere eigenen Flaechen (dieselbe Tabelle wie in ui/style.lua)
 W.own = own
 
@@ -1593,8 +1596,7 @@ function W.SoftReport(f)
     local out = {}
     local CS = WeintCodex.UICharacter
     if CS and CS.ReportFrame then CS.ReportFrame(f, out) end
-    local RG = WeintCodex.UIRegister
-    for _, R in ipairs(RG and RG.all or {}) do R.Report(f, out) end
+    for _, tab in ipairs(W.TABS) do tab.Report(f, out) end
     if type(f) == "table" and f.ScrollContainer and W.mapMask and W.mapMask.report then
         out[#out + 1] = W.mapMask.report
     end
@@ -2181,12 +2183,10 @@ function W.Inner()
                 -- Das Charakterfenster als Ganzes: ui/character.lua.
                 local CS = WeintCodex.UICharacter
                 if CS then CS.Update(f, done[f]) end
-                -- Register (ui/register.lua): Ruf, Fertigkeiten - Liste des
-                -- Spiels mit Detailkarte, je ein Reiter des Fensters.
-                local RG = WeintCodex.UIRegister
-                if RG then
-                    for _, R in ipairs(RG.all) do R.Update(f) end
-                end
+                -- Gestaltete Reiter (W.TABS): Register (ui/register.lua: Ruf,
+                -- Fertigkeiten) und PvP (ui/pvp.lua). Jeder prueft selbst,
+                -- ob sein Reiter offen ist.
+                for _, tab in ipairs(W.TABS) do tab.Update(f) end
             end
             if W.WantsLarge(n) then
                 SkinSpellItems(f, 0)

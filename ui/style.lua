@@ -397,11 +397,77 @@ end
 -- Schrift einer fremden Zeile: Groesse, Farbe, Schatten. Der Text bleibt.
 local function StyleText(fs, size, c)
     K.SetFont(fs, size)
-    fs:SetTextColor(c[1], c[2], c[3], 1)
+    if c then fs:SetTextColor(c[1], c[2], c[3], 1) end
     if fs.SetShadowOffset then fs:SetShadowOffset(1, -1) end
     if fs.SetShadowColor then fs:SetShadowColor(0, 0, 0, 0.9) end
 end
+-- `c` = false (6.7.2.0): Farbe des Spiels behalten - wo sie Bedeutung
+-- traegt (Rang, Qualitaet), bekommt die Zeile nur Groesse und Schatten.
 function S.Title(fs, size, c)
     if type(fs) ~= "table" or not fs.SetTextColor then return false end
-    return (pcall(StyleText, fs, size, c or C.textBright))
+    if c == nil then c = C.textBright end
+    return (pcall(StyleText, fs, size, c))
+end
+
+--------------------------------------------------
+-- Mittelpunkt, Ornament, Flaeche nach Zahlen (6.7.2.0)
+--------------------------------------------------
+-- Buehne: ein Element als Mittelpunkt, ohne es anzufassen - dahinter ein
+-- weicher dunkler Hof (nimmt die Umgebung zurueck) und darin ein Hauch
+-- Licht. Beides liegt auf `host` in der untersten Ebene, also unter dem
+-- Element, wenn `host` darunter liegt (ein Elternrahmen). Gross = Faktor
+-- zur Groesse des Elements.
+S.STAGE_SHADE, S.STAGE_LIGHT = 2.4, 1.5
+function S.Stage(host, target, sub)
+    local g = { shade = Own(host:CreateTexture(nil, "BACKGROUND", nil, sub or -5)),
+                light = Own(host:CreateTexture(nil, "BACKGROUND", nil, (sub or -5) + 1)) }
+    local sh, li = GC.stageShade, GC.stageLight
+    g.shade:SetTexture(K.MEDIA .. "halo")
+    g.shade:SetVertexColor(sh[1], sh[2], sh[3], sh[4])
+    g.light:SetTexture(K.MEDIA .. "halo")
+    g.light:SetVertexColor(li[1], li[2], li[3], li[4])
+    g.shade:SetPoint("CENTER", target, "CENTER", 0, 0)
+    g.light:SetPoint("CENTER", target, "CENTER", 0, 0)
+    g.target = target
+    return g
+end
+
+-- Groesse der Buehne nach dem Element (nur bei einer Aenderung).
+function S.FitStage(g, w, h)
+    local size = math.max(w or 0, h or 0)
+    if size <= 0 or g.size == size then return end
+    g.size = size
+    g.shade:SetSize(size * S.STAGE_SHADE, size * S.STAGE_SHADE)
+    g.light:SetSize(size * S.STAGE_LIGHT, size * S.STAGE_LIGHT)
+end
+
+-- Ornament: Linie zu beiden Seiten auslaufend, in der Mitte eine Raute mit
+-- dunklem Kern - der Abschnittsbeginn ohne eigenen Text.
+function S.Ornament(host, c, alpha)
+    local o = { line = S.Under(S.Divider(host, c, alpha or 0.45, 0), -1) }
+    o.dot = S.Diamond(host, 5, c, 0.8, 0)
+    o.dot:SetDrawLayer("BACKGROUND", 0)
+    o.hole = S.Diamond(host, 2, C.surface1, 1, 0)
+    o.hole:SetDrawLayer("BACKGROUND", 1)
+    o.hole:SetPoint("CENTER", o.dot, "CENTER", 0, 0)
+    o.parts = { o.line.l, o.line.r, o.dot, o.hole }
+    return o
+end
+
+-- Auf Hoehe `y` (relativ zur Oberkante von `host`), `inset` vom Rand.
+function S.PlaceOrnament(o, host, inset, y)
+    if o.y == y and o.host == host then return end
+    o.y, o.host = y, host
+    S.PlaceTop(o.line, host, inset, y)
+    o.dot:ClearAllPoints()
+    o.dot:SetPoint("CENTER", host, "TOP", 0, y)
+end
+
+-- Eine Flaeche nach Zahlen: links/oben/rechts/unten relativ zur linken
+-- oberen Ecke von `host` (y negativ = tiefer). Fuer Bereiche, die sich aus
+-- der Lage mehrerer Rahmen des Spiels ergeben.
+function S.PlaceRect(t, host, x1, y1, x2, y2)
+    t:ClearAllPoints()
+    t:SetPoint("TOPLEFT", host, "TOPLEFT", x1, y1)
+    t:SetPoint("BOTTOMRIGHT", host, "TOPLEFT", x2, y2)
 end

@@ -5609,6 +5609,118 @@ do
     Check(okF, "Fertigkeiten als Register: Stil, Sektionen, Balken (Farbe bleibt), Auswahl, Karte - nichts verloren, kein Muell"
         .. (okF and "" or (": " .. tostring(errF))))
 
+    -- 6.7.2.0: PvP als Profil (ui/pvp.lua). Ungemessen - gefunden wird ueber
+    -- Lage und Form. Nachgebaut nach der Beschreibung im Beta-Test: links
+    -- Rangsymbol, Rang, Rangpunkte, Balken; rechts Rang, Beschreibung,
+    -- "Naechste Belohnungen", Belohnung (Knopf mit Symbol und Name),
+    -- Beschreibung. Dazu zwei Fallen: ein Hintergrundbild (zu gross) und ein
+    -- kleines Symbol (zu klein) duerfen nicht das Rangsymbol sein.
+    local okP, errP = pcall(function()
+        local W, S, PV, RP, SK = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIPvP,
+                                 WeintCodex.UIReputation, WeintCodex.UISkills
+        assert(PV and W.TABS[1] == RP and W.TABS[2] == SK and W.TABS[3] == PV, "Reiter nicht eingetragen")
+        assert(S.SCOPES.PVPFrame == S.CHARACTER_INFO, "PvP ohne Stil der Klasse")
+        local touched = {}
+        local function Box(obj, l, t, r, b)
+            obj.GetLeft, obj.GetTop = function() return l end, function() return t end
+            obj.GetRight, obj.GetBottom = function() return r end, function() return b end
+            obj._width, obj._height = r - l, t - b
+            obj.SetPoint = function() touched[#touched + 1] = "SetPoint" end
+            obj.ClearAllPoints = function() touched[#touched + 1] = "ClearAllPoints" end
+            return obj
+        end
+        local function Line(text, l, t, r, b)
+            local fs = Box(stub.NewObject("FontString"), l, t, r, b)
+            fs._text, fs._font = text, true
+            fs.SetText = function() touched[#touched + 1] = "SetText " .. text end
+            fs.SetTextColor = function() touched[#touched + 1] = "Farbe " .. text end
+            fs.GetStringHeight = function() return t - b end
+            return fs
+        end
+        local cf = stub.NewObject("Frame")
+        local root = Box(stub.NewObject("Frame", "PVPFrame"), 100, 500, 480, 50)
+        root._parent = cf
+        local bg = Box(stub.NewObject("Texture"), 100, 500, 480, 50)            -- Hintergrund: zu gross
+        local tiny = Box(stub.NewObject("Texture"), 300, 480, 320, 460)         -- 20 px: zu klein
+        root.GetRegions = function() return bg, tiny end
+        local rankFrame = Box(stub.NewObject("Frame"), 110, 430, 250, 280)
+        local icon = Box(stub.NewObject("Texture"), 140, 420, 204, 356)
+        -- Rang unter dem Balken: die Beschreibung rechts steht dem Symbol
+        -- naeher - sie darf trotzdem nicht als Rang gelten.
+        local rank = Line("Zivilist", 130, 285, 214, 271)
+        local points = Line("Rangpunkte: 0 / 750", 120, 320, 230, 306)
+        local bar, fill = Box(stub.NewObject("StatusBar"), 120, 300, 230, 290), stub.NewObject("Texture")
+        bar.GetStatusBarTexture = function() return fill end
+        bar.SetStatusBarColor = function() touched[#touched + 1] = "Balkenfarbe" end
+        rankFrame.GetRegions = function() return icon, rank, points end
+        rankFrame.GetChildren = function() return bar end
+        -- Detailansicht rechts.
+        local det = Box(stub.NewObject("Frame"), 270, 480, 470, 60)
+        det._parent = root
+        local title = Line("Zivilist", 280, 470, 460, 454)
+        local desc = Line("Du hast noch keinen Rang in der Armee deiner Fraktion erworben.", 280, 440, 460, 400)
+        local head = Line("Nächste Belohnungen", 280, 380, 460, 366)
+        local itemDesc = Line("Ein schlichter Umhang für jene, die gerade erst ins Feld ziehen.", 280, 320, 460, 290)
+        local reward = Box(stub.NewObject("Button"), 280, 360, 460, 324)
+        local rIcon = Box(stub.NewObject("Texture"), 280, 360, 316, 324)
+        local rName = Line("Umhang des Gefreiten", 322, 358, 460, 344)
+        rName.SetFont = function() touched[#touched + 1] = "Schrift Itemname" end
+        reward.Icon = rIcon
+        reward.GetRegions = function() return rIcon, rName end
+        det.GetRegions = function() return title, desc, head, itemDesc end
+        det.GetChildren = function() return reward end
+        root.GetChildren = function() return rankFrame, det end
+        cf.GetChildren = function() return root end
+        local oldPV = _G.PVPFrame
+        _G.PVPFrame = root
+
+        PV.Update(cf)
+        local L = PV.layouts[root]
+        assert(L and L.detail == det and L.icon == icon and L.rank == rank and L.points == points and L.bar == bar,
+            "Profil nicht erkannt: Symbol " .. tostring(L and L.icon == icon) .. ", Rang " .. tostring(L and L.rank == rank))
+        assert(L.title == title and L.reward == reward and L.head == head, "Detailansicht nicht erkannt")
+        -- Rangbereich um Symbol, Rang, Punkte und Balken; Buehne am Symbol.
+        assert(L.ax1 == 20 and L.ay1 == -80 and L.ax2 == 130 and L.ay2 == -229, "Rangbereich falsch gelegt: "
+            .. tostring(L.ax1) .. "/" .. tostring(L.ay1) .. " " .. tostring(L.ax2) .. "/" .. tostring(L.ay2))
+        assert(L.stage and L.stage.target == icon and L.stage.size == 64 and L.stage.shade._parent == cf,
+            "Rangsymbol nicht als Mittelpunkt")
+        assert(L.barFinish and L.barFinish.how == "Statusbalken" and L.torchL and L.torchR and L.on,
+            "Balken oder Atmosphaere fehlt")
+        -- Karte: Linie unter dem Rang, Ornament ueber "Naechste Belohnungen",
+        -- Belohnung auf eigener Flaeche, Karte endet darunter.
+        local d = L.card
+        assert(d and d.inTree and d.yTitle == -26 and d.yHead == -100 and d.yReward == -120 and d.yLow == -190,
+            "Karte falsch vermessen")
+        assert(d.titleLine.l:IsShown() and d.rewardOrn.dot:IsShown() and d.rewardBody:IsShown() and d.cardBottom == -202,
+            "Bereiche der Karte fehlen")
+        -- Nichts verloren, keine Farbe des Spiels ueberschrieben, nichts verschoben.
+        assert(#touched == 0, "Blizzard-Teile angefasst: " .. table.concat(touched, ", "))
+        for _, t in ipairs({ icon, rank, points, bar, title, desc, head, itemDesc, reward, rIcon, rName }) do
+            assert(t:IsShown() and t:GetAlpha() == 1, "Inhalt ausgeblendet")
+        end
+        local rep = table.concat(PV.Report(cf, {}), "\n")
+        assert(rep:find("PvP (Stil ruhig, Klasse): Fenster PVPFrame", 1, true)
+            and rep:find("Punkte „Rangpunkte: 0 / 750“", 1, true) and rep:find("Rang „Zivilist“", 1, true)
+            and rep:find("Überschrift „Nächste Belohnungen“", 1, true) and rep:find("Karte endet bei -202", 1, true),
+            "Bericht: " .. rep)
+        -- Anderer Reiter: Atmosphaere weg.
+        root._scripts.OnHide(root)
+        assert(not L.on and not L.torchL:IsShown(), "Atmosphaere bleibt ueber anderem Reiter")
+        root._scripts.OnShow(root)
+        for _ = 1, 3 do PV.Update(cf) end
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do PV.Update(cf) end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        print(string.format("    (20 Durchlaeufe PvP: %.1f KB)", grew))
+        assert(grew < 1, string.format("PvP legt im Takt Muell an: %.1f KB", grew))
+        _G.PVPFrame = oldPV
+    end)
+    Check(okP, "PvP als Profil: Rangsymbol als Mittelpunkt, Rangbereich, Karte mit Belohnung - Farben bleiben, nichts verloren, kein Muell"
+        .. (okP and "" or (": " .. tostring(errP))))
+
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett
     -- auf Wunsch. Es bleibt ein Akzent (accent = purple = violet = brandA).
     local ok4, err4 = pcall(function()
