@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.8.0.0",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFF„Suche nach Gruppe“ in der ruhigen Oberfläche.|r Kein Schein in deiner Klassenfarbe mehr oben im Fenster, sondern ein Hauch neutrales Licht; die Flächen im Fenster tragen einen weichen Schatten und oben eine feine Kante in Gold, der gewählte Seitenreiter ebenfalls Gold – wie Spielmenü, Gilde und Karte.",
+            "|cff7C6CFFRollen und Hinweise unverändert.|r Rollensymbole, die Fahne für neue Spieler, die Auswahl der Rolle, Texte und Knöpfe bleiben, wie das Spiel sie zeigt.",
+        },
+    },
+    {
         version = "6.7.9.0",
         date    = "29.09.2026",
         notes   = {

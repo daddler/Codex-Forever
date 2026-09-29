@@ -6674,6 +6674,61 @@ do
     Check(okQ, "Karte & Questlog: Gold, Questlog auf Flaeche, Zonen als Abschnitte, weicher Rand der Karte bleibt"
         .. (okQ and "" or (": " .. tostring(errQ))))
 
+    -- 6.8.0.0: Suche nach Gruppe in Gold - Schein der Klasse aus, die
+    -- Innenflaechen (W.Insets, nicht ueber Namen) mit Schatten und Kante in
+    -- Gold, aus mit ihrer Flaeche.
+    local okL, errL = pcall(function()
+        local W, S, LF = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UILFG
+        local GC = WeintCodex.GameColors
+        assert(LF and W.HOSTED.LFGParentFrame[1] == LF and W.HOSTED.PVEFrame[1] == LF
+            and S.SCOPES.LFGParentFrame == S.CALM and S.SCOPES.PVEFrame == S.CALM, "Suche nach Gruppe nicht in Gold eingetragen")
+        local f = stub.NewObject("Frame", "LFGParentFrame")
+        local listing, inset = stub.NewObject("Frame"), stub.NewObject("Frame")
+        listing._parent, inset._parent = f, listing
+        listing.Inset = inset
+        listing.GetChildren = function() return inset end
+        f.GetChildren = function() return listing end
+        -- Eine Innenflaeche eines anderen Fensters darf nichts bekommen.
+        local other, otherInset = stub.NewObject("Frame"), stub.NewObject("Frame")
+        otherInset._parent = other
+        W.Insets[otherInset] = true
+        W.SkinInsets(f)
+        assert(W.Insets[inset], "Innenflaeche nicht gestaltet")
+        local glow = stub.NewObject("Texture")
+        W.done[f] = { glow = glow }
+        S.Scope(f, S.CALM)
+        local grad, classy, goldy = S.Gradient, 0, 0
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == K.Highlight() then classy = classy + 1 end
+            if c == GC.frameAccent then goldy = goldy + 1 end
+            return grad(t, dir, c, a0, a1)
+        end
+        LF.Update(f)
+        W.HoldGlow(f, "LFGParentFrame")
+        S.Gradient = grad
+        local d = LF.decks[inset]
+        assert(d and d.on and d.shadow and d.edge and LF.windows[f].light, "Innenflaeche ohne Kante oder Schatten")
+        assert(not LF.decks[otherInset], "Innenflaeche eines anderen Fensters gestaltet")
+        assert(classy == 0 and goldy > 0 and not glow:IsShown(), "nicht in Gold oder Schein der Klasse bleibt")
+        local rep = table.concat(LF.Report(f, {}), "\n")
+        assert(rep:find("Suche nach Gruppe (Stil ruhig): 1 Innenflächen mit Kante in Gold", 1, true), "Bericht: " .. rep)
+        inset:Hide()
+        LF.Update(f)
+        assert(not d.on and not d.shadow:IsShown(), "Kante bleibt ohne Innenflaeche")
+        inset:Show()
+        for _ = 1, 3 do LF.Update(f) end
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do LF.Update(f) W.HoldGlow(f, "LFGParentFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Suche nach Gruppe legt im Takt Muell an: %.1f KB", grew))
+        W.Insets[otherInset], W.done[f] = nil, nil
+    end)
+    Check(okL, "Suche nach Gruppe: Gold, Innenflaechen mit Kante und Schatten, kein Schein der Klasse"
+        .. (okL and "" or (": " .. tostring(errL))))
+
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett
     -- auf Wunsch. Es bleibt ein Akzent (accent = purple = violet = brandA).
     local ok4, err4 = pcall(function()

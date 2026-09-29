@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.8.0.0] – 2026-09-29
+
+**„Suche nach Gruppe“ in der ruhigen Oberfläche.** Kein Schein in deiner Klassenfarbe mehr oben im Fenster, sondern ein Hauch neutrales Licht; die Flächen im Fenster tragen einen weichen Schatten und oben eine feine Kante in Gold, der gewählte Seitenreiter ebenfalls Gold – wie Spielmenü, Gilde und Karte.
+
+**Rollen und Hinweise unverändert.** Rollensymbole, die Fahne für neue Spieler, die Auswahl der Rolle, Texte und Knöpfe bleiben, wie das Spiel sie zeigt.
+
+### Technisch
+
+- Neu `ui/lfg.lua` (`WeintCodex.UILFG`): `LFGParentFrame` (gemessen) und `PVEFrame` (Quelltext des Spiels) in `S.CALM`, in `W.HOSTED`. Schein der Klasse aus (`W.HoldGlow`), neutrales Licht (120 px). Jede Innenfläche des Fensters (`W.Insets`, von `W.SkinInsets` seit 6.6.2.2 gestaltet; nur die, die unter dem Fenster hängen) bekommt Schatten und Kante in Gold, aus mit ihr – gefunden ohne Namen, die Messung zeigte keinen.
+- Version 6.8.0.0 statt 6.7.10.0: ob irgendwo Fassungen als Text verglichen werden („6.7.10.0“ < „6.7.9.0“), ist ungeprüft.
+- `load_test.lua`: Innenfläche mit Kante und Schatten, die eines anderen Fensters nicht, aus mit ihr, kein Schein, Gold.
+
 ## [6.7.9.0] – 2026-09-29
 
 **Das Spielmenü in der ruhigen Oberfläche.** Statt des Scheins in deiner Klassenfarbe ein Hauch Licht von oben und eine feine Kante in Gold; unter „Spielmenü“ eine Linie mit Raute, und zwischen den Gruppen – Optionen, Addons bis Makros, Ausloggen und Spiel verlassen, Zurück zum Spiel – je eine zarte Trennlinie.

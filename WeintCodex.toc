@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.7.9.0
+## Version: 6.8.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -197,6 +197,8 @@ ui/community.lua
 ui/gamemenu.lua
 # Karte & Questlog (6.7.9.0): Questlog auf Flaeche, Abschnitte in Gold, Karte unberuehrt.
 ui/questlog.lua
+# Suche nach Gruppe (6.8.0.0): Gold, Innenflaechen mit Kante und Schatten.
+ui/lfg.lua
 ui/testmode.lua
 ui/options.lua
 ui/editmode.lua

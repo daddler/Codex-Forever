@@ -2193,6 +2193,32 @@ auf der Karte; aus, wenn die Seitenleiste zu ist.
 **Unverändert:** Farben der Quests (Schwierigkeit), Ziele, Symbole,
 Häkchen zum Verfolgen, Suche, Zähler, Filter, Markierungen auf der Karte.
 
+### Suche nach Gruppe *(6.8.0.0, `ui/lfg.lua`)*
+
+Beta-Test: „das Fenster bitte auch noch“. **Gemessen** (`/wcui fenster`):
+`LFGParentFrame` mit `WhoListingTab`, `ListingTab`, `BrowsingTab`
+(Seitenreiter), `LFGListingFrameGroupRoleButtonsRole` (Symbol 337499,
+Ring 340817), `…RoleDropdown`, `LFGListingFrameNewPlayerFriendlyButton`.
+Kein Bild des Spiels mehr übrig – der braune Verlauf oben war der Schein
+der Klasse.
+
+**Gold** (`S.CALM`, für `LFGParentFrame` und `PVEFrame`): Schein der Klasse
+aus (`W.HoldGlow`), neutrales Licht (120 px), gewählter Seitenreiter in
+Gold. **Innenflächen:** welcher Rahmen der dunkle Bereich („Nur der
+Gruppenführer kann die Gruppe anmelden.“) ist, zeigte die Messung nicht.
+Er ist eine Innenfläche, die `W.SkinInsets` seit 6.6.2.2 gestaltet und in
+`W.Insets` merkt – das Modul nimmt jede davon, die unter dem Fenster hängt
+(`InTree`), und gibt ihr Schatten und Kante in Gold wie den Flächen der
+Register; aus mit ihr. `/wcui fenster`: „Suche nach Gruppe (Stil ruhig):
+n Innenflächen …“ – bei 0 ist es ein anderer Rahmen.
+
+**Unverändert:** Rollensymbole samt Ringen, Fahne, Auswahl der Rolle,
+Texte (gelb, wie das Spiel sie setzt), Knöpfe.
+
+Fassung 6.8.0.0 statt 6.7.10.0: ob die Companion oder ein anderes Werkzeug
+Fassungen als Text vergleicht, ist ungeprüft – „6.7.10.0“ käme dort vor
+„6.7.9.0“.
+
 ### Nächste Fenster
 
 Vorgesehen: Berufsübersicht (nach Messung), Gilde (mittlere Atmosphäre), Talente
