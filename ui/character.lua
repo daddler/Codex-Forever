@@ -122,16 +122,28 @@ CS.layouts = layout
 
 -- Der sichtbare rechte Bereich: die Innenflaeche rechts, sonst der
 -- Rahmen, in dem die Werte laufen (ihr Bildlauf), sonst die Werte selbst.
+-- 6.6.4.2: in diesem Client laufen die Werte in CharacterStatsPaneScrollBox;
+-- CharacterStatsPane selbst meldet sich unsichtbar (/wcui fenster:
+-- "Glas CharacterStatsPane, eingeklappt") - das Glas wurde nie gezeichnet.
+-- Jetzt gilt der erste SICHTBARE Kandidat, sonst der erste vorhandene.
+CS.RIGHT_PANES = { "InsetRight", "CharacterStatsPaneScrollBox", "CharacterStatsPane" }
+
+local function Visible(t)
+    local ok, v = pcall(t.IsVisible, t)
+    return ok and K.Bool(v, false) or false
+end
+
 function CS.RightPane(f)
-    local inset = f.InsetRight
-    if type(inset) ~= "table" and f.GetName and f:GetName() then inset = _G[f:GetName() .. "InsetRight"] end
-    if type(inset) == "table" and inset.GetObjectType then return inset, "InsetRight" end
-    local pane = _G.CharacterStatsPane
-    if type(pane) ~= "table" then return nil, nil end
-    local ok, parent = pcall(pane.GetParent, pane)
-    local pok, kind = pcall(function() return parent:GetObjectType() end)
-    if ok and pok and kind == "ScrollFrame" then return parent, "Bildlauf der Werte" end
-    return pane, "CharacterStatsPane"
+    local first, firstName
+    for _, n in ipairs(CS.RIGHT_PANES) do
+        local t = (n == "InsetRight") and f.InsetRight or _G[n]
+        if n == "InsetRight" and type(t) ~= "table" and f.GetName and f:GetName() then t = _G[f:GetName() .. "InsetRight"] end
+        if type(t) == "table" and t.GetObjectType then
+            if Visible(t) then return t, n end
+            if not first then first, firstName = t, n end
+        end
+    end
+    return first, firstName
 end
 
 local function Glass(f, theme)
@@ -142,9 +154,8 @@ local function Glass(f, theme)
     -- Auf dem Fenster selbst, ueber Basis und Schein (BACKGROUND -7/-6),
     -- unter allem, was das Spiel zeichnet.
     g.body = Own(f:CreateTexture(nil, "BACKGROUND", nil, -4))
-    g.body:SetPoint("TOPLEFT", target, "TOPLEFT", -pad, pad)
-    g.body:SetPoint("BOTTOMRIGHT", target, "BOTTOMRIGHT", pad, -pad)
     g.body:SetColorTexture(c[1], c[2], c[3], a)
+    g.frame = f
     g.edge = Own(f:CreateTexture(nil, "BACKGROUND", nil, -4))
     g.edge:SetPoint("TOPRIGHT", g.body, "TOPLEFT", 0, 0)
     g.edge:SetPoint("BOTTOMRIGHT", g.body, "BOTTOMLEFT", 0, 0)
@@ -163,7 +174,34 @@ local function Glass(f, theme)
     g.lineBottom:SetPoint("BOTTOMLEFT", g.body, "BOTTOMLEFT", 0, 0)
     Gradient(g.lineBottom, "VERTICAL", acc, 0, CS.GLASS_LINE)
     g.parts = { g.body, g.edge, g.lineTop, g.lineBottom }
+    CS.AnchorGlass(g, target, name)
     return g
+end
+
+-- Das Glas reicht von unter dem Titelbalken (CS.GLASS_TOP) bis unter die
+-- Werte: EINE Flaeche rechts, die mit "Allgemein" beginnt - kein
+-- Kasten erst ab der Liste. Links haengt es an der Kante der Werte.
+CS.GLASS_TOP = -30
+function CS.AnchorGlass(g, target, name)
+    g.target, g.name, g.dx = target, name, nil
+    CS.PlaceGlass(g)
+end
+
+function CS.PlaceGlass(g)
+    local tok, tl = pcall(g.target.GetLeft, g.target)
+    local fok, fl = pcall(g.frame.GetLeft, g.frame)
+    tl, fl = tok and Num(tl) or nil, fok and Num(fl) or nil
+    local dx = (tl and fl) and (tl - fl - CS.GLASS_PAD) or false
+    if g.dx == dx then return end
+    g.dx = dx
+    local pad = CS.GLASS_PAD
+    g.body:ClearAllPoints()
+    if dx then
+        g.body:SetPoint("TOPLEFT", g.frame, "TOPLEFT", dx, CS.GLASS_TOP)
+    else
+        g.body:SetPoint("TOPLEFT", g.target, "TOPLEFT", -pad, pad)
+    end
+    g.body:SetPoint("BOTTOMRIGHT", g.target, "BOTTOMRIGHT", pad, -pad)
 end
 
 function CS.Layout(f, d, theme)
@@ -175,18 +213,36 @@ function CS.Layout(f, d, theme)
             d.kachel.bg:SetColorTexture(b[1], b[2], b[3], b[4])
             L.base = true
         end
-        if d and d.glow then d.glow:SetAlpha(CS.TOP_GLOW) end
         for _, key in ipairs({ "Inset", "InsetRight", "InsetLeft" }) do
             if d and d[key] then d[key]:SetAlpha(0) end
         end
         L.glass = Glass(f, theme)
         layout[f] = L
     end
-    -- Das Glas folgt dem rechten Bereich (der laesst sich einklappen).
+    -- Der Schein der Klasse oben (W.AddGlow): 6.6.4.2 in JEDEM Durchlauf
+    -- gehalten. Einmal auf Deckkraft 0 gesetzt, war er im Beta-Test
+    -- trotzdem da (gemessen: neutralgrau 99 oben, bis 260 px auslaufend -
+    -- genau dieser Schein, weiss beim Priester) - jetzt versteckt statt
+    -- durchsichtig, und nachgezogen, falls ihn etwas wieder zeigt.
+    local glow = d and d.glow
+    if glow then
+        if CS.TOP_GLOW <= 0 then
+            if glow:IsShown() then glow:Hide() end
+        elseif glow:GetAlpha() ~= CS.TOP_GLOW then
+            glow:SetAlpha(CS.TOP_GLOW)
+        end
+        L.glow = glow
+    end
+    -- Das Glas folgt dem rechten Bereich (der laesst sich einklappen);
+    -- ist sein Traeger weg, nimmt es den naechsten sichtbaren.
     local g = L.glass
     if g then
-        local ok, vis = pcall(g.target.IsVisible, g.target)
-        local shown = ok and K.Bool(vis, false) or false
+        if not Visible(g.target) then
+            local t, n = CS.RightPane(f)
+            if t and t ~= g.target and Visible(t) then CS.AnchorGlass(g, t, n) end
+        end
+        CS.PlaceGlass(g)
+        local shown = Visible(g.target)
         if g.shown ~= shown then
             g.shown = shown
             for _, t in ipairs(g.parts) do t:SetShown(shown) end
@@ -424,7 +480,9 @@ end
 -- Ruf, Waehrung usw. steht der Titel wie immer. Der Name kommt aus dem
 -- Titel des Spiels (mit Titel wie "Hueter ..."), sonst aus UnitName.
 -- Klasse und Stufe beim Zeigen und bei PLAYER_LEVEL_UP, nicht im Durchlauf.
-CS.NAME_SIZE, CS.SUB_SIZE, CS.LINE_W, CS.HEAD_Y = 18, 10, 90, -8
+-- HEAD_Y und die Abstaende 6.6.4.2 enger: Raute und Linie lagen in der
+-- Reihe der Zoomknoepfe ueber dem Modell.
+CS.NAME_SIZE, CS.SUB_SIZE, CS.LINE_W, CS.HEAD_Y = 18, 10, 90, -5
 CS.REDUNDANT = { "CharacterLevelText" }
 
 function CS.IdentityLine(className, level)
@@ -443,10 +501,19 @@ function CS.NameLine(name)
     return WeintCodex.Upper(name)
 end
 
+-- Wie StyleTitle in ui/windows.lua: der Titel liegt je nach Client an
+-- TitleContainer.TitleText, an .TitleText oder heisst <Name>TitleText.
+-- 6.6.4.2: nur der erste Weg war gefragt - in diesem Client blieb
+-- "Holy Larena" deshalb neben der Kopfzeile stehen (Beta-Test).
 local function Title(f)
     local tc = f.TitleContainer
-    return type(tc) == "table" and tc.TitleText or nil
+    if type(tc) == "table" and type(tc.TitleText) == "table" then return tc.TitleText end
+    if type(f.TitleText) == "table" then return f.TitleText end
+    local n = f.GetName and f:GetName()
+    local t = type(n) == "string" and _G[n .. "TitleText"]
+    return type(t) == "table" and t or nil
 end
+CS.Title = Title
 
 -- Deckkraft der Zeilen des Spiels, die die Kopfzeile ersetzt.
 local function Replaced(h, alpha)
@@ -529,10 +596,10 @@ function CS.Header(f)
     h.name:SetPoint("TOP", h, "TOP", 0, 0)
     h.name:SetTextColor(bright[1], bright[2], bright[3], 1)
     h.sub = K.NewText(h, CS.SUB_SIZE, "OVERLAY")
-    h.sub:SetPoint("TOP", h.name, "BOTTOM", 0, -4)
+    h.sub:SetPoint("TOP", h.name, "BOTTOM", 0, -2)
     h.sub:SetTextColor(acc[1], acc[2], acc[3], 0.9)
     h.dot = W.Diamond(h, 6, acc, 1, 2)
-    h.dot:SetPoint("TOP", h.sub, "BOTTOM", 0, -5)
+    h.dot:SetPoint("TOP", h.sub, "BOTTOM", 0, -3)
     h.hole = W.Diamond(h, 2, C.surface1, 1, 3)
     h.hole:SetPoint("CENTER", h.dot, "CENTER", 0, 0)
     h.lines = {}
@@ -566,6 +633,7 @@ function CS.Header(f)
         end
         local line = CS.IdentityLine(cok and className or nil, level)
         h.name:SetText(name or "")
+        h.named = name ~= nil
         h.sub:SetText(line or "")
         -- Nicht h verstecken: dann kaeme kein OnShow mehr.
         for _, t in ipairs({ h.dot, h.hole, h.lines[1], h.lines[2] }) do t:SetShown(line ~= nil) end
@@ -588,6 +656,16 @@ end
 function CS.KeepHeader(h, box)
     CS.KeepHeaderLevel(h)
     CS.FindDuplicate(h)
+    -- Was die Kopfzeile ersetzt, bleibt unsichtbar, solange sie zu sehen
+    -- ist - auch wenn das Spiel die Zeile neu setzt (ohne Tabellen).
+    if h.named and Visible(h) then
+        local list = h.replaced
+        for i = 1, #list do
+            local t = list[i]
+            local ok, a = pcall(t.GetAlpha, t)
+            if not (ok and Num(a) == 0) then pcall(t.SetAlpha, t, 0) end
+        end
+    end
     local off = 0
     if box then
         -- Ohne Closure: das laeuft in jedem Durchlauf.
@@ -733,12 +811,16 @@ function CS.ReportFrame(f, out)
         theme.art and tostring(theme.art.file) or "des Spiels")
     if L then
         local g = L.glass
-        out[#out + 1] = string.format("   Basis %s, Glas %s", L.base and "dunkel" or "fehlt (keine Kachel)",
-            not g and "fehlt (kein rechter Bereich)" or (g.name .. (g.shown and "" or ", eingeklappt")))
+        out[#out + 1] = string.format("   Basis %s, Glas %s, Schein oben %s", L.base and "dunkel" or "fehlt (keine Kachel)",
+            not g and "fehlt (kein rechter Bereich)" or (tostring(g.name) .. (g.shown and "" or ", eingeklappt")),
+            not L.glow and "keiner" or (L.glow:IsShown() and ("an, " .. tostring(L.glow:GetAlpha())) or "aus"))
     end
     local h = CS.head
     if h then
         out[#out + 1] = "   Doppelte Stufenzeile: " .. (CS.dup and "gefunden, ausgeblendet" or "nicht gefunden")
+        local title = Title(h.frame)
+        out[#out + 1] = "   Titel des Spiels: " .. (not title and "nicht gefunden"
+            or (string.format("Deckkraft %s", tostring(title:GetAlpha()))))
         out[#out + 1] = string.format("   Kopfzeile: %s ersetzt, Ebene %s (Modell %s)", tostring(#h.replaced),
             tostring(LevelOf(h)), tostring(LevelOf(_G.CharacterModelScene)))
     end
