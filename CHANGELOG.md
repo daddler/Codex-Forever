@@ -9,6 +9,21 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.1.0] – 2026-09-29
+
+**Die Fertigkeiten im neuen Stil.** Berufe, Sekundäre Fertigkeiten und Waffenfertigkeiten stehen als eigene Abschnitte mit Raute und Linie in deiner Klassenfarbe, die Einträge sind fein voneinander abgesetzt, die gewählte Fertigkeit trägt einen schmalen Streifen in deiner Klasse. Die Liste liegt auf einer ruhigen, leicht angehobenen Fläche wie im Ruf.
+
+**Fortschrittsbalken mit Tiefe, Farbe unverändert.** Dunklere Bahn, Schatten und Lichtkante an der Füllung – die Farbe und die Werte wie „32 / 75“ bleiben genau so, wie das Spiel sie zeigt.
+
+**Die Detailansicht der Fertigkeiten ist eine Karte.** Name und Fortschritt oben, darunter eine feine Linie, dann die Beschreibung; was darunter folgt, steht in einem eigenen, abgesetzten Bereich, und die Karte endet unter ihrem Inhalt.
+
+### Technisch
+
+- Neuer Baustein `ui/register.lua` (`WeintCodex.UIRegister.New(cfg)`): Liste des Spiels + Detailkarte, entstanden aus dem Ruf. `ui/reputation.lua` ist jetzt ein Einstellungssatz davon (Verhalten und Test unverändert), `ui/skills.lua` der zweite. `W.Inner` und `/wcui fenster` bedienen alle Register (`UIRegister.all`).
+- Fenster tragen ihren Stil selbst in `S.SCOPES` ein; `S.Register` löst auch Pfade auf (`CharacterFrame.SkillsFrame`). `ui/style.lua` kennt keinen Fensternamen mehr.
+- Neu im Register (allgemein, per Einstellung): Detailansicht per Suche (`detailSearch`), Titel als oberste Schriftzeile (`titleTop`), Titel im Balken bleibt unverändert, Linie unter dem Balken (`barLine = "below"`), abgesetzter Bereich für das, was unter der Beschreibung folgt (`tail`, nichts wird bewegt), Karte endet unter dem Inhalt (`compact`), Zeilenbalken auch ohne bekannten Schlüssel.
+- `SkillsFrame` in `W.PANELS`. Kein Codex-Zeichen bei den Fertigkeiten: kein passendes Motiv unter den Grafiken, keines erzwungen.
+
 ## [6.7.0.3] – 2026-09-29
 
 **Die Detailansicht im Ruf ist jetzt eine kompakte Karte.** Name, Rufstufe, Fortschritt und Beschreibung stehen oben; „Im Krieg“, „Inaktiv“ und „Als Erfahrungsleiste anzeigen“ rücken direkt unter die Beschreibung in ihren eigenen, abgesetzten Bereich, und die Karte endet kurz darunter – kein leerer schwarzer Raum mehr bis zum unteren Rand. Ist eine Beschreibung lang, bleiben die Optionen an ihrem gewohnten Platz; sie funktionieren unverändert.

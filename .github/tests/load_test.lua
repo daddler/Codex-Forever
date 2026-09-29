@@ -5472,6 +5472,143 @@ do
     Check(okR, "Ruf im Stil der Fenster: Klassenfarbe, Flaechen, Sektionen, Balken, Maus, Auswahl, Codex-Tafel - nichts verloren, kein Muell"
         .. (okR and "" or (": " .. tostring(errR))))
 
+    -- 6.7.1.0: Fertigkeiten - dasselbe Register (ui/register.lua), eigene
+    -- Eigenheiten. Nachgebaut wie aeltere Fassungen des Fensters: Name und
+    -- Fortschritt IM Balken, Detailansicht ohne bekannten Schluessel, eine
+    -- Zeile unter der Beschreibung, ein Knopf neben dem Balken. Die Liste
+    -- wie gemessen (dieselben Vorlagen wie im Ruf).
+    local okF, errF = pcall(function()
+        local W, S, RG, SK, RP = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIRegister,
+                                 WeintCodex.UISkills, WeintCodex.UIReputation
+        assert(RG and SK and RP and RG.all[1] == RP and RG.all[2] == SK, "Register nicht angelegt")
+        assert(S.SCOPES.SkillsFrame == S.CHARACTER_INFO and S.SCOPES.ReputationFrame == S.CHARACTER_INFO,
+            "Fenster tragen ihren Stil nicht selbst ein")
+        local function Tex(atlas)
+            local t = stub.NewObject("Texture")
+            t.GetAtlas = function() return atlas end
+            return t
+        end
+        local wrote, touched = {}, {}
+        local function Line(text, top, h)
+            local fs = stub.NewObject("FontString")
+            fs._text, fs._font = text, true
+            fs.SetText = function() wrote[#wrote + 1] = text end
+            fs.SetPoint = function() touched[#touched + 1] = text end
+            fs.ClearAllPoints = function() touched[#touched + 1] = text end
+            if top then
+                fs.GetTop, fs.GetBottom = function() return top end, function() return top - (h or 12) end
+                fs.GetStringHeight = function() return h or 12 end
+            end
+            return fs
+        end
+        local cf = stub.NewObject("Frame")
+        local sk = stub.NewObject("Frame", "SkillsFrame")
+        sk._parent = cf
+        local list, target = stub.NewObject("Frame"), stub.NewObject("Frame")
+        sk.ScrollBox, list.ScrollTarget = list, target
+        local head = stub.NewObject("Button")
+        local hBg, minus = Tex("common-button-list-collapseExpand"), Tex("common-button-list-minus")
+        hBg._width = 300
+        local hName = Line("Berufe")
+        head.GetRegions = function() return hBg, minus, hName end
+        -- Zeile: Balken unter einem ungemessenen Schluessel (RankBar), blau.
+        local recolored = {}
+        local function Skill(text)
+            local row, content = stub.NewObject("Frame"), stub.NewObject("Button")
+            local bar, fill = stub.NewObject("StatusBar"), stub.NewObject("Texture")
+            local track = Tex("common-stat-bar-BG")
+            bar.GetRegions = function() return track end
+            bar.GetStatusBarTexture = function() return fill end
+            bar.SetStatusBarColor = function() recolored[#recolored + 1] = text end
+            fill.SetVertexColor = function() recolored[#recolored + 1] = text end
+            content.Name, content.RankBar = Line(text), bar
+            content.GetChildren = function() return bar end
+            row.Content = content
+            row.GetChildren = function() return content end
+            return row, bar, track
+        end
+        local row1, bar1, track1 = Skill("Bergbau")
+        local row2 = Skill("Schmiedekunst")
+        target.GetChildren = function() return head, row1, row2 end
+        list.GetChildren = function() return target end
+        -- Detailansicht ohne bekannten Schluessel (sk.RightPanel).
+        local det = stub.NewObject("Frame")
+        det._parent, det._width = sk, 220
+        det.GetTop = function() return 500 end
+        local dBar, dFill = stub.NewObject("StatusBar"), stub.NewObject("Texture")
+        dBar.GetStatusBarTexture = function() return dFill end
+        dBar.GetTop, dBar.GetBottom = function() return 470 end, function() return 450 end
+        dBar._parent = det
+        local name, rank = Line("Bergbau", 468), Line("32 / 75", 466)
+        name._parent, rank._parent = dBar, dBar
+        name.SetFont = function() touched[#touched + 1] = "Schrift im Balken" end
+        dBar.GetRegions = function() return name, rank end
+        local desc = Line("Mit Bergbau kannst du Erz und Stein abbauen, um daraus Metallbarren zu schmelzen.", 430, 45)
+        local cost = Line("Kosten: 1 Gold", 350, 14)
+        local unlearn = stub.NewObject("Button")
+        unlearn.GetTop, unlearn.GetBottom = function() return 470 end, function() return 455 end
+        unlearn.SetPoint = function() touched[#touched + 1] = "Knopf" end
+        det.GetRegions = function() return desc, cost end
+        det.GetChildren = function() return dBar, unlearn end
+        dBar.SetPoint = function() touched[#touched + 1] = "Balken" end
+        sk.RightPanel = det
+        sk.GetChildren = function() return list, det end
+        cf.GetChildren = function() return sk end
+        local oldSK = _G.SkillsFrame
+        _G.SkillsFrame = sk
+
+        S.Register()
+        assert(S.ScopeOf(sk) == S.CHARACTER_INFO, "Fertigkeiten ohne Stil der Klasse")
+        W.HideByAtlas(cf)
+        local lh = W.ListHeaders[head]
+        assert(lh and lh.band and lh.accent == K.Highlight(), "Gruppe der Fertigkeiten nicht als Sektion")
+        assert(track1:GetAlpha() == 0 and W.FlatBars[bar1] and W.FlatBars[bar1].style == S.CHARACTER_INFO,
+            "Fortschrittsbalken ohne dunkle Bahn")
+        SK.Update(cf)
+        local a = SK.atmos[sk]
+        assert(a and a.on and a.list and a.vignette.TOP and not a.sigil, "Atmosphaere falsch (kein Zeichen bei den Fertigkeiten)")
+        local r1, r2 = SK.rows[row1], SK.rows[row2]
+        assert(r1 and r2 and r1.bar == bar1 and SK.bars[bar1] and SK.bars[bar1].how == "Statusbalken",
+            "Balken ohne bekannten Schluessel nicht gefunden")
+        assert(r1.sep and r1.hover and not SK.rows[head].sep, "Zeilen nicht abgesetzt oder ohne Maus")
+        -- Detailansicht gefunden, Titel steht im Balken und bleibt, wie er ist.
+        local d = SK.details[det]
+        assert(d and d.inTree and d.surface and d.bar == dBar and d.desc == desc and d.title == name,
+            "Detailansicht der Fertigkeiten nicht gefunden")
+        assert(SK.state.selected == "Bergbau" and r1.sel.on and not r2.sel.on, "gewaehlte Fertigkeit nicht markiert")
+        -- Linie UNTER dem Balken, darunter Beschreibung, dann das, was folgt.
+        assert(d.yBar == -30 and d.yBarB == -50 and d.db == -115, "Karte falsch vermessen")
+        assert(d.yOpt == -150 and d.yOptB == -164 and not d.opts, "was unter der Beschreibung folgt, nicht erkannt")
+        assert(d.barLine.l:IsShown() and d.optLine.l:IsShown() and d.options:IsShown(), "Linien der Karte fehlen")
+        assert(d.barLineY == -59, "Linie nicht unter dem Balken: " .. tostring(d.barLineY))
+        assert(d.cardBottom == -176, "Karte endet nicht unter dem Inhalt: " .. tostring(d.cardBottom))
+        -- Nichts verloren, nichts umgefaerbt, nichts verschoben.
+        assert(#wrote == 0, "SetText auf einer Zeile des Spiels")
+        assert(#touched == 0, "Rahmen oder Schrift der Detailansicht angefasst: " .. table.concat(touched, ", "))
+        assert(#recolored == 0, "Farbe eines Fortschrittsbalkens veraendert")
+        for _, t in ipairs({ bar1, row1, row2, head, name, rank, desc, cost, unlearn, dBar }) do
+            assert(t:IsShown() and t:GetAlpha() == 1, "Inhalt ausgeblendet")
+        end
+        local rep = table.concat(SK.Report(cf, {}), "\n")
+        assert(rep:find("Fertigkeiten (Stil ruhig, Klasse): Liste gefunden, 3 Zeilen (1 Kopfzeilen, 2 mit Balken, 3 mit Namen)", 1, true)
+            and rep:find("Fertigkeiten, gewählt: „Bergbau“", 1, true) and rep:find("Titel „Bergbau“ (im Balken)", 1, true)
+            and rep:find("Fertigkeiten, Optionen: darunter abgesetzt ab -150", 1, true), "Bericht: " .. rep)
+        -- Der Ruf bleibt unberuehrt: sein Bericht schweigt (Ruf zu).
+        assert(#RP.Report(cf, {}) == 0 or not _G.ReputationFrame, "Ruf meldet sich ueber den Fertigkeiten")
+        for _ = 1, 3 do SK.Update(cf) end
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do SK.Update(cf) end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        print(string.format("    (20 Durchlaeufe Fertigkeiten: %.1f KB)", grew))
+        assert(grew < 1, string.format("Fertigkeiten legen im Takt Muell an: %.1f KB", grew))
+        _G.SkillsFrame = oldSK
+    end)
+    Check(okF, "Fertigkeiten als Register: Stil, Sektionen, Balken (Farbe bleibt), Auswahl, Karte - nichts verloren, kein Muell"
+        .. (okF and "" or (": " .. tostring(errF))))
+
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett
     -- auf Wunsch. Es bleibt ein Akzent (accent = purple = violet = brandA).
     local ok4, err4 = pcall(function()

@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.7.1.0",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Fertigkeiten im neuen Stil.|r Berufe, Sekundäre Fertigkeiten und Waffenfertigkeiten stehen als eigene Abschnitte mit Raute und Linie in deiner Klassenfarbe, die Einträge sind fein voneinander abgesetzt, die gewählte Fertigkeit trägt einen schmalen Streifen in deiner Klasse. Die Liste liegt auf einer ruhigen, leicht angehobenen Fläche wie im Ruf.",
+            "|cff7C6CFFFortschrittsbalken mit Tiefe, Farbe unverändert.|r Dunklere Bahn, Schatten und Lichtkante an der Füllung – die Farbe und die Werte wie „32 / 75“ bleiben genau so, wie das Spiel sie zeigt.",
+            "|cff7C6CFFDie Detailansicht der Fertigkeiten ist eine Karte.|r Name und Fortschritt oben, darunter eine feine Linie, dann die Beschreibung; was darunter folgt, steht in einem eigenen, abgesetzten Bereich, und die Karte endet unter ihrem Inhalt.",
+        },
+    },
+    {
         version = "6.7.0.3",
         date    = "29.09.2026",
         notes   = {

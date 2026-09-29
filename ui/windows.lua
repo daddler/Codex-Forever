@@ -130,7 +130,7 @@ W.LARGE_SHARE = 0.15   -- ab diesem Anteil an der Fensterflaeche ist ein Bild Hi
 -- Teilfenster, deren eigene Bilder der Grund sind (gemessen, 6.6.2.2):
 -- die Liste im Dungeonbrowser liegt auf Marmor (Bild 374155).
 W.OWN_BG = { "LFGListingFrame" }
-W.PANELS  = { "PaperDollFrame", "ReputationFrame", "SkillFrame", "TokenFrame", "PVPFrame", "HonorFrame",
+W.PANELS  = { "PaperDollFrame", "ReputationFrame", "SkillFrame", "SkillsFrame", "TokenFrame", "PVPFrame", "HonorFrame",
               "CharacterStatsPane" }
 
 -- Schmuck in der Fenstervorlage des Spiels, als Schluessel am Rahmen.
@@ -1593,8 +1593,8 @@ function W.SoftReport(f)
     local out = {}
     local CS = WeintCodex.UICharacter
     if CS and CS.ReportFrame then CS.ReportFrame(f, out) end
-    local RP = WeintCodex.UIReputation
-    if RP and RP.Report then RP.Report(f, out) end
+    local RG = WeintCodex.UIRegister
+    for _, R in ipairs(RG and RG.all or {}) do R.Report(f, out) end
     if type(f) == "table" and f.ScrollContainer and W.mapMask and W.mapMask.report then
         out[#out + 1] = W.mapMask.report
     end
@@ -2181,9 +2181,12 @@ function W.Inner()
                 -- Das Charakterfenster als Ganzes: ui/character.lua.
                 local CS = WeintCodex.UICharacter
                 if CS then CS.Update(f, done[f]) end
-                -- Der Reiter Ruf: erstes Fenster der Designsprache (ui/reputation.lua).
-                local RP = WeintCodex.UIReputation
-                if RP then RP.Update(f) end
+                -- Register (ui/register.lua): Ruf, Fertigkeiten - Liste des
+                -- Spiels mit Detailkarte, je ein Reiter des Fensters.
+                local RG = WeintCodex.UIRegister
+                if RG then
+                    for _, R in ipairs(RG.all) do R.Update(f) end
+                end
             end
             if W.WantsLarge(n) then
                 SkinSpellItems(f, 0)

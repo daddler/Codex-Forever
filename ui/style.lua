@@ -33,8 +33,11 @@
 --               sie gehoeren zum Charakter (Beta-Test).
 -- Ein Rahmen ohne Stil verhaelt sich wie bisher (SHOWCASE).
 --
--- Neue Fenster migrieren: Namen in S.SCOPES eintragen, dann die
--- Bausteine unten benutzen (ui/reputation.lua ist das Muster).
+-- Neue Fenster migrieren: eine Liste mit Detailansicht wird ein Register
+-- (ui/register.lua; Muster ui/reputation.lua, ui/skills.lua) - es traegt
+-- seinen Stil selbst in S.SCOPES ein. Sonst den Namen in S.SCOPES
+-- eintragen und die Bausteine unten benutzen. Hier gehoert nichts hin,
+-- was nur ein Fenster braucht.
 --
 -- Wie ueberall in ui/windows.lua: nur Aussehen. Eigene Flaechen daneben
 -- und dahinter, Deckkraft und Schrift an fremden Zeilen - kein SetText,
@@ -75,9 +78,10 @@ S.CHARACTER_INFO = { key = "charinfo", name = "ruhig, Klasse", accent = "class",
                      band = true, headerSize = 14,
                      barTrack = "barTrack", barEdge = 0.5 }
 
--- Welche Fenster (globale Namen) welchen Stil tragen. Phase 3 des
--- Umbaus: nur der Ruf. Die anderen folgen nach dem Test im Spiel.
-S.SCOPES = { ReputationFrame = S.CHARACTER_INFO }
+-- Welche Fenster welchen Stil tragen: globaler Name oder Pfad
+-- ("CharacterFrame.SkillsFrame"). Seit 6.7.1.0 tragen sich die Fenster
+-- selbst ein (ui/register.lua: Ruf, Fertigkeiten) - hier steht kein Name.
+S.SCOPES = {}
 
 local scoped = setmetatable({}, { __mode = "k" })
 S.scoped = scoped
@@ -90,7 +94,8 @@ function S.ScopeOf(f) return scoped[f] end
 -- an (laeuft in jedem Durchlauf).
 function S.Register()
     for n, style in pairs(S.SCOPES) do
-        local f = _G[n]
+        local W = WeintCodex.UIWindows
+        local f = (n:find(".", 1, true) and W and W.Resolve) and W.Resolve(n) or _G[n]
         if type(f) == "table" and scoped[f] == nil then scoped[f] = style end
     end
 end

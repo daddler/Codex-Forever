@@ -1760,10 +1760,76 @@ Im Spiel ungeprüft: ob die Beschriftungen der Häkchen an ihnen hängen
 (sonst meldet der Bericht den Grund und nichts rückt) und ob
 `GetStringHeight` die Höhe des umbrochenen Textes liefert.
 
+### Register und Fertigkeiten *(6.7.1.0)*
+
+Beta-Test: das Fähigkeitenfenster (Reiter „Fertigkeiten“) auf das Niveau
+des Rufs bringen – dasselbe System, keine Kopie. Die Liste der
+Fertigkeiten ist dieselbe Vorlage wie die des Rufs (gemessen 6.6.2.9:
+`SkillsFrame.ScrollBox`, `common-button-list-collapseExpand`,
+`common-stat-bar-BG`). Statt `ui/reputation.lua` zu kopieren, ist seine
+Logik ein Baustein geworden.
+
+**`ui/register.lua`** (`WeintCodex.UIRegister`): `New(cfg)` liefert ein
+Register mit `Update(f)`/`Report(f, out)` und denselben Feldern wie
+vorher der Ruf (`atmos`, `rows`, `bars`, `details`, `state`, `Options`,
+…). Jedes Register trägt sich in `UIRegister.all` ein (W.Inner ruft
+alle, `/wcui fenster` fragt alle) und seinen Stil für seine Fenster in
+`S.SCOPES` – `ui/style.lua` enthält keinen Fensternamen mehr;
+`S.Register` löst dort auch Pfade auf. Einstellungen (Kopf von
+`ui/register.lua`): `label`, `frames`, `style`, `detailKeys`,
+`detailGlobals`, `detailSearch`, `titleKeys`, `titleGlobals`,
+`titleTop`, `barKeys`, `detailBarKeys`, `sigil`, `barLine`, `tail`,
+`compact`.
+
+| | Ruf | Fertigkeiten |
+|---|---|---|
+| Fenster | `ReputationFrame` | `SkillsFrame`, `SkillFrame`, `CharacterFrame.SkillsFrame`/`.SkillFrame` |
+| Detailansicht | `ReputationDetailFrame` (gemessen) | Schlüssel aus älteren Fassungen, sonst **Suche**: Kind des Fensters mit dem längsten Text |
+| Titel | `.Title` (gemessen) | Schlüssel, sonst die **oberste Schriftzeile**; steht er **im Balken**, bleibt er unverändert |
+| Linie am Balken | darüber (Name/Stufe darüber) | **darunter** (Name/Fortschritt gehören zusammen) |
+| Unter der Beschreibung | Häkchen, rücken nach oben | was folgt (Zeilen, Knöpfe) → abgesetzter Bereich, **nichts bewegt** |
+| Karte | endet unter gerückten Häkchen | endet immer unter dem Inhalt (`compact`) |
+| Codex-Zeichen | ja | **nein** – kein passendes Motiv, keins erzwungen |
+
+**Fortschrittsbalken**: gefunden über Schlüssel oder – neu, für alle
+Register – als erster Statusbalken bzw. Rahmen mit der Füllung
+`common-stat-bar-white` bis zwei Ebenen tief. Bahn `barTrack`, Rand 50 %,
+Schatten und Lichtkante an der Füllung. **Farbe und Text bleiben die des
+Spiels** (Blau = Fortschritt); `load_test.lua` prüft, dass weder
+`SetStatusBarColor` noch die Farbe der Füllung angefasst wird.
+
+**Was unter der Beschreibung folgt** (`tail`): sichtbare Schriftzeilen
+mit Text und Knöpfe in der Detailansicht (bis zwei Ebenen), deren
+Oberkante unter dem Text der Beschreibung liegt – nicht Titel, nicht
+Beschreibung, nicht der Balken und was in ihm steht. Die Linie mit Raute
+steht mittig zwischen Beschreibung und diesem Bereich.
+
+**Wiederverwendet** aus `ui/style.lua`: `S.CHARACTER_INFO`, `S.Band`
+(über `W.ListHeader`), `S.Hairline`, `S.Selection`/`S.SetSelected`,
+`S.Tint`, `S.Hover`, `S.BarFinish`, `S.SoftPanel`, `S.Shadow`,
+`S.Vignette`, `S.TopLight`, `S.Divider`/`S.PlaceTop`/`S.Under`,
+`S.PlaceBand`, `S.Diamond`, `S.Title`, `S.Panel`. **Neu in
+`ui/style.lua`**: nichts Fertigkeiten-Spezifisches – nur `S.SCOPES` leer
+und `S.Register` mit Pfaden. **Unverändert** bleiben alle Blizzard-Teile:
+Liste und Bildlauf (`ScrollBox`, `ScrollBar`), Zeilen, Kopfzeilen samt
+Auf-/Zuklappen, Balken (Farbe, Text, Größe), Detailansicht, Texte,
+Knöpfe; kein Rahmen der Fertigkeiten wird bewegt.
+
+`/wcui fenster` über den Fertigkeiten: dieselben Zeilen wie beim Ruf,
+mit „Fertigkeiten, …“; neu der Name der gefundenen Detailansicht
+(`GetDebugName`) und „(im Balken)“ am Titel, und „Fertigkeiten,
+Optionen: darunter abgesetzt ab y“ bzw. „nichts unter der
+Beschreibung“.
+
+Im Spiel **ungeprüft**: der Name des Fensters, die Schlüssel der
+Zeilen und – vor allem – die Detailansicht. Steht dort „nicht
+gefunden“, sind Liste, Balken und Atmosphäre trotzdem gestaltet, nur die
+Karte fehlt; der nächste Schritt ist dann die Messung.
+
 ### Nächste Fenster
 
-Erst nach Freigabe des Rufs. Vorgesehen: Fertigkeiten und Abzeichen
-(Reiter des Charakterfensters → `S.CHARACTER_INFO`), Berufe und
+Vorgesehen: Abzeichen (Reiter des Charakterfensters →
+`S.CHARACTER_INFO`, vermutlich ein weiteres Register), Berufe und
 Statistiken (`S.CALM`), PvP, Gilde (mittlere Atmosphäre), Talente
 (Klassenfarbe). Migrieren heißt: Name in
 `S.SCOPES`, ein Modul nach dem Muster von `ui/reputation.lua` nur dort,
