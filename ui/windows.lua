@@ -2190,6 +2190,31 @@ function W.SkinCommunitiesList(f)
 end
 
 
+-- Der Schein der Klasse oben (W.AddGlow) und die neue Sprache (6.7.7.0):
+-- ein Fenster in Gold (S.CALM, Berufe) traegt ihn nie - er ist die
+-- Klassenfarbe, und ein Bereich traegt einen Akzent. Ein gestalteter Teil
+-- (W.HOSTED) kann ihn abschalten, solange er offen ist (GlowOff: das
+-- Zauberbuch hat die ruhige Atmosphaere des Registers). Sonst bleibt er.
+-- Versteckt statt durchsichtig und je Durchlauf gehalten - wie im
+-- Charakterfenster (ui/character.lua), wo er wieder auftauchte.
+function W.HoldGlow(f, n)
+    local d = done[f]
+    local glow = d and d.glow
+    if not glow then return end
+    local sc = scoped[f]
+    local off = (sc and sc.accent == "frame") and true or false
+    local hosted = W.HOSTED[n]
+    if not off and hosted then
+        for _, tab in ipairs(hosted) do
+            if tab.GlowOff and tab.GlowOff(f) then off = true break end
+        end
+    end
+    local shown = K.Bool(glow:IsShown(), false)
+    if off and shown then glow:Hide()
+    elseif not off and not shown and d.glowHeld then glow:Show() end
+    d.glowHeld = off
+end
+
 function W.Inner()
     stats.runs = stats.runs + 1
     stats.last = _G.GetTime and K.Plain(_G.GetTime()) or nil
@@ -2225,6 +2250,7 @@ function W.Inner()
             if hosted then
                 for _, tab in ipairs(hosted) do tab.Update(f) end
             end
+            W.HoldGlow(f, n)
             if W.WantsLarge(n) then
                 SkinSpellItems(f, 0)
                 LightenText(f, 0)

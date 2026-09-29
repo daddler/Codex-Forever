@@ -6322,6 +6322,102 @@ do
     Check(okO, "Berufe, Uebersicht: Karten mit Flaeche, Titel als Abschnitt, Balken mit Tiefe, Gold - nichts verloren, kein Muell"
         .. (okO and "" or (": " .. tostring(errO))))
 
+    -- 6.7.7.0: Zauberbuch - Flaeche, Ueberschrift als Abschnitt in der
+    -- Klassenfarbe, ruhige Atmosphaere statt des Scheins der Klasse. Dazu der
+    -- Schein im Berufsfenster (Gold): nie. Nachgebaut wie gemessen:
+    -- PlayerSpellsFrame.SpellBookFrame.PagedSpellsFrame.View1 mit Eintraegen
+    -- (Zauber mit .Button) und einer Ueberschrift (ohne .Button).
+    local okZ, errZ = pcall(function()
+        local W, S, SB = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UISpellBook
+        local GC = WeintCodex.GameColors
+        assert(SB and W.HOSTED.PlayerSpellsFrame and W.HOSTED.PlayerSpellsFrame[1] == SB, "Zauberbuch nicht am Fenster eingetragen")
+        assert(S.SCOPES["PlayerSpellsFrame.SpellBookFrame"] == S.CHARACTER_INFO and not S.SCOPES.PlayerSpellsFrame,
+            "Zauberbuch nicht in der Klassenfarbe (oder die Talente gleich mit)")
+        local touched = {}
+        local function Line(text)
+            local fs = stub.NewObject("FontString")
+            fs._text, fs._font = text, true
+            fs.SetText = function() touched[#touched + 1] = "SetText " .. text end
+            fs.SetTextColor = function() touched[#touched + 1] = "Farbe " .. text end
+            fs.SetFont = function() touched[#touched + 1] = "Schrift " .. text end
+            fs.ClearAllPoints = function() touched[#touched + 1] = "Lage " .. text end
+            fs.GetStringWidth = function() return 120 end
+            return fs
+        end
+        local psf = stub.NewObject("Frame", "PlayerSpellsFrame")
+        local book, paged, view = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Frame")
+        psf.SpellBookFrame, book.PagedSpellsFrame, paged.View1 = book, paged, view
+        local head = stub.NewObject("Frame")
+        local hText = Line("Allgemein")
+        head.Text = hText
+        head.GetRegions = function() return hText end
+        local function Spell(name)
+            local e, btn = stub.NewObject("Frame"), stub.NewObject("Button")
+            local n = Line(name)
+            e.Button = btn
+            e.GetRegions = function() return n end
+            e.GetChildren = function() return btn end
+            return e, n, btn
+        end
+        local s1, n1, b1 = Spell("Angreifen")
+        local s2, n2 = Spell("Werfen")
+        view.GetChildren = function() return head, s1, s2 end
+        paged.GetChildren = function() return view end
+        book.GetChildren = function() return paged end
+        psf.GetChildren = function() return book end
+        -- Schein der Klasse, wie W.Skin ihn anlegt.
+        local glow = stub.NewObject("Texture")
+        W.done[psf] = { glow = glow }
+
+        local grad, classy, goldy = S.Gradient, 0, 0
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == K.Highlight() then classy = classy + 1 end
+            if c == GC.frameAccent then goldy = goldy + 1 end
+            return grad(t, dir, c, a0, a1)
+        end
+        SB.Update(psf)
+        W.HoldGlow(psf, "PlayerSpellsFrame")
+        S.Gradient = grad
+        local b = SB.books[book]
+        assert(b and b.on and b.body and b.shadow and b.host == psf and b.vignette.TOP and b.light, "Flaeche oder Atmosphaere fehlt")
+        local h = SB.heads[head]
+        assert(h and h.fs == hText and h.dot and h.line and b.heads == 1, "Ueberschrift nicht als Abschnitt")
+        assert(not SB.heads[s1] and not SB.heads[s2], "Zauber als Ueberschrift gestaltet")
+        assert(classy > 0 and goldy == 0, "Zauberbuch nicht in der Klassenfarbe: Klasse " .. classy .. ", Gold " .. goldy)
+        assert(not glow:IsShown(), "Schein der Klasse bleibt ueber dem Zauberbuch")
+        assert(#touched == 0, "Blizzard-Teile angefasst: " .. table.concat(touched, ", "))
+        for _, t in ipairs({ hText, n1, n2, b1 }) do
+            assert(t:IsShown() and t:GetAlpha() == 1, "Inhalt ausgeblendet")
+        end
+        local rep = table.concat(SB.Report(psf, {}), "\n")
+        assert(rep:find("Zauberbuch (Stil ruhig, Klasse): Seite gefunden, Fläche ja, Schein der Klasse aus", 1, true)
+            and rep:find("Überschriften: „Allgemein“", 1, true), "Bericht: " .. rep)
+        for _ = 1, 3 do SB.Update(psf) W.HoldGlow(psf, "PlayerSpellsFrame") end
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do SB.Update(psf) W.HoldGlow(psf, "PlayerSpellsFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        print(string.format("    (20 Durchlaeufe Zauberbuch: %.1f KB)", grew))
+        assert(grew < 1, string.format("Zauberbuch legt im Takt Muell an: %.1f KB", grew))
+        -- Anderer Reiter (Talente): Schein zurueck, Atmosphaere weg.
+        book:Hide()
+        SB.Update(psf)
+        W.HoldGlow(psf, "PlayerSpellsFrame")
+        assert(glow:IsShown() and not b.on and not b.body:IsShown(), "Talente ohne Schein oder mit Flaeche des Zauberbuchs")
+        -- Berufsfenster (Gold): der Schein der Klasse nie.
+        local pf = stub.NewObject("Frame", "ProfessionsFrame")
+        local pglow = stub.NewObject("Texture")
+        W.done[pf] = { glow = pglow }
+        S.Scope(pf, S.CALM)
+        W.HoldGlow(pf, "ProfessionsFrame")
+        assert(not pglow:IsShown(), "Schein der Klasse im Berufsfenster (Gold)")
+        W.done[psf], W.done[pf] = nil, nil
+    end)
+    Check(okZ, "Zauberbuch: Flaeche, Ueberschrift als Abschnitt in der Klassenfarbe, Schein der Klasse aus - Berufe ohne Schein"
+        .. (okZ and "" or (": " .. tostring(errZ))))
+
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett
     -- auf Wunsch. Es bleibt ein Akzent (accent = purple = violet = brandA).
     local ok4, err4 = pcall(function()

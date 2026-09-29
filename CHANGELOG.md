@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.7.0] – 2026-09-29
+
+**Das Zauberbuch in der ruhigen Oberfläche.** Statt des großen Scheins in deiner Klassenfarbe über der halben Seite liegen deine Zauber auf derselben ruhigen, leicht angehobenen Fläche wie Ruf und Fertigkeiten, mit dezenter Randabdunklung und einem Hauch Licht. Überschriften wie „Allgemein“ tragen Raute und Linie in deiner Klassenfarbe.
+
+**Zauber unverändert.** Symbole, Namen, „Passiv“, der Schein an Zaubern, die noch auf keiner Leiste liegen, Reiter, Suche und Blättern bleiben, wie das Spiel sie zeigt. Die Talente behalten ihr Aussehen.
+
+**Im Berufsfenster kein Schein in der Klassenfarbe mehr.** Es trägt nur noch sein Gold.
+
+### Technisch
+
+- Neu `ui/spellbook.lua` (`WeintCodex.UISpellBook`): `PlayerSpellsFrame.SpellBookFrame` (gemessen), in `W.HOSTED.PlayerSpellsFrame`, Stil `S.CHARACTER_INFO` nur für das Zauberbuch (nicht die Talente). Fläche unter `PagedSpellsFrame`, Vignette und neutrales Licht, Überschrift = Eintrag in `View1`/`View2` ohne `.Button` → Raute und Linie hinter dem Text (Schrift und Lage bleiben).
+- `ui/windows.lua`: `W.HoldGlow` – der Schein der Klasse (`W.AddGlow`) ist in Fenstern in Gold (`S.CALM`) immer aus, sonst aus, solange ein gestalteter Teil es will (`GlowOff`, Zauberbuch); versteckt und je Durchlauf gehalten. Behebt die Klassenfarbe im Berufsfenster seit 6.7.5.0.
+- `load_test.lua`: Zauberbuch wie gemessen, Schein im Zauberbuch aus und bei den Talenten zurück, im Berufsfenster nie.
+
 ## [6.7.6.0] – 2026-09-29
 
 **Die Berufsübersicht passt zur Rezeptseite.** Jeder Beruf liegt auf einer ruhigen, leicht angehobenen Karte mit weichem Schatten statt der braunen Fläche; der Name des Berufs ist die Überschrift der Karte, mit Raute und Linie in Gold. Die Bilder hinter den Nebenberufen sind weg – hinter Text steht nichts mehr.

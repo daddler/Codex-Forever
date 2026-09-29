@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.7.7.0",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDas Zauberbuch in der ruhigen Oberfläche.|r Statt des großen Scheins in deiner Klassenfarbe über der halben Seite liegen deine Zauber auf derselben ruhigen, leicht angehobenen Fläche wie Ruf und Fertigkeiten, mit dezenter Randabdunklung und einem Hauch Licht. Überschriften wie „Allgemein“ tragen Raute und Linie in deiner Klassenfarbe.",
+            "|cff7C6CFFZauber unverändert.|r Symbole, Namen, „Passiv“, der Schein an Zaubern, die noch auf keiner Leiste liegen, Reiter, Suche und Blättern bleiben, wie das Spiel sie zeigt. Die Talente behalten ihr Aussehen.",
+            "|cff7C6CFFIm Berufsfenster kein Schein in der Klassenfarbe mehr.|r Es trägt nur noch sein Gold.",
+        },
+    },
+    {
         version = "6.7.6.0",
         date    = "29.09.2026",
         notes   = {

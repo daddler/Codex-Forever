@@ -2058,6 +2058,43 @@ Bausteine, in `W.HOSTED.ProfessionsFrame` neben der Rezeptseite, Stil
 **Unverändert:** Symbole, Namen und Rang, Zauberknöpfe, Knopf zum
 Verlernen, Texte und Lage aller Teile.
 
+### Zauberbuch *(6.7.7.0, `ui/spellbook.lua`)*
+
+Beta-Test: das Zauberbuch nach dem neuen Prinzip. **Gemessen**
+(`/wcui fenster`): `PlayerSpellsFrame.SpellBookFrame` mit
+`.PagedSpellsFrame.View1.<Eintrag>.Button` (Zauber; Schein
+`talents-sheen-node`, `spellbook-item-unassigned-glow`),
+`.PagingControls`, `.CategoryTabSystem`, `.SettingsDropdown`. Kein großes
+Bild des Spiels – der braune Verlauf über der halben Seite war **unser**
+Schein der Klasse (`W.AddGlow`, Krieger: 0.78/0.61/0.43, 40 %).
+
+Kein Register (Raster, keine Detailansicht), aber dieselben Bausteine,
+in `W.HOSTED.PlayerSpellsFrame`, Stil `S.CHARACTER_INFO` – **nur** für
+`PlayerSpellsFrame.SpellBookFrame`, die Talente daneben bleiben, wie sie
+sind:
+
+- **Grund:** Vignette 35 % / 48 px, neutrales Licht; angehobene Fläche
+  (`surfaceRaised`, Schatten, Lichtkante) unter `PagedSpellsFrame`.
+- **Schein der Klasse aus**, solange das Zauberbuch offen ist
+  (`SB.GlowOff` → `W.HoldGlow`), zurück bei den Talenten.
+- **Überschrift** („Allgemein“, Name eines Talentbaums): ein Eintrag in
+  `View1`/`View2` **ohne** `.Button` (die Zauber haben alle einen;
+  ungemessen, der Bericht nennt, was gefunden wurde). Raute und Linie in
+  der Klassenfarbe hinter dem Text, Linie bis 16 px vor den Rand der
+  Seite; Schrift, Größe und Lage bleiben (Seitentitel). Neu gelegt, wenn
+  Text oder Breite sich ändern – die Seite verwendet ihre Einträge beim
+  Blättern weiter.
+
+**`W.HoldGlow`** (allgemein): Fenster in Gold (`S.CALM`) tragen den Schein
+der Klasse nie – im Berufsfenster lag er seit 6.7.5.0 über dem Gold, ein
+zweiter Akzent in einem Bereich, den der Test nicht sah (er entsteht in
+`W.Skin`, nicht über `S.Gradient`). Versteckt statt durchsichtig und je
+Durchlauf gehalten, wie im Charakterfenster.
+
+**Unverändert:** Zauber (Symbol mit eckigem Rand seit 6.4.1.2, Name,
+Untertitel), Schein an nicht zugewiesenen Zaubern, Reiter, Suche,
+Blättern, Talente.
+
 ### Nächste Fenster
 
 Vorgesehen: Berufsübersicht (nach Messung), Gilde (mittlere Atmosphäre), Talente
