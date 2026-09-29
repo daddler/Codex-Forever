@@ -27,6 +27,8 @@ WeintCodex_ChangelogData = {
         notes   = {
             "|cff7C6CFFEin bisschen Klassenfarbe im Zauberbuch.|r Von oben fällt ein Hauch Licht in deiner Klassenfarbe, die Fläche mit deinen Zaubern trägt oben eine feine Kante in deiner Klasse – wie die Karten in Ruf und Fertigkeiten. Nicht mehr der große Schein über der halben Seite.",
             "|cff7C6CFFDie Linie hinter „Allgemein“ ist da.|r Hinter Überschriften im Zauberbuch und hinter Schmiedekunst und Bergbau in der Berufsübersicht fehlte die feine Linie nach der Raute – sie war falsch befestigt und wurde nicht gezeichnet.",
+            "|cff7C6CFFGilde & Communitys in der ruhigen Oberfläche.|r Liste, Chat und Mitglieder liegen auf eigenen, leicht angehobenen Flächen mit weichem Schatten und feiner Kante in Gold; dezente Randabdunklung und ein Hauch Licht. Die Gilde gehört nicht zu deiner Klasse – deshalb Gold statt Klassenfarbe, auch am gewählten Eintrag links und am Seitenreiter, und kein Schein in der Klassenfarbe mehr.",
+            "|cff7C6CFFNamen und Farben bleiben.|r Chat, Mitgliederliste, Wappen, Kronen und „online“ zeigen alles, wie das Spiel es zeigt; die Mitgliederliste behält innen ihren gewohnten Grund.",
         },
     },
     {

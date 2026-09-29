@@ -2107,6 +2107,36 @@ Durchlauf gehalten, wie im Charakterfenster.
 Untertitel), Schein an nicht zugewiesenen Zaubern, Reiter, Suche,
 Blättern, Talente.
 
+### Gilde & Communitys *(6.7.8.0, `ui/community.lua`)*
+
+Beta-Test: „Gilde und Community fertig machen“. **Gemessen**
+(`/wcui fenster`, Chat der Gilde): `CommunitiesFrame` mit `.MemberList`
+(`.InsetFrame.NineSlice`: `!UI-Frame-InnerRightTile`/`-InnerLeftTile`,
+Zeilen mit Bild 131128, Kronen 132061), `.ChatEditBox`, `.StreamDropdown`,
+`.ChatTab`, `.PortraitOverlay`, `.VoiceChatHeadset`; die Liste links
+`CommunitiesFrameCommunitiesList` (Einträge mit
+`communities-guildbanner-*`).
+
+**Gold** (`S.SCOPES.CommunitiesFrame = S.CALM`): die Gilde gehört nicht
+zur Klasse. Damit folgen der gewählte Seitenreiter (`SkinSideTabs`, seit
+6.7.5.0) und – neu – der gewählte Eintrag links (`W.NavEntry` bekommt den
+Stil aus `HideByAtlas`) dem Gold; der Schein der Klasse oben ist aus
+(`W.HoldGlow`, Fenster in Gold).
+
+Kein Register, drei Spalten; je Spalte die angehobene Fläche des Registers
+(`surfaceRaised`, Schatten, Kante in Gold 45 %), 6 px über die Spalte
+hinaus, auf dem Fenster unter allem: Liste (`.CommunitiesList`, sonst der
+globale Name), Chat (`.Chat`, `.ChatFrame`, `.MessageFrame` – ungemessen;
+bis zur Unterkante von `.ChatEditBox`), Mitglieder (`.MemberList`).
+Angelegt, sobald die Spalte da ist, gezeigt nur mit ihr (andere Ansicht:
+Mitglieder groß, Gildeninfo). Vignette 35 %/48 px, neutrales Licht.
+
+**Unverändert:** Namen in Chat und Mitgliederliste in den Farben des
+Spiels (Klasse, Kanal), Zeiten, Wappen, Kronen, „8/22 online“, Kanalwahl,
+Knöpfe, und innen die Mitgliederliste (`W.INSET_KEEP`, 6.6.3.3: „im
+Normalzustand“) – ihre Fläche liegt darunter, zu sehen sind Schatten und
+Kante.
+
 ### Nächste Fenster
 
 Vorgesehen: Berufsübersicht (nach Messung), Gilde (mittlere Atmosphäre), Talente

@@ -6443,6 +6443,73 @@ do
     Check(okZ, "Zauberbuch: Flaeche, Ueberschrift als Abschnitt in der Klassenfarbe, Schein der Klasse aus - Berufe ohne Schein"
         .. (okZ and "" or (": " .. tostring(errZ))))
 
+    -- 6.7.8.0: Gilde & Communitys - Gold, drei Spalten auf Flaechen, der
+    -- gewaehlte Eintrag links in Gold, kein Schein der Klasse. Nachgebaut
+    -- wie gemessen: CommunitiesFrame mit .MemberList, .ChatEditBox, Chat
+    -- und der Liste links als CommunitiesFrameCommunitiesList.
+    local okG, errG = pcall(function()
+        local W, S, CO = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UICommunity
+        local GC = WeintCodex.GameColors
+        assert(CO and W.HOSTED.CommunitiesFrame and W.HOSTED.CommunitiesFrame[1] == CO and S.SCOPES.CommunitiesFrame == S.CALM,
+            "Gilde nicht in Gold am Fenster eingetragen")
+        local cf = stub.NewObject("Frame", "CommunitiesFrame")
+        local list, chat, edit, members = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("EditBox"), stub.NewObject("Frame")
+        cf.Chat, cf.ChatEditBox, cf.MemberList = chat, edit, members
+        local oldCL, oldCF = _G.CommunitiesFrameCommunitiesList, _G.CommunitiesFrame
+        _G.CommunitiesFrameCommunitiesList, _G.CommunitiesFrame = list, cf
+        -- Eintrag links (gewaehlt), wie 6.6.2.3 gemessen.
+        local entry = stub.NewObject("Button")
+        local pressed = stub.NewObject("Texture")
+        pressed.GetAtlas = function() return "communities-nav-button-pressed" end
+        entry.GetRegions = function() return pressed end
+        list.GetChildren = function() return entry end
+        cf.GetChildren = function() return list, chat, members end
+        local glow = stub.NewObject("Texture")
+        W.done[cf] = { glow = glow }
+
+        local grad, classy, goldy = S.Gradient, 0, 0
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == K.Highlight() then classy = classy + 1 end
+            if c == GC.frameAccent then goldy = goldy + 1 end
+            return grad(t, dir, c, a0, a1)
+        end
+        S.Register()
+        W.HideByAtlas(cf)
+        CO.Update(cf)
+        W.HoldGlow(cf, "CommunitiesFrame")
+        S.Gradient = grad
+        local d = CO.frames[cf]
+        assert(d and d.vignette.TOP and d.light, "Atmosphaere fehlt")
+        for _, key in ipairs({ "Liste", "Chat", "Mitglieder" }) do
+            local col = d.cols[key]
+            assert(col and col.on and col.body and col.shadow and W.own[col.body], "Spalte ohne Flaeche: " .. key)
+        end
+        assert(d.cols.Liste.anchor == list and d.cols.Chat.anchor == chat and d.cols.Mitglieder.anchor == members, "Spalten vertauscht")
+        assert(W.Entries[entry] and W.Entries[entry].on and W.Entries[entry].accent == GC.frameAccent, "gewaehlter Eintrag nicht in Gold")
+        assert(classy == 0 and goldy > 0, "Gilde nicht in Gold: Klasse " .. classy .. ", Gold " .. goldy)
+        assert(not glow:IsShown(), "Schein der Klasse ueber der Gilde")
+        local rep = table.concat(CO.Report(cf, {}), "\n")
+        assert(rep:find("Gilde & Communitys (Stil ruhig): Liste Fläche · Chat Fläche · Mitglieder Fläche", 1, true), "Bericht: " .. rep)
+        -- Andere Ansicht: der Chat geht, seine Flaeche mit.
+        chat:Hide()
+        CO.Update(cf)
+        assert(not d.cols.Chat.on and not d.cols.Chat.body:IsShown() and d.cols.Liste.on, "Flaeche bleibt ohne Chat")
+        chat:Show()
+        for _ = 1, 3 do CO.Update(cf) end
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do CO.Update(cf) W.HoldGlow(cf, "CommunitiesFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        print(string.format("    (20 Durchlaeufe Gilde: %.1f KB)", grew))
+        assert(grew < 1, string.format("Gilde legt im Takt Muell an: %.1f KB", grew))
+        _G.CommunitiesFrameCommunitiesList, _G.CommunitiesFrame = oldCL, oldCF
+        W.done[cf] = nil
+    end)
+    Check(okG, "Gilde & Communitys: Gold, drei Spalten auf Flaechen, Eintrag links in Gold, kein Schein der Klasse, kein Muell"
+        .. (okG and "" or (": " .. tostring(errG))))
+
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett
     -- auf Wunsch. Es bleibt ein Akzent (accent = purple = violet = brandA).
     local ok4, err4 = pcall(function()

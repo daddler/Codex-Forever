@@ -455,7 +455,9 @@ end
 -- oder "select" heisst und gezeigt wird - je Durchlauf neu bestimmt.
 local entries = setmetatable({}, { __mode = "k" })
 W.Entries = entries
-function W.NavEntry(f, r, atlas)
+-- `sc` (6.7.8.0): der Stil des Bereichs - der gewaehlte Eintrag traegt
+-- dessen Akzent (Gilde: Gold), sonst die Klassenfarbe.
+function W.NavEntry(f, r, atlas, sc)
     if type(f) ~= "table" or not f.CreateTexture then return end
     local d = entries[f]
     if not d then
@@ -475,9 +477,10 @@ function W.NavEntry(f, r, atlas)
     if (low:find("pressed", 1, true) or low:find("select", 1, true)) and r.IsShown and K.Bool(r:IsShown(), false) then
         d.onNow = true
     end
-    if d.on ~= d.onNow then
-        d.on = d.onNow
-        local c = d.on and K.Highlight() or { 0, 0, 0 }
+    local accent = S.Accent(sc and sc.accent)
+    if d.on ~= d.onNow or (d.on and d.accent ~= accent) then
+        d.on, d.accent = d.onNow, d.onNow and accent or nil
+        local c = d.on and accent or BLACK
         d.kachel.border:SetColor(c[1], c[2], c[3], 1)
     end
 end
@@ -790,7 +793,7 @@ function HideByAtlas(f, depth, sc)
             if atlas:find("^common%-stat%-bar%-BG") or atlas:find("^Profession%-ProgressBar%-BG") then FlatBar(f, sc) end
             if atlas:find("^Profession%-square%-frame") or atlas:find("^groupfinder%-button%-cover") then W.EdgeBorder(f) end
             if atlas:find("^common%-search%-border") then FlatBar(f) end
-            if atlas:find("^communities%-nav%-button") then W.NavEntry(f, r, atlas) end
+            if atlas:find("^communities%-nav%-button") then W.NavEntry(f, r, atlas, sc) end
             if W.HeaderAtlas(atlas) then
                 if sc and sc.header == "list" then W.ListHeader(f, r, sc) else W.Header(f, r) end
             end

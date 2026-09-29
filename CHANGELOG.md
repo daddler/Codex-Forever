@@ -15,11 +15,18 @@ nicht zusammen.
 
 **Die Linie hinter „Allgemein“ ist da.** Hinter Überschriften im Zauberbuch und hinter Schmiedekunst und Bergbau in der Berufsübersicht fehlte die feine Linie nach der Raute – sie war falsch befestigt und wurde nicht gezeichnet.
 
+**Gilde & Communitys in der ruhigen Oberfläche.** Liste, Chat und Mitglieder liegen auf eigenen, leicht angehobenen Flächen mit weichem Schatten und feiner Kante in Gold; dezente Randabdunklung und ein Hauch Licht. Die Gilde gehört nicht zu deiner Klasse – deshalb Gold statt Klassenfarbe, auch am gewählten Eintrag links und am Seitenreiter, und kein Schein in der Klassenfarbe mehr.
+
+**Namen und Farben bleiben.** Chat, Mitgliederliste, Wappen, Kronen und „online“ zeigen alles, wie das Spiel es zeigt; die Mitgliederliste behält innen ihren gewohnten Grund.
+
 ### Technisch
 
 - `ui/spellbook.lua`: Licht von oben in der Klassenfarbe (`GC.classLight`, 7 %, 180 px statt neutral 3,5 %/140 px), Kante über der Fläche in der Klassenfarbe (50 %) statt weiß.
 - `ui/spellbook.lua`, `ui/profbook.lua`: die Linie hinter einer Überschrift war links an der Raute und rechts an `"RIGHT"` der Seite bzw. Karte verankert – das ist deren **halbe Höhe**, nicht die Höhe der Zeile; im Spiel wurde sie nicht gezeichnet (Screenshot: nur die Raute). Jetzt nur links verankert, Breite gerechnet (Rand minus Einzug minus Text), neu bei geänderter Lage.
 - `load_test.lua`: Breite der Linie, nur ein Anker (links), Licht und Kante in der Klassenfarbe.
+- Neu `ui/community.lua` (`WeintCodex.UICommunity`): `CommunitiesFrame` in `S.CALM` (Gold), in `W.HOSTED`. Vignette und neutrales Licht; je Spalte (Liste `CommunitiesFrameCommunitiesList`, Chat `.Chat` samt `.ChatEditBox`, `.MemberList`) die angehobene Fläche mit Schatten und Kante in Gold, sichtbar nur mit ihrer Spalte. Schein der Klasse aus (`W.HoldGlow`, Fenster in Gold).
+- `W.NavEntry` (Einträge links): der gewählte trägt den Akzent des Bereichs (Gilde: Gold) statt immer die Klassenfarbe.
+- `load_test.lua`: Gilde wie gemessen – Gold, drei Spalten, Spalte zu = Fläche weg, Eintrag in Gold, kein Schein.
 
 ## [6.7.7.0] – 2026-09-29
 

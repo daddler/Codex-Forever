@@ -191,6 +191,8 @@ ui/professions.lua
 ui/profbook.lua
 # Zauberbuch (6.7.7.0): Flaeche, Abschnitte in der Klassenfarbe, ruhige Atmosphaere.
 ui/spellbook.lua
+# Gilde & Communitys (6.7.8.0): drei Spalten auf Flaechen, Gold.
+ui/community.lua
 ui/testmode.lua
 ui/options.lua
 ui/editmode.lua
