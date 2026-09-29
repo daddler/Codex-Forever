@@ -855,9 +855,14 @@ for token, art in pairs(WeintCodex.ClassArtworks or {}) do
     Check(classes[token] == true, "Klassenbild " .. tostring(token) .. " gehoert zu einer Klasse, die es gibt")
     CheckArt(art, "Klassenbild " .. tostring(token))
 end
-Check(WeintCodex.Art.Class("PALADIN") == nil and WeintCodex.Art.Class(nil) == nil,
+Check(WeintCodex.Art.Class("KEINEKLASSE") == nil and WeintCodex.Art.Class(nil) == nil,
     "eine Klasse ohne Bild liefert nil")
 print("  --    " .. artClasses .. " Klasse(n) mit Bild")
+-- 6.6.4.5: alle neun Klassen haben eine Szene und ein Thema.
+for token in pairs(classes) do
+    Check(WeintCodex.Art.Class(token) ~= nil and WeintCodex.ClassThemes[token] ~= nil,
+        "Klasse " .. token .. " hat Szene und Thema")
+end
 
 -- Klassen-Themen (6.6.4.0, data/classthemes.lua): nur DEFAULT und
 -- Klassen, die es gibt; eine Szene nur mit Bild; Werte 0..1.
@@ -883,7 +888,7 @@ for token, theme in pairs(WeintCodex.ClassThemes or {}) do
     if theme.wash ~= nil then ok = ok and Rgb(theme.wash, 4) end
     Check(ok, what .. ": Werte wohlgeformt (0..1)")
 end
-Check(WeintCodex.ClassTheme("PALADIN").art == nil and WeintCodex.ClassTheme("PRIEST").art ~= nil,
+Check(WeintCodex.ClassTheme("KEINEKLASSE").art == nil and WeintCodex.ClassTheme("PRIEST").art ~= nil,
     "Klasse ohne Thema: Buehne des Spiels; Priester: eigenes Bild")
 
 --------------------------------------------------

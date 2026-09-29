@@ -349,7 +349,7 @@ WeintCodex.ClassArtworks = {
         w = 1496, h = 1051, focusX = 0.44, dim = 0.85,
     },
 
-    -- 6.6.4.5: fuenf weitere, alle Querformat 1496x1051, ganz. Wie beim
+    -- 6.6.4.5: sieben weitere, alle Querformat 1496x1051, ganz. Wie beim
     -- Jaeger zeigt das hochkante Modellfeld rund 60 % der Breite; focusX
     -- legt das Motiv der Mitte hinter die Figur.
 
@@ -382,6 +382,19 @@ WeintCodex.ClassArtworks = {
     WARLOCK = {
         file = "classes/warlock",
         w = 1496, h = 1051, focusX = 0.60, dim = 0.85,
+    },
+    -- Lichthalle: Altar mit Lichtkreuz vor hohem Fenster, zwei
+    -- Ritterstatuen, blaue Banner mit Goldstern. focusX 0.60 = der Altar.
+    -- Das hellste Bild - dim 0.82.
+    PALADIN = {
+        file = "classes/paladin",
+        w = 1496, h = 1051, focusX = 0.60, dim = 0.82,
+    },
+    -- Steinkreis: Tor mit Runen, Blitz und Sturmwirbel, Totems,
+    -- Wasserfaelle. focusX 0.59 = das Tor ueber der Treppe.
+    SHAMAN = {
+        file = "classes/shaman",
+        w = 1496, h = 1051, focusX = 0.59, dim = 0.85,
     },
 }
 

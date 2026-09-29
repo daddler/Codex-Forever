@@ -11,7 +11,7 @@ nicht zusammen.
 
 ## [6.6.4.5] – 2026-09-29
 
-**Fünf weitere Klassen bekommen ihre Szene im Charakterfenster.** Krieger stehen in einer Waffenkammer mit Thron und Esse, Druiden in einem Hain mit Geweihtor, Magier in einer arkanen Halle unter einer Armillarsphäre, Schurken in einem nächtlichen Versteck mit Laternen, Hexenmeister vor einem grünen Portal. Jede Figur nimmt das Licht ihrer Szene an; Aufbau, Werte und deine Klassenfarbe als Akzent bleiben dieselben. Paladin und Schamane behalten vorerst den Hintergrund des Spiels.
+**Alle Klassen haben jetzt ihre Szene im Charakterfenster.** Krieger stehen in einer Waffenkammer mit Thron und Esse, Druiden in einem Hain mit Geweihtor, Magier in einer arkanen Halle unter einer Armillarsphäre, Schurken in einem nächtlichen Versteck mit Laternen, Hexenmeister vor einem grünen Portal, Paladine in einer Lichthalle vor dem Altar, Schamanen in einem Steinkreis unter dem Sturm. Jede Figur nimmt das Licht ihrer Szene an; Aufbau, Werte und deine Klassenfarbe als Akzent bleiben dieselben.
 
 ## [6.6.4.4] – 2026-09-29
 

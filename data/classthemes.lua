@@ -119,7 +119,7 @@ WeintCodex.ClassThemes = {
         wash        = { 0.80, 0.95, 0.70, 0.035 },
     },
 
-    -- 6.6.4.5: fuenf weitere Klassen. Tiefe wie Priester und Jaeger (das
+    -- 6.6.4.5: die uebrigen sieben Klassen. Tiefe wie Priester und Jaeger (das
     -- Geruest), nur das Licht folgt jeweils dem Bild - gedaempfte
     -- Umgebung, Hauptlicht in der Farbe der staerksten Lichtquelle, ein
     -- Hauch darueber unter 4 %.
@@ -160,6 +160,21 @@ WeintCodex.ClassThemes = {
         vignette = 0.60, calm = 0.30, shadow = 0.60, haze = 0.40,
         light = { ambient = { 0.52, 0.48, 0.58 }, diffuse = { 0.90, 0.82, 0.98 } },
         wash  = { 0.75, 0.60, 0.95, 0.035 },
+    },
+    -- Lichthalle: goldenes Licht wie beim Priester, etwas heller; der
+    -- Hof hinter der Figur etwas staerker, das Bild ist das hellste.
+    PALADIN = {
+        scene = "PALADIN", gameOverlay = false,
+        vignette = 0.60, calm = 0.34, shadow = 0.60, haze = 0.40,
+        light = { ambient = { 0.58, 0.54, 0.48 }, diffuse = { 0.98, 0.88, 0.70 } },
+        wash  = { 1.00, 0.90, 0.72, 0.035 },
+    },
+    -- Sturm: kuehles Blau des Blitzes, die Kerzen nur am Rand.
+    SHAMAN = {
+        scene = "SHAMAN", gameOverlay = false,
+        vignette = 0.60, calm = 0.30, shadow = 0.60, haze = 0.40,
+        light = { ambient = { 0.48, 0.52, 0.60 }, diffuse = { 0.82, 0.88, 1.00 } },
+        wash  = { 0.65, 0.78, 1.00, 0.035 },
     },
 }
 

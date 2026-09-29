@@ -129,6 +129,8 @@ CLASS_JOBS = [
     ("classes/mage", "mage.png"),
     ("classes/rogue", "rogue.png"),
     ("classes/warlock", "warlock.png"),
+    ("classes/paladin", "paladin.png"),
+    ("classes/shaman", "shaman.png"),
 ]
 CLASS_W, CLASS_H = 1024, 1024
 
