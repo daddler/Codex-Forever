@@ -385,6 +385,12 @@ W.HIDE_ATLAS = {
     "^Profession%-Background%-Template",
     "^Professions%-background%-summarylist",
     "^Profession%-background%-card%-",
+    -- 6.7.6.0, gemessen auf der Uebersicht: die braune Flaeche der
+    -- Hauptberufe (Profession-overview-Card) und die Bilder der Nebenberufe
+    -- (Profession-overview-card-generic-*) - bis 6.7.5.0 gedaempft, aber sie
+    -- standen hinter Text. Die Karten tragen jetzt die Flaeche des Registers
+    -- (ui/profbook.lua), der Titel sagt, welcher Beruf es ist.
+    "^Profession%-overview%-[Cc]ard",
     -- 6.6.2.2, gemessen: Dungeonbrowser ("Suche nach Gruppe") und Questlog.
     "^UI%-Frame%-PortraitMetal",             -- Metallecke am Portrait
     "^_?UI%-Frame%-TopTileStreaks",          -- Streifen unter dem Titel
@@ -398,11 +404,11 @@ W.HIDE_ATLAS = {
     -- Rand im Akzent (W.NavEntry). Das Wappen im Eintrag bleibt.
     "^communities%-nav%-button",
 }
--- Gedaempft statt weg (mit "Stimmung statt Schwarz"): die Karten der
--- Berufsuebersicht tragen je Beruf ein Bild - das zeigt, welcher es ist.
--- Ebenso die Bilder der Kategorien im Dungeonbrowser (Quests & Zonen,
--- Schlachtfelder, Benutzerdefiniert) - 6.6.2.2.
-W.TONE_ATLAS = { "^Profession%-overview%-card", "^groupfinder%-button%-" }
+-- Gedaempft statt weg (mit "Stimmung statt Schwarz"): die Bilder der
+-- Kategorien im Dungeonbrowser (Quests & Zonen, Schlachtfelder,
+-- Benutzerdefiniert) - 6.6.2.2. Die Karten der Berufsuebersicht standen
+-- hier bis 6.7.5.0; seit 6.7.6.0 sind sie weg (hinter Text, W.HIDE_ATLAS).
+W.TONE_ATLAS = { "^groupfinder%-button%-" }
 function W.TonesAtlas(atlas)
     if type(atlas) ~= "string" or W.HidesAtlas(atlas) then return false end
     for _, pat in ipairs(W.TONE_ATLAS) do

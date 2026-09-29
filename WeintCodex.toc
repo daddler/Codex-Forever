@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.7.5.0
+## Version: 6.7.6.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -187,6 +187,8 @@ ui/currency.lua
 ui/statistics.lua
 # Berufe (6.7.5.0): Rezeptseite als Register im Berufsfenster, Gold.
 ui/professions.lua
+# Berufe, Uebersicht (6.7.6.0): Karten je Beruf in derselben Sprache.
+ui/profbook.lua
 ui/testmode.lua
 ui/options.lua
 ui/editmode.lua

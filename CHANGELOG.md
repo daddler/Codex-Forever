@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.7.6.0] – 2026-09-29
+
+**Die Berufsübersicht passt zur Rezeptseite.** Jeder Beruf liegt auf einer ruhigen, leicht angehobenen Karte mit weichem Schatten statt der braunen Fläche; der Name des Berufs ist die Überschrift der Karte, mit Raute und Linie in Gold. Die Bilder hinter den Nebenberufen sind weg – hinter Text steht nichts mehr.
+
+**Fortschrittsbalken mit Tiefe, Farbe unverändert.** Wie bei den Fertigkeiten: Schatten und Lichtkante an der Füllung; Farbe, Glanz und Werte wie „Kochkunst 8/75“ bleiben, wie das Spiel sie zeigt. Symbole, Rang, Zauber und der Knopf zum Verlernen sind unverändert.
+
+### Technisch
+
+- Neu `ui/profbook.lua` (`WeintCodex.UIProfessionBook`): Übersicht des Berufsfensters (`BookPage.ProfessionsContentFrame`, gemessen), in `W.HOSTED.ProfessionsFrame` neben der Rezeptseite. Je Karte (`PrimaryProfession1/2`, `SecondaryProfession1..3`): Fläche des Registers, Titel (oberste Zeile) als Abschnitt – links mit Raute und Linie, mittig mit Linie darunter –, `S.BarFinish` am `.StatusBar`, Rahmen der Karte (`NineSlice`/`Border`) weg.
+- `ui/windows.lua`: `Profession-overview-Card` und `Profession-overview-card-generic-*` ausgeblendet statt gedämpft (standen hinter Text); `W.TONE_ATLAS` nur noch der Dungeonbrowser.
+- `load_test.lua`: Übersicht wie gemessen, Gold statt Klassenfarbe, nichts bewegt.
+
 ## [6.7.5.0] – 2026-09-29
 
 **Die Rezepte deiner Berufe im neuen Stil.** Die Rezeptliste liegt wie Ruf und Fertigkeiten auf einer ruhigen, leicht angehobenen Fläche, Kategorien wie „Alltägliche Mahlzeiten“ stehen als eigene Abschnitte mit Raute und Linie, Rezepte sind fein voneinander abgesetzt, das gewählte trägt einen schmalen Streifen. Rechts ist das Rezept eine Karte: Name oben größer in seiner Farbe, Beschreibung, darunter abgesetzt Reagenzien und was es braucht.

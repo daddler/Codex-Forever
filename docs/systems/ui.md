@@ -2031,11 +2031,32 @@ Knöpfe, damit ist das Rücken ohnehin gesperrt. **Unverändert:**
 Rangbalken, Ergebnissymbol samt Qualitätsrahmen, Plätze der Reagenzien,
 Filter, Suchfeld, Knöpfe, Seitenreiter (außer der Farbe des Rahmens).
 
-**Die Übersicht** (erster Seitenreiter, eine Karte je Beruf) ist **nicht
-gemessen** – das Bild dazu kam ohne `/wcui fenster`. Sie bleibt, wie sie
-seit 6.6.2.1 ist (Hintergrund weg, Bilder der Karten gedämpft), bekommt
-aber den Stil des Fensters (Gold; Balken mit `barTrack`). Nächster
-Schritt: `/wcui fenster` über der Übersicht.
+**Die Übersicht** (erster Seitenreiter) seit 6.7.6.0: `ui/profbook.lua`,
+siehe unten.
+
+### Berufsübersicht *(6.7.6.0, `ui/profbook.lua`)*
+
+Beta-Test: die Rezeptseite „prinzipiell okay“, die Übersicht angleichen.
+**Gemessen** (`/wcui fenster`): `ProfessionsFrame.BookPage.
+ProfessionsContentFrame` mit `PrimaryProfession1/2` (braune Fläche
+`Profession-overview-Card`) und `SecondaryProfession1..3` (Bilder
+`Profession-overview-card-generic-Cooking/Fishing/FirstAid`), je Karte
+`.StatusBar` (`Skillbar_Fill_Flipbook_<Beruf>`, `Skillbar_Flare_<Beruf>`),
+`.SpellButton1/2`, `.UnlearnButton` (`Profession-button-red-crossmark`).
+
+Kein Register (keine Liste, keine Detailansicht), aber dieselben
+Bausteine, in `W.HOSTED.ProfessionsFrame` neben der Rezeptseite, Stil
+`S.CALM`:
+
+| Teil | 6.7.6.0 |
+|---|---|
+| Fläche der Karte | braune Fläche und Bild weg (`W.HIDE_ATLAS`, bis 6.7.5.0 waren die Bilder nur gedämpft – sie standen hinter Text); `surfaceRaised` 2 px innerhalb, weicher Schatten, Lichtkante oben; `NineSlice`/`Border`/`Bg`/`Background` der Karte weg, falls vorhanden |
+| Titel | oberste Zeile der Karte (ungemessen), hell, 14 pt; `GetJustifyH` „LEFT“ → Raute und Linie hinter dem Text (wie die Kopfzeilen im Ruf), „CENTER“ → Linie mit Raute 7 px darunter |
+| Balken | `S.BarFinish` am `.StatusBar`: Tiefe an der Füllung; Farbe, Glanz, Text bleiben |
+| Grund | Vignette 35 % / 48 px und neutrales Licht wie im Register, auf dem Berufsfenster, aus mit der Seite |
+
+**Unverändert:** Symbole, Namen und Rang, Zauberknöpfe, Knopf zum
+Verlernen, Texte und Lage aller Teile.
 
 ### Nächste Fenster
 

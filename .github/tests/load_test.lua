@@ -4868,8 +4868,9 @@ do
                              "Profession-ProgressBar-frame", "Profession-square-frame", "Profession-Background-Overview" }) do
             assert(W.HidesAtlas(a), "bleibt sichtbar: " .. a)
         end
-        assert(W.TonesAtlas("Profession-overview-card-generic-Fishing") and not W.HidesAtlas("Profession-overview-card-generic-Fishing"),
-            "Berufskarte weg statt gedaempft")
+        -- 6.7.6.0: Karten und Bilder der Uebersicht weg (standen hinter Text).
+        assert(W.HidesAtlas("Profession-overview-card-generic-Fishing") and W.HidesAtlas("Profession-overview-Card")
+            and not W.TonesAtlas("Profession-overview-card-generic-Fishing"), "Berufskarte bleibt hinter dem Text")
         assert(not W.IsDark(1, 0.1, 0.1), "rote Schrift (fehlt) wird hell")
         assert(W.WantsLarge("ProfessionsFrame"), "Berufe ohne gedaempfte Bilder")
         -- Seitenreiter: Goldrahmen weg, Kachel, gewaehlter im Akzent.
@@ -6213,6 +6214,113 @@ do
     end)
     Check(okB, "Berufe: Rezeptseite als Register im Berufsfenster, Gold statt Klassenfarbe, Grundbilder weg - nichts verloren, kein Muell"
         .. (okB and "" or (": " .. tostring(errB))))
+
+    -- 6.7.6.0: Berufe, Uebersicht - Karten je Beruf. Nachgebaut wie gemessen:
+    -- BookPage.ProfessionsContentFrame mit PrimaryProfession1 (braune
+    -- Flaeche, Titel links, Balken, Knopf zum Verlernen) und
+    -- SecondaryProfession1 (Bild hinter dem Text, Titel mittig, Rahmen).
+    local okO, errO = pcall(function()
+        local W, S, PB, PR = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIProfessionBook, WeintCodex.UIProfessions
+        local GC = WeintCodex.GameColors
+        assert(PB and W.HOSTED.ProfessionsFrame[1] == PR and W.HOSTED.ProfessionsFrame[2] == PB, "Uebersicht nicht am Berufsfenster")
+        local touched = {}
+        local function Tex(atlas)
+            local t = stub.NewObject("Texture")
+            t.GetAtlas = function() return atlas end
+            return t
+        end
+        local function Line(text, top, bottom, justify)
+            local fs = stub.NewObject("FontString")
+            fs._text, fs._font = text, true
+            fs.SetText = function() touched[#touched + 1] = "SetText " .. text end
+            fs.GetTop, fs.GetBottom = function() return top end, function() return bottom end
+            fs.GetStringWidth = function() return 90 end
+            fs.GetJustifyH = function() return justify or "LEFT" end
+            return fs
+        end
+        local function Card(top, art, title)
+            local card = stub.NewObject("Frame")
+            card.GetTop = function() return top end
+            card.SetPoint = function() touched[#touched + 1] = "SetPoint Karte" end
+            local bar, fill = stub.NewObject("StatusBar"), Tex("Skillbar_Fill_Flipbook_Cooking")
+            bar.GetStatusBarTexture = function() return fill end
+            bar.SetStatusBarColor = function() touched[#touched + 1] = "Balkenfarbe" end
+            local flare = Tex("Skillbar_Flare_Cooking")
+            local barText = Line("Kochkunst 8/75", top - 40, top - 52)
+            bar.GetRegions = function() return fill, flare, barText end
+            card.StatusBar = bar
+            local bg = Tex(art)
+            card.GetRegions = function() return bg, title end
+            return card, bg, bar, fill, flare, barText
+        end
+        local pf = stub.NewObject("Frame", "ProfessionsFrame")
+        local book, content = stub.NewObject("Frame"), stub.NewObject("Frame")
+        pf.BookPage, book.ProfessionsContentFrame = book, content
+        local t1 = Line("Schmiedekunst", 470, 456, "LEFT")
+        local c1, bg1, bar1, fill1, flare1 = Card(480, "Profession-overview-Card", t1)
+        local unlearn = stub.NewObject("Button")
+        local cross = Tex("Profession-button-red-crossmark")
+        unlearn.GetRegions = function() return cross end
+        c1.UnlearnButton = unlearn
+        c1.GetChildren = function() return bar1, unlearn end
+        local t2 = Line("Kochkunst", 290, 280, "CENTER")
+        local c2, bg2, bar2 = Card(300, "Profession-overview-card-generic-Cooking", t2)
+        local nine = stub.NewObject("Frame")
+        local nineEdge = stub.NewObject("Texture")
+        nine.GetRegions = function() return nineEdge end
+        c2.NineSlice = nine
+        c2.GetChildren = function() return bar2, nine end
+        content.PrimaryProfession1, content.SecondaryProfession1 = c1, c2
+        content.GetChildren = function() return c1, c2 end
+        book.GetChildren = function() return content end
+        pf.GetChildren = function() return book end
+        local oldPF = _G.ProfessionsFrame
+        _G.ProfessionsFrame = pf
+
+        local grad, classy, goldy = S.Gradient, 0, 0
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == K.Highlight() then classy = classy + 1 end
+            if c == GC.frameAccent then goldy = goldy + 1 end
+            return grad(t, dir, c, a0, a1)
+        end
+        S.Register()
+        W.HideByAtlas(pf)
+        assert(bg1:GetAlpha() == 0 and bg2:GetAlpha() == 0, "braune Flaeche oder Bild hinter dem Text noch da")
+        PB.Update(pf)
+        local p = PB.pages[content]
+        assert(p and p.on and p.host == pf and p.vignette.TOP, "Atmosphaere der Uebersicht fehlt")
+        local k1, k2 = PB.cards[c1], PB.cards[c2]
+        assert(k1 and k2 and k1.body and k1.shadow and k2.body and nineEdge:GetAlpha() == 0, "Karte ohne Flaeche oder Rahmen bleibt")
+        assert(k1.title == t1 and k2.title == t2, "Titel der Karten nicht gefunden")
+        -- Links: Raute und Linie hinter dem Text; mittig: Linie darunter.
+        assert(not k1.centered and k1.dot:IsShown() and k1.line:IsShown() and not k1.orn.dot:IsShown(), "Titel links falsch")
+        assert(k2.centered and not k2.dot:IsShown() and k2.orn.dot:IsShown() and k2.y == -27, "Titel mittig falsch: " .. tostring(k2.y))
+        assert(k1.bar and k1.bar.how == "Statusbalken" and k2.bar, "Balken ohne Tiefe")
+        S.Gradient = grad
+        assert(classy == 0 and goldy > 0, "Uebersicht nicht in Gold: Klasse " .. classy .. ", Gold " .. goldy)
+        assert(#touched == 0, "Blizzard-Teile angefasst: " .. table.concat(touched, ", "))
+        for _, t in ipairs({ t1, t2, bar1, fill1, flare1, unlearn, cross, bar2 }) do
+            assert(t:IsShown() and t:GetAlpha() == 1, "Inhalt ausgeblendet")
+        end
+        local rep = table.concat(PB.Report(pf, {}), "\n")
+        assert(rep:find("Berufe, Übersicht (Stil ruhig): 2 Karten, 2 mit Titel (1 mittig), 2 Balken (Füllung Statusbalken)", 1, true)
+            and rep:find("„Schmiedekunst“, „Kochkunst“", 1, true), "Bericht: " .. rep)
+        for _ = 1, 3 do PB.Update(pf) end
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do PB.Update(pf) end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        print(string.format("    (20 Durchlaeufe Berufsuebersicht: %.1f KB)", grew))
+        assert(grew < 1, string.format("Uebersicht legt im Takt Muell an: %.1f KB", grew))
+        content:Hide()
+        PB.Update(pf)
+        assert(not p.on and not p.light:IsShown(), "Atmosphaere bleibt ueber der Rezeptseite")
+        _G.ProfessionsFrame = oldPF
+    end)
+    Check(okO, "Berufe, Uebersicht: Karten mit Flaeche, Titel als Abschnitt, Balken mit Tiefe, Gold - nichts verloren, kein Muell"
+        .. (okO and "" or (": " .. tostring(errO))))
 
     -- 6.6.3.1: der Akzent IST die Klassenfarbe - im ganzen Addon. Violett
     -- auf Wunsch. Es bleibt ein Akzent (accent = purple = violet = brandA).

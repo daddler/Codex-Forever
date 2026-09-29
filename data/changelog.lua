@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.7.6.0",
+        date    = "29.09.2026",
+        notes   = {
+            "|cff7C6CFFDie Berufsübersicht passt zur Rezeptseite.|r Jeder Beruf liegt auf einer ruhigen, leicht angehobenen Karte mit weichem Schatten statt der braunen Fläche; der Name des Berufs ist die Überschrift der Karte, mit Raute und Linie in Gold. Die Bilder hinter den Nebenberufen sind weg – hinter Text steht nichts mehr.",
+            "|cff7C6CFFFortschrittsbalken mit Tiefe, Farbe unverändert.|r Wie bei den Fertigkeiten: Schatten und Lichtkante an der Füllung; Farbe, Glanz und Werte wie „Kochkunst 8/75“ bleiben, wie das Spiel sie zeigt. Symbole, Rang, Zauber und der Knopf zum Verlernen sind unverändert.",
+        },
+    },
+    {
         version = "6.7.5.0",
         date    = "29.09.2026",
         notes   = {
