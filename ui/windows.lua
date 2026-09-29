@@ -61,7 +61,23 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               "ProfessionsFrame", "CommunitiesFrame",
               -- 6.6.2.2: "Suche nach Gruppe" (Dungeonbrowser). Im Forever-Client
               -- LFGParentFrame (gemessen), im Quelltext des Spiels PVEFrame.
-              "LFGParentFrame", "PVEFrame" }
+              "LFGParentFrame", "PVEFrame",
+              -- 6.6.3.3: das Spielmenue (Esc), Beta-Test: "Redesign soll auch im
+              -- Optionsmenue Einheit finden".
+              "GameMenuFrame" }
+
+-- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
+-- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus
+-- Diamantmetall ("UI-Frame-DiamondMetal-*") und ein Grund am Rahmen (Bild
+-- 131071). Rahmen und Kopf weg, Kachel wie jedes Fenster, die Knoepfe
+-- flach wie "Aenderungen anwenden". Ueber das Menue laufen Ausloggen,
+-- Beenden und der Bearbeitungsmodus - geaendert werden nur Bilder, kein
+-- Skript und kein Feld am Menue.
+-- Kein Schatten ausserhalb: das Menue ordnet seine Knoepfe selbst an und
+-- richtet seine Groesse danach; ein Bild, das ueber den Rand ragt, soll
+-- dabei nicht mitgerechnet werden koennen.
+W.EXTRA_DECOR = { GameMenuFrame = { "Border", "Header" } }
+W.NO_SHADOW = { GameMenuFrame = true }
 
 -- GESPRAECHE (6.6.1.4, Beta-Test: "die normale Interaktion von
 -- Questgebern, Gastwirten etc. muss angeglichen werden"). Gespraech,
@@ -216,6 +232,10 @@ end
 local WHOLE = { PortraitContainer = true, PortraitFrame = true, PortraitButton = true }
 
 local function HideDecorOf(f)
+    local fname = f.GetName and f:GetName()
+    for _, key in ipairs(type(fname) == "string" and W.EXTRA_DECOR[fname] or {}) do
+        HideDecor(f[key])
+    end
     for _, key in ipairs(DECOR) do
         HideDecor(f[key])
         if WHOLE[key] and type(f[key]) == "table" and f[key].GetObjectType then Hide(f[key]) end
@@ -231,6 +251,16 @@ end
 local function StyleTitle(f)
     local title = (type(f.TitleContainer) == "table" and f.TitleContainer.TitleText) or f.TitleText
         or (f.GetName and f:GetName() and _G[f:GetName() .. "TitleText"])
+    -- Spielmenue: der Titel steht im Kopf (.Header.Text), der ueber dem
+    -- oberen Rand sass - ohne den Kopf rueckt er in die Kachel.
+    local header = type(f.Header) == "table" and f.Header.Text
+    if type(title) ~= "table" and type(header) == "table" and header.SetPoint then
+        title = header
+        pcall(function()
+            title:ClearAllPoints()
+            title:SetPoint("TOP", f, "TOP", 0, -14)
+        end)
+    end
     if type(title) == "table" and title.SetTextColor then
         K.SetFont(title, 13)
         title:SetTextColor(unpack(C.textBright))
@@ -247,7 +277,8 @@ function W.Skin(f, panel)
     HideDecorOf(f)
     if not panel then
         HideOwnTextures(f)
-        d.kachel = K.Kachel(f, { alpha = 0.94, shadow = 8 })
+        local fname = f.GetName and f:GetName()
+        d.kachel = K.Kachel(f, { alpha = 0.94, shadow = (type(fname) == "string" and W.NO_SHADOW[fname]) and 0 or 8 })
         own[d.kachel.bg], own[d.kachel.light] = true, true
         if d.kachel.shadow and d.kachel.shadow.tex then own[d.kachel.shadow.tex] = true end
         W.AddGlow(f, d)
@@ -293,6 +324,8 @@ W.HIDE_ATLAS = {
     "^common%-framedivider",                 -- senkrechte Trennlinie
     "^common%-stat%-bar%-BG",                -- Rahmen der Ruf-/Fertigkeitsbalken
     "^common%-sidetab",                      -- Goldrahmen der Reiter rechts
+    "^_?128%-RedButton%-",                   -- rote Knoepfe im Spielmenue (6.6.3.3)
+    "^!?_?UI%-Frame%-DiamondMetal%-",        -- Rahmen und Kopf des Spielmenues
     -- Zauberbuch (Blizzard_PlayerSpells, Quelltext des Spiels 12.x):
     "^spellbook%-background",                -- Pergament, Buchseiten, Band
     "^spellbook%-corner",                    -- Eselsohr zum Blaettern
@@ -665,6 +698,7 @@ local function HideByAtlas(f, depth)
             if atlas:find("^common%-search%-border") then FlatBar(f) end
             if atlas:find("^communities%-nav%-button") then W.NavEntry(f, r, atlas) end
             if W.HeaderAtlas(atlas) then W.Header(f, r) end
+            if atlas:find("^_?128%-RedButton%-") and W.SkinPanelButton then pcall(W.SkinPanelButton, f) end
         elseif ok and W.TonesAtlas(atlas) then
             if Opt("windowArt") then W.Tone(r) else Hide(r) end
             if not seen[r] then
@@ -1209,6 +1243,8 @@ local function SkinPanelButton(b)
     mine:SetColorTexture(h[1], h[2], h[3], h[4] * 0.5)
     own[mine] = true
 end
+
+W.SkinPanelButton, W.ButtonSkin = SkinPanelButton, btnSkin
 
 local function SkinPanelButtons(f, depth)
     if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
@@ -2058,6 +2094,11 @@ local function HookWindow(f)
     -- Ein eigener Kindrahmen, kein Skript am Fenster des Spiels: er
     -- laeuft nur, solange das Fenster sichtbar ist. Alle teilen W.Tick.
     local watch = CreateFrame("Frame", nil, f)
+    -- So gross wie das Fenster und aus jeder Anordnung heraus: Fenster, die
+    -- ihre Groesse aus ihren Kindern rechnen (Spielmenue), sollen ihn nicht
+    -- mitzaehlen.
+    watch:SetAllPoints(f)
+    watch.ignoreInLayout = true
     watch:SetScript("OnUpdate", K.Measured("Fenster", function() W.Tick() end))
 end
 

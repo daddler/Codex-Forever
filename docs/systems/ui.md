@@ -1193,6 +1193,22 @@ Funktion je Rahmen oder Fläche. Wer eine Liste braucht, nimmt
 `W.Regions`/`W.Children` mit eigenem `key`; wer eine Liste über einen
 Aufruf hinaus behalten will, kopiert sie.
 
+**Spielmenü (6.6.3.3).** Beta-Test: „Redesign soll auch im Optionsmenü
+Einheit finden“. Gemessen mit `/wcui fenster`: rote Knöpfe
+(`128-RedButton-Left/Right/Highlight`, `_128-RedButton-Center` – mit
+Unterstrich), Rahmen und Kopf aus `UI-Frame-DiamondMetal-*`, ein Grund am
+Rahmen (Bild 131071). `GameMenuFrame` steht in `W.WINDOWS`; `Border` und
+`Header` gehen über `W.EXTRA_DECOR`, die Atlanten über `W.HIDE_ATLAS`.
+Die Kachel hat **keinen** Schatten nach außen (`W.NO_SHADOW`): das Menü
+ordnet seine Knöpfe selbst an und richtet seine Größe danach – ein Bild
+über dem Rand soll dabei nicht mitgerechnet werden können. Aus demselben
+Grund liegt der Taktgeber jedes Fensters seit 6.6.3.3 genau auf dem
+Fenster und trägt `ignoreInLayout`. Der Titel (`Header.Text`) rückt in
+die Kachel (`StyleTitle`). Knöpfe: wo `HideByAtlas` einen roten Knopf
+findet, macht `W.SkinPanelButton` ihn flach. Über das Menü laufen
+Ausloggen, Beenden und der Bearbeitungsmodus – geändert werden nur
+Bilder, kein Skript und kein Feld am Menü.
+
 **Mitgliederliste bleibt (6.6.3.3).** Beta-Test: „die Mitgliederliste ist
 etwas verdunkelt, das kann gern wieder im Normalzustand sein“.
 `SkinInsets` ersetzte auch dort den Grund der Innenfläche des Spiels

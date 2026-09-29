@@ -11,6 +11,8 @@ nicht zusammen.
 
 ## [6.6.3.3] – 2026-09-29
 
+**Das Spielmenü (Esc) im Stil von WeintCodex.** Statt Diamantmetall-Rahmen und roten Knöpfen dieselbe dunkle Kachel wie jedes andere Fenster, mit dem Schein deiner Klassenfarbe oben; die Knöpfe sind flach und werden unter der Maus heller.
+
 **Mitgliederliste wieder wie im Spiel.** In Gilde & Communitys trägt die Mitgliederliste wieder ihren eigenen Hintergrund statt der dunkleren Fläche von WeintCodex.
 
 ## [6.6.3.2] – 2026-09-28

@@ -4780,6 +4780,42 @@ do
         assert(rd and rd.title == name and rd.icon == minus and rd.beam == wide and rd.hover,
             "Ruf-Kopfzeile nicht am breitesten Grund gestaltet")
     end)
+    -- 6.6.3.3: das Spielmenue (gemessen): Diamantmetall-Rahmen und Kopf
+    -- weg, Kachel ohne Schatten nach aussen, rote Knoepfe flach.
+    local ok8, err8 = pcall(function()
+        local W = WeintCodex.UIWindows
+        local function Tex(atlas)
+            local t = stub.NewObject("Texture")
+            t.GetAtlas = function() return atlas end
+            return t
+        end
+        local menu = stub.NewObject("Frame", "GameMenuFrame")
+        local border, header = stub.NewObject("Frame"), stub.NewObject("Frame")
+        local edge, bgfile = Tex("!UI-Frame-DiamondMetal-EdgeLeft"), Tex(nil)
+        border.GetRegions = function() return edge, bgfile end
+        local hTile = Tex("_UI-Frame-DiamondMetal-Header-Tile")
+        local hText = stub.NewObject("FontString")
+        header.GetRegions = function() return hTile, hText end
+        header.Text = hText
+        local moved
+        hText.SetPoint = function(_, point, rel) moved = point .. ":" .. tostring(rel == menu) end
+        menu.Border, menu.Header = border, header
+        local btn = stub.NewObject("Button")
+        local left, center, glow = Tex("128-RedButton-Left"), Tex("_128-RedButton-Center"), Tex("128-RedButton-Highlight")
+        btn.GetRegions = function() return left, center, glow end
+        menu.GetChildren = function() return border, header, btn end
+        local d = W.Skin(menu)
+        assert(edge:GetAlpha() == 0 and bgfile:GetAlpha() == 0 and hTile:GetAlpha() == 0, "Diamantmetall bleibt")
+        assert(d and d.kachel and not d.kachel.shadow, "Spielmenue mit Schatten ueber den Rand")
+        assert(moved == "TOP:true", "Titel nicht in die Kachel gerueckt: " .. tostring(moved))
+        W.HideByAtlas(menu)
+        assert(left:GetAlpha() == 0 and center:GetAlpha() == 0 and glow:GetAlpha() == 0, "rote Knoepfe bleiben")
+        assert(W.ButtonSkin[btn], "Knopf des Spielmenues nicht flach gestaltet")
+        local found = false
+        for _, n in ipairs(W.WINDOWS) do if n == "GameMenuFrame" then found = true end end
+        assert(found, "Spielmenue nicht in der Fensterliste")
+    end)
+    Check(ok8, "Spielmenue: Rahmen und rote Knoepfe im WeintCodex-Stil" .. (ok8 and "" or (": " .. tostring(err8))))
     Check(ok7, "Kategorien im Charakterfenster: Titel mittig zwischen auslaufenden Zierlinien"
         .. (ok7 and "" or (": " .. tostring(err7))))
 
