@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.9.0.1] – 2026-10-01
+
+**Der Willkommens-Assistent kommt auch nach einem Neuladen.** Wer WeintCodex im laufenden Spiel aktualisiert und neu lädt, bekommt ihn jetzt gleich zu sehen – nicht erst beim nächsten Einloggen. Nach „Später“ fragt er bis dahin nicht noch einmal.
+
+### Technisch
+
+- `ui/welcome.lua`: Nach einem `/reload` fragt der Assistent, wenn `WeintCodex.SaveHealth()` „ok“ meldet (`WL.ReloadBlocks`) – bis dahin nie, wer in der Sitzung aktualisierte, sah ihn nicht. Bei „verloren“/„unbekannt“ wie bisher erst beim Einloggen. „Später“ merkt `ui.later` bis zum nächsten Einloggen.
+- Die Sperre stammt aus 6.0.0.1 (Frageschleife eines Clients, der nicht speicherte); bei „unbekannt“ bleibt sie, weil dort eine Schleife möglich wäre. `load_test.lua`: alle drei Zustände nach `/reload`, „Später“ über ein `/reload` hinweg und gelöscht beim Einloggen; sechs Gegenproben.
+
 ## [6.9.0.0] – 2026-10-01
 
 **Die WeintCodex-Oberfläche ist wieder freiwillig.** Das Spiel merkt sich Einstellungen jetzt, also fragt WeintCodex einmal, ob du sie verwenden möchtest – auch, wenn du sie bisher hattest. Ein- und ausschalten kannst du sie jederzeit mit /wcui.
@@ -37,7 +46,6 @@ nicht zusammen.
 - Neu `ui/macroframe.lua`: `MacroFrame` (Blizzard_MacroUI) in Gold – Plätze (Bilder 130764/130718) flach mit 1 px Rand, Reiter `MacroFrameTab1/2` über `W.SkinTab`; Liste und Textfeld über `LF.INSETS` (jetzt auch globale Namen) als Innenflächen.
 - Neu `ui/launcher.lua`: Symbol „WeintCodexUI“ an der Minikarte (LibDataBroker/LibDBIcon, Zahnrad `media/ui/icon_gear`), nur mit Oberfläche, folgt dem Hauptschalter sofort; Zustand in `WeintCodex_SavedData.ui.launcher`, Schalter auf `/wcui` → Allgemein.
 - `ui/windows.lua`: Die Linie eines Abschnitts (`W.ListHeader`/`FitList`) hing an zwei Punkten – links an der Raute, rechts am Balken des Spiels (bzw. am Zeichen zum Auf- und Zuklappen). Liegen deren Mitten nicht auf einer Höhe („RIGHT“ = halbe Höhe der jeweiligen Region), zeichnet das Spiel die 1-px-Linie nicht. Jetzt nur links verankert, Breite aus den Kanten gerechnet (`W.SizeLine`, `W.EdgeOf`), neu bei jeder gewanderten Kante; ohne gemessene Kante keine Linie statt einer geratenen. Dasselbe für die rechte Linie der mittigen Kopfzeilen vor dem Zeichen (`FitStop`). Zauberbuch, Talente und Berufsübersicht hatten das seit 6.7.8.0. `/wcui fenster` meldet „Abschnitte: N, mit Linie M · ohne: …“.
-- `ui/welcome.lua`: Nach einem `/reload` fragt der Assistent, wenn `WeintCodex.SaveHealth()` „ok“ meldet (`WL.ReloadBlocks`) – bis dahin nie, wer in der Sitzung aktualisierte, sah ihn nicht. Bei „verloren“/„unbekannt“ wie bisher erst beim Einloggen. „Später“ merkt `ui.later` bis zum nächsten Einloggen.
 - `load_test.lua`: Prüflauf als Spieler mit „Ja“; neue Abschnitte „Profil“, „Ohne Oberfläche“, „Willkommens-Assistent“ (beide Wege, Später, Zurückblättern, Paket bleibt Standard, Platz je Schritt, Bilder vorhanden); elf Gegenproben (Original überschrieben, fremder Wert zurückgedreht, eigene Wahl überstimmt, leeres Vorher, falscher Ersatz, Einrichtung ohne Merken, Fenster ohne Wahl, Klickzauber ohne Rahmen des Spiels, Klickzauber trotz Komfort aus, Schadensanzeige an der Oberfläche, Hauptschalter ohne Profil).
 
 ## [6.8.1.0] – 2026-10-01

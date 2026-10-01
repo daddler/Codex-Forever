@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.9.0.1",
+        date    = "01.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Willkommens-Assistent kommt auch nach einem Neuladen.|r Wer WeintCodex im laufenden Spiel aktualisiert und neu lädt, bekommt ihn jetzt gleich zu sehen – nicht erst beim nächsten Einloggen. Nach „Später“ fragt er bis dahin nicht noch einmal.",
+        },
+    },
+    {
         version = "6.9.0.0",
         date    = "01.10.2026",
         notes   = {

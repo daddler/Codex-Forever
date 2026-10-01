@@ -680,7 +680,8 @@ end
 -- Antwort nicht gespeichert (siehe WeintCodex.SaveHealth in
 -- core/main.lua). Speichern kann dieses Addon nicht erzwingen - aber die
 -- Schleife darf es nicht bauen. Bis 6.9.0.0 hiess das: nach einem
--- /reload nie fragen. Beta-Test 6.9.0.0: "6.9.0.0 geladen, /reload -
+-- /reload nie fragen. Beta-Test zu 6.9.0.0, geaendert in 6.9.0.1:
+-- "6.9.0.0 geladen, /reload -
 -- sollte nicht der Willkommensbildschirm kommen?" - wer das Addon
 -- mitten in der Sitzung aktualisiert, laedt neu und sah ihn nie.
 -- Jetzt: nach einem /reload fragen, wenn die Speicherpruefung "ok"

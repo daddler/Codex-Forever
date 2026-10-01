@@ -296,7 +296,7 @@ möchte. Ein komplettes An-die-Hand-Nehmen.“ Er ersetzt die frühere
 Ja/Nein-Frage – einmal je Konto, **nach** der Einführung bzw. dem
 Changelog-Popup (`Onboarding.OnClosed`, `Onboarding.IsShowing`), nie im
 Kampf. Nach einem `/reload` nur, wenn die Speicherprüfung „ok“ meldet
-(`WL.ReloadBlocks`, `WeintCodex.SaveHealth`): Beta-Test 6.9.0.0 – wer
+(`WL.ReloadBlocks`, `WeintCodex.SaveHealth`, seit 6.9.0.1): Beta-Test zu 6.9.0.0 – wer
 das Addon in der Sitzung aktualisiert und neu lädt, sah ihn bis dahin
 nie (Sperre aus 6.0.0.1 gegen die Frageschleife eines Clients, der nicht
 speicherte). Bei „verloren“ oder „unbekannt“ weiter erst beim nächsten

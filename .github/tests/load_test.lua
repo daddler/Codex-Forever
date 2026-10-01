@@ -999,7 +999,7 @@ do
         sd.saveProbe = time() - 5
         stub.FireEvent("PLAYER_ENTERING_WORLD", false, true)
         assert(WeintCodex.SaveHealth() == "ok", "frischer Stempel nicht als gespeichert erkannt")
-        -- 6.9.0.0 (Beta-Test: "6.9.0.0 geladen, /reload - sollte nicht der
+        -- 6.9.0.1 (Beta-Test: "6.9.0.0 geladen, /reload - sollte nicht der
         -- Willkommensbildschirm kommen?"): hat der Client gespeichert, gibt
         -- es keine Schleife - dann auch nach einem /reload fragen.
         WL.MaybeAsk()
