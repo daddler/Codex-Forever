@@ -7517,6 +7517,117 @@ do
     Check(okL, "Beute und Optionen: Gold, Metall und Sand weg, Beute auf Flaeche, Optionen auf Innenflaechen, Kategorien als Abschnitte, kein Muell"
         .. (okL and "" or (": " .. tostring(errL))))
 
+    -- 6.9.0.0: Makrofenster in Gold. Beta-Test: Metallrahmen, Marmor,
+    -- Leder, Steinplaetze, Reiter des Spiels.
+    local okMF, errMF = pcall(function()
+        local W, S, MF, LF, GC = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIMacroFrame, WeintCodex.UICalm, WeintCodex.GameColors
+        local listed = false
+        for _, n in ipairs(W.WINDOWS) do if n == "MacroFrame" then listed = true end end
+        assert(listed and MF and S.SCOPES.MacroFrame == S.CALM, "Makrofenster nicht im Durchlauf oder nicht in Gold")
+        local hosts = {}
+        for _, h in ipairs(W.HOSTED.MacroFrame or {}) do hosts[h] = true end
+        assert(hosts[MF] and hosts[LF], "Makrofenster ohne Plaetze/Reiter oder ohne Innenflaechen")
+        local saved = {}
+        local function Global(name, obj) saved[name] = _G[name] _G[name] = obj return obj end
+        local mf = Global("MacroFrame", stub.NewObject("Frame", "MacroFrame"))
+        local selector, btn = stub.NewObject("Frame"), stub.NewObject("CheckButton")
+        local stone, icon = stub.NewObject("Texture"), stub.NewObject("Texture")
+        stone.GetTexture = function() return 130764 end
+        icon.GetTexture = function() return 136243 end
+        btn.GetRegions = function() return stone, icon end
+        selector.GetChildren = function() return btn end
+        local inset = Global("MacroFrameInset", stub.NewObject("Frame"))
+        local leather = stub.NewObject("Texture")
+        inset.GetRegions = function() return leather end
+        inset.GetParent = function() return mf end
+        local textBg = Global("MacroFrameTextBackground", stub.NewObject("Frame"))
+        textBg.GetParent = function() return mf end
+        mf.GetChildren = function() return selector, inset, textBg end
+        local tabs = {}
+        for i = 1, 2 do
+            local tab = Global("MacroFrameTab" .. i, stub.NewObject("Button"))
+            tab.LeftActive = stub.NewObject("Texture")
+            tab.isSelected, tab.IsSelected = false, false
+            tabs[i] = tab
+        end
+        mf.selectedTab = 1
+        S.Register()
+        local glow = stub.NewObject("Texture")
+        W.done[mf] = { glow = glow }
+        local grad, gold = S.Gradient, {}
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == GC.frameAccent then gold[t] = true end
+            return grad(t, dir, c, a0, a1)
+        end
+        LF.Update(mf)
+        MF.Update(mf)
+        LF.Update(mf)
+        S.Gradient = grad
+        W.HoldGlow(mf, "MacroFrame")
+        local m = MF.frames[mf]
+        assert(not glow:IsShown(), "Schein der Klasse ueber den Makros")
+        assert(m and gold[m.edge.l], "Kante oben nicht in Gold")
+        assert(stone:GetAlpha() == 0 and MF.slots[btn], "Stein unter dem Platz bleibt oder Platz nicht flach")
+        assert(icon:GetAlpha() == 1 and btn:GetAlpha() == 1, "Symbol oder Platz eines Makros ausgeblendet")
+        assert(W.Insets[inset] and W.Insets[textBg] and leather:GetAlpha() == 0, "Liste oder Textfeld nicht auf Innenflaeche")
+        assert((LF.windows[mf].decks or 0) == 2, "Innenflaechen ohne Kante in Gold")
+        local sk1, sk2 = W.TabSkin[tabs[1]], W.TabSkin[tabs[2]]
+        assert(sk1 and sk2 and sk1.accent == GC.frameAccent and sk2.accent == nil, "gewaehlter Reiter nicht in Gold")
+        local rep = table.concat(MF.Report(mf, {}), "\n")
+        assert(rep:find("Makros (Stil ruhig): Kante in Gold, kein Schein der Klasse · Plätze flach 1 · Reiter 2", 1, true), "Bericht: " .. rep)
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do MF.Update(mf) LF.Update(mf) W.HoldGlow(mf, "MacroFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Makrofenster legt im Takt Muell an: %.1f KB", grew))
+        W.done[mf] = nil
+        for name, v in pairs(saved) do _G[name] = v end
+    end)
+    Check(okMF, "Makrofenster: Gold, Plaetze flach, Symbole bleiben, Liste und Textfeld als Innenflaechen, Reiter in Gold, kein Muell"
+        .. (okMF and "" or (": " .. tostring(errMF))))
+
+    -- 6.9.0.0: Symbol der Oberflaeche an der Minikarte - nur mit Oberflaeche.
+    local okLN, errLN = pcall(function()
+        local LN = WeintCodex.UILauncher
+        local icon = LibStub("LibDBIcon-1.0")
+        assert(K.UIEnabled() and icon:IsRegistered(LN.NAME), "mit Oberflaeche kein Symbol an der Minikarte")
+        local b = icon:GetMinimapButton(LN.NAME)
+        assert(b and b:IsShown(), "Symbol nicht zu sehen")
+        -- Klicks: links die Einstellungen, rechts der Gestaltungsmodus.
+        local UO = WeintCodex.UIOptions
+        local toggled = 0
+        local oldToggle = UO.Toggle
+        UO.Toggle = function() toggled = toggled + 1 end
+        LN.Click("LeftButton")
+        UO.Toggle = oldToggle
+        assert(toggled == 1, "Linksklick oeffnet die Einstellungen nicht")
+        local was = K.IsUnlocked()
+        LN.Click("RightButton")
+        assert(K.IsUnlocked() ~= was, "Rechtsklick schaltet den Gestaltungsmodus nicht")
+        LN.Click("RightButton")
+        assert(K.IsUnlocked() == was, "zweiter Rechtsklick beendet den Gestaltungsmodus nicht")
+        K.SetUnlocked(was)
+        local lines = {}
+        local tt = { AddLine = function(_, t) lines[#lines + 1] = t end,
+                     AddDoubleLine = function(_, a, t) lines[#lines + 1] = a .. " " .. t end }
+        LN.Tooltip(tt)
+        assert(table.concat(lines, "|"):find("Einstellungen (/wcui)", 1, true), "Tooltip nennt den Linksklick nicht")
+        -- Oberflaeche aus: das Symbol geht sofort; wieder an: es kommt.
+        K.SetUIEnabled(false)
+        assert(not b:IsShown() and not LN.Wanted(), "ohne Oberflaeche bleibt das Symbol")
+        K.SetUIEnabled(true)
+        assert(b:IsShown(), "Symbol kommt mit der Oberflaeche nicht zurueck")
+        -- Abschalten in /wcui.
+        LN.SetShown(false)
+        assert(not b:IsShown() and K.Root().launcher.hide == true, "Symbol laesst sich nicht abschalten")
+        LN.SetShown(true)
+        assert(b:IsShown(), "Symbol laesst sich nicht wieder einschalten")
+    end)
+    Check(okLN, "Symbol der Oberflaeche an der Minikarte: nur mit Oberflaeche, Links Einstellungen, Rechts Gestaltung, abschaltbar"
+        .. (okLN and "" or (": " .. tostring(errLN))))
+
     -- 6.7.9.0: Karte & Questlog in Gold. Der weiche Rand um die Karte
     -- (ausdruecklich gewuenscht) bleibt; der Questlog liegt auf einer
     -- Flaeche, seine Zonen sind Abschnitte wie im Ruf, kein Schein der Klasse.

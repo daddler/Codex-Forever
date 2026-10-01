@@ -114,7 +114,11 @@ K.Register({
                 B:Row({ type = "button", label = "Willkommen", text = "Assistenten zeigen",
                         tooltip = "Der Rundgang vom ersten Mal: Oberfläche ja oder nein, Komfort wählen, übernehmen (/wcui willkommen).",
                         onClick = function() WeintCodex.UIWelcome.Ask() end },
-                      { type = "empty" })
+                      { type = "toggle", label = "Symbol an der Minikarte",
+                        description = "Links: diese Einstellungen. Rechts: Rahmen verschieben. Nur mit Oberfläche.",
+                        get = function() return WeintCodex.UILauncher.IsShown() end,
+                        set = function(on) WeintCodex.UILauncher.SetShown(on) end,
+                        disabled = function() return not K.UIEnabled() end })
                 B:Note("Eigenes Profil: Die Oberfläche bekommt im Bearbeitungsmodus ein eigenes Layout „WeintCodex“. Dein Layout, deine Chatreiter und deine Spieleinstellungen bleiben – schaltest du aus, ist dein Layout wieder aktiv, und was WeintCodex an Einstellungen geändert hat, steht wie vorher.")
                 B:Note("Alles links unter „Komfort“ — Schadensanzeige, Questpfeil, Erinnerungen, Klickzauber, Makro-Helfer, Automark und die kleinen Helfer — hängt nicht an diesem Schalter. Schadensanzeige und Erinnerungen sind mit der Oberfläche von Haus aus an; ohne sie schaltest du sie selbst ein.")
             else
@@ -180,7 +184,7 @@ K.Register({
             B:Row({ type = "toggle", label = "Spielername in Klassenfarbe", key = "tooltipClassName", disabled = off },
                   { type = "toggle", label = "Rand in Klassen- und Qualitätsfarbe", key = "tooltipBorder", disabled = off,
                     description = "Spieler in ihrer Klassenfarbe, Gegenstände ab „selten“ in ihrer Qualität." })
-            B:Section("Fenster", "Charakterfenster (C), Zauberbuch und Talente (P, N), Weltkarte und Questlog (M), Berufe, Gilde & Communitys, Suche nach Gruppe, Gespräche mit NPCs, Quests, Händler, Bücher, Beute und die Optionen des Spiels als Kachel statt Holz, Metall und Pergament.")
+            B:Section("Fenster", "Charakterfenster (C), Zauberbuch und Talente (P, N), Weltkarte und Questlog (M), Berufe, Gilde & Communitys, Suche nach Gruppe, Gespräche mit NPCs, Quests, Händler, Bücher, Beute, Makros und die Optionen des Spiels als Kachel statt Holz, Metall und Pergament.")
             B:Row({ type = "toggle", label = "Fenster im WeintCodex-Stil", key = "windowSkin", reload = true },
                   { type = "toggle", label = "Stimmung statt Schwarz", key = "windowArt", reload = true,
                     disabled = function() return not K.Get("general", "windowSkin") end,

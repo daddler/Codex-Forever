@@ -2668,6 +2668,28 @@ tragen Gold (`S.CALM`):
   Tastenbelegungen).
 * Das rote Kreuz zum Schließen bleibt wie in allen anderen Fenstern.
 
+### Makrofenster *(6.9.0.0, `ui/macroframe.lua`)*
+
+Gemessen mit `/wcui fenster`: `MacroFrame` (Marmor, Bild 374155),
+`MacroFrameInset` (Leder, 374154), Metallrahmen, Streifen, Portrait,
+Steinplätze (Bilder 130764 und 130718, je 18 Plätze plus das gewählte
+Makro), das Textfeld im Rahmen des Tooltips, Reiter des Spiels. Gold
+(`S.CALM`): Hülle wie jedes Fenster, Liste und Textfeld als Innenflächen
+(`LF.INSETS`, Kante in Gold), Plätze flach mit 1 px Rand (Symbol und
+Goldrahmen der Wahl bleiben), Reiter flach, der gewählte in Gold. Die
+Knöpfe flacht der allgemeine Durchlauf ab. Nur Bilder – Makros anlegen
+ist geschützt.
+
+### Symbol an der Minikarte *(6.9.0.0, `ui/launcher.lua`)*
+
+Mit Oberfläche ein zweites Symbol („WeintCodexUI“, Zahnrad) neben dem von
+WeintCodex: Linksklick `/wcui`, Rechtsklick Gestaltungsmodus (nie im
+Kampf). Ohne Oberfläche gibt es keins; der Hauptschalter blendet es
+sofort ein oder aus (`K.Listen`, `general.enabled`). Abschaltbar auf
+`/wcui` → Allgemein, gespeichert in `ui.launcher` (dort führt LibDBIcon
+auch den Platz). Über LibDBIcon landet es auch in der Knopfspalte der
+Minikarte.
+
 ### Nächste Fenster
 
 Vorgesehen: Berufsübersicht (nach Messung), Gilde (mittlere Atmosphäre), Talente

@@ -212,12 +212,16 @@ ui/gossip.lua
 ui/merchant.lua
 # Beute in Gold (6.9.0.0): Liste auf Flaeche, Karten ohne Rahmen.
 ui/loot.lua
+# Makrofenster in Gold (6.9.0.0): Plaetze flach, Reiter flach, Innenflaechen.
+ui/macroframe.lua
 # Karte & Questlog (6.7.9.0, 6.8.0.9): Questlog und Questdetails auf Flaeche, Gold, Karte unberuehrt.
 ui/questlog.lua
 # Fenster in Gold mit Innenflaechen (6.8.0.0 Suche nach Gruppe, 6.8.0.2 Sammlung).
 ui/calm.lua
 ui/testmode.lua
 ui/options.lua
+# Symbol der Oberflaeche an der Minikarte (6.9.0.0), nur mit Oberflaeche.
+ui/launcher.lua
 ui/editmode.lua
 
 # Die Frage beim ersten Einloggen ("WeintCodex-Oberflaeche verwenden?").

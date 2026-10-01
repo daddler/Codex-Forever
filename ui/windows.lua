@@ -73,7 +73,10 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               -- 6.9.0.0: Beute (ui/loot.lua) und die Optionen des Spiels
               -- (Esc -> Optionen, ui/calm.lua) - Beta-Test: "auch hier muss
               -- noch designed werden".
-              "LootFrame", "SettingsPanel" }
+              "LootFrame", "SettingsPanel",
+              -- 6.9.0.0: Makros (/m, Blizzard_MacroUI, erst beim Oeffnen
+              -- geladen; ui/macroframe.lua).
+              "MacroFrame" }
 
 -- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
 -- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus

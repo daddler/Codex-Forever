@@ -30,6 +30,8 @@
 --                      der Titel "Optionen" (NineSlice.Text) hell.
 --                      Schalter, Haken, Regler, Auswahl, Suche, Tastenbelegung
 --                      und die Wahl links (Options_List_Active) bleiben.
+--   Makros             MacroFrame (6.9.0.0) - Innenflaechen: Makroliste und
+--                      Textfeld (LF.INSETS); Plaetze und Reiter: ui/macroframe.lua
 --   Sammlung           CollectionsJournal - Innenflaeche:
 --                      WardrobeCollectionFrame.ItemsCollectionFrame
 --                      (W.OWN_BG_PATHS seit 6.6.3.3); Plaetze der Vorlagen
@@ -53,11 +55,14 @@ local Visible, IsFrame, InTree = RG.Visible, RG.IsFrame, RG.InTree
 
 -- Fenster -> Name im Bericht.
 LF.WINDOWS = { LFGParentFrame = "Suche nach Gruppe", PVEFrame = "Suche nach Gruppe",
-               CollectionsJournal = "Sammlung", SettingsPanel = "Optionen" }
-LF.HOSTS = { "LFGParentFrame", "PVEFrame", "CollectionsJournal", "SettingsPanel" }
+               CollectionsJournal = "Sammlung", SettingsPanel = "Optionen", MacroFrame = "Makros" }
+LF.HOSTS = { "LFGParentFrame", "PVEFrame", "CollectionsJournal", "SettingsPanel", "MacroFrame" }
 -- Innenflaechen, die das Fenster selbst nicht als solche baut: Feld am
--- Fenster -> W.OwnBackground (eigene Bilder weg, Innenflaeche).
-LF.INSETS = { SettingsPanel = { "CategoryList", "Container" } }
+-- Fenster oder globaler Name -> W.OwnBackground (eigene Bilder weg,
+-- Innenflaeche). Makros (6.9.0.0, ui/macroframe.lua): die Liste (Leder)
+-- und das Textfeld (Rahmen des Tooltips).
+LF.INSETS = { SettingsPanel = { "CategoryList", "Container" },
+              MacroFrame = { "MacroFrameInset", "MacroFrameTextBackground" } }
 LF.STYLE = S.CALM
 LF.LIGHT_HEIGHT = 120
 LF.SHADOW_PAD = 10
@@ -104,7 +109,9 @@ function LF.Update(f)
         local keys = ok and LF.INSETS[name]
         if keys then
             for _, key in ipairs(keys) do
-                if IsFrame(f[key]) then W.OwnBackground(f[key]) end
+                local inset = f[key]
+                if not IsFrame(inset) then inset = _G[key] end
+                if IsFrame(inset) then W.OwnBackground(inset) end
             end
             w.title = Title(f)
         end
