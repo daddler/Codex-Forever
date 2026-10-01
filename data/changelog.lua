@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.8.1.0",
+        date    = "01.10.2026",
+        notes   = {
+            "|cff7C6CFFNamensplaketten mit Leben.|r Was ein Treffer nimmt, bleibt einen Moment hell stehen und schmilzt dann weg; das Leben gleitet, statt zu springen. Dein Ziel atmet: das Leuchten pulsiert, eine feine Kante trägt deine Klassenfarbe, ab und zu läuft ein Glanz über den Balken, jeder Treffer blitzt kurz auf und die Zielmarken bewegen sich. Jeder Effekt lässt sich einzeln abschalten.",
+            "|cff7C6CFFAutomark.|r Betrittst du als Gruppenleiter einen Dungeon oder Schlachtzug, bekommen Tank und Heiler ihre Markierung – welche, wählst du. Markiert wird nur, wer vom Spiel eine Rolle hat; geraten wird nichts. Zu finden unter Komfort, von Haus aus aus.",
+            "|cff7C6CFFMakro-Helfer.|r Statt Makrosprache drei Fragen: was, auf wen, welcher Zauber. Der Text entsteht Zeile für Zeile erklärt, ein Klick legt das Makro an, ein zweiter legt es auf den Mauszeiger. Unter Aktionsleisten, Seite „Makros“.",
+            "|cff7C6CFFEntfluchen auf Klick.|r Ein Schalter bei den Klickzaubern legt die Zauber deiner Klasse gegen Flüche, Gifte, Krankheiten und Magie auf Strg + Links und Rechts – ein Klick auf den Gruppenrahmen entflucht. Deine eigene Belegung bleibt, wie sie ist.",
+        },
+    },
+    {
         version = "6.8.0.9",
         date    = "29.09.2026",
         notes   = {

@@ -1333,6 +1333,76 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Entfluchen auf Klick (6.8.1.0): ein Schalter legt die Zauber der Klasse
+-- auf Zusatztaste + Links/Rechts; nur gelernte (Name vom Client, im
+-- Zauberbuch); die eigene Belegung gewinnt; ohne Schalter nichts.
+do
+    local ok, err = pcall(function()
+        local DP, CC = WeintCodex.UIDispel, WeintCodex.UIClickCast
+        assert(DP and CC.ExtraBindings == DP.Bindings, "Entfluchen nicht an den Klickzaubern")
+        assert(K.Get("groupframes", "clickDispel") == false, "Entfluchen von Haus aus an")
+        local saved = { UnitClass = _G.UnitClass, C_Spell = _G.C_Spell, IsPlayerSpell = _G.IsPlayerSpell,
+                        Spellbook = CC.Spellbook, Bindings = CC.Bindings }
+        local okIn, errIn = pcall(function()
+        local class = "PRIEST"
+        local names = { [527] = "Magiebannung", [988] = "Magiebannung", [552] = "Krankheit aufheben", [528] = "Krankheit heilen",
+                        [2782] = "Fluch aufheben", [2893] = "Vergiftung aufheben", [8946] = "Vergiftung heilen" }
+        local book = { { name = "Magiebannung" }, { name = "Krankheit heilen" }, { name = "Blitzheilung" } }
+        local mine = {}
+        _G.UnitClass = function() return "x", class, 5 end
+        _G.C_Spell = { GetSpellName = function(id) return names[id] end }
+        _G.IsPlayerSpell = function() return false end
+        CC.Spellbook = function() return book end
+        CC.Bindings = function() return mine end
+        -- Aus: nichts.
+        assert(#DP.Bindings() == 0, "ohne Schalter belegt")
+        K.Set("groupframes", "clickDispel", true)
+        local eff = CC.Effective()
+        assert(#eff == 2 and eff[1].mod == "ctrl-" and eff[1].button == 1 and eff[1].spell == "Magiebannung"
+            and eff[2].button == 2 and eff[2].spell == "Krankheit heilen", "Priester: falsch belegt")
+        -- Aufheben gelernt: das bessere zuerst.
+        book[#book + 1] = { name = "Krankheit aufheben" }
+        assert(CC.Effective()[2].spell == "Krankheit aufheben", "das bessere nicht gewaehlt")
+        -- Auf dem Rahmen: Attribute wie bei jedem Klickzauber.
+        local f = stub.NewObject("Button")
+        local attrs = {}
+        f.SetAttribute = function(_, k, v) attrs[k] = v end
+        CC.ApplyTo(f, CC.Effective())
+        assert(attrs["ctrl-type1"] == "spell" and attrs["ctrl-spell1"] == "Magiebannung"
+            and attrs["ctrl-spell2"] == "Krankheit aufheben", "nicht auf dem Rahmen")
+        -- Eigene Belegung gewinnt.
+        mine[1] = { button = 1, mod = "ctrl-", action = "spell", spell = "Erneuerung" }
+        eff = CC.Effective()
+        assert(#eff == 2 and eff[1].spell == "Erneuerung" and eff[2].spell == "Krankheit aufheben", "eigene Belegung ueberschrieben")
+        assert(DP.Summary():find("besetzt", 1, true), "Seite sagt nicht, dass Links besetzt ist: " .. DP.Summary())
+        mine[1] = nil
+        -- Andere Zusatztaste.
+        K.Set("groupframes", "clickDispelMod", "shift-")
+        assert(CC.Effective()[1].mod == "shift-", "Zusatztaste nicht uebernommen")
+        K.Set("groupframes", "clickDispelMod", "ctrl-")
+        -- Nicht gelernt: nicht angeboten, aber genannt.
+        class, book = "DRUID", { { name = "Heilende Beruehrung" } }
+        assert(#CC.Effective() == 0 and DP.Summary():find("noch nicht gelernt", 1, true), "Druide ohne Zauber")
+        book[#book + 1] = { name = "Vergiftung heilen" }
+        eff = CC.Effective()
+        assert(#eff == 1 and eff[1].button == 2 and eff[1].spell == "Vergiftung heilen", "Gift auf Rechts erwartet")
+        -- ID ohne Namen im Client (in Forever geaendert): nichts Falsches.
+        names[2893], names[8946] = nil, nil
+        assert(#CC.Effective() == 0, "Zauber ohne Namen vom Client belegt")
+        -- Klasse ohne Entfluchen.
+        class = "WARRIOR"
+        assert(#CC.Effective() == 0 and DP.Summary():find("keinen Zauber", 1, true), "Krieger: " .. DP.Summary())
+        end)
+        K.Set("groupframes", "clickDispel", false)
+        -- Einzeln zuruecksetzen: pairs ueberginge Werte, die vorher nil waren.
+        _G.UnitClass, _G.C_Spell, _G.IsPlayerSpell = saved.UnitClass, saved.C_Spell, saved.IsPlayerSpell
+        CC.Spellbook, CC.Bindings = saved.Spellbook, saved.Bindings
+        assert(okIn, errIn)
+    end)
+    Check(ok, "Entfluchen auf Klick: nur gelernte Zauber, bessere zuerst, eigene Belegung gewinnt, von Haus aus aus"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Questpfeil: die Rechnung.
 do
     local function Near(a, b) return math.abs(a - b) < 1e-6 end

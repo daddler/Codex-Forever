@@ -9,6 +9,25 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.8.1.0] – 2026-10-01
+
+**Namensplaketten mit Leben.** Was ein Treffer nimmt, bleibt einen Moment hell stehen und schmilzt dann weg; das Leben gleitet, statt zu springen. Dein Ziel atmet: das Leuchten pulsiert, eine feine Kante trägt deine Klassenfarbe, ab und zu läuft ein Glanz über den Balken, jeder Treffer blitzt kurz auf und die Zielmarken bewegen sich. Jeder Effekt lässt sich einzeln abschalten.
+
+**Automark.** Betrittst du als Gruppenleiter einen Dungeon oder Schlachtzug, bekommen Tank und Heiler ihre Markierung – welche, wählst du. Markiert wird nur, wer vom Spiel eine Rolle hat; geraten wird nichts. Zu finden unter Komfort, von Haus aus aus.
+
+**Makro-Helfer.** Statt Makrosprache drei Fragen: was, auf wen, welcher Zauber. Der Text entsteht Zeile für Zeile erklärt, ein Klick legt das Makro an, ein zweiter legt es auf den Mauszeiger. Unter Aktionsleisten, Seite „Makros“.
+
+**Entfluchen auf Klick.** Ein Schalter bei den Klickzaubern legt die Zauber deiner Klasse gegen Flüche, Gifte, Krankheiten und Magie auf Strg + Links und Rechts – ein Klick auf den Gruppenrahmen entflucht. Deine eigene Belegung bleibt, wie sie ist.
+
+### Technisch
+
+- `ui/nameplates.lua` (Entwurf „8 · Namensplaketten 3.0“, Varianten B + C): Schadensspur `p.trail` (zweiter Balken hinter dem Leben, derselbe Wert `NP.TRAIL_DELAY` = 0,35 s später; der erste Treffer startet die Uhr), Gleiten über `Enum.StatusBarInterpolation` mit Rückfall (`NP.smoothBroken`), am Ziel Alpha-/Translation-Animationen des Spiels (`NP.Anim`, `NP.Motion`): Leuchten atmet, Kante in Klassenfarbe, Glanz (`SetClipsChildren`), Aufblitzen bei `UNIT_HEALTH`, Zielmarken ±3 px. Grund `p.bg` jetzt am Plakettenrahmen. Sieben Schalter (Abschnitt „Bewegung“). Neu in `core/ui.lua`: `damageTrail`, `hitFlash`, `plateSheen`. Auch eine Heilung blitzt – ob das Leben sank, ist geheim.
+- Neu `ui/automark.lua` (Seite im Komfort): Rolle nur aus `UnitGroupRolesAssigned`, nur als Gruppenleiter (abschaltbar), je Instanz einmal je Spieler und Markierung – dieselbe Markierung noch einmal nähme sie ab, der Index ist geheim –, nie im Kampf.
+- Neu `ui/macros.lua` (Seite der Aktionsleisten): `MH.Build` erzeugt `/cast`, `/cast [mod:…]`, `/castsequence reset=…` mit Zielbedingungen (`@mouseover`, `@focus`, `@player`, `@cursor`), `#showtooltip`, `/stopcasting`, `/startattack`; Zähler in Bytes gegen 255; `CreateMacro`/`EditMacro`/`PickupMacro`, nie im Kampf; Name mit `Utf8Sub`.
+- Neu `ui/dispel.lua`: Entfluch-Zauber je Klasse als Classic-IDs (Herkunft „classic“), angeboten nur, wenn der Client einen Namen nennt und er im Zauberbuch steht; `CC.Effective()` in `ui/clickcast.lua` legt sie nur auf freie Tasten.
+- Automark und Makro-Helfer sind Seiten bestehender Module, weil die Seitenleiste der Einstellungen sonst keinen Platz mehr hätte („Nichts muss scrollen“).
+- Testattrappe: `SetBlendMode`/`GetBlendMode`. `load_test.lua`: je Feature eine Prüfung mit Gegenproben (Spur-Uhr, Kante, Blitz nur am Ziel, Markieren ohne Leiter/Rolle/im Kampf, Makrotext und Grenzen, Entfluchen mit eigener Belegung).
+
 ## [6.8.0.9] – 2026-09-29
 
 **Quests an der Karte ohne Pergament.** Öffnest du eine Quest, liegt ihr Text auf derselben ruhigen Fläche mit feiner Kante in Gold wie der Questlog – ohne Pergament, ohne braunen Balken, ohne Metallstriche zwischen den Knöpfen, in heller Schrift. Farben, die etwas sagen, bleiben.

@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.8.0.9
+## Version: 6.8.1.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -159,6 +159,8 @@ ui/unitframes.lua
 ui/groupframes.lua
 ui/gamegroup.lua
 ui/clickcast.lua
+# Entfluchen auf Klick (6.8.1.0): Zauber der Klasse gegen Flueche usw. auf die Klickzauber.
+ui/dispel.lua
 ui/actionbars.lua
 # Makro-Helfer (6.8.1.0): Seite der Aktionsleisten; braucht das Zauberbuch der Klickzauber.
 ui/macros.lua

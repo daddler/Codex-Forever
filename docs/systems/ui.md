@@ -107,6 +107,7 @@ weil sie genau das sind, wofür er steht.
 | `ui/comfort.lua` | Komfortfunktionen |
 | `ui/automark.lua` | Automark (6.8.1.0): Tank und Heiler beim Betreten einer Instanz markieren – Seite im Komfort |
 | `ui/macros.lua` | Makro-Helfer (6.8.1.0): was, auf wen, welcher Zauber → Makrotext mit Erklärung, anlegen/ersetzen/aufnehmen – Seite der Aktionsleisten |
+| `ui/dispel.lua` | Entfluchen auf Klick (6.8.1.0): Zauber der Klasse gegen Flüche, Gifte, Krankheiten, Magie auf Zusatztaste + Links/Rechts der Klickzauber |
 | `ui/options.lua` | das Einstellungsfenster und das Modul „Allgemein“ |
 
 Neue Bausteine in `core/ui.lua`: `CreateDropdown` (Auswahlliste, eine
@@ -960,6 +961,44 @@ oder lehnt der Client das Argument ab, springt der Balken wie bisher
 (`NP.smoothBroken`, einmal gemerkt) – die Spur wirkt trotzdem, nur ohne
 Gleiten. Ob `SetClipsChildren` den Glanz im Forever-Client sauber
 abschneidet, zeigt erst das Spiel.
+
+## Entfluchen auf Klick *(6.8.1.0, `ui/dispel.lua`)*
+
+Beta-Test: „ein Feature wie Decursive – so haben Spieler, die sonst nicht
+mit Klickzaubern zu tun haben, direkt eine Möglichkeit zu entfluchen.“
+
+**Die Grundlage, nicht Decursive.** Ein Schalter im Reiter „Klickzauber“
+der Gruppenrahmen (`clickDispel`, von Haus aus aus) legt die Zauber der
+Klasse auf Zusatztaste (`clickDispelMod`, Standard Strg; „ohne“ gibt es
+nicht – Links wählt sonst nicht mehr an) + Links (erste Gruppe) und
+Rechts (zweite). Decursive liest die Debuffs der Gruppe und ordnet sie –
+im Kampf gibt der 12.x-Client Addons fremde Auren nicht heraus (gemessen
+6.6.0.1–6.6.0.3). Bannbare Debuffs zeigen die Gruppenrahmen des Spiels
+(„Nur bannbare“). Was Forever zu Debuffs der Gruppe herausgibt: zu messen.
+
+**Eine kleine Liste mit Herkunft** (`DP.SPELLS`, `DP.SOURCE = "classic"`):
+der Client sagt nicht, welcher Zauber bannt. Zauber-IDs aus WoW Classic
+1.12, je Klasse Gruppen mit Alternativen, die bessere zuerst:
+
+| Klasse | Links | Rechts |
+|---|---|---|
+| Priester | Magiebannung (527/988) | Krankheit aufheben (552), sonst heilen (528) |
+| Paladin | Reinigung des Glaubens (4987), sonst Läutern (1152) | – |
+| Druide | Fluch aufheben (2782) | Vergiftung aufheben (2893), sonst heilen (8946) |
+| Magier | Geringen Fluch aufheben (475) | – |
+| Schamane | Gift heilen (526) | Krankheit heilen (2870) |
+
+Angeboten wird ein Zauber nur, wenn der Client unter der ID einen Namen
+nennt (`C_Spell.GetSpellName`/`GetSpellInfo`) **und** der Name im
+Zauberbuch steht (oder `IsPlayerSpell`). Eine in Forever geänderte ID
+führt zu nichts, nie zu einem falschen Zauber. Gewirkt wird über den
+Namen (höchster Rang). Die Namen in der Tabelle sind nur Kommentar.
+
+**Deine Belegung gewinnt.** `CC.Effective()` = deine Belegung, dazu
+`CC.ExtraBindings()` nur auf freien Tasten; Rahmen und Tooltip nutzen
+`CC.Effective`. Die Seite sagt, was wo liegt, was besetzt ist und was noch
+nicht gelernt ist. Neu gelernt (`SPELLS_CHANGED`, `LEARNED_SPELL_IN_TAB`):
+neu angewendet.
 
 ## Makro-Helfer *(6.8.1.0, `ui/macros.lua`)*
 

@@ -146,6 +146,24 @@ function CC.Remove(i)
     CC.SetBindings(list)
 end
 
+-- Was wirklich auf den Rahmen kommt: deine Belegung, dazu Belegungen
+-- anderer Teile (6.8.1.0: Entfluchen auf Klick, ui/dispel.lua) - aber nur
+-- auf Tasten, die du nicht selbst belegt hast. Deine Wahl gewinnt immer.
+function CC.Effective()
+    local list = CC.Bindings()
+    local extra = CC.ExtraBindings and CC.ExtraBindings()
+    if type(extra) ~= "table" or #extra == 0 then return list end
+    local out, taken = {}, {}
+    for _, b in ipairs(list) do
+        out[#out + 1] = b
+        taken[b.mod .. b.button] = true
+    end
+    for _, b in ipairs(extra) do
+        if not taken[b.mod .. b.button] then out[#out + 1] = b end
+    end
+    return out
+end
+
 -- "Umschalt + Links"
 function CC.KeyText(b)
     local key = Short(CC.BUTTONS, b.button)
@@ -155,8 +173,9 @@ end
 
 function CC.ActionText(b)
     if b.action == "spell" then
-        if b.rank then return (b.spell or "?") .. " (" .. b.rank .. ")" end
-        return b.spell or "?"
+        local note = b.note and ("  –  " .. b.note) or ""
+        if b.rank then return (b.spell or "?") .. " (" .. b.rank .. ")" .. note end
+        return (b.spell or "?") .. note
     end
     return Short(CC.ACTIONS, b.action)
 end
@@ -228,7 +247,7 @@ function CC.Apply()
         end
         return false
     end
-    local list = CC.Bindings()
+    local list = CC.Effective()
     local seen = {}
     for _, f in ipairs(CC.Frames()) do
         seen[f] = true
@@ -247,7 +266,7 @@ end
 
 function CC.TooltipLines()
     local out = {}
-    for _, b in ipairs(CC.Bindings()) do
+    for _, b in ipairs(CC.Effective()) do
         if b.action == "spell" then out[#out + 1] = { CC.KeyText(b), CC.ActionText(b) } end
     end
     return out
@@ -616,6 +635,8 @@ function CC.BuildPage(B)
     B:Row({ type = "toggle", label = "Nur hilfreiche Zauber", key = "clickHelpfulOnly",
             description = "Heilungen, Buffs, Bannen – was man auf Verbündete wirkt." },
           { type = "empty" })
+    local DP = WeintCodex.UIDispel
+    if DP and DP.BuildSection then DP.BuildSection(B) end
     B:Section("Wo")
     B:Row({ type = "toggle", label = "Auch Einheitenrahmen", key = "clickUnitFrames",
             description = "Spieler, Ziel, Fokus, Ziel des Ziels und Begleiter – nicht nur Gruppe und Schlachtzug." },
