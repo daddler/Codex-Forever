@@ -924,6 +924,43 @@ einen Mark über den Kopf bekommen. Einstellbar, welches Mark.“
 - **Ungemessen:** ob der Forever-Client Addons markieren lässt. Lehnt er
   ab, steht „(vom Spiel abgelehnt)“ hinter dem Namen.
 
+## Namensplaketten 3.0: Bewegung *(6.8.1.0, `ui/nameplates.lua`)*
+
+Beta-Test: „insgesamt wirklich schon gut, aber es fehlt noch etwas
+Cooles, ein Wow-Effekt“. Entwurf auf der Zeichenfläche „8 ·
+Namensplaketten 3.0“ (drei Varianten), gewählt: **B + C** – „Lebendig“
+mit den Zielmarken von „Vertraut“. Der Name bleibt, wo die Einstellung ihn
+hinstellt (im Balken, darüber, darunter).
+
+| Effekt | Schalter | Wie |
+|---|---|---|
+| Schadensspur | `damageTrail` | zweiter Balken `p.trail` **hinter** dem Leben (Grund `p.bg` seither am Plakettenrahmen, Ebene `BACKGROUND` 7; Spur Rahmenebene +1, Leben +2), Farbe `GC.damageTrail` |
+| Weiche Balken | `smoothBars` | `SetValue(wert, Enum.StatusBarInterpolation.ExponentialEaseOut)` – der Client gleitet, auch mit geheimem Wert |
+| Leuchten atmet | `targetPulse` | Alpha-Animation 100 % ↔ 45 %, 1,2 s je Richtung, an beiden Scheinen |
+| Kante in Klassenfarbe | `targetEdge` | der 1-px-Rand des Ziels im Akzent (`K.Highlight`) |
+| Glanz | `targetSheen` | heller Streifen (`GC.plateSheen`, additiv) läuft in 0,9 s über den Balken, dann 3,6 s Ruhe; abgeschnitten an einem Rahmen mit `SetClipsChildren` |
+| Treffer blitzt | `hitFlash` | additiv Weiß (`GC.hitFlash`) 0,25 s, nur am Ziel, nur bei `UNIT_HEALTH` (nicht bei `UNIT_MAXHEALTH`) |
+| Zielmarken bewegen sich | `markMotion` | Translation ±3 px nach außen, 0,8 s, hin und zurück |
+
+**Geheime Werte.** Nichts davon rechnet oder vergleicht mit dem Leben: die
+Spur bekommt **denselben** Wert wie das Leben, nur `NP.TRAIL_DELAY`
+(0,35 s) später. Der erste Treffer startet die Uhr, weitere schreiben nur
+den neuesten Wert – sonst schmölze die Spur in einem langen Kampf nie
+(der Test hält genau das fest). Ob das Leben sank oder stieg, darf Lua
+nicht fragen: **auch eine Heilung blitzt** (bei Gegnern selten; abschaltbar).
+
+**Kein Lua je Bild.** Atmen, Glanz, Blitz und Marken sind Animationen des
+Spiels (`NP.Anim`, AnimationGroup), gestartet und gestoppt nur bei einem
+Wechsel (`NP.Motion`, `p._fx*`). Der einzige Takt ist die wartende Spur
+(`NP.TrailTick`), er läuft nur, solange eine wartet; keine Closure, keine
+Tabelle je Treffer (`load_test.lua` misst es).
+
+**Ungemessen:** ob Forever `Enum.StatusBarInterpolation` kennt. Fehlt es
+oder lehnt der Client das Argument ab, springt der Balken wie bisher
+(`NP.smoothBroken`, einmal gemerkt) – die Spur wirkt trotzdem, nur ohne
+Gleiten. Ob `SetClipsChildren` den Glanz im Forever-Client sauber
+abschneidet, zeigt erst das Spiel.
+
 ## Makro-Helfer *(6.8.1.0, `ui/macros.lua`)*
 
 Beta-Test: „Viele wissen nicht, wie man ein Makro schreiben kann. Der

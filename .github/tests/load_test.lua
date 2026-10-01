@@ -1837,6 +1837,130 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Plaketten 3.0 (6.8.1.0, Entwurf B + C): Schadensspur, weiche Balken,
+-- Ziel atmet (Leuchten, Glanz, Kante, Marken), Treffer blitzt. Werte nur
+-- durchgereicht (geheim erlaubt), kein Muell je Treffer.
+do
+    local NP = WeintCodex.UINameplates
+    local ok, err = pcall(function()
+        local isTarget, now, cur = {}, 100, 100
+        local saved = { UnitIsUnit = _G.UnitIsUnit, UnitHealth = _G.UnitHealth, UnitHealthMax = _G.UnitHealthMax,
+                        GetTime = _G.GetTime, Enum = _G.Enum }
+        local okIn, errIn = pcall(function()
+        _G.UnitIsUnit = function(a, b) if b == "target" then return isTarget[a] == true end return a == b end
+        _G.UnitHealth = function() return cur end
+        _G.UnitHealthMax = function() return 100 end
+        _G.GetTime = function() return now end
+        _G.Enum = setmetatable({ StatusBarInterpolation = { Immediate = 0, ExponentialEaseOut = 1 } }, { __index = saved.Enum })
+        NP.smoothBroken = nil
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        local p = NP.plates["nameplate1"]
+        assert(p and p.trail and p.bg._parent == p, "Plakette ohne Spur oder Grund nicht am Rahmen")
+        assert(p.trail:GetFrameLevel() < p.health:GetFrameLevel(), "Spur nicht hinter dem Leben")
+        local hv, hi, tv, ti, tcalls = nil, nil, nil, nil, 0
+        p.health.SetValue = function(_, v, i) hv, hi = v, i end
+        p.trail.SetValue = function(_, v, i) tv, ti, tcalls = v, i, tcalls + 1 end
+        -- Treffer: Leben gleitet sofort, die Spur wartet.
+        cur = 70
+        stub.FireEvent("UNIT_HEALTH", "nameplate1")
+        assert(hv == 70 and hi == 1, "Leben gleitet nicht: " .. tostring(hi))
+        assert(tcalls == 0 and NP.trailPending[p], "Spur folgt sofort statt zu warten")
+        now = now + NP.TRAIL_DELAY / 2
+        cur = 55
+        stub.FireEvent("UNIT_HEALTH", "nameplate1")
+        NP.TrailTick()
+        assert(tcalls == 0, "Spur zu frueh")
+        -- Kurz nach der Frist des ERSTEN Treffers: die Spur schmilzt - der
+        -- zweite Treffer darf die Uhr nicht zuruecksetzen (sonst schmilzt
+        -- sie in einem langen Kampf nie).
+        now = now + NP.TRAIL_DELAY / 2 + 0.01
+        NP.TrailTick()
+        assert(tcalls == 1 and tv == 55 and ti == 1 and not NP.trailPending[p], "Spur schmilzt nicht zum neuesten Wert")
+        -- Neue Einheit: Spur sofort.
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        p = NP.plates["nameplate1"]
+        tcalls = 0
+        p.trail.SetValue = function(_, v) tv, tcalls = v, tcalls + 1 end
+        p.health.SetValue = function(_, v, i) hv, hi = v, i end
+        assert(not NP.trailPending[p], "neue Einheit wartet mit alter Spur")
+        -- Client lehnt das Gleiten ab: einmal Rueckfall, danach ohne.
+        p.health.SetValue = function(_, v, i) if i ~= nil then error("kein Gleiten") end hv, hi = v, i end
+        cur = 40
+        stub.FireEvent("UNIT_HEALTH", "nameplate1")
+        assert(hv == 40 and hi == nil and NP.smoothBroken, "Rueckfall ohne Gleiten fehlt")
+        NP.smoothBroken = nil
+        -- Ziel: atmen, Glanz, Kante, Marken; Treffer blitzt.
+        local plays, stops = {}, {}
+        local function Spy(ag, name)
+            ag.Play = function() plays[name] = (plays[name] or 0) + 1 end
+            ag.Stop = function() stops[name] = (stops[name] or 0) + 1 end
+        end
+        Spy(p.pulseAnims[1], "pulse") Spy(p.sheenAnim, "sheen") Spy(p.markAnims[1], "marks") Spy(p.flashAnim, "flash")
+        p._fxPulse, p._fxSheen, p._fxMarks, p._fxEdge = nil, nil, nil, nil
+        local edgeColor
+        p.border.SetColor = function(_, r, g, b) edgeColor = { r, g, b } end
+        isTarget.nameplate1 = true
+        stub.FireEvent("PLAYER_TARGET_CHANGED")
+        local hc = K.Highlight()
+        assert(plays.pulse == 1 and plays.sheen == 1 and plays.marks == 1 and p.sheen:IsShown(), "Ziel bewegt sich nicht")
+        assert(edgeColor and edgeColor[1] == hc[1] and edgeColor[3] == hc[3], "Kante nicht in Klassenfarbe")
+        stub.FireEvent("PLAYER_TARGET_CHANGED")
+        assert(plays.pulse == 1 and plays.sheen == 1, "Animation bei jedem Zielwechsel neu gestartet")
+        cur = 30
+        stub.FireEvent("UNIT_HEALTH", "nameplate1")
+        assert(plays.flash == 1, "Treffer am Ziel blitzt nicht")
+        stub.FireEvent("UNIT_MAXHEALTH", "nameplate1")
+        assert(plays.flash == 1, "Hoechstwert blitzt wie ein Treffer")
+        K.Set("nameplates", "hitFlash", false)
+        stub.FireEvent("UNIT_HEALTH", "nameplate1")
+        assert(plays.flash == 1, "Blitz trotz Schalter")
+        K.Set("nameplates", "hitFlash", true)
+        isTarget.nameplate1 = nil
+        stub.FireEvent("PLAYER_TARGET_CHANGED")
+        assert(stops.pulse and stops.sheen and stops.marks and not p.sheen:IsShown(), "Bewegung bleibt ohne Ziel")
+        stub.FireEvent("UNIT_HEALTH", "nameplate1")
+        assert(plays.flash == 1, "Nicht-Ziel blitzt")
+        -- Schalter: kein Glanz.
+        K.Set("nameplates", "targetSheen", false)
+        Spy(NP.plates["nameplate1"].sheenAnim, "sheen")
+        isTarget.nameplate1 = true
+        stub.FireEvent("PLAYER_TARGET_CHANGED")
+        assert(not NP.plates["nameplate1"].sheen:IsShown(), "Glanz trotz Schalter")
+        K.Set("nameplates", "targetSheen", true)
+        isTarget.nameplate1 = nil
+        stub.FireEvent("PLAYER_TARGET_CHANGED")
+        -- Kein Muell: Spur und Balken im Takt.
+        p = NP.plates["nameplate1"]
+        local tr, hb = stub.NewObject("StatusBar"), stub.NewObject("StatusBar")
+        tr.SetValue = function() end
+        hb.SetValue = function() end
+        local realTrail, realHealth = p.trail, p.health
+        p.trail, p.health = tr, hb
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for i = 1, 50 do
+            NP.Trail(p, i)
+            NP.SetBar(hb, i, true)
+            now = now + 1
+            NP.TrailTick()
+        end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Spur legt je Treffer Muell an: %.1f KB", grew))
+        p.trail, p.health = realTrail, realHealth
+        p.trail.SetValue, p.health.SetValue = nil, nil
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        end)
+        for k, v in pairs(saved) do _G[k] = v end
+        NP.smoothBroken = nil
+        assert(okIn, errIn)
+    end)
+    Check(ok, "Plakette 3.0: Schadensspur, weiche Balken, Ziel atmet (Leuchten, Glanz, Kante, Marken), Treffer blitzt, kein Muell"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.1.4: Keine verwaiste Plakette. ADDED doppelt (Neuladen) oder eine
 -- Plakette des Spiels, die ohne REMOVED an eine andere Einheit geht, liess
 -- die alte sichtbar und eingefroren an ihr haengen.

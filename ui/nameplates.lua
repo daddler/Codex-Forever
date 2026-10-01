@@ -56,6 +56,15 @@ local defaults = {
     hover       = true,        -- Maus darueber hellt auf
     executeMark = false,       -- fester Strich bei executeAt % im Balken
     executeAt   = 20,
+    -- Bewegung (6.8.1.0, Beta-Test: "es fehlt noch etwas Cooles, ein
+    -- Wow-Effekt"; Entwurf "Namensplaketten 3.0", Variante B + C).
+    damageTrail = true,        -- Schadensspur: was ein Treffer nahm, bleibt kurz hell stehen
+    smoothBars  = true,        -- Leben gleitet (wenn der Client es kann)
+    targetPulse = true,        -- Leuchten des Ziels atmet
+    targetEdge  = true,        -- feine Kante in der Klassenfarbe am Ziel
+    targetSheen = true,        -- Glanz laeuft alle paar Sekunden ueber den Balken des Ziels
+    hitFlash    = true,        -- Treffer am Ziel blitzt kurz auf
+    markMotion  = true,        -- Zielmarken atmen nach aussen
 
     enemyInCombat = K.ColorDefault("enemyInCombat"),
     hostile       = K.ColorDefault("hostile"),
@@ -367,6 +376,133 @@ NP.plates = plates
 
 local SLOTS = { "top", "left", "right", "center" }
 
+--------------------------------------------------
+-- Bewegung (6.8.1.0): Schadensspur, weiche Balken, das Ziel lebt
+--------------------------------------------------
+-- Alles, was sich bewegt, ist eine Animation des Spiels (AnimationGroup)
+-- oder ein Wert, den der Balken selbst gleiten laesst - kein Lua je Bild.
+-- Einziger Takt: die Schadensspur wartet NP.TRAIL_DELAY s, dann ein
+-- SetValue; der Takt laeuft nur, solange eine Spur wartet. Keine Closure,
+-- keine Tabelle je Treffer.
+
+NP.TRAIL_DELAY = 0.35      -- so lange bleibt, was ein Treffer nahm, hell stehen
+NP.SHEEN_W     = 36        -- Breite des Glanzes in px
+NP.SHEEN_RUN   = 0.9       -- s fuer einen Lauf ueber den Balken ...
+NP.SHEEN_PAUSE = 3.6       -- ... dann so lange Ruhe
+NP.MARK_SWAY   = 3         -- px, um die die Zielmarken nach aussen atmen
+NP.MARK_BREATH = 0.8       -- s je Richtung
+NP.PULSE_LOW   = 0.45      -- Leuchten des Ziels atmet zwischen 100 % und diesem Wert
+NP.PULSE_HALF  = 1.2       -- s je Richtung
+
+-- Eine Animation an `region` (ein Rahmen oder eine Textur). setup(a, ag)
+-- stellt sie ein. nil, wenn der Client keine Animationen anbietet.
+function NP.Anim(region, kind, setup, looping)
+    if type(region) ~= "table" or type(region.CreateAnimationGroup) ~= "function" then return nil end
+    local ok, ag = pcall(region.CreateAnimationGroup, region)
+    if not ok or type(ag) ~= "table" or type(ag.CreateAnimation) ~= "function" then return nil end
+    local a = ag:CreateAnimation(kind)
+    if type(a) ~= "table" then return nil end
+    pcall(setup, a, ag)
+    if looping and ag.SetLooping then ag:SetLooping(looping) end
+    return ag
+end
+
+local function Run(ag, on)
+    if not ag then return end
+    if on then ag:Play() else ag:Stop() end
+end
+
+-- Gleiten: neuere Clients lassen einen Balken selbst zum neuen Wert laufen
+-- (SetValue mit Enum.StatusBarInterpolation) - auch mit geheimem Wert.
+-- Ungemessen fuer Forever: fehlt es oder lehnt der Client ab, springt der
+-- Balken wie bisher (NP.smoothBroken), die Spur wirkt trotzdem.
+function NP.Interp()
+    if NP.smoothBroken then return nil end
+    local E = _G.Enum
+    local I = E and E.StatusBarInterpolation
+    return I and I.ExponentialEaseOut or nil
+end
+
+function NP.SetBar(bar, value, smooth)
+    if smooth and S.smoothBars then
+        local interp = NP.Interp()
+        if interp then
+            if pcall(bar.SetValue, bar, value, interp) then return end
+            NP.smoothBroken = true
+        end
+    end
+    bar:SetValue(value)
+end
+
+-- Schadensspur: der erste Treffer startet die Uhr, weitere schreiben nur
+-- den neuesten Wert. So schmilzt die Spur auch in einem langen Kampf
+-- immer wieder, statt zu warten, bis keiner mehr trifft.
+NP.trailPending = {}
+local pending = NP.trailPending
+local trailDriver = CreateFrame("Frame")
+local function Now() return K.Plain(_G.GetTime and _G.GetTime()) or 0 end
+local TrailTick
+TrailTick = K.Measured("Plaketten", function()
+    local now = Now()
+    for p in pairs(pending) do
+        if now >= (p._trailAt or 0) then
+            NP.SetBar(p.trail, p._trailVal, true)
+            pending[p] = nil
+        end
+    end
+    if _G.next(pending) == nil then trailDriver:SetScript("OnUpdate", nil) end
+end)
+NP.TrailTick = TrailTick
+
+function NP.Trail(p, cur, snap)
+    if snap or not S.damageTrail then
+        pending[p] = nil
+        p.trail:SetValue(cur)
+        return
+    end
+    p._trailVal = cur
+    if not pending[p] then
+        p._trailAt = Now() + NP.TRAIL_DELAY
+        pending[p] = true
+        trailDriver:SetScript("OnUpdate", TrailTick)
+    end
+end
+
+-- Ziel: Leuchten atmet, Glanz, Kante in der Klassenfarbe, Zielmarken.
+-- Gesetzt nur, wenn sich etwas aendert (p._fx*).
+function NP.Motion(p, isTarget, glow)
+    isTarget = isTarget and true or false
+    local pulse = isTarget and glow and S.targetPulse and true or false
+    local sheen = isTarget and S.targetSheen and true or false
+    local marks = isTarget and glow and S.markMotion and true or false
+    local edge = isTarget and S.targetEdge and true or false
+    if p._fxPulse ~= pulse then
+        p._fxPulse = pulse
+        for _, ag in pairs(p.pulseAnims) do Run(ag, pulse) end
+    end
+    if p._fxSheen ~= sheen then
+        p._fxSheen = sheen
+        p.sheen:SetShown(sheen)
+        Run(p.sheenAnim, sheen)
+    end
+    if p._fxMarks ~= marks then
+        p._fxMarks = marks
+        for _, ag in pairs(p.markAnims) do Run(ag, marks) end
+    end
+    if p._fxEdge ~= edge then
+        p._fxEdge = edge
+        if edge then
+            local c = K.Highlight()
+            p.border:SetColor(c[1], c[2], c[3], 1)
+            p.border:SetShown(true)
+        else
+            local bc = S.borderColor or defaults.borderColor
+            p.border:SetColor(bc.r, bc.g, bc.b, 1)
+            p.border:SetShown(S.showBorder and not p._friendly or (p._friendly and S.friendlyHealth and S.showBorder))
+        end
+    end
+end
+
 local function Build(parent)
     local p = CreateFrame("Frame", nil, parent or UIParent)
     p:SetSize(defaults.width, defaults.height)
@@ -377,9 +513,28 @@ local function Build(parent)
     health:SetValue(1)
     p.health = health
 
-    local bg = health:CreateTexture(nil, "BACKGROUND")
+    -- Grund am Plakettenrahmen (seit 6.8.1.0), nicht am Balken: zwischen
+    -- beiden liegt die Schadensspur, ein eigener Balken. Ganz oben in der
+    -- untersten Ebene - ueber den Scheinen, unter Spur und Leben.
+    local bg = p:CreateTexture(nil, "BACKGROUND", nil, 7)
     bg:SetAllPoints(health)
     p.bg = bg
+
+    -- SCHADENSSPUR. Ein zweiter Balken hinter dem Leben, derselbe Wert -
+    -- nur NP.TRAIL_DELAY s spaeter (und, wo der Client es kann, gleitend).
+    -- Was ein Treffer nahm, steht so einen Moment hell da. Keine Rechnung,
+    -- kein Vergleich: der Wert darf geheim sein, er wird nur weitergereicht.
+    local trail = CreateFrame("StatusBar", nil, p)
+    trail:SetStatusBarTexture(K.BarTexture())
+    trail:SetAllPoints(health)
+    trail:SetMinMaxValues(0, 1)
+    trail:SetValue(1)
+    local GCt = WeintCodex.GameColors.damageTrail
+    trail:SetStatusBarColor(GCt[1], GCt[2], GCt[3], GCt[4])
+    p.trail = trail
+    local base = p:GetFrameLevel()
+    trail:SetFrameLevel(base + 1)
+    health:SetFrameLevel(base + 2)
 
     p.border = K.Border(health, 1, 0, 0, 0, 1, "BORDER")
     p.ring = K.Border(health, 2, 1, 1, 1, 1, "OVERLAY")
@@ -407,6 +562,60 @@ local function Build(parent)
     if hf.SetBlendMode then hf:SetBlendMode("ADD") end
     hf:Hide()
     p.hoverFill = hf
+
+    -- Treffer am Ziel: kurzes Aufblitzen (additiv, Animation des Spiels -
+    -- kein Lua je Bild).
+    local fl = health:CreateTexture(nil, "OVERLAY", nil, 3)
+    fl:SetAllPoints(health)
+    fl:SetColorTexture(1, 1, 1, 1)
+    if fl.SetBlendMode then fl:SetBlendMode("ADD") end
+    fl:SetAlpha(0)
+    p.flash = fl
+    p.flashAnim = NP.Anim(fl, "Alpha", function(a)
+        local c = GC.hitFlash
+        a:SetFromAlpha(c[4]) a:SetToAlpha(0) a:SetDuration(0.25)
+    end)
+
+    -- Glanz: ein heller Streifen laeuft ueber den Balken des Ziels, dann
+    -- Pause. Abgeschnitten an einem Rahmen (SetClipsChildren), der genau
+    -- so gross ist wie der Balken; bewegt wird der Rahmen darin.
+    local clip = CreateFrame("Frame", nil, health)
+    clip:SetAllPoints(health)
+    if clip.SetClipsChildren then pcall(clip.SetClipsChildren, clip, true) end
+    local sheen = CreateFrame("Frame", nil, clip)
+    sheen:SetSize(NP.SHEEN_W, 1)
+    sheen:SetPoint("TOPRIGHT", clip, "TOPLEFT", 0, 0)
+    sheen:SetPoint("BOTTOMRIGHT", clip, "BOTTOMLEFT", 0, 0)
+    local sc = GC.plateSheen
+    for i, half in ipairs({ "l", "r" }) do
+        local t = sheen:CreateTexture(nil, "OVERLAY")
+        t:SetColorTexture(1, 1, 1, 1)
+        if t.SetBlendMode then t:SetBlendMode("ADD") end
+        t:SetPoint("TOP", sheen, "TOP", 0, 0)
+        t:SetPoint("BOTTOM", sheen, "BOTTOM", 0, 0)
+        t:SetWidth(NP.SHEEN_W / 2)
+        if i == 1 then t:SetPoint("LEFT", sheen, "LEFT", 0, 0) else t:SetPoint("RIGHT", sheen, "RIGHT", 0, 0) end
+        if t.SetGradient and _G.CreateColor then
+            local a0, a1 = (i == 1) and 0 or sc[4], (i == 1) and sc[4] or 0
+            t:SetGradient("HORIZONTAL", _G.CreateColor(sc[1], sc[2], sc[3], a0), _G.CreateColor(sc[1], sc[2], sc[3], a1))
+        else
+            t:SetVertexColor(sc[1], sc[2], sc[3], sc[4] * 0.5)
+        end
+        sheen[half] = t
+    end
+    sheen:Hide()
+    p.sheen = sheen
+    p.sheenAnim = NP.Anim(sheen, "Translation", function(a, ag)
+        a:SetDuration(NP.SHEEN_RUN)
+        if a.SetSmoothing then a:SetSmoothing("IN_OUT") end
+        a:SetOrder(1)
+        -- Pause: eine Animation, die nichts tut, als Zeit zu brauchen.
+        local wait = ag:CreateAnimation("Alpha")
+        if type(wait) == "table" and wait.SetFromAlpha then
+            wait:SetFromAlpha(1) wait:SetToAlpha(1) wait:SetDuration(NP.SHEEN_PAUSE) wait:SetOrder(2)
+        end
+        p.sheenMove = a
+    end, "REPEAT")
 
     -- Hinrichtungsmarke: ein fester Strich im Balken. Keine Rechnung mit
     -- dem Leben (das kann geheim sein) - der Strich steht, der Balken
@@ -436,6 +645,7 @@ local function Build(parent)
     -- Zielmarken: zwei gestaffelte Winkel links und rechts, die auf den
     -- Balken zeigen. Eine Datei, rechts gespiegelt.
     p.marks = {}
+    p.markAnims = {}
     for i, side in ipairs({ "left", "right" }) do
         local m = textHost:CreateTexture(nil, "OVERLAY")
         m:SetTexture(K.MARK_TEXTURE)
@@ -444,6 +654,22 @@ local function Build(parent)
         m:SetVertexColor(c[1], c[2], c[3], c[4])
         m:Hide()
         p.marks[i] = m
+        -- Atmen nach aussen (6.8.1.0): ein paar Pixel hin und zurueck.
+        p.markAnims[i] = NP.Anim(m, "Translation", function(a)
+            a:SetOffset(i == 1 and -NP.MARK_SWAY or NP.MARK_SWAY, 0)
+            a:SetDuration(NP.MARK_BREATH)
+            if a.SetSmoothing then a:SetSmoothing("IN_OUT") end
+        end, "BOUNCE")
+    end
+    -- Leuchten des Ziels atmet (6.8.1.0).
+    p.pulseAnims = {}
+    for i, g in ipairs({ p.glow, p.glowWide }) do
+        if g.tex then
+            p.pulseAnims[i] = NP.Anim(g.tex, "Alpha", function(a)
+                a:SetFromAlpha(1) a:SetToAlpha(NP.PULSE_LOW) a:SetDuration(NP.PULSE_HALF)
+                if a.SetSmoothing then a:SetSmoothing("IN_OUT") end
+            end, "BOUNCE")
+        end
     end
 
     p.cast = CB.Create(p)
@@ -473,6 +699,9 @@ local function LayoutFriendly(p)
     p:SetSize(S.width, bar and S.height or 1)
     if bar then p.health:Show() else p.health:Hide() end
     p.border:SetShown(bar and S.showBorder)
+    p.bg:SetShown(bar and true or false)
+    p.trail:SetShown(bar and S.damageTrail and true or false)
+    NP.Motion(p, false)
     p.ring:SetShown(false)
     p.shadow:SetShown(bar and S.shadow)
     p.glow:SetShown(false)
@@ -509,7 +738,11 @@ end
 local function Layout(p)
     if p._friendly then return LayoutFriendly(p) end
     p.health:Show()
+    p.bg:Show()
+    p.trail:SetShown(S.damageTrail and true or false)
     p:SetSize(S.width, S.height)
+    -- Der Glanz laeuft ueber die ganze Breite und ein Stueck hinaus.
+    if p.sheenMove and p.sheenMove.SetOffset then p.sheenMove:SetOffset(S.width + NP.SHEEN_W, 0) end
 
     local bgc = S.bgColor or defaults.bgColor
     p.bg:SetColorTexture(bgc.r, bgc.g, bgc.b, 1)
@@ -534,6 +767,8 @@ local function Layout(p)
     p.border:SetColor(bc.r, bc.g, bc.b, 1)
     local rc = K.Highlight()
     p.ring:SetColor(rc[1], rc[2], rc[3], 1)
+    -- Rand neu gesetzt: Kante und Bewegung beim naechsten UpdateTarget neu.
+    p._fxEdge, p._fxPulse, p._fxSheen, p._fxMarks = nil, nil, nil, nil
 
     local t = p.texts
     for _, slot in ipairs(SLOTS) do
@@ -745,13 +980,27 @@ local function FillTexts(p, onlyHealth)
     end
 end
 
-local function UpdateHealth(p)
+-- `hit`: ein Ereignis UNIT_HEALTH (Aufblitzen am Ziel); `snap`: neue
+-- Einheit an der Plakette - Spur sofort, ohne Verzoegerung.
+local function UpdateHealth(p, hit, snap)
     local unit = p.unit
     if not unit then return end
     local max = _G.UnitHealthMax and _G.UnitHealthMax(unit)
-    if type(max) ~= "nil" then p.health:SetMinMaxValues(0, max) end
+    if type(max) ~= "nil" then
+        p.health:SetMinMaxValues(0, max)
+        p.trail:SetMinMaxValues(0, max)
+    end
     local cur = _G.UnitHealth and _G.UnitHealth(unit)
-    if type(cur) ~= "nil" then p.health:SetValue(cur) end
+    if type(cur) ~= "nil" then
+        NP.SetBar(p.health, cur, not snap)
+        NP.Trail(p, cur, snap)
+    end
+    -- Ob das Leben sank oder stieg, darf Lua nicht fragen (geheim): auch
+    -- eine Heilung blitzt. Bei Gegnern selten, deshalb abschaltbar.
+    if hit and p._isTarget == true and S.hitFlash and p.flashAnim then
+        p.flashAnim:Stop()
+        p.flashAnim:Play()
+    end
     FillTexts(p, true)
 end
 
@@ -866,6 +1115,8 @@ local function UpdateTarget(p)
     for _, m in ipairs(p.marks) do m:SetShown(glow) end
     p.hoverFill:SetShown(isHover and not isTarget)
     p.hoverGlow:SetShown(isHover and not isTarget)
+    p._isTarget = isTarget and true or false
+    NP.Motion(p, isTarget, glow)
 
     p._hl = (isTarget or isHover) or nil
     if not p._friendly then
@@ -1034,7 +1285,7 @@ end
 NP.UpdateThreatText = UpdateThreatText
 
 local function FullUpdate(p)
-    UpdateHealth(p)
+    UpdateHealth(p, false, true)
     FillTexts(p, false)
     UpdateColor(p)
     UpdateTarget(p)
@@ -1109,6 +1360,9 @@ function Detach(unit)
     p.auras:SetUnit(nil)
     p.unit, p.nameplate, p._friendly = nil, nil, nil
     p._npcID, p._npcName, p._caster = nil, nil, nil
+    NP.trailPending[p] = nil
+    p._isTarget = false
+    NP.Motion(p, false)
     p:Hide()
     p:SetParent(hidden)
     pool[#pool + 1] = p
@@ -1121,7 +1375,7 @@ end
 local events = CreateFrame("Frame")
 
 local UNIT_EVENTS = {
-    UNIT_HEALTH = function(p) UpdateHealth(p) end,
+    UNIT_HEALTH = function(p) UpdateHealth(p, true) end,
     UNIT_MAXHEALTH = function(p) UpdateHealth(p) end,
     UNIT_NAME_UPDATE = function(p) FillTexts(p, false) UpdateColor(p) end,
     UNIT_LEVEL = function(p) FillTexts(p, false) end,
@@ -1304,6 +1558,10 @@ function NP.RefreshPreview()
     p.glow:SetShown(glow)
     p.glowWide:SetShown(glow)
     for _, m in ipairs(p.marks) do m:SetShown(glow) end
+    -- Spur und Bewegung wie am Ziel: 64 % Leben, die Spur bei 78 %.
+    p.trail:SetMinMaxValues(0, 100)
+    p.trail:SetValue(S.damageTrail and 78 or 64)
+    NP.Motion(p, true, glow)
     p:SetScale(S.targetScale / 100)
     if S.raidMarker ~= "none" then K.ShowRaidIndex(p.raid, 8) else p.raid:Hide() end
     if S.castEnabled then p.cast:ShowPreview(true) else p.cast:ShowPreview(false) end
@@ -1430,6 +1688,20 @@ K.Register({
                         { value = "none", text = "Gar nicht" } } },
                   { type = "toggle", label = "Maus hebt hervor", key = "hover",
                     description = "Die Plakette unter der Maus hellt auf und kommt nach vorn." })
+            B:Section("Bewegung", "Nur am Ziel und bei Treffern – alle anderen Plaketten bleiben still.")
+            B:Row({ type = "toggle", label = "Schadensspur", key = "damageTrail",
+                    description = "Was ein Treffer nimmt, bleibt einen Moment hell stehen und schmilzt dann weg." },
+                  { type = "toggle", label = "Weiche Balken", key = "smoothBars",
+                    description = "Das Leben gleitet zum neuen Wert, statt zu springen – wenn der Client es kann." })
+            B:Row({ type = "toggle", label = "Ziel: Leuchten atmet", key = "targetPulse",
+                    disabled = function() local s = K.Get(KEY, "targetStyle") return s ~= "glow" and s ~= "both" end },
+                  { type = "toggle", label = "Ziel: Kante in Klassenfarbe", key = "targetEdge" })
+            B:Row({ type = "toggle", label = "Ziel: Glanz läuft über den Balken", key = "targetSheen" },
+                  { type = "toggle", label = "Ziel: Treffer blitzt", key = "hitFlash",
+                    description = "Auch eine Heilung blitzt – ob das Leben sank oder stieg, verrät der Client nicht." })
+            B:Row({ type = "toggle", label = "Zielmarken bewegen sich", key = "markMotion",
+                    disabled = function() local s = K.Get(KEY, "targetStyle") return s ~= "glow" and s ~= "both" end },
+                  { type = "empty" })
             B:Section("Hinrichtungsmarke",
                 "Ein fester Strich im Balken zeigt, ab wann Fähigkeiten wie Hinrichten wirken.")
             B:Row({ type = "toggle", label = "Anzeigen", key = "executeMark" },
