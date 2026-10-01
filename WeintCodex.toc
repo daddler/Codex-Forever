@@ -160,6 +160,8 @@ ui/groupframes.lua
 ui/gamegroup.lua
 ui/clickcast.lua
 ui/actionbars.lua
+# Makro-Helfer (6.8.1.0): Seite der Aktionsleisten; braucht das Zauberbuch der Klickzauber.
+ui/macros.lua
 ui/xpbar.lua
 ui/minimap.lua
 ui/chat.lua

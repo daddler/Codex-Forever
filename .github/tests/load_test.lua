@@ -1240,6 +1240,99 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Makro-Helfer (6.8.1.0): was, auf wen, welcher Zauber -> Text der
+-- Makrosprache, erklaert; anlegen, ersetzen, aufnehmen; nie im Kampf.
+do
+    local ok, err = pcall(function()
+        local MH = WeintCodex.UIMacros
+        local found = false
+        for _, pg in ipairs(K.Module("actionbars").pages) do if pg.key == "makros" then found = true end end
+        assert(MH and found, "Makro-Helfer nicht als Seite der Aktionsleisten")
+        local function D(t)
+            local d = { kind = "cast", target = "target", mod = "shift", reset = "target", spells = { "", "", "" },
+                        slot = 1, tooltip = true, startattack = false, stopcasting = false, name = "", save = "account" }
+            for k, v in pairs(t) do d[k] = v end
+            return d
+        end
+        local function Text(t) local x, _, e = MH.Build(D(t)) return x, e end
+        assert(Text({ spells = { "Blitzschlag", "", "" } }) == "#showtooltip\n/cast Blitzschlag", "einfacher Zauber")
+        assert(Text({ target = "mouseover", tooltip = false, spells = { "Blitzschlag", "", "" } })
+            == "/cast [@mouseover,exists,nodead][] Blitzschlag", "Maus-Ziel, sonst Ziel")
+        assert(Text({ target = "mouseoverself", tooltip = false, spells = { "Blitzheilung", "", "" } })
+            == "/cast [@mouseover,help,nodead][@player] Blitzheilung", "Maus-Ziel, sonst selbst")
+        assert(Text({ target = "cursor", tooltip = false, spells = { "Blizzard", "", "" } }) == "/cast [@cursor] Blizzard", "Mauszeiger")
+        assert(Text({ kind = "modifier", tooltip = false, spells = { "Heilen", "Blitzheilung", "" } })
+            == "/cast [mod:shift] Blitzheilung; Heilen", "Zusatztaste ohne Zielbedingung")
+        assert(Text({ kind = "modifier", mod = "ctrl", target = "mouseover", tooltip = false, spells = { "Heilen", "Erneuerung", "" } })
+            == "/cast [mod:ctrl,@mouseover,exists,nodead][mod:ctrl] Erneuerung; [@mouseover,exists,nodead][] Heilen",
+            "Zusatztaste mit Maus-Ziel: " .. tostring(Text({ kind = "modifier", mod = "ctrl", target = "mouseover", tooltip = false, spells = { "Heilen", "Erneuerung", "" } })))
+        assert(Text({ kind = "sequence", tooltip = false, spells = { "Verderbnis", "Fluch der Pein", "Feuerbrand" } })
+            == "/castsequence reset=target Verderbnis, Fluch der Pein, Feuerbrand", "Abfolge")
+        assert(Text({ kind = "sequence", reset = "", target = "focus", tooltip = false, spells = { "A", "B", "" } })
+            == "/castsequence [@focus,exists,nodead][] A, B", "Abfolge ohne Neubeginn, mit Fokus")
+        assert(Text({ startattack = true, stopcasting = true, spells = { "Tritt", "", "" } })
+            == "#showtooltip\n/stopcasting\n/startattack\n/cast Tritt", "Extras")
+        local x, e = Text({ spells = { "", "", "" } })
+        assert(x == nil and e:find("Zauber", 1, true), "leer ohne Hinweis")
+        x, e = Text({ kind = "sequence", spells = { "A", "", "" } })
+        assert(x == nil and e:find("zwei", 1, true), "Abfolge mit einem Zauber")
+        x, e = Text({ kind = "modifier", spells = { "A", "", "" } })
+        assert(x == nil and e, "Zusatztaste ohne zweiten Zauber")
+        x, e = Text({ spells = { string.rep("x", 260), "", "" } })
+        assert(x and e and e:find("255", 1, true), "zu lang ohne Hinweis")
+        -- Erklaerung je Zeile.
+        local _, why = MH.Build(D({ target = "mouseoverself", spells = { "Heilen", "", "" } }))
+        assert(#why == 2 and why[2]:find("Heilen", 1, true) and why[2]:find("selbst", 1, true), "keine Erklaerung")
+        -- Name: hoechstens 16 Zeichen, Umlaute heil.
+        local n = MH.Name(D({ spells = { "Große Heilung der Ältesten", "", "" } }))
+        assert(WeintCodex.Utf8Len(n) == 16 and n == "Große Heilung de", "Name: " .. n)
+        assert(MH.Name(D({ name = "  Mein Makro ", spells = { "A", "", "" } })) == "Mein Makro", "eigener Name")
+        -- Anlegen.
+        local names = { "InCombatLockdown", "CreateMacro", "EditMacro", "GetMacroIndexByName", "GetNumMacros", "PickupMacro" }
+        local saved = {}
+        for _, k in ipairs(names) do saved[k] = _G[k] end
+        local macros, combat, picked = {}, false, nil
+        _G.InCombatLockdown = function() return combat end
+        _G.GetMacroIndexByName = function(nm) for i, m in ipairs(macros) do if m.name == nm then return i end end return 0 end
+        _G.GetNumMacros = function() local g, c = 0, 0 for _, m in ipairs(macros) do if m.char then c = c + 1 else g = g + 1 end end return g, c end
+        _G.CreateMacro = function(nm, icon, body, perChar) macros[#macros + 1] = { name = nm, body = body, char = perChar } return #macros end
+        _G.EditMacro = function(i, nm, icon, body) macros[i].body = body return i end
+        _G.PickupMacro = function(i) picked = i end
+        local okIn, errIn = pcall(function()
+            local d = D({ spells = { "Blitzheilung", "", "" }, target = "mouseoverself", save = "char" })
+            local idx, msg = MH.Create(d)
+            assert(idx == 1 and macros[1].name == "Blitzheilung" and macros[1].char == true
+                and macros[1].body == "#showtooltip\n/cast [@mouseover,help,nodead][@player] Blitzheilung", "nicht angelegt: " .. tostring(msg))
+            d.target = "player"
+            idx = MH.Create(d)
+            assert(idx == 1 and #macros == 1 and macros[1].body:find("[@player]", 1, true), "nicht ersetzt")
+            assert(MH.Pickup(d) and picked == 1, "nicht aufgenommen")
+            combat = true
+            local n0 = #macros
+            assert(MH.Create(D({ name = "Neu", spells = { "A", "", "" } })) == nil and #macros == n0
+                and MH.last:find("Kampf", 1, true), "im Kampf angelegt")
+            assert(not MH.Pickup(d), "im Kampf aufgenommen")
+            combat = false
+            for i = 1, 18 do macros[#macros + 1] = { name = "c" .. i, char = true } end
+            assert(MH.Create(D({ name = "Voll", save = "char", spells = { "A", "", "" } })) == nil
+                and MH.last:find("belegt", 1, true), "voller Charakter nicht gemeldet")
+            x = MH.Create(D({ name = "Lang", spells = { string.rep("x", 260), "", "" } }))
+            assert(x == nil, "zu langes Makro angelegt")
+        end)
+        for _, k in ipairs(names) do _G[k] = saved[k] end
+        assert(okIn, errIn)
+        -- Tafel: ein Klick fuellt das gewaehlte Feld und rueckt weiter.
+        local dr = MH.draft
+        dr.kind, dr.slot, dr.spells = "sequence", 1, { "", "", "" }
+        MH.Pick("Verderbnis")
+        MH.Pick("Fluch der Pein")
+        assert(dr.spells[1] == "Verderbnis" and dr.spells[2] == "Fluch der Pein" and dr.slot == 3, "Tafel fuellt nicht")
+        dr.kind, dr.slot, dr.spells = "cast", 1, { "", "", "" }
+    end)
+    Check(ok, "Makro-Helfer: Text der Makrosprache, Erklaerung, Grenzen, anlegen/ersetzen/aufnehmen, nie im Kampf"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Questpfeil: die Rechnung.
 do
     local function Near(a, b) return math.abs(a - b) < 1e-6 end

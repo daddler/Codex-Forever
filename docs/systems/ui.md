@@ -106,6 +106,7 @@ weil sie genau das sind, wofür er steht.
 | `ui/questarrow.lua` | Questpfeil |
 | `ui/comfort.lua` | Komfortfunktionen |
 | `ui/automark.lua` | Automark (6.8.1.0): Tank und Heiler beim Betreten einer Instanz markieren – Seite im Komfort |
+| `ui/macros.lua` | Makro-Helfer (6.8.1.0): was, auf wen, welcher Zauber → Makrotext mit Erklärung, anlegen/ersetzen/aufnehmen – Seite der Aktionsleisten |
 | `ui/options.lua` | das Einstellungsfenster und das Modul „Allgemein“ |
 
 Neue Bausteine in `core/ui.lua`: `CreateDropdown` (Auswahlliste, eine
@@ -922,6 +923,43 @@ einen Mark über den Kopf bekommen. Einstellbar, welches Mark.“
   **aus**. Standard: Tank Quadrat, Heiler Dreieck.
 - **Ungemessen:** ob der Forever-Client Addons markieren lässt. Lehnt er
   ab, steht „(vom Spiel abgelehnt)“ hinter dem Namen.
+
+## Makro-Helfer *(6.8.1.0, `ui/macros.lua`)*
+
+Beta-Test: „Viele wissen nicht, wie man ein Makro schreiben kann. Der
+Nutzer kann auswählen, was das Makro machen soll, und es wird geschrieben.“
+
+**Drei Fragen statt Makrosprache** (Seite „Makros“ der Aktionsleisten):
+
+| Frage | Auswahl | Text |
+|---|---|---|
+| Was | Einen Zauber wirken · Mit Zusatztaste einen zweiten · Zauber nacheinander | `/cast` · `/cast [mod:…] B; A` · `/castsequence reset=… A, B, C` |
+| Auf wen | Dein Ziel · Maus-Ziel, sonst Ziel · Maus-Ziel, sonst du selbst · Fokus, sonst Ziel · Du selbst · Am Mauszeiger | – · `[@mouseover,exists,nodead][]` · `[@mouseover,help,nodead][@player]` · `[@focus,exists,nodead][]` · `[@player]` · `[@cursor]` |
+| Welcher Zauber | Tafel aus dem Zauberbuch (`UIClickCast.Spellbook`) oder eingetippt | Name, höchster Rang |
+
+Mit Zusatztaste steht die Bedingung in **jeder** Klammer des zweiten
+Zaubers (`[mod:ctrl,@mouseover,exists,nodead][mod:ctrl] B; […][] A`) –
+sonst griffe der Rückfall `[]` ohne Taste. Extras: `#showtooltip` (Standard
+an), `/stopcasting`, `/startattack`. Jede Zeile wird darunter in Worten
+erklärt.
+
+- **255 sind Bytes.** Der Zähler zählt mit `#` – hier mit Absicht, nicht
+  Zeichen: ein Umlaut kostet zwei. Zu lang: Hinweis, Anlegen gesperrt.
+- **Name** höchstens 16 Zeichen, gekürzt mit `Utf8Sub` (nie `:sub`);
+  leer = erster Zauber.
+- **Anlegen** (`CreateMacro`, Symbol Fragezeichen – `#showtooltip` zeigt
+  das Zaubersymbol): gibt es den Namen schon, `EditMacro` (ersetzt);
+  Plätze voll (`MAX_ACCOUNT_MACROS`/`MAX_CHARACTER_MACROS`) → Meldung.
+  **Aufnehmen** (`PickupMacro`) legt es auf den Mauszeiger. Beides nie im
+  Kampf.
+- **Keine eingebaute Zauberliste** – wie bei den Klickzaubern. Ein
+  eingetippter Name, den das Zauberbuch nicht kennt, wird nicht abgelehnt
+  (Gegenstände), aber benannt.
+- **Wo:** Seite der Aktionsleisten statt eigenes Modul (Seitenleiste
+  der Einstellungen, „Nichts muss scrollen“). Der Entwurf lebt nur in der
+  Sitzung.
+- **Ungemessen:** ob der Forever-Client einzelne Befehle oder Bedingungen
+  für Makros sperrt.
 
 ## Die Falle `x and false or nil`
 
