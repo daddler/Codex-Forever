@@ -170,6 +170,8 @@ ui/cooldowns.lua
 ui/questtracker.lua
 ui/questarrow.lua
 ui/comfort.lua
+# Automark (6.8.1.0): Tank und Heiler beim Betreten einer Instanz markieren.
+ui/automark.lua
 ui/tooltip.lua
 ui/windows.lua
 # Das Charakterfenster als Ganzes (6.6.4.0), baut auf ui/windows.lua auf.

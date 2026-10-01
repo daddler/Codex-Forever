@@ -105,6 +105,7 @@ weil sie genau das sind, wofür er steht.
 | `ui/clickcast.lua` | **Klickzauber**: Maustaste + Zusatztaste wirkt einen Zauber auf die Einheit des Rahmens (Reiter der Gruppenrahmen) |
 | `ui/questarrow.lua` | Questpfeil |
 | `ui/comfort.lua` | Komfortfunktionen |
+| `ui/automark.lua` | Automark (6.8.1.0): Tank und Heiler beim Betreten einer Instanz markieren – Seite im Komfort |
 | `ui/options.lua` | das Einstellungsfenster und das Modul „Allgemein“ |
 
 Neue Bausteine in `core/ui.lua`: `CreateDropdown` (Auswahlliste, eine
@@ -889,6 +890,38 @@ Koordinaten ausgeblendet.
 Minikarte, Taschen), Schadensanzeige in Ruhe auf die Kopfzeile
 zusammenklappen (jetzt: nur leiser), Chat-Hintergrund in Ruhe,
 Gestaltungsmodus mit Einstellkarte, Infoleiste, Levelhilfe.
+
+## Automark *(6.8.1.0, `ui/automark.lua`)*
+
+Beta-Test: „Wenn eine Instanz betreten wird, soll der Tank und Heiler
+einen Mark über den Kopf bekommen. Einstellbar, welches Mark.“
+
+- **Rolle nur vom Spiel.** `UnitGroupRolesAssigned` – gesetzt von der
+  Suche nach Gruppe oder der Rollenwahl. Ohne Rolle wird **nicht**
+  markiert und nichts hergeleitet (weder Ausrüstung noch Talentbaum);
+  die Seite sagt „keine Rolle vergeben“. Je Rolle der erste Spieler in
+  fester Reihenfolge (`player`, `party1…4` bzw. `raid1…40`) – eine
+  Markierung kann nur einer tragen.
+- **Die Falle: dieselbe Markierung noch einmal nimmt sie ab**
+  (`SetRaidTarget`), und der Forever-Client hält den Index geheim
+  (`ui/kit.lua`, „Markierung geheim“). Deshalb: nur der Gruppenleiter
+  markiert (`markOnlyLeader`, abschaltbar; im Schlachtzug sonst Leiter
+  oder Assistent); je Instanz einmal je **Spieler und Markierung**
+  (`state.done[role] = GUID#Index`) – neu nur, wenn die Rolle, die
+  gewählte Markierung oder die Instanz wechselt. Eine andere Einstellung
+  setzt nichts neu (der Test fand genau das: „Im Chat melden“
+  umschalten nahm die Markierungen ab). Ist der Index offen lesbar und
+  stimmt schon, bleibt es dabei.
+- **Nie im Kampf:** gemerkt (`pending`), gesetzt nach
+  `PLAYER_REGEN_ENABLED`.
+- **Wo:** Seite „Automark“ im Komfort, kein eigenes Modul – ein weiterer
+  Eintrag hätte der Seitenleiste der Einstellungen die Luft für einen
+  nächsten genommen. Einstellungen unter `comfort` (`autoMark`,
+  `markTank`, `markHealer`, `markDungeons`, `markRaids`,
+  `markOnlyLeader`, `markChat`); wie jeder Komfort-Helfer von Haus aus
+  **aus**. Standard: Tank Quadrat, Heiler Dreieck.
+- **Ungemessen:** ob der Forever-Client Addons markieren lässt. Lehnt er
+  ab, steht „(vom Spiel abgelehnt)“ hinter dem Namen.
 
 ## Die Falle `x and false or nil`
 

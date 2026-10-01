@@ -1145,6 +1145,101 @@ do
         "ohne Auskunft des Clients ist die Haltbarkeit unbekannt, nicht 0")
 end
 
+-- Automark (6.8.1.0): Tank und Heiler markieren - nur mit der Rolle, die
+-- das Spiel vergeben hat, nur als Gruppenleiter, je Instanz einmal, nie im Kampf.
+do
+    local ok, err = pcall(function()
+        local AM = WeintCodex.UIAutoMark
+        local pagesOk = false
+        for _, pg in ipairs(K.Module("comfort").pages) do if pg.key == "automark" then pagesOk = true end end
+        assert(AM and pagesOk and not K.Module("automark"), "Automark nicht als Seite im Komfort")
+        assert(K.Get("comfort", "autoMark") == false, "Automark von Haus aus an (Komfort: von Haus aus aus)")
+        K.Set("comfort", "autoMark", true)
+        local names = { "IsInInstance", "GetInstanceInfo", "UnitIsGroupLeader", "UnitIsGroupAssistant", "UnitExists",
+            "UnitGroupRolesAssigned", "UnitGUID", "UnitName", "InCombatLockdown", "SetRaidTarget", "GetRaidTargetIndex" }
+        local saved = {}
+        for _, n in ipairs(names) do saved[n] = _G[n] end
+        K.Set("comfort", "markChat", false)
+        AM.state.instance, AM.state.done = nil, {}
+        local okIn, errIn = pcall(function()
+        local roles = { player = "DAMAGER", party1 = "TANK", party2 = "HEALER", party3 = "DAMAGER", party4 = "HEALER" }
+        local inside, kind, instID, leader, combat = true, "party", 36, true, false
+        local marks, calls = {}, 0
+        _G.IsInInstance = function() return inside, kind end
+        _G.GetInstanceInfo = function() return "Die Todesminen", kind, 1, "Normal", 5, 0, false, instID end
+        _G.UnitIsGroupLeader = function() return leader end
+        _G.UnitIsGroupAssistant = function() return false end
+        _G.UnitExists = function(u) return roles[u] ~= nil end
+        _G.UnitGroupRolesAssigned = function(u) return roles[u] or "NONE" end
+        _G.UnitGUID = function(u) return "Player-1-" .. u end
+        _G.UnitName = function(u) return ({ party1 = "Brunhild", party2 = "Kalle", party4 = "Zweite" })[u] or u end
+        _G.InCombatLockdown = function() return combat end
+        _G.SetRaidTarget = function(u, i) calls = calls + 1 marks[u] = (marks[u] == i) and nil or i end
+        _G.GetRaidTargetIndex = function() return nil end
+        stub.FireEvent("PLAYER_ENTERING_WORLD")
+        assert(marks.party1 == 6 and marks.party2 == 4 and calls == 2, "Tank/Heiler nicht markiert: " .. tostring(calls))
+        assert(not marks.party4, "zweiter Heiler markiert (eine Markierung, ein Spieler)")
+        -- Weitere Ereignisse: nicht noch einmal (das nimmt die Markierung ab).
+        stub.FireEvent("GROUP_ROSTER_UPDATE")
+        stub.FireEvent("ZONE_CHANGED_NEW_AREA")
+        assert(calls == 2 and marks.party1 == 6, "erneut markiert - Markierung abgenommen")
+        local st = AM.Status()
+        assert(st:find("Tank: Brunhild", 1, true) and st:find("Heiler: Kalle", 1, true), "Status: " .. st)
+        -- Rolle wechselt: der neue Tank wird markiert.
+        roles.party1, roles.party3 = "DAMAGER", "TANK"
+        stub.FireEvent("PLAYER_ROLES_ASSIGNED")
+        assert(marks.party3 == 6 and calls == 3, "neuer Tank nicht markiert")
+        -- Keine Rollen vergeben: nichts raten.
+        roles = { player = "NONE", party1 = "NONE", party2 = "NONE" }
+        instID, marks, calls = 48, {}, 0
+        stub.FireEvent("PLAYER_ENTERING_WORLD")
+        assert(calls == 0, "ohne Rolle markiert")
+        assert(AM.Status():find("keine Rolle vergeben", 1, true), "Status sagt nicht, warum")
+        -- Nicht Leiter: nichts.
+        roles = { player = "DAMAGER", party1 = "TANK", party2 = "HEALER" }
+        leader, instID = false, 49
+        stub.FireEvent("PLAYER_ENTERING_WORLD")
+        assert(calls == 0 and AM.Status():find("Gruppenleiter", 1, true), "markiert ohne Leiter")
+        -- Im Kampf: erst danach.
+        leader, combat, instID = true, true, 50
+        stub.FireEvent("PLAYER_ENTERING_WORLD")
+        assert(calls == 0, "im Kampf markiert")
+        combat = false
+        stub.FireEvent("PLAYER_REGEN_ENABLED")
+        assert(calls == 2 and marks.party1 == 6, "nach dem Kampf nicht markiert")
+        -- Draussen: nichts; wieder hinein: neu markiert.
+        inside, kind = false, "none"
+        stub.FireEvent("ZONE_CHANGED_NEW_AREA")
+        inside, kind, marks, calls = true, "party", {}, 0
+        stub.FireEvent("PLAYER_ENTERING_WORLD")
+        assert(calls == 2, "nach dem Wiederbetreten nicht neu markiert")
+        -- Schlachtzug abgeschaltet: nichts.
+        K.Set("comfort", "markRaids", false)
+        inside, kind, instID, calls = true, "raid", 51, 0
+        stub.FireEvent("PLAYER_ENTERING_WORLD")
+        assert(calls == 0, "im Schlachtzug trotz Schalter markiert")
+        K.Set("comfort", "markRaids", true)
+        -- Gleiche Markierung fuer beide Rollen: der Heiler wird ausgelassen.
+        kind, instID, calls = "party", 52, 0
+        K.Set("comfort", "markHealer", 6)
+        assert(calls == 1 and AM.Status():find("dieselbe Markierung", 1, true), "doppelte Markierung")
+        K.Set("comfort", "markHealer", 4)
+        -- Eine andere Einstellung setzt nichts neu (nahm die Markierung ab).
+        calls = 0
+        K.Set("comfort", "markChat", true)
+        K.Set("comfort", "markChat", false)
+        assert(calls == 0, "Einstellung geaendert - erneut markiert")
+        end)
+        for _, n in ipairs(names) do _G[n] = saved[n] end
+        AM.state.instance, AM.state.done = nil, {}
+        K.Set("comfort", "markChat", true)
+        K.Set("comfort", "autoMark", false)
+        assert(okIn, errIn)
+    end)
+    Check(ok, "Automark: Rolle vom Spiel, nur Leiter, je Instanz einmal, nie im Kampf, nichts geraten"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Questpfeil: die Rechnung.
 do
     local function Near(a, b) return math.abs(a - b) < 1e-6 end
