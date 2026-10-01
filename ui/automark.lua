@@ -31,9 +31,9 @@
 -- Einstellungen zeigten "markiert". Erlaubt ist es nur aus einem Klick des
 -- Spielers - ein geschuetzter Knopf mit einem Makro (/tm [@einheit] n),
 -- derselbe Weg wie beim Neuladen (WeintCodex.AttachReload). Deshalb:
--- beim Betreten bietet Automark einen Knopf an ("Tank und Heiler
--- markieren"); Linksklick markiert, Rechtsklick blendet ihn bis zum
--- naechsten Betreten aus. Kein Code hier ruft SetRaidTarget.
+-- beim Betreten fragt Automark ("Tank und Heiler markieren?"); "Markieren"
+-- setzt beide, "Nicht jetzt" laesst Ruhe bis zum naechsten Betreten. Kein
+-- Code hier ruft SetRaidTarget. Seit 12.0 gilt das auch in Retail.
 -- UNGEMESSEN: ob /tm aus einem Makro auf Forever markiert.
 --
 -- WO. Eine Seite des Komforts ("Automark"), kein eigenes Modul: ein
@@ -223,8 +223,8 @@ function AM.Run()
         local sig = AM.Macro(plan)
         if K.Get(KEY, "markChat") and state.told ~= sig then
             state.told = sig
-            Say("Automark: " .. state.last .. " – klick auf den Knopf oben, um zu markieren"
-                .. " (das Spiel lässt Addons nur auf Klick markieren).")
+            Say("Automark: " .. state.last .. " – bestätige oben mit „Markieren“"
+                .. " (das Spiel lässt Addons nur auf deinen Klick markieren).")
         end
     else
         AM.Withdraw()
@@ -233,16 +233,25 @@ function AM.Run()
 end
 
 --------------------------------------------------
--- Der Knopf (6.9.0.2)
+-- Die Abfrage (6.9.0.2)
 --------------------------------------------------
--- Ein geschuetzter Knopf (SecureActionButtonTemplate) mit einem Makro: je
--- Rolle "/tm [@einheit] n". Gesetzt, gezeigt und versteckt wird er nur
--- ausserhalb des Kampfes. Linksklick markiert (das Spiel fuehrt das Makro
--- aus), Rechtsklick blendet ihn bis zum naechsten Betreten aus. Mit Namen
--- (AM.BUTTON) laesst er sich auch per "/click" auf eine Taste legen.
+-- Beta-Test: "beim Dungeoneintritt eine Abfrage, ich bestaetige, dann
+-- werden die Marks gesetzt". Ein kleines Fenster unter den Erinnerungen:
+-- wer welche Markierung bekaeme, darunter "Markieren" und "Nicht jetzt".
+--
+-- Ueber "Markieren" liegt ein geschuetzter Knopf (SecureActionButtonTemplate,
+-- AM.BUTTON) mit einem Makro: je Rolle "/tm [@einheit] n" - derselbe Weg
+-- wie beim Neuladen (WeintCodex.AttachReload): das Spiel fuehrt das Makro
+-- aus, weil der Spieler klickt. Gesetzt, gezeigt und versteckt wird nur
+-- ausserhalb des Kampfes. Rechtsklick auf "Markieren" oder "Nicht jetzt":
+-- bis zum naechsten Betreten Ruhe. Mit Namen laesst sich der Knopf auch
+-- per "/click WeintCodexAutoMarkButton" auf eine Taste legen.
+-- Seit 12.0 ist SetRaidTarget fuer Addons geschuetzt, auch in Retail; ein
+-- Klick des Spielers ist der Weg, den das Spiel offen laesst.
 AM.BUTTON = "WeintCodexAutoMarkButton"
 AM.CMD = "/tm"
-AM.HEIGHT, AM.PAD = 30, 14
+AM.W, AM.PAD, AM.LINE = 300, 14, 18
+AM.BTN_W, AM.BTN_H = 124, 30
 
 -- Makrotext: Einheiten der Gruppe (party1, raid7), nie Namen.
 function AM.Macro(plan)
@@ -253,19 +262,34 @@ function AM.Macro(plan)
     return table.concat(lines, "\n")
 end
 
-local button
-function AM.Button()
-    if button then return button end
+local dialog
+function AM.Dialog()
+    if dialog then return dialog end
     if K.InCombat() then return nil end
-    local ok, b = pcall(CreateFrame, "Button", AM.BUTTON, UIParent, "SecureActionButtonTemplate")
-    if not ok or not b then return nil end
+    local d = CreateFrame("Frame", nil, UIParent)
     local p = K.Layout("automark")
-    b:SetPoint(p.point, UIParent, p.relPoint, p.x, p.y)
-    b:SetHeight(AM.HEIGHT)
-    b:SetFrameStrata("MEDIUM")
-    K.Kachel(b, { alpha = 0.94, shadow = 6 })
-    b.text = K.NewText(b, 13, "OVERLAY")
-    b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
+    d:SetPoint(p.point, UIParent, p.relPoint, p.x, p.y)
+    d:SetWidth(AM.W)
+    d:SetFrameStrata("DIALOG")
+    K.Kachel(d, { alpha = 0.96, shadow = 8 })
+    d.title = K.NewText(d, 14, "OVERLAY")
+    d.title:SetPoint("TOPLEFT", d, "TOPLEFT", AM.PAD, -AM.PAD)
+    d.title:SetText(WeintCodex.AC .. "Automark|r  Tank und Heiler markieren?")
+    d.body = K.NewText(d, 12, "OVERLAY")
+    d.body:SetPoint("TOPLEFT", d.title, "BOTTOMLEFT", 0, -8)
+    d.body:SetJustifyH("LEFT")
+    -- Sichtbarer Knopf, darueber der geschuetzte (er nimmt den Klick).
+    d.yes = WeintCodex.CreateButton(d, { text = "Markieren", kind = "primary", height = AM.BTN_H, size = 12 })
+    d.yes:SetWidth(AM.BTN_W)
+    d.yes:SetPoint("BOTTOMRIGHT", d, "BOTTOMRIGHT", -AM.PAD, AM.PAD)
+    d.no = WeintCodex.CreateButton(d, { text = "Nicht jetzt", kind = "secondary", height = AM.BTN_H, size = 12,
+        backdrop = "surface2", onClick = function() AM.Clicked("RightButton") end })
+    d.no:SetWidth(AM.BTN_W)
+    d.no:SetPoint("RIGHT", d.yes, "LEFT", -10, 0)
+    local ok, b = pcall(CreateFrame, "Button", AM.BUTTON, d, "SecureActionButtonTemplate")
+    if not ok or not b then return nil end
+    b:SetAllPoints(d.yes)
+    b:SetFrameLevel((d.yes:GetFrameLevel() or 1) + 5)
     if b.RegisterForClicks then b:RegisterForClicks("AnyUp") end
     b:SetAttribute("useOnKeyDown", false)
     b:SetAttribute("type1", "macro")       -- nur links; rechts tut das Spiel nichts
@@ -274,46 +298,49 @@ function AM.Button()
         if not GameTooltip then return end
         GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
         GameTooltip:AddLine("Automark")
-        GameTooltip:AddLine("Linksklick: markieren. Rechtsklick: ausblenden bis zum nächsten Betreten.", 1, 1, 1, true)
+        GameTooltip:AddLine("Setzt die Markierungen. Das Spiel lässt Addons nur auf deinen Klick markieren.", 1, 1, 1, true)
         GameTooltip:Show()
     end)
     b:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
-    b:Hide()
-    button = b
-    return b
+    d.secure = b
+    d:Hide()
+    dialog = d
+    AM.dialog = d
+    return d
 end
 
 function AM.Offer(plan)
-    local b = AM.Button()
-    if not b then return end
+    local d = AM.Dialog()
+    if not d then return end
     state.offer = plan
-    b:SetAttribute("macrotext1", AM.Macro(plan))
-    local bits = {}
-    for _, p in ipairs(plan) do bits[#bits + 1] = AM.ROLE_LABEL[p.role] .. " " .. AM.Icon(p.index) end
-    b.text:SetText(WeintCodex.AC .. "Markieren|r  " .. table.concat(bits, "  "))
-    local ok, w = pcall(b.text.GetStringWidth, b.text)
-    w = ok and K.Plain(w) or nil
-    b:SetWidth(math.max(160, (type(w) == "number" and w or 140) + 2 * AM.PAD))
-    b:Show()
+    d.secure:SetAttribute("macrotext1", AM.Macro(plan))
+    local lines = {}
+    for _, p in ipairs(plan) do
+        lines[#lines + 1] = string.format("%s:  %s %s", AM.ROLE_LABEL[p.role], NameOf(p.unit), AM.Icon(p.index, 16))
+    end
+    d.body:SetText(table.concat(lines, "\n"))
+    d:SetHeight(AM.PAD * 3 + 14 + 8 + #lines * AM.LINE + AM.BTN_H + 6)
+    d:Show()
 end
 
 function AM.Withdraw()
     state.offer = nil
-    if not button then return end
+    if not dialog then return end
     if K.InCombat() then K.AfterCombat(AM.Withdraw) return end
-    button:SetAttribute("macrotext1", nil)
-    button:Hide()
+    dialog.secure:SetAttribute("macrotext1", nil)
+    dialog:Hide()
 end
 
-function AM.IsOffered() return button ~= nil and button:IsShown() and state.offer ~= nil end
+function AM.IsOffered() return dialog ~= nil and dialog:IsShown() and state.offer ~= nil end
 
 -- Nach dem Klick (das Makro lief schon): als markiert merken. Ob das Spiel
--- wirklich markiert hat, sagt es nicht (Index geheim) - der Knopf geht.
+-- wirklich markiert hat, sagt es nicht (Index geheim) - die Abfrage geht.
+-- "RightButton" heisst hier: Nicht jetzt.
 function AM.Clicked(which)
     if which == "RightButton" then
         state.dismissed = state.instance
         AM.Withdraw()
-        state.last = "Ausgeblendet bis zum nächsten Betreten."
+        state.last = "Nicht jetzt – bis zum nächsten Betreten."
         return
     end
     for _, p in ipairs(state.offer or {}) do state.done[p.role] = p.who end
@@ -367,7 +394,7 @@ local function Build(B)
     local off = function() return not K.Get(KEY, "autoMark") end
     B:Section("Automark")
     B:Row({ type = "toggle", label = "Tank und Heiler markieren", key = "autoMark",
-            description = "Beim Betreten einer Instanz erscheint ein Knopf – ein Klick markiert. Ohne Klick lässt das Spiel Addons nicht markieren." },
+            description = "Beim Betreten einer Instanz fragt Automark nach – „Markieren“ setzt beide. Ohne deinen Klick lässt das Spiel Addons nicht markieren." },
           { type = "toggle", label = "Im Chat melden", key = "markChat", disabled = off })
     B:Section("Wer bekommt welche Markierung")
     B:Row({ type = "dropdown", label = "Tank", key = "markTank", items = MarkItems(), disabled = off },

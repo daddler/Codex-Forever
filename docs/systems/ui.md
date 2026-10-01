@@ -1007,13 +1007,17 @@ einen Mark über den Kopf bekommen. Einstellbar, welches Mark.“
   eines Dungeons: `ADDON_ACTION_FORBIDDEN … UNKNOWN()` aus
   `pcall(SetRaidTarget)` – Markieren ist für Addons **geschützt**, wie
   das Neuladen. `pcall` fängt das nicht ab: das Spiel blockiert, `pcall`
-  meldet Erfolg, die Seite zeigte „markiert“. Jetzt bietet Automark einen
-  geschützten Knopf an (`WeintCodexAutoMarkButton`,
-  `SecureActionButtonTemplate`, `type1 = "macro"`, Platz
-  `K.LAYOUT.automark` unter den Erinnerungen): je Rolle eine Zeile
-  `/tm [@einheit] n` (Einheiten, nie Namen). **Linksklick** markiert und
-  merkt `state.done`; **Rechtsklick** tut im Spiel nichts (kein `type2`)
-  und blendet den Knopf bis zum nächsten Betreten aus. Ob das Spiel
+  meldet Erfolg, die Seite zeigte „markiert“. Seit 12.0.0 gilt das auch
+  in Retail (`SetRaidTarget` geschützt, `GetRaidTargetIndex` geheim) –
+  kein Addon markiert dort mehr ohne Klick. Jetzt **fragt** Automark beim
+  Betreten (Beta-Test: „Abfrage, ich bestätige, dann werden die Marks
+  gesetzt“): ein Fenster an `K.LAYOUT.automark` unter den Erinnerungen
+  mit Namen und Markierungen, „Markieren“ und „Nicht jetzt“. Über
+  „Markieren“ liegt der geschützte Knopf `WeintCodexAutoMarkButton`
+  (`SecureActionButtonTemplate`, `type1 = "macro"`): je Rolle eine Zeile
+  `/tm [@einheit] n` (Einheiten, nie Namen). **Markieren** merkt
+  `state.done`; **Nicht jetzt** (oder Rechtsklick, kein `type2`) lässt
+  bis zum nächsten Betreten Ruhe. Ob das Spiel
   wirklich markiert hat, sagt es nicht (Index geheim) – nach dem Klick
   gilt es als markiert. Mit `/click WeintCodexAutoMarkButton` in einem
   Makro auch auf eine Taste. `load_test.lua` verbietet `SetRaidTarget`

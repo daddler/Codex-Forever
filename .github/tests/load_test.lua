@@ -1308,10 +1308,15 @@ do
         _G.SetRaidTarget = function() calls = calls + 1 end
         _G.GetRaidTargetIndex = function() return nil end
         local function Macro() local b = _G[AM.BUTTON] return b and b:GetAttribute("macrotext1") end
+        -- 6.9.0.2: eine Abfrage (Fenster), darin der geschuetzte Knopf.
+        local function Shown() return AM.dialog ~= nil and AM.dialog:IsShown() end
         stub.FireEvent("PLAYER_ENTERING_WORLD")
         local b = _G[AM.BUTTON]
         assert(b and b._template == "SecureActionButtonTemplate", "kein geschuetzter Knopf")
-        assert(AM.IsOffered() and b:IsShown(), "Knopf nicht angeboten")
+        assert(AM.IsOffered() and Shown(), "Abfrage nicht gezeigt")
+        assert(b._parent == AM.dialog, "geschuetzter Knopf nicht in der Abfrage")
+        local body = AM.dialog.body:GetText()
+        assert(body:find("Tank:  Brunhild", 1, true) and body:find("Heiler:  Kalle", 1, true), "Abfrage nennt niemanden: " .. body)
         assert(b:GetAttribute("type1") == "macro" and b:GetAttribute("type") == nil and b:GetAttribute("type2") == nil
             and b:GetAttribute("useOnKeyDown") == false, "Knopf falsch belegt (Rechtsklick muss nichts tun)")
         assert(Macro() == "/tm [@party1] 6\n/tm [@party2] 4", "Makro: " .. tostring(Macro()))
@@ -1322,62 +1327,71 @@ do
         assert(Macro() == "/tm [@party1] 6\n/tm [@party2] 4", "Angebot veraendert")
         -- Klick: gemerkt, Knopf weg.
         b:Click("LeftButton")
-        assert(not b:IsShown() and not AM.IsOffered(), "Knopf bleibt nach dem Klick")
+        assert(not Shown() and not AM.IsOffered(), "Knopf bleibt nach dem Klick")
         local st = AM.Status()
         assert(st:find("Tank: Brunhild", 1, true) and st:find("Heiler: Kalle", 1, true)
             and not st:find("wartet", 1, true), "Status nach Klick: " .. st)
         stub.FireEvent("GROUP_ROSTER_UPDATE")
-        assert(not b:IsShown(), "nach dem Klick erneut angeboten - Markierung waere abgenommen")
+        assert(not Shown(), "nach dem Klick erneut angeboten - Markierung waere abgenommen")
         -- Rolle wechselt: nur der neue Tank.
         roles.party1, roles.party3 = "DAMAGER", "TANK"
         stub.FireEvent("PLAYER_ROLES_ASSIGNED")
-        assert(b:IsShown() and Macro() == "/tm [@party3] 6", "neuer Tank nicht angeboten: " .. tostring(Macro()))
+        assert(Shown() and Macro() == "/tm [@party3] 6", "neuer Tank nicht angeboten: " .. tostring(Macro()))
         b:Click("LeftButton")
         -- Keine Rollen vergeben: nichts raten.
         roles = { player = "NONE", party1 = "NONE", party2 = "NONE" }
         instID = 48
         stub.FireEvent("PLAYER_ENTERING_WORLD")
-        assert(not b:IsShown() and AM.Status():find("keine Rolle vergeben", 1, true), "ohne Rolle angeboten")
+        assert(not Shown() and AM.Status():find("keine Rolle vergeben", 1, true), "ohne Rolle angeboten")
         -- Nicht Leiter: nichts.
         roles = { player = "DAMAGER", party1 = "TANK", party2 = "HEALER" }
         leader, instID = false, 49
         stub.FireEvent("PLAYER_ENTERING_WORLD")
-        assert(not b:IsShown() and AM.Status():find("Gruppenleiter", 1, true), "angeboten ohne Leiter")
+        assert(not Shown() and AM.Status():find("Gruppenleiter", 1, true), "angeboten ohne Leiter")
         -- Im Kampf: der Knopf ist geschuetzt - erst danach.
         leader, combat, instID = true, true, 50
         stub.FireEvent("PLAYER_ENTERING_WORLD")
-        assert(not b:IsShown(), "im Kampf angeboten")
+        assert(not Shown(), "im Kampf angeboten")
         combat = false
         stub.FireEvent("PLAYER_REGEN_ENABLED")
-        assert(b:IsShown() and Macro() == "/tm [@party1] 6\n/tm [@party2] 4", "nach dem Kampf nicht angeboten")
+        assert(Shown() and Macro() == "/tm [@party1] 6\n/tm [@party2] 4", "nach dem Kampf nicht angeboten")
         -- Klick im Kampf: gemerkt, der Knopf geht nach dem Kampf.
         combat = true
         b:Click("LeftButton")
-        assert(b:IsShown(), "geschuetzter Knopf im Kampf versteckt")
+        assert(Shown(), "geschuetzter Knopf im Kampf versteckt")
         combat = false
         stub.FireEvent("PLAYER_REGEN_ENABLED")
-        assert(not b:IsShown(), "Knopf nach dem Kampf nicht weg")
+        assert(not Shown(), "Knopf nach dem Kampf nicht weg")
         -- Rechtsklick: ausgeblendet bis zum naechsten Betreten.
         instID = 53
         stub.FireEvent("PLAYER_ENTERING_WORLD")
-        assert(b:IsShown(), "neue Instanz nicht angeboten")
-        b:Click("RightButton")
-        assert(not b:IsShown(), "Rechtsklick blendet nicht aus")
+        assert(Shown(), "neue Instanz nicht angeboten")
+        AM.dialog.no:Click()
+        assert(not Shown(), "Nicht jetzt blendet nicht aus")
         stub.FireEvent("GROUP_ROSTER_UPDATE")
-        assert(not b:IsShown(), "nach Rechtsklick wieder angeboten")
-        assert(AM.Status():find("wartet auf Klick", 1, true), "Rechtsklick als Markierung gewertet: " .. AM.Status())
+        assert(not Shown(), "nach Rechtsklick wieder angeboten")
+        assert(AM.Status():find("wartet auf Klick", 1, true), "Nicht jetzt als Markierung gewertet: " .. AM.Status())
+        -- Rechtsklick auf "Markieren" wirkt wie "Nicht jetzt".
+        inside, kind = false, "none"
+        stub.FireEvent("ZONE_CHANGED_NEW_AREA")
+        inside, kind = true, "party"
+        stub.FireEvent("PLAYER_ENTERING_WORLD")
+        assert(Shown(), "nach dem Wiederbetreten keine Abfrage")
+        b:Click("RightButton")
+        stub.FireEvent("GROUP_ROSTER_UPDATE")
+        assert(not Shown() and AM.Status():find("wartet auf Klick", 1, true), "Rechtsklick markiert oder blendet nicht aus")
         -- Draussen: weg; wieder hinein: neu angeboten.
         inside, kind = false, "none"
         stub.FireEvent("ZONE_CHANGED_NEW_AREA")
-        assert(not b:IsShown(), "Knopf draussen sichtbar")
+        assert(not Shown(), "Knopf draussen sichtbar")
         inside, kind = true, "party"
         stub.FireEvent("PLAYER_ENTERING_WORLD")
-        assert(b:IsShown(), "nach dem Wiederbetreten nicht angeboten")
+        assert(Shown(), "nach dem Wiederbetreten nicht angeboten")
         -- Schlachtzug abgeschaltet: nichts.
         K.Set("comfort", "markRaids", false)
         kind, instID = "raid", 51
         stub.FireEvent("PLAYER_ENTERING_WORLD")
-        assert(not b:IsShown(), "im Schlachtzug trotz Schalter angeboten")
+        assert(not Shown(), "im Schlachtzug trotz Schalter angeboten")
         K.Set("comfort", "markRaids", true)
         -- Gleiche Markierung fuer beide Rollen: der Heiler wird ausgelassen.
         kind, instID = "party", 52
@@ -1391,7 +1405,7 @@ do
         assert(Macro() == before, "Einstellung geaendert - Angebot veraendert")
         -- Automark aus: Knopf weg.
         K.Set("comfort", "autoMark", false)
-        assert(not b:IsShown(), "Knopf bleibt mit Automark aus")
+        assert(not Shown(), "Knopf bleibt mit Automark aus")
         K.Set("comfort", "autoMark", true)
         assert(calls == 0, "SetRaidTarget aufgerufen (geschuetzt): " .. calls)
         end)

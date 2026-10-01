@@ -218,7 +218,9 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   `load_test.lua` fails on any direct call. **Raid markers likewise**
   (`SetRaidTarget` → `ADDON_ACTION_FORBIDDEN`, measured 6.9.0.1; `pcall`
   does *not* catch it – the call is blocked and `pcall` reports success):
-  Automark offers a secure macro button (`/tm [@unit] n`) since 6.9.0.2,
+  Automark asks on entering an instance and marks through a secure macro
+  button (`/tm [@unit] n`) since 6.9.0.2 – the same restriction holds in
+  Retail since 12.0.0,
   and `load_test.lua` fails on any reference to `SetRaidTarget`.
 - **Every colour value lives in `core/ui.lua`.** It is the translation of
   the Companion's `gui/theme/tokens.py`. A hex value anywhere else is a
