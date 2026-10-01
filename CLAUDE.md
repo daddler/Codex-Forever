@@ -171,15 +171,26 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   never carries the class glow at the top (`W.HoldGlow`); `SetAccent`
   never touches the gold. Never use it in the addon's
   own pages, never next to the class colour in the same region.
-- **The UI (`ui/`) is built opt-in, and opt-in is suspended since
-  6.0.0.3.** The Forever beta client does not persist SavedVariables, so
-  a choice would be forgotten on every reload: `K.OPT_IN = false` in
-  `ui/kit.lua` makes `UIKit.UIEnabled()` always true, silences the login
-  question (`ui/welcome.lua`) and replaces the master switch with a note.
-  Flipping that **one** line back to `true` restores the full opt-in flow;
-  `load_test.lua` tests both states. UI modules (`group = "ui"`) replace
-  Blizzard frames and change only after a reload; comfort modules
-  (`group = "qol"`) never depend on the master switch. Layout and defaults
+- **The UI (`ui/`) is opt-in again since 6.9.0.0, and switching it on
+  never overwrites the player's own setup.** `K.OPT_IN = true` in
+  `ui/kit.lua` (6.0.0.3–6.8.1.0 it was `false`: the beta client did not
+  persist SavedVariables); flipping it back to `false` makes the UI on for
+  everyone again, and `load_test.lua` tests both states. The first login
+  asks once per account (`ui/welcome.lua`). **Profile rule
+  (`ui/profile.lua`):** the UI gets its own Edit Mode layout "WeintCodex"
+  and never writes into the player's; the active layout is remembered
+  **before** switching (`ui.before`, once), every CVar change goes through
+  `PF.SetCVar(name, value, owner)` (first value remembered in `ui.cvars`),
+  and switching off restores both – the layout only if "WeintCodex" is
+  still active, a CVar only if *our* value still stands. Chat tabs are
+  never reset any more (they exist once per character; resetting meant
+  deleting). **Two groups:** `group = "ui"` modules replace or dress a
+  game frame and run only with the master switch (reload to change);
+  `group = "qol"` adds what the game lacks and runs without it –
+  quest arrow, damage meter, reminders, comfort (with Automark, click
+  casting + dispel, macro helper as pages; `store =` keeps their saved
+  settings at their old module). `defaultEnabled = "ui"`: on by default
+  only with the UI (the full package), off otherwise. Layout and defaults
   follow EllesmereUI, but **no code or media from it** — its licence is
   "all rights reserved". Game-world colours live in `core/ui.lua` as
   `WeintCodex.GameColors`. Values from the 12.x client may be *secret*:
@@ -264,7 +275,7 @@ into modules that no longer exist. A green run means "it loads", never
 | Companion-Authentifizierung/Token | `../Companion-Forever/docs/companion-auth.md` |
 | Welche Spieldaten fehlen und warum | `../Companion-Forever/docs/systems/forever-data.md` |
 | Neugestaltung der Oberfläche (UI 2.0): Cockpit, Raster, Kachel, Ruhe/Kampf, Gestaltungsmodus, Phasen | `docs/design/ui-2.0.md` |
-| Oberfläche (`ui/`): Plaketten (auch Farben je NPC, `ui/npccolors.lua`), Einheiten-/Gruppenrahmen (eigene und die des Spiels, `ui/gamegroup.lua`), Einrichtung beim ersten Mal (`ui/setup.lua`, Layout im Bearbeitungsmodus), Aktionsleisten, Erfahrungsbalken, Charakterfenster (`ui/character.lua`, Klassen-Themen `data/classthemes.lua`), Designsprache der Fenster des Spiels (`ui/style.lua`: Akzente, Stile je Bereich, Bausteine), Register – Liste des Spiels mit Detailkarte (`ui/register.lua`) – mit Ruf (`ui/reputation.lua`), Fertigkeiten (`ui/skills.lua`), Abzeichen/Währungen (`ui/currency.lua`) Statistiken (`ui/statistics.lua`, ohne Detailansicht) und Berufe (`ui/professions.lua`, Rezeptseite, Gold; Register außerhalb des Charakterfensters über `W.HOSTED`; Übersicht mit Karten je Beruf `ui/profbook.lua`), Zauberbuch (`ui/spellbook.lua`, Klassenfarbe; Schein der Klasse `W.HoldGlow`), Talente (`ui/talents.lua`, Klassenfarbe, Animation bleibt; Namen der Bäume notfalls aus `data/specs.lua`), Namensplaketten-Bewegung (6.8.1.0: Schadensspur, weiche Balken, Ziel atmet), Automark (`ui/automark.lua`, Seite im Komfort), Makro-Helfer (`ui/macros.lua`, Seite der Aktionsleisten), Entfluchen auf Klick (`ui/dispel.lua`, an den Klickzaubern), Gespräche in Gold (`ui/gossip.lua`: Gespräch, Questtext, Bücher), Händler in Gold (`ui/merchant.lua`: Waren auf Fläche, Reiter unten über `W.SkinTab`), Gilde & Communitys (`ui/community.lua`, Gold, drei Spalten), Spielmenü (`ui/gamemenu.lua`, Gold) und Dialoge (`W.SkinPopup`), Questlog an der Karte (`ui/questlog.lua`, Gold; weicher Rand der Karte bleibt), Fenster in Gold mit Innenflächen – Suche nach Gruppe, Sammlung (`ui/calm.lua`, Innenflächen über `W.Insets`), PvP-Profil (`ui/pvp.lua`), Weltkarte & Questlog, Gesprächsfenster (Questgeber, Gastwirte, Händler), Erinnerungen, Klickzauber (`ui/clickcast.lua`), Abklingzeitmanager, Minikarte, Chat, Tooltip, Taschen, Schadensanzeige, Questliste, Auren, Questpfeil, Komfort, `/wcui`, `OPT_IN`, `WeintCodex.GameColors`, geheime Werte (12.x), `UIKit.NewText`, `UIKit.NewBar`/`Glow`/`Kachel`, Layout-Tabelle, Ruhe/Kampf, Testmodus | `docs/systems/ui.md` |
+| Oberfläche (`ui/`): Plaketten (auch Farben je NPC, `ui/npccolors.lua`), Einheiten-/Gruppenrahmen (eigene und die des Spiels, `ui/gamegroup.lua`), Einrichtung beim ersten Mal (`ui/setup.lua`, Layout im Bearbeitungsmodus), Aktionsleisten, Erfahrungsbalken, Charakterfenster (`ui/character.lua`, Klassen-Themen `data/classthemes.lua`), Designsprache der Fenster des Spiels (`ui/style.lua`: Akzente, Stile je Bereich, Bausteine), Register – Liste des Spiels mit Detailkarte (`ui/register.lua`) – mit Ruf (`ui/reputation.lua`), Fertigkeiten (`ui/skills.lua`), Abzeichen/Währungen (`ui/currency.lua`) Statistiken (`ui/statistics.lua`, ohne Detailansicht) und Berufe (`ui/professions.lua`, Rezeptseite, Gold; Register außerhalb des Charakterfensters über `W.HOSTED`; Übersicht mit Karten je Beruf `ui/profbook.lua`), Zauberbuch (`ui/spellbook.lua`, Klassenfarbe; Schein der Klasse `W.HoldGlow`), Talente (`ui/talents.lua`, Klassenfarbe, Animation bleibt; Namen der Bäume notfalls aus `data/specs.lua`), Namensplaketten-Bewegung (6.8.1.0: Schadensspur, weiche Balken, Ziel atmet), Automark (`ui/automark.lua`, Seite im Komfort), Makro-Helfer (`ui/macros.lua`, seit 6.9.0.0 Seite im Komfort), Entfluchen auf Klick (`ui/dispel.lua`, an den Klickzaubern, die seit 6.9.0.0 im Komfort stehen), Hauptschalter und Profil (`ui/profile.lua`: eigenes Layout, Layout und Spieleinstellungen von vorher zurück; Komfort ohne Oberfläche), Gespräche in Gold (`ui/gossip.lua`: Gespräch, Questtext, Bücher), Händler in Gold (`ui/merchant.lua`: Waren auf Fläche, Reiter unten über `W.SkinTab`), Gilde & Communitys (`ui/community.lua`, Gold, drei Spalten), Spielmenü (`ui/gamemenu.lua`, Gold) und Dialoge (`W.SkinPopup`), Questlog an der Karte (`ui/questlog.lua`, Gold; weicher Rand der Karte bleibt), Fenster in Gold mit Innenflächen – Suche nach Gruppe, Sammlung (`ui/calm.lua`, Innenflächen über `W.Insets`), PvP-Profil (`ui/pvp.lua`), Weltkarte & Questlog, Gesprächsfenster (Questgeber, Gastwirte, Händler), Erinnerungen, Klickzauber (`ui/clickcast.lua`), Abklingzeitmanager, Minikarte, Chat, Tooltip, Taschen, Schadensanzeige, Questliste, Auren, Questpfeil, Komfort, `/wcui`, `OPT_IN`, `WeintCodex.GameColors`, geheime Werte (12.x), `UIKit.NewText`, `UIKit.NewBar`/`Glow`/`Kachel`, Layout-Tabelle, Ruhe/Kampf, Testmodus | `docs/systems/ui.md` |
 
 Cross-repo tasks (something touches Codex **and** Companion **and/or**
 Bot): read this table's Companion-doc pointers first — they are the

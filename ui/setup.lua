@@ -19,11 +19,15 @@
 --      einen festen Platz - fest heisst: nie "Standardplatz", denn den
 --      rechnet das Spiel (6.6.1.1: die Vorlage stellte die Aktionsleisten
 --      unten links). Gruppe schlachtzugsartig, ohne Blizzards Linien.
---   2. Die Chatfenster: zurueck auf Allgemein und Kampflog
---      (FCF_ResetChatWindows, derselbe Knopf wie in den Einstellungen des
---      Spiels) - Reiter und Kanaele eines frueheren Addons verschwinden.
---   3. Wenige Spieleinstellungen, die die Oberflaeche voraussetzt (CVARS).
---      Jede wird nur gesetzt, wenn der Client sie kennt.
+--   2. Wenige Spieleinstellungen, die die Oberflaeche voraussetzt (CVARS).
+--      Jede wird nur gesetzt, wenn der Client sie kennt, und ueber
+--      ui/profile.lua: der Wert von vorher kommt zurueck, wenn die
+--      Oberflaeche aus ist.
+--   NICHT MEHR (seit 6.9.0.0): die Chatfenster. 6.6.1.3 setzte sie zurueck
+--   (FCF_ResetChatWindows) - damit verschwanden eigene Reiter und Kanaele
+--   unwiederbringlich, und die speichert das Spiel nur einmal je
+--   Charakter. Beta-Test: "damit nichts geloescht oder ueberschrieben
+--   wird". Wo der Chat steht, stellt weiter das Layout.
 --   Was der Spieler selbst gebaut hat, bleibt (seit 6.6.1.4): die Plaetze
 --   des Abklingzeitmanagers (ES.KeepPersonal) und die eigenen Rahmen von
 --   WeintCodex, die er im Gestaltungsmodus verschoben hat.
@@ -51,7 +55,9 @@ local K  = WeintCodex.UIKit
 local C  = WeintCodex.Colors
 local F  = WeintCodex.Fonts
 
-ES.LAYOUT_NAME = "WeintCodex"
+-- Der Name lebt in ui/profile.lua: dort wird das Layout gemerkt und
+-- zurueckgegeben.
+ES.LAYOUT_NAME = WeintCodex.UIProfile.LAYOUT_NAME
 
 local function Say(text)
     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. text)
@@ -347,13 +353,6 @@ local function ApplyLayout(report)
     return true
 end
 
--- Chatfenster zurueck auf den Stand des Spiels: Allgemein und Kampflog.
-local function ResetChat()
-    local fn = _G.FCF_ResetChatWindows
-    if type(fn) ~= "function" then return false end
-    return (pcall(fn))
-end
-
 -- Spieleinstellungen, die die Oberflaeche voraussetzt - jede mit Grund.
 ES.CVARS = {
     -- Eingabezeile nur beim Schreiben: darunter liegt die Infozeile.
@@ -376,15 +375,13 @@ local function GetCVarValue(name)
     return ok and v or nil
 end
 
--- Gibt zurueck, wie viele gesetzt wurden, und die unbekannten.
+-- Gibt zurueck, wie viele gesetzt wurden, und die unbekannten. Jeder
+-- Wert von vorher wird gemerkt (ui/profile.lua, Besitzer "ui").
 local function ApplyCVars()
-    local cv = _G.C_CVar
-    local set = (cv and cv.SetCVar) or _G.SetCVar
+    local PF = WeintCodex.UIProfile
     local n, unknown = 0, {}
     for _, c in ipairs(ES.CVARS) do
-        if type(GetCVarValue(c.name)) ~= "string" or type(set) ~= "function" then
-            unknown[#unknown + 1] = c.name
-        elseif pcall(set, c.name, c.value) then
+        if PF.SetCVar(c.name, c.value, "ui") then
             n = n + 1
         else
             unknown[#unknown + 1] = c.name
@@ -398,9 +395,10 @@ function ES.Apply()
     if K.InCombat() then return false, "im Kampf" end
     local report = {}
     ES.report = report
+    -- Erst merken, was vorher galt - dann erst umstellen.
+    WeintCodex.UIProfile.Remember()
     local ok, why = ApplyLayout(report)
     if not ok then return false, why end
-    report.chat = ResetChat()
     report.cvars, report.unknownCVars = ApplyCVars()
     -- Die eigenen Rahmen bleiben, wo der Spieler sie im Gestaltungsmodus
     -- hingezogen hat (6.6.1.3 setzte sie zurueck - Beta-Test: die
@@ -604,14 +602,15 @@ local function ShowQuestion()
         .. " Taschen, Menü, Gruppe (schlachtzugsartig, mit HoTs und Schilden) und Schlachtzug. Dafür entsteht im"
         .. " Bearbeitungsmodus das Layout „WeintCodex“ auf Grundlage "
         .. (baseName and ("der Vorlage „" .. tostring(baseName) .. "“") or "der Vorlage des Spiels")
-        .. ", nicht deines bisherigen Layouts.\n"
-        .. "•  Chatfenster zurück auf „Allgemein“ und „Kampflog“ – eigene Reiter verschwinden.\n"
+        .. ". Dein bisheriges Layout wird nicht verändert.\n"
         .. "•  Abklingzeitmanager kleiner, nur Fähigkeiten und ihre Laufzeiten; seine Buff-Symbole klein über"
         .. " dem Spielerrahmen – welche, wählst du im Abklingzeitmanager des Spiels.\n"
-        .. "•  Einige Spieleinstellungen (Chatstil, Flüstern im Chat, Leisten sperren, keine Tutorials).\n\n"
+        .. "•  Einige Spieleinstellungen (Chatstil, Flüstern im Chat, Leisten sperren, keine Tutorials) –"
+        .. " WeintCodex merkt sich deine bisherigen Werte.\n\n"
         .. "Was du selbst gebaut hast, bleibt: die Plätze des Abklingzeitmanagers, deine verschobenen"
-        .. " WeintCodex-Rahmen und die Skalierung der Oberfläche. Danach einmal neu laden. Dein bisheriges"
-        .. " Layout bleibt im Bearbeitungsmodus wählbar; verschieben kannst du hinterher alles.")
+        .. " WeintCodex-Rahmen, die Skalierung der Oberfläche und deine Chatreiter. Danach einmal neu laden."
+        .. " Schaltest du die Oberfläche aus, ist dein bisheriges Layout wieder aktiv und deine Einstellungen"
+        .. " stehen wie vorher.")
     SetButtons({
         { key = "later", text = "Später", kind = "secondary", onClick = function()
             Close()
@@ -632,8 +631,6 @@ ShowDone = function()
     if r.missing and #r.missing > 0 then
         lines[#lines + 1] = "•  Nicht im Layout des Spiels gefunden: " .. table.concat(r.missing, ", ") .. "."
     end
-    lines[#lines + 1] = r.chat and "•  Chatfenster zurückgesetzt."
-        or "•  Chatfenster NICHT zurückgesetzt (der Client kennt FCF_ResetChatWindows nicht)."
     lines[#lines + 1] = "•  " .. tostring(r.cvars or 0) .. " Spieleinstellungen gesetzt"
         .. ((r.unknownCVars and #r.unknownCVars > 0) and (", unbekannt: " .. table.concat(r.unknownCVars, ", ")) or "")
         .. "."

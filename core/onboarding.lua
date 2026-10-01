@@ -271,12 +271,14 @@ local TOUR_STEPS = {
         local optIn = K and K.OPT_IN
         local intro = "WeintCodex bringt ein eigenes, schlichtes Interface mit: "
             .. E("Namensplaketten") .. ", " .. E("Einheiten- und Gruppenrahmen")
-            .. ", Aktionsleisten, Minikarte, Chat, Taschen und eine "
-            .. E("Schadensanzeige") .. " — im Stil von WeintCodex.\n\n"
+            .. ", Aktionsleisten, Minikarte, Chat, Taschen und die Fenster des "
+            .. "Spiels — im Stil von WeintCodex.\n\n"
         local middle
         if optIn then
             middle = E("Sie ist ganz freiwillig.") .. " Solange sie aus ist, zeigt das "
                 .. "Spiel seine eigenen Rahmen, und WeintCodex fasst keinen davon an. "
+                .. "Eingeschaltet bekommt sie " .. E("ein eigenes Layout") .. " – deins "
+                .. "bleibt, wie es ist, und kommt beim Ausschalten zurück. "
                 .. "Beim ersten Mal fragt WeintCodex dich gleich nach dieser "
                 .. "Einführung, ob du sie verwenden möchtest.\n\n"
                 .. "Einschalten, einstellen oder wieder ausschalten kannst du sie "
@@ -304,10 +306,10 @@ local TOUR_STEPS = {
         .. "Zauberreichweiten \"Meter\" nennt. In Dungeons nennt das Spiel "
         .. "keine Position; dort steht \"Position unbekannt\" statt einer "
         .. "Zahl.\n\n"
-        .. "Dazu gibt es kleine Helfer: automatisch reparieren, graue "
-        .. "Gegenstände verkaufen, schneller plündern, Kampfhinweis, "
-        .. "Haltbarkeitswarnung und einiges mehr. " .. E("Jeder ist einzeln "
-        .. "zuschaltbar und von Haus aus aus.") .. "\n\n"
+        .. "Dazu gibt es Helfer: " .. E("Schadensanzeige") .. ", Erinnerungen, "
+        .. "Klickzauber, Makro-Helfer, automatisch reparieren, graue "
+        .. "Gegenstände verkaufen, Automark und einiges mehr. " .. E("Jeder ist "
+        .. "einzeln zuschaltbar.") .. "\n\n"
         .. "Pfeil und Helfer brauchen die Oberfläche nicht. Du findest sie in "
         .. A("/wcui") .. " unter " .. A("Komfort") .. "; " .. A("/wc pfeil")
         .. " führt direkt zum Pfeil." },

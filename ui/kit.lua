@@ -13,9 +13,16 @@
 --                   Aendern verlangt ein Neuladen: einen ersetzten
 --                   Blizzard-Rahmen sauber zurueckzugeben ist im laufenden
 --                   Spiel nicht zu haben, ohne Taint zu riskieren.
---   group = "qol"   Questpfeil, Komfortfunktionen. Sie haengen NICHT am
---                   Hauptschalter - wer die Oberflaeche nicht will, soll
---                   den Pfeil trotzdem haben koennen. Sie schalten sofort.
+--   group = "qol"   Questpfeil, Komfortfunktionen, Schadensanzeige,
+--                   Erinnerungen (seit 6.9.0.0 auch Klickzauber und
+--                   Makro-Helfer als Seiten im Komfort). Sie haengen NICHT
+--                   am Hauptschalter - wer die Oberflaeche nicht will, soll
+--                   das trotzdem haben koennen. Sie schalten sofort, es sei
+--                   denn, das Modul sagt `reload = true` (eigene Fenster,
+--                   die sich im laufenden Spiel nicht sauber abbauen).
+--   Die Regel dahinter: ERSETZT oder KLEIDET ein Teil etwas des Spiels
+--   (Rahmen, Leisten, Karte, Chat, Taschen, Fenster), ist es Oberflaeche.
+--   FUEGT es etwas hinzu, das dem Spiel fehlt, ist es Komfort.
 --
 -- VORBILD UND GRENZE. Aufbau, Funktionsumfang und Voreinstellungen folgen
 -- EllesmereUI (Stand 9.2.6). Uebernommen sind Ideen, Optionsnamen und
@@ -188,26 +195,24 @@ end
 -- Hauptschalter
 --------------------------------------------------
 
--- DER HAUPTSCHALTER IST SEIT 6.0.0.3 AUSGESETZT - UND BEREIT FUER DIE
--- RUECKKEHR.
+-- DER HAUPTSCHALTER (seit 6.9.0.0 wieder in Kraft).
 --
--- Die Oberflaeche war freiwillig: Frage beim Einloggen (ui/welcome.lua),
--- Hauptschalter in /wcui und in den Einstellungen. Das setzt voraus, dass
--- der Client die Antwort speichert. Der Forever-Beta-Client tut das nicht
--- (gemeldet mit 6.0.0.1, bestaetigt mit 6.0.0.2: auch "Mit Esc schliessen"
--- ueberlebt kein /reload). Eine Wahl, die nach jedem Neuladen vergessen
--- ist, ist keine - also ist die Oberflaeche jetzt fuer alle an.
+-- Die Oberflaeche ist freiwillig: Frage beim Einloggen (ui/welcome.lua),
+-- Hauptschalter in /wcui und in den Einstellungen. Von 6.0.0.3 bis 6.8.1.0
+-- war sie fuer alle an, weil der Forever-Beta-Client die SavedVariables
+-- nicht speicherte - eine Wahl, die nach jedem Neuladen vergessen ist, ist
+-- keine. Seit der Client wieder speichert (Beta-Test nach 6.8.1.0), gilt
+-- die Wahl wieder.
 --
--- K.OPT_IN ist die EINE Stelle, an der das zurueckgedreht wird. Steht es
--- auf true, gilt wieder alles von vorher, ohne weitere Aenderung:
---   * K.UIEnabled() liest wieder den gespeicherten Hauptschalter,
---   * die Frage beim Einloggen kommt wieder (ui/welcome.lua),
---   * der Hauptschalter in /wcui und in den Einstellungen ist wieder
---     bedienbar, die Einfuehrung spricht wieder von "freiwillig".
--- Alle drei Stellen fragen K.OPT_IN, und load_test.lua prueft beide
--- Zustaende. Wann umschalten: sobald WeintCodex.SaveHealth() nach einem
--- /reload "ok" meldet (Einstellungen -> Diagnose -> Speichern).
-K.OPT_IN = false
+-- K.OPT_IN ist die EINE Stelle, an der das umgeschaltet wird. Steht es
+-- auf false, ist die Oberflaeche wieder fuer alle an, ohne weitere
+-- Aenderung (keine Frage, kein Hauptschalter); load_test.lua prueft beide
+-- Zustaende.
+--
+-- Was die Oberflaeche am Spiel aendert (Layout des Bearbeitungsmodus,
+-- Spieleinstellungen), merkt sich ui/profile.lua vorher und gibt es beim
+-- Ausschalten zurueck - der Hauptschalter ruft es (PF.OnSwitch).
+K.OPT_IN = true
 
 function K.UIEnabled()
     if not K.OPT_IN then return true end
@@ -216,21 +221,36 @@ function K.UIEnabled()
 end
 
 -- Wird der Hauptschalter umgelegt, ist ein Neuladen faellig (siehe oben).
--- Ohne OPT_IN gibt es nichts umzulegen.
+-- Ohne OPT_IN gibt es nichts umzulegen. Auch ein "aus", das schon aus
+-- war, laeuft durch das Profil: wer die Oberflaeche vor 6.9.0.0 hatte,
+-- steht noch im Layout "WeintCodex" und bekommt seins zurueck.
 function K.SetUIEnabled(on)
     if not K.OPT_IN then return end
     local ui = Root()
     if not ui then return end
-    ui.enabled = on and true or false
-    K.MarkReload()
+    on = on and true or false
+    local was = ui.enabled == true
+    ui.enabled = on
+    if was ~= on then K.MarkReload() end
     K.Fire("setting", "general", "enabled")
+    local PF = WeintCodex.UIProfile
+    if PF and PF.OnSwitch then
+        local ok, err = pcall(PF.OnSwitch, on)
+        if not ok then K.Report("profil", err) end
+    end
 end
 
 function K.ModuleEnabled(moduleKey)
     local m = modules[moduleKey]
     if not m then return false end
     local v = Store(moduleKey).enabled
-    if v == nil then v = m.defaultEnabled ~= false end
+    if v == nil then
+        -- defaultEnabled = "ui": von Haus aus an, wenn die Oberflaeche an ist
+        -- (das Komplettpaket), sonst aus - wer "Nein" zur Oberflaeche sagt,
+        -- bekommt kein Fenster, das er nicht gewaehlt hat (6.9.0.0).
+        if m.defaultEnabled == "ui" then v = K.UIEnabled()
+        else v = m.defaultEnabled ~= false end
+    end
     return v and true or false
 end
 
@@ -266,6 +286,17 @@ function K.SetModuleEnabled(moduleKey, on)
         K.Deactivate(moduleKey)
     end
     K.Fire("setting", moduleKey, "enabled")
+    K.SweepProfile()
+end
+
+-- Spieleinstellungen, die kein laufender Teil mehr braucht, zurueck
+-- (ui/profile.lua).
+function K.SweepProfile()
+    local PF = WeintCodex.UIProfile
+    if PF and PF.Sweep then
+        local ok, err = pcall(PF.Sweep)
+        if not ok then K.Report("profil", err) end
+    end
 end
 
 --------------------------------------------------
@@ -273,7 +304,8 @@ end
 --------------------------------------------------
 -- def = {
 --   key, group = "ui"|"qol", title, description, order,
---   defaults = { ... }, defaultEnabled = true|false,
+--   defaults = { ... }, defaultEnabled = true|false|"ui",
+--   reload = true,             -- qol: Schalten wirkt erst nach dem Neuladen
 --   Enable = function() end,   -- beim Anmelden bzw. beim Einschalten
 --   Disable = function() end,  -- nur qol: beim Ausschalten
 --   OnSetting = function(key, value) end,
@@ -1410,4 +1442,5 @@ boot:SetScript("OnEvent", function(_, event)
     for _, key in ipairs(order) do
         if K.WantsActive(key) then K.Activate(key) end
     end
+    K.SweepProfile()
 end)

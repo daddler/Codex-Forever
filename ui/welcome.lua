@@ -1,12 +1,10 @@
 --------------------------------------------------
 -- WeintCodex :: Oberflaeche - die Frage beim Einloggen
 --------------------------------------------------
--- SEIT 6.0.0.3 RUHT DIESE DATEI. Die Frage setzt voraus, dass der Client
--- die Antwort speichert; der Forever-Beta-Client tut das nicht. Solange
--- UIKit.OPT_IN (ui/kit.lua) false ist, fragt MaybeAsk nie, und die
--- Oberflaeche ist fuer alle an. Die Datei bleibt vollstaendig und
--- geprueft (load_test.lua spielt sie mit OPT_IN = true durch), damit sie
--- mit einer einzigen Zeile zurueckkommt.
+-- VON 6.0.0.3 BIS 6.8.1.0 RUHTE DIESE DATEI: der Forever-Beta-Client
+-- speicherte die Antwort nicht. Seit 6.9.0.0 speichert er, UIKit.OPT_IN
+-- (ui/kit.lua) steht wieder auf true, und die Frage kommt einmal je Konto
+-- - auch fuer alle, die die Oberflaeche bisher ungefragt hatten.
 --------------------------------------------------
 -- Einmal je Konto fragt WeintCodex: "Moechtest du die WeintCodex-
 -- Oberflaeche verwenden?" Die Oberflaeche ist freiwillig, und wer nicht
@@ -15,9 +13,12 @@
 --
 -- Ja   -> Hauptschalter an, und das Angebot, sofort neu zu laden (die
 --         Oberflaeche ersetzt Blizzard-Rahmen und startet erst dann).
+--         Dein Layout wird vorher gemerkt (ui/profile.lua), die
+--         Oberflaeche bekommt ein eigenes.
 -- Nein -> nichts wird angefasst, und der Hinweis, WO man es spaeter
 --         einschaltet. Ein "Nein" ohne diesen Satz waere endgueltig,
---         obwohl es das nicht ist.
+--         obwohl es das nicht ist. Wer noch im Layout "WeintCodex" steht
+--         (Oberflaeche vor 6.9.0.0), bekommt dabei sein eigenes zurueck.
 --
 -- Wann: nach der Einfuehrung bzw. dem Changelog-Popup, nie darueber.
 -- Zwei Fenster uebereinander sind eine Frage, die man wegklickt, ohne
@@ -26,9 +27,9 @@
 -- Wer die Oberflaeche schon eingeschaltet hat (etwa ueber /wcui), wird
 -- nicht mehr gefragt.
 --
--- BEKANNT: Der Forever-Beta-Client speichert SavedVariables laut der
--- Vorlage (EllesmereUI) nur manchmal. Dann kommt die Frage wieder -
--- das ist der Client, nicht dieses Fenster.
+-- Speichert der Client die Antwort doch einmal nicht, kommt die Frage
+-- beim naechsten Einloggen wieder - das ist der Client, nicht dieses
+-- Fenster (Einstellungen -> Diagnose -> Speichern sagt, ob er speichert).
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -186,12 +187,16 @@ local ShowYes, ShowNo
 local function ShowQuestion()
     SetText("Neu in WeintCodex",
         "Möchtest du die WeintCodex-Oberfläche verwenden?",
-        "WeintCodex bringt ein eigenes, schlichtes Interface mit: Namensplaketten"
-        .. " und Einheitenrahmen im Stil von WeintCodex, einstellbar bis ins"
-        .. " Detail.\n\n"
-        .. "Es ist ganz freiwillig. Bei „Nein“ bleibt alles, wie das Spiel es"
-        .. " zeigt. Questpfeil und Komfortfunktionen kannst du in beiden Fällen"
-        .. " nutzen.")
+        "WeintCodex bringt ein eigenes, schlichtes Interface mit: Namensplaketten,"
+        .. " Rahmen, Leisten, Karte, Chat, Taschen und die Fenster des Spiels im Stil"
+        .. " von WeintCodex.\n\n"
+        .. "Bei „Ja“ bekommt die Oberfläche ein eigenes Profil: ein neues Layout im"
+        .. " Bearbeitungsmodus. Dein jetziges Layout, deine Chatreiter und deine"
+        .. " Einstellungen werden nicht überschrieben – schaltest du sie wieder aus,"
+        .. " ist alles wie vorher.\n\n"
+        .. "Bei „Nein“ bleibt alles, wie es ist. Schadensanzeige, Questpfeil,"
+        .. " Erinnerungen, Klickzauber, Makro-Helfer und die Komfortfunktionen"
+        .. " kannst du in beiden Fällen nutzen.")
     SetButtons({
         { key = "no",  text = "Nein, danke", kind = "secondary", onClick = function() ShowNo() end },
         { key = "yes", text = "Ja, verwenden", kind = "primary", onClick = function() ShowYes() end },
@@ -204,12 +209,11 @@ ShowYes = function()
     SetText("WeintCodex-Oberfläche",
         "Die Oberfläche ist eingeschaltet.",
         "Sie startet nach dem Neuladen — sie ersetzt Rahmen des Spiels, und das"
-        .. " geht nur beim Laden.\n\n"
-        .. "Ändert sich nach dem Neuladen nichts, hat der Client die Einstellung"
-        .. " nicht gespeichert — ein bekannter Fehler der Forever-Beta. Dann"
-        .. " schalte sie mit /wcui erneut ein und lade noch einmal neu.\n\n"
+        .. " geht nur beim Laden. Gibt es ihr Layout noch nicht, fragt WeintCodex"
+        .. " danach, ob es eingerichtet werden soll.\n\n"
         .. "Einstellen, verschieben oder wieder ausschalten: /wcui, oder in den"
-        .. " Einstellungen von WeintCodex unter „Oberfläche“.")
+        .. " Einstellungen von WeintCodex unter „Oberfläche“. Ausschalten gibt dir"
+        .. " dein bisheriges Layout zurück.")
     SetButtons({
         { key = "later",  text = "Später", kind = "secondary", onClick = function()
             Close()
@@ -223,13 +227,17 @@ end
 
 ShowNo = function()
     MarkAsked()
+    -- Bleibt aus - und wer noch im Layout "WeintCodex" steht, bekommt
+    -- seins zurueck (ui/profile.lua).
+    K.SetUIEnabled(false)
     SetText("WeintCodex-Oberfläche",
         "Alles bleibt, wie es ist.",
         "Du kannst die WeintCodex-Oberfläche jederzeit nachträglich aktivieren:"
         .. " in den Einstellungen von WeintCodex unter „Oberfläche“"
         .. " (/wc einstellungen) oder direkt mit /wcui.\n\n"
-        .. "Questpfeil und Komfortfunktionen findest du an derselben Stelle —"
-        .. " sie funktionieren auch ohne die Oberfläche.")
+        .. "Schadensanzeige, Questpfeil, Erinnerungen und die Komfortfunktionen"
+        .. " (mit Klickzaubern und Makro-Helfer) findest du an derselben Stelle"
+        .. " unter „Komfort“ — sie funktionieren auch ohne die Oberfläche.")
     SetButtons({
         { key = "settings", text = "Einstellungen öffnen", kind = "secondary", onClick = function()
             Close()

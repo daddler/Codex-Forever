@@ -92,6 +92,12 @@ Check(WeintCodex.SavedData == _G.WeintCodex_SavedData,
 -- prueft ein eigener Abschnitt.
 WeintCodex.UIKit.Set("groupframes", "source", "own")
 
+-- Seit 6.9.0.0 ist die Oberflaeche wieder freiwillig (UIKit.OPT_IN). Der
+-- Prueflauf spielt einen Spieler, der "Ja" gesagt hat - sonst liefe nach
+-- dem Anmelden kein ui-Modul, und alles darunter prueft sie. Den Weg ohne
+-- Oberflaeche prueft der Abschnitt "Ohne Oberflaeche".
+WeintCodex.UIKit.Root().enabled = true
+
 -- PLAYER_LOGIN dazu: dort melden sich Charakter und Twinkliste an die
 -- Companion, die Rosternamen werden aufgeloest und die Einfuehrung
 -- prueft, ob sie sich zeigen muss. Vier Wege, die im Spiel bei JEDEM
@@ -710,13 +716,13 @@ for _, key in ipairs({ "general", "nameplates", "unitframes", "questarrow", "com
     Check(K.Module(key) ~= nil, "Modul '" .. key .. "' ist angemeldet")
 end
 
--- SEIT 6.0.0.3: DIE OBERFLAECHE IST FUER ALLE AN (UIKit.OPT_IN = false),
--- weil der Forever-Beta-Client keine Einstellungen speichert. Nach dem
--- Anmelden laeuft deshalb jedes ui-Modul - und zwar gegen die Attrappe,
--- ohne einen einzigen Fehler (K.Report meldete ihn im Chat, und
--- K.IsActive bliebe false).
-Check(K.OPT_IN == false, "Hauptschalter ausgesetzt (OPT_IN = false) - bis der Client speichert")
-Check(K.UIEnabled() == true, "ohne OPT_IN ist die Oberflaeche an")
+-- SEIT 6.9.0.0 IST DIE OBERFLAECHE WIEDER FREIWILLIG (UIKit.OPT_IN = true;
+-- 6.0.0.3 bis 6.8.1.0 war sie fuer alle an, weil der Client nicht
+-- speicherte). Der Prueflauf hat "Ja" gesagt: nach dem Anmelden laeuft jedes
+-- ui-Modul - gegen die Attrappe, ohne einen einzigen Fehler (K.Report
+-- meldete ihn im Chat, und K.IsActive bliebe false).
+Check(K.OPT_IN == true, "Hauptschalter in Kraft (OPT_IN = true) - der Client speichert wieder")
+Check(K.UIEnabled() == true, "mit gespeichertem Ja ist die Oberflaeche an")
 for _, key in ipairs({ "nameplates", "unitframes", "groupframes", "actionbars",
     "minimap", "chat", "bags", "damagemeter", "questarrow", "comfort" }) do
     Check(K.IsActive(key), "Modul '" .. key .. "' laeuft nach dem Anmelden")
@@ -772,17 +778,21 @@ do
     Check(ok, "jede Auswahlliste laesst sich oeffnen" .. (ok and "" or (": " .. tostring(err))))
 end
 
--- AB HIER BIS ZUM "EINSCHALTEN WIE EIN SPIELER" MIT OPT_IN = true: die
--- Frage beim Einloggen ruht, bleibt aber geprueft - sie muss mit einer
--- einzigen Zeile in ui/kit.lua zurueckkommen koennen.
+-- AB HIER BIS ZUM "EINSCHALTEN WIE EIN SPIELER" OHNE GESPEICHERTE ANTWORT:
+-- die Frage beim Einloggen, und beide Antworten.
 do
     local WL = WeintCodex.UIWelcome
     local sd = WeintCodex.SavedData
     sd.ui.asked = nil
+    -- Der Rueckweg muss mit einer Zeile gehen: OPT_IN = false heisst
+    -- "fuer alle an, nie fragen".
+    K.OPT_IN = false
     WL.MaybeAsk()
-    Check(not WL.IsShown(), "ohne OPT_IN fragt WeintCodex nie, auch nicht ungefragt")
+    Check(not WL.IsShown() and K.UIEnabled(), "ohne OPT_IN fragt WeintCodex nie, und die Oberflaeche ist an")
     K.OPT_IN = true
-    Check(K.UIEnabled() == false, "mit OPT_IN liest der Hauptschalter wieder den Speicher (aus)")
+    -- Ab hier ein Spieler, der noch nicht geantwortet hat.
+    sd.ui.enabled = nil
+    Check(K.UIEnabled() == false, "mit OPT_IN liest der Hauptschalter den Speicher (keine Antwort = aus)")
 end
 
 -- Die Frage beim Einloggen. Sie darf nicht UEBER der Einfuehrung
@@ -1047,16 +1057,18 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
--- Mit OPT_IN: der Hauptschalter verlangt ein Neuladen und schaltet die
--- ui-Module fuer das naechste Laden ein. Danach zurueck auf den Stand der
--- Fassung (OPT_IN = false).
+-- Der Hauptschalter verlangt ein Neuladen und schaltet die ui-Module fuer
+-- das naechste Laden ein.
 K.SetUIEnabled(true)
 Check(K.ReloadPending(), "mit OPT_IN verlangt der Hauptschalter ein Neuladen")
 Check(K.WantsActive("nameplates") and K.WantsActive("unitframes"),
     "nach dem Neuladen liefen Plaketten und Einheitenrahmen")
 K.SetUIEnabled(false)
-K.OPT_IN = false
-Check(K.UIEnabled() and K.WantsActive("groupframes"), "OPT_IN zurueck auf false: wieder alles an")
+Check(not K.WantsActive("nameplates") and K.WantsActive("questarrow"),
+    "Oberflaeche aus: Plaketten nicht mehr, Questpfeil weiter")
+-- Zurueck auf den Spieler mit "Ja" fuer alles darunter.
+K.Root().enabled = true
+Check(K.UIEnabled() and K.WantsActive("groupframes"), "zurueck auf Ja: wieder alles an")
 
 -- Eine Welt mit einer feindlichen Plakette und einem Ziel.
 local blizzPlate = stub.NewObject("Frame", "NamePlate1")
@@ -1246,8 +1258,11 @@ do
     local ok, err = pcall(function()
         local MH = WeintCodex.UIMacros
         local found = false
-        for _, pg in ipairs(K.Module("actionbars").pages) do if pg.key == "makros" then found = true end end
-        assert(MH and found, "Makro-Helfer nicht als Seite der Aktionsleisten")
+        -- Seit 6.9.0.0 im Komfort (geht ohne Oberflaeche), Speicher bleibt.
+        for _, pg in ipairs(K.Module("comfort").pages) do
+            if pg.key == "makros" and pg.store == "actionbars" then found = true end
+        end
+        assert(MH and found, "Makro-Helfer nicht als Seite im Komfort (Speicher der Aktionsleisten)")
         local function D(t)
             local d = { kind = "cast", target = "target", mod = "shift", reset = "target", spells = { "", "", "" },
                         slot = 1, tooltip = true, startattack = false, stopcasting = false, name = "", save = "account" }
@@ -2433,6 +2448,7 @@ do
         }
         local chatReset = 0
         _G.FCF_ResetChatWindows = function() chatReset = chatReset + 1 end
+        K.Root().before, K.Root().cvars = nil, nil
         assert(ES.HasLayout() == false, "Layout vor der Einrichtung schon da")
         assert(ES.BaseName() == "Modern", "Grundlage nicht die Vorlage des Spiels")
         local okA, why = ES.Apply()
@@ -2468,8 +2484,14 @@ do
         -- Was das Layout der Vorlage nicht traegt, nennt der Bericht.
         local r = ES.report
         assert(r.frames == 7 and #r.missing == #K.GAME_LAYOUT - 7, "Bericht zaehlt die Rahmen falsch: " .. tostring(r.frames))
-        assert(chatReset == 1 and r.chat, "Chatfenster nicht zurueckgesetzt")
+        -- 6.9.0.0: die Chatreiter gehoeren dem Spieler - nie mehr zuruecksetzen.
+        assert(chatReset == 0 and r.chat == nil, "Chatfenster angefasst (eigene Reiter weg)")
         assert(cvars.chatStyle == "im" and cvars.whisperMode == "inline" and cvars.lockActionBars == "1", "Spieleinstellungen nicht gesetzt")
+        -- ... und vorher gemerkt, was galt: das Layout und die alten Werte.
+        local before = K.Root().before
+        assert(before and before.layout and before.layout.name == "EllesmereUI Forever v4", "Layout von vorher nicht gemerkt")
+        local rec = K.Root().cvars and K.Root().cvars.chatStyle
+        assert(rec and rec.orig == "classic" and rec.set == "im" and rec.owner == "ui", "alter Wert nicht gemerkt")
         assert(r.cvars == 3 and #r.unknownCVars == #ES.CVARS - 3, "unbekannte Einstellungen nicht ehrlich gemeldet")
         -- 6.6.1.4: eigene Rahmen bleiben, wo der Spieler sie hingezogen hat.
         assert(r.own == nil, "eigene Rahmen zurueckgesetzt")
@@ -2585,7 +2607,8 @@ do
         ES._ResetAsked()
         ES.MaybeAsk()
         assert(ES.IsShown() and ES.Button("apply") and ES.Button("later"), "Einrichtungsfenster nicht gezeigt")
-        assert(ES.BodyText():find("Chatfenster", 1, true), "Frage nennt den Chat nicht")
+        assert(ES.BodyText():find("Chatreiter", 1, true) and not ES.BodyText():find("Reiter verschwinden", 1, true),
+            "Frage sagt nicht, dass die Chatreiter bleiben")
         ES.Button("apply"):Click()
         assert(ES.Button("reload") and ES.BodyText():find("Neuladen", 1, true), "nach dem Einrichten kein Neuladen angeboten")
         assert(ES.BodyText():find("Nicht im Layout", 1, true), "fehlende Rahmen verschwiegen")
@@ -2603,7 +2626,153 @@ do
         ES.Button("close"):Click()
         _G.C_EditMode, _G.EditModePresetLayoutManager, _G.Enum = oldEM, oldPM, oldEnum
     end)
-    Check(ok, "Einrichtung: alle Rahmen des Spiels fest auf der Vorlage, Chat, Spieleinstellungen, danach neu laden"
+    Check(ok, "Einrichtung: alle Rahmen des Spiels fest auf der Vorlage, Chatreiter bleiben, Spieleinstellungen gemerkt, danach neu laden"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.9.0.0: DEIN PROFIL BLEIBT DEINS. Einschalten merkt das Layout von
+-- vorher (einmal) und setzt "WeintCodex" aktiv; Ausschalten gibt das
+-- gemerkte zurueck - nur, wenn noch "WeintCodex" aktiv ist - und die
+-- Spieleinstellungen, aber nur, wo noch UNSER Wert steht.
+do
+    local PF = WeintCodex.UIProfile
+    local ui = K.Root()
+    local oldEM, oldPM, oldCV = _G.C_EditMode, _G.EditModePresetLayoutManager, _G.C_CVar
+    local oldEnabled = ui.enabled
+    local ok, err = pcall(function()
+        assert(PF, "ui/profile.lua nicht geladen")
+        _G.EditModePresetLayoutManager = { GetCopyOfPresetLayouts = function()
+            return { { layoutName = "Modern" }, { layoutName = "Klassisch" } } end }
+        local stored = { activeLayout = 3, layouts = { { layoutName = "Mein Layout" }, { layoutName = "WeintCodex" } } }
+        local switches = 0
+        _G.C_EditMode = {
+            GetLayouts = function() return stored end,
+            SetActiveLayout = function(i) stored.activeLayout = i switches = switches + 1 end,
+        }
+        local cvars = { chatStyle = "classic", whisperMode = "popout", damageMeterEnabled = "1" }
+        _G.C_CVar = {
+            GetCVar = function(n) return cvars[n] end,
+            SetCVar = function(n, v) if cvars[n] == nil then error("unbekannt") end cvars[n] = v end,
+        }
+        ui.before, ui.cvars, ui.enabled = nil, nil, false
+
+        -- Sagt der Client nichts, wird nichts gemerkt (sonst versperrte ein
+        -- leeres "vorher" das echte).
+        local em = _G.C_EditMode
+        _G.C_EditMode = nil
+        assert(PF.Remember() == false and ui.before == nil, "ohne Client ein leeres Vorher gemerkt")
+        _G.C_EditMode = em
+
+        -- Einschalten: gemerkt, dann das eigene Layout aktiv.
+        K.SetUIEnabled(true)
+        assert(ui.before and ui.before.layout.name == "Mein Layout", "Layout von vorher nicht gemerkt")
+        assert(stored.activeLayout == 4, "Layout WeintCodex nicht aktiv gesetzt")
+        -- Ein zweites Einschalten ueberschreibt das Original nicht.
+        assert(PF.Remember() == false and ui.before.layout.name == "Mein Layout", "Original mit WeintCodex ueberschrieben")
+
+        -- Spieleinstellungen: der allererste Wert zaehlt.
+        assert(PF.SetCVar("chatStyle", "im", "ui") and PF.SetCVar("chatStyle", "im2", "ui"), "Einstellung nicht gesetzt")
+        assert(ui.cvars.chatStyle.orig == "classic" and ui.cvars.chatStyle.set == "im2", "Original ueberschrieben")
+        assert(PF.SetCVar("whisperMode", "inline", "ui"), "Fluestern nicht gesetzt")
+        assert(PF.SetCVar("gibtsNicht", "1", "ui") == false and ui.cvars.gibtsNicht == nil, "unbekannte Einstellung gemerkt")
+        -- Der Spieler stellt selbst um: seine Wahl gilt.
+        cvars.whisperMode = "selbst"
+
+        -- Ausschalten: Layout und eigener Wert zurueck, fremder bleibt.
+        K.SetUIEnabled(false)
+        assert(stored.activeLayout == 3, "Layout von vorher nicht zurueck")
+        assert(cvars.chatStyle == "classic", "Spieleinstellung nicht zurueckgegeben")
+        assert(cvars.whisperMode == "selbst", "Wahl des Spielers ueberschrieben")
+        assert(ui.before == nil and ui.cvars.chatStyle == nil and ui.cvars.whisperMode == nil, "Merkliste nicht geleert")
+
+        -- Selbst umgestellt (Vorlage aktiv): Ausschalten fasst das Layout nicht an.
+        K.SetUIEnabled(true)
+        stored.activeLayout = 1
+        local n = switches
+        assert(PF.Leave() == "kept" and stored.activeLayout == 1 and switches == n, "eigene Wahl des Spielers ueberstimmt")
+
+        -- Nichts gemerkt (Oberflaeche vor 6.9.0.0): erstes eigenes Layout,
+        -- ehrlich als Ersatz gemeldet - nie "WeintCodex".
+        stored.activeLayout, ui.before = 4, nil
+        local how, now = PF.Leave()
+        assert(how == "fallback" and now.name == "Mein Layout" and stored.activeLayout == 3, "kein ehrlicher Ersatz: " .. tostring(how))
+        -- Ohne eigenes Layout: die erste Vorlage des Spiels.
+        stored.layouts = { { layoutName = "WeintCodex" } }
+        stored.activeLayout = 3
+        how, now = PF.Leave()
+        assert(how == "fallback" and now.preset == 1 and stored.activeLayout == 1, "keine Vorlage als Ersatz")
+
+        -- Besitzer Modul: die Anzeige des Spiels kommt zurueck, sobald die
+        -- Schadensanzeige aus ist.
+        ui.enabled = true
+        PF.SetCVar("damageMeterEnabled", "0", "damagemeter")
+        assert(PF.Sweep() == 0 and cvars.damageMeterEnabled == "0", "laufender Besitzer verliert seine Einstellung")
+        ui.modules.damagemeter = ui.modules.damagemeter or {}
+        ui.modules.damagemeter.enabled = false
+        assert(PF.Sweep() == 1 and cvars.damageMeterEnabled == "1", "Anzeige des Spiels nicht zurueck")
+        ui.modules.damagemeter.enabled = nil
+    end)
+    _G.C_EditMode, _G.EditModePresetLayoutManager, _G.C_CVar = oldEM, oldPM, oldCV
+    ui.before, ui.cvars, ui.enabled = nil, nil, oldEnabled
+    Check(ok, "Profil: Layout von vorher gemerkt und zurueck, Spieleinstellungen nur eigene zurueck, ehrlicher Ersatz"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.9.0.0: OHNE OBERFLAECHE. Komfort laeuft, Oberflaeche nicht; was ein
+-- Fenster zeigt (Schadensanzeige, Erinnerungen), kommt ohne Oberflaeche
+-- erst, wenn man es waehlt. Klickzauber gelten dann auf den Rahmen des
+-- Spiels.
+do
+    local ui = K.Root()
+    local oldEnabled = ui.enabled
+    local CC = WeintCodex.UIClickCast
+    local gf = K.Module("groupframes")
+    local oldActive = gf._active
+    local ok, err = pcall(function()
+        ui.enabled = false
+        for _, key in ipairs({ "damagemeter", "reminders", "questarrow", "comfort" }) do
+            assert(K.Module(key).group == "qol", key .. " haengt an der Oberflaeche")
+        end
+        for _, key in ipairs({ "nameplates", "unitframes", "groupframes", "actionbars", "minimap", "chat", "bags", "questtracker" }) do
+            assert(K.Module(key).group == "ui" and not K.WantsActive(key), key .. " liefe ohne Oberflaeche")
+        end
+        assert(K.WantsActive("questarrow") and K.WantsActive("comfort"), "Komfort laeuft ohne Oberflaeche nicht")
+        assert(not K.WantsActive("damagemeter") and not K.WantsActive("reminders"),
+            "ohne Oberflaeche erscheint ein Fenster, das niemand gewaehlt hat")
+        K.SetModuleEnabled("damagemeter", true)
+        assert(K.WantsActive("damagemeter") and K.ReloadPending(), "Schadensanzeige ohne Oberflaeche nicht waehlbar")
+        ui.enabled = true
+        assert(K.WantsActive("reminders"), "mit Oberflaeche ist das Komplettpaket nicht an")
+        ui.modules.damagemeter.enabled = nil
+        -- Klickzauber: Rahmen des Spiels, wenn die eigenen Gruppenrahmen
+        -- nicht laufen; mit eigenen Kacheln nicht (die des Spiels sind weg).
+        gf._active = false
+        assert(CC.GameFrames(), "ohne Gruppenrahmen von WeintCodex keine Klickzauber auf denen des Spiels")
+        gf._active = true
+        local GG = WeintCodex.UIGameGroup
+        local was = GG.active
+        GG.active = false
+        assert(not CC.GameFrames(), "Klickzauber auf versteckten Rahmen des Spiels")
+        GG.active = was
+        -- Komfort aus: keine Belegung.
+        local seen
+        local oldApplyTo, oldFrames = CC.ApplyTo, CC.Frames
+        local f = CreateFrame("Button")
+        CC.Frames = function() return { f } end
+        CC.ApplyTo = function(x, list) if x == f then seen = #list end end
+        local oldBind = CC.Effective
+        CC.Effective = function() return { { button = 1, mod = "shift-", action = "target" } } end
+        ui.modules.comfort = ui.modules.comfort or {}
+        ui.modules.comfort.enabled = false
+        CC.Apply()
+        assert(seen == 0, "Komfort aus, Klickzauber gelten trotzdem")
+        ui.modules.comfort.enabled = nil
+        CC.Apply()
+        assert(seen == 1, "Komfort an, Klickzauber gelten nicht")
+        CC.ApplyTo, CC.Frames, CC.Effective = oldApplyTo, oldFrames, oldBind
+    end)
+    ui.enabled, gf._active = oldEnabled, oldActive
+    Check(ok, "Ohne Oberflaeche: Komfort ja, Oberflaeche nein, Fenster nur gewaehlt, Klickzauber auf Rahmen des Spiels"
         .. (ok and "" or (": " .. tostring(err))))
 end
 
@@ -2613,10 +2782,14 @@ do
     local ok, err = pcall(function()
         local CC = WeintCodex.UIClickCast
         assert(CC, "ui/clickcast.lua nicht geladen")
-        local gm = K.Module("groupframes")
+        -- Seit 6.9.0.0 im Komfort; die Einstellungen bleiben bei den
+        -- Gruppenrahmen (store), dort stehen auch die Standardwerte.
         local page = false
-        for _, pg in ipairs(gm.pages) do if pg.key == "klickzauber" then page = true end end
-        assert(page, "kein Reiter Klickzauber an den Gruppenrahmen")
+        for _, pg in ipairs(K.Module("comfort").pages) do
+            if pg.key == "klickzauber" and pg.store == "groupframes" then page = true end
+        end
+        assert(page, "kein Reiter Klickzauber im Komfort (Speicher der Gruppenrahmen)")
+        assert(K.Get("groupframes", "clickTooltip") ~= nil, "Standardwerte der Klickzauber fehlen")
         local oldClass, oldCombat, oldFrames = _G.UnitClass, _G.InCombatLockdown, CC.Frames
         _G.UnitClass = function() return "Priesterin", "PRIEST", 5 end
         _G.InCombatLockdown = function() return false end

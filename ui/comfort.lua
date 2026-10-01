@@ -438,7 +438,7 @@ local function Row2(a, b) return a, b or { type = "empty" } end
 K.Register({
     key = KEY, group = "qol", order = 60,
     title = "Komfort",
-    description = "Kleine Helfer für den Alltag: reparieren, Schrott verkaufen, schneller plündern, Hinweise. Jeder einzeln, jeder von Haus aus aus.",
+    description = "Helfer für den Alltag, mit und ohne Oberfläche: reparieren, Schrott verkaufen, Hinweise, Klickzauber, Makros, Automark. Jeder einzeln schaltbar.",
     defaultEnabled = true,
     defaults = defaults,
     -- Verteilt wird ueber den Rueckruf "active" unten: K.Activate setzt
@@ -479,6 +479,21 @@ K.Register({
         end },
     },
 })
+
+-- Seiten aus Dateien, die frueher laden (6.9.0.0): Klickzauber (mit
+-- Entfluchen) und Makro-Helfer gehen auch ohne Oberflaeche, also stehen sie
+-- hier. Ihre Einstellungen bleiben, wo sie immer lagen (`store`) - nichts
+-- Gespeichertes geht beim Umzug verloren.
+do
+    local m = K.Module(KEY)
+    local CC, MH = WeintCodex.UIClickCast, WeintCodex.UIMacros
+    if CC and CC.BuildPage then
+        m.pages[#m.pages + 1] = { key = "klickzauber", label = "Klickzauber", store = "groupframes", build = CC.BuildPage }
+    end
+    if MH and MH.BuildPage then
+        m.pages[#m.pages + 1] = { key = "makros", label = "Makros", store = "actionbars", build = MH.BuildPage }
+    end
+end
 
 -- Nach dem Einschalten (K.Activate setzt _active erst nach Enable) die
 -- Ereignisse einmal nach Lage verteilen.

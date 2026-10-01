@@ -911,8 +911,13 @@ local function DraftChanged() K.Fire("setting", KEY, "draft") end
 
 local function px(v) return string.format("%d px", v) end
 
+-- Komfort, nicht Oberflaeche (6.9.0.0): ein eigenes Fenster, das dem
+-- Spiel fehlt - es geht auch ohne die WeintCodex-Oberflaeche. Von Haus aus
+-- an, wenn die Oberflaeche an ist; sonst erst, wenn du es einschaltest.
+-- Schalten wirkt nach dem Neuladen (eigene Fenster und Ereignisse, die
+-- sich im laufenden Spiel nicht sauber abbauen).
 K.Register({
-    key = KEY, group = "ui", order = 58,
+    key = KEY, group = "qol", order = 58, defaultEnabled = "ui", reload = true,
     title = "Erinnerungen",
     description = "Fehlende Buffs, Waffenverzauberung und Begleiter vor dem Kampf; eigene Buffs, Procs und Abklingzeiten als Symbole – so weit der Client sie herausgibt.",
     defaults = defaults,

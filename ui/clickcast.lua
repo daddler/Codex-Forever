@@ -221,10 +221,20 @@ function CC.ApplyTo(f, list)
 end
 
 -- Jeder Rahmen, der eine Einheit zeigt.
+-- OHNE OBERFLAECHE (seit 6.9.0.0 Komfort): laufen die Gruppenrahmen von
+-- WeintCodex nicht, sind die Rahmen des Spiels die, auf die man klickt -
+-- dann gilt die Belegung dort, ungestylt. Mit eigenen Kacheln nicht: die
+-- Rahmen des Spiels sind dann versteckt.
+function CC.GameFrames()
+    local GG = WeintCodex.UIGameGroup
+    if not GG then return false end
+    return GG.active or not K.IsActive("groupframes")
+end
+
 function CC.Frames()
     local out = {}
     local GG = WeintCodex.UIGameGroup
-    if GG and GG.active then
+    if CC.GameFrames() then
         for _, f in ipairs(GG.Frames()) do out[#out + 1] = f end
     end
     local GF = WeintCodex.UIGroupFrames
@@ -247,7 +257,11 @@ function CC.Apply()
         end
         return false
     end
-    local list = CC.Effective()
+    -- Seit 6.9.0.0 ein Teil des Komforts: ist der aus, gilt keine Belegung.
+    local list = K.ModuleEnabled("comfort") and CC.Effective() or {}
+    -- Nichts belegt und nie etwas gesetzt: die Rahmen des Spiels nicht
+    -- einmal anfassen (kein Tooltip-Haken auf Rahmen, die niemand belegt).
+    if #list == 0 and _G.next(applied) == nil then return true end
     local seen = {}
     for _, f in ipairs(CC.Frames()) do
         seen[f] = true
@@ -620,7 +634,7 @@ function CC.BuildPage(B)
     local class = PlayerClass()
     local label = class and WeintCodex.Names and WeintCodex.Names.ClassLabel(class) or "deine Klasse"
     B:Section("Belegung – " .. tostring(label),
-        "Klick mit Taste auf einen Rahmen von WeintCodex (Gruppe, Schlachtzug, Spieler, Ziel …) wirkt den Zauber auf diese Einheit – ohne sie erst anzuwählen. Gilt für diese Klasse. Im Kampf änderst du nichts; es greift danach.")
+        "Klick mit Taste auf einen Gruppen- oder Schlachtzugsrahmen (auch die des Spiels, wenn du die Oberfläche nicht nutzt) wirkt den Zauber auf diese Einheit – ohne sie erst anzuwählen. Gilt für diese Klasse. Im Kampf änderst du nichts; es greift danach.")
     B:Row({ type = "custom", height = LIST_ROWS * 26 + 18, create = function(parent, width)
                 return CC.BuildList(parent, width)
             end }, nil)
@@ -639,18 +653,19 @@ function CC.BuildPage(B)
     if DP and DP.BuildSection then DP.BuildSection(B) end
     B:Section("Wo")
     B:Row({ type = "toggle", label = "Auch Einheitenrahmen", key = "clickUnitFrames",
-            description = "Spieler, Ziel, Fokus, Ziel des Ziels und Begleiter – nicht nur Gruppe und Schlachtzug." },
+            description = "Spieler, Ziel, Fokus, Ziel des Ziels und Begleiter von WeintCodex – nur mit der Oberfläche." },
           { type = "toggle", label = "Belegung im Tooltip", key = "clickTooltip",
             description = "Maus über einem Rahmen zeigt, welche Taste welchen Zauber wirkt." })
     B:Note("Links ohne Zusatztaste wählt sonst das Ziel, Rechts öffnet das Menü – belegst du sie, gilt deine Belegung. Tastatur-Tasten beim Drüberfahren (wie in Clique) kann der Forever-Client für Addons nicht, ebenso keine Kombinationen wie Strg + Umschalt.")
 end
 
--- An die Gruppenrahmen haengen: Standardwerte und Reiter.
+-- Die Standardwerte stehen bei den Gruppenrahmen (dort waren sie immer;
+-- gespeicherte Werte bleiben). Die SEITE steht seit 6.9.0.0 im Komfort
+-- (ui/comfort.lua haengt sie an) - Klickzauber gehen auch ohne Oberflaeche.
 do
     local m = K.Module(KEY)
     if m then
         for k, v in pairs(CC.DEFAULTS) do m.defaults[k] = v end
-        m.pages[#m.pages + 1] = { key = "klickzauber", label = "Klickzauber", build = CC.BuildPage }
     end
 end
 
@@ -659,11 +674,25 @@ end
 -- (neuer Charakter = neues Einloggen).
 K.Listen(function(kind, module, key)
     if kind ~= "setting" then return end
-    if module == STORE or (module == KEY and key ~= "clickDraft") then CC.Apply() end
+    if module == STORE or (module == KEY and key ~= "clickDraft")
+       or (module == "comfort" and key == "enabled") then CC.Apply() end
 end)
+-- Ohne die Gruppenrahmen von WeintCodex entstehen die Rahmen des Spiels,
+-- wenn die Gruppe waechst - dann neu anwenden (mit ihnen erledigt das
+-- ui/gamegroup.lua). Kurz gesammelt: ein Gruppenwechsel kommt selten allein.
+local applyLater = false
+local function ApplySoon()
+    if applyLater then return end
+    applyLater = true
+    local function run() applyLater = false CC.Apply() end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.3, run) else run() end
+end
+CC.ApplySoon = ApplySoon
+
 local ev = CreateFrame("Frame")
-ev:RegisterEvent("PLAYER_ENTERING_WORLD")
-ev:SetScript("OnEvent", function()
-    if K.UIEnabled and not K.UIEnabled() then return end
-    CC.Apply()
+for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "GROUP_ROSTER_UPDATE" }) do pcall(ev.RegisterEvent, ev, e) end
+ev:SetScript("OnEvent", function(_, event)
+    if event == "PLAYER_ENTERING_WORLD" then CC.Apply() return end
+    local GG = WeintCodex.UIGameGroup
+    if not (GG and GG.active) then ApplySoon() end
 end)

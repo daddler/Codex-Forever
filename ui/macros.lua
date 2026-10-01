@@ -24,8 +24,8 @@
 -- Die 255 sind Bytes: ein Umlaut zaehlt doppelt - der Zaehler zaehlt
 -- deshalb Bytes (#), mit Absicht, nicht Zeichen.
 --
--- WO. Eine Seite der Aktionsleisten ("Makros"), kein eigenes Modul: dort
--- landet das Makro, und die Seitenleiste der Einstellungen hat keinen Platz
+-- WO. Eine Seite im Komfort ("Makros", bis 6.8.1.0 bei den Aktionsleisten),
+-- kein eigenes Modul: die Seitenleiste der Einstellungen hat keinen Platz
 -- fuer einen weiteren Eintrag (load_test.lua, "Nichts muss scrollen").
 -- Der Entwurf lebt nur in dieser Sitzung; angelegt ist angelegt.
 --------------------------------------------------
@@ -499,7 +499,5 @@ function MH.BuildPage(B)
         .. "Alle Makros findest du im Spiel mit /m.")
 end
 
-do
-    local m = K.Module(KEY)
-    if m then m.pages[#m.pages + 1] = { key = "makros", label = "Makros", build = MH.BuildPage } end
-end
+-- Die Seite steht seit 6.9.0.0 im Komfort (ui/comfort.lua haengt sie an):
+-- Makros anlegen braucht die Oberflaeche nicht.

@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.8.1.0
+## Version: 6.9.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -146,6 +146,9 @@ core/search.lua
 # dahin angemeldet hat.
 #
 ui/kit.lua
+# Dein Profil bleibt deins (6.9.0.0): Layout und Spieleinstellungen von
+# vorher merken und beim Ausschalten zurueckgeben.
+ui/profile.lua
 # Bausteine der Designsprache fuer die Fenster des Spiels (6.7.0.0).
 ui/style.lua
 ui/layout.lua

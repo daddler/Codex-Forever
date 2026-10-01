@@ -9,6 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.9.0.0] – 2026-10-01
+
+**Die WeintCodex-Oberfläche ist wieder freiwillig.** Das Spiel merkt sich Einstellungen jetzt, also fragt WeintCodex einmal, ob du sie verwenden möchtest – auch, wenn du sie bisher hattest. Ein- und ausschalten kannst du sie jederzeit mit /wcui.
+
+**Dein Profil bleibt deins.** Die Oberfläche bekommt im Bearbeitungsmodus ihr eigenes Layout. Dein bisheriges Layout, deine Chatreiter und deine Spieleinstellungen werden nicht überschrieben – schaltest du sie aus, ist dein Layout wieder aktiv, und was WeintCodex an Einstellungen geändert hat, steht wie vorher.
+
+**Komfort auch ohne Oberfläche.** Schadensanzeige, Erinnerungen, Questpfeil, Klickzauber mit Entfluchen, Makro-Helfer, Automark und die kleinen Helfer stehen jetzt unter Komfort und laufen auch mit den Rahmen des Spiels – Klickzauber dann direkt auf dessen Gruppenrahmen. Das Komplettpaket ist mit der Oberfläche von Haus aus an; ohne sie wählst du selbst.
+
+### Technisch
+
+- `UIKit.OPT_IN = true` (6.0.0.3–6.8.1.0 `false`, weil der Beta-Client nicht speicherte). Frage beim Einloggen wieder aktiv; wer die Oberfläche vorher ungefragt hatte, hat keine gespeicherte Antwort und wird einmal gefragt.
+- Neu `ui/profile.lua`: `PF.Remember()` merkt das aktive Layout des Bearbeitungsmodus vor dem Einschalten (einmal, nur wenn der Client antwortet) in `ui.before`; `PF.Leave()` setzt es beim Ausschalten zurück, nur wenn „WeintCodex“ noch aktiv ist, sonst ehrlich gemeldeter Ersatz. `PF.SetCVar(name, wert, besitzer)` merkt den ersten Wert in `ui.cvars`; `PF.Sweep()` gibt ihn zurück, sobald der Besitzer nicht mehr läuft – nur, wenn noch unser Wert steht. `K.SetUIEnabled` ruft `PF.OnSwitch`, Anmelden und Modulschalter rufen `PF.Sweep`.
+- `ui/setup.lua`: kein `FCF_ResetChatWindows` mehr; Spieleinstellungen über `PF.SetCVar(…, "ui")`.
+- `ui/damagemeter.lua`: `damageMeterEnabled` über `PF.SetCVar(…, "damagemeter")` – die Anzeige des Spiels kommt zurück, wenn die Schadensanzeige oder ihr Schalter aus ist (vorher blieb sie für immer aus).
+- Schadensanzeige und Erinnerungen: `group = "qol"`, `defaultEnabled = "ui"` (neu in `K.ModuleEnabled`), `reload = true`. Klickzauber und Makro-Helfer als Seiten im Komfort mit `store =` (Einstellungen bleiben bei Gruppenrahmen bzw. Aktionsleisten). `CC.GameFrames()`: ohne Gruppenrahmen von WeintCodex gelten Klickzauber auf denen des Spiels, neu angewendet bei `GROUP_ROSTER_UPDATE`; Komfort aus → keine Belegung.
+- `load_test.lua`: Prüflauf als Spieler mit „Ja“; neue Abschnitte „Profil“ und „Ohne Oberfläche“; elf Gegenproben (Original überschrieben, fremder Wert zurückgedreht, eigene Wahl überstimmt, leeres Vorher, falscher Ersatz, Einrichtung ohne Merken, Fenster ohne Wahl, Klickzauber ohne Rahmen des Spiels, Klickzauber trotz Komfort aus, Schadensanzeige an der Oberfläche, Hauptschalter ohne Profil).
+
 ## [6.8.1.0] – 2026-10-01
 
 **Namensplaketten mit Leben.** Was ein Treffer nimmt, bleibt einen Moment hell stehen und schmilzt dann weg; das Leben gleitet, statt zu springen. Dein Ziel atmet: das Leuchten pulsiert, eine feine Kante trägt deine Klassenfarbe, ab und zu läuft ein Glanz über den Balken, jeder Treffer blitzt kurz auf und die Zielmarken bewegen sich. Jeder Effekt lässt sich einzeln abschalten.

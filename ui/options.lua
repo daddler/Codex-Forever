@@ -69,7 +69,7 @@ K.Register({
     -- Die Beschreibung haengt an UIKit.OPT_IN (ui/kit.lua): solange der
     -- Client keine Einstellungen speichert, ist die Oberflaeche fuer alle an.
     description = K.OPT_IN
-        and "Ein eigenes, schlichtes Interface zusätzlich zu WeintCodex — ganz freiwillig. Aus bleibt alles, wie das Spiel es zeigt; die Komfortfunktionen gehen trotzdem."
+        and "Ein eigenes, schlichtes Interface zusätzlich zu WeintCodex — ganz freiwillig, mit eigenem Layout. Aus bleibt alles, wie das Spiel es zeigt; alles unter „Komfort“ geht trotzdem."
         or "Das Interface von WeintCodex: Plaketten, Rahmen, Leisten, Karte, Chat, Taschen und Schadensanzeige. Jedes Modul lässt sich einzeln abschalten.",
     defaults = (function()
         -- highlight: die Farbe der Oberflaeche - Klasse (Standard) oder
@@ -107,11 +107,12 @@ K.Register({
                 onClick = function() K.SetUnlocked(not K.IsUnlocked()) end }
             if K.OPT_IN then
                 B:Row({ type = "toggle", label = "WeintCodex-Oberfläche verwenden",
-                        description = "Namensplaketten und Einheitenrahmen von WeintCodex statt der des Spiels. Wirkt nach dem Neuladen.",
+                        description = "Plaketten, Rahmen, Leisten, Karte, Chat, Taschen und Fenster von WeintCodex statt der des Spiels. Wirkt nach dem Neuladen.",
                         get = function() return K.UIEnabled() end,
                         set = function(on) K.SetUIEnabled(on) end },
                       unlock)
-                B:Note("Die Komfortfunktionen links unter „Komfort“ — Questpfeil, Reparieren, Schrott verkaufen und Co. — hängen nicht an diesem Schalter. Du kannst sie ohne die Oberfläche benutzen.")
+                B:Note("Eigenes Profil: Die Oberfläche bekommt im Bearbeitungsmodus ein eigenes Layout „WeintCodex“. Dein Layout, deine Chatreiter und deine Spieleinstellungen bleiben – schaltest du aus, ist dein Layout wieder aktiv, und was WeintCodex an Einstellungen geändert hat, steht wie vorher.")
+                B:Note("Alles links unter „Komfort“ — Schadensanzeige, Questpfeil, Erinnerungen, Klickzauber, Makro-Helfer, Automark und die kleinen Helfer — hängt nicht an diesem Schalter. Schadensanzeige und Erinnerungen sind mit der Oberfläche von Haus aus an; ohne sie schaltest du sie selbst ein.")
             else
                 B:Row(unlock, { type = "empty" })
                 B:Note("Die WeintCodex-Oberfläche ist derzeit für alle eingeschaltet. Der Forever-Beta-Client speichert Addon-Einstellungen nicht über ein Neuladen hinweg – eine Wahl „an“ oder „aus“ wäre nach jedem /reload vergessen. Sobald der Client wieder speichert, kommt der Hauptschalter zurück.")
@@ -202,8 +203,10 @@ function O.ModuleStatus(key)
         return K.UIEnabled() and "an" or "aus", K.UIEnabled() and "success" or "textDim"
     end
     local wants, active = K.WantsActive(key), K.IsActive(key)
+    if (m.group == "ui" or m.reload) and wants ~= active then
+        return "nach dem Neuladen " .. (wants and "an" or "aus"), "warning"
+    end
     if m.group == "ui" then
-        if wants ~= active then return "nach dem Neuladen " .. (wants and "an" or "aus"), "warning" end
         if active then return "an", "success" end
         if not K.UIEnabled() then return "Oberfläche aus", "textFaint" end
         return "aus", "textDim"
@@ -473,7 +476,9 @@ local function ShowPage()
         local host = CreateFrame("Frame", nil, inner)
         host:SetPoint("TOPLEFT", inner, "TOPLEFT", 0, 0)
         host:SetSize(CONTENT_W, 10)
-        local B = NewBuilder(key, host)
+        -- `store`: eine Seite, deren Einstellungen bei einem anderen Modul
+        -- liegen (Klickzauber und Makros im Komfort, 6.9.0.0).
+        local B = NewBuilder((def and def.store) or key, host)
         if def and def.build then
             local ok, err = pcall(def.build, B)
             if not ok then K.Report(key, err) end

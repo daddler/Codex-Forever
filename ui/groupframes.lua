@@ -845,7 +845,7 @@ local function px(v) return string.format("%d px", v) end
 K.Register({
     key = KEY, group = "ui", order = 25,
     title = "Gruppenrahmen",
-    description = "Gruppe und Schlachtzug: die Rahmen des Spiels im WeintCodex-Stil – mit HoTs, Buffs, Schilden und Debuffs auch im Kampf – oder eigene Kacheln. Dazu Klickzauber: Zauber auf Maustasten.",
+    description = "Gruppe und Schlachtzug: die Rahmen des Spiels im WeintCodex-Stil – mit HoTs, Buffs, Schilden und Debuffs auch im Kampf – oder eigene Kacheln. Klickzauber stehen unter „Komfort“.",
     defaults = defaults,
     Enable = Enable,
     OnSetting = OnSetting,

@@ -1960,9 +1960,14 @@ local function Enable()
         for i = 1, Count() do if windows[i] then out[#out + 1] = windows[i].frame end end
         return out
     end, "fade_damage")
+    -- Ueber ui/profile.lua: der Wert von vorher kommt zurueck, sobald die
+    -- Schadensanzeige oder dieser Schalter aus ist (6.9.0.0 - vorher blieb
+    -- die Anzeige des Spiels fuer immer aus).
+    local PF = WeintCodex.UIProfile
     if Opt("hideBlizzard") then
-        local set = (_G.C_CVar and _G.C_CVar.SetCVar) or _G.SetCVar
-        if set then pcall(set, "damageMeterEnabled", "0") end
+        PF.SetCVar("damageMeterEnabled", "0", KEY)
+    else
+        PF.Release("damageMeterEnabled")
     end
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "DAMAGE_METER_COMBAT_SESSION_UPDATED", "DAMAGE_METER_CURRENT_SESSION_UPDATED",
@@ -2012,8 +2017,13 @@ local function ModeItems()
 end
 local SESSION_ITEMS = { { value = "Current", text = "Dieser Kampf" }, { value = "Overall", text = "Ganze Sitzung" } }
 
+-- Komfort, nicht Oberflaeche (6.9.0.0): ein eigenes Fenster, das dem
+-- Spiel fehlt - es geht auch ohne die WeintCodex-Oberflaeche. Von Haus aus
+-- an, wenn die Oberflaeche an ist; sonst erst, wenn du es einschaltest.
+-- Schalten wirkt nach dem Neuladen (eigene Fenster und Ereignisse, die
+-- sich im laufenden Spiel nicht sauber abbauen).
 K.Register({
-    key = KEY, group = "ui", order = 55,
+    key = KEY, group = "qol", order = 55, defaultEnabled = "ui", reload = true,
     title = "Schadensanzeige",
     description = "Schaden, Heilung, erlittener Schaden, Unterbrechungen, Bannungen und Tode als Balken – bis zu vier Fenster, gemessen vom Spiel selbst.",
     defaults = defaults,

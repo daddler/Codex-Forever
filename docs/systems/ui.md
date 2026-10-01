@@ -14,46 +14,106 @@ Komfortfunktionen – eingestellt in einem eigenen Fenster (`/wcui`,
 `/wc ui`, oder in den Einstellungen des Hauptfensters unter
 „Oberfläche“).
 
-## Freiwillig – und seit 6.0.0.3 vorübergehend nicht (`UIKit.OPT_IN`)
+## Freiwillig – wieder seit 6.9.0.0 (`UIKit.OPT_IN`)
 
 Gebaut ist sie **freiwillig**: Hauptschalter, Frage beim Einloggen
 (`ui/welcome.lua`), und solange der Schalter aus ist, fasst WeintCodex
 keinen Blizzard-Rahmen an.
 
-Das setzt voraus, dass der Client die Wahl speichert. Der
-Forever-Beta-Client tut das nicht (6.0.0.1 gemeldet, 6.0.0.2 bestätigt:
-auch „Mit Esc schließen“ überlebt kein `/reload`). Eine Wahl, die nach
-jedem Neuladen vergessen ist, ist keine. **Seit 6.0.0.3 ist die
-Oberfläche deshalb für alle an.**
+Von 6.0.0.3 bis 6.8.1.0 war sie **für alle an** (`K.OPT_IN = false`):
+der Forever-Beta-Client speicherte die SavedVariables nicht, und eine Wahl,
+die nach jedem Neuladen vergessen ist, ist keine. Seit der Client wieder
+speichert (Beta-Test nach 6.8.1.0), steht `K.OPT_IN = true`:
 
-Die Rückkehr ist **eine Zeile**: `K.OPT_IN = false` in `ui/kit.lua` auf
-`true`. Dann gilt ohne jede weitere Änderung wieder:
-
-| Stelle | mit `OPT_IN = true` | mit `OPT_IN = false` (jetzt) |
+| Stelle | mit `OPT_IN = true` (jetzt) | mit `OPT_IN = false` |
 |---|---|---|
 | `UIKit.UIEnabled()` | liest den gespeicherten Hauptschalter | immer `true` |
 | Frage beim Einloggen | nach der Einführung, einmal je Konto | kommt nie |
 | Hauptschalter in `/wcui` | Schalter oben rechts und auf „Allgemein“ | Hinweis „derzeit für alle an“ |
 | Einstellungen → Oberfläche | Schalter | derselbe Hinweis |
-| Einführung, Kapitel „Oberfläche & Komfort“ | „ganz freiwillig“ | „derzeit für alle eingeschaltet“ |
+| Einführung, Kapitel „Oberfläche & Komfort“ | „ganz freiwillig“, eigenes Layout | „derzeit für alle eingeschaltet“ |
 
 Alle Stellen fragen `K.OPT_IN` zur Laufzeit; `load_test.lua` prüft beide
-Zustände (die Frage und ihre Antworten laufen mit `OPT_IN = true` durch).
-**Wann umschalten:** sobald Einstellungen → Diagnose → „Speichern“ nach
-einem `/reload` „gespeichert“ meldet (`WeintCodex.SaveHealth()`).
+Zustände. Der Prüflauf spielt einen Spieler, der „Ja“ gesagt hat
+(`ui.enabled = true` vor `PLAYER_LOGIN`), und prüft den Weg ohne
+Oberfläche in einem eigenen Abschnitt.
 
-Einzelne Module lassen sich in `/wcui` weiterhin abschalten – das gilt,
-solange der Client nicht speichert, ebenfalls nur bis zum Neuladen.
+**Wer die Oberfläche vor 6.9.0.0 hatte**, hat nie geantwortet (gespeichert
+wurde nichts): er wird einmal gefragt, und bis dahin ist sie in dieser
+Sitzung aus – das Layout „WeintCodex“ des Bearbeitungsmodus ist dann noch
+aktiv. „Ja“ lädt neu, „Nein“ gibt ihm sein eigenes Layout zurück (siehe
+*Dein Profil bleibt deins*).
+
+## Dein Profil bleibt deins *(6.9.0.0, `ui/profile.lua`)*
+
+Beta-Test: „Wenn man die WeintCodexUI nutzen will, dann muss ein neues
+Profil angelegt werden, damit nichts gelöscht oder überschrieben wird!“
+
+Außerhalb ihres eigenen Speichers fasst die Oberfläche genau zwei Dinge
+des Spiels an:
+
+1. **Das Layout des Bearbeitungsmodus.** Die Einrichtung legt ein
+   eigenes Layout „WeintCodex“ an (Grundlage: die Vorlage des Spiels) und
+   schreibt nie in eines des Spielers. Neu: **vorher** merkt sich
+   `PF.Remember()` in `ui.before`, welches Layout aktiv war – nur einmal,
+   bis es zurückgegeben ist (ein zweites Einschalten darf das Original
+   nicht mit „WeintCodex“ überschreiben), und nur, wenn der Client
+   antwortet (ein leeres „vorher“ versperrte sonst das echte).
+2. **Spieleinstellungen (CVars).** Jede Änderung läuft über
+   `PF.SetCVar(name, wert, besitzer)` und merkt den **allerersten** Wert
+   in `ui.cvars`. Besitzer ist `"ui"` (die Einrichtung) oder ein Modul
+   (die Schadensanzeige blendet die des Spiels aus). Läuft der Besitzer
+   nicht mehr, gibt `PF.Sweep()` den alten Wert zurück – beim Anmelden,
+   nach jedem Modulschalter und beim Ausschalten –, **aber nur, wenn noch
+   unser Wert steht**. Hat der Spieler die Einstellung inzwischen selbst
+   geändert, gilt seine (`PF.Release`).
+
+**Ausschalten** (Hauptschalter, „Nein“ bei der Frage): `PF.Leave()` setzt
+das gemerkte Layout wieder aktiv – nur, wenn gerade „WeintCodex“ aktiv
+ist; wer selbst umgestellt hat, behält seine Wahl. Ist nichts gemerkt
+(Oberfläche vor 6.9.0.0) oder das gemerkte gelöscht, nimmt es das erste
+eigene Layout, sonst die erste Vorlage – und sagt im Chat, dass es ein
+Ersatz ist. Das Layout „WeintCodex“ bleibt stehen; wer wieder einschaltet,
+muss nicht neu einrichten (`PF.Enter()` setzt es aktiv). Im Kampf wartet
+der Wechsel bis nach dem Kampf.
+
+**Nicht mehr:** die Chatfenster zurücksetzen (`FCF_ResetChatWindows`,
+6.6.1.3 bis 6.8.1.0). Reiter und Kanäle speichert das Spiel nur einmal
+je Charakter – ein zweites Profil davon gibt es nicht, zurücksetzen hieß
+löschen. Wo der Chat steht, stellt weiter das Layout.
+
+Bewusst **nicht** über das Profil: die Spieleinstellungen, die die Seiten
+„Namensplaketten“ und „Abklingzeitmanager“ als Schalter zeigen. Das sind
+die Schalter des Spiels selbst, nur an anderer Stelle – wie im Spielmenü
+gelten sie auch ohne Oberfläche.
 
 ## Zwei Arten von Modulen
 
 | Gruppe | Module | Hängt am Hauptschalter? | Umschalten |
 |---|---|---|---|
-| `ui` | Namensplaketten, Einheitenrahmen, Gruppenrahmen, Aktionsleisten, Minikarte, Chat, Taschen, Schadensanzeige, Questliste | **ja** (derzeit immer an) | nach dem Neuladen |
-| `qol` | Questpfeil, Komfort | **nein** | sofort |
+| `ui` | Namensplaketten, Einheitenrahmen, Gruppenrahmen, Aktionsleisten, Minikarte, Chat, Taschen, Questliste; Tooltip und Fenster des Spiels (`general`) | **ja** | nach dem Neuladen |
+| `qol` | Questpfeil, Schadensanzeige, Erinnerungen, Komfort (mit Automark, Klickzauber samt Entfluchen, Makro-Helfer) | **nein** | sofort; Schadensanzeige und Erinnerungen nach dem Neuladen (`reload = true`) |
 
-Der Unterschied ist Absicht: wer die Oberfläche nicht will, soll den
-Questpfeil und das automatische Reparieren trotzdem haben können.
+Die Regel seit 6.9.0.0: **ersetzt oder kleidet** ein Teil etwas des
+Spiels, ist es Oberfläche; **fügt** es etwas hinzu, das dem Spiel fehlt,
+ist es Komfort. Wer die Oberfläche nicht will, soll Schadensanzeige,
+Questpfeil, Klickzauber und das automatische Reparieren trotzdem haben
+können – das Komplettpaket gibt es mit der Oberfläche.
+
+`defaultEnabled = "ui"` (Schadensanzeige, Erinnerungen): von Haus aus an,
+wenn die Oberfläche an ist, sonst aus. Wer „Nein“ zur Oberfläche sagt,
+bekommt kein Fenster, das er nicht gewählt hat – und die Anzeige des
+Spiels wird nicht ausgeblendet. Eine ausdrückliche Wahl gilt in beiden
+Fällen.
+
+Klickzauber und Makro-Helfer sind seit 6.9.0.0 **Seiten im Komfort**; ihre
+Einstellungen bleiben, wo sie immer lagen (Seiteneintrag `store =
+"groupframes"` bzw. `"actionbars"`, `NewBuilder(def.store or key)`), nichts
+Gespeichertes geht beim Umzug verloren. Ohne die Gruppenrahmen von
+WeintCodex gelten die Klickzauber auf den Rahmen des Spiels
+(`CC.GameFrames()`; neu angewendet bei `GROUP_ROSTER_UPDATE`), mit eigenen
+Kacheln nicht – die des Spiels sind dann versteckt. Ist der Komfort aus,
+gilt keine Belegung.
 
 `ui`-Module **ersetzen** Blizzard-Rahmen. Einen ersetzten Rahmen im
 laufenden Spiel sauber zurückzugeben, ist ohne Taint-Risiko nicht zu
@@ -93,6 +153,7 @@ weil sie genau das sind, wofür er steht.
 | Datei | Aufgabe |
 |---|---|
 | `ui/kit.lua` | Speicher, Modulregister, Hauptschalter, Kampfsperre, Schrift, **Stil 2.0** (`NewBar`, `Glow`, `Kachel`), Rahmen, **Verschieben** |
+| `ui/profile.lua` | *(6.9.0.0)* Layout des Bearbeitungsmodus und Spieleinstellungen von vorher merken, beim Ausschalten zurückgeben |
 | `ui/layout.lua` | **wo alles steht**: die Standardpositionen aller beweglichen Rahmen (`UIKit.LAYOUT`, `UIKit.Layout`) |
 | `ui/presence.lua` | **Ruhe, Bereit, Kampf**: Deckkraft außerhalb des Kampfes |
 | `ui/testmode.lua` | **Testmodus**: Beispieldaten für Ziel, Fokus, Gruppe, Zauberbalken, Schadensanzeige |
@@ -121,8 +182,11 @@ Ausschließlich `WeintCodex_SavedData.ui` – keine neue SavedVariable.
 ```
 ui = {
   enabled   = true|false,          -- Hauptschalter
+  asked     = true,                -- Frage beim Einloggen beantwortet
   modules   = { [modul] = { enabled = , <nur Abweichungen vom Standard> } },
   positions = { [rahmen] = { point, relPoint, x, y } },
+  before    = { layout = { name = } | { preset = n } | nil },  -- 6.9.0.0, ui/profile.lua
+  cvars     = { [name] = { orig, set, owner } },               -- 6.9.0.0, ui/profile.lua
 }
 ```
 
@@ -225,18 +289,20 @@ Einstellungsseite des Moduls.
 
 ## Die Frage beim Einloggen (`ui/welcome.lua`)
 
-**Ruht seit 6.0.0.3** (siehe oben, `OPT_IN`). Beschrieben ist, wie sie
-arbeitet, wenn `OPT_IN` wieder `true` ist.
+Ruhte von 6.0.0.3 bis 6.8.1.0 (siehe oben, `OPT_IN`); seit 6.9.0.0 wieder
+in Kraft.
 
 Einmal je Konto fragt WeintCodex, ob die Oberfläche verwendet werden
 soll – **nach** der Einführung bzw. dem Changelog-Popup, nie darüber
 (`Onboarding.OnClosed`, `Onboarding.IsShowing`), und nie im Kampf.
 
-* **Ja** → Hauptschalter an, Angebot „Jetzt neu laden“ / „Später“.
+* **Ja** → Hauptschalter an (das Layout von vorher wird gemerkt, siehe
+  *Dein Profil bleibt deins*), Angebot „Jetzt neu laden“ / „Später“.
 * **Nein** → nichts wird angefasst, und der Hinweis, wo man es später
   einschaltet (Einstellungen → „Oberfläche“, `/wcui`), im Fenster und im
   Chat. Ein „Nein“ ohne diesen Satz wirkte endgültig, obwohl es das nicht
-  ist.
+  ist. Steht noch das Layout „WeintCodex“ (Oberfläche vor 6.9.0.0), kommt
+  das eigene zurück.
 * ESC ist **keine** Antwort: die Frage kommt beim nächsten Einloggen
   wieder.
 

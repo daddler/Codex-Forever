@@ -581,10 +581,12 @@ local function ViewInterface(y)
 
     if K.OPT_IN then
         y = Group(y, "WeintCodex-Oberfläche",
-            "Ein eigenes, schlichtes Interface für Namensplaketten und"
-            .. " Einheitenrahmen — ganz freiwillig. Solange es aus ist, zeigt"
-            .. " das Spiel seine eigenen, und WeintCodex fasst keinen"
-            .. " Blizzard-Rahmen an.")
+            "Ein eigenes, schlichtes Interface: Plaketten, Rahmen, Leisten,"
+            .. " Karte, Chat, Taschen und die Fenster des Spiels — ganz"
+            .. " freiwillig. Solange es aus ist, zeigt das Spiel seine eigenen,"
+            .. " und WeintCodex fasst keinen Blizzard-Rahmen an. Eingeschaltet"
+            .. " bekommt es ein eigenes Layout; deins bleibt unverändert und ist"
+            .. " nach dem Ausschalten wieder aktiv.")
 
         y = Toggle(y, {
             label = "WeintCodex-Oberfläche verwenden",
@@ -617,11 +619,23 @@ local function ViewInterface(y)
         get = function() return K.ModuleEnabled("questarrow") end,
         set = function(on) K.SetModuleEnabled("questarrow", on) end,
     })
+    y = Toggle(y, {
+        label = "Schadensanzeige",
+        description = "Schaden, Heilung und mehr je Spieler – die Zahlen des Spiels. Wirkt nach dem Neuladen.",
+        get = function() return K.ModuleEnabled("damagemeter") end,
+        set = function(on) K.SetModuleEnabled("damagemeter", on) end,
+    })
+    y = Toggle(y, {
+        label = "Erinnerungen",
+        description = "Fehlende Buffs, Waffe, Begleiter, Munition; Procs und Abklingzeiten. Wirkt nach dem Neuladen.",
+        get = function() return K.ModuleEnabled("reminders") end,
+        set = function(on) K.SetModuleEnabled("reminders", on) end,
+    })
 
     y = Buttons(y, {
         { text = "Einstellungen der Oberfläche öffnen", kind = "primary",
-          tooltip = "Namensplaketten, Einheitenrahmen, Questpfeil und alle"
-              .. " Komfortfunktionen (/wcui).",
+          tooltip = "Namensplaketten, Einheitenrahmen, Schadensanzeige, Questpfeil,"
+              .. " Klickzauber, Makro-Helfer und alle Komfortfunktionen (/wcui).",
           onClick = function() WeintCodex.UIOptions.Show() end },
     })
 
