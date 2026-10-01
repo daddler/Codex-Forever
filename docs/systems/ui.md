@@ -2720,6 +2720,27 @@ Goldrahmen der Wahl bleiben), Reiter flach, der gewählte in Gold. Die
 Knöpfe flacht der allgemeine Durchlauf ab. Nur Bilder – Makros anlegen
 ist geschützt.
 
+### Handel *(6.9.0.2, `ui/trade.lua`)*
+
+Gemessen mit `/wcui fenster` (Beta-Test 6.9.0.1): `TradeFrame` (Marmor
+374155, Trennleiste „!UI-Frame-LeftTile“, Metallrahmen, Streifen, zwei
+Porträts RTPortrait1), sechs Innenflächen (Leder 374154, NineSlice
+„_UI-Frame-InnerTopTile/BotTile“), je Seite sieben Plätze mit Bildern
+136796 und 130766 am Platz, 130841 und 130718 am Knopf (je 14×), 137072
+am siebten Platz („Wird nicht gehandelt“), Grund des Gelds beim
+Gegenüber (`TradeRecipientMoneyBg`, 525911), Knöpfe mit 130826/130828.
+Gold (`S.CALM`): Hülle wie jedes Fenster (`W.WINDOWS`), Kante oben in Gold,
+die beiden Namen hell; Innenflächen über `.Bg` + `.NineSlice` erkannt
+(`W.OwnBackground`, Kante und Schatten aus `ui/calm.lua`), das Geld
+ebenso. Plätze (`TR.SLOT_FILES`) aus, der Knopf (130718) flach mit 1 px
+Rand; das Namensfeld (136796) wird eine flache Leiste.
+**Das Symbol eines Gegenstands bleibt immer:** Symbolregionen (`.icon`,
+`.Icon`, „…IconTexture“) werden nie angefasst, und eine ausgeblendete
+Region, die später ein anderes Bild zeigt, wird wieder sichtbar
+(`TR.hidden`, je Durchlauf geprüft). Ungemessen: welches der drei Bilder
+Rand, Stein oder leerer Platz ist (alle gehen), und ob „Handeln“ und
+„Abbrechen“ Left/Middle/Right tragen (dann flach).
+
 ### Symbol an der Minikarte *(6.9.0.0, `ui/launcher.lua`)*
 
 Mit Oberfläche ein zweites Symbol („WeintCodexUI“, Zahnrad) neben dem von

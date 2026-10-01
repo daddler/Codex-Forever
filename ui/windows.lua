@@ -76,7 +76,9 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               "LootFrame", "SettingsPanel",
               -- 6.9.0.0: Makros (/m, Blizzard_MacroUI, erst beim Oeffnen
               -- geladen; ui/macroframe.lua).
-              "MacroFrame" }
+              "MacroFrame",
+              -- 6.9.0.2: Handel (ui/trade.lua).
+              "TradeFrame" }
 
 -- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
 -- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus

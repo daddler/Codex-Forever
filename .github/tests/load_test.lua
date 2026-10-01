@@ -7665,6 +7665,97 @@ do
     Check(okMF, "Makrofenster: Gold, Plaetze flach, Symbole bleiben, Liste und Textfeld als Innenflaechen, Reiter in Gold, kein Muell"
         .. (okMF and "" or (": " .. tostring(errMF))))
 
+    -- 6.9.0.2: Handel in Gold. Beta-Test 6.9.0.1: Metallrahmen, Marmor,
+    -- Leder, Steinplaetze, Namensfelder, Portraets.
+    local okTR, errTR = pcall(function()
+        local W, S, TR, LF, GC = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UITrade, WeintCodex.UICalm, WeintCodex.GameColors
+        local listed = false
+        for _, n in ipairs(W.WINDOWS) do if n == "TradeFrame" then listed = true end end
+        assert(listed and TR and S.SCOPES.TradeFrame == S.CALM, "Handel nicht im Durchlauf oder nicht in Gold")
+        local hosts = {}
+        for _, h in ipairs(W.HOSTED.TradeFrame or {}) do hosts[h] = true end
+        assert(hosts[TR] and hosts[LF], "Handel ohne Plaetze oder ohne Kante an den Innenflaechen")
+        local saved = {}
+        local function Global(name, obj) saved[name] = _G[name] _G[name] = obj return obj end
+        local function Tex(id) local t = stub.NewObject("Texture") t._file = id t.GetTexture = function(self) return self._file end return t end
+        local tf = Global("TradeFrame", stub.NewObject("Frame", "TradeFrame"))
+        -- Ein Platz: Rahmen mit Stein/Namensfeld, Knopf mit Rand, leerem Platz und Symbol.
+        local item, btn = stub.NewObject("Frame"), stub.NewObject("Button")
+        local slotBg, nameBg = Tex(130766), Tex(136796)
+        item.GetRegions = function() return slotBg, nameBg end
+        -- Das Symbol traegt (leer) dasselbe Bild wie der leere Platz - es
+        -- darf trotzdem nie ausgeblendet werden.
+        local rim, empty, icon = Tex(130718), Tex(130841), Tex(130841)
+        btn.icon = icon
+        btn.GetRegions = function() return rim, empty, icon end
+        item.GetChildren = function() return btn end
+        -- Eine Innenflaeche (InsetFrameTemplate) und der Grund des Gelds.
+        local inset = stub.NewObject("Frame")
+        inset.Bg, inset.NineSlice = Tex(374154), stub.NewObject("Frame")
+        inset.GetRegions = function() return inset.Bg end
+        inset.GetParent = function() return tf end
+        local money = Global("TradeRecipientMoneyBg", stub.NewObject("Frame"))
+        local moneyTex = Tex(525911)
+        money.GetRegions = function() return moneyTex end
+        money.GetParent = function() return tf end
+        tf.GetChildren = function() return item, inset end
+        local pName = Global("TradeFramePlayerNameText", stub.NewObject("FontString"))
+        local colored
+        pName.SetTextColor = function(_, r) colored = r end
+        S.Register()
+        local glow = stub.NewObject("Texture")
+        W.done[tf] = { glow = glow }
+        local grad, gold = S.Gradient, {}
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == GC.frameAccent then gold[t] = true end
+            return grad(t, dir, c, a0, a1)
+        end
+        TR.Update(tf)
+        LF.Update(tf)
+        S.Gradient = grad
+        W.HoldGlow(tf, "TradeFrame")
+        local m = TR.frames[tf]
+        assert(not glow:IsShown(), "Schein der Klasse ueber dem Handel")
+        assert(m and gold[m.edge.l], "Kante oben nicht in Gold")
+        assert(slotBg:GetAlpha() == 0 and rim:GetAlpha() == 0 and empty:GetAlpha() == 0, "Stein, Rand oder leerer Platz bleibt")
+        assert(TR.flat[btn] and not TR.flat[item], "Knopf nicht flach (oder der ganze Platz statt des Knopfs)")
+        assert(nameBg:GetAlpha() == 0 and TR.strips[nameBg], "Namensfeld nicht als Leiste")
+        assert(icon:GetAlpha() == 1 and btn:GetAlpha() == 1 and item:GetAlpha() == 1, "Symbol oder Platz ausgeblendet")
+        assert(W.Insets[inset] and inset.Bg:GetAlpha() == 0, "Leder bleibt / keine Innenflaeche")
+        assert(W.Insets[money] and moneyTex:GetAlpha() == 0, "Grund des Gelds nicht auf Flaeche")
+        assert((LF.windows[tf].decks or 0) == 2, "Innenflaechen ohne Kante in Gold: " .. tostring(LF.windows[tf].decks))
+        assert(colored == C.textBright[1], "Name oben nicht hell")
+        -- Ein Gegenstand im Platz: die Region zeigt etwas anderes - wieder sichtbar.
+        empty._file = 135274
+        TR.Update(tf)
+        assert(empty:GetAlpha() == 1 and not TR.hidden[empty], "Bild eines Gegenstands bleibt unsichtbar")
+        assert(rim:GetAlpha() == 0, "Rand kommt mit zurueck")
+        -- Wieder leer: wieder weg.
+        empty._file = 130841
+        TR.Update(tf)
+        assert(empty:GetAlpha() == 0, "leerer Platz kommt nicht wieder weg")
+        -- Ruhe im Takt: was ausgeblendet ist, wird nicht je Durchlauf neu gesetzt.
+        local sets = 0
+        local rsa = rim.SetAlpha
+        rim.SetAlpha = function(self, a) sets = sets + 1 return rsa(self, a) end
+        for _ = 1, 5 do TR.Update(tf) end
+        rim.SetAlpha = rsa
+        assert(sets == 0, "Rand je Durchlauf neu gesetzt: " .. sets)
+        local rep = table.concat(TR.Report(tf, {}), "\n")
+        assert(rep:find("Handel (Stil ruhig): Kante in Gold, kein Schein der Klasse · Plätze flach 1 · Namensfelder 1 · Innenflächen 1 · Geld auf Fläche · Namen hell 1", 1, true), "Bericht: " .. rep)
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do TR.Update(tf) LF.Update(tf) W.HoldGlow(tf, "TradeFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Handel legt im Takt Muell an: %.1f KB", grew))
+        W.done[tf] = nil
+        for name, v in pairs(saved) do _G[name] = v end
+    end)
+    Check(okTR, "Handel: Gold, Plaetze flach, Symbole bleiben, Namensfelder als Leiste, Innenflaechen und Geld auf Flaeche, kein Muell"
+        .. (okTR and "" or (": " .. tostring(errTR))))
+
     -- 6.9.0.0: Symbol der Oberflaeche an der Minikarte - nur mit Oberflaeche.
     local okLN, errLN = pcall(function()
         local LN = WeintCodex.UILauncher
