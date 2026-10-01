@@ -1097,7 +1097,7 @@ end
 -- ausgenommen), und die Knoepfe, die neu laden, tun es ueber den
 -- Makroknopf, ohne selbst etwas Geschuetztes aufzurufen.
 do
-    local offenders = {}
+    local offenders, marking = {}, {}
     for _, folder in ipairs({ "core", "modules", "ui" }) do
         local pipe = io.popen and io.popen('ls "' .. ROOT .. "/" .. folder .. '" 2>/dev/null')
         if pipe then
@@ -1109,6 +1109,11 @@ do
                     if code:find("ReloadUI%s*%(") or code:find("C_UI%.Reload") then
                         offenders[#offenders + 1] = folder .. "/" .. name
                     end
+                    -- 6.9.0.2: Markieren ebenso (ADDON_ACTION_FORBIDDEN aus
+                    -- Automark, gemessen) - auch als Verweis in pcall.
+                    if code:find("SetRaidTarget") then
+                        marking[#marking + 1] = folder .. "/" .. name
+                    end
                 end
             end
             pipe:close()
@@ -1116,6 +1121,8 @@ do
     end
     Check(#offenders == 0, "kein direkter Aufruf von ReloadUI/C_UI.Reload"
         .. (#offenders == 0 and "" or (": " .. table.concat(offenders, ", "))))
+    Check(#marking == 0, "kein Aufruf von SetRaidTarget (Markieren nur ueber den Klick auf einen Makroknopf)"
+        .. (#marking == 0 and "" or (": " .. table.concat(marking, ", "))))
 
     local blocked = 0
     _G.ReloadUI = function() blocked = blocked + 1 end
@@ -1265,8 +1272,9 @@ do
         "ohne Auskunft des Clients ist die Haltbarkeit unbekannt, nicht 0")
 end
 
--- Automark (6.8.1.0): Tank und Heiler markieren - nur mit der Rolle, die
--- das Spiel vergeben hat, nur als Gruppenleiter, je Instanz einmal, nie im Kampf.
+-- Automark (6.8.1.0, 6.9.0.2 auf Klick): Tank und Heiler markieren - nur mit
+-- der Rolle, die das Spiel vergeben hat, nur als Gruppenleiter, je Instanz
+-- einmal, nie im Kampf, und nur ueber den Klick auf einen Makroknopf.
 do
     local ok, err = pcall(function()
         local AM = WeintCodex.UIAutoMark
@@ -1284,7 +1292,7 @@ do
         local okIn, errIn = pcall(function()
         local roles = { player = "DAMAGER", party1 = "TANK", party2 = "HEALER", party3 = "DAMAGER", party4 = "HEALER" }
         local inside, kind, instID, leader, combat = true, "party", 36, true, false
-        local marks, calls = {}, 0
+        local calls = 0
         _G.IsInInstance = function() return inside, kind end
         _G.GetInstanceInfo = function() return "Die Todesminen", kind, 1, "Normal", 5, 0, false, instID end
         _G.UnitIsGroupLeader = function() return leader end
@@ -1294,61 +1302,98 @@ do
         _G.UnitGUID = function(u) return "Player-1-" .. u end
         _G.UnitName = function(u) return ({ party1 = "Brunhild", party2 = "Kalle", party4 = "Zweite" })[u] or u end
         _G.InCombatLockdown = function() return combat end
-        _G.SetRaidTarget = function(u, i) calls = calls + 1 marks[u] = (marks[u] == i) and nil or i end
+        -- 6.9.0.2 (gemessen: ADDON_ACTION_FORBIDDEN): Markieren ist fuer
+        -- Addons geschuetzt. Automark ruft es NIE; es bietet einen Knopf
+        -- mit Makro an, den der Spieler klickt.
+        _G.SetRaidTarget = function() calls = calls + 1 end
         _G.GetRaidTargetIndex = function() return nil end
+        local function Macro() local b = _G[AM.BUTTON] return b and b:GetAttribute("macrotext1") end
         stub.FireEvent("PLAYER_ENTERING_WORLD")
-        assert(marks.party1 == 6 and marks.party2 == 4 and calls == 2, "Tank/Heiler nicht markiert: " .. tostring(calls))
-        assert(not marks.party4, "zweiter Heiler markiert (eine Markierung, ein Spieler)")
-        -- Weitere Ereignisse: nicht noch einmal (das nimmt die Markierung ab).
+        local b = _G[AM.BUTTON]
+        assert(b and b._template == "SecureActionButtonTemplate", "kein geschuetzter Knopf")
+        assert(AM.IsOffered() and b:IsShown(), "Knopf nicht angeboten")
+        assert(b:GetAttribute("type1") == "macro" and b:GetAttribute("type") == nil and b:GetAttribute("type2") == nil
+            and b:GetAttribute("useOnKeyDown") == false, "Knopf falsch belegt (Rechtsklick muss nichts tun)")
+        assert(Macro() == "/tm [@party1] 6\n/tm [@party2] 4", "Makro: " .. tostring(Macro()))
+        assert(AM.Status():find("wartet auf Klick", 1, true), "Status behauptet Markierung vor dem Klick: " .. AM.Status())
+        -- Weitere Ereignisse: dasselbe Angebot, nichts doppelt.
         stub.FireEvent("GROUP_ROSTER_UPDATE")
         stub.FireEvent("ZONE_CHANGED_NEW_AREA")
-        assert(calls == 2 and marks.party1 == 6, "erneut markiert - Markierung abgenommen")
+        assert(Macro() == "/tm [@party1] 6\n/tm [@party2] 4", "Angebot veraendert")
+        -- Klick: gemerkt, Knopf weg.
+        b:Click("LeftButton")
+        assert(not b:IsShown() and not AM.IsOffered(), "Knopf bleibt nach dem Klick")
         local st = AM.Status()
-        assert(st:find("Tank: Brunhild", 1, true) and st:find("Heiler: Kalle", 1, true), "Status: " .. st)
-        -- Rolle wechselt: der neue Tank wird markiert.
+        assert(st:find("Tank: Brunhild", 1, true) and st:find("Heiler: Kalle", 1, true)
+            and not st:find("wartet", 1, true), "Status nach Klick: " .. st)
+        stub.FireEvent("GROUP_ROSTER_UPDATE")
+        assert(not b:IsShown(), "nach dem Klick erneut angeboten - Markierung waere abgenommen")
+        -- Rolle wechselt: nur der neue Tank.
         roles.party1, roles.party3 = "DAMAGER", "TANK"
         stub.FireEvent("PLAYER_ROLES_ASSIGNED")
-        assert(marks.party3 == 6 and calls == 3, "neuer Tank nicht markiert")
+        assert(b:IsShown() and Macro() == "/tm [@party3] 6", "neuer Tank nicht angeboten: " .. tostring(Macro()))
+        b:Click("LeftButton")
         -- Keine Rollen vergeben: nichts raten.
         roles = { player = "NONE", party1 = "NONE", party2 = "NONE" }
-        instID, marks, calls = 48, {}, 0
+        instID = 48
         stub.FireEvent("PLAYER_ENTERING_WORLD")
-        assert(calls == 0, "ohne Rolle markiert")
-        assert(AM.Status():find("keine Rolle vergeben", 1, true), "Status sagt nicht, warum")
+        assert(not b:IsShown() and AM.Status():find("keine Rolle vergeben", 1, true), "ohne Rolle angeboten")
         -- Nicht Leiter: nichts.
         roles = { player = "DAMAGER", party1 = "TANK", party2 = "HEALER" }
         leader, instID = false, 49
         stub.FireEvent("PLAYER_ENTERING_WORLD")
-        assert(calls == 0 and AM.Status():find("Gruppenleiter", 1, true), "markiert ohne Leiter")
-        -- Im Kampf: erst danach.
+        assert(not b:IsShown() and AM.Status():find("Gruppenleiter", 1, true), "angeboten ohne Leiter")
+        -- Im Kampf: der Knopf ist geschuetzt - erst danach.
         leader, combat, instID = true, true, 50
         stub.FireEvent("PLAYER_ENTERING_WORLD")
-        assert(calls == 0, "im Kampf markiert")
+        assert(not b:IsShown(), "im Kampf angeboten")
         combat = false
         stub.FireEvent("PLAYER_REGEN_ENABLED")
-        assert(calls == 2 and marks.party1 == 6, "nach dem Kampf nicht markiert")
-        -- Draussen: nichts; wieder hinein: neu markiert.
+        assert(b:IsShown() and Macro() == "/tm [@party1] 6\n/tm [@party2] 4", "nach dem Kampf nicht angeboten")
+        -- Klick im Kampf: gemerkt, der Knopf geht nach dem Kampf.
+        combat = true
+        b:Click("LeftButton")
+        assert(b:IsShown(), "geschuetzter Knopf im Kampf versteckt")
+        combat = false
+        stub.FireEvent("PLAYER_REGEN_ENABLED")
+        assert(not b:IsShown(), "Knopf nach dem Kampf nicht weg")
+        -- Rechtsklick: ausgeblendet bis zum naechsten Betreten.
+        instID = 53
+        stub.FireEvent("PLAYER_ENTERING_WORLD")
+        assert(b:IsShown(), "neue Instanz nicht angeboten")
+        b:Click("RightButton")
+        assert(not b:IsShown(), "Rechtsklick blendet nicht aus")
+        stub.FireEvent("GROUP_ROSTER_UPDATE")
+        assert(not b:IsShown(), "nach Rechtsklick wieder angeboten")
+        assert(AM.Status():find("wartet auf Klick", 1, true), "Rechtsklick als Markierung gewertet: " .. AM.Status())
+        -- Draussen: weg; wieder hinein: neu angeboten.
         inside, kind = false, "none"
         stub.FireEvent("ZONE_CHANGED_NEW_AREA")
-        inside, kind, marks, calls = true, "party", {}, 0
+        assert(not b:IsShown(), "Knopf draussen sichtbar")
+        inside, kind = true, "party"
         stub.FireEvent("PLAYER_ENTERING_WORLD")
-        assert(calls == 2, "nach dem Wiederbetreten nicht neu markiert")
+        assert(b:IsShown(), "nach dem Wiederbetreten nicht angeboten")
         -- Schlachtzug abgeschaltet: nichts.
         K.Set("comfort", "markRaids", false)
-        inside, kind, instID, calls = true, "raid", 51, 0
+        kind, instID = "raid", 51
         stub.FireEvent("PLAYER_ENTERING_WORLD")
-        assert(calls == 0, "im Schlachtzug trotz Schalter markiert")
+        assert(not b:IsShown(), "im Schlachtzug trotz Schalter angeboten")
         K.Set("comfort", "markRaids", true)
         -- Gleiche Markierung fuer beide Rollen: der Heiler wird ausgelassen.
-        kind, instID, calls = "party", 52, 0
+        kind, instID = "party", 52
         K.Set("comfort", "markHealer", 6)
-        assert(calls == 1 and AM.Status():find("dieselbe Markierung", 1, true), "doppelte Markierung")
+        assert(Macro() == "/tm [@party1] 6" and AM.Status():find("dieselbe Markierung", 1, true), "doppelte Markierung")
         K.Set("comfort", "markHealer", 4)
-        -- Eine andere Einstellung setzt nichts neu (nahm die Markierung ab).
-        calls = 0
+        -- Eine andere Einstellung aendert das Angebot nicht.
+        local before = Macro()
         K.Set("comfort", "markChat", true)
         K.Set("comfort", "markChat", false)
-        assert(calls == 0, "Einstellung geaendert - erneut markiert")
+        assert(Macro() == before, "Einstellung geaendert - Angebot veraendert")
+        -- Automark aus: Knopf weg.
+        K.Set("comfort", "autoMark", false)
+        assert(not b:IsShown(), "Knopf bleibt mit Automark aus")
+        K.Set("comfort", "autoMark", true)
+        assert(calls == 0, "SetRaidTarget aufgerufen (geschuetzt): " .. calls)
         end)
         for _, n in ipairs(names) do _G[n] = saved[n] end
         AM.state.instance, AM.state.done = nil, {}
@@ -1356,7 +1401,7 @@ do
         K.Set("comfort", "autoMark", false)
         assert(okIn, errIn)
     end)
-    Check(ok, "Automark: Rolle vom Spiel, nur Leiter, je Instanz einmal, nie im Kampf, nichts geraten"
+    Check(ok, "Automark: Knopf mit Makro statt SetRaidTarget, Rolle vom Spiel, nur Leiter, je Instanz einmal, nie im Kampf, nichts geraten"
         .. (ok and "" or (": " .. tostring(err))))
 end
 
@@ -7724,7 +7769,8 @@ do
         W.SkinMap(map)
         assert(lh.width == 0 and not lh.line:IsShown(), "Linie ohne gemessene Kante: Breite geraten")
         local hrep = table.concat(W.HeaderReport(), "\n")
-        assert(hrep:find("Abschnitte: %d+, mit Linie %d+ · ohne: [^\n]*Die Todesminen"), "Bericht ohne fehlende Linie: " .. hrep)
+        local before = tonumber(hrep:match("Abschnitte: %d+, mit Linie (%d+) · ohne: "))
+        assert(before, "Bericht ohne fehlende Linie: " .. hrep)
         hName.GetLeft = function() return 20 end
         W.SkinMap(map)
         -- bis 6 px vor das Zeichen: 290 - 6 - (20 + 100 + 2 * 8 + 3) = 145
@@ -7733,7 +7779,7 @@ do
         for _, p in ipairs(linePts) do assert(p == "LEFT", "Linie an zweitem Punkt verankert: " .. p) end
         assert(#linePts > 0, "Linie nie neu gelegt")
         hrep = table.concat(W.HeaderReport(), "\n")
-        assert(hrep:find("Abschnitte: %d+, mit Linie [1-9]") and not hrep:find("Die Todesminen", 1, true), "Bericht: " .. hrep)
+        assert(tonumber(hrep:match("Abschnitte: %d+, mit Linie (%d+)")) == before + 1, "Bericht zaehlt die Linie nicht: " .. hrep)
         -- Die Zeile wandert (Liste verwendet sie neu): Breite folgt.
         minus.GetLeft = function() return 250 end
         W.SkinMap(map)

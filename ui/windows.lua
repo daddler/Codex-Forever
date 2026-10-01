@@ -789,16 +789,21 @@ function W.HeaderReport()
         if Open(f) then
             n = n + 1
             if (d.width or 0) > 0 then lined = lined + 1
-            elseif #missing < 6 then
+            else
                 local text = d.title and K.Plain(d.title:GetText())
                 missing[#missing + 1] = type(text) == "string" and text or "?"
             end
         end
     end
     if n > 0 then
+        -- Erst sortieren, dann kuerzen: sonst entschiede die Reihenfolge
+        -- der Tabelle, welche Namen der Bericht nennt.
         table.sort(missing)
-        out[#out + 1] = string.format("   Abschnitte: %d, mit Linie %d%s", n, lined,
-            #missing > 0 and (" · ohne: " .. table.concat(missing, ", ")) or "")
+        local more = #missing - 6
+        for i = #missing, 7, -1 do missing[i] = nil end
+        out[#out + 1] = string.format("   Abschnitte: %d, mit Linie %d%s%s", n, lined,
+            #missing > 0 and (" · ohne: " .. table.concat(missing, ", ")) or "",
+            more > 0 and (" und " .. more .. " weitere") or "")
     end
     return out
 end

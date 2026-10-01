@@ -87,7 +87,7 @@ WL.HELPERS = {
     { module = "comfort", key = "fastLoot", shot = "helpers", label = "Schneller plündern",
       text = "Nimmt alles sofort, wenn automatisches Plündern an ist." },
     { module = "comfort", key = "autoMark", shot = "helpers", label = "Automark",
-      text = "Als Gruppenleiter bekommen Tank und Heiler beim Betreten einer Instanz ihre Markierung." },
+      text = "Als Gruppenleiter erscheint beim Betreten einer Instanz ein Knopf – ein Klick markiert Tank und Heiler." },
     { module = "groupframes", key = "clickDispel", shot = "group", label = "Entfluchen auf Klick", dispel = true,
       text = "Strg + Klick auf einen Gruppenrahmen entfernt Flüche, Gifte, Krankheiten oder Magie – mit den Zaubern deiner Klasse." },
 }

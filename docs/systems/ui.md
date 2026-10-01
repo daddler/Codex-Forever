@@ -166,7 +166,7 @@ weil sie genau das sind, wofür er steht.
 | `ui/clickcast.lua` | **Klickzauber**: Maustaste + Zusatztaste wirkt einen Zauber auf die Einheit des Rahmens (Reiter der Gruppenrahmen) |
 | `ui/questarrow.lua` | Questpfeil |
 | `ui/comfort.lua` | Komfortfunktionen |
-| `ui/automark.lua` | Automark (6.8.1.0): Tank und Heiler beim Betreten einer Instanz markieren – Seite im Komfort |
+| `ui/automark.lua` | Automark (6.8.1.0): Tank und Heiler beim Betreten einer Instanz markieren – seit 6.9.0.2 über einen Knopf (Markieren ist geschützt) – Seite im Komfort |
 | `ui/macros.lua` | Makro-Helfer (6.8.1.0): was, auf wen, welcher Zauber → Makrotext mit Erklärung, anlegen/ersetzen/aufnehmen – Seite der Aktionsleisten |
 | `ui/dispel.lua` | Entfluchen auf Klick (6.8.1.0): Zauber der Klasse gegen Flüche, Gifte, Krankheiten, Magie auf Zusatztaste + Links/Rechts der Klickzauber |
 | `ui/options.lua` | das Einstellungsfenster und das Modul „Allgemein“ |
@@ -982,7 +982,7 @@ Minikarte, Taschen), Schadensanzeige in Ruhe auf die Kopfzeile
 zusammenklappen (jetzt: nur leiser), Chat-Hintergrund in Ruhe,
 Gestaltungsmodus mit Einstellkarte, Infoleiste, Levelhilfe.
 
-## Automark *(6.8.1.0, `ui/automark.lua`)*
+## Automark *(6.8.1.0, auf Klick seit 6.9.0.2, `ui/automark.lua`)*
 
 Beta-Test: „Wenn eine Instanz betreten wird, soll der Tank und Heiler
 einen Mark über den Kopf bekommen. Einstellbar, welches Mark.“
@@ -1003,16 +1003,33 @@ einen Mark über den Kopf bekommen. Einstellbar, welches Mark.“
   setzt nichts neu (der Test fand genau das: „Im Chat melden“
   umschalten nahm die Markierungen ab). Ist der Index offen lesbar und
   stimmt schon, bleibt es dabei.
-- **Nie im Kampf:** gemerkt (`pending`), gesetzt nach
-  `PLAYER_REGEN_ENABLED`.
+- **Nur auf Klick (6.9.0.2, gemessen).** Beta-Test 6.9.0.1 beim Betreten
+  eines Dungeons: `ADDON_ACTION_FORBIDDEN … UNKNOWN()` aus
+  `pcall(SetRaidTarget)` – Markieren ist für Addons **geschützt**, wie
+  das Neuladen. `pcall` fängt das nicht ab: das Spiel blockiert, `pcall`
+  meldet Erfolg, die Seite zeigte „markiert“. Jetzt bietet Automark einen
+  geschützten Knopf an (`WeintCodexAutoMarkButton`,
+  `SecureActionButtonTemplate`, `type1 = "macro"`, Platz
+  `K.LAYOUT.automark` unter den Erinnerungen): je Rolle eine Zeile
+  `/tm [@einheit] n` (Einheiten, nie Namen). **Linksklick** markiert und
+  merkt `state.done`; **Rechtsklick** tut im Spiel nichts (kein `type2`)
+  und blendet den Knopf bis zum nächsten Betreten aus. Ob das Spiel
+  wirklich markiert hat, sagt es nicht (Index geheim) – nach dem Klick
+  gilt es als markiert. Mit `/click WeintCodexAutoMarkButton` in einem
+  Makro auch auf eine Taste. `load_test.lua` verbietet `SetRaidTarget`
+  im ganzen Code (wie `ReloadUI`). **Ungemessen:** ob `/tm` aus einem
+  Makro auf Forever markiert.
+- **Nie im Kampf:** der Knopf ist geschützt – gezeigt, belegt und
+  versteckt wird er nur außerhalb (`pending`, `PLAYER_REGEN_ENABLED`;
+  ein Klick im Kampf wirkt, der Knopf geht danach).
 - **Wo:** Seite „Automark“ im Komfort, kein eigenes Modul – ein weiterer
   Eintrag hätte der Seitenleiste der Einstellungen die Luft für einen
   nächsten genommen. Einstellungen unter `comfort` (`autoMark`,
   `markTank`, `markHealer`, `markDungeons`, `markRaids`,
   `markOnlyLeader`, `markChat`); wie jeder Komfort-Helfer von Haus aus
   **aus**. Standard: Tank Quadrat, Heiler Dreieck.
-- **Ungemessen:** ob der Forever-Client Addons markieren lässt. Lehnt er
-  ab, steht „(vom Spiel abgelehnt)“ hinter dem Namen.
+- **Status:** „(wartet auf Klick)“ hinter jedem Namen, der noch nicht
+  markiert ist – nie „markiert“ ohne Klick.
 
 ## Namensplaketten 3.0: Bewegung *(6.8.1.0, `ui/nameplates.lua`)*
 

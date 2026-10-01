@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.9.0.2] – 2026-10-01
+
+**Automark markiert jetzt auf Klick – ohne Fehlermeldung.** Das Spiel lässt Addons nicht selbst markieren; beim Betreten eines Dungeons gab es deshalb eine Fehlermeldung, und markiert wurde nichts. Jetzt erscheint ein Knopf mit den Markierungen für Tank und Heiler: ein Linksklick markiert, ein Rechtsklick blendet ihn bis zum nächsten Betreten aus. Auf eine Taste legen: /click WeintCodexAutoMarkButton in einem Makro.
+
+**Auch im Fensterbericht fehlt kein Abschnitt mehr.** Er nennt die Abschnitte ohne Linie jetzt in fester Reihenfolge.
+
+### Technisch
+
+- Gemessen (BugGrabber, Beta-Test 6.9.0.1): `pcall(SetRaidTarget, …)` in `ui/automark.lua` löst `ADDON_ACTION_FORBIDDEN` aus – Markieren ist für Addons geschützt. `pcall` fängt das nicht ab (blockiert, aber „erfolgreich“), die Einstellungen zeigten deshalb „markiert“.
+- `ui/automark.lua`: kein `SetRaidTarget` mehr. `AM.Offer` belegt einen geschützten Knopf `WeintCodexAutoMarkButton` (`SecureActionButtonTemplate`, `type1 = "macro"`, `macrotext1` = je Rolle `/tm [@einheit] n`, `useOnKeyDown = false`), Platz `K.LAYOUT.automark`. `AM.Clicked`: links → `state.done`, rechts → `state.dismissed` bis zum nächsten Betreten. Zeigen, Belegen, Verstecken nur außerhalb des Kampfes (`K.AfterCombat`). Status „(wartet auf Klick)“ statt einer behaupteten Markierung.
+- `W.HeaderReport`: fehlende Linien erst sortieren, dann auf sechs kürzen („und N weitere“) – vorher entschied die Reihenfolge der Tabelle, und der Prüflauf schlug je nach Lauf fehl.
+- `load_test.lua`: verbietet `SetRaidTarget` im ganzen Code (wie `ReloadUI`); Automark-Prüfung neu für den Knopf; zehn Gegenproben (direkter Aufruf, `type` statt `type1`, Klick ohne Merken, Angebot im Kampf, Rechtsklick als Markierung, Ausblenden ignoriert, Verstecken im Kampf, Status ohne Warten, Namen statt Einheiten).
+
 ## [6.9.0.1] – 2026-10-01
 
 **Der Willkommens-Assistent kommt auch nach einem Neuladen.** Wer WeintCodex im laufenden Spiel aktualisiert und neu lädt, bekommt ihn jetzt gleich zu sehen – nicht erst beim nächsten Einloggen. Nach „Später“ fragt er bis dahin nicht noch einmal.

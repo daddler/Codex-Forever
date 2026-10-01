@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.9.0.2",
+        date    = "01.10.2026",
+        notes   = {
+            "|cff7C6CFFAutomark markiert jetzt auf Klick – ohne Fehlermeldung.|r Das Spiel lässt Addons nicht selbst markieren; beim Betreten eines Dungeons gab es deshalb eine Fehlermeldung, und markiert wurde nichts. Jetzt erscheint ein Knopf mit den Markierungen für Tank und Heiler: ein Linksklick markiert, ein Rechtsklick blendet ihn bis zum nächsten Betreten aus. Auf eine Taste legen: /click WeintCodexAutoMarkButton in einem Makro.",
+            "|cff7C6CFFAuch im Fensterbericht fehlt kein Abschnitt mehr.|r Er nennt die Abschnitte ohne Linie jetzt in fester Reihenfolge.",
+        },
+    },
+    {
         version = "6.9.0.1",
         date    = "01.10.2026",
         notes   = {

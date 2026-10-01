@@ -24,8 +24,17 @@
 --   * ist der Index doch lesbar und stimmt schon, bleibt es dabei.
 --   * nie im Kampf: erst danach (PLAYER_REGEN_ENABLED).
 --
--- UNGEMESSEN: ob der Forever-Client Addons ueberhaupt markieren laesst.
--- Lehnt er ab, steht das in den Einstellungen ("vom Spiel abgelehnt").
+-- NUR AUF KLICK (6.9.0.2). GEMESSEN (Beta-Test 6.9.0.1, BugGrabber beim
+-- Betreten eines Dungeons): "ADDON_ACTION_FORBIDDEN ... UNKNOWN()" aus
+-- pcall(SetRaidTarget) - Markieren ist fuer Addons GESCHUETZT. pcall fing
+-- das nicht ab: das Spiel blockiert, pcall meldet Erfolg, und die
+-- Einstellungen zeigten "markiert". Erlaubt ist es nur aus einem Klick des
+-- Spielers - ein geschuetzter Knopf mit einem Makro (/tm [@einheit] n),
+-- derselbe Weg wie beim Neuladen (WeintCodex.AttachReload). Deshalb:
+-- beim Betreten bietet Automark einen Knopf an ("Tank und Heiler
+-- markieren"); Linksklick markiert, Rechtsklick blendet ihn bis zum
+-- naechsten Betreten aus. Kein Code hier ruft SetRaidTarget.
+-- UNGEMESSEN: ob /tm aus einem Makro auf Forever markiert.
 --
 -- WO. Eine Seite des Komforts ("Automark"), kein eigenes Modul: ein
 -- weiterer Eintrag haette der Seitenleiste der Einstellungen die Luft fuer
@@ -74,8 +83,9 @@ local function Call(fn, ...)
     return K.Plain(a), K.Plain(b)
 end
 
--- Zustand dieser Sitzung (nichts davon wird gespeichert).
-AM.state = { instance = nil, done = {}, last = nil, refused = false, pending = false }
+-- Zustand dieser Sitzung (nichts davon wird gespeichert). offer: was der
+-- Knopf gerade markieren wuerde; dismissed: Instanz, in der er weg soll.
+AM.state = { instance = nil, done = {}, last = nil, pending = false, offer = nil, dismissed = nil }
 local state = AM.state
 
 -- In welcher Instanz sind wir, und soll dort markiert werden?
@@ -158,27 +168,30 @@ end
 function AM.Run()
     if not AM.On() then return nil end
     local id, kind = AM.Instance()
-    if not id then
-        state.instance, state.done = nil, {}
-        state.last = "Nicht in einer Instanz, in der markiert wird."
-        return state.last
-    end
-    if state.instance ~= id then
-        state.instance, state.done, state.told = id, {}, false
-    end
     if Call(_G.InCombatLockdown) then
+        -- Der Knopf ist geschuetzt: im Kampf weder zeigen noch aendern.
         state.pending = true
         state.last = "Im Kampf – markiert wird danach."
         return state.last
     end
     state.pending = false
+    if not id then
+        state.instance, state.done, state.dismissed = nil, {}, nil
+        AM.Withdraw()
+        state.last = "Nicht in einer Instanz, in der markiert wird."
+        return state.last
+    end
+    if state.instance ~= id then
+        state.instance, state.done, state.told, state.dismissed = id, {}, nil, nil
+    end
     local may, why = AM.MayMark(kind)
     if not may then
+        AM.Withdraw()
         state.last = "Nicht markiert: " .. why .. "."
         return state.last
     end
     local holders = AM.Holders(kind)
-    local parts, changed, used = {}, false, {}
+    local parts, used, plan = {}, {}, {}
     for _, role in ipairs(AM.ROLES) do
         local index = tonumber(K.Get(KEY, AM.SETTING[role])) or 0
         local unit = holders[role]
@@ -194,29 +207,119 @@ function AM.Run()
             -- Spieler UND Markierung: neu gesetzt wird nur, wenn sich eines
             -- davon aendert - dieselbe noch einmal naehme sie ab.
             local who = Who(unit) .. "#" .. index
-            if state.done[role] ~= who then
-                if Already(unit, index) then
-                    state.done[role] = who
-                else
-                    local ok = pcall(_G.SetRaidTarget, unit, index)
-                    if ok and type(_G.SetRaidTarget) == "function" then
-                        state.done[role] = who
-                        changed = true
-                    else
-                        state.refused = true
-                    end
-                end
+            if state.done[role] ~= who and Already(unit, index) then state.done[role] = who end
+            local done = state.done[role] == who
+            if not done then
+                plan[#plan + 1] = { role = role, unit = unit, index = index, who = who }
             end
-            parts[#parts + 1] = string.format("%s: %s %s", label, NameOf(unit),
-                state.done[role] == who and AM.Icon(index) or "(vom Spiel abgelehnt)")
+            parts[#parts + 1] = string.format("%s: %s %s%s", label, NameOf(unit), AM.Icon(index),
+                done and "" or " (wartet auf Klick)")
         end
     end
     state.last = table.concat(parts, " · ")
-    if K.Get(KEY, "markChat") and (changed or not state.told) then
-        state.told = true
-        Say("Automark: " .. state.last)
+    if #plan > 0 and state.dismissed ~= id then
+        AM.Offer(plan)
+        -- Einmal je Angebot im Chat: was ein Klick tut und warum es einen braucht.
+        local sig = AM.Macro(plan)
+        if K.Get(KEY, "markChat") and state.told ~= sig then
+            state.told = sig
+            Say("Automark: " .. state.last .. " – klick auf den Knopf oben, um zu markieren"
+                .. " (das Spiel lässt Addons nur auf Klick markieren).")
+        end
+    else
+        AM.Withdraw()
     end
     return state.last
+end
+
+--------------------------------------------------
+-- Der Knopf (6.9.0.2)
+--------------------------------------------------
+-- Ein geschuetzter Knopf (SecureActionButtonTemplate) mit einem Makro: je
+-- Rolle "/tm [@einheit] n". Gesetzt, gezeigt und versteckt wird er nur
+-- ausserhalb des Kampfes. Linksklick markiert (das Spiel fuehrt das Makro
+-- aus), Rechtsklick blendet ihn bis zum naechsten Betreten aus. Mit Namen
+-- (AM.BUTTON) laesst er sich auch per "/click" auf eine Taste legen.
+AM.BUTTON = "WeintCodexAutoMarkButton"
+AM.CMD = "/tm"
+AM.HEIGHT, AM.PAD = 30, 14
+
+-- Makrotext: Einheiten der Gruppe (party1, raid7), nie Namen.
+function AM.Macro(plan)
+    local lines = {}
+    for _, p in ipairs(plan) do
+        lines[#lines + 1] = string.format("%s [@%s] %d", AM.CMD, p.unit, p.index)
+    end
+    return table.concat(lines, "\n")
+end
+
+local button
+function AM.Button()
+    if button then return button end
+    if K.InCombat() then return nil end
+    local ok, b = pcall(CreateFrame, "Button", AM.BUTTON, UIParent, "SecureActionButtonTemplate")
+    if not ok or not b then return nil end
+    local p = K.Layout("automark")
+    b:SetPoint(p.point, UIParent, p.relPoint, p.x, p.y)
+    b:SetHeight(AM.HEIGHT)
+    b:SetFrameStrata("MEDIUM")
+    K.Kachel(b, { alpha = 0.94, shadow = 6 })
+    b.text = K.NewText(b, 13, "OVERLAY")
+    b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
+    if b.RegisterForClicks then b:RegisterForClicks("AnyUp") end
+    b:SetAttribute("useOnKeyDown", false)
+    b:SetAttribute("type1", "macro")       -- nur links; rechts tut das Spiel nichts
+    b:HookScript("OnClick", function(_, which) AM.Clicked(which) end)
+    b:SetScript("OnEnter", function(self)
+        if not GameTooltip then return end
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:AddLine("Automark")
+        GameTooltip:AddLine("Linksklick: markieren. Rechtsklick: ausblenden bis zum nächsten Betreten.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    b:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
+    b:Hide()
+    button = b
+    return b
+end
+
+function AM.Offer(plan)
+    local b = AM.Button()
+    if not b then return end
+    state.offer = plan
+    b:SetAttribute("macrotext1", AM.Macro(plan))
+    local bits = {}
+    for _, p in ipairs(plan) do bits[#bits + 1] = AM.ROLE_LABEL[p.role] .. " " .. AM.Icon(p.index) end
+    b.text:SetText(WeintCodex.AC .. "Markieren|r  " .. table.concat(bits, "  "))
+    local ok, w = pcall(b.text.GetStringWidth, b.text)
+    w = ok and K.Plain(w) or nil
+    b:SetWidth(math.max(160, (type(w) == "number" and w or 140) + 2 * AM.PAD))
+    b:Show()
+end
+
+function AM.Withdraw()
+    state.offer = nil
+    if not button then return end
+    if K.InCombat() then K.AfterCombat(AM.Withdraw) return end
+    button:SetAttribute("macrotext1", nil)
+    button:Hide()
+end
+
+function AM.IsOffered() return button ~= nil and button:IsShown() and state.offer ~= nil end
+
+-- Nach dem Klick (das Makro lief schon): als markiert merken. Ob das Spiel
+-- wirklich markiert hat, sagt es nicht (Index geheim) - der Knopf geht.
+function AM.Clicked(which)
+    if which == "RightButton" then
+        state.dismissed = state.instance
+        AM.Withdraw()
+        state.last = "Ausgeblendet bis zum nächsten Betreten."
+        return
+    end
+    for _, p in ipairs(state.offer or {}) do state.done[p.role] = p.who end
+    AM.Withdraw()
+    if K.InCombat() then return end
+    AM.Run()
 end
 
 --------------------------------------------------
@@ -236,6 +339,7 @@ local function Apply()
     events:UnregisterAllEvents()
     if not AM.On() then
         state.last = nil
+        AM.Withdraw()
         return
     end
     for _, e in ipairs(AM.EVENTS) do pcall(events.RegisterEvent, events, e) end
@@ -263,7 +367,7 @@ local function Build(B)
     local off = function() return not K.Get(KEY, "autoMark") end
     B:Section("Automark")
     B:Row({ type = "toggle", label = "Tank und Heiler markieren", key = "autoMark",
-            description = "Beim Betreten einer Instanz, mit der Rolle, die das Spiel vergeben hat." },
+            description = "Beim Betreten einer Instanz erscheint ein Knopf – ein Klick markiert. Ohne Klick lässt das Spiel Addons nicht markieren." },
           { type = "toggle", label = "Im Chat melden", key = "markChat", disabled = off })
     B:Section("Wer bekommt welche Markierung")
     B:Row({ type = "dropdown", label = "Tank", key = "markTank", items = MarkItems(), disabled = off },
@@ -276,7 +380,8 @@ local function Build(B)
           { type = "empty" })
     B:Note("Markiert wird nur, wer vom Spiel eine Rolle bekommen hat (Suche nach Gruppe, Rollenwahl). "
         .. "Ohne Rolle wird nichts geraten – weder aus Ausrüstung noch aus Talenten. "
-        .. "Je Instanz einmal; neu, wenn eine Rolle oder die Markierung wechselt. Nie im Kampf.")
+        .. "Je Instanz einmal; neu, wenn eine Rolle oder die Markierung wechselt. Nie im Kampf. "
+        .. "Der Knopf heißt " .. AM.BUTTON .. " – mit /click " .. AM.BUTTON .. " in einem Makro auch auf eine Taste.")
     B:Note("Zuletzt: " .. AM.Status())
 end
 
