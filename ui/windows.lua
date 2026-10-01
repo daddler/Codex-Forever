@@ -69,7 +69,11 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               -- Optionsmenue Einheit finden".
               "GameMenuFrame",
               -- 6.6.3.3: Sammlung (Blizzard_Collections, erst beim Oeffnen geladen).
-              "CollectionsJournal" }
+              "CollectionsJournal",
+              -- 6.9.0.0: Beute (ui/loot.lua) und die Optionen des Spiels
+              -- (Esc -> Optionen, ui/calm.lua) - Beta-Test: "auch hier muss
+              -- noch designed werden".
+              "LootFrame", "SettingsPanel" }
 
 -- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
 -- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus
@@ -418,6 +422,18 @@ W.HIDE_ATLAS = {
     -- (gruen, blau) - statt dessen eine kleine Kachel, der gewaehlte mit
     -- Rand im Akzent (W.NavEntry). Das Wappen im Eintrag bleibt.
     "^communities%-nav%-button",
+    -- 6.9.0.0, gemessen mit /wcui fenster: Beute (LootFrame) - Sand hinter
+    -- dem Fenster, Grund, Rahmen und Etikettrahmen jeder Karte (nur der
+    -- Rahmen "Normal": ein anderer traegt Qualitaet oder Maus).
+    "^UIFrameBackground%-NineSlice%-",
+    "^Looting_ItemCard_BG",
+    "^Looting_ItemCard_Stroke_Normal",
+    "^Looting_RarityTag_Frame",
+    -- Optionen (SettingsPanel): der Rahmen um Kategorien und Einstellungen
+    -- und die braunen Balken der Kategorien (die werden Abschnitte,
+    -- W.HEADER_ATLAS).
+    "^Options_InnerFrame",
+    "^Options_CategoryHeader_",
 }
 -- Gedaempft statt weg (mit "Stimmung statt Schwarz"): die Bilder der
 -- Kategorien im Dungeonbrowser (Quests & Zonen, Schlachtfelder,
@@ -513,7 +529,9 @@ local edged = setmetatable({}, { __mode = "k" })
 -- Erkannt am Atlas des Balkens (W.HEADER_ATLAS), nicht an einem
 -- Namen - jede Kopfzeile, die ihn traegt, in jedem Fenster. Der Text des
 -- Spiels bleibt, wie er ist (kein SetText auf fremde Zeilen).
-W.HEADER_ATLAS = { "^UI%-Character%-Info%-Title", "^common%-button%-list%-collapseExpand" }
+W.HEADER_ATLAS = { "^UI%-Character%-Info%-Title", "^common%-button%-list%-collapseExpand",
+                   -- 6.9.0.0: Kategorien der Optionen (Gameplay, Zugaenglichkeit, System).
+                   "^Options_CategoryHeader_" }
 
 -- Nur offene Fenster (6.6.2.6): vorher lief jeder Durchlauf auch ueber
 -- alle geschlossenen, die schon einmal gestaltet waren.

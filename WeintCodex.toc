@@ -210,6 +210,8 @@ ui/gamemenu.lua
 ui/gossip.lua
 # Haendler (6.8.0.6): Gold, Waren auf Flaeche, Geld als Innenflaeche, Reiter flach.
 ui/merchant.lua
+# Beute in Gold (6.9.0.0): Liste auf Flaeche, Karten ohne Rahmen.
+ui/loot.lua
 # Karte & Questlog (6.7.9.0, 6.8.0.9): Questlog und Questdetails auf Flaeche, Gold, Karte unberuehrt.
 ui/questlog.lua
 # Fenster in Gold mit Innenflaechen (6.8.0.0 Suche nach Gruppe, 6.8.0.2 Sammlung).

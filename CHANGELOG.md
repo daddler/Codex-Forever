@@ -17,6 +17,8 @@ nicht zusammen.
 
 **Ein Willkommens-Assistent nimmt dich an die Hand.** Fünf kurze Schritte mit Bildern: was die Oberfläche kann und warum sie sich lohnt, dann – mit oder ohne sie – welche Anzeigen und Helfer du haben möchtest, jeweils mit einem Satz, was sie tun. Erst „Übernehmen“ stellt um; mit Oberfläche wird dabei gleich ihr Layout eingerichtet, ein Neuladen genügt. Wieder zeigen: /wcui willkommen.
 
+**Beute und Optionen im ruhigen Stil.** Das Beutefenster liegt ohne Metallrahmen und Sand auf einer ruhigen Fläche mit feiner Kante in Gold, die Gegenstände ohne eigene Rahmen. Die Optionen des Spiels (Esc → Optionen) ebenso: Kategorien und Einstellungen auf ruhigen Flächen, Gameplay, Zugänglichkeit und System als Abschnitte statt brauner Balken. Schalter, Regler und Farben der Qualität bleiben.
+
 **Komfort auch ohne Oberfläche.** Schadensanzeige, Erinnerungen, Questpfeil, Klickzauber mit Entfluchen, Makro-Helfer, Automark und die kleinen Helfer stehen jetzt unter Komfort und laufen auch mit den Rahmen des Spiels – Klickzauber dann direkt auf dessen Gruppenrahmen. Das Komplettpaket ist mit der Oberfläche von Haus aus an; ohne sie wählst du selbst.
 
 ### Technisch
@@ -27,6 +29,7 @@ nicht zusammen.
 - `ui/damagemeter.lua`: `damageMeterEnabled` über `PF.SetCVar(…, "damagemeter")` – die Anzeige des Spiels kommt zurück, wenn die Schadensanzeige oder ihr Schalter aus ist (vorher blieb sie für immer aus).
 - Schadensanzeige und Erinnerungen: `group = "qol"`, `defaultEnabled = "ui"` (neu in `K.ModuleEnabled`), `reload = true`. Klickzauber und Makro-Helfer als Seiten im Komfort mit `store =` (Einstellungen bleiben bei Gruppenrahmen bzw. Aktionsleisten). `CC.GameFrames()`: ohne Gruppenrahmen von WeintCodex gelten Klickzauber auf denen des Spiels, neu angewendet bei `GROUP_ROSTER_UPDATE`; Komfort aus → keine Belegung.
 - `ui/welcome.lua` neu: Assistent in fünf Schritten statt der Ja/Nein-Frage (`WL.Decide`, `WL.Apply`, erst „Übernehmen“ schaltet; mit Oberfläche `ES.Apply` gleich dabei). Acht eigene Vorschaubilder `media/welcome/*.blp` (512×256, BLP2/DXT1) aus `.github/scripts/welcome/shots.html` über `.github/scripts/make_welcome.py`. `/wcui willkommen`, Knopf „Assistenten zeigen“.
+- Neu `ui/loot.lua`: `LootFrame` in Gold (S.CALM), Liste (`ScrollBox`) auf `surfaceRaised` mit Kante in Gold, Titel hell. `W.WINDOWS` um `LootFrame` und `SettingsPanel`; `W.HIDE_ATLAS` um `UIFrameBackground-NineSlice-*`, `Looting_ItemCard_BG`, `Looting_ItemCard_Stroke_Normal` (nur „Normal“), `Looting_RarityTag_Frame`, `Options_InnerFrame`, `Options_CategoryHeader_*`; letztere auch in `W.HEADER_ATLAS` (Abschnitt mit Raute und Linie). `ui/calm.lua`: `SettingsPanel` als Gast, `LF.INSETS` (`CategoryList`, `Container` → `W.OwnBackground`), Titel `NineSlice.Text` hell.
 - `load_test.lua`: Prüflauf als Spieler mit „Ja“; neue Abschnitte „Profil“, „Ohne Oberfläche“, „Willkommens-Assistent“ (beide Wege, Später, Zurückblättern, Paket bleibt Standard, Platz je Schritt, Bilder vorhanden); elf Gegenproben (Original überschrieben, fremder Wert zurückgedreht, eigene Wahl überstimmt, leeres Vorher, falscher Ersatz, Einrichtung ohne Merken, Fenster ohne Wahl, Klickzauber ohne Rahmen des Spiels, Klickzauber trotz Komfort aus, Schadensanzeige an der Oberfläche, Hauptschalter ohne Profil).
 
 ## [6.8.1.0] – 2026-10-01

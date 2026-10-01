@@ -180,7 +180,7 @@ K.Register({
             B:Row({ type = "toggle", label = "Spielername in Klassenfarbe", key = "tooltipClassName", disabled = off },
                   { type = "toggle", label = "Rand in Klassen- und Qualitätsfarbe", key = "tooltipBorder", disabled = off,
                     description = "Spieler in ihrer Klassenfarbe, Gegenstände ab „selten“ in ihrer Qualität." })
-            B:Section("Fenster", "Charakterfenster (C), Zauberbuch und Talente (P, N), Weltkarte und Questlog (M), Berufe, Gilde & Communitys, Suche nach Gruppe, Gespräche mit NPCs, Quests, Händler und Bücher als Kachel statt Holz, Metall und Pergament.")
+            B:Section("Fenster", "Charakterfenster (C), Zauberbuch und Talente (P, N), Weltkarte und Questlog (M), Berufe, Gilde & Communitys, Suche nach Gruppe, Gespräche mit NPCs, Quests, Händler, Bücher, Beute und die Optionen des Spiels als Kachel statt Holz, Metall und Pergament.")
             B:Row({ type = "toggle", label = "Fenster im WeintCodex-Stil", key = "windowSkin", reload = true },
                   { type = "toggle", label = "Stimmung statt Schwarz", key = "windowArt", reload = true,
                     disabled = function() return not K.Get("general", "windowSkin") end,

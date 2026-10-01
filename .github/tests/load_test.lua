@@ -7406,6 +7406,117 @@ do
     Check(okM, "Haendler: Gold, kein Schein der Klasse, Waren auf Flaeche, Geld als Innenflaeche, Reiter flach in Gold, kein Muell"
         .. (okM and "" or (": " .. tostring(errM))))
 
+    -- 6.9.0.0: Beute und Optionen in Gold. Beta-Test: Metallrahmen, Sand,
+    -- Karten mit Rahmen im Beutefenster; Metall, brauner Rahmen und braune
+    -- Kategorie-Balken in den Optionen des Spiels.
+    local okL, errL = pcall(function()
+        local W, S, LT, LF, GC = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UILoot, WeintCodex.UICalm, WeintCodex.GameColors
+        local listed = {}
+        for _, n in ipairs(W.WINDOWS) do listed[n] = true end
+        assert(listed.LootFrame and listed.SettingsPanel, "Beute oder Optionen nicht im Fensterdurchlauf")
+        assert(LT and S.SCOPES.LootFrame == S.CALM and W.HOSTED.LootFrame and W.HOSTED.LootFrame[1] == LT, "Beute nicht in Gold eingetragen")
+        assert(S.SCOPES.SettingsPanel == S.CALM and W.HOSTED.SettingsPanel and W.HOSTED.SettingsPanel[1] == LF, "Optionen nicht in Gold eingetragen")
+        -- Was weg muss, was bleibt.
+        for _, a in ipairs({ "Looting_ItemCard_BG", "Looting_ItemCard_Stroke_Normal", "Looting_RarityTag_Frame",
+                             "UIFrameBackground-NineSlice-CornerBottomLeft", "Options_InnerFrame", "Options_CategoryHeader_2",
+                             "!UI-Frame-Metal-EdgeLeft", "UI-Frame-Metal-CornerTopRight" }) do
+            assert(W.HidesAtlas(a), a .. " bleibt")
+        end
+        for _, a in ipairs({ "Looting_ItemCard_Stroke_Highlight", "Looting_ItemCard_Stroke_Epic", "Options_List_Active",
+                             "checkbox-minimal", "checkmark-minimal", "_Minimal_SliderBar_Middle", "common-dropdown-c-button" }) do
+            assert(not W.HidesAtlas(a), a .. " ausgeblendet, sagt aber etwas")
+        end
+        assert(W.HeaderAtlas("Options_CategoryHeader_1"), "Kategorie der Optionen wird kein Abschnitt")
+
+        -- Beute: Liste auf Flaeche, Titel hell, kein Schein der Klasse.
+        local lf = stub.NewObject("Frame", "LootFrame")
+        local box = stub.NewObject("Frame")
+        lf.ScrollBox = box
+        local tc = stub.NewObject("Frame")
+        local ttl = stub.NewObject("FontString")
+        ttl._text, ttl._font = "Gegenstände", true
+        local col
+        ttl.SetTextColor = function(_, r, g, b) col = { r, g, b } end
+        tc.TitleText = ttl
+        lf.TitleContainer = tc
+        local oldLF = _G.LootFrame
+        _G.LootFrame = lf
+        S.Register()
+        local glow = stub.NewObject("Texture")
+        W.done[lf] = { glow = glow }
+        local grad, gold = S.Gradient, {}
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == GC.frameAccent then gold[t] = true end
+            return grad(t, dir, c, a0, a1)
+        end
+        LT.Update(lf)
+        S.Gradient = grad
+        W.HoldGlow(lf, "LootFrame")
+        local w = LT.windows[lf]
+        assert(not glow:IsShown(), "Schein der Klasse ueber der Beute")
+        assert(w and gold[w.edge.l] and w.card and w.card.on and gold[w.card.edge.l], "Beute nicht auf Flaeche mit Kante in Gold")
+        assert(col and col[1] == WeintCodex.Colors.textBright[1], "Titel nicht hell")
+        local rep = table.concat(LT.Report(lf, {}), "\n")
+        assert(rep:find("Beute (Stil ruhig): Kante in Gold, kein Schein der Klasse · Titel hell · Liste auf Fläche", 1, true), "Bericht: " .. rep)
+        box:Hide()
+        LT.Update(lf)
+        for _, t in ipairs(w.card.parts) do assert(not t:IsShown(), "Flaeche, Schatten oder Kante bleibt ohne Liste") end
+        assert(not w.card.on, "Flaeche gilt ohne Liste als offen")
+        box:Show()
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do LT.Update(lf) W.HoldGlow(lf, "LootFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Beute legt im Takt Muell an: %.1f KB", grew))
+        W.done[lf] = nil
+        _G.LootFrame = oldLF
+
+        -- Optionen: Kategorien und Einstellungen als Innenflaechen, Titel
+        -- hell, Kategorie-Balken als Abschnitt in Gold.
+        local sp = stub.NewObject("Frame", "SettingsPanel")
+        local cats, cont, ns = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Frame")
+        local catTex, contTex = stub.NewObject("Texture"), stub.NewObject("Texture")
+        cats.GetRegions = function() return catTex end
+        cont.GetRegions = function() return contTex end
+        cats.GetParent = function() return sp end
+        cont.GetParent = function() return sp end
+        local head = stub.NewObject("Button")
+        local hBg = stub.NewObject("Texture")
+        hBg.GetAtlas = function() return "Options_CategoryHeader_1" end
+        hBg._width = 180
+        local hName = stub.NewObject("FontString")
+        hName._text, hName._font = "Gameplay", true
+        head.GetRegions = function() return hBg, hName end
+        cats.GetChildren = function() return head end
+        sp.GetChildren = function() return cats, cont end
+        local nsText = stub.NewObject("FontString")
+        nsText._text, nsText._font = "Optionen", true
+        local nsCol
+        nsText.SetTextColor = function(_, r) nsCol = r end
+        ns.Text = nsText
+        sp.CategoryList, sp.Container, sp.NineSlice = cats, cont, ns
+        local oldSP = _G.SettingsPanel
+        _G.SettingsPanel = sp
+        S.Register()
+        W.done[sp] = { glow = stub.NewObject("Texture") }
+        LF.Update(sp)
+        W.HideByAtlas(sp)
+        LF.Update(sp)
+        assert(W.Insets[cats] and W.Insets[cont] and catTex:GetAlpha() == 0 and contTex:GetAlpha() == 0,
+            "Kategorien oder Einstellungen nicht auf Innenflaeche")
+        assert(nsCol == WeintCodex.Colors.textBright[1], "Titel der Optionen nicht hell")
+        assert(hBg:GetAlpha() == 0, "brauner Kategorie-Balken bleibt")
+        local lh = W.ListHeaders[head]
+        assert(lh and lh.accent == GC.frameAccent, "Kategorie nicht als Abschnitt in Gold")
+        assert((LF.windows[sp].decks or 0) == 2, "Innenflaechen ohne Kante in Gold: " .. tostring(LF.windows[sp].decks))
+        W.done[sp] = nil
+        _G.SettingsPanel = oldSP
+    end)
+    Check(okL, "Beute und Optionen: Gold, Metall und Sand weg, Beute auf Flaeche, Optionen auf Innenflaechen, Kategorien als Abschnitte, kein Muell"
+        .. (okL and "" or (": " .. tostring(errL))))
+
     -- 6.7.9.0: Karte & Questlog in Gold. Der weiche Rand um die Karte
     -- (ausdruecklich gewuenscht) bleibt; der Questlog liegt auf einer
     -- Flaeche, seine Zonen sind Abschnitte wie im Ruf, kein Schein der Klasse.

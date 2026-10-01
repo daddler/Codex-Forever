@@ -20,6 +20,16 @@
 --   Suche nach Gruppe  LFGParentFrame (Quelltext: PVEFrame) - Innenflaechen:
 --                      der Bereich des ersten Reiters, LFGBrowseFrame und
 --                      LFGWhoListFrame (W.OWN_BG_PATHS, 6.8.0.1)
+--   Optionen           SettingsPanel (6.9.0.0, Esc -> Optionen) - Innenflaechen:
+--                      die Kategorien links (CategoryList) und die
+--                      Einstellungen rechts (Container), LF.INSETS. Der
+--                      Rahmen um beide ("Options_InnerFrame") ist weg, die
+--                      Kategorien Gameplay / Zugaenglichkeit / System
+--                      ("Options_CategoryHeader_1..3", brauner Balken) sind
+--                      Abschnitte mit Raute und Linie in Gold (W.HEADER_ATLAS),
+--                      der Titel "Optionen" (NineSlice.Text) hell.
+--                      Schalter, Haken, Regler, Auswahl, Suche, Tastenbelegung
+--                      und die Wahl links (Options_List_Active) bleiben.
 --   Sammlung           CollectionsJournal - Innenflaeche:
 --                      WardrobeCollectionFrame.ItemsCollectionFrame
 --                      (W.OWN_BG_PATHS seit 6.6.3.3); Plaetze der Vorlagen
@@ -32,6 +42,8 @@ WeintCodex = WeintCodex or {}
 WeintCodex.UICalm = {}
 
 local LF = WeintCodex.UICalm
+local K = WeintCodex.UIKit
+local C = WeintCodex.Colors
 local GC = WeintCodex.GameColors
 local W = WeintCodex.UIWindows
 local S = WeintCodex.UIStyle
@@ -41,8 +53,11 @@ local Visible, IsFrame, InTree = RG.Visible, RG.IsFrame, RG.InTree
 
 -- Fenster -> Name im Bericht.
 LF.WINDOWS = { LFGParentFrame = "Suche nach Gruppe", PVEFrame = "Suche nach Gruppe",
-               CollectionsJournal = "Sammlung" }
-LF.HOSTS = { "LFGParentFrame", "PVEFrame", "CollectionsJournal" }
+               CollectionsJournal = "Sammlung", SettingsPanel = "Optionen" }
+LF.HOSTS = { "LFGParentFrame", "PVEFrame", "CollectionsJournal", "SettingsPanel" }
+-- Innenflaechen, die das Fenster selbst nicht als solche baut: Feld am
+-- Fenster -> W.OwnBackground (eigene Bilder weg, Innenflaeche).
+LF.INSETS = { SettingsPanel = { "CategoryList", "Container" } }
 LF.STYLE = S.CALM
 LF.LIGHT_HEIGHT = 120
 LF.SHADOW_PAD = 10
@@ -68,11 +83,31 @@ local function Deck(f, inset, accent)
     return d
 end
 
+-- Titel im Rahmen (SettingsPanel: NineSlice.Text) hell statt Gold.
+local function Title(f)
+    local ns = f.NineSlice
+    local t = type(ns) == "table" and ns.Text
+    if type(t) == "table" and t.SetTextColor then
+        K.SetFont(t, 13)
+        t:SetTextColor(unpack(C.textBright))
+        return true
+    end
+    return false
+end
+
 function LF.Update(f)
     local w = windows[f]
     if not w then
         local l = GC.atmosLight
         w = { light = S.TopLight(f, f, l, l[4], LF.LIGHT_HEIGHT, -5) }
+        local ok, name = pcall(f.GetName, f)
+        local keys = ok and LF.INSETS[name]
+        if keys then
+            for _, key in ipairs(keys) do
+                if IsFrame(f[key]) then W.OwnBackground(f[key]) end
+            end
+            w.title = Title(f)
+        end
         windows[f] = w
     end
     local accent = S.Accent(LF.STYLE.accent)

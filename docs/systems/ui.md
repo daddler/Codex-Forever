@@ -2643,6 +2643,31 @@ Blättern, Rückkauf-Platz.
 setzt die Randfarbe in jedem Durchlauf – an jedem Reiter jedes offenen
 Fensters lief also Müll an. Die Liste wird jetzt einmal gebaut.
 
+### Beute und Optionen *(6.9.0.0, `ui/loot.lua`, `ui/calm.lua`)*
+
+Beta-Test mit `/wcui fenster`: das Beutefenster (`LootFrame`) mit
+Metallrahmen, Sand (`UIFrameBackground-NineSlice-*`) und je Gegenstand
+einer Karte mit Grund, Rahmen und Etikettrahmen; die Optionen des Spiels
+(`SettingsPanel`) mit Metallrahmen, braunem Innenrahmen
+(`Options_InnerFrame`) und braunen Kategorie-Balken
+(`Options_CategoryHeader_1..3`). Beide stehen jetzt in `W.WINDOWS` und
+tragen Gold (`S.CALM`):
+
+* **Beute** (`ui/loot.lua`): Kachel, Titel hell, Licht und Kante in Gold,
+  die Liste (`LootFrame.ScrollBox`) auf `surfaceRaised` mit Schatten und
+  Kante. Die Karten verlieren Grund, Rahmen **„Normal“** und
+  Etikettrahmen – ein anderer Rahmen (Qualität, Maus) und das Etikett
+  selbst („Schlecht“) bleiben, ebenso Namen in Qualitätsfarbe.
+* **Optionen** (`ui/calm.lua`, `LF.INSETS`): Kategorien links und
+  Einstellungen rechts werden Innenflächen mit Kante in Gold; die
+  Kategorien sind Abschnitte mit Raute und Linie (`W.HEADER_ATLAS`), der
+  Titel „Optionen“ (`NineSlice.Text`) hell. Schalter, Haken, Regler,
+  Auswahl, Tastenbelegung, Suche und die Wahl links (`Options_List_Active`)
+  bleiben, wie das Spiel sie zeichnet. Geändert werden nur Bilder – kein
+  Skript und kein Feld am Fenster (die Optionen tragen geschützte
+  Tastenbelegungen).
+* Das rote Kreuz zum Schließen bleibt wie in allen anderen Fenstern.
+
 ### Nächste Fenster
 
 Vorgesehen: Berufsübersicht (nach Messung), Gilde (mittlere Atmosphäre), Talente
