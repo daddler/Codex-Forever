@@ -23,6 +23,8 @@ nicht zusammen.
 
 **Komfort auch ohne Oberfläche.** Schadensanzeige, Erinnerungen, Questpfeil, Klickzauber mit Entfluchen, Makro-Helfer, Automark und die kleinen Helfer stehen jetzt unter Komfort und laufen auch mit den Rahmen des Spiels – Klickzauber dann direkt auf dessen Gruppenrahmen. Das Komplettpaket ist mit der Oberfläche von Haus aus an; ohne sie wählst du selbst.
 
+**Jeder Abschnitt hat wieder seine Linie.** Im Questlog fehlte bei manchen Zonen die feine Linie hinter Name und Raute – je nachdem, wo die Zeile gerade lag. Behoben für alle Listen mit Abschnitten: Questlog, Ruf, Fertigkeiten, Abzeichen, Berufe, Gilde, Gruppensuche, Sammlung, PvP und die Optionen des Spiels.
+
 ### Technisch
 
 - `UIKit.OPT_IN = true` (6.0.0.3–6.8.1.0 `false`, weil der Beta-Client nicht speicherte). Frage beim Einloggen wieder aktiv; wer die Oberfläche vorher ungefragt hatte, hat keine gespeicherte Antwort und wird einmal gefragt.
@@ -34,6 +36,7 @@ nicht zusammen.
 - Neu `ui/loot.lua`: `LootFrame` in Gold (S.CALM), Liste (`ScrollBox`) auf `surfaceRaised` mit Kante in Gold, Titel hell. `W.WINDOWS` um `LootFrame` und `SettingsPanel`; `W.HIDE_ATLAS` um `UIFrameBackground-NineSlice-*`, `Looting_ItemCard_BG`, `Looting_ItemCard_Stroke_Normal` (nur „Normal“), `Looting_RarityTag_Frame`, `Options_InnerFrame`, `Options_CategoryHeader_*`; letztere auch in `W.HEADER_ATLAS` (Abschnitt mit Raute und Linie). `ui/calm.lua`: `SettingsPanel` als Gast, `LF.INSETS` (`CategoryList`, `Container` → `W.OwnBackground`), Titel `NineSlice.Text` hell.
 - Neu `ui/macroframe.lua`: `MacroFrame` (Blizzard_MacroUI) in Gold – Plätze (Bilder 130764/130718) flach mit 1 px Rand, Reiter `MacroFrameTab1/2` über `W.SkinTab`; Liste und Textfeld über `LF.INSETS` (jetzt auch globale Namen) als Innenflächen.
 - Neu `ui/launcher.lua`: Symbol „WeintCodexUI“ an der Minikarte (LibDataBroker/LibDBIcon, Zahnrad `media/ui/icon_gear`), nur mit Oberfläche, folgt dem Hauptschalter sofort; Zustand in `WeintCodex_SavedData.ui.launcher`, Schalter auf `/wcui` → Allgemein.
+- `ui/windows.lua`: Die Linie eines Abschnitts (`W.ListHeader`/`FitList`) hing an zwei Punkten – links an der Raute, rechts am Balken des Spiels (bzw. am Zeichen zum Auf- und Zuklappen). Liegen deren Mitten nicht auf einer Höhe („RIGHT“ = halbe Höhe der jeweiligen Region), zeichnet das Spiel die 1-px-Linie nicht. Jetzt nur links verankert, Breite aus den Kanten gerechnet (`W.SizeLine`, `W.EdgeOf`), neu bei jeder gewanderten Kante; ohne gemessene Kante keine Linie statt einer geratenen. Dasselbe für die rechte Linie der mittigen Kopfzeilen vor dem Zeichen (`FitStop`). Zauberbuch, Talente und Berufsübersicht hatten das seit 6.7.8.0. `/wcui fenster` meldet „Abschnitte: N, mit Linie M · ohne: …“.
 - `load_test.lua`: Prüflauf als Spieler mit „Ja“; neue Abschnitte „Profil“, „Ohne Oberfläche“, „Willkommens-Assistent“ (beide Wege, Später, Zurückblättern, Paket bleibt Standard, Platz je Schritt, Bilder vorhanden); elf Gegenproben (Original überschrieben, fremder Wert zurückgedreht, eigene Wahl überstimmt, leeres Vorher, falscher Ersatz, Einrichtung ohne Merken, Fenster ohne Wahl, Klickzauber ohne Rahmen des Spiels, Klickzauber trotz Komfort aus, Schadensanzeige an der Oberfläche, Hauptschalter ohne Profil).
 
 ## [6.8.1.0] – 2026-10-01

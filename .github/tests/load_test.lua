@@ -5813,6 +5813,23 @@ do
         assert(minus:GetAlpha() == 1, "Zeichen zum Auf- und Zuklappen ausgeblendet")
         assert(rd and rd.title == name and rd.icon == minus and rd.beam == wide and rd.hover,
             "Ruf-Kopfzeile nicht am breitesten Grund gestaltet")
+        -- 6.9.0.0: rechte Linie bis vor das Zeichen nur links verankert,
+        -- Breite gerechnet (das Zeichen liegt nicht auf der Hoehe des Titels).
+        local rPts = {}
+        local rsp = rd.r.line.SetPoint
+        rd.r.line.SetPoint = function(self, p, ...) rPts[#rPts + 1] = p return rsp(self, p, ...) end
+        name.GetRight, minus.GetLeft = function() return 150 end, function() return 280 end
+        W.HideByAtlas(list)
+        -- 280 - 6 - (150 + 8 + 19 - 6) = 103
+        assert(rd.r.line:GetWidth() == 103 and rd.r.line:IsShown(), "rechte Linie: " .. tostring(rd.r.line:GetWidth()))
+        -- Ein breiterer Grund legt neu an: auch dann nur "LEFT".
+        local wider = stub.NewObject("Texture")
+        wider._width = 400
+        W.Header(row, wider)
+        rd.r.line.SetPoint = rsp
+        assert(#rPts > 0 and rd.beam == wider, "rechte Linie nicht neu gelegt")
+        for _, p in ipairs(rPts) do assert(p == "LEFT", "rechte Linie an zweitem Punkt: " .. p) end
+        assert(rd.r.line:GetWidth() == 103, "Breite nach neuem Grund verloren")
     end)
     -- 6.6.3.3: das Spielmenue (gemessen): Diamantmetall-Rahmen und Kopf
     -- weg, Kachel ohne Schatten nach aussen, rote Knoepfe flach.
@@ -7678,6 +7695,42 @@ do
         W.SoftMap(map)
         local lh = W.ListHeaders[head]
         assert(lh and lh.band and lh.accent == GC.frameAccent and not W.Headers[head], "Zone nicht als Abschnitt in Gold")
+        -- 6.9.0.0 (Beta-Test: "Brachland", "Dunkelkueste", "Stormwind" mit
+        -- Raute, ohne Linie): die Linie haengt an EINEM Punkt (links an der
+        -- Raute), ihre Breite ist gerechnet - zwei Punkte an Regionen
+        -- verschiedener Hoehe zeichnet das Spiel nicht. Ohne Kanten keine
+        -- geratene Breite, und der Bericht nennt die Zeile.
+        local linePts = {}
+        local sp = lh.line.SetPoint
+        lh.line.SetPoint = function(self, p, ...) linePts[#linePts + 1] = p return sp(self, p, ...) end
+        hName.GetLeft, hName.GetStringWidth = function() return nil end, function() return 100 end
+        minus.GetLeft = function() return 290 end
+        head:Show()
+        W.SkinMap(map)
+        assert(lh.width == 0 and not lh.line:IsShown(), "Linie ohne gemessene Kante: Breite geraten")
+        local hrep = table.concat(W.HeaderReport(), "\n")
+        assert(hrep:find("Abschnitte: %d+, mit Linie %d+ · ohne: [^\n]*Die Todesminen"), "Bericht ohne fehlende Linie: " .. hrep)
+        hName.GetLeft = function() return 20 end
+        W.SkinMap(map)
+        -- bis 6 px vor das Zeichen: 290 - 6 - (20 + 100 + 2 * 8 + 3) = 145
+        assert(lh.width == 145 and lh.line:IsShown() and lh.line:GetWidth() == 145,
+            "Breite der Linie falsch: " .. tostring(lh.width))
+        for _, p in ipairs(linePts) do assert(p == "LEFT", "Linie an zweitem Punkt verankert: " .. p) end
+        assert(#linePts > 0, "Linie nie neu gelegt")
+        hrep = table.concat(W.HeaderReport(), "\n")
+        assert(hrep:find("Abschnitte: %d+, mit Linie [1-9]") and not hrep:find("Die Todesminen", 1, true), "Bericht: " .. hrep)
+        -- Die Zeile wandert (Liste verwendet sie neu): Breite folgt.
+        minus.GetLeft = function() return 250 end
+        W.SkinMap(map)
+        assert(lh.width == 105, "Breite folgt der Kante nicht: " .. tostring(lh.width))
+        -- Ohne Zeichen in der Zeile (Questlog: es steckt im CollapseButton):
+        -- bis 10 px vor das Ende des Balkens.
+        local icon = lh.icon
+        lh.icon = nil
+        hBg.GetRight = function() return 300 end
+        W.SkinMap(map)
+        assert(lh.width == 151, "Linie endet nicht vor dem Balken: " .. tostring(lh.width))
+        lh.icon = icon
         QL.Update(map)
         local glow = stub.NewObject("Texture")
         W.done[map].glow = glow

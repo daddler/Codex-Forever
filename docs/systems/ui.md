@@ -1875,6 +1875,22 @@ eigene Flächen und Linien daneben und darunter.
   Haarlinie (`hairline`, weiß 5,5 %); Überschrift 14 pt
   (`S.CHARACTER_INFO.headerSize`), Raute und Linie in der Klassenfarbe
   wie gehabt. Einrückung des Spiels bleibt (Text nicht verschoben).
+- **Die Linie hängt an einem Punkt** *(6.9.0.0)*. Bis dahin lief sie
+  von der Raute (`LEFT`) bis an den Balken des Spiels bzw. vor das
+  Zeichen zum Auf- und Zuklappen (`RIGHT`). „RIGHT“ ist die halbe Höhe
+  *der jeweiligen Region* – liegen Raute und Balken nicht genau auf
+  einer Zeile, widersprechen sich die Punkte und das Spiel zeichnet die
+  1-px-Linie gar nicht (Beta-Test: im Questlog fehlte sie bei
+  „Brachland“, „Dunkelküste“, „Stormwind“, je nach Lage der Zeile).
+  Jetzt nur links verankert, Breite aus `GetLeft`/`GetRight` gerechnet
+  (`W.SizeLine`), neu, sobald eine Kante wandert; ohne gemessene Kante
+  keine Linie. Gilt für jeden `W.ListHeader` (Questlog, Ruf,
+  Fertigkeiten, Abzeichen, Berufe, Gilde, Gruppensuche, Sammlung, PvP,
+  Optionen) und die rechte Linie der mittigen Kopfzeilen vor dem
+  Zeichen. Zauberbuch, Talente und Berufsübersicht tun das seit
+  6.7.8.0. **Regel:** eine Linie von 1 px nie an zwei Regionen
+  verschiedener Höhe verankern. `/wcui fenster` zählt „Abschnitte: N,
+  mit Linie M · ohne: …“.
 - **Kein echter zusätzlicher Abstand zwischen Gruppen.** Die Liste
   (`WowScrollBoxList`) ordnet ihre Zeilen selbst nach der Höhe ihrer
   Vorlagen; mehr Abstand hieße, ihre Anordnung zu ersetzen

@@ -632,9 +632,12 @@ local function PlaceSide(e, fs, beam, sign, stop)
         e.line:SetPoint("LEFT", beam, "LEFT", W.HEADER_INSET, 0)
     else
         e.line:SetPoint("LEFT", fs, "RIGHT", inner, 0)
-        if stop then e.line:SetPoint("RIGHT", stop, "LEFT", -6, 0)
-        else e.line:SetPoint("RIGHT", beam, "RIGHT", -W.HEADER_INSET, 0) end
+        -- Vor dem Zeichen zum Auf- und Zuklappen: das liegt nicht auf der
+        -- Hoehe des Titels - nur links verankert, die Breite gerechnet
+        -- (W.SizeLine, jeder Durchlauf in FitStop).
+        if not stop then e.line:SetPoint("RIGHT", beam, "RIGHT", -W.HEADER_INSET, 0) end
     end
+    e.stop, e.inner = stop, inner
     e.glow:SetPoint("LEFT", e.line, "LEFT", 0, 0)
     e.glow:SetPoint("RIGHT", e.line, "RIGHT", 0, 0)
 end
@@ -656,6 +659,7 @@ local function Place(d, beam)
     d.hover:SetAllPoints(beam)
     d.beam = beam
     d.fitW = nil
+    d.r.fr, d.r.sl = false, false      -- nil hiesse "gemessen: keine Kante"
 end
 
 local function WidthOf(r)
@@ -668,6 +672,41 @@ local function TextWidth(fs)
     local ok, w = pcall(fs.GetStringWidth, fs)
     w = ok and K.Plain(w) or nil
     return type(w) == "number" and w or 0
+end
+
+-- Eine Kante (GetLeft/GetRight/...) oder nil - nie geraten.
+local function EdgeOf(fr, getter)
+    if type(fr) ~= "table" or type(fr[getter]) ~= "function" then return nil end
+    local ok, v = pcall(fr[getter], fr)
+    v = ok and K.Plain(v) or nil
+    return type(v) == "number" and v or nil
+end
+W.EdgeOf = EdgeOf
+
+-- Eine Linie von 1 px nur LINKS verankern und ihre Breite rechnen
+-- (6.9.0.0, Beta-Test: im Questlog hatten "Brachland", "Dunkelkueste",
+-- "Stormwind" Raute ohne Linie). Zwei Punkte an Regionen verschiedener
+-- Hoehe ("LEFT" an der Raute, "RIGHT" am Balken des Spiels = dessen halbe
+-- Hoehe) widersprechen sich, sobald die Mitten nicht genau auf einer Zeile
+-- liegen - dann zeichnet das Spiel die Linie gar nicht. Im Zauberbuch und
+-- in den Berufen war das seit 6.7.8.0 behoben, hier nicht.
+-- `from`: x, an dem die Linie beginnt; `to`: x, an dem sie endet.
+function W.SizeLine(line, from, to)
+    local w = (from and to) and (to - from) or 0
+    w = w > 0 and math.floor(w + 0.5) or 0
+    line:SetWidth(w)
+    line:SetShown(w > 0)
+    return w
+end
+
+-- Rechte Linie bis vor das Zeichen: neu gerechnet, wenn eine Kante wandert.
+local function FitStop(d)
+    local e = d.r
+    if not e.stop then return end
+    local fr, sl = EdgeOf(d.title, "GetRight"), EdgeOf(e.stop, "GetLeft")
+    if e.fr == fr and e.sl == sl then return end
+    e.fr, e.sl = fr, sl
+    W.SizeLine(e.line, fr and fr + e.inner, sl and sl - 6)
 end
 
 -- Passt der Titel samt Verzierung in den Balken? Sonst kleiner, dann
@@ -695,6 +734,7 @@ function W.Header(f, beam)
     if d then
         if beam ~= d.beam and WidthOf(beam) > WidthOf(d.beam) then Place(d, beam) end
         W.FitHeader(d)
+        FitStop(d)
         return d
     end
     local fs = HeaderTitle(f)
@@ -724,6 +764,7 @@ function W.Header(f, beam)
     Place(d, beam)
     headerDone[f] = d
     W.FitHeader(d)
+    FitStop(d)
     return d
 end
 
@@ -736,9 +777,30 @@ function W.HeaderReport()
             names[#names + 1] = type(text) == "string" and text or "?"
         end
     end
-    if #names == 0 then return {} end
-    table.sort(names)
-    return { string.format("   Kategorien: %d (%s)", #names, table.concat(names, ", ")) }
+    local out = {}
+    if #names > 0 then
+        table.sort(names)
+        out[1] = string.format("   Kategorien: %d (%s)", #names, table.concat(names, ", "))
+    end
+    -- Abschnitte der Listen (6.9.0.0): wie viele eine Linie haben, und
+    -- welche nicht - im Questlog fehlte sie an drei von sieben.
+    local n, lined, missing = 0, 0, {}
+    for f, d in pairs(W.ListHeaders) do
+        if Open(f) then
+            n = n + 1
+            if (d.width or 0) > 0 then lined = lined + 1
+            elseif #missing < 6 then
+                local text = d.title and K.Plain(d.title:GetText())
+                missing[#missing + 1] = type(text) == "string" and text or "?"
+            end
+        end
+    end
+    if n > 0 then
+        table.sort(missing)
+        out[#out + 1] = string.format("   Abschnitte: %d, mit Linie %d%s", n, lined,
+            #missing > 0 and (" · ohne: " .. table.concat(missing, ", ")) or "")
+    end
+    return out
 end
 
 --------------------------------------------------
@@ -759,21 +821,35 @@ W.ListHeaders = listHeads
 
 -- Linie und Raute haengen am Ende des TEXTES (nicht der Zeile: die kann
 -- breiter sein als ihr Text). Neu gelegt nur, wenn sich die Breite des
--- Textes aendert - die Liste verwendet ihre Zeilen fuer andere Gruppen.
+-- Textes oder eine Kante aendert - die Liste verwendet ihre Zeilen fuer
+-- andere Gruppen. Die Linie ist nur links verankert, ihre Breite
+-- gerechnet (W.SizeLine): bis vor das Zeichen zum Auf- und Zuklappen,
+-- sonst bis vor das Ende des Balkens.
 local function FitList(d)
     local tw = TextWidth(d.title)
-    if d.tw == tw and d.placedBeam == d.beam then return end
-    d.tw, d.placedBeam = tw, d.beam
-    d.dot:ClearAllPoints()
-    d.dot:SetPoint("CENTER", d.title, "LEFT", tw + W.LIST_GAP + 3, 0)
-    d.hole:ClearAllPoints()
-    d.hole:SetPoint("CENTER", d.dot, "CENTER", 0, 0)
-    d.line:ClearAllPoints()
-    d.line:SetPoint("LEFT", d.dot, "CENTER", W.LIST_GAP, 0)
-    if d.icon then d.line:SetPoint("RIGHT", d.icon, "LEFT", -6, 0)
-    else d.line:SetPoint("RIGHT", d.beam, "RIGHT", -W.HEADER_INSET, 0) end
-    d.hover:ClearAllPoints()
-    d.hover:SetAllPoints(d.beam)
+    local fl = EdgeOf(d.title, "GetLeft")
+    local stop
+    if d.icon then
+        stop = EdgeOf(d.icon, "GetLeft")
+        stop = stop and stop - 6
+    else
+        stop = EdgeOf(d.beam, "GetRight")
+        stop = stop and stop - W.HEADER_INSET
+    end
+    if d.tw == tw and d.placedBeam == d.beam and d.fl == fl and d.stop == stop then return end
+    local moved = d.tw ~= tw or d.placedBeam ~= d.beam
+    d.tw, d.placedBeam, d.fl, d.stop = tw, d.beam, fl, stop
+    if moved then
+        d.dot:ClearAllPoints()
+        d.dot:SetPoint("CENTER", d.title, "LEFT", tw + W.LIST_GAP + 3, 0)
+        d.hole:ClearAllPoints()
+        d.hole:SetPoint("CENTER", d.dot, "CENTER", 0, 0)
+        d.line:ClearAllPoints()
+        d.line:SetPoint("LEFT", d.dot, "CENTER", W.LIST_GAP, 0)
+        d.hover:ClearAllPoints()
+        d.hover:SetAllPoints(d.beam)
+    end
+    d.width = W.SizeLine(d.line, fl and fl + tw + 2 * W.LIST_GAP + 3, stop)
 end
 W.FitList = FitList
 
@@ -1903,12 +1979,6 @@ end
 -- QuestMapFrame.QuestsFrame.DetailsFrame - 6.8.0.8 suchte nur
 -- QuestMapFrame.DetailsFrame (Quelltext des Spiels) und fand nichts.
 W.MAP_COVERS = { { "QuestsFrame", "DetailsFrame" }, { "DetailsFrame" } }
-local function EdgeOf(fr, getter)
-    if type(fr) ~= "table" or type(fr[getter]) ~= "function" then return nil end
-    local ok, v = pcall(fr[getter], fr)
-    v = ok and K.Plain(v) or nil
-    return type(v) == "number" and v or nil
-end
 
 local function CoverVisible(fr)
     return type(fr) == "table" and fr.IsVisible and K.Bool(fr:IsVisible(), false)
