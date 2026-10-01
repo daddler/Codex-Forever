@@ -15,6 +15,8 @@ nicht zusammen.
 
 **Dein Profil bleibt deins.** Die Oberfläche bekommt im Bearbeitungsmodus ihr eigenes Layout. Dein bisheriges Layout, deine Chatreiter und deine Spieleinstellungen werden nicht überschrieben – schaltest du sie aus, ist dein Layout wieder aktiv, und was WeintCodex an Einstellungen geändert hat, steht wie vorher.
 
+**Ein Willkommens-Assistent nimmt dich an die Hand.** Fünf kurze Schritte mit Bildern: was die Oberfläche kann und warum sie sich lohnt, dann – mit oder ohne sie – welche Anzeigen und Helfer du haben möchtest, jeweils mit einem Satz, was sie tun. Erst „Übernehmen“ stellt um; mit Oberfläche wird dabei gleich ihr Layout eingerichtet, ein Neuladen genügt. Wieder zeigen: /wcui willkommen.
+
 **Komfort auch ohne Oberfläche.** Schadensanzeige, Erinnerungen, Questpfeil, Klickzauber mit Entfluchen, Makro-Helfer, Automark und die kleinen Helfer stehen jetzt unter Komfort und laufen auch mit den Rahmen des Spiels – Klickzauber dann direkt auf dessen Gruppenrahmen. Das Komplettpaket ist mit der Oberfläche von Haus aus an; ohne sie wählst du selbst.
 
 ### Technisch
@@ -24,7 +26,8 @@ nicht zusammen.
 - `ui/setup.lua`: kein `FCF_ResetChatWindows` mehr; Spieleinstellungen über `PF.SetCVar(…, "ui")`.
 - `ui/damagemeter.lua`: `damageMeterEnabled` über `PF.SetCVar(…, "damagemeter")` – die Anzeige des Spiels kommt zurück, wenn die Schadensanzeige oder ihr Schalter aus ist (vorher blieb sie für immer aus).
 - Schadensanzeige und Erinnerungen: `group = "qol"`, `defaultEnabled = "ui"` (neu in `K.ModuleEnabled`), `reload = true`. Klickzauber und Makro-Helfer als Seiten im Komfort mit `store =` (Einstellungen bleiben bei Gruppenrahmen bzw. Aktionsleisten). `CC.GameFrames()`: ohne Gruppenrahmen von WeintCodex gelten Klickzauber auf denen des Spiels, neu angewendet bei `GROUP_ROSTER_UPDATE`; Komfort aus → keine Belegung.
-- `load_test.lua`: Prüflauf als Spieler mit „Ja“; neue Abschnitte „Profil“ und „Ohne Oberfläche“; elf Gegenproben (Original überschrieben, fremder Wert zurückgedreht, eigene Wahl überstimmt, leeres Vorher, falscher Ersatz, Einrichtung ohne Merken, Fenster ohne Wahl, Klickzauber ohne Rahmen des Spiels, Klickzauber trotz Komfort aus, Schadensanzeige an der Oberfläche, Hauptschalter ohne Profil).
+- `ui/welcome.lua` neu: Assistent in fünf Schritten statt der Ja/Nein-Frage (`WL.Decide`, `WL.Apply`, erst „Übernehmen“ schaltet; mit Oberfläche `ES.Apply` gleich dabei). Acht eigene Vorschaubilder `media/welcome/*.blp` (512×256, BLP2/DXT1) aus `.github/scripts/welcome/shots.html` über `.github/scripts/make_welcome.py`. `/wcui willkommen`, Knopf „Assistenten zeigen“.
+- `load_test.lua`: Prüflauf als Spieler mit „Ja“; neue Abschnitte „Profil“, „Ohne Oberfläche“, „Willkommens-Assistent“ (beide Wege, Später, Zurückblättern, Paket bleibt Standard, Platz je Schritt, Bilder vorhanden); elf Gegenproben (Original überschrieben, fremder Wert zurückgedreht, eigene Wahl überstimmt, leeres Vorher, falscher Ersatz, Einrichtung ohne Merken, Fenster ohne Wahl, Klickzauber ohne Rahmen des Spiels, Klickzauber trotz Komfort aus, Schadensanzeige an der Oberfläche, Hauptschalter ohne Profil).
 
 ## [6.8.1.0] – 2026-10-01
 

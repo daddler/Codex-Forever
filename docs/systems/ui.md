@@ -287,35 +287,51 @@ Einstellungsseite des Moduls.
 | Questliste (`ui/questtracker.lua`) | eigene Fläche hinter der Zielverfolgung des Spiels, goldenes Banner weg, Höhe folgt dem Inhalt | Die Liste bleibt Blizzards (taint-empfindlich: Questgegenstände im Kampf); nur ein eigener Rahmen dahinter und durchsichtige Hintergrundtexturen. |
 | Questpfeil (`ui/questarrow.lua`) | 3D-Pfeil aus 64 vorgerechneten Ansichten (`media/ui/arrow3d.tga`, erzeugt von `make_ui_media.py`), Farbe grün → gelb → rot nach Abweichung; plant seit 6.6.2.7 selbst (nächstes lohnendes Ziel aus dem Questlog, siehe *Questpfeil: Planen*); als Geist zur Leiche (`C_DeathInfo`); nach dem Abgeben die nächstgelegene Quest – seit 6.6.0.1 nur für den Pfeil (`QA.Chosen`), nicht mehr über `C_SuperTrack.SetSuperTrackedQuestID` (das berührte Blizzards Questverfolgung, im Kampf blockierte das Spiel dann `SetPassThroughButtons`); wählt der Spieler selbst, gilt seine Wahl –, wahlweise schon bei erfüllten Zielen | Kein Modell im Spiel, sondern Bilder: ein `PlayerModel` ließe sich nicht zuverlässig drehen und färben. Leiche und nächste Quest nur, wo das Spiel einen Ort nennt – sonst „Ort unbekannt“, nie 0 m. |
 
-## Die Frage beim Einloggen (`ui/welcome.lua`)
+## Der Willkommens-Assistent (`ui/welcome.lua`, seit 6.9.0.0)
 
-Ruhte von 6.0.0.3 bis 6.8.1.0 (siehe oben, `OPT_IN`); seit 6.9.0.0 wieder
-in Kraft.
+Beta-Test: „Ein Willkommensbildschirm, wo dem Nutzer alles erklärt wird,
+ggf. mit kleinen Screenshots … Wenn man sich gegen das UI entscheidet,
+soll dennoch eine Abfrage kommen, ob man die Komfortfunktionen haben
+möchte. Ein komplettes An-die-Hand-Nehmen.“ Er ersetzt die frühere
+Ja/Nein-Frage – einmal je Konto, **nach** der Einführung bzw. dem
+Changelog-Popup (`Onboarding.OnClosed`, `Onboarding.IsShowing`), nie im
+Kampf, nie nach einem `/reload`. Wieder zeigen: `/wcui willkommen` oder
+der Knopf „Assistenten zeigen“ auf `/wcui` → Allgemein.
 
-Einmal je Konto fragt WeintCodex, ob die Oberfläche verwendet werden
-soll – **nach** der Einführung bzw. dem Changelog-Popup, nie darüber
-(`Onboarding.OnClosed`, `Onboarding.IsShowing`), und nie im Kampf.
+| Schritt | Inhalt |
+|---|---|
+| 1 Willkommen | was WeintCodex ist, dass zwei Pakete zur Wahl stehen, dass nichts vor „Übernehmen“ geschieht |
+| 2 Oberfläche | Vorteile, „Dein Profil bleibt deins“, Galerie mit vier Bildern → „Ohne Oberfläche“ / „Oberfläche verwenden“ |
+| 3 Anzeigen | Schadensanzeige, Erinnerungen, Questpfeil – Schalter mit Erklärung, Bild wechselt mit der Zeile |
+| 4 Helfer | reparieren, Graues verkaufen, schneller plündern, Automark, Entfluchen (nur wenn `DP.SPELLS` die Klasse kennt); Hinweis auf Klickzauber und Makro-Helfer |
+| 5 Bereit | Zusammenfassung → „Übernehmen“ → Bericht und „Jetzt neu laden“ |
 
-* **Ja** → Hauptschalter an (das Layout von vorher wird gemerkt, siehe
-  *Dein Profil bleibt deins*), Angebot „Jetzt neu laden“ / „Später“.
-* **Nein** → nichts wird angefasst, und der Hinweis, wo man es später
-  einschaltet (Einstellungen → „Oberfläche“, `/wcui`), im Fenster und im
-  Chat. Ein „Nein“ ohne diesen Satz wirkte endgültig, obwohl es das nicht
-  ist. Steht noch das Layout „WeintCodex“ (Oberfläche vor 6.9.0.0), kommt
-  das eigene zurück.
-* ESC ist **keine** Antwort: die Frage kommt beim nächsten Einloggen
-  wieder.
+**Mit Oberfläche** sind die Anzeigen vorgewählt (Komplettpaket), **ohne**
+stehen sie, wie sie sind (`defaultEnabled = "ui"` → aus). Eine frühere
+ausdrückliche Wahl gilt in beiden Fällen. Zurückblättern behält die Haken
+(`WL.Decide` setzt das Paket nur, wenn sich die Antwort ändert).
 
-Gemerkt wird `ui.asked`. Wer die Oberfläche vorher schon über `/wcui`
-eingeschaltet hat, wird nicht gefragt.
+**Nichts geschieht vor „Übernehmen“** (`WL.Apply`): erst dann
+Hauptschalter (zuerst – davon hängt ab, was Standard ist), Module nur, wo
+die Wahl vom Standard abweicht (das Paket bleibt Standard und folgt der
+Oberfläche, wenn sie später ausgeht), Helfer, und mit Oberfläche
+**gleich die Einrichtung** (`ES.Apply`, falls es das Layout noch nicht
+gibt) – ein Neuladen statt zwei. „Später“, das Kreuz und Abbrechen
+merken nichts; dann fragt der Assistent beim nächsten Einloggen wieder.
+ESC ist keine Antwort.
 
-**Nach einem `/reload` wird nie automatisch gefragt, nur beim echten
-Einloggen** (`PLAYER_ENTERING_WORLD` mit `isReloadingUi`). Mit 6.0.0.1
-gemeldet: „Ja“ → „Jetzt neu laden“ → dieselbe Frage, in einer Schleife.
-Der Beta-Client hatte die Antwort nicht gespeichert. Erzwingen kann das
-Addon das Speichern nicht – aber wer gerade neu geladen hat, hat die
-Frage fast immer eben beantwortet. Beim nächsten echten Einloggen kommt
-sie wieder, falls die Antwort verloren ging.
+**Die Bilder** sind eigene Zeichnungen, keine Bildschirmfotos (Spielwelt
+und Symbole gehören Blizzard): `.github/scripts/welcome/shots.html`, je
+Szene ein Bild aus einem kopflosen Chromium, verkleinert auf 512×256,
+BLP2/DXT1 ohne Mipmaps nach `media/welcome/` (rund 64 KB je Bild, acht
+Bilder). Neu bauen: `python3 .github/scripts/make_welcome.py
+[png-vorschau]`. Der Akzent der Bilder ist ein Beispiel (Magier) – die
+Unterschrift sagt das.
+
+**Platz:** `load_test.lua` schätzt jeden Schritt mit
+`WeintCodex.EstimateLines` gegen die Spalte (`WL.COL_W`) und die Höhe
+zwischen Kopf und Knopfzeile, und prüft, dass jedes Bild als Datei
+existiert.
 
 ### Hat der Client gespeichert? (`WeintCodex.SaveHealth`)
 

@@ -111,6 +111,10 @@ K.Register({
                         get = function() return K.UIEnabled() end,
                         set = function(on) K.SetUIEnabled(on) end },
                       unlock)
+                B:Row({ type = "button", label = "Willkommen", text = "Assistenten zeigen",
+                        tooltip = "Der Rundgang vom ersten Mal: Oberfläche ja oder nein, Komfort wählen, übernehmen (/wcui willkommen).",
+                        onClick = function() WeintCodex.UIWelcome.Ask() end },
+                      { type = "empty" })
                 B:Note("Eigenes Profil: Die Oberfläche bekommt im Bearbeitungsmodus ein eigenes Layout „WeintCodex“. Dein Layout, deine Chatreiter und deine Spieleinstellungen bleiben – schaltest du aus, ist dein Layout wieder aktiv, und was WeintCodex an Einstellungen geändert hat, steht wie vorher.")
                 B:Note("Alles links unter „Komfort“ — Schadensanzeige, Questpfeil, Erinnerungen, Klickzauber, Makro-Helfer, Automark und die kleinen Helfer — hängt nicht an diesem Schalter. Schadensanzeige und Erinnerungen sind mit der Oberfläche von Haus aus an; ohne sie schaltest du sie selbst ein.")
             else
@@ -854,6 +858,10 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         for _, line in ipairs(WeintCodex.UIMinimap.InspectAddons()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
         end
+        return
+    end
+    if msg == "willkommen" or msg == "welcome" then
+        WeintCodex.UIWelcome.Ask()
         return
     end
     if msg == "einrichten" or msg == "setup" then

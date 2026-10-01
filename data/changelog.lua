@@ -27,6 +27,7 @@ WeintCodex_ChangelogData = {
         notes   = {
             "|cff7C6CFFDie WeintCodex-Oberfläche ist wieder freiwillig.|r Das Spiel merkt sich Einstellungen jetzt, also fragt WeintCodex einmal, ob du sie verwenden möchtest – auch, wenn du sie bisher hattest. Ein- und ausschalten kannst du sie jederzeit mit /wcui.",
             "|cff7C6CFFDein Profil bleibt deins.|r Die Oberfläche bekommt im Bearbeitungsmodus ihr eigenes Layout. Dein bisheriges Layout, deine Chatreiter und deine Spieleinstellungen werden nicht überschrieben – schaltest du sie aus, ist dein Layout wieder aktiv, und was WeintCodex an Einstellungen geändert hat, steht wie vorher.",
+            "|cff7C6CFFEin Willkommens-Assistent nimmt dich an die Hand.|r Fünf kurze Schritte mit Bildern: was die Oberfläche kann und warum sie sich lohnt, dann – mit oder ohne sie – welche Anzeigen und Helfer du haben möchtest, jeweils mit einem Satz, was sie tun. Erst „Übernehmen“ stellt um; mit Oberfläche wird dabei gleich ihr Layout eingerichtet, ein Neuladen genügt. Wieder zeigen: /wcui willkommen.",
             "|cff7C6CFFKomfort auch ohne Oberfläche.|r Schadensanzeige, Erinnerungen, Questpfeil, Klickzauber mit Entfluchen, Makro-Helfer, Automark und die kleinen Helfer stehen jetzt unter Komfort und laufen auch mit den Rahmen des Spiels – Klickzauber dann direkt auf dessen Gruppenrahmen. Das Komplettpaket ist mit der Oberfläche von Haus aus an; ohne sie wählst du selbst.",
         },
     },

@@ -1,0 +1,347 @@
+<!doctype html>
+<!--
+  Vorschaubilder des Willkommens-Assistenten (ui/welcome.lua, 6.9.0.0).
+
+  Eigene Zeichnungen im Stil von WeintCodex - KEINE Bildschirmfotos aus dem
+  Spiel: deren Hintergrund (Spielwelt, Symbole) gehoert Blizzard (siehe
+  CLAUDE.md, "Karten- und Bossbilder aus dem Spiel"). Die Welt ist ein
+  Verlauf, Symbole sind Flaechen, Namen sind ausgedacht. Der Akzent ist die
+  Klassenfarbe - hier am Beispiel Magier (#3FC7EB); im Spiel traegt jeder
+  seine.
+
+  Erzeugt mit .github/scripts/make_welcome.py: je Szene ein Bildschirmfoto
+  dieser Seite (?s=<name>, 1024x512), verkleinert auf 512x256, als BLP2/DXT1
+  nach media/welcome/<name>.blp.
+-->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: "Cond"; src: url("../../../media/fonts/IBMPlexSansCondensed-SemiBold.ttf"); }
+@font-face { font-family: "CondB"; src: url("../../../media/fonts/IBMPlexSansCondensed-Bold.ttf"); }
+@font-face { font-family: "Sans"; src: url("../../../media/fonts/IBMPlexSans-Medium.ttf"); }
+@font-face { font-family: "SansB"; src: url("../../../media/fonts/IBMPlexSans-SemiBold.ttf"); }
+@font-face { font-family: "Mono"; src: url("../../../media/fonts/IBMPlexMono-Medium.ttf"); }
+@font-face { font-family: "Serif"; src: url("../../../media/fonts/Newsreader-SemiBold.ttf"); }
+:root {
+  --bg: #0C0C0F; --s1: #08080A; --s2: #141419; --s3: #1C1C23;
+  --line: #26262E; --strong: #33333C;
+  --tb: #F7F7FA; --tn: #EDEDF2; --tm: #A0A0AC; --td: #8A8A98; --tf: #5F5F6B;
+  --acc: #3FC7EB;          /* Klassenfarbe, Beispiel Magier */
+  --gold: #C9A45C;         /* frameAccent: Fenster, die keiner Klasse gehoeren */
+  --green: #3DB85C; --red: #C8463C; --hostile: #73201C; --yellow: #D9B838;
+  --warn: #F0A63A; --blue: #4EA8F5; --violet: #7C6CFF;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1024px; height: 512px; overflow: hidden; background: #000; }
+.scene { position: relative; width: 1024px; height: 512px; overflow: hidden; display: none;
+  font-family: "Sans"; color: var(--tn); }
+.scene.on { display: block; }
+/* Die Welt: kein Spielmaterial, nur Dunkel, Horizont und Huegel. */
+.world { position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 45% at 62% 18%, rgba(120,150,190,.28), transparent 70%),
+    linear-gradient(180deg, #1d2633 0%, #18202a 40%, #121815 62%, #0d110e 100%); }
+.world::before { content: ""; position: absolute; left: -5%; right: -5%; bottom: 0; height: 52%;
+  background:
+    radial-gradient(ellipse 40% 60% at 20% 100%, #1a2419 0 60%, transparent 61%),
+    radial-gradient(ellipse 50% 55% at 75% 100%, #172016 0 60%, transparent 61%),
+    radial-gradient(ellipse 70% 40% at 50% 100%, #111a12 0 60%, transparent 61%); }
+.world::after { content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 80% at 50% 45%, transparent 55%, rgba(0,0,0,.55)); }
+.dark { position: absolute; inset: 0; background: linear-gradient(160deg, #15151b, #0b0b0e); }
+
+.tile { position: absolute; background: rgba(20,20,25,.92); border: 1px solid var(--line);
+  box-shadow: 0 6px 18px rgba(0,0,0,.55); }
+.bar { position: absolute; left: 0; top: 0; bottom: 0; }
+.gloss::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0) 55%, rgba(0,0,0,.18)); }
+.name { position: absolute; font-family: "Cond"; color: var(--tb); text-shadow: 0 1px 2px #000; white-space: nowrap; }
+.mono { font-family: "Mono"; }
+.icon { position: absolute; border: 1px solid #000; box-shadow: 0 0 0 1px var(--line); }
+.eyebrow { font-family: "Mono"; letter-spacing: .22em; text-transform: uppercase; color: var(--td); }
+</style>
+</head>
+<body>
+
+<!-- 1 · Die ganze Oberflaeche auf einen Blick -->
+<div class="scene" id="overview">
+  <div class="world"></div>
+  <!-- Minikarte, eckig -->
+  <div class="tile" style="right:28px;top:24px;width:150px;height:150px;
+       background: radial-gradient(circle at 40% 45%, #3a4a32, #26301f 60%, #1b2216);">
+    <div style="position:absolute;left:68px;top:68px;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:16px solid #fff;"></div>
+    <div class="mono" style="position:absolute;left:8px;bottom:6px;font-size:13px;color:var(--tm)">12:40</div>
+  </div>
+  <!-- Erinnerung -->
+  <div class="tile" style="left:372px;top:40px;width:280px;height:42px;border-color:var(--warn)">
+    <div class="icon" style="left:8px;top:7px;width:26px;height:26px;background:linear-gradient(135deg,#6fb6ff,#2b4f9a)"></div>
+    <div class="name" style="left:44px;top:10px;font-size:17px">Fehlt: Arkane Intelligenz</div>
+  </div>
+  <!-- Plakette ueber einem Gegner -->
+  <div style="position:absolute;left:432px;top:150px;width:160px;height:18px;box-shadow:0 0 18px 4px rgba(63,199,235,.55);border:1px solid var(--acc);background:#1a1a1e">
+    <div class="bar gloss" style="width:72%;background:var(--red)"></div>
+    <div class="bar" style="left:72%;width:9%;background:#f4d9b8;opacity:.85"></div>
+    <div class="name" style="left:6px;top:0;font-size:14px;line-height:18px">Wildschwein</div>
+  </div>
+  <div style="position:absolute;left:470px;top:182px;width:84px;height:60px;border-radius:50% 50% 40% 40%;background:radial-gradient(circle at 50% 35%,#3a2f28,#1d1714);opacity:.9"></div>
+  <!-- Spieler und Ziel -->
+  <div class="tile" style="left:250px;top:286px;width:230px;height:54px">
+    <div style="position:absolute;left:4px;top:4px;right:4px;height:34px;background:#101014">
+      <div class="bar gloss" style="width:88%;background:var(--acc)"></div>
+      <div class="name" style="left:8px;top:7px;font-size:16px">Kalle</div>
+      <div class="name mono" style="right:8px;top:8px;font-size:13px">88 %</div>
+    </div>
+    <div style="position:absolute;left:4px;bottom:4px;right:4px;height:8px;background:#101014"><div class="bar" style="width:64%;background:#3f6fe0"></div></div>
+  </div>
+  <div class="tile" style="left:544px;top:286px;width:230px;height:54px;border-color:var(--acc)">
+    <div style="position:absolute;left:4px;top:4px;right:4px;height:34px;background:#101014">
+      <div class="bar gloss" style="width:72%;background:var(--red)"></div>
+      <div class="name" style="left:8px;top:7px;font-size:16px">Wildschwein</div>
+      <div class="name mono" style="right:8px;top:8px;font-size:13px;color:var(--yellow)">12</div>
+    </div>
+    <div style="position:absolute;left:4px;bottom:4px;right:4px;height:8px;background:#101014"><div class="bar" style="width:100%;background:#c8a03a"></div></div>
+  </div>
+  <!-- Aktionsleiste -->
+  <div style="position:absolute;left:278px;bottom:22px;display:flex;gap:4px">
+    <div class="icon" style="position:relative;width:36px;height:36px;background:linear-gradient(135deg,#ff9b4a,#9a2a12)"></div>
+    <div class="icon" style="position:relative;width:36px;height:36px;background:linear-gradient(135deg,#9fe3ff,#2a6aa0)"></div>
+    <div class="icon" style="position:relative;width:36px;height:36px;background:linear-gradient(135deg,#c9b6ff,#4a2a9a)"></div>
+    <div class="icon" style="position:relative;width:36px;height:36px;background:linear-gradient(135deg,#ffe08a,#8a6a12)"></div>
+    <div class="icon" style="position:relative;width:36px;height:36px;background:linear-gradient(135deg,#a8ffb0,#22803a)"></div>
+    <div class="icon" style="position:relative;width:36px;height:36px;background:linear-gradient(135deg,#ff8aa0,#801a3a)"></div>
+    <div class="icon" style="position:relative;width:36px;height:36px;background:linear-gradient(135deg,#d0d0d0,#444)"></div>
+    <div class="icon" style="position:relative;width:36px;height:36px;background:linear-gradient(135deg,#7fd0ff,#1a3f80)"></div>
+    <div class="icon" style="position:relative;width:36px;height:36px;background:linear-gradient(135deg,#ffcf7f,#7a3a10)"></div>
+    <div class="icon" style="position:relative;width:36px;height:36px;background:linear-gradient(135deg,#b0ffef,#1a7a6a)"></div>
+    <div class="icon" style="position:relative;width:36px;height:36px;background:var(--s3)"></div>
+    <div class="icon" style="position:relative;width:36px;height:36px;background:var(--s3)"></div>
+  </div>
+  <!-- Chat -->
+  <div class="tile" style="left:22px;bottom:22px;width:220px;height:118px;padding:8px 10px;font-size:12px;line-height:18px">
+    <div class="eyebrow" style="font-size:10px;color:var(--acc);margin-bottom:4px">Allgemein · Handel</div>
+    <div><span style="color:#ff7d0a">[Brunhild]</span> <span style="color:var(--tm)">Gruppe für Höhlen?</span></div>
+    <div><span style="color:var(--acc)">[Kalle]</span> <span style="color:var(--tm)">bin dabei</span></div>
+    <div style="color:var(--tf)">Wildschwein stirbt.</div>
+  </div>
+  <!-- Schadensanzeige -->
+  <div class="tile" style="right:22px;bottom:22px;width:220px;height:118px">
+    <div class="eyebrow" style="position:absolute;left:8px;top:6px;font-size:10px">Schaden</div>
+    <div style="position:absolute;left:6px;right:6px;top:26px;height:20px;background:#101014"><div class="bar gloss" style="width:100%;background:var(--acc)"></div><div class="name" style="left:6px;font-size:13px;line-height:20px">Kalle</div><div class="name mono" style="right:6px;font-size:12px;line-height:20px">4,2K</div></div>
+    <div style="position:absolute;left:6px;right:6px;top:49px;height:20px;background:#101014"><div class="bar gloss" style="width:78%;background:#ff7d0a"></div><div class="name" style="left:6px;font-size:13px;line-height:20px">Brunhild</div><div class="name mono" style="right:6px;font-size:12px;line-height:20px">3,3K</div></div>
+    <div style="position:absolute;left:6px;right:6px;top:72px;height:20px;background:#101014"><div class="bar gloss" style="width:55%;background:#fff569"></div><div class="name" style="left:6px;font-size:13px;line-height:20px">Ole</div><div class="name mono" style="right:6px;font-size:12px;line-height:20px">2,3K</div></div>
+    <div style="position:absolute;left:6px;right:6px;top:95px;height:18px;background:#101014"><div class="bar gloss" style="width:34%;background:#c79c6e"></div><div class="name" style="left:6px;font-size:13px;line-height:18px">Grimm</div></div>
+  </div>
+</div>
+
+<!-- 2 · Namensplaketten -->
+<div class="scene" id="plates">
+  <div class="world"></div>
+  <!-- Ziel: Leuchten, Kante, Schadensspur, Auren, Zauberbalken, Marke -->
+  <div style="position:absolute;left:300px;top:118px;width:0;height:0">
+    <svg width="34" height="34" viewBox="0 0 24 24" style="position:absolute;left:174px;top:-62px">
+      <path d="M12 1.5l3.1 6.6 7.2.8-5.4 4.9 1.5 7.1L12 17.3 5.6 20.9l1.5-7.1L1.7 8.9l7.2-.8z" fill="#ffd84a" stroke="#7a5a00" stroke-width="1"/></svg>
+    <div style="position:absolute;left:0;top:-38px;display:flex;gap:4px">
+      <div class="icon" style="position:relative;width:30px;height:30px;background:linear-gradient(135deg,#9fe3ff,#2a6aa0)"><div class="mono" style="position:absolute;right:2px;bottom:0;font-size:12px;color:#fff;text-shadow:0 1px 2px #000">8</div></div>
+      <div class="icon" style="position:relative;width:30px;height:30px;background:linear-gradient(135deg,#ff9b4a,#9a2a12)"><div class="mono" style="position:absolute;right:2px;bottom:0;font-size:12px;color:#fff;text-shadow:0 1px 2px #000">3</div></div>
+    </div>
+  </div>
+  <div style="position:absolute;left:300px;top:118px;width:380px;height:40px;background:#1a1a1e;border:2px solid var(--acc);box-shadow:0 0 34px 10px rgba(63,199,235,.45)">
+    <div class="bar gloss" style="width:58%;background:var(--red)"></div>
+    <div class="bar" style="left:58%;width:14%;background:#f4d9b8;opacity:.9"></div>
+    <div style="position:absolute;left:30%;top:0;bottom:0;width:60px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)"></div>
+    <div class="name" style="left:12px;top:4px;font-size:24px;line-height:30px">Waldwolf</div>
+    <div class="name mono" style="right:12px;top:6px;font-size:20px;line-height:26px">58 %</div>
+  </div>
+  <div style="position:absolute;left:300px;top:164px;width:380px;height:20px;background:#101014;border:1px solid var(--line)">
+    <div class="bar gloss" style="width:64%;background:#e0b23a"></div>
+    <div class="name" style="left:8px;font-size:15px;line-height:20px">Heulen</div>
+    <div class="name mono" style="right:8px;font-size:13px;line-height:20px">0,9</div>
+  </div>
+  <!-- Nicht-Ziel: leiser -->
+  <div style="position:absolute;left:96px;top:290px;width:240px;height:26px;background:#1a1a1e;border:1px solid #000;opacity:.7">
+    <div class="bar gloss" style="width:100%;background:var(--hostile)"></div>
+    <div class="name" style="left:8px;top:2px;font-size:17px;line-height:22px">Waldwolf</div>
+  </div>
+  <div style="position:absolute;left:680px;top:330px;width:240px;height:26px;background:#1a1a1e;border:1px solid #000;opacity:.7">
+    <div class="bar gloss" style="width:100%;background:var(--yellow)"></div>
+    <div class="name" style="left:8px;top:2px;font-size:17px;line-height:22px;color:#111;text-shadow:none">Händlerin Mara</div>
+  </div>
+</div>
+
+<!-- 3 · Gruppenrahmen und Klickzauber -->
+<div class="scene" id="group">
+  <div class="dark"></div>
+  <div style="position:absolute;left:40px;top:70px;display:grid;grid-template-columns:repeat(2,200px);gap:6px">
+    <!-- je Rahmen: Name, Leben in Klassenfarbe, HoT-Ecke, Schild, Debuff -->
+    <div class="tile" style="position:relative;width:200px;height:70px">
+      <div class="bar gloss" style="left:2px;top:2px;bottom:10px;width:92%;background:#c79c6e"></div>
+      <div class="name" style="left:10px;top:8px;font-size:17px">Brunhild</div>
+      <div class="name mono" style="left:10px;top:34px;font-size:12px;color:var(--tn)">Tank</div>
+      <div style="position:absolute;right:6px;top:6px;width:10px;height:10px;background:#3ddc84;border:1px solid #000"></div>
+      <div style="position:absolute;left:2px;right:2px;bottom:2px;height:6px;background:#101014"><div class="bar" style="width:40%;background:#c8463c"></div></div>
+    </div>
+    <div class="tile" style="position:relative;width:200px;height:70px;border-color:var(--violet);box-shadow:0 0 0 2px var(--violet)">
+      <div class="bar gloss" style="left:2px;top:2px;bottom:10px;width:46%;background:#3FC7EB"></div>
+      <div style="position:absolute;left:46%;top:2px;bottom:10px;width:18%;background:repeating-linear-gradient(45deg,rgba(255,255,255,.55) 0 4px,rgba(255,255,255,.15) 4px 8px)"></div>
+      <div class="name" style="left:10px;top:8px;font-size:17px">Kalle</div>
+      <div class="icon" style="right:6px;top:34px;width:24px;height:24px;background:linear-gradient(135deg,#b48aff,#4a1a9a)"></div>
+      <div style="position:absolute;left:2px;right:2px;bottom:2px;height:6px;background:#101014"><div class="bar" style="width:70%;background:#3f6fe0"></div></div>
+    </div>
+    <div class="tile" style="position:relative;width:200px;height:70px">
+      <div class="bar gloss" style="left:2px;top:2px;bottom:10px;width:100%;background:#ffffff;opacity:.92"></div>
+      <div class="name" style="left:10px;top:8px;font-size:17px;color:#111;text-shadow:none">Lene</div>
+      <div style="position:absolute;right:6px;top:6px;width:10px;height:10px;background:#3ddc84;border:1px solid #000"></div>
+      <div style="position:absolute;right:20px;top:6px;width:10px;height:10px;background:#f5d64a;border:1px solid #000"></div>
+      <div style="position:absolute;left:2px;right:2px;bottom:2px;height:6px;background:#101014"><div class="bar" style="width:55%;background:#3f6fe0"></div></div>
+    </div>
+    <div class="tile" style="position:relative;width:200px;height:70px">
+      <div class="bar gloss" style="left:2px;top:2px;bottom:10px;width:74%;background:#fff569"></div>
+      <div style="position:absolute;left:74%;top:2px;bottom:10px;width:12%;background:rgba(61,184,92,.5)"></div>
+      <div class="name" style="left:10px;top:8px;font-size:17px;color:#111;text-shadow:none">Ole</div>
+      <div style="position:absolute;left:2px;right:2px;bottom:2px;height:6px;background:#101014"><div class="bar" style="width:90%;background:#e8d040"></div></div>
+    </div>
+    <div class="tile" style="position:relative;width:200px;height:70px;opacity:.55">
+      <div class="bar gloss" style="left:2px;top:2px;bottom:10px;width:100%;background:#9482c9"></div>
+      <div class="name" style="left:10px;top:8px;font-size:17px">Grimm</div>
+      <div class="name mono" style="left:10px;top:34px;font-size:12px;color:var(--tn)">außer Reichweite</div>
+    </div>
+  </div>
+  <!-- Mauszeiger und Tooltip -->
+  <svg width="26" height="34" viewBox="0 0 13 17" style="position:absolute;left:300px;top:126px">
+    <path d="M1 1v14l3.6-3.4 2.4 5 2-1-2.4-4.8H12z" fill="#fff" stroke="#000" stroke-width="1"/></svg>
+  <div class="tile" style="left:520px;top:70px;width:440px;height:220px;padding:18px 20px;border-color:var(--acc)">
+    <div class="name" style="position:static;font-size:24px;color:#3FC7EB">Kalle</div>
+    <div class="mono" style="font-size:13px;color:var(--td);margin:4px 0 14px">Stufe 24 · Magier</div>
+    <div class="eyebrow" style="font-size:11px;margin-bottom:8px;color:var(--acc)">Klickzauber</div>
+    <div style="font-size:17px;line-height:30px">
+      <div><span class="mono" style="color:var(--tb)">Umschalt + Links</span><span style="color:var(--tm)"> · Erneuerung</span></div>
+      <div><span class="mono" style="color:var(--tb)">Umschalt + Rechts</span><span style="color:var(--tm)"> · Blitzheilung</span></div>
+      <div><span class="mono" style="color:var(--tb)">Strg + Links</span><span style="color:var(--tm)"> · Magie bannen</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 4 · Fenster des Spiels, ruhig -->
+<div class="scene" id="windows">
+  <div class="world" style="filter:brightness(.6)"></div>
+  <div class="tile" style="left:150px;top:28px;width:724px;height:456px;background:#0e0e12;border-color:#2a2a31">
+    <div style="position:absolute;left:0;right:0;top:0;height:120px;background:radial-gradient(ellipse 60% 100% at 50% 0%,rgba(201,164,92,.18),transparent 70%)"></div>
+    <div style="position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)"></div>
+    <div class="eyebrow" style="position:absolute;left:28px;top:22px;font-size:12px;color:var(--gold)">Händler</div>
+    <div style="position:absolute;left:28px;top:42px;font-family:Serif;font-size:30px;color:var(--tb)">Händlerin Mara</div>
+    <div style="position:absolute;left:28px;right:28px;top:96px;bottom:70px;display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;padding:14px;background:#141419;border:1px solid #2e2a22">
+      <!-- je Ware: Symbol, Name, Preis -->
+      <div style="display:flex;gap:10px;align-items:center"><div class="icon" style="position:relative;width:40px;height:40px;background:linear-gradient(135deg,#d8e8ff,#5a6a8a)"></div><div><div style="font-family:Cond;font-size:17px;color:#1eff00">Robuste Lederstiefel</div><div class="mono" style="font-size:13px;color:var(--gold)">1g 20s</div></div></div>
+      <div style="display:flex;gap:10px;align-items:center"><div class="icon" style="position:relative;width:40px;height:40px;background:linear-gradient(135deg,#ffe4a8,#8a5a12)"></div><div><div style="font-family:Cond;font-size:17px">Frisches Brot</div><div class="mono" style="font-size:13px;color:var(--gold)">25c</div></div></div>
+      <div style="display:flex;gap:10px;align-items:center"><div class="icon" style="position:relative;width:40px;height:40px;background:linear-gradient(135deg,#bff2ff,#2a7aa0)"></div><div><div style="font-family:Cond;font-size:17px">Quellwasser</div><div class="mono" style="font-size:13px;color:var(--gold)">20c</div></div></div>
+      <div style="display:flex;gap:10px;align-items:center"><div class="icon" style="position:relative;width:40px;height:40px;background:linear-gradient(135deg,#e8e8e8,#666)"></div><div><div style="font-family:Cond;font-size:17px">Wurfmesser</div><div class="mono" style="font-size:13px;color:var(--gold)">8s</div></div></div>
+      <div style="display:flex;gap:10px;align-items:center"><div class="icon" style="position:relative;width:40px;height:40px;background:linear-gradient(135deg,#ffb0b0,#8a1a1a)"></div><div><div style="font-family:Cond;font-size:17px">Heiltrank, gering</div><div class="mono" style="font-size:13px;color:var(--gold)">40s</div></div></div>
+      <div style="display:flex;gap:10px;align-items:center"><div class="icon" style="position:relative;width:40px;height:40px;background:linear-gradient(135deg,#c8ffd0,#2a7a3a)"></div><div><div style="font-family:Cond;font-size:17px">Leinenstoff</div><div class="mono" style="font-size:13px;color:var(--gold)">2s</div></div></div>
+    </div>
+    <div style="position:absolute;left:28px;bottom:22px;display:flex;gap:2px">
+      <div style="padding:8px 20px;font-family:Cond;font-size:16px;color:var(--tb);background:#1c1a16;border-bottom:2px solid var(--gold)">Händler</div>
+      <div style="padding:8px 20px;font-family:Cond;font-size:16px;color:var(--td);background:#141419">Rückkauf</div>
+    </div>
+    <div class="mono" style="position:absolute;right:28px;bottom:30px;font-size:16px;color:var(--gold)">12g 48s 03c</div>
+  </div>
+</div>
+
+<!-- 5 · Schadensanzeige -->
+<div class="scene" id="damage">
+  <div class="world" style="filter:brightness(.7)"></div>
+  <div class="tile" style="left:262px;top:40px;width:500px;height:432px">
+    <div style="position:absolute;left:0;right:0;top:0;height:44px;border-bottom:1px solid var(--line);background:#121217">
+      <div class="eyebrow" style="position:absolute;left:16px;top:15px;font-size:13px;color:var(--acc)">Schaden · Dieser Kampf</div>
+      <div class="mono" style="position:absolute;right:16px;top:13px;font-size:14px;color:var(--td)">1:24</div>
+    </div>
+    <div id="dmgrows" style="position:absolute;left:10px;right:10px;top:56px"></div>
+  </div>
+</div>
+
+<!-- 6 · Erinnerungen -->
+<div class="scene" id="reminders">
+  <div class="world"></div>
+  <div class="tile" style="left:252px;top:60px;width:520px;height:80px;border-color:var(--warn);box-shadow:0 0 30px rgba(240,166,58,.25)">
+    <div class="icon" style="left:16px;top:14px;width:50px;height:50px;background:linear-gradient(135deg,#6fb6ff,#2b4f9a)"></div>
+    <div class="eyebrow" style="position:absolute;left:84px;top:14px;font-size:12px;color:var(--warn)">Vor dem Kampf</div>
+    <div class="name" style="left:84px;top:32px;font-size:26px">Fehlt: Arkane Intelligenz</div>
+  </div>
+  <div class="eyebrow" style="position:absolute;left:300px;top:218px;font-size:12px">Buffs und Procs</div>
+  <div style="position:absolute;left:300px;top:240px;display:flex;gap:10px">
+    <div class="icon" style="position:relative;width:64px;height:64px;background:linear-gradient(135deg,#ffb36b,#a1300f);box-shadow:0 0 0 2px var(--acc),0 0 22px rgba(63,199,235,.6)"><div class="mono" style="position:absolute;right:4px;bottom:2px;font-size:20px;color:#fff;text-shadow:0 1px 2px #000">6</div></div>
+    <div class="icon" style="position:relative;width:64px;height:64px;background:linear-gradient(135deg,#c9b6ff,#4a2a9a)"><div class="mono" style="position:absolute;right:4px;bottom:2px;font-size:20px;color:#fff;text-shadow:0 1px 2px #000">14</div></div>
+  </div>
+  <div class="eyebrow" style="position:absolute;left:520px;top:218px;font-size:12px">Abklingzeiten</div>
+  <div style="position:absolute;left:520px;top:240px;display:flex;gap:10px">
+    <div class="icon" style="position:relative;width:64px;height:64px;background:linear-gradient(135deg,#9fe3ff,#2a6aa0)"></div>
+    <div class="icon" style="position:relative;width:64px;height:64px;background:conic-gradient(rgba(0,0,0,.72) 0 62%,transparent 62%),linear-gradient(135deg,#ffe08a,#8a6a12)"><div class="mono" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;text-shadow:0 1px 2px #000">18</div></div>
+    <div class="icon" style="position:relative;width:64px;height:64px;background:conic-gradient(rgba(0,0,0,.72) 0 30%,transparent 30%),linear-gradient(135deg,#a8ffb0,#22803a)"><div class="mono" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;text-shadow:0 1px 2px #000">4</div></div>
+  </div>
+  <div class="tile" style="left:300px;top:352px;width:424px;height:56px;border-color:var(--warn)">
+    <div class="icon" style="left:12px;top:10px;width:34px;height:34px;background:linear-gradient(135deg,#e8e8e8,#666)"></div>
+    <div class="name" style="left:58px;top:14px;font-size:21px">Waffe ohne Öl – vor dem Kampf auftragen</div>
+  </div>
+</div>
+
+<!-- 7 · Questpfeil -->
+<div class="scene" id="arrow">
+  <div class="world"></div>
+  <svg width="220" height="220" viewBox="0 0 100 100" style="position:absolute;left:402px;top:60px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.6))">
+    <defs>
+      <linearGradient id="ar" x1="0" x2="1"><stop offset="0" stop-color="#2f9f55"/><stop offset=".5" stop-color="#6fe39a"/><stop offset="1" stop-color="#1f7a3e"/></linearGradient>
+    </defs>
+    <g transform="rotate(28 50 50)">
+      <path d="M50 6 L84 62 L60 54 L60 94 L40 94 L40 54 L16 62 Z" fill="url(#ar)" stroke="#0b2a14" stroke-width="2.5" stroke-linejoin="round"/>
+    </g>
+  </svg>
+  <div class="name" style="left:0;right:0;top:300px;text-align:center;font-size:40px">142 m</div>
+  <div class="mono" style="position:absolute;left:0;right:0;top:352px;text-align:center;font-size:18px;color:var(--tm)">ca. 0:35 · du läufst genau darauf zu</div>
+  <div class="eyebrow" style="position:absolute;left:0;right:0;top:392px;text-align:center;font-size:13px;color:var(--acc)">Wildschweinjagd</div>
+</div>
+
+<!-- 8 · Kleine Helfer -->
+<div class="scene" id="helpers">
+  <div class="dark"></div>
+  <div class="tile" style="left:40px;top:44px;width:560px;height:424px;padding:20px 22px;font-size:17px;line-height:30px">
+    <div class="eyebrow" style="font-size:12px;color:var(--acc);margin-bottom:10px">Chat · Allgemein</div>
+    <div><span style="color:var(--acc)">[WeintCodex]</span> <span style="color:var(--tm)">Repariert für</span> <span class="mono" style="color:var(--gold)">3g 12s</span> <span style="color:var(--tf)">(Gildenbank)</span></div>
+    <div><span style="color:var(--acc)">[WeintCodex]</span> <span style="color:var(--tm)">Graues verkauft:</span> <span class="mono" style="color:var(--gold)">47s 20c</span></div>
+    <div><span style="color:var(--acc)">[WeintCodex]</span> <span style="color:var(--tm)">Automark: Tank Brunhild</span> <span style="color:#ffd84a">★</span><span style="color:var(--tm)"> · Heiler Lene</span> <span style="color:#3ddc84">◆</span></div>
+    <div style="color:var(--tf)">Du erhältst Beute: Leinenstoff x3.</div>
+    <div style="margin-top:22px" class="eyebrow">Haltbarkeit</div>
+    <div class="tile" style="position:relative;margin-top:8px;width:240px;height:46px;border-color:var(--warn)"><div class="name" style="left:14px;top:9px;font-size:19px;color:var(--warn)">Ausrüstung: 18 %</div></div>
+  </div>
+  <div class="tile" style="left:630px;top:44px;width:354px;height:424px;padding:20px 22px">
+    <div class="eyebrow" style="font-size:12px;color:var(--acc)">Makro-Helfer</div>
+    <div style="font-family:Cond;font-size:21px;margin:8px 0 14px;color:var(--tb)">Heilen per Maus</div>
+    <div class="mono" style="font-size:15px;line-height:26px;background:#0c0c0f;border:1px solid var(--line);padding:12px 14px">
+      <div style="color:var(--td)">#showtooltip</div>
+      <div>/cast [@mouseover,help]</div>
+      <div>&nbsp;&nbsp;[@target] Blitzheilung</div>
+    </div>
+    <div style="font-size:14px;line-height:22px;color:var(--tm);margin-top:14px">Zeile für Zeile erklärt – ein Klick legt das Makro an.</div>
+    <div style="position:absolute;left:22px;right:22px;bottom:22px;height:44px;background:var(--acc);display:flex;align-items:center;justify-content:center;font-family:SansB;font-size:16px;color:#0b0b0e">Makro anlegen</div>
+  </div>
+</div>
+
+<script>
+// Zeilen der Schadensanzeige (Klassenfarben des Spiels, Namen ausgedacht).
+const rows = [
+  ["Kalle", "#3FC7EB", 100, "18,4K", "219/s"], ["Brunhild", "#C79C6E", 82, "15,1K", "180/s"],
+  ["Ole", "#FFF569", 71, "13,0K", "155/s"], ["Grimm", "#9482C9", 55, "10,1K", "120/s"],
+  ["Lene", "#FF7D0A", 22, "4,0K", "48/s"], ["Tilda", "#F58CBA", 15, "2,8K", "33/s"]];
+const box = document.getElementById("dmgrows");
+rows.forEach((r, i) => {
+  const d = document.createElement("div");
+  d.style.cssText = `position:absolute;left:0;right:0;top:${i * 60}px;height:52px;background:#101014`;
+  d.innerHTML = `<div class="bar gloss" style="width:${Math.round(r[2] * 0.66)}%;background:${r[1]};opacity:.9"></div>
+    <div class="name" style="left:14px;top:12px;font-size:22px;${r[1] === '#FFFFFF' || r[1] === '#FFF569' ? 'color:#111;text-shadow:none' : ''}">${i + 1}. ${r[0]}</div>
+    <div class="name mono" style="right:14px;top:14px;font-size:18px">${r[3]} <span style="color:var(--tm)">(${r[4]})</span></div>`;
+  box.appendChild(d);
+});
+const s = new URLSearchParams(location.search).get("s") || "overview";
+document.getElementById(s).classList.add("on");
+</script>
+</body>
+</html>

@@ -801,43 +801,132 @@ end
 -- Antworten muessen tun, was sie sagen.
 do
     local WL = WeintCodex.UIWelcome
+    local sd = WeintCodex.SavedData
     local ok, err = pcall(function()
         assert(WeintCodex.Onboarding.IsShowing(), "Einfuehrung steht nicht (Voraussetzung)")
         WL.MaybeAsk()
-        assert(not WL.IsShown(), "Frage erscheint ueber der Einfuehrung")
+        assert(not WL.IsShown(), "Assistent erscheint ueber der Einfuehrung")
 
-        -- Einfuehrung wegklicken: jetzt kommt die Frage.
+        -- Einfuehrung wegklicken: jetzt kommt der Assistent, Schritt 1.
         WeintCodex.Onboarding.Dismiss()
-        assert(WL.IsShown(), "nach der Einfuehrung kommt keine Frage")
+        assert(WL.IsShown(), "nach der Einfuehrung kommt kein Assistent")
+        assert(WL.Step() == "start" and WL.ShownShot() == "overview", "Assistent beginnt nicht bei Willkommen mit Bild")
 
-        -- "Nein": nichts eingeschaltet, Hinweis auf die Einstellungen, nie wieder fragen.
-        WL.Button("no"):Click()
-        assert(not K.UIEnabled(), "Nein hat die Oberflaeche eingeschaltet")
-        assert(WeintCodex_SavedData.ui.asked == true, "Nein wird nicht gemerkt")
-        assert(WL.BodyText():find("Einstellungen", 1, true)
-            and WL.BodyText():find("/wcui", 1, true),
-            "Nein nennt nicht, wo man es spaeter einschaltet")
-        WL.Button("settings"):Click()
-        assert(not WL.IsShown(), "Einstellungen oeffnen schliesst die Frage nicht")
-        assert((WeintCodex.Breadcrumb:GetText() or ""):find(
-            WeintCodex.Spaced(WeintCodex.Upper("Oberfläche")), 1, true),
-            "Einstellungen oeffnen landet nicht auf der Ansicht Oberflaeche")
-        WL.MaybeAsk()
-        assert(not WL.IsShown(), "nach Nein wird erneut gefragt")
-
-        -- "Ja": Hauptschalter an, Neuladen wird angeboten.
-        WL.Ask()
-        WL.Button("yes"):Click()
-        assert(K.UIEnabled(), "Ja schaltet die Oberflaeche nicht ein")
-        assert(WL.Button("reload") and WL.Button("later"), "Ja bietet kein Neuladen an")
+        -- "Spaeter": nichts gemerkt, nichts geschaltet - beim naechsten Mal wieder.
         WL.Button("later"):Click()
-        assert(not WL.IsShown(), "Spaeter schliesst die Frage nicht")
+        assert(not WL.IsShown() and not sd.ui.asked and not K.UIEnabled(), "Spaeter hat etwas entschieden")
+
+        -- WEG OHNE OBERFLAECHE: danach trotzdem die Komfortfrage.
+        WL.Ask()
+        WL.Button("next"):Click()
+        assert(WL.Step() == "ui" and WL.BodyText():find("Profil bleibt deins", 1, true), "Schritt Oberflaeche ohne Profilversprechen")
+        WL.ShowShot("plates")
+        assert(WL.ShownShot() == "plates", "Galerie wechselt das Bild nicht")
+        WL.Button("no"):Click()
+        assert(WL.Step() == "anzeigen", "nach Nein keine Komfortfrage")
+        local c = WL.choice
+        assert(not c.shows.damagemeter and not c.shows.reminders and c.shows.questarrow,
+            "ohne Oberflaeche Anzeigen vorgewaehlt, die niemand gewaehlt hat")
+        WL.Row("show", "damagemeter"):Click()
+        assert(c.shows.damagemeter and WL.ShownShot() == "damage", "Schadensanzeige laesst sich nicht waehlen")
+        assert(not K.WantsActive("damagemeter") and not sd.ui.asked, "vor Uebernehmen schon geschaltet")
+        WL.Button("next"):Click()
+        assert(WL.Step() == "helfer" and WL.BodyText():find("Klickzauber", 1, true), "Helfer ohne Hinweis auf Klickzauber")
+        WL.Row("help", "autoRepair"):Click()
+        assert(c.helpers.autoRepair and not K.Get("comfort", "autoRepair"), "Helfer vor Uebernehmen geschaltet")
+        -- Zurueckblaettern bis zur Oberflaeche und wieder Nein: Haken bleiben.
+        WL.Button("back"):Click()
+        WL.Button("back"):Click()
+        WL.Button("no"):Click()
+        assert(c.shows.damagemeter, "Zurueckblaettern verliert die Wahl")
+        WL.Button("next"):Click()
+        WL.Button("next"):Click()
+        assert(WL.Step() == "bereit", "keine Zusammenfassung")
+        local txt = WL.BodyText()
+        assert(txt:find("Oberfläche: nein", 1, true) and txt:find("Schadensanzeige", 1, true)
+            and txt:find("Automatisch reparieren", 1, true) and txt:find("/wcui", 1, true),
+            "Zusammenfassung nennt die Wahl nicht: " .. txt)
+        WL.Button("apply"):Click()
+        assert(WL.Step() == "fertig" and sd.ui.asked == true and not K.UIEnabled(), "Uebernehmen ohne Oberflaeche falsch")
+        assert(K.WantsActive("damagemeter") and sd.ui.modules.damagemeter.enabled == true, "Schadensanzeige nicht gewaehlt")
+        assert(not K.WantsActive("reminders") and K.Get("comfort", "autoRepair") == true, "Helfer oder Erinnerungen falsch")
+        assert(WL.Button("reload") and WL.Button("close"), "Anzeige gewaehlt, aber kein Neuladen angeboten")
+        WL.Button("close"):Click()
+        assert(not WL.IsShown(), "Spaeter schliesst nicht")
+        WL.MaybeAsk()
+        assert(not WL.IsShown(), "nach der Antwort wird erneut gefragt")
+        K.Set("comfort", "autoRepair", false)
+        sd.ui.modules.damagemeter.enabled = nil
+
+        -- WEG MIT OBERFLAECHE: das Komplettpaket ist vorgewaehlt, und das
+        -- Layout entsteht gleich beim Uebernehmen (ein Neuladen statt zwei).
+        local ES = WeintCodex.UISetup
+        local oldHas, oldApply = ES.HasLayout, ES.Apply
+        local setupRan = 0
+        ES.HasLayout = function() return false end
+        ES.Apply = function() setupRan = setupRan + 1 return true end
+        sd.ui.asked = nil
+        WL.Ask()
+        WL.Button("next"):Click()
+        WL.Button("yes"):Click()
+        assert(c.ui and c.shows.damagemeter and c.shows.reminders, "mit Oberflaeche kein Komplettpaket")
+        assert(setupRan == 0 and not K.UIEnabled(), "vor Uebernehmen eingerichtet")
+        WL.Button("next"):Click()
+        WL.Button("next"):Click()
+        WL.Button("apply"):Click()
+        ES.HasLayout, ES.Apply = oldHas, oldApply
+        assert(K.UIEnabled() and setupRan == 1, "Oberflaeche nicht an oder Layout nicht eingerichtet")
+        assert(WL.BodyText():find("Layout „WeintCodex“", 1, true), "Bericht nennt das Layout nicht")
+        -- Das Paket ist der Standard, keine ausdrueckliche Wahl: es folgt
+        -- der Oberflaeche, wenn sie spaeter ausgeht.
+        assert(K.WantsActive("reminders") and (sd.ui.modules.reminders or {}).enabled == nil,
+            "Komplettpaket als feste Wahl gespeichert")
+        assert(WL.Button("reload"), "mit Oberflaeche kein Neuladen angeboten")
+        WL.Button("close"):Click()
 
         -- Zurueck auf den Ausgangszustand fuer die Pruefungen darunter.
         K.SetUIEnabled(false)
     end)
-    Check(ok, "Frage beim Einloggen: erst nach der Einfuehrung, Nein und Ja tun, was sie sagen"
+    if WL.IsShown() then WL.Close() end
+    Check(ok, "Willkommens-Assistent: nach der Einfuehrung, Spaeter, ohne Oberflaeche mit Komfortwahl, mit Komplettpaket, erst Uebernehmen schaltet"
         .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- DER ASSISTENT PASST INS FENSTER. Texte werden geschaetzt
+-- (WeintCodex.EstimateLines, wie WeintCodex.Paragraph), nicht vom
+-- Client gemessen - so rechnen Test und Spiel gleich.
+do
+    local WL = WeintCodex.UIWelcome
+    local budget = WL.H - WL.BODY_TOP - WL.FOOT_H
+    local cols = math.floor(WL.COL_W / (WL.TEXT_SIZE * 0.60))
+    local line = WL.TEXT_SIZE + WL.TEXT_SPACING
+    local worst, worstName = 0, ""
+    local function Measure(name, text)
+        local h = WeintCodex.EstimateLines(text, cols) * line
+        if h > worst then worst, worstName = h, name end
+    end
+    Measure("start", WL.Text("start"))
+    Measure("ui", WL.Text("ui"))
+    WL.Decide(true)
+    for _, s in ipairs(WL.SHOWS) do WL.choice.shows[s.key] = true end
+    for _, h in ipairs(WL.HELPERS) do WL.choice.helpers[h.key] = true end
+    Measure("bereit", WL.ReadyText())
+    -- Helfer: jede Zeile Name + Erlaeuterung (Mono 9 auf der Zeilenbreite),
+    -- darunter der Hinweis.
+    local rowsH = 0
+    for _, h in ipairs(WL.HELPERS) do
+        rowsH = rowsH + 23 + WeintCodex.EstimateLines(h.text, math.floor((WL.COL_W - 58) / (9 * 0.60))) * 13 + 6 + 6
+    end
+    Measure("helfer", string.rep("\n", math.ceil(rowsH / line)) .. WL.Text("helfer"))
+    Check(worst <= budget, "Assistent: laengster Schritt (" .. worstName .. ") " .. worst .. " von " .. budget .. " px")
+    -- Jedes Bild, das er zeigt, gibt es als Datei.
+    local missing = {}
+    for key, s in pairs(WL.SHOTS) do
+        local file = ROOT .. "/" .. s.file:gsub("^Interface\\AddOns\\WeintCodex\\", ""):gsub("\\", "/") .. ".blp"
+        local h = io.open(file, "rb")
+        if h then h:close() else missing[#missing + 1] = key end
+    end
+    Check(#missing == 0, "Assistent: jedes Bild liegt in media/welcome" .. (#missing == 0 and "" or (": " .. table.concat(missing, ", "))))
 end
 
 -- KEINE VERSEHENTLICHEN GLOBALEN in ui/. Mit 6.0.0.1 stand ein `local`
@@ -918,8 +1007,8 @@ do
         assert(not WL.IsReloadSession(), "Einloggen als Neuladen gewertet")
         WL.MaybeAsk()
         assert(WL.IsShown(), "beim Einloggen wird nicht gefragt, obwohl die Antwort fehlt")
-        WL.Button("no"):Click()
-        WL.Button("ok"):Click()
+        WL.Button("later"):Click()
+        sd.ui.asked = true
     end)
     Check(ok, "keine Frageschleife nach /reload; Speicherpruefung erkennt ok/verloren/unbekannt"
         .. (ok and "" or (": " .. tostring(err))))
@@ -1019,7 +1108,11 @@ do
     local WL = WeintCodex.UIWelcome
     local ok, err = pcall(function()
         WL.Ask()
+        WL.Button("next"):Click()
         WL.Button("yes"):Click()
+        WL.Button("next"):Click()
+        WL.Button("next"):Click()
+        WL.Button("apply"):Click()
         local btn = WL.Button("reload")
         assert(btn and btn._reloadOverlay, "Neuladeknopf ohne Makroknopf")
         assert(WeintCodex.ReloadArmed(btn._reloadOverlay), "Makroknopf nicht scharf")

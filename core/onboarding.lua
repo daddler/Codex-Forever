@@ -279,8 +279,9 @@ local TOUR_STEPS = {
                 .. "Spiel seine eigenen Rahmen, und WeintCodex fasst keinen davon an. "
                 .. "Eingeschaltet bekommt sie " .. E("ein eigenes Layout") .. " – deins "
                 .. "bleibt, wie es ist, und kommt beim Ausschalten zurück. "
-                .. "Beim ersten Mal fragt WeintCodex dich gleich nach dieser "
-                .. "Einführung, ob du sie verwenden möchtest.\n\n"
+                .. "Gleich nach dieser Einführung führt dich ein kurzer Assistent "
+                .. "durch die Wahl – mit Bildern, und auch ohne Oberfläche mit den "
+                .. "Komfortfunktionen.\n\n"
                 .. "Einschalten, einstellen oder wieder ausschalten kannst du sie "
                 .. "jederzeit: unter " .. A("Einstellungen") .. " → " .. A("Oberfläche")
                 .. " oder direkt mit " .. A("/wcui") .. ".\n\n"

@@ -1,35 +1,40 @@
 --------------------------------------------------
--- WeintCodex :: Oberflaeche - die Frage beim Einloggen
+-- WeintCodex :: Oberflaeche - Willkommen (der Assistent beim ersten Mal)
 --------------------------------------------------
--- VON 6.0.0.3 BIS 6.8.1.0 RUHTE DIESE DATEI: der Forever-Beta-Client
--- speicherte die Antwort nicht. Seit 6.9.0.0 speichert er, UIKit.OPT_IN
--- (ui/kit.lua) steht wieder auf true, und die Frage kommt einmal je Konto
--- - auch fuer alle, die die Oberflaeche bisher ungefragt hatten.
---------------------------------------------------
--- Einmal je Konto fragt WeintCodex: "Moechtest du die WeintCodex-
--- Oberflaeche verwenden?" Die Oberflaeche ist freiwillig, und wer nicht
--- gefragt wird, erfaehrt nie, dass es sie gibt - ein Schalter, den
--- niemand findet, ist eine Funktion, die es nicht gibt.
+-- Beta-Test (6.9.0.0): "Ein Willkommensbildschirm, wo dem Nutzer alles
+-- erklaert wird, ggf. auch mit kleinen Screenshots, wie es ungefaehr
+-- aussieht, was der Vorteil waere, die UI zu nutzen. Wenn man sich gegen
+-- das UI entscheidet, soll dennoch eine Abfrage kommen, ob man die
+-- Komfortfunktionen haben moechte. Ein komplettes An-die-Hand-Nehmen."
 --
--- Ja   -> Hauptschalter an, und das Angebot, sofort neu zu laden (die
---         Oberflaeche ersetzt Blizzard-Rahmen und startet erst dann).
---         Dein Layout wird vorher gemerkt (ui/profile.lua), die
---         Oberflaeche bekommt ein eigenes.
--- Nein -> nichts wird angefasst, und der Hinweis, WO man es spaeter
---         einschaltet. Ein "Nein" ohne diesen Satz waere endgueltig,
---         obwohl es das nicht ist. Wer noch im Layout "WeintCodex" steht
---         (Oberflaeche vor 6.9.0.0), bekommt dabei sein eigenes zurueck.
+-- FUENF SCHRITTE, EIN FENSTER:
+--   1 Willkommen   was WeintCodex ist, was jetzt gefragt wird
+--   2 Oberflaeche  Bilder, Vorteile, "dein Profil bleibt deins" -> ja/nein
+--   3 Anzeigen     Schadensanzeige, Erinnerungen, Questpfeil
+--   4 Helfer       reparieren, Graues verkaufen, pluendern, Automark,
+--                  Entfluchen (nur, wenn die Klasse es kann)
+--   5 Bereit       Zusammenfassung -> "Uebernehmen" -> neu laden
+-- Mit Oberflaeche sind die Anzeigen vorgewaehlt (das Komplettpaket), ohne
+-- sie stehen sie, wie sie sind - abwaehlen und waehlen geht in beiden
+-- Faellen.
 --
--- Wann: nach der Einfuehrung bzw. dem Changelog-Popup, nie darueber.
--- Zwei Fenster uebereinander sind eine Frage, die man wegklickt, ohne
--- sie gelesen zu haben.
+-- NICHTS GESCHIEHT VOR "UEBERNEHMEN". Vor- und Zurueckblaettern, "Spaeter"
+-- oder das Kreuz lassen alles, wie es war; wer abbricht, wird beim
+-- naechsten Einloggen wieder gefragt. Erst "Uebernehmen" schaltet, und mit
+-- Oberflaeche richtet es auch gleich das Layout ein (ui/setup.lua) - ein
+-- Neuladen statt zwei.
 --
--- Wer die Oberflaeche schon eingeschaltet hat (etwa ueber /wcui), wird
--- nicht mehr gefragt.
+-- DIE BILDER sind eigene Zeichnungen im Stil von WeintCodex, keine
+-- Bildschirmfotos aus dem Spiel (Spielwelt und Symbole gehoeren Blizzard,
+-- siehe CLAUDE.md). Quelle und Bau: .github/scripts/welcome/shots.html,
+-- .github/scripts/make_welcome.py -> media/welcome/*.blp.
 --
--- Speichert der Client die Antwort doch einmal nicht, kommt die Frage
--- beim naechsten Einloggen wieder - das ist der Client, nicht dieses
--- Fenster (Einstellungen -> Diagnose -> Speichern sagt, ob er speichert).
+-- Wann: nach der Einfuehrung bzw. dem Changelog-Popup, nie darueber, nie
+-- im Kampf, nie nach einem /reload (6.0.0.1: sonst die Frageschleife).
+-- Wieder zeigen: /wcui willkommen.
+--
+-- Solange UIKit.OPT_IN (ui/kit.lua) false ist, fragt MaybeAsk nie - dann
+-- ist die Oberflaeche fuer alle an.
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -40,15 +45,56 @@ local K  = WeintCodex.UIKit
 local C  = WeintCodex.Colors
 local F  = WeintCodex.Fonts
 
-local WIN_W, WIN_H = 500, 300
+WL.W, WL.H = 820, 580
+WL.PAD = 28
+WL.COL_W = 360                    -- linke Spalte: Text bzw. Schalter
+WL.IMG_W, WL.IMG_H = 400, 200     -- rechte Spalte: Bild (Textur 512x256)
+WL.TEXT_SIZE, WL.TEXT_SPACING = 13, 4
+WL.BODY_TOP = 112                 -- Unterkante des Kopfes
+WL.FOOT_H = 78                    -- Knopfzeile
+
+local MEDIA = "Interface\\AddOns\\WeintCodex\\media\\welcome\\"
+
+-- Die Bilder (Namen wie in make_welcome.py).
+WL.SHOTS = {
+    overview  = { file = MEDIA .. "overview",  caption = "Alles auf einen Blick – der Akzent trägt deine Klassenfarbe (hier: Magier)." },
+    plates    = { file = MEDIA .. "plates",    caption = "Namensplaketten: Schadensspur, Zielleuchten, Zauberbalken, deine Auren." },
+    group     = { file = MEDIA .. "group",     caption = "Gruppenrahmen mit HoTs, Schilden und Debuffs – Klickzauber direkt darauf." },
+    windows   = { file = MEDIA .. "windows",   caption = "Die Fenster des Spiels ruhig, ohne Holz und Pergament." },
+    damage    = { file = MEDIA .. "damage",    caption = "Schadensanzeige: wer wie viel macht – ein Klick schlüsselt auf." },
+    reminders = { file = MEDIA .. "reminders", caption = "Erinnerungen vor dem Kampf, Procs und Abklingzeiten im Kampf." },
+    arrow     = { file = MEDIA .. "arrow",     caption = "Questpfeil: Richtung, Entfernung, Ankunftszeit." },
+    helpers   = { file = MEDIA .. "helpers",   caption = "Kleine Helfer melden sich kurz im Chat; Makros klickst du zusammen." },
+}
+WL.GALLERY = { "overview", "plates", "group", "windows" }
+
+WL.STEPS = { "start", "ui", "anzeigen", "helfer", "bereit" }
+
+-- Die Anzeigen (Module) und Helfer (Einstellungen) zum Waehlen.
+WL.SHOWS = {
+    { key = "damagemeter", shot = "damage", label = "Schadensanzeige",
+      text = "Wer wie viel Schaden und Heilung macht – die Zahlen des Spiels, mit Aufschlüsselung per Klick. Ersetzt die Anzeige des Spiels." },
+    { key = "reminders", shot = "reminders", label = "Erinnerungen",
+      text = "Fehlender Buff, Waffe ohne Öl, Begleiter vergessen – bevor der Kampf beginnt. Dazu Procs und Abklingzeiten als Symbole." },
+    { key = "questarrow", shot = "arrow", label = "Questpfeil",
+      text = "Zeigt zur gewählten Quest oder Kartenmarkierung, mit Entfernung und Ankunftszeit." },
+}
+WL.HELPERS = {
+    { module = "comfort", key = "autoRepair", shot = "helpers", label = "Automatisch reparieren",
+      text = "Beim Händler, ohne Klick. Die Summe steht im Chat." },
+    { module = "comfort", key = "sellJunk", shot = "helpers", label = "Graue Gegenstände verkaufen",
+      text = "Nur Qualität „Schlecht“ – nichts, was einen Wert hat, den du übersehen könntest." },
+    { module = "comfort", key = "fastLoot", shot = "helpers", label = "Schneller plündern",
+      text = "Nimmt alles sofort, wenn automatisches Plündern an ist." },
+    { module = "comfort", key = "autoMark", shot = "helpers", label = "Automark",
+      text = "Als Gruppenleiter bekommen Tank und Heiler beim Betreten einer Instanz ihre Markierung." },
+    { module = "groupframes", key = "clickDispel", shot = "group", label = "Entfluchen auf Klick", dispel = true,
+      text = "Strg + Klick auf einen Gruppenrahmen entfernt Flüche, Gifte, Krankheiten oder Magie – mit den Zaubern deiner Klasse." },
+}
 
 -- Ist diese Sitzung ein /reload? Gesetzt beim ersten PLAYER_ENTERING_WORLD
--- (siehe unten). Steht hier oben, weil MaybeAsk sie liest - ein `local`
--- unterhalb der Funktion waere darin eine (leere) globale Variable.
+-- (siehe unten). Steht hier oben, weil MaybeAsk sie liest.
 local reloadSession = false
-
-local dimmer, win, eyebrow, title, body
-local buttons = {}
 
 local function Asked()
     local ui = K.Root()
@@ -64,13 +110,161 @@ local function Say(text)
     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. text)
 end
 
-local function Close()
-    if dimmer then dimmer:Hide() end
+--------------------------------------------------
+-- Die Wahl (erst "Uebernehmen" schreibt sie)
+--------------------------------------------------
+
+local choice = { ui = nil, shows = {}, helpers = {}, picked = nil }
+WL.choice = choice
+
+local function PlayerClass()
+    if type(_G.UnitClass) ~= "function" then return nil end
+    local ok, _, token = pcall(_G.UnitClass, "player")
+    return ok and token or nil
+end
+
+-- Kann die Klasse entfluchen? (ui/dispel.lua kennt die Zauber je Klasse)
+function WL.CanDispel()
+    local DP = WeintCodex.UIDispel
+    local class = PlayerClass()
+    return DP ~= nil and class ~= nil and DP.SPELLS[class] ~= nil
+end
+
+-- Was eine Anzeige nach der Wahl "Oberflaeche ja/nein" waere: eine
+-- ausdrueckliche Wahl von frueher gilt, sonst der Standard des Moduls -
+-- "ui" heisst: mit Oberflaeche an (das Komplettpaket).
+local function ShowDefault(key, ui)
+    local root = K.Root()
+    local st = root and root.modules[key]
+    if st and st.enabled ~= nil then return st.enabled and true or false end
+    local m = K.Module(key)
+    if not m then return false end
+    if m.defaultEnabled == "ui" then return ui and true or false end
+    return m.defaultEnabled ~= false
+end
+
+-- Oberflaeche gewaehlt: die Anzeigen auf das passende Paket setzen (nur,
+-- wenn sich die Wahl aendert - wer zurueckblaettert, behaelt seine Haken).
+function WL.Decide(ui)
+    ui = ui and true or false
+    if choice.picked ~= ui then
+        for _, s in ipairs(WL.SHOWS) do choice.shows[s.key] = ShowDefault(s.key, ui) end
+        choice.picked = ui
+    end
+    choice.ui = ui
+end
+
+local function ResetChoice()
+    choice.ui, choice.picked = nil, nil
+    wipe(choice.shows)
+    wipe(choice.helpers)
+    for _, h in ipairs(WL.HELPERS) do
+        choice.helpers[h.key] = K.Get(h.module, h.key) and true or false
+    end
+    -- Wer schon geantwortet hat (/wcui willkommen), sieht seinen Stand.
+    if Asked() and K.OPT_IN then WL.Decide(K.UIEnabled()) end
+end
+
+-- Die Wahl in Worten (Schritt 5 und Prueflauf).
+function WL.Summary()
+    local lines = {}
+    if choice.ui then
+        lines[#lines + 1] = "•  Oberfläche: ja – mit eigenem Layout „WeintCodex“. Dein Layout, deine Chatreiter"
+            .. " und Einstellungen bleiben und kommen beim Ausschalten zurück."
+    else
+        lines[#lines + 1] = "•  Oberfläche: nein – das Spiel zeigt seine Rahmen wie bisher."
+    end
+    local on = {}
+    for _, s in ipairs(WL.SHOWS) do if choice.shows[s.key] then on[#on + 1] = s.label end end
+    lines[#lines + 1] = "•  Anzeigen: " .. (#on > 0 and table.concat(on, ", ") or "keine")
+    local help = {}
+    for _, h in ipairs(WL.HELPERS) do
+        if choice.helpers[h.key] and (not h.dispel or WL.CanDispel()) then help[#help + 1] = h.label end
+    end
+    lines[#lines + 1] = "•  Helfer: " .. (#help > 0 and table.concat(help, ", ") or "keine")
+    return lines
+end
+
+-- Uebernehmen. Gibt einen Bericht zurueck: { layout = true|"Grund"|nil, reload = bool }.
+function WL.Apply()
+    local report = {}
+    MarkAsked()
+    local ui = choice.ui and true or false
+    -- Zuerst der Hauptschalter: davon haengt ab, was "Standard" ist.
+    K.SetUIEnabled(ui)
+    for _, s in ipairs(WL.SHOWS) do
+        local want = choice.shows[s.key] and true or false
+        if K.ModuleEnabled(s.key) ~= want then K.SetModuleEnabled(s.key, want) end
+    end
+    local anyHelper = false
+    for _, h in ipairs(WL.HELPERS) do
+        if not h.dispel or WL.CanDispel() then
+            local want = choice.helpers[h.key] and true or false
+            if (K.Get(h.module, h.key) and true or false) ~= want then K.Set(h.module, h.key, want) end
+            if want and h.module == "comfort" then anyHelper = true end
+        end
+    end
+    if anyHelper and not K.ModuleEnabled("comfort") then K.SetModuleEnabled("comfort", true) end
+    -- Mit Oberflaeche gleich einrichten: ein Neuladen statt zwei.
+    local ES = WeintCodex.UISetup
+    if ui and ES and ES.HasLayout() == false then
+        local ok, why = ES.Apply()
+        report.layout = ok and true or tostring(why)
+    end
+    report.reload = K.ReloadPending()
+    WL.report = report
+    return report
 end
 
 --------------------------------------------------
--- Aufbau (dieselbe Form wie Einfuehrung und Changelog-Popup)
+-- Aufbau
 --------------------------------------------------
+
+local dimmer, win, eyebrow, title, body, closeBtn
+local img, caption, thumbs, dots = nil, nil, {}, {}
+local rowsHost, rows = nil, {}
+local buttons, byKey = {}, {}
+local step = "start"
+local applied = false
+local shown = "overview"
+
+local function Close()
+    if dimmer then dimmer:Hide() end
+end
+WL.Close = Close
+
+local function Edge(frame)
+    if K.Border then return K.Border(frame, 1, C.border[1], C.border[2], C.border[3], 1) end
+    return nil
+end
+
+local function Thumb(parent, key, w, h)
+    local b = CreateFrame("Button", nil, parent)
+    b:SetSize(w, h)
+    local t = b:CreateTexture(nil, "ARTWORK")
+    t:SetAllPoints(b)
+    t:SetTexture(WL.SHOTS[key].file)
+    b.edge = Edge(b)
+    b.key = key
+    b:SetScript("OnClick", function() WL.ShowShot(key) end)
+    return b
+end
+
+function WL.ShowShot(key)
+    local s = WL.SHOTS[key]
+    if not (s and img) then return end
+    shown = key
+    img:SetTexture(s.file)
+    caption:SetText(s.caption)
+    local hi = K.Highlight()
+    for _, t in ipairs(thumbs) do
+        if type(t.edge) == "table" and t.edge.SetColor then
+            if t.key == key then t.edge:SetColor(hi[1], hi[2], hi[3], 1)
+            else t.edge:SetColor(C.border[1], C.border[2], C.border[3], 1) end
+        end
+    end
+end
+function WL.ShownShot() return shown end
 
 local function Build()
     if dimmer then return end
@@ -81,193 +275,369 @@ local function Build()
     dimmer:EnableMouse(true)
     local shade = dimmer:CreateTexture(nil, "BACKGROUND")
     shade:SetAllPoints(dimmer)
-    shade:SetColorTexture(0, 0, 0, 0.6)
+    shade:SetColorTexture(0, 0, 0, 0.65)
     dimmer:Hide()
 
     win = CreateFrame("Frame", nil, dimmer)
-    win:SetSize(WIN_W, WIN_H)
-    win:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
+    win:SetSize(WL.W, WL.H)
+    win:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
     win:SetFrameLevel(dimmer:GetFrameLevel() + 10)
     local bg = win:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(win)
     bg:SetColorTexture(unpack(C.surface2))
     WeintCodex.DrawBorder(win, C.borderStrong[1], C.borderStrong[2], C.borderStrong[3], 1, 1)
     local top = win:CreateTexture(nil, "ARTWORK")
-    top:SetHeight(1)
+    top:SetHeight(2)
     top:SetPoint("TOPLEFT", win, "TOPLEFT", 8, 0)
     top:SetPoint("TOPRIGHT", win, "TOPRIGHT", -8, 0)
-    top:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.34)
+    top:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.5)
 
     eyebrow = K.NewText(win)
     eyebrow:SetFont(F.mono, 10, "")
     eyebrow:SetTextColor(unpack(C.accent))
-    eyebrow:SetPoint("TOPLEFT", win, "TOPLEFT", 28, -26)
+    eyebrow:SetPoint("TOPLEFT", win, "TOPLEFT", WL.PAD, -26)
 
     title = K.NewText(win)
-    title:SetFont(F.sansBold, 20, "")
+    title:SetFont(F.display, 24, "")
     title:SetTextColor(unpack(C.textBright))
-    title:SetPoint("TOPLEFT", eyebrow, "BOTTOMLEFT", 0, -8)
-    title:SetWidth(WIN_W - 56)
+    title:SetPoint("TOPLEFT", eyebrow, "BOTTOMLEFT", 0, -10)
+    title:SetWidth(WL.W - WL.PAD * 2 - 120)
     title:SetJustifyH("LEFT")
 
+    -- Fortschritt: ein Strich je Schritt oben rechts.
+    for i = 1, #WL.STEPS do
+        local d = win:CreateTexture(nil, "ARTWORK")
+        d:SetSize(8, 4)
+        d:SetPoint("TOPRIGHT", win, "TOPRIGHT", -WL.PAD - (#WL.STEPS - i) * 26 - 30, -30)
+        dots[i] = d
+    end
+
+    closeBtn = CreateFrame("Button", nil, win)
+    closeBtn:SetSize(22, 22)
+    closeBtn:SetPoint("TOPRIGHT", win, "TOPRIGHT", -14, -14)
+    local x = closeBtn:CreateTexture(nil, "ARTWORK")
+    x:SetAllPoints(closeBtn)
+    x:SetTexture(K.MEDIA .. "icon_close")
+    x:SetVertexColor(unpack(C.textDim))
+    closeBtn:SetScript("OnClick", function() WL.Later() end)
+    WL.closeButton = closeBtn
+
     body = K.NewText(win)
-    body:SetFont(F.sans, 13, "")
+    body:SetFont(F.sans, WL.TEXT_SIZE, "")
     body:SetTextColor(unpack(C.textNormal))
-    body:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -14)
-    body:SetWidth(WIN_W - 56)
+    body:SetPoint("TOPLEFT", win, "TOPLEFT", WL.PAD, -WL.BODY_TOP)
+    body:SetWidth(WL.COL_W)
     body:SetJustifyH("LEFT")
     body:SetJustifyV("TOP")
-    body:SetSpacing(4)
+    body:SetSpacing(WL.TEXT_SPACING)
 
-    -- ESC ist hier keine Antwort: die Frage bleibt offen und kommt beim
-    -- naechsten Einloggen wieder. Deshalb steht das Fenster NICHT in
-    -- UISpecialFrames - ein versehentliches ESC soll nicht "Nein" heissen.
+    -- Rechte Spalte: Bild, Unterschrift, darunter (Schritt 2) die Galerie.
+    local frame = CreateFrame("Frame", nil, win)
+    frame:SetSize(WL.IMG_W, WL.IMG_H)
+    frame:SetPoint("TOPRIGHT", win, "TOPRIGHT", -WL.PAD, -WL.BODY_TOP)
+    img = frame:CreateTexture(nil, "ARTWORK")
+    img:SetAllPoints(frame)
+    Edge(frame)
+    WL.imageFrame = frame
+
+    caption = K.NewText(win)
+    caption:SetFont(F.sans, 11, "")
+    caption:SetTextColor(unpack(C.textDim))
+    caption:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 0, -8)
+    caption:SetWidth(WL.IMG_W)
+    caption:SetJustifyH("LEFT")
+
+    local tw = math.floor((WL.IMG_W - 3 * 8) / 4)
+    for i, key in ipairs(WL.GALLERY) do
+        local t = Thumb(win, key, tw, math.floor(tw / 2))
+        t:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", (i - 1) * (tw + 8), -40)
+        thumbs[i] = t
+    end
+
+    rowsHost = CreateFrame("Frame", nil, win)
+    rowsHost:SetPoint("TOPLEFT", win, "TOPLEFT", WL.PAD, -WL.BODY_TOP)
+    rowsHost:SetSize(WL.COL_W, WL.H - WL.BODY_TOP - WL.FOOT_H)
+
+    -- ESC ist keine Antwort: kein UISpecialFrames. Das Kreuz heisst "Spaeter".
 end
 
--- Ein Satz Knoepfe unten rechts, von rechts nach links gesetzt.
--- Jeder Knopf wird EINMAL gebaut und danach nur gezeigt oder versteckt:
--- WoW gibt Frames nie frei, und der Neuladeknopf bekommt seine Attribute
--- nur ausserhalb des Kampfes - ein neuer je Anzeige waere beides.
-local byKey = {}
-
-local function SetButtons(defs)
+-- Ein Satz Knoepfe unten: links (Zurueck/Spaeter), rechts die Antworten.
+-- Jeder Knopf wird EINMAL gebaut (WoW gibt Frames nie frei; der Neuladeknopf
+-- bekommt seine Attribute nur ausserhalb des Kampfes).
+local function SetButtons(left, right)
     for _, b in ipairs(buttons) do b:Hide() end
     wipe(buttons)
-    local anchor
-    for i = #defs, 1, -1 do
-        local d = defs[i]
+    local function make(d)
         local b = byKey[d.key]
         if not b then
+            local function click() local x = byKey[d.key] if x and x._onClick then x._onClick() end end
             if d.reload then
-                -- Neuladen ist auf Forever geschuetzt: der Klick selbst
-                -- fuehrt "/reload" aus (UIKit.ReloadButton).
-                b = K.ReloadButton(win, {
-                    text = d.text, height = 34, size = 12, backdrop = "surface2",
-                    onClick = d.onClick,
-                })
+                b = K.ReloadButton(win, { text = d.text, height = 36, size = 12, backdrop = "surface2", onClick = click })
             else
-                b = WeintCodex.CreateButton(win, {
-                    text = d.text, kind = d.kind or "secondary", height = 34, size = 12,
-                    backdrop = "surface2", onClick = d.onClick,
-                })
+                b = WeintCodex.CreateButton(win, { text = d.text, kind = d.kind or "secondary", height = 36, size = 12,
+                    backdrop = "surface2", onClick = click })
             end
             byKey[d.key] = b
         end
+        b._onClick = d.onClick
+        b._key = d.key
         b:ClearAllPoints()
         b:Show()
-        if anchor then
-            b:SetPoint("RIGHT", anchor, "LEFT", -10, 0)
-        else
-            b:SetPoint("BOTTOMRIGHT", win, "BOTTOMRIGHT", -28, 24)
-        end
-        anchor = b
-        b._key = d.key
         buttons[#buttons + 1] = b
+        return b
+    end
+    local anchor
+    for _, d in ipairs(left or {}) do
+        local b = make(d)
+        if anchor then b:SetPoint("LEFT", anchor, "RIGHT", 10, 0)
+        else b:SetPoint("BOTTOMLEFT", win, "BOTTOMLEFT", WL.PAD, 24) end
+        anchor = b
+    end
+    anchor = nil
+    for i = #(right or {}), 1, -1 do
+        local b = make(right[i])
+        if anchor then b:SetPoint("RIGHT", anchor, "LEFT", -10, 0)
+        else b:SetPoint("BOTTOMRIGHT", win, "BOTTOMRIGHT", -WL.PAD, 24) end
+        anchor = b
     end
 end
 
-local function SetText(eb, t, text)
-    eyebrow:SetText(WeintCodex.Spaced(WeintCodex.Upper(eb)))
+-- Schalterzeilen (Schritte 3 und 4). Je Eintrag eine Zeile, einmal gebaut.
+local function Rows(list, kind)
+    for _, r in pairs(rows) do r:Hide() end
+    local y = 0
+    for _, e in ipairs(list) do
+        local id = kind .. ":" .. e.key
+        local r = rows[id]
+        if not r then
+            r = WeintCodex.CreateToggle(rowsHost, {
+                label = e.label, description = e.text, width = WL.COL_W,
+                get = function()
+                    if kind == "show" then return choice.shows[e.key] end
+                    return choice.helpers[e.key]
+                end,
+                set = function(v)
+                    if kind == "show" then choice.shows[e.key] = v and true or false
+                    else choice.helpers[e.key] = v and true or false end
+                end,
+                onChange = function() WL.ShowShot(e.shot) end,
+            })
+            r:HookScript("OnEnter", function() WL.ShowShot(e.shot) end)
+            rows[id] = r
+        end
+        r:ClearAllPoints()
+        r:SetPoint("TOPLEFT", rowsHost, "TOPLEFT", 0, -y)
+        r:Sync()
+        r:Show()
+        local ok, h = pcall(r.GetHeight, r)
+        y = y + ((ok and type(h) == "number" and h > 0) and h or 46) + 6
+    end
+    return y
+end
+
+-- Fuer den Prueflauf: die Schalterzeile eines Eintrags.
+function WL.Row(kind, key) return rows[kind .. ":" .. key] end
+
+--------------------------------------------------
+-- Die Schritte
+--------------------------------------------------
+
+local Go
+
+local function Head(n, eb, t)
+    eyebrow:SetText(WeintCodex.Spaced(WeintCodex.Upper(eb .. " · Schritt " .. n .. " von " .. #WL.STEPS)))
     title:SetText(t)
-    body:SetText(text)
-    -- Das Fenster waechst mit dem Text: oben Rubrik und Titel (rund 90 px),
-    -- unten die Knopfzeile (rund 80 px). Mit fester Hoehe liefe ein
-    -- laengerer Absatz unter die Knoepfe.
-    local ok, h = pcall(body.GetStringHeight, body)
-    if not ok or type(h) ~= "number" then h = 0 end
-    win:SetHeight(math.max(WIN_H, math.ceil(h) + 176))
+    local hi = K.Highlight()
+    for i, d in ipairs(dots) do
+        d:SetWidth(i == n and 18 or 8)
+        if i <= n then d:SetColorTexture(hi[1], hi[2], hi[3], i == n and 1 or 0.45)
+        else d:SetColorTexture(C.surface3[1], C.surface3[2], C.surface3[3], 1) end
+    end
 end
 
---------------------------------------------------
--- Die drei Zustaende: Frage, "Ja", "Nein"
---------------------------------------------------
-
-local ShowYes, ShowNo
-
-local function ShowQuestion()
-    SetText("Neu in WeintCodex",
-        "Möchtest du die WeintCodex-Oberfläche verwenden?",
-        "WeintCodex bringt ein eigenes, schlichtes Interface mit: Namensplaketten,"
-        .. " Rahmen, Leisten, Karte, Chat, Taschen und die Fenster des Spiels im Stil"
-        .. " von WeintCodex.\n\n"
-        .. "Bei „Ja“ bekommt die Oberfläche ein eigenes Profil: ein neues Layout im"
-        .. " Bearbeitungsmodus. Dein jetziges Layout, deine Chatreiter und deine"
-        .. " Einstellungen werden nicht überschrieben – schaltest du sie wieder aus,"
-        .. " ist alles wie vorher.\n\n"
-        .. "Bei „Nein“ bleibt alles, wie es ist. Schadensanzeige, Questpfeil,"
-        .. " Erinnerungen, Klickzauber, Makro-Helfer und die Komfortfunktionen"
-        .. " kannst du in beiden Fällen nutzen.")
-    SetButtons({
-        { key = "no",  text = "Nein, danke", kind = "secondary", onClick = function() ShowNo() end },
-        { key = "yes", text = "Ja, verwenden", kind = "primary", onClick = function() ShowYes() end },
-    })
+local function ShowGallery(on)
+    for _, t in ipairs(thumbs) do t:SetShown(on) end
 end
 
-ShowYes = function()
-    MarkAsked()
-    K.SetUIEnabled(true)
-    SetText("WeintCodex-Oberfläche",
-        "Die Oberfläche ist eingeschaltet.",
-        "Sie startet nach dem Neuladen — sie ersetzt Rahmen des Spiels, und das"
-        .. " geht nur beim Laden. Gibt es ihr Layout noch nicht, fragt WeintCodex"
-        .. " danach, ob es eingerichtet werden soll.\n\n"
-        .. "Einstellen, verschieben oder wieder ausschalten: /wcui, oder in den"
-        .. " Einstellungen von WeintCodex unter „Oberfläche“. Ausschalten gibt dir"
-        .. " dein bisheriges Layout zurück.")
-    SetButtons({
-        { key = "later",  text = "Später", kind = "secondary", onClick = function()
-            Close()
-            Say("Die Oberfläche startet beim nächsten Neuladen (/reload).")
-        end },
-        { key = "reload", text = "Jetzt neu laden", reload = true, onClick = function()
-            Close()
-        end },
-    })
+-- Die Texte der Schritte (fuer den Aufbau UND fuer die Platzpruefung im
+-- Prueflauf - beide lesen dieselbe Quelle).
+function WL.Text(key)
+    if key == "start" then
+        return "WeintCodex ist dein Begleiter für Forever: Dungeons und Schlachtzüge mit dem, was deine Rolle"
+            .. " wissen muss, Hilfe beim Leveln, Lehrer, Gruppencheck und die Brücke zu Discord.\n\n"
+            .. "Dazu bringt es zwei Pakete mit, die du jetzt in Ruhe wählst:\n"
+            .. "•  die WeintCodex-Oberfläche – ein eigenes, ruhiges Interface,\n"
+            .. "•  Komfort – Helfer, die es auch ohne die Oberfläche gibt.\n\n"
+            .. "Nichts geschieht, bevor du am Ende „Übernehmen“ klickst. Alles lässt sich später mit /wcui"
+            .. " ändern, und diesen Assistenten zeigt /wcui willkommen wieder."
+    elseif key == "ui" then
+        return "•  Plaketten, Rahmen, Leisten, Karte, Chat und Taschen in einem ruhigen Stil.\n"
+            .. "•  Ziel und Gefahr springen ins Auge: Schadensspur, Zielleuchten, Zauberbalken.\n"
+            .. "•  Gruppenrahmen mit HoTs, Schilden und bannbaren Debuffs – auch im Kampf.\n"
+            .. "•  Außerhalb des Kampfes tritt alles zurück.\n"
+            .. "•  Die Fenster des Spiels ohne Holz und Pergament.\n"
+            .. "•  Dazu das Komplettpaket: Schadensanzeige und Erinnerungen sind gleich an.\n\n"
+            .. "Dein Profil bleibt deins: Die Oberfläche bekommt im Bearbeitungsmodus ein eigenes Layout."
+            .. " Dein jetziges, deine Chatreiter und deine Einstellungen werden nicht überschrieben –"
+            .. " ausschalten bringt alles zurück."
+    elseif key == "helfer" then
+        return "Klickzauber (heilen per Klick auf den Rahmen) und den Makro-Helfer richtest du später unter"
+            .. " /wcui → Komfort ein – dort wählst du die Zauber aus deinem Zauberbuch."
+    end
+    return ""
 end
 
-ShowNo = function()
-    MarkAsked()
-    -- Bleibt aus - und wer noch im Layout "WeintCodex" steht, bekommt
-    -- seins zurueck (ui/profile.lua).
-    K.SetUIEnabled(false)
-    SetText("WeintCodex-Oberfläche",
-        "Alles bleibt, wie es ist.",
-        "Du kannst die WeintCodex-Oberfläche jederzeit nachträglich aktivieren:"
-        .. " in den Einstellungen von WeintCodex unter „Oberfläche“"
-        .. " (/wc einstellungen) oder direkt mit /wcui.\n\n"
-        .. "Schadensanzeige, Questpfeil, Erinnerungen und die Komfortfunktionen"
-        .. " (mit Klickzaubern und Makro-Helfer) findest du an derselben Stelle"
-        .. " unter „Komfort“ — sie funktionieren auch ohne die Oberfläche.")
-    SetButtons({
-        { key = "settings", text = "Einstellungen öffnen", kind = "secondary", onClick = function()
-            Close()
-            if WeintCodex.Settings and WeintCodex.Settings.Open then
-                WeintCodex.Settings.Open("oberflaeche")
-            end
-        end },
-        { key = "ok", text = "Verstanden", kind = "primary", onClick = function() Close() end },
-    })
-    Say("Die WeintCodex-Oberfläche kannst du jederzeit in den Einstellungen"
-        .. " (/wc einstellungen → Oberfläche) oder mit /wcui aktivieren.")
+local function StepStart()
+    Head(1, "Willkommen", "Schön, dass du da bist.")
+    body:SetText(WL.Text("start"))
+    body:Show()
+    rowsHost:Hide()
+    ShowGallery(false)
+    WL.ShowShot("overview")
+    SetButtons({ { key = "later", text = "Später", onClick = function() WL.Later() end } },
+        { { key = "next", text = "Los geht’s", kind = "primary", onClick = function() Go("ui") end } })
+end
+
+local function StepUI()
+    Head(2, "Die Oberfläche", "Ein Interface aus einem Guss")
+    body:SetText(WL.Text("ui"))
+    body:Show()
+    rowsHost:Hide()
+    ShowGallery(true)
+    WL.ShowShot("overview")
+    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go("start") end } },
+        { { key = "no", text = "Ohne Oberfläche", onClick = function() WL.Decide(false) Go("anzeigen") end },
+          { key = "yes", text = "Oberfläche verwenden", kind = "primary", onClick = function() WL.Decide(true) Go("anzeigen") end } })
+end
+
+local function StepShows()
+    Head(3, "Komfort",
+        choice.ui and "Dein Komplettpaket: Anzeigen" or "Was darf WeintCodex dir zeigen?")
+    body:Hide()
+    rowsHost:Show()
+    ShowGallery(false)
+    WL.rowsHeight = Rows(WL.SHOWS, "show")
+    WL.ShowShot("damage")
+    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go("ui") end } },
+        { { key = "next", text = "Weiter", kind = "primary", onClick = function() Go("helfer") end } })
+end
+
+local function StepHelpers()
+    Head(4, "Komfort", "Kleine Helfer")
+    local list = {}
+    for _, h in ipairs(WL.HELPERS) do
+        if not h.dispel or WL.CanDispel() then list[#list + 1] = h end
+    end
+    rowsHost:Show()
+    ShowGallery(false)
+    local y = Rows(list, "help")
+    WL.rowsHeight = y
+    -- Darunter der Hinweis auf Klickzauber und Makros.
+    body:ClearAllPoints()
+    body:SetPoint("TOPLEFT", win, "TOPLEFT", WL.PAD, -(WL.BODY_TOP + y + 6))
+    body:SetText(WL.Text("helfer"))
+    body:SetTextColor(unpack(C.textDim))
+    body:Show()
+    WL.ShowShot("helpers")
+    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go("anzeigen") end } },
+        { { key = "next", text = "Weiter", kind = "primary", onClick = function() Go("bereit") end } })
+end
+
+function WL.ReadyText()
+    return table.concat(WL.Summary(), "\n")
+        .. "\n\nNach „Übernehmen“ " .. (choice.ui and "richtet WeintCodex sein Layout ein; danach einmal neu laden."
+            or "gilt das meiste sofort; Anzeigen kommen nach dem Neuladen.")
+        .. "\n\nÄndern kannst du alles jederzeit mit /wcui oder unter Einstellungen → Oberfläche."
+end
+
+local function StepReady()
+    Head(5, "Zusammenfassung", "Bereit")
+    rowsHost:Hide()
+    ShowGallery(false)
+    body:SetText(WL.ReadyText())
+    body:Show()
+    WL.ShowShot(choice.ui and "overview" or "helpers")
+    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go("helfer") end } },
+        { { key = "apply", text = "Übernehmen", kind = "primary", onClick = function() WL.Finish() end } })
+end
+
+-- Nach "Uebernehmen": was geschah, und das Neuladen.
+local function StepDone(report)
+    Head(5, "Fertig", report.reload and "Fertig – jetzt neu laden" or "Fertig")
+    local lines = {}
+    if report.layout == true then
+        lines[#lines + 1] = "•  Layout „WeintCodex“ im Bearbeitungsmodus angelegt und aktiv. Dein bisheriges ist gemerkt."
+    elseif type(report.layout) == "string" then
+        lines[#lines + 1] = "•  Das Layout ließ sich nicht anlegen (" .. report.layout
+            .. "). Nach dem Neuladen fragt WeintCodex noch einmal."
+    end
+    for _, l in ipairs(WL.Summary()) do lines[#lines + 1] = l end
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = report.reload
+        and "Erst nach dem Neuladen steht alles an seinem Platz – bis dahin bitte nicht in den Kampf."
+        or "Alles gilt ab sofort."
+    body:SetText(table.concat(lines, "\n"))
+    if report.reload then
+        SetButtons(nil, { { key = "close", text = "Später", onClick = function()
+                              Close()
+                              Say("Deine Wahl gilt nach dem nächsten Neuladen (/reload).")
+                          end },
+                          { key = "reload", text = "Jetzt neu laden", reload = true, onClick = function() Close() end } })
+    else
+        SetButtons(nil, { { key = "done", text = "Schließen", kind = "primary", onClick = function() Close() end } })
+    end
+end
+
+Go = function(key)
+    step = key
+    body:ClearAllPoints()
+    body:SetPoint("TOPLEFT", win, "TOPLEFT", WL.PAD, -WL.BODY_TOP)
+    body:SetTextColor(unpack(C.textNormal))
+    if key == "start" then StepStart()
+    elseif key == "ui" then StepUI()
+    elseif key == "anzeigen" then StepShows()
+    elseif key == "helfer" then StepHelpers()
+    else StepReady() end
+end
+
+function WL.Step() return applied and "fertig" or step end
+
+function WL.Finish()
+    if K.InCombat() then
+        Say("Nach dem Kampf – im Kampf lässt sich nichts umstellen.")
+        return false
+    end
+    local report = WL.Apply()
+    applied = true
+    StepDone(report)
+    return true
+end
+
+-- Abbrechen: nichts angefasst, beim naechsten Einloggen wieder gefragt.
+function WL.Later()
+    Close()
+    if not applied and not Asked() then
+        Say("Kein Problem – beim nächsten Einloggen fragt WeintCodex wieder. Oder jetzt: /wcui willkommen.")
+    end
 end
 
 --------------------------------------------------
 -- Einstieg
 --------------------------------------------------
 
--- Die Frage zeigen, egal ob schon gefragt (fuer den Prueflauf und fuer
--- den, der sie noch einmal sehen will).
+-- Den Assistenten zeigen, egal ob schon gefragt (/wcui willkommen,
+-- Prueflauf).
 function WL.Ask()
     Build()
-    ShowQuestion()
+    applied = false
+    ResetChoice()
+    Go("start")
     dimmer:Show()
 end
 
 -- Fragen, wenn es noch nicht geschehen ist und gerade nichts anderes
 -- davor steht.
 function WL.MaybeAsk()
-    -- Ohne OPT_IN gibt es nichts zu fragen: die Oberflaeche ist fuer alle
-    -- an, bis der Client wieder speichert (UIKit.OPT_IN, ui/kit.lua).
     if not K.OPT_IN then return end
     if Asked() or K.UIEnabled() then return end
     if reloadSession then return end   -- siehe unten: keine Schleife nach /reload
@@ -283,15 +653,16 @@ function WL.MaybeAsk()
     end)
 end
 
--- Fuer den Prueflauf: die Knoepfe des Fensters nach ihrer Rolle.
+-- Fuer den Prueflauf.
 function WL.Button(key)
     for _, b in ipairs(buttons) do
-        if b._key == key then return b end
+        if b._key == key and b:IsShown() then return b end
     end
     return nil
 end
 function WL.IsShown() return dimmer ~= nil and dimmer:IsShown() end
 function WL.BodyText() return body and body:GetText() or "" end
+function WL.TitleText() return title and title:GetText() or "" end
 
 if WeintCodex.Onboarding and WeintCodex.Onboarding.OnClosed then
     WeintCodex.Onboarding.OnClosed(function() WL.MaybeAsk() end)
@@ -319,7 +690,7 @@ ev:SetScript("OnEvent", function(_, _, isInitialLogin, isReloadingUi)
     reloadSession = isReloadingUi and true or false
 
     -- Schliesst jemand das Hauptfenster samt Popup, ohne das Popup selbst
-    -- wegzuklicken, soll die Frage trotzdem kommen.
+    -- wegzuklicken, soll der Assistent trotzdem kommen.
     local main = WeintCodex.MainFrame
     if not hooked and main and main.HookScript then
         hooked = true
