@@ -986,17 +986,31 @@ do
         assert(WeintCodex.SaveHealth() == "unknown", "ohne Stempel ist Speichern unbekannt, nicht ok")
         assert(WL.IsReloadSession(), "Neuladen nicht erkannt")
 
-        sd.ui.asked = nil
+        sd.ui.asked, sd.ui.later = nil, nil
         WL.MaybeAsk()
-        assert(not WL.IsShown(), "nach /reload wird wieder gefragt (die Schleife)")
+        assert(not WL.IsShown(), "nach /reload ohne Speicherpruefung wird gefragt (die Schleife)")
 
         sd.saveProbe = time() - 3600
         stub.FireEvent("PLAYER_ENTERING_WORLD", false, true)
         assert(WeintCodex.SaveHealth() == "failed", "veralteter Stempel nach /reload nicht erkannt")
+        WL.MaybeAsk()
+        assert(not WL.IsShown(), "nach /reload ohne Speichern wird gefragt (die Schleife)")
 
         sd.saveProbe = time() - 5
         stub.FireEvent("PLAYER_ENTERING_WORLD", false, true)
         assert(WeintCodex.SaveHealth() == "ok", "frischer Stempel nicht als gespeichert erkannt")
+        -- 6.9.0.0 (Beta-Test: "6.9.0.0 geladen, /reload - sollte nicht der
+        -- Willkommensbildschirm kommen?"): hat der Client gespeichert, gibt
+        -- es keine Schleife - dann auch nach einem /reload fragen.
+        WL.MaybeAsk()
+        assert(WL.IsShown(), "nach /reload mit Speichern wird nicht gefragt (Aktualisierung in der Sitzung)")
+        -- "Spaeter" gilt bis zum Einloggen, auch ueber ein /reload hinweg.
+        WL.Button("later"):Click()
+        assert(not WL.IsShown() and sd.ui.later == true and not sd.ui.asked, "Spaeter nicht gemerkt")
+        sd.saveProbe = time() - 5
+        stub.FireEvent("PLAYER_ENTERING_WORLD", false, true)
+        WL.MaybeAsk()
+        assert(not WL.IsShown(), "nach Spaeter beim naechsten /reload wieder gefragt")
 
         sd.saveProbe = nil
         stub.FireEvent("PLAYER_LOGOUT")
@@ -1005,6 +1019,7 @@ do
         -- Echtes Einloggen: dann darf (und soll) wieder gefragt werden.
         stub.FireEvent("PLAYER_ENTERING_WORLD", true, false)
         assert(not WL.IsReloadSession(), "Einloggen als Neuladen gewertet")
+        assert(sd.ui.later == nil, "Spaeter ueberlebt das Einloggen")
         WL.MaybeAsk()
         assert(WL.IsShown(), "beim Einloggen wird nicht gefragt, obwohl die Antwort fehlt")
         WL.Button("later"):Click()

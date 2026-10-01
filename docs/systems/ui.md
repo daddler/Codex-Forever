@@ -295,7 +295,12 @@ soll dennoch eine Abfrage kommen, ob man die Komfortfunktionen haben
 möchte. Ein komplettes An-die-Hand-Nehmen.“ Er ersetzt die frühere
 Ja/Nein-Frage – einmal je Konto, **nach** der Einführung bzw. dem
 Changelog-Popup (`Onboarding.OnClosed`, `Onboarding.IsShowing`), nie im
-Kampf, nie nach einem `/reload`. Wieder zeigen: `/wcui willkommen` oder
+Kampf. Nach einem `/reload` nur, wenn die Speicherprüfung „ok“ meldet
+(`WL.ReloadBlocks`, `WeintCodex.SaveHealth`): Beta-Test 6.9.0.0 – wer
+das Addon in der Sitzung aktualisiert und neu lädt, sah ihn bis dahin
+nie (Sperre aus 6.0.0.1 gegen die Frageschleife eines Clients, der nicht
+speicherte). Bei „verloren“ oder „unbekannt“ weiter erst beim nächsten
+Einloggen – dort wäre die Schleife. Wieder zeigen: `/wcui willkommen` oder
 der Knopf „Assistenten zeigen“ auf `/wcui` → Allgemein.
 
 | Schritt | Inhalt |
@@ -317,7 +322,9 @@ die Wahl vom Standard abweicht (das Paket bleibt Standard und folgt der
 Oberfläche, wenn sie später ausgeht), Helfer, und mit Oberfläche
 **gleich die Einrichtung** (`ES.Apply`, falls es das Layout noch nicht
 gibt) – ein Neuladen statt zwei. „Später“, das Kreuz und Abbrechen
-merken nichts; dann fragt der Assistent beim nächsten Einloggen wieder.
+entscheiden nichts; „Später“ merkt sich nur `ui.later` (gelöscht beim
+Einloggen), damit ein `/reload` nicht gleich wieder fragt – der Assistent
+kommt beim nächsten Einloggen wieder.
 ESC ist keine Antwort.
 
 **Die Bilder** sind eigene Zeichnungen, keine Bildschirmfotos (Spielwelt

@@ -617,6 +617,9 @@ end
 function WL.Later()
     Close()
     if not applied and not Asked() then
+        -- Gilt bis zum naechsten Einloggen - auch ueber ein /reload hinweg.
+        local ui = K.Root()
+        if ui then ui.later = true end
         Say("Kein Problem – beim nächsten Einloggen fragt WeintCodex wieder. Oder jetzt: /wcui willkommen.")
     end
 end
@@ -640,7 +643,9 @@ end
 function WL.MaybeAsk()
     if not K.OPT_IN then return end
     if Asked() or K.UIEnabled() then return end
-    if reloadSession then return end   -- siehe unten: keine Schleife nach /reload
+    if WL.ReloadBlocks() then return end   -- siehe unten: keine Schleife nach /reload
+    local ui = K.Root()
+    if ui and ui.later then return end     -- "Spaeter" gilt bis zum Einloggen
     if dimmer and dimmer:IsShown() then return end
     if WeintCodex.Onboarding and WeintCodex.Onboarding.IsShowing
        and WeintCodex.Onboarding.IsShowing() then
@@ -668,17 +673,27 @@ if WeintCodex.Onboarding and WeintCodex.Onboarding.OnClosed then
     WeintCodex.Onboarding.OnClosed(function() WL.MaybeAsk() end)
 end
 
--- NACH EINEM /reload WIRD NICHT GEFRAGT, nur beim echten Einloggen.
+-- NACH EINEM /reload WIRD NUR GEFRAGT, WENN DER CLIENT GESPEICHERT HAT.
 --
 -- Mit 6.0.0.1 gemeldet: "Ja, verwenden" -> "Jetzt neu laden" -> die
 -- Frage kam wieder, immer wieder. Der Forever-Beta-Client hatte die
 -- Antwort nicht gespeichert (siehe WeintCodex.SaveHealth in
 -- core/main.lua). Speichern kann dieses Addon nicht erzwingen - aber die
--- Schleife darf es nicht bauen: wer gerade neu geladen hat, hat die
--- Frage fast immer eben beantwortet. Beim naechsten echten Einloggen
--- kommt sie wieder, falls die Antwort verloren ging.
+-- Schleife darf es nicht bauen. Bis 6.9.0.0 hiess das: nach einem
+-- /reload nie fragen. Beta-Test 6.9.0.0: "6.9.0.0 geladen, /reload -
+-- sollte nicht der Willkommensbildschirm kommen?" - wer das Addon
+-- mitten in der Sitzung aktualisiert, laedt neu und sah ihn nie.
+-- Jetzt: nach einem /reload fragen, wenn die Speicherpruefung "ok"
+-- sagt (der Client hat beim Neuladen geschrieben - eine Antwort waere
+-- also erhalten geblieben, eine Schleife gibt es nicht). Bei "verloren"
+-- oder "unbekannt" wie bisher erst beim naechsten echten Einloggen.
 
 function WL.IsReloadSession() return reloadSession end
+function WL.ReloadBlocks()
+    if not reloadSession then return false end
+    local health = WeintCodex.SaveHealth and WeintCodex.SaveHealth() or "unknown"
+    return health ~= "ok"
+end
 
 local hooked = false
 local ev = CreateFrame("Frame")
@@ -688,6 +703,11 @@ ev:SetScript("OnEvent", function(_, _, isInitialLogin, isReloadingUi)
     -- beiden Flags; Zonenwechsel tragen keins.
     if not (isInitialLogin or isReloadingUi) then return end
     reloadSession = isReloadingUi and true or false
+    -- "Spaeter" endet mit dem Einloggen.
+    if isInitialLogin then
+        local ui = K.Root()
+        if ui then ui.later = nil end
+    end
 
     -- Schliesst jemand das Hauptfenster samt Popup, ohne das Popup selbst
     -- wegzuklicken, soll der Assistent trotzdem kommen.
@@ -699,7 +719,10 @@ ev:SetScript("OnEvent", function(_, _, isInitialLogin, isReloadingUi)
 
     -- Das Einfuehrungs-Popup wird beim Anmelden geoeffnet; einen
     -- Augenblick warten, damit es sicher steht, bevor gefragt wird.
-    if not reloadSession and _G.C_Timer and _G.C_Timer.After then
+    -- Immer verzoegert und erst DANN die Speicherpruefung lesen: sie
+    -- entsteht im selben Ereignis (core/main.lua), die Reihenfolge der
+    -- Empfaenger sagt das Spiel nicht zu.
+    if _G.C_Timer and _G.C_Timer.After then
         _G.C_Timer.After(1.5, WL.MaybeAsk)
     end
 end)
