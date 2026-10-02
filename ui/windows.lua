@@ -78,7 +78,10 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               -- geladen; ui/macroframe.lua).
               "MacroFrame",
               -- 6.9.0.2: Handel (ui/trade.lua).
-              "TradeFrame" }
+              "TradeFrame",
+              -- 6.9.0.4: Auktionshaus (Blizzard_AuctionHouseUI, erst beim
+              -- Ansprechen geladen; ui/auction.lua).
+              "AuctionHouseFrame" }
 
 -- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
 -- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus
@@ -427,6 +430,13 @@ W.HIDE_ATLAS = {
     -- (gruen, blau) - statt dessen eine kleine Kachel, der gewaehlte mit
     -- Rand im Akzent (W.NavEntry). Das Wappen im Eintrag bleibt.
     "^communities%-nav%-button",
+    -- 6.9.0.4, gemessen (/wcui fenster am Auktionshaus): Kategorien links
+    -- (braune Balken, auch -secondary/-tertiary, -highlight, -select) - wie
+    -- die Liste an Gilde & Communitys (W.NavEntry); die Gruende der Listen
+    -- ("auctionhouse-background-index", "-categories" und die weiteren
+    -- Ansichten) - darunter eine Innenflaeche (ui/auction.lua).
+    "^auctionhouse%-nav%-button",
+    "^auctionhouse%-background%-",
     -- 6.9.0.0, gemessen mit /wcui fenster: Beute (LootFrame) - Sand hinter
     -- dem Fenster, Grund, Rahmen und Etikettrahmen jeder Karte (nur der
     -- Rahmen "Normal": ein anderer traegt Qualitaet oder Maus).
@@ -912,7 +922,7 @@ function HideByAtlas(f, depth, sc)
             if atlas:find("^common%-stat%-bar%-BG") or atlas:find("^Profession%-ProgressBar%-BG") then FlatBar(f, sc) end
             if atlas:find("^Profession%-square%-frame") or atlas:find("^groupfinder%-button%-cover") then W.EdgeBorder(f) end
             if atlas:find("^common%-search%-border") then FlatBar(f) end
-            if atlas:find("^communities%-nav%-button") then W.NavEntry(f, r, atlas, sc) end
+            if atlas:find("^communities%-nav%-button") or atlas:find("^auctionhouse%-nav%-button") then W.NavEntry(f, r, atlas, sc) end
             if W.HeaderAtlas(atlas) then
                 if sc and sc.header == "list" then W.ListHeader(f, r, sc) else W.Header(f, r) end
             end

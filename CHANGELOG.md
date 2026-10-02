@@ -11,11 +11,14 @@ nicht zusammen.
 
 ## [6.9.0.4] – 2026-10-02
 
+**Das Auktionshaus im ruhigen Stil.** Ohne Metall, Marmor und Holz: die Kategorien links als schlichte Kacheln, die gewählte mit feinem Goldrand, Listen und Geld auf ruhigen Flächen, die Spaltenköpfe flach. Suche, Filter, Preise und Kaufen bleiben, wie sie sind.
+
 **Keine Fehlermeldung mehr beim Anvisieren.** Seit dem letzten Update meldete das Spiel beim Anvisieren mancher NPCs (etwa des Auktionators) einen Fehler im Zielrahmen. Behoben – der rote Zauberbalken des Spiels über dem Ziel bleibt trotzdem weg.
 
 ### Technisch
 
 - Fehler aus 6.9.0.3 (BugGrabber: `TargetFrame.lua:829: attempt to call a nil value` aus `SignalAuraContainerAnchorsChanged`): `UF.HideGameCastBar` hing `TargetFrameSpellBar` über `K.HideBlizzard` an einen leeren Rahmen; `TargetSpellBarMixin:AdjustPosition` ruft `self:GetParent():ShouldAnchorSpellBarToAuraContainer()` – am leeren Rahmen nil. Jetzt bleibt der Balken an seinem Rahmen: `UnregisterAllEvents` (das Spiel schaltet ihn nur über Ereignisse ein), `Hide`, und Haken hinter `Show`/`SetShown` halten ihn versteckt.
+- Neu `ui/auction.lua`: `AuctionHouseFrame` in Gold (`W.WINDOWS`, `S.SCOPES`, Gast in `ui/calm.lua`). `W.HIDE_ATLAS` um `auctionhouse-nav-button*` (→ `W.NavEntry`, wie Gilde & Communitys) und `auctionhouse-background-*` (→ Innenfläche an derselben Stelle, `W.Insets`); Spaltenköpfe (Bild 131139) flach, Sortierpfeil (136580) bleibt; Geld (`MoneyFrameBorder`, `MoneyFrameInset`) über `W.OwnBackground`; Reiter über `W.SkinTab`. Prüfung mit neun Gegenproben.
 - `load_test.lua`: Balken bleibt am eigenen Rahmen, `AdjustPosition` wie im Quelltext des Spiels läuft, `Show`/`SetShown` halten ihn nicht; sechs Gegenproben, darunter die Fassung aus 6.9.0.3.
 
 ## [6.9.0.3] – 2026-10-02

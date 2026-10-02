@@ -2757,6 +2757,24 @@ Region, die später ein anderes Bild zeigt, wird wieder sichtbar
 Rand, Stein oder leerer Platz ist (alle gehen), und ob „Handeln“ und
 „Abbrechen“ Left/Middle/Right tragen (dann flach).
 
+### Auktionshaus *(6.9.0.4, `ui/auction.lua`)*
+
+Gemessen mit `/wcui fenster` (Beta-Test 6.9.0.3, Reiter „Kaufen“):
+`AuctionHouseFrame` (Marmor 374155, Metallrahmen, Streifen, Porträt), die
+Kategorien links („auctionhouse-nav-button“, 9×) auf
+„auctionhouse-background-categories“, die Ergebnisliste auf
+„auctionhouse-background-index“, Spaltenköpfe aus Holz (Bild 131139, 9×)
+mit Sortierpfeil (136580), Reiter „uiframe-tab-*“, Geld unten links
+(`MoneyFrameBorder` 525911, `MoneyFrameInset` 374154), „Suchen“
+(130828). Gold (`S.CALM`, Gast in `ui/calm.lua`): Hülle wie jedes
+Fenster; Kategorien als kleine Kacheln wie an Gilde & Communitys
+(`W.NavEntry`, die gewählte mit Rand in Gold); jeder Grund
+„auctionhouse-background-*“ weg, an seiner Stelle eine Innenfläche mit
+Schatten und Kante in Gold; Spaltenköpfe flach mit 1 px Rand, der
+Sortierpfeil bleibt; Geld als Innenflächen; Reiter flach, der gewählte in
+Gold. Nur Bilder – Bieten und Kaufen sind geschützt. Ungemessen:
+„Verkaufen“, „Auktionen“ und die Zeilen einer gefüllten Liste.
+
 ### Symbol an der Minikarte *(6.9.0.0, `ui/launcher.lua`)*
 
 Mit Oberfläche ein zweites Symbol („WeintCodexUI“, seit 6.9.0.3 das

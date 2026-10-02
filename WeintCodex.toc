@@ -216,6 +216,8 @@ ui/loot.lua
 ui/macroframe.lua
 # Handel in Gold (6.9.0.2): Plaetze flach, Namensfelder als Leiste, Innenflaechen.
 ui/trade.lua
+# Auktionshaus in Gold (6.9.0.4): Kategorien als Kacheln, Listen auf Flaeche, Spaltenkoepfe flach.
+ui/auction.lua
 # Karte & Questlog (6.7.9.0, 6.8.0.9): Questlog und Questdetails auf Flaeche, Gold, Karte unberuehrt.
 ui/questlog.lua
 # Fenster in Gold mit Innenflaechen (6.8.0.0 Suche nach Gruppe, 6.8.0.2 Sammlung).

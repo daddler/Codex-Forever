@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.9.0.4",
         date    = "02.10.2026",
         notes   = {
+            "|cff7C6CFFDas Auktionshaus im ruhigen Stil.|r Ohne Metall, Marmor und Holz: die Kategorien links als schlichte Kacheln, die gewählte mit feinem Goldrand, Listen und Geld auf ruhigen Flächen, die Spaltenköpfe flach. Suche, Filter, Preise und Kaufen bleiben, wie sie sind.",
             "|cff7C6CFFKeine Fehlermeldung mehr beim Anvisieren.|r Seit dem letzten Update meldete das Spiel beim Anvisieren mancher NPCs (etwa des Auktionators) einen Fehler im Zielrahmen. Behoben – der rote Zauberbalken des Spiels über dem Ziel bleibt trotzdem weg.",
         },
     },

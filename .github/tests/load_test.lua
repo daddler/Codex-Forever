@@ -7880,6 +7880,106 @@ do
     Check(okTR, "Handel: Gold, Plaetze flach, Symbole bleiben, Namensfelder als Leiste, Innenflaechen und Geld auf Flaeche, kein Muell"
         .. (okTR and "" or (": " .. tostring(errTR))))
 
+    -- 6.9.0.4: Auktionshaus in Gold. Beta-Test 6.9.0.3: Metallrahmen,
+    -- Marmor, braune Kategorien, Lederlisten, Spaltenkoepfe aus Holz.
+    local okAH, errAH = pcall(function()
+        local W, S, AH, LF, GC = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIAuction, WeintCodex.UICalm, WeintCodex.GameColors
+        local listed = false
+        for _, n in ipairs(W.WINDOWS) do if n == "AuctionHouseFrame" then listed = true end end
+        assert(listed and AH and S.SCOPES.AuctionHouseFrame == S.CALM, "Auktionshaus nicht im Durchlauf oder nicht in Gold")
+        local hosts = {}
+        for _, h in ipairs(W.HOSTED.AuctionHouseFrame or {}) do hosts[h] = true end
+        assert(hosts[AH] and hosts[LF], "Auktionshaus ohne eigene Teile oder ohne Kante an den Innenflaechen")
+        local saved = {}
+        local function Global(name, obj) saved[name] = _G[name] _G[name] = obj return obj end
+        local function Tex(atlas, file)
+            local t = stub.NewObject("Texture")
+            t.GetAtlas = function() return atlas end
+            t.GetTexture = function() return file end
+            return t
+        end
+        local ah = Global("AuctionHouseFrame", stub.NewObject("Frame", "AuctionHouseFrame"))
+        -- Kategorien: Liste mit Grund, ein Eintrag (gewaehlt) und einer nicht.
+        local cats, scroll = stub.NewObject("Frame"), stub.NewObject("Frame")
+        local catBg = Tex("auctionhouse-background-categories")
+        cats.GetRegions = function() return catBg end
+        cats.GetParent = function() return ah end
+        local navA, navB = stub.NewObject("Button"), stub.NewObject("Button")
+        local aNormal, aSel = Tex("auctionhouse-nav-button"), Tex("auctionhouse-nav-button-select")
+        aSel:Show()
+        navA.GetRegions = function() return aNormal, aSel end
+        local bNormal, bSel = Tex("auctionhouse-nav-button"), Tex("auctionhouse-nav-button-select")
+        bSel:Hide()
+        navB.GetRegions = function() return bNormal, bSel end
+        scroll.GetChildren = function() return navA, navB end
+        cats.GetChildren = function() return scroll end
+        -- Ergebnisliste mit Grund und einem Spaltenkopf (Holz + Sortierpfeil).
+        local list, headBtn = stub.NewObject("Frame"), stub.NewObject("Button")
+        local listBg = Tex("auctionhouse-background-index")
+        list.GetRegions = function() return listBg end
+        list.GetParent = function() return ah end
+        local wood, arrow = Tex(nil, 131139), Tex(nil, 136580)
+        headBtn.GetRegions = function() return wood, arrow end
+        list.GetChildren = function() return headBtn end
+        -- Geld.
+        local border, inset = stub.NewObject("Frame"), stub.NewObject("Frame")
+        local borderTex, insetTex = Tex(nil, 525911), Tex(nil, 374154)
+        border.GetRegions = function() return borderTex end
+        inset.GetRegions = function() return insetTex end
+        border.GetParent = function() return ah end
+        inset.GetParent = function() return ah end
+        ah.MoneyFrameBorder, ah.MoneyFrameInset = border, inset
+        ah.GetChildren = function() return cats, list, border, inset end
+        -- Reiter.
+        local tabs = {}
+        for i = 1, 3 do
+            local tab = stub.NewObject("Button")
+            tab.LeftActive = stub.NewObject("Texture")
+            tab.GetID = function() return i end
+            tabs[i] = tab
+        end
+        ah.Tabs, ah.selectedTab = tabs, 2
+        S.Register()
+        local glow = stub.NewObject("Texture")
+        W.done[ah] = { glow = glow }
+        local grad, gold = S.Gradient, {}
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == GC.frameAccent then gold[t] = true end
+            return grad(t, dir, c, a0, a1)
+        end
+        W.HideByAtlas(ah)
+        AH.Update(ah)
+        LF.Update(ah)
+        S.Gradient = grad
+        W.HoldGlow(ah, "AuctionHouseFrame")
+        local m = AH.frames[ah]
+        assert(not glow:IsShown(), "Schein der Klasse ueber dem Auktionshaus")
+        assert(m and gold[m.edge.l], "Kante oben nicht in Gold")
+        assert(catBg:GetAlpha() == 0 and listBg:GetAlpha() == 0, "Grund der Listen bleibt")
+        assert(AH.lists[catBg] and AH.lists[listBg] and W.Insets[cats] and W.Insets[list], "Listen nicht auf Innenflaeche")
+        assert(aNormal:GetAlpha() == 0 and W.Entries[navA] and W.Entries[navB], "Kategorien nicht als Kacheln")
+        assert(W.Entries[navA].on and not W.Entries[navB].on and W.Entries[navA].accent == GC.frameAccent,
+            "gewaehlte Kategorie nicht in Gold (oder die falsche)")
+        assert(wood:GetAlpha() == 0 and AH.heads[headBtn] and arrow:GetAlpha() == 1, "Spaltenkopf nicht flach oder Sortierpfeil weg")
+        assert(W.Insets[border] and W.Insets[inset] and borderTex:GetAlpha() == 0 and insetTex:GetAlpha() == 0, "Geld nicht auf Flaeche")
+        assert((LF.windows[ah].decks or 0) == 4, "Innenflaechen ohne Kante in Gold: " .. tostring(LF.windows[ah].decks))
+        local sk1, sk2 = W.TabSkin[tabs[1]], W.TabSkin[tabs[2]]
+        assert(sk1 and sk2 and sk2.accent == GC.frameAccent and sk1.accent == nil, "gewaehlter Reiter nicht in Gold")
+        local rep = table.concat(AH.Report(ah, {}), "\n")
+        assert(rep:find("Auktionshaus (Stil ruhig): Kante in Gold, kein Schein der Klasse · Listen auf Fläche 2 · Spaltenköpfe flach 1 · Geld 2 · Reiter 3", 1, true), "Bericht: " .. rep)
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do AH.Update(ah) LF.Update(ah) W.HoldGlow(ah, "AuctionHouseFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Auktionshaus legt im Takt Muell an: %.1f KB", grew))
+        W.done[ah] = nil
+        for name, v in pairs(saved) do _G[name] = v end
+    end)
+    Check(okAH, "Auktionshaus: Gold, Kategorien als Kacheln (gewaehlte in Gold), Listen und Geld auf Flaeche, Spaltenkoepfe flach, Reiter, kein Muell"
+        .. (okAH and "" or (": " .. tostring(errAH))))
+
     -- 6.9.0.0: Symbol der Oberflaeche an der Minikarte - nur mit Oberflaeche.
     local okLN, errLN = pcall(function()
         local LN = WeintCodex.UILauncher
