@@ -332,7 +332,7 @@ function E.IsShown() return bar ~= nil and bar:IsShown() end
 -- und wer von hier kam, kommt beim Schliessen dorthin zurueck: in den
 -- Gestaltungsmodus oder ins Einstellungsfenster. Solange der des Spiels
 -- offen ist, sagt eine kleine Leiste darunter, wohin es danach geht, und
--- schaltet das um.
+-- ihr Knopf "Zum Gestaltungsmodus" fuehrt sofort hinueber (E.AttachBack).
 --
 -- GEOEFFNET wird ueber den Befehl des Spiels (SLASH_EDITMODE1, "/editmode")
 -- als Makro auf einem sicheren Knopf, ausgeloest vom Klick: so oeffnet das
@@ -527,32 +527,73 @@ end
 --------------------------------------------------
 
 local function StripText()
-    if bridge.from == "design" then return "Danach: Gestaltungsmodus von WeintCodex" end
-    if bridge.from == "options" then return "Danach: Einstellungen von WeintCodex" end
-    return "Rahmen von WeintCodex verschiebst du im Gestaltungsmodus."
+    if bridge.from == "design" then return "Schließen bringt dich zurück in den Gestaltungsmodus." end
+    if bridge.from == "options" then return "Schließen bringt dich zurück in die Einstellungen von WeintCodex." end
+    return "Die Rahmen von WeintCodex verschiebst du im Gestaltungsmodus."
 end
 
 function SyncStrip()
     if not strip then return end
     strip.text:SetText(StripText())
-    strip.toggle:SetText(ToggleText("Danach Gestaltungsmodus", bridge.from == "design"))
     local tw = strip.text.GetStringWidth and strip.text:GetStringWidth()
-    local bw = strip.toggle:GetWidth()
+    local bw = strip.back:GetWidth()
     tw = (type(tw) == "number" and tw > 0) and tw or 280
     strip:SetWidth(math.ceil(14 + tw + 16 + ((type(bw) == "number") and bw or 0) + 8))
 end
 
--- Danach in den Gestaltungsmodus - oder nicht (dann wieder dorthin, wo
--- man vorher war, falls das das Einstellungsfenster war).
-function E.ToggleReturn()
-    if bridge.from == "design" then
-        bridge.from = bridge.reopen and "options" or nil
-        bridge.reopen = false
-    else
-        bridge.reopen = bridge.reopen or bridge.from == "options"
-        bridge.from = "design"
-    end
+-- Der Knopf zurueck: danach in den Gestaltungsmodus (und war man aus dem
+-- Einstellungsfenster gekommen, nach "Fertig" wieder dorthin).
+function E.PrepareBack()
+    bridge.reopen = bridge.reopen or bridge.from == "options"
+    bridge.from = "design"
     SyncStrip()
+end
+
+-- Das Schliessen des Spiels: sein eigener Knopf (das X oben rechts).
+function E.GameClose()
+    local f = E.GameFrame()
+    local c = f and f.CloseButton
+    return (type(c) == "table" and type(c.Click) == "function") and c or nil
+end
+
+E.BACK_HINT = "Schließe den Bearbeitungsmodus des Spiels (Esc oder X) – danach geht der Gestaltungsmodus auf."
+
+-- Macht aus einem Knopf den Weg zurueck. WeintCodex schliesst den Modus
+-- des Spiels NICHT selbst (HideUIPanel aus Addon-Code: Taint, und die
+-- Frage nach ungespeicherten Aenderungen kaeme vielleicht nie). Ein
+-- sicherer Knopf klickt das X des Spiels (type "click"): das Spiel
+-- schliesst, wie wenn man es selbst anklickt, samt seiner Rueckfrage -
+-- und erst wenn es wirklich zu ist, geht der Gestaltungsmodus auf (OnHide).
+-- Ohne X: der Rueckweg wird gemerkt, und ein Satz sagt, was zu tun ist.
+function E.AttachBack(button)
+    local close = E.GameClose()
+    if close and not K.InCombat() then
+        local ok, ov = pcall(CreateFrame, "Button", nil, button, "SecureActionButtonTemplate")
+        if ok and ov then
+            ov:SetAllPoints(button)
+            ov:SetFrameLevel((button:GetFrameLevel() or 1) + 5)
+            if ov.RegisterForClicks then ov:RegisterForClicks("AnyUp") end
+            ov:SetAttribute("useOnKeyDown", false)
+            ov:SetAttribute("type", "click")
+            ov:SetAttribute("clickbutton", close)
+            ov:SetScript("PreClick", E.PrepareBack)
+            ov:SetScript("OnEnter", function()
+                local f = button:GetScript("OnEnter")
+                if f then f(button) end
+            end)
+            ov:SetScript("OnLeave", function()
+                local f = button:GetScript("OnLeave")
+                if f then f(button) end
+            end)
+            button._gameBack = ov
+            return ov
+        end
+    end
+    button:SetScript("OnClick", function()
+        E.PrepareBack()
+        Say(E.BACK_HINT)
+    end)
+    return nil
 end
 
 -- Unter das Fenster des Spiels, als Zahlen (nicht daran verankert: ein
@@ -591,21 +632,33 @@ function E.ShowStrip()
         strip.text = K.NewText(strip, 11)
         strip.text:SetPoint("LEFT", strip, "LEFT", 14, 0)
         strip.text:SetTextColor(unpack(C.textMuted))
-        strip.toggle = WeintCodex.CreateButton(strip, { text = "", kind = "secondary", height = 22, size = 11,
-            tooltip = "Wohin es geht, wenn du den Bearbeitungsmodus des Spiels schließt: in den Gestaltungsmodus von WeintCodex – dort verschiebst du Einheitenrahmen, Gruppe, Schadensanzeige und die übrigen Rahmen von WeintCodex." })
-        strip.toggle:SetPoint("RIGHT", strip, "RIGHT", -8, 0)
-        strip.toggle:SetScript("OnClick", E.ToggleReturn)
+        strip.back = WeintCodex.CreateButton(strip, { text = "Zum Gestaltungsmodus", kind = "primary", height = 22, size = 11,
+            tooltip = "Schließt den Bearbeitungsmodus des Spiels – wie sein X, samt Rückfrage bei ungespeicherten Änderungen – und öffnet den Gestaltungsmodus von WeintCodex: Einheitenrahmen, Gruppe, Schadensanzeige und die übrigen Rahmen von WeintCodex." })
+        strip.back:SetPoint("RIGHT", strip, "RIGHT", -8, 0)
+        E.AttachBack(strip.back)
     end
     SyncStrip()
     PlaceStrip()
     strip:Show()
 end
 
+-- Die Leiste traegt einen geschuetzten Knopf: im Kampf darf ein Addon sie
+-- nicht ausblenden. Daher schon beim Kampfbeginn (PLAYER_REGEN_DISABLED
+-- kommt, bevor die Sperre greift) und sonst nach dem Kampf.
 function E.HideStrip()
-    if strip then strip:Hide() end
+    if not strip then return end
+    if K.InCombat() then K.AfterCombat(E.HideStrip) return end
+    strip:Hide()
 end
 
+local combatEvents = CreateFrame("Frame")
+combatEvents:RegisterEvent("PLAYER_REGEN_DISABLED")
+combatEvents:SetScript("OnEvent", function()
+    if strip and strip:IsShown() then strip:Hide() end
+end)
+
 function E.StripShown() return strip ~= nil and strip:IsShown() end
+function E.StripButton() return strip and strip.back end   -- fuer den Prueflauf
 
 -- Auf- und Zugehen des Bearbeitungsmodus mitbekommen. HookScript
 -- veraendert das Fenster des Spiels nicht.

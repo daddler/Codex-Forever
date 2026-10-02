@@ -2820,12 +2820,25 @@ kam, ist nach dem Schließen wieder dort (`E.bridge.from`), aus dem Fenster
 auf derselben Seite; kam man über Fenster → Gestaltungsmodus, geht nach
 „Fertig“ auch das Fenster wieder auf (`reopen`). Solange der Modus des
 Spiels offen ist, steht darunter eine kleine Leiste
-(`WeintCodexGameEditBar`, nur mit Oberfläche): wohin es danach geht, und
-ein Schalter „Danach Gestaltungsmodus“ – auch für den, der über Esc
+(`WeintCodexGameEditBar`, nur mit Oberfläche): wohin Schließen führt, und
+der **Knopf zurück** „Zum Gestaltungsmodus“ – auch für den, der über Esc
 hineinkam. Gesetzt als Zahlen unter dem Fenster des Spiels, nicht daran
 verankert (ein Rahmen, der an einem des Spiels hängt, erbt dessen Schutz).
 Geht der Modus nicht auf (Kampf, kein Befehl), ist man nach 0,3 s wieder,
 wo man war, mit einem Satz im Chat.
+
+**Wie zurück:** WeintCodex schließt den Modus des Spiels nie selbst
+(`HideUIPanel` aus Addon-Code: Taint, und die Rückfrage bei
+ungespeicherten Änderungen käme womöglich nicht). Über dem Knopf liegt ein
+`SecureActionButtonTemplate` mit `type = "click"` und `clickbutton =
+EditModeManagerFrame.CloseButton` – das Spiel schließt, als hätte man sein
+X angeklickt, samt Rückfrage. `PreClick` merkt den Rückweg (`design`, aus
+dem Fenster gekommen: `reopen`), aufgehen tut der Gestaltungsmodus erst in
+`OnHide` – bricht man die Rückfrage ab, bleibt alles, wie es war, bis man
+schließt. Ohne `CloseButton` merkt der Knopf nur den Rückweg und sagt im
+Chat, was zu tun ist. Weil die Leiste damit einen geschützten Knopf trägt,
+blendet WeintCodex sie beim Kampfbeginn aus (`PLAYER_REGEN_DISABLED`, vor
+der Sperre), sonst erst nach dem Kampf.
 
 **Wie geöffnet wird:** Gibt es den Befehl des Spiels (`SLASH_EDITMODE1`
 samt `SlashCmdList.EDITMODE`), liegt über dem Knopf ein
@@ -2836,7 +2849,8 @@ Spiel geschützte Leisten). Platz gemacht wird erst in `PostClick`, weil
 der Knopf in der Leiste liegt, die dabei zugeht. Ohne Befehl öffnet
 WeintCodex direkt (`ShowUIPanel`). Welcher Weg gilt, sagt `/wcui
 einrichten prüfen` (letzte Zeile). **Ungeprüft auf Forever:** ob es
-`/editmode` gibt und ob der direkte Weg Folgen hat.
+`/editmode` gibt, ob der direkte Weg Folgen hat und ob das Fenster des
+Spiels sein X als `CloseButton` führt.
 
 ### Nächste Fenster
 

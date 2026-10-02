@@ -8960,6 +8960,9 @@ do
         local game = CreateFrame("Frame")
         function game:Show() self._shown = true local f = self:GetScript("OnShow") if f then f(self) end end
         function game:Hide() self._shown = false local f = self:GetScript("OnHide") if f then f(self) end end
+        -- Sein X oben rechts: schliesst das Fenster.
+        game.CloseButton = CreateFrame("Button")
+        game.CloseButton:SetScript("OnClick", function() game:Hide() end)
         _G.EditModeManagerFrame = game
         local opens = 0
         _G.ShowUIPanel = function(f) opens = opens + 1 f:Show() end
@@ -8992,19 +8995,56 @@ do
         game:Hide()
         assert(UO.frame:IsShown(), "nach dem Schliessen nicht zurueck im Einstellungsfenster")
 
-        -- 3. Umschalten in der Leiste: danach in den Gestaltungsmodus, und
-        -- nach "Fertig" wieder ins Fenster.
+        -- 3. Der Knopf zurueck: ein sicherer Knopf klickt das X des Spiels
+        -- (das Spiel schliesst selbst, samt Rueckfrage); erst wenn es zu
+        -- ist, geht der Gestaltungsmodus auf - und nach Fertig das Fenster.
         cell:Click()
-        E.ToggleReturn()
-        assert(E.bridge.from == "design" and E.bridge.reopen, "Umschalten merkt das Fenster nicht")
-        game:Hide()
-        assert(K.IsUnlocked() and not UO.frame:IsShown(), "nicht im Gestaltungsmodus nach dem Umschalten")
+        local sb = E.StripButton()
+        local back = sb and sb._gameBack
+        assert(back and back:GetAttribute("type") == "click" and back:GetAttribute("clickbutton") == game.CloseButton
+            and back:GetAttribute("useOnKeyDown") == false, "Knopf zurueck klickt nicht das X des Spiels")
+        assert(back:GetScript("PreClick") == E.PrepareBack, "Rueckweg nicht vor dem Klick gemerkt")
+        back:GetScript("PreClick")(back)
+        assert(E.GameShown() and not K.IsUnlocked(), "Gestaltungsmodus geht auf, bevor das Spiel geschlossen hat")
+        game.CloseButton:Click()              -- das Spiel fuehrt den Klick aus
+        assert(not E.GameShown() and K.IsUnlocked() and not UO.frame:IsShown(), "zurueck: nicht im Gestaltungsmodus")
         K.SetUnlocked(false)
         assert(UO.frame:IsShown(), "nach Fertig nicht zurueck im Einstellungsfenster")
+        -- Rueckfrage abgebrochen (das X schliesst nicht): nichts geht auf,
+        -- bis man wirklich schliesst.
         cell:Click()
-        E.ToggleReturn() E.ToggleReturn()
-        assert(E.bridge.from == "options", "zweimal umschalten: Rueckweg ins Fenster verloren")
+        back:GetScript("PreClick")(back)
+        assert(E.GameShown() and not K.IsUnlocked() and not UO.frame:IsShown(), "abgebrochen und trotzdem gewechselt")
         game:Hide()
+        assert(K.IsUnlocked(), "nach dem Schliessen nicht im Gestaltungsmodus")
+        K.SetUnlocked(false)
+        -- Ohne X: der Rueckweg wird gemerkt, ein Satz sagt den Rest.
+        local x = game.CloseButton
+        game.CloseButton = nil
+        UO.frame:Hide()
+        local fb = WeintCodex.CreateButton(UIParent, { text = "z" })
+        assert(E.AttachBack(fb) == nil, "ohne X ein sicherer Knopf")
+        game:Show()                           -- ueber Esc hinein
+        assert(E.bridge.from == nil, "ueber Esc hinein und schon ein Rueckweg")
+        fb:Click()
+        assert(E.bridge.from == "design", "ohne X: Rueckweg nicht gemerkt")
+        game:Hide()
+        assert(K.IsUnlocked(), "ohne X: nach dem Schliessen nicht im Gestaltungsmodus")
+        K.SetUnlocked(false)
+        game.CloseButton = x
+        -- Die Leiste traegt einen geschuetzten Knopf: im Kampf nie
+        -- ausblenden, beim Kampfbeginn (vor der Sperre) schon.
+        game:Show()
+        assert(E.StripShown(), "Leiste fehlt (Voraussetzung)")
+        _G.InCombatLockdown = function() return true end
+        E.HideStrip()
+        assert(E.StripShown(), "Leiste mit geschuetztem Knopf im Kampf ausgeblendet")
+        _G.InCombatLockdown = function() return false end
+        stub.FireEvent("PLAYER_REGEN_DISABLED")
+        assert(not E.StripShown(), "Leiste beim Kampfbeginn nicht weg")
+        stub.FireEvent("PLAYER_REGEN_ENABLED")
+        game:Hide()
+        UO.frame:Hide()
 
         -- 3b. Fenster -> Gestaltungsmodus -> Spiel: das Fenster wartet, bis
         -- der Gestaltungsmodus fertig ist, und geht nicht mit dem Spiel auf.
@@ -9077,7 +9117,7 @@ do
     _G.EditModeManagerFrame, _G.ShowUIPanel, _G.C_Timer.After, _G.InCombatLockdown,
         _G.SLASH_EDITMODE1, _G.SlashCmdList.EDITMODE, sd.ui.enabled, K.OPT_IN = unpack(saved, 1, 8)
     if K.IsUnlocked() then K.SetUnlocked(false) end
-    Check(ok, "Bruecke zum Bearbeitungsmodus des Spiels: hinueber und zurueck (Gestaltung, Fenster), Umschalten, nicht aufgegangen, Kampf, /editmode als Makro, Knopf auf jeder Seite"
+    Check(ok, "Bruecke zum Bearbeitungsmodus des Spiels: hinueber und zurueck (Gestaltung, Fenster), Knopf zurueck ueber das X des Spiels, ohne X, Kampf, nicht aufgegangen, Kampf, /editmode als Makro, Knopf auf jeder Seite"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

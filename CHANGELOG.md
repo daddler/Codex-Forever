@@ -13,15 +13,16 @@ nicht zusammen.
 
 **Ein Knopf zum Bearbeitungsmodus des Spiels.** Was WeintCodex nicht selbst verschiebt – Aktionsleisten, Minikarte, Buffs, Questliste, Abklingzeitmanager, Chat, die Gruppenrahmen des Spiels –, erreichst du jetzt mit einem Klick: oben im Gestaltungsmodus, unter „Allgemein“ und auf jeder Seite, deren Rahmen das Spiel stellt.
 
-**Und wieder zurück.** Schließt du den Bearbeitungsmodus des Spiels, bist du wieder dort, wo du herkamst – im Gestaltungsmodus oder auf derselben Einstellungsseite. Eine kleine Leiste darunter sagt, wohin es geht, und schaltet auf Wunsch in den Gestaltungsmodus um.
+**Und wieder zurück.** Schließt du den Bearbeitungsmodus des Spiels, bist du wieder dort, wo du herkamst – im Gestaltungsmodus oder auf derselben Einstellungsseite. Und unter dem Bearbeitungsmodus des Spiels steht ein Knopf „Zum Gestaltungsmodus“: er schließt ihn wie sein X – mit Rückfrage, falls noch etwas ungespeichert ist – und öffnet den Gestaltungsmodus von WeintCodex.
 
 ### Technisch
 
 - `ui/editmode.lua`, Abschnitt *Brücke*: `E.AttachGame(button)` macht aus einem Knopf den Weg hinüber. Gibt es den Befehl des Spiels (`SLASH_EDITMODE1` mit `SlashCmdList.EDITMODE`), legt es darüber einen `SecureActionButtonTemplate` mit `type = "macro"`, `macrotext = "/editmode"`, `useOnKeyDown = false` – das Spiel öffnet seinen Modus selbst, kein Addon-Code ruft `EditModeManagerFrame` auf (Taint). Platz gemacht (Gestaltungsmodus zu, Einstellungsfenster zu, Rückweg gemerkt) wird erst in `PostClick`: der Knopf liegt in der Leiste, die dabei zugeht. Ohne Befehl: `ShowUIPanel(EditModeManagerFrame)` direkt. Welcher Weg gilt, sagt `/wcui einrichten prüfen`. Im Kampf kein sicherer Knopf (nachgeholt über `K.AfterCombat`) und kein Öffnen.
 - Rückweg über `HookScript("OnShow"/"OnHide")` am Fenster des Spiels: `E.bridge.from` (`design`/`options`) und `reopen` (nach dem Gestaltungsmodus noch ins Fenster). Geht der Modus nicht auf (Kampf, Befehl unbekannt), nach 0,3 s sofort zurück mit einem Satz im Chat. Die Leiste `WeintCodexGameEditBar` steht unter dem Fenster des Spiels, als Zahlen gesetzt statt daran verankert.
+- Zurück: die Leiste `WeintCodexGameEditBar` unter dem Modus des Spiels trägt „Zum Gestaltungsmodus“ (`E.AttachBack`): ein `SecureActionButtonTemplate` mit `type = "click"`, `clickbutton = EditModeManagerFrame.CloseButton` – das Spiel schließt selbst, samt Rückfrage bei ungespeicherten Änderungen; `PreClick` merkt den Rückweg, der Gestaltungsmodus geht erst in `OnHide` auf. WeintCodex ruft nie `HideUIPanel` auf. Ohne `CloseButton`: Rückweg gemerkt, ein Satz im Chat. Die Leiste wird beim Kampfbeginn (`PLAYER_REGEN_DISABLED`, vor der Sperre) ausgeblendet, sonst nach dem Kampf – sie trägt jetzt einen geschützten Knopf.
 - `ui/options.lua`: `Builder:GameEditMode(note)` (Satz + Knopf) und `gameEditMode = true` an Knopfzellen; eingesetzt auf Allgemein, Aktionsleisten (zwei Seiten), Minikarte, Questliste, Abklingzeitmanager und Gruppenrahmen statt „Esc → Bearbeitungsmodus“. Die Leiste des Gestaltungsmodus wird so breit wie ihre Knöpfe.
-- `load_test.lua`: hinüber und zurück aus Gestaltungsmodus und Fenster, Fenster → Gestaltung → Spiel, Umschalten, nicht aufgegangen, Kampf, `/editmode` als Makro auf sicherem Knopf, Knopf auf jeder betroffenen Seite; Gegenproben.
-- Ungeprüft auf Forever: ob es `/editmode` gibt und ob der direkte Weg Folgen hat.
+- `load_test.lua`: hinüber und zurück aus Gestaltungsmodus und Fenster, Fenster → Gestaltung → Spiel, Knopf zurück (sicher und ohne X), nicht aufgegangen, Kampf, `/editmode` als Makro auf sicherem Knopf, Knopf auf jeder betroffenen Seite; Gegenproben.
+- Ungeprüft auf Forever: ob es `/editmode` gibt, ob der direkte Weg Folgen hat und ob das Fenster des Spiels sein X als `CloseButton` führt.
 
 ## [6.9.0.4] – 2026-10-02
 
