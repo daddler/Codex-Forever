@@ -2747,13 +2747,24 @@ Rand, Stein oder leerer Platz ist (alle gehen), und ob „Handeln“ und
 
 ### Symbol an der Minikarte *(6.9.0.0, `ui/launcher.lua`)*
 
-Mit Oberfläche ein zweites Symbol („WeintCodexUI“, Zahnrad) neben dem von
-WeintCodex: Linksklick `/wcui`, Rechtsklick Gestaltungsmodus (nie im
+Mit Oberfläche ein zweites Symbol („WeintCodexUI“, seit 6.9.0.3 das
+WCUI-Logo, vorher ein Zahnrad) neben dem von WeintCodex: Linksklick `/wcui`, Rechtsklick Gestaltungsmodus (nie im
 Kampf). Ohne Oberfläche gibt es keins; der Hauptschalter blendet es
 sofort ein oder aus (`K.Listen`, `general.enabled`). Abschaltbar auf
 `/wcui` → Allgemein, gespeichert in `ui.launcher` (dort führt LibDBIcon
 auch den Platz). Über LibDBIcon landet es auch in der Knopfspalte der
 Minikarte.
+
+**Das Logo** *(6.9.0.3)* – vom Projektinhaber vorgegeben, Quelle
+`.github/scripts/logo/wcui.png`, gebaut mit `.github/scripts/make_logo.py`:
+`media/ui/logo_32.tga` (Minikarte, ganz gezeigt über `iconCoords =
+{0,1,0,1}`, und im Tooltip) und `logo_64.tga` (oben links im
+Willkommens-Assistenten, 64 px; vor „WeintCodex“ in der Seitenleiste von
+`/wcui`, 40 px). Sparsam eingesetzt, mit Absicht: ein Wappen mit Grün,
+Violett und rissigem Gold ist ein Markenzeichen, keine Fläche – auf
+Hintergründen oder in Fenstern des Spiels widerspräche es der ruhigen
+Oberfläche. `load_test.lua` prüft, dass jede Grafik, die `ui/` über
+`K.MEDIA` anfordert, in `media/ui` liegt.
 
 ### Nächste Fenster
 

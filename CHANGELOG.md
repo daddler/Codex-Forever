@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.9.0.3] – 2026-10-02
+
+**Die Oberfläche hat ein Logo.** Das Symbol an der Minikarte zeigt jetzt das WCUI-Wappen statt eines Zahnrads; dasselbe Wappen steht oben im Willkommens-Assistenten und in den Einstellungen der Oberfläche (/wcui).
+
+### Technisch
+
+- Quelle `.github/scripts/logo/wcui.png` (512×512, vom Projektinhaber vorgegeben), gebaut mit `.github/scripts/make_logo.py` zu `media/ui/logo_32.tga` (Minikarte, Tooltip) und `logo_64.tga` (Assistent 64 px, Seitenleiste von `/wcui` 40 px) – je Datei nahe der Anzeigegröße, verkleinert mit vormultipliziertem Alpha, oben links gespeichert wie die anderen Grafiken.
+- `ui/launcher.lua`: `LN.ICON = logo_32`, `iconCoords = {0,1,0,1}` (LibDBIcon schneidet sonst 5 % je Rand ab); Logo auch im Tooltip.
+- `load_test.lua`: jede Grafik, die `ui/` über `K.MEDIA` anfordert, muss in `media/ui` liegen (sonst grünes Rechteck im Spiel); Logo in beiden Größen mit Alpha und Ausrichtung; Logo in Assistent und Seitenleiste. Fünf Gegenproben.
+
 ## [6.9.0.2] – 2026-10-01
 
 **Automark fragt jetzt nach – ohne Fehlermeldung.** Das Spiel lässt Addons nicht selbst markieren; beim Betreten eines Dungeons gab es deshalb eine Fehlermeldung, und markiert wurde nichts. Jetzt fragt Automark beim Betreten nach, wer welche Markierung bekäme – „Markieren“ setzt sie, „Nicht jetzt“ lässt dich bis zum nächsten Betreten in Ruhe. Auf eine Taste legen: /click WeintCodexAutoMarkButton in einem Makro.

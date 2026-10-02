@@ -26,7 +26,12 @@ local LN = WeintCodex.UILauncher
 local K = WeintCodex.UIKit
 
 LN.NAME = "WeintCodexUI"
-LN.ICON = K.MEDIA .. "icon_gear"
+-- Das Logo der Oberflaeche (6.9.0.2, vom Projektinhaber vorgegeben;
+-- .github/scripts/make_logo.py). Bis dahin ein Zahnrad.
+LN.ICON = K.MEDIA .. "logo_32"
+-- Ganz zeigen: LibDBIcon schneidet sonst 5 % je Rand ab - die Spitzen des
+-- Logos reichen bis an den Rand.
+LN.ICON_COORDS = { 0, 1, 0, 1 }
 
 local function Libs()
     local ls = _G.LibStub
@@ -70,7 +75,7 @@ function LN.Click(button)
 end
 
 function LN.Tooltip(tt)
-    tt:AddLine(WeintCodex.AC .. "WeintCodex-Oberfläche|r")
+    tt:AddLine("|T" .. LN.ICON .. ":16:16|t " .. WeintCodex.AC .. "WeintCodex-Oberfläche|r")
     tt:AddLine("|cffA0A0ACPlaketten, Rahmen, Leisten, Fenster|r")
     tt:AddLine(" ")
     tt:AddDoubleLine("|cff34C77BLinksklick|r", "Einstellungen (/wcui)", 1, 1, 1, 0.85, 0.85, 0.85)
@@ -86,6 +91,7 @@ function LN.Object()
     launcher = ldb:NewDataObject(LN.NAME, {
         type = "launcher",
         icon = LN.ICON,
+        iconCoords = LN.ICON_COORDS,
         label = "WeintCodex-Oberfläche",
         OnClick = function(_, button) LN.Click(button) end,
         OnTooltipShow = function(tt) LN.Tooltip(tt) end,

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.9.0.3",
+        date    = "02.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Oberfläche hat ein Logo.|r Das Symbol an der Minikarte zeigt jetzt das WCUI-Wappen statt eines Zahnrads; dasselbe Wappen steht oben im Willkommens-Assistenten und in den Einstellungen der Oberfläche (/wcui).",
+        },
+    },
+    {
         version = "6.9.0.2",
         date    = "01.10.2026",
         notes   = {

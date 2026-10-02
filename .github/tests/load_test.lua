@@ -751,6 +751,7 @@ for _, key in ipairs(K.order) do
     local m = K.Module(key)
     for i, page in ipairs(m.pages) do
         local ok, err = pcall(UO.Show, key, i)
+        if ok and not UO.logo then ok, err = false, "Seitenleiste ohne Logo" end
         local widgets = ok and #UO.CurrentWidgets() or 0
         if ok and widgets > 0 then
             print("  ok    Seite " .. key .. "/" .. page.key .. " (" .. widgets .. " Elemente)")
@@ -818,6 +819,7 @@ do
 
         -- WEG OHNE OBERFLAECHE: danach trotzdem die Komfortfrage.
         WL.Ask()
+        assert(WL.logo and WL.logo:GetWidth() == WL.LOGO, "Assistent ohne Logo")
         WL.Button("next"):Click()
         assert(WL.Step() == "ui" and WL.BodyText():find("Profil bleibt deins", 1, true), "Schritt Oberflaeche ohne Profilversprechen")
         WL.ShowShot("plates")
@@ -1875,6 +1877,50 @@ do
     local w = head and (head:byte(13) + head:byte(14) * 256)
     local hh = head and (head:byte(15) + head:byte(16) * 256)
     Check(w == 512 and hh == 512, "arrow3d.tga ist 512 x 512 (8 x 8 Ansichten)")
+end
+
+-- JEDE GRAFIK, DIE ui/ ANFORDERT, GIBT ES (6.9.0.2). Ein Pfad ohne Datei
+-- zeichnet im Spiel ein gruenes Rechteck - und faellt hier sonst niemandem
+-- auf. Gesucht wird K.MEDIA .. "name" im Code (Kommentare ausgenommen).
+do
+    local missing, seen = {}, 0
+    local pipe = io.popen and io.popen('ls "' .. ROOT .. '/ui" 2>/dev/null')
+    if pipe then
+        for name in pipe:lines() do
+            if name:match("%.lua$") then
+                local h = io.open(ROOT .. "/ui/" .. name, "r")
+                local code = h:read("*a"):gsub("%-%-[^\n]*", "")
+                h:close()
+                for tex in code:gmatch('K%.MEDIA%s*%.%.%s*"([%w_]+)"') do
+                    seen = seen + 1
+                    local f = io.open(ROOT .. "/media/ui/" .. tex .. ".tga", "rb")
+                        or io.open(ROOT .. "/media/ui/" .. tex .. ".blp", "rb")
+                    if f then f:close() else missing[#missing + 1] = "ui/" .. name .. ": " .. tex end
+                end
+            end
+        end
+        pipe:close()
+    end
+    Check(seen > 0 and #missing == 0, seen .. " Grafiken aus ui/ liegen in media/ui"
+        .. (#missing == 0 and "" or (" – fehlt: " .. table.concat(missing, ", "))))
+
+    -- Das Logo der Oberflaeche: zwei Groessen, oben links gespeichert (wie
+    -- die anderen Grafiken, Kopfbyte 0x28), an Minikarte, Assistent und /wcui.
+    local function Head(file)
+        local h = io.open(ROOT .. "/media/ui/" .. file, "rb")
+        local head = h and h:read(18)
+        if h then h:close() end
+        if not head then return nil end
+        return head:byte(13) + head:byte(14) * 256, head:byte(15) + head:byte(16) * 256, head:byte(17), head:byte(18)
+    end
+    local ok = true
+    for file, size in pairs({ ["logo_32.tga"] = 32, ["logo_64.tga"] = 64 }) do
+        local w, hh, bpp, desc = Head(file)
+        if not (w == size and hh == size and bpp == 32 and desc == 0x28) then ok = false end
+    end
+    local LN, WL = WeintCodex.UILauncher, WeintCodex.UIWelcome
+    Check(ok and LN.ICON == K.MEDIA .. "logo_32" and LN.ICON_COORDS and LN.ICON_COORDS[1] == 0
+        and LN.ICON_COORDS[2] == 1, "Logo: 32 und 64 px mit Alpha, oben links; Symbol an der Minikarte zeigt es ganz")
 end
 
 -- DIE MODULE AUS 6.0.0.3 gegen die Attrappe: jedes einmal mit Daten,

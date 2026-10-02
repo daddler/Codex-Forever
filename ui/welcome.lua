@@ -47,6 +47,7 @@ local F  = WeintCodex.Fonts
 
 WL.W, WL.H = 820, 580
 WL.PAD = 28
+WL.LOGO, WL.LOGO_GAP = 64, 14   -- Logo oben links (media/ui/logo_64)
 WL.COL_W = 360                    -- linke Spalte: Text bzw. Schalter
 WL.IMG_W, WL.IMG_H = 400, 200     -- rechte Spalte: Bild (Textur 512x256)
 WL.TEXT_SIZE, WL.TEXT_SPACING = 13, 4
@@ -292,16 +293,22 @@ local function Build()
     top:SetPoint("TOPRIGHT", win, "TOPRIGHT", -8, 0)
     top:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.5)
 
+    -- Das Logo der Oberflaeche (6.9.0.2) links neben Ueberschrift und Titel.
+    WL.logo = win:CreateTexture(nil, "ARTWORK")
+    WL.logo:SetSize(WL.LOGO, WL.LOGO)
+    WL.logo:SetPoint("TOPLEFT", win, "TOPLEFT", WL.PAD - 4, -20)
+    WL.logo:SetTexture(K.MEDIA .. "logo_64")
+
     eyebrow = K.NewText(win)
     eyebrow:SetFont(F.mono, 10, "")
     eyebrow:SetTextColor(unpack(C.accent))
-    eyebrow:SetPoint("TOPLEFT", win, "TOPLEFT", WL.PAD, -26)
+    eyebrow:SetPoint("TOPLEFT", win, "TOPLEFT", WL.PAD + WL.LOGO + WL.LOGO_GAP - 4, -26)
 
     title = K.NewText(win)
     title:SetFont(F.display, 24, "")
     title:SetTextColor(unpack(C.textBright))
     title:SetPoint("TOPLEFT", eyebrow, "BOTTOMLEFT", 0, -10)
-    title:SetWidth(WL.W - WL.PAD * 2 - 120)
+    title:SetWidth(WL.W - WL.PAD * 2 - 120 - WL.LOGO - WL.LOGO_GAP)
     title:SetJustifyH("LEFT")
 
     -- Fortschritt: ein Strich je Schritt oben rechts.

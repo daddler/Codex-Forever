@@ -33,6 +33,7 @@ local F = WeintCodex.Fonts
 
 local W, H     = 1000, 680
 local SIDE_W   = 224
+local LOGO     = 40         -- Logo vor "WeintCodex" (media/ui/logo_64)
 -- Seitenleiste: seit 6.0.0.3 elf Eintraege. 38 hoch, 40 Schritt - der
 -- Prueflauf haelt die belegte Hoehe gegen die Fensterhoehe (nichts in der
 -- Seitenleiste darf rollen muessen).
@@ -624,8 +625,14 @@ end
 
 local function BuildSidebar()
     local y = -22
+    -- Das Logo der Oberflaeche (6.9.0.2) vor dem Namen.
+    local logo = sidebar:CreateTexture(nil, "ARTWORK")
+    logo:SetSize(LOGO, LOGO)
+    logo:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 14, y + 4)
+    logo:SetTexture(K.MEDIA .. "logo_64")
+    O.logo = logo
     local brand = Label(sidebar, F.display, 20, "textBright")
-    brand:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 20, y)
+    brand:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 14 + LOGO + 8, y)
     brand:SetText("WeintCodex")
     local sub = WeintCodex.Eyebrow(sidebar, "Oberfläche", { color = "accent", size = 9 })
     sub:SetPoint("TOPLEFT", brand, "BOTTOMLEFT", 1, -4)
