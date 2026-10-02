@@ -60,11 +60,13 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   rendered as a measured zero, a red dot, or a progress bar at 0 %.
   Since 5.1.0.0 there is a fourth state, **provisional**: data that is
   in the game but was never announced. Since 5.2.0.0 there are two
-  more, and they are not decoration: **counted but unnamed** (City of
-  Dalaran — nine encounters reported, names unknown: `bossCount` set,
-  `bosses` empty) and **contested** (Excavation Site, Blackmaw Hold —
-  sources contradict each other: `conflict` set, everything else
-  empty). Neither may be rendered as an empty list or as silence.
+  more, and they are not decoration: **counted but unnamed**
+  (`bossCount` set, `bosses` empty — City of Dalaran until 6.9.0.6, when
+  all nine names arrived; no current case, `load_test.lua` borrows a
+  table to keep the page honest) and **contested** (Blackmaw Hold, and
+  Excavation Site until 6.9.0.6 — sources contradict each other:
+  `conflict` set, everything else empty). Neither may be rendered as an
+  empty list or as silence.
   Details: `docs/invariants/data-integrity.md`.
 - **Kein Bestand ohne Herkunft.** Nothing may appear in a data table
   whose source cannot be named — that, not emptiness, was always the
@@ -79,8 +81,8 @@ rewrites), or through a copy-pasted `WCIMPORT:` string.
   every other kind carries a visible prefix *and* a `Why()` sentence
   on every surface. A filled boss list without a valid source fails
   `data_test.lua`; so does an empty one *with* one. Onyxias Hort,
-  Excavation Site, Blackmaw Hold, four more dungeons and the material
-  watchlist stay empty — no source, no entry. Same reasoning as
+  Blackmaw Hold, four more dungeons and the material watchlist stay
+  empty — no source, no entry. Same reasoning as
   `../Companion-Forever/docs/systems/forever-data.md`; details in
   `docs/systems/raids-and-progress.md`, section *Herkunft ist Pflicht*,
   and `docs/systems/dungeons.md`, section *Fünf Arten von Herkunft*.

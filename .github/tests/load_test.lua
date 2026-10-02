@@ -620,6 +620,60 @@ do
         end
     end
 
+    -- ZWEI ZUSTAENDE OHNE ECHTEN FALL (seit 6.9.0.6). "Quellen
+    -- widersprechen sich" und "gezaehlt, aber nicht benannt" trugen bis
+    -- dahin die Excavation Site und die City of Dalaran; seit beide eine
+    -- Liste haben, zeichnet sie kein Dungeon des Bestands mehr. Die Seite
+    -- muss sie trotzdem koennen - der naechste umstrittene Dungeon kommt
+    -- bestimmt. Also hier mit geliehenen Tabellen, danach zurueck.
+    do
+        -- Die Attrappe kennt keine Kindrahmen; mitgeschrieben wird darum
+        -- jeder Text, den die Seite beim Zeichnen setzt.
+        local seen = {}
+        local setText = stub.Methods.SetText
+        local function Record(fn)
+            seen = {}
+            stub.Methods.SetText = function(self, t)
+                if type(t) == "string" then seen[#seen + 1] = t end
+                return setText(self, t)
+            end
+            local ok, err = pcall(fn)
+            stub.Methods.SetText = setText
+            assert(ok, err)
+        end
+        local function Shows(text)
+            for _, t in ipairs(seen) do
+                if t:find(text, 1, true) then return true end
+            end
+            return false
+        end
+        local D = WeintCodex.DungeonData
+        local KEYS = { "bosses", "bossSource", "bossesComplete", "orderKnown", "bossCount",
+                       "countSource", "partial", "conflict" }
+        local function Borrow(id, state)
+            local d = D.Get(id)
+            local saved = {}
+            for _, k in ipairs(KEYS) do saved[k] = d[k] d[k] = nil end
+            for k, v in pairs(state) do d[k] = v end
+            return function() for _, k in ipairs(KEYS) do d[k] = saved[k] end end
+        end
+        local back = Borrow("excavation_site", { bosses = {},
+            conflict = "Zwei Quellen nennen verschiedene Bosse (Prueflauf)." })
+        Record(function() Measure("excavation_site", nil, "Excavation Site, umstritten (Prueflauf)") end)
+        local contested = Shows("Quellen widersprechen sich") and Shows("(Prueflauf)")
+        back()
+        back = Borrow("city_of_dalaran", { bosses = {}, bossCount = 9,
+            countSource = WeintCodex.Sources.COMMUNITY,
+            partial = { names = { "Arcane Anomaly", "Lyn the Ignored" }, source = WeintCodex.Sources.COMMUNITY } })
+        Record(function() Measure("city_of_dalaran", nil, "City of Dalaran, gezaehlt (Prueflauf)") end)
+        local counted = Shows("9 Kämpfe berichtet, Namen unbekannt") and Shows("Bisher benannt (2 von 9)")
+        back()
+        Check(contested, "Zustand 'Quellen widersprechen sich' wird gezeichnet (geliehene Tabelle)")
+        Check(counted, "Zustand 'gezaehlt, Namen offen' wird gezeichnet, samt Teilliste (geliehene Tabelle)")
+        Check(#D.Get("excavation_site").bosses == 3 and #D.Get("city_of_dalaran").bosses == 9,
+            "nach dem Leihen stehen die echten Listen wieder da")
+    end
+
     Check(failed == nil, "keine Dungeonseite laeuft unten aus dem Fenster"
         .. (failed and (" - " .. failed) or ""))
     Check(worst <= budget, "Seiteninhalt, schlimmster Fall (" .. worstName .. "): "

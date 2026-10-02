@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.9.0.6] – 2026-10-02
+
+**Beute und Quests für sechs weitere Dungeons.** Im Dungeonkompendium stehen jetzt auch für The Stockade, Gnomeregan, Razorfen Kraul, den Friedhof des Scharlachroten Klosters, die Excavation Site und die City of Dalaran die Beute je Boss und – wo bekannt – die Quests mit Questgebern auf der Weltkarte.
+
+**Dalaran und die Excavation Site haben Bosse.** Für Dalaran sind jetzt alle neun Kämpfe benannt, für die Excavation Site drei Bosse – beides aus Beta-Berichten, nicht von Blizzard bestätigt, und ohne Reihenfolge.
+
+**Beute unterwegs.** In The Deadmines, Wailing Caverns, Shadowfang Keep und Blackfathom Deeps steht jetzt auch, was die Gegner zwischen den Bossen fallen lassen.
+
+### Technisch
+
+- Abgleich mit dem Addon *Dungeon Journal* 1.4.2 (Exehn), maschinell (beide Bestände als JSON ausgelesen und verglichen). `data/dungeon_journal.lua`: 7 → 13 Dungeons, 153 → 277 Gegenstände, 50 → 80 Quests, 33 → 55 Orte. Nur Fakten übernommen (Nummern, Stufen, Erfahrung, Orte, Namen aus dem Spiel), deutsche Texte eigene. Nicht übernommen: Erfahrung, die das Addon selbst als Classic-Wert kennzeichnet; fünf Quests der Excavation Site ohne Nummer; die abweichenden Stufenbereiche (Hall of Thanes 13–20, Ruins of Lordaeron 15–22, Wailing Caverns 15–24, Shadowfang Keep 20–30, Blackfathom Deeps 22+) – Community gegen Community, ohne Beleg.
+- `data/dungeons.lua`: City of Dalaran 9 Bosse (`community`, `bossesComplete = true`, `orderKnown = false`, Lyn the Ignored `optional`), Excavation Site 3 Bosse (`community`, unvollständig, ohne Reihenfolge; „Highland Horror“ ist ein Questziel) – `bossCount`/`partial` bzw. `conflict` entfallen. Blackmaw Hold bleibt umstritten.
+- Korrekturen: `startItem` bei 96393 und 971 entfernt (kein Startgegenstand), Hinweis „0 Erfahrung beobachtet“ bei 92422 statt `xp = 0`.
+- *What's Training?* 11.0.0-beta10: Zauber, Ränge, Tierausbildung, Waffenfertigkeiten und Waffenmeister unverändert; nur Herkunftsvermerk in `data/trainer.lua` aktualisiert.
+- `load_test.lua`: die Zustände „gezählt, Namen offen“ und „Quellen widersprechen sich“ werden mit geliehenen Tabellen gezeichnet und geprüft – „gezählt“ hat keinen echten Fall mehr. `wow_stub.lua` gibt dafür `M.Methods` heraus.
+
 ## [6.9.0.5] – 2026-10-02
 
 **Ein Knopf zum Bearbeitungsmodus des Spiels.** Was WeintCodex nicht selbst verschiebt – Aktionsleisten, Minikarte, Buffs, Questliste, Abklingzeitmanager, Chat, die Gruppenrahmen des Spiels –, erreichst du jetzt mit einem Klick: oben im Gestaltungsmodus, unter „Allgemein“ und auf jeder Seite, deren Rahmen das Spiel stellt.

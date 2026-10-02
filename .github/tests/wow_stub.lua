@@ -230,6 +230,9 @@ end
 -- Umgebung, die der Lauf nicht mehr beherrscht.
 local registry = {}
 M._registry = registry
+-- Die Methoden aller Objekte: ein Prueflauf kann eine davon kurz
+-- mitschreiben lassen (z. B. SetText), ohne die Attrappe umzubauen.
+M.Methods = Methods
 
 function Methods:RegisterEvent(event)
     self._events = self._events or {}

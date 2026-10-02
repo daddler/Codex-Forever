@@ -6,6 +6,18 @@
 -- Ragefire Chasm, Wailing Caverns, Ruins of Lordaeron, The Deadmines,
 -- Shadowfang Keep, Blackfathom Deeps).
 --
+-- 6.9.0.6: abgeglichen mit dem Addon "Dungeon Journal" (Exehn, Fassung
+-- 1.4.2), das dieselben Berichte sammelt. Neu: The Stockade, Gnomeregan,
+-- Razorfen Kraul, Scarlet Monastery (nur Friedhof), Excavation Site und
+-- City of Dalaran (nur zwei bekannte Gegenstaende, keine Quest); Beute
+-- von Gegnern unterwegs ("Trash") in The Deadmines, Wailing Caverns,
+-- Shadowfang Keep und Blackfathom Deeps. Uebernommen sind nur Fakten
+-- (Nummern, Stufen, Erfahrung, Orte, Namen aus dem Spiel); die deutschen
+-- Texte sind eigene. Erfahrung, die das Addon selbst als Classic-Wert
+-- kennzeichnet, steht NICHT da (keine Angabe statt einer alten Zahl).
+-- Quests ohne Nummer (fuenf in der Excavation Site) fehlen - keine Quest
+-- ohne Nummer, siehe unten.
+--
 -- HERKUNFT: `community`, wie die Bosslisten der Forever-Dungeons.
 -- Zusammengetragen aus oeffentlichen Beta-Berichten (wowforevertalents,
 -- foreverchanges, Wowhead Forever, Stand 22.-25.09.2026) - NICHT aus dem
@@ -47,8 +59,8 @@ local J = WeintCodex.DungeonJournal
 
 J.SOURCE = {
     kind  = "community",
-    date  = "25.09.2026",
-    label = "Beta-Berichte der Community (Beute und Quests)",
+    date  = "02.10.2026",
+    label = "Beta-Berichte der Community (Beute und Quests), abgeglichen mit dem Dungeon Journal 1.4.2",
 }
 
 J.DATA = {
@@ -118,7 +130,6 @@ J.DATA = {
                 reputation = { { "Eisenschmiede", 100 }, { "Gnomeregangnome", 100 } },
                 choice = true,
                 rewards = { { 279894, "Calibrated Blunderbuss", 3 }, { 279895, "Ironforge Greathammer", 3 }, { 279896, "Deepblaze", 3 } },
-                startItem = { 274268, "Dark Iron Map" },
                 note = "Die Reihe beginnt mit der Dark Iron Map, Beute von Dark Iron Spies bei Ironband's Compound in Dun Morogh (um 76; 61).",
             },
             {
@@ -264,6 +275,11 @@ J.DATA = {
                 { 5243, "Firebelcher", "Distanz, Zauberstab", 3 },
                 { 6632, "Feyscale Cloak", "Rücken, Stoff", 3 },
             },
+        },
+        others = {
+            { name = "Druid of the Fang", items = {
+                { 10413, "Gloves of the Fang", "Hände, Leder", 3 },
+            } },
         },
         quests = {
             {
@@ -474,6 +490,7 @@ J.DATA = {
                 reputation = { { "Unterstadt", 150 } },
                 choice = true,
                 rewards = { { 251533, "Forsaken Greataxe", 3 }, { 251534, "Gnarled Necromancer's Staff", 3 } },
+                note = "In der Beta beobachtet: diese Quest gibt keine Erfahrung (0) – ob das so bleibt, ist offen.",
             },
         },
     },
@@ -525,6 +542,15 @@ J.DATA = {
                 { 5197, "Cookie's Tenderizer", "Einhändig, Streitkolben", 3 },
                 { 273298, "Lookie's Spyglass", "Schmuck", 3 },
             },
+        },
+        others = {
+            { name = "Defias Strip Miner", items = {
+                { 10402, "Blackened Defias Boots", "Füße, Leder", 3 },
+            } },
+            { name = "Defias Overseer / Defias Taskmaster", items = {
+                { 10401, "Blackened Defias Gloves", "Hände, Leder", 3 },
+                { 10400, "Blackened Defias Leggings", "Beine, Leder", 3 },
+            } },
         },
         quests = {
             {
@@ -658,6 +684,19 @@ J.DATA = {
             { name = "Arugal's Voidwalker", items = {
                 { 5943, "Rift Bracers", "Handgelenke, Schwere Rüstung", 3 },
             } },
+            { name = "Gegner unterwegs", items = {
+                { 1489, "Gloomshroud Armor", "Brust, Leder", 3 },
+                { 1974, "Mindthrust Bracers", "Handgelenke, Stoff", 3 },
+                { 1483, "Face Smasher", "Einhändig, Streitkolben", 3 },
+                { 2292, "Necrology Robes", "Brust, Stoff", 3 },
+                { 2205, "Duskbringer", "Zweihändig, Schwert", 3 },
+                { 2807, "Guillotine Axe", "Waffenhand, Axt", 3 },
+                { 3194, "Black Malice", "Zweihändig, Streitkolben", 3 },
+                { 1482, "Shadowfang", "Waffenhand, Schwert", 3 },
+                { 1935, "Assassin's Blade", "Einhändig, Dolch", 3 },
+                { 1318, "Night Reaver", "Zweihändig, Axt", 3 },
+                { 1484, "Witching Stave", "Zweihändig, Stab", 3 },
+            } },
         },
         quests = {
             {
@@ -745,6 +784,22 @@ J.DATA = {
                 { 6909, "Strike of the Hydra", "Zweihändig, Schwert", 3 },
             },
         },
+        others = {
+            { name = "Gegner unterwegs", items = {
+                { 1454, "Axe of the Enforcer", "Einhändig, Axt", 3 },
+                { 1481, "Grimclaw", "Einhändig, Axt", 3 },
+                { 3413, "Doomspike", "Einhändig, Dolch", 3 },
+                { 2567, "Evocator's Blade", "Einhändig, Dolch", 3 },
+                { 3414, "Crested Scepter", "Waffenhand, Streitkolben", 3 },
+                { 3415, "Staff of the Friar", "Zweihändig, Stab", 3 },
+                { 2271, "Staff of the Blessed Seer", "Zweihändig, Stab", 3 },
+                { 3417, "Onyx Claymore", "Zweihändig, Schwert", 3 },
+                { 1491, "Ring of Precision", "Finger", 3 },
+                { 1486, "Tree Bark Jacket", "Brust, Stoff", 3 },
+                { 3416, "Martyr's Chain", "Brust, Schwere Rüstung", 3 },
+                { 2034, "Scholarly Robes", "Brust, Stoff", 3 },
+            } },
+        },
         quests = {
             {
                 id = 971, name = "Knowledge in the Deeps", level = 23, requires = 10, faction = "alliance",
@@ -755,7 +810,6 @@ J.DATA = {
                 reputation = { { "Eisenschmiede", 50 } },
                 choice = false,
                 rewards = { { 6743, "Sustaining Ring", 2 } },
-                startItem = { 5359, "Lorgalis Manuscript" },
                 note = "Das Manuskript liegt in einer Narbigen Eisentruhe unter Wasser im Becken von Ask'ar, in der nördlichen Nische direkt hinter dem Raum der Schildkröte Ghamoo-ra.",
             },
             {
@@ -862,6 +916,467 @@ J.DATA = {
             },
         },
     },
+    the_stockade = {
+        loot = {
+            targorr = {
+                { 273805, "Blackrock Harness", "Brust, Leder", 3 },
+                { 273804, "Executioner Mantle", "Schulter, Leder", 3 },
+                { 273806, "Dark Horde Band", "Finger", 3 },
+            },
+            kam_deepfury = {
+                { 2280, "Kam's Walking Stick", "Zweihändig, Stab", 4 },
+                { 273808, "Bridgebreaker Bindings", "Handgelenke, Stoff", 3 },
+            },
+            hamhock = {
+                { 273809, "Hamhock's Cleaver", "Waffenhand, Axt", 3 },
+                { 273810, "Ogre Grips", "Hände, Schwere Rüstung", 3 },
+            },
+            dextren_ward = {
+                { 273820, "Nightskulker Ring", "Finger", 3 },
+            },
+            bazil_thredd = {
+                { 273827, "Debt Collector", "Waffenhand, Schwert", 3 },
+                { 273824, "Defias Jailbreakers", "Hände, Leder", 3 },
+                { 273825, "Red Wool Cloak", "Rücken, Stoff", 3 },
+                { 273829, "Concealed Hand Crossbow", "Distanz, Armbrust", 3 },
+            },
+            bruegal = {
+                { 3228, "Jimmied Handcuffs", "Handgelenke, Schwere Rüstung", 3 },
+                { 2941, "Prison Shank", "Einhändig, Dolch", 3 },
+                { 2942, "Iron Knuckles", "Einhändig, Faustwaffe", 3 },
+            },
+        },
+        others = {
+            { name = "Gegner unterwegs", items = {
+                { 274092, "Sharpened Cutlery", "Wurfwaffe", 3 },
+                { 1076, "Defias Renegade Ring", "Finger", 3 },
+            } },
+        },
+        quests = {
+            {
+                id = 386, name = "What Comes Around...", level = 25, requires = 22, faction = "alliance",
+                giver = "Guard Berton, Seenhain, Rotkammgebirge",
+                objective = "Targorr the Dread im Verlies töten und seinen Kopf zu Guard Berton bringen.",
+                turnin = "Guard Berton, Seenhain, Rotkammgebirge",
+                xp = 2000,
+                reputation = { { "Sturmwind", 100 } },
+                choice = true,
+                rewards = { { 3400, "Lucine Longsword", 3 }, { 1317, "Hardened Root Staff", 3 }, { 270027, "Unbekannte Belohnung", 1 } },
+            },
+            {
+                id = 377, name = "Crime and Punishment", level = 26, requires = 22, faction = "alliance",
+                giver = "Councilman Millstipe, Dunkelhain, Dämmerwald",
+                objective = "Dextren Ward im Verlies töten und seine Hand zu Councilman Millstipe bringen.",
+                turnin = "Councilman Millstipe, Dunkelhain, Dämmerwald",
+                xp = 2100,
+                reputation = { { "Sturmwind", 100 } },
+                choice = true,
+                rewards = { { 2033, "Ambassador's Boots", 3 }, { 2906, "Darkshire Mail Leggings", 3 }, { 270029, "Unbekannte Belohnung", 1 } },
+            },
+            {
+                id = 387, name = "Quell the Uprising", level = 26, requires = 22, faction = "alliance",
+                giver = "Warden Thelwater, vor dem Verlies, Sturmwind",
+                objective = "Im Verlies 10 Defias Prisoners, 8 Defias Convicts und 8 Defias Insurgents töten.",
+                turnin = "Warden Thelwater, vor dem Verlies, Sturmwind",
+                xp = 2650,
+                money = 4000,
+                reputation = { { "Sturmwind", 150 } },
+            },
+            {
+                id = 388, name = "The Color of Blood", level = 26, requires = 22, faction = "alliance",
+                giver = "Nikova Raskol, Altstadt, Sturmwind",
+                objective = "10 rote Wollkopftücher von den Defias im Verlies sammeln.",
+                turnin = "Nikova Raskol, Altstadt, Sturmwind",
+                xp = 2650,
+                money = 4000,
+                reputation = { { "Sturmwind", 150 } },
+            },
+            {
+                id = 378, name = "The Fury Runs Deep", level = 27, requires = 25, faction = "alliance",
+                giver = "Motley Garmason, Dun Modr, Sumpfland",
+                objective = "Kam Deepfury im Verlies töten und seinen Kopf zu Motley Garmason bringen.",
+                turnin = "Motley Garmason, Dun Modr, Sumpfland",
+                reputation = { { "Eisenschmiede", 150 } },
+                choice = true,
+                rewards = { { 3562, "Belt of Vindication", 3 }, { 1264, "Headbasher", 3 } },
+                note = "Erst nach „The Dark Iron War“ zu haben.",
+            },
+            {
+                id = 391, name = "The Stockade Riots", level = 29, requires = 16, faction = "alliance",
+                giver = "Warden Thelwater, vor dem Verlies, Sturmwind",
+                objective = "Bazil Thredd im Verlies töten und seinen Kopf zu Warden Thelwater bringen.",
+                turnin = "Warden Thelwater, vor dem Verlies, Sturmwind",
+                xp = 2350,
+                money = 2500,
+                reputation = { { "Sturmwind", 100 } },
+                note = "Teil der Reihe, die mit „The Unsent Letter“ von Edwin VanCleef in The Deadmines beginnt.",
+            },
+        },
+    },
+    gnomeregan = {
+        loot = {
+            grubbis = {
+                { 9445, "Grubbis Paws", "Hände, Schwere Rüstung", 3 },
+            },
+            viscous_fallout = {
+                { 9452, "Hydrocane", "Zweihändig, Stab", 3 },
+                { 9453, "Toxic Revenger", "Einhändig, Dolch", 3 },
+                { 9454, "Acidic Walkers", "Füße, Stoff", 3 },
+            },
+            electrocutioner = {
+                { 9446, "Electrocutioner Leg", "Waffenhand, Schwert", 3 },
+                { 9447, "Electrocutioner Lagnut", "Finger", 3 },
+                { 9448, "Spidertank Oilrag", "Handgelenke, Stoff", 3 },
+            },
+            crowd_pummeler = {
+                { 9449, "Manual Crowd Pummeler", "Zweihändig, Streitkolben", 3 },
+                { 9450, "Gnomebot Operating Boots", "Füße, Leder", 3 },
+            },
+            dark_iron_ambassador = {
+                { 9455, "Emissary Cuffs", "Handgelenke, Schwere Rüstung", 3 },
+                { 9456, "Glass Shooter", "Distanz, Schusswaffe", 3 },
+                { 9457, "Royal Diplomatic Scepter", "Waffenhand, Streitkolben", 3 },
+            },
+            thermaplugg = {
+                { 9458, "Thermaplugg's Central Core", "Schildhand, Schild", 3 },
+                { 9459, "Thermaplugg's Left Arm", "Zweihändig, Axt", 3 },
+                { 9461, "Charged Gear", "Finger", 3 },
+                { 9492, "Electromagnetic Gigaflux Reactivator", "Kopf, Stoff", 3 },
+            },
+        },
+        others = {
+            { name = "Gegner unterwegs (seltene Beute)", items = {
+                { 9508, "Mechbuilder's Overalls", "Brust, Stoff", 3 },
+                { 9491, "Hotshot Pilot's Gloves", "Hände, Stoff", 3 },
+                { 9509, "Petrolspill Leggings", "Beine, Leder", 3 },
+                { 9510, "Caverndeep Trudgers", "Füße, Schwere Rüstung", 3 },
+                { 9487, "Hi-tech Supergun", "Distanz, Schusswaffe", 3 },
+                { 9485, "Vibroblade", "Einhändig, Axt", 3 },
+                { 9488, "Oscillating Power Hammer", "Einhändig, Streitkolben", 3 },
+                { 9486, "Supercharger Battle Axe", "Zweihändig, Axt", 3 },
+                { 9490, "Gizmotron Megachopper", "Zweihändig, Schwert", 3 },
+                { 9489, "Gyromatic Icemaker", "Distanz, Zauberstab", 3 },
+            } },
+        },
+        quests = {
+            {
+                id = 2922, name = "Save Techbot's Brain!", level = 26, requires = 20, faction = "alliance",
+                giver = "Tinkmaster Overspark, Tüftlerstadt, Eisenschmiede",
+                objective = "Techbots Speicherkern zu Tinkmaster Overspark bringen.",
+                turnin = "Tinkmaster Overspark, Tüftlerstadt, Eisenschmiede",
+                xp = 6890,
+                money = 2000,
+            },
+            {
+                id = 2926, name = "Gnogaine", level = 27, requires = 20, faction = "alliance",
+                giver = "Ozzie Togglevolt, Kharanos, Dun Morogh",
+                objective = "Die leere bleierne Sammelphiole an Irradiated Invaders oder Irradiated Pillagers benutzen und die volle Phiole zu Ozzie bringen.",
+                turnin = "Ozzie Togglevolt, Kharanos, Dun Morogh",
+                xp = 5720,
+                money = 2200,
+            },
+            {
+                id = 2962, name = "The Only Cure is More Green Glow", level = 30, requires = 20, faction = "alliance",
+                giver = "Ozzie Togglevolt, Kharanos, Dun Morogh",
+                objective = "Hochwirksamen radioaktiven Niederschlag in der schweren bleiernen Sammelphiole zu Ozzie bringen – er zerfällt schnell.",
+                turnin = "Ozzie Togglevolt, Kharanos, Dun Morogh",
+                xp = 6370,
+                money = 2500,
+            },
+            {
+                id = 2928, name = "Gyrodrillmatic Excavationators", level = 30, requires = 20, faction = "alliance",
+                giver = "Shoni the Shilent, Zwergendistrikt, Sturmwind",
+                objective = "24 robomechanische Innereien zu Shoni bringen.",
+                turnin = "Shoni the Shilent, Zwergendistrikt, Sturmwind",
+                xp = 6370,
+                choice = true,
+                rewards = { { 9608, "Shoni's Disarming Tool", 2 }, { 9609, "Shilly Mitts", 2 }, { 270045, "Operator's Gloves", 2 } },
+            },
+            {
+                id = 2924, name = "Essential Artificials", level = 30, requires = 24, faction = "alliance",
+                giver = "Klockmort Spannerspan, Tüftlerstadt, Eisenschmiede",
+                objective = "12 Essential Artificials zu Klockmort bringen.",
+                turnin = "Klockmort Spannerspan, Tüftlerstadt, Eisenschmiede",
+                money = 5500,
+            },
+            {
+                id = 2930, name = "Data Rescue", level = 30, requires = 25, faction = "alliance",
+                giver = "Master Mechanic Castpipe, Tüftlerstadt, Eisenschmiede",
+                objective = "Eine prismatische Lochkarte zu Master Mechanic Castpipe bringen.",
+                turnin = "Master Mechanic Castpipe, Tüftlerstadt, Eisenschmiede",
+                money = 2500,
+                choice = true,
+                rewards = { { 9605, "Repairman's Cape", 2 }, { 9604, "Mechanic's Pipehammer", 2 } },
+                note = "Die Karte entsteht in vier Schritten an den Matrix-Lochkartographen 3005-A bis 3005-D; der erste steht vor der Instanz im Zugdepot.",
+            },
+            {
+                id = 2929, name = "The Grand Betrayal", level = 35, requires = 25, faction = "alliance",
+                giver = "High Tinker Mekkatorque, Tüftlerstadt, Eisenschmiede",
+                objective = "Mekgineer Thermaplugg töten und zu Mekkatorque zurückkehren.",
+                turnin = "High Tinker Mekkatorque, Tüftlerstadt, Eisenschmiede",
+                money = 3500,
+                choice = true,
+                rewards = { { 9623, "Civinad Robes", 2 }, { 9624, "Triprunner Dungarees", 2 }, { 9625, "Dual Reinforced Leggings", 2 } },
+            },
+            {
+                id = 2843, name = "Gnomer-gooooone!", level = 35, requires = 20, faction = "horde",
+                giver = "Scooty, Beutebucht, Schlingendorntal",
+                objective = "Warten, bis Scooty den Goblin-Transponder geeicht hat.",
+                turnin = "Scooty, Beutebucht, Schlingendorntal",
+                note = "Belohnung ist der Goblin-Transponder.",
+            },
+            {
+                id = 2841, name = "Rig Wars", level = 35, requires = 25, faction = "horde",
+                giver = "Nogg, Tal der Ehre, Orgrimmar",
+                objective = "Die Bohrturmpläne und Thermapluggs Safekombination zu Nogg bringen.",
+                turnin = "Nogg, Tal der Ehre, Orgrimmar",
+                choice = true,
+                rewards = { { 9623, "Civinad Robes", 2 }, { 9624, "Triprunner Dungarees", 2 }, { 9625, "Dual Reinforced Leggings", 2 } },
+            },
+            {
+                id = 2904, name = "A Fine Mess", level = 30, requires = 24, faction = "both",
+                giver = "Kernobee, in Gnomeregan",
+                objective = "Kernobee zum Ausgang am Clockwerk Run geleiten und danach Scooty in Beutebucht Bericht erstatten.",
+                turnin = "Scooty, Beutebucht, Schlingendorntal",
+                xp = 9188,
+                choice = true,
+                rewards = { { 9535, "Fire-welded Bracers", 2 }, { 9536, "Fairywing Mantle", 2 }, { 270042, "Technician's Bracers", 2 } },
+            },
+            {
+                id = 2951, name = "The Sparklematic 5200!", level = 30, requires = 25, faction = "both",
+                giver = "The Sparklematic 5200, in Gnomeregan",
+                objective = "Einen schmutzverkrusteten Gegenstand und drei Silbermünzen in den Sparklematic 5200 geben.",
+                turnin = "The Sparklematic 5200, in Gnomeregan",
+                choice = false,
+                rewards = { { 9363, "Sparklematic-Wrapped Box", 1 } },
+            },
+            {
+                id = 2945, name = "Grime-Encrusted Ring", level = 34, requires = 28, faction = "both",
+                giver = "Grime-Encrusted Ring, Beute der Dark Iron Agents",
+                objective = "Den Ring im Sparklematic 5200 reinigen.",
+                turnin = "The Sparklematic 5200, in Gnomeregan",
+                startItem = { 9326, "Grime-Encrusted Ring" },
+                note = "Weiter mit „Return of the Ring“: Allianz zu Talvash del Kissel in Eisenschmiede, Horde zu Nogg in Orgrimmar.",
+            },
+        },
+    },
+    razorfen_kraul = {
+        loot = {
+            roogug = {
+                { 274155, "Geomancer Headdress", "Kopf, Leder", 3 },
+                { 274152, "Roogug's Severed Head", "Schmuck", 3 },
+            },
+            aggem_thorncurse = {
+                { 6681, "Thornspike", "Einhändig, Dolch", 3 },
+                { 274158, "Death Prophet Spine", "Zweihändig, Stab", 3 },
+            },
+            death_speaker_jargba = {
+                { 2816, "Death Speaker Scepter", "Waffenhand, Streitkolben", 3 },
+                { 6685, "Death Speaker Mantle", "Schulter, Stoff", 3 },
+                { 6682, "Death Speaker Robes", "Brust, Stoff", 3 },
+            },
+            overlord_ramtusk = {
+                { 6687, "Corpsemaker", "Zweihändig, Axt", 3 },
+                { 6686, "Tusken Helm", "Kopf, Schwere Rüstung", 3 },
+                { 274161, "Quillord Mail Leggings", "Beine, Schwere Rüstung", 3 },
+            },
+            agathelos = {
+                { 6691, "Swinetusk Shank", "Waffenhand, Dolch", 3 },
+                { 6690, "Ferine Leggings", "Beine, Leder", 3 },
+                { 274160, "Quilrager Throwing Axe", "Wurfwaffe", 3 },
+            },
+            charlga_razorflank = {
+                { 6693, "Agamaggan's Clutch", "Finger", 3 },
+                { 6694, "Heart of Agamaggan", "Schildhand, Schild", 3 },
+                { 6692, "Pronged Reaver", "Einhändig, Axt", 3 },
+            },
+        },
+        others = {
+            { name = "Blind Hunter (seltener Spawn)", items = {
+                { 6695, "Stygian Bone Amulet", "Hals", 3 },
+                { 6697, "Batwing Mantle", "Schulter, Stoff", 3 },
+                { 6696, "Nightstalker Bow", "Distanz, Bogen", 3 },
+            } },
+            { name = "Earthcaller Halmgar (seltener Spawn)", items = {
+                { 6689, "Wind Spirit Staff", "Zweihändig, Stab", 3 },
+                { 6688, "Whisperwind Headdress", "Kopf, Leder", 3 },
+            } },
+        },
+        quests = {
+            {
+                id = 1221, name = "Blueleaf Tubers", level = 26, requires = 20, faction = "both",
+                giver = "Mebok Mizzyrix, Ratschet, Brachland",
+                objective = "Mit der Kiste mit Löchern eine Schnüffelnasenratte rufen, mit dem Kommandostab sechs Blaublattknollen finden lassen und alles zu Mebok zurückbringen.",
+                turnin = "Mebok Mizzyrix, Ratschet, Brachland",
+                xp = 7875,
+                note = "Belohnung: ein kleines Behältnis mit Edelsteinen.",
+            },
+            {
+                id = 1144, name = "Willix the Importer", level = 30, requires = 23, faction = "both",
+                giver = "Willix the Importer, im Kral",
+                objective = "Willix aus Razorfen Kraul geleiten.",
+                turnin = "Willix the Importer, am Ausgang des Krals",
+                xp = 7468,
+                choice = true,
+                rewards = { { 6748, "Monkey Ring", 2 }, { 6750, "Snake Hoop", 2 }, { 6749, "Tiger Band", 2 } },
+            },
+            {
+                id = 1142, name = "Mortality Wanes", level = 30, requires = 25, faction = "alliance",
+                giver = "Heralath Fallowbrook, im Kral",
+                objective = "Treshalas Anhänger finden und zu Treshala Fallowbrook nach Darnassus bringen.",
+                turnin = "Treshala Fallowbrook, Darnassus",
+                choice = true,
+                rewards = { { 6751, "Mourning Shawl", 2 }, { 6752, "Lancer Boots", 2 } },
+            },
+            {
+                id = 1101, name = "The Crone of the Kraul", level = 34, requires = 29, faction = "alliance",
+                giver = "Falfindel Waywarder, Thalanaar, Feralas",
+                objective = "Razorflanks Medaillon zu Falfindel Waywarder bringen.",
+                turnin = "Falfindel Waywarder, Thalanaar, Feralas",
+                choice = true,
+                rewards = { { 4197, "Berylline Pads", 2 }, { 6742, "Stonefist Girdle", 2 }, { 6725, "Marbled Buckler", 2 } },
+            },
+            {
+                id = 1102, name = "A Vengeful Fate", level = 34, requires = 29, faction = "horde",
+                giver = "Auld Stonespire, Donnerfels",
+                objective = "Razorflanks Herz zu Auld Stonespire bringen.",
+                turnin = "Auld Stonespire, Donnerfels",
+                choice = true,
+                rewards = { { 4197, "Berylline Pads", 2 }, { 6742, "Stonefist Girdle", 2 }, { 6725, "Marbled Buckler", 2 } },
+            },
+            {
+                id = 1109, name = "Going, Going, Guano!", level = 33, requires = 30, faction = "horde",
+                giver = "Master Apothecary Faranell, Apothekarium, Unterstadt",
+                objective = "Einen Haufen Kral-Guano von den Fledermäusen im Kral zu Faranell bringen.",
+                turnin = "Master Apothecary Faranell, Apothekarium, Unterstadt",
+            },
+            {
+                id = 6522, name = "An Unholy Alliance", level = 36, requires = 28, faction = "horde",
+                giver = "Small Scroll, Beute von Charlga Razorflank",
+                objective = "Die kleine Schriftrolle zu Varimathras in Unterstadt bringen.",
+                turnin = "Varimathras, Königsviertel, Unterstadt",
+                money = 4000,
+                startItem = { 17008, "Small Scroll" },
+                note = "Teil 1 von 2; die Fortsetzung führt nach Razorfen Downs.",
+            },
+        },
+    },
+    scarlet_monastery = {
+        loot = {
+            interrogator_vishas = {
+                { 7682, "Torturing Poker", "Einhändig, Dolch", 3 },
+                { 7683, "Bloody Brass Knuckles", "Einhändig, Faustwaffe", 3 },
+                { 274290, "Painwalker Buckler", "Schildhand, Schild", 3 },
+                { 252513, "Trapper's Leather Helm", "Kopf, Leder", 3 },
+            },
+            azshir = {
+                { 7709, "Blighted Leggings", "Beine, Stoff", 3 },
+                { 7708, "Necrotic Wand", "Distanz, Zauberstab", 3 },
+                { 7731, "Ghostshard Talisman", "Hals", 3 },
+            },
+            fallen_champion = {
+                { 7691, "Embalmed Shroud", "Kopf, Stoff", 3 },
+                { 7690, "Ebon Vise", "Hände, Leder", 3 },
+                { 7689, "Morbid Dawn", "Zweihändig, Schwert", 3 },
+            },
+            ironspine = {
+                { 7688, "Ironspine's Ribcage", "Brust, Schwere Rüstung", 3 },
+                { 7687, "Ironspine's Fist", "Einhändig, Streitkolben", 3 },
+                { 7686, "Ironspine's Eye", "Finger", 3 },
+            },
+            bloodmage_thalnos = {
+                { 7685, "Orb of the Forgotten Seer", "In Schildhand geführt", 3 },
+                { 7684, "Bloodmage Mantle", "Schulter, Stoff", 3 },
+                { 274291, "Polished Skullcap", "Kopf, Schwere Rüstung", 3 },
+            },
+        },
+        others = {
+            { name = "Gegner unterwegs (Kettenrüstung des Scharlachroten Kreuzzugs)", items = {
+                { 10328, "Scarlet Chestpiece", "Brust, Schwere Rüstung", 2 },
+                { 10329, "Scarlet Belt", "Taille, Schwere Rüstung", 2 },
+                { 10330, "Scarlet Leggings", "Beine, Schwere Rüstung", 2 },
+                { 10331, "Scarlet Gauntlets", "Hände, Schwere Rüstung", 2 },
+                { 10333, "Scarlet Wristguards", "Handgelenke, Schwere Rüstung", 2 },
+                { 10332, "Scarlet Boots", "Füße, Schwere Rüstung", 2 },
+            } },
+        },
+        quests = {
+            {
+                id = 1051, name = "Vorrel's Revenge", level = 33, requires = 25, faction = "horde",
+                giver = "Vorrel Sengutz, auf dem Friedhof des Klosters",
+                objective = "Vorrels Ehering (bei Nancy Vishas) zu Monika Sengutz nach Tarrens Mühle bringen.",
+                turnin = "Monika Sengutz, Tarrens Mühle, Vorgebirge des Hügellands",
+                choice = true,
+                rewards = { { 7750, "Mantle of Woe", 2 }, { 4643, "Grimsteel Cape", 2 } },
+                note = "Dazu gibt es Vorrel's Boots.",
+            },
+            {
+                id = 1113, name = "Hearts of Zeal", level = 33, requires = 30, faction = "horde",
+                giver = "Master Apothecary Faranell, Apothekarium, Unterstadt",
+                objective = "20 Herzen des Eifers aus dem Scharlachroten Kloster zu Faranell bringen.",
+                turnin = "Master Apothecary Faranell, Apothekarium, Unterstadt",
+            },
+        },
+    },
+    excavation_site = {
+        loot = {
+            saltspine = {
+                { 273024, "Glinteye Slippers", "Füße, Stoff", 3 },
+                { 273022, "Supple Bellyskin Leggings", "Beine, Leder", 3 },
+                { 273023, "Saltscale Girdle", "Taille, Schwere Rüstung", 3 },
+            },
+            shadetooth = {
+                { 273025, "Raptorclaw Greaves", "Füße, Schwere Rüstung", 3 },
+                { 273027, "Raptor's Gaze", "In Schildhand geführt", 3 },
+            },
+            relic_guardian = {
+                { 273028, "Reliquary Mantle", "Schulter, Schwere Rüstung", 3 },
+                { 273029, "Golemsight Long Gun", "Distanz, Schusswaffe", 3 },
+                { 273030, "Ring of Power Regulation", "Finger", 3 },
+                { 270866, "Titan Relic", "Questgegenstand", 1 },
+            },
+        },
+        quests = {
+            {
+                id = 95772, name = "Songblade Search", level = 31, requires = 24, faction = "alliance",
+                giver = "Dorin Songblade, Rotkammgebirge",
+                objective = "In Whelgars Ausgrabungsstätte nach Dorins Bruder Daewyn suchen.",
+                turnin = "Noch nicht bestätigt",
+                xp = 6150,
+            },
+            {
+                id = 95646, name = "Horrors in the Highland", level = 31, requires = 24, faction = "alliance",
+                giver = "Rethiel the Greenwarden, Sumpfland",
+                objective = "In der Excavation Site einen Highland Horror töten und seinen Wurzelkern zu Rethiel bringen.",
+                turnin = "Rethiel the Greenwarden, Sumpfland",
+                xp = 6150,
+                choice = true,
+                rewards = { { 271667, "Ironwood Destroyer", 3 }, { 271670, "Curl of Life", 3 }, { 271664, "Hornbeam Heft", 3 } },
+            },
+            {
+                id = 95809, name = "Heartwoven", level = 31, requires = 24, faction = "alliance",
+                giver = "Ardin Grassman, in der Excavation Site",
+                objective = "Zu Caitlin Grassman in den Hafen von Menethil zurückkehren.",
+                turnin = "Caitlin Grassman, Hafen von Menethil, Sumpfland",
+                xp = 6150,
+                choice = true,
+                rewards = { { 1710, "Greater Healing Potion", 1 }, { 3827, "Mana Potion", 1 } },
+                note = "Folgequest von „Lost in the Thicket Things“. Zusätzlich gibt es einen Swiftness Potion und einen Satchel of Potions.",
+            },
+        },
+    },
+    city_of_dalaran = {
+        loot = {
+            unstable_sentinel = {
+                { 273046, "Guardian's Dualblade", "Waffe", 3 },
+            },
+            shade_of_the_archmage = {
+                { 273052, "Ponderous Orb", "In Schildhand geführt", 3 },
+            },
+        },
+        quests = {
+        },
+    },
 }
 
 --------------------------------------------------
@@ -924,6 +1439,33 @@ J.PLACES = {
     [1740]  = { map = 1413, x = 0.4930, y = 0.5720, who = "Doan Karhan" },
     [1013]  = { map = 1458, x = 0.5370, y = 0.5450, who = "Keeper Bel'dugur" },
     [1014]  = { map = 1421, x = 0.4420, y = 0.3980, who = "Dalar Dawnweaver" },
+    -- The Stockade
+    [386]   = { map = 1433, x = 0.2660, y = 0.4680, who = "Guard Berton" },
+    [377]   = { map = 1431, x = 0.7200, y = 0.4780, who = "Councilman Millstipe" },
+    [387]   = { map = 1453, x = 0.5180, y = 0.6930, who = "Warden Thelwater" },
+    [388]   = { map = 1453, x = 0.7360, y = 0.4660, who = "Nikova Raskol" },
+    [378]   = { map = 1437, x = 0.4960, y = 0.1820, who = "Motley Garmason" },
+    [391]   = { map = 1453, x = 0.5180, y = 0.6930, who = "Warden Thelwater" },
+    -- Gnomeregan
+    [2922]  = { map = 1455, x = 0.6900, y = 0.5000, who = "Tinkmaster Overspark" },
+    [2926]  = { map = 1426, x = 0.4500, y = 0.4900, who = "Ozzie Togglevolt" },
+    [2962]  = { map = 1426, x = 0.4500, y = 0.4900, who = "Ozzie Togglevolt" },
+    [2928]  = { map = 1453, x = 0.6300, y = 0.3400, who = "Shoni the Shilent" },
+    [2924]  = { map = 1455, x = 0.6700, y = 0.4600, who = "Klockmort Spannerspan" },
+    [2930]  = { map = 1455, x = 0.6900, y = 0.4800, who = "Master Mechanic Castpipe" },
+    [2929]  = { map = 1455, x = 0.6800, y = 0.4900, who = "High Tinker Mekkatorque" },
+    [2843]  = { map = 1434, x = 0.2800, y = 0.7700, who = "Scooty" },
+    [2841]  = { map = 1454, x = 0.7600, y = 0.2500, who = "Nogg" },
+    -- Razorfen Kraul
+    [1221]  = { map = 1413, x = 0.6200, y = 0.3700, who = "Mebok Mizzyrix" },
+    [1101]  = { map = 1444, x = 0.8900, y = 0.4600, who = "Falfindel Waywarder" },
+    [1102]  = { map = 1456, x = 0.3600, y = 0.5900, who = "Auld Stonespire" },
+    [1109]  = { map = 1458, x = 0.4800, y = 0.6900, who = "Master Apothecary Faranell" },
+    -- Scarlet Monastery
+    [1113]  = { map = 1458, x = 0.4800, y = 0.6900, who = "Master Apothecary Faranell" },
+    -- Excavation Site
+    [95772] = { map = 1433, x = 0.2560, y = 0.4660, who = "Dorin Songblade" },
+    [95646] = { map = 1437, x = 0.5620, y = 0.4060, who = "Rethiel the Greenwarden" },
 }
 
 -- Ort einer Quest auf der Weltkarte, oder nil.

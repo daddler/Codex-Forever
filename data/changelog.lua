@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.9.0.6",
+        date    = "02.10.2026",
+        notes   = {
+            "|cff7C6CFFBeute und Quests für sechs weitere Dungeons.|r Im Dungeonkompendium stehen jetzt auch für The Stockade, Gnomeregan, Razorfen Kraul, den Friedhof des Scharlachroten Klosters, die Excavation Site und die City of Dalaran die Beute je Boss und – wo bekannt – die Quests mit Questgebern auf der Weltkarte.",
+            "|cff7C6CFFDalaran und die Excavation Site haben Bosse.|r Für Dalaran sind jetzt alle neun Kämpfe benannt, für die Excavation Site drei Bosse – beides aus Beta-Berichten, nicht von Blizzard bestätigt, und ohne Reihenfolge.",
+            "|cff7C6CFFBeute unterwegs.|r In The Deadmines, Wailing Caverns, Shadowfang Keep und Blackfathom Deeps steht jetzt auch, was die Gegner zwischen den Bossen fallen lassen.",
+        },
+    },
+    {
         version = "6.9.0.5",
         date    = "02.10.2026",
         notes   = {

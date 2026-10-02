@@ -123,7 +123,10 @@ Waffenfertigkeit lernt.
   und Lage). Herkunft **`community`**: übernommen aus *What's Training?*
   (Forever-Fassung 11.0.0-beta7, MIT-Lizenz – der Lizenztext steht im Kopf
   der Datei, wie die Lizenz es verlangt). Nur Daten, kein Code, keine
-  Bilder.
+  Bilder. 6.9.0.6: gegen Fassung 11.0.0-beta10 abgeglichen (Zauber aller neun
+  Klassen, Ränge, Tierausbildung, Waffenfertigkeiten, Waffenmeister) –
+  keine Abweichung; neu dort sind nur Rufrabatte, die WeintCodex
+  weiterhin nicht einrechnet.
 * **Ob etwas gelernt ist**, fragt die Seite den Client
   (`C_SpellBook.IsSpellKnown/IsSpellInSpellBook`, `IsPlayerSpell`). Ein
   ersetzter niedrigerer Rang zählt als gelernt (`ranks`), weil der Client
