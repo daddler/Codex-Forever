@@ -204,6 +204,8 @@ WeintCodex.GameColors = {
     tankLosing    = {0.941, 0.651, 0.227, 1.0},
     dpsAggro      = {1.000, 0.500, 0.000, 1.0},
     dpsNear       = {0.941, 0.651, 0.227, 1.0},
+    threatLow     = {0.520, 0.560, 0.640, 1.0},   -- Bedrohungsleiste: weit weg von der Aggro (6.9.0.8)
+    threatBarBg   = {0.000, 0.000, 0.000, 0.6},   -- Grund der Bedrohungsleiste
 
     cast          = {0.486, 0.424, 1.000, 1.0},   -- = Akzent: Fortschritt
     castLocked    = {0.450, 0.450, 0.480, 1.0},   -- nicht unterbrechbar

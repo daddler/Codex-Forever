@@ -54,6 +54,8 @@ local defaults = {
     classIcons = true,     -- Klassensymbol vor dem Balken
     showPercent = true,    -- Anteil am Ganzen, wo die Zahlen offen sind
     pinSelf   = true,      -- die eigene Zeile immer zeigen (wie Details)
+    reportButton = true,   -- Sprechblase in der Kopfzeile: in den Chat melden (6.9.0.8)
+    reportLines  = 5,      -- so viele Plaetze werden gemeldet
     -- Je Fenster Messart und Zeitraum (flach gespeichert: UIKit.Set
     -- vergleicht Tabellen nur eine Ebene tief).
     w1mode = "DamageDone",  w1session = "Current",
@@ -67,14 +69,29 @@ local function Count() return math.max(1, math.min(MAX_WINDOWS, Opt("windows") o
 
 -- Die Messarten, in der Reihenfolge des Umschaltens. Was der Client
 -- nicht kennt (Enum fehlt), faellt heraus.
+--
+-- SEIT 6.9.0.8 (Beta-Test: "es fehlt noch ein bisschen, wenn ich das mit
+-- Details vergleiche"): pro Sekunde als eigene Rangliste (`perSecond`:
+-- Balken und erste Zahl nach amountPerSecond, `base` ist die Messart
+-- dahinter fuer die Aufschluesselung), Absorption, vermeidbarer Schaden,
+-- Schaden an Gegnern - jeweils nur, wenn der Client die Messart nennt.
+-- Und Bedrohung (`threat`): die zaehlt nicht C_DamageMeter, sondern das
+-- Spiel je Gegner (UnitDetailedThreatSituation) - siehe "Bedrohung" unten.
 local MODES = {
     { key = "DamageDone",   label = "Schaden",            rate = true },
+    { key = "Dps",          label = "Schaden pro Sekunde", short = "DPS", rate = true, perSecond = true, base = "DamageDone" },
     { key = "HealingDone",  label = "Heilung",            rate = true },
+    { key = "Hps",          label = "Heilung pro Sekunde", short = "HPS", rate = true, perSecond = true, base = "HealingDone" },
+    { key = "Absorbs",      label = "Absorption",         short = "Absorb.", rate = true },
     { key = "DamageTaken",  label = "Erlittener Schaden", short = "Erlitten", rate = true },
+    { key = "AvoidableDamageTaken", label = "Vermeidbarer Schaden", short = "Vermeidbar", rate = true },
+    { key = "EnemyDamageTaken", label = "Schaden an Gegnern", short = "Gegner", rate = true },
     { key = "Interrupts",   label = "Unterbrechungen",    short = "Unterbr.", count = true },
     { key = "Dispels",      label = "Bannungen",          count = true },
     { key = "Deaths",       label = "Tode",               deaths = true },
+    { key = "Threat",       label = "Bedrohung",          threat = true },
 }
+DM.MODES = MODES
 
 local function Available()
     return _G.C_DamageMeter and _G.C_DamageMeter.GetCombatSessionFromType
@@ -83,14 +100,29 @@ local function Available()
 end
 DM.Available = Available
 
+local function ThreatAvailable() return _G.UnitDetailedThreatSituation ~= nil end
+DM.ThreatAvailable = ThreatAvailable
+
+-- Ohne Enum (alter oder fremder Client) bleiben die Grundarten stehen -
+-- das Fenster sagt dann selbst, dass die Messung fehlt. Die neuen Arten
+-- erscheinen nur, wenn der Client sie beim Namen nennt.
+local BASIC = { DamageDone = true, HealingDone = true, DamageTaken = true,
+                Interrupts = true, Dispels = true, Deaths = true }
 local function Modes()
     local out = {}
     local e = _G.Enum and _G.Enum.DamageMeterType
     for _, m in ipairs(MODES) do
-        if not e or e[m.key] ~= nil then out[#out + 1] = m end
+        if m.threat then
+            if ThreatAvailable() then out[#out + 1] = m end
+        elseif e then
+            if e[m.key] ~= nil then out[#out + 1] = m end
+        elseif BASIC[m.key] then
+            out[#out + 1] = m
+        end
     end
     return out
 end
+DM.Modes = Modes
 
 local function ModeInfo(key)
     for _, m in ipairs(MODES) do if m.key == key then return m end end
@@ -303,7 +335,8 @@ function Win:Layout()
     self.plus:SetShown(Count() < MAX_WINDOWS)
     -- Die Knoepfe rechts reihen sich von aussen nach innen.
     local anchor, x = self.header, -4
-    for _, b in ipairs({ self.close, self.gear, self.reset, self.plus }) do
+    self.report:SetShown(Opt("reportButton") and true or false)
+    for _, b in ipairs({ self.close, self.gear, self.reset, self.report, self.plus }) do
         if b:IsShown() then
             b:ClearAllPoints()
             b:SetPoint("RIGHT", anchor, anchor == self.header and "RIGHT" or "LEFT", x, 0)
@@ -323,12 +356,26 @@ local function Share(src, total)
 end
 DM.Share = Share
 
+-- Welches Feld die Balkenlaenge traegt: pro Sekunde, wo die Rangliste
+-- danach geht und der Client die Zahl nennt, sonst die Summe.
+function DM.BarField(mode, first)
+    if mode.perSecond and first and type(first.amountPerSecond) ~= "nil" then return "amountPerSecond" end
+    return "totalAmount"
+end
+
 local function Amount(fs, src, mode, pct)
     if mode.deaths or type(src.totalAmount) == "nil" then fs:SetText("") return end
     local fmt = Opt("numbers")
     local rate = src.amountPerSecond
     local tail = (pct and Opt("showPercent")) and string.format("  %d%%", math.floor(pct + 0.5)) or ""
-    if mode.count or type(rate) == "nil" or fmt == "total" then
+    if mode.perSecond and type(rate) ~= "nil" then
+        -- Rangliste nach pro Sekunde: diese Zahl zuerst, die Summe dahinter.
+        if fmt == "both" then
+            fs:SetFormattedText("%s (%s)%s", DM.Format(rate), DM.Format(src.totalAmount), tail)
+        else
+            fs:SetFormattedText("%s%s", DM.Format(rate), tail)
+        end
+    elseif mode.count or type(rate) == "nil" or fmt == "total" then
         fs:SetFormattedText("%s%s", DM.Format(src.totalAmount), tail)
     elseif fmt == "rate" then
         fs:SetFormattedText("%s%s", DM.Format(rate), tail)
@@ -376,6 +423,8 @@ function Win:Refresh()
     local f = self.frame
     if not f:IsShown() then return end
     local mode = self:Mode()
+    if mode.threat then return self:RefreshThreat(mode) end
+    self.session:Show()
     local session = self:Session()
     self.session.text:SetText(self:SessionLabel())
 
@@ -440,15 +489,19 @@ function Win:Refresh()
     self.empty:Hide()
 
     -- Die Liste kommt absteigend sortiert: der erste Eintrag ist der
-    -- volle Balken (auch wenn Lua seinen Wert nicht sehen darf).
-    local maxAmt = sources[1].totalAmount
+    -- volle Balken (auch wenn Lua seinen Wert nicht sehen darf). Pro
+    -- Sekunde misst der Balken pro Sekunde - sonst waere die Reihenfolge
+    -- eine andere als die Laenge.
+    local field = DM.BarField(mode, sources[1])
+    local maxAmt = sources[1][field]
     local h = Opt("barHeight")
     for i = 1, n do
         local r = self.rows[i]
         local rank = order[i]
         local src = rank and sources[rank]
         if r and src and i <= count then
-            r._src, r._rank = src, rank
+            r._src, r._rank, r._threat = src, rank, nil
+            r.amount:SetTextColor(1, 1, 1, 1)
             local icon = Opt("classIcons") and ClassIcon(r.icon, K.Plain(src.classFilename))
             if not icon then r.icon:Hide() end
             r.icon:SetWidth(h)
@@ -462,7 +515,7 @@ function Win:Refresh()
                 r.bar:SetMinMaxValues(0, maxAmt)
                 -- Kein `or 0`: ein Wahrheitstest auf einem geheimen Wert
                 -- waere ein Fehler.
-                local v = src.totalAmount
+                local v = src[field]
                 if type(v) ~= "nil" then r.bar:SetValue(v) else r.bar:SetValue(0) end
             end
             local cr, cg, cb = C.info[1], C.info[2], C.info[3]
@@ -482,11 +535,223 @@ function Win:Refresh()
             Amount(r.amount, src, mode, Share(src, self._total))
             r:Show()
         elseif r then
-            r._src = nil
+            r._src, r._threat = nil, nil
             r:Hide()
         end
     end
     self:Fit(count)
+end
+
+--------------------------------------------------
+-- Bedrohung (6.9.0.8)
+--------------------------------------------------
+-- Wie Tiny Threat in Details: alle aus deiner Gruppe (mit Begleitern) auf
+-- der Bedrohungsliste deines Ziels - ist dein Ziel freundlich, auf der
+-- seines Ziels. Der Balken ist die Bedrohung, gemessen an der Grenze, ab
+-- der man die Aggro zieht: voll = du ziehst sie. In Classic liegt diese
+-- Grenze im Nahkampf bei 110 %, auf Distanz bei 130 % der Bedrohung
+-- dessen, der den Gegner haelt; das rechnet das Spiel in den Wert
+-- (scaledPercentage) schon ein, WeintCodex rechnet nichts nach.
+--
+-- Die Zahlen kommen vom Spiel und koennen geheim sein. Dann gehen sie nur
+-- an Balken und SetFormattedText, und die Liste bleibt in der Reihenfolge
+-- der Gruppe: sortieren hiesse vergleichen. Ohne Sortierung stehen keine
+-- Platznummern davor - eine Reihenfolge, die niemand kennt, wird nicht
+-- behauptet.
+--
+-- Laeuft im Kampf zweimal je Sekunde: keine Tabelle je Takt. Einheiten,
+-- Eintraege und Vergleich sind einmal angelegt und werden wiederverwendet.
+
+local SOLO_UNITS, PARTY_UNITS, RAID_UNITS = { "player", "pet" }, { "player", "pet" }, {}
+for i = 1, 4 do PARTY_UNITS[#PARTY_UNITS + 1] = "party" .. i; PARTY_UNITS[#PARTY_UNITS + 1] = "partypet" .. i end
+for i = 1, 40 do RAID_UNITS[#RAID_UNITS + 1] = "raid" .. i; RAID_UNITS[#RAID_UNITS + 1] = "raidpet" .. i end
+
+local threatPool, threatList = {}, {}
+
+-- Tank zuerst, dann nach Bedrohung. Nur mit offenen Zahlen aufgerufen.
+local function ThreatOrder(a, b)
+    if a.tanking ~= b.tanking then return a.tanking end
+    if a.pct ~= b.pct then return a.pct > b.pct end
+    return (a.rawPct or 0) > (b.rawPct or 0)
+end
+
+-- Der Gegner, dessen Liste gezeigt wird, oder nil und warum nicht.
+local function Can(u)
+    return K.Bool(_G.UnitExists and _G.UnitExists(u), false)
+        and K.Bool(_G.UnitCanAttack and _G.UnitCanAttack("player", u), false)
+end
+
+function DM.ThreatMob()
+    if not K.Bool(_G.UnitExists and _G.UnitExists("target"), false) then
+        return nil, "Kein Ziel – wähle einen Gegner."
+    end
+    if Can("target") then return "target" end
+    if Can("targettarget") then return "targettarget" end
+    return nil, "Dein Ziel ist kein Gegner."
+end
+
+-- Alle aus der Gruppe auf der Liste von `mob`. Liefert die Liste und, ob
+-- sie sortiert ist (alle Werte offen).
+function DM.ThreatList(mob)
+    wipe(threatList)
+    local units = SOLO_UNITS
+    if K.Bool(_G.IsInRaid and _G.IsInRaid(), false) then units = RAID_UNITS
+    elseif K.Bool(_G.IsInGroup and _G.IsInGroup(), false) then units = PARTY_UNITS end
+    local open = true
+    for _, u in ipairs(units) do
+        if K.Bool(_G.UnitExists and _G.UnitExists(u), false) then
+            local ok, tanking, status, scaled, raw = pcall(_G.UnitDetailedThreatSituation, u, mob)
+            local pct = ok and K.Plain(scaled)
+            -- Nicht auf der Liste (nil) oder offen bei 0 ohne Aggro: weg.
+            -- Geheim bleibt drin - "unbekannt" ist nicht "keine".
+            if ok and type(scaled) ~= "nil" and not (type(pct) == "number" and pct <= 0 and not K.Bool(tanking, false)) then
+                local e = threatPool[#threatList + 1] or {}
+                threatPool[#threatList + 1] = e
+                e.unit, e.scaled = u, scaled
+                e.pct = type(pct) == "number" and pct or nil
+                local rp = K.Plain(raw)
+                e.rawPct = type(rp) == "number" and rp or nil
+                e.tanking = K.Bool(tanking, false)
+                local st = K.Plain(status)
+                e.status = type(st) == "number" and st or nil
+                e.name = _G.UnitName and _G.UnitName(u) or nil
+                local _, class = _G.UnitClass and _G.UnitClass(u)
+                e.class = K.Plain(class)
+                e.me = K.Bool(_G.UnitIsUnit and _G.UnitIsUnit(u, "player"), false)
+                if not e.pct then open = false end
+                threatList[#threatList + 1] = e
+            end
+        end
+    end
+    if open and #threatList > 1 then table.sort(threatList, ThreatOrder) end
+    return threatList, open
+end
+
+-- Beispiel fuer den Testmodus (Namen wie die Beispielzeilen, erfunden).
+DM.TEST_THREAT = {
+    { name = "Brunhild", class = "WARRIOR", pct = 100, scaled = 100, rawPct = 100, tanking = true, status = 3 },
+    { name = "Varek",    class = "ROGUE",   pct = 84,  scaled = 84,  rawPct = 92,  status = 0, me = true },
+    { name = "Tamsin",   class = "MAGE",    pct = 61,  scaled = 61,  rawPct = 79,  status = 0 },
+    { name = "Orwen",    class = "HUNTER",  pct = 23,  scaled = 23,  rawPct = 30,  status = 0 },
+}
+
+-- Farbe der Zahl rechts: wer haelt (gruen, unsicher orange), wer kurz
+-- davor ist (orange), sonst weiss. Dieselben Farben wie an den Plaketten.
+local function ThreatColor(e)
+    local GC = WeintCodex.GameColors
+    if e.tanking then return e.status == 2 and GC.tankLosing or GC.tankAggro end
+    if e.status == 1 or (e.pct and e.pct >= 90) then return GC.dpsNear end
+    return nil
+end
+
+function Win:RefreshThreat(mode)
+    self.session:Hide()
+    local list, sorted, why, mob
+    if DM._test then
+        self.title:SetText(mode.label .. "  " .. WeintCodex.ColorText("textMuted", "Beispiel"))
+        list, sorted = DM.TEST_THREAT, true
+    elseif not ThreatAvailable() then
+        self.title:SetText(mode.label)
+        why = "Der Client nennt hier keine Bedrohung."
+    else
+        mob, why = DM.ThreatMob()
+        local name = mob and _G.UnitName and _G.UnitName(mob)
+        local plain = K.Plain(name)
+        if type(plain) == "string" then
+            local short = WeintCodex.Truncate and WeintCodex.Truncate(plain, 16) or plain
+            self.title:SetText(mode.label .. "  " .. WeintCodex.ColorText("textMuted", short))
+        elseif type(name) ~= "nil" then
+            self.title:SetFormattedText("%s  %s", mode.label, name)
+        else
+            self.title:SetText(mode.label)
+        end
+        if mob then
+            list, sorted = DM.ThreatList(mob)
+            if #list == 0 then why = "Noch niemand aus deiner Gruppe steht auf seiner Bedrohungsliste." end
+        end
+    end
+    if why then
+        for _, r in ipairs(self.rows) do r._threat, r._src = nil, nil end
+        self:ShowEmpty(why)
+        return
+    end
+    self.empty:Hide()
+
+    local n = Opt("bars")
+    local count = math.min(#list, n)
+    local order = self._threatOrder or {}
+    self._threatOrder = order
+    for i = 1, n do order[i] = (i <= count) and i or nil end
+    if Opt("pinSelf") and #list > n and n > 1 then
+        local mine
+        for i = 1, n do if list[i].me then mine = i break end end
+        if not mine then
+            for i = n + 1, #list do if list[i].me then order[n] = i break end end
+        end
+    end
+
+    local h = Opt("barHeight")
+    for i = 1, n do
+        local r = self.rows[i]
+        local idx = order[i]
+        local e = idx and list[idx]
+        if r and e then
+            r._src, r._threat, r._rank = nil, e, sorted and idx or nil
+            local icon = Opt("classIcons") and ClassIcon(r.icon, e.class)
+            if not icon then r.icon:Hide() end
+            r.icon:SetWidth(h)
+            r.bar:SetPoint("TOPLEFT", r, "TOPLEFT", icon and (h + 1) or 0, 0)
+            r.bar:SetPoint("BOTTOMLEFT", r, "BOTTOMLEFT", icon and (h + 1) or 0, 0)
+            r.own:SetShown(e.me and true or false)
+            r.bar:SetMinMaxValues(0, 100)
+            r.bar:SetValue(e.scaled)
+            local cr, cg, cb = C.info[1], C.info[2], C.info[3]
+            local cc = Opt("classColor") and e.class and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[e.class]
+            if cc then cr, cg, cb = cc.r, cc.g, cc.b end
+            K.PaintBar(r.bar, cr, cg, cb)
+            if type(e.name) == "nil" then
+                r.name:SetText(sorted and Opt("rank") and (idx .. ".") or "?")
+            elseif sorted and Opt("rank") then
+                r.name:SetFormattedText("%d. %s", idx, e.name)
+            else
+                r.name:SetFormattedText("%s", e.name)
+            end
+            if e.tanking then
+                r.amount:SetText("Aggro")
+            else
+                r.amount:SetFormattedText("%d%%", e.scaled)
+            end
+            local tc = ThreatColor(e)
+            if tc then r.amount:SetTextColor(tc[1], tc[2], tc[3], 1) else r.amount:SetTextColor(1, 1, 1, 1) end
+            r:Show()
+        elseif r then
+            r._src, r._threat = nil, nil
+            r:Hide()
+        end
+    end
+    self:Fit(count)
+end
+
+-- Tooltip einer Bedrohungszeile: was die beiden Zahlen heissen.
+function DM.ShowThreatTooltip(r)
+    local e = r._threat
+    GameTooltip:SetOwner(r, "ANCHOR_LEFT")
+    pcall(GameTooltip.SetText, GameTooltip, e.name or "?", 1, 1, 1)
+    local muted = C.textMuted
+    GameTooltip:AddLine("Bedrohung", muted[1], muted[2], muted[3])
+    if e.tanking then
+        GameTooltip:AddLine(e.status == 2 and "Hat die Aggro – aber jemand liegt darüber." or "Hat die Aggro.", 1, 1, 1, true)
+    elseif not e.pct then
+        GameTooltip:AddLine("Die Zahl ist gerade geheim (im Kampf) – der Balken zeigt sie trotzdem.", 1, 1, 1, true)
+    else
+        GameTooltip:AddDoubleLine("Bis zur Aggro", string.format("%d%%", math.floor(e.pct + 0.5)), 1, 1, 1, 1, 1, 1)
+        if e.rawPct then
+            GameTooltip:AddDoubleLine("Gegenüber dem Halter", string.format("%d%%", math.floor(e.rawPct + 0.5)), 1, 1, 1, 1, 1, 1)
+        end
+    end
+    GameTooltip:AddLine("100 % heißt: diese Person zieht die Aggro. Das Spiel rechnet dabei schon ein, dass man sie im Nahkampf erst bei 110 %, auf Distanz bei 130 % der Bedrohung des Halters zieht.",
+        muted[1], muted[2], muted[3], true)
+    GameTooltip:Show()
 end
 
 -- Die Daten eines Zeitraums fuer eine Messart. Liefert ok, Daten.
@@ -543,6 +808,7 @@ end
 
 -- Tooltip einer Zeile: Summe, pro Sekunde, Anteil, dann die Zauber.
 function DM.ShowTooltip(w, r)
+    if r._threat then return DM.ShowThreatTooltip(r) end
     local src = r._src
     if not src then return end
     local mode = w:Mode()
@@ -560,7 +826,7 @@ function DM.ShowTooltip(w, r)
             GameTooltip:AddDoubleLine("Anteil", string.format("%d%%", math.floor(pct + 0.5)), 1, 1, 1, 1, 1, 1)
         end
     end
-    local spells = DM._test and {} or DM.Spells(w:Session(), mode.key, src.sourceGUID)
+    local spells = DM._test and {} or DM.Spells(w:Session(), mode.base or mode.key, src.sourceGUID)
     if #spells > 0 then
         GameTooltip:AddLine(" ")
         for i = 1, math.min(8, #spells) do
@@ -1153,7 +1419,9 @@ local function BuildTabs()
     local x = 0
     local i = 0
     for _, m in ipairs(Modes()) do
-        if not m.deaths then
+        -- Pro Sekunde steht schon in Schaden/Heilung, Bedrohung ist keine
+        -- Zahl eines Spielers ueber den Kampf.
+        if not (m.deaths or m.perSecond or m.threat) then
             i = i + 1
             local t = bd.tabs[i]
             if not t then
@@ -1710,8 +1978,9 @@ function DM.OpenBreakdown(w, src)
     end
     bd.win, bd.guid, bd.name_ = w, guid, name
     bd.class = K.Plain(src.classFilename)
-    bd.mode = w:Mode().key
-    if w:Mode().deaths then bd.mode = "DamageDone" end
+    local wm = w:Mode()
+    bd.mode = wm.base or wm.key
+    if wm.deaths then bd.mode = "DamageDone" end
     -- Der Vergleich gilt einem Paar; wer jemand Neues aufschlaegt, faengt
     -- ohne an - ausser er schlaegt den Verglichenen selbst auf.
     if bd.cmp and SameSource(src, bd.cmp.guid, bd.cmp.name) then bd.cmp = nil end
@@ -1807,6 +2076,7 @@ local function CreateWindow(i)
         if cdm and cdm.ResetAllCombatSessions then pcall(cdm.ResetAllCombatSessions) end
         DM.Refresh()
     end)
+    w.report = IconButton(header, "icon_report", "In den Chat melden", function(self) DM.ReportMenu(w, self) end)
     w.gear = IconButton(header, "icon_gear", "Einstellungen", function()
         local O = WeintCodex.UIOptions
         if O and O.Show then O.Show(KEY) end
@@ -1857,6 +2127,15 @@ function DM.Refresh()
     DM.RefreshBreakdown()
 end
 
+-- Zeigt gerade ein Fenster Bedrohung?
+function DM.ShowsThreat()
+    for i = 1, Count() do
+        local w = windows[i]
+        if w and w.frame:IsShown() and w:Mode().threat then return true end
+    end
+    return false
+end
+
 local soon = false
 function DM.RefreshSoon()
     if soon then return end
@@ -1903,6 +2182,127 @@ function DM.AmountText(i, row)
     local w = windows[i or 1]
     local r = w and w.rows[row or 1]
     return r and r.amount:GetText() or nil
+end
+
+--------------------------------------------------
+-- In den Chat melden (6.9.0.8, wie Details)
+--------------------------------------------------
+-- Die ersten Plaetze als Text in Gruppe, Schlachtzug, Gilde ... Nur mit
+-- offenen Zahlen und nur ausserhalb des Kampfes: im Kampf sind die Werte
+-- geheim, und eine Zeile mit Luecken waere eine falsche Meldung. Was
+-- nicht geht, sagt WeintCodex im eigenen Chatfenster, gemeldet wird dann
+-- nichts. Beispielzahlen (Testmodus) werden nie gemeldet.
+
+local function Note(text)
+    print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. text)
+end
+
+local function Pct(v) return string.format("%d%%", math.floor(v + 0.5)) end
+
+-- Die Zeilen fuer den Chat, oder nil und warum nicht.
+function DM.ReportLines(w)
+    if DM._test then return nil, "Beispielzahlen werden nicht gemeldet." end
+    if _G.InCombatLockdown and _G.InCombatLockdown() then
+        return nil, "Melden geht nach dem Kampf – im Kampf sind die Zahlen geheim."
+    end
+    local mode, n = w:Mode(), Opt("reportLines") or 5
+    local out = {}
+    if mode.threat then
+        if not ThreatAvailable() then return nil, "Der Client nennt hier keine Bedrohung." end
+        local mob, why = DM.ThreatMob()
+        if not mob then return nil, why end
+        local list, open = DM.ThreatList(mob)
+        if #list == 0 then return nil, "Niemand aus deiner Gruppe steht auf seiner Bedrohungsliste." end
+        local mobName = K.Plain(_G.UnitName and _G.UnitName(mob))
+        if not open or type(mobName) ~= "string" then return nil, "Die Bedrohung ist gerade geheim." end
+        out[1] = string.format("WeintCodex – Bedrohung auf %s:", mobName)
+        for i = 1, math.min(n, #list) do
+            local e = list[i]
+            local name = K.Plain(e.name)
+            if type(name) ~= "string" then return nil, "Die Namen sind gerade geheim." end
+            out[#out + 1] = string.format("%d. %s  %s", i, name, e.tanking and "Aggro" or Pct(e.pct))
+        end
+        return out
+    end
+    if not Available() then return nil, "Die Schadensmessung des Spiels steht auf diesem Client nicht zur Verfügung." end
+    local session = w:Session()
+    local sources, total = SourcesFor(session, mode.key)
+    if not sources or #sources == 0 then return nil, "Noch nichts gemessen – nichts zu melden." end
+    local head = mode.label .. ", " .. w:SessionLabel()
+    local cdm = _G.C_DamageMeter
+    if type(session) == "string" and cdm.GetSessionDurationSeconds then
+        local ok, secs = pcall(cdm.GetSessionDurationSeconds, _G.Enum.DamageMeterSessionType[session])
+        secs = ok and K.Plain(secs)
+        if type(secs) == "number" and secs > 0 and secs < 6 * 3600 then head = head .. ", " .. Clock(secs) end
+    end
+    out[1] = "WeintCodex – " .. head .. ":"
+    local secret = "Die Zahlen sind gerade geheim – melde nach dem Kampf."
+    for i = 1, math.min(n, #sources) do
+        local src = sources[i]
+        local name = K.Plain(src.name)
+        if type(name) ~= "string" then return nil, secret end
+        local text = ""
+        if not mode.deaths then
+            local amt, rate = K.Plain(src.totalAmount), K.Plain(src.amountPerSecond)
+            if type(amt) ~= "number" then return nil, secret end
+            local hasRate = mode.rate and type(rate) == "number"
+            if hasRate and mode.perSecond then
+                text = DM.Format(rate) .. " (" .. DM.Format(amt) .. ")"
+            elseif hasRate then
+                text = DM.Format(amt) .. " (" .. DM.Format(rate) .. ")"
+            else
+                text = DM.Format(amt)
+            end
+            local pct = Share(src, total)
+            if pct then text = text .. ", " .. Pct(pct) end
+        end
+        out[#out + 1] = string.format("%d. %s  %s", i, name, text)
+    end
+    return out
+end
+
+-- Wohin gemeldet werden kann, in dieser Reihenfolge (der erste ist der
+-- Standard). Fluestern nur an einen Spieler im Ziel.
+function DM.ReportChannels()
+    local list = {}
+    local function Has(fn, ...) return fn and K.Bool(fn(...), false) end
+    if Has(_G.IsInRaid) then list[#list + 1] = { value = "RAID", text = "Schlachtzug" } end
+    local inst = _G.LE_PARTY_CATEGORY_INSTANCE
+    if inst and Has(_G.IsInGroup, inst) then list[#list + 1] = { value = "INSTANCE_CHAT", text = "Instanz" } end
+    if Has(_G.IsInGroup) and not Has(_G.IsInRaid) then list[#list + 1] = { value = "PARTY", text = "Gruppe" } end
+    if Has(_G.IsInGuild) then list[#list + 1] = { value = "GUILD", text = "Gilde" } end
+    list[#list + 1] = { value = "SAY", text = "Sagen" }
+    if Has(_G.UnitIsPlayer, "target") and not Has(_G.UnitIsUnit, "target", "player") then
+        local t = K.Plain(_G.UnitName and _G.UnitName("target"))
+        if type(t) == "string" then list[#list + 1] = { value = "WHISPER", text = "Flüstern an " .. t, target = t } end
+    end
+    return list
+end
+
+-- Melden. Liefert, ob etwas gesendet wurde.
+function DM.Report(w, channel, target)
+    local lines, why = DM.ReportLines(w)
+    if not lines then Note(why) return false end
+    local send = (_G.C_ChatInfo and _G.C_ChatInfo.SendChatMessage) or _G.SendChatMessage
+    if not send then Note("Der Client bietet keinen Weg, in den Chat zu schreiben.") return false end
+    for _, line in ipairs(lines) do
+        local ok = pcall(send, line, channel, nil, target)
+        if not ok then Note("Der Client hat die Meldung nicht angenommen.") return false end
+    end
+    return true
+end
+
+-- Klick auf die Sprechblase: Kanal waehlen.
+function DM.ReportMenu(w, owner)
+    local channels = DM.ReportChannels()
+    local open = WeintCodex.OpenDropMenu
+    if not open then return DM.Report(w, channels[1].value, channels[1].target) end
+    local items = {}
+    for i, c in ipairs(channels) do items[i] = { value = i, text = c.text } end
+    open(owner, items, nil, function(i)
+        local c = channels[i]
+        if c then DM.Report(w, c.value, c.target) end
+    end, 150)
 end
 
 --------------------------------------------------
@@ -1974,6 +2374,18 @@ local function Enable()
         "DAMAGE_METER_RESET", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "PLAYER_ENTERING_WORLD" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
+    -- Bedrohung (6.9.0.8): eigener Rahmen - die Ereignisse kommen im Kampf
+    -- fuer jede Einheit, und neu gezeichnet wird nur, wenn ein Fenster
+    -- Bedrohung zeigt (gesammelt wie oben).
+    local threatEv = CreateFrame("Frame")
+    for _, e in ipairs({ "UNIT_THREAT_LIST_UPDATE", "UNIT_THREAT_SITUATION_UPDATE",
+        "PLAYER_TARGET_CHANGED", "GROUP_ROSTER_UPDATE" }) do
+        pcall(threatEv.RegisterEvent, threatEv, e)
+    end
+    threatEv:SetScript("OnEvent", function()
+        if DM.ShowsThreat() then DM.RefreshSoon() end
+    end)
+    DM.threatEvents = threatEv
     -- Auren der Gruppe (6.6.2.1): eigener Rahmen, weil UNIT_AURA sehr oft
     -- kommt (auch fuer Plaketten) und nichts neu zeichnen soll.
     local auraEv = CreateFrame("Frame")
@@ -2025,7 +2437,7 @@ local SESSION_ITEMS = { { value = "Current", text = "Dieser Kampf" }, { value = 
 K.Register({
     key = KEY, group = "qol", order = 55, defaultEnabled = "ui", reload = true,
     title = "Schadensanzeige",
-    description = "Schaden, Heilung, erlittener Schaden, Unterbrechungen, Bannungen und Tode als Balken – bis zu vier Fenster, gemessen vom Spiel selbst.",
+    description = "Schaden, Heilung, erlittener Schaden, Unterbrechungen, Bannungen, Tode und Bedrohung als Balken – bis zu vier Fenster, gemessen vom Spiel selbst, mit Meldung in den Chat.",
     defaults = defaults,
     Enable = Enable,
     OnSetting = function()
@@ -2060,8 +2472,16 @@ K.Register({
             B:Row({ type = "toggle", label = "Klassenfarben", key = "classColor" },
                   { type = "toggle", label = "Anzeige des Spiels ausblenden", key = "hideBlizzard", reload = true,
                     description = "Die Messung läuft weiter – nur Blizzards Fenster geht aus." })
+            B:Section("In den Chat melden")
+            B:Row({ type = "toggle", label = "Knopf in der Kopfzeile", key = "reportButton",
+                    description = "Die Sprechblase meldet die ersten Plätze in Gruppe, Schlachtzug, Gilde, Sagen oder als Flüstern an dein Ziel." },
+                  { type = "slider", label = "Plätze", key = "reportLines", min = 1, max = 10, step = 1,
+                    format = function(v) return tostring(v) end })
+            B:Note("Gemeldet wird nur nach dem Kampf: im Kampf hält das Spiel die Zahlen geheim, und eine Meldung mit Lücken wäre falsch. Beispielzahlen aus dem Testmodus werden nie gemeldet.")
             B:Section("Bedienung")
-            B:Note("Klick auf die Messart schaltet weiter (Rechtsklick zurück), „Aktuell/Gesamt“ wechselt zwischen diesem Kampf und der ganzen Sitzung. In der Kopfzeile: Plus öffnet ein weiteres Fenster, der Kreis leert alle Messungen, das Zahnrad öffnet diese Seite, das Kreuz schließt ein zusätzliches Fenster. Verschieben: „Rahmen entsperren“.")
+            B:Note("Klick auf die Messart schaltet weiter (Rechtsklick zurück), „Aktuell/Gesamt“ wechselt zwischen diesem Kampf und der ganzen Sitzung. In der Kopfzeile: Plus öffnet ein weiteres Fenster, die Sprechblase meldet in den Chat, der Kreis leert alle Messungen, das Zahnrad öffnet diese Seite, das Kreuz schließt ein zusätzliches Fenster. Verschieben: „Rahmen entsperren“.")
+            B:Section("Bedrohung")
+            B:Note("Messart „Bedrohung“: alle aus deiner Gruppe auf der Bedrohungsliste deines Ziels (ist dein Ziel freundlich: auf der seines Ziels). Ein voller Balken heißt: diese Person zieht die Aggro – das Spiel rechnet dabei schon ein, dass man sie im Nahkampf erst bei 110 %, auf Distanz bei 130 % zieht. Sind die Zahlen im Kampf geheim, bleibt die Liste in der Reihenfolge der Gruppe, ohne Platznummern.")
         end },
         { key = "fenster", label = "Je Fenster", build = function(B)
             for i = 1, MAX_WINDOWS do

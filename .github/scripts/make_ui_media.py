@@ -565,6 +565,20 @@ def render_sigil(size):
     return pixels
 
 
+def icon_report(x, y):
+    # Eine Sprechblase mit zwei Zeilen: "in den Chat melden" (6.9.0.8).
+    def in_round_rect(px_, py_, x0, y0, x1, y1, r):
+        cx = min(max(px_, x0 + r), x1 - r)
+        cy = min(max(py_, y0 + r), y1 - r)
+        return math.hypot(px_ - cx, py_ - cy) <= r
+    bubble = in_round_rect(x, y, -0.76, -0.66, 0.76, 0.34, 0.22)
+    tail = inside_polygon(x, y, [(-0.44, 0.30), (-0.08, 0.30), (-0.54, 0.76)])
+    if not (bubble or tail):
+        return False
+    lines = abs(x) <= 0.46 and (-0.36 <= y <= -0.22 or -0.06 <= y <= 0.08)
+    return not lines
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     target = os.path.join(OUT, "arrow.tga")
@@ -575,7 +589,7 @@ def main():
                      ("icon_reset", icon_reset), ("icon_gear", icon_gear),
                      ("icon_combat", icon_combat), ("icon_tank", icon_tank),
                      ("icon_dps", icon_dps), ("icon_leader", icon_leader),
-                     ("icon_check", icon_check)):
+                     ("icon_check", icon_check), ("icon_report", icon_report)):
         target = os.path.join(OUT, name + ".tga")
         write_tga(target, ICON, ICON, render_shape(ICON, fn))
         print("geschrieben:", os.path.relpath(target, ROOT))

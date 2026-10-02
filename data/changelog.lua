@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.9.0.8",
+        date    = "02.10.2026",
+        notes   = {
+            "|cff7C6CFFBedrohung in der Schadensanzeige.|r Neue Messart „Bedrohung“: alle aus deiner Gruppe auf der Bedrohungsliste deines Ziels, Tank zuerst. Ein voller Balken heißt: diese Person zieht die Aggro – die 110 % im Nahkampf und 130 % auf Distanz rechnet das Spiel schon ein.",
+            "|cff7C6CFFBedrohung an den Namensplaketten.|r Unter dem Leben läuft eine dünne Leiste, die sich bis zur Aggro füllt – grau weit weg, orange kurz davor, rot mit Aggro, als Tank grün, solange du sie hältst. Liegt die Aggro nicht beim Tank, steht darunter, wer sie hat.",
+            "|cff7C6CFFMehr Messarten.|r Schaden und Heilung pro Sekunde als eigene Ranglisten, Absorption, vermeidbarer Schaden und Schaden an Gegnern – sofern das Spiel sie misst.",
+            "|cff7C6CFFIn den Chat melden.|r Die Sprechblase in der Kopfzeile schreibt die ersten Plätze in Gruppe, Schlachtzug, Gilde, Sagen oder als Flüstern an dein Ziel – nach dem Kampf, wenn die Zahlen offen sind.",
+        },
+    },
+    {
         version = "6.9.0.7",
         date    = "02.10.2026",
         notes   = {

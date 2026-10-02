@@ -283,7 +283,7 @@ Einstellungsseite des Moduls.
 | Minikarte (`ui/minimap.lua`) | eckig, Rand, Mausrad-Zoom; Koordinaten oben links, Uhr oben rechts, Gebiet unten auf einem Streifen; Knöpfe des Spiels (Verfolgung, Kalender, Post, Schwierigkeit) in einer Spalte links | Knopfnamen wechseln zwischen den Clients – was fehlt, fällt heraus. Die Spalte wird nach `MinimapCluster:Layout` neu gesetzt. | Lage: Bearbeitungsmodus. Die Kompass-*Textur* wird versteckt, nie ihr Elternrahmen (Kampfhilfen lesen daraus die Blickrichtung). `GetMinimapShape` meldet `SQUARE` für Addon-Knöpfe. |
 | Chat (`ui/chat.lua`) | Schrift, Hintergrund über Reiter und Text, flache Reiter (aktiver hell mit Strich), Eingabezeile, Knöpfe des Spiels in einer Spalte links (oder weg) | **Keine veränderten Nachrichten** (Kanalnamen, Links, Zeitstempel): Nachrichten können im Kampf geheim sein, ein `gsub` darauf ist ein Fehler, und ein Fehler in `AddMessage` verschluckt die Nachricht. |
 | Taschen (`ui/bags.lua`) | alle Taschen in einem Raster, Suche, Sortieren, Gold, Gegenstandsstufe, Qualitätsrand | Knöpfe sind `ContainerFrameItemButtonTemplate` (Benutzen/Verkaufen macht das Spiel); **nie im Kampf angelegt** (sonst „tainted“), deshalb 180 auf Vorrat beim Anmelden. Öffnen folgt den Taschen des Spiels (Haken an `Show`/`Hide`, nicht an `OnShow` – die feuern im versteckten Elternrahmen nie). Die Bank bleibt die des Spiels. |
-| Schadensanzeige (`ui/damagemeter.lua`) | bis zu vier Fenster, je mit eigener Messart (Schaden, Heilung, erlittener Schaden, Unterbrechungen, Bannungen, Tode) und eigenem Zeitraum; Kopfzeile mit Kampfdauer und Symbolknöpfen | Addons bekommen ab 12.0 kein Kampflog: die Zahlen kommen aus `C_DamageMeter` (die Messung des Spiels), Blizzards Fenster geht aus (`damageMeterEnabled = 0`). Fehlt die Messung, steht das im Fenster – keine Nullen. Zahlen über `CreateAbbreviateConfig` (K/M/B, darunter ganze Zahlen): ohne sie gibt `AbbreviateNumbers` Werte unter 1000 ungerundet heraus („16.826086956522“, 6.0.0.4). Fenster flach gespeichert (`w1mode` …), weil `UIKit.Set` Tabellen nur eine Ebene tief vergleicht. |
+| Schadensanzeige (`ui/damagemeter.lua`) | bis zu vier Fenster, je mit eigener Messart (Schaden, Heilung, erlittener Schaden, Unterbrechungen, Bannungen, Tode; seit 6.9.0.8 auch pro Sekunde, Absorption, vermeidbarer Schaden, Schaden an Gegnern und **Bedrohung**) und eigenem Zeitraum; Kopfzeile mit Kampfdauer und Symbolknöpfen (seit 6.9.0.8 mit „In den Chat melden“) | Addons bekommen ab 12.0 kein Kampflog: die Zahlen kommen aus `C_DamageMeter` (die Messung des Spiels), Blizzards Fenster geht aus (`damageMeterEnabled = 0`). Fehlt die Messung, steht das im Fenster – keine Nullen. Zahlen über `CreateAbbreviateConfig` (K/M/B, darunter ganze Zahlen): ohne sie gibt `AbbreviateNumbers` Werte unter 1000 ungerundet heraus („16.826086956522“, 6.0.0.4). Fenster flach gespeichert (`w1mode` …), weil `UIKit.Set` Tabellen nur eine Ebene tief vergleicht. |
 | Questliste (`ui/questtracker.lua`) | eigene Fläche hinter der Zielverfolgung des Spiels, goldenes Banner weg, Höhe folgt dem Inhalt | Die Liste bleibt Blizzards (taint-empfindlich: Questgegenstände im Kampf); nur ein eigener Rahmen dahinter und durchsichtige Hintergrundtexturen. |
 | Questpfeil (`ui/questarrow.lua`) | 3D-Pfeil aus 64 vorgerechneten Ansichten (`media/ui/arrow3d.tga`, erzeugt von `make_ui_media.py`), Farbe grün → gelb → rot nach Abweichung; plant seit 6.6.2.7 selbst (nächstes lohnendes Ziel aus dem Questlog, siehe *Questpfeil: Planen*); als Geist zur Leiche (`C_DeathInfo`); nach dem Abgeben die nächstgelegene Quest – seit 6.6.0.1 nur für den Pfeil (`QA.Chosen`), nicht mehr über `C_SuperTrack.SetSuperTrackedQuestID` (das berührte Blizzards Questverfolgung, im Kampf blockierte das Spiel dann `SetPassThroughButtons`); wählt der Spieler selbst, gilt seine Wahl –, wahlweise schon bei erfüllten Zielen | Kein Modell im Spiel, sondern Bilder: ein `PlayerModel` ließe sich nicht zuverlässig drehen und färben. Leiche und nächste Quest nur, wo das Spiel einen Ort nennt – sonst „Ort unbekannt“, nie 0 m. |
 
@@ -919,6 +919,33 @@ Seit 6.2.0.0:
 * **Schadensanzeige** wie Details, soweit die Messung des Spiels es
   hergibt: Klassensymbol, Anteil (nur mit offenen Zahlen), eigene Zeile
   angeheftet und markiert, Tooltip mit Zaubern, frühere Kämpfe.
+  **Seit 6.9.0.8** (Beta-Test: „es fehlt noch ein bisschen im Vergleich
+  zu Details, gerade ein Threatmeter“):
+  * *Pro Sekunde als Rangliste* (`Dps`, `Hps`; Messart mit `perSecond`):
+    Balken nach `amountPerSecond` (`DM.BarField`), sonst stünde ein
+    kürzerer Balken über einem längeren. Aufschlüsselung und Zauber
+    über `base` (Schaden/Heilung). Dazu `Absorbs`,
+    `AvoidableDamageTaken`, `EnemyDamageTaken` – alle nur, wenn
+    `Enum.DamageMeterType` sie nennt (`DM.Modes`); ohne Enum die sechs
+    Grundarten, damit das Fenster selbst sagt, dass die Messung fehlt.
+    Die Enum-Namen sind aus der Retail-Dokumentation, auf Forever nicht
+    gesehen – was fehlt, erscheint nicht.
+  * *Bedrohung* (`threat`, wie Tiny Threat): kommt nicht aus
+    `C_DamageMeter`, sondern aus `UnitDetailedThreatSituation` je
+    Gruppenmitglied und Begleiter auf dem Ziel (freundliches Ziel:
+    dessen Ziel, `DM.ThreatMob`). Balken = `scaledPercentage` bis 100:
+    das Spiel rechnet die 110 %/130 % von Classic schon ein. Sortiert
+    nur mit offenen Werten (`ThreatOrder`: Tank, Prozent, roher Anteil);
+    mit geheimen bleibt die Reihenfolge der Gruppe **ohne
+    Platznummern**. Offen 0 ohne Aggro fällt heraus, geheim bleibt drin.
+    Kein Zeitraum, keine Aufschlüsselung. Läuft im Takt ohne neue
+    Tabellen (feste Einheitenlisten, Einträge aus einem Vorrat).
+  * *Melden* (Sprechblase, `DM.ReportMenu` → `DM.Report`): nur nach dem
+    Kampf und mit offenen Zahlen, nie Beispielzahlen; was nicht geht,
+    sagt ein Hinweis im eigenen Chat. Kanäle nach Lage
+    (`DM.ReportChannels`). Ob der Client das Senden irgendwo sperrt, ist
+    auf Forever nicht gemessen – `pcall` fängt eine Sperre nicht (siehe
+    Raidmarkierungen).
   **Aufschlüsselung seit 6.6.2.1** (Beta-Test: „frei verschieben, mehr
   Informationen, Vergleich, Graphen, Auren – auch Bufffood,
   Fläschchen“):
@@ -1300,6 +1327,32 @@ Häkchen und Symbole bleiben.
 
 **Gilde & Communitys**: das Wappen oben links (`PortraitOverlay`) ist
 weg. Liste links (grüne Auswahl) und Chat-Eingabe sind ungemessen.
+
+## Bedrohung an den Plaketten *(6.9.0.8, `ui/nameplates.lua`)*
+
+Beta-Test: „besser an den Namensplaketten anzeigen, nicht nur die
+Prozentzahl rechts neben der Plakette“. Gewählt (aus drei Entwürfen):
+Leiste unter dem Leben **und** wer die Aggro hat.
+
+* **Leiste** (`threatBar`, Höhe `threatBarHeight`, Standard 3 px):
+  direkt unter dem Leben, `scaledPercentage` bis 100 (nur `SetValue`,
+  darf geheim sein). Farbe wie die Bedrohungsfarben: grau
+  (`threatLow`) weit weg, orange kurz davor, rot mit Aggro; als Tank
+  grün, solange du hältst, orange, wenn jemand darüber liegt. Nur auf
+  der Liste des Gegners – nicht darauf oder offen 0: keine Leiste. Der
+  Zauberbalken rückt **immer** um ihre Höhe nach unten, nicht nur im
+  Kampf: ein springender Zauberbalken liest sich schlechter.
+* **„Aggro: Name“** (`aggroName`): rechts unter der Plakette, bei
+  laufendem Zauber unter dem Zauberbalken (`PlaceAggro`, neu gesetzt bei
+  Zauber-Ereignissen). Halter (`NP.AggroHolder`): du, wenn du tankst;
+  sonst das Ziel des Gegners – in Classic der, der ihn hält. Während
+  eines Zaubers kann der Gegner kurz jemand anderen anvisieren, dann
+  steht kurz ein anderer Name da; das Spiel sagt es nicht genauer. Nur
+  Freunde unter Spielerkontrolle (eine Wache ist kein Aggroverlust),
+  nur in einer Gruppe. `problem` (Standard): nur wenn der Halter keine
+  Tankrolle hat – ohne zugewiesene Rollen also immer; `always`; `none`.
+  Name in der Klassenfarbe, „Du“ rot (als Tank grün).
+* Die Prozentzahl (`threatText`) bleibt wählbar.
 
 ## Plaketten nach NPC *(6.6.2.2, `ui/npccolors.lua`)*
 

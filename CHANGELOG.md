@@ -9,6 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.9.0.8] – 2026-10-02
+
+**Bedrohung in der Schadensanzeige.** Neue Messart „Bedrohung“: alle aus deiner Gruppe auf der Bedrohungsliste deines Ziels, Tank zuerst. Ein voller Balken heißt: diese Person zieht die Aggro – die 110 % im Nahkampf und 130 % auf Distanz rechnet das Spiel schon ein.
+
+**Bedrohung an den Namensplaketten.** Unter dem Leben läuft eine dünne Leiste, die sich bis zur Aggro füllt – grau weit weg, orange kurz davor, rot mit Aggro, als Tank grün, solange du sie hältst. Liegt die Aggro nicht beim Tank, steht darunter, wer sie hat („Aggro: Tamsin“, auch „Aggro: Du“).
+
+**Mehr Messarten.** Schaden und Heilung pro Sekunde als eigene Ranglisten, Absorption, vermeidbarer Schaden und Schaden an Gegnern – sofern das Spiel sie misst.
+
+**In den Chat melden.** Die Sprechblase in der Kopfzeile schreibt die ersten Plätze in Gruppe, Schlachtzug, Instanz, Gilde, Sagen oder als Flüstern an dein Ziel – nach dem Kampf, wenn die Zahlen offen sind.
+
+### Technisch
+
+- `ui/damagemeter.lua`: Messarten mit `perSecond` (Balken und erste Zahl nach `amountPerSecond`, `base` für Aufschlüsselung und Tooltip-Zauber) und `threat`. Neue Arten nur, wenn `Enum.DamageMeterType` sie nennt; ohne Enum bleiben die sechs Grundarten. Bedrohung aus `UnitDetailedThreatSituation(einheit, ziel)` für Spieler, Gruppe/Schlachtzug und Begleiter; ist das Ziel freundlich, dessen Ziel. Sortiert (Tank zuerst, dann Bedrohung, dann roher Anteil) nur, wenn alle Werte offen sind – sonst Reihenfolge der Gruppe ohne Platznummern. Einheitenlisten und Einträge einmal angelegt, keine Tabelle je Takt. Eigene Ereignisse (`UNIT_THREAT_*`, Zielwechsel, Gruppe) zeichnen nur, wenn ein Fenster Bedrohung zeigt.
+- Melden (`DM.ReportLines`/`DM.Report`/`DM.ReportChannels`): nur mit offenen Zahlen, nicht im Kampf (`InCombatLockdown`), nie aus dem Testmodus; sonst ein Hinweis im eigenen Chatfenster. Neues Symbol `media/ui/icon_report.tga` aus `.github/scripts/make_ui_media.py`.
+- `ui/nameplates.lua`: `p.threatBar` unter dem Leben (Zauberbalken rückt um ihre Höhe nach unten), `p.aggro` rechts darunter bzw. unter dem Zauberbalken. Halter: du selbst, wenn du tankst, sonst das Ziel des Gegners – nur freundlich und unter Spielerkontrolle (`NP.AggroHolder`). Einstellungen `threatBar`, `threatBarHeight`, `aggroName` (`problem`/`always`/`none`). Farben `threatLow`, `threatBarBg` in `core/ui.lua`.
+- `load_test.lua`: Messarten nach Enum, pro Sekunde, Melden (offen, Kampf, geheim, Beispiel, Kanäle), Bedrohung (sortiert, geheim unsortiert, freundliches Ziel, kein Ziel, ohne Client-Funktion), Plakette (Leiste, Aggro nach Rolle, Wache, allein, nicht auf der Liste, abgeschaltet). 27 Gegenproben, alle gefangen (zwei erst nach zusätzlichen Fällen: Gleichstand mit dem Tank, Gegner schlägt eine Wache).
+
 ## [6.9.0.7] – 2026-10-02
 
 **Zurück genau dorthin, wo du warst.** Schließt du den Bearbeitungsmodus des Spiels, geht das Einstellungsfenster wieder auf – auf derselben Seite und an derselben Stelle. Bisher blieb es zu, weil das Spiel es beim Öffnen selbst geschlossen hatte.

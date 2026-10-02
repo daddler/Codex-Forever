@@ -9280,6 +9280,202 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.9.0.8: Schadensanzeige wie Details - pro Sekunde als Rangliste,
+-- Bedrohung, Melden in den Chat; an den Plaketten Bedrohungsleiste und
+-- wer die Aggro hat.
+do
+    local DM = WeintCodex.UIDamageMeter
+    local NP = WeintCodex.UINameplates
+    local names = { "UnitExists", "UnitCanAttack", "UnitDetailedThreatSituation", "IsInGroup", "IsInRaid",
+        "UnitName", "UnitClass", "UnitIsUnit", "InCombatLockdown", "SendChatMessage", "issecretvalue",
+        "UnitIsPlayer", "IsInGuild", "UnitGroupRolesAssigned", "UnitPlayerControlled", "C_DamageMeter", "print" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = _G[n] end
+    local savedEnum = _G.Enum and _G.Enum.DamageMeterType
+    local savedSess = _G.Enum and _G.Enum.DamageMeterSessionType
+    local printed = {}
+    local ok, err = pcall(function()
+        _G.print = function(s) printed[#printed + 1] = tostring(s) end
+        _G.Enum = _G.Enum or {}
+        local w = DM.Window(1)
+
+        -- 1. Messarten: nur, was der Client nennt; ohne Enum die Grundarten.
+        _G.Enum.DamageMeterType = nil
+        local keys = {}
+        for _, m in ipairs(DM.Modes()) do keys[#keys + 1] = m.key end
+        assert(table.concat(keys, ",") == "DamageDone,HealingDone,DamageTaken,Interrupts,Dispels,Deaths",
+            "ohne Enum: " .. table.concat(keys, ","))
+        _G.Enum.DamageMeterType = { DamageDone = 0, Dps = 1, HealingDone = 2, DamageTaken = 7, Deaths = 9 }
+        _G.Enum.DamageMeterSessionType = { Current = 0, Overall = 1 }
+        keys = {}
+        for _, m in ipairs(DM.Modes()) do keys[#keys + 1] = m.key end
+        assert(table.concat(keys, ",") == "DamageDone,Dps,HealingDone,DamageTaken,Deaths",
+            "Messarten nach Enum: " .. table.concat(keys, ","))
+
+        -- 2. Pro Sekunde: Balken und erste Zahl nach pro Sekunde.
+        local srcs = {
+            { name = "Schnell", classFilename = "ROGUE", totalAmount = 1000, amountPerSecond = 50 },
+            { name = "Lang",    classFilename = "MAGE",  totalAmount = 2000, amountPerSecond = 40 },
+        }
+        _G.C_DamageMeter = { GetCombatSessionFromType = function() return { combatSources = srcs } end }
+        K.Set("damagemeter", "w1mode", "Dps")
+        DM.Refresh()
+        local _, mx = w.rows[1].bar:GetMinMaxValues()
+        assert(mx == 50 and w.rows[2].bar:GetValue() == 40, "DPS-Balken nach Summe statt pro Sekunde: " .. tostring(mx))
+        assert(DM.AmountText(1, 1) == "50 (1,0K)  33%", "DPS-Zahl: " .. tostring(DM.AmountText(1, 1)))
+        K.Set("damagemeter", "w1mode", "DamageDone")
+        DM.Refresh()
+        _, mx = w.rows[1].bar:GetMinMaxValues()
+        assert(mx == 1000, "Schaden misst nicht mehr die Summe")
+
+        -- 3. Melden: offene Zahlen nach dem Kampf, sonst nichts.
+        local sent = {}
+        _G.SendChatMessage = function(msg, chan) sent[#sent + 1] = chan .. "|" .. msg end
+        _G.InCombatLockdown = function() return false end
+        assert(DM.Report(w, "PARTY"), "Melden schlaegt fehl")
+        assert(#sent == 3 and sent[1]:find("^PARTY|WeintCodex – Schaden, Aktuell") and sent[2] == "PARTY|1. Schnell  1,0K (50), 33%",
+            "Meldung: " .. table.concat(sent, " / "))
+        sent = {}
+        _G.InCombatLockdown = function() return true end
+        assert(not DM.Report(w, "PARTY") and #sent == 0, "im Kampf gemeldet")
+        assert(printed[#printed]:find("nach dem Kampf", 1, true), "kein Hinweis im Kampf")
+        _G.InCombatLockdown = function() return false end
+        _G.issecretvalue = function(v) return v == 1000 end
+        assert(not DM.Report(w, "PARTY") and #sent == 0, "geheime Zahl gemeldet")
+        _G.issecretvalue = saved[11]
+        DM.ShowTest(true)
+        assert(not DM.Report(w, "PARTY") and #sent == 0, "Beispielzahlen gemeldet")
+        DM.ShowTest(false)
+        _G.IsInGroup = function() return true end
+        _G.IsInRaid = function() return false end
+        _G.IsInGuild = function() return true end
+        _G.UnitIsPlayer = function(u) return u == "target" end
+        _G.UnitIsUnit = function(a, b) return a == b end
+        _G.UnitName = function(u) return ({ target = "Freund" })[u] or "Testchar" end
+        local ch = {}
+        for _, c in ipairs(DM.ReportChannels()) do ch[#ch + 1] = c.value end
+        assert(table.concat(ch, ",") == "PARTY,GUILD,SAY,WHISPER", "Kanaele: " .. table.concat(ch, ","))
+        assert(w.report:IsShown(), "Sprechblase fehlt in der Kopfzeile")
+
+        -- 4. Bedrohung: Gruppe auf dem Ziel, Tank zuerst, eigene Zeile.
+        local threat = {
+            player = { false, 0, 84, 92 },
+            party1 = { true, 3, 100, 100 },
+            party2 = { false, 0, 61, 70 },
+            party3 = { false, 0, 0, 0 },     -- auf der Liste, aber 0: weg
+        }
+        local unitName = { player = "Testchar", party1 = "Tanky", party2 = "Magier", party3 = "Leer", target = "Kobold" }
+        local exists = { player = true, target = true, party1 = true, party2 = true, party3 = true, party4 = true }
+        _G.UnitExists = function(u) return exists[u] or false end
+        _G.UnitCanAttack = function(_, u) return u == "target" end
+        _G.UnitIsPlayer = function() return false end
+        _G.UnitName = function(u) return unitName[u] end
+        _G.UnitClass = function(u) return "x", u == "party1" and "WARRIOR" or "MAGE" end
+        _G.UnitDetailedThreatSituation = function(u)
+            local t = threat[u]
+            if not t then return nil end
+            return t[1], t[2], t[3], t[4]
+        end
+        K.Set("damagemeter", "w1mode", "Threat")
+        assert(DM.Window(1):Mode().threat and DM.ShowsThreat(), "Bedrohung nicht gewaehlt")
+        DM.Refresh()
+        assert(DM.RowsShown() == 3, "drei auf der Liste erwartet, " .. DM.RowsShown())
+        assert(w.rows[1].name:GetText() == "1. Tanky" and w.rows[1].amount:GetText() == "Aggro", "Tank nicht zuerst: " .. tostring(w.rows[1].name:GetText()))
+        assert(w.rows[2].name:GetText() == "2. Testchar" and DM.AmountText(1, 2) == "84%" and w.rows[2].own:IsShown(),
+            "eigene Zeile: " .. tostring(w.rows[2].name:GetText()) .. " " .. tostring(DM.AmountText(1, 2)))
+        _, mx = w.rows[2].bar:GetMinMaxValues()
+        assert(mx == 100 and w.rows[2].bar:GetValue() == 84, "Bedrohungsbalken nicht bis 100")
+        assert(w.title:GetText():find("Kobold", 1, true) and not w.session:IsShown(), "Titel/Zeitraum: " .. tostring(w.title:GetText()))
+        -- Gleichstand bei 100 % (und mehr roher Bedrohung): der Tank bleibt oben.
+        threat.party4 = { false, 1, 100, 110 }
+        unitName.party4 = "Vier"
+        DM.Refresh()
+        assert(w.rows[1].name:GetText() == "1. Tanky" and w.rows[2].name:GetText() == "2. Vier",
+            "Tank nicht vor Gleichstand: " .. tostring(w.rows[1].name:GetText()))
+        threat.party4 = nil
+        DM.Refresh()
+        w.rows[2]._scripts.OnMouseUp(w.rows[2], "LeftButton")
+        assert(not (DM.Breakdown() and DM.Breakdown().frame:IsShown()), "Bedrohungszeile oeffnet eine Aufschluesselung")
+        sent = {}
+        assert(DM.Report(w, "PARTY") and sent[1] == "PARTY|WeintCodex – Bedrohung auf Kobold:" and sent[2] == "PARTY|1. Tanky  Aggro"
+            and sent[3] == "PARTY|2. Testchar  84%", "Bedrohung melden: " .. table.concat(sent, " / "))
+        -- Geheim: keine Sortierung, keine Platznummern, Zahl trotzdem da.
+        _G.issecretvalue = function(v) return v == 61 end
+        DM.Refresh()
+        assert(w.rows[1].name:GetText() == "Testchar" and DM.AmountText(1, 1) == "84%",
+            "geheim und trotzdem sortiert: " .. tostring(w.rows[1].name:GetText()))
+        assert(w.rows[3].bar:GetValue() == 61, "geheimer Wert nicht an den Balken")
+        sent = {}
+        assert(not DM.Report(w, "PARTY") and #sent == 0, "geheime Bedrohung gemeldet")
+        _G.issecretvalue = saved[11]
+        -- Freundliches Ziel: dessen Ziel. Kein Ziel: ein Satz.
+        exists.targettarget = true
+        unitName.targettarget = "Ork"
+        _G.UnitCanAttack = function(_, u) return u == "targettarget" end
+        DM.Refresh()
+        assert(w.title:GetText():find("Ork", 1, true), "freundliches Ziel: nicht dessen Ziel")
+        exists.target = false
+        DM.Refresh()
+        assert(DM.RowsShown() == 0 and DM.EmptyText():find("Kein Ziel", 1, true), "ohne Ziel: " .. tostring(DM.EmptyText()))
+        exists.target = true
+        _G.UnitDetailedThreatSituation = nil
+        DM.Refresh()
+        assert(DM.EmptyText():find("keine Bedrohung", 1, true), "ohne Client-Funktion: " .. tostring(DM.EmptyText()))
+        K.Set("damagemeter", "w1mode", nil)
+
+        -- 5. Plakette: Leiste unter dem Leben, "Aggro: …" nach Rolle.
+        _G.UnitCanAttack = function(_, u) return u == "nameplate1" end
+        exists.nameplate1, exists.nameplate1target = true, true
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        local p = NP.plates["nameplate1"]
+        assert(p and not p._friendly, "Plakette fehlt")
+        local mine = { false, 1, 95 }
+        _G.UnitDetailedThreatSituation = function() return mine[1], mine[2], mine[3] end
+        local roles = { player = "DAMAGER", nameplate1target = "DAMAGER" }
+        _G.UnitGroupRolesAssigned = function(u) return roles[u] or "NONE" end
+        _G.UnitPlayerControlled = function(u) return u == "nameplate1target" end
+        _G.UnitIsUnit = function(a, b) return a == b end
+        unitName.nameplate1target = "Tamsin"
+        NP.UpdateThreatText(p)
+        assert(p.threatBar:IsShown() and p.threatBar:GetValue() == 95, "Bedrohungsleiste fehlt")
+        assert(p.aggro:IsShown() and p.aggro:GetText():find("Tamsin", 1, true), "Aggro-Name fehlt: " .. tostring(p.aggro:GetText()))
+        -- Der Gegner schlaegt eine Wache (kein Spieler): niemand aus der Gruppe.
+        _G.UnitPlayerControlled = function() return false end
+        NP.UpdateThreatText(p)
+        assert(not p.aggro:IsShown(), "Wache als Aggro-Halter gemeldet")
+        _G.UnitPlayerControlled = function(u) return u == "nameplate1target" end
+        roles.nameplate1target = "TANK"
+        NP.UpdateThreatText(p)
+        assert(not p.aggro:IsShown(), "beim Tank trotzdem gemeldet")
+        K.Set("nameplates", "aggroName", "always")
+        NP.UpdateThreatText(p)
+        assert(p.aggro:IsShown(), "'immer' zeigt den Tank nicht")
+        K.Set("nameplates", "aggroName", nil)
+        mine[1] = true
+        NP.UpdateThreatText(p)
+        assert(p.aggro:IsShown() and p.aggro:GetText():find("Du", 1, true), "eigene Aggro als DD nicht gemeldet")
+        _G.IsInGroup = function() return false end
+        NP.UpdateThreatText(p)
+        assert(not p.aggro:IsShown() and p.threatBar:IsShown(), "allein: Name ja/Leiste nein")
+        mine[3] = nil
+        NP.UpdateThreatText(p)
+        assert(not p.threatBar:IsShown() and not p.threat:IsShown(), "nicht auf der Liste und trotzdem Leiste")
+        K.Set("nameplates", "threatBar", false)
+        mine[3] = 50
+        NP.UpdateThreatText(p)
+        assert(not p.threatBar:IsShown(), "abgeschaltete Leiste erscheint")
+        K.Set("nameplates", "threatBar", nil)
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+    end)
+    for i, n in ipairs(names) do _G[n] = saved[i] end
+    _G.Enum.DamageMeterType, _G.Enum.DamageMeterSessionType = savedEnum, savedSess
+    K.Set("damagemeter", "w1mode", nil)
+    DM.ShowTest(false)
+    DM.Refresh()
+    Check(ok, "Schadensanzeige wie Details: pro Sekunde, Bedrohung (sortiert, geheim, Ziel), Melden (offen, Kampf, geheim, Beispiel, Kanaele); Plaketten: Bedrohungsleiste, Aggro nach Rolle"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 --------------------------------------------------
 
 print("")

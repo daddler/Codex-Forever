@@ -88,6 +88,11 @@ local defaults = {
     -- "wie viel Threat ich gerade habe"). none | topleft | right. Rechts:
     -- oben links kollidiert mit langen Namen und den Symbolen des Spiels.
     threatText = "right",
+    -- 6.9.0.8: Bedrohung als Leiste unter dem Leben und wer die Aggro hat.
+    -- aggroName: problem (nur wenn sie nicht beim Tank liegt) | always | none.
+    threatBar  = true,
+    threatBarHeight = 3,
+    aggroName  = "problem",
     tankAggro  = K.ColorDefault("tankAggro"),
     tankLosing = K.ColorDefault("tankLosing"),
     dpsAggro   = K.ColorDefault("dpsAggro"),
@@ -681,6 +686,23 @@ local function Build(parent)
     p.quest:Hide()
     p.threat = K.NewText(textHost, 10)
     p.threat:Hide()
+    -- Bedrohungsleiste (6.9.0.8, Beta-Test: "besser an den Plaketten
+    -- anzeigen, nicht nur die Prozentzahl"): duenn unter dem Leben, voll =
+    -- du ziehst die Aggro. Der Wert geht nur an SetValue (darf geheim sein).
+    local tb = K.NewBar(p, true)
+    tb:SetMinMaxValues(0, 100)
+    tb:SetValue(0)
+    local tbg = tb:CreateTexture(nil, "BACKGROUND")
+    tbg:SetAllPoints(tb)
+    local tgc = GC.threatBarBg
+    tbg:SetColorTexture(tgc[1], tgc[2], tgc[3], tgc[4])
+    tb:Hide()
+    p.threatBar = tb
+    -- Wer die Aggro hat ("Aggro: Tamsin"), unter der Plakette rechts.
+    p.aggro = K.NewText(textHost, 10)
+    p.aggro:SetJustifyH("RIGHT")
+    p.aggro:SetWordWrap(false)
+    p.aggro:Hide()
     return p
 end
 
@@ -836,10 +858,22 @@ local function Layout(p)
     end
     p.auras:SetShown(S.auraEnabled and S.auraSource == "own")
 
+    -- Bedrohungsleiste direkt unter dem Leben; der Zauberbalken rueckt um
+    -- ihre Hoehe nach unten - immer, nicht nur wenn sie zu sehen ist: eine
+    -- Plakette, deren Zauberbalken im Kampf springt, liest sich schlechter.
+    local tbh = S.threatBar and (S.threatBarHeight or 3) or 0
+    p.threatBar:ClearAllPoints()
+    p.threatBar:SetPoint("TOPLEFT", p, "BOTTOMLEFT", 0, -1)
+    p.threatBar:SetPoint("TOPRIGHT", p, "BOTTOMRIGHT", 0, -1)
+    p.threatBar:SetHeight(math.max(1, tbh))
+    if not S.threatBar then p.threatBar:Hide() end
+    K.SetFont(p.aggro, S.textSize)
+    p.aggro:SetWidth(S.width)
+    p._aggroAt = nil
     local cast = p.cast
     cast:ClearAllPoints()
-    cast:SetPoint("TOPLEFT", p, "BOTTOMLEFT", 0, -2)
-    cast:SetPoint("TOPRIGHT", p, "BOTTOMRIGHT", 0, -2)
+    cast:SetPoint("TOPLEFT", p, "BOTTOMLEFT", 0, -2 - (tbh > 0 and tbh + 1 or 0))
+    cast:SetPoint("TOPRIGHT", p, "BOTTOMRIGHT", 0, -2 - (tbh > 0 and tbh + 1 or 0))
     cast:ApplyStyle({
         height = S.castHeight, icon = S.castIcon, timer = S.castTimer,
         shield = S.castShield, cast = S.castColor, locked = S.castLocked,
@@ -1253,34 +1287,115 @@ local function UpdateQuest(p)
     end
 end
 
--- Deine Bedrohung auf diesem Gegner in Prozent (100 % = du hast oder
--- bekommst die Aggro). Nur solange du auf seiner Liste stehst. Der Wert
--- kann geheim sein: er geht nur an SetFormattedText. Die Farbe folgt der
--- Lage wie die Bedrohungsfarben des Balkens - als Tank gruen, solange du
--- sie haeltst; sonst gelb kurz davor, rot mit Aggro.
-local function UpdateThreatText(p)
-    local fs = p.threat
-    if p._friendly or S.threatText == "none" or not p.unit or not _G.UnitDetailedThreatSituation then
+-- Deine Bedrohung auf diesem Gegner: in Prozent (100 % = du hast oder
+-- bekommst die Aggro) und seit 6.9.0.8 als Leiste unter dem Leben, dazu
+-- wer die Aggro gerade hat. Nur solange du auf seiner Liste stehst. Der
+-- Wert kann geheim sein: er geht nur an SetFormattedText und SetValue.
+-- Die Farbe folgt der Lage wie die Bedrohungsfarben des Balkens - als Tank
+-- gruen, solange du sie haeltst; sonst orange kurz davor, rot mit Aggro.
+local function ThreatColor(status)
+    local st = K.Plain(status)
+    if type(st) ~= "number" then return nil end
+    local tank = K.Plain(_G.UnitGroupRolesAssigned and _G.UnitGroupRolesAssigned("player")) == "TANK"
+    if tank then
+        return (st == 3 and S.tankAggro) or (st == 2 and S.tankLosing) or S.dpsAggro
+    end
+    return (st >= 2 and S.dpsAggro) or (st == 1 and S.dpsNear) or nil
+end
+
+-- Wer den Gegner gerade haelt. In Classic ist das sein Ziel (waehrend
+-- eines Zaubers kann es kurz ein anderes sein - dann steht kurz ein
+-- anderer Name da, das Spiel sagt es nicht genauer). Nur Freunde unter
+-- Spielerkontrolle: ein Gegner, der eine Wache angreift, hat niemandem aus
+-- der Gruppe die Aggro genommen. Liefert Einheit, ob du es bist.
+function NP.AggroHolder(p, iHold)
+    if iHold then return "player", true end
+    if p._ttFor ~= p.unit then p._tt, p._ttFor = p.unit .. "target", p.unit end
+    local tu = p._tt
+    if not K.Bool(_G.UnitExists and _G.UnitExists(tu), false) then return nil end
+    if IsUnit(tu, "player") then return "player", true end
+    if not K.Bool(_G.UnitPlayerControlled and _G.UnitPlayerControlled(tu), false) then return nil end
+    if K.Bool(_G.UnitCanAttack and _G.UnitCanAttack("player", tu), true) then return nil end
+    return tu, false
+end
+
+-- Unter die Plakette, oder unter den Zauberbalken, wenn er steht.
+local function PlaceAggro(p)
+    local at = (p.cast and p.cast:IsShown()) and p.cast or (S.threatBar and p.threatBar or p)
+    if p._aggroAt == at then return end
+    p._aggroAt = at
+    p.aggro:ClearAllPoints()
+    p.aggro:SetPoint("TOPRIGHT", at, "BOTTOMRIGHT", 0, -1)
+end
+NP.PlaceAggro = PlaceAggro
+
+local function UpdateAggro(p, onList, iHold)
+    local fs = p.aggro
+    if S.aggroName == "none" or not onList
+        or not K.Bool(_G.IsInGroup and _G.IsInGroup(), false) then
         fs:Hide()
         return
     end
-    local ok, _, status, scaled = pcall(_G.UnitDetailedThreatSituation, "player", p.unit)
-    if not ok or type(scaled) == "nil" then fs:Hide() return end
-    local plain = K.Plain(scaled)
-    if type(plain) == "number" and plain <= 0 then fs:Hide() return end
-    fs:SetFormattedText("%d%%", scaled)
-    local st = K.Plain(status)
-    local c
-    if type(st) == "number" then
-        local tank = K.Plain(_G.UnitGroupRolesAssigned and _G.UnitGroupRolesAssigned("player")) == "TANK"
-        if tank then
-            c = (st == 3 and S.tankAggro) or (st == 2 and S.tankLosing) or S.dpsAggro
-        else
-            c = (st >= 2 and S.dpsAggro) or (st == 1 and S.dpsNear) or nil
-        end
+    local u, me = NP.AggroHolder(p, iHold)
+    if not u then fs:Hide() return end
+    if S.aggroName == "problem" then
+        -- Beim Tank liegt sie richtig - dann keine Zeile.
+        local role = K.Plain(_G.UnitGroupRolesAssigned and _G.UnitGroupRolesAssigned(u))
+        if role == "TANK" then fs:Hide() return end
     end
-    if c then fs:SetTextColor(c.r, c.g, c.b, 1) else fs:SetTextColor(1, 1, 1, 1) end
+    local label = WeintCodex.ColorText("textMuted", "Aggro:")
+    if me then
+        fs:SetText(label .. " Du")
+        local c = S.dpsAggro
+        if K.Plain(_G.UnitGroupRolesAssigned and _G.UnitGroupRolesAssigned("player")) == "TANK" then c = S.tankAggro end
+        fs:SetTextColor(c.r, c.g, c.b, 1)
+    else
+        local name = _G.UnitName and _G.UnitName(u)
+        if type(name) == "nil" then fs:Hide() return end
+        fs:SetFormattedText("%s %s", label, name)
+        local _, class = _G.UnitClass and _G.UnitClass(u)
+        class = K.Plain(class)
+        local cc = class and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
+        if cc then fs:SetTextColor(cc.r, cc.g, cc.b, 1) else fs:SetTextColor(1, 1, 1, 1) end
+    end
+    PlaceAggro(p)
     fs:Show()
+end
+
+local function UpdateThreatText(p)
+    local fs, bar = p.threat, p.threatBar
+    if p._friendly or not p.unit or not _G.UnitDetailedThreatSituation then
+        fs:Hide() bar:Hide() p.aggro:Hide()
+        return
+    end
+    local ok, tanking, status, scaled = pcall(_G.UnitDetailedThreatSituation, "player", p.unit)
+    local onList = ok and type(scaled) ~= "nil"
+    local plain = onList and K.Plain(scaled)
+    if type(plain) == "number" and plain <= 0 then onList = false end
+    local c = onList and ThreatColor(status) or nil
+
+    if onList and S.threatText ~= "none" then
+        fs:SetFormattedText("%d%%", scaled)
+        if c then fs:SetTextColor(c.r, c.g, c.b, 1) else fs:SetTextColor(1, 1, 1, 1) end
+        fs:Show()
+    else
+        fs:Hide()
+    end
+
+    if onList and S.threatBar then
+        bar:SetValue(scaled)
+        if c then
+            K.PaintBar(bar, c.r, c.g, c.b)
+        else
+            local low = WeintCodex.GameColors.threatLow
+            K.PaintBar(bar, low[1], low[2], low[3])
+        end
+        bar:Show()
+    else
+        bar:Hide()
+    end
+
+    UpdateAggro(p, onList, ok and K.Bool(tanking, false))
 end
 NP.UpdateThreatText = UpdateThreatText
 
@@ -1445,6 +1560,8 @@ local function OnEvent(_, event, unit)
     -- Der Gegner wechselt mitten im Zauber sein Ziel: das Ziel im Balken mit.
     if event == "UNIT_TARGET" then
         if not p._friendly and p.cast:IsShown() then p.cast:UpdateTarget() end
+        -- Neues Ziel des Gegners: vielleicht hat jetzt jemand anderes die Aggro.
+        if not p._friendly and S.aggroName ~= "none" then UpdateThreatText(p) end
         return
     end
 
@@ -1464,6 +1581,8 @@ local function OnEvent(_, event, unit)
         else
             p.cast:Stop(cast == "failed")
         end
+        -- "Aggro: …" weicht dem Zauberbalken aus.
+        if p.aggro:IsShown() then PlaceAggro(p) end
     end
 end
 
@@ -1546,6 +1665,24 @@ function NP.RefreshPreview()
         p.threat:Show()
     else
         p.threat:Hide()
+    end
+    -- Bedrohungsleiste und "Aggro: …" im Beispiel (6.9.0.8).
+    if S.threatBar then
+        p.threatBar:SetValue(84)
+        K.PaintBar(p.threatBar, S.dpsNear.r, S.dpsNear.g, S.dpsNear.b)
+        p.threatBar:Show()
+    else
+        p.threatBar:Hide()
+    end
+    if S.aggroName ~= "none" then
+        p.aggro:SetText(WeintCodex.ColorText("textMuted", "Aggro:") .. " Tamsin")
+        local mc = _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS.MAGE
+        if mc then p.aggro:SetTextColor(mc.r, mc.g, mc.b, 1) else p.aggro:SetTextColor(1, 1, 1, 1) end
+        p._aggroAt = nil
+        NP.PlaceAggro(p)
+        p.aggro:Show()
+    else
+        p.aggro:Hide()
     end
     local c = S.eliteColoring and S.elite or S.enemyInCombat
     K.PaintBar(p.health, c.r, c.g, c.b)
@@ -1753,7 +1890,18 @@ K.Register({
                         { value = "topleft", text = "Oben links" },
                         { value = "none",    text = "Aus" } },
                     description = "Deine Bedrohung auf diesem Gegner; 100 % heißt: du hast die Aggro. Nur im Kampf und solange du auf seiner Liste stehst." })
-            local noThreat = function() return not K.Get(KEY, "threatColors") end
+            B:Row({ type = "toggle", label = "Bedrohungsleiste", key = "threatBar",
+                    description = "Dünne Leiste unter dem Leben: voll heißt, du ziehst die Aggro. Grau weit weg, orange kurz davor, rot mit Aggro – als Tank grün, solange du sie hältst." },
+                  { type = "dropdown", label = "Wer die Aggro hat", key = "aggroName", items = {
+                        { value = "problem", text = "Wenn nicht beim Tank" },
+                        { value = "always",  text = "Immer" },
+                        { value = "none",    text = "Aus" } },
+                    description = "Name unter der Plakette, nur in einer Gruppe. „Wenn nicht beim Tank“: nur wenn jemand ohne Tankrolle den Gegner hält – auch du selbst („Aggro: Du“). Ohne zugewiesene Rollen erscheint der Name immer." })
+            B:Row({ type = "slider", label = "Höhe der Leiste", key = "threatBarHeight", min = 2, max = 6, step = 1,
+                    format = function(v) return string.format("%d px", v) end,
+                    disabled = function() return not K.Get(KEY, "threatBar") end },
+                  { type = "empty" })
+            local noThreat = function() return not (K.Get(KEY, "threatColors") or K.Get(KEY, "threatBar")) end
             B:Row({ type = "color", label = "Tank: hält die Aggro", key = "tankAggro", disabled = noThreat },
                   { type = "color", label = "Tank: verliert sie", key = "tankLosing", disabled = noThreat })
             B:Row({ type = "color", label = "Aggro gezogen", key = "dpsAggro", disabled = noThreat },
