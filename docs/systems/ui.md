@@ -501,6 +501,13 @@ Seit 6.2.0.0:
   und `AnchorAuraContainer` – nie ein Feld am Rahmen des Spiels (dessen
   Code liefe sonst unsicher und scheiterte an geheimen Werten). Stand:
   `/wcui auren`. Im Spiel ungeprüft.
+  **Sein Zauberbalken nicht** (6.9.0.3, Beta-Test: beim Unterbrechen
+  stand über dem Zielrahmen der Balken des Spiels in Rot): „Unterbrochen“
+  blendet über eine Animation ein, und die setzt die Deckkraft an
+  `SetAlpha` vorbei. `UF.HideGameCastBar` hängt `TargetFrameSpellBar` und
+  `FocusFrameSpellBar` (sonst `.spellbar` am Rahmen) für jeden ersetzten
+  Rahmen ab – `K.HideBlizzard`, ob der Zielrahmen des Spiels lebt oder
+  nicht.
 * **Aurenleisten (Restzeit als Leiste, „wie bei ElvUI“) – nicht machbar,
   ausgebaut in 6.6.0.4.** Drei Fassungen lang im Beta-Client gemessen:
   - 6.6.0.1, Container des Spiels (`AuraContainer`, Dauerleiste über

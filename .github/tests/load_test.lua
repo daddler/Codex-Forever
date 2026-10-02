@@ -3323,6 +3323,46 @@ do
     Check(ok, "Erinnerungen: Regeln, fehlende Buffs, Waffe, Begleiter, Editor" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.9.0.3: der Zauberbalken des Spiels an Ziel und Fokus ist weg. Beta-Test:
+-- beim Unterbrechen erschien ueber dem Zielrahmen der Balken des Spiels in
+-- Rot - der Zielrahmen des Spiels lebt fuer seine Auren, und die
+-- Animation "Unterbrochen" setzt die Deckkraft an SetAlpha vorbei.
+do
+    local ok, err = pcall(function()
+        local UF = WeintCodex.UIUnitFrames
+        local saved = { _G.TargetFrameSpellBar, _G.FocusFrameSpellBar, _G.FocusFrame }
+        local unreg = {}
+        local function Bar(name)
+            local b = stub.NewObject("StatusBar", name)
+            b:Show()
+            b.UnregisterAllEvents = function(self) unreg[self] = true end
+            return b
+        end
+        -- Ueber den Namen.
+        local tbar = Bar("TargetFrameSpellBar")
+        _G.TargetFrameSpellBar = tbar
+        assert(UF.HideGameCastBar("target") == tbar, "Zauberbalken des Ziels nicht gefunden")
+        assert(tbar:GetParent() == K.hiddenParent and not tbar:IsShown() and unreg[tbar],
+            "Zauberbalken des Ziels nicht abgehaengt (Eltern, sichtbar, Ereignisse)")
+        -- Ohne globalen Namen: ueber das Feld am Rahmen.
+        _G.FocusFrameSpellBar = nil
+        local fbar = Bar(nil)
+        _G.FocusFrame = stub.NewObject("Frame")
+        _G.FocusFrame.spellbar = fbar
+        assert(UF.HideGameCastBar("focus") == fbar and fbar:GetParent() == K.hiddenParent, "Zauberbalken des Fokus bleibt")
+        assert(UF.HideGameCastBar("player") == nil, "Spieler hat hier keinen Balken des Spiels")
+        _G.TargetFrameSpellBar, _G.FocusFrameSpellBar, _G.FocusFrame = saved[1], saved[2], saved[3]
+        -- Der Aufbau ruft es fuer jeden ersetzten Rahmen.
+        local h = io.open(ROOT .. "/ui/unitframes.lua", "r")
+        local code = h:read("*a"):gsub("%-%-[^\n]*", "")
+        h:close()
+        local build = code:match("local function Build%(%)(.-)\nend")
+        assert(build and build:find("UF.HideGameCastBar(u)", 1, true), "Aufbau haengt die Zauberbalken des Spiels nicht ab")
+    end)
+    Check(ok, "Zauberbalken des Spiels an Ziel und Fokus abgehaengt, auch mit den Auren des Spiels"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.4.0.3: Debuffs am Zielrahmen - der Aurenbehaelter des Zielrahmens des
 -- Spiels haengt ueber unserem, alles andere an ihm unsichtbar und ohne Maus.
 do

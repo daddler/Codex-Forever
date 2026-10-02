@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.9.0.3",
         date    = "02.10.2026",
         notes   = {
+            "|cff7C6CFFKein Zauberbalken des Spiels mehr über dem Ziel.|r Unterbrichst du dein Ziel, erschien über dem Zielrahmen noch der rote Balken des Spiels. Er ist jetzt an Ziel und Fokus ganz weg – es bleibt der eigene.",
             "|cff7C6CFFDie Oberfläche hat ein Logo.|r Das Symbol an der Minikarte zeigt jetzt das WCUI-Wappen statt eines Zahnrads; dasselbe Wappen steht oben im Willkommens-Assistenten und in den Einstellungen der Oberfläche (/wcui).",
         },
     },

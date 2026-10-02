@@ -133,6 +133,38 @@ local BLIZZARD = {
     -- Ziel des Ziels haengt im Spiel am Zielrahmen und geht mit ihm.
 }
 
+-- Die Zauberbalken des Spiels an Ziel und Fokus (6.9.0.3). Beta-Test 6.9.0.2:
+-- "Wenn ich ein Ziel unterbreche, ist ueber dem Zielfenster noch der
+-- Standard-Castbalken von Blizzard, rot als unterbrochen." Mit den Auren
+-- des Spiels (targetAuraSource = "game") bleibt der Zielrahmen des Spiels
+-- am Leben und wird nur durchsichtig (DimAllBut) - sein Zauberbalken aber
+-- blendet "Unterbrochen" ueber eine Animation ein, und eine Animation setzt
+-- die Deckkraft an SetAlpha vorbei. Deshalb wird der Balken selbst
+-- abgehaengt (K.HideBlizzard: Ereignisse weg, an den versteckten Rahmen),
+-- egal ob der Zielrahmen des Spiels lebt oder nicht. Name oder Feld am
+-- Rahmen (.spellbar), was der Client kennt.
+UF.CASTBARS = {
+    target = { name = "TargetFrameSpellBar", owner = "TargetFrame" },
+    focus  = { name = "FocusFrameSpellBar", owner = "FocusFrame" },
+}
+
+function UF.GameCastBar(u)
+    local c = UF.CASTBARS[u]
+    if not c then return nil end
+    local bar = _G[c.name]
+    if type(bar) ~= "table" then
+        local owner = _G[c.owner]
+        bar = type(owner) == "table" and owner.spellbar or nil
+    end
+    return type(bar) == "table" and bar or nil
+end
+
+function UF.HideGameCastBar(u)
+    local bar = UF.GameCastBar(u)
+    if bar then HideBlizzard(bar) end
+    return bar
+end
+
 --------------------------------------------------
 -- Aufbau
 --------------------------------------------------
@@ -1391,6 +1423,7 @@ local function Build()
             for _, b in ipairs(BLIZZARD[u] or {}) do
                 if not (keepGame and b == "TargetFrame") then HideBlizzard(b) end
             end
+            UF.HideGameCastBar(u)
             f:Refresh()
         end
     end

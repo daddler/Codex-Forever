@@ -11,10 +11,13 @@ nicht zusammen.
 
 ## [6.9.0.3] – 2026-10-02
 
+**Kein Zauberbalken des Spiels mehr über dem Ziel.** Unterbrichst du dein Ziel, erschien über dem Zielrahmen noch der rote Balken des Spiels. Er ist jetzt an Ziel und Fokus ganz weg – es bleibt der eigene.
+
 **Die Oberfläche hat ein Logo.** Das Symbol an der Minikarte zeigt jetzt das WCUI-Wappen statt eines Zahnrads; dasselbe Wappen steht oben im Willkommens-Assistenten und in den Einstellungen der Oberfläche (/wcui).
 
 ### Technisch
 
+- `ui/unitframes.lua`: `UF.HideGameCastBar(u)` hängt `TargetFrameSpellBar`/`FocusFrameSpellBar` (sonst `.spellbar`) über `K.HideBlizzard` ab, für jeden ersetzten Rahmen. Ursache: mit den Auren des Spiels lebt der Zielrahmen des Spiels (Alpha 0), und die Animation „Unterbrochen“ seines Balkens setzt die Deckkraft an `SetAlpha` vorbei. Prüfung mit vier Gegenproben.
 - Quelle `.github/scripts/logo/wcui.png` (512×512, vom Projektinhaber vorgegeben), gebaut mit `.github/scripts/make_logo.py` zu `media/ui/logo_32.tga` (Minikarte, Tooltip) und `logo_64.tga` (Assistent 64 px, Seitenleiste von `/wcui` 40 px) – je Datei nahe der Anzeigegröße, verkleinert mit vormultipliziertem Alpha, oben links gespeichert wie die anderen Grafiken.
 - `ui/launcher.lua`: `LN.ICON = logo_32`, `iconCoords = {0,1,0,1}` (LibDBIcon schneidet sonst 5 % je Rand ab); Logo auch im Tooltip.
 - `load_test.lua`: jede Grafik, die `ui/` über `K.MEDIA` anfordert, muss in `media/ui` liegen (sonst grünes Rechteck im Spiel); Logo in beiden Größen mit Alpha und Ausrichtung; Logo in Assistent und Seitenleiste. Fünf Gegenproben.
