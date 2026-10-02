@@ -14,6 +14,12 @@
 -- einer Veroeffentlichung von Blizzard. Kosten und Stufen koennen sich
 -- in der Beta aendern - die Seite sagt deshalb "unbestaetigt".
 --
+-- 6.9.0.6: abgeglichen mit Fassung 11.0.0-beta10 (Classes/Camelot,
+-- Waffenfertigkeiten): Zauber, Stufen, Kosten, Voraussetzungen, Raenge,
+-- Tierausbildung, Waffenfertigkeiten und Waffenmeister unveraendert.
+-- Neu in der Vorlage sind nur Rufrabatte beim Lehrer - die nimmt
+-- WeintCodex weiter bewusst nicht auf (modules/trainer.lua).
+--
 -- LIZENZ der uebernommenen Daten (Zaubernummern, Stufen, Kosten,
 -- Voraussetzungen, Waffenmeister):
 --
@@ -62,8 +68,8 @@ local T = WeintCodex.TrainerData
 
 T.SOURCE = {
     kind  = "community",
-    date  = "27.09.2026",
-    label = "What's Training? (Forever-Fassung), Beobachtung im Beta-Client",
+    date  = "02.10.2026",
+    label = "What's Training? (Forever-Fassung, geprüft gegen 11.0.0-beta10), Beobachtung im Beta-Client",
 }
 
 T.CLASSES = {

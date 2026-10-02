@@ -9,6 +9,35 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.9.0.7] – 2026-10-02
+
+**Zurück genau dorthin, wo du warst.** Schließt du den Bearbeitungsmodus des Spiels, geht das Einstellungsfenster wieder auf – auf derselben Seite und an derselben Stelle. Bisher blieb es zu, weil das Spiel es beim Öffnen selbst geschlossen hatte.
+
+**Lage und Größe ganz oben.** Bei den Aktionsleisten steht der Knopf zum Bearbeitungsmodus des Spiels jetzt am Anfang der Seite statt ganz unten.
+
+**Queststatus im Dungeonkompendium.** Jede Quest eines Dungeons zeigt, ob du sie schon hast, abgeben kannst, erledigt hast oder ob sie noch fehlt – mit farbigem Streifen und einer Summe über der Liste. Kein Vergleichen mit dem Questlog mehr.
+
+### Technisch
+
+- Fehler aus 6.9.0.5 (Beta-Test): das Spiel schließt beim Öffnen seines Bearbeitungsmodus das Einstellungsfenster selbst (`UISpecialFrames`); der Knopf prüfte die Herkunft erst im `PostClick` und fand nichts. Jetzt `E.NoteOrigin` im `PreClick` (Herkunft samt `O.Where()`: Modul, Seite, Bildlauf), `E.MakeRoom` im `PostClick`; zurück mit `O.Return`, auch über Gestaltungsmodus → „Fertig“. `load_test.lua` bildet das Schließen durch das Spiel nach; fünf Gegenproben, darunter das alte Verhalten.
+- `modules/dungeonpages.lua`: `DungeonPages.QuestState(q)` → `done`/`ready`/`active`/`open`/`later` oder `nil`, wenn der Client nicht antwortet (`IsQuestFlaggedCompleted`, `GetLogIndexForQuestID`/`IsOnQuest`, `IsComplete`, `UnitLevel`; geheime Werte über `UIKit.Plain`). Status rechts in der Kachel, Streifen links, Summe neben „Quests“ (nur wenn jede Quest beantwortet ist). Umgefärbt bei Questereignissen, nur sichtbare Zeilen, ohne neue Tabellen. Sechs Gegenproben.
+
+## [6.9.0.6] – 2026-10-02
+
+**Beute und Quests für sechs weitere Dungeons.** Im Dungeonkompendium stehen jetzt auch für The Stockade, Gnomeregan, Razorfen Kraul, den Friedhof des Scharlachroten Klosters, die Excavation Site und die City of Dalaran die Beute je Boss und – wo bekannt – die Quests mit Questgebern auf der Weltkarte.
+
+**Dalaran und die Excavation Site haben Bosse.** Für Dalaran sind jetzt alle neun Kämpfe benannt, für die Excavation Site drei Bosse – beides aus Beta-Berichten, nicht von Blizzard bestätigt, und ohne Reihenfolge.
+
+**Beute unterwegs.** In The Deadmines, Wailing Caverns, Shadowfang Keep und Blackfathom Deeps steht jetzt auch, was die Gegner zwischen den Bossen fallen lassen.
+
+### Technisch
+
+- Abgleich mit dem Addon *Dungeon Journal* 1.4.2 (Exehn), maschinell (beide Bestände als JSON ausgelesen und verglichen). `data/dungeon_journal.lua`: 7 → 13 Dungeons, 153 → 277 Gegenstände, 50 → 80 Quests, 33 → 55 Orte. Nur Fakten übernommen (Nummern, Stufen, Erfahrung, Orte, Namen aus dem Spiel), deutsche Texte eigene. Nicht übernommen: Erfahrung, die das Addon selbst als Classic-Wert kennzeichnet; fünf Quests der Excavation Site ohne Nummer; die abweichenden Stufenbereiche (Hall of Thanes 13–20, Ruins of Lordaeron 15–22, Wailing Caverns 15–24, Shadowfang Keep 20–30, Blackfathom Deeps 22+) – Community gegen Community, ohne Beleg.
+- `data/dungeons.lua`: City of Dalaran 9 Bosse (`community`, `bossesComplete = true`, `orderKnown = false`, Lyn the Ignored `optional`), Excavation Site 3 Bosse (`community`, unvollständig, ohne Reihenfolge; „Highland Horror“ ist ein Questziel) – `bossCount`/`partial` bzw. `conflict` entfallen. Blackmaw Hold bleibt umstritten.
+- Korrekturen: `startItem` bei 96393 und 971 entfernt (kein Startgegenstand), Hinweis „0 Erfahrung beobachtet“ bei 92422 statt `xp = 0`.
+- *What's Training?* 11.0.0-beta10: Zauber, Ränge, Tierausbildung, Waffenfertigkeiten und Waffenmeister unverändert; nur Herkunftsvermerk in `data/trainer.lua` aktualisiert.
+- `load_test.lua`: die Zustände „gezählt, Namen offen“ und „Quellen widersprechen sich“ werden mit geliehenen Tabellen gezeichnet und geprüft – „gezählt“ hat keinen echten Fall mehr. `wow_stub.lua` gibt dafür `M.Methods` heraus.
+
 ## [6.9.0.5] – 2026-10-02
 
 **Ein Knopf zum Bearbeitungsmodus des Spiels.** Was WeintCodex nicht selbst verschiebt – Aktionsleisten, Minikarte, Buffs, Questliste, Abklingzeitmanager, Chat, die Gruppenrahmen des Spiels –, erreichst du jetzt mit einem Klick: oben im Gestaltungsmodus, unter „Allgemein“ und auf jeder Seite, deren Rahmen das Spiel stellt.

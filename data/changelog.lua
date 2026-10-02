@@ -22,6 +22,24 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.9.0.7",
+        date    = "02.10.2026",
+        notes   = {
+            "|cff7C6CFFZurück genau dorthin, wo du warst.|r Schließt du den Bearbeitungsmodus des Spiels, geht das Einstellungsfenster wieder auf – auf derselben Seite und an derselben Stelle. Bisher blieb es zu, weil das Spiel es beim Öffnen selbst geschlossen hatte.",
+            "|cff7C6CFFLage und Größe ganz oben.|r Bei den Aktionsleisten steht der Knopf zum Bearbeitungsmodus des Spiels jetzt am Anfang der Seite statt ganz unten.",
+            "|cff7C6CFFQueststatus im Dungeonkompendium.|r Jede Quest eines Dungeons zeigt, ob du sie schon hast, abgeben kannst, erledigt hast oder ob sie noch fehlt – mit farbigem Streifen und einer Summe über der Liste. Kein Vergleichen mit dem Questlog mehr.",
+        },
+    },
+    {
+        version = "6.9.0.6",
+        date    = "02.10.2026",
+        notes   = {
+            "|cff7C6CFFBeute und Quests für sechs weitere Dungeons.|r Im Dungeonkompendium stehen jetzt auch für The Stockade, Gnomeregan, Razorfen Kraul, den Friedhof des Scharlachroten Klosters, die Excavation Site und die City of Dalaran die Beute je Boss und – wo bekannt – die Quests mit Questgebern auf der Weltkarte.",
+            "|cff7C6CFFDalaran und die Excavation Site haben Bosse.|r Für Dalaran sind jetzt alle neun Kämpfe benannt, für die Excavation Site drei Bosse – beides aus Beta-Berichten, nicht von Blizzard bestätigt, und ohne Reihenfolge.",
+            "|cff7C6CFFBeute unterwegs.|r In The Deadmines, Wailing Caverns, Shadowfang Keep und Blackfathom Deeps steht jetzt auch, was die Gegner zwischen den Bossen fallen lassen.",
+        },
+    },
+    {
         version = "6.9.0.5",
         date    = "02.10.2026",
         notes   = {

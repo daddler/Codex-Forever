@@ -19,8 +19,8 @@ zu Stufe 32?"* — und die beantwortet eine Neunerliste falsch.
 |---|---|---|---|---|
 | `hall_of_thanes` | Hall of Thanes | Eisenschmiede | 13 – 18 | 4, vollständig |
 | `ruins_of_lordaeron` | Ruins of Lordaeron | Tirisfal-Wälder | 15 – 20 | 7, unvollständig |
-| `excavation_site` | Excavation Site | Sumpfland | 24 – 29 | — (Quellen widersprechen sich) |
-| `city_of_dalaran` | City of Dalaran | Alteracgebirge | 28 – 33 | 9 Kämpfe, Namen unbekannt |
+| `excavation_site` | Excavation Site | Sumpfland | 24 – 29 | 3, unvollständig (seit 6.9.0.6; vorher: Quellen widersprechen sich) |
+| `city_of_dalaran` | City of Dalaran | Alteracgebirge | 28 – 33 | 9, vollständig, ohne Reihenfolge (seit 6.9.0.6; vorher: 9 Kämpfe, Namen unbekannt) |
 | `drowned_city` | The Drowned City | Schlingendorntal | 35 – 40 | 2, unvollständig |
 | `kroldok_stronghold` | Krol'dok Stronghold | Riverglades | 40 – 45 | — |
 | `alcaz_island_prison` | Alcaz Island Prison | Düstermarschen | 48 – 53 | — |
@@ -76,19 +76,28 @@ Früher war eine Bossliste entweder da oder nicht. Das reicht nicht mehr:
 |---|---|---|
 | `bosses` gefüllt, `bossesComplete = true` | so vollständig, wie die Quelle sie hergibt | Hall of Thanes |
 | `bosses` gefüllt, `bossesComplete = false` | Kämpfe bekannt, aber nicht alle | Ruins of Lordaeron, Drowned City |
-| `bosses` leer, `bossCount` gesetzt | die **Anzahl** ist berichtet, die Namen nicht | City of Dalaran (9) |
-| alles leer, `conflict` gesetzt | die Quellen widersprechen sich | Excavation Site, Blackmaw Hold |
+| `bosses` leer, `bossCount` gesetzt | die **Anzahl** ist berichtet, die Namen nicht | derzeit keiner (City of Dalaran bis 6.9.0.6) |
+| alles leer, `conflict` gesetzt | die Quellen widersprechen sich | Blackmaw Hold (Excavation Site bis 6.9.0.6) |
 
 Der dritte Zustand ist der interessante: *„neun Kämpfe, Namen
 unbekannt"* ist mehr als „nichts bekannt" und weniger als eine Liste.
 Fünf von neun Namen als Liste einzutragen hiesse, einen Dungeon mit neun
 Kämpfen als Dungeon mit fünf zu führen.
 
-Der vierte auch. Für Excavation Site kursieren vier Bossnamen, die eine
-andere Darstellung ausdrücklich bestreitet; für Blackmaw Hold kursiert
-eine Liste, die nachweislich die der Drowned City ist. Beides steht als
-Widerspruch da — wer die kursierende Liste anderswo gesehen hat, erfährt
-hier, warum sie fehlt.
+Der vierte auch. Für Blackmaw Hold kursiert eine Liste, die
+nachweislich die der Drowned City ist. Das steht als Widerspruch da —
+wer die kursierende Liste anderswo gesehen hat, erfährt hier, warum sie
+fehlt.
+
+**6.9.0.6: zwei Zustände aufgelöst.** Das Dungeon Journal (Fassung
+1.4.2, `community`) nennt für die City of Dalaran alle neun Kämpfe —
+dieselbe Zahl, die vorher berichtet war —, acht davon mit eigener
+Forever-NPC-Nummer; für die Excavation Site drei Bosse mit eigener
+Nummer und Beute, und „Highland Horror“ als Ziel einer Quest, nicht als
+Boss. Beide Listen sind `community`, ohne Reihenfolge, die der
+Excavation Site als unvollständig markiert. Den Zustand „gezählt,
+unbenannt“ trägt damit kein Dungeon mehr; `load_test.lua` zeichnet ihn
+mit einer geliehenen Tabelle, damit die Seite ihn weiter kann.
 
 ### `order` steht nur da, wo die Reihenfolge bekannt ist
 
@@ -672,8 +681,8 @@ Vier Zustände des Bossabschnitts, keiner davon eine leere Liste:
 | Bestand | Bossabschnitt |
 |---|---|
 | Namen liegen vor | das Kartenraster; darunter ggf. „7 Kämpfe sind bekannt, ihre Reihenfolge nicht" |
-| nur die Anzahl (City of Dalaran) | neun **leere Karten** mit `?`, darunter die bisher benannten |
-| Widerspruch (Excavation Site, Blackmaw Hold) | kein Bestand, der Widerspruch als Absatz, Vorsatz „Quellen widersprechen sich" |
+| nur die Anzahl (derzeit keiner; City of Dalaran bis 6.9.0.6) | so viele **leere Karten** mit `?`, darunter die bisher benannten |
+| Widerspruch (Blackmaw Hold) | kein Bestand, der Widerspruch als Absatz, Vorsatz „Quellen widersprechen sich" |
 | nichts | ein Absatz, der sagt, dass nichts veröffentlicht ist |
 
 ### Die Spalte läuft nicht über, und die Seite auch nicht
@@ -835,10 +844,33 @@ unangetastet (siehe `core/ui.lua`).
 ## Beute und Quests *(seit 6.5.0.0)*
 
 `data/dungeon_journal.lua` (`WeintCodex.DungeonJournal`) trägt für die
-**sieben** Dungeons, zu denen Beta-Berichte vorliegen – Hall of Thanes,
+Dungeons, zu denen Beta-Berichte vorliegen, die **Beute je Boss** und die
+**Quests je Dungeon**. Bis 6.9.0.5 waren es sieben (Hall of Thanes,
 Ragefire Chasm, Wailing Caverns, Ruins of Lordaeron, The Deadmines,
-Shadowfang Keep, Blackfathom Deeps – die **Beute je Boss** (153
-Gegenstände) und die **Quests je Dungeon** (50).
+Shadowfang Keep, Blackfathom Deeps; 153 Gegenstände, 50 Quests).
+
+**6.9.0.6: abgeglichen mit dem Addon „Dungeon Journal“ 1.4.2** (Exehn),
+das dieselben Berichte sammelt – jetzt **13 Dungeons, 277 Gegenstände,
+80 Quests, 55 Orte**. Neu: The Stockade, Gnomeregan, Razorfen Kraul,
+Scarlet Monastery (nur der Friedhof), Excavation Site, City of Dalaran
+(nur zwei bekannte Gegenstände, keine Quest); Beute von Gegnern
+unterwegs in The Deadmines, Wailing Caverns, Shadowfang Keep und
+Blackfathom Deeps (`others`); in Razorfen Kraul die seltenen Spawns
+Blind Hunter und Earthcaller Halmgar (`others`, sie fehlen der
+Classic-Bossliste). Übernommen sind nur Fakten – Nummern, Stufen,
+Erfahrung, Orte und die Namen aus dem Spiel; die deutschen Texte sind
+eigene. **Nicht übernommen:** Erfahrung, die das Addon selbst als
+Classic-Wert kennzeichnet (dort steht keine Angabe statt einer alten
+Zahl); fünf Quests der Excavation Site ohne Questnummer; die
+Stufenbereiche des Addons (Hall of Thanes 13–20 statt 13–18, Ruins of
+Lordaeron 15–22 statt 15–20 …) – zwei Community-Angaben ohne Beleg, welche
+stimmt. Korrigiert: bei „Old Ironforge Incursion“ und „Knowledge in the
+Deeps“ war der genannte Gegenstand kein Startgegenstand (die Karte
+beginnt die Reihe davor, das Manuskript ist das Questziel); „The Wrath
+of Rath'mael“ gibt in der Beta beobachtet keine Erfahrung (Hinweis, kein
+`xp = 0` – eine Null wäre eine Messung, die der Test nicht annimmt).
+*What's Training?* (Fassung 11.0.0-beta10) brachte für `data/trainer.lua`
+keine Änderung.
 
 * **Herkunft `community`** (`J.SOURCE`), wie die Forever-Bosslisten:
   zusammengetragen aus öffentlichen Beta-Berichten, nicht aus dem
@@ -855,6 +887,18 @@ Gegenstände) und die **Quests je Dungeon** (50).
   englisch.
 * **Erfahrung ist beobachtet** (`xp`), keine Angabe des Clients – die
   Seite schreibt „EP (beobachtet)“.
+* **Queststatus aus dem Client** *(6.9.0.7)*. Jede Questkachel sagt rechts
+  oben, wo die Quest für dich steht – **Erledigt**
+  (`C_QuestLog.IsQuestFlaggedCompleted`), **Abgabebereit** (`IsComplete`),
+  **Im Questlog** (`GetLogIndexForQuestID`, ersatzweise `IsOnQuest`),
+  **Fehlt noch**, **Ab Stufe N** (fehlt, aber noch zu niedrig) – mit einem
+  Streifen links in derselben Farbe; neben der Rubrik „Quests“ die Summe
+  („1 im Questlog · 2 erledigt · 1 fehlt noch“). Antwortet der Client auf
+  eine der Fragen nicht, steht **kein** Status da und keine Summe:
+  unbekannt ist nicht „fehlt“. Bei `QUEST_LOG_UPDATE`, `QUEST_ACCEPTED`,
+  `QUEST_TURNED_IN`, `QUEST_REMOVED` und `PLAYER_LEVEL_UP` werden die
+  sichtbaren Kacheln umgefärbt, nicht neu gezeichnet – die Seite springt
+  nicht.
 * **Zuordnung zu den eigenen Bossen.** Jede Beute hängt an einer
   Bosskennung aus `data/dungeons*.lua` (`data_test.lua` prüft das).
   Abweichungen: *The Baron* der Berichte ist unser *The Butcher*
@@ -920,7 +964,7 @@ Gegenstände) und die **Quests je Dungeon** (50).
 | `data/sources.lua` | Herkunftsmodell: `KINDS`, `IsValid/IsConfirmed/Label/Prefix/Why/Weaker` |
 | `data/dungeons.lua` | Die neun von Forever + `All/Get/HasBosses/BossesComplete/OrderKnown/BossSource/BossCount/SummonableBosses/LevelRange/ZoneLabel/FitsLevel` |
 | `data/dungeons_classic.lua` | Die zwanzig aus Classic + `AllClassic/AllInstances/IsLegacy/AllSummonable/Brackets/BracketIndexOf/Wings/BossesInWing` |
-| `data/dungeon_journal.lua` | Beute je Boss und Quests je Dungeon (sieben Dungeons), Orte der Questgeber (`PLACES`) + `Loot/Others/Quests/Has/Place` |
+| `data/dungeon_journal.lua` | Beute je Boss und Quests je Dungeon (13 Dungeons seit 6.9.0.6), Orte der Questgeber (`PLACES`) + `Loot/Others/Quests/Has/Place` |
 | `modules/questmap.lua` | Marke des Questgebers auf der Weltkarte: `Show/Place/Clear/MapName` |
 | `data/roles.lua` | Rollenmodell: Labels, Farben, `Frame`, `Specs`, `Tips`, `HasTips` |
 | `modules/rolepanel.lua` | Darstellung: `Card`/`BossCards`/`InstanceBlocks`/`BossBlocks` (Schlachtzug), `Roster`/`BossRoleRows` (Dungeon) |

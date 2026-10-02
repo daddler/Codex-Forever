@@ -620,6 +620,60 @@ do
         end
     end
 
+    -- ZWEI ZUSTAENDE OHNE ECHTEN FALL (seit 6.9.0.6). "Quellen
+    -- widersprechen sich" und "gezaehlt, aber nicht benannt" trugen bis
+    -- dahin die Excavation Site und die City of Dalaran; seit beide eine
+    -- Liste haben, zeichnet sie kein Dungeon des Bestands mehr. Die Seite
+    -- muss sie trotzdem koennen - der naechste umstrittene Dungeon kommt
+    -- bestimmt. Also hier mit geliehenen Tabellen, danach zurueck.
+    do
+        -- Die Attrappe kennt keine Kindrahmen; mitgeschrieben wird darum
+        -- jeder Text, den die Seite beim Zeichnen setzt.
+        local seen = {}
+        local setText = stub.Methods.SetText
+        local function Record(fn)
+            seen = {}
+            stub.Methods.SetText = function(self, t)
+                if type(t) == "string" then seen[#seen + 1] = t end
+                return setText(self, t)
+            end
+            local ok, err = pcall(fn)
+            stub.Methods.SetText = setText
+            assert(ok, err)
+        end
+        local function Shows(text)
+            for _, t in ipairs(seen) do
+                if t:find(text, 1, true) then return true end
+            end
+            return false
+        end
+        local D = WeintCodex.DungeonData
+        local KEYS = { "bosses", "bossSource", "bossesComplete", "orderKnown", "bossCount",
+                       "countSource", "partial", "conflict" }
+        local function Borrow(id, state)
+            local d = D.Get(id)
+            local saved = {}
+            for _, k in ipairs(KEYS) do saved[k] = d[k] d[k] = nil end
+            for k, v in pairs(state) do d[k] = v end
+            return function() for _, k in ipairs(KEYS) do d[k] = saved[k] end end
+        end
+        local back = Borrow("excavation_site", { bosses = {},
+            conflict = "Zwei Quellen nennen verschiedene Bosse (Prueflauf)." })
+        Record(function() Measure("excavation_site", nil, "Excavation Site, umstritten (Prueflauf)") end)
+        local contested = Shows("Quellen widersprechen sich") and Shows("(Prueflauf)")
+        back()
+        back = Borrow("city_of_dalaran", { bosses = {}, bossCount = 9,
+            countSource = WeintCodex.Sources.COMMUNITY,
+            partial = { names = { "Arcane Anomaly", "Lyn the Ignored" }, source = WeintCodex.Sources.COMMUNITY } })
+        Record(function() Measure("city_of_dalaran", nil, "City of Dalaran, gezaehlt (Prueflauf)") end)
+        local counted = Shows("9 Kämpfe berichtet, Namen unbekannt") and Shows("Bisher benannt (2 von 9)")
+        back()
+        Check(contested, "Zustand 'Quellen widersprechen sich' wird gezeichnet (geliehene Tabelle)")
+        Check(counted, "Zustand 'gezaehlt, Namen offen' wird gezeichnet, samt Teilliste (geliehene Tabelle)")
+        Check(#D.Get("excavation_site").bosses == 3 and #D.Get("city_of_dalaran").bosses == 9,
+            "nach dem Leihen stehen die echten Listen wieder da")
+    end
+
     Check(failed == nil, "keine Dungeonseite laeuft unten aus dem Fenster"
         .. (failed and (" - " .. failed) or ""))
     Check(worst <= budget, "Seiteninhalt, schlimmster Fall (" .. worstName .. "): "
@@ -8944,6 +8998,81 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Queststatus im Dungeonkompendium (6.9.0.7): was der Client sagt -
+-- erledigt, abgabebereit, im Questlog, fehlt, zu niedrig. Antwortet er
+-- nicht, steht nichts da (unbekannt ist nicht "fehlt").
+do
+    local DP = WeintCodex.DungeonPages
+    local saved = { _G.C_QuestLog, _G.IsQuestFlaggedCompleted, _G.UnitLevel, _G.UnitFactionGroup }
+    local ok, err = pcall(function()
+        local done, log, complete, level = {}, {}, {}, 20
+        _G.IsQuestFlaggedCompleted = nil
+        _G.C_QuestLog = {
+            IsQuestFlaggedCompleted = function(id) return done[id] == true end,
+            GetLogIndexForQuestID = function(id) return log[id] end,
+            IsComplete = function(id) return complete[id] == true end,
+        }
+        _G.UnitLevel = function() return level end
+        _G.UnitFactionGroup = function() return "Horde" end
+        local Q = function(id, req) return { id = id, requires = req or 10 } end
+        done[1] = true; log[2] = 3; complete[2] = true; log[3] = 4
+        assert(DP.QuestState(Q(1)) == "done", "erledigt nicht erkannt")
+        assert(DP.QuestState(Q(2)) == "ready", "abgabebereit nicht erkannt")
+        assert(DP.QuestState(Q(3)) == "active", "im Questlog nicht erkannt")
+        assert(DP.QuestState(Q(4)) == "open", "fehlende Quest nicht erkannt")
+        assert(DP.QuestState(Q(5, 25)) == "later", "zu niedrige Stufe nicht erkannt")
+        -- Unbekannt bleibt unbekannt.
+        _G.C_QuestLog.IsQuestFlaggedCompleted = nil
+        assert(DP.QuestState(Q(4)) == nil, "ohne Antwort auf 'erledigt' trotzdem ein Status")
+        _G.C_QuestLog.IsQuestFlaggedCompleted = function() return true end
+        _G.C_QuestLog.IsQuestFlaggedCompleted = function() error("gesperrt") end
+        assert(DP.QuestState(Q(4)) == nil, "Fehler des Clients als Status gelesen")
+        _G.C_QuestLog.IsQuestFlaggedCompleted = function(id) return done[id] == true end
+        _G.C_QuestLog.GetLogIndexForQuestID = function() error("gesperrt") end
+        assert(DP.QuestState(Q(4)) == nil, "ohne Antwort auf 'im Log' trotzdem 'fehlt'")
+        _G.C_QuestLog.IsOnQuest = function(id) return id == 3 end
+        assert(DP.QuestState(Q(3)) == "active" and DP.QuestState(Q(4)) == "open", "IsOnQuest als Ersatz nicht genutzt")
+        _G.C_QuestLog.IsOnQuest = nil
+        _G.C_QuestLog.GetLogIndexForQuestID = function(id) return log[id] end
+
+        -- Auf der Seite: Ragefire Chasm (Horde). Jede Kachel traegt ihren
+        -- Status, oben rechts die Summe.
+        local quests = WeintCodex.DungeonJournal.Quests("ragefire_chasm", "horde")
+        assert(#quests >= 3, "Voraussetzung: Quests in Ragefire Chasm")
+        for k in pairs(done) do done[k] = nil end
+        for k in pairs(log) do log[k] = nil end
+        done[quests[1].id] = true
+        log[quests[2].id] = 1
+        DP.Select("ragefire_chasm", nil)
+        WeintCodex.Navigation.SwitchTo("dungeons")
+        assert(#DP.questMarks == #quests, "nicht jede Kachel hat einen Status (" .. #DP.questMarks .. " von " .. #quests .. ")")
+        local byId = {}
+        for _, m in ipairs(DP.questMarks) do byId[m.q.id] = m end
+        assert(byId[quests[1].id].fs:GetText() == "Erledigt", "Kachel 'Erledigt' fehlt")
+        assert(byId[quests[2].id].fs:GetText() == "Im Questlog", "Kachel 'Im Questlog' fehlt")
+        assert(byId[quests[3].id].fs:GetText() == "Fehlt noch", "Kachel 'Fehlt noch' fehlt")
+        local sum = DP.QuestSummaryText() or ""
+        assert(sum:find("1 im Questlog", 1, true) and sum:find("1 erledigt", 1, true),
+            "Summe falsch: " .. sum)
+        -- Annehmen: die Kachel faerbt sich um, ohne neu zu zeichnen.
+        for _, m in ipairs(DP.questMarks) do m.fs:Show() end
+        log[quests[3].id] = 2
+        stub.FireEvent("QUEST_ACCEPTED", quests[3].id)
+        assert(byId[quests[3].id].fs:GetText() == "Im Questlog", "nach dem Annehmen nicht umgefaerbt")
+        -- Kein Client, kein Status - und keine Summe.
+        _G.C_QuestLog = nil
+        DP.Select("ragefire_chasm", nil)
+        WeintCodex.Navigation.SwitchTo("dungeons")
+        for _, m in ipairs(DP.questMarks) do
+            assert(m.fs:GetText() == "" and not m.state, "ohne Client ein Status: " .. tostring(m.fs:GetText()))
+        end
+        assert((DP.QuestSummaryText() or "") == "", "ohne Client eine Summe")
+    end)
+    _G.C_QuestLog, _G.IsQuestFlaggedCompleted, _G.UnitLevel, _G.UnitFactionGroup = unpack(saved, 1, 4)
+    Check(ok, "Queststatus: erledigt, abgabebereit, im Questlog, fehlt, zu niedrig; unbekannt bleibt leer; Summe; Umfaerben beim Annehmen"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Bruecke zum Bearbeitungsmodus des Spiels (6.9.0.5): was WeintCodex nicht
 -- verschiebt, erreicht ein Knopf - und wer von hier kam, kommt zurueck.
 do
@@ -9082,14 +9211,44 @@ do
         assert(ov and ov:GetAttribute("type") == "macro" and ov:GetAttribute("macrotext") == "/editmode"
             and ov:GetAttribute("useOnKeyDown") == false, "kein sicherer Makroknopf mit /editmode")
         assert(ov:GetScript("PostClick") == E.AfterGameClick, "Platz machen nicht nach dem Klick")
-        assert(not ov:GetScript("PreClick"), "Platz machen vor dem Klick - der Knopf ginge mit der Leiste zu")
+        assert(ov:GetScript("PreClick") == E.NoteOrigin, "Ausgangsort nicht VOR dem Klick gemerkt")
+        local function SecureClick()           -- Reihenfolge wie im Client
+            ov:GetScript("PreClick")(ov)
+            _G.SlashCmdList.EDITMODE()         -- das Makro, ausgefuehrt vom Spiel
+            ov:GetScript("PostClick")(ov)
+        end
         K.SetUnlocked(true)
-        _G.SlashCmdList.EDITMODE()            -- das Makro, ausgefuehrt vom Spiel
-        ov:GetScript("PostClick")(ov)
+        SecureClick()
         assert(not K.IsUnlocked() and E.bridge.from == "design", "nach dem Makro nicht hinueber")
         game:Hide()
         assert(K.IsUnlocked(), "mit Befehl: nicht zurueck im Gestaltungsmodus")
         K.SetUnlocked(false)
+        -- 6.9.0.7, Beta-Test: das Spiel SCHLIESST beim Oeffnen selbst das
+        -- Einstellungsfenster (UISpecialFrames). Der Rueckweg muss vorher
+        -- gemerkt sein - und zurueck geht es auf dieselbe Seite.
+        _G.SlashCmdList.EDITMODE = function() UO.frame:Hide() game:Show() end
+        UO.Show("actionbars", 2)
+        local before = UO.Where()
+        assert(before.module == "actionbars" and before.page == 2, "Voraussetzung: Aktionsleisten, Seite 2")
+        SecureClick()
+        assert(E.GameShown() and not UO.frame:IsShown() and E.bridge.from == "options",
+            "Fenster vom Spiel geschlossen: Rueckweg verloren (" .. tostring(E.bridge.from) .. ")")
+        game:Hide()
+        local after = UO.Where()
+        assert(UO.frame:IsShown() and after.module == "actionbars" and after.page == 2,
+            "nicht zurueck auf derselben Seite: " .. tostring(after.module) .. "/" .. tostring(after.page))
+        -- Und ueber den Gestaltungsmodus: Fenster -> Gestaltung -> Spiel ->
+        -- Gestaltung -> Fertig landet wieder auf derselben Seite.
+        K.SetUnlocked(true)
+        SecureClick()
+        game:Hide()
+        assert(K.IsUnlocked(), "ueber den Gestaltungsmodus: nicht zurueck")
+        K.SetUnlocked(false)
+        after = UO.Where()
+        assert(UO.frame:IsShown() and after.module == "actionbars" and after.page == 2,
+            "nach Fertig nicht auf derselben Seite: " .. tostring(after.module) .. "/" .. tostring(after.page))
+        UO.frame:Hide()
+        _G.SlashCmdList.EDITMODE = function() game:Show() end
         -- Im Kampf wird kein sicherer Knopf angelegt.
         _G.InCombatLockdown = function() return true end
         assert(E.AttachGame(WeintCodex.CreateButton(UIParent, { text = "y" })) == nil, "sicherer Knopf im Kampf angelegt")

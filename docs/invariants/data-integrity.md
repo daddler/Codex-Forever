@@ -204,13 +204,15 @@ auf der Oberfläche einen eigenen Text:
 Die letzten drei sind die neuen, und sie sind der eigentliche Gewinn:
 
 * **Gezählt, unbenannt** ist mehr als Schweigen. Für die City of
-  Dalaran sind neun Kämpfe berichtet und fünf Namen. Fünf Namen als
+  Dalaran waren bis 6.9.0.6 neun Kämpfe berichtet und fünf Namen
+  (seither sind alle neun benannt; der Zustand hat derzeit keinen Fall). Fünf Namen als
   Liste einzutragen hiesse, einen Dungeon mit neun Kämpfen als Dungeon
   mit fünf zu führen; gar nichts zu sagen verschweigt eine Auskunft,
   die man hat. „Neun Kämpfe" beantwortet *„wie lang wird das?"* bereits.
-* **Umstritten** ist mehr als Schweigen. Für Excavation Site kursieren
-  vier Bossnamen, die eine andere Darstellung bestreitet; für Blackmaw
-  Hold kursiert eine Liste, die nachweislich die der Drowned City ist.
+* **Umstritten** ist mehr als Schweigen. Für Excavation Site kursierten
+  bis 6.9.0.6 vier Bossnamen, die eine andere Darstellung bestritt
+  (aufgelöst durch eine genauere Quelle: drei Bosse, der vierte Name ist
+  ein Questziel); für Blackmaw Hold kursiert eine Liste, die nachweislich die der Drowned City ist.
   Wer die kursierende Liste anderswo gesehen hat, soll hier erfahren,
   **warum** sie fehlt — sonst sieht das Addon einfach veraltet aus.
 * **Vorläufig** ist seit 5.2.0.0 abgestuft. `data/sources.lua` kennt

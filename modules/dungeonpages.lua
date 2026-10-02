@@ -1913,6 +1913,11 @@ local function DrawQuestBody(inner, y, w, q)
 
     local tags = { FACTION_TEXT[q.faction] or "" }
     if q.class then tags[#tags + 1] = CLASS_TEXT[q.class] or q.class end
+    -- Rechts in derselben Zeile: der Status aus dem Client (6.9.0.7).
+    local mark = WeintCodex.Label(inner, "", { size = 11, color = "textMuted", justify = "RIGHT",
+        font = WeintCodex.Fonts.sansSemi })
+    mark:SetPoint("TOPRIGHT", inner, "TOPRIGHT", 0, y)
+    inner._questMark = mark
     y = BodyText(inner, y, table.concat(tags, " · "), w, { size = 10, color = "textFaint" }) - 2
 
     y = BodyText(inner, y, q.objective, w, { size = 12, color = "textNormal" }) - 2
@@ -1950,6 +1955,157 @@ local function DrawQuestBody(inner, y, w, q)
     return y
 end
 
+--------------------------------------------------
+-- Queststatus (6.9.0.7, Beta-Test: "ob man die Quest schon angenommen hat
+-- oder die noch fehlt - schneller im Blick als mit dem Questlog
+-- vergleichen")
+--------------------------------------------------
+-- DER CLIENT ANTWORTET, NICHT DER BESTAND. Erledigt fragt
+-- C_QuestLog.IsQuestFlaggedCompleted, im Questlog GetLogIndexForQuestID
+-- (bzw. IsOnQuest), abgabebereit IsComplete. Antwortet eine dieser
+-- Fragen nicht (Funktion fehlt, Fehler, geheimer Wert), steht KEIN Status
+-- da - "unbekannt" ist nicht "fehlt noch" (CLAUDE.md, erste Regel).
+--
+--   done    Erledigt               success
+--   ready   Abgabebereit           successBright
+--   active  Im Questlog            blueBright
+--   open    Fehlt noch             warningBright
+--   later   Ab Stufe N             textFaint   (fehlt, aber noch zu niedrig)
+--
+-- Die Zeilen werden nicht neu gezeichnet, sondern umgefaerbt (wie die
+-- Gegenstandszeilen): Questereignisse kommen oft, und die Seite soll
+-- dabei nicht nach oben springen.
+
+local QUEST_STATE = {
+    done   = { text = "Erledigt",      color = "success" },
+    ready  = { text = "Abgabebereit",  color = "successBright" },
+    active = { text = "Im Questlog",   color = "blueBright" },
+    open   = { text = "Fehlt noch",    color = "warningBright" },
+    later  = { text = "Ab Stufe %d",   color = "textFaint" },
+}
+WeintCodex.DungeonPages.QUEST_STATE = QUEST_STATE
+
+local function Plainly(v)
+    local K = WeintCodex.UIKit
+    if K and K.Plain then return K.Plain(v) end
+    return v
+end
+
+-- Eine Frage an den Client: (true, Antwort) oder (false) ohne Antwort.
+local function Ask(fn, ...)
+    if type(fn) ~= "function" then return false end
+    local ok, v = pcall(fn, ...)
+    if not ok then return false end
+    return true, Plainly(v)
+end
+
+function WeintCodex.DungeonPages.QuestState(q)
+    if type(q) ~= "table" or type(q.id) ~= "number" then return nil end
+    local ql = _G.C_QuestLog
+    local answered, done = Ask(ql and ql.IsQuestFlaggedCompleted, q.id)
+    if not answered then answered, done = Ask(_G.IsQuestFlaggedCompleted, q.id) end
+    if answered and done == true then return "done" end
+    if not answered or type(done) ~= "boolean" then return nil end
+
+    -- GetLogIndexForQuestID liefert nil, wenn die Quest NICHT im Log
+    -- steht - nil ist hier eine Antwort, kein Schweigen.
+    local inLog
+    local okIdx, idx = Ask(ql and ql.GetLogIndexForQuestID, q.id)
+    if okIdx then
+        if type(idx) == "number" then inLog = idx > 0
+        elseif type(idx) == "nil" then inLog = false end
+    end
+    if inLog == nil then
+        local okOn, on = Ask(ql and ql.IsOnQuest, q.id)
+        if okOn and type(on) == "boolean" then inLog = on end
+    end
+    if inLog == nil then return nil end
+    if inLog then
+        local okC, complete = Ask(ql.IsComplete, q.id)
+        if okC and complete == true then return "ready" end
+        return "active"
+    end
+    local okL, level = Ask(_G.UnitLevel, "player")
+    if okL and type(level) == "number" and type(q.requires) == "number" and level < q.requires then
+        return "later"
+    end
+    return "open"
+end
+
+local questMarks = {}      -- { fs, stripe, q } je gezeichnete Kachel
+local questSummary         -- { fs, quests } der gezeigten Liste
+WeintCodex.DungeonPages.questMarks = questMarks
+
+local function PaintQuestMark(m)
+    local state = WeintCodex.DungeonPages.QuestState(m.q)
+    local def = state and QUEST_STATE[state]
+    if not def then
+        m.fs:SetText("")
+        if m.stripe then m.stripe:Hide() end
+        m.state = nil
+        return
+    end
+    local col = C[def.color] or C.textMuted
+    m.fs:SetText(state == "later" and string.format(def.text, m.q.requires) or def.text)
+    m.fs:SetTextColor(col[1], col[2], col[3], 1)
+    if m.stripe then
+        m.stripe:SetColorTexture(col[1], col[2], col[3], state == "later" and 0.35 or 0.9)
+        m.stripe:Show()
+    end
+    m.state = state
+end
+
+-- "2 im Questlog · 1 abgabebereit · 1 erledigt · 2 fehlen noch" - nur,
+-- wenn der Client fuer JEDE Quest der Liste geantwortet hat; eine Summe
+-- ueber teils unbekannte Zustaende waere eine erfundene Zahl.
+local SUMMARY_ORDER = { "active", "ready", "done", "open", "later" }
+local SUMMARY_WORD = {
+    active = "im Questlog", ready = "abgabebereit", done = "erledigt",
+    open = "fehlen noch", later = "später",
+}
+local counts = {}
+local function PaintSummary()
+    if not questSummary then return end
+    for k in pairs(counts) do counts[k] = 0 end
+    for _, q in ipairs(questSummary.quests) do
+        local state = WeintCodex.DungeonPages.QuestState(q)
+        if not state then questSummary.fs:SetText("") return end
+        counts[state] = (counts[state] or 0) + 1
+    end
+    local text = ""
+    for _, k in ipairs(SUMMARY_ORDER) do
+        local n = counts[k] or 0
+        if n > 0 then
+            local word = (k == "open" and n == 1) and "fehlt noch" or SUMMARY_WORD[k]
+            text = text .. (text == "" and "" or "  ·  ") .. n .. " " .. word
+        end
+    end
+    questSummary.fs:SetText(text)
+end
+
+-- Nur, was gerade zu sehen ist (IsVisible, nicht IsShown: eine Zeile
+-- einer geschlossenen Seite ist "gezeigt", aber nicht sichtbar).
+function WeintCodex.DungeonPages.RepaintQuests()
+    for _, m in ipairs(questMarks) do
+        if m.fs:IsVisible() then PaintQuestMark(m) end
+    end
+    if questSummary and questSummary.fs:IsVisible() then PaintSummary() end
+end
+
+-- Fuer den Prueflauf: die Zusammenfassung der gezeigten Liste.
+function WeintCodex.DungeonPages.QuestSummaryText()
+    return questSummary and questSummary.fs:GetText() or nil
+end
+
+local questEvents = CreateFrame("Frame")
+WeintCodex.DungeonPages.questEvents = questEvents
+for _, ev in ipairs({ "QUEST_LOG_UPDATE", "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_REMOVED", "PLAYER_LEVEL_UP" }) do
+    pcall(questEvents.RegisterEvent, questEvents, ev)
+end
+questEvents:SetScript("OnEvent", function()
+    if #questMarks > 0 or questSummary then WeintCodex.DungeonPages.RepaintQuests() end
+end)
+
 -- JEDE QUEST IN IHRER KACHEL (6.5.1.1, Beta-Test: "die Quests sind
 -- nacheinander weg, man erkennt nicht, wann eine neue beginnt"): eine
 -- Flaeche eine Stufe heller als die Karte, ein Haarlinienrand, Luft
@@ -1971,6 +2127,16 @@ local function DrawQuest(inner, y, w, q)
     local h = -endY + 2 * QUEST_PAD
     body:SetHeight(-endY)
     tile:SetHeight(h)
+    -- Ein Streifen links in der Farbe des Status: auf einen Blick, auch
+    -- beim schnellen Durchrollen.
+    local stripe = tile:CreateTexture(nil, "ARTWORK")
+    stripe:SetPoint("TOPLEFT", tile, "TOPLEFT", 0, 0)
+    stripe:SetPoint("BOTTOMLEFT", tile, "BOTTOMLEFT", 0, 0)
+    stripe:SetWidth(3)
+    stripe:Hide()
+    local m = { fs = body._questMark, stripe = stripe, q = q }
+    questMarks[#questMarks + 1] = m
+    PaintQuestMark(m)
     WeintCodex.DungeonPages.questTiles = (WeintCodex.DungeonPages.questTiles or 0) + 1
     return y - h - QUEST_GAP
 end
@@ -1996,6 +2162,13 @@ local function DrawJournal(inner, y, w, dungeon)
     if #all > 0 then
         local rubric = WeintCodex.Eyebrow(inner, "Quests", { color = "textDim", size = 10 })
         rubric:SetPoint("TOPLEFT", inner, "TOPLEFT", 0, y)
+        -- Rechts neben der Rubrik: wie viele davon wo stehen (6.9.0.7).
+        if #quests > 0 then
+            local sum = WeintCodex.Label(inner, "", { size = 11, color = "textMuted", justify = "RIGHT" })
+            sum:SetPoint("TOPRIGHT", inner, "TOPRIGHT", 0, y + 1)
+            questSummary = { fs = sum, quests = quests }
+            PaintSummary()
+        end
         y = y - JOURNAL_RUBRIC_H
         for _, q in ipairs(quests) do y = DrawQuest(inner, y, w, q) end
         local hidden = #all - #quests
@@ -2500,6 +2673,8 @@ local function DrawDungeonAt(f, dungeon, withInspector)
     WeintCodex.DungeonPages.itemRows = 0   -- fuer den Prueflauf: Gegenstandszeilen dieser Runde
     WeintCodex.DungeonPages.mapLinks = 0   -- und Kartenlinks
     WeintCodex.DungeonPages.questTiles = 0
+    wipe(questMarks)       -- Queststatus: nur die Kacheln dieser Runde
+    questSummary = nil
     f._relayout = nil
     gridCols, gridLongest = 0, 0
 

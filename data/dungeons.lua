@@ -257,22 +257,39 @@ WeintCodex_Dungeons = {
                 .. "Titanenkonstrukte bewachen den Fund.",
         mapArt   = true,
 
-        -- HIER STEHT ABSICHTLICH NICHTS, OBWOHL VIER NAMEN KURSIEREN.
-        -- Eine Darstellung nennt vier Bosse und schreibt sie dem
-        -- Beta-Client zu; eine andere sagt ausdrücklich, für diesen
-        -- Dungeon sei keine Liste bekannt. Zwei Quellen, die einander
-        -- widersprechen, ergeben keine Liste - sie ergeben einen
-        -- offenen Punkt, und der steht hier als solcher.
-        bossSource     = nil,
-        bossesComplete = nil,
-        orderKnown     = nil,
+        -- BIS 6.9.0.5 STAND HIER ABSICHTLICH NICHTS. Vier Namen kursierten
+        -- (Saltspine, Shadetooth, Highland Horror, Relic Guardian), eine
+        -- andere Darstellung sagte, für diesen Dungeon sei keine Liste
+        -- bekannt - zwei Quellen, die einander widersprachen.
+        -- Seit 6.9.0.6 löst das Dungeon Journal (Fassung 1.4.2, eine
+        -- Sammlung aus Beta-Berichten) das auf: drei Bosse mit eigenen
+        -- Forever-NPC-Nummern (260322, 260325, 260326) und eigener Beute;
+        -- „Highland Horror“ ist das Ziel der Quest „Horrors in the
+        -- Highland“, kein Boss. Weiter `community`, nicht bestätigt, und
+        -- die Beute nennt der Bericht ausdrücklich unvollständig - also
+        -- `bossesComplete = false`. Relic Guardian gilt als Endboss; eine
+        -- Reihenfolge für die beiden anderen nennt niemand.
+        bossSource     = SRC.COMMUNITY,
+        bossesComplete = false,
+        orderKnown     = false,
         bossCount      = nil,
-        conflict = "Vier Bossnamen kursieren (Saltspine, Shadetooth, Highland "
-                .. "Horror, Relic Guardian), eine andere Darstellung sagt "
-                .. "ausdrücklich, für diesen Dungeon sei keine Liste bekannt. "
-                .. "WeintCodex trägt sie nicht ein, solange sich das "
-                .. "widerspricht.",
-        bosses = {},
+        bosses = {
+            {
+                id   = "saltspine",
+                name = "Saltspine",
+                position = "Ein weißer Krokilisk.",
+            },
+            {
+                id   = "shadetooth",
+                name = "Shadetooth",
+                position = "Ein großer violetter Raptor, Anführer der Raptoren im Stalker's Thicket.",
+            },
+            {
+                id   = "relic_guardian",
+                name = "Relic Guardian",
+                position = "Steinernes Titanenkonstrukt, der Endboss.",
+            },
+        },
     },
 
     {
@@ -291,25 +308,55 @@ WeintCodex_Dungeons = {
                 .. "einzige mit Händlern.",
         mapArt   = true,
 
-        -- DER FALL, FÜR DEN `bossCount` OHNE `bosses` ERFUNDEN WURDE.
-        -- Berichtet wird übereinstimmend: neun Kämpfe. Von den neun
-        -- Namen sind fünf zu bekommen, die Reihenfolge von keinem.
-        -- Fünf Namen als Liste einzutragen hiesse, einen Dungeon mit
-        -- neun Kämpfen als Dungeon mit fünf zu führen - die Anzahl zu
-        -- nennen und die Namen als das auszuweisen, was sie sind, ist
-        -- die ehrlichere Auskunft.
-        bossSource     = nil,
-        bossesComplete = nil,
-        orderKnown     = nil,
+        -- BIS 6.9.0.5 DER FALL, FÜR DEN `bossCount` OHNE `bosses`
+        -- ERFUNDEN WURDE: neun Kämpfe berichtet, fünf Namen bekannt.
+        -- Seit 6.9.0.6 nennt das Dungeon Journal (Fassung 1.4.2, eine
+        -- Sammlung aus Beta-Berichten) alle neun, acht davon mit eigener
+        -- Forever-NPC-Nummer - dieselbe Zahl, die schon vorher berichtet
+        -- war. Weiter `community`; die Reihenfolge nennt niemand
+        -- vollständig (Atrexis in der Unterstadt am Anfang, der Shade of
+        -- the Archmage in der Violetten Zitadelle am Ende), also keine
+        -- Pullnummern. Lyn the Ignored ist ein seltener Elite.
+        bossSource     = SRC.COMMUNITY,
+        bossesComplete = true,
+        orderKnown     = false,
         bossCount      = 9,
-        countSource    = SRC.COMMUNITY,
-        partial = {
-            names  = { "Arcane Anomaly", "Unstable Sentinel",
-                       "Shade of the Archmage", "Atrexis the Grave Knight",
-                       "Lyn the Ignored" },
-            source = SRC.COMMUNITY,
+        bosses = {
+            {
+                id   = "atrexis",
+                name = "Atrexis the Grave Knight",
+                position = "Am Ritualkreis in der Unterstadt (Underbelly), zwischen Nekromanten des Kirin Tor und aufsteigenden Skeletten. Entwaffnet.",
+            },
+            {
+                id   = "arcane_anomaly",
+                name = "Arcane Anomaly",
+                position = "Auf einer runden Terrasse in den Straßen, nach der Kanalisation.",
+            },
+            {
+                id   = "fel_ancient",
+                name = "Fel Ancient",
+                position = "Ein vom Teufel verderbter Treant in den Straßen.",
+            },
+            {
+                id   = "unstable_sentinel",
+                name = "Unstable Sentinel",
+                position = "Arkaner Golem bei der Magus Commerce Exchange. „Malfunction“ trifft alle im Umkreis von 25 Metern.",
+            },
+            { id = "mana_wraith",    name = "Mana Wraith" },
+            { id = "mana_devourer",  name = "Mana Devourer" },
+            { id = "mana_elemental", name = "Mana Elemental" },
+            {
+                id       = "lyn_the_ignored",
+                name     = "Lyn the Ignored",
+                optional = true,
+                note     = "Seltener Elite.",
+            },
+            {
+                id   = "shade_of_the_archmage",
+                name = "Shade of the Archmage",
+                position = "Endboss, im Purpursalon der Violetten Zitadelle. Nicht in einer Linie mit dem Ziel von „Bounding Mana“ stehen; er verwandelt die Gruppe und setzt zurück, wenn jemand den Raum verlässt.",
+            },
         },
-        bosses = {},
     },
 
     {
