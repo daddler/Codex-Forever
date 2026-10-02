@@ -139,10 +139,16 @@ local BLIZZARD = {
 -- des Spiels (targetAuraSource = "game") bleibt der Zielrahmen des Spiels
 -- am Leben und wird nur durchsichtig (DimAllBut) - sein Zauberbalken aber
 -- blendet "Unterbrochen" ueber eine Animation ein, und eine Animation setzt
--- die Deckkraft an SetAlpha vorbei. Deshalb wird der Balken selbst
--- abgehaengt (K.HideBlizzard: Ereignisse weg, an den versteckten Rahmen),
--- egal ob der Zielrahmen des Spiels lebt oder nicht. Name oder Feld am
--- Rahmen (.spellbar), was der Client kennt.
+-- die Deckkraft an SetAlpha vorbei. Deshalb wird der Balken selbst still
+-- gelegt, egal ob der Zielrahmen des Spiels lebt oder nicht: keine
+-- Ereignisse (nur ueber sie schaltet das Spiel ihn ein - SetUnit beim
+-- Anlegen), versteckt, und versteckt gehalten, falls ihn doch jemand zeigt.
+-- NICHT umhaengen (6.9.0.3 tat das mit K.HideBlizzard): das Spiel fragt in
+-- TargetSpellBarMixin:AdjustPosition seinen Elternrahmen
+-- (ShouldAnchorSpellBarToAuraContainer) - am versteckten Rahmen gibt es die
+-- Methode nicht, Beta-Test 6.9.0.3: "TargetFrame.lua:829: attempt to call a
+-- nil value" beim Anvisieren des Auktionators. Name oder Feld am Rahmen
+-- (.spellbar), was der Client kennt.
 UF.CASTBARS = {
     target = { name = "TargetFrameSpellBar", owner = "TargetFrame" },
     focus  = { name = "FocusFrameSpellBar", owner = "FocusFrame" },
@@ -159,9 +165,23 @@ function UF.GameCastBar(u)
     return type(bar) == "table" and bar or nil
 end
 
+local quietBars = setmetatable({}, { __mode = "k" })
+UF.quietBars = quietBars
+
 function UF.HideGameCastBar(u)
     local bar = UF.GameCastBar(u)
-    if bar then HideBlizzard(bar) end
+    if not bar or (bar.IsForbidden and bar:IsForbidden()) then return bar end
+    K.AfterCombat(function()
+        if bar.UnregisterAllEvents then bar:UnregisterAllEvents() end
+        bar:Hide()
+    end)
+    if not quietBars[bar] and _G.hooksecurefunc then
+        quietBars[bar] = true
+        _G.hooksecurefunc(bar, "Show", function(self) self:Hide() end)
+        if type(bar.SetShown) == "function" then
+            _G.hooksecurefunc(bar, "SetShown", function(self, on) if on then self:Hide() end end)
+        end
+    end
     return bar
 end
 

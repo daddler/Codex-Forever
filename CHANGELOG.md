@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.9.0.4] – 2026-10-02
+
+**Keine Fehlermeldung mehr beim Anvisieren.** Seit dem letzten Update meldete das Spiel beim Anvisieren mancher NPCs (etwa des Auktionators) einen Fehler im Zielrahmen. Behoben – der rote Zauberbalken des Spiels über dem Ziel bleibt trotzdem weg.
+
+### Technisch
+
+- Fehler aus 6.9.0.3 (BugGrabber: `TargetFrame.lua:829: attempt to call a nil value` aus `SignalAuraContainerAnchorsChanged`): `UF.HideGameCastBar` hing `TargetFrameSpellBar` über `K.HideBlizzard` an einen leeren Rahmen; `TargetSpellBarMixin:AdjustPosition` ruft `self:GetParent():ShouldAnchorSpellBarToAuraContainer()` – am leeren Rahmen nil. Jetzt bleibt der Balken an seinem Rahmen: `UnregisterAllEvents` (das Spiel schaltet ihn nur über Ereignisse ein), `Hide`, und Haken hinter `Show`/`SetShown` halten ihn versteckt.
+- `load_test.lua`: Balken bleibt am eigenen Rahmen, `AdjustPosition` wie im Quelltext des Spiels läuft, `Show`/`SetShown` halten ihn nicht; sechs Gegenproben, darunter die Fassung aus 6.9.0.3.
+
 ## [6.9.0.3] – 2026-10-02
 
 **Kein Zauberbalken des Spiels mehr über dem Ziel.** Unterbrichst du dein Ziel, erschien über dem Zielrahmen noch der rote Balken des Spiels. Er ist jetzt an Ziel und Fokus ganz weg – es bleibt der eigene.

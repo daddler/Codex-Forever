@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.9.0.4",
+        date    = "02.10.2026",
+        notes   = {
+            "|cff7C6CFFKeine Fehlermeldung mehr beim Anvisieren.|r Seit dem letzten Update meldete das Spiel beim Anvisieren mancher NPCs (etwa des Auktionators) einen Fehler im Zielrahmen. Behoben – der rote Zauberbalken des Spiels über dem Ziel bleibt trotzdem weg.",
+        },
+    },
+    {
         version = "6.9.0.3",
         date    = "02.10.2026",
         notes   = {

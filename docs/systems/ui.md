@@ -504,10 +504,15 @@ Seit 6.2.0.0:
   **Sein Zauberbalken nicht** (6.9.0.3, Beta-Test: beim Unterbrechen
   stand über dem Zielrahmen der Balken des Spiels in Rot): „Unterbrochen“
   blendet über eine Animation ein, und die setzt die Deckkraft an
-  `SetAlpha` vorbei. `UF.HideGameCastBar` hängt `TargetFrameSpellBar` und
+  `SetAlpha` vorbei. `UF.HideGameCastBar` legt `TargetFrameSpellBar` und
   `FocusFrameSpellBar` (sonst `.spellbar` am Rahmen) für jeden ersetzten
-  Rahmen ab – `K.HideBlizzard`, ob der Zielrahmen des Spiels lebt oder
-  nicht.
+  Rahmen still: keine Ereignisse, versteckt, Haken hinter `Show`/`SetShown`.
+  **Nie umhängen** (6.9.0.4): `TargetSpellBarMixin:AdjustPosition` fragt
+  den Elternrahmen (`ShouldAnchorSpellBarToAuraContainer`) – 6.9.0.3 hing
+  ihn mit `K.HideBlizzard` an einen leeren Rahmen, und beim Anvisieren kam
+  „TargetFrame.lua:829: attempt to call a nil value“. Allgemein:
+  `K.HideBlizzard` nur für Rahmen, deren Kinder und Code nicht über
+  `GetParent()` zurück zum Spiel greifen.
 * **Aurenleisten (Restzeit als Leiste, „wie bei ElvUI“) – nicht machbar,
   ausgebaut in 6.6.0.4.** Drei Fassungen lang im Beta-Client gemessen:
   - 6.6.0.1, Container des Spiels (`AuraContainer`, Dauerleiste über

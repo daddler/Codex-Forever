@@ -3327,39 +3327,63 @@ end
 -- beim Unterbrechen erschien ueber dem Zielrahmen der Balken des Spiels in
 -- Rot - der Zielrahmen des Spiels lebt fuer seine Auren, und die
 -- Animation "Unterbrochen" setzt die Deckkraft an SetAlpha vorbei.
+-- 6.9.0.4: NICHT umhaengen - das Spiel fragt in AdjustPosition seinen
+-- Elternrahmen (ShouldAnchorSpellBarToAuraContainer); 6.9.0.3 hing ihn an
+-- einen leeren Rahmen, und beim Anvisieren des Auktionators kam
+-- "TargetFrame.lua:829: attempt to call a nil value".
 do
     local ok, err = pcall(function()
         local UF = WeintCodex.UIUnitFrames
-        local saved = { _G.TargetFrameSpellBar, _G.FocusFrameSpellBar, _G.FocusFrame }
+        local saved = { _G.TargetFrameSpellBar, _G.FocusFrameSpellBar, _G.FocusFrame, _G.hooksecurefunc }
+        _G.hooksecurefunc = function(obj, name, fn)
+            local orig = obj[name]
+            obj[name] = function(...) local r = orig(...) fn(...) return r end
+        end
         local unreg = {}
-        local function Bar(name)
+        local function Bar(name, owner)
             local b = stub.NewObject("StatusBar", name)
+            b:SetParent(owner)
             b:Show()
             b.UnregisterAllEvents = function(self) unreg[self] = true end
+            -- wie TargetSpellBarMixin:AdjustPosition im Quelltext des Spiels
+            b.AdjustPosition = function(self) return self:GetParent():ShouldAnchorSpellBarToAuraContainer() end
             return b
         end
+        local function Owner()
+            local o = stub.NewObject("Frame")
+            o.ShouldAnchorSpellBarToAuraContainer = function() return false end
+            return o
+        end
         -- Ueber den Namen.
-        local tbar = Bar("TargetFrameSpellBar")
+        local towner = Owner()
+        local tbar = Bar("TargetFrameSpellBar", towner)
         _G.TargetFrameSpellBar = tbar
         assert(UF.HideGameCastBar("target") == tbar, "Zauberbalken des Ziels nicht gefunden")
-        assert(tbar:GetParent() == K.hiddenParent and not tbar:IsShown() and unreg[tbar],
-            "Zauberbalken des Ziels nicht abgehaengt (Eltern, sichtbar, Ereignisse)")
+        assert(not tbar:IsShown() and unreg[tbar], "Zauberbalken des Ziels nicht still (sichtbar oder Ereignisse)")
+        assert(tbar:GetParent() == towner, "Zauberbalken umgehaengt - AdjustPosition des Spiels scheitert")
+        assert(pcall(tbar.AdjustPosition, tbar), "AdjustPosition des Spiels scheitert")
+        -- Zeigt ihn doch jemand: er bleibt weg.
+        tbar:Show()
+        assert(not tbar:IsShown(), "Zauberbalken laesst sich wieder zeigen")
+        tbar:SetShown(true)
+        assert(not tbar:IsShown(), "Zauberbalken laesst sich ueber SetShown zeigen")
         -- Ohne globalen Namen: ueber das Feld am Rahmen.
         _G.FocusFrameSpellBar = nil
-        local fbar = Bar(nil)
-        _G.FocusFrame = stub.NewObject("Frame")
+        _G.FocusFrame = Owner()
+        local fbar = Bar(nil, _G.FocusFrame)
         _G.FocusFrame.spellbar = fbar
-        assert(UF.HideGameCastBar("focus") == fbar and fbar:GetParent() == K.hiddenParent, "Zauberbalken des Fokus bleibt")
+        assert(UF.HideGameCastBar("focus") == fbar and not fbar:IsShown() and fbar:GetParent() == _G.FocusFrame,
+            "Zauberbalken des Fokus bleibt oder wird umgehaengt")
         assert(UF.HideGameCastBar("player") == nil, "Spieler hat hier keinen Balken des Spiels")
-        _G.TargetFrameSpellBar, _G.FocusFrameSpellBar, _G.FocusFrame = saved[1], saved[2], saved[3]
+        _G.TargetFrameSpellBar, _G.FocusFrameSpellBar, _G.FocusFrame, _G.hooksecurefunc = saved[1], saved[2], saved[3], saved[4]
         -- Der Aufbau ruft es fuer jeden ersetzten Rahmen.
         local h = io.open(ROOT .. "/ui/unitframes.lua", "r")
         local code = h:read("*a"):gsub("%-%-[^\n]*", "")
         h:close()
         local build = code:match("local function Build%(%)(.-)\nend")
-        assert(build and build:find("UF.HideGameCastBar(u)", 1, true), "Aufbau haengt die Zauberbalken des Spiels nicht ab")
+        assert(build and build:find("UF.HideGameCastBar(u)", 1, true), "Aufbau legt die Zauberbalken des Spiels nicht still")
     end)
-    Check(ok, "Zauberbalken des Spiels an Ziel und Fokus abgehaengt, auch mit den Auren des Spiels"
+    Check(ok, "Zauberbalken des Spiels an Ziel und Fokus still, am eigenen Elternrahmen (AdjustPosition des Spiels laeuft)"
         .. (ok and "" or (": " .. tostring(err))))
 end
 
