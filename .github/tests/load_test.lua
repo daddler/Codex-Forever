@@ -9328,6 +9328,31 @@ do
         _, mx = w.rows[1].bar:GetMinMaxValues()
         assert(mx == 1000, "Schaden misst nicht mehr die Summe")
 
+        -- Aufschluesselung: alle Reiter passen hinein (Beta-Test: "Bannungen"
+        -- lief rechts aus dem Fenster), und mit wenigen wird sie wieder schmal.
+        local allTypes = { DamageDone = 0, Dps = 1, HealingDone = 2, Hps = 3, Absorbs = 4, Interrupts = 5,
+            Dispels = 6, DamageTaken = 7, AvoidableDamageTaken = 8, Deaths = 9, EnemyDamageTaken = 10 }
+        local function TabsFit()
+            local bdx = DM.Breakdown()
+            local sum, n = 0, 0
+            for _, t in ipairs(bdx.tabs) do
+                if t:IsShown() then sum, n = sum + t:GetWidth(), n + 1 end
+            end
+            return sum + 4 * (n - 1) <= bdx.frame:GetWidth() - 24 and bdx.frame:GetWidth() == DM.BreakdownWidth(), n
+        end
+        _G.Enum.DamageMeterType = allTypes
+        DM.OpenBreakdown(w, srcs[1])
+        local fits, n = TabsFit()
+        assert(DM.Breakdown().frame:IsShown() and n == 8 and fits,
+            "Reiter laufen aus dem Fenster: " .. n .. " Reiter, " .. DM.Breakdown().frame:GetWidth() .. " px")
+        assert(DM.Breakdown().stats[4]:GetWidth() == (DM.BreakdownWidth() - 24) / 4, "Kennzahlen nicht mitgewachsen")
+        DM.Breakdown().frame:Hide()
+        _G.Enum.DamageMeterType = { DamageDone = 0, HealingDone = 2 }
+        DM.OpenBreakdown(w, srcs[1])
+        assert(DM.Breakdown().frame:GetWidth() == 360 and TabsFit(), "mit zwei Reitern nicht wieder schmal")
+        DM.Breakdown().frame:Hide()
+        _G.Enum.DamageMeterType = { DamageDone = 0, Dps = 1, HealingDone = 2, DamageTaken = 7, Deaths = 9 }
+
         -- 3. Melden: offene Zahlen nach dem Kampf, sonst nichts.
         local sent = {}
         _G.SendChatMessage = function(msg, chan) sent[#sent + 1] = chan .. "|" .. msg end

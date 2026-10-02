@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.9.0.9",
+        date    = "02.10.2026",
+        notes   = {
+            "|cff7C6CFFAufschlüsselung mit Platz für alles.|r Das Fenster, das sich mit einem Klick auf einen Namen in der Schadensanzeige öffnet, wird so breit, wie die Reiter der Messarten es brauchen – keiner läuft mehr rechts hinaus.",
+        },
+    },
+    {
         version = "6.9.0.8",
         date    = "02.10.2026",
         notes   = {

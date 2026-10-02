@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.9.0.9] – 2026-10-02
+
+**Aufschlüsselung mit Platz für alles.** Das Fenster, das sich mit einem Klick auf einen Namen in der Schadensanzeige öffnet, wird so breit, wie die Reiter der Messarten es brauchen – keiner läuft mehr rechts hinaus.
+
+### Technisch
+
+- Fehler aus 6.9.0.8 (Beta-Test, Bildschirmfoto): mit Absorption, vermeidbarem Schaden und Gegnern passten die Reiter nicht mehr in die feste Breite von 360 px, „Bannungen“ stand außerhalb. `BuildTabs` misst jetzt die Reiterzeile und setzt die Breite (`ApplyWidth`: Rahmen, Kennzahlen, Hinweis; mindestens 360 px, mit wenigen Reitern wieder schmal). Zauber, Verlauf und Auren rechneten schon beim Zeichnen mit der Breite. `load_test.lua` prüft alle elf Messarten und zwei; fünf Gegenproben.
+
 ## [6.9.0.8] – 2026-10-02
 
 **Bedrohung in der Schadensanzeige.** Neue Messart „Bedrohung“: alle aus deiner Gruppe auf der Bedrohungsliste deines Ziels, Tank zuerst. Ein voller Balken heißt: diese Person zieht die Aggro – die 110 % im Nahkampf und 130 % auf Distanz rechnet das Spiel schon ein.
