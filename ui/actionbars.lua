@@ -859,20 +859,42 @@ AB.Arrange = Arrange
 --------------------------------------------------
 
 
+-- FREI VERSCHIEBBAR seit 6.9.1.0 (Beta-Test: "das Mikromenue laesst sich
+-- nicht frei verschieben"). Bis dahin stand hier ein fester Punkt (unten
+-- links 4/4, Taschen unten rechts): nach jedem Anordnen des
+-- Bearbeitungsmodus setzte WeintCodex beide zurueck - wer sie dort
+-- verschob, sah sie zurueckspringen, und im Gestaltungsmodus fehlten sie.
+-- Jetzt sind beide Rahmen des Gestaltungsmodus (`hud_micro`, `hud_bags`):
+-- der Platz ist der dort gespeicherte, sonst der aus ui/layout.lua.
+-- "Geschuetzt" behandelt (nicht im Kampf ziehen, setzen erst danach) - ob
+-- das Spiel sie schuetzt, ist auf Forever nicht gemessen.
+local PLACED = {
+    { key = "hud_micro", label = "Mikromenü", opt = "microMenu", want = "left",
+      frames = { "MicroMenuContainer", "MicroMenu" } },
+    { key = "hud_bags", label = "Taschenleiste", opt = "bagsBar", want = "right",
+      frames = { "BagsBar" } },
+}
+AB.PLACED = PLACED
+local registered = {}
+
 local placing = false
 local function Place()
     if placing or K.InCombat() then return end
     placing = true
-    local micro = Frame("MicroMenuContainer", "MicroMenu")
-    if micro and Opt("microMenu") == "left" then
-        micro:SetScale((Opt("microScale") or 85) / 100)
-        micro:ClearAllPoints()
-        micro:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 4, 4)
-    end
-    local bags = Frame("BagsBar")
-    if bags and Opt("bagsBar") == "right" then
-        bags:ClearAllPoints()
-        bags:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -4, 4)
+    for _, e in ipairs(PLACED) do
+        local f = Frame(unpack(e.frames))
+        if f and Opt(e.opt) == e.want then
+            if e.key == "hud_micro" then f:SetScale((Opt("microScale") or 85) / 100) end
+            if registered[e.key] ~= f then
+                registered[e.key] = f
+                K.RegisterMover(f, e.key, e.label, K.Layout(e.key), { secure = true })
+            else
+                K.ApplyPosition(e.key)
+            end
+            -- Gezogen wird mit StartMoving; den Platz merkt sich WeintCodex,
+            -- nicht die Layout-Datei des Spiels.
+            if f.SetUserPlaced then pcall(f.SetUserPlaced, f, false) end
+        end
     end
     placing = false
 end
@@ -1053,7 +1075,7 @@ K.Register({
                         { value = "game",  text = "Wie im Spiel" } } },
                   { type = "toggle", label = "Taschenleiste im WeintCodex-Stil", key = "bagsSkin", reload = true,
                     description = "Flache Taschenplätze mit feinem Rand statt der goldenen Rahmen." })
-            B:Note("Solange hier nicht „Wie im Spiel“ steht, bestimmt WeintCodex den Platz von Mikromenü und Taschenleiste – auch nach dem Bearbeitungsmodus.")
+            B:Note("Solange hier nicht „Wie im Spiel“ steht, bestimmt WeintCodex den Platz von Mikromenü und Taschenleiste: verschieben im Gestaltungsmodus von WeintCodex (ziehen, Rechtsklick setzt zurück), nicht im Bearbeitungsmodus des Spiels – dort bleibt der Platz von WeintCodex. Mit „Wie im Spiel“ verschiebt sie der Bearbeitungsmodus.")
             B:Section("Welche Leisten es gibt")
             B:Note("Welche Leisten es überhaupt gibt, bestimmt das Spiel (Esc → Optionen → Aktionsleisten). Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt – WeintCodex ordnet die Knöpfe des Spiels.")
         end },

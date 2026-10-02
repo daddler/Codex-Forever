@@ -75,6 +75,12 @@ K.LAYOUT = {
     -- Automark (ui/automark.lua, 6.9.0.2): der Knopf "Markieren" unter den
     -- Erinnerungen - erscheint nur beim Betreten einer Instanz.
     automark        = { point = "TOP",         relPoint = "TOP", x = 0, y = -170 },
+    -- Mikromenue und Taschenleiste des Spiels (6.9.1.0): seitdem Rahmen des
+    -- Gestaltungsmodus (ui/actionbars.lua) - hier ihr Standardplatz, den
+    -- auch das Layout im Bearbeitungsmodus bekommt (K.GAME_LAYOUT, `from`).
+    -- 4 = Abstand zum Rand wie EDGE weiter unten.
+    hud_micro       = { point = "BOTTOMLEFT",  relPoint = "BOTTOMLEFT", x = 4, y = 4 },
+    hud_bags        = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -4, y = 4 },
 }
 
 --------------------------------------------------
@@ -215,11 +221,9 @@ K.GAME_LAYOUT = {
       point = "TOPRIGHT", relPoint = "TOPRIGHT", x = TRACK_X - 270, y = TRACK_Y, frames = { "CompactArenaFrame", "ArenaEnemyFramesContainer" } },
     { key = "tooltip", label = "Tooltip", sys = "HudTooltip",
       point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = TRACK_X, y = 240, frames = { "GameTooltipDefaultContainer" } },
-    { key = "bags", label = "Taschenleiste", sys = "Bags",
-      point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -EDGE, y = EDGE, frames = { "BagsBar" } },
+    { key = "bags", label = "Taschenleiste", sys = "Bags", from = "hud_bags", frames = { "BagsBar" } },
 
-    { key = "micro", label = "Mikromenü", sys = "MicroMenu",
-      point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = EDGE, y = EDGE, frames = { "MicroMenuContainer", "MicroMenu" } },
+    { key = "micro", label = "Mikromenü", sys = "MicroMenu", from = "hud_micro", frames = { "MicroMenuContainer", "MicroMenu" } },
     { key = "chat", label = "Chat", sys = "ChatFrame",
       point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = 14, y = 72, frames = { "ChatFrame1" },
       set = { WidthHundreds = math.floor(K.CHAT_SIZE.w / 100), WidthTensAndOnes = K.CHAT_SIZE.w % 100,

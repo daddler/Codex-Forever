@@ -9501,6 +9501,72 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.9.1.0: Mikromenue und Taschenleiste frei verschiebbar (Beta-Test: "das
+-- Mikromenue laesst sich nicht frei verschieben" - WeintCodex setzte es nach
+-- jedem Anordnen fest nach unten links, im Gestaltungsmodus fehlte es).
+do
+    local AB = WeintCodex.UIActionBars
+    local E  = WeintCodex.UIEditMode
+    local saved = { _G.MicroMenuContainer, _G.BagsBar, _G.InCombatLockdown }
+    local ok, err = pcall(function()
+        local function Track(f)
+            f.SetPoint = function(self, ...) self._pt = { ... } end
+            f.GetPoint = function(self) local p = self._pt or {} return p[1], p[2], p[3], p[4], p[5] end
+            return f
+        end
+        local micro = Track(CreateFrame("Frame", "MicroMenuContainer", UIParent))
+        local bags = Track(CreateFrame("Frame", "BagsBar", UIParent))
+        micro.SetScale = function(self, v) self._scale = v end
+        local pos = K.Root().positions
+        pos.hud_micro, pos.hud_bags = nil, nil
+        _G.InCombatLockdown = function() return false end
+        -- Schon einmal angemeldet (frueherer Lauf): die Flaeche muss auf den
+        -- neuen Rahmen.
+        local old = K.movers.hud_micro and K.movers.hud_micro.overlay
+        if old then old.SetAllPoints = function(self, f) self._anchor = f end end
+        AB.Place()
+        if old then assert(old._anchor == micro, "Flaeche im Gestaltungsmodus liegt auf dem alten Rahmen") end
+        local m = K.movers.hud_micro
+        assert(m and m.frame == micro and K.movers.hud_bags and K.movers.hud_bags.frame == bags,
+            "Mikromenue/Taschenleiste nicht im Gestaltungsmodus")
+        assert(micro._pt[1] == "BOTTOMLEFT" and micro._pt[4] == 4 and micro._pt[5] == 4, "Standardplatz nicht aus ui/layout.lua")
+        assert(E.ModuleFor("hud_micro") == "actionbars" and E.ModuleFor("hud_bags") == "actionbars",
+            "Doppelklick fuehrt nicht zu den Aktionsleisten")
+        -- Ziehen: der neue Platz bleibt, auch wenn das Spiel neu anordnet.
+        m.overlay._scripts.OnDragStart(m.overlay)
+        micro:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 300, 200)
+        m.overlay._scripts.OnDragStop(m.overlay)
+        local want = pos.hud_micro
+        assert(want and want.point == "BOTTOMLEFT", "gezogener Platz nicht gespeichert")
+        micro:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 4, 4)   -- das Spiel ordnet an
+        AB.Place()
+        assert(micro._pt[4] == want.x and micro._pt[5] == want.y and want.x ~= 4,
+            "Mikromenue springt zurueck: " .. tostring(micro._pt[4]) .. "/" .. tostring(micro._pt[5]))
+        -- Im Kampf wird nichts gesetzt.
+        _G.InCombatLockdown = function() return true end
+        micro:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 4, 4)
+        micro._scale = nil
+        AB.Place()
+        assert(micro._pt[4] == 4 and micro._scale == nil, "im Kampf versetzt oder skaliert")
+        _G.InCombatLockdown = function() return false end
+        -- Rechtsklick: zurueck an den Standardplatz.
+        m.overlay._scripts.OnClick(m.overlay, "RightButton")
+        assert(not pos.hud_micro and micro._pt[4] == 4 and micro._pt[5] == 4, "Rechtsklick setzt nicht zurueck")
+        -- "Wie im Spiel": WeintCodex laesst den Platz in Ruhe.
+        K.Set("actionbars", "microMenu", "game")
+        micro:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 77, 88)
+        AB.Place()
+        assert(micro._pt[4] == 77, "'Wie im Spiel' wird trotzdem versetzt")
+        K.Set("actionbars", "microMenu", nil)
+        pos.hud_micro, pos.hud_bags = nil, nil
+    end)
+    _G.MicroMenuContainer, _G.BagsBar, _G.InCombatLockdown = saved[1], saved[2], saved[3]
+    if K.movers.hud_micro then K.SetMoverEnabled("hud_micro", false) end
+    if K.movers.hud_bags then K.SetMoverEnabled("hud_bags", false) end
+    Check(ok, "Mikromenue und Taschenleiste: im Gestaltungsmodus, Platz bleibt nach dem Anordnen des Spiels, Kampf, Rechtsklick, 'Wie im Spiel'"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 --------------------------------------------------
 
 print("")

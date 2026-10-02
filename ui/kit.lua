@@ -914,12 +914,15 @@ function K.RegisterMover(frame, key, label, default, opts)
         t:SetPoint("CENTER", ov, "CENTER", 0, 0)
         t:SetTextColor(unpack(C.textBright))
         t:SetText(label)
+        -- Immer der zuletzt angemeldete Rahmen (m.frame), nicht der beim
+        -- ersten Anmelden: Rahmen des Spiels koennen neu entstehen (6.9.1.0).
         ov:SetScript("OnDragStart", function()
             if m.secure and K.InCombat() then return end
-            frame:SetMovable(true)
-            frame:StartMoving()
+            m.frame:SetMovable(true)
+            m.frame:StartMoving()
         end)
         ov:SetScript("OnDragStop", function()
+            local frame = m.frame
             frame:StopMovingOrSizing()
             SavePosition(key, frame)
             -- Einrasten: die gespeicherte Stelle um den Rest zum Raster bzw.
@@ -927,7 +930,7 @@ function K.RegisterMover(frame, key, label, default, opts)
             local ui = Root()
             local pos = ui and ui.positions[key]
             if pos and K.SnapOffset then
-                local ok, dx, dy = pcall(K.SnapOffset, frame)
+                local ok, dx, dy = pcall(K.SnapOffset, m.frame)
                 if ok and type(dx) == "number" and type(dy) == "number" then
                     pos.x = math.floor(pos.x + dx + 0.5)
                     pos.y = math.floor(pos.y + dy + 0.5)
@@ -961,6 +964,9 @@ function K.RegisterMover(frame, key, label, default, opts)
         ov:Hide()
         m.overlay = ov
     end
+    -- Die Flaeche liegt ueber dem Rahmen, der gerade angemeldet ist.
+    m.overlay:ClearAllPoints()
+    m.overlay:SetAllPoints(frame)
 
     m.enabled = true
     K.ApplyPosition(key)

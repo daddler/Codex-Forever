@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.9.1.0",
+        date    = "02.10.2026",
+        notes   = {
+            "|cff7C6CFFMikromenü und Taschenleiste frei verschiebbar.|r Beide stehen jetzt im Gestaltungsmodus: ziehen, und sie bleiben dort – auch wenn das Spiel seine Leisten neu anordnet. Rechtsklick setzt sie zurück. Bisher sprangen sie immer wieder nach unten links bzw. rechts.",
+        },
+    },
+    {
         version = "6.9.0.9",
         date    = "02.10.2026",
         notes   = {

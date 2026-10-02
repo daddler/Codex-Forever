@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.9.1.0] – 2026-10-02
+
+**Mikromenü und Taschenleiste frei verschiebbar.** Beide stehen jetzt im Gestaltungsmodus: ziehen, und sie bleiben dort – auch wenn das Spiel seine Leisten neu anordnet. Rechtsklick setzt sie zurück. Bisher sprangen sie immer wieder nach unten links bzw. rechts.
+
+### Technisch
+
+- Fehler seit 6.0.0.5 (Beta-Test: „das Mikromenü lässt sich nicht frei verschieben“): `AB.Place` setzte Mikromenü und Taschenleiste fest auf unten links/rechts (4/4) – nach jedem `ApplySystemAnchor` und `ExitEditMode`. Im Bearbeitungsmodus verschoben, sprangen sie zurück; im Gestaltungsmodus gab es sie nicht. Jetzt Rahmen des Gestaltungsmodus `hud_micro`/`hud_bags` (als geschützt behandelt: nicht im Kampf ziehen, setzen erst danach), Standardplatz in `K.LAYOUT` (bisher Zahlen im Code), auch für das Layout im Bearbeitungsmodus (`K.GAME_LAYOUT` mit `from`). Doppelklick öffnet die Aktionsleisten (`hud_` in `MODULE_OF`). Mit „Wie im Spiel“ fasst WeintCodex beide nicht an. `SetUserPlaced(false)` nach dem Setzen: den Platz merkt sich WeintCodex, nicht die Layout-Datei des Spiels.
+- `UIKit.RegisterMover`: Ziehen und Fläche folgen dem zuletzt angemeldeten Rahmen (`m.frame`) statt dem vom ersten Anmelden.
+- `load_test.lua`: Standardplatz, Ziehen, Platz bleibt nach dem Anordnen des Spiels, Kampf (weder versetzt noch skaliert), Rechtsklick, „Wie im Spiel“, Fläche auf dem neuen Rahmen. Neun Gegenproben, alle gefangen (zwei erst nach geschärftem Test).
+
 ## [6.9.0.9] – 2026-10-02
 
 **Aufschlüsselung mit Platz für alles.** Das Fenster, das sich mit einem Klick auf einen Namen in der Schadensanzeige öffnet, wird so breit, wie die Reiter der Messarten es brauchen – keiner läuft mehr rechts hinaus.
