@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.9.0.7",
+        date    = "02.10.2026",
+        notes   = {
+            "|cff7C6CFFZurück genau dorthin, wo du warst.|r Schließt du den Bearbeitungsmodus des Spiels, geht das Einstellungsfenster wieder auf – auf derselben Seite und an derselben Stelle. Bisher blieb es zu, weil das Spiel es beim Öffnen selbst geschlossen hatte.",
+            "|cff7C6CFFLage und Größe ganz oben.|r Bei den Aktionsleisten steht der Knopf zum Bearbeitungsmodus des Spiels jetzt am Anfang der Seite statt ganz unten.",
+            "|cff7C6CFFQueststatus im Dungeonkompendium.|r Jede Quest eines Dungeons zeigt, ob du sie schon hast, abgeben kannst, erledigt hast oder ob sie noch fehlt – mit farbigem Streifen und einer Summe über der Liste. Kein Vergleichen mit dem Questlog mehr.",
+        },
+    },
+    {
         version = "6.9.0.6",
         date    = "02.10.2026",
         notes   = {

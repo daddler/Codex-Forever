@@ -842,6 +842,25 @@ function O.Show(key, pageIndex)
     O.Select(key or current.module, pageIndex)
 end
 
+-- Wo das Fenster gerade steht: Modul, Seite, Bildlauf. Die Bruecke zum
+-- Bearbeitungsmodus des Spiels (ui/editmode.lua) merkt sich das und kehrt
+-- genau dorthin zurueck - nicht auf die erste Seite des Moduls.
+function O.Where()
+    local scroll = scroller and scroller.GetVerticalScroll and scroller:GetVerticalScroll()
+    return { module = current.module, page = current.page, scroll = type(scroll) == "number" and scroll or 0 }
+end
+
+function O.Return(where)
+    if type(where) ~= "table" then return O.Show() end
+    O.Show(where.module, where.page)
+    if scroller and where.scroll and where.scroll > 0 then
+        local maxScroll = scroller.GetVerticalScrollRange and scroller:GetVerticalScrollRange()
+        local s = where.scroll
+        if type(maxScroll) == "number" and maxScroll >= 0 and s > maxScroll then s = maxScroll end
+        scroller:SetVerticalScroll(s)
+    end
+end
+
 function O.Toggle()
     O.Build()
     if frame:IsShown() then frame:Hide() else O.Show() end

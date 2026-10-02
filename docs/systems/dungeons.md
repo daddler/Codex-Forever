@@ -887,6 +887,18 @@ keine Änderung.
   englisch.
 * **Erfahrung ist beobachtet** (`xp`), keine Angabe des Clients – die
   Seite schreibt „EP (beobachtet)“.
+* **Queststatus aus dem Client** *(6.9.0.7)*. Jede Questkachel sagt rechts
+  oben, wo die Quest für dich steht – **Erledigt**
+  (`C_QuestLog.IsQuestFlaggedCompleted`), **Abgabebereit** (`IsComplete`),
+  **Im Questlog** (`GetLogIndexForQuestID`, ersatzweise `IsOnQuest`),
+  **Fehlt noch**, **Ab Stufe N** (fehlt, aber noch zu niedrig) – mit einem
+  Streifen links in derselben Farbe; neben der Rubrik „Quests“ die Summe
+  („1 im Questlog · 2 erledigt · 1 fehlt noch“). Antwortet der Client auf
+  eine der Fragen nicht, steht **kein** Status da und keine Summe:
+  unbekannt ist nicht „fehlt“. Bei `QUEST_LOG_UPDATE`, `QUEST_ACCEPTED`,
+  `QUEST_TURNED_IN`, `QUEST_REMOVED` und `PLAYER_LEVEL_UP` werden die
+  sichtbaren Kacheln umgefärbt, nicht neu gezeichnet – die Seite springt
+  nicht.
 * **Zuordnung zu den eigenen Bossen.** Jede Beute hängt an einer
   Bosskennung aus `data/dungeons*.lua` (`data_test.lua` prüft das).
   Abweichungen: *The Baron* der Berichte ist unser *The Butcher*

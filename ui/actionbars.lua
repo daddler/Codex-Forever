@@ -999,6 +999,10 @@ K.Register({
     end,
     pages = {
         { key = "allgemein", label = "Allgemein", build = function(B)
+            -- 6.9.0.7: ganz oben statt ganz unten (Beta-Test: "ziemlich weit
+            -- unten") - verschieben ist das, was man hier am oeftesten sucht.
+            B:Section("Lage und Größe")
+            B:GameEditMode("Verschieben geht im Bearbeitungsmodus des Spiels – der Knopf führt hin, und beim Schließen bist du wieder hier. Größe, Abstand und Anzahl der Knöpfe stellst du je Leiste auf der Seite „Leisten“ ein.")
             B:Section("Knöpfe")
             B:Row({ type = "toggle", label = "Rand anzeigen", key = "border" },
                   { type = "color", label = "Randfarbe", key = "borderColor",
@@ -1050,8 +1054,7 @@ K.Register({
                   { type = "toggle", label = "Taschenleiste im WeintCodex-Stil", key = "bagsSkin", reload = true,
                     description = "Flache Taschenplätze mit feinem Rand statt der goldenen Rahmen." })
             B:Note("Solange hier nicht „Wie im Spiel“ steht, bestimmt WeintCodex den Platz von Mikromenü und Taschenleiste – auch nach dem Bearbeitungsmodus.")
-            B:Section("Lage und Größe")
-            B:GameEditMode("Größe, Abstand und Anzahl der Knöpfe stellst du je Leiste auf der Seite „Leisten“ ein. Verschieben geht im Bearbeitungsmodus des Spiels – der Knopf darunter führt hin und beim Schließen hierher zurück.")
+            B:Section("Welche Leisten es gibt")
             B:Note("Welche Leisten es überhaupt gibt, bestimmt das Spiel (Esc → Optionen → Aktionsleisten). Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt – WeintCodex ordnet die Knöpfe des Spiels.")
         end },
         { key = "leisten", label = "Leisten", build = function(B)

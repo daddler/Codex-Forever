@@ -2827,6 +2827,18 @@ verankert (ein Rahmen, der an einem des Spiels hängt, erbt dessen Schutz).
 Geht der Modus nicht auf (Kampf, kein Befehl), ist man nach 0,3 s wieder,
 wo man war, mit einem Satz im Chat.
 
+**6.9.0.7, Beta-Test – Rückweg ins Fenster ging verloren.** Das Spiel
+schließt beim Öffnen seines Bearbeitungsmodus selbst Fenster, auch das
+Einstellungsfenster (es steht in `UISpecialFrames`, damit Esc es
+schließt). Bis 6.9.0.6 sah der Knopf erst *nach* dem Klick nach, woher man
+kam – da war das Fenster schon zu und der Rückweg leer. Jetzt zwei
+Schritte: `E.NoteOrigin` im `PreClick` merkt den Ausgangsort samt Modul,
+Seite und Bildlauf des Fensters (`O.Where`), `E.MakeRoom` im `PostClick`
+räumt auf. Zurück geht es mit `O.Return` genau auf diese Seite und
+Bildlaufposition – auch über den Umweg Gestaltungsmodus → „Fertig“
+(`E.reopenWhere`). `load_test.lua` bildet das Schließen durch das Spiel
+nach.
+
 **Wie zurück:** WeintCodex schließt den Modus des Spiels nie selbst
 (`HideUIPanel` aus Addon-Code: Taint, und die Rückfrage bei
 ungespeicherten Änderungen käme womöglich nicht). Über dem Knopf liegt ein

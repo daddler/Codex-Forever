@@ -265,6 +265,7 @@ function E.Enter()
     local O = WeintCodex.UIOptions
     if O and O.frame and O.frame:IsShown() then
         reopen = true
+        E.reopenWhere = O.Where and O.Where() or nil
         O.frame:Hide()
     end
     local T = WeintCodex.UITestMode
@@ -292,7 +293,7 @@ function E.Leave()
     -- Zurueck ins Fenster - nicht, wenn ein Kampf den Modus beendet hat.
     if reopen and not K.InCombat() then
         local O = WeintCodex.UIOptions
-        if O and O.Show then O.Show() end
+        if O and O.Return then O.Return(E.reopenWhere) elseif O and O.Show then O.Show() end
     end
     reopen = false
 end
@@ -400,8 +401,17 @@ function E.Report()
 end
 
 -- Vor dem Oeffnen: merken, woher man kommt, und Platz machen.
-function E.LeaveForGame()
-    bridge.from, bridge.reopen, bridge.pending = nil, false, false
+-- 6.9.0.7: ZWEI SCHRITTE, und der erste VOR dem Klick. Das Spiel schliesst
+-- beim Oeffnen seines Bearbeitungsmodus selbst Fenster - auch das
+-- Einstellungsfenster (es steht in UISpecialFrames, damit Esc es
+-- schliesst). Bis 6.9.0.6 wurde erst NACH dem Klick nachgesehen, woher man
+-- kam: das Fenster war dann schon zu, der Rueckweg leer (Beta-Test).
+-- Jetzt merkt NoteOrigin den Ausgangsort vorher (PreClick, samt Seite und
+-- Bildlauf des Fensters), MakeRoom raeumt danach auf (PostClick).
+local function Options() return WeintCodex.UIOptions end
+
+function E.NoteOrigin()
+    bridge.from, bridge.reopen, bridge.pending, bridge.where = nil, false, false, nil
     if K.InCombat() then
         Say("Im Kampf öffnet das Spiel seinen Bearbeitungsmodus nicht.")
         return false
@@ -410,19 +420,32 @@ function E.LeaveForGame()
         Say("Dieser Client hat keinen Bearbeitungsmodus.")
         return false
     end
+    local O = Options()
     if K.IsUnlocked() then
         bridge.from = "design"
+    elseif O and O.frame and O.frame:IsShown() then
+        bridge.from = "options"
+        bridge.where = O.Where and O.Where() or nil
+    end
+    bridge.pending = true
+    return true
+end
+
+function E.MakeRoom()
+    if bridge.from == "design" and K.IsUnlocked() then
         bridge.leaving = true     -- E.Leave merkt sich das Einstellungsfenster
         K.SetUnlocked(false)
         bridge.leaving = false
-    else
-        local O = WeintCodex.UIOptions
-        if O and O.frame and O.frame:IsShown() then
-            bridge.from = "options"
-            O.frame:Hide()
-        end
     end
-    bridge.pending = true
+    local O = Options()
+    if bridge.from == "options" and O and O.frame and O.frame:IsShown() then
+        O.frame:Hide()
+    end
+end
+
+function E.LeaveForGame()
+    if not E.NoteOrigin() then return false end
+    E.MakeRoom()
     return true
 end
 
@@ -435,9 +458,10 @@ function E.BackFromGame()
         if not K.SetUnlocked(true) then return false end
         reopen = again
     elseif from == "options" then
-        local O = WeintCodex.UIOptions
-        if O and O.Show then O.Show() end
+        local O = Options()
+        if O and O.Return then O.Return(bridge.where) elseif O and O.Show then O.Show() end
     end
+    bridge.where = nil
     return true
 end
 
@@ -463,10 +487,10 @@ end
 -- geoeffnet, die Leiste darunter steht schon - sie erfaehrt jetzt, woher
 -- man kam.
 function E.AfterGameClick()
-    if E.LeaveForGame() then
-        SyncStrip()
-        CheckLater()
-    end
+    if not bridge.pending then return end
+    E.MakeRoom()
+    SyncStrip()
+    CheckLater()
 end
 
 -- Der direkte Weg, nur ohne Befehl des Spiels.
@@ -505,6 +529,7 @@ function E.AttachGame(button)
             -- Erst NACH dem Makro Platz machen: der Knopf liegt in der
             -- Leiste, die dabei zugeht, und ein Klick soll nicht davon
             -- abhaengen, ob ein versteckter Knopf ihn noch ausfuehrt.
+            ov:SetScript("PreClick", E.NoteOrigin)
             ov:SetScript("PostClick", E.AfterGameClick)
             ov:SetScript("OnEnter", function()
                 local f = button:GetScript("OnEnter")
@@ -544,6 +569,7 @@ end
 -- Der Knopf zurueck: danach in den Gestaltungsmodus (und war man aus dem
 -- Einstellungsfenster gekommen, nach "Fertig" wieder dorthin).
 function E.PrepareBack()
+    if bridge.from == "options" then E.reopenWhere = bridge.where end
     bridge.reopen = bridge.reopen or bridge.from == "options"
     bridge.from = "design"
     SyncStrip()

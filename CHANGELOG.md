@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.9.0.7] – 2026-10-02
+
+**Zurück genau dorthin, wo du warst.** Schließt du den Bearbeitungsmodus des Spiels, geht das Einstellungsfenster wieder auf – auf derselben Seite und an derselben Stelle. Bisher blieb es zu, weil das Spiel es beim Öffnen selbst geschlossen hatte.
+
+**Lage und Größe ganz oben.** Bei den Aktionsleisten steht der Knopf zum Bearbeitungsmodus des Spiels jetzt am Anfang der Seite statt ganz unten.
+
+**Queststatus im Dungeonkompendium.** Jede Quest eines Dungeons zeigt, ob du sie schon hast, abgeben kannst, erledigt hast oder ob sie noch fehlt – mit farbigem Streifen und einer Summe über der Liste. Kein Vergleichen mit dem Questlog mehr.
+
+### Technisch
+
+- Fehler aus 6.9.0.5 (Beta-Test): das Spiel schließt beim Öffnen seines Bearbeitungsmodus das Einstellungsfenster selbst (`UISpecialFrames`); der Knopf prüfte die Herkunft erst im `PostClick` und fand nichts. Jetzt `E.NoteOrigin` im `PreClick` (Herkunft samt `O.Where()`: Modul, Seite, Bildlauf), `E.MakeRoom` im `PostClick`; zurück mit `O.Return`, auch über Gestaltungsmodus → „Fertig“. `load_test.lua` bildet das Schließen durch das Spiel nach; fünf Gegenproben, darunter das alte Verhalten.
+- `modules/dungeonpages.lua`: `DungeonPages.QuestState(q)` → `done`/`ready`/`active`/`open`/`later` oder `nil`, wenn der Client nicht antwortet (`IsQuestFlaggedCompleted`, `GetLogIndexForQuestID`/`IsOnQuest`, `IsComplete`, `UnitLevel`; geheime Werte über `UIKit.Plain`). Status rechts in der Kachel, Streifen links, Summe neben „Quests“ (nur wenn jede Quest beantwortet ist). Umgefärbt bei Questereignissen, nur sichtbare Zeilen, ohne neue Tabellen. Sechs Gegenproben.
+
 ## [6.9.0.6] – 2026-10-02
 
 **Beute und Quests für sechs weitere Dungeons.** Im Dungeonkompendium stehen jetzt auch für The Stockade, Gnomeregan, Razorfen Kraul, den Friedhof des Scharlachroten Klosters, die Excavation Site und die City of Dalaran die Beute je Boss und – wo bekannt – die Quests mit Questgebern auf der Weltkarte.
