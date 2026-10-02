@@ -940,6 +940,9 @@ Seit 6.2.0.0:
     Platznummern**. Offen 0 ohne Aggro fällt heraus, geheim bleibt drin.
     Kein Zeitraum, keine Aufschlüsselung. Läuft im Takt ohne neue
     Tabellen (feste Einheitenlisten, Einträge aus einem Vorrat).
+  * *Breite der Aufschlüsselung* (6.9.0.9): so breit wie die Reiter der
+    Messarten (`ApplyWidth` in `BuildTabs`), mindestens 360 px – mit den
+    neuen Arten lief „Bannungen“ aus dem festen Fenster.
   * *Melden* (Sprechblase, `DM.ReportMenu` → `DM.Report`): nur nach dem
     Kampf und mit offenen Zahlen, nie Beispielzahlen; was nicht geht,
     sagt ein Hinweis im eigenen Chat. Kanäle nach Lage

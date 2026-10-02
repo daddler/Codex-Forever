@@ -871,7 +871,11 @@ end
 -- Treffer, kritische Treffer nennt C_DamageMeter nach allem, was bekannt
 -- ist, nicht - deshalb gibt es sie hier nicht.
 
-local BD_W, BD_ROW, BD_MAX = 360, 20, 12
+-- Breite: mindestens BD_W_MIN, sonst so breit wie die Reiter der Messarten
+-- (6.9.0.8, Beta-Test: mit Absorption, vermeidbarem Schaden und Gegnern
+-- liefen die Reiter rechts aus dem Fenster). BD_W ist die aktuelle Breite.
+local BD_W_MIN, BD_ROW, BD_MAX = 360, 20, 12
+local BD_W = BD_W_MIN
 local GRAPH_H, GRAPH_COLS = 96, 48
 local AURA_SIZE, AURA_GAP, AURA_MAX = 24, 3, 32
 local bd
@@ -1414,6 +1418,22 @@ local function PaintTabs()
     end
 end
 
+-- Das Fenster auf Breite `w` bringen (nie schmaler als BD_W_MIN): Rahmen,
+-- Kennzahlen, Hinweis. Zauber, Verlauf und Auren rechnen beim Zeichnen
+-- mit BD_W.
+local function ApplyWidth(w)
+    w = math.max(BD_W_MIN, math.ceil(w))
+    if w == BD_W then return end
+    BD_W = w
+    bd.frame:SetWidth(w)
+    for _, c in ipairs(bd.stats) do
+        c:SetSize((w - 24) / 4, 34)
+        c.cmp:SetWidth((w - 24) / 4 - 4)
+    end
+    bd.note:SetWidth(w - 24)
+end
+DM.BreakdownWidth = function() return BD_W end
+
 local function BuildTabs()
     for _, t in ipairs(bd.tabs) do t:Hide() end
     local x = 0
@@ -1440,6 +1460,8 @@ local function BuildTabs()
             t:Show()
         end
     end
+    -- Rand links und rechts je 12, hinter dem letzten Reiter kein Abstand.
+    ApplyWidth(x - 4 + 24)
     PaintTabs()
 end
 
@@ -1957,7 +1979,7 @@ function DM.RefreshBreakdown()
     bd.note:SetText(note or "")
     local noteH = 0
     if (note or "") ~= "" then
-        local lines = math.ceil(((WeintCodex.Utf8Len and WeintCodex.Utf8Len(note)) or #note) / 58)
+        local lines = math.ceil(((WeintCodex.Utf8Len and WeintCodex.Utf8Len(note)) or #note) / math.floor((BD_W - 24) / 5.8))
         noteH = 14 * math.max(1, lines) + 4
     end
     bd.frame:SetHeight(contentTop + h + noteH + 14)
