@@ -106,24 +106,29 @@ K.Register({
             local unlock = { type = "button", label = "Gestaltungsmodus",
                 text = function() return K.IsUnlocked() and "Gestaltung beenden" or "Rahmen verschieben" end,
                 onClick = function() K.SetUnlocked(not K.IsUnlocked()) end }
+            local game = { type = "button", label = "Rahmen des Spiels", text = "Bearbeitungsmodus des Spiels",
+                tooltip = WeintCodex.UIEditMode.GAME_TOOLTIP, gameEditMode = true }
             if K.OPT_IN then
                 B:Row({ type = "toggle", label = "WeintCodex-Oberfläche verwenden",
                         description = "Plaketten, Rahmen, Leisten, Karte, Chat, Taschen und Fenster von WeintCodex statt der des Spiels. Wirkt nach dem Neuladen.",
                         get = function() return K.UIEnabled() end,
                         set = function(on) K.SetUIEnabled(on) end },
-                      unlock)
-                B:Row({ type = "button", label = "Willkommen", text = "Assistenten zeigen",
-                        tooltip = "Der Rundgang vom ersten Mal: Oberfläche ja oder nein, Komfort wählen, übernehmen (/wcui willkommen).",
-                        onClick = function() WeintCodex.UIWelcome.Ask() end },
                       { type = "toggle", label = "Symbol an der Minikarte",
                         description = "Links: diese Einstellungen. Rechts: Rahmen verschieben. Nur mit Oberfläche.",
                         get = function() return WeintCodex.UILauncher.IsShown() end,
                         set = function(on) WeintCodex.UILauncher.SetShown(on) end,
                         disabled = function() return not K.UIEnabled() end })
+                -- Beide Wege zum Verschieben nebeneinander: die Rahmen von
+                -- WeintCodex und die des Spiels.
+                B:Row(unlock, game)
+                B:Row({ type = "button", label = "Willkommen", text = "Assistenten zeigen",
+                        tooltip = "Der Rundgang vom ersten Mal: Oberfläche ja oder nein, Komfort wählen, übernehmen (/wcui willkommen).",
+                        onClick = function() WeintCodex.UIWelcome.Ask() end },
+                      { type = "empty" })
                 B:Note("Eigenes Profil: Die Oberfläche bekommt im Bearbeitungsmodus ein eigenes Layout „WeintCodex“. Dein Layout, deine Chatreiter und deine Spieleinstellungen bleiben – schaltest du aus, ist dein Layout wieder aktiv, und was WeintCodex an Einstellungen geändert hat, steht wie vorher.")
                 B:Note("Alles links unter „Komfort“ — Schadensanzeige, Questpfeil, Erinnerungen, Klickzauber, Makro-Helfer, Automark und die kleinen Helfer — hängt nicht an diesem Schalter. Schadensanzeige und Erinnerungen sind mit der Oberfläche von Haus aus an; ohne sie schaltest du sie selbst ein.")
             else
-                B:Row(unlock, { type = "empty" })
+                B:Row(unlock, game)
                 B:Note("Die WeintCodex-Oberfläche ist derzeit für alle eingeschaltet. Der Forever-Beta-Client speichert Addon-Einstellungen nicht über ein Neuladen hinweg – eine Wahl „an“ oder „aus“ wäre nach jedem /reload vergessen. Sobald der Client wieder speichert, kommt der Hauptschalter zurück.")
                 B:Note("Einzelne Module schaltest du links ab (Schalter oben rechts). Auch das gilt, solange der Client nicht speichert, nur bis zum nächsten Neuladen.")
             end
@@ -352,9 +357,14 @@ function Builder:Cell(spec)
         local b = WeintCodex.CreateButton(w, {
             text = label(), kind = spec.kind or "secondary", height = 26, size = 11,
             backdrop = "bgDark", tooltip = spec.tooltip,
-            onClick = function() spec.onClick() ; w.Sync() end,
+            onClick = function() if spec.onClick then spec.onClick() end ; w.Sync() end,
         })
         b:SetPoint("BOTTOMLEFT", w, "BOTTOMLEFT", 0, 2)
+        -- Hinueber in den Bearbeitungsmodus des Spiels (ui/editmode.lua).
+        if spec.gameEditMode then
+            WeintCodex.UIEditMode.AttachGame(b)
+            w._gameEditMode = b
+        end
         w.Sync = function() b:SetText(label()) end
     elseif t == "input" then
         -- Ein Eingabefeld (Erinnerungen: Zauber mit Namen oder ID).
@@ -416,6 +426,25 @@ function Builder:Row(a, b)
         h = math.max(h, wb:GetHeight() or 0)
     end
     self.y = self.y - h - 10
+end
+
+-- Was das Spiel stellt, stellt sein Bearbeitungsmodus: der Satz dazu und
+-- ein Knopf hinueber (ui/editmode.lua, Bruecke). Schliesst man ihn, ist
+-- man wieder auf dieser Seite.
+O.GAME_EDIT_TEXT = "Bearbeitungsmodus des Spiels öffnen"
+function Builder:GameEditMode(note)
+    if note then self:Note(note) end
+    local E = WeintCodex.UIEditMode
+    local b = WeintCodex.CreateButton(self.parent, {
+        text = O.GAME_EDIT_TEXT, kind = "secondary", height = 26, size = 11,
+        backdrop = "bgDark", tooltip = E.GAME_TOOLTIP,
+    })
+    b:SetPoint("TOPLEFT", self.parent, "TOPLEFT", 0, self.y)
+    E.AttachGame(b)
+    b._gameEditMode = b         -- wie bei der Zelle: so findet ihn der Prueflauf
+    self.widgets[#self.widgets + 1] = b
+    self.y = self.y - 26 - 14
+    return b
 end
 
 O.NewBuilder = NewBuilder   -- fuer den Prueflauf

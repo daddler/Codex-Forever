@@ -1051,7 +1051,8 @@ K.Register({
                     description = "Flache Taschenplätze mit feinem Rand statt der goldenen Rahmen." })
             B:Note("Solange hier nicht „Wie im Spiel“ steht, bestimmt WeintCodex den Platz von Mikromenü und Taschenleiste – auch nach dem Bearbeitungsmodus.")
             B:Section("Lage und Größe")
-            B:Note("Größe, Abstand und Anzahl der Knöpfe stellst du je Leiste auf der Seite „Leisten“ ein. Verschieben geht im Bearbeitungsmodus des Spiels (Esc → Bearbeitungsmodus). Welche Leisten es überhaupt gibt, bestimmt das Spiel (Esc → Optionen → Aktionsleisten). Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt – WeintCodex ordnet die Knöpfe des Spiels.")
+            B:GameEditMode("Größe, Abstand und Anzahl der Knöpfe stellst du je Leiste auf der Seite „Leisten“ ein. Verschieben geht im Bearbeitungsmodus des Spiels – der Knopf darunter führt hin und beim Schließen hierher zurück.")
+            B:Note("Welche Leisten es überhaupt gibt, bestimmt das Spiel (Esc → Optionen → Aktionsleisten). Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt – WeintCodex ordnet die Knöpfe des Spiels.")
         end },
         { key = "leisten", label = "Leisten", build = function(B)
             local game = function() return K.Get(KEY, "layout") ~= "wc" end
@@ -1070,7 +1071,7 @@ K.Register({
                         { value = "wc",   text = "WeintCodex (je Leiste)" },
                         { value = "game", text = "Bearbeitungsmodus des Spiels" } } },
                   { type = "empty" })
-            B:Note("Verschieben: im Bearbeitungsmodus des Spiels (Esc → Bearbeitungsmodus). Eine dort verschobene Leiste lässt das Spiel an ihrem Platz; WeintCodex ordnet nur die Knöpfe darin. Im eigenen Gestaltungsmodus verschiebt WeintCodex die Leisten nicht – das Spiel stapelt sie im Kampf selbst neu und blockiert jeden fremden Eingriff.")
+            B:GameEditMode("Verschieben: im Bearbeitungsmodus des Spiels. Eine dort verschobene Leiste lässt das Spiel an ihrem Platz; WeintCodex ordnet nur die Knöpfe darin. Im eigenen Gestaltungsmodus verschiebt WeintCodex die Leisten nicht – das Spiel stapelt sie im Kampf selbst neu und blockiert jeden fremden Eingriff.")
             local items = {}
             for i, e in ipairs(BAR_BUTTONS) do items[i] = { value = i, text = e.label } end
             B:Section("Leiste")

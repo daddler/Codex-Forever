@@ -8944,6 +8944,143 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Bruecke zum Bearbeitungsmodus des Spiels (6.9.0.5): was WeintCodex nicht
+-- verschiebt, erreicht ein Knopf - und wer von hier kam, kommt zurueck.
+do
+    local E = WeintCodex.UIEditMode
+    local sd = WeintCodex.SavedData
+    local saved = { _G.EditModeManagerFrame, _G.ShowUIPanel, _G.C_Timer.After, _G.InCombatLockdown,
+                    _G.SLASH_EDITMODE1, _G.SlashCmdList.EDITMODE, sd.ui.enabled, K.OPT_IN }
+    local ok, err = pcall(function()
+        sd.ui.enabled, K.OPT_IN = true, true
+        _G.C_Timer.After = function(_, fn) fn() end
+        _G.InCombatLockdown = function() return false end
+        _G.SLASH_EDITMODE1, _G.SlashCmdList.EDITMODE = nil, nil
+        -- Das Fenster des Spiels: Show/Hide loesen OnShow/OnHide aus wie im Client.
+        local game = CreateFrame("Frame")
+        function game:Show() self._shown = true local f = self:GetScript("OnShow") if f then f(self) end end
+        function game:Hide() self._shown = false local f = self:GetScript("OnHide") if f then f(self) end end
+        _G.EditModeManagerFrame = game
+        local opens = 0
+        _G.ShowUIPanel = function(f) opens = opens + 1 f:Show() end
+        assert(E.HookGame(), "Fenster des Spiels nicht eingehakt")
+        assert(E.GamePath() == "direct", "ohne Befehl nicht der direkte Weg: " .. E.GamePath())
+
+        -- 1. Aus dem Gestaltungsmodus hinueber und zurueck.
+        UO.frame:Hide()
+        assert(K.SetUnlocked(true), "Gestaltungsmodus geht nicht an")
+        local gb = E.buttons.game
+        assert(gb and gb:GetScript("OnClick"), "Knopf zum Bearbeitungsmodus fehlt in der Leiste")
+        gb:Click()
+        assert(opens == 1 and E.GameShown(), "Bearbeitungsmodus des Spiels nicht geoeffnet")
+        assert(not K.IsUnlocked(), "Gestaltungsmodus bleibt offen unter dem des Spiels")
+        assert(E.StripShown(), "keine Leiste unter dem Bearbeitungsmodus des Spiels")
+        assert(E.bridge.from == "design", "Rueckweg nicht gemerkt: " .. tostring(E.bridge.from))
+        game:Hide()
+        assert(not E.StripShown(), "Leiste bleibt nach dem Schliessen")
+        assert(K.IsUnlocked(), "nach dem Schliessen nicht zurueck im Gestaltungsmodus")
+        K.SetUnlocked(false)
+
+        -- 2. Aus dem Einstellungsfenster hinueber und zurueck auf dieselbe Seite.
+        UO.Show("general", 1)
+        local cell
+        for _, w in ipairs(UO.CurrentWidgets()) do if w._gameEditMode then cell = w._gameEditMode end end
+        assert(cell, "Allgemein: kein Knopf zum Bearbeitungsmodus des Spiels")
+        cell:Click()
+        assert(E.GameShown() and not UO.frame:IsShown(), "Einstellungsfenster bleibt ueber dem Bearbeitungsmodus")
+        assert(E.bridge.from == "options", "Rueckweg ins Fenster nicht gemerkt")
+        game:Hide()
+        assert(UO.frame:IsShown(), "nach dem Schliessen nicht zurueck im Einstellungsfenster")
+
+        -- 3. Umschalten in der Leiste: danach in den Gestaltungsmodus, und
+        -- nach "Fertig" wieder ins Fenster.
+        cell:Click()
+        E.ToggleReturn()
+        assert(E.bridge.from == "design" and E.bridge.reopen, "Umschalten merkt das Fenster nicht")
+        game:Hide()
+        assert(K.IsUnlocked() and not UO.frame:IsShown(), "nicht im Gestaltungsmodus nach dem Umschalten")
+        K.SetUnlocked(false)
+        assert(UO.frame:IsShown(), "nach Fertig nicht zurueck im Einstellungsfenster")
+        cell:Click()
+        E.ToggleReturn() E.ToggleReturn()
+        assert(E.bridge.from == "options", "zweimal umschalten: Rueckweg ins Fenster verloren")
+        game:Hide()
+
+        -- 3b. Fenster -> Gestaltungsmodus -> Spiel: das Fenster wartet, bis
+        -- der Gestaltungsmodus fertig ist, und geht nicht mit dem Spiel auf.
+        UO.Show("general", 1)
+        K.SetUnlocked(true)
+        assert(not UO.frame:IsShown(), "Fenster bleibt im Gestaltungsmodus offen (Voraussetzung)")
+        E.buttons.game:Click()
+        assert(E.GameShown() and not UO.frame:IsShown(), "Fenster geht mit dem Bearbeitungsmodus des Spiels auf")
+        game:Hide()
+        assert(K.IsUnlocked() and not UO.frame:IsShown(), "zurueck: nicht im Gestaltungsmodus")
+        K.SetUnlocked(false)
+        assert(UO.frame:IsShown(), "nach Fertig nicht zurueck im Fenster, aus dem man kam")
+
+        -- 4. Geht er nicht auf: sofort zurueck, wo man war.
+        UO.frame:Hide()
+        _G.ShowUIPanel = function() end
+        K.SetUnlocked(true)
+        E.buttons.game:Click()
+        assert(K.IsUnlocked() and E.bridge.from == nil, "nicht geoeffnet und trotzdem weg")
+        K.SetUnlocked(false)
+        _G.ShowUIPanel = function(f) f:Show() end
+
+        -- 5. Im Kampf: nichts aendert sich.
+        _G.InCombatLockdown = function() return true end
+        assert(not E.OpenGame() and not E.GameShown(), "im Kampf geoeffnet")
+        _G.InCombatLockdown = function() return false end
+
+        -- 6. Mit Befehl des Spiels: ein sicherer Knopf fuehrt ihn als Makro
+        -- aus; Platz gemacht wird erst danach (PostClick).
+        _G.SLASH_EDITMODE1 = "/editmode"
+        _G.SlashCmdList.EDITMODE = function() game:Show() end
+        assert(E.GamePath() == "slash", "Befehl nicht erkannt")
+        local b = WeintCodex.CreateButton(UIParent, { text = "x" })
+        local ov = E.AttachGame(b)
+        assert(ov and ov:GetAttribute("type") == "macro" and ov:GetAttribute("macrotext") == "/editmode"
+            and ov:GetAttribute("useOnKeyDown") == false, "kein sicherer Makroknopf mit /editmode")
+        assert(ov:GetScript("PostClick") == E.AfterGameClick, "Platz machen nicht nach dem Klick")
+        assert(not ov:GetScript("PreClick"), "Platz machen vor dem Klick - der Knopf ginge mit der Leiste zu")
+        K.SetUnlocked(true)
+        _G.SlashCmdList.EDITMODE()            -- das Makro, ausgefuehrt vom Spiel
+        ov:GetScript("PostClick")(ov)
+        assert(not K.IsUnlocked() and E.bridge.from == "design", "nach dem Makro nicht hinueber")
+        game:Hide()
+        assert(K.IsUnlocked(), "mit Befehl: nicht zurueck im Gestaltungsmodus")
+        K.SetUnlocked(false)
+        -- Im Kampf wird kein sicherer Knopf angelegt.
+        _G.InCombatLockdown = function() return true end
+        assert(E.AttachGame(WeintCodex.CreateButton(UIParent, { text = "y" })) == nil, "sicherer Knopf im Kampf angelegt")
+        _G.InCombatLockdown = function() return false end
+        assert(E.Report():find("/editmode", 1, true), "Diagnose nennt den Weg nicht")
+
+        -- 7. Jede Seite, deren Rahmen das Spiel stellt, hat den Knopf.
+        local want = { general = true, actionbars = true, minimap = true, questtracker = true,
+                       groupframes = true, reminders = true }
+        local found = {}
+        for _, key in ipairs(K.order) do
+            for i in ipairs(K.Module(key).pages) do
+                UO.Show(key, i)
+                for _, w in ipairs(UO.CurrentWidgets()) do
+                    if w._gameEditMode then found[key] = true end
+                end
+            end
+        end
+        local missing = {}
+        for key in pairs(want) do if not found[key] then missing[#missing + 1] = key end end
+        table.sort(missing)
+        assert(#missing == 0, "ohne Knopf zum Bearbeitungsmodus: " .. table.concat(missing, ", "))
+        UO.frame:Hide()
+    end)
+    _G.EditModeManagerFrame, _G.ShowUIPanel, _G.C_Timer.After, _G.InCombatLockdown,
+        _G.SLASH_EDITMODE1, _G.SlashCmdList.EDITMODE, sd.ui.enabled, K.OPT_IN = unpack(saved, 1, 8)
+    if K.IsUnlocked() then K.SetUnlocked(false) end
+    Check(ok, "Bruecke zum Bearbeitungsmodus des Spiels: hinueber und zurueck (Gestaltung, Fenster), Umschalten, nicht aufgegangen, Kampf, /editmode als Makro, Knopf auf jeder Seite"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 --------------------------------------------------
 
 print("")

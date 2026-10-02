@@ -497,6 +497,9 @@ function ES.Check()
             out[#out + 1] = "Einstellung " .. c.name .. ": soll " .. c.value .. ", ist " .. v
         end
     end
+    -- Welcher Weg in den Bearbeitungsmodus fuehrt (Bruecke, ui/editmode.lua).
+    local E = WeintCodex.UIEditMode
+    if E and E.Report then out[#out + 1] = E.Report() end
     return out
 end
 

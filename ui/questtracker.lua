@@ -329,7 +329,7 @@ K.Register({
                     description = "Beim Betreten verfolgt die Liste nur die Quests dieses Dungeons; beim Verlassen kommt alles zurück." },
                   { type = "empty" })
             B:Note("Deckkraft 0 % blendet die Fläche ganz aus, samt Rand und Schatten. Die Liste selbst bleibt die des Spiels: Quests anklicken, verfolgen und Questgegenstände benutzen funktionieren wie gewohnt.")
-            B:Note("Wie hoch die Liste sein darf: Bearbeitungsmodus (Esc) → Zielverfolgung anklicken → „Höhe“. Was nicht passt, blendet das Spiel aus; mit dem Minus an einer Überschrift klappst du Abschnitte zu. Scrollen kann die Liste nicht – sie trägt die Knöpfe der Questgegenstände, und die darf ein Addon im Kampf nicht verschieben. Die Einrichtung (/wcui einrichten) stellt eine Höhe ein, die bis über den Tooltip unten rechts reicht.")
+            B:GameEditMode("Wo die Liste steht und wie hoch sie sein darf: Bearbeitungsmodus des Spiels → Zielverfolgung anklicken → „Höhe“. Was nicht passt, blendet das Spiel aus; mit dem Minus an einer Überschrift klappst du Abschnitte zu. Scrollen kann die Liste nicht – sie trägt die Knöpfe der Questgegenstände, und die darf ein Addon im Kampf nicht verschieben. Die Einrichtung (/wcui einrichten) stellt eine Höhe ein, die bis über den Tooltip unten rechts reicht.")
         end },
     },
 })

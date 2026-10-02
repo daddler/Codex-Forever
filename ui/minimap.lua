@@ -794,7 +794,7 @@ K.Register({
                     description = "Verfolgung, Post und Schwierigkeit neben der Karte statt auf ihrem Rand." },
                   { type = "toggle", label = "Addon-Knöpfe sammeln", key = "addonBag", reload = true,
                     description = "Ein Knopf unten links neben der Karte klappt alle Addon-Knöpfe auf." })
-            B:Note("Wo die Minikarte steht, stellst du im Bearbeitungsmodus des Spiels ein (Esc → Bearbeitungsmodus).")
+            B:GameEditMode("Wo die Minikarte steht, stellst du im Bearbeitungsmodus des Spiels ein.")
         end },
     },
 })

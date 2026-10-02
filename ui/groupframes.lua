@@ -860,7 +860,9 @@ K.Register({
             B:Row({ type = "button", label = "Rahmen des Spiels", text = "Einrichten",
                     tooltip = "Legt das Layout „WeintCodex“ im Bearbeitungsmodus an: schlachtzugsartige Gruppenrahmen, ohne Blizzards Linien, an den WeintCodex-Plätzen. Danach neu laden. Auch mit /wcui einrichten.",
                     onClick = function() WeintCodex.UISetup.Show() end },
-                  { type = "empty" })
+                  { type = "button", label = "Lage und Größe", text = "Bearbeitungsmodus des Spiels",
+                    tooltip = "Für die Rahmen des Spiels: Platz und Größe stellt sein Bearbeitungsmodus ein. Schließt du ihn, bist du wieder hier. Die eigenen Kacheln verschiebst du im Gestaltungsmodus.",
+                    gameEditMode = true })
             B:Note("Die folgenden Einstellungen gelten für die eigenen Kacheln; bei den Rahmen des Spiels wirken Rand, Farben und Schriftgröße.")
             B:Section("Farben und Rahmen")
             B:Row({ type = "toggle", label = "Klassenfarbe", key = "classColor" },

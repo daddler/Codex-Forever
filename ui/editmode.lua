@@ -18,6 +18,9 @@
 --     nahe ist).
 --   * Anklicken waehlt einen Rahmen, Pfeiltasten schieben ihn um 1
 --     (Umschalt: 8), Doppelklick oeffnet seine Einstellungen, Esc beendet.
+--   * Bruecke (6.9.0.5): was das Spiel stellt, verschiebt nur dessen
+--     Bearbeitungsmodus - ein Knopf fuehrt hinueber und beim Schliessen
+--     zurueck (Abschnitt "Bruecke" unten).
 --
 -- Die Schalter gelten fuer die Sitzung: der Beta-Client speichert ohnehin
 -- nicht, und beim naechsten Mal sollen sie wieder an sein.
@@ -36,6 +39,7 @@ local state = E.state
 
 local bar, info, grid
 local buttons = {}
+E.buttons = buttons     -- fuer den Prueflauf
 local reopen, startedTest = false, false
 local armedReset = false
 
@@ -120,12 +124,29 @@ end
 
 local function ToggleText(label, on) return label .. (on and ": an" or ": aus") end
 
+-- Von rechts nach links, mit dem Abstand zum rechten Nachbarn.
+local ORDER = { { "done", 8 }, { "reset", 10 }, { "snap", 6 }, { "grid", 6 }, { "test", 6 }, { "game", 10 } }
+E.BAR_MIN = 760
+
+-- Die Leiste so breit wie Titel und Knoepfe - die Beschriftungen wechseln.
+local function FitBar()
+    local w = 14 + 20
+    local tw = bar.title.GetStringWidth and bar.title:GetStringWidth()
+    w = w + ((type(tw) == "number" and tw > 0) and tw or 120)
+    for _, o in ipairs(ORDER) do
+        local bw = buttons[o[1]]:GetWidth()
+        w = w + o[2] + ((type(bw) == "number") and bw or 0)
+    end
+    bar:SetWidth(math.max(E.BAR_MIN, math.ceil(w)))
+end
+
 local function Sync()
     if not bar then return end
     buttons.test:SetText(ToggleText("Testdaten", state.test))
     buttons.grid:SetText(ToggleText("Raster", state.grid))
     buttons.snap:SetText(ToggleText("Einrasten", state.snap))
     buttons.reset:SetText(armedReset and "Wirklich alles?" or "Alles zurücksetzen")
+    FitBar()
     if grid then grid:SetShown(state.grid and K.IsUnlocked()) end
     E.UpdateInfo()
 end
@@ -144,9 +165,9 @@ function E.UpdateInfo()
     end
 end
 
-local function Button(text, kind, onClick)
-    local b = WeintCodex.CreateButton(bar, { text = text, kind = kind or "secondary", height = 24, size = 11 })
-    b:SetScript("OnClick", onClick)
+local function Button(text, kind, onClick, tooltip)
+    local b = WeintCodex.CreateButton(bar, { text = text, kind = kind or "secondary", height = 24, size = 11, tooltip = tooltip })
+    if onClick then b:SetScript("OnClick", onClick) end
     return b
 end
 
@@ -154,7 +175,7 @@ local function BuildBar()
     if bar then return bar end
     bar = CreateFrame("Frame", "WeintCodexDesignBar", UIParent)
     bar:SetFrameStrata("FULLSCREEN_DIALOG")
-    bar:SetSize(760, 38)
+    bar:SetSize(E.BAR_MIN, 38)
     bar:SetPoint("TOP", UIParent, "TOP", 0, -14)
     bar:EnableMouse(true)
     K.Kachel(bar)
@@ -163,6 +184,7 @@ local function BuildBar()
     title:SetPoint("LEFT", bar, "LEFT", 14, 0)
     title:SetTextColor(unpack(C.textBright))
     title:SetText("Gestaltungsmodus")
+    bar.title = title
 
     buttons.test = Button("", "secondary", function()
         state.test = not state.test
@@ -200,12 +222,14 @@ local function BuildBar()
         Sync()
     end)
     buttons.done = Button("Fertig", "primary", function() K.SetUnlocked(false) end)
+    -- Hinueber in den Bearbeitungsmodus des Spiels (Bruecke, unten).
+    buttons.game = Button(E.GAME_LABEL, "secondary", nil, E.GAME_TOOLTIP)
+    E.AttachGame(buttons.game)
 
-    buttons.done:SetPoint("RIGHT", bar, "RIGHT", -8, 0)
-    buttons.reset:SetPoint("RIGHT", buttons.done, "LEFT", -10, 0)
-    buttons.snap:SetPoint("RIGHT", buttons.reset, "LEFT", -6, 0)
-    buttons.grid:SetPoint("RIGHT", buttons.snap, "LEFT", -6, 0)
-    buttons.test:SetPoint("RIGHT", buttons.grid, "LEFT", -6, 0)
+    for i, o in ipairs(ORDER) do
+        local right = i == 1 and bar or buttons[ORDER[i - 1][1]]
+        buttons[o[1]]:SetPoint("RIGHT", right, i == 1 and "RIGHT" or "LEFT", -o[2], 0)
+    end
 
     info = K.NewText(bar, 11)
     info:SetPoint("TOP", bar, "BOTTOM", 0, -6)
@@ -255,6 +279,11 @@ function E.Enter()
 end
 
 function E.Leave()
+    -- Hinueber ins Spiel: das Einstellungsfenster wartet bis zur Rueckkehr.
+    if E.bridge.leaving then
+        E.bridge.reopen = reopen
+        reopen = false
+    end
     if bar then bar:Hide() end
     if grid then grid:Hide() end
     local T = WeintCodex.UITestMode
@@ -289,6 +318,324 @@ function E.OpenSettings(key)
 end
 
 function E.IsShown() return bar ~= nil and bar:IsShown() end
+
+--------------------------------------------------
+-- Bruecke zum Bearbeitungsmodus des Spiels (6.9.0.5)
+--------------------------------------------------
+-- Was das Spiel stellt - Aktionsleisten, Minikarte, Buffs, Questliste,
+-- Abklingzeitmanager, Chat, seine Gruppenrahmen -, verschiebt nur sein
+-- Bearbeitungsmodus: WeintCodex schreibt dessen Einstellungen nicht
+-- (ui/setup.lua, ui/actionbars.lua). Bis 6.9.0.4 stand das nur als Satz
+-- da ("Esc -> Bearbeitungsmodus"). Jetzt fuehrt ein Knopf hinueber - in
+-- der Leiste des Gestaltungsmodus, auf "Allgemein" und auf jeder Seite,
+-- deren Rahmen das Spiel stellt (Builder:GameEditMode, ui/options.lua) -,
+-- und wer von hier kam, kommt beim Schliessen dorthin zurueck: in den
+-- Gestaltungsmodus oder ins Einstellungsfenster. Solange der des Spiels
+-- offen ist, sagt eine kleine Leiste darunter, wohin es danach geht, und
+-- schaltet das um.
+--
+-- GEOEFFNET wird ueber den Befehl des Spiels (SLASH_EDITMODE1, "/editmode")
+-- als Makro auf einem sicheren Knopf, ausgeloest vom Klick: so oeffnet das
+-- Spiel den Modus selbst, und kein Addon-Code ruft ihn auf. Ein Addon, das
+-- EditModeManagerFrame selbst oeffnet, kann ihn verunreinigen (Taint) -
+-- und ueber ihn ordnet das Spiel geschuetzte Leisten. Kennt der Client den
+-- Befehl nicht, oeffnet WeintCodex ihn doch direkt (ShowUIPanel); welcher
+-- Weg gilt, sagt /wcui einrichten pruefen.
+-- UNGEPRUEFT auf Forever: ob es den Befehl gibt und ob der direkte Weg
+-- Folgen hat. Geht der Modus nicht auf (Kampf, kein Befehl), kommt man
+-- sofort dorthin zurueck, wo man war, mit einem Satz im Chat.
+--------------------------------------------------
+
+E.GAME_FRAME = "EditModeManagerFrame"
+E.GAME_LABEL = "Bearbeitungsmodus des Spiels"
+E.GAME_OWNS = "Aktionsleisten, Minikarte, Buffs, Questliste, Abklingzeitmanager, Chat und die Gruppenrahmen des Spiels"
+E.GAME_TOOLTIP = E.GAME_OWNS .. " stellt das Spiel – Platz und Größe dort. "
+    .. "Öffnet seinen Bearbeitungsmodus; schließt du ihn, bist du wieder hier."
+E.CHECK_DELAY = 0.3
+
+-- from: wohin es nach dem Schliessen geht ("design", "options" oder nil);
+-- reopen: nach dem Gestaltungsmodus noch ins Einstellungsfenster.
+E.bridge = { from = nil, reopen = false, leaving = false, pending = false }
+local bridge = E.bridge
+local strip
+local SyncStrip     -- unten bei der Leiste
+
+local function Say(text)
+    print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. text)
+end
+
+function E.GameFrame()
+    local f = _G[E.GAME_FRAME]
+    return (type(f) == "table" and type(f.IsShown) == "function") and f or nil
+end
+
+function E.GameShown()
+    local f = E.GameFrame()
+    return f ~= nil and f:IsShown() == true
+end
+
+-- Der Befehl des Spiels, wenn es ihn gibt.
+function E.GameSlash()
+    local cmd, list = _G.SLASH_EDITMODE1, _G.SlashCmdList
+    if type(cmd) == "string" and cmd ~= "" and type(list) == "table" and type(list.EDITMODE) == "function" then
+        return cmd
+    end
+    return nil
+end
+
+-- "slash" (Befehl des Spiels), "direct" (WeintCodex oeffnet) oder "none".
+function E.GamePath()
+    if not E.GameFrame() then return "none" end
+    return E.GameSlash() and "slash" or "direct"
+end
+
+function E.Report()
+    local path = E.GamePath()
+    if path == "slash" then
+        return "Bearbeitungsmodus des Spiels: über " .. E.GameSlash() .. " (das Spiel öffnet selbst)"
+    elseif path == "direct" then
+        return "Bearbeitungsmodus des Spiels: kein Befehl /editmode – WeintCodex öffnet ihn direkt"
+    end
+    return "Bearbeitungsmodus des Spiels: nicht gefunden (EditModeManagerFrame fehlt)"
+end
+
+-- Vor dem Oeffnen: merken, woher man kommt, und Platz machen.
+function E.LeaveForGame()
+    bridge.from, bridge.reopen, bridge.pending = nil, false, false
+    if K.InCombat() then
+        Say("Im Kampf öffnet das Spiel seinen Bearbeitungsmodus nicht.")
+        return false
+    end
+    if not E.GameFrame() then
+        Say("Dieser Client hat keinen Bearbeitungsmodus.")
+        return false
+    end
+    if K.IsUnlocked() then
+        bridge.from = "design"
+        bridge.leaving = true     -- E.Leave merkt sich das Einstellungsfenster
+        K.SetUnlocked(false)
+        bridge.leaving = false
+    else
+        local O = WeintCodex.UIOptions
+        if O and O.frame and O.frame:IsShown() then
+            bridge.from = "options"
+            O.frame:Hide()
+        end
+    end
+    bridge.pending = true
+    return true
+end
+
+-- Dorthin zurueck, woher man kam - nie im Kampf.
+function E.BackFromGame()
+    local from, again = bridge.from, bridge.reopen
+    bridge.from, bridge.reopen = nil, false
+    if not from or K.InCombat() then return false end
+    if from == "design" then
+        if not K.SetUnlocked(true) then return false end
+        reopen = again
+    elseif from == "options" then
+        local O = WeintCodex.UIOptions
+        if O and O.Show then O.Show() end
+    end
+    return true
+end
+
+-- Ist er aufgegangen? Wenn nicht: zurueck, mit einem Satz.
+function E.CheckOpened()
+    if not bridge.pending then return true end
+    bridge.pending = false
+    if E.GameShown() then return true end
+    Say("Der Bearbeitungsmodus des Spiels ist nicht aufgegangen. Von Hand: Esc → Bearbeitungsmodus.")
+    E.BackFromGame()
+    return false
+end
+
+local function CheckLater()
+    if _G.C_Timer and _G.C_Timer.After then
+        _G.C_Timer.After(E.CHECK_DELAY, E.CheckOpened)
+    else
+        E.CheckOpened()
+    end
+end
+
+-- Nach dem Klick auf den sicheren Knopf: das Spiel hat (vielleicht) schon
+-- geoeffnet, die Leiste darunter steht schon - sie erfaehrt jetzt, woher
+-- man kam.
+function E.AfterGameClick()
+    if E.LeaveForGame() then
+        SyncStrip()
+        CheckLater()
+    end
+end
+
+-- Der direkte Weg, nur ohne Befehl des Spiels.
+function E.OpenGame()
+    if not E.LeaveForGame() then return false end
+    local f = E.GameFrame()
+    local show = _G.ShowUIPanel
+    local ok, err = pcall(function()
+        if type(show) == "function" then show(f) else f:Show() end
+    end)
+    if not ok then K.Report("bearbeitungsmodus", err) end
+    CheckLater()
+    return ok
+end
+
+-- Macht aus einem Knopf den Weg hinueber. Mit Befehl: ein sicherer Knopf
+-- darueber fuehrt ihn als Makro aus (wie WeintCodex.AttachReload);
+-- angelegt wird der nur ausserhalb des Kampfes.
+function E.AttachGame(button)
+    E.HookGame()
+    local slash = E.GameSlash()
+    if slash and K.InCombat() then
+        button:SetScript("OnClick", function() E.LeaveForGame() end)
+        K.AfterCombat(function() E.AttachGame(button) end)
+        return nil
+    end
+    if slash then
+        local ok, ov = pcall(CreateFrame, "Button", nil, button, "SecureActionButtonTemplate")
+        if ok and ov then
+            ov:SetAllPoints(button)
+            ov:SetFrameLevel((button:GetFrameLevel() or 1) + 5)
+            if ov.RegisterForClicks then ov:RegisterForClicks("AnyUp") end
+            ov:SetAttribute("useOnKeyDown", false)
+            ov:SetAttribute("type", "macro")
+            ov:SetAttribute("macrotext", slash)
+            -- Erst NACH dem Makro Platz machen: der Knopf liegt in der
+            -- Leiste, die dabei zugeht, und ein Klick soll nicht davon
+            -- abhaengen, ob ein versteckter Knopf ihn noch ausfuehrt.
+            ov:SetScript("PostClick", E.AfterGameClick)
+            ov:SetScript("OnEnter", function()
+                local f = button:GetScript("OnEnter")
+                if f then f(button) end
+            end)
+            ov:SetScript("OnLeave", function()
+                local f = button:GetScript("OnLeave")
+                if f then f(button) end
+            end)
+            button._gameEditMode = ov
+            return ov
+        end
+    end
+    button:SetScript("OnClick", function() E.OpenGame() end)
+    return nil
+end
+
+--------------------------------------------------
+-- Die Leiste unter dem Bearbeitungsmodus des Spiels
+--------------------------------------------------
+
+local function StripText()
+    if bridge.from == "design" then return "Danach: Gestaltungsmodus von WeintCodex" end
+    if bridge.from == "options" then return "Danach: Einstellungen von WeintCodex" end
+    return "Rahmen von WeintCodex verschiebst du im Gestaltungsmodus."
+end
+
+function SyncStrip()
+    if not strip then return end
+    strip.text:SetText(StripText())
+    strip.toggle:SetText(ToggleText("Danach Gestaltungsmodus", bridge.from == "design"))
+    local tw = strip.text.GetStringWidth and strip.text:GetStringWidth()
+    local bw = strip.toggle:GetWidth()
+    tw = (type(tw) == "number" and tw > 0) and tw or 280
+    strip:SetWidth(math.ceil(14 + tw + 16 + ((type(bw) == "number") and bw or 0) + 8))
+end
+
+-- Danach in den Gestaltungsmodus - oder nicht (dann wieder dorthin, wo
+-- man vorher war, falls das das Einstellungsfenster war).
+function E.ToggleReturn()
+    if bridge.from == "design" then
+        bridge.from = bridge.reopen and "options" or nil
+        bridge.reopen = false
+    else
+        bridge.reopen = bridge.reopen or bridge.from == "options"
+        bridge.from = "design"
+    end
+    SyncStrip()
+end
+
+-- Unter das Fenster des Spiels, als Zahlen (nicht daran verankert: ein
+-- Rahmen, der an einem des Spiels haengt, erbt dessen Schutz). Passt es
+-- unten nicht, darueber.
+local function PlaceStrip()
+    strip:ClearAllPoints()
+    local f = E.GameFrame()
+    local l, b, t, w = f:GetLeft(), f:GetBottom(), f:GetTop(), f:GetWidth()
+    if type(l) ~= "number" or type(b) ~= "number" or type(t) ~= "number" or type(w) ~= "number" then
+        strip:SetPoint("TOP", UIParent, "TOP", 0, -14)
+        return
+    end
+    local es = 1
+    if f.GetEffectiveScale and UIParent.GetEffectiveScale then
+        local a, u = f:GetEffectiveScale(), UIParent:GetEffectiveScale()
+        if type(a) == "number" and type(u) == "number" and u > 0 then es = a / u end
+    end
+    local cx, h = (l + w / 2) * es, strip:GetHeight() or 34
+    if b * es - 8 - h >= 0 then
+        strip:SetPoint("TOP", UIParent, "BOTTOMLEFT", cx, b * es - 8)
+    else
+        strip:SetPoint("BOTTOM", UIParent, "BOTTOMLEFT", cx, t * es + 8)
+    end
+end
+
+function E.ShowStrip()
+    if not (K.UIEnabled and K.UIEnabled()) or not E.GameFrame() then return end
+    if not strip then
+        strip = CreateFrame("Frame", "WeintCodexGameEditBar", UIParent)
+        strip:SetFrameStrata("FULLSCREEN_DIALOG")
+        strip:SetSize(480, 34)
+        strip:EnableMouse(true)
+        if strip.SetClampedToScreen then strip:SetClampedToScreen(true) end
+        K.Kachel(strip)
+        strip.text = K.NewText(strip, 11)
+        strip.text:SetPoint("LEFT", strip, "LEFT", 14, 0)
+        strip.text:SetTextColor(unpack(C.textMuted))
+        strip.toggle = WeintCodex.CreateButton(strip, { text = "", kind = "secondary", height = 22, size = 11,
+            tooltip = "Wohin es geht, wenn du den Bearbeitungsmodus des Spiels schließt: in den Gestaltungsmodus von WeintCodex – dort verschiebst du Einheitenrahmen, Gruppe, Schadensanzeige und die übrigen Rahmen von WeintCodex." })
+        strip.toggle:SetPoint("RIGHT", strip, "RIGHT", -8, 0)
+        strip.toggle:SetScript("OnClick", E.ToggleReturn)
+    end
+    SyncStrip()
+    PlaceStrip()
+    strip:Show()
+end
+
+function E.HideStrip()
+    if strip then strip:Hide() end
+end
+
+function E.StripShown() return strip ~= nil and strip:IsShown() end
+
+-- Auf- und Zugehen des Bearbeitungsmodus mitbekommen. HookScript
+-- veraendert das Fenster des Spiels nicht.
+local hooked = false
+function E.HookGame()
+    if hooked then return true end
+    local f = E.GameFrame()
+    if not (f and f.HookScript) then return false end
+    hooked = true
+    f:HookScript("OnShow", E.ShowStrip)
+    f:HookScript("OnHide", function()
+        E.HideStrip()
+        bridge.pending = false
+        -- Erst wenn das Spiel fertig ist (es speichert beim Schliessen).
+        if _G.C_Timer and _G.C_Timer.After then
+            _G.C_Timer.After(0, E.BackFromGame)
+        else
+            E.BackFromGame()
+        end
+    end)
+    return true
+end
+
+local hookEvents = CreateFrame("Frame")
+hookEvents:RegisterEvent("PLAYER_LOGIN")
+hookEvents:RegisterEvent("ADDON_LOADED")
+hookEvents:SetScript("OnEvent", function(self, event, name)
+    if event == "ADDON_LOADED" and name ~= "Blizzard_EditMode" then return end
+    if E.HookGame() then self:UnregisterAllEvents() end
+end)
 
 K.Listen(function(kind, a)
     if kind == "unlock" then

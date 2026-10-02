@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.9.0.5",
+        date    = "02.10.2026",
+        notes   = {
+            "|cff7C6CFFEin Knopf zum Bearbeitungsmodus des Spiels.|r Was WeintCodex nicht selbst verschiebt – Aktionsleisten, Minikarte, Buffs, Questliste, Abklingzeitmanager, Chat, die Gruppenrahmen des Spiels –, erreichst du jetzt mit einem Klick: oben im Gestaltungsmodus, unter „Allgemein“ und auf jeder Seite, deren Rahmen das Spiel stellt.",
+            "|cff7C6CFFUnd wieder zurück.|r Schließt du den Bearbeitungsmodus des Spiels, bist du wieder dort, wo du herkamst – im Gestaltungsmodus oder auf derselben Einstellungsseite. Eine kleine Leiste darunter sagt, wohin es geht, und schaltet auf Wunsch in den Gestaltungsmodus um.",
+        },
+    },
+    {
         version = "6.9.0.4",
         date    = "02.10.2026",
         notes   = {

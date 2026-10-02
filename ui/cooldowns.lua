@@ -378,7 +378,7 @@ function CD.BuildPage(B)
           { type = "slider", label = "Ladungen und Stapel", key = "cdmCountSize", min = 8, max = 20, step = 1, format = px })
     B:Row({ type = "slider", label = "Balken: Name und Zeit", key = "cdmBarFontSize", min = 8, max = 18, step = 1, format = px },
           { type = "empty" })
-    B:Note("Eigene Zählwerke gibt es hier bewusst nicht: im Kampf nennt der Client Abklingzeiten und Buffs nur dem Manager des Spiels. Symbolgröße, Abstand und Reihen stellt dessen Bearbeitungsmodus ein – dort werden sie gespeichert.")
+    B:GameEditMode("Eigene Zählwerke gibt es hier bewusst nicht: im Kampf nennt der Client Abklingzeiten und Buffs nur dem Manager des Spiels. Platz, Symbolgröße, Abstand und Reihen stellt dessen Bearbeitungsmodus ein – dort werden sie gespeichert.")
 end
 
 -- An das Modul "Erinnerungen" haengen (es laedt vorher, siehe .toc).

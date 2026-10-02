@@ -157,7 +157,7 @@ weil sie genau das sind, wofür er steht.
 | `ui/layout.lua` | **wo alles steht**: die Standardpositionen aller beweglichen Rahmen (`UIKit.LAYOUT`, `UIKit.Layout`) |
 | `ui/presence.lua` | **Ruhe, Bereit, Kampf**: Deckkraft außerhalb des Kampfes |
 | `ui/testmode.lua` | **Testmodus**: Beispieldaten für Ziel, Fokus, Gruppe, Zauberbalken, Schadensanzeige |
-| `ui/editmode.lua` | **Gestaltungsmodus**: Leiste, Raster, Einrasten, Pfeiltasten, Doppelklick zu den Einstellungen |
+| `ui/editmode.lua` | **Gestaltungsmodus**: Leiste, Raster, Einrasten, Pfeiltasten, Doppelklick zu den Einstellungen; Brücke zum Bearbeitungsmodus des Spiels (6.9.0.5) |
 | `ui/castbar.lua` | **ein** Zauberbalken für Plaketten und Einheitenrahmen |
 | `ui/nameplates.lua` | Gegnerplaketten |
 | `ui/unitframes.lua` | Spieler, Ziel, Ziel des Ziels, Fokus, Begleiter; Porträt als 3D-Modell oder Bild |
@@ -2795,6 +2795,48 @@ Violett und rissigem Gold ist ein Markenzeichen, keine Fläche – auf
 Hintergründen oder in Fenstern des Spiels widerspräche es der ruhigen
 Oberfläche. `load_test.lua` prüft, dass jede Grafik, die `ui/` über
 `K.MEDIA` anfordert, in `media/ui` liegt.
+
+### Brücke zum Bearbeitungsmodus des Spiels *(6.9.0.5, `ui/editmode.lua`)*
+
+Zwei Modi, zwei Zuständigkeiten: der **Gestaltungsmodus** verschiebt, was
+WeintCodex baut (Einheiten- und Gruppenrahmen, Schadensanzeige,
+Questpfeil, Taschen …); der **Bearbeitungsmodus des Spiels**, was das Spiel
+stellt – Aktionsleisten, Minikarte, Buffs, Questliste,
+Abklingzeitmanager, Chat, die Gruppenrahmen des Spiels. WeintCodex
+schreibt dessen Einstellungen nicht (ein Addon, das sie schreibt, macht
+den Modus kaputt, siehe Einrichtung). Bis 6.9.0.4 stand dafür nur ein Satz
+„Esc → Bearbeitungsmodus“ da; jetzt führt ein Knopf hinüber:
+
+* in der Leiste des Gestaltungsmodus („Bearbeitungsmodus des Spiels“,
+  die Leiste wird so breit wie ihre Knöpfe),
+* auf `/wcui` → Allgemein neben „Gestaltungsmodus“,
+* auf jeder Seite, deren Rahmen das Spiel stellt: Aktionsleisten (zwei
+  Seiten), Minikarte, Questliste, Abklingzeitmanager, Gruppenrahmen –
+  `Builder:GameEditMode(note)` (Satz + Knopf) bzw. `gameEditMode = true`
+  an einer Knopfzelle.
+
+**Zurück:** Wer aus dem Gestaltungsmodus oder dem Einstellungsfenster
+kam, ist nach dem Schließen wieder dort (`E.bridge.from`), aus dem Fenster
+auf derselben Seite; kam man über Fenster → Gestaltungsmodus, geht nach
+„Fertig“ auch das Fenster wieder auf (`reopen`). Solange der Modus des
+Spiels offen ist, steht darunter eine kleine Leiste
+(`WeintCodexGameEditBar`, nur mit Oberfläche): wohin es danach geht, und
+ein Schalter „Danach Gestaltungsmodus“ – auch für den, der über Esc
+hineinkam. Gesetzt als Zahlen unter dem Fenster des Spiels, nicht daran
+verankert (ein Rahmen, der an einem des Spiels hängt, erbt dessen Schutz).
+Geht der Modus nicht auf (Kampf, kein Befehl), ist man nach 0,3 s wieder,
+wo man war, mit einem Satz im Chat.
+
+**Wie geöffnet wird:** Gibt es den Befehl des Spiels (`SLASH_EDITMODE1`
+samt `SlashCmdList.EDITMODE`), liegt über dem Knopf ein
+`SecureActionButtonTemplate` mit `type = "macro"`,
+`macrotext = "/editmode"` – das Spiel öffnet seinen Modus selbst, kein
+Addon-Code ruft `EditModeManagerFrame` auf (Taint: über ihn ordnet das
+Spiel geschützte Leisten). Platz gemacht wird erst in `PostClick`, weil
+der Knopf in der Leiste liegt, die dabei zugeht. Ohne Befehl öffnet
+WeintCodex direkt (`ShowUIPanel`). Welcher Weg gilt, sagt `/wcui
+einrichten prüfen` (letzte Zeile). **Ungeprüft auf Forever:** ob es
+`/editmode` gibt und ob der direkte Weg Folgen hat.
 
 ### Nächste Fenster
 
