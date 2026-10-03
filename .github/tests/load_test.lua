@@ -8136,6 +8136,133 @@ do
     Check(okBK, "Bank: Gold (auch Gildenbank), Plaetze und Taschenplaetze flach, Symbol/Qualitaet/Schloss bleiben, Grund und Geld auf Flaeche, Schmuck weg, kein Muell"
         .. (okBK and "" or (": " .. tostring(errBK))))
 
+    -- 6.9.1.2: Post in Gold. Beta-Test 6.9.1.1: Metallrahmen, Pergament,
+    -- Steinplaetze, Eingabefelder mit Goldrand, Holzleisten.
+    local okML, errML = pcall(function()
+        local W, S, ML, LF, GC = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIMail, WeintCodex.UICalm, WeintCodex.GameColors
+        local listed = {}
+        for _, n in ipairs(W.WINDOWS) do listed[n] = true end
+        assert(listed.MailFrame and listed.OpenMailFrame and ML and S.SCOPES.MailFrame == S.CALM
+            and S.SCOPES.OpenMailFrame == S.CALM, "Post/Brief nicht im Durchlauf oder nicht in Gold")
+        local hosts = {}
+        for _, h in ipairs(W.HOSTED.MailFrame or {}) do hosts[h] = true end
+        assert(hosts[ML] and hosts[LF], "Post ohne eigene Teile oder ohne Kante an den Innenflaechen")
+        local saved = {}
+        local function Global(name, obj) saved[name] = _G[name] _G[name] = obj return obj end
+        local function Tex(file)
+            local t = stub.NewObject("Texture")
+            t._file = file
+            t.GetTexture = function(self) return self._file end
+            return t
+        end
+        local mf = Global("MailFrame", stub.NewObject("Frame", "MailFrame"))
+        mf.selectedTab = 2
+        -- Posteingang: Pergament, eine Zeile mit Rahmen und Knopf (Symbol bleibt).
+        local inbox = stub.NewObject("Frame")
+        local inboxBg = Tex(530419)
+        inbox.GetRegions = function() return inboxBg end
+        local row = stub.NewObject("Frame")
+        local rowRim = Tex(136383)
+        row.GetRegions = function() return rowRim end
+        local rowBtn = Global("MailItem1Button", stub.NewObject("Button"))
+        local letter = Tex(133468)
+        rowBtn.Icon = letter
+        rowBtn.GetRegions = function() return letter end
+        row.GetChildren = function() return rowBtn end
+        inbox.GetChildren = function() return row end
+        -- Versenden: Pergament hinter dem Brief, Feld, Anhang, Trennleiste.
+        local send = stub.NewObject("Frame")
+        local divider = Tex(130968)
+        send.GetRegions = function() return divider end
+        local scroll = stub.NewObject("Frame")
+        local pTop, pBot = Tex(136859), Tex(136860)
+        scroll.GetRegions = function() return pTop, pBot end
+        local field = stub.NewObject("EditBox")
+        local fl, fm, fr = Tex(130975), Tex(130975), Tex(130975)
+        field.GetRegions = function() return fl, fm, fr end
+        local att = stub.NewObject("Button")
+        -- Das (leere) Symbol traegt dasselbe Bild wie der Stein - es bleibt.
+        local stone, rim, attIcon = Tex(130862), Tex(130718), Tex(130862)
+        att.icon = attIcon
+        att.GetRegions = function() return stone, rim, attIcon end
+        send.GetChildren = function() return scroll, field, att end
+        -- Symbol des Briefkastens und die Innenflaeche des Fensters.
+        local portrait = stub.NewObject("Frame")
+        local mailbox = Tex(136382)
+        portrait.GetRegions = function() return mailbox end
+        local inset = stub.NewObject("Frame")
+        inset.Bg, inset.NineSlice = Tex(374154), stub.NewObject("Frame")
+        inset.GetRegions = function() return inset.Bg end
+        inset.GetParent = function() return mf end
+        mf.GetChildren = function() return inbox, send, portrait, inset end
+        local money = Global("SendMailMoneyBg", stub.NewObject("Frame"))
+        local moneyTex = Tex(525911)
+        money.GetRegions = function() return moneyTex end
+        money.GetParent = function() return mf end
+        local body = Global("SendMailBodyEditBox", stub.NewObject("EditBox"))
+        local bodyColor
+        body.SetTextColor = function(_, r) bodyColor = r end
+        local tab1 = Global("MailFrameTab1", stub.NewObject("Button"))
+        local tab2 = Global("MailFrameTab2", stub.NewObject("Button"))
+        tab1.GetID = function() return 1 end
+        tab2.GetID = function() return 2 end
+        local tabsSeen = {}
+        local skinTab = W.SkinTab
+        W.SkinTab = function(tab, accent, sel) tabsSeen[tab] = sel return true end
+        S.Register()
+        local glow = stub.NewObject("Texture")
+        W.done[mf] = { glow = glow }
+        local grad, gold = S.Gradient, {}
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == GC.frameAccent then gold[t] = true end
+            return grad(t, dir, c, a0, a1)
+        end
+        ML.Update(mf)
+        LF.Update(mf)
+        S.Gradient = grad
+        W.SkinTab = skinTab
+        W.HoldGlow(mf, "MailFrame")
+        local m = ML.frames[mf]
+        assert(not glow:IsShown(), "Schein der Klasse ueber der Post")
+        assert(m and gold[m.edge.l], "Kante oben nicht in Gold")
+        assert(inboxBg:GetAlpha() == 0 and ML.surfaces[inboxBg] and W.Insets[inbox], "Pergament im Posteingang bleibt")
+        assert(pTop:GetAlpha() == 0 and pBot:GetAlpha() == 0 and W.Insets[scroll], "Pergament hinter dem Brief bleibt")
+        assert(rowRim:GetAlpha() == 0 and ML.flat[rowBtn] and letter:GetAlpha() == 1, "Zeile: Rahmen bleibt, Knopf nicht flach oder Symbol weg")
+        assert(stone:GetAlpha() == 0 and rim:GetAlpha() == 0 and ML.flat[att] and attIcon:GetAlpha() == 1, "Anhang: Stein/Rand bleibt oder Symbol weg")
+        assert(fl:GetAlpha() == 0 and fm:GetAlpha() == 0 and fr:GetAlpha() == 0 and ML.fields[field], "Feld behaelt den Goldrand")
+        assert(divider:GetAlpha() == 0 and mailbox:GetAlpha() == 0, "Trennleiste oder Briefkasten bleibt")
+        assert(W.Insets[inset] and inset.Bg:GetAlpha() == 0, "Innenflaeche des Fensters bleibt Leder")
+        assert(W.Insets[money] and moneyTex:GetAlpha() == 0, "Geld nicht auf Flaeche")
+        assert(bodyColor == C.textBright[1], "Schrift des Briefs bleibt dunkel")
+        assert(tabsSeen[tab1] == false and tabsSeen[tab2] == true, "Reiter: der gewaehlte nicht in Gold")
+        -- Ein Gegenstand im Anhang: die Region zeigt etwas anderes - wieder sichtbar.
+        stone._file = 135274
+        ML.Update(mf)
+        assert(stone:GetAlpha() == 1 and not ML.hidden[stone], "Bild eines Gegenstands bleibt unsichtbar")
+        stone._file = 130862
+        ML.Update(mf)
+        assert(stone:GetAlpha() == 0, "Stein kommt nicht wieder weg")
+        local sets = 0
+        local rsa = rowRim.SetAlpha
+        rowRim.SetAlpha = function(self, a) sets = sets + 1 return rsa(self, a) end
+        for _ = 1, 5 do ML.Update(mf) end
+        rowRim.SetAlpha = rsa
+        assert(sets == 0, "Rahmen je Durchlauf neu gesetzt: " .. sets)
+        local rep = table.concat(ML.Report(mf, {}), "\n")
+        assert(rep:find("Post (Stil ruhig): Kante in Gold, kein Schein der Klasse · Pergament auf Fläche 3", 1, true), "Bericht: " .. rep)
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do ML.Update(mf) LF.Update(mf) W.HoldGlow(mf, "MailFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Post legt im Takt Muell an: %.1f KB", grew))
+        W.done[mf] = nil
+        for name, v in pairs(saved) do _G[name] = v end
+    end)
+    Check(okML, "Post: Gold (auch Brief), Pergament weg und Schrift hell, Zeilen/Anhaenge flach, Symbole bleiben, Felder flach, Geld und Innenflaeche, Reiter, kein Muell"
+        .. (okML and "" or (": " .. tostring(errML))))
+
     -- 6.9.0.0: Symbol der Oberflaeche an der Minikarte - nur mit Oberflaeche.
     local okLN, errLN = pcall(function()
         local LN = WeintCodex.UILauncher

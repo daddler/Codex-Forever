@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.9.1.2",
+        date    = "03.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Post im neuen Stil.|r Posteingang und Post versenden ohne Metallrahmen, Pergament und Stein: ruhige Flächen, flache Plätze und Eingabefelder, Gold als Akzent wie bei Bank und Auktionshaus. Der Brief, den du schreibst, steht in heller Schrift.",
+        },
+    },
+    {
         version = "6.9.1.1",
         date    = "03.10.2026",
         notes   = {

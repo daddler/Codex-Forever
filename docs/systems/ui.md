@@ -2853,6 +2853,27 @@ Gold über `W.WINDOWS`/`ui/calm.lua` – ihre Plätze und Reiter sind
 **ungemessen**; was dort noch Stein oder Holz trägt, sagt `/wcui fenster`
 bei offener Gildenbank.
 
+### Post *(6.9.1.2, `ui/mail.lua`)*
+
+Gemessen mit `/wcui fenster` (Beta-Test 6.9.1.1, beide Reiter):
+`MailFrame` (Marmor, Metallrahmen, Streifen, Symbol des Briefkastens
+`PortraitContainer` 136382), `MailFrameInset` (Leder 374154), Pergament
+im Posteingang (`InboxFrame`, 530419) und hinter dem Brief
+(`SendMailScrollFrame`, 136859/136860), Rahmen der Zeilen (`MailItem1`,
+136383), Anhänge (`SendMailAttachment1`: Stein 130862, Rand 130718),
+Eingabefelder mit Goldrand (130975, An/Betreff/Geld), Trennleisten
+(`SendMailFrame`, 130968), Geld (`SendMailMoneyBg`, 525911), Reiter
+(`MailFrameTab1/2`, „uiframe-tab-*“). Gold (`S.CALM`, Gast in
+`ui/calm.lua`): Pergament weg, an seiner Stelle Innenflächen – die Schrift
+des Briefs (`SendMailBodyEditBox`) war auf Pergament dunkelbraun und wird
+hell, aber erst, wenn das Pergament wirklich weg ist; Zeilen- und
+Anhangknöpfe flach mit 1 px Rand, Symbole bleiben; Felder als flache
+Leisten; Trennleisten und Briefkasten weg; Geld und Innenfläche wie
+überall; Reiter flach, der gewählte in Gold. Nur Bilder und Schriftfarben.
+
+**Geöffneter Brief** (`OpenMailFrame`): nur Hülle und Gold – ungemessen;
+sein Pergament sagt `/wcui fenster` bei offenem Brief.
+
 ### Symbol an der Minikarte *(6.9.0.0, `ui/launcher.lua`)*
 
 Mit Oberfläche ein zweites Symbol („WeintCodexUI“, seit 6.9.0.3 das

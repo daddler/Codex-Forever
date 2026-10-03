@@ -37,6 +37,9 @@
 --   Auktionshaus       AuctionHouseFrame (6.9.0.4) - Listen, Geld: ui/auction.lua
 --   Bank               BankFrame (6.9.1.1) - Grund, Plaetze, Geld: ui/bank.lua
 --   Gildenbank         GuildBankFrame (6.9.1.1) - nur Huelle und Gold, ungemessen
+--   Post               MailFrame (6.9.1.2) - Pergament, Zeilen, Plaetze, Felder,
+--                      Geld, Reiter: ui/mail.lua
+--   Brief              OpenMailFrame (6.9.1.2) - nur Huelle und Gold, ungemessen
 --   Sammlung           CollectionsJournal - Innenflaeche:
 --                      WardrobeCollectionFrame.ItemsCollectionFrame
 --                      (W.OWN_BG_PATHS seit 6.6.3.3); Plaetze der Vorlagen
@@ -62,9 +65,10 @@ local Visible, IsFrame, InTree = RG.Visible, RG.IsFrame, RG.InTree
 LF.WINDOWS = { LFGParentFrame = "Suche nach Gruppe", PVEFrame = "Suche nach Gruppe",
                CollectionsJournal = "Sammlung", SettingsPanel = "Optionen", MacroFrame = "Makros",
                TradeFrame = "Handel", AuctionHouseFrame = "Auktionshaus",
-               BankFrame = "Bank", GuildBankFrame = "Gildenbank" }
+               BankFrame = "Bank", GuildBankFrame = "Gildenbank",
+               MailFrame = "Post", OpenMailFrame = "Brief" }
 LF.HOSTS = { "LFGParentFrame", "PVEFrame", "CollectionsJournal", "SettingsPanel", "MacroFrame", "TradeFrame",
-             "AuctionHouseFrame", "BankFrame", "GuildBankFrame" }
+             "AuctionHouseFrame", "BankFrame", "GuildBankFrame", "MailFrame", "OpenMailFrame" }
 -- Innenflaechen, die das Fenster selbst nicht als solche baut: Feld am
 -- Fenster oder globaler Name -> W.OwnBackground (eigene Bilder weg,
 -- Innenflaeche). Makros (6.9.0.0, ui/macroframe.lua): die Liste (Leder)

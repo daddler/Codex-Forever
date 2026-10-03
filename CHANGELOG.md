@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.9.1.2] – 2026-10-03
+
+**Die Post im neuen Stil.** Posteingang und Post versenden ohne Metallrahmen, Pergament und Stein: ruhige Flächen, flache Plätze und Eingabefelder, Gold als Akzent wie bei Bank und Auktionshaus. Der Brief, den du schreibst, steht in heller Schrift.
+
+### Technisch
+
+- Neu `ui/mail.lua` (Gast an `MailFrame`, `S.CALM`), nach der Messung aus dem Beta-Test (`/wcui fenster`, beide Reiter): Pergament (530419, 136859, 136860) → Innenflächen, Zeilenrahmen (136383) weg und `MailItem1..7Button` flach, Anhänge (130862, 130718) flach, Eingabefelder (130975) als flache Leisten, Trennleisten (130968) und Briefkasten (136382) weg, `SendMailMoneyBg` und `MailFrameInset` als Innenflächen, Reiter `MailFrameTab1/2` über `W.SkinTab`. `SendMailBodyEditBox` hell – nur wenn das Pergament weg ist. Symbole und Qualität bleiben; eine Region, die später ein anderes Bild zeigt, wird wieder sichtbar.
+- `OpenMailFrame` in `W.WINDOWS` und `ui/calm.lua`: Hülle und Gold; das Pergament des geöffneten Briefs ist ungemessen.
+- `load_test.lua`: Post in Gold, Pergament weg und Schrift hell, Zeilen/Anhänge flach, Symbole bleiben (auch mit demselben Bild), Felder, Geld, Innenfläche, Reiter, Rückkehr eines Bilds, kein Neusetzen im Takt, kein Müll. 18 Gegenproben, alle gefangen.
+
 ## [6.9.1.1] – 2026-10-03
 
 **Die Bank im neuen Stil.** Kein Metallrahmen, kein Stein und kein Leder mehr: flache Plätze mit feinem Rand auf ruhiger Fläche, Gold als Akzent wie beim Händler und im Auktionshaus. Symbole, Qualitätsfarben und die Schlösser ungekaufter Taschenplätze bleiben.

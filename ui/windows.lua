@@ -84,7 +84,10 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               "AuctionHouseFrame",
               -- 6.9.1.1: Bank (ui/bank.lua) und Gildenbank (Blizzard_GuildBankUI,
               -- erst beim Oeffnen geladen; nur Huelle und Gold, ungemessen).
-              "BankFrame", "GuildBankFrame" }
+              "BankFrame", "GuildBankFrame",
+              -- 6.9.1.2: Post (ui/mail.lua) und ein geoeffneter Brief (nur
+              -- Huelle und Gold, ungemessen).
+              "MailFrame", "OpenMailFrame" }
 
 -- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
 -- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus
