@@ -2831,6 +2831,28 @@ Sortierpfeil bleibt; Geld als Innenflächen; Reiter flach, der gewählte in
 Gold. Nur Bilder – Bieten und Kaufen sind geschützt. Ungemessen:
 „Verkaufen“, „Auktionen“ und die Zeilen einer gefüllten Liste.
 
+### Bank *(6.9.1.1, `ui/bank.lua`)*
+
+Gemessen mit `/wcui fenster` (Beta-Test 6.9.1.0): `BankFrame` (Marmor
+374155, Metallrahmen, Porträt, Streifen, „bank-frame-background“,
+„bank-divider“), `BankPanel.EdgeShadows` („_bank-frame-horiz-shadow“,
+„!bank-frame-vert-shadow“), 48 Plätze („bags-item-bankslot64“,
+„bank-frame-item-slotframe“, Rand Bild 130718), acht Taschenplätze
+(„bank-frame-bag-slot-bg“, „bank-frame-bag-slotframe“, Schloss
+„bankslot-icon-lock“), Geld (`BankPanel.MoneyFrame.Border`, 525911),
+Seitenreiter („common-sidetab“). Gold (`S.CALM`, Gast in `ui/calm.lua`):
+Hülle wie jedes Fenster; der Grund weg, an seiner Stelle eine Innenfläche
+mit Schatten und Kante in Gold; Trennleiste und Randschatten weg; Plätze
+und Taschenplätze flach mit 1 px Rand wie im Handel – Symbol, Rand der
+Qualität, Überlagerung und das Schloss eines ungekauften Platzes bleiben,
+und was später ein anderes Bild zeigt, wird wieder sichtbar; Geld als
+Innenfläche; Seitenreiter als Kacheln, der gewählte in Gold. Nur Bilder.
+
+**Gildenbank** (`GuildBankFrame`, erst beim Öffnen geladen): nur Hülle und
+Gold über `W.WINDOWS`/`ui/calm.lua` – ihre Plätze und Reiter sind
+**ungemessen**; was dort noch Stein oder Holz trägt, sagt `/wcui fenster`
+bei offener Gildenbank.
+
 ### Symbol an der Minikarte *(6.9.0.0, `ui/launcher.lua`)*
 
 Mit Oberfläche ein zweites Symbol („WeintCodexUI“, seit 6.9.0.3 das

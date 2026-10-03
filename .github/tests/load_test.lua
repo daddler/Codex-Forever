@@ -8034,6 +8034,108 @@ do
     Check(okAH, "Auktionshaus: Gold, Kategorien als Kacheln (gewaehlte in Gold), Listen und Geld auf Flaeche, Spaltenkoepfe flach, Reiter, kein Muell"
         .. (okAH and "" or (": " .. tostring(errAH))))
 
+    -- 6.9.1.1: Bank in Gold. Beta-Test 6.9.1.0: Metallrahmen, Portraet,
+    -- Steinplaetze, Holzleisten, Grund aus Leder.
+    local okBK, errBK = pcall(function()
+        local W, S, BK, LF, GC = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIBank, WeintCodex.UICalm, WeintCodex.GameColors
+        local listed = {}
+        for _, n in ipairs(W.WINDOWS) do listed[n] = true end
+        assert(listed.BankFrame and listed.GuildBankFrame and BK and S.SCOPES.BankFrame == S.CALM
+            and S.SCOPES.GuildBankFrame == S.CALM, "Bank/Gildenbank nicht im Durchlauf oder nicht in Gold")
+        local hosts = {}
+        for _, h in ipairs(W.HOSTED.BankFrame or {}) do hosts[h] = true end
+        assert(hosts[BK] and hosts[LF], "Bank ohne Plaetze oder ohne Kante an den Innenflaechen")
+        local saved = {}
+        local function Global(name, obj) saved[name] = _G[name] _G[name] = obj return obj end
+        local function Tex(atlas, file)
+            local t = stub.NewObject("Texture")
+            t._atlas, t._file = atlas, file
+            t.GetAtlas = function(self) return self._atlas end
+            t.GetTexture = function(self) return self._file end
+            return t
+        end
+        local bf = Global("BankFrame", stub.NewObject("Frame", "BankFrame"))
+        local panel = stub.NewObject("Frame")
+        bf.BankPanel = panel
+        local bgTex, divider = Tex("bank-frame-background"), Tex("bank-divider")
+        bf.GetRegions = function() return bgTex, divider end
+        -- Ein Platz: Stein, Rahmen, Rand des Knopfs, Symbol, Rand der Qualitaet.
+        local slot = stub.NewObject("Button")
+        local stone, frame, rim = Tex("bags-item-bankslot64"), Tex("bank-frame-item-slotframe"), Tex(nil, 130718)
+        -- Symbol, Rand der Qualitaet und Ueberlagerung tragen (leer) dasselbe
+        -- Bild wie der Rand des Knopfs - sie duerfen trotzdem nie weg.
+        local icon, quality, overlay = Tex(nil, 130718), Tex(nil, 130718), Tex(nil, 130718)
+        slot.icon, slot.IconBorder, slot.IconOverlay = icon, quality, overlay
+        slot.GetRegions = function() return stone, frame, rim, icon, quality, overlay end
+        -- Ein Taschenplatz mit Schloss (bleibt).
+        local bag = stub.NewObject("Button")
+        local bagBg, bagFrame, lock = Tex("bank-frame-bag-slot-bg"), Tex("bank-frame-bag-slotframe"), Tex("bankslot-icon-lock")
+        bag.GetRegions = function() return bagBg, bagFrame, lock end
+        -- Schatten am Rand und Geld.
+        local shadows = stub.NewObject("Frame")
+        local hs, vs = Tex("_bank-frame-horiz-shadow"), Tex("!bank-frame-vert-shadow")
+        shadows.GetRegions = function() return hs, vs end
+        local mf, border = stub.NewObject("Frame"), stub.NewObject("Frame")
+        local moneyTex = Tex(nil, 525911)
+        border.GetRegions = function() return moneyTex end
+        border.GetParent = function() return mf end
+        mf.Border = border
+        panel.MoneyFrame = mf
+        panel.GetChildren = function() return slot, bag, shadows end
+        bf.GetChildren = function() return panel end
+        S.Register()
+        local glow = stub.NewObject("Texture")
+        W.done[bf] = { glow = glow }
+        local grad, gold = S.Gradient, {}
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == GC.frameAccent then gold[t] = true end
+            return grad(t, dir, c, a0, a1)
+        end
+        BK.Update(bf)
+        LF.Update(bf)
+        S.Gradient = grad
+        W.HoldGlow(bf, "BankFrame")
+        local m = BK.frames[bf]
+        assert(not glow:IsShown(), "Schein der Klasse ueber der Bank")
+        assert(m and gold[m.edge.l], "Kante oben nicht in Gold")
+        assert(stone:GetAlpha() == 0 and frame:GetAlpha() == 0 and rim:GetAlpha() == 0, "Stein, Rahmen oder Rand des Platzes bleibt")
+        assert(BK.flat[slot] and BK.flat[bag] and not BK.flat[panel], "Platz nicht flach (oder das ganze Fenster)")
+        assert(icon:GetAlpha() == 1 and quality:GetAlpha() == 1 and overlay:GetAlpha() == 1 and slot:GetAlpha() == 1,
+            "Symbol, Rand der Qualitaet oder Ueberlagerung ausgeblendet")
+        assert(bagBg:GetAlpha() == 0 and bagFrame:GetAlpha() == 0 and lock:GetAlpha() == 1, "Taschenplatz: Rahmen bleibt oder Schloss weg")
+        assert(bgTex:GetAlpha() == 0 and BK.surfaces[bgTex] and W.Insets[bf], "Grund nicht als Innenflaeche")
+        assert(divider:GetAlpha() == 0 and hs:GetAlpha() == 0 and vs:GetAlpha() == 0, "Trennleiste oder Schatten bleibt")
+        assert(W.Insets[border] and moneyTex:GetAlpha() == 0, "Geld nicht auf Flaeche")
+        -- Zeigt eine Region spaeter etwas anderes: wieder sichtbar.
+        rim._file = 135274
+        BK.Update(bf)
+        assert(rim:GetAlpha() == 1 and not BK.hidden[rim], "Bild eines Gegenstands bleibt unsichtbar")
+        rim._file = 130718
+        BK.Update(bf)
+        assert(rim:GetAlpha() == 0, "Rand kommt nicht wieder weg")
+        -- Ruhe im Takt: nichts wird je Durchlauf neu gesetzt.
+        local sets = 0
+        local ssa = stone.SetAlpha
+        stone.SetAlpha = function(self, a) sets = sets + 1 return ssa(self, a) end
+        for _ = 1, 5 do BK.Update(bf) end
+        stone.SetAlpha = ssa
+        assert(sets == 0, "Stein je Durchlauf neu gesetzt: " .. sets)
+        local rep = table.concat(BK.Report(bf, {}), "\n")
+        assert(rep:find("Bank (Stil ruhig): Kante in Gold, kein Schein der Klasse · Plätze flach 2", 1, true)
+            and rep:find("Grund auf Fläche · Geld auf Fläche", 1, true), "Bericht: " .. rep)
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do BK.Update(bf) LF.Update(bf) W.HoldGlow(bf, "BankFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Bank legt im Takt Muell an: %.1f KB", grew))
+        W.done[bf] = nil
+        for name, v in pairs(saved) do _G[name] = v end
+    end)
+    Check(okBK, "Bank: Gold (auch Gildenbank), Plaetze und Taschenplaetze flach, Symbol/Qualitaet/Schloss bleiben, Grund und Geld auf Flaeche, Schmuck weg, kein Muell"
+        .. (okBK and "" or (": " .. tostring(errBK))))
+
     -- 6.9.0.0: Symbol der Oberflaeche an der Minikarte - nur mit Oberflaeche.
     local okLN, errLN = pcall(function()
         local LN = WeintCodex.UILauncher

@@ -81,7 +81,10 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               "TradeFrame",
               -- 6.9.0.4: Auktionshaus (Blizzard_AuctionHouseUI, erst beim
               -- Ansprechen geladen; ui/auction.lua).
-              "AuctionHouseFrame" }
+              "AuctionHouseFrame",
+              -- 6.9.1.1: Bank (ui/bank.lua) und Gildenbank (Blizzard_GuildBankUI,
+              -- erst beim Oeffnen geladen; nur Huelle und Gold, ungemessen).
+              "BankFrame", "GuildBankFrame" }
 
 -- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
 -- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus

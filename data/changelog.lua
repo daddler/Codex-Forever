@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.9.1.1",
+        date    = "03.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Bank im neuen Stil.|r Kein Metallrahmen, kein Stein und kein Leder mehr: flache Plätze mit feinem Rand auf ruhiger Fläche, Gold als Akzent wie beim Händler und im Auktionshaus. Symbole, Qualitätsfarben und die Schlösser ungekaufter Taschenplätze bleiben.",
+            "|cff7C6CFFGildenbank in Gold.|r Rahmen und Akzent wie die Bank. Die Plätze darin folgen, sobald sie vermessen sind.",
+        },
+    },
+    {
         version = "6.9.1.0",
         date    = "02.10.2026",
         notes   = {

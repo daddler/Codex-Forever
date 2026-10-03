@@ -35,6 +35,8 @@
 --   Handel             TradeFrame (6.9.0.2) - Innenflaechen findet ui/trade.lua
 --                      (InsetFrameTemplate); Plaetze und Namensfelder dort
 --   Auktionshaus       AuctionHouseFrame (6.9.0.4) - Listen, Geld: ui/auction.lua
+--   Bank               BankFrame (6.9.1.1) - Grund, Plaetze, Geld: ui/bank.lua
+--   Gildenbank         GuildBankFrame (6.9.1.1) - nur Huelle und Gold, ungemessen
 --   Sammlung           CollectionsJournal - Innenflaeche:
 --                      WardrobeCollectionFrame.ItemsCollectionFrame
 --                      (W.OWN_BG_PATHS seit 6.6.3.3); Plaetze der Vorlagen
@@ -59,9 +61,10 @@ local Visible, IsFrame, InTree = RG.Visible, RG.IsFrame, RG.InTree
 -- Fenster -> Name im Bericht.
 LF.WINDOWS = { LFGParentFrame = "Suche nach Gruppe", PVEFrame = "Suche nach Gruppe",
                CollectionsJournal = "Sammlung", SettingsPanel = "Optionen", MacroFrame = "Makros",
-               TradeFrame = "Handel", AuctionHouseFrame = "Auktionshaus" }
+               TradeFrame = "Handel", AuctionHouseFrame = "Auktionshaus",
+               BankFrame = "Bank", GuildBankFrame = "Gildenbank" }
 LF.HOSTS = { "LFGParentFrame", "PVEFrame", "CollectionsJournal", "SettingsPanel", "MacroFrame", "TradeFrame",
-             "AuctionHouseFrame" }
+             "AuctionHouseFrame", "BankFrame", "GuildBankFrame" }
 -- Innenflaechen, die das Fenster selbst nicht als solche baut: Feld am
 -- Fenster oder globaler Name -> W.OwnBackground (eigene Bilder weg,
 -- Innenflaeche). Makros (6.9.0.0, ui/macroframe.lua): die Liste (Leder)

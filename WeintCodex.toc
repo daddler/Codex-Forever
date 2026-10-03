@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.9.1.0
+## Version: 6.9.1.1
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -218,6 +218,8 @@ ui/macroframe.lua
 ui/trade.lua
 # Auktionshaus in Gold (6.9.0.4): Kategorien als Kacheln, Listen auf Flaeche, Spaltenkoepfe flach.
 ui/auction.lua
+# Bank in Gold (6.9.1.1): Plaetze flach, Grund und Geld auf Flaeche.
+ui/bank.lua
 # Karte & Questlog (6.7.9.0, 6.8.0.9): Questlog und Questdetails auf Flaeche, Gold, Karte unberuehrt.
 ui/questlog.lua
 # Fenster in Gold mit Innenflaechen (6.8.0.0 Suche nach Gruppe, 6.8.0.2 Sammlung).

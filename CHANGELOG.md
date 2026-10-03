@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.9.1.1] – 2026-10-03
+
+**Die Bank im neuen Stil.** Kein Metallrahmen, kein Stein und kein Leder mehr: flache Plätze mit feinem Rand auf ruhiger Fläche, Gold als Akzent wie beim Händler und im Auktionshaus. Symbole, Qualitätsfarben und die Schlösser ungekaufter Taschenplätze bleiben.
+
+**Gildenbank in Gold.** Rahmen und Akzent wie die Bank. Die Plätze darin folgen, sobald sie vermessen sind.
+
+### Technisch
+
+- Neu `ui/bank.lua` (Gast an `BankFrame`, `S.CALM`), nach der Messung aus dem Beta-Test (`/wcui fenster`): „bank-frame-background“ → Innenfläche (`W.Insets`), „bank-divider“ und Randschatten weg, Plätze („bags-item-bankslot64“, „bank-frame-item-slotframe“, Bild 130718) und Taschenplätze („bank-frame-bag-*“) flach mit 1 px Rand, `BankPanel.MoneyFrame.Border` als Innenfläche. Symbol, `IconBorder`, `IconOverlay` und „bankslot-icon-lock“ bleiben; eine Region, die später ein anderes Bild zeigt, wird wieder sichtbar. Hülle, Seitenreiter und Knöpfe über den allgemeinen Durchlauf (`W.WINDOWS`), Licht und Kante über `ui/calm.lua`.
+- `GuildBankFrame` in `W.WINDOWS` und `ui/calm.lua`: Hülle und Gold; Plätze und Reiter ungemessen.
+- `load_test.lua`: Bank in Gold, Plätze/Taschenplätze flach, Symbol/Qualität/Überlagerung/Schloss bleiben (auch wenn sie dasselbe Bild tragen), Grund und Geld auf Fläche, Schmuck weg, Rückkehr eines Bilds, kein Neusetzen im Takt, kein Müll. 16 Gegenproben, alle gefangen (zwei erst nach geschärftem Test).
+
 ## [6.9.1.0] – 2026-10-02
 
 **Mikromenü und Taschenleiste frei verschiebbar.** Beide stehen jetzt im Gestaltungsmodus: ziehen, und sie bleiben dort – auch wenn das Spiel seine Leisten neu anordnet. Rechtsklick setzt sie zurück. Bisher sprangen sie immer wieder nach unten links bzw. rechts.
