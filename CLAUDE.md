@@ -278,7 +278,7 @@ into modules that no longer exist. A green run means "it loads", never
 | Gruppencheck | `docs/systems/groupcheck.md` |
 | Companion-Sync allgemein (Inbox/Outbound, `ProcessInbox`) | `docs/systems/companion-bridge.md` |
 | Onboarding-Tour, Update-Changelog-Popup | `docs/systems/onboarding-changelog.md` |
-| Release schneiden, Changelog, Patchnote-Stil, Builder | `docs/development/releases.md` |
+| Release schneiden, Changelog, Patchnote-Stil, Builder | `docs/development/releases.md`, vor jedem Release die Prüfliste im Spiel `docs/development/release-checklist.md` |
 | Kopflose Prüfläufe, Client-Attrappe | `.github/tests/README.md` |
 | Zugriffsprofile / `core/access.lua` | `../Companion-Forever/docs/access-profile-bridge.md` |
 | Ausrüstungsstand an die Companion (`character_sheet`) | `../Companion-Forever/docs/character-sheet-bridge.md` |

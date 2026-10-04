@@ -7,7 +7,9 @@
 3. `WeintCodex.toc` — `## Version` erhöhen.
 4. `core/main.lua` — `WeintCodex.Version` auf dieselbe Zahl.
 5. Prüfen, commiten, pushen.
-6. Unter **Actions → „Release auf Knopfdruck"** den Tag `v<Fassung>`
+6. **Prüfliste im Spiel** abarbeiten (`docs/development/release-checklist.md`,
+   etwa zehn Minuten). Was sich nicht prüfen ließ, steht in den Notizen.
+7. Unter **Actions → „Release auf Knopfdruck"** den Tag `v<Fassung>`
    eintragen und starten.
 
 Das war es. Der Rest passiert von selbst.

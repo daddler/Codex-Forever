@@ -9982,6 +9982,56 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.10.0.0: Kopfzeile der Schadensanzeige gerechnet statt fest - bei
+-- jeder erlaubten Breite passen Titel, Zeitraum und Knoepfe nebeneinander.
+do
+    local DM = WeintCodex.UIDamageMeter
+    local ok, err = pcall(function()
+        local H = DM.HEADER
+        for w = DM.MIN_WIDTH, 420, 2 do
+            for buttons = 0, 5 do
+                local tw, sw = DM.HeaderWidths(w, buttons)
+                local used = H.left + tw + H.between + sw + H.gap + buttons * H.button + H.edge
+                assert(used <= w - 2, string.format("Kopfzeile laeuft ueber: %d px, %d Knoepfe, %d gebraucht", w, buttons, used))
+                assert(tw >= H.titleMin and sw >= H.sessionMin, "Titel oder Zeitraum zu schmal bei " .. w)
+            end
+        end
+        -- Eine schmalere Einstellung von frueher wird gehoben.
+        K.Set("damagemeter", "width", 160)
+        DM.Window(1):Layout()
+        assert(DM.Window(1).frame:GetWidth() == DM.MIN_WIDTH, "alte schmale Breite bleibt: " .. tostring(DM.Window(1).frame:GetWidth()))
+        local win = DM.Window(1)
+        assert(win._titleW and win.title:GetWidth() == win._titleW and win.session:GetWidth() == win._sessionW,
+            "Titel/Zeitraum bekommen ihre Breite nicht")
+        local n = 0
+        for _, b in ipairs({ win.close, win.gear, win.reset, win.report, win.plus }) do
+            if b:IsShown() then n = n + 1 end
+        end
+        assert(n > 0 and win._buttons == n, "Knoepfe nicht mitgezaehlt: " .. tostring(win._buttons) .. " statt " .. n)
+        -- Name und Zahl einer Zeile ueberlappen nicht (schmalstes Fenster).
+        local r = win.rows[1]
+        r.amount:SetText("12,0K (400)  60%")
+        win:FitName(r, true)
+        local rowW = DM.Width() - 4
+        local iconW = K.Get("damagemeter", "barHeight") + 1
+        assert(iconW + 5 + r.name:GetWidth() + 10 + r.amount:GetStringWidth() <= rowW,
+            "Name laeuft in die Zahl: " .. r.name:GetWidth())
+        -- Geheime Breite: Rueckfall auf 55 %, kein Fehler.
+        local gsw = r.amount.GetStringWidth
+        local secret = 77
+        local oldSecret = _G.issecretvalue
+        _G.issecretvalue = function(v) return v == secret end
+        r.amount.GetStringWidth = function() return secret end
+        win:FitName(r, true)
+        assert(r.name:GetWidth() == math.floor(DM.Width() * 0.55), "geheime Breite ohne Rueckfall")
+        r.amount.GetStringWidth, _G.issecretvalue = gsw, oldSecret
+        K.Set("damagemeter", "width", nil)
+        DM.Window(1):Layout()
+    end)
+    Check(ok, "Schadensanzeige: Kopfzeile passt bei jeder Breite (Titel, Zeitraum, Knoepfe), alte schmale Breite gehoben"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 --------------------------------------------------
 
 print("")

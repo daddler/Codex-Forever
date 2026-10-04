@@ -312,8 +312,15 @@ function Win:SessionLabel()
     return "Früher"
 end
 
+-- Mindestbreite (6.10.0.0): darunter passen Titel und Zeitraum nicht neben
+-- fuenf Knoepfe (DM.HeaderWidths). Aeltere, schmalere Einstellungen werden
+-- beim Zeichnen auf diese Breite gehoben.
+DM.MIN_WIDTH = 220
+local function Width() return math.max(DM.MIN_WIDTH, Opt("width") or 260) end
+DM.Width = Width
+
 function Win:Layout()
-    local w, n, h = Opt("width"), Opt("bars"), Opt("barHeight")
+    local w, n, h = Width(), Opt("bars"), Opt("barHeight")
     local f = self.frame
     f:SetSize(w, 24 + n * (h + 1) + 3)
     local bg = C.bgDark
@@ -336,15 +343,59 @@ function Win:Layout()
     -- Die Knoepfe rechts reihen sich von aussen nach innen.
     local anchor, x = self.header, -4
     self.report:SetShown(Opt("reportButton") and true or false)
+    local shown = 0
     for _, b in ipairs({ self.close, self.gear, self.reset, self.report, self.plus }) do
         if b:IsShown() then
             b:ClearAllPoints()
             b:SetPoint("RIGHT", anchor, anchor == self.header and "RIGHT" or "LEFT", x, 0)
             anchor, x = b, -4
+            shown = shown + 1
         end
     end
     self.session:ClearAllPoints()
     self.session:SetPoint("RIGHT", anchor, anchor == self.header and "RIGHT" or "LEFT", -8, 0)
+    -- Titel und Zeitraum teilen sich, was die Knoepfe uebrig lassen (6.10.0.0:
+    -- vorher 150 + 70 px fest - bei 160 px Breite und fuenf Knoepfen lagen
+    -- Titel, Zeitraum und Knoepfe uebereinander).
+    local titleW, sessionW = DM.HeaderWidths(w, shown)
+    self.session:SetWidth(sessionW)
+    self.session.text:SetWidth(sessionW)
+    self.session.text:SetWordWrap(false)
+    self.titleButton:SetWidth(titleW)
+    self.title:SetWidth(titleW)
+    self.title:SetWordWrap(false)
+    self._titleW, self._sessionW, self._buttons = titleW, sessionW, shown
+end
+
+-- Platz in der Kopfzeile: links 6 Rand, je Knopf 16 + 4, vor dem Zeitraum
+-- 8, zwischen Titel und Zeitraum 6. Der Zeitraum gibt zuerst nach (bis 44),
+-- der Titel behaelt mindestens 50 - was dann nicht passt, kuerzt die Schrift.
+DM.HEADER = { left = 6, button = 20, edge = 4, gap = 8, between = 6, session = 70, sessionMin = 44, titleMin = 50 }
+function DM.HeaderWidths(w, buttons)
+    local H = DM.HEADER
+    local free = w - 2 - H.left - H.edge - buttons * H.button - H.gap - H.between
+    local sessionW = H.session
+    local titleW = free - sessionW
+    if titleW < 2 * H.titleMin then
+        sessionW = math.max(H.sessionMin, sessionW - (2 * H.titleMin - titleW))
+        titleW = free - sessionW
+    end
+    return math.max(H.titleMin, math.floor(titleW)), sessionW
+end
+
+-- Der Name bekommt, was die Zahl rechts uebrig laesst (6.10.0.0: vorher
+-- fest 55 % - bei schmalem Fenster lag "12,3K (456)  23%" ueber dem Namen).
+-- Die Breite der Zahl misst der Client; ist sie geheim, bleibt es bei 55 %.
+function Win:FitName(r, iconShown)
+    local w = Width()
+    local aw = K.Plain(r.amount:GetStringWidth())
+    local nameW
+    if type(aw) == "number" and aw >= 0 then
+        nameW = (w - 4) - (iconShown and (Opt("barHeight") + 1) or 0) - 5 - aw - 10
+    else
+        nameW = w * 0.55
+    end
+    r.name:SetWidth(math.max(30, math.floor(nameW)))
 end
 
 -- Anteil in Prozent - nur mit offenen Zahlen. Eine geheime Summe heisst
@@ -533,6 +584,7 @@ function Win:Refresh()
                 r.name:SetFormattedText("%s", src.name)
             end
             Amount(r.amount, src, mode, Share(src, self._total))
+            self:FitName(r, icon)
             r:Show()
         elseif r then
             r._src, r._threat = nil, nil
@@ -723,6 +775,7 @@ function Win:RefreshThreat(mode)
             end
             local tc = ThreatColor(e)
             if tc then r.amount:SetTextColor(tc[1], tc[2], tc[3], 1) else r.amount:SetTextColor(1, 1, 1, 1) end
+            self:FitName(r, icon)
             r:Show()
         elseif r then
             r._src, r._threat = nil, nil
@@ -2062,7 +2115,8 @@ local function CreateWindow(i)
     -- Der Titel ist der Schalter fuer die Messart.
     local tb = CreateFrame("Button", nil, header)
     tb:SetPoint("LEFT", header, "LEFT", 6, 0)
-    tb:SetSize(150, 20)
+    tb:SetSize(150, 20)       -- Breite setzt Win:Layout (DM.HeaderWidths)
+    w.titleButton = tb
     if tb.RegisterForClicks then tb:RegisterForClicks("LeftButtonUp", "RightButtonUp") end
     w.title = K.NewText(tb, 11)
     w.title:SetPoint("LEFT", tb, "LEFT", 0, 0)
@@ -2112,7 +2166,7 @@ local function CreateWindow(i)
     w.empty:Hide()
 
     f.WCShowForUnlock = function() end
-    local width = Opt("width") or 260
+    local width = Width()
     -- Weitere Fenster reihen sich vom Rand weg an: links verankert nach
     -- rechts, rechts verankert nach links (seit 6.6.1.4 steht die Anzeige
     -- oben links - nach links liefe das zweite Fenster aus dem Bild).
@@ -2470,7 +2524,7 @@ K.Register({
             B:Section("Fenster")
             B:Row({ type = "slider", label = "Anzahl Fenster", key = "windows", min = 1, max = MAX_WINDOWS, step = 1,
                     format = function(v) return tostring(v) end },
-                  { type = "slider", label = "Breite", key = "width", min = 160, max = 420, step = 2, format = px })
+                  { type = "slider", label = "Breite", key = "width", min = DM.MIN_WIDTH, max = 420, step = 2, format = px })
             B:Row({ type = "slider", label = "Balken", key = "bars", min = 3, max = 25, step = 1,
                     format = function(v) return tostring(v) end },
                   { type = "slider", label = "Balkenhöhe", key = "barHeight", min = 12, max = 30, step = 1, format = px })
