@@ -942,9 +942,11 @@ Seit 6.2.0.0:
     **Gemessen (04.10.2026, Client 1.60.1, Build 70205, `/wcui prüfen`):** die **eigene**
     Bedrohung kommt im Kampf **offen**, alle fünf Werte (Krieger Stufe 21,
     allein: `isTanking` true, `status` 3, `scaledPercent` 100,
-    `rawPercent` 255, `threatValue` 145). Ob die Werte **anderer**
-    Spieler offen kommen, ist ungemessen – seit 6.10.2.1 fragt
-    `/wcui prüfen` in einer Gruppe einen Mitspieler eigens ab.
+    `rawPercent` 255, `threatValue` 145), und die **anderer Spieler**
+    ebenso (Gruppe zu zweit: `party1` `scaledPercent` 78,18 bei
+    `rawPercent` 86 = 86 / 1,10 – das Spiel rechnet die Grenze im
+    Nahkampf wirklich ein). Das Bedrohungsfenster sortiert also mit
+    Zahlen und Platznummern. Schlachtzug ungemessen, dieselbe Abfrage.
     Kein Zeitraum, keine Aufschlüsselung. Läuft im Takt ohne neue
     Tabellen (feste Einheitenlisten, Einträge aus einem Vorrat).
   * *Breite der Aufschlüsselung* (6.9.0.9): so breit wie die Reiter der
@@ -1250,7 +1252,7 @@ Fassung des Clients eine Antwort nicht stillschweigend überholt.
 | Frage | Antwort | Gemessen |
 |---|---|---|
 | Eigene Bedrohung im Kampf geheim? | nein, alle fünf Werte offen | 04.10.2026, 1.60.1 (70205), Krieger 21, allein |
-| Bedrohung anderer Spieler geheim? | **ungemessen** | – |
+| Bedrohung anderer Spieler geheim? | nein, alle fünf Werte offen (`party1`: `scaledPercent` 78,18 bei `rawPercent` 86 – genau 86 / 1,10, die Nahkampfgrenze von Classic) | 04.10.2026, 1.60.1 (70205), Gruppe zu zweit, im Kampf |
 | Messarten in `Enum.DamageMeterType` | alle elf aus `DM.MODES` | 04.10.2026, 1.60.1 (70205) |
 | Chat für Addons gesperrt (`InChatMessagingLockdown`)? | nein | 04.10.2026, 1.60.1 (70205), offene Welt, im Kampf |
 | Meldung in den Chat kommt an? | **ungemessen** | – |
@@ -1258,6 +1260,8 @@ Fassung des Clients eine Antwort nicht stillschweigend überholt.
 | Einstellungen werden gespeichert? | ja | 04.10.2026, 1.60.1 (70205) |
 | `issecretvalue` vorhanden? | ja | 04.10.2026, 1.60.1 (70205) |
 | TOC des Clients | 16001 (steht in `## Interface`) | 04.10.2026 |
+| Talentfenster | kein `PlayerTalentFrame`/`TalentFrame`/`ClassTalentFrame` und kein `Blizzard_TalentUI` – die Talente stehen im `PlayerSpellsFrame` (`ui/talents.lua`) | 04.10.2026, 1.60.1 (70205) |
+| PvP-Fenster | kein eigenes `PVPFrame`/`HonorFrame` – PvP ist ein Reiter des Charakterfensters (`ui/pvp.lua`) | 04.10.2026, 1.60.1 (70205) |
 
 ## Namensplaketten 3.0: Bewegung *(6.8.1.0, `ui/nameplates.lua`)*
 
