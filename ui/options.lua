@@ -194,7 +194,7 @@ K.Register({
             B:Row({ type = "toggle", label = "Spielername in Klassenfarbe", key = "tooltipClassName", disabled = off },
                   { type = "toggle", label = "Rand in Klassen- und Qualitätsfarbe", key = "tooltipBorder", disabled = off,
                     description = "Spieler in ihrer Klassenfarbe, Gegenstände ab „selten“ in ihrer Qualität." })
-            B:Section("Fenster", "Charakterfenster (C), Zauberbuch und Talente (P, N), Weltkarte und Questlog (M), Berufe, Gilde & Communitys, Suche nach Gruppe, Gespräche mit NPCs, Quests, Händler, Bücher, Beute, Makros, Handel, Auktionshaus und die Optionen des Spiels als Kachel statt Holz, Metall und Pergament.")
+            B:Section("Fenster", "Charakterfenster (C), Zauberbuch und Talente (P, N), Weltkarte und Questlog (M), Berufe, Gilde & Communitys, Suche nach Gruppe, Gespräche mit NPCs, Quests, Händler, Bücher, Beute, Makros, Handel, Auktionshaus, Bank, Post, Kontakte, Lehrer und die Optionen des Spiels als Kachel statt Holz, Metall und Pergament.")
             B:Row({ type = "toggle", label = "Fenster im WeintCodex-Stil", key = "windowSkin", reload = true },
                   { type = "toggle", label = "Stimmung statt Schwarz", key = "windowArt", reload = true,
                     disabled = function() return not K.Get("general", "windowSkin") end,
@@ -203,7 +203,14 @@ K.Register({
                     disabled = function() return not K.Get("general", "windowSkin") end,
                     description = "Rahmen, Pergament und Holz der Karte (M) weg – die Karte selbst bleibt, wie sie ist." },
                   { type = "empty" })
-            B:Note("Erste Stufe: nur die Hülle des Fensters. Was darin noch nach Holz aussieht, nennt /wcui fenster – Maus über das Fenster halten und abschicken.")
+            B:Note("Was in einem Fenster noch nach Holz aussieht, nennt /wcui fenster – Maus über das Fenster halten und abschicken. Der Bericht kommt in einem Fenster zum Kopieren.")
+            -- 6.10.2.0: die Selbstpruefung auch ohne Befehl.
+            B:Section("Selbstprüfung", "Fragt den Client, was nur er beantworten kann: Bedrohung offen oder geheim, welche Messarten es gibt, ob das Mikromenü geschützt ist, welche Fenster es gibt. Ändert nichts. Auch mit /wcui prüfen.")
+            B:Row({ type = "button", label = "Bericht zum Kopieren", text = "Selbstprüfung",
+                    onClick = function()
+                        K.ShowReport("Selbstprüfung", WeintCodex.UISelfCheck.Run())
+                    end },
+                  { type = "empty" })
         end },
     },
 })
@@ -1190,10 +1197,20 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         O.Show("reminders", CD.PAGE)
         return
     end
+    -- 6.10.2.0: Berichte in ein Fenster zum Kopieren statt in den Chat.
     if msg == "fenster" or msg == "window" then
-        for _, line in ipairs(K.InspectWindow()) do
-            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
-        end
+        local lines = K.InspectWindow()
+        K.ShowReport("Fenster unter der Maus", lines)
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. lines[1]
+            .. " – Bericht im Fenster, Strg+C kopiert.")
+        return
+    end
+    if msg == "prüfen" or msg == "pruefen" or msg == "check" then
+        local lines = WeintCodex.UISelfCheck.Run()
+        K.ShowReport("Selbstprüfung", lines)
+        local last = WeintCodex.UISelfCheck.last
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. string.format(
+            " Selbstprüfung: %d Befunde, %d offen – Bericht im Fenster, Strg+C kopiert.", last.bad, last.open))
         return
     end
     if msg == "maus" or msg == "mouse" then

@@ -16,6 +16,8 @@ sondern fängt das Offensichtliche ab, **bevor** es Spieler melden.
 - [ ] Keine Lua-Fehler beim Laden. `/console scriptErrors 1` muss an sein,
       sonst sieht man sie nicht.
 - [ ] `/wcui speicher`: Kein Modul legt im Leerlauf merklich Speicher an.
+- [ ] `/wcui prüfen`, einmal mit einem Gegner im Ziel: Jede `[!]`-Zeile ist
+      ein Befund. Den Bericht kopieren und mit den Notizen ablegen.
 
 ## Verschieben (2 Minuten)
 
@@ -40,7 +42,7 @@ sondern fängt das Offensichtliche ab, **bevor** es Spieler melden.
 ## Fenster des Spiels (3 Minuten)
 
 Jedes einmal öffnen. Nichts darf aussehen wie halb alt, halb neu. Wenn
-doch: `/wcui fenster` und die Ausgabe sichern.
+doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 
 - [ ] Charakter (C), Zauberbuch und Talente (P, N), Weltkarte (M)
 - [ ] Händler, Bank, Post (beide Reiter), Auktionshaus, Handel

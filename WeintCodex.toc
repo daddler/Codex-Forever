@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.10.1.0
+## Version: 6.10.2.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -146,6 +146,8 @@ core/search.lua
 # dahin angemeldet hat.
 #
 ui/kit.lua
+# Bericht zum Kopieren (6.10.2.0): /wcui fenster und /wcui pruefen.
+ui/report.lua
 # Dein Profil bleibt deins (6.9.0.0): Layout und Spieleinstellungen von
 # vorher merken und beim Ausschalten zurueckgeben.
 ui/profile.lua
@@ -237,6 +239,8 @@ ui/options.lua
 # Symbol der Oberflaeche an der Minikarte (6.9.0.0), nur mit Oberflaeche.
 ui/launcher.lua
 ui/editmode.lua
+# Selbstpruefung im Spiel (6.10.2.0): /wcui pruefen.
+ui/selfcheck.lua
 
 # Die Frage beim ersten Einloggen ("WeintCodex-Oberflaeche verwenden?").
 # Zuletzt, weil sie auf das Fenster und die Einstellungsseite verweist.

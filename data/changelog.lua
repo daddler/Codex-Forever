@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.2.0",
+        date    = "04.10.2026",
+        notes   = {
+            "|cff7C6CFFSelbstprüfung.|r /wcui prüfen (oder der Knopf unter Einstellungen → Tooltip & Fenster) fragt das Spiel, was nur es beantworten kann – etwa ob die Bedrohung lesbar ist und welche Messarten es gibt – und zeigt das Ergebnis zum Kopieren. Geändert wird nichts.",
+            "|cff7C6CFFBerichte zum Kopieren.|r /wcui fenster schreibt nicht mehr in den Chat, sondern in ein Fenster: alles markiert, Strg+C, fertig – ohne Bildschirmfoto und ohne abgeschnittene Zeilen. Jedes Bild steht dort mit allen Stellen, an denen es vorkommt.",
+        },
+    },
+    {
         version = "6.10.1.0",
         date    = "04.10.2026",
         notes   = {

@@ -10205,6 +10205,144 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.10.2.0: Bericht zum Kopieren, /wcui fenster je Fundort, /wcui pruefen.
+do
+    local ok, err = pcall(function()
+        -- Kopiert kommt Text an, keine Farbcodes.
+        assert(K.PlainText("|cff7C6CFFRot|r und |TInterface\\x:12|t gut") == "Rot und  gut", "Farbcodes oder Symbole bleiben im Bericht")
+        -- Namenlose Rahmen einer Liste fallen in eine Zeile.
+        assert(K.PatternName("A.ScrollBox.ScrollTarget.63f74260.NormalTexture") == "A.ScrollBox.ScrollTarget.*.NormalTexture",
+            "Adresse namenloser Rahmen bleibt im Namen")
+        assert(K.PatternName("ClassTrainerFrame.BG") == "ClassTrainerFrame.BG" and K.PatternName(nil) == "(ohne Namen)",
+            "Name mit Schluessel veraendert")
+
+        -- Fenster: nur lesen, alles markiert, ohne Farbcodes.
+        local rep = K.ShowReport("|cffffffffTitel|r", { "Zeile |cffff0000eins|r", "Zeile zwei" })
+        assert(rep:IsShown() and rep.title:GetText() == "Titel", "Bericht nicht offen oder Titel mit Farbcode")
+        assert(rep.edit:GetText() == "Zeile eins\nZeile zwei", "Text im Feld: " .. tostring(rep.edit:GetText()))
+        rep.edit:SetText("getippt")
+        rep.edit._scripts.OnTextChanged(rep.edit, true)
+        assert(rep.edit:GetText() == "Zeile eins\nZeile zwei", "Bericht laesst sich ueberschreiben")
+        local special = false
+        for _, n in ipairs(UISpecialFrames) do if n == "WeintCodexReport" then special = true end end
+        assert(special, "Esc schliesst den Bericht nicht")
+        rep:Hide()
+
+        -- /wcui fenster: je Bild jeder Fundort, Zeilen zusammengefasst,
+        -- unsichtbare gezaehlt, keine Grenze bei 24, Art der Bausteine.
+        local function Tex(file, debug, alpha)
+            local t = stub.NewObject("Texture")
+            t._file, t._alpha = file, alpha
+            t.GetTexture = function(self) return self._file end
+            t.GetDebugName = function() return debug end
+            return t
+        end
+        local top = stub.NewObject("Frame", "WCTestWindow")
+        top.GetDebugName = function() return "WCTestWindow" end
+        top.GetParent = function() return UIParent end
+        local bgTex = Tex(404984, "WCTestWindow.BG")
+        local gone = Tex(130718, "WCTestWindow.Gone", 0)
+        local many = {}
+        for i = 1, 30 do many[i] = Tex(500000 + i, "WCTestWindow.Deko" .. i) end
+        bgTex._kind = "bg"
+        top.GetRegions = function() return bgTex, gone, unpack(many) end
+        local rows = {}
+        for i, hex in ipairs({ "63f74260", "b9a2d740" }) do
+            local row = stub.NewObject("Button")
+            local name = "WCTestWindow.ScrollBox.ScrollTarget." .. hex
+            row.GetDebugName = function() return name end
+            local normal = Tex(404984, name .. ".NormalTexture")
+            local icon = Tex(135812, name .. ".Icon")
+            row.GetRegions = function() return normal, icon end
+            rows[i] = row
+        end
+        top.GetChildren = function() return rows[1], rows[2] end
+        local CP = WeintCodex.UICalmParts
+        CP.hosts.WCTestWindow = { LABEL = "Test", Kind = function(r) return r._kind end }
+        local oldFoci = _G.GetMouseFoci
+        _G.GetMouseFoci = function() return { top } end
+        local lines = K.InspectWindow()
+        _G.GetMouseFoci = oldFoci
+        CP.hosts.WCTestWindow = nil
+        local text = table.concat(lines, "\n")
+        assert(text:find("Bild 404984 · 3× · Baustein: bg", 1, true), "Bild nicht zusammengefasst oder Art fehlt:\n" .. text)
+        assert(text:find("\n   2× WCTestWindow.ScrollBox.ScrollTarget.*.NormalTexture", 1, true)
+            and text:find("\n   1× WCTestWindow.BG", 1, true), "Fundorte fehlen:\n" .. text)
+        assert(text:find("unsichtbar (Deckkraft 0, auch die von WeintCodex): 1", 1, true), "Unsichtbare nicht gezaehlt")
+        assert(not text:find("Bild 130718", 1, true), "Unsichtbares als sichtbar gelistet")
+        local images = 0
+        for _, l in ipairs(lines) do if l:find("^Bild ") then images = images + 1 end end
+        assert(images == 32, "nicht alle Bilder im Bericht (Grenze?): " .. images)
+
+        -- /wcui pruefen: jede Pruefung, Stand je Zeile, Summe stimmt.
+        local SC = WeintCodex.UISelfCheck
+        local saved = {}
+        local function Set(name, v) if saved[name] == nil then saved[name] = { v = _G[name] } end _G[name] = v end
+        local SECRET = {}
+        Set("issecretvalue", function(v) return v == SECRET end)
+        Set("UnitExists", function() return false end)
+        Set("UnitDetailedThreatSituation", function() return nil end)
+        Set("C_DamageMeter", {})
+        Set("Enum", { DamageMeterType = {} })
+        local out = table.concat(SC.Run(), "\n")
+        assert(out:find("WeintCodex " .. WeintCodex.Version, 1, true), "Fassung fehlt im Kopf")
+        for _, c in ipairs(SC.CHECKS) do assert(out:find(c.name .. ":", 1, true), "Pruefung fehlt: " .. c.name) end
+        assert(out:find("[?] Bedrohung: Kein angreifbares Ziel", 1, true), "ohne Ziel keine Anleitung:\n" .. out)
+        -- Mit Ziel: offen, dann geheim.
+        Set("UnitExists", function() return true end)
+        Set("UnitCanAttack", function() return true end)
+        Set("UnitDetailedThreatSituation", function() return true, 3, 100, 100, 5000 end)
+        out = table.concat(SC.Run(), "\n")
+        assert(out:find("[ok] Bedrohung: Bedrohung außerhalb des Kampfes offen: isTanking=true, status=3", 1, true), "offene Bedrohung:\n" .. out)
+        Set("UnitDetailedThreatSituation", function() return SECRET, SECRET, nil, nil, nil end)
+        out = table.concat(SC.Run(), "\n")
+        assert(out:find("[!] Bedrohung: Bedrohung außerhalb des Kampfes: 2 von 5 Werten geheim", 1, true)
+            and out:find("isTanking=geheim", 1, true), "geheime Bedrohung nicht erkannt:\n" .. out)
+        -- Messarten: fehlende und neue.
+        local oldEnum = Enum.DamageMeterType
+        Enum.DamageMeterType = { DamageDone = 0, HealingDone = 1, Neuigkeit = 99 }
+        out = table.concat(SC.Run(), "\n")
+        Enum.DamageMeterType = oldEnum
+        assert(out:find("[!] Messarten: Der Client kennt 2 von", 1, true) and out:find("Absorbs", 1, true),
+            "fehlende Messarten nicht genannt:\n" .. out)
+        assert(out:find("[?] Messarten: Der Client hat Messarten, die WeintCodex nicht zeigt: Neuigkeit", 1, true), "neue Messart verschwiegen")
+        -- Mikromenue geschuetzt.
+        local mm = stub.NewObject("Frame")
+        mm.IsProtected = function() return true, true end
+        Set("MicroMenuContainer", mm)
+        -- Ein Fehler eines Teils und eine Pruefung, die selbst scheitert.
+        -- Ueber den echten Weg: K.Report merkt sich den Fehler.
+        K.Report("testteil", "kaputt")
+        assert(K.errors[#K.errors] == "testteil: kaputt", "K.Report merkt sich den Fehler nicht")
+        table.insert(SC.CHECKS, { name = "Kaputt", fn = function() error("absichtlich") end })
+        local res = SC.Run()
+        table.remove(SC.CHECKS)
+        table.remove(K.errors)
+        out = table.concat(res, "\n")
+        assert(out:find("[!] Mikromenü: MicroMenuContainer: geschützt true (ausdrücklich)", 1, true), "geschuetztes Mikromenue:\n" .. out)
+        assert(out:find(string.format("[!] Fehler: %d Fehler seit dem Laden:", #K.errors + 1), 1, true)
+            and out:find("\n   testteil: kaputt", 1, true), "Fehler nicht genannt")
+        assert(out:find("[!] Kaputt: Prüfung selbst scheiterte", 1, true) and out:find("Speicherbedarf:", 1, true),
+            "eine scheiternde Pruefung nimmt den Rest mit")
+        local bad, open = 0, 0
+        for _, l in ipairs(res) do
+            if l:find("^%[!%]") then bad = bad + 1 elseif l:find("^%[%?%]") then open = open + 1 end
+        end
+        assert(SC.last.bad == bad and SC.last.open == open and out:find(string.format("Summe: %d Befunde [!], %d offen [?].", bad, open), 1, true),
+            "Summe stimmt nicht")
+        for name, v in pairs(saved) do _G[name] = v.v end
+        -- Befehle: Bericht im Fenster.
+        SlashCmdList["WEINTCODEXUI"]("prüfen")
+        assert(K.report:IsShown() and K.report.title:GetText() == "Selbstprüfung", "/wcui prüfen zeigt keinen Bericht")
+        K.report:Hide()
+        SlashCmdList["WEINTCODEXUI"]("check")
+        assert(K.report:IsShown(), "/wcui check zeigt keinen Bericht")
+        K.report:Hide()
+    end)
+    Check(ok, "Bericht zum Kopieren, /wcui fenster je Fundort ohne Grenze, /wcui pruefen (Bedrohung offen/geheim, Messarten, Mikromenue, Fehler, Summe)"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.10.0.0: Kopfzeile der Schadensanzeige gerechnet statt fest - bei
 -- jeder erlaubten Breite passen Titel, Zeitraum und Knoepfe nebeneinander.
 do

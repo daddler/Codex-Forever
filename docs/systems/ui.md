@@ -1156,6 +1156,61 @@ Auktionshaus sind nicht auf Bausteine umgestellt – umgestellt wird ein
 Fenster, wenn es ohnehin angefasst wird. Die Schadensanzeige bekommt
 vorerst nichts Neues, bis im Spiel geprüft ist, was sie heute kann.
 
+
+## 6.10.2.0: Messen im Spiel – Bericht zum Kopieren und Selbstprüfung
+
+Zweite Einschätzung: „im Spiel abgesichert“ 4 von 10. Jede Messung kam
+als Bildschirmfoto vom Chat, nach 24 Bildern abgeschnitten.
+
+**Bericht zum Kopieren** (`ui/report.lua`): `K.ShowReport(titel, zeilen)`
+öffnet ein eigenes Fenster an `UIParent` (`WeintCodexReport`, verschiebbar,
+Esc schließt) mit einem Textfeld ohne Grenze – alles markiert, Strg+C.
+Nur lesen: Getipptes wird durch den Bericht ersetzt. `K.PlainText` nimmt
+Farbcodes und Symbole heraus.
+
+**`/wcui fenster`** (`K.InspectWindow`, `ui/kit.lua`) schreibt in dieses
+Fenster und nennt je Bild **jeden Fundort** mit Anzahl – als Name des
+Bildes selbst, also mit seinem Schlüssel am Rahmen (`.BG`,
+`.NormalTexture`, `.selectedTex`). Adressen namenloser Rahmen werden `*`
+(`K.PatternName`): die Zeilen einer Liste, die das Spiel wiederverwendet,
+stehen als eine Zeile da. Keine Grenze bei 24 Bildern. Unsichtbare Bilder
+(Deckkraft 0, auch die von WeintCodex ausgeblendeten) werden gezählt,
+nicht gelistet. Kennt der Baustein des Fensters (`CP.hosts[name].Kind`)
+ein Bild, das noch sichtbar ist, steht seine Art daneben – entweder ein
+Symbol (gewollt) oder ein Fehler.
+
+Anlass: beim Lehrer klang „404984 · 10× · in ClassTrainerFrame“ nach zehn
+Bildern am Fenster. Es waren Pergament, Grund jeder Zeile und die
+Markierung der gewählten Zeile, verteilt über das Fenster.
+
+**`/wcui prüfen`** (auch `/wcui check`, `ui/selfcheck.lua`, Knopf unter
+Einstellungen → Tooltip & Fenster): fragt den Client, was nur er beantworten
+kann, und ändert nichts. Kopf: Fassung, Client (`GetBuildInfo`), Klasse,
+Stufe, Gruppe, Kampf, Oberfläche. Dann je Prüfung Zeilen mit Stand:
+
+| Stand | Bedeutung |
+|---|---|
+| `[ok]` | der Client antwortet, wie WeintCodex es erwartet |
+| `[!]` | Befund: der Client antwortet anders |
+| `[?]` | gerade nicht zu beantworten – die Zeile sagt, was zu tun ist |
+
+| Prüfung | Was |
+|---|---|
+| Speichern | `WeintCodex.SaveHealth()` |
+| Fehler | `K.errors` – jede Meldung von `K.Report` seit dem Laden |
+| Geheime Werte | gibt es `issecretvalue`? |
+| Bedrohung | `UnitDetailedThreatSituation("player", "target")`: jedes der fünf Felder offen, geheim oder leer; ohne angreifbares Ziel `[?]` |
+| Messarten | jede Messart aus `DM.MODES` in `Enum.DamageMeterType` – fehlende als `[!]`, **neue** des Clients als `[?]` |
+| Chat | Senden vorhanden, `C_ChatInfo.InChatMessagingLockdown`; ob eine Meldung ankommt, zeigt nur ein Versuch – es wird **nichts** gesendet |
+| Mikromenü | `MicroMenuContainer`/`MicroMenu`: `IsProtected` |
+| Fenster in Gold | je Name in `W.WINDOWS`: gestaltet, vorhanden (noch nicht geöffnet), nicht im Client (manche lädt das Spiel erst beim Öffnen) |
+| Speicherbedarf | `K.AddonKB` |
+
+Jede Prüfung läuft für sich (`pcall`); eine, die scheitert, steht als
+`[!]` im Bericht. Eine neue Prüfung: `Check(name, function(add) … end)` in
+`ui/selfcheck.lua`, `add(stand, text)` beliebig oft, `add("", text)` für
+eingerückte Folgezeilen.
+
 ## Namensplaketten 3.0: Bewegung *(6.8.1.0, `ui/nameplates.lua`)*
 
 Beta-Test: „insgesamt wirklich schon gut, aber es fehlt noch etwas

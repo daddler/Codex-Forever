@@ -333,6 +333,7 @@ function K.Module(key) return modules[key] end
 -- wird er trotzdem - einmal, in den Chat, mit dem Modulnamen: still
 -- verschluckt saehe er aus wie ein Modul, das nichts tut.
 local reported = {}
+K.errors = {}
 --------------------------------------------------
 -- Messen: wer erzeugt wie viel Wegwerf-Speicher? (/wcui speicher)
 --------------------------------------------------
@@ -444,6 +445,8 @@ function K.Report(moduleKey, err)
     local key = tostring(moduleKey) .. tostring(err)
     if reported[key] then return end
     reported[key] = true
+    -- Fuer /wcui pruefen (6.10.2.0): was seit dem Laden schiefging.
+    K.errors[#K.errors + 1] = tostring(moduleKey) .. ": " .. tostring(err)
     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " "
         .. WeintCodex.ColorText("warning", "Oberfläche/" .. tostring(moduleKey)
         .. ": ") .. tostring(err))
@@ -1249,9 +1252,25 @@ local function TextureOf(r)
     return ok and v or nil
 end
 
+-- Ein Name ohne die Adressen namenloser Rahmen ("...ScrollTarget.63f74260"
+-- -> "...ScrollTarget.*"): so fallen die Zeilen einer Liste, die das Spiel
+-- wiederverwendet, in EINE Zeile des Berichts.
+function K.PatternName(name)
+    if type(name) ~= "string" then return "(ohne Namen)" end
+    return (name:gsub("%.%x%x%x%x%x%x%x%x+", ".*"))
+end
+
 -- /wcui fenster: das oberste Fenster unter der Maus (bis unter UIParent)
 -- und alles Sichtbare darin, nach Bild zusammengefasst, das Groesste
 -- zuerst. So heisst, was im Fenster eines Clients nach Holz aussieht.
+--
+-- Seit 6.10.2.0 (Lehrer, 6.10.1.0: "404984 · 10× · in ClassTrainerFrame"
+-- waren in Wahrheit Pergament, Zeilengrund und Markierung der gewaehlten
+-- Zeile - verteilt, nicht am Fenster): je Bild JEDER Fundort mit Anzahl,
+-- als Name des Bildes selbst (".BG", ".NormalTexture", ".selectedTex"),
+-- ohne Grenze bei 24 Zeilen, und die Art, unter der die Bausteine des
+-- Fensters (ui/calmparts.lua) das Bild kennen. Die Ausgabe geht in ein
+-- Fenster zum Kopieren (K.ShowReport) statt in den Chat.
 function K.InspectWindow()
     local out = {}
     local focus
@@ -1280,7 +1299,12 @@ function K.InspectWindow()
         local ok, line = pcall(W.Status)
         if ok and line then out[#out + 1] = line end
     end
+    -- Bausteine dieses Fensters: welche Art sie einem Bild geben.
+    local CP = WeintCodex.UICalmParts
+    local okName, topName = pcall(function() return top:GetName() end)
+    local host = (CP and CP.hosts and okName and type(topName) == "string") and CP.hosts[topName] or nil
     local groups, list = {}, {}
+    local invisible = 0
     -- Die Kartenkacheln der Weltkarte sind Inhalt, keine Gestaltung - und
     -- so gross, dass sie jede andere Zeile aus der Liste draengten
     -- (Beta-Test 6.6.2.0). Sie werden ausgelassen, dafuer geht die Suche
@@ -1293,23 +1317,37 @@ function K.InspectWindow()
         if canvas and f == canvas then skipped = true return end
         local vok, vis = pcall(function() return K.Bool(f:IsVisible(), false) end)
         if not vok or not vis then return end
+        local owner = K.PatternName(NameOf(f))
         local rok, regions = pcall(function() return { f:GetRegions() } end)
         for _, r in ipairs(rok and regions or {}) do
             local ok, info = pcall(function()
-                if r:GetObjectType() ~= "Texture" or not K.Bool(r:IsVisible(), false) then return nil end
-                if K.Plain(r:GetAlpha()) == 0 then return nil end
+                if r:GetObjectType() ~= "Texture" or not K.Bool(r:IsShown(), false) then return nil end
+                if K.Plain(r:GetAlpha()) == 0 then return "invisible" end
                 local w, h = K.Plain(r:GetWidth()), K.Plain(r:GetHeight())
                 if type(w) ~= "number" or type(h) ~= "number" then return nil end
-                return { key = TextureOf(r) or "Farbfläche", area = w * h, owner = NameOf(f) }
+                -- Wo: der Name des Bildes selbst (traegt seinen Schluessel am
+                -- Rahmen), sonst der Rahmen.
+                local rn = NameOf(r)
+                local where = rn ~= "(ohne Namen)" and K.PatternName(rn) or owner
+                local kind = host and host.Kind and host.Kind(r) or nil
+                return { key = TextureOf(r) or "Farbfläche", area = w * h, where = where, kind = kind }
             end)
-            if ok and info then
+            if ok and info == "invisible" then
+                invisible = invisible + 1
+            elseif ok and info then
                 local g = groups[info.key]
                 if not g then
-                    g = { key = info.key, n = 0, area = 0, owner = info.owner }
+                    g = { key = info.key, n = 0, area = 0, places = {}, order = {}, kinds = {} }
                     groups[info.key] = g
                     list[#list + 1] = g
                 end
                 g.n, g.area = g.n + 1, g.area + info.area
+                if not g.places[info.where] then
+                    g.places[info.where] = 0
+                    g.order[#g.order + 1] = info.where
+                end
+                g.places[info.where] = g.places[info.where] + 1
+                if info.kind then g.kinds[info.kind] = true end
             end
         end
         local cok, kids = pcall(function() return { f:GetChildren() } end)
@@ -1319,15 +1357,29 @@ function K.InspectWindow()
     end
     Walk(top, 0)
     table.sort(list, function(a, b) return a.area > b.area end)
+    out[#out + 1] = string.format("Sichtbar: %d verschiedene Bilder · unsichtbar (Deckkraft 0, auch die von WeintCodex): %d%s",
+        #list, invisible, host and (" · Bausteine: " .. tostring(host.LABEL)) or "")
     if skipped then out[#out + 1] = "   (Kartenbild ausgelassen)" end
-    for i = 1, math.min(#list, 24) do
-        local g = list[i]
-        local mark = ""
+    for _, g in ipairs(list) do
+        local marks = ""
         local atlas = g.key:match("^Atlas (.+)$")
         if atlas and W and W.HidesAtlas and W.HidesAtlas(atlas) then
-            mark = " · SOLLTE WEG SEIN"
+            marks = " · SOLLTE WEG SEIN"
         end
-        out[#out + 1] = string.format("   %s · %d× · in %s%s", g.key, g.n, g.owner, mark)
+        local kinds = {}
+        for kind in pairs(g.kinds) do kinds[#kinds + 1] = kind end
+        if #kinds > 0 then
+            table.sort(kinds)
+            marks = marks .. " · Baustein: " .. table.concat(kinds, "/") .. " (sichtbar - Symbol oder Fehler?)"
+        end
+        out[#out + 1] = string.format("%s · %d×%s", g.key, g.n, marks)
+        table.sort(g.order, function(a, b)
+            if g.places[a] ~= g.places[b] then return g.places[a] > g.places[b] end
+            return a < b
+        end)
+        for _, where in ipairs(g.order) do
+            out[#out + 1] = string.format("   %d× %s", g.places[where], where)
+        end
     end
     if #list == 0 then out[#out + 1] = "   keine sichtbaren Bilder" end
     if W and W.SoftReport then

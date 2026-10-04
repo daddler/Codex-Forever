@@ -9,6 +9,21 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.2.0] – 2026-10-04
+
+**Selbstprüfung.** /wcui prüfen (oder der Knopf unter Einstellungen → Tooltip & Fenster) fragt das Spiel, was nur es beantworten kann – etwa ob die Bedrohung lesbar ist und welche Messarten es gibt – und zeigt das Ergebnis zum Kopieren. Geändert wird nichts.
+
+**Berichte zum Kopieren.** /wcui fenster schreibt nicht mehr in den Chat, sondern in ein Fenster: alles markiert, Strg+C, fertig – ohne Bildschirmfoto und ohne abgeschnittene Zeilen. Jedes Bild steht dort mit allen Stellen, an denen es vorkommt.
+
+### Technisch
+
+Antwort auf die zweite Einschätzung: „im Spiel abgesichert“ war mit 4 von 10 der schwächste Bereich, und jede Messung kam als Bildschirmfoto vom Chat.
+
+- **Bericht zum Kopieren** (`ui/report.lua`, `K.ShowReport`, `K.PlainText`): eigenes Fenster an `UIParent` (der Export-Dialog in `core/ui.lua` hängt am Hauptfenster des Codex), Textfeld ohne Grenze, nur lesen, Farbcodes und Symbole entfernt, Esc schließt (`UISpecialFrames`).
+- **`/wcui fenster`** (`K.InspectWindow`): je Bild jeder Fundort mit Anzahl, als Name des Bildes selbst (`.BG`, `.NormalTexture`, `.selectedTex`); Adressen namenloser Rahmen werden `*` (`K.PatternName`), die Zeilen einer Liste also eine Zeile; keine Grenze bei 24 Bildern; unsichtbare (Deckkraft 0) gezählt; die Art, unter der die Bausteine des Fensters ein noch sichtbares Bild kennen („Baustein: slot – Symbol oder Fehler?“). Anlass: Beim Lehrer klang „404984 · 10× · in ClassTrainerFrame“ nach zehn Bildern am Fenster – es waren Pergament, Zeilengrund und Markierung, verteilt.
+- **`/wcui prüfen`** (`ui/selfcheck.lua`, `SC.Run`, auch `/wcui check` und ein Knopf in den Einstellungen): Speichern, Fehler seit dem Laden (`K.errors`, gefüllt von `K.Report`), geheime Werte, Bedrohung am Ziel (jedes der fünf Felder offen/geheim/leer), Messarten (fehlende **und** neue im Client), Chat (Senden vorhanden, Sperre für Addons), Mikromenü (geschützt?), Fenster in Gold (gestaltet / vorhanden / nicht im Client), Speicherbedarf. Stand je Zeile `[ok]`/`[!]`/`[?]`, Summe am Ende. Jede Prüfung für sich (`pcall`). Schickt nichts in den Chat und ändert nichts.
+- `load_test.lua`: Farbcodes weg, Namen zusammengefasst, Bericht nur lesen und Esc, Fenster je Fundort (Zeilen zusammengefasst, Art, Unsichtbare, 32 Bilder ohne Grenze), Selbstprüfung (ohne Ziel, offen, geheim, fehlende und neue Messarten, geschütztes Mikromenü, Fehler eines Teils, scheiternde Prüfung nimmt den Rest nicht mit, Summe stimmt), `/wcui prüfen` und `/wcui check`. Gegenproben: 17, gefangen – eine (`K.Report` füllt `K.errors`) erst, nachdem der Test den echten Weg statt eines direkten Eintrags nahm.
+
 ## [6.10.1.0] – 2026-10-04
 
 **Lehrer im neuen Aussehen.** Das Fenster beim Lehrer ohne Pergament und rotbraune Zeilen – die gewählte Zeile bleibt in Gold markiert, dein Gold steht wie gewohnt unten links.
