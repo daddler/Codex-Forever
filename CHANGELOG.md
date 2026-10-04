@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.4.1] – 2026-10-04
+
+**Gegner per Mouseover markieren.** In Dungeons und Schlachtzügen: Maus über einen Gegner, mittlere Maustaste – er bekommt die nächste freie Markierung, Totenkopf zuerst, und niemand wird doppelt markiert. Taste, Orte und Markierungen stellst du unter /wcui → Komfort → Automark ein. Nur außerhalb des Kampfes, und nur mit Tastendruck: von sich aus lässt das Spiel Addons nicht markieren.
+
+**Geschlossene Fenster kommen an ihren Platz zurück.** Ein verschobenes Fenster bleibt dort, solange es offen ist; nach dem Schließen öffnet es wieder an seinem gewohnten Platz.
+
+### Technisch
+
+- **Fenster** (`ui/movewindows.lua`), Beta-Test: „wenn ein Fenster geschlossen wurde, soll es wieder dort auftauchen, wo es eigentlich sein sollte“. Der Platz gilt nur noch, solange das Fenster offen ist (`MW.open`, nicht gespeichert); auch nach `UpdateUIPanelPositions` (zweites Fenster geht auf) bleibt es dort. Beim Schließen (`OnHide`) an den Platz des Spiels (`MW.default`) – nur, wenn es verschoben war; ein geschütztes im Kampf danach. Die dauerhaften Plätze aus 6.10.4.0 (`ui.windowPos`) werden beim Start einmal gelöscht (`MW.Forget`). `/wcui fenster zurück` gilt für die offenen.
+- **Markieren per Mouseover** (`ui/hovermark.lua`, `WeintCodex.UIHoverMark`, Seite „Automark“ im Komfort): **nur Drüberfahren geht nicht** – Markieren ist für Addons geschützt (gemessen 6.9.0.1, `ADDON_ACTION_FORBIDDEN`). Eine Taste (Standard mittlere Maustaste; Maustaste 4/5, Umschalt/Strg/Alt + mittlere) liegt als Vorrang-Belegung (`SetOverrideBindingClick`) auf einem geschützten Knopf mit `/tm [@mouseover,harm,nodead] n` – nur dort, wo markiert wird (Dungeons und Schlachtzüge, nur Dungeons, überall), gesetzt und entfernt außerhalb des Kampfes. `n` wählt `UPDATE_MOUSEOVER_UNIT`: erste freie in Totenkopf, Kreuz, Quadrat, Mond, Dreieck, Diamant, Kreis, Stern (jede abwählbar, unter „Erweitert“), ohne die Automark-Markierungen von Tank und Heiler. Je Gegner (GUID) gemerkt: schon markiert → kein Makro (dieselbe Markierung nähme sie ab). Nur Angreifbare, keine Spieler, keine Toten. **Nie im Kampf:** bei `PLAYER_REGEN_DISABLED` geleert (sonst wanderte die Markierung), ein Druck im Kampf sagt es einmal im Chat. Nach dem Kampf frei, was tot ist oder keine Plakette mehr hat; beim Gebietswechsel alles. Komfort: von Haus aus aus.
+- **Ungemessen:** ob `/tm` aus einem Makro auf Forever markiert (wie bei Automark) und ob die Belegung der mittleren Maustaste greift.
+- `load_test.lua`: Fenster – unverschobenes beim Schließen nicht angefasst (auch mit bekanntem Platz des Spiels), offen nach dem Ordnen am Platz, zu → Platz des Spiels, wieder offen dort, im Kampf geschlossen → danach, alte Plätze gelöscht, `/wcui fenster zurück`. Markieren – aus von Haus aus, draußen keine Taste, im Dungeon mit Vorrang, Totenkopf/Kreuz/Quadrat der Reihe nach, nicht doppelt, Tank-Markierung frei nur mit Automark, abgewählte ausgelassen, Spieler/Freund/Toter nicht, Kampf geleert und einmaliger Hinweis, nach dem Kampf Toter frei/Lebender gemerkt, Taste wählbar, nur Dungeons, Gebietswechsel im Kampf, aus → Taste frei, drei Einstellungen sichtbar und acht unter „Erweitert“. Gegenproben: 10 (Fenster) und 19 (Markieren), alle gefangen – drei erst nach geschärftem Test.
+
 ## [6.10.4.0] – 2026-10-04
 
 **Fenster lassen sich verschieben.** Charakter, Zauberbuch, Bank, Post, Händler, Karte, Berufe und viele mehr: an einer freien Stelle (Titel, Rand) mit der linken Maustaste ziehen. Der Platz bleibt gemerkt und gilt beim nächsten Öffnen wieder. Umschalt + Rechtsklick auf ein Fenster setzt es an seinen alten Platz zurück, /wcui fenster zurück alle.

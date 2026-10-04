@@ -12,12 +12,17 @@
 --              (Titel, Rand, Grund - ueber Knoepfen und Listen klickt man
 --              weiter, was dort liegt). Das Fenster bleibt auf dem
 --              Bildschirm.
---   merken     Der Platz (obere linke Ecke) je Fenster, kontoweit in
---              WeintCodex_SavedData.ui.windowPos. Beim naechsten Oeffnen
---              steht es wieder dort - auch wenn das Spiel es beim Zeigen
---              neu anordnet (UpdateUIPanelPositions: danach noch einmal).
+--   solange    Der Platz gilt, solange das Fenster offen ist - auch wenn
+--   offen      das Spiel beim Oeffnen eines zweiten Fensters neu anordnet
+--              (UpdateUIPanelPositions: danach noch einmal).
+--   zu         Beim Schliessen faellt er weg: das naechste Mal steht das
+--              Fenster wieder dort, wo das Spiel es hinsetzt (6.10.4.1,
+--              Beta-Test: "wenn ein Fenster geschlossen wurde, soll es
+--              wieder dort auftauchen, wo es eigentlich sein sollte"). Bis
+--              6.10.4.0 galt der Platz dauerhaft (ui.windowPos) - das wird
+--              beim Start einmal geleert.
 --   zurueck    Umschalt + Rechtsklick auf das Fenster: dieses Fenster an
---              den Platz des Spiels. /wcui fenster zurück: alle.
+--              den Platz des Spiels. /wcui fenster zurück: alle offenen.
 --
 -- Nur oberste Fenster (Eltern = UIParent): ein Reiter des Charakterfensters
 -- (PVPFrame) darf sich nicht von seinem Fenster loesen. Geschuetzte Fenster
@@ -57,16 +62,16 @@ local moving = setmetatable({}, { __mode = "k" })
 local pending = setmetatable({}, { __mode = "k" })   -- im Kampf aufgeschoben
 local default = setmetatable({}, { __mode = "k" })   -- Platz des Spiels (Anker 1)
 local mine = setmetatable({}, { __mode = "k" })      -- zuletzt von uns gesetzt
-MW.hooked, MW.pending, MW.default = hooked, pending, default
+local open = setmetatable({}, { __mode = "k" })      -- Platz, solange offen
+MW.hooked, MW.pending, MW.default, MW.open = hooked, pending, default, open
 MW.active, MW.reason = false, nil
 
-local function Store()
+-- Bis 6.10.4.0 dauerhaft gemerkte Plaetze: einmal weg.
+function MW.Forget()
     local ui = K.Root()
-    if not ui then return nil end
-    ui.windowPos = ui.windowPos or {}
-    return ui.windowPos
+    if ui and ui.windowPos ~= nil then ui.windowPos = nil return true end
+    return false
 end
-MW.Store = Store
 
 local function Loaded(name)
     local A = _G.C_AddOns
@@ -112,9 +117,7 @@ end
 
 -- Den gemerkten Platz setzen (beim Zeigen und nachdem das Spiel ordnet).
 function MW.Apply(f)
-    local name = hooked[f]
-    local store = Store()
-    local pos = name and store and store[name]
+    local pos = hooked[f] and open[f]
     if type(pos) ~= "table" or moving[f] or Maximized(f) then return false end
     if Blocked(f) then pending[f] = true return false end
     RememberDefault(f)
@@ -127,13 +130,12 @@ function MW.Apply(f)
 end
 
 function MW.Save(f)
-    local name, store = hooked[f], Store()
-    if not (name and store) then return false end
+    if not hooked[f] then return false end
     local l, t = K.Plain(f:GetLeft()), K.Plain(f:GetTop())
     if type(l) ~= "number" or type(t) ~= "number" then return false end
-    local pos = store[name] or {}
+    local pos = open[f] or {}
     pos.x, pos.y = Round(l), Round(t)
-    store[name] = pos
+    open[f] = pos
     -- Neu an den gemerkten Platz verankert (StopMovingOrSizing hinterlaesst
     -- einen Anker an der naechsten Ecke) - so ist er beim Zeigen "unserer".
     f:ClearAllPoints()
@@ -154,28 +156,27 @@ local function StopMove(f)
     MW.Save(f)
 end
 
--- Ein Fenster an den Platz des Spiels zurueck.
+-- Ein Fenster an den Platz des Spiels zurueck. Im Kampf ein geschuetztes:
+-- nach dem Kampf.
 function MW.Reset(f)
-    local name, store = hooked[f], Store()
-    if not name then return false end
-    if store then store[name] = nil end
-    mine[f] = nil
+    if not hooked[f] then return false end
+    local had = open[f] ~= nil
+    open[f] = nil
     local d = default[f]
-    if d and not Blocked(f) then
+    if had and d then
+        if Blocked(f) then pending[f] = "reset" return true end
         f:ClearAllPoints()
         f:SetPoint(d.p, d.rel, d.rp, d.x, d.y)
     end
-    return true
+    mine[f] = nil
+    return had
 end
 
 function MW.ResetAll()
-    local store = Store()
     local n = 0
-    if store then
-        for _ in pairs(store) do n = n + 1 end
-        for k in pairs(store) do store[k] = nil end
+    for f in pairs(hooked) do
+        if MW.Reset(f) then n = n + 1 end
     end
-    for f in pairs(hooked) do MW.Reset(f) end
     return n
 end
 
@@ -193,7 +194,11 @@ local function OnMouseUp(f, button)
 end
 
 local function OnShow(f) MW.Apply(f) end
-local function OnHide(f) StopMove(f) end
+-- Zu: der Platz gilt nur, solange das Fenster offen ist.
+local function OnHide(f)
+    StopMove(f)
+    MW.Reset(f)
+end
 local function OnDragStop(f) StopMove(f) end
 
 -- Ein Fenster einrichten (einmal). Nur oberste Fenster.
@@ -242,6 +247,7 @@ function MW.Start()
         end
     end
     MW.active, MW.reason = true, nil
+    MW.Forget()
     if not MW._uiHook and type(_G.UpdateUIPanelPositions) == "function" and _G.hooksecurefunc then
         MW._uiHook = true
         _G.hooksecurefunc("UpdateUIPanelPositions", MW.Reapply)
@@ -255,7 +261,14 @@ function MW.Flush()
     for f, v in pairs(pending) do
         pending[f] = nil
         if hooked[f] then
-            if K.Bool(f:IsShown(), false) then MW.Apply(f) end
+            if v == "reset" then
+                local d = default[f]
+                if d and not open[f] then
+                    f:ClearAllPoints()
+                    f:SetPoint(d.p, d.rel, d.rp, d.x, d.y)
+                    mine[f] = nil
+                end
+            elseif K.Bool(f:IsShown(), false) then MW.Apply(f) end
         elseif type(v) == "string" then
             MW.Hook(f, v)
         end
@@ -267,10 +280,10 @@ function MW.Status()
     if not MW.active then
         return MW.reason and ("Fenster verschieben: aus, " .. MW.reason .. " ist geladen") or "Fenster verschieben: noch nicht gestartet"
     end
-    local n, saved = 0, 0
+    local n, moved = 0, 0
     for _ in pairs(hooked) do n = n + 1 end
-    for _ in pairs(Store() or {}) do saved = saved + 1 end
-    return string.format("Fenster verschieben: %d Fenster ziehbar, %d mit eigenem Platz", n, saved)
+    for _ in pairs(open) do moved = moved + 1 end
+    return string.format("Fenster verschieben: %d Fenster ziehbar, %d gerade verschoben (bis zum Schließen)", n, moved)
 end
 
 local ev = CreateFrame("Frame")

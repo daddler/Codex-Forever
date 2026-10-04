@@ -10877,8 +10877,9 @@ do
         local uiHook
         _G.UpdateUIPanelPositions = function() end
         _G.hooksecurefunc = function(a, b) if a == "UpdateUIPanelPositions" then uiHook = b end end
-        local store = MW.Store()
-        for k in pairs(store) do store[k] = nil end
+        -- Bis 6.10.4.0 gemerkte Plaetze: beim Start weg.
+        local ui = K.Root()
+        ui.windowPos = { CharacterFrame = { x = 1, y = 2 } }
         -- Vorrang fuer MoveAny.
         loaded.MoveAny = true
         local cf = Win("CharacterFrame")
@@ -10895,35 +10896,36 @@ do
         _G.SpellBookFrame = sbf
         MW._uiHook = nil
         assert(MW.Start() and MW.active, "nicht gestartet")
+        assert(ui.windowPos == nil, "alte dauerhafte Plaetze bleiben stehen")
         assert(MW.hooked[cf] == "CharacterFrame" and MW.hooked[psf], "Fenster nicht eingerichtet")
         assert(not MW.hooked[sbf], "Teilfenster wird vom Fenster geloest")
         assert(psf._mouse == true, "Fenster ohne Maus bleibt unziehbar")
         assert(type(uiHook) == "function", "Ordnen des Spiels nicht beobachtet")
-        -- Ziehen und merken.
+        -- Ein unverschobenes Fenster: Schliessen fasst es nicht an.
+        cf:Show()
+        local touched = false
+        local sp = cf.SetPoint
+        cf.SetPoint = function(...) touched = true return sp(...) end
+        cf:Hide()
+        cf._scripts.OnHide(cf)
+        assert(not touched, "unverschobenes Fenster beim Schliessen versetzt")
+        cf.SetPoint = sp
+        -- Ziehen: der Platz gilt, solange es offen ist.
         cf:Show()
         cf._scripts.OnDragStart(cf)
         assert(cf._moving, "Ziehen beginnt nicht")
         cf._l, cf._t = 300.4, 650.6
         cf._scripts.OnDragStop(cf)
         assert(not cf._moving and cf._userPlaced == false, "Layout des Spiels uebernimmt den Platz")
-        assert(store.CharacterFrame and store.CharacterFrame.x == 300 and store.CharacterFrame.y == 651, "Platz nicht gemerkt")
+        assert(MW.open[cf] and MW.open[cf].x == 300 and MW.open[cf].y == 651, "Platz nicht gemerkt")
         assert(cf._pt[1] == "TOPLEFT" and cf._pt[2] == UIParent and cf._pt[3] == "BOTTOMLEFT" and cf._pt[4] == 300,
             "nach dem Ziehen nicht an den gemerkten Platz verankert")
-        -- Zu, das Spiel setzt es beim naechsten Oeffnen an seinen Platz:
-        -- nach dem Ordnen wieder unserer.
-        cf:Hide()
-        cf._scripts.OnShow(cf)
-        cf._pt = { "TOPLEFT", UIParent, "TOPLEFT", 16, -116 }   -- UpdateUIPanelPositions
-        cf:Show()
+        assert(K.Root().windowPos == nil, "Platz dauerhaft gespeichert")
+        -- Ein zweites Fenster geht auf, das Spiel ordnet neu: es bleibt da.
+        cf._pt = { "TOPLEFT", UIParent, "TOPLEFT", 16, -116 }
         uiHook()
-        assert(cf._pt[3] == "BOTTOMLEFT" and cf._pt[4] == 300 and cf._pt[5] == 651, "nach dem Ordnen des Spiels nicht am Platz")
+        assert(cf._pt[3] == "BOTTOMLEFT" and cf._pt[4] == 300 and cf._pt[5] == 651, "offen: nach dem Ordnen des Spiels nicht am Platz")
         assert(MW.default[cf] and MW.default[cf].x == 16 and MW.default[cf].y == -116, "Platz des Spiels nicht gemerkt")
-        -- Wieder oeffnen: beim Zeigen steht es noch an UNSEREM Platz - das
-        -- ist nicht der Platz des Spiels und ueberschreibt ihn nicht.
-        cf:Hide()
-        cf:Show()
-        cf._scripts.OnShow(cf)
-        assert(MW.default[cf].x == 16 and MW.default[cf].y == -116, "eigener Platz als Platz des Spiels gemerkt")
         -- Mitten im Ziehen ordnet das Spiel: das Fenster bleibt an der Maus.
         cf._scripts.OnDragStart(cf)
         cf._pt = { "CENTER", UIParent, "CENTER", 7, 7 }
@@ -10931,7 +10933,30 @@ do
         assert(cf._pt[1] == "CENTER", "Fenster beim Ziehen weggesetzt")
         cf._l, cf._t = 300, 651
         cf._scripts.OnDragStop(cf)
+        -- Zu: zurueck an den Platz des Spiels, und beim naechsten Oeffnen
+        -- bleibt es dort.
+        cf:Hide()
+        cf._scripts.OnHide(cf)
+        assert(MW.open[cf] == nil and cf._pt[3] == "TOPLEFT" and cf._pt[4] == 16 and cf._pt[5] == -116,
+            "nach dem Schliessen nicht am Platz des Spiels")
+        cf:Show()
+        cf._scripts.OnShow(cf)
+        uiHook()
+        assert(cf._pt[4] == 16, "beim naechsten Oeffnen am alten gezogenen Platz")
+        -- Platz des Spiels ist jetzt bekannt, nicht verschoben: Schliessen
+        -- setzt trotzdem nichts.
+        local touched2 = false
+        local sp2 = cf.SetPoint
+        cf.SetPoint = function(...) touched2 = true return sp2(...) end
+        cf:Hide()
+        cf._scripts.OnHide(cf)
+        cf.SetPoint = sp2
+        assert(not touched2, "unverschobenes Fenster beim Schliessen versetzt (Platz des Spiels bekannt)")
+        cf:Show()
         -- Im Kampf: ein geschuetztes Fenster wird nicht angefasst, danach schon.
+        cf._scripts.OnDragStart(cf)
+        cf._l, cf._t = 300, 651
+        cf._scripts.OnDragStop(cf)
         cf._protected, combat = true, true
         cf._pt = { "TOPLEFT", UIParent, "TOPLEFT", 16, -116 }
         uiHook()
@@ -10941,7 +10966,16 @@ do
         combat = false
         stub.FireEvent("PLAYER_REGEN_ENABLED")
         assert(cf._pt[4] == 300 and not MW.pending[cf], "nach dem Kampf nicht nachgeholt")
+        -- Im Kampf geschlossen: zurueck erst nach dem Kampf.
+        combat = true
+        cf:Hide()
+        cf._scripts.OnHide(cf)
+        assert(cf._pt[4] == 300 and MW.pending[cf] == "reset", "geschuetztes Fenster im Kampf zurueckgesetzt")
+        combat = false
+        stub.FireEvent("PLAYER_REGEN_ENABLED")
+        assert(cf._pt[4] == 16 and cf._pt[5] == -116, "nach dem Kampf nicht an den Platz des Spiels")
         cf._protected = false
+        cf:Show()
         -- Ein geschuetztes Fenster, das im Kampf erst auftaucht: Einrichten nachgeholt.
         local mf = Win("MacroFrame")
         mf._protected = true
@@ -10952,7 +10986,7 @@ do
         combat = false
         stub.FireEvent("PLAYER_REGEN_ENABLED")
         assert(MW.hooked[mf] == "MacroFrame", "Einrichten nach dem Kampf nicht nachgeholt")
-        -- Vergroesserte Karte: nicht ziehen.
+        -- Vergroesserte Karte: nicht ziehen, nicht setzen.
         local map = Win("WorldMapFrame")
         _G.WorldMapFrame = map
         map.IsMaximized = function() return true end
@@ -10961,26 +10995,183 @@ do
         map:Show()
         map._scripts.OnDragStart(map)
         assert(not map._moving, "vergroesserte Karte gezogen")
-        store.WorldMapFrame = { x = 5, y = 6 }
+        MW.open[map] = { x = 5, y = 6 }
         map._scripts.OnShow(map)
         assert(map._pt[4] ~= 5, "vergroesserte Karte versetzt")
-        store.WorldMapFrame = nil
+        MW.open[map] = nil
         -- Umschalt + Rechtsklick: an den Platz des Spiels.
+        cf._scripts.OnDragStart(cf)
+        cf._l, cf._t = 300, 651
+        cf._scripts.OnDragStop(cf)
         cf._scripts.OnMouseUp(cf, "RightButton")
-        assert(store.CharacterFrame, "Rechtsklick ohne Umschalt setzt zurueck")
+        assert(MW.open[cf], "Rechtsklick ohne Umschalt setzt zurueck")
         shift = true
         cf._scripts.OnMouseUp(cf, "RightButton")
         shift = false
-        assert(store.CharacterFrame == nil and cf._pt[3] == "TOPLEFT" and cf._pt[4] == 16, "Umschalt+Rechtsklick setzt nicht zurueck")
-        -- /wcui fenster zurück: alle.
-        store.CharacterFrame, store.PlayerSpellsFrame = { x = 1, y = 2 }, { x = 3, y = 4 }
+        assert(MW.open[cf] == nil and cf._pt[3] == "TOPLEFT" and cf._pt[4] == 16, "Umschalt+Rechtsklick setzt nicht zurueck")
+        -- /wcui fenster zurück: alle offenen.
+        cf._scripts.OnDragStart(cf)
+        cf._scripts.OnDragStop(cf)
+        psf:Show()
+        psf._scripts.OnDragStart(psf)
+        psf._scripts.OnDragStop(psf)
+        assert(MW.Status():find("2 gerade verschoben", 1, true), "Status: " .. MW.Status())
         SlashCmdList["WEINTCODEXUI"]("fenster zurück")
-        assert(next(store) == nil, "/wcui fenster zurück laesst Plaetze stehen")
+        assert(next(MW.open) == nil, "/wcui fenster zurück laesst Plaetze stehen")
         assert(MW.Status():find("ziehbar", 1, true), "Status: " .. MW.Status())
         for f in pairs(MW.hooked) do MW.hooked[f] = nil end
     end)
     for i, n in ipairs(names) do _G[n] = saved[i] end
     Check(ok, "Fenster verschieben: ziehen, merken, nach dem Ordnen wieder hin, Kampf, Reiter, Karte, zurueck, MoveAny hat Vorrang"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.10.4.1: Markieren per Mouseover. Maus ueber den Gegner, eine Taste
+-- (Vorrang-Belegung nur dort, wo markiert wird); naechste freie Markierung,
+-- nicht doppelt, Tank/Heiler frei, nie im Kampf, nach dem Kampf frei, was tot ist.
+do
+    local HM = WeintCodex.UIHoverMark
+    local names = { "IsInInstance", "UnitExists", "UnitCanAttack", "UnitPlayerControlled", "UnitIsDead", "UnitGUID",
+                    "SetOverrideBindingClick", "ClearOverrideBindings", "InCombatLockdown", "SetRaidTarget" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = _G[n] end
+    local ok, err = pcall(function()
+        assert(HM and HM.Prepare and HM.Bind, "ui/hovermark.lua fehlt")
+        assert(K.Get("comfort", "markHover") == false, "Mouseover-Markieren von Haus aus an (Komfort: aus)")
+        local bindings = {}
+        _G.SetOverrideBindingClick = function(owner, prio, key, name, mb)
+            bindings[key] = { owner = owner, prio = prio, name = name, mb = mb }
+        end
+        _G.ClearOverrideBindings = function() for k in pairs(bindings) do bindings[k] = nil end end
+        local inside, kind = false, nil
+        _G.IsInInstance = function() return inside, kind end
+        local mouse = { exists = true, attack = true, player = false, dead = false, guid = "Creature-0-A" }
+        local plates = {}
+        local function Of(u) if u == "mouseover" then return mouse end return plates[u] end
+        _G.UnitExists = function(u) local m = Of(u) return m ~= nil and m.exists ~= false end
+        _G.UnitCanAttack = function(_, u) local m = Of(u) return m and m.attack end
+        _G.UnitPlayerControlled = function(u) local m = Of(u) return m and m.player end
+        _G.UnitIsDead = function(u) local m = Of(u) return m and m.dead end
+        _G.UnitGUID = function(u) local m = Of(u) return m and m.guid end
+        local combat = false
+        _G.InCombatLockdown = function() return combat end
+        _G.SetRaidTarget = function() error("SetRaidTarget gerufen") end
+        local amWas = K.Get("comfort", "autoMark")
+        K.Set("comfort", "autoMark", false)
+        HM.Clear()
+        K.Set("comfort", "markHover", true)
+        assert(HM.On(), "nicht an")
+        local b = _G[HM.BUTTON]
+        assert(b and HM.button == b, "Knopf fehlt")
+        -- Draussen: keine Taste, kein Makro.
+        assert(next(bindings) == nil and b:GetAttribute("macrotext") == "", "draussen belegt oder Makro")
+        -- In einem Dungeon: Taste mit Vorrang auf den Knopf.
+        inside, kind = true, "party"
+        stub.FireEvent("ZONE_CHANGED_NEW_AREA")
+        local bd = bindings.BUTTON3
+        assert(bd and bd.prio == true and bd.name == HM.BUTTON and bd.owner == b, "Taste nicht belegt")
+        -- Ueber einem Gegner: Totenkopf vorbereitet.
+        stub.FireEvent("UPDATE_MOUSEOVER_UNIT")
+        assert(b:GetAttribute("macrotext") == "/tm [@mouseover,harm,nodead] 8", "Makro: " .. tostring(b:GetAttribute("macrotext")))
+        -- Gedrueckt: gemerkt; derselbe Gegner bekommt kein Makro mehr.
+        b._scripts.PostClick(b)
+        assert(HM.state.byGuid["Creature-0-A"] == 8 and b:GetAttribute("macrotext") == "", "zweiter Druck naehme die Markierung ab")
+        -- Naechster Gegner: Kreuz.
+        mouse.guid = "Creature-0-B"
+        stub.FireEvent("UPDATE_MOUSEOVER_UNIT")
+        assert(b:GetAttribute("macrotext"):find("%] 7$"), "zweiter Gegner nicht Kreuz: " .. b:GetAttribute("macrotext"))
+        b._scripts.PostClick(b)
+        -- Automark aus: Quadrat ist frei, obwohl es die Tank-Markierung waere.
+        mouse.guid = "Creature-0-C"
+        stub.FireEvent("UPDATE_MOUSEOVER_UNIT")
+        assert(b:GetAttribute("macrotext"):find("%] 6$"), "Automark aus, Quadrat trotzdem gesperrt: " .. b:GetAttribute("macrotext"))
+        -- Kreuz vergeben, Quadrat dem Tank (Automark an): der dritte bekommt Mond.
+        K.Set("comfort", "markHoverUse6", true)
+        K.Set("comfort", "autoMark", true)
+        K.Set("comfort", "markTank", 6)
+        mouse.guid = "Creature-0-C"
+        stub.FireEvent("UPDATE_MOUSEOVER_UNIT")
+        assert(b:GetAttribute("macrotext"):find("%] 5$"), "Tank-Markierung nicht ausgelassen: " .. b:GetAttribute("macrotext"))
+        K.Set("comfort", "markHoverUse5", false)
+        stub.FireEvent("UPDATE_MOUSEOVER_UNIT")
+        assert(b:GetAttribute("macrotext"):find("%] 4$") == nil and b:GetAttribute("macrotext"):find("%] [34]$"),
+            "abgewaehlte Markierung benutzt: " .. b:GetAttribute("macrotext"))
+        K.Set("comfort", "markHoverUse5", nil)
+        K.Set("comfort", "autoMark", false)
+        K.Set("comfort", "markTank", nil)
+        -- Kein Gegner: Spieler, Freund, Toter.
+        for _, f in ipairs({ { "player", true }, { "attack", false }, { "dead", true } }) do
+            local was = mouse[f[1]]
+            mouse[f[1]] = f[2]
+            stub.FireEvent("UPDATE_MOUSEOVER_UNIT")
+            assert(b:GetAttribute("macrotext") == "", "markiert trotz " .. f[1])
+            mouse[f[1]] = was
+        end
+        -- Kampf: Text beim Beginn geleert, ein Druck im Kampf merkt nichts.
+        stub.FireEvent("UPDATE_MOUSEOVER_UNIT")
+        assert(b:GetAttribute("macrotext") ~= "", "Vorbedingung: Makro da")
+        stub.FireEvent("PLAYER_REGEN_DISABLED")
+        combat = true
+        assert(b:GetAttribute("macrotext") == "", "Makro im Kampf noch gesetzt")
+        stub.FireEvent("UPDATE_MOUSEOVER_UNIT")
+        assert(b:GetAttribute("macrotext") == "", "im Kampf neu vorbereitet")
+        local said = {}
+        local oldPrint = print
+        print = function(s) said[#said + 1] = tostring(s) end
+        b._scripts.PostClick(b)
+        b._scripts.PostClick(b)
+        print = oldPrint
+        assert(HM.state.byGuid["Creature-0-C"] == nil, "im Kampf als markiert gemerkt")
+        assert(#said == 1 and said[1]:find("außerhalb des Kampfes", 1, true), "Druck im Kampf ohne (einmaligen) Hinweis: " .. #said)
+        -- Nach dem Kampf: A ist tot, B lebt mit Plakette - A's Totenkopf ist frei.
+        plates.nameplate1 = { guid = "Creature-0-A", dead = true }
+        plates.nameplate2 = { guid = "Creature-0-B", dead = false }
+        combat = false
+        stub.FireEvent("PLAYER_REGEN_ENABLED")
+        assert(HM.state.byGuid["Creature-0-A"] == nil and HM.state.byMark[8] == nil, "Markierung des Toten nicht frei")
+        assert(HM.state.byGuid["Creature-0-B"] == 7, "Markierung des Lebenden verloren")
+        mouse.guid = "Creature-0-D"
+        stub.FireEvent("UPDATE_MOUSEOVER_UNIT")
+        assert(b:GetAttribute("macrotext"):find("%] 8$"), "frei gewordener Totenkopf nicht wieder vergeben")
+        -- Taste waehlbar, Wo: nur Dungeons.
+        K.Set("comfort", "markHoverKey", "BUTTON4")
+        assert(bindings.BUTTON4 and not bindings.BUTTON3, "neue Taste nicht belegt")
+        K.Set("comfort", "markHoverWhere", "party")
+        kind = "raid"
+        stub.FireEvent("ZONE_CHANGED_NEW_AREA")
+        assert(next(bindings) == nil, "nur Dungeons: im Schlachtzug belegt")
+        assert(next(HM.state.byGuid) == nil, "Gebietswechsel: alte Markierungen gemerkt")
+        K.Set("comfort", "markHoverWhere", nil)
+        K.Set("comfort", "markHoverKey", nil)
+        -- Gebiet im Kampf gewechselt: Belegung erst danach.
+        inside, kind = false, nil
+        stub.FireEvent("ZONE_CHANGED_NEW_AREA")
+        assert(next(bindings) == nil, "Vorbedingung: draussen belegt")
+        inside, kind = true, "party"
+        combat = true
+        stub.FireEvent("ZONE_CHANGED_NEW_AREA")
+        assert(next(bindings) == nil, "Belegung im Kampf gesetzt")
+        combat = false
+        stub.FireEvent("PLAYER_REGEN_ENABLED")
+        assert(bindings.BUTTON3, "Belegung nach dem Kampf nicht nachgeholt")
+        -- Aus: Taste wieder frei.
+        K.Set("comfort", "markHover", nil)
+        assert(next(bindings) == nil and b:GetAttribute("macrotext") == "", "ausgeschaltet: Taste belegt")
+        assert(HM.Status() == "Aus.", "Status: " .. HM.Status())
+        -- Einstellungen: drei sichtbar auf der Seite Automark, die acht Markierungen unter Erweitert.
+        local O = WeintCodex.UIOptions
+        local vis, adv = {}, 0
+        for _, e in ipairs(O.SearchIndex()) do
+            if e.module == "comfort" and e.pageLabel == "Automark" then
+                if e.advanced then adv = adv + 1 else vis[e.label] = true end
+            end
+        end
+        assert(vis["Per Mouseover markieren"] and vis["Taste"] and vis["Wo"], "Mouseover-Einstellungen nicht sichtbar")
+        assert(adv == 8, "Markierungen nicht unter Erweitert: " .. adv)
+        K.Set("comfort", "autoMark", amWas)
+    end)
+    for i, n in ipairs(names) do _G[n] = saved[i] end
+    Check(ok, "Mouseover-Markieren: Taste nur in der Instanz, naechste freie Markierung, nicht doppelt, Tank/Heiler frei, nie im Kampf, frei nach dem Tod"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

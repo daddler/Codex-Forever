@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.10.4.0
+## Version: 6.10.4.1
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -185,6 +185,8 @@ ui/questarrow.lua
 ui/comfort.lua
 # Automark (6.8.1.0): Tank und Heiler beim Betreten einer Instanz markieren.
 ui/automark.lua
+# Markieren per Mouseover (6.10.4.1): Maus ueber den Gegner, eine Taste - Seite Automark.
+ui/hovermark.lua
 ui/tooltip.lua
 ui/windows.lua
 # Das Charakterfenster als Ganzes (6.6.4.0), baut auf ui/windows.lua auf.

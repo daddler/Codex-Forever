@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.4.1",
+        date    = "04.10.2026",
+        notes   = {
+            "|cff7C6CFFGegner per Mouseover markieren.|r In Dungeons und Schlachtzügen: Maus über einen Gegner, mittlere Maustaste – er bekommt die nächste freie Markierung, Totenkopf zuerst, und niemand wird doppelt markiert. Taste, Orte und Markierungen stellst du unter /wcui → Komfort → Automark ein. Nur außerhalb des Kampfes, und nur mit Tastendruck: von sich aus lässt das Spiel Addons nicht markieren.",
+            "|cff7C6CFFGeschlossene Fenster kommen an ihren Platz zurück.|r Ein verschobenes Fenster bleibt dort, solange es offen ist; nach dem Schließen öffnet es wieder an seinem gewohnten Platz.",
+        },
+    },
+    {
         version = "6.10.4.0",
         date    = "04.10.2026",
         notes   = {

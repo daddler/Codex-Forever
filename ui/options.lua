@@ -205,7 +205,7 @@ K.Register({
                   { type = "empty" })
             B:Note("Was in einem Fenster noch nach Holz aussieht, nennt /wcui fenster – Maus über das Fenster halten und abschicken. Der Bericht kommt in einem Fenster zum Kopieren.")
             -- 6.10.4.0: Verschieben ist immer an - hier steht nur, wie es geht.
-            B:Note("Fenster verschieben: mit der linken Maustaste an einer freien Stelle ziehen (Titel, Rand). Der Platz bleibt gemerkt. Umschalt + Rechtsklick setzt ein Fenster zurück, /wcui fenster zurück alle.")
+            B:Note("Fenster verschieben: mit der linken Maustaste an einer freien Stelle ziehen (Titel, Rand). Der Platz gilt, bis du das Fenster schließt – danach öffnet es wieder an seinem gewohnten Platz. Umschalt + Rechtsklick setzt ein offenes Fenster sofort zurück.")
             -- 6.10.2.0: die Selbstpruefung auch ohne Befehl.
             B:Section("Selbstprüfung", "Fragt den Client, was nur er beantworten kann: Bedrohung offen oder geheim, welche Messarten es gibt, ob das Mikromenü geschützt ist, welche Fenster es gibt. Ändert nichts. Auch mit /wcui prüfen.")
             B:Row({ type = "button", label = "Bericht zum Kopieren", text = "Selbstprüfung",

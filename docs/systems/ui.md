@@ -3178,15 +3178,36 @@ Rights Reserved“: Verhalten übernommen, kein Code.
 | Was | Wie |
 |---|---|
 | ziehen | linke Maustaste auf freier Stelle (Titel, Rand); am Bildschirm gehalten; danach `SetUserPlaced(false)` und Anker `TOPLEFT` an `UIParent BOTTOMLEFT` |
-| merken | `ui.windowPos[name] = { x, y }` (obere linke Ecke, kontoweit) |
-| setzen | `OnShow` und nach `UpdateUIPanelPositions` (das Spiel ordnet beim Zeigen neu); nicht beim Ziehen, nicht bei vergrößerter Karte |
+| solange offen | `MW.open[f] = { x, y }` (obere linke Ecke, nicht gespeichert); gesetzt bei `OnShow` und nach `UpdateUIPanelPositions` (ein zweites Fenster geht auf); nicht beim Ziehen, nicht bei vergrößerter Karte |
+| zu (6.10.4.1) | an den Platz des Spiels (`MW.default`, erster Anker, gemerkt solange er nicht unserer ist) – nur wenn verschoben; geschützt im Kampf: danach. Beta-Test: „wieder dort, wo es eigentlich sein sollte“. Die dauerhaften Plätze von 6.10.4.0 (`ui.windowPos`) löscht `MW.Forget` beim Start |
 | Kampf | geschützte Fenster weder ziehen, setzen noch einrichten; `PLAYER_REGEN_ENABLED` holt nach |
-| zurück | Umschalt + Rechtsklick (erster Anker des Spiels, gemerkt solange er nicht unserer ist); `/wcui fenster zurück` alle |
+| zurück | Umschalt + Rechtsklick; `/wcui fenster zurück` alle offenen |
 | welche | `MW.WINDOWS`, nur oberste (Eltern `UIParent`); `ADDON_LOADED` nimmt nachgeladene dazu |
 | Vorrang | MoveAny oder BlizzMove geladen: WeintCodex tut nichts |
 
 **Ungemessen:** ob Forever beim Setzen der Fenster aus Addon-Code etwas
 blockiert. Falls ja, nennt es die Fehlerliste von `/wcui prüfen`.
+
+### Markieren per Mouseover *(6.10.4.1, `ui/hovermark.lua`)*
+
+Beta-Test: „in einer Instanz per Mouseover über die Namensplakette die
+NPCs markieren, einstellbar in WCui“. Seite **Automark** im Komfort.
+
+**Nur Drüberfahren geht nicht:** Markieren ist für Addons geschützt
+(gemessen 6.9.0.1, siehe Automark). Deshalb Maus über den Gegner **und
+eine Taste**:
+
+| Teil | Wie |
+|---|---|
+| Taste | `markHoverKey` (Standard `BUTTON3`, mittlere Maustaste), `SetOverrideBindingClick(…, true, …)` auf `WeintCodexHoverMarkButton` – nur wo markiert wird (`markHoverWhere`: Dungeons und Schlachtzüge / nur Dungeons / überall), nur außerhalb des Kampfes gesetzt und entfernt |
+| Makro | `/tm [@mouseover,harm,nodead] n`, vorbereitet bei `UPDATE_MOUSEOVER_UNIT` |
+| welche | erste freie in Totenkopf → Stern (`markHoverUse1..8`, unter „Erweitert“), ohne Tank/Heiler von Automark (nur wenn Automark an) |
+| doppelt | je GUID gemerkt; schon von uns markiert → leeres Makro (dieselbe nähme sie ab). Von anderen gesetzte kennt Lua nicht (Index geheim) |
+| Kampf | `PLAYER_REGEN_DISABLED` leert das Makro – im Kampf darf es sich nicht ändern, die Markierung wanderte sonst; ein Druck sagt es einmal |
+| frei | nach dem Kampf: wer tot ist oder keine Plakette hat; Gebietswechsel: alle |
+
+**Ungemessen:** ob `/tm` aus dem Makro auf Forever markiert und ob die
+mittlere Maustaste so belegt werden kann.
 
 ### Würfeln um Beute *(6.10.3.1, `ui/lootroll.lua`)*
 
