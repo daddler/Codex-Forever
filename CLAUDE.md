@@ -271,7 +271,7 @@ into modules that no longer exist. A green run means "it loads", never
 | UI-Struktur, Theme, `core/ui.lua`, Navigationsspalte, PageHead, Detailbereich | `docs/architecture/overview.md` |
 | Leere Tabellen, `unknown ≠ 0`, Leerzustände | `docs/invariants/data-integrity.md` |
 | Schlachtzüge, Bosslisten, Lockouts, Fortschritt, Herkunft einer Liste | `docs/systems/raids-and-progress.md` |
-| Dungeons (Forever **und** Classic), Stufenbereiche, Bosslisten, Flügel, beschwörbare Zusatzbosse, Rollen, Beute und Quests (`data/dungeon_journal.lua`, Queststatus aus dem Client seit 6.9.0.7), Questgeber auf der Weltkarte (`modules/questmap.lua`) | `docs/systems/dungeons.md` |
+| Dungeons (Forever **und** Classic), Stufenbereiche, Bosslisten, Flügel, beschwörbare Zusatzbosse, Rollen, Beute und Quests (`data/dungeon_journal.lua`, Queststatus aus dem Client seit 6.9.0.7), Questgeber auf der Weltkarte (`modules/questmap.lua`), Abgleich mit dem Client (`/wc abgleich`, `modules/clientcheck.lua`, 6.10.3.0: liest Gruppensuche und Kompendium, schreibt nichts) | `docs/systems/dungeons.md` |
 | Artwork, `data/artwork.lua`, `WeintCodex.Artwork`, `media/dungeons/` | `docs/systems/dungeons.md`, Abschnitt *Bilder: kein Spielmaterial, eigenes schon* |
 | Herkunft eines Eintrags, `data/sources.lua`, `release`/`announced`/`beta`/`community`/`classic` | `docs/systems/dungeons.md`, Abschnitt *Fünf Arten von Herkunft* |
 | Charakterseite, Twinks, Ausrüstungsstand, Lehrer (`modules/trainer.lua`, `data/trainer.lua`) | `docs/systems/character.md` |

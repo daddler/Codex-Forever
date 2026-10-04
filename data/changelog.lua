@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.3.0",
+        date    = "04.10.2026",
+        notes   = {
+            "|cff7C6CFFDungeons mit dem Spiel abgleichen.|r /wc abgleich liest, was das Spiel selbst über Dungeons und Schlachtzüge weiß – Namen, Stufen, Bosse und ihre Reihenfolge – und stellt es neben das, was der Codex sagt. Ergebnis zum Kopieren; am Codex ändert der Befehl nichts.",
+        },
+    },
+    {
         version = "6.10.2.1",
         date    = "04.10.2026",
         notes   = {

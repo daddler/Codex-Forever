@@ -10398,6 +10398,92 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.10.3.0: /wc abgleich - Dungeons und Schlachtzuege aus dem Client
+-- lesen und gegen den Codex halten. Liest nur.
+do
+    local ok, err = pcall(function()
+        local CC = WeintCodex.ClientCheck
+        assert(CC and CC.Run, "Abgleich fehlt")
+        local saved = {}
+        local function Set(name, v) if saved[name] == nil then saved[name] = { v = _G[name] } end _G[name] = v end
+        -- Geheim ist im Client eine Zeichenkette, die Lua nicht lesen darf -
+        -- keine Tabelle: die Typpruefung allein liesse sie durch.
+        local SECRET = "Geheimer Name"
+        Set("issecretvalue", function(v) return v == SECRET end)
+        Set("GetLocale", function() return "deDE" end)
+        local LFG = {
+            [10] = { "Hall of Thanes", 1, 1, 13, 18, 15, 13, 18, 0, 0, "", 1, 5,
+                     bosses = { "Magmatus", "Faldrim Anvilmar", "Plunder", "Neuer Boss" } },
+            [20] = { "Ruinen von Lordaeron", 1, 1, 15, 20, 17, 15, 20, 0, 0, "", 1, 5, bosses = { "Witterzahn" } },
+            [30] = { "Geheimnis", 1, 1, 70, 70, 70, 70, 70, 0, 0, "", 1, 5, bosses = {} },
+            [40] = { SECRET, 1, 1, 10, 12, 11, 10, 12, 0, 0, "", 1, 5, bosses = {} },
+            -- Ohne "The": der Codex fuehrt "The Drowned City".
+            [50] = { "Drowned City", 1, 1, 35, 40, 37, 35, 40, 0, 0, "", 1, 5, bosses = {} },
+        }
+        Set("GetLFGDungeonInfo", function(id) local e = LFG[id] if e then return unpack(e) end return nil end)
+        Set("GetLFGDungeonNumEncounters", function(id) local e = LFG[id] return e and #e.bosses or 0, 0 end)
+        Set("GetLFGDungeonEncounterInfo", function(id, i) return LFG[id].bosses[i], "", false end)
+        for _, n in ipairs({ "EJ_GetNumTiers", "EJ_SelectTier", "EJ_GetInstanceByIndex", "EJ_GetEncounterInfoByIndex",
+                             "EJ_SelectInstance", "EJ_GetCurrentTier" }) do Set(n, nil) end
+        -- Der Codex bleibt, wie er ist.
+        local before = 0
+        for _, d in ipairs(CC.CodexInstances()) do before = before + #(d.bosses or {}) end
+        local lines = CC.Run()
+        local after = 0
+        for _, d in ipairs(CC.CodexInstances()) do after = after + #(d.bosses or {}) end
+        assert(before == after and before > 0, "Abgleich veraendert den Codex")
+        local text = table.concat(lines, "\n")
+        assert(text:find("Liest nur.", 1, true) and text:find("Gruppensuche: 4 Einträge", 1, true)
+            and text:find("Dungeonkompendium: kein Dungeonkompendium", 1, true), "Kopf falsch:\n" .. text)
+        assert(text:find("Der Client ist nicht englisch", 1, true), "deutscher Client nicht erwaehnt")
+        -- Gleicher Name: Boss fuer Boss, Reihenfolge.
+        assert(text:find("[Name] Hall of Thanes (Stufe 13–18, 4 Bosse im Codex, Unbestätigt)", 1, true), "Name nicht zugeordnet:\n" .. text)
+        assert(text:find("      gleich 3: ", 1, true) and text:find("      nur im Codex: Durgen Dirgehammer", 1, true)
+            and text:find("      nur im Client: Neuer Boss", 1, true), "Bossvergleich falsch:\n" .. text)
+        assert(text:find("      Reihenfolge weicht ab – Client: Magmatus › Faldrim Anvilmar", 1, true), "Reihenfolge nicht verglichen")
+        -- Anderer Name: nur ueber die Stufen, vermutlich, ohne Bossvergleich.
+        assert(text:find("[Stufen, vermutlich] Ruins of Lordaeron", 1, true)
+            and text:find("Gruppensuche #20 „Ruinen von Lordaeron“ · Stufe 15–20 · 1 Kämpfe: Witterzahn", 1, true),
+            "Stufenzuordnung falsch:\n" .. text)
+        -- Bestand: Unzugeordnetes steht da, Geheimes nicht.
+        assert(text:find("(nicht zugeordnet) Gruppensuche #30 „Geheimnis“", 1, true), "Unzugeordnetes fehlt im Bestand")
+        assert(not text:find("Gruppensuche #40", 1, true) and not text:find(SECRET, 1, true), "geheimer Name im Bestand")
+        assert(text:find("[Name] The Drowned City", 1, true), "'The' verhindert die Zuordnung ueber den Namen")
+        assert(text:find("[kein Gegenstück] ", 1, true), "Codex ohne Gegenstueck nicht gemeldet")
+        assert(CC.last and CC.last.name == 2 and CC.last.level > 0 and CC.last.none > 0, "Summe falsch")
+        -- Kompendium: Schlachtzug ueber den Namen, Erweiterung zurueckgesetzt.
+        local selected = {}
+        Set("EJ_GetNumTiers", function() return 1 end)
+        Set("EJ_GetCurrentTier", function() return 7 end)
+        Set("EJ_SelectTier", function(t) selected[#selected + 1] = t end)
+        Set("EJ_SelectInstance", function() end)
+        Set("EJ_GetInstanceByIndex", function(idx, isRaid)
+            if isRaid and idx == 1 then return 1001, "Barrow Deeps" end
+            return nil
+        end)
+        Set("EJ_GetEncounterInfoByIndex", function(i, inst)
+            local list = { "Deepscar Matriarch", "Amethrax" }
+            if inst == 1001 then return list[i] end
+        end)
+        text = table.concat(CC.Run(), "\n")
+        assert(text:find("Dungeonkompendium: 1 Instanzen", 1, true) and text:find("[Name] Barrow Deeps", 1, true)
+            and text:find("Kompendium #1001 „Barrow Deeps“", 1, true), "Kompendium nicht gelesen:\n" .. text)
+        assert(selected[#selected] == 7, "Erweiterung des Kompendiums nicht zurueckgesetzt")
+        -- Ohne Gruppensuche: ein Satz statt eines Fehlers.
+        Set("GetLFGDungeonInfo", nil)
+        text = table.concat(CC.Run(), "\n")
+        assert(text:find("Gruppensuche: GetLFGDungeonInfo fehlt", 1, true), "fehlende Gruppensuche nicht gemeldet")
+        for name, v in pairs(saved) do _G[name] = v.v end
+        -- Befehl: Bericht im Fenster.
+        SlashCmdList["WEINTCODEX"]("abgleich")
+        assert(WeintCodex.UIKit.report:IsShown() and WeintCodex.UIKit.report.title:GetText() == "Abgleich mit dem Client",
+            "/wc abgleich zeigt keinen Bericht")
+        WeintCodex.UIKit.report:Hide()
+    end)
+    Check(ok, "/wc abgleich: Gruppensuche und Kompendium gelesen, Name/Stufen/kein Gegenstueck, Boss fuer Boss, Bestand, schreibt nichts"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.10.0.0: Kopfzeile der Schadensanzeige gerechnet statt fest - bei
 -- jeder erlaubten Breite passen Titel, Zeitraum und Knoepfe nebeneinander.
 do

@@ -68,6 +68,39 @@ die nie stattgefunden hat.
 sagt **warum** — ein Hinweis „vorläufig" ohne Begründung ist eine
 Fussnote, die niemand liest.
 
+### Abgleich mit dem Client *(seit 6.10.3.0)*
+
+`/wc abgleich` (`modules/clientcheck.lua`) liest, was der Client selbst
+über Instanzen weiß, und hält es gegen den Codex – als Bericht zum
+Kopieren. **Der Befehl schreibt nichts in die Daten.** Er ist das
+Werkzeug, mit dem aus `community` ehrlich `beta` werden kann: eine Liste
+darf `beta` heißen, wenn sie aus dem Client gelesen ist, und genau das
+belegt der Bericht (mit Client-Build und Datum im Kopf).
+
+| Quelle im Client | Was sie liefert |
+|---|---|
+| Gruppensuche (`GetLFGDungeonInfo`, Kennungen 1–3000) | Name, Art, Stufen (Zugang und empfohlen), Größe, Kämpfe in Reihenfolge (`GetLFGDungeonEncounterInfo`) |
+| Dungeonkompendium (`EJ_*`), falls vorhanden | Instanzen je Erweiterung (Dungeon/Schlachtzug), Kämpfe; die gewählte Erweiterung wird zurückgesetzt |
+
+Zuordnung in drei Stufen, jede steht im Bericht mit ihrem Namen:
+
+1. **`[Name]`** – gleicher Name ohne Groß/klein, Satzzeichen und „The“.
+   Dann Boss für Boss: gleich, nur im Codex, nur im Client; die
+   Reihenfolge, wo der Codex eine behauptet (`orderKnown`).
+2. **`[Stufen, vermutlich]`** – gleicher Stufenbereich (Zugang oder
+   empfohlen), alle Kandidaten, **ohne** Bossvergleich: ein deutscher
+   Client nennt deutsche Namen, der Codex englische (warum, steht oben
+   in `data/dungeons.lua`).
+3. **`[kein Gegenstück]`**.
+
+Danach der ganze Bestand des Clients, Unzugeordnetes markiert – damit
+auch das zugeordnet werden kann, was keine Stufe fand.
+
+**Übernehmen** heißt: ein Mensch liest den Bericht, ordnet zu und trägt
+mit einer neuen Quelle in `data/sources.lua` ein (`kind = "beta"`,
+Build und Datum des Laufs) – nie automatisch, und nie mit einem
+hochgezählten Build.
+
 ## Drei Zustände statt zwei
 
 Früher war eine Bossliste entweder da oder nicht. Das reicht nicht mehr:

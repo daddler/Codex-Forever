@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.3.0] – 2026-10-04
+
+**Dungeons mit dem Spiel abgleichen.** /wc abgleich liest, was das Spiel selbst über Dungeons und Schlachtzüge weiß – Namen, Stufen, Bosse und ihre Reihenfolge – und stellt es neben das, was der Codex sagt. Ergebnis zum Kopieren; am Codex ändert der Befehl nichts.
+
+### Technisch
+
+- **`/wc abgleich`** (`modules/clientcheck.lua`, `WeintCodex.ClientCheck`): liest die Gruppensuche (`GetLFGDungeonInfo` für die Kennungen 1–3000, `GetLFGDungeonNumEncounters`/`GetLFGDungeonEncounterInfo`) und, falls vorhanden, das Dungeonkompendium (`EJ_GetNumTiers`, `EJ_GetInstanceByIndex`, `EJ_GetEncounterInfoByIndex`; die gewählte Erweiterung wird zurückgesetzt). Zuordnung zu Forever-, Classic-Dungeons und Schlachtzügen des Codex: über den Namen (ohne Groß/klein, Satzzeichen, „The“) mit Vergleich Boss für Boss und Reihenfolge, wo der Codex eine behauptet; sonst über den Stufenbereich als **vermutlich**, ohne Bossvergleich (ein deutscher Client nennt andere Namen); sonst „kein Gegenstück“. Am Ende der ganze Bestand des Clients, Unzugeordnetes markiert. Geheime Namen werden nicht gelesen. **Schreibt nichts** – was übernommen wird, trägt ein Mensch mit einer Quelle `beta` (Build, Datum) ein.
+- Selbstprüfung: das Melden in den Chat ist gemessen (Gruppe, Client 1.60.1, Build 70205) und steht nicht mehr bei jedem Lauf als offen da.
+- `load_test.lua`: Kopf (Einträge, fehlendes Kompendium, deutscher Client), Name mit Boss für Boss (gleich, nur Codex, nur Client, Reihenfolge), „The“, nur Stufen (vermutlich), kein Gegenstück, Bestand mit Unzugeordnetem, geheimer Name (als Zeichenkette, wie im Client), Kompendium mit Schlachtzug und zurückgesetzter Erweiterung, fehlende Gruppensuche, Codex unverändert, `/wc abgleich`. Gegenproben: 11, gefangen – zwei („The“, geheimer Name) erst nach geschärftem Test.
+
 ## [6.10.2.1] – 2026-10-04
 
 **Genauere Selbstprüfung.** /wcui prüfen meldet Fenster, die das Spiel erst beim ersten Öffnen lädt, nicht mehr als fehlend, und in einer Gruppe prüft sie auch die Bedrohung eines Mitspielers – einmal im Kampf in einer Gruppe ausführen hilft.

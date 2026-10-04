@@ -12,7 +12,7 @@ WeintCodex = WeintCodex or {}
 -- "v" plus diese Zahl sein. Die CI prueft alle vier gegeneinander und
 -- bricht sonst ab - siehe .github/scripts/release_notes.py und
 -- docs/development/releases.md.
-WeintCodex.Version = "6.10.2.1"
+WeintCodex.Version = "6.10.3.0"
 
 SLASH_WEINTCODEX1 = "/wc"
 SLASH_WEINTCODEX2 = "/weintcodex"
@@ -101,6 +101,25 @@ SlashCmdList["WEINTCODEX"] = function(msg)
 
     if verb == "companion" or verb == "bruecke" or verb == "brücke" then
         Open("companion")
+        return
+    end
+
+    -- 6.10.3.0: Dungeons und Schlachtzuege aus dem Client lesen und gegen
+    -- den Codex halten (modules/clientcheck.lua). Schreibt nichts.
+    if verb == "abgleich" or verb == "compare" then
+        local CC = WeintCodex.ClientCheck
+        if not (CC and CC.Run) then return end
+        local lines = CC.Run()
+        local K = WeintCodex.UIKit
+        if K and K.ShowReport then
+            K.ShowReport("Abgleich mit dem Client", lines)
+            local c = CC.last or {}
+            print(WeintCodex.AC .. "[WeintCodex]|r " .. string.format(
+                "Abgleich: %d über den Namen, %d vermutlich, %d ohne Gegenstück – Bericht im Fenster, Strg+C kopiert.",
+                c.name or 0, c.level or 0, c.none or 0))
+        else
+            for _, line in ipairs(lines) do print(line) end
+        end
         return
     end
 

@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.10.2.1
+## Version: 6.10.3.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -127,6 +127,8 @@ modules/companion.lua
 modules/companionpage.lua
 modules/sync.lua
 modules/settings.lua
+# Abgleich mit dem Client (6.10.3.0): /wc abgleich, liest nur.
+modules/clientcheck.lua
 
 #
 # Zuletzt: die Suche baut ihren Index aus allem darueber.
