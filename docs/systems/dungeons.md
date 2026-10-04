@@ -101,6 +101,38 @@ mit einer neuen Quelle in `data/sources.lua` ein (`kind = "beta"`,
 Build und Datum des Laufs) – nie automatisch, und nie mit einem
 hochgezählten Build.
 
+#### Erster Lauf: 04.10.2026, Client 1.60.1 (Build 70205), deDE
+
+**Ergebnis: Der Client liefert über diese beiden Wege nichts, was eine
+Liste des Codex belegen könnte. Übernommen wurde nichts.**
+
+- **Dungeonkompendium:** die Funktionen gibt es, aber 0 Instanzen.
+- **Gruppensuche:** 67 Einträge auf den ungeraden Kennungen 1–131 – die
+  alte Liste der Classic-Gruppensuche: 26 Dungeons und Schlachtzüge
+  (bis Zul'Gurub, Onyxia, Geschmolzener Kern, Pechschwingenhort), 3
+  Schlachtfelder (Art 5), 38 Gebiete (Art 4). Jeder Eintrag hat genau
+  **einen** Kampf namens „Nicht mehr verwendet“, Größe 0 und eine einzige
+  Stufe statt eines Bereichs. Das ist ein Überbleibsel, kein Bestand.
+- **Keiner der neun Forever-Dungeons** (Hall of Thanes, Ruins of
+  Lordaeron, Excavation Site, City of Dalaran, The Drowned City,
+  Krol'dok Stronghold, Alcaz Island Prison, Blackmaw Hold, Shaper's
+  Terrace) und keiner der Forever-Schlachtzüge steht darin.
+- Die eine Stufe je Eintrag passt nicht zu den Bereichen des Codex
+  (Todesminen 16, Burg Schattenfang 18, Blackfathom-Tiefe 22) und sagt
+  nicht, ob es eine Zugangs- oder Empfehlungsstufe ist. Nicht übernommen.
+
+Schwächen des Werkzeugs, die der Lauf gezeigt hat (nicht behoben, weil
+die Antwort ohne sie dieselbe ist): der Platzhalterkampf wird als Boss
+verglichen (sechs Dungeons melden „nur im Codex: alle“), die Zuordnung
+über Stufen verlangt einen Bereich und konnte bei einer einzelnen Stufe
+nie greifen (hier zum Glück: Höhlen des Wehklagens 17 hätte auf zwei
+Dungeons gepasst), „Onyxia“ findet „Onyxias Hort“ nicht, Gebiete und
+Schlachtfelder stehen ungefiltert im Bestand.
+
+Was der Client wirklich über einen Kampf weiß, zeigt er erst **in** der
+Instanz (`GetInstanceInfo`, `ENCOUNTER_START`/`ENCOUNTER_END` mit Kennung
+und Namen) – ob Forever diese Ereignisse feuert, ist nicht gemessen.
+
 ## Drei Zustände statt zwei
 
 Früher war eine Bossliste entweder da oder nicht. Das reicht nicht mehr:
