@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.3.4",
+        date    = "04.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Bedrohungsleiste lässt sich einstellen.|r Unter Namensplaketten → Bedrohung & Farben hat die Leiste jetzt einen eigenen Abschnitt: ab wie viel Prozent sie warnt, ob sie auch allein erscheint, ob sie dir als Tank den Nächsten oder deine eigene Bedrohung zeigt – und alle Farben, auch das Grau für „weit weg“. Die Vorschau oben zeigt sofort, was sich ändert.",
+        },
+    },
+    {
         version = "6.10.3.3",
         date    = "04.10.2026",
         notes   = {

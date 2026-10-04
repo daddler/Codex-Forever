@@ -106,6 +106,12 @@ local defaults = {
     tankLosing = K.ColorDefault("tankLosing"),
     dpsAggro   = K.ColorDefault("dpsAggro"),
     dpsNear    = K.ColorDefault("dpsNear"),
+    -- 6.10.3.4 (Beta-Test: "die Bedrohungsleiste in den Einstellungen
+    -- einstellen - Farbe, Prozent etc."): was bis dahin fest war.
+    threatLow  = K.ColorDefault("threatLow"),  -- Leiste: weit weg
+    threatWarn = 80,       -- ab hier "kurz davor" (DD) bzw. "der Naechste ist nah" (Tank)
+    threatSolo = false,    -- auch allein ohne Begleiter (dann immer 100 %)
+    tankLead   = true,     -- als Tank den Naechsten zeigen statt der eigenen
 
     -- Textplaetze. Auf Forever steht links die Stufe (Vorlage:
     -- textSlotLeft = "level" nur auf Forever) - in einer Welt mit
@@ -1339,18 +1345,26 @@ end
 -- orange ab NP.WARN % (Status 0, aber nah dran). Der Tank wird orange,
 -- wenn der Naechste ab NP.WARN % liegt (oder Status 2), rot, wenn er sie
 -- verloren hat. Nil = keine Lage, die eine Farbe verdient.
+-- Seit 6.10.3.4 einstellbar ("Warnen ab", threatWarn); NP.WARN ist der
+-- Rueckfall, falls die Einstellung fehlt.
 NP.WARN = 80
+NP.PREVIEW_THREAT = 84     -- das Beispiel in der Vorschau
+local function Warn()
+    local w = S.threatWarn
+    return type(w) == "number" and w or NP.WARN
+end
+NP.Warn = Warn
 function NP.ThreatTint(status, scaled, tank, lead)
     local st = K.Plain(status)
     if type(st) ~= "number" then return nil end
     if tank then
         if st < 2 then return S.dpsAggro end
-        if st == 2 or (type(lead) == "number" and lead >= NP.WARN) then return S.tankLosing end
+        if st == 2 or (type(lead) == "number" and lead >= Warn()) then return S.tankLosing end
         return S.tankAggro
     end
     if st >= 2 then return S.dpsAggro end
     local v = K.Plain(scaled)
-    if st == 1 or (type(v) == "number" and v >= NP.WARN) then return S.dpsNear end
+    if st == 1 or (type(v) == "number" and v >= Warn()) then return S.dpsNear end
     return nil
 end
 
@@ -1432,6 +1446,8 @@ NP.PARTY_UNITS, NP.RAID_UNITS = PARTY_UNITS, RAID_UNITS
 
 -- Kann dir jemand die Aggro abnehmen?
 function NP.Contested()
+    -- "Auch allein zeigen" (6.10.3.4): wer es will, bekommt es.
+    if S.threatSolo then return true end
     if K.Bool(_G.IsInGroup and _G.IsInGroup(), false) then return true end
     return K.Bool(_G.UnitExists and _G.UnitExists("pet"), false)
 end
@@ -1472,7 +1488,7 @@ local function UpdateThreatText(p)
     local contested = onList and NP.Contested()
     local tank = contested and K.Plain(_G.UnitGroupRolesAssigned and _G.UnitGroupRolesAssigned("player")) == "TANK"
     local lead = nil
-    if tank and holding then lead = NP.RunnerUp(p.unit) end
+    if tank and holding and S.tankLead then lead = NP.RunnerUp(p.unit) end
     local c = contested and NP.ThreatTint(status, scaled, tank, lead) or nil
     p._threatTint, p._threatLead = c, lead
 
@@ -1489,8 +1505,8 @@ local function UpdateThreatText(p)
         if c then
             K.PaintBar(bar, c.r, c.g, c.b)
         else
-            local low = WeintCodex.GameColors.threatLow
-            K.PaintBar(bar, low[1], low[2], low[3])
+            local low = S.threatLow
+            K.PaintBar(bar, low.r, low.g, low.b)
         end
         bar:Show()
     else
@@ -1735,6 +1751,8 @@ function NP.CreatePreview(parent)
     return host, 92
 end
 
+NP.PreviewPlate = function() return preview end
+
 function NP.RefreshPreview()
     local p = preview
     if not p then return end
@@ -1762,17 +1780,22 @@ function NP.RefreshPreview()
             fs:Show()
         end
     end
+    -- Das Beispiel: ein DD bei 84 %, gefaerbt wie im Kampf - so zeigt die
+    -- Vorschau, was "Warnen ab" und die Farben tun (6.10.3.4).
+    local sample = NP.ThreatTint(0, NP.PREVIEW_THREAT, false, nil)
+    local low = S.threatLow
     if S.threatText ~= "none" then
-        p.threat:SetText("84%")
-        p.threat:SetTextColor(S.dpsNear.r, S.dpsNear.g, S.dpsNear.b, 1)
+        p.threat:SetText(NP.PREVIEW_THREAT .. "%")
+        if sample then p.threat:SetTextColor(sample.r, sample.g, sample.b, 1) else p.threat:SetTextColor(1, 1, 1, 1) end
         p.threat:Show()
     else
         p.threat:Hide()
     end
     -- Bedrohungsleiste und "Aggro: …" im Beispiel (6.9.0.8).
     if S.threatBar then
-        p.threatBar:SetValue(84)
-        K.PaintBar(p.threatBar, S.dpsNear.r, S.dpsNear.g, S.dpsNear.b)
+        p.threatBar:SetValue(NP.PREVIEW_THREAT)
+        local c = sample or low
+        K.PaintBar(p.threatBar, c.r, c.g, c.b)
         p.threatBar:Show()
     else
         p.threatBar:Hide()
@@ -1977,22 +2000,38 @@ K.Register({
             B:Section("Bedrohung",
                 "Ob du Tank bist, liest WeintCodex aus der zugewiesenen Gruppenrolle. Ohne zugewiesene Rolle gelten die Farben für Schaden und Heilung.")
             B:Row({ type = "toggle", label = "Bedrohungsfarben", key = "threatColors",
-                    description = "Der Lebensbalken nimmt die Farbe der Lage an, sobald sie zählt: rot mit Aggro, orange ab 80 % kurz davor – als Tank grün, solange du sie sicher hältst, orange, wenn der Nächste nah dran ist. Allein ohne Begleiter färbt nichts." },
+                    description = "Der Lebensbalken nimmt die Farbe der Lage an, sobald sie zählt – dieselbe wie Leiste und Prozentzahl (Farben unten)." },
                   { type = "dropdown", label = "Bedrohung in %", key = "threatText", items = {
                         { value = "right",   text = "Rechts neben dem Balken" },
                         { value = "topleft", text = "Oben links" },
                         { value = "none",    text = "Aus" } },
                     description = "Deine Bedrohung auf diesem Gegner; 100 % heißt: du hast die Aggro. Nur im Kampf und solange du auf seiner Liste stehst." })
-            B:Row({ type = "toggle", label = "Bedrohungsleiste", key = "threatBar",
-                    description = "Dünne Leiste unter dem Leben: voll heißt, du ziehst die Aggro. Grau weit weg, orange ab 80 %, rot mit Aggro. Als Tank zeigt sie, wie nah der Nächste dran ist – grün, orange ab 80 %. Allein ohne Begleiter keine Leiste: dann hast du sie immer." },
-                  { type = "dropdown", label = "Wer die Aggro hat", key = "aggroName", items = {
+            B:Row({ type = "dropdown", label = "Wer die Aggro hat", key = "aggroName", items = {
                         { value = "problem", text = "Wenn nicht beim Tank" },
                         { value = "always",  text = "Immer" },
                         { value = "none",    text = "Aus" } },
-                    description = "Name unter der Plakette, nur in einer Gruppe. „Wenn nicht beim Tank“: nur wenn jemand ohne Tankrolle den Gegner hält – auch du selbst („Aggro: Du“). Ohne zugewiesene Rollen erscheint der Name immer." })
-            B:Row({ type = "slider", label = "Höhe der Leiste", key = "threatBarHeight", min = 2, max = 6, step = 1,
-                    format = function(v) return string.format("%d px", v) end,
-                    disabled = function() return not K.Get(KEY, "threatBar") end },
+                    description = "Name unter der Plakette, nur in einer Gruppe. „Wenn nicht beim Tank“: nur wenn jemand ohne Tankrolle den Gegner hält – auch du selbst („Aggro: Du“). Ohne zugewiesene Rollen erscheint der Name immer." },
+                  { type = "empty" })
+            local noBar = function() return not K.Get(KEY, "threatBar") end
+            B:Section("Bedrohungsleiste", "Dünne Leiste unter dem Leben: voll heißt, du ziehst die Aggro.")
+            B:Row({ type = "toggle", label = "Bedrohungsleiste", key = "threatBar" },
+                  { type = "slider", label = "Höhe der Leiste", key = "threatBarHeight", min = 2, max = 6, step = 1,
+                    format = function(v) return string.format("%d px", v) end, disabled = noBar })
+            B:Row({ type = "slider", label = "Warnen ab", key = "threatWarn", min = 50, max = 100, step = 5,
+                    format = function(v) return string.format("%d %%", v) end,
+                    description = "Ab hier „kurz davor“: als DD deine Bedrohung, als Tank die des Nächsten. Gilt für Leiste, Prozentzahl und Lebensbalken." },
+                  { type = "toggle", label = "Auch allein zeigen", key = "threatSolo",
+                    description = "Ohne Gruppe und Begleiter hast du die Aggro immer (100 %) – deshalb ab Werk aus. An: Leiste und Farben auch dann." })
+            B:Row({ type = "toggle", label = "Als Tank: den Nächsten zeigen", key = "tankLead",
+                    description = "An: die Leiste zeigt, wie nah der Nächste an deiner Aggro ist. Aus: deine eigene Bedrohung – als Tank meist voll." },
+                  { type = "empty" })
+            local noThreat = function() return not (K.Get(KEY, "threatColors") or K.Get(KEY, "threatBar") or K.Get(KEY, "threatText") ~= "none") end
+            B:Section("Farben der Bedrohung", "Für Leiste, Prozentzahl und – mit Bedrohungsfarben – den Lebensbalken.")
+            B:Row({ type = "color", label = "Aggro gezogen", key = "dpsAggro", disabled = noThreat },
+                  { type = "color", label = "Kurz davor", key = "dpsNear", disabled = noThreat })
+            B:Row({ type = "color", label = "Tank: hält die Aggro", key = "tankAggro", disabled = noThreat },
+                  { type = "color", label = "Tank: der Nächste ist nah", key = "tankLosing", disabled = noThreat })
+            B:Row({ type = "color", label = "Weit weg (nur Leiste)", key = "threatLow", disabled = noBar },
                   { type = "empty" })
             B:Advanced()
             B:Section("Gegner")
@@ -2016,12 +2055,6 @@ K.Register({
             B:Row({ type = "toggle", label = "Ziel eigens färben", key = "targetColorEnabled" },
                   { type = "color", label = "Ziel", key = "target",
                     disabled = function() return not K.Get(KEY, "targetColorEnabled") end })
-            B:Section("Bedrohungsfarben")
-            local noThreat = function() return not (K.Get(KEY, "threatColors") or K.Get(KEY, "threatBar")) end
-            B:Row({ type = "color", label = "Tank: hält die Aggro", key = "tankAggro", disabled = noThreat },
-                  { type = "color", label = "Tank: verliert sie", key = "tankLosing", disabled = noThreat })
-            B:Row({ type = "color", label = "Aggro gezogen", key = "dpsAggro", disabled = noThreat },
-                  { type = "color", label = "Kurz davor", key = "dpsNear", disabled = noThreat })
         end },
         { key = "texte", label = "Texte", build = function(B)
             B:Section("Name")

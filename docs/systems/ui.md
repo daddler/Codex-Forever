@@ -1579,6 +1579,19 @@ Prozentzahl und `BarColor` gelesen – darum bei den Ereignissen und in
 
 Allein ohne Begleiter (`NP.Contested` falsch) gibt es keine Lage.
 
+**6.10.3.4 – einstellbar** (Beta-Test: „Farbe, Prozent etc.“). Seite
+„Bedrohung & Farben“, alles sichtbar:
+
+| Abschnitt | Einstellungen |
+|---|---|
+| Bedrohung | Bedrohungsfarben (Leben), Bedrohung in %, Wer die Aggro hat |
+| Bedrohungsleiste | an/aus, Höhe, **Warnen ab** (`threatWarn`, 50–100 %, Standard 80), **Auch allein zeigen** (`threatSolo`, aus), **Als Tank: den Nächsten zeigen** (`tankLead`, an) |
+| Farben der Bedrohung | Aggro gezogen, Kurz davor, Tank: hält, Tank: der Nächste ist nah, **Weit weg** (`threatLow`, nur Leiste) |
+
+`NP.Warn()` liest die Schwelle, `NP.WARN` (80) ist nur Rückfall. Die
+Vorschau färbt ihr Beispiel (84 %) über `NP.ThreatTint` – die Schwelle
+ist dort sofort zu sehen. Unter „Erweitert“ nur Gegner, Ziel und Fokus.
+
 **Gemessen (04.10.2026, Client 1.60.1, Build 70205, `/wcui prüfen`):** die eigene Bedrohung am
 Ziel kommt im Kampf offen – Leiste und Farben haben echte Werte. Für
 andere Spieler (die Leiste zeigt immer **deine** Bedrohung, „Aggro: Name“

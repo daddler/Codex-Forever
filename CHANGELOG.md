@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.3.4] – 2026-10-04
+
+**Die Bedrohungsleiste lässt sich einstellen.** Unter Namensplaketten → Bedrohung & Farben hat die Leiste jetzt einen eigenen Abschnitt: ab wie viel Prozent sie warnt, ob sie auch allein erscheint, ob sie dir als Tank den Nächsten oder deine eigene Bedrohung zeigt – und alle Farben, auch das Grau für „weit weg“. Die Vorschau oben zeigt sofort, was sich ändert.
+
+### Technisch
+
+Beta-Test: „ich würde die Bedrohungsleiste auch einstellen wollen in den Einstellungen bzgl. Farbe, Prozent etc.“ Fest war bis hier: die Schwelle (80 %), das Grau der Leiste (`GameColors.threatLow`), „allein keine Leiste“, „Tank sieht den Nächsten“. Die vier Farben gab es, aber unter „Erweitert“ zwischen den Gegnerfarben.
+
+- Neue Einstellungen (`ui/nameplates.lua`, `defaults`): `threatWarn` (50–100 %, Schritt 5, Standard 80; `NP.Warn()`, `NP.WARN` nur noch Rückfall), `threatSolo` (Standard aus; `NP.Contested` gibt dann immer wahr), `tankLead` (Standard an; aus: eigene Bedrohung), `threatLow` (Farbe „weit weg“, Standard aus `GameColors.threatLow`).
+- Seite „Bedrohung & Farben“ neu geordnet, alles **sichtbar** (13 Einstellungen, Grenze 15): Bedrohung (Farben am Leben, Prozentzahl, wer die Aggro hat) – Bedrohungsleiste (an/aus, Höhe, Warnen ab, auch allein, Tank: den Nächsten) – Farben der Bedrohung (fünf, „Tank: verliert sie“ heißt jetzt „Tank: der Nächste ist nah“). Unter „Erweitert“ bleiben nur Gegner, Ziel und Fokus.
+- Vorschau: das Beispiel (84 %, `NP.PREVIEW_THREAT`) wird über `NP.ThreatTint` gefärbt – „Warnen ab“ und die Farben sind sofort zu sehen.
+- `load_test.lua`: auch allein, Warnen ab 90 (85 % ungefärbt, 95 % orange), eigene Farbe „weit weg“, Tank mit Nächstem unter der Schwelle grün, Tank ohne „den Nächsten zeigen“, Vorschau folgt der Schwelle, alle neun sichtbar (nicht unter „Erweitert“). Gegenproben: 9, alle gefangen.
+
 ## [6.10.3.3] – 2026-10-04
 
 **Aggro auf einen Blick an der Farbe.** Die Namensplaketten färben sich jetzt ab Werk nach der Bedrohung: rot, wenn du die Aggro hast, orange, wenn du kurz davor bist – als Tank grün, solange du sicher hältst, und orange, wenn der Nächste nah dran ist. Leiste, Prozentzahl und Lebensbalken zeigen dieselbe Farbe. Allein ohne Begleiter bleibt alles in seiner gewohnten Farbe. Abschaltbar unter Namensplaketten → Bedrohung & Farben.

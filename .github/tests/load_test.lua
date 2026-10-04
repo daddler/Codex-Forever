@@ -10121,6 +10121,74 @@ do
         exists.pet = nil
         Run()
         assert(p._threatTint == nil and healthPaint[1] ~= da.r, "allein ohne Begleiter: Leben rot")
+        -- 6.10.3.4: was fest war, ist einstellbar.
+        K.PaintBar = function(b, r, g, bl)
+            local cur = NP.plates["nameplate1"]
+            if cur and b == cur.threatBar then painted = { r, g, bl } end
+            if cur and b == cur.health then healthPaint = { r, g, bl } end
+            return paint(b, r, g, bl)
+        end
+        -- "Auch allein zeigen": dann Leiste und Farbe auch ohne Begleiter.
+        K.Set("nameplates", "threatSolo", true)
+        Run()
+        assert(p.threatBar:IsShown() and p._threatTint == da, "auch allein: keine Leiste/Farbe")
+        K.Set("nameplates", "threatSolo", nil)
+        _G.IsInGroup = function() return true end
+        -- "Warnen ab": 90 % - ein DD bei 85 % ist noch nicht orange, bei 95 % schon.
+        K.Set("nameplates", "threatWarn", 90)
+        mine[1], mine[2], mine[3] = false, 0, 85
+        Run()
+        assert(p._threatTint == nil, "Warnen ab 90: bei 85 % schon gefaerbt")
+        mine[3] = 95
+        Run()
+        assert(p._threatTint == dn, "Warnen ab 90: bei 95 % nicht orange")
+        -- Eigene Farbe fuer "weit weg".
+        K.Set("nameplates", "threatLow", { r = 0.1, g = 0.2, b = 0.3 })
+        mine[3] = 40
+        Run()
+        assert(painted[1] == 0.1 and painted[2] == 0.2 and painted[3] == 0.3, "eigene Farbe 'weit weg' nicht an der Leiste")
+        K.Set("nameplates", "threatLow", nil)
+        -- Tank: der Naechste bei 85 % unter "Warnen ab 90" bleibt gruen;
+        -- "den Naechsten zeigen" aus: die eigene Bedrohung.
+        roles.player = "TANK"
+        mine[1], mine[2], mine[3] = true, 3, 100
+        others.party1 = 85
+        exists.party1 = true
+        Run()
+        local ta2 = K.Get("nameplates", "tankAggro")
+        assert(p._threatLead == 85 and p._threatTint == ta2, "Tank, Warnen ab 90, Naechster 85: nicht gruen")
+        K.Set("nameplates", "tankLead", false)
+        Run()
+        assert(p._threatLead == nil and p.threatBar:GetValue() == 100 and p._threatTint == ta2,
+            "Tank ohne 'den Naechsten zeigen': nicht die eigene Bedrohung")
+        K.Set("nameplates", "tankLead", nil)
+        K.Set("nameplates", "threatWarn", nil)
+        others.party1 = nil
+        roles.player = "DAMAGER"
+        -- Vorschau: folgt "Warnen ab" (Beispiel 84 %).
+        NP.CreatePreview(UIParent)
+        local pv = NP.PreviewPlate()
+        local pvPaint
+        local prev = K.PaintBar
+        K.PaintBar = function(b, r, g, bl) if b == pv.threatBar then pvPaint = { r, g, bl } end return prev(b, r, g, bl) end
+        NP.RefreshPreview()
+        assert(pvPaint and pvPaint[1] == dn.r, "Vorschau bei Warnen ab 80: nicht orange")
+        K.Set("nameplates", "threatWarn", 90)
+        NP.RefreshPreview()
+        local lw = K.Get("nameplates", "threatLow")
+        assert(pvPaint[1] == lw.r and pvPaint[2] == lw.g, "Vorschau folgt 'Warnen ab' nicht")
+        K.Set("nameplates", "threatWarn", nil)
+        K.PaintBar = prev
+        -- Die Einstellungen stehen sichtbar, nicht unter "Erweitert".
+        local O = WeintCodex.UIOptions
+        local seen = {}
+        for _, e in ipairs(O.SearchIndex()) do
+            if e.module == "nameplates" and not e.advanced then seen[e.label] = true end
+        end
+        for _, l in ipairs({ "Warnen ab", "Auch allein zeigen", "Als Tank: den Nächsten zeigen", "Weit weg (nur Leiste)",
+                             "Aggro gezogen", "Kurz davor", "Tank: hält die Aggro", "Tank: der Nächste ist nah", "Höhe der Leiste" }) do
+            assert(seen[l], "nicht sichtbar auf der Seite: " .. l)
+        end
         _G.IsInGroup = oldGroup
         _G.UnitAffectingCombat = oldUAC
         K.PaintBar = paint
