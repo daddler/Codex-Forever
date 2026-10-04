@@ -279,7 +279,7 @@ Einstellungsseite des Moduls.
 | Restzeit auf Auren-Symbolen | Sekunden oben links am Symbol | Engine-Weg: `SetDurationText` – das Spiel zählt selbst, auch geheime Werte. Alter Weg: ein Takt je Objekt, nur solange etwas abläuft. |
 | Freundliche Plaketten | Name in Klassenfarbe, wahlweise mit Balken | In Instanzen sind sie für Addons gesperrt (`IsForbidden`) – dort bleiben die des Spiels. |
 | Gruppen-/Schlachtzugsrahmen (`ui/groupframes.lua`) | zwei `SecureGroupHeader`, Klassenfarbe, Leben, Reichweite, Aggro, bannbare Debuffs | Ohne Secure Snippets gebaut (fehlen laut Vorlage im Beta-Client): kein `initialConfigFunction`, alle Knöpfe beim Anmelden per `startingIndex` angelegt und außerhalb des Kampfes eingerichtet. Die Seitenleiste des Spiels (Markierungen, Bereitschaftscheck) verschwindet mit den Schlachtzugsrahmen. **Auf Forever ungeprüft.** |
-| Aktionsleisten (`ui/actionbars.lua`) | die Knöpfe des Spiels umgestaltet: flach, Rand, Schrift, rote Schicht außer Reichweite, Greifen weg; seit 6.0.0.5 Mikromenü klein unten links, Taschenleiste unten rechts | **Keine eigenen Leisten**: Umblättern bei Haltung/Gestalt/Fahrzeug braucht Secure Snippets. Lage und Größe der Leisten: Bearbeitungsmodus des Spiels. Reichweite als eigene Schicht, damit die Färbung des Spiels (keine Kraft, nicht benutzbar) erhalten bleibt. Mikromenü und Taschenleiste werden nach jedem Anordnen des Bearbeitungsmodus (`ApplySystemAnchor`, `ExitEditMode`) und nie im Kampf gesetzt – seit 6.9.1.0 an ihren Platz aus dem **Gestaltungsmodus** (`hud_micro`, `hud_bags`, Standard in `K.LAYOUT`); bis dahin fest unten links/rechts, verschieben ging nicht (Beta-Test). Ob das Setzen den Bearbeitungsmodus auf Forever unberührt lässt, ist **ungeprüft**; „Wie im Spiel“ schaltet es ab. |
+| Aktionsleisten (`ui/actionbars.lua`) | die Knöpfe des Spiels umgestaltet: flach, Rand, Schrift, rote Schicht außer Reichweite, Greifen weg; seit 6.0.0.5 Mikromenü klein unten links, Taschenleiste unten rechts | **Keine eigenen Leisten**: Umblättern bei Haltung/Gestalt/Fahrzeug braucht Secure Snippets. Lage und Größe der Leisten: Bearbeitungsmodus des Spiels. Reichweite als eigene Schicht, damit die Färbung des Spiels (keine Kraft, nicht benutzbar) erhalten bleibt. Mikromenü und Taschenleiste werden nach jedem Anordnen des Bearbeitungsmodus (`ApplySystemAnchor`, `ExitEditMode`) und nie im Kampf gesetzt – seit 6.9.1.0 an ihren Platz aus dem **Gestaltungsmodus** (`hud_micro`, `hud_bags`, Standard in `K.LAYOUT`); bis dahin fest unten links/rechts, verschieben ging nicht (Beta-Test). Ob das Setzen den Bearbeitungsmodus auf Forever unberührt lässt, ist **ungeprüft**; „Wie im Spiel“ schaltet es ab. **Gemessen (04.10.2026, Client 1.60.1, Build 70205, `/wcui prüfen`):** `MicroMenuContainer` und `MicroMenu` sind nicht geschützt (`IsProtected` false) – nicht setzen im Kampf ist Vorsicht, keine Pflicht. |
 | Minikarte (`ui/minimap.lua`) | eckig, Rand, Mausrad-Zoom; Koordinaten oben links, Uhr oben rechts, Gebiet unten auf einem Streifen; Knöpfe des Spiels (Verfolgung, Kalender, Post, Schwierigkeit) in einer Spalte links | Knopfnamen wechseln zwischen den Clients – was fehlt, fällt heraus. Die Spalte wird nach `MinimapCluster:Layout` neu gesetzt. | Lage: Bearbeitungsmodus. Die Kompass-*Textur* wird versteckt, nie ihr Elternrahmen (Kampfhilfen lesen daraus die Blickrichtung). `GetMinimapShape` meldet `SQUARE` für Addon-Knöpfe. |
 | Chat (`ui/chat.lua`) | Schrift, Hintergrund über Reiter und Text, flache Reiter (aktiver hell mit Strich), Eingabezeile, Knöpfe des Spiels in einer Spalte links (oder weg) | **Keine veränderten Nachrichten** (Kanalnamen, Links, Zeitstempel): Nachrichten können im Kampf geheim sein, ein `gsub` darauf ist ein Fehler, und ein Fehler in `AddMessage` verschluckt die Nachricht. |
 | Taschen (`ui/bags.lua`) | alle Taschen in einem Raster, Suche, Sortieren, Gold, Gegenstandsstufe, Qualitätsrand | Knöpfe sind `ContainerFrameItemButtonTemplate` (Benutzen/Verkaufen macht das Spiel); **nie im Kampf angelegt** (sonst „tainted“), deshalb 180 auf Vorrat beim Anmelden. Öffnen folgt den Taschen des Spiels (Haken an `Show`/`Hide`, nicht an `OnShow` – die feuern im versteckten Elternrahmen nie). Die Bank bleibt die des Spiels. |
@@ -928,8 +928,9 @@ Seit 6.2.0.0:
     `AvoidableDamageTaken`, `EnemyDamageTaken` – alle nur, wenn
     `Enum.DamageMeterType` sie nennt (`DM.Modes`); ohne Enum die sechs
     Grundarten, damit das Fenster selbst sagt, dass die Messung fehlt.
-    Die Enum-Namen sind aus der Retail-Dokumentation, auf Forever nicht
-    gesehen – was fehlt, erscheint nicht.
+    Die Enum-Namen sind aus der Retail-Dokumentation – was fehlt,
+    erscheint nicht. **Gemessen (04.10.2026, Client 1.60.1, Build 70205, `/wcui prüfen`): alle elf
+    Messarten kennt der Client.**
   * *Bedrohung* (`threat`, wie Tiny Threat): kommt nicht aus
     `C_DamageMeter`, sondern aus `UnitDetailedThreatSituation` je
     Gruppenmitglied und Begleiter auf dem Ziel (freundliches Ziel:
@@ -938,6 +939,12 @@ Seit 6.2.0.0:
     nur mit offenen Werten (`ThreatOrder`: Tank, Prozent, roher Anteil);
     mit geheimen bleibt die Reihenfolge der Gruppe **ohne
     Platznummern**. Offen 0 ohne Aggro fällt heraus, geheim bleibt drin.
+    **Gemessen (04.10.2026, Client 1.60.1, Build 70205, `/wcui prüfen`):** die **eigene**
+    Bedrohung kommt im Kampf **offen**, alle fünf Werte (Krieger Stufe 21,
+    allein: `isTanking` true, `status` 3, `scaledPercent` 100,
+    `rawPercent` 255, `threatValue` 145). Ob die Werte **anderer**
+    Spieler offen kommen, ist ungemessen – seit 6.10.2.1 fragt
+    `/wcui prüfen` in einer Gruppe einen Mitspieler eigens ab.
     Kein Zeitraum, keine Aufschlüsselung. Läuft im Takt ohne neue
     Tabellen (feste Einheitenlisten, Einträge aus einem Vorrat).
   * *Breite der Aufschlüsselung* (6.9.0.9): so breit wie die Reiter der
@@ -946,9 +953,10 @@ Seit 6.2.0.0:
   * *Melden* (Sprechblase, `DM.ReportMenu` → `DM.Report`): nur nach dem
     Kampf und mit offenen Zahlen, nie Beispielzahlen; was nicht geht,
     sagt ein Hinweis im eigenen Chat. Kanäle nach Lage
-    (`DM.ReportChannels`). Ob der Client das Senden irgendwo sperrt, ist
-    auf Forever nicht gemessen – `pcall` fängt eine Sperre nicht (siehe
-    Raidmarkierungen).
+    (`DM.ReportChannels`). **Gemessen (04.10.2026, Client 1.60.1, Build 70205, `/wcui prüfen`):**
+    `C_ChatInfo.InChatMessagingLockdown()` ist `false` (allein, im Kampf,
+    offene Welt). Ob eine Meldung ankommt, ist ungemessen – `pcall`
+    fängt eine Sperre nicht (siehe Raidmarkierungen).
   **Aufschlüsselung seit 6.6.2.1** (Beta-Test: „frei verschieben, mehr
   Informationen, Vergleich, Graphen, Auren – auch Bufffood,
   Fläschchen“):
@@ -1210,6 +1218,46 @@ Jede Prüfung läuft für sich (`pcall`); eine, die scheitert, steht als
 `[!]` im Bericht. Eine neue Prüfung: `Check(name, function(add) … end)` in
 `ui/selfcheck.lua`, `add(stand, text)` beliebig oft, `add("", text)` für
 eingerückte Folgezeilen.
+
+
+### 6.10.2.1: genauer nach dem ersten Lauf
+
+Der erste Lauf (04.10.2026, Client 1.60.1, Build 70205, `/wcui prüfen`) meldete 14 Fenster als „nicht im
+Client“ – fast alles Lärm:
+
+* **Alternativen** (`SC.ALTERNATIVES`): von `PlayerSpellsFrame`/
+  `SpellBookFrame`, den drei Talentfenstern, `PVPFrame`/`HonorFrame` und
+  `LFGParentFrame`/`PVEFrame` hat ein Client immer nur eines. Ist eines
+  da, zählt die Gruppe als vorhanden.
+* **Pakete des Spiels** (`SC.ADDON_OF`, `SC.AddonState` über
+  `C_AddOns.GetAddOnInfo`/`IsAddOnLoaded`): ein Fenster, dessen Paket es
+  gibt, aber noch nicht geladen ist, „lädt beim ersten Öffnen“ – kein
+  Befund. Ist das Paket **geladen** und das Fenster fehlt trotzdem, ist
+  das ein `[!]`: es heißt im Client anders. Nur was weder da ist noch ein
+  bekanntes Paket hat, bleibt `[?]`. Ein falscher Paketname in der
+  Tabelle fällt dort auf, nicht als gefundenes Fenster.
+* **Bedrohung in der Gruppe** (`SC.GroupMate`, `SC.ThreatOf`): neben
+  deiner eigenen die eines Mitspielers (der erste aus `party1–4` bzw.
+  `raid1–40`, der nicht du bist) am selben Ziel – der Client kann die
+  Werte anderer anders behandeln als deine. Allein steht ein `[?]` mit
+  dem Hinweis auf die Gruppe.
+
+### Messprotokoll
+
+Was der Client geantwortet hat – mit Datum und Build, damit eine spätere
+Fassung des Clients eine Antwort nicht stillschweigend überholt.
+
+| Frage | Antwort | Gemessen |
+|---|---|---|
+| Eigene Bedrohung im Kampf geheim? | nein, alle fünf Werte offen | 04.10.2026, 1.60.1 (70205), Krieger 21, allein |
+| Bedrohung anderer Spieler geheim? | **ungemessen** | – |
+| Messarten in `Enum.DamageMeterType` | alle elf aus `DM.MODES` | 04.10.2026, 1.60.1 (70205) |
+| Chat für Addons gesperrt (`InChatMessagingLockdown`)? | nein | 04.10.2026, 1.60.1 (70205), offene Welt, im Kampf |
+| Meldung in den Chat kommt an? | **ungemessen** | – |
+| Mikromenü geschützt? | nein (`MicroMenuContainer`, `MicroMenu`) | 04.10.2026, 1.60.1 (70205) |
+| Einstellungen werden gespeichert? | ja | 04.10.2026, 1.60.1 (70205) |
+| `issecretvalue` vorhanden? | ja | 04.10.2026, 1.60.1 (70205) |
+| TOC des Clients | 16001 (steht in `## Interface`) | 04.10.2026 |
 
 ## Namensplaketten 3.0: Bewegung *(6.8.1.0, `ui/nameplates.lua`)*
 
@@ -1490,6 +1538,13 @@ Leiste unter dem Leben **und** wer die Aggro hat.
   Tankrolle hat – ohne zugewiesene Rollen also immer; `always`; `none`.
   Name in der Klassenfarbe, „Du“ rot (als Tank grün).
 * Die Prozentzahl (`threatText`) bleibt wählbar.
+
+**Gemessen (04.10.2026, Client 1.60.1, Build 70205, `/wcui prüfen`):** die eigene Bedrohung am
+Ziel kommt im Kampf offen – Leiste und Farben haben echte Werte. Für
+andere Spieler (die Leiste zeigt immer **deine** Bedrohung, „Aggro: Name“
+liest nur das Ziel des Gegners) ist das ohne Belang; das Bedrohungsfenster
+der Schadensanzeige dagegen liest alle aus der Gruppe – dort ist offen,
+was ein Gruppenlauf von `/wcui prüfen` zeigt.
 
 ## Plaketten nach NPC *(6.6.2.2, `ui/npccolors.lua`)*
 

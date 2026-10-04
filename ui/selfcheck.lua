@@ -75,6 +75,41 @@ end)
 
 local THREAT_FIELDS = { "isTanking", "status", "scaledPercent", "rawPercent", "threatValue" }
 SC.THREAT_FIELDS = THREAT_FIELDS
+-- Die fuenf Werte einer Einheit am Ziel: wie viele geheim, wie viele da,
+-- und die Zeile "isTanking=..., status=...".
+local threatVals = { n = 0 }
+local function PackThreat(...)
+    threatVals.n = select("#", ...)
+    for i = 1, #THREAT_FIELDS do threatVals[i] = (select(i, ...)) end
+end
+function SC.ThreatOf(unit)
+    PackThreat(_G.UnitDetailedThreatSituation(unit, "target"))
+    local parts, secret, filled = {}, 0, 0
+    for i, name in ipairs(THREAT_FIELDS) do
+        local v = threatVals[i]
+        if K.IsSecret(v) then secret = secret + 1 end
+        if type(v) ~= "nil" then filled = filled + 1 end
+        parts[#parts + 1] = name .. "=" .. Show(v)
+    end
+    return secret, filled, table.concat(parts, ", ")
+end
+
+-- Ein anderer Spieler aus der Gruppe (nicht du), oder nil.
+function SC.GroupMate()
+    local raid = _G.IsInRaid and K.Bool(_G.IsInRaid(), false)
+    local group = raid or (_G.IsInGroup and K.Bool(_G.IsInGroup(), false))
+    if not group then return nil end
+    local prefix, count = raid and "raid" or "party", raid and 40 or 4
+    for i = 1, count do
+        local u = prefix .. i
+        if _G.UnitExists and K.Bool(_G.UnitExists(u), false)
+            and not (_G.UnitIsUnit and K.Bool(_G.UnitIsUnit(u, "player"), false)) then
+            return u
+        end
+    end
+    return nil
+end
+
 Check("Bedrohung", function(add)
     local fn = _G.UnitDetailedThreatSituation
     if type(fn) ~= "function" then
@@ -87,25 +122,28 @@ Check("Bedrohung", function(add)
         add(SC.OPEN, "Kein angreifbares Ziel – einen Gegner anvisieren (am besten im Kampf) und /wcui prüfen wiederholen.")
         return
     end
-    local r = { n = 0 }
-    local function Pack(...) r.n = select("#", ...) for i = 1, r.n do r[i] = (select(i, ...)) end end
-    Pack(fn("player", "target"))
-    local parts, secret, filled = {}, 0, 0
-    for i, name in ipairs(THREAT_FIELDS) do
-        local v = r[i]
-        if K.IsSecret(v) then secret = secret + 1 end
-        if type(v) ~= "nil" then filled = filled + 1 end
-        parts[#parts + 1] = name .. "=" .. Show(v)
-    end
     local combat = _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false)
     local where = combat and "im Kampf" or "außerhalb des Kampfes"
-    if secret > 0 then
-        add(SC.BAD, string.format("Bedrohung %s: %d von %d Werten geheim – Rangfolge nur nach Gruppe, ohne Zahlen. %s",
-            where, secret, #THREAT_FIELDS, table.concat(parts, ", ")))
-    elseif filled == 0 then
-        add(SC.OPEN, string.format("Bedrohung %s: keine Werte – du stehst auf keiner Bedrohungsliste dieses Ziels. Im Kampf wiederholen.", where))
+    -- Deine eigene, dann (6.10.2.1) die eines anderen aus der Gruppe: der
+    -- Client kann die Werte anderer Spieler anders behandeln als deine.
+    local function Judge(who, unit)
+        local secret, filled, parts = SC.ThreatOf(unit)
+        if secret > 0 then
+            add(SC.BAD, string.format("%s %s: %d von %d Werten geheim – Rangfolge nur nach Gruppe, ohne Zahlen. %s",
+                who, where, secret, #THREAT_FIELDS, parts))
+        elseif filled == 0 then
+            add(SC.OPEN, string.format("%s %s: keine Werte – nicht auf der Bedrohungsliste dieses Ziels. Im Kampf wiederholen, wenn %s angreift.",
+                who, where, unit == "player" and "du" or "er oder sie"))
+        else
+            add(SC.OK, string.format("%s %s offen: %s", who, where, parts))
+        end
+    end
+    Judge("Bedrohung", "player")
+    local mate = SC.GroupMate()
+    if mate then
+        Judge("Bedrohung von " .. mate, mate)
     else
-        add(SC.OK, string.format("Bedrohung %s offen: %s", where, table.concat(parts, ", ")))
+        add(SC.OPEN, "Allein: ob der Client die Bedrohung anderer Spieler offen herausgibt, zeigt erst ein Lauf in einer Gruppe – dort im Kampf wiederholen.")
     end
 end)
 
@@ -175,29 +213,98 @@ Check("Mikromenü", function(add)
     if not found then add(SC.OPEN, "Kein Mikromenü unter MicroMenuContainer/MicroMenu gefunden.") end
 end)
 
+-- Fenster, von denen der Client immer nur EINES hat (je nach Fassung des
+-- Spiels) - fehlen die anderen, ist das richtig so.
+SC.ALTERNATIVES = {
+    { "PlayerSpellsFrame", "SpellBookFrame" },
+    { "PlayerTalentFrame", "TalentFrame", "ClassTalentFrame" },
+    { "PVPFrame", "HonorFrame" },
+    { "LFGParentFrame", "PVEFrame" },
+}
+-- Fenster, die das Spiel erst beim ersten Oeffnen laedt, und ihr Paket.
+-- Ob es das Paket gibt, sagt der Client (GetAddOnInfo); ein falscher Name
+-- hier faellt als "nicht gefunden" auf, nicht als gefundenes Fenster.
+SC.ADDON_OF = {
+    PlayerSpellsFrame = "Blizzard_PlayerSpells",
+    PlayerTalentFrame = "Blizzard_TalentUI", TalentFrame = "Blizzard_TalentUI",
+    ClassTalentFrame = "Blizzard_ClassTalentUI",
+    ProfessionsFrame = "Blizzard_Professions",
+    CommunitiesFrame = "Blizzard_Communities",
+    CollectionsJournal = "Blizzard_Collections",
+    MacroFrame = "Blizzard_MacroUI",
+    AuctionHouseFrame = "Blizzard_AuctionHouseUI",
+    GuildBankFrame = "Blizzard_GuildBankUI",
+    ClassTrainerFrame = "Blizzard_TrainerUI",
+}
+
+-- "loaded", "ondemand" oder "missing" - was der Client ueber ein Paket sagt.
+function SC.AddonState(name)
+    local A = type(_G.C_AddOns) == "table" and _G.C_AddOns or nil
+    local info = (A and A.GetAddOnInfo) or _G.GetAddOnInfo
+    if type(info) ~= "function" then return "missing" end
+    local ok, n, _, _, _, reason = pcall(info, name)
+    if not ok or type(n) == "nil" or reason == "MISSING" then return "missing" end
+    local isLoaded = (A and A.IsAddOnLoaded) or _G.IsAddOnLoaded
+    local lok, loaded = false, false
+    if type(isLoaded) == "function" then lok, loaded = pcall(isLoaded, name) end
+    return (lok and K.Bool(loaded, false)) and "loaded" or "ondemand"
+end
+
 Check("Fenster in Gold", function(add)
     local W = WeintCodex.UIWindows
     if not (W and W.WINDOWS) then
         add(SC.OPEN, "Fenster des Spiels nicht geladen (Oberfläche aus?).")
         return
     end
-    local styled, waiting, absent = {}, {}, {}
+    local function Present(n) return type(_G[n]) == "table" end
+    local groupOf = {}
+    for _, g in ipairs(SC.ALTERNATIVES) do for _, n in ipairs(g) do groupOf[n] = g end end
+    local styled, waiting, later, alt, broken, unknown = {}, {}, {}, {}, {}, {}
+    local seen = {}
     for _, n in ipairs(W.WINDOWS) do
         local f = _G[n]
-        if type(f) ~= "table" then
-            absent[#absent + 1] = n
-        elseif W.done and W.done[f] then
-            styled[#styled + 1] = n
-        else
-            waiting[#waiting + 1] = n
+        local g = groupOf[n]
+        if Present(n) then
+            if W.done and W.done[f] then styled[#styled + 1] = n else waiting[#waiting + 1] = n end
+        elseif g and not seen[g] then
+            seen[g] = true
+            local have
+            for _, m in ipairs(g) do if Present(m) then have = m end end
+            if have then
+                alt[#alt + 1] = have
+            else
+                -- Keins aus der Gruppe da: ueber die Pakete der Mitglieder.
+                local state, pkg = "missing", nil
+                for _, m in ipairs(g) do
+                    local a = SC.ADDON_OF[m]
+                    local st = a and SC.AddonState(a) or "missing"
+                    if st == "loaded" then state, pkg = "loaded", a break end
+                    if st == "ondemand" and state == "missing" then state, pkg = "ondemand", a end
+                end
+                local label = table.concat(g, "/")
+                if state == "ondemand" then later[#later + 1] = label .. " (" .. pkg .. ")"
+                elseif state == "loaded" then broken[#broken + 1] = label .. " (" .. pkg .. " geladen)"
+                else unknown[#unknown + 1] = label end
+            end
+        elseif not g then
+            local a = SC.ADDON_OF[n]
+            local st = a and SC.AddonState(a) or "missing"
+            if st == "ondemand" then later[#later + 1] = n .. " (" .. a .. ")"
+            elseif st == "loaded" then broken[#broken + 1] = n .. " (" .. a .. " geladen)"
+            else unknown[#unknown + 1] = n end
         end
     end
-    add(SC.OK, string.format("Gestaltet: %d · vorhanden, noch nicht geöffnet: %d · nicht im Client: %d (von %d)",
-        #styled, #waiting, #absent, #W.WINDOWS))
+    add(SC.OK, string.format("Gestaltet %d · noch nicht geöffnet %d · lädt beim ersten Öffnen %d · Alternative im Client %d",
+        #styled, #waiting, #later, #alt))
     if #waiting > 0 then add("", "   Noch nicht geöffnet: " .. table.concat(waiting, ", ")) end
-    if #absent > 0 then
-        add(SC.OPEN, "Nicht im Client (manche lädt das Spiel erst beim ersten Öffnen – danach wiederholen): "
-            .. table.concat(absent, ", "))
+    if #later > 0 then add("", "   Lädt beim ersten Öffnen: " .. table.concat(later, ", ")) end
+    if #alt > 0 then add("", "   Aus einer Gruppe von Alternativen da: " .. table.concat(alt, ", ")) end
+    if #broken > 0 then
+        add(SC.BAD, "Paket geladen, aber kein Fenster unter diesem Namen – heißt im Client anders: " .. table.concat(broken, ", "))
+    end
+    if #unknown > 0 then
+        add(SC.OPEN, "Nicht gefunden und kein Paket des Spiels dazu bekannt – heißt anders oder gibt es nicht: "
+            .. table.concat(unknown, ", "))
     end
     if W.Status then add("", "   " .. W.Status()) end
 end)

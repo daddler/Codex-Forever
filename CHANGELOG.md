@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.2.1] – 2026-10-04
+
+**Genauere Selbstprüfung.** /wcui prüfen meldet Fenster, die das Spiel erst beim ersten Öffnen lädt, nicht mehr als fehlend, und in einer Gruppe prüft sie auch die Bedrohung eines Mitspielers – einmal im Kampf in einer Gruppe ausführen hilft.
+
+### Technisch
+
+Nach dem ersten Lauf von `/wcui prüfen` im Beta-Client (Client 1.60.1, Build 70205):
+
+- **Fenster** (`ui/selfcheck.lua`): 14 von 29 als „nicht im Client“ war fast nur Lärm. Neu: Gruppen von Alternativen (`SC.ALTERNATIVES`, eine genügt) und Pakete des Spiels (`SC.ADDON_OF`, `SC.AddonState` über `C_AddOns.GetAddOnInfo`/`IsAddOnLoaded`): „lädt beim ersten Öffnen“ ist kein Befund; Paket geladen, Fenster fehlt ist ein `[!]`; nur weder da noch Paket bekannt bleibt `[?]`.
+- **Bedrohung** (`SC.ThreatOf`, `SC.GroupMate`): in einer Gruppe zusätzlich ein Mitspieler am selben Ziel; allein ein `[?]` mit Hinweis.
+- **Messergebnisse dokumentiert** (`docs/systems/ui.md`, Messprotokoll): eigene Bedrohung im Kampf offen (alle fünf Werte), alle elf Messarten vorhanden, Chat für Addons nicht gesperrt, Mikromenü nicht geschützt, Speichern funktioniert. Ungemessen: Bedrohung anderer Spieler, ob eine Meldung ankommt.
+- `load_test.lua`: allein, Mitspieler geheim bei eigener offener Bedrohung, du selbst nicht als Mitspieler, Alternative da, Paket lädt beim Öffnen (einzeln und als Gruppe), Paket geladen ohne Fenster (einzeln und als Gruppe), unbekannt, kaputte Abfrage. Gegenproben: 8, gefangen – eine (Gruppe mit geladenem Paket) erst nach einem zusätzlichen Testfall.
+
 ## [6.10.2.0] – 2026-10-04
 
 **Selbstprüfung.** /wcui prüfen (oder der Knopf unter Einstellungen → Tooltip & Fenster) fragt das Spiel, was nur es beantworten kann – etwa ob die Bedrohung lesbar ist und welche Messarten es gibt – und zeigt das Ergebnis zum Kopieren. Geändert wird nichts.

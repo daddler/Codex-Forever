@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.2.1",
+        date    = "04.10.2026",
+        notes   = {
+            "|cff7C6CFFGenauere Selbstprüfung.|r /wcui prüfen meldet Fenster, die das Spiel erst beim ersten Öffnen lädt, nicht mehr als fehlend, und in einer Gruppe prüft sie auch die Bedrohung eines Mitspielers – einmal im Kampf in einer Gruppe ausführen hilft.",
+        },
+    },
+    {
         version = "6.10.2.0",
         date    = "04.10.2026",
         notes   = {

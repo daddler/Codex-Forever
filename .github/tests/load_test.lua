@@ -10298,6 +10298,61 @@ do
         out = table.concat(SC.Run(), "\n")
         assert(out:find("[!] Bedrohung: Bedrohung außerhalb des Kampfes: 2 von 5 Werten geheim", 1, true)
             and out:find("isTanking=geheim", 1, true), "geheime Bedrohung nicht erkannt:\n" .. out)
+        -- 6.10.2.1: allein ein Hinweis auf die Gruppe; in der Gruppe ein
+        -- Mitspieler eigens - offen bei dir heisst nicht offen bei ihm.
+        Set("UnitDetailedThreatSituation", function(u)
+            if u == "player" then return true, 3, 100, 100, 5000 end
+            return SECRET, 1, SECRET, nil, nil
+        end)
+        Set("IsInGroup", function() return false end)
+        Set("IsInRaid", function() return false end)
+        out = table.concat(SC.Run(), "\n")
+        assert(out:find("[?] Bedrohung: Allein: ob der Client die Bedrohung anderer Spieler", 1, true), "allein kein Hinweis auf die Gruppe:\n" .. out)
+        Set("IsInGroup", function() return true end)
+        Set("UnitIsUnit", function(a, b) return a == b end)
+        out = table.concat(SC.Run(), "\n")
+        assert(out:find("[ok] Bedrohung: Bedrohung außerhalb des Kampfes offen", 1, true)
+            and out:find("[!] Bedrohung: Bedrohung von party1 außerhalb des Kampfes: 2 von 5 Werten geheim", 1, true),
+            "Mitspieler nicht eigens geprueft:\n" .. out)
+        assert(SC.GroupMate() == "party1", "Mitspieler nicht gefunden")
+        Set("UnitIsUnit", function(a) return a == "party1" end)
+        assert(SC.GroupMate() == "party2", "du selbst als Mitspieler gezaehlt")
+        Set("IsInGroup", function() return false end)
+        -- Fenster: Alternativen, Pakete des Spiels (spaeter, geladen ohne
+        -- Fenster, unbekannt).
+        Set("C_AddOns", {
+            GetAddOnInfo = function(name)
+                if name == "Blizzard_TrainerUI" or name == "Blizzard_TalentUI" or name == "Blizzard_GuildBankUI" then
+                    return name, name, "", true, nil
+                end
+                return name, name, "", false, "MISSING"
+            end,
+            IsAddOnLoaded = function(name) return name == "Blizzard_GuildBankUI" end,
+        })
+        for _, n in ipairs({ "ClassTrainerFrame", "GuildBankFrame", "PVEFrame", "PVPFrame", "HonorFrame",
+                             "PlayerTalentFrame", "TalentFrame", "ClassTalentFrame" }) do Set(n, nil) end
+        Set("LFGParentFrame", stub.NewObject("Frame"))
+        out = table.concat(SC.Run(), "\n")
+        assert(out:find("ClassTrainerFrame (Blizzard_TrainerUI)", 1, true)
+            and out:find("PlayerTalentFrame/TalentFrame/ClassTalentFrame (Blizzard_TalentUI)", 1, true),
+            "laedt beim Oeffnen nicht erkannt:\n" .. out)
+        assert(out:find("Aus einer Gruppe von Alternativen da: ", 1, true) and out:find("LFGParentFrame", 1, true)
+            and not out:find("PVEFrame", 1, true), "Alternative als fehlend gemeldet:\n" .. out)
+        assert(out:find("[!] Fenster in Gold: Paket geladen, aber kein Fenster unter diesem Namen – heißt im Client anders: GuildBankFrame (Blizzard_GuildBankUI geladen)", 1, true),
+            "geladenes Paket ohne Fenster nicht gemeldet:\n" .. out)
+        assert(out:find("[?] Fenster in Gold: Nicht gefunden", 1, true) and out:find("PVPFrame/HonorFrame", 1, true),
+            "Gruppe ohne Mitglied nicht gemeldet:\n" .. out)
+        -- Eine Gruppe, deren Paket geladen ist, ohne Fenster: auch ein Befund.
+        local isLoaded = C_AddOns.IsAddOnLoaded
+        C_AddOns.IsAddOnLoaded = function(name) return name == "Blizzard_TalentUI" end
+        out = table.concat(SC.Run(), "\n")
+        C_AddOns.IsAddOnLoaded = isLoaded
+        assert(out:find("PlayerTalentFrame/TalentFrame/ClassTalentFrame (Blizzard_TalentUI geladen)", 1, true),
+            "Gruppe mit geladenem Paket ohne Fenster nicht gemeldet:\n" .. out)
+        assert(SC.AddonState("Blizzard_GuildBankUI") == "loaded" and SC.AddonState("Blizzard_TrainerUI") == "ondemand"
+            and SC.AddonState("Gibtsnicht") == "missing", "Zustand eines Pakets falsch")
+        Set("C_AddOns", { GetAddOnInfo = function() error("kaputt") end })
+        assert(SC.AddonState("Blizzard_TrainerUI") == "missing", "kaputte Abfrage des Pakets nicht abgefangen")
         -- Messarten: fehlende und neue.
         local oldEnum = Enum.DamageMeterType
         Enum.DamageMeterType = { DamageDone = 0, HealingDone = 1, Neuigkeit = 99 }
