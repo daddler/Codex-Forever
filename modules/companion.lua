@@ -115,12 +115,10 @@ if STATE_MESSAGES[messageType] then
         -- Nachricht sonst eine fehlende oder veraltete ID.
         message.community = community
 
-        print(
-            "|cff34C77BWeintCompanion|r: "
-            .. messageType ..
-            " aktualisiert."
-        )
-
+        -- Kein Satz im Chat (seit 6.9.1.3, Beta-Test: "character_sheet
+        -- aktualisiert" kam bei jeder Fertigkeitsstufe). Wie viele
+        -- Nachrichten warten, steht auf der Companion-Seite; wer etwas
+        -- bewusst schickt (Materialien), bekommt dort seine Rueckmeldung.
         return message.id
 
         end
@@ -157,12 +155,7 @@ if STATE_MESSAGES[messageType] then
             message
         )
 
-        print(
-            "|cff34C77BWeintCompanion|r: "
-            .. messageType ..
-            " zur Warteschlange hinzugefügt."
-        )
-
+        -- Still, wie beim Ersetzen oben.
         return message.id
 
         end

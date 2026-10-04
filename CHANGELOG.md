@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.9.1.3] – 2026-10-04
+
+**Ruhe im Chat.** Die Zeilen „WeintCompanion: … aktualisiert“ und „… zur Warteschlange hinzugefügt“ erscheinen nicht mehr – sie kamen bei jeder Fertigkeitsstufe und jedem Ausrüstungswechsel. Was für die Companion bereitliegt, steht weiter auf der Companion-Seite.
+
+### Technisch
+
+- `modules/companion.lua`, `Companion.Send`: beide `print` entfernt (Beta-Test: `character_sheet` wird bei jeder Änderung des Ausrüstungsstands neu eingereiht, auch bei Fertigkeitsstufen). Die Warteschlange selbst ist unverändert; die Zahl wartender Nachrichten zeigen Companion-Seite und Einstellungen, die Materialien bestätigen ihr Senden mit eigenem Dialog, eine verweigerte Freigabe meldet der Aufrufer weiter selbst.
+- `load_test.lua`: neue und ersetzte Nachricht landen in der Warteschlange, nichts im Chat; der Test schlägt mit dem alten Code an.
+
 ## [6.9.1.2] – 2026-10-03
 
 **Die Post im neuen Stil.** Posteingang und Post versenden ohne Metallrahmen, Pergament und Stein: ruhige Flächen, flache Plätze und Eingabefelder, Gold als Akzent wie bei Bank und Auktionshaus. Der Brief, den du schreibst, steht in heller Schrift.

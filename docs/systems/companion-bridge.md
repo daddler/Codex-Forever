@@ -88,6 +88,14 @@ statt angehängt.
 Jede ausgehende Nachricht trägt die gebundene Community-ID, damit die
 Desktop-Seite Verkehr einer anderen Community verwerfen kann.
 
+**Still** (seit 6.9.1.3): `Companion.Send` schreibt nichts in den Chat.
+Bis dahin stand bei jedem Einreihen „WeintCompanion: … aktualisiert“ bzw.
+„… zur Warteschlange hinzugefügt“ – `character_sheet` wird bei jeder
+Änderung des Ausrüstungsstands neu eingereiht, also auch bei jeder
+Fertigkeitsstufe (Beta-Test). Wie viele Nachrichten warten, zeigt die
+Seite *Companion*; wer bewusst etwas schickt (Materialien), bekommt die
+Rückmeldung dort, wo er geklickt hat.
+
 ## `character_sheet` — was leer bleibt, und warum
 
 Die Nachricht wird weiterhin gesendet, aber:

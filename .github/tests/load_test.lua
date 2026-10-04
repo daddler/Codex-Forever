@@ -9796,6 +9796,27 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.9.1.3: Nachrichten an die Companion schreiben nichts in den Chat
+-- (Beta-Test: "character_sheet aktualisiert" bei jeder Fertigkeitsstufe).
+do
+    local CO = WeintCodex.Companion
+    local savedPrint, savedDB = _G.print, _G.WeintCompanionDB
+    local printed = {}
+    local ok, err = pcall(function()
+        _G.WeintCompanionDB = { queue = {} }
+        _G.print = function(...) printed[#printed + 1] = table.concat({ ... }, " ") end
+        local id1 = CO.Send("character_sheet", "a")
+        local id2 = CO.Send("character_sheet", "b")     -- ersetzt
+        local id3 = CO.Send("calendar", "c")            -- neu
+        assert(id1 and id2 == id1 and id3 and id3 ~= id1, "Warteschlange arbeitet nicht mehr")
+        assert(#WeintCompanionDB.queue == 2 and WeintCompanionDB.queue[1].payload == "b", "Zustandsnachricht nicht ersetzt")
+        assert(#printed == 0, "Chat: " .. tostring(printed[1]))
+    end)
+    _G.print, _G.WeintCompanionDB = savedPrint, savedDB
+    Check(ok, "Companion: Nachrichten still in die Warteschlange (neu und ersetzt), kein Satz im Chat"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 --------------------------------------------------
 
 print("")

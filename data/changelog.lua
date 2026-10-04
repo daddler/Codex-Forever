@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.9.1.3",
+        date    = "04.10.2026",
+        notes   = {
+            "|cff7C6CFFRuhe im Chat.|r Die Zeilen „WeintCompanion: … aktualisiert“ und „… zur Warteschlange hinzugefügt“ erscheinen nicht mehr – sie kamen bei jeder Fertigkeitsstufe und jedem Ausrüstungswechsel. Was für die Companion bereitliegt, steht weiter auf der Companion-Seite.",
+        },
+    },
+    {
         version = "6.9.1.2",
         date    = "03.10.2026",
         notes   = {
