@@ -2494,16 +2494,17 @@ K.Register({
             B:Row({ type = "toggle", label = "Klassenfarben", key = "classColor" },
                   { type = "toggle", label = "Anzeige des Spiels ausblenden", key = "hideBlizzard", reload = true,
                     description = "Die Messung läuft weiter – nur Blizzards Fenster geht aus." })
+            B:Section("Bedienung")
+            B:Note("Klick auf die Messart schaltet weiter (Rechtsklick zurück), „Aktuell/Gesamt“ wechselt zwischen diesem Kampf und der ganzen Sitzung. In der Kopfzeile: Plus öffnet ein weiteres Fenster, die Sprechblase meldet in den Chat, der Kreis leert alle Messungen, das Zahnrad öffnet diese Seite, das Kreuz schließt ein zusätzliches Fenster. Verschieben: „Rahmen entsperren“.")
+            B:Section("Bedrohung")
+            B:Note("Messart „Bedrohung“: alle aus deiner Gruppe auf der Bedrohungsliste deines Ziels (ist dein Ziel freundlich: auf der seines Ziels). Ein voller Balken heißt: diese Person zieht die Aggro – das Spiel rechnet dabei schon ein, dass man sie im Nahkampf erst bei 110 %, auf Distanz bei 130 % zieht. Sind die Zahlen im Kampf geheim, bleibt die Liste in der Reihenfolge der Gruppe, ohne Platznummern.")
+            B:Advanced()
             B:Section("In den Chat melden")
             B:Row({ type = "toggle", label = "Knopf in der Kopfzeile", key = "reportButton",
                     description = "Die Sprechblase meldet die ersten Plätze in Gruppe, Schlachtzug, Gilde, Sagen oder als Flüstern an dein Ziel." },
                   { type = "slider", label = "Plätze", key = "reportLines", min = 1, max = 10, step = 1,
                     format = function(v) return tostring(v) end })
             B:Note("Gemeldet wird nur nach dem Kampf: im Kampf hält das Spiel die Zahlen geheim, und eine Meldung mit Lücken wäre falsch. Beispielzahlen aus dem Testmodus werden nie gemeldet.")
-            B:Section("Bedienung")
-            B:Note("Klick auf die Messart schaltet weiter (Rechtsklick zurück), „Aktuell/Gesamt“ wechselt zwischen diesem Kampf und der ganzen Sitzung. In der Kopfzeile: Plus öffnet ein weiteres Fenster, die Sprechblase meldet in den Chat, der Kreis leert alle Messungen, das Zahnrad öffnet diese Seite, das Kreuz schließt ein zusätzliches Fenster. Verschieben: „Rahmen entsperren“.")
-            B:Section("Bedrohung")
-            B:Note("Messart „Bedrohung“: alle aus deiner Gruppe auf der Bedrohungsliste deines Ziels (ist dein Ziel freundlich: auf der seines Ziels). Ein voller Balken heißt: diese Person zieht die Aggro – das Spiel rechnet dabei schon ein, dass man sie im Nahkampf erst bei 110 %, auf Distanz bei 130 % zieht. Sind die Zahlen im Kampf geheim, bleibt die Liste in der Reihenfolge der Gruppe, ohne Platznummern.")
         end },
         { key = "fenster", label = "Je Fenster", build = function(B)
             for i = 1, MAX_WINDOWS do

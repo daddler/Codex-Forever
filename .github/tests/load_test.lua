@@ -833,6 +833,67 @@ do
     Check(ok, "jede Auswahlliste laesst sich oeffnen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.10.0.0: Feineinstellungen zugeklappt ("Erweitert"). Zugeklappt nennt
+-- der Knopf, wie viele Einstellungen dahinter liegen; aufgeklappt sind sie
+-- alle da - und jede Auswahlliste darin oeffnet sich wie die anderen.
+do
+    local ok, err = pcall(function()
+        assert(K.Get("general", "showAdvanced") == false, "Erweitert ist nicht von Haus aus zu")
+        local closed, zonesSeen = {}, 0
+        for _, key in ipairs(K.order) do
+            for i in ipairs(K.Module(key).pages) do
+                UO.Show(key, i)
+                closed[key .. "/" .. i] = #UO.CurrentWidgets()
+                for _, z in ipairs(UO.CurrentZones()) do
+                    zonesSeen = zonesSeen + 1
+                    assert(not z.open and z.count > 0, key .. "/" .. i .. ": leerer oder offener Bereich")
+                    assert(z.button._label:GetText() == UO.AdvancedText(z.count), key .. "/" .. i .. ": Knopf nennt die Zahl nicht")
+                end
+            end
+        end
+        assert(zonesSeen >= 6, "zu wenige Bereiche 'Erweitert': " .. zonesSeen)
+        -- Zugeklappt wird auch ein Hinweis darin nicht gebaut.
+        local texts = {}
+        local setText = stub.Methods.SetText
+        stub.Methods.SetText = function(self, t) texts[#texts + 1] = tostring(t) return setText(self, t) end
+        UO.SetAdvanced(false)
+        UO.Show("damagemeter", 1)
+        stub.Methods.SetText = setText
+        for _, t in ipairs(texts) do
+            assert(not t:find("Gemeldet wird nur nach dem Kampf", 1, true), "Hinweis unter 'Erweitert' trotzdem gebaut")
+        end
+        UO.Show("nameplates", 1)
+        UO.CurrentZones()[1].button:Click()
+        assert(K.Get("general", "showAdvanced") == true, "Knopf blendet nicht ein")
+        local grew = 0
+        for _, key in ipairs(K.order) do
+            for i in ipairs(K.Module(key).pages) do
+                UO.Show(key, i)
+                local n = #UO.CurrentWidgets()
+                local zones = UO.CurrentZones()
+                local hidden = 0
+                for _, z in ipairs(zones) do
+                    assert(z.open and z.button._label:GetText() == UO.ADV_HIDE, key .. "/" .. i .. ": Bereich bleibt zu")
+                end
+                if #zones > 0 then
+                    assert(n > closed[key .. "/" .. i], key .. "/" .. i .. ": aufgeklappt nicht mehr Elemente")
+                    grew = grew + 1
+                end
+                for _, w in ipairs(UO.CurrentWidgets()) do
+                    if w._button then w._button:Click() end
+                end
+            end
+        end
+        assert(grew >= 6, "aufgeklappt kaum mehr: " .. grew)
+        UO.Show("nameplates", 1)
+        UO.CurrentZones()[1].button:Click()
+        assert(K.Get("general", "showAdvanced") == false, "Knopf blendet nicht wieder aus")
+        UO.frame:Hide()
+    end)
+    Check(ok, "Einstellungen: 'Erweitert' zu (Knopf nennt die Zahl), auf (mehr Elemente, alle Listen oeffnen sich), wieder zu"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- AB HIER BIS ZUM "EINSCHALTEN WIE EIN SPIELER" OHNE GESPEICHERTE ANTWORT:
 -- die Frage beim Einloggen, und beide Antworten.
 do
@@ -2252,6 +2313,24 @@ do
         p._fxPulse, p._fxSheen, p._fxMarks, p._fxEdge = nil, nil, nil, nil
         local edgeColor
         p.border.SetColor = function(_, r, g, b) edgeColor = { r, g, b } end
+        -- 6.10.0.0: von Haus aus "Ruhig" - das Ziel leuchtet, aber nichts
+        -- atmet, glaenzt, bewegt sich oder blitzt; die Kante bleibt.
+        assert(K.Get("nameplates", "motion") == "calm", "Standard ist nicht 'Ruhig'")
+        isTarget.nameplate1 = true
+        stub.FireEvent("PLAYER_TARGET_CHANGED")
+        assert(not plays.pulse and not plays.sheen and not plays.marks and not p.sheen:IsShown(), "'Ruhig' bewegt sich trotzdem")
+        assert(edgeColor, "'Ruhig' nimmt auch die Kante weg")
+        local calmCur = cur
+        cur = cur - 5
+        stub.FireEvent("UNIT_HEALTH", "nameplate1")
+        assert(not plays.flash, "'Ruhig' blitzt")
+        cur = calmCur
+        isTarget.nameplate1 = nil
+        stub.FireEvent("PLAYER_TARGET_CHANGED")
+        plays, stops = {}, {}
+        p._fxPulse, p._fxSheen, p._fxMarks, p._fxEdge = nil, nil, nil, nil
+        edgeColor = nil
+        K.Set("nameplates", "motion", "lively")
         isTarget.nameplate1 = true
         stub.FireEvent("PLAYER_TARGET_CHANGED")
         local hc = K.Highlight()
@@ -2264,15 +2343,21 @@ do
         assert(plays.flash == 1, "Treffer am Ziel blitzt nicht")
         stub.FireEvent("UNIT_MAXHEALTH", "nameplate1")
         assert(plays.flash == 1, "Hoechstwert blitzt wie ein Treffer")
+        -- Einzelne Schalter gelten nur mit "Eigene"; "Lebendig" laesst sie liegen.
         K.Set("nameplates", "hitFlash", false)
+        cur = 25
         stub.FireEvent("UNIT_HEALTH", "nameplate1")
-        assert(plays.flash == 1, "Blitz trotz Schalter")
+        assert(plays.flash == 2, "'Lebendig' haelt sich an einen einzelnen Schalter")
+        K.Set("nameplates", "motion", "custom")
+        cur = 20
+        stub.FireEvent("UNIT_HEALTH", "nameplate1")
+        assert(plays.flash == 2, "Blitz trotz Schalter")
         K.Set("nameplates", "hitFlash", true)
         isTarget.nameplate1 = nil
         stub.FireEvent("PLAYER_TARGET_CHANGED")
         assert(stops.pulse and stops.sheen and stops.marks and not p.sheen:IsShown(), "Bewegung bleibt ohne Ziel")
         stub.FireEvent("UNIT_HEALTH", "nameplate1")
-        assert(plays.flash == 1, "Nicht-Ziel blitzt")
+        assert(plays.flash == 2, "Nicht-Ziel blitzt")
         -- Schalter: kein Glanz.
         K.Set("nameplates", "targetSheen", false)
         Spy(NP.plates["nameplate1"].sheenAnim, "sheen")
@@ -2280,6 +2365,7 @@ do
         stub.FireEvent("PLAYER_TARGET_CHANGED")
         assert(not NP.plates["nameplate1"].sheen:IsShown(), "Glanz trotz Schalter")
         K.Set("nameplates", "targetSheen", true)
+        K.Set("nameplates", "motion", nil)
         isTarget.nameplate1 = nil
         stub.FireEvent("PLAYER_TARGET_CHANGED")
         -- Kein Muell: Spur und Balken im Takt.
@@ -9834,6 +9920,65 @@ do
         assert(not CP.hosts.XFrame, "abgelehntes Fenster trotzdem angemeldet")
     end)
     Check(ok, "Fenster in Gold aus Bausteinen: Handel, Bank, Post angemeldet, unbekannte Arten abgelehnt"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.10.0.0: Suche in den Einstellungen - findet auch Zugeklapptes und
+-- klappt es beim Oeffnen auf.
+do
+    local ok, err = pcall(function()
+        local idx = UO.SearchIndex()
+        assert(#idx > 250, "Suche kennt zu wenige Einstellungen: " .. #idx)
+        local function Find(label, module)
+            for _, e in ipairs(idx) do
+                if e.label == label and (not module or e.module == module) then return e end
+            end
+        end
+        local sheen = Find("Ziel: Glanz läuft über den Balken")
+        assert(sheen and sheen.module == "nameplates" and sheen.page == 1 and sheen.advanced
+            and sheen.section == "Bewegung einzeln", "Eintrag unter 'Erweitert' fehlt oder falsch einsortiert")
+        local bar = Find("Bedrohungsleiste", "nameplates")
+        assert(bar and not bar.advanced and bar.pageLabel == "Bedrohung & Farben", "Bedrohungsleiste falsch einsortiert")
+        -- Gross/klein und Umlaute egal; ein Zeichen sucht nicht.
+        local hits = UO.Search("glanz")
+        local found = false
+        for _, e in ipairs(hits) do if e == sheen then found = true end end
+        assert(found, "'glanz' findet den Glanz nicht")
+        -- Nur ueber die Faltung zu finden: im Text steht "über der Plakette".
+        local u = UO.Search("ÜBER DER PLAKETTE")
+        assert(#u > 0, "Umlaut in Grossbuchstaben findet nichts")
+        -- Zeichen, die in Lua-Mustern etwas bedeuten, sind hier nur Text.
+        local okPct, pct = pcall(UO.Search, "in %")
+        assert(okPct and #pct > 0, "'in %' findet 'Bedrohung in %' nicht: " .. tostring(pct))
+        assert(#UO.Search("g") == 0, "ein Zeichen sucht schon")
+        assert(#UO.Search("zzqxy") == 0, "Unsinn findet etwas")
+        -- Im Fenster: Feld, Treffer, Klick oeffnet die Seite und klappt auf.
+        UO.Show("general", 1)
+        K.Set("general", "showAdvanced", false)
+        UO.searchBox:SetText("glanz")
+        UO.searchBox._scripts.OnTextChanged(UO.searchBox)
+        assert(UO.results and UO.results:IsShown(), "Treffer erscheinen nicht")
+        local row
+        for _, r in ipairs(UO.SearchRows()) do if r:IsShown() and r._hit == sheen then row = r end end
+        assert(row, "Treffer nicht in der Liste")
+        row:Click()
+        assert(not UO.results:IsShown() and UO.searchBox:GetText() == "", "Suche bleibt nach dem Klick stehen")
+        local w = UO.Where()
+        assert(w.module == "nameplates" and w.page == 1, "Klick oeffnet die falsche Seite: " .. tostring(w.module) .. "/" .. tostring(w.page))
+        assert(K.Get("general", "showAdvanced") == true, "Treffer unter 'Erweitert' klappt nicht auf")
+        -- Leere Suche: zurueck zur Seite; Klick links ersetzt die Treffer.
+        UO.ShowSearch("bedrohung")
+        assert(UO.results:IsShown(), "zweite Suche zeigt nichts")
+        UO.Show("chat", 1)
+        assert(not UO.results:IsShown(), "Seite links geklickt, Treffer bleiben stehen")
+        UO.ShowSearch("zzqxy")
+        assert(UO.results.empty:IsShown(), "kein Treffer ohne Satz")
+        UO.ShowSearch("")
+        assert(not UO.results:IsShown(), "leere Suche bleibt")
+        UO.SetAdvanced(false)
+        UO.frame:Hide()
+    end)
+    Check(ok, "Einstellungen: Suche (Index, Umlaute, Erweitert aufklappen, Klick oeffnet die Seite, leer und links zurueck)"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

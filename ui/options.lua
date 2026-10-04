@@ -76,7 +76,9 @@ K.Register({
         -- highlight: die Farbe der Oberflaeche - Klasse (Standard) oder
         -- Violett (6.6.2.4 nur Rahmen, seit 6.6.3.1 der ganze Akzent).
         local d = { font = "cond", outline = "thin", barStyle = "glanz", shadows = true, windowScale = 100,
-                    highlight = "class" }
+                    highlight = "class",
+                    -- 6.10.0.0: Feineinstellungen jeder Seite zugeklappt (Builder:Advanced).
+                    showAdvanced = false }
         -- Ruhe und Kampf (ui/presence.lua): dort definiert, hier gespeichert.
         for k, v in pairs(WeintCodex.UIPresence.DEFAULTS) do d[k] = v end
         -- Tooltip (ui/tooltip.lua): ebenso.
@@ -86,6 +88,8 @@ K.Register({
         return d
     end)(),
     OnSetting = function(key)
+        -- Nur die Ansicht dieses Fensters - kein Modul muss neu zeichnen.
+        if key == "showAdvanced" then return end
         if key == "barStyle" or key == "*" then K.RestyleBars() end
         if key == "shadows" or key == "*" then K.ApplyShadows() end
         if key == "windowScale" then
@@ -250,7 +254,51 @@ local function NewBuilder(moduleKey, parent)
     return setmetatable({ mod = moduleKey, parent = parent, y = -4, widgets = {} }, Builder)
 end
 
+-- ERWEITERT (6.10.0.0, Selbsteinschaetzung: "rund 340 Schalter - kaum ein
+-- Spieler stellt die Farbe fuer 'Tank verliert Aggro' um, aber jeder muss
+-- daran vorbeiscrollen"). Was auf einer Seite nach B:Advanced() steht (bis
+-- B:EndAdvanced() oder zum Ende der Seite), ist Feineinstellung: von Haus
+-- aus zugeklappt, an seiner Stelle ein Knopf, der sagt, wie viele
+-- Einstellungen dahinter liegen. Ein Klick blendet sie auf JEDER Seite ein
+-- (general.showAdvanced) - wer Feinheiten sucht, sucht sie selten nur
+-- einmal. Verloren geht nichts: die Werte gelten weiter, auch zugeklappt.
+O.ADV_HIDE = "Erweiterte Einstellungen ausblenden"
+function O.AdvancedText(count)
+    if count == 1 then return "Erweitert: 1 Einstellung einblenden" end
+    return string.format("Erweitert: %d Einstellungen einblenden", count)
+end
+
+function Builder:Advanced()
+    local open = K.Get("general", "showAdvanced") and true or false
+    if self.y < -4 then self.y = self.y - 8 end
+    local b = WeintCodex.CreateButton(self.parent, {
+        text = open and O.ADV_HIDE or O.AdvancedText(0), kind = "secondary", height = 24, size = 11,
+        backdrop = "bgDark",
+        onClick = function() O.SetAdvanced(not open) end,
+    })
+    b:SetPoint("TOPLEFT", self.parent, "TOPLEFT", 0, self.y)
+    b._advanced = true
+    self.y = self.y - 24 - 12
+    self.zones = self.zones or {}
+    local zone = { button = b, count = 0, open = open }
+    self.zones[#self.zones + 1] = zone
+    self.zone = zone
+    self.skip = not open
+end
+
+function Builder:EndAdvanced()
+    self.skip, self.zone = false, nil
+end
+
+-- Nach dem Bau: die Knoepfe nennen, wie viel hinter ihnen liegt.
+function Builder:FinishAdvanced()
+    for _, z in ipairs(self.zones or {}) do
+        if not z.open then z.button:SetText(O.AdvancedText(z.count)) end
+    end
+end
+
 function Builder:Section(title, note)
+    if self.skip then return end
     if self.y < -4 then self.y = self.y - 14 end
     local eb = WeintCodex.Eyebrow(self.parent, title, { color = "accent", size = 10 })
     eb:SetPoint("TOPLEFT", self.parent, "TOPLEFT", 0, self.y)
@@ -274,6 +322,7 @@ function Builder:Section(title, note)
 end
 
 function Builder:Note(text)
+    if self.skip then return end
     local fs = K.NewText(self.parent)
     fs:SetFont(F.sans, 11, "")
     fs:SetPoint("TOPLEFT", self.parent, "TOPLEFT", 0, self.y)
@@ -414,6 +463,12 @@ function Builder:Cell(spec)
 end
 
 function Builder:Row(a, b)
+    if self.skip then
+        local z = self.zone
+        if a and a.type ~= "empty" then z.count = z.count + 1 end
+        if b and b.type ~= "empty" then z.count = z.count + 1 end
+        return
+    end
     local wa = a and a.type ~= "empty" and self:Cell(a)
     local wb = b and b.type ~= "empty" and self:Cell(b)
     local h = 0
@@ -433,6 +488,7 @@ end
 -- man wieder auf dieser Seite.
 O.GAME_EDIT_TEXT = "Bearbeitungsmodus des Spiels öffnen"
 function Builder:GameEditMode(note)
+    if self.skip then return end
     if note then self:Note(note) end
     local E = WeintCodex.UIEditMode
     local b = WeintCodex.CreateButton(self.parent, {
@@ -496,6 +552,8 @@ end
 O.SyncChrome = SyncChrome
 
 local function ShowPage()
+    -- Eine Seite ersetzt die Treffer der Suche (Klick links waehrend der Suche).
+    if O.HideSearch then O.HideSearch() end
     local key = current.module
     local m = K.Module(key)
     local b = built[key]
@@ -521,7 +579,8 @@ local function ShowPage()
             local ok, err = pcall(def.build, B)
             if not ok then K.Report(key, err) end
         end
-        page = { frame = host, height = -B.y + 20, widgets = B.widgets }
+        B:FinishAdvanced()
+        page = { frame = host, height = -B.y + 20, widgets = B.widgets, zones = B.zones }
         host:SetHeight(page.height)
         b.pages[current.page] = page
     end
@@ -533,6 +592,24 @@ local function ShowPage()
         if page.height > (scroller:GetHeight() or 0) then bar:Show() else bar:Hide() end
     end
     SyncChrome()
+end
+
+-- Erweitert ein- oder ausblenden: alle gebauten Seiten verwerfen, die
+-- aktuelle neu bauen - an derselben Stelle.
+function O.SetAdvanced(on)
+    K.Set("general", "showAdvanced", on and true or false)
+    for _, b in pairs(built) do
+        for _, p in pairs(b.pages) do p.frame:Hide() end
+        wipe(b.pages)
+    end
+    if current.module and built[current.module] then
+        local scroll = scroller and scroller:GetVerticalScroll()
+        ShowPage()
+        if type(scroll) == "number" and scroller then
+            local maxScroll = math.max(0, (inner:GetHeight() or 0) - (scroller:GetHeight() or 0))
+            scroller:SetVerticalScroll(math.min(scroll, maxScroll))
+        end
+    end
 end
 
 local function Layout()
@@ -706,6 +783,9 @@ local function BuildSidebar()
     O._sidebarUsed = -y
 end
 
+-- Das Suchfeld (weiter unten, "Suche").
+local BuildSearch
+
 function O.Build()
     if frame then return frame end
 
@@ -770,6 +850,7 @@ function O.Build()
     close:SetScript("OnClick", function() frame:Hide() end)
     close:SetScript("OnEnter", function() x:SetTextColor(unpack(C.textBright)) end)
     close:SetScript("OnLeave", function() x:SetTextColor(unpack(C.textMuted)) end)
+    BuildSearch(head, close)
 
     tabsHost = CreateFrame("Frame", nil, frame)
     tabsHost:SetPoint("TOPLEFT", frame, "TOPLEFT", SIDE_W + PAD, -HEAD_H)
@@ -836,6 +917,13 @@ function O.CurrentWidgets()
     return page and page.widgets or {}
 end
 
+-- Die Bereiche "Erweitert" der aktuellen Seite ({ button, count, open }).
+function O.CurrentZones()
+    local b = built[current.module]
+    local page = b and b.pages[current.page]
+    return page and page.zones or {}
+end
+
 function O.Show(key, pageIndex)
     O.Build()
     frame:Show()
@@ -859,6 +947,207 @@ function O.Return(where)
         if type(maxScroll) == "number" and maxScroll >= 0 and s > maxScroll then s = maxScroll end
         scroller:SetVerticalScroll(s)
     end
+end
+
+--------------------------------------------------
+-- Suche (6.10.0.0)
+--------------------------------------------------
+-- Rund 340 Einstellungen auf gut 40 Seiten: wer "Stapelzahl" sucht, soll
+-- nicht raten muessen, ob sie bei den Leisten oder den Taschen steht. Die
+-- Suche liest jede Seite einmal mit einem Mitschreiber (gleiche Methoden
+-- wie der Seitenbauer, baut aber nichts) und findet auch, was unter
+-- "Erweitert" zugeklappt ist. Ein Klick auf einen Treffer oeffnet die
+-- Seite - und klappt "Erweitert" auf, wenn der Treffer dort steht.
+
+local Recorder = {}
+local function Nothing() end
+Recorder.__index = function(_, k)
+    if Recorder[k] then return Recorder[k] end
+    -- Was eine Seite sonst noch aufruft (Methoden: Grossbuchstabe vorn),
+    -- tut beim Mitschreiben nichts. Felder (section, adv) bleiben nil.
+    if type(k) == "string" and k:find("^%u") then return Nothing end
+    return nil
+end
+function Recorder:Section(title) self.section = title end
+function Recorder:Advanced() self.adv = true end
+function Recorder:EndAdvanced() self.adv = false end
+function Recorder:Add(label, description)
+    if type(label) ~= "string" or label == "" then return end
+    local out = self.out
+    out[#out + 1] = { module = self.module, page = self.page, pageLabel = self.pageLabel,
+                      section = self.section, label = label, description = description,
+                      advanced = self.adv and true or false }
+end
+function Recorder:Cell(spec)
+    if type(spec) == "table" and spec.type ~= "empty" then self:Add(spec.label, spec.description) end
+end
+function Recorder:Row(a, b) self:Cell(a) self:Cell(b) end
+function Recorder:GameEditMode() self:Add(O.GAME_EDIT_TEXT) end
+
+-- Klein, auch Umlaute: string.lower kennt nur ASCII.
+local UMLAUT = { ["\195\132"] = "\195\164", ["\195\150"] = "\195\182", ["\195\156"] = "\195\188" }
+local function Fold(text)
+    return (tostring(text or ""):lower():gsub("\195[\132\150\156]", UMLAUT))
+end
+O.Fold = Fold
+
+local index
+-- Alle Eintraege aller Seiten, einmal gelesen.
+function O.SearchIndex()
+    if index then return index end
+    index = {}
+    local scratch = CreateFrame("Frame", nil, UIParent)
+    scratch:Hide()
+    for _, key in ipairs(K.order) do
+        local m = K.Module(key)
+        for i, def in ipairs(m.pages or {}) do
+            if def.build then
+                local R = setmetatable({ out = index, module = key, page = i, pageLabel = def.label,
+                                         parent = scratch, y = -4, widgets = {} }, Recorder)
+                pcall(def.build, R)
+            end
+        end
+    end
+    return index
+end
+
+-- Treffer fuer `text` (ab zwei Zeichen), hoechstens `limit`.
+function O.Search(text, limit)
+    local q = Fold(text):gsub("^%s+", ""):gsub("%s+$", "")
+    local hits = {}
+    if #q < 2 then return hits end
+    for _, e in ipairs(O.SearchIndex()) do
+        local m = K.Module(e.module)
+        local hay = Fold(e.label) .. " " .. Fold(e.section) .. " " .. Fold(e.pageLabel) .. " "
+            .. Fold(m and m.title) .. " " .. Fold(e.description)
+        if hay:find(q, 1, true) then
+            hits[#hits + 1] = e
+            if limit and #hits >= limit then break end
+        end
+    end
+    return hits
+end
+
+O.SEARCH_MAX = 30
+local results, resultRows, searchBox = nil, {}, nil
+
+local function OpenHit(e)
+    if searchBox then searchBox:SetText("") searchBox:ClearFocus() end
+    if results then results:Hide() end
+    if e.advanced and not K.Get("general", "showAdvanced") then O.SetAdvanced(true) end
+    O.Show(e.module, e.page)
+end
+O.OpenHit = OpenHit
+
+local function ResultRow(i)
+    local r = resultRows[i]
+    if r then return r end
+    r = CreateFrame("Button", nil, results)
+    r:SetSize(CONTENT_W, 40)
+    r:SetPoint("TOPLEFT", results, "TOPLEFT", 0, -(i - 1) * 44)
+    local bg = r:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(r)
+    bg:SetColorTexture(unpack(C.surface1))
+    local hl = r:CreateTexture(nil, "HIGHLIGHT")
+    hl:SetAllPoints(r)
+    hl:SetColorTexture(unpack(C.surface2))
+    r.label = Label(r, F.sans, 13, "textBright")
+    r.label:SetPoint("TOPLEFT", r, "TOPLEFT", 10, -6)
+    r.label:SetWidth(CONTENT_W - 20)
+    r.label:SetWordWrap(false)
+    r.path = Label(r, F.sans, 11, "textMuted")
+    r.path:SetPoint("TOPLEFT", r.label, "BOTTOMLEFT", 0, -3)
+    r.path:SetWidth(CONTENT_W - 20)
+    r.path:SetWordWrap(false)
+    r:SetScript("OnClick", function(self) if self._hit then OpenHit(self._hit) end end)
+    resultRows[i] = r
+    return r
+end
+
+-- Treffer statt der Seite zeigen; leerer Text: zurueck zur Seite.
+function O.ShowSearch(text)
+    O.Build()
+    local hits = O.Search(text, O.SEARCH_MAX)
+    if #Fold(text):gsub("%s", "") < 2 then
+        if results and results:IsShown() then
+            results:Hide()
+            ShowPage()
+        end
+        return hits
+    end
+    if not results then
+        results = CreateFrame("Frame", nil, inner)
+        results:SetPoint("TOPLEFT", inner, "TOPLEFT", 0, 0)
+        results:SetSize(CONTENT_W, 10)
+        results.empty = Label(results, F.sans, 12, "textDim")
+        results.empty:SetPoint("TOPLEFT", results, "TOPLEFT", 0, -4)
+        results.empty:SetWidth(CONTENT_W)
+        O.results = results
+    end
+    for _, b in pairs(built) do
+        for _, p in pairs(b.pages) do p.frame:Hide() end
+        if b.tabs then b.tabs:Hide() end
+        if b.preview then b.preview:Hide() end
+    end
+    for i, e in ipairs(hits) do
+        local r = ResultRow(i)
+        local m = K.Module(e.module)
+        r._hit = e
+        r.label:SetText(e.label)
+        local path = (m and m.title or e.module) .. "  ›  " .. (e.pageLabel or "")
+        if e.section then path = path .. "  ›  " .. e.section end
+        if e.advanced then path = path .. "  ·  Erweitert" end
+        r.path:SetText(path)
+        r:Show()
+    end
+    for i = #hits + 1, #resultRows do resultRows[i]._hit = nil resultRows[i]:Hide() end
+    if #hits == 0 then
+        results.empty:SetText("Keine Einstellung gefunden.")
+        results.empty:Show()
+    else
+        results.empty:Hide()
+    end
+    local h = math.max(40, #hits * 44)
+    results:SetHeight(h)
+    results:Show()
+    inner:SetHeight(h)
+    scroller:SetVerticalScroll(0)
+    return hits
+end
+
+function O.SearchRows() return resultRows end
+function O.HideSearch()
+    if results then results:Hide() end
+end
+
+-- Das Suchfeld oben rechts im Kopf.
+BuildSearch = function(parent, anchor)
+    local eb = CreateFrame("EditBox", nil, parent)
+    eb:SetSize(180, 24)
+    eb:SetPoint("RIGHT", anchor, "LEFT", -10, 0)
+    eb:SetAutoFocus(false)
+    if eb.SetTextInsets then eb:SetTextInsets(8, 8, 0, 0) end
+    K.SetFont(eb, 12)
+    local bg = eb:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(eb)
+    bg:SetColorTexture(unpack(C.bgDark))
+    K.Border(eb, 1, 0, 0, 0, 1, "BORDER")
+    local hint = Label(eb, F.sans, 12, "textFaint")
+    hint:SetPoint("LEFT", eb, "LEFT", 8, 0)
+    hint:SetText("Einstellung suchen …")
+    eb:SetScript("OnTextChanged", function(self)
+        local t = self:GetText() or ""
+        hint:SetShown(t == "")
+        O.ShowSearch(t)
+    end)
+    eb:SetScript("OnEscapePressed", function(self) self:SetText("") self:ClearFocus() end)
+    eb:SetScript("OnEnterPressed", function(self)
+        local first = resultRows[1]
+        if first and first:IsShown() and first._hit then OpenHit(first._hit) else self:ClearFocus() end
+    end)
+    searchBox = eb
+    O.searchBox = eb
+    return eb
 end
 
 function O.Toggle()

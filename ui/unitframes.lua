@@ -1586,6 +1586,7 @@ local pages = {
                 description = "Eine blaue Fläche vom rechten Rand über dem Leben: wie viel Schaden Schilde noch abfangen." })
         B:Row({ type = "toggle", label = "Treffer und Heilung als Zahl", key = "combatFeedback",
                 description = "Spieler und Ziel: erlittener Schaden rot mit Minus, erhaltene Heilung grün mit Plus – kurz im Rahmen." })
+        B:Advanced()
         B:Section("Schrift")
         B:Row({ type = "slider", label = "Größe links", key = "nameSize", min = 8, max = 20, step = 1, format = px },
               { type = "slider", label = "Größe rechts", key = "textSize", min = 8, max = 20, step = 1, format = px })

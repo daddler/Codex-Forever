@@ -65,6 +65,13 @@ local defaults = {
     targetSheen = true,        -- Glanz laeuft alle paar Sekunden ueber den Balken des Ziels
     hitFlash    = true,        -- Treffer am Ziel blitzt kurz auf
     markMotion  = true,        -- Zielmarken atmen nach aussen
+    -- 6.10.0.0 (Selbsteinschaetzung: "Ruhige Oberflaeche und Wow-Effekt
+    -- beissen sich - fuenfzehn Gegner mit atmendem Ziel, Glanz, Marken und
+    -- Blitzen ist viel Bewegung"): eine Stufe ueber den vier lauten
+    -- Bewegungen. calm = alle vier aus (Standard), lively = alle an,
+    -- custom = die Schalter einzeln. Schadensspur, weiche Balken und Kante
+    -- bleiben eigene Schalter - sie sagen etwas und sind leise.
+    motion      = "calm",      -- calm | lively | custom
 
     enemyInCombat = K.ColorDefault("enemyInCombat"),
     hostile       = K.ColorDefault("hostile"),
@@ -157,9 +164,18 @@ local defaults = {
 }
 
 local S = {}   -- aufgeloeste Einstellungen, neu gelesen bei jeder Aenderung
+-- Die vier lauten Bewegungen, die die Stufe (motion) schaltet.
+NP.MOTION_KEYS = { "targetPulse", "targetSheen", "hitFlash", "markMotion" }
 local function Resolve()
     for k in pairs(defaults) do S[k] = K.Get(KEY, k) end
+    -- Die Stufe gilt, ohne die eigenen Schalter zu ueberschreiben: wer auf
+    -- "Eigene" zurueckwechselt, findet seine Wahl wieder.
+    if S.motion ~= "custom" then
+        local on = (S.motion == "lively")
+        for _, k in ipairs(NP.MOTION_KEYS) do S[k] = on end
+    end
 end
+NP.Resolved = function(k) return S[k] end
 
 --------------------------------------------------
 -- Blizzard-Inhalt unsichtbar stellen
@@ -1826,19 +1842,35 @@ K.Register({
                   { type = "toggle", label = "Maus hebt hervor", key = "hover",
                     description = "Die Plakette unter der Maus hellt auf und kommt nach vorn." })
             B:Section("Bewegung", "Nur am Ziel und bei Treffern – alle anderen Plaketten bleiben still.")
-            B:Row({ type = "toggle", label = "Schadensspur", key = "damageTrail",
-                    description = "Was ein Treffer nimmt, bleibt einen Moment hell stehen und schmilzt dann weg." },
-                  { type = "toggle", label = "Weiche Balken", key = "smoothBars",
-                    description = "Das Leben gleitet zum neuen Wert, statt zu springen – wenn der Client es kann." })
-            B:Row({ type = "toggle", label = "Ziel: Leuchten atmet", key = "targetPulse",
-                    disabled = function() local s = K.Get(KEY, "targetStyle") return s ~= "glow" and s ~= "both" end },
+            B:Row({ type = "dropdown", label = "Bewegung", key = "motion", items = {
+                        { value = "calm",   text = "Ruhig" },
+                        { value = "lively", text = "Lebendig" },
+                        { value = "custom", text = "Eigene (unter „Erweitert“)" } },
+                    description = "Ruhig: das Ziel leuchtet, aber nichts atmet, glänzt oder blitzt. Lebendig: Leuchten atmet, Glanz läuft, Treffer blitzen, Zielmarken bewegen sich." },
+                  { type = "toggle", label = "Schadensspur", key = "damageTrail",
+                    description = "Was ein Treffer nimmt, bleibt einen Moment hell stehen und schmilzt dann weg." })
+            B:Row({ type = "toggle", label = "Weiche Balken", key = "smoothBars",
+                    description = "Das Leben gleitet zum neuen Wert, statt zu springen – wenn der Client es kann." },
                   { type = "toggle", label = "Ziel: Kante in Klassenfarbe", key = "targetEdge" })
-            B:Row({ type = "toggle", label = "Ziel: Glanz läuft über den Balken", key = "targetSheen" },
-                  { type = "toggle", label = "Ziel: Treffer blitzt", key = "hitFlash",
-                    description = "Auch eine Heilung blitzt – ob das Leben sank oder stieg, verrät der Client nicht." })
-            B:Row({ type = "toggle", label = "Zielmarken bewegen sich", key = "markMotion",
-                    disabled = function() local s = K.Get(KEY, "targetStyle") return s ~= "glow" and s ~= "both" end },
+            B:Section("Spieleinstellungen",
+                "Diese Schalter ändern die Einstellung des Spiels selbst und gelten deshalb auch ohne WeintCodex-Plaketten.")
+            B:Row(CVarToggle("Plaketten stapeln", "nameplateMotion", "1", "0",
+                    "An: Plaketten weichen einander aus. Aus: sie dürfen sich überlappen."),
+                  CVarToggle("Gegnerische Begleiter", "nameplateShowEnemyPets", "1", "0"))
+            B:Row(CVarToggle("Gegnerische Diener", "nameplateShowEnemyMinions", "1", "0"),
                   { type = "empty" })
+            B:Advanced()
+            B:Section("Bewegung einzeln", "Gilt nur mit „Bewegung: Eigene“.")
+            local notCustom = function() return K.Get(KEY, "motion") ~= "custom" end
+            local glowOff = function()
+                local s = K.Get(KEY, "targetStyle")
+                return notCustom() or (s ~= "glow" and s ~= "both")
+            end
+            B:Row({ type = "toggle", label = "Ziel: Leuchten atmet", key = "targetPulse", disabled = glowOff },
+                  { type = "toggle", label = "Ziel: Glanz läuft über den Balken", key = "targetSheen", disabled = notCustom })
+            B:Row({ type = "toggle", label = "Ziel: Treffer blitzt", key = "hitFlash", disabled = notCustom,
+                    description = "Auch eine Heilung blitzt – ob das Leben sank oder stieg, verrät der Client nicht." },
+                  { type = "toggle", label = "Zielmarken bewegen sich", key = "markMotion", disabled = glowOff })
             B:Section("Hinrichtungsmarke",
                 "Ein fester Strich im Balken zeigt, ab wann Fähigkeiten wie Hinrichten wirken.")
             B:Row({ type = "toggle", label = "Anzeigen", key = "executeMark" },
@@ -1852,15 +1884,28 @@ K.Register({
                   { type = "color", label = "Randfarbe", key = "borderColor",
                     disabled = function() return not K.Get(KEY, "showBorder") end })
             B:Row({ type = "color", label = "Hintergrund", key = "bgColor" }, { type = "empty" })
-            B:Section("Spieleinstellungen",
-                "Diese Schalter ändern die Einstellung des Spiels selbst und gelten deshalb auch ohne WeintCodex-Plaketten.")
-            B:Row(CVarToggle("Plaketten stapeln", "nameplateMotion", "1", "0",
-                    "An: Plaketten weichen einander aus. Aus: sie dürfen sich überlappen."),
-                  CVarToggle("Gegnerische Begleiter", "nameplateShowEnemyPets", "1", "0"))
-            B:Row(CVarToggle("Gegnerische Diener", "nameplateShowEnemyMinions", "1", "0"),
-                  { type = "empty" })
         end },
-        { key = "farben", label = "Farben", build = function(B)
+        { key = "farben", label = "Bedrohung & Farben", build = function(B)
+            B:Section("Bedrohung",
+                "Ob du Tank bist, liest WeintCodex aus der zugewiesenen Gruppenrolle. Ohne zugewiesene Rolle gelten die Farben für Schaden und Heilung.")
+            B:Row({ type = "toggle", label = "Bedrohungsfarben", key = "threatColors" },
+                  { type = "dropdown", label = "Bedrohung in %", key = "threatText", items = {
+                        { value = "right",   text = "Rechts neben dem Balken" },
+                        { value = "topleft", text = "Oben links" },
+                        { value = "none",    text = "Aus" } },
+                    description = "Deine Bedrohung auf diesem Gegner; 100 % heißt: du hast die Aggro. Nur im Kampf und solange du auf seiner Liste stehst." })
+            B:Row({ type = "toggle", label = "Bedrohungsleiste", key = "threatBar",
+                    description = "Dünne Leiste unter dem Leben: voll heißt, du ziehst die Aggro. Grau weit weg, orange kurz davor, rot mit Aggro – als Tank grün, solange du sie hältst." },
+                  { type = "dropdown", label = "Wer die Aggro hat", key = "aggroName", items = {
+                        { value = "problem", text = "Wenn nicht beim Tank" },
+                        { value = "always",  text = "Immer" },
+                        { value = "none",    text = "Aus" } },
+                    description = "Name unter der Plakette, nur in einer Gruppe. „Wenn nicht beim Tank“: nur wenn jemand ohne Tankrolle den Gegner hält – auch du selbst („Aggro: Du“). Ohne zugewiesene Rollen erscheint der Name immer." })
+            B:Row({ type = "slider", label = "Höhe der Leiste", key = "threatBarHeight", min = 2, max = 6, step = 1,
+                    format = function(v) return string.format("%d px", v) end,
+                    disabled = function() return not K.Get(KEY, "threatBar") end },
+                  { type = "empty" })
+            B:Advanced()
             B:Section("Gegner")
             B:Row({ type = "color", label = "Feind im Kampf", key = "enemyInCombat" },
                   { type = "color", label = "Feind außerhalb des Kampfes", key = "hostile",
@@ -1882,25 +1927,7 @@ K.Register({
             B:Row({ type = "toggle", label = "Ziel eigens färben", key = "targetColorEnabled" },
                   { type = "color", label = "Ziel", key = "target",
                     disabled = function() return not K.Get(KEY, "targetColorEnabled") end })
-            B:Section("Bedrohung",
-                "Ob du Tank bist, liest WeintCodex aus der zugewiesenen Gruppenrolle. Ohne zugewiesene Rolle gelten die Farben für Schaden und Heilung.")
-            B:Row({ type = "toggle", label = "Bedrohungsfarben", key = "threatColors" },
-                  { type = "dropdown", label = "Bedrohung in %", key = "threatText", items = {
-                        { value = "right",   text = "Rechts neben dem Balken" },
-                        { value = "topleft", text = "Oben links" },
-                        { value = "none",    text = "Aus" } },
-                    description = "Deine Bedrohung auf diesem Gegner; 100 % heißt: du hast die Aggro. Nur im Kampf und solange du auf seiner Liste stehst." })
-            B:Row({ type = "toggle", label = "Bedrohungsleiste", key = "threatBar",
-                    description = "Dünne Leiste unter dem Leben: voll heißt, du ziehst die Aggro. Grau weit weg, orange kurz davor, rot mit Aggro – als Tank grün, solange du sie hältst." },
-                  { type = "dropdown", label = "Wer die Aggro hat", key = "aggroName", items = {
-                        { value = "problem", text = "Wenn nicht beim Tank" },
-                        { value = "always",  text = "Immer" },
-                        { value = "none",    text = "Aus" } },
-                    description = "Name unter der Plakette, nur in einer Gruppe. „Wenn nicht beim Tank“: nur wenn jemand ohne Tankrolle den Gegner hält – auch du selbst („Aggro: Du“). Ohne zugewiesene Rollen erscheint der Name immer." })
-            B:Row({ type = "slider", label = "Höhe der Leiste", key = "threatBarHeight", min = 2, max = 6, step = 1,
-                    format = function(v) return string.format("%d px", v) end,
-                    disabled = function() return not K.Get(KEY, "threatBar") end },
-                  { type = "empty" })
+            B:Section("Bedrohungsfarben")
             local noThreat = function() return not (K.Get(KEY, "threatColors") or K.Get(KEY, "threatBar")) end
             B:Row({ type = "color", label = "Tank: hält die Aggro", key = "tankAggro", disabled = noThreat },
                   { type = "color", label = "Tank: verliert sie", key = "tankLosing", disabled = noThreat })
@@ -1913,6 +1940,7 @@ K.Register({
                     get = NP.NamePlace, set = NP.SetNamePlace,
                     description = "Stellt die Textplätze unten passend ein; dort lässt sich alles weiter einzeln belegen." },
                   { type = "empty" })
+            B:Advanced()
             B:Section("Textplätze")
             B:Row({ type = "dropdown", label = "Oben", key = "textTop", items = SLOT_ITEMS },
                   { type = "dropdown", label = "Mitte", key = "textCenter", items = SLOT_ITEMS })
@@ -1961,6 +1989,7 @@ K.Register({
                     description = "„8/10“, wenn der Gegner zu einer deiner Quests gehört. Nicht in Dungeons." },
                   { type = "empty" })
             B:Note("Auf dem neuen Client liest das Spiel die Auren selbst und reicht sie an die Plakette – WeintCodex sieht sie dabei nicht. Deshalb gibt es hier keine Liste einzelner Zauber zum Ein- und Ausblenden.")
+            B:Advanced()
             B:Section("Zustand",
                 "Gilt für alle Auren: Plaketten, Zielrahmen, Gruppe. Wirkt sofort. Erscheinen keine Debuffs, hier den anderen Weg wählen und mit einem Gegner als Ziel /wcui auren eingeben – die Zeilen im Chat sagen, woran es liegt.")
             B:Row({ type = "dropdown", label = "Weg", items = {
@@ -1996,6 +2025,7 @@ K.Register({
             B:Row({ type = "toggle", label = "Ziel des Zaubers", key = "castTarget", disabled = off,
                     description = "Rechts im Balken, auf wen der Gegner zaubert – „Dich“ in Rot, Spieler in Klassenfarbe." },
                   { type = "empty" })
+            B:Advanced()
             B:Section("Unterbrechen")
             B:Row({ type = "color", label = "Unterbrechbar", key = "castColor", disabled = off },
                   { type = "color", label = "Nicht unterbrechbar", key = "castLocked", disabled = off })
