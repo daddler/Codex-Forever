@@ -50,6 +50,7 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 - [ ] Lehrer (Klasse und Beruf): eine Zeile wählen – sie bleibt markiert
 - [ ] Bedrohungsleiste an den Plaketten: allein ohne Begleiter keine; als Tank in der Gruppe zeigt sie den Nächsten und wird orange, wenn er nah dran ist
 - [ ] Bedrohungsfarben in der Gruppe: der Lebensbalken wird rot, wenn du als DD die Aggro ziehst, orange kurz davor; allein bleibt er in seiner Farbe
+- [ ] Fenster verschieben: Charakterfenster ziehen, schließen, wieder öffnen – steht am neuen Platz; Umschalt+Rechtsklick setzt zurück; Zauberbuch im Kampf öffnen – keine Fehlermeldung
 - [ ] Würfeln um Beute (Gruppe, Beute ab „Selten“): Kachel, Rand in der Qualität, Zeit läuft sichtbar ab; `/wcui fenster` mit der Maus über dem Wurf, solange er läuft
 - [ ] Spielmenü (Esc), Optionen des Spiels, Makros (/m)
 - [ ] Gilde & Communitys, Suche nach Gruppe, Sammlung

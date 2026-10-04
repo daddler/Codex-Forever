@@ -9,6 +9,24 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.4.0] – 2026-10-04
+
+**Fenster lassen sich verschieben.** Charakter, Zauberbuch, Bank, Post, Händler, Karte, Berufe und viele mehr: an einer freien Stelle (Titel, Rand) mit der linken Maustaste ziehen. Der Platz bleibt gemerkt und gilt beim nächsten Öffnen wieder. Umschalt + Rechtsklick auf ein Fenster setzt es an seinen alten Platz zurück, /wcui fenster zurück alle.
+
+### Technisch
+
+Beta-Test: „Das Verschieben von Fenstern [wie in MoveAny] finde ich richtig gut und das soll auch in Codex drin sein. Nur Fenster, die man öffnet. Keine Einstellungsoption, von vornherein drin.“
+
+- **Kein Code aus MoveAny.** Seine Lizenz ist „All Rights Reserved“ (Ansehen ja, Weitergeben nein) – dieselbe Lage wie bei EllesmereUI. Übernommen ist nur das Verhalten, der Code ist eigen.
+- **`ui/movewindows.lua`** (`WeintCodex.UIMoveWindows`), kein Modul, kein Schalter, unabhängig vom Hauptschalter der Oberfläche; Start bei `PLAYER_LOGIN`, nachgeladene Fenster (`Blizzard_*`) bei `ADDON_LOADED`. Liste `MW.WINDOWS` (53 Namen; was der Client nicht kennt, fällt heraus). Nur oberste Fenster (Eltern = `UIParent`) – ein Reiter wie `SpellBookFrame` löst sich nicht von seinem Fenster.
+- **Ziehen:** `SetMovable`, `RegisterForDrag("LeftButton")`, am Bildschirm gehalten; Fenster ohne Maus bekommen sie. Nach dem Loslassen `SetUserPlaced(false)` (sonst speicherte der Client den Platz im eigenen Layout und nähme das Fenster aus seiner Anordnung) und ein fester Anker `TOPLEFT` an `UIParent BOTTOMLEFT`.
+- **Merken:** obere linke Ecke je Fenster, kontoweit in `WeintCodex_SavedData.ui.windowPos`. Gesetzt bei `OnShow` **und** nach `UpdateUIPanelPositions` (`hooksecurefunc`) – das Spiel ordnet seine Fenster beim Zeigen neu an. Nicht während des Ziehens, nicht bei vergrößerter Karte.
+- **Kampf:** geschützte Fenster werden im Kampf weder gezogen, gesetzt noch eingerichtet; nachgeholt bei `PLAYER_REGEN_ENABLED`.
+- **Zurück:** Umschalt + Rechtsklick (`MW.Reset`: der erste Anker, den das Spiel gesetzt hatte – gemerkt, solange er nicht unserer ist); `/wcui fenster zurück` (`MW.ResetAll`). Hinweis (keine Einstellung) auf der Seite „Tooltip & Fenster“; `/wcui fenster` nennt den Stand.
+- **MoveAny oder BlizzMove geladen:** WeintCodex tritt zurück (zwei Addons, die dasselbe Fenster setzen, kämpfen bei jedem Öffnen).
+- `load_test.lua`: Vorrang für MoveAny, oberstes Fenster ja/Teilfenster nein, Maus, Ziehen und Merken (gerundet, verankert, nicht im Layout des Spiels), nach dem Ordnen des Spiels wieder hin, Platz des Spiels gemerkt und beim erneuten Öffnen nicht überschrieben, nicht beim Ziehen versetzt, Kampf (setzen und einrichten nachgeholt), vergrößerte Karte, Umschalt+Rechtsklick, `/wcui fenster zurück`. Gegenproben: 17, alle gefangen – drei erst nach geschärftem Test.
+- **Ungemessen:** ob Forever beim Verschieben aus Addon-Code Fehler („blockiert“) meldet, vor allem an Zauberbuch und Talenten im Kampf. Gebaut ist es so, dass geschützte Fenster im Kampf nicht angefasst werden.
+
 ## [6.10.3.4] – 2026-10-04
 
 **Die Bedrohungsleiste lässt sich einstellen.** Unter Namensplaketten → Bedrohung & Farben hat die Leiste jetzt einen eigenen Abschnitt: ab wie viel Prozent sie warnt, ob sie auch allein erscheint, ob sie dir als Tank den Nächsten oder deine eigene Bedrohung zeigt – und alle Farben, auch das Grau für „weit weg“. Die Vorschau oben zeigt sofort, was sich ändert.

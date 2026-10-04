@@ -3168,6 +3168,26 @@ Metall, Ring, Porträt (`PortraitContainer`, ganz), Streifen, Knopf
 anderen Fenstern. **Ungemessen:** Berufslehrer mit der Leiste der
 Fertigkeit (`ClassTrainerStatusBar`) – Hülle und Gold.
 
+### Fenster verschieben *(6.10.4.0, `ui/movewindows.lua`)*
+
+Beta-Test: wie MoveAny, „nur Fenster, die man öffnet“, **ohne
+Einstellung**, von vornherein an – auch ohne Hauptschalter der
+Oberfläche (verschoben wird nur, was jemand zieht). MoveAny ist „All
+Rights Reserved“: Verhalten übernommen, kein Code.
+
+| Was | Wie |
+|---|---|
+| ziehen | linke Maustaste auf freier Stelle (Titel, Rand); am Bildschirm gehalten; danach `SetUserPlaced(false)` und Anker `TOPLEFT` an `UIParent BOTTOMLEFT` |
+| merken | `ui.windowPos[name] = { x, y }` (obere linke Ecke, kontoweit) |
+| setzen | `OnShow` und nach `UpdateUIPanelPositions` (das Spiel ordnet beim Zeigen neu); nicht beim Ziehen, nicht bei vergrößerter Karte |
+| Kampf | geschützte Fenster weder ziehen, setzen noch einrichten; `PLAYER_REGEN_ENABLED` holt nach |
+| zurück | Umschalt + Rechtsklick (erster Anker des Spiels, gemerkt solange er nicht unserer ist); `/wcui fenster zurück` alle |
+| welche | `MW.WINDOWS`, nur oberste (Eltern `UIParent`); `ADDON_LOADED` nimmt nachgeladene dazu |
+| Vorrang | MoveAny oder BlizzMove geladen: WeintCodex tut nichts |
+
+**Ungemessen:** ob Forever beim Setzen der Fenster aus Addon-Code etwas
+blockiert. Falls ja, nennt es die Fehlerliste von `/wcui prüfen`.
+
 ### Würfeln um Beute *(6.10.3.1, `ui/lootroll.lua`)*
 
 `GroupLootFrame1..4` (Bedarf/Gier/Passen) sind kein Fenster aus

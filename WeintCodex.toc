@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.10.3.4
+## Version: 6.10.4.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -150,6 +150,8 @@ core/search.lua
 ui/kit.lua
 # Bericht zum Kopieren (6.10.2.0): /wcui fenster und /wcui pruefen.
 ui/report.lua
+# Fenster verschieben (6.10.4.0): ziehen, merken, Umschalt+Rechtsklick zurueck. Immer an.
+ui/movewindows.lua
 # Dein Profil bleibt deins (6.9.0.0): Layout und Spieleinstellungen von
 # vorher merken und beim Ausschalten zurueckgeben.
 ui/profile.lua

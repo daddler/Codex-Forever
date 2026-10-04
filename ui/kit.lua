@@ -1299,6 +1299,11 @@ function K.InspectWindow()
         local ok, line = pcall(W.Status)
         if ok and line then out[#out + 1] = line end
     end
+    local MW = WeintCodex.UIMoveWindows
+    if MW and MW.Status then
+        local ok, line = pcall(MW.Status)
+        if ok and line then out[#out + 1] = line end
+    end
     -- Bausteine dieses Fensters: welche Art sie einem Bild geben.
     local CP = WeintCodex.UICalmParts
     local okName, topName = pcall(function() return top:GetName() end)

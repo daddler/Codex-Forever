@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.4.0",
+        date    = "04.10.2026",
+        notes   = {
+            "|cff7C6CFFFenster lassen sich verschieben.|r Charakter, Zauberbuch, Bank, Post, Händler, Karte, Berufe und viele mehr: an einer freien Stelle (Titel, Rand) mit der linken Maustaste ziehen. Der Platz bleibt gemerkt und gilt beim nächsten Öffnen wieder. Umschalt + Rechtsklick auf ein Fenster setzt es an seinen alten Platz zurück, /wcui fenster zurück alle.",
+        },
+    },
+    {
         version = "6.10.3.4",
         date    = "04.10.2026",
         notes   = {

@@ -10838,6 +10838,152 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.10.4.0: Fenster verschieben (wie MoveAny, eigener Code). Ziehen,
+-- merken, nach dem Ordnen des Spiels wieder hin, im Kampf geschuetzte
+-- Fenster nicht anfassen, Umschalt+Rechtsklick zurueck, Platz zurueck fuer
+-- alle, Reiter nicht loesen, vergroesserte Karte nicht, MoveAny/BlizzMove
+-- haben Vorrang.
+do
+    local MW = WeintCodex.UIMoveWindows
+    local names = { "CharacterFrame", "SpellBookFrame", "PlayerSpellsFrame", "WorldMapFrame", "MacroFrame",
+                    "C_AddOns", "InCombatLockdown", "IsShiftKeyDown", "UpdateUIPanelPositions", "hooksecurefunc" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = _G[n] end
+    local ok, err = pcall(function()
+        assert(MW and MW.Start and MW.Hook and MW.Apply, "ui/movewindows.lua fehlt")
+        -- Ein Fenster mit echten Ankern und Kanten.
+        local function Win(name, parent)
+            local f = CreateFrame("Frame", name, parent or UIParent)
+            f._pt = { "TOPLEFT", UIParent, "TOPLEFT", 16, -116 }
+            f.SetPoint = function(self, p, rel, rp, x, y) self._pt = { p, rel, rp, x, y } end
+            f.ClearAllPoints = function(self) self._pt = {} end
+            f.GetPoint = function(self) local q = self._pt return q[1], q[2], q[3], q[4], q[5] end
+            f._l, f._t = 16, 700
+            f.GetLeft = function(self) return self._l end
+            f.GetTop = function(self) return self._t end
+            f.StartMoving = function(self) self._moving = true end
+            f.StopMovingOrSizing = function(self) self._moving = false end
+            f.SetUserPlaced = function(self, v) self._userPlaced = v end
+            f.IsProtected = function(self) return self._protected or false end
+            f:Hide()
+            return f
+        end
+        local loaded = {}
+        _G.C_AddOns = { IsAddOnLoaded = function(a) return loaded[a] or false end }
+        local combat = false
+        _G.InCombatLockdown = function() return combat end
+        local shift = false
+        _G.IsShiftKeyDown = function() return shift end
+        local uiHook
+        _G.UpdateUIPanelPositions = function() end
+        _G.hooksecurefunc = function(a, b) if a == "UpdateUIPanelPositions" then uiHook = b end end
+        local store = MW.Store()
+        for k in pairs(store) do store[k] = nil end
+        -- Vorrang fuer MoveAny.
+        loaded.MoveAny = true
+        local cf = Win("CharacterFrame")
+        _G.CharacterFrame = cf
+        assert(MW.Start() == false and not MW.active and MW.Status():find("MoveAny", 1, true), "MoveAny geladen, trotzdem aktiv")
+        assert(not MW.hooked[cf], "neben MoveAny eingerichtet")
+        loaded.MoveAny = nil
+        -- Normal: oberstes Fenster ja, Reiter (Eltern = anderes Fenster) nein.
+        local psf = Win("PlayerSpellsFrame")
+        psf.IsMouseEnabled = function(self) return self._mouse or false end
+        psf.EnableMouse = function(self, v) self._mouse = v end
+        _G.PlayerSpellsFrame = psf
+        local sbf = Win("SpellBookFrame", psf)
+        _G.SpellBookFrame = sbf
+        MW._uiHook = nil
+        assert(MW.Start() and MW.active, "nicht gestartet")
+        assert(MW.hooked[cf] == "CharacterFrame" and MW.hooked[psf], "Fenster nicht eingerichtet")
+        assert(not MW.hooked[sbf], "Teilfenster wird vom Fenster geloest")
+        assert(psf._mouse == true, "Fenster ohne Maus bleibt unziehbar")
+        assert(type(uiHook) == "function", "Ordnen des Spiels nicht beobachtet")
+        -- Ziehen und merken.
+        cf:Show()
+        cf._scripts.OnDragStart(cf)
+        assert(cf._moving, "Ziehen beginnt nicht")
+        cf._l, cf._t = 300.4, 650.6
+        cf._scripts.OnDragStop(cf)
+        assert(not cf._moving and cf._userPlaced == false, "Layout des Spiels uebernimmt den Platz")
+        assert(store.CharacterFrame and store.CharacterFrame.x == 300 and store.CharacterFrame.y == 651, "Platz nicht gemerkt")
+        assert(cf._pt[1] == "TOPLEFT" and cf._pt[2] == UIParent and cf._pt[3] == "BOTTOMLEFT" and cf._pt[4] == 300,
+            "nach dem Ziehen nicht an den gemerkten Platz verankert")
+        -- Zu, das Spiel setzt es beim naechsten Oeffnen an seinen Platz:
+        -- nach dem Ordnen wieder unserer.
+        cf:Hide()
+        cf._scripts.OnShow(cf)
+        cf._pt = { "TOPLEFT", UIParent, "TOPLEFT", 16, -116 }   -- UpdateUIPanelPositions
+        cf:Show()
+        uiHook()
+        assert(cf._pt[3] == "BOTTOMLEFT" and cf._pt[4] == 300 and cf._pt[5] == 651, "nach dem Ordnen des Spiels nicht am Platz")
+        assert(MW.default[cf] and MW.default[cf].x == 16 and MW.default[cf].y == -116, "Platz des Spiels nicht gemerkt")
+        -- Wieder oeffnen: beim Zeigen steht es noch an UNSEREM Platz - das
+        -- ist nicht der Platz des Spiels und ueberschreibt ihn nicht.
+        cf:Hide()
+        cf:Show()
+        cf._scripts.OnShow(cf)
+        assert(MW.default[cf].x == 16 and MW.default[cf].y == -116, "eigener Platz als Platz des Spiels gemerkt")
+        -- Mitten im Ziehen ordnet das Spiel: das Fenster bleibt an der Maus.
+        cf._scripts.OnDragStart(cf)
+        cf._pt = { "CENTER", UIParent, "CENTER", 7, 7 }
+        uiHook()
+        assert(cf._pt[1] == "CENTER", "Fenster beim Ziehen weggesetzt")
+        cf._l, cf._t = 300, 651
+        cf._scripts.OnDragStop(cf)
+        -- Im Kampf: ein geschuetztes Fenster wird nicht angefasst, danach schon.
+        cf._protected, combat = true, true
+        cf._pt = { "TOPLEFT", UIParent, "TOPLEFT", 16, -116 }
+        uiHook()
+        assert(cf._pt[4] == 16 and MW.pending[cf], "geschuetztes Fenster im Kampf gesetzt")
+        cf._scripts.OnDragStart(cf)
+        assert(not cf._moving, "geschuetztes Fenster im Kampf gezogen")
+        combat = false
+        stub.FireEvent("PLAYER_REGEN_ENABLED")
+        assert(cf._pt[4] == 300 and not MW.pending[cf], "nach dem Kampf nicht nachgeholt")
+        cf._protected = false
+        -- Ein geschuetztes Fenster, das im Kampf erst auftaucht: Einrichten nachgeholt.
+        local mf = Win("MacroFrame")
+        mf._protected = true
+        combat = true
+        _G.MacroFrame = mf
+        stub.FireEvent("ADDON_LOADED", "Blizzard_MacroUI")
+        assert(not MW.hooked[mf], "geschuetztes Fenster im Kampf eingerichtet")
+        combat = false
+        stub.FireEvent("PLAYER_REGEN_ENABLED")
+        assert(MW.hooked[mf] == "MacroFrame", "Einrichten nach dem Kampf nicht nachgeholt")
+        -- Vergroesserte Karte: nicht ziehen.
+        local map = Win("WorldMapFrame")
+        _G.WorldMapFrame = map
+        map.IsMaximized = function() return true end
+        stub.FireEvent("ADDON_LOADED", "Blizzard_WorldMap")
+        assert(MW.hooked[map], "Karte nicht eingerichtet")
+        map:Show()
+        map._scripts.OnDragStart(map)
+        assert(not map._moving, "vergroesserte Karte gezogen")
+        store.WorldMapFrame = { x = 5, y = 6 }
+        map._scripts.OnShow(map)
+        assert(map._pt[4] ~= 5, "vergroesserte Karte versetzt")
+        store.WorldMapFrame = nil
+        -- Umschalt + Rechtsklick: an den Platz des Spiels.
+        cf._scripts.OnMouseUp(cf, "RightButton")
+        assert(store.CharacterFrame, "Rechtsklick ohne Umschalt setzt zurueck")
+        shift = true
+        cf._scripts.OnMouseUp(cf, "RightButton")
+        shift = false
+        assert(store.CharacterFrame == nil and cf._pt[3] == "TOPLEFT" and cf._pt[4] == 16, "Umschalt+Rechtsklick setzt nicht zurueck")
+        -- /wcui fenster zurück: alle.
+        store.CharacterFrame, store.PlayerSpellsFrame = { x = 1, y = 2 }, { x = 3, y = 4 }
+        SlashCmdList["WEINTCODEXUI"]("fenster zurück")
+        assert(next(store) == nil, "/wcui fenster zurück laesst Plaetze stehen")
+        assert(MW.Status():find("ziehbar", 1, true), "Status: " .. MW.Status())
+        for f in pairs(MW.hooked) do MW.hooked[f] = nil end
+    end)
+    for i, n in ipairs(names) do _G[n] = saved[i] end
+    Check(ok, "Fenster verschieben: ziehen, merken, nach dem Ordnen wieder hin, Kampf, Reiter, Karte, zurueck, MoveAny hat Vorrang"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 --------------------------------------------------
 
 print("")
