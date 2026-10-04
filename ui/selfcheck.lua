@@ -194,7 +194,9 @@ Check("Chat", function(add)
         local locked = ok and K.Bool(v, false)
         add(locked and SC.BAD or SC.OK, "Chat gesperrt für Addons gerade: " .. (ok and Show(v) or "Abfrage scheiterte"))
     end
-    add(SC.OPEN, "Ob eine Meldung ankommt, zeigt nur ein Versuch: nach einem Kampf in der Schadensanzeige 'In den Chat melden' → Gruppe oder Sagen.")
+    -- Gemessen 04.10.2026 (Client 1.60.1, Build 70205): eine Meldung an die
+    -- Gruppe kommt an. Kein [?] mehr bei jedem Lauf - nur noch ein Hinweis.
+    add("", "   Gemessen: eine Meldung an die Gruppe kommt an (Client 1.60.1, Build 70205).")
 end)
 
 Check("Mikromenü", function(add)

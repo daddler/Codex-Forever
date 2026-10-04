@@ -957,8 +957,9 @@ Seit 6.2.0.0:
     sagt ein Hinweis im eigenen Chat. Kanäle nach Lage
     (`DM.ReportChannels`). **Gemessen (04.10.2026, Client 1.60.1, Build 70205, `/wcui prüfen`):**
     `C_ChatInfo.InChatMessagingLockdown()` ist `false` (allein, im Kampf,
-    offene Welt). Ob eine Meldung ankommt, ist ungemessen – `pcall`
-    fängt eine Sperre nicht (siehe Raidmarkierungen).
+    offene Welt), und eine Meldung an die **Gruppe kommt an** (Gruppe zu
+    zweit, nach dem Kampf). Schlachtzug, Gilde, Flüstern ungemessen –
+    `pcall` fängt eine Sperre nicht (siehe Raidmarkierungen).
   **Aufschlüsselung seit 6.6.2.1** (Beta-Test: „frei verschieben, mehr
   Informationen, Vergleich, Graphen, Auren – auch Bufffood,
   Fläschchen“):
@@ -1255,7 +1256,7 @@ Fassung des Clients eine Antwort nicht stillschweigend überholt.
 | Bedrohung anderer Spieler geheim? | nein, alle fünf Werte offen (`party1`: `scaledPercent` 78,18 bei `rawPercent` 86 – genau 86 / 1,10, die Nahkampfgrenze von Classic) | 04.10.2026, 1.60.1 (70205), Gruppe zu zweit, im Kampf |
 | Messarten in `Enum.DamageMeterType` | alle elf aus `DM.MODES` | 04.10.2026, 1.60.1 (70205) |
 | Chat für Addons gesperrt (`InChatMessagingLockdown`)? | nein | 04.10.2026, 1.60.1 (70205), offene Welt, im Kampf |
-| Meldung in den Chat kommt an? | **ungemessen** | – |
+| Meldung in den Chat kommt an? | ja, Kanal Gruppe | 04.10.2026, 1.60.1 (70205), Gruppe zu zweit, nach dem Kampf |
 | Mikromenü geschützt? | nein (`MicroMenuContainer`, `MicroMenu`) | 04.10.2026, 1.60.1 (70205) |
 | Einstellungen werden gespeichert? | ja | 04.10.2026, 1.60.1 (70205) |
 | `issecretvalue` vorhanden? | ja | 04.10.2026, 1.60.1 (70205) |
