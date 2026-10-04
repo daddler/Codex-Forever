@@ -1077,6 +1077,57 @@ einen Mark über den Kopf bekommen. Einstellbar, welches Mark.“
 - **Status:** „(wartet auf Klick)“ hinter jedem Namen, der noch nicht
   markiert ist – nie „markiert“ ohne Klick.
 
+## 6.10.0.0: Antworten auf die eigene Einschätzung
+
+Selbsteinschätzung der Oberfläche (Gesamt 6,5 von 10) mit fünf Punkten,
+alle umgesetzt:
+
+1. **Fenster in Gold aus Bausteinen** (`ui/calmparts.lua`, `CP.New`).
+   Handel, Bank und Post waren dreimal derselbe Ablauf. Jetzt beschreibt
+   ein Fenster nur noch seine gemessenen Bilder: `files` (Bild → Art),
+   `atlases` (Muster → Art), `money`, `moneyOf`, `tabs`, `after`,
+   `report`. Arten: `slot` (weg, Rahmen flach), `field` (weg, Leiste mit
+   Rand), `strip` (weg, Leiste ohne Rand), `bg` (weg, Innenfläche),
+   `decor` (weg). Die Regeln gelten an einer Stelle: Symbol, Qualität und
+   Überlagerung bleiben; ausgeblendet nur, solange das Bild ein gemessenes
+   ist; nichts wird im Takt neu gesetzt; `InsetFrameTemplate` wird
+   Innenfläche. Eine unbekannte Art lehnt `CP.New` ab. Das Auktionshaus
+   (Navigation, Spaltenköpfe ohne Wiederzeigen) und die älteren Fenster
+   (Händler, Beute, Makros, Gespräche) sind **noch nicht** umgestellt.
+   Der Ladetest fand dabei einen Fehler: `spec.money or {}` legte im Takt
+   je Aufruf eine Tabelle an.
+2. **Einstellungen in zwei Stufen** (`ui/options.lua`). Was nach
+   `B:Advanced()` steht (bis `B:EndAdvanced()` oder zum Seitenende), ist
+   zugeklappt. Der Knopf nennt die Zahl („Erweitert: 12 Einstellungen
+   einblenden“), ein Klick klappt auf **jeder** Seite auf
+   (`general.showAdvanced`, `O.SetAdvanced` verwirft die gebauten Seiten
+   und baut die aktuelle an derselben Stelle neu). Markiert: Plaketten
+   (alle sechs Seiten), Einheitenrahmen (Schrift, Zauberbalken),
+   Schadensanzeige (Melden). Die Werte gelten auch zugeklappt.
+   **Suche** oben rechts: `O.SearchIndex` liest jede Seite einmal mit
+   einem Mitschreiber (`Recorder`: dieselben Methoden wie der
+   Seitenbauer, baut nichts; unbekannte Methoden, also Großbuchstabe vorn,
+   tun nichts, Felder bleiben `nil`). `O.Search` vergleicht klein, auch
+   Umlaute (`O.Fold`), als Text statt als Lua-Muster („in %“). Ein Klick
+   öffnet die Seite und klappt „Erweitert“ auf, wenn der Treffer dort
+   steht. Eine Seite links ersetzt die Treffer.
+3. **Prüfliste im Spiel** vor jedem Release:
+   `docs/development/release-checklist.md`, etwa zehn Minuten.
+4. **Plaketten: Bewegung „Ruhig“ als Standard** (`motion`: `calm` |
+   `lively` | `custom`). Die Stufe schaltet die vier lauten Bewegungen
+   (`NP.MOTION_KEYS`: Atmen, Glanz, Trefferblitz, bewegte Marken) beim
+   Einlesen (`Resolve`), ohne die eigenen Schalter zu überschreiben. Wer
+   auf „Eigene“ zurückwechselt, findet seine Wahl wieder. Schadensspur,
+   weiche Balken und Kante bleiben eigene Schalter: Sie sind leise und
+   sagen etwas.
+5. **Breiten gerechnet** in der Schadensanzeige. Die Kopfzeile teilt sich
+   nach `DM.HeaderWidths` (Zeitraum gibt bis 44 nach, Titel mindestens 50).
+   Das geht erst ab **220 px** auf (`DM.MIN_WIDTH`), ältere schmalere
+   Einstellungen werden gehoben. Der Name einer Zeile bekommt, was die
+   gemessene Zahl rechts übrig lässt (`Win:FitName`); ist die Breite
+   geheim, bleibt es bei 55 %. Andere Module sind darauf **nicht**
+   durchgesehen.
+
 ## Namensplaketten 3.0: Bewegung *(6.8.1.0, `ui/nameplates.lua`)*
 
 Beta-Test: „insgesamt wirklich schon gut, aber es fehlt noch etwas

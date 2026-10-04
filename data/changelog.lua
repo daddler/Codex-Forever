@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.0.0",
+        date    = "04.10.2026",
+        notes   = {
+            "|cff7C6CFFEinstellungen suchen.|r Oben rechts im Einstellungsfenster: ein Wort tippen, auf den Treffer klicken – die richtige Seite öffnet sich.",
+            "|cff7C6CFFWeniger Schalter auf einen Blick.|r Feineinstellungen wie einzelne Farben, Schriftgrößen und Textplätze liegen unter „Erweitert“ und sind zugeklappt. Ein Klick blendet sie auf allen Seiten ein; was du dort eingestellt hast, gilt weiter.",
+            "|cff7C6CFFRuhigere Namensplaketten.|r Neue Wahl „Bewegung“: Ruhig (Standard), Lebendig oder Eigene. Ruhig: Das Ziel leuchtet, aber nichts atmet, glänzt oder blitzt mehr. Wer es lebendig mag, stellt es um.",
+            "|cff7C6CFFSchadensanzeige ohne Überlappen.|r Titel, Zeitraum und Knöpfe teilen sich die Kopfzeile, Name und Zahl die Zeile – nichts liegt mehr übereinander. Das Fenster ist dafür mindestens 220 Punkte breit.",
+        },
+    },
+    {
         version = "6.9.1.3",
         date    = "04.10.2026",
         notes   = {

@@ -9,6 +9,27 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.0.0] – 2026-10-04
+
+**Einstellungen suchen.** Oben rechts im Einstellungsfenster: ein Wort tippen, auf den Treffer klicken – die richtige Seite öffnet sich.
+
+**Weniger Schalter auf einen Blick.** Feineinstellungen wie einzelne Farben, Schriftgrößen und Textplätze liegen unter „Erweitert“ und sind zugeklappt. Ein Klick blendet sie auf allen Seiten ein; was du dort eingestellt hast, gilt weiter.
+
+**Ruhigere Namensplaketten.** Neue Wahl „Bewegung“: Ruhig (Standard), Lebendig oder Eigene. Ruhig: Das Ziel leuchtet, aber nichts atmet, glänzt oder blitzt mehr. Wer es lebendig mag, stellt es um.
+
+**Schadensanzeige ohne Überlappen.** Titel, Zeitraum und Knöpfe teilen sich die Kopfzeile, Name und Zahl die Zeile – nichts liegt mehr übereinander. Das Fenster ist dafür mindestens 220 Punkte breit.
+
+### Technisch
+
+Antwort auf die eigene Einschätzung der Oberfläche (6,5 von 10), alle fünf Punkte:
+
+- **Bausteine für Fenster in Gold** (`ui/calmparts.lua`, `CP.New`): Handel, Bank und Post beschreiben nur noch ihre gemessenen Bilder (Art `slot`/`field`/`strip`/`bg`/`decor`), der Ablauf steht an einer Stelle. Unterm Strich rund 120 Zeilen weniger. Verhalten unverändert; die Tests der drei Fenster laufen unverändert. Dabei gefunden: `spec.money or {}` legte im Takt eine Tabelle je Aufruf an. Auktionshaus, Händler, Beute, Makros und Gespräche sind noch nicht umgestellt.
+- **Einstellungen zweistufig** (`Builder:Advanced`/`EndAdvanced`/`FinishAdvanced`, `general.showAdvanced`, `O.SetAdvanced`) und **Suche** (`O.SearchIndex` mit Mitschreiber, `O.Search`, `O.ShowSearch`, Feld im Kopf). Dabei gefunden: Der Mitschreiber gab für jedes unbekannte Feld eine Funktion zurück, auch für „Abschnitt“ und „Erweitert“ – alles stand als „Erweitert“ im Index.
+- **Prüfliste im Spiel** vor jedem Release: `docs/development/release-checklist.md`, verlinkt in `releases.md`.
+- **Plaketten**: `motion` (`calm` Standard, `lively`, `custom`) schaltet Atmen, Glanz, Trefferblitz und bewegte Marken beim Einlesen, ohne die eigenen Schalter zu überschreiben. Seite „Farben“ heißt „Bedrohung & Farben“, die Bedrohung steht oben.
+- **Schadensanzeige**: `DM.HeaderWidths` (Kopfzeile), `DM.MIN_WIDTH = 220` (darunter geht die Rechnung mit fünf Knöpfen nicht auf, ältere Werte werden gehoben), `Win:FitName` (Name nach gemessener Zahl, bei geheimer Breite 55 %).
+- `load_test.lua`: Bausteine (Anmeldung, unbekannte Arten), „Erweitert“ (zu mit Zahl, kein Hinweis gebaut, auf mit mehr Elementen und allen Listen, wieder zu), Suche (Index, Umlaute, „%“, Klick klappt auf, Seite links ersetzt Treffer), Bewegung (Ruhig still, Lebendig, Eigene), Kopfzeile bei jeder Breite und Knopfzahl, Name gegen Zahl. Gegenproben: Bausteine 16, Einstellungen/Suche/Bewegung 17, Breiten 6 – alle gefangen, fünf erst nach geschärften Tests.
+
 ## [6.9.1.3] – 2026-10-04
 
 **Ruhe im Chat.** Die Zeilen „WeintCompanion: … aktualisiert“ und „… zur Warteschlange hinzugefügt“ erscheinen nicht mehr – sie kamen bei jeder Fertigkeitsstufe und jedem Ausrüstungswechsel. Was für die Companion bereitliegt, steht weiter auf der Companion-Seite.
