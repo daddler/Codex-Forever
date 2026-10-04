@@ -9817,6 +9817,26 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.10.0.0: Fenster in Gold aus Bausteinen - Handel, Bank, Post sind nur
+-- noch Beschreibung (ui/calmparts.lua).
+do
+    local CP = WeintCodex.UICalmParts
+    local ok, err = pcall(function()
+        for _, host in ipairs({ "TradeFrame", "BankFrame", "MailFrame" }) do
+            assert(CP.hosts[host], "kein Baustein-Fenster: " .. host)
+        end
+        assert(CP.hosts.TradeFrame == WeintCodex.UITrade and CP.hosts.BankFrame == WeintCodex.UIBank
+            and CP.hosts.MailFrame == WeintCodex.UIMail, "Module zeigen nicht auf ihr Baustein-Fenster")
+        local bad = pcall(CP.New, { label = "X", host = "XFrame", files = { [1] = "stein" } })
+        assert(not bad, "unbekannte Art wird angenommen")
+        bad = pcall(CP.New, { label = "X", host = "XFrame", atlases = { { "^x", "holz" } } })
+        assert(not bad, "unbekannte Art (Atlas) wird angenommen")
+        assert(not CP.hosts.XFrame, "abgelehntes Fenster trotzdem angemeldet")
+    end)
+    Check(ok, "Fenster in Gold aus Bausteinen: Handel, Bank, Post angemeldet, unbekannte Arten abgelehnt"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 --------------------------------------------------
 
 print("")

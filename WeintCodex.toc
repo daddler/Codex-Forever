@@ -215,6 +215,8 @@ ui/loot.lua
 # Makrofenster in Gold (6.9.0.0): Plaetze flach, Reiter flach, Innenflaechen.
 ui/macroframe.lua
 # Handel in Gold (6.9.0.2): Plaetze flach, Namensfelder als Leiste, Innenflaechen.
+# Bausteine fuer Fenster in Gold (6.10.0.0): Handel, Bank, Post beschreiben nur noch.
+ui/calmparts.lua
 ui/trade.lua
 # Auktionshaus in Gold (6.9.0.4): Kategorien als Kacheln, Listen auf Flaeche, Spaltenkoepfe flach.
 ui/auction.lua
