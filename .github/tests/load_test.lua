@@ -10052,6 +10052,77 @@ do
         others.party1 = 40
         NP.UpdateThreatText(p)
         assert(p._threatLead == nil and p.threatBar:GetValue() == 100, "DD mit Aggro: nicht die eigene Bedrohung")
+        -- 6.10.3.3: eine Farbe der Lage fuer Leiste UND Lebensbalken.
+        assert(K.Get("nameplates", "threatColors") == true, "Bedrohungsfarben ab Werk aus")
+        local healthPaint
+        K.PaintBar = function(b, r, g, bl)
+            if b == p.threatBar then painted = { r, g, bl } end
+            if b == p.health then healthPaint = { r, g, bl } end
+            return paint(b, r, g, bl)
+        end
+        local da, dn = K.Get("nameplates", "dpsAggro"), K.Get("nameplates", "dpsNear")
+        local oldUAC = _G.UnitAffectingCombat
+        _G.UnitAffectingCombat = function() return true end
+        local function Run() NP.UpdateThreatText(p) NP.RecolorAll() end
+        -- DD mit Aggro: Leiste und Leben rot.
+        Run()
+        assert(p._threatTint == da and painted[1] == da.r and healthPaint[1] == da.r and healthPaint[2] == da.g,
+            "DD mit Aggro: Leben nicht rot")
+        -- DD nah dran (Status 0, 85 %): orange - nicht erst bei Status 1.
+        mine[1], mine[2], mine[3] = false, 0, 85
+        Run()
+        assert(p._threatTint == dn and painted[1] == dn.r and healthPaint[1] == dn.r, "DD bei 85 %: nicht orange")
+        -- DD weit weg: keine Lage, Leiste grau, Leben in seiner Farbe.
+        mine[3] = 50
+        Run()
+        local low = WeintCodex.GameColors.threatLow
+        assert(p._threatTint == nil and painted[1] == low[1] and healthPaint[1] ~= da.r and healthPaint[1] ~= dn.r,
+            "DD bei 50 %: gefaerbt")
+        -- Tank hat sie verloren: rot.
+        roles.player = "TANK"
+        mine[1], mine[2], mine[3] = false, 1, 95
+        Run()
+        assert(p._threatTint == da and healthPaint[1] == da.r, "Tank ohne Aggro: nicht rot")
+        -- Abgeschaltet: Leben in seiner Farbe, Leiste weiter gefaerbt.
+        K.Set("nameplates", "threatColors", false)
+        Run()
+        assert(healthPaint[1] ~= da.r and painted[1] == da.r, "abgeschaltete Bedrohungsfarben faerben das Leben")
+        K.Set("nameplates", "threatColors", nil)
+        roles.player = "DAMAGER"
+        -- Ueber das Ereignis und beim Erscheinen: erst die Lage, dann die
+        -- Farbe - sonst traegt das Leben die Lage vom letzten Mal.
+        K.PaintBar = function(b, r, g, bl)
+            local cur = NP.plates["nameplate1"]
+            if cur and b == cur.health then healthPaint = { r, g, bl } end
+            return paint(b, r, g, bl)
+        end
+        mine[1], mine[2], mine[3] = false, 0, 50
+        stub.FireEvent("UNIT_THREAT_LIST_UPDATE", "nameplate1")
+        assert(healthPaint[1] ~= da.r, "Vorbedingung: Leben schon rot")
+        mine[1], mine[2], mine[3] = true, 3, 100
+        stub.FireEvent("UNIT_THREAT_LIST_UPDATE", "nameplate1")
+        assert(healthPaint[1] == da.r, "Ereignis: Leben folgt der Lage erst beim naechsten Mal")
+        mine[1], mine[2], mine[3] = false, 0, 50
+        stub.FireEvent("UNIT_THREAT_SITUATION_UPDATE", "nameplate1")
+        assert(healthPaint[1] ~= da.r, "Lage-Ereignis: Leben bleibt rot")
+        mine[1], mine[2], mine[3] = true, 3, 100
+        stub.FireEvent("UNIT_THREAT_SITUATION_UPDATE", "nameplate1")
+        assert(healthPaint[1] == da.r, "Lage-Ereignis: Leben folgt erst beim naechsten Mal")
+        mine[1], mine[2], mine[3] = false, 0, 50
+        stub.FireEvent("UNIT_THREAT_LIST_UPDATE", "nameplate1")
+        stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+        mine[1], mine[2], mine[3] = true, 3, 100
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        p = NP.plates["nameplate1"]
+        assert(healthPaint[1] == da.r, "neue Plakette: Leben folgt der Lage nicht")
+        -- Allein ohne Begleiter: keine Farbe (sonst waere jeder Gegner rot).
+        local oldGroup = _G.IsInGroup
+        _G.IsInGroup = function() return false end
+        exists.pet = nil
+        Run()
+        assert(p._threatTint == nil and healthPaint[1] ~= da.r, "allein ohne Begleiter: Leben rot")
+        _G.IsInGroup = oldGroup
+        _G.UnitAffectingCombat = oldUAC
         K.PaintBar = paint
         others.party1 = nil
         _G.IsInGroup = function() return false end

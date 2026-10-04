@@ -9,6 +9,21 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.3.3] – 2026-10-04
+
+**Aggro auf einen Blick an der Farbe.** Die Namensplaketten färben sich jetzt ab Werk nach der Bedrohung: rot, wenn du die Aggro hast, orange, wenn du kurz davor bist – als Tank grün, solange du sicher hältst, und orange, wenn der Nächste nah dran ist. Leiste, Prozentzahl und Lebensbalken zeigen dieselbe Farbe. Allein ohne Begleiter bleibt alles in seiner gewohnten Farbe. Abschaltbar unter Namensplaketten → Bedrohung & Farben.
+
+### Technisch
+
+Beta-Test nach 6.10.3.2: „ich sehe den Balken mit der Aggro, aber schön wäre es, wenn es auch farblich erkannt werden kann“. Zwei Gründe, warum man es nicht sah:
+
+- **Lebensbalken:** `threatColors` war ab Werk **aus** (Vorlage `tankHasAggroEnabled = false`). Jetzt an. Wer es nie umgestellt hat, bekommt es; gespeichert war nur, was vom Standard abwich.
+- **Leiste:** ein DD wurde nur bei Status 1 orange – den gibt es in Classic nur im schmalen Fenster über dem Tank, also grau, grau, rot. Jetzt orange ab `NP.WARN` (80 %) auch bei Status 0.
+- **Eine Farbe** (`NP.ThreatTint(status, scaled, tank, lead)`), berechnet in `UpdateThreatText` und gemerkt (`p._threatTint`): Leiste, Prozentzahl und Lebensbalken (`BarColor`, statt eigener Abfrage von `UnitThreatSituation`). Tank: grün, orange bei Status 2 oder Nächstem ab 80 %, rot ohne Aggro. DD: rot ab Status 2, orange bei Status 1 oder ab 80 %, sonst keine. Nur wenn jemand die Aggro abnehmen kann (`NP.Contested`) – allein ohne Begleiter färbt nichts, auch die Prozentzahl nicht mehr rot.
+- Reihenfolge: bei `UNIT_THREAT_*` und beim Erscheinen einer Plakette erst die Lage, dann die Farbe – sonst trüge das Leben die Lage vom letzten Ereignis.
+- `NP.LEAD_WARN` heißt jetzt `NP.WARN` (eine Schwelle für Tank und DD).
+- `load_test.lua`: ab Werk an; DD mit Aggro rot (Leiste und Leben), bei 85 % orange, bei 50 % ungefärbt und Leiste grau; Tank ohne Aggro rot; abgeschaltet färbt das Leben nicht, die Leiste schon; beide Ereignisse und eine neue Plakette folgen der Lage sofort; allein ohne Begleiter ungefärbt. Gegenproben: 12, alle gefangen – drei (Reihenfolge bei beiden Ereignissen und beim Erscheinen) erst nach geschärftem Test.
+
 ## [6.10.3.2] – 2026-10-04
 
 **Die Bedrohungsleiste unter den Namensplaketten sagt jetzt etwas.** Als Tank zeigt sie, wie nah der Nächste an der Aggro ist – grün mit Abstand, orange, wenn es eng wird – statt immer voll grün. Allein ohne Begleiter fällt sie weg: dann hast du die Aggro ohnehin immer, und jeder Gegner trug eine volle rote Leiste. Dazu ein feiner Rand wie am Leben darüber.

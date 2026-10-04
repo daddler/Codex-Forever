@@ -90,7 +90,9 @@ local defaults = {
     targetColorEnabled = false, -- Vorlage: false
     target             = K.ColorDefault("target"),
     classColorPlayers  = true,
-    threatColors = false,       -- Vorlage: tankHasAggroEnabled = false
+    -- 6.10.3.3: ab Werk an (Beta-Test: "farblich erkennen"). Allein ohne
+    -- Begleiter faerbt nichts (NP.Contested).
+    threatColors = true,
     -- Eigene Bedrohung in Prozent an der Plakette (Beta-Test 6.3.2.5:
     -- "wie viel Threat ich gerade habe"). none | topleft | right. Rechts:
     -- oben links kollidiert mit langen Namen und den Symbolen des Spiels.
@@ -1124,21 +1126,10 @@ local function BarColor(p)
 
     local inCombat = K.Bool(_G.UnitAffectingCombat and _G.UnitAffectingCombat(unit), true)
 
-    if S.threatColors and inCombat and _G.UnitThreatSituation then
-        local status = K.Plain(_G.UnitThreatSituation("player", unit))
-        if type(status) == "number" then
-            local tank = _G.UnitGroupRolesAssigned
-                and _G.UnitGroupRolesAssigned("player") == "TANK"
-            if tank then
-                if status == 3 then return C3(S.tankAggro) end
-                if status == 2 then return C3(S.tankLosing) end
-                return C3(S.dpsAggro)
-            else
-                if status >= 2 then return C3(S.dpsAggro) end
-                if status == 1 then return C3(S.dpsNear) end
-            end
-        end
-    end
+    -- Die Lage aus UpdateThreatText (NP.ThreatTint) - dieselbe Farbe wie
+    -- Leiste und Prozentzahl, und wie dort nicht allein ohne Begleiter.
+    local tint = p._threatTint
+    if S.threatColors and inCombat and tint then return C3(tint) end
 
     local reaction = K.Plain(_G.UnitReaction and _G.UnitReaction(unit, "player"))
     if reaction == 4 then return C3(S.neutral) end
@@ -1339,14 +1330,28 @@ end
 -- Wert kann geheim sein: er geht nur an SetFormattedText und SetValue.
 -- Die Farbe folgt der Lage wie die Bedrohungsfarben des Balkens - als Tank
 -- gruen, solange du sie haeltst; sonst orange kurz davor, rot mit Aggro.
-local function ThreatColor(status)
+--
+-- 6.10.3.3 (Beta-Test: "schoen waere es, wenn es auch farblich erkannt
+-- werden kann"): EINE Farbe der Lage, fuer Leiste, Prozentzahl und - mit
+-- "Bedrohungsfarben", seit dieser Fassung ab Werk an - den Lebensbalken.
+-- Bis dahin wurde ein DD nur bei Status 1 orange; den gibt es in Classic
+-- nur im schmalen Fenster ueber dem Tank, also: grau, grau, rot. Jetzt
+-- orange ab NP.WARN % (Status 0, aber nah dran). Der Tank wird orange,
+-- wenn der Naechste ab NP.WARN % liegt (oder Status 2), rot, wenn er sie
+-- verloren hat. Nil = keine Lage, die eine Farbe verdient.
+NP.WARN = 80
+function NP.ThreatTint(status, scaled, tank, lead)
     local st = K.Plain(status)
     if type(st) ~= "number" then return nil end
-    local tank = K.Plain(_G.UnitGroupRolesAssigned and _G.UnitGroupRolesAssigned("player")) == "TANK"
     if tank then
-        return (st == 3 and S.tankAggro) or (st == 2 and S.tankLosing) or S.dpsAggro
+        if st < 2 then return S.dpsAggro end
+        if st == 2 or (type(lead) == "number" and lead >= NP.WARN) then return S.tankLosing end
+        return S.tankAggro
     end
-    return (st >= 2 and S.dpsAggro) or (st == 1 and S.dpsNear) or nil
+    if st >= 2 then return S.dpsAggro end
+    local v = K.Plain(scaled)
+    if st == 1 or (type(v) == "number" and v >= NP.WARN) then return S.dpsNear end
+    return nil
 end
 
 -- Wer den Gegner gerade haelt. In Classic ist das sein Ziel (waehrend
@@ -1416,10 +1421,9 @@ end
 --             ist, der dir die Aggro abnehmen koennte (Gruppe, Begleiter).
 --   als Tank  hast du sie - immer voll gruen. Jetzt zeigt sie, wie nah der
 --             Naechste dran ist (sein scaledPercentage auf diesem Gegner:
---             100 = er zieht sie), gruen, ab NP.LEAD_WARN orange. Gemessen
+--             100 = er zieht sie), gruen, ab NP.WARN orange. Gemessen
 --             (04.10.2026, Build 70205): die Bedrohung der Mitspieler kommt
 --             offen. Ist sie geheim, bleibt es bei deiner eigenen.
-NP.LEAD_WARN = 80
 local PARTY_UNITS = { "pet", "party1", "party2", "party3", "party4",
     "partypet1", "partypet2", "partypet3", "partypet4" }
 local RAID_UNITS = { "pet" }
@@ -1455,14 +1459,22 @@ local function UpdateThreatText(p)
     local fs, bar = p.threat, p.threatBar
     if p._friendly or not p.unit or not _G.UnitDetailedThreatSituation then
         fs:Hide() bar:Hide() p.aggro:Hide()
+        p._threatTint, p._threatLead = nil, nil
         return
     end
     local ok, tanking, status, scaled = pcall(_G.UnitDetailedThreatSituation, "player", p.unit)
     local onList = ok and type(scaled) ~= "nil"
     local plain = onList and K.Plain(scaled)
     if type(plain) == "number" and plain <= 0 then onList = false end
-    local c = onList and ThreatColor(status) or nil
     local holding = ok and K.Bool(tanking, false)
+    -- Farbe nur, wenn dir jemand die Aggro abnehmen kann - allein waere
+    -- jeder Gegner rot (immer 100 %).
+    local contested = onList and NP.Contested()
+    local tank = contested and K.Plain(_G.UnitGroupRolesAssigned and _G.UnitGroupRolesAssigned("player")) == "TANK"
+    local lead = nil
+    if tank and holding then lead = NP.RunnerUp(p.unit) end
+    local c = contested and NP.ThreatTint(status, scaled, tank, lead) or nil
+    p._threatTint, p._threatLead = c, lead
 
     if onList and S.threatText ~= "none" then
         fs:SetFormattedText("%d%%", scaled)
@@ -1472,24 +1484,13 @@ local function UpdateThreatText(p)
         fs:Hide()
     end
 
-    if onList and S.threatBar and NP.Contested() then
-        local lead = nil
-        if holding and K.Plain(_G.UnitGroupRolesAssigned and _G.UnitGroupRolesAssigned("player")) == "TANK" then
-            lead = NP.RunnerUp(p.unit)
-        end
-        p._threatLead = lead
-        if lead then
-            bar:SetValue(math.min(lead, 100))
-            local tc = (lead >= NP.LEAD_WARN or K.Plain(status) == 2) and S.tankLosing or S.tankAggro
-            K.PaintBar(bar, tc.r, tc.g, tc.b)
+    if contested and S.threatBar then
+        if lead then bar:SetValue(math.min(lead, 100)) else bar:SetValue(scaled) end
+        if c then
+            K.PaintBar(bar, c.r, c.g, c.b)
         else
-            bar:SetValue(scaled)
-            if c then
-                K.PaintBar(bar, c.r, c.g, c.b)
-            else
-                local low = WeintCodex.GameColors.threatLow
-                K.PaintBar(bar, low[1], low[2], low[3])
-            end
+            local low = WeintCodex.GameColors.threatLow
+            K.PaintBar(bar, low[1], low[2], low[3])
         end
         bar:Show()
     else
@@ -1503,11 +1504,12 @@ NP.UpdateThreatText = UpdateThreatText
 local function FullUpdate(p)
     UpdateHealth(p, false, true)
     FillTexts(p, false)
+    -- Die Lage vor der Farbe: der Lebensbalken nimmt sie (6.10.3.3).
+    UpdateThreatText(p)
     UpdateColor(p)
     UpdateTarget(p)
     UpdateRaidIcon(p)
     UpdateQuest(p)
-    UpdateThreatText(p)
     if p._friendly then return end
     if S.castEnabled then p.cast:Update() else p.cast:Hide() end
 end
@@ -1597,8 +1599,8 @@ local UNIT_EVENTS = {
     UNIT_LEVEL = function(p) FillTexts(p, false) end,
     UNIT_CLASSIFICATION_CHANGED = function(p) FillTexts(p, false) UpdateColor(p) end,
     UNIT_FLAGS = function(p) UpdateColor(p) end,
-    UNIT_THREAT_SITUATION_UPDATE = function(p) UpdateColor(p) UpdateThreatText(p) end,
-    UNIT_THREAT_LIST_UPDATE = function(p) UpdateColor(p) UpdateThreatText(p) end,
+    UNIT_THREAT_SITUATION_UPDATE = function(p) UpdateThreatText(p) UpdateColor(p) end,
+    UNIT_THREAT_LIST_UPDATE = function(p) UpdateThreatText(p) UpdateColor(p) end,
 }
 
 local CAST_EVENTS = {
@@ -1974,14 +1976,15 @@ K.Register({
         { key = "farben", label = "Bedrohung & Farben", build = function(B)
             B:Section("Bedrohung",
                 "Ob du Tank bist, liest WeintCodex aus der zugewiesenen Gruppenrolle. Ohne zugewiesene Rolle gelten die Farben für Schaden und Heilung.")
-            B:Row({ type = "toggle", label = "Bedrohungsfarben", key = "threatColors" },
+            B:Row({ type = "toggle", label = "Bedrohungsfarben", key = "threatColors",
+                    description = "Der Lebensbalken nimmt die Farbe der Lage an, sobald sie zählt: rot mit Aggro, orange ab 80 % kurz davor – als Tank grün, solange du sie sicher hältst, orange, wenn der Nächste nah dran ist. Allein ohne Begleiter färbt nichts." },
                   { type = "dropdown", label = "Bedrohung in %", key = "threatText", items = {
                         { value = "right",   text = "Rechts neben dem Balken" },
                         { value = "topleft", text = "Oben links" },
                         { value = "none",    text = "Aus" } },
                     description = "Deine Bedrohung auf diesem Gegner; 100 % heißt: du hast die Aggro. Nur im Kampf und solange du auf seiner Liste stehst." })
             B:Row({ type = "toggle", label = "Bedrohungsleiste", key = "threatBar",
-                    description = "Dünne Leiste unter dem Leben: voll heißt, du ziehst die Aggro. Grau weit weg, orange kurz davor, rot mit Aggro. Als Tank zeigt sie, wie nah der Nächste dran ist – grün, orange ab 80 %. Allein ohne Begleiter keine Leiste: dann hast du sie immer." },
+                    description = "Dünne Leiste unter dem Leben: voll heißt, du ziehst die Aggro. Grau weit weg, orange ab 80 %, rot mit Aggro. Als Tank zeigt sie, wie nah der Nächste dran ist – grün, orange ab 80 %. Allein ohne Begleiter keine Leiste: dann hast du sie immer." },
                   { type = "dropdown", label = "Wer die Aggro hat", key = "aggroName", items = {
                         { value = "problem", text = "Wenn nicht beim Tank" },
                         { value = "always",  text = "Immer" },

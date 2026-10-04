@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.3.3",
+        date    = "04.10.2026",
+        notes   = {
+            "|cff7C6CFFAggro auf einen Blick an der Farbe.|r Die Namensplaketten färben sich jetzt ab Werk nach der Bedrohung: rot, wenn du die Aggro hast, orange, wenn du kurz davor bist – als Tank grün, solange du sicher hältst, und orange, wenn der Nächste nah dran ist. Leiste, Prozentzahl und Lebensbalken zeigen dieselbe Farbe. Allein ohne Begleiter bleibt alles in seiner gewohnten Farbe. Abschaltbar unter Namensplaketten → Bedrohung & Farben.",
+        },
+    },
+    {
         version = "6.10.3.2",
         date    = "04.10.2026",
         notes   = {

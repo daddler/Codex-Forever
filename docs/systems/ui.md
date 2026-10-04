@@ -1555,11 +1555,29 @@ wegen der Aggro“). Die eigene Bedrohung war in zwei Lagen ohne Aussage:
   **Nächste** (`NP.RunnerUp`): höchste `scaledPercentage` eines anderen
   auf diesem Gegner (Gruppe: `pet`, `party1..4`, `partypet1..4`;
   Schlachtzug: `pet`, `raid1..40`, ohne dich). Grün, ab
-  `NP.LEAD_WARN` (80 %) oder bei Status 2 orange. Niemand sonst auf der
+  `NP.WARN` (80 %, bis 6.10.3.2 `NP.LEAD_WARN`) oder bei Status 2 orange. Niemand sonst auf der
   Liste: 0. Ein geheimer Wert: zurück zur eigenen Bedrohung – nie eine
   geratene Zahl. Ohne Tankrolle bleibt es bei der eigenen (DD mit Aggro
   sieht Rot).
 * 1 px Rand um die Leiste (`threatBar.edge`).
+
+**6.10.3.3 – an der Farbe erkennen** (Beta-Test: „schön wäre es, wenn es
+auch farblich erkannt werden kann“). `threatColors` (Lebensbalken) ist
+ab Werk **an**. Eine Farbe der Lage, `NP.ThreatTint`, berechnet in
+`UpdateThreatText`, gemerkt als `p._threatTint` und von Leiste,
+Prozentzahl und `BarColor` gelesen – darum bei den Ereignissen und in
+`FullUpdate` erst die Lage, dann die Farbe.
+
+| Lage | Farbe |
+|---|---|
+| Tank hält sicher, Nächster unter 80 % | `tankAggro` (grün) |
+| Tank, Status 2 oder Nächster ab 80 % (`NP.WARN`) | `tankLosing` (orange) |
+| Tank ohne Aggro | `dpsAggro` (rot) |
+| DD mit Aggro (Status ≥ 2) | `dpsAggro` (rot) |
+| DD Status 1 oder ab 80 % | `dpsNear` (orange) – vorher nur Status 1, den es in Classic kaum gibt |
+| sonst | keine: Leiste grau (`threatLow`), Leben in seiner Farbe |
+
+Allein ohne Begleiter (`NP.Contested` falsch) gibt es keine Lage.
 
 **Gemessen (04.10.2026, Client 1.60.1, Build 70205, `/wcui prüfen`):** die eigene Bedrohung am
 Ziel kommt im Kampf offen – Leiste und Farben haben echte Werte. Für
