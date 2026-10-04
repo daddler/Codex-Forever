@@ -88,8 +88,9 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               -- 6.9.1.2: Post (ui/mail.lua) und ein geoeffneter Brief (nur
               -- Huelle und Gold, ungemessen).
               "MailFrame", "OpenMailFrame",
-              -- 6.10.1.0: Kontakte (ui/friends.lua).
-              "FriendsFrame" }
+              -- 6.10.1.0: Kontakte (ui/friends.lua) und Lehrer (Blizzard_TrainerUI,
+              -- erst beim Ansprechen geladen; ui/classtrainer.lua).
+              "FriendsFrame", "ClassTrainerFrame" }
 
 -- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
 -- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus

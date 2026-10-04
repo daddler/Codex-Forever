@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.10.1.0",
         date    = "04.10.2026",
         notes   = {
+            "|cff7C6CFFLehrer im neuen Aussehen.|r Das Fenster beim Lehrer ohne Pergament und rotbraune Zeilen – die gewählte Zeile bleibt in Gold markiert, dein Gold steht wie gewohnt unten links.",
             "|cff7C6CFFKontakte im neuen Aussehen.|r Freundesliste, BattleTag und Status in Gold wie Post und Bank – ohne Metallrahmen und rote Knöpfe. Wer online ist und wer nicht, siehst du weiter an der Farbe der Zeile.",
             "|cff7C6CFFAufgeräumte Einstellungen in allen großen Bereichen.|r Auch Gruppenrahmen, Aktionsleisten, Questpfeil, Minikarte, Chat und die Seiten der einzelnen Einheitenrahmen zeigen zuerst das Wichtige; Randfarben, Schriftgrößen und Kleinigkeiten liegen unter „Erweitert“. Die Suche findet alles weiter.",
             "|cff7C6CFFDeine Plaketten-Bewegung bleibt.|r Wer sich vorher einzelne Bewegungen ab- und andere angeschaltet hatte, behält genau diese Wahl – sie steht jetzt unter „Bewegung: Eigene“.",

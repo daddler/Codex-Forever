@@ -2978,6 +2978,33 @@ Reiter „Freunde“): `FriendsFrame` (Marmor 374155, Metallrahmen
 **Ungemessen:** „Kürzliche Verbündete“, „Schlachtzug“, Ignorierliste –
 Hülle und Gold; was dort alt aussieht, sagt `/wcui fenster` auf dem Reiter.
 
+### Lehrer *(6.10.1.0, `ui/classtrainer.lua`)*
+
+Gemessen mit `/wcui fenster` (Beta-Test 6.10.0.0, Magierlehrer), die
+Dateinummern aufgelöst mit der Dateiliste der Community
+(`wowdev/wow-listfile`), der Aufbau aus dem Quelltext des Spiels
+(`Blizzard_TrainerUI.xml`, Mainline).
+
+**Ein Bild, vier Rollen.** 404984 (`classtrainerframe/trainertextures`)
+ist Pergament (`ClassTrainerFrame.BG`), Grund jeder Zeile
+(`NormalTexture`), Schein unter der Maus (`HighlightTexture`) und
+Markierung der gewählten Zeile (`selectedTex`) – nur andere Ausschnitte.
+`/wcui fenster` zählt gleiche Bilder fensterweit zusammen („10×“) und
+nennt den ersten Besitzer; nach Bildnummer zu sortieren wie an der Post
+hätte die Markierung mitgenommen. Deshalb im `after` nach Rolle:
+
+| Rolle | Was |
+|---|---|
+| Pergament (`BG`) | weg, darunter die Innenfläche |
+| Grund der Zeile (`NormalTexture`) | weg, die Zeile flach mit 1 px Rand – Zeilen der `ScrollBox` (wiederverwendet: zeigt eine Zeile ein anderes Bild, wird es wieder sichtbar) und `skillStepButton` |
+| Markierung, Schein, Grau (`disabledBG`), Symbol, Schloss | bleiben |
+| Geldrahmen (`ClassTrainerFrameMoneyBg`, 237619) | weg, eine Leiste auf Ebene −6 am Fenster – eine Leiste der Bausteine (−8) läge unter der Kachel (−7) |
+
+Metall, Ring, Porträt (`PortraitContainer`, ganz), Streifen, Knopf
+„Ausbilden“: `W.WINDOWS`. Der Knopf „Optionen“ (Filter) bleibt wie in den
+anderen Fenstern. **Ungemessen:** Berufslehrer mit der Leiste der
+Fertigkeit (`ClassTrainerStatusBar`) – Hülle und Gold.
+
 ### Symbol an der Minikarte *(6.9.0.0, `ui/launcher.lua`)*
 
 Mit Oberfläche ein zweites Symbol („WeintCodexUI“, seit 6.9.0.3 das

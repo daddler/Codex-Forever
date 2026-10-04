@@ -226,6 +226,8 @@ ui/bank.lua
 ui/mail.lua
 # Kontakte in Gold (6.10.1.0): das erste Fenster, das von Anfang an aus Bausteinen besteht.
 ui/friends.lua
+# Lehrer in Gold (6.10.1.0): Pergament und Zeilen nach Rolle, nicht nach Bild.
+ui/classtrainer.lua
 # Karte & Questlog (6.7.9.0, 6.8.0.9): Questlog und Questdetails auf Flaeche, Gold, Karte unberuehrt.
 ui/questlog.lua
 # Fenster in Gold mit Innenflaechen (6.8.0.0 Suche nach Gruppe, 6.8.0.2 Sammlung).

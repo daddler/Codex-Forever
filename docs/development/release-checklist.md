@@ -45,6 +45,7 @@ doch: `/wcui fenster` und die Ausgabe sichern.
 - [ ] Charakter (C), Zauberbuch und Talente (P, N), Weltkarte (M)
 - [ ] Händler, Bank, Post (beide Reiter), Auktionshaus, Handel
 - [ ] Kontakte (O): Freunde, Kürzliche Verbündete, Schlachtzug
+- [ ] Lehrer (Klasse und Beruf): eine Zeile wählen – sie bleibt markiert
 - [ ] Spielmenü (Esc), Optionen des Spiels, Makros (/m)
 - [ ] Gilde & Communitys, Suche nach Gruppe, Sammlung
 - [ ] Neu in dieser Fassung umgestaltet: zusätzlich Gegenstände

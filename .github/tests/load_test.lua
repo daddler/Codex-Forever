@@ -8466,6 +8466,92 @@ do
     Check(okFR, "Kontakte: Gold, Metall weg, Symbol weg, BattleTag und Status flach, Liste auf Flaeche, Schein der Zeile bleibt, Reiter, kein Muell"
         .. (okFR and "" or (": " .. tostring(errFR))))
 
+    -- 6.10.1.0: Lehrer in Gold. Pergament, Zeilengrund, Schein und
+    -- Markierung sind EIN Bild (404984) - sortiert wird nach Rolle.
+    local okCT, errCT = pcall(function()
+        local W, S, CT, LF, GC = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIClassTrainer, WeintCodex.UICalm, WeintCodex.GameColors
+        local listed = {}
+        for _, n in ipairs(W.WINDOWS) do listed[n] = true end
+        assert(listed.ClassTrainerFrame and CT and S.SCOPES.ClassTrainerFrame == S.CALM, "Lehrer nicht im Durchlauf oder nicht in Gold")
+        local hosts = {}
+        for _, h in ipairs(W.HOSTED.ClassTrainerFrame or {}) do hosts[h] = true end
+        assert(hosts[CT] and hosts[LF] and LF.WINDOWS.ClassTrainerFrame == "Lehrer", "Lehrer ohne eigene Teile oder ohne Licht in Gold")
+        local saved = {}
+        local function Global(name, obj) saved[name] = _G[name] _G[name] = obj return obj end
+        local function Tex(file)
+            local t = stub.NewObject("Texture")
+            t._file = file
+            t.GetTexture = function(self) return self._file end
+            return t
+        end
+        local function NewRow()
+            local b = stub.NewObject("Button")
+            b._normal, b.selectedTex, b._high, b.icon = Tex(404984), Tex(404984), Tex(404984), Tex(135812)
+            b.GetNormalTexture = function(self) return self._normal end
+            b.GetRegions = function(self) return self._normal, self.selectedTex, self._high, self.icon end
+            return b
+        end
+        local tf = Global("ClassTrainerFrame", stub.NewObject("Frame", "ClassTrainerFrame"))
+        tf.BG = Tex(404984)
+        local moneyBorder = Global("ClassTrainerFrameMoneyBg", Tex(237619))
+        tf.GetRegions = function() return tf.BG, moneyBorder end
+        tf.skillStepButton = NewRow()
+        local rowA, rowB = NewRow(), NewRow()
+        local target = stub.NewObject("Frame")
+        target.GetChildren = function() return rowA, rowB end
+        tf.ScrollBox = stub.NewObject("Frame")
+        tf.ScrollBox.ScrollTarget = target
+        tf.ScrollBox.GetChildren = function() return target end
+        local inset = stub.NewObject("Frame")
+        inset.Bg, inset.NineSlice = Tex(374154), stub.NewObject("Frame")
+        inset.GetRegions = function() return inset.Bg end
+        inset.GetParent = function() return tf end
+        tf.GetChildren = function() return tf.skillStepButton, tf.ScrollBox, inset end
+        S.Register()
+        local glow = stub.NewObject("Texture")
+        W.done[tf] = { glow = glow }
+        local grad, gold = S.Gradient, {}
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == GC.frameAccent then gold[t] = true end
+            return grad(t, dir, c, a0, a1)
+        end
+        CT.Update(tf)
+        LF.Update(tf)
+        S.Gradient = grad
+        W.HoldGlow(tf, "ClassTrainerFrame")
+        local m = CT.frames[tf]
+        assert(not glow:IsShown(), "Schein der Klasse ueber dem Lehrer")
+        assert(m and gold[m.edge.l], "Kante oben nicht in Gold")
+        assert(tf.BG:GetAlpha() == 0 and m.parchment == 1, "Pergament bleibt")
+        for _, b in ipairs({ tf.skillStepButton, rowA, rowB }) do
+            assert(b._normal:GetAlpha() == 0 and CT.flat[b], "Zeile behaelt ihren Grund")
+            assert(b.selectedTex:GetAlpha() == 1 and b._high:GetAlpha() == 1 and b.icon:GetAlpha() == 1,
+                "Markierung, Schein oder Symbol der Zeile weg - gleiches Bild, andere Rolle")
+        end
+        assert(m.rows == 3, "nicht alle Zeilen flach: " .. tostring(m.rows))
+        assert(moneyBorder:GetAlpha() == 0 and m.money_bar and m.money_bar:IsShown(), "Geld ohne Leiste oder Rahmen bleibt")
+        assert(W.Insets[inset] and inset.Bg:GetAlpha() == 0, "Innenflaeche bleibt Leder")
+        -- Eine wiederverwendete Zeile zeigt etwas anderes: wieder sichtbar.
+        rowB._normal._file = 999
+        CT.Update(tf)
+        assert(rowB._normal:GetAlpha() == 1 and not CT.own[rowB._normal], "fremdes Bild in einer Zeile bleibt unsichtbar")
+        rowB._normal._file = 404984
+        local rep = table.concat(CT.Report(tf, {}), "\n")
+        assert(rep:find("Lehrer (Stil ruhig): Kante in Gold, kein Schein der Klasse · Pergament weg 1 · Zeilen flach", 1, true), "Bericht: " .. rep)
+        CT.Update(tf)
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do CT.Update(tf) LF.Update(tf) W.HoldGlow(tf, "ClassTrainerFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Lehrer legt im Takt Muell an: %.1f KB", grew))
+        W.done[tf] = nil
+        for name, v in pairs(saved) do _G[name] = v end
+    end)
+    Check(okCT, "Lehrer: Gold, Pergament weg, Zeilen flach (Markierung, Schein, Symbol bleiben), Geld als Leiste, Innenflaeche, kein Muell"
+        .. (okCT and "" or (": " .. tostring(errCT))))
+
     -- 6.9.0.0: Symbol der Oberflaeche an der Minikarte - nur mit Oberflaeche.
     local okLN, errLN = pcall(function()
         local LN = WeintCodex.UILauncher
