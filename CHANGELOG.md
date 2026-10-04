@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.3.1] – 2026-10-04
+
+**Würfeln um Beute im neuen Stil.** Das kleine Fenster für Bedarf, Gier und Passen steht jetzt auf einer ruhigen Fläche statt auf dem dunklen Toast: das Symbol mit einem feinen Rand in der Farbe seiner Qualität, die verbleibende Zeit als schlichter Balken in Gold. Die Knöpfe bleiben, wie sie sind.
+
+### Technisch
+
+- **`ui/lootroll.lua`** (`WeintCodex.UILootRoll`), aus `W.Apply` (nur mit „Fenster im Stil“): `GroupLootFrame1..4` in Gold (`S.CALM`). `.Background` und `.Border` (beide `Interface\LootFrame\LootToast`) weg, Kachel, Licht und Kante in Gold wie die Dialoge. Symbol beschnitten, `IconFrame.Border` (Atlas `loottoast-itemborder-*`) weg, 1 px in der Qualität ab „Selten“ (`GetLootRollItemInfo`, `C_Item.GetItemQualityColor`), sonst schwarz. Name in der Schrift der Oberfläche, 134 statt 125 px breit. Zeit flach in Gold auf dunkler Rinne mit Rand – und **über** die Kachel gehoben: das Spiel legt sie bei jedem Zeigen eine Ebene unter das Fenster (der Toast hatte dort ein Loch), deshalb ein angehängtes `OnShow`. Bedarf, Gier, Passen, Transmog, Würfel-Animation, Positionen: unverändert.
+- **Nicht gemessen.** `/wcui fenster` im Beta-Test meldete nur `BottomManagedFrameContainer` ohne Bild – der Wurf war schon vorbei. Gebaut nach dem Quelltext des Spiels (`Blizzard_UIPanels_Game/Mainline/GroupLootFrame.xml`) und dem Bildschirmfoto. `/wcui fenster` über einem laufenden Wurf nennt jetzt zusätzlich, was die Gestaltung getan hat.
+- Doku: Messprotokoll zum ersten Lauf von `/wc abgleich` in `docs/systems/dungeons.md` (Gruppensuche = alte Classic-Liste mit Platzhalterkämpfen, Kompendium leer, kein Forever-Dungeon im Client; nichts übernommen).
+- `load_test.lua`: Toast und Rand weg, Kachel eigen, Gold, Symbol beschnitten, Zeit flach/Gold/dunkel/über der Kachel (auch beim nächsten Zeigen), Rand in der Qualität und schwarz darunter und ohne Wurf, Name breiter, keine doppelte Gestaltung, `W.Apply` nimmt die Würfe mit, `/wcui fenster` über dem Wurf. Gegenproben: 17, alle gefangen.
+
 ## [6.10.3.0] – 2026-10-04
 
 **Dungeons mit dem Spiel abgleichen.** /wc abgleich liest, was das Spiel selbst über Dungeons und Schlachtzüge weiß – Namen, Stufen, Bosse und ihre Reihenfolge – und stellt es neben das, was der Codex sagt. Ergebnis zum Kopieren; am Codex ändert der Befehl nichts.

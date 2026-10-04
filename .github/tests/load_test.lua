@@ -10534,6 +10534,108 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.10.3.1: Wuerfeln um Beute in Gold. Toast und leuchtender Rand weg,
+-- Kachel, Rand des Symbols in der Qualitaet (ab Selten), Zeit flach in
+-- Gold UND ueber der Kachel - das Spiel legt sie bei jedem Zeigen darunter.
+do
+    local oldInfo, oldItem, oldF = _G.GetLootRollItemInfo, _G.C_Item, _G.GroupLootFrame2
+    local ok, err = pcall(function()
+        local LR, W, K, GC, S = WeintCodex.UILootRoll, WeintCodex.UIWindows, WeintCodex.UIKit,
+            WeintCodex.GameColors, WeintCodex.UIStyle
+        assert(LR and LR.Skin and LR.Apply, "ui/lootroll.lua fehlt")
+        local f = stub.NewObject("Frame", "GroupLootFrame2")
+        f._level = 5
+        f.Background, f.Border = stub.NewObject("Texture"), stub.NewObject("Texture")
+        f.Name = stub.NewObject("FontString")
+        f.Name._font = true
+        local icf = stub.NewObject("Button")
+        icf.Icon, icf.Border = stub.NewObject("Texture"), stub.NewObject("Texture")
+        f.IconFrame = icf
+        local timer = stub.NewObject("StatusBar")
+        timer.Background = stub.NewObject("Texture")
+        f.Timer = timer
+        local need = stub.NewObject("Button")
+        f.NeedButton = need
+        local coords, barTex, vc, bgc
+        icf.Icon.SetTexCoord = function(_, a) coords = a end
+        timer.SetStatusBarTexture = function(_, t) barTex = t end
+        local bar = stub.NewObject("Texture")
+        timer.GetStatusBarTexture = function() return bar end
+        bar.SetVertexColor = function(_, r, g, b) vc = { r, g, b } end
+        timer.Background.SetColorTexture = function(_, r, g, b) bgc = { r, g, b } end
+        f.rollID = 7
+        local quality = 3
+        _G.GetLootRollItemInfo = function(id)
+            assert(id == 7, "falscher Wurf gelesen")
+            return 132, "Kantiges Bastardschwert", 1, quality
+        end
+        _G.C_Item = setmetatable({ GetItemQualityColor = function(q)
+            if q == 3 then return 0, 0.44, 0.87 end
+            return 1, 1, 1
+        end }, { __index = oldItem })
+        _G.GroupLootFrame2 = f
+        timer._level = 4            -- so legt es das Spiel hin
+        LR.Apply()
+        local d = LR.done[f]
+        assert(d and d.kachel, "Wurf nicht gestaltet")
+        assert(f.Background:GetAlpha() == 0 and f.Border:GetAlpha() == 0, "Toast des Spiels bleibt")
+        assert(icf.Border:GetAlpha() == 0, "leuchtender Rand des Spiels bleibt")
+        assert(need:GetAlpha() == 1, "Bedarf angefasst")
+        assert(W.own[d.kachel.bg], "Kachel nicht als eigene Flaeche eingetragen")
+        assert(S.ScopeOf(f) == S.CALM and d.edge and d.light, "Wurf nicht in Gold")
+        assert(coords == 0.08, "Symbol nicht beschnitten")
+        assert(barTex == K.BAR_TEXTURE, "Zeit nicht flach")
+        local a = GC.frameAccent
+        assert(vc and vc[1] == a[1] and vc[2] == a[2] and vc[3] == a[3], "Zeit nicht in Gold")
+        assert(bgc and bgc[1] == WeintCodex.Colors.bgDark[1], "Rinne der Zeit nicht dunkel")
+        assert(f.Name:GetWidth() == LR.NAME_W, "Name nicht verbreitert")
+        assert(timer:GetFrameLevel() == 6, "Zeit liegt unter der Kachel: " .. timer:GetFrameLevel())
+        assert(d.qualityColored, "Rand nicht in der Qualitaet")
+        -- Naechster Wurf: das Spiel legt die Zeit wieder darunter, die
+        -- Qualitaet ist gewoehnlich - Rand schwarz.
+        local qc
+        d.quality.top.SetColorTexture = function(_, r, g, b) qc = { r, g, b } end
+        quality, timer._level = 1, 4
+        f:GetScript("OnShow")(f)
+        assert(timer:GetFrameLevel() == 6, "Zeit beim naechsten Zeigen unter der Kachel")
+        assert(qc and qc[1] == 0 and qc[2] == 0 and qc[3] == 0 and not d.qualityColored,
+            "gewoehnlicher Gegenstand mit farbigem Rand")
+        quality = 3
+        f:GetScript("OnShow")(f)
+        assert(qc[2] == 0.44 and qc[3] == 0.87, "seltener Gegenstand ohne Rand in der Qualitaet")
+        -- Kein Wurf bekannt: kein Fehler, Rand schwarz.
+        f.rollID = nil
+        f:GetScript("OnShow")(f)
+        assert(qc[1] == 0 and qc[3] == 0, "Rand ohne Wurf nicht schwarz")
+        LR.Apply()
+        assert(LR.done[f] == d, "Wurf doppelt gestaltet")
+        -- Der allgemeine Durchlauf nimmt die Wuerfe mit.
+        local f3 = stub.NewObject("Frame", "GroupLootFrame3")
+        local oldF3 = _G.GroupLootFrame3
+        _G.GroupLootFrame3 = f3
+        local wasOn = K.Get("general", "windowSkin")
+        K.Set("general", "windowSkin", true)
+        W.Apply()
+        K.Set("general", "windowSkin", wasOn)
+        _G.GroupLootFrame3 = oldF3
+        assert(LR.done[f3], "W.Apply gestaltet die Wuerfe nicht")
+        local rep = table.concat(LR.Report({}), "\n")
+        assert(rep:find("1 von 4 gestaltet", 1, true), "Bericht: " .. rep)
+        -- /wcui fenster ueber dem Wurf (Maus auf Bedarf) nennt die Gestaltung.
+        need.GetParent = function() return f end
+        f.GetParent = function() return _G.UIParent end
+        local oldFoci = _G.GetMouseFoci
+        _G.GetMouseFoci = function() return { need } end
+        local insp = table.concat(K.InspectWindow(), "\n")
+        _G.GetMouseFoci = oldFoci
+        assert(insp:find("Fenster: GroupLootFrame2", 1, true) and insp:find("Würfeln um Beute", 1, true),
+            "/wcui fenster ueber dem Wurf: " .. insp)
+    end)
+    _G.GetLootRollItemInfo, _G.C_Item, _G.GroupLootFrame2 = oldInfo, oldItem, oldF
+    Check(ok, "Wuerfeln um Beute: Kachel in Gold, Rand in der Qualitaet, Zeit flach und ueber der Kachel"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 --------------------------------------------------
 
 print("")

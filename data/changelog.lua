@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.3.1",
+        date    = "04.10.2026",
+        notes   = {
+            "|cff7C6CFFWürfeln um Beute im neuen Stil.|r Das kleine Fenster für Bedarf, Gier und Passen steht jetzt auf einer ruhigen Fläche statt auf dem dunklen Toast: das Symbol mit einem feinen Rand in der Farbe seiner Qualität, die verbleibende Zeit als schlichter Balken in Gold. Die Knöpfe bleiben, wie sie sind.",
+        },
+    },
+    {
         version = "6.10.3.0",
         date    = "04.10.2026",
         notes   = {

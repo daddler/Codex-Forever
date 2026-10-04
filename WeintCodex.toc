@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.10.3.0
+## Version: 6.10.3.1
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -216,6 +216,8 @@ ui/gossip.lua
 ui/merchant.lua
 # Beute in Gold (6.9.0.0): Liste auf Flaeche, Karten ohne Rahmen.
 ui/loot.lua
+# Wuerfeln um Beute in Gold (6.10.3.1): Kachel statt Toast, Rand in der Qualitaet, Zeit in Gold.
+ui/lootroll.lua
 # Makrofenster in Gold (6.9.0.0): Plaetze flach, Reiter flach, Innenflaechen.
 ui/macroframe.lua
 # Handel in Gold (6.9.0.2): Plaetze flach, Namensfelder als Leiste, Innenflaechen.

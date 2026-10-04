@@ -2517,6 +2517,9 @@ function W.Apply()
     end
     for _, path in ipairs(W.OWN_BG_PATHS) do W.OwnBackground(W.Resolve(path)) end
     for _, n in ipairs(W.POPUPS) do W.SkinPopup(_G[n]) end
+    -- Wuerfeln um Beute (ui/lootroll.lua, 6.10.3.1), laedt nach dieser Datei.
+    local LR = WeintCodex.UILootRoll
+    if LR then LR.Apply() end
     W.Inner()
 end
 

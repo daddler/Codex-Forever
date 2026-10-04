@@ -1360,6 +1360,11 @@ function K.InspectWindow()
     out[#out + 1] = string.format("Sichtbar: %d verschiedene Bilder · unsichtbar (Deckkraft 0, auch die von WeintCodex): %d%s",
         #list, invisible, host and (" · Bausteine: " .. tostring(host.LABEL)) or "")
     if skipped then out[#out + 1] = "   (Kartenbild ausgelassen)" end
+    -- Wuerfeln um Beute (ui/lootroll.lua): kein Fenster aus W.WINDOWS.
+    local LR = WeintCodex.UILootRoll
+    if LR and okName and type(topName) == "string" and topName:match("^GroupLootFrame%d$") then
+        pcall(LR.Report, out)
+    end
     for _, g in ipairs(list) do
         local marks = ""
         local atlas = g.key:match("^Atlas (.+)$")

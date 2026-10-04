@@ -48,6 +48,7 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 - [ ] Händler, Bank, Post (beide Reiter), Auktionshaus, Handel
 - [ ] Kontakte (O): Freunde, Kürzliche Verbündete, Schlachtzug
 - [ ] Lehrer (Klasse und Beruf): eine Zeile wählen – sie bleibt markiert
+- [ ] Würfeln um Beute (Gruppe, Beute ab „Selten“): Kachel, Rand in der Qualität, Zeit läuft sichtbar ab; `/wcui fenster` mit der Maus über dem Wurf, solange er läuft
 - [ ] Spielmenü (Esc), Optionen des Spiels, Makros (/m)
 - [ ] Gilde & Communitys, Suche nach Gruppe, Sammlung
 - [ ] Neu in dieser Fassung umgestaltet: zusätzlich Gegenstände

@@ -3120,6 +3120,27 @@ Metall, Ring, Porträt (`PortraitContainer`, ganz), Streifen, Knopf
 anderen Fenstern. **Ungemessen:** Berufslehrer mit der Leiste der
 Fertigkeit (`ClassTrainerStatusBar`) – Hülle und Gold.
 
+### Würfeln um Beute *(6.10.3.1, `ui/lootroll.lua`)*
+
+`GroupLootFrame1..4` (Bedarf/Gier/Passen) sind kein Fenster aus
+`W.WINDOWS`: ein Toast, den das Spiel über `GroupLootContainer`
+stapelt. Gestaltet einmal je Rahmen aus `W.Apply` (wie die Dialoge,
+`W.SkinPopup`), Gold (`S.CALM`).
+
+| Teil | Was |
+|---|---|
+| `.Background`, `.Border` (`Interface\LootFrame\LootToast`) | weg; Kachel, Licht und Kante in Gold |
+| Symbol, `IconFrame.Border` (`loottoast-itemborder-*`) | beschnitten; Rand des Spiels weg, 1 px in der Qualität ab „Selten“, sonst schwarz – wie in den Taschen |
+| `.Name` | Schrift der Oberfläche, 134 px; die Farbe der Qualität setzt das Spiel |
+| `.Timer` | flach in Gold, dunkle Rinne, 1 px Rand; **bei jedem Zeigen über die Kachel** – das Spiel setzt sie in `GroupLootFrame_OnShow` eine Ebene unter das Fenster, wo der Toast ein Loch hatte |
+| Bedarf, Gier, Passen, Transmog, Würfel-Animation | unverändert |
+
+**Ungemessen.** Gebaut nach `Blizzard_UIPanels_Game/Mainline/GroupLootFrame.xml`
+und einem Bildschirmfoto; `/wcui fenster` im Beta-Test kam zu spät (nur
+`BottomManagedFrameContainer`, kein Bild). Über einem laufenden Wurf nennt
+`/wcui fenster` jetzt auch die Zeile „Würfeln um Beute“. `BonusRollFrame`
+(Bonuswurf) ist nicht gestaltet – ob Forever ihn hat, ist offen.
+
 ### Symbol an der Minikarte *(6.9.0.0, `ui/launcher.lua`)*
 
 Mit Oberfläche ein zweites Symbol („WeintCodexUI“, seit 6.9.0.3 das
