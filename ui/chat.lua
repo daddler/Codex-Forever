@@ -794,29 +794,31 @@ K.Register({
             B:Row({ type = "slider", label = "Schriftgröße", key = "fontSize", min = 9, max = 20, step = 1, format = px },
                   { type = "slider", label = "Deckkraft des Hintergrunds", key = "bgAlpha", min = 0, max = 100, step = 5,
                     format = function(v) return string.format("%d %%", v) end })
-            B:Row({ type = "toggle", label = "Flache Reiter", key = "flatTabs", reload = true },
-                  { type = "dropdown", label = "Knöpfe des Spiels", key = "buttons", reload = true, items = {
+            B:Row({ type = "dropdown", label = "Knöpfe des Spiels", key = "buttons", reload = true, items = {
                         { value = "tabrow", text = "Klein in der Reiterzeile" },
                         { value = "column", text = "In einer Spalte links" },
                         { value = "hide",   text = "Ausblenden" },
-                        { value = "game",   text = "Wie im Spiel" } } })
-            B:Row({ type = "toggle", label = "Reiter immer sichtbar", key = "tabsVisible", reload = true,
-                    description = "Das Spiel blendet die Reiter aus, wenn die Maus nicht über dem Chat ist." },
+                        { value = "game",   text = "Wie im Spiel" } } },
                   { type = "empty" })
+            B:Section("Infozeile und Eingabe")
+            B:Row({ type = "toggle", label = "Infozeile unter dem Chat", key = "infoBar",
+                    description = "Uhrzeit, Gold, freie Taschenplätze, Haltbarkeit, Bildrate und Latenz. Beim Schreiben liegt die Eingabezeile darüber." },
+                  { type = "toggle", label = "Erst mit Enter zeigen", key = "editOnEnter",
+                    description = "Die Zeile ist unsichtbar, bis du Enter drückst, und geht nach dem Abschicken wieder. Solange steht dort die Infozeile." })
+            -- 6.10.1.0: Reiter, Bildlaufleiste und Lage der Eingabezeile zugeklappt.
+            B:Advanced()
+            B:Section("Reiter und Ränder")
+            B:Row({ type = "toggle", label = "Flache Reiter", key = "flatTabs", reload = true },
+                  { type = "toggle", label = "Reiter immer sichtbar", key = "tabsVisible", reload = true,
+                    description = "Das Spiel blendet die Reiter aus, wenn die Maus nicht über dem Chat ist." })
             B:Row({ type = "toggle", label = "Bildlaufleiste ausblenden", key = "hideScrollBar", reload = true,
                     description = "Die Leiste und der Pfeil nach unten am rechten Rand. Blättern geht mit dem Mausrad." },
                   { type = "empty" })
-            B:Section("Infozeile")
-            B:Row({ type = "toggle", label = "Infozeile unter dem Chat", key = "infoBar",
-                    description = "Uhrzeit, Gold, freie Taschenplätze, Haltbarkeit, Bildrate und Latenz. Beim Schreiben liegt die Eingabezeile darüber." },
-                  { type = "empty" })
             B:Section("Eingabezeile")
-            B:Row({ type = "toggle", label = "Erst mit Enter zeigen", key = "editOnEnter",
-                    description = "Die Zeile ist unsichtbar, bis du Enter drückst, und geht nach dem Abschicken wieder. Solange steht dort die Infozeile." },
-                  { type = "empty" })
             B:Row({ type = "toggle", label = "Eingabezeile im WeintCodex-Stil", key = "editBoxSkin", reload = true },
                   { type = "toggle", label = "Über dem Chat statt darunter", key = "editBoxTop",
                     disabled = function() return not K.Get(KEY, "editBoxSkin") end })
+            B:EndAdvanced()
             B:Section("Was es hier nicht gibt")
             B:Note("Kurze Kanalnamen, anklickbare Links und Zeitstempel im Text bräuchten das Umschreiben jeder Nachricht. Auf dem neuen Client können Nachrichten im Kampf für Addons gesperrt sein, und ein Fehler dabei würde die Nachricht verschlucken. Zeitstempel bietet das Spiel selbst an: Optionen → Soziales.")
         end },

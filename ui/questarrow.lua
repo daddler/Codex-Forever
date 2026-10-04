@@ -1121,37 +1121,40 @@ K.Register({
                         { value = "metric", text = "echte Meter (× 0,9144)" },
                         { value = "yards",  text = "Yards" } } })
             B:Row({ type = "toggle", label = "Name der Quest", key = "showTitle" },
-                  { type = "toggle", label = "Ankunftszeit", key = "showEta",
-                    description = "Aus der tatsächlichen Annäherung der letzten Sekunden." })
-            B:Row({ type = "dropdown", label = "Pfeil", key = "style", items = {
-                        { value = "3d",   text = "Dreidimensional" },
-                        { value = "flat", text = "Flach" } } },
-                  { type = "toggle", label = "Farbe nach Richtung", key = "colorByCourse",
-                    description = "Grün geradeaus, gelb quer, rot in die falsche Richtung." })
+                  { type = "toggle", label = "Zielmarke im Raum", key = "worldMarker",
+                    description = "Eine Nadel genau am Ziel, auf dem Berg oder am Höhleneingang. Nur für die Quest, die das Spiel verfolgt, und für Kartenmarkierungen." })
             B:Row({ type = "toggle", label = "Im Kampf ausblenden", key = "hideInCombat" },
                   { type = "toggle", label = "In Dungeons ausblenden", key = "hideInInstance",
                     description = "Auch in Schlachtzügen, auf Schlachtfeldern und in Arenen. Dort nennt das Spiel keine Position." })
-            B:Row({ type = "slider", label = "„Am Ziel“ ab", key = "arriveDistance", min = 2, max = 30, step = 1,
-                    format = function(v) return string.format("%d m", v) end },
-                  { type = "empty" })
-            B:Row({ type = "toggle", label = "Höhenunterschied", key = "showHeight",
-                    description = "Aus der Navigation des Spiels: wie viel höher oder tiefer das Ziel liegt und ob es verdeckt ist (Höhle, Gebäude). Ob höher oder tiefer, nur wenn der Client deine eigene Höhe nennt – /wcui pfeil sagt es." },
-                  { type = "toggle", label = "Zielmarke im Raum", key = "worldMarker",
-                    description = "Eine Nadel genau am Ziel, auf dem Berg oder am Höhleneingang. Nur für die Quest, die das Spiel verfolgt, und für Kartenmarkierungen." })
             B:Section("Mitdenken")
             B:Row({ type = "dropdown", label = "Welches Ziel", key = "plan", items = {
                         { value = "smart",   text = "Selbst planen (nächstes lohnendes Ziel)" },
                         { value = "tracked", text = "Nur die Quest, die das Spiel verfolgt" } },
                     tooltip = "Selbst planen: aus deinem ganzen Questlog das Ziel mit dem kürzesten Weg – offene Quests an ihrem Zielgebiet, erfüllte an der Abgabe. Quests weit über deiner Stufe und Gruppenquests zählen weiter weg. Klickst du selbst eine Quest an, gilt sie bis zur Abgabe." },
+                  { type = "toggle", label = "Als Geist zur Leiche", key = "corpse",
+                    description = "Nach dem Tod zeigt der Pfeil von selbst zu deiner Leiche." })
+            -- 6.10.1.0: Aussehen des Pfeils und was nach einer Quest kommt, zugeklappt.
+            B:Advanced()
+            B:Section("Der Pfeil im Einzelnen")
+            B:Row({ type = "dropdown", label = "Pfeil", key = "style", items = {
+                        { value = "3d",   text = "Dreidimensional" },
+                        { value = "flat", text = "Flach" } } },
+                  { type = "toggle", label = "Farbe nach Richtung", key = "colorByCourse",
+                    description = "Grün geradeaus, gelb quer, rot in die falsche Richtung." })
+            B:Row({ type = "toggle", label = "Ankunftszeit", key = "showEta",
+                    description = "Aus der tatsächlichen Annäherung der letzten Sekunden." },
+                  { type = "toggle", label = "Höhenunterschied", key = "showHeight",
+                    description = "Aus der Navigation des Spiels: wie viel höher oder tiefer das Ziel liegt und ob es verdeckt ist (Höhle, Gebäude). Ob höher oder tiefer, nur wenn der Client deine eigene Höhe nennt – /wcui pfeil sagt es." })
+            B:Row({ type = "slider", label = "„Am Ziel“ ab", key = "arriveDistance", min = 2, max = 30, step = 1,
+                    format = function(v) return string.format("%d m", v) end },
                   { type = "empty" })
-            B:Row({ type = "toggle", label = "Als Geist zur Leiche", key = "corpse",
-                    description = "Nach dem Tod zeigt der Pfeil von selbst zu deiner Leiche." },
-                  { type = "toggle", label = "Nach dem Abgeben weiter", key = "autoNext",
-                    description = "Nur bei „Nur die Quest, die das Spiel verfolgt“: die nächstgelegene Quest aus deinem Questlog wird ausgewählt." })
+            B:Section("Nach einer Quest")
             B:Row({ type = "dropdown", label = "Wenn die Ziele erfüllt sind", key = "onComplete", items = {
                         { value = "turnin", text = "Zur Abgabe führen" },
                         { value = "next",   text = "Gleich zur nächsten Quest" } } },
-                  { type = "empty" })
+                  { type = "toggle", label = "Nach dem Abgeben weiter", key = "autoNext",
+                    description = "Nur bei „Nur die Quest, die das Spiel verfolgt“: die nächstgelegene Quest aus deinem Questlog wird ausgewählt." })
+            B:EndAdvanced()
             B:Section("So benutzt du ihn")
             B:Note("Von selbst zeigt der Pfeil auf das nächste lohnende Ziel aus deinem Questlog und plant unterwegs neu. Klickst du im Questlog oder in der Zielverfolgung eine Quest an, gilt sie bis zur Abgabe; eine Kartenmarkierung gilt, solange sie steht.")
             B:Note("/wcui pfeil zeigt, was zur Wahl stand. /wcui pfeil weiter lässt das jetzige Ziel zehn Minuten aus, /wcui pfeil planen gibt eine eigene Wahl wieder ab.")

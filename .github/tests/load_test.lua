@@ -2368,6 +2368,35 @@ do
         K.Set("nameplates", "motion", nil)
         isTarget.nameplate1 = nil
         stub.FireEvent("PLAYER_TARGET_CHANGED")
+        -- 6.10.1.0: Uebernahme. Eine Mischung von vor 6.10 wird "Eigene",
+        -- einmal je Konto; alles aus bleibt "Ruhig", nichts gespeichert auch.
+        do
+            local ui = K.Root()
+            local st = ui.modules.nameplates
+            assert(ui.migrated and ui.migrated.npMotion, "Uebernahme laeuft beim Einschalten der Plaketten nicht")
+            local function Fresh(off)
+                ui.migrated = ui.migrated or {}
+                ui.migrated.npMotion = nil
+                st.motion = nil
+                for _, k in ipairs(NP.MOTION_KEYS) do st[k] = nil end
+                for _, k in ipairs(off) do st[k] = false end
+            end
+            Fresh({ "targetSheen", "hitFlash" })
+            assert(NP.MigrateMotion() == "custom" and K.Get("nameplates", "motion") == "custom",
+                "Mischung von vor 6.10 nicht als 'Eigene' uebernommen")
+            assert(ui.migrated.npMotion, "Uebernahme nicht gemerkt")
+            st.motion = nil
+            assert(NP.MigrateMotion() == nil and K.Get("nameplates", "motion") == "calm",
+                "Uebernahme laeuft zweimal - wer selbst auf 'Ruhig' geht, wird zurueckgestellt")
+            Fresh({ "targetPulse", "targetSheen", "hitFlash", "markMotion" })
+            assert(NP.MigrateMotion() == nil and K.Get("nameplates", "motion") == "calm", "Alles aus ist 'Ruhig', nicht 'Eigene'")
+            Fresh({})
+            assert(NP.MigrateMotion() == nil and K.Get("nameplates", "motion") == "calm", "Nichts gespeichert wird 'Eigene'")
+            Fresh({ "hitFlash" })
+            st.motion = "lively"
+            assert(NP.MigrateMotion() == nil and st.motion == "lively", "Gespeicherte Stufe ueberschrieben")
+            Fresh({})
+        end
         -- Kein Muell: Spur und Balken im Takt.
         p = NP.plates["nameplate1"]
         local tr, hb = stub.NewObject("StatusBar"), stub.NewObject("StatusBar")
@@ -8349,6 +8378,94 @@ do
     Check(okML, "Post: Gold (auch Brief), Pergament weg und Schrift hell, Zeilen/Anhaenge flach, Symbole bleiben, Felder flach, Geld und Innenflaeche, Reiter, kein Muell"
         .. (okML and "" or (": " .. tostring(errML))))
 
+    -- 6.10.1.0: Kontakte in Gold, gemessen am Reiter "Freunde".
+    local okFR, errFR = pcall(function()
+        local W, S, FR, LF, GC = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIFriends, WeintCodex.UICalm, WeintCodex.GameColors
+        local listed = {}
+        for _, n in ipairs(W.WINDOWS) do listed[n] = true end
+        assert(listed.FriendsFrame and FR and S.SCOPES.FriendsFrame == S.CALM, "Kontakte nicht im Durchlauf oder nicht in Gold")
+        assert(W.HidesAtlas("UI-Frame-Metal-CornerTopLeft") and W.HidesAtlas("!UI-Frame-Metal-EdgeLeft")
+            and W.HidesAtlas("UI-Frame-PortraitMetal-CornerTopLeft") and W.HidesAtlas("_UI-Frame-TopTileStreaks"),
+            "gemessener Metallrahmen der Kontakte bleibt")
+        local hosts = {}
+        for _, h in ipairs(W.HOSTED.FriendsFrame or {}) do hosts[h] = true end
+        assert(hosts[FR] and hosts[LF] and LF.WINDOWS.FriendsFrame == "Kontakte", "Kontakte ohne eigene Teile oder ohne Licht in Gold")
+        local saved = {}
+        local function Global(name, obj) saved[name] = _G[name] _G[name] = obj return obj end
+        local function Tex(file, atlas)
+            local t = stub.NewObject("Texture")
+            t._file, t._atlas = file, atlas
+            t.GetTexture = function(self) return self._file end
+            if atlas then t.GetAtlas = function(self) return self._atlas end end
+            return t
+        end
+        local ff = Global("FriendsFrame", stub.NewObject("Frame", "FriendsFrame"))
+        ff.selectedTab = 1
+        local heads = Tex(526421)
+        ff.GetRegions = function() return heads end
+        local bnet = stub.NewObject("Frame")
+        local blue = Tex(632259)
+        bnet.GetRegions = function() return blue end
+        local status = stub.NewObject("Button")
+        local holder = Tex(nil, "common-dropdown-textholder")
+        status.GetRegions = function() return holder end
+        local inset = stub.NewObject("Frame")
+        inset.Bg, inset.NineSlice = Tex(374154), stub.NewObject("Frame")
+        inset.GetRegions = function() return inset.Bg end
+        inset.GetParent = function() return ff end
+        -- Der Schein einer Zeile unter der Maus sagt etwas - er bleibt.
+        local list = stub.NewObject("Frame")
+        local rowGlow = Tex(136809)
+        list.GetRegions = function() return rowGlow end
+        ff.GetChildren = function() return bnet, status, inset, list end
+        local tab1 = Global("FriendsFrameTab1", stub.NewObject("Button"))
+        local tab3 = Global("FriendsFrameTab3", stub.NewObject("Button"))
+        tab1.GetID = function() return 1 end
+        tab3.GetID = function() return 3 end
+        local tabsSeen = {}
+        local skinTab = W.SkinTab
+        W.SkinTab = function(tab, accent, sel) tabsSeen[tab] = sel return true end
+        S.Register()
+        local glow = stub.NewObject("Texture")
+        W.done[ff] = { glow = glow }
+        local grad, gold = S.Gradient, {}
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == GC.frameAccent then gold[t] = true end
+            return grad(t, dir, c, a0, a1)
+        end
+        FR.Update(ff)
+        LF.Update(ff)
+        S.Gradient = grad
+        W.SkinTab = skinTab
+        W.HoldGlow(ff, "FriendsFrame")
+        local m = FR.frames[ff]
+        assert(not glow:IsShown(), "Schein der Klasse ueber den Kontakten")
+        assert(m and gold[m.edge.l], "Kante oben nicht in Gold")
+        assert(heads:GetAlpha() == 0, "Symbol oben links bleibt")
+        assert(blue:GetAlpha() == 0 and FR.fields[bnet], "BattleTag bleibt blauer Kasten")
+        assert(holder:GetAlpha() == 0 and FR.fields[status], "Feld des Status nicht flach")
+        assert(W.Insets[inset] and inset.Bg:GetAlpha() == 0, "Innenflaeche der Liste bleibt")
+        assert(rowGlow:GetAlpha() == 1 and not FR.hidden[rowGlow], "Schein der Zeile weg")
+        assert(tabsSeen[tab1] == true and tabsSeen[tab3] == false and m.tabs == 2, "Reiter: der gewaehlte nicht in Gold")
+        local rep = table.concat(FR.Report(ff, {}), "\n")
+        assert(rep:find("Kontakte (Stil ruhig): Kante in Gold, kein Schein der Klasse", 1, true), "Bericht: " .. rep)
+        -- Einmal vorweg: die flachen Leisten haengen neue Bilder an BattleTag
+        -- und Status, der zweite Lauf liest deren Liste einmal neu (gemessen
+        -- 16 KB, danach je Lauf 0). Gemessen wird der Takt, nicht das Aufbauen.
+        FR.Update(ff)
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do FR.Update(ff) LF.Update(ff) W.HoldGlow(ff, "FriendsFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("Kontakte legen im Takt Muell an: %.1f KB", grew))
+        W.done[ff] = nil
+        for name, v in pairs(saved) do _G[name] = v end
+    end)
+    Check(okFR, "Kontakte: Gold, Metall weg, Symbol weg, BattleTag und Status flach, Liste auf Flaeche, Schein der Zeile bleibt, Reiter, kein Muell"
+        .. (okFR and "" or (": " .. tostring(errFR))))
+
     -- 6.9.0.0: Symbol der Oberflaeche an der Minikarte - nur mit Oberflaeche.
     local okLN, errLN = pcall(function()
         local LN = WeintCodex.UILauncher
@@ -9908,11 +10025,11 @@ end
 do
     local CP = WeintCodex.UICalmParts
     local ok, err = pcall(function()
-        for _, host in ipairs({ "TradeFrame", "BankFrame", "MailFrame" }) do
+        for _, host in ipairs({ "TradeFrame", "BankFrame", "MailFrame", "FriendsFrame" }) do
             assert(CP.hosts[host], "kein Baustein-Fenster: " .. host)
         end
         assert(CP.hosts.TradeFrame == WeintCodex.UITrade and CP.hosts.BankFrame == WeintCodex.UIBank
-            and CP.hosts.MailFrame == WeintCodex.UIMail, "Module zeigen nicht auf ihr Baustein-Fenster")
+            and CP.hosts.MailFrame == WeintCodex.UIMail and CP.hosts.FriendsFrame == WeintCodex.UIFriends, "Module zeigen nicht auf ihr Baustein-Fenster")
         local bad = pcall(CP.New, { label = "X", host = "XFrame", files = { [1] = "stein" } })
         assert(not bad, "unbekannte Art wird angenommen")
         bad = pcall(CP.New, { label = "X", host = "XFrame", atlases = { { "^x", "holz" } } })
@@ -9929,6 +10046,26 @@ do
     local ok, err = pcall(function()
         local idx = UO.SearchIndex()
         assert(#idx > 250, "Suche kennt zu wenige Einstellungen: " .. #idx)
+        -- 6.10.1.0: zugeklappt zeigt keine Seite mehr als 15 Einstellungen
+        -- (vorher bis 19: Zielrahmen). Wer eine Seite fuellt, sortiert
+        -- Feinheiten hinter B:Advanced() - oder begruendet hier eine Ausnahme.
+        local shown = {}
+        for _, e in ipairs(idx) do
+            if not e.advanced then
+                local k = e.module .. "/" .. e.page
+                shown[k] = (shown[k] or 0) + 1
+            end
+        end
+        for k, n in pairs(shown) do
+            assert(n <= 15, k .. ": zugeklappt " .. n .. " Einstellungen - Feinheiten unter 'Erweitert'")
+        end
+        -- Wo Feinheiten waren, gibt es jetzt einen Bereich.
+        for _, key in ipairs({ "nameplates", "unitframes", "groupframes", "actionbars", "damagemeter",
+                               "questarrow", "minimap", "chat" }) do
+            local any = false
+            for _, e in ipairs(idx) do if e.module == key and e.advanced then any = true break end end
+            assert(any, key .. ": keine Einstellung unter 'Erweitert'")
+        end
         local function Find(label, module)
             for _, e in ipairs(idx) do
                 if e.label == label and (not module or e.module == module) then return e end

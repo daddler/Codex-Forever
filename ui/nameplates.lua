@@ -177,6 +177,32 @@ local function Resolve()
 end
 NP.Resolved = function(k) return S[k] end
 
+-- UEBERNAHME (6.10.1.0, Selbsteinschaetzung: "wer sich eine Mischung
+-- eingestellt hatte, verliert sie stillschweigend"). Bis 6.9 waren die vier
+-- Bewegungen einzeln an; gespeichert ist nur, was vom Standard abweicht -
+-- also nur ein `false`. Liegt ohne gespeicherte Stufe eine MISCHUNG vor
+-- (manche aus, nicht alle), war das eine bewusste Wahl: sie wird "Eigene".
+-- Alle vier aus ist "Ruhig" und bleibt es; nichts gespeichert hiess
+-- "alles an" als Standard - dort gilt der neue Standard (Changelog 6.10).
+-- Einmal je Konto (ui.migrated.npMotion): wer in 6.10 selbst von "Eigene"
+-- auf "Ruhig" zurueckgeht, wird nicht wieder umgestellt.
+function NP.MigrateMotion()
+    local ui = K.Root()
+    if not ui then return nil end
+    ui.migrated = ui.migrated or {}
+    if ui.migrated.npMotion then return nil end
+    ui.migrated.npMotion = true
+    local store = ui.modules[KEY]
+    if type(store) ~= "table" or type(store.motion) ~= "nil" then return nil end
+    local off = 0
+    for _, k in ipairs(NP.MOTION_KEYS) do
+        if store[k] == false then off = off + 1 end
+    end
+    if off == 0 or off == #NP.MOTION_KEYS then return nil end
+    K.Set(KEY, "motion", "custom")
+    return "custom"
+end
+
 --------------------------------------------------
 -- Blizzard-Inhalt unsichtbar stellen
 --------------------------------------------------
@@ -1725,6 +1751,7 @@ end
 --------------------------------------------------
 
 local function Enable()
+    NP.MigrateMotion()
     Resolve()
     for _, e in ipairs({
         "NAME_PLATE_UNIT_ADDED", "NAME_PLATE_UNIT_REMOVED", "UNIT_FACTION",

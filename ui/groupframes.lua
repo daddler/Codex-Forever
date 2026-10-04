@@ -866,31 +866,20 @@ K.Register({
             B:Note("Die folgenden Einstellungen gelten für die eigenen Kacheln; bei den Rahmen des Spiels wirken Rand, Farben und Schriftgröße.")
             B:Section("Farben und Rahmen")
             B:Row({ type = "toggle", label = "Klassenfarbe", key = "classColor" },
-                  { type = "color", label = "Lebensbalken sonst", key = "healthColor" })
-            B:Row({ type = "color", label = "Hintergrund", key = "bgColor" },
-                  { type = "toggle", label = "Rand anzeigen", key = "showBorder" })
-            B:Row({ type = "toggle", label = "Roter Rand bei Aggro", key = "aggroBorder" },
-                  { type = "slider", label = "Deckkraft außer Reichweite", key = "rangeAlpha", min = 10, max = 100, step = 5,
-                    format = function(v) return string.format("%d %%", v) end })
-            B:Section("Texte")
-            B:Row({ type = "slider", label = "Schriftgröße", key = "nameSize", min = 8, max = 16, step = 1, format = px },
+                  { type = "toggle", label = "Roter Rand bei Aggro", key = "aggroBorder" })
+            B:Row({ type = "slider", label = "Deckkraft außer Reichweite", key = "rangeAlpha", min = 10, max = 100, step = 5,
+                    format = function(v) return string.format("%d %%", v) end },
                   { type = "dropdown", label = "Unter dem Namen", key = "statusText", items = {
                         { value = "none",    text = "Nichts" },
                         { value = "percent", text = "Leben in %" },
                         { value = "deficit", text = "Fehlendes Leben" } } })
             B:Section("Kraft und Debuffs")
             B:Row({ type = "toggle", label = "Kraftleiste", key = "power" },
-                  { type = "slider", label = "Höhe der Kraftleiste", key = "powerHeight", min = 1, max = 8, step = 1, format = px,
-                    disabled = function() return not K.Get(KEY, "power") end })
-            B:Row({ type = "toggle", label = "Debuffs", key = "debuffs" },
-                  { type = "toggle", label = "Nur bannbare", key = "onlyDispellable",
+                  { type = "toggle", label = "Debuffs", key = "debuffs" })
+            B:Row({ type = "toggle", label = "Nur bannbare", key = "onlyDispellable",
                     disabled = function() return not K.Get(KEY, "debuffs") end,
-                    description = "Was du selbst entfernen kannst." })
-            B:Row({ type = "slider", label = "Symbolgröße", key = "debuffSize", min = 10, max = 28, step = 1, format = px,
-                    disabled = function() return not K.Get(KEY, "debuffs") end },
-                  { type = "slider", label = "Höchstens", key = "debuffMax", min = 1, max = 6, step = 1,
-                    format = function(v) return tostring(v) end,
-                    disabled = function() return not K.Get(KEY, "debuffs") end })
+                    description = "Was du selbst entfernen kannst." },
+                  { type = "empty" })
             B:Section("Mehr im Rahmen")
             B:Row({ type = "toggle", label = "Eingehende Heilung", key = "healPrediction",
                     description = "Ein heller grüner Balken hinter dem Leben: so weit reichen Heilungen, die gerade gewirkt werden." },
@@ -898,12 +887,28 @@ K.Register({
                     description = "Ein weißer Balken dahinter: wie viel Schaden Schilde noch abfangen." })
             B:Row({ type = "toggle", label = "Rollensymbol", key = "roleIcon",
                     description = "Schild, Kreuz oder Schwert oben links – nur, wenn eine Rolle zugewiesen ist." },
-                  { type = "toggle", label = "Krone beim Gruppenleiter", key = "leaderIcon" })
-            B:Row({ type = "toggle", label = "Bereitschaftscheck", key = "readyCheck",
-                    description = "Haken, Kreuz oder „?“ in der Mitte; das Ergebnis bleibt ein paar Sekunden stehen." },
+                  { type = "toggle", label = "Bereitschaftscheck", key = "readyCheck",
+                    description = "Haken, Kreuz oder „?“ in der Mitte; das Ergebnis bleibt ein paar Sekunden stehen." })
+            B:Note("Wer gerade wiederbelebt oder beschworen wird, steht unter dem Namen („Wird belebt“, „Beschwörung“). Schaden, der erst noch kommt, kennt das Spiel nicht – das Aufblitzen zeigt Treffer in dem Moment, in dem sie landen.")
+            -- 6.10.1.0: Farbtoene, Rand, Groessen und Kleinigkeiten zugeklappt.
+            B:Advanced()
+            B:Section("Farben und Rand")
+            B:Row({ type = "color", label = "Lebensbalken sonst", key = "healthColor" },
+                  { type = "color", label = "Hintergrund", key = "bgColor" })
+            B:Row({ type = "toggle", label = "Rand anzeigen", key = "showBorder" },
                   { type = "toggle", label = "Aufblitzen bei Treffern", key = "hitFlash",
                     description = "Der Knopf blitzt kurz rot auf, wenn jemand getroffen wird." })
-            B:Note("Wer gerade wiederbelebt oder beschworen wird, steht unter dem Namen („Wird belebt“, „Beschwörung“). Schaden, der erst noch kommt, kennt das Spiel nicht – das Aufblitzen zeigt Treffer in dem Moment, in dem sie landen.")
+            B:Section("Größen")
+            B:Row({ type = "slider", label = "Schriftgröße", key = "nameSize", min = 8, max = 16, step = 1, format = px },
+                  { type = "slider", label = "Höhe der Kraftleiste", key = "powerHeight", min = 1, max = 8, step = 1, format = px,
+                    disabled = function() return not K.Get(KEY, "power") end })
+            B:Row({ type = "slider", label = "Symbolgröße der Debuffs", key = "debuffSize", min = 10, max = 28, step = 1, format = px,
+                    disabled = function() return not K.Get(KEY, "debuffs") end },
+                  { type = "slider", label = "Höchstens Debuffs", key = "debuffMax", min = 1, max = 6, step = 1,
+                    format = function(v) return tostring(v) end,
+                    disabled = function() return not K.Get(KEY, "debuffs") end })
+            B:Row({ type = "toggle", label = "Krone beim Gruppenleiter", key = "leaderIcon" },
+                  { type = "empty" })
         end },
         { key = "gruppe", label = "Gruppe", build = function(B)
             local off = function() return not K.Get(KEY, "partyEnabled") end

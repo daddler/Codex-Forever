@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.10.0.0
+## Version: 6.10.1.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -224,6 +224,8 @@ ui/auction.lua
 ui/bank.lua
 # Post in Gold (6.9.1.2): Pergament weg, Plaetze und Felder flach.
 ui/mail.lua
+# Kontakte in Gold (6.10.1.0): das erste Fenster, das von Anfang an aus Bausteinen besteht.
+ui/friends.lua
 # Karte & Questlog (6.7.9.0, 6.8.0.9): Questlog und Questdetails auf Flaeche, Gold, Karte unberuehrt.
 ui/questlog.lua
 # Fenster in Gold mit Innenflaechen (6.8.0.0 Suche nach Gruppe, 6.8.0.2 Sammlung).

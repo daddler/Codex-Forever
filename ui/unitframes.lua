@@ -1499,6 +1499,9 @@ local TEXT_ITEMS = {
 local function UnitPage(u)
     return { key = u, label = LABELS[u], build = function(B)
         local off = function() return not K.Get(KEY, u .. "_enabled") end
+        local noAuras = function() return off() or not K.Get(KEY, "targetAuras") end
+        local notOwn = function() return noAuras() or K.Get(KEY, "targetAuraSource") ~= "own" end
+        local notGame = function() return noAuras() or K.Get(KEY, "targetAuraSource") ~= "game" end
         B:Section(LABELS[u])
         B:Row({ type = "toggle", label = "Rahmen anzeigen", key = u .. "_enabled", reload = true,
                 description = "Ersetzt den Blizzard-Rahmen. Wirkt nach dem Neuladen." },
@@ -1506,14 +1509,10 @@ local function UnitPage(u)
                     { value = "3d",   text = "3D-Modell" },
                     { value = "2d",   text = "Bild" },
                     { value = "none", text = "Keins" } } })
-        B:Row({ type = "toggle", label = "Porträt rechts", key = u .. "_portraitRight",
-                disabled = function() return off() or K.Get(KEY, u .. "_portrait") == "none" end },
-              { type = "empty" })
         B:Row({ type = "slider", label = "Breite", key = u .. "_width", min = 60, max = 320, step = 1, format = px, disabled = off },
               { type = "slider", label = "Höhe", key = u .. "_height", min = 10, max = 80, step = 1, format = px, disabled = off })
         B:Row({ type = "toggle", label = "Kraftleiste", key = u .. "_power", disabled = off },
-              { type = "slider", label = "Höhe der Kraftleiste", key = u .. "_powerHeight", min = 2, max = 20, step = 1, format = px,
-                disabled = function() return off() or not K.Get(KEY, u .. "_power") end })
+              { type = "empty" })
         B:Section("Texte")
         B:Row({ type = "dropdown", label = "Links", key = u .. "_left", items = TEXT_ITEMS, disabled = off },
               { type = "dropdown", label = "Rechts", key = u .. "_right", items = TEXT_ITEMS, disabled = off })
@@ -1527,24 +1526,33 @@ local function UnitPage(u)
             if u == "player" then
                 B:Row({ type = "toggle", label = "Symbol für Kampf und Ruhe", key = "player_stateIcon", disabled = off,
                         description = "Gekreuzte Schwerter im Kampf, „zZ“ beim Ausruhen (Gasthaus, Stadt)." },
-                      { type = "empty" })
-                B:Row({ type = "toggle", label = "Mittig über den Leisten", key = "playerCastCentered",
+                      { type = "toggle", label = "Mittig über den Leisten", key = "playerCastCentered",
                         disabled = function() return off() or not K.Get(KEY, "player_cast") end,
-                        description = "Aus: direkt unter dem Spielerrahmen." },
-                      { type = "empty" })
+                        description = "Aus: direkt unter dem Spielerrahmen." })
             end
         end
         if u == "target" then
             B:Section("Auren und Kombopunkte")
-            local noAuras = function() return off() or not K.Get(KEY, "targetAuras") end
-            local notOwn = function() return noAuras() or K.Get(KEY, "targetAuraSource") ~= "own" end
-            local notGame = function() return noAuras() or K.Get(KEY, "targetAuraSource") ~= "game" end
             B:Row({ type = "toggle", label = "Buffs und Debuffs", key = "targetAuras", disabled = off },
                   { type = "dropdown", label = "Symbole", key = "targetAuraSource", reload = true, disabled = noAuras,
                     items = {
                         { value = "game", text = "Des Spiels (auch im Kampf)" },
                         { value = "own",  text = "Eigene (im Kampf leer)" } },
                     description = "Im Kampf gibt der Client Auren nur an seine eigenen Symbole heraus – wie auf den Plaketten." })
+            B:Row({ type = "toggle", label = "Kombopunkte", key = "comboPoints", disabled = off,
+                    description = "Schurken und Druiden in Katzengestalt." },
+                  { type = "empty" })
+        end
+        -- 6.10.1.0: Lage des Portraets, Hoehe der Kraftleiste und die Feinheiten
+        -- der Auren zugeklappt.
+        B:Advanced()
+        B:Section("Feinheiten")
+        B:Row({ type = "toggle", label = "Porträt rechts", key = u .. "_portraitRight",
+                disabled = function() return off() or K.Get(KEY, u .. "_portrait") == "none" end },
+              { type = "slider", label = "Höhe der Kraftleiste", key = u .. "_powerHeight", min = 2, max = 20, step = 1, format = px,
+                disabled = function() return off() or not K.Get(KEY, u .. "_power") end })
+        if u == "target" then
+            B:Section("Auren im Einzelnen")
             B:Row({ type = "slider", label = "Größe (Spiel)", key = "targetGameScale", min = 60, max = 200, step = 5,
                     format = function(v) return string.format("%d %%", v) end, disabled = notGame },
                   { type = "slider", label = "Symbolgröße (eigene)", key = "auraSize", min = 14, max = 36, step = 1, format = px,
@@ -1556,12 +1564,9 @@ local function UnitPage(u)
                     format = px, disabled = noAuras })
             B:Row({ type = "toggle", label = "Nur eigene Debuffs", key = "onlyOwnDebuffs",
                     disabled = notOwn },
-                  { type = "toggle", label = "Kombopunkte", key = "comboPoints", disabled = off,
-                    description = "Schurken und Druiden in Katzengestalt." })
-            B:Row({ type = "toggle", label = "Kombopunkte mittig", key = "comboCentered",
+                  { type = "toggle", label = "Kombopunkte mittig", key = "comboCentered",
                     disabled = function() return off() or not K.Get(KEY, "comboPoints") end,
-                    description = "Unter der Figur statt über dem Zielrahmen." },
-                  { type = "empty" })
+                    description = "Unter der Figur statt über dem Zielrahmen." })
         end
     end }
 end

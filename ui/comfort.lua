@@ -475,7 +475,7 @@ K.Register({
             B:Section("Karte")
             B:Row(Row2({ type = "toggle", label = "Koordinaten auf der Weltkarte", key = "mapCoords",
                          description = "Deine Position und die des Mauszeigers." }))
-            B:Note("Kampfhinweis, Bildrate und Haltbarkeitswarnung lassen sich mit „Rahmen entsperren“ verschieben.")
+            B:Note("Kampfhinweis, Bildrate und Haltbarkeitswarnung verschiebst du im Gestaltungsmodus.")
         end },
     },
 })

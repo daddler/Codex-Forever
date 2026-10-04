@@ -763,38 +763,41 @@ K.Register({
             B:Row({ type = "toggle", label = "Eckig", key = "square",
                     description = "Aus: die runde Karte des Spiels." },
                   { type = "slider", label = "Größe", key = "size", min = 120, max = 320, step = 2, format = px })
-            B:Row({ type = "color", label = "Randfarbe", key = "borderColor",
-                    disabled = function() return not K.Get(KEY, "square") end },
-                  { type = "empty" })
             B:Section("Anzeigen")
             B:Row({ type = "toggle", label = "Gebiet", key = "zoneText" },
+                  { type = "toggle", label = "Koordinaten", key = "coords",
+                    description = "In Instanzen nennt das Spiel keine Position – dann steht ein Strich." })
+            B:Row({ type = "toggle", label = "Uhrzeit", key = "clock" },
+                  { type = "toggle", label = "Karte oben im Bereich", key = "atTop", reload = true,
+                    description = "Die Karte rückt nach oben, wo die ausgeblendete Kopfleiste des Spiels stand." })
+            B:Section("Bedienung")
+            B:Row({ type = "toggle", label = "Zoom mit dem Mausrad", key = "wheelZoom" },
+                  { type = "toggle", label = "Addon-Knöpfe sammeln", key = "addonBag", reload = true,
+                    description = "Ein Knopf unten links neben der Karte klappt alle Addon-Knöpfe auf." })
+            B:Row({ type = "toggle", label = "Knöpfe in einer Spalte links", key = "buttonColumn", reload = true,
+                    description = "Verfolgung, Post und Schwierigkeit neben der Karte statt auf ihrem Rand." },
+                  { type = "empty" })
+            B:GameEditMode("Wo die Minikarte steht, stellst du im Bearbeitungsmodus des Spiels ein.")
+            -- 6.10.1.0: Randfarbe, Lage der Texte und Kleinigkeiten zugeklappt.
+            B:Advanced()
+            B:Section("Feinheiten")
+            B:Row({ type = "color", label = "Randfarbe", key = "borderColor",
+                    disabled = function() return not K.Get(KEY, "square") end },
                   { type = "toggle", label = "Gebiet unten in der Karte", key = "zoneInside",
                     description = "Aus: über der Karte.",
                     disabled = function() return not K.Get(KEY, "zoneText") end })
-            B:Row({ type = "toggle", label = "Koordinaten", key = "coords",
-                    description = "In Instanzen nennt das Spiel keine Position – dann steht ein Strich." },
-                  { type = "toggle", label = "Koordinaten mit Nachkommastelle", key = "coordDecimals",
-                    disabled = function() return not K.Get(KEY, "coords") end })
-            B:Row({ type = "toggle", label = "Andere Koordinaten ausblenden", key = "hideOtherCoords", reload = true,
-                    description = "Eine zweite Koordinatenzeile an der Karte, die nicht von WeintCodex stammt (Spiel oder anderes Addon)." },
-                  { type = "toggle", label = "Karte oben im Bereich", key = "atTop", reload = true,
-                    description = "Die Karte rückt nach oben, wo die ausgeblendete Kopfleiste des Spiels stand." })
-            B:Row({ type = "toggle", label = "Uhrzeit", key = "clock" },
-                  { type = "toggle", label = "Kalenderknopf ausblenden", key = "hideCalendar" })
+            B:Row({ type = "toggle", label = "Koordinaten mit Nachkommastelle", key = "coordDecimals",
+                    disabled = function() return not K.Get(KEY, "coords") end },
+                  { type = "toggle", label = "Andere Koordinaten ausblenden", key = "hideOtherCoords", reload = true,
+                    description = "Eine zweite Koordinatenzeile an der Karte, die nicht von WeintCodex stammt (Spiel oder anderes Addon)." })
+            B:Row({ type = "toggle", label = "Kalenderknopf ausblenden", key = "hideCalendar" },
+                  { type = "toggle", label = "Zoomknöpfe ausblenden", key = "hideZoomButtons" })
             B:Row({ type = "dropdown", label = "Tageszeit in der Ecke", key = "dayCorner", items = {
                         { value = "BOTTOMRIGHT", text = "Unten rechts" },
                         { value = "BOTTOMLEFT",  text = "Unten links" },
                         { value = "TOPRIGHT",    text = "Oben rechts" },
                         { value = "TOPLEFT",     text = "Oben links" } } },
                   { type = "empty" })
-            B:Section("Bedienung")
-            B:Row({ type = "toggle", label = "Zoom mit dem Mausrad", key = "wheelZoom" },
-                  { type = "toggle", label = "Zoomknöpfe ausblenden", key = "hideZoomButtons" })
-            B:Row({ type = "toggle", label = "Knöpfe in einer Spalte links", key = "buttonColumn", reload = true,
-                    description = "Verfolgung, Post und Schwierigkeit neben der Karte statt auf ihrem Rand." },
-                  { type = "toggle", label = "Addon-Knöpfe sammeln", key = "addonBag", reload = true,
-                    description = "Ein Knopf unten links neben der Karte klappt alle Addon-Knöpfe auf." })
-            B:GameEditMode("Wo die Minikarte steht, stellst du im Bearbeitungsmodus des Spiels ein.")
         end },
     },
 })

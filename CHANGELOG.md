@@ -9,6 +9,24 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.1.0] – 2026-10-04
+
+**Kontakte im neuen Aussehen.** Freundesliste, BattleTag und Status in Gold wie Post und Bank – ohne Metallrahmen und rote Knöpfe. Wer online ist und wer nicht, siehst du weiter an der Farbe der Zeile.
+
+**Aufgeräumte Einstellungen in allen großen Bereichen.** Auch Gruppenrahmen, Aktionsleisten, Questpfeil, Minikarte, Chat und die Seiten der einzelnen Einheitenrahmen zeigen zuerst das Wichtige; Randfarben, Schriftgrößen und Kleinigkeiten liegen unter „Erweitert“. Die Suche findet alles weiter.
+
+**Deine Plaketten-Bewegung bleibt.** Wer sich vorher einzelne Bewegungen ab- und andere angeschaltet hatte, behält genau diese Wahl – sie steht jetzt unter „Bewegung: Eigene“.
+
+### Technisch
+
+Zweite Selbsteinschätzung (7 von 10), die offenen Punkte:
+
+- **Kontakte** (`ui/friends.lua`): das erste Fenster, das von Anfang an aus Bausteinen besteht (`CP.New`) – 526421 (Symbol oben links) `decor`, 632259 (BattleTag) `field`, `common-dropdown-textholder` (Status) `field`, Reiter unten `FriendsFrameTab1–4`. Metall, Porträtring, Streifen, rote Knöpfe und die Reiter oben nimmt der allgemeine Durchlauf (`W.WINDOWS`), Licht und Kante `ui/calm.lua`. Der Schein der Zeile (136809) bleibt. Gemessen nur der Reiter „Freunde“; „Kürzliche Verbündete“, „Schlachtzug“ und die Ignorierliste haben Hülle und Gold, ungemessen.
+- **„Erweitert“ in allen Modulen mit Feineinstellungen:** Gruppenrahmen, Aktionsleisten, Questpfeil, Minikarte, Chat und die Einheitenseiten (Spieler, Ziel, …) neu sortiert. Ohne: Erinnerungen, Komfort, Taschen, Questliste – dort ist jede Einstellung ein eigener Schalter für eine Funktion. Zugeklappt zeigt keine Seite mehr als 15 Einstellungen (vorher bis 19, Zielrahmen); `load_test.lua` hält die Grenze. Korrektur der Einschätzung: Der Knopf „Erweitert“ stand schon in 6.10.0.0 nur auf Seiten mit Feineinstellungen, ins Leere griff er nirgends.
+- **Plaketten** `NP.MigrateMotion` (einmal je Konto, `ui.migrated.npMotion`): eine gespeicherte Mischung der vier Bewegungen ohne gespeicherte Stufe wird `custom`. Alles aus bleibt `calm`, nichts gespeichert folgt dem neuen Standard.
+- Komfort: Hinweis „mit ‚Rahmen entsperren‘ verschieben“ (seit 6.3 Gestaltungsmodus) berichtigt.
+- `load_test.lua`: Übernahme (Mischung, einmal, alles aus, nichts, gespeicherte Stufe, läuft beim Einschalten), höchstens 15 sichtbare Einstellungen je Seite und „Erweitert“ in acht Modulen, Kontakte (Gold, Metall gemessen weg, Symbol, BattleTag, Status, Innenfläche, Schein der Zeile bleibt, Reiter, Bericht, kein Müll im Takt). Gegenproben: Übernahme 5, Einstellungen 2, Kontakte 6 – alle gefangen.
+
 ## [6.10.0.0] – 2026-10-04
 
 **Einstellungen suchen.** Oben rechts im Einstellungsfenster: ein Wort tippen, auf den Treffer klicken – die richtige Seite öffnet sich.

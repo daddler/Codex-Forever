@@ -1027,36 +1027,23 @@ K.Register({
             B:GameEditMode("Verschieben geht im Bearbeitungsmodus des Spiels – der Knopf führt hin, und beim Schließen bist du wieder hier. Größe, Abstand und Anzahl der Knöpfe stellst du je Leiste auf der Seite „Leisten“ ein.")
             B:Section("Knöpfe")
             B:Row({ type = "toggle", label = "Rand anzeigen", key = "border" },
-                  { type = "color", label = "Randfarbe", key = "borderColor",
-                    disabled = function() return not K.Get(KEY, "border") end })
-            B:Row({ type = "toggle", label = "Symbol rot außer Reichweite", key = "rangeColor" },
-                  { type = "toggle", label = "Greifen an den Enden ausblenden", key = "hideEndCaps", reload = true })
-            B:Section("Leisten")
+                  { type = "toggle", label = "Symbol rot außer Reichweite", key = "rangeColor" })
             B:Row({ type = "toggle", label = "Fläche hinter jeder Leiste", key = "barBackdrop",
                     description = "Die Knöpfe stehen auf einer gemeinsamen dunklen Fläche mit feinem Rand." },
                   { type = "toggle", label = "Blätterpfeile ausblenden", key = "hidePaging", reload = true,
                     description = "Pfeile und Seitenzahl neben Leiste 1. Umblättern geht weiter mit Umschalt+Mausrad." })
-            B:Section("Aussehen")
             B:Row({ type = "dropdown", label = "Leere Plätze", key = "emptySlots", items = {
                         { value = "hide",  text = "Ausblenden (beim Ziehen sichtbar)" },
                         { value = "faint", text = "Sichtbar, zurückgenommen" },
                         { value = "game",  text = "Wie im Spiel" } } },
-                  { type = "toggle", label = "Schatten am Symbol", key = "iconShade" })
-            B:Row({ type = "toggle", label = "Abklingzahl in WeintCodex-Schrift", key = "cooldownFont", reload = true },
-                  { type = "slider", label = "Größe der Abklingzahl", key = "cooldownSize", min = 10, max = 24, step = 1, format = px,
-                    disabled = function() return not K.Get(KEY, "cooldownFont") end })
-            B:Row({ type = "toggle", label = "Reichweitenpunkt ausblenden", key = "hideRangeDot",
-                    description = "Der Punkt auf Knöpfen ohne Taste – die rote Schicht zeigt die Reichweite schon." },
                   { type = "empty" })
             B:Section("Texte")
             B:Row({ type = "toggle", label = "Tastenkürzel", key = "hotkeys" },
-                  { type = "slider", label = "Größe der Tastenkürzel", key = "hotkeySize", min = 8, max = 18, step = 1, format = px,
+                  { type = "toggle", label = "Kurze Tastenkürzel", key = "shortHotkeys",
+                    description = "„M4“ statt „Maustaste 4“, „S1“ statt „s-1“.",
                     disabled = function() return not K.Get(KEY, "hotkeys") end })
-            B:Row({ type = "toggle", label = "Kurze Tastenkürzel", key = "shortHotkeys",
-                    description = "„M4“ statt „Maustaste 4“, „S1“ statt „s-1“." },
-                  { type = "empty" })
             B:Row({ type = "toggle", label = "Makronamen", key = "macroNames" },
-                  { type = "slider", label = "Größe der Stapelzahl", key = "countSize", min = 8, max = 20, step = 1, format = px })
+                  { type = "empty" })
             B:Section("Anordnung")
             B:Row({ type = "dropdown", label = "Mikromenü", key = "microMenu", reload = true, items = {
                         { value = "left", text = "Klein unten links" },
@@ -1078,6 +1065,22 @@ K.Register({
             B:Note("Solange hier nicht „Wie im Spiel“ steht, bestimmt WeintCodex den Platz von Mikromenü und Taschenleiste: verschieben im Gestaltungsmodus von WeintCodex (ziehen, Rechtsklick setzt zurück), nicht im Bearbeitungsmodus des Spiels – dort bleibt der Platz von WeintCodex. Mit „Wie im Spiel“ verschiebt sie der Bearbeitungsmodus.")
             B:Section("Welche Leisten es gibt")
             B:Note("Welche Leisten es überhaupt gibt, bestimmt das Spiel (Esc → Optionen → Aktionsleisten). Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt – WeintCodex ordnet die Knöpfe des Spiels.")
+            -- 6.10.1.0: Randfarbe, Schriftgroessen und Kleinigkeiten am Symbol zugeklappt.
+            B:Advanced()
+            B:Section("Feinheiten der Knöpfe")
+            B:Row({ type = "color", label = "Randfarbe", key = "borderColor",
+                    disabled = function() return not K.Get(KEY, "border") end },
+                  { type = "toggle", label = "Schatten am Symbol", key = "iconShade" })
+            B:Row({ type = "toggle", label = "Greifen an den Enden ausblenden", key = "hideEndCaps", reload = true },
+                  { type = "toggle", label = "Reichweitenpunkt ausblenden", key = "hideRangeDot",
+                    description = "Der Punkt auf Knöpfen ohne Taste – die rote Schicht zeigt die Reichweite schon." })
+            B:Section("Schrift")
+            B:Row({ type = "toggle", label = "Abklingzahl in WeintCodex-Schrift", key = "cooldownFont", reload = true },
+                  { type = "slider", label = "Größe der Abklingzahl", key = "cooldownSize", min = 10, max = 24, step = 1, format = px,
+                    disabled = function() return not K.Get(KEY, "cooldownFont") end })
+            B:Row({ type = "slider", label = "Größe der Tastenkürzel", key = "hotkeySize", min = 8, max = 18, step = 1, format = px,
+                    disabled = function() return not K.Get(KEY, "hotkeys") end },
+                  { type = "slider", label = "Größe der Stapelzahl", key = "countSize", min = 8, max = 20, step = 1, format = px })
         end },
         { key = "leisten", label = "Leisten", build = function(B)
             local game = function() return K.Get(KEY, "layout") ~= "wc" end

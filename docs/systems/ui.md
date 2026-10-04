@@ -1128,6 +1128,34 @@ alle umgesetzt:
    geheim, bleibt es bei 55 %. Andere Module sind darauf **nicht**
    durchgesehen.
 
+## 6.10.1.0: die offenen Punkte der zweiten Einschätzung
+
+Zweite Einschätzung: 7 von 10. Umgesetzt:
+
+1. **„Erweitert“ überall, wo es Feinheiten gibt.** Neu sortiert:
+   Gruppenrahmen, Aktionsleisten, Questpfeil (mit `B:EndAdvanced()` vor
+   der Gebrauchsanleitung), Minikarte, Chat und jede Einheitenseite
+   (`UnitPage`: Porträt rechts, Höhe der Kraftleiste, beim Ziel die
+   Feinheiten der Auren). **Bewusst ohne:** Erinnerungen, Komfort, Taschen,
+   Questliste – jede Einstellung dort schaltet eine Funktion. Regel im
+   Ladetest: Zugeklappt zeigt keine Seite mehr als 15 Einstellungen; wer
+   eine Seite füllt, sortiert Feinheiten hinter `B:Advanced()`.
+   Korrektur: Der Knopf erscheint nur dort, wo eine Seite einen Bereich
+   hat – ein Schalter ohne Wirkung war er nie.
+2. **Übernahme der Plaketten-Bewegung** (`NP.MigrateMotion`, beim
+   Einschalten, einmal je Konto über `ui.migrated.npMotion`). Gespeichert
+   ist nur, was vom Standard abweicht – bis 6.9 also nur ein `false`.
+   Eine Mischung (manche aus, nicht alle) ohne gespeicherte Stufe wird
+   `custom`; alle aus ist ohnehin „Ruhig“; nichts gespeichert folgt dem
+   neuen Standard. Einmal, damit niemand zurückgestellt wird, der in
+   6.10 selbst von „Eigene“ auf „Ruhig“ gegangen ist.
+3. **Kontakte** aus Bausteinen (siehe unten).
+
+Unverändert offen: Händler, Beute, Makros, Gespräche und das
+Auktionshaus sind nicht auf Bausteine umgestellt – umgestellt wird ein
+Fenster, wenn es ohnehin angefasst wird. Die Schadensanzeige bekommt
+vorerst nichts Neues, bis im Spiel geprüft ist, was sie heute kann.
+
 ## Namensplaketten 3.0: Bewegung *(6.8.1.0, `ui/nameplates.lua`)*
 
 Beta-Test: „insgesamt wirklich schon gut, aber es fehlt noch etwas
@@ -2924,6 +2952,31 @@ Leisten; Trennleisten und Briefkasten weg; Geld und Innenfläche wie
 
 **Geöffneter Brief** (`OpenMailFrame`): nur Hülle und Gold – ungemessen;
 sein Pergament sagt `/wcui fenster` bei offenem Brief.
+
+### Kontakte *(6.10.1.0, `ui/friends.lua`)*
+
+Das erste Fenster, das von Anfang an aus Bausteinen besteht
+(`ui/calmparts.lua`). Gemessen mit `/wcui fenster` (Beta-Test 6.10.0.0,
+Reiter „Freunde“): `FriendsFrame` (Marmor 374155, Metallrahmen
+„UI-Frame-Metal-*“, Porträtring, Streifen, Symbol 526421),
+`FriendsFrameInset` (374154), Zeilen der Liste (Schein 136809),
+`FriendsFrameAddFriendButton` (rot, 130828/130826),
+`FriendsFrameBattlenetFrame` (blauer Kasten 632259),
+`FriendsTabHeader.TabSystem` („uiframe-tab-*“),
+`FriendsFrameStatusDropdown` („common-dropdown-textholder“).
+
+| Teil | Wer | Was |
+|---|---|---|
+| Metall, Ring, Streifen, rote Knöpfe, Reiter oben | `W.WINDOWS` | weg bzw. flach, der gewählte Reiter in Gold |
+| Symbol oben links (526421) | `decor` | weg |
+| BattleTag (632259) | `field` | flache Leiste mit 1 px Rand |
+| Status („common-dropdown-textholder“) | `field` | flache Leiste |
+| Innenfläche der Liste | Bausteine | Innenfläche (`InsetFrameTemplate`) |
+| Zeilen | – | bleiben: Farbe (BattleTag, Charakter, offline) und Schein unter der Maus sagen etwas |
+| Reiter unten (`FriendsFrameTab1–4`) | `tabs` | flach, der gewählte in Gold; fehlende fallen heraus |
+
+**Ungemessen:** „Kürzliche Verbündete“, „Schlachtzug“, Ignorierliste –
+Hülle und Gold; was dort alt aussieht, sagt `/wcui fenster` auf dem Reiter.
 
 ### Symbol an der Minikarte *(6.9.0.0, `ui/launcher.lua`)*
 
