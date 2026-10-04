@@ -9981,6 +9981,7 @@ do
         unitName.nameplate1target = "Tamsin"
         NP.UpdateThreatText(p)
         assert(p.threatBar:IsShown() and p.threatBar:GetValue() == 95, "Bedrohungsleiste fehlt")
+        assert(type(p.threatBar.edge) == "table" and p.threatBar.edge.top, "Bedrohungsleiste ohne Rand")
         assert(p.aggro:IsShown() and p.aggro:GetText():find("Tamsin", 1, true), "Aggro-Name fehlt: " .. tostring(p.aggro:GetText()))
         -- Der Gegner schlaegt eine Wache (kein Spieler): niemand aus der Gruppe.
         _G.UnitPlayerControlled = function() return false end
@@ -9997,9 +9998,71 @@ do
         mine[1] = true
         NP.UpdateThreatText(p)
         assert(p.aggro:IsShown() and p.aggro:GetText():find("Du", 1, true), "eigene Aggro als DD nicht gemeldet")
-        _G.IsInGroup = function() return false end
+        -- 6.10.3.2, Tank: die Leiste zeigt den Naechsten, nicht sich selbst.
+        local GC = WeintCodex.GameColors
+        local painted
+        local paint = K.PaintBar
+        K.PaintBar = function(b, r, g, bl) if b == p.threatBar then painted = { r, g, bl } end return paint(b, r, g, bl) end
+        local others = { party1 = 40, party2 = 85 }
+        exists.party1, exists.party2 = true, true
+        _G.UnitDetailedThreatSituation = function(u)
+            if u == "player" then return mine[1], mine[2], mine[3] end
+            local v = others[u]
+            if v == nil then return nil end
+            return false, 0, v
+        end
+        roles.player = "TANK"
+        mine[1], mine[2], mine[3] = true, 3, 100
+        others.party1, others.party2 = 60, 40     -- der Hoechste steht nicht zuletzt
         NP.UpdateThreatText(p)
-        assert(not p.aggro:IsShown() and p.threatBar:IsShown(), "allein: Name ja/Leiste nein")
+        assert(p.threatBar:IsShown() and p.threatBar:GetValue() == 60 and p._threatLead == 60,
+            "Tank: Leiste zeigt nicht den Naechsten: " .. tostring(p.threatBar:GetValue()))
+        -- Im Schlachtzug steht der Spieler selbst in der Liste (raid1): er
+        -- zaehlt nicht als der Naechste.
+        local oldRaid, oldIsUnit = _G.IsInRaid, _G.UnitIsUnit
+        _G.IsInRaid = function() return true end
+        _G.UnitIsUnit = function(a, b) return a == b or (a == "raid1" and b == "player") end
+        exists.raid1, exists.raid2 = true, true
+        others.raid1, others.raid2 = 100, 55
+        NP.UpdateThreatText(p)
+        assert(p._threatLead == 55, "Schlachtzug: der Tank zaehlt sich selbst: " .. tostring(p._threatLead))
+        _G.IsInRaid, _G.UnitIsUnit = oldRaid, oldIsUnit
+        exists.raid1, exists.raid2, others.raid1, others.raid2 = nil, nil, nil, nil
+        others.party1, others.party2 = 40, 60
+        local ta = K.Get("nameplates", "tankAggro")
+        assert(painted and painted[1] == ta.r and painted[2] == ta.g, "Tank mit Abstand nicht gruen")
+        others.party2 = 85
+        NP.UpdateThreatText(p)
+        local tl = K.Get("nameplates", "tankLosing")
+        assert(p.threatBar:GetValue() == 85 and painted[1] == tl.r and painted[2] == tl.g,
+            "Tank, der Naechste kurz davor: nicht orange")
+        -- Niemand sonst auf der Liste: 0, gemessen - nicht unbekannt.
+        others.party1, others.party2 = nil, nil
+        NP.UpdateThreatText(p)
+        assert(p._threatLead == 0 and p.threatBar:GetValue() == 0, "Tank allein auf der Liste: " .. tostring(p._threatLead))
+        -- Geheim: zurueck zur eigenen Bedrohung.
+        others.party1 = 61
+        local oldSecret = _G.issecretvalue
+        _G.issecretvalue = function(v) return v == 61 end
+        NP.UpdateThreatText(p)
+        _G.issecretvalue = oldSecret
+        assert(p._threatLead == nil and p.threatBar:GetValue() == 100, "geheime Bedrohung als Abstand gelesen")
+        -- Kein Tank: die eigene Bedrohung, auch wenn du sie haeltst (rot).
+        roles.player = "DAMAGER"
+        others.party1 = 40
+        NP.UpdateThreatText(p)
+        assert(p._threatLead == nil and p.threatBar:GetValue() == 100, "DD mit Aggro: nicht die eigene Bedrohung")
+        K.PaintBar = paint
+        others.party1 = nil
+        _G.IsInGroup = function() return false end
+        -- Allein ohne Begleiter: immer 100 % - keine Leiste (das war Rauschen).
+        exists.pet = nil
+        NP.UpdateThreatText(p)
+        assert(not p.aggro:IsShown() and not p.threatBar:IsShown(), "allein ohne Begleiter: Leiste oder Name")
+        -- Mit Begleiter kann dir jemand die Aggro nehmen: Leiste ja.
+        exists.pet = true
+        NP.UpdateThreatText(p)
+        assert(p.threatBar:IsShown(), "allein mit Begleiter: keine Leiste")
         mine[3] = nil
         NP.UpdateThreatText(p)
         assert(not p.threatBar:IsShown() and not p.threat:IsShown(), "nicht auf der Liste und trotzdem Leiste")

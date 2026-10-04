@@ -1544,6 +1544,23 @@ Leiste unter dem Leben **und** wer die Aggro hat.
   Name in der Klassenfarbe, „Du“ rot (als Tank grün).
 * Die Prozentzahl (`threatText`) bleibt wählbar.
 
+**6.10.3.2 – die Leiste sagt etwas** (Beta-Test: „noch nicht richtig gut
+wegen der Aggro“). Die eigene Bedrohung war in zwei Lagen ohne Aussage:
+
+* **Allein ohne Begleiter** immer 100 % – an jedem Gegner voll rot. Die
+  Leiste erscheint nur noch, wenn jemand die Aggro abnehmen kann
+  (`NP.Contested`: Gruppe oder Begleiter). Die Prozentzahl folgt ihrer
+  eigenen Einstellung.
+* **Als Tank** (Rolle `TANK`, du hältst ihn) immer voll grün. Jetzt der
+  **Nächste** (`NP.RunnerUp`): höchste `scaledPercentage` eines anderen
+  auf diesem Gegner (Gruppe: `pet`, `party1..4`, `partypet1..4`;
+  Schlachtzug: `pet`, `raid1..40`, ohne dich). Grün, ab
+  `NP.LEAD_WARN` (80 %) oder bei Status 2 orange. Niemand sonst auf der
+  Liste: 0. Ein geheimer Wert: zurück zur eigenen Bedrohung – nie eine
+  geratene Zahl. Ohne Tankrolle bleibt es bei der eigenen (DD mit Aggro
+  sieht Rot).
+* 1 px Rand um die Leiste (`threatBar.edge`).
+
 **Gemessen (04.10.2026, Client 1.60.1, Build 70205, `/wcui prüfen`):** die eigene Bedrohung am
 Ziel kommt im Kampf offen – Leiste und Farben haben echte Werte. Für
 andere Spieler (die Leiste zeigt immer **deine** Bedrohung, „Aggro: Name“

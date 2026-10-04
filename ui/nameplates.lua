@@ -738,6 +738,10 @@ local function Build(parent)
     tbg:SetAllPoints(tb)
     local tgc = GC.threatBarBg
     tbg:SetColorTexture(tgc[1], tgc[2], tgc[3], tgc[4])
+    -- 6.10.3.2: 1 px Schwarz wie das Leben - oben teilt sie sich die Linie
+    -- mit dessen Rand, unten liegt sie in der Luecke zum Zauberbalken.
+    -- Vorher stand die Leiste ohne Abschluss im Spiel.
+    tb.edge = K.Border(tb, 1, 0, 0, 0, 1, "OVERLAY")
     tb:Hide()
     p.threatBar = tb
     -- Wer die Aggro hat ("Aggro: Tamsin"), unter der Plakette rechts.
@@ -1404,6 +1408,49 @@ local function UpdateAggro(p, onList, iHold)
     fs:Show()
 end
 
+-- 6.10.3.2 (Beta-Test: "die Leiste unter der Plakette ist noch nicht
+-- richtig gut wegen der Aggro"). Bis dahin zeigte sie immer DEINE
+-- Bedrohung - zwei Faelle ohne jede Aussage:
+--   allein    ohne Begleiter hast du immer 100 %: an jedem Gegner eine
+--             volle rote Leiste. Jetzt keine Leiste, solange niemand da
+--             ist, der dir die Aggro abnehmen koennte (Gruppe, Begleiter).
+--   als Tank  hast du sie - immer voll gruen. Jetzt zeigt sie, wie nah der
+--             Naechste dran ist (sein scaledPercentage auf diesem Gegner:
+--             100 = er zieht sie), gruen, ab NP.LEAD_WARN orange. Gemessen
+--             (04.10.2026, Build 70205): die Bedrohung der Mitspieler kommt
+--             offen. Ist sie geheim, bleibt es bei deiner eigenen.
+NP.LEAD_WARN = 80
+local PARTY_UNITS = { "pet", "party1", "party2", "party3", "party4",
+    "partypet1", "partypet2", "partypet3", "partypet4" }
+local RAID_UNITS = { "pet" }
+for i = 1, 40 do RAID_UNITS[#RAID_UNITS + 1] = "raid" .. i end
+NP.PARTY_UNITS, NP.RAID_UNITS = PARTY_UNITS, RAID_UNITS
+
+-- Kann dir jemand die Aggro abnehmen?
+function NP.Contested()
+    if K.Bool(_G.IsInGroup and _G.IsInGroup(), false) then return true end
+    return K.Bool(_G.UnitExists and _G.UnitExists("pet"), false)
+end
+
+-- Die hoechste Bedrohung eines anderen auf `unit` (0..100), 0 wenn
+-- niemand sonst auf der Liste steht, nil wenn eine davon geheim ist.
+function NP.RunnerUp(unit)
+    local list = K.Bool(_G.IsInRaid and _G.IsInRaid(), false) and RAID_UNITS or PARTY_UNITS
+    local best = 0
+    for i = 1, #list do
+        local u = list[i]
+        if K.Bool(_G.UnitExists and _G.UnitExists(u), false) and not IsUnit(u, "player") then
+            local ok, _, _, sc = pcall(_G.UnitDetailedThreatSituation, u, unit)
+            if ok and type(sc) ~= "nil" then
+                local v = K.Plain(sc)
+                if type(v) ~= "number" then return nil end
+                if v > best then best = v end
+            end
+        end
+    end
+    return best
+end
+
 local function UpdateThreatText(p)
     local fs, bar = p.threat, p.threatBar
     if p._friendly or not p.unit or not _G.UnitDetailedThreatSituation then
@@ -1415,6 +1462,7 @@ local function UpdateThreatText(p)
     local plain = onList and K.Plain(scaled)
     if type(plain) == "number" and plain <= 0 then onList = false end
     local c = onList and ThreatColor(status) or nil
+    local holding = ok and K.Bool(tanking, false)
 
     if onList and S.threatText ~= "none" then
         fs:SetFormattedText("%d%%", scaled)
@@ -1424,20 +1472,31 @@ local function UpdateThreatText(p)
         fs:Hide()
     end
 
-    if onList and S.threatBar then
-        bar:SetValue(scaled)
-        if c then
-            K.PaintBar(bar, c.r, c.g, c.b)
+    if onList and S.threatBar and NP.Contested() then
+        local lead = nil
+        if holding and K.Plain(_G.UnitGroupRolesAssigned and _G.UnitGroupRolesAssigned("player")) == "TANK" then
+            lead = NP.RunnerUp(p.unit)
+        end
+        p._threatLead = lead
+        if lead then
+            bar:SetValue(math.min(lead, 100))
+            local tc = (lead >= NP.LEAD_WARN or K.Plain(status) == 2) and S.tankLosing or S.tankAggro
+            K.PaintBar(bar, tc.r, tc.g, tc.b)
         else
-            local low = WeintCodex.GameColors.threatLow
-            K.PaintBar(bar, low[1], low[2], low[3])
+            bar:SetValue(scaled)
+            if c then
+                K.PaintBar(bar, c.r, c.g, c.b)
+            else
+                local low = WeintCodex.GameColors.threatLow
+                K.PaintBar(bar, low[1], low[2], low[3])
+            end
         end
         bar:Show()
     else
         bar:Hide()
     end
 
-    UpdateAggro(p, onList, ok and K.Bool(tanking, false))
+    UpdateAggro(p, onList, holding)
 end
 NP.UpdateThreatText = UpdateThreatText
 
@@ -1922,7 +1981,7 @@ K.Register({
                         { value = "none",    text = "Aus" } },
                     description = "Deine Bedrohung auf diesem Gegner; 100 % heißt: du hast die Aggro. Nur im Kampf und solange du auf seiner Liste stehst." })
             B:Row({ type = "toggle", label = "Bedrohungsleiste", key = "threatBar",
-                    description = "Dünne Leiste unter dem Leben: voll heißt, du ziehst die Aggro. Grau weit weg, orange kurz davor, rot mit Aggro – als Tank grün, solange du sie hältst." },
+                    description = "Dünne Leiste unter dem Leben: voll heißt, du ziehst die Aggro. Grau weit weg, orange kurz davor, rot mit Aggro. Als Tank zeigt sie, wie nah der Nächste dran ist – grün, orange ab 80 %. Allein ohne Begleiter keine Leiste: dann hast du sie immer." },
                   { type = "dropdown", label = "Wer die Aggro hat", key = "aggroName", items = {
                         { value = "problem", text = "Wenn nicht beim Tank" },
                         { value = "always",  text = "Immer" },

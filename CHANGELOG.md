@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.3.2] – 2026-10-04
+
+**Die Bedrohungsleiste unter den Namensplaketten sagt jetzt etwas.** Als Tank zeigt sie, wie nah der Nächste an der Aggro ist – grün mit Abstand, orange, wenn es eng wird – statt immer voll grün. Allein ohne Begleiter fällt sie weg: dann hast du die Aggro ohnehin immer, und jeder Gegner trug eine volle rote Leiste. Dazu ein feiner Rand wie am Leben darüber.
+
+### Technisch
+
+Beta-Test: „die Leiste unter der Namensplakette ist noch nicht richtig gut wegen der Aggro“. Die Leiste (6.9.0.8) zeigte immer die **eigene** `scaledPercentage` – in zwei häufigen Lagen ohne Aussage:
+
+- **Allein ohne Begleiter** immer 100 %, also an jedem Gegner voll rot. Jetzt nur, wenn jemand die Aggro abnehmen kann (`NP.Contested`: Gruppe oder `UnitExists("pet")`). Die Prozentzahl (`threatText`) bleibt eine eigene Wahl und unverändert.
+- **Als Tank** (Rolle `TANK` und du hältst ihn) immer voll grün. Jetzt der Nächste (`NP.RunnerUp`): die höchste `scaledPercentage` eines anderen auf diesem Gegner – Gruppe: `pet`, `party1..4`, `partypet1..4`; Schlachtzug: `pet`, `raid1..40` ohne dich selbst. Grün, ab `NP.LEAD_WARN` (80) oder bei Status 2 orange. Niemand sonst auf der Liste ist 0 (gemessen, nicht unbekannt); ist ein Wert geheim, bleibt die eigene Bedrohung. Die Bedrohung der Mitspieler kommt offen (gemessen 04.10.2026, Build 70205). Feste Listen der Einheiten, nichts wird je Aufruf angelegt.
+- Ohne Tankrolle (auch ohne zugewiesene Rollen) bleibt es bei der eigenen Bedrohung – wer als DD die Aggro hält, soll Rot sehen.
+- **Rand:** 1 px Schwarz um die Leiste (`threatBar.edge`), oben auf derselben Linie wie der Rand des Lebens.
+- `load_test.lua`: Tank sieht den Nächsten (der Höchste nicht zuletzt in der Liste), grün/orange, niemand sonst = 0, geheim = eigene, Schlachtzug ohne sich selbst, DD mit Aggro = eigene, allein ohne Begleiter keine Leiste, mit Begleiter ja, Rand. Gegenproben: 10, alle gefangen – zwei (Maximum, sich selbst im Schlachtzug) erst nach geschärftem Test.
+
 ## [6.10.3.1] – 2026-10-04
 
 **Würfeln um Beute im neuen Stil.** Das kleine Fenster für Bedarf, Gier und Passen steht jetzt auf einer ruhigen Fläche statt auf dem dunklen Toast: das Symbol mit einem feinen Rand in der Farbe seiner Qualität, die verbleibende Zeit als schlichter Balken in Gold. Die Knöpfe bleiben, wie sie sind.

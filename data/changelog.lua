@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.3.2",
+        date    = "04.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Bedrohungsleiste unter den Namensplaketten sagt jetzt etwas.|r Als Tank zeigt sie, wie nah der Nächste an der Aggro ist – grün mit Abstand, orange, wenn es eng wird – statt immer voll grün. Allein ohne Begleiter fällt sie weg: dann hast du die Aggro ohnehin immer, und jeder Gegner trug eine volle rote Leiste. Dazu ein feiner Rand wie am Leben darüber.",
+        },
+    },
+    {
         version = "6.10.3.1",
         date    = "04.10.2026",
         notes   = {
