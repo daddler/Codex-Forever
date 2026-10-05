@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.11.0.4] – 2026-10-05
+
+**Keine Schrift mehr übereinander.** Auf den Karten unter „Außerdem“ lief eine lange Zeile – etwa die Namen der Waffen – unter „es fehlen …“ durch. Jetzt endet sie davor.
+
+### Technisch
+
+- **Karte „Außerdem“** (`modules/home.lua`), Beta-Test mit 6.11.0.3: „Einhandäxte, … beim Waffenmeister“ lief unter „es fehlen 38s 67k“ durch. Satz und kurze Zeile endeten vor den **Kosten** („70s“, schmal), nicht vor dem breiteren Fehlbetrag darunter. Jetzt stehen beide rechtsbündig in einer Spalte `c.money`, so breit wie der längere (`HM.FitMoney`: gemessen, nie schmaler als geschätzt; `HM.Visible` zählt ohne Farbcodes und eine Münze wie zwei Zeichen); Satz und Zeile enden 18 davor.
+- **Gemessen mit 6.11.0.3:** Namen der lernbaren Zauber unter „Als Nächstes“ erscheinen („wenn ich Zauber erlernen kann, stehen diese auch da“); Schraffur der Erfahrung und ihre Legende sichtbar; die Waffenkarte nennt sieben Waffen. **Münzen:** die Karte zeigt „70s“ in Worten – der Rückfall ohne `GetCoinTextureString` greift, die Münzbilder des Spiels erscheinen auf Forever nicht.
+- `load_test.lua`: Spalte mindestens so breit wie „es fehlen 27s 20k“, ohne Fehlbetrag mindestens wie die Kosten, ohne Kosten 0; Satz und Zeile an `c.money` verankert (Quelltext geprüft – die Attrappe merkt sich keine Anker); `HM.Visible`. Gegenproben: 8, alle gefangen – eine erst nach zusätzlichem Fall (nur Kosten); eine war gleichwertig, die Bedingung ist raus.
+
 ## [6.11.0.3] – 2026-10-05
 
 **Die Übersicht nennt deine Zauber.** Kannst du beim Lehrer etwas lernen, stehen die Zauber mit Symbol und Rang gleich unter „Als Nächstes“ – ohne erst zum Lehrer zu wechseln. Fährst du mit der Maus darüber, zeigt das Spiel den Zauber. Bei den Waffen stehen die Namen ebenso da.

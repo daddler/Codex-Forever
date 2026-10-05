@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.11.0.4",
+        date    = "05.10.2026",
+        notes   = {
+            "|cff7C6CFFKeine Schrift mehr übereinander.|r Auf den Karten unter „Außerdem“ lief eine lange Zeile – etwa die Namen der Waffen – unter „es fehlen …“ durch. Jetzt endet sie davor.",
+        },
+    },
+    {
         version = "6.11.0.3",
         date    = "05.10.2026",
         notes   = {

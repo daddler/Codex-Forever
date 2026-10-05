@@ -11623,6 +11623,14 @@ do
             "Karte: " .. tostring(c.title:GetText()))
         assert(c.cost:GetText() == "40s" and c.short:GetText() == "es fehlen 27s 20k", "Kosten: " .. tostring(c.short:GetText()))
         assert(c.shortColor == "warningBright", "optionaler Fehlbetrag nicht in Bernstein")
+        -- 6.11.0.4: Satz und Zeile enden vor dem LAENGEREN von Kosten und
+        -- Fehlbetrag (Beta-Test: Namen liefen unter "es fehlen" durch).
+        local shortEst = WeintCodex.Utf8Len("es fehlen 27s 20k") * 12 * 0.56
+        assert(c.moneyW >= shortEst, "Spalte Kosten schmaler als der Fehlbetrag: " .. c.moneyW)
+        local hf = io.open(ROOT .. "/modules/home.lua"):read("*a")
+        assert(hf:find('c.title:SetPoint("RIGHT", c.money, "LEFT"', 1, true) and hf:find('c.sub:SetPoint("RIGHT", c.money, "LEFT"', 1, true),
+            "Satz oder Zeile der Karte enden nicht vor der Spalte der Kosten")
+        assert(HM.Visible("|cffffffff12|r|TInterface\\MoneyFrame\\UI-SilverIcon:0:0:2:0|t") == "1200", "sichtbarer Text")
         -- Dein Weg: acht Stufen nebeneinander, ab der eigenen.
         local lv = HM.last.levels
         assert(#lv == HM.WEG_COLS and lv[1].level == 7 and lv[1].current and lv[8].level == 14, "Weg: Stufen")
@@ -11641,6 +11649,7 @@ do
             and f.more.count:GetText() == "2 weitere Schritte", "drei Schritte falsch verteilt")
         assert(f.cards[1].step.key == "quests" and f.cards[1].iconPath == HM.ICONS.quests
             and not f.cards[1].cost:IsShown(), "Karte Quests")
+        assert(f.cards[1].moneyW == 0, "Karte ohne Kosten haelt Platz frei: " .. f.cards[1].moneyW)
         assert(f.cards[2].step.key == "repair" and f.cards[2].button:IsShown(), "Karte Reparieren")
         assert(not h.bar:IsShown() and not h.xpLeft:IsShown(), "Erfahrung ohne Antwort als Leiste")
 
@@ -11704,6 +11713,8 @@ do
             HM.Fill(f, { level = 5, quests = { readyCount = 1, ready = 100 }, trainer = wt, dungeons = {} })
             assert(f.cards[1].step.key == "weapons" and f.cards[1].sub:GetText() == "Einhandäxte, Bogen – optional, beim Waffenmeister",
                 "Karte Waffen: " .. tostring(f.cards[1].sub:GetText()))
+            assert(not f.cards[1].short:IsShown() and f.cards[1].moneyW >= WeintCodex.Utf8Len(f.cards[1].cost:GetText()) * 14 * 0.56,
+                "Spalte Kosten ohne Fehlbetrag: " .. f.cards[1].moneyW)
             -- Dein Weg: die Namen einer Stufe im Tooltip; "du" und "nichts" ohne.
             local wtr = Trainer(0, 0, 0, { { id = 4, level = 6 }, { id = 3, level = 6 } }, { { id = 6, level = 9 } })
             HM.Fill(f, { level = 5, trainer = wtr, dungeons = { { name = "Tor", minLevel = 9 } } })

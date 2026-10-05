@@ -126,7 +126,10 @@ damit als ungültige UTF-8-Folge wieder heraus.
     Waffenfertigkeiten (`optional`: Fehlbetrag in Bernstein), ein Dungeon
     für die Stufe (nur ohne den mit Quests). Der erste steht oben, die
     übrigen unter **Außerdem** als Karten: Symbol (`HM.ICONS`), Satz,
-    kurze Zeile (`sub`), Kosten und Fehlbetrag in Münzen (`HM.Coins`),
+    kurze Zeile (`sub`), Kosten und Fehlbetrag in Münzen (`HM.Coins`; auf
+    Forever gemessen in Worten, „70s“) rechtsbündig in einer Spalte so
+    breit wie der längere (`HM.FitMoney`, seit 6.11.0.4 – vorher lief die
+    Zeile unter dem Fehlbetrag durch),
     Knopf zum Ziel (`HM.Go`). Ohne weiteren Schritt kein Abschnitt.
   * **Dein Weg**: die nächsten acht Stufen einzeln (`HM.Levels`, aus
     `HM.Path`): Kreis = du, Quadrat = neue Zauber beim Lehrer (ohne

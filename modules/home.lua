@@ -831,19 +831,27 @@ local function BuildCard(parent, i)
         onClick = function() Go(c.step) end,
     })
     c.button:SetPoint("RIGHT", c, "RIGHT", -20, 0)
+    -- Kosten und Fehlbetrag stehen rechtsbuendig in einer Spalte, so breit
+    -- wie der laengere der beiden (HM.FitMoney). Satz und kurze Zeile enden
+    -- davor - bis 6.11.0.3 endeten sie vor den Kosten allein, und die Namen
+    -- der Waffen liefen unter "es fehlen ..." durch (Beta-Test).
+    c.money = CreateFrame("Frame", nil, c)
+    c.money:SetSize(1, HM.CARD_H)
+    c.money:SetPoint("RIGHT", c.button, "LEFT", -18, 0)
+    c.moneyW = 0
     c.cost = Label(c, 14, "textNormal")
-    c.cost:SetPoint("BOTTOMRIGHT", c.button, "LEFT", -18, 2)
+    c.cost:SetPoint("BOTTOMRIGHT", c.money, "RIGHT", 0, 2)
     OneLine(c.cost, "RIGHT")
     c.short = Label(c, 12, "warningBright")
-    c.short:SetPoint("TOPRIGHT", c.button, "LEFT", -18, -3)
+    c.short:SetPoint("TOPRIGHT", c.money, "RIGHT", 0, -3)
     OneLine(c.short, "RIGHT")
     c.title = Label(c, 15, "textBright", true)
     c.title:SetPoint("BOTTOMLEFT", c.tile, "RIGHT", 18, 2)
-    c.title:SetPoint("RIGHT", c.cost, "LEFT", -18, 0)
+    c.title:SetPoint("RIGHT", c.money, "LEFT", -18, 0)
     OneLine(c.title)
     c.sub = Label(c, 13, "textMuted")
     c.sub:SetPoint("TOPLEFT", c.tile, "RIGHT", 18, -3)
-    c.sub:SetPoint("RIGHT", c.cost, "LEFT", -18, 0)
+    c.sub:SetPoint("RIGHT", c.money, "LEFT", -18, 0)
     OneLine(c.sub)
     return c
 end
@@ -1051,6 +1059,21 @@ end
 -- Fuellen
 --------------------------------------------------
 
+-- Was von einem Text zu sehen ist: ohne Farbcodes, ein Bild (Muenze) wie
+-- zwei Zeichen - fuer die Schaetzung der Breite.
+function HM.Visible(text)
+    return (tostring(text or ""):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):gsub("|T.-|t", "00"))
+end
+
+-- Spalte fuer Kosten und Fehlbetrag so breit wie der laengere (was fehlt,
+-- steht leer da und zaehlt 0).
+function HM.FitMoney(c)
+    local w = math.max(TextWidth(c.cost, HM.Visible(c.cost:GetText()), 14),
+                       TextWidth(c.short, HM.Visible(c.short:GetText()), 12))
+    c.moneyW = math.ceil(w)
+    c.money:SetWidth(math.max(1, c.moneyW))
+end
+
 local function FillCard(c, step)
     c.step = step
     if not step then c:Hide() return end
@@ -1083,6 +1106,7 @@ local function FillCard(c, step)
         c.short:SetText("")
         c.short:Hide()
     end
+    HM.FitMoney(c)
     if step.action then
         c.button:SetText(step.action)
         c.button:Show()
