@@ -4131,18 +4131,19 @@ do
         assert((TR.mapButtons or 0) > 0, "kein Kartenknopf fuer Waffenmeister")
         assert(TR.lastBill and TR.lastBill[1][2][2] == TR.Money(150), "Rechnung zeigt das Gold nicht")
         assert(TR.lastBill[1][3][1] == ((b.rest < 0) and "Es fehlen" or "Danach"), "Rechnung: bleibt/fehlt falsch")
-        -- 6.6.2.1: die Startseite fragt den Lehrer und die Dungeons.
-        local nav0 = WeintCodex.Navigation
-        local home = nav0.HomeTrainer()
+        -- 6.6.2.1: die Startseite fragt den Lehrer und die Dungeons
+        -- (seit 6.11.0.0 modules/home.lua).
+        local nav0, HM0 = WeintCodex.Navigation, WeintCodex.Home
+        local home = HM0.Trainer()
         assert(home and #home.cat.sections.now > 0 and home.budget and home.budget.money == 150,
             "Startseite kennt den Lehrer nicht")
-        local fit = nav0.HomeDungeons(15)
+        local fit = HM0.Dungeons(15)
         local hot = false
         for _, d in ipairs(fit) do if d.id == "hall_of_thanes" then hot = true end end
         assert(hot, "Hall of Thanes (13-18) passt nicht zu Stufe 15")
-        local none, nextUp = nav0.HomeDungeons(1)
+        local none, nextUp = HM0.Dungeons(1)
         assert(#none == 0 and nextUp and nextUp.minLevel > 1, "ohne passenden Dungeon kein naechster")
-        assert(#nav0.HomeDungeons(nil) == 0, "ohne Stufe trotzdem Dungeons empfohlen")
+        assert(#HM0.Dungeons(nil) == 0, "ohne Stufe trotzdem Dungeons empfohlen")
         nav0.SwitchTo("uebersicht")
         -- 6.6.0.1: erst der Detailbereich, dann gemessen - er macht die
         -- Flaeche schmaler, und die Karten muessen die schmale Breite nehmen.
@@ -11470,6 +11471,147 @@ do
     end)
     for i, n in ipairs(names) do _G[n] = saved[i] end
     Check(ok, "Mouseover-Markieren: Taste nur in der Instanz, naechste freie Markierung, nicht doppelt, Tank/Heiler frei, nie im Kampf, frei nach dem Tod"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.11.0.0: Startseite neu - "Was mache ich als Naechstes?". Hoechstens
+-- drei Schritte nach Dringlichkeit, der Weg der naechsten Stufen; leere
+-- Plaetze sind kein Mangel (Beta-Test, Stufe 3: "11 Dinge sind noch offen").
+Section("Startseite")
+do
+    local HM = WeintCodex.Home
+    local ok, err = pcall(function()
+        local function Trainer(nowN, money, nowCost, soon, later, weapons)
+            local now = {}
+            for i = 1, nowN do now[i] = { id = i, level = 1, cost = 10 } end
+            local rest = type(money) == "number" and (money - nowCost) or nil
+            return { cat = { sections = { now = now, soon = soon or {}, later = later or {} } },
+                     budget = { money = money, now = nowCost, rest = rest,
+                                weaponCount = weapons or 0, weapons = (weapons or 0) * 1000 } }
+        end
+        local function Keys(steps)
+            local k = {}
+            for i, s in ipairs(steps) do k[i] = s.key end
+            return table.concat(k, ",")
+        end
+        local hot = WeintCodex.DungeonData.Get("hall_of_thanes")
+        assert(hot, "Hall of Thanes fehlt im Bestand")
+
+        -- Das Bild aus dem Beta-Test: Stufe 3, elf leere Plaetze, nichts
+        -- beim Lehrer, vier Waffen. Leere Plaetze sind KEIN Schritt.
+        local ctx = { level = 3, className = "Paladin", trainer = Trainer(0, 18300, 0, {}, {}, 4),
+                      gear = { empty = { "Kopf", "Hals", "Schultern", "Umhang", "a", "b", "c", "d", "e", "f", "g" }, broken = {} },
+                      fit = {}, dungeonQuests = {}, dungeons = { hot } }
+        local steps = HM.Steps(ctx)
+        assert(Keys(steps) == "weapons", "Stufe 3: " .. Keys(steps))
+        assert(HM.Headline(ctx, steps) == "4 Waffenfertigkeiten lernbar", "Ueberschrift: " .. HM.Headline(ctx, steps))
+        for _, s in ipairs(steps) do assert(not s.title:find("offen"), "leere Plaetze als offen") end
+        -- 1s 83k gegen 4 x 10s: das Gold reicht nicht - gesagt, aber nicht rot.
+        ctx.trainer.budget.money = 183
+        assert(HM.Steps(ctx)[1].detail:find("es fehlen 38s 17k", 1, true) and not HM.Steps(ctx)[1].tone,
+            "Waffen: " .. HM.Steps(ctx)[1].detail)
+        ctx.trainer.budget.money = 18300
+        assert(HM.Steps(ctx)[1].detail:find("dein Gold reicht", 1, true), "Waffen, Gold reicht")
+
+        -- Lehrer: Gold reicht / fehlt / unbekannt - nie 0.
+        local s = HM.Steps({ trainer = Trainer(2, 500, 20) })[1]
+        assert(s.key == "trainer" and s.title == "2 Zauber lernbar" and s.detail:find("dein Gold reicht", 1, true)
+            and not s.tone, "Lehrer, Gold reicht: " .. tostring(s.detail))
+        assert(s.headline == "2 Zauber warten beim Lehrer" and s.go.tab == "lehrer", "Lehrer: Ueberschrift/Ziel")
+        s = HM.Steps({ trainer = Trainer(1, 5, 20) })[1]
+        assert(s.tone == "danger" and s.detail:find("es fehlen 15k", 1, true) and s.title == "Ein Zauber lernbar",
+            "Lehrer, Gold fehlt: " .. tostring(s.detail))
+        s = HM.Steps({ trainer = Trainer(1, nil, 20) })[1]
+        assert(not s.tone and s.detail:find("unbekannt", 1, true), "Lehrer ohne Gold geurteilt: " .. tostring(s.detail))
+
+        -- Quests und Reparieren.
+        s = HM.Steps({ quests = { readyCount = 3, ready = 4200 } })[1]
+        assert(s.key == "quests" and s.title == "3 Quests abgabebereit" and s.detail:find("4.200 EP", 1, true)
+            and not s.action, "Quests: " .. tostring(s.title))
+        assert(#HM.Steps({ quests = { readyCount = 0, ready = 0 } }) == 0, "keine Quest als Schritt")
+        s = HM.Steps({ gear = { empty = {}, broken = { "Brust" } } })[1]
+        assert(s.key == "repair" and s.tone == "danger" and s.detail:find("Brust", 1, true), "Reparieren fehlt")
+
+        -- Reihenfolge und Obergrenze: alles da -> die drei dringendsten.
+        local all = { trainer = Trainer(2, 500, 20, {}, {}, 1), quests = { readyCount = 1, ready = 100 },
+                      gear = { broken = { "Brust" } }, fit = { hot },
+                      dungeonQuests = { { dungeon = hot, active = 1, ready = 1 } } }
+        assert(Keys(HM.Steps(all)) == "trainer,quests,repair", "Reihenfolge: " .. Keys(HM.Steps(all)))
+        all.trainer, all.quests, all.gear = nil, nil, nil
+        steps = HM.Steps(all)
+        assert(Keys(steps) == "dungeonQuests", "Dungeon mit Quests verdraengt den passenden nicht: " .. Keys(steps))
+        assert(steps[1].detail:find("2 Quests im Log", 1, true) and steps[1].detail:find("1 abgabebereit", 1, true)
+            and steps[1].go.dungeon == "hall_of_thanes", "Dungeon-Quests: " .. steps[1].detail)
+        all.dungeonQuests = {}
+        steps = HM.Steps(all)
+        assert(Keys(steps) == "dungeonFit" and steps[1].title == hot.name, "passender Dungeon: " .. Keys(steps))
+
+        -- Ohne Stufe: kein Schritt, kein Weg, ehrliche Ueberschrift.
+        steps = HM.Steps({})
+        assert(#steps == 0 and HM.Path({}) == nil and HM.Headline({}, steps) == "Willkommen zurück", "ohne Stufe geraten")
+        assert(HM.IdleDetail({}, nil):find("meldet der Client", 1, true), "ohne Stufe: Leerzeile")
+
+        -- Der Weg: Zauber je Stufe, Dungeons ab ihrer Stufe, aufsteigend,
+        -- hoechstens HM.MAX_PATH; was unter der eigenen Stufe liegt, fehlt.
+        local soon = { { level = 4 }, { level = 4 }, { level = 5 } }
+        local later = { { level = 10 }, { level = 12 }, { level = 14 }, { level = 16 } }
+        local low = { name = "Niedrig", minLevel = 2 }
+        local four = { name = "Vier", minLevel = 4 }
+        local path = HM.Path({ level = 3, trainer = Trainer(0, 0, 0, soon, later), dungeons = { hot, low, four } })
+        assert(#path == HM.MAX_PATH, "Weg: " .. #path)
+        assert(path[1].level == 4 and path[1].spells == 2 and path[1].dungeons[1] == "Vier", "Stufe 4 falsch")
+        assert(path[2].level == 5 and path[3].level == 10 and path[4].level == 12 and path[5].level == 13
+            and path[5].dungeons[1] == hot.name, "Weg nicht aufsteigend oder Dungeon fehlt")
+        for _, m in ipairs(path) do assert(m.level > 3, "Weg zeigt Vergangenes") end
+        assert(HM.IdleDetail({ level = 3 }, path) == "Der nächste Zauber kommt mit Stufe 4.", "Leerzeile ohne naechsten Zauber")
+
+        -- Nichts muss scrollen: volle Seite im kleinsten Fenster.
+        local budget = WeintCodex.DungeonPages.PageBudget()
+        assert(HM.PageHeight() <= budget, "Startseite " .. HM.PageHeight() .. " > " .. budget)
+
+        -- Die Seite: einmal gebaut, danach nur gefuellt.
+        WeintCodex.Navigation.SwitchTo("uebersicht")
+        local f = HM.Page()
+        assert(f and f:IsShown(), "Startseite nicht offen")
+        local nav = WeintCodex.Navigation
+        local badges, counts = {}, {}
+        local oldB, oldC = nav.SetTabBadge, nav.SetTabCount
+        nav.SetTabBadge = function(id, on) badges[id] = on end
+        nav.SetTabCount = function(id, v) counts[id] = v or false end
+        local oldSnap = WeintCodex.Charakter.Snapshot
+        WeintCodex.Charakter.Snapshot = function() return ctx.gear end
+        HM.Show()
+        WeintCodex.Charakter.Snapshot = oldSnap
+        nav.SetTabBadge, nav.SetTabCount = oldB, oldC
+        assert(HM.Page() == f, "Startseite bei jedem Oeffnen neu gebaut")
+        assert(badges.charakter == false, "leere Plaetze setzen den Punkt am Charakter")
+        assert(counts.raids == false, "Schlachtzuege tragen auf der Startseite eine Zahl")
+
+        HM.Fill(f, ctx)
+        assert(f.title:GetText() == "4 Waffenfertigkeiten lernbar", "Ueberschrift gezeichnet: " .. tostring(f.title:GetText()))
+        assert(f.rows[1]:IsShown() and not f.rows[2]:IsShown() and not f.rows[3]:IsShown(), "Zeilen ohne Schritt sichtbar")
+        assert(f.rows[1].button:IsShown() and f.steps:GetHeight() == HM.ROW_H, "Zeile/Hoehe falsch")
+        assert(f.slotCount == 2 and f.slots[1]:IsShown() and f.slots[2]:IsShown() and not f.slots[3]:IsShown(),
+            "Weg: " .. tostring(f.slotCount))
+        assert(f.slots[1].line1:GetText() == "Jetzt" and f.slots[2].level:GetText() == "Stufe 13", "Weg beschriftet falsch")
+        HM.Fill(f, all)   -- passender Dungeon
+        HM.Fill(f, { level = 3, trainer = Trainer(0, 0, 0), dungeons = {} })
+        assert(f.title:GetText() == "Nichts offen – weiter leveln" and f.rows[1].title:GetText() == "Nichts offen"
+            and not f.rows[1].button:IsShown(), "nichts offen: " .. tostring(f.title:GetText()))
+        assert(f.slotCount == 0 and f.pathEmpty:IsShown(), "leerer Weg ohne Hinweis")
+        HM.Fill(f, {})
+        assert(f.eyebrow:GetText():gsub("[^%a]", ""):find("STUFEUNBEKANNT", 1, true) and f.pathEmpty:GetText():find("Stufe", 1, true),
+            "ohne Stufe: " .. tostring(f.eyebrow:GetText()))
+        -- Ziel eines Knopfs: Dungeon vorwaehlen, dann die Seite.
+        local sel, went
+        local oldSel, oldGo = WeintCodex.DungeonPages.Select, nav.GoToTab
+        WeintCodex.DungeonPages.Select = function(id) sel = id end
+        nav.GoToTab = function(tab) went = tab end
+        HM.Go({ go = { tab = "dungeons", dungeon = "hall_of_thanes" } })
+        WeintCodex.DungeonPages.Select, nav.GoToTab = oldSel, oldGo
+        assert(sel == "hall_of_thanes" and went == "dungeons", "Knopf fuehrt nicht zum Dungeon")
+    end)
+    Check(ok, "Startseite: drei Schritte nach Dringlichkeit, leere Plaetze kein Mangel, Gold nie geraten, Weg aufsteigend, einmal gebaut"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

@@ -269,7 +269,7 @@ into modules that no longer exist. A green run means "it loads", never
 
 | Task touches… | Read |
 |---|---|
-| UI-Struktur, Theme, `core/ui.lua`, Navigationsspalte, PageHead, Detailbereich | `docs/architecture/overview.md` |
+| UI-Struktur, Theme, `core/ui.lua`, Navigationsspalte, PageHead, Detailbereich, Startseite (`modules/home.lua`, 6.11.0.0: „Als Nächstes“ + „Dein Weg“) | `docs/architecture/overview.md` |
 | Leere Tabellen, `unknown ≠ 0`, Leerzustände | `docs/invariants/data-integrity.md` |
 | Schlachtzüge, Bosslisten, Lockouts, Fortschritt, Herkunft einer Liste | `docs/systems/raids-and-progress.md` |
 | Dungeons (Forever **und** Classic), Stufenbereiche, Bosslisten, Flügel, beschwörbare Zusatzbosse, Rollen, Beute und Quests (`data/dungeon_journal.lua`, Queststatus aus dem Client seit 6.9.0.7), Questgeber auf der Weltkarte (`modules/questmap.lua`), Abgleich mit dem Client (`/wc abgleich`, `modules/clientcheck.lua`, 6.10.3.0: liest Gruppensuche und Kompendium, schreibt nichts) | `docs/systems/dungeons.md` |

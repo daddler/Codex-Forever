@@ -173,15 +173,13 @@ local TOUR_STEPS = {
       body =
         "Die Startseite ist kein zweites Menü. Sie beantwortet eine Frage: "
         .. E("was ist jetzt zu tun?") .. "\n\n"
-        .. "Ganz oben stehen deine Stufe, deine Erfahrung und die Quests, "
-        .. "die zur Abgabe bereit sind — und wie viele Zauber beim "
-        .. A("Lehrer") .. " auf dich warten. Darunter drei Spalten: was du "
-        .. "beim Lehrer noch nicht gelernt hast und ob dein Gold dafür "
-        .. "reicht, was an deiner Ausrüstung offen ist, und welche Dungeons "
-        .. "zu deiner Stufe passen.\n\n"
-        .. "Ganz unten läuft eine Zeile mit dem Zustand der Brücke zu "
-        .. A("WeintCompanion") .. ". Steht dort \"keine Lieferung\", ist das "
-        .. "der Grund, wenn eine Seite leer bleibt." },
+        .. "Unter " .. E("Als Nächstes") .. " stehen höchstens drei Schritte, "
+        .. "das Dringendste zuerst: Zauber beim " .. A("Lehrer") .. " (und ob "
+        .. "dein Gold reicht), Quests zur Abgabe, ein zerbrochener Gegenstand, "
+        .. "ein Dungeon, für den Quests in deinem Log liegen. Ein Knopf führt "
+        .. "jeweils hin.\n\n"
+        .. "Darunter " .. E("Dein Weg") .. ": die nächsten Stufen, an denen etwas "
+        .. "Neues kommt – neue Zauber, ein Dungeon, der sich öffnet." },
 
     { chapter = "Der Abend", icon = ICON .. "INV_Misc_GroupLooking",
       title = "Anmeldung und Kalender",

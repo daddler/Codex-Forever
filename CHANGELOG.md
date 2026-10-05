@@ -9,6 +9,24 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.11.0.0] – 2026-10-05
+
+**Die Übersicht sagt dir, was als Nächstes dran ist.** Statt Datum, Erfahrungsleiste und drei vollen Spalten stehen dort höchstens drei Schritte, das Wichtigste zuerst – Zauber beim Lehrer, Quests zur Abgabe, ein zerbrochener Gegenstand, ein Dungeon, für den du Quests hast. Ein Knopf bringt dich jeweils hin.
+
+**Dein Weg.** Darunter siehst du die nächsten Stufen, an denen etwas Neues kommt: neue Zauber beim Lehrer und Dungeons, die sich öffnen.
+
+**Leere Ausrüstungsplätze sind kein Mangel mehr.** Mit Stufe 3 hat jeder noch keinen Helm und keinen Umhang – die Übersicht und der rote Punkt am Charakter melden nur noch zerbrochene Gegenstände. Reicht dein Gold für Zauber oder Waffen nicht, steht das dabei.
+
+### Technisch
+
+- **Startseite neu** (`modules/home.lua`, `WeintCodex.Home`; raus aus `core/navigation.lua`, dort −600 Zeilen). Beta-Test mit 6.10.4.9 (Paladin, Stufe 3): „sehr schwierig, das muss anders“ – Forever ist ein neues Spiel, alle fangen neu an, Raids sind erst einmal egal. Das Bild zeigte: Überschrift „11 Dinge sind noch offen“ (leere Plätze), „0 lernbar“ neben „4 Waffenfertigkeiten lernbar“ und „Alles gelernt“, überlappender Text („BEKANNTFÜR“), „Gegenstandsstufe 0.3“, drei fast leere Karten, Companion-Zeile.
+- Aufbau: Kopf (Stufe · Klasse, Überschrift = erster Schritt), **Als Nächstes** (`HM.Steps`, höchstens 3: Lehrer → Quests abgabebereit → zerbrochen → Dungeon mit Quests im Log → Waffen → Dungeon für die Stufe), **Dein Weg** (`HM.Path`, die nächsten 5 Stufen mit neuen Zaubern bzw. Dungeons). `HM.Context()` fragt, `Steps`/`Path` sind rein, `HM.Fill` füllt eine einmal gebaute Seite. Ereignisse (Stufe, Zauber, Questlog, Gold, Haltbarkeit) füllen neu, gebündelt.
+- Weg: Datum, Erfahrungsleiste, Gegenstandsstufe, Spalte Ausrüstung, Companion-Zeile, Zahl an „Schlachtzüge“. Leere Plätze setzen den roten Punkt am Charakter nicht mehr (`SetTabBadge`, nur `broken`).
+- Ehrlich bleibt: ohne Stufe kein Dungeon und kein Weg („Willkommen zurück“), ohne Gold „unbekannt“, Quests ohne Antwort des Clients zählen nicht.
+- Tour (`core/onboarding.lua`) und `docs/architecture/overview.md` beschreiben die neue Seite.
+- `load_test.lua`: das Bild aus dem Beta-Test (11 leere Plätze, 4 Waffen) → ein Schritt „Waffen“, kein „offen“, Gold fehlt 38s 17k ohne Rot; Lehrer reicht/fehlt/unbekannt; Quests; Reparieren; Reihenfolge und Obergrenze; Dungeon mit Quests vor passendem; ohne Stufe nichts geraten; Weg aufsteigend, ohne Vergangenes, höchstens 5; Seite einmal gebaut, Zeilen und Weg gefüllt, Knopf wählt den Dungeon vor; volle Höhe 500 ≤ kleinstes Fenster. Gegenproben: 13, alle gefangen.
+- **Ungeprüft im Spiel:** alles an der neuen Seite – Aussehen, ob die Schritte stimmen, ob der Dungeon-Knopf auf dem richtigen Dungeon landet.
+
 ## [6.10.4.9] – 2026-10-05
 
 **Nichts Neues im Spiel.** Diese Fassung hält fest, was in der letzten Testrunde im Spiel geprüft wurde – und was noch nicht.

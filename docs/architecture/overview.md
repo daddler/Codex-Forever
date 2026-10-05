@@ -93,19 +93,39 @@ damit als ungültige UTF-8-Folge wieder heraus.
   Ordnung aus Mists of Pandaria. Nichts ist entfernt; Anmeldung und
   Kalender sind Lieferungen des Bots und kommen wieder, wenn geraidet
   wird.
-* **Die Startseite** *(seit 6.6.2.1)* beantwortet das Leveln, nicht den
-  Raidabend: oben Stufe, Klasse, Erfahrung (`UIXPBar.Experience`),
-  Erholung und abgabebereite Quests (`UIXPBar.QuestXP`) mit der Zahl der
-  lernbaren Zauber und dem Knopf zum Lehrer; darunter drei Spalten –
-  **Beim Lehrer** (was noch nicht gelernt ist, mit der Rechnung gegen das
-  eigene Gold, `Navigation.HomeTrainer` über `Trainer.Budget`), **Deine
-  Ausrüstung**, **Dungeons** für die eigene Stufe
-  (`Navigation.HomeDungeons`, `DungeonData.FitsLevel`; passt keiner, der
-  nächste darüber). Nächster Raid, Anmeldungen, Schlachtzüge und
-  Gildenbank stehen nicht mehr auf der Startseite. Neu gezeichnet wird
-  nur bei offener Seite, nach Stufenaufstieg oder wenn der Client einen
-  Zaubernamen nachliefert – nicht bei jedem EP-Tick, weil jedes Zeichnen
-  die Seite neu aufbaut.
+* **Die Startseite** *(seit 6.11.0.0 `modules/home.lua`, vorher in
+  `core/navigation.lua`)* beantwortet eine Frage: **„Was mache ich als
+  Nächstes?“** Forever ist ein neues Spiel, alle fangen bei Stufe 1 an –
+  Schlachtzug, Anmeldung, Gildenbank und Companion stehen links in der
+  Spalte, nicht hier. Aufbau:
+  * **Kopf:** Stufe und Klasse, als Überschrift der wichtigste Schritt
+    (`HM.Headline`; ohne Schritt „Nichts offen – weiter leveln“, ohne
+    Stufe „Willkommen zurück“).
+  * **Als Nächstes:** höchstens drei Schritte (`HM.MAX_STEPS`), nach
+    Dringlichkeit (`HM.Steps`): Zauber beim Lehrer (mit Gold gegen
+    Kosten – ohne Gold „unbekannt“, nie „reicht“), abgabebereite Quests
+    (`UIXPBar.QuestXP`), zerbrochene Gegenstände (Haltbarkeit 0), ein
+    Dungeon mit Quests im Log (`DungeonPages.QuestState` – nur
+    beantwortete Quests zählen), Waffenfertigkeiten, ein Dungeon für die
+    Stufe (nur ohne den mit Quests). Jede Zeile: Art, Satz, Einzelheit,
+    Knopf zum Ziel (`HM.Go`: Dungeon vorwählen, dann die Seite).
+  * **Dein Weg:** die nächsten fünf Stufen, an denen etwas kommt
+    (`HM.Path`): neue Zauber beim Lehrer (ohne Talente und
+    Tierausbildung) und Dungeons ab ihrer Mindeststufe – in gleich
+    breiten Spalten, nicht maßstabsgetreu.
+  * **Nicht mehr da** (Beta-Test mit Stufe 3, 6.10.4.9): Datum,
+    Erfahrungsleiste (zeigt das Spiel), drei gleich schwere Spalten,
+    Gegenstandsstufe, Companion-Zeile, die Zahl an „Schlachtzüge“. **Leere
+    Ausrüstungsplätze sind kein Schritt und kein roter Punkt mehr** – „11
+    Dinge sind noch offen“ hieß bei Stufe 3: Kopf, Hals, Umhang … leer,
+    wie bei jedem.
+  * Getrennt in `HM.Context()` (Client und Bestände), `HM.Steps`/`HM.Path`
+    (rein, im Prüflauf ohne Zeichnen geprüft) und `HM.Fill`. Die Seite
+    wird **einmal gebaut** und danach nur gefüllt (die alte legte bei
+    jedem Öffnen einen neuen Rahmen an). Neu gefüllt bei offener Seite
+    nach Stufenaufstieg, Zauber, Questlog, Gold, Haltbarkeit – gebündelt
+    (0,5 s). Volle Höhe `HM.PageHeight()` (500) gegen das kleinste
+    Fenster im Prüflauf.
 * Die Module zeichnen ausschliesslich in `WeintCodex.ContentPanel` und
   rechnen gegen dessen Grösse. Ob rechts ein Detailbereich steht oder
   links eine Unternavigation, verändert nur die Grösse dieser Fläche —

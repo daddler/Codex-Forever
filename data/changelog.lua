@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.11.0.0",
+        date    = "05.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Übersicht sagt dir, was als Nächstes dran ist.|r Statt Datum, Erfahrungsleiste und drei vollen Spalten stehen dort höchstens drei Schritte, das Wichtigste zuerst – Zauber beim Lehrer, Quests zur Abgabe, ein zerbrochener Gegenstand, ein Dungeon, für den du Quests hast. Ein Knopf bringt dich jeweils hin.",
+            "|cff7C6CFFDein Weg.|r Darunter siehst du die nächsten Stufen, an denen etwas Neues kommt: neue Zauber beim Lehrer und Dungeons, die sich öffnen.",
+            "|cff7C6CFFLeere Ausrüstungsplätze sind kein Mangel mehr.|r Mit Stufe 3 hat jeder noch keinen Helm und keinen Umhang – die Übersicht und der rote Punkt am Charakter melden nur noch zerbrochene Gegenstände. Reicht dein Gold für Zauber oder Waffen nicht, steht das dabei.",
+        },
+    },
+    {
         version = "6.10.4.9",
         date    = "05.10.2026",
         notes   = {
