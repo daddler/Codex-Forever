@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.11.0.3",
+        date    = "05.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Übersicht nennt deine Zauber.|r Kannst du beim Lehrer etwas lernen, stehen die Zauber mit Symbol und Rang gleich unter „Als Nächstes“ – ohne erst zum Lehrer zu wechseln. Fährst du mit der Maus darüber, zeigt das Spiel den Zauber. Bei den Waffen stehen die Namen ebenso da.",
+            "|cff7C6CFFDein Weg verrät, was kommt.|r Fahr mit der Maus über eine Stufe in „Dein Weg“, und du siehst, welche Zauber sie bringt und welcher Dungeon sich öffnet – auch die Namen, die unten nicht ganz hinpassen.",
+        },
+    },
+    {
         version = "6.11.0.2",
         date    = "05.10.2026",
         notes   = {

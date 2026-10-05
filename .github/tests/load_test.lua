@@ -11643,6 +11643,93 @@ do
             and not f.cards[1].cost:IsShown(), "Karte Quests")
         assert(f.cards[2].step.key == "repair" and f.cards[2].button:IsShown(), "Karte Reparieren")
         assert(not h.bar:IsShown() and not h.xpLeft:IsShown(), "Erfahrung ohne Antwort als Leiste")
+
+        -- 6.11.0.3: welche Zauber, mit Namen - ohne erst zum Lehrer zu
+        -- gehen. Namen nennt der Client; fehlt einer, Wort und Nummer.
+        local TRm = WeintCodex.Trainer
+        local oldInfo = TRm.SpellInfo
+        local NAMES = { [1] = "Arkaner Schuss", [2] = "Biss der Schlange", [3] = "Raptorstoß",
+                        [4] = "Mal des Jägers", [5] = "Erschütternder Schuss", [6] = "Aspekt des Affen",
+                        [196] = "Einhandäxte", [264] = "Bogen" }
+        TRm.SpellInfo = function(id) return NAMES[id], id == 3 and "Rang 2" or nil, "icon" .. id end
+        local listOk, listErr = pcall(function()
+            local st = HM.Steps({ trainer = Trainer(2, 500, 20) })[1]
+            assert(#st.spells == 2 and st.spells[1] == 1 and st.spells[2] == 2, "Lehrer: Zauber-IDs fehlen am Schritt")
+            local wt = Trainer(0, 18300, 0, {}, {}, 2)
+            wt.weapons = { { id = 196, key = "now" }, { id = 197, key = "known" }, { id = 264, key = "now" },
+                           { id = 200, key = "later" } }
+            st = HM.Steps({ trainer = wt })[1]
+            assert(st.key == "weapons" and #st.spells == 2 and st.spells[1] == 196 and st.spells[2] == 264,
+                "Waffen: nur die jetzt lernbaren")
+            -- Kachel: Namen unter der Einzelheit, Erfahrung rueckt nach unten.
+            HM.Fill(f, three)
+            assert(h.listShown and h.chips:IsShown() and #h.chipNames == 2 and h.chipNames[1] == "Arkaner Schuss"
+                and h.chipNames[2] == "Biss der Schlange" and h.chipRest == 0, "Kachel: Namen der Zauber")
+            assert(h.chip[1]:IsShown() and h.chip[1].spellID == 1 and not h.chip[3]:IsShown(), "Kachel: Zauber-Knoepfe")
+            assert(h.xpTop == HM.HERO_TOP + HM.LIST_H, "Erfahrung nicht unter der Namenszeile: " .. tostring(h.xpTop))
+            -- Zu viele fuer die Zeile: so viele wie passen, der Rest als Zahl.
+            local six = Trainer(6, 500, 60)
+            local oldW = h.chips.GetWidth
+            h.chips.GetWidth = function() return 360 end
+            HM.Fill(f, { level = 5, trainer = six, dungeons = {} })
+            local n = #h.chipNames
+            assert(n >= 1 and n < 6 and h.chipRest == 6 - n and h.chipMore:IsShown()
+                and h.chipMore:GetText() == "+" .. (6 - n) .. ((6 - n) == 1 and " weiterer" or " weitere"),
+                "Ueberlauf: " .. n .. " / " .. tostring(h.chipMore:GetText()))
+            assert(h.chip[3]:IsShown() == (n >= 3) and not h.chip[6]:IsShown(), "Ueberlauf: Knoepfe sichtbar")
+            -- Schon der erste passt nicht: er steht trotzdem, gekuerzt.
+            h.chips.GetWidth = function() return 60 end
+            HM.LayoutChips(h)
+            assert(#h.chipNames == 1 and h.chipRest == 5 and h.chip[1]:IsShown(), "schmal: erster fehlt")
+            HM.Fill(f, three)
+            assert(#h.chipNames == 1 and h.chipRest == 1 and h.chipMore:GetText() == "+1 weiterer", "Einzahl: " .. tostring(h.chipMore:GetText()))
+            h.chips.GetWidth = oldW
+            -- Name fehlt noch: Wort und Nummer, nie leer.
+            NAMES[2] = nil
+            HM.Fill(f, three)
+            assert(h.chipNames[2] == "Zauber 2", "fehlender Name: " .. tostring(h.chipNames[2]))
+            NAMES[2] = "Biss der Schlange"
+            -- Nichts muss scrollen: gerechnet wie gezeichnet - drei Schritte,
+            -- Namenszeile, Erfahrung.
+            local full = { level = 5, trainer = Trainer(2, 500, 20, {}, {}, 1), quests = { readyCount = 1, ready = 100 },
+                           xp = { cur = 10, max = 100 }, gear = { broken = { "Brust" } }, dungeons = {} }
+            HM.Fill(f, full)
+            local drawn = HM.TOP + h:GetHeight() + HM.GAP + f.more:GetHeight() + HM.GAP + f.way:GetHeight()
+            assert(h.listShown and drawn == HM.PageHeight(), "Seitenhoehe " .. HM.PageHeight() .. ", gezeichnet " .. drawn)
+            -- Ohne Liste: Textblock wie zuvor, Erfahrung an ihrem Platz.
+            HM.Fill(f, { level = 5, quests = { readyCount = 1, ready = 100 }, xp = { cur = 10, max = 100 }, dungeons = {} })
+            assert(not h.listShown and not h.chips:IsShown() and h.xpTop == HM.HERO_TOP and #h.chipNames == 0,
+                "Namenszeile ohne Zauber")
+            -- Karte Waffen: erst was, dann wo.
+            HM.Fill(f, { level = 5, quests = { readyCount = 1, ready = 100 }, trainer = wt, dungeons = {} })
+            assert(f.cards[1].step.key == "weapons" and f.cards[1].sub:GetText() == "Einhandäxte, Bogen – optional, beim Waffenmeister",
+                "Karte Waffen: " .. tostring(f.cards[1].sub:GetText()))
+            -- Dein Weg: die Namen einer Stufe im Tooltip; "du" und "nichts" ohne.
+            local wtr = Trainer(0, 0, 0, { { id = 4, level = 6 }, { id = 3, level = 6 } }, { { id = 6, level = 9 } })
+            HM.Fill(f, { level = 5, trainer = wtr, dungeons = { { name = "Tor", minLevel = 9 } } })
+            local col6, col9
+            for _, c2 in ipairs(f.cols) do
+                if c2.m and c2.m.level == 6 then col6 = c2 elseif c2.m and c2.m.level == 9 then col9 = c2 end
+            end
+            local lines = HM.ColumnLines(col6.m)
+            assert(#lines == 2 and lines[1].text:find("Mal des Jägers", 1, true) and lines[1].text:find("|Ticon4:", 1, true)
+                and lines[2].text:find("Raptorstoß", 1, true) and lines[2].text:find("Rang 2", 1, true), "Weg-Tooltip: Zauber")
+            lines = HM.ColumnLines(col9.m)
+            assert(#lines == 2 and lines[1].text:find("Aspekt des Affen", 1, true) and lines[2].text == "Dungeon: Tor"
+                and lines[2].color == "infoBright", "Weg-Tooltip: Dungeon")
+            assert(#HM.ColumnLines(f.cols[1].m) == 0 and #HM.ColumnLines(f.cols[3].m) == 0, "Weg-Tooltip bei du/nichts")
+            local shown = {}
+            local oldGT = _G.GameTooltip
+            _G.GameTooltip = { SetOwner = function() end, SetText = function(_, t) shown[#shown + 1] = t end,
+                               AddLine = function(_, t) shown[#shown + 1] = t end, Show = function() shown.on = true end,
+                               Hide = function() end }
+            HM.ColumnTooltip(col6)
+            _G.GameTooltip = oldGT
+            assert(shown.on and shown[1] == "Stufe 6" and #shown == 3, "Weg-Tooltip nicht gezeigt")
+        end)
+        TRm.SpellInfo = oldInfo
+        assert(listOk, listErr)
+
         HM.Fill(f, { level = 3, trainer = Trainer(0, 0, 0), dungeons = {} })
         assert(h.title:GetText() == "Nichts offen – weiter leveln" and not h.button:IsShown()
             and not f.more:IsShown(), "nichts offen: " .. tostring(h.title:GetText()))

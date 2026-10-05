@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.11.0.3] – 2026-10-05
+
+**Die Übersicht nennt deine Zauber.** Kannst du beim Lehrer etwas lernen, stehen die Zauber mit Symbol und Rang gleich unter „Als Nächstes“ – ohne erst zum Lehrer zu wechseln. Fährst du mit der Maus darüber, zeigt das Spiel den Zauber. Bei den Waffen stehen die Namen ebenso da.
+
+**Dein Weg verrät, was kommt.** Fahr mit der Maus über eine Stufe in „Dein Weg“, und du siehst, welche Zauber sie bringt und welcher Dungeon sich öffnet – auch die Namen, die unten nicht ganz hinpassen.
+
+### Technisch
+
+- **Startseite, Namen** (`modules/home.lua`), Beta-Test mit 6.11.0.2: „Cool wäre eine Auflistung, welche Zauber das sind, statt erst auf die Lehrerkarte zu klicken.“ Die Schritte Lehrer und Waffen tragen `spells` (IDs der jetzt lernbaren; Waffen nur `key == "now"`), `unnamed` und bei den Waffen `where`. Namen, Rang und Symbol nennt erst beim Zeichnen der Client (`HM.SpellLabel` über `Trainer.SpellInfo`; fehlt ein Name noch, „Zauber 123“ wie auf der Lehrerseite, `SPELL_DATA_LOAD_RESULT` füllt neu). `HM.Steps` bleibt ohne Client.
+- **Als Nächstes**: Namenszeile unter der Einzelheit (`HM.LayoutChips`): Symbol 20, Name 13, Rang 11, Abstand 18, höchstens `HM.CHIPS` (8); was nicht in die Breite bis zum Knopf passt (`HM.ChipRoom`, gemessen, Breiten der Namen gemessen und nie schmaler als geschätzt), steht als „+N weitere“ dahinter; der erste steht immer, notfalls gekürzt. Tooltip des Spiels je Name (`SetSpellByID`). Mit Namenszeile rückt der Textblock an die Oberkante der Stufenkachel und die Erfahrung um `HM.LIST_H` (10) tiefer (`HM.PlaceXP`); volle Seite jetzt 704 (`HM.PageHeight`, Grenze 716).
+- **Außerdem**: Karte Waffen mit Namen – „Einhandäxte, Bogen – optional, beim Waffenmeister“ (zu lang kürzt die Zeile am Ende).
+- **Dein Weg**: jede Spalte mit neuen Zaubern oder Dungeon ist ein Knopf mit Tooltip (`HM.ColumnLines`: Zauber mit Symbol und Rang, „Dungeon: …“ in Blau) und leichtem Schein beim Drüberfahren; „du“ und leere Stufen ohne. `HM.Levels` trägt dafür `ids`.
+- Vorschau vor dem Release gerendert (breit und kleinstes Fenster).
+- `load_test.lua`: IDs am Schritt (Waffen nur lernbare), Namenszeile mit Namen und Knöpfen, Erfahrung darunter, Überlauf „+N weitere“/„+1 weiterer“, erster Name auch im schmalsten Fall, fehlender Name „Zauber 2“, ohne Liste alles am alten Platz, Karte Waffen mit Namen, Weg-Tooltip (Zauber mit Symbol und Rang, Dungeon in Blau, nichts bei „du“), gerechnete = gezeichnete Seitenhöhe. Gegenproben: 21, alle gefangen – drei erst nach geschärftem Test (Einzahl, Seitenhöhe; eine Bedingung war überflüssig und ist raus).
+- **Ungeprüft im Spiel:** wie breit die Namen tatsächlich laufen (Schätzung 0,56 je Zeichen), ob die Symbole erscheinen, Tooltips.
+
 ## [6.11.0.2] – 2026-10-05
 
 **Die Übersicht nach deinem Entwurf.** Oben „Als Nächstes“ mit deiner Stufe, dem wichtigsten Schritt und deiner Erfahrung – schraffiert siehst du, wie weit dich die abgabebereiten Quests bringen. Darunter „Außerdem“ als eigene Karten mit Kosten in Münzen, und „Dein Weg“ zeigt die nächsten acht Stufen nebeneinander: neue Zauber, Dungeons, die sich öffnen.

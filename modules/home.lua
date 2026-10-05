@@ -189,7 +189,9 @@ end
 -- "Ausserdem", sonst detail), cost/short (Kupfer: Kosten, Fehlbetrag -
 -- short nur, wenn das Gold bekannt ist und nicht reicht), optional
 -- (Fehlbetrag in Bernstein statt Rot), tone (nil | "danger"), action
--- (Knopftext), go (Ziel).
+-- (Knopftext), go (Ziel); beim Lehrer und bei den Waffen spells (Zauber-
+-- IDs, die jetzt gehen - die Namen nennt beim Zeichnen der Client),
+-- unnamed (Wort, solange ein Name fehlt), where (Ort auf der Karte).
 
 function HM.Steps(ctx)
     local steps = {}
@@ -201,6 +203,8 @@ function HM.Steps(ctx)
     local tr = ctx.trainer
     local now = tr and tr.cat and tr.cat.sections and tr.cat.sections.now or {}
     if #now > 0 then
+        local ids = {}
+        for i, sp in ipairs(now) do ids[i] = sp.id end
         local b = tr.budget or {}
         local cost = "zusammen " .. Money(b.now or 0)
         local detail, tone
@@ -215,7 +219,7 @@ function HM.Steps(ctx)
               title = Plural(#now, "Ein Zauber lernbar", "Zauber lernbar"),
               headline = #now == 1 and "Ein Zauber wartet beim Lehrer" or (#now .. " Zauber warten beim Lehrer"),
               detail = detail, tone = tone, action = "Zum Lehrer", go = { tab = "lehrer" },
-              sub = "Beim Klassenlehrer", cost = b.now,
+              sub = "Beim Klassenlehrer", cost = b.now, spells = ids, unnamed = "Zauber",
               short = (type(b.rest) == "number" and b.rest < 0) and -b.rest or nil })
     end
 
@@ -263,9 +267,14 @@ function HM.Steps(ctx)
         if type(b.money) == "number" then
             detail = detail .. (b.money < cost and (" · es fehlen " .. Money(cost - b.money)) or " · dein Gold reicht")
         end
+        local ids = {}
+        for _, wp in ipairs(tr.weapons or {}) do
+            if wp.key == "now" then ids[#ids + 1] = wp.id end
+        end
         add({ key = "weapons", label = "Waffen", title = title, headline = title,
               detail = detail, action = "Zum Lehrer", go = { tab = "lehrer" },
               sub = "Beim Waffenmeister · optional", optional = true, cost = cost,
+              spells = ids, unnamed = "Waffe", where = "optional, beim Waffenmeister",
               short = (type(b.money) == "number" and b.money < cost) and (cost - b.money) or nil })
     end
 
@@ -409,6 +418,14 @@ HM.CARD_H    = 76                  -- eine Karte unter "Ausserdem"
 HM.CARD_GAP  = 10
 HM.WEG_H     = 140
 HM.WEG_COLS  = 8
+-- 6.11.0.3: was man lernen kann, mit Namen (Beta-Test: "statt erst auf
+-- die Lehrerkarte zu klicken"). Eine Zeile unter der Einzelheit; der
+-- Textblock rueckt dafuer an die Oberkante der Kachel, die Erfahrung um
+-- HM.LIST_H nach unten.
+HM.CHIPS     = 8                   -- hoechstens so viele Namen
+HM.CHIP_H    = 20
+HM.CHIP_GAP  = 18
+HM.LIST_H    = 10
 
 local page
 
@@ -474,6 +491,27 @@ function HM.Coins(copper)
         if ok and type(s) == "string" and s ~= "" then return s end
     end
     return Money(copper)
+end
+
+-- Name, Rang und Bild eines Zaubers vom Client (modules/trainer.lua fragt
+-- und fordert nach); solange der Name fehlt, Wort und Nummer - wie auf
+-- der Lehrerseite. SPELL_DATA_LOAD_RESULT fuellt die Seite neu.
+function HM.SpellLabel(id, unnamed)
+    local TR = WeintCodex.Trainer
+    local name, sub, icon
+    if TR and TR.SpellInfo then name, sub, icon = TR.SpellInfo(id) end
+    return name or ((unnamed or "Zauber") .. " " .. tostring(id)), sub, icon
+end
+
+-- Breite eines Textes: gemessen, aber nie schmaler als geschaetzt (wie
+-- modules/dungeonpages.lua) - wo die Schaetzung darueber liegt, bleibt
+-- Luft, nie fehlt welche.
+local function TextWidth(fs, text, size)
+    local est = WeintCodex.Utf8Len(text) * size * 0.56
+    local ok, w = pcall(fs.GetStringWidth, fs)
+    w = ok and Plain(w) or nil
+    if type(w) == "number" and w > est then return w end
+    return est
 end
 
 --------------------------------------------------
@@ -550,6 +588,110 @@ end
 -- Als Naechstes
 --------------------------------------------------
 
+local TEXT_X = 32 + HM.TILE + 28     -- Textblock rechts der Kachel
+
+-- Ein Zauber in der Namenszeile: Symbol, Name, Rang; beim Drueberfahren
+-- der Tooltip des Spiels.
+local function BuildChip(parent)
+    local b = CreateFrame("Button", nil, parent)
+    b:SetHeight(HM.CHIP_H)
+    b.icon = b:CreateTexture(nil, "ARTWORK")
+    b.icon:SetSize(HM.CHIP_H, HM.CHIP_H)
+    b.icon:SetPoint("LEFT", b, "LEFT", 0, 0)
+    b.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    b.name = Label(b, 13, "textNormal")
+    b.name:SetPoint("LEFT", b.icon, "RIGHT", 7, 0)
+    OneLine(b.name)
+    b.rank = Label(b, 11, "textDim")
+    b.rank:SetPoint("LEFT", b.name, "RIGHT", 5, 0)
+    OneLine(b.rank)
+    b.spellID = false
+    b:SetScript("OnEnter", function(self)
+        local gt = _G.GameTooltip
+        if not (gt and self.spellID) then return end
+        gt:SetOwner(self, "ANCHOR_BOTTOMLEFT")
+        if gt.SetSpellByID then gt:SetSpellByID(self.spellID) else gt:SetText(self.name:GetText()) end
+        gt:Show()
+    end)
+    b:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+    b:Hide()
+    return b
+end
+
+-- Die Erfahrung beginnt `top` unter der Oberkante der Kachel.
+function HM.PlaceXP(h, top)
+    h.xp:ClearAllPoints()
+    h.xp:SetPoint("TOPLEFT",  h, "TOPLEFT",  32, -top)
+    h.xp:SetPoint("TOPRIGHT", h, "TOPRIGHT", -32, -top)
+    h.xpTop = top
+end
+
+-- Platz der Namenszeile: gemessen; ohne Antwort der bei voller Breite.
+function HM.ChipRoom(h)
+    local w = Plain(h.chips:GetWidth())
+    if type(w) == "number" and w > 0 then return w end
+    local bw = Plain(h.button:GetWidth())
+    bw = type(bw) == "number" and bw > 0 and bw or 140
+    return HM.MAX_W - TEXT_X - 32 - bw - 28
+end
+
+-- Namen nebeneinander, solange sie passen; der Rest als "+N weitere".
+-- Der erste steht immer (notfalls gekuerzt). h.chipNames/h.chipRest
+-- halten fest, was zu sehen ist.
+local MORE_W = 80
+function HM.LayoutChips(h)
+    local list, room = h.list or {}, HM.ChipRoom(h)
+    local x, shown, names = 0, 0, {}
+    for i, chip in ipairs(h.chip) do
+        local it = list[i]
+        local fits = false
+        if it then
+            chip.spellID = it.id
+            chip.name:SetWidth(0)
+            chip.name:SetText(it.name)
+            chip.rank:SetText(it.sub or "")
+            chip.rank:SetShown(it.sub and true or false)
+            if it.icon then
+                chip.icon:SetTexture(it.icon)
+            else
+                local c = Col("surface3")
+                chip.icon:SetColorTexture(c[1], c[2], c[3], 1)
+            end
+            local w = HM.CHIP_H + 7 + TextWidth(chip.name, it.name, 13)
+                + (it.sub and (5 + TextWidth(chip.rank, it.sub, 11)) or 0)
+            local tail = (#list > i) and (HM.CHIP_GAP + MORE_W) or 0
+            if shown == 0 and w + tail > room then
+                -- Schon der erste passt nicht: gekuerzt, ohne Rang.
+                local nw = math.max(24, room - tail - HM.CHIP_H - 7)
+                chip.name:SetWidth(nw)
+                chip.rank:Hide()
+                w = HM.CHIP_H + 7 + nw
+                fits = true
+            elseif shown == i - 1 and x + w + tail <= room then
+                fits = true
+            end
+            if fits then
+                chip:ClearAllPoints()
+                chip:SetPoint("LEFT", h.chips, "LEFT", x, 0)
+                chip:SetWidth(w)
+                x = x + w + HM.CHIP_GAP
+                shown = shown + 1
+                names[shown] = it.name
+            end
+        end
+        chip:SetShown(fits)
+    end
+    h.chipNames, h.chipRest = names, #list - shown
+    if h.chipRest > 0 then
+        h.chipMore:SetText("+" .. h.chipRest .. (h.chipRest == 1 and " weiterer" or " weitere"))
+        h.chipMore:ClearAllPoints()
+        h.chipMore:SetPoint("LEFT", h.chips, "LEFT", x, 0)
+        h.chipMore:Show()
+    else
+        h.chipMore:Hide()
+    end
+end
+
 local function BuildHero(f)
     local h = HM.Box(f.inner, { radius = 14, fill = "surface2", border = "border", backdrop = "bgDark" })
     h:SetPoint("TOPLEFT",  f.inner, "TOPLEFT",  0, 0)
@@ -571,14 +713,13 @@ local function BuildHero(f)
     h.class:SetPoint("BOTTOMRIGHT", h.tile, "BOTTOMRIGHT", -4, 11)
     OneLine(h.class, "CENTER")
 
-    local x = 32 + HM.TILE + 28
     h.button = WeintCodex.CreateButton(h, {
         text = "", kind = "primary", height = 42, backdrop = "surface2",
         onClick = function() Go(h.step) end,
     })
     h.button:SetPoint("RIGHT", h, "TOPRIGHT", -32, -(28 + HM.TILE / 2))
     h.eyebrow = Label(h, 11, "accent", true)
-    h.eyebrow:SetPoint("TOPLEFT", h, "TOPLEFT", x, -37)
+    h.eyebrow:SetPoint("TOPLEFT", h, "TOPLEFT", TEXT_X, -37)
     OneLine(h.eyebrow)
     h.title = WeintCodex.PageTitle(h, "", { size = 30 })
     h.title:SetPoint("TOPLEFT", h.eyebrow, "BOTTOMLEFT", 0, -6)
@@ -589,18 +730,35 @@ local function BuildHero(f)
     h.detail:SetPoint("RIGHT", h.button, "LEFT", -28, 0)
     OneLine(h.detail)
 
-    -- Erfahrung: Zeile, Leiste (erreicht + schraffiert nach Abgabe), Legende.
-    local y = -HM.HERO_TOP
-    h.xpLeft = Label(h, 13, "textMuted")
-    h.xpLeft:SetPoint("TOPLEFT", h, "TOPLEFT", 32, y)
+    -- Was man jetzt lernen kann: Symbol, Name, Rang in einer Zeile; was
+    -- nicht passt, als Zahl dahinter.
+    h.chips = CreateFrame("Frame", nil, h)
+    h.chips:SetHeight(HM.CHIP_H)
+    h.chips:SetPoint("TOPLEFT", h.detail, "BOTTOMLEFT", 0, -12)
+    h.chips:SetPoint("RIGHT", h.button, "LEFT", -28, 0)
+    h.chip = {}
+    for i = 1, HM.CHIPS do h.chip[i] = BuildChip(h.chips) end
+    h.chipMore = Label(h.chips, 12, "textDim")
+    OneLine(h.chipMore)
+    h.chips:Hide()
+    h.list, h.listShown, h.chipNames, h.chipRest = {}, false, {}, 0
+    h.chips:HookScript("OnSizeChanged", function() if h.listShown then HM.LayoutChips(h) end end)
+
+    -- Erfahrung: Zeile, Leiste (erreicht + schraffiert nach Abgabe),
+    -- Legende - in einem Rahmen, der mit der Namenszeile nach unten rueckt.
+    h.xp = CreateFrame("Frame", nil, h)
+    h.xp:SetHeight(HM.XP_H)
+    HM.PlaceXP(h, HM.HERO_TOP)
+    h.xpLeft = Label(h.xp, 13, "textMuted")
+    h.xpLeft:SetPoint("TOPLEFT", h.xp, "TOPLEFT", 0, 0)
     OneLine(h.xpLeft)
-    h.xpRight = Label(h, 13, "textMuted")
-    h.xpRight:SetPoint("TOPRIGHT", h, "TOPRIGHT", -32, y)
+    h.xpRight = Label(h.xp, 13, "textMuted")
+    h.xpRight:SetPoint("TOPRIGHT", h.xp, "TOPRIGHT", 0, 0)
     OneLine(h.xpRight, "RIGHT")
-    h.bar = CreateFrame("Frame", nil, h)
+    h.bar = CreateFrame("Frame", nil, h.xp)
     h.bar:SetHeight(10)
-    h.bar:SetPoint("TOPLEFT", h, "TOPLEFT", 32, y - 26)
-    h.bar:SetPoint("TOPRIGHT", h, "TOPRIGHT", -32, y - 26)
+    h.bar:SetPoint("TOPLEFT", h.xp, "TOPLEFT", 0, -26)
+    h.bar:SetPoint("TOPRIGHT", h.xp, "TOPRIGHT", 0, -26)
     h.barBg = Square(h.bar, 1, "surface3", "BACKGROUND")
     h.barBg:SetAllPoints(h.bar)
     h.barFill = Square(h.bar, 1, "accent", "ARTWORK")
@@ -613,15 +771,15 @@ local function BuildHero(f)
     h.barCut:SetWidth(1)
     WeintCodex.CutCorners(h.bar, 5, "surface2")
     h.bar:HookScript("OnSizeChanged", function() HM.PaintBar(h) end)
-    h.legend1 = Square(h, 10, "accent")
+    h.legend1 = Square(h.xp, 10, "accent")
     h.legend1:SetPoint("TOPLEFT", h.bar, "BOTTOMLEFT", 0, -10)
-    h.legend1Text = Label(h, 11, "textDim")
+    h.legend1Text = Label(h.xp, 11, "textDim")
     h.legend1Text:SetPoint("LEFT", h.legend1, "RIGHT", 6, 0)
     h.legend1Text:SetText("erreicht")
-    h.legend2 = Shape(h, "stripes", 10, "accent")
+    h.legend2 = Shape(h.xp, "stripes", 10, "accent")
     h.legend2:SetTexCoord(0, 10 / 32, 0, 10 / 32)
     h.legend2:SetPoint("LEFT", h.legend1Text, "RIGHT", 18, 0)
-    h.legend2Text = Label(h, 11, "textDim")
+    h.legend2Text = Label(h.xp, 11, "textDim")
     h.legend2Text:SetPoint("LEFT", h.legend2, "RIGHT", 6, 0)
     h.legend2Text:SetText("nach Questabgabe")
     return h
@@ -694,9 +852,52 @@ end
 -- Dein Weg
 --------------------------------------------------
 
+-- Was eine Stufe bringt, Zeile fuer Zeile (fuer den Tooltip): Zauber mit
+-- Symbol und Rang, dann die Dungeons in Blau. Leer fuer "du" und "nichts"
+-- (HM.Path kennt nur Stufen ueber der eigenen).
+function HM.ColumnLines(m)
+    local out = {}
+    if type(m) ~= "table" then return out end
+    for _, id in ipairs(m.ids or {}) do
+        local name, sub, icon = HM.SpellLabel(id, "Zauber")
+        local text = (icon and ("|T" .. tostring(icon) .. ":16:16:0:0:64:64:5:59:5:59|t ") or "") .. name
+        if sub then text = text .. "  " .. WeintCodex.ColorText("textDim", sub) end
+        out[#out + 1] = { text = text, color = "textNormal" }
+    end
+    for _, d in ipairs(m.dungeons or {}) do
+        out[#out + 1] = { text = "Dungeon: " .. d, color = "infoBright" }
+    end
+    return out
+end
+
+local function ColumnTooltip(s)
+    local gt = _G.GameTooltip
+    local lines = HM.ColumnLines(s.m)
+    if not (gt and #lines > 0) then return end
+    gt:SetOwner(s, "ANCHOR_BOTTOM")
+    local t = Col("textBright")
+    gt:SetText("Stufe " .. s.m.level, t[1], t[2], t[3])
+    for _, l in ipairs(lines) do
+        local c = Col(l.color)
+        gt:AddLine(l.text, c[1], c[2], c[3])
+    end
+    gt:Show()
+end
+HM.ColumnTooltip = ColumnTooltip
+
 local function BuildColumn(card, i)
-    local s = CreateFrame("Frame", nil, card)
+    -- Knopf, nicht Rahmen: die Namen stehen im Tooltip (die Spalte selbst
+    -- hat nur Platz fuer "3 neue Zauber").
+    local s = CreateFrame("Button", nil, card)
     s:SetHeight(HM.WEG_H)
+    s.hl = s:CreateTexture(nil, "HIGHLIGHT")
+    s.hl:SetPoint("TOPLEFT", s, "TOPLEFT", 4, -12)
+    s.hl:SetPoint("BOTTOMRIGHT", s, "BOTTOMRIGHT", -4, 12)
+    local hc = Col("textBright")
+    s.hl:SetColorTexture(hc[1], hc[2], hc[3], 0.04)
+    s:SetScript("OnEnter", ColumnTooltip)
+    s:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+    s:EnableMouse(false)
     s.ring = Shape(s, "disc", 20, "accent", "ARTWORK", 1)
     s.gap = Shape(s, "disc", 14, "surface2", "ARTWORK", 2)
     s.core = Shape(s, "disc", 8, "accent", "ARTWORK", 3)
@@ -783,6 +984,7 @@ local function Build()
         f.inner:SetWidth(HM.InnerWidth(Plain(f:GetWidth())))
         HM.PlaceColumns(f)
         HM.PaintBar(f.hero)
+        if f.hero.listShown then HM.LayoutChips(f.hero) end
     end
     f:HookScript("OnSizeChanged", resize)
     card:HookScript("OnSizeChanged", function() HM.PlaceColumns(f) end)
@@ -831,8 +1033,8 @@ function HM.Levels(ctx, n)
     for i = 0, (n or HM.WEG_COLS) - 1 do
         local l = ctx.level + i
         local m = by[l]
-        out[#out + 1] = { level = l, current = (i == 0),
-                          spells = m and m.spells or 0, dungeons = m and m.dungeons or {} }
+        out[#out + 1] = { level = l, current = (i == 0), spells = m and m.spells or 0,
+                          ids = m and m.ids or {}, dungeons = m and m.dungeons or {} }
     end
     return out
 end
@@ -841,7 +1043,7 @@ end
 -- kleinste Fenster (CLAUDE.md: "Nichts muss scrollen").
 function HM.PageHeight()
     local more = HM.HEAD + HM.HEAD_GAP + (HM.MAX_STEPS - 1) * HM.CARD_H + (HM.MAX_STEPS - 2) * HM.CARD_GAP
-    return HM.TOP + HM.HERO_TOP + HM.XP_H + HM.HERO_PAD + HM.GAP + more + HM.GAP
+    return HM.TOP + HM.HERO_TOP + HM.LIST_H + HM.XP_H + HM.HERO_PAD + HM.GAP + more + HM.GAP
         + HM.HEAD + HM.HEAD_GAP + HM.WEG_H
 end
 
@@ -856,7 +1058,15 @@ local function FillCard(c, step)
     c.iconPath = HM.ICONS[step.key] or (UI .. "icon_check")
     c.icon:SetTexture(c.iconPath)
     c.title:SetText(step.title or "")
-    c.sub:SetText(step.sub or step.detail or "")
+    -- Mit Namen: erst was, dann wo ("Bogen, Dolche – optional, beim
+    -- Waffenmeister"); zu lang kuerzt die Zeile am Ende.
+    local names = {}
+    for i, id in ipairs(step.spells or {}) do names[i] = (HM.SpellLabel(id, step.unnamed)) end
+    if #names > 0 and step.where then
+        c.sub:SetText(table.concat(names, ", ") .. " – " .. step.where)
+    else
+        c.sub:SetText(step.sub or step.detail or "")
+    end
     if type(step.cost) == "number" then
         c.cost:SetText(HM.Coins(step.cost))
         c.cost:Show()
@@ -893,6 +1103,7 @@ local function FillColumn(s, m)
     s.square:SetShown(kind == "spells")
     s.diamond:SetShown(kind == "dungeon")
     s.dot:SetShown(kind == "none")
+    s:EnableMouse(kind == "spells" or kind == "dungeon")
     if kind == "none" then
         s.level:SetText(tostring(m.level))
         SetColor(s.level, "textFaint")
@@ -938,6 +1149,25 @@ local function FillHero(h, ctx, steps, path)
         h.button:Hide()
     end
 
+    -- Die Namen (Lehrer, Waffen): Textblock an die Oberkante der Kachel,
+    -- die Erfahrung um HM.LIST_H tiefer.
+    local list = {}
+    for i, id in ipairs(step and step.spells or {}) do
+        local name, sub, icon = HM.SpellLabel(id, step.unnamed)
+        list[i] = { id = id, name = name, sub = sub, icon = icon }
+    end
+    h.list, h.listShown = list, #list > 0
+    h.chips:SetShown(h.listShown)
+    h.eyebrow:ClearAllPoints()
+    h.eyebrow:SetPoint("TOPLEFT", h, "TOPLEFT", TEXT_X, h.listShown and -28 or -37)
+    if h.listShown then
+        HM.LayoutChips(h)
+    else
+        h.chipNames, h.chipRest = {}, 0
+    end
+    local top = HM.HERO_TOP + (h.listShown and HM.LIST_H or 0)
+    HM.PlaceXP(h, top)
+
     -- Erfahrung: dieselbe Auskunft wie der Erfahrungsbalken; ohne sie
     -- (Hoechststufe, gesperrt, keine Antwort) kein Block - nie 0 %.
     local xp = ctx.xp
@@ -947,10 +1177,10 @@ local function FillHero(h, ctx, steps, path)
         h.pct, h.after = false, false
         h.legend2:Hide()
         h.legend2Text:Hide()
-        h:SetHeight(HM.HERO_TOP)
+        h:SetHeight(top)
         return
     end
-    h:SetHeight(HM.HERO_TOP + HM.XP_H + HM.HERO_PAD)
+    h:SetHeight(top + HM.XP_H + HM.HERO_PAD)
     h.pct = math.max(0, math.min(1, xp.cur / xp.max))
     local nextLevel = type(ctx.level) == "number" and tostring(ctx.level + 1) or "?"
     h.xpLeft:SetText(WeintCodex.ColorText("textNormal", Thousands(xp.cur)) .. " / " .. Thousands(xp.max)

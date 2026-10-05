@@ -111,6 +111,11 @@ damit als ungültige UTF-8-Folge wieder heraus.
     „Willkommen zurück“). Darunter die Erfahrung (`UIXPBar.Experience`):
     Zeile, Leiste mit schraffiertem Teil für abgabebereite Quests
     (`UIXPBar.QuestXP`, „nach Abgabe …“), Legende – ohne Antwort kein Block.
+    **Seit 6.11.0.3** beim Lehrer und bei den Waffen eine Namenszeile unter
+    der Einzelheit (`HM.LayoutChips`): Symbol, Name, Rang der jetzt
+    lernbaren (`step.spells`, Namen erst beim Zeichnen über
+    `HM.SpellLabel`), was nicht passt als „+N weitere“, Tooltip des Spiels
+    je Name. Dann rückt die Erfahrung um `HM.LIST_H` tiefer (`HM.PlaceXP`).
   * **Schritte**: höchstens drei (`HM.MAX_STEPS`), nach
     Dringlichkeit (`HM.Steps`): Zauber beim Lehrer (mit Gold gegen
     Kosten – ohne Gold „unbekannt“, nie „reicht“), abgabebereite Quests
@@ -127,7 +132,9 @@ damit als ungültige UTF-8-Folge wieder heraus.
     `HM.Path`): Kreis = du, Quadrat = neue Zauber beim Lehrer (ohne
     Talente und Tierausbildung), Raute = Dungeon ab seiner Mindeststufe
     (Namen in Blau), kleiner Punkt = nichts. Die Linie ist vom Kreis aus
-    so weit gefärbt, wie die Erfahrung zur nächsten Stufe reicht.
+    so weit gefärbt, wie die Erfahrung zur nächsten Stufe reicht. Seit
+    6.11.0.3 zeigt eine Spalte mit Zaubern oder Dungeon beim Drüberfahren
+    die Namen (`HM.ColumnLines`).
   * **Nicht mehr da** (Beta-Test mit Stufe 3, 6.10.4.9): Datum,
     Erfahrungsleiste (zeigt das Spiel), drei gleich schwere Spalten,
     Gegenstandsstufe, Companion-Zeile, die Zahl an „Schlachtzüge“. **Leere
@@ -139,7 +146,7 @@ damit als ungültige UTF-8-Folge wieder heraus.
     wird **einmal gebaut** und danach nur gefüllt (die alte legte bei
     jedem Öffnen einen neuen Rahmen an). Neu gefüllt bei offener Seite
     nach Stufenaufstieg, Zauber, Questlog, Gold, Haltbarkeit – gebündelt
-    (0,5 s). `HM.PageHeight()` (alle drei Schritte, 694) gegen das kleinste
+    (0,5 s). `HM.PageHeight()` (alle drei Schritte mit Namenszeile, 704) gegen das kleinste
     Fenster im Prüflauf.
 * Die Module zeichnen ausschliesslich in `WeintCodex.ContentPanel` und
   rechnen gegen dessen Grösse. Ob rechts ein Detailbereich steht oder
