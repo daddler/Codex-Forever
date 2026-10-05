@@ -45,6 +45,7 @@ Jedes einmal öffnen. Nichts darf aussehen wie halb alt, halb neu. Wenn
 doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 
 - [ ] Charakter (C), Zauberbuch und Talente (P, N), Weltkarte (M)
+- [ ] Zauberbuch und Talente: hinter „Allgemein“ und den Namen der Bäume Raute **und** Linie; sonst `/wcui fenster` – die Zeile „Linie: …“ sagt Höhe und Bildpunkte
 - [ ] Händler, Bank, Post (beide Reiter), Auktionshaus, Handel
 - [ ] Kontakte (O): Freunde, Kürzliche Verbündete, Schlachtzug
 - [ ] Lehrer (Klasse und Beruf): eine Zeile wählen – sie bleibt markiert

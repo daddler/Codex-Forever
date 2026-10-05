@@ -7448,6 +7448,27 @@ do
         hText.GetStringWidth = function() return 130 end
         SB.Update(psf)
         assert(#pts == 1 and pts[1] == "LEFT" and h.width == 435, "Linie wieder rechts verankert: " .. table.concat(pts, ","))
+        -- 6.10.4.2 im Spiel: Raute zu sehen, Linie nicht. Eine Einheit ist
+        -- bei kleiner Skalierung weniger als ein Bildpunkt - die Linie ist
+        -- einen Bildpunkt hoch, nie unter einer Einheit, und folgt der
+        -- Skalierung (auch ohne neuen Text).
+        assert(h.line:GetHeight() == 1, "Linie ohne Bildschirmmass nicht 1 hoch: " .. tostring(h.line:GetHeight()))
+        local oldPhys = _G.GetPhysicalScreenSize
+        _G.GetPhysicalScreenSize = function() return 1920, 1080 end
+        h.line.GetEffectiveScale = function() return 0.5 end   -- 768/1080/0.5 = 1.42 Einheiten je Bildpunkt
+        SB.Update(psf)
+        assert(math.abs(h.line:GetHeight() - 768 / 1080 / 0.5) < 1e-6, "Linie nicht einen Bildpunkt hoch: " .. tostring(h.line:GetHeight()))
+        h.line.GetEffectiveScale = function() return 1.0 end   -- 0.71: eine Einheit ist mehr als ein Bildpunkt
+        SB.Update(psf)
+        assert(h.line:GetHeight() == 1, "Linie unter einer Einheit: " .. tostring(h.line:GetHeight()))
+        h.line.GetEffectiveScale = function() return 0.5 end
+        h.line.GetTop = function() return 300 end
+        SB.Update(psf)
+        local lrep = table.concat(SB.Report(psf, {}), "\n")
+        assert(lrep:find("Zauberbuch, Linie: 435 breit, 1.42 hoch = 1.00 Bildpunkte, Oberkante bei Bildpunkt 210.94, sichtbar ja", 1, true),
+            "Bericht ohne Linie: " .. lrep)
+        _G.GetPhysicalScreenSize = oldPhys
+        h.line.GetEffectiveScale, h.line.GetTop = nil, nil
         assert(b.edge and W.own[b.edge.l], "Kante ueber der Flaeche fehlt")
         -- Ein bisschen Klassenfarbe: Licht von oben und Kante ueber der Flaeche.
         assert(classTex[b.light] and classTex[b.edge.l] and classTex[b.edge.r], "Licht oder Kante nicht in der Klassenfarbe")
@@ -8959,12 +8980,23 @@ do
         assert(h2.line:GetWidth() == TL.LineWidth(60) and lineEnd <= TL.ROW - TL.BACK_LEFT - TL.LINE_END + 1,
             "Linie laeuft ueber den Grund hinaus: " .. tostring(h2.line:GetWidth()))
         assert(TL.LineWidth(400) == TL.MIN_LINE, "Linie bei langem Namen nicht begrenzt")
+        -- 6.10.4.2: auch mit Deckkraft 0.9 unsichtbar - es war die Hoehe.
+        local oldPhys = _G.GetPhysicalScreenSize
+        _G.GetPhysicalScreenSize = function() return 1920, 1080 end
+        h2.line.GetEffectiveScale = function() return 0.5 end
+        TL.Update(psf)
+        assert(math.abs(h2.line:GetHeight() - 768 / 1080 / 0.5) < 1e-6, "Linie eines Baums nicht einen Bildpunkt hoch: " .. tostring(h2.line:GetHeight()))
+        _G.GetPhysicalScreenSize = oldPhys
+        h2.line.GetEffectiveScale = nil
+        TL.Update(psf)
+        assert(h2.line:GetHeight() == 1, "Linie eines Baums ohne Bildschirmmass nicht 1 hoch")
         assert(not glow:IsShown(), "Schein der Klasse ueber den Talenten")
         for _, x in ipairs({ clouds, land, particles, green, rank, hs[1] }) do
             assert(x:IsShown() and x:GetAlpha() == 1, "Animation, Landschaft oder Talent angefasst")
         end
         local rep = table.concat(TL.Report(psf, {}), "\n")
-        assert(rep:find("Bäume „Waffen“, „Furor“, „Schutz“ auf dunklem Grund", 1, true), "Bericht: " .. rep)
+        assert(rep:find("Bäume „Waffen“, „Furor“, „Schutz“ auf dunklem Grund", 1, true)
+            and rep:find("Talente, Linie: ", 1, true), "Bericht: " .. rep)
         -- Gefunden ist gefunden: keine weitere Suche.
         local scans = t.scans
         for _ = 1, 5 do TL.Update(psf) end

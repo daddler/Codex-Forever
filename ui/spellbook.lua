@@ -110,10 +110,11 @@ local function Head(entry, fs, paged, accent)
         h.hole = S.Diamond(entry, 2, C.surface1, 1, 3)
         h.hole:SetPoint("CENTER", h.dot, "CENTER", 0, 0)
         h.line = S.Own(entry:CreateTexture(nil, "ARTWORK", nil, 1))
-        h.line:SetHeight(1)
         S.Fade(h.line, accent, SB.LINE, "RIGHT")
         heads[entry] = h
     end
+    -- Hoehe ein Bildpunkt (6.10.4.2): 1 Einheit war im Spiel unsichtbar.
+    S.PixelLine(h.line)
     -- Die Liste verwendet ihre Eintraege weiter: neu legen, wenn Text,
     -- Breite oder Lage sich aendern.
     local ok, tw = pcall(fs.GetStringWidth, fs)
@@ -205,13 +206,17 @@ function SB.Report(f, out)
     if not book or not Visible(book) then return out end
     local b = books[book]
     local names = ""
+    local line
     local paged = SB.Paged(book)
     for _, key in ipairs(SB.VIEWS) do
         local view = paged and paged[key]
         if IsFrame(view) then
             for _, entry in ipairs(W.Children(view, "sbView")) do
                 local h = heads[entry]
-                if h and Visible(entry) then names = names .. (names == "" and "" or ", ") .. "„" .. (TextOf(h.fs) or "?") .. "“" end
+                if h and Visible(entry) then
+                    names = names .. (names == "" and "" or ", ") .. "„" .. (TextOf(h.fs) or "?") .. "“"
+                    line = line or h.line
+                end
             end
         end
     end
@@ -219,5 +224,6 @@ function SB.Report(f, out)
         SB.LABEL, SB.STYLE.name, paged and "gefunden" or "FEHLT", (b and b.body) and "ja" or "nein",
         SB.GlowOff(f) and "aus" or "an")
     out[#out + 1] = string.format("   %s, Überschriften: %s", SB.LABEL, names ~= "" and names or "keine gefunden")
+    if line then out[#out + 1] = "   " .. SB.LABEL .. ", " .. S.LineReport(line) end
     return out
 end

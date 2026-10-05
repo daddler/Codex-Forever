@@ -127,6 +127,57 @@ function S.Fade(t, c, alpha, outward)
     end
 end
 
+-- Linie von einem Bildpunkt (6.10.4.2): mindestens ein Bildpunkt am Bildschirm hoch.
+-- Gemessen 05.10.2026 (Zauberbuch, Talente): Raute zu sehen, die Linie von
+-- 1 Einheit dahinter nicht - auch mit Deckkraft 0.9 (6.8.0.4). Ist eine
+-- Einheit kleiner als ein Bildpunkt (kleine UI-Skalierung), rundet das
+-- Spiel Ober- und Unterkante je nach Lage auf DIESELBE Bildpunktzeile -
+-- die Linie hat dann die Hoehe 0. Dieselbe Linie an anderer Stelle (Berufe)
+-- traf zufaellig. Dagegen: Hoehe = ein Bildpunkt, nie unter 1 Einheit.
+-- Laeuft in jedem Durchlauf (Skalierung kann sich aendern), ohne Tabelle.
+function S.PixelSize(r)
+    local get = _G.GetPhysicalScreenSize
+    if type(r.GetEffectiveScale) ~= "function" and type(r.GetParent) == "function" then
+        local okP, p = pcall(r.GetParent, r)
+        r = okP and type(p) == "table" and p or r
+    end
+    if type(get) ~= "function" or type(r.GetEffectiveScale) ~= "function" then return nil end
+    local ok, _, h = pcall(get)
+    local okS, s = pcall(r.GetEffectiveScale, r)
+    h = ok and K.Plain(h) or nil
+    s = okS and K.Plain(s) or nil
+    if type(h) ~= "number" or h <= 0 or type(s) ~= "number" or s <= 0 then return nil end
+    return 768 / h / s
+end
+
+function S.PixelLine(t)
+    local px = S.PixelSize(t)
+    local hgt = (px and px > 1) and px or 1
+    if t.pixelLine ~= hgt then
+        t.pixelLine = hgt
+        t:SetHeight(hgt)
+    end
+    return hgt, px
+end
+
+-- Fuer /wcui fenster: was die Linie im Client ist - damit die naechste
+-- Messung sagt, ob die Hoehe der Linie der Grund war.
+function S.LineReport(t)
+    local function Num(m)
+        local ok, v = pcall(t[m], t)
+        v = ok and K.Plain(v) or nil
+        return type(v) == "number" and v or nil
+    end
+    local w, h, top = Num("GetWidth"), Num("GetHeight"), Num("GetTop")
+    local px = S.PixelSize(t)
+    local okS, shown = pcall(t.IsVisible, t)
+    return string.format("Linie: %s breit, %s hoch = %s Bildpunkte, Oberkante bei Bildpunkt %s, sichtbar %s",
+        w and string.format("%.0f", w) or "?", h and string.format("%.2f", h) or "?",
+        (h and px) and string.format("%.2f", h / px) or "?",
+        (top and px) and string.format("%.2f", top / px) or "?",
+        (okS and K.Bool(shown, false)) and "ja" or "nein")
+end
+
 -- Raute (gedrehtes Quadrat).
 function S.Diamond(f, size, c, a, sub)
     local t = Own(f:CreateTexture(nil, "ARTWORK", nil, sub))

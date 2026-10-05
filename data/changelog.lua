@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.4.2",
+        date    = "05.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Linie hinter den Überschriften ist jetzt einen Bildpunkt hoch.|r Im Zauberbuch („Allgemein“) und an den Namen der Talentbäume stand bisher nur die Raute. Die feine Linie dahinter war vermutlich schmaler als ein Bildpunkt und verschwand. Fehlt sie noch, sagt /wcui fenster jetzt, wie hoch sie ist.",
+        },
+    },
+    {
         version = "6.10.4.1",
         date    = "04.10.2026",
         notes   = {

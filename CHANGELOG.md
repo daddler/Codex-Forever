@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.4.2] – 2026-10-05
+
+**Die Linie hinter den Überschriften ist jetzt einen Bildpunkt hoch.** Im Zauberbuch („Allgemein“) und an den Namen der Talentbäume stand bisher nur die Raute. Die feine Linie dahinter war vermutlich schmaler als ein Bildpunkt und verschwand. Fehlt sie noch, sagt /wcui fenster jetzt, wie hoch sie ist.
+
+### Technisch
+
+Messrunde im Spiel (05.10.2026, Client 1.60.1): Raute zu sehen, Linie nicht – im Zauberbuch **und** an den Talentbäumen, im Bildschirmfoto Bildpunkt für Bildpunkt nachgeprüft. Zweimal vergeblich behoben: 6.7.8.0 (Anker), 6.8.0.4 (Deckkraft 0.9 an den Talenten). Dunkler Grund und Raute am selben Rahmen sind zu sehen – übrig bleibt die Höhe.
+
+- **`S.PixelLine(t)`** (`ui/style.lua`): Höhe = ein Bildpunkt (`768 / GetPhysicalScreenSize-Höhe / GetEffectiveScale`), nie unter 1 Einheit. Bei kleiner Skalierung ist eine Einheit weniger als ein Bildpunkt; das Spiel rundet Ober- und Unterkante je nach Lage auf dieselbe Zeile, und die Linie hat die Höhe 0. Dieselbe Linie in den Berufen traf zufällig. Läuft in jedem Durchlauf (Skalierung ändert sich), setzt nur bei Änderung, ohne Tabelle. **Vermutung, nicht gemessen** – deshalb:
+- **`S.LineReport(t)`**: `/wcui fenster` nennt im Zauberbuch und in den Talenten die Linie – Breite, Höhe in Einheiten und Bildpunkten, Oberkante in Bildpunkten, sichtbar. Ist sie wieder nicht zu sehen, sagt der Bericht, woran es nicht lag.
+- **Gemessen in dieser Runde:** `Enum.StatusBarInterpolation` gibt es, die Plaketten gleiten. Zauberbuch: Überschrift „Allgemein“ gefunden. Talente: Wolken und Funken liegen richtig. Berufe: Titel der Rezeptkarte gefunden, Rahmen des Spiels 0 Bilder. Währungen: nicht messbar ohne Währung.
+- `load_test.lua`: Linie ohne Bildschirmmaß 1 hoch, bei Skalierung 0,5 auf 1920×1080 genau ein Bildpunkt (1,42), bei 1,0 nicht unter 1, folgt der Skalierung ohne neuen Text, Bericht mit Bildpunkten; dasselbe an den Talenten. Gegenproben: 9, alle gefangen.
+
 ## [6.10.4.1] – 2026-10-04
 
 **Gegner per Mouseover markieren.** In Dungeons und Schlachtzügen: Maus über einen Gegner, mittlere Maustaste – er bekommt die nächste freie Markierung, Totenkopf zuerst, und niemand wird doppelt markiert. Taste, Orte und Markierungen stellst du unter /wcui → Komfort → Automark ein. Nur außerhalb des Kampfes, und nur mit Tastendruck: von sich aus lässt das Spiel Addons nicht markieren.

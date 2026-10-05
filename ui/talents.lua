@@ -64,7 +64,7 @@ TL.LIGHT_HEIGHT = 220
 TL.LIGHT_ALPHA = 0.16       -- ueber Nebel: kraeftiger als GameColors.classLight auf dunkler Flaeche
 TL.EDGE = 0.5               -- Kante oben in der Klassenfarbe
 TL.GAP = 8                  -- Text -> Raute -> Linie
-TL.LINE = 0.9               -- ueber Nebel: 0.55 (Zauberbuch) war im Spiel nicht zu sehen (6.8.0.4)
+TL.LINE = 0.9               -- ueber Nebel (6.8.0.4); unsichtbar war sie wegen der Hoehe (S.PixelLine, 6.10.4.2)
 TL.MIN_LINE = 24            -- Linie hoechstens so kurz (sehr langer Name)
 -- Grund unter der Zeile eines Baums (6.8.0.7): FESTE Breite ab dem Symbol,
 -- so breit wie ein Baum - nicht bis zum Ende einer festen Linie. 6.8.0.5
@@ -174,7 +174,6 @@ local function Head(fs, accent)
     h.hole = S.Diamond(p, 2, C.surface1, 1, 3)
     h.hole:SetPoint("CENTER", h.dot, "CENTER", 0, 0)
     h.line = S.Own(p:CreateTexture(nil, "ARTWORK", nil, 1))
-    h.line:SetHeight(1)
     h.line:SetWidth(TL.MIN_LINE)
     S.Fade(h.line, accent, TL.LINE, "RIGHT")
     -- Nur links verankert (6.7.8.0: nie an einen Rahmen anderer Hoehe).
@@ -196,6 +195,9 @@ local function Head(fs, accent)
 end
 
 local function Place(h)
+    -- Hoehe ein Bildpunkt (6.10.4.2): 1 Einheit war im Spiel unsichtbar,
+    -- auch mit Deckkraft 0.9 - es war nie die Deckkraft.
+    S.PixelLine(h.line)
     local ok, tw = pcall(h.fs.GetStringWidth, h.fs)
     tw = ok and K.Plain(tw) or nil
     tw = type(tw) == "number" and tw or 0
@@ -300,6 +302,7 @@ function TL.Report(f, out)
     out[#out + 1] = string.format("   %s (Stil %s): Bäume %s%s · Licht und Kante in der Klassenfarbe über den Wolken, Animation unberührt",
         TL.LABEL, TL.STYLE.name, names ~= "" and names or "keine gefunden",
         first and (" auf dunklem Grund (am Rahmen " .. K.NameOf(first.parent) .. ")") or "")
+    if first then out[#out + 1] = "   " .. TL.LABEL .. ", " .. S.LineReport(first.line) end
     if #t.order < (t.want or 0) or names == "" then
         local want = {}
         for n in pairs(t.names or {}) do want[#want + 1] = n end

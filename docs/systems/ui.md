@@ -1296,10 +1296,11 @@ Wechsel (`NP.Motion`, `p._fx*`). Der einzige Takt ist die wartende Spur
 (`NP.TrailTick`), er läuft nur, solange eine wartet; keine Closure, keine
 Tabelle je Treffer (`load_test.lua` misst es).
 
-**Ungemessen:** ob Forever `Enum.StatusBarInterpolation` kennt. Fehlt es
-oder lehnt der Client das Argument ab, springt der Balken wie bisher
-(`NP.smoothBroken`, einmal gemerkt) – die Spur wirkt trotzdem, nur ohne
-Gleiten. Ob `SetClipsChildren` den Glanz im Forever-Client sauber
+**Gemessen (05.10.2026, Client 1.60.1):** Forever kennt
+`Enum.StatusBarInterpolation`, die Balken gleiten. Fehlt es in einer
+späteren Fassung oder lehnt der Client das Argument ab, springt der Balken
+wie bisher (`NP.smoothBroken`, einmal gemerkt) – die Spur wirkt trotzdem,
+nur ohne Gleiten. Ob `SetClipsChildren` den Glanz im Forever-Client sauber
 abschneidet, zeigt erst das Spiel.
 
 ## Entfluchen auf Klick *(6.8.1.0, `ui/dispel.lua`)*
@@ -2524,7 +2525,8 @@ Das dritte Register nach Ruf und Fertigkeiten, Stil `S.CHARACTER_INFO`.
 
 **Gemessen** (`/wcui fenster`, Stufe 19 ohne Währungen): `TokenFrame`,
 Bildlauf `TokenFrame.ScrollBar` (`minimal-scrollbar-*`), rechts nur der
-Hinweis „Wählt eine Währung, um ihre Details anzuzeigen.“ **Ungemessen:**
+Hinweis „Wählt eine Währung, um ihre Details anzuzeigen.“ **Ungemessen**
+(05.10.2026 noch nicht messbar – der Charakter hat außer Gold keine Währung):
 Schlüssel der Liste (`listKeys`: `ScrollBox`, `Container`,
 `ScrollFrame`), der Zeilen (wie im Ruf erwartet: `.Content`, `.Name`) und
 der Detailansicht (Schlüssel, globale Namen, sonst Suche nach dem Kind mit
@@ -2609,8 +2611,9 @@ darüber fragt es („Berufe, …“). Neu dafür: Pfade in `listKeys`/
 `highlightAtlas` (`^Professions_Recipe_`), `titleColor = false` (der
 Rezeptname behält seine Farbe – er kann die Qualität tragen).
 
-**Karte:** Titel `OutputText` (Schlüssel aus dem Quelltext des Spiels,
-ungemessen; sonst oberste Zeile), Beschreibung `Description` oder die
+**Karte:** Titel `OutputText` (Schlüssel aus dem Quelltext des Spiels;
+gemessen 05.10.2026: Titel „Kupferarmschienen“ gefunden, kein Bild des
+Spiels mehr sichtbar; sonst oberste Zeile), Beschreibung `Description` oder die
 längste Zeile, darunter `tail`: Reagenzien, „Benötigt: …“ als
 abgesetzter Bereich; `compact`. Nichts wird bewegt – Reagenzien sind
 Knöpfe, damit ist das Rücken ohnehin gesperrt. **Unverändert:**
@@ -2665,7 +2668,7 @@ sind:
   (`SB.GlowOff` → `W.HoldGlow`), zurück bei den Talenten.
 - **Überschrift** („Allgemein“, Name eines Talentbaums): ein Eintrag in
   `View1`/`View2` **ohne** `.Button` (die Zauber haben alle einen;
-  ungemessen, der Bericht nennt, was gefunden wurde). Raute und Linie in
+  gemessen 05.10.2026: „Allgemein“ gefunden). Raute und Linie in
   der Klassenfarbe hinter dem Text, Linie bis 16 px vor den Rand der
   Seite; Schrift, Größe und Lage bleiben (Seitentitel). Neu gelegt, wenn
   Text oder Breite sich ändern – die Seite verwendet ihre Einträge beim
@@ -2677,11 +2680,27 @@ der Klassenfarbe (`GC.classLight`, 7 %, 180 px) statt des neutralen
 den Detailkarten. Der große Schein (40 %, 260 px) bleibt aus. **Fehler
 behoben:** die Linie hinter der Überschrift war rechts an `"RIGHT"` der
 Seite verankert – der **halben Höhe** der Seite, nicht der Zeile; im Spiel
-wurde sie nicht gezeichnet (nur die Raute stand da). Jetzt nur links
+wurde sie nicht gezeichnet (nur die Raute stand da). *(Nachtrag 6.10.4.2:
+auch danach nicht – siehe unten, Höhe der Linie.)* Jetzt nur links
 verankert, Breite gerechnet. Derselbe Fehler in `ui/profbook.lua` (Titel
 links, an der Karte). Regel: eine Linie hinter Text nie an einen Rahmen
 anderer Höhe hängen – nur an Teile derselben Zeile (so macht es
 `W.ListHeader`) oder links verankert mit gerechneter Breite.
+
+**Höhe der Linie (6.10.4.2).** Messrunde 05.10.2026: im Zauberbuch und an
+den Talentbäumen weiter nur die Raute – im Bildschirmfoto Bildpunkt für
+Bildpunkt nachgeprüft, auch nach 6.7.8.0 (Anker) und 6.8.0.4 (Deckkraft
+0.9). Dunkler Grund und Raute am selben Rahmen sind zu sehen; übrig bleibt
+die Höhe von 1 Einheit. Bei kleiner Skalierung ist eine Einheit weniger
+als ein Bildpunkt, und das Spiel rundet Ober- und Unterkante je nach Lage
+auf dieselbe Zeile – Höhe 0. `S.PixelLine(t)` (`ui/style.lua`) setzt die
+Höhe auf einen Bildpunkt (`768 / Bildschirmhöhe / GetEffectiveScale`), nie
+unter 1 Einheit, in jedem Durchlauf (nur bei Änderung). **Vermutung, nicht
+gemessen:** `/wcui fenster` nennt deshalb an beiden Stellen die Linie
+(`S.LineReport`: Breite, Höhe in Einheiten und Bildpunkten, Oberkante in
+Bildpunkten, sichtbar). Stimmt die Vermutung, betrifft sie jede Linie von
+1 Einheit (`S.Divider`, `W.ListHeader`, `K.Border`) – die trafen bisher
+zufällig; umgestellt wird erst nach der Messung.
 
 **`W.HoldGlow`** (allgemein): Fenster in Gold (`S.CALM`) tragen den Schein
 der Klasse nie – im Berufsfenster lag er seit 6.7.5.0 über dem Gold, ein
@@ -2886,8 +2905,8 @@ Klassenfarbe (`S.CHARACTER_INFO`, nur für `…TalentsFrame`), in
   (`GC.classLight`, 180 px) und oben eine Kante (50 %) – wie im
   Zauberbuch. Sie liegen **auf** dem Talentfenster (`BORDER` 7, `ARTWORK`
   7): auf dem äußeren Fenster lägen sie unter den Landschaften und wären
-  unsichtbar. Ob Wolken und Funken darüber liegen, ist ungemessen; das
-  Licht ist ein Hauch (7 %).
+  unsichtbar. Gemessen 05.10.2026 (Bildschirmfoto): Wolken und Funken
+  liegen richtig; das Licht ist ein Hauch (7 %).
 - **Schein der Klasse aus**, solange die Talente offen sind
   (`TL.GlowOff`; beim Zauberbuch schon seit 6.7.7.0).
 - **Namen der Bäume:** welche Zeile ein Name ist, sagt das Spiel –
