@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "05.10.2026",
         notes   = {
             "|cff7C6CFFDie Linie hinter den Überschriften ist jetzt einen Bildpunkt hoch.|r Im Zauberbuch („Allgemein“) und an den Namen der Talentbäume stand bisher nur die Raute. Die feine Linie dahinter war vermutlich schmaler als ein Bildpunkt und verschwand. Fehlt sie noch, sagt /wcui fenster jetzt, wie hoch sie ist.",
+            "|cff7C6CFFDer Reiter der Sammlung ist flach.|r „Gegenstände“ unter den Vorlagen trug noch das Gold des Spiels; jetzt sieht er aus wie die Reiter in Händler, Post und Kontakten, der gewählte mit goldenem Rand.",
         },
     },
     {

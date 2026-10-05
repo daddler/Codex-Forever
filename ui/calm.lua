@@ -44,7 +44,8 @@
 --                      WardrobeCollectionFrame.ItemsCollectionFrame
 --                      (W.OWN_BG_PATHS seit 6.6.3.3); Plaetze der Vorlagen
 --                      (transmog-nav-slot-*, der gewaehlte mit Goldring des
---                      Spiels), Klassenauswahl, Suche, Filter, Blaettern
+--                      Spiels), Klassenauswahl, Suche, Filter, Blaettern;
+--                      Reiter oben flach (LF.TABS, 6.10.4.2)
 -- Unveraendert jeweils: Symbole, Ringe, Auswahl, Texte, Knoepfe.
 --------------------------------------------------
 
@@ -77,6 +78,12 @@ LF.HOSTS = { "LFGParentFrame", "PVEFrame", "CollectionsJournal", "SettingsPanel"
 -- und das Textfeld (Rahmen des Tooltips).
 LF.INSETS = { SettingsPanel = { "CategoryList", "Container" },
               MacroFrame = { "MacroFrameInset", "MacroFrameTextBackground" } }
+-- Reiter oben in einem Teilfenster (6.10.4.2, gemessen 05.10.2026): die
+-- Sammlung trug am Reiter "Gegenstaende" noch das Gold des Spiels
+-- (uiframe-activetab-*). Flach wie ueberall (W.SkinTab); welcher gewaehlt
+-- ist, merkt sich das Teilfenster (PanelTemplates: selectedTab).
+LF.TABS = { CollectionsJournal = { owner = "WardrobeCollectionFrame",
+                                   names = { "WardrobeCollectionFrameTab1", "WardrobeCollectionFrameTab2" } } }
 LF.STYLE = S.CALM
 LF.LIGHT_HEIGHT = 120
 LF.SHADOW_PAD = 10
@@ -145,6 +152,24 @@ function LF.Update(f)
         end
     end
     w.decks = n
+    w.tabs = 0
+    local ok, name = pcall(f.GetName, f)
+    local spec = ok and LF.TABS[name]
+    if spec then
+        local owner = _G[spec.owner]
+        local selected = IsFrame(owner) and K.Plain(owner.selectedTab) or nil
+        for i, tabName in ipairs(spec.names) do
+            local tab = _G[tabName]
+            if IsFrame(tab) and tab.CreateTexture then
+                -- Nicht `x and (a == b) or nil` - das macht aus false nil
+                -- (die Falle `x and false or nil`, docs/systems/ui.md).
+                local sel
+                if type(selected) == "number" then sel = (selected == i) end
+                W.SkinTab(tab, accent, sel)
+                w.tabs = w.tabs + 1
+            end
+        end
+    end
     return w
 end
 
@@ -153,7 +178,8 @@ function LF.Report(f, out)
     if not w then return out end
     local ok, name = pcall(function() return f:GetName() end)
     local label = ok and LF.WINDOWS[name] or "Fenster in Gold"
-    out[#out + 1] = string.format("   %s (Stil %s): %d Innenflächen mit Kante in Gold%s", label, LF.STYLE.name,
-        w.decks or 0, (w.decks or 0) == 0 and " (keine gefunden)" or "")
+    out[#out + 1] = string.format("   %s (Stil %s): %d Innenflächen mit Kante in Gold%s%s", label, LF.STYLE.name,
+        w.decks or 0, (w.decks or 0) == 0 and " (keine gefunden)" or "",
+        (ok and LF.TABS[name]) and (" · Reiter oben " .. (w.tabs or 0)) or "")
     return out
 end

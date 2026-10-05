@@ -13,14 +13,17 @@ nicht zusammen.
 
 **Die Linie hinter den Überschriften ist jetzt einen Bildpunkt hoch.** Im Zauberbuch („Allgemein“) und an den Namen der Talentbäume stand bisher nur die Raute. Die feine Linie dahinter war vermutlich schmaler als ein Bildpunkt und verschwand. Fehlt sie noch, sagt /wcui fenster jetzt, wie hoch sie ist.
 
+**Der Reiter der Sammlung ist flach.** „Gegenstände“ unter den Vorlagen trug noch das Gold des Spiels; jetzt sieht er aus wie die Reiter in Händler, Post und Kontakten, der gewählte mit goldenem Rand.
+
 ### Technisch
 
 Messrunde im Spiel (05.10.2026, Client 1.60.1): Raute zu sehen, Linie nicht – im Zauberbuch **und** an den Talentbäumen, im Bildschirmfoto Bildpunkt für Bildpunkt nachgeprüft. Zweimal vergeblich behoben: 6.7.8.0 (Anker), 6.8.0.4 (Deckkraft 0.9 an den Talenten). Dunkler Grund und Raute am selben Rahmen sind zu sehen – übrig bleibt die Höhe.
 
 - **`S.PixelLine(t)`** (`ui/style.lua`): Höhe = ein Bildpunkt (`768 / GetPhysicalScreenSize-Höhe / GetEffectiveScale`), nie unter 1 Einheit. Bei kleiner Skalierung ist eine Einheit weniger als ein Bildpunkt; das Spiel rundet Ober- und Unterkante je nach Lage auf dieselbe Zeile, und die Linie hat die Höhe 0. Dieselbe Linie in den Berufen traf zufällig. Läuft in jedem Durchlauf (Skalierung ändert sich), setzt nur bei Änderung, ohne Tabelle. **Vermutung, nicht gemessen** – deshalb:
 - **`S.LineReport(t)`**: `/wcui fenster` nennt im Zauberbuch und in den Talenten die Linie – Breite, Höhe in Einheiten und Bildpunkten, Oberkante in Bildpunkten, sichtbar. Ist sie wieder nicht zu sehen, sagt der Bericht, woran es nicht lag.
-- **Gemessen in dieser Runde:** `Enum.StatusBarInterpolation` gibt es, die Plaketten gleiten. Zauberbuch: Überschrift „Allgemein“ gefunden. Talente: Wolken und Funken liegen richtig. Berufe: Titel der Rezeptkarte gefunden, Rahmen des Spiels 0 Bilder. Währungen: nicht messbar ohne Währung.
-- `load_test.lua`: Linie ohne Bildschirmmaß 1 hoch, bei Skalierung 0,5 auf 1920×1080 genau ein Bildpunkt (1,42), bei 1,0 nicht unter 1, folgt der Skalierung ohne neuen Text, Bericht mit Bildpunkten; dasselbe an den Talenten. Gegenproben: 9, alle gefangen.
+- **Sammlung** (`ui/calm.lua`, `LF.TABS`): `/wcui fenster` auf „Vorlagen“ zeigte `WardrobeCollectionFrameTab1` mit `uiframe-activetab-*`/`uiframe-tab-*` – der einzige Rest des Spiels. Flach über `W.SkinTab`, gewählt nach `WardrobeCollectionFrame.selectedTab` (Tab2 „Sets“, falls der Client ihn hat); der Bericht nennt „Reiter oben n“. Erst falsch geschrieben: `selected == i or nil` machte aus „nicht gewählt“ ein „weiß nicht“, und beide Reiter wurden gold – die Falle `x and false or nil`, vom Test gefangen.
+- **Gemessen in dieser Runde:** `Enum.StatusBarInterpolation` gibt es, die Plaketten gleiten. Zauberbuch: Überschrift „Allgemein“ gefunden. Talente: Wolken und Funken liegen richtig. Berufe: Titel der Rezeptkarte gefunden, Rahmen des Spiels 0 Bilder. Sammlung: Seitenreiter gestaltet, Plätze der Vorlagen, Klassenauswahl, Suche und Filter bleiben wie gewollt. Kontakte: „Kürzliche Verbündete“ (Einladen-Knöpfe je Zeile und Trennlinien des Spiels bleiben – Inhalt) und „Schlachtzug“ (Knöpfe flach, Häkchen bleibt) ohne Rest. Währungen und Ignorierliste: noch nicht messbar.
+- `load_test.lua`: Linie ohne Bildschirmmaß 1 hoch, bei Skalierung 0,5 auf 1920×1080 genau ein Bildpunkt (1,42), bei 1,0 nicht unter 1, folgt der Skalierung ohne neuen Text, Bericht mit Bildpunkten; dasselbe an den Talenten. Sammlung: Gold des Spiels am Reiter weg, gewählter in Gold, folgt der Wahl, Bericht. Gegenproben: 9 (Linie) und 6 (Sammlung), alle gefangen.
 
 ## [6.10.4.1] – 2026-10-04
 

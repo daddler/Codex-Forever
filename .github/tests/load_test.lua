@@ -7908,6 +7908,38 @@ do
     Check(okL, "Beute und Optionen: Gold, Metall und Sand weg, Beute auf Flaeche, Optionen auf Innenflaechen, Kategorien als Abschnitte, kein Muell"
         .. (okL and "" or (": " .. tostring(errL))))
 
+    -- 6.10.4.2, gemessen 05.10.2026: die Sammlung trug am Reiter
+    -- "Gegenstaende" noch das Gold des Spiels (uiframe-activetab-*).
+    local okCJ, errCJ = pcall(function()
+        local W, LF, GC = WeintCodex.UIWindows, WeintCodex.UICalm, WeintCodex.GameColors
+        local saved = {}
+        local function Global(name, obj) saved[name] = _G[name] _G[name] = obj return obj end
+        local cj = Global("CollectionsJournal", stub.NewObject("Frame", "CollectionsJournal"))
+        local wf = Global("WardrobeCollectionFrame", stub.NewObject("Frame"))
+        local function Tab(name)
+            local t = Global(name, stub.NewObject("Button", name))
+            for _, k in ipairs({ "LeftActive", "MiddleActive", "RightActive", "LeftHighlight" }) do
+                t[k] = stub.NewObject("Texture")
+            end
+            return t
+        end
+        local t1, t2 = Tab("WardrobeCollectionFrameTab1"), Tab("WardrobeCollectionFrameTab2")
+        wf.selectedTab = 1
+        W.done[cj] = { glow = stub.NewObject("Texture") }
+        LF.Update(cj)
+        assert(t1.LeftActive:GetAlpha() == 0 and t1.MiddleActive:GetAlpha() == 0 and t2.RightActive:GetAlpha() == 0,
+            "Gold des Spiels am Reiter der Sammlung bleibt")
+        assert(W.TabSkin[t1] and W.TabSkin[t1].accent == GC.frameAccent and W.TabSkin[t2].accent == nil, "gewaehlter Reiter der Sammlung nicht in Gold")
+        wf.selectedTab = 2
+        LF.Update(cj)
+        assert(W.TabSkin[t2].accent == GC.frameAccent and W.TabSkin[t1].accent == nil, "Reiter der Sammlung folgt der Wahl nicht")
+        local rep = table.concat(LF.Report(cj, {}), "\n")
+        assert(rep:find("Sammlung (Stil ruhig): 0 Innenflächen mit Kante in Gold (keine gefunden) · Reiter oben 2", 1, true), "Bericht: " .. rep)
+        W.done[cj], LF.windows[cj] = nil, nil
+        for name, old in pairs(saved) do _G[name] = old end
+    end)
+    Check(okCJ, "Sammlung: Reiter oben flach, der gewaehlte in Gold" .. (okCJ and "" or (": " .. tostring(errCJ))))
+
     -- 6.9.0.0: Makrofenster in Gold. Beta-Test: Metallrahmen, Marmor,
     -- Leder, Steinplaetze, Reiter des Spiels.
     local okMF, errMF = pcall(function()

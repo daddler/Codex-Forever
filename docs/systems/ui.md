@@ -1947,7 +1947,11 @@ Kachelmuster, Schatten und Ecken (`collections-background-*`, in
 `W.HIDE_ATLAS`). Teilfenster ohne globalen Namen stehen als Pfad in
 `W.OWN_BG_PATHS` (`W.Resolve`); `W.OwnBackground` blendet ihre eigenen
 Bilder aus und legt eine Innenfläche darunter (`SkinInset`), einmal je
-Fläche. Reiter („Gegenstände“) und der Reiter rechts sind nicht gemessen.
+Fläche. Gemessen 05.10.2026 (`/wcui fenster` auf „Vorlagen“): der
+Seitenreiter rechts ist gestaltet; der Reiter „Gegenstände“
+(`WardrobeCollectionFrameTab1`) trug noch `uiframe-activetab-*` – seit
+6.10.4.2 flach über `W.SkinTab` (`LF.TABS` in `ui/calm.lua`, gewählt nach
+`WardrobeCollectionFrame.selectedTab`).
 
 **Spielmenü (6.6.3.3).** Beta-Test: „Redesign soll auch im Optionsmenü
 Einheit finden“. Gemessen mit `/wcui fenster`: rote Knöpfe
@@ -3159,8 +3163,11 @@ Reiter „Freunde“): `FriendsFrame` (Marmor 374155, Metallrahmen
 | Zeilen | – | bleiben: Farbe (BattleTag, Charakter, offline) und Schein unter der Maus sagen etwas |
 | Reiter unten (`FriendsFrameTab1–4`) | `tabs` | flach, der gewählte in Gold; fehlende fallen heraus |
 
-**Ungemessen:** „Kürzliche Verbündete“, „Schlachtzug“, Ignorierliste –
-Hülle und Gold; was dort alt aussieht, sagt `/wcui fenster` auf dem Reiter.
+**Gemessen 05.10.2026:** „Kürzliche Verbündete“ und „Schlachtzug“ ohne
+Rest des Spiels – was dort an Bildern bleibt, ist Inhalt (Einladen-Knopf
+je Zeile, Trennlinien zwischen Name und Stufe, Häkchen „Alle Assistent“).
+**Ungemessen:** Ignorierliste – Hülle und Gold; was dort alt aussieht,
+sagt `/wcui fenster` auf dem Reiter.
 
 ### Lehrer *(6.10.1.0, `ui/classtrainer.lua`)*
 
