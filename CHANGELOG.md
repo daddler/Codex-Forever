@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.4.7] – 2026-10-05
+
+**Berufslehrer ohne blauen Rest.** Hinter der Leiste mit deinem Fertigkeitsstand lag noch eine blaue Fläche des Spiels; jetzt ist die Rinne dunkel wie bei den anderen Leisten.
+
+### Technisch
+
+- **Berufslehrer** (`ui/classtrainer.lua`), gemessen mit 6.10.4.6 (Angeln, 1/75): sichtbar `ClassTrainerStatusBarBackground` – eine Farbfläche des Spiels (FileData ID 0) in Blau auf `BACKGROUND` 0, also **über** unserer Rinne (−8). Bei 1/75 ist die goldene Füllung kaum breiter als ein Strich, die Leiste wirkte deshalb ganz blau. Jetzt Teil von `CT.BAR_PARTS`, Deckkraft 0. Die Füllung meldet 130871 – vermutlich `WHITE8X8` (`K.BAR_TEXTURE`), nicht nachgeschlagen.
+- **Gemessen mit 6.10.4.6:** Melden an Gilde und Sagen über die Eingabezeile klappt. Brief (`ItemTextFrame`) ohne Rest: Kante in Gold, Bildlauf des Spiels, Text lesbar. Berufslehrer sonst passend (Zeilen flach, Markierung bleibt).
+- `load_test.lua`: die Farbfläche (ID 0) ist nach dem Durchlauf weg. Gegenprobe: 1, gefangen.
+
 ## [6.10.4.6] – 2026-10-05
 
 **Schadensanzeige in die Gilde ohne Fehlermeldung.** Das Spiel lässt Addons nicht selbst in die Gilde schreiben – die Meldung brach mit einem Lua-Fehler ab. Für Gilde, Sagen und Flüstern legt die Sprechblase die Meldung jetzt als eine Zeile in die Eingabezeile des Chats; mit Enter schickst du sie ab. In die Gruppe meldet sie weiter direkt.

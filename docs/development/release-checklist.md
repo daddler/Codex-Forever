@@ -49,7 +49,7 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 - [ ] Händler, Bank, Post (beide Reiter), Auktionshaus, Handel
 - [ ] Post: keine dunkle Fläche rechts oder unten neben dem Fenster; Gildenbank: Reiter flach, Betrag ohne Goldrahmen, kein Wappen über dem Rand; Gildenmitglieder ohne graue Bänder; Gildenchat: Eingabezeile flach
 - [ ] Kontakte (O): Freunde, Kürzliche Verbündete, Schlachtzug
-- [ ] Lehrer (Klasse und Beruf): eine Zeile wählen – sie bleibt markiert
+- [ ] Lehrer (Klasse und Beruf): eine Zeile wählen – sie bleibt markiert; beim Berufslehrer die Leiste oben dunkel mit Gold, kein Blau
 - [ ] Bedrohungsleiste an den Plaketten: allein ohne Begleiter keine; als Tank in der Gruppe zeigt sie den Nächsten und wird orange, wenn er nah dran ist
 - [ ] Bedrohungsfarben in der Gruppe: der Lebensbalken wird rot, wenn du als DD die Aggro ziehst, orange kurz davor; allein bleibt er in seiner Farbe
 - [ ] Fenster verschieben: Charakterfenster ziehen, schließen, wieder öffnen – steht wieder am Platz des Spiels; Umschalt+Rechtsklick setzt zurück; Zauberbuch im Kampf öffnen – keine Fehlermeldung

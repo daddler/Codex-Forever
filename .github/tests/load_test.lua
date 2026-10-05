@@ -8775,6 +8775,8 @@ do
         for _, n in ipairs({ "ClassTrainerStatusBarLeft", "ClassTrainerStatusBarMiddle", "ClassTrainerStatusBarRight" }) do
             parts[#parts + 1] = Global(n, Tex(410251))
         end
+        -- 6.10.4.7, gemessen: blaue Farbflaeche (FileData ID 0) ueber der Bahn.
+        parts[#parts + 1] = Global("ClassTrainerStatusBarBackground", Tex(0))
         local col, colSets, barTex = { 0, 0, 1 }, 0, nil
         sb.GetStatusBarColor = function() return col[1], col[2], col[3], 1 end
         sb.SetStatusBarColor = function(_, r, g, b) col = { r, g, b } colSets = colSets + 1 end

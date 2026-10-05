@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.4.7",
+        date    = "05.10.2026",
+        notes   = {
+            "|cff7C6CFFBerufslehrer ohne blauen Rest.|r Hinter der Leiste mit deinem Fertigkeitsstand lag noch eine blaue Fläche des Spiels; jetzt ist die Rinne dunkel wie bei den anderen Leisten.",
+        },
+    },
+    {
         version = "6.10.4.6",
         date    = "05.10.2026",
         notes   = {

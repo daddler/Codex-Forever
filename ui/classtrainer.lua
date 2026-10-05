@@ -82,8 +82,10 @@ local function Off(r)
     return true
 end
 
--- Die Leiste der Fertigkeit (nur beim Berufslehrer zu sehen).
-local BAR_PARTS = { "ClassTrainerStatusBarLeft", "ClassTrainerStatusBarMiddle", "ClassTrainerStatusBarRight" }
+-- Die Leiste der Fertigkeit (nur beim Berufslehrer zu sehen). Background
+-- (6.10.4.7, gemessen): Farbflaeche des Spiels in Blau, ueber unserer Bahn.
+local BAR_PARTS = { "ClassTrainerStatusBarLeft", "ClassTrainerStatusBarMiddle", "ClassTrainerStatusBarRight",
+    "ClassTrainerStatusBarBackground" }
 local bars = setmetatable({}, { __mode = "k" })
 
 local function SkillBar()
