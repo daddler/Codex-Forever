@@ -2731,7 +2731,10 @@ das Spiel rundet sie auf dieselbe Zeile. `S.PixelY(t, y)` liefert den
 Versatz, mit dem die Oberkante ganz wird (je Durchlauf, gesetzt nur bei
 Änderung, unter einem Bildpunkt); Zauberbuch (`h.lineY`) und Talente
 nutzen ihn. Gemessen mit 6.10.4.4: „Oberkante bei Bildpunkt 918.00“ – die
-Verschiebung wirkt. **Regel:** eine Linie von einem Bildpunkt nie nur an ihrer
+Verschiebung wirkt; mit 6.10.4.5 im Bildschirmfoto bestätigt: die Linie
+steht im Zauberbuch und an allen drei Talentbäumen (Beta-Test: „alles
+korrekt so“). Erledigt nach drei Anläufen (Anker, Deckkraft, Höhe) – erst
+die Messzeile im Bericht hat die Ursache gezeigt. **Regel:** eine Linie von einem Bildpunkt nie nur an ihrer
 Mitte auf eine ganze Koordinate hängen – an einer Kante verankern oder
 `S.PixelY`. Andere Linien dieser Art sind (noch) nicht umgestellt; fällt
 eine aus, ist das der erste Verdacht.
