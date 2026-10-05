@@ -11589,6 +11589,9 @@ do
 
         -- 6.11.0.1: Kachel mit dem wichtigsten Schritt, daneben nichts doppelt.
         assert(HM.RowsFit() and HM.SlotsFit(), "Karten zu niedrig fuer ihre Zeilen")
+        -- 6.11.0.2: "AUßERDEM" im Spiel - ß wird SS.
+        assert(WeintCodex.Upper("Außerdem") == "AUSSERDEM" and WeintCodex.Upper("Größe") == "GRÖSSE",
+            "Versal: " .. WeintCodex.Upper("Außerdem"))
         local PX = WeintCodex.Metrics.PAD_X
         assert(HM.InnerWidth(1468) == HM.MAX_W and HM.InnerWidth(884) == 884 - 2 * PX and HM.InnerWidth(nil) == HM.MAX_W,
             "Breite innen: " .. HM.InnerWidth(1468) .. " / " .. HM.InnerWidth(884))

@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.11.0.2] – 2026-10-05
+
+**Kein seltsames Zeichen mehr in Überschriften.** Ein „ß“ in einer Überschrift in Großbuchstaben stand als kleines Zeichen zwischen den Versalien – jetzt heißt es „AUSSERDEM“.
+
+### Technisch
+
+- **`WeintCodex.Upper`** (`core/ui.lua`), Beta-Test mit 6.11.0.1: „AUßERDEM“ auf der Startseite – `UTF8_UPPER` kannte kein „ß“, es blieb klein und sah in der Monoschrift wie ein Beta aus. Jetzt „SS“ (Duden; das große ẞ fehlt in vielen Schriften). Gilt für jede versale Überschrift (`Eyebrow`).
+- **Gemessen mit 6.11.0.1:** Startseite wie die Vorschau – Kachel mit Stufe, Klasse und Erfahrung („92 % bis Stufe 7“), Symbol der Waffen erscheint, Linie im Weg sichtbar.
+- `load_test.lua`: „Außerdem“ → „AUSSERDEM“, „Größe“ → „GRÖSSE“. Gegenprobe: 1, gefangen.
+
 ## [6.11.0.1] – 2026-10-05
 
 **Die Übersicht ist aufgeräumt.** Oben steht groß, was als Nächstes dran ist – mit deiner Stufe und wie weit es bis zur nächsten ist. Darunter links, was sonst noch ansteht, mit Symbol, und rechts dein Weg als Liste der nächsten Stufen.

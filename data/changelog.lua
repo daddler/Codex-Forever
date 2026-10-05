@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.11.0.2",
+        date    = "05.10.2026",
+        notes   = {
+            "|cff7C6CFFKein seltsames Zeichen mehr in Überschriften.|r Ein „ß“ in einer Überschrift in Großbuchstaben stand als kleines Zeichen zwischen den Versalien – jetzt heißt es „AUSSERDEM“.",
+        },
+    },
+    {
         version = "6.11.0.1",
         date    = "05.10.2026",
         notes   = {

@@ -905,6 +905,10 @@ local UTF8_UPPER = {
     ["ò"] = "Ò", ["ó"] = "Ó", ["ô"] = "Ô", ["õ"] = "Õ", ["ø"] = "Ø",
     ["ù"] = "Ù", ["ú"] = "Ú", ["û"] = "Û",
     ["ñ"] = "Ñ", ["ç"] = "Ç", ["æ"] = "Æ", ["ý"] = "Ý",
+    -- 6.11.0.2: "ß" blieb klein und stand in der Monoschrift wie ein
+    -- griechisches Beta zwischen Versalien ("AUßERDEM", Beta-Test).
+    -- Versal nach Duden: "SS" - das grosse ẞ fehlt in vielen Schriften.
+    ["ß"] = "SS",
 }
 
 function WeintCodex.Upper(s)
