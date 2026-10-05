@@ -9,15 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [6.10.4.8] – 2026-10-05
+## [6.10.4.9] – 2026-10-05
 
-**Die Leiste beim Berufslehrer ist wieder blau.** Dunkel war sie schlecht zu erkennen – jetzt trägt sie das Blau, das du von der Fertigkeit kennst, flach und ohne grauen Rahmen.
+**Nichts Neues im Spiel.** Diese Fassung hält fest, was in der letzten Testrunde im Spiel geprüft wurde – und was noch nicht.
 
 ### Technisch
 
-- **Berufslehrer** (`ui/classtrainer.lua`), Beta-Test mit 6.10.4.7: „dunkel kann man schlecht erkennen, der Wiedererkennungswert ist nicht gegeben“. Gold (6.10.4.6) und dunkle Rinne (6.10.4.7) sind zurückgenommen: die Farbe der Füllung bleibt die des Spiels (kein `SetStatusBarColor` mehr, auch nicht je Durchlauf), `ClassTrainerStatusBarBackground` (blaue Farbfläche) bleibt sichtbar. Weiter weg: der Rahmen `…Left/Middle/Right`; weiter flach: Füllung `K.BAR_TEXTURE`, 1 px Rand. Kein eigener Blauton – die Farbe kommt aus dem Spiel, nicht aus `core/ui.lua`. Blau ist hier keine zweite Akzentfarbe, sondern die Farbe, an der man die Leiste der Fertigkeit erkennt – wie die Zustandsfarben.
-- `load_test.lua`: Rahmen weg, flach, blaue Fläche sichtbar, Farbe der Füllung nie gesetzt. Gegenproben: 3, alle gefangen.
-- **Ende der Testrunde 6.10.4.2–6.10.4.8 (nachgetragen nach dem Release).** Im Spiel bestätigt: Linie in Zauberbuch und Talenten, Gildenbank ohne Wappen, Gildenmitglieder (klein und groß), Gilde „Info“, Post ohne Fläche daneben, Gildenchat, Melden an Gilde und Sagen über die Eingabezeile, Brief (`ItemTextFrame`), Questtext, Questlog, Klassen- und Berufslehrer, Händler.
+- Keine Änderung am Code; Version, damit Release, `main` und CHANGELOG auf einem Stand sind.
+- **Ende der Testrunde 6.10.4.2–6.10.4.8.** Im Spiel bestätigt: Linie in Zauberbuch und Talenten, Gildenbank ohne Wappen, Gildenmitglieder (klein und groß), Gilde „Info“, Post ohne Fläche daneben, Gildenchat, Melden an Gilde und Sagen über die Eingabezeile, Brief (`ItemTextFrame`), Questtext, Questlog, Klassen- und Berufslehrer, Händler.
 - **Ungeprüft** (nicht ausprobiert – kein Fehler bekannt, aber auch nichts gesehen):
   - Handel mit einem anderen Spieler.
   - Würfeln um Beute und Rolle festlegen – brauchen eine Gruppe.
@@ -27,6 +26,15 @@ nicht zusammen.
   - Währungen, Ignorierliste.
   - Leiste beim Berufslehrer in 6.10.4.8: dass die Füllung nach dem Wechsel auf `K.BAR_TEXTURE` blau bleibt und nicht weiß wird. Bei 1/75 nicht zu erkennen.
   - Melden mit Flüstern über die Eingabezeile (Gilde und Sagen gemessen, derselbe Weg).
+
+## [6.10.4.8] – 2026-10-05
+
+**Die Leiste beim Berufslehrer ist wieder blau.** Dunkel war sie schlecht zu erkennen – jetzt trägt sie das Blau, das du von der Fertigkeit kennst, flach und ohne grauen Rahmen.
+
+### Technisch
+
+- **Berufslehrer** (`ui/classtrainer.lua`), Beta-Test mit 6.10.4.7: „dunkel kann man schlecht erkennen, der Wiedererkennungswert ist nicht gegeben“. Gold (6.10.4.6) und dunkle Rinne (6.10.4.7) sind zurückgenommen: die Farbe der Füllung bleibt die des Spiels (kein `SetStatusBarColor` mehr, auch nicht je Durchlauf), `ClassTrainerStatusBarBackground` (blaue Farbfläche) bleibt sichtbar. Weiter weg: der Rahmen `…Left/Middle/Right`; weiter flach: Füllung `K.BAR_TEXTURE`, 1 px Rand. Kein eigener Blauton – die Farbe kommt aus dem Spiel, nicht aus `core/ui.lua`. Blau ist hier keine zweite Akzentfarbe, sondern die Farbe, an der man die Leiste der Fertigkeit erkennt – wie die Zustandsfarben.
+- `load_test.lua`: Rahmen weg, flach, blaue Fläche sichtbar, Farbe der Füllung nie gesetzt. Gegenproben: 3, alle gefangen.
 
 ## [6.10.4.7] – 2026-10-05
 

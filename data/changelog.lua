@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.4.9",
+        date    = "05.10.2026",
+        notes   = {
+            "|cff7C6CFFNichts Neues im Spiel.|r Diese Fassung hält nur fest, was in der letzten Testrunde geprüft wurde und was noch nicht.",
+        },
+    },
+    {
         version = "6.10.4.8",
         date    = "05.10.2026",
         notes   = {
