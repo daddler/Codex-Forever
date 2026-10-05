@@ -11,13 +11,17 @@ nicht zusammen.
 
 ## [6.11.0.2] – 2026-10-05
 
+**Die Übersicht nutzt das ganze Fenster.** Was sonst noch ansteht, steht jetzt als schmale Zeile in der großen Kachel oben. Darunter läuft dein Weg bis zum unteren Rand – mit den Zaubern beim Namen und den Dungeons, die sich öffnen. Je größer das Fenster, desto weiter schaut er voraus.
+
 **Kein seltsames Zeichen mehr in Überschriften.** Ein „ß“ in einer Überschrift in Großbuchstaben stand als kleines Zeichen zwischen den Versalien – jetzt heißt es „AUSSERDEM“.
 
 ### Technisch
 
-- **`WeintCodex.Upper`** (`core/ui.lua`), Beta-Test mit 6.11.0.1: „AUßERDEM“ auf der Startseite – `UTF8_UPPER` kannte kein „ß“, es blieb klein und sah in der Monoschrift wie ein Beta aus. Jetzt „SS“ (Duden; das große ẞ fehlt in vielen Schriften). Gilt für jede versale Überschrift (`Eyebrow`).
+- **Startseite, Aufbau** (`modules/home.lua`), Beta-Test mit 6.11.0.1: Die Seite brauchte knapp 500 von fast 1.000 Bildpunkten, die Karte „Außerdem“ stand bei einem Schritt fast leer. Gewählt: Kombination aus „Außerdem in die Kachel“ und „der Weg schaut weiter voraus“. Weitere Schritte sind schmale Zeilen (44, Symbol 22, Satz und Einzelheit in einer Zeile, kleiner Knopf) unten in der Kachel, die mitwächst (`HM.HeroHeight`). „Dein Weg“ steht darunter über die volle Breite bis zum unteren Rand; so viele Stufen, wie passen (`HM.PathRows`, höchstens 14, `HM.Path(ctx, max)`), je Stufe die Zauber beim Namen (`Trainer.SpellInfo`, gleiche Namen einmal; fehlt ein Name, steht die Zahl – der Client liefert nach) und Dungeons in hellerer Schrift. Neu gefüllt bei Größenänderung des Fensters, ohne neu zu fragen (`HM.lastCtx`).
+- Vorschau vor dem Release wieder als Bild gerendert, breit (14 Stufen) und im kleinsten Fenster (9 Stufen).
+- `WeintCodex.Upper` (`core/ui.lua`), Beta-Test mit 6.11.0.1: „AUßERDEM“ auf der Startseite – `UTF8_UPPER` kannte kein „ß“, es blieb klein und sah in der Monoschrift wie ein Beta aus. Jetzt „SS“ (Duden; das große ẞ fehlt in vielen Schriften). Gilt für jede versale Überschrift (`Eyebrow`).
 - **Gemessen mit 6.11.0.1:** Startseite wie die Vorschau – Kachel mit Stufe, Klasse und Erfahrung („92 % bis Stufe 7“), Symbol der Waffen erscheint, Linie im Weg sichtbar.
-- `load_test.lua`: „Außerdem“ → „AUSSERDEM“, „Größe“ → „GRÖSSE“. Gegenprobe: 1, gefangen.
+- `load_test.lua`: „Außerdem“ → „AUSSERDEM“, „Größe“ → „GRÖSSE“; Kachel wächst mit den Schritten, erster Schritt nicht doppelt; Zahl der Stufen aus der Höhe (kleinstes Fenster ≥ 3, 960 hoch ≥ 10, nie über 14), Weg im Stub länger als 5; Zauber beim Namen, gleiche einmal, fehlender Name → Zahl; Dungeon hervorgehoben. Gegenproben: 13, davon 2 erst nach geschärftem Test gefangen; eine (Zeilenhöhe der Kachel) bewusst offen – ein reiner Gestaltungswert, den festzunageln hieße, den Test gegen sich selbst zu prüfen.
 
 ## [6.11.0.1] – 2026-10-05
 

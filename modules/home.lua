@@ -8,12 +8,12 @@
 -- Anmeldung, Gildenbank und Companion stehen links in der Spalte, nicht
 -- hier.
 --
--- Aufbau (seit 6.11.0.1, siehe "Zeichnen"):
---   * Kachel: die Stufe, der wichtigste Schritt mit Knopf, die Erfahrung.
---   * "Ausserdem": die uebrigen Schritte (hoechstens drei insgesamt,
---     nach Dringlichkeit) - Symbol, Satz, Einzelheit, Knopf.
---   * "Dein Weg": die naechsten Stufen, an denen etwas Neues kommt
---     (Zauber beim Lehrer, ein Dungeon oeffnet sich).
+-- Aufbau (seit 6.11.0.2, siehe "Zeichnen"):
+--   * Kachel: die Stufe, der wichtigste Schritt mit Knopf, darunter die
+--     uebrigen Schritte als schmale Zeilen (hoechstens drei insgesamt,
+--     nach Dringlichkeit), unten die Erfahrung.
+--   * "Dein Weg": bis zum unteren Rand die naechsten Stufen, an denen
+--     etwas Neues kommt - Zauber beim Namen, Dungeons, die sich oeffnen.
 --
 -- Bis 6.10.4.9 (core/navigation.lua) stand hier ein Armaturenbrett:
 -- Datum, Erfahrungsleiste, drei gleich schwere Spalten, Companion-Zeile.
@@ -41,7 +41,8 @@ local HM = WeintCodex.Home
 local C  = WeintCodex.Colors
 
 HM.MAX_STEPS = 3
-HM.MAX_PATH  = 5
+HM.MAX_PATH  = 5          -- Vorgabe ohne gemessene Hoehe
+HM.PATH_CAP  = 14         -- mehr Stufen zeigt der Weg nie, auch im grossen Fenster
 
 local function Plain(v)
     local K = WeintCodex.UIKit
@@ -282,9 +283,10 @@ end
 -- Die naechsten Stufen, an denen etwas kommt: neue Zauber beim Lehrer
 -- (ohne Talente und Tierausbildung - die haengen nicht an der Stufe) und
 -- Dungeons, die sich oeffnen. Ohne Stufe kein Weg (nil).
--- Rueckgabe: { { level, spells, dungeons = { Namen } }, ... }, aufsteigend.
+-- Rueckgabe: { { level, spells, ids = { Zauber }, dungeons = { Namen } }, ... },
+-- aufsteigend, hoechstens `max` (Vorgabe HM.MAX_PATH) Stufen.
 
-function HM.Path(ctx)
+function HM.Path(ctx, max)
     ctx = ctx or {}
     local level = ctx.level
     if type(level) ~= "number" then return nil end
@@ -292,7 +294,7 @@ function HM.Path(ctx)
     local function at(l)
         local m = by[l]
         if not m then
-            m = { level = l, spells = 0, dungeons = {} }
+            m = { level = l, spells = 0, ids = {}, dungeons = {} }
             by[l] = m
             levels[#levels + 1] = l
         end
@@ -306,6 +308,7 @@ function HM.Path(ctx)
                 if type(sp.level) == "number" and sp.level > level then
                     local m = at(sp.level)
                     m.spells = m.spells + 1
+                    m.ids[#m.ids + 1] = sp.id
                 end
             end
         end
@@ -318,7 +321,7 @@ function HM.Path(ctx)
     end
     table.sort(levels)
     local out = {}
-    for i = 1, math.min(#levels, HM.MAX_PATH) do out[i] = by[levels[i]] end
+    for i = 1, math.min(#levels, max or HM.MAX_PATH) do out[i] = by[levels[i]] end
     return out
 end
 
@@ -343,22 +346,23 @@ function HM.IdleDetail(ctx, path)
 end
 
 --------------------------------------------------
--- Zeichnen (6.11.0.1)
+-- Zeichnen (6.11.0.2)
 --------------------------------------------------
--- Beta-Test mit 6.11.0.0: "sieht noch nicht schoen aus". Das Bild: eine
--- Tabelle ueber 1.400 Bildpunkte - Text links, Knopf ganz rechts, die
--- Ueberschrift ein zweites Mal als erste Zeile, gesperrte Kleinschrift
--- als Zeilenkopf, der Weg als Punkte in einer langen leeren Leiste, die
--- halbe Seite leer. Jetzt:
+-- Zwei Teile: "was jetzt" und "was kommt".
 --
---   Kachel     der wichtigste Schritt, gross: links die Stufe in einem
---              eigenen Feld, daneben Satz, Einzelheit und Knopf, unten
---              der Fortschritt zur naechsten Stufe.
---   Ausserdem  links, die uebrigen Schritte mit Symbol und kleinem Knopf.
---   Dein Weg   rechts, senkrecht: eine Stufe je Zeile.
+--   Kachel     oben. Der wichtigste Schritt gross (Satz, Einzelheit,
+--              Knopf), links das Feld mit der Stufe. Die uebrigen
+--              Schritte darunter als schmale Zeilen IN der Kachel (eine
+--              eigene Karte "Ausserdem" stand in 6.11.0.1 meist fast leer
+--              daneben - Beta-Test). Ganz unten die Erfahrung.
+--   Dein Weg   darunter, ueber die ganze Breite bis zum unteren Rand. So
+--              viele Stufen, wie Platz haben (HM.PathRows), je Stufe die
+--              Zauber beim Namen und die Dungeons, die sich oeffnen - die
+--              Breite traegt Namen statt "3 neue Zauber".
 --
--- Beide Karten unten sind gleich hoch - zwei unterschiedlich lange
--- Kaesten nebeneinander wirken unfertig.
+-- 6.11.0.1 (Beta-Test): eine Tabelle ueber 1.400 Bildpunkte war "nicht
+-- schoen"; 6.11.0.1 hatte darunter zwei gleich hohe Karten und eine leere
+-- halbe Seite. Innen weiter hoechstens HM.MAX_W breit, mittig.
 
 -- Symbole je Art. Nur solche, die WeintCodex schon zeigt (Tour, Rollen) -
 -- ein geratener Pfad zeichnet im Spiel ein gruenes Rechteck.
@@ -371,13 +375,15 @@ HM.ICONS = {
     weapons       = "Interface\\Icons\\Ability_DualWield",
 }
 
-HM.HERO_H   = 148
-HM.TILE     = 92        -- Feld der Stufe in der Kachel
-HM.CARD_H   = 292       -- beide Karten unten
-HM.HEAD_H   = 52        -- Kopf einer Karte bis zur ersten Zeile
-HM.ROW_H    = 72        -- eine Zeile "Ausserdem"
+HM.HERO_H   = 148       -- Kachel ohne weitere Schritte
+HM.HERO_TOP = 128       -- bis hier Feld und Ueberschrift
+HM.EXTRA_H  = 44        -- eine weitere Zeile in der Kachel
+HM.HERO_FOOT = 48       -- Erfahrung unten in der Kachel
+HM.TILE     = 92        -- Feld der Stufe
+HM.TEXT_X   = 24 + 92 + 28
+HM.HEAD_H   = 52        -- Kopf der Karte "Dein Weg" bis zur ersten Zeile
 HM.PATH_ROW = 38        -- eine Stufe im Weg
-HM.LEFT     = 0.56      -- Anteil der linken Karte
+HM.PATH_PAD = 16        -- Luft unter der letzten Zeile
 HM.MAX_W    = 1180      -- breiter liest sich nicht: Text links, Knopf weit rechts
 
 local page
@@ -407,7 +413,55 @@ local function Spaced(text)
     return WeintCodex.Spaced(WeintCodex.Upper(text or ""))
 end
 
--- Die Kachel: der wichtigste Schritt.
+-- Hoehe der Kachel mit n weiteren Schritten.
+function HM.HeroHeight(n)
+    if (n or 0) <= 0 then return HM.HERO_H end
+    return HM.HERO_TOP + n * HM.EXTRA_H + HM.HERO_FOOT
+end
+
+-- Wie viele Stufen passen in eine Karte dieser Hoehe? Die erste Zeile ist
+-- "du bist hier", deshalb eine weniger. Mindestens eine, hoechstens
+-- HM.PATH_CAP.
+function HM.PathRows(h)
+    if type(h) ~= "number" or h <= 0 then return HM.MAX_PATH end
+    local rows = math.floor((h - HM.HEAD_H - HM.PATH_PAD) / HM.PATH_ROW) - 1
+    return math.max(1, math.min(HM.PATH_CAP, rows))
+end
+
+-- Breite innen: was der Inhaltsbereich hergibt, hoechstens HM.MAX_W.
+function HM.InnerWidth(w)
+    local M = WeintCodex.Metrics
+    w = type(w) == "number" and w > 0 and (w - 2 * M.PAD_X) or HM.MAX_W
+    return math.max(1, math.min(HM.MAX_W, math.floor(w)))
+end
+
+-- Eine weitere Zeile in der Kachel: Symbol, Satz, Einzelheit, kleiner Knopf.
+local function BuildExtra(h, i)
+    local r = CreateFrame("Frame", nil, h)
+    r:SetHeight(HM.EXTRA_H)
+    local y = -HM.HERO_TOP - (i - 1) * HM.EXTRA_H
+    r:SetPoint("TOPLEFT",  h, "TOPLEFT",  HM.TEXT_X, y)
+    r:SetPoint("TOPRIGHT", h, "TOPRIGHT", -28, y)
+    r.line = WeintCodex.RowLine(r, 0)
+    r.icon = r:CreateTexture(nil, "ARTWORK")
+    r.icon:SetSize(22, 22)
+    r.icon:SetPoint("LEFT", r, "LEFT", 0, 0)
+    r.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    r.button = WeintCodex.CreateButton(r, {
+        text = "", kind = "secondary", height = 28, backdrop = "accentCardBot",
+        onClick = function() Go(r.step) end,
+    })
+    r.button:SetPoint("RIGHT", r, "RIGHT", 0, 0)
+    r.title = WeintCodex.Label(r, "", { font = WeintCodex.Fonts.sansSemi, size = 13, color = "textBright" })
+    r.title:SetPoint("LEFT", r.icon, "RIGHT", 12, 0)
+    OneLine(r.title)
+    r.detail = WeintCodex.Label(r, "", { size = 12, color = "textMuted" })
+    r.detail:SetPoint("LEFT", r.title, "RIGHT", 12, 0)
+    r.detail:SetPoint("RIGHT", r.button, "LEFT", -16, 0)
+    OneLine(r.detail)
+    return r
+end
+
 local function BuildHero(f)
     local h = WeintCodex.CreateSurface(f.inner, { tone = "accent", radius = 14, backdrop = "bgDark", height = HM.HERO_H })
     h:SetPoint("TOPLEFT",  f.inner, "TOPLEFT",  0, 0)
@@ -416,7 +470,7 @@ local function BuildHero(f)
     -- Feld der Stufe: die eine Zahl, die beim Leveln zaehlt.
     h.tile = WeintCodex.CreateSurface(h, { tone = "flat", surface = "bgDark", radius = 0,
                                            width = HM.TILE, height = HM.TILE })
-    h.tile:SetPoint("TOPLEFT", h, "TOPLEFT", 24, -(HM.HERO_H - HM.TILE) / 2)
+    h.tile:SetPoint("TOPLEFT", h, "TOPLEFT", 24, -28)
     h.tileCap = WeintCodex.Eyebrow(h.tile, "Stufe", { size = 9, color = "textDim", justify = "CENTER" })
     h.tileCap:SetPoint("TOP", h.tile, "TOP", 0, -12)
     h.level = WeintCodex.PageTitle(h.tile, "", { size = 38, justify = "CENTER" })
@@ -426,14 +480,13 @@ local function BuildHero(f)
     h.class:SetPoint("BOTTOMRIGHT", h.tile, "BOTTOMRIGHT", -6, 10)
     if h.class.SetWordWrap then h.class:SetWordWrap(false) end
 
-    local x = 24 + HM.TILE + 28
     h.button = WeintCodex.CreateButton(h, {
         text = "", kind = "primary", backdrop = "accentCardTop",
         onClick = function() Go(h.step) end,
     })
-    h.button:SetPoint("RIGHT", h, "RIGHT", -28, 8)
+    h.button:SetPoint("TOPRIGHT", h, "TOPRIGHT", -28, -46)
     h.eyebrow = WeintCodex.Eyebrow(h, "", { size = 10, color = "accentBright" })
-    h.eyebrow:SetPoint("TOPLEFT", h, "TOPLEFT", x, -30)
+    h.eyebrow:SetPoint("TOPLEFT", h, "TOPLEFT", HM.TEXT_X, -30)
     h.title = WeintCodex.PageTitle(h, "", { size = 26 })
     h.title:SetPoint("TOPLEFT", h.eyebrow, "BOTTOMLEFT", 0, -8)
     h.title:SetPoint("RIGHT", h.button, "LEFT", -24, 0)
@@ -443,52 +496,17 @@ local function BuildHero(f)
     h.detail:SetPoint("RIGHT", h.button, "LEFT", -24, 0)
     OneLine(h.detail)
 
-    -- Fortschritt zur naechsten Stufe, unten ueber die ganze Breite neben dem Feld.
+    h.extras = {}
+    for i = 1, HM.MAX_STEPS - 1 do h.extras[i] = BuildExtra(h, i) end
+
+    -- Fortschritt zur naechsten Stufe, ganz unten neben dem Feld.
     h.meter = WeintCodex.CreateMeter(h, { height = 4, tone = "accent" })
-    h.meter:SetPoint("BOTTOMLEFT",  h, "BOTTOMLEFT",  x, 22)
+    h.meter:SetPoint("BOTTOMLEFT",  h, "BOTTOMLEFT",  HM.TEXT_X, 22)
     h.meter:SetPoint("BOTTOMRIGHT", h, "BOTTOMRIGHT", -28, 22)
     h.meter:HookScript("OnSizeChanged", function(self) if h.pct then self:SetValue(h.pct) end end)
     h.xp = WeintCodex.Label(h, "", { size = 11, color = "textDim", justify = "RIGHT" })
     h.xp:SetPoint("BOTTOMRIGHT", h.meter, "TOPRIGHT", 0, 8)
     return h
-end
-
--- Eine Karte mit Kopf, gleich hoch wie ihre Nachbarin.
-local function Card(f, title)
-    local c = WeintCodex.CreateSurface(f, { tone = "plain", radius = 14, backdrop = "bgDark", height = HM.CARD_H })
-    c.head = WeintCodex.Eyebrow(c, title)
-    c.head:SetPoint("TOPLEFT", c, "TOPLEFT", 24, -22)
-    return c
-end
-
-local function BuildRow(card, i)
-    local r = CreateFrame("Frame", nil, card)
-    r:SetHeight(HM.ROW_H)
-    local y = -HM.HEAD_H - (i - 1) * HM.ROW_H
-    r:SetPoint("TOPLEFT",  card, "TOPLEFT",  0, y)
-    r:SetPoint("TOPRIGHT", card, "TOPRIGHT", 0, y)
-    if i > 1 then r.line = WeintCodex.RowLine(r, 0) end
-    r.icon = r:CreateTexture(nil, "ARTWORK")
-    r.icon:SetSize(36, 36)
-    r.icon:SetPoint("LEFT", r, "LEFT", 24, 0)
-    r.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-    r.button = WeintCodex.CreateButton(r, {
-        text = "", kind = "secondary", height = 32, backdrop = "cardTop",
-        onClick = function() Go(r.step) end,
-    })
-    r.button:SetPoint("RIGHT", r, "RIGHT", -20, 0)
-    r.title = WeintCodex.Label(r, "", { font = WeintCodex.Fonts.sansSemi, size = 14, color = "textBright" })
-    r.title:SetPoint("TOPLEFT", r.icon, "TOPRIGHT", 16, 2)
-    r.title:SetPoint("RIGHT", r.button, "LEFT", -16, 0)
-    OneLine(r.title)
-    -- Zwei Zeilen: im schmalsten Fenster schnitt der Knopf sonst genau
-    -- das Wichtige ab ("es fehlen ...").
-    r.detail = WeintCodex.Label(r, "", { size = 12, color = "textMuted" })
-    r.detail:SetPoint("TOPLEFT", r.title, "BOTTOMLEFT", 0, -6)
-    r.detail:SetPoint("RIGHT", r.button, "LEFT", -16, 0)
-    r.detail:SetJustifyH("LEFT")
-    if r.detail.SetMaxLines then r.detail:SetMaxLines(2) end
-    return r
 end
 
 -- Eine Stufe im Weg: Punkt auf der Linie, Stufe, was kommt.
@@ -503,92 +521,76 @@ local function BuildSlot(card, i)
     s.dot:SetPoint("TOPLEFT", s, "TOPLEFT", 28, -5)
     s.level = WeintCodex.Label(s, "", { font = WeintCodex.Fonts.sansSemi, size = 13, color = "textBright" })
     s.level:SetPoint("TOPLEFT", s, "TOPLEFT", 54, -2)
-    s.level:SetWidth(76)
+    s.level:SetWidth(84)
     OneLine(s.level)
     s.text = WeintCodex.Label(s, "", { size = 12, color = "textMuted" })
-    s.text:SetPoint("TOPLEFT", s, "TOPLEFT", 136, -3)
+    s.text:SetPoint("TOPLEFT", s, "TOPLEFT", 146, -3)
     s.text:SetPoint("RIGHT", s, "RIGHT", -24, 0)
     OneLine(s.text)
     return s
-end
-
--- Breite innen: was der Inhaltsbereich hergibt, hoechstens HM.MAX_W.
-function HM.InnerWidth(w)
-    local M = WeintCodex.Metrics
-    w = type(w) == "number" and w > 0 and (w - 2 * M.PAD_X) or HM.MAX_W
-    return math.max(1, math.min(HM.MAX_W, math.floor(w)))
 end
 
 local function Build()
     local M = WeintCodex.Metrics
     local f = CreateFrame("Frame", nil, WeintCodex.ContentPanel)
     f:SetAllPoints(WeintCodex.ContentPanel)
-    -- Innen hoechstens HM.MAX_W breit, mittig.
+    -- Innen hoechstens HM.MAX_W breit, mittig, bis zum unteren Rand.
     f.inner = CreateFrame("Frame", nil, f)
     f.inner:SetPoint("TOP", f, "TOP", 0, -M.PAD_Y)
-    f.inner:SetHeight(HM.HERO_H + M.GAP + HM.CARD_H)
-    local function width() f.inner:SetWidth(HM.InnerWidth(Plain(f:GetWidth()))) end
-    f:HookScript("OnSizeChanged", width)
-    width()
+    f.inner:SetPoint("BOTTOM", f, "BOTTOM", 0, M.PAD_Y)
     f.hero = BuildHero(f)
 
-    -- Zwei Karten nebeneinander; WoW kennt keine Rasterspalten, die
-    -- Breiten werden bei jeder Groessenaenderung gerechnet.
-    f.grid = CreateFrame("Frame", nil, f.inner)
-    f.grid:SetPoint("TOPLEFT",  f.hero, "BOTTOMLEFT",  0, -M.GAP)
-    f.grid:SetPoint("TOPRIGHT", f.hero, "BOTTOMRIGHT", 0, -M.GAP)
-    f.grid:SetHeight(HM.CARD_H)
-    f.more = Card(f.grid, "Außerdem")
-    f.path = Card(f.grid, "Dein Weg")
-    local function place()
-        local w = Plain(f.grid:GetWidth())
-        w = type(w) == "number" and w > 0 and w or 900
-        local lw = math.floor((w - M.GAP) * HM.LEFT)
-        f.more:ClearAllPoints()
-        f.more:SetPoint("TOPLEFT", f.grid, "TOPLEFT", 0, 0)
-        f.more:SetWidth(lw)
-        f.path:ClearAllPoints()
-        f.path:SetPoint("TOPLEFT", f.grid, "TOPLEFT", lw + M.GAP, 0)
-        f.path:SetPoint("TOPRIGHT", f.grid, "TOPRIGHT", 0, 0)
-    end
-    f.grid:HookScript("OnSizeChanged", place)
-    place()
-
-    f.rows = {}
-    for i = 1, HM.MAX_STEPS - 1 do f.rows[i] = BuildRow(f.more, i) end
-    f.moreEmpty = WeintCodex.Label(f.more, "", { size = 13, color = "textDim" })
-    f.moreEmpty:SetPoint("TOPLEFT", f.more, "TOPLEFT", 24, -HM.HEAD_H - 4)
-    f.moreEmpty:SetPoint("RIGHT", f.more, "RIGHT", -24, 0)
-    OneLine(f.moreEmpty)
-
-    -- Die Linie hinter den Punkten: senkrecht, links verankert (eine
-    -- an ihrer Mitte verankerte Linie von einem Bildpunkt zeichnet das
-    -- Spiel nicht, gemessen 6.10.4.2).
+    f.path = WeintCodex.CreateSurface(f.inner, { tone = "plain", radius = 14, backdrop = "bgDark" })
+    f.path:SetPoint("TOPLEFT",  f.hero, "BOTTOMLEFT",  0, -M.GAP)
+    f.path:SetPoint("TOPRIGHT", f.hero, "BOTTOMRIGHT", 0, -M.GAP)
+    f.path:SetPoint("BOTTOM", f.inner, "BOTTOM", 0, 0)
+    f.path.head = WeintCodex.Eyebrow(f.path, "Dein Weg")
+    f.path.head:SetPoint("TOPLEFT", f.path, "TOPLEFT", 24, -22)
+    -- Die Linie hinter den Punkten: senkrecht, links verankert (eine an
+    -- ihrer Mitte verankerte Linie von einem Bildpunkt zeichnet das Spiel
+    -- nicht, gemessen 6.10.4.2).
     f.track = f.path:CreateTexture(nil, "ARTWORK")
     f.track:SetWidth(1)
     local lc = C.rowLine or C.textFaint
     f.track:SetColorTexture(lc[1], lc[2], lc[3], 1)
     f.slots = {}
-    for i = 1, HM.MAX_PATH + 1 do f.slots[i] = BuildSlot(f.path, i) end
+    for i = 1, HM.PATH_CAP + 1 do f.slots[i] = BuildSlot(f.path, i) end
     f.pathEmpty = WeintCodex.Label(f.path, "", { size = 13, color = "textDim" })
     f.pathEmpty:SetPoint("TOPLEFT", f.path, "TOPLEFT", 24, -HM.HEAD_H - 4)
     f.pathEmpty:SetPoint("RIGHT", f.path, "RIGHT", -24, 0)
     OneLine(f.pathEmpty)
+
+    local function resize()
+        f.inner:SetWidth(HM.InnerWidth(Plain(f:GetWidth())))
+        -- Andere Hoehe, andere Zahl Stufen: neu fuellen, ohne neu zu fragen.
+        if HM.lastCtx and f:IsShown() then HM.Fill(f, HM.lastCtx) end
+    end
+    f:HookScript("OnSizeChanged", resize)
+    f.inner:SetWidth(HM.InnerWidth(Plain(f:GetWidth())))
     return f
 end
 
--- Hoehe der Seite, gerechnet aus denselben Massen wie Build() - der
--- Prueflauf haelt sie gegen das kleinste Fenster (CLAUDE.md: "Nichts
--- muss scrollen"). Die Karten sind fest hoch; ob ihr Inhalt passt,
--- rechnen HM.RowsFit/HM.SlotsFit.
+-- Hoehe der Karte "Dein Weg": gemessen, sonst aus dem kleinsten Fenster
+-- gerechnet (Prueflauf) - dieselbe Rechnung wie das Budget der Dungeonseite.
+function HM.PathHeight(f, heroH)
+    local h = f and Plain(f:GetHeight())
+    local M = WeintCodex.Metrics
+    if type(h) ~= "number" or h <= 0 then
+        local limits = WeintCodex.WindowLimits or {}
+        h = (limits.minH or 780) - (M.TITLEBAR_H or 40)
+    end
+    return h - 2 * M.PAD_Y - heroH - M.GAP
+end
+
+-- Hoehe der Seite im ungunstigsten Fall: Kachel mit allen Schritten und
+-- ein Weg mit mindestens drei Zeilen. Der Prueflauf haelt sie gegen das
+-- kleinste Fenster (CLAUDE.md: "Nichts muss scrollen").
 function HM.PageHeight()
     local M = WeintCodex.Metrics
-    return M.PAD_Y + HM.HERO_H + M.GAP + HM.CARD_H
+    return M.PAD_Y + HM.HeroHeight(HM.MAX_STEPS - 1) + M.GAP + HM.HEAD_H + 3 * HM.PATH_ROW + HM.PATH_PAD
 end
-function HM.RowsFit()  return HM.HEAD_H + (HM.MAX_STEPS - 1) * HM.ROW_H <= HM.CARD_H end
-function HM.SlotsFit() return HM.HEAD_H + (HM.MAX_PATH + 1) * HM.PATH_ROW <= HM.CARD_H end
 
-local function FillRow(r, step)
+local function FillExtra(r, step)
     r.step = step
     if not step then r:Hide() return end
     r:Show()
@@ -605,6 +607,35 @@ local function FillRow(r, step)
     end
 end
 
+-- Was an einer Stufe kommt, in Worten: die Zauber beim Namen (gleiche
+-- Namen - hoehere Raenge - einmal), die Dungeons. Kennt der Client einen
+-- Namen noch nicht, steht die Zahl da; er liefert nach
+-- (SPELL_DATA_LOAD_RESULT), dann fuellt die Seite neu.
+-- `bright`: Dungeons in hellerer Schrift - sie sollen zwischen Zaubern
+-- auffallen (Farbe aus core/ui.lua ueber ColorText).
+function HM.SlotText(m, bright)
+    local parts = {}
+    if #m.dungeons > 0 then
+        local d = (#m.dungeons == 1 and "Dungeon " or "Dungeons ") .. table.concat(m.dungeons, ", ")
+        parts[#parts + 1] = bright and WeintCodex.ColorText("textBright", d) or d
+    end
+    if m.spells > 0 then
+        local TR = WeintCodex.Trainer
+        local names, seen, missing = {}, {}, false
+        for _, id in ipairs(m.ids or {}) do
+            local name = TR and TR.SpellInfo and TR.SpellInfo(id)
+            if type(name) ~= "string" then missing = true break end
+            if not seen[name] then seen[name] = true names[#names + 1] = name end
+        end
+        if missing or #names == 0 then
+            parts[#parts + 1] = Plural(m.spells, "ein neuer Zauber", "neue Zauber")
+        else
+            parts[#parts + 1] = table.concat(names, ", ")
+        end
+    end
+    return table.concat(parts, " · ")
+end
+
 local function FillSlot(s, m, current)
     s:Show()
     local dc = current and C.accent or C.textFaint
@@ -618,10 +649,7 @@ local function FillSlot(s, m, current)
     end
     SetColor(s.level, "textBright")
     SetColor(s.text, "textMuted")
-    local parts = {}
-    if m.spells > 0 then parts[#parts + 1] = Plural(m.spells, "ein neuer Zauber", "neue Zauber") end
-    if #m.dungeons > 0 then parts[#parts + 1] = table.concat(m.dungeons, ", ") end
-    s.text:SetText(table.concat(parts, " · "))
+    s.text:SetText(HM.SlotText(m, true))
 end
 
 local function FillHero(h, ctx, steps, path)
@@ -646,6 +674,12 @@ local function FillHero(h, ctx, steps, path)
     else
         h.button:Hide()
     end
+    local n = 0
+    for i, r in ipairs(h.extras) do
+        FillExtra(r, steps[i + 1])
+        if steps[i + 1] then n = n + 1 end
+    end
+    h:SetHeight(HM.HeroHeight(n))
     -- Erfahrung: dieselbe Auskunft wie der Erfahrungsbalken; ohne sie
     -- (Hoechststufe, gesperrt, keine Antwort) keine Leiste - nie 0 %.
     local xp = ctx.xp
@@ -663,27 +697,19 @@ local function FillHero(h, ctx, steps, path)
         h.meter:Hide()
         h.xp:Hide()
     end
+    return n
 end
 
 -- Zustand der Seite fuer Pruefung und Bericht.
 HM.last = nil
 
 function HM.Fill(f, ctx)
+    HM.lastCtx = ctx
     local steps = HM.Steps(ctx)
-    local path = HM.Path(ctx)
+    local extras = math.max(0, math.min(#steps, HM.MAX_STEPS) - 1)
+    local rows = HM.PathRows(HM.PathHeight(f, HM.HeroHeight(extras)))
+    local path = HM.Path(ctx, rows)
     FillHero(f.hero, ctx, steps, path)
-
-    local shown = 0
-    for i, r in ipairs(f.rows) do
-        FillRow(r, steps[i + 1])
-        if steps[i + 1] then shown = shown + 1 end
-    end
-    if shown == 0 then
-        f.moreEmpty:SetText(#steps == 0 and "Gerade steht nichts an." or "Sonst steht gerade nichts an.")
-        f.moreEmpty:Show()
-    else
-        f.moreEmpty:Hide()
-    end
 
     local n = 0
     if path and #path > 0 then
@@ -709,7 +735,7 @@ function HM.Fill(f, ctx)
         f.track:Hide()
     end
 
-    HM.last = { steps = steps, path = path, headline = f.hero.title:GetText() }
+    HM.last = { steps = steps, path = path, rows = rows, headline = f.hero.title:GetText() }
     return steps, path
 end
 
