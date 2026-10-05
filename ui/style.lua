@@ -160,6 +160,29 @@ function S.PixelLine(t)
     return hgt, px
 end
 
+-- Auf ganze Bildpunkte (6.10.4.3). Gemessen 05.10.2026 mit 6.10.4.2:
+-- "Linie: 614 breit, 1.00 hoch = 1.00 Bildpunkte, Oberkante bei Bildpunkt
+-- 866.50, sichtbar ja" - und im Bild nichts. Die Hoehe war es nicht: eine
+-- Linie von einem Bildpunkt, an ihrer MITTE verankert (LEFT am CENTER der
+-- Raute), hat ihre Kanten auf halben Bildpunkten, wenn die Mitte auf
+-- einem ganzen liegt - das Spiel rundet beide auf dieselbe Zeile. Hier:
+-- der Versatz in y, mit dem die Oberkante auf einem ganzen Bildpunkt
+-- liegt. `y` ist der jetzige Versatz; zurueck der neue (gleich, wenn
+-- nichts zu tun ist oder Lage/Mass unbekannt sind). Bleibt in (-1, 0]
+-- Bildpunkt, wandert also nicht.
+function S.PixelY(t, y)
+    local px = S.PixelSize(t)
+    local ok, top = pcall(t.GetTop, t)
+    top = ok and K.Plain(top) or nil
+    if not px or type(top) ~= "number" then return y end
+    local p = top / px
+    local frac = p - math.floor(p)
+    if frac < 0.01 or frac > 0.99 then return y end
+    local ny = y - frac * px
+    if ny <= -px then ny = ny + px end
+    return ny
+end
+
 -- Fuer /wcui fenster: was die Linie im Client ist - damit die naechste
 -- Messung sagt, ob die Hoehe der Linie der Grund war.
 function S.LineReport(t)

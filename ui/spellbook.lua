@@ -113,8 +113,16 @@ local function Head(entry, fs, paged, accent)
         S.Fade(h.line, accent, SB.LINE, "RIGHT")
         heads[entry] = h
     end
-    -- Hoehe ein Bildpunkt (6.10.4.2): 1 Einheit war im Spiel unsichtbar.
+    -- Hoehe ein Bildpunkt (6.10.4.2), Kanten auf ganzen Bildpunkten
+    -- (6.10.4.3) - gemessen: Oberkante bei 866.50, die Linie unsichtbar.
     S.PixelLine(h.line)
+    if h.lineY then
+        local ny = S.PixelY(h.line, h.lineY)
+        if ny ~= h.lineY then
+            h.lineY = ny
+            h.line:SetPoint("LEFT", h.dot, "CENTER", SB.GAP, ny)
+        end
+    end
     -- Die Liste verwendet ihre Eintraege weiter: neu legen, wenn Text,
     -- Breite oder Lage sich aendern.
     local ok, tw = pcall(fs.GetStringWidth, fs)
@@ -130,6 +138,7 @@ local function Head(entry, fs, paged, accent)
     -- die Linie war im Spiel unsichtbar.
     h.line:ClearAllPoints()
     h.line:SetPoint("LEFT", h.dot, "CENTER", SB.GAP, 0)
+    h.lineY = 0
     local w = (fl and pr) and (pr - SB.INSET - (fl + tw + 2 * SB.GAP + 3)) or 0
     h.width = w > 0 and math.floor(w + 0.5) or 0
     h.line:SetWidth(h.width)

@@ -7467,8 +7467,35 @@ do
         local lrep = table.concat(SB.Report(psf, {}), "\n")
         assert(lrep:find("Zauberbuch, Linie: 435 breit, 1.42 hoch = 1.00 Bildpunkte, Oberkante bei Bildpunkt 210.94, sichtbar ja", 1, true),
             "Bericht ohne Linie: " .. lrep)
+        -- 6.10.4.3, gemessen mit 6.10.4.2: "1.00 hoch = 1.00 Bildpunkte,
+        -- Oberkante bei Bildpunkt 866.50" und nichts zu sehen. Die Kanten
+        -- auf halben Bildpunkten - die Linie wird um den Rest verschoben.
+        _G.GetPhysicalScreenSize = function() return 1920, 768 end   -- eine Einheit = ein Bildpunkt
+        h.line.GetEffectiveScale = function() return 1.0 end
+        local top, set = 866.5, {}
+        h.lineY = 0   -- der Schritt davor hat sie schon einmal verschoben
+        h.line.GetTop = function() return top end
+        h.line.SetPoint = function(_, p, rel, rp, x, y) set[#set + 1] = { p, rel, rp, x, y } top = 866.5 + y end
+        SB.Update(psf)
+        assert(#set == 1 and set[1][1] == "LEFT" and set[1][2] == h.dot and set[1][4] == SB.GAP and math.abs(set[1][5] + 0.5) < 1e-6,
+            "Linie nicht auf ganze Bildpunkte gelegt: " .. tostring(set[1] and set[1][5]))
+        assert(math.abs(top - 866) < 1e-6, "Oberkante nicht ganz: " .. top)
+        SB.Update(psf)
+        assert(#set == 1, "Linie je Durchlauf neu gesetzt")
+        -- S.PixelY selbst: fast ganz bleibt, wie es ist; der Versatz bleibt
+        -- unter einem Bildpunkt (wandert nicht).
+        local probe = stub.NewObject("Texture")
+        probe.GetEffectiveScale = function() return 1.0 end
+        probe.GetTop = function() return 866.004 end
+        assert(S.PixelY(probe, 0) == 0, "fast ganze Oberkante verschoben")
+        probe.GetTop = function() return 866.5 end
+        assert(math.abs(S.PixelY(probe, -0.8) + 0.3) < 1e-6, "Versatz waechst ueber einen Bildpunkt: " .. tostring(S.PixelY(probe, -0.8)))
+        probe.GetTop = function() return nil end
+        assert(S.PixelY(probe, -0.25) == -0.25, "ohne Lage verschoben")
+        local okRep = table.concat(SB.Report(psf, {}), "\n")
+        assert(okRep:find("Oberkante bei Bildpunkt 866.00", 1, true), "Bericht: " .. okRep)
         _G.GetPhysicalScreenSize = oldPhys
-        h.line.GetEffectiveScale, h.line.GetTop = nil, nil
+        h.line.GetEffectiveScale, h.line.GetTop, h.line.SetPoint = nil, nil, nil
         assert(b.edge and W.own[b.edge.l], "Kante ueber der Flaeche fehlt")
         -- Ein bisschen Klassenfarbe: Licht von oben und Kante ueber der Flaeche.
         assert(classTex[b.light] and classTex[b.edge.l] and classTex[b.edge.r], "Licht oder Kante nicht in der Klassenfarbe")
@@ -7520,6 +7547,22 @@ do
         local cf = stub.NewObject("Frame", "CommunitiesFrame")
         local list, chat, edit, members = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("EditBox"), stub.NewObject("Frame")
         cf.Chat, cf.ChatEditBox, cf.MemberList = chat, edit, members
+        -- 6.10.4.3 gemessen: Mitgliederliste mit grauem Rand, Leder hinter
+        -- dem Bildlauf und zwei Baendern je Zeile; Rang und Namen bleiben.
+        local function FileTex(id)
+            local t = stub.NewObject("Texture")
+            t.GetTexture = function() return id end
+            return t
+        end
+        local mInset, mNine, mBar = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Frame")
+        mInset.NineSlice, members.InsetFrame = mNine, mInset
+        mBar.Background, members.ScrollBar = FileTex(374154), mBar
+        local mBox, mTarget = stub.NewObject("Frame"), stub.NewObject("Frame")
+        mBox.ScrollTarget, members.ScrollBox = mTarget, mBox
+        local mRow = stub.NewObject("Button")
+        local band1, band2, rankIcon = FileTex(410251), FileTex(131128), FileTex(132061)
+        mRow.GetRegions = function() return band1, band2, rankIcon end
+        mTarget.GetChildren = function() return mRow end
         -- 6.10.4.2 gemessen: Eingabezeile mit Left/Mid/Right (heller Rahmen).
         edit.Left, edit.Mid, edit.Right = stub.NewObject("Texture"), stub.NewObject("Texture"), stub.NewObject("Texture")
         local oldCL, oldCF = _G.CommunitiesFrameCommunitiesList, _G.CommunitiesFrame
@@ -7559,6 +7602,10 @@ do
         assert(rep:find("Gilde & Communitys (Stil ruhig): Liste Fläche · Chat Fläche · Mitglieder Fläche · Eingabe flach", 1, true), "Bericht: " .. rep)
         assert(edit.Left:GetAlpha() == 0 and edit.Mid:GetAlpha() == 0 and edit.Right:GetAlpha() == 0 and CO.fields[edit],
             "Eingabezeile behaelt den hellen Rahmen des Spiels")
+        assert(mNine:GetAlpha() == 0 and mBar.Background:GetAlpha() == 0, "Rand oder Leder der Mitgliederliste bleibt")
+        assert(band1:GetAlpha() == 0 and band2:GetAlpha() == 0 and rankIcon:GetAlpha() == 1, "Baender der Zeile bleiben oder Rang weg")
+        assert(not W.Insets[mInset], "Mitgliederliste verdunkelt (6.6.3.3: Normalzustand)")
+        assert(rep:find("Zeilen ohne Band 2", 1, true), "Bericht: " .. rep)
         cf.ChatEditBox = nil
         CO.Update(cf)
         local rep2 = table.concat(CO.Report(cf, {}), "\n")
@@ -8330,6 +8377,9 @@ do
             return t
         end
         local gb = Global("GuildBankFrame", stub.NewObject("Frame", "GuildBankFrame"))
+        -- 6.10.4.3, Beta-Test: ohne Fluegel ragte das Wappen allein ueber
+        -- die Kachel ("sieht oben in der Mitte bloed aus") - ganz weg.
+        for _, name in ipairs(GB.EMBLEM) do Global(name, stub.NewObject("Texture", name)) end
         local mL, mM, mR = Tex(525911), Tex(525911), Tex(525911)
         local emblem = stub.NewObject("Frame")
         local wingL, wingR, tabard = Tex(132069), Tex(132069), Tex(180159)
@@ -8350,13 +8400,17 @@ do
         assert(mL:GetAlpha() == 0 and mM:GetAlpha() == 0 and mR:GetAlpha() == 0 and GB.strips[mL] and GB.strips[mR],
             "Goldrahmen um das Geld bleibt")
         assert(wingL:GetAlpha() == 0 and wingR:GetAlpha() == 0, "goldene Fluegel am Wappen bleiben")
-        assert(tabard:GetAlpha() == 1, "Wappen der Gilde ausgeblendet")
+        for _, name in ipairs(GB.EMBLEM) do
+            assert(_G[name]:GetAlpha() == 0, "Wappen der Gildenbank bleibt: " .. name)
+        end
+        local gbRep = table.concat(GB.Report(gb, {}), "\n")
+        assert(gbRep:find("Wappen weg 12 · Reiter 4", 1, true), "Bericht: " .. gbRep)
         assert(seen[tabs[3]] and seen[tabs[3]][1] == GC.frameAccent and seen[tabs[3]][2] == true
             and seen[tabs[1]][2] == false and seen[tabs[4]][2] == false, "Reiter der Gildenbank nicht flach oder falsch gewaehlt")
         W.done[gb], GB.frames[gb] = nil, nil
         for name, old in pairs(saved) do _G[name] = old end
     end)
-    Check(okGB, "Gildenbank: Reiter flach, Geld ohne Goldrahmen, Fluegel weg, Wappen bleibt"
+    Check(okGB, "Gildenbank: Reiter flach, Geld ohne Goldrahmen, Wappen samt Fluegeln weg"
         .. (okGB and "" or (": " .. tostring(errGB))))
 
     -- 6.9.1.2: Post in Gold. Beta-Test 6.9.1.1: Metallrahmen, Pergament,
@@ -9099,6 +9153,17 @@ do
         h2.line.GetEffectiveScale = function() return 0.5 end
         TL.Update(psf)
         assert(math.abs(h2.line:GetHeight() - 768 / 1080 / 0.5) < 1e-6, "Linie eines Baums nicht einen Bildpunkt hoch: " .. tostring(h2.line:GetHeight()))
+        -- 6.10.4.3: Oberkante auf halbem Bildpunkt - verschoben.
+        h2.line.GetEffectiveScale = function() return 768 / 1080 end   -- eine Einheit = ein Bildpunkt
+        local top2, set2 = 400.5, {}
+        h2.line.GetTop = function() return top2 end
+        h2.line.SetPoint = function(_, p, rel, rp, x, y) set2[#set2 + 1] = y top2 = 400.5 + y end
+        TL.Update(psf)
+        assert(#set2 == 1 and math.abs(set2[1] + 0.5) < 1e-6 and math.abs(top2 - 400) < 1e-6,
+            "Linie eines Baums nicht auf ganze Bildpunkte: " .. tostring(set2[1]))
+        TL.Update(psf)
+        assert(#set2 == 1, "Linie eines Baums je Durchlauf neu gesetzt")
+        h2.line.GetTop, h2.line.SetPoint = nil, nil
         _G.GetPhysicalScreenSize = oldPhys
         h2.line.GetEffectiveScale = nil
         TL.Update(psf)

@@ -43,6 +43,7 @@ local S = WeintCodex.UIStyle
 local RG = WeintCodex.UIRegister
 
 local Visible, IsFrame = RG.Visible, RG.IsFrame
+local K = WeintCodex.UIKit
 
 CO.LABEL = "Gilde & Communitys"
 CO.HOST = "CommunitiesFrame"
@@ -59,6 +60,17 @@ CO.CHAT_KEYS = { "Chat", "ChatFrame", "MessageFrame" }
 CO.EDIT_PARTS = { "Left", "Mid", "Middle", "Right" }
 CO.EDIT_ALPHA = 0.55
 CO.fields = setmetatable({}, { __mode = "k" })
+-- Mitgliederliste (6.10.4.3, Beta-Test: "die Gildenmitgliederliste etwas
+-- besser einarbeiten"). Gemessen 05.10.2026: grauer Rand des Spiels
+-- (MemberList.InsetFrame.NineSlice, "UI-Frame-Inner*"), Leder hinter dem
+-- Bildlauf (ScrollBar.Background, 374154) und je Zeile zwei Baender
+-- (410251, 131128). Weg - die Liste steht auf ihrer Spalte wie der Chat.
+-- NICHT dunkler (6.6.3.3: "etwas verdunkelt, gern wieder im
+-- Normalzustand"): keine Innenflaeche darueber, W.INSET_KEEP bleibt.
+-- Rang, Anwesenheit, Sprachchat, Namen in ihren Farben und das
+-- Wasserzeichen der Gilde bleiben.
+CO.ROW_FILES = { [410251] = true, [131128] = true }
+CO.rows = setmetatable({}, { __mode = "k" })
 
 S.SCOPES[CO.HOST] = CO.STYLE
 W.HOSTED[CO.HOST] = W.HOSTED[CO.HOST] or {}
@@ -85,6 +97,37 @@ end
 function CO.Members(f)
     local m = f.MemberList
     return IsFrame(m) and m or nil
+end
+
+local function Gone(t)
+    if IsFrame(t) and t.SetAlpha and K.Plain(t:GetAlpha()) ~= 0 then t:SetAlpha(0) end
+end
+
+-- Je Durchlauf: die Zeilen werden beim Blaettern weiterverwendet. Ohne
+-- neue Tabelle (W.Regions/W.Children mit Kennung).
+function CO.SkinMembers(m)
+    local inset = m.InsetFrame
+    if IsFrame(inset) and IsFrame(inset.NineSlice) then Gone(inset.NineSlice) end
+    local bar = m.ScrollBar
+    if IsFrame(bar) then Gone(bar.Background) end
+    local box = m.ScrollBox
+    local target = IsFrame(box) and box.ScrollTarget or nil
+    if not IsFrame(target) then return 0 end
+    local CP = WeintCodex.UICalmParts
+    local n = 0
+    for _, row in ipairs(W.Children(target, "coRows", 0)) do
+        if IsFrame(row) then
+            for _, r in ipairs(W.Regions(row, "coRow", 1)) do
+                local id = CP and CP.FileOf(r)
+                if id and CO.ROW_FILES[id] then
+                    Gone(r)
+                    if not CO.rows[r] then CO.rows[r] = true end
+                    n = n + 1
+                end
+            end
+        end
+    end
+    return n
 end
 
 local function Column(f, anchor, corner, accent)
@@ -133,6 +176,8 @@ function CO.Update(f)
     Ensure(f, d, "Liste", CO.List(f), nil, accent)
     Ensure(f, d, "Chat", chat, IsFrame(edit) and edit or nil, accent)
     Ensure(f, d, "Mitglieder", CO.Members(f), nil, accent)
+    local members = CO.Members(f)
+    d.rows = members and CO.SkinMembers(members) or 0
     d.edit = false
     if IsFrame(edit) then
         for _, key in ipairs(CO.EDIT_PARTS) do
@@ -162,7 +207,7 @@ function CO.Report(f, out)
         parts = parts .. (parts == "" and "" or " · ") .. key .. " "
             .. (col and (col.on and "Fläche" or "Fläche (Spalte zu)") or "FEHLT")
     end
-    out[#out + 1] = string.format("   %s (Stil %s): %s · Eingabe %s", CO.LABEL, CO.STYLE.name, parts,
-        d.edit and "flach" or "nicht gefunden")
+    out[#out + 1] = string.format("   %s (Stil %s): %s · Eingabe %s · Zeilen ohne Band %d", CO.LABEL, CO.STYLE.name, parts,
+        d.edit and "flach" or "nicht gefunden", d.rows or 0)
     return out
 end

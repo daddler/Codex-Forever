@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.4.3] – 2026-10-05
+
+**Die Linie hinter den Überschriften, zweiter Anlauf.** Im Zauberbuch und an den Talentbäumen lag die feine Linie genau zwischen zwei Bildpunkten und wurde deshalb nicht gezeichnet. Jetzt liegt sie auf ganzen Bildpunkten.
+
+**Gildenbank ohne Wappen.** Das Wappen ragte allein über den oberen Rand des Fensters; jetzt beginnt die Gildenbank so ruhig wie die anderen Fenster.
+
+**Die Mitgliederliste der Gilde passt dazu.** Grauer Rand, Leder hinter dem Bildlauf und die grauen Bänder hinter jedem Namen sind weg – die Liste steht auf derselben Fläche wie Chat und Communitys, ohne dunkler zu werden. Rang, Status und Namensfarben bleiben.
+
+### Technisch
+
+- **Linie hinter Überschriften – die Vermutung aus 6.10.4.2 war falsch.** Gemessen mit 6.10.4.2 (`/wcui fenster`, Zauberbuch): „Linie: 614 breit, 1.00 hoch = 1.00 Bildpunkte, Oberkante bei Bildpunkt 866.50, sichtbar ja“ – und im Bild nichts. Die Höhe war schon ein Bildpunkt. Die Linie ist mit ihrer **Mitte** an der Mitte der Raute verankert (`LEFT` an `CENTER`); liegt die auf einem ganzen Bildpunkt, liegen Ober- und Unterkante auf halben, und das Spiel rundet beide auf dieselbe Zeile. Ohne die Zeile im Bericht wäre das ein vierter Rateversuch geworden. **`S.PixelY(t, y)`** (`ui/style.lua`): der Versatz in y, mit dem die Oberkante auf einem ganzen Bildpunkt liegt – je Durchlauf (Blättern, Ziehen), gesetzt nur bei Änderung, Versatz bleibt unter einem Bildpunkt. Zauberbuch (`h.lineY`) und Talente. `S.PixelLine` bleibt (schadet nicht, hilft bei kleiner Skalierung). Betrifft im Prinzip jede an ihrer Mitte verankerte Linie von einem Bildpunkt; umgestellt sind nur die zwei gemessenen.
+- **Gildenbank** (`ui/bank.lua`), Beta-Test mit 6.10.4.2: „sieht oben in der Mitte ziemlich blöd aus“ – ohne Flügel ragte das Wappen allein über die Kachel. Jetzt ganz weg: `GuildBankEmblemBackground*`, `GuildBankEmblem*`, `GuildBankEmblemBorder*` je Ecke (12, gemessen), Bericht „Wappen weg n“. In Gilde & Communitys bleibt es, dort sitzt es im Fenster.
+- **Mitgliederliste** (`ui/community.lua`, `CO.SkinMembers`), Beta-Test: „die Gildenmitgliederliste etwas besser einarbeiten“. Weg: `MemberList.InsetFrame.NineSlice` („UI-Frame-Inner*“), Leder `ScrollBar.Background` (374154), je Zeile die Bänder 410251 und 131128 (Zeilen werden beim Blättern weiterverwendet – je Durchlauf, ohne neue Tabelle). Keine Innenfläche darüber: 6.6.3.3 wollte die Liste „nicht verdunkelt“, `W.INSET_KEEP` bleibt. Rang, Anwesenheit, Sprachchat, Namensfarben, Wasserzeichen bleiben. Bericht „Zeilen ohne Band n“.
+- **Gemessen:** Post – die Fläche neben dem Fenster ist weg (`CP.Clamp` aus 6.10.4.2 wirkt). Gildenchat – Eingabe flach.
+- `load_test.lua`: Linie mit Oberkante bei 866,5 → um einen halben Bildpunkt verschoben, danach ganz, nicht je Durchlauf neu gesetzt, Bericht 866.00; `S.PixelY` selbst (fast ganz bleibt, Versatz wandert nicht, ohne Lage nichts); dasselbe an den Talenten. Gildenbank: alle 12 Teile des Wappens weg, Bericht. Mitgliederliste: Rand, Leder, beide Bänder weg, Rang bleibt, nicht verdunkelt, Bericht. Gegenproben: 16, alle gefangen – zwei erst nach geschärftem Test.
+
 ## [6.10.4.2] – 2026-10-05
 
 **Die Linie hinter den Überschriften ist jetzt einen Bildpunkt hoch.** Im Zauberbuch („Allgemein“) und an den Namen der Talentbäume stand bisher nur die Raute. Die feine Linie dahinter war vermutlich schmaler als ein Bildpunkt und verschwand. Fehlt sie noch, sagt /wcui fenster jetzt, wie hoch sie ist.

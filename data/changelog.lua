@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.4.3",
+        date    = "05.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Linie hinter den Überschriften, zweiter Anlauf.|r Im Zauberbuch und an den Talentbäumen lag die feine Linie genau zwischen zwei Bildpunkten und wurde deshalb nicht gezeichnet. Jetzt liegt sie auf ganzen Bildpunkten.",
+            "|cff7C6CFFGildenbank ohne Wappen.|r Das Wappen ragte allein über den oberen Rand des Fensters; jetzt beginnt die Gildenbank so ruhig wie die anderen Fenster.",
+            "|cff7C6CFFDie Mitgliederliste der Gilde passt dazu.|r Grauer Rand, Leder hinter dem Bildlauf und die grauen Bänder hinter jedem Namen sind weg – die Liste steht auf derselben Fläche wie Chat und Communitys, ohne dunkler zu werden. Rang, Status und Namensfarben bleiben.",
+        },
+    },
+    {
         version = "6.10.4.2",
         date    = "05.10.2026",
         notes   = {

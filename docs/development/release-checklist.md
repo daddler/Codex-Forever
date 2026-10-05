@@ -47,7 +47,7 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 - [ ] Charakter (C), Zauberbuch und Talente (P, N), Weltkarte (M)
 - [ ] Zauberbuch und Talente: hinter „Allgemein“ und den Namen der Bäume Raute **und** Linie; sonst `/wcui fenster` – die Zeile „Linie: …“ sagt Höhe und Bildpunkte
 - [ ] Händler, Bank, Post (beide Reiter), Auktionshaus, Handel
-- [ ] Post: keine dunkle Fläche rechts oder unten neben dem Fenster; Gildenbank: Reiter flach, Betrag ohne Goldrahmen; Gildenchat: Eingabezeile flach
+- [ ] Post: keine dunkle Fläche rechts oder unten neben dem Fenster; Gildenbank: Reiter flach, Betrag ohne Goldrahmen, kein Wappen über dem Rand; Gildenmitglieder ohne graue Bänder; Gildenchat: Eingabezeile flach
 - [ ] Kontakte (O): Freunde, Kürzliche Verbündete, Schlachtzug
 - [ ] Lehrer (Klasse und Beruf): eine Zeile wählen – sie bleibt markiert
 - [ ] Bedrohungsleiste an den Plaketten: allein ohne Begleiter keine; als Tank in der Gruppe zeigt sie den Nächsten und wird orange, wenn er nah dran ist

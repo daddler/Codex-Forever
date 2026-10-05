@@ -178,6 +178,7 @@ local function Head(fs, accent)
     S.Fade(h.line, accent, TL.LINE, "RIGHT")
     -- Nur links verankert (6.7.8.0: nie an einen Rahmen anderer Hoehe).
     h.line:SetPoint("LEFT", h.dot, "CENTER", TL.GAP, 0)
+    h.lineY = 0
     -- Dunkler Grund unter Symbol, Name und Linie - ganz unten in der Ebene
     -- der Raute, damit er ueber dem Nebel und unter dem Text liegt. Zwei
     -- Verlaeufe (links ein, rechts aus), feste Breite, nur links verankert.
@@ -198,6 +199,12 @@ local function Place(h)
     -- Hoehe ein Bildpunkt (6.10.4.2): 1 Einheit war im Spiel unsichtbar,
     -- auch mit Deckkraft 0.9 - es war nie die Deckkraft.
     S.PixelLine(h.line)
+    -- Kanten auf ganzen Bildpunkten (6.10.4.3, wie im Zauberbuch).
+    local ny = S.PixelY(h.line, h.lineY)
+    if ny ~= h.lineY then
+        h.lineY = ny
+        h.line:SetPoint("LEFT", h.dot, "CENTER", TL.GAP, ny)
+    end
     local ok, tw = pcall(h.fs.GetStringWidth, h.fs)
     tw = ok and K.Plain(tw) or nil
     tw = type(tw) == "number" and tw or 0

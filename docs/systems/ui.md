@@ -1522,7 +1522,11 @@ Häkchen und Symbole bleiben.
 (6.6.2.2 ausgeblendet, der Beta-Test wollte es zurück). Gemessen
 05.10.2026: die Liste links ist gestaltet; die Chat-Eingabe trug den
 hellen runden Rahmen des Spiels (`.ChatEditBox` Left/Mid/Right) – seit
-6.10.4.2 flach (`CP.Flat`).
+6.10.4.2 flach (`CP.Flat`). Mitgliederliste seit 6.10.4.3 eingearbeitet
+(`CO.SkinMembers`, Beta-Test „etwas besser einarbeiten“): grauer Rand
+(`InsetFrame.NineSlice`), Leder hinter dem Bildlauf (374154) und die zwei
+Bänder je Zeile (410251, 131128) weg – ohne Innenfläche darüber, denn
+6.6.3.3 wollte sie nicht verdunkelt (`W.INSET_KEEP` bleibt).
 
 ## Bedrohung an den Plaketten *(6.9.0.8, `ui/nameplates.lua`)*
 
@@ -2709,6 +2713,19 @@ Bildpunkten, sichtbar). Stimmt die Vermutung, betrifft sie jede Linie von
 1 Einheit (`S.Divider`, `W.ListHeader`, `K.Border`) – die trafen bisher
 zufällig; umgestellt wird erst nach der Messung.
 
+**Gemessen mit 6.10.4.2 – die Vermutung war falsch (6.10.4.3).** „Linie:
+614 breit, 1.00 hoch = 1.00 Bildpunkte, Oberkante bei Bildpunkt 866.50,
+sichtbar ja“ – und im Bild nichts. Die Höhe war schon ein Bildpunkt; die
+**Lage** war es: die Linie hängt mit ihrer Mitte an der Mitte der Raute.
+Liegt die auf einem ganzen Bildpunkt, liegen beide Kanten auf halben, und
+das Spiel rundet sie auf dieselbe Zeile. `S.PixelY(t, y)` liefert den
+Versatz, mit dem die Oberkante ganz wird (je Durchlauf, gesetzt nur bei
+Änderung, unter einem Bildpunkt); Zauberbuch (`h.lineY`) und Talente
+nutzen ihn. **Regel:** eine Linie von einem Bildpunkt nie nur an ihrer
+Mitte auf eine ganze Koordinate hängen – an einer Kante verankern oder
+`S.PixelY`. Andere Linien dieser Art sind (noch) nicht umgestellt; fällt
+eine aus, ist das der erste Verdacht.
+
 **`W.HoldGlow`** (allgemein): Fenster in Gold (`S.CALM`) tragen den Schein
 der Klasse nie – im Berufsfenster lag er seit 6.7.5.0 über dem Gold, ein
 zweiter Akzent in einem Bereich, den der Test nicht sah (er entsteht in
@@ -3127,7 +3144,10 @@ Befugnis für die Fächer): Reiter unten `GuildBankFrameTab1–4`
 („uiframe-tab-*“) → flach, gewählt nach `selectedTab`; Goldrahmen um
 „Verfügbarer Betrag“ (525911, `GuildBankFrameLeft/Middle/Right`) → Leiste
 ohne Rand; goldene Flügel am Wappen (132069, `Emblem.Left/Right`) → weg.
-Das Wappen selbst (`GuildBankEmblem*`) bleibt, wie in Gilde & Communitys.
+Seit 6.10.4.3 auch das Wappen selbst (`GuildBankEmblemBackground*`,
+`GuildBankEmblem*`, `GuildBankEmblemBorder*`, je Ecke) – Beta-Test: ohne
+Flügel ragte es allein über die Kachel und „sieht oben in der Mitte
+ziemlich blöd aus“. In Gilde & Communitys bleibt es (dort im Fenster).
 **Ungemessen:** Fächer und Plätze – `/wcui fenster` mit Befugnis.
 
 ### Post *(6.9.1.2, `ui/mail.lua`)*

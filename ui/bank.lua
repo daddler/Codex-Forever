@@ -49,6 +49,7 @@ WeintCodex = WeintCodex or {}
 
 local CP = WeintCodex.UICalmParts
 local RG = WeintCodex.UIRegister
+local K = WeintCodex.UIKit
 
 local IsFrame = RG.IsFrame
 
@@ -89,9 +90,18 @@ WeintCodex.UIBank = BK
 -- Faecher): bis hier nur Huelle und Gold. Was blieb: die Reiter unten
 -- ("uiframe-tab-*" wie bei der Post), der Goldrahmen um "Verfuegbarer
 -- Betrag" (525911, wie an der Bank; GuildBankFrameLeft/Middle/Right) und
--- die goldenen Fluegel am Wappen (132069, Emblem.Left/Right). Das Wappen
--- selbst bleibt - wie in Gilde & Communitys (Beta-Test 6.6.2.2).
+-- die goldenen Fluegel am Wappen (132069, Emblem.Left/Right).
+-- 6.10.4.3, Beta-Test mit 6.10.4.2: "das sieht oben in der Mitte ziemlich
+-- bloed aus" - ohne Fluegel ragte das Wappen allein ueber die Kachel. Jetzt
+-- ganz weg: Grund, Wappen und Rand je Ecke (GuildBankEmblem*, gemessen).
+-- In Gilde & Communitys bleibt es - dort sitzt es im Fenster.
 -- Ungemessen: Faecher und Plaetze (ohne Befugnis nicht zu sehen).
+local EMBLEM = {}
+for _, part in ipairs({ "Background", "", "Border" }) do
+    for _, corner in ipairs({ "UL", "UR", "BL", "BR" }) do
+        EMBLEM[#EMBLEM + 1] = "GuildBankEmblem" .. part .. corner
+    end
+end
 local GB = CP.New({
     label = "Gildenbank", host = "GuildBankFrame", depth = 4,
     files = {
@@ -99,5 +109,22 @@ local GB = CP.New({
         [132069] = "decor",  -- goldene Fluegel am Wappen
     },
     tabs = { "GuildBankFrameTab1", "GuildBankFrameTab2", "GuildBankFrameTab3", "GuildBankFrameTab4" },
+    after = function(_, m)
+        local n = 0
+        for _, name in ipairs(EMBLEM) do
+            local t = _G[name]
+            if IsFrame(t) and t.SetAlpha then
+                if K.Plain(t:GetAlpha()) ~= 0 then t:SetAlpha(0) end
+                n = n + 1
+            end
+        end
+        m.emblem = n
+    end,
+    report = function(_, m, H)
+        local nh = 0
+        for _ in pairs(H.hidden) do nh = nh + 1 end
+        return string.format("Bilder weg %d · Wappen weg %d · Reiter %d", nh, m.emblem or 0, m.tabs)
+    end,
 })
+GB.EMBLEM = EMBLEM
 WeintCodex.UIGuildBank = GB
