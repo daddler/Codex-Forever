@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.11.0.1] – 2026-10-05
+
+**Die Übersicht ist aufgeräumt.** Oben steht groß, was als Nächstes dran ist – mit deiner Stufe und wie weit es bis zur nächsten ist. Darunter links, was sonst noch ansteht, mit Symbol, und rechts dein Weg als Liste der nächsten Stufen.
+
+### Technisch
+
+- **Startseite, Gestalt** (`modules/home.lua`), Beta-Test mit 6.11.0.0: „sieht noch nicht schön aus“ (Inhalt passte). Das Bild: eine Tabelle über 1.400 Bildpunkte, die Überschrift ein zweites Mal als erste Zeile, gesperrte Kleinschrift als Zeilenkopf, der Weg als Punkte in einer langen leeren Leiste, die halbe Seite leer.
+- Neu: **Kachel** oben mit dem wichtigsten Schritt (Satz, Einzelheit, Knopf), links ein Feld mit der Stufe, unten die Erfahrung zur nächsten Stufe (`UIXPBar.Experience`; ohne Antwort keine Leiste, nie 0 %). Darunter zwei gleich hohe Karten: **Außerdem** (die übrigen Schritte, Symbol aus `HM.ICONS` – nur Symbole, die WeintCodex schon zeigt –, Einzelheit bis zwei Zeilen) und **Dein Weg** senkrecht, eine Stufe je Zeile mit Linie. Innen höchstens 1.180 breit, mittig (`HM.InnerWidth`). Der erste Schritt steht nur noch in der Kachel.
+- Vorschau vor dem Release als Bild gerendert (HTML mit denselben Schriften, Farben und Maßen), breit und im kleinsten Fenster – dabei gefunden: im schmalen Fenster schnitt der Knopf „es fehlen …“ ab, daher zwei Zeilen.
+- `load_test.lua`: Kachel (Satz, Knopf, Stufe, Klasse, „21 % bis Stufe 4“), erster Schritt nicht doppelt, drei Schritte verteilt (Kachel + zwei Zeilen mit Symbol), ohne Erfahrung keine Leiste, Weg mit Linie, „du bist hier“, ohne Stufe „–“, Breite höchstens 1.180, Karten hoch genug für ihre Zeilen, volle Höhe 480. Gegenproben: 9, alle gefangen.
+- **Ungeprüft im Spiel:** wie Kachel und Karten im Spiel wirken; ob die Symbole erscheinen.
+
 ## [6.11.0.0] – 2026-10-05
 
 **Die Übersicht sagt dir, was als Nächstes dran ist.** Statt Datum, Erfahrungsleiste und drei vollen Spalten stehen dort höchstens drei Schritte, das Wichtigste zuerst – Zauber beim Lehrer, Quests zur Abgabe, ein zerbrochener Gegenstand, ein Dungeon, für den du Quests hast. Ein Knopf bringt dich jeweils hin.

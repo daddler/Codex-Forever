@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.11.0.1",
+        date    = "05.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Übersicht ist aufgeräumt.|r Oben steht groß, was als Nächstes dran ist – mit deiner Stufe und wie weit es bis zur nächsten ist. Darunter links, was sonst noch ansteht, mit Symbol, und rechts dein Weg als Liste der nächsten Stufen.",
+        },
+    },
+    {
         version = "6.11.0.0",
         date    = "05.10.2026",
         notes   = {

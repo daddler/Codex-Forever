@@ -11587,21 +11587,45 @@ do
         assert(badges.charakter == false, "leere Plaetze setzen den Punkt am Charakter")
         assert(counts.raids == false, "Schlachtzuege tragen auf der Startseite eine Zahl")
 
+        -- 6.11.0.1: Kachel mit dem wichtigsten Schritt, daneben nichts doppelt.
+        assert(HM.RowsFit() and HM.SlotsFit(), "Karten zu niedrig fuer ihre Zeilen")
+        local PX = WeintCodex.Metrics.PAD_X
+        assert(HM.InnerWidth(1468) == HM.MAX_W and HM.InnerWidth(884) == 884 - 2 * PX and HM.InnerWidth(nil) == HM.MAX_W,
+            "Breite innen: " .. HM.InnerWidth(1468) .. " / " .. HM.InnerWidth(884))
+        ctx.xp = { cur = 296, max = 1400, rested = 0 }
         HM.Fill(f, ctx)
-        assert(f.title:GetText() == "4 Waffenfertigkeiten lernbar", "Ueberschrift gezeichnet: " .. tostring(f.title:GetText()))
-        assert(f.rows[1]:IsShown() and not f.rows[2]:IsShown() and not f.rows[3]:IsShown(), "Zeilen ohne Schritt sichtbar")
-        assert(f.rows[1].button:IsShown() and f.steps:GetHeight() == HM.ROW_H, "Zeile/Hoehe falsch")
-        assert(f.slotCount == 2 and f.slots[1]:IsShown() and f.slots[2]:IsShown() and not f.slots[3]:IsShown(),
-            "Weg: " .. tostring(f.slotCount))
-        assert(f.slots[1].line1:GetText() == "Jetzt" and f.slots[2].level:GetText() == "Stufe 13", "Weg beschriftet falsch")
+        local h = f.hero
+        assert(h.title:GetText() == "4 Waffenfertigkeiten lernbar" and h.button:IsShown(),
+            "Kachel: " .. tostring(h.title:GetText()))
+        assert(h.level:GetText() == "3" and h.class:GetText() == "Paladin", "Stufe in der Kachel")
+        assert(h.meter:IsShown() and h.xp:GetText() == "21 % bis Stufe 4", "Erfahrung: " .. tostring(h.xp:GetText()))
+        assert(not f.rows[1]:IsShown() and not f.rows[2]:IsShown() and f.moreEmpty:IsShown(),
+            "erster Schritt doppelt unter Ausserdem")
+        assert(f.slotCount == 2 and f.slots[1]:IsShown() and f.slots[2]:IsShown() and not f.slots[3]:IsShown()
+            and f.track:IsShown(), "Weg: " .. tostring(f.slotCount))
+        assert(f.slots[1].text:GetText() == "du bist hier" and f.slots[2].level:GetText() == "Stufe 13"
+            and f.slots[2].text:GetText() == hot.name, "Weg beschriftet falsch")
+        -- Drei Schritte: der erste in der Kachel, zwei unter Ausserdem, mit Symbol.
+        local three = { level = 5, trainer = Trainer(2, 500, 20, {}, {}, 1), quests = { readyCount = 1, ready = 100 },
+                        gear = { broken = { "Brust" } }, dungeons = {} }
+        HM.Fill(f, three)
+        assert(h.title:GetText() == "2 Zauber warten beim Lehrer" and f.rows[1]:IsShown() and f.rows[2]:IsShown()
+            and not f.moreEmpty:IsShown(), "drei Schritte falsch verteilt")
+        assert(f.rows[1].title:GetText() == "Eine Quest abgabebereit" and not f.rows[1].button:IsShown()
+            and f.rows[1].iconPath == HM.ICONS.quests, "Zeile Quests")
+        assert(f.rows[2].step.key == "repair" and f.rows[2].button:IsShown(), "Zeile Reparieren")
+        for key, path in pairs(HM.ICONS) do assert(path:find("^Interface\\Icons\\"), "Symbol " .. key) end
+        assert(not h.meter:IsShown() and not h.xp:IsShown(), "Erfahrung ohne Antwort als Leiste")
         HM.Fill(f, all)   -- passender Dungeon
         HM.Fill(f, { level = 3, trainer = Trainer(0, 0, 0), dungeons = {} })
-        assert(f.title:GetText() == "Nichts offen – weiter leveln" and f.rows[1].title:GetText() == "Nichts offen"
-            and not f.rows[1].button:IsShown(), "nichts offen: " .. tostring(f.title:GetText()))
-        assert(f.slotCount == 0 and f.pathEmpty:IsShown(), "leerer Weg ohne Hinweis")
+        assert(h.title:GetText() == "Nichts offen – weiter leveln" and not h.button:IsShown()
+            and h.detail:GetText() == "Beim Lehrer und in den Dungeons steht gerade nichts an.",
+            "nichts offen: " .. tostring(h.title:GetText()))
+        assert(f.moreEmpty:GetText() == "Gerade steht nichts an.", "Ausserdem ohne Schritt")
+        assert(f.slotCount == 0 and f.pathEmpty:IsShown() and not f.track:IsShown(), "leerer Weg ohne Hinweis")
         HM.Fill(f, {})
-        assert(f.eyebrow:GetText():gsub("[^%a]", ""):find("STUFEUNBEKANNT", 1, true) and f.pathEmpty:GetText():find("Stufe", 1, true),
-            "ohne Stufe: " .. tostring(f.eyebrow:GetText()))
+        assert(h.level:GetText() == "–" and h.title:GetText() == "Willkommen zurück"
+            and f.pathEmpty:GetText():find("Stufe", 1, true), "ohne Stufe: " .. tostring(h.level:GetText()))
         -- Ziel eines Knopfs: Dungeon vorwaehlen, dann die Seite.
         local sel, went
         local oldSel, oldGo = WeintCodex.DungeonPages.Select, nav.GoToTab
