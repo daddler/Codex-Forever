@@ -111,6 +111,29 @@ local function Patch(store, owner, r, color, alpha)
     return t
 end
 
+-- Eine Innenflaeche nie ueber das Fenster hinaus (6.10.4.2, gemessen
+-- 05.10.2026): das Pergament des Posteingangs ist ein Bild von 512 x 512,
+-- groesser als das Fenster - der Rest war durchsichtig, unsere Flaeche an
+-- seiner Stelle nicht: ein dunkles Rechteck rechts und unten neben der Post.
+-- Verankert bleibt sie am Bild; nur was ueber das Fenster ragt, wird
+-- abgeschnitten. Abstaende statt Lage: beim Ziehen wandern beide mit.
+local Edge = RG.Edge
+local function Clamp(t, r, host)
+    local rl, rr, rt, rb = Edge(r, "GetLeft"), Edge(r, "GetRight"), Edge(r, "GetTop"), Edge(r, "GetBottom")
+    local hl, hr, ht, hb = Edge(host, "GetLeft"), Edge(host, "GetRight"), Edge(host, "GetTop"), Edge(host, "GetBottom")
+    if not (rl and rr and rt and rb and hl and hr and ht and hb) then return end
+    local l = math.floor(math.max(0, hl - rl) + 0.5)
+    local rg = math.floor(math.min(0, hr - rr) - 0.5) + 1
+    local tp = math.floor(math.min(0, ht - rt) - 0.5) + 1
+    local bt = math.floor(math.max(0, hb - rb) + 0.5)
+    if t.clampL == l and t.clampR == rg and t.clampT == tp and t.clampB == bt then return end
+    t.clampL, t.clampR, t.clampT, t.clampB = l, rg, tp, bt
+    t:ClearAllPoints()
+    t:SetPoint("TOPLEFT", r, "TOPLEFT", l, tp)
+    t:SetPoint("BOTTOMRIGHT", r, "BOTTOMRIGHT", rg, bt)
+end
+CP.Clamp = Clamp
+
 -- Ein Fenster aus seiner Beschreibung. Liefert das Gastmodul fuer
 -- W.HOSTED (Update, Report) samt seiner Tabellen fuer Pruefung und Bericht.
 function CP.New(spec)
@@ -178,6 +201,7 @@ function CP.New(spec)
                         Patch(H.strips, f, r, GC.plateBg, spec.stripAlpha or CP.STRIP_ALPHA)
                     elseif kind == "bg" then
                         Patch(H.surfaces, f, r, C.surface1, CP.SURFACE_ALPHA)
+                        if H.surfaces[r] and m.root then Clamp(H.surfaces[r], r, m.root) end
                         W.Insets[f] = true
                         m.bg = m.bg + 1
                     end
@@ -223,6 +247,7 @@ function CP.New(spec)
             if IsFrame(part) then W.OwnBackground(part) money = money + 1 end
         end
         m.money = money
+        m.root = f
         Release()
         m.insets, m.bg = 0, 0
         Walk(f, 0, m)

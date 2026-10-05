@@ -27,6 +27,8 @@ WeintCodex_ChangelogData = {
         notes   = {
             "|cff7C6CFFDie Linie hinter den Überschriften ist jetzt einen Bildpunkt hoch.|r Im Zauberbuch („Allgemein“) und an den Namen der Talentbäume stand bisher nur die Raute. Die feine Linie dahinter war vermutlich schmaler als ein Bildpunkt und verschwand. Fehlt sie noch, sagt /wcui fenster jetzt, wie hoch sie ist.",
             "|cff7C6CFFDer Reiter der Sammlung ist flach.|r „Gegenstände“ unter den Vorlagen trug noch das Gold des Spiels; jetzt sieht er aus wie die Reiter in Händler, Post und Kontakten, der gewählte mit goldenem Rand.",
+            "|cff7C6CFFKein dunkles Rechteck mehr neben der Post.|r Die Fläche hinter dem Posteingang ragte rechts und unten über das Fenster hinaus; jetzt endet sie am Rand.",
+            "|cff7C6CFFGildenbank und Gildenchat ohne Reste des Spiels.|r Die Reiter der Gildenbank sind flach, der Betrag steht ohne Goldrahmen, die goldenen Flügel am Wappen sind weg – das Wappen selbst bleibt. Die Eingabezeile im Gildenchat ist eine flache Leiste statt des hellen runden Rahmens.",
         },
     },
     {

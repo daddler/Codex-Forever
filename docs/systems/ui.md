@@ -1518,8 +1518,11 @@ Seitenleiste (`MapCornerShadow-*`) weg, braune Pfeilknöpfe
 Bildlaufleisten (`minimal-scrollbar-*`, überall) grau. Questmarken,
 Häkchen und Symbole bleiben.
 
-**Gilde & Communitys**: das Wappen oben links (`PortraitOverlay`) ist
-weg. Liste links (grüne Auswahl) und Chat-Eingabe sind ungemessen.
+**Gilde & Communitys**: das Wappen oben links (`PortraitOverlay`) bleibt
+(6.6.2.2 ausgeblendet, der Beta-Test wollte es zurück). Gemessen
+05.10.2026: die Liste links ist gestaltet; die Chat-Eingabe trug den
+hellen runden Rahmen des Spiels (`.ChatEditBox` Left/Mid/Right) – seit
+6.10.4.2 flach (`CP.Flat`).
 
 ## Bedrohung an den Plaketten *(6.9.0.8, `ui/nameplates.lua`)*
 
@@ -3095,8 +3098,10 @@ Fenster; Kategorien als kleine Kacheln wie an Gilde & Communitys
 „auctionhouse-background-*“ weg, an seiner Stelle eine Innenfläche mit
 Schatten und Kante in Gold; Spaltenköpfe flach mit 1 px Rand, der
 Sortierpfeil bleibt; Geld als Innenflächen; Reiter flach, der gewählte in
-Gold. Nur Bilder – Bieten und Kaufen sind geschützt. Ungemessen:
-„Verkaufen“, „Auktionen“ und die Zeilen einer gefüllten Liste.
+Gold. Nur Bilder – Bieten und Kaufen sind geschützt. Gemessen 05.10.2026:
+„Kaufen“ mit leerer Liste ohne Rest des Spiels (die feinen Innenränder
+der Listen bleiben). Ungemessen: „Verkaufen“, „Auktionen“ und die Zeilen
+einer gefüllten Liste.
 
 ### Bank *(6.9.1.1, `ui/bank.lua`)*
 
@@ -3115,10 +3120,15 @@ Qualität, Überlagerung und das Schloss eines ungekauften Platzes bleiben,
 und was später ein anderes Bild zeigt, wird wieder sichtbar; Geld als
 Innenfläche; Seitenreiter als Kacheln, der gewählte in Gold. Nur Bilder.
 
-**Gildenbank** (`GuildBankFrame`, erst beim Öffnen geladen): nur Hülle und
-Gold über `W.WINDOWS`/`ui/calm.lua` – ihre Plätze und Reiter sind
-**ungemessen**; was dort noch Stein oder Holz trägt, sagt `/wcui fenster`
-bei offener Gildenbank.
+**Gildenbank** (`GuildBankFrame`, erst beim Öffnen geladen): Hülle und
+Gold über `W.WINDOWS`/`ui/calm.lua`, seit 6.10.4.2 dazu aus Bausteinen
+(`WeintCodex.UIGuildBank` in `ui/bank.lua`). Gemessen 05.10.2026 (ohne
+Befugnis für die Fächer): Reiter unten `GuildBankFrameTab1–4`
+(„uiframe-tab-*“) → flach, gewählt nach `selectedTab`; Goldrahmen um
+„Verfügbarer Betrag“ (525911, `GuildBankFrameLeft/Middle/Right`) → Leiste
+ohne Rand; goldene Flügel am Wappen (132069, `Emblem.Left/Right`) → weg.
+Das Wappen selbst (`GuildBankEmblem*`) bleibt, wie in Gilde & Communitys.
+**Ungemessen:** Fächer und Plätze – `/wcui fenster` mit Befugnis.
 
 ### Post *(6.9.1.2, `ui/mail.lua`)*
 
@@ -3137,6 +3147,15 @@ hell, aber erst, wenn das Pergament wirklich weg ist; Zeilen- und
 Anhangknöpfe flach mit 1 px Rand, Symbole bleiben; Felder als flache
 Leisten; Trennleisten und Briefkasten weg; Geld und Innenfläche wie
 überall; Reiter flach, der gewählte in Gold. Nur Bilder und Schriftfarben.
+
+**Fläche nie über das Fenster (6.10.4.2).** Beta-Test: „ein
+transparenter Rahmen, der neben dem Fenster liegt“. Das Pergament des
+Posteingangs ist ein Bild von 512 × 512 und ragt über das Fenster; der
+Rest war durchsichtig, unsere Innenfläche an seiner Stelle nicht.
+`CP.Clamp` (`ui/calmparts.lua`) schneidet jede Innenfläche der Art `bg`
+am Fenster ab: am Bild verankert, mit Abständen, wo es übersteht – beim
+Ziehen gleich, gesetzt nur bei Änderung. Gilt für jedes Fenster aus
+Bausteinen.
 
 **Geöffneter Brief** (`OpenMailFrame`): nur Hülle und Gold – ungemessen;
 sein Pergament sagt `/wcui fenster` bei offenem Brief.

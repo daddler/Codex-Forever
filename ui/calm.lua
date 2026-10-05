@@ -36,7 +36,7 @@
 --                      (InsetFrameTemplate); Plaetze und Namensfelder dort
 --   Auktionshaus       AuctionHouseFrame (6.9.0.4) - Listen, Geld: ui/auction.lua
 --   Bank               BankFrame (6.9.1.1) - Grund, Plaetze, Geld: ui/bank.lua
---   Gildenbank         GuildBankFrame (6.9.1.1) - nur Huelle und Gold, ungemessen
+--   Gildenbank         GuildBankFrame (6.9.1.1) - Reiter, Geld, Wappen: ui/bank.lua (6.10.4.2)
 --   Post               MailFrame (6.9.1.2) - Pergament, Zeilen, Plaetze, Felder,
 --                      Geld, Reiter: ui/mail.lua
 --   Brief              OpenMailFrame (6.9.1.2) - nur Huelle und Gold, ungemessen

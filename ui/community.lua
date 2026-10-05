@@ -53,6 +53,12 @@ CO.PAD = 6                  -- Flaeche so weit ueber die Spalte hinaus
 CO.SHADOW_PAD = 14
 CO.EDGE = 0.45              -- Kante oben in Gold
 CO.CHAT_KEYS = { "Chat", "ChatFrame", "MessageFrame" }
+-- Eingabezeile (6.10.4.2, gemessen 05.10.2026): .ChatEditBox mit Left/Mid/
+-- Right (375507, 389190, 375508) - der helle runde Rahmen des Spiels. Weg,
+-- das Feld flach wie die Felder der Post (CP.Flat).
+CO.EDIT_PARTS = { "Left", "Mid", "Middle", "Right" }
+CO.EDIT_ALPHA = 0.55
+CO.fields = setmetatable({}, { __mode = "k" })
 
 S.SCOPES[CO.HOST] = CO.STYLE
 W.HOSTED[CO.HOST] = W.HOSTED[CO.HOST] or {}
@@ -127,6 +133,17 @@ function CO.Update(f)
     Ensure(f, d, "Liste", CO.List(f), nil, accent)
     Ensure(f, d, "Chat", chat, IsFrame(edit) and edit or nil, accent)
     Ensure(f, d, "Mitglieder", CO.Members(f), nil, accent)
+    d.edit = false
+    if IsFrame(edit) then
+        for _, key in ipairs(CO.EDIT_PARTS) do
+            local t = edit[key]
+            if IsFrame(t) and t.SetAlpha then W.Hide(t) end
+        end
+        -- Laedt nach diesem Modul (ui/calmparts.lua) - erst im Durchlauf da.
+        local CP = WeintCodex.UICalmParts
+        if CP and CP.Flat then CP.Flat(CO.fields, edit, CO.EDIT_ALPHA) end
+        d.edit = CO.fields[edit] ~= nil
+    end
     -- Jede Flaeche folgt ihrer Spalte (andere Ansicht: Mitglieder gross,
     -- Gildeninfo ...).
     for _, key in ipairs(d.names) do
@@ -145,6 +162,7 @@ function CO.Report(f, out)
         parts = parts .. (parts == "" and "" or " · ") .. key .. " "
             .. (col and (col.on and "Fläche" or "Fläche (Spalte zu)") or "FEHLT")
     end
-    out[#out + 1] = string.format("   %s (Stil %s): %s", CO.LABEL, CO.STYLE.name, parts)
+    out[#out + 1] = string.format("   %s (Stil %s): %s · Eingabe %s", CO.LABEL, CO.STYLE.name, parts,
+        d.edit and "flach" or "nicht gefunden")
     return out
 end

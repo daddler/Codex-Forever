@@ -42,8 +42,7 @@
 -- ("bank-frame-bag-slot-bg", "bank-frame-bag-slotframe",
 -- "bankslot-icon-lock"), BankPanel.MoneyFrame.Border (525911, 3x),
 -- Seitenreiter ("common-sidetab", "common-sidetab-selected").
--- UNGEMESSEN: die Gildenbank (GuildBankFrame, erst beim Oeffnen geladen) -
--- sie bekommt Huelle und Gold, ihre Plaetze sagt erst /wcui fenster.
+-- Gildenbank: unten (GB, 6.10.4.2) - Reiter, Geld, Fluegel am Wappen.
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -85,3 +84,20 @@ local BK = CP.New({
     end,
 })
 WeintCodex.UIBank = BK
+
+-- Gildenbank (6.10.4.2, gemessen 05.10.2026, ohne Befugnis fuer die
+-- Faecher): bis hier nur Huelle und Gold. Was blieb: die Reiter unten
+-- ("uiframe-tab-*" wie bei der Post), der Goldrahmen um "Verfuegbarer
+-- Betrag" (525911, wie an der Bank; GuildBankFrameLeft/Middle/Right) und
+-- die goldenen Fluegel am Wappen (132069, Emblem.Left/Right). Das Wappen
+-- selbst bleibt - wie in Gilde & Communitys (Beta-Test 6.6.2.2).
+-- Ungemessen: Faecher und Plaetze (ohne Befugnis nicht zu sehen).
+local GB = CP.New({
+    label = "Gildenbank", host = "GuildBankFrame", depth = 4,
+    files = {
+        [525911] = "strip",  -- Goldrahmen um das Geld
+        [132069] = "decor",  -- goldene Fluegel am Wappen
+    },
+    tabs = { "GuildBankFrameTab1", "GuildBankFrameTab2", "GuildBankFrameTab3", "GuildBankFrameTab4" },
+})
+WeintCodex.UIGuildBank = GB

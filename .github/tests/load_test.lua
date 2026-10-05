@@ -7520,6 +7520,8 @@ do
         local cf = stub.NewObject("Frame", "CommunitiesFrame")
         local list, chat, edit, members = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("EditBox"), stub.NewObject("Frame")
         cf.Chat, cf.ChatEditBox, cf.MemberList = chat, edit, members
+        -- 6.10.4.2 gemessen: Eingabezeile mit Left/Mid/Right (heller Rahmen).
+        edit.Left, edit.Mid, edit.Right = stub.NewObject("Texture"), stub.NewObject("Texture"), stub.NewObject("Texture")
         local oldCL, oldCF = _G.CommunitiesFrameCommunitiesList, _G.CommunitiesFrame
         _G.CommunitiesFrameCommunitiesList, _G.CommunitiesFrame = list, cf
         -- Eintrag links (gewaehlt), wie 6.6.2.3 gemessen.
@@ -7554,7 +7556,15 @@ do
         assert(classy == 0 and goldy > 0, "Gilde nicht in Gold: Klasse " .. classy .. ", Gold " .. goldy)
         assert(not glow:IsShown(), "Schein der Klasse ueber der Gilde")
         local rep = table.concat(CO.Report(cf, {}), "\n")
-        assert(rep:find("Gilde & Communitys (Stil ruhig): Liste Fläche · Chat Fläche · Mitglieder Fläche", 1, true), "Bericht: " .. rep)
+        assert(rep:find("Gilde & Communitys (Stil ruhig): Liste Fläche · Chat Fläche · Mitglieder Fläche · Eingabe flach", 1, true), "Bericht: " .. rep)
+        assert(edit.Left:GetAlpha() == 0 and edit.Mid:GetAlpha() == 0 and edit.Right:GetAlpha() == 0 and CO.fields[edit],
+            "Eingabezeile behaelt den hellen Rahmen des Spiels")
+        cf.ChatEditBox = nil
+        CO.Update(cf)
+        local rep2 = table.concat(CO.Report(cf, {}), "\n")
+        assert(rep2:find("Eingabe nicht gefunden", 1, true), "Bericht nennt eine Eingabe, die es nicht gibt: " .. rep2)
+        cf.ChatEditBox = edit
+        CO.Update(cf)
         -- Andere Ansicht: der Chat geht, seine Flaeche mit.
         chat:Hide()
         CO.Update(cf)
@@ -8304,6 +8314,51 @@ do
     Check(okBK, "Bank: Gold (auch Gildenbank), Plaetze und Taschenplaetze flach, Symbol/Qualitaet/Schloss bleiben, Grund und Geld auf Flaeche, Schmuck weg, kein Muell"
         .. (okBK and "" or (": " .. tostring(errBK))))
 
+    -- 6.10.4.2, gemessen 05.10.2026: Gildenbank - Reiter des Spiels,
+    -- Goldrahmen um das Geld, goldene Fluegel am Wappen; das Wappen bleibt.
+    local okGB, errGB = pcall(function()
+        local W, GB, GC = WeintCodex.UIWindows, WeintCodex.UIGuildBank, WeintCodex.GameColors
+        local hosts = {}
+        for _, h in ipairs(W.HOSTED.GuildBankFrame or {}) do hosts[h] = true end
+        assert(GB and hosts[GB] and hosts[WeintCodex.UICalm], "Gildenbank ohne eigene Teile")
+        local saved = {}
+        local function Global(name, obj) saved[name] = _G[name] _G[name] = obj return obj end
+        local function Tex(file)
+            local t = stub.NewObject("Texture")
+            t._file = file
+            t.GetTexture = function(self) return self._file end
+            return t
+        end
+        local gb = Global("GuildBankFrame", stub.NewObject("Frame", "GuildBankFrame"))
+        local mL, mM, mR = Tex(525911), Tex(525911), Tex(525911)
+        local emblem = stub.NewObject("Frame")
+        local wingL, wingR, tabard = Tex(132069), Tex(132069), Tex(180159)
+        emblem.GetRegions = function() return wingL, wingR, tabard end
+        gb.GetRegions = function() return mL, mM, mR end
+        gb.GetChildren = function() return emblem end
+        local tabs, seen = {}, {}
+        for i = 1, 4 do
+            tabs[i] = Global("GuildBankFrameTab" .. i, stub.NewObject("Button"))
+            tabs[i].GetID = function() return i end
+        end
+        gb.selectedTab = 3
+        local skinTab = W.SkinTab
+        W.SkinTab = function(tab, accent, sel) seen[tab] = { accent, sel } return true end
+        W.done[gb] = { glow = stub.NewObject("Texture") }
+        GB.Update(gb)
+        W.SkinTab = skinTab
+        assert(mL:GetAlpha() == 0 and mM:GetAlpha() == 0 and mR:GetAlpha() == 0 and GB.strips[mL] and GB.strips[mR],
+            "Goldrahmen um das Geld bleibt")
+        assert(wingL:GetAlpha() == 0 and wingR:GetAlpha() == 0, "goldene Fluegel am Wappen bleiben")
+        assert(tabard:GetAlpha() == 1, "Wappen der Gilde ausgeblendet")
+        assert(seen[tabs[3]] and seen[tabs[3]][1] == GC.frameAccent and seen[tabs[3]][2] == true
+            and seen[tabs[1]][2] == false and seen[tabs[4]][2] == false, "Reiter der Gildenbank nicht flach oder falsch gewaehlt")
+        W.done[gb], GB.frames[gb] = nil, nil
+        for name, old in pairs(saved) do _G[name] = old end
+    end)
+    Check(okGB, "Gildenbank: Reiter flach, Geld ohne Goldrahmen, Fluegel weg, Wappen bleibt"
+        .. (okGB and "" or (": " .. tostring(errGB))))
+
     -- 6.9.1.2: Post in Gold. Beta-Test 6.9.1.1: Metallrahmen, Pergament,
     -- Steinplaetze, Eingabefelder mit Goldrand, Holzleisten.
     local okML, errML = pcall(function()
@@ -8418,6 +8473,32 @@ do
         assert(sets == 0, "Rahmen je Durchlauf neu gesetzt: " .. sets)
         local rep = table.concat(ML.Report(mf, {}), "\n")
         assert(rep:find("Post (Stil ruhig): Kante in Gold, kein Schein der Klasse · Pergament auf Fläche 3", 1, true), "Bericht: " .. rep)
+        -- 6.10.4.2 im Spiel: das Pergament (512 x 512) ragt rechts und unten
+        -- ueber das Fenster - die Flaeche an seiner Stelle nicht mehr.
+        local surf = ML.surfaces[inboxBg]
+        local pts = {}
+        surf.SetPoint = function(_, p, rel, rp, x, y) pts[p] = { rel, rp, x, y } end
+        surf.ClearAllPoints = function() end
+        mf.GetLeft, mf.GetRight, mf.GetTop, mf.GetBottom = function() return 100 end, function() return 484 end,
+            function() return 700 end, function() return 188 end
+        inboxBg.GetLeft, inboxBg.GetRight, inboxBg.GetTop, inboxBg.GetBottom = function() return 104 end, function() return 616 end,
+            function() return 640 end, function() return 128 end
+        ML.Update(mf)
+        assert(pts.TOPLEFT and pts.TOPLEFT[1] == inboxBg and pts.TOPLEFT[3] == 0 and pts.TOPLEFT[4] == 0, "Flaeche oben links verschoben")
+        assert(pts.BOTTOMRIGHT and pts.BOTTOMRIGHT[1] == inboxBg and pts.BOTTOMRIGHT[3] == -132 and pts.BOTTOMRIGHT[4] == 60,
+            "Flaeche ragt ueber das Fenster: " .. tostring(pts.BOTTOMRIGHT and pts.BOTTOMRIGHT[3]) .. "/" .. tostring(pts.BOTTOMRIGHT and pts.BOTTOMRIGHT[4]))
+        -- Gezogen: beide wandern - die Abstaende bleiben, nichts neu gesetzt.
+        pts = {}
+        mf.GetLeft, mf.GetRight = function() return 300 end, function() return 684 end
+        inboxBg.GetLeft, inboxBg.GetRight = function() return 304 end, function() return 816 end
+        ML.Update(mf)
+        assert(next(pts) == nil, "Flaeche beim Ziehen neu gesetzt")
+        -- Innerhalb des Fensters: genau am Bild.
+        inboxBg.GetRight, inboxBg.GetBottom = function() return 600 end, function() return 300 end
+        mf.GetRight = function() return 684 end
+        ML.Update(mf)
+        assert(pts.BOTTOMRIGHT and pts.BOTTOMRIGHT[3] == 0 and pts.BOTTOMRIGHT[4] == 0, "Flaeche innerhalb des Fensters beschnitten")
+        for _, k in ipairs({ "GetLeft", "GetRight", "GetTop", "GetBottom" }) do mf[k], inboxBg[k] = nil, nil end
         collectgarbage("collect")
         collectgarbage("stop")
         local k0 = collectgarbage("count")
