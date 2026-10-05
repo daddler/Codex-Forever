@@ -784,20 +784,20 @@ end
 
 -- Gespeichert wird in DER Tabelle aus der .toc, und nur die Abweichung.
 K.Set("nameplates", "width", 180)
-Check(WeintCodex_SavedData.ui.modules.nameplates.width == 180,
+Check(WeintCodex.UIKit.Profile().modules.nameplates.width == 180,
     "eine Einstellung landet in WeintCodex_SavedData.ui")
 K.Set("nameplates", "width", 150)
-Check(WeintCodex_SavedData.ui.modules.nameplates.width == nil,
+Check(WeintCodex.UIKit.Profile().modules.nameplates.width == nil,
     "der Standardwert wird nicht gespeichert")
 -- Die Falle aus 6.0.0.0 bis 6.0.0.2: `x and false or nil` ist nil. Ein
 -- Schalter, der von "an" auf "aus" geht, muss als false im Speicher
 -- stehen - sonst laesst sich keine eingeschaltete Option abschalten.
 K.Set("nameplates", "hover", false)
-Check(WeintCodex_SavedData.ui.modules.nameplates.hover == false
+Check(WeintCodex.UIKit.Profile().modules.nameplates.hover == false
     and K.Get("nameplates", "hover") == false,
     "ein Schalter laesst sich von an auf aus stellen (false wird gespeichert)")
 K.Set("nameplates", "hover", true)
-Check(WeintCodex_SavedData.ui.modules.nameplates.hover == nil,
+Check(WeintCodex.UIKit.Profile().modules.nameplates.hover == nil,
     "zurueck auf den Standard: der Eintrag verschwindet")
 
 -- Jede Seite jedes Moduls bauen.
@@ -965,7 +965,7 @@ do
             "Zusammenfassung nennt die Wahl nicht: " .. txt)
         WL.Button("apply"):Click()
         assert(WL.Step() == "fertig" and sd.ui.asked == true and not K.UIEnabled(), "Uebernehmen ohne Oberflaeche falsch")
-        assert(K.WantsActive("damagemeter") and sd.ui.modules.damagemeter.enabled == true, "Schadensanzeige nicht gewaehlt")
+        assert(K.WantsActive("damagemeter") and WeintCodex.UIKit.Profile().modules.damagemeter.enabled == true, "Schadensanzeige nicht gewaehlt")
         assert(not K.WantsActive("reminders") and K.Get("comfort", "autoRepair") == true, "Helfer oder Erinnerungen falsch")
         assert(WL.Button("reload") and WL.Button("close"), "Anzeige gewaehlt, aber kein Neuladen angeboten")
         WL.Button("close"):Click()
@@ -973,7 +973,7 @@ do
         WL.MaybeAsk()
         assert(not WL.IsShown(), "nach der Antwort wird erneut gefragt")
         K.Set("comfort", "autoRepair", false)
-        sd.ui.modules.damagemeter.enabled = nil
+        WeintCodex.UIKit.Profile().modules.damagemeter.enabled = nil
 
         -- WEG MIT OBERFLAECHE: das Komplettpaket ist vorgewaehlt, und das
         -- Layout entsteht gleich beim Uebernehmen (ein Neuladen statt zwei).
@@ -996,7 +996,7 @@ do
         assert(WL.BodyText():find("Layout „WeintCodex“", 1, true), "Bericht nennt das Layout nicht")
         -- Das Paket ist der Standard, keine ausdrueckliche Wahl: es folgt
         -- der Oberflaeche, wenn sie spaeter ausgeht.
-        assert(K.WantsActive("reminders") and (sd.ui.modules.reminders or {}).enabled == nil,
+        assert(K.WantsActive("reminders") and (WeintCodex.UIKit.Profile().modules.reminders or {}).enabled == nil,
             "Komplettpaket als feste Wahl gespeichert")
         assert(WL.Button("reload"), "mit Oberflaeche kein Neuladen angeboten")
         WL.Button("close"):Click()
@@ -2372,7 +2372,7 @@ do
         -- einmal je Konto; alles aus bleibt "Ruhig", nichts gespeichert auch.
         do
             local ui = K.Root()
-            local st = ui.modules.nameplates
+            local st = K.Profile().modules.nameplates
             assert(ui.migrated and ui.migrated.npMotion, "Uebernahme laeuft beim Einschalten der Plaketten nicht")
             local function Fresh(off)
                 ui.migrated = ui.migrated or {}
@@ -3089,10 +3089,10 @@ do
         ui.enabled = true
         PF.SetCVar("damageMeterEnabled", "0", "damagemeter")
         assert(PF.Sweep() == 0 and cvars.damageMeterEnabled == "0", "laufender Besitzer verliert seine Einstellung")
-        ui.modules.damagemeter = ui.modules.damagemeter or {}
-        ui.modules.damagemeter.enabled = false
+        K.Profile().modules.damagemeter = K.Profile().modules.damagemeter or {}
+        K.Profile().modules.damagemeter.enabled = false
         assert(PF.Sweep() == 1 and cvars.damageMeterEnabled == "1", "Anzeige des Spiels nicht zurueck")
-        ui.modules.damagemeter.enabled = nil
+        K.Profile().modules.damagemeter.enabled = nil
     end)
     _G.C_EditMode, _G.EditModePresetLayoutManager, _G.C_CVar = oldEM, oldPM, oldCV
     ui.before, ui.cvars, ui.enabled = nil, nil, oldEnabled
@@ -3125,7 +3125,7 @@ do
         assert(K.WantsActive("damagemeter") and K.ReloadPending(), "Schadensanzeige ohne Oberflaeche nicht waehlbar")
         ui.enabled = true
         assert(K.WantsActive("reminders"), "mit Oberflaeche ist das Komplettpaket nicht an")
-        ui.modules.damagemeter.enabled = nil
+        K.Profile().modules.damagemeter.enabled = nil
         -- Klickzauber: Rahmen des Spiels, wenn die eigenen Gruppenrahmen
         -- nicht laufen; mit eigenen Kacheln nicht (die des Spiels sind weg).
         gf._active = false
@@ -3144,11 +3144,11 @@ do
         CC.ApplyTo = function(x, list) if x == f then seen = #list end end
         local oldBind = CC.Effective
         CC.Effective = function() return { { button = 1, mod = "shift-", action = "target" } } end
-        ui.modules.comfort = ui.modules.comfort or {}
-        ui.modules.comfort.enabled = false
+        K.Profile().modules.comfort = K.Profile().modules.comfort or {}
+        K.Profile().modules.comfort.enabled = false
         CC.Apply()
         assert(seen == 0, "Komfort aus, Klickzauber gelten trotzdem")
-        ui.modules.comfort.enabled = nil
+        K.Profile().modules.comfort.enabled = nil
         CC.Apply()
         assert(seen == 1, "Komfort an, Klickzauber gelten nicht")
         CC.ApplyTo, CC.Frames, CC.Effective = oldApplyTo, oldFrames, oldBind
@@ -10536,7 +10536,7 @@ do
         local micro = Track(CreateFrame("Frame", "MicroMenuContainer", UIParent))
         local bags = Track(CreateFrame("Frame", "BagsBar", UIParent))
         micro.SetScale = function(self, v) self._scale = v end
-        local pos = K.Root().positions
+        local pos = K.Profile().positions
         pos.hud_micro, pos.hud_bags = nil, nil
         _G.InCombatLockdown = function() return false end
         -- Schon einmal angemeldet (frueherer Lauf): die Flaeche muss auf den
@@ -11765,6 +11765,150 @@ do
         assert(sel == "hall_of_thanes" and went == "dungeons", "Knopf fuehrt nicht zum Dungeon")
     end)
     Check(ok, "Startseite: drei Schritte nach Dringlichkeit, leere Plaetze kein Mangel, Gold nie geraten, Weg aufsteigend, einmal gebaut"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.11.0.4: Profile je Charakter (ui/profiles.lua). Was bis 6.11.0.3 fuer
+-- alle galt, zieht nach "Standard"; das Profil einer Sitzung steht bis zum
+-- Neuladen fest; "Standard" bleibt immer.
+Section("Profile")
+do
+    local K, PR, O = WeintCodex.UIKit, WeintCodex.UIProfiles, WeintCodex.UIOptions
+    local sd = WeintCodex.SavedData
+    local savedUI, oldName = sd.ui, _G.UnitName
+    local me = "Shooty"
+    local reloads, counting = 0, false
+    _G.UnitName = function(u) if u == "player" then return me end return oldName(u) end
+    local ok, err = pcall(function()
+        -- Umzug: alte Ablage -> "Standard", Konto-Werte bleiben, wo sie sind.
+        sd.ui = { enabled = true, asked = true, modules = { nameplates = { width = 170 } },
+                  positions = { hud_player = { point = "CENTER", x = 1, y = 2 } } }
+        K._SetActiveProfile(nil)
+        local ui = K.Root()
+        assert(ui.modules == nil and ui.positions == nil, "alte Ablage nicht geraeumt")
+        assert(ui.profiles.Standard.modules.nameplates.width == 170 and ui.profiles.Standard.positions.hud_player.x == 1,
+            "alte Einstellungen nicht nach Standard gezogen")
+        assert(ui.enabled == true and ui.asked == true, "Konto-Werte mit umgezogen")
+        assert(K.Get("nameplates", "width") == 170 and K.ActiveProfile() == "Standard" and PR.Chosen() == "Standard",
+            "Standard nicht aktiv")
+        assert(K.CharKey() == "Shooty-Testrealm", "Charakter: " .. tostring(K.CharKey()))
+        -- "Standard" gibt es immer, auch wenn die Datei es nicht mehr kennt.
+        local keep = sd.ui
+        sd.ui = { profiles = { X = {} } }
+        assert(K.Root().profiles.Standard and K.Root().profiles.X, "Standard fehlt")
+        sd.ui = keep
+        -- Ein Wechsel meldet "neu laden" (gezaehlt, der Merker steht laengst).
+        reloads, counting = 0, true
+        K.Listen(function(kind) if counting and kind == "reload" then reloads = reloads + 1 end end)
+
+        -- Neues Profil: Kopie (tief) des gewaehlten, nach dem Charakter
+        -- benannt, gewaehlt - laufen tut bis zum Neuladen das alte.
+        local name = PR.New()
+        assert(name == "Shooty" and PR.Chosen() == "Shooty" and ui.profileOf["Shooty-Testrealm"] == "Shooty", "Neues Profil")
+        assert(ui.profiles.Shooty.modules.nameplates.width == 170
+            and ui.profiles.Shooty.modules.nameplates ~= ui.profiles.Standard.modules.nameplates, "keine tiefe Kopie")
+        assert(K.ActiveProfile() == "Standard" and PR.Pending() and K.ReloadPending() and reloads == 1,
+            "Wechsel mitten in der Sitzung (Neuladen gemeldet: " .. reloads .. ")")
+        assert(PR.StatusText():find("Nach dem Neuladen gilt", 1, true), "Hinweis aufs Neuladen fehlt")
+        assert(PR.FreeName("Shooty") == "Shooty 2" and PR.FreeName("Neu") == "Neu", "freier Name")
+        ui.profiles["Shooty 2"] = {}
+        assert(PR.FreeName("Shooty") == "Shooty 3", "freier Name zaehlt nicht weiter")
+        ui.profiles["Shooty 2"] = nil
+
+        -- Neue Sitzung als Shooty: Einstellungen landen in seinem Profil.
+        K._SetActiveProfile(nil)
+        assert(K.ActiveProfile() == "Shooty" and not PR.Pending(), "Shooty nach dem Neuladen")
+        K.Set("nameplates", "width", 200)
+        assert(K.Get("nameplates", "width") == 200 and ui.profiles.Standard.modules.nameplates.width == 170,
+            "Einstellung schreibt ins falsche Profil")
+        K.Profile().positions.hud_player = { point = "TOP", x = 9, y = 9 }
+        assert(ui.profiles.Standard.positions.hud_player.x == 1, "Platz schreibt ins falsche Profil")
+        -- Verschieben mit den Pfeiltasten schreibt ins laufende Profil.
+        local mf = CreateFrame("Frame", nil, UIParent)
+        K.RegisterMover(mf, "proftest", "Profilprobe", { point = "CENTER", x = 0, y = 0 })
+        K.SelectMover("proftest")
+        assert(K.NudgeMover(3, 0) and K.Profile().positions.proftest.x == 3
+            and ui.profiles.Standard.positions.proftest == nil, "Pfeiltasten schreiben ins falsche Profil")
+        K.SelectMover(nil)
+        -- Willkommen: eine fruehere Wahl im Profil gilt (Schadensanzeige aus).
+        local WL = WeintCodex.UIWelcome
+        local dmKey
+        for _, sh in ipairs(WL.SHOWS) do if sh.key == "damagemeter" then dmKey = sh.key end end
+        if dmKey then
+            K.Profile().modules.damagemeter = { enabled = false }
+            WL.choice.picked = nil
+            WL.Decide(true)
+            assert(WL.choice.shows.damagemeter == false, "Willkommen liest die Wahl nicht aus dem Profil")
+            K.Profile().modules.damagemeter = nil
+            WL.choice.picked = nil
+        end
+
+        -- Zweiter Charakter: ohne Wahl "Standard", waehlt dann Shooty mit.
+        me = "Twink"
+        assert(PR.Chosen() == "Standard", "neuer Charakter nicht bei Standard")
+        assert(PR.Choose("Shooty") and table.concat(PR.Users("Shooty"), ",") == "Shooty,Twink", "geteiltes Profil")
+        assert(PR.Choose("Standard") and ui.profileOf["Twink-Testrealm"] == nil, "Standard braucht keinen Eintrag")
+        PR.Choose("Shooty")
+        assert(PR.StatusText():find("Shooty, Twink", 1, true), "Status nennt die Nutzer nicht: " .. PR.StatusText())
+        me = "Shooty"
+
+        -- Umbenennen: Eintraege und laufendes Profil ziehen mit; ungueltig
+        -- aendert nichts.
+        assert(PR.Rename("Shooty", "Jäger") and ui.profiles["Jäger"] and not ui.profiles.Shooty, "Umbenennen")
+        assert(ui.profileOf["Shooty-Testrealm"] == "Jäger" and ui.profileOf["Twink-Testrealm"] == "Jäger"
+            and K.ActiveProfile() == "Jäger" and K.Get("nameplates", "width") == 200, "Umbenennen verliert Zuordnung")
+        assert(not PR.Rename("Jäger", "Standard") and not PR.Rename("Jäger", "  ") and not PR.Rename("Standard", "X")
+            and not PR.Rename("Jäger", string.rep("x", PR.MAX_NAME + 1)), "ungueltiger Name angenommen")
+        assert(PR.Rename("Jäger", " Jägerin ") and ui.profiles["Jägerin"], "Leerzeichen am Rand nicht entfernt")
+        PR.Rename("Jägerin", "Jäger")
+        -- Das laufende umbenennen, waehrend ein anderes gewaehlt ist: die
+        -- Sitzung bleibt bei ihm.
+        PR.Choose("Standard")
+        assert(PR.Rename("Jäger", "Jagd") and K.ActiveProfile() == "Jagd" and K.Get("nameplates", "width") == 200,
+            "laufendes Profil nach dem Umbenennen verloren: " .. tostring(K.ActiveProfile()))
+        PR.Rename("Jagd", "Jäger")
+        PR.Choose("Jäger")
+
+        -- Uebernehmen und Zuruecksetzen: in das gewaehlte, tief kopiert.
+        assert(PR.CopyFrom("Standard") and K.Get("nameplates", "width") == 170, "Uebernehmen")
+        assert(ui.profiles["Jäger"].modules ~= ui.profiles.Standard.modules, "Uebernehmen teilt Tabellen")
+        assert(not PR.CopyFrom("Jäger") and not PR.CopyFrom("Gibtsnicht"), "Uebernehmen von sich selbst")
+        assert(PR.Reset() and K.Get("nameplates", "width") == 150 and next(K.Profile().positions) == nil, "Zuruecksetzen")
+        assert(ui.profiles.Standard.modules.nameplates.width == 170, "Zuruecksetzen trifft Standard")
+
+        -- Loeschen: nie Standard, das laufende oder das gewaehlte; wer es
+        -- nutzte, landet bei Standard.
+        assert(not PR.Deletable("Standard") and not PR.Deletable("Jäger"), "Laufendes/Standard loeschbar")
+        PR.New("Neu")
+        assert(PR.Chosen() == "Neu" and not PR.Deletable("Neu") and not PR.Deletable("Jäger"), "gewaehltes loeschbar")
+        PR.Choose("Jäger")
+        ui.profileOf["Twink-Testrealm"] = "Neu"
+        assert(PR.Delete("Neu") and not ui.profiles.Neu and ui.profileOf["Twink-Testrealm"] == nil, "Loeschen")
+        me = "Twink"
+        assert(PR.Chosen() == "Standard", "nach dem Loeschen nicht bei Standard")
+        me = "Shooty"
+        local list = PR.List()
+        assert(list[1] == "Standard" and list[2] == "Jäger" and #list == 2, "Liste: " .. table.concat(list, ","))
+
+        -- Ohne Charakternamen: keine Wahl, aber Standard laeuft.
+        me = nil
+        assert(not PR.Choose("Jäger") and K.ChosenProfile() == "Standard", "Wahl ohne Charakter")
+        me = "Shooty"
+
+        -- Die Seite und der Befehl.
+        local idx = O.PageIndex("general", "profile")
+        assert(idx > 1 and K.Module("general").pages[idx].key == "profile", "Seite Profile fehlt")
+        SlashCmdList["WEINTCODEXUI"]("profil")
+        local widgets = O.CurrentWidgets()
+        assert(#widgets >= 6, "Seite Profile: " .. #widgets .. " Bedienelemente")
+        local status
+        for _, w in ipairs(widgets) do if w.isProfileStatus == true then status = w.text:GetText() end end
+        assert(status and status:find("„Jäger“ nutzen", 1, true), "Statuszeile: " .. tostring(status))
+    end)
+    counting = false
+    sd.ui, _G.UnitName = savedUI, oldName
+    K._SetActiveProfile(nil)
+    Check(ok, "Profile: Umzug nach Standard, je Charakter gewaehlt, fest bis zum Neuladen, Kopie, Umbenennen, Uebernehmen, Zuruecksetzen, Loeschen"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

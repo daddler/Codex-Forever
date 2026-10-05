@@ -181,14 +181,47 @@ Ausschließlich `WeintCodex_SavedData.ui` – keine neue SavedVariable.
 
 ```
 ui = {
-  enabled   = true|false,          -- Hauptschalter
+  enabled   = true|false,          -- Hauptschalter (ganzes Konto)
   asked     = true,                -- Frage beim Einloggen beantwortet
-  modules   = { [modul] = { enabled = , <nur Abweichungen vom Standard> } },
-  positions = { [rahmen] = { point, relPoint, x, y } },
+  profiles  = {                    -- seit 6.12.0.0, ui/profiles.lua
+    [name] = {
+      modules   = { [modul] = { enabled = , <nur Abweichungen vom Standard> } },
+      positions = { [rahmen] = { point, relPoint, x, y } },
+    },
+  },
+  profileOf = { ["Name-Realm"] = name },  -- ohne Eintrag: "Standard"
   before    = { layout = { name = } | { preset = n } | nil },  -- 6.9.0.0, ui/profile.lua
   cvars     = { [name] = { orig, set, owner } },               -- 6.9.0.0, ui/profile.lua
 }
 ```
+
+**Profile (seit 6.12.0.0, Beta-Test: „ein großer Vorteil, wenn man
+mehrere Charaktere hat“).** Einstellungen der Module und Plätze der
+Rahmen stehen je Profil; jeder Charakter nutzt eins, mehrere können eins
+teilen. Beim ersten Laden zieht, was bis 6.11.0.4 unter `ui.modules`/
+`ui.positions` für alle galt, nach „Standard“. Regeln:
+
+- `UIKit.Profile()` liefert das Profil der **Sitzung** – beim ersten
+  Zugriff gewählt (`ui.profileOf[CharKey]`, sonst „Standard“), danach
+  fest bis zum Neuladen. Laufende Module lesen nie mitten im Spiel aus
+  einem anderen. Wählen, Kopie anlegen, Übernehmen und Zurücksetzen des
+  laufenden Profils verlangen ein Neuladen (`K.MarkReload`).
+- „Standard“ gibt es immer (`Root` legt es notfalls an), es lässt sich
+  weder umbenennen noch löschen; wessen Profil gelöscht wird, landet dort.
+  Gelöscht wird nur, was weder läuft noch gewählt ist.
+- Nicht im Profil (ganzes Konto): Hauptschalter, Willkommen, `before`/
+  `cvars` (`ui/profile.lua`), Minikartensymbol (`launcher`), verfolgte
+  Quests (`questWatch`), Fensterplätze (`windowPos`), `migrated`.
+- Wer direkt in den Speicher greift, nimmt `UIKit.Profile().modules`/
+  `.positions` – nie `Root().modules` (gibt es nicht mehr).
+- Seite: Allgemein → Profile, auch `/wcui profil`. Wählen, „Als Kopie
+  anlegen“ (Name des Charakters), Name ändern (bei jeder Eingabe; leer
+  oder vergeben ändert nichts), Einstellungen übernehmen von, Profil
+  zurücksetzen, Profil löschen (beide mit Rückfrage), dazu wer es nutzt
+  und ob ein Neuladen aussteht.
+- Rückweg: Eine Version vor 6.12.0.0 findet `ui.modules` nicht mehr und
+  startet mit den Voreinstellungen (die Daten bleiben unter
+  `profiles.Standard`).
 
 `UIKit.Set` speichert **nur, was vom Standard abweicht**. Ändert sich
 eine Voreinstellung, zieht sie bei allen nach, die den Wert nie

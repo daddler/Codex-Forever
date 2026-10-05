@@ -186,6 +186,8 @@ K.Register({
                   { type = "slider", label = "Weitere Leisten", key = "fade_bars", min = 0, max = 100, step = 5, format = pct, disabled = off })
             B:Note("Ausgeblendete Leisten bleiben benutzbar: Tastenkürzel wirken immer, und die Maus zeigt sie wieder.")
         end },
+        -- 6.11.0.4: Profile je Charakter (ui/profiles.lua).
+        { key = "profile", label = "Profile", build = function(B) WeintCodex.UIProfiles.BuildPage(B) end },
         { key = "tooltip", label = "Tooltip & Fenster", build = function(B)
             local off = function() return not K.Get("general", "tooltipStyle") end
             B:Section("Tooltip", "Die Hinweisfenster des Spiels als Kachel statt mit dem Blizzard-Rahmen.")
@@ -933,6 +935,15 @@ function O.CurrentZones()
     return page and page.zones or {}
 end
 
+-- Stelle einer Seite in einem Modul (nach ihrem Schluessel), sonst 1.
+function O.PageIndex(moduleKey, pageKey)
+    local m = K.Module(moduleKey)
+    for i, p in ipairs(m and m.pages or {}) do
+        if p.key == pageKey then return i end
+    end
+    return 1
+end
+
 function O.Show(key, pageIndex)
     O.Build()
     frame:Show()
@@ -1232,6 +1243,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         for _, line in ipairs(WeintCodex.UIMinimap.InspectAddons()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
         end
+        return
+    end
+    -- 6.11.0.4: Profile je Charakter.
+    if msg == "profil" or msg == "profile" then
+        O.Show("general", O.PageIndex("general", "profile"))
         return
     end
     if msg == "willkommen" or msg == "welcome" then

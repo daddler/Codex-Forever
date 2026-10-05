@@ -200,7 +200,8 @@ function NP.MigrateMotion()
     ui.migrated = ui.migrated or {}
     if ui.migrated.npMotion then return nil end
     ui.migrated.npMotion = true
-    local store = ui.modules[KEY]
+    local prof = K.Profile()
+    local store = prof and prof.modules[KEY]
     if type(store) ~= "table" or type(store.motion) ~= "nil" then return nil end
     local off = 0
     for _, k in ipairs(NP.MOTION_KEYS) do

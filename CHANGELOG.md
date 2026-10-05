@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.12.0.0] – 2026-10-05
+
+**Profile für deine Charaktere.** Jeder Charakter kann seine eigene Oberfläche haben – Einstellungen und Plätze der Rahmen. Unter /wcui → Allgemein → Profile (oder /wcui profil) legst du ein Profil als Kopie an, gibst ihm einen Namen, wählst es für einen Charakter, übernimmst Einstellungen aus einem anderen oder setzt es zurück. Mehrere Charaktere können ein Profil teilen.
+
+**Nichts geht verloren.** Alles, was du bisher eingestellt hast, steht jetzt im Profil „Standard“ – damit starten auch neue Charaktere. Ein Wechsel gilt nach dem Neuladen.
+
+### Technisch
+
+- **Profile** (`ui/kit.lua`, neu `ui/profiles.lua`), Beta-Test: „wcui bräuchte Profile – ein großer Vorteil, wenn man mehrere Charaktere hat.“ Speicher: `ui.profiles[name] = { modules, positions }`, Zuordnung `ui.profileOf["Name-Realm"]` (ohne Eintrag „Standard“). Beim ersten Laden ziehen `ui.modules`/`ui.positions` nach „Standard“ und werden geräumt. Alles über `UIKit.Profile()`: `Store`, `ResetModule`, alle Plätze (Speichern, Anwenden, Ziehen, Pfeiltasten, Rechtsklick, alle zurücksetzen), die Übernahme der Plakettenbewegung (`ui/nameplates.lua`), die Vorauswahl im Willkommen (`ui/welcome.lua`).
+- **Fest bis zum Neuladen**: das Profil einer Sitzung wird beim ersten Zugriff gewählt und gehalten (nur wenn der Client den Charakter nennt) – laufende Module lesen nie mitten im Spiel aus einem anderen. Wählen, Kopie, Übernehmen und Zurücksetzen des laufenden Profils melden „Neu laden“.
+- **Regeln**: „Standard“ gibt es immer (wird notfalls angelegt), nicht umbenennbar, nicht löschbar; gelöscht wird nur, was weder läuft noch gewählt ist, wer es nutzte, landet bei „Standard“. Namen getrimmt, nicht leer, höchstens 32 Zeichen, nicht vergeben. Kopien tief (keine geteilten Tabellen). Rückfrage über einen Dialog des Spiels vor Übernehmen, Zurücksetzen, Löschen.
+- **Nicht im Profil** (ganzes Konto): Hauptschalter, Willkommen, Layout und Spieleinstellungen von vorher (`ui/profile.lua`), Minikartensymbol, verfolgte Quests, Fensterplätze.
+- **Seite** Allgemein → Profile (`/wcui profil`, `O.PageIndex`): Profil wählen, „Als Kopie anlegen“ (Name des Charakters, sonst „Name 2“ …), Name ändern, wer es nutzt und ob ein Neuladen aussteht, Einstellungen übernehmen von, Profil zurücksetzen, Profil löschen.
+- `load_test.lua`, neuer Abschnitt „Profile“: Umzug nach „Standard“ (Konto-Werte bleiben), „Standard“ immer da, Kopie tief und gewählt, Neuladen gemeldet und Sitzung fest, Einstellungen und Plätze (auch Pfeiltasten) im laufenden Profil, zweiter Charakter bei „Standard“, geteiltes Profil, Umbenennen (Zuordnungen und laufendes Profil ziehen mit – auch wenn ein anderes gewählt ist), ungültige Namen, Übernehmen, Zurücksetzen, Löschen und seine Grenzen, ohne Charakternamen keine Wahl, Willkommen liest aus dem Profil, Seite und Befehl. Bestehende Prüfungen lesen über `UIKit.Profile()`. Gegenproben: 28, alle gefangen – sechs erst nach geschärftem Test; dabei gefunden: **Umbenennen des laufenden Profils, während ein anderes gewählt war, warf die Sitzung auf das gewählte** (die Frage „läuft es?“ kam nach dem Umzug), behoben. Eine Gegenprobe war gleichwertig (leeres Profil), die Zeile ist raus.
+- **Ungeprüft im Spiel:** ob `UnitName`/`GetRealmName` beim ersten Zugriff schon antworten (sonst gilt bis zum ersten Zugriff mit Namen „Standard“), der Dialog zur Rückfrage, die Seite.
+
 ## [6.11.0.4] – 2026-10-05
 
 **Keine Schrift mehr übereinander.** Auf den Karten unter „Außerdem“ lief eine lange Zeile – etwa die Namen der Waffen – unter „es fehlen …“ durch. Jetzt endet sie davor.

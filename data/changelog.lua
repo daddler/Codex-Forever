@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.12.0.0",
+        date    = "05.10.2026",
+        notes   = {
+            "|cff7C6CFFProfile für deine Charaktere.|r Jeder Charakter kann seine eigene Oberfläche haben – Einstellungen und Plätze der Rahmen. Unter /wcui → Allgemein → Profile (oder /wcui profil) legst du ein Profil als Kopie an, gibst ihm einen Namen, wählst es für einen Charakter, übernimmst Einstellungen aus einem anderen oder setzt es zurück. Mehrere Charaktere können ein Profil teilen.",
+            "|cff7C6CFFNichts geht verloren.|r Alles, was du bisher eingestellt hast, steht jetzt im Profil „Standard“ – damit starten auch neue Charaktere. Ein Wechsel gilt nach dem Neuladen.",
+        },
+    },
+    {
         version = "6.11.0.4",
         date    = "05.10.2026",
         notes   = {

@@ -34,6 +34,17 @@
 -- vom Standard abweicht; der Standard steht beim Modul. Ein Modul, dessen
 -- Voreinstellung sich aendert, zieht damit bei allen nach, die den Wert nie
 -- angefasst haben.
+--
+-- PROFILE (6.11.0.4, Beta-Test: "ein grosser Vorteil, wenn man mehrere
+-- Charaktere hat"). Einstellungen der Module und Plaetze der Rahmen stehen
+-- in ui.profiles[name] = { modules, positions }; welcher Charakter welches
+-- nutzt, in ui.profileOf["Name-Realm"]. Ohne Eintrag gilt "Standard" -
+-- dorthin ist beim ersten Laden gezogen, was bis 6.11.0.3 fuer alle galt
+-- (ui.modules/ui.positions). Fuer das ganze Konto bleiben: Hauptschalter,
+-- Willkommen, was ui/profile.lua am Spiel geaendert hat (Layout, CVars),
+-- Minikartensymbol, verfolgte Quests. Das Profil einer Sitzung steht fest
+-- bis zum Neuladen (K.Profile); gewaehlt, angelegt, kopiert wird in
+-- ui/profiles.lua.
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -78,27 +89,80 @@ end
 -- Speicher
 --------------------------------------------------
 
+K.DEFAULT_PROFILE = "Standard"
+
 local function Root()
     local sv = WeintCodex.SavedData
     if not sv then return nil end
     sv.ui = sv.ui or {}
     local ui = sv.ui
-    ui.modules   = ui.modules or {}
-    ui.positions = ui.positions or {}
+    if type(ui.profiles) ~= "table" then
+        -- Umzug (einmal): was bis 6.11.0.3 fuer alle galt, ist "Standard".
+        ui.profiles = { [K.DEFAULT_PROFILE] = { modules = ui.modules or {}, positions = ui.positions or {} } }
+        ui.modules, ui.positions = nil, nil
+    end
+    -- "Standard" gibt es immer: der Platz jedes Charakters ohne Wahl.
+    ui.profiles[K.DEFAULT_PROFILE] = ui.profiles[K.DEFAULT_PROFILE] or {}
+    ui.profileOf = ui.profileOf or {}
     return ui
 end
 
 function K.Root() return Root() end
+
+-- "Name-Realm" des Spielers; nil, solange der Client ihn nicht nennt.
+function K.CharKey()
+    local okN, name = pcall(_G.UnitName, "player")
+    local okR, realm = pcall(_G.GetRealmName)
+    if okN and okR and type(name) == "string" and name ~= "" and type(realm) == "string" and realm ~= "" then
+        return name .. "-" .. realm
+    end
+    return nil
+end
+
+-- Das Profil, das dieser Charakter gewaehlt hat; ohne Wahl (oder wenn
+-- seins geloescht ist) "Standard".
+function K.ChosenProfile(ui)
+    ui = ui or Root()
+    if not ui then return nil end
+    local key = K.CharKey()
+    local name = key and ui.profileOf[key]
+    if type(name) == "string" and ui.profiles[name] then return name end
+    return K.DEFAULT_PROFILE
+end
+
+-- Das Profil dieser Sitzung: beim ersten Zugriff gewaehlt, danach fest
+-- bis zum Neuladen - laufende Module lesen nie mitten im Spiel aus einem
+-- anderen. Nur festgehalten, wenn der Client den Charakter nennt.
+local active
+function K.Profile()
+    local ui = Root()
+    if not ui then return nil end
+    local name = active
+    if not (name and ui.profiles[name]) then
+        name = K.ChosenProfile(ui)
+        if K.CharKey() then active = name end
+    end
+    local p = ui.profiles[name]
+    p.modules = p.modules or {}
+    p.positions = p.positions or {}
+    return p, name
+end
+
+function K.ActiveProfile() return select(2, K.Profile()) end
+
+-- Nur fuer ui/profiles.lua (Umbenennen des laufenden Profils) und den
+-- Prueflauf (neue Sitzung).
+function K._SetActiveProfile(name) active = name end
 
 -- Die gespeicherten Abweichungen eines Moduls (nie nil, sobald SavedData
 -- steht; davor eine leere Tabelle, die nie gespeichert wird - gelesen wird
 -- davor nur der Standard).
 local EMPTY = {}
 local function Store(key)
-    local ui = Root()
-    if not ui then return EMPTY end
-    ui.modules[key] = ui.modules[key] or {}
-    return ui.modules[key]
+    local p = K.Profile()
+    if not p then return EMPTY end
+    p.modules[key] = p.modules[key] or {}
+    return p.modules[key]
 end
 
 local function CopyValue(v)
@@ -182,10 +246,10 @@ function K.GetColor(moduleKey, key)
 end
 
 function K.ResetModule(moduleKey)
-    local ui = Root()
-    if not ui then return end
-    local enabled = ui.modules[moduleKey] and ui.modules[moduleKey].enabled
-    ui.modules[moduleKey] = { enabled = enabled }
+    local p = K.Profile()
+    if not p then return end
+    local enabled = p.modules[moduleKey] and p.modules[moduleKey].enabled
+    p.modules[moduleKey] = { enabled = enabled }
     local m = modules[moduleKey]
     if m and m.OnSetting then pcall(m.OnSetting, "*") end
     K.Fire("setting", moduleKey, "*")
@@ -869,7 +933,7 @@ K.movers = movers
 K.SnapOffset = nil
 
 local function SavePosition(key, frame)
-    local ui = Root()
+    local ui = K.Profile()
     if not ui then return end
     local point, _, relPoint, x, y = frame:GetPoint(1)
     if not point then return end
@@ -882,7 +946,7 @@ end
 function K.ApplyPosition(key)
     local m = movers[key]
     if not m then return end
-    local ui = Root()
+    local ui = K.Profile()
     local pos = ui and ui.positions[key] or m.default
     local frame = m.frame
     local function apply()
@@ -930,7 +994,7 @@ function K.RegisterMover(frame, key, label, default, opts)
             SavePosition(key, frame)
             -- Einrasten: die gespeicherte Stelle um den Rest zum Raster bzw.
             -- zur Mittelachse verschieben (derselbe Anker, nur genauer).
-            local ui = Root()
+            local ui = K.Profile()
             local pos = ui and ui.positions[key]
             if pos and K.SnapOffset then
                 local ok, dx, dy = pcall(K.SnapOffset, m.frame)
@@ -953,7 +1017,7 @@ function K.RegisterMover(frame, key, label, default, opts)
         end
         ov:SetScript("OnClick", function(_, button)
             if button ~= "RightButton" then return end
-            local ui = Root()
+            local ui = K.Profile()
             if ui then ui.positions[key] = nil end
             K.ApplyPosition(key)
         end)
@@ -1010,7 +1074,7 @@ function K.SelectedMover() return selected end
 function K.NudgeMover(dx, dy)
     local m = selected and movers[selected]
     if not m or (m.secure and K.InCombat()) then return false end
-    local ui = Root()
+    local ui = K.Profile()
     if not ui then return false end
     local cur = ui.positions[selected] or m.default
     ui.positions[selected] = { point = cur.point, relPoint = cur.relPoint or cur.point,
@@ -1024,7 +1088,7 @@ end
 function K.MoverPosition(key)
     local m = movers[key]
     if not m then return nil end
-    local ui = Root()
+    local ui = K.Profile()
     return (ui and ui.positions[key]) or m.default, m.label
 end
 
@@ -1054,7 +1118,7 @@ function K.SetUnlocked(on)
 end
 
 function K.ResetAllPositions()
-    local ui = Root()
+    local ui = K.Profile()
     if not ui then return end
     wipe(ui.positions)
     for key in pairs(movers) do K.ApplyPosition(key) end

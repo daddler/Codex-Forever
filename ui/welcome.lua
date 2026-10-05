@@ -135,8 +135,8 @@ end
 -- ausdrueckliche Wahl von frueher gilt, sonst der Standard des Moduls -
 -- "ui" heisst: mit Oberflaeche an (das Komplettpaket).
 local function ShowDefault(key, ui)
-    local root = K.Root()
-    local st = root and root.modules[key]
+    local prof = K.Profile()
+    local st = prof and prof.modules[key]
     if st and st.enabled ~= nil then return st.enabled and true or false end
     local m = K.Module(key)
     if not m then return false end

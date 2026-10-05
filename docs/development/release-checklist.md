@@ -38,6 +38,11 @@ sondern fängt das Offensichtliche ab, **bevor** es Spieler melden.
 - [ ] „Erweitert“ ein- und ausblenden.
 - [ ] Eine Einstellung ändern, die „Neu laden“ verlangt. Der Knopf
       erscheint und lädt neu.
+- [ ] Profile (`/wcui profil`): Nach dem ersten Laden steht „Standard“ mit
+      allen bisherigen Einstellungen. „Als Kopie anlegen“, neu laden, eine
+      Einstellung und einen Rahmen ändern. Mit einem zweiten Charakter
+      einloggen: er hat „Standard“, unverändert. Profil wählen, neu laden –
+      Einstellung und Platz sind da.
 
 ## Fenster des Spiels (3 Minuten)
 
