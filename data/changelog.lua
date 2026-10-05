@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.4.8",
+        date    = "05.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Leiste beim Berufslehrer ist wieder blau.|r Dunkel war sie schlecht zu erkennen – jetzt trägt sie das Blau, das du von der Fertigkeit kennst, flach und ohne grauen Rahmen.",
+        },
+    },
+    {
         version = "6.10.4.7",
         date    = "05.10.2026",
         notes   = {

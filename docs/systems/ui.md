@@ -3261,11 +3261,15 @@ oben die Leiste der Fertigkeit `ClassTrainerStatusBar` – Rahmen
 6.10.4.6 Rahmen weg, Füllung flach (`K.BAR_TEXTURE`) in Gold
 (`frameAccent`, je Durchlauf nachgefärbt – das Spiel färbt beim
 Aktualisieren neu), dunkle Rinne, 1 px Rand. Der Rest wie beim
-Klassenlehrer; die gewählte Zeile trägt den goldenen Schein. Seit
-6.10.4.7 auch `ClassTrainerStatusBarBackground` weg (gemessen mit
-6.10.4.6, Angeln 1/75): eine blaue Farbfläche des Spiels auf
-`BACKGROUND` 0, über unserer Rinne – bei wenig Fortschritt sah die Leiste
-ganz blau aus.
+Klassenlehrer; die gewählte Zeile trägt den goldenen Schein. 6.10.4.7
+nahm auch `ClassTrainerStatusBarBackground` weg (gemessen mit 6.10.4.6,
+Angeln 1/75: eine blaue Farbfläche des Spiels auf `BACKGROUND` 0, über
+unserer Rinne). **Seit 6.10.4.8 wieder Blau** (Beta-Test: dunkel schlecht
+zu erkennen, kein Wiedererkennungswert): Farbe der Füllung und blaue
+Fläche bleiben die des Spiels, kein Nachfärben; weg bleibt nur der
+Rahmen, flach bleibt die Füllung. Blau ist hier keine zweite Akzentfarbe,
+sondern das Erkennungszeichen der Leiste – darum aus dem Spiel und nicht
+als Ton in `core/ui.lua`.
 
 ### Fenster verschieben *(6.10.4.0, `ui/movewindows.lua`)*
 

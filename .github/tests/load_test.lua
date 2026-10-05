@@ -8775,8 +8775,9 @@ do
         for _, n in ipairs({ "ClassTrainerStatusBarLeft", "ClassTrainerStatusBarMiddle", "ClassTrainerStatusBarRight" }) do
             parts[#parts + 1] = Global(n, Tex(410251))
         end
-        -- 6.10.4.7, gemessen: blaue Farbflaeche (FileData ID 0) ueber der Bahn.
-        parts[#parts + 1] = Global("ClassTrainerStatusBarBackground", Tex(0))
+        -- Blaue Farbflaeche (FileData ID 0, gemessen mit 6.10.4.6). Seit
+        -- 6.10.4.8 bleiben sie und das Blau der Fuellung (Beta-Test).
+        local blueBg = Global("ClassTrainerStatusBarBackground", Tex(0))
         local col, colSets, barTex = { 0, 0, 1 }, 0, nil
         sb.GetStatusBarColor = function() return col[1], col[2], col[3], 1 end
         sb.SetStatusBarColor = function(_, r, g, b) col = { r, g, b } colSets = colSets + 1 end
@@ -8784,12 +8785,9 @@ do
         CT.Update(tf)
         for _, t in ipairs(parts) do assert(t:GetAlpha() == 0, "Rahmen der Leiste bleibt") end
         assert(barTex == K.BAR_TEXTURE and CT.bars[sb] and CT.bars[sb].edge, "Leiste nicht flach")
-        assert(col[1] == GC.frameAccent[1] and col[3] == GC.frameAccent[3], "Leiste nicht in Gold")
+        assert(blueBg:GetAlpha() == 1, "blaue Flaeche der Leiste ausgeblendet")
         CT.Update(tf)
-        assert(colSets == 1, "Farbe je Durchlauf neu gesetzt")
-        col = { 0, 0, 1 }   -- das Spiel faerbt beim Aktualisieren neu
-        CT.Update(tf)
-        assert(colSets == 2 and col[1] == GC.frameAccent[1], "Blau des Spiels bleibt")
+        assert(colSets == 0 and col[1] == 0 and col[3] == 1, "Blau der Fuellung umgefaerbt")
         local rep2 = table.concat(CT.Report(tf, {}), "\n")
         assert(rep2:find("Leiste der Fertigkeit flach", 1, true), "Bericht: " .. rep2)
         CT.Update(tf)

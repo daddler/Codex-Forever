@@ -41,8 +41,8 @@
 -- GEMESSEN 05.10.2026 (6.10.4.6): ein Berufslehrer zeigt oben die Leiste
 -- der Fertigkeit (ClassTrainerStatusBar): Rahmen Left/Middle/Right (Bild
 -- 410251), Fuellung UI-StatusBar (136570) in Blau. Rahmen weg, Fuellung
--- flach in Gold mit dunkler Rinne und 1 px Rand - wie die Zeit beim
--- Wuerfeln um Beute. Der Text "5/75" bleibt.
+-- flach mit 1 px Rand; das Blau des Spiels bleibt (6.10.4.8 - Gold und
+-- Dunkel waren im Beta-Test schlecht zu erkennen). Der Text "5/75" bleibt.
 -- (frueher: UNGEMESSEN: ein Berufslehrer (Leiste der Fertigkeit, ClassTrainerStatusBar))
 -- - Huelle und Gold; was dort alt aussieht, sagt /wcui fenster.
 -- Der Knopf "Optionen" (Filter) bleibt wie in den anderen Fenstern.
@@ -82,10 +82,11 @@ local function Off(r)
     return true
 end
 
--- Die Leiste der Fertigkeit (nur beim Berufslehrer zu sehen). Background
--- (6.10.4.7, gemessen): Farbflaeche des Spiels in Blau, ueber unserer Bahn.
-local BAR_PARTS = { "ClassTrainerStatusBarLeft", "ClassTrainerStatusBarMiddle", "ClassTrainerStatusBarRight",
-    "ClassTrainerStatusBarBackground" }
+-- Die Leiste der Fertigkeit (nur beim Berufslehrer zu sehen). Seit 6.10.4.8
+-- im Blau des Spiels (Beta-Test: dunkel schlecht zu erkennen, Blau ist
+-- die Leiste der Fertigkeit): Farbe der Fuellung und blaue Farbflaeche
+-- (Background) bleiben, nur der Rahmen geht, die Fuellung wird flach.
+local BAR_PARTS = { "ClassTrainerStatusBarLeft", "ClassTrainerStatusBarMiddle", "ClassTrainerStatusBarRight" }
 local bars = setmetatable({}, { __mode = "k" })
 
 local function SkillBar()
@@ -104,13 +105,6 @@ local function SkillBar()
         track:SetColorTexture(c[1], c[2], c[3], 1)
         d = { track = track, edge = K.Border(sb, 1, 0, 0, 0, 0.5, "OVERLAY") }
         bars[sb] = d
-    end
-    -- Je Durchlauf: das Spiel faerbt die Leiste beim Aktualisieren neu.
-    local a = GC.frameAccent
-    local ok, r, g, b = pcall(sb.GetStatusBarColor, sb)
-    r, g, b = ok and K.Plain(r), ok and K.Plain(g), ok and K.Plain(b)
-    if type(r) ~= "number" or math.abs(r - a[1]) > 0.01 or math.abs(g - a[2]) > 0.01 or math.abs(b - a[3]) > 0.01 then
-        sb:SetStatusBarColor(a[1], a[2], a[3], 1)
     end
     return 1
 end
