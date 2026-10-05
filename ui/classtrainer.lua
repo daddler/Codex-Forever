@@ -38,7 +38,12 @@
 -- ClassTrainerTrainButton (130828/130826), Zeilen in der ScrollBox
 -- (Zaubersymbole 135807 u. a.). Die Dateinummern sind mit der Dateiliste
 -- der Community (wowdev/wow-listfile) aufgeloest.
--- UNGEMESSEN: ein Berufslehrer (Leiste der Fertigkeit, ClassTrainerStatusBar)
+-- GEMESSEN 05.10.2026 (6.10.4.6): ein Berufslehrer zeigt oben die Leiste
+-- der Fertigkeit (ClassTrainerStatusBar): Rahmen Left/Middle/Right (Bild
+-- 410251), Fuellung UI-StatusBar (136570) in Blau. Rahmen weg, Fuellung
+-- flach in Gold mit dunkler Rinne und 1 px Rand - wie die Zeit beim
+-- Wuerfeln um Beute. Der Text "5/75" bleibt.
+-- (frueher: UNGEMESSEN: ein Berufslehrer (Leiste der Fertigkeit, ClassTrainerStatusBar))
 -- - Huelle und Gold; was dort alt aussieht, sagt /wcui fenster.
 -- Der Knopf "Optionen" (Filter) bleibt wie in den anderen Fenstern.
 --------------------------------------------------
@@ -75,6 +80,37 @@ local function Off(r)
     if K.Plain(r:GetAlpha()) ~= 0 then r:SetAlpha(0) end
     own[r] = true
     return true
+end
+
+-- Die Leiste der Fertigkeit (nur beim Berufslehrer zu sehen).
+local BAR_PARTS = { "ClassTrainerStatusBarLeft", "ClassTrainerStatusBarMiddle", "ClassTrainerStatusBarRight" }
+local bars = setmetatable({}, { __mode = "k" })
+
+local function SkillBar()
+    local sb = _G.ClassTrainerStatusBar
+    if not (IsFrame(sb) and sb.SetStatusBarTexture and sb.CreateTexture) then return 0 end
+    for _, name in ipairs(BAR_PARTS) do
+        local t = _G[name]
+        if type(t) == "table" and t.SetAlpha and K.Plain(t:GetAlpha()) ~= 0 then t:SetAlpha(0) end
+    end
+    local d = bars[sb]
+    if not d then
+        sb:SetStatusBarTexture(K.BAR_TEXTURE)
+        local track = sb:CreateTexture(nil, "BACKGROUND", nil, -8)
+        track:SetAllPoints(sb)
+        local c = GC.barTrack or GC.plateBg
+        track:SetColorTexture(c[1], c[2], c[3], 1)
+        d = { track = track, edge = K.Border(sb, 1, 0, 0, 0, 0.5, "OVERLAY") }
+        bars[sb] = d
+    end
+    -- Je Durchlauf: das Spiel faerbt die Leiste beim Aktualisieren neu.
+    local a = GC.frameAccent
+    local ok, r, g, b = pcall(sb.GetStatusBarColor, sb)
+    r, g, b = ok and K.Plain(r), ok and K.Plain(g), ok and K.Plain(b)
+    if type(r) ~= "number" or math.abs(r - a[1]) > 0.01 or math.abs(g - a[2]) > 0.01 or math.abs(b - a[3]) > 0.01 then
+        sb:SetStatusBarColor(a[1], a[2], a[3], 1)
+    end
+    return 1
 end
 
 local function NormalOf(b)
@@ -126,12 +162,13 @@ CT = CP.New({
             end
         end
         m.rows = rows
+        m.skillbar = SkillBar()
     end,
     report = function(_, m, H)
         local bar = m.money_bar and K.Bool(m.money_bar:IsShown(), false) and 1 or 0
-        return string.format("Pergament weg %d · Zeilen flach %d · Geld als Leiste %d · Innenflächen %d",
-            m.parchment or 0, m.rows or 0, bar, m.insets)
+        return string.format("Pergament weg %d · Zeilen flach %d · Geld als Leiste %d · Innenflächen %d · Leiste der Fertigkeit %s",
+            m.parchment or 0, m.rows or 0, bar, m.insets, (m.skillbar or 0) > 0 and "flach" or "–")
     end,
 })
-CT.TRAINER_TEX, CT.own = TRAINER_TEX, own
+CT.TRAINER_TEX, CT.own, CT.BAR_PARTS, CT.bars = TRAINER_TEX, own, BAR_PARTS, bars
 WeintCodex.UIClassTrainer = CT

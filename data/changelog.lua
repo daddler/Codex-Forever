@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.4.6",
+        date    = "05.10.2026",
+        notes   = {
+            "|cff7C6CFFSchadensanzeige in die Gilde ohne Fehlermeldung.|r Das Spiel lässt Addons nicht selbst in die Gilde schreiben – die Meldung brach mit einem Lua-Fehler ab. Für Gilde, Sagen und Flüstern legt die Sprechblase die Meldung jetzt als eine Zeile in die Eingabezeile des Chats; mit Enter schickst du sie ab. In die Gruppe meldet sie weiter direkt.",
+            "|cff7C6CFFBerufslehrer in Gold.|r Die Leiste mit deinem Fertigkeitsstand oben im Fenster ist flach und golden statt blau mit grauem Rahmen.",
+        },
+    },
+    {
         version = "6.10.4.5",
         date    = "05.10.2026",
         notes   = {

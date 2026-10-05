@@ -8767,6 +8767,29 @@ do
         rowB._normal._file = 404984
         local rep = table.concat(CT.Report(tf, {}), "\n")
         assert(rep:find("Lehrer (Stil ruhig): Kante in Gold, kein Schein der Klasse · Pergament weg 1 · Zeilen flach", 1, true), "Bericht: " .. rep)
+        assert(rep:find("Leiste der Fertigkeit –", 1, true), "Klassenlehrer meldet eine Leiste: " .. rep)
+        -- 6.10.4.6, gemessen beim Berufslehrer: Leiste der Fertigkeit mit
+        -- Rahmen (410251, Left/Middle/Right) und blauer Fuellung (136570).
+        local sb = Global("ClassTrainerStatusBar", stub.NewObject("StatusBar", "ClassTrainerStatusBar"))
+        local parts = {}
+        for _, n in ipairs({ "ClassTrainerStatusBarLeft", "ClassTrainerStatusBarMiddle", "ClassTrainerStatusBarRight" }) do
+            parts[#parts + 1] = Global(n, Tex(410251))
+        end
+        local col, colSets, barTex = { 0, 0, 1 }, 0, nil
+        sb.GetStatusBarColor = function() return col[1], col[2], col[3], 1 end
+        sb.SetStatusBarColor = function(_, r, g, b) col = { r, g, b } colSets = colSets + 1 end
+        sb.SetStatusBarTexture = function(_, t) barTex = t end
+        CT.Update(tf)
+        for _, t in ipairs(parts) do assert(t:GetAlpha() == 0, "Rahmen der Leiste bleibt") end
+        assert(barTex == K.BAR_TEXTURE and CT.bars[sb] and CT.bars[sb].edge, "Leiste nicht flach")
+        assert(col[1] == GC.frameAccent[1] and col[3] == GC.frameAccent[3], "Leiste nicht in Gold")
+        CT.Update(tf)
+        assert(colSets == 1, "Farbe je Durchlauf neu gesetzt")
+        col = { 0, 0, 1 }   -- das Spiel faerbt beim Aktualisieren neu
+        CT.Update(tf)
+        assert(colSets == 2 and col[1] == GC.frameAccent[1], "Blau des Spiels bleibt")
+        local rep2 = table.concat(CT.Report(tf, {}), "\n")
+        assert(rep2:find("Leiste der Fertigkeit flach", 1, true), "Bericht: " .. rep2)
         CT.Update(tf)
         collectgarbage("collect")
         collectgarbage("stop")
@@ -10149,6 +10172,30 @@ do
         local ch = {}
         for _, c in ipairs(DM.ReportChannels()) do ch[#ch + 1] = c.value end
         assert(table.concat(ch, ",") == "PARTY,GUILD,SAY,WHISPER", "Kanaele: " .. table.concat(ch, ","))
+        -- 6.10.4.6, gemessen: an die Gilde selbst schreiben -> ADDON_ACTION_BLOCKED
+        -- (pcall faengt es nicht). Gilde/Sagen/Fluestern: eine Zeile in die
+        -- Eingabezeile, nichts gesendet; die Gruppe weiter direkt.
+        local box = {}
+        local oldOpen = _G.ChatFrame_OpenChat
+        _G.ChatFrame_OpenChat = function(text) box[#box + 1] = text end
+        sent = {}
+        assert(DM.Report(w, "GUILD") and #sent == 0 and #box == 1, "Gilde selbst geschrieben: " .. table.concat(sent, " / "))
+        assert(box[1]:find("^/g WeintCodex – Schaden, Aktuell") and box[1]:find(": 1. Schnell  1,0K (50), 33% · 2. ", 1, true),
+            "Zeile fuer die Gilde: " .. tostring(box[1]))
+        assert(printed[#printed]:find("Enter sendet", 1, true), "kein Hinweis auf Enter")
+        assert(DM.Report(w, "WHISPER", "Freund") and box[2]:find("^/w Freund WeintCodex") and #sent == 0, "Fluestern: " .. tostring(box[2]))
+        assert(DM.Report(w, "SAY") and box[3]:find("^/s ") and #sent == 0, "Sagen: " .. tostring(box[3]))
+        assert(DM.Report(w, "PARTY") and #sent == 3 and #box == 3, "Gruppe nicht mehr direkt")
+        -- Eine Zeile, hoechstens 255 Bytes, nur ganze Plaetze.
+        local long = { "Kopf:" }
+        for i = 1, 30 do long[#long + 1] = string.format("%d. Spieler%02d  12,3K (456), 10%%", i, i) end
+        local one = DM.OneLine(long, 255 - 3)
+        assert(#one <= 252 and one:sub(-3) == "10%" and one:find("^Kopf: 1%. Spieler01"), "zu lang oder abgeschnitten: " .. #one .. " " .. one)
+        _G.ChatFrame_OpenChat = nil
+        assert(not DM.Report(w, "GUILD") and printed[#printed]:find("ließ sich nicht öffnen", 1, true), "ohne Eingabezeile still")
+        _G.ChatFrame_OpenChat = function() error("gesperrt") end
+        assert(not DM.Report(w, "GUILD") and printed[#printed]:find("ließ sich nicht öffnen", 1, true), "Fehler der Eingabezeile verschluckt")
+        _G.ChatFrame_OpenChat = oldOpen
         assert(w.report:IsShown(), "Sprechblase fehlt in der Kopfzeile")
 
         -- 4. Bedrohung: Gruppe auf dem Ziel, Tank zuerst, eigene Zeile.

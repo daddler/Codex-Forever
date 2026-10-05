@@ -958,8 +958,17 @@ Seit 6.2.0.0:
     (`DM.ReportChannels`). **Gemessen (04.10.2026, Client 1.60.1, Build 70205, `/wcui prüfen`):**
     `C_ChatInfo.InChatMessagingLockdown()` ist `false` (allein, im Kampf,
     offene Welt), und eine Meldung an die **Gruppe kommt an** (Gruppe zu
-    zweit, nach dem Kampf). Schlachtzug, Gilde, Flüstern ungemessen –
-    `pcall` fängt eine Sperre nicht (siehe Raidmarkierungen).
+    zweit, nach dem Kampf). **Gemessen 05.10.2026: an die Gilde →
+    `ADDON_ACTION_BLOCKED`** („geschützte Funktion UNKNOWN()“), obwohl der
+    Klick ein Tastendruck war; `pcall` fängt es nicht, der Spieler sieht
+    einen Lua-Fehler. Seit 6.10.4.6 schreibt WeintCodex selbst nur in
+    Gruppe, Schlachtzug und Instanz (`DM.DIRECT`; Schlachtzug und Instanz
+    ungemessen, dieselbe Sorte wie die Gruppe). Gilde, Sagen und Flüstern
+    (`DM.SLASH`, „/w Name“) legen **eine** Zeile in die Eingabezeile des
+    Chats (`DM.OneLine`: ganze Plätze, höchstens 255 Bytes;
+    `ChatFrame_OpenChat`) – Enter sendet, dann schreibt das Spiel selbst.
+    Das Menü sagt es („Gilde (Enter sendet)“). Ungemessen: ob die
+    Eingabezeile auf Forever so aufgeht.
   **Aufschlüsselung seit 6.6.2.1** (Beta-Test: „frei verschieben, mehr
   Informationen, Vergleich, Graphen, Auren – auch Bufffood,
   Fläschchen“):
@@ -3017,8 +3026,9 @@ Optionen, Sprechblase Bild 136810; `.ScrollBar` mit
   (`GreetingPanel.ScrollBox`) auf der angehobenen Fläche der Register
   (`GC.surfaceRaised`) mit weichem Schatten und Kante in Gold; die
   Bildlaufleiste ist die untere rechte Ecke. Aus, wenn die Liste zu ist.
-- **Questtext, Bücher, Briefe:** ungemessen – nur Grund und Kante, keine
-  geratene Fläche.
+- **Questtext:** gemessen 05.10.2026 (Quest annehmen) – nichts mehr vom
+  Spiel zu sehen außer Bildlauf, Knöpfen und Geld; lesbar. **Bücher,
+  Briefe:** ungemessen – nur Grund und Kante, keine geratene Fläche.
 
 **Unverändert:** Texte, Symbole der Optionen, Farben der Quests (samt
 `W.LightCodes`), Bildlaufleiste, „Lebt wohl“.
@@ -3245,8 +3255,13 @@ hätte die Markierung mitgenommen. Deshalb im `after` nach Rolle:
 
 Metall, Ring, Porträt (`PortraitContainer`, ganz), Streifen, Knopf
 „Ausbilden“: `W.WINDOWS`. Der Knopf „Optionen“ (Filter) bleibt wie in den
-anderen Fenstern. **Ungemessen:** Berufslehrer mit der Leiste der
-Fertigkeit (`ClassTrainerStatusBar`) – Hülle und Gold.
+anderen Fenstern. **Berufslehrer** (gemessen 05.10.2026, Schmiedekunst):
+oben die Leiste der Fertigkeit `ClassTrainerStatusBar` – Rahmen
+`…Left/Middle/Right` (410251), Füllung UI-StatusBar (136570) in Blau. Seit
+6.10.4.6 Rahmen weg, Füllung flach (`K.BAR_TEXTURE`) in Gold
+(`frameAccent`, je Durchlauf nachgefärbt – das Spiel färbt beim
+Aktualisieren neu), dunkle Rinne, 1 px Rand. Der Rest wie beim
+Klassenlehrer; die gewählte Zeile trägt den goldenen Schein.
 
 ### Fenster verschieben *(6.10.4.0, `ui/movewindows.lua`)*
 

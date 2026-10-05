@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.4.6] – 2026-10-05
+
+**Schadensanzeige in die Gilde ohne Fehlermeldung.** Das Spiel lässt Addons nicht selbst in die Gilde schreiben – die Meldung brach mit einem Lua-Fehler ab. Für Gilde, Sagen und Flüstern legt die Sprechblase die Meldung jetzt als eine Zeile in die Eingabezeile des Chats; mit Enter schickst du sie ab. In die Gruppe meldet sie weiter direkt.
+
+**Berufslehrer in Gold.** Die Leiste mit deinem Fertigkeitsstand oben im Fenster ist flach und golden statt blau mit grauem Rahmen.
+
+### Technisch
+
+- **In den Chat melden** (`ui/damagemeter.lua`), gemessen 05.10.2026: an die Gilde → `ADDON_ACTION_BLOCKED` („geschützte Funktion UNKNOWN()“, `damagemeter.lua:2365` im `pcall`), obwohl der Aufruf synchron im Klick lief. `pcall` fängt eine Sperre nicht – der Spieler sah einen Lua-Fehler, gemeldet wurde nichts. Selbst geschrieben wird nur noch in `DM.DIRECT` (Gruppe – gemessen; Schlachtzug, Instanz – dieselbe Sorte, ungemessen). Gilde, Sagen, Flüstern: `DM.OneLine` fasst Kopf und Plätze in **eine** Zeile (ganze Plätze, höchstens 255 Bytes samt „/g “, „/s “ bzw. „/w Name “), `DM.ToChatBox` legt sie über `ChatFrame_OpenChat` (sonst `ChatFrameUtil.OpenChat`) in die Eingabezeile; Enter sendet – dann schreibt das Spiel. Menü: „Gilde (Enter sendet)“ usw., Hinweis im eigenen Chat. Ungemessen: ob die Eingabezeile auf Forever so aufgeht (sonst ein Hinweis, kein Fehler).
+- **Berufslehrer** (`ui/classtrainer.lua`), gemessen (Schmiedekunst): `ClassTrainerStatusBar` mit Rahmen `…Left/Middle/Right` (410251) und blauer Füllung (136570). Rahmen weg, Füllung `K.BAR_TEXTURE` in Gold, je Durchlauf nachgefärbt, wenn das Spiel sie umfärbt (nur bei Abweichung), dunkle Rinne, 1 px Rand. Bericht: „Leiste der Fertigkeit flach“ (beim Klassenlehrer „–“).
+- **Gemessen:** Zauberbuch und Talente – die Linie hinter den Überschriften steht (Bildschirmfoto). Gilde „Info“ passt. Questtext (Quest annehmen), Questlog an der Karte, Klassenlehrer, Händler ohne Rest.
+- `load_test.lua`: Gilde/Sagen/Flüstern nichts gesendet, eine Zeile mit „/g “, „/w Freund “, „/s “ in der Eingabezeile, Hinweis auf Enter; Gruppe weiter direkt; 30 Plätze → höchstens 255 Bytes, nur ganze; ohne oder mit fehlerhafter Eingabezeile ein Hinweis. Lehrer: Rahmen weg, flach, Gold, nicht je Durchlauf neu gefärbt, nach Umfärben des Spiels wieder Gold, Bericht. Gegenproben: 12, alle gefangen – eine erst nach geschärftem Test.
+
 ## [6.10.4.5] – 2026-10-05
 
 **Der Reiter „Info“ der Gilde ohne Pergament.** Nachricht des Tages, Gildeninformation und Gildenneuigkeiten stehen jetzt auf ruhigen dunklen Flächen statt auf braunem Pergament mit grauen Rändern und Holzleiste.

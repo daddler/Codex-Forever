@@ -2346,19 +2346,59 @@ function DM.ReportChannels()
     local inst = _G.LE_PARTY_CATEGORY_INSTANCE
     if inst and Has(_G.IsInGroup, inst) then list[#list + 1] = { value = "INSTANCE_CHAT", text = "Instanz" } end
     if Has(_G.IsInGroup) and not Has(_G.IsInRaid) then list[#list + 1] = { value = "PARTY", text = "Gruppe" } end
-    if Has(_G.IsInGuild) then list[#list + 1] = { value = "GUILD", text = "Gilde" } end
-    list[#list + 1] = { value = "SAY", text = "Sagen" }
+    if Has(_G.IsInGuild) then list[#list + 1] = { value = "GUILD", text = "Gilde (Enter sendet)" } end
+    list[#list + 1] = { value = "SAY", text = "Sagen (Enter sendet)" }
     if Has(_G.UnitIsPlayer, "target") and not Has(_G.UnitIsUnit, "target", "player") then
         local t = K.Plain(_G.UnitName and _G.UnitName("target"))
-        if type(t) == "string" then list[#list + 1] = { value = "WHISPER", text = "Flüstern an " .. t, target = t } end
+        if type(t) == "string" then list[#list + 1] = { value = "WHISPER", text = "Flüstern an " .. t .. " (Enter sendet)", target = t } end
     end
     return list
 end
 
--- Melden. Liefert, ob etwas gesendet wurde.
+-- Selbst schreiben nur in die Gruppe (6.10.4.6). Gemessen 04.10.2026:
+-- eine Meldung an die Gruppe kommt an. Gemessen 05.10.2026: an die Gilde
+-- -> ADDON_ACTION_BLOCKED (geschuetzte Funktion), obwohl der Klick ein
+-- Tastendruck war - und pcall faengt das nicht ab, der Spieler sieht einen
+-- Lua-Fehler. Gilde, Sagen und Fluestern (die zwei letzten ungemessen,
+-- dieselbe Sorte) gehen deshalb in die Eingabezeile des Chats: eine Zeile,
+-- Enter sendet - dann schreibt das Spiel selbst, und das darf es immer.
+-- Schlachtzug und Instanz wie die Gruppe (ungemessen, dieselbe Sorte).
+DM.DIRECT = { PARTY = true, RAID = true, INSTANCE_CHAT = true }
+DM.SLASH = { GUILD = "/g ", SAY = "/s " }
+DM.LINE_MAX = 255   -- Bytes, nicht Zeichen: so zaehlt die Eingabezeile
+
+-- Alle Zeilen in einer, ganze Plaetze, hoechstens `max` Bytes.
+function DM.OneLine(lines, max)
+    local s = lines[1]
+    for i = 2, #lines do
+        local add = (i == 2 and " " or " · ") .. lines[i]
+        if #s + #add > max then break end
+        s = s .. add
+    end
+    return s
+end
+
+-- In die Eingabezeile des Chats, nicht gesendet.
+function DM.ToChatBox(text)
+    local open = _G.ChatFrame_OpenChat or (type(_G.ChatFrameUtil) == "table" and _G.ChatFrameUtil.OpenChat)
+    if type(open) ~= "function" then return false end
+    return (pcall(open, text))
+end
+
+-- Melden. Liefert, ob etwas gesendet (oder in die Eingabezeile gelegt) wurde.
 function DM.Report(w, channel, target)
     local lines, why = DM.ReportLines(w)
     if not lines then Note(why) return false end
+    if not DM.DIRECT[channel] then
+        local prefix = channel == "WHISPER" and type(target) == "string" and ("/w " .. target .. " ") or DM.SLASH[channel]
+        if not prefix then Note("Diesen Kanal kennt WeintCodex nicht.") return false end
+        if not DM.ToChatBox(prefix .. DM.OneLine(lines, DM.LINE_MAX - #prefix)) then
+            Note("Die Eingabezeile des Chats ließ sich nicht öffnen.")
+            return false
+        end
+        Note("Die Meldung steht in der Eingabezeile – Enter sendet sie. Selbst schreiben darf ein Addon nur in die Gruppe.")
+        return true
+    end
     local send = (_G.C_ChatInfo and _G.C_ChatInfo.SendChatMessage) or _G.SendChatMessage
     if not send then Note("Der Client bietet keinen Weg, in den Chat zu schreiben.") return false end
     for _, line in ipairs(lines) do
@@ -2555,7 +2595,7 @@ K.Register({
             B:Advanced()
             B:Section("In den Chat melden")
             B:Row({ type = "toggle", label = "Knopf in der Kopfzeile", key = "reportButton",
-                    description = "Die Sprechblase meldet die ersten Plätze in Gruppe, Schlachtzug, Gilde, Sagen oder als Flüstern an dein Ziel." },
+                    description = "Die Sprechblase meldet die ersten Plätze in Gruppe oder Schlachtzug. Für Gilde, Sagen oder Flüstern an dein Ziel legt sie die Meldung in die Eingabezeile – Enter sendet; selbst schreiben darf ein Addon dort nicht." },
                   { type = "slider", label = "Plätze", key = "reportLines", min = 1, max = 10, step = 1,
                     format = function(v) return tostring(v) end })
             B:Note("Gemeldet wird nur nach dem Kampf: im Kampf hält das Spiel die Zahlen geheim, und eine Meldung mit Lücken wäre falsch. Beispielzahlen aus dem Testmodus werden nie gemeldet.")
