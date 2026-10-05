@@ -1526,7 +1526,11 @@ hellen runden Rahmen des Spiels (`.ChatEditBox` Left/Mid/Right) – seit
 (`CO.SkinMembers`, Beta-Test „etwas besser einarbeiten“): grauer Rand
 (`InsetFrame.NineSlice`), Leder hinter dem Bildlauf (374154) und die zwei
 Bänder je Zeile (410251, 131128) weg – ohne Innenfläche darüber, denn
-6.6.3.3 wollte sie nicht verdunkelt (`W.INSET_KEEP` bleibt).
+6.6.3.3 wollte sie nicht verdunkelt (`W.INSET_KEEP` bleibt). Seit
+6.10.4.4 auch in der Ansicht „Mitglieder groß“ (gemessen): die
+Spaltenköpfe (`MemberList.ColumnDisplay`) trugen einen zweiten grauen
+Rahmen (`InsetBorder*`) und Marmor (`Background`, 374155) – weg
+(`CO.COLUMN_PARTS`); der Rahmen der Liste Bild für Bild.
 
 ## Bedrohung an den Plaketten *(6.9.0.8, `ui/nameplates.lua`)*
 

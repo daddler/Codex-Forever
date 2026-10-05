@@ -7556,6 +7556,14 @@ do
         end
         local mInset, mNine, mBar = stub.NewObject("Frame"), stub.NewObject("Frame"), stub.NewObject("Frame")
         mInset.NineSlice, members.InsetFrame = mNine, mInset
+        local nineEdge = stub.NewObject("Texture")
+        mNine.GetRegions = function() return nineEdge end
+        -- 6.10.4.4, Ansicht "Mitglieder gross": Spaltenkoepfe mit zweitem Rahmen und Marmor.
+        local cols = stub.NewObject("Frame")
+        local COLS = { "Background", "InsetBorderTop", "InsetBorderLeft", "InsetBorderTopLeft", "InsetBorderTopRight",
+                       "InsetBorderBottomLeft" }   -- gemessen
+        for _, k in ipairs(COLS) do cols[k] = stub.NewObject("Texture") end
+        members.ColumnDisplay = cols
         mBar.Background, members.ScrollBar = FileTex(374154), mBar
         local mBox, mTarget = stub.NewObject("Frame"), stub.NewObject("Frame")
         mBox.ScrollTarget, members.ScrollBox = mTarget, mBox
@@ -7602,7 +7610,10 @@ do
         assert(rep:find("Gilde & Communitys (Stil ruhig): Liste Fläche · Chat Fläche · Mitglieder Fläche · Eingabe flach", 1, true), "Bericht: " .. rep)
         assert(edit.Left:GetAlpha() == 0 and edit.Mid:GetAlpha() == 0 and edit.Right:GetAlpha() == 0 and CO.fields[edit],
             "Eingabezeile behaelt den hellen Rahmen des Spiels")
-        assert(mNine:GetAlpha() == 0 and mBar.Background:GetAlpha() == 0, "Rand oder Leder der Mitgliederliste bleibt")
+        assert(mNine:GetAlpha() == 0 and nineEdge:GetAlpha() == 0 and mBar.Background:GetAlpha() == 0, "Rand oder Leder der Mitgliederliste bleibt")
+        for _, k in ipairs(COLS) do
+            assert(cols[k]:GetAlpha() == 0, "Rahmen oder Marmor der Spaltenkoepfe bleibt: " .. k)
+        end
         assert(band1:GetAlpha() == 0 and band2:GetAlpha() == 0 and rankIcon:GetAlpha() == 1, "Baender der Zeile bleiben oder Rang weg")
         assert(not W.Insets[mInset], "Mitgliederliste verdunkelt (6.6.3.3: Normalzustand)")
         assert(rep:find("Zeilen ohne Band 2", 1, true), "Bericht: " .. rep)

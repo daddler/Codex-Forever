@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.4.4] – 2026-10-05
+
+**Gildenmitglieder ohne hellen Rand.** In der großen Mitgliederansicht saß um die Liste und die Spaltenköpfe noch ein grauer Rahmen, hinter den Köpfen Marmor – beides ist weg.
+
+### Technisch
+
+- **Mitgliederliste, Ansicht „Mitglieder groß“** (`ui/community.lua`, `CO.SkinMembers`), Beta-Test mit 6.10.4.3: „ein hellerer Rand, das ist noch fehlerhaft“. `/wcui fenster` auf dem Reiter: die Spaltenköpfe `MemberList.ColumnDisplay` tragen einen **zweiten** grauen Rahmen (`InsetBorderTop/Left/TopLeft/TopRight/BottomLeft`, „UI-Frame-Inner*“) und Marmor (`Background`, 374155) – in 6.10.4.3 nicht gemessen, weil nur die kleine Ansicht neben dem Chat vorlag. Weg (`CO.COLUMN_PARTS`, je Durchlauf). Der Rahmen der Liste (`InsetFrame.NineSlice`) wird jetzt zusätzlich Bild für Bild ausgeblendet – nur den Rahmen auf 0 zu setzen, ließ sich im Bericht nicht von „sichtbar“ unterscheiden.
+- **Gemessen mit 6.10.4.3:** Gildenbank ohne Wappen, Mitgliederzeilen ohne Bänder (Rang, Klasse, Namensfarben bleiben) – „passt alles soweit“.
+- `load_test.lua`: alle gemessenen Teile der Spaltenköpfe weg (Namen fest im Test, nicht aus `CO.COLUMN_PARTS` – sonst prüft der Test die Liste gegen sich selbst), jedes Bild des Rahmens weg. Gegenproben: 5, alle gefangen – eine erst nach dem festen Namen im Test.
+
 ## [6.10.4.3] – 2026-10-05
 
 **Die Linie hinter den Überschriften, zweiter Anlauf.** Im Zauberbuch und an den Talentbäumen lag die feine Linie genau zwischen zwei Bildpunkten und wurde deshalb nicht gezeichnet. Jetzt liegt sie auf ganzen Bildpunkten.

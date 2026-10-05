@@ -70,6 +70,14 @@ CO.fields = setmetatable({}, { __mode = "k" })
 -- Rang, Anwesenheit, Sprachchat, Namen in ihren Farben und das
 -- Wasserzeichen der Gilde bleiben.
 CO.ROW_FILES = { [410251] = true, [131128] = true }
+-- Ansicht "Mitglieder gross" (6.10.4.4, gemessen 05.10.2026, Beta-Test:
+-- "ein hellerer Rand"): die Spaltenkoepfe (MemberList.ColumnDisplay)
+-- tragen einen zweiten grauen Rahmen (InsetBorder*, "UI-Frame-Inner*")
+-- und Marmor (Background, 374155). Und der Rahmen der Liste
+-- (InsetFrame.NineSlice) jetzt Bild fuer Bild - nur der Rahmen auf 0
+-- reichte nicht sicher.
+CO.COLUMN_PARTS = { "Background", "InsetBorderTop", "InsetBorderBottom", "InsetBorderLeft", "InsetBorderRight",
+                    "InsetBorderTopLeft", "InsetBorderTopRight", "InsetBorderBottomLeft", "InsetBorderBottomRight" }
 CO.rows = setmetatable({}, { __mode = "k" })
 
 S.SCOPES[CO.HOST] = CO.STYLE
@@ -107,7 +115,14 @@ end
 -- neue Tabelle (W.Regions/W.Children mit Kennung).
 function CO.SkinMembers(m)
     local inset = m.InsetFrame
-    if IsFrame(inset) and IsFrame(inset.NineSlice) then Gone(inset.NineSlice) end
+    if IsFrame(inset) and IsFrame(inset.NineSlice) then
+        Gone(inset.NineSlice)
+        for _, r in ipairs(W.Regions(inset.NineSlice, "coNine", 0)) do Gone(r) end
+    end
+    local cd = m.ColumnDisplay
+    if IsFrame(cd) then
+        for _, key in ipairs(CO.COLUMN_PARTS) do Gone(cd[key]) end
+    end
     local bar = m.ScrollBar
     if IsFrame(bar) then Gone(bar.Background) end
     local box = m.ScrollBox

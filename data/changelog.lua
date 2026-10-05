@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.4.4",
+        date    = "05.10.2026",
+        notes   = {
+            "|cff7C6CFFGildenmitglieder ohne hellen Rand.|r In der großen Mitgliederansicht saß um die Liste und die Spaltenköpfe noch ein grauer Rahmen, hinter den Köpfen Marmor – beides ist weg.",
+        },
+    },
+    {
         version = "6.10.4.3",
         date    = "05.10.2026",
         notes   = {
