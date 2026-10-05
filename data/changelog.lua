@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.10.4.5",
+        date    = "05.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Reiter „Info“ der Gilde ohne Pergament.|r Nachricht des Tages, Gildeninformation und Gildenneuigkeiten stehen jetzt auf ruhigen dunklen Flächen statt auf braunem Pergament mit grauen Rändern und Holzleiste.",
+        },
+    },
+    {
         version = "6.10.4.4",
         date    = "05.10.2026",
         notes   = {

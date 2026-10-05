@@ -7617,6 +7617,36 @@ do
         assert(band1:GetAlpha() == 0 and band2:GetAlpha() == 0 and rankIcon:GetAlpha() == 1, "Baender der Zeile bleiben oder Rang weg")
         assert(not W.Insets[mInset], "Mitgliederliste verdunkelt (6.6.3.3: Normalzustand)")
         assert(rep:find("Zeilen ohne Band 2", 1, true), "Bericht: " .. rep)
+        -- 6.10.4.5 gemessen: Reiter "Info" - Pergament, Kopfbalken und
+        -- Holzleiste je Flaeche, graue Raender am Rahmen, Leder am Bildlauf.
+        local det = stub.NewObject("Frame")
+        local function Atl(a)
+            local t = stub.NewObject("Texture")
+            t.GetAtlas = function() return a end
+            return t
+        end
+        local eL, eTL2, other = Atl("!UI-Frame-InnerLeftTile"), Atl("UI-Frame-InnerTopLeft"), Atl("talents-sheen-node")
+        det.GetRegions = function() return eL, eTL2, other end
+        local info, news = stub.NewObject("Frame"), stub.NewObject("Frame")
+        local parch, head1, bar2 = FileTex(410251), FileTex(410251), FileTex(130968)
+        local motd = stub.NewObject("FontString")
+        motd._text, motd._font = "Nachricht des Tages", true
+        info.GetRegions = function() return parch, head1, bar2, motd end
+        local nParch, nBar = FileTex(410251), stub.NewObject("Frame")
+        nBar.Background = FileTex(374154)
+        news.GetRegions = function() return nParch end
+        news.ScrollBar = nBar
+        det.Info, det.News = info, news
+        cf.GuildDetailsFrame = det
+        CO.Update(cf)
+        assert(eL:GetAlpha() == 0 and eTL2:GetAlpha() == 0 and other:GetAlpha() == 1, "graue Raender des Info-Reiters bleiben (oder Fremdes weg)")
+        assert(parch:GetAlpha() == 0 and head1:GetAlpha() == 0 and bar2:GetAlpha() == 0 and nParch:GetAlpha() == 0
+            and W.OwnBgDone[info] and W.OwnBgDone[news], "Pergament oder Leisten im Info-Reiter bleiben")
+        assert(nBar.Background:GetAlpha() == 0, "Leder am Bildlauf der News bleibt")
+        assert(motd:GetAlpha() == 1, "Ueberschrift im Info-Reiter ausgeblendet")
+        local rep3 = table.concat(CO.Report(cf, {}), "\n")
+        assert(rep3:find("Info: Flächen 2, Ränder weg 2", 1, true), "Bericht: " .. rep3)
+        cf.GuildDetailsFrame = nil
         cf.ChatEditBox = nil
         CO.Update(cf)
         local rep2 = table.concat(CO.Report(cf, {}), "\n")

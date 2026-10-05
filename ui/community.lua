@@ -79,6 +79,16 @@ CO.ROW_FILES = { [410251] = true, [131128] = true }
 CO.COLUMN_PARTS = { "Background", "InsetBorderTop", "InsetBorderBottom", "InsetBorderLeft", "InsetBorderRight",
                     "InsetBorderTopLeft", "InsetBorderTopRight", "InsetBorderBottomLeft", "InsetBorderBottomRight" }
 CO.rows = setmetatable({}, { __mode = "k" })
+-- Reiter "Info" (6.10.4.5, gemessen 05.10.2026, Beta-Test: "muss auch
+-- noch angeglichen werden"): CommunitiesFrameGuildDetailsFrame mit zwei
+-- Flaechen - Info (Nachricht des Tages, Gildeninformation) und News -,
+-- je Pergament und Kopfbalken (410251), dazwischen eine Holzleiste
+-- (130968, Bar2Left), graue Raender je Flaeche (InsetBorder*, auch "...2",
+-- "UI-Frame-Inner*") und Leder hinter dem Bildlauf der News (374154).
+-- Die Flaechen werden Innenflaechen wie ueberall (W.OwnBackground: eigene
+-- Bilder weg, Schatten und Kante in Gold ueber ui/calm.lua), die Raender
+-- weg. Ueberschriften, Texte und "Log ansehen" bleiben.
+CO.DETAIL_PANES = { "Info", "News" }
 
 S.SCOPES[CO.HOST] = CO.STYLE
 W.HOSTED[CO.HOST] = W.HOSTED[CO.HOST] or {}
@@ -145,6 +155,43 @@ function CO.SkinMembers(m)
     return n
 end
 
+function CO.Details(f)
+    local d = f.GuildDetailsFrame
+    if not IsFrame(d) then d = _G.CommunitiesFrameGuildDetailsFrame end
+    return IsFrame(d) and d or nil
+end
+
+local function AtlasOf(r)
+    if type(r.GetAtlas) ~= "function" then return nil end
+    local ok, a = pcall(r.GetAtlas, r)
+    a = ok and K.Plain(a) or nil
+    return type(a) == "string" and a or nil
+end
+
+-- Je Durchlauf (die Raender sind Bilder am Rahmen, ohne neue Tabelle);
+-- die Flaechen einmal je Flaeche (W.OwnBackground merkt sich das).
+function CO.SkinDetails(det)
+    local panes, edges = 0, 0
+    for _, r in ipairs(W.Regions(det, "coDetail", 0)) do
+        local a = AtlasOf(r)
+        if a and a:find("UI%-Frame%-Inner") then
+            Gone(r)
+            edges = edges + 1
+        end
+    end
+    for _, key in ipairs(CO.DETAIL_PANES) do
+        local pane = det[key]
+        if not IsFrame(pane) then pane = _G["CommunitiesFrameGuildDetailsFrame" .. key] end
+        if IsFrame(pane) then
+            W.OwnBackground(pane)
+            local bar = pane.ScrollBar
+            if IsFrame(bar) then Gone(bar.Background) end
+            panes = panes + 1
+        end
+    end
+    return panes, edges
+end
+
 local function Column(f, anchor, corner, accent)
     local c = GC.surfaceRaised
     local col = { anchor = anchor }
@@ -193,6 +240,9 @@ function CO.Update(f)
     Ensure(f, d, "Mitglieder", CO.Members(f), nil, accent)
     local members = CO.Members(f)
     d.rows = members and CO.SkinMembers(members) or 0
+    local det = CO.Details(f)
+    d.panes, d.edges = 0, 0
+    if det then d.panes, d.edges = CO.SkinDetails(det) end
     d.edit = false
     if IsFrame(edit) then
         for _, key in ipairs(CO.EDIT_PARTS) do
@@ -222,7 +272,7 @@ function CO.Report(f, out)
         parts = parts .. (parts == "" and "" or " · ") .. key .. " "
             .. (col and (col.on and "Fläche" or "Fläche (Spalte zu)") or "FEHLT")
     end
-    out[#out + 1] = string.format("   %s (Stil %s): %s · Eingabe %s · Zeilen ohne Band %d", CO.LABEL, CO.STYLE.name, parts,
-        d.edit and "flach" or "nicht gefunden", d.rows or 0)
+    out[#out + 1] = string.format("   %s (Stil %s): %s · Eingabe %s · Zeilen ohne Band %d · Info: Flächen %d, Ränder weg %d",
+        CO.LABEL, CO.STYLE.name, parts, d.edit and "flach" or "nicht gefunden", d.rows or 0, d.panes or 0, d.edges or 0)
     return out
 end

@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.10.4.5] – 2026-10-05
+
+**Der Reiter „Info“ der Gilde ohne Pergament.** Nachricht des Tages, Gildeninformation und Gildenneuigkeiten stehen jetzt auf ruhigen dunklen Flächen statt auf braunem Pergament mit grauen Rändern und Holzleiste.
+
+### Technisch
+
+- **Gilde & Communitys, Reiter „Info“** (`ui/community.lua`, `CO.SkinDetails`), Beta-Test mit 6.10.4.4: „muss auch noch angeglichen werden“. Gemessen (`/wcui fenster`): `CommunitiesFrameGuildDetailsFrame` mit den Flächen `Info` und `News` – je Pergament und Kopfbalken (410251), in `Info` eine Holzleiste (130968, `Bar2Left`), am Rahmen graue Ränder (`InsetBorder*`, auch die „…2“ zwischen den Flächen, „UI-Frame-Inner*“), Leder hinter dem Bildlauf der News (374154). Flächen über `W.OwnBackground` (eigene Bilder weg, Innenfläche), Ränder je Durchlauf nach Atlas weg, Leder weg. Überschriften, Texte, „Log ansehen“ bleiben. Bericht: „Info: Flächen n, Ränder weg n“.
+- **Gemessen mit 6.10.4.4:** große Mitgliederansicht ohne hellen Rand. Zauberbuch: „Linie: 611 breit, 1.00 hoch = 1.00 Bildpunkte, **Oberkante bei Bildpunkt 918.00**“ – die Verschiebung aus 6.10.4.3 wirkt; ob die Linie im Bild zu sehen ist, steht noch aus.
+- `load_test.lua`: Ränder nach Atlas weg (Fremdes bleibt), Pergament, Kopfbalken, Holzleiste und Leder weg, Überschrift bleibt, Bericht. Gegenproben: 6, alle gefangen.
+
 ## [6.10.4.4] – 2026-10-05
 
 **Gildenmitglieder ohne hellen Rand.** In der großen Mitgliederansicht saß um die Liste und die Spaltenköpfe noch ein grauer Rahmen, hinter den Köpfen Marmor – beides ist weg.

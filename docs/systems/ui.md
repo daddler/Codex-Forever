@@ -1530,7 +1530,12 @@ Bänder je Zeile (410251, 131128) weg – ohne Innenfläche darüber, denn
 6.10.4.4 auch in der Ansicht „Mitglieder groß“ (gemessen): die
 Spaltenköpfe (`MemberList.ColumnDisplay`) trugen einen zweiten grauen
 Rahmen (`InsetBorder*`) und Marmor (`Background`, 374155) – weg
-(`CO.COLUMN_PARTS`); der Rahmen der Liste Bild für Bild.
+(`CO.COLUMN_PARTS`); der Rahmen der Liste Bild für Bild. Reiter „Info“
+seit 6.10.4.5 (`CO.SkinDetails`, gemessen): `CommunitiesFrameGuildDetailsFrame`
+mit den Flächen `Info` und `News` (Pergament und Kopfbalken 410251,
+Holzleiste 130968) → Innenflächen über `W.OwnBackground`; graue Ränder am
+Rahmen (`InsetBorder*`, auch „…2“) je Durchlauf nach Atlas weg, Leder am
+Bildlauf der News weg.
 
 ## Bedrohung an den Plaketten *(6.9.0.8, `ui/nameplates.lua`)*
 
@@ -2725,7 +2730,8 @@ Liegt die auf einem ganzen Bildpunkt, liegen beide Kanten auf halben, und
 das Spiel rundet sie auf dieselbe Zeile. `S.PixelY(t, y)` liefert den
 Versatz, mit dem die Oberkante ganz wird (je Durchlauf, gesetzt nur bei
 Änderung, unter einem Bildpunkt); Zauberbuch (`h.lineY`) und Talente
-nutzen ihn. **Regel:** eine Linie von einem Bildpunkt nie nur an ihrer
+nutzen ihn. Gemessen mit 6.10.4.4: „Oberkante bei Bildpunkt 918.00“ – die
+Verschiebung wirkt. **Regel:** eine Linie von einem Bildpunkt nie nur an ihrer
 Mitte auf eine ganze Koordinate hängen – an einer Kante verankern oder
 `S.PixelY`. Andere Linien dieser Art sind (noch) nicht umgestellt; fällt
 eine aus, ist das der erste Verdacht.
