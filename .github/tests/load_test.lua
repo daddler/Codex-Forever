@@ -11527,7 +11527,7 @@ do
         -- Quests und Reparieren.
         s = HM.Steps({ quests = { readyCount = 3, ready = 4200 } })[1]
         assert(s.key == "quests" and s.title == "3 Quests abgabebereit" and s.detail:find("4.200 EP", 1, true)
-            and not s.action, "Quests: " .. tostring(s.title))
+            and s.action == "Auf der Karte zeigen" and s.go.map, "Quests: " .. tostring(s.title))
         assert(#HM.Steps({ quests = { readyCount = 0, ready = 0 } }) == 0, "keine Quest als Schritt")
         s = HM.Steps({ gear = { empty = {}, broken = { "Brust" } } })[1]
         assert(s.key == "repair" and s.tone == "danger" and s.detail:find("Brust", 1, true), "Reparieren fehlt")
@@ -11590,73 +11590,73 @@ do
         -- 6.11.0.2: "AUßERDEM" im Spiel - ß wird SS.
         assert(WeintCodex.Upper("Außerdem") == "AUSSERDEM" and WeintCodex.Upper("Größe") == "GRÖSSE",
             "Versal: " .. WeintCodex.Upper("Außerdem"))
+        -- Laufweite: Haar-Leerzeichen zwischen den Zeichen, Umlaute ganz.
+        assert(HM.Tracked("Stufe") == "S\226\128\138T\226\128\138U\226\128\138F\226\128\138E", "Laufweite")
+        local nae, gaps = HM.Tracked("Nä"):gsub("\226\128\138", "")
+        assert(nae == "NÄ" and gaps == 1, "Laufweite trennt Umlaute: " .. gaps .. " Luecken")
         local PX = WeintCodex.Metrics.PAD_X
         assert(HM.InnerWidth(1468) == HM.MAX_W and HM.InnerWidth(884) == 884 - 2 * PX and HM.InnerWidth(nil) == HM.MAX_W,
             "Breite innen: " .. HM.InnerWidth(1468) .. " / " .. HM.InnerWidth(884))
-        -- Kachel waechst mit den weiteren Schritten; der Weg nimmt, was bleibt.
-        assert(HM.HeroHeight(0) == HM.HERO_H and HM.HeroHeight(2) == HM.HERO_TOP + 2 * HM.EXTRA_H + HM.HERO_FOOT,
-            "Hoehe der Kachel")
-        assert(HM.PathRows(nil) == HM.MAX_PATH and HM.PathRows(10) == 1 and HM.PathRows(5000) == HM.PATH_CAP,
-            "Zeilen im Weg: " .. HM.PathRows(10) .. "/" .. HM.PathRows(5000))
-        local small = HM.PathHeight(nil, HM.HeroHeight(HM.MAX_STEPS - 1))
-        assert(HM.PathRows(small) >= 3, "kleinstes Fenster: nur " .. HM.PathRows(small) .. " Stufen im Weg")
-        -- Breites Fenster (1.000 hoch, wie im Beta-Test): weit mehr als fuenf Stufen.
-        local tall = { GetHeight = function() return 960 end }
-        assert(HM.PathRows(HM.PathHeight(tall, HM.HeroHeight(1))) >= 10, "grosses Fenster: Weg nutzt die Hoehe nicht")
+        -- Muenzen: ohne GetCoinTextureString in Worten, nie 0 fuer unbekannt.
+        assert(HM.Coins(nil) == "—" and HM.Coins(4000) == "40s", "Muenzen: " .. HM.Coins(4000))
 
-        ctx.xp = { cur = 296, max = 1400, rested = 0 }
+        -- Das Bild aus dem Entwurf: Stufe 7, zwei Quests (1.220 EP), Waffen.
+        ctx.level, ctx.xp = 7, { cur = 2160, max = 4500, rested = 10 }
+        ctx.quests = { readyCount = 2, ready = 1220 }
+        ctx.trainer.budget.money = 1280
         HM.Fill(f, ctx)
         local h = f.hero
-        assert(h.title:GetText() == "4 Waffenfertigkeiten lernbar" and h.button:IsShown(),
-            "Kachel: " .. tostring(h.title:GetText()))
-        assert(h.level:GetText() == "3" and h.class:GetText() == "Paladin", "Stufe in der Kachel")
-        assert(h.meter:IsShown() and h.xp:GetText() == "21 % bis Stufe 4", "Erfahrung: " .. tostring(h.xp:GetText()))
-        assert(not h.extras[1]:IsShown() and not h.extras[2]:IsShown() and h:GetHeight() == HM.HERO_H,
-            "erster Schritt doppelt oder Kachel zu hoch")
-        assert(f.slotCount == 2 and f.slots[1]:IsShown() and f.slots[2]:IsShown() and not f.slots[3]:IsShown()
-            and f.track:IsShown(), "Weg: " .. tostring(f.slotCount))
-        assert(f.slots[1].text:GetText() == "du bist hier" and f.slots[2].level:GetText() == "Stufe 13"
-            and f.slots[2].text:GetText():gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "") == "Dungeon " .. hot.name
-            and f.slots[2].text:GetText():find("|c", 1, true), "Weg beschriftet falsch: " .. tostring(f.slots[2].text:GetText()))
-        -- Zauber beim Namen, gleiche Namen einmal; fehlt einer, die Zahl.
-        local TRm = WeintCodex.Trainer
-        local oldInfo = TRm.SpellInfo
-        local names = { [1] = "Segen der Macht", [2] = "Segen der Macht", [3] = "Läuterung" }
-        TRm.SpellInfo = function(id) return names[id] end
-        assert(HM.SlotText({ level = 8, spells = 3, ids = { 1, 2, 3 }, dungeons = {} }) == "Segen der Macht, Läuterung",
-            "Namen: " .. HM.SlotText({ level = 8, spells = 3, ids = { 1, 2, 3 }, dungeons = {} }))
-        assert(HM.SlotText({ level = 8, spells = 2, ids = { 1, 9 }, dungeons = { "A" } }) == "Dungeon A · 2 neue Zauber",
-            "fehlender Name: " .. HM.SlotText({ level = 8, spells = 2, ids = { 1, 9 }, dungeons = { "A" } }))
-        TRm.SpellInfo = oldInfo
-        -- Mehr als fuenf Stufen, wenn Platz ist (A: der Weg schaut weiter voraus).
-        local many = {}
-        for l = 6, 30, 2 do many[#many + 1] = { level = l } end
-        local longCtx = { level = 5, trainer = Trainer(0, 0, 0, {}, many), dungeons = {} }
-        assert(#HM.Path(longCtx, 9) == 9 and #HM.Path(longCtx) == HM.MAX_PATH, "Weg: Zahl der Stufen falsch begrenzt")
-        HM.Fill(f, longCtx)
-        local want = HM.PathRows(HM.PathHeight(f, HM.HeroHeight(0)))
-        assert(want > HM.MAX_PATH and f.slotCount == math.min(want, #many) + 1,
-            "Weg nutzt die Hoehe nicht: " .. tostring(f.slotCount) .. " statt " .. (math.min(want, #many) + 1))
-        -- Drei Schritte: der erste gross, zwei als Zeilen in der Kachel, mit Symbol.
-        local three = { level = 5, trainer = Trainer(2, 500, 20, {}, {}, 1), quests = { readyCount = 1, ready = 100 },
+        assert(h.title:GetText() == "2 Quests abgabebereit" and h.button:IsShown()
+            and h.button._label:GetText() == "Auf der Karte zeigen", "Kachel: " .. tostring(h.title:GetText()))
+        assert(h.detail:GetText():find("1.220 EP", 1, true), "Kachel, Einzelheit: " .. tostring(h.detail:GetText()))
+        assert(h.level:GetText() == "7" and h.class:GetText() == "Paladin", "Stufe in der Kachel")
+        local plain = function(t) return (tostring(t):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")) end
+        assert(plain(h.xpLeft:GetText()) == "2.160 / 4.500 EP bis Stufe 8 · 48 %", "Erfahrung: " .. plain(h.xpLeft:GetText()))
+        assert(plain(h.xpRight:GetText()) == "nach Abgabe 75 % · erholt 10 EP", "nach Abgabe: " .. plain(h.xpRight:GetText()))
+        assert(math.abs(h.pct - 0.48) < 0.001 and math.abs(h.after - (3380 / 4500)) < 0.001 and h.legend2:IsShown(),
+            "Leiste: " .. tostring(h.pct) .. " / " .. tostring(h.after))
+        -- Ausserdem: eine Karte mit Symbol, Kosten und Fehlbetrag in Bernstein.
+        assert(f.more:IsShown() and f.more.count:GetText() == "1 weiterer Schritt", "Ausserdem: Zahl")
+        local c = f.cards[1]
+        assert(c:IsShown() and not f.cards[2]:IsShown() and c.title:GetText() == "4 Waffenfertigkeiten lernbar"
+            and c.sub:GetText() == "Beim Waffenmeister · optional" and c.iconPath == HM.ICONS.weapons,
+            "Karte: " .. tostring(c.title:GetText()))
+        assert(c.cost:GetText() == "40s" and c.short:GetText() == "es fehlen 27s 20k", "Kosten: " .. tostring(c.short:GetText()))
+        assert(c.shortColor == "warningBright", "optionaler Fehlbetrag nicht in Bernstein")
+        -- Dein Weg: acht Stufen nebeneinander, ab der eigenen.
+        local lv = HM.last.levels
+        assert(#lv == HM.WEG_COLS and lv[1].level == 7 and lv[1].current and lv[8].level == 14, "Weg: Stufen")
+        assert(f.cols[1].kind == "current" and f.cols[1].text:GetText() == "du bist hier", "Weg: du")
+        local thanes
+        for _, s2 in ipairs(f.cols) do if s2.m and s2.m.level == 13 then thanes = s2 end end
+        assert(thanes and thanes.kind == "dungeon" and thanes.text:GetText():find(hot.name, 1, true), "Weg: Dungeon bei 13")
+        assert(f.cols[2].kind == "none" and f.cols[2].level:GetText() == "8", "Weg: Stufe ohne Neues")
+        assert(f.track:IsShown() and math.abs(f.wayPct - 0.48) < 0.001, "Weg: Linie bis zur naechsten Stufe")
+        for key, path in pairs(HM.ICONS) do assert(path:find("media\\ui\\icon_"), "Symbol " .. key) end
+        -- Kosten, ohne dass das Gold reicht -> Rot beim Lehrer (Pflicht).
+        local three = { level = 5, trainer = Trainer(2, 5, 20, {}, {}, 1), quests = { readyCount = 1, ready = 100 },
                         gear = { broken = { "Brust" } }, dungeons = {} }
         HM.Fill(f, three)
-        assert(h.title:GetText() == "2 Zauber warten beim Lehrer" and h.extras[1]:IsShown() and h.extras[2]:IsShown()
-            and h:GetHeight() == HM.HeroHeight(2), "drei Schritte falsch verteilt")
-        assert(h.extras[1].title:GetText() == "Eine Quest abgabebereit" and not h.extras[1].button:IsShown()
-            and h.extras[1].iconPath == HM.ICONS.quests, "Zeile Quests")
-        assert(h.extras[2].step.key == "repair" and h.extras[2].button:IsShown(), "Zeile Reparieren")
-        for key, path in pairs(HM.ICONS) do assert(path:find("^Interface\\Icons\\"), "Symbol " .. key) end
-        assert(not h.meter:IsShown() and not h.xp:IsShown(), "Erfahrung ohne Antwort als Leiste")
-        HM.Fill(f, all)   -- passender Dungeon
+        assert(h.title:GetText() == "2 Zauber warten beim Lehrer" and f.cards[1]:IsShown() and f.cards[2]:IsShown()
+            and f.more.count:GetText() == "2 weitere Schritte", "drei Schritte falsch verteilt")
+        assert(f.cards[1].step.key == "quests" and f.cards[1].iconPath == HM.ICONS.quests
+            and not f.cards[1].cost:IsShown(), "Karte Quests")
+        assert(f.cards[2].step.key == "repair" and f.cards[2].button:IsShown(), "Karte Reparieren")
+        assert(not h.bar:IsShown() and not h.xpLeft:IsShown(), "Erfahrung ohne Antwort als Leiste")
         HM.Fill(f, { level = 3, trainer = Trainer(0, 0, 0), dungeons = {} })
         assert(h.title:GetText() == "Nichts offen – weiter leveln" and not h.button:IsShown()
-            and h.detail:GetText() == "Beim Lehrer und in den Dungeons steht gerade nichts an.",
-            "nichts offen: " .. tostring(h.title:GetText()))
-        assert(f.slotCount == 0 and f.pathEmpty:IsShown() and not f.track:IsShown(), "leerer Weg ohne Hinweis")
+            and not f.more:IsShown(), "nichts offen: " .. tostring(h.title:GetText()))
+        assert(f.wayEmpty:IsShown() and not f.track:IsShown(), "leerer Weg ohne Hinweis")
         HM.Fill(f, {})
         assert(h.level:GetText() == "–" and h.title:GetText() == "Willkommen zurück"
-            and f.pathEmpty:GetText():find("Stufe", 1, true), "ohne Stufe: " .. tostring(h.level:GetText()))
+            and f.wayEmpty:GetText():find("Stufe", 1, true), "ohne Stufe: " .. tostring(h.level:GetText()))
+        -- Quests: Knopf oeffnet die Karte nur ueber questmap (C_Map), im Kampf nicht.
+        local QMm = WeintCodex.QuestMap
+        local oldOpen, opened = QMm._OpenMap, 0
+        QMm._OpenMap = function() opened = opened + 1 return true end
+        HM.Go({ go = { map = true } })
+        QMm._OpenMap = oldOpen
+        assert(opened == 1, "Karte nicht ueber questmap geoeffnet")
         -- Ziel eines Knopfs: Dungeon vorwaehlen, dann die Seite.
         local sel, went
         local oldSel, oldGo = WeintCodex.DungeonPages.Select, nav.GoToTab

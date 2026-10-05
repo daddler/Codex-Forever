@@ -25,7 +25,8 @@ WeintCodex_ChangelogData = {
         version = "6.11.0.2",
         date    = "05.10.2026",
         notes   = {
-            "|cff7C6CFFDie Übersicht nutzt das ganze Fenster.|r Was sonst noch ansteht, steht jetzt als schmale Zeile in der großen Kachel oben. Darunter läuft dein Weg bis zum unteren Rand – mit den Zaubern beim Namen und den Dungeons, die sich öffnen. Je größer das Fenster, desto weiter schaut er voraus.",
+            "|cff7C6CFFDie Übersicht nach deinem Entwurf.|r Oben „Als Nächstes“ mit deiner Stufe, dem wichtigsten Schritt und deiner Erfahrung – schraffiert siehst du, wie weit dich die abgabebereiten Quests bringen. Darunter „Außerdem“ als eigene Karten mit Kosten in Münzen, und „Dein Weg“ zeigt die nächsten acht Stufen nebeneinander: neue Zauber, Dungeons, die sich öffnen.",
+            "|cff7C6CFFQuests auf der Karte.|r Sind Quests abgabebereit, öffnet „Auf der Karte zeigen“ die Weltkarte.",
             "|cff7C6CFFKein seltsames Zeichen mehr in Überschriften.|r Ein „ß“ in einer Überschrift in Großbuchstaben stand als kleines Zeichen zwischen den Versalien – jetzt heißt es „AUSSERDEM“.",
         },
     },

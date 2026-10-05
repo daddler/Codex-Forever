@@ -174,14 +174,13 @@ local TOUR_STEPS = {
         "Die Startseite ist kein zweites Menü. Sie beantwortet eine Frage: "
         .. E("was ist jetzt zu tun?") .. "\n\n"
         .. "Oben steht groß, was " .. E("als Nächstes") .. " dran ist, neben "
-        .. "deiner Stufe; darunter in derselben Kachel bis zu zwei weitere "
-        .. "Schritte – das Dringendste zuerst: Zauber beim " .. A("Lehrer") .. " (und "
+        .. "deiner Stufe und deiner Erfahrung; darunter unter " .. E("Außerdem") .. " bis zu "
+        .. "zwei weitere Schritte – das Dringendste zuerst: Zauber beim " .. A("Lehrer") .. " (und "
         .. "ob dein Gold reicht), Quests zur Abgabe, ein zerbrochener Gegenstand, "
         .. "ein Dungeon, für den Quests in deinem Log liegen. Ein Knopf führt "
         .. "jeweils hin.\n\n"
-        .. "Darunter " .. E("Dein Weg") .. ": die nächsten Stufen, an denen "
-        .. "etwas Neues kommt – die Zauber beim Namen, Dungeons, die sich öffnen. "
-        .. "Je größer das Fenster, desto weiter schaut er voraus." },
+        .. "Darunter " .. E("Dein Weg") .. ": die nächsten acht Stufen – wo "
+        .. "neue Zauber warten und welche Dungeons sich öffnen." },
 
     { chapter = "Der Abend", icon = ICON .. "INV_Misc_GroupLooking",
       title = "Anmeldung und Kalender",

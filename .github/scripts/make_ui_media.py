@@ -579,8 +579,133 @@ def icon_report(x, y):
     return not lines
 
 
+# ------------------------------------------------------------------
+# Startseite (6.11.0.3): Ecken mit Rahmen, Formen der Wegmarken,
+# Schraffur der Erfahrung und vier Linien-Symbole. Alles weiss; die
+# Farbe setzt das Spiel per SetVertexColor.
+# ------------------------------------------------------------------
+
+def _coverage(size, inside):
+    """Anteil je Pixel (0..1) aus 4x4 Unterabtastung; inside(px, py) in Pixeln."""
+    out = []
+    step = 1.0 / SAMPLES
+    for py in range(size):
+        for px in range(size):
+            hit = 0
+            for sy in range(SAMPLES):
+                for sx in range(SAMPLES):
+                    if inside(px + (sx + 0.5) * step, py + (sy + 0.5) * step):
+                        hit += 1
+            out.append(hit / (SAMPLES * SAMPLES))
+    return out
+
+
+def _white(cov):
+    return [(255, 255, 255, round(255 * c)) for c in cov]
+
+
+def render_round(radius, ring):
+    """16x16, Ecke oben links, Kreis um (radius, radius).
+
+    ring=False: die Flaeche AUSSERHALB des Bogens (wird in der Farbe des
+    Untergrunds gefaerbt und stanzt die Ecke aus).
+    ring=True: der Bogen selbst, 1 Bildpunkt breit, innen an der Kante -
+    er schliesst an die geraden Rahmenlinien an, die bei `radius` beginnen.
+    """
+    def inside(x, y):
+        if x > radius or y > radius:
+            return False
+        d = math.hypot(x - radius, y - radius)
+        if ring:
+            return radius - 1.0 <= d <= radius
+        return d > radius
+    return _white(_coverage(16, inside))
+
+
+def render_disc(size):
+    c = size / 2.0
+    return _white(_coverage(size, lambda x, y: math.hypot(x - c, y - c) <= c - 0.5))
+
+
+def render_diamond(size):
+    c = size / 2.0
+    return _white(_coverage(size, lambda x, y: abs(x - c) + abs(y - c) <= c - 0.5))
+
+
+def render_stripes(size, period, on):
+    """Schraeg (wie "/"), kachelbar: Periode teilt die Groesse."""
+    return _white(_coverage(size, lambda x, y: ((x + y) % period) < on))
+
+
+def _seg(px_, py_, ax, ay, bx, by, r):
+    vx, vy = bx - ax, by - ay
+    t = max(0.0, min(1.0, ((px_ - ax) * vx + (py_ - ay) * vy) / (vx * vx + vy * vy)))
+    return math.hypot(px_ - (ax + t * vx), py_ - (ay + t * vy)) <= r
+
+
+LW = 0.075   # Strichstaerke der Linien-Symbole (Feld -1..1)
+
+
+def icon_book(x, y):
+    # Ein aufgeschlagenes Buch: zwei Seiten, Ruecken in der Mitte.
+    pts = [(-0.78, -0.50), (-0.06, -0.38), (0.06, -0.38), (0.78, -0.50)]
+    lines = [((-0.78, -0.50), (-0.78, 0.50)), ((-0.78, 0.50), (0.0, 0.62)),
+             ((0.0, 0.62), (0.78, 0.50)), ((0.78, 0.50), (0.78, -0.50)),
+             ((-0.78, -0.50), (0.0, -0.38)), ((0.0, -0.38), (0.78, -0.50)),
+             ((0.0, -0.38), (0.0, 0.62))]
+    return any(_seg(x, y, a[0], a[1], b[0], b[1], LW) for a, b in lines)
+
+
+def icon_quest(x, y):
+    # Das Ausrufezeichen ueber dem Questgeber.
+    bar = inside_polygon(x, y, [(-0.16, -0.78), (0.16, -0.78), (0.09, 0.30), (-0.09, 0.30)])
+    return bar or math.hypot(x, y - 0.62) <= 0.15
+
+
+def icon_gate(x, y):
+    # Ein Tor mit Rundbogen: Eingang zum Dungeon.
+    if _seg(x, y, -0.66, 0.78, 0.66, 0.78, LW):
+        return True
+    outer = _seg(x, y, -0.66, 0.78, -0.66, -0.06, LW) or _seg(x, y, 0.66, 0.78, 0.66, -0.06, LW)
+    r = math.hypot(x, y + 0.06)
+    arch = y <= -0.06 and abs(r - 0.66) <= LW
+    inner = _seg(x, y, -0.30, 0.78, -0.30, 0.10, LW) or _seg(x, y, 0.30, 0.78, 0.30, 0.10, LW)
+    r2 = math.hypot(x, y - 0.10)
+    arch2 = y <= 0.10 and abs(r2 - 0.30) <= LW
+    return outer or arch or inner or arch2
+
+
+def icon_hammer(x, y):
+    # Ein Hammer, Stiel schraeg: reparieren.
+    # Feld: y waechst nach UNTEN - oben rechts heisst x > 0, y < 0.
+    a = 0.7071
+    u, v = (x - y) * a, (x + y) * a          # u entlang des Stiels, Kopf oben rechts
+    handle = -0.84 <= u <= 0.36 and abs(v) <= 0.08
+    head = 0.30 <= u <= 0.66 and abs(v) <= 0.44
+    return handle or head
+
+
+def make_home_media():
+    os.makedirs(OUT, exist_ok=True)
+    files = []
+    for r in (8, 12, 14):
+        files.append(("round%d_mask" % r, 16, render_round(r, False)))
+        files.append(("round%d_ring" % r, 16, render_round(r, True)))
+    files.append(("disc", 32, render_disc(32)))
+    files.append(("diamond", 32, render_diamond(32)))
+    files.append(("stripes", 32, render_stripes(32, 16, 8)))
+    for name, fn in (("icon_book", icon_book), ("icon_quest", icon_quest),
+                     ("icon_gate", icon_gate), ("icon_hammer", icon_hammer)):
+        files.append((name, ICON, render_shape(ICON, fn)))
+    for name, size, pixels in files:
+        target = os.path.join(OUT, name + ".tga")
+        write_tga(target, size, size, pixels)
+        print("geschrieben:", os.path.relpath(target, ROOT))
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
+    make_home_media()
     target = os.path.join(OUT, "arrow.tga")
     write_tga(target, SIZE, SIZE, render(ARROW))
     print("geschrieben:", os.path.relpath(target, ROOT))

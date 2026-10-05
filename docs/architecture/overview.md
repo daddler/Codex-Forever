@@ -98,31 +98,36 @@ damit als ungültige UTF-8-Folge wieder heraus.
   Nächstes?“** Forever ist ein neues Spiel, alle fangen bei Stufe 1 an –
   Schlachtzug, Anmeldung, Gildenbank und Companion stehen links in der
   Spalte, nicht hier. Aufbau:
-  * **Kachel** *(Gestalt seit 6.11.0.2)*: links ein Feld mit der Stufe
-    (ohne Stufe „–“) und der Klasse, daneben der wichtigste Schritt als
-    Überschrift mit Einzelheit und Knopf (`HM.Headline`; ohne Schritt
-    „Nichts offen – weiter leveln“, ohne Stufe „Willkommen zurück“),
-    darunter die übrigen Schritte als schmale Zeilen (die Kachel wächst
-    mit, `HM.HeroHeight`), ganz unten die Erfahrung zur nächsten Stufe
-    (`UIXPBar.Experience`, ohne Antwort keine Leiste). Der erste Schritt
-    steht nur einmal. Innen höchstens `HM.MAX_W` (1.180) breit, mittig.
+  * **Gestalt seit 6.11.0.2: der Entwurf des Spielers** (Design-Leinwand
+    „WeintCodex Übersicht“), innen höchstens `HM.MAX_W` (1.040), mittig.
+    Abweichungen, weil das Spiel es nicht hergibt: Laufweite über
+    Haar-Leerzeichen (`HM.Tracked`, U+200A in IBM Plex Sans), Newsreader
+    statt IBM Plex Serif, Knöpfe aus dem Baukasten, Symbole als eigene
+    Texturen. Runde Ecken mit Rahmen über `HM.Box` (Maske + Bogen aus
+    `media/ui/round{8,12,14}_{mask,ring}.tga`).
+  * **Als Nächstes**: Feld der Stufe (ohne Stufe „–“) mit Klasse,
+    daneben der wichtigste Schritt (Art, Satz, Einzelheit, Knopf;
+    `HM.Headline`: ohne Schritt „Nichts offen – weiter leveln“, ohne Stufe
+    „Willkommen zurück“). Darunter die Erfahrung (`UIXPBar.Experience`):
+    Zeile, Leiste mit schraffiertem Teil für abgabebereite Quests
+    (`UIXPBar.QuestXP`, „nach Abgabe …“), Legende – ohne Antwort kein Block.
   * **Schritte**: höchstens drei (`HM.MAX_STEPS`), nach
     Dringlichkeit (`HM.Steps`): Zauber beim Lehrer (mit Gold gegen
     Kosten – ohne Gold „unbekannt“, nie „reicht“), abgabebereite Quests
-    (`UIXPBar.QuestXP`), zerbrochene Gegenstände (Haltbarkeit 0), ein
-    Dungeon mit Quests im Log (`DungeonPages.QuestState` – nur
-    beantwortete Quests zählen), Waffenfertigkeiten, ein Dungeon für die
-    Stufe (nur ohne den mit Quests). Jede Zeile: Symbol (`HM.ICONS`, nur
-    Symbole, die WeintCodex schon zeigt), Satz, Einzelheit (bis zwei
-    Zeilen), Knopf zum Ziel (`HM.Go`: Dungeon vorwählen, dann die Seite).
-  * **Dein Weg** (darunter, volle Breite bis zum unteren Rand): so viele
-    Stufen, wie Platz haben (`HM.PathRows`, höchstens 14; `HM.Path(ctx,
-    max)`), an denen etwas kommt: neue Zauber beim Lehrer beim Namen
-    (`HM.SlotText`; ohne Talente und Tierausbildung, gleiche Namen einmal,
-    fehlt ein Name die Zahl) und Dungeons ab ihrer Mindeststufe in hellerer
-    Schrift – senkrecht, eine Stufe je Zeile, oben „du bist hier“. Eine
-    eigene Karte „Außerdem“ (6.11.0.1) gibt es nicht mehr – sie stand bei
-    einem Schritt fast leer.
+    (Knopf „Auf der Karte zeigen“ über `QuestMap._OpenMap`, nur
+    `C_Map.OpenWorldMap`, nie im Kampf), zerbrochene Gegenstände
+    (Haltbarkeit 0), ein Dungeon mit Quests im Log
+    (`DungeonPages.QuestState` – nur beantwortete Quests zählen),
+    Waffenfertigkeiten (`optional`: Fehlbetrag in Bernstein), ein Dungeon
+    für die Stufe (nur ohne den mit Quests). Der erste steht oben, die
+    übrigen unter **Außerdem** als Karten: Symbol (`HM.ICONS`), Satz,
+    kurze Zeile (`sub`), Kosten und Fehlbetrag in Münzen (`HM.Coins`),
+    Knopf zum Ziel (`HM.Go`). Ohne weiteren Schritt kein Abschnitt.
+  * **Dein Weg**: die nächsten acht Stufen einzeln (`HM.Levels`, aus
+    `HM.Path`): Kreis = du, Quadrat = neue Zauber beim Lehrer (ohne
+    Talente und Tierausbildung), Raute = Dungeon ab seiner Mindeststufe
+    (Namen in Blau), kleiner Punkt = nichts. Die Linie ist vom Kreis aus
+    so weit gefärbt, wie die Erfahrung zur nächsten Stufe reicht.
   * **Nicht mehr da** (Beta-Test mit Stufe 3, 6.10.4.9): Datum,
     Erfahrungsleiste (zeigt das Spiel), drei gleich schwere Spalten,
     Gegenstandsstufe, Companion-Zeile, die Zahl an „Schlachtzüge“. **Leere
@@ -134,7 +139,7 @@ damit als ungültige UTF-8-Folge wieder heraus.
     wird **einmal gebaut** und danach nur gefüllt (die alte legte bei
     jedem Öffnen einen neuen Rahmen an). Neu gefüllt bei offener Seite
     nach Stufenaufstieg, Zauber, Questlog, Gold, Haltbarkeit – gebündelt
-    (0,5 s); bei Größenänderung neu gefüllt, ohne neu zu fragen. `HM.PageHeight()` (Kachel mit allen Schritten + Weg mit drei Stufen) gegen das kleinste
+    (0,5 s). `HM.PageHeight()` (alle drei Schritte, 694) gegen das kleinste
     Fenster im Prüflauf.
 * Die Module zeichnen ausschliesslich in `WeintCodex.ContentPanel` und
   rechnen gegen dessen Grösse. Ob rechts ein Detailbereich steht oder
