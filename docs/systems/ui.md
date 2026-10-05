@@ -1074,8 +1074,9 @@ einen Mark über den Kopf bekommen. Einstellbar, welches Mark.“
   wirklich markiert hat, sagt es nicht (Index geheim) – nach dem Klick
   gilt es als markiert. Mit `/click WeintCodexAutoMarkButton` in einem
   Makro auch auf eine Taste. `load_test.lua` verbietet `SetRaidTarget`
-  im ganzen Code (wie `ReloadUI`). **Ungemessen:** ob `/tm` aus einem
-  Makro auf Forever markiert.
+  im ganzen Code (wie `ReloadUI`). **Gemessen (05.10.2026, Client 1.60.1):**
+  `/tm` aus dem Makro markiert auf Forever (Automark und Markieren per
+  Mouseover, Rückmeldung aus dem Spiel).
 - **Nie im Kampf:** der Knopf ist geschützt – gezeigt, belegt und
   versteckt wird er nur außerhalb (`pending`, `PLAYER_REGEN_ENABLED`;
   ein Klick im Kampf wirkt, der Knopf geht danach).
@@ -1374,7 +1375,8 @@ erklärt.
   der Einstellungen, „Nichts muss scrollen“). Der Entwurf lebt nur in der
   Sitzung.
 - **Ungemessen:** ob der Forever-Client einzelne Befehle oder Bedingungen
-  für Makros sperrt.
+  für Makros sperrt. Gemessen ist nur `/tm [@mouseover,harm,nodead]`
+  (05.10.2026, Markieren per Mouseover): geht.
 
 ## Die Falle `x and false or nil`
 
@@ -3185,8 +3187,9 @@ Rights Reserved“: Verhalten übernommen, kein Code.
 | welche | `MW.WINDOWS`, nur oberste (Eltern `UIParent`); `ADDON_LOADED` nimmt nachgeladene dazu |
 | Vorrang | MoveAny oder BlizzMove geladen: WeintCodex tut nichts |
 
-**Ungemessen:** ob Forever beim Setzen der Fenster aus Addon-Code etwas
-blockiert. Falls ja, nennt es die Fehlerliste von `/wcui prüfen`.
+**Gemessen (05.10.2026, Client 1.60.1):** Ziehen, Schließen, Zurück an den
+Platz des Spiels – außerhalb des Kampfes blockiert nichts. Im Kampf
+ungemessen (geschützte Fenster warten ohnehin bis danach).
 
 ### Markieren per Mouseover *(6.10.4.1, `ui/hovermark.lua`)*
 
@@ -3206,8 +3209,8 @@ eine Taste**:
 | Kampf | `PLAYER_REGEN_DISABLED` leert das Makro – im Kampf darf es sich nicht ändern, die Markierung wanderte sonst; ein Druck sagt es einmal |
 | frei | nach dem Kampf: wer tot ist oder keine Plakette hat; Gebietswechsel: alle |
 
-**Ungemessen:** ob `/tm` aus dem Makro auf Forever markiert und ob die
-mittlere Maustaste so belegt werden kann.
+**Gemessen (05.10.2026, Client 1.60.1):** `/tm` aus dem Makro markiert, und
+die Vorrang-Belegung auf der mittleren Maustaste greift.
 
 ### Würfeln um Beute *(6.10.3.1, `ui/lootroll.lua`)*
 
