@@ -45,6 +45,9 @@ local tabs = {
     -- Seit 6.6.0.0: was der Klassenlehrer lehrt (modules/trainer.lua).
     -- Ohne feature: dieselbe Auskunft, die jeder Lehrer im Spiel gibt.
     { id = "lehrer",     icon = ICON_PATH .. "nav_lehrer",     label = "Lehrer" },
+    -- Seit 6.14.0.0: Rezepte nach deiner Fertigkeit und die Lehrer der
+    -- Berufe (modules/professions.lua). Ohne feature, wie der Lehrer.
+    { id = "berufe",     icon = ICON_PATH .. "nav_berufe",     label = "Berufe" },
 
     -- Die Dungeons, ohne feature: Namen, Gebiete und Stufenbereiche stehen
     -- in data/dungeons.lua. Gildenintern sind allein die Rollen-Tipps des
@@ -2415,6 +2418,10 @@ function WeintCodex.Navigation.SwitchTo(tabId)
     elseif tabId == "lehrer" then
         if WeintCodex.Trainer and WeintCodex.Trainer.Show then
             WeintCodex.Trainer.Show()
+        end
+    elseif tabId == "berufe" then
+        if WeintCodex.Professions and WeintCodex.Professions.Show then
+            WeintCodex.Professions.Show()
         end
     elseif tabId == "materialien" then
         if WeintCodex.Materials and WeintCodex.Materials.Show then

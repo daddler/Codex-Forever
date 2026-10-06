@@ -417,6 +417,50 @@ Check("Begleiter", function(add)
     end
 end)
 
+-- Berufe (6.14.0.0): woher die Berufe-Seite Fertigkeit und Gelerntes
+-- nimmt. Ungemessen auf Forever ist, welche der Abfragen antwortet -
+-- ForeverGuide nutzt GetSkillLineInfo und GetTradeSkillRecipeLink, der
+-- Codex fragt zuerst GetProfessions und C_TradeSkillUI.
+Check("Berufe", function(add)
+    local PRO = WeintCodex.Professions
+    if not (PRO and PRO.Skills) then
+        add(SC.OPEN, "Berufe-Seite nicht geladen.")
+        return
+    end
+    local skills, answered = PRO.Skills()
+    local names = {}
+    for key, s in pairs(skills) do
+        names[#names + 1] = PRO.ProfName(key) .. " " .. s.rank .. (s.max and ("/" .. s.max) or "")
+    end
+    table.sort(names)
+    if #names > 0 then
+        add(SC.OK, "Fertigkeit gelesen: " .. table.concat(names, ", ") .. ".")
+    elseif answered then
+        add(SC.OPEN, "Der Client nennt keinen Beruf – keiner gelernt?")
+    else
+        add(SC.BAD, "Fertigkeit nicht lesbar – die Seite zeigt Rezepte nur nach Rängen.")
+    end
+    local function has(f) return type(f) == "function" and "ja" or "nein" end
+    add("", "   GetProfessions: " .. has(_G.GetProfessions) .. " · GetSkillLineInfo: " .. has(_G.GetSkillLineInfo))
+    local ts = _G.C_TradeSkillUI
+    add("", "   C_TradeSkillUI.GetAllRecipeIDs: " .. has(type(ts) == "table" and ts.GetAllRecipeIDs or nil)
+        .. " · GetTradeSkillRecipeLink: " .. has(_G.GetTradeSkillRecipeLink)
+        .. " · GetCraftRecipeLink: " .. has(_G.GetCraftRecipeLink))
+    local mem = PRO.Memory and PRO.Memory()
+    local scanned, known = {}, 0
+    for key in pairs(mem and mem.scanned or {}) do scanned[#scanned + 1] = PRO.ProfName(key) end
+    for _ in pairs(mem and mem.known or {}) do known = known + 1 end
+    table.sort(scanned)
+    if #scanned > 0 then
+        add("", "   Aus dem Berufsfenster gemerkt: " .. table.concat(scanned, ", ") .. " (" .. known .. " Rezepte)")
+    else
+        add("", "   Noch kein Berufsfenster gelesen – einmal öffnen (Rezepte), dann wiederholen")
+    end
+    if PRO.lastScan then
+        add("", "   Letzter Blick ins Berufsfenster: " .. PRO.lastScan.count .. " gelernte Rezepte erkannt")
+    end
+end)
+
 Check("Speicherbedarf", function(add)
     local kb = K.AddonKB and K.AddonKB()
     if type(kb) == "number" then

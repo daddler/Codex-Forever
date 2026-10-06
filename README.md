@@ -56,7 +56,8 @@ weiter und behält ihren eigenen Update-Kanal.
 | **Übersicht** | Was steht beim Leveln an? Stufe und Erfahrung, was beim Lehrer noch nicht gelernt ist (und ob das Gold reicht), offene Ausrüstung, Dungeons für deine Stufe. |
 | **Charakter** | Was angelegt ist — und welche deiner Charaktere der Bot kennen soll. |
 | **Lehrer** | Was dein Klassenlehrer jetzt lehrt, was bald kommt, was es kostet — mit Rechnung gegen dein Gold — und wo du Waffen lernst. |
-| **Dungeons** | Alle Instanzen, mit Gebiet und Stufenbereich. Passt meine Stufe? Wie ist die Gruppe aufzustellen? |
+| **Berufe** | Was du bei deiner Fertigkeit jetzt lernen kannst, was dir noch Punkte bringt, was neu in Forever ist — mit Reagenzien und dem nächsten Berufslehrer auf der Karte. |
+| **Dungeons** | Alle Instanzen, mit Gebiet und Stufenbereich, Eingang auf der Karte, Quests mit Vor- und Folgequest, Beute. Passt meine Stufe? Wie ist die Gruppe aufzustellen? |
 | **Gruppencheck** | Trägt jeder etwas auf jedem Platz? Ist etwas zerbrochen? Wie weit liegen die Stufen auseinander? |
 | **Schlachtzüge** | Welche Instanzen es gibt, welche Bosse darin stehen, ob du eine gespeicherte ID trägst — und je Boss, was für Tank, Heiler und Schaden zu beachten ist. |
 | **Anmeldung** | Wer hat sich für Mittwoch und Donnerstag eingetragen — mit Rolle, Klasse und Notiz. Wichtig, sobald geraidet wird. |

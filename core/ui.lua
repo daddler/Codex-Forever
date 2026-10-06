@@ -105,6 +105,14 @@ local C = {
     warningBright = {0.961, 0.741, 0.400, 1.0},
     accentDim     = {0.318, 0.275, 0.667, 1.0},
 
+    -- Schwierigkeit eines Rezepts (6.14.0.0, Berufe-Seite): die vier Toene,
+    -- in denen das Berufsfenster des Spiels sie zeigt - bekannt aus dem
+    -- Spiel, damit sie dort und hier dasselbe bedeuten. Status, nie Klasse.
+    skillOrange   = {1.000, 0.502, 0.251, 1.0},
+    skillYellow   = {1.000, 1.000, 0.000, 1.0},
+    skillGreen    = {0.251, 0.753, 0.251, 1.0},
+    skillGrey     = {0.502, 0.502, 0.502, 1.0},
+
     -- Textstufen (bright > normal > muted > dim > faint > ghost)
     textBright  = {0.969, 0.969, 0.980, 1.0},   -- F7F7FA
     textNormal  = {0.929, 0.929, 0.949, 1.0},   -- EDEDF2

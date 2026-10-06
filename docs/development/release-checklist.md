@@ -53,6 +53,8 @@ sondern fängt das Offensichtliche ab, **bevor** es Spieler melden.
 Jedes einmal öffnen. Nichts darf aussehen wie halb alt, halb neu. Wenn
 doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 
+- [ ] Berufe (`/wc berufe`): links deine Berufe mit Fertigkeit zuerst; Rezepte in Fächern mit Farben orange/gelb/grün/grau, Tooltip mit Reagenzien und Herkunft; einmal das Berufsfenster öffnen – danach steht „Gelernt“ richtig und „Bringt noch Fertigkeit“ erscheint; Lehrer: der deinen nächsten Rang lehrt oben, „Karte“ setzt die Marke; `/wcui prüfen` → Zeile „Berufe“ ablegen
+- [ ] Dungeons aus dem Abgleich: Blackrock-Tiefen mit Quests (Geber „…, im Dungeon“, „Vorher/Danach“), Herkunftszeilen „Quests: Addon ForeverGuide“ und „Beute aus Classic“; „Eingang auf der Karte“ setzt die Marke (Stratholme: zwei Knöpfe)
 - [ ] Navigationsspalte: vier Gruppen Leveln, Gruppe, Gilde, System, kein
       „Import“ mehr; Companion hat die Reiter Synchronisierung und Import.
       `/wc import` öffnet Companion mit dem Reiter Import, Companion ist

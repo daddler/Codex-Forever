@@ -114,7 +114,7 @@ local TOUR_STEPS = {
       title = "So ist das Fenster aufgebaut",
       body =
         "Links steht die Navigationsspalte, in vier Gruppen: " .. A("Leveln")
-        .. " (Übersicht, Charakter, Lehrer, Dungeons) – dein Charakter und sein Weg; "
+        .. " (Übersicht, Charakter, Lehrer, Berufe, Dungeons) – dein Charakter und sein Weg; "
         .. A("Gruppe") .. " (Gruppencheck, Schlachtzüge, Anmeldung, Kalender) – "
         .. "zusammen spielen; " .. A("Gilde") .. " (Materialien) "
         .. "und " .. A("System") .. " (Companion mit Synchronisierung und Import, "

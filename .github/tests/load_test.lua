@@ -3639,6 +3639,236 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.14.0.0: Abgleich mit ForeverGuide - Quests ohne eigene Texte (Geber
+-- und Abgabe als NPC mit Gebiet oder "im Dungeon"), Ketten, feste
+-- Belohnungen, Herkunft je Abschnitt, Eingaenge auf der Karte.
+do
+    local saved = { WeintCodex.Paragraph, _G.UnitFactionGroup, _G.C_Map, _G.C_QuestLog }
+    local ok, err = pcall(function()
+        local DP, J = WeintCodex.DungeonPages, WeintCodex.DungeonJournal
+        _G.C_QuestLog = nil   -- Namen aus dem Bestand, nicht aus einer Attrappe davor
+        -- Bestand: eingemischt, Handgepflegtes bleibt vorn.
+        local brd = J.Quests("blackrock_depths")
+        local q4126
+        for _, q in ipairs(brd) do if q.id == 4126 then q4126 = q end end
+        assert(q4126 and q4126.src == "fg" and J.QuestSource(q4126) == J.FG_SOURCE, "Quest 4126 nicht aus dem Abgleich")
+        assert(J.QuestSource(J.Quests("hall_of_thanes")[1]) == J.SOURCE, "Journal-Quest traegt die Herkunft des Abgleichs")
+        assert(J.LootSource("scholomance", "darkmaster_gandling") == J.CLASSIC_LOOT_SOURCE, "Classic-Beute ohne Classic-Herkunft")
+        assert(J.LootSource("hall_of_thanes", "faldrim_anvilmar") == J.SOURCE, "Journal-Beute als Classic ausgewiesen")
+        assert(J.Chain(4242) and J.Chain(4242).prev[1] == 4241 and J.QuestName(4241) == "Marshal Windsor", "Kette von 4242")
+        -- Einmischen ersetzt nie Handgepflegtes und ist wiederholbar - auch
+        -- wenn der Abgleich dieselben Nummern bringt.
+        local nThanes, nBrd = #J.Quests("hall_of_thanes"), #J.Quests("blackrock_depths")
+        local nOthers = #J.Others("blackrock_depths")
+        local fq, fp, fl = J.FG_QUESTS.hall_of_thanes, J.FG_PLACES[214], J.CLASSIC_LOOT.hall_of_thanes
+        local hand = J.Quests("hall_of_thanes")[1]
+        J.FG_QUESTS.hall_of_thanes = { { id = hand.id, name = "Falsch", level = 1, faction = "both" } }
+        J.FG_PLACES[214] = { map = 1, x = 0.5, y = 0.5, who = "Falsch" }
+        J.CLASSIC_LOOT.hall_of_thanes = { faldrim_anvilmar = { { 1, "Falsch", "Kopf", 1 } } }
+        J.MergeForeverGuide()
+        J.FG_QUESTS.hall_of_thanes, J.FG_PLACES[214], J.CLASSIC_LOOT.hall_of_thanes = fq, fp, fl
+        assert(#J.Quests("hall_of_thanes") == nThanes and J.Quests("hall_of_thanes")[1].name ~= "Falsch",
+            "Journal-Quest vom Abgleich ersetzt oder doppelt")
+        assert(J.Place(214).who == "Scout Riell", "Ort des Journals vom Abgleich ersetzt")
+        assert(J.Loot("hall_of_thanes", "faldrim_anvilmar")[1][2] == "Ephemeral Choker"
+            and J.LootSource("hall_of_thanes", "faldrim_anvilmar") == J.SOURCE, "Beute des Journals vom Abgleich ersetzt")
+        assert(#J.Quests("blackrock_depths") == nBrd and #J.Others("blackrock_depths") == nOthers,
+            "zweites Einmischen verdoppelt")
+        -- Geber in Worten.
+        _G.C_Map = { GetMapInfo = function(id) if id == 1426 then return { name = "Dun Morogh" } end end }
+        assert(DP.NpcText("Eigener Text", { name = "X", map = 1426 }) == "Eigener Text", "Journaltext ueberschrieben")
+        assert(DP.NpcText(nil, { name = "Ragnar Thunderbrew", map = 1426 }) == "Ragnar Thunderbrew, Dun Morogh", "Geber ohne Gebiet")
+        assert(DP.NpcText(nil, { name = "Marshal Windsor", inside = true }) == "Marshal Windsor, im Dungeon", "Geber im Dungeon")
+        assert(DP.NpcText(nil, { name = "Niemand", map = 9999 }) == "Niemand", "unbekanntes Gebiet erfunden")
+        assert(DP.NpcText(nil, nil) == nil, "Geber erfunden")
+        -- Die Seite: Texte mitschreiben.
+        local texts = {}
+        WeintCodex.Paragraph = function(parent, text, opts)
+            texts[#texts + 1] = tostring(text)
+            return saved[1](parent, text, opts)
+        end
+        _G.UnitFactionGroup = function() return "Alliance" end
+        DP.Select("blackrock_depths", nil)
+        WeintCodex.Navigation.SwitchTo("dungeons")
+        local all = table.concat(texts, "\n")
+        assert(all:find("Beginnt: Ragnar Thunderbrew, Dun Morogh", 1, true), "Geber aus dem Abgleich fehlt")
+        assert(all:find("Beginnt: Marshal Windsor, im Dungeon", 1, true), "Geber im Dungeon fehlt")
+        assert(all:find("Vorher: „Marshal Windsor“", 1, true) and all:find("Danach: „", 1, true), "Kette fehlt")
+        assert(all:find("Dazu:", 1, true), "feste Belohnung fehlt")
+        assert(all:find("Quests: Addon ForeverGuide", 1, true), "Herkunft der Quests aus dem Abgleich nicht genannt")
+        assert(all:find("Beute aus Classic", 1, true), "Classic-Beute nicht ausgewiesen")
+        assert(DP.entranceLinks == 1, "Eingang von Blackrock Depths: " .. tostring(DP.entranceLinks))
+        DP.Select("stratholme", nil)
+        WeintCodex.Navigation.SwitchTo("dungeons")
+        assert(DP.entranceLinks == 2, "Stratholme hat zwei Eingaenge: " .. tostring(DP.entranceLinks))
+        -- Boss mit Classic-Beute: die Zeile nennt Classic.
+        texts = {}
+        DP.Select("scholomance", "darkmaster_gandling")
+        WeintCodex.Navigation.SwitchTo("dungeons")
+        assert(table.concat(texts, "\n"):find("Beute aus Classic", 1, true), "Boss mit Classic-Beute ohne Hinweis")
+        assert(DP.itemRows > 0, "Classic-Beute ohne Zeilen")
+    end)
+    WeintCodex.Paragraph, _G.UnitFactionGroup, _G.C_Map, _G.C_QuestLog = saved[1], saved[2], saved[3], saved[4]
+    Check(ok, "Dungeons: Abgleich mit ForeverGuide - Geber, Ketten, Belohnungen, Herkunft, Eingaenge"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.14.0.0: Berufe - Fertigkeit und Gelerntes aus dem Client, Rezepte
+-- nach Faechern, Lehrer der Fraktion, Startseite, Selbstpruefung.
+do
+    local G = _G
+    local saved = { G.GetProfessions, G.GetProfessionInfo, G.GetNumSkillLines, G.GetSkillLineInfo, G.C_TradeSkillUI,
+                    G.GetNumTradeSkills, G.GetTradeSkillRecipeLink, G.UnitFactionGroup, G.UnitName }
+    local PRO, P = WeintCodex.Professions, WeintCodex.ProfessionData
+    local sd = WeintCodex.SavedData
+    local savedProf = sd and sd.professions
+    local ok, err = pcall(function()
+        assert(#P.PROFS == 12, "Berufe im Bestand: " .. #P.PROFS)
+        local tail = PRO.Recipes("tailoring")
+        local lines = select(2, P.RAW.tailoring:gsub("\n", ""))
+        assert(#tail == lines and #tail > 300, "Schneiderei: " .. #tail .. " Rezepte, " .. lines .. " Zeilen")
+        local withReag = 0
+        for _, r in ipairs(tail) do if #r.reagents > 0 then withReag = withReag + 1 end end
+        assert(withReag > 300, "Reagenzien nicht gelesen")
+        -- Schwierigkeit wie im Berufsfenster.
+        local r0 = { learn = 1, yellow = 10, green = 15, grey = 20 }
+        assert(PRO.Difficulty(r0, 5) == "orange" and PRO.Difficulty(r0, 12) == "yellow" and PRO.Difficulty(r0, 16) == "green"
+            and PRO.Difficulty(r0, 25) == "grey" and PRO.Difficulty({ learn = 30 }, 10) == "unavailable"
+            and PRO.Difficulty(r0, nil) == nil, "Schwierigkeit")
+        -- Fertigkeit: GetProfessions, sonst die Fertigkeitsliste, sonst nichts.
+        G.GetProfessions = function() return 1, 2, nil, nil, 3, nil end
+        G.GetProfessionInfo = function(i)
+            if i == 1 then return "Schneiderei", nil, 75, 150, 0, 0, 197 end
+            if i == 2 then return "Kräuterkunde", nil, 40, 75, 0, 0, 182 end
+            if i == 3 then return "Kochkunst", nil, 10, 75, 0, 0, 185 end
+        end
+        local skills, answered = PRO.Skills()
+        assert(answered and skills.tailoring.rank == 75 and skills.tailoring.max == 150 and skills.herbalism.rank == 40
+            and skills.cooking.rank == 10 and not skills.alchemy, "GetProfessions nicht gelesen")
+        G.GetProfessions = nil
+        G.GetNumSkillLines = function() return 2 end
+        G.GetSkillLineInfo = function(i)
+            if i == 1 then return "Berufe", true end
+            return "Schneiderei", false, nil, 30, 0, 0, 75
+        end
+        skills = PRO.Skills()
+        assert(skills.tailoring and skills.tailoring.rank == 30, "Fertigkeitsliste nicht gelesen")
+        G.GetNumSkillLines, G.GetSkillLineInfo = nil, nil
+        skills, answered = PRO.Skills()
+        assert(not answered and next(skills) == nil, "ohne Abfrage eine Fertigkeit erfunden")
+
+        -- Gelernt: ohne Berufsfenster "weiss nicht", danach der Speicher.
+        sd.professions = nil
+        local learnable = {}
+        for _, r in ipairs(tail) do
+            if r.learn and r.learn <= 75 and #learnable < 3 then learnable[#learnable + 1] = r end
+        end
+        local c0 = PRO.Categorize("tailoring", 75)
+        assert(not c0.learnedKnown and #c0.sections.now > 0 and #c0.sections.recipe > 0 and #c0.sections.known == 0,
+            "ohne Berufsfenster: lernbar/gelernt falsch")
+        for _, r in ipairs(c0.sections.now) do assert(r.trainer, "Rezept ohne Lehrer unter 'Beim Lehrer'") end
+        for _, r in ipairs(c0.sections.recipe) do assert(not r.trainer, "Lehrer-Rezept unter 'Als Rezept'") end
+        assert(PRO.Learned(learnable[1]) == nil, "ohne Berufsfenster: Gelerntes behauptet")
+        local s1, s2, s3 = learnable[1].spell, learnable[2].spell, learnable[3].spell
+        G.C_TradeSkillUI = { GetAllRecipeIDs = function() return { s1, s2, s3 } end,
+                             GetRecipeInfo = function(id) return { learned = id ~= s3 } end }
+        assert(PRO.Scan() == 2, "Berufsfenster nicht gelesen")
+        assert(PRO.Learned(learnable[1]) == true and PRO.Learned(learnable[3]) == false, "Gelernt/nicht gelernt nach dem Lesen")
+        local c1 = PRO.Categorize("tailoring", 75)
+        assert(c1.learnedKnown and #c1.sections.known + #c1.sections.skillup == 2, "Gelerntes nicht einsortiert")
+        for _, r in ipairs(c1.sections.now) do assert(r.spell ~= s1 and r.spell ~= s2, "Gelerntes als lernbar") end
+        -- Klassisches Fenster: Links.
+        G.C_TradeSkillUI = nil
+        local r4
+        for _, r in ipairs(tail) do if r.learn and r.learn <= 75 and r.spell ~= s1 and r.spell ~= s2 and r.spell ~= s3 then r4 = r break end end
+        G.GetNumTradeSkills = function() return 1 end
+        G.GetTradeSkillRecipeLink = function() return "|cffffd000|Henchant:" .. r4.spell .. "|h[x]|h|r" end
+        PRO.Scan()
+        assert(PRO.Learned(r4) == true, "Link aus dem klassischen Fenster nicht erkannt")
+        -- Neu gelernt beim Lehrer: das Ereignis traegt nach.
+        stub.FireEvent("NEW_RECIPE_LEARNED", s3)
+        assert(PRO.Learned(learnable[3]) == true, "NEW_RECIPE_LEARNED nicht gemerkt")
+        -- Je Charakter.
+        G.UnitName = function() return "Twink" end
+        assert(PRO.Learned(learnable[1]) == nil, "Gelerntes eines anderen Charakters")
+        G.UnitName = saved[9]
+
+        -- Lehrer: Fraktion, der naechste Rang zuerst.
+        -- Ein Lehrer "hier" (gleiche Karte), der den naechsten Rang NICHT lehrt,
+        -- steht trotzdem hinter denen, die ihn lehren.
+        -- Grenze 150 (Geselle): der naechste Rang ist Experte (3). Eldrin in
+        -- Elwynn lehrt nur bis 150 - steht er "hier", bleibt er trotzdem hinten.
+        local low
+        for _, t in ipairs(P.TRAINERS.tailoring) do if t[7] == 2 and t[3] and t[6] == "Alliance" then low = t end end
+        assert(low, "kein Lehrer mit Rang 2 im Bestand")
+        local oldMap = G.C_Map
+        G.C_Map = { GetBestMapForUnit = function() return low[3] end, GetMapInfo = function() return nil end }
+        local tr, need = PRO.Trainers("tailoring", "Alliance", 150)
+        G.C_Map = oldMap
+        local lowSeen = false
+        for _, t in ipairs(tr) do if t.id == low[1] then lowSeen = t.here end end
+        assert(lowSeen, "Lehrer auf der eigenen Karte nicht erkannt")
+        assert(need == 3 and #tr > 0 and tr[1].next and tr[1].rank >= 3, "naechster Rang nicht zuerst")
+        local seenOther = false
+        for _, t in ipairs(tr) do
+            if not t.next then seenOther = true end
+            assert(not (t.next and seenOther), "Lehrer des naechsten Rangs hinter einem anderen")
+        end
+        for _, t in ipairs(tr) do assert(t.faction == nil or t.faction == "Alliance", "Lehrer der Horde fuer die Allianz") end
+
+        -- Seite: deine Berufe zuerst, Rezepte und Lehrer, Spalte passt.
+        G.GetProfessions = function() return 1, 2, nil, nil, 3, nil end
+        G.UnitFactionGroup = function() return "Alliance" end
+        PRO.ShowAll(false)
+        PRO.Select("tailoring")
+        WeintCodex.Navigation.SwitchTo("berufe")
+        local d = PRO.lastDraw
+        assert(d and d.key == "tailoring" and d.skill == 75 and d.rows > 0 and d.trainers > 0, "Seite nicht gezeichnet")
+        local nav = WeintCodex.Navigation
+        assert(nav.SubNavHeight() <= nav.SubNavBudget() - nav.SubNavHeadroom(),
+            "Spalte der Berufe zu hoch: " .. nav.SubNavHeight())
+        local items = PRO.SidebarItems(PRO.Skills())
+        assert(items[1].isGroup and items[1].label == "Deine Berufe" and items[5].isGroup, "deine Berufe nicht zuerst")
+        assert(d.hidden > 0, "Spaeteres nicht zugeklappt")
+        PRO.ShowAll(true)
+        PRO.Show()
+        assert(PRO.lastDraw.hidden == 0 and PRO.lastDraw.rows >= d.rows, "Alle zeigen zeigt nicht alles")
+        PRO.ShowAll(false)
+        -- Ohne Fertigkeit: nach Raengen.
+        PRO.Select("alchemy")
+        PRO.Show()
+        assert(PRO.lastDraw.skill == nil and PRO.lastDraw.rows > 0, "Beruf ohne Fertigkeit")
+
+        -- Startseite: Schritt nur mit bekanntem Gelernten.
+        local HM = WeintCodex.Home
+        local prof = HM.Professions()
+        assert(#prof == 1 and prof[1].key == "tailoring" and prof[1].now > 0, "Startseite kennt den Beruf nicht")
+        local steps = HM.Steps({ professions = prof })
+        assert(steps[1] and steps[1].key == "profession" and steps[1].go.tab == "berufe" and steps[1].go.profession == "tailoring",
+            "Schritt Beruf fehlt")
+        PRO.Select("alchemy")
+        HM.Go(steps[1])
+        assert(PRO.Selected() == "tailoring", "Schritt schlaegt den Beruf nicht auf")
+        sd.professions = nil
+        assert(#HM.Professions() == 0, "Schritt ohne Blick ins Berufsfenster")
+
+        -- Selbstpruefung.
+        local SC = WeintCodex.UISelfCheck
+        local out = {}
+        for _, c in ipairs(SC.CHECKS) do
+            if c.name == "Berufe" then c.fn(function(mark, text) out[#out + 1] = (mark ~= "" and (mark .. " ") or "") .. text end) end
+        end
+        local txt = table.concat(out, "\n")
+        assert(txt:find("Fertigkeit gelesen:", 1, true) and txt:find("Schneiderei 75/150", 1, true), "Selbstpruefung Berufe: " .. txt)
+    end)
+    G.GetProfessions, G.GetProfessionInfo, G.GetNumSkillLines, G.GetSkillLineInfo, G.C_TradeSkillUI,
+        G.GetNumTradeSkills, G.GetTradeSkillRecipeLink, G.UnitFactionGroup, G.UnitName = unpack(saved, 1, 9)
+    if sd then sd.professions = savedProf end
+    PRO.ShowAll(false)
+    Check(ok, "Berufe: Fertigkeit, Gelerntes aus dem Berufsfenster, Faecher, Lehrer, Seite, Startseite, Selbstpruefung"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.13.2.0: die Regelliste zeigt nur, was fuer diesen Charakter gilt
 -- (Beta-Test: "Ich sehe in den Erinnerungen alle Erinnerungen von allen
 -- Charakteren"). Alte Begleiter-/Munitionsregeln ohne Klasse gelten nur, wo
@@ -4200,7 +4430,7 @@ end
 -- 6.5.0.0: Beute je Boss und Quests je Dungeon auf der Dungeonseite.
 do
     local ok, err = pcall(function()
-        local DP = WeintCodex.DungeonPages
+        local DP, J = WeintCodex.DungeonPages, WeintCodex.DungeonJournal
         -- Boss mit drei berichteten Gegenstaenden.
         DP.Select("hall_of_thanes", "faldrim_anvilmar")
         WeintCodex.Navigation.SwitchTo("dungeons")
@@ -4221,7 +4451,10 @@ do
         WeintCodex.Navigation.SwitchTo("dungeons")
         assert(DP.itemRows > 0, "keine Questbelohnungen auf der Dungeonseite")
         -- Ein Dungeon ohne Journal zeichnet keine einzige Gegenstandszeile.
-        DP.Select("maraudon", nil)
+        -- (Seit 6.14.0.0 hat Maraudon Quests und Beute aus dem Abgleich -
+        -- ohne Journal bleiben die Forever-Dungeons ohne Berichte.)
+        assert(not J.Has("kroldok_stronghold"), "Krol'dok Stronghold hat ein Journal")
+        DP.Select("kroldok_stronghold", nil)
         WeintCodex.Navigation.SwitchTo("dungeons")
         assert(DP.itemRows == 0, "Gegenstandszeilen in einem Dungeon ohne Journal")
     end)
@@ -4241,14 +4474,16 @@ do
         end
         DP.Select("the_deadmines", nil)
         WeintCodex.Navigation.SwitchTo("dungeons")
-        assert(DP.mapLinks == 5, "Kartenlinks in The Deadmines: " .. tostring(DP.mapLinks) .. " statt 5")
+        -- 6.14.0.0: dazu der Eingang (Westfalen) - fuenf Geber, ein Eingang.
+        assert(DP.mapLinks == 6 and DP.entranceLinks == 1,
+            "Kartenlinks in The Deadmines: " .. tostring(DP.mapLinks) .. " statt 6, Eingaenge " .. tostring(DP.entranceLinks))
         -- 6.5.1.1: jede Quest in ihrer Kachel (sieben in The Deadmines).
         assert(DP.questTiles == #J.Quests("the_deadmines", nil) or DP.questTiles == #J.Quests("the_deadmines", "alliance"),
             "Questkacheln: " .. tostring(DP.questTiles))
         assert(DP.questTiles > 0, "keine Questkachel")
         DP.Select("hall_of_thanes", nil)
         WeintCodex.Navigation.SwitchTo("dungeons")
-        assert(DP.mapLinks == 1, "Fundort der Dark Iron Map ohne Link")
+        assert(DP.mapLinks - DP.entranceLinks >= 1 and DP.entranceLinks == 1, "Fundort der Dark Iron Map ohne Link")
 
         -- Weltkarte als Attrappe.
         local oldWM, oldOpen = _G.WorldMapFrame, _G.OpenWorldMap
@@ -12298,7 +12533,7 @@ do
     local nav = WeintCodex.Navigation
     local ok, err = pcall(function()
         local want = {
-            { "uebersicht", "Leveln" }, { "charakter" }, { "lehrer" }, { "dungeons" },
+            { "uebersicht", "Leveln" }, { "charakter" }, { "lehrer" }, { "berufe" }, { "dungeons" },
             { "gruppe", "Gruppe" }, { "raids" }, { "anmeldung" }, { "kalender" },
             { "materialien", "Gilde" },
             { "companion", "System" }, { "settings" },

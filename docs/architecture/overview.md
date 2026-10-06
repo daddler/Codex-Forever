@@ -89,8 +89,11 @@ damit als ungültige UTF-8-Folge wieder heraus.
   Gruppen, je eine Frage:
   * **Leveln** – mein Charakter und sein Weg: Übersicht (das Cockpit:
     was jetzt wichtig ist), Charakter (Zustand), Lehrer (Wissen über die
-    Entwicklung der Klasse, bewusst eigenständig), Dungeons
-    (nachschlagen; die Übersicht verlinkt nur, sie ersetzt es nicht).
+    Entwicklung der Klasse, bewusst eigenständig), Berufe (seit
+    6.14.0.0: Rezepte nach deiner Fertigkeit, Berufslehrer;
+    `modules/professions.lua`, Details in `docs/systems/character.md`),
+    Dungeons (nachschlagen; die Übersicht verlinkt nur, sie ersetzt es
+    nicht).
   * **Gruppe** – zusammen spielen: Gruppencheck (Bereitschaft),
     Schlachtzüge (Wissen), Anmeldung und Kalender (Organisation).
   * **Gilde** – Materialien.
@@ -158,7 +161,11 @@ damit als ungültige UTF-8-Folge wieder heraus.
     6.11.0.3 zeigt eine Spalte mit Zaubern oder Dungeon beim Drüberfahren
     die Namen (`HM.ColumnLines`). Unter einer Stufe stehen zwei Zeilen als
     zwei Texte (`HM.ColumnText`, seit 6.13.4.0): erster Dungeon, dann der
-    zweite, bei mehr „+N weitere“, sonst die Zauber. Vorher standen zwei
+    zweite, bei mehr „+N weitere“, sonst die Zauber.
+    **Schritt „Beruf“** (seit 6.14.0.0, `HM.Professions`): Rezepte beim
+    Berufslehrer, die du jetzt lernen kannst – nur, wenn das Gelernte aus
+    deinem Berufsfenster bekannt ist (sonst wäre „lernbar“ geraten);
+    Knopf „Zu den Berufen“ schlägt den Beruf auf. Vorher standen zwei
     Dungeons mit Zeilenumbruch in einem einzeiligen Text – das Spiel
     zeigte „Wailing Caverns…“ und verschluckte The Deadmines.
     Die Stufen der klassischen Dungeons sind die von Classic

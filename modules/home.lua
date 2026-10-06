@@ -180,7 +180,25 @@ function HM.Context()
     ctx.fit, ctx.nextUp = HM.Dungeons(ctx.level, ctx.faction)
     ctx.dungeonQuests = HM.DungeonQuests(ctx.faction)
     ctx.dungeons = AllDungeons(ctx.faction)
+    ctx.professions = HM.Professions()
     return ctx
+end
+
+-- Deine Berufe mit Rezepten beim Lehrer (6.14.0.0) - nur, wo das Gelernte
+-- aus dem Berufsfenster bekannt ist; sonst waere "lernbar" geraten.
+-- { { key, name, rank, max, now }, ... }, die meisten zuerst.
+function HM.Professions()
+    local PRO = WeintCodex.Professions
+    if not (PRO and PRO.Skills and PRO.Summary) then return {} end
+    local out = {}
+    for key, s in pairs(PRO.Skills()) do
+        local sum = PRO.Summary(key, s.rank)
+        if sum and sum.sure and sum.now > 0 then
+            out[#out + 1] = { key = key, name = PRO.ProfName(key), rank = s.rank, max = s.max, now = sum.now }
+        end
+    end
+    table.sort(out, function(a, b) if a.now ~= b.now then return a.now > b.now end return a.key < b.key end)
+    return out
 end
 
 --------------------------------------------------
@@ -193,6 +211,8 @@ end
 --   4 Dungeon       Quests dafuer im Log
 --   5 Waffen        Waffenfertigkeiten beim Waffenmeister
 --   6 Dungeon       passt zur Stufe (nur ohne Schritt 4)
+--   7 Beruf         Rezepte beim Berufslehrer (6.14.0.0; nur mit bekanntem
+--                   Gelernten - aus dem Berufsfenster)
 -- Hoechstens HM.MAX_STEPS. Ein Schritt: key, label, title, headline,
 -- detail (Satz in der Kachel), sub (kurze Zeile auf einer Karte unter
 -- "Ausserdem", sonst detail), cost/short (Kupfer: Kosten, Fehlbetrag -
@@ -303,6 +323,17 @@ function HM.Steps(ctx)
               go = { tab = "dungeons", dungeon = d.id } })
     end
 
+    local pr = ctx.professions and ctx.professions[1]
+    if pr then
+        local title = Plural(pr.now, "Ein Rezept lernbar", "Rezepte lernbar")
+        local detail = pr.name .. " · Fertigkeit " .. pr.rank .. (pr.max and (" / " .. pr.max) or "")
+        add({ key = "profession", label = "Beruf", title = title,
+              headline = pr.now == 1 and (pr.name .. ": ein Rezept beim Lehrer")
+                  or (pr.name .. ": " .. pr.now .. " Rezepte beim Lehrer"),
+              detail = detail, sub = "Beim Berufslehrer · " .. detail, action = "Zu den Berufen",
+              go = { tab = "berufe", profession = pr.key } })
+    end
+
     return steps
 end
 
@@ -411,6 +442,7 @@ HM.ICONS = {
     dungeonQuests = "Interface\\AddOns\\WeintCodex\\media\\ui\\icon_gate",
     dungeonFit    = "Interface\\AddOns\\WeintCodex\\media\\ui\\icon_gate",
     weapons       = "Interface\\AddOns\\WeintCodex\\media\\ui\\icon_combat",
+    profession    = "Interface\\AddOns\\WeintCodex\\media\\ui\\icon_hammer",
 }
 local UI = "Interface\\AddOns\\WeintCodex\\media\\ui\\"
 
@@ -458,6 +490,9 @@ local function Go(step)
     end
     if go.dungeon and WeintCodex.DungeonPages and WeintCodex.DungeonPages.Select then
         WeintCodex.DungeonPages.Select(go.dungeon)
+    end
+    if go.profession and WeintCodex.Professions and WeintCodex.Professions.Select then
+        WeintCodex.Professions.Select(go.profession)
     end
     local nav = WeintCodex.Navigation
     if nav and nav.GoToTab then nav.GoToTab(go.tab) end

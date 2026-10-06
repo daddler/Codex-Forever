@@ -22,6 +22,17 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.14.0.0",
+        date    = "06.10.2026",
+        notes   = {
+            "|cff7C6CFFNeu: Berufe.|r Links deine Berufe mit Fertigkeit, in der Mitte die Rezepte: was du jetzt beim Lehrer oder als Rezept lernen kannst, was dir noch Punkte bringt (in den Farben des Berufsfensters), was bald kommt – und was neu oder geändert in Forever ist. Rechts die Lehrer deiner Fraktion, der deinen nächsten Rang lehrt zuerst, mit Marke auf der Karte. Öffne einmal dein Berufsfenster, dann weiß WeintCodex, was du schon kannst. Auch mit /wc berufe.",
+            "|cff7C6CFFDungeons: viel mehr Quests.|r Blackrock-Tiefen, Düsterbruch, Schwarzfelsspitze, Uldaman, Stratholme, Scholomance und weitere haben jetzt ihre Quests – mit Geber, Abgabe, Belohnungen und welche Quest davor und danach kommt.",
+            "|cff7C6CFFEingang auf der Karte.|r Für die meisten Dungeons setzt ein Knopf die Marke am Eingang, Stratholme hat zwei.",
+            "|cff7C6CFFBeute auch in den alten Dungeons.|r Was die Bosse in Classic fallen ließen, steht jetzt dabei – als Classic-Liste gekennzeichnet, denn Forever hat die Beute überarbeitet.",
+            "|cff7C6CFFDie Übersicht kennt deine Berufe.|r Kannst du beim Berufslehrer etwas lernen, steht es als Schritt auf der Startseite.",
+        },
+    },
+    {
         version = "6.13.5.0",
         date    = "06.10.2026",
         notes   = {

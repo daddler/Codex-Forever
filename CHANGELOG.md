@@ -9,6 +9,29 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.14.0.0] – 2026-10-06
+
+**Neu: Berufe.** Links deine Berufe mit Fertigkeit, in der Mitte die Rezepte: was du jetzt beim Lehrer oder als Rezept lernen kannst, was dir noch Punkte bringt (in den Farben des Berufsfensters), was bald kommt – und was neu oder geändert in Forever ist. Rechts die Lehrer deiner Fraktion, der deinen nächsten Rang lehrt zuerst, mit Marke auf der Karte. Öffne einmal dein Berufsfenster, dann weiß WeintCodex, was du schon kannst. Auch mit /wc berufe.
+
+**Dungeons: viel mehr Quests.** Blackrock-Tiefen, Düsterbruch, Schwarzfelsspitze, Uldaman, Stratholme, Scholomance und weitere haben jetzt ihre Quests – mit Geber, Abgabe, Belohnungen und welche Quest davor und danach kommt.
+
+**Eingang auf der Karte.** Für die meisten Dungeons setzt ein Knopf die Marke am Eingang, Stratholme hat zwei.
+
+**Beute auch in den alten Dungeons.** Was die Bosse in Classic fallen ließen, steht jetzt dabei – als Classic-Liste gekennzeichnet, denn Forever hat die Beute überarbeitet.
+
+**Die Übersicht kennt deine Berufe.** Kannst du beim Berufslehrer etwas lernen, steht es als Schritt auf der Startseite.
+
+### Technisch
+
+- **Abgleich mit dem Addon ForeverGuide 1.25.6**, erzeugt statt abgetippt: `.github/scripts/import_foreverguide.py <Ordner>` liest dessen Datendateien in leerer Umgebung (`fg_dump.lua`: `setfenv` ohne `os`/`io`), den eigenen Bestand über `codex_dump.lua`, schreibt `data/dungeon_journal_fg.lua` und `data/professions.lua` und druckt einen Bericht. ForeverGuide nennt keine Lizenz – übernommen sind wie beim Dungeon Journal (6.9.0.6) nur Fakten (Nummern, Stufen, Lagen, Zuordnungen, englische Namen), keine Texte, kein Code. Bücher bewusst nicht.
+- **Dungeons** (`data/dungeon_journal_fg.lua`, `J.MergeForeverGuide` in `data/dungeon_journal.lua`): 266 Quests in 17 Dungeons ohne Ziel (abgeschrieben wird nicht), Geber/Abgabe als NPC mit Lage (`giverNpc`/`turninNpc`; „Name, Gebiet“ aus dem Client oder „im Dungeon“ – Questie legt drinnen stehende NPCs auf den Eingang, 87 ohne Ort), Klassen, Geld, Wahl- und feste Belohnungen; Vor-/Folgequest für 178 (`J.CHAIN`, nur benannte Glieder); 162 Orte; 22 Eingänge (`J.ENTRANCES`); Beute der alten Dungeons an Bossen ohne Journal-Beute – 738 an Bossen, 91 als „weitere Beute“ – mit Herkunft `classic` (`J.CLASSIC_LOOT_SOURCE`, `J.LOOT_KIND`), Qualität aus den Clienttabellen (45 ohne). Feste Zuordnungen: Ring of Law, The Seven, Balnazzar → Dathrohan, Eric/Olaf → The Lost Dwarves. Nicht übernommen: 11 Quests ohne Nummer, 2 ohne Stufe, Dropchancen, Bossfähigkeiten, Stufenbereiche (dieselben Classic-Werte). Nie ersetzt wird Handgepflegtes; zweimal einmischen ändert nichts.
+- **Dungeonseite** (`modules/dungeonpages.lua`): Ziel nur mit eigenem Text; „Beginnt/Abgabe“ über `NpcText`; „Vorher/Danach“; „Dazu:“ für feste Belohnungen; „Nur Krieger/…“; Mindeststufe darf fehlen; Herkunft je Abschnitt (`JournalSource(src)`: Journal, „Quests: Addon ForeverGuide“, „Beute aus Classic“); Knopf „Eingang auf der Karte“ (`MapLink` mit eigener Beschriftung).
+- **Berufe** (`modules/professions.lua`, `data/professions.lua`, Navigation unter Leveln, Symbol `media/icons/nav_berufe.tga` – eigener Amboss): 2.216 Rezepte in zwölf Berufen ohne „Season of Discovery“ (280 weggelassen), 223 Lehrer, Händler für Rezepte aus Classic. Rezepte als Zeilen, gelesen erst beim Aufschlagen. Fertigkeit: `GetProfessions` (sechs Plätze mit Lücken – `ipairs` hätte Kochen und Erste Hilfe verloren, der Prüflauf fand es), sonst `GetSkillLineInfo`. Gelernt: aus dem Berufsfenster (`C_TradeSkillUI`, sonst `GetTradeSkillRecipeLink`/`GetCraftRecipeLink`), je Charakter in `SavedData.professions`, `NEW_RECIPE_LEARNED` trägt nach; vorher nur ein „ja“ des Clients, sonst „ab deiner Fertigkeit, vielleicht schon gelernt“. Fächer, Schwierigkeitsfarben (`skillOrange`… neu in `core/ui.lua`), Lehrer des nächsten Rangs zuerst, Zeilen wiederverwendet. `/wc berufe`, Suche „Berufe“, Einführung.
+- **Startseite**: Schritt „Beruf“ (`HM.Professions`) nur mit bekanntem Gelernten.
+- **`/wcui prüfen`, „Berufe“**: Fertigkeit gelesen, welche Abfragen es gibt, welche Berufsfenster gemerkt sind.
+- `load_test.lua`: zwei neue Abschnitte (Dungeons aus dem Abgleich: Herkunft, Ketten, NPC-Texte, Einmischen ersetzt nichts und ist wiederholbar, Seite mit Gebern, Ketten, festen Belohnungen, Herkunftszeilen, Eingängen; Berufe: Schwierigkeit, Fertigkeit aus beiden Abfragen und ohne, Gelerntes aus beiden Fenstern, `NEW_RECIPE_LEARNED`, je Charakter, Lehrer nach Fraktion und Rang, Seite mit Spaltenhöhe, Zuklappen, Startseite, Selbstprüfung). `data_test.lua`: Journal-Regeln für Abgleich-Quests (kein abgeschriebener Text), Eingänge, Ketten mit Namen, Classic-Beute ausgewiesen; Berufe wohlgeformt (Nummern, Schwierigkeit aufsteigend – die Lernstufe darf darüber liegen –, Lehrer, Händler). Gegenproben: 36, alle gefangen – sieben erst nach geschärftem Test (Einmischen wiederholbar, Herkunft der Quests, Lehrer/Rezept, Lehrer-Reihenfolge mit einem Lehrer „hier“, Zuklappen).
+- **Ungeprüft im Spiel:** welche Abfrage Fertigkeit und Gelerntes auf Forever liefert (`/wcui prüfen`), die Seite selbst (Breiten der Karten, Spalte mit zwölf Berufen), ob die Lagen der Questgeber und Eingänge auf Forever stimmen (Classic-Kartennummern wie bisher), Speicher mit den neuen Daten.
+
 ## [6.13.5.0] – 2026-10-06
 
 **Die Übersicht schlägt keine Dungeons der anderen Fraktion mehr vor.** Wer in der Allianz spielt, bekommt Ragefire Chasm in Orgrimmar nicht mehr als „passt“, wer in der Horde spielt, Hall of Thanes und The Stockade nicht. Im Dungeonkompendium stehen weiter alle.

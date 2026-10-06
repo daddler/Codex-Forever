@@ -1468,6 +1468,109 @@ J.PLACES = {
     [95646] = { map = 1437, x = 0.5620, y = 0.4060, who = "Rethiel the Greenwarden" },
 }
 
+--------------------------------------------------
+-- Abgleich mit ForeverGuide (6.14.0.0, data/dungeon_journal_fg.lua)
+--------------------------------------------------
+-- Die erzeugte Datei ergaenzt, was hier fehlt, und ruft am Ende
+-- J.MergeForeverGuide(). Was hier steht, bleibt immer vorn und unveraendert:
+-- eine Quest, ein Ort, eine Beute des Journals wird nie ersetzt - auch dann
+-- nicht, wenn der Abgleich dieselbe Nummer bringt. Zweimal einmischen
+-- aendert nichts (der Prueflauf tut es).
+--   Quests    `src = "fg"` - ohne eigenes Ziel; Geber und Abgabe als NPC
+--             mit Lage (`giverNpc`, `turninNpc`), Herkunft J.FG_SOURCE
+--   Beute     an Bossen ohne Beute hier; J.LOOT_KIND[dungeon][boss] =
+--             "classic", Herkunft J.CLASSIC_LOOT_SOURCE
+--   Weitere   Gruppen mit `kind = "classic"`
+J.LOOT_KIND = {}
+J.ENTRANCES = J.ENTRANCES or {}
+J.CHAIN = J.CHAIN or {}
+J.CHAIN_NAMES = J.CHAIN_NAMES or {}
+
+function J.MergeForeverGuide()
+    local function entry(did)
+        local e = J.DATA[did]
+        if not e then
+            e = { loot = {}, quests = {} }
+            J.DATA[did] = e
+        end
+        e.loot, e.quests = e.loot or {}, e.quests or {}
+        return e
+    end
+    for did, list in pairs(J.FG_QUESTS or {}) do
+        local e = entry(did)
+        local have = {}
+        for _, q in ipairs(e.quests) do have[q.id] = true end
+        for _, q in ipairs(list) do
+            if not have[q.id] then
+                q.src = "fg"
+                e.quests[#e.quests + 1] = q
+                have[q.id] = true
+            end
+        end
+    end
+    for id, p in pairs(J.FG_PLACES or {}) do
+        if not J.PLACES[id] then J.PLACES[id] = p end
+    end
+    for did, bosses in pairs(J.CLASSIC_LOOT or {}) do
+        local e = entry(did)
+        for bid, list in pairs(bosses) do
+            if not e.loot[bid] then
+                e.loot[bid] = list
+                J.LOOT_KIND[did] = J.LOOT_KIND[did] or {}
+                J.LOOT_KIND[did][bid] = "classic"
+            end
+        end
+    end
+    for did, groups in pairs(J.CLASSIC_OTHERS or {}) do
+        local e = entry(did)
+        e.others = e.others or {}
+        local have = {}
+        for _, g in ipairs(e.others) do have[g.name] = true end
+        for _, g in ipairs(groups) do
+            if not have[g.name] then
+                g.kind = "classic"
+                e.others[#e.others + 1] = g
+                have[g.name] = true
+            end
+        end
+    end
+end
+
+-- Herkunft einer Beute: J.CLASSIC_LOOT_SOURCE oder J.SOURCE.
+function J.LootSource(dungeonId, bossId)
+    local k = J.LOOT_KIND[dungeonId]
+    if k and k[bossId] == "classic" and J.CLASSIC_LOOT_SOURCE then return J.CLASSIC_LOOT_SOURCE end
+    return J.SOURCE
+end
+
+-- Herkunft einer Quest.
+function J.QuestSource(q)
+    if type(q) == "table" and q.src == "fg" and J.FG_SOURCE then return J.FG_SOURCE end
+    return J.SOURCE
+end
+
+-- Eingaenge eines Dungeons ({ map, x, y, label }), leer, wenn keiner bekannt.
+function J.Entrances(dungeonId)
+    return J.ENTRANCES[dungeonId] or {}
+end
+
+-- Vor- und Folgequest: { prev = { Nummern }, next = Nummer } oder nil.
+function J.Chain(questId)
+    return J.CHAIN[questId]
+end
+
+-- Name einer Quest nach Nummer: Journal, sonst die Kettennamen.
+local questNames
+function J.QuestName(questId)
+    if not questNames then
+        questNames = {}
+        for _, e in pairs(J.DATA) do
+            for _, q in ipairs(e.quests or {}) do questNames[q.id] = q.name end
+        end
+    end
+    return questNames[questId] or J.CHAIN_NAMES[questId]
+end
+
 -- Ort einer Quest auf der Weltkarte, oder nil.
 function J.Place(questId)
     return J.PLACES[questId]

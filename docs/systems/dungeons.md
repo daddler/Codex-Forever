@@ -937,6 +937,50 @@ of Rath'mael“ gibt in der Beta beobachtet keine Erfahrung (Hinweis, kein
 *What's Training?* (Fassung 11.0.0-beta10) brachte für `data/trainer.lua`
 keine Änderung.
 
+**6.14.0.0: abgeglichen mit dem Addon ForeverGuide 1.25.6** – erzeugt,
+nicht von Hand: `.github/scripts/import_foreverguide.py <Ordner>` liest
+dessen Datendateien in einer leeren Umgebung (`fg_dump.lua`), den eigenen
+Bestand über `codex_dump.lua`, schreibt `data/dungeon_journal_fg.lua` und
+druckt einen Bericht. ForeverGuide nennt keine Lizenz; übernommen sind,
+wie beim Dungeon Journal, nur Fakten (Nummern, Stufen, Lagen,
+Zuordnungen, englische Namen) – keine Texte, kein Code. Was es bringt:
+
+* **266 Quests in 17 Dungeons** (Blackrock-Tiefen 40, Düsterbruch 36,
+  Untere/Obere Schwarzfelsspitze je 37, Uldaman 29, Stratholme 16,
+  Scholomance 12 …), dazu fehlende in Gnomeregan (9), Ruins of Lordaeron
+  (4), Scarlet Monastery (5), Wailing Caverns (2), Blackfathom Deeps und
+  Hall of Thanes (je 1). Herkunft `community` (`J.FG_SOURCE`, Questie-
+  Datenbank für Forever). **Ohne Ziel**: das Journal schreibt seine Ziele
+  selbst, abgeschrieben wird nicht. Geber und Abgabe als NPC
+  (`giverNpc`/`turninNpc`) – die Seite schreibt „Name, Gebiet“ mit dem
+  Gebiet aus dem Client, oder „Name, im Dungeon“: Questie legt NPCs, die
+  drinnen stehen, auf den Eingang; eine Marke dort zeigte vor die Tür
+  (87 Geber/Abgaben, ohne Ort). Klassenquests mit „Nur …“. Feste
+  Belohnungen neben der Wahl („Dazu:“).
+* **Vor- und Folgequest** (`J.CHAIN`, 178 Quests): „Vorher: „…““,
+  „Danach: „…““ – nur Glieder mit Namen (`J.CHAIN_NAMES` für Quests
+  außerhalb des Journals).
+* **162 Orte** von Questgebern (`J.FG_PLACES`, wie `J.PLACES`).
+* **22 Eingänge in 21 Dungeons** (`J.ENTRANCES`, Stratholme: Haupttor und
+  Dienstboteneingang): Knopf „Eingang auf der Karte“ unter der Aufstellung.
+* **Beute der alten Dungeons** an Bossen ohne Beute im Journal: 738
+  Gegenstände, 91 weitere (Truhen, seltene Gegner, Begleiter wie Gyth) als
+  „Weitere Beute“. **Herkunft `classic`** (`J.CLASSIC_LOOT_SOURCE`,
+  `J.LOOT_KIND`): die Listen stammen aus Classic (foreverchanges.pro mit
+  Dropraten von Classic-Wowhead), Forever hat die Beute überarbeitet – die
+  Seite sagt das an jedem Boss. Keine Dropchance; Qualität aus den
+  Clienttabellen, wo bekannt (45 ohne – der Client färbt selbst).
+  Zuordnung über den Namen, dazu fest: „Ring of Law: …“ → Ring of Law,
+  „Chest of The Seven“ → The Seven, Balnazzar → Grand Crusader Dathrohan,
+  Eric und Olaf → The Lost Dwarves.
+* **Nicht übernommen:** 11 Quests ohne Nummer (Excavation Site), 2 ohne
+  Stufe, Dropchancen, Fähigkeiten der Bosse (Classic, für Forever nichts
+  bestätigt), die Stufenbereiche (dieselben Classic-Werte wie hier).
+  **Nur im Codex** (bleiben): 1740, 92753, 95646, 95772, 95809.
+* **Nie ersetzt:** `J.MergeForeverGuide` mischt ein, was fehlt – eine
+  Quest, ein Ort, eine Beute des Journals bleibt, auch wenn der Abgleich
+  dieselbe Nummer bringt; zweimal einmischen ändert nichts (Prüflauf).
+
 * **Herkunft `community`** (`J.SOURCE`), wie die Forever-Bosslisten:
   zusammengetragen aus öffentlichen Beta-Berichten, nicht aus dem
   Client. Die Beute mischt beobachtete Forever-Gegenstände mit aus

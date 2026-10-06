@@ -1785,8 +1785,9 @@ local function ItemRow(parent, y, w, id, name, slot, quality, prefix)
 end
 
 -- Herkunft einer Journal-Auskunft, eine Zeile, klein.
-local function JournalSource(inner, y, w)
-    local label = S.Label(J.SOURCE)
+-- Seit 6.14.0.0 mit Herkunft als Argument: Journal, ForeverGuide, Classic.
+local function JournalSource(inner, y, w, src)
+    local label = S.Label(src or J.SOURCE)
     if not label then return y end
     return BodyText(inner, y - 2, label, w, { size = 10, color = "warningBright" })
 end
@@ -1799,12 +1800,17 @@ local function DrawLoot(inner, y, w, dungeon, boss)
     for _, e in ipairs(loot) do
         y = ItemRow(inner, y, w, e[1], e[2], e[3], e[4], e.from and (e.from .. ":") or nil)
     end
-    y = JournalSource(inner, y - 4, w)
+    y = JournalSource(inner, y - 4, w, J.LootSource and J.LootSource(dungeon.id, boss.id))
     return y - 14
 end
 
 local FACTION_TEXT = { alliance = "Allianz", horde = "Horde", both = "Beide Fraktionen" }
 local CLASS_TEXT = { WARLOCK = "Nur Hexenmeister" }
+-- Klassen in Worten (Abgleich 6.14.0.0: Klassenquests in den Dungeons).
+local CLASS_NAME = {
+    WARRIOR = "Krieger", PALADIN = "Paladin", HUNTER = "Jäger", ROGUE = "Schurke", PRIEST = "Priester",
+    SHAMAN = "Schamane", MAGE = "Magier", WARLOCK = "Hexenmeister", DRUID = "Druide",
+}
 
 local function PlayerFaction()
     local f = _G.UnitFactionGroup and _G.UnitFactionGroup("player")
@@ -1850,11 +1856,13 @@ end
 -- Rand im gedaempften Akzent statt einer Textzeile - er ist die eine
 -- Handlung in der Questkachel.
 local MAP_LINK_H = 24
-local function MapLink(parent, y, place, q)
+-- `text`/`title` (6.14.0.0): derselbe Knopf fuer den Eingang eines
+-- Dungeons - eigene Beschriftung, Titel der Marke statt einer Quest.
+local function MapLink(parent, y, place, q, text, title)
     local QM = WeintCodex.QuestMap
     if not QM then return y end
     WeintCodex.DungeonPages.mapLinks = (WeintCodex.DungeonPages.mapLinks or 0) + 1
-    local text = place.item and ("Fundort auf der Karte: " .. place.who) or "Questgeber auf der Karte zeigen"
+    text = text or (place.item and ("Fundort auf der Karte: " .. place.who) or "Questgeber auf der Karte zeigen")
     local b = CreateFrame("Button", nil, parent)
     b:SetHeight(MAP_LINK_H)
     b:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, y)
@@ -1875,7 +1883,7 @@ local function MapLink(parent, y, place, q)
     fs:SetPoint("LEFT", mark, "RIGHT", 8, 0)
     fs:SetWordWrap(false)
     b:SetWidth(40 + math.ceil(WeintCodex.Utf8Len(text) * 12 * 0.56))
-    b.place, b.quest = place, q
+    b.place, b.quest, b.title = place, q, title
     b:SetScript("OnEnter", function(self)
         Paint(true)
         local gt = _G.GameTooltip
@@ -1893,9 +1901,33 @@ local function MapLink(parent, y, place, q)
         if _G.GameTooltip then _G.GameTooltip:Hide() end
     end)
     b:SetScript("OnClick", function(self)
-        QM.Show(self.place, QuestTitle(self.quest))
+        QM.Show(self.place, self.title or QuestTitle(self.quest))
     end)
     return y - MAP_LINK_H - 6
+end
+WeintCodex.DungeonPages.MapLink = MapLink
+
+-- Geber oder Abgabe in Worten: der Text des Journals, sonst (Abgleich mit
+-- ForeverGuide, 6.14.0.0) der NPC mit Gebiet aus dem Client - oder "im
+-- Dungeon", wo er drinnen steht. nil: nichts bekannt, keine Zeile.
+local function NpcText(text, npc)
+    if type(text) == "string" and text ~= "" then return text end
+    if type(npc) ~= "table" then return nil end
+    if npc.inside then return npc.name .. ", im Dungeon" end
+    local QM = WeintCodex.QuestMap
+    local zone = npc.map and QM and QM.MapName(npc.map)
+    return zone and (npc.name .. ", " .. zone) or npc.name
+end
+WeintCodex.DungeonPages.NpcText = NpcText
+
+-- Name einer Quest nach Nummer: der Client, sonst der Bestand.
+local function QuestTitleById(id)
+    local ql = _G.C_QuestLog
+    if ql and ql.GetTitleForQuestID then
+        local ok, t = pcall(ql.GetTitleForQuestID, id)
+        if ok and type(t) == "string" and t ~= "" then return t end
+    end
+    return J.QuestName and J.QuestName(id) or ("Quest " .. id)
 end
 
 local function DrawQuestBody(inner, y, w, q)
@@ -1906,13 +1938,18 @@ local function DrawQuestBody(inner, y, w, q)
     -- auch die Hoehe an deren Mitte.
     title:SetWidth(math.max(60, w - 120))
     title:SetWordWrap(false)
-    local meta = "Stufe " .. q.level .. " · ab " .. q.requires
+    local meta = "Stufe " .. q.level .. (type(q.requires) == "number" and (" · ab " .. q.requires) or "")
     local metaFs = WeintCodex.Label(inner, meta, { size = 11, color = "textDim", justify = "RIGHT" })
     metaFs:SetPoint("TOPRIGHT", inner, "TOPRIGHT", 0, y - 2)
     y = y - 20
 
     local tags = { FACTION_TEXT[q.faction] or "" }
     if q.class then tags[#tags + 1] = CLASS_TEXT[q.class] or q.class end
+    if q.classes and #q.classes > 0 then
+        local names = {}
+        for _, c in ipairs(q.classes) do names[#names + 1] = CLASS_NAME[c] or c end
+        tags[#tags + 1] = "Nur " .. table.concat(names, "/")
+    end
     -- Rechts in derselben Zeile: der Status aus dem Client (6.9.0.7).
     local mark = WeintCodex.Label(inner, "", { size = 11, color = "textMuted", justify = "RIGHT",
         font = WeintCodex.Fonts.sansSemi })
@@ -1920,11 +1957,29 @@ local function DrawQuestBody(inner, y, w, q)
     inner._questMark = mark
     y = BodyText(inner, y, table.concat(tags, " · "), w, { size = 10, color = "textFaint" }) - 2
 
-    y = BodyText(inner, y, q.objective, w, { size = 12, color = "textNormal" }) - 2
-    y = BodyText(inner, y, "Beginnt: " .. q.giver, w, { size = 11, color = "textMuted" })
+    -- Ziel nur, wo das Journal eines geschrieben hat (Quests aus dem
+    -- Abgleich tragen keins - abgeschrieben wird nicht).
+    if type(q.objective) == "string" and q.objective ~= "" then
+        y = BodyText(inner, y, q.objective, w, { size = 12, color = "textNormal" }) - 2
+    end
+    local giver = NpcText(q.giver, q.giverNpc)
+    if giver then y = BodyText(inner, y, "Beginnt: " .. giver, w, { size = 11, color = "textMuted" }) end
     local place = J.Place and J.Place(q.id)
     if place and not place.item then y = MapLink(inner, y - 4, place, q) end
-    y = BodyText(inner, y, "Abgabe: " .. q.turnin, w, { size = 11, color = "textMuted" })
+    local turnin = NpcText(q.turnin, q.turninNpc)
+    if turnin then y = BodyText(inner, y, "Abgabe: " .. turnin, w, { size = 11, color = "textMuted" }) end
+    -- Kette (6.14.0.0): was davor kommt, was danach.
+    local chain = J.Chain and J.Chain(q.id)
+    if chain then
+        if chain.prev and #chain.prev > 0 then
+            local names = {}
+            for _, id in ipairs(chain.prev) do names[#names + 1] = "„" .. QuestTitleById(id) .. "“" end
+            y = BodyText(inner, y, "Vorher: " .. table.concat(names, ", "), w, { size = 11, color = "textMuted" })
+        end
+        if chain.next then
+            y = BodyText(inner, y, "Danach: „" .. QuestTitleById(chain.next) .. "“", w, { size = 11, color = "textMuted" })
+        end
+    end
 
     if q.startItem then
         y = ItemRow(inner, y - 2, w, q.startItem[1], q.startItem[2], nil, 1, "Beginnt mit:")
@@ -1943,6 +1998,12 @@ local function DrawQuestBody(inner, y, w, q)
             y = BodyText(inner, y - 2, "Eine davon zur Wahl:", w, { size = 10, color = "textFaint" })
         end
         for _, r in ipairs(q.rewards) do
+            y = ItemRow(inner, y, w, r[1], r[2], nil, r[3])
+        end
+    end
+    if q.fixed and #q.fixed > 0 then
+        y = BodyText(inner, y - 2, "Dazu:", w, { size = 10, color = "textFaint" })
+        for _, r in ipairs(q.fixed) do
             y = ItemRow(inner, y, w, r[1], r[2], nil, r[3])
         end
     end
@@ -2141,6 +2202,21 @@ local function DrawQuest(inner, y, w, q)
     return y - h - QUEST_GAP
 end
 
+-- Eingang auf der Weltkarte (6.14.0.0, Abgleich mit ForeverGuide): ein
+-- Knopf je Eingang, unter der Aufstellung. Ohne bekannten Eingang nichts.
+local function DrawEntrances(inner, y, w, dungeon)
+    local list = J and J.Entrances and J.Entrances(dungeon.id) or {}
+    if #list == 0 then return y end
+    y = y - 10
+    for _, e in ipairs(list) do
+        local text = e.label and ("Eingang auf der Karte: " .. e.label) or "Eingang auf der Karte"
+        local place = { map = e.map, x = e.x, y = e.y, who = dungeon.name .. (e.label and (" – " .. e.label) or "") }
+        y = MapLink(inner, y, place, nil, text, "Eingang: " .. dungeon.name)
+        WeintCodex.DungeonPages.entranceLinks = (WeintCodex.DungeonPages.entranceLinks or 0) + 1
+    end
+    return y
+end
+
 -- Quests und weitere Beute eines Dungeons, unter der Aufstellung.
 -- Nur die eigene Fraktion (und "beide"); die andere wird gezaehlt,
 -- nicht verschwiegen.
@@ -2192,7 +2268,14 @@ local function DrawJournal(inner, y, w, dungeon)
         end
     end
 
-    return JournalSource(inner, y, w)
+    -- Jede Herkunft, die auf dieser Seite vorkommt, einmal (6.14.0.0).
+    local sources, seen = {}, {}
+    local function add(src) if src and not seen[src] then seen[src] = true sources[#sources + 1] = src end end
+    for _, q in ipairs(quests) do add(J.QuestSource and J.QuestSource(q) or J.SOURCE) end
+    for _, grp in ipairs(others) do add(grp.kind == "classic" and J.CLASSIC_LOOT_SOURCE or J.SOURCE) end
+    if #sources == 0 then add(J.SOURCE) end
+    for _, src in ipairs(sources) do y = JournalSource(inner, y, w, src) end
+    return y
 end
 
 --------------------------------------------------
@@ -2445,6 +2528,7 @@ local function DrawRoster(f, y, dungeon)
                     dungeon, { width = w, compact = true })
             end
 
+            endY = DrawEntrances(inner, endY, w, dungeon)
             endY = DrawJournal(inner, endY, w, dungeon)
 
             if not inspectorShown then
@@ -2673,6 +2757,7 @@ local function DrawDungeonAt(f, dungeon, withInspector)
     WeintCodex.DungeonPages.itemRows = 0   -- fuer den Prueflauf: Gegenstandszeilen dieser Runde
     WeintCodex.DungeonPages.mapLinks = 0   -- und Kartenlinks
     WeintCodex.DungeonPages.questTiles = 0
+    WeintCodex.DungeonPages.entranceLinks = 0
     wipe(questMarks)       -- Queststatus: nur die Kacheln dieser Runde
     questSummary = nil
     f._relayout = nil

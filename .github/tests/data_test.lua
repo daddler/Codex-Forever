@@ -968,6 +968,70 @@ do
 end
 
 print("")
+print("== Berufe")
+-- 6.14.0.0: Rezepte und Lehrer aus dem Abgleich mit ForeverGuide. Jede
+-- Nummer eine ganze Zahl (der Client fragt mit ihr), die Schwierigkeit
+-- eines Rezepts aufsteigend (gelb <= gruen <= grau, wo bekannt), jeder
+-- Lehrer mit Lage, Fraktion und Rang, jeder Haendler bekannt. Herkunft:
+-- community, die Haendler classic.
+do
+    local P, PRO = WeintCodex.ProfessionData, WeintCodex.Professions
+    local function IsId(v) return type(v) == "number" and v > 0 and v == math.floor(v) end
+    Check(WeintCodex.Sources.IsValid(P.SOURCE) and P.SOURCE.kind == "community", "Berufe: Herkunft community")
+    Check(WeintCodex.Sources.IsValid(P.VENDOR_SOURCE) and P.VENDOR_SOURCE.kind == "classic", "Haendler fuer Rezepte: Herkunft classic")
+    Check(#P.PROFS == 12, "zwoelf Berufe (" .. #P.PROFS .. ")")
+    local total, bad, seen = 0, 0, {}
+    for _, p in ipairs(P.PROFS) do
+        Check(IsId(p.spell) and IsId(p.line) and type(p.name) == "string", p.key .. ": Zauber, Fertigkeitslinie, Name")
+        local n = 0
+        for _, r in ipairs(PRO.Recipes(p.key)) do
+            n = n + 1
+            if not IsId(r.spell) or seen[r.spell] then bad = bad + 1 end
+            seen[r.spell] = true
+            -- Aufsteigend nur die Schwierigkeit (gelb <= gruen <= grau). Die
+            -- Lernstufe beim Lehrer kann darueber liegen - "Coarse Sharpening
+            -- Stone" ist ab 75 lernbar und ab 55 schon grau.
+            -- Lernstufe 0: mit dem Beruf gelernt ("Smelt Copper").
+            if r.learn and not (r.learn == 0 or IsId(r.learn)) then bad = bad + 1 end
+            local prev = 0
+            for _, v in ipairs({ r.yellow, r.green, r.grey }) do
+                if v then
+                    if not (IsId(v) and v >= prev) then bad = bad + 1 end
+                    prev = v
+                end
+            end
+            for _, e in ipairs(r.reagents) do
+                if not (IsId(e[1]) and IsId(e[2])) then bad = bad + 1 end
+            end
+            if r.state ~= "n" and r.state ~= "c" and r.state ~= "s" then bad = bad + 1 end
+            if r.recipeItem and not IsId(r.recipeItem) then bad = bad + 1 end
+            if type(r.name) ~= "string" or r.name == "" then bad = bad + 1 end
+        end
+        Check(n > 0, p.key .. ": Rezepte (" .. n .. ")")
+        total = total + n
+        local tbad = 0
+        for _, t in ipairs(P.TRAINERS[p.key] or {}) do
+            local placed = t[3] == nil and t[4] == nil and t[5] == nil
+                or (IsId(t[3]) and t[4] > 0 and t[4] < 100 and t[5] > 0 and t[5] < 100)
+            if not (IsId(t[1]) and type(t[2]) == "string" and placed and (t[6] == nil or t[6] == "Alliance" or t[6] == "Horde")
+                    and IsId(t[7]) and t[7] <= 4) then
+                tbad = tbad + 1
+            end
+        end
+        Check(#(P.TRAINERS[p.key] or {}) > 0 and tbad == 0, p.key .. ": Lehrer wohlgeformt (" .. tbad .. " Fehler)")
+    end
+    Check(bad == 0, "Rezepte wohlgeformt, jede Nummer einmal (" .. bad .. " Fehler)")
+    Check(total > 2000, "Rezepte gesamt (" .. total .. ")")
+    local vbad = 0
+    for item, npcs in pairs(P.VENDORS) do
+        if not IsId(item) then vbad = vbad + 1 end
+        for _, n in ipairs(npcs) do if not P.VENDOR_NPC[n] then vbad = vbad + 1 end end
+    end
+    Check(vbad == 0, "Haendler fuer Rezepte bekannt (" .. vbad .. " ohne)")
+    print("  --    " .. total .. " Rezepte, " .. #P.PROFS .. " Berufe")
+end
+
+print("")
 print("== Dungeon-Journal")
 do
     local J = WeintCodex.DungeonJournal
@@ -978,6 +1042,9 @@ do
     local function IsId(v) return type(v) == "number" and v > 0 and v == math.floor(v) end
     local items, quests, dungeons = 0, 0, 0
     local allQuests = {}
+    local fgQuests = 0
+    local RAID_CLASSES = { WARRIOR = true, PALADIN = true, HUNTER = true, ROGUE = true, PRIEST = true,
+                           SHAMAN = true, MAGE = true, WARLOCK = true, DRUID = true }
     for dungeonId, entry in pairs(J.DATA) do
         dungeons = dungeons + 1
         local dungeon = D.Get(dungeonId)
@@ -992,7 +1059,11 @@ do
                 Check(IsId(e[1]), "Beute " .. dungeonId .. "/" .. bossId .. ": Gegenstandsnummer " .. tostring(e[1]))
                 Check(type(e[2]) == "string" and e[2] ~= "", "Beute " .. tostring(e[1]) .. " hat einen Namen")
                 Check(type(e[3]) == "string" and e[3] ~= "", "Beute " .. tostring(e[1]) .. " hat einen Platz")
-                Check(type(e[4]) == "number" and e[4] >= 0 and e[4] <= 7, "Beute " .. tostring(e[1]) .. " hat eine Qualitaet")
+                -- Qualitaet: aus dem Bericht; bei Classic-Beute aus dem Abgleich
+                -- (6.14.0.0) nil, wo die Clienttabellen sie nicht nennen.
+                local classic = J.LOOT_KIND[dungeonId] and J.LOOT_KIND[dungeonId][bossId] == "classic"
+                Check((type(e[4]) == "number" and e[4] >= 0 and e[4] <= 7) or (classic and e[4] == nil),
+                    "Beute " .. tostring(e[1]) .. " hat eine Qualitaet")
                 Check(not seen[e[1]], "Beute " .. tostring(e[1]) .. " nur einmal an " .. bossId)
                 seen[e[1]] = true
             end
@@ -1013,11 +1084,30 @@ do
             qseen[q.id] = true
             allQuests[q.id] = true
             Check(type(q.name) == "string" and q.name ~= "", tag .. ": Name")
-            Check(type(q.level) == "number" and type(q.requires) == "number" and q.requires <= q.level,
+            local fg = q.src == "fg"
+            Check(type(q.level) == "number"
+                and ((type(q.requires) == "number" and q.requires <= q.level) or (fg and q.requires == nil)),
                 tag .. ": Stufe und Mindeststufe")
             Check(q.faction == "both" or q.faction == "alliance" or q.faction == "horde", tag .. ": Fraktion")
-            for _, k in ipairs({ "giver", "objective", "turnin" }) do
-                Check(type(q[k]) == "string" and q[k] ~= "", tag .. ": " .. k)
+            if fg then
+                -- Abgleich mit ForeverGuide (6.14.0.0): keine Texte, Geber und
+                -- Abgabe als NPC - mit Namen, und mit Lage nur auf der Weltkarte.
+                Check(q.objective == nil and q.giver == nil and q.turnin == nil, tag .. ": kein abgeschriebener Text")
+                for _, k in ipairs({ "giverNpc", "turninNpc" }) do
+                    local n = q[k]
+                    Check(n == nil or (type(n.name) == "string" and n.name ~= ""
+                        and (n.map == nil or (IsId(n.map) and n.x > 0 and n.x < 1 and n.y > 0 and n.y < 1))
+                        and not (n.inside and n.map)), tag .. ": " .. k)
+                end
+                for _, c in ipairs(q.classes or {}) do
+                    Check(RAID_CLASSES[c] == true, tag .. ": Klasse " .. tostring(c))
+                end
+                for _, r in ipairs(q.fixed or {}) do Check(IsId(r[1]), tag .. ": feste Belohnung " .. tostring(r[1])) end
+                fgQuests = fgQuests + 1
+            else
+                for _, k in ipairs({ "giver", "objective", "turnin" }) do
+                    Check(type(q[k]) == "string" and q[k] ~= "", tag .. ": " .. k)
+                end
             end
             Check(q.xp == nil or IsId(q.xp), tag .. ": Erfahrung ist eine Zahl oder fehlt")
             for _, r in ipairs(q.rewards or {}) do
@@ -1042,6 +1132,42 @@ do
     end
     print("  --    " .. dungeons .. " Dungeon(s), " .. items .. " Gegenstaende, " .. quests .. " Quests, "
         .. places .. " Orte")
+
+    -- 6.14.0.0: Abgleich mit ForeverGuide. Herkunft benannt, Classic-Beute
+    -- als Classic, Eingaenge auf der Weltkarte, Ketten aus ganzen Nummern
+    -- mit Namen, und nichts aus dem Journal ueberschrieben.
+    Check(WeintCodex.Sources.IsValid(J.FG_SOURCE) and J.FG_SOURCE.kind == "community",
+        "Quests aus dem Abgleich tragen eine Herkunft der Art community")
+    Check(WeintCodex.Sources.IsValid(J.CLASSIC_LOOT_SOURCE) and J.CLASSIC_LOOT_SOURCE.kind == "classic",
+        "Beute aus dem Abgleich traegt die Herkunft classic")
+    Check(fgQuests > 200, "Quests aus dem Abgleich eingemischt (" .. fgQuests .. ")")
+    local ent = 0
+    for did, list in pairs(J.ENTRANCES) do
+        Check(D.Get(did) ~= nil, "Eingang fuer " .. did .. ": Dungeon gibt es")
+        for _, e in ipairs(list) do
+            ent = ent + 1
+            Check(IsId(e.map) and e.x > 0 and e.x < 1 and e.y > 0 and e.y < 1, "Eingang " .. did .. ": Lage")
+        end
+    end
+    Check(ent >= 20, "Eingaenge da (" .. ent .. ")")
+    local badChain = 0
+    for id, c in pairs(J.CHAIN) do
+        if not IsId(id) then badChain = badChain + 1 end
+        for _, p in ipairs(c.prev or {}) do
+            if not (IsId(p) and J.QuestName(p)) then badChain = badChain + 1 end
+        end
+        if c.next and not (IsId(c.next) and J.QuestName(c.next)) then badChain = badChain + 1 end
+    end
+    Check(badChain == 0, "Questketten: Nummern mit Namen (" .. badChain .. " ohne)")
+    for did, kinds in pairs(J.LOOT_KIND) do
+        for bid in pairs(kinds) do
+            Check(J.LootSource(did, bid) == J.CLASSIC_LOOT_SOURCE, "Beute " .. did .. "/" .. bid .. " als Classic ausgewiesen")
+        end
+    end
+    -- Handgepflegtes bleibt: Hall of Thanes behaelt seine Texte und Beute.
+    Check(J.Quests("hall_of_thanes")[1].objective ~= nil and J.LootSource("hall_of_thanes", "faldrim_anvilmar") == J.SOURCE,
+        "Journal vom Abgleich ueberschrieben")
+    print("  --    Abgleich: " .. fgQuests .. " Quests, " .. ent .. " Eingaenge")
 end
 
 --------------------------------------------------

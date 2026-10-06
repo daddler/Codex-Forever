@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.13.5.0
+## Version: 6.14.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -82,6 +82,9 @@ data/dungeons.lua
 data/dungeons_classic.lua
 # Beute und Quests je Dungeon (6.5.0.0); braucht die Kennungen oben.
 data/dungeon_journal.lua
+# Abgleich mit ForeverGuide (6.14.0.0), erzeugt: mischt sich in das Journal
+# darueber ein (J.MergeForeverGuide) - steht deshalb direkt danach.
+data/dungeon_journal_fg.lua
 
 #
 # data/artwork.lua steht NACH den Dungeondateien, weil es sie mit
@@ -95,6 +98,8 @@ data/classthemes.lua
 data/specs.lua
 # Was der Klassenlehrer lehrt (6.6.0.0); gelesen von modules/trainer.lua.
 data/trainer.lua
+# Rezepte und Lehrer der Berufe (6.14.0.0, erzeugt); gelesen von modules/professions.lua.
+data/professions.lua
 
 #
 # data/roles.lua steht NACH data/specs.lua: es liest die Talentbaeume,
@@ -111,6 +116,8 @@ data/roles.lua
 #
 modules/charakter.lua
 modules/trainer.lua
+# Berufe (6.14.0.0): Rezepte nach deiner Fertigkeit, Lehrer auf der Karte.
+modules/professions.lua
 modules/encounter_tracking.lua
 modules/rolepanel.lua
 modules/raidpages.lua

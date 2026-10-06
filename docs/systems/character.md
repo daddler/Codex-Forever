@@ -172,3 +172,59 @@ der Lehrer in der Gruppe **Leveln** (Übersicht, Charakter, Lehrer,
 Dungeons, Gruppencheck); Schlachtzüge, Anmeldung und Kalender stehen in
 **Schlachtzug** darunter – gleich viele Gruppen, gleich viele Einträge,
 kein Pixel mehr.
+
+## Berufe *(seit 6.14.0.0)*
+
+`modules/professions.lua` (`WeintCodex.Professions`), Navigation „Berufe“
+unter Leveln, `/wc berufe`. Je Beruf: was du bei deiner Fertigkeit jetzt
+lernen kannst, was dir noch Punkte bringt, was neu in Forever ist – und wo
+der nächste Berufslehrer steht.
+
+**Zwei Bestände, nie vermischt** (wie beim Klassenlehrer):
+
+* **Was es gibt** – `data/professions.lua`, **erzeugt** von
+  `.github/scripts/import_foreverguide.py` aus dem Addon ForeverGuide
+  1.25.6: 2.216 Rezepte in zwölf Berufen (Zauber, Gegenstand, Lernstufe,
+  Schwellen gelb/grün/grau, Reagenzien, Lehrer oder Rezeptgegenstand,
+  Händlergunst, Stand *neu/geändert/wie Classic*), 223 Lehrer mit Lage,
+  Fraktion und Rang (1 bis 75 … 4 bis 300). ForeverGuide hat die Rezepte
+  aus dem Forever-Client gelesen (Build 1.60.1, über wowforevertalents.com),
+  die Lehrer aus der Questie-Datenbank für Forever – Herkunft `community`.
+  Händler für Rezepte stammen aus Classic (`classic`). **Weggelassen:** der
+  Abschnitt „Season of Discovery“ (280 Rezepte, im Client, ob in Forever
+  lernbar, ist nicht belegt). Nur Fakten übernommen, keine Texte; die Namen
+  nennt der Client (englisch nur als Rückfall, `P.NAMES`).
+  Die Rezepte stehen als Zeilen je Beruf und werden erst beim Aufschlagen
+  gelesen (`PRO.Recipes`) – als Tabellen kosteten 2.216 Rezepte ein
+  Vielfaches.
+* **Wie weit du bist** – der Client: Fertigkeit über
+  `GetProfessions`/`GetProfessionInfo` (sechs Plätze *mit Lücken* – kein
+  `ipairs`), sonst `GetNumSkillLines`/`GetSkillLineInfo` (Name des
+  Berufszaubers). **Was du schon kannst**, liest die Seite aus deinem
+  Berufsfenster, wenn es offen ist (`C_TradeSkillUI.GetAllRecipeIDs`/
+  `GetRecipeInfo().learned`, sonst `GetTradeSkillRecipeLink` und
+  `GetCraftRecipeLink`), und merkt es je Charakter
+  (`SavedData.professions["Name-Realm"]`); neu Gelerntes trägt
+  `NEW_RECIPE_LEARNED` nach. Vorher sagt nur ein „ja“ des Clients
+  (`Trainer.Known`) etwas – „lernbar“ heißt dann „ab deiner Fertigkeit,
+  vielleicht schon gelernt“, und die Seite sagt das. Welche dieser
+  Abfragen Forever beantwortet, misst `/wcui prüfen` („Berufe“).
+
+**Fächer** mit Fertigkeit: Beim Lehrer lernbar · Als Rezept lernbar ·
+Bringt noch Fertigkeit (gelernt, unter Grau) · Bald (bis 25 Punkte über
+dir) · Später · Lernstufe unbekannt · Gelernt, bringt nichts mehr – die
+letzten drei zugeklappt („Alle zeigen“). Ohne Fertigkeit nach Rängen
+(Lehrling … Fachmann), der erste offen. Die Schwierigkeit färbt wie im
+Berufsfenster (`PRO.Difficulty`; Farben `skillOrange`… in `core/ui.lua`).
+Die Lernstufe kann über der gelben Schwelle liegen (ein Rezept ist ab 75
+lernbar und ab 55 schon grau) – kein Fehler der Daten. Lernstufe 0: mit
+dem Beruf gelernt.
+
+**Lehrer** (rechts): deine Fraktion; wer deinen **nächsten Rang** lehrt,
+zuerst (aus der Obergrenze deiner Fertigkeit: 75 → Geselle …), dann die
+auf deiner Karte. „Karte“ setzt die Marke (`QuestMap.Show`). Annora
+(Verzauberkunst, Fachmann, in Uldaman) steht ohne Lage – ohne Karte.
+
+Zeilen werden wiederverwendet (500 Rezepte der Lederverarbeitung wären
+sonst bei jedem Aufschlagen 500 neue Rahmen). Die Startseite bekommt den
+Schritt „Beruf“ nur mit bekanntem Gelernten (`HM.Professions`).

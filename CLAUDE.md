@@ -269,13 +269,13 @@ into modules that no longer exist. A green run means "it loads", never
 
 | Task touches… | Read |
 |---|---|
-| UI-Struktur, Theme, `core/ui.lua`, Navigationsspalte (seit 6.13.0.0 als Informationsarchitektur: Leveln/Gruppe/Gilde/System, Import als Reiter unter Companion über `Navigation.SUBTABS`), PageHead, Detailbereich, Startseite (`modules/home.lua`, seit 6.11.0.2 nach dem Entwurf des Spielers: „Als Nächstes“ mit Erfahrung, „Außerdem“, „Dein Weg“ über acht Stufen; seit 6.11.0.3 die lernbaren Zauber mit Namen und Tooltips im Weg) | `docs/architecture/overview.md` |
+| UI-Struktur, Theme, `core/ui.lua`, Navigationsspalte (seit 6.13.0.0 als Informationsarchitektur: Leveln/Gruppe/Gilde/System, Import als Reiter unter Companion über `Navigation.SUBTABS`; seit 6.14.0.0 „Berufe“ unter Leveln), PageHead, Detailbereich, Startseite (`modules/home.lua`, seit 6.11.0.2 nach dem Entwurf des Spielers: „Als Nächstes“ mit Erfahrung, „Außerdem“, „Dein Weg“ über acht Stufen; seit 6.11.0.3 die lernbaren Zauber mit Namen und Tooltips im Weg) | `docs/architecture/overview.md` |
 | Leere Tabellen, `unknown ≠ 0`, Leerzustände | `docs/invariants/data-integrity.md` |
 | Schlachtzüge, Bosslisten, Lockouts, Fortschritt, Herkunft einer Liste | `docs/systems/raids-and-progress.md` |
-| Dungeons (Forever **und** Classic), Stufenbereiche, Bosslisten, Flügel, beschwörbare Zusatzbosse, Rollen, Beute und Quests (`data/dungeon_journal.lua`, Queststatus aus dem Client seit 6.9.0.7), Questgeber auf der Weltkarte (`modules/questmap.lua`), Abgleich mit dem Client (`/wc abgleich`, `modules/clientcheck.lua`, 6.10.3.0: liest Gruppensuche und Kompendium, schreibt nichts) | `docs/systems/dungeons.md` |
+| Dungeons (Forever **und** Classic), Stufenbereiche, Bosslisten, Flügel, beschwörbare Zusatzbosse, Rollen, Beute und Quests (`data/dungeon_journal.lua`, Queststatus aus dem Client seit 6.9.0.7), Questgeber auf der Weltkarte (`modules/questmap.lua`), Abgleich mit dem Client (`/wc abgleich`, `modules/clientcheck.lua`, 6.10.3.0: liest Gruppensuche und Kompendium, schreibt nichts), Abgleich mit dem Addon ForeverGuide (6.14.0.0: `data/dungeon_journal_fg.lua` **erzeugt** von `.github/scripts/import_foreverguide.py` – Quests mit Ketten ohne Texte, Eingänge, Beute der alten Dungeons als `classic`; `J.MergeForeverGuide` ersetzt nie Handgepflegtes) | `docs/systems/dungeons.md` |
 | Artwork, `data/artwork.lua`, `WeintCodex.Artwork`, `media/dungeons/` | `docs/systems/dungeons.md`, Abschnitt *Bilder: kein Spielmaterial, eigenes schon* |
 | Herkunft eines Eintrags, `data/sources.lua`, `release`/`announced`/`beta`/`community`/`classic` | `docs/systems/dungeons.md`, Abschnitt *Fünf Arten von Herkunft* |
-| Charakterseite, Twinks, Ausrüstungsstand, Lehrer (`modules/trainer.lua`, `data/trainer.lua`) | `docs/systems/character.md` |
+| Charakterseite, Twinks, Ausrüstungsstand, Lehrer (`modules/trainer.lua`, `data/trainer.lua`), Berufe (6.14.0.0: `modules/professions.lua`, `data/professions.lua` **erzeugt** von `.github/scripts/import_foreverguide.py`; Gelerntes aus dem Berufsfenster je Charakter) | `docs/systems/character.md` |
 | Gruppencheck | `docs/systems/groupcheck.md` |
 | Companion-Sync allgemein (Inbox/Outbound, `ProcessInbox`) | `docs/systems/companion-bridge.md` |
 | Onboarding-Tour, Update-Changelog-Popup | `docs/systems/onboarding-changelog.md` |
