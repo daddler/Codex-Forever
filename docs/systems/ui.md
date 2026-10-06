@@ -861,6 +861,12 @@ Seit 6.2.0.0:
   `GetPetHappiness` antwortet auf Forever nicht. Seit 6.13.2.0 sammelt
   `/wcui prüfen` („Begleiter“), wo der Client die Laune führt; erst mit
   diesem Bericht kommt eine zweite Quelle, keine geratene.
+  **Gemessen mit 6.13.2.0:** kein `GetPetHappiness`, aber
+  `C_PetInfo.GetPetHappiness`; Energieart Happiness (27, max. 1000)
+  geheim auch außer Kampf. Seit 6.13.3.0 fragt `K.PetHappinessSource()`
+  diese Funktion (ohne Argument, dann mit `"pet"`) mit Gegenprobe über den
+  Schaden in Prozent (`K.HAPPY_DAMAGE`, 75/100/125). Was sie zurückgibt,
+  ist noch ungemessen.
   **Liste je Charakter** (6.13.2.0): die Regeln bleiben accountweit, die
   Liste zeigt, was hier gilt (`R.ListedRules`, Stelle der Regel in
   `index`, Entfernen über sie), den Rest als Zählzeile; „Alle zeigen“

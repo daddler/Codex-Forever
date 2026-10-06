@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.13.3.0] – 2026-10-06
+
+**Zweiter Versuch für die Laune deines Begleiters.** WeintCodex fragt jetzt dort, wo Forever sie führt. Erscheint der Punkt am Begleiterrahmen weiterhin nicht, gibt das Spiel die Laune nur verschlüsselt heraus – /wcui prüfen zeigt dann, was genau es antwortet.
+
+### Technisch
+
+- **Gemessen mit 6.13.2.0** (`/wcui prüfen`, Client 1.60.1, Build 70235): `GetPetHappiness` gibt es nicht; die einzige Funktion mit „Happiness“ im Namen ist `C_PetInfo.GetPetHappiness`. Energieart `Enum.PowerType.Happiness = 27`, `UnitPowerMax` 1000, `UnitPower` **geheim, auch außer Kampf**. `UNIT_HAPPINESS` kennt der Client. Am Rahmen des Spiels (`PetPaperDollPetHappinessInfo`) keine einfachen Werte; sein Bild ist der ganze Atlas `UI-PetHappiness` (Ausschnitt 0–1) – die Laune lässt sich dort nicht ablesen.
+- **Zweite Quelle** (`ui/kit.lua`): `K.PetHappinessSource()` – `GetPetHappiness` (Classic), sonst `C_PetInfo.GetPetHappiness`; gefragt ohne Argument, ohne Antwort einmal mit `"pet"`. **Gegenprobe** (`K.HAPPY_DAMAGE`): liefert die Abfrage als zweiten Wert den Schaden in Prozent, muss er zur Laune passen (75/100/125 wie in Classic) – sonst ist die Bedeutung eine andere, und es gibt keinen Punkt statt einer falschen Farbe. Geheim oder Fehler: nil wie bisher.
+- `/wcui prüfen`, „Begleiter“: Antworten beider Abfragen ohne und mit `"pet"` (vier Werte, geheim als Wort) und die genutzte Quelle.
+- `load_test.lua`: C_PetInfo gelesen, unpassender Schaden abgelehnt, ohne zweiten Wert angenommen, `"pet"` als zweiter Versuch, Fehler (auch mit einer Zahl als Fehlerwert) und geheim ergeben nichts; der Bericht nennt die Antworten und die Quelle. Gegenproben: 8, alle gefangen – eine erst nach geschärftem Test (Fehler mit Zahl).
+- **Ungeprüft im Spiel:** was `C_PetInfo.GetPetHappiness` zurückgibt. Ist der Wert geheim wie die Energieart, kann Lua ihn nicht vergleichen – dann bleibt nur, ihn an eine Leiste des Spiels durchzureichen (Füllstand statt Farbe); das kommt erst mit dem Bericht.
+
 ## [6.13.2.0] – 2026-10-06
 
 **Die Erinnerungen zeigen nur noch die Regeln deiner Klasse.** Die der anderen Charaktere stehen als eine Zeile darunter; „Alle zeigen“ holt sie zum Aufräumen dazu. Eine alte Regel „Begleiter fehlt“ gilt nur noch für Jäger und Hexenmeister.

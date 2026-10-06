@@ -353,12 +353,23 @@ Check("Begleiter", function(add)
     else
         add(SC.BAD, "Laune nicht lesbar – kein Punkt am Begleiterrahmen, keine Erinnerung.")
     end
-    if type(_G.GetPetHappiness) == "function" then
-        local ok, a, b, c = pcall(_G.GetPetHappiness)
-        add("", "   GetPetHappiness(): " .. (ok and (Show(a) .. ", " .. Show(b) .. ", " .. Show(c)) or ("Fehler " .. tostring(a))))
-    else
-        add("", "   GetPetHappiness: gibt es nicht")
+    -- Was jede bekannte Abfrage zurueckgibt - ohne Argument und mit "pet".
+    local function Answer(label, f)
+        if type(f) ~= "function" then
+            add("", "   " .. label .. ": gibt es nicht")
+            return
+        end
+        for _, arg in ipairs({ false, "pet" }) do
+            local ok, a, b, c, d
+            if arg then ok, a, b, c, d = pcall(f, arg) else ok, a, b, c, d = pcall(f) end
+            add("", string.format("   %s(%s): %s", label, arg and '"pet"' or "",
+                ok and (Show(a) .. ", " .. Show(b) .. ", " .. Show(c) .. ", " .. Show(d)) or ("Fehler " .. tostring(a))))
+        end
     end
+    Answer("GetPetHappiness", _G.GetPetHappiness)
+    Answer("C_PetInfo.GetPetHappiness", type(_G.C_PetInfo) == "table" and _G.C_PetInfo.GetPetHappiness or nil)
+    local _, src = K.PetHappinessSource()
+    add("", "   Quelle: " .. (src or "keine"))
     local names = SC.HappinessNames()
     add("", "   Funktionen mit „Happiness“: " .. (#names > 0 and table.concat(names, ", ") or "keine"))
     local pt = type(_G.Enum) == "table" and type(_G.Enum.PowerType) == "table" and _G.Enum.PowerType.Happiness

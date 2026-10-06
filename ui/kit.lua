@@ -96,19 +96,51 @@ end
 -- Classic-Clients: 1 ungluecklich, 2 zufrieden, 3 gluecklich. Ohne die
 -- Funktion, ohne Jaegerbegleiter (Wichtel: nil) oder geheim: nil - dann
 -- zeigt nichts eine Laune an, nie "ungluecklich".
+--
+-- GEMESSEN MIT 6.13.2.0 (/wcui pruefen, Client 1.60.1): GetPetHappiness
+-- gibt es auf Forever nicht, wohl aber C_PetInfo.GetPetHappiness; die
+-- Energieart Happiness (27, hoechstens 1000) ist selbst ausser Kampf
+-- geheim. Was C_PetInfo.GetPetHappiness zurueckgibt, ist noch nicht
+-- gemessen - deshalb eine Gegenprobe: liefert die Abfrage wie in Classic
+-- als zweiten Wert den Schaden in Prozent, muss er zur Laune passen
+-- (75/100/125). Passt er nicht, ist die Bedeutung eine andere - dann
+-- lieber kein Punkt als eine falsche Farbe. Ohne Antwort ohne Argument
+-- wird einmal mit "pet" gefragt.
 K.HAPPINESS = {
     [1] = { text = "unglücklich", color = "danger" },
     [2] = { text = "zufrieden",   color = "warning" },
     [3] = { text = "glücklich",   color = "success" },
 }
+K.HAPPY_DAMAGE = { [1] = 75, [2] = 100, [3] = 125 }
+
+-- Eine Antwort pruefen: Laune 1-3, offen, und - wenn mitgeliefert - der
+-- passende Schaden. Sonst nil.
+local function HappyFrom(ok, h, dmg)
+    if not ok then return nil end
+    h, dmg = K.Plain(h), K.Plain(dmg)
+    if type(h) ~= "number" or not K.HAPPINESS[h] then return nil end
+    if type(dmg) == "number" and dmg ~= K.HAPPY_DAMAGE[h] then return nil end
+    return h
+end
+K._HappyFrom = HappyFrom
+
+local function AskHappiness(f)
+    if type(f) ~= "function" then return nil end
+    return HappyFrom(pcall(f)) or HappyFrom(pcall(f, "pet"))
+end
+
+-- Die Quellen, in dieser Reihenfolge: Classic, dann Forever.
+function K.PetHappinessSource()
+    if type(_G.GetPetHappiness) == "function" then return _G.GetPetHappiness, "GetPetHappiness" end
+    local pi = _G.C_PetInfo
+    if type(pi) == "table" and type(pi.GetPetHappiness) == "function" then
+        return pi.GetPetHappiness, "C_PetInfo.GetPetHappiness"
+    end
+    return nil
+end
 
 function K.PetHappiness()
-    local f = _G.GetPetHappiness
-    if type(f) ~= "function" then return nil end
-    local ok, h = pcall(f)
-    h = ok and K.Plain(h) or nil
-    if type(h) ~= "number" or not K.HAPPINESS[h] then return nil end
-    return h
+    return AskHappiness((K.PetHappinessSource()))
 end
 
 --------------------------------------------------

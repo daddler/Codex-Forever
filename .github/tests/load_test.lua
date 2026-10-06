@@ -3498,13 +3498,36 @@ end
 -- Begleiterrahmen. Nur, was der Client sagt: ohne GetPetHappiness, ohne
 -- Laune (Wichtel) oder geheim nichts, nie "ungluecklich".
 do
-    local saved = { _G.GetPetHappiness, _G.UnitClass, _G.InCombatLockdown, _G.issecretvalue, _G.UnitExists }
+    local saved = { _G.GetPetHappiness, _G.UnitClass, _G.InCombatLockdown, _G.issecretvalue, _G.UnitExists, _G.C_PetInfo }
     local ok, err = pcall(function()
         local R, UF = WeintCodex.UIReminders, WeintCodex.UIUnitFrames
+        -- 6.13.3.0, gemessen auf Forever: kein GetPetHappiness, aber
+        -- C_PetInfo.GetPetHappiness. Gegenprobe ueber den Schaden in Prozent.
+        _G.GetPetHappiness = nil
+        local ans
+        _G.C_PetInfo = { GetPetHappiness = function(...) return ans(...) end }
+        ans = function() return 3, 125, 0 end
+        assert(K.PetHappiness() == 3 and select(2, K.PetHappinessSource()) == "C_PetInfo.GetPetHappiness",
+            "C_PetInfo.GetPetHappiness nicht gelesen")
+        ans = function() return 3, 100, 0 end
+        assert(K.PetHappiness() == nil, "Laune trotz unpassendem Schaden angenommen")
+        ans = function() return 2 end
+        assert(K.PetHappiness() == 2, "Laune ohne zweiten Wert nicht gelesen")
+        ans = function(u) if u == "pet" then return 1, 75 end end
+        assert(K.PetHappiness() == 1, "Abfrage mit \"pet\" nicht versucht")
+        ans = function() error("Usage") end
+        assert(K.PetHappiness() == nil, "Fehler der Abfrage als Laune")
+        ans = function() error(3, 0) end   -- Stufe 0: ohne Ortsangabe bleibt es die Zahl
+        assert(K.PetHappiness() == nil, "Fehler mit Zahl als Laune gelesen")
+        _G.issecretvalue = function(v) return v == 3 end
+        ans = function() return 3, 125 end
+        assert(K.PetHappiness() == nil, "geheime Laune aus C_PetInfo gelesen")
+        _G.issecretvalue = saved[4]
+        _G.C_PetInfo = saved[6]
         _G.InCombatLockdown = function() return false end
         _G.UnitClass = function() return "Jäger", "HUNTER", 3 end
         local mood
-        _G.GetPetHappiness = function() return mood, 0, 0 end
+        _G.GetPetHappiness = function() return mood, K.HAPPY_DAMAGE[mood], 0 end
         assert(K.PetHappiness() == nil, "keine Laune als Laune gelesen")
         mood = 0
         assert(K.PetHappiness() == nil, "Laune 0 angenommen")
@@ -3533,7 +3556,7 @@ do
         assert(texts() == "", "ohne Laune erinnert (weiss nicht ist nicht ungluecklich)")
         _G.GetPetHappiness = nil
         assert(texts() == "", "ohne Abfrage erinnert")
-        _G.GetPetHappiness = function() return mood, 0, 0 end
+        _G.GetPetHappiness = function() return mood, K.HAPPY_DAMAGE[mood], 0 end
         -- Schwelle "ungluecklich": zufrieden reicht.
         R.SetRules({ { kind = "happy", below = 2, class = "HUNTER" } })
         mood = 2
@@ -3609,7 +3632,7 @@ do
         f:ShowTest(false)
         assert(not f._happy:IsShown(), "Punkt des Testmodus bleibt stehen")
     end)
-    _G.GetPetHappiness, _G.UnitClass, _G.InCombatLockdown, _G.issecretvalue, _G.UnitExists = unpack(saved, 1, 5)
+    _G.GetPetHappiness, _G.UnitClass, _G.InCombatLockdown, _G.issecretvalue, _G.UnitExists, _G.C_PetInfo = unpack(saved, 1, 6)
     K.Set("reminders", "rules", nil)
     WeintCodex.UIReminders.draft.kind, WeintCodex.UIReminders.draft.below = "buff", 3
     Check(ok, "Laune des Begleiters: Erinnerung mit Schwelle, weiss nicht, Editor, Punkt am Rahmen, Tooltip, Testmodus"
@@ -3621,7 +3644,7 @@ end
 -- Charakteren"). Alte Begleiter-/Munitionsregeln ohne Klasse gelten nur, wo
 -- die Klasse sie vorschlaegt. Dazu die Messung der Laune in /wcui pruefen.
 do
-    local saved = { _G.UnitClass, _G.UnitExists, _G.GetPetHappiness, _G.PetPaperDollPetHappinessInfo, _G.C_PetHappy }
+    local saved = { _G.UnitClass, _G.UnitExists, _G.GetPetHappiness, _G.PetPaperDollPetHappinessInfo, _G.C_PetHappy, _G.C_PetInfo, _G.issecretvalue }
     local R = WeintCodex.UIReminders
     local ok, err = pcall(function()
         _G.UnitClass = function() return "Jäger", "HUNTER", 3 end
@@ -3706,12 +3729,23 @@ do
         assert(out:find("happiness=3", 1, true) and out:find("tooltip=Glücklich", 1, true), "Werte des Spielrahmens fehlen: " .. out)
         assert(out:find("Atlas UI-PetHappiness", 1, true) and out:find("0.188", 1, true), "Bild des Spielrahmens fehlt: " .. out)
         assert(out:find("Ereignis UNIT_HAPPINESS", 1, true), "Ereignis nicht geprueft")
+        assert(out:find("Quelle: keine", 1, true), "fehlende Quelle nicht genannt: " .. out)
         _G.GetPetHappiness = function() return 2, 100, 0 end
         out = run()
-        assert(out:find("[ok] Laune gelesen: 2 (zufrieden)", 1, true) and out:find("GetPetHappiness(): 2, 100, 0", 1, true),
+        assert(out:find("[ok] Laune gelesen: 2 (zufrieden)", 1, true) and out:find("GetPetHappiness(): 2, 100, 0, leer", 1, true),
             "gelesene Laune nicht berichtet: " .. out)
+        -- Forever: C_PetInfo, ohne und mit "pet", geheim als Wort.
+        _G.GetPetHappiness = nil
+        local secret = {}
+        _G.issecretvalue = function(v) return v == secret end
+        _G.C_PetInfo = { GetPetHappiness = function(u) if u == "pet" then return secret, 125 end end }
+        out = run()
+        _G.issecretvalue = nil
+        assert(out:find("C_PetInfo.GetPetHappiness(): leer, leer, leer, leer", 1, true)
+            and out:find('C_PetInfo.GetPetHappiness("pet"): geheim, 125, leer, leer', 1, true)
+            and out:find("Quelle: C_PetInfo.GetPetHappiness", 1, true), "Antworten von C_PetInfo nicht berichtet: " .. out)
     end)
-    _G.UnitClass, _G.UnitExists, _G.GetPetHappiness, _G.PetPaperDollPetHappinessInfo, _G.C_PetHappy = unpack(saved, 1, 5)
+    _G.UnitClass, _G.UnitExists, _G.GetPetHappiness, _G.PetPaperDollPetHappinessInfo, _G.C_PetHappy, _G.C_PetInfo, _G.issecretvalue = unpack(saved, 1, 7)
     R.listAll = false
     K.Set("reminders", "rules", nil)
     Check(ok, "Erinnerungen nur fuer diesen Charakter, Entfernen je Zeile, Alle zeigen; Laune messen"

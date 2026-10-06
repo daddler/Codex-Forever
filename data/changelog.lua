@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.13.3.0",
+        date    = "06.10.2026",
+        notes   = {
+            "|cff7C6CFFZweiter Versuch für die Laune deines Begleiters.|r WeintCodex fragt jetzt dort, wo Forever sie führt. Erscheint der Punkt am Begleiterrahmen weiterhin nicht, gibt das Spiel die Laune nur verschlüsselt heraus – /wcui prüfen zeigt dann, was genau es antwortet.",
+        },
+    },
+    {
         version = "6.13.2.0",
         date    = "06.10.2026",
         notes   = {
