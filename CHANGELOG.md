@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.14.0.1] – 2026-10-06
+
+**Der nächste Berufslehrer steht oben.** Unter allen, die deinen nächsten Rang lehren, kommt der zuerst, der dir am nächsten ist – nicht mehr der Fachmann am anderen Ende des Kontinents. Die Zeile nennt den Ort und bis wohin er lehrt, den Rang zeigt der Tooltip.
+
+**Berufe: ehrlichere Zahlen.** Solange du dein Berufsfenster nicht geöffnet hast, heißt es „bis zu“ und „mindestens“ – und über den Rezepten steht, was die vier Zahlen bedeuten.
+
+### Technisch
+
+- **Beta-Test 6.14.0.0** (Lederverarbeitung 1/75, Allianz): Die Lehrer standen Fachmann → Experte → Geselle, Drakk Stonehand im Hinterland vor Gretta Finespindle in Eisenschmiede – `PRO.Trainers` sortierte unter „lehrt den nächsten Rang“ nach Rang absteigend. Jetzt: Entfernung aus `C_Map.GetWorldPosFromMapPos` (Lehrer und Spieler, nur gleicher Kontinent), ohne Weltlage eigene Karte, dann Rang aufsteigend. Zeile „Ort · bis 150“ statt „Fachmann · bis 300 · Hinterl…“, Rangname im Tooltip; Hinweis „Grün: lehrt deinen nächsten Rang“ über der Liste.
+- **Detailbereich** (`InspectorBlocks`, jetzt `PRO.InspectorBlocks`): Die Liste zeigte 6 „Bringt noch Fertigkeit“ (vom Client als gelernt bestätigt), der Detailbereich „—“. Ohne Berufsfenster jetzt „mind. 6“ und „bis zu 4“, mit Berufsfenster feste Zahlen.
+- **Legende** über den Rezepten (`PRO.Legend`), `Note` aus `SectionHead` herausgelöst.
+- **`/wcui prüfen` „Berufe“**: Der Bericht sagte „noch kein Berufsfenster gelesen“ – offen, ob es nicht geöffnet wurde oder das Ereignis nie kam. Jetzt zählt `PRO.eventCount` die Ereignisse seit dem Laden, `PRO.lastScan` nennt Nummern vom Client, davon im Bestand, gelernt und die Abfrage; Nummern ohne Treffer sind ein Befund.
+- Prüflauf: Entfernung, anderer Kontinent, Rückfall nach Rang, Grenzen im Detailbereich, Messung im Bericht; 10 Gegenproben, alle gefangen (das Zählen der Ereignisse erst nach geschärfter Prüfung).
+
 ## [6.14.0.0] – 2026-10-06
 
 **Neu: Berufe.** Links deine Berufe mit Fertigkeit, in der Mitte die Rezepte: was du jetzt beim Lehrer oder als Rezept lernen kannst, was dir noch Punkte bringt (in den Farben des Berufsfensters), was bald kommt – und was neu oder geändert in Forever ist. Rechts die Lehrer deiner Fraktion, der deinen nächsten Rang lehrt zuerst, mit Marke auf der Karte. Öffne einmal dein Berufsfenster, dann weiß WeintCodex, was du schon kannst. Auch mit /wc berufe.

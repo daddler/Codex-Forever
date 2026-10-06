@@ -456,9 +456,21 @@ Check("Berufe", function(add)
     else
         add("", "   Noch kein Berufsfenster gelesen – einmal öffnen (Rezepte), dann wiederholen")
     end
-    if PRO.lastScan then
-        add("", "   Letzter Blick ins Berufsfenster: " .. PRO.lastScan.count .. " gelernte Rezepte erkannt")
+    local ls = PRO.lastScan
+    if ls then
+        add("", "   Letzter Blick ins Berufsfenster: " .. ls.ids .. " Nummern vom Client (" .. (#ls.via > 0 and table.concat(ls.via, ", ") or "keine Abfrage")
+            .. "), " .. ls.matched .. " im Bestand, " .. ls.count .. " gelernt")
+        if ls.ids > 0 and ls.matched == 0 then
+            add(SC.BAD, "Die Rezeptnummern des Clients passen nicht zum Bestand – „gelernt“ bleibt unbekannt.")
+        end
+    else
+        add("", "   Seit dem Laden kein Blick ins Berufsfenster")
     end
+    local evs = {}
+    for _, e in ipairs({ "TRADE_SKILL_SHOW", "TRADE_SKILL_LIST_UPDATE", "CRAFT_SHOW", "NEW_RECIPE_LEARNED" }) do
+        evs[#evs + 1] = e .. " " .. ((PRO.eventCount and PRO.eventCount[e]) or 0)
+    end
+    add("", "   Ereignisse seit dem Laden: " .. table.concat(evs, " · "))
 end)
 
 Check("Speicherbedarf", function(add)

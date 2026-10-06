@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.14.0.1",
+        date    = "06.10.2026",
+        notes   = {
+            "|cff7C6CFFDer nächste Berufslehrer steht oben.|r Unter allen, die deinen nächsten Rang lehren, kommt der zuerst, der dir am nächsten ist – nicht mehr der Fachmann am anderen Ende des Kontinents. Die Zeile nennt den Ort und bis wohin er lehrt, den Rang zeigt der Tooltip.",
+            "|cff7C6CFFBerufe: ehrlichere Zahlen.|r Solange du dein Berufsfenster nicht geöffnet hast, heißt es „bis zu“ und „mindestens“ – und über den Rezepten steht, was die vier Zahlen bedeuten.",
+        },
+    },
+    {
         version = "6.14.0.0",
         date    = "06.10.2026",
         notes   = {

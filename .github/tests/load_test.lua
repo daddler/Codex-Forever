@@ -3759,6 +3759,25 @@ do
 
         -- Gelernt: ohne Berufsfenster "weiss nicht", danach der Speicher.
         sd.professions = nil
+        -- Detailbereich ohne Berufsfenster: Grenzen statt fester Zahlen
+        -- (6.14.0.1: die Liste zeigte 6 "bringt Fertigkeit", der Detailbereich "—").
+        local function inspect(skill)
+            local cat = PRO.Categorize("tailoring", skill)
+            local vals = {}
+            for _, b in ipairs(PRO.InspectorBlocks("tailoring", skill, cat)) do
+                for _, r in ipairs(b.rows or {}) do vals[r.label] = r.value end
+            end
+            return vals, cat
+        end
+        local TRk = WeintCodex.Trainer
+        local oldKnown = TRk.Known
+        local firstLearn
+        for _, r in ipairs(tail) do if r.learn and r.learn <= 75 and r.grey and r.grey > 75 then firstLearn = r break end end
+        TRk.Known = function(id) return id == firstLearn.spell end
+        local iv, icat = inspect(75)
+        TRk.Known = oldKnown
+        assert(#icat.sections.skillup == 1 and iv["Bringt Fertigkeit"] == "mind. 1", "Untergrenze: " .. tostring(iv["Bringt Fertigkeit"]))
+        assert(iv["Jetzt lernbar"]:find("^bis zu %d"), "Obergrenze: " .. tostring(iv["Jetzt lernbar"]))
         local learnable = {}
         for _, r in ipairs(tail) do
             if r.learn and r.learn <= 75 and #learnable < 3 then learnable[#learnable + 1] = r end
@@ -3776,6 +3795,8 @@ do
         assert(PRO.Learned(learnable[1]) == true and PRO.Learned(learnable[3]) == false, "Gelernt/nicht gelernt nach dem Lesen")
         local c1 = PRO.Categorize("tailoring", 75)
         assert(c1.learnedKnown and #c1.sections.known + #c1.sections.skillup == 2, "Gelerntes nicht einsortiert")
+        assert(PRO.lastScan.ids == 3 and PRO.lastScan.matched == 3 and PRO.lastScan.via[1] == "C_TradeSkillUI",
+            "Messung des Berufsfensters fehlt")
         for _, r in ipairs(c1.sections.now) do assert(r.spell ~= s1 and r.spell ~= s2, "Gelerntes als lernbar") end
         -- Klassisches Fenster: Links.
         G.C_TradeSkillUI = nil
@@ -3815,6 +3836,46 @@ do
             assert(not (t.next and seenOther), "Lehrer des naechsten Rangs hinter einem anderen")
         end
         for _, t in ipairs(tr) do assert(t.faction == nil or t.faction == "Alliance", "Lehrer der Horde fuer die Allianz") end
+        -- 6.14.0.1: mit Weltlage vom Client der naechste zuerst. Die Attrappe
+        -- legt jede Karte 1000 Einheiten neben die vorige; eine Karte liegt
+        -- auf einem anderen Kontinent und zaehlt dann nicht als nah.
+        local far
+        for _, t in ipairs(P.TRAINERS.tailoring) do
+            if t[3] and t[3] ~= low[3] and t[6] == "Alliance" and t[7] >= 3 then far = t[3] break end
+        end
+        G.C_Map = {
+            GetBestMapForUnit = function() return low[3] end,
+            GetPlayerMapPosition = function() return { x = 0.5, y = 0.5 } end,
+            GetWorldPosFromMapPos = function(map, v)
+                return map == far and 2 or 1, { x = map * 1000 + v.x * 100, y = v.y * 100 }
+            end,
+        }
+        tr = PRO.Trainers("tailoring", "Alliance", 150)
+        local lastD, noDist = -1, false
+        for _, t in ipairs(tr) do
+            if t.next then
+                if t.dist then
+                    assert(not noDist and t.dist >= lastD, "Lehrer nicht nach Entfernung: " .. t.name)
+                    lastD = t.dist
+                else
+                    noDist = true
+                end
+                if t.map == far then assert(t.dist == nil, "anderer Kontinent als nah gerechnet") end
+            end
+        end
+        assert(tr[1].next and tr[1].dist and math.abs(tr[1].map - low[3]) <= math.abs((tr[2].map or 0) - low[3]),
+            "der naechste Lehrer steht nicht oben")
+        -- Ohne Weltlage: die eigene Karte, dann der niedrigere Rang.
+        G.C_Map = { GetBestMapForUnit = function() return -1 end }
+        tr = PRO.Trainers("tailoring", "Alliance", 75)
+        local lastRank = 0
+        for _, t in ipairs(tr) do
+            if t.next then
+                assert(t.dist == nil and t.rank >= lastRank, "ohne Weltlage nicht nach Rang aufsteigend: " .. t.name)
+                lastRank = t.rank
+            end
+        end
+        G.C_Map = oldMap
 
         -- Seite: deine Berufe zuerst, Rezepte und Lehrer, Spalte passt.
         G.GetProfessions = function() return 1, 2, nil, nil, 3, nil end
@@ -3852,7 +3913,8 @@ do
         sd.professions = nil
         assert(#HM.Professions() == 0, "Schritt ohne Blick ins Berufsfenster")
 
-        -- Selbstpruefung.
+        -- Selbstpruefung: zaehlt, ob das Spiel das Berufsfenster gemeldet hat.
+        stub.FireEvent("TRADE_SKILL_SHOW")
         local SC = WeintCodex.UISelfCheck
         local out = {}
         for _, c in ipairs(SC.CHECKS) do
@@ -3860,6 +3922,18 @@ do
         end
         local txt = table.concat(out, "\n")
         assert(txt:find("Fertigkeit gelesen:", 1, true) and txt:find("Schneiderei 75/150", 1, true), "Selbstpruefung Berufe: " .. txt)
+        assert(txt:find("Nummern vom Client", 1, true) and txt:find("TRADE_SKILL_SHOW [1-9]"), "Selbstpruefung ohne Messung: " .. txt)
+        -- Nummern, die nicht zum Bestand passen, sind ein Befund.
+        G.C_TradeSkillUI = { GetAllRecipeIDs = function() return { 1, 2 } end, GetRecipeInfo = function() return { learned = true } end }
+        G.GetNumTradeSkills = nil
+        PRO.Scan()
+        out = {}
+        for _, c in ipairs(SC.CHECKS) do
+            if c.name == "Berufe" then c.fn(function(mark, text) out[#out + 1] = (mark ~= "" and (mark .. " ") or "") .. text end) end
+        end
+        assert(table.concat(out, "\n"):find("passen nicht zum Bestand", 1, true), "fremde Nummern ohne Befund")
+        -- Die Seite: Legende der Zahlen, Lehrer nach Ort.
+        assert(PRO.Legend():find("lernbar ab", 1, true) and PRO.Legend():find("grau ab", 1, true), "Legende")
     end)
     G.GetProfessions, G.GetProfessionInfo, G.GetNumSkillLines, G.GetSkillLineInfo, G.C_TradeSkillUI,
         G.GetNumTradeSkills, G.GetTradeSkillRecipeLink, G.UnitFactionGroup, G.UnitName = unpack(saved, 1, 9)

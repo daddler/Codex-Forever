@@ -182,11 +182,13 @@ function PRO.Scan()
     local m = PRO.Memory()
     if not m then return 0 end
     local index = SpellIndex()
-    local seen, count = {}, 0
+    local seen, count, ids, matched, via = {}, 0, 0, 0, {}
     local function mark(id, learned)
         id = Plain(id)
+        ids = ids + 1
         local key = type(id) == "number" and index[id] or nil
         if not key then return end
+        matched = matched + 1
         seen[key] = true
         if learned then
             m.known[id] = true
@@ -197,19 +199,21 @@ function PRO.Scan()
     end
     local ts = _G.C_TradeSkillUI
     if type(ts) == "table" and type(ts.GetAllRecipeIDs) == "function" and type(ts.GetRecipeInfo) == "function" then
-        local ok, ids = pcall(ts.GetAllRecipeIDs)
-        if ok and type(ids) == "table" then
-            for _, id in ipairs(ids) do
+        local ok, list = pcall(ts.GetAllRecipeIDs)
+        if ok and type(list) == "table" then
+            via[#via + 1] = "C_TradeSkillUI"
+            for _, id in ipairs(list) do
                 local ok2, info = pcall(ts.GetRecipeInfo, id)
                 if ok2 and type(info) == "table" then mark(id, Plain(info.learned) == true) end
             end
         end
     end
     -- Klassische Fenster: die Liste zeigt nur Gelerntes.
-    local function classic(numFn, linkFn)
+    local function classic(numFn, linkFn, name)
         if type(numFn) ~= "function" or type(linkFn) ~= "function" then return end
         local ok, n = pcall(numFn)
         n = ok and Plain(n) or nil
+        if type(n) == "number" and n > 0 then via[#via + 1] = name end
         for i = 1, (type(n) == "number" and n or 0) do
             local ok2, link = pcall(linkFn, i)
             link = ok2 and Plain(link) or nil
@@ -217,10 +221,12 @@ function PRO.Scan()
             if id then mark(id, true) end
         end
     end
-    classic(_G.GetNumTradeSkills, _G.GetTradeSkillRecipeLink)
-    classic(_G.GetNumCrafts, _G.GetCraftRecipeLink)
+    classic(_G.GetNumTradeSkills, _G.GetTradeSkillRecipeLink, "GetTradeSkillRecipeLink")
+    classic(_G.GetNumCrafts, _G.GetCraftRecipeLink, "GetCraftRecipeLink")
     for key in pairs(seen) do m.scanned[key] = Now() end
-    PRO.lastScan = { count = count, professions = seen }
+    -- Fuer /wcui pruefen: wie viele Nummern der Client nannte und wie viele
+    -- davon im Bestand stehen (passen sie nicht, bleibt "gelernt" unbekannt).
+    PRO.lastScan = { count = count, professions = seen, ids = ids, matched = matched, via = via }
     return count
 end
 
@@ -325,28 +331,68 @@ end
 
 -- Lehrer eines Berufs fuer eine Fraktion; der deinen naechsten Rang lehrt zuerst.
 PRO.RANK_TEXT = { [1] = "Lehrling · bis 75", [2] = "Geselle · bis 150", [3] = "Experte · bis 225", [4] = "Fachmann · bis 300" }
+PRO.RANK_CAP = { 75, 150, 225, 300 }
 local CAP_RANK = { [75] = 1, [150] = 2, [225] = 3, [300] = 4 }
 
+-- Weltlage eines Kartenpunkts (x, y 0..1): Kontinent und Koordinaten, vom
+-- Client gerechnet - nil, wenn er nicht antwortet.
+local function WorldPos(map, x, y)
+    local cm, V = _G.C_Map, _G.CreateVector2D
+    if not (cm and type(cm.GetWorldPosFromMapPos) == "function" and type(V) == "function") then return nil end
+    local ok, cont, pos = pcall(cm.GetWorldPosFromMapPos, map, V(x, y))
+    cont = ok and Plain(cont) or nil
+    if type(cont) ~= "number" or type(pos) ~= "table" then return nil end
+    local wx, wy = pos.x, pos.y
+    if type(pos.GetXY) == "function" then wx, wy = pos:GetXY() end
+    wx, wy = Plain(wx), Plain(wy)
+    if type(wx) ~= "number" or type(wy) ~= "number" then return nil end
+    return cont, wx, wy
+end
+
+-- Karte und Weltlage des Spielers (in Instanzen nur die Karte, oder nichts).
+local function PlayerPos()
+    local cm = _G.C_Map
+    if not (cm and type(cm.GetBestMapForUnit) == "function") then return nil end
+    local ok, m = pcall(cm.GetBestMapForUnit, "player")
+    m = ok and Plain(m) or nil
+    if type(m) ~= "number" then return nil end
+    if type(cm.GetPlayerMapPosition) ~= "function" then return m end
+    local ok2, p = pcall(cm.GetPlayerMapPosition, m, "player")
+    if not ok2 or type(p) ~= "table" then return m end
+    local x, y = p.x, p.y
+    if type(p.GetXY) == "function" then x, y = p:GetXY() end
+    x, y = Plain(x), Plain(y)
+    if type(x) ~= "number" or type(y) ~= "number" then return m end
+    return m, WorldPos(m, x, y)
+end
+
+-- Lehrer eines Berufs fuer eine Fraktion. Wer deinen naechsten Rang lehrt,
+-- steht vorn; darin der naechste zuerst (Entfernung vom Client, nur auf
+-- demselben Kontinent), ohne Entfernung die eigene Karte, dann der
+-- niedrigere Rang - die hohen stehen meist weit draussen (6.14.0.1: ein
+-- Fachmann im Hinterland stand vor dem Gesellen in Eisenschmiede).
 function PRO.Trainers(key, faction, max)
     local need = max and CAP_RANK[max] and (CAP_RANK[max] + 1) or nil
-    local here
-    local cm = _G.C_Map
-    if cm and cm.GetBestMapForUnit then
-        local ok, m = pcall(cm.GetBestMapForUnit, "player")
-        here = ok and Plain(m) or nil
-    end
+    local here, pc, px, py = PlayerPos()
     local out = {}
     for _, t in ipairs(P and P.TRAINERS and P.TRAINERS[key] or {}) do
         local fr = t[6]
         if not faction or not fr or fr == faction then
+            local dist
+            if pc and t[3] then
+                local c, wx, wy = WorldPos(t[3], t[4] / 100, t[5] / 100)
+                if c == pc then dist = math.sqrt((wx - px) ^ 2 + (wy - py) ^ 2) end
+            end
             out[#out + 1] = { id = t[1], name = t[2], map = t[3], x = t[4], y = t[5], faction = fr, rank = t[7],
-                              next = need ~= nil and t[7] >= need, here = here ~= nil and t[3] == here }
+                              next = need ~= nil and t[7] >= need, here = here ~= nil and t[3] == here, dist = dist }
         end
     end
     table.sort(out, function(a, b)
         if a.next ~= b.next then return a.next end
+        if (a.dist ~= nil) ~= (b.dist ~= nil) then return a.dist ~= nil end
+        if a.dist and a.dist ~= b.dist then return a.dist < b.dist end
         if a.here ~= b.here then return a.here end
-        if a.rank ~= b.rank then return a.rank > b.rank end
+        if a.rank ~= b.rank then return a.rank < b.rank end
         return a.name < b.name
     end)
     return out, need
@@ -408,6 +454,13 @@ function PRO.StepsText(r)
     add(r.green, "skillGreen")
     add(r.grey, "skillGrey")
     return table.concat(parts, " ")
+end
+
+-- Was die vier Zahlen einer Zeile heissen, in ihren Farben.
+function PRO.Legend()
+    local CT = WeintCodex.ColorText
+    return "Fertigkeit: " .. CT("skillOrange", "lernbar ab") .. " · " .. CT("skillYellow", "gelb ab")
+        .. " · " .. CT("skillGreen", "grün ab") .. " · " .. CT("skillGrey", "grau ab")
 end
 
 --------------------------------------------------
@@ -573,6 +626,26 @@ local function RecipeRow(body, y, w, r, opts)
     return y - ROW_H
 end
 
+-- Ein Absatz wie WeintCodex.Paragraph, aber wiederverwendet.
+local function Note(body, y, w, note)
+    used.note = used.note + 1
+    local fs = notePool[used.note]
+    if not fs then
+        fs = WeintCodex.Paragraph(body, "", { size = 11, color = "textDim" })
+        notePool[used.note] = fs
+    end
+    fs:SetParent(body)
+    fs:ClearAllPoints()
+    fs:SetPoint("TOPLEFT", body, "TOPLEFT", 0, y)
+    fs:SetWidth(w)
+    fs:SetText(note)
+    -- Hoehe geschaetzt wie in Paragraph (Groesse 11, Abstand 3), nie vom Client gelesen.
+    local h = WeintCodex.EstimateLines(note, math.floor(w / (11 * 0.60))) * (11 + 3)
+    fs:SetHeight(h)
+    fs:Show()
+    return y - h - 6
+end
+
 local function SectionHead(body, y, w, label, color, count, note)
     used.head = used.head + 1
     local head = headPool[used.head]
@@ -600,25 +673,7 @@ local function SectionHead(body, y, w, label, color, count, note)
     head.right:SetText(count == 1 and "1 Rezept" or (count .. " Rezepte"))
     head:Show()
     y = y - HEAD_H - 4
-    if note then
-        used.note = used.note + 1
-        local fs = notePool[used.note]
-        if not fs then
-            -- Ein Absatz wie WeintCodex.Paragraph, aber wiederverwendet.
-            fs = WeintCodex.Paragraph(body, "", { size = 11, color = "textDim" })
-            notePool[used.note] = fs
-        end
-        fs:SetParent(body)
-        fs:ClearAllPoints()
-        fs:SetPoint("TOPLEFT", body, "TOPLEFT", 0, y)
-        fs:SetWidth(w)
-        fs:SetText(note)
-        -- Hoehe geschaetzt wie in Paragraph (Groesse 11, Abstand 3), nie vom Client gelesen.
-        local h = WeintCodex.EstimateLines(note, math.floor(w / (11 * 0.60))) * (11 + 3)
-        fs:SetHeight(h)
-        fs:Show()
-        y = y - h - 6
-    end
+    if note then y = Note(body, y, w, note) end
     return y
 end
 
@@ -631,6 +686,7 @@ PRO.NOTE_UNSURE = NOTE_UNSURE
 local function DrawRecipes(body, w, skill, cat)
     local y, shown, hidden = 0, 0, 0
     local defs = skill and PRO.SECTIONS or PRO.RANKS
+    y = Note(body, y, w, PRO.Legend())
     for i, sec in ipairs(defs) do
         local list = cat.sections[sec.key]
         -- Ohne Fertigkeit: der erste Rang offen, die anderen nur mit "Alle zeigen".
@@ -673,6 +729,21 @@ local function TrainerRow(body, y, w, t, profName)
         row.sub:SetPoint("RIGHT", row, "RIGHT", -64, 0)
         row.name:SetWordWrap(false)
         row.sub:SetWordWrap(false)
+        row:EnableMouse(true)
+        row:SetScript("OnEnter", function(self)
+            local gt, tt = _G.GameTooltip, self.trainer
+            if not (gt and tt) then return end
+            gt:SetOwner(self, "ANCHOR_RIGHT")
+            local tb, tm = C.textBright, C.textMuted
+            gt:SetText(tt.name, tb[1], tb[2], tb[3])
+            gt:AddLine((self.prof or "") .. ": " .. (PRO.RANK_TEXT[tt.rank] or "Rang unbekannt"), tm[1], tm[2], tm[3], true)
+            if tt.next then
+                local g = C.successBright
+                gt:AddLine("Lehrt deinen nächsten Rang", g[1], g[2], g[3], true)
+            end
+            gt:Show()
+        end)
+        row:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
         row.map = WeintCodex.CreateButton(row, { kind = "secondary", text = "Karte", height = 20, size = 10,
             padding = 18, radius = 0, onClick = function()
                 local tt = row.trainer
@@ -695,10 +766,12 @@ local function TrainerRow(body, y, w, t, profName)
     row.name:SetTextColor(c[1], c[2], c[3])
     local QM = WeintCodex.QuestMap
     local zone = t.map and QM and QM.MapName(t.map)
-    local parts = { PRO.RANK_TEXT[t.rank] or "" }
-    if zone then parts[#parts + 1] = zone elseif not t.map then parts[#parts + 1] = "Lage unbekannt" end
+    -- Erst der Ort, dann bis wohin er lehrt - der Rangname steht im Tooltip
+    -- (6.14.0.1: "Fachmann · bis 300 · Hinterl..." schnitt den Ort ab).
+    local parts = {}
+    if zone then parts[1] = zone elseif not t.map then parts[1] = "Lage unbekannt" end
+    if PRO.RANK_CAP[t.rank] then parts[#parts + 1] = "bis " .. PRO.RANK_CAP[t.rank] end
     row.map:SetShown(t.map ~= nil)
-    if t.next then parts[#parts + 1] = "dein nächster Rang" end
     row.sub:SetText(table.concat(parts, "  ·  "))
     row:Show()
     return y - 44
@@ -708,6 +781,10 @@ local function DrawTrainers(body, w, key, faction, max)
     local list, need = PRO.Trainers(key, faction, max)
     local y = 0
     local profName = PRO.ProfName(key)
+    if list[1] and list[1].next and PRO.RANK_CAP[need] then
+        y = Note(body, y, w, WeintCodex.ColorText("successBright", "Grün") .. ": lehrt deinen nächsten Rang (bis "
+            .. PRO.RANK_CAP[need] .. ")" .. (list[1].dist and " – der nächste steht oben." or "."))
+    end
     for _, t in ipairs(list) do y = TrainerRow(body, y, w, t, profName) end
     if #list == 0 then
         y = SectionHead(body, y, w, "Lehrer", "textMuted", 0,
@@ -763,8 +840,13 @@ local function InspectorBlocks(key, skill, cat)
         { label = "Geändert", value = tostring(changed) },
     }
     if skill then
-        rows[#rows + 1] = { label = "Jetzt lernbar", value = tostring(#cat.sections.now + #cat.sections.recipe) }
-        rows[#rows + 1] = { label = "Bringt Fertigkeit", value = cat.learnedKnown and tostring(#cat.sections.skillup) or "—" }
+        -- Ohne Blick ins Berufsfenster sagt der Client nur "gelernt" sicher:
+        -- "lernbar" ist dann eine Obergrenze, "bringt Fertigkeit" eine
+        -- Untergrenze (6.14.0.1: die Liste zeigte 6, der Detailbereich "—").
+        local now, up = #cat.sections.now + #cat.sections.recipe, #cat.sections.skillup
+        local sure = cat.learnedKnown
+        rows[#rows + 1] = { label = "Jetzt lernbar", value = (sure or now == 0) and tostring(now) or ("bis zu " .. now) }
+        rows[#rows + 1] = { label = "Bringt Fertigkeit", value = sure and tostring(up) or (up > 0 and ("mind. " .. up) or "—") }
     end
     local at = PRO.ScannedAt(key)
     return {
@@ -793,6 +875,8 @@ local function InspectorBlocks(key, skill, cat)
         }},
     }
 end
+
+PRO.InspectorBlocks = InspectorBlocks
 
 function PRO.Show()
     local cp = WeintCodex.ContentPanel
@@ -881,7 +965,11 @@ for _, e in ipairs({ "TRADE_SKILL_SHOW", "TRADE_SKILL_LIST_UPDATE", "TRADE_SKILL
                      "GET_ITEM_INFO_RECEIVED" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
+-- Wie oft jedes Ereignis kam (fuer /wcui pruefen: hat das Spiel das
+-- Berufsfenster ueberhaupt gemeldet?).
+PRO.eventCount = {}
 ev:SetScript("OnEvent", function(_, event, id)
+    PRO.eventCount[event] = (PRO.eventCount[event] or 0) + 1
     if event == "TRADE_SKILL_SHOW" or event == "CRAFT_SHOW" then QueueScan(0.3) return end
     if event == "NEW_RECIPE_LEARNED" then
         local m = PRO.Memory()

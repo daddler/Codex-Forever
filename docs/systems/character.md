@@ -221,9 +221,25 @@ lernbar und ab 55 schon grau) – kein Fehler der Daten. Lernstufe 0: mit
 dem Beruf gelernt.
 
 **Lehrer** (rechts): deine Fraktion; wer deinen **nächsten Rang** lehrt,
-zuerst (aus der Obergrenze deiner Fertigkeit: 75 → Geselle …), dann die
-auf deiner Karte. „Karte“ setzt die Marke (`QuestMap.Show`). Annora
-(Verzauberkunst, Fachmann, in Uldaman) steht ohne Lage – ohne Karte.
+zuerst (aus der Obergrenze deiner Fertigkeit: 75 → Geselle …). Darin seit
+6.14.0.1 der **nächste** zuerst: Entfernung aus der Weltlage, die der
+Client rechnet (`C_Map.GetWorldPosFromMapPos` für Lehrer und Spieler,
+nur auf demselben Kontinent); ohne Weltlage (in Instanzen) die eigene
+Karte, dann der **niedrigere** Rang – die Fachleute stehen meist weit
+draußen (gemeldet: ein Fachmann im Hinterland stand vor dem Gesellen in
+Eisenschmiede). Die Zeile nennt Ort und „bis 150“, der Rangname steht im
+Tooltip (vorher schnitt er den Ort ab). „Karte“ setzt die Marke
+(`QuestMap.Show`). Annora (Verzauberkunst, Fachmann, in Uldaman) steht
+ohne Lage – ohne Karte.
+
+**Grenzen statt Zahlen** (6.14.0.1): Ohne Blick ins Berufsfenster nennt
+der Detailbereich „Jetzt lernbar: bis zu 4“ (manches kannst du vielleicht
+schon) und „Bringt Fertigkeit: mind. 6“ (was der Client als gelernt
+bestätigt); erst danach feste Zahlen. Über der Liste erklärt eine Zeile
+die vier Zahlen je Rezept (lernbar ab · gelb · grün · grau ab).
+`/wcui prüfen` zählt die Ereignisse des Berufsfensters seit dem Laden und
+beim letzten Lesen, wie viele Rezeptnummern der Client nannte und wie
+viele davon im Bestand stehen – passen sie nicht, ist das ein Befund.
 
 Zeilen werden wiederverwendet (500 Rezepte der Lederverarbeitung wären
 sonst bei jedem Aufschlagen 500 neue Rahmen). Die Startseite bekommt den
