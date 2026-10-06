@@ -100,8 +100,9 @@ end
 -- GEMESSEN MIT 6.13.2.0 (/wcui pruefen, Client 1.60.1): GetPetHappiness
 -- gibt es auf Forever nicht, wohl aber C_PetInfo.GetPetHappiness; die
 -- Energieart Happiness (27, hoechstens 1000) ist selbst ausser Kampf
--- geheim. Was C_PetInfo.GetPetHappiness zurueckgibt, ist noch nicht
--- gemessen - deshalb eine Gegenprobe: liefert die Abfrage wie in Classic
+-- geheim. GEMESSEN MIT 6.13.3.0: C_PetInfo.GetPetHappiness() ausser Kampf
+-- offen "3, 125, 20" - Laune, Schaden in Prozent, Treuerate wie in Classic;
+-- mit und ohne "pet" gleich. Die Gegenprobe bleibt: liefert die Abfrage wie in Classic
 -- als zweiten Wert den Schaden in Prozent, muss er zur Laune passen
 -- (75/100/125). Passt er nicht, ist die Bedeutung eine andere - dann
 -- lieber kein Punkt als eine falsche Farbe. Ohne Antwort ohne Argument
