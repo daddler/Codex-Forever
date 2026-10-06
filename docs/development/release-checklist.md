@@ -43,6 +43,10 @@ sondern fängt das Offensichtliche ab, **bevor** es Spieler melden.
       Einstellung und einen Rahmen ändern. Mit einem zweiten Charakter
       einloggen: er hat „Standard“, unverändert. Profil wählen, neu laden –
       Einstellung und Platz sind da.
+- [ ] Mit einem Charakter ohne eigenes Profil einloggen: Die Frage „Eigenes
+      Profil für …?“ kommt einmal, nicht neben dem Willkommen oder dem
+      Update-Hinweis; Knöpfe nebeneinander, kein Text abgeschnitten. „×“,
+      neu einloggen: sie kommt wieder. „Standard behalten“: nie wieder.
 
 ## Fenster des Spiels (3 Minuten)
 

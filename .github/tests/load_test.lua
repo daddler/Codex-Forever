@@ -11904,6 +11904,78 @@ do
         local status
         for _, w in ipairs(widgets) do if w.isProfileStatus == true then status = w.text:GetText() end end
         assert(status and status:find("„Jäger“ nutzen", 1, true), "Statuszeile: " .. tostring(status))
+
+        -- 6.12.0.1: beim Einloggen fragen - einmal je Charakter ohne Wahl,
+        -- nur mit Oberflaeche, nie vor dem Willkommen, nicht neben dem
+        -- Hinweis auf ein Update.
+        local oldEnabled, oldAsked = ui.enabled, ui.asked
+        ui.enabled, ui.asked = true, true
+        me = "Neuling"
+        PR.ResetLater()
+        assert(not PR.Answered() and PR.ShouldAsk(), "Neuling wird nicht gefragt")
+        ui.asked = nil
+        assert(not PR.ShouldAsk(), "Frage vor dem Willkommen")
+        ui.asked, ui.enabled = true, false
+        assert(not PR.ShouldAsk(), "Frage ohne Oberflaeche")
+        ui.enabled = true
+        local OB = WeintCodex.Onboarding
+        local oldShowing = OB.IsShowing
+        OB.IsShowing = function() return true end
+        assert(not PR.ShouldAsk(), "Frage neben dem Hinweis auf ein Update")
+        OB.IsShowing = oldShowing
+        local WLm = WeintCodex.UIWelcome
+        local oldWShown, oldBlocks = WLm.IsShown, WLm.ReloadBlocks
+        WLm.IsShown = function() return true end
+        assert(not PR.ShouldAsk(), "Frage neben dem Willkommen")
+        WLm.IsShown = oldWShown
+        WLm.ReloadBlocks = function() return true end
+        assert(not PR.ShouldAsk(), "Frage nach /reload, obwohl der Client nicht speichert")
+        WLm.ReloadBlocks = oldBlocks
+        assert(PR.MaybeAsk(), "MaybeAsk fragt nicht")
+        local a = PR.AskFrame()
+        assert(a and a:IsShown() and a.state == "frage" and a.title:GetText():find("Neuling", 1, true)
+            and a.create:IsShown() and a.keep:IsShown() and a.pick:IsShown() and not a.reload:IsShown(),
+            "Dialog: " .. tostring(a and a.title:GetText()))
+        assert(not PR.ShouldAsk(), "doppelt gefragt")
+        -- "Standard behalten": Antwort, nie wieder.
+        PR.AskKeep()
+        assert(not a:IsShown() and PR.Answered() and not PR.ShouldAsk() and PR.Chosen() == "Standard",
+            "Standard behalten")
+        -- Esc / "×": Spaeter - bis zum naechsten Einloggen.
+        me = "Zweiter"
+        PR.ShowAsk("frage")
+        a.close:Click()
+        assert(not a:IsShown() and not PR.Answered() and not PR.ShouldAsk(), "Spaeter fragt sofort wieder")
+        stub.FireEvent("PLAYER_ENTERING_WORLD", true, false)
+        assert(PR.ShouldAsk(), "Spaeter endet nicht mit dem Einloggen")
+        stub.FireEvent("PLAYER_ENTERING_WORLD", false, true)
+        -- "Eigenes Profil anlegen": angelegt, gewaehlt, Knopf zum Neuladen.
+        PR.MaybeAsk()
+        local made = PR.AskCreate()
+        assert(made == "Zweiter" and PR.Chosen() == "Zweiter" and PR.Answered() and a:IsShown()
+            and a.state == "angelegt" and a.reload:IsShown() and a.later:IsShown() and not a.create:IsShown(),
+            "Anlegen aus dem Dialog")
+        assert(a.body:GetText():find("bis dahin läuft", 1, true), "Hinweis aufs Neuladen fehlt")
+        a.later:Click()
+        assert(not a:IsShown(), "Spaeter schliesst nicht")
+        -- Wer schon gewaehlt hat, wird nie gefragt.
+        me = "Shooty"
+        assert(PR.Answered(), "Charakter mit Profil gefragt")
+        -- "Profil waehlen": nur bei mehr als Standard; oeffnet die Seite.
+        me = "Dritter"
+        PR.ShowAsk("frage")
+        PR.AskPick()
+        assert(not a:IsShown() and PR.Answered() and O.CurrentWidgets()[1] ~= nil, "Profil waehlen")
+        local keepProfiles = ui.profiles
+        ui.profiles = { Standard = {} }
+        me = "Vierter"
+        PR.ShowAsk("frage")
+        assert(not a.pick:IsShown() and a.keep:IsShown(), "Waehlen ohne Auswahl")
+        a.decided = true
+        a:Hide()
+        ui.profiles = keepProfiles
+        me = "Shooty"
+        ui.enabled, ui.asked = oldEnabled, oldAsked
     end)
     counting = false
     sd.ui, _G.UnitName = savedUI, oldName

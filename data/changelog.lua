@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.12.0.1",
+        date    = "06.10.2026",
+        notes   = {
+            "|cff7C6CFFWeintCodex fragt nach deinem Profil.|r Loggst du mit einem Charakter ein, der noch kein eigenes Profil hat, fragt WeintCodex einmal: eigenes Profil anlegen, ein vorhandenes wählen oder „Standard“ behalten. Mit dem Kreuz oder Esc kommt die Frage beim nächsten Einloggen wieder.",
+        },
+    },
+    {
         version = "6.12.0.0",
         date    = "05.10.2026",
         notes   = {
