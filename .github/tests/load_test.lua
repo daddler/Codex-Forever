@@ -11900,6 +11900,30 @@ do
         for _, s2 in ipairs(f.cols) do if s2.m and s2.m.level == 13 then thanes = s2 end end
         assert(thanes and thanes.kind == "dungeon" and thanes.text:GetText():find(hot.name, 1, true), "Weg: Dungeon bei 13")
         assert(f.cols[2].kind == "none" and f.cols[2].level:GetText() == "8", "Weg: Stufe ohne Neues")
+        -- 6.13.4.0, Beta-Test Stufe 13: bei 17 stand "Wailing Caverns..." -
+        -- zwei Dungeons mit Zeilenumbruch in einem einzeiligen Text, der
+        -- zweite (The Deadmines) war unsichtbar. Jetzt zwei Texte.
+        assert(not thanes.text:GetText():find("\n", 1, true), "Zeilenumbruch in einem einzeiligen Text")
+        local l1, l2 = HM.ColumnText({ dungeons = { "Wailing Caverns", "The Deadmines" }, spells = 3 })
+        assert(l1.text == "Wailing Caverns" and l2 and l2.text == "The Deadmines" and l2.color == "infoBright",
+            "zweiter Dungeon nicht in der zweiten Zeile")
+        l1, l2 = HM.ColumnText({ dungeons = { "A", "B", "C" }, spells = 0 })
+        assert(l2 and l2.text == "+2 weitere", "drei Dungeons ohne Zaehlung: " .. tostring(l2 and l2.text))
+        l1, l2 = HM.ColumnText({ dungeons = { "A" }, spells = 3 })
+        assert(l2 and l2.text == "3 neue Zauber" and l2.color == "textMuted", "Zauber nicht unter dem Dungeon")
+        l1, l2 = HM.ColumnText({ dungeons = { "A" }, spells = 0 })
+        assert(l2 == nil, "zweite Zeile ohne Inhalt")
+        local two = { level = 13, trainer = Trainer(0, 0, 0, {}, {}), dungeons = {
+            { name = "Wailing Caverns", minLevel = 17 }, { name = "The Deadmines", minLevel = 17 } } }
+        HM.Fill(f, two)
+        local at17
+        for _, s2 in ipairs(f.cols) do if s2.m and s2.m.level == 17 then at17 = s2 end end
+        assert(at17 and at17.text:GetText() == "Wailing Caverns" and at17.text2:GetText() == "The Deadmines",
+            "Stufe 17: " .. tostring(at17 and at17.text:GetText()) .. " / " .. tostring(at17 and at17.text2:GetText()))
+        for _, s2 in ipairs(f.cols) do
+            if s2.m and s2.m.level ~= 17 then assert(s2.text2:GetText() == "", "zweite Zeile bleibt stehen bei " .. s2.m.level) end
+        end
+        HM.Fill(f, ctx)
         assert(f.track:IsShown() and math.abs(f.wayPct - 0.48) < 0.001, "Weg: Linie bis zur naechsten Stufe")
         for key, path in pairs(HM.ICONS) do assert(path:find("media\\ui\\icon_"), "Symbol " .. key) end
         -- Kosten, ohne dass das Gold reicht -> Rot beim Lehrer (Pflicht).

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.13.4.0",
+        date    = "06.10.2026",
+        notes   = {
+            "|cff7C6CFFDein Weg zeigt wieder jeden Dungeon.|r Öffnen sich auf einer Stufe zwei Dungeons, stehen beide da – bisher war der zweite hinter „…“ verschwunden, etwa The Deadmines neben Wailing Caverns. Bei mehr als zweien steht „+N weitere“, alle Namen im Tooltip.",
+        },
+    },
+    {
         version = "6.13.3.0",
         date    = "06.10.2026",
         notes   = {

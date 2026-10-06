@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.13.4.0] – 2026-10-06
+
+**Dein Weg zeigt wieder jeden Dungeon.** Öffnen sich auf einer Stufe zwei Dungeons, stehen beide da – bisher war der zweite hinter „…“ verschwunden, etwa The Deadmines neben Wailing Caverns. Bei mehr als zweien steht „+N weitere“, alle Namen im Tooltip.
+
+### Technisch
+
+- Beta-Test, Stufe 13: „Es fehlen im Zeitstrahl auf jeden Fall Dungeons, Todesminen wären da auch schon möglich.“ Ursache: `FillColumn` (`modules/home.lua`) setzte zwei Dungeons mit `\n` in **einen** Text, der mit `SetWordWrap(false)` einzeilig ist – im Spiel „Wailing Caverns…“, The Deadmines (ebenfalls ab 17) unsichtbar. Seit 6.11.0.2 so; der Test prüfte nur, dass der erste Name im Text steht.
+- Jetzt zwei Texte je Spalte (`s.text`, `s.text2` bei `HM.LINE2_Y = 96`, innerhalb `HM.WEG_H`), Inhalt aus `HM.ColumnText(m)`: erster Dungeon; zweiter Dungeon, bei mehr als zweien „+N weitere“, sonst die Zauber (gedämpft). Die zweite Zeile wird bei jedem Füllen geleert.
+- **Nicht geändert, mit Absicht:** die Stufenbereiche. The Deadmines steht ab 17, weil `data/dungeons_classic.lua` die Bereiche von Classic führt (17–26) – für Forever hat Blizzard keine veröffentlicht, und die Gruppensuche des Clients nennt beim ersten Abgleich nur eine Stufe je Dungeon (Todesminen 16), ohne zu sagen, ob es Zugang oder Empfehlung ist. The Stockade (24–32) liegt bei Stufe 13 jenseits der acht Stufen des Wegs und steht deshalb dort noch nicht – im Dungeonkompendium ist es.
+- `load_test.lua`: kein Zeilenumbruch im einzeiligen Text; zwei Dungeons auf einer Stufe stehen in zwei Zeilen, drei als „+2 weitere“, ein Dungeon mit Zaubern darunter (gedämpft), ohne zweiten Inhalt keine zweite Zeile; auf anderen Stufen bleibt keine zweite Zeile stehen. Gegenproben: 6, alle gefangen.
+- **Ungeprüft im Spiel:** Abstand der zweiten Zeile.
+
 ## [6.13.3.0] – 2026-10-06
 
 **Zweiter Versuch für die Laune deines Begleiters.** WeintCodex fragt jetzt dort, wo Forever sie führt. Erscheint der Punkt am Begleiterrahmen weiterhin nicht, gibt das Spiel die Laune nur verschlüsselt heraus – /wcui prüfen zeigt dann, was genau es antwortet.

@@ -156,7 +156,16 @@ damit als ungültige UTF-8-Folge wieder heraus.
     (Namen in Blau), kleiner Punkt = nichts. Die Linie ist vom Kreis aus
     so weit gefärbt, wie die Erfahrung zur nächsten Stufe reicht. Seit
     6.11.0.3 zeigt eine Spalte mit Zaubern oder Dungeon beim Drüberfahren
-    die Namen (`HM.ColumnLines`).
+    die Namen (`HM.ColumnLines`). Unter einer Stufe stehen zwei Zeilen als
+    zwei Texte (`HM.ColumnText`, seit 6.13.4.0): erster Dungeon, dann der
+    zweite, bei mehr „+N weitere“, sonst die Zauber. Vorher standen zwei
+    Dungeons mit Zeilenumbruch in einem einzeiligen Text – das Spiel
+    zeigte „Wailing Caverns…“ und verschluckte The Deadmines.
+    Die Stufen der klassischen Dungeons sind die von Classic
+    (`data/dungeons_classic.lua`); Forever hat sie nicht veröffentlicht,
+    und die Gruppensuche des Clients nennt nur eine Stufe je Dungeon
+    (`docs/systems/dungeons.md`, erster Abgleich). Was sich nicht in den
+    acht Stufen öffnet (The Stockade ab 24 bei Stufe 13), steht noch nicht im Weg.
   * **Nicht mehr da** (Beta-Test mit Stufe 3, 6.10.4.9): Datum,
     Erfahrungsleiste (zeigt das Spiel), drei gleich schwere Spalten,
     Gegenstandsstufe, Companion-Zeile, die Zahl an „Schlachtzüge“. **Leere

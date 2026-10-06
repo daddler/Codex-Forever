@@ -417,6 +417,7 @@ HM.HEAD_GAP  = 12
 HM.CARD_H    = 76                  -- eine Karte unter "Ausserdem"
 HM.CARD_GAP  = 10
 HM.WEG_H     = 140
+HM.LINE2_Y   = 96         -- zweite Zeile unter einer Stufe (erste bei 78)
 HM.WEG_COLS  = 8
 -- 6.11.0.3: was man lernen kann, mit Namen (Beta-Test: "statt erst auf
 -- die Lehrerkarte zu klicken"). Eine Zeile unter der Einzelheit; der
@@ -923,7 +924,14 @@ local function BuildColumn(card, i)
     s.text:SetPoint("TOPLEFT", s, "TOPLEFT", 4, -78)
     s.text:SetPoint("TOPRIGHT", s, "TOPRIGHT", -4, -78)
     OneLine(s.text, "CENTER")
-    if s.text.SetSpacing then s.text:SetSpacing(4) end
+    -- Zweite Zeile als eigener Text (6.13.4.0). Bis dahin standen zwei
+    -- Dungeons mit Zeilenumbruch in EINEM einzeiligen Text - das Spiel
+    -- zeigte die erste Zeile mit "..." und verschluckte die zweite
+    -- (Beta-Test, Stufe 17: "Wailing Caverns..." - The Deadmines fehlte).
+    s.text2 = Label(s, 12, "textMuted")
+    s.text2:SetPoint("TOPLEFT", s, "TOPLEFT", 4, -HM.LINE2_Y)
+    s.text2:SetPoint("TOPRIGHT", s, "TOPRIGHT", -4, -HM.LINE2_Y)
+    OneLine(s.text2, "CENTER")
     return s
 end
 
@@ -1115,10 +1123,27 @@ local function FillCard(c, step)
     end
 end
 
+-- Die zwei Zeilen unter einer Stufe mit Dungeon: erster Dungeon, dann
+-- der zweite (bei mehr: "+N weitere", alle im Tooltip) oder die Zauber.
+function HM.ColumnText(m)
+    local d = m.dungeons or {}
+    local l1 = { text = d[1], color = "infoBright" }
+    local l2
+    if #d == 2 then
+        l2 = { text = d[2], color = "infoBright" }
+    elseif #d > 2 then
+        l2 = { text = "+" .. (#d - 1) .. " weitere", color = "infoBright" }
+    elseif (m.spells or 0) > 0 then
+        l2 = { text = Plural(m.spells, "ein neuer Zauber", "neue Zauber"), color = "textMuted" }
+    end
+    return l1, l2
+end
+
 local function FillColumn(s, m)
     s.m = m
     if not m then s:Hide() return end
     s:Show()
+    s.text2:SetText("")
     local kind = m.current and "current" or (#m.dungeons > 0 and "dungeon") or (m.spells > 0 and "spells") or "none"
     s.kind = kind
     s.ring:SetShown(kind == "current")
@@ -1140,10 +1165,13 @@ local function FillColumn(s, m)
         s.text:SetText("du bist hier")
         SetColor(s.text, "textMuted")
     elseif kind == "dungeon" then
-        local lines = { m.dungeons[1], m.dungeons[2] }
-        if m.spells > 0 and #lines < 2 then lines[#lines + 1] = Plural(m.spells, "ein neuer Zauber", "neue Zauber") end
-        s.text:SetText(table.concat(lines, "\n"))
-        SetColor(s.text, "infoBright")
+        local l1, l2 = HM.ColumnText(m)
+        s.text:SetText(l1.text)
+        SetColor(s.text, l1.color)
+        if l2 then
+            s.text2:SetText(l2.text)
+            SetColor(s.text2, l2.color)
+        end
     else
         s.text:SetText(Plural(m.spells, "ein neuer Zauber", "neue Zauber"))
         SetColor(s.text, "textMuted")
