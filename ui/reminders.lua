@@ -12,6 +12,8 @@
 --   buff      "Kampfschrei fehlt"      - Erinnerung, solange der Buff fehlt
 --   weapon    "Waffengift fehlt"       - Waffe ohne Verzauberung / laeuft ab
 --   pet       "Begleiter fehlt"        - er war da und ist weg
+--   happy     "Begleiter unglücklich"  - Laune des Jaegerbegleiters unter
+--                                        der Schwelle (6.13.1.0)
 --   proc      Symbol, solange ein eigener Buff/Proc laeuft
 --   cooldown  Symbol mit Abklingzeit einer Faehigkeit
 --   ammo      "Munition knapp"         - angelegte Munition unter der Menge
@@ -62,6 +64,7 @@ R.KINDS = {
     { value = "buff",     text = "Buff fehlt" },
     { value = "weapon",   text = "Waffe ohne Verzauberung" },
     { value = "pet",      text = "Begleiter fehlt" },
+    { value = "happy",    text = "Begleiter nicht glücklich" },
     { value = "proc",     text = "Buff/Proc anzeigen" },
     { value = "cooldown", text = "Abklingzeit anzeigen" },
     { value = "ammo",     text = "Munition knapp" },
@@ -82,6 +85,20 @@ function R.NeedsAmount(kind) return kind == "ammo" or kind == "item" end
 -- Ohne Angabe: ein Stapel Pfeile/Kugeln (200), bei Vorrat "gar keiner mehr".
 R.DEFAULT_MIN = { ammo = 200, item = 1 }
 
+-- Laune des Begleiters (6.13.1.0, Beta-Test als Jaeger: "sehen, wie
+-- gluecklich mein Pet ist ... am besten als Reminder"). `below`: erinnern,
+-- solange die Laune darunter liegt - 3 "nicht gluecklich" (Standard),
+-- 2 "ungluecklich". Die Laune selbst: UIKit.PetHappiness.
+R.HAPPY_BELOW = {
+    { value = 3, text = "nicht glücklich" },
+    { value = 2, text = "unglücklich" },
+}
+R.DEFAULT_BELOW = 3
+local function Below(rule)
+    local b = tonumber(rule.below)
+    return (b == 2 or b == 3) and b or R.DEFAULT_BELOW
+end
+
 local function PlayerClass()
     -- Nicht `_G.UnitClass and _G.UnitClass(...)`: das `and` kappt auf EINEN
     -- Rueckgabewert, die Klasse (der zweite) kam nie an.
@@ -99,7 +116,8 @@ function R.Suggestions(class)
     elseif class == "SHAMAN" then
         out = { { kind = "weapon", hand = "main" } }
     elseif class == "HUNTER" then
-        out = { { kind = "pet" }, { kind = "ammo", min = R.DEFAULT_MIN.ammo } }
+        out = { { kind = "pet" }, { kind = "ammo", min = R.DEFAULT_MIN.ammo },
+                { kind = "happy", below = R.DEFAULT_BELOW } }
     elseif class == "WARLOCK" then
         out = { { kind = "pet" } }
     end
@@ -446,6 +464,13 @@ function R.Check(rule)
             return nil
         end
         return { text = "Begleiter fehlt" }
+    elseif kind == "happy" then
+        -- Nur, was der Client sagt: ohne Laune (kein Jaegerbegleiter, keine
+        -- Abfrage, geheim) keine Erinnerung - "weiss nicht" ist nicht
+        -- "ungluecklich".
+        local h = K.PetHappiness()
+        if not h or h >= Below(rule) then return nil end
+        return { text = "Begleiter " .. K.HAPPINESS[h].text .. " – füttern" }
     elseif kind == "ammo" then
         local id, n = R.Ammo()
         if not id or type(n) ~= "number" then return nil end
@@ -476,7 +501,7 @@ function R.Active()
     if where == "instance" and not InInstance() then return out end
     for _, rule in ipairs(R.Here()) do
         local k = rule.kind
-        if k == "buff" or k == "weapon" or k == "pet" or k == "ammo" or k == "item" then
+        if k == "buff" or k == "weapon" or k == "pet" or k == "happy" or k == "ammo" or k == "item" then
             local hit = R.Check(rule)
             if hit then out[#out + 1] = hit end
         end
@@ -746,7 +771,7 @@ local function Enable()
     for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED", "PLAYER_REGEN_DISABLED",
         "UNIT_AURA", "UNIT_PET", "UNIT_INVENTORY_CHANGED", "GROUP_ROSTER_UPDATE", "ZONE_CHANGED_NEW_AREA",
         "SPELL_UPDATE_COOLDOWN", "SPELL_UPDATE_CHARGES", "READY_CHECK", "PLAYER_MOUNT_DISPLAY_CHANGED",
-        "BAG_UPDATE_DELAYED" }) do
+        "BAG_UPDATE_DELAYED", "UNIT_HAPPINESS" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
     pcall(ev.RegisterEvent, ev, "SPELLS_CHANGED")
@@ -779,7 +804,7 @@ end
 --------------------------------------------------
 
 -- Was im Formular "Regel hinzufuegen" steht (nicht gespeichert).
-local draft = { kind = "buff", spell = "", hand = "main", scope = "class", min = "" }
+local draft = { kind = "buff", spell = "", hand = "main", scope = "class", min = "", below = 3 }
 R.draft = draft
 
 -- Fuer wen: "alle Klassen", "nur Krieger" oder - alte Regel - offen.
@@ -806,6 +831,8 @@ function R.BaseRuleText(rule)
         return kind .. ": " .. tostring(name) .. known
     elseif rule.kind == "weapon" then
         return kind .. " (" .. WeaponText(rule.hand) .. ")"
+    elseif rule.kind == "happy" then
+        return "Begleiter-Laune: erinnern, wenn " .. (Below(rule) == 2 and "unglücklich" or "nicht glücklich")
     elseif rule.kind == "ammo" then
         return string.format("Munition knapp: unter %d", tonumber(rule.min) or R.DEFAULT_MIN.ammo)
     elseif rule.kind == "item" then
@@ -825,6 +852,8 @@ function R.AddDraft()
         rule.spell = text
     elseif draft.kind == "weapon" then
         rule.hand = draft.hand
+    elseif draft.kind == "happy" then
+        rule.below = Below(draft)
     elseif R.NeedsItem(draft.kind) then
         local text = (draft.spell or ""):gsub("^%s+", ""):gsub("%s+$", "")
         if text == "" then return false, "Gegenstand fehlt" end
@@ -919,7 +948,7 @@ local function px(v) return string.format("%d px", v) end
 K.Register({
     key = KEY, group = "qol", order = 58, defaultEnabled = "ui", reload = true,
     title = "Erinnerungen",
-    description = "Fehlende Buffs, Waffenverzauberung und Begleiter vor dem Kampf; eigene Buffs, Procs und Abklingzeiten als Symbole – so weit der Client sie herausgibt.",
+    description = "Fehlende Buffs, Waffenverzauberung, Begleiter und seine Laune vor dem Kampf; eigene Buffs, Procs und Abklingzeiten als Symbole – so weit der Client sie herausgibt.",
     defaults = defaults,
     Enable = Enable,
     OnSetting = function() R.ClearCache() R.UpdateAll() end,
@@ -953,7 +982,7 @@ K.Register({
                         end
                     end })
             B:Row({ type = "button", label = "Vorschläge", text = "Für meine Klasse",
-                    tooltip = "Ergänzt die Vorschläge für deine Klasse (Waffe, Begleiter, Munition). Eigene Regeln bleiben.",
+                    tooltip = "Ergänzt die Vorschläge für deine Klasse (Waffe, Begleiter und seine Laune, Munition). Eigene Regeln bleiben.",
                     onClick = function()
                         local added, total = R.AddSuggestions()
                         local line
@@ -966,7 +995,9 @@ K.Register({
                         end
                         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
                     end },
-                  { type = "empty" })
+                  { type = "dropdown", label = "Laune (bei Begleiter): erinnern, wenn", items = R.HAPPY_BELOW,
+                    get = function() return draft.below end, set = function(v) draft.below = v DraftChanged() end,
+                    disabled = function() return draft.kind ~= "happy" end })
         end },
         { key = "anzeige", label = "Anzeige", build = function(B)
             B:Section("Erinnerungen")

@@ -3312,8 +3312,10 @@ do
                         _G.GetInventoryItemID, _G.C_Item, _G.UnitExists, _G.InCombatLockdown, _G.issecretvalue }
         -- Vorschlaege ohne Zauber-ID.
         assert(#R.Suggestions("ROGUE") == 2 and R.Suggestions("ROGUE")[1].kind == "weapon", "Schurke ohne Waffengift-Vorschlag")
-        assert(#R.Suggestions("HUNTER") == 2 and R.Suggestions("HUNTER")[1].kind == "pet"
-            and R.Suggestions("HUNTER")[2].kind == "ammo", "Jaeger ohne Begleiter- und Munitions-Vorschlag")
+        assert(#R.Suggestions("HUNTER") == 3 and R.Suggestions("HUNTER")[1].kind == "pet"
+            and R.Suggestions("HUNTER")[2].kind == "ammo" and R.Suggestions("HUNTER")[3].kind == "happy",
+            "Jaeger ohne Begleiter-, Munitions- und Laune-Vorschlag")
+        assert(#R.Suggestions("WARLOCK") == 1, "Hexenmeister mit Laune-Vorschlag (Daemonen haben keine)")
         assert(#R.Suggestions("WARRIOR") == 0, "Vorschlag mit geratener Zauber-ID")
         -- Ohne Angabe: die Klasse des Spielers (zweiter Rueckgabewert).
         local oldClass = _G.UnitClass
@@ -3490,6 +3492,128 @@ do
             _G.GetInventoryItemID, _G.C_Item, _G.UnitExists, _G.InCombatLockdown = unpack(saved, 1, 8)
     end)
     Check(ok, "Erinnerungen: Regeln, fehlende Buffs, Waffe, Begleiter, Editor" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.13.1.0: Laune des Jaegerbegleiters - als Erinnerung und als Punkt am
+-- Begleiterrahmen. Nur, was der Client sagt: ohne GetPetHappiness, ohne
+-- Laune (Wichtel) oder geheim nichts, nie "ungluecklich".
+do
+    local saved = { _G.GetPetHappiness, _G.UnitClass, _G.InCombatLockdown, _G.issecretvalue, _G.UnitExists }
+    local ok, err = pcall(function()
+        local R, UF = WeintCodex.UIReminders, WeintCodex.UIUnitFrames
+        _G.InCombatLockdown = function() return false end
+        _G.UnitClass = function() return "Jäger", "HUNTER", 3 end
+        local mood
+        _G.GetPetHappiness = function() return mood, 0, 0 end
+        assert(K.PetHappiness() == nil, "keine Laune als Laune gelesen")
+        mood = 0
+        assert(K.PetHappiness() == nil, "Laune 0 angenommen")
+        mood = 2
+        assert(K.PetHappiness() == 2, "Laune nicht gelesen")
+        -- Geheim ist im Spiel eine Zahl (type "number") - hier die 3.
+        _G.issecretvalue = function(v) return v == 3 end
+        mood = 3
+        assert(K.PetHappiness() == nil, "geheime Laune gelesen")
+        _G.issecretvalue = saved[4]
+
+        local function texts()
+            local t = {}
+            for _, a in ipairs(R.Active()) do t[#t + 1] = a.text end
+            return table.concat(t, " | ")
+        end
+        -- Standard: erinnern, solange nicht gluecklich.
+        R.SetRules({ { kind = "happy", below = 3, class = "HUNTER" } })
+        mood = 3
+        assert(texts() == "", "gluecklich und trotzdem erinnert: " .. texts())
+        mood = 2
+        assert(texts() == "Begleiter zufrieden – füttern", "zufrieden nicht erinnert: " .. texts())
+        mood = 1
+        assert(texts() == "Begleiter unglücklich – füttern", "ungluecklich nicht erinnert: " .. texts())
+        mood = nil
+        assert(texts() == "", "ohne Laune erinnert (weiss nicht ist nicht ungluecklich)")
+        _G.GetPetHappiness = nil
+        assert(texts() == "", "ohne Abfrage erinnert")
+        _G.GetPetHappiness = function() return mood, 0, 0 end
+        -- Schwelle "ungluecklich": zufrieden reicht.
+        R.SetRules({ { kind = "happy", below = 2, class = "HUNTER" } })
+        mood = 2
+        assert(texts() == "", "Schwelle ungluecklich erinnert bei zufrieden")
+        mood = 1
+        assert(texts() == "Begleiter unglücklich – füttern", "Schwelle ungluecklich erinnert nicht")
+        -- Regel ohne Schwelle: Standard "nicht gluecklich".
+        R.SetRules({ { kind = "happy", class = "HUNTER" } })
+        mood = 2
+        assert(texts() ~= "", "Regel ohne Schwelle erinnert nicht bei zufrieden")
+        assert(R.RuleText(R.Rules()[1]):find("nicht glücklich", 1, true), "Regeltext ohne Schwelle")
+        -- Kriegerregel? Gilt nicht fuer den Jaeger; Klasse bleibt die Regel.
+        R.SetRules({ { kind = "happy", class = "WARRIOR" } })
+        assert(texts() == "", "Laune-Regel einer anderen Klasse erinnert")
+        -- Editor: Schwelle aus dem Formular.
+        R.SetRules({})
+        R.draft.kind, R.draft.below = "happy", 2
+        assert(R.AddDraft() and R.Rules()[1].kind == "happy" and R.Rules()[1].below == 2
+            and R.Rules()[1].class == "HUNTER", "Laune-Regel nicht angelegt")
+        assert(R.RuleText(R.Rules()[1]):find("wenn unglücklich", 1, true), "Regeltext ohne Schwelle: " .. R.RuleText(R.Rules()[1]))
+        R.draft.kind, R.draft.below = "buff", 3
+        -- "Fuer meine Klasse" ergaenzt die Laune nicht doppelt, auch bei anderer Schwelle.
+        R.SetRules({ { kind = "happy", below = 2, class = "HUNTER" } })
+        local added = R.AddSuggestions("HUNTER")
+        assert(added == 2 and #R.Rules() == 3, "Laune doppelt ergaenzt: " .. added)
+        K.Set("reminders", "rules", nil)
+
+        -- Punkt am Begleiterrahmen: Farbe der Laune, sonst aus.
+        local f = UF.frames.pet
+        assert(f and f._happy, "Begleiterrahmen ohne Punkt fuer die Laune")
+        assert(not (UF.frames.player._happy or UF.frames.target._happy), "Laune-Punkt an einem anderen Rahmen")
+        local Cc = WeintCodex.Colors
+        local vc = {}
+        f._happy.SetVertexColor = function(_, r, g, b) vc = { r, g, b } end
+        local function shows(color)
+            if not f._happy:IsShown() then return false end
+            local r, g, b = vc[1], vc[2], vc[3]
+            return r == Cc[color][1] and g == Cc[color][2] and b == Cc[color][3]
+        end
+        for level, color in pairs({ [1] = "danger", [2] = "warning", [3] = "success" }) do
+            mood = level
+            f:UpdateHappiness()
+            assert(shows(color), "Laune " .. level .. " nicht in " .. color)
+        end
+        mood = nil
+        f:UpdateHappiness()
+        assert(not f._happy:IsShown(), "Punkt ohne Laune sichtbar")
+        -- Der Rahmen zeichnet beim Neuzeichnen die Laune mit (Erscheinen, Einstellung).
+        _G.UnitExists = function() return true end
+        mood = 2
+        f:Refresh()
+        assert(shows("warning"), "Refresh zeichnet die Laune nicht")
+        -- Ereignis UNIT_HAPPINESS zeichnet nach.
+        mood = 1
+        stub.FireEvent("UNIT_HAPPINESS", "pet")
+        assert(shows("danger"), "UNIT_HAPPINESS zeichnet den Punkt nicht")
+        -- Tooltip: die Laune als Wort.
+        local lines = {}
+        local oldAdd = GameTooltip.AddLine
+        GameTooltip.AddLine = function(_, text) lines[#lines + 1] = text end
+        f:HappinessTooltip()
+        GameTooltip.AddLine = oldAdd
+        -- Die Attrappe ersetzt bei HookScript (Klickzauber), statt
+        -- anzuhaengen - deshalb die Quelle: OnEnter ruft die Zeile.
+        local src = assert(io.open(ROOT .. "/ui/unitframes.lua")):read("*a")
+        assert(src:find('SetScript%("OnEnter".-self:HappinessTooltip%(%)'), "OnEnter ohne Laune")
+        assert(table.concat(lines, "|"):find("Laune: unglücklich", 1, true), "Laune fehlt im Tooltip")
+        -- Testmodus: gluecklich, danach wieder, was der Client sagt.
+        mood = nil
+        _G.UnitExists = function(u) return u ~= "pet" end
+        f:ShowTest(true)
+        assert(shows("success"), "Testmodus ohne Laune")
+        f:ShowTest(false)
+        assert(not f._happy:IsShown(), "Punkt des Testmodus bleibt stehen")
+    end)
+    _G.GetPetHappiness, _G.UnitClass, _G.InCombatLockdown, _G.issecretvalue, _G.UnitExists = unpack(saved, 1, 5)
+    K.Set("reminders", "rules", nil)
+    WeintCodex.UIReminders.draft.kind, WeintCodex.UIReminders.draft.below = "buff", 3
+    Check(ok, "Laune des Begleiters: Erinnerung mit Schwelle, weiss nicht, Editor, Punkt am Rahmen, Tooltip, Testmodus"
+        .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.9.0.3: der Zauberbalken des Spiels an Ziel und Fokus ist weg. Beta-Test:

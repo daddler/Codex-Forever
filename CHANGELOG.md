@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.13.1.0] – 2026-10-06
+
+**Du siehst, wie glücklich dein Begleiter ist.** Am Begleiterrahmen steht links ein Punkt: grün für glücklich, gelb für zufrieden, rot für unglücklich – im Tooltip als Wort.
+
+**Neue Erinnerung: Begleiter nicht glücklich.** Unter Erinnerungen → Regeln wählst du, ob sie schon bei „zufrieden“ kommt oder erst bei „unglücklich“. Jäger bekommen sie als Vorschlag; wer schon eigene Regeln hat, ergänzt sie mit „Für meine Klasse“.
+
+### Technisch
+
+- Beta-Test als Jäger: „Ich brauche die Möglichkeit, dass ich sehen kann, wie glücklich mein Pet ist. Am besten als Reminder.“ Die Oberfläche versteckt den Begleiterrahmen des Spiels (`PetFrame`) samt seinem Gesicht; zu sehen war die Laune nur noch im Charakterfenster.
+- **Laune lesen** (`ui/kit.lua`, `K.PetHappiness`, `K.HAPPINESS`): `GetPetHappiness()` der Classic-Clients, 1 unglücklich, 2 zufrieden, 3 glücklich. Gemessen ist nur, dass der Forever-Client die Laune kennt (`PetPaperDollPetHappinessInfo` mit Atlas `UI-PetHappiness` im Bericht `/wcui fenster`) – **die Funktion selbst ist im Spiel ungeprüft.** Ohne Funktion, ohne Laune (Dämonen des Hexenmeisters), außerhalb 1–3 oder geheim: `nil`, und dann zeigt nichts eine Laune.
+- **Begleiterrahmen** (`ui/unitframes.lua`): Punkt (`media/ui/dot`, 8 px) links neben dem Rahmen in `success`/`warning`/`danger` – Statusfarben, nie die Klasse; eigene Grafik statt der Gesichter des Spiels, deren Ausschnitte im Atlas niemand gemessen hat. `Frame:UpdateHappiness` bei `Refresh`, `UNIT_HAPPINESS` und den Energie-Ereignissen des Begleiters; Tooltip-Zeile „Laune: …“ (`Frame:HappinessTooltip`). Testmodus: glücklich, danach wieder, was der Client sagt.
+- **Erinnerung** (`ui/reminders.lua`): neue Art `happy` mit Schwelle `below` (3 „nicht glücklich“, Standard; 2 „unglücklich“), Text „Begleiter zufrieden – füttern“ bzw. „… unglücklich – füttern“. Vorschlag für Jäger (nicht Hexenmeister). Editor: Auswahl „Laune (bei Begleiter): erinnern, wenn“ in der Zeile der Vorschläge, aktiv nur bei dieser Art. `UNIT_HAPPINESS` wird zusätzlich gehört; ohne das Ereignis greift der Takt alle fünf Sekunden. Im Kampf ruht sie wie jede Erinnerung.
+- Jäger ohne eigene Regeln bekommen die Erinnerung sofort (Vorschläge gelten, solange keine Regel gespeichert ist); mit eigenen Regeln über „Für meine Klasse“ – eine Laune-Regel mit anderer Schwelle zählt als vorhanden.
+- `load_test.lua`, neuer Abschnitt: Laune lesen (fehlt, 0, geheim), Erinnerung bei beiden Schwellen und ohne Schwelle, keine ohne Laune oder Abfrage, fremde Klasse, Editor, „Für meine Klasse“ nicht doppelt; Punkt in drei Farben, aus ohne Laune, `Refresh` und `UNIT_HAPPINESS` zeichnen nach, Tooltip, Testmodus. Gegenproben: 16, alle gefangen – zwei erst nach geschärftem Test (geheim als Zahl statt Tabelle; Weg über `Refresh`).
+- **Ungeprüft im Spiel:** ob `GetPetHappiness` auf Forever antwortet und `UNIT_HAPPINESS` kommt; ob „füttern“ dort der Weg zur guten Laune ist; der Platz des Punkts neben dem Rahmen.
+
 ## [6.13.0.0] – 2026-10-06
 
 **Die Navigation ist neu geordnet.** Vier Gruppen, je eine Frage: Leveln (Übersicht, Charakter, Lehrer, Dungeons), Gruppe (Gruppencheck, Schlachtzüge, Anmeldung, Kalender), Gilde (Materialien) und System (Companion, Einstellungen). Es fehlt nichts – nur der Platz hat sich geändert.

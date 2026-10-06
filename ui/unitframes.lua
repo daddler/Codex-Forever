@@ -494,6 +494,18 @@ local function Create(unit)
         f._state = st
     end
 
+    -- Laune des Jaegerbegleiters (6.13.1.0): ein Punkt links am Rahmen in
+    -- Gruen/Gold/Rot, wie die Gesichter des Spiels; im Tooltip als Wort.
+    -- Kennt der Client keine Laune, bleibt er aus (Frame:UpdateHappiness).
+    if unit == "pet" then
+        local hp = textHost:CreateTexture(nil, "OVERLAY")
+        hp:SetTexture(K.MEDIA .. "dot")
+        hp:SetSize(8, 8)
+        hp:SetPoint("RIGHT", f, "LEFT", -4, 0)
+        hp:Hide()
+        f._happy = hp
+    end
+
     if SHAPE[unit].cast then
         f._cast = CB.Create(f)
         f._cast:SetUnit(unit)
@@ -535,6 +547,7 @@ local function Create(unit)
             GameTooltip:SetUnit(self.unit)
             GameTooltip:Show()
         end
+        self:HappinessTooltip()
     end)
     f:SetScript("OnLeave", function(self)
         self._hover:Hide()
@@ -808,6 +821,31 @@ function Frame:Refresh()
     if self._cast and Opt(u .. "_cast") then self._cast:Update() end
     if self._combo then self:UpdateCombo() end
     if self._auras then self:UpdateAuras() end
+    if self._happy then self:UpdateHappiness() end
+end
+
+-- Im Tooltip des Begleiters die Laune als Wort - der Punkt allein sagt
+-- nur dem etwas, der die Gesichter des Spiels kennt.
+function Frame:HappinessTooltip()
+    local h = self._happy and self._happy:IsShown() and K.HAPPINESS[self._happyLevel]
+    if not h or not GameTooltip.AddLine then return end
+    local c = WeintCodex.Colors[h.color]
+    GameTooltip:AddLine("Laune: " .. h.text, c[1], c[2], c[3])
+    GameTooltip:Show()
+end
+
+-- Laune des Begleiters (6.13.1.0, K.PetHappiness): Punkt in der Farbe der
+-- Laune; weiss der Client nichts (Wichtel, keine Abfrage, geheim), aus.
+function Frame:UpdateHappiness(level)
+    local dot = self._happy
+    if not dot then return end
+    if level == nil then level = K.PetHappiness() end
+    local h = level and K.HAPPINESS[level]
+    self._happyLevel = h and level or nil
+    if not h then dot:Hide() return end
+    local c = WeintCodex.Colors[h.color]
+    dot:SetVertexColor(c[1], c[2], c[3], 1)
+    dot:Show()
 end
 
 --------------------------------------------------
@@ -1181,7 +1219,7 @@ local TEST = {
                      heal = 0.14, absorb = 0.08 },
     targettarget = { name = "Brunhild", class = "WARRIOR", hp = 0.72 },
     focus        = { name = "Liora", class = "PRIEST", hp = 1, power = 0.76, ptoken = "MANA" },
-    pet          = { name = "Wolf", color = "friendly", hp = 0.8, power = 0.5, ptoken = "FOCUS" },
+    pet          = { name = "Wolf", color = "friendly", hp = 0.8, power = 0.5, ptoken = "FOCUS", happy = 3 },
 }
 
 local function TestColor(t)
@@ -1239,6 +1277,7 @@ function Frame:ShowTest(on)
         if self._combo and Opt("comboPoints") and UsesCombo() then
             self:SetCombo(3, 5)
         end
+        if self._happy then self:UpdateHappiness(t.happy) end
     else
         self._testShown = nil
         if self._cast then self._cast:ShowPreview(false) end
@@ -1247,6 +1286,9 @@ function Frame:ShowTest(on)
         self:Refresh()
         self:UpdatePortrait()
         if self._combo then self:UpdateCombo() end
+        -- Refresh kehrt ohne Begleiter frueh zurueck: der Punkt des
+        -- Testmodus darf nicht stehen bleiben.
+        if self._happy then self:UpdateHappiness() end
     end
 end
 
@@ -1318,6 +1360,9 @@ local function OnEvent(_, event, unit, ...)
     elseif event == "UNIT_PET" then
         if unit == "player" then RefreshUnit("pet", true) end
         return
+    elseif event == "UNIT_HAPPINESS" then
+        if frames.pet then frames.pet:UpdateHappiness() end
+        return
     elseif event == "UNIT_PORTRAIT_UPDATE" or event == "UNIT_MODEL_CHANGED" then
         if unit and frames[unit] then RefreshUnit(unit, true) end
         return
@@ -1366,6 +1411,7 @@ local function OnEvent(_, event, unit, ...)
             Fill(f.right, unit, Opt(unit .. "_right"))
         end
         if unit == "player" and frames.target then frames.target:UpdateCombo() end
+        if f._happy then f:UpdateHappiness() end
     elseif event == "UNIT_AURA" then
         -- Die Auren melden sich selbst (Container bzw. eigenes UNIT_AURA).
     else
@@ -1468,6 +1514,7 @@ local function Enable()
         "PLAYER_ENTERING_WORLD", "RAID_TARGET_UPDATE", "UPDATE_SHAPESHIFT_FORM",
         "UNIT_PORTRAIT_UPDATE", "UNIT_MODEL_CHANGED",
         "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "PLAYER_UPDATE_RESTING", "UNIT_COMBAT",
+        "UNIT_HAPPINESS",   -- Classic-Clients; fehlt es, laeuft die Laune ueber UNIT_POWER_UPDATE
     }) do Register(e) end
     for e in pairs(HEALTH) do Register(e) end
     for e in pairs(PREDICTION) do Register(e) end

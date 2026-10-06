@@ -86,6 +86,32 @@ function K.Bool(v, fallback)
 end
 
 --------------------------------------------------
+-- Laune des Begleiters (6.13.1.0)
+--------------------------------------------------
+-- Beta-Test: "Ich brauche als Hunter die Moeglichkeit, dass ich sehen
+-- kann, wie gluecklich mein Pet ist." Der Rahmen des Spiels zeigt sie als
+-- Gesicht - die Oberflaeche versteckt ihn. Gemessen ist nur, dass der
+-- Client die Laune kennt (`PetPaperDollPetHappinessInfo` im
+-- Charakterfenster, /wcui fenster); GetPetHappiness ist die Abfrage der
+-- Classic-Clients: 1 ungluecklich, 2 zufrieden, 3 gluecklich. Ohne die
+-- Funktion, ohne Jaegerbegleiter (Wichtel: nil) oder geheim: nil - dann
+-- zeigt nichts eine Laune an, nie "ungluecklich".
+K.HAPPINESS = {
+    [1] = { text = "unglücklich", color = "danger" },
+    [2] = { text = "zufrieden",   color = "warning" },
+    [3] = { text = "glücklich",   color = "success" },
+}
+
+function K.PetHappiness()
+    local f = _G.GetPetHappiness
+    if type(f) ~= "function" then return nil end
+    local ok, h = pcall(f)
+    h = ok and K.Plain(h) or nil
+    if type(h) ~= "number" or not K.HAPPINESS[h] then return nil end
+    return h
+end
+
+--------------------------------------------------
 -- Speicher
 --------------------------------------------------
 

@@ -845,6 +845,18 @@ Seit 6.2.0.0:
   `min`, ohne Angabe 200 (Munition) bzw. 1 (Vorrat). Vorschlag für
   Jäger: Begleiter und Munition. Ob der Forever-Client den
   Munitionsplatz so führt, ist im Spiel ungeprüft.
+  **Laune des Begleiters** (6.13.1.0, Beta-Test als Jäger: „sehen, wie
+  glücklich mein Pet ist … am besten als Reminder“): `happy` erinnert,
+  solange die Laune unter `below` liegt (3 „nicht glücklich“, Standard;
+  2 „unglücklich“). Gelesen über `UIKit.PetHappiness()`
+  (`GetPetHappiness`, 1–3; fehlt die Funktion, keine Laune wie beim
+  Wichtel, oder geheim: `nil` – keine Erinnerung, nie „unglücklich“).
+  Derselbe Wert zeichnet am eigenen Begleiterrahmen einen Punkt in
+  `success`/`warning`/`danger` (`Frame:UpdateHappiness`, Tooltip
+  „Laune: …“), weil die Oberfläche den Rahmen des Spiels mit seinem
+  Gesicht versteckt. Vorschlag für Jäger: Begleiter, Munition, Laune.
+  Gemessen ist nur, dass der Client die Laune kennt (Charakterfenster,
+  `PetPaperDollPetHappinessInfo`); die Abfrage selbst ist ungeprüft.
 * **Fenster des Spiels** (6.3.1.6, `ui/windows.lua`): Charakterfenster
   und Teilfenster, erste Stufe nur die Hülle (Schmuck der Vorlage weg,
   Kachel darunter). Inhalte werden nie angefasst. Was innen noch nach

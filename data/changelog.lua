@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.13.1.0",
+        date    = "06.10.2026",
+        notes   = {
+            "|cff7C6CFFDu siehst, wie glücklich dein Begleiter ist.|r Am Begleiterrahmen steht links ein Punkt: grün für glücklich, gelb für zufrieden, rot für unglücklich – im Tooltip als Wort.",
+            "|cff7C6CFFNeue Erinnerung: Begleiter nicht glücklich.|r Unter Erinnerungen → Regeln wählst du, ob sie schon bei „zufrieden“ kommt oder erst bei „unglücklich“. Jäger bekommen sie als Vorschlag; wer schon eigene Regeln hat, ergänzt sie mit „Für meine Klasse“.",
+        },
+    },
+    {
         version = "6.13.0.0",
         date    = "06.10.2026",
         notes   = {
