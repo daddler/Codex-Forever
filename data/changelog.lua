@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.14.0.2",
+        date    = "06.10.2026",
+        notes   = {
+            "|cff7C6CFFWeniger Speicher.|r Questpfeil, Namensplaketten, Minikarte und die Koordinaten an der Weltkarte erzeugen beim Laufen nur noch einen Bruchteil des Abfalls, und Lehrerdaten anderer Klassen und die Classic-Beute der alten Dungeons werden erst geladen, wenn du sie aufschlägst. An dem, was du siehst, ändert sich nichts.",
+            "|cff7C6CFF/wcui speicher sagt jetzt auch, was davon Abfall war:|r Nach der Messung räumt es einmal auf und nennt, wie viel WeintCodex wirklich belegt.",
+            "|cff7C6CFFBerufe:|r Über den Lehrern heißt es jetzt „der nächstgelegene steht oben“.",
+        },
+    },
+    {
         version = "6.14.0.1",
         date    = "06.10.2026",
         notes   = {

@@ -783,7 +783,7 @@ local function DrawTrainers(body, w, key, faction, max)
     local profName = PRO.ProfName(key)
     if list[1] and list[1].next and PRO.RANK_CAP[need] then
         y = Note(body, y, w, WeintCodex.ColorText("successBright", "Grün") .. ": lehrt deinen nächsten Rang (bis "
-            .. PRO.RANK_CAP[need] .. ")" .. (list[1].dist and " – der nächste steht oben." or "."))
+            .. PRO.RANK_CAP[need] .. ")" .. (list[1].dist and " – der nächstgelegene steht oben." or "."))
     end
     for _, t in ipairs(list) do y = TrainerRow(body, y, w, t, profName) end
     if #list == 0 then

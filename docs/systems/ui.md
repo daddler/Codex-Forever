@@ -907,6 +907,43 @@ Seit 6.2.0.0:
   unter 30 KB bleiben (vorher 141 KB im Prüflauf). Zweiter: **Questpfeil**
   28 KB/s – seitdem fünfmal je Sekunde ein ganzer Durchlauf, dazwischen
   dreht `QA.Turn` nur den Pfeil aus den gemerkten Punkten (`QA._aim`).
+  **6.14.0.2** (Beta-Test, gelaufen und geplündert: 17,5 MB, 62,6 KB/s,
+  Questpfeil 26,2 KB/s, Plaketten 11, Minikarte 3,6):
+  * **Eigene Lage ohne Vektoren** (`ui/kit.lua`: `K.BestMap`,
+    `K.PlayerWorld`, `K.PlayerMapXY`, `K.ToWorld`). `GetPlayerMapPosition`
+    und `GetWorldPosFromMapPos` legen je Aufruf eine Tabelle mit allen
+    Methoden des Mixins an; `UnitPosition` nennt Zahlen. Genommen wird es
+    nur nach **Abgleich** mit dem Weg über die Karte (gleicher Kontinent,
+    auf 2 Einheiten genau, nicht auf der Diagonale – dort sähen vertauschte
+    Achsen gleich aus), wiederholt alle `K.POS_CHECK_EVERY` = 10 s. Stimmt
+    es nicht oder schweigt der Client, bleibt der alte Weg – die
+    Zuordnung der Achsen ist also gemessen, nicht angenommen.
+    Kartenkoordinaten (Minikarte, Weltkarte im Komfort) aus der Lage und
+    den Ecken der Karte (je Karte einmal gerechnet).
+  * **Questpfeil plant aus dem Zwischenspeicher**: Ort, Stufe, Gruppe,
+    erfüllt je Quest liest `FillPlanCache` nur nach einem Ereignis des
+    Questlogs (`QA.PlanDirty`) oder beim Kartenwechsel; der Lauf alle 5 s
+    rechnet nur Entfernungen, Kandidaten und Sortierung ohne neue
+    Tabellen. Das Ziel wird ohne Ereignis alle `QA.RESOLVE_EVERY` = 3 s
+    statt jede Sekunde neu gesucht (Questlog, Wegpunkt, Leiche und Gebiet
+    erzwingen es sofort), seine Weltlage nur, wenn sich der Ort ändert;
+    `QA.Nav` nutzt eine Tabelle.
+  * **Plaketten**: `FillTexts` (läuft bei jedem `UNIT_HEALTH`) ohne
+    Tabelle je Aufruf (`TEXT_KEYS`), `BarColor` ohne Closure; der
+    Questfortschritt (`C_TooltipInfo.GetUnit` – eine große Tabelle je
+    Plakette) wird je Schub `QUEST_LOG_UPDATE` einmal gelesen
+    (`NP.QueueQuestRefresh`, `NP.QUEST_DELAY` = 0,5 s) statt je Ereignis.
+  * Im Prüflauf (Attrappe mit Vektoren wie im Spiel): Questpfeil
+    48,7 → 6,0 KB/s, Plaketten 107,5 → 33,7 KB/s; `load_test.lua` hält
+    100 Läufe des Pfeils unter 6 KB und 100 Treffer an einer Plakette
+    unter 2 KB.
+  * **Ruhender Bestand**: Lehrerdaten je Klasse und Classic-Beute je
+    Dungeon werden erst beim ersten Zugriff gebaut (gut 450 KB weniger
+    beim Laden, siehe `docs/systems/character.md` und
+    `docs/systems/dungeons.md`).
+  * **`/wcui speicher`** nennt zusätzlich den Wert **nach dem
+    Aufräumen** (`collectgarbage("collect")`, dann neu gemessen) – „Speicher
+    jetzt“ zählt Abfall mit, bis die Bereinigung des Spiels ihn holt.
 * **Gespräche** (6.6.1.4, Beta-Test: „die normale Interaktion von
   Questgebern, Gastwirten etc. muss angeglichen werden“): `GossipFrame`,
   `QuestFrame`, `ItemTextFrame` (`W.DIALOGS`) bekommen die Fensterhülle,

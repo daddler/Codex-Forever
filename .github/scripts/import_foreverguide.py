@@ -472,9 +472,12 @@ def write_dungeons(dd):
     w("}")
     w("")
     w("-- { Nummer, Name, Platz, Qualitaet (nil: unbekannt), from = Gegner (optional) }")
+    w("-- Je Dungeon eine Funktion: gebaut erst, wenn jemand die Beute dieses")
+    w("-- Dungeons aufschlaegt (J.EnsureClassic) - als fertige Tabellen kosteten")
+    w("-- alle zusammen rund 200 KB, die fast niemand je ansieht.")
     w("J.CLASSIC_LOOT = {")
     for did in sorted(dd["loot"]):
-        w(f"    {did} = {{")
+        w(f"    {did} = function() return {{")
         for bid in sorted(dd["loot"][did]):
             w(f"        {bid} = {{")
             for r in dd["loot"][did][bid]:
@@ -482,18 +485,18 @@ def write_dungeons(dd):
                 frm = f", from = {lua_str(r[4])}" if r[4] else ""
                 w(f"            {{ {r[0]}, {lua_str(r[1])}, {lua_str(r[2])}, {q}{frm} }},")
             w("        },")
-        w("    },")
+        w("    } end,")
     w("}")
     w("J.CLASSIC_OTHERS = {")
     for did in sorted(dd["others"]):
-        w(f"    {did} = {{")
+        w(f"    {did} = function() return {{")
         for g in dd["others"][did]:
             w(f"        {{ name = {lua_str(g['name'])}, items = {{")
             for r in g["items"]:
                 q = "nil" if r[3] is None else str(r[3])
                 w(f"            {{ {r[0]}, {lua_str(r[1])}, {lua_str(r[2])}, {q} }},")
             w("        } },")
-        w("    },")
+        w("    } end,")
     w("}")
     w("")
     w("J.MergeForeverGuide()")

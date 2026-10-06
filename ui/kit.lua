@@ -86,6 +86,136 @@ function K.Bool(v, fallback)
 end
 
 --------------------------------------------------
+-- Eigene Lage ohne Wegwerf-Vektoren (6.14.0.2)
+--------------------------------------------------
+-- /wcui speicher: Questpfeil 26 KB/s, Minikarte 3,6 KB/s. GetPlayerMapPosition
+-- und GetWorldPosFromMapPos legen je Aufruf einen Vektor an (eine Tabelle
+-- mit allen Methoden des Mixins); der Pfeil fragte fuenfmal je Sekunde, die
+-- Minikarte zweimal, die Weltkarte zehnmal. UnitPosition nennt nur Zahlen.
+-- Genommen wird es erst, wenn es mit dem Weg ueber die Karte uebereinstimmt
+-- (gleicher Kontinent, auf 2 Einheiten genau, nicht auf der Diagonale, wo
+-- vertauschte Achsen gleich aussaehen) - geprueft beim ersten Mal und
+-- wieder alle K.POS_CHECK_EVERY s. Stimmt es nicht oder schweigt der Client
+-- (Instanzen, geheime Werte), bleibt es beim Weg ueber die Karte.
+K.POS_CHECK_EVERY = 10
+local posFast = { ok = false, at = -math.huge }
+K._posFast = posFast
+local vec   -- ein Vektor fuer alle eigenen Umrechnungen
+
+function K.BestMap()
+    local cm = _G.C_Map
+    if not (cm and cm.GetBestMapForUnit) then return nil end
+    local ok, m = pcall(cm.GetBestMapForUnit, "player")
+    m = ok and K.Plain(m) or nil
+    return type(m) == "number" and m or nil
+end
+
+-- Weltlage eines Kartenpunkts: Kontinent, Norden, Westen (oder nil).
+function K.ToWorld(mapID, x, y)
+    local cm = _G.C_Map
+    if not (cm and cm.GetWorldPosFromMapPos and _G.CreateVector2D) then return nil end
+    if vec and vec.SetXY then vec:SetXY(x, y) else vec = _G.CreateVector2D(x, y) end
+    local ok, continent, world = pcall(cm.GetWorldPosFromMapPos, mapID, vec)
+    if not ok or type(world) ~= "table" then return nil end
+    local n, w = world.x, world.y
+    if world.GetXY then n, w = world:GetXY() end
+    continent, n, w = K.Plain(continent), K.Plain(n), K.Plain(w)
+    if type(n) ~= "number" or type(w) ~= "number" then return nil end
+    return continent, n, w
+end
+
+-- Der Weg ueber die Karte (legt Vektoren an): Karte, x, y.
+function K.MapPosSlow(map)
+    local cm = _G.C_Map
+    map = map or K.BestMap()
+    if not (map and cm and cm.GetPlayerMapPosition) then return nil end
+    local ok, pos = pcall(cm.GetPlayerMapPosition, map, "player")
+    if not ok or type(pos) ~= "table" then return nil end
+    local x, y = pos.x, pos.y
+    if pos.GetXY then x, y = pos:GetXY() end
+    x, y = K.Plain(x), K.Plain(y)
+    if type(x) ~= "number" or type(y) ~= "number" then return nil end
+    return map, x, y
+end
+
+local function UnitWorld()
+    if not _G.UnitPosition then return nil end
+    local ok, n, w, _, inst = pcall(_G.UnitPosition, "player")
+    if not ok then return nil end
+    n, w, inst = K.Plain(n), K.Plain(w), K.Plain(inst)
+    if type(n) ~= "number" or type(w) ~= "number" or type(inst) ~= "number" then return nil end
+    return inst, n, w
+end
+
+local function Now() return (_G.GetTime and K.Plain(_G.GetTime())) or 0 end
+local function FastNow(now) return posFast.ok and now - posFast.at < K.POS_CHECK_EVERY end
+
+-- Ueber die Karte und dabei abgleichen. Liefert Kontinent, Norden, Westen.
+local function WorldSlow(now)
+    local map, px, py = K.MapPosSlow()
+    if not map then return nil end
+    local pc, pN, pW = K.ToWorld(map, px, py)
+    if not pc then return nil end
+    local uc, un, uw = UnitWorld()
+    posFast.ok = uc ~= nil and uc == pc and math.abs(un - pN) < 2 and math.abs(uw - pW) < 2
+        and math.abs(pN - pW) > 10
+    posFast.at = now
+    return pc, pN, pW
+end
+
+-- Kontinent, Norden, Westen des Spielers - oder nil.
+function K.PlayerWorld()
+    local now = Now()
+    if FastNow(now) then
+        local c, n, w = UnitWorld()
+        if c then return c, n, w end
+    end
+    return WorldSlow(now)
+end
+
+-- Die Ecken einer Karte in der Welt, je Karte einmal gerechnet.
+local rects = {}
+local function Rect(map)
+    local r = rects[map]
+    if r == nil then
+        local c0, n0, w0 = K.ToWorld(map, 0, 0)
+        local c1, n1, w1 = K.ToWorld(map, 1, 1)
+        if c0 and c0 == c1 and n1 ~= n0 and w1 ~= w0 then
+            r = { c = c0, n0 = n0, w0 = w0, dn = n1 - n0, dw = w1 - w0 }
+        else
+            r = false
+        end
+        rects[map] = r
+    end
+    return r or nil
+end
+
+-- Wo auf Karte `map` (Standard: die eigene) der Spieler steht, 0..1 -
+-- oder nil (andere Karte, Instanz, Client schweigt).
+function K.PlayerMapXY(map)
+    map = map or K.BestMap()
+    if not map then return nil end
+    local now = Now()
+    if not FastNow(now) then
+        WorldSlow(now)
+        if not FastNow(now) then
+            local _, x, y = K.MapPosSlow(map)
+            return x, y
+        end
+    end
+    local r = Rect(map)
+    local c, n, w = UnitWorld()
+    if not (r and c) then
+        local _, x, y = K.MapPosSlow(map)
+        return x, y
+    end
+    if c ~= r.c then return nil end
+    local x, y = (w - r.w0) / r.dw, (n - r.n0) / r.dn
+    if x < 0 or x > 1 or y < 0 or y > 1 then return nil end
+    return x, y
+end
+
+--------------------------------------------------
 -- Laune des Begleiters (6.13.1.0)
 --------------------------------------------------
 -- Beta-Test: "Ich brauche als Hunter die Moeglichkeit, dass ich sehen
@@ -543,6 +673,17 @@ function K.ProfileReport(secs)
         out[#out + 1] = string.format("In %d s %s um %.0f KB (%.1f KB/s)%s", secs,
             d >= 0 and "gewachsen" or "gefallen (Bereinigung lief)", math.abs(d), d / secs,
             P.inCombat and ", im Kampf gestartet" or "")
+    end
+    -- Was davon Abfall war (6.14.0.2): einmal ganz aufraeumen und neu
+    -- messen. "Speicher jetzt" zaehlt Abfall mit, bis die Bereinigung des
+    -- Spiels ihn holt - erst der Wert danach ist, was WeintCodex wirklich haelt.
+    if type(kb1) == "number" and P.collect ~= false and type(_G.collectgarbage) == "function"
+       and pcall(_G.collectgarbage, "collect") then
+        local kb2 = AddonKB()
+        if type(kb2) == "number" then
+            out[#out + 1] = string.format("Nach dem Aufräumen %.1f MB (%.1f MB waren Abfall)", kb2 / 1024,
+                math.max(0, kb1 - kb2) / 1024)
+        end
     end
     local list, sum = {}, 0
     for name, e in pairs(P.data) do

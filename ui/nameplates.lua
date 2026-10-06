@@ -1003,6 +1003,7 @@ local function HealthTexts(unit)
     return pctText, numText
 end
 
+local TEXT_KEYS = { top = "textTop", left = "textLeft", right = "textRight", center = "textCenter" }
 local function FillTexts(p, onlyHealth)
     local unit = p.unit
     if not unit then return end
@@ -1023,9 +1024,11 @@ local function FillTexts(p, onlyHealth)
         t:Show()
         return
     end
-    local kinds = { top = S.textTop, left = S.textLeft, right = S.textRight, center = S.textCenter }
     local pctText, numText
-    for slot, kind in pairs(kinds) do
+    -- Ohne neue Tabelle: FillTexts laeuft bei jedem UNIT_HEALTH (6.14.0.2,
+    -- /wcui speicher: Plaketten 11 KB/s).
+    for slot, key in pairs(TEXT_KEYS) do
+        local kind = S[key]
         local fs = p.texts[slot]
         if kind == "none" then
             fs:Hide()
@@ -1096,9 +1099,9 @@ end
 -- Die Farbe des Balkens, in Rangfolge. Jede Frage, die der Client geheim
 -- beantwortet, zaehlt als "nein" - die Plakette faellt dann auf die
 -- naechste Stufe zurueck, statt mit einem Fehler stehen zu bleiben.
+local function C3(c) return c.r, c.g, c.b end
 local function BarColor(p)
     local unit = p.unit
-    local function C3(c) return c.r, c.g, c.b end
 
     if p._friendly then
         if S.friendlyClassColor and K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(unit), false) then
@@ -1330,6 +1333,27 @@ local function UpdateQuest(p)
         p.quest:Hide()
     end
 end
+
+-- Neu lesen nach einer Aenderung des Questlogs: gesammelt, hoechstens
+-- einmal je NP.QUEST_DELAY s. C_TooltipInfo.GetUnit legt je Plakette eine
+-- grosse Tabelle an - bei jedem QUEST_LOG_UPDATE fuer jede Plakette war das
+-- der groesste Teil des Wegwerf-Speichers der Plaketten.
+NP.QUEST_DELAY = 0.5
+local questQueued = false
+local function QuestRefresh()
+    questQueued = false
+    for _, p in pairs(plates) do UpdateQuest(p) end
+end
+function NP.QueueQuestRefresh()
+    if questQueued then return end
+    if _G.C_Timer and _G.C_Timer.After then
+        questQueued = true
+        _G.C_Timer.After(NP.QUEST_DELAY, QuestRefresh)
+    else
+        QuestRefresh()
+    end
+end
+NP.QuestRefresh = QuestRefresh
 
 -- Deine Bedrohung auf diesem Gegner: in Prozent (100 % = du hast oder
 -- bekommst die Aggro) und seit 6.9.0.8 als Leiste unter dem Leben, dazu
@@ -1669,8 +1693,10 @@ local function OnEvent(_, event, unit)
         SetHovered(found)
         return
     elseif event == "QUEST_LOG_UPDATE" or event == "UNIT_QUEST_LOG_CHANGED" then
+        -- Das Spiel meldet das in Schueben (Pluendern, jedes Questziel); je
+        -- Schub liest der Tooltip jeder Plakette nur einmal neu.
         wipe(questCache)
-        for _, p in pairs(plates) do UpdateQuest(p) end
+        NP.QueueQuestRefresh()
         return
     end
 

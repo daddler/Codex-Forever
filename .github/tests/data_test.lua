@@ -1045,6 +1045,18 @@ do
     local fgQuests = 0
     local RAID_CLASSES = { WARRIOR = true, PALADIN = true, HUNTER = true, ROGUE = true, PRIEST = true,
                            SHAMAN = true, MAGE = true, WARLOCK = true, DRUID = true }
+    -- Classic-Beute wird je Dungeon erst bei Bedarf gebaut (6.14.0.2) -
+    -- geprueft wird alles.
+    local lazy, all = 0, 0
+    for _, v in pairs(J.CLASSIC_LOOT) do all = all + 1 if type(v) == "function" then lazy = lazy + 1 end end
+    Check(all > 10 and lazy == all, "Classic-Beute beim Laden nicht gebaut (" .. lazy .. " von " .. all .. " je Dungeon offen)")
+    -- Der erste Blick ueber J.Loot bzw. J.Others baut die Beute.
+    local did, build = next(J.CLASSIC_LOOT)
+    local bid = next(build())
+    Check(#J.Loot(did, bid) > 0, "J.Loot baut die Classic-Beute von " .. did)
+    local odid = next(J.CLASSIC_OTHERS)
+    Check(type(J.CLASSIC_OTHERS[odid]) ~= "function" or #J.Others(odid) > 0, "J.Others baut die weitere Beute von " .. odid)
+    J.EnsureAllClassic()
     for dungeonId, entry in pairs(J.DATA) do
         dungeons = dungeons + 1
         local dungeon = D.Get(dungeonId)

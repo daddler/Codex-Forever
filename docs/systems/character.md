@@ -126,7 +126,10 @@ Waffenfertigkeit lernt.
   Bilder. 6.9.0.6: gegen Fassung 11.0.0-beta10 abgeglichen (Zauber aller neun
   Klassen, Ränge, Tierausbildung, Waffenfertigkeiten, Waffenmeister) –
   keine Abweichung; neu dort sind nur Rufrabatte, die WeintCodex
-  weiterhin nicht einrechnet.
+  weiterhin nicht einrechnet. Seit 6.14.0.2 ist jede Klasse eine
+  Funktion, gebaut beim ersten Zugriff auf `T.CLASSES[klasse]` (Metatabelle;
+  `pairs(T.CLASSES)` geht deshalb nicht) – gebraucht wird nur die eigene,
+  die acht anderen kosteten als Tabellen gut 270 KB.
 * **Ob etwas gelernt ist**, fragt die Seite den Client
   (`C_SpellBook.IsSpellKnown/IsSpellInSpellBook`, `IsPlayerSpell`). Ein
   ersetzter niedrigerer Rang zählt als gelernt (`ranks`), weil der Client

@@ -333,12 +333,9 @@ local function EnsureCoords()
         if not On("mapCoords") then self.text:SetText("") return end
         K.SetFont(self.text, 12)
         local mapID = wm.GetMapID and wm:GetMapID()
+        -- Ohne Vektor je Abfrage (K.PlayerMapXY, 6.14.0.2).
         local px, py
-        if mapID and _G.C_Map and _G.C_Map.GetPlayerMapPosition then
-            local pos = _G.C_Map.GetPlayerMapPosition(mapID, "player")
-            if pos then px, py = pos.x, pos.y end
-            px, py = K.Plain(px), K.Plain(py)
-        end
+        if mapID then px, py = K.PlayerMapXY(mapID) end
         local cx, cy
         local sc = wm.ScrollContainer
         if sc and sc.IsMouseOver and sc:IsMouseOver() and sc.GetNormalizedCursorPosition then

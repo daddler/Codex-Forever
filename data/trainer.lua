@@ -72,8 +72,11 @@ T.SOURCE = {
     label = "What's Training? (Forever-Fassung, geprüft gegen 11.0.0-beta10), Beobachtung im Beta-Client",
 }
 
-T.CLASSES = {
-  WARRIOR = {
+-- Je Klasse eine Funktion, gebaut erst beim ersten Zugriff (6.14.0.2):
+-- gebraucht wird nur die Klasse des Charakters, die acht anderen kosteten
+-- als fertige Tabellen gut 270 KB. T.CLASSES[klasse] liefert sie wie zuvor.
+local BUILD = {
+  WARRIOR = function() return {
     spells = {
       [1] = {
         { id = 6673, cost = 10 },
@@ -259,8 +262,8 @@ T.CLASSES = {
       { 12294, 21551, 21552, 21553 },
       { 23922, 23923, 23924, 23925 },
     },
-  },
-  PALADIN = {
+  } end,
+  PALADIN = function() return {
     spells = {
       [1] = {
         { id = 465, cost = 10 },
@@ -485,8 +488,8 @@ T.CLASSES = {
       { 19888, 19897, 19898 },
       { 19891, 19899, 19900 },
     },
-  },
-  HUNTER = {
+  } end,
+  HUNTER = function() return {
     spells = {
       [1] = {
         { id = 1494, cost = 10 },
@@ -718,8 +721,8 @@ T.CLASSES = {
         { id = 24630, cost = 10000, pet = true },
       },
     },
-  },
-  ROGUE = {
+  } end,
+  ROGUE = function() return {
     spells = {
       [1] = {
         { id = 1784, cost = 10 },
@@ -913,8 +916,8 @@ T.CLASSES = {
       { 13220, 13228, 13229, 13230 },
       { 1310706, 399956, 1241582, 1241584 },
     },
-  },
-  PRIEST = {
+  } end,
+  PRIEST = function() return {
     spells = {
       [1] = {
         { id = 1243, cost = 10 },
@@ -1187,8 +1190,8 @@ T.CLASSES = {
         { id = 1277328, cost = 2300, requiredIds = { 1277327 }, race = 5 },
       },
     },
-  },
-  SHAMAN = {
+  } end,
+  SHAMAN = function() return {
     spells = {
       [1] = {
         { id = 8017, cost = 10 },
@@ -1417,8 +1420,8 @@ T.CLASSES = {
         { id = 16362, cost = 34000, requiredIds = { 10486 } },
       },
     },
-  },
-  MAGE = {
+  } end,
+  MAGE = function() return {
     spells = {
       [1] = {
         { id = 1459, cost = 10 },
@@ -1651,8 +1654,8 @@ T.CLASSES = {
         { id = 18809, cost = 2100, requiredIds = { 12526 }, requiredTalentId = 11366 },
       },
     },
-  },
-  WARLOCK = {
+  } end,
+  WARLOCK = function() return {
     spells = {
       [1] = {
         { id = 348, cost = 10 },
@@ -1862,8 +1865,8 @@ T.CLASSES = {
         { id = 11661, cost = 26000, requiredIds = { 11660 } },
       },
     },
-  },
-  DRUID = {
+  } end,
+  DRUID = function() return {
     spells = {
       [1] = {
         { id = 1126, cost = 10 },
@@ -2126,8 +2129,16 @@ T.CLASSES = {
       { 6785, 6787, 9866, 9867 },
       { 9005, 9823, 9827 },
     },
-  },
+  } end,
 }
+T.CLASSES = setmetatable({}, { __index = function(t, class)
+    local f = BUILD[class]
+    if type(f) ~= "function" then return nil end
+    local v = f()
+    rawset(t, class, v)
+    BUILD[class] = nil   -- gebaut: die Vorlage darf gehen
+    return v
+end })
 
 --------------------------------------------------
 -- Waffenfertigkeiten

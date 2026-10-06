@@ -980,6 +980,14 @@ Zuordnungen, englische Namen) – keine Texte, kein Code. Was es bringt:
 * **Nie ersetzt:** `J.MergeForeverGuide` mischt ein, was fehlt – eine
   Quest, ein Ort, eine Beute des Journals bleibt, auch wenn der Abgleich
   dieselbe Nummer bringt; zweimal einmischen ändert nichts (Prüflauf).
+* **Beute erst bei Bedarf** (6.14.0.2): `J.CLASSIC_LOOT[dungeon]` und
+  `J.CLASSIC_OTHERS[dungeon]` sind Funktionen (so schreibt sie der
+  Generator); `J.Loot`, `J.Others` und `J.LootSource` bauen und mischen sie
+  beim ersten Blick auf diesen Dungeon ein (`J.MergeClassic`,
+  `J.EnsureClassic`), danach steht die Tabelle da. Als fertige Tabellen
+  kostete die Beute beim Laden rund 160 KB. `data_test.lua` prüft, dass
+  beim Laden nichts gebaut ist, und baut für seine Prüfung alles
+  (`J.EnsureAllClassic`).
 
 * **Herkunft `community`** (`J.SOURCE`), wie die Forever-Bosslisten:
   zusammengetragen aus öffentlichen Beta-Berichten, nicht aus dem

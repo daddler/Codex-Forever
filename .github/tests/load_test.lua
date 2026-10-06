@@ -775,6 +775,17 @@ end
 -- speicherte). Der Prueflauf hat "Ja" gesagt: nach dem Anmelden laeuft jedes
 -- ui-Modul - gegen die Attrappe, ohne einen einzigen Fehler (K.Report
 -- meldete ihn im Chat, und K.IsActive bliebe false).
+-- 6.14.0.2: /wcui speicher sagt, was davon Abfall war.
+do
+    local saved, savedData = _G.C_AddOns, K.prof.data
+    local vals, i = { 17920, 9216 }, 0
+    _G.C_AddOns = { GetAddOnMemoryUsage = function() i = i + 1 return vals[math.min(i, 2)] end }
+    K.prof.data = {}
+    local lines = table.concat(K.ProfileReport(30), " | ")
+    _G.C_AddOns, K.prof.data = saved, savedData
+    Check(lines:find("Speicher jetzt 17.5 MB", 1, true) and lines:find("Nach dem Aufräumen 9.0 MB (8.5 MB waren Abfall)", 1, true),
+        "/wcui speicher: Wert nach dem Aufraeumen - " .. lines)
+end
 Check(K.OPT_IN == true, "Hauptschalter in Kraft (OPT_IN = true) - der Client speichert wieder")
 Check(K.UIEnabled() == true, "mit gespeichertem Ja ist die Oberflaeche an")
 for _, key in ipairs({ "nameplates", "unitframes", "groupframes", "actionbars",
@@ -1914,18 +1925,27 @@ do
         stub.FireEvent("PLAYER_ENTERING_WORLD")
         assert(QA.Chosen == 9, "nicht das naechste lohnende Ziel: " .. tostring(QA.Chosen))
         calls = 0
+        QA.PlanDirty()
         QA.Replan()
         assert(calls == 1, "Karte je Quest neu abgefragt: " .. calls)
+        -- 6.14.0.2: ohne Ereignis rechnet der Lauf nur - kein GetInfo, keine Karte.
+        local infos, getInfo = 0, _G.C_QuestLog.GetInfo
+        _G.C_QuestLog.GetInfo = function(i) infos = infos + 1 return getInfo(i) end
+        calls = 0
+        QA.Replan()
+        assert(calls == 0 and infos == 0 and QA.Chosen == 9, "Planen ohne Ereignis fragt den Questlog: " .. calls .. "/" .. infos)
+        _G.C_QuestLog.GetInfo = getInfo
         QA.Update(true)
         assert(QA.texts.dist:GetText() == "80 m", "Pfeil zeigt nicht auf das geplante Ziel: " .. tostring(QA.texts.dist:GetText()))
         -- Nicht hin und her: 13 taucht 70 m entfernt auf - kaum naeher, 9 bleibt.
         table.insert(log, { questID = 13, level = 10 })
         where[13] = { 0.5, 0.43 }
-        QA.Replan()
+        stub.FireEvent("QUEST_ACCEPTED", 13)
         assert(QA.Chosen == 9, "springt wegen 10 m zu einem anderen Ziel")
-        -- Deutlich naeher (20 m): jetzt wechselt er.
+        -- Deutlich naeher (20 m): jetzt wechselt er (das Spiel meldet den
+        -- neuen Ort mit QUEST_POI_UPDATE).
         where[13] = { 0.5, 0.48 }
-        QA.Replan()
+        stub.FireEvent("QUEST_POI_UPDATE")
         assert(QA.Chosen == 13, "deutlich naeheres Ziel nicht genommen")
         -- Das Spiel waehlt beim Annehmen selbst: gilt NICHT als eigene Wahl.
         stub.FireEvent("QUEST_ACCEPTED", 13)
@@ -1965,6 +1985,94 @@ do
     _G.GetTime, _G.UnitLevel, _G.C_Timer.After = oldGT, oldUL, oldAfter
     _G.C_QuestLog.IsComplete, _G.C_QuestLog.GetNumQuestLogEntries, _G.C_QuestLog.GetInfo = nil, nil, nil
     Check(ok, "Questpfeil plant: naechstes lohnendes Ziel, kein Hin und Her, eigene Wahl bis zur Abgabe"
+        .. (ok and "" or (": " .. tostring(err))))
+
+    -- 6.14.0.2: die eigene Lage ueber UnitPosition, wenn es mit der Karte
+    -- uebereinstimmt - dann keine Vektoren mehr je Lauf.
+    local saved = { _G.GetTime, _G.UnitPosition, _G.C_Map.GetPlayerMapPosition }
+    ok, err = pcall(function()
+        local now = 5000
+        _G.GetTime = function() return now end
+        local mapCalls = 0
+        -- Spieler bei Karte (0.4, 0.5): Norden 500, Westen 600 (siehe oben).
+        _G.C_Map.GetPlayerMapPosition = function() mapCalls = mapCalls + 1 return { x = 0.4, y = 0.5 } end
+        local un, uw = 500, 600
+        _G.UnitPosition = function() return un, uw, 0, 0 end
+        WeintCodex.UIKit._posFast.ok, WeintCodex.UIKit._posFast.at = false, -math.huge
+        local c, n, w = QA.PlayerWorld()
+        assert(c == 0 and n == 500 and w == 600 and WeintCodex.UIKit._posFast.ok, "Abgleich mit der Karte nicht bestanden")
+        mapCalls = 0
+        un = 510
+        c, n = QA.PlayerWorld()
+        assert(mapCalls == 0 and n == 510, "UnitPosition nicht genommen")
+        -- Nach WeintCodex.UIKit.POS_CHECK_EVERY s wieder ueber die Karte geprueft.
+        now = now + WeintCodex.UIKit.POS_CHECK_EVERY + 1
+        c, n = QA.PlayerWorld()
+        assert(mapCalls == 1 and n == 500 and not WeintCodex.UIKit._posFast.ok, "nicht erneut geprueft oder Abweichung uebersehen")
+        -- Vertauschte Achsen oder andere Zaehlung: nie genommen.
+        un, uw = 600, 500
+        now = now + WeintCodex.UIKit.POS_CHECK_EVERY + 1
+        QA.PlayerWorld()
+        assert(not WeintCodex.UIKit._posFast.ok, "vertauschte Achsen genommen")
+        -- Auf der Diagonale (Norden = Westen) waere ein Tausch unsichtbar.
+        _G.C_Map.GetPlayerMapPosition = function() return { x = 0.5, y = 0.5 } end
+        un, uw = 500, 500
+        QA.PlayerWorld()
+        assert(not WeintCodex.UIKit._posFast.ok, "auf der Diagonale genommen")
+        -- Anderer Kontinent als die Karte: nicht genommen.
+        _G.C_Map.GetPlayerMapPosition = function() return { x = 0.4, y = 0.5 } end
+        un, uw = 500, 600
+        _G.UnitPosition = function() return un, uw, 0, 1 end
+        QA.PlayerWorld()
+        assert(not WeintCodex.UIKit._posFast.ok, "anderer Kontinent genommen")
+        -- Kartenkoordinaten (Minikarte, Weltkarte) aus derselben Lage: wie
+        -- ueber die Karte, aber ohne neue Vektoren.
+        local KK = WeintCodex.UIKit
+        _G.UnitPosition = function() return un, uw, 0, 0 end
+        now = now + KK.POS_CHECK_EVERY + 1
+        local x, y = KK.PlayerMapXY(1)
+        assert(math.abs(x - 0.4) < 1e-9 and math.abs(y - 0.5) < 1e-9 and KK._posFast.ok, "Kartenlage: " .. tostring(x) .. "/" .. tostring(y))
+        mapCalls = 0
+        _G.C_Map.GetPlayerMapPosition = function() mapCalls = mapCalls + 1 return { x = 0.4, y = 0.5 } end
+        un, uw = 400, 700     -- 100 nach Sueden und Osten: x 0.3, y 0.6
+        x, y = KK.PlayerMapXY(1)
+        assert(mapCalls == 0 and math.abs(x - 0.3) < 1e-9 and math.abs(y - 0.6) < 1e-9, "Kartenlage ohne Karte gerechnet: " .. tostring(x) .. "/" .. tostring(y))
+        -- Ausserhalb der Karte: nichts, keine 0 oder 1.
+        un = -5
+        assert(KK.PlayerMapXY(1) == nil, "Lage ausserhalb der Karte erfunden")
+        -- Ohne UnitPosition: der Weg ueber die Karte.
+        _G.UnitPosition = nil
+        now = now + KK.POS_CHECK_EVERY + 1
+        x = KK.PlayerMapXY(1)
+        assert(x == 0.4, "ohne UnitPosition nicht ueber die Karte")
+        -- Haushalt: 100 Laeufe (20 s Spiel) mit bestaetigter Lage legen
+        -- kaum Wegwerf-Speicher an - vorher zwei Vektoren je Lauf.
+        local oldST = _G.C_SuperTrack.GetSuperTrackedQuestID
+        _G.C_SuperTrack.GetSuperTrackedQuestID = function() return 42 end
+        QA.manual, QA.Chosen = nil, nil
+        K.Set("questarrow", "plan", "tracked")
+        _G.C_QuestLog.GetQuestsOnMap = function() return { { questID = 42, x = 0.5, y = 0.4 } } end
+        _G.UnitPosition = function() return 500, 600, 0, 0 end
+        now = now + KK.POS_CHECK_EVERY + 1
+        QA.Update(true)
+        local vecs = 0
+        _G.C_Map.GetPlayerMapPosition = function() vecs = vecs + 1 return { x = 0.4, y = 0.5 } end
+        collectgarbage("collect") collectgarbage("stop")
+        local kb0 = collectgarbage("count")
+        for _ = 1, 100 do now = now + 0.2 QA.Update() end
+        local used = collectgarbage("count") - kb0
+        collectgarbage("restart")
+        local shown = QA.texts.dist:GetText()
+        _G.C_SuperTrack.GetSuperTrackedQuestID = oldST
+        K.Set("questarrow", "plan", "smart")
+        assert(QA.frame:IsShown() and tostring(shown):find("^%d+ m$"), "Haushalt ohne Pfeil gemessen: " .. tostring(shown))
+        print(string.format("  --    Questpfeil: 100 Laeufe %.1f KB, %d Kartenabfragen", used, vecs))
+        assert(vecs <= 3, "Questpfeil fragt die Karte je Lauf: " .. vecs)
+        assert(used < 6, string.format("Questpfeil: %.1f KB fuer 100 Laeufe", used))
+    end)
+    _G.GetTime, _G.UnitPosition, _G.C_Map.GetPlayerMapPosition = saved[1], saved[2], saved[3]
+    WeintCodex.UIKit._posFast.ok = false
+    Check(ok, "Questpfeil: eigene Lage ueber UnitPosition nur nach Abgleich mit der Karte"
         .. (ok and "" or (": " .. tostring(err))))
 end
 
@@ -2186,8 +2294,41 @@ do
         assert(NP.QuestProgress("nameplate1") == "!", "ohne lesbaren Stand: markiert, nicht geraten")
         -- Questlog geaendert: neu gelesen.
         lines[2] = { type = 8, completed = false, numFulfilled = 9, numRequired = 10 }
+        -- 6.14.0.2: ein Schub QUEST_LOG_UPDATE liest den Tooltip je Plakette
+        -- einmal (der Zeitgeber der Attrappe laeuft nie - hier von Hand).
+        local reads, getUnit = 0, _G.C_TooltipInfo.GetUnit
+        _G.C_TooltipInfo.GetUnit = function(...) reads = reads + 1 return getUnit(...) end
+        local queued, after = {}, _G.C_Timer.After
+        _G.C_Timer.After = function(_, fn) queued[#queued + 1] = fn end
+        NP.QuestRefresh()   -- ein haengender Merker aus frueheren Schritten
+        reads = 0
         stub.FireEvent("QUEST_LOG_UPDATE")
+        stub.FireEvent("QUEST_LOG_UPDATE")
+        stub.FireEvent("UNIT_QUEST_LOG_CHANGED", "player")
+        _G.C_Timer.After = after
+        local mine = 0
+        for _, fn in ipairs(queued) do if fn == NP.QuestRefresh then mine = mine + 1 end end
+        assert(reads == 0 and mine == 1, "Tooltip je Ereignis gelesen oder je Ereignis geplant: " .. reads .. "/" .. mine)
+        NP.QuestRefresh()
+        assert(reads == 1, "Tooltip je Schub nicht genau einmal: " .. reads)
         assert(p.quest:GetText() == "9/10", "nach Questlog-Aenderung nicht neu gelesen")
+        -- Haushalt (6.14.0.2): 100 Treffer an einer Plakette legen keine
+        -- Tabelle je Treffer an (vorher eine fuer die Textplaetze).
+        local handler
+        for _, f in ipairs(stub._registry) do
+            if f._events and f._events.NAME_PLATE_UNIT_ADDED and f._scripts and f._scripts.OnEvent then
+                local fr = f
+                handler = function(...) fr._scripts.OnEvent(fr, ...) end
+            end
+        end
+        handler("UNIT_HEALTH", "nameplate1")
+        collectgarbage("collect") collectgarbage("stop")
+        local kb0 = collectgarbage("count")
+        for _ = 1, 100 do handler("UNIT_HEALTH", "nameplate1") end
+        local used = collectgarbage("count") - kb0
+        collectgarbage("restart")
+        print(string.format("  --    Plakette: 100 Treffer %.1f KB", used))
+        assert(used < 2, string.format("Plakette: %.1f KB fuer 100 Treffer", used))
         stub.FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
         _G.C_TooltipInfo, _G.C_QuestLog.IsOnQuest = nil, nil
     end)

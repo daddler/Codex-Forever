@@ -1511,8 +1511,33 @@ function J.MergeForeverGuide()
     for id, p in pairs(J.FG_PLACES or {}) do
         if not J.PLACES[id] then J.PLACES[id] = p end
     end
-    for did, bosses in pairs(J.CLASSIC_LOOT or {}) do
-        local e = entry(did)
+    -- Beute: was schon als Tabelle dasteht, gleich; je Dungeon gebaute
+    -- (Funktionen) erst beim ersten Blick auf diesen Dungeon.
+    for did, v in pairs(J.CLASSIC_LOOT or {}) do
+        if type(v) == "table" then J.MergeClassic(did) end
+    end
+    for did, v in pairs(J.CLASSIC_OTHERS or {}) do
+        if type(v) == "table" then J.MergeClassic(did) end
+    end
+end
+
+-- Beute aus Classic fuer einen Dungeon einmischen (6.14.0.2: erst bei
+-- Bedarf). Eine Funktion wird gebaut und durch ihre Tabelle ersetzt; nie
+-- ersetzt wird Beute des Journals, zweimal einmischen aendert nichts.
+function J.MergeClassic(did)
+    local function entry()
+        local e = J.DATA[did]
+        if not e then
+            e = { loot = {}, quests = {} }
+            J.DATA[did] = e
+        end
+        e.loot, e.quests = e.loot or {}, e.quests or {}
+        return e
+    end
+    local bosses = J.CLASSIC_LOOT and J.CLASSIC_LOOT[did]
+    if type(bosses) == "function" then bosses = bosses() J.CLASSIC_LOOT[did] = bosses end
+    if type(bosses) == "table" then
+        local e = entry()
         for bid, list in pairs(bosses) do
             if not e.loot[bid] then
                 e.loot[bid] = list
@@ -1521,8 +1546,10 @@ function J.MergeForeverGuide()
             end
         end
     end
-    for did, groups in pairs(J.CLASSIC_OTHERS or {}) do
-        local e = entry(did)
+    local groups = J.CLASSIC_OTHERS and J.CLASSIC_OTHERS[did]
+    if type(groups) == "function" then groups = groups() J.CLASSIC_OTHERS[did] = groups end
+    if type(groups) == "table" then
+        local e = entry()
         e.others = e.others or {}
         local have = {}
         for _, g in ipairs(e.others) do have[g.name] = true end
@@ -1536,8 +1563,22 @@ function J.MergeForeverGuide()
     end
 end
 
+-- Vor jedem Blick auf Beute eines Dungeons.
+local function EnsureClassic(did)
+    local l, o = J.CLASSIC_LOOT and J.CLASSIC_LOOT[did], J.CLASSIC_OTHERS and J.CLASSIC_OTHERS[did]
+    if type(l) == "function" or type(o) == "function" then J.MergeClassic(did) end
+end
+J.EnsureClassic = EnsureClassic
+
+-- Alles auf einmal (Datenpruefung).
+function J.EnsureAllClassic()
+    for did in pairs(J.CLASSIC_LOOT or {}) do EnsureClassic(did) end
+    for did in pairs(J.CLASSIC_OTHERS or {}) do EnsureClassic(did) end
+end
+
 -- Herkunft einer Beute: J.CLASSIC_LOOT_SOURCE oder J.SOURCE.
 function J.LootSource(dungeonId, bossId)
+    EnsureClassic(dungeonId)
     local k = J.LOOT_KIND[dungeonId]
     if k and k[bossId] == "classic" and J.CLASSIC_LOOT_SOURCE then return J.CLASSIC_LOOT_SOURCE end
     return J.SOURCE
@@ -1578,12 +1619,14 @@ end
 
 -- Beute eines Bosses (Liste, leer wenn keine berichtet ist).
 function J.Loot(dungeonId, bossId)
+    EnsureClassic(dungeonId)
     local d = J.DATA[dungeonId]
     return d and d.loot and d.loot[bossId] or {}
 end
 
 -- Beute von Gegnern ohne eigenen Boss.
 function J.Others(dungeonId)
+    EnsureClassic(dungeonId)
     local d = J.DATA[dungeonId]
     return d and d.others or {}
 end

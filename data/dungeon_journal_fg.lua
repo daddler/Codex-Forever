@@ -913,8 +913,11 @@ J.ENTRANCES = {
 }
 
 -- { Nummer, Name, Platz, Qualitaet (nil: unbekannt), from = Gegner (optional) }
+-- Je Dungeon eine Funktion: gebaut erst, wenn jemand die Beute dieses
+-- Dungeons aufschlaegt (J.EnsureClassic) - als fertige Tabellen kosteten
+-- alle zusammen rund 200 KB, die fast niemand je ansieht.
 J.CLASSIC_LOOT = {
-    blackrock_depths = {
+    blackrock_depths = function() return {
         ambassador_flamelash = {
             { 11808, "Circle of Flame", "Kopf, Stoff", 4 },
             { 11812, "Cape of the Fire Salamander", "Rücken, Stoff", 3 },
@@ -1063,8 +1066,8 @@ J.CLASSIC_LOOT = {
             { 22256, "Mana Shaping Handwraps", "Hände, Stoff", 3 },
             { 22254, "Wand of Eternal Light", "Distanz, Zauberstab", 3 },
         },
-    },
-    dire_maul = {
+    } end,
+    dire_maul = function() return {
         alzzin = {
             { 18328, "Shadewood Cloak", "Rücken, Stoff", 3 },
             { 18312, "Energized Chestplate", "Brust, Platte", 3 },
@@ -1210,8 +1213,8 @@ J.CLASSIC_LOOT = {
             { 18308, "Clever Hat", "Kopf, Leder", 2 },
             { 18306, "Gloves of Shadowy Mist", "Hände, Stoff", 2 },
         },
-    },
-    lower_blackrock_spire = {
+    } end,
+    lower_blackrock_spire = function() return {
         gizrul = {
             { 16718, "Wildheart Spaulders", "Schulter, Leder", 3 },
             { 13208, "Bleak Howler Armguards", "Handgelenke, Leder", 3 },
@@ -1275,8 +1278,8 @@ J.CLASSIC_LOOT = {
             { 12582, "Keris of Zul'Serak", "Einhändig, Dolch", 3 },
             { 13175, "Voone's Twitchbow", "Distanz, Bogen", 2 },
         },
-    },
-    maraudon = {
+    } end,
+    maraudon = function() return {
         celebras = {
             { 17740, "Soothsayer's Headdress", "Kopf, Leder", 3 },
             { 17739, "Grovekeeper's Drape", "Rücken, Stoff", 3 },
@@ -1329,8 +1332,8 @@ J.CLASSIC_LOOT = {
             { 17717, "Megashot Rifle", "Distanz, Schusswaffe", 3 },
             { 17719, "Inventor's Focal Sword", "Einhändig, Schwert", 3 },
         },
-    },
-    razorfen_downs = {
+    } end,
+    razorfen_downs = function() return {
         amnennar = {
             { 10763, "Icemetal Barbute", "Kopf, Platte", 3 },
             { 10762, "Robes of the Lich", "Brust, Stoff", 3 },
@@ -1361,8 +1364,8 @@ J.CLASSIC_LOOT = {
             { 10775, "Carapace of Tuten'kash", "Brust, Platte", 3 },
             { 10777, "Arachnid Gloves", "Hände, Leder", 3 },
         },
-    },
-    scarlet_monastery = {
+    } end,
+    scarlet_monastery = function() return {
         arcanist_doan = {
             { 7714, "Hypnotic Blade", "Waffenhand, Dolch", 3 },
             { 7713, "Illusionary Rod", "Zweihändig, Stab", 3 },
@@ -1396,8 +1399,8 @@ J.CLASSIC_LOOT = {
             { 7722, "Triune Amulet", "Hals", 3 },
             { 7721, "Hand of Righteousness", "Waffenhand, Streitkolben", 3 },
         },
-    },
-    scholomance = {
+    } end,
+    scholomance = function() return {
         darkmaster_gandling = {
             { 13937, "Headmaster's Charge", "Zweihändig, Stab", 4 },
             { 14514, "Pattern: Robe of the Void", "Schneiderei (Muster)", nil },
@@ -1531,8 +1534,8 @@ J.CLASSIC_LOOT = {
             { 18691, "Dark Advisor's Pendant", "Hals", 3 },
             { 14577, "Skullsmoke Pants", "Beine, Stoff", 3 },
         },
-    },
-    stratholme = {
+    } end,
+    stratholme = function() return {
         archivist_galford = {
             { 16692, "Devout Gloves", "Hände, Stoff", 3 },
             { 13386, "Archivist Cape", "Rücken, Stoff", 3 },
@@ -1688,8 +1691,8 @@ J.CLASSIC_LOOT = {
             { 13402, "Timmy's Galoshes", "Füße, Schwere Rüstung", 3 },
             { 13401, "The Cruel Hand of Timmy", "Einhändig, Streitkolben", 3 },
         },
-    },
-    sunken_temple = {
+    } end,
+    sunken_temple = function() return {
         atalalarion = {
             { 10800, "Darkwater Bracers", "Handgelenke, Leder", 3 },
             { 10798, "Atal'alarion's Tusk Ring", "Taille, Platte", 3 },
@@ -1764,8 +1767,8 @@ J.CLASSIC_LOOT = {
             { 10795, "Drakeclaw Band", "Finger", 3 },
             { 10796, "Drakestone", "In Schildhand geführt", 3 },
         },
-    },
-    uldaman = {
+    } end,
+    uldaman = function() return {
         ancient_stone_keeper = {
             { 9410, "Cragfists", "Hände, Platte", 3 },
             { 9411, "Rockshard Pauldrons", "Schulter, Schwere Rüstung", 2 },
@@ -1807,8 +1810,8 @@ J.CLASSIC_LOOT = {
             { 9404, "Olaf's All Purpose Shield", "Schildhand, Schild", 3 },
             { 9403, "Battered Viking Shield", "Schildhand, Schild", 1 },
         },
-    },
-    upper_blackrock_spire = {
+    } end,
+    upper_blackrock_spire = function() return {
         general_drakkisath = {
             { 12592, "Blackblade of Shahram", "Zweihändig, Schwert", 4 },
             { 22267, "Spellweaver's Turban", "Kopf, Stoff", 3 },
@@ -1886,8 +1889,8 @@ J.CLASSIC_LOOT = {
             { 12939, "Dal'Rend's Tribal Guardian", "Schildhand, Schwert", 3 },
             { 12583, "Blackhand Doomsaw", "Zweihändig, Stangenwaffe", 3 },
         },
-    },
-    zulfarrak = {
+    } end,
+    zulfarrak = function() return {
         antusul = {
             { 9640, "Vice Grips", "Hände, Platte", 3 },
             { 9641, "Lifeblood Amulet", "Hals", 3 },
@@ -1925,10 +1928,10 @@ J.CLASSIC_LOOT = {
             { 18083, "Jumanza Grips", "Hände, Stoff", 3 },
             { 18082, "Zum'rah's Vexing Cane", "Zweihändig, Stab", 3 },
         },
-    },
+    } end,
 }
 J.CLASSIC_OTHERS = {
-    blackrock_depths = {
+    blackrock_depths = function() return {
         { name = "Dark Coffer", items = {
             { 11197, "Dark Keeper Key", "Schlüssel", nil },
             { 22256, "Mana Shaping Handwraps", "Hände, Stoff", 3 },
@@ -1961,21 +1964,21 @@ J.CLASSIC_OTHERS = {
             { 12556, "High Priestess Boots", "Füße, Stoff", 3 },
             { 12553, "Swiftwalker Boots", "Füße, Leder", 3 },
         } },
-    },
-    dire_maul = {
+    } end,
+    dire_maul = function() return {
         { name = "Cho'Rush the Observer", items = {
             { 18490, "Insightful Hood", "Kopf, Leder", 3 },
             { 18483, "Mana Channeling Wand", "Distanz, Zauberstab", 3 },
             { 18485, "Observer's Shield", "Schildhand, Schild", 3 },
             { 18484, "Cho'Rush's Blade", "Einhändig, Schwert", 3 },
         } },
-    },
-    gnomeregan = {
+    } end,
+    gnomeregan = function() return {
         { name = "Techbot", items = {
             { 9444, "Techbot CPU Shell", "Schildhand, Schild", 1 },
         } },
-    },
-    lower_blackrock_spire = {
+    } end,
+    lower_blackrock_spire = function() return {
         { name = "Burning Felguard", items = {
             { 13181, "Demonskin Gloves", "Hände, Stoff", 3 },
             { 13182, "Phase Blade", "Einhändig, Schwert", 3 },
@@ -2009,16 +2012,16 @@ J.CLASSIC_OTHERS = {
             { 13198, "Hurd Smasher", "Einhändig, Faustwaffe", 3 },
             { 13204, "Bashguuder", "Einhändig, Streitkolben", 3 },
         } },
-    },
-    maraudon = {
+    } end,
+    maraudon = function() return {
         { name = "Veng", items = {
             { 17765, "Gem of the Fifth Khan", "Questgegenstand", nil },
         } },
         { name = "Maraudos", items = {
             { 17764, "Gem of the Fourth Khan", "Questgegenstand", nil },
         } },
-    },
-    razorfen_kraul = {
+    } end,
+    razorfen_kraul = function() return {
         { name = "Razorfen Spearhide", items = {
             { 6679, "Armor Piercer", "Zweihändig, Stangenwaffe", 2 },
         } },
@@ -2031,23 +2034,23 @@ J.CLASSIC_OTHERS = {
             { 6689, "Wind Spirit Staff", "Zweihändig, Stab", 3 },
             { 6688, "Whisperwind Headdress", "Kopf, Leder", 2 },
         } },
-    },
-    ruins_of_lordaeron = {
+    } end,
+    ruins_of_lordaeron = function() return {
         { name = "The Baron", items = {
             { 271204, "Meathook Slicer", "Einhändig, Dolch", 2 },
             { 271205, "Abomination Bones", "Brust, Schwere Rüstung", 2 },
             { 271206, "Leftover Abomination Skin", "Brust, Stoff", 2 },
         } },
-    },
-    scholomance = {
+    } end,
+    scholomance = function() return {
         { name = "Death Knight Darkreaver", items = {
             { 18760, "Necromantic Band", "Finger", 3 },
             { 18761, "Oblivion's Touch", "Distanz, Zauberstab", 3 },
             { 18758, "Specter's Blade", "Einhändig, Dolch", 3 },
             { 18759, "Malicious Axe", "Zweihändig, Axt", 3 },
         } },
-    },
-    shadowfang_keep = {
+    } end,
+    shadowfang_keep = function() return {
         { name = "Fel Steed / Shadow Charger", items = {
             { 6341, "Eerie Stable Lantern", "In Schildhand geführt", 2 },
             { 932, "Fel Steed Saddlebags", "Tasche", 1 },
@@ -2055,8 +2058,8 @@ J.CLASSIC_OTHERS = {
         { name = "Arugal's Voidwalker", items = {
             { 5943, "Rift Bracers", "Handgelenke, Schwere Rüstung", 2 },
         } },
-    },
-    sunken_temple = {
+    } end,
+    sunken_temple = function() return {
         { name = "Atal'ai Defenders (balcony)", items = {
             { 10783, "Atal'ai Spaulders", "Schulter, Leder", 3 },
             { 10784, "Atal'ai Breastplate", "Brust, Schwere Rüstung", 3 },
@@ -2069,21 +2072,21 @@ J.CLASSIC_OTHERS = {
             { 10801, "Slitherscale Boots", "Füße, Leder", 3 },
             { 10802, "Wingveil Cloak", "Rücken, Stoff", 2 },
         } },
-    },
-    the_deadmines = {
+    } end,
+    the_deadmines = function() return {
         { name = "Sneed", items = {
             { 5194, "Taskmaster Axe", "Zweihändig, Axt", 3 },
             { 5195, "Gold-flecked Gloves", "Hände, Stoff", 2 },
             { 273293, "Bandsaw Wristbands", "Handgelenke, Schwere Rüstung", 2 },
             { 273092, "Blueprint: Repair Bot", "Ingenieurskunst (Bauplan)", nil },
         } },
-    },
-    uldaman = {
+    } end,
+    uldaman = function() return {
         { name = "Obsidian Sentinel", items = {
             { 8053, "Obsidian Power Source", "Questgegenstand", nil },
         } },
-    },
-    upper_blackrock_spire = {
+    } end,
+    upper_blackrock_spire = function() return {
         { name = "Gyth", items = {
             { 16669, "Pauldrons of Elements", "Schulter, Schwere Rüstung", 3 },
             { 22225, "Dragonskin Cowl", "Kopf, Stoff", 3 },
@@ -2092,8 +2095,8 @@ J.CLASSIC_OTHERS = {
             { 12952, "Gyth's Skull", "Kopf, Platte", 3 },
             { 13522, "Recipe: Flask of Chromatic Resistance", "Alchemie (Rezept)", nil },
         } },
-    },
-    zulfarrak = {
+    } end,
+    zulfarrak = function() return {
         { name = "Sandarr Dunereaver", items = {
             { 9523, "Troll Temper", "Questgegenstand", nil },
         } },
@@ -2110,7 +2113,7 @@ J.CLASSIC_OTHERS = {
         { name = "Zerillis", items = {
             { 12470, "Sandstalker Ankleguards", "Füße, Leder", 3 },
         } },
-    },
+    } end,
 }
 
 J.MergeForeverGuide()

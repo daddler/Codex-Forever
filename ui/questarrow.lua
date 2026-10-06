@@ -220,6 +220,11 @@ local function ToWorld(mapID, x, y)
     return continent, n, w
 end
 
+-- Eigene Lage ohne Wegwerf-Vektoren: K.BestMap, K.PlayerWorld (ui/kit.lua,
+-- 6.14.0.2 - vorher fuenfmal je Sekunde zwei Vektoren, 26 KB/s).
+local BestMap, PlayerWorld = K.BestMap, K.PlayerWorld
+QA.PlayerWorld = PlayerWorld
+
 local function QuestTitle(questID)
     local ql = _G.C_QuestLog
     if ql and ql.GetTitleForQuestID then return ql.GetTitleForQuestID(questID) end
@@ -417,43 +422,76 @@ function QA.Weight(level, playerLevel, group)
     return w
 end
 
+-- Was der Planer je Quest braucht, haengt nicht an der eigenen Position:
+-- Ort, Stufe, Gruppe, erfuellt. Es wird nur nach einem Ereignis des
+-- Questlogs (QA.PlanDirty) und beim Kartenwechsel neu gelesen; der Lauf
+-- alle QA.PLAN_EVERY s rechnet nur Entfernungen (6.14.0.2 - vorher je
+-- Lauf GetInfo, GetQuestsOnMap und ein Vektor je Quest).
+local planCache = { dirty = true, n = 0 }
+QA._planCache = planCache
+function QA.PlanDirty() planCache.dirty = true end
+
+local function FillPlanCache(playerMap)
+    local ql = _G.C_QuestLog
+    local onMap = {}
+    local n = 0
+    for i = 1, (ql.GetNumQuestLogEntries() or 0) do
+        local info = ql.GetInfo(i)
+        local id = info and info.questID
+        if id and id ~= 0 and not info.isHeader and not info.isHidden then
+            local mapID, x, y = QuestLocation(id, playerMap, onMap, true)
+            local tc, tN, tW
+            if mapID then tc, tN, tW = ToWorld(mapID, x, y) end
+            if tc then
+                n = n + 1
+                local e = planCache[n] or {}
+                planCache[n] = e
+                e.id, e.tc, e.tN, e.tW = id, tc, tN, tW
+                e.level, e.group, e.done = info.difficultyLevel or info.level, info.suggestedGroup, IsComplete(id)
+            end
+        end
+    end
+    for i = n + 1, planCache.n do planCache[i] = nil end
+    planCache.n, planCache.map, planCache.dirty = n, playerMap, false
+end
+
+local function ByCost(a, b) return a.cost < b.cost end
+
 -- Das Ziel mit den geringsten Kosten; current bleibt, solange nichts
 -- deutlich Guenstigeres da ist. Liefert questID (oder nil) und schreibt
 -- die Kandidaten nach QA.plan.list (fuer /wcui pfeil).
 function QA.Plan(current)
     local list = QA.plan.list
-    for i = #list, 1, -1 do list[i] = nil end
+    local k = 0
     local ql = _G.C_QuestLog
-    if not (ql and ql.GetNumQuestLogEntries and ql.GetInfo) then return nil end
-    local playerMap, px, py = PlayerMapPos()
-    if not playerMap then return nil end
-    local pc, pN, pW = ToWorld(playerMap, px, py)
-    if not pc then return nil end
+    local playerMap = (ql and ql.GetNumQuestLogEntries and ql.GetInfo) and BestMap() or nil
+    local pc, pN, pW
+    if playerMap then pc, pN, pW = PlayerWorld() end
+    if not pc then
+        for i = #list, 1, -1 do list[i] = nil end
+        return nil
+    end
+    if planCache.dirty or planCache.map ~= playerMap then FillPlanCache(playerMap) end
     local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
     local plevel = _G.UnitLevel and K.Plain(_G.UnitLevel("player"))
-    local onMap = {}
     local best, bestCost, curCost
-    for i = 1, (ql.GetNumQuestLogEntries() or 0) do
-        local info = ql.GetInfo(i)
-        local id = info and info.questID
-        local until_ = id and QA.skipped[id]
-        if id and id ~= 0 and not info.isHeader and not info.isHidden
-           and not (until_ and until_ > now) then
-            local mapID, x, y = QuestLocation(id, playerMap, onMap, true)
-            if mapID then
-                local tc, tN, tW = ToWorld(mapID, x, y)
-                if tc == pc then
-                    local d = QA.Solve(pN, pW, tN, tW, nil)
-                    local w = QA.Weight(info.difficultyLevel or info.level, plevel, info.suggestedGroup)
-                    local cost = d * w
-                    list[#list + 1] = { id = id, dist = d, weight = w, cost = cost, done = IsComplete(id) }
-                    if id == current then curCost = cost end
-                    if not bestCost or cost < bestCost then best, bestCost = id, cost end
-                end
-            end
+    for i = 1, planCache.n do
+        local e = planCache[i]
+        local until_ = QA.skipped[e.id]
+        if e.tc == pc and not (until_ and until_ > now) then
+            local d = QA.Solve(pN, pW, e.tN, e.tW, nil)
+            local w = QA.Weight(e.level, plevel, e.group)
+            local cost = d * w
+            k = k + 1
+            local c = list[k] or {}
+            list[k] = c
+            c.id, c.dist, c.weight, c.cost, c.done = e.id, d, w, cost, e.done
+            if e.id == current then curCost = cost end
+            if not bestCost or cost < bestCost then best, bestCost = e.id, cost end
         end
     end
-    table.sort(list, function(a, b) return a.cost < b.cost end)
+    for i = #list, k + 1, -1 do list[i] = nil end
+    table.sort(list, ByCost)
     QA.plan.at = now
     if curCost and best ~= current
        and not (bestCost < curCost * QA.KEEP_SHARE and curCost - bestCost > QA.KEEP_MIN) then
@@ -511,14 +549,16 @@ end
 --------------------------------------------------
 
 -- { frame, dist (Luftlinie, Yards), occluded, onScreen } oder nil.
+-- Eine Tabelle fuer alle Laeufe (6.14.0.2), nicht fuenf je Sekunde.
+local navOut = {}
 function QA.Nav()
     local cn = _G.C_Navigation
     if not (cn and cn.GetDistance) then return nil end
-    local out = {}
+    local out = navOut
     local ok, d = pcall(cn.GetDistance)
     d = ok and K.Plain(d) or nil
     if type(d) ~= "number" or d <= 0 then return nil end
-    out.dist = d
+    out.dist, out.occluded, out.frame = d, nil, nil
     if cn.GetTargetState then
         local okS, st = pcall(cn.GetTargetState)
         st = okS and K.Plain(st) or nil
@@ -723,6 +763,10 @@ end
 -- einmal je Sekunde neu gesucht - GetQuestsOnMap legt bei jedem Aufruf
 -- eine Tabelle an, und zwanzigmal je Sekunde waere das reiner Muell.
 local cache = { at = -1 }
+-- Ohne Ereignis alle 3 s statt jede Sekunde (6.14.0.2): jede Suche legt
+-- die Questliste der Karte neu an. Was den Ort aendert, meldet das Spiel
+-- (Questlog, Wegpunkt, Leiche, Gebiet) und erzwingt die Suche sofort.
+QA.RESOLVE_EVERY = 3
 -- Zwischen zwei ganzen Durchlaeufen dreht sich nur der Pfeil (6.6.1.9):
 -- die Blickrichtung aendert sich jedes Bild, die eigene Position kaum.
 -- Ein ganzer Durchlauf fragt Karte, Weltposition, Navigation ab und
@@ -744,14 +788,20 @@ end
 
 local function Target(playerMap, force)
     local now = _G.GetTime and _G.GetTime() or 0
-    if not force and cache.at >= 0 and cache.map == playerMap and (now - cache.at) < 1 then
+    if not force and cache.at >= 0 and cache.map == playerMap and (now - cache.at) < QA.RESOLVE_EVERY then
         return cache
     end
     local status, mapID, tx, ty, name, kind, nav = ResolveTarget(playerMap)
     cache.at, cache.map, cache.status, cache.title, cache.kind = now, playerMap, status, name, kind
     cache.nav = nav and true or false
-    cache.tc, cache.tN, cache.tW = nil, nil, nil
-    if status == "ok" then cache.tc, cache.tN, cache.tW = ToWorld(mapID, tx, ty) end
+    -- Derselbe Ort wie beim letzten Mal: die Weltlage steht schon da (ein
+    -- Vektor weniger je Sekunde).
+    if status == "ok" and cache.tc and cache.tm == mapID and cache.tx == tx and cache.ty == ty then return cache end
+    cache.tc, cache.tN, cache.tW, cache.tm, cache.tx, cache.ty = nil, nil, nil, nil, nil, nil
+    if status == "ok" then
+        cache.tc, cache.tN, cache.tW = ToWorld(mapID, tx, ty)
+        cache.tm, cache.tx, cache.ty = mapID, tx, ty
+    end
     return cache
 end
 
@@ -774,7 +824,7 @@ function QA.Update(force)
     if K.Get(KEY, "hideInCombat") and K.InCombat() then frame:Hide() return end
     if K.Get(KEY, "hideInInstance") and QA.InInstance() then frame:Hide() return end
 
-    local playerMap, px, py = PlayerMapPos()
+    local playerMap = BestMap()
     local t = Target(playerMap, force)
     local status, name = t.status, t.title
     if status == "none" then frame:Hide() return end
@@ -802,7 +852,7 @@ function QA.Update(force)
         return
     end
 
-    local pc, pN, pW = ToWorld(playerMap, px, py)
+    local pc, pN, pW = PlayerWorld()
     local tc, tN, tW = t.tc, t.tN, t.tW
     if not pc then
         arrow:Hide()
@@ -832,14 +882,14 @@ function QA.Update(force)
     if nav then
         local units = K.Get(KEY, "units")
         if K.Get(KEY, "showHeight") then
-            local parts = {}
+            local first, second
             local dh = QA.Height(nav.dist, yards)
             local dir = QA.TrackHeight(QA.PlayerZ(), dh)
             -- Erst in der Naehe verlaesslich: Kartenort und Navigationspunkt
             -- liegen auf Entfernung nicht genau aufeinander.
             if dh and dh >= 8 and yards <= 300 then
                 local word = (dir == "up" and " höher") or (dir == "down" and " tiefer") or ""
-                parts[#parts + 1] = (word ~= "" and "Ziel " or "Höhenunterschied ") .. "≈ "
+                first = (word ~= "" and "Ziel " or "Höhenunterschied ") .. "≈ "
                     .. QA.FormatDistance(dh, units) .. word
                 if dir and QA.updown then
                     QA.updown:SetRotation(dir == "up" and 0 or math.pi)
@@ -847,9 +897,9 @@ function QA.Update(force)
                 end
             end
             if nav.occluded and nav.dist <= 150 then
-                parts[#parts + 1] = "verdeckt – Höhle, Gebäude oder Hang?"
+                second = "verdeckt – Höhle, Gebäude oder Hang?"
             end
-            height:SetText(table.concat(parts, " · "))
+            height:SetText(first and second and (first .. " · " .. second) or first or second or "")
         end
         PlaceMarker(nav, QA.FormatDistance(nav.dist, units))
     end
@@ -992,6 +1042,7 @@ local function OnSmartEvent(event, questID, game)
 end
 
 local function OnEvent(_, event, questID)
+    if REPLAN[event] then QA.PlanDirty() end
     local st = _G.C_SuperTrack
     local game = st and st.GetSuperTrackedQuestID and st.GetSuperTrackedQuestID()
     if game == 0 then game = nil end

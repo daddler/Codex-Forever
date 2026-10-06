@@ -9,6 +9,25 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.14.0.2] – 2026-10-06
+
+**Weniger Speicher.** Questpfeil, Namensplaketten, Minikarte und die Koordinaten an der Weltkarte erzeugen beim Laufen nur noch einen Bruchteil des Abfalls, und Lehrerdaten anderer Klassen und die Classic-Beute der alten Dungeons werden erst geladen, wenn du sie aufschlägst. An dem, was du siehst, ändert sich nichts.
+
+**/wcui speicher sagt jetzt auch, was davon Abfall war:** Nach der Messung räumt es einmal auf und nennt, wie viel WeintCodex wirklich belegt.
+
+**Berufe:** Über den Lehrern heißt es jetzt „der nächstgelegene steht oben“.
+
+### Technisch
+
+- **Beta-Messung** (`/wcui speicher`, 30 s gelaufen und geplündert): 17,5 MB, +62,6 KB/s; Questpfeil 26,2 KB/s, Plaketten 11,0, Schadensanzeige 4,0, Minikarte 3,6, Einheitenrahmen 2,8.
+- **Eigene Lage ohne Vektoren** (`ui/kit.lua`: `K.BestMap`, `K.PlayerWorld`, `K.PlayerMapXY`, `K.ToWorld`, `K.MapPosSlow`): `GetPlayerMapPosition`/`GetWorldPosFromMapPos` legen je Aufruf eine Mixin-Tabelle an, `UnitPosition` nennt Zahlen. Genommen nur nach Abgleich mit dem Weg über die Karte (gleicher Kontinent, ±2, nicht auf der Diagonale), erneut alle 10 s (`K.POS_CHECK_EVERY`); sonst der alte Weg. Genutzt von Questpfeil, Minikarte und den Koordinaten an der Weltkarte (Komfort).
+- **Questpfeil**: Planen aus dem Zwischenspeicher (`FillPlanCache`, neu nur nach `QA.PlanDirty` – jedes Ereignis aus `REPLAN` – oder Kartenwechsel), Kandidaten wiederverwendet, Sortierung ohne Closure; Ziel ohne Ereignis alle 3 s statt jede Sekunde (`QA.RESOLVE_EVERY`), Weltlage des Ziels nur bei neuem Ort; `QA.Nav` eine Tabelle; Höhentext ohne Liste. Prüflauf mit Vektoren wie im Spiel: 48,7 → 6,0 KB/s.
+- **Plaketten**: `FillTexts` ohne Tabelle je `UNIT_HEALTH` (`TEXT_KEYS`), `BarColor` ohne Closure, Questfortschritt je Schub `QUEST_LOG_UPDATE` einmal (`NP.QueueQuestRefresh`, 0,5 s). Prüflauf: 107,5 → 33,7 KB/s.
+- **Ruhender Bestand**: `T.CLASSES` baut je Klasse beim ersten Zugriff (Metatabelle, gut 270 KB weniger); Classic-Beute je Dungeon als Funktion (Generator angepasst), eingemischt beim ersten `J.Loot`/`J.Others`/`J.LootSource` (`J.MergeClassic`, `J.EnsureClassic`, `J.EnsureAllClassic` für die Datenprüfung). Beim Laden in der Attrappe 2.563 → 1.979 KB Daten.
+- **`/wcui speicher`**: „Nach dem Aufräumen … (… waren Abfall)“ nach `collectgarbage("collect")`.
+- Nicht geändert: Schadensanzeige (ihr Takt läuft nur im Kampf, die 4 KB/s sind die Kampfdaten des Clients) und Einheitenrahmen (8 Byte je Aufruf).
+- Prüflauf: Haushalt Questpfeil (100 Läufe < 6 KB, höchstens 3 Kartenabfragen) und Plakette (100 Treffer < 2 KB), Abgleich der Lage (Tausch, Diagonale, anderer Kontinent, Wiederholung), Kartenkoordinaten, Planen ohne Ereignis, ein Schub Questlog = ein Lesen, Beute erst beim ersten Blick; 20 Gegenproben, alle gefangen (drei erst nach geschärften Prüfungen).
+
 ## [6.14.0.1] – 2026-10-06
 
 **Der nächste Berufslehrer steht oben.** Unter allen, die deinen nächsten Rang lehren, kommt der zuerst, der dir am nächsten ist – nicht mehr der Fachmann am anderen Ende des Kontinents. Die Zeile nennt den Ort und bis wohin er lehrt, den Rang zeigt der Tooltip.

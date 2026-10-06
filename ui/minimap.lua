@@ -65,15 +65,9 @@ local DECORATIONS = { "MinimapBorder", "MinimapBorderTop", "MinimapNorthTag", "M
 
 local frame, zone, coords, clock, border, strip
 
+-- Ohne Vektor je Abfrage (K.PlayerMapXY, 6.14.0.2).
 local function PlayerCoords()
-    local cm = _G.C_Map
-    if not (cm and cm.GetBestMapForUnit and cm.GetPlayerMapPosition) then return nil end
-    local map = cm.GetBestMapForUnit("player")
-    local pos = map and cm.GetPlayerMapPosition(map, "player")
-    if not pos then return nil end
-    local x, y = K.Plain(pos.x), K.Plain(pos.y)
-    if type(x) ~= "number" or type(y) ~= "number" then return nil end
-    return x, y
+    return K.PlayerMapXY()
 end
 
 local function UpdateTexts()
