@@ -23,12 +23,22 @@ local activeTab = nil
 -- die Reihenfolge dieser Tabelle ist die Reihenfolge der Spalte.
 local ICON_PATH = "Interface\\AddOns\\WeintCodex\\media\\icons\\"
 local tabs = {
-    -- SEIT 6.6.2.1: GEORDNET NACH DEM, WAS IN FOREVER JETZT ANSTEHT.
-    -- Erst wird wochenlang gelevelt (Beta-Test: "Schlachtzugsanmeldungen
-    -- sind erstmal irrelevant"). Oben steht deshalb, was dabei hilft;
-    -- Schlachtzug und Anmeldung stehen weiter da, nur weiter unten. Die
-    -- Zahl der Gruppen und Eintraege ist dieselbe wie vorher - die Spalte
-    -- braucht keinen Pixel mehr (NavColumnHeight).
+    -- SEIT 6.13.0.0: DIE SPALTE IST DIE INFORMATIONSARCHITEKTUR, NICHT
+    -- DIE GESCHICHTE DER FUNKTIONEN. Vier Gruppen, je eine Frage:
+    --   Leveln  mein Charakter und sein Weg - Cockpit, Zustand, Lehrer,
+    --           Dungeonwissen (Uebersicht = was jetzt wichtig ist,
+    --           Dungeons = nachschlagen; die Uebersicht verlinkt nur)
+    --   Gruppe  zusammen spielen - Bereitschaft (Gruppencheck), Inhalt
+    --           (Schlachtzuege), Organisation (Anmeldung, Kalender)
+    --   Gilde   was die Gilde teilt (Materialien)
+    --   System  Technik - Companion mit Synchronisierung und Import,
+    --           Einstellungen
+    -- Die Spalte ist stabil: nichts blendet sich nach Stufe ein oder aus.
+    -- Den Kontext liefert die Uebersicht. Import steht nicht mehr hier,
+    -- sondern als Reiter unter Companion (SUBTABS unten) - die ID
+    -- "import" lebt weiter fuer /wc import, Suche und Verweise.
+    -- (6.6.2.1 hatte die Spalte nach dem geordnet, was ansteht; der
+    -- Gruppencheck stand unter Leveln, Import unter Gilde.)
     { id = "uebersicht", icon = ICON_PATH .. "nav_uebersicht", label = "Übersicht",
       group = "Leveln" },
     { id = "charakter",  icon = ICON_PATH .. "nav_charakter",  label = "Charakter" },
@@ -45,15 +55,15 @@ local tabs = {
     -- Bewusst OHNE feature: der Gruppencheck liest ausschliesslich die
     -- Ausruestung der Leute, die gerade neben einem stehen. Das ist keine
     -- gildeninterne Lieferung, sondern dieselbe Auskunft, die jeder
-    -- Client ueber "Untersuchen" ohnehin gibt. Beim Leveln: die Gruppe
-    -- fuer den Dungeon.
-    { id = "gruppe",     icon = ICON_PATH .. "nav_gruppe",     label = "Gruppencheck" },
+    -- Client ueber "Untersuchen" ohnehin gibt. Erster Eintrag der Gruppe:
+    -- die unmittelbare Bereitschaft, fuer Dungeon wie Schlachtzug.
+    { id = "gruppe",     icon = ICON_PATH .. "nav_gruppe",     label = "Gruppencheck",
+      group = "Gruppe" },
 
-    -- Die Schlachtzuege selbst: Instanzen, Bosse, ID-Fortschritt. Bewusst
-    -- OHNE feature - der Bestand steht in data/raids.lua und kommt nicht
-    -- vom Bot.
-    { id = "raids",      icon = ICON_PATH .. "nav_bosse",      label = "Schlachtzüge",
-      group = "Schlachtzug" },
+    -- Die Schlachtzuege selbst: Instanzen, Bosse, ID-Fortschritt - ein
+    -- Wissensbereich. Bewusst OHNE feature - der Bestand steht in
+    -- data/raids.lua und kommt nicht vom Bot.
+    { id = "raids",      icon = ICON_PATH .. "nav_bosse",      label = "Schlachtzüge" },
 
     -- Die Anmeldeliste dagegen ist eine gildeninterne Lieferung.
     { id = "anmeldung",  icon = ICON_PATH .. "nav_raids",      label = "Anmeldung",
@@ -64,7 +74,6 @@ local tabs = {
 
     { id = "materialien", icon = ICON_PATH .. "nav_materialien", label = "Materialien",
       group = "Gilde", feature = "materials.view" },
-    { id = "import",     icon = ICON_PATH .. "nav_import",     label = "Import" },
 
     { id = "companion",  icon = ICON_PATH .. "nav_companion",  label = "Companion",
       group = "System" },
@@ -75,6 +84,25 @@ local tabs = {
     -- einen gestoert hat.
     { id = "settings",   icon = ICON_PATH .. "nav_einstellungen", label = "Einstellungen" },
 }
+
+-- Bereiche OHNE eigenen Eintrag in der Spalte: ein Reiter unter einem
+-- anderen. GoToTab/SwitchTo nehmen die ID weiter an, oeffnen den Bereich
+-- und markieren in der Spalte den Eintrag, unter dem er steht. Seit
+-- 6.13.0.0: Import (Strings des Discord-Bots einfuegen) ist ein Kanal
+-- der Synchronisierung und steht unter Companion.
+local SUBTABS = {
+    import = { tab = "companion", sub = "import" },
+}
+WeintCodex.Navigation.SUBTABS = SUBTABS
+
+-- Die Spalte zum Nachlesen (Pruefung, Doku): id, label, group, feature.
+function WeintCodex.Navigation.Tabs()
+    local out = {}
+    for i, t in ipairs(tabs) do
+        out[i] = { id = t.id, label = t.label, group = t.group, feature = t.feature }
+    end
+    return out
+end
 
 -- Die Hoehenrechnung dieser Spalte steht weiter unten als Funktion
 -- (NavColumnHeight/NavColumnBudget) und wird vom kopflosen Prueflauf
@@ -2340,13 +2368,17 @@ function WeintCodex.Navigation.SwitchTo(tabId)
     WeintCodex.Navigation.ClearTitleActions()
     ClearContentPanel()
 
+    -- Ein Reiter unter einem anderen Eintrag (SUBTABS): dessen Bereich,
+    -- aufgeschlagen auf dem Reiter.
+    local sub
+    if SUBTABS[tabId] then
+        tabId, sub = SUBTABS[tabId].tab, SUBTABS[tabId].sub
+    end
+
     -- Einziger Kontrollpunkt für gesperrte Bereiche. Deckt Rail-Klicks,
-    -- GoToTab (Dashboard-Kacheln und Statistik-Karten) sowie core/search.lua
-    -- mit ab, weil alle drei hier hereinlaufen.
-    -- Bewusst NICHT abgedeckt: /wc import (core/main.lua) und der
-    -- Import-Button im Dashboard rufen Sync.ShowImportDialog() direkt auf.
-    -- Das ist unschädlich - der Import-Tab ist nie gesperrt, der Gate für
-    -- die Daten selbst sitzt in ProcessImport (modules/sync.lua).
+    -- GoToTab (Slash-Befehle, Knoepfe der Uebersicht) sowie core/search.lua
+    -- mit ab, weil alle hier hereinlaufen. Import ist nie gesperrt; der
+    -- Gate fuer die Daten selbst sitzt in ProcessImport (modules/sync.lua).
     local needed = tabFeature[tabId]
     if needed and not Can(needed) then
         WeintCodex.Navigation.ShowAccessLock(tabId, needed)
@@ -2388,13 +2420,9 @@ function WeintCodex.Navigation.SwitchTo(tabId)
         if WeintCodex.Materials and WeintCodex.Materials.Show then
             WeintCodex.Materials.Show()
         end
-    elseif tabId == "import" then
-        if WeintCodex.Sync and WeintCodex.Sync.ShowImportDialog then
-            WeintCodex.Sync.ShowImportDialog()
-        end
     elseif tabId == "companion" then
         if WeintCodex.CompanionPage and WeintCodex.CompanionPage.Show then
-            WeintCodex.CompanionPage.Show()
+            WeintCodex.CompanionPage.Show(sub)
         end
     elseif tabId == "settings" then
         if WeintCodex.Settings and WeintCodex.Settings.Show then
@@ -2534,6 +2562,18 @@ end
 -- Aktiviert einen Tab so, als haette der Nutzer direkt darauf geklickt
 -- (Navigationsspalte und Unternavigation ziehen korrekt mit).
 local function GoToTab(tabId)
+    -- Ein Reiter ohne eigenen Eintrag: der Eintrag darueber wird markiert,
+    -- der Reiter aufgeschlagen - auch wenn der Eintrag schon offen ist
+    -- (ein Klick darauf taete dann nichts).
+    local alias = SUBTABS[tabId]
+    if alias then
+        for _, b in ipairs(tabButtons) do SetTabActive(b, false) end
+        local host = tabButtons[alias.tab]
+        if host then SetTabActive(host, true) end
+        activeTab = alias.tab
+        WeintCodex.Navigation.SwitchTo(tabId)
+        return
+    end
     local btn = tabButtons[tabId]
     if btn then btn:Click() end
 end

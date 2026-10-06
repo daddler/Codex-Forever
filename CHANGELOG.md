@@ -9,6 +9,24 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.13.0.0] – 2026-10-06
+
+**Die Navigation ist neu geordnet.** Vier Gruppen, je eine Frage: Leveln (Übersicht, Charakter, Lehrer, Dungeons), Gruppe (Gruppencheck, Schlachtzüge, Anmeldung, Kalender), Gilde (Materialien) und System (Companion, Einstellungen). Es fehlt nichts – nur der Platz hat sich geändert.
+
+**Import steht jetzt unter Companion.** Dort gibt es zwei Reiter: Synchronisierung und Import. /wc import führt weiter direkt dorthin.
+
+**Die Suche findet die Übersicht wieder.** Der Treffer „Übersicht“ tat bisher nichts.
+
+### Technisch
+
+- **Informationsarchitektur der Spalte** (`core/navigation.lua`): Leveln (Übersicht, Charakter, Lehrer, Dungeons), **Gruppe** (Gruppencheck, Schlachtzüge, Anmeldung, Kalender – vorher Gruppencheck unter Leveln, die Gruppe hieß „Schlachtzug“), Gilde (Materialien), System (Companion, Einstellungen). IDs, Freigaben (`raids.view`, `calendar.view`, `materials.view`) und Sperrseite unverändert; nichts blendet sich nach Stufe ein oder aus. 11 statt 12 Einträge (Spalte 604 von 684 px).
+- **Import unter Companion**: kein Eintrag mehr in der Spalte; `Navigation.SUBTABS = { import = { tab = "companion", sub = "import" } }`. `GoToTab("import")` markiert Companion und schlägt den Reiter auf (auch wenn Companion schon offen ist), `SwitchTo("import")` ebenso. `modules/companionpage.lua`: Reiterleiste (`BuildSidebar`, dieselbe wie auf Charakter/Materialien) mit „Synchronisierung“ (die bisherige Seite, Brotkrume „Companion · Synchronisierung“) und „Import“ (der bisherige Dialog aus `modules/sync.lua`, Brotkrume „Companion · Import“); der Knopf „Import öffnen“ wechselt den Reiter. `ShowImportDialog` räumt die Reiterleiste nicht mehr ab.
+- **Bestehende Fehler, gefunden beim Prüfen der Wege:** `Sync.ShowImportDialog` setzte Brotkrume und Detailbereich nur beim ersten Aufbau – ein zweites Öffnen ließ die der vorigen Seite stehen (jetzt `ImportContext()` bei jedem Mal). Die Suche führte „Übersicht“ unter der ID `übersicht`, die die Navigation nicht kennt – der Treffer tat nichts (jetzt `uebersicht`; Treffer in der Reihenfolge der Spalte). Der Rechtsklick auf das Minikartensymbol rief `SwitchTo("raids")` – links blieb der alte Eintrag markiert (jetzt `GoToTab`).
+- Der Punkt für wartende Nachrichten an die Companion (`modules/home.lua`) steht an Companion statt an Import. Einführung (`core/onboarding.lua`): Gruppen und „Companion → Import“. README, `docs/architecture/overview.md`, Prüfliste.
+- `media/icons/nav_import.tga` bleibt liegen, ungenutzt.
+- `load_test.lua`, neuer Abschnitt „Navigation“: Gruppen und Reihenfolge (`Navigation.Tabs()`), Freigaben, Import ohne Eintrag; jeder Eintrag und jeder Suchtreffer erreichbar und links markiert; Import aus Companion heraus, zurück, Brotkrume beim zweiten Öffnen; `/wc` import, companion, einstellungen, dungeons, raids, anmeldung, kalender, charakter, materialien, lehrer, gruppe; Sperre (Materialien gesperrt, Import offen); Minikarte über `GoToTab`; Punkt an Companion. Gegenproben: 11, alle gefangen.
+- **Ungeprüft im Spiel:** die Reiterleiste auf der Companion-Seite (Abstand zum Kopf der Seite), die Gruppenköpfe in der Spalte.
+
 ## [6.12.0.1] – 2026-10-06
 
 **WeintCodex fragt nach deinem Profil.** Loggst du mit einem Charakter ein, der noch kein eigenes Profil hat, fragt WeintCodex einmal: eigenes Profil anlegen, ein vorhandenes wählen oder „Standard“ behalten. Mit dem Kreuz oder Esc kommt die Frage beim nächsten Einloggen wieder.

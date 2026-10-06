@@ -124,10 +124,12 @@ if not WeintCodex.MainFrame then
                                                 ToggleAddon()
                                                 end
 
+                                                -- GoToTab statt SwitchTo (6.13.0.0): sonst
+                                                -- bliebe in der Spalte der alte Eintrag markiert.
                                                 if WeintCodex.Navigation
-                                                    and WeintCodex.Navigation.SwitchTo then
+                                                    and WeintCodex.Navigation.GoToTab then
 
-                                                    WeintCodex.Navigation.SwitchTo("raids")
+                                                    WeintCodex.Navigation.GoToTab("raids")
 
                                                     end
 

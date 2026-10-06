@@ -114,10 +114,11 @@ local TOUR_STEPS = {
       title = "So ist das Fenster aufgebaut",
       body =
         "Links steht die Navigationsspalte, in vier Gruppen: " .. A("Leveln")
-        .. " (Übersicht, Charakter, Lehrer, Dungeons, Gruppencheck), "
-        .. A("Schlachtzug") .. " (Schlachtzüge, Anmeldung, Kalender), "
-        .. A("Gilde") .. " (Materialien, Import) "
-        .. "und " .. A("System") .. " (Companion, Einstellungen).\n\n"
+        .. " (Übersicht, Charakter, Lehrer, Dungeons) – dein Charakter und sein Weg; "
+        .. A("Gruppe") .. " (Gruppencheck, Schlachtzüge, Anmeldung, Kalender) – "
+        .. "zusammen spielen; " .. A("Gilde") .. " (Materialien) "
+        .. "und " .. A("System") .. " (Companion mit Synchronisierung und Import, "
+        .. "Einstellungen).\n\n"
         .. "In der Mitte steht die Seite. Rechts erscheint ein schmales Feld, "
         .. "sobald es zur Seite etwas zu sagen gibt — die Begründung zu dem, "
         .. "was links steht. Wenn dich etwas wundert, steht die Antwort "
@@ -188,7 +189,7 @@ local TOUR_STEPS = {
         "Unter " .. A("Anmeldung") .. " steht, wer sich für Mittwoch und "
         .. "Donnerstag eingetragen hat — mit Rolle, Klasse und Notiz. Die "
         .. "Liste kommt vom Discord-Bot, entweder über " .. A("WeintCompanion")
-        .. " oder über einen String, den du unter " .. A("Import")
+        .. " oder über einen String, den du unter " .. A("Companion → Import")
         .. " einfügst.\n\n"
         .. "Unter " .. A("Kalender") .. " steht der Termin selbst. Wer die "
         .. "Raidleitung hat, kann von dort aus die Ingame-Einladungen "
@@ -246,7 +247,8 @@ local TOUR_STEPS = {
         .. "Verbrauchsgüter Forever kennt und wie viele ein Raid braucht, ist "
         .. "nicht veröffentlicht — ein Posten ohne Soll bekommt deshalb keinen "
         .. "Statuspunkt und keinen Balken.\n\n"
-        .. "Unter " .. A("Import") .. " fügst du ein, was der Discord-Bot "
+        .. "Unter " .. A("Companion → Import") .. " (oder mit " .. A("/wc import")
+        .. ") fügst du ein, was der Discord-Bot "
         .. "ausgibt: Anmeldungen, Materialien, Bossnotizen. Mehrere Zeilen "
         .. "dürfen zusammen hinein." },
 
@@ -327,7 +329,7 @@ local TOUR_STEPS = {
         .. "und schiebt die Daten zwischen Addon und Discord hin und her.\n\n"
         .. "Der " .. A("WeintCodex Bot") .. " läuft auf Discord. Mit ihm "
         .. "meldest du dich zum Raid an; seine Exportbefehle erzeugen die "
-        .. "Strings für " .. A("Import") .. ".\n\n"
+        .. "Strings, die du unter " .. A("Companion → Import") .. " einfügst.\n\n"
         .. E("Das Addon selbst geht nie ins Netz.") .. " Alles kommt über eine "
         .. "Datei im Spielordner oder über einen eingefügten Text. Die Seite "
         .. A("Companion") .. " zeigt dir, was zuletzt ankam." },

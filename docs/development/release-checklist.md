@@ -53,6 +53,11 @@ sondern fängt das Offensichtliche ab, **bevor** es Spieler melden.
 Jedes einmal öffnen. Nichts darf aussehen wie halb alt, halb neu. Wenn
 doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 
+- [ ] Navigationsspalte: vier Gruppen Leveln, Gruppe, Gilde, System, kein
+      „Import“ mehr; Companion hat die Reiter Synchronisierung und Import.
+      `/wc import` öffnet Companion mit dem Reiter Import, Companion ist
+      links markiert. Rechtsklick auf das Minikartensymbol: Schlachtzüge,
+      links markiert.
 - [ ] Codex-Übersicht (/wc): höchstens drei Schritte, jeder Knopf landet am Ziel (Dungeon-Knopf auf dem genannten Dungeon); „Dein Weg“ ohne abgeschnittene Namen; mit lernbaren Zaubern stehen ihre Namen mit Symbol unter „Als Nächstes“ (Tooltip beim Drüberfahren), eine Stufe im Weg zeigt beim Drüberfahren ihre Zauber
 - [ ] Charakter (C), Zauberbuch und Talente (P, N), Weltkarte (M)
 - [ ] Zauberbuch und Talente: hinter „Allgemein“ und den Namen der Bäume Raute **und** Linie; sonst `/wcui fenster` – die Zeile „Linie: …“ sagt Höhe und Bildpunkte
