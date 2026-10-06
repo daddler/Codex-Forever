@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.13.2.0] – 2026-10-06
+
+**Die Erinnerungen zeigen nur noch die Regeln deiner Klasse.** Die der anderen Charaktere stehen als eine Zeile darunter; „Alle zeigen“ holt sie zum Aufräumen dazu. Eine alte Regel „Begleiter fehlt“ gilt nur noch für Jäger und Hexenmeister.
+
+**Die Laune deines Begleiters lässt sich messen.** Der Punkt am Begleiterrahmen bleibt aus, weil das Spiel die Laune nicht dort herausgibt, wo WeintCodex fragt. /wcui prüfen mit Begleiter zeigt jetzt, wo das Spiel sie führt – mit diesem Bericht kommt der Punkt.
+
+### Technisch
+
+- **Regelliste je Charakter** (`ui/reminders.lua`), Beta-Test: „Ich sehe in den Erinnerungen alle Erinnerungen von allen Charakteren … das macht das alles sehr unübersichtlich.“ Die Regeln bleiben accountweit gespeichert; `R.ListedRules()` liefert, was hier gilt (`R.Applies`), mit der Stelle in der gespeicherten Liste, und zählt den Rest („3 Regeln anderer Klassen ausgeblendet“). Knopf „Alle zeigen“/„Nur diese Klasse“ (`R.listAll`, nicht gespeichert), nur wenn es fremde Regeln gibt. **Entfernen trifft die Regel der Zeile** (`row.index`) – mit gefilterter Liste wäre die n-te gespeicherte die falsche. Leere Liste mit fremden Regeln: „Für diese Klasse noch keine Regel“.
+- **Alte Regeln ohne Klasse** (`R.CLASS_KINDS`): Begleiter, Laune und Munition gelten wie die Waffe nur, wo die Klasse sie vorschlägt (bis 6.13.1.0 galt der Begleiter überall – „Begleiter fehlt“ stand auch beim Krieger).
+- **Laune: Messung statt zweiter Vermutung.** Gemessen mit 6.13.1.0: kein Punkt am Begleiterrahmen, das Charakterfenster des Spiels zeigt das Gesicht – `GetPetHappiness()` antwortet auf Forever nicht (oder nicht mit 1–3). `/wcui prüfen`, neue Prüfung „Begleiter“ (`ui/selfcheck.lua`): gelesene Laune, `GetPetHappiness()` mit allen Rückgabewerten, jede Funktion mit „Happiness“ im Namen global und in `C_*` (`SC.HappinessNames`), Energieart `Enum.PowerType.Happiness` mit `UnitPower`, ob der Client `UNIT_HAPPINESS` kennt, die einfachen Werte am Rahmen des Spiels `PetPaperDollPetHappinessInfo` (höchstens 12), Atlas und Ausschnitt seines Bilds, Zustand des eigenen Punkts. Ändert nichts.
+- `load_test.lua`, neuer Abschnitt: alte Regeln je Klasse (Jäger, Krieger, Hexenmeister, Schamane mit Nebenhand), Liste gefiltert mit richtigen Stellen, Zählzeile, Entfernen je Zeile, „Alle zeigen“ hin und zurück, Hinweis bei nur fremden Regeln, kein Knopf ohne fremde (auch im Modus „alle“); Prüfung „Begleiter“ ohne Begleiter offen, ohne Abfrage ein Befund, Funktion in `C_*` gefunden, Werte und Bild des Spielrahmens, gelesene Laune. Gegenproben: 14, alle gefangen – zwei erst nach geschärftem Test (Hand der Waffe, Knopf im Modus „alle“).
+- **Ungeprüft im Spiel:** der Knopf unter der Liste (Platz, Breite); die Laune selbst – sie braucht den Bericht.
+
 ## [6.13.1.0] – 2026-10-06
 
 **Du siehst, wie glücklich dein Begleiter ist.** Am Begleiterrahmen steht links ein Punkt: grün für glücklich, gelb für zufrieden, rot für unglücklich – im Tooltip als Wort.

@@ -311,6 +311,101 @@ Check("Fenster in Gold", function(add)
     if W.Status then add("", "   " .. W.Status()) end
 end)
 
+-- Laune des Begleiters (6.13.2.0). Beta-Test 6.13.1.0: kein Punkt am
+-- Begleiterrahmen, obwohl das Charakterfenster des Spiels das Gesicht zeigt
+-- - GetPetHappiness (Classic) antwortet auf Forever offenbar nicht. Statt
+-- eine andere Abfrage zu raten, sammelt diese Pruefung, wo der Client die
+-- Laune fuehrt: Funktionen mit "Happiness" im Namen (global und in C_*),
+-- eine Energieart, das Ereignis UNIT_HAPPINESS und was der Rahmen des
+-- Spiels (PetPaperDollPetHappinessInfo) an Werten traegt.
+SC.HAPPY_FRAME = "PetPaperDollPetHappinessInfo"
+SC.HAPPY_MAX = 12
+
+-- Namen mit "appiness" (Happiness/happiness), global und in C_*-Tabellen.
+function SC.HappinessNames()
+    local out = {}
+    for k, v in pairs(_G) do
+        if type(k) == "string" then
+            if k:find("appiness", 1, true) and type(v) == "function" then
+                out[#out + 1] = k
+            elseif k:sub(1, 2) == "C_" and type(v) == "table" then
+                for m, f in pairs(v) do
+                    if type(m) == "string" and m:find("appiness", 1, true) and type(f) == "function" then
+                        out[#out + 1] = k .. "." .. m
+                    end
+                end
+            end
+        end
+    end
+    table.sort(out)
+    return out
+end
+
+Check("Begleiter", function(add)
+    local has = K.Bool(_G.UnitExists and _G.UnitExists("pet"), false)
+    if not has then
+        add(SC.OPEN, "Kein Begleiter – mit Begleiter (Jäger) wiederholen.")
+        return
+    end
+    local h = K.PetHappiness()
+    if h then
+        add(SC.OK, "Laune gelesen: " .. h .. " (" .. K.HAPPINESS[h].text .. ").")
+    else
+        add(SC.BAD, "Laune nicht lesbar – kein Punkt am Begleiterrahmen, keine Erinnerung.")
+    end
+    if type(_G.GetPetHappiness) == "function" then
+        local ok, a, b, c = pcall(_G.GetPetHappiness)
+        add("", "   GetPetHappiness(): " .. (ok and (Show(a) .. ", " .. Show(b) .. ", " .. Show(c)) or ("Fehler " .. tostring(a))))
+    else
+        add("", "   GetPetHappiness: gibt es nicht")
+    end
+    local names = SC.HappinessNames()
+    add("", "   Funktionen mit „Happiness“: " .. (#names > 0 and table.concat(names, ", ") or "keine"))
+    local pt = type(_G.Enum) == "table" and type(_G.Enum.PowerType) == "table" and _G.Enum.PowerType.Happiness
+    if type(pt) ~= "nil" and _G.UnitPower then
+        local okP, p = pcall(_G.UnitPower, "pet", pt)
+        local okM, m = pcall(_G.UnitPowerMax, "pet", pt)
+        add("", string.format("   Energieart Happiness = %s: %s von %s", Show(pt),
+            okP and Show(p) or "Fehler", okM and Show(m) or "Fehler"))
+    else
+        add("", "   Energieart Happiness: gibt es nicht")
+    end
+    local probe = CreateFrame("Frame")
+    local okE = pcall(probe.RegisterEvent, probe, "UNIT_HAPPINESS")
+    if okE and probe.UnregisterEvent then pcall(probe.UnregisterEvent, probe, "UNIT_HAPPINESS") end
+    add("", "   Ereignis UNIT_HAPPINESS: " .. (okE and "bekannt" or "unbekannt"))
+    -- Was der Rahmen des Spiels traegt: einfache Werte, Bild, Tooltip.
+    local f = _G[SC.HAPPY_FRAME]
+    if type(f) ~= "table" then
+        add("", "   " .. SC.HAPPY_FRAME .. ": nicht da – Charakterfenster einmal mit dem Begleiter-Reiter öffnen, dann wiederholen")
+    else
+        local fields = {}
+        for k, v in pairs(f) do
+            local t = type(v)
+            if type(k) == "string" and (t == "string" or t == "number" or t == "boolean") and #fields < SC.HAPPY_MAX then
+                fields[#fields + 1] = k .. "=" .. Show(v)
+            end
+        end
+        table.sort(fields)
+        add("", "   " .. SC.HAPPY_FRAME .. ": " .. (#fields > 0 and table.concat(fields, ", ") or "keine einfachen Werte"))
+        local tex = f.Texture
+        if type(tex) == "table" then
+            local okA, atlas = false, nil
+            if tex.GetAtlas then okA, atlas = pcall(tex.GetAtlas, tex) end
+            if not okA then atlas = nil end
+            local coords = tex.GetTexCoord and { pcall(tex.GetTexCoord, tex) } or { false }
+            local cs = {}
+            for i = 2, (coords[1] and #coords or 1) do cs[#cs + 1] = type(coords[i]) == "number" and string.format("%.3f", coords[i]) or Show(coords[i]) end
+            add("", "   Bild: Atlas " .. Show(atlas) .. " · Ausschnitt " .. (#cs > 0 and table.concat(cs, " ") or "leer"))
+        end
+    end
+    local UF = WeintCodex.UIUnitFrames
+    local pf = UF and UF.frames and UF.frames.pet
+    if pf and pf._happy then
+        add("", "   Punkt am Begleiterrahmen: " .. (pf._happy:IsShown() and "sichtbar" or "aus"))
+    end
+end)
+
 Check("Speicherbedarf", function(add)
     local kb = K.AddonKB and K.AddonKB()
     if type(kb) == "number" then

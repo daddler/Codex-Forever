@@ -138,11 +138,15 @@ end
 -- Regeln von vorher haben keine Klasse. Fuer sie entscheidet, was der
 -- Client sagt: ein Zauber gilt, wenn der Charakter ihn kennt; einer, den
 -- er nicht kennt (oder der sich nicht einmal aufloesen laesst - Namen
--- loest der Client nur fuer bekannte Zauber auf), gilt nicht. Waffe gilt,
--- wo sie Vorschlag der Klasse ist; Begleiter ueberall (er erinnert erst,
--- wenn einer da war). Kann der Client gar nicht sagen, was bekannt ist,
--- gilt die Regel - "weiss nicht" ist nicht "gilt nicht".
+-- loest der Client nur fuer bekannte Zauber auf), gilt nicht. Waffe,
+-- Begleiter, Laune und Munition gelten, wo sie Vorschlag der Klasse sind
+-- (bis 6.13.1.0 galt der Begleiter ueberall - Beta-Test: "Begleiter fehlt"
+-- stand auch beim Krieger in der Liste). Kann der Client gar nicht sagen,
+-- was bekannt ist, gilt die Regel - "weiss nicht" ist nicht "gilt nicht".
 R.ALL = "*"
+-- Arten, die an der Klasse haengen: ohne `class` gelten sie nur dort, wo
+-- die Klasse sie vorschlaegt.
+R.CLASS_KINDS = { weapon = true, pet = true, happy = true, ammo = true }
 
 local function CanAskSpells()
     local sb = _G.C_SpellBook
@@ -167,9 +171,9 @@ function R.Applies(rule, class)
         local id = sp and sp.id
         if not id then return not CanAskSpells() end
         return SpellKnown(id) ~= false
-    elseif rule.kind == "weapon" then
+    elseif R.CLASS_KINDS[rule.kind] then
         for _, sg in ipairs(R.Suggestions(class)) do
-            if sg.kind == "weapon" and sg.hand == rule.hand then return true end
+            if sg.kind == rule.kind and (rule.kind ~= "weapon" or sg.hand == rule.hand) then return true end
         end
         return false
     end
@@ -879,7 +883,32 @@ end
 -- Symbol, Beschreibung und einem Knopf zum Entfernen. Mehr passen nicht
 -- auf die Seite - die neunte und alle weiteren wirken trotzdem und werden
 -- als "... und N weitere" gezaehlt, statt still zu verschwinden.
+--
+-- NUR DIESER CHARAKTER (6.13.2.0, Beta-Test: "Ich sehe in den Erinnerungen
+-- alle Erinnerungen von allen Charakteren ... das macht das alles sehr
+-- unuebersichtlich"). Die Regeln sind accountweit gespeichert; die Liste
+-- zeigt, was hier gilt (R.Applies), und zaehlt den Rest in einer Zeile.
+-- "Alle zeigen" holt die anderen dazu (blass, "(hier aus)") - zum
+-- Aufraeumen. Entfernen trifft immer die Regel der Zeile (`row.index`),
+-- nicht die n-te gespeicherte.
 local LIST_ROWS = 8
+R.LIST_ROWS = LIST_ROWS
+R.LIST_HEIGHT = LIST_ROWS * 26 + 28
+R.listAll = false
+
+-- Was die Liste zeigt: { { rule, index }, ... } und wie viele ausgeblendet sind.
+function R.ListedRules()
+    local out, hidden = {}, 0
+    for i, rule in ipairs(R.Rules()) do
+        if R.listAll or R.Applies(rule) then
+            out[#out + 1] = { rule = rule, index = i }
+        else
+            hidden = hidden + 1
+        end
+    end
+    return out, hidden
+end
+
 function R.BuildRuleList(parent, width)
     local w = CreateFrame("Frame", nil, parent)
     w.rows = {}
@@ -900,22 +929,28 @@ function R.BuildRuleList(parent, width)
         row.text:SetPoint("RIGHT", row, "RIGHT", -96, 0)
         row.text:SetJustifyH("LEFT")
         row.text:SetWordWrap(false)
-        local idx = i
         row.remove = WeintCodex.CreateButton(row, { text = "Entfernen", kind = "secondary", height = 20, size = 10,
-            onClick = function() R.RemoveRule(idx) end })
+            onClick = function() if row.index then R.RemoveRule(row.index) end end })
         row.remove:SetPoint("RIGHT", row, "RIGHT", -2, 0)
         w.rows[i] = row
     end
     w.more = K.NewText(w, 11)
-    w.more:SetPoint("TOPLEFT", w, "TOPLEFT", 4, -LIST_ROWS * 26)
+    w.more:SetPoint("TOPLEFT", w, "TOPLEFT", 4, -LIST_ROWS * 26 - 4)
+    w.toggle = WeintCodex.CreateButton(w, { text = "Alle zeigen", kind = "secondary", height = 20, size = 10,
+        onClick = function()
+            R.listAll = not R.listAll
+            w.Sync()
+        end })
+    w.toggle:SetPoint("TOPRIGHT", w, "TOPLEFT", width - 2, -LIST_ROWS * 26)
     w.empty = K.NewText(w, 12)
     w.empty:SetPoint("TOPLEFT", w, "TOPLEFT", 4, -6)
-    w.empty:SetText("Noch keine Regel. Unten eine anlegen – oder „Für meine Klasse“.")
     w.empty:SetTextColor(unpack(C.textDim))
     w.Sync = function()
-        local rules = R.Rules()
+        local listed, hidden = R.ListedRules()
         for i, row in ipairs(w.rows) do
-            local rule = rules[i]
+            local entry = listed[i]
+            local rule = entry and entry.rule
+            row.index = entry and entry.index or nil
             if rule then
                 row.text:SetText(R.RuleText(rule))
                 row.text:SetTextColor(unpack(R.Applies(rule) and C.textNormal or C.textDim))
@@ -927,9 +962,26 @@ function R.BuildRuleList(parent, width)
                 row:Hide()
             end
         end
-        local extra = #rules - LIST_ROWS
-        w.more:SetText(extra > 0 and ("… und " .. extra .. " weitere") or "")
-        w.empty:SetShown(#rules == 0)
+        local extra = #listed - LIST_ROWS
+        local parts = {}
+        if extra > 0 then parts[#parts + 1] = "… und " .. extra .. " weitere" end
+        if hidden > 0 then
+            parts[#parts + 1] = hidden == 1 and "1 Regel anderer Klassen ausgeblendet"
+                or (hidden .. " Regeln anderer Klassen ausgeblendet")
+        end
+        w.more:SetText(table.concat(parts, "  ·  "))
+        -- Der Knopf nur, wenn es etwas umzuschalten gibt.
+        local others = hidden > 0 or R.listAll
+        if R.listAll then
+            local n = 0
+            for _, e in ipairs(listed) do if not R.Applies(e.rule) then n = n + 1 end end
+            others = n > 0
+        end
+        w.toggle:SetShown(others)
+        if w.toggle.SetText then w.toggle:SetText(R.listAll and "Nur diese Klasse" or "Alle zeigen") end
+        w.empty:SetText(hidden > 0 and "Für diese Klasse noch keine Regel. Unten eine anlegen – oder „Für meine Klasse“."
+            or "Noch keine Regel. Unten eine anlegen – oder „Für meine Klasse“.")
+        w.empty:SetShown(#listed == 0)
     end
     return w
 end
@@ -954,8 +1006,8 @@ K.Register({
     OnSetting = function() R.ClearCache() R.UpdateAll() end,
     pages = {
         { key = "regeln", label = "Regeln", build = function(B)
-            B:Section("Deine Regeln", "Jede Regel ist eine Erinnerung oder ein Symbol. Zauber nennst du mit Namen oder ID – eine eingebaute Liste gibt es nicht. Eine Regel gilt für die Klasse, auf der du sie anlegst, oder für alle; was hier nicht gilt, steht blass.")
-            B:Row({ type = "custom", height = 8 * 26 + 6, create = function(parent, width)
+            B:Section("Deine Regeln", "Jede Regel ist eine Erinnerung oder ein Symbol. Zauber nennst du mit Namen oder ID – eine eingebaute Liste gibt es nicht. Eine Regel gilt für die Klasse, auf der du sie anlegst, oder für alle. Hier stehen die Regeln dieser Klasse; die der anderen holt „Alle zeigen“ dazu.")
+            B:Row({ type = "custom", height = R.LIST_HEIGHT, create = function(parent, width)
                         return R.BuildRuleList(parent, width)
                     end }, nil)
             B:Section("Neue Regel")

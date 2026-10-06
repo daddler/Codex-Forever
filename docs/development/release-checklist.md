@@ -65,6 +65,8 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 - [ ] Post: keine dunkle Fläche rechts oder unten neben dem Fenster; Gildenbank: Reiter flach, Betrag ohne Goldrahmen, kein Wappen über dem Rand; Gildenmitglieder ohne graue Bänder; Gildenchat: Eingabezeile flach
 - [ ] Kontakte (O): Freunde, Kürzliche Verbündete, Schlachtzug
 - [ ] Lehrer (Klasse und Beruf): eine Zeile wählen – sie bleibt markiert; beim Berufslehrer die Leiste oben blau, flach, ohne grauen Rahmen
+- [ ] Erinnerungen → Regeln auf einem Charakter mit Regeln anderer Klassen: nur die eigenen stehen da, darunter „N Regeln anderer Klassen ausgeblendet“ und „Alle zeigen“; Entfernen löscht die Zeile, auf der der Knopf steht
+- [ ] Als Jäger mit Begleiter: `/wcui prüfen`, Zeile „Begleiter“ – den Bericht ablegen, bis die Laune lesbar ist
 - [ ] Als Jäger mit Begleiter: links am Begleiterrahmen ein Punkt in der Farbe der Laune (Tooltip „Laune: …“), gleich dem Gesicht im Charakterfenster; Erinnerungen → Regeln, „Begleiter nicht glücklich“ anlegen – bei „zufrieden“ kommt „Begleiter zufrieden – füttern“, nach dem Füttern geht sie
 - [ ] Bedrohungsleiste an den Plaketten: allein ohne Begleiter keine; als Tank in der Gruppe zeigt sie den Nächsten und wird orange, wenn er nah dran ist
 - [ ] Bedrohungsfarben in der Gruppe: der Lebensbalken wird rot, wenn du als DD die Aggro ziehst, orange kurz davor; allein bleibt er in seiner Farbe

@@ -3345,7 +3345,7 @@ do
         assert(R.Resolve("Unbekannt").id == nil, "Unbekannter Zauber bekommt eine ID")
 
         -- Regeln setzen: Buff fehlt, Waffe, Begleiter, Proc, Abklingzeit.
-        R.SetRules({ { kind = "buff", spell = "Kampfschrei" }, { kind = "weapon", hand = "main", class = R.ALL }, { kind = "pet" },
+        R.SetRules({ { kind = "buff", spell = "Kampfschrei" }, { kind = "weapon", hand = "main", class = R.ALL }, { kind = "pet", class = R.ALL },
                      { kind = "proc", spell = "Kampfschrei" }, { kind = "cooldown", spell = "Blutrausch" } })
         local hasBuff = false
         _G.C_UnitAuras = { GetPlayerAuraBySpellID = function(id)
@@ -3613,6 +3613,108 @@ do
     K.Set("reminders", "rules", nil)
     WeintCodex.UIReminders.draft.kind, WeintCodex.UIReminders.draft.below = "buff", 3
     Check(ok, "Laune des Begleiters: Erinnerung mit Schwelle, weiss nicht, Editor, Punkt am Rahmen, Tooltip, Testmodus"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.13.2.0: die Regelliste zeigt nur, was fuer diesen Charakter gilt
+-- (Beta-Test: "Ich sehe in den Erinnerungen alle Erinnerungen von allen
+-- Charakteren"). Alte Begleiter-/Munitionsregeln ohne Klasse gelten nur, wo
+-- die Klasse sie vorschlaegt. Dazu die Messung der Laune in /wcui pruefen.
+do
+    local saved = { _G.UnitClass, _G.UnitExists, _G.GetPetHappiness, _G.PetPaperDollPetHappinessInfo, _G.C_PetHappy }
+    local R = WeintCodex.UIReminders
+    local ok, err = pcall(function()
+        _G.UnitClass = function() return "Jäger", "HUNTER", 3 end
+        -- Alte Regeln ohne Klasse: Begleiter, Laune, Munition beim Jaeger ja.
+        for _, kind in ipairs({ "pet", "happy", "ammo" }) do
+            assert(R.Applies({ kind = kind }, "HUNTER"), kind .. " ohne Klasse gilt beim Jaeger nicht")
+            assert(not R.Applies({ kind = kind }, "WARRIOR"), kind .. " ohne Klasse gilt beim Krieger")
+        end
+        assert(R.Applies({ kind = "pet" }, "WARLOCK") and not R.Applies({ kind = "happy" }, "WARLOCK"),
+            "Hexenmeister: Begleiter ja, Laune nein")
+        assert(R.Applies({ kind = "pet", class = R.ALL }, "WARRIOR"), "Regel fuer alle gilt nicht ueberall")
+        assert(R.Applies({ kind = "weapon", hand = "main" }, "SHAMAN") and not R.Applies({ kind = "weapon", hand = "off" }, "SHAMAN"),
+            "Schamane: alte Nebenhand-Regel gilt")
+
+        -- Liste: Jaeger sieht seine Regeln, die anderen als eine Zeile.
+        R.listAll = false
+        R.SetRules({
+            { kind = "buff", spell = "Schlachtruf", class = "WARRIOR" },
+            { kind = "pet" },
+            { kind = "buff", spell = "Inneres Feuer", class = "PRIEST" },
+            { kind = "ammo", min = 200, class = "HUNTER" },
+            { kind = "weapon", hand = "main" },
+        })
+        local listed, hidden = R.ListedRules()
+        assert(#listed == 2 and hidden == 3, "Liste nicht gefiltert: " .. #listed .. "/" .. hidden)
+        assert(listed[1].index == 2 and listed[2].index == 4, "Liste traegt die falschen Stellen")
+        local w = R.BuildRuleList(UIParent, 500)
+        w.Sync()
+        assert(w.rows[1]:IsShown() and w.rows[2]:IsShown() and not w.rows[3]:IsShown(), "falsche Zeilen sichtbar")
+        assert(w.rows[1].text:GetText():find("Begleiter fehlt", 1, true), "erste Zeile nicht der Begleiter: " .. w.rows[1].text:GetText())
+        assert(w.more:GetText():find("3 Regeln anderer Klassen ausgeblendet", 1, true), "Ausgeblendete nicht gezaehlt: " .. w.more:GetText())
+        assert(w.toggle:IsShown(), "kein Knopf fuer die anderen")
+        -- Entfernen trifft die Regel der Zeile, nicht die n-te gespeicherte.
+        w.rows[2].remove:Click()
+        assert(#R.Rules() == 4 and R.Rules()[2].kind == "pet" and R.Rules()[3].spell == "Inneres Feuer"
+            and R.Rules()[4].kind == "weapon", "falsche Regel entfernt")
+        w.Sync()
+        -- "Alle zeigen": die anderen dazu, blass; zurueck mit demselben Knopf.
+        w.toggle:Click()
+        assert(R.listAll and #R.ListedRules() == 4, "Alle zeigen zeigt nicht alle")
+        assert(w.rows[1].text:GetText():find("(hier aus)", 1, true), "fremde Regel nicht als aus markiert")
+        assert(w.more:GetText() == "", "im Modus 'alle' trotzdem ausgeblendet gezaehlt")
+        w.toggle:Click()
+        assert(not R.listAll, "zurueck auf 'nur diese Klasse' geht nicht")
+        -- Nur fremde Regeln: Hinweis statt leerer Flaeche.
+        R.SetRules({ { kind = "buff", spell = "Schlachtruf", class = "WARRIOR" } })
+        w.Sync()
+        assert(w.empty:IsShown() and w.empty:GetText():find("Für diese Klasse noch keine Regel", 1, true), "leere Liste ohne Hinweis")
+        -- Nur eigene: kein Knopf, keine Zaehlzeile - auch im Modus "alle".
+        R.SetRules({ { kind = "ammo", min = 200, class = "HUNTER" } })
+        w.Sync()
+        assert(not w.toggle:IsShown() and w.more:GetText() == "", "Knopf ohne fremde Regeln")
+        R.listAll = true
+        w.Sync()
+        assert(not w.toggle:IsShown(), "Knopf im Modus 'alle' ohne fremde Regeln")
+        R.listAll = false
+
+        -- /wcui pruefen, Begleiter: ohne Begleiter offen; mit: was der Client fuehrt.
+        local SC = WeintCodex.UISelfCheck
+        local function run()
+            local lines = {}
+            for _, c in ipairs(SC.CHECKS) do
+                if c.name == "Begleiter" then
+                    c.fn(function(mark, text) lines[#lines + 1] = (mark ~= "" and (mark .. " ") or "") .. text end)
+                end
+            end
+            return table.concat(lines, "\n")
+        end
+        _G.UnitExists = function(u) return u ~= "pet" end
+        assert(run():find("[?] Kein Begleiter", 1, true), "ohne Begleiter nicht offen")
+        _G.UnitExists = function() return true end
+        _G.GetPetHappiness = nil
+        _G.C_PetHappy = { GetPetHappiness = function() return 3 end }
+        local tex = stub.NewObject("Texture")
+        tex.GetAtlas = function() return "UI-PetHappiness" end
+        tex.GetTexCoord = function() return 0, 0.1875, 0, 0.359375 end
+        _G.PetPaperDollPetHappinessInfo = { Texture = tex, happiness = 3, tooltip = "Glücklich" }
+        local out = run()
+        assert(out:find("[!] Laune nicht lesbar", 1, true), "fehlende Laune nicht als Befund: " .. out)
+        assert(out:find("GetPetHappiness: gibt es nicht", 1, true), "fehlende Abfrage nicht genannt")
+        assert(out:find("C_PetHappy.GetPetHappiness", 1, true), "Funktion in C_* nicht gefunden: " .. out)
+        assert(out:find("happiness=3", 1, true) and out:find("tooltip=Glücklich", 1, true), "Werte des Spielrahmens fehlen: " .. out)
+        assert(out:find("Atlas UI-PetHappiness", 1, true) and out:find("0.188", 1, true), "Bild des Spielrahmens fehlt: " .. out)
+        assert(out:find("Ereignis UNIT_HAPPINESS", 1, true), "Ereignis nicht geprueft")
+        _G.GetPetHappiness = function() return 2, 100, 0 end
+        out = run()
+        assert(out:find("[ok] Laune gelesen: 2 (zufrieden)", 1, true) and out:find("GetPetHappiness(): 2, 100, 0", 1, true),
+            "gelesene Laune nicht berichtet: " .. out)
+    end)
+    _G.UnitClass, _G.UnitExists, _G.GetPetHappiness, _G.PetPaperDollPetHappinessInfo, _G.C_PetHappy = unpack(saved, 1, 5)
+    R.listAll = false
+    K.Set("reminders", "rules", nil)
+    Check(ok, "Erinnerungen nur fuer diesen Charakter, Entfernen je Zeile, Alle zeigen; Laune messen"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

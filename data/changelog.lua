@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.13.2.0",
+        date    = "06.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Erinnerungen zeigen nur noch die Regeln deiner Klasse.|r Die der anderen Charaktere stehen als eine Zeile darunter; „Alle zeigen“ holt sie zum Aufräumen dazu. Eine alte Regel „Begleiter fehlt“ gilt nur noch für Jäger und Hexenmeister.",
+            "|cff7C6CFFDie Laune deines Begleiters lässt sich messen.|r Der Punkt am Begleiterrahmen bleibt aus, weil das Spiel die Laune nicht dort herausgibt, wo WeintCodex fragt. /wcui prüfen mit Begleiter zeigt jetzt, wo das Spiel sie führt – mit diesem Bericht kommt der Punkt.",
+        },
+    },
+    {
         version = "6.13.1.0",
         date    = "06.10.2026",
         notes   = {

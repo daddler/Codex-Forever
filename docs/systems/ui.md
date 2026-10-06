@@ -832,8 +832,9 @@ Seit 6.2.0.0:
   gilt, wenn der Charakter ihn kennt (`WeintCodex.Trainer.Known`); einer,
   den er nicht kennt oder nicht auflösen kann, gilt nicht – außer der
   Client kann gar nicht fragen („weiß nicht“ ≠ „gilt nicht“). Waffe gilt
-  nur, wo sie Vorschlag der Klasse ist, Begleiter überall. Die Liste
-  zeigt alle Regeln, fremde blass mit „(hier aus)“.
+  nur, wo sie Vorschlag der Klasse ist, Begleiter bis 6.13.1.0 überall
+  (seitdem wie die Waffe). Die Liste zeigte bis 6.13.1.0 alle Regeln,
+  fremde blass mit „(hier aus)“ – seitdem nur die dieses Charakters.
   **Munition und Vorrat** (6.6.0.6, Beta-Test „Erinnerung bei zu wenig
   Munition“): `ammo` liest den Munitionsplatz (Platz 0,
   `GetInventoryItemID`/`GetInventoryItemCount`); ist er leer, nachdem
@@ -856,7 +857,16 @@ Seit 6.2.0.0:
   „Laune: …“), weil die Oberfläche den Rahmen des Spiels mit seinem
   Gesicht versteckt. Vorschlag für Jäger: Begleiter, Munition, Laune.
   Gemessen ist nur, dass der Client die Laune kennt (Charakterfenster,
-  `PetPaperDollPetHappinessInfo`); die Abfrage selbst ist ungeprüft.
+  `PetPaperDollPetHappinessInfo`). **Gemessen mit 6.13.1.0:** kein Punkt –
+  `GetPetHappiness` antwortet auf Forever nicht. Seit 6.13.2.0 sammelt
+  `/wcui prüfen` („Begleiter“), wo der Client die Laune führt; erst mit
+  diesem Bericht kommt eine zweite Quelle, keine geratene.
+  **Liste je Charakter** (6.13.2.0): die Regeln bleiben accountweit, die
+  Liste zeigt, was hier gilt (`R.ListedRules`, Stelle der Regel in
+  `index`, Entfernen über sie), den Rest als Zählzeile; „Alle zeigen“
+  (`R.listAll`) holt ihn blass dazu. Alte Regeln ohne Klasse der Arten
+  `R.CLASS_KINDS` (Waffe, Begleiter, Laune, Munition) gelten nur, wo die
+  Klasse sie vorschlägt.
 * **Fenster des Spiels** (6.3.1.6, `ui/windows.lua`): Charakterfenster
   und Teilfenster, erste Stufe nur die Hülle (Schmuck der Vorlage weg,
   Kachel darunter). Inhalte werden nie angefasst. Was innen noch nach
