@@ -74,6 +74,7 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 - [ ] Bedrohungsleiste an den Plaketten: allein ohne Begleiter keine; als Tank in der Gruppe zeigt sie den Nächsten und wird orange, wenn er nah dran ist
 - [ ] Bedrohungsfarben in der Gruppe: der Lebensbalken wird rot, wenn du als DD die Aggro ziehst, orange kurz davor; allein bleibt er in seiner Farbe
 - [ ] Fenster verschieben: Charakterfenster ziehen, schließen, wieder öffnen – steht wieder am Platz des Spiels; Umschalt+Rechtsklick setzt zurück; Zauberbuch im Kampf öffnen – keine Fehlermeldung
+- [ ] Seltene Gegner (Komfort → Seltene Gegner an): einen seltenen Gegner anvisieren oder seine Plakette sehen – Ton, Zeile im Chat, Hinweis oben mit Stufe und „Wiederkehr in Classic“; derselbe nicht gleich wieder; `/wcui selten` listet das Gebiet mit „zuletzt gesehen“; `/wcui prüfen` → Zeile „Seltene Gegner“ ablegen (GUID offen?, Vignetten?)
 - [ ] Markieren per Mouseover (Komfort → Automark an): im Dungeon Maus über Gegner, mittlere Maustaste – Totenkopf, nächster Kreuz; derselbe nicht noch einmal; draußen ist die Taste wieder frei
 - [ ] Würfeln um Beute (Gruppe, Beute ab „Selten“): Kachel, Rand in der Qualität, Zeit läuft sichtbar ab; `/wcui fenster` mit der Maus über dem Wurf, solange er läuft
 - [ ] Spielmenü (Esc), Optionen des Spiels, Makros (/m)

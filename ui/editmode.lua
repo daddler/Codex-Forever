@@ -302,6 +302,7 @@ end
 local MODULE_OF = {
     uf_ = "unitframes", gf_ = "groupframes", damagemeter = "damagemeter", bags = "bags",
     questarrow = "questarrow", combatalert = "comfort", fps = "comfort", durability = "comfort",
+    rarealert = "comfort",
     hud_ = "actionbars",
 }
 function E.ModuleFor(key)

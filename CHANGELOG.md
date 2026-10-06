@@ -9,6 +9,21 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.16.0.0] – 2026-10-06
+
+**Neu im Komfort: seltene Gegner melden.** Taucht einer als Namensplakette, im Ziel, unter der Maus oder als Symbol auf der Minikarte auf, gibt es einen Ton, eine Zeile im Chat und oben einen Hinweis mit Stufe, Elite und wie lange er in Classic zum Wiederkommen brauchte. Derselbe meldet sich höchstens alle fünf Minuten. Einschalten unter Komfort → Seltene Gegner.
+
+**/wcui selten** listet die seltenen Gegner deines Gebiets – mit dem Zeitpunkt, an dem du jeden zuletzt gesehen hast.
+
+### Technisch
+
+- **Daten** (`data/rares.lua`, erzeugt von `.github/scripts/import_foreverguide.py`, `fg_dump.lua` liest `RareData.lua`): 404 seltene Gegner aus ForeverGuide 1.25.6 (Questie-Datenbank für Forever, `community`), je eine Zeile, gelesen bei Bedarf: Name, Stufen, Merkmale, Wiederkehr (`classic`, aus cmangos), Lagen. Keine Fähigkeiten, keine Beute, keine Texte. 365 mit Lage.
+- **Erkennen** (`ui/rares.lua`, `WeintCodex.UIRares`): selten, wenn der Client es sagt (`UnitClassification`) oder die NPC-Nummer aus der GUID im Bestand steht (`RA.NpcId`, nur Kreaturen); Plakette, Ziel, Maus, Vignetten (`C_VignetteInfo`, nur Bestand oder `VignetteKill*`). Geheime Werte: keine Meldung.
+- **Melden**: Ton über `SOUNDKIT.RAID_WARNING` (ohne Tabelle kein Ton), Chatzeile, Hinweis (Kachel, Mover `rarealert`), je Gegner höchstens alle 5 min, tot/Instanz nur auf Wunsch, Spieler nie.
+- **Seite im Komfort** (`rareAlert` … `rareDead` unter `comfort`, ab Werk aus) statt eines eigenen Moduls – das hätte die Seitenleiste des Einstellungsfensters über ihr Maß gehoben (Prüflauf: 648 von 680 px).
+- **Gedächtnis** je Realm (`SavedData.rares`): zuletzt gesehen, wo (deine Lage), tot. **`/wcui selten`**: Bericht des Gebiets. **`/wcui prüfen`**: Zeile „Seltene Gegner“.
+- Prüflauf: GUID, Bestand, Wiederkehr („1:30–2:30 h“ – die erste Fassung schrieb „1:30 h–2:30 h“), aus/an, Plakette/Ziel/Maus, 5 Minuten, nur vom Client selten, tot, Instanz, Spieler, Vignette, Bericht, Selbstprüfung; Datenprüfung der Zeilen. 13 Gegenproben, alle gefangen (eine erst nach geschärfter Prüfung).
+
 ## [6.15.0.0] – 2026-10-06
 
 **Neu beim Lehrer: Klassenquests.** Ein zweiter Reiter zeigt die Quests nur für deine Klasse und dein Volk – vor allem die, die einen Zauber lehren, den kein Lehrer hat: Begleiter, Zähmen, Totems, Haltungen, Gestalten. Was du schon erledigt hast und was im Questlog steht, sagt dein Spiel; ein Klick setzt die Marke am Questgeber, wo er bekannt ist. Auch mit /wc klassenquests.

@@ -1291,6 +1291,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Eigene Wahl abgegeben – der Pfeil plant wieder selbst.")
         return
     end
+    if msg == "selten" or msg == "rares" or msg == "rare" then
+        local RA = WeintCodex.UIRares
+        if RA and RA.Report then K.ShowReport("Seltene Gegner", RA.Report()) end
+        return
+    end
     if msg == "pfeil" or msg == "arrow" then
         for _, line in ipairs(WeintCodex.UIQuestArrow.Inspect()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)

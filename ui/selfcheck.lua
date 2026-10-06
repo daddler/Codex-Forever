@@ -421,6 +421,35 @@ end)
 -- nimmt. Ungemessen auf Forever ist, welche der Abfragen antwortet -
 -- ForeverGuide nutzt GetSkillLineInfo und GetTradeSkillRecipeLink, der
 -- Codex fragt zuerst GetProfessions und C_TradeSkillUI.
+-- Seltene Gegner (6.16.0.0): woran WeintCodex sie erkennt. Ungemessen auf
+-- Forever ist, ob GUIDs und Vignetten offen sind.
+Check("Seltene Gegner", function(add)
+    local RA, RD = WeintCodex.UIRares, WeintCodex.RareData
+    if not (RA and RD) then
+        add(SC.OPEN, "Seltene Gegner nicht geladen.")
+        return
+    end
+    local n = 0
+    for _ in pairs(RD.RAW or {}) do n = n + 1 end
+    local active = RA.Active()
+    add(active and SC.OK or SC.OPEN, (active and "An" or "Aus (Komfort → Seltene Gegner)") .. " · " .. n .. " im Bestand")
+    local function has(f) return type(f) == "function" and "ja" or "nein" end
+    local vi = _G.C_VignetteInfo
+    add("", "   UnitClassification: " .. has(_G.UnitClassification) .. " · UnitGUID: " .. has(_G.UnitGUID)
+        .. " · C_VignetteInfo.GetVignettes: " .. has(type(vi) == "table" and vi.GetVignettes or nil))
+    local g = _G.UnitGUID and _G.UnitGUID("target")
+    if type(g) ~= "nil" then
+        local plain = K.Plain(g)
+        add("", "   GUID des Ziels: " .. (type(plain) == "string" and ("offen, NPC " .. tostring(RA.NpcId(plain) or "–")) or "geheim"))
+    end
+    if RA.lastVignettes then add("", "   Letzter Blick auf die Minikarte: " .. RA.lastVignettes .. " seltene als Symbol") end
+    if RA.last then
+        add("", "   Zuletzt gemeldet: " .. RA.last.name .. " (über " .. (RA.last.how or "?") .. (RA.last.known and ", im Bestand)" or ", nur vom Client)"))
+    else
+        add("", "   Seit dem Laden keiner gemeldet")
+    end
+end)
+
 Check("Berufe", function(add)
     local PRO = WeintCodex.Professions
     if not (PRO and PRO.Skills) then

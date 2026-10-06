@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.16.0.0",
+        date    = "06.10.2026",
+        notes   = {
+            "|cff7C6CFFNeu im Komfort: seltene Gegner melden.|r Taucht einer als Namensplakette, im Ziel, unter der Maus oder als Symbol auf der Minikarte auf, gibt es einen Ton, eine Zeile im Chat und oben einen Hinweis mit Stufe, Elite und wie lange er in Classic zum Wiederkommen brauchte. Derselbe meldet sich höchstens alle fünf Minuten. Einschalten unter Komfort → Seltene Gegner.",
+            "|cff7C6CFF/wcui selten|r listet die seltenen Gegner deines Gebiets – mit dem Zeitpunkt, an dem du jeden zuletzt gesehen hast.",
+        },
+    },
+    {
         version = "6.15.0.0",
         date    = "06.10.2026",
         notes   = {

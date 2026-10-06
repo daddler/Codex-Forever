@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.15.0.0
+## Version: 6.16.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -102,6 +102,8 @@ data/trainer.lua
 data/professions.lua
 # Klassenquests und Klassenlehrer (6.15.0.0, erzeugt); gelesen von modules/classquests.lua.
 data/classquests.lua
+# Seltene Gegner (6.16.0.0, erzeugt); gelesen von ui/rares.lua.
+data/rares.lua
 
 #
 # data/roles.lua steht NACH data/specs.lua: es liest die Talentbaeume,
@@ -201,6 +203,8 @@ ui/comfort.lua
 ui/automark.lua
 # Markieren per Mouseover (6.10.4.1): Maus ueber den Gegner, eine Taste - Seite Automark.
 ui/hovermark.lua
+# Seltene Gegner melden (6.16.0.0, Komfort).
+ui/rares.lua
 ui/tooltip.lua
 ui/windows.lua
 # Das Charakterfenster als Ganzes (6.6.4.0), baut auf ui/windows.lua auf.

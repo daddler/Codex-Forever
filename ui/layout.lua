@@ -72,6 +72,8 @@ K.LAYOUT = {
     combatalert     = { point = "CENTER",      relPoint = "CENTER", x = 0, y = 220 },
     fps             = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -12 },
     durability      = { point = "TOP",         relPoint = "TOP", x = 0, y = -90 },
+    -- Seltene Gegner (ui/rares.lua, 6.16.0.0): Hinweis unter dem Questpfeil.
+    rarealert       = { point = "TOP",         relPoint = "TOP", x = 0, y = -210 },
     -- Automark (ui/automark.lua, 6.9.0.2): der Knopf "Markieren" unter den
     -- Erinnerungen - erscheint nur beim Betreten einer Instanz.
     automark        = { point = "TOP",         relPoint = "TOP", x = 0, y = -170 },

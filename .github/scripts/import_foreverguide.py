@@ -823,6 +823,82 @@ def write_classquests(cd):
     say(f"  -> {os.path.relpath(path, ROOT)} ({os.path.getsize(path) // 1024} KB)")
 
 
+
+def build_rares(fg):
+    out = {}
+    nopos = forever = 0
+    for k in sorted(fg["RARE"], key=lambda k: int(k)):
+        v = fg["RARE"][k]
+        flags = ""
+        for key, f in (("el", "e"), ("ph", "p"), ("tm", "t"), ("night", "n"), ("sum", "s"), ("la", "a"), ("rsf", "r")):
+            if v.get(key):
+                flags += f
+        if v.get("dk"):
+            flags += "d"
+        if v.get("src") == "f":
+            flags += "f"
+            forever += 1
+        pts = as_list(v.get("p"))
+        pos = []
+        for i in range(0, len(pts) - 2, 3):
+            pos.append(f"{num(pts[i])},{num(pts[i + 1])},{num(pts[i + 2])}")
+        if not pos:
+            nopos += 1
+        rs = as_list(v.get("rs"))
+        rs1, rs2 = (num(rs[0]), num(rs[1])) if len(rs) == 2 else ("-", "-")
+        name = v["n"].replace("|", "/")
+        out[int(k)] = f"{name}|{num(v['lv1'])}|{num(v['lv2'])}|{flags or '-'}|{rs1}|{rs2}|{';'.join(pos)}"
+    say("Seltene Gegner")
+    say(f"  {len(out)} Gegner, {forever} aus Forever-Daten, {nopos} ohne Lage (Dungeon oder unbekannt)")
+    return out
+
+
+def write_rares(rd):
+    L = []
+    w = L.append
+    w("--------------------------------------------------")
+    w("-- WeintCodex :: Seltene Gegner")
+    w("--------------------------------------------------")
+    w("-- ERZEUGT von .github/scripts/import_foreverguide.py - nicht von Hand")
+    w("-- aendern; neu erzeugen.")
+    w("--")
+    w("-- HERKUNFT `community`: das Addon ForeverGuide " + FG_VERSION + " nennt die seltenen")
+    w("-- Gegner aus der Questie-Datenbank fuer Forever (Liste, Stufen, Lagen). Die")
+    w("-- WIEDERKEHR stammt aus Classic (cmangos) und heisst so (`classic`).")
+    w("-- Uebernommen sind nur Fakten - keine Faehigkeiten, keine Texte, keine")
+    w("-- Beute (deren Chancen sind die von Classic).")
+    w("--")
+    w("-- Je Gegner eine Zeile, gelesen erst, wenn er gebraucht wird:")
+    w("--   Name|Stufe von|Stufe bis|Merkmale|Wiederkehr von|bis (s)|Karte,x,y;...")
+    w("--   Merkmale: e Elite, p teilt den Platz mit einem gewoehnlichen Gegner,")
+    w("--   t zaehmbar, n nur nachts, s wird beschworen, a Stufe ungefaehr,")
+    w("--   r Wiederkehr aus Forever, d im Dungeon, f aus Forever-Daten; \"-\" keine")
+    w("--------------------------------------------------")
+    w("")
+    w("WeintCodex = WeintCodex or {}")
+    w("WeintCodex.RareData = WeintCodex.RareData or {}")
+    w("local R = WeintCodex.RareData")
+    w("")
+    w("R.SOURCE = {")
+    w('    kind  = "community",')
+    w(f'    date  = "{FG_DATE}",')
+    w(f'    label = "Seltene Gegner: Addon ForeverGuide {FG_VERSION} (Questie-Datenbank für Forever)",')
+    w("}")
+    w("R.RESPAWN_SOURCE = {")
+    w('    kind  = "classic",')
+    w(f'    label = "Wiederkehr aus Classic (über ForeverGuide {FG_VERSION})",')
+    w("}")
+    w("")
+    w("R.RAW = {")
+    for i, line in rd.items():
+        w(f"    [{i}] = {lua_str(line)},")
+    w("}")
+    path = os.path.join(ROOT, "data", "rares.lua")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(L) + "\n")
+    say(f"  -> {os.path.relpath(path, ROOT)} ({os.path.getsize(path) // 1024} KB)")
+
+
 def main():
     if len(sys.argv) != 2:
         print(__doc__)
@@ -832,6 +908,7 @@ def main():
     write_dungeons(build_dungeons(fg, cx))
     write_professions(build_professions(fg))
     write_classquests(build_classquests(fg))
+    write_rares(build_rares(fg))
     print("\n".join(report))
 
 

@@ -1152,6 +1152,39 @@ Minikarte, Taschen), Schadensanzeige in Ruhe auf die Kopfzeile
 zusammenklappen (jetzt: nur leiser), Chat-Hintergrund in Ruhe,
 Gestaltungsmodus mit Einstellkarte, Infoleiste, Levelhilfe.
 
+## Seltene Gegner *(6.16.0.0, `ui/rares.lua`, Seite im Komfort)*
+
+Meldet einen seltenen Gegner, sobald er als Plakette
+(`NAME_PLATE_UNIT_ADDED`), im Ziel, unter der Maus oder als Symbol auf
+der Minikarte (`C_VignetteInfo`, `VIGNETTES_UPDATED`) auftaucht: Ton
+(`SOUNDKIT.RAID_WARNING` – fehlt die Tabelle, kein Ton, keine geratene
+Nummer), Zeile im Chat, Hinweis oben (Kachel, `rarealert` im
+Gestaltungsmodus, Klick schließt, nach `RA.TOAST_TIME` = 12 s weg).
+Derselbe höchstens alle `RA.REALERT` = 5 min; tot nur auf Wunsch; in
+Instanzen nur auf Wunsch; Spieler nie. Gespeichert unter `comfort`
+(`rareAlert` … `rareDead`), wie jeder Komfort-Helfer ab Werk **aus** –
+ein eigenes Modul hätte die Seitenleiste des Einstellungsfensters über
+ihr Maß gehoben (`load_test.lua`, 648 von 680 px).
+
+**Selten ist, was gemessen ist:** der Client sagt es
+(`UnitClassification` „rare“/„rareelite“ – auch für Gegner, die nicht im
+Bestand stehen; die Zeile sagt dann „nicht im Bestand“), oder der
+Bestand kennt die NPC-Nummer aus der GUID (`RA.NpcId`, nur `Creature`/
+`Vehicle`). Geheime GUID oder geheimer Name: keine Meldung.
+**Bestand:** `data/rares.lua`, **erzeugt** von
+`.github/scripts/import_foreverguide.py` – 404 Gegner aus ForeverGuide
+1.25.6 (Questie-Datenbank für Forever, `community`), je eine Zeile, gelesen
+bei Bedarf (`RA.Info`): Name, Stufen, Merkmale (Elite, Platzhalter,
+zähmbar, nachts, beschworen), Wiederkehr (aus Classic, `classic`, im
+Hinweis „Wiederkehr in Classic 1:30–2:30 h“), Lagen. Nicht übernommen:
+Fähigkeiten (Texte), Beute (Classic-Chancen), Modelle.
+**Gedächtnis:** je Realm (`SavedData.rares[Realm][NPC oder Name]`), wann
+und wo (deine Lage) zuletzt gesehen, ob tot – nie eine geschätzte
+Wiederkehr. **`/wcui selten`**: Bericht der seltenen Gegner deines
+Gebiets mit Wiederkehr und zuletzt gesehen. **`/wcui prüfen`**:
+„Seltene Gegner“ (an/aus, Abfragen da, GUID des Ziels offen oder geheim,
+Vignetten, zuletzt gemeldet).
+
 ## Automark *(6.8.1.0, auf Klick seit 6.9.0.2, `ui/automark.lua`)*
 
 Beta-Test: „Wenn eine Instanz betreten wird, soll der Tank und Heiler

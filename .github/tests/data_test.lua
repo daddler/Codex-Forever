@@ -1236,6 +1236,36 @@ do
     print("  --    " .. total .. " Klassenquests, " .. spells .. " lehren einen Zauber")
 end
 
+-- 6.16.0.0: Seltene Gegner (erzeugt aus ForeverGuide): jede Zeile lesbar,
+-- Stufen, Wiederkehr paarweise oder gar nicht, Lagen in 0..100, keine Texte.
+print("")
+print("== Seltene Gegner")
+do
+    local R = WeintCodex.RareData
+    Check(R ~= nil, "data/rares.lua geladen")
+    Check(WeintCodex.Sources.IsValid(R.SOURCE) and R.SOURCE.kind == "community", "Seltene Gegner: Herkunft community")
+    Check(WeintCodex.Sources.IsValid(R.RESPAWN_SOURCE) and R.RESPAWN_SOURCE.kind == "classic", "Wiederkehr: Herkunft classic")
+    local n, bad, located = 0, 0, 0
+    for id, raw in pairs(R.RAW) do
+        n = n + 1
+        local name, lv1, lv2, flags, rs1, rs2, pos = raw:match("^([^|]+)|(%d+)|(%d+)|([%a%-]+)|([%d%-]+)|([%d%-]+)|(.*)$")
+        if not (type(id) == "number" and id > 0 and name and tonumber(lv1) and tonumber(lv2) and tonumber(lv1) <= tonumber(lv2)) then
+            bad = bad + 1
+        elseif (rs1 == "-") ~= (rs2 == "-") then
+            bad = bad + 1
+        else
+            if pos ~= "" then located = located + 1 end
+            for m, x, y in pos:gmatch("(%d+),([%d%.]+),([%d%.]+)") do
+                if tonumber(x) > 100 or tonumber(y) > 100 or tonumber(m) < 1 then bad = bad + 1 end
+            end
+            if #name > 60 then bad = bad + 1 end
+        end
+    end
+    Check(n >= 400 and bad == 0, "Seltene Gegner: " .. n .. " Zeilen, " .. bad .. " Fehler")
+    Check(located >= 350, "Seltene Gegner mit Lage (" .. located .. ")")
+    print("  --    " .. n .. " seltene Gegner, " .. located .. " mit Lage")
+end
+
 --------------------------------------------------
 
 print("")

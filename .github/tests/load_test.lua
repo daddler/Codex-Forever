@@ -4183,6 +4183,115 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.16.0.0: Seltene Gegner - erkannt vom Client oder aus dem Bestand,
+-- gemeldet mit Ton, Chat und Hinweis, hoechstens alle 5 Minuten, nicht tot,
+-- nicht in Instanzen; Vignetten; Bericht; Selbstpruefung.
+do
+    local G = _G
+    local names = { "UnitGUID", "UnitClassification", "UnitName", "UnitLevel", "UnitIsDead", "UnitIsPlayer",
+                    "UnitExists", "IsInInstance", "PlaySound", "SOUNDKIT", "C_VignetteInfo", "GetTime", "print" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local K = WeintCodex.UIKit
+    local savedBest = K.BestMap
+    local RA = WeintCodex.UIRares
+    local ok, err = pcall(function()
+        assert(RA.NpcId("Creature-0-1465-0-2105-61-00001A2F3C") == 61 and RA.NpcId("Player-1-0ABC") == nil
+            and RA.NpcId(nil) == nil and RA.NpcId("Pet-0-1-0-1-61-0000") == nil
+            and RA.NpcId("GameObject-0-1-0-1-61-0000") == nil, "NPC-Nummer aus der GUID (nur Kreaturen)")
+        local info = RA.Info(61)
+        assert(info and info.name == "Thuros Lightfingers" and info.lv1 == 11 and info.placeholder and info.rs1 == 5400
+            and info.pos[1][1] == 1429, "Bestand: Thuros")
+        assert(RA.Info(1) == nil, "Gegner erfunden")
+        assert(RA.RespawnText(info) == "Wiederkehr in Classic 1:30–2:30 h", "Wiederkehr: " .. tostring(RA.RespawnText(info)))
+        assert(RA.Describe(info) == "Stufe 11", "Beschreibung: " .. RA.Describe(info))
+
+        local now, guid, cls, dead, inside = 1000, "Creature-0-1-0-1-61-0000AAAA", "normal", false, false
+        local sounds, lines = 0, {}
+        G.GetTime = function() return now end
+        G.UnitExists = function() return true end
+        G.UnitIsPlayer = function() return false end
+        G.UnitGUID = function() return guid end
+        G.UnitClassification = function() return cls end
+        G.UnitName = function() return "Thuros Lightfingers" end
+        G.UnitLevel = function() return 11 end
+        G.UnitIsDead = function() return dead end
+        G.IsInInstance = function() return inside, inside and "party" or "none" end
+        G.SOUNDKIT = { RAID_WARNING = 8959 }
+        G.PlaySound = function() sounds = sounds + 1 end
+        G.print = function(...) lines[#lines + 1] = table.concat({ ... }, " ") end
+        K.BestMap = function() return 1429 end
+
+        -- Aus: nichts.
+        K.Set("comfort", "rareAlert", false)
+        assert(RA.CheckUnit("nameplate3", "nameplate") == false and #lines == 0, "gemeldet, obwohl aus")
+        K.Set("comfort", "rareAlert", true)
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate3")
+        assert(#lines == 1 and lines[1]:find("Thuros Lightfingers", 1, true) and sounds == 1, "Plakette nicht gemeldet")
+        assert(RA.toast:IsShown() and RA.toast.title:GetText():find("Thuros", 1, true)
+            and RA.toast.sub:GetText():find("Wiederkehr in Classic", 1, true), "Hinweis fehlt")
+        -- Hoechstens alle 5 Minuten.
+        stub.FireEvent("PLAYER_TARGET_CHANGED")
+        assert(#lines == 1, "zweimal gemeldet")
+        now = now + RA.REALERT + 1
+        stub.FireEvent("UPDATE_MOUSEOVER_UNIT")
+        assert(#lines == 2, "nach 5 Minuten nicht wieder gemeldet")
+        -- Gemerkt: wann, wo (deine Lage).
+        local mem = RA.Memory()
+        assert(mem[61] and mem[61].name == "Thuros Lightfingers" and mem[61].map == 1429, "nicht gemerkt")
+        -- Gewoehnlicher Gegner, nicht im Bestand: nichts.
+        guid = "Creature-0-1-0-1-424242-0000AAAA"
+        assert(RA.CheckUnit("target", "target") == false and #lines == 2, "gewoehnlicher Gegner gemeldet")
+        -- Der Client sagt "selten", der Bestand kennt ihn nicht: melden, ehrlich.
+        cls = "rareelite"
+        G.UnitName = function() return "Unbekannter Schrecken" end
+        assert(RA.CheckUnit("target", "target") == true and lines[3]:find("nicht im Bestand", 1, true)
+            and lines[3]:find("Elite", 1, true), "Seltener nur vom Client nicht gemeldet: " .. tostring(lines[3]))
+        -- Tot: gemerkt, nicht gemeldet.
+        guid, dead = "Creature-0-1-0-1-79-0000AAAA", true
+        assert(RA.CheckUnit("target", "target") == false and #lines == 3 and mem[79] and mem[79].dead, "Toter gemeldet")
+        -- In Instanzen nur auf Wunsch.
+        dead, inside = false, true
+        assert(RA.CheckUnit("target", "target") == false, "in der Instanz gemeldet")
+        inside = false
+        -- Spieler nie.
+        G.UnitIsPlayer = function() return true end
+        guid = "Creature-0-1-0-1-100-0000AAAA"
+        assert(RA.CheckUnit("target", "target") == false, "Spieler gemeldet")
+        G.UnitIsPlayer = function() return false end
+
+        -- Minikarte: Vignetten.
+        G.C_VignetteInfo = {
+            GetVignettes = function() return { "v1", "v2" } end,
+            GetVignetteInfo = function(v)
+                if v == "v1" then return { objectGUID = "Creature-0-1-0-1-462-0000", name = "Vultros", atlasName = "VignetteKill" } end
+                return { objectGUID = "GameObject-0-1-0-1-5-0", name = "Truhe", atlasName = "VignetteLoot" }
+            end,
+        }
+        assert(RA.ScanVignettes() == 1 and lines[#lines]:find("Vultros", 1, true), "Vignette nicht gemeldet")
+
+        -- Bericht fuer das Gebiet.
+        local rep = table.concat(RA.Report(), "\n")
+        assert(rep:find("Thuros Lightfingers", 1, true) and rep:find("zuletzt gesehen", 1, true)
+            and rep:find("Classic", 1, true), "Bericht: " .. rep)
+
+        -- Selbstpruefung.
+        local SC = WeintCodex.UISelfCheck
+        local out = {}
+        for _, c in ipairs(SC.CHECKS) do
+            if c.name == "Seltene Gegner" then c.fn(function(mark, text) out[#out + 1] = (mark ~= "" and (mark .. " ") or "") .. text end) end
+        end
+        local txt = table.concat(out, "\n")
+        assert(txt:find("im Bestand", 1, true) and txt:find("Zuletzt gemeldet: Vultros", 1, true), "Selbstpruefung: " .. txt)
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    K.BestMap = savedBest
+    K.Set("comfort", "rareAlert", false)
+    if RA.toast then RA.toast:Hide() end
+    Check(ok, "Seltene Gegner: Client oder Bestand, Ton/Chat/Hinweis, 5 Minuten, tot, Instanz, Vignette, Bericht"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.13.2.0: die Regelliste zeigt nur, was fuer diesen Charakter gilt
 -- (Beta-Test: "Ich sehe in den Erinnerungen alle Erinnerungen von allen
 -- Charakteren"). Alte Begleiter-/Munitionsregeln ohne Klasse gelten nur, wo
