@@ -219,6 +219,13 @@ teilen. Beim ersten Laden zieht, was bis 6.11.0.4 unter `ui.modules`/
   oder vergeben ändert nichts), Einstellungen übernehmen von, Profil
   zurücksetzen, Profil löschen (beide mit Rückfrage), dazu wer es nutzt
   und ob ein Neuladen aussteht.
+- **Frage beim Einloggen (seit 6.12.0.1):** einmal je Charakter ohne
+  eigene Wahl und ohne Antwort (`ui.profileAsked["Name-Realm"]`), nur mit
+  Oberfläche, nie vor oder neben dem Willkommen, nicht neben dem Hinweis
+  auf ein Update, nach `/reload` nur, wenn der Client speichert, nie im
+  Kampf (`PR.ShouldAsk`/`PR.MaybeAsk`). Antworten: eigenes Profil anlegen
+  (dann „Jetzt neu laden“), Profil wählen (nur mit Auswahl), „Standard“
+  behalten; „×“/Esc heißt später, bis zum nächsten Einloggen.
 - Rückweg: Eine Version vor 6.12.0.0 findet `ui.modules` nicht mehr und
   startet mit den Voreinstellungen (die Daten bleiben unter
   `profiles.Standard`).

@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.12.0.1] – 2026-10-06
+
+**WeintCodex fragt nach deinem Profil.** Loggst du mit einem Charakter ein, der noch kein eigenes Profil hat, fragt WeintCodex einmal: eigenes Profil anlegen, ein vorhandenes wählen oder „Standard“ behalten. Mit dem Kreuz oder Esc kommt die Frage beim nächsten Einloggen wieder.
+
+### Technisch
+
+- **Frage beim Einloggen** (`ui/profiles.lua`), Beta-Test mit 6.12.0.0: „Gut wäre, wenn man direkt darauf hingewiesen wird, ein Profil anzulegen, beim Start vom Spiel.“ Eigener kleiner Dialog (Kachel, 560 × 214, verschiebbar, Esc), zwei Zustände:
+  - **frage**: „Eigenes Profil für Name?“ – „Eigenes Profil anlegen“ (`PR.New`, Kopie des Gewählten), „Profil wählen …“ (nur mit mehr als „Standard“, öffnet die Seite), „Standard behalten“; „×“/Esc = später.
+  - **angelegt**: „Profil „Name“ angelegt“, gilt nach dem Neuladen – „Jetzt neu laden“ (`K.ReloadButton`, Makro auf sicherem Knopf) und „Später“.
+- **Wann** (`PR.ShouldAsk`): einmal je Charakter ohne eigene Wahl (`ui.profileOf`) und ohne Antwort (`ui.profileAsked["Name-Realm"]`, ganzes Konto); nur mit Oberfläche; nie vor dem Willkommen (`ui.asked`) und nie daneben; nicht neben dem Hinweis auf ein Update (`Onboarding.IsShowing`, danach über `OnClosed`); nach `/reload` nur, wenn der Client speichert (`WL.ReloadBlocks`, dieselbe Regel wie beim Willkommen – sonst Schleife); nie im Kampf (`K.AfterCombat`). 2,5 s nach `PLAYER_ENTERING_WORLD`, nach Willkommen (1,5 s). „Später“ endet mit dem Einloggen.
+- `load_test.lua`: gefragt nur ohne Wahl und Antwort, mit Oberfläche, nach dem Willkommen, nicht neben Willkommen, Update-Hinweis oder einem Neuladen ohne Speichern, nicht doppelt; „Standard behalten“ für immer; „×“ bis zum Einloggen; „Eigenes Profil anlegen“ legt an, wählt und zeigt „Jetzt neu laden“; „Profil wählen“ nur mit Auswahl, öffnet die Seite; Charakter mit Profil nie gefragt. Gegenproben: 14, alle gefangen – zwei erst nach geschärftem Test; eine war gleichwertig (Anlegen wählt, das beantwortet), die Zeile ist raus.
+- **Ungeprüft im Spiel:** der Dialog selbst (Breite der Knöpfe, Umbruch), ob der Zeitpunkt nach dem Hinweis auf ein Update passt.
+
 ## [6.12.0.0] – 2026-10-05
 
 **Profile für deine Charaktere.** Jeder Charakter kann seine eigene Oberfläche haben – Einstellungen und Plätze der Rahmen. Unter /wcui → Allgemein → Profile (oder /wcui profil) legst du ein Profil als Kopie an, gibst ihm einen Namen, wählst es für einen Charakter, übernimmst Einstellungen aus einem anderen oder setzt es zurück. Mehrere Charaktere können ein Profil teilen.

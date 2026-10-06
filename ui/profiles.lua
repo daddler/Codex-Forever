@@ -318,3 +318,214 @@ function PR.BuildPage(B)
           { type = "empty" })
     B:Note("Hauptschalter, Willkommen, das Symbol an der Minikarte und was WeintCodex am Spiel geändert hat (Layout, Spieleinstellungen), gelten für alle Charaktere – sie sind nicht im Profil.")
 end
+
+--------------------------------------------------
+-- Beim Einloggen fragen (6.12.0.1)
+--------------------------------------------------
+-- Beta-Test: "Gut waere, wenn man direkt darauf hingewiesen wird, ein
+-- Profil anzulegen, beim Start vom Spiel." Einmal je Charakter, der noch
+-- kein eigenes Profil gewaehlt hat:
+--   "Eigenes Profil anlegen"  Kopie von dem, was laeuft, gewaehlt; danach
+--                             derselbe Dialog mit "Jetzt neu laden".
+--   "Profil wählen …"         nur, wenn es mehr als "Standard" gibt: die
+--                             Seite in /wcui.
+--   "Standard behalten"       gilt als Antwort - nie wieder gefragt.
+--   "×" oben rechts, Esc       "Spaeter": bis zum naechsten Einloggen.
+-- Gemerkt in ui.profileAsked["Name-Realm"] (ganzes Konto). Gefragt wird
+-- nur mit Oberflaeche, nie zugleich mit dem Willkommen oder dem Hinweis
+-- auf ein Update, nie im Kampf, nach /reload nur, wenn der Client
+-- speichert (dieselbe Regel wie ui/welcome.lua - sonst kaeme die Frage
+-- nach jedem Neuladen wieder).
+
+PR.ASK_W, PR.ASK_H = 560, 214
+
+local ask, later = nil, false
+
+-- Hat dieser Charakter schon geantwortet (oder gewaehlt)?
+function PR.Answered()
+    local ui, key = K.Root(), K.CharKey()
+    if not (ui and key) then return true end
+    if ui.profileOf[key] then return true end
+    return ui.profileAsked ~= nil and ui.profileAsked[key] == true
+end
+
+local function MarkAnswered()
+    local ui, key = K.Root(), K.CharKey()
+    if not (ui and key) then return end
+    ui.profileAsked = ui.profileAsked or {}
+    ui.profileAsked[key] = true
+end
+
+-- Soll jetzt gefragt werden? (Ohne Kampf - das prueft MaybeAsk.)
+function PR.ShouldAsk()
+    if later or PR.Answered() then return false end
+    if not K.UIEnabled() then return false end
+    local WL = WeintCodex.UIWelcome
+    if WL then
+        if WL.IsShown() then return false end
+        if WL.ReloadBlocks() then return false end
+        local ui = K.Root()
+        -- Das Willkommen kommt zuerst; gefragt wird beim naechsten Mal.
+        if K.OPT_IN and not (ui and ui.asked == true) then return false end
+    end
+    local OB = WeintCodex.Onboarding
+    if OB and OB.IsShowing and OB.IsShowing() then return false end
+    if ask and ask:IsShown() then return false end
+    return true
+end
+
+local function Name()
+    local key = K.CharKey()
+    return key and key:match("^(.-)%-") or "dieser Charakter"
+end
+
+local function Label(parent, size, color)
+    local fs = K.NewText(parent, size)
+    fs:SetJustifyH("LEFT")
+    fs:SetTextColor(unpack(WeintCodex.Colors[color]))
+    return fs
+end
+
+local function BuildAsk()
+    if ask then return ask end
+    local f = CreateFrame("Frame", "WeintCodexProfileAsk", UIParent)
+    f:SetSize(PR.ASK_W, PR.ASK_H)
+    f:SetPoint("CENTER", UIParent, "CENTER", 0, 120)
+    f:SetFrameStrata("DIALOG")
+    f:SetToplevel(true)
+    f:EnableMouse(true)
+    f:SetMovable(true)
+    f:RegisterForDrag("LeftButton")
+    f:SetScript("OnDragStart", f.StartMoving)
+    f:SetScript("OnDragStop", f.StopMovingOrSizing)
+    f:SetClampedToScreen(true)
+    K.Kachel(f, { shadow = 8 })
+    -- Esc schliesst - und heisst "Spaeter".
+    if type(_G.UISpecialFrames) == "table" then table.insert(_G.UISpecialFrames, "WeintCodexProfileAsk") end
+    f:SetScript("OnHide", function() if not f.decided then later = true end end)
+
+    f.title = Label(f, 16, "textBright")
+    f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 22, -20)
+    f.title:SetPoint("RIGHT", f, "RIGHT", -44, 0)
+    f.body = Label(f, 12, "textMuted")
+    f.body:SetPoint("TOPLEFT", f.title, "BOTTOMLEFT", 0, -10)
+    f.body:SetPoint("RIGHT", f, "RIGHT", -22, 0)
+    if f.body.SetWordWrap then f.body:SetWordWrap(true) end
+    if f.body.SetSpacing then f.body:SetSpacing(3) end
+
+    local function Button(text, kind, onClick)
+        local b = WeintCodex.CreateButton(f, { text = text, kind = kind, height = 32, size = 12,
+            backdrop = "surface2", onClick = onClick })
+        return b
+    end
+    f.create = Button("Eigenes Profil anlegen", "primary", function() PR.AskCreate() end)
+    f.pick = Button("Profil wählen …", "secondary", function() PR.AskPick() end)
+    f.keep = Button("Standard behalten", "secondary", function() PR.AskKeep() end)
+    f.later = Button("Später", "ghost", function() PR.AskLater() end)
+    f.close = WeintCodex.CreateButton(f, { text = "×", kind = "ghost", height = 26, size = 14,
+        backdrop = "surface2", tooltip = "Später – beim nächsten Einloggen wieder.", onClick = function() PR.AskLater() end })
+    f.close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -10, -10)
+    f.reload = K.ReloadButton(f, { text = "Jetzt neu laden", height = 32, size = 12, backdrop = "surface2",
+        onClick = function() f.decided = true end })
+    f.create:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 22, 20)
+    f.reload:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 22, 20)
+    f.later:SetPoint("LEFT", f.reload, "RIGHT", 10, 0)
+    f:Hide()
+    ask = f
+    return f
+end
+
+-- Den Dialog in einem seiner zwei Zustaende zeigen: "frage" oder "angelegt".
+function PR.ShowAsk(state, created)
+    local f = BuildAsk()
+    f.decided, f.state = false, state
+    local name = Name()
+    if state == "angelegt" then
+        f.title:SetText("Profil „" .. tostring(created) .. "“ angelegt")
+        f.body:SetText("Es ist eine Kopie deiner jetzigen Einstellungen und für " .. name
+            .. " gewählt. Was du ab jetzt einstellst und verschiebst, gilt nur dort.\n"
+            .. "Es gilt nach dem Neuladen – bis dahin läuft „" .. tostring(PR.Active()) .. "“.")
+        f.create:Hide() f.pick:Hide() f.keep:Hide()
+        f.reload:Show()
+        f.later:Show()
+    else
+        f.title:SetText("Eigenes Profil für " .. name .. "?")
+        f.body:SetText(name .. " nutzt „" .. tostring(PR.Chosen()) .. "“ – das teilen sich alle Charaktere ohne eigenes Profil."
+            .. " Ein eigenes Profil beginnt als Kopie davon; danach ändert, was du einstellst und verschiebst, nur "
+            .. name .. ".\nÄndern lässt sich das jederzeit unter /wcui profil.")
+        f.reload:Hide()
+        f.later:Hide()
+        f.create:Show()
+        f.keep:Show()
+        local more = #PR.List() > 1
+        f.pick:SetShown(more)
+        f.keep:ClearAllPoints()
+        if more then
+            f.pick:ClearAllPoints()
+            f.pick:SetPoint("LEFT", f.create, "RIGHT", 10, 0)
+            f.keep:SetPoint("LEFT", f.pick, "RIGHT", 10, 0)
+        else
+            f.keep:SetPoint("LEFT", f.create, "RIGHT", 10, 0)
+        end
+    end
+    f:Show()
+    return f
+end
+
+function PR.AskCreate()
+    -- Angelegt heisst gewaehlt (ui.profileOf) - damit beantwortet.
+    local created = PR.New()
+    if created then
+        PR.ShowAsk("angelegt", created)
+    elseif ask then
+        ask.decided = true
+        ask:Hide()
+    end
+    return created
+end
+
+function PR.AskPick()
+    MarkAnswered()
+    if ask then ask.decided = true ask:Hide() end
+    local O = WeintCodex.UIOptions
+    if O and O.Show and O.PageIndex then O.Show("general", O.PageIndex("general", "profile")) end
+end
+
+-- "Spaeter" (auch Esc ueber OnHide): bis zum naechsten Einloggen.
+function PR.AskLater()
+    later = true
+    if ask then ask:Hide() end
+end
+
+function PR.AskKeep()
+    MarkAnswered()
+    if ask then ask.decided = true ask:Hide() end
+end
+
+function PR.MaybeAsk()
+    if not PR.ShouldAsk() then return false end
+    K.AfterCombat(function()
+        if PR.ShouldAsk() then PR.ShowAsk("frage") end
+    end)
+    return true
+end
+
+-- Fuer den Prueflauf.
+function PR.AskFrame() return ask end
+function PR.ResetLater() later = false end
+
+if WeintCodex.Onboarding and WeintCodex.Onboarding.OnClosed then
+    WeintCodex.Onboarding.OnClosed(function() PR.MaybeAsk() end)
+end
+
+do
+    local ev = CreateFrame("Frame")
+    ev:RegisterEvent("PLAYER_ENTERING_WORLD")
+    ev:SetScript("OnEvent", function(_, _, isInitialLogin, isReloadingUi)
+        if not (isInitialLogin or isReloadingUi) then return end
+        -- "Spaeter" endet mit dem Einloggen.
+        if isInitialLogin then later = false end
+        -- Nach dem Willkommen und dem Hinweis auf ein Update (1,5 s).
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(2.5, PR.MaybeAsk) end
+    end)
+end
