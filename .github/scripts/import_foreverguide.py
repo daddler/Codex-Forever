@@ -669,6 +669,160 @@ def write_professions(pd):
     say(f"  -> {os.path.relpath(path, ROOT)} ({os.path.getsize(path) // 1024} KB)")
 
 
+
+# Voelker (Bit = 1 << (Volk - 1)), fuer den Bericht.
+RACE_BITS = [(1, "Mensch"), (2, "Orc"), (4, "Zwerg"), (8, "Nachtelf"), (16, "Untoter"),
+             (32, "Tauren"), (64, "Gnom"), (128, "Troll")]
+
+
+def build_classquests(fg):
+    q = fg["CLASS_Q"]
+    npc_raw = fg["CLASS_NPC"]
+    npcs = {}
+    for k, v in npc_raw.items():
+        f = v.split("\t")
+        m = int(f[5]) if f[5] not in ("", "0") else None
+        x = float(f[6]) if f[6] else None
+        y = float(f[7]) if f[7] else None
+        if m not in WORLD_MAPS:
+            m, x, y = None, None, None
+        npcs[int(k)] = {"name": f[1], "map": m, "x": x, "y": y, "fr": f[10]}
+    classes = {name: [] for _, name in CLASS_BITS}
+    used = set()
+    nostart = noloc = spells = 0
+    for k in sorted(q, key=lambda k: int(k)):
+        v = q[k]
+        e = {"id": int(k), "name": v["n"], "lv": num(v["lv"]), "rl": num(v["rl"])}
+        if v.get("ra"):
+            e["ra"] = num(v["ra"])
+        for key, field in (("s", "giver"), ("e", "turnin")):
+            if v.get(key):
+                e[field] = num(v[key])
+                if num(v[key]) in npcs:
+                    used.add(num(v[key]))
+        if v.get("si"):
+            e["start"] = "item"
+        elif v.get("so"):
+            e["start"] = "object"
+        if not v.get("s") and not e.get("start"):
+            nostart += 1
+        if v.get("s") and not (npcs.get(num(v["s"])) and npcs[num(v["s"])]["map"]):
+            noloc += 1
+        if v.get("pre"):
+            e["pre"] = [num(x) for x in as_list(v["pre"])]
+        if v.get("nx"):
+            e["next"] = num(v["nx"])
+        if v.get("sp"):
+            e["spell"] = num(v["sp"])
+            e["spellName"] = v.get("spn")
+            spells += 1
+        if v.get("it"):
+            e["items"] = [num(x) for x in as_list(v["it"])][0::2]
+        if v.get("ch"):
+            e["choice"] = [num(x) for x in as_list(v["ch"])][0::2]
+        if v.get("m"):
+            e["money"] = num(v["m"])
+        for bit, name in CLASS_BITS:
+            if v["c"] & bit:
+                classes[name].append(e)
+    trainers = {}
+    for cls, ids in fg["CLASS_TRAINERS"].items():
+        lst = [num(i) for i in as_list(ids)]
+        trainers[cls] = lst
+        used.update(i for i in lst if i in npcs)
+    say("Klassenquests")
+    say(f"  {len(q)} Quests, {sum(len(l) for l in classes.values())} Eintraege je Klasse, {spells} lehren einen Zauber")
+    say(f"  ohne Geber {nostart}, Geber ohne Lage {noloc} (nur Name/Nummer bekannt)")
+    say(f"  Klassenlehrer: " + ", ".join(f"{c} {len(l)}" for c, l in sorted(trainers.items())))
+    return {"classes": classes, "npcs": {i: npcs[i] for i in sorted(used)}, "trainers": trainers}
+
+
+def write_classquests(cd):
+    L = []
+    w = L.append
+    w("--------------------------------------------------")
+    w("-- WeintCodex :: Klassenquests und Klassenlehrer")
+    w("--------------------------------------------------")
+    w("-- ERZEUGT von .github/scripts/import_foreverguide.py - nicht von Hand")
+    w("-- aendern; neu erzeugen.")
+    w("--")
+    w("-- HERKUNFT `community`: das Addon ForeverGuide " + FG_VERSION + " sammelt die")
+    w("-- Klassenquests aus der Questie-Datenbank fuer Forever. Uebernommen sind")
+    w("-- nur Fakten: Nummer, Stufe, Mindeststufe, Klassen, Voelker, Geber und")
+    w("-- Abgabe (NPC-Nummer), Vor- und Folgequest, gelehrter Zauber, Belohnungen.")
+    w("-- Keine Ziele, keine Texte - der Name steht nur als englischer Rueckfall,")
+    w("-- angezeigt wird der des Clients. Die BELOHNUNGEN stammen aus Classic")
+    w("-- (cmangos, ueber ForeverGuide) und heissen so (`classic`).")
+    w("--")
+    w("-- Je Klasse eine Funktion, gebaut erst beim ersten Zugriff - gebraucht wird")
+    w("-- nur die des Charakters.")
+    w("--   ra     Voelker (Bit 1 << (Volk - 1)); fehlt: alle")
+    w("--   giver/turnin  NPC-Nummer; Name und Lage in NPCS, wenn bekannt")
+    w("--   start  \"item\"/\"object\": beginnt an einem Gegenstand oder Objekt")
+    w("--   spell  gelehrter Zauber (spellName: englischer Rueckfall)")
+    w("--   items/choice  Belohnung fest / zur Wahl (Gegenstandsnummern)")
+    w("--------------------------------------------------")
+    w("")
+    w("WeintCodex = WeintCodex or {}")
+    w("WeintCodex.ClassQuestData = WeintCodex.ClassQuestData or {}")
+    w("local Q = WeintCodex.ClassQuestData")
+    w("")
+    w("Q.SOURCE = {")
+    w('    kind  = "community",')
+    w(f'    date  = "{FG_DATE}",')
+    w(f'    label = "Klassenquests: Addon ForeverGuide {FG_VERSION} (Questie-Datenbank für Forever)",')
+    w("}")
+    w("Q.REWARD_SOURCE = {")
+    w('    kind  = "classic",')
+    w(f'    label = "Belohnungen aus Classic (über ForeverGuide {FG_VERSION})",')
+    w("}")
+    w("")
+    w("local BUILD = {")
+    for _, cls in CLASS_BITS:
+        w(f"    {cls} = function() return {{")
+        for e in cd["classes"][cls]:
+            parts = [f"id = {e['id']}", f"name = {lua_str(e['name'])}", f"lv = {e['lv']}", f"rl = {e['rl']}"]
+            for key in ("ra", "giver", "turnin", "next", "spell", "money"):
+                if key in e:
+                    parts.append(f"{key} = {e[key]}")
+            if "start" in e:
+                parts.append(f'start = "{e["start"]}"')
+            if e.get("spellName"):
+                parts.append(f"spellName = {lua_str(e['spellName'])}")
+            for key in ("pre", "items", "choice"):
+                if e.get(key):
+                    parts.append(f"{key} = {{ " + ", ".join(str(x) for x in e[key]) + " }")
+            w("        { " + ", ".join(parts) + " },")
+        w("    } end,")
+    w("}")
+    w("Q.CLASSES = setmetatable({}, { __index = function(t, class)")
+    w("    local f = BUILD[class]")
+    w('    if type(f) ~= "function" then return nil end')
+    w("    local v = f()")
+    w("    rawset(t, class, v)")
+    w("    BUILD[class] = nil")
+    w("    return v")
+    w("end })")
+    w("")
+    w("-- NPC: { Name (englisch), Karte, x, y (0..100), Fraktion \"A\"/\"H\"/\"AH\" }")
+    w("-- Karte nil: Lage unbekannt (oder in einer Instanz).")
+    w("Q.NPCS = {")
+    for i, n in cd["npcs"].items():
+        loc = f"{n['map']}, {num(n['x'])}, {num(n['y'])}" if n["map"] else "nil, nil, nil"
+        w(f"    [{i}] = {{ {lua_str(n['name'])}, {loc}, \"{n['fr']}\" }},")
+    w("}")
+    w("")
+    w("-- Klassenlehrer je Klasse (NPC-Nummern, Lage in NPCS).")
+    w("Q.TRAINERS = {")
+    for cls in sorted(cd["trainers"]):
+        w(f"    {cls} = {{ " + ", ".join(str(i) for i in cd["trainers"][cls]) + " },")
+    w("}")
+    path = os.path.join(ROOT, "data", "classquests.lua")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(L) + "\n")
+    say(f"  -> {os.path.relpath(path, ROOT)} ({os.path.getsize(path) // 1024} KB)")
+
+
 def main():
     if len(sys.argv) != 2:
         print(__doc__)
@@ -677,6 +831,7 @@ def main():
     cx = run_dump(".github/scripts/codex_dump.lua")
     write_dungeons(build_dungeons(fg, cx))
     write_professions(build_professions(fg))
+    write_classquests(build_classquests(fg))
     print("\n".join(report))
 
 

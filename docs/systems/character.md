@@ -176,6 +176,50 @@ Dungeons, Gruppencheck); Schlachtzüge, Anmeldung und Kalender stehen in
 **Schlachtzug** darunter – gleich viele Gruppen, gleich viele Einträge,
 kein Pixel mehr.
 
+## Klassenquests *(seit 6.15.0.0)*
+
+Zweiter Reiter unter **Lehrer** (`modules/classquests.lua`,
+`WeintCodex.ClassQuests`; `TR.Show(view)` baut die Reiterleiste „Zauber und
+Waffen“ | „Klassenquests“, `TR.view` merkt den Reiter; `/wc klassenquests`,
+`GoToTab("klassenquests")` über `Navigation.SUBTABS`). Gebraucht, weil
+manche Zauber kein Lehrer hat: Begleiter des Hexenmeisters, Zähmen des
+Jägers, Totems des Schamanen, Haltungen des Kriegers, Gestalten des
+Druiden – 90 der 801 Quests lehren einen Zauber.
+
+**Zwei Bestände, nie vermischt:**
+
+* **Was es gibt** – `data/classquests.lua`, **erzeugt** von
+  `.github/scripts/import_foreverguide.py` aus dem Addon ForeverGuide
+  1.25.6 (Questie-Datenbank für Forever, Herkunft `community`): Nummer,
+  englischer Name (nur Rückfall), Stufe, Mindeststufe, Völker (`ra`, Bit
+  `1 << (Volk - 1)`), Geber/Abgabe als NPC-Nummer, Start an Gegenstand
+  oder Objekt, Vor- und Folgequest, gelehrter Zauber, Belohnungen (aus
+  Classic, `Q.REWARD_SOURCE`, Herkunft `classic`). **Keine Ziele, keine
+  Texte.** Je Klasse eine Funktion, gebaut beim ersten Zugriff (wie
+  `T.CLASSES`). `Q.NPCS` nennt Name und Lage nur für 220 NPCs (vor allem
+  Klassenlehrer) – bei 658 Quests ist der Geber nur eine Nummer, die Seite
+  sagt dann „Geber nicht hinterlegt“, statt zu raten. `Q.TRAINERS`: die
+  Klassenlehrer je Klasse.
+* **Wie weit du bist** – der Client, über
+  `WeintCodex.DungeonPages.QuestState` (erledigt, im Questlog,
+  abgabebereit). Antwortet er nicht: „Stand unbekannt“. Der Name einer
+  Quest kommt vom Client (`C_QuestLog.GetTitleForQuestID`, nachgeladen mit
+  `RequestLoadQuestByID`, neu gezeichnet bei `QUEST_DATA_LOAD_RESULT`),
+  Zaubernamen ebenso.
+
+**Fächer:** Abgabebereit · Im Questlog · Jetzt möglich · Bald (bis 5
+Stufen über dir) · Stand unbekannt · Nach einer Vorquest · Später ·
+Erledigt (die letzten drei zugeklappt). **Vorquest:** Questie nennt
+mehrere oft als Wahl (je Volk eine) – gesperrt ist eine Quest erst, wenn
+der Client für jede antwortet und keine erledigt ist (`CQ.Blocked`).
+**Volk:** ausgelassen wird nur, was sicher nicht passt (`CQ.ForRace`).
+Klick auf eine Zeile setzt die Marke am Geber, wenn seine Lage bekannt
+ist. **Klassenlehrer** (rechts): deine Fraktion, der nächstgelegene oben
+(`K.ToWorld`/`K.PlayerWorld`, gleicher Kontinent), sonst nach Karte.
+**Startseite:** Schritt „Klassenquest“ (`CQ.NextSpellQuest`) für die erste
+Quest, die jetzt einen Zauber lehrt – vor den Dungeons, weil es den Zauber
+nur dort gibt.
+
 ## Berufe *(seit 6.14.0.0)*
 
 `modules/professions.lua` (`WeintCodex.Professions`), Navigation „Berufe“

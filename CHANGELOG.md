@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.15.0.0] – 2026-10-06
+
+**Neu beim Lehrer: Klassenquests.** Ein zweiter Reiter zeigt die Quests nur für deine Klasse und dein Volk – vor allem die, die einen Zauber lehren, den kein Lehrer hat: Begleiter, Zähmen, Totems, Haltungen, Gestalten. Was du schon erledigt hast und was im Questlog steht, sagt dein Spiel; ein Klick setzt die Marke am Questgeber, wo er bekannt ist. Auch mit /wc klassenquests.
+
+**Der nächste Klassenlehrer.** Neben den Klassenquests stehen die Lehrer deiner Klasse, der nächstgelegene oben, mit Marke auf der Karte.
+
+**Die Übersicht meldet Klassenquests.** Ist eine Quest dran, die dir einen Zauber beibringt, steht sie als Schritt auf der Startseite.
+
+### Technisch
+
+- **Daten** (`data/classquests.lua`, erzeugt von `.github/scripts/import_foreverguide.py`, `fg_dump.lua` liest jetzt auch `ClassData.lua`): 801 Klassenquests aus ForeverGuide 1.25.6 (Questie-Datenbank für Forever, `community`), 90 lehren einen Zauber; Nummer, Stufe, Mindeststufe, Völker, Geber/Abgabe (NPC-Nummer), Start an Gegenstand/Objekt, Vor-/Folgequest, Zauber, Belohnungen (`classic`, aus cmangos). Keine Ziele, keine Texte, der englische Name nur als Rückfall. Je Klasse gebaut beim ersten Zugriff. Lage nur für 220 NPCs (vor allem Klassenlehrer) – 658 Quests nennen ihren Geber nur als Nummer, die Seite sagt „Geber nicht hinterlegt“.
+- **Seite** (`modules/classquests.lua`, `WeintCodex.ClassQuests`): Fächer Abgabebereit, Im Questlog, Jetzt möglich, Bald (+5), Stand unbekannt, Nach einer Vorquest, Später, Erledigt (die letzten drei zugeklappt); Stand über `DungeonPages.QuestState`; Vorquest sperrt erst, wenn der Client zu jeder antwortet und keine erledigt ist (Questie nennt sie oft als Wahl je Volk); Namen vom Client (`RequestLoadQuestByID`, `QUEST_DATA_LOAD_RESULT`); Zeilen wiederverwendet; Klassenlehrer nach Entfernung (`K.ToWorld`/`K.PlayerWorld`).
+- **Lehrer** mit Reiterleiste (`TR.Show(view)`, `TR.view`, `TR.DrawView`, `TR.DrawSpells`); `Navigation.SUBTABS.klassenquests`, Suche „Klassenquests“, `/wc klassenquests|kq`.
+- **Startseite**: Schritt „Klassenquest“ (`CQ.NextSpellQuest`) nach dem Reparieren, vor den Dungeons.
+- Prüflauf: Volksfilter, Stand nur vom Client (ohne Antwort „unbekannt“), Vorquest (auch ohne Antwort), Fächer, Reiter, Startseite, Lehrer nach Fraktion und Entfernung; Datenprüfung: Nummern, Stufen, Geber, keine Texte, Lagen auf Karten der Welt, gebaut erst bei Bedarf. 14 Gegenproben, alle gefangen (eine erst nach geschärfter Prüfung).
+
 ## [6.14.0.2] – 2026-10-06
 
 **Weniger Speicher.** Questpfeil, Namensplaketten, Minikarte und die Koordinaten an der Weltkarte erzeugen beim Laufen nur noch einen Bruchteil des Abfalls, und Lehrerdaten anderer Klassen und die Classic-Beute der alten Dungeons werden erst geladen, wenn du sie aufschlägst. An dem, was du siehst, ändert sich nichts.

@@ -4084,6 +4084,105 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.15.0.0: Klassenquests - Volk und Klasse, Stand nur vom Client, Vorquest,
+-- Seite als zweiter Reiter unter Lehrer, Startseite, Lehrer nach Entfernung.
+do
+    local G = _G
+    local saved = { G.UnitClass, G.UnitRace, G.UnitLevel, G.UnitFactionGroup, G.C_QuestLog, G.C_Spell }
+    local K = WeintCodex.UIKit
+    local savedK = { K.PlayerWorld, K.BestMap, K.ToWorld }
+    local CQ, Q, TR = WeintCodex.ClassQuests, WeintCodex.ClassQuestData, WeintCodex.Trainer
+    local ok, err = pcall(function()
+        G.UnitClass = function() return "Jäger", "HUNTER", 3 end
+        G.UnitRace = function() return "Nachtelf", "NightElf", 4 end
+        G.UnitLevel = function() return 10 end
+        G.UnitFactionGroup = function() return "Alliance" end
+        G.C_Spell = { GetSpellName = function(id) return id == 1579 and "Wildtier zähmen lehren" or nil end }
+        local done, inLog = {}, {}
+        G.C_QuestLog = {
+            IsQuestFlaggedCompleted = function(id) return done[id] == true end,
+            GetLogIndexForQuestID = function(id) return inLog[id] end,
+            IsComplete = function() return false end,
+        }
+        -- Volk: nur, was fuer Nachtelfen gilt (Bit 8) oder fuer alle.
+        local list = CQ.List("HUNTER", 4)
+        local taming, tauren
+        for _, q in ipairs(list) do
+            assert(not q.ra or math.floor(q.ra / 8) % 2 == 1, "Quest eines anderen Volkes: " .. q.id)
+            if q.spell == 1579 then taming = q end
+        end
+        for _, q in ipairs(Q.CLASSES.HUNTER) do if q.ra == 32 then tauren = q end end
+        assert(taming and tauren and #list < #Q.CLASSES.HUNTER, "Volksfilter")
+        assert(CQ.ForRace(tauren, nil) == true, "ohne Volk etwas ausgelassen")
+        -- Vorquest offen (Client antwortet "nicht erledigt"): wartet.
+        local cat = CQ.Categorize(list, 10)
+        local function where(c, q)
+            for key, l in pairs(c.sections) do for _, x in ipairs(l) do if x == q then return key end end end
+        end
+        assert(where(cat, taming) == "chain", "Zaehmen ohne Vorquest als moeglich: " .. tostring(where(cat, taming)))
+        -- Schweigt der Client zur Vorquest, sperrt sie nicht.
+        local pre = {}
+        for _, id in ipairs(taming.pre) do pre[id] = true end
+        G.C_QuestLog.IsQuestFlaggedCompleted = function(id) if pre[id] then error("geheim") end return done[id] == true end
+        assert(CQ.Blocked(taming) == false, "Vorquest ohne Antwort sperrt")
+        G.C_QuestLog.IsQuestFlaggedCompleted = function(id) return done[id] == true end
+        for _, id in ipairs(taming.pre) do done[id] = true end
+        cat = CQ.Categorize(list, 10)
+        assert(where(cat, taming) == "now", "Zaehmen nach der Vorquest nicht moeglich: " .. tostring(where(cat, taming)))
+        inLog[taming.id] = 3
+        assert(where(CQ.Categorize(list, 10), taming) == "active", "im Questlog nicht erkannt")
+        inLog[taming.id] = nil
+        assert(where(CQ.Categorize(list, 8), taming) == "soon", "zwei Stufen darueber nicht 'bald'")
+        -- Schweigt der Client: unbekannt, nie "fehlt".
+        G.C_QuestLog.IsQuestFlaggedCompleted = nil
+        cat = CQ.Categorize(list, 10)
+        assert(#cat.sections.unknown == #list and #cat.sections.now == 0, "ohne Antwort ein Stand behauptet")
+        G.C_QuestLog.IsQuestFlaggedCompleted = function(id) return done[id] == true end
+
+        -- Startseite: die naechste Quest, die einen Zauber lehrt.
+        local nq = CQ.NextSpellQuest()
+        assert(nq and nq.q.spell and nq.state == "now", "keine Klassenquest mit Zauber gefunden")
+        local HM = WeintCodex.Home
+        local steps = HM.Steps({ classQuest = { q = taming, state = "now", title = "Zähmen", spell = "Wildtier zähmen",
+                                                giver = "bei Dazalar" } })
+        assert(steps[1] and steps[1].key == "classQuest" and steps[1].go.tab == "klassenquests", "Schritt Klassenquest fehlt")
+
+        -- Seite: zweiter Reiter unter Lehrer, ueber Navigation und Startseite.
+        WeintCodex.Navigation.SwitchTo("lehrer")
+        assert(TR.view == "spells" and #WeintCodex.Navigation.SidebarButtons() >= 2, "Lehrer ohne Reiter")
+        HM.Go(steps[1])
+        local d = CQ.lastDraw
+        assert(TR.view == "quests" and d and d.class == "HUNTER" and d.total == #list and d.rows > 0,
+            "Klassenquests nicht gezeichnet")
+        assert(d.hidden > 0, "Erledigtes/Spaeteres nicht zugeklappt")
+        CQ.ShowAll(true)
+        CQ.Draw()
+        assert(CQ.lastDraw.hidden == 0 and CQ.lastDraw.rows >= d.rows, "Alle zeigen zeigt nicht alles")
+        CQ.ShowAll(false)
+        WeintCodex.Navigation.SwitchTo("lehrer")
+        assert(TR.view == "spells", "Lehrer schlaegt nicht die Zauber auf")
+
+        -- Lehrer: Fraktion, der naechste zuerst (Weltlage vom Client).
+        K.BestMap = function() return 1438 end
+        K.PlayerWorld = function() return 1, 0, 0 end
+        K.ToWorld = function(map, x, y) return 1, (map - 1438) * 1000 + x * 100, y * 100 end
+        local tr = CQ.Trainers("HUNTER", "Alliance")
+        assert(#tr > 0, "keine Jaegerlehrer der Allianz")
+        local last = -1
+        for _, n in ipairs(tr) do
+            assert(n.faction ~= "H", "Lehrer der Horde fuer die Allianz: " .. n.name)
+            if n.dist then assert(n.dist >= last, "Lehrer nicht nach Entfernung") last = n.dist end
+        end
+        assert(tr[1].dist and tr[1].map == 1438, "der naechste Lehrer steht nicht oben: " .. tostring(tr[1].map))
+    end)
+    G.UnitClass, G.UnitRace, G.UnitLevel, G.UnitFactionGroup, G.C_QuestLog, G.C_Spell = unpack(saved, 1, 6)
+    K.PlayerWorld, K.BestMap, K.ToWorld = savedK[1], savedK[2], savedK[3]
+    CQ.ShowAll(false)
+    TR.view = "spells"
+    Check(ok, "Klassenquests: Volk, Stand vom Client, Vorquest, Reiter unter Lehrer, Startseite, Lehrer nach Entfernung"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.13.2.0: die Regelliste zeigt nur, was fuer diesen Charakter gilt
 -- (Beta-Test: "Ich sehe in den Erinnerungen alle Erinnerungen von allen
 -- Charakteren"). Alte Begleiter-/Munitionsregeln ohne Klasse gelten nur, wo

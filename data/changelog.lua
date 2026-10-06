@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.15.0.0",
+        date    = "06.10.2026",
+        notes   = {
+            "|cff7C6CFFNeu beim Lehrer: Klassenquests.|r Ein zweiter Reiter zeigt die Quests nur für deine Klasse und dein Volk – vor allem die, die einen Zauber lehren, den kein Lehrer hat: Begleiter, Zähmen, Totems, Haltungen, Gestalten. Was du schon erledigt hast und was im Questlog steht, sagt dein Spiel; ein Klick setzt die Marke am Questgeber, wo er bekannt ist. Auch mit /wc klassenquests.",
+            "|cff7C6CFFDer nächste Klassenlehrer.|r Neben den Klassenquests stehen die Lehrer deiner Klasse, der nächstgelegene oben, mit Marke auf der Karte.",
+            "|cff7C6CFFDie Übersicht meldet Klassenquests.|r Ist eine Quest dran, die dir einen Zauber beibringt, steht sie als Schritt auf der Startseite.",
+        },
+    },
+    {
         version = "6.14.0.2",
         date    = "06.10.2026",
         notes   = {

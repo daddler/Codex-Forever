@@ -12,7 +12,7 @@ WeintCodex = WeintCodex or {}
 -- "v" plus diese Zahl sein. Die CI prueft alle vier gegeneinander und
 -- bricht sonst ab - siehe .github/scripts/release_notes.py und
 -- docs/development/releases.md.
-WeintCodex.Version = "6.14.0.2"
+WeintCodex.Version = "6.15.0.0"
 
 SLASH_WEINTCODEX1 = "/wc"
 SLASH_WEINTCODEX2 = "/weintcodex"
@@ -91,6 +91,11 @@ SlashCmdList["WEINTCODEX"] = function(msg)
 
     if verb == "lehrer" or verb == "training" or verb == "lernen" then
         Open("lehrer")
+        return
+    end
+
+    if verb == "klassenquests" or verb == "klassenquest" or verb == "kq" then
+        Open("klassenquests")
         return
     end
 

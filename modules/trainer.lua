@@ -368,7 +368,7 @@ local function BuildPage()
     f.KnownButton = WeintCodex.CreateButton(spellCard, { kind = "ghost", text = "Gelernte zeigen", height = 24,
         size = 11, padding = 20, radius = 0, onClick = function()
             showKnown = not showKnown
-            TR.Show()
+            TR.DrawSpells()
         end })
     f.KnownButton:SetPoint("TOPRIGHT", spellCard, "TOPRIGHT", -16, -12)
     f.Bill = TR.BuildBill(spellCard)
@@ -626,12 +626,35 @@ local function InspectorBlocks(state, cat, weapons)
     }
 end
 
-function TR.Show()
+-- Zwei Reiter (6.15.0.0): "Zauber und Waffen" (diese Seite) und
+-- "Klassenquests" (modules/classquests.lua). TR.view merkt sich den Reiter.
+TR.view = "spells"
+
+function TR.Show(view)
+    if view == "quests" or view == "spells" then TR.view = view end
+    local nav = WeintCodex.Navigation
+    nav.BuildSidebar("Lehrer", {
+        { label = "Zauber und Waffen", onClick = function() TR.view = "spells" TR.DrawView() end },
+        { label = "Klassenquests", onClick = function() TR.view = "quests" TR.DrawView() end },
+    })
+    nav.ActivateIndex(TR.view == "quests" and 2 or 1)
+end
+
+function TR.DrawView()
+    local CQ = WeintCodex.ClassQuests
+    if TR.view == "quests" and CQ and CQ.Draw then
+        CQ.Draw()
+    else
+        TR.DrawSpells()
+    end
+end
+
+function TR.DrawSpells()
     local cp = WeintCodex.ContentPanel
     for _, child in pairs({ cp:GetChildren() }) do child:Hide() end
     local f = BuildPage()
     f:Show()
-    WeintCodex.SetBreadcrumb("Lehrer")
+    WeintCodex.SetBreadcrumb("Lehrer", "Zauber und Waffen")
 
     local state = PlayerState()
     local cat = TR.Categorize(state)
@@ -685,7 +708,7 @@ local function Redraw()
     local main = WeintCodex.MainFrame
     if type(main) == "table" and main.IsShown and not main:IsShown() then return end
     redrawQueued = true
-    local function run() redrawQueued = false if page and page:IsShown() then TR.Show() end end
+    local function run() redrawQueued = false if page and page:IsShown() then TR.DrawSpells() end end
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.2, run) else run() end
 end
 TR.Redraw = Redraw

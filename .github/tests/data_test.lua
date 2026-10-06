@@ -1182,6 +1182,60 @@ do
     print("  --    Abgleich: " .. fgQuests .. " Quests, " .. ent .. " Eingaenge")
 end
 
+-- 6.15.0.0: Klassenquests (erzeugt aus ForeverGuide). Nur Fakten: keine
+-- Ziele, keine Texte; jede Quest mit Stufe, Geber oder Startpunkt; jeder
+-- Geber mit Lage auf einer Karte der Welt oder ohne Lage; je Klasse Quests
+-- und Lehrer; gebaut erst beim ersten Zugriff.
+print("")
+print("== Klassenquests")
+do
+    local Q = WeintCodex.ClassQuestData
+    Check(Q ~= nil, "data/classquests.lua geladen")
+    Check(WeintCodex.Sources.IsValid(Q.SOURCE) and Q.SOURCE.kind == "community", "Klassenquests: Herkunft community")
+    Check(WeintCodex.Sources.IsValid(Q.REWARD_SOURCE) and Q.REWARD_SOURCE.kind == "classic", "Belohnungen: Herkunft classic")
+    Check(rawget(Q.CLASSES, "HUNTER") == nil, "Klassenquests beim Laden nicht gebaut")
+    local function IsId(v) return type(v) == "number" and v > 0 and v == math.floor(v) end
+    local total, spells, bad, texts = 0, 0, 0, 0
+    for _, class in ipairs({ "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "SHAMAN", "MAGE", "WARLOCK", "DRUID" }) do
+        local list = Q.CLASSES[class]
+        Check(type(list) == "table" and #list >= 50, class .. ": Klassenquests hinterlegt (" .. (list and #list or 0) .. ")")
+        Check(#(Q.TRAINERS[class] or {}) > 0, class .. ": Klassenlehrer hinterlegt")
+        local seen = {}
+        for _, q in ipairs(list or {}) do
+            total = total + 1
+            if q.spell then spells = spells + 1 end
+            if not (IsId(q.id) and type(q.name) == "string" and q.name ~= "") then bad = bad + 1 end
+            if not (type(q.lv) == "number" and q.lv >= 1 and q.lv <= 63 and type(q.rl) == "number" and q.rl >= 1 and q.rl <= 60) then bad = bad + 1 end
+            if not (IsId(q.giver) or q.start == "item" or q.start == "object") then bad = bad + 1 end
+            for _, k in ipairs({ "turnin", "next", "spell", "money", "ra" }) do
+                if q[k] ~= nil and not IsId(q[k]) then bad = bad + 1 end
+            end
+            for _, k in ipairs({ "pre", "items", "choice" }) do
+                for _, v in ipairs(q[k] or {}) do if not IsId(v) then bad = bad + 1 end end
+            end
+            if q.objective or q.text or q.o then texts = texts + 1 end
+            if seen[q.id] then bad = bad + 1 end
+            seen[q.id] = true
+        end
+    end
+    Check(bad == 0, "Klassenquests: Nummern, Stufen, Geber gueltig (" .. bad .. " Fehler)")
+    Check(texts == 0, "Klassenquests ohne abgeschriebene Texte")
+    Check(spells >= 80, "Quests, die einen Zauber lehren (" .. spells .. ")")
+    local npcBad, located = 0, 0
+    for id, n in pairs(Q.NPCS) do
+        if not (IsId(id) and type(n[1]) == "string" and n[1] ~= "") then npcBad = npcBad + 1 end
+        if n[2] ~= nil then
+            located = located + 1
+            if not (n[2] >= 1411 and n[2] <= 1458 and n[3] >= 0 and n[3] <= 100 and n[4] >= 0 and n[4] <= 100) then npcBad = npcBad + 1 end
+        elseif n[3] ~= nil or n[4] ~= nil then
+            npcBad = npcBad + 1
+        end
+        if not (n[5] == "A" or n[5] == "H" or n[5] == "AH" or n[5] == "") then npcBad = npcBad + 1 end
+    end
+    Check(npcBad == 0 and located > 100, "NPCs: Lage auf einer Karte der Welt oder keine (" .. npcBad .. " Fehler, " .. located .. " mit Lage)")
+    print("  --    " .. total .. " Klassenquests, " .. spells .. " lehren einen Zauber")
+end
+
 --------------------------------------------------
 
 print("")

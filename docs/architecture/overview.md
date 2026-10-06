@@ -89,7 +89,10 @@ damit als ungültige UTF-8-Folge wieder heraus.
   Gruppen, je eine Frage:
   * **Leveln** – mein Charakter und sein Weg: Übersicht (das Cockpit:
     was jetzt wichtig ist), Charakter (Zustand), Lehrer (Wissen über die
-    Entwicklung der Klasse, bewusst eigenständig), Berufe (seit
+    Entwicklung der Klasse, bewusst eigenständig; seit 6.15.0.0 mit zwei
+    Reitern „Zauber und Waffen“ | „Klassenquests“ – die Reiterleiste baut
+    `Trainer.Show(view)`, `Navigation.SUBTABS.klassenquests` schlägt den
+    zweiten auf), Berufe (seit
     6.14.0.0: Rezepte nach deiner Fertigkeit, Berufslehrer;
     `modules/professions.lua`, Details in `docs/systems/character.md`),
     Dungeons (nachschlagen; die Übersicht verlinkt nur, sie ersetzt es

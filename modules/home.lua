@@ -181,6 +181,8 @@ function HM.Context()
     ctx.dungeonQuests = HM.DungeonQuests(ctx.faction)
     ctx.dungeons = AllDungeons(ctx.faction)
     ctx.professions = HM.Professions()
+    local CQ = WeintCodex.ClassQuests
+    ctx.classQuest = CQ and CQ.NextSpellQuest and CQ.NextSpellQuest() or nil
     return ctx
 end
 
@@ -208,10 +210,13 @@ end
 --   1 Lehrer        Zauber, die man jetzt lernen kann
 --   2 Quests        abgabebereit - Erfahrung, die schon verdient ist
 --   3 Reparieren    ein zerbrochener Gegenstand wirkt nicht
---   4 Dungeon       Quests dafuer im Log
---   5 Waffen        Waffenfertigkeiten beim Waffenmeister
---   6 Dungeon       passt zur Stufe (nur ohne Schritt 4)
---   7 Beruf         Rezepte beim Berufslehrer (6.14.0.0; nur mit bekanntem
+--   4 Klassenquest  lehrt einen Zauber und ist jetzt dran (6.15.0.0; nur
+--                   mit Antwort des Clients zum Queststand) - vor den
+--                   Dungeons: einen Zauber gibt es nur hier
+--   5 Dungeon       Quests dafuer im Log
+--   6 Waffen        Waffenfertigkeiten beim Waffenmeister
+--   7 Dungeon       passt zur Stufe (nur ohne Schritt 5)
+--   8 Beruf         Rezepte beim Berufslehrer (6.14.0.0; nur mit bekanntem
 --                   Gelernten - aus dem Berufsfenster)
 -- Hoechstens HM.MAX_STEPS. Ein Schritt: key, label, title, headline,
 -- detail (Satz in der Kachel), sub (kurze Zeile auf einer Karte unter
@@ -270,6 +275,17 @@ function HM.Steps(ctx)
               detail = table.concat(broken, ", ") .. " – beim Händler reparieren", tone = "danger",
               sub = table.concat(broken, ", ") .. " · beim Händler reparieren",
               action = "Charakter", go = { tab = "charakter" } })
+    end
+
+    local cq = ctx.classQuest
+    if cq then
+        local stateText = (cq.state == "ready" and "abgabebereit") or (cq.state == "active" and "im Questlog")
+            or "jetzt möglich"
+        add({ key = "classQuest", label = "Klassenquest", title = cq.spell .. " per Quest",
+              headline = "Klassenquest: " .. cq.title,
+              detail = "Lehrt " .. cq.spell .. " · " .. stateText .. " · " .. cq.giver,
+              sub = "Lehrt " .. cq.spell .. " · " .. stateText, action = "Zur Klassenquest",
+              go = { tab = "klassenquests" } })
     end
 
     local D = WeintCodex.DungeonData
@@ -443,6 +459,7 @@ HM.ICONS = {
     dungeonFit    = "Interface\\AddOns\\WeintCodex\\media\\ui\\icon_gate",
     weapons       = "Interface\\AddOns\\WeintCodex\\media\\ui\\icon_combat",
     profession    = "Interface\\AddOns\\WeintCodex\\media\\ui\\icon_hammer",
+    classQuest    = "Interface\\AddOns\\WeintCodex\\media\\ui\\icon_quest",
 }
 local UI = "Interface\\AddOns\\WeintCodex\\media\\ui\\"
 

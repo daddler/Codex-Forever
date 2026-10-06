@@ -95,6 +95,8 @@ local tabs = {
 -- der Synchronisierung und steht unter Companion.
 local SUBTABS = {
     import = { tab = "companion", sub = "import" },
+    -- 6.15.0.0: Klassenquests als Reiter unter Lehrer.
+    klassenquests = { tab = "lehrer", sub = "quests" },
 }
 WeintCodex.Navigation.SUBTABS = SUBTABS
 
@@ -2417,7 +2419,7 @@ function WeintCodex.Navigation.SwitchTo(tabId)
         end
     elseif tabId == "lehrer" then
         if WeintCodex.Trainer and WeintCodex.Trainer.Show then
-            WeintCodex.Trainer.Show()
+            WeintCodex.Trainer.Show(sub or "spells")
         end
     elseif tabId == "berufe" then
         if WeintCodex.Professions and WeintCodex.Professions.Show then

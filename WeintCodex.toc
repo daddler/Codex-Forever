@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.14.0.2
+## Version: 6.15.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -100,6 +100,8 @@ data/specs.lua
 data/trainer.lua
 # Rezepte und Lehrer der Berufe (6.14.0.0, erzeugt); gelesen von modules/professions.lua.
 data/professions.lua
+# Klassenquests und Klassenlehrer (6.15.0.0, erzeugt); gelesen von modules/classquests.lua.
+data/classquests.lua
 
 #
 # data/roles.lua steht NACH data/specs.lua: es liest die Talentbaeume,
@@ -116,6 +118,8 @@ data/roles.lua
 #
 modules/charakter.lua
 modules/trainer.lua
+# Klassenquests (6.15.0.0): zweiter Reiter unter Lehrer.
+modules/classquests.lua
 # Berufe (6.14.0.0): Rezepte nach deiner Fertigkeit, Lehrer auf der Karte.
 modules/professions.lua
 modules/encounter_tracking.lua

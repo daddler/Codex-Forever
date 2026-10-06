@@ -42,6 +42,7 @@ local PAGES = {
     { id = "uebersicht",  label = "Übersicht" },
     { id = "charakter",   label = "Charakter" },
     { id = "lehrer",      label = "Lehrer" },
+    { id = "klassenquests", label = "Klassenquests" },
     { id = "berufe",      label = "Berufe" },
     { id = "dungeons",    label = "Dungeons" },
     { id = "gruppe",      label = "Gruppencheck" },
