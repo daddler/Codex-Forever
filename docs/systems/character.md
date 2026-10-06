@@ -209,6 +209,16 @@ der nächste Berufslehrer steht.
   (`Trainer.Known`) etwas – „lernbar“ heißt dann „ab deiner Fertigkeit,
   vielleicht schon gelernt“, und die Seite sagt das. Welche dieser
   Abfragen Forever beantwortet, misst `/wcui prüfen` („Berufe“).
+  **Gemessen** (6.14.0.1, Client 1.60.1 Build 70235, Jäger Stufe 16):
+  Fertigkeit über `GetProfessions` (`GetSkillLineInfo` gibt es nicht);
+  Gelerntes über `C_TradeSkillUI` (`GetTradeSkillRecipeLink` und
+  `GetCraftRecipeLink` gibt es nicht) – `TRADE_SKILL_SHOW` 1,
+  `TRADE_SKILL_LIST_UPDATE` 3; Lederverarbeitung: 592 Nummern vom Client,
+  505 davon im Bestand, 6 gelernt. Die übrigen 87 stehen nicht im Bestand
+  (vermutlich der weggelassene Abschnitt „Season of Discovery“ – nicht
+  nachgeprüft). Ortsnamen der Lehrer nennt der Client: auf Forever teils
+  englisch („Ironforge“, „Stormwind“, „Ashenvale“), teils deutsch
+  („Wald von Elwynn“, „Das Brachland“) – so angezeigt, nicht übersetzt.
 
 **Fächer** mit Fertigkeit: Beim Lehrer lernbar · Als Rezept lernbar ·
 Bringt noch Fertigkeit (gelernt, unter Grau) · Bald (bis 25 Punkte über
