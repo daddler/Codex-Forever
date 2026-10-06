@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.13.5.0",
+        date    = "06.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Übersicht schlägt keine Dungeons der anderen Fraktion mehr vor.|r Wer in der Allianz spielt, bekommt Ragefire Chasm in Orgrimmar nicht mehr als „passt“, wer in der Horde spielt, Hall of Thanes und The Stockade nicht. Im Dungeonkompendium stehen weiter alle.",
+        },
+    },
+    {
         version = "6.13.4.0",
         date    = "06.10.2026",
         notes   = {

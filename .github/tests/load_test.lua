@@ -11900,6 +11900,28 @@ do
         for _, s2 in ipairs(f.cols) do if s2.m and s2.m.level == 13 then thanes = s2 end end
         assert(thanes and thanes.kind == "dungeon" and thanes.text:GetText():find(hot.name, 1, true), "Weg: Dungeon bei 13")
         assert(f.cols[2].kind == "none" and f.cols[2].level:GetText() == "8", "Weg: Stufe ohne Neues")
+        -- 6.13.5.0: Fraktion. Ein Allianz-Jaeger bekam Ragefire Chasm
+        -- (Orgrimmar) als "passt"; ohne bekannte Fraktion bleibt alles.
+        local D = WeintCodex.DungeonData
+        assert(D.ForFaction({ faction = "Horde" }, "Alliance") == false and D.ForFaction({ faction = "Horde" }, "Horde")
+            and D.ForFaction({}, "Alliance") and D.ForFaction({ faction = "Horde" }, nil), "ForFaction")
+        local function ids(list)
+            local t = {}
+            for _, d in ipairs(list) do t[d.id] = true end
+            return t
+        end
+        local fitA = ids((HM.Dungeons(13, "Alliance")))
+        local fitH = ids((HM.Dungeons(13, "Horde")))
+        local fitN = ids((HM.Dungeons(13, nil)))
+        assert(fitA.hall_of_thanes and not fitA.ragefire_chasm, "Allianz auf 13: Ragefire vorgeschlagen")
+        assert(fitH.ragefire_chasm and not fitH.hall_of_thanes, "Horde auf 13: Hall of Thanes vorgeschlagen")
+        assert(fitN.ragefire_chasm and fitN.hall_of_thanes, "ohne Fraktion ausgeschlossen")
+        local allA, allH = ids(HM.AllDungeons("Alliance")), ids(HM.AllDungeons("Horde"))
+        assert(allA.the_stockade and not allH.the_stockade and allA.the_deadmines and allH.the_deadmines,
+            "Weg: Stockade nur Allianz, Deadmines beide")
+        local hf2 = io.open(ROOT .. "/modules/home.lua"):read("*a")
+        assert(hf2:find("HM.Dungeons(ctx.level, ctx.faction)", 1, true) and hf2:find("ctx.dungeons = AllDungeons(ctx.faction)", 1, true),
+            "Uebersicht fragt ohne Fraktion")
         -- 6.13.4.0, Beta-Test Stufe 13: bei 17 stand "Wailing Caverns..." -
         -- zwei Dungeons mit Zeilenumbruch in einem einzeiligen Text, der
         -- zweite (The Deadmines) war unsichtbar. Jetzt zwei Texte.

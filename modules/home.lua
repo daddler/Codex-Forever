@@ -93,19 +93,28 @@ function HM.Trainer()
     return { state = state, cat = cat, weapons = weapons, budget = budget }
 end
 
--- Alle Instanzen mit Stufenbereich (Forever und klassische).
-local function AllDungeons()
+-- Alle Instanzen mit Stufenbereich (Forever und klassische), ohne die
+-- der anderen Fraktion (D.ForFaction, 6.13.5.0 - Ragefire Chasm in
+-- Orgrimmar ist fuer die Allianz kein Vorschlag). Ohne Fraktion alle.
+local function AllDungeons(faction)
     local D = WeintCodex.DungeonData
     if not D then return {} end
-    return (D.AllInstances and D.AllInstances()) or (D.All and D.All()) or {}
+    local all = (D.AllInstances and D.AllInstances()) or (D.All and D.All()) or {}
+    if not D.ForFaction then return all end
+    local out = {}
+    for _, d in ipairs(all) do
+        if D.ForFaction(d, faction) then out[#out + 1] = d end
+    end
+    return out
 end
+HM.AllDungeons = AllDungeons
 
 -- Dungeons fuer die eigene Stufe; passt keiner, der naechste darueber.
-function HM.Dungeons(level)
+function HM.Dungeons(level, faction)
     local D = WeintCodex.DungeonData
     if not (D and type(level) == "number") then return {}, nil end
     local fit, nextUp = {}, nil
-    for _, d in ipairs(AllDungeons()) do
+    for _, d in ipairs(AllDungeons(faction)) do
         if D.FitsLevel(d, level) then
             fit[#fit + 1] = d
         elseif type(d.minLevel) == "number" and d.minLevel > level
@@ -168,9 +177,9 @@ function HM.Context()
     local XB = WeintCodex.UIXPBar
     ctx.quests = XB and XB.QuestXP and XB.QuestXP() or nil
     ctx.xp = XB and XB.Experience and XB.Experience() or nil
-    ctx.fit, ctx.nextUp = HM.Dungeons(ctx.level)
+    ctx.fit, ctx.nextUp = HM.Dungeons(ctx.level, ctx.faction)
     ctx.dungeonQuests = HM.DungeonQuests(ctx.faction)
-    ctx.dungeons = AllDungeons()
+    ctx.dungeons = AllDungeons(ctx.faction)
     return ctx
 end
 

@@ -57,6 +57,9 @@ WeintCodex_ClassicDungeons = {
         size = 5, minLevel = 13, maxLevel = 18,
         theme = "Der Schlund unter Orgrimmar. Hordeseite; das Gegenstück zur "
              .. "Hall of Thanes der Allianz.",
+        -- Eingang in der Hauptstadt der Horde (Classic): die Übersicht
+        -- schlägt ihn der Allianz nicht vor (D.ForFaction, 6.13.5.0).
+        faction = "Horde",
         orderKnown = true, bossesComplete = true,
         bosses = {
             { id = "oggleflint",   name = "Oggleflint",              order = 1 },
@@ -162,6 +165,8 @@ WeintCodex_ClassicDungeons = {
         size = 5, minLevel = 24, maxLevel = 32,
         theme = "Das Gefängnis unter Sturmwind. Der kürzeste Dungeon im "
              .. "ganzen Spiel.",
+        -- Eingang in der Hauptstadt der Allianz (Classic).
+        faction = "Alliance",
         -- Rundbau ohne festen Weg.
         orderKnown = false, bossesComplete = true,
         bosses = {

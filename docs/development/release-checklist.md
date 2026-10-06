@@ -58,7 +58,7 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
       `/wc import` öffnet Companion mit dem Reiter Import, Companion ist
       links markiert. Rechtsklick auf das Minikartensymbol: Schlachtzüge,
       links markiert.
-- [ ] Codex-Übersicht (/wc): höchstens drei Schritte, jeder Knopf landet am Ziel (Dungeon-Knopf auf dem genannten Dungeon); „Dein Weg“ ohne abgeschnittene Namen, zwei Dungeons auf einer Stufe stehen beide da (zweite Zeile); mit lernbaren Zaubern stehen ihre Namen mit Symbol unter „Als Nächstes“ (Tooltip beim Drüberfahren), eine Stufe im Weg zeigt beim Drüberfahren ihre Zauber
+- [ ] Codex-Übersicht (/wc): höchstens drei Schritte, jeder Knopf landet am Ziel (Dungeon-Knopf auf dem genannten Dungeon); „Dein Weg“ ohne abgeschnittene Namen, zwei Dungeons auf einer Stufe stehen beide da (zweite Zeile); kein Dungeon der anderen Fraktion (Allianz: kein Ragefire Chasm); mit lernbaren Zaubern stehen ihre Namen mit Symbol unter „Als Nächstes“ (Tooltip beim Drüberfahren), eine Stufe im Weg zeigt beim Drüberfahren ihre Zauber
 - [ ] Charakter (C), Zauberbuch und Talente (P, N), Weltkarte (M)
 - [ ] Zauberbuch und Talente: hinter „Allgemein“ und den Namen der Bäume Raute **und** Linie; sonst `/wcui fenster` – die Zeile „Linie: …“ sagt Höhe und Bildpunkte
 - [ ] Händler, Bank, Post (beide Reiter), Auktionshaus, Handel

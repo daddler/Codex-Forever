@@ -166,6 +166,14 @@ damit als ungültige UTF-8-Folge wieder heraus.
     und die Gruppensuche des Clients nennt nur eine Stufe je Dungeon
     (`docs/systems/dungeons.md`, erster Abgleich). Was sich nicht in den
     acht Stufen öffnet (The Stockade ab 24 bei Stufe 13), steht noch nicht im Weg.
+    **Fraktion** (seit 6.13.5.0): Weg und „passt zu deiner Stufe“ lassen
+    Dungeons der anderen Fraktion weg (`D.ForFaction`, Feld `faction`). Es
+    steht nur an drei Dungeons: Hall of Thanes (in den Daten als
+    Allianzseite beschrieben), Ragefire Chasm (Orgrimmar) und The Stockade
+    (Sturmwind) – Eingang in einer Hauptstadt bzw. ausdrücklich einer Seite
+    zugeschrieben. Ohne bekannte Fraktion des Spielers bleibt alles.
+    Quests im Questlog zählen unabhängig davon; das Dungeonkompendium
+    zeigt weiter alle Dungeons.
   * **Nicht mehr da** (Beta-Test mit Stufe 3, 6.10.4.9): Datum,
     Erfahrungsleiste (zeigt das Spiel), drei gleich schwere Spalten,
     Gegenstandsstufe, Companion-Zeile, die Zahl an „Schlachtzüge“. **Leere

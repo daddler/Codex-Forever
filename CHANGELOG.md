@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.13.5.0] – 2026-10-06
+
+**Die Übersicht schlägt keine Dungeons der anderen Fraktion mehr vor.** Wer in der Allianz spielt, bekommt Ragefire Chasm in Orgrimmar nicht mehr als „passt“, wer in der Horde spielt, Hall of Thanes und The Stockade nicht. Im Dungeonkompendium stehen weiter alle.
+
+### Technisch
+
+- Beta-Test (Allianz-Jäger, Stufe 13): „Hall of Thanes · ein weiterer passt“ – der weitere war Ragefire Chasm in Orgrimmar.
+- Neues Feld `faction` („Alliance“/„Horde“, Schreibweise von `UnitFactionGroup`) an genau drei Dungeons: **Hall of Thanes** (die Daten beschreiben ihn schon als „nur für die Allianz“, Herkunft wie der Eintrag: `community`), **Ragefire Chasm** und **The Stockade** (Eingang in Orgrimmar bzw. Sturmwind, Classic). Sonst keiner – die Deadmines in Westfall oder die Wailing Caverns im Brachland erreicht jede Seite, und für die Forever-Dungeons ist nichts belegt.
+- `D.ForFaction(dungeon, faction)` (`data/dungeons.lua`): ohne `faction` am Dungeon oder ohne bekannte Fraktion des Spielers `true` – „weiß nicht“ schließt nichts aus. `modules/home.lua`: `AllDungeons(faction)` filtert; `HM.Dungeons(level, faction)` („passt“, nächster darüber) und der Weg nutzen die Fraktion aus dem Kontext. Quests im Questlog zählen ungefiltert (was im Log steht, ist eine Tatsache); das Dungeonkompendium bleibt vollständig.
+- `data_test.lua`: Fraktion nur „Alliance“/„Horde“ und an genau diesen drei. `load_test.lua`: `ForFaction` in allen vier Fällen; Stufe 13 Allianz ohne Ragefire, Horde ohne Hall of Thanes, ohne Fraktion beide; Stockade nur Allianz, Deadmines beide; die Übersicht fragt mit Fraktion. Gegenproben: 8, alle gefangen.
+
 ## [6.13.4.0] – 2026-10-06
 
 **Dein Weg zeigt wieder jeden Dungeon.** Öffnen sich auf einer Stufe zwei Dungeons, stehen beide da – bisher war der zweite hinter „…“ verschwunden, etwa The Deadmines neben Wailing Caverns. Bei mehr als zweien steht „+N weitere“, alle Namen im Tooltip.

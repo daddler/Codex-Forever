@@ -478,6 +478,21 @@ for index = 2, #instances do
 end
 Check(sorted, "AllInstances ist nach Mindeststufe sortiert")
 
+-- 6.13.5.0: Fraktion nur, wo die Daten sie begruenden, und nur in der
+-- Schreibweise des Clients (UnitFactionGroup).
+do
+    local marked = {}
+    for _, d in ipairs(instances) do
+        if d.faction ~= nil then
+            Check(d.faction == "Alliance" or d.faction == "Horde", d.id .. ": Fraktion " .. tostring(d.faction))
+            marked[#marked + 1] = d.id .. "=" .. d.faction
+        end
+    end
+    table.sort(marked)
+    Check(table.concat(marked, ",") == "hall_of_thanes=Alliance,ragefire_chasm=Horde,the_stockade=Alliance",
+        "Fraktion an genau drei Dungeons: " .. table.concat(marked, ","))
+end
+
 -- JEDE INSTANZ STECKT IN GENAU EINEM ABSCHNITT. Eine in keinem
 -- waere in der Oberflaeche unerreichbar, eine in zweien doppelt.
 local seenInBracket = {}

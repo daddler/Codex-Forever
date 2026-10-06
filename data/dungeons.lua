@@ -108,6 +108,9 @@ WeintCodex_Dungeons = {
         -- Allianz - das Gegenstück zum Ragefire Chasm der Horde.
         theme    = "Grabmal der Könige von Eisenschmiede. Allianzseite; das "
                 .. "Gegenstück zum Ragefire Chasm der Horde.",
+        -- Nur für die Allianz (siehe oben): die Übersicht schlägt ihn
+        -- der Horde nicht vor (D.ForFaction, 6.13.5.0).
+        faction  = "Alliance",
         mapArt   = true,
 
         -- Der am besten belegte Dungeon von allen neun: seit dem
@@ -612,6 +615,18 @@ end
 function D.ZoneLabel(dungeon)
     if type(dungeon) ~= "table" then return nil end
     return dungeon.zoneDe or dungeon.zone
+end
+
+-- Kommt diese Fraktion hin? (6.13.5.0, Beta-Test: die Übersicht schlug
+-- einem Allianz-Jäger Ragefire Chasm in Orgrimmar vor.) `faction` steht
+-- nur an Dungeons, deren Eingang in einer Hauptstadt liegt bzw. die als
+-- Seite einer Fraktion beschrieben sind: Hall of Thanes, Ragefire Chasm,
+-- The Stockade. Ohne Angabe am Dungeon oder ohne bekannte eigene
+-- Fraktion: true - "weiss nicht" schliesst nichts aus.
+function D.ForFaction(dungeon, faction)
+    if type(dungeon) ~= "table" then return false end
+    if dungeon.faction == nil or (faction ~= "Alliance" and faction ~= "Horde") then return true end
+    return dungeon.faction == faction
 end
 
 -- Passt die eigene Stufe zu diesem Dungeon? `nil`, wenn der Client
