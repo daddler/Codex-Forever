@@ -84,15 +84,34 @@ damit als ungültige UTF-8-Folge wieder heraus.
 * **`core/navigation.lua`** füllt die Navigationsspalte, verteilt die
   Klicks auf die Module (`SwitchTo`), zeichnet die Startseite
   (`ShowHome`) und stellt den Detailbereich bereit (`SetInspector`).
-* **Ordnung der Spalte auf Forever-Niveau** *(seit 6.6.2.1)*: vier
-  Gruppen in der Reihenfolge dessen, was ansteht – **Leveln**
-  (Übersicht, Charakter, Lehrer, Dungeons, Gruppencheck),
-  **Schlachtzug** (Schlachtzüge, Anmeldung, Kalender), **Gilde**
-  (Materialien, Import), **System** (Companion, Einstellungen). Vorher
-  stand die Gruppe „Raid“ mit Anmeldung und Kalender oben – eine
-  Ordnung aus Mists of Pandaria. Nichts ist entfernt; Anmeldung und
-  Kalender sind Lieferungen des Bots und kommen wieder, wenn geraidet
-  wird.
+* **Die Spalte ist die Informationsarchitektur** *(seit 6.13.0.0)*,
+  nicht die Reihenfolge, in der Funktionen entstanden sind. Vier
+  Gruppen, je eine Frage:
+  * **Leveln** – mein Charakter und sein Weg: Übersicht (das Cockpit:
+    was jetzt wichtig ist), Charakter (Zustand), Lehrer (Wissen über die
+    Entwicklung der Klasse, bewusst eigenständig), Dungeons
+    (nachschlagen; die Übersicht verlinkt nur, sie ersetzt es nicht).
+  * **Gruppe** – zusammen spielen: Gruppencheck (Bereitschaft),
+    Schlachtzüge (Wissen), Anmeldung und Kalender (Organisation).
+  * **Gilde** – Materialien.
+  * **System** – Companion mit zwei Reitern, **Synchronisierung** und
+    **Import** (`WCIMPORT:`-Strings), und Einstellungen.
+
+  Regeln: Die Spalte ist **stabil** – nichts blendet sich nach Stufe ein
+  oder aus; den Kontext liefert die Übersicht. Jede Information hat
+  **einen** Platz in der Spalte, verlinkt werden darf sie von überall.
+  Import hat seit 6.13.0.0 keinen eigenen Eintrag mehr: Er ist derselbe
+  Datenkanal wie die Companion. Die ID `import` bleibt –
+  `Navigation.SUBTABS` führt sie auf den Reiter unter Companion
+  (`GoToTab`/`SwitchTo` markieren Companion und schlagen den Reiter
+  auf), damit `/wc import`, die Suche und alle Verweise weiter tragen.
+  `Navigation.Tabs()` liefert die Spalte zum Nachlesen; `load_test.lua`
+  (Abschnitt „Navigation“) hält Gruppen, Reihenfolge, Freigaben,
+  Erreichbarkeit jedes Eintrags und jedes Suchtreffers sowie die
+  Slash-Befehle fest. Vorher: 6.6.2.1 ordnete nach dem, was ansteht
+  (Gruppencheck unter Leveln, „Schlachtzug“ mit Anmeldung und Kalender,
+  Import unter Gilde); davor stand „Raid“ oben – eine Ordnung aus Mists
+  of Pandaria.
 * **Die Startseite** *(seit 6.11.0.0 `modules/home.lua`, vorher in
   `core/navigation.lua`)* beantwortet eine Frage: **„Was mache ich als
   Nächstes?“** Forever ist ein neues Spiel, alle fangen bei Stufe 1 an –

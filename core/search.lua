@@ -35,19 +35,26 @@ local CATEGORY_LABEL = {
 -- in core/navigation.lua; gesperrte Bereiche faengt GoToTab selbst ab
 -- (es laeuft ueber SwitchTo und damit ueber die Sperrpruefung).
 local PAGES = {
-    { id = "übersicht",  label = "Übersicht" },
-    { id = "raids",       label = "Schlachtzüge" },
-    { id = "dungeons",    label = "Dungeons" },
-    { id = "anmeldung",   label = "Anmeldung" },
-    { id = "kalender",    label = "Kalender" },
-    { id = "gruppe",      label = "Gruppencheck" },
+    -- In der Reihenfolge der Spalte (6.13.0.0). "uebersicht" ohne ue-Umlaut:
+    -- bis 6.12 stand hier "übersicht", eine ID, die die Navigation nicht
+    -- kennt - der Treffer tat nichts. Import hat keinen Eintrag in der
+    -- Spalte mehr; GoToTab schlaegt den Reiter unter Companion auf.
+    { id = "uebersicht",  label = "Übersicht" },
     { id = "charakter",   label = "Charakter" },
     { id = "lehrer",      label = "Lehrer" },
+    { id = "dungeons",    label = "Dungeons" },
+    { id = "gruppe",      label = "Gruppencheck" },
+    { id = "raids",       label = "Schlachtzüge" },
+    { id = "anmeldung",   label = "Anmeldung" },
+    { id = "kalender",    label = "Kalender" },
     { id = "materialien", label = "Materialien" },
-    { id = "import",      label = "Import" },
     { id = "companion",   label = "Companion" },
+    { id = "import",      label = "Import" },
     { id = "settings",    label = "Einstellungen" },
 }
+
+-- Fuer den Prueflauf: jeder Treffer muss einen Bereich oeffnen.
+WeintCodex.Search.PAGES = PAGES
 
 --------------------------------------------------
 -- Index aufbauen

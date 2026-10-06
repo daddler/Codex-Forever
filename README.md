@@ -62,8 +62,7 @@ weiter und behält ihren eigenen Update-Kanal.
 | **Anmeldung** | Wer hat sich für Mittwoch und Donnerstag eingetragen — mit Rolle, Klasse und Notiz. Wichtig, sobald geraidet wird. |
 | **Kalender** | Der Termin, und für die Raidleitung die Ingame-Einladung. |
 | **Materialien** | Was in der Gildenbank liegt. |
-| **Import** | Der `WCIMPORT:`-Weg aus Discord. |
-| **Companion** | Zustand der Brücke, in Klartext. |
+| **Companion** | Zustand der Brücke, in Klartext – und unter „Import“ der `WCIMPORT:`-Weg aus Discord. |
 | **Einstellungen** | Fenster, Diagnose, Zugriffsprofil. |
 
 ---
@@ -97,7 +96,7 @@ Im Spiel öffnet `/wc` das Fenster.
 | `/wc gruppe` · `/wc gruppe prüfen` | Gruppencheck öffnen bzw. sofort durchlaufen |
 | `/wc raids` · `/wc dungeons` · `/wc anmeldung` · `/wc kalender` | direkt zum Bereich |
 | `/wc charakter` · `/wc materialien` · `/wc companion` | direkt zum Bereich |
-| `/wc import` | Import-Seite |
+| `/wc import` | Import (Reiter unter Companion) |
 | `/wc einstellungen` | Einstellungen |
 | `/wc access` | Das eigene Zugriffsprofil, mit jeder Freigabe |
 | `/wc kalender prüfen` | Kalender-Diagnose im Chat |

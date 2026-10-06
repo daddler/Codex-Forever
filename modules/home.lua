@@ -1302,7 +1302,9 @@ local function Badges(ctx)
     nav.SetTabBadge("materialien", shortages > 0, "red")
     local CP = WeintCodex.Companion
     local queue = CP and CP.GetQueueSize and CP.GetQueueSize() or 0
-    nav.SetTabBadge("import", queue > 0, "accent")
+    -- Nachrichten an die Companion warten: der Punkt steht an Companion
+    -- (bis 6.12 an Import, das seit 6.13.0.0 keinen Eintrag mehr hat).
+    nav.SetTabBadge("companion", queue > 0, "accent")
     local now = ctx.trainer and #ctx.trainer.cat.sections.now or 0
     nav.SetTabCount("lehrer", now > 0 and now or nil, "successBright")
     -- Schlachtzuege: in einem neuen Spiel erst einmal nicht dran - keine Zahl.

@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.13.0.0",
+        date    = "06.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Navigation ist neu geordnet.|r Vier Gruppen, je eine Frage: Leveln (Übersicht, Charakter, Lehrer, Dungeons), Gruppe (Gruppencheck, Schlachtzüge, Anmeldung, Kalender), Gilde (Materialien) und System (Companion, Einstellungen). Es fehlt nichts – nur der Platz hat sich geändert.",
+            "|cff7C6CFFImport steht jetzt unter Companion.|r Dort gibt es zwei Reiter: Synchronisierung und Import. /wc import führt weiter direkt dorthin.",
+            "|cff7C6CFFDie Suche findet die Übersicht wieder.|r Der Treffer „Übersicht“ tat bisher nichts.",
+        },
+    },
+    {
         version = "6.12.0.1",
         date    = "06.10.2026",
         notes   = {

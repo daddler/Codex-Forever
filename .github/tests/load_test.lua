@@ -11585,6 +11585,7 @@ do
         nav.SetTabBadge, nav.SetTabCount = oldB, oldC
         assert(HM.Page() == f, "Startseite bei jedem Oeffnen neu gebaut")
         assert(badges.charakter == false, "leere Plaetze setzen den Punkt am Charakter")
+        assert(badges.import == nil and badges.companion ~= nil, "Punkt der Companion-Warteschlange nicht an Companion")
         assert(counts.raids == false, "Schlachtzuege tragen auf der Startseite eine Zahl")
 
         -- 6.11.0.2: "AUßERDEM" im Spiel - ß wird SS.
@@ -11981,6 +11982,108 @@ do
     sd.ui, _G.UnitName = savedUI, oldName
     K._SetActiveProfile(nil)
     Check(ok, "Profile: Umzug nach Standard, je Charakter gewaehlt, fest bis zum Neuladen, Kopie, Umbenennen, Uebernehmen, Zuruecksetzen, Loeschen"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.13.0.0: Die Spalte als Informationsarchitektur. Vier Gruppen, je
+-- eine Frage; Import ist ein Reiter unter Companion, die ID bleibt.
+Section("Navigation")
+do
+    local nav = WeintCodex.Navigation
+    local ok, err = pcall(function()
+        local want = {
+            { "uebersicht", "Leveln" }, { "charakter" }, { "lehrer" }, { "dungeons" },
+            { "gruppe", "Gruppe" }, { "raids" }, { "anmeldung" }, { "kalender" },
+            { "materialien", "Gilde" },
+            { "companion", "System" }, { "settings" },
+        }
+        local tabs = nav.Tabs()
+        assert(#tabs == #want, "Eintraege: " .. #tabs)
+        for i, w in ipairs(want) do
+            assert(tabs[i].id == w[1] and tabs[i].group == w[2],
+                "Spalte, Platz " .. i .. ": " .. tostring(tabs[i].id) .. " / " .. tostring(tabs[i].group))
+        end
+        -- Freigaben unveraendert, Import ohne Eintrag und ohne Sperre.
+        local feat = nav.GetTabFeatures()
+        assert(feat.anmeldung == "raids.view" and feat.kalender == "calendar.view"
+            and feat.materialien == "materials.view" and feat.import == nil and feat.companion == nil,
+            "Freigaben veraendert")
+        assert(nav.SUBTABS.import and nav.SUBTABS.import.tab == "companion", "Import ohne Platz")
+
+        -- Jeder Bereich ist erreichbar - aus der Spalte, und jeder Treffer
+        -- der Suche landet in der Spalte auf seinem Eintrag.
+        for _, t in ipairs(tabs) do
+            WeintCodex.ResetToHome()
+            nav.GoToTab(t.id)
+            assert(nav.CurrentTab() == t.id, t.id .. " nicht erreichbar: " .. tostring(nav.CurrentTab()))
+        end
+        for _, page in ipairs(WeintCodex.Search.PAGES) do
+            WeintCodex.ResetToHome()
+            if page.id ~= "uebersicht" then nav.GoToTab("settings") end
+            nav.GoToTab(page.id)
+            local host = nav.SUBTABS[page.id] and nav.SUBTABS[page.id].tab or page.id
+            assert(nav.CurrentTab() == host, "Suche: " .. page.id .. " -> " .. tostring(nav.CurrentTab()))
+        end
+
+        -- Import: Companion markiert, Reiter Import offen - auch wenn
+        -- Companion schon offen war; Brotkrume und Detail bei jedem Mal.
+        local CPG = WeintCodex.CompanionPage
+        local crumbs = {}
+        local oldCrumb = WeintCodex.SetBreadcrumb
+        WeintCodex.SetBreadcrumb = function(...) crumbs[#crumbs + 1] = table.concat({ ... }, "/") end
+        WeintCodex.ResetToHome()
+        nav.GoToTab("companion")
+        assert(nav.CurrentTab() == "companion" and CPG.current == "sync", "Companion: erster Reiter")
+        nav.GoToTab("import")
+        assert(nav.CurrentTab() == "companion" and CPG.current == "import", "Import aus Companion heraus")
+        nav.ActivateIndex(1)
+        assert(CPG.current == "sync", "zurueck zur Synchronisierung")
+        nav.ActivateIndex(2)
+        WeintCodex.SetBreadcrumb = oldCrumb
+        local imports = 0
+        for _, c in ipairs(crumbs) do if c == "Companion/Import" then imports = imports + 1 end end
+        assert(imports >= 2, "Brotkrume beim zweiten Oeffnen von Import nicht gesetzt (" .. imports .. ")")
+
+        -- Slash-Befehle: wie gehabt, /wc import landet auf dem Reiter.
+        local slash = SlashCmdList["WEINTCODEX"]
+        local cases = {
+            { "import", "companion" }, { "companion", "companion" }, { "einstellungen", "settings" },
+            { "dungeons", "dungeons" }, { "raids", "raids" }, { "anmeldung", "anmeldung" },
+            { "kalender", "kalender" }, { "charakter", "charakter" }, { "materialien", "materialien" },
+            { "lehrer", "lehrer" }, { "gruppe", "gruppe" },
+        }
+        for _, c in ipairs(cases) do
+            WeintCodex.ResetToHome()
+            slash(c[1])
+            assert(nav.CurrentTab() == c[2], "/wc " .. c[1] .. " -> " .. tostring(nav.CurrentTab()))
+        end
+        WeintCodex.ResetToHome()
+        slash("import")
+        assert(CPG.current == "import", "/wc import schlaegt den Reiter nicht auf")
+
+        -- Sperre unveraendert: ohne Freigabe zeigt Materialien die
+        -- Sperrseite, Import bleibt offen.
+        local A = WeintCodex.Access
+        local realCan = A.Can
+        local locked
+        local oldLock = nav.ShowAccessLock
+        nav.ShowAccessLock = function(id) locked = id end
+        A.Can = function(key) return key ~= "materials.view" end
+        WeintCodex.ResetToHome()
+        nav.GoToTab("materialien")
+        local matLocked = locked
+        locked = nil
+        nav.GoToTab("import")
+        A.Can, nav.ShowAccessLock = realCan, oldLock
+        assert(matLocked == "materialien" and locked == nil and CPG.current == "import", "Sperre veraendert")
+
+        -- Minikarte, Rechtsklick: Schlachtzuege, in der Spalte markiert.
+        local mm = io.open(ROOT .. "/core/minimap.lua"):read("*a")
+        assert(not mm:find("SwitchTo(\"raids\")", 1, true) and mm:find('GoToTab("raids")', 1, true),
+            "Minikarte oeffnet Schlachtzuege ohne Markierung")
+        WeintCodex.ResetToHome()
+    end)
+    Check(ok, "Navigation: Leveln/Gruppe/Gilde/System, Import unter Companion, alles erreichbar, Befehle, Suche, Sperre"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

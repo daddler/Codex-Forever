@@ -18,6 +18,13 @@
 -- die häufigste Frage im Discord war entsprechend "bei mir geht der
 -- Sync nicht" - in zwei von drei Fällen ging er.
 --
+-- ZWEI REITER (seit 6.13.0.0): "Synchronisierung" ist diese Seite,
+-- "Import" der Dialog fuer WCIMPORT-Strings (modules/sync.lua). Import
+-- war bis dahin ein eigener Eintrag der Navigation; er ist derselbe
+-- Datenkanal - was der Bot liefert, kommt ueber die Companion oder als
+-- eingefuegter Text. /wc import und die Suche landen auf dem Reiter
+-- (core/navigation.lua, SUBTABS).
+--
 -- DIE INBOX WIRD NUR BEIM LADEN GELESEN. Was hier steht, ist der Stand
 -- der letzten Lieferung und nie eine laufende Verbindung. Diese Seite
 -- sagt das ausdrücklich; eine Zeile "verbunden" wäre eine Behauptung
@@ -79,7 +86,28 @@ end
 
 --------------------------------------------------
 
-function WeintCodex.CompanionPage.Show()
+local CPG = WeintCodex.CompanionPage
+CPG.SUBS = { "sync", "import" }
+CPG.current = "sync"
+
+local DrawSync
+
+-- Die Seite mit ihren zwei Reitern; `sub` ("sync" | "import") schlaegt
+-- einen auf, ohne Angabe den ersten.
+function CPG.Show(sub)
+    CPG.current = (sub == "import") and "import" or "sync"
+    local nav = WeintCodex.Navigation
+    nav.BuildSidebar("Companion", {
+        { label = "Synchronisierung", onClick = function() CPG.current = "sync" DrawSync() end },
+        { label = "Import", onClick = function()
+            CPG.current = "import"
+            if WeintCodex.Sync and WeintCodex.Sync.ShowImportDialog then WeintCodex.Sync.ShowImportDialog() end
+        end },
+    })
+    nav.ActivateIndex(CPG.current == "import" and 2 or 1)
+end
+
+DrawSync = function()
     local cp = WeintCodex.ContentPanel
     for _, child in pairs({ cp:GetChildren() }) do child:Hide() end
 
@@ -94,7 +122,7 @@ function WeintCodex.CompanionPage.Show()
         if region.Hide then region:Hide() end
     end
 
-    WeintCodex.SetBreadcrumb("Companion")
+    WeintCodex.SetBreadcrumb("Companion", "Synchronisierung")
 
     local PAD_X = WeintCodex.Metrics.PAD_X
     local PAD_Y = WeintCodex.Metrics.PAD_Y
@@ -225,9 +253,7 @@ function WeintCodex.CompanionPage.Show()
         }},
         { type = "divider" },
         { type = "button", label = "Import öffnen", onClick = function()
-            if WeintCodex.Navigation and WeintCodex.Navigation.GoToTab then
-                WeintCodex.Navigation.GoToTab("import")
-            end
+            WeintCodex.Navigation.ActivateIndex(2)
         end },
     })
 end

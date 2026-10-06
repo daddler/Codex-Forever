@@ -476,33 +476,11 @@ end
 -- Import-Dialog (vollständige Seite im ContentPanel)
 --------------------------------------------------
 
-function WeintCodex.Sync.ShowImportDialog()
-    local cp = WeintCodex.ContentPanel
-    for _, child in pairs({cp:GetChildren()}) do child:Hide() end
-    WeintCodex.Navigation.ClearSidebar()
-
-    if importDialog then
-        importDialog:SetParent(cp)
-        importDialog:ClearAllPoints()
-        importDialog:SetAllPoints(cp)
-        importDialog:Show()
-        importDialog.EditBox:SetText("")
-        importDialog.StatusText:SetText("")
-        return
-    end
-
-    local f = CreateFrame("Frame", nil, cp)
-    f:SetAllPoints(cp)
-    importDialog = f
-
-    -- Title
-    local titleStr = f:CreateFontString(nil, "OVERLAY")
-    titleStr:SetFont(WeintCodex.Fonts.sansBold, 24, "")
-    titleStr:SetPoint("TOPLEFT", f, "TOPLEFT", 24, -18)
-    titleStr:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
-    titleStr:SetText("Daten importieren")
-
-    WeintCodex.SetBreadcrumb("Import")
+-- Brotkrume und Detailbereich - bei JEDEM Aufschlagen. Bis 6.12 standen
+-- sie nur im ersten Aufbau; ein zweites Oeffnen kehrte vorher zurueck und
+-- liess Brotkrume und Detailbereich der vorigen Seite stehen.
+local function ImportContext()
+    WeintCodex.SetBreadcrumb("Companion", "Import")
     WeintCodex.Navigation.SetInspector({
         { type = "header", text = "Unterstützte Typen" },
         { type = "rows", rows = {
@@ -520,6 +498,38 @@ function WeintCodex.Sync.ShowImportDialog()
             "hängt an deiner Discord-Rolle.",
         }},
     })
+end
+
+-- Seit 6.13.0.0 der Reiter "Import" unter Companion
+-- (modules/companionpage.lua): die Reiterleiste gehoert der Seite und
+-- bleibt stehen.
+function WeintCodex.Sync.ShowImportDialog()
+    local cp = WeintCodex.ContentPanel
+    for _, child in pairs({cp:GetChildren()}) do child:Hide() end
+
+    if importDialog then
+        importDialog:SetParent(cp)
+        importDialog:ClearAllPoints()
+        importDialog:SetAllPoints(cp)
+        importDialog:Show()
+        importDialog.EditBox:SetText("")
+        importDialog.StatusText:SetText("")
+        ImportContext()
+        return
+    end
+
+    local f = CreateFrame("Frame", nil, cp)
+    f:SetAllPoints(cp)
+    importDialog = f
+
+    -- Title
+    local titleStr = f:CreateFontString(nil, "OVERLAY")
+    titleStr:SetFont(WeintCodex.Fonts.sansBold, 24, "")
+    titleStr:SetPoint("TOPLEFT", f, "TOPLEFT", 24, -18)
+    titleStr:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
+    titleStr:SetText("Daten importieren")
+
+    ImportContext()
 
     local divider = f:CreateTexture(nil, "OVERLAY")
     divider:SetHeight(1)
