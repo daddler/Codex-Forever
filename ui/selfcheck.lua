@@ -496,6 +496,19 @@ Check("Flüstern", function(add)
     for _, line in ipairs(MS.StatusLines()) do add("", "   " .. line) end
 end)
 
+-- Karte (6.20.0.0): Eingaenge im Bestand, ob der Client Kontinent und
+-- eigene Eingaenge kennt.
+Check("Karte", function(add)
+    local ME = WeintCodex.UIMapEntrances
+    if not ME then
+        add(SC.OPEN, "Karte nicht geladen.")
+        return
+    end
+    local active = ME.Active()
+    add(active and SC.OK or SC.OPEN, active and "Instanzeingänge an" or "Instanzeingänge aus (Komfort → Karte)")
+    for _, line in ipairs(ME.StatusLines()) do add("", "   " .. line) end
+end)
+
 Check("Berufe", function(add)
     local PRO = WeintCodex.Professions
     if not (PRO and PRO.Skills) then

@@ -5356,6 +5356,165 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.20.0.0: Instanzeingaenge auf der Weltkarte (Komfort -> Karte). Eigene
+-- Symbole auf der Flaeche der Karte, aus J.ENTRANCES; ein Symbol je Stelle
+-- (Blackrock: drei Dungeons); auf dem Kontinent ueber GetMapRectOnMap;
+-- nichts, wo das Spiel selbst Eingaenge zeigt; nie in die Karte schreiben.
+do
+    local G = _G
+    local names = { "WorldMapFrame", "C_Map", "C_EncounterJournal", "GameTooltip" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local K = WeintCodex.UIKit
+    local ME = WeintCodex.UIMapEntrances
+    local navSaved = WeintCodex.Navigation.GoToTab
+    local ok, err = pcall(function()
+        local wm = CreateFrame("Frame", "WorldMapFrame", UIParent)
+        G.WorldMapFrame = wm
+        local mapID = 1427
+        local wrote = 0
+        wm.GetMapID = function() return mapID end
+        wm.SetMapID = function() wrote = wrote + 1 end
+        wm.AddDataProvider = function() wrote = wrote + 1 end
+        local canvas = CreateFrame("Frame", nil, wm)
+        canvas._width, canvas._height = 1000, 600
+        wm.GetCanvas = function() return canvas end
+        -- Zonen unter den Oestlichen Koenigreichen (1415), Kalimdor 1414.
+        local KALIMDOR = { [1413] = true, [1440] = true, [1443] = true, [1444] = true, [1446] = true, [1454] = true, [1435] = false }
+        G.C_Map = {
+            GetMapInfo = function(id)
+                if id == 1414 or id == 1415 then return { mapType = 2, parentMapID = 947 } end
+                if id == 947 then return { mapType = 1 } end
+                return { mapType = 3, parentMapID = KALIMDOR[id] and 1414 or 1415 }
+            end,
+            -- Jedes Rechteck gleich - welche Zone auf welchen Kontinent gehoert,
+            -- muss WeintCodex selbst ueber die Eltern wissen.
+            GetMapRectOnMap = function(zone, top)
+                if top == 1414 or top == 1415 or top == 947 then return 0.4, 0.6, 0.5, 0.7 end
+                return nil
+            end,
+        }
+        local gameShows = {}
+        G.C_EncounterJournal = { GetDungeonEntrancesForMap = function(id) return gameShows[id] or {} end }
+
+        -- Bestand: Blackrock einmal mit drei Dungeons, Stratholme zweimal.
+        local spots = ME.Spots()
+        local br, strat = nil, 0
+        for _, sp in ipairs(spots) do
+            if sp.map == 1427 then br = sp end
+            if sp.map == 1423 then strat = strat + 1 end
+        end
+        assert(br and #br.entries == 3 and strat == 2, "Stellen falsch zusammengefasst")
+        assert(br.entries[1].dungeon.minLevel <= br.entries[3].dungeon.minLevel, "nicht nach Stufe")
+
+        -- Aus: nichts auf der Karte.
+        K.Set("comfort", "mapEntrances", false)
+        wm:Show()
+        assert(ME.Place() == 0 and (not ME.pins[1] or not ME.pins[1]:IsShown()), "Symbole, obwohl aus")
+        K.Set("comfort", "mapEntrances", true)
+        assert(ME.driver and ME.driver:GetParent() == wm, "kein Taktgeber an der Karte")
+
+        -- Zone: ein Symbol an der Stelle, gleich gross bei jedem Zoom.
+        local pt
+        assert(ME.Place() == 1, "Blackrock: nicht genau ein Symbol")
+        local p = ME.pins[1]
+        p.SetPoint = function(_, a, rel, b, x, y) pt = { a, rel, b, x, y } end
+        ME.Place()
+        assert(pt[1] == "CENTER" and pt[2] == canvas and pt[3] == "TOPLEFT" and math.abs(pt[4] - 348) < 0.01
+            and math.abs(pt[5] + 511.8) < 0.01, "an falscher Stelle: " .. tostring(pt[4]) .. ", " .. tostring(pt[5]))
+        assert(p:GetParent() == canvas and p:IsShown() and p.spot == br, "Symbol nicht auf der Flaeche")
+        -- Gezoomt: die Flaeche doppelt so gross, das Symbol halb.
+        local scale
+        p.SetScale = function(_, v) scale = v end
+        canvas.GetEffectiveScale = function() return 2 end
+        wm.GetEffectiveScale = function() return 1 end
+        ME.Place()
+        assert(scale == 0.5 and math.abs(pt[4] - 696) < 0.01 and math.abs(pt[5] + 1023.6) < 0.01, "Zoom nicht ausgeglichen")
+        canvas.GetEffectiveScale, wm.GetEffectiveScale = nil, nil
+        p.SetScale = nil
+        -- Neue Flaeche (die Karte baut sie neu): die Symbole ziehen mit.
+        local canvas2 = CreateFrame("Frame", nil, wm)
+        canvas2._width, canvas2._height = 1000, 600
+        wm.GetCanvas = function() return canvas2 end
+        ME.Place()
+        assert(p:GetParent() == canvas2, "Symbol bleibt auf der alten Flaeche")
+        wm.GetCanvas = function() return canvas end
+        ME.Place()
+        mapID = 1423
+        assert(ME.Place() == 2 and ME.pins[2]:IsShown(), "Stratholme: zwei Eingaenge")
+        mapID = 1429
+        assert(ME.Place() == 0 and not ME.pins[1]:IsShown() and not ME.pins[2]:IsShown(), "Zone ohne Eingang zeigt Symbole")
+
+        -- Kontinent: nur, wo der Client das Rechteck nennt.
+        mapID = 1415
+        assert(ME.Place() == 12, "Oestliche Koenigreiche: " .. tostring(ME.Place()))
+        mapID = 1414
+        assert(ME.Place() == 8, "Kalimdor: " .. tostring(ME.Place()))
+        mapID = 1415
+        ME.Place()
+        assert(ME.pins[1].spot == br, "Kontinent: erstes Symbol nicht Blackrock")
+        ME.pins[1].SetPoint = function(_, a, rel, b, x, y) pt = { a, rel, b, x, y } end
+        ME.Place()
+        assert(math.abs(pt[4] - 1000 * (0.4 + 0.348 * 0.2)) < 0.01 and math.abs(pt[5] + 600 * (0.5 + 0.853 * 0.2)) < 0.01,
+            "Kontinent an falscher Stelle")
+        K.Set("comfort", "mapContinent", false)
+        assert(ME.Place() == 0, "Kontinent, obwohl abgeschaltet")
+        K.Set("comfort", "mapContinent", true)
+        -- Die ganze Welt (kein Kontinent): nichts.
+        mapID = 947
+        assert(ME.Place() == 0, "Weltkarte zeigt Symbole")
+
+        -- Zeigt das Spiel selbst Eingaenge: unsere bleiben weg.
+        gameShows[1427] = { { name = "Schwarzfels" } }
+        ME.Forget()
+        mapID = 1427
+        assert(ME.Place() == 0, "doppelt zu den Eingaengen des Spiels")
+        gameShows[1427] = nil
+        ME.Forget()
+        assert(ME.Place() == 1, "Symbol kommt nicht wieder")
+
+        -- Tooltip: alle drei, mit Stufe, und woher.
+        local lines = {}
+        G.GameTooltip = setmetatable({
+            SetOwner = function() end, Show = function() end, Hide = function() end,
+            SetText = function(_, t) lines[#lines + 1] = t end,
+            AddLine = function(_, t) lines[#lines + 1] = t end,
+        }, {})
+        ME.pins[1]:GetScript("OnEnter")(ME.pins[1])
+        local tip = table.concat(lines, "\n")
+        for _, e in ipairs(br.entries) do assert(tip:find(e.dungeon.name, 1, true), "Tooltip ohne " .. e.dungeon.name) end
+        assert(tip:find("Stufe ", 1, true) and tip:find("unbestätigt", 1, true), "Tooltip: " .. tip)
+
+        -- Klick: Codex auf, beim Dungeon.
+        local went
+        WeintCodex.Navigation.GoToTab = function(t) went = t end
+        local main = WeintCodex.MainFrame
+        main:Hide()
+        ME.pins[1]:GetScript("OnClick")(ME.pins[1])
+        assert(main:IsShown() and went == "dungeons", "Klick oeffnet den Codex nicht")
+        main:Hide()
+
+        -- Karte zu: Taktgeber stellt nichts.
+        wm:Hide()
+        assert(ME.Place() == 0 and not ME.pins[1]:IsShown(), "Symbole bei geschlossener Karte")
+        assert(wrote == 0, "in die Weltkarte geschrieben")
+
+        -- Selbstpruefung.
+        local sc = table.concat(ME.StatusLines(), "\n")
+        assert(sc:find("Eingänge im Bestand: 22 an 20 Stellen", 1, true) and sc:find("GetMapRectOnMap): ja", 1, true), "Selbstpruefung: " .. sc)
+        local page
+        for _, pg in ipairs(K.Module("comfort").pages) do if pg.key == "karte" then page = pg end end
+        assert(page and page.label == "Karte", "Seite fehlt")
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    WeintCodex.Navigation.GoToTab = navSaved
+    K.Set("comfort", "mapEntrances", false)
+    K.Set("comfort", "mapContinent", true)
+    ME.Forget()
+    Check(ok, "Karte: Instanzeingaenge als Symbol, je Stelle eins, Kontinent, nicht doppelt zum Spiel, Tooltip mit Herkunft, Klick in den Codex"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.13.2.0: die Regelliste zeigt nur, was fuer diesen Charakter gilt
 -- (Beta-Test: "Ich sehe in den Erinnerungen alle Erinnerungen von allen
 -- Charakteren"). Alte Begleiter-/Munitionsregeln ohne Klasse gelten nur, wo

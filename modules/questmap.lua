@@ -64,6 +64,9 @@ local function Canvas()
     return nil
 end
 
+-- Auch fuer die Instanzeingaenge (ui/mapentrances.lua, 6.20.0.0).
+QM.Canvas = Canvas
+
 -- Name der Zone, wie der Client ihn nennt (deutsch auf deutschem Client).
 function QM.MapName(mapID)
     local cm = _G.C_Map
@@ -83,6 +86,8 @@ local function CurrentMap()
     id = ok and Plain(id) or nil
     return type(id) == "number" and id or nil
 end
+
+QM.CurrentMap = CurrentMap
 
 -- DIE MARKE (6.6.0.1, Beta-Test: "sieht anfaengermaessig aus"): eine
 -- Stecknadel aus eigenen Grafiken (media/ui/pin, dot, halo - gezeichnet,

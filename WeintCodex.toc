@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.19.1.3
+## Version: 6.20.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -211,6 +211,8 @@ ui/auctionprices.lua
 ui/auctionshare.lua
 # Fluestern als Messenger (6.19.0.0, Komfort): Fenster nach dem Verhalten von WIM, kein Code daraus.
 ui/messenger.lua
+# Instanzeingaenge auf der Weltkarte (6.20.0.0, Komfort): eigene Symbole, Daten aus J.ENTRANCES.
+ui/mapentrances.lua
 ui/tooltip.lua
 ui/windows.lua
 # Das Charakterfenster als Ganzes (6.6.4.0), baut auf ui/windows.lua auf.

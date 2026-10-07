@@ -1429,6 +1429,41 @@ spielt (dann zwei), ob ein Klick auf einen Namen im Chat wirklich über
 die Eingabezeile läuft. Gemessen (Beta-Test 6.19.0.1): Fenster geht auf,
 Markieren und Kopieren gehen.
 
+## Instanzeingänge auf der Karte *(6.20.0.0, `ui/mapentrances.lua`, Seite im Komfort)*
+
+Wunsch des Spielers: „wenn ich die Karte normal aufmache, schon auch sehen,
+wo die Instanz ist, mit einem Instanzsymbol“ – zusätzlich zur Marke aus dem
+Codex („Eingang auf der Karte“, `modules/questmap.lua`), die bleibt. Seite
+„Karte“ im Komfort, `mapEntrances` ab Werk aus, `mapContinent` an.
+
+- **Woher:** `J.ENTRANCES` (aus dem Abgleich mit ForeverGuide, 6.14.0.0,
+  `community`) – 22 Eingänge an 20 Stellen. Kein Eintrag, kein Symbol.
+  Gleiche Stelle → ein Symbol, im Tooltip alle Dungeons nach Stufe
+  (`ME.Spots`; Schwarzfels: drei). Tooltip sagt „aus Beta-Berichten
+  (ForeverGuide) – unbestätigt“; Klick schlägt den ersten im Codex auf.
+- **Wie:** dieselbe Regel wie die Marke (6.6.0.1) – eigene Rahmen auf der
+  Fläche (`QM.Canvas`), Kehrwert des Zooms, Ebene über der Karte; nie
+  `AddDataProvider`, nie in Rahmen des Spiels geschrieben. Taktgeber
+  (`ME.TICK` = 0,05 s) als Kind der Weltkarte; die Liste je Karte
+  entsteht nur beim Wechsel (`ME.ForMap`, gemerkt, `ME.Forget` bei jeder
+  Einstellung), im Takt wird nur gestellt.
+- **Kontinent:** Zonen, deren Eltern (`parentMapID`) zum gezeigten
+  Kontinent führen (`mapType` 2), über `C_Map.GetMapRectOnMap`; ohne
+  Rechteck kein Symbol. Die Welt als Ganzes bleibt leer.
+- **Nicht doppelt:** liefert `C_EncounterJournal.GetDungeonEntrancesForMap`
+  für die Karte etwas, zeigt das Spiel selbst Eingänge – unsere bleiben
+  dort weg.
+- **Bild:** eigene `disc`/`icon_gate` (media/ui), neutral (dunkel, hell),
+  kein Akzent – die Weltkarte ist mit der Oberfläche ein Fenster in Gold.
+- **Ungemessen:** die Ebene über den Symbolen des Spiels, ob
+  `GetMapRectOnMap` auf Forever Rechtecke nennt, ob das Spiel selbst
+  Eingänge kennt (`/wcui prüfen` → „Karte“).
+
+**Karte aufdecken** (gewünscht, nicht gebaut): bräuchte die Liste aller
+Kartenteile je Zone (Bild, Lage, Größe). Der Client gibt nur die schon
+erkundeten heraus (`C_MapExplorationInfo.GetExploredMapTextures`); die
+vollständige Liste steht in den Spieldaten, nicht in einer Schnittstelle.
+
 ## Automark *(6.8.1.0, auf Klick seit 6.9.0.2, `ui/automark.lua`)*
 
 Beta-Test: „Wenn eine Instanz betreten wird, soll der Tank und Heiler

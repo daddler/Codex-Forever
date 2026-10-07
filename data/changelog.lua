@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.20.0.0",
+        date    = "07.10.2026",
+        notes   = {
+            "|cff7C6CFFNeu im Komfort: Instanzeingänge auf der Karte.|r Öffnest du die Weltkarte, steht an jedem Dungeoneingang, den der Codex kennt, ein Symbol – auch auf der Karte von Kalimdor und den Östlichen Königreichen. Maus darauf zeigt Dungeon und Stufe, ein Klick schlägt ihn im Codex auf. Einschalten unter Komfort → Karte.",
+            "|cff7C6CFFDie Marke aus dem Codex bleibt.|r „Eingang auf der Karte“ auf einer Dungeonseite setzt weiter die große Marke wie bisher.",
+        },
+    },
+    {
         version = "6.19.1.3",
         date    = "07.10.2026",
         notes   = {

@@ -9,7 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [6.19.1.3] – 2026-10-07
+## [6.20.0.0] – 2026-10-07
+
+**Neu im Komfort: Instanzeingänge auf der Karte.** Öffnest du die Weltkarte, steht an jedem Dungeoneingang, den der Codex kennt, ein Symbol – auch auf der Karte von Kalimdor und den Östlichen Königreichen. Maus darauf zeigt Dungeon und Stufe, ein Klick schlägt ihn im Codex auf. Einschalten unter Komfort → Karte.
+
+**Die Marke aus dem Codex bleibt.** „Eingang auf der Karte“ auf einer Dungeonseite setzt weiter die große Marke wie bisher.
+
+### Technisch
+
+- Neues `ui/mapentrances.lua` (Seite „Karte“ im Komfort, `mapEntrances` ab Werk aus, `mapContinent` an). Daten: `J.ENTRANCES` (Abgleich mit ForeverGuide, 6.14.0.0, `community`) – 22 Eingänge an 20 Stellen; Eingänge an derselben Stelle (Schwarzfels: Tiefen, untere und obere Spitze) werden ein Symbol mit allen Namen im Tooltip (`ME.Spots`).
+- Wie die Marke (`modules/questmap.lua`, 6.6.0.1): eigene Rahmen auf der Fläche der Karte (`QM.Canvas`, jetzt nach außen gegeben, ebenso `QM.CurrentMap`), Kehrwert des Zooms, nie `AddDataProvider`, nie in Rahmen des Spiels geschrieben. Taktgeber als Kind der Weltkarte (läuft nur, solange sie offen ist); die Liste je Karte entsteht beim Wechsel (`ME.ForMap`, gemerkt), im Takt wird nur gestellt.
+- Kontinent: `C_Map.GetMapRectOnMap(Zone, Kontinent)`, nur für Zonen, deren Eltern zum Kontinent führen (`mapType` 2); die Weltkarte als Ganzes bleibt leer. Liefert `C_EncounterJournal.GetDungeonEntrancesForMap` etwas, zeigt das Spiel selbst Eingänge – dann bleiben unsere auf dieser Karte weg.
+- Symbol aus eigenen Bildern (`disc`, `icon_gate`), neutral statt Akzent: die Karte ist mit der Oberfläche ein Fenster in Gold.
+- `/wcui prüfen` → „Karte“: Bestand, ob der Client Kontinent-Rechteck und eigene Eingänge kennt, was zuletzt gezeigt wurde.
+- 17 Gegenproben, alle gefangen – vier erst nach geschärfter Prüfung (nur Kontinente, Zonen nach Eltern, Zoom, neue Fläche).
+- Darin auch 6.19.1.3 (nie einzeln veröffentlicht).
+
+
 
 **Flüstern: kein „r“ mehr in der Chatzeile.** Nach der Taste „Antworten“ stand der Buchstabe der Taste schon in der Zeile. Jetzt ist sie leer und bereit für deine Antwort.
 
