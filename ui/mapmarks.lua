@@ -34,7 +34,15 @@ local MK = WeintCodex.UIMapMarks
 MK.DEFAULTS = {
     mapSpirit    = false,    -- Geistheiler
     mapCrossings = false,    -- Uebergaenge in andere Gebiete
+    -- 6.21.2.0 (Beta-Test: "alle Geistheiler, Pfeile etc. azerothweit"):
+    mapFlight    = false,    -- Flugmeister
+    mapTravel    = false,    -- Schiffe, Zeppeline, Trams, Portale
+    mapMarksOther = false,   -- auch die der anderen Fraktion
+    mapMarksContinent = true, -- auch auf der Kontinentkarte
 }
+MK.SMALL = 0.7       -- auf dem Kontinent kleiner (es sind ueber zweihundert)
+MK.VEHICLE = { "Schiff", "Zeppelin", "Tram", "Portal" }
+MK.FACTION = { "Allianz", "Horde", "neutral" }
 
 -- 6.21.0.1 (Beta-Test: "zwar drin, aber nicht gut zu sehen"): groesser,
 -- heller (GameColors.mapMark), mit hellem Rand und dunklem Hof - auf dem
@@ -43,10 +51,22 @@ MK.SPIRIT = 20       -- Groesse des Punkts (Bildpunkte, bei jedem Zoom)
 MK.ARROW = 30        -- Groesse des Pfeils
 MK.TICK = 0.05
 
+local WANT = { spirit = "mapSpirit", crossing = "mapCrossings", flight = "mapFlight", travel = "mapTravel" }
 function MK.Wants(kind)
-    return K.IsActive(KEY) and K.Get(KEY, kind == "spirit" and "mapSpirit" or "mapCrossings") and true or false
+    return K.IsActive(KEY) and K.Get(KEY, WANT[kind]) and true or false
 end
-function MK.Active() return MK.Wants("spirit") or MK.Wants("crossing") end
+function MK.Active() return MK.Wants("spirit") or MK.Wants("crossing") or MK.Wants("flight") or MK.Wants("travel") end
+
+-- Eigene Fraktion: 1 Allianz, 2 Horde, nil unbekannt (dann alle).
+local function MyFaction()
+    local f = _G.UnitFactionGroup and K.Plain(_G.UnitFactionGroup("player"))
+    return f == "Alliance" and 1 or f == "Horde" and 2 or nil
+end
+local function Shows(f)
+    if f == 3 or K.Get(KEY, "mapMarksOther") then return true end
+    local me = MyFaction()
+    return me == nil or me == f
+end
 
 local function QM() return WeintCodex.QuestMap end
 local function Data() return WeintCodex.MapMarksData or {} end
@@ -69,24 +89,73 @@ end
 -- { { kind, x, y, rot, to }, ... } fuer diese Karte; gemerkt je Karte.
 local forMap = {}
 
+-- Die Eintraege einer Zone in `out`; `x0..y1` legt sie auf den Kontinent.
+local function AddZone(out, d, zone, x0, x1, y0, y1)
+    local function P(x, y)
+        if not x0 then return x, y end
+        return x0 + x * (x1 - x0), y0 + y * (y1 - y0)
+    end
+    local small = x0 ~= nil
+    if MK.Wants("spirit") then
+        local list = d.spirit and d.spirit[zone]
+        for i = 1, list and #list or 0, 2 do
+            local x, y = P(list[i], list[i + 1])
+            out[#out + 1] = { kind = "spirit", x = x, y = y, small = small }
+        end
+    end
+    if MK.Wants("crossing") then
+        local list = d.crossings and d.crossings[zone]
+        for i = 1, list and #list or 0, 4 do
+            local to = list[i + 3]
+            if MK.MapName(to) then
+                local x, y = P(list[i], list[i + 1])
+                out[#out + 1] = { kind = "crossing", x = x, y = y, rot = list[i + 2], to = to, small = small }
+            end
+        end
+    end
+    if MK.Wants("flight") then
+        local list = d.flights and d.flights[zone]
+        for i = 1, list and #list or 0, 3 do
+            if Shows(list[i + 2]) then
+                local x, y = P(list[i], list[i + 1])
+                out[#out + 1] = { kind = "flight", x = x, y = y, faction = list[i + 2], zone = zone, small = small }
+            end
+        end
+    end
+    if MK.Wants("travel") then
+        local list = d.travel and d.travel[zone]
+        for i = 1, list and #list or 0, 5 do
+            if Shows(list[i + 3]) and MK.MapName(list[i + 4]) then
+                local x, y = P(list[i], list[i + 1])
+                out[#out + 1] = { kind = "travel", x = x, y = y, vehicle = list[i + 2], faction = list[i + 3],
+                                  to = list[i + 4], small = small }
+            end
+        end
+    end
+end
+
 function MK.ForMap(mapID)
     if type(mapID) ~= "number" then return {} end
     local cached = forMap[mapID]
     if cached then return cached end
     local out = {}
     local d = Data()
-    if MK.Wants("spirit") then
-        local list = d.spirit and d.spirit[mapID]
-        for i = 1, list and #list or 0, 2 do
-            out[#out + 1] = { kind = "spirit", x = list[i], y = list[i + 1] }
+    AddZone(out, d, mapID)
+    -- Kontinent: jede Zone darunter, ueber das Rechteck, das der Client nennt.
+    local ME = WeintCodex.UIMapEntrances
+    local info = ME and ME.MapInfo(mapID)
+    if K.Get(KEY, "mapMarksContinent") and info and K.Plain(info.mapType) == ME.CONTINENT then
+        local zones, seen = {}, {}
+        for _, set in ipairs({ d.spirit, d.crossings, d.flights, d.travel }) do
+            for zone in pairs(set or {}) do
+                if not seen[zone] then seen[zone] = true zones[#zones + 1] = zone end
+            end
         end
-    end
-    if MK.Wants("crossing") then
-        local list = d.crossings and d.crossings[mapID]
-        for i = 1, list and #list or 0, 4 do
-            local to = list[i + 3]
-            if MK.MapName(to) then
-                out[#out + 1] = { kind = "crossing", x = list[i], y = list[i + 1], rot = list[i + 2], to = to }
+        table.sort(zones)
+        for _, zone in ipairs(zones) do
+            if zone ~= mapID and ME.Under(zone, mapID) then
+                local x0, x1, y0, y1 = ME.Rect(zone, mapID)
+                if x0 then AddZone(out, d, zone, x0, x1, y0, y1) end
             end
         end
     end
@@ -114,6 +183,13 @@ local function Tooltip(self)
     local t = C.textBright
     if e.kind == "spirit" then
         gt:SetText("Geistheiler", t[1], t[2], t[3])
+    elseif e.kind == "flight" then
+        gt:SetText("Flugmeister (" .. MK.FACTION[e.faction] .. ")", t[1], t[2], t[3])
+        local z = MK.MapName(e.zone)
+        if z then gt:AddLine(z, C.textNormal[1], C.textNormal[2], C.textNormal[3]) end
+    elseif e.kind == "travel" then
+        gt:SetText(MK.VEHICLE[e.vehicle] .. " nach " .. (MK.MapName(e.to) or "?"), t[1], t[2], t[3])
+        gt:AddLine(MK.FACTION[e.faction], C.textNormal[1], C.textNormal[2], C.textNormal[3])
     else
         gt:SetText("Nach " .. (MK.MapName(e.to) or "?"), t[1], t[2], t[3])
     end
@@ -144,6 +220,11 @@ local function NewPin(canvas)
     p.spirit = { Layer(p, disc, 1, BLACK, 0.6, 3), Layer(p, disc, 2, w, 1, 0), Layer(p, disc, 3, g, 1, -3) }
     -- Pfeil: dunkler Schatten, heller Rand, gruener Pfeil.
     p.crossing = { Layer(p, arrow, 1, BLACK, 0.9, 4), Layer(p, arrow, 2, w, 1, 2), Layer(p, arrow, 3, g, 1, 0) }
+    -- Flugmeister: Raute; Reise: Kreis mit hellem Kern - je in der Farbe
+    -- der Fraktion (der Kern wird beim Einrichten gefaerbt).
+    local diamond = K.MEDIA .. "diamond"
+    p.flight = { Layer(p, diamond, 1, BLACK, 0.7, 3), Layer(p, diamond, 2, w, 1, 0), Layer(p, diamond, 3, g, 1, -3) }
+    p.travel = { Layer(p, disc, 1, BLACK, 0.7, 3), Layer(p, disc, 2, g, 1, 0), Layer(p, disc, 3, w, 1, -6) }
     p.rim, p.dot = p.spirit[2], p.spirit[3]
     p.shade, p.arrow = p.crossing[1], p.crossing[3]
     p:SetScript("OnEnter", Tooltip)
@@ -157,11 +238,17 @@ local function Dress(p, e)
     if p.entry == e then return end
     p.entry = e
     local spirit = e.kind == "spirit"
-    local size = spirit and MK.SPIRIT or MK.ARROW
+    local size = e.kind == "crossing" and MK.ARROW or MK.SPIRIT
     p:SetSize(size, size)
-    for _, t in ipairs(p.spirit) do t:SetShown(spirit) end
-    for _, t in ipairs(p.crossing) do t:SetShown(not spirit) end
-    if not spirit then
+    for _, kind in ipairs({ "spirit", "crossing", "flight", "travel" }) do
+        for _, t in ipairs(p[kind]) do t:SetShown(e.kind == kind) end
+    end
+    if e.faction then
+        local c = e.faction == 1 and GC.alliance or e.faction == 2 and GC.horde or GC.neutral
+        local core = e.kind == "flight" and p.flight[3] or p.travel[2]
+        core:SetVertexColor(c[1], c[2], c[3], 1)
+    end
+    if e.kind == "crossing" then
         local r = tonumber(e.rot) or 0
         for _, t in ipairs(p.crossing) do
             if t.SetRotation then t:SetRotation(r) end
@@ -207,7 +294,7 @@ function MK.Place()
         end
         if p:GetParent() ~= canvas then p:SetParent(canvas) end
         Dress(p, e)
-        p:SetScale(1 / s)
+        p:SetScale((e.small and MK.SMALL or 1) / s)
         p:SetFrameLevel(lvl)
         p:ClearAllPoints()
         p:SetPoint("CENTER", canvas, "TOPLEFT", w * e.x * s, -h * e.y * s)
@@ -285,6 +372,14 @@ function MK.BuildRows(B)
             description = "Ein grüner Punkt, wo ein Geistheiler steht." },
           { type = "toggle", label = "Übergänge in andere Gebiete", key = "mapCrossings",
             description = "Ein grüner Pfeil, wo der Weg ins nächste Gebiet führt. Maus darauf: wohin." })
+    B:Row({ type = "toggle", label = "Flugmeister", key = "mapFlight",
+            description = "Eine Raute in der Farbe der Fraktion." },
+          { type = "toggle", label = "Schiffe, Zeppeline, Trams, Portale", key = "mapTravel",
+            description = "Ein Kreis in der Farbe der Fraktion. Maus darauf: wohin." })
+    B:Row({ type = "toggle", label = "Auch die der anderen Fraktion", key = "mapMarksOther",
+            description = "Sonst nur deine und die neutralen." },
+          { type = "toggle", label = "Auch auf der Kontinentkarte", key = "mapMarksContinent",
+            description = "Kalimdor und die Östlichen Königreiche im Ganzen, etwas kleiner." })
 end
 
 local mod = K.Module(KEY)

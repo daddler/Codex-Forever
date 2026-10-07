@@ -28,11 +28,16 @@ OUT = os.path.join(ROOT, "data", "mapmarks.lua")
 
 ZONE = re.compile(r"--\[\[([^\]]+)\]\]\s*\[(\d+)\]\s*=\s*\{")
 SPIRIT = re.compile(r'^\s*\{"Spirit",\s*([\d.]+),\s*([\d.]+),')
+FLIGHT = re.compile(r'^\s*\{"Flight([AHN])",\s*([\d.]+),\s*([\d.]+),')
+TRAVEL = re.compile(r'^\s*\{"(Travel|Portal)([AHN])",\s*([\d.]+),\s*([\d.]+),\s*L\["(Boat|Zeppelin|Tram|Portal) to"\].*,\s*(\d+)\s*\},?\s*$')
+FACTION = {"A": 1, "H": 2, "N": 3}
+VEHICLE = {"Boat": 1, "Zeppelin": 2, "Tram": 3, "Portal": 4}
 ARROW = re.compile(r'^\s*\{"Arrow",\s*([\d.]+),\s*([\d.]+),.*,\s*(-?[\d.]+),\s*(\d+)\s*\},?\s*$')
 
 
 def parse(text):
     spirit, arrows, skipped = {}, {}, 0
+    flights, travel = {}, {}
     zone = None
     for line in text.splitlines():
         m = ZONE.search(line)
@@ -48,6 +53,17 @@ def parse(text):
                 raise SystemExit(f"Karte {zone}: Geistheiler ausserhalb: {line.strip()}")
             spirit.setdefault(zone, []).append((x / 100, y / 100))
             continue
+        m = FLIGHT.match(line)
+        if m:
+            flights.setdefault(zone, []).append((float(m.group(2)) / 100, float(m.group(3)) / 100, FACTION[m.group(1)]))
+            continue
+        if line.strip().startswith(('{"Travel', '{"Portal')):
+            m = TRAVEL.match(line)
+            if not m:
+                raise SystemExit(f"Karte {zone}: Reise nicht lesbar: {line.strip()[:80]}")
+            travel.setdefault(zone, []).append((float(m.group(3)) / 100, float(m.group(4)) / 100,
+                                                VEHICLE[m.group(5)], FACTION[m.group(2)], int(m.group(6))))
+            continue
         if line.strip().startswith('{"Arrow"'):
             m = ARROW.match(line)
             if not m:
@@ -57,7 +73,7 @@ def parse(text):
                 skipped += 1
                 continue
             arrows.setdefault(zone, []).append((x / 100, y / 100, rot, to))
-    return spirit, arrows, skipped
+    return spirit, arrows, skipped, flights, travel
 
 
 def num(v):
@@ -65,7 +81,7 @@ def num(v):
     return s if s not in ("", "-0") else "0"
 
 
-def write(spirit, arrows, skipped):
+def write(spirit, arrows, skipped, flights, travel):
     ns = sum(len(v) for v in spirit.values())
     na = sum(len(v) for v in arrows.values())
     out = [
@@ -96,11 +112,25 @@ def write(spirit, arrows, skipped):
         vals = ", ".join(f"{num(x)}, {num(y)}, {num(r)}, {to}" for x, y, r, to in arrows[zone])
         out.append(f"        [{zone}] = {{ {vals} }},")
     out.append("    },")
+    out.append("    -- flights[Karte] = { x, y, Fraktion, ... } (1 Allianz, 2 Horde, 3 neutral)")
+    out.append("    flights = {")
+    for zone in sorted(flights):
+        vals = ", ".join(f"{num(x)}, {num(y)}, {f}" for x, y, f in flights[zone])
+        out.append(f"        [{zone}] = {{ {vals} }},")
+    out.append("    },")
+    out.append("    -- travel[Karte] = { x, y, Art, Fraktion, Ziel, ... } (Art: 1 Schiff, 2 Zeppelin, 3 Tram, 4 Portal)")
+    out.append("    travel = {")
+    for zone in sorted(travel):
+        vals = ", ".join(f"{num(x)}, {num(y)}, {v}, {f}, {to}" for x, y, v, f, to in travel[zone])
+        out.append(f"        [{zone}] = {{ {vals} }},")
+    out.append("    },")
     out.append("}")
     out.append("")
     with open(OUT, "w", encoding="utf-8") as f:
         f.write("\n".join(out))
-    print(f"geschrieben: data/mapmarks.lua ({ns} Geistheiler, {na} Uebergaenge, {skipped} weggelassen)")
+    nf = sum(len(v) for v in flights.values())
+    nt = sum(len(v) for v in travel.values())
+    print(f"geschrieben: data/mapmarks.lua ({ns} Geistheiler, {na} Uebergaenge, {skipped} weggelassen, {nf} Flugmeister, {nt} Reisen)")
 
 
 def main():

@@ -1543,6 +1543,14 @@ beide ab Werk aus.
   dem Grün und Braun der Karte unter. Seit 6.21.0.1: Punkt 20 px, Pfeil
   30 px, je drei Lagen (dunkler Hof/Schatten, heller Rand `textBright`, Kern
   `GameColors.mapMark`), Schatten und Rand drehen mit.
+- **Azerothweit (Beta-Test 6.21.1.0, „alle Geistheiler, Pfeile etc.“):**
+  dazu Flugmeister (Raute) und Reisen (Kreis: Schiff, Zeppelin, Tram,
+  Portal) in der Farbe der Fraktion (`GameColors.alliance`/`horde`/
+  `neutral`); ab Werk eigene Fraktion und neutrale (`mapMarksOther`).
+  `mapMarksContinent` (an): auf dem Kontinent jede Zone darunter über
+  `GetMapRectOnMap` (`ME.Under`/`ME.Rect`), Symbole auf 70 % (`MK.SMALL`).
+  Der Bestand deckt alle 50 Karten der Quelle ab, auch die neuen Gebiete
+  von Forever.
 
 ## Herkunft im Spiel ohne fremde Namen *(6.21.0.0)*
 
@@ -1587,7 +1595,7 @@ Reiter) – gekürzt, ebenso die der Oberfläche; `load_test.lua` hält jede
 Beschreibung auf zwei Zeilen (nach Wörtern umbrochen, 6 px je Zeichen –
 Zeichen zählen allein ließ die alte Beschreibung durch).
 
-## Raus aus dem Feuer *(6.21.1.0, `ui/firealarm.lua`, Seite „Feuer“)*
+## Raus da *(6.21.1.0, `ui/firealarm.lua`, Seite „Raus da“)*
 
 Beta-Test: „GTFO – Sound, wenn man in Feuer oder Schaden steht.“ Kein
 Kampflog für Addons, also keine Zauberliste wie bei GTFO: im Kampf alle

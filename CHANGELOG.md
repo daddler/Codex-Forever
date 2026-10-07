@@ -11,7 +11,9 @@ nicht zusammen.
 
 ## [6.21.1.0] – 2026-10-07
 
-**Neu im Komfort: Raus aus dem Feuer.** Ein Warnton, sobald dich Schaden trifft, dem man ausweichen kann – Feuer, Gift am Boden, Flächen. Drei Töne zur Wahl, höchstens einer je Sekunde. Einschalten unter Komfort → Feuer.
+**Neu im Komfort: Raus da!** Ein Warnton, sobald du in etwas stehst, das dir schadet und dem man ausweichen kann – nicht nur Feuer, alles am Boden, dazu Kegel und Wellen vor dem Gegner. Drei Töne zur Wahl, höchstens einer je Sekunde. Einschalten unter Komfort → Raus da.
+
+**Die ganze Welt auf der Karte.** Neben Geistheilern und Übergängen zeigt die Karte auf Wunsch Flugmeister, Schiffe, Zeppeline, Trams und Portale – in allen Gebieten und jetzt auch auf der Kontinentkarte. Ab Werk nur deine Fraktion und die neutralen; einstellbar unter Komfort → Karte.
 
 **Deine eigene Farbe.** Unter „Farbe der Oberfläche“ gibt es jetzt neben Klassenfarbe und Lila eine eigene Farbe zum Aussuchen. Sie gilt nach dem Neuladen.
 
@@ -19,6 +21,7 @@ nicht zusammen.
 
 - **Warnton** (`ui/firealarm.lua`, Seite „Feuer“, `fireAlarm` ab Werk aus, `fireSound`): Verhalten wie GTFO, ohne Code und ohne Zauberliste. Addons haben kein Kampflog; statt dessen fragt der Takt im Kampf (0,2 s) die eigene Summe des **vermeidbaren Schadens** aus `C_DamageMeter` (`AvoidableDamageTaken`, Sitzung „Current“). Wächst sie: Ton (`SOUNDKIT` Schlachtzugswarnung/Bereitschaftscheck/Wecker), höchstens einer je Sekunde; Kampfbeginn setzt zurück. Geheime Summe: kein Ton, gezählt – `/wcui prüfen` → „Feuer“. **Ungemessen:** ob die Summe auf Forever im Kampf offen kommt; die Schadensanzeige sah 6.6.2.3 geheime Summen im Kampf. Dann bleibt der Ton stumm.
 - **Eigene Farbe** (`general.highlight = "custom"`, `highlightColor`, Vorgabe das Lila über `WeintCodex.VioletRGB`): `K.ResetHighlight` setzt sie mit `SetAccent` – weiter ein Akzent, der Prüflauf hält accent = purple = violet = brandA.
+- **Karte azerothweit** (`ui/mapmarks.lua`): Bestand aller 50 Karten erweitert um 65 Flugmeister (Fraktion) und 28 Reisen (Schiff, Zeppelin, Tram, Portal; Fraktion, Zielkarte – Name vom Client); `mapFlight`, `mapTravel`, `mapMarksOther` (ab Werk nur eigene + neutrale), `mapMarksContinent` (ab Werk an: jede Zone unter dem Kontinent über `GetMapRectOnMap`, Symbole auf 70 %). Farben `GameColors.alliance`/`horde`/`neutral`. Seite „Raus da“ statt „Feuer“ – es geht um allen vermeidbaren Schaden.
 - 7 Gegenproben, alle gefangen.
 
 ## [6.21.0.1] – 2026-10-07

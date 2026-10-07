@@ -203,6 +203,9 @@ WeintCodex.GameColors = {
     -- In "friendly" waren sie auf dem Gruen der Karte kaum zu sehen
     -- (Beta-Test) - heller und satter, dazu ein heller Rand.
     mapMark       = {0.420, 1.000, 0.380, 1.0},
+    -- 6.21.2.0: Flugmeister, Schiffe, Zeppeline, Portale nach Fraktion.
+    alliance      = {0.250, 0.550, 1.000, 1.0},
+    horde         = {0.950, 0.250, 0.200, 1.0},
     boss          = {0.860, 0.400, 0.120, 1.0},
     elite         = {0.620, 0.220, 0.460, 1.0},
     focus         = {0.250, 0.700, 0.850, 1.0},

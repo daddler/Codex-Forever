@@ -25,7 +25,8 @@ WeintCodex_ChangelogData = {
         version = "6.21.1.0",
         date    = "07.10.2026",
         notes   = {
-            "|cff7C6CFFNeu im Komfort: Raus aus dem Feuer.|r Ein Warnton, sobald dich Schaden trifft, dem man ausweichen kann – Feuer, Gift am Boden, Flächen. Drei Töne zur Wahl, höchstens einer je Sekunde. Einschalten unter Komfort → Feuer.",
+            "|cff7C6CFFNeu im Komfort: Raus da!|r Ein Warnton, sobald du in etwas stehst, das dir schadet und dem man ausweichen kann – nicht nur Feuer, alles am Boden, dazu Kegel und Wellen vor dem Gegner. Drei Töne zur Wahl, höchstens einer je Sekunde. Einschalten unter Komfort → Raus da.",
+            "|cff7C6CFFDie ganze Welt auf der Karte.|r Neben Geistheilern und Übergängen zeigt die Karte auf Wunsch Flugmeister, Schiffe, Zeppeline, Trams und Portale – in allen Gebieten und jetzt auch auf der Kontinentkarte. Ab Werk nur deine Fraktion und die neutralen; einstellbar unter Komfort → Karte.",
             "|cff7C6CFFDeine eigene Farbe.|r Unter „Farbe der Oberfläche“ gibt es jetzt neben Klassenfarbe und Lila eine eigene Farbe zum Aussuchen. Sie gilt nach dem Neuladen.",
         },
     },

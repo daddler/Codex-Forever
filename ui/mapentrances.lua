@@ -168,6 +168,8 @@ function ME.ForMap(mapID)
     return out
 end
 
+ME.MapInfo, ME.Under, ME.Rect = MapInfo, Under, Rect
+
 function ME.Forget()
     for k in pairs(forMap) do forMap[k] = nil end
 end

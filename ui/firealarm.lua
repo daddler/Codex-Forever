@@ -18,7 +18,8 @@
 -- nicht vergleichen - dann schweigt der Ton, statt zu raten, und
 -- /wcui prüfen sagt "geheim". Ob das auf Forever so ist, ist ungemessen.
 --
--- Seite "Feuer" im Komfort, ab Werk aus, geht ohne Oberflaeche. Gefragt
+-- Seite "Raus da" im Komfort (6.21.2.0: nicht nur Feuer - "allgemein in
+-- der Schei... stehen"; vermeidbar ist alles, was das Spiel so zaehlt), ab Werk aus, geht ohne Oberflaeche. Gefragt
 -- wird nur im Kampf, fuenfmal je Sekunde.
 --------------------------------------------------
 
@@ -116,7 +117,7 @@ end
 local ticker = CreateFrame("Frame")
 ticker:Hide()
 local acc = 0
-ticker:SetScript("OnUpdate", K.Measured("Feuer-Warnung", function(_, el)
+ticker:SetScript("OnUpdate", K.Measured("Raus da", function(_, el)
     acc = acc + (el or 0)
     if acc < FA.TICK then return end
     acc = 0
@@ -172,10 +173,10 @@ end
 
 local function Build(B)
     local off = function() return not K.Get(KEY, "fireAlarm") end
-    B:Section("Raus aus dem Feuer", "Ein Ton, sobald dich Schaden trifft, dem man ausweichen kann – Feuer, Gift am Boden, Flächen. Was vermeidbar ist, sagt das Spiel; Kampflog gibt es für Addons nicht.")
+    B:Section("Raus da!", "Ein Ton, sobald du in etwas stehst, das dir schadet und dem man ausweichen kann – nicht nur Feuer: alles am Boden (Gift, Leere, Eis, Blitze, Wirbel), Kegel und Wellen vor dem Gegner. Was vermeidbar ist, sagt das Spiel; ein Kampflog gibt es für Addons nicht.")
     local items = {}
     for _, k in ipairs({ "raid", "ready", "alarm" }) do items[#items + 1] = { value = k, text = FA.SOUNDS[k].text } end
-    B:Row({ type = "toggle", label = "Warnton bei vermeidbarem Schaden", key = "fireAlarm",
+    B:Row({ type = "toggle", label = "Warnton, wenn du in etwas stehst", key = "fireAlarm",
             description = "Höchstens einmal je Sekunde, nur im Kampf." },
           { type = "dropdown", label = "Ton", key = "fireSound", items = items, disabled = off })
     B:Row({ type = "button", label = "Probe", text = "Ton abspielen", onClick = FA.Play },
@@ -188,7 +189,7 @@ if mod then
     for k, v in pairs(FA.DEFAULTS) do
         if mod.defaults[k] == nil then mod.defaults[k] = v end
     end
-    mod.pages[#mod.pages + 1] = { key = "feuer", label = "Feuer", build = Build }
+    mod.pages[#mod.pages + 1] = { key = "rausda", label = "Raus da", build = Build }
 end
 
 K.Listen(function(kind, key)

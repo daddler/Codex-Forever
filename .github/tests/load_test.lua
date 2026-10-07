@@ -5819,10 +5819,53 @@ do
         -- Nur die Geistheiler wieder: die Pfeile verschwinden.
         K.Set("comfort", "mapCrossings", false)
         assert(MK.Place() == 7 and not MK.pins[8]:IsShown(), "Pfeile bleiben stehen")
-        -- Kontinent: keine (ueber hundert Punkte waeren keine Hilfe).
+        -- 6.21.2.0: Kontinent - jede Zone darunter, kleiner; nur mit Rechteck.
         K.Set("comfort", "mapCrossings", true)
         mapID = 1414
-        assert(MK.Place() == 0, "Kontinent zeigt Geistheiler oder Pfeile")
+        assert(MK.Place() == 0, "Kontinent ohne Rechteck zeigt Symbole")
+        G.C_Map.GetMapRectOnMap = function(zone, top) if top == 1414 then return 0.4, 0.6, 0.5, 0.7 end end
+        MK.Forget()
+        local n = MK.Place()
+        assert(n > 50 and MK.pins[1].entry.small, "Kontinent: " .. tostring(n))
+        assert(math.abs(MK.pins[1].entry.x - (0.4 + D.spirit[1411][1] * 0.2)) < 1e-6, "Kontinent an falscher Stelle")
+        K.Set("comfort", "mapMarksContinent", false)
+        assert(MK.Place() == 0, "Kontinent, obwohl abgeschaltet")
+        K.Set("comfort", "mapMarksContinent", true)
+        -- Flugmeister und Reisen, nach Fraktion.
+        G.UnitFactionGroup = function() return "Horde" end
+        K.Set("comfort", "mapSpirit", false)
+        K.Set("comfort", "mapCrossings", false)
+        K.Set("comfort", "mapFlight", true)
+        K.Set("comfort", "mapTravel", true)
+        mapID = 1420
+        MK.Place()
+        local kinds, factions = {}, {}
+        for _, q in ipairs(MK.pins) do
+            if q:IsShown() then kinds[q.entry.kind] = true factions[q.entry.faction] = true end
+        end
+        assert(kinds.travel and not factions[1], "Tirisfal: Zeppelin fehlt oder Allianz gezeigt")
+        K.Set("comfort", "mapMarksOther", true)
+        mapID = 1455
+        local all = MK.Place()
+        K.Set("comfort", "mapMarksOther", false)
+        assert(MK.Place() < all, "andere Fraktion nicht ausgeblendet")
+        lines = {}
+        for _, q in ipairs(MK.pins) do
+            if q:IsShown() and q.entry.kind == "travel" then q:GetScript("OnEnter")(q) break end
+        end
+        K.Set("comfort", "mapMarksOther", true)
+        mapID = 1455
+        MK.Place()
+        for _, q in ipairs(MK.pins) do
+            if q:IsShown() and q.entry.kind == "travel" then q:GetScript("OnEnter")(q) break end
+        end
+        assert(table.concat(lines, "\n"):find("Tram nach Zone 1453", 1, true), "Tooltip der Reise: " .. table.concat(lines, "|"))
+        K.Set("comfort", "mapMarksOther", false)
+        K.Set("comfort", "mapFlight", false)
+        K.Set("comfort", "mapTravel", false)
+        K.Set("comfort", "mapSpirit", true)
+        G.UnitFactionGroup = nil
+        mapID = 1414
         -- Karte zu: nichts.
         mapID = 1440
         wm:Hide()
@@ -5832,6 +5875,10 @@ do
         assert(sc:find("Geistheiler im Bestand: 103 auf", 1, true) and sc:find("Übergänge: 110 auf", 1, true), "Selbstpruefung: " .. sc)
     end)
     for i, n in ipairs(names) do G[n] = saved[i] end
+    G.UnitFactionGroup = nil
+    K.Set("comfort", "mapFlight", false)
+    K.Set("comfort", "mapTravel", false)
+    K.Set("comfort", "mapMarksOther", false)
     stub.Methods.SetVertexColor, stub.Methods.GetVertexColor = svc, gvc
     K.Set("comfort", "mapSpirit", false)
     K.Set("comfort", "mapCrossings", false)
