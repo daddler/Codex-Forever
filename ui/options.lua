@@ -1291,6 +1291,16 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Eigene Wahl abgegeben – der Pfeil plant wieder selbst.")
         return
     end
+    if msg == "auktion" or msg == "ah" or msg == "auction" then
+        local AP = WeintCodex.UIAuctionPrices
+        if AP and AP.Report then K.ShowReport("Auktionspreise", AP.Report()) end
+        return
+    end
+    if msg == "auktion scan" or msg == "ah scan" or msg == "auction scan" then
+        local AP = WeintCodex.UIAuctionPrices
+        if AP and AP.Start then AP.Start() end
+        return
+    end
     if msg == "selten" or msg == "rares" or msg == "rare" then
         local RA = WeintCodex.UIRares
         if RA and RA.Report then K.ShowReport("Seltene Gegner", RA.Report()) end

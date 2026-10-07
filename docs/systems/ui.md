@@ -1185,6 +1185,63 @@ Gebiets mit Wiederkehr und zuletzt gesehen. **`/wcui prüfen`**:
 „Seltene Gegner“ (an/aus, Abfragen da, GUID des Ziels offen oder geheim,
 Vignetten, zuletzt gemeldet).
 
+## Auktionspreise *(6.17.0.0, `ui/auctionprices.lua`, Seite im Komfort)*
+
+Wunsch des Spielers nach dem Vorbild von ForeverGuide (Verhalten, kein
+Code – das Addon hat keine Lizenz). Ein Knopf „Preise scannen“ in der
+Titelzeile des Auktionshauses (Lage **ungemessen**) liest die Angebote;
+danach nennt jeder Tooltip eines Gegenstands (`TooltipDataProcessor`,
+nur `GameTooltip`/`ItemRefTooltip`) das günstigste Angebot je Stück,
+Menge, Tag – in den Taschen auch den Stapel (`GetPrimaryTooltipInfo` →
+`GetBagItem`, sonst `GetBagID` des Besitzers). Gespeichert unter
+`comfort` (`ahPrices`, `ahStack`, `ahPassive`), der Helfer ab Werk
+**aus**; geht ohne Oberfläche.
+
+**Die Zahl ist kein „Wert“:** das günstigste Sofortkauf-Angebot je
+Stück beim letzten Blick, kein Durchschnitt – ein einzelnes billiges
+Angebot macht sie klein, darum stehen Menge und Tag daneben. Herkunft
+ist dein eigener Blick ins Auktionshaus. Kein Eintrag: **keine Zeile**,
+nie „0“. Beim letzten vollständigen Scan nicht dabei: „zuletzt vor N
+Tagen · beim letzten Scan nicht im Angebot“ (abgeleitet aus dem Tag des
+Eintrags und `store.full`, ohne eigenes Feld).
+
+**Drei Wege, alle ungemessen auf Forever:**
+
+1. **Vollscan** (`C_AuctionHouse.ReplicateItems`), höchstens alle
+   `AP.REPLICATE_EVERY` = 15 min. Gelesen werden `GetReplicateItemInfo`
+   mit **0-basierten** Nummern, `AP.BATCH` = 1000 je Bild über einen
+   Taktgeber, der nur während eines Scans läuft (`AP.Step`). Fertig mit
+   `REPLICATE_ITEM_LIST_UPDATE` – oder ohne Ereignis, wenn
+   `GetNumReplicateItems` zweimal dieselbe Zahl nennt.
+2. **Suche**, wenn der Server nach `AP.REPLICATE_WAIT` = 35 s schweigt
+   (laut ForeverGuide tut er das auf Forever manchmal); dann drei Tage
+   lang gleich die Suche (`store.noReplicate`). `SendBrowseQuery` mit
+   leerem Text (zwei Formen, `AP.Query`), weitere Seiten
+   (`RequestMoreBrowseResults`) erst, wenn das Auktionshaus Anfragen
+   nimmt; fertig mit `HasFullBrowseResults`, sonst nach `AP.STALL` =
+   15 s ohne Seite **unvollständig** (dann setzt der Scan kein `full`).
+   Nebenwirkung: die Liste im Auktionshaus zeigt dabei, was die Suche
+   bringt.
+3. **Nebenbei** die eigene Suche des Spielers (`ahPassive`).
+
+**Ablage:** `SavedData.auction["Realm|Seite"]` mit Seite `Alliance`,
+`Horde` oder `Neutral` (Karten 1446 Tanaris, 1434 Schlingendorntal, 1452
+Winterquell – bestimmt beim Öffnen). Je Gegenstand **eine Zahl**
+(`AP.Pack`/`AP.Unpack`: Preis · 10⁷ + Menge · 10⁴ + Tag seit 1.1.2026 in
+Ortszeit; gekappt bei `AP.PRICE_MAX` ≈ 90.000 Gold und 999 Stück) – eine
+Tabelle je Gegenstand hätte das Dreifache gekostet. Nach
+`AP.KEEP_DAYS` = 30 Tagen fällt ein Eintrag heraus. Im Tooltip zuerst das
+Auktionshaus, an dem du stehst (sonst deiner Fraktion), dann das neutrale
+(„Auktionshaus (neutral)“).
+
+**Nicht gebaut:** Durchschnitt über mehrere Scans, Gewinn je Rezept,
+Preise von anderen Spielern (ForeverGuide tauscht sie über einen
+versteckten Kanal – widerspricht „nie nach außen“). **`/wcui auktion`**:
+Bericht beider Ablagen mit den letzten Schritten; **`/wcui auktion
+scan`** startet bei offenem Auktionshaus; **`/wcui prüfen`**:
+„Auktionspreise“ (an/aus, welche Wege der Client anbietet, Tooltip über
+welchen Weg, letzter Scan).
+
 ## Automark *(6.8.1.0, auf Klick seit 6.9.0.2, `ui/automark.lua`)*
 
 Beta-Test: „Wenn eine Instanz betreten wird, soll der Tank und Heiler

@@ -4292,6 +4292,257 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.17.0.0: Auktionspreise - Vollscan, sonst Suche Seite um Seite (erst,
+-- wenn das Auktionshaus Anfragen nimmt), nebenbei die eigene Suche; eine
+-- Zahl je Gegenstand; Tooltip mit Preis, Menge, Tag, Stapel; je Seite.
+do
+    local G = _G
+    local names = { "C_AuctionHouse", "AuctionHouseFrame", "UnitFactionGroup", "C_Container", "print", "Enum" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local K = WeintCodex.UIKit
+    local savedBest = K.BestMap
+    local AP = WeintCodex.UIAuctionPrices
+    local savedBatch = AP.BATCH
+    local savedAuction = WeintCodex.SavedData.auction
+    local gt = G.GameTooltip
+    local savedAdd, savedAdd2, savedPrim = gt.AddLine, gt.AddDoubleLine, gt.GetPrimaryTooltipInfo
+    local ok, err = pcall(function()
+        -- Eine Zahl je Gegenstand: Preis, Menge, Tag.
+        local p, q, d = AP.Unpack(AP.Pack(123456789, 42, 280))
+        assert(p == 123456789 and q == 42 and d == 280, "Packen: " .. p .. "/" .. q .. "/" .. d)
+        p, q, d = AP.Unpack(AP.Pack(AP.PRICE_MAX, 5000, 9999))
+        assert(p == AP.PRICE_MAX and q == AP.QTY_MAX and d == 9999, "Packen an der Grenze")
+        p = AP.Unpack(AP.Pack(AP.PRICE_MAX * 10, 1, 1))
+        assert(p == AP.PRICE_MAX, "zu teuer nicht gekappt")
+        for _, v in ipairs({ { 899999998, 999, 9998 }, { 1, 0, 0 }, { 7, 1, 1 } }) do
+            local a, b, c = AP.Unpack(AP.Pack(v[1], v[2], v[3]))
+            assert(a == v[1] and b == v[2] and c == v[3], "Packen: " .. v[1])
+        end
+        assert(AP.Day(os.time({ year = 2026, month = 1, day = 1, hour = 12 })) == 0
+            and AP.Day(os.time({ year = 2026, month = 3, day = 1, hour = 12 })) == 59, "Tagesnummer")
+        assert(AP.AgeText(10, 10) == "heute" and AP.AgeText(9, 10) == "gestern" and AP.AgeText(5, 10) == "vor 5 Tagen", "Alter")
+        assert(AP.Money(12345) == "1 G 23 S 45 K" and AP.Money(80) == "80 K", "Geld: " .. AP.Money(12345))
+
+        local lines = {}
+        G.print = function(...) lines[#lines + 1] = table.concat({ ... }, " ") end
+        G.UnitFactionGroup = function() return "Horde" end
+        G.AuctionHouseFrame = CreateFrame("Frame")
+        WeintCodex.SavedData.auction = nil
+        local map = 1454
+        K.BestMap = function() return map end
+
+        -- Der Client: Vollscan mit 0-basierten Nummern, Suche in Seiten.
+        local rep, calls = {}, { replicate = 0, query = 0, more = 0 }
+        local repN, ready, full, results, queryFails = 0, true, false, {}, 0
+        G.C_AuctionHouse = {
+            ReplicateItems = function() calls.replicate = calls.replicate + 1 end,
+            GetNumReplicateItems = function() return repN end,
+            GetReplicateItemInfo = function(i)
+                local r = rep[i + 1]
+                assert(r, "Vollscan: Nummer " .. i .. " gibt es nicht")
+                return "x", 1, r[2], 1, true, 1, 0, 1, 1, r[3], 0, false, nil, nil, nil, 0, r[1], true
+            end,
+            SendBrowseQuery = function(q)
+                calls.query = calls.query + 1
+                if queryFails > 0 then queryFails = queryFails - 1 error("bad query") end
+                assert(q.searchString == "", "Suche nicht leer")
+            end,
+            RequestMoreBrowseResults = function() calls.more = calls.more + 1 end,
+            GetBrowseResults = function() return results end,
+            HasFullBrowseResults = function() return full end,
+            IsThrottledMessageSystemReady = function() return ready end,
+        }
+        local function Fire(e) AP.OnEvent(nil, e) end
+        local function Store(side) return WeintCodex.SavedData.auction["Testrealm|" .. side] end
+
+        -- Aus: nichts, auch kein Scan.
+        K.Set("comfort", "ahPrices", false)
+        assert(AP.Start() == false and calls.replicate == 0, "Scan, obwohl aus")
+        K.Set("comfort", "ahPrices", true)
+        assert(AP.Start() == false and lines[#lines]:find("Erst das Auktionshaus", 1, true), "Scan ohne Auktionshaus")
+        Fire("AUCTION_HOUSE_SHOW")
+        assert(AP.button and AP.button:IsShown() and AP.button:GetText() == "Preise scannen", "Knopf am Auktionshaus fehlt")
+
+        -- 1. Vollscan: guenstigstes Angebot je Stueck, Menge zusammen,
+        -- nur Sofortkauf; in Stuecken zu AP.BATCH je Bild.
+        rep = { { 100, 5, 500 }, { 100, 1, 80 }, { 200, 1, 0 }, { 300, 20, 2000000 }, { 100, 2, 300 } }
+        repN = #rep
+        AP.BATCH = 2
+        assert(AP.Start() == true and calls.replicate == 1 and AP.Phase() == "replicate", "Vollscan nicht angefragt")
+        assert(AP.Start() == false, "zweiter Scan gleichzeitig")
+        Fire("REPLICATE_ITEM_LIST_UPDATE")
+        assert(AP.Phase() == "read", "Ereignis nicht gelesen")
+        AP.Step(0.01)
+        assert(AP.Phase() == "read" and AP.button:GetText():find("40 %%"), "Stueckweise: " .. tostring(AP.button:GetText()))
+        AP.Step(0.01) AP.Step(0.01)
+        assert(not AP.Scanning(), "Vollscan nicht fertig")
+        local st = Store("Horde")
+        local function Get(id) return AP.Unpack(st.items[id]) end
+        p, q = Get(100)
+        assert(p == 80 and q == 8, "Preis/Menge 100: " .. p .. "/" .. q)
+        assert(st.items[200] == nil, "Gebot ohne Sofortkauf gespeichert")
+        assert(select(1, Get(300)) == 100000 and st.full and st.via == "Vollscan" and st.lots == 4 and st.n == 2, "Vollscan-Ablage")
+        assert(lines[#lines]:find("4 Angebote, 2 Gegenstände", 1, true), "Meldung: " .. lines[#lines])
+        AP.BATCH = savedBatch
+        -- Keine 15 Minuten spaeter: kein zweiter Vollscan, gleich die Suche.
+        AP.Start()
+        assert(calls.replicate == 1 and AP.Phase() == "browse" and table.concat(AP.log, " "):find("keine 15 Minuten", 1, true),
+            "Vollscan vor Ablauf der 15 Minuten")
+        AP.Step(AP.STALL)
+        assert(not AP.Scanning(), "Suche nicht beendet")
+        calls.query = 0
+        -- Ohne Ereignis: zweimal dieselbe Zahl hintereinander heisst fertig.
+        st.replicateAt = 0
+        AP.Start()
+        AP.Step(1) AP.Step(1)
+        assert(AP.Phase() == "replicate", "zu frueh gelesen")
+        AP.Step(1)
+        assert(AP.Phase() == "read" and table.concat(AP.log, " "):find("ohne Ereignis", 1, true), "ohne Ereignis nicht gelesen")
+        AP.Step(0) AP.Step(0) AP.Step(0)
+        assert(not AP.Scanning() and calls.replicate == 2, "Vollscan ohne Ereignis nicht fertig")
+        calls.replicate = 1
+
+        -- Tooltip: Preis, Menge, Tag; Stapel aus der Tasche; nur, was bekannt ist.
+        local tl = {}
+        gt.AddDoubleLine = function(_, l, r) tl[#tl + 1] = l .. " = " .. r end
+        gt.AddLine = function(_, l) tl[#tl + 1] = l end
+        gt.GetPrimaryTooltipInfo = function() return { getterName = "GetBagItem", getterArgs = { 0, 3 } } end
+        G.C_Container = { GetContainerItemInfo = function(b, sl) return (b == 0 and sl == 3) and { stackCount = 20 } or nil end }
+        AP.OnItem(gt, { id = 100 })
+        local txt = table.concat(tl, "\n")
+        assert(tl[1] == "Auktionshaus = ab 80 K" and tl[2] == "Stapel (20) = 16 S" and tl[3] == "heute · 8 Stück im Angebot",
+            "Tooltip: " .. txt)
+        tl = {}
+        K.Set("comfort", "ahStack", false)
+        AP.OnItem(gt, { id = 100 })
+        assert(#tl == 2, "Stapel trotz Schalter")
+        K.Set("comfort", "ahStack", true)
+        tl = {}
+        AP.OnItem(gt, { id = 999 })
+        local other = CreateFrame("Frame")
+        other.AddDoubleLine, other.AddLine = gt.AddDoubleLine, gt.AddLine
+        AP.OnItem(other, { id = 100 })
+        assert(#tl == 0, "Preis erfunden oder fremder Tooltip: " .. table.concat(tl, " | "))
+        K.Set("comfort", "ahPrices", false)
+        AP.OnItem(gt, { id = 100 })
+        assert(#tl == 0, "Tooltip, obwohl aus")
+        K.Set("comfort", "ahPrices", true)
+        Fire("AUCTION_HOUSE_SHOW")
+
+        -- 2. Der Server schweigt zum Vollscan: nach AP.REPLICATE_WAIT s die
+        -- Suche; erste Form abgelehnt, zweite genommen; weitere Seiten erst,
+        -- wenn das Auktionshaus Anfragen nimmt.
+        st.replicateAt = 0
+        repN = 0
+        queryFails = 1
+        assert(AP.Start() == true and calls.replicate == 2, "zweiter Vollscan nicht angefragt")
+        for _ = 1, AP.REPLICATE_WAIT - 1 do AP.Step(1) end
+        assert(AP.Phase() == "replicate", "zu frueh aufgegeben")
+        AP.Step(1)
+        assert(AP.Phase() == "browse" and calls.query == 2 and (st.noReplicate or 0) > os.time(), "keine Suche nach dem Schweigen")
+        results = { { itemKey = { itemID = 400 }, minPrice = 5000, totalQuantity = 3 },
+                    { itemKey = { itemID = 100 }, minPrice = 70, totalQuantity = 12 } }
+        ready = false
+        Fire("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
+        assert(calls.more == 0 and AP.Phase() == "browse", "weitere Seite trotz Drosselung")
+        ready = true
+        AP.Step(0.1)
+        assert(calls.more == 1, "weitere Seite nicht angefragt (Takt)")
+        results[3] = { itemKey = { itemID = 500 }, minPrice = 999, totalQuantity = 1 }
+        ready = false
+        Fire("AUCTION_HOUSE_BROWSE_RESULTS_ADDED")
+        assert(calls.more == 1, "dritte Seite trotz Drosselung")
+        ready = true
+        Fire("AUCTION_HOUSE_THROTTLED_SYSTEM_READY")
+        assert(calls.more == 2, "weitere Seite nicht angefragt (Ereignis)")
+        results[4] = { itemKey = { itemID = 450 }, minPrice = 9, totalQuantity = 1 }
+        full = true
+        Fire("AUCTION_HOUSE_BROWSE_RESULTS_ADDED")
+        assert(not AP.Scanning() and st.via == "Suche" and st.n == 4 and st.lots == 4, "Suche nicht fertig: " .. tostring(st.via))
+        assert(select(1, Get(100)) == 70 and select(1, Get(400)) == 5000, "Preise aus der Suche")
+
+        -- 300 war beim letzten vollstaendigen Scan nicht dabei.
+        st.items[300] = AP.Pack(100000, 20, AP.Day() - 2)
+        tl = {}
+        gt.GetPrimaryTooltipInfo = nil
+        AP.OnItem(gt, { id = 300 })
+        assert(tl[2] == "zuletzt vor 2 Tagen · beim letzten Scan nicht im Angebot", "Fehlt: " .. table.concat(tl, " | "))
+
+        -- 3. Drei Tage lang gleich die Suche; ohne neue Seite nach AP.STALL s
+        -- ist Schluss - ohne Ergebnis ehrlich gesagt.
+        full, results = false, {}
+        AP.Start()
+        assert(calls.replicate == 2 and AP.Phase() == "browse" and table.concat(AP.log, " "):find("zuletzt nicht", 1, true),
+            "Vollscan trotz Schweigen")
+        AP.Step(AP.STALL)
+        assert(not AP.Scanning() and AP.last.ok == false and lines[#lines]:find("keine Preise", 1, true), "Stillstand")
+
+        -- 4. Nebenbei: deine eigene Suche.
+        results = { { itemKey = { itemID = 600 }, minPrice = 1234, totalQuantity = 2 } }
+        Fire("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
+        assert(st.items[600] and select(1, Get(600)) == 1234, "eigene Suche nicht gemerkt")
+        K.Set("comfort", "ahPassive", false)
+        results = { { itemKey = { itemID = 601 }, minPrice = 1, totalQuantity = 1 } }
+        Fire("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
+        assert(st.items[601] == nil, "eigene Suche trotz Schalter")
+        K.Set("comfort", "ahPassive", true)
+
+        -- 5. Geschlossen mitten im Scan: behalten, was da ist, unvollstaendig.
+        results = { { itemKey = { itemID = 700 }, minPrice = 10, totalQuantity = 1 } }
+        st.full = 1
+        local fullBefore = st.full
+        AP.Start()
+        Fire("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
+        Fire("AUCTION_HOUSE_CLOSED")
+        assert(not AP.Scanning() and st.items[700] and st.full == fullBefore and AP.last.full == false, "geschlossen im Scan")
+
+        -- 6. Neutral (Gadgetzan): eigene Ablage; die Horde sieht sie im
+        -- Tooltip, wenn ihre eigene nichts weiss.
+        map = 1446
+        Fire("AUCTION_HOUSE_SHOW")
+        results, full = { { itemKey = { itemID = 800 }, minPrice = 555, totalQuantity = 4 } }, true
+        AP.Start()
+        Fire("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
+        assert(Store("Neutral") and Store("Neutral").items[800] and st.items[800] == nil, "neutral nicht getrennt")
+        Fire("AUCTION_HOUSE_CLOSED")
+        tl = {}
+        AP.OnItem(gt, { id = 800 })
+        assert(tl[1] == "Auktionshaus (neutral) = ab 5 S 55 K", "neutral im Tooltip: " .. tostring(tl[1]))
+
+        -- Nach 30 Tagen faellt es heraus.
+        st.items[900] = AP.Pack(1, 1, AP.Day() - AP.KEEP_DAYS - 1)
+        AP.Prune(st)
+        assert(st.items[900] == nil and st.items[100], "Aufraeumen")
+
+        -- Bericht, Selbstpruefung, Seite.
+        local r = table.concat(AP.Report(), "\n")
+        assert(r:find("Auktionshaus Horde", 1, true) and r:find("Auktionshaus neutral", 1, true) and r:find("Schritte", 1, true)
+            and r:find("kein Durchschnitt", 1, true), "Bericht: " .. r)
+        local SC = WeintCodex.UISelfCheck
+        local out = {}
+        for _, c in ipairs(SC.CHECKS) do
+            if c.name == "Auktionspreise" then c.fn(function(mark, text) out[#out + 1] = (mark ~= "" and (mark .. " ") or "") .. text end) end
+        end
+        local sc = table.concat(out, "\n")
+        assert(sc:find("Vollscan (ReplicateItems): ja", 1, true) and sc:find("Letzter Scan", 1, true), "Selbstpruefung: " .. sc)
+        local page
+        for _, pg in ipairs(K.Module("comfort").pages) do if pg.key == "auktion" then page = pg end end
+        assert(page and page.label == "Auktionshaus", "Seite im Komfort fehlt")
+        -- Aus: Knopf weg, nichts registriert.
+        K.Set("comfort", "ahPrices", false)
+        assert(not AP.button:IsShown(), "Knopf bleibt, obwohl aus")
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    gt.AddLine, gt.AddDoubleLine, gt.GetPrimaryTooltipInfo = savedAdd, savedAdd2, savedPrim
+    K.BestMap = savedBest
+    AP.BATCH = savedBatch
+    K.Set("comfort", "ahPrices", false)
+    WeintCodex.SavedData.auction = savedAuction
+    Check(ok, "Auktionspreise: Vollscan, Suche nach Schweigen, Drosselung, eigene Suche, Tooltip, Stapel, neutral, 30 Tage"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.13.2.0: die Regelliste zeigt nur, was fuer diesen Charakter gilt
 -- (Beta-Test: "Ich sehe in den Erinnerungen alle Erinnerungen von allen
 -- Charakteren"). Alte Begleiter-/Munitionsregeln ohne Klasse gelten nur, wo

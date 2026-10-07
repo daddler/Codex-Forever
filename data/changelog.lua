@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.17.0.0",
+        date    = "07.10.2026",
+        notes   = {
+            "|cff7C6CFFNeu im Komfort: Auktionspreise im Tooltip.|r Oben am Auktionshaus liest der Knopf „Preise scannen“ alle Angebote. Danach steht in jedem Tooltip eines Gegenstands das günstigste Angebot je Stück – mit der Menge im Angebot und dem Tag, an dem du es gesehen hast; in den Taschen auch der Preis des ganzen Stapels. Einschalten unter Komfort → Auktionshaus.",
+            "|cff7C6CFFAuch beim Stöbern.|r Was deine eigene Suche im Auktionshaus zeigt, wird nebenbei gemerkt – je Realm und Auktionshaus (Allianz, Horde, neutral), höchstens 30 Tage.",
+            "|cff7C6CFF/wcui auktion|r zeigt, wann zuletzt gelesen wurde und auf welchem Weg.",
+        },
+    },
+    {
         version = "6.16.0.0",
         date    = "06.10.2026",
         notes   = {

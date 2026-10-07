@@ -450,6 +450,30 @@ Check("Seltene Gegner", function(add)
     end
 end)
 
+-- Auktionspreise (6.17.0.0): welche Wege das Spiel anbietet und welcher
+-- zuletzt lief. Ungemessen auf Forever ist, ob der Server den Vollscan
+-- beantwortet (laut ForeverGuide nicht immer) und ob die Suche alles schickt.
+Check("Auktionspreise", function(add)
+    local AP = WeintCodex.UIAuctionPrices
+    if not AP then
+        add(SC.OPEN, "Auktionspreise nicht geladen.")
+        return
+    end
+    local active = AP.Active()
+    add(active and SC.OK or SC.OPEN, active and "An" or "Aus (Komfort → Auktionshaus)")
+    local function has(f) return type(f) == "function" and "ja" or "nein" end
+    local ah = type(_G.C_AuctionHouse) == "table" and _G.C_AuctionHouse or {}
+    add("", "   Vollscan (ReplicateItems): " .. has(ah.ReplicateItems) .. " · Suche (SendBrowseQuery): "
+        .. has(ah.SendBrowseQuery) .. " · Tooltip über " .. (AP.hookedVia or "– (noch nicht eingehängt)"))
+    for _, line in ipairs(AP.StatusLines(AP.Faction())) do add("", "   " .. line) end
+    local last = AP.last
+    if last then
+        add("", "   Letzter Scan: " .. (last.ok and ((last.full and "vollständig" or "unvollständig") .. " über " .. last.via
+            .. ", " .. last.n .. " Gegenstände") or ("ohne Ergebnis (" .. (last.why or last.via) .. ")")))
+    end
+    if AP.lastTooltip then add("", "   Zuletzt im Tooltip: Gegenstand " .. AP.lastTooltip) end
+end)
+
 Check("Berufe", function(add)
     local PRO = WeintCodex.Professions
     if not (PRO and PRO.Skills) then

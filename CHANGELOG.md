@@ -9,6 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.17.0.0] – 2026-10-07
+
+**Neu im Komfort: Auktionspreise im Tooltip.** Oben am Auktionshaus liest der Knopf „Preise scannen“ alle Angebote. Danach steht in jedem Tooltip eines Gegenstands das günstigste Angebot je Stück – mit der Menge im Angebot und dem Tag, an dem du es gesehen hast; in den Taschen auch der Preis des ganzen Stapels. Einschalten unter Komfort → Auktionshaus.
+
+**Auch beim Stöbern.** Was deine eigene Suche im Auktionshaus zeigt, wird nebenbei gemerkt – je Realm und Auktionshaus (Allianz, Horde, neutral), höchstens 30 Tage.
+
+**/wcui auktion** zeigt, wann zuletzt gelesen wurde und auf welchem Weg.
+
+### Technisch
+
+- **Neu** `ui/auctionprices.lua` (`WeintCodex.UIAuctionPrices`), Seite „Auktionshaus“ im Komfort (`ahPrices`, `ahStack`, `ahPassive` unter `comfort`, der Helfer ab Werk aus). Verhalten nach ForeverGuide 1.25.6 (Auktionshaus-Scan, Preis im Tooltip, Rückfall auf die Suche, wenn der Server den Vollscan nicht beantwortet, neutrale Auktionshäuser) – kein Code daraus.
+- **Drei Wege, der Reihe nach:** Vollscan (`C_AuctionHouse.ReplicateItems`, höchstens alle 15 min, gelesen zu je `AP.BATCH` = 1000 Angeboten je Bild; fertig mit `REPLICATE_ITEM_LIST_UPDATE` oder, ohne Ereignis, wenn die Zahl zweimal gleich bleibt); ohne Antwort nach `AP.REPLICATE_WAIT` = 35 s die Suche (`SendBrowseQuery` mit leerem Text, zwei Formen der Anfrage, `RequestMoreBrowseResults` erst, wenn `IsThrottledMessageSystemReady`/`AUCTION_HOUSE_THROTTLED_SYSTEM_READY`; fertig mit `HasFullBrowseResults`, unvollständig nach `AP.STALL` = 15 s ohne Seite) und drei Tage lang gleich die Suche; nebenbei die eigene Suche (`AUCTION_HOUSE_BROWSE_RESULTS_UPDATED/ADDED`).
+- **Die Zahl:** günstigstes Sofortkauf-Angebot je Stück (Gebote ohne Sofortkauf zählen nicht), Menge zusammen. **Eine Zahl je Gegenstand** (`AP.Pack`: Preis · 10⁷ + Menge · 10⁴ + Tag seit 1.1.2026, gekappt bei ~90.000 Gold und 999 Stück) in `SavedData.auction["Realm|Seite"]`; Seite neutral in Tanaris, Schlingendorntal, Winterquell (Karten 1446, 1434, 1452). Nach 30 Tagen fällt ein Eintrag heraus. Beim letzten vollständigen Scan nicht dabei: „zuletzt vor N Tagen · beim letzten Scan nicht im Angebot“. Kein Eintrag: keine Zeile.
+- **Tooltip** über `TooltipDataProcessor` (sonst `OnTooltipSetItem`), nur `GameTooltip`/`ItemRefTooltip`; Stapel aus `GetPrimaryTooltipInfo` (`GetBagItem`) bzw. `GetBagID` des Besitzers und `C_Container.GetContainerItemInfo`. Zuerst das Auktionshaus, an dem du stehst (sonst deiner Fraktion), dann das neutrale.
+- **Knopf** „Preise scannen“ in der Titelzeile des Auktionshauses (ungemessen) mit Fortschritt; **`/wcui auktion`** Bericht mit den letzten Schritten, **`/wcui auktion scan`**; **`/wcui prüfen`**: Zeile „Auktionspreise“.
+- Prüflauf: Packen an den Grenzen, Tag, Vollscan stückweise mit 0-basierten Nummern, Sofortkauf, Tooltip mit Stapel, unbekannt schweigt, fremder Tooltip, Schweigen → Suche, abgelehnte Anfrage, Drosselung, vollständig, nicht mehr im Angebot, drei Tage Suche, Stillstand, eigene Suche, Schließen im Scan, neutral, 30 Tage, Bericht, Selbstprüfung. 28 Gegenproben, alle gefangen – fünf erst nach geschärfter Prüfung (fremder Tooltip, „vollständig“ nur bei vollständigem Scan, 15 Minuten, Vollscan ohne Ereignis, Drosselung ohne Ereignis); eine Schutzzeile in `AP.Unpack` war nachweislich unerreichbar und ist entfernt.
+
 ## [6.16.0.0] – 2026-10-06
 
 **Neu im Komfort: seltene Gegner melden.** Taucht einer als Namensplakette, im Ziel, unter der Maus oder als Symbol auf der Minikarte auf, gibt es einen Ton, eine Zeile im Chat und oben einen Hinweis mit Stufe, Elite und wie lange er in Classic zum Wiederkommen brauchte. Derselbe meldet sich höchstens alle fünf Minuten. Einschalten unter Komfort → Seltene Gegner.
