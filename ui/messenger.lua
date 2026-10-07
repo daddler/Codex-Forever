@@ -9,12 +9,27 @@
 -- aus AUS; geht ohne Oberflaeche.
 --
 -- ENTSCHIEDEN MIT DEM SPIELER (07.10.2026):
---   * Der Chat bleibt, wie er ist - jedes Gefluesterte steht AUCH dort.
---     Kein Chatfilter, keine Zeile wird veraendert oder versteckt.
 --   * Verlauf nur fuer diese Sitzung: nichts davon landet in den
 --     gespeicherten Daten - die Datei liest auch die Companion-App, und
 --     private Nachrichten gehoeren da nicht hinein.
 --   * Nur Fluestern und Battle.net-Fluestern, nicht Gilde oder Gruppe.
+--
+-- NEU ENTSCHIEDEN (6.19.1.0, Beta-Test: "Whisper sollen nicht parallel auch
+-- im Chat zu sehen sein. Dafuer ist dann wirklich dieses Messenger
+-- Fenster."): bis 6.19.0.1 stand alles auch im Chat. Jetzt blendet ein
+-- Chatfilter des Spiels (AddMessageEventFilter) Gefluestertes im Chat aus -
+-- ausgeblendet, nie umgeschrieben, und NUR, was das Fenster selbst lesen
+-- konnte (MS.Capturable): Geheimes bleibt im Chat, sonst stuende es
+-- nirgends. Folge, die das Spiel bestimmt: Die Taste "Antworten" (R) kennt
+-- nur, was der Chat gezeigt hat - den Absender selbst eintragen hiesse,
+-- die Chatzeile des Spiels zu "verunreinigen" (taint), und dann sperrt
+-- das Spiel /cast & Co. aus ihr heraus. Darum antwortet man im Fenster.
+--   * Im Kampf klappt das Fenster ein (versteckt) und geht danach wieder
+--     auf; das Symbol zaehlt solange die Ungelesenen.
+--   * "/w Name" in der Chatzeile oder ein Klick auf einen Namen oeffnet
+--     das Gespraech im Fenster. Die Chatzeile bleibt dabei unberuehrt -
+--     WeintCodex liest nur ihre Attribute (chatType, tellTarget).
+--   * Ein eigenes Symbol (ziehbar) oeffnet das Fenster jederzeit.
 --
 -- ANTWORTEN: Selbst fluestern darf ein Addon auf Forever vielleicht nicht -
 -- an die Gilde ist es gemessen gesperrt (ADDON_ACTION_BLOCKED, 6.10.4.6).
@@ -46,10 +61,12 @@ local MS = WeintCodex.UIMessenger
 
 MS.DEFAULTS = {
     msgOn       = false,  -- der Helfer
-    msgCombat   = false,  -- auch im Kampf aufgehen (sonst danach)
+    msgCombat   = false,  -- auch im Kampf offen (sonst einklappen, danach wieder auf)
     msgOutgoing = true,   -- auch aufgehen, wenn du selbst jemandem fluesterst
     msgStamps   = true,   -- Uhrzeit vor jeder Zeile
     msgDirect   = false,  -- selbst senden (ungemessen)
+    msgHideChat = true,   -- Gefluestertes nur im Fenster, nicht im Chat (6.19.1.0)
+    msgIcon     = true,   -- Symbol zum Oeffnen (6.19.1.0)
 }
 
 MS.MAX_LINES = 200        -- je Gespraech, nur diese Sitzung
@@ -59,7 +76,8 @@ MS.LIST_W    = 120
 MS.ROW_H     = 24
 MS.BLOCK_WINDOW = 1       -- so lange nach einem Sendeversuch zaehlt eine Sperrmeldung (s)
 
-local SETTING = { combat = "msgCombat", outgoing = "msgOutgoing", stamps = "msgStamps", direct = "msgDirect" }
+local SETTING = { combat = "msgCombat", outgoing = "msgOutgoing", stamps = "msgStamps", direct = "msgDirect",
+                  hide = "msgHideChat", icon = "msgIcon" }
 local function Get(k) return K.Get(KEY, SETTING[k] or k) end
 function MS.Active() return K.IsActive(KEY) and K.Get(KEY, "msgOn") and true or false end
 
@@ -125,6 +143,7 @@ function MS.Close(key)
     end
     if MS.current == key then MS.current = order[1] end
     MS.Redraw()
+    MS.UpdateIcon()
 end
 
 local function ClassOf(guid)
@@ -354,6 +373,10 @@ local function Build()
     foot:SetTextColor(m[1], m[2], m[3])
 
     K.RegisterMover(win, "messenger", "Flüstern", K.Layout("messenger"))
+    -- Ziehen am Fenster selbst (6.19.1.0), nicht nur im Gestaltungsmodus.
+    K.DragToMove(win, "messenger")
+    win:SetScript("OnHide", function() MS.UpdateIcon() end)
+    win:SetScript("OnShow", function() MS.UpdateIcon() end)
     MS.win, MS.smf, MS.input, MS.title, MS.sub, MS.foot, MS.rows = win, smf, input, title, sub, foot, rows
     MS.copy, MS.copyEdit, MS.markBtn = copy, copyEdit, markBtn
     return win
@@ -430,6 +453,7 @@ function MS.Select(key)
     MS.current = key
     conv[key].unread = 0
     MS.Redraw()
+    MS.UpdateIcon()
 end
 
 function MS.Show(key)
@@ -437,9 +461,10 @@ function MS.Show(key)
     if key then MS.current = key end
     if not conv[MS.current or ""] then MS.current = order[1] end
     if MS.current and conv[MS.current] then conv[MS.current].unread = 0 end
-    MS.pending = nil
+    MS.pending, MS.folded = nil, nil
     win:Show()
     MS.Redraw()
+    MS.UpdateIcon()
 end
 
 function MS.Toggle()
@@ -447,17 +472,102 @@ function MS.Toggle()
     if win:IsShown() then win:Hide() else MS.Show() end
 end
 
+--------------------------------------------------
+-- Symbol (6.19.1.0, Beta-Test: "die Moeglichkeit eines Icons, damit ich
+-- die Whisper auch so wieder oeffnen kann")
+--------------------------------------------------
+-- Eine kleine Kachel mit der Sprechblase aus media/ui (icon_report,
+-- eigenes Bild), die Zahl der Ungelesenen oben rechts. Klick: Fenster
+-- auf/zu; ziehen verschiebt. Auch ohne Oberflaeche - wie der Helfer.
+
+local icon
+
+function MS.Unread()
+    local n = 0
+    for _, c in pairs(conv) do n = n + (c.unread or 0) end
+    return n
+end
+
+local function BuildIcon()
+    if icon then return icon end
+    icon = CreateFrame("Button", "WeintCodexMessengerIcon", UIParent)
+    icon:SetSize(32, 32)
+    icon:SetFrameStrata("MEDIUM")
+    icon:SetClampedToScreen(true)
+    K.Kachel(icon, { shadow = 4 })
+    icon.tex = icon:CreateTexture(nil, "ARTWORK")
+    icon.tex:SetSize(20, 20)
+    icon.tex:SetPoint("CENTER", icon, "CENTER", 0, 0)
+    icon.tex:SetTexture(K.MEDIA .. "icon_report")
+    icon.badge = K.NewText(icon, 10)
+    icon.badge:SetPoint("TOPRIGHT", icon, "TOPRIGHT", -2, -2)
+    if icon.RegisterForClicks then icon:RegisterForClicks("LeftButtonUp") end
+    icon:SetScript("OnClick", function() MS.Toggle() end)
+    icon:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText("Flüstern", 1, 1, 1)
+        local n = MS.Unread()
+        if n > 0 then GameTooltip:AddLine(n .. " ungelesen", unpack(C.accent)) end
+        GameTooltip:AddLine("Klick: Fenster auf/zu. Ziehen verschiebt.", 0.7, 0.7, 0.75, true)
+        GameTooltip:Show()
+    end)
+    icon:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    icon:Hide()
+    K.RegisterMover(icon, "messengerIcon", "Flüstern-Symbol", K.Layout("messengerIcon"))
+    K.DragToMove(icon, "messengerIcon")
+    MS.icon = icon
+    return icon
+end
+MS.BuildIcon = BuildIcon
+
+function MS.UpdateIcon()
+    local want = MS.Active() and Get("icon")
+    if not want then
+        if icon then icon:Hide() end
+        return
+    end
+    BuildIcon()
+    local n = MS.Unread()
+    icon.badge:SetText(n > 0 and tostring(n) or "")
+    local a = C.accentBright or C.accent
+    icon.badge:SetTextColor(a[1], a[2], a[3])
+    -- Hell, solange etwas ungelesen ist oder das Fenster offen.
+    local lit = n > 0 or (win and win:IsShown())
+    local t = lit and C.textBright or C.textMuted
+    icon.tex:SetVertexColor(t[1], t[2], t[3])
+    icon:Show()
+end
+
 -- Aufgehen - oder, im Kampf, bis danach warten.
 local function Pop(key)
     if win and win:IsShown() then
         MS.Redraw()
+        MS.UpdateIcon()
         return
     end
     if K.InCombat() and not Get("combat") then
         MS.pending = key
+        MS.UpdateIcon()
         return
     end
     MS.Show(key)
+end
+
+-- Im Kampf einklappen, danach wieder auf (6.19.1.0, Beta-Test: "Wenn ich
+-- infight bin, soll sich das Fenster automatisch minimieren und wieder
+-- aufploppen, sobald ich aus dem Kampf raus bin").
+function MS.OnCombat(start)
+    if not MS.Active() then return end
+    if start then
+        if Get("combat") or not (win and win:IsShown()) then return end
+        if MS.copyMode then MS.SetCopyMode(false) end
+        MS.folded = MS.current or true
+        win:Hide()
+        return
+    end
+    local key = MS.pending or MS.folded
+    MS.pending, MS.folded = nil, nil
+    if key then MS.Show(key ~= true and key or nil) end
 end
 
 --------------------------------------------------
@@ -522,52 +632,199 @@ local function KeyFor(sender, bnID)
     return "w:" .. (MS.Short(sender) or sender)
 end
 
+local BN_EVENT = { CHAT_MSG_BN_WHISPER = true, CHAT_MSG_BN_WHISPER_INFORM = true }
+local WHISPER_EVENT = { CHAT_MSG_WHISPER = true, CHAT_MSG_WHISPER_INFORM = true,
+                        CHAT_MSG_BN_WHISPER = true, CHAT_MSG_BN_WHISPER_INFORM = true }
+
+-- Kann das Fenster diese Nachricht lesen? Nur dann darf der Chat sie
+-- verbergen - der Filter und das Fenster fragen dieselbe Stelle.
+function MS.Capturable(event, text, sender, bnID)
+    if type(K.Plain(text)) ~= "string" or type(K.Plain(sender)) ~= "string" then return false end
+    if BN_EVENT[event] then return type(K.Plain(bnID)) == "number" end
+    return true
+end
+
+-- Verbirgt der Chat gerade Gefluestertes?
+function MS.Hiding()
+    return MS.Active() and Get("hide") and MS.filterApi and true or false
+end
+
+-- Der Ton des Spiels kommt aus der Chatzeile, die jetzt nicht gezeigt
+-- wird - also einer von hier, hoechstens alle paar Sekunden.
+MS.PING_GAP = 3
+local pingAt = -1e9
+function MS.Ping()
+    local now = Clock()
+    if now - pingAt < MS.PING_GAP then return false end
+    pingAt = now
+    local kit = _G.SOUNDKIT
+    if _G.PlaySound then pcall(_G.PlaySound, (type(kit) == "table" and kit.TELL_MESSAGE) or 3081) end
+    if _G.FlashClientIcon then pcall(_G.FlashClientIcon) end
+    return true
+end
+
 -- Ein- oder ausgehendes Fluestern. Geheim: nur zaehlen.
 function MS.OnWhisper(event, text, sender, guid, bnID)
     if not MS.Active() then return end
-    text, sender, bnID = K.Plain(text), K.Plain(sender), K.Plain(bnID)
-    local bn = event == "CHAT_MSG_BN_WHISPER" or event == "CHAT_MSG_BN_WHISPER_INFORM"
-    if type(text) ~= "string" or type(sender) ~= "string" or (bn and type(bnID) ~= "number") then
+    if not MS.Capturable(event, text, sender, bnID) then
         MS.locked = MS.locked + 1
         if win and win:IsShown() then MS.Redraw() end
         return
     end
+    text, sender, bnID = K.Plain(text), K.Plain(sender), K.Plain(bnID)
+    local bn = BN_EVENT[event] or false
     local out = event == "CHAT_MSG_WHISPER_INFORM" or event == "CHAT_MSG_BN_WHISPER_INFORM"
     local key = KeyFor(sender, bn and bnID or nil)
     local c = MS.Ensure(key, bn and sender or (MS.Short(sender) or sender), bn and bnID or sender, bn)
     if not bn then c.class = c.class or ClassOf(guid) end
     MS.Add(c, out and "out" or "in", text)
+    if not out and MS.Hiding() then MS.Ping() end
     local visible = win and win:IsShown()
     if not out and not (visible and MS.current == key) then c.unread = c.unread + 1 end
-    if out and not visible and not Get("outgoing") then return end
+    if out and not visible and not Get("outgoing") then
+        MS.UpdateIcon()
+        return
+    end
     if not visible then MS.current = key end
     Pop(key)
 end
 
--- Abwesend/Beschaeftigt-Antworten und "nicht online": in ein offenes Gespraech.
-function MS.OnSystem(event, text, sender)
-    if not MS.Active() then return end
+-- Abwesend/Beschaeftigt-Antworten und "nicht online": in welches Gespraech?
+-- (nil: in keines - dann bleibt es auch im Chat.)
+function MS.SystemTarget(event, text, sender)
     text, sender = K.Plain(text), K.Plain(sender)
-    if type(text) ~= "string" then return end
-    local c, line
+    if type(text) ~= "string" then return nil end
     if event == "CHAT_MSG_SYSTEM" then
         local pat = NotFoundPattern()
         local who = pat and text:match(pat)
-        c = who and conv[KeyFor(who)]
-        line = c and (c.name .. " ist nicht online.")
+        local c = who and conv[KeyFor(who)]
+        return c, c and (c.name .. " ist nicht online.")
     elseif type(sender) == "string" then
-        c = conv[KeyFor(sender)]
-        line = c and ((event == "CHAT_MSG_AFK" and "Abwesend" or "Beschäftigt") .. (text ~= "" and (": " .. text) or ""))
+        local c = conv[KeyFor(sender)]
+        return c, c and ((event == "CHAT_MSG_AFK" and "Abwesend" or "Beschäftigt") .. (text ~= "" and (": " .. text) or ""))
     end
+    return nil
+end
+
+function MS.OnSystem(event, text, sender)
+    if not MS.Active() then return end
+    local c, line = MS.SystemTarget(event, text, sender)
     if not c then return end
     MS.Add(c, "sys", line)
     if win and win:IsShown() then MS.Redraw() end
 end
 
+--------------------------------------------------
+-- Nur im Fenster: der Chatfilter (6.19.1.0)
+--------------------------------------------------
+-- true heisst: diese Zeile zeigt der Chat nicht. Nie veraenderte Angaben
+-- zurueck - nur verbergen, und nur, was das Fenster selbst hat.
+
+local FILTER_EVENTS = { "CHAT_MSG_WHISPER", "CHAT_MSG_WHISPER_INFORM", "CHAT_MSG_BN_WHISPER",
+                        "CHAT_MSG_BN_WHISPER_INFORM", "CHAT_MSG_AFK", "CHAT_MSG_DND", "CHAT_MSG_SYSTEM" }
+
+function MS.ChatFilter(_, event, text, sender, ...)
+    if not MS.Hiding() then return false end
+    if WHISPER_EVENT[event] then
+        -- an 13. Stelle die Nummer des Battle.net-Kontos (wie OnEvent)
+        local bnID = BN_EVENT[event] and select(11, ...) or nil
+        return MS.Capturable(event, text, sender, bnID)
+    end
+    return MS.SystemTarget(event, text, sender) ~= nil
+end
+
+local function AddFilter()
+    if MS.filterApi then return end
+    local util = _G.ChatFrameUtil
+    local add, api
+    if type(util) == "table" and type(util.AddMessageEventFilter) == "function" then
+        add, api = util.AddMessageEventFilter, "ChatFrameUtil.AddMessageEventFilter"
+    elseif type(_G.ChatFrame_AddMessageEventFilter) == "function" then
+        add, api = _G.ChatFrame_AddMessageEventFilter, "ChatFrame_AddMessageEventFilter"
+    end
+    if not add then
+        MS.filterApi = false
+        return
+    end
+    for _, e in ipairs(FILTER_EVENTS) do pcall(add, e, MS.ChatFilter) end
+    MS.filterApi = api
+end
+MS.AddFilter = AddFilter
+
+--------------------------------------------------
+-- "/w Name" und Klick auf einen Namen (6.19.1.0)
+--------------------------------------------------
+-- Die Chatzeile des Spiels bleibt unberuehrt: WeintCodex haengt sich nur
+-- hinten an (HookScript) und LIEST, an wen sie gerade fluestert. Ein
+-- Gespraech geht einmal je Ziel auf, bis die Zeile wieder zu ist.
+
+local lastEdit = setmetatable({}, { __mode = "k" })
+
+function MS.KeyForTarget(kind, target)
+    if kind == "WHISPER" then
+        local key = KeyFor(target)
+        MS.Ensure(key, MS.Short(target) or target, target, nil)
+        return key
+    end
+    for key, c in pairs(conv) do
+        if c.bn and c.name == target then
+            Touch(key)
+            return key
+        end
+    end
+    local f = _G.BNet_GetBNetIDAccount
+    if type(f) ~= "function" then return nil end
+    local ok, id = pcall(f, target)
+    id = ok and K.Plain(id) or nil
+    if type(id) ~= "number" then return nil end
+    local key = KeyFor(nil, id)
+    MS.Ensure(key, target, id, true)
+    return key
+end
+
+function MS.OnChatEdit(eb)
+    if not (MS.Active() and Get("outgoing")) or type(eb) ~= "table" or not eb.GetAttribute then return end
+    local kind, target = K.Plain(eb:GetAttribute("chatType")), K.Plain(eb:GetAttribute("tellTarget"))
+    if (kind ~= "WHISPER" and kind ~= "BN_WHISPER") or type(target) ~= "string" or target == "" then
+        lastEdit[eb] = nil
+        return
+    end
+    local sig = kind .. "\1" .. target
+    if lastEdit[eb] == sig then return end
+    lastEdit[eb] = sig
+    local key = MS.KeyForTarget(kind, target)
+    if not key then return end
+    if win and win:IsShown() then
+        MS.Select(key)
+    else
+        MS.current = key
+        Pop(key)
+    end
+end
+
+local editHooked, headerHooked = {}, false
+local function HookChatEdit()
+    local function Forget(self) lastEdit[self] = nil end
+    for i = 1, (_G.NUM_CHAT_WINDOWS or 10) do
+        local eb = _G["ChatFrame" .. i .. "EditBox"]
+        if type(eb) == "table" and eb.HookScript and not editHooked[eb] then
+            editHooked[eb] = true
+            pcall(eb.HookScript, eb, "OnShow", MS.OnChatEdit)
+            pcall(eb.HookScript, eb, "OnTextChanged", MS.OnChatEdit)
+            pcall(eb.HookScript, eb, "OnHide", Forget)
+        end
+    end
+    if not headerHooked and type(_G.hooksecurefunc) == "function" and type(_G.ChatEdit_UpdateHeader) == "function" then
+        headerHooked = true
+        pcall(_G.hooksecurefunc, "ChatEdit_UpdateHeader", MS.OnChatEdit)
+    end
+end
+MS.HookChatEdit = HookChatEdit
+
 local ev = CreateFrame("Frame")
 MS.events = ev
 local EVENTS = { "CHAT_MSG_WHISPER", "CHAT_MSG_WHISPER_INFORM", "CHAT_MSG_BN_WHISPER", "CHAT_MSG_BN_WHISPER_INFORM",
-                 "CHAT_MSG_AFK", "CHAT_MSG_DND", "CHAT_MSG_SYSTEM", "PLAYER_REGEN_ENABLED",
+                 "CHAT_MSG_AFK", "CHAT_MSG_DND", "CHAT_MSG_SYSTEM", "PLAYER_REGEN_ENABLED", "PLAYER_REGEN_DISABLED",
                  "ADDON_ACTION_BLOCKED", "ADDON_ACTION_FORBIDDEN" }
 
 local function OnEvent(_, event, a1, a2, ...)
@@ -579,8 +836,10 @@ local function OnEvent(_, event, a1, a2, ...)
         -- ... an 13. Stelle die Nummer des Battle.net-Kontos.
         local bnID = select(11, ...)
         MS.OnWhisper(event, a1, a2, nil, bnID)
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        MS.OnCombat(true)
     elseif event == "PLAYER_REGEN_ENABLED" then
-        if MS.pending and MS.Active() then MS.Show(MS.pending) end
+        MS.OnCombat(false)
     elseif event == "ADDON_ACTION_BLOCKED" or event == "ADDON_ACTION_FORBIDDEN" then
         MS.OnBlocked(a1)
     else
@@ -596,13 +855,19 @@ local function Apply()
     for _, e in ipairs(EVENTS) do
         if on then pcall(ev.RegisterEvent, ev, e) else pcall(ev.UnregisterEvent, ev, e) end
     end
+    if on then
+        AddFilter()
+        HookChatEdit()
+    end
     if K.SetMoverEnabled and win then K.SetMoverEnabled("messenger", on) end
+    if K.SetMoverEnabled and icon then K.SetMoverEnabled("messengerIcon", on and Get("icon")) end
     if not on then
-        MS.pending = nil
+        MS.pending, MS.folded = nil, nil
         if win then win:Hide() end
     elseif win and win:IsShown() then
         MS.Redraw()
     end
+    MS.UpdateIcon()
 end
 MS.Apply = Apply
 
@@ -623,6 +888,10 @@ function MS.StatusLines()
         .. (blocked and _G.date and (" · gemessen gesperrt am " .. _G.date("%d.%m. %H:%M", blocked)) or "")
         .. (MS.lastDirect and (" · zuletzt " .. MS.lastDirect) or "")
     out[#out + 1] = "Gespräche dieser Sitzung: " .. #order .. (MS.locked > 0 and (" · " .. MS.locked .. " während einer Sperre nur im Chat") or "")
+    -- Nur im Fenster: welcher Chatfilter des Spiels da ist (6.19.1.0).
+    local api = MS.filterApi
+    out[#out + 1] = "Nur im Fenster: " .. (Get("hide") and "an" or "aus") .. " · Chatfilter: "
+        .. (api and api or (api == false and "fehlt – Flüstern bleibt im Chat" or "noch nicht angemeldet"))
     return out
 end
 
@@ -632,17 +901,21 @@ end
 
 local function BuildPage(B)
     local off = function() return not K.Get(KEY, "msgOn") end
-    B:Section("Flüstern", "Wird dir etwas zugeflüstert, geht ein Fenster auf wie bei einem Messenger. Im Chat steht es trotzdem – nichts wird dort versteckt. Der Verlauf gilt nur bis zum Ausloggen.")
+    B:Section("Flüstern", "Wird dir etwas zugeflüstert, geht ein Fenster auf wie bei einem Messenger. Der Verlauf gilt nur bis zum Ausloggen.")
     B:Row({ type = "toggle", label = "Flüstern im eigenen Fenster", key = "msgOn",
-            description = "Auch Battle.net-Flüstern. /wcui flüstern öffnet es jederzeit." },
-          { type = "toggle", label = "Auch im Kampf aufgehen", key = "msgCombat", disabled = off,
-            description = "Sonst geht es nach dem Kampf auf." })
-    B:Row({ type = "toggle", label = "Auch bei eigenem Flüstern", key = "msgOutgoing", disabled = off,
-            description = "Flüsterst du jemandem im Chat, geht das Gespräch ebenfalls auf." },
+            description = "Auch Battle.net-Flüstern. Das Symbol oder /wcui flüstern öffnet es jederzeit." },
+          { type = "toggle", label = "Nur im Fenster, nicht im Chat", key = "msgHideChat", disabled = off,
+            description = "Was das Fenster nicht lesen darf (Sperre des Spiels), bleibt im Chat. Die Taste „Antworten“ (R) kennt dann nur, was der Chat gezeigt hat – antworte im Fenster." })
+    B:Row({ type = "toggle", label = "Im Kampf offen lassen", key = "msgCombat", disabled = off,
+            description = "Sonst klappt es im Kampf ein und geht danach wieder auf." },
+          { type = "toggle", label = "Bei eigenem Flüstern aufgehen", key = "msgOutgoing", disabled = off,
+            description = "„/w Name“ in der Chatzeile oder ein Klick auf einen Namen öffnet das Gespräch." })
+    B:Row({ type = "toggle", label = "Symbol zeigen", key = "msgIcon", disabled = off,
+            description = "Klick öffnet das Fenster, die Zahl zeigt Ungelesenes. Ziehen verschiebt." },
           { type = "toggle", label = "Uhrzeit", key = "msgStamps", disabled = off })
     B:Row({ type = "toggle", label = "Direkt aus dem Fenster senden", key = "msgDirect", disabled = off,
             description = "Ungetestet: ob das Spiel es WeintCodex erlaubt. Sperrt es, schaltet sich das ab, und Antworten gehen wieder über die Chatzeile." })
-    B:Note("Verschieben im Gestaltungsmodus. Esc schließt das Fenster, die Gespräche bleiben bis zum Ausloggen.")
+    B:Note("Fenster und Symbol lassen sich mit der Maus ziehen. Esc schließt das Fenster, die Gespräche bleiben bis zum Ausloggen.")
 end
 MS.BuildPage = BuildPage
 

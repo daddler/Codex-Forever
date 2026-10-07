@@ -4995,6 +4995,238 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.19.1.0 (Beta-Test: "das Fenster ist nicht verschiebbar", "Whisper
+-- sollen nicht parallel auch im Chat zu sehen sein", "infight minimieren
+-- und wieder aufploppen", "/w Name oder Name anklicken -> Fenster",
+-- "ein Icon, damit ich die Whisper auch so wieder oeffnen kann").
+do
+    local G = _G
+    local names = { "GetNormalizedRealmName", "InCombatLockdown", "issecretvalue", "ChatFrameUtil",
+                    "ChatFrame_AddMessageEventFilter", "ChatFrame_OpenChat", "NUM_CHAT_WINDOWS", "ChatFrame1EditBox",
+                    "hooksecurefunc", "ChatEdit_UpdateHeader", "BNet_GetBNetIDAccount", "PlaySound", "SOUNDKIT",
+                    "FlashClientIcon", "GetTime" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local K = WeintCodex.UIKit
+    local MS = WeintCodex.UIMessenger
+    local ok, err = pcall(function()
+        local combat, secret, now = false, {}, 1000
+        G.GetNormalizedRealmName = function() return "Testrealm" end
+        G.InCombatLockdown = function() return combat end
+        G.issecretvalue = function(v) return secret[v] == true end
+        G.GetTime = function() return now end
+        G.ChatFrameUtil = nil
+        G.ChatFrame_OpenChat = function() end
+        local filters, sounds, flashed = {}, 0, 0
+        G.ChatFrame_AddMessageEventFilter = function(e, f) filters[e] = f end
+        G.SOUNDKIT = { TELL_MESSAGE = 3081 }
+        G.PlaySound = function(id) if id == 3081 then sounds = sounds + 1 end end
+        G.FlashClientIcon = function() flashed = flashed + 1 end
+        -- Die Chatzeile des Spiels: WeintCodex darf sie nur lesen.
+        G.NUM_CHAT_WINDOWS = 1
+        local eb = CreateFrame("EditBox", nil, UIParent)
+        G.ChatFrame1EditBox = eb
+        local touched = {}
+        for _, m in ipairs({ "SetText", "Insert", "Hide", "ClearFocus", "SetFocus" }) do
+            eb[m] = function() touched[#touched + 1] = m end
+        end
+        local headerHook
+        G.ChatEdit_UpdateHeader = function() end
+        G.hooksecurefunc = function(name, fn) if name == "ChatEdit_UpdateHeader" then headerHook = fn end end
+        G.BNet_GetBNetIDAccount = function(n) if n == "Kumpel" then return 77 end end
+        local function W(text, sender) MS.OnEvent(nil, "CHAT_MSG_WHISPER", text, sender, "", "", "", "", 0, 0, "", 0, 1, nil) end
+        local function Filter(event, text, sender, ...) return filters[event](nil, event, text, sender, ...) end
+
+        K.Set("comfort", "msgOn", false)
+        K.Set("comfort", "msgOn", true)
+        MS.Build()
+        MS.win:Hide()
+
+        -- Nur im Fenster: der Chat verbirgt, was das Fenster liest - und nur das.
+        assert(MS.filterApi == "ChatFrame_AddMessageEventFilter", "Chatfilter nicht angemeldet: " .. tostring(MS.filterApi))
+        for _, e in ipairs({ "CHAT_MSG_WHISPER", "CHAT_MSG_WHISPER_INFORM", "CHAT_MSG_BN_WHISPER", "CHAT_MSG_BN_WHISPER_INFORM",
+                             "CHAT_MSG_AFK", "CHAT_MSG_DND", "CHAT_MSG_SYSTEM" }) do
+            assert(filters[e], "kein Filter fuer " .. e)
+        end
+        assert(K.Get("comfort", "msgHideChat") == true, "nur im Fenster ab Werk aus")
+        assert(Filter("CHAT_MSG_WHISPER", "hi", "Mara") == true, "Fluestern im Chat geblieben")
+        assert(Filter("CHAT_MSG_WHISPER_INFORM", "hi", "Mara") == true, "eigenes Fluestern im Chat geblieben")
+        local hidden = "geheim"
+        secret[hidden] = true
+        assert(Filter("CHAT_MSG_WHISPER", hidden, "Mara") == false, "Geheimes im Chat verborgen - stuende nirgends")
+        assert(Filter("CHAT_MSG_WHISPER", "hi", hidden) == false, "geheimer Absender verborgen")
+        secret[hidden] = nil
+        assert(Filter("CHAT_MSG_BN_WHISPER", "na", "|Kq1|k", "", "", "", "", 0, 0, "", 0, 1, "", nil) == false, "Battle.net ohne Konto verborgen")
+        assert(Filter("CHAT_MSG_BN_WHISPER", "na", "|Kq1|k", "", "", "", "", 0, 0, "", 0, 1, "", 5) == true, "Battle.net im Chat geblieben")
+        W("hallo", "Mara-Testrealm")
+        assert(Filter("CHAT_MSG_AFK", "weg", "Mara-Testrealm") == true, "Abwesend im Chat geblieben")
+        assert(Filter("CHAT_MSG_AFK", "weg", "Fremdling") == false, "Abwesend ohne Gespraech verborgen")
+        assert(Filter("CHAT_MSG_SYSTEM", "Kein Spieler namens 'Mara' ist derzeit gespielt.") == true, "nicht online im Chat geblieben")
+        assert(Filter("CHAT_MSG_SYSTEM", "Du hast Erfahrung erhalten.") == false, "Systemzeile verborgen")
+        K.Set("comfort", "msgHideChat", false)
+        assert(Filter("CHAT_MSG_WHISPER", "hi", "Mara") == false, "verborgen, obwohl aus")
+        K.Set("comfort", "msgHideChat", true)
+        local api = MS.filterApi
+        MS.filterApi = false
+        assert(Filter("CHAT_MSG_WHISPER", "hi", "Mara") == false, "ohne Chatfilter nicht Hiding")
+        MS.filterApi = api
+        K.Set("comfort", "msgOn", false)
+        assert(Filter("CHAT_MSG_WHISPER", "hi", "Mara") == false, "verborgen, obwohl der Helfer aus ist")
+        K.Set("comfort", "msgOn", true)
+
+        -- Ton: der des Spiels kommt mit der Chatzeile - jetzt einer von hier.
+        local s0 = sounds
+        now = now + 100
+        W("ping", "Mara-Testrealm")
+        assert(sounds == s0 + 1 and flashed > 0, "kein Ton bei verborgenem Fluestern")
+        W("ping2", "Mara-Testrealm")
+        assert(sounds == s0 + 1, "Ton nicht gedrosselt")
+        now = now + MS.PING_GAP + 1
+        MS.OnEvent(nil, "CHAT_MSG_WHISPER_INFORM", "selbst", "Mara-Testrealm", "", "", "", "", 0, 0, "", 0, 1, nil)
+        assert(sounds == s0 + 1, "Ton bei eigenem Fluestern")
+        K.Set("comfort", "msgHideChat", false)
+        W("ping3", "Mara-Testrealm")
+        assert(sounds == s0 + 1, "zweiter Ton, obwohl der Chat zeigt")
+        K.Set("comfort", "msgHideChat", true)
+
+        -- Im Kampf einklappen, danach wieder auf - das Gespraech von vorher.
+        MS.Show("w:Mara")
+        combat = true
+        MS.OnEvent(nil, "PLAYER_REGEN_DISABLED")
+        assert(not MS.win:IsShown() and MS.folded == "w:Mara", "im Kampf nicht eingeklappt")
+        combat = false
+        MS.OnEvent(nil, "PLAYER_REGEN_ENABLED")
+        assert(MS.win:IsShown() and MS.current == "w:Mara" and MS.folded == nil, "nach dem Kampf nicht wieder auf")
+        -- Neues im Kampf: Symbol zaehlt, danach geht DAS Gespraech auf.
+        combat = true
+        MS.OnEvent(nil, "PLAYER_REGEN_DISABLED")
+        W("hilfe!", "Nils")
+        assert(not MS.win:IsShown() and MS.icon:IsShown() and MS.icon.badge:GetText() == tostring(MS.Unread())
+            and MS.Unread() >= 1, "Symbol zaehlt nicht: " .. tostring(MS.icon.badge:GetText()))
+        combat = false
+        MS.OnEvent(nil, "PLAYER_REGEN_ENABLED")
+        assert(MS.win:IsShown() and MS.current == "w:Nils" and MS.conv["w:Nils"].unread == 0, "nach dem Kampf nicht beim Neuen")
+        -- Geschlossen in den Kampf: bleibt zu.
+        MS.win:Hide()
+        MS.OnEvent(nil, "PLAYER_REGEN_DISABLED")
+        MS.OnEvent(nil, "PLAYER_REGEN_ENABLED")
+        assert(not MS.win:IsShown(), "aufgegangen, obwohl es vor dem Kampf zu war")
+        -- "Im Kampf offen lassen": bleibt offen.
+        K.Set("comfort", "msgCombat", true)
+        MS.Show("w:Mara")
+        MS.OnEvent(nil, "PLAYER_REGEN_DISABLED")
+        assert(MS.win:IsShown() and MS.folded == nil, "trotz Schalter eingeklappt")
+        K.Set("comfort", "msgCombat", false)
+        -- Markieren endet beim Einklappen.
+        MS.SetCopyMode(true)
+        MS.OnEvent(nil, "PLAYER_REGEN_DISABLED")
+        assert(not MS.copyMode, "Markieren ueberlebt das Einklappen")
+        MS.OnEvent(nil, "PLAYER_REGEN_ENABLED")
+
+        -- "/w Name" oder Klick auf einen Namen: Gespraech geht auf.
+        MS.win:Hide()
+        eb:SetAttribute("chatType", "WHISPER")
+        eb:SetAttribute("tellTarget", "Zora-Testrealm")
+        eb:GetScript("OnTextChanged")(eb, true)
+        assert(MS.win:IsShown() and MS.current == "w:Zora" and MS.conv["w:Zora"].target == "Zora-Testrealm", "/w Zora oeffnet nicht")
+        -- Einmal je Ziel: weiter tippen oeffnet nicht wieder.
+        MS.win:Hide()
+        eb:GetScript("OnTextChanged")(eb, true)
+        assert(not MS.win:IsShown(), "bei jedem Tastendruck aufgegangen")
+        -- Zeile zu und wieder auf: wieder.
+        eb:GetScript("OnHide")(eb)
+        eb:GetScript("OnShow")(eb)
+        assert(MS.win:IsShown(), "nach neuem Oeffnen der Zeile nicht auf")
+        -- Offen: wechselt zum Ziel.
+        MS.Select("w:Mara")
+        W("noch was", "Nils")
+        assert(MS.conv["w:Nils"].unread == 1, "Nils nicht ungelesen")
+        eb:SetAttribute("tellTarget", "Nils")
+        headerHook(eb)
+        assert(MS.current == "w:Nils" and MS.conv["w:Nils"].unread == 0, "offenes Fenster wechselt nicht zum Ziel (UpdateHeader)")
+        -- Kein Fluestern: nichts.
+        MS.win:Hide()
+        for _, kind in ipairs({ "SAY", "GUILD", "PARTY" }) do
+            eb:SetAttribute("chatType", kind)
+            -- Ein Ziel bleibt in der Zeile stehen - auch eines, das Battle.net kennt.
+            for _, who in ipairs({ "Otto", "Kumpel" }) do
+                eb:SetAttribute("tellTarget", who)
+                eb:GetScript("OnTextChanged")(eb, true)
+                assert(not MS.win:IsShown() and MS.conv["w:Otto"] == nil and MS.conv["bn:77"] == nil,
+                    "bei " .. kind .. " aufgegangen")
+            end
+        end
+        -- Battle.net ueber die Nummer des Kontos.
+        eb:SetAttribute("chatType", "BN_WHISPER")
+        eb:SetAttribute("tellTarget", "Kumpel")
+        eb:GetScript("OnTextChanged")(eb, true)
+        assert(MS.win:IsShown() and MS.current == "bn:77" and MS.conv["bn:77"].bn, "Battle.net-Ziel")
+        -- Ein schon offenes Battle.net-Gespraech ueber den Namen (ohne Nummer vom Spiel).
+        MS.OnEvent(nil, "CHAT_MSG_BN_WHISPER", "huhu", "Altfreund", "", "", "", "", 0, 0, "", 0, 1, "", 9)
+        eb:SetAttribute("tellTarget", "Altfreund")
+        eb:GetScript("OnTextChanged")(eb, true)
+        assert(MS.current == "bn:9" and MS.conv["bn:Altfreund"] == nil, "Battle.net-Gespraech ueber den Namen: " .. tostring(MS.current))
+        -- Im Kampf: erst danach.
+        MS.win:Hide()
+        combat = true
+        eb:SetAttribute("chatType", "WHISPER")
+        eb:SetAttribute("tellTarget", "Pia")
+        eb:GetScript("OnTextChanged")(eb, true)
+        assert(not MS.win:IsShown() and MS.pending == "w:Pia", "im Kampf aufgegangen")
+        combat = false
+        MS.OnEvent(nil, "PLAYER_REGEN_ENABLED")
+        assert(MS.win:IsShown() and MS.current == "w:Pia", "nach dem Kampf nicht bei Pia")
+        -- Ohne "Bei eigenem Fluestern aufgehen": nichts.
+        MS.win:Hide()
+        K.Set("comfort", "msgOutgoing", false)
+        eb:GetScript("OnHide")(eb)
+        eb:SetAttribute("tellTarget", "Quentin")
+        eb:GetScript("OnShow")(eb)
+        assert(not MS.win:IsShown() and MS.conv["w:Quentin"] == nil, "aufgegangen, obwohl abgeschaltet")
+        K.Set("comfort", "msgOutgoing", true)
+        assert(#touched == 0, "Chatzeile des Spiels angefasst: " .. table.concat(touched, ", "))
+
+        -- Symbol: Klick auf/zu, abschaltbar, mit dem Helfer weg.
+        MS.win:Hide()
+        MS.icon:GetScript("OnClick")(MS.icon)
+        assert(MS.win:IsShown(), "Symbol oeffnet nicht")
+        MS.icon:GetScript("OnClick")(MS.icon)
+        assert(not MS.win:IsShown(), "Symbol schliesst nicht")
+        K.Set("comfort", "msgIcon", false)
+        assert(not MS.icon:IsShown(), "Symbol trotz Schalter")
+        K.Set("comfort", "msgIcon", true)
+        assert(MS.icon:IsShown(), "Symbol kommt nicht wieder")
+
+        -- Ziehen: am Fenster selbst, gespeichert wie im Gestaltungsmodus.
+        local moving
+        MS.win.StartMoving = function() moving = true end
+        MS.win.StopMovingOrSizing = function() moving = false end
+        MS.win.GetPoint = function() return "BOTTOMLEFT", UIParent, "BOTTOMLEFT", 101.4, 222.6 end
+        MS.win:GetScript("OnDragStart")(MS.win)
+        assert(moving == true, "Fenster laesst sich nicht ziehen")
+        MS.win:GetScript("OnDragStop")(MS.win)
+        local pos = K.Profile().positions.messenger
+        assert(moving == false and pos and pos.x == 101 and pos.y == 223, "Stelle nicht gespeichert")
+        K.Profile().positions.messenger = nil
+        assert(MS.icon:GetScript("OnDragStart") and MS.icon:GetScript("OnDragStop"), "Symbol laesst sich nicht ziehen")
+
+        -- Selbstpruefung nennt den Chatfilter.
+        local sc = table.concat(MS.StatusLines(), "\n")
+        assert(sc:find("Chatfilter: ChatFrame_AddMessageEventFilter", 1, true), "Selbstpruefung: " .. sc)
+
+        K.Set("comfort", "msgOn", false)
+        assert(not MS.icon:IsShown() and not MS.win:IsShown(), "Symbol oder Fenster bleibt, obwohl aus")
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    K.Set("comfort", "msgOn", false)
+    K.Set("comfort", "msgCombat", false)
+    K.Set("comfort", "msgOutgoing", true)
+    K.Set("comfort", "msgHideChat", true)
+    K.Set("comfort", "msgIcon", true)
+    Check(ok, "Fluestern nur im Fenster: Chatfilter verbirgt nur Lesbares, Ton, Kampf einklappen, /w oeffnet (Zeile unberuehrt), Symbol, ziehen"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.13.2.0: die Regelliste zeigt nur, was fuer diesen Charakter gilt
 -- (Beta-Test: "Ich sehe in den Erinnerungen alle Erinnerungen von allen
 -- Charakteren"). Alte Begleiter-/Munitionsregeln ohne Klasse gelten nur, wo

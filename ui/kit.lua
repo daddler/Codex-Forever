@@ -1240,6 +1240,27 @@ function K.RegisterMover(frame, key, label, default, opts)
     if unlocked then m.overlay:Show() end
 end
 
+-- Ziehen ohne Gestaltungsmodus (6.19.1.0, Fluestern: "das Fenster ist
+-- nicht verschiebbar"): der Rahmen selbst laesst sich ziehen, die Stelle
+-- landet am selben Ort wie die aus dem Gestaltungsmodus.
+function K.DragToMove(handle, key)
+    handle:EnableMouse(true)
+    handle:RegisterForDrag("LeftButton")
+    handle:SetScript("OnDragStart", function()
+        local m = movers[key]
+        if not m or (m.secure and K.InCombat()) then return end
+        m.frame:SetMovable(true)
+        m.frame:StartMoving()
+    end)
+    handle:SetScript("OnDragStop", function()
+        local m = movers[key]
+        if not m then return end
+        m.frame:StopMovingOrSizing()
+        SavePosition(key, m.frame)
+        K.ApplyPosition(key)
+    end)
+end
+
 -- Ein Rahmen, dessen Modul aus ist, soll im Entsperrmodus nicht als
 -- leere Flaeche herumstehen.
 function K.SetMoverEnabled(key, on)

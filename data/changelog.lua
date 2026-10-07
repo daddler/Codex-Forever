@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.19.1.0",
+        date    = "07.10.2026",
+        notes   = {
+            "|cff7C6CFFFlüstern nur noch im Fenster.|r Was dir zugeflüstert wird, steht nicht mehr zusätzlich im Chat – nur im Messenger, mit eigenem Ton. Was das Spiel dem Fenster während einer Sperre nicht verrät, bleibt im Chat, damit nichts verloren geht. Antworte im Fenster: Die Taste R kennt nur, was im Chat stand.",
+            "|cff7C6CFFIm Kampf klappt es ein.|r Das Fenster verschwindet, sobald der Kampf beginnt, und geht danach von selbst wieder auf – mit dem, was in der Zwischenzeit kam.",
+            "|cff7C6CFF„/w Name“ öffnet das Gespräch.|r Ebenso ein Klick auf einen Namen im Chat. Geschrieben wird weiter in der Chatzeile.",
+            "|cff7C6CFFNeues Symbol:|r Ein Klick öffnet die Gespräche jederzeit, die Zahl zeigt Ungelesenes. Fenster und Symbol lassen sich mit der Maus verschieben.",
+        },
+    },
+    {
         version = "6.19.0.1",
         date    = "07.10.2026",
         notes   = {

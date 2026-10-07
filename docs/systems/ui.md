@@ -1314,11 +1314,10 @@ Oberfläche. `/wcui flüstern` öffnet und schließt.
 
 **Mit dem Spieler entschieden (07.10.2026), nicht verhandelbar ohne ihn:**
 
-- **Der Chat bleibt.** Kein `AddMessageEventFilter`, keine Zeile wird
-  versteckt oder verändert – jedes Flüstern steht auch im Chat. WIM
-  nimmt es dort heraus; bei uns gilt „Chatzeilen werden nie
-  umgeschrieben“, und in einer Sperre des Spiels gingen ohnehin nur
-  die Zeilen des Chats.
+- ~~**Der Chat bleibt.**~~ Bis 6.19.0.1 stand jedes Flüstern auch im
+  Chat. **Neu entschieden in 6.19.1.0** (Beta-Test: „Whisper sollen nicht
+  parallel auch im Chat zu sehen sein. Dafür ist dann wirklich dieses
+  Messenger Fenster.“) – siehe *Nur im Fenster* unten.
 - **Verlauf nur diese Sitzung** (`MS.conv`, `MS.MAX_LINES` = 200 je
   Gespräch, `MS.MAX_CONV` = 8). **Nie** in `WeintCodex_SavedData`: die
   Datei liest die Companion-App, und private Nachrichten gehören dort
@@ -1341,7 +1340,50 @@ Chatzeile weiter – der Spieler sieht dabei einmal den Fehler des Spiels.
 **Aufgehen.** Ist das Fenster zu, geht es beim nächsten Flüstern auf
 (auch beim eigenen, `msgOutgoing`); ist es offen, bleibt das gewählte
 Gespräch, das neue zählt als ungelesen. Im Kampf erst nach
-`PLAYER_REGEN_ENABLED` (`msgCombat` schaltet das ab).
+`PLAYER_REGEN_ENABLED` (`msgCombat` schaltet das ab). Seit 6.19.1.0
+klappt ein offenes Fenster bei `PLAYER_REGEN_DISABLED` ein (versteckt,
+`MS.folded`) und geht danach wieder auf – mit dem Gespräch, das im Kampf
+dazukam (`MS.pending`), sonst mit dem von vorher (`MS.OnCombat`).
+
+**Nur im Fenster** (6.19.1.0, `msgHideChat`, ab Werk an, sobald der
+Helfer an ist). Ein Chatfilter des Spiels (`ChatFrameUtil.AddMessageEventFilter`,
+sonst `ChatFrame_AddMessageEventFilter`; welcher, steht in `/wcui prüfen`)
+für Flüstern, Battle.net-Flüstern, Abwesend/Beschäftigt und „nicht
+online“. Er gibt nur `true` zurück (verbergen), **nie** veränderte Angaben –
+Chatzeilen werden weiter nie umgeschrieben. Und nur, was das Fenster
+selbst lesen kann: Filter und Fenster fragen dieselbe Stelle
+(`MS.Capturable`, für die Systemzeilen `MS.SystemTarget`). Geheimes
+(Sperre des Spiels) bleibt im Chat – sonst stünde es nirgends.
+Was der Chat dann nicht mehr tut, weil er die Zeile nie sieht: Ton und
+blinkendes Symbol der Taskleiste (macht jetzt `MS.Ping`, höchstens alle
+`MS.PING_GAP` = 3 s) und **die Taste „Antworten“ (R)**: das Spiel merkt
+sich den Absender nur für Zeilen, die der Chat zeigt. Den Absender selbst
+eintragen (`ChatEdit_SetLastTellTarget`) hieße, die Chatzeile des Spiels
+zu verunreinigen (taint) – danach blockiert das Spiel geschützte Befehle
+aus ihr (`/cast`, `/target`). Darum: antworten im Fenster; die Seite sagt
+es beim Schalter.
+
+**„/w Name“ und Klick auf einen Namen** (6.19.1.0). WeintCodex hängt sich
+an die Eingabezeilen des Spiels (`HookScript` auf `OnShow`/`OnTextChanged`,
+dazu `hooksecurefunc("ChatEdit_UpdateHeader")`) und **liest nur** deren
+Attribute `chatType`/`tellTarget`. Steht dort `WHISPER` oder
+`BN_WHISPER` mit Ziel, geht das Gespräch im Fenster auf (`MS.OnChatEdit`,
+einmal je Ziel, bis die Zeile wieder zu ist; Battle.net über ein offenes
+Gespräch gleichen Namens oder `BNet_GetBNetIDAccount`). Geschrieben wird
+weiter in der Chatzeile – sie wird nie angefasst (kein `SetText`,
+`Hide`, `ClearFocus`; `load_test.lua` hält das fest). Hängt an
+`msgOutgoing`.
+
+**Symbol** (6.19.1.0, `msgIcon`, ab Werk an): eine Kachel 32 × 32 mit der
+Sprechblase aus `media/ui/icon_report.tga` (eigenes Bild), oben rechts
+die Zahl der Ungelesenen (`MS.Unread`); hell, solange etwas ungelesen
+oder das Fenster offen ist. Klick: auf/zu. Platz `messengerIcon` in
+`ui/layout.lua`.
+
+**Ziehen** (6.19.1.0, Beta-Test: „das Fenster ist nicht verschiebbar“):
+Fenster und Symbol lassen sich direkt mit der Maus ziehen
+(`K.DragToMove`), nicht nur im Gestaltungsmodus; die Stelle landet in
+`ui.positions` wie dort.
 
 **Sperre des Spiels.** Ist der Text geheim (`issecretvalue`, z. B. im
 Bosskampf), wird er nie gelesen; das Fenster zählt nur („N während einer
@@ -1360,8 +1402,12 @@ Link-Kodes (`[Donnerzorn]` statt `|Hitem:…|h`). Mit der Maus markieren,
 Strg+C kopiert; Tippen stellt den Text wieder her; Esc oder der Knopf führt
 zurück zum Verlauf mit Farben und klickbaren Links.
 
-**Ungemessen:** das ganze Fenster auf Forever, ob `msgDirect` erlaubt ist,
-ob Battle.net-Namen (`|K…|k`) im Fenster richtig erscheinen.
+**Ungemessen:** ob `msgDirect` erlaubt ist, ob Battle.net-Namen (`|K…|k`)
+im Fenster richtig erscheinen; seit 6.19.1.0 auch, welcher Chatfilter auf
+Forever da ist, ob das Spiel ohne gezeigte Zeile selbst noch einen Ton
+spielt (dann zwei), ob ein Klick auf einen Namen im Chat wirklich über
+die Eingabezeile läuft. Gemessen (Beta-Test 6.19.0.1): Fenster geht auf,
+Markieren und Kopieren gehen.
 
 ## Automark *(6.8.1.0, auf Klick seit 6.9.0.2, `ui/automark.lua`)*
 

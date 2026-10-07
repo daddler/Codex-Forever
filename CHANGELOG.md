@@ -9,6 +9,25 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.19.1.0] – 2026-10-07
+
+**Flüstern nur noch im Fenster.** Was dir zugeflüstert wird, steht nicht mehr zusätzlich im Chat – nur im Messenger, mit eigenem Ton. Was das Spiel dem Fenster während einer Sperre nicht verrät, bleibt im Chat, damit nichts verloren geht. Antworte im Fenster: Die Taste R kennt nur, was im Chat stand.
+
+**Im Kampf klappt es ein.** Das Fenster verschwindet, sobald der Kampf beginnt, und geht danach von selbst wieder auf – mit dem, was in der Zwischenzeit kam.
+
+**„/w Name“ öffnet das Gespräch.** Ebenso ein Klick auf einen Namen im Chat. Geschrieben wird weiter in der Chatzeile.
+
+**Neues Symbol:** Ein Klick öffnet die Gespräche jederzeit, die Zahl zeigt Ungelesenes. Fenster und Symbol lassen sich mit der Maus verschieben.
+
+### Technisch
+
+- **Entscheidung geändert** (Beta-Test 6.19.0.1: „Whisper sollen nicht parallel auch im Chat zu sehen sein“): `msgHideChat` (ab Werk an) meldet einen Chatfilter an (`ChatFrameUtil.AddMessageEventFilter`, sonst `ChatFrame_AddMessageEventFilter`) für Flüstern, Battle.net-Flüstern, Abwesend/Beschäftigt und „nicht online“. Er gibt nur `true` zurück – verbirgt, schreibt nie um – und nur für das, was das Fenster selbst liest: Filter und Fenster fragen `MS.Capturable` bzw. `MS.SystemTarget`. Geheimes bleibt im Chat. Ton und blinkendes Symbol macht jetzt `MS.Ping` (höchstens alle 3 s). Die Taste R kennt nur gezeigte Zeilen; den Absender selbst einzutragen hieße, die Chatzeile des Spiels zu verunreinigen (taint) – danach sperrt das Spiel `/cast` aus ihr. Darum nicht.
+- **Kampf:** `PLAYER_REGEN_DISABLED` klappt ein offenes Fenster ein (`MS.folded`), `PLAYER_REGEN_ENABLED` öffnet es wieder – mit dem Gespräch aus dem Kampf (`MS.pending`), sonst dem von vorher. `msgCombat` heißt jetzt „Im Kampf offen lassen“.
+- **„/w Name“ und Klick auf einen Namen:** `HookScript` auf `OnShow`/`OnTextChanged` der Eingabezeilen und `hooksecurefunc("ChatEdit_UpdateHeader")`; gelesen werden nur `chatType`/`tellTarget` (`MS.OnChatEdit`, einmal je Ziel). Die Zeile wird nie angefasst – der Prüflauf hält fest, dass weder `SetText` noch `Hide`, `ClearFocus` oder `SetFocus` auf ihr laufen.
+- **Symbol** `WeintCodexMessengerIcon` (Sprechblase `media/ui/icon_report.tga`, Ungelesene `MS.Unread`), Platz `messengerIcon` in `ui/layout.lua`, abschaltbar (`msgIcon`).
+- **Ziehen ohne Gestaltungsmodus:** neues `K.DragToMove(handle, key)` in `ui/kit.lua`, speichert wie der Gestaltungsmodus in `ui.positions`.
+- `/wcui prüfen` nennt den Chatfilter. 25 Gegenproben, alle gefangen – drei erst nach geschärfter Prüfung (Wechsel im offenen Fenster, andere Chatarten mit stehengebliebenem Ziel, Battle.net über den Namen).
+
 ## [6.19.0.1] – 2026-10-07
 
 **Flüstern: Text markieren und kopieren.** Der Knopf „Markieren“ oben im Fenster zeigt das Gespräch als Text – mit der Maus markieren, Strg+C kopiert, Esc führt zurück.
