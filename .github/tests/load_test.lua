@@ -5015,7 +5015,8 @@ do
     local names = { "GetNormalizedRealmName", "InCombatLockdown", "issecretvalue", "ChatFrameUtil",
                     "ChatFrame_AddMessageEventFilter", "ChatFrame_OpenChat", "NUM_CHAT_WINDOWS", "ChatFrame1EditBox",
                     "hooksecurefunc", "ChatEdit_UpdateHeader", "BNet_GetBNetIDAccount", "PlaySound", "SOUNDKIT",
-                    "FlashClientIcon", "GetTime", "ERR_CHAT_PLAYER_NOT_FOUND_S" }
+                    "FlashClientIcon", "GetTime", "ERR_CHAT_PLAYER_NOT_FOUND_S", "ChatFrame_ReplyTell",
+                    "ChatEdit_GetActiveWindow", "ChatFrame_SendBNetTell" }
     local saved = {}
     for i, n in ipairs(names) do saved[i] = G[n] end
     local K = WeintCodex.UIKit
@@ -5027,7 +5028,9 @@ do
         G.issecretvalue = function(v) return secret[v] == true end
         G.GetTime = function() return now end
         G.ChatFrameUtil = nil
-        G.ChatFrame_OpenChat = function() end
+        local opened = {}
+        G.ChatFrame_OpenChat = function(t) opened[#opened + 1] = t end
+        G.ChatFrame_SendBNetTell = function(id) opened[#opened + 1] = "bn:" .. tostring(id) end
         local filters, sounds, flashed = {}, 0, 0
         G.ChatFrame_AddMessageEventFilter = function(e, f) filters[e] = f end
         G.SOUNDKIT = { TELL_MESSAGE = 3081 }
@@ -5042,9 +5045,14 @@ do
         for _, m in ipairs({ "SetText", "Insert", "Hide", "ClearFocus", "SetFocus" }) do
             eb[m] = function() touched[#touched + 1] = m end
         end
-        local headerHook
+        local headerHook, replyHook
         G.ChatEdit_UpdateHeader = function() end
-        G.hooksecurefunc = function(name, fn) if name == "ChatEdit_UpdateHeader" then headerHook = fn end end
+        G.ChatFrame_ReplyTell = function() end
+        G.ChatEdit_GetActiveWindow = function() return eb end
+        G.hooksecurefunc = function(name, fn)
+            if name == "ChatEdit_UpdateHeader" then headerHook = fn end
+            if name == "ChatFrame_ReplyTell" then replyHook = fn end
+        end
         G.BNet_GetBNetIDAccount = function(n) if n == "Kumpel" then return 77 end end
         local function W(text, sender) MS.OnEvent(nil, "CHAT_MSG_WHISPER", text, sender, "", "", "", "", 0, 0, "", 0, 1, nil) end
         local function Filter(event, text, sender, ...) return filters[event](nil, event, text, sender, ...) end
@@ -5220,6 +5228,67 @@ do
         eb:GetScript("OnShow")(eb)
         assert(not MS.win:IsShown() and MS.conv["w:Quentin"] == nil, "aufgegangen, obwohl abgeschaltet")
         K.Set("comfort", "msgOutgoing", true)
+
+        -- Taste "Antworten" (R, 6.19.1.2): Fenster beim zuletzt Fluesternden auf;
+        -- zielt die Chatzeile (veraltet) woanders hin, neu mit "/w Name".
+        assert(replyHook, "Taste Antworten nicht angehaengt")
+        MS.win:Hide()
+        W("antwortest du?", "Rita")
+        MS.OnEvent(nil, "CHAT_MSG_WHISPER_INFORM", "selbst", "Sven", "", "", "", "", 0, 0, "", 0, 1, nil)
+        assert(MS.lastIn == "w:Rita", "zuletzt fluesternd: " .. tostring(MS.lastIn))
+        MS.win:Hide()
+        eb:SetAttribute("chatType", "WHISPER")
+        eb:SetAttribute("tellTarget", "Altbekannt")
+        local nOpen = #opened
+        replyHook()
+        assert(MS.win:IsShown() and MS.current == "w:Rita" and MS.conv["w:Rita"].unread == 0 and MS.order[1] == "w:Rita",
+            "R oeffnet nicht bei Rita: " .. tostring(MS.current))
+        assert(#opened == nOpen + 1 and opened[#opened] == "/w Rita ", "Chatzeile nicht auf Rita: " .. tostring(opened[#opened]))
+        -- Zielt sie schon auf Rita: nicht noch einmal.
+        eb:SetAttribute("tellTarget", "Rita-Testrealm")
+        replyHook()
+        assert(#opened == nOpen + 1, "Chatzeile doppelt geoeffnet")
+        -- Im Kampf: ausdruecklich gedrueckt, also auf.
+        MS.win:Hide()
+        combat = true
+        replyHook()
+        assert(MS.win:IsShown(), "R im Kampf: Fenster bleibt zu")
+        combat = false
+        -- Direkt senden: die Antwortzeile des Fensters, nicht die Chatzeile.
+        K.Set("comfort", "msgDirect", true)
+        local focused
+        MS.input.SetFocus = function() focused = true end
+        eb:SetAttribute("tellTarget", "Altbekannt")
+        replyHook()
+        assert(focused and #opened == nOpen + 1, "direkt: Fokus nicht im Fenster oder Chatzeile geoeffnet")
+        MS.input.SetFocus = nil
+        K.Set("comfort", "msgDirect", false)
+        -- Battle.net: Ziel ueber den Namen.
+        MS.OnEvent(nil, "CHAT_MSG_BN_WHISPER", "bn?", "Bnfreund", "", "", "", "", 0, 0, "", 0, 1, "", 31)
+        eb:SetAttribute("chatType", "BN_WHISPER")
+        eb:SetAttribute("tellTarget", "Bnfreund")
+        replyHook()
+        assert(MS.current == "bn:31" and #opened == nOpen + 1, "Battle.net: Chatzeile zielte schon richtig")
+        eb:SetAttribute("tellTarget", "Jemandanders")
+        replyHook()
+        assert(#opened == nOpen + 2 and opened[#opened] == "bn:31", "Battle.net: Chatzeile nicht neu gezielt")
+        nOpen = #opened
+        -- Gespraech inzwischen geschlossen: nichts, und nicht neu angelegt.
+        MS.Close("bn:31")
+        MS.win:Hide()
+        replyHook()
+        assert(not MS.win:IsShown() and MS.conv["bn:31"] == nil and #opened == nOpen, "R nach geschlossenem Gespraech")
+        MS.lastIn = "w:Rita"
+        -- Niemand hat gefluestert, oder der Helfer ist aus: nichts.
+        MS.lastIn = nil
+        MS.win:Hide()
+        replyHook()
+        assert(not MS.win:IsShown(), "R ohne Fluesternden: aufgegangen")
+        MS.lastIn = "w:Rita"
+        K.Set("comfort", "msgOn", false)
+        replyHook()
+        assert(not MS.win:IsShown() and #opened == nOpen, "R bei abgeschaltetem Helfer")
+        K.Set("comfort", "msgOn", true)
         assert(#touched == 0, "Chatzeile des Spiels angefasst: " .. table.concat(touched, ", "))
 
         -- Symbol: Klick auf/zu, abschaltbar, mit dem Helfer weg.

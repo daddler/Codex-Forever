@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.19.1.2",
+        date    = "07.10.2026",
+        notes   = {
+            "|cff7C6CFFFlüstern: die Taste „Antworten“ öffnet das Fenster.|r Drückst du R (oder deine Taste dafür), geht das Gespräch mit dem auf, der dir zuletzt geflüstert hat – auch im Kampf. Die Chatzeile zielt dabei auf ihn, auch wenn das Flüstern nicht im Chat stand.",
+        },
+    },
+    {
         version = "6.19.1.1",
         date    = "07.10.2026",
         notes   = {

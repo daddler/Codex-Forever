@@ -1360,8 +1360,15 @@ blinkendes Symbol der Taskleiste (macht jetzt `MS.Ping`, höchstens alle
 sich den Absender nur für Zeilen, die der Chat zeigt. Den Absender selbst
 eintragen (`ChatEdit_SetLastTellTarget`) hieße, die Chatzeile des Spiels
 zu verunreinigen (taint) – danach blockiert das Spiel geschützte Befehle
-aus ihr (`/cast`, `/target`). Darum: antworten im Fenster; die Seite sagt
-es beim Schalter.
+aus ihr (`/cast`, `/target`). Darum hängt sich WeintCodex seit 6.19.1.2 **hinter** die Taste
+(`hooksecurefunc` auf `ChatFrame_ReplyTell`/`ChatFrameUtil.ReplyTell`,
+`MS.OnReply`): das Fenster geht beim zuletzt Flüsternden auf (`MS.lastIn`,
+ausdrücklich – auch im Kampf, als gelesen), und zielt die offene
+Chatzeile auf jemand anderen (`MS.EditAimsAt`, Attribute nur gelesen),
+öffnet WeintCodex sie neu mit „/w Name“ – derselbe Weg wie der Klick in
+die Antwortzeile (`OpenGameReply`). Mit „Direkt senden“: Fokus in die
+Antwortzeile des Fensters. Ungemessen: ob die Taste auf Forever über eine
+dieser beiden Funktionen läuft.
 
 **„/w Name“ und Klick auf einen Namen** (6.19.1.0). WeintCodex hängt sich
 an die Eingabezeilen des Spiels (`HookScript` auf `OnShow`/`OnTextChanged`,

@@ -9,7 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [6.19.1.1] – 2026-10-07
+## [6.19.1.2] – 2026-10-07
+
+**Flüstern: die Taste „Antworten“ öffnet das Fenster.** Drückst du R (oder deine Taste dafür), geht das Gespräch mit dem auf, der dir zuletzt geflüstert hat – auch im Kampf. Die Chatzeile zielt dabei auf ihn, auch wenn das Flüstern nicht im Chat stand.
+
+### Technisch
+
+- `hooksecurefunc` hinter `ChatFrame_ReplyTell` (und `ChatFrameUtil.ReplyTell`, wo es das gibt) → `MS.OnReply`: Fenster beim zuletzt Flüsternden (`MS.lastIn`, nur eingehend, nur Gelesenes), ausdrücklich, also auch im Kampf und als gelesen. Das Spiel kennt bei verborgenem Flüstern einen alten Namen oder keinen; zielt die offene Chatzeile (`ChatEdit_GetActiveWindow`, Attribute nur gelesen, `MS.EditAimsAt`) woanders hin, öffnet WeintCodex sie neu mit „/w Name“ (`OpenGameReply`, derselbe Weg wie der Klick in die Antwortzeile seit 6.19.0.0; Battle.net `ChatFrame_SendBNetTell`). Mit „Direkt senden“ stattdessen der Fokus in die Antwortzeile des Fensters. Nie `ChatEdit_SetLastTellTarget` (taint).
+- Damit ist die Einschränkung aus 6.19.1.0 („R kennt nur, was der Chat zeigte“) aufgehoben, soweit WeintCodex den Absender lesen konnte.
+- 13 Gegenproben, alle gefangen – zwei erst nach geschärfter Prüfung (geschlossenes Gespräch, Battle.net-Ziel).
+
+
 
 **Flüstern: die Zahl am Symbol.** Ein Punkt in deiner Farbe zeigt, wie viele Nachrichten du noch nicht gelesen hast. Geht das Fenster von selbst auf, bleiben sie ungelesen, bis du mit der Maus darüberfährst, in die Antwortzeile klickst oder das Gespräch wählst.
 

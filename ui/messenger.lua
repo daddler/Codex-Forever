@@ -23,7 +23,10 @@
 -- nirgends. Folge, die das Spiel bestimmt: Die Taste "Antworten" (R) kennt
 -- nur, was der Chat gezeigt hat - den Absender selbst eintragen hiesse,
 -- die Chatzeile des Spiels zu "verunreinigen" (taint), und dann sperrt
--- das Spiel /cast & Co. aus ihr heraus. Darum antwortet man im Fenster.
+-- das Spiel /cast & Co. aus ihr heraus. Seit 6.19.1.2 haengt WeintCodex
+-- sich hinten an die Taste (MS.OnReply): Fenster beim zuletzt Fluesternden
+-- auf, die Chatzeile notfalls neu mit "/w Name" - wie der Klick in die
+-- Antwortzeile.
 --   * Im Kampf klappt das Fenster ein (versteckt) und geht danach wieder
 --     auf; das Symbol zaehlt solange die Ungelesenen.
 --   * "/w Name" in der Chatzeile oder ein Klick auf einen Namen oeffnet
@@ -714,6 +717,7 @@ function MS.OnWhisper(event, text, sender, guid, bnID)
     local c = MS.Ensure(key, bn and sender or (MS.Short(sender) or sender), bn and bnID or sender, bn)
     if not bn then c.class = c.class or ClassOf(guid) end
     MS.Add(c, out and "out" or "in", text)
+    if not out then MS.lastIn = key end
     if not out and MS.Hiding() then MS.Ping() end
     local visible = win and win:IsShown()
     if not out and not (visible and MS.current == key and c.unread == 0) then c.unread = c.unread + 1 end
@@ -822,6 +826,52 @@ function MS.KeyForTarget(kind, target)
     return key
 end
 
+--------------------------------------------------
+-- Die Taste "Antworten" (6.19.1.2, Beta-Test: "wenn ich die Taste druecke
+-- zum Antworten (Standard R), soll das Fenster wieder aufgehen")
+--------------------------------------------------
+-- Das Spiel antwortet dem, den sein Chat zuletzt gezeigt hat - verbirgt
+-- der Chat das Fluestern (msgHideChat), ist das ein ALTER Name oder gar
+-- keiner. Darum: das Fenster geht beim zuletzt Fluesternden auf
+-- (MS.lastIn), und zielt die Chatzeile auf jemand anderen, oeffnet
+-- WeintCodex sie neu mit "/w Name" - derselbe Weg wie der Klick in die
+-- Antwortzeile (OpenGameReply, seit 6.19.0.0), nie Attribute der Zeile
+-- setzen und nie ChatEdit_SetLastTellTarget (taint, s. o.).
+
+local function ActiveEdit()
+    local util = _G.ChatFrameUtil
+    local f = (type(util) == "table" and util.GetActiveWindow) or _G.ChatEdit_GetActiveWindow
+    if type(f) ~= "function" then return nil end
+    local ok, eb = pcall(f)
+    return ok and type(eb) == "table" and eb or nil
+end
+
+-- Zielt die offene Chatzeile schon auf dieses Gespraech?
+function MS.EditAimsAt(key)
+    local eb = ActiveEdit()
+    local c = conv[key or ""]
+    if not eb or not c or not eb.GetAttribute then return false end
+    local kind, target = K.Plain(eb:GetAttribute("chatType")), K.Plain(eb:GetAttribute("tellTarget"))
+    if type(target) ~= "string" then return false end
+    if kind == "WHISPER" then return not c.bn and KeyFor(target) == key end
+    if kind == "BN_WHISPER" then return c.bn and c.name == target or false end
+    return false
+end
+
+function MS.OnReply()
+    if not MS.Active() then return end
+    local key = MS.lastIn
+    if not (key and conv[key]) then return end
+    Touch(key)
+    -- Ausdruecklich gedrueckt: auch im Kampf auf, und gelesen.
+    MS.Show(key)
+    if Get("direct") then
+        if input then input:SetFocus() end
+        return
+    end
+    if not MS.EditAimsAt(key) then OpenGameReply(conv[key]) end
+end
+
 function MS.OnChatEdit(eb)
     if not (MS.Active() and Get("outgoing")) or type(eb) ~= "table" or not eb.GetAttribute then return end
     local kind, target = K.Plain(eb:GetAttribute("chatType")), K.Plain(eb:GetAttribute("tellTarget"))
@@ -842,7 +892,7 @@ function MS.OnChatEdit(eb)
     end
 end
 
-local editHooked, headerHooked = {}, false
+local editHooked, headerHooked, replyHooked = {}, false, false
 local function HookChatEdit()
     local function Forget(self) lastEdit[self] = nil end
     for i = 1, (_G.NUM_CHAT_WINDOWS or 10) do
@@ -857,6 +907,16 @@ local function HookChatEdit()
     if not headerHooked and type(_G.hooksecurefunc) == "function" and type(_G.ChatEdit_UpdateHeader) == "function" then
         headerHooked = true
         pcall(_G.hooksecurefunc, "ChatEdit_UpdateHeader", MS.OnChatEdit)
+    end
+    -- Die Taste "Antworten" (R): hinten an die Funktion des Spiels.
+    if not replyHooked and type(_G.hooksecurefunc) == "function" then
+        local util = _G.ChatFrameUtil
+        if type(util) == "table" and type(util.ReplyTell) == "function" then
+            replyHooked = pcall(_G.hooksecurefunc, util, "ReplyTell", MS.OnReply)
+        end
+        if type(_G.ChatFrame_ReplyTell) == "function" then
+            replyHooked = pcall(_G.hooksecurefunc, "ChatFrame_ReplyTell", MS.OnReply) or replyHooked
+        end
     end
 end
 MS.HookChatEdit = HookChatEdit
@@ -945,7 +1005,7 @@ local function BuildPage(B)
     B:Row({ type = "toggle", label = "Flüstern im eigenen Fenster", key = "msgOn",
             description = "Auch Battle.net-Flüstern. Das Symbol oder /wcui flüstern öffnet es jederzeit." },
           { type = "toggle", label = "Nur im Fenster, nicht im Chat", key = "msgHideChat", disabled = off,
-            description = "Was das Fenster nicht lesen darf (Sperre des Spiels), bleibt im Chat. Die Taste „Antworten“ (R) kennt dann nur, was der Chat gezeigt hat – antworte im Fenster." })
+            description = "Was das Fenster nicht lesen darf (Sperre des Spiels), bleibt im Chat. Die Taste „Antworten“ (R) öffnet das Fenster beim Letzten, der dir geflüstert hat, und richtet die Chatzeile auf ihn." })
     B:Row({ type = "toggle", label = "Im Kampf offen lassen", key = "msgCombat", disabled = off,
             description = "Sonst klappt es im Kampf ein und geht danach wieder auf." },
           { type = "toggle", label = "Bei eigenem Flüstern aufgehen", key = "msgOutgoing", disabled = off,
