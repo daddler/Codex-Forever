@@ -18,6 +18,7 @@ nicht zusammen.
 - Fehler aus 6.18.0.0 (Beta-Test, BugGrabber 125×: `auctionshare.lua:376: attempt to perform arithmetic on field 'last' (a string value)`): der Ereignis-Handler reichte alle Angaben von `CHAT_MSG_ADDON` an `AS.OnAddonMessage(prefix, text, channel, sender, now)` weiter – die fünfte ist das Ziel, im Kanal dessen Name („5. FGLayers“), und landete als Uhrzeit in `ib.last`; jeder Takt (`FinishInbound`) brach danach ab. Jetzt nur die ersten vier; `now` und `ib.last` nehmen nur Zahlen an.
 - Gemessen dabei: der Kanal von ForeverGuide antwortet auf Forever, Preise kommen an (24 von einem Spieler, bevor der Takt abbrach).
 - Prüflauf: `CHAT_MSG_ADDON` jetzt auch über das Ereignis mit allen neun Angaben wie im Spiel (vorher nur direkt aufgerufen – deshalb unentdeckt). Gegenprobe: alle drei Stellen zurückgedreht → gefangen mit derselben Meldung wie im Spiel; jede allein fängt die beiden anderen ab.
+- Release-Lauf zuerst rot: zwei Empfänge mit gleichem Zeitstempel (der neue Prüflauf) – welcher als „zuletzt von Spielern“ blieb, hing von der Reihenfolge von `pairs()` ab, und die von den Zeitstempeln, also von der Uhrzeit (lokal 2 von 12 Läufen rot). Jetzt eindeutig: neuer vor älter, bei gleicher Zeit mehr Preise, dann der Name.
 
 ## [6.18.0.0] – 2026-10-07
 

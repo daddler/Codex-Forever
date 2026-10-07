@@ -378,7 +378,12 @@ local function FinishInbound(now)
             local st = AP.Store(ib.side)
             if st and ib.n > 0 then
                 local sh = type(st.shared) == "table" and st.shared or {}
-                if ib.stamp >= (sh.stamp or 0) then
+                -- Unabhaengig von der Reihenfolge, in der pairs() die
+                -- Empfaenge liefert: neuer schlaegt aelter, bei gleicher
+                -- Zeit mehr Preise, dann der Name.
+                local s0, n0 = sh.stamp or 0, sh.n or 0
+                if ib.stamp > s0 or (ib.stamp == s0 and (ib.n > n0
+                    or (ib.n == n0 and ib.from < (sh.from or "\255")))) then
                     st.shared = { stamp = ib.stamp, at = ToLocal(ib.stamp), from = ib.from, via = ib.via, n = ib.n }
                 end
                 AS.last = { from = ib.from, via = ib.via, side = ib.side, n = ib.n, at = ToLocal(ib.stamp) }
