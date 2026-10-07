@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.21.1.2",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFKontinentkarte: Symbole an der richtigen Stelle.|r Geistheiler, Pfeile, Flugmeister und Reisen standen auf Kalimdor und den Östlichen Königreichen zusammengedrängt am linken Rand. Jetzt stehen sie dort, wo sie hingehören.",
+        },
+    },
+    {
         version = "6.21.1.1",
         date    = "08.10.2026",
         notes   = {

@@ -309,10 +309,14 @@ function MK.Place()
         local holder = MK.Holder(canvas)
         if p:GetParent() ~= holder then p:SetParent(holder) end
         Dress(p, e)
-        p:SetScale((e.small and MK.SMALL or 1) / s)
+        -- Der Abstand gilt im Massstab des Symbols: kleiner gemacht (Kontinent)
+        -- muss er im selben Mass groesser werden - sonst rutschte alles zur
+        -- linken oberen Ecke (6.21.1.2, Beta-Test: alles in einer Spalte).
+        local f = e.small and MK.SMALL or 1
+        p:SetScale(f / s)
         p:SetFrameLevel(lvl)
         p:ClearAllPoints()
-        p:SetPoint("CENTER", canvas, "TOPLEFT", w * e.x * s, -h * e.y * s)
+        p:SetPoint("CENTER", canvas, "TOPLEFT", w * e.x * s / f, -h * e.y * s / f)
         p:Show()
     end
     HideAll(#list + 1)

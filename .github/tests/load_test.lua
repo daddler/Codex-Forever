@@ -5856,6 +5856,15 @@ do
         local n = MK.Place()
         assert(n > 50 and MK.pins[1].entry.small, "Kontinent: " .. tostring(n))
         assert(math.abs(MK.pins[1].entry.x - (0.4 + D.spirit[1411][1] * 0.2)) < 1e-6, "Kontinent an falscher Stelle")
+        -- 6.21.1.2: kleiner gemacht, aber an derselben Stelle - der Abstand
+        -- gilt im Massstab des Symbols.
+        local cpt, csc
+        MK.pins[1].SetPoint = function(_, a, rel, b, x, y) cpt = { x, y } end
+        MK.pins[1].SetScale = function(_, v) csc = v end
+        MK.Place()
+        assert(csc == MK.SMALL and math.abs(cpt[1] * csc - 1000 * MK.pins[1].entry.x) < 1e-6
+            and math.abs(cpt[2] * csc + 600 * MK.pins[1].entry.y) < 1e-6, "Kontinent: verkleinert und verschoben")
+        MK.pins[1].SetPoint, MK.pins[1].SetScale = nil, nil
         K.Set("comfort", "mapMarksContinent", false)
         assert(MK.Place() == 0, "Kontinent, obwohl abgeschaltet")
         K.Set("comfort", "mapMarksContinent", true)

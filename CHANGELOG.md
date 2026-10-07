@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.21.1.2] – 2026-10-08
+
+**Kontinentkarte: Symbole an der richtigen Stelle.** Geistheiler, Pfeile, Flugmeister und Reisen standen auf Kalimdor und den Östlichen Königreichen zusammengedrängt am linken Rand. Jetzt stehen sie dort, wo sie hingehören.
+
+### Technisch
+
+- Beta-Test 6.21.1.1: auf dem Kontinent alle Symbole in einer Spalte links. `ui/mapmarks.lua` verkleinert die Symbole dort mit `SetScale(MK.SMALL / s)` – der Abstand von `SetPoint` gilt aber im Maßstab des Rahmens selbst, also landete alles bei 70 % des Wegs von der linken oberen Ecke. Jetzt wird der Abstand durch denselben Faktor geteilt. Prüflauf hält Maßstab × Abstand gegen die Lage; Gegenprobe gefangen.
+
 ## [6.21.1.1] – 2026-10-08
 
 **Kein Absturz mehr an der Karte.** Mit vielen Kartensymbolen (Geistheiler, Flugmeister, Reisen auf der Kontinentkarte) stürzte das Spiel ab. Behoben.
