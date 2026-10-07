@@ -9,6 +9,25 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.19.0.0] – 2026-10-07
+
+**Neu im Komfort: Flüstern wie im Messenger.** Wird dir etwas zugeflüstert, geht ein Fenster auf – links deine Gespräche mit der Zahl ungelesener Nachrichten, rechts der Verlauf in der Klassenfarbe des anderen. Auch Battle.net-Freunde. Im Kampf geht es erst danach auf. Einschalten unter Komfort → Flüstern, jederzeit öffnen mit /wcui flüstern.
+
+**Im Chat bleibt alles, wie es ist.** Jedes Flüstern steht weiter auch dort, und der Verlauf im Fenster gilt nur bis zum Ausloggen – nichts davon wird gespeichert.
+
+**Antworten:** Ein Klick in die Antwortzeile öffnet die Chatzeile mit „/w Name“, Enter sendet. Wer es ausprobieren will: „Direkt aus dem Fenster senden“ – lässt das Spiel es nicht zu, schaltet es sich von selbst wieder ab.
+
+### Technisch
+
+- **Neu** `ui/messenger.lua` (`WeintCodex.UIMessenger`), Seite „Flüstern“ im Komfort (`msgOn`, `msgCombat`, `msgOutgoing`, `msgStamps`, `msgDirect` unter `comfort`, der Helfer ab Werk aus). Nach dem Verhalten von WIM 3.18.1 – WIM ist „All Rights Reserved“, kein Code, keine Bilder, keine Töne daraus.
+- **Mit dem Spieler entschieden:** kein Chatfilter, keine Chatzeile wird verändert (Grundsatz); Verlauf nur im Speicher der Sitzung (`MS.conv`, höchstens `MS.MAX_LINES` = 200 Zeilen je Gespräch, `MS.MAX_CONV` = 8 Gespräche) – nie in `WeintCodex_SavedData`, die Datei liest die Companion-App; nur Flüstern und Battle.net-Flüstern.
+- **Ereignisse:** `CHAT_MSG_WHISPER(_INFORM)` (GUID an 12. Stelle → Klasse über `GetPlayerInfoByGUID`), `CHAT_MSG_BN_WHISPER(_INFORM)` (Konto an 13. Stelle), `CHAT_MSG_AFK`/`DND` und „nicht online“ (Muster aus `ERR_CHAT_PLAYER_NOT_FOUND_S`) als Zeile in ein offenes Gespräch. Geheimer Text (Sperre des Spiels): nie gelesen, nur gezählt („N während einer Sperre nur im Chat“).
+- **Fenster:** Kachel 420 × 260, links die Gespräche (neuestes oben, Ungelesene als Zahl, × schließt), rechts `ScrollingMessageFrame` (Uhrzeit, Name in Klassenfarbe, du im Akzent, Links klickbar, Mausrad), Esc schließt (`UISpecialFrames`), verschieben im Gestaltungsmodus (`messenger` in `ui/layout.lua`). Geht auf, wenn es zu ist – ein neues Flüstern bei offenem Fenster wechselt das Gespräch nicht; im Kampf erst nach `PLAYER_REGEN_ENABLED` (Schalter `msgCombat`).
+- **Antworten:** ab Werk öffnet ein Klick in die Antwortzeile die Chatzeile des Spiels (`ChatFrame_OpenChat("/w Name ")` bzw. `ChatFrame_SendBNetTell`) – das Spiel sendet selbst. `msgDirect` (ungemessen) sendet über `C_ChatInfo.SendChatMessage`/`BNSendWhisper`; kommt binnen `MS.BLOCK_WINDOW` = 1 s `ADDON_ACTION_BLOCKED`/`FORBIDDEN` für WeintCodex, schaltet es sich ab, merkt die Messung (`ui.msgDirectBlocked`) und gibt den Text an die Chatzeile.
+- **`/wcui flüstern`** öffnet und schließt; **`/wcui prüfen`**: Zeile „Flüstern“ (Wege zum Antworten, direkt senden gemessen gesperrt?, Gespräche, Gesperrtes).
+- Prüflauf: aus/an, Gespräch mit Klasse, Fenster geht auf, offenes Gespräch nicht ungelesen, zweites ungelesen ohne Wechsel, Kampf und danach, Schalter Kampf, geheimer Text/Absender/Konto nur gezählt, eigenes Flüstern, Battle.net, abwesend, nicht online (nur offene Gespräche), Klick in die Antwortzeile, Chatzeile, Battle.net-Antwort, direkt gesendet, direkt gesperrt → aus und gemerkt, fremde Sperre zählt nicht, Grenzen, Schließen, **nichts in den gespeicherten Daten**, Selbstprüfung, Seite. 25 Gegenproben, alle gefangen – drei erst nach geschärfter Prüfung (offenes Gespräch als ungelesen, geheimer Absender, Klick in die Antwortzeile).
+- Dazu die unveröffentlichte 6.18.0.2 (Zählung in `/wcui auktion`).
+
 ## [6.18.0.2] – 2026-10-07
 
 **/wcui auktion zählt richtig.** Was verworfen wird, weil es älter ist als dein eigener Scan, steht jetzt als Zahl der Nachrichten da – vorher hieß es „ganze Scans“, gezählt wurden aber einzelne Nachrichten.

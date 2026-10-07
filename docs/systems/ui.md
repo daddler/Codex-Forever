@@ -1301,6 +1301,60 @@ Argument von `CHAT_MSG_ADDON` ist das Ziel, im Kanal dessen Name.
 **Ungemessen:** die Gilde (niemand sonst mit WeintCodex), die Drosselung
 beim Senden, ob der Beitritt eine Zeile im Chat zeigt.
 
+## Flüstern als Messenger *(6.19.0.0, `ui/messenger.lua`, Seite im Komfort)*
+
+Wunsch des Spielers nach dem Verhalten von WIM (WoW Instant Messenger
+3.18.1 – „All Rights Reserved“: kein Code, keine Bilder, keine Töne).
+Wird dir etwas zugeflüstert, geht ein Fenster auf: links die Gespräche
+(neuestes oben, Ungelesene als Zahl, × schließt eins), rechts der
+Verlauf (Uhrzeit, Name in Klassenfarbe aus der GUID, du im Akzent,
+Links klickbar), unten die Antwortzeile. Gespeichert unter `comfort`
+(`msgOn` … `msgDirect`), der Helfer ab Werk **aus**; geht ohne
+Oberfläche. `/wcui flüstern` öffnet und schließt.
+
+**Mit dem Spieler entschieden (07.10.2026), nicht verhandelbar ohne ihn:**
+
+- **Der Chat bleibt.** Kein `AddMessageEventFilter`, keine Zeile wird
+  versteckt oder verändert – jedes Flüstern steht auch im Chat. WIM
+  nimmt es dort heraus; bei uns gilt „Chatzeilen werden nie
+  umgeschrieben“, und in einer Sperre des Spiels gingen ohnehin nur
+  die Zeilen des Chats.
+- **Verlauf nur diese Sitzung** (`MS.conv`, `MS.MAX_LINES` = 200 je
+  Gespräch, `MS.MAX_CONV` = 8). **Nie** in `WeintCodex_SavedData`: die
+  Datei liest die Companion-App, und private Nachrichten gehören dort
+  nicht hin. `load_test.lua` durchsucht die gespeicherten Daten nach dem
+  Text der Prüfnachrichten.
+- **Nur Flüstern und Battle.net-Flüstern**, nicht Gilde oder Gruppe.
+
+**Antworten.** An die Gilde ist eigenes Senden gemessen gesperrt
+(6.10.4.6, `ADDON_ACTION_BLOCKED`, `pcall` fängt es nicht). Darum öffnet
+ab Werk ein Klick in die Antwortzeile die **Chatzeile des Spiels** mit
+„/w Name “ (`ChatFrame_OpenChat`; Battle.net `ChatFrame_SendBNetTell`) –
+Enter sendet, das Spiel sendet selbst. „Direkt aus dem Fenster senden“
+(`msgDirect`, ab Werk aus, **ungemessen**) sendet über
+`C_ChatInfo.SendChatMessage` bzw. `BNSendWhisper`. Meldet das Spiel
+binnen `MS.BLOCK_WINDOW` = 1 s `ADDON_ACTION_BLOCKED`/`FORBIDDEN` für
+WeintCodex, schaltet WeintCodex `msgDirect` ab, merkt die Messung
+(`ui.msgDirectBlocked`, steht in `/wcui prüfen`) und gibt den Text an die
+Chatzeile weiter – der Spieler sieht dabei einmal den Fehler des Spiels.
+
+**Aufgehen.** Ist das Fenster zu, geht es beim nächsten Flüstern auf
+(auch beim eigenen, `msgOutgoing`); ist es offen, bleibt das gewählte
+Gespräch, das neue zählt als ungelesen. Im Kampf erst nach
+`PLAYER_REGEN_ENABLED` (`msgCombat` schaltet das ab).
+
+**Sperre des Spiels.** Ist der Text geheim (`issecretvalue`, z. B. im
+Bosskampf), wird er nie gelesen; das Fenster zählt nur („N während einer
+Sperre nur im Chat“). WIM baut solche Nachrichten nachher nach – das geht
+bei geheimen Werten nicht, und wir raten nicht.
+
+**Dazu:** Abwesend/Beschäftigt (`CHAT_MSG_AFK`/`DND`) und „nicht online“
+(Muster aus `ERR_CHAT_PLAYER_NOT_FOUND_S`) als graue Zeile in ein offenes
+Gespräch – nie ein neues Gespräch für Fremde.
+
+**Ungemessen:** das ganze Fenster auf Forever, ob `msgDirect` erlaubt ist,
+ob Battle.net-Namen (`|K…|k`) im Fenster richtig erscheinen.
+
 ## Automark *(6.8.1.0, auf Klick seit 6.9.0.2, `ui/automark.lua`)*
 
 Beta-Test: „Wenn eine Instanz betreten wird, soll der Tank und Heiler

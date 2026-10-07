@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.19.0.0",
+        date    = "07.10.2026",
+        notes   = {
+            "|cff7C6CFFNeu im Komfort: Flüstern wie im Messenger.|r Wird dir etwas zugeflüstert, geht ein Fenster auf – links deine Gespräche mit der Zahl ungelesener Nachrichten, rechts der Verlauf in der Klassenfarbe des anderen. Auch Battle.net-Freunde. Im Kampf geht es erst danach auf. Einschalten unter Komfort → Flüstern, jederzeit öffnen mit /wcui flüstern.",
+            "|cff7C6CFFIm Chat bleibt alles, wie es ist.|r Jedes Flüstern steht weiter auch dort, und der Verlauf im Fenster gilt nur bis zum Ausloggen – nichts davon wird gespeichert.",
+            "|cff7C6CFFAntworten:|r Ein Klick in die Antwortzeile öffnet die Chatzeile mit „/w Name“, Enter sendet. Wer es ausprobieren will: „Direkt aus dem Fenster senden“ – lässt das Spiel es nicht zu, schaltet es sich von selbst wieder ab.",
+        },
+    },
+    {
         version = "6.18.0.2",
         date    = "07.10.2026",
         notes   = {

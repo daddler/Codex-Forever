@@ -1291,6 +1291,12 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Eigene Wahl abgegeben – der Pfeil plant wieder selbst.")
         return
     end
+    if msg == "flüstern" or msg == "fluestern" or msg == "wim" or msg == "whisper" then
+        local MS = WeintCodex.UIMessenger
+        if MS and MS.Active() then MS.Toggle()
+        else print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Flüstern im eigenen Fenster ist aus (Komfort → Flüstern).") end
+        return
+    end
     if msg == "auktion" or msg == "ah" or msg == "auction" then
         local AP = WeintCodex.UIAuctionPrices
         if AP and AP.Report then K.ShowReport("Auktionspreise", AP.Report()) end

@@ -483,6 +483,19 @@ Check("Auktionspreise", function(add)
     end
 end)
 
+-- Fluestern (6.19.0.0): welche Wege zum Antworten der Client anbietet und
+-- ob "direkt senden" gemessen gesperrt ist.
+Check("Flüstern", function(add)
+    local MS = WeintCodex.UIMessenger
+    if not MS then
+        add(SC.OPEN, "Flüstern nicht geladen.")
+        return
+    end
+    local active = MS.Active()
+    add(active and SC.OK or SC.OPEN, active and "An" or "Aus (Komfort → Flüstern)")
+    for _, line in ipairs(MS.StatusLines()) do add("", "   " .. line) end
+end)
+
 Check("Berufe", function(add)
     local PRO = WeintCodex.Professions
     if not (PRO and PRO.Skills) then

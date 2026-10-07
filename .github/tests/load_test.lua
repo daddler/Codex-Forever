@@ -4757,6 +4757,182 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.19.0.0: Fluestern als Messenger. Ein Fenster, links die Gespraeche,
+-- rechts der Verlauf; im Kampf erst danach; Geheimes nur gezaehlt; nichts
+-- in den gespeicherten Daten; Antworten ueber die Chatzeile des Spiels,
+-- direkt nur auf Wunsch - gesperrt schaltet es sich selbst ab.
+do
+    local G = _G
+    local names = { "GetNormalizedRealmName", "GetPlayerInfoByGUID", "InCombatLockdown", "issecretvalue",
+                    "ChatFrame_OpenChat", "ChatFrameUtil", "ChatFrame_SendBNetTell", "C_ChatInfo", "BNSendWhisper",
+                    "ERR_CHAT_PLAYER_NOT_FOUND_S", "print" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local K = WeintCodex.UIKit
+    local MS = WeintCodex.UIMessenger
+    local ok, err = pcall(function()
+        local combat, secret = false, {}
+        G.GetNormalizedRealmName = function() return "Testrealm" end
+        G.GetPlayerInfoByGUID = function(g) if g == "Player-1-AAA" then return "Krieger", "WARRIOR" end end
+        G.InCombatLockdown = function() return combat end
+        G.issecretvalue = function(v) return secret[v] == true end
+        G.ERR_CHAT_PLAYER_NOT_FOUND_S = "Kein Spieler namens '%s' ist derzeit gespielt."
+        local opened, bnTell, lines = {}, {}, {}
+        G.ChatFrameUtil = nil
+        G.ChatFrame_OpenChat = function(t) opened[#opened + 1] = t end
+        G.ChatFrame_SendBNetTell = function(n) bnTell[#bnTell + 1] = n end
+        G.print = function(...) lines[#lines + 1] = table.concat({ ... }, " ") end
+        local function W(text, sender, guid) MS.OnEvent(nil, "CHAT_MSG_WHISPER", text, sender, "", "", "", "", 0, 0, "", 0, 1, guid) end
+        local function Out(text, target) MS.OnEvent(nil, "CHAT_MSG_WHISPER_INFORM", text, target, "", "", "", "", 0, 0, "", 0, 1, nil) end
+
+        -- Aus: nichts.
+        K.Set("comfort", "msgOn", false)
+        W("hallo Welt", "Anna-Testrealm", "Player-1-AAA")
+        assert(#MS.order == 0, "gemerkt, obwohl aus")
+        K.Set("comfort", "msgOn", true)
+
+        -- Eingehend: Gespraech, Klasse, Fenster geht auf, gelesen.
+        MS.Build()
+        local shown = {}
+        MS.smf.AddMessage = function(_, t) shown[#shown + 1] = t end
+        MS.smf.Clear = function() shown = {} end
+        W("hallo Welt", "Anna-Testrealm", "Player-1-AAA")
+        local a = MS.conv["w:Anna"]
+        assert(a and a.name == "Anna" and a.class == "WARRIOR" and a.target == "Anna-Testrealm", "Gespraech mit Anna")
+        assert(MS.win:IsShown() and MS.current == "w:Anna" and a.unread == 0, "Fenster nicht aufgegangen")
+        assert(#shown == 1 and shown[1]:find("hallo Welt", 1, true) and shown[1]:find("Anna", 1, true), "Verlauf: " .. tostring(shown[1]))
+        -- Offen und gewaehlt: gelesen, nicht ungelesen.
+        W("noch was", "Anna-Testrealm", "Player-1-AAA")
+        assert(a.unread == 0 and #a.lines == 2, "offenes Gespraech als ungelesen gezaehlt")
+        -- Ein zweiter, waehrend Anna offen ist: Anna bleibt, Bob ungelesen.
+        W("bist du da?", "Bob")
+        assert(MS.current == "w:Anna" and MS.conv["w:Bob"].unread == 1, "Gespraech gewechselt")
+        assert(MS.order[1] == "w:Bob" and MS.rows[1].badge:GetText() == "1", "Ungelesen nicht angezeigt")
+        MS.Select("w:Bob")
+        assert(MS.conv["w:Bob"].unread == 0 and #shown == 1, "Auswahl")
+
+        -- Im Kampf: zu, bis der Kampf vorbei ist.
+        MS.win:Hide()
+        combat = true
+        W("inv pls", "Carl")
+        assert(not MS.win:IsShown() and MS.pending == "w:Carl", "im Kampf aufgegangen")
+        combat = false
+        MS.OnEvent(nil, "PLAYER_REGEN_ENABLED")
+        assert(MS.win:IsShown() and MS.current == "w:Carl", "nach dem Kampf nicht aufgegangen")
+        K.Set("comfort", "msgCombat", true)
+        MS.win:Hide()
+        combat = true
+        W("noch da?", "Carl")
+        assert(MS.win:IsShown(), "trotz Schalter nicht im Kampf aufgegangen")
+        combat = false
+        K.Set("comfort", "msgCombat", false)
+
+        -- Geheim (Sperre des Spiels): nur gezaehlt, nie gelesen.
+        local hidden = "geheimer Text"
+        secret[hidden] = true
+        local n0 = #MS.order
+        W(hidden, "Dora")
+        assert(MS.locked == 1 and #MS.order == n0 and MS.conv["w:Dora"] == nil, "Geheimes gelesen")
+        -- Auch ein geheimer Absender, und Battle.net ohne Konto.
+        local who = "Geheimname"
+        secret[who] = true
+        W("offen", who)
+        MS.OnEvent(nil, "CHAT_MSG_BN_WHISPER", "offen", "|Kq7|k", "", "", "", "", 0, 0, "", 0, 1, "", nil)
+        assert(MS.locked == 3 and #MS.order == n0, "geheimer Absender oder Konto gelesen")
+        secret[who] = nil
+        assert(MS.foot:GetText():find("Sperre", 1, true), "Sperre nicht genannt")
+        secret[hidden] = nil
+
+        -- Eigenes Fluestern: aufgehen nur auf Wunsch.
+        MS.win:Hide()
+        K.Set("comfort", "msgOutgoing", false)
+        Out("treffen wir uns?", "Emil-Testrealm")
+        assert(MS.conv["w:Emil"] and not MS.win:IsShown(), "bei eigenem Fluestern aufgegangen")
+        K.Set("comfort", "msgOutgoing", true)
+        Out("hallo?", "Emil-Testrealm")
+        assert(MS.win:IsShown() and MS.conv["w:Emil"].lines[2].kind == "out", "eigenes Fluestern")
+
+        -- Battle.net: an 13. Stelle die Nummer des Kontos.
+        MS.OnEvent(nil, "CHAT_MSG_BN_WHISPER", "na du", "|Kq42|k", "", "", "", "", 0, 0, "", 0, 1, "", 42)
+        local b = MS.conv["bn:42"]
+        assert(b and b.bn and b.target == 42, "Battle.net-Gespraech")
+
+        -- Abwesend und nicht online.
+        MS.OnEvent(nil, "CHAT_MSG_AFK", "bin weg", "Anna-Testrealm")
+        MS.OnEvent(nil, "CHAT_MSG_SYSTEM", "Kein Spieler namens 'Bob' ist derzeit gespielt.")
+        MS.OnEvent(nil, "CHAT_MSG_SYSTEM", "Kein Spieler namens 'Fremder' ist derzeit gespielt.")
+        local la, lb = MS.conv["w:Anna"].lines, MS.conv["w:Bob"].lines
+        assert(la[#la].kind == "sys" and la[#la].text == "Abwesend: bin weg", "Abwesend")
+        assert(lb[#lb].text == "Bob ist nicht online.", "nicht online")
+        assert(MS.conv["w:Fremder"] == nil, "Gespraech fuer Fremden angelegt")
+
+        -- Antworten: ab Werk ueber die Chatzeile des Spiels.
+        MS.Select("w:Anna")
+        MS.input:GetScript("OnEditFocusGained")(MS.input)
+        assert(opened[#opened] == "/w Anna-Testrealm ", "Klick in die Antwortzeile: " .. tostring(opened[#opened]))
+        assert(MS.Send("w:Anna", "gleich") == true and opened[#opened] == "/w Anna-Testrealm gleich", "Chatzeile: " .. tostring(opened[#opened]))
+        MS.Send("bn:42", "ok")
+        assert(bnTell[#bnTell] == 42, "Battle.net-Antwort")
+
+        -- Direkt: gesendet; gesperrt -> abgeschaltet, gemerkt, Text in die Chatzeile.
+        local sentDirect = {}
+        G.C_ChatInfo = { SendChatMessage = function(t, kind, _, to) sentDirect[#sentDirect + 1] = { t, kind, to } end }
+        K.Set("comfort", "msgDirect", true)
+        assert(MS.Send("w:Anna", "direkt") == true and sentDirect[1][1] == "direkt" and sentDirect[1][2] == "WHISPER"
+            and sentDirect[1][3] == "Anna-Testrealm", "direkt nicht gesendet")
+        local nOpen = #opened
+        G.C_ChatInfo.SendChatMessage = function() MS.OnEvent(nil, "ADDON_ACTION_BLOCKED", "WeintCodex", "SendChatMessage()") end
+        assert(MS.Send("w:Anna", "gesperrt") == false, "Sperre nicht erkannt")
+        assert(K.Get("comfort", "msgDirect") == false and WeintCodex.SavedData.ui.msgDirectBlocked
+            and opened[nOpen + 1] == "/w Anna-Testrealm gesperrt" and lines[#lines]:find("nicht selbst", 1, true), "nach der Sperre")
+        -- Eine Sperre eines anderen Addons zaehlt nicht.
+        assert(MS.OnBlocked("AnderesAddon") == false, "fremde Sperre gezaehlt")
+
+        -- Grenzen: Zeilen je Gespraech, Zahl der Gespraeche; schliessen.
+        for i = 1, MS.MAX_LINES + 5 do MS.Add(MS.conv["w:Anna"], "in", "z" .. i) end
+        assert(#MS.conv["w:Anna"].lines == MS.MAX_LINES and MS.conv["w:Anna"].lines[MS.MAX_LINES].text == "z" .. (MS.MAX_LINES + 5), "Zeilen")
+        for i = 1, MS.MAX_CONV + 1 do W("x", "Neu" .. i) end
+        assert(#MS.order == MS.MAX_CONV and MS.conv["w:Anna"] == nil, "zu viele Gespraeche")
+        local first = MS.order[1]
+        MS.Select(first)
+        MS.Close(first)
+        assert(MS.conv[first] == nil and MS.current == MS.order[1], "Schliessen")
+
+        -- Nichts davon in den gespeicherten Daten.
+        local function Find(t, needle, seen)
+            seen = seen or {}
+            if seen[t] then return false end
+            seen[t] = true
+            for k, v in pairs(t) do
+                if v == needle or k == needle then return true end
+                if type(v) == "table" and Find(v, needle, seen) then return true end
+            end
+            return false
+        end
+        assert(not Find(WeintCodex.SavedData, "hallo Welt") and not Find(WeintCodex.SavedData, "bist du da?"), "Fluestern gespeichert")
+
+        -- Selbstpruefung, Seite, Befehl.
+        local SC = WeintCodex.UISelfCheck
+        local out = {}
+        for _, c in ipairs(SC.CHECKS) do
+            if c.name == "Flüstern" then c.fn(function(_, text) out[#out + 1] = text end) end
+        end
+        local sc = table.concat(out, "\n")
+        assert(sc:find("gemessen gesperrt", 1, true) and sc:find("SendChatMessage: ja", 1, true), "Selbstpruefung: " .. sc)
+        local page
+        for _, pg in ipairs(K.Module("comfort").pages) do if pg.key == "fluestern" then page = pg end end
+        assert(page and page.label == "Flüstern", "Seite fehlt")
+        K.Set("comfort", "msgOn", false)
+        assert(not MS.win:IsShown(), "Fenster bleibt, obwohl aus")
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    K.Set("comfort", "msgOn", false)
+    K.Set("comfort", "msgDirect", false)
+    if WeintCodex.SavedData.ui then WeintCodex.SavedData.ui.msgDirectBlocked = nil end
+    Check(ok, "Fluestern: Fenster, Gespraeche, Kampf, Geheimes, eigenes, Battle.net, abwesend, Chatzeile, direkt/gesperrt, nichts gespeichert"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.13.2.0: die Regelliste zeigt nur, was fuer diesen Charakter gilt
 -- (Beta-Test: "Ich sehe in den Erinnerungen alle Erinnerungen von allen
 -- Charakteren"). Alte Begleiter-/Munitionsregeln ohne Klasse gelten nur, wo
