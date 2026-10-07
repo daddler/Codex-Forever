@@ -375,12 +375,14 @@ end
 
 local function BuildPage(B)
     local off = function() return not K.Get(KEY, "mapEntrances") end
-    B:Section("Karte", "Instanzeingänge als Symbol auf der Weltkarte – ohne den Codex aufzuschlagen. Die Marke aus dem Codex („Eingang auf der Karte“) bleibt, wie sie ist.")
+    B:Section("Karte", "Instanzeingänge als Symbol auf der Weltkarte, und auf Wunsch die ganze Karte. Die Marke aus dem Codex („Eingang auf der Karte“) bleibt, wie sie ist.")
     B:Row({ type = "toggle", label = "Instanzeingänge auf der Karte", key = "mapEntrances",
             description = "Ein Symbol an jedem Eingang, den der Codex kennt. Maus darauf: welcher Dungeon, welche Stufe. Klick: im Codex öffnen." },
           { type = "toggle", label = "Auch auf der Kontinentkarte", key = "mapContinent", disabled = off,
             description = "Kalimdor und die Östlichen Königreiche im Ganzen." })
     B:Note("Die Lagen stammen aus Beta-Berichten (ForeverGuide) und sind unbestätigt. Wo der Codex keinen Eingang kennt, steht kein Symbol.")
+    local MR = WeintCodex.UIMapReveal
+    if MR and MR.BuildRows then MR.BuildRows(B) end
 end
 ME.BuildPage = BuildPage
 

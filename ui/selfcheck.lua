@@ -507,6 +507,11 @@ Check("Karte", function(add)
     local active = ME.Active()
     add(active and SC.OK or SC.OPEN, active and "Instanzeingänge an" or "Instanzeingänge aus (Komfort → Karte)")
     for _, line in ipairs(ME.StatusLines()) do add("", "   " .. line) end
+    local MR = WeintCodex.UIMapReveal
+    if MR then
+        add(MR.Active() and SC.OK or SC.OPEN, MR.Active() and "Ganze Karte an" or "Ganze Karte aus")
+        for _, line in ipairs(MR.StatusLines()) do add("", "   " .. line) end
+    end
 end)
 
 Check("Berufe", function(add)

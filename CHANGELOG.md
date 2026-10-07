@@ -13,9 +13,16 @@ nicht zusammen.
 
 **Neu im Komfort: Instanzeingänge auf der Karte.** Öffnest du die Weltkarte, steht an jedem Dungeoneingang, den der Codex kennt, ein Symbol – auch auf der Karte von Kalimdor und den Östlichen Königreichen. Maus darauf zeigt Dungeon und Stufe, ein Klick schlägt ihn im Codex auf. Einschalten unter Komfort → Karte.
 
+**Die ganze Karte auf einen Blick.** Auf Wunsch zeigt die Weltkarte auch die Gebiete, in denen du noch nicht warst – abgedunkelt, damit du siehst, wo du noch hin musst. Passt eine Zone nicht zu dem, was du schon erkundet hast, bleibt sie, wie sie ist.
+
 **Die Marke aus dem Codex bleibt.** „Eingang auf der Karte“ auf einer Dungeonseite setzt weiter die große Marke wie bisher.
 
 ### Technisch
+
+- **Karte aufdecken** (`ui/mapreveal.lua`, auf der Seite „Karte“: `mapReveal` ab Werk aus, `mapRevealTint` an). Der Client gibt nur erkundete Kartenteile heraus (`C_MapExplorationInfo.GetExploredMapTextures`); die ganze Liste steht in `data/mapreveal.lua` – **erzeugt** von `.github/scripts/import_mapreveal.py` aus der Tabelle „Reveal Data for Forever“ von Leatrix Maps 1.60.15 (vom Spieler hochgeladen; nur die Daten – Bildnummern, Größe, Lage –, kein Code; eine Lizenzdatei liegt dem Addon nicht bei). 44 Zonen, 569 Teile; das Skript prüft, dass jedes Teil so viele Bilder hat, wie Kacheln zu 256 hineinpassen. Gebaut erst, wenn jemand aufdeckt (`build()`).
+- **Gegenprobe im Spiel** (`MR.Check`): die erkundeten Teile, die der Client nennt, gegen die Tabelle – fehlt eins oder trägt es andere Bilder, bleibt die Zone, wie sie ist („passt nicht“, ein falsches Bild wäre eine grüne Fläche); ohne Erkundetes „ungeprüft“, aufgedeckt. `/wcui prüfen` → „Karte“ zählt beides.
+- Gezeichnet nur die **unerkundeten** Teile (die erkundeten zeichnet das Spiel), in einem eigenen Rahmen auf der Fläche, auf der Ebene der erkundeten Teile des Spiels (gefunden über `pinTemplate` unter den Kindern der Fläche, nur gelesen); Kacheln zu 256 Zeile für Zeile, der Rest auf die nächste Zweierpotenz zugeschnitten; abgedunkelt auf `MR.TINT` = 0,45. Neu gezeichnet nur bei Zonen- oder Flächenwechsel und `MAP_EXPLORATION_UPDATED`. Ist Leatrix Maps geladen, deckt es auf, WeintCodex nicht.
+- 17 Gegenproben für das Aufdecken, 16 gefangen – zwei erst nach geschärfter Prüfung (Kacheln von vorher, Ereignis allein); die übrige ist gleichwertig (Zweierpotenz einer vollen Kachel ist 256).
 
 - Neues `ui/mapentrances.lua` (Seite „Karte“ im Komfort, `mapEntrances` ab Werk aus, `mapContinent` an). Daten: `J.ENTRANCES` (Abgleich mit ForeverGuide, 6.14.0.0, `community`) – 22 Eingänge an 20 Stellen; Eingänge an derselben Stelle (Schwarzfels: Tiefen, untere und obere Spitze) werden ein Symbol mit allen Namen im Tooltip (`ME.Spots`).
 - Wie die Marke (`modules/questmap.lua`, 6.6.0.1): eigene Rahmen auf der Fläche der Karte (`QM.Canvas`, jetzt nach außen gegeben, ebenso `QM.CurrentMap`), Kehrwert des Zooms, nie `AddDataProvider`, nie in Rahmen des Spiels geschrieben. Taktgeber als Kind der Weltkarte (läuft nur, solange sie offen ist); die Liste je Karte entsteht beim Wechsel (`ME.ForMap`, gemerkt), im Takt wird nur gestellt.

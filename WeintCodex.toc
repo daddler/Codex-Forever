@@ -104,6 +104,8 @@ data/professions.lua
 data/classquests.lua
 # Seltene Gegner (6.16.0.0, erzeugt); gelesen von ui/rares.lua.
 data/rares.lua
+# Kartenteile zum Aufdecken der Weltkarte (6.20.0.0, erzeugt); gelesen von ui/mapreveal.lua.
+data/mapreveal.lua
 
 #
 # data/roles.lua steht NACH data/specs.lua: es liest die Talentbaeume,
@@ -213,6 +215,8 @@ ui/auctionshare.lua
 ui/messenger.lua
 # Instanzeingaenge auf der Weltkarte (6.20.0.0, Komfort): eigene Symbole, Daten aus J.ENTRANCES.
 ui/mapentrances.lua
+# Weltkarte aufdecken (6.20.0.0, Seite "Karte"): Daten aus data/mapreveal.lua, im Spiel gegengeprueft.
+ui/mapreveal.lua
 ui/tooltip.lua
 ui/windows.lua
 # Das Charakterfenster als Ganzes (6.6.4.0), baut auf ui/windows.lua auf.

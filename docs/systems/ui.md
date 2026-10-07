@@ -1459,10 +1459,36 @@ Codex („Eingang auf der Karte“, `modules/questmap.lua`), die bleibt. Seite
   `GetMapRectOnMap` auf Forever Rechtecke nennt, ob das Spiel selbst
   Eingänge kennt (`/wcui prüfen` → „Karte“).
 
-**Karte aufdecken** (gewünscht, nicht gebaut): bräuchte die Liste aller
-Kartenteile je Zone (Bild, Lage, Größe). Der Client gibt nur die schon
-erkundeten heraus (`C_MapExplorationInfo.GetExploredMapTextures`); die
-vollständige Liste steht in den Spieldaten, nicht in einer Schnittstelle.
+## Karte aufdecken *(6.20.0.0, `ui/mapreveal.lua`, Seite „Karte“)*
+
+Wunsch des Spielers: „optional die Karte komplett aufgedeckt; wo ich noch
+nicht war, etwas abgedunkelt“. `mapReveal` ab Werk aus, `mapRevealTint` an.
+
+- **Daten:** der Client gibt nur die **erkundeten** Kartenteile heraus
+  (`C_MapExplorationInfo.GetExploredMapTextures`), nicht die ganze Liste.
+  Die steht in `data/mapreveal.lua`, **erzeugt** von
+  `.github/scripts/import_mapreveal.py` aus der Tabelle „Reveal Data for
+  Forever“ des Addons Leatrix Maps (1.60.15, vom Spieler hochgeladen) –
+  nur Bildnummern, Größe, Lage je Teil, kein Code; dem Addon liegt keine
+  Lizenzdatei bei, übernommen sind nur Tatsachen aus den Spieldaten (wie
+  bei ForeverGuide). Schlüssel: `C_Map.GetMapArtID`. 44 Zonen, 569 Teile,
+  erst bei Bedarf gebaut (`build()`). Neue Fassung: Skript mit der neuen
+  `Leatrix_Maps_Reveal.lua` laufen lassen.
+- **Gegenprobe** (`MR.Check`): die erkundeten Teile des Clients gegen die
+  Tabelle. Fehlt eines dort oder trägt es andere Bilder → „passt nicht“,
+  die Zone bleibt, wie sie ist (ein falsches Bild zeichnet das Spiel als
+  grüne Fläche). Nichts erkundet → „ungeprüft“, aufgedeckt.
+- **Zeichnen** (`MR.Draw`): nur die unerkundeten Teile, eigene Bilder in
+  einem eigenen Rahmen auf der Fläche der Karte, auf der Ebene der
+  erkundeten Teile des Spiels (das Kind der Fläche mit
+  `pinTemplate == "MapExplorationPinTemplate"`, nur gelesen; sonst Fläche
+  + 1, `/wcui prüfen` sagt „geschätzt“). Kacheln zu 256, Zeile für Zeile,
+  die letzte zugeschnitten auf die nächste Zweierpotenz (`SetTexCoord`).
+  Abgedunkelt: `MR.TINT` = 0,45. Neu nur bei Zonen-/Flächenwechsel und
+  `MAP_EXPLORATION_UPDATED` (`dirty`).
+- **Leatrix Maps geladen:** es deckt auf, WeintCodex nicht.
+- **Ungemessen:** die Ebene auf Forever, ob die Lage auf der Fläche in
+  deren Einheiten stimmt (die Fläche hat die Größe des Kartenbilds).
 
 ## Automark *(6.8.1.0, auf Klick seit 6.9.0.2, `ui/automark.lua`)*
 

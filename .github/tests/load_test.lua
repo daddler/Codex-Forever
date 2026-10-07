@@ -5515,6 +5515,161 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.20.0.0: Weltkarte aufdecken. Daten aus data/mapreveal.lua (erzeugt aus
+-- Leatrix Maps, nur Daten); im Spiel gegen die erkundeten Teile gehalten;
+-- gezeichnet nur Unerkundetes, abgedunkelt; Kacheln wie in den Spieldaten.
+do
+    local G = _G
+    local names = { "WorldMapFrame", "C_Map", "C_MapExplorationInfo", "C_AddOns", "IsAddOnLoaded" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local K = WeintCodex.UIKit
+    local MR = WeintCodex.UIMapReveal
+    local ok, err = pcall(function()
+        -- Bestand: jede Zone mit Teilen, jedes Teil mit so vielen Bildern wie Kacheln.
+        local data = MR.Data()
+        local zones, parts = 0, 0
+        for art, z in pairs(data) do
+            zones = zones + 1
+            assert(type(z.map) == "number" and type(z.name) == "string" and #z > 0, "Zone " .. art)
+            for _, p in ipairs(z) do
+                parts = parts + 1
+                assert(#p[5] == math.ceil(p[1] / 256) * math.ceil(p[2] / 256), "Bilder je Teil: " .. z.name)
+            end
+        end
+        assert(zones == 44 and parts == 569 and data[2169].map == 1411, "Bestand: " .. zones .. "/" .. parts)
+
+        local wm = CreateFrame("Frame", "WorldMapFrame", UIParent)
+        G.WorldMapFrame = wm
+        local mapID = 1411
+        local wrote = 0
+        wm.GetMapID = function() return mapID end
+        wm.SetMapID = function() wrote = wrote + 1 end
+        wm.AddDataProvider = function() wrote = wrote + 1 end
+        local canvas = CreateFrame("Frame", nil, wm)
+        canvas._width, canvas._height = 1002, 668
+        wm.GetCanvas = function() return canvas end
+        -- Die erkundeten Teile des Spiels: ein Rahmen auf der Flaeche.
+        local gamePin = CreateFrame("Frame", nil, canvas)
+        gamePin.pinTemplate = "MapExplorationPinTemplate"
+        gamePin:SetFrameLevel(37)
+        canvas.GetChildren = function() return gamePin end
+        -- Kartenbild wie im Bestand; 1429 bekommt eines, das er nicht kennt.
+        G.C_Map = { GetMapArtID = function(id)
+            if id == 1429 then return 999999 end
+            for art, z in pairs(data) do if z.map == id then return art end end
+        end }
+        local explored = {}
+        G.C_MapExplorationInfo = { GetExploredMapTextures = function() return explored end }
+        G.C_AddOns = { IsAddOnLoaded = function() return false end }
+        local durotar = data[2169]
+        local function Info(p, ids) return { textureWidth = p[1], textureHeight = p[2], offsetX = p[3], offsetY = p[4], fileDataIDs = ids or p[5] } end
+
+        K.Set("comfort", "mapReveal", false)
+        wm:Show()
+        assert(MR.Update() == 0, "aufgedeckt, obwohl aus")
+        -- Eingeschaltet auf einer Zone ohne Daten: der Rahmen entsteht, Bilder nicht.
+        mapID = 1429
+        K.Set("comfort", "mapReveal", true)
+        assert(MR.driver and MR.driver:GetParent() == wm, "kein Taktgeber an der Karte")
+
+        -- Aufzeichnende Bilder: was gesetzt wird, steht danach am Bild.
+        assert(MR.layer and (MR.drawn or 0) == 0 and #MR.tex == 0, "Zone ohne Daten gezeichnet")
+        MR.layer.CreateTexture = function()
+            local t = CreateFrame("Frame", nil, MR.layer)
+            t.SetTexture = function(self, v) self.file = v end
+            t.SetTexCoord = function(self, a, b, c, d) self.tc = { a, b, c, d } end
+            t.SetPoint = function(self, a, rel, b, x, y) self.pt = { a, rel, b, x, y } end
+            t.SetVertexColor = function(self, r, g, b, a) self.col = { r, g, b, a } end
+            return t
+        end
+
+        -- Nichts erkundet: alles gezeichnet, ungeprueft, abgedunkelt.
+        mapID = 1411
+        MR.Forget()
+        local tiles = 0
+        for _, p in ipairs(durotar) do tiles = tiles + #p[5] end
+        assert(MR.Update() == tiles, "nicht alle Kacheln: " .. tostring(MR.drawn) .. " von " .. tiles)
+        assert(MR.Check(1411).status == "unchecked", "ohne Erkundetes nicht ungeprueft")
+        assert(MR.layer:GetParent() == canvas and MR.layer:GetFrameLevel() == 37, "nicht auf der Ebene der erkundeten Teile")
+        assert(MR.tex[1].col[1] == MR.TINT and MR.tex[1].col[4] == 1, "nicht abgedunkelt")
+
+        -- Kacheln wie in den Spieldaten: Zeile fuer Zeile, Rest auf die
+        -- naechste Zweierpotenz.
+        -- Ein Teil mit Rest in beiden Richtungen (2 x 2 Kacheln, keine voll).
+        local big, bigMap
+        for _, z in pairs(data) do
+            for _, p in ipairs(z) do
+                if not big and p[1] > 256 and p[1] < 512 and p[2] > 256 and p[2] < 512 and p[1] % 256 ~= 0 and p[2] % 256 ~= 0 then
+                    big, bigMap = p, z.map
+                end
+            end
+        end
+        assert(big, "kein Teil mit Rest im Bestand")
+        mapID = bigMap
+        MR.Update()
+        local function Find(file) for _, t in ipairs(MR.tex) do if t.file == file and t:IsShown() then return t end end end
+        local t1, t2, t3, t4 = Find(big[5][1]), Find(big[5][2]), Find(big[5][3]), Find(big[5][4])
+        assert(t1 and t2 and t3 and t4, "Kacheln des Teils fehlen")
+        local rw, rh = big[1] - 256, big[2] - 256
+        local function P2(n) local q = 1 while q < n do q = q * 2 end return q end
+        assert(t1._width == 256 and t1._height == 256 and t1.tc[2] == 1 and t1.pt[4] == big[3] and t1.pt[5] == -big[4], "Kachel oben links")
+        assert(t2._width == rw and t2._height == 256 and t2.tc[2] == rw / P2(rw) and t2.tc[4] == 1
+            and t2.pt[4] == big[3] + 256 and t2.pt[5] == -big[4], "Kachel oben rechts")
+        assert(t3._width == 256 and t3._height == rh and t3.tc[4] == rh / P2(rh) and t3.pt[4] == big[3]
+            and t3.pt[5] == -(big[4] + 256), "Kachel unten links")
+        assert(t4._width == rw and t4._height == rh and t4.pt[4] == big[3] + 256 and t4.pt[5] == -(big[4] + 256), "Kachel unten rechts")
+        mapID = 1411
+        MR.Update()
+
+        -- Erkundet und passend: das Erkundete zeichnet das Spiel, wir den Rest.
+        -- Neu erkundet meldet das Spiel mit einem Ereignis - das allein reicht.
+        explored = { Info(durotar[1]), Info(durotar[2]) }
+        MR.events:GetScript("OnEvent")(MR.events, "MAP_EXPLORATION_UPDATED")
+        local n = MR.Update()
+        assert(MR.Check(1411).status == "fits" and n == tiles - #durotar[1][5] - #durotar[2][5], "Erkundetes doppelt gezeichnet: " .. n)
+        assert(not Find(durotar[1][5][1]), "erkundetes Teil von WeintCodex gezeichnet")
+        -- Abdunkeln aus: volle Helligkeit.
+        K.Set("comfort", "mapRevealTint", false)
+        MR.Update()
+        assert(MR.tex[1].col[1] == 1, "abgedunkelt, obwohl aus")
+        K.Set("comfort", "mapRevealTint", true)
+
+        -- Passt nicht (anderes Bild oder unbekanntes Teil): Zone bleibt, wie sie ist.
+        explored = { Info(durotar[1], { 1 }) }
+        MR.Forget()
+        MR.Update()
+        local c = MR.Check(1411)
+        assert(c.status == "mismatch" and MR.drawn == 0, "trotz falscher Bilder aufgedeckt")
+        for _, t in ipairs(MR.tex) do assert(not t:IsShown(), "Kacheln von vorher bleiben stehen") end
+        explored = { { textureWidth = 10, textureHeight = 10, offsetX = 1, offsetY = 1, fileDataIDs = { 5 } } }
+        MR.Forget()
+        MR.Update()
+        assert(MR.Check(1411).status == "mismatch" and MR.drawn == 0, "trotz unbekanntem Teil aufgedeckt")
+        local sc = table.concat(MR.StatusLines(), "\n")
+        assert(sc:find("1 passen nicht: Durotar", 1, true) and sc:find("44 Zonen", 1, true), "Selbstpruefung: " .. sc)
+
+        -- Leatrix Maps geladen: es deckt auf, wir nicht.
+        explored = {}
+        MR.Forget()
+        G.C_AddOns = { IsAddOnLoaded = function(n) return n == "Leatrix_Maps" end }
+        assert(not MR.Active() and MR.Update() == 0 and not MR.tex[1]:IsShown(), "doppelt zu Leatrix Maps")
+        G.C_AddOns = { IsAddOnLoaded = function() return false end }
+        assert(MR.Update() > 0, "kommt nach Leatrix nicht wieder")
+
+        -- Karte zu: nichts; nie in die Karte geschrieben.
+        wm:Hide()
+        assert(MR.Update() == 0 and not MR.layer:IsShown(), "gezeichnet bei geschlossener Karte")
+        assert(wrote == 0, "in die Weltkarte geschrieben")
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    K.Set("comfort", "mapReveal", false)
+    K.Set("comfort", "mapRevealTint", true)
+    MR.Forget()
+    Check(ok, "Karte aufdecken: Bestand, Gegenprobe mit dem Erkundeten, nur Unerkundetes abgedunkelt, Kacheln wie im Spiel, Leatrix hat Vorrang"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.13.2.0: die Regelliste zeigt nur, was fuer diesen Charakter gilt
 -- (Beta-Test: "Ich sehe in den Erinnerungen alle Erinnerungen von allen
 -- Charakteren"). Alte Begleiter-/Munitionsregeln ohne Klasse gelten nur, wo
