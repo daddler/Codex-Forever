@@ -524,6 +524,7 @@ local frame, sidebar, head, tabsHost, previewHost, scroller, inner, footer
 local sideRows = {}
 local current = { module = "general", page = 1 }
 local built = {}       -- [modul] = { tabs = , preview = , pages = { [i] = { frame, height, widgets } } }
+O.built = built        -- fuer den Prueflauf
 
 local function Label(parent, font, size, tone)
     local fs = K.NewText(parent)
@@ -629,7 +630,12 @@ local function Layout()
     local key = current.module
     local b = built[key]
     local top = HEAD_H
-    if b.tabs and #K.Module(key).pages > 1 then top = top + TABS_H + 10 end
+    if b.tabs and #K.Module(key).pages > 1 then
+        local th = b.tabs:GetHeight() or TABS_H
+        tabsHost:SetHeight(th)
+        top = top + th + 10
+    end
+    O.tabsBottom = top   -- fuer den Prueflauf: hier beginnt, was unter der Leiste steht
     if b.preview then
         b.preview:ClearAllPoints()
         b.preview:SetPoint("TOPLEFT", frame, "TOPLEFT", SIDE_W + PAD, -top)
@@ -653,7 +659,7 @@ function O.Select(key, pageIndex)
             local items = {}
             for i, p in ipairs(m.pages) do items[i] = { text = p.label, key = i } end
             b.tabs = WeintCodex.CreateSegmentedControl(tabsHost, {
-                items = items, backdrop = "bgDark",
+                items = items, backdrop = "bgDark", maxWidth = CONTENT_W,
                 onSelect = function(_, i)
                     current.page = i
                     ShowPage()

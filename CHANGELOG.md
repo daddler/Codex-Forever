@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.19.0.1] – 2026-10-07
+
+**Flüstern: Text markieren und kopieren.** Der Knopf „Markieren“ oben im Fenster zeigt das Gespräch als Text – mit der Maus markieren, Strg+C kopiert, Esc führt zurück.
+
+**Komfort: alle Reiter im Fenster.** Mit „Flüstern“ lief die Reiterleiste über den Rand. Reicht eine Zeile nicht, bricht sie jetzt in eine zweite um.
+
+### Technisch
+
+- **Reiterleiste** (`WeintCodex.CreateSegmentedControl`, Beta-Test mit Bild: der achte Reiter „Flüstern“ stand im Komfort über dem Rand): neues `opts.maxWidth` – reicht die Breite nicht, bricht die Leiste in weitere Zeilen um (je 34 px, `bar.rows`, `bar.segs`); gerechnet mit mindestens `WeintCodex.SEG_CHAR_W` = 7 px je Zeichen, weil die Attrappe 6 px misst und das Spiel mehr. `ui/options.lua` gibt `CONTENT_W` mit und rückt den Inhalt um die echte Höhe der Leiste (`O.tabsBottom`). Nur das Einstellungsfenster nutzt `maxWidth`; Navigation und Dungeonseiten bleiben, wie sie sind.
+- **Prüflauf neu:** jede Reiterleiste jedes Moduls passt in `CONTENT_W`, jeder Reiter mindestens so breit wie im Spiel gerechnet, der Inhalt beginnt unter der ganzen Leiste; der Komfort bricht um (zwei Zeilen). Vorher prüfte nichts die Breite – deshalb fiel der achte Reiter erst im Spiel auf.
+- **Markieren** (`ui/messenger.lua`): das Nachrichtenfeld des Spiels (`ScrollingMessageFrame`) kann keinen Text markieren. Knopf „Markieren“ tauscht es gegen ein Textfeld nur zum Lesen an derselben Stelle (`MS.SetCopyMode`, `MS.PlainHistory`: ohne Farben, Bilder und Link-Kodes – „[Donnerzorn]“ statt `|Hitem:…|h`); Tippen stellt den Text wieder her, Esc oder der Knopf kehrt zurück.
+- 12 Gegenproben, alle gefangen – zwei erst nach geschärfter Prüfung (Breite je Zeichen, Höhe der Leiste).
+
 ## [6.19.0.0] – 2026-10-07
 
 **Neu im Komfort: Flüstern wie im Messenger.** Wird dir etwas zugeflüstert, geht ein Fenster auf – links deine Gespräche mit der Zahl ungelesener Nachrichten, rechts der Verlauf in der Klassenfarbe des anderen. Auch Battle.net-Freunde. Im Kampf geht es erst danach auf. Einschalten unter Komfort → Flüstern, jederzeit öffnen mit /wcui flüstern.

@@ -811,6 +811,47 @@ K.Set("nameplates", "hover", true)
 Check(WeintCodex.UIKit.Profile().modules.nameplates.hover == nil,
     "zurueck auf den Standard: der Eintrag verschwindet")
 
+-- 6.19.0.1 (Beta-Test: "Flüstern" stand als achter Reiter im Komfort ueber
+-- dem Rand): jede Reiterleiste passt in die Breite des Inhalts - jeder
+-- Reiter mit seinem rechten Rand, gerechnet mit SEG_CHAR_W je Zeichen
+-- wie im Spiel. Reicht eine Zeile nicht, bricht sie um, und der Inhalt
+-- rueckt um die Hoehe der Leiste nach unten.
+do
+    local over, wrapped = {}, nil
+    for _, key in ipairs(K.order) do
+        local m = K.Module(key)
+        if #m.pages > 1 then
+            UO.Show(key, 1)
+            local b = UO.built[key]
+            local tabs = b and b.tabs
+            if not tabs then
+                over[#over + 1] = key .. ": keine Reiter"
+            else
+                local w = tabs:GetWidth() or 0
+                if w > UO.CONTENT_W then over[#over + 1] = key .. " " .. w .. " > " .. UO.CONTENT_W end
+                for i, p in ipairs(m.pages) do
+                    local need = WeintCodex.Utf8Len(p.label) * WeintCodex.SEG_CHAR_W + 28
+                    if need > UO.CONTENT_W then over[#over + 1] = key .. "/" .. p.key .. " allein zu breit" end
+                    -- Gerechnet wie im Spiel, nicht mit den 6 px der Attrappe.
+                    local seg = tabs.segs and tabs.segs[i]
+                    if not seg or (seg:GetWidth() or 0) < need then over[#over + 1] = key .. "/" .. p.key .. " schmaler gerechnet als im Spiel" end
+                end
+                -- Der Inhalt beginnt unter der ganzen Leiste.
+                if UO.tabsBottom ~= 96 + (tabs:GetHeight() or 0) + 10 then
+                    over[#over + 1] = key .. ": Inhalt bei " .. tostring(UO.tabsBottom) .. ", Leiste " .. tostring(tabs:GetHeight())
+                end
+                if (tabs.rows or 1) > 1 then wrapped = key end
+            end
+        end
+    end
+    Check(#over == 0, "Reiterleisten passen ins Fenster" .. (#over > 0 and (": " .. table.concat(over, ", ")) or ""))
+    -- Der Komfort hat so viele Seiten, dass seine Leiste umbricht.
+    local comfortRows = UO.built.comfort and UO.built.comfort.tabs and UO.built.comfort.tabs.rows
+    Check(wrapped ~= nil and comfortRows and comfortRows > 1
+        and (UO.built.comfort.tabs:GetHeight() or 0) == 38 + (comfortRows - 1) * 34,
+        "Reiterleiste bricht um, wenn eine Zeile nicht reicht (Komfort: " .. tostring(comfortRows) .. " Zeilen)")
+end
+
 -- Jede Seite jedes Moduls bauen.
 for _, key in ipairs(K.order) do
     local m = K.Module(key)
@@ -4865,6 +4906,27 @@ do
         assert(la[#la].kind == "sys" and la[#la].text == "Abwesend: bin weg", "Abwesend")
         assert(lb[#lb].text == "Bob ist nicht online.", "nicht online")
         assert(MS.conv["w:Fremder"] == nil, "Gespraech fuer Fremden angelegt")
+
+        -- Markieren (6.19.0.1): Textfeld nur zum Lesen, ohne Farben und
+        -- Link-Kodes; tippen aendert nichts; Esc zurueck zum Verlauf.
+        MS.win:Show()
+        MS.Select("w:Anna")
+        W("schau: |cff0070dd|Hitem:19019::::|h[Donnerzorn]|h|r", "Anna-Testrealm", "Player-1-AAA")
+        MS.SetCopyMode(true)
+        local txt = MS.copyEdit:GetText() or ""
+        assert(MS.copy:IsShown() and not MS.smf:IsShown(), "Markieren nicht umgeschaltet")
+        assert(txt:find("Anna: schau: [Donnerzorn]", 1, true) and txt:find("Abwesend: bin weg", 1, true)
+            and txt:find("Anna: hallo Welt", 1, true) and not txt:find("|", 1, true), "Text zum Markieren: " .. txt)
+        assert(MS.foot:GetText():find("Strg+C", 1, true), "Hinweis fehlt")
+        MS.copyEdit:SetText("weg damit")
+        MS.copyEdit:GetScript("OnTextChanged")(MS.copyEdit, true)
+        assert(MS.copyEdit:GetText() == txt, "Text zum Markieren veraendert")
+        MS.copyEdit:GetScript("OnEscapePressed")(MS.copyEdit)
+        assert(not MS.copyMode and MS.smf:IsShown() and not MS.copy:IsShown(), "Esc fuehrt nicht zurueck")
+        MS.markBtn:GetScript("OnClick")(MS.markBtn)
+        assert(MS.copyMode, "Knopf Markieren")
+        MS.markBtn:GetScript("OnClick")(MS.markBtn)
+        assert(not MS.copyMode, "Knopf Markieren zurueck")
 
         -- Antworten: ab Werk ueber die Chatzeile des Spiels.
         MS.Select("w:Anna")

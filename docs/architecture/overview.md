@@ -268,6 +268,16 @@ reine Beschriftungen wird es eine Reiterleiste über dem Inhalt, alles
 darüber (oder sobald ein Eintrag mehr trägt als eine Beschriftung) eine
 Listenspalte links.
 
+**Die Reiter im Einstellungsfenster** (`ui/options.lua`, je Modul eine
+Leiste über den Seiten) haben keine Grenze von sieben – der Komfort trägt
+acht Seiten. Seit 6.19.0.1 bekommen sie `maxWidth = CONTENT_W`: reicht
+eine Zeile nicht, bricht `CreateSegmentedControl` in weitere Zeilen um, und
+der Inhalt rückt um die ganze Höhe der Leiste. Gerechnet wird mit
+mindestens `WeintCodex.SEG_CHAR_W` = 7 px je Zeichen (die Attrappe misst 6,
+das Spiel mehr), damit Prüflauf und Spiel dieselbe Leiste bauen.
+`load_test.lua` hält jede Leiste gegen `CONTENT_W` – vorher prüfte nichts
+die Breite, und der achte Reiter stand im Spiel über dem Rand.
+
 **Die Listenspalte kann zweistufig sein.** Ein Eintrag mit `indent = true`
 sitzt eingerückt unter dem vorangehenden und gehört zu ihm — so stehen
 die Bosse eines Schlachtzugs unter ihrem Schlachtzug. Der Grund ist

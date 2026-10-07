@@ -25,6 +25,12 @@
 -- schaltet WeintCodex es ab, merkt sich die Messung und gibt den Text an
 -- die Chatzeile weiter.
 --
+-- MARKIEREN (6.19.0.1, Beta-Test: "Saetze markieren und kopieren"): das
+-- Nachrichtenfeld des Spiels (ScrollingMessageFrame) kann keinen Text
+-- markieren. Der Knopf "Markieren" tauscht den Verlauf gegen ein Textfeld
+-- nur zum Lesen, ohne Farben und Link-Kodes - mit der Maus markieren,
+-- Strg+C kopiert, Esc oder der Knopf kehrt zurueck.
+--
 -- SPERRE DES SPIELS: Im Kampf gegen Bosse u. a. kann der Client
 -- Chatnachrichten fuer Addons geheim halten. Geheimes wird nie gelesen -
 -- es steht im Chat, und das Fenster zaehlt nur, wie viele es waren.
@@ -158,8 +164,25 @@ end
 -- Fenster
 --------------------------------------------------
 
-local win, list, smf, input, title, sub, foot
+local win, list, smf, input, title, sub, foot, copy, copyEdit, markBtn
 local rows = {}
+MS.copyMode = false
+
+-- Eine Zeile als reiner Text (zum Kopieren): ohne Farben, Bilder, Link-Kodes.
+function MS.PlainLine(c, line)
+    local t = ""
+    if Get("stamps") and _G.date then t = _G.date("%H:%M", line.t) .. " " end
+    local text = (line.text or ""):gsub("|H.-|h(.-)|h", "%1")
+    if line.kind == "sys" then return K.PlainText(t .. text) end
+    return K.PlainText(t .. (line.kind == "out" and "Du" or c.name) .. ": " .. text)
+end
+
+function MS.PlainHistory(c)
+    if not c then return "" end
+    local out = {}
+    for i, line in ipairs(c.lines) do out[i] = MS.PlainLine(c, line) end
+    return table.concat(out, "\n")
+end
 
 local function NewRow(i)
     local r = CreateFrame("Button", nil, list)
@@ -237,7 +260,7 @@ local function Build()
 
     title = K.NewText(win, 14)
     title:SetPoint("TOPLEFT", win, "TOPLEFT", MS.LIST_W + 12, -10)
-    title:SetPoint("RIGHT", win, "RIGHT", -34, 0)
+    title:SetPoint("RIGHT", win, "RIGHT", -120, 0)   -- Platz fuer "Markieren" und x
     title:SetJustifyH("LEFT")
     title:SetWordWrap(false)
     sub = K.NewText(win, 10)
@@ -254,6 +277,15 @@ local function Build()
     x:SetText("\195\151")
     close:SetScript("OnClick", function() win:Hide() end)
 
+    markBtn = CreateFrame("Button", nil, win)
+    markBtn:SetSize(78, 20)
+    markBtn:SetPoint("RIGHT", close, "LEFT", -4, 0)
+    markBtn.t = K.NewText(markBtn, 11)
+    markBtn.t:SetPoint("CENTER", markBtn, "CENTER", 0, 0)
+    markBtn.t:SetTextColor(m[1], m[2], m[3])
+    markBtn.t:SetText("Markieren")
+    markBtn:SetScript("OnClick", function() MS.SetCopyMode(not MS.copyMode) end)
+
     smf = CreateFrame("ScrollingMessageFrame", nil, win)
     smf:SetPoint("TOPLEFT", win, "TOPLEFT", MS.LIST_W + 12, -44)
     smf:SetPoint("BOTTOMRIGHT", win, "BOTTOMRIGHT", -10, 58)
@@ -269,6 +301,25 @@ local function Build()
     smf:SetScript("OnMouseWheel", function(self, d)
         if d > 0 then self:ScrollUp() else self:ScrollDown() end
     end)
+
+    -- Markieren: ein Textfeld nur zum Lesen an derselben Stelle.
+    copy = CreateFrame("ScrollFrame", nil, win, "UIPanelScrollFrameTemplate")
+    copy:SetPoint("TOPLEFT", smf, "TOPLEFT", 0, 0)
+    copy:SetPoint("BOTTOMRIGHT", smf, "BOTTOMRIGHT", -20, 0)
+    copy:Hide()
+    copyEdit = CreateFrame("EditBox", nil, copy)
+    copyEdit:SetMultiLine(true)
+    copyEdit:SetMaxLetters(0)
+    copyEdit:SetAutoFocus(false)
+    copyEdit:SetWidth(MS.W - MS.LIST_W - 52)
+    copyEdit:SetFont(F.sans, 12, "")
+    local tn = C.textNormal
+    copyEdit:SetTextColor(tn[1], tn[2], tn[3])
+    copy:SetScrollChild(copyEdit)
+    copyEdit:SetScript("OnTextChanged", function(self, user)
+        if user then self:SetText(MS.PlainHistory(conv[MS.current])) end
+    end)
+    copyEdit:SetScript("OnEscapePressed", function() MS.SetCopyMode(false) end)
 
     input = CreateFrame("EditBox", nil, win)
     input:SetPoint("BOTTOMLEFT", win, "BOTTOMLEFT", MS.LIST_W + 10, 26)
@@ -304,6 +355,7 @@ local function Build()
 
     K.RegisterMover(win, "messenger", "Flüstern", K.Layout("messenger"))
     MS.win, MS.smf, MS.input, MS.title, MS.sub, MS.foot, MS.rows = win, smf, input, title, sub, foot, rows
+    MS.copy, MS.copyEdit, MS.markBtn = copy, copyEdit, markBtn
     return win
 end
 MS.Build = Build
@@ -342,11 +394,35 @@ function MS.Redraw()
         sub:SetText(c.bn and "Battle.net" or "")
         for _, line in ipairs(c.lines) do smf:AddMessage(MS.Format(c, line)) end
     end
+    if MS.copyMode then
+        copyEdit:SetText(MS.PlainHistory(c))
+        local a = C.accent
+        markBtn.t:SetTextColor(a[1], a[2], a[3])
+        foot:SetText("Mit der Maus markieren, Strg+C kopiert  ·  Esc zurück")
+        return
+    end
+    local m = C.textMuted
+    markBtn.t:SetTextColor(m[1], m[2], m[3])
     local hint = Get("direct") and "Enter sendet" or "Klick: antworten in der Chatzeile"
     if MS.locked > 0 then
         hint = hint .. "  ·  " .. MS.locked .. " während einer Sperre nur im Chat"
     end
     foot:SetText(hint)
+end
+
+function MS.SetCopyMode(on)
+    Build()
+    MS.copyMode = on and true or false
+    smf:SetShown(not MS.copyMode)
+    copy:SetShown(MS.copyMode)
+    if MS.copyMode then
+        MS.Redraw()
+        copyEdit:SetFocus()
+    else
+        copyEdit:ClearFocus()
+        copyEdit:HighlightText(0, 0)
+        MS.Redraw()
+    end
 end
 
 function MS.Select(key)
@@ -516,6 +592,7 @@ MS.OnEvent = OnEvent
 
 local function Apply()
     local on = MS.Active()
+    if not on and MS.copyMode then MS.SetCopyMode(false) end
     for _, e in ipairs(EVENTS) do
         if on then pcall(ev.RegisterEvent, ev, e) else pcall(ev.UnregisterEvent, ev, e) end
     end

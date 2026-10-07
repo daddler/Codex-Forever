@@ -1352,6 +1352,14 @@ bei geheimen Werten nicht, und wir raten nicht.
 (Muster aus `ERR_CHAT_PLAYER_NOT_FOUND_S`) als graue Zeile in ein offenes
 Gespräch – nie ein neues Gespräch für Fremde.
 
+**Markieren** (6.19.0.1, Beta-Test „Sätze markieren und kopieren“): das
+Nachrichtenfeld des Spiels kann keinen Text markieren. Der Knopf
+„Markieren“ oben tauscht es gegen ein Textfeld nur zum Lesen an derselben
+Stelle (`MS.SetCopyMode`), mit `MS.PlainHistory` – ohne Farben, Bilder und
+Link-Kodes (`[Donnerzorn]` statt `|Hitem:…|h`). Mit der Maus markieren,
+Strg+C kopiert; Tippen stellt den Text wieder her; Esc oder der Knopf führt
+zurück zum Verlauf mit Farben und klickbaren Links.
+
 **Ungemessen:** das ganze Fenster auf Forever, ob `msgDirect` erlaubt ist,
 ob Battle.net-Namen (`|K…|k`) im Fenster richtig erscheinen.
 

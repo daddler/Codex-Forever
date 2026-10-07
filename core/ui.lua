@@ -1326,12 +1326,23 @@ end
 -- Ein Segment darf einen Statuspunkt tragen ({ text=, dot="danger" }).
 --
 -- opts: { items = { {text=, dot=, key=}, ... }, onSelect = function(key, i),
---         selected = 1, backdrop = "bgDark" }
+--         selected = 1, backdrop = "bgDark", maxWidth = px }
+--
+-- maxWidth (6.19.0.1, Beta-Test: der achte Reiter im Komfort, "Fluestern",
+-- stand ueber dem Rand des Fensters): reicht die Breite nicht, bricht die
+-- Leiste in weitere Zeilen um (je 34 px). Gerechnet wird mit mindestens
+-- SEG_CHAR_W je Zeichen, nicht nur mit GetStringWidth - die Attrappe
+-- misst 6 px je Zeichen, das Spiel mehr; so bauen Pruefung und Spiel
+-- dieselbe Leiste.
 --------------------------------------------------
+
+local SEG_CHAR_W, SEG_ROW = 7, 34
+WeintCodex.SEG_CHAR_W = SEG_CHAR_W
 
 function WeintCodex.CreateSegmentedControl(parent, opts)
     opts = opts or {}
     local items = opts.items or {}
+    local maxW = opts.maxWidth
 
     local bar = CreateFrame("Frame", nil, parent)
     bar:SetHeight(38)
@@ -1360,15 +1371,30 @@ function WeintCodex.CreateSegmentedControl(parent, opts)
             dot:SetPoint("LEFT", lbl, "RIGHT", 8, 0)
         end
 
-        local w = lbl:GetStringWidth() + 28 + (dot and 15 or 0)
+        local tw = lbl:GetStringWidth() or 0
+        if maxW then tw = math.max(tw, WeintCodex.Utf8Len(item.text or "") * SEG_CHAR_W) end
+        local w = tw + 28 + (dot and 15 or 0)
         s:SetWidth(w)
-        s:SetPoint("LEFT", bar, "LEFT", total - 4, 0)
-        total = total + w + 6
+        s._w = w
 
         s._bg, s._label, s._key, s._index = sbg, lbl, item.key or i, i
         segs[i] = s
     end
-    bar:SetWidth(total - 6 + 8)
+    -- Anordnen: eine Zeile, oder - mit maxWidth - so viele wie noetig.
+    local x, row, widest = 8, 0, 0
+    for _, s in ipairs(segs) do
+        if maxW and x > 8 and x + s._w + 8 > maxW then
+            widest = math.max(widest, x - 6 + 8)
+            x, row = 8, row + 1
+        end
+        s:SetPoint("TOPLEFT", bar, "TOPLEFT", x - 4, -(4 + row * SEG_ROW))
+        x = x + s._w + 6
+    end
+    total = x
+    widest = math.max(widest, x - 6 + 8)
+    bar.rows, bar.segs = row + 1, segs
+    bar:SetHeight(38 + row * SEG_ROW)
+    bar:SetWidth(widest)
 
     local selected = opts.selected or 1
 

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.19.0.1",
+        date    = "07.10.2026",
+        notes   = {
+            "|cff7C6CFFFlüstern: Text markieren und kopieren.|r Der Knopf „Markieren“ oben im Fenster zeigt das Gespräch als Text – mit der Maus markieren, Strg+C kopiert, Esc führt zurück.",
+            "|cff7C6CFFKomfort: alle Reiter im Fenster.|r Mit „Flüstern“ lief die Reiterleiste über den Rand. Reicht eine Zeile nicht, bricht sie jetzt in eine zweite um.",
+        },
+    },
+    {
         version = "6.19.0.0",
         date    = "07.10.2026",
         notes   = {
