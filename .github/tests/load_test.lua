@@ -4704,6 +4704,12 @@ do
         local fgStamp = Server() - 60
         Msg("B:1:H:" .. E(fgStamp) .. ":3:" .. E(900) .. "," .. E(777) .. "," .. E(4), "Erik", "FGD", "CHANNEL")
         assert(st.items[900] and select(1, AP.Unpack(st.items[900])) == 777, "ForeverGuide nicht gelesen")
+        -- Wie das Spiel es schickt: neun Angaben, die fuenfte ist der Name
+        -- des Kanals (6.18.0.0 hielt sie fuer die Uhrzeit, Beta-Test).
+        stub.FireEvent("CHAT_MSG_ADDON", "FGD", "B:1:H:" .. E(fgStamp) .. ":4:" .. E(905) .. "," .. E(42) .. ",1",
+            "CHANNEL", "Flor Scyth", "5. FGLayers", 0, 5, "FGLayers", 0)
+        assert(st.items[905] and select(1, AP.Unpack(st.items[905])) == 42, "Ereignis des Spiels nicht gelesen")
+        for _, ib in pairs(AS.inbound) do assert(type(ib.last) == "number", "Empfangszeit ist keine Zahl: " .. tostring(ib.last)) end
         Msg("B:1:H:" .. E(fgStamp) .. ":3:" .. E(901) .. ",1,1", "Erik", "FGD", "GUILD")
         Msg("B:2:H:" .. E(fgStamp) .. ":3:" .. E(902) .. ",1,1", "Erik", "FGD", "CHANNEL")
         assert(st.items[901] == nil and st.items[902] == nil, "fremde Form angenommen")

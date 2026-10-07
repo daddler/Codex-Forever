@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.18.0.1] – 2026-10-07
+
+**Keine Fehlermeldungen mehr mit „Preise aus ForeverGuide übernehmen“.** Sobald Preise von anderen Spielern ankamen, meldete das Spiel laufend einen Fehler. Behoben – die Preise selbst kamen schon an und bleiben erhalten.
+
+### Technisch
+
+- Fehler aus 6.18.0.0 (Beta-Test, BugGrabber 125×: `auctionshare.lua:376: attempt to perform arithmetic on field 'last' (a string value)`): der Ereignis-Handler reichte alle Angaben von `CHAT_MSG_ADDON` an `AS.OnAddonMessage(prefix, text, channel, sender, now)` weiter – die fünfte ist das Ziel, im Kanal dessen Name („5. FGLayers“), und landete als Uhrzeit in `ib.last`; jeder Takt (`FinishInbound`) brach danach ab. Jetzt nur die ersten vier; `now` und `ib.last` nehmen nur Zahlen an.
+- Gemessen dabei: der Kanal von ForeverGuide antwortet auf Forever, Preise kommen an (24 von einem Spieler, bevor der Takt abbrach).
+- Prüflauf: `CHAT_MSG_ADDON` jetzt auch über das Ereignis mit allen neun Angaben wie im Spiel (vorher nur direkt aufgerufen – deshalb unentdeckt). Gegenprobe: alle drei Stellen zurückgedreht → gefangen mit derselben Meldung wie im Spiel; jede allein fängt die beiden anderen ab.
+
 ## [6.18.0.0] – 2026-10-07
 
 **Auktionspreise von anderen Spielern.** Du musst nicht mehr selbst scannen, um frische Preise zu haben: Wer in deiner Gilde mit WeintCodex gescannt hat, teilt seine Preise mit dir – und du deine mit ihm. Im Tooltip steht dann „von Spielern“. Einschalten unter Komfort → Auktionshaus → „Mit der Gilde teilen“.

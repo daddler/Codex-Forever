@@ -361,7 +361,7 @@ function AS.OnBulk(sender, via, side, stamp, payload, now)
         ib = { from = from, via = via, side = side, stamp = stamp, n = 0 }
         inbound[key] = ib
     end
-    ib.last = now or Clock()
+    ib.last = type(now) == "number" and now or Clock()
     local n = 0
     for a, b, c in payload:gmatch("(%w+),(%w+),(%w+)") do
         if AS.ApplyPrice(st, D(a), D(b), D(c), day, from) then n = n + 1 end
@@ -433,7 +433,7 @@ end
 function AS.OnAddonMessage(prefix, text, channel, sender, now)
     prefix, text, channel, sender = K.Plain(prefix), K.Plain(text), K.Plain(channel), K.Plain(sender)
     if type(prefix) ~= "string" or type(text) ~= "string" or type(sender) ~= "string" then return end
-    now = now or Clock()
+    if type(now) ~= "number" then now = Clock() end
     if prefix == AS.FG_PREFIX then
         if channel ~= "CHANNEL" or not AS.Listen() then return end
         local code, stamp, _, payload = text:match("^B:1:([AHN]):(%w+):(%w+):(.*)$")
@@ -531,7 +531,11 @@ local ev = CreateFrame("Frame")
 AS.events = ev
 ev:SetScript("OnEvent", K.Measured("Auktionspreise teilen", function(_, event, ...)
     if event == "CHAT_MSG_ADDON" then
-        AS.OnAddonMessage(...)
+        -- Nur die ersten vier: das fuenfte ist das Ziel (im Kanal sein Name,
+        -- "5. FGLayers") - 6.18.0.0 reichte es als Uhrzeit weiter, und jeder
+        -- Takt danach brach ab (Beta-Test, 125x).
+        local prefix, text, channel, sender = ...
+        AS.OnAddonMessage(prefix, text, channel, sender)
     elseif event == "PLAYER_ENTERING_WORLD" then
         AS.Apply(true)
     end

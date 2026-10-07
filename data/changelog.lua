@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.18.0.1",
+        date    = "07.10.2026",
+        notes   = {
+            "|cff7C6CFFKeine Fehlermeldungen mehr mit „Preise aus ForeverGuide übernehmen“.|r Sobald Preise von anderen Spielern ankamen, meldete das Spiel laufend einen Fehler. Behoben – die Preise selbst kamen schon an und bleiben erhalten.",
+        },
+    },
+    {
         version = "6.18.0.0",
         date    = "07.10.2026",
         notes   = {
