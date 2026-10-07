@@ -6655,6 +6655,80 @@ do
     Check(ok, "Spielerrahmen: Stufe, Symbol fuer Kampf und Ruhe" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.20.0.0: Portraet im Balken (Spieler, Ziel): der Kopf als Modell ueber
+-- der Fuellung, halb durchsichtig, unter Text; die Balken ueber die ganze
+-- Breite; ausser Sichtweite oder ohne Modelldatei kein Kopf.
+do
+    local G = _G
+    local names = { "UnitExists", "UnitIsVisible", "C_Timer" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local UF = WeintCodex.UIUnitFrames
+    local ok, err = pcall(function()
+        local function Has(list, v) for _, it in ipairs(list) do if it.value == v then return true end end end
+        assert(Has(UF.PortraitItems("player"), "bar") and Has(UF.PortraitItems("target"), "bar"), "Spieler/Ziel ohne 'Im Balken'")
+        assert(not Has(UF.PortraitItems("focus"), "bar") and Has(UF.PortraitItems("focus"), "3d"), "Fokus mit 'Im Balken'")
+        local visible = true
+        G.UnitExists = function() return true end
+        G.UnitIsVisible = function() return visible end
+        local queue = {}
+        G.C_Timer = { After = function(_, fn) queue[#queue + 1] = fn end, NewTicker = function() return {} end }
+        local f = UF.frames.player
+        local bm = f._barModel
+        assert(bm and UF.frames.target._barModel and not (UF.frames.focus and UF.frames.focus._barModel), "Modell im Balken fehlt oder zu viel")
+        local unitSet, healthPts = nil, {}
+        bm.SetUnit = function(_, u) unitSet = u end
+        bm.GetModelFileID = function() return 123 end
+        f.health.SetPoint = function(_, a, rel, b, x) healthPts[a] = x end
+        f._portrait.tex:Hide()
+        K.Set("unitframes", "player_portrait", "bar")
+        f:Layout()
+        assert(bm:IsShown() and unitSet == "player" and not f._portrait:IsShown(), "Kopf nicht im Balken")
+        assert(not f._portrait.tex:IsShown(), "Bild des Portraets nebenbei gesetzt")
+        assert(healthPts.TOPLEFT == 0 and healthPts.TOPRIGHT == 0, "Balken mit Platz fuer ein Portraet")
+        assert(math.abs(bm:GetAlpha() - 0.35) < 0.001, "Deckkraft: " .. tostring(bm:GetAlpha()))
+        assert(bm:GetFrameLevel() == f.health:GetFrameLevel() + 1 and bm:GetFrameLevel() < f.left:GetParent():GetFrameLevel(),
+            "Kopf nicht zwischen Fuellung und Text")
+        K.Set("unitframes", "player_barAlpha", 60)
+        f:UpdatePortrait()
+        assert(math.abs(bm:GetAlpha() - 0.6) < 0.001, "Deckkraft nicht eingestellt")
+        assert(not f._portrait.tex:IsShown(), "Bild des Portraets bei jedem Neuzeichnen gesetzt")
+        -- Modell geladen: bleibt. Ohne Modelldatei: weg.
+        for _, fn in ipairs(queue) do fn() end
+        assert(bm:IsShown(), "Kopf trotz Modelldatei weg")
+        queue = {}
+        bm.GetModelFileID = function() return 0 end
+        f:UpdatePortrait()
+        for _, fn in ipairs(queue) do fn() end
+        assert(not bm:IsShown(), "Kopf ohne Modelldatei (schwarzer Balken)")
+        bm.GetModelFileID = function() return 123 end
+        -- Ausser Sichtweite: kein Kopf, auch kein Bild im Balken.
+        visible = false
+        f:UpdatePortrait()
+        assert(not bm:IsShown() and not f._portrait:IsShown(), "Kopf ausser Sichtweite")
+        visible = true
+        -- Zurueck zum 3D-Portraet: Kopf weg, Portraet links mit Platz.
+        K.Set("unitframes", "player_portrait", "3d")
+        f:Layout()
+        assert(not bm:IsShown() and f._portrait:IsShown() and healthPts.TOPLEFT > 0, "3D-Portraet nicht zurueck")
+        -- Ziel im Testmodus: Beispiel statt Kopf.
+        local t = UF.frames.target
+        K.Set("unitframes", "target_portrait", "bar")
+        t:Layout()
+        t:ShowTest(true)
+        assert(not t._barModel:IsShown(), "Kopf im Testmodus")
+        t:UpdatePortrait()
+        assert(not t._barModel:IsShown(), "Kopf kommt im Testmodus zurueck")
+        t:ShowTest(false)
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    K.Set("unitframes", "player_portrait", "3d")
+    K.Set("unitframes", "target_portrait", "3d")
+    K.Set("unitframes", "player_barAlpha", 35)
+    Check(ok, "Portraet im Balken: Spieler/Ziel, ganze Breite, Deckkraft, ohne Modell/ausser Sicht keins, Testmodus"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.0: Haltungsleiste so breit wie die Haltungen der Klasse.
 do
     local AB = WeintCodex.UIActionBars

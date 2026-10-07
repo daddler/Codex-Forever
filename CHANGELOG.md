@@ -15,9 +15,13 @@ nicht zusammen.
 
 **Die ganze Karte auf einen Blick.** Auf Wunsch zeigt die Weltkarte auch die Gebiete, in denen du noch nicht warst – abgedunkelt, damit du siehst, wo du noch hin musst. Passt eine Zone nicht zu dem, was du schon erkundet hast, bleibt sie, wie sie ist.
 
+**Der Kopf im Balken.** Spieler- und Zielrahmen können das Porträt jetzt auch animiert im Lebensbalken zeigen – halb durchsichtig hinter Namen und Werten. Einstellen unter Einheitenrahmen → Porträt → „Im Balken (animiert)“, die Deckkraft unter Feinheiten.
+
 **Die Marke aus dem Codex bleibt.** „Eingang auf der Karte“ auf einer Dungeonseite setzt weiter die große Marke wie bisher.
 
 ### Technisch
+
+- **Porträt im Balken** (`ui/unitframes.lua`, Wunsch des Spielers „wie bei ElvUI“, nur das Verhalten): neue Porträt-Art `bar` für Spieler und Ziel (`UF.PortraitItems`). Ein zweites `PlayerModel` (`_barModel`) über dem ganzen Lebensbalken, Ebene Balken + 1 – über der Füllung, unter Heilung/Schild und Text; Kamera wie beim Porträt, die Bewegung zeichnet der Client. Deckkraft `<einheit>_barAlpha` (35 %, Feinheiten; `SetAlpha` und, wo es das gibt, `SetModelAlpha`). Balken über die ganze Breite. Außer Sichtweite, ohne Modelldatei (0,4 s nach `SetUnit`) und im Testmodus des Ziels kein Kopf. 11 Gegenproben, alle gefangen – zwei erst nach geschärfter Prüfung (Testmodus beim Neuzeichnen, kein Bild nebenbei).
 
 - **Karte aufdecken** (`ui/mapreveal.lua`, auf der Seite „Karte“: `mapReveal` ab Werk aus, `mapRevealTint` an). Der Client gibt nur erkundete Kartenteile heraus (`C_MapExplorationInfo.GetExploredMapTextures`); die ganze Liste steht in `data/mapreveal.lua` – **erzeugt** von `.github/scripts/import_mapreveal.py` aus der Tabelle „Reveal Data for Forever“ von Leatrix Maps 1.60.15 (vom Spieler hochgeladen; nur die Daten – Bildnummern, Größe, Lage –, kein Code; eine Lizenzdatei liegt dem Addon nicht bei). 44 Zonen, 569 Teile; das Skript prüft, dass jedes Teil so viele Bilder hat, wie Kacheln zu 256 hineinpassen. Gebaut erst, wenn jemand aufdeckt (`build()`).
 - **Gegenprobe im Spiel** (`MR.Check`): die erkundeten Teile, die der Client nennt, gegen die Tabelle – fehlt eins oder trägt es andere Bilder, bleibt die Zone, wie sie ist („passt nicht“, ein falsches Bild wäre eine grüne Fläche); ohne Erkundetes „ungeprüft“, aufgedeckt. `/wcui prüfen` → „Karte“ zählt beides.

@@ -111,6 +111,8 @@ for _, u in ipairs(UNITS) do
     defaults[u .. "_portrait"] = s.portrait or "none"
     -- Das Ziel spiegelt den Spieler: Portraet rechts (wie in EllesmereUI).
     defaults[u .. "_portraitRight"] = (u == "target")
+    -- Portraet IM Balken (6.20.0.0): wie deckend der Kopf ueber der Fuellung liegt.
+    defaults[u .. "_barAlpha"] = 35
     if s.cast then defaults[u .. "_cast"] = true end
 end
 
@@ -424,6 +426,26 @@ local function Create(unit)
     pf:Hide()
     f._portrait = pf
 
+    -- Portraet IM Balken (6.20.0.0, Wunsch des Spielers: "dass der Kopf in
+    -- der Leiste animiert drin ist, wie bei ElvUI" - nur das Verhalten, kein
+    -- Code daraus): ein zweites Modell ueber der Fuellung des Lebensbalkens,
+    -- halb durchsichtig, unter Heilung, Schild und Text. Es bewegt sich, wie
+    -- jedes Modell des Spiels - die Animation zeichnet der Client. Nur
+    -- Spieler und Ziel.
+    if unit == "player" or unit == "target" then
+        local okBar, bm = pcall(CreateFrame, "PlayerModel", nil, f)
+        if okBar and type(bm) == "table" then
+            bm:SetAllPoints(health)
+            bm:SetFrameLevel((health:GetFrameLevel() or 1) + 1)
+            pcall(bm.SetScript, bm, "OnModelLoaded", function(m)
+                if m.SetPortraitZoom then m:SetPortraitZoom(1) end
+                if m.SetCamDistanceScale then m:SetCamDistanceScale(1) end
+            end)
+            bm:Hide()
+            f._barModel = bm
+        end
+    end
+
     -- Treffer und Heilung (UNIT_COMBAT): eine kleine Zahl ueber dem
     -- Portraet (ohne Portraet mitten im Lebensbalken), die nach einer
     -- Sekunde ausblendet - so zeigt es auch der Rahmen des Spiels.
@@ -576,10 +598,40 @@ local function Create(unit)
     return f
 end
 
+-- Portraet im Balken: Modell der Einheit, ausser Sichtweite keins (ein
+-- Bild im Balken saehe aus wie ein Fehler). Ohne Modelldatei ebenso.
+function Frame:UpdateBarPortrait()
+    local bm, u = self._barModel, self.unit
+    if not bm then return end
+    local exists = K.Bool(_G.UnitExists and _G.UnitExists(u), false)
+    local visible = K.Bool(_G.UnitIsVisible and _G.UnitIsVisible(u), true)
+    if Opt(u .. "_portrait") ~= "bar" or not exists or not visible or self._testShown then
+        bm:Hide()
+        return
+    end
+    local a = (Opt(u .. "_barAlpha") or 35) / 100
+    bm:SetAlpha(a)
+    if bm.SetModelAlpha then pcall(bm.SetModelAlpha, bm, a) end
+    bm:Show()
+    bm:SetUnit(u)
+    if bm.SetPortraitZoom then bm:SetPortraitZoom(1) end
+    if bm.SetCamDistanceScale then bm:SetCamDistanceScale(1) end
+    local me, token = self, (self._barToken or 0) + 1
+    self._barToken = token
+    if _G.C_Timer and _G.C_Timer.After and bm.GetModelFileID then
+        _G.C_Timer.After(0.4, function()
+            if me._barToken ~= token or not bm:IsShown() then return end
+            local id = K.Plain(bm:GetModelFileID())
+            if type(id) ~= "number" or id <= 0 then bm:Hide() end
+        end)
+    end
+end
+
 function Frame:UpdatePortrait()
     local pf, u = self._portrait, self.unit
     local kind = Opt(u .. "_portrait")
-    if kind == "none" or not K.Bool(_G.UnitExists and _G.UnitExists(u), false) then return end
+    self:UpdateBarPortrait()
+    if kind == "none" or kind == "bar" or not K.Bool(_G.UnitExists and _G.UnitExists(u), false) then return end
     -- Ausser Sichtweite zeigt das Modell nichts; dann das Bild.
     local visible = K.Bool(_G.UnitIsVisible and _G.UnitIsVisible(u), true)
     if kind == "3d" and pf.model and visible then
@@ -625,7 +677,9 @@ function Frame:Layout()
     local pf = self._portrait
     local inset = 0
     local right = Opt(u .. "_portraitRight")
-    if Opt(u .. "_portrait") ~= "none" then
+    local kind = Opt(u .. "_portrait")
+    if kind == "bar" and not self._barModel then kind = "none" end
+    if kind ~= "none" and kind ~= "bar" then
         inset = total + 1
         pf:ClearAllPoints()
         pf:SetPoint(right and "TOPRIGHT" or "TOPLEFT", self, right and "TOPRIGHT" or "TOPLEFT", 0, 0)
@@ -634,6 +688,7 @@ function Frame:Layout()
         self:UpdatePortrait()
     else
         pf:Hide()
+        self:UpdateBarPortrait()
     end
     if self._fb then
         self._fb:ClearAllPoints()
@@ -1273,6 +1328,7 @@ function Frame:ShowTest(on)
         local right = Opt(u .. "_right")
         if right == "none" then self.right:SetText("") else self.right:SetFormattedText("%d%%", t.hp * 100) end
         if self._portrait.model then self._portrait.model:Hide() end
+        if self._barModel then self._barModel:Hide() end
         if self._cast and Opt(u .. "_cast") then self._cast:ShowPreview(true) end
         if self._combo and Opt("comboPoints") and UsesCombo() then
             self:SetCombo(3, 5)
@@ -1543,6 +1599,20 @@ local TEXT_ITEMS = {
     { value = "power",         text = "Kraft als Zahl" },
 }
 
+-- Spieler und Ziel koennen den Kopf auch im Balken tragen (6.20.0.0).
+local function PortraitItems(u)
+    local items = {
+        { value = "3d",   text = "3D-Modell" },
+        { value = "2d",   text = "Bild" },
+    }
+    if u == "player" or u == "target" then
+        items[#items + 1] = { value = "bar", text = "Im Balken (animiert)" }
+    end
+    items[#items + 1] = { value = "none", text = "Keins" }
+    return items
+end
+UF.PortraitItems = PortraitItems
+
 local function UnitPage(u)
     return { key = u, label = LABELS[u], build = function(B)
         local off = function() return not K.Get(KEY, u .. "_enabled") end
@@ -1552,10 +1622,7 @@ local function UnitPage(u)
         B:Section(LABELS[u])
         B:Row({ type = "toggle", label = "Rahmen anzeigen", key = u .. "_enabled", reload = true,
                 description = "Ersetzt den Blizzard-Rahmen. Wirkt nach dem Neuladen." },
-              { type = "dropdown", label = "Porträt", key = u .. "_portrait", disabled = off, items = {
-                    { value = "3d",   text = "3D-Modell" },
-                    { value = "2d",   text = "Bild" },
-                    { value = "none", text = "Keins" } } })
+              { type = "dropdown", label = "Porträt", key = u .. "_portrait", disabled = off, items = PortraitItems(u) })
         B:Row({ type = "slider", label = "Breite", key = u .. "_width", min = 60, max = 320, step = 1, format = px, disabled = off },
               { type = "slider", label = "Höhe", key = u .. "_height", min = 10, max = 80, step = 1, format = px, disabled = off })
         B:Row({ type = "toggle", label = "Kraftleiste", key = u .. "_power", disabled = off },
@@ -1595,9 +1662,15 @@ local function UnitPage(u)
         B:Advanced()
         B:Section("Feinheiten")
         B:Row({ type = "toggle", label = "Porträt rechts", key = u .. "_portraitRight",
-                disabled = function() return off() or K.Get(KEY, u .. "_portrait") == "none" end },
+                disabled = function() local k = K.Get(KEY, u .. "_portrait") return off() or k == "none" or k == "bar" end },
               { type = "slider", label = "Höhe der Kraftleiste", key = u .. "_powerHeight", min = 2, max = 20, step = 1, format = px,
                 disabled = function() return off() or not K.Get(KEY, u .. "_power") end })
+        if u == "player" or u == "target" then
+            B:Row({ type = "slider", label = "Kopf im Balken: Deckkraft", key = u .. "_barAlpha", min = 10, max = 100, step = 5,
+                    format = function(v) return string.format("%d %%", v) end,
+                    disabled = function() return off() or K.Get(KEY, u .. "_portrait") ~= "bar" end },
+                  { type = "empty" })
+        end
         if u == "target" then
             B:Section("Auren im Einzelnen")
             B:Row({ type = "slider", label = "Größe (Spiel)", key = "targetGameScale", min = 60, max = 200, step = 5,

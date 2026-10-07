@@ -27,6 +27,7 @@ WeintCodex_ChangelogData = {
         notes   = {
             "|cff7C6CFFNeu im Komfort: Instanzeingänge auf der Karte.|r Öffnest du die Weltkarte, steht an jedem Dungeoneingang, den der Codex kennt, ein Symbol – auch auf der Karte von Kalimdor und den Östlichen Königreichen. Maus darauf zeigt Dungeon und Stufe, ein Klick schlägt ihn im Codex auf. Einschalten unter Komfort → Karte.",
             "|cff7C6CFFDie ganze Karte auf einen Blick.|r Auf Wunsch zeigt die Weltkarte auch die Gebiete, in denen du noch nicht warst – abgedunkelt, damit du siehst, wo du noch hin musst. Passt eine Zone nicht zu dem, was du schon erkundet hast, bleibt sie, wie sie ist.",
+            "|cff7C6CFFDer Kopf im Balken.|r Spieler- und Zielrahmen können das Porträt jetzt auch animiert im Lebensbalken zeigen – halb durchsichtig hinter Namen und Werten. Einstellen unter Einheitenrahmen → Porträt → „Im Balken (animiert)“, die Deckkraft unter Feinheiten.",
             "|cff7C6CFFDie Marke aus dem Codex bleibt.|r „Eingang auf der Karte“ auf einer Dungeonseite setzt weiter die große Marke wie bisher.",
         },
     },

@@ -160,7 +160,7 @@ weil sie genau das sind, wofür er steht.
 | `ui/editmode.lua` | **Gestaltungsmodus**: Leiste, Raster, Einrasten, Pfeiltasten, Doppelklick zu den Einstellungen; Brücke zum Bearbeitungsmodus des Spiels (6.9.0.5) |
 | `ui/castbar.lua` | **ein** Zauberbalken für Plaketten und Einheitenrahmen |
 | `ui/nameplates.lua` | Gegnerplaketten |
-| `ui/unitframes.lua` | Spieler, Ziel, Ziel des Ziels, Fokus, Begleiter; Porträt als 3D-Modell oder Bild |
+| `ui/unitframes.lua` | Spieler, Ziel, Ziel des Ziels, Fokus, Begleiter; Porträt als 3D-Modell oder Bild, bei Spieler und Ziel auch animiert im Balken (6.20.0.0) |
 | `ui/setup.lua` | **Einrichtung beim ersten Mal**: stellt alles – Layout „WeintCodex“ im Bearbeitungsmodus mit jedem Rahmen des Spiels an festem Platz (`K.GAME_LAYOUT`), Chatfenster, einige Spieleinstellungen, eigene Rahmen –, danach neu laden (`/wcui einrichten`, prüfen: `/wcui einrichten pruefen`) |
 | `ui/gamegroup.lua` | **Gruppenrahmen des Spiels im WeintCodex-Stil** (Standard seit 6.6.0.9): nur sie zeigen HoTs, Buffs, Schilde und Debuffs im Kampf |
 | `ui/clickcast.lua` | **Klickzauber**: Maustaste + Zusatztaste wirkt einen Zauber auf die Einheit des Rahmens (Reiter der Gruppenrahmen) |
@@ -469,6 +469,19 @@ Schwierigkeit, `+` für Elite, `??` wenn unbekannt). Das 3D-Porträt
 setzt die Kamera bei `OnModelLoaded`; hat das Modell 0,4 s nach
 `SetUnit` keine Datei (`GetModelFileID`), steht das Bild da – im
 Beta-Test war es beim Ziel ein schwarzes Kästchen.
+
+**Porträt im Balken** (6.20.0.0, Spieler und Ziel, `<einheit>_portrait =
+"bar"`, Wunsch des Spielers „wie bei ElvUI“ – nur das Verhalten, kein Code):
+ein zweites `PlayerModel` (`_barModel`) über der ganzen Fläche des
+Lebensbalkens, Ebene Balken + 1 – über der Füllung, unter Heilung/Schild
+(Klammer + 1) und Text (+ 3). Kamera wie beim Porträt (`SetPortraitZoom(1)`),
+die Bewegung (Leerlauf) zeichnet der Client. Deckkraft
+`<einheit>_barAlpha` (ab Werk 35 %, Feinheiten). Die Balken nehmen die
+ganze Breite (kein Platz für ein Porträt). Außer Sichtweite oder ohne
+Modelldatei nach 0,4 s: kein Kopf – ein Bild im Balken sähe aus wie ein
+Fehler. Im Testmodus des Ziels: kein Kopf. **Ungemessen:** wie das Modell in
+einem breiten, flachen Rahmen sitzt (Kopf mittig, Größe) und ob
+`SetAlpha` am Modell auf Forever wirkt (zusätzlich `SetModelAlpha`).
 
 Eingehende Heilung und Schilde (6.6.0.6, `healPrediction`, `absorbs`,
 Reiter Allgemein): wie in den Gruppenrahmen zwei Balken in einer
