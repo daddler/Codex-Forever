@@ -78,7 +78,7 @@ def write(maps, version):
     out.append("")
     out.append("WeintCodex = WeintCodex or {}")
     out.append("WeintCodex.MapRevealData = {")
-    out.append(f"    source = {lua_string('Leatrix Maps ' + version)},")
+    out.append(f"    source = {lua_string('Kartenteile des Spiels (Beta)')},")
     out.append("    -- Gebaut erst, wenn jemand die Karte aufdeckt (ui/mapreveal.lua):")
     out.append("    -- als fertige Tabellen kosteten sie Speicher, den fast niemand braucht.")
     out.append("    build = function() return {")

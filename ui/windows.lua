@@ -577,14 +577,29 @@ end
 local headerDone = setmetatable({}, { __mode = "k" })
 W.Headers = headerDone
 
-local function HeaderTitle(f)
-    if type(f.Title) == "table" and f.Title.GetText then return f.Title end
+local function HasText(fs)
+    local ok, t = pcall(fs.GetText, fs)
+    t = ok and K.Plain(t) or nil
+    return type(t) == "string" and t ~= ""
+end
+
+-- `filled`: nur eine Zeile, die schon Text traegt (6.21.0.0, Kontakte:
+-- die Kopfzeile "Freundesliste 0/2" hat vor ihrem Text eine leere Zeile -
+-- an der hingen Raute und Linie, mitten durch den Text).
+local function HeaderTitle(f, filled)
+    if type(f.Title) == "table" and f.Title.GetText and (not filled or HasText(f.Title)) then return f.Title end
+    local first
     for _, r in ipairs(Regions(f, "hdrTitle")) do
         local ok, isText = pcall(IsFontString, r)
-        if ok and isText then return r end
+        if ok and isText then
+            if HasText(r) then return r end
+            first = first or r
+        end
     end
-    return nil
+    if filled then return nil end
+    return first
 end
+W.HeaderTitle = HeaderTitle
 
 -- Zweite Fassung (6.6.2.8, Beta-Test zum dunklen Band mit weissem
 -- Streifen: "sieht richtig scheisse aus - Verzierungen, etwas, das sich
@@ -807,10 +822,19 @@ function W.HeaderReport()
     end
     -- Abschnitte der Listen (6.9.0.0): wie viele eine Linie haben, und
     -- welche nicht - im Questlog fehlte sie an drei von sieben.
-    local n, lined, missing = 0, 0, {}
+    local n, lined, missing, titles = 0, 0, {}, {}
     for f, d in pairs(W.ListHeaders) do
         if Open(f) then
             n = n + 1
+            -- Woran die Verzierung haengt (6.21.0.0): Titel, und hinter
+            -- welchem Text sie beginnt, wenn es ein anderer ist.
+            if #titles < 6 then
+                local text = d.title and K.Plain(d.title:GetText())
+                local tail = d.tail and d.tail ~= d.title and K.Plain(d.tail:GetText())
+                titles[#titles + 1] = (type(text) == "string" and text ~= "" and text or "(leer)")
+                    .. (type(tail) == "string" and (" → hinter „" .. tail .. "“") or "")
+                    .. (d.bare and " (ohne Verzierung)" or "")
+            end
             if (d.width or 0) > 0 then lined = lined + 1
             else
                 local text = d.title and K.Plain(d.title:GetText())
@@ -827,6 +851,8 @@ function W.HeaderReport()
         out[#out + 1] = string.format("   Abschnitte: %d, mit Linie %d%s%s", n, lined,
             #missing > 0 and (" · ohne: " .. table.concat(missing, ", ")) or "",
             more > 0 and (" und " .. more .. " weitere") or "")
+        table.sort(titles)
+        out[#out + 1] = "   Abschnitte: " .. table.concat(titles, ", ")
     end
     return out
 end
@@ -855,7 +881,30 @@ W.ListHeaders = listHeads
 -- sonst bis vor das Ende des Balkens.
 local function FitList(d)
     local tw = TextWidth(d.title)
-    local fl = EdgeOf(d.title, "GetLeft")
+    -- Ohne Text keine Verzierung: Raute und Linie hingen sonst am Anfang der
+    -- Zeile und liefen durch den Text, den eine andere Zeile traegt.
+    if tw <= 0 then
+        if not d.bare then
+            d.dot:Hide() d.hole:Hide() d.line:Hide()
+            d.width, d.tw, d.bare = 0, 0, true
+        end
+        return
+    end
+    if d.bare then
+        d.dot:Show() d.hole:Show()
+        d.bare = false
+    end
+    -- Steht rechts vom Titel noch Text ("Freundesliste" und "0/2" koennen
+    -- zwei Zeilen sein), beginnt die Verzierung hinter dem letzten.
+    local tail, fl = d.title, EdgeOf(d.title, "GetLeft")
+    for _, r in ipairs(Regions(d.frame, "hdrTail")) do
+        if r ~= d.title then
+            local ok, isText = pcall(IsFontString, r)
+            local rl = ok and isText and HasText(r) and EdgeOf(r, "GetLeft")
+            if rl and fl and rl > fl then tail, fl = r, rl end
+        end
+    end
+    if tail ~= d.title then tw = TextWidth(tail) end
     local stop
     if d.icon then
         stop = EdgeOf(d.icon, "GetLeft")
@@ -864,12 +913,12 @@ local function FitList(d)
         stop = EdgeOf(d.beam, "GetRight")
         stop = stop and stop - W.HEADER_INSET
     end
-    if d.tw == tw and d.placedBeam == d.beam and d.fl == fl and d.stop == stop then return end
-    local moved = d.tw ~= tw or d.placedBeam ~= d.beam
-    d.tw, d.placedBeam, d.fl, d.stop = tw, d.beam, fl, stop
+    if d.tw == tw and d.tail == tail and d.placedBeam == d.beam and d.fl == fl and d.stop == stop then return end
+    local moved = d.tw ~= tw or d.tail ~= tail or d.placedBeam ~= d.beam
+    d.tw, d.tail, d.placedBeam, d.fl, d.stop = tw, tail, d.beam, fl, stop
     if moved then
         d.dot:ClearAllPoints()
-        d.dot:SetPoint("CENTER", d.title, "LEFT", tw + W.LIST_GAP + 3, 0)
+        d.dot:SetPoint("CENTER", tail, "LEFT", tw + W.LIST_GAP + 3, 0)
         d.hole:ClearAllPoints()
         d.hole:SetPoint("CENTER", d.dot, "CENTER", 0, 0)
         d.line:ClearAllPoints()
@@ -886,12 +935,23 @@ function W.ListHeader(f, beam, sc)
     local d = listHeads[f]
     if d then
         if beam ~= d.beam and WidthOf(beam) > WidthOf(d.beam) then d.beam = beam end
+        -- Die Liste verwendet ihre Zeilen weiter: traegt die gewaehlte Zeile
+        -- keinen Text (mehr), eine nehmen, die einen hat.
+        if TextWidth(d.title) <= 0 then
+            local better = HeaderTitle(f, true)
+            if better and better ~= d.title then
+                d.title = better
+                S.Title(better, (sc and sc.headerSize) or W.LIST_HEADER_SIZE, C.textBright)
+                pcall(better.SetJustifyH, better, "LEFT")
+                d.tw = nil
+            end
+        end
         FitList(d)
         return d
     end
-    local fs = HeaderTitle(f)
+    local fs = HeaderTitle(f, true) or HeaderTitle(f)
     if not fs then return nil end
-    d = { title = fs, icon = HeaderIcon(f), beam = beam, style = sc, accent = S.Accent(sc and sc.accent) }
+    d = { title = fs, frame = f, icon = HeaderIcon(f), beam = beam, style = sc, accent = S.Accent(sc and sc.accent) }
     S.Title(fs, (sc and sc.headerSize) or W.LIST_HEADER_SIZE, C.textBright)
     -- Die Gruppe als eigene Sektion (6.7.0.2): Licht von links, Haarlinie oben.
     if sc and sc.band then d.band = S.Band(f) end

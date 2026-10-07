@@ -24,11 +24,11 @@ local R = WeintCodex.RareData
 R.SOURCE = {
     kind  = "community",
     date  = "06.10.2026",
-    label = "Seltene Gegner: Addon ForeverGuide 1.25.6 (Questie-Datenbank für Forever)",
+    label = "Seltene Gegner: Wissensstand aus der Beta",
 }
 R.RESPAWN_SOURCE = {
     kind  = "classic",
-    label = "Wiederkehr aus Classic (über ForeverGuide 1.25.6)",
+    label = "Wiederkehr aus Classic",
 }
 
 R.RAW = {

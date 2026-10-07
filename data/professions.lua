@@ -27,11 +27,11 @@ local P = WeintCodex.ProfessionData
 P.SOURCE = {
     kind  = "community",
     date  = "06.10.2026",
-    label = "Addon ForeverGuide 1.25.6: Rezepte aus dem Forever-Client (Build 1.60.1), Lehrer aus der Questie-Datenbank",
+    label = "Rezepte aus dem Forever-Client (Build 1.60.1), Lehrer: Wissensstand aus der Beta",
 }
 P.VENDOR_SOURCE = {
     kind  = "classic",
-    label = "Händler für Rezepte aus Classic (über ForeverGuide 1.25.6)",
+    label = "Händler für Rezepte aus Classic",
 }
 
 -- cat: 1 Hauptberuf (herstellend), 2 Hauptberuf (sammelnd), 3 Nebenberuf

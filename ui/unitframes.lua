@@ -113,6 +113,9 @@ for _, u in ipairs(UNITS) do
     defaults[u .. "_portraitRight"] = (u == "target")
     -- Portraet IM Balken (6.20.0.0): wie deckend der Kopf ueber der Fuellung liegt.
     defaults[u .. "_barAlpha"] = 35
+    -- Abstand der Kamera im Balken in Prozent (6.21.0.0, Beta-Test: "ein
+    -- bisschen weiter rausgezoomt waere super"): 100 = wie das Portraet.
+    defaults[u .. "_barCam"] = 150
     if s.cast then defaults[u .. "_cast"] = true end
 end
 
@@ -439,7 +442,7 @@ local function Create(unit)
             bm:SetFrameLevel((health:GetFrameLevel() or 1) + 1)
             pcall(bm.SetScript, bm, "OnModelLoaded", function(m)
                 if m.SetPortraitZoom then m:SetPortraitZoom(1) end
-                if m.SetCamDistanceScale then m:SetCamDistanceScale(1) end
+                if m.SetCamDistanceScale then m:SetCamDistanceScale(UF.BarCam(unit)) end
             end)
             bm:Hide()
             f._barModel = bm
@@ -598,6 +601,12 @@ local function Create(unit)
     return f
 end
 
+-- Abstand der Kamera im Balken: Faktor auf den des Portraets (1 = gleich).
+function UF.BarCam(u)
+    local v = tonumber(Opt(u .. "_barCam")) or 150
+    return math.max(100, math.min(300, v)) / 100
+end
+
 -- Portraet im Balken: Modell der Einheit, ausser Sichtweite keins (ein
 -- Bild im Balken saehe aus wie ein Fehler). Ohne Modelldatei ebenso.
 function Frame:UpdateBarPortrait()
@@ -615,7 +624,7 @@ function Frame:UpdateBarPortrait()
     bm:Show()
     bm:SetUnit(u)
     if bm.SetPortraitZoom then bm:SetPortraitZoom(1) end
-    if bm.SetCamDistanceScale then bm:SetCamDistanceScale(1) end
+    if bm.SetCamDistanceScale then bm:SetCamDistanceScale(UF.BarCam(u)) end
     local me, token = self, (self._barToken or 0) + 1
     self._barToken = token
     if _G.C_Timer and _G.C_Timer.After and bm.GetModelFileID then
@@ -1669,7 +1678,9 @@ local function UnitPage(u)
             B:Row({ type = "slider", label = "Kopf im Balken: Deckkraft", key = u .. "_barAlpha", min = 10, max = 100, step = 5,
                     format = function(v) return string.format("%d %%", v) end,
                     disabled = function() return off() or K.Get(KEY, u .. "_portrait") ~= "bar" end },
-                  { type = "empty" })
+                  { type = "slider", label = "Kopf im Balken: Abstand", key = u .. "_barCam", min = 100, max = 300, step = 10,
+                    format = function(v) return (string.format("%.1f×", v / 100):gsub("%.", ",")) end,
+                    disabled = function() return off() or K.Get(KEY, u .. "_portrait") ~= "bar" end })
         end
         if u == "target" then
             B:Section("Auren im Einzelnen")

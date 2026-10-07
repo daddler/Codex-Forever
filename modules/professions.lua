@@ -866,10 +866,9 @@ local function InspectorBlocks(key, skill, cat)
         { type = "divider" },
         { type = "header", text = "Woher das stammt" },
         { type = "card", lines = {
-            "Unbestätigt: Rezepte, Stufen und Lehrer",
-            "stammen aus dem Addon ForeverGuide",
-            "(Rezepte aus dem Forever-Client, Lehrer aus",
-            "der Questie-Datenbank) – nicht von Blizzard.",
+            "Unbestätigt: Rezepte, Stufen und Lehrer sind",
+            "der Wissensstand aus der Beta (Rezepte aus",
+            "dem Forever-Client) – nicht von Blizzard.",
             "Händler für Rezepte stammen aus Classic.",
             "Ohne „Season of Discovery“.",
         }},

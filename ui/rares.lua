@@ -388,7 +388,7 @@ ev:SetScript("OnEvent", K.Measured("Seltene Gegner", OnEvent))
 
 local function Build(B)
     local off = function() return not K.Get(KEY, "rareAlert") end
-    B:Section("Seltene Gegner", "Selten ist ein Gegner, wenn das Spiel es sagt oder wenn er im Bestand steht (404 aus der Questie-Datenbank für Forever). Derselbe meldet sich höchstens alle fünf Minuten.")
+    B:Section("Seltene Gegner", "Selten ist ein Gegner, wenn das Spiel es sagt oder wenn er im Bestand steht (404 aus dem Wissensstand der Beta). Derselbe meldet sich höchstens alle fünf Minuten.")
     B:Row({ type = "toggle", label = "Seltene Gegner melden", key = "rareAlert",
             description = "Sobald einer als Plakette, im Ziel, unter der Maus oder als Symbol auf der Minikarte auftaucht." },
           { type = "toggle", label = "Ton", key = "rareSound", disabled = off })

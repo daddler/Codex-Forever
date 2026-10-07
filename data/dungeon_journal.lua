@@ -60,7 +60,7 @@ local J = WeintCodex.DungeonJournal
 J.SOURCE = {
     kind  = "community",
     date  = "02.10.2026",
-    label = "Beta-Berichte der Community (Beute und Quests), abgeglichen mit dem Dungeon Journal 1.4.2",
+    label = "Beta-Berichte der Community (Beute und Quests)",
 }
 
 J.DATA = {

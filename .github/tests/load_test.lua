@@ -852,6 +852,100 @@ do
         "Reiterleiste bricht um, wenn eine Zeile nicht reicht (Komfort: " .. tostring(comfortRows) .. " Zeilen)")
 end
 
+-- 6.21.0.0 (Beta-Test: "unter den Punkten erklaert, allerdings mit 3
+-- Punkten abgekuerzt"): Beschriftung und Erlaeuterung eines Schalters
+-- haengen nur oben links und haben eine Breite - ein Punkt "RIGHT" der
+-- Zeile legte auch ihre Hoehe fest (eine Zeile, dann "..."). Die Zeile
+-- waechst mit der Erlaeuterung.
+do
+    local ok, err = pcall(function()
+        local pts = setmetatable({}, { __mode = "k" })
+        local sp = stub.Methods.SetPoint
+        stub.Methods.SetPoint = function(self, p, ...)
+            pts[self] = pts[self] or {}
+            table.insert(pts[self], p)
+            return sp(self, p, ...)
+        end
+        local long = string.rep("Ein langer Satz, der umbrechen muss. ", 6)
+        local host = CreateFrame("Frame")
+        local t = WeintCodex.CreateToggle(host, { label = "Schalter", description = long, width = UO.CELL_W,
+            get = function() return true end })
+        stub.Methods.SetPoint = sp
+        local textW = UO.CELL_W - 58
+        for _, fs in ipairs({ t._label, t._hint }) do
+            assert(pts[fs] and #pts[fs] > 0, "Text ohne Anker")
+            for _, p in ipairs(pts[fs]) do
+                assert(p == "TOPLEFT", "Text haengt an " .. tostring(p) .. " - das legt seine Hoehe fest")
+            end
+            assert(fs._width == textW, "Breite " .. tostring(fs._width) .. " statt " .. textW)
+        end
+        local lines = WeintCodex.EstimateLines(long, math.floor(textW / 5.4))
+        assert(lines >= 4, "Probetext zu kurz")
+        assert(t:GetHeight() >= 2 + 15 + 4 + lines * 11 + 8, "Zeile waechst nicht mit: " .. tostring(t:GetHeight()))
+        local short = WeintCodex.CreateToggle(host, { label = "S", description = "kurz", width = UO.CELL_W })
+        assert(short:GetHeight() == 46, "kurze Erlaeuterung: Zeile " .. tostring(short:GetHeight()))
+        -- Ausgegraut steht ein anderer Text darunter - auch der passt hinein.
+        local off = WeintCodex.CreateToggle(host, { label = "S", description = "kurz", width = UO.CELL_W,
+            disabled = function() return true end, disabledHint = long })
+        assert(off:GetHeight() == t:GetHeight(), "Hinweis bei gesperrtem Schalter abgeschnitten")
+    end)
+    Check(ok, "Schalter: Erlaeuterung ganz, nicht abgekuerzt, Zeile waechst mit" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.21.0.0: die Beschreibung eines Moduls steht im Kopf der Seite (96 px)
+-- - mehr als zwei Zeilen laufen in die Reiter. Umbrochen nach Woertern,
+-- 6 px je Zeichen (IBM Plex Sans 12 misst im Schnitt 5,5 - der Rest ist
+-- Spielraum: Zeichen zaehlen ist keine Messung, und an der Grenze lag es
+-- daneben).
+do
+    local long = {}
+    local cols = math.floor((UO.CONTENT_W - 200) / 6)
+    local function Lines(text)
+        local n, cur = 1, 0
+        for word in text:gmatch("%S+") do
+            local len = WeintCodex.Utf8Len(word)
+            local add = cur == 0 and len or cur + 1 + len
+            if add > cols and cur > 0 then n, cur = n + 1, len else cur = add end
+        end
+        return n
+    end
+    for _, key in ipairs(K.order) do
+        local d = K.Module(key).description
+        if type(d) == "string" and Lines(d) > 2 then long[#long + 1] = key end
+    end
+    Check(#long == 0, "Beschreibungen der Module passen in zwei Zeilen" .. (#long > 0 and (": " .. table.concat(long, ", ")) or ""))
+end
+
+-- 6.21.0.0 (Beta-Test: "nirgendwo als Quelle ... dass dies von
+-- ForeverGuide uebernommen wurde ... das soll ueberall so sein"): kein Text,
+-- den ein Spieler sieht, nennt ein fremdes Addon als Quelle. Geprueft an
+-- jeder Zeichenkette ausserhalb von Kommentaren. Erlaubt ist nur der blosse
+-- Name als Schluessel (ob ein Addon geladen ist, alter gemerkter Wert) und
+-- Leatrix Maps als Hinweis, wer die Karte schon aufdeckt - eine Auskunft
+-- ueber den Spieler, keine Quelle.
+do
+    local NAMES = { "ForeverGuide", "Questie", "What's Training", "Dungeon Journal 1", "Leatrix Maps 1" }
+    local ALLOWED = { ['"ForeverGuide"'] = true }
+    local bad = {}
+    local p = io.popen("find '" .. ROOT .. "/core' '" .. ROOT .. "/data' '" .. ROOT .. "/modules' '" .. ROOT .. "/ui' -name '*.lua' | sort")
+    for path in p:lines() do
+        local n = 0
+        for line in io.lines(path) do
+            n = n + 1
+            local code = line:gsub("%-%-.*$", "")
+            for lit in code:gmatch('"[^"]*"') do
+                if not ALLOWED[lit] then
+                    for _, name in ipairs(NAMES) do
+                        if lit:find(name, 1, true) then bad[#bad + 1] = path:gsub("^.*/(%w+/[^/]+)$", "%1") .. ":" .. n end
+                    end
+                end
+            end
+        end
+    end
+    p:close()
+    Check(#bad == 0, "kein fremdes Addon als Quelle in sichtbaren Texten" .. (#bad > 0 and (": " .. table.concat(bad, ", ")) or ""))
+end
+
 -- Jede Seite jedes Moduls bauen.
 for _, key in ipairs(K.order) do
     local m = K.Module(key)
@@ -3877,7 +3971,8 @@ do
         assert(all:find("Beginnt: Marshal Windsor, im Dungeon", 1, true), "Geber im Dungeon fehlt")
         assert(all:find("Vorher: „Marshal Windsor“", 1, true) and all:find("Danach: „", 1, true), "Kette fehlt")
         assert(all:find("Dazu:", 1, true), "feste Belohnung fehlt")
-        assert(all:find("Quests: Addon ForeverGuide", 1, true), "Herkunft der Quests aus dem Abgleich nicht genannt")
+        assert(all:find("Quests: Wissensstand aus der Beta", 1, true), "Herkunft der Quests aus dem Abgleich nicht genannt")
+        assert(not all:find("ForeverGuide", 1, true) and not all:find("Questie", 1, true), "fremdes Addon als Quelle genannt")
         assert(all:find("Beute aus Classic", 1, true), "Classic-Beute nicht ausgewiesen")
         assert(DP.entranceLinks == 1, "Eingang von Blackrock Depths: " .. tostring(DP.entranceLinks))
         DP.Select("stratholme", nil)
@@ -4755,7 +4850,7 @@ do
         Msg("B:2:H:" .. E(fgStamp) .. ":3:" .. E(902) .. ",1,1", "Erik", "FGD", "CHANNEL")
         assert(st.items[901] == nil and st.items[902] == nil, "fremde Form angenommen")
         Run(AS.IDLE + 1)
-        assert(st.shared.via == "ForeverGuide" and st.shared.from == "Erik", "ForeverGuide nicht gemerkt")
+        assert(st.shared.via == AS.VIA_CHANNEL and st.shared.from == "Erik", "Kanal nicht gemerkt")
         for _, m in ipairs(sent) do assert(m[1] == "WCAH" and m[3] == "GUILD", "in den Kanal gesendet") end
         -- Aus: Kanal bleibt, solange ForeverGuide selbst laeuft; sonst verlassen.
         K.Set("comfort", "ahListenFG", false)
@@ -4771,7 +4866,12 @@ do
         -- Bericht und Selbstpruefung.
         local r = table.concat(AP.Report(), "\n")
         assert(r:find("Mit der Gilde teilen: an", 1, true) and r:find("Zuletzt von Spielern", 1, true)
-            and r:find("Aus ForeverGuide übernehmen: aus", 1, true), "Bericht: " .. r)
+            and r:find("Von anderen Auktions-Addons übernehmen: aus", 1, true)
+            and r:find("(andere Auktions-Addons)", 1, true) and not r:find("ForeverGuide", 1, true), "Bericht: " .. r)
+        -- Frueher gemerkt als "ForeverGuide": gezeigt ohne den Namen.
+        st.shared.via = "ForeverGuide"
+        r = table.concat(AP.Report(), "\n")
+        assert(not r:find("ForeverGuide", 1, true), "alter Name im Bericht: " .. r)
         local SC = WeintCodex.UISelfCheck
         local out = {}
         for _, c in ipairs(SC.CHECKS) do
@@ -5512,6 +5612,124 @@ do
     K.Set("comfort", "mapContinent", true)
     ME.Forget()
     Check(ok, "Karte: Instanzeingaenge als Symbol, je Stelle eins, Kontinent, nicht doppelt zum Spiel, Tooltip mit Herkunft, Klick in den Codex"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.21.0.0: Geistheiler und Uebergaenge (Beta-Test: "dort sind auch die
+-- Geistheiler und die gruenen Pfeile eingezeichnet ... das waere cool").
+do
+    local G = _G
+    local names = { "WorldMapFrame", "C_Map", "GameTooltip" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local K = WeintCodex.UIKit
+    local MK = WeintCodex.UIMapMarks
+    local ME = WeintCodex.UIMapEntrances
+    local ok, err = pcall(function()
+        local D = WeintCodex.MapMarksData
+        -- Bestand: Lagen auf der Karte, Richtung und Ziel als Zahlen.
+        local ns, na = 0, 0
+        for map, l in pairs(D.spirit) do
+            assert(#l % 2 == 0, "Geistheiler " .. map .. ": ungerade Liste")
+            for _, v in ipairs(l) do assert(v >= 0 and v <= 1, "Geistheiler " .. map .. " ausserhalb") end
+            ns = ns + #l / 2
+        end
+        for map, l in pairs(D.crossings) do
+            assert(#l % 4 == 0, "Uebergang " .. map .. ": Liste nicht in Vierern")
+            for i = 1, #l, 4 do
+                assert(l[i] >= 0 and l[i] <= 1 and l[i + 1] >= 0 and l[i + 1] <= 1, "Uebergang " .. map .. " ausserhalb")
+                assert(type(l[i + 2]) == "number" and l[i + 3] ~= map and l[i + 3] > 0, "Uebergang " .. map .. ": Richtung oder Ziel")
+            end
+            na = na + #l / 4
+        end
+        assert(ns == 103 and na == 110, "Bestand: " .. ns .. " Geistheiler, " .. na .. " Uebergaenge")
+        assert(K.Module("comfort").defaults.mapSpirit == false and K.Module("comfort").defaults.mapCrossings == false,
+            "nicht von Haus aus aus")
+
+        local wm = CreateFrame("Frame", "WorldMapFrame", UIParent)
+        G.WorldMapFrame = wm
+        local mapID, wrote = 1440, 0
+        wm.GetMapID = function() return mapID end
+        wm.SetMapID = function() wrote = wrote + 1 end
+        wm.AddDataProvider = function() wrote = wrote + 1 end
+        local canvas = CreateFrame("Frame", nil, wm)
+        canvas._width, canvas._height = 1000, 600
+        wm.GetCanvas = function() return canvas end
+        -- Der Client kennt jede Zone beim Namen - ausser Dunkelkueste (1439).
+        G.C_Map = { GetMapInfo = function(id)
+            if id == 1414 then return { mapType = 2, parentMapID = 947, name = "Kalimdor" } end
+            return { mapType = 3, parentMapID = 1414, name = id ~= 1439 and ("Zone " .. id) or nil }
+        end }
+        wm:Show()
+        K.Set("comfort", "mapSpirit", false)
+        K.Set("comfort", "mapCrossings", false)
+        assert(MK.Place() == 0 and not MK.Active(), "Symbole, obwohl aus")
+        K.Set("comfort", "mapSpirit", true)
+        assert(MK.driver and MK.driver:GetParent() == wm, "kein Taktgeber an der Karte")
+        assert(MK.Place() == 7, "Eschental: sieben Geistheiler, gezeigt " .. tostring(MK.Place()))
+        local p = MK.pins[1]
+        local pt
+        p.SetPoint = function(_, a, rel, b, x, y) pt = { a, rel, b, x, y } end
+        MK.Place()
+        assert(pt[2] == canvas and math.abs(pt[4] - 178) < 0.01 and math.abs(pt[5] + 66) < 0.01, "Geistheiler an falscher Stelle")
+        assert(p:GetWidth() == MK.SPIRIT and p.dot:IsShown() and not p.arrow:IsShown(), "Geistheiler nicht als Punkt")
+        -- Unter den Eingaengen.
+        assert(p:GetFrameLevel() < (canvas:GetFrameLevel() or 0) + 1500, "Geistheiler ueber den Eingaengen")
+
+        -- Uebergaenge dazu: sieben, drei davon nach Dunkelkueste - die kennt
+        -- der Client nicht beim Namen, also keiner davon.
+        K.Set("comfort", "mapCrossings", true)
+        assert(MK.Place() == 7 + 4, "Eschental mit Uebergaengen: " .. tostring(MK.Place()))
+        local a = MK.pins[8]
+        assert(a.entry.kind == "crossing" and a.entry.to == 1442 and a:GetWidth() == MK.ARROW
+            and a.arrow:IsShown() and not a.dot:IsShown(), "Pfeil nicht als Pfeil")
+        for i = 8, 11 do assert(MK.pins[i].entry.to ~= 1439, "Pfeil ohne Namen des Ziels") end
+        -- Richtung, gesetzt beim ersten Einrichten.
+        MK.Forget()
+        for _, q in ipairs(MK.pins) do q.entry = nil end
+        local set = {}
+        for i = 8, 11 do MK.pins[i].arrow.SetRotation = function(_, r) set[i] = r end end
+        MK.Place()
+        assert(set[8] == 2.7 and set[9] == 0 and set[10] == 4.4 and set[11] == 3.2, "Richtungen: "
+            .. tostring(set[8]) .. " " .. tostring(set[9]) .. " " .. tostring(set[10]) .. " " .. tostring(set[11]))
+
+        -- Tooltip: wohin, und woher die Lage stammt - ohne fremdes Addon.
+        local lines = {}
+        G.GameTooltip = setmetatable({
+            SetOwner = function() end, Show = function() end, Hide = function() end,
+            SetText = function(_, t) lines[#lines + 1] = t end,
+            AddLine = function(_, t) lines[#lines + 1] = t end,
+        }, {})
+        a:GetScript("OnEnter")(a)
+        MK.pins[1]:GetScript("OnEnter")(MK.pins[1])
+        local tip = table.concat(lines, "\n")
+        assert(tip:find("Nach Zone 1442", 1, true) and tip:find("Geistheiler", 1, true)
+            and tip:find("unbestätigt", 1, true), "Tooltip: " .. tip)
+
+        -- Nur die Pfeile: die Punkte verschwinden.
+        K.Set("comfort", "mapSpirit", false)
+        assert(MK.Place() == 4 and MK.pins[1].entry.kind == "crossing" and not MK.pins[5]:IsShown(), "Geistheiler bleiben stehen")
+        K.Set("comfort", "mapSpirit", true)
+        -- Nur die Geistheiler wieder: die Pfeile verschwinden.
+        K.Set("comfort", "mapCrossings", false)
+        assert(MK.Place() == 7 and not MK.pins[8]:IsShown(), "Pfeile bleiben stehen")
+        -- Kontinent: keine (ueber hundert Punkte waeren keine Hilfe).
+        K.Set("comfort", "mapCrossings", true)
+        mapID = 1414
+        assert(MK.Place() == 0, "Kontinent zeigt Geistheiler oder Pfeile")
+        -- Karte zu: nichts.
+        mapID = 1440
+        wm:Hide()
+        assert(MK.Place() == 0 and not MK.pins[1]:IsShown(), "Symbole bei geschlossener Karte")
+        assert(wrote == 0, "in die Weltkarte geschrieben")
+        local sc = table.concat(MK.StatusLines(), "\n")
+        assert(sc:find("Geistheiler im Bestand: 103 auf", 1, true) and sc:find("Übergänge: 110 auf", 1, true), "Selbstpruefung: " .. sc)
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    K.Set("comfort", "mapSpirit", false)
+    K.Set("comfort", "mapCrossings", false)
+    MK.Forget()
+    Check(ok, "Karte: Geistheiler und Uebergaenge - Bestand, Lage, Pfeilrichtung, Ziel nur mit Namen vom Client, Tooltip, nur Zonen, kein Schreiben in die Karte"
         .. (ok and "" or (": " .. tostring(err))))
 end
 
@@ -6676,8 +6894,9 @@ do
         local f = UF.frames.player
         local bm = f._barModel
         assert(bm and UF.frames.target._barModel and not (UF.frames.focus and UF.frames.focus._barModel), "Modell im Balken fehlt oder zu viel")
-        local unitSet, healthPts = nil, {}
+        local unitSet, healthPts, cam = nil, {}, nil
         bm.SetUnit = function(_, u) unitSet = u end
+        bm.SetCamDistanceScale = function(_, v) cam = v end
         bm.GetModelFileID = function() return 123 end
         f.health.SetPoint = function(_, a, rel, b, x) healthPts[a] = x end
         f._portrait.tex:Hide()
@@ -6689,9 +6908,18 @@ do
         assert(math.abs(bm:GetAlpha() - 0.35) < 0.001, "Deckkraft: " .. tostring(bm:GetAlpha()))
         assert(bm:GetFrameLevel() == f.health:GetFrameLevel() + 1 and bm:GetFrameLevel() < f.left:GetParent():GetFrameLevel(),
             "Kopf nicht zwischen Fuellung und Text")
+        -- 6.21.0.0: weiter weg als das Portraet ("ein bisschen weiter
+        -- rausgezoomt"), einstellbar.
+        assert(cam == 1.5, "Kamera im Balken: " .. tostring(cam))
         K.Set("unitframes", "player_barAlpha", 60)
+        K.Set("unitframes", "player_barCam", 220)
         f:UpdatePortrait()
         assert(math.abs(bm:GetAlpha() - 0.6) < 0.001, "Deckkraft nicht eingestellt")
+        assert(math.abs(cam - 2.2) < 0.001, "Abstand nicht eingestellt: " .. tostring(cam))
+        K.Set("unitframes", "player_barCam", 999)
+        f:UpdatePortrait()
+        assert(cam == 3, "Abstand nicht begrenzt: " .. tostring(cam))
+        K.Set("unitframes", "player_barCam", 150)
         assert(not f._portrait.tex:IsShown(), "Bild des Portraets bei jedem Neuzeichnen gesetzt")
         -- Modell geladen: bleibt. Ohne Modelldatei: weg.
         for _, fn in ipairs(queue) do fn() end
@@ -11164,6 +11392,47 @@ do
         assert(grew < 1, string.format("neue Kontakte legen im Takt Muell an: %.1f KB", grew))
         W.done[sf], S.scoped[sf] = nil, nil
     end)
+    -- 6.21.0.0 (Beta-Test: "bei Freundesliste 0/2 ist das durchgestrichen"):
+    -- die Kopfzeile traegt vor ihrem Text eine leere Zeile. Raute und Linie
+    -- hingen an ihr - am Anfang der Zeile, die Linie durch den Text. Jetzt:
+    -- Titel ist eine Zeile MIT Text, die Verzierung beginnt hinter dem
+    -- letzten Text ("0/2"), und ohne Text gibt es keine.
+    local okFH, errFH = pcall(function()
+        local W, S = WeintCodex.UIWindows, WeintCodex.UIStyle
+        local function Fs(text, left)
+            local fs = stub.NewObject("FontString")
+            fs._text = text
+            fs.GetLeft = function() return left end
+            return fs
+        end
+        local function Row(...)
+            local row = stub.NewObject("Frame")
+            local regions = { ... }
+            row.GetRegions = function() return unpack(regions) end
+            return row
+        end
+        local bg = stub.NewObject("Texture")
+        bg.GetRight = function() return 360 end
+        local empty, name, count = Fs("", 20), Fs("Freundesliste", 20), Fs("0/2", 110)
+        local row = Row(empty, name, count, bg)
+        local d = W.ListHeader(row, bg, S.CALM)
+        assert(d and d.title == name, "Titel ist die leere Zeile")
+        assert(d.tail == count and d.tw == 18, "Verzierung beginnt nicht hinter dem letzten Text")
+        assert(d.dot:IsShown() and d.width > 0, "Raute oder Linie fehlt")
+        assert(d.width == 360 - W.HEADER_INSET - (110 + 18 + 2 * W.LIST_GAP + 3), "Linie nicht vom Ende des Textes bis vor den Rand: " .. tostring(d.width))
+        -- Eine Kopfzeile, deren Text erst spaeter kommt: erst keine
+        -- Verzierung, dann die Zeile mit dem Text.
+        local blank, later = Fs("", 20), Fs("", 20)
+        local row2 = Row(blank, later, bg)
+        local d2 = W.ListHeader(row2, bg, S.CALM)
+        assert(d2 and not d2.dot:IsShown() and not d2.line:IsShown() and d2.width == 0, "Verzierung ohne Text")
+        later._text = "Freundesliste"
+        W.ListHeader(row2, bg, S.CALM)
+        assert(d2.title == later and d2.dot:IsShown() and d2.width > 0, "Text kam spaeter - Verzierung bleibt weg oder an der leeren Zeile: " .. tostring(d2.title == later) .. tostring(d2.dot:IsShown()) .. tostring(d2.width))
+    end)
+    Check(okFH, "Kopfzeile einer Liste: nie durch den Text, Titel mit Text, hinter dem letzten Text, ohne Text keine Verzierung"
+        .. (okFH and "" or (": " .. tostring(errFH))))
+
     Check(okSF, "Kontakte neu (SocialUIFrame): Gold, verschiebbar, Rahmen/Knopf/Reiter im Durchlauf, Verlauf und Band weg, BattleTag als Leiste, Status und Suche flach, Filter und Karten bleiben, kein Muell"
         .. (okSF and "" or (": " .. tostring(errSF))))
 

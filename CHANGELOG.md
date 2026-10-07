@@ -9,6 +9,27 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.21.0.0] – 2026-10-07
+
+**Geistheiler und Wege in andere Gebiete auf der Karte.** Auf Wunsch zeigt die Weltkarte, wo Geistheiler stehen (grüner Punkt) und wo der Weg ins nächste Gebiet führt (grüner Pfeil – Maus darauf zeigt, wohin). Einschalten unter Komfort → Karte.
+
+**Mehr vom Kopf im Balken.** Der animierte Kopf im Lebensbalken ist ab Werk weiter herausgezoomt. Wie weit, stellst du unter Feinheiten mit „Kopf im Balken: Abstand“ ein.
+
+**Erklärungen in den Einstellungen ganz lesbar.** Die Sätze unter den Schaltern brachen nach einer Zeile mit „…“ ab. Jetzt stehen sie vollständig da.
+
+**Kontakte: „Freundesliste“ nicht mehr durchgestrichen.** Die Zierlinie lief mitten durch die Überschrift. Jetzt beginnt sie hinter dem Text.
+
+**Herkunft einfacher gesagt.** Wo der Codex sagt, woher Quests, Rezepte, Lehrer, Eingänge oder seltene Gegner stammen, steht jetzt „Wissensstand aus der Beta“. Im Auktionshaus heißt der Schalter „Preise von anderen Auktionshaus-Addons, die wie WeintCodex arbeiten, übernehmen“.
+
+### Technisch
+
+- **Geistheiler und Übergänge** (`ui/mapmarks.lua`, Seite „Karte“, `mapSpirit`/`mapCrossings` ab Werk aus): `data/mapmarks.lua` **erzeugt** von `.github/scripts/import_mapmarks.py` aus der Symboltabelle eines Karten-Addons (nur Lagen) – 103 Geistheiler, 110 Übergänge, vier Pfeile innerhalb einer Karte weggelassen. Name des Ziels vom Client (`C_Map.GetMapInfo`), ohne Namen kein Pfeil. Eigene Rahmen auf der Fläche der Karte wie die Eingänge, unter ihnen, nie `SetMapID` (kein Klick hinüber), nur auf Zonen. Farbe `GameColors.friendly`.
+- **Kopf im Balken:** Abstand der Kamera `<einheit>_barCam` (Prozent auf den des Porträts, ab Werk 150, 100–300, `UF.BarCam`).
+- **Erläuterungen unter Schaltern** (`core/ui.lua`, `CreateToggle`): Beschriftung und Erläuterung hingen oben links und am Punkt `RIGHT` der Zeile – der liegt in ihrer Mitte und legte die Höhe fest (eine Zeile, dann „…“). Jetzt oben links mit Breite; die Zeile wächst mit (gemessen und geschätzt, das Größere). Alle 900 Texte der Einstellungsseiten mit der echten Schrift nachgemessen: sonst läuft nichts über; die Beschreibung der Gruppenrahmen ging im Seitenkopf in die dritte Zeile – gekürzt, der Prüflauf hält jede auf zwei.
+- **Kopfzeile einer Liste** (`W.ListHeader`): Titel ist eine Textzeile **mit** Text (vorher die erste, auch leere – dann standen Raute und Linie am Anfang und liefen durch den Text), die Verzierung beginnt hinter dem letzten Text der Zeile, ohne Text keine. `/wcui fenster` nennt je Abschnitt Titel und Anschluss. Die Ursache ist eine Annahme, nicht gemessen.
+- **Herkunft ohne fremde Namen:** Herkunftsangaben, Tooltips, Hinweise, Berichte und die Neuigkeiten nennen kein fremdes Addon mehr als Quelle; die Art der Herkunft bleibt (`community` = „Unbestätigt“). Ältere gespeicherte Angaben beim Teilen von Preisen werden beim Zeigen übersetzt (`AS.ViaName`). Der Prüflauf sucht in jeder Zeichenkette außerhalb von Kommentaren danach.
+- 24 Gegenproben, alle gefangen – eine erst nach geschärfter Prüfung (nur Pfeile, Geistheiler aus). Die Prüfung der Seitenköpfe zählte erst Zeichen und ließ die alte, dreizeilige Beschreibung durch; jetzt bricht sie nach Wörtern um (6 px je Zeichen), dafür sind zwei Beschreibungen kürzer.
+
 ## [6.20.0.0] – 2026-10-07
 
 **Neu im Komfort: Instanzeingänge auf der Karte.** Öffnest du die Weltkarte, steht an jedem Dungeoneingang, den der Codex kennt, ein Symbol – auch auf der Karte von Kalimdor und den Östlichen Königreichen. Maus darauf zeigt Dungeon und Stufe, ein Klick schlägt ihn im Codex auf. Einschalten unter Komfort → Karte.
@@ -133,7 +154,7 @@ nicht zusammen.
 
 ## [6.18.0.1] – 2026-10-07
 
-**Keine Fehlermeldungen mehr mit „Preise aus ForeverGuide übernehmen“.** Sobald Preise von anderen Spielern ankamen, meldete das Spiel laufend einen Fehler. Behoben – die Preise selbst kamen schon an und bleiben erhalten.
+**Keine Fehlermeldungen mehr beim Übernehmen von Preisen anderer Auktions-Addons.** Sobald Preise von anderen Spielern ankamen, meldete das Spiel laufend einen Fehler. Behoben – die Preise selbst kamen schon an und bleiben erhalten.
 
 ### Technisch
 
@@ -146,7 +167,7 @@ nicht zusammen.
 
 **Auktionspreise von anderen Spielern.** Du musst nicht mehr selbst scannen, um frische Preise zu haben: Wer in deiner Gilde mit WeintCodex gescannt hat, teilt seine Preise mit dir – und du deine mit ihm. Im Tooltip steht dann „von Spielern“. Einschalten unter Komfort → Auktionshaus → „Mit der Gilde teilen“.
 
-**Preise aus ForeverGuide übernehmen.** Wer ForeverGuide nutzt, verschickt seine Scans an alle ForeverGuide-Spieler deines Realms. WeintCodex kann mithören und diese Preise übernehmen – es schickt selbst nie etwas dorthin. Ebenfalls unter Komfort → Auktionshaus.
+**Preise anderer Auktions-Addons übernehmen.** Manche Auktions-Addons verschicken ihre Scans an alle Spieler deines Realms, die dasselbe Addon nutzen. WeintCodex kann mithören und diese Preise übernehmen – es schickt selbst nie etwas dorthin. Ebenfalls unter Komfort → Auktionshaus.
 
 **Dein eigener Scan geht immer vor.** Ein fremder Preis, der mehr als dreimal so hoch oder niedrig ist wie der bekannte, zählt erst, wenn ein zweiter Spieler ihn bestätigt.
 

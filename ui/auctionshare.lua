@@ -54,6 +54,14 @@ AS.PREFIX        = "WCAH"
 AS.PROTO         = "1"
 AS.FG_PREFIX     = "FGD"
 AS.FG_CHANNEL    = "FGLayers"
+-- Wie der Kanal im Bericht heisst (6.21.0.0: keine fremden Addons als
+-- Quelle nennen). Gemerkt war bis dahin "ForeverGuide" - so steht es noch
+-- in gespeicherten Preisen und wird beim Zeigen uebersetzt.
+AS.VIA_CHANNEL     = "andere Auktions-Addons"
+function AS.ViaName(via)
+    if via == "ForeverGuide" then return AS.VIA_CHANNEL end
+    return type(via) == "string" and via or "?"
+end
 AS.FRESH_GAP     = 20 * 60     -- so viel frischer muss ein Angebot sein
 AS.OFFER_MAX_AGE = 6 * 3600    -- aeltere eigene Scans bietet niemand an
 AS.QUERY_EVERY   = 20 * 60     -- so oft fragt WeintCodex die Gilde
@@ -369,7 +377,7 @@ function AS.OnBulk(sender, via, side, stamp, payload, now)
         if AS.ApplyPrice(st, D(a), D(b), D(c), day, from) then n = n + 1 end
     end
     ib.n = ib.n + n
-    if via == "ForeverGuide" then stats.fgIn = stats.fgIn + n else stats.guildIn = stats.guildIn + n end
+    if via == AS.VIA_CHANNEL then stats.fgIn = stats.fgIn + n else stats.guildIn = stats.guildIn + n end
     return n
 end
 
@@ -418,7 +426,7 @@ function AS.Join()
         if fn then pcall(fn, AS.FG_CHANNEL) end
     end
     AS.joined = ChannelId() ~= nil
-    Log(AS.joined and "Kanal von ForeverGuide verbunden" or "Kanal von ForeverGuide: Beitritt ohne Erfolg")
+    Log(AS.joined and "Kanal der anderen Auktions-Addons verbunden" or "Kanal der anderen Auktions-Addons: Beitritt ohne Erfolg")
     return AS.joined
 end
 
@@ -430,7 +438,7 @@ function AS.Leave()
     local loaded = _G.C_AddOns and _G.C_AddOns.IsAddOnLoaded
     local fg = loaded and K.Bool(loaded("ForeverGuide"), true)
     if not fg and _G.LeaveChannelByName then pcall(_G.LeaveChannelByName, AS.FG_CHANNEL) end
-    Log("Kanal von ForeverGuide verlassen")
+    Log("Kanal der anderen Auktions-Addons verlassen")
 end
 
 --------------------------------------------------
@@ -444,7 +452,7 @@ function AS.OnAddonMessage(prefix, text, channel, sender, now)
     if prefix == AS.FG_PREFIX then
         if channel ~= "CHANNEL" or not AS.Listen() then return end
         local code, stamp, _, payload = text:match("^B:1:([AHN]):(%w+):(%w+):(.*)$")
-        if code then AS.OnBulk(sender, "ForeverGuide", CODE_SIDE[code], D(stamp) or 0, payload, now) end
+        if code then AS.OnBulk(sender, AS.VIA_CHANNEL, CODE_SIDE[code], D(stamp) or 0, payload, now) end
         return
     end
     if prefix ~= AS.PREFIX or channel ~= "GUILD" or not AS.Guild() or AS.IsMe(sender) then return end
@@ -516,7 +524,7 @@ function AS.Lines()
     local out = {}
     out[#out + 1] = "Mit der Gilde teilen: " .. (AS.Guild() and "an" or "aus")
         .. " · gesendet " .. stats.sent .. " Nachrichten · empfangen " .. stats.guildIn .. " Preise"
-    out[#out + 1] = "Aus ForeverGuide übernehmen: " .. (AS.Listen() and "an" or "aus")
+    out[#out + 1] = "Von anderen Auktions-Addons übernehmen: " .. (AS.Listen() and "an" or "aus")
         .. " · Kanal " .. (AS.joined and "verbunden" or "nicht verbunden")
         .. " · empfangen " .. stats.fgIn .. " Preise"
     if stats.held > 0 or stats.ignored > 0 then

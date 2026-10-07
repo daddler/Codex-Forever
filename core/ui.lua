@@ -1495,13 +1495,23 @@ function WeintCodex.CreateToggle(parent, opts)
     label:SetText(opts.label or "")
 
     local hint
+    -- Mit Erlaeuterung (6.21.0.0, Beta-Test: "unter den Punkten erklaert,
+    -- allerdings mit 3 Punkten abgekuerzt"): Beschriftung und Erlaeuterung
+    -- hingen bis dahin oben links UND am Punkt "RIGHT" der Zeile - der sitzt
+    -- in ihrer Mitte und legte damit auch die Hoehe fest: die Erlaeuterung
+    -- bekam eine Zeile und endete mit "...". Jetzt nur oben links und eine
+    -- Breite, wie die Hinweise der Einstellungsseiten - die Hoehe folgt dem
+    -- Text, und die Zeile waechst mit (FitHeight).
+    local textW = opts.width and (opts.width - 46 - 12) or nil
     if opts.description then
         label:SetPoint("TOPLEFT", row, "TOPLEFT", 46, -2)
-        label:SetPoint("RIGHT",   row, "RIGHT",  -12, 0)
+        if textW then label:SetWidth(textW) else label:SetPoint("TOPRIGHT", row, "TOPRIGHT", -12, -2) end
+        label:SetWordWrap(true)
         hint = row:CreateFontString(nil, "OVERLAY")
         hint:SetFont(F.mono, 9, "")
         hint:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 0, -4)
-        hint:SetPoint("RIGHT",   row,   "RIGHT",    -12, 0)
+        if textW then hint:SetWidth(textW) else hint:SetPoint("TOPRIGHT", label, "BOTTOMRIGHT", 0, -4) end
+        hint:SetWordWrap(true)
         hint:SetJustifyH("LEFT")
         hint:SetTextColor(unpack(C.textFaint))
         hint:SetText(opts.description)
@@ -1519,15 +1529,29 @@ function WeintCodex.CreateToggle(parent, opts)
     -- fester Zeilenhoehe laege die naechste Zeile dann darin - dieselbe
     -- Ueberlegung wie bei TextHeight in modules/gearalert.lua, und
     -- gemessen wird erst, nachdem der Text steht.
+    -- Gemessen UND geschaetzt, das Groessere gilt: die Attrappe misst
+    -- nicht, und im Spiel misst GetStringHeight vor dem ersten Zeichnen
+    -- mitunter eine Zeile. Geschaetzt mit der Breite der Schrift (IBM Plex
+    -- Mono: 0,6 em je Zeichen, Sans 13: rund 7 px).
     local baseH = opts.height or (opts.description and 46 or 34)
+    local function Height(fs, size, charW, line)
+        local ok, h = pcall(fs.GetStringHeight, fs)
+        if not ok or type(h) ~= "number" or h <= 0 then h = line end
+        if textW then
+            local ok2, text = pcall(fs.GetText, fs)
+            local cols = math.max(1, math.floor(textW / charW))
+            h = math.max(h, WeintCodex.EstimateLines(ok2 and text or "", cols) * line)
+        end
+        return math.ceil(h)
+    end
     local function FitHeight()
         if not hint then
             row:SetHeight(baseH)
             return
         end
-        local ok, h = pcall(hint.GetStringHeight, hint)
-        if not ok or type(h) ~= "number" or h <= 0 then h = 11 end
-        row:SetHeight(math.max(baseH, 23 + math.ceil(h) + 6))
+        local lh = Height(label, 13, 7, 15)
+        local hh = Height(hint, 9, 5.4, 11)
+        row:SetHeight(math.max(baseH, 2 + lh + 4 + hh + 8))
     end
 
     row.Sync = function(self)

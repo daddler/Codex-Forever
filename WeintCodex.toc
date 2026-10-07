@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.20.0.0
+## Version: 6.21.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -106,6 +106,8 @@ data/classquests.lua
 data/rares.lua
 # Kartenteile zum Aufdecken der Weltkarte (6.20.0.0, erzeugt); gelesen von ui/mapreveal.lua.
 data/mapreveal.lua
+# Geistheiler und Uebergaenge auf der Weltkarte (6.21.0.0, erzeugt); gelesen von ui/mapmarks.lua.
+data/mapmarks.lua
 
 #
 # data/roles.lua steht NACH data/specs.lua: es liest die Talentbaeume,
@@ -215,6 +217,8 @@ ui/auctionshare.lua
 ui/messenger.lua
 # Instanzeingaenge auf der Weltkarte (6.20.0.0, Komfort): eigene Symbole, Daten aus J.ENTRANCES.
 ui/mapentrances.lua
+# Geistheiler und Uebergaenge auf der Weltkarte (6.21.0.0, Seite "Karte").
+ui/mapmarks.lua
 # Weltkarte aufdecken (6.20.0.0, Seite "Karte"): Daten aus data/mapreveal.lua, im Spiel gegengeprueft.
 ui/mapreveal.lua
 ui/tooltip.lua

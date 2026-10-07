@@ -482,6 +482,11 @@ Modelldatei nach 0,4 s: kein Kopf – ein Bild im Balken sähe aus wie ein
 Fehler. Im Testmodus des Ziels: kein Kopf. **Ungemessen:** wie das Modell in
 einem breiten, flachen Rahmen sitzt (Kopf mittig, Größe) und ob
 `SetAlpha` am Modell auf Forever wirkt (zusätzlich `SetModelAlpha`).
+**Gemessen 6.20.0.0 (Beta-Test):** sitzt und bewegt sich, „ein bisschen
+weiter rausgezoomt wäre super“. Seit 6.21.0.0 Abstand der Kamera
+`<einheit>_barCam` in Prozent auf den des Porträts (`SetCamDistanceScale`,
+`UF.BarCam`): ab Werk 150 (1,5×), 100–300, Regler „Kopf im Balken:
+Abstand“ unter Feinheiten.
 
 Eingehende Heilung und Schilde (6.6.0.6, `healPrediction`, `absorbs`,
 Reiter Allgemein): wie in den Gruppenrahmen zwei Balken in einer
@@ -1452,8 +1457,10 @@ Codex („Eingang auf der Karte“, `modules/questmap.lua`), die bleibt. Seite
 - **Woher:** `J.ENTRANCES` (aus dem Abgleich mit ForeverGuide, 6.14.0.0,
   `community`) – 22 Eingänge an 20 Stellen. Kein Eintrag, kein Symbol.
   Gleiche Stelle → ein Symbol, im Tooltip alle Dungeons nach Stufe
-  (`ME.Spots`; Schwarzfels: drei). Tooltip sagt „aus Beta-Berichten
-  (ForeverGuide) – unbestätigt“; Klick schlägt den ersten im Codex auf.
+  (`ME.Spots`; Schwarzfels: drei). Tooltip sagt „Wissensstand aus der
+  Beta – unbestätigt“ (seit 6.21.0.0 ohne den Namen des Addons, siehe
+  *Herkunft im Spiel ohne fremde Namen*); Klick schlägt den ersten im
+  Codex auf.
 - **Wie:** dieselbe Regel wie die Marke (6.6.0.1) – eigene Rahmen auf der
   Fläche (`QM.Canvas`), Kehrwert des Zooms, Ebene über der Karte; nie
   `AddDataProvider`, nie in Rahmen des Spiels geschrieben. Taktgeber
@@ -1502,6 +1509,78 @@ nicht war, etwas abgedunkelt“. `mapReveal` ab Werk aus, `mapRevealTint` an.
 - **Leatrix Maps geladen:** es deckt auf, WeintCodex nicht.
 - **Ungemessen:** die Ebene auf Forever, ob die Lage auf der Fläche in
   deren Einheiten stimmt (die Fläche hat die Größe des Kartenbilds).
+
+## Geistheiler und Übergänge *(6.21.0.0, `ui/mapmarks.lua`, Seite „Karte“)*
+
+Beta-Test: „dort sind auch die Geistheiler (grüner Punkt) und die grünen
+Pfeile eingezeichnet, um zu sehen, wie man zum nächsten Gebiet kommt. Das
+wäre cool, wenn das auch mit reinkommt.“ `mapSpirit` und `mapCrossings`,
+beide ab Werk aus.
+
+- **Daten:** `data/mapmarks.lua`, **erzeugt** von
+  `.github/scripts/import_mapmarks.py` aus der Symboltabelle von Leatrix
+  Maps (`Leatrix_Maps_Icons.lua`, 1.60.15, dieselbe Fassung wie beim
+  Aufdecken) – nur Lagen: 103 Geistheiler auf 46 Karten, 110 Übergänge auf
+  45 Karten (Lage, Richtung des Pfeils in Bogenmaß gegen den Uhrzeigersinn,
+  0 = oben, Zielkarte). Vier Pfeile innerhalb derselben Karte („dem Weg nach
+  Westen folgen“) brauchen einen Satz und bleiben weg.
+- **Name des Ziels vom Client** (`C_Map.GetMapInfo(ziel).name`): in der
+  Sprache des Spielers, kein Text aus fremden Daten. Nennt der Client das
+  Ziel nicht beim Namen, kein Pfeil (`MK.MapName`, gemerkt je Karte).
+- **Wie die Eingänge:** eigene Rahmen auf `QM.Canvas`, Kehrwert des Zooms,
+  nie `AddDataProvider`, nie `SetMapID` – ein Klick auf den Pfeil führt
+  deshalb **nicht** hinüber. Ebene Fläche + 1490, unter den Eingängen
+  (+ 1500). Nur auf der Karte einer Zone, nie auf dem Kontinent.
+- **Bild:** Punkt aus `disc` (schwarzer Rand), Pfeil aus `arrow` mit
+  schwarzem Schatten, beide in `GameColors.friendly` – Farbe freundlicher
+  NPCs, eine Farbe der Spielwelt, kein Akzent. Tooltip: „Geistheiler“ bzw.
+  „Nach <Gebiet>“, darunter „Wissensstand aus der Beta – unbestätigt“.
+- **Ungemessen:** ob die Pfeilrichtung unseres Bildes zu den Richtungen
+  passt (unser `arrow` zeigt nach oben wie das Vorbild), ob die Lagen auf
+  Forever stimmen, die Ebene neben den Questmarken.
+
+## Herkunft im Spiel ohne fremde Namen *(6.21.0.0)*
+
+Beta-Test: „Ich möchte, dass nirgendwo als Quelle … steht, dass dies von
+ForeverGuide übernommen wurde. Dann einfach lieber Wissensstand von der
+Beta nehmen … Das soll überall so sein.“ Was ein Spieler sieht (Herkunft
+einer Liste, Tooltips, Hinweise, Berichte, Neuigkeiten), nennt **kein**
+fremdes Addon als Quelle – „Wissensstand aus der Beta“, „aus Classic“,
+„Bilder des Spiels“. Die **Art** der Herkunft bleibt, wie sie ist
+(`community` ist weiter „Unbestätigt“, nie `beta` – das hieße, jemand habe
+den Client gelesen). Woher die Daten wirklich stammen, steht weiter in den
+Skripten, den erzeugten Dateien (Kommentare) und hier in der Doku – für
+die, die sie pflegen („Kein Bestand ohne Herkunft“).
+`load_test.lua` sucht in jeder Zeichenkette außerhalb von Kommentaren nach
+ForeverGuide, Questie, What's Training, Dungeon Journal und der Fassung
+von Leatrix Maps; erlaubt ist nur `"ForeverGuide"` als bloßer Schlüssel
+(ist das Addon geladen; alter gemerkter Wert, beim Zeigen übersetzt:
+`AS.ViaName`). „Leatrix Maps geladen – es deckt selbst auf“ bleibt: eine
+Auskunft, wer die Karte schon aufdeckt, keine Quelle. Der Schalter im
+Auktionshaus heißt „Preise von anderen Auktionshaus-Addons, die wie
+WeintCodex arbeiten, übernehmen“ (Schlüssel `ahListenFG` unverändert).
+
+## Erläuterungen unter Schaltern *(6.21.0.0, `core/ui.lua`, `CreateToggle`)*
+
+Beta-Test: „Einige Sachen sind zwar unter den Punkten erklärt, allerdings
+werden diese mit 3 Punkten abgekürzt.“ Beschriftung und Erläuterung eines
+Schalters hingen oben links **und** am Punkt `RIGHT` der Zeile. `RIGHT`
+sitzt in der **Mitte** der Zeile – zusammen mit `TOPLEFT` legt das auch
+die Höhe fest: eine Zeile, der Rest „…“. Jetzt nur oben links und eine
+Breite (`opts.width − 58`, wie die Hinweise der Seiten); ohne Breite
+`TOPRIGHT` (nie ein Punkt, der die Höhe mitbestimmt). Die Zeile wächst mit:
+Höhe aus Beschriftung und Erläuterung, je das Größere aus gemessen
+(`GetStringHeight`) und geschätzt (`EstimateLines`, Mono 9: 5,4 px je
+Zeichen, Zeile 11; Sans 13: 7 px, Zeile 15). Eine Zeile Erläuterung:
+46 px wie bisher.
+
+Dazu nachgemessen (Skript mit der echten Schrift, IBM Plex, alle 900
+Texte der Einstellungsseiten): keine Beschriftung, kein Wert einer
+Auswahlliste, keine Farbe läuft über ihre Breite. Die Beschreibung der
+Gruppenrahmen lief im Kopf der Seite in die dritte Zeile (und in die
+Reiter) – gekürzt, ebenso die der Oberfläche; `load_test.lua` hält jede
+Beschreibung auf zwei Zeilen (nach Wörtern umbrochen, 6 px je Zeichen –
+Zeichen zählen allein ließ die alte Beschreibung durch).
 
 ## Automark *(6.8.1.0, auf Klick seit 6.9.0.2, `ui/automark.lua`)*
 
@@ -3715,6 +3794,18 @@ Verschiebbar wie das alte (`MW.WINDOWS`), Licht und Kante in Gold über
 auf der Kachel) – `/wcui fenster` sagt dort „keine gefunden“, das ist
 richtig. **Ungemessen:** die Reiter „Kürzliche Verbündete“, „Schlachtzug“,
 „Anfragen“, und wie die Karten auf der Kachel wirken.
+
+**Kopfzeile durchgestrichen (6.21.0.0, Beta-Test „bei Freundesliste 0/2 ist
+das durchgestrichen“).** Raute und Linie einer Listen-Kopfzeile
+(`W.ListHeader`) hängen am Ende des Titels. Als Titel galt die erste
+Textzeile des Rahmens – trägt die Kopfzeile vor ihrem Text eine leere,
+stand die Raute am Anfang der Zeile und die Linie lief durch den Text.
+Jetzt: Titel ist eine Zeile **mit** Text (`HeaderTitle(f, true)`; ist die
+gewählte später leer, wird neu gewählt), die Verzierung beginnt hinter dem
+**letzten** Text der Zeile („Freundesliste“ und „0/2“ können zwei sein),
+und ohne Text gibt es keine (`d.bare`). `/wcui fenster` nennt je Abschnitt
+Titel und den Text, hinter dem es beginnt. Ob die leere Zeile wirklich die
+Ursache war, ist nicht gemessen – der Bericht sagt es beim nächsten Mal.
 
 ### Lehrer *(6.10.1.0, `ui/classtrainer.lua`)*
 

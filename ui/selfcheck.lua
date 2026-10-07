@@ -507,6 +507,12 @@ Check("Karte", function(add)
     local active = ME.Active()
     add(active and SC.OK or SC.OPEN, active and "Instanzeingänge an" or "Instanzeingänge aus (Komfort → Karte)")
     for _, line in ipairs(ME.StatusLines()) do add("", "   " .. line) end
+    local MK = WeintCodex.UIMapMarks
+    if MK then
+        local sp, cr = MK.Wants("spirit"), MK.Wants("crossing")
+        add((sp or cr) and SC.OK or SC.OPEN, "Geistheiler " .. (sp and "an" or "aus") .. " · Übergänge " .. (cr and "an" or "aus"))
+        for _, line in ipairs(MK.StatusLines()) do add("", "   " .. line) end
+    end
     local MR = WeintCodex.UIMapReveal
     if MR then
         add(MR.Active() and SC.OK or SC.OPEN, MR.Active() and "Ganze Karte an" or "Ganze Karte aus")

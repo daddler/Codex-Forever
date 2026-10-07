@@ -13,7 +13,7 @@
 
 WeintCodex = WeintCodex or {}
 WeintCodex.MapRevealData = {
-    source = "Leatrix Maps 1.60.15",
+    source = "Kartenteile des Spiels (Beta)",
     -- Gebaut erst, wenn jemand die Karte aufdeckt (ui/mapreveal.lua):
     -- als fertige Tabellen kosteten sie Speicher, den fast niemand braucht.
     build = function() return {

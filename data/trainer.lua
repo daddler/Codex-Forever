@@ -69,7 +69,7 @@ local T = WeintCodex.TrainerData
 T.SOURCE = {
     kind  = "community",
     date  = "02.10.2026",
-    label = "What's Training? (Forever-Fassung, geprüft gegen 11.0.0-beta10), Beobachtung im Beta-Client",
+    label = "Wissensstand aus der Beta, Beobachtung im Beta-Client",
 }
 
 -- Je Klasse eine Funktion, gebaut erst beim ersten Zugriff (6.14.0.2):

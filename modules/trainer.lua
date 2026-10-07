@@ -617,9 +617,8 @@ local function InspectorBlocks(state, cat, weapons)
         { type = "divider" },
         { type = "header", text = "Woher das stammt" },
         { type = "card", lines = {
-            "Unbestätigt: Stufen, Kosten und Voraussetzungen stammen",
-            "aus dem Addon „What's Training?“ (Forever-Fassung) und aus",
-            "Beobachtung in der Beta – nicht von Blizzard.",
+            "Unbestätigt: Stufen, Kosten und Voraussetzungen sind",
+            "der Wissensstand aus der Beta – nicht von Blizzard.",
             "Ob du etwas schon kannst, sagt dein Client.",
             "Rufrabatte beim Lehrer sind nicht eingerechnet.",
         }},

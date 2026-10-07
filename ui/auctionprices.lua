@@ -712,7 +712,7 @@ function AP.StatusLines(side)
     local sh = store.shared
     if type(sh) == "table" and sh.at and _G.date then
         out[#out + 1] = "Zuletzt von Spielern: " .. Thousands(sh.n or 0) .. " Gegenstände von " .. (sh.from or "?")
-            .. " (" .. (sh.via or "?") .. "), Scan vom " .. _G.date("%d.%m. %H:%M", sh.at)
+            .. " (" .. (WeintCodex.UIAuctionShare and WeintCodex.UIAuctionShare.ViaName(sh.via) or tostring(sh.via or "?")) .. "), Scan vom " .. _G.date("%d.%m. %H:%M", sh.at)
     end
     if (store.noReplicate or 0) > Time() then
         out[#out + 1] = "Der Vollscan blieb zuletzt ohne Antwort – bis " .. (_G.date and _G.date("%d.%m.", store.noReplicate) or "?")
@@ -821,8 +821,9 @@ local function Build(B)
     B:Section("Preise von anderen Spielern", "Dein eigener Scan geht immer vor. Fremde Preise stehen im Tooltip als „von Spielern“; einer, der mehr als dreimal so hoch oder niedrig ist wie der bekannte, zählt erst, wenn ein zweiter Spieler ihn bestätigt.")
     B:Row({ type = "toggle", label = "Mit der Gilde teilen", key = "ahShareGuild", disabled = off,
             description = "Hat ein Gildenmitglied mit WeintCodex frischere Preise, kommen sie zu dir – und deine zu ihm." },
-          { type = "toggle", label = "Preise aus ForeverGuide übernehmen", key = "ahListenFG", disabled = off,
-            description = "Nur zuhören: tritt dem versteckten Kanal von ForeverGuide bei und sendet nie etwas." })
+          { type = "toggle", label = "Preise von anderen Auktionshaus-Addons, die wie WeintCodex arbeiten, übernehmen",
+            key = "ahListenFG", disabled = off,
+            description = "Nur zuhören: tritt ihrem gemeinsamen, versteckten Kanal bei und sendet nie etwas." })
     B:Note("Gemerkt wird je Realm und Auktionshaus (Allianz, Horde, neutral), höchstens 30 Tage. Was zuletzt passiert ist: /wcui auktion.")
 end
 

@@ -348,7 +348,7 @@ function MR.BuildRows(B)
             description = "Auch Gebiete, in denen du noch nicht warst. Hat Leatrix Maps das Aufdecken, macht es das." },
           { type = "toggle", label = "Unerkundetes abdunkeln", key = "mapRevealTint", disabled = off,
             description = "Dunkler, wo du noch hin musst." })
-    B:Note("Die Kartenteile stammen aus Leatrix Maps (nur die Daten). WeintCodex prüft sie gegen das, was du schon erkundet hast, und deckt eine Zone nicht auf, wenn sie nicht passen.")
+    B:Note("Die Kartenteile sind die Bilder des Spiels selbst. WeintCodex prüft sie gegen das, was du schon erkundet hast, und deckt eine Zone nicht auf, wenn sie nicht passen.")
 end
 
 local mod = K.Module(KEY)

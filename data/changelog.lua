@@ -22,6 +22,17 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.21.0.0",
+        date    = "07.10.2026",
+        notes   = {
+            "|cff7C6CFFGeistheiler und Wege in andere Gebiete auf der Karte.|r Auf Wunsch zeigt die Weltkarte, wo Geistheiler stehen (grüner Punkt) und wo der Weg ins nächste Gebiet führt (grüner Pfeil – Maus darauf zeigt, wohin). Einschalten unter Komfort → Karte.",
+            "|cff7C6CFFMehr vom Kopf im Balken.|r Der animierte Kopf im Lebensbalken ist ab Werk weiter herausgezoomt. Wie weit, stellst du unter Feinheiten mit „Kopf im Balken: Abstand“ ein.",
+            "|cff7C6CFFErklärungen in den Einstellungen ganz lesbar.|r Die Sätze unter den Schaltern brachen nach einer Zeile mit „…“ ab. Jetzt stehen sie vollständig da.",
+            "|cff7C6CFFKontakte: „Freundesliste“ nicht mehr durchgestrichen.|r Die Zierlinie lief mitten durch die Überschrift. Jetzt beginnt sie hinter dem Text.",
+            "|cff7C6CFFHerkunft einfacher gesagt.|r Wo der Codex sagt, woher Quests, Rezepte, Lehrer, Eingänge oder seltene Gegner stammen, steht jetzt „Wissensstand aus der Beta“. Im Auktionshaus heißt der Schalter „Preise von anderen Auktionshaus-Addons, die wie WeintCodex arbeiten, übernehmen“.",
+        },
+    },
+    {
         version = "6.20.0.0",
         date    = "07.10.2026",
         notes   = {
@@ -91,7 +102,7 @@ WeintCodex_ChangelogData = {
         version = "6.18.0.1",
         date    = "07.10.2026",
         notes   = {
-            "|cff7C6CFFKeine Fehlermeldungen mehr mit „Preise aus ForeverGuide übernehmen“.|r Sobald Preise von anderen Spielern ankamen, meldete das Spiel laufend einen Fehler. Behoben – die Preise selbst kamen schon an und bleiben erhalten.",
+            "|cff7C6CFFKeine Fehlermeldungen mehr beim Übernehmen von Preisen anderer Auktions-Addons.|r Sobald Preise von anderen Spielern ankamen, meldete das Spiel laufend einen Fehler. Behoben – die Preise selbst kamen schon an und bleiben erhalten.",
         },
     },
     {
@@ -99,7 +110,7 @@ WeintCodex_ChangelogData = {
         date    = "07.10.2026",
         notes   = {
             "|cff7C6CFFAuktionspreise von anderen Spielern.|r Du musst nicht mehr selbst scannen, um frische Preise zu haben: Wer in deiner Gilde mit WeintCodex gescannt hat, teilt seine Preise mit dir – und du deine mit ihm. Im Tooltip steht dann „von Spielern“. Einschalten unter Komfort → Auktionshaus → „Mit der Gilde teilen“.",
-            "|cff7C6CFFPreise aus ForeverGuide übernehmen.|r Wer ForeverGuide nutzt, verschickt seine Scans an alle ForeverGuide-Spieler deines Realms. WeintCodex kann mithören und diese Preise übernehmen – es schickt selbst nie etwas dorthin. Ebenfalls unter Komfort → Auktionshaus.",
+            "|cff7C6CFFPreise anderer Auktions-Addons übernehmen.|r Manche Auktions-Addons verschicken ihre Scans an alle Spieler deines Realms, die dasselbe Addon nutzen. WeintCodex kann mithören und diese Preise übernehmen – es schickt selbst nie etwas dorthin. Ebenfalls unter Komfort → Auktionshaus.",
             "|cff7C6CFFDein eigener Scan geht immer vor.|r Ein fremder Preis, der mehr als dreimal so hoch oder niedrig ist wie der bekannte, zählt erst, wenn ein zweiter Spieler ihn bestätigt.",
         },
     },

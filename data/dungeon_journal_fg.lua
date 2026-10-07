@@ -28,11 +28,11 @@ local J = WeintCodex.DungeonJournal
 J.FG_SOURCE = {
     kind  = "community",
     date  = "06.10.2026",
-    label = "Quests: Addon ForeverGuide 1.25.6 (Questie-Datenbank für Forever)",
+    label = "Quests: Wissensstand aus der Beta",
 }
 J.CLASSIC_LOOT_SOURCE = {
     kind  = "classic",
-    label = "Beute aus Classic (über ForeverGuide 1.25.6) – Forever hat die Beute überarbeitet",
+    label = "Beute aus Classic – Forever hat die Beute überarbeitet",
 }
 
 J.FG_QUESTS = {

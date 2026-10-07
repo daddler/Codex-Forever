@@ -70,7 +70,7 @@ K.Register({
     -- Die Beschreibung haengt an UIKit.OPT_IN (ui/kit.lua): solange der
     -- Client keine Einstellungen speichert, ist die Oberflaeche fuer alle an.
     description = K.OPT_IN
-        and "Ein eigenes, schlichtes Interface zusätzlich zu WeintCodex — ganz freiwillig, mit eigenem Layout. Aus bleibt alles, wie das Spiel es zeigt; alles unter „Komfort“ geht trotzdem."
+        and "Ein eigenes, schlichtes Interface zu WeintCodex – freiwillig, mit eigenem Layout. Aus bleibt alles, wie das Spiel es zeigt; „Komfort“ geht trotzdem."
         or "Das Interface von WeintCodex: Plaketten, Rahmen, Leisten, Karte, Chat, Taschen und Schadensanzeige. Jedes Modul lässt sich einzeln abschalten.",
     defaults = (function()
         -- highlight: die Farbe der Oberflaeche - Klasse (Standard) oder

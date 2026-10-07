@@ -199,7 +199,7 @@ local function Tooltip(self)
         end
         if range then gt:AddLine("Stufe " .. range, C.textNormal[1], C.textNormal[2], C.textNormal[3]) end
     end
-    gt:AddLine("Eingang aus Beta-Berichten (ForeverGuide) – unbestätigt.", C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
+    gt:AddLine("Eingang: Wissensstand aus der Beta – unbestätigt.", C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
     gt:AddLine("Klick: im Codex öffnen", C.textMuted[1], C.textMuted[2], C.textMuted[3])
     gt:Show()
 end
@@ -375,12 +375,14 @@ end
 
 local function BuildPage(B)
     local off = function() return not K.Get(KEY, "mapEntrances") end
-    B:Section("Karte", "Instanzeingänge als Symbol auf der Weltkarte, und auf Wunsch die ganze Karte. Die Marke aus dem Codex („Eingang auf der Karte“) bleibt, wie sie ist.")
+    B:Section("Karte", "Instanzeingänge, Geistheiler und Übergänge als Symbole auf der Weltkarte, und auf Wunsch die ganze Karte. Die Marke aus dem Codex („Eingang auf der Karte“) bleibt, wie sie ist.")
     B:Row({ type = "toggle", label = "Instanzeingänge auf der Karte", key = "mapEntrances",
             description = "Ein Symbol an jedem Eingang, den der Codex kennt. Maus darauf: welcher Dungeon, welche Stufe. Klick: im Codex öffnen." },
           { type = "toggle", label = "Auch auf der Kontinentkarte", key = "mapContinent", disabled = off,
             description = "Kalimdor und die Östlichen Königreiche im Ganzen." })
-    B:Note("Die Lagen stammen aus Beta-Berichten (ForeverGuide) und sind unbestätigt. Wo der Codex keinen Eingang kennt, steht kein Symbol.")
+    B:Note("Die Lagen sind der Wissensstand aus der Beta und unbestätigt. Wo der Codex keinen Eingang kennt, steht kein Symbol.")
+    local MK = WeintCodex.UIMapMarks
+    if MK and MK.BuildRows then MK.BuildRows(B) end
     local MR = WeintCodex.UIMapReveal
     if MR and MR.BuildRows then MR.BuildRows(B) end
 end

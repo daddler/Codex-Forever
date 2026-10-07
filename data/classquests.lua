@@ -28,11 +28,11 @@ local Q = WeintCodex.ClassQuestData
 Q.SOURCE = {
     kind  = "community",
     date  = "06.10.2026",
-    label = "Klassenquests: Addon ForeverGuide 1.25.6 (Questie-Datenbank für Forever)",
+    label = "Klassenquests: Wissensstand aus der Beta",
 }
 Q.REWARD_SOURCE = {
     kind  = "classic",
-    label = "Belohnungen aus Classic (über ForeverGuide 1.25.6)",
+    label = "Belohnungen aus Classic",
 }
 
 local BUILD = {
