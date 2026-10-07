@@ -374,8 +374,15 @@ function K.Highlight()
     return WeintCodex.Colors.accent
 end
 
+-- 6.21.1.0 (Beta-Test: "nach seinen eigenen Praeferenzen, als dritte
+-- Option"): "custom" nimmt die Farbe aus highlightColor - weiter EIN
+-- Akzent, nur einer, den der Spieler waehlt.
 function K.ResetHighlight()
-    if K.Get("general", "highlight") == "accent" then WeintCodex.SetVioletAccent()
+    local h = K.Get("general", "highlight")
+    if h == "accent" then WeintCodex.SetVioletAccent()
+    elseif h == "custom" then
+        local c = K.GetColor("general", "highlightColor")
+        WeintCodex.SetAccent(c.r, c.g, c.b)
     else WeintCodex.ApplyClassAccent() end
 end
 

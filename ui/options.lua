@@ -76,7 +76,7 @@ K.Register({
         -- highlight: die Farbe der Oberflaeche - Klasse (Standard) oder
         -- Violett (6.6.2.4 nur Rahmen, seit 6.6.3.1 der ganze Akzent).
         local d = { font = "cond", outline = "thin", barStyle = "glanz", shadows = true, windowScale = 100,
-                    highlight = "class",
+                    highlight = "class", highlightColor = WeintCodex.VioletRGB(),
                     -- 6.10.0.0: Feineinstellungen jeder Seite zugeklappt (Builder:Advanced).
                     showAdvanced = false }
         -- Ruhe und Kampf (ui/presence.lua): dort definiert, hier gespeichert.
@@ -155,9 +155,12 @@ K.Register({
                     description = "Rahmen, Leisten und Fenster heben sich mit einem Schatten von der Spielwelt ab." })
             B:Row({ type = "dropdown", label = "Farbe der Oberfläche", key = "highlight", reload = true, items = {
                         { value = "class",  text = "In der Farbe deiner Klasse" },
-                        { value = "accent", text = "WeintCodex-Lila" } },
+                        { value = "accent", text = "WeintCodex-Lila" },
+                        { value = "custom", text = "Eigene Farbe" } },
                     tooltip = "Die eine Farbe, die WeintCodex überall trägt: Fenster, Einstellungen, gewählte Reiter, Rahmen, Zielleuchten, Zauber- und Erfahrungsbalken, Überschriften, Texte. Grün, Rot, Gold und Blau bleiben – sie bedeuten etwas (fertig, Fehler, Warnung, Hinweis)." },
-                  { type = "empty" })
+                  { type = "color", label = "Eigene Farbe", key = "highlightColor", reload = true,
+                    disabled = function() return K.Get("general", "highlight") ~= "custom" end,
+                    tooltip = "Gilt mit „Eigene Farbe“ nach dem Neuladen. Sehr dunkle Farben machen Text in dieser Farbe schwer lesbar." })
             B:Section("Testmodus",
                 "Zeigt Ziel, Fokus, Gruppe, Zauberbalken und Schadensanzeige mit Beispielwerten – so siehst du alles auf einem Bildschirm, ohne Gruppe und ohne Kampf. Auch mit /wcui test.")
             B:Row({ type = "button", label = "Beispieldaten",

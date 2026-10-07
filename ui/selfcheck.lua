@@ -520,6 +520,14 @@ Check("Karte", function(add)
     end
 end)
 
+-- Feuer (6.21.1.0): kommt die eigene Summe offen oder geheim?
+Check("Feuer", function(add)
+    local FA = WeintCodex.UIFireAlarm
+    if not FA then add(SC.OPEN, "Feuer-Warnung nicht geladen.") return end
+    add(FA.Active() and SC.OK or SC.OPEN, FA.Active() and "Warnton an" or "Warnton aus (Komfort → Feuer)")
+    for _, line in ipairs(FA.StatusLines()) do add("", "   " .. line) end
+end)
+
 Check("Berufe", function(add)
     local PRO = WeintCodex.Professions
     if not (PRO and PRO.Skills) then

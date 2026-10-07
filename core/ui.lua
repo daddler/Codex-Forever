@@ -386,6 +386,12 @@ end
 -- zusammengesetzt, damit die Pruefung auf feste Farbcodes ihn nicht zaehlt.
 WeintCodex.VIOLET_CODE = "|cff" .. "7C6CFF"
 
+-- Das Violett als { r, g, b } - Vorgabe der eigenen Farbe (6.21.1.0).
+function WeintCodex.VioletRGB()
+    local v = VIOLET.base
+    return { r = v[1], g = v[2], b = v[3] }
+end
+
 function WeintCodex.SetVioletAccent()
     local v = VIOLET.base
     return WeintCodex.SetAccent(v[1], v[2], v[3], VIOLET)

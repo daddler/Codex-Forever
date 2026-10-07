@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.21.1.0",
+        date    = "07.10.2026",
+        notes   = {
+            "|cff7C6CFFNeu im Komfort: Raus aus dem Feuer.|r Ein Warnton, sobald dich Schaden trifft, dem man ausweichen kann – Feuer, Gift am Boden, Flächen. Drei Töne zur Wahl, höchstens einer je Sekunde. Einschalten unter Komfort → Feuer.",
+            "|cff7C6CFFDeine eigene Farbe.|r Unter „Farbe der Oberfläche“ gibt es jetzt neben Klassenfarbe und Lila eine eigene Farbe zum Aussuchen. Sie gilt nach dem Neuladen.",
+        },
+    },
+    {
         version = "6.21.0.1",
         date    = "07.10.2026",
         notes   = {

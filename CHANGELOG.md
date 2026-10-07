@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.21.1.0] – 2026-10-07
+
+**Neu im Komfort: Raus aus dem Feuer.** Ein Warnton, sobald dich Schaden trifft, dem man ausweichen kann – Feuer, Gift am Boden, Flächen. Drei Töne zur Wahl, höchstens einer je Sekunde. Einschalten unter Komfort → Feuer.
+
+**Deine eigene Farbe.** Unter „Farbe der Oberfläche“ gibt es jetzt neben Klassenfarbe und Lila eine eigene Farbe zum Aussuchen. Sie gilt nach dem Neuladen.
+
+### Technisch
+
+- **Warnton** (`ui/firealarm.lua`, Seite „Feuer“, `fireAlarm` ab Werk aus, `fireSound`): Verhalten wie GTFO, ohne Code und ohne Zauberliste. Addons haben kein Kampflog; statt dessen fragt der Takt im Kampf (0,2 s) die eigene Summe des **vermeidbaren Schadens** aus `C_DamageMeter` (`AvoidableDamageTaken`, Sitzung „Current“). Wächst sie: Ton (`SOUNDKIT` Schlachtzugswarnung/Bereitschaftscheck/Wecker), höchstens einer je Sekunde; Kampfbeginn setzt zurück. Geheime Summe: kein Ton, gezählt – `/wcui prüfen` → „Feuer“. **Ungemessen:** ob die Summe auf Forever im Kampf offen kommt; die Schadensanzeige sah 6.6.2.3 geheime Summen im Kampf. Dann bleibt der Ton stumm.
+- **Eigene Farbe** (`general.highlight = "custom"`, `highlightColor`, Vorgabe das Lila über `WeintCodex.VioletRGB`): `K.ResetHighlight` setzt sie mit `SetAccent` – weiter ein Akzent, der Prüflauf hält accent = purple = violet = brandA.
+- 7 Gegenproben, alle gefangen.
+
 ## [6.21.0.1] – 2026-10-07
 
 **Geistheiler und Pfeile auf der Karte besser zu sehen.** Sie sind größer, in hellerem Grün und haben einen hellen Rand – auf dem Grün und Braun der Karte gingen sie vorher unter.

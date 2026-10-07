@@ -946,6 +946,96 @@ do
     Check(#bad == 0, "kein fremdes Addon als Quelle in sichtbaren Texten" .. (#bad > 0 and (": " .. table.concat(bad, ", ")) or ""))
 end
 
+-- 6.21.1.0: eigene Farbe der Oberflaeche - eine dritte Wahl, weiter EIN Akzent.
+do
+    local ok, err = pcall(function()
+        local C = WeintCodex.Colors
+        K.Set("general", "highlight", "custom")
+        K.Set("general", "highlightColor", { r = 1, g = 0.5, b = 0 })
+        K.ResetHighlight()
+        assert(C.accent[1] == 1 and C.accent[2] == 0.5 and C.accent[3] == 0, "eigene Farbe nicht gesetzt")
+        assert(C.purple[1] == C.accent[1] and C.violet[2] == C.accent[2] and C.brandA[3] == C.accent[3], "zweiter Akzent")
+        assert(WeintCodex.AC == "|cffFF8000", "Farbcode im Text: " .. tostring(WeintCodex.AC))
+        K.Set("general", "highlight", "accent")
+        K.ResetHighlight()
+        local v = WeintCodex.VioletRGB()
+        assert(math.abs(C.accent[1] - v.r) < 1e-6, "zurueck auf Lila")
+        local d = K.Module("general").defaults.highlightColor
+        assert(d.r == v.r and d.b == v.b, "Vorgabe der eigenen Farbe nicht das Lila")
+    end)
+    K.Set("general", "highlight", "class")
+    K.Set("general", "highlightColor", nil)
+    K.ResetHighlight()
+    Check(ok, "Farbe der Oberflaeche: eigene Farbe als dritte Wahl, ein Akzent" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.21.1.0: Warnton bei vermeidbarem Schaden (wie GTFO, ohne Kampflog).
+do
+    local G = _G
+    local names = { "C_DamageMeter", "Enum", "PlaySound", "GetTime", "UnitGUID", "SOUNDKIT" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local FA = WeintCodex.UIFireAlarm
+    local ok, err = pcall(function()
+        local now, mine, played = 100, nil, {}
+        G.GetTime = function() return now end
+        G.UnitGUID = function() return "Player-1" end
+        G.SOUNDKIT = { RAID_WARNING = 8959, READY_CHECK = 8960 }
+        G.PlaySound = function(id, ch) played[#played + 1] = id end
+        G.Enum = { DamageMeterType = { AvoidableDamageTaken = 9, DamageDone = 0 },
+                   DamageMeterSessionType = { Current = 1, Overall = 0 } }
+        local secret = setmetatable({}, { __tostring = function() return "geheim" end })
+        G.C_DamageMeter = { GetCombatSessionFromType = function(st, mt)
+            assert(mt == 9, "falsche Messart")
+            local list = { { sourceGUID = "Player-2", totalAmount = 999 } }
+            if mine ~= nil then list[2] = { sourceGUID = "Player-1", totalAmount = mine } end
+            return { combatSources = list }
+        end }
+        K.Set("comfort", "fireAlarm", false)
+        mine = 0
+        assert(FA.Check() == false and #played == 0, "Ton, obwohl aus")
+        K.Set("comfort", "fireAlarm", true)
+        FA.Reset()
+        assert(FA.Check() == false, "Ton beim ersten Blick")
+        mine = 0
+        assert(FA.Check() == false, "Ton ohne neuen Schaden")
+        mine = 50
+        assert(FA.Check() == true and played[1] == 8959, "kein Ton bei vermeidbarem Schaden")
+        mine = 60
+        now = now + 0.5
+        assert(FA.Check() == false and #played == 1, "Ton oefter als einmal je Sekunde")
+        now = now + 1
+        mine = 70
+        K.Set("comfort", "fireSound", "ready")
+        assert(FA.Check() == true and played[2] == 8960, "gewaehlter Ton nicht gespielt")
+        -- Fremder Schaden zaehlt nicht.
+        now = now + 2
+        assert(FA.Check() == false, "Ton fuer den Schaden eines anderen")
+        -- Geheim: kein Ton, gezaehlt.
+        local before = FA.stats.secret
+        mine = secret
+        now = now + 2
+        assert(FA.Check() == false and FA.stats.secret == before + 1, "geheime Summe nicht erkannt")
+        -- Neuer Kampf: was vorher war, zaehlt nicht.
+        mine = 5
+        FA.Reset()
+        assert(FA.Check() == false, "Ton zu Kampfbeginn")
+        local sc = table.concat(FA.StatusLines(), "\n")
+        assert(sc:find("Vermeidbarer Schaden im Client: ja", 1, true) and sc:find("geheim 1", 1, true), "Bericht: " .. sc)
+        -- Takt nur im Kampf.
+        stub.FireEvent("PLAYER_REGEN_DISABLED")
+        assert(FA.ticker:IsShown(), "kein Takt im Kampf")
+        stub.FireEvent("PLAYER_REGEN_ENABLED")
+        assert(not FA.ticker:IsShown(), "Takt nach dem Kampf")
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    K.Set("comfort", "fireAlarm", false)
+    K.Set("comfort", "fireSound", "raid")
+    FA.Reset()
+    Check(ok, "Feuer: Ton bei eigenem vermeidbarem Schaden, gewaehlter Ton, einmal je Sekunde, geheim stumm, nur im Kampf"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Jede Seite jedes Moduls bauen.
 for _, key in ipairs(K.order) do
     local m = K.Module(key)

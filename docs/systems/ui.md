@@ -1587,6 +1587,26 @@ Reiter) – gekürzt, ebenso die der Oberfläche; `load_test.lua` hält jede
 Beschreibung auf zwei Zeilen (nach Wörtern umbrochen, 6 px je Zeichen –
 Zeichen zählen allein ließ die alte Beschreibung durch).
 
+## Raus aus dem Feuer *(6.21.1.0, `ui/firealarm.lua`, Seite „Feuer“)*
+
+Beta-Test: „GTFO – Sound, wenn man in Feuer oder Schaden steht.“ Kein
+Kampflog für Addons, also keine Zauberliste wie bei GTFO: im Kampf alle
+0,2 s die eigene Summe des vermeidbaren Schadens (`C_DamageMeter`,
+`AvoidableDamageTaken`, „Current“); wächst sie, ein Ton (`fireSound`:
+Schlachtzugswarnung, Bereitschaftscheck, Wecker), höchstens einer je
+Sekunde (`FA.GAP`). Was vermeidbar ist, entscheidet das Spiel. Kommt die
+Summe geheim, schweigt der Ton – mit Geheimem lässt sich nicht
+vergleichen; `/wcui prüfen` → „Feuer“ zählt offen/geheim/keine Zeile.
+**Ungemessen:** genau das – offen oder geheim im Kampf auf Forever.
+
+## Eigene Farbe der Oberfläche *(6.21.1.0)*
+
+`general.highlight` kennt `"custom"`: die Farbe aus `highlightColor`
+(Farbfeld neben der Auswahl, Vorgabe das Lila), gesetzt mit
+`WeintCodex.SetAccent` in `K.ResetHighlight`. Weiter **ein** Akzent;
+sehr dunkle Farben machen Text in Akzentfarbe schwer lesbar (Hinweis am
+Farbfeld). Gilt nach dem Neuladen wie die anderen beiden.
+
 ## Automark *(6.8.1.0, auf Klick seit 6.9.0.2, `ui/automark.lua`)*
 
 Beta-Test: „Wenn eine Instanz betreten wird, soll der Tank und Heiler
