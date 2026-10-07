@@ -222,11 +222,30 @@ local function GetChildrenOf(f) return f:GetChildren() end
 -- Flaechen bzw. Kindrahmen von f in einer wiederverwendeten Liste. key
 -- nennt den Durchlauf, depth seine Tiefe: die Liste gilt, bis derselbe
 -- Durchlauf in derselben Tiefe wieder fragt. Wer sie behalten will, kopiert.
+-- 6.21.1.1 (Beta-Test: Absturz des Spiels, "Assertion failure L->top <
+-- L->ci->top"): pcall(f:GetChildren()) legt JEDES Kind auf den Stapel des
+-- Clients. Die Flaeche der Weltkarte trug mit Geistheilern, Flugmeistern und
+-- Reisen auf dem Kontinent ueber zweihundert Kinder - der Stapel lief ueber
+-- und riss das Spiel mit. Rahmen mit mehr als W.MAX_KIDS Kindern oder
+-- Flaechen werden nicht abgelaufen (gezaehlt in W.tooMany).
+W.MAX_KIDS = 100
+W.tooMany = 0
+local function Count(f, method)
+    local fn = f[method]
+    if type(fn) ~= "function" then return 0 end
+    local ok, n = pcall(fn, f)
+    n = ok and K.Plain(n) or 0
+    return type(n) == "number" and n or 0
+end
 local function Regions(f, key, depth)
-    return Pack(Slot(regionPool, key, depth or 0), pcall(GetRegionsOf, f))
+    local t = Slot(regionPool, key, depth or 0)
+    if Count(f, "GetNumRegions") > W.MAX_KIDS then W.tooMany = W.tooMany + 1 return Pack(t, false) end
+    return Pack(t, pcall(GetRegionsOf, f))
 end
 local function Children(f, key, depth)
-    return Pack(Slot(childPool, key, depth or 0), pcall(GetChildrenOf, f))
+    local t = Slot(childPool, key, depth or 0)
+    if Count(f, "GetNumChildren") > W.MAX_KIDS then W.tooMany = W.tooMany + 1 return Pack(t, false) end
+    return Pack(t, pcall(GetChildrenOf, f))
 end
 W.Regions, W.Children = Regions, Children
 

@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.21.1.1] – 2026-10-08
+
+**Kein Absturz mehr an der Karte.** Mit vielen Kartensymbolen (Geistheiler, Flugmeister, Reisen auf der Kontinentkarte) stürzte das Spiel ab. Behoben.
+
+### Technisch
+
+- Beta-Test 6.21.1.0: Absturz des Clients („Assertion failure! L->top < L->ci->top“, lapi.c) beim Einstellen der Karte. Ursache laut Stapel: der Fensterdurchlauf (`W.SoftMap` → `W.Children`) las die Fläche der Weltkarte mit `pcall(f:GetChildren())` – mit über zweihundert eigenen Symbolen als Kindern lief der Stapel des Clients über. Zwei Riegel: die Symbole hängen jetzt in **einem** Rahmen auf der Fläche (`MK.Holder`); `W.Regions`/`W.Children` lesen keinen Rahmen mit mehr als `W.MAX_KIDS` = 100 Kindern oder Flächen (gezählt in `W.tooMany`).
+- Lehre: kein Rahmen mit Hunderten Kindern dort, wo ein Durchlauf `GetChildren` liest.
+
 ## [6.21.1.0] – 2026-10-07
 
 **Neu im Komfort: Raus da!** Ein Warnton, sobald du in etwas stehst, das dir schadet und dem man ausweichen kann – nicht nur Feuer, alles am Boden, dazu Kegel und Wellen vor dem Gegner. Drei Töne zur Wahl, höchstens einer je Sekunde. Einschalten unter Komfort → Raus da.

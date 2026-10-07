@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.21.1.1",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFKein Absturz mehr an der Karte.|r Mit vielen Kartensymbolen (Geistheiler, Flugmeister, Reisen auf der Kontinentkarte) stürzte das Spiel ab. Behoben.",
+        },
+    },
+    {
         version = "6.21.1.0",
         date    = "07.10.2026",
         notes   = {

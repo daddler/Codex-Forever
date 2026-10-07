@@ -211,6 +211,17 @@ end
 
 local BLACK = { 0, 0, 0 }
 
+local holders = setmetatable({}, { __mode = "k" })
+function MK.Holder(canvas)
+    local h = holders[canvas]
+    if not h then
+        h = CreateFrame("Frame", nil, canvas)
+        h:SetAllPoints(canvas)
+        holders[canvas] = h
+    end
+    return h
+end
+
 local function NewPin(canvas)
     local p = CreateFrame("Frame", nil, canvas)
     p:EnableMouse(true)
@@ -289,10 +300,14 @@ function MK.Place()
     for i, e in ipairs(list) do
         local p = pins[i]
         if not p then
-            p = NewPin(canvas)
+            p = NewPin(MK.Holder(canvas))
             pins[i] = p
         end
-        if p:GetParent() ~= canvas then p:SetParent(canvas) end
+        -- Alle Symbole in EINEM Rahmen auf der Flaeche (6.21.1.1): direkt auf
+        -- der Flaeche wurden es ueber zweihundert Kinder, und wer sie mit
+        -- GetChildren las, brachte das Spiel zum Absturz.
+        local holder = MK.Holder(canvas)
+        if p:GetParent() ~= holder then p:SetParent(holder) end
         Dress(p, e)
         p:SetScale((e.small and MK.SMALL or 1) / s)
         p:SetFrameLevel(lvl)

@@ -1036,6 +1036,33 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.21.1.1 (Absturz im Spiel, "L->top < L->ci->top"): Rahmen mit sehr
+-- vielen Kindern werden nicht mit GetChildren gelesen, und die Symbole der
+-- Karte haengen in einem Rahmen, nicht direkt auf der Flaeche.
+do
+    local ok, err = pcall(function()
+        local W, MK = WeintCodex.UIWindows, WeintCodex.UIMapMarks
+        local big, called = CreateFrame("Frame"), false
+        big.GetNumChildren = function() return 300 end
+        big.GetNumRegions = function() return 300 end
+        big.GetChildren = function() called = true end
+        big.GetRegions = function() called = true end
+        local before = W.tooMany
+        assert(W.Children(big, "probe").n == 0 and W.Regions(big, "probe").n == 0 and not called,
+            "Rahmen mit 300 Kindern trotzdem gelesen")
+        assert(W.tooMany == before + 2, "nicht gezaehlt")
+        local small = CreateFrame("Frame")
+        local kid = CreateFrame("Frame", nil, small)
+        small.GetNumChildren = function() return 1 end
+        small.GetChildren = function() return kid end
+        assert(W.Children(small, "probe").n == 1, "kleiner Rahmen nicht gelesen")
+        local canvas = CreateFrame("Frame")
+        local h = MK.Holder(canvas)
+        assert(h:GetParent() == canvas and MK.Holder(canvas) == h, "kein eigener Rahmen fuer die Symbole")
+    end)
+    Check(ok, "Absturzschutz: Rahmen mit vielen Kindern nicht gelesen, Kartensymbole in einem Rahmen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Jede Seite jedes Moduls bauen.
 for _, key in ipairs(K.order) do
     local m = K.Module(key)
@@ -5761,6 +5788,7 @@ do
         assert(MK.driver and MK.driver:GetParent() == wm, "kein Taktgeber an der Karte")
         assert(MK.Place() == 7, "Eschental: sieben Geistheiler, gezeigt " .. tostring(MK.Place()))
         local p = MK.pins[1]
+        assert(p:GetParent() ~= canvas and p:GetParent():GetParent() == canvas, "Symbol direkt auf der Flaeche")
         local pt
         p.SetPoint = function(_, a, rel, b, x, y) pt = { a, rel, b, x, y } end
         MK.Place()
