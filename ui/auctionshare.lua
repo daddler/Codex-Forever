@@ -35,9 +35,11 @@
 --   * Zeitstempel aus der Zukunft (mehr als 5 Minuten): verworfen.
 --   * Im Tooltip "von Spielern"; wer und wann: /wcui auktion.
 --
--- UNGEMESSEN auf Forever: ob Addon-Nachrichten an die Gilde und im Kanal
--- ankommen, wie das Spiel sie drosselt und ob der Beitritt eine Zeile im
--- Chat zeigt.
+-- GEMESSEN (6.18.0.1, Beta-Test, /wcui auktion): der Kanal antwortet;
+-- 3.750 Preise von zwei Spielern in einer Sitzung, 10 Ausreisser
+-- zurueckgehalten, Empfang abgeschlossen. UNGEMESSEN: die Gilde (niemand
+-- sonst mit WeintCodex), die Drosselung beim Senden, ob der Beitritt eine
+-- Zeile im Chat zeigt.
 --------------------------------------------------
 
 local K = WeintCodex.UIKit
@@ -518,7 +520,7 @@ function AS.Lines()
         .. " · Kanal " .. (AS.joined and "verbunden" or "nicht verbunden")
         .. " · empfangen " .. stats.fgIn .. " Preise"
     if stats.held > 0 or stats.ignored > 0 then
-        out[#out + 1] = "Zurückgehalten (Ausreißer): " .. stats.held .. " · ganze Scans älter als deiner: " .. stats.ignored
+        out[#out + 1] = "Zurückgehalten (Ausreißer): " .. stats.held .. " · verworfen, weil älter als dein Scan: " .. stats.ignored .. " Nachrichten"
     end
     if #AS.log > 0 then
         out[#out + 1] = "Spielernetz, Schritte:"

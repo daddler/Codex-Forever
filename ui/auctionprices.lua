@@ -23,7 +23,9 @@
 --      wenn das Auktionshaus wieder Anfragen nimmt). Schickt der Server
 --      AP.STALL s keine Seite mehr, gilt der Scan als unvollstaendig.
 --   3. Nebenbei: was deine eigene Suche im Auktionshaus ohnehin zeigt.
--- UNGEMESSEN ist jeder dieser Wege auf Forever: /wcui prüfen und
+-- GEMESSEN (6.18.0.1, Beta-Test): der Vollscan antwortet auf Forever mit
+-- REPLICATE_ITEM_LIST_UPDATE - 66.155 Angebote, 2.982 Gegenstaende, ohne
+-- Fehler. Die Suche als Rueckfall ist ungemessen. /wcui prüfen und
 -- /wcui auktion sagen, welcher lief und was er brachte.
 --
 -- Gespeichert je Realm und Seite (Allianz, Horde, neutral: Gadgetzan,

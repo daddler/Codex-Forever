@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.18.0.2] – 2026-10-07
+
+**/wcui auktion zählt richtig.** Was verworfen wird, weil es älter ist als dein eigener Scan, steht jetzt als Zahl der Nachrichten da – vorher hieß es „ganze Scans“, gezählt wurden aber einzelne Nachrichten.
+
+### Technisch
+
+- `AS.Lines`: `stats.ignored` zählt je Nachricht (`AS.OnBulk`), die Zeile sagte „ganze Scans älter als deiner: 37“ (Beta-Test). Jetzt „verworfen, weil älter als dein Scan: 37 Nachrichten“.
+- **Gemessen** (Beta-Test, `/wcui auktion` mit 6.18.0.1): Vollscan antwortet auf Forever mit `REPLICATE_ITEM_LIST_UPDATE` – 66.155 Angebote, 2.982 Gegenstände, ohne Fehler; Kanal von ForeverGuide: 3.750 Preise von zwei Spielern, 10 Ausreißer zurückgehalten, Empfänge abgeschlossen, kyrillische Namen kommen durch. In den Kommentaren von `ui/auctionprices.lua`, `ui/auctionshare.lua` und in `docs/systems/ui.md` nachgetragen. Ungemessen bleiben die Suche als Rückfall und die Gilde.
+
 ## [6.18.0.1] – 2026-10-07
 
 **Keine Fehlermeldungen mehr mit „Preise aus ForeverGuide übernehmen“.** Sobald Preise von anderen Spielern ankamen, meldete das Spiel laufend einen Fehler. Behoben – die Preise selbst kamen schon an und bleiben erhalten.

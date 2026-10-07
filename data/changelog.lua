@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.18.0.2",
+        date    = "07.10.2026",
+        notes   = {
+            "|cff7C6CFF/wcui auktion zählt richtig.|r Was verworfen wird, weil es älter ist als dein eigener Scan, steht jetzt als Zahl der Nachrichten da – vorher hieß es „ganze Scans“, gezählt wurden aber einzelne Nachrichten.",
+        },
+    },
+    {
         version = "6.18.0.1",
         date    = "07.10.2026",
         notes   = {

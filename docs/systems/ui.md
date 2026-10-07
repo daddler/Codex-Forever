@@ -1224,6 +1224,10 @@ Eintrags und `store.full`, ohne eigenes Feld).
    bringt.
 3. **Nebenbei** die eigene Suche des Spielers (`ahPassive`).
 
+**Gemessen (6.18.0.1, Beta-Test):** der Vollscan antwortet auf Forever,
+mit Ereignis – 66.155 Angebote, 2.982 Gegenstände, ohne Fehler. Die
+Suche als Rückfall ist damit ungemessen geblieben.
+
 **Ablage:** `SavedData.auction["Realm|Seite"]` mit Seite `Alliance`,
 `Horde` oder `Neutral` (Karten 1446 Tanaris, 1434 Schlingendorntal, 1452
 Winterquell – bestimmt beim Öffnen). Je Gegenstand **eine Zahl**
@@ -1289,8 +1293,13 @@ nur auf Wunsch: zwei Schalter unter `comfort`, ab Werk aus, nur mit
   Schalter an ist. Keine Zeile im Chat beim Empfang – bei vielen
   ForeverGuide-Nutzern käme alle 20 Minuten eine.
 
-**Ungemessen:** ob Gildennachrichten und der Kanal auf Forever ankommen,
-wie das Spiel drosselt, ob der Beitritt eine Zeile im Chat zeigt.
+**Gemessen (6.18.0.1, Beta-Test):** der Kanal von ForeverGuide antwortet –
+3.750 Preise von zwei Spielern in einer Sitzung, 10 Ausreißer
+zurückgehalten, Empfänge sauber abgeschlossen; Namen in kyrillischer
+Schrift kommen durch. Der erste Versuch (6.18.0.0) brach ab: das fünfte
+Argument von `CHAT_MSG_ADDON` ist das Ziel, im Kanal dessen Name.
+**Ungemessen:** die Gilde (niemand sonst mit WeintCodex), die Drosselung
+beim Senden, ob der Beitritt eine Zeile im Chat zeigt.
 
 ## Automark *(6.8.1.0, auf Klick seit 6.9.0.2, `ui/automark.lua`)*
 
