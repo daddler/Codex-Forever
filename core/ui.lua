@@ -199,6 +199,10 @@ WeintCodex.GameColors = {
     neutral       = {0.850, 0.720, 0.220, 1.0},
     tapped        = {0.500, 0.500, 0.500, 1.0},
     friendly      = {0.300, 0.780, 0.420, 1.0},
+    -- 6.21.0.1: Geistheiler und Uebergaenge auf der Weltkarte (ui/mapmarks.lua).
+    -- In "friendly" waren sie auf dem Gruen der Karte kaum zu sehen
+    -- (Beta-Test) - heller und satter, dazu ein heller Rand.
+    mapMark       = {0.420, 1.000, 0.380, 1.0},
     boss          = {0.860, 0.400, 0.120, 1.0},
     elite         = {0.620, 0.220, 0.460, 1.0},
     focus         = {0.250, 0.700, 0.850, 1.0},

@@ -85,6 +85,7 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 - [ ] Kopf im Balken (6.20.0.0, Einheitenrahmen → Spieler/Ziel → Porträt „Im Balken (animiert)“): Kopf sichtbar und bewegt, mittig, nicht abgeschnitten oder riesig; Name und Werte gut lesbar; Deckkraft-Regler wirkt; Ziel außer Sichtweite – kein Kopf, kein schwarzer Balken; zurück auf „3D-Modell“ – Porträt wieder links
 - [ ] Kopf im Balken weiter weg (6.21.0.0): ab Werk mehr vom Kopf zu sehen; Regler „Kopf im Balken: Abstand“ (Feinheiten) wirkt sofort
 - [ ] Geistheiler und Übergänge (6.21.0.0, Komfort → Karte beide an): Eschental – sieben grüne Punkte, Pfeile zu Steinkrallengebirge, Teufelswald, Azshara, Brachland; zeigen sie in die richtige Richtung?; Maus auf Pfeil: „Nach <Gebiet>“ auf Deutsch; Kontinentkarte ohne Punkte und Pfeile; `/wcui prüfen` → „Karte“
+- [ ] Geistheiler und Pfeile gut sichtbar (6.21.0.1): auf grüner und brauner Karte auf einen Blick zu finden, Rand dreht mit dem Pfeil
 - [ ] Erläuterungen (6.21.0.0): Einstellungen durchblättern – kein Satz unter einem Schalter endet mit „…“, nichts überlappt die nächste Zeile
 - [ ] Kontakte (6.21.0.0): „Freundesliste 0/2“ – Raute und Linie hinter dem Text, nicht hindurch; `/wcui fenster` → Zeile „Abschnitte:“ ablegen
 - [ ] Herkunft (6.21.0.0): Tooltip eines Instanzeingangs, Berufe, Klassenquests, Lehrer, seltene Gegner, Auktionshaus – nirgends ein fremdes Addon als Quelle

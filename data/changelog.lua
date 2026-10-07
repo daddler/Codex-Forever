@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.21.0.1",
+        date    = "07.10.2026",
+        notes   = {
+            "|cff7C6CFFGeistheiler und Pfeile auf der Karte besser zu sehen.|r Sie sind größer, in hellerem Grün und haben einen hellen Rand – auf dem Grün und Braun der Karte gingen sie vorher unter.",
+        },
+    },
+    {
         version = "6.21.0.0",
         date    = "07.10.2026",
         notes   = {

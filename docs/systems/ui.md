@@ -1538,6 +1538,11 @@ beide ab Werk aus.
 - **Ungemessen:** ob die Pfeilrichtung unseres Bildes zu den Richtungen
   passt (unser `arrow` zeigt nach oben wie das Vorbild), ob die Lagen auf
   Forever stimmen, die Ebene neben den Questmarken.
+- **Gemessen 6.21.0.0 (Beta-Test):** Lagen und Richtungen stimmen in
+  Eschental, aber „nicht gut zu sehen“ – 14/22 px in `friendly` gingen auf
+  dem Grün und Braun der Karte unter. Seit 6.21.0.1: Punkt 20 px, Pfeil
+  30 px, je drei Lagen (dunkler Hof/Schatten, heller Rand `textBright`, Kern
+  `GameColors.mapMark`), Schatten und Rand drehen mit.
 
 ## Herkunft im Spiel ohne fremde Namen *(6.21.0.0)*
 

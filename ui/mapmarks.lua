@@ -18,8 +18,9 @@
 -- SetMapID (deshalb fuehrt ein Klick auf den Pfeil nicht hinueber). Nur auf
 -- der Karte einer Zone: auf dem Kontinent waeren es ueber hundert Punkte.
 --
--- FARBE: Geistheiler und Pfeile in der Farbe freundlicher NPCs
--- (GameColors.friendly) - Farben der Spielwelt, nicht der Akzent.
+-- FARBE: Geistheiler und Pfeile in einem hellen Gruen der Spielwelt
+-- (GameColors.mapMark, seit 6.21.0.1; bis dahin "friendly"), nicht der
+-- Akzent - mit hellem Rand und dunklem Hof.
 --------------------------------------------------
 
 local K = WeintCodex.UIKit
@@ -35,8 +36,11 @@ MK.DEFAULTS = {
     mapCrossings = false,    -- Uebergaenge in andere Gebiete
 }
 
-MK.SPIRIT = 14       -- Groesse des Punkts (Bildpunkte, bei jedem Zoom)
-MK.ARROW = 22        -- Groesse des Pfeils
+-- 6.21.0.1 (Beta-Test: "zwar drin, aber nicht gut zu sehen"): groesser,
+-- heller (GameColors.mapMark), mit hellem Rand und dunklem Hof - auf dem
+-- Gruen und Braun der Karte hob sich das Gruen allein nicht ab.
+MK.SPIRIT = 20       -- Groesse des Punkts (Bildpunkte, bei jedem Zoom)
+MK.ARROW = 30        -- Groesse des Pfeils
 MK.TICK = 0.05
 
 function MK.Wants(kind)
@@ -118,31 +122,30 @@ local function Tooltip(self)
     gt:Show()
 end
 
+-- Eine Lage eines Symbols: Bild, Farbe, wie weit ueber den Rahmen hinaus
+-- (negativ: nach innen).
+local function Layer(p, tex, sub, c, a, out)
+    local t = p:CreateTexture(nil, "ARTWORK", nil, sub)
+    t:SetTexture(tex)
+    t:SetPoint("TOPLEFT", p, "TOPLEFT", -out, out)
+    t:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", out, -out)
+    t:SetVertexColor(c[1], c[2], c[3], a)
+    return t
+end
+
+local BLACK = { 0, 0, 0 }
+
 local function NewPin(canvas)
     local p = CreateFrame("Frame", nil, canvas)
     p:EnableMouse(true)
-    -- Punkt: Rand und Fuellung (eigene Bilder).
-    local rim = p:CreateTexture(nil, "ARTWORK", nil, 1)
-    rim:SetTexture(K.MEDIA .. "disc")
-    rim:SetAllPoints(p)
-    rim:SetVertexColor(0, 0, 0, 0.85)
-    local dot = p:CreateTexture(nil, "ARTWORK", nil, 2)
-    dot:SetTexture(K.MEDIA .. "disc")
-    dot:SetPoint("TOPLEFT", p, "TOPLEFT", 2, -2)
-    dot:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", -2, 2)
-    local f = GC.friendly
-    dot:SetVertexColor(f[1], f[2], f[3], 1)
-    -- Pfeil: dunkler Schatten, darueber der Pfeil.
-    local shade = p:CreateTexture(nil, "ARTWORK", nil, 1)
-    shade:SetTexture(K.ARROW_TEXTURE)
-    shade:SetPoint("TOPLEFT", p, "TOPLEFT", -1, 1)
-    shade:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", 1, -1)
-    shade:SetVertexColor(0, 0, 0, 0.9)
-    local arrow = p:CreateTexture(nil, "ARTWORK", nil, 2)
-    arrow:SetTexture(K.ARROW_TEXTURE)
-    arrow:SetAllPoints(p)
-    arrow:SetVertexColor(f[1], f[2], f[3], 1)
-    p.rim, p.dot, p.shade, p.arrow = rim, dot, shade, arrow
+    local g, w = GC.mapMark, C.textBright
+    local disc, arrow = K.MEDIA .. "disc", K.ARROW_TEXTURE
+    -- Punkt: dunkler Hof, heller Ring, gruener Kern (eigene Bilder).
+    p.spirit = { Layer(p, disc, 1, BLACK, 0.6, 3), Layer(p, disc, 2, w, 1, 0), Layer(p, disc, 3, g, 1, -3) }
+    -- Pfeil: dunkler Schatten, heller Rand, gruener Pfeil.
+    p.crossing = { Layer(p, arrow, 1, BLACK, 0.9, 4), Layer(p, arrow, 2, w, 1, 2), Layer(p, arrow, 3, g, 1, 0) }
+    p.rim, p.dot = p.spirit[2], p.spirit[3]
+    p.shade, p.arrow = p.crossing[1], p.crossing[3]
     p:SetScript("OnEnter", Tooltip)
     p:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
     p:Hide()
@@ -156,14 +159,13 @@ local function Dress(p, e)
     local spirit = e.kind == "spirit"
     local size = spirit and MK.SPIRIT or MK.ARROW
     p:SetSize(size, size)
-    p.rim:SetShown(spirit)
-    p.dot:SetShown(spirit)
-    p.shade:SetShown(not spirit)
-    p.arrow:SetShown(not spirit)
+    for _, t in ipairs(p.spirit) do t:SetShown(spirit) end
+    for _, t in ipairs(p.crossing) do t:SetShown(not spirit) end
     if not spirit then
         local r = tonumber(e.rot) or 0
-        if p.arrow.SetRotation then p.arrow:SetRotation(r) end
-        if p.shade.SetRotation then p.shade:SetRotation(r) end
+        for _, t in ipairs(p.crossing) do
+            if t.SetRotation then t:SetRotation(r) end
+        end
     end
 end
 

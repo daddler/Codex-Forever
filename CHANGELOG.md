@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.21.0.1] – 2026-10-07
+
+**Geistheiler und Pfeile auf der Karte besser zu sehen.** Sie sind größer, in hellerem Grün und haben einen hellen Rand – auf dem Grün und Braun der Karte gingen sie vorher unter.
+
+### Technisch
+
+- Beta-Test 6.21.0.0: „Pfeile und Geistheiler sind zwar drin, aber nicht gut zu sehen.“ `ui/mapmarks.lua`: Punkt 14 → 20 px, Pfeil 22 → 30 px; je drei Lagen – dunkler Hof bzw. Schatten, heller Rand (`textBright`), Kern in neuem `GameColors.mapMark` (helleres, satteres Grün statt `friendly`). Schatten und Rand drehen mit dem Pfeil.
+- Kontakte: `/wcui fenster` nennt als Abschnitt „Freundesliste 0/2“ – die Verzierung hängt jetzt an der Zeile mit dem Text (6.21.0.0).
+- 5 Gegenproben, alle gefangen.
+
 ## [6.21.0.0] – 2026-10-07
 
 **Geistheiler und Wege in andere Gebiete auf der Karte.** Auf Wunsch zeigt die Weltkarte, wo Geistheiler stehen (grüner Punkt) und wo der Weg ins nächste Gebiet führt (grüner Pfeil – Maus darauf zeigt, wohin). Einschalten unter Komfort → Karte.

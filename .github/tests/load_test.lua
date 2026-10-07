@@ -5625,6 +5625,9 @@ do
     local K = WeintCodex.UIKit
     local MK = WeintCodex.UIMapMarks
     local ME = WeintCodex.UIMapEntrances
+    local svc, gvc = stub.Methods.SetVertexColor, stub.Methods.GetVertexColor
+    stub.Methods.SetVertexColor = function(self, r, g, b, a) self._vc = { r, g, b, a } end
+    stub.Methods.GetVertexColor = function(self) local v = self._vc or {} return v[1], v[2], v[3], v[4] end
     local ok, err = pcall(function()
         local D = WeintCodex.MapMarksData
         -- Bestand: Lagen auf der Karte, Richtung und Ziel als Zahlen.
@@ -5673,6 +5676,14 @@ do
         MK.Place()
         assert(pt[2] == canvas and math.abs(pt[4] - 178) < 0.01 and math.abs(pt[5] + 66) < 0.01, "Geistheiler an falscher Stelle")
         assert(p:GetWidth() == MK.SPIRIT and p.dot:IsShown() and not p.arrow:IsShown(), "Geistheiler nicht als Punkt")
+        -- 6.21.0.1 (Beta-Test: "nicht gut zu sehen"): gross genug, helles
+        -- Gruen mit hellem Rand und dunklem Hof.
+        local gc = WeintCodex.GameColors.mapMark
+        local cr, cg, cb = p.dot:GetVertexColor()
+        assert(MK.SPIRIT >= 20 and MK.ARROW >= 30 and cr == gc[1] and cg == gc[2] and cb == gc[3]
+            and gc[2] > WeintCodex.GameColors.friendly[2], "Geistheiler zu klein oder zu dunkel")
+        assert(#p.spirit == 3 and #p.crossing == 3 and p.spirit[1]:IsShown() and p.rim:IsShown()
+            and not p.crossing[2]:IsShown(), "Hof oder Rand fehlt")
         -- Unter den Eingaengen.
         assert(p:GetFrameLevel() < (canvas:GetFrameLevel() or 0) + 1500, "Geistheiler ueber den Eingaengen")
 
@@ -5687,9 +5698,14 @@ do
         -- Richtung, gesetzt beim ersten Einrichten.
         MK.Forget()
         for _, q in ipairs(MK.pins) do q.entry = nil end
-        local set = {}
+        local set, layers = {}, {}
         for i = 8, 11 do MK.pins[i].arrow.SetRotation = function(_, r) set[i] = r end end
+        -- 6.21.0.1: Schatten und Rand drehen mit - sonst zeigt der Rand woandershin.
+        for li, t in ipairs(MK.pins[8].crossing) do
+            if t ~= MK.pins[8].arrow then t.SetRotation = function(_, r) layers[li] = r end end
+        end
         MK.Place()
+        assert(layers[1] == 2.7 and layers[2] == 2.7, "Schatten oder Rand nicht gedreht")
         assert(set[8] == 2.7 and set[9] == 0 and set[10] == 4.4 and set[11] == 3.2, "Richtungen: "
             .. tostring(set[8]) .. " " .. tostring(set[9]) .. " " .. tostring(set[10]) .. " " .. tostring(set[11]))
 
@@ -5726,6 +5742,7 @@ do
         assert(sc:find("Geistheiler im Bestand: 103 auf", 1, true) and sc:find("Übergänge: 110 auf", 1, true), "Selbstpruefung: " .. sc)
     end)
     for i, n in ipairs(names) do G[n] = saved[i] end
+    stub.Methods.SetVertexColor, stub.Methods.GetVertexColor = svc, gvc
     K.Set("comfort", "mapSpirit", false)
     K.Set("comfort", "mapCrossings", false)
     MK.Forget()
