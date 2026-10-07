@@ -45,7 +45,7 @@ local K = WeintCodex.UIKit
 -- was erst beim Oeffnen laedt (Blizzard_*), kommt mit ADDON_LOADED dazu.
 MW.WINDOWS = {
     "CharacterFrame", "PlayerSpellsFrame", "SpellBookFrame", "PlayerTalentFrame", "ClassTalentFrame", "TalentFrame",
-    "FriendsFrame", "CommunitiesFrame", "GuildFrame", "LFGParentFrame", "PVEFrame", "CollectionsJournal",
+    "FriendsFrame", "SocialUIFrame", "CommunitiesFrame", "GuildFrame", "LFGParentFrame", "PVEFrame", "CollectionsJournal",
     "ProfessionsFrame", "ProfessionsBookFrame", "TradeSkillFrame", "CraftFrame", "ClassTrainerFrame",
     "GossipFrame", "QuestFrame", "QuestLogFrame", "QuestLogPopupDetailFrame", "ItemTextFrame",
     "MerchantFrame", "MailFrame", "OpenMailFrame", "BankFrame", "GuildBankFrame", "AuctionHouseFrame",

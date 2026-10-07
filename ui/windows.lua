@@ -90,7 +90,9 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               "MailFrame", "OpenMailFrame",
               -- 6.10.1.0: Kontakte (ui/friends.lua) und Lehrer (Blizzard_TrainerUI,
               -- erst beim Ansprechen geladen; ui/classtrainer.lua).
-              "FriendsFrame", "ClassTrainerFrame" }
+              "FriendsFrame", "ClassTrainerFrame",
+              -- 6.20.0.0: das neue Kontaktfenster (ui/friends.lua).
+              "SocialUIFrame" }
 
 -- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
 -- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus

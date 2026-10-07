@@ -66,6 +66,7 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 - [ ] Händler, Bank, Post (beide Reiter), Auktionshaus, Handel
 - [ ] Post: keine dunkle Fläche rechts oder unten neben dem Fenster; Gildenbank: Reiter flach, Betrag ohne Goldrahmen, kein Wappen über dem Rand; Gildenmitglieder ohne graue Bänder; Gildenchat: Eingabezeile flach
 - [ ] Kontakte (O): Freunde, Kürzliche Verbündete, Schlachtzug
+- [ ] Kontakte neu (6.20.0.0, `SocialUIFrame`): kein Metall, kein rotes Symbol, kein roter Knopf; Seitenreiter als Kachel, der gewählte in Gold – auch nach Wechsel; BattleTag-Zeile ohne braunes Band, Status und Suche flach; Fenster ziehbar; `/wcui fenster` auf jedem Reiter – kein „SOLLTE WEG SEIN“
 - [ ] Klassenquests (`/wc klassenquests`, Reiter unter Lehrer): Reiterleiste „Zauber und Waffen“ | „Klassenquests“; Quests nur deines Volkes; erledigte zugeklappt, Stand „Im Questlog“/„Abgabebereit“ wie im Questlog; Namen deutsch (nach kurzem Nachladen); Zeile mit Zauber zeigt „Lehrt …“; Klick setzt die Marke am Geber; rechts der nächstgelegene Klassenlehrer oben; Startseite nennt eine Klassenquest mit Zauber, wenn eine dran ist
 - [ ] Lehrer (Klasse und Beruf): eine Zeile wählen – sie bleibt markiert; beim Berufslehrer die Leiste oben blau, flach, ohne grauen Rahmen
 - [ ] Erinnerungen → Regeln auf einem Charakter mit Regeln anderer Klassen: nur die eigenen stehen da, darunter „N Regeln anderer Klassen ausgeblendet“ und „Alle zeigen“; Entfernen löscht die Zeile, auf der der Knopf steht

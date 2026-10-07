@@ -17,10 +17,14 @@ nicht zusammen.
 
 **Der Kopf im Balken.** Spieler- und Zielrahmen können das Porträt jetzt auch animiert im Lebensbalken zeigen – halb durchsichtig hinter Namen und Werten. Einstellen unter Einheitenrahmen → Porträt → „Im Balken (animiert)“, die Deckkraft unter Feinheiten.
 
+**Das neue Kontaktfenster im Codex-Stil.** Das Spiel hat die Kontakte neu gebaut – jetzt sehen sie wieder aus wie die anderen Fenster: ruhiger Grund statt Metall, die Reiter rechts als Kacheln, der gewählte in Gold, Suche und Status flach. Ziehen kannst du es auch.
+
 **Die Marke aus dem Codex bleibt.** „Eingang auf der Karte“ auf einer Dungeonseite setzt weiter die große Marke wie bisher.
 
 ### Technisch
 
+- **Kontakte neu** (`ui/friends.lua`, Beta-Test: „Blizzard hat das Kontaktfenster neu gemacht“): `SocialUIFrame` in `W.WINDOWS`, `MW.WINDOWS` und den Fenstern in Gold (`ui/calm.lua`); eigene Teile als zweites Baustein-Fenster `FR.Social` (Tiefe 3): Symbol, Verlauf oben/unten, Band hinter der BattleTag, Linien um die Liste weg; der blaue Kasten eine Leiste ohne Rand (`strip`), Status und Suchfeld flach. Filterknopf und Karten je Freund bleiben. Metall, roter Knopf und Seitenreiter nimmt der allgemeine Durchlauf – sie standen im Bericht schon als „SOLLTE WEG SEIN“. `FriendsFrame` bleibt eingetragen. 12 Gegenproben, alle gefangen – eine erst nach geschärfter Prüfung (Karten der Liste werden im Takt nicht abgelaufen).
+- Ungemessen: die Reiter „Kürzliche Verbündete“, „Schlachtzug“, „Anfragen“ des neuen Fensters.
 - **Porträt im Balken** (`ui/unitframes.lua`, Wunsch des Spielers „wie bei ElvUI“, nur das Verhalten): neue Porträt-Art `bar` für Spieler und Ziel (`UF.PortraitItems`). Ein zweites `PlayerModel` (`_barModel`) über dem ganzen Lebensbalken, Ebene Balken + 1 – über der Füllung, unter Heilung/Schild und Text; Kamera wie beim Porträt, die Bewegung zeichnet der Client. Deckkraft `<einheit>_barAlpha` (35 %, Feinheiten; `SetAlpha` und, wo es das gibt, `SetModelAlpha`). Balken über die ganze Breite. Außer Sichtweite, ohne Modelldatei (0,4 s nach `SetUnit`) und im Testmodus des Ziels kein Kopf. 11 Gegenproben, alle gefangen – zwei erst nach geschärfter Prüfung (Testmodus beim Neuzeichnen, kein Bild nebenbei).
 
 - **Karte aufdecken** (`ui/mapreveal.lua`, auf der Seite „Karte“: `mapReveal` ab Werk aus, `mapRevealTint` an). Der Client gibt nur erkundete Kartenteile heraus (`C_MapExplorationInfo.GetExploredMapTextures`); die ganze Liste steht in `data/mapreveal.lua` – **erzeugt** von `.github/scripts/import_mapreveal.py` aus der Tabelle „Reveal Data for Forever“ von Leatrix Maps 1.60.15 (vom Spieler hochgeladen; nur die Daten – Bildnummern, Größe, Lage –, kein Code; eine Lizenzdatei liegt dem Addon nicht bei). 44 Zonen, 569 Teile; das Skript prüft, dass jedes Teil so viele Bilder hat, wie Kacheln zu 256 hineinpassen. Gebaut erst, wenn jemand aufdeckt (`build()`).

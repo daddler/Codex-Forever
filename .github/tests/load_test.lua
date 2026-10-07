@@ -11066,6 +11066,107 @@ do
     Check(okFR, "Kontakte: Gold, Metall weg, Symbol weg, BattleTag und Status flach, Liste auf Flaeche, Schein der Zeile bleibt, Reiter, kein Muell"
         .. (okFR and "" or (": " .. tostring(errFR))))
 
+    -- 6.20.0.0: das neue Kontaktfenster (SocialUIFrame), gemessen am Reiter
+    -- "Freunde" - Reiter rechts, Karten je Freund, Suche und Filter.
+    local okSF, errSF = pcall(function()
+        local W, S, FR, LF, GC = WeintCodex.UIWindows, WeintCodex.UIStyle, WeintCodex.UIFriends, WeintCodex.UICalm, WeintCodex.GameColors
+        local SF = FR and FR.Social
+        local listed, movable = {}, {}
+        for _, n in ipairs(W.WINDOWS) do listed[n] = true end
+        for _, n in ipairs(WeintCodex.UIMoveWindows.WINDOWS) do movable[n] = true end
+        assert(listed.SocialUIFrame and SF and S.SCOPES.SocialUIFrame == S.CALM, "neue Kontakte nicht im Durchlauf oder nicht in Gold")
+        assert(movable.SocialUIFrame, "neue Kontakte nicht verschiebbar")
+        assert(WeintCodex.UICalmParts.hosts.SocialUIFrame == SF, "neue Kontakte ohne Baustein-Fenster")
+        local hosts = {}
+        for _, h in ipairs(W.HOSTED.SocialUIFrame or {}) do hosts[h] = true end
+        assert(hosts[SF] and hosts[LF] and LF.WINDOWS.SocialUIFrame == "Kontakte", "neue Kontakte ohne eigene Teile oder ohne Licht in Gold")
+        -- Was der allgemeine Durchlauf nehmen muss (gemessen: SOLLTE WEG SEIN).
+        for _, a in ipairs({ "UI-Frame-Metal-CornerTopLeft", "UI-Frame-PortraitMetal-CornerTopLeft", "_UI-Frame-Metal-EdgeTop",
+                             "!UI-Frame-Metal-EdgeLeft", "128-RedButton-Left", "_128-RedButton-Center", "common-sidetab",
+                             "common-sidetab-selected", "common-button-list-collapseExpand" }) do
+            assert(W.HidesAtlas(a), "bleibt am neuen Kontaktfenster: " .. a)
+        end
+        local function Tex(file, atlas)
+            local t = stub.NewObject("Texture")
+            t._file, t._atlas = file, atlas
+            t.GetTexture = function(self) return self._file end
+            if atlas then t.GetAtlas = function(self) return self._atlas end end
+            return t
+        end
+        local function Holder(...)
+            local f = stub.NewObject("Frame")
+            local regions = { ... }
+            f.GetRegions = function() return unpack(regions) end
+            return f
+        end
+        local heads, top, bottom = Tex(526421), Tex(nil, "friends-frame-topTexBG"), Tex(nil, "friends-frame-bottomTexBG")
+        local sf = Holder(heads, top, bottom)
+        local band, blue = Tex(nil, "friends-frame-infoBG"), Tex(632259)
+        local holder = Tex(nil, "common-dropdown-textholder")
+        local status = Holder(holder)
+        local controls = Holder(blue)
+        controls.GetChildren = function() return status end
+        local bar = Holder(band)
+        bar.GetChildren = function() return controls end
+        local search = Tex(nil, "common-searchbar-a")
+        local searchBar = Holder(search)
+        local filterBg = Tex(nil, "common-dropdown-b-button")
+        local filter = Holder(filterBg)
+        local filterBar = stub.NewObject("Frame")
+        filterBar.GetChildren = function() return searchBar, filter end
+        -- Die Karte eines Freundes (eine Ebene tiefer als abgelaufen) bleibt.
+        local cardBg = Tex(nil, "friends-card-disabled")
+        local card, cardReads = stub.NewObject("Frame"), 0
+        card.GetRegions = function() cardReads = cardReads + 1 return cardBg end
+        local target = stub.NewObject("Frame")
+        target.GetChildren = function() return card end
+        local box = stub.NewObject("Frame")
+        box.GetChildren = function() return target end
+        local div1, div2 = Tex(nil, "perks-divider-short"), Tex(nil, "perks-divider-short")
+        local list = Holder(div1, div2)
+        list.GetChildren = function() return filterBar, box end
+        sf.GetChildren = function() return bar, list end
+        S.Register()
+        local glow = stub.NewObject("Texture")
+        W.done[sf] = { glow = glow }
+        local grad, gold = S.Gradient, {}
+        S.Gradient = function(t, dir, c, a0, a1)
+            if c == GC.frameAccent then gold[t] = true end
+            return grad(t, dir, c, a0, a1)
+        end
+        S.scoped[sf] = S.SCOPES.SocialUIFrame
+        SF.Update(sf)
+        LF.Update(sf)
+        S.Gradient = grad
+        W.HoldGlow(sf, "SocialUIFrame")
+        local m = SF.frames[sf]
+        assert(not glow:IsShown(), "Schein der Klasse ueber den neuen Kontakten")
+        assert(m and gold[m.edge.l], "Kante oben nicht in Gold")
+        assert(heads:GetAlpha() == 0, "Symbol oben links bleibt")
+        assert(top:GetAlpha() == 0 and bottom:GetAlpha() == 0, "Verlauf oben/unten bleibt")
+        assert(band:GetAlpha() == 0 and blue:GetAlpha() == 0 and SF.strips[blue], "BattleTag bleibt blauer Kasten auf Band")
+        assert(not SF.fields[controls], "ganze BattleTag-Zeile mit Rand statt Leiste")
+        assert(holder:GetAlpha() == 0 and SF.fields[status], "Feld des Status nicht flach")
+        assert(search:GetAlpha() == 0 and SF.fields[searchBar], "Suchfeld nicht flach")
+        assert(div1:GetAlpha() == 0 and div2:GetAlpha() == 0, "Linien ueber/unter der Liste bleiben")
+        assert(filterBg:GetAlpha() == 1 and not SF.fields[filter], "Filterknopf verliert seinen Pfeil")
+        assert(cardBg:GetAlpha() == 1 and not SF.hidden[cardBg], "Karte eines Freundes angefasst")
+        assert(cardReads == 0, "Karten der Liste werden im Takt abgelaufen")
+        local rep = table.concat(SF.Report(sf, {}), "\n")
+        assert(rep:find("Kontakte (Stil ruhig): Kante in Gold, kein Schein der Klasse", 1, true), "Bericht: " .. rep)
+        SF.Update(sf)
+        collectgarbage("collect")
+        collectgarbage("stop")
+        local k0 = collectgarbage("count")
+        for _ = 1, 20 do SF.Update(sf) LF.Update(sf) W.HoldGlow(sf, "SocialUIFrame") end
+        local grew = collectgarbage("count") - k0
+        collectgarbage("restart")
+        assert(grew < 1, string.format("neue Kontakte legen im Takt Muell an: %.1f KB", grew))
+        W.done[sf], S.scoped[sf] = nil, nil
+    end)
+    Check(okSF, "Kontakte neu (SocialUIFrame): Gold, verschiebbar, Rahmen/Knopf/Reiter im Durchlauf, Verlauf und Band weg, BattleTag als Leiste, Status und Suche flach, Filter und Karten bleiben, kein Muell"
+        .. (okSF and "" or (": " .. tostring(errSF))))
+
     -- 6.10.1.0: Lehrer in Gold. Pergament, Zeilengrund, Schein und
     -- Markierung sind EIN Bild (404984) - sortiert wird nach Rolle.
     local okCT, errCT = pcall(function()
@@ -12982,7 +13083,7 @@ end
 do
     local CP = WeintCodex.UICalmParts
     local ok, err = pcall(function()
-        for _, host in ipairs({ "TradeFrame", "BankFrame", "MailFrame", "FriendsFrame" }) do
+        for _, host in ipairs({ "TradeFrame", "BankFrame", "MailFrame", "FriendsFrame", "SocialUIFrame" }) do
             assert(CP.hosts[host], "kein Baustein-Fenster: " .. host)
         end
         assert(CP.hosts.TradeFrame == WeintCodex.UITrade and CP.hosts.BankFrame == WeintCodex.UIBank

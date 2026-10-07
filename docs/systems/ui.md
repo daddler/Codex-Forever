@@ -3690,6 +3690,32 @@ je Zeile, Trennlinien zwischen Name und Stufe, Häkchen „Alle Assistent“).
 **Ungemessen:** Ignorierliste – Hülle und Gold; was dort alt aussieht,
 sagt `/wcui fenster` auf dem Reiter.
 
+**Das neue Kontaktfenster (6.20.0.0).** Blizzard hat die Kontakte neu
+gebaut: `SocialUIFrame`, Reiter rechts statt unten, eine Karte je Freund,
+Suche und Filter. Beta-Test: „Blizzard hat das Kontaktfenster neu gemacht.
+Daher muss das angeglichen werden.“ – `/wcui fenster` fand es, aber in
+keiner Liste: Metall, Porträt, roter Knopf und goldene Seitenreiter standen
+alle als „SOLLTE WEG SEIN“ da. `FriendsFrame` bleibt eingetragen; was der
+Client nicht hat, fällt heraus. Gemessen 07.10.2026 am Reiter „Freunde“:
+
+| Teil | Wer | Was |
+|---|---|---|
+| Metall, Porträtring, `SocialUIFrameBg`, roter Knopf, Seitenreiter („common-sidetab*“), Kopfzeile der Liste | `W.WINDOWS` | Kachel, Knopf flach, Reiter als Kachel – der gewählte in Gold (über `selTex`, gemessen eindeutig) |
+| Symbol oben links (526421) | `decor` | weg |
+| Verlauf oben/unten („friends-frame-topTexBG“/„-bottomTexBG“) | `decor` | weg |
+| Band hinter der BattleTag („friends-frame-infoBG“) | `decor` | weg |
+| Blauer Kasten der BattleTag (632259) | `strip` | Leiste ohne Rand an seiner Stelle – nicht `field`: der Kasten liegt am Rahmen der ganzen Zeile (Status, BattleTag, Menü), die wäre mit Rand umzogen worden |
+| Status („common-dropdown-textholder“), Suchfeld („common-searchbar-a“) | `field` | flache Leiste |
+| Linien über/unter der Liste („perks-divider-short“) | `decor` | weg |
+| Filterknopf („common-dropdown-b-button“) | – | bleibt: der Pfeil ist Teil des Bildes |
+| Karten je Freund („friends-card-*“), Knopf zum Einladen | – | bleiben: grau heißt offline, die Wahl ist zu sehen; Tiefe 3, die Karten werden im Takt gar nicht abgelaufen |
+
+Verschiebbar wie das alte (`MW.WINDOWS`), Licht und Kante in Gold über
+`ui/calm.lua`. Eine Innenfläche hat das neue Fenster nicht (die Liste liegt
+auf der Kachel) – `/wcui fenster` sagt dort „keine gefunden“, das ist
+richtig. **Ungemessen:** die Reiter „Kürzliche Verbündete“, „Schlachtzug“,
+„Anfragen“, und wie die Karten auf der Kachel wirken.
+
 ### Lehrer *(6.10.1.0, `ui/classtrainer.lua`)*
 
 Gemessen mit `/wcui fenster` (Beta-Test 6.10.0.0, Magierlehrer), die
