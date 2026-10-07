@@ -4840,8 +4840,19 @@ do
         W("hallo Welt", "Anna-Testrealm", "Player-1-AAA")
         local a = MS.conv["w:Anna"]
         assert(a and a.name == "Anna" and a.class == "WARRIOR" and a.target == "Anna-Testrealm", "Gespraech mit Anna")
-        assert(MS.win:IsShown() and MS.current == "w:Anna" and a.unread == 0, "Fenster nicht aufgegangen")
+        -- Von selbst aufgegangen: ungelesen, bis du hinsiehst (6.19.1.1).
+        assert(MS.win:IsShown() and MS.current == "w:Anna" and a.unread == 1, "Fenster nicht aufgegangen")
         assert(#shown == 1 and shown[1]:find("hallo Welt", 1, true) and shown[1]:find("Anna", 1, true), "Verlauf: " .. tostring(shown[1]))
+        MS.win:GetScript("OnUpdate")(MS.win, 1)
+        assert(a.unread == 1, "ohne Maus gelesen")
+        -- Noch nicht gesehen: die naechste zaehlt dazu, auch im offenen Gespraech.
+        W("bist du da?", "Anna-Testrealm", "Player-1-AAA")
+        assert(a.unread == 2, "zweite ungesehene nicht gezaehlt: " .. a.unread)
+        table.remove(a.lines)
+        MS.win.IsMouseOver = function() return true end
+        MS.win:GetScript("OnUpdate")(MS.win, 1)
+        MS.win.IsMouseOver = nil
+        assert(a.unread == 0, "Maus ueber dem Fenster: nicht gelesen")
         -- Offen und gewaehlt: gelesen, nicht ungelesen.
         W("noch was", "Anna-Testrealm", "Player-1-AAA")
         assert(a.unread == 0 and #a.lines == 2, "offenes Gespraech als ungelesen gezaehlt")
@@ -5004,7 +5015,7 @@ do
     local names = { "GetNormalizedRealmName", "InCombatLockdown", "issecretvalue", "ChatFrameUtil",
                     "ChatFrame_AddMessageEventFilter", "ChatFrame_OpenChat", "NUM_CHAT_WINDOWS", "ChatFrame1EditBox",
                     "hooksecurefunc", "ChatEdit_UpdateHeader", "BNet_GetBNetIDAccount", "PlaySound", "SOUNDKIT",
-                    "FlashClientIcon", "GetTime" }
+                    "FlashClientIcon", "GetTime", "ERR_CHAT_PLAYER_NOT_FOUND_S" }
     local saved = {}
     for i, n in ipairs(names) do saved[i] = G[n] end
     local K = WeintCodex.UIKit
@@ -5023,6 +5034,7 @@ do
         G.PlaySound = function(id) if id == 3081 then sounds = sounds + 1 end end
         G.FlashClientIcon = function() flashed = flashed + 1 end
         -- Die Chatzeile des Spiels: WeintCodex darf sie nur lesen.
+        G.ERR_CHAT_PLAYER_NOT_FOUND_S = "Kein Spieler namens '%s' ist derzeit gespielt."
         G.NUM_CHAT_WINDOWS = 1
         local eb = CreateFrame("EditBox", nil, UIParent)
         G.ChatFrame1EditBox = eb
@@ -5063,6 +5075,13 @@ do
         assert(Filter("CHAT_MSG_AFK", "weg", "Fremdling") == false, "Abwesend ohne Gespraech verborgen")
         assert(Filter("CHAT_MSG_SYSTEM", "Kein Spieler namens 'Mara' ist derzeit gespielt.") == true, "nicht online im Chat geblieben")
         assert(Filter("CHAT_MSG_SYSTEM", "Du hast Erfahrung erhalten.") == false, "Systemzeile verborgen")
+        -- Ohne Muster des Spiels: keine Systemzeile verbergen (war "false ~= nil").
+        G.ERR_CHAT_PLAYER_NOT_FOUND_S = nil
+        assert(Filter("CHAT_MSG_SYSTEM", "Du hast Erfahrung erhalten.") == false, "ohne Muster jede Systemzeile verborgen")
+        -- Kommt das Muster spaeter (oder anders), gilt das neue.
+        G.ERR_CHAT_PLAYER_NOT_FOUND_S = "'%s' ist nicht da."
+        assert(Filter("CHAT_MSG_SYSTEM", "'Mara' ist nicht da.") == true, "Muster des Spiels veraltet gemerkt")
+        G.ERR_CHAT_PLAYER_NOT_FOUND_S = "Kein Spieler namens '%s' ist derzeit gespielt."
         K.Set("comfort", "msgHideChat", false)
         assert(Filter("CHAT_MSG_WHISPER", "hi", "Mara") == false, "verborgen, obwohl aus")
         K.Set("comfort", "msgHideChat", true)
@@ -5105,7 +5124,24 @@ do
             and MS.Unread() >= 1, "Symbol zaehlt nicht: " .. tostring(MS.icon.badge:GetText()))
         combat = false
         MS.OnEvent(nil, "PLAYER_REGEN_ENABLED")
-        assert(MS.win:IsShown() and MS.current == "w:Nils" and MS.conv["w:Nils"].unread == 0, "nach dem Kampf nicht beim Neuen")
+        assert(MS.win:IsShown() and MS.current == "w:Nils", "nach dem Kampf nicht beim Neuen")
+        -- Von selbst auf: die Zahl bleibt am Symbol, bis du hinsiehst.
+        assert(MS.conv["w:Nils"].unread == 1 and MS.icon.dot:IsShown() and MS.icon.badge:GetText() == tostring(MS.Unread()),
+            "Zahl am Symbol weg, obwohl nicht gesehen")
+        MS.input:GetScript("OnEditFocusGained")(MS.input)
+        assert(MS.conv["w:Nils"].unread == 0, "Klick in die Antwortzeile: nicht gelesen")
+        MS.conv["w:Nils"].unread = 3
+        MS.SetCopyMode(true)
+        assert(MS.conv["w:Nils"].unread == 0, "Markieren: nicht gelesen")
+        MS.SetCopyMode(false)
+        -- Alles gelesen: kein Punkt, keine Zahl.
+        for _, k in ipairs(MS.order) do MS.conv[k].unread = 0 end
+        MS.UpdateIcon()
+        assert(not MS.icon.dot:IsShown() and MS.icon.badge:GetText() == "", "Punkt ohne Ungelesenes")
+        MS.conv["w:Nils"].unread = 120
+        MS.UpdateIcon()
+        assert(MS.icon.badge:GetText() == "99+", "mehr als 99: " .. tostring(MS.icon.badge:GetText()))
+        MS.conv["w:Nils"].unread = 0
         -- Geschlossen in den Kampf: bleibt zu.
         MS.win:Hide()
         MS.OnEvent(nil, "PLAYER_REGEN_DISABLED")
@@ -5188,8 +5224,9 @@ do
 
         -- Symbol: Klick auf/zu, abschaltbar, mit dem Helfer weg.
         MS.win:Hide()
+        MS.conv[MS.current].unread = 2
         MS.icon:GetScript("OnClick")(MS.icon)
-        assert(MS.win:IsShown(), "Symbol oeffnet nicht")
+        assert(MS.win:IsShown() and MS.conv[MS.current].unread == 0, "Symbol oeffnet nicht (oder laesst ungelesen)")
         MS.icon:GetScript("OnClick")(MS.icon)
         assert(not MS.win:IsShown(), "Symbol schliesst nicht")
         K.Set("comfort", "msgIcon", false)

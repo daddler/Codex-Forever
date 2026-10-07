@@ -9,7 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [6.19.1.0] – 2026-10-07
+## [6.19.1.1] – 2026-10-07
+
+**Flüstern: die Zahl am Symbol.** Ein Punkt in deiner Farbe zeigt, wie viele Nachrichten du noch nicht gelesen hast. Geht das Fenster von selbst auf, bleiben sie ungelesen, bis du mit der Maus darüberfährst, in die Antwortzeile klickst oder das Gespräch wählst.
+
+### Technisch
+
+- **Warum bisher keine Zahl kam** (Beta-Test mit Bild: Symbol nur weiß, keine Zahl): das Fenster ging beim Flüstern von selbst auf, und `MS.Show` setzte das Gespräch dabei auf gelesen – am Symbol stand also nie etwas, außer im Kampf. Jetzt `MS.Show(key, auto)`: von selbst aufgegangen (Flüstern, nach dem Kampf) bleibt Ungelesenes ungelesen. Gelesen (`MS.MarkRead`) wird es, wenn die Maus über dem Fenster liegt (`OnUpdate` nur bei Ungelesenem, alle `MS.SEEN_EVERY` = 0,2 s, ohne Tabellen), beim Klick in die Antwortzeile, bei „Markieren“, beim Wählen des Gesprächs oder Öffnen über Symbol oder Befehl. Solange das offene Gespräch Ungesehenes hat, zählt jede weitere Nachricht dazu.
+- **Symbol:** die Zahl steht auf einem Punkt im Akzent (`media/ui/disc.tga`) über der Ecke, ab 100 „99+“; ohne Ungelesenes kein Punkt.
+- **Fehler behoben, den der Prüflauf fand:** `MS.SystemTarget` lieferte ohne Muster des Spiels (`ERR_CHAT_PLAYER_NOT_FOUND_S`) `false` statt `nil`, und der Chatfilter fragte `~= nil` – er hätte dann **jede** Systemzeile im Chat verborgen. Jetzt `nil`, der Filter fragt `and true or false`, und das Muster wird neu gebaut, wenn sich die Vorlage des Spiels ändert (vorher blieb ein fehlendes für immer gemerkt).
+- 15 Gegenproben, 14 gefangen – drei erst nach geschärfter Prüfung; die eine übrige ist gleichwertig (`~= nil` gegen `and true or false`, seit `SystemTarget` nie `false` liefert).
+
+
 
 **Flüstern nur noch im Fenster.** Was dir zugeflüstert wird, steht nicht mehr zusätzlich im Chat – nur im Messenger, mit eigenem Ton. Was das Spiel dem Fenster während einer Sperre nicht verrät, bleibt im Chat, damit nichts verloren geht. Antworte im Fenster: Die Taste R kennt nur, was im Chat stand.
 

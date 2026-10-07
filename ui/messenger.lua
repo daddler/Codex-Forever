@@ -74,7 +74,8 @@ MS.MAX_CONV  = 8          -- so viele Gespraeche in der Liste
 MS.W, MS.H   = 420, 260
 MS.LIST_W    = 120
 MS.ROW_H     = 24
-MS.BLOCK_WINDOW = 1       -- so lange nach einem Sendeversuch zaehlt eine Sperrmeldung (s)
+MS.BLOCK_WINDOW = 1
+MS.SEEN_EVERY = 0.2       -- so oft fragt das offene Fenster, ob die Maus darueber liegt (s)       -- so lange nach einem Sendeversuch zaehlt eine Sperrmeldung (s)
 
 local SETTING = { combat = "msgCombat", outgoing = "msgOutgoing", stamps = "msgStamps", direct = "msgDirect",
                   hide = "msgHideChat", icon = "msgIcon" }
@@ -352,6 +353,7 @@ local function Build()
     ib:SetAllPoints(input)
     ib:SetColorTexture(s1[1], s1[2], s1[3], 1)
     input:SetScript("OnEditFocusGained", function(self)
+        MS.MarkRead(MS.current)
         -- Ohne "direkt senden": gleich die Chatzeile des Spiels.
         if not Get("direct") then
             self:ClearFocus()
@@ -376,6 +378,17 @@ local function Build()
     -- Ziehen am Fenster selbst (6.19.1.0), nicht nur im Gestaltungsmodus.
     K.DragToMove(win, "messenger")
     win:SetScript("OnHide", function() MS.UpdateIcon() end)
+    -- Hinsehen: liegt die Maus ueber dem Fenster, ist das Gespraech gelesen.
+    -- Nur solange etwas ungelesen ist; keine Tabelle, keine Closure je Bild.
+    local seenAcc = 0
+    win:SetScript("OnUpdate", K.Measured("Flüstern", function(self, el)
+        local c = conv[MS.current or ""]
+        if not c or c.unread == 0 then return end
+        seenAcc = seenAcc + (el or 0)
+        if seenAcc < MS.SEEN_EVERY then return end
+        seenAcc = 0
+        if K.Bool(self:IsMouseOver(), false) then MS.MarkRead(MS.current) end
+    end))
     win:SetScript("OnShow", function() MS.UpdateIcon() end)
     MS.win, MS.smf, MS.input, MS.title, MS.sub, MS.foot, MS.rows = win, smf, input, title, sub, foot, rows
     MS.copy, MS.copyEdit, MS.markBtn = copy, copyEdit, markBtn
@@ -436,6 +449,7 @@ end
 function MS.SetCopyMode(on)
     Build()
     MS.copyMode = on and true or false
+    if MS.copyMode then MS.MarkRead(MS.current) end
     smf:SetShown(not MS.copyMode)
     copy:SetShown(MS.copyMode)
     if MS.copyMode then
@@ -448,6 +462,16 @@ function MS.SetCopyMode(on)
     end
 end
 
+-- Gesehen: Maus ueber dem Fenster, Klick in die Antwortzeile, Markieren.
+function MS.MarkRead(key)
+    local c = conv[key or ""]
+    if not c or c.unread == 0 then return false end
+    c.unread = 0
+    MS.Redraw()
+    MS.UpdateIcon()
+    return true
+end
+
 function MS.Select(key)
     if not conv[key] then return end
     MS.current = key
@@ -456,11 +480,14 @@ function MS.Select(key)
     MS.UpdateIcon()
 end
 
-function MS.Show(key)
+-- auto: von selbst aufgegangen (Fluestern, nach dem Kampf). Dann bleibt
+-- Ungelesenes ungelesen, bis du hinsiehst (MS.MarkRead) - sonst stuende am
+-- Symbol nie eine Zahl (Beta-Test 6.19.1.0: "Da muss noch ne Zahl hin").
+function MS.Show(key, auto)
     Build()
     if key then MS.current = key end
     if not conv[MS.current or ""] then MS.current = order[1] end
-    if MS.current and conv[MS.current] then conv[MS.current].unread = 0 end
+    if not auto and MS.current and conv[MS.current] then conv[MS.current].unread = 0 end
     MS.pending, MS.folded = nil, nil
     win:Show()
     MS.Redraw()
@@ -499,8 +526,13 @@ local function BuildIcon()
     icon.tex:SetSize(20, 20)
     icon.tex:SetPoint("CENTER", icon, "CENTER", 0, 0)
     icon.tex:SetTexture(K.MEDIA .. "icon_report")
-    icon.badge = K.NewText(icon, 10)
-    icon.badge:SetPoint("TOPRIGHT", icon, "TOPRIGHT", -2, -2)
+    -- Die Zahl der Ungelesenen auf einem Punkt im Akzent, ueber der Ecke.
+    icon.dot = icon:CreateTexture(nil, "OVERLAY", nil, 1)
+    icon.dot:SetSize(16, 16)
+    icon.dot:SetPoint("CENTER", icon, "TOPRIGHT", -3, -3)
+    icon.dot:SetTexture(K.MEDIA .. "disc")
+    icon.badge = K.NewText(icon, 10, "OVERLAY", 2)
+    icon.badge:SetPoint("CENTER", icon.dot, "CENTER", 0, 0)
     if icon.RegisterForClicks then icon:RegisterForClicks("LeftButtonUp") end
     icon:SetScript("OnClick", function() MS.Toggle() end)
     icon:SetScript("OnEnter", function(self)
@@ -528,9 +560,12 @@ function MS.UpdateIcon()
     end
     BuildIcon()
     local n = MS.Unread()
-    icon.badge:SetText(n > 0 and tostring(n) or "")
-    local a = C.accentBright or C.accent
-    icon.badge:SetTextColor(a[1], a[2], a[3])
+    icon.badge:SetText(n > 99 and "99+" or (n > 0 and tostring(n)) or "")
+    local a = C.accent
+    icon.dot:SetVertexColor(a[1], a[2], a[3], 1)
+    icon.dot:SetShown(n > 0)
+    local tb = C.textBright
+    icon.badge:SetTextColor(tb[1], tb[2], tb[3])
     -- Hell, solange etwas ungelesen ist oder das Fenster offen.
     local lit = n > 0 or (win and win:IsShown())
     local t = lit and C.textBright or C.textMuted
@@ -550,7 +585,7 @@ local function Pop(key)
         MS.UpdateIcon()
         return
     end
-    MS.Show(key)
+    MS.Show(key, true)
 end
 
 -- Im Kampf einklappen, danach wieder auf (6.19.1.0, Beta-Test: "Wenn ich
@@ -567,7 +602,7 @@ function MS.OnCombat(start)
     end
     local key = MS.pending or MS.folded
     MS.pending, MS.folded = nil, nil
-    if key then MS.Show(key ~= true and key or nil) end
+    if key then MS.Show(key ~= true and key or nil, true) end
 end
 
 --------------------------------------------------
@@ -617,10 +652,11 @@ end
 -- Ereignisse
 --------------------------------------------------
 
-local notFound   -- Muster aus ERR_CHAT_PLAYER_NOT_FOUND_S
+local notFound, notFoundSrc   -- Muster aus ERR_CHAT_PLAYER_NOT_FOUND_S (und woraus)
 local function NotFoundPattern()
-    if notFound ~= nil then return notFound end
     local s = K.Plain(_G.ERR_CHAT_PLAYER_NOT_FOUND_S)
+    if notFound ~= nil and notFoundSrc == s then return notFound end
+    notFoundSrc = s
     if type(s) ~= "string" then notFound = false return false end
     s = s:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1"):gsub("%%%%s", "(.+)")
     notFound = "^" .. s .. "$"
@@ -680,7 +716,7 @@ function MS.OnWhisper(event, text, sender, guid, bnID)
     MS.Add(c, out and "out" or "in", text)
     if not out and MS.Hiding() then MS.Ping() end
     local visible = win and win:IsShown()
-    if not out and not (visible and MS.current == key) then c.unread = c.unread + 1 end
+    if not out and not (visible and MS.current == key and c.unread == 0) then c.unread = c.unread + 1 end
     if out and not visible and not Get("outgoing") then
         MS.UpdateIcon()
         return
@@ -697,11 +733,15 @@ function MS.SystemTarget(event, text, sender)
     if event == "CHAT_MSG_SYSTEM" then
         local pat = NotFoundPattern()
         local who = pat and text:match(pat)
-        local c = who and conv[KeyFor(who)]
-        return c, c and (c.name .. " ist nicht online.")
+        -- nil, nie false: der Filter fragt "~= nil" - ohne Muster des
+        -- Spiels verbarg er sonst JEDE Systemzeile.
+        local c = who and conv[KeyFor(who)] or nil
+        if not c then return nil end
+        return c, c.name .. " ist nicht online."
     elseif type(sender) == "string" then
         local c = conv[KeyFor(sender)]
-        return c, c and ((event == "CHAT_MSG_AFK" and "Abwesend" or "Beschäftigt") .. (text ~= "" and (": " .. text) or ""))
+        if not c then return nil end
+        return c, (event == "CHAT_MSG_AFK" and "Abwesend" or "Beschäftigt") .. (text ~= "" and (": " .. text) or "")
     end
     return nil
 end
@@ -730,7 +770,7 @@ function MS.ChatFilter(_, event, text, sender, ...)
         local bnID = BN_EVENT[event] and select(11, ...) or nil
         return MS.Capturable(event, text, sender, bnID)
     end
-    return MS.SystemTarget(event, text, sender) ~= nil
+    return MS.SystemTarget(event, text, sender) and true or false
 end
 
 local function AddFilter()

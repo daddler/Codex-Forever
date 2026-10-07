@@ -1376,9 +1376,19 @@ weiter in der Chatzeile – sie wird nie angefasst (kein `SetText`,
 
 **Symbol** (6.19.1.0, `msgIcon`, ab Werk an): eine Kachel 32 × 32 mit der
 Sprechblase aus `media/ui/icon_report.tga` (eigenes Bild), oben rechts
-die Zahl der Ungelesenen (`MS.Unread`); hell, solange etwas ungelesen
-oder das Fenster offen ist. Klick: auf/zu. Platz `messengerIcon` in
-`ui/layout.lua`.
+die Zahl der Ungelesenen (`MS.Unread`) – seit 6.19.1.1 auf einem Punkt im
+Akzent (`disc.tga`) über der Ecke, ab 100 „99+“; hell, solange etwas
+ungelesen oder das Fenster offen ist. Klick: auf/zu. Platz `messengerIcon`
+in `ui/layout.lua`.
+
+**Gelesen** (6.19.1.1, Beta-Test: „Da muss noch ne Zahl hin“): bis dahin
+setzte das Aufgehen selbst das Gespräch auf gelesen – am Symbol stand nie
+eine Zahl. `MS.Show(key, auto)`: von selbst aufgegangen (Flüstern, nach dem
+Kampf) bleibt es ungelesen, bis du hinsiehst (`MS.MarkRead`): Maus über dem
+Fenster (`OnUpdate` nur bei Ungelesenem, alle `MS.SEEN_EVERY` = 0,2 s),
+Klick in die Antwortzeile, „Markieren“, Gespräch wählen, Öffnen über
+Symbol oder `/wcui flüstern`. Hat das offene Gespräch Ungesehenes, zählt
+jede weitere Nachricht dazu.
 
 **Ziehen** (6.19.1.0, Beta-Test: „das Fenster ist nicht verschiebbar“):
 Fenster und Symbol lassen sich direkt mit der Maus ziehen

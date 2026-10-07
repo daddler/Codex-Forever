@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.19.1.1",
+        date    = "07.10.2026",
+        notes   = {
+            "|cff7C6CFFFlüstern: die Zahl am Symbol.|r Ein Punkt in deiner Farbe zeigt, wie viele Nachrichten du noch nicht gelesen hast. Geht das Fenster von selbst auf, bleiben sie ungelesen, bis du mit der Maus darüberfährst, in die Antwortzeile klickst oder das Gespräch wählst.",
+        },
+    },
+    {
         version = "6.19.1.0",
         date    = "07.10.2026",
         notes   = {
