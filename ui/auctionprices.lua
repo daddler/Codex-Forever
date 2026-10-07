@@ -28,9 +28,12 @@
 --
 -- Gespeichert je Realm und Seite (Allianz, Horde, neutral: Gadgetzan,
 -- Beutebucht, Ewige Warte) in WeintCodex_SavedData.auction - EINE Zahl je
--- Gegenstand: Preis, Menge und Tag zusammen (AP.Pack); eine Tabelle je
--- Gegenstand haette das Dreifache gekostet. Was AP.KEEP_DAYS Tage nicht
--- gesehen wurde, faellt heraus.
+-- Gegenstand: Preis, Menge, Tag und "von Spielern" zusammen (AP.Pack); eine
+-- Tabelle je Gegenstand haette das Dreifache gekostet. Was AP.KEEP_DAYS Tage
+-- nicht gesehen wurde, faellt heraus.
+--
+-- Seit 6.18.0.0 kommen Preise auch von anderen Spielern (ui/auctionshare.lua:
+-- Gilde, ForeverGuide) - im Tooltip "von Spielern", dein Scan geht vor.
 --------------------------------------------------
 
 local K = WeintCodex.UIKit
@@ -44,6 +47,9 @@ AP.DEFAULTS = {
     ahPrices  = false,   -- der Helfer: Knopf am Auktionshaus, Preise im Tooltip
     ahStack   = true,    -- in den Taschen auch der Preis des ganzen Stapels
     ahPassive = true,    -- auch merken, was deine eigene Suche zeigt
+    -- 6.18.0.0 (ui/auctionshare.lua): Preise von anderen Spielern.
+    ahShareGuild = false, -- mit der Gilde teilen (senden und empfangen)
+    ahListenFG   = false, -- aus dem Kanal von ForeverGuide nur empfangen
 }
 
 AP.REPLICATE_WAIT  = 35          -- so lange auf den Vollscan warten (s)
@@ -53,9 +59,13 @@ AP.STALL           = 15          -- Suche: so lange ohne neue Seite, dann Schlus
 AP.BATCH           = 1000        -- Vollscan: Angebote je Bild
 AP.KEEP_DAYS       = 30
 -- Preis * 1e7 + Menge * 1e4 + Tag muss unter 2^53 bleiben: hoechstens
--- ~90.000 Gold je Stueck (mehr wird gekappt), 999 Stueck, 9999 Tage.
+-- ~90.000 Gold je Stueck (mehr wird gekappt), 999 Stueck. Der Tag (bis
+-- AP.DAY_MAX, also bis 2039) traegt + AP.SHARED, wenn der Preis von anderen
+-- Spielern kam.
 AP.PRICE_MAX = 899999999
 AP.QTY_MAX   = 999
+AP.DAY_MAX   = 4999
+AP.SHARED    = 5000
 
 -- Die neutralen Auktionshaeuser: Tanaris (Gadgetzan), Schlingendorntal
 -- (Beutebucht), Winterquell (Ewige Warte) - Kartennummern wie in data/.
@@ -98,25 +108,29 @@ function AP.Day(t)
     if type(d) ~= "table" then return 0 end
     local n = JDN(d.year, d.month, d.day) - BASE
     if n < 0 then return 0 end
-    return n > 9999 and 9999 or n
+    return n > AP.DAY_MAX and AP.DAY_MAX or n
 end
 
-function AP.Pack(price, qty, day)
+function AP.Pack(price, qty, day, shared)
     price = math.floor(price)
     if price > AP.PRICE_MAX then price = AP.PRICE_MAX end
     qty = math.floor(qty or 0)
     if qty > AP.QTY_MAX then qty = AP.QTY_MAX elseif qty < 0 then qty = 0 end
-    return price * 1e7 + qty * 1e4 + (day or 0)
+    day = math.floor(day or 0)
+    if day > AP.DAY_MAX then day = AP.DAY_MAX elseif day < 0 then day = 0 end
+    return price * 1e7 + qty * 1e4 + day + (shared and AP.SHARED or 0)
 end
 
 -- Preis, Menge, Tag. v / 1e7 rundet nie auf die naechste ganze Zahl: der
 -- Abstand dorthin ist mindestens 1e-7, ein halber Schritt der Gleitkommazahl
--- unter 2^30 (> AP.PRICE_MAX) nur 6e-8.
+-- unter 2^30 (> AP.PRICE_MAX) nur 6e-8. Viertens: von anderen Spielern.
 function AP.Unpack(v)
     local price = math.floor(v / 1e7)
     local rest = v - price * 1e7
     local qty = math.floor(rest / 1e4)
-    return price, qty, rest - qty * 1e4
+    local day = rest - qty * 1e4
+    if day >= AP.SHARED then return price, qty, day - AP.SHARED, true end
+    return price, qty, day, false
 end
 
 --------------------------------------------------
@@ -179,7 +193,7 @@ end
 
 -- Preis eines Gegenstands: zuerst das Auktionshaus, an dem du stehst (sonst
 -- das deiner Fraktion), dann das neutrale. Nichts gefunden: nil.
--- { price, qty, day, neutral, missing } - missing: beim letzten
+-- { price, qty, day, shared, neutral, missing } - missing: beim letzten
 -- vollstaendigen Scan nicht im Angebot (der Preis ist der zuletzt gesehene).
 local found = {}
 function AP.Lookup(id)
@@ -194,7 +208,7 @@ function AP.Lookup(id)
         neutral = true
     end
     if not v then return nil end
-    found.price, found.qty, found.day = AP.Unpack(v)
+    found.price, found.qty, found.day, found.shared = AP.Unpack(v)
     found.neutral = neutral
     found.missing = store.full ~= nil and found.day < AP.Day(store.full)
     return found
@@ -285,7 +299,7 @@ function AP.TooltipLines(id, stack)
     if e.missing then
         info = "zuletzt " .. AP.AgeText(e.day) .. " · beim letzten Scan nicht im Angebot"
     else
-        info = AP.AgeText(e.day)
+        info = (e.shared and "von Spielern, " or "") .. AP.AgeText(e.day)
         local q = AP.QtyText(e.qty)
         if q then info = info .. " · " .. q end
     end
@@ -415,6 +429,7 @@ local function Finish(full)
     AP.Merge(store, s.price, s.qty)
     if full then store.full, store.via, store.lots, store.n = Time(), s.via, s.lots, n end
     local kept = AP.Prune(store)
+    if full and AP.OnOwnScanHook then AP.OnOwnScanHook(s.side) end
     AP.last = { ok = true, full = full, via = s.via, lots = s.lots, n = n, kept = kept, at = Time(), side = s.side }
     Log(s.via .. ": " .. s.lots .. " Angebote, " .. n .. " Gegenstände" .. (full and "" or ", unvollständig"))
     Say("Auktionshaus gelesen: " .. Thousands(s.lots) .. " Angebote, " .. Thousands(n) .. " Gegenstände"
@@ -692,6 +707,11 @@ function AP.StatusLines(side)
     else
         out[1] = label .. ": " .. Thousands(n) .. " Gegenstände, noch kein vollständiger Scan"
     end
+    local sh = store.shared
+    if type(sh) == "table" and sh.at and _G.date then
+        out[#out + 1] = "Zuletzt von Spielern: " .. Thousands(sh.n or 0) .. " Gegenstände von " .. (sh.from or "?")
+            .. " (" .. (sh.via or "?") .. "), Scan vom " .. _G.date("%d.%m. %H:%M", sh.at)
+    end
     if (store.noReplicate or 0) > Time() then
         out[#out + 1] = "Der Vollscan blieb zuletzt ohne Antwort – bis " .. (_G.date and _G.date("%d.%m.", store.noReplicate) or "?")
             .. " gleich die Suche."
@@ -715,6 +735,9 @@ function AP.Report()
     if #AP.log > 0 then
         out[#out + 1] = "Schritte:"
         for _, m in ipairs(AP.log) do out[#out + 1] = "  " .. m end
+    end
+    if AP.ShareLines then
+        for _, l in ipairs(AP.ShareLines()) do out[#out + 1] = l end
     end
     out[#out + 1] = "Der Preis ist das günstigste Sofortkauf-Angebot je Stück, als du zuletzt hingeschaut hast – kein Durchschnitt."
     return out
@@ -793,6 +816,11 @@ local function Build(B)
             description = "In den Taschen: was der ganze Stapel kostet." })
     B:Row({ type = "toggle", label = "Auch beim Stöbern merken", key = "ahPassive", disabled = off,
             description = "Was deine eigene Suche im Auktionshaus zeigt, ohne Scan." })
+    B:Section("Preise von anderen Spielern", "Dein eigener Scan geht immer vor. Fremde Preise stehen im Tooltip als „von Spielern“; einer, der mehr als dreimal so hoch oder niedrig ist wie der bekannte, zählt erst, wenn ein zweiter Spieler ihn bestätigt.")
+    B:Row({ type = "toggle", label = "Mit der Gilde teilen", key = "ahShareGuild", disabled = off,
+            description = "Hat ein Gildenmitglied mit WeintCodex frischere Preise, kommen sie zu dir – und deine zu ihm." },
+          { type = "toggle", label = "Preise aus ForeverGuide übernehmen", key = "ahListenFG", disabled = off,
+            description = "Nur zuhören: tritt dem versteckten Kanal von ForeverGuide bei und sendet nie etwas." })
     B:Note("Gemerkt wird je Realm und Auktionshaus (Allianz, Horde, neutral), höchstens 30 Tage. Was zuletzt passiert ist: /wcui auktion.")
 end
 

@@ -1234,13 +1234,63 @@ Tabelle je Gegenstand hätte das Dreifache gekostet. Nach
 Auktionshaus, an dem du stehst (sonst deiner Fraktion), dann das neutrale
 („Auktionshaus (neutral)“).
 
-**Nicht gebaut:** Durchschnitt über mehrere Scans, Gewinn je Rezept,
-Preise von anderen Spielern (ForeverGuide tauscht sie über einen
-versteckten Kanal – widerspricht „nie nach außen“). **`/wcui auktion`**:
+**Nicht gebaut:** Durchschnitt über mehrere Scans, Gewinn je Rezept.
+Preise von anderen Spielern seit 6.18.0.0, siehe unten. **`/wcui auktion`**:
 Bericht beider Ablagen mit den letzten Schritten; **`/wcui auktion
 scan`** startet bei offenem Auktionshaus; **`/wcui prüfen`**:
 „Auktionspreise“ (an/aus, welche Wege der Client anbietet, Tooltip über
 welchen Weg, letzter Scan).
+
+### Preise von anderen Spielern *(6.18.0.0, `ui/auctionshare.lua`)*
+
+Anlass (Beta-Test): ForeverGuide zeigte Preise „vor 6 Minuten“ ohne
+Besuch im Auktionshaus – das Spielernetz von ForeverGuide 1.25
+(`Net.lua`: versteckter Kanal `FGLayers`, Kennung `FGD`, ab Werk an). Die
+**einzige Ausnahme** vom Grundsatz „nichts verlässt den Client“ (CLAUDE.md),
+nur auf Wunsch: zwei Schalter unter `comfort`, ab Werk aus, nur mit
+`ahPrices`.
+
+- **Gilde** (`ahShareGuild`, Kennung `AS.PREFIX` = `WCAH`, an `GUILD`):
+  Nachrichten `Art:1:Seite:Zeit36[:…]` mit der Zeit des Servers
+  (`GetServerTime`). Eigener vollständiger Scan → Angebot `O` (5 s
+  später). Alle `AS.QUERY_EVERY` = 20 min Frage `Q`, wenn die eigenen
+  Preise älter als `AS.FRESH_GAP` = 20 min sind. Wer mindestens so viel
+  frischer ist, bietet nach 1–4 s an, außer jemand kam mit einem gleich
+  guten zuvor. Der Fragende wählt nach `AS.WANT_WAIT` = 4 s den
+  frischesten (`W:…:Name`), der schickt seinen Scan in Stücken `B`
+  (`id,preis,menge` in Basis 36, ≤ 255 Zeichen) an die ganze Gilde – je
+  Seite höchstens alle `AS.BROADCAST_GAP` = 30 min, **nur Eigenes aus dem
+  letzten vollständigen Scan**, nie Weitergereichtes, nie Scans älter als
+  6 h. Schlange: eine Nachricht je `AS.SEND_GAP` = 1 s, nicht im Kampf;
+  nimmt das Spiel nicht an (Rückgabe ≠ 0), `AS.BUSY_GAP` = 5 s Pause.
+- **ForeverGuide nur zuhören** (`ahListenFG`): Beitritt zu `FGLayers`
+  `AS.JOIN_DELAY` = 12 s nach dem Einloggen (`JoinTemporaryChannel`),
+  Kennung `FGD` angemeldet; gelesen werden nur `B:1:Seite:Zeit:Nr:…`
+  im Kanal (`CHANNEL`). **WeintCodex sendet dort nie** – der Prüflauf hält
+  jede gesendete Nachricht an `WCAH`/`GUILD`. Das Format steht im Kopf von
+  `ForeverGuide/Net.lua`; übernommen ist das Format, kein Code. Ändert es
+  sich, kommt still nichts mehr an – `/wcui auktion` zeigt „empfangen 0“.
+  Ausschalten verlässt den Kanal nur, wenn ForeverGuide nicht läuft. Aus
+  den Chatfenstern wird der Kanal nicht entfernt (Eingriff in Fenster des
+  Spiels; der Kanal trägt nur Addon-Nachrichten).
+- **Regeln für fremde Preise** (`AS.OnBulk`, `AS.ApplyPrice`): eigener
+  Realm (Name-Realm des Absenders), nie von dir selbst, ganzer Scan nicht
+  älter als deiner (−60 s), Zeit nicht mehr als 5 min in der Zukunft. Je
+  Gegenstand gilt ein neuerer Tag; dein eigener Preis vom selben Tag geht
+  vor. Mehr als `AS.OUTLIER` = 3× abweichend: zurückgehalten, bis ein
+  **anderer** Absender etwas innerhalb von 2× meldet (`AS.held`, höchstens
+  `AS.MAX_HELD`). Empfang je Absender und Scan; nach `AS.IDLE` = 12 s Stille
+  fertig → `store.shared` (Zeit, Absender, Weg, Anzahl).
+- **In derselben Zahl:** „von Spielern“ ist `AP.SHARED` = 5000 auf dem Tag
+  (`AP.Pack(…, shared)`, viertes Ergebnis von `AP.Unpack`); Tage gehen
+  dadurch bis `AP.DAY_MAX` = 4999 (2039). Tooltip: „von Spielern, heute ·
+  3 Stück im Angebot“.
+- Taktgeber `AS.Step` alle `AS.TICK` = 0,25 s, nur solange einer der
+  Schalter an ist. Keine Zeile im Chat beim Empfang – bei vielen
+  ForeverGuide-Nutzern käme alle 20 Minuten eine.
+
+**Ungemessen:** ob Gildennachrichten und der Kanal auf Forever ankommen,
+wie das Spiel drosselt, ob der Beitritt eine Zeile im Chat zeigt.
 
 ## Automark *(6.8.1.0, auf Klick seit 6.9.0.2, `ui/automark.lua`)*
 

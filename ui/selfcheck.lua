@@ -472,6 +472,15 @@ Check("Auktionspreise", function(add)
             .. ", " .. last.n .. " Gegenstände") or ("ohne Ergebnis (" .. (last.why or last.via) .. ")")))
     end
     if AP.lastTooltip then add("", "   Zuletzt im Tooltip: Gegenstand " .. AP.lastTooltip) end
+    -- 6.18.0.0: Preise von anderen Spielern. Ungemessen, ob Nachrichten
+    -- an die Gilde und im Kanal von ForeverGuide ankommen.
+    if AP.ShareLines then
+        local cc = type(_G.C_ChatInfo) == "table" and _G.C_ChatInfo or {}
+        add("", "   SendAddonMessage: " .. has(cc.SendAddonMessage) .. " · JoinTemporaryChannel: " .. has(_G.JoinTemporaryChannel))
+        for _, line in ipairs(AP.ShareLines()) do
+            if line:sub(1, 2) ~= "  " then add("", "   " .. line) end
+        end
+    end
 end)
 
 Check("Berufe", function(add)

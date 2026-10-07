@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.17.0.0
+## Version: 6.18.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -207,6 +207,8 @@ ui/hovermark.lua
 ui/rares.lua
 # Auktionspreise (6.17.0.0, Komfort): Scan am Auktionshaus, Preis im Tooltip.
 ui/auctionprices.lua
+# Auktionspreise von anderen Spielern (6.18.0.0): Gilde, ForeverGuide nur zuhoeren.
+ui/auctionshare.lua
 ui/tooltip.lua
 ui/windows.lua
 # Das Charakterfenster als Ganzes (6.6.4.0), baut auf ui/windows.lua auf.

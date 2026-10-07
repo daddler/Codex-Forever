@@ -9,6 +9,26 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.18.0.0] – 2026-10-07
+
+**Auktionspreise von anderen Spielern.** Du musst nicht mehr selbst scannen, um frische Preise zu haben: Wer in deiner Gilde mit WeintCodex gescannt hat, teilt seine Preise mit dir – und du deine mit ihm. Im Tooltip steht dann „von Spielern“. Einschalten unter Komfort → Auktionshaus → „Mit der Gilde teilen“.
+
+**Preise aus ForeverGuide übernehmen.** Wer ForeverGuide nutzt, verschickt seine Scans an alle ForeverGuide-Spieler deines Realms. WeintCodex kann mithören und diese Preise übernehmen – es schickt selbst nie etwas dorthin. Ebenfalls unter Komfort → Auktionshaus.
+
+**Dein eigener Scan geht immer vor.** Ein fremder Preis, der mehr als dreimal so hoch oder niedrig ist wie der bekannte, zählt erst, wenn ein zweiter Spieler ihn bestätigt.
+
+### Technisch
+
+- **Anlass** (Beta-Test): ForeverGuide zeigte Preise „vor 6 Minuten“, ohne dass der Spieler am Auktionshaus war. Belegt in ForeverGuide 1.25.6, `Net.lua`: Spielernetz über den versteckten Kanal `FGLayers`, Kennung `FGD`, Senden und Empfangen ab Werk an.
+- **Neu** `ui/auctionshare.lua` (`WeintCodex.UIAuctionShare`), zwei Schalter auf der Seite Auktionshaus (`ahShareGuild`, `ahListenFG` unter `comfort`, ab Werk aus, nur mit `ahPrices`).
+- **Gilde** (Kennung `WCAH`, `GUILD`, eigenes Format `Art:1:Seite:Zeit36[:…]`, Zeit nach der Uhr des Servers): nach eigenem vollständigen Scan anbieten (`O`), alle 20 min fragen, wenn die eigenen Preise älter als 20 min sind (`Q`), wer ≥ 20 min frischer ist, bietet nach 1–4 s an und schweigt, wenn ein gleich gutes Angebot kommt; der Fragende wählt nach 4 s den frischesten (`W`), der schickt seinen Scan in Stücken (`B`, `id,preis,menge` in Basis 36) – je Seite höchstens alle 30 min, nur Eigenes aus dem letzten vollständigen Scan, nie Weitergereichtes, nie Scans älter als 6 h. Eine Nachricht je Sekunde, nicht im Kampf; lehnt das Spiel ab, 5 s Pause.
+- **ForeverGuide nur zuhören**: Beitritt zu `FGLayers` 12 s nach dem Einloggen, Kennung `FGD` angemeldet, gelesen werden nur `B:1:…`-Nachrichten im Kanal – WeintCodex sendet dort nie. Format aus dem Kopf von `ForeverGuide/Net.lua`, kein Code. Ausschalten verlässt den Kanal nur, wenn ForeverGuide selbst nicht läuft.
+- **Regeln für fremde Preise** (`AS.ApplyPrice`, `AS.OnBulk`): nur eigener Realm, nie von dir selbst, ganzer Scan nicht älter als deiner, Zeit aus der Zukunft verworfen; je Gegenstand gilt ein neuerer Tag, dein Preis vom selben Tag geht vor; mehr als 3× abweichend erst mit einem zweiten Absender (höchstens 2.000 wartende).
+- **„von Spielern“ in derselben Zahl**: `AP.Pack` addiert `AP.SHARED` = 5000 zum Tag (Tage bis 4999, also bis 2039), `AP.Unpack` gibt es als viertes zurück; Tooltip „von Spielern, heute · …“. Je Ablage `shared` = Zeit, Absender, Weg, Anzahl des letzten fremden Scans.
+- **Bericht**: `/wcui auktion` mit Spielernetz (an/aus, gesendet, empfangen, zurückgehalten, Schritte); `/wcui prüfen` zeigt, ob `SendAddonMessage` und `JoinTemporaryChannel` da sind.
+- **CLAUDE.md**: der Grundsatz „nie nach außen“ nennt jetzt diese eine Ausnahme im Spiel.
+- Prüflauf: Basis 36, aus/an, Angebot nur mit Eigenem, Antwort auf Frage, zuvorgekommen, Wahl gesendet in Stücken, im Kampf nicht, nicht zweimal, fremder „Ich“, Empfang neuer Gegenstände, eigener Preis vom selben Tag, Ausreißer erst mit zweitem Absender, Tooltip „von Spielern“, fremder Realm, ich selbst, Zukunft, alter Scan, Wahl des frischeren, regelmäßig fragen, ForeverGuide verzögert beitreten, nur `B:1` im Kanal, nie in den Kanal gesendet, Kanal bleibt bei laufendem ForeverGuide, aus heißt taub, Bericht, Selbstprüfung. Ein Fehler vor dem ersten grünen Lauf gefunden: derselbe Scan von zwei Absendern landete in einem Empfang, die Bestätigung eines Ausreißers griff dadurch nie. 29 Gegenproben, alle gefangen – zehn erst nach geschärfter Prüfung (eigener Preis vom selben Tag, Bestätigung nur durch einen anderen, Wahl des frischesten, gewählt ist ein anderer, Schlange nach dem Ausschalten, nicht fragen, wenn frisch, kein Angebot ohne Vorsprung, Empfang erst nach der Stille fertig, Geflüstertes und Eigenes, Meldung des eigenen Scans).
+
 ## [6.17.0.0] – 2026-10-07
 
 **Neu im Komfort: Auktionspreise im Tooltip.** Oben am Auktionshaus liest der Knopf „Preise scannen“ alle Angebote. Danach steht in jedem Tooltip eines Gegenstands das günstigste Angebot je Stück – mit der Menge im Angebot und dem Tag, an dem du es gesehen hast; in den Taschen auch der Preis des ganzen Stapels. Einschalten unter Komfort → Auktionshaus.

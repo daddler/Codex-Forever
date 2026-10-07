@@ -4304,6 +4304,7 @@ do
     local savedBest = K.BestMap
     local AP = WeintCodex.UIAuctionPrices
     local savedBatch = AP.BATCH
+    local savedHook = AP.OnOwnScanHook
     local savedAuction = WeintCodex.SavedData.auction
     local gt = G.GameTooltip
     local savedAdd, savedAdd2, savedPrim = gt.AddLine, gt.AddDoubleLine, gt.GetPrimaryTooltipInfo
@@ -4312,10 +4313,14 @@ do
         local p, q, d = AP.Unpack(AP.Pack(123456789, 42, 280))
         assert(p == 123456789 and q == 42 and d == 280, "Packen: " .. p .. "/" .. q .. "/" .. d)
         p, q, d = AP.Unpack(AP.Pack(AP.PRICE_MAX, 5000, 9999))
-        assert(p == AP.PRICE_MAX and q == AP.QTY_MAX and d == 9999, "Packen an der Grenze")
+        assert(p == AP.PRICE_MAX and q == AP.QTY_MAX and d == AP.DAY_MAX, "Packen an der Grenze")
+        local sh
+        p, q, d, sh = AP.Unpack(AP.Pack(AP.PRICE_MAX, 999, AP.DAY_MAX, true))
+        assert(p == AP.PRICE_MAX and q == 999 and d == AP.DAY_MAX and sh == true, "Packen: von Spielern")
+        assert(select(4, AP.Unpack(AP.Pack(5, 1, 0))) == false, "eigener Preis als fremd")
         p = AP.Unpack(AP.Pack(AP.PRICE_MAX * 10, 1, 1))
         assert(p == AP.PRICE_MAX, "zu teuer nicht gekappt")
-        for _, v in ipairs({ { 899999998, 999, 9998 }, { 1, 0, 0 }, { 7, 1, 1 } }) do
+        for _, v in ipairs({ { 899999998, 999, 4998 }, { 1, 0, 0 }, { 7, 1, 1 } }) do
             local a, b, c = AP.Unpack(AP.Pack(v[1], v[2], v[3]))
             assert(a == v[1] and b == v[2] and c == v[3], "Packen: " .. v[1])
         end
@@ -4369,6 +4374,8 @@ do
         rep = { { 100, 5, 500 }, { 100, 1, 80 }, { 200, 1, 0 }, { 300, 20, 2000000 }, { 100, 2, 300 } }
         repN = #rep
         AP.BATCH = 2
+        local hooked
+        AP.OnOwnScanHook = function(side) hooked = side end
         assert(AP.Start() == true and calls.replicate == 1 and AP.Phase() == "replicate", "Vollscan nicht angefragt")
         assert(AP.Start() == false, "zweiter Scan gleichzeitig")
         Fire("REPLICATE_ITEM_LIST_UPDATE")
@@ -4377,6 +4384,7 @@ do
         assert(AP.Phase() == "read" and AP.button:GetText():find("40 %%"), "Stueckweise: " .. tostring(AP.button:GetText()))
         AP.Step(0.01) AP.Step(0.01)
         assert(not AP.Scanning(), "Vollscan nicht fertig")
+        assert(hooked == "Horde", "Spielernetz nicht ueber den eigenen Scan unterrichtet")
         local st = Store("Horde")
         local function Get(id) return AP.Unpack(st.items[id]) end
         p, q = Get(100)
@@ -4537,9 +4545,209 @@ do
     gt.AddLine, gt.AddDoubleLine, gt.GetPrimaryTooltipInfo = savedAdd, savedAdd2, savedPrim
     K.BestMap = savedBest
     AP.BATCH = savedBatch
+    AP.OnOwnScanHook = savedHook
     K.Set("comfort", "ahPrices", false)
     WeintCodex.SavedData.auction = savedAuction
     Check(ok, "Auktionspreise: Vollscan, Suche nach Schweigen, Drosselung, eigene Suche, Tooltip, Stapel, neutral, 30 Tage"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.18.0.0: Auktionspreise von anderen Spielern. Gilde: fragen, anbieten,
+-- waehlen, in Stuecken senden - nur Eigenes aus dem letzten vollstaendigen
+-- Scan. ForeverGuide: nur zuhoeren. Fremde Preise: eigener Realm, nicht
+-- aelter, eigener Preis vom selben Tag geht vor, Ausreisser erst bestaetigt.
+do
+    local G = _G
+    local names = { "GetTime", "GetServerTime", "UnitName", "UnitFactionGroup", "IsInGuild", "InCombatLockdown",
+                    "C_ChatInfo", "GetChannelName", "JoinTemporaryChannel", "LeaveChannelByName", "C_AddOns", "IsLoggedIn" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local K = WeintCodex.UIKit
+    local AP, AS = WeintCodex.UIAuctionPrices, WeintCodex.UIAuctionShare
+    local savedAuction = WeintCodex.SavedData.auction
+    local ok, err = pcall(function()
+        local E = AS.E
+        assert(E(0) == "0" and E(35) == "z" and E(36) == "10" and AS.D("10") == 36 and AS.D("zz") == 1295, "Basis 36")
+        local clock, combat, inGuild = 1000, false, true
+        local OFFSET = 7200                       -- die Uhr des Servers geht zwei Stunden vor
+        G.GetTime = function() return clock end
+        G.GetServerTime = function() return os.time() + OFFSET end
+        G.UnitName = function() return "Ich" end
+        G.UnitFactionGroup = function() return "Horde" end
+        G.IsInGuild = function() return inGuild end
+        G.InCombatLockdown = function() return combat end
+        G.IsLoggedIn = function() return true end
+        local sent, prefixes = {}, {}
+        G.C_ChatInfo = {
+            SendAddonMessage = function(prefix, msg, kind) sent[#sent + 1] = { prefix, msg, kind } return 0 end,
+            RegisterAddonMessagePrefix = function(pf) prefixes[pf] = true end,
+        }
+        local chan, joins, leaves, fgLoaded = 0, 0, 0, true
+        G.GetChannelName = function(n) return (n == "FGLayers" and chan > 0) and chan or 0 end
+        G.JoinTemporaryChannel = function(n) if n == "FGLayers" then chan, joins = 5, joins + 1 end end
+        G.LeaveChannelByName = function() chan, leaves = 0, leaves + 1 end
+        G.C_AddOns = { IsAddOnLoaded = function(n) return n == "ForeverGuide" and fgLoaded end }
+        local function Msg(text, sender, prefix, channel)
+            AS.OnAddonMessage(prefix or "WCAH", text, channel or "GUILD", sender, clock)
+        end
+        local function Run(secs) for _ = 1, secs do clock = clock + 1 AS.Step(clock) end end
+        local function Server() return os.time() + OFFSET end
+
+        WeintCodex.SavedData.auction = nil
+        local today = AP.Day()
+        local st = AP.Store("Horde", true)
+        st.full = os.time() - 60
+        st.items[100] = AP.Pack(80, 8, today)
+        st.items[300] = AP.Pack(100000, 20, today)
+        st.items[555] = AP.Pack(1, 1, today - 3)          -- nicht im letzten Scan
+        st.items[777] = AP.Pack(5, 1, today, true)        -- von Spielern: nie weiterreichen
+
+        -- Aus: nichts gehoert, nichts gesendet.
+        K.Set("comfort", "ahPrices", true)
+        K.Set("comfort", "ahShareGuild", false)
+        Msg("W:1:H:" .. E(Server()) .. ":Ich", "Anna")
+        AS.OnOwnScan("Horde")
+        Run(10)
+        assert(#sent == 0, "gesendet, obwohl aus")
+
+        K.Set("comfort", "ahShareGuild", true)
+        assert(prefixes.WCAH, "Kennung nicht angemeldet")
+        -- Eigener Scan: angeboten, nur Eigenes aus dem letzten Scan gezaehlt.
+        AS.OnOwnScan("Horde")
+        Run(7)
+        assert(#sent == 1 and sent[1][1] == "WCAH" and sent[1][3] == "GUILD"
+            and sent[1][2] == "O:1:H:" .. E(AS.ToServer(st.full)) .. ":2", "Angebot: " .. tostring(sent[1] and sent[1][2]))
+
+        -- Frage von Anna (alt): ich biete an - es sei denn, Bob kommt zuvor.
+        Msg("Q:1:H:" .. E(Server() - 3600), "Anna")
+        assert(AS.pendingOffer.Horde, "Frage nicht beantwortet")
+        Msg("O:1:H:" .. E(AS.ToServer(st.full)) .. ":9", "Bob")
+        assert(AS.pendingOffer.Horde == nil, "doppeltes Angebot")
+        Run(5)
+        assert(#sent == 1, "trotzdem angeboten")
+
+        -- Nicht frischer als ich: kein Angebot. Gefluestert oder von mir selbst:
+        -- zaehlt nicht. Gewaehlt ist ein anderer: nichts.
+        Msg("Q:1:H:" .. E(AS.ToServer(st.full)), "Anna")
+        Msg("Q:1:H:" .. E(Server() - 3600), "Ich")
+        Msg("Q:1:H:" .. E(Server() - 3600), "Anna", "WCAH", "WHISPER")
+        assert(AS.pendingOffer.Horde == nil, "Angebot ohne Grund")
+        Msg("W:1:H:" .. E(AS.ToServer(st.full)) .. ":Bob", "Anna")
+        Msg("W:1:H:" .. E(AS.ToServer(st.full)) .. ":Ich", "Anna", "WCAH", "WHISPER")
+        assert(AS.QueueSize() == 0, "gesendet, obwohl ein anderer gewaehlt war")
+        -- Anna waehlt mich: der Scan in Stuecken an die Gilde, eine je Sekunde.
+        Msg("W:1:H:" .. E(AS.ToServer(st.full)) .. ":Ich-Testrealm", "Anna")
+        assert(AS.QueueSize() == 1, "Scan nicht eingereiht: " .. AS.QueueSize())
+        combat = true
+        Run(3)
+        assert(#sent == 1, "im Kampf gesendet")
+        combat = false
+        Run(2)
+        local b = sent[2] and sent[2][2] or ""
+        assert(b:find("^B:1:H:" .. E(AS.ToServer(st.full)) .. ":1:") and b:find(E(100) .. "," .. E(80) .. "," .. E(8), 1, true)
+            and b:find(E(300) .. "," .. E(100000) .. "," .. E(20), 1, true)
+            and not b:find(E(555) .. ",", 1, true) and not b:find(E(777) .. ",", 1, true), "Stuecke: " .. b)
+        -- Dieselbe Seite nicht gleich noch einmal; ein anderer "Ich" ist nicht ich.
+        Msg("W:1:H:" .. E(AS.ToServer(st.full)) .. ":Ich", "Carl")
+        Msg("W:1:H:" .. E(AS.ToServer(st.full)) .. ":Ich-Andersrealm", "Carl")
+        assert(AS.QueueSize() == 0, "zweimal gesendet")
+
+        -- Empfangen von Anna (frischer): neue Gegenstaende ja; mein Preis vom
+        -- selben Tag bleibt; Ausreisser erst mit zweitem Spieler.
+        local fresh = Server()
+        Msg("B:1:H:" .. E(fresh) .. ":1:" .. E(400) .. "," .. E(1234) .. "," .. E(3) .. ";" .. E(100) .. "," .. E(70) .. ",1;"
+            .. E(555) .. "," .. E(50) .. ",1", "Anna-Testrealm")
+        local p, q, d, sh = AP.Unpack(st.items[400])
+        assert(p == 1234 and q == 3 and sh == true and d == today, "fremder Preis nicht uebernommen")
+        assert(select(1, AP.Unpack(st.items[100])) == 80, "eigener Preis vom selben Tag ueberschrieben")
+        assert(select(1, AP.Unpack(st.items[555])) == 1 and AS.held[555], "Ausreisser sofort uebernommen")
+        Msg("B:1:H:" .. E(fresh) .. ":2:" .. E(555) .. "," .. E(55) .. ",2", "Anna")
+        assert(select(1, AP.Unpack(st.items[555])) == 1, "Ausreisser vom selben Absender bestaetigt")
+        Run(1)
+        assert(st.shared == nil, "Empfang vor der Stille beendet")
+        Msg("B:1:H:" .. E(fresh - 1) .. ":1:" .. E(555) .. "," .. E(60) .. ",2", "Bob")
+        assert(select(1, AP.Unpack(st.items[555])) == 60, "bestaetigter Ausreisser nicht uebernommen")
+        -- Tooltip: "von Spielern".
+        local lines = AP.TooltipLines(400)
+        assert(lines[2][1] == "von Spielern, heute · 3 Stück im Angebot", "Tooltip: " .. tostring(lines[2][1]))
+        -- Fremder Realm, ich selbst, Zukunft: nichts.
+        assert(AS.OnBulk("Zed-Andersrealm", "Gilde", "Horde", fresh, E(401) .. ",1,1", clock) == 0
+            and AS.OnBulk("Ich", "Gilde", "Horde", fresh, E(402) .. ",1,1", clock) == 0
+            and AS.OnBulk("Zed", "Gilde", "Horde", Server() + 3600, E(403) .. ",1,1", clock) == 0
+            and st.items[401] == nil and st.items[402] == nil and st.items[403] == nil, "falscher Absender angenommen")
+        -- Fertig nach AS.IDLE s Stille: gemerkt, von wem.
+        Run(AS.IDLE + 1)
+        assert(type(st.shared) == "table" and st.shared.from == "Anna" and st.shared.via == "Gilde" and st.shared.stamp == fresh,
+            "Empfang nicht gemerkt")
+        -- Ein ganzer Scan, aelter als meiner: zaehlt nicht.
+        local ign = AS.stats.ignored
+        Msg("B:1:H:" .. E(fresh - 3600) .. ":1:" .. E(404) .. ",1,1", "Dora")
+        assert(st.items[404] == nil and AS.stats.ignored == ign + 1, "alter Scan angenommen")
+
+        -- Als Fragender: meine Preise alt; zwei Angebote, der frischere gewinnt.
+        st.full, st.shared = os.time() - 3 * 3600, nil
+        Msg("O:1:H:" .. E(Server() - 300) .. ":40", "Dave")
+        Msg("O:1:H:" .. E(Server() - 600) .. ":50", "Carl")
+        local n0 = #sent
+        Run(AS.WANT_WAIT + 1)
+        assert(#sent == n0 + 1 and sent[#sent][2] == "W:1:H:" .. E(Server() - 300) .. ":Dave", "Wahl: " .. tostring(sent[#sent][2]))
+        -- Regelmaessig fragen, wenn die eigenen Preise alt sind.
+        n0 = #sent
+        Run(AS.QUERY_EVERY + 2)
+        assert(#sent == n0 + 1 and sent[#sent][2]:find("^Q:1:H:"), "Gilde nicht gefragt")
+
+        -- ForeverGuide: beitreten (verzoegert), nur zuhoeren.
+        K.Set("comfort", "ahListenFG", true)
+        assert(joins == 0, "sofort beigetreten")
+        Run(3)
+        assert(joins == 1 and AS.joined and prefixes.FGD, "Kanal nicht beigetreten")
+        local fgStamp = Server() - 60
+        Msg("B:1:H:" .. E(fgStamp) .. ":3:" .. E(900) .. "," .. E(777) .. "," .. E(4), "Erik", "FGD", "CHANNEL")
+        assert(st.items[900] and select(1, AP.Unpack(st.items[900])) == 777, "ForeverGuide nicht gelesen")
+        Msg("B:1:H:" .. E(fgStamp) .. ":3:" .. E(901) .. ",1,1", "Erik", "FGD", "GUILD")
+        Msg("B:2:H:" .. E(fgStamp) .. ":3:" .. E(902) .. ",1,1", "Erik", "FGD", "CHANNEL")
+        assert(st.items[901] == nil and st.items[902] == nil, "fremde Form angenommen")
+        Run(AS.IDLE + 1)
+        assert(st.shared.via == "ForeverGuide" and st.shared.from == "Erik", "ForeverGuide nicht gemerkt")
+        for _, m in ipairs(sent) do assert(m[1] == "WCAH" and m[3] == "GUILD", "in den Kanal gesendet") end
+        -- Aus: Kanal bleibt, solange ForeverGuide selbst laeuft; sonst verlassen.
+        K.Set("comfort", "ahListenFG", false)
+        assert(leaves == 0 and not AS.joined, "Kanal von ForeverGuide verlassen")
+        K.Set("comfort", "ahListenFG", true)
+        Run(2)
+        fgLoaded = false
+        K.Set("comfort", "ahListenFG", false)
+        assert(leaves == 1, "Kanal nicht verlassen")
+        Msg("B:1:H:" .. E(Server()) .. ":3:" .. E(903) .. ",1,1", "Erik", "FGD", "CHANNEL")
+        assert(st.items[903] == nil, "gelesen, obwohl aus")
+
+        -- Bericht und Selbstpruefung.
+        local r = table.concat(AP.Report(), "\n")
+        assert(r:find("Mit der Gilde teilen: an", 1, true) and r:find("Zuletzt von Spielern", 1, true)
+            and r:find("Aus ForeverGuide übernehmen: aus", 1, true), "Bericht: " .. r)
+        local SC = WeintCodex.UISelfCheck
+        local out = {}
+        for _, c in ipairs(SC.CHECKS) do
+            if c.name == "Auktionspreise" then c.fn(function(mark, text) out[#out + 1] = text end) end
+        end
+        assert(table.concat(out, "\n"):find("SendAddonMessage: ja", 1, true), "Selbstpruefung")
+
+        -- Frisch (eben von ForeverGuide): nicht fragen. Alt: fragen - und
+        -- nach dem Ausschalten der Gilde nichts mehr senden.
+        assert(AS.Query("Horde", clock) == false, "gefragt, obwohl frisch")
+        st.shared = nil
+        assert(AS.Query("Horde", clock) == true and AS.QueueSize() == 1, "nicht gefragt, obwohl alt")
+        K.Set("comfort", "ahShareGuild", false)
+        n0 = #sent
+        Run(3)
+        assert(#sent == n0, "gesendet nach dem Ausschalten")
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    K.Set("comfort", "ahShareGuild", false)
+    K.Set("comfort", "ahListenFG", false)
+    K.Set("comfort", "ahPrices", false)
+    WeintCodex.SavedData.auction = savedAuction
+    Check(ok, "Auktionspreise teilen: Gilde fragt/bietet/waehlt/sendet, nur Eigenes, Empfang mit Regeln, ForeverGuide nur zuhoeren"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

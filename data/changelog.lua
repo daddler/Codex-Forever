@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.18.0.0",
+        date    = "07.10.2026",
+        notes   = {
+            "|cff7C6CFFAuktionspreise von anderen Spielern.|r Du musst nicht mehr selbst scannen, um frische Preise zu haben: Wer in deiner Gilde mit WeintCodex gescannt hat, teilt seine Preise mit dir – und du deine mit ihm. Im Tooltip steht dann „von Spielern“. Einschalten unter Komfort → Auktionshaus → „Mit der Gilde teilen“.",
+            "|cff7C6CFFPreise aus ForeverGuide übernehmen.|r Wer ForeverGuide nutzt, verschickt seine Scans an alle ForeverGuide-Spieler deines Realms. WeintCodex kann mithören und diese Preise übernehmen – es schickt selbst nie etwas dorthin. Ebenfalls unter Komfort → Auktionshaus.",
+            "|cff7C6CFFDein eigener Scan geht immer vor.|r Ein fremder Preis, der mehr als dreimal so hoch oder niedrig ist wie der bekannte, zählt erst, wenn ein zweiter Spieler ihn bestätigt.",
+        },
+    },
+    {
         version = "6.17.0.0",
         date    = "07.10.2026",
         notes   = {
