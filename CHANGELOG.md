@@ -9,7 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
-## [6.19.1.2] – 2026-10-07
+## [6.19.1.3] – 2026-10-07
+
+**Flüstern: kein „r“ mehr in der Chatzeile.** Nach der Taste „Antworten“ stand der Buchstabe der Taste schon in der Zeile. Jetzt ist sie leer und bereit für deine Antwort.
+
+### Technisch
+
+- Beta-Test 6.19.1.2: „wenn ich r drücke, ist im Chat auch schon direkt r im Eingabefenster“. `MS.OnReply` lief hinter `ChatFrame_ReplyTell` noch während des Tastendrucks und öffnete die Chatzeile mit „/w Name“ sofort – das Zeichen der Taste kam danach und landete in ihr (mit „Direkt senden“ ebenso in der Antwortzeile des Fensters). Jetzt öffnet die Taste das Fenster sofort, die Chatzeile bzw. den Fokus aber erst im nächsten Bild (`C_Timer.After(0, …)`); „/w Name“ ersetzt dann, was darin steht. Ist der Helfer bis dahin aus oder das Gespräch geschlossen, passiert nichts.
+- Prüflauf mit einem Zeitgeber, den der Test selbst auslöst: im Augenblick der Taste weder Chatzeile noch Fokus, im nächsten Bild beides. 5 Gegenproben, alle gefangen – eine erst nach geschärfter Prüfung (abgeschaltet zwischen Taste und nächstem Bild).
+- Ungemessen: ob ein Bild auf Forever reicht. Steht das „r“ weiter da, muss die Wartezeit länger werden.
+
+
 
 **Flüstern: die Taste „Antworten“ öffnet das Fenster.** Drückst du R (oder deine Taste dafür), geht das Gespräch mit dem auf, der dir zuletzt geflüstert hat – auch im Kampf. Die Chatzeile zielt dabei auf ihn, auch wenn das Flüstern nicht im Chat stand.
 

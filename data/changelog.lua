@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.19.1.3",
+        date    = "07.10.2026",
+        notes   = {
+            "|cff7C6CFFFlüstern: kein „r“ mehr in der Chatzeile.|r Nach der Taste „Antworten“ stand der Buchstabe der Taste schon in der Zeile. Jetzt ist sie leer und bereit für deine Antwort.",
+        },
+    },
+    {
         version = "6.19.1.2",
         date    = "07.10.2026",
         notes   = {

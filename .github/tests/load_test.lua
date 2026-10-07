@@ -5016,7 +5016,7 @@ do
                     "ChatFrame_AddMessageEventFilter", "ChatFrame_OpenChat", "NUM_CHAT_WINDOWS", "ChatFrame1EditBox",
                     "hooksecurefunc", "ChatEdit_UpdateHeader", "BNet_GetBNetIDAccount", "PlaySound", "SOUNDKIT",
                     "FlashClientIcon", "GetTime", "ERR_CHAT_PLAYER_NOT_FOUND_S", "ChatFrame_ReplyTell",
-                    "ChatEdit_GetActiveWindow", "ChatFrame_SendBNetTell" }
+                    "ChatEdit_GetActiveWindow", "ChatFrame_SendBNetTell", "C_Timer" }
     local saved = {}
     for i, n in ipairs(names) do saved[i] = G[n] end
     local K = WeintCodex.UIKit
@@ -5231,7 +5231,18 @@ do
 
         -- Taste "Antworten" (R, 6.19.1.2): Fenster beim zuletzt Fluesternden auf;
         -- zielt die Chatzeile (veraltet) woanders hin, neu mit "/w Name".
+        -- Seit 6.19.1.3 erst im naechsten Bild - sonst landet das "r" der
+        -- Taste in der eben geoeffneten Zeile. Der Zeitgeber hier feuert,
+        -- wenn der Test es sagt (Next).
         assert(replyHook, "Taste Antworten nicht angehaengt")
+        local queue = {}
+        G.C_Timer = { After = function(d, fn) queue[#queue + 1] = { d, fn } end, NewTicker = function() return {} end }
+        local function Next()
+            local q = queue
+            queue = {}
+            for _, e in ipairs(q) do assert(e[1] == 0, "nicht im naechsten Bild: " .. tostring(e[1])) e[2]() end
+        end
+        local function R() replyHook() Next() end
         MS.win:Hide()
         W("antwortest du?", "Rita")
         MS.OnEvent(nil, "CHAT_MSG_WHISPER_INFORM", "selbst", "Sven", "", "", "", "", 0, 0, "", 0, 1, nil)
@@ -5241,17 +5252,19 @@ do
         eb:SetAttribute("tellTarget", "Altbekannt")
         local nOpen = #opened
         replyHook()
+        assert(MS.win:IsShown() and #opened == nOpen, "Chatzeile im selben Augenblick wie die Taste geoeffnet (das r landet darin)")
+        Next()
         assert(MS.win:IsShown() and MS.current == "w:Rita" and MS.conv["w:Rita"].unread == 0 and MS.order[1] == "w:Rita",
             "R oeffnet nicht bei Rita: " .. tostring(MS.current))
         assert(#opened == nOpen + 1 and opened[#opened] == "/w Rita ", "Chatzeile nicht auf Rita: " .. tostring(opened[#opened]))
         -- Zielt sie schon auf Rita: nicht noch einmal.
         eb:SetAttribute("tellTarget", "Rita-Testrealm")
-        replyHook()
+        R()
         assert(#opened == nOpen + 1, "Chatzeile doppelt geoeffnet")
         -- Im Kampf: ausdruecklich gedrueckt, also auf.
         MS.win:Hide()
         combat = true
-        replyHook()
+        R()
         assert(MS.win:IsShown(), "R im Kampf: Fenster bleibt zu")
         combat = false
         -- Direkt senden: die Antwortzeile des Fensters, nicht die Chatzeile.
@@ -5260,33 +5273,43 @@ do
         MS.input.SetFocus = function() focused = true end
         eb:SetAttribute("tellTarget", "Altbekannt")
         replyHook()
+        assert(not focused, "direkt: Fokus im selben Augenblick wie die Taste (das r landet darin)")
+        Next()
         assert(focused and #opened == nOpen + 1, "direkt: Fokus nicht im Fenster oder Chatzeile geoeffnet")
         MS.input.SetFocus = nil
         K.Set("comfort", "msgDirect", false)
+        -- Zwischen Taste und naechstem Bild abgeschaltet: nichts mehr anfassen.
+        eb:SetAttribute("chatType", "WHISPER")
+        eb:SetAttribute("tellTarget", "Altbekannt")
+        replyHook()
+        K.Set("comfort", "msgOn", false)
+        Next()
+        K.Set("comfort", "msgOn", true)
+        assert(#opened == nOpen + 1, "nach dem Abschalten noch die Chatzeile geoeffnet")
         -- Battle.net: Ziel ueber den Namen.
         MS.OnEvent(nil, "CHAT_MSG_BN_WHISPER", "bn?", "Bnfreund", "", "", "", "", 0, 0, "", 0, 1, "", 31)
         eb:SetAttribute("chatType", "BN_WHISPER")
         eb:SetAttribute("tellTarget", "Bnfreund")
-        replyHook()
+        R()
         assert(MS.current == "bn:31" and #opened == nOpen + 1, "Battle.net: Chatzeile zielte schon richtig")
         eb:SetAttribute("tellTarget", "Jemandanders")
-        replyHook()
+        R()
         assert(#opened == nOpen + 2 and opened[#opened] == "bn:31", "Battle.net: Chatzeile nicht neu gezielt")
         nOpen = #opened
         -- Gespraech inzwischen geschlossen: nichts, und nicht neu angelegt.
         MS.Close("bn:31")
         MS.win:Hide()
-        replyHook()
+        R()
         assert(not MS.win:IsShown() and MS.conv["bn:31"] == nil and #opened == nOpen, "R nach geschlossenem Gespraech")
         MS.lastIn = "w:Rita"
         -- Niemand hat gefluestert, oder der Helfer ist aus: nichts.
         MS.lastIn = nil
         MS.win:Hide()
-        replyHook()
+        R()
         assert(not MS.win:IsShown(), "R ohne Fluesternden: aufgegangen")
         MS.lastIn = "w:Rita"
         K.Set("comfort", "msgOn", false)
-        replyHook()
+        R()
         assert(not MS.win:IsShown() and #opened == nOpen, "R bei abgeschaltetem Helfer")
         K.Set("comfort", "msgOn", true)
         assert(#touched == 0, "Chatzeile des Spiels angefasst: " .. table.concat(touched, ", "))

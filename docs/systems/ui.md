@@ -1367,8 +1367,11 @@ ausdrücklich – auch im Kampf, als gelesen), und zielt die offene
 Chatzeile auf jemand anderen (`MS.EditAimsAt`, Attribute nur gelesen),
 öffnet WeintCodex sie neu mit „/w Name“ – derselbe Weg wie der Klick in
 die Antwortzeile (`OpenGameReply`). Mit „Direkt senden“: Fokus in die
-Antwortzeile des Fensters. Ungemessen: ob die Taste auf Forever über eine
-dieser beiden Funktionen läuft.
+Antwortzeile des Fensters. Gemessen (Beta-Test 6.19.1.2): die Taste läuft
+darüber, das Fenster geht auf. Seit 6.19.1.3 kommen Chatzeile bzw. Fokus
+erst im nächsten Bild (`C_Timer.After(0, …)`): sofort geöffnet, fing die
+Zeile das Zeichen der Taste („r“) auf – „/w Name“ ersetzt jetzt, was darin
+steht. Ungemessen: ob ein Bild reicht.
 
 **„/w Name“ und Klick auf einen Namen** (6.19.1.0). WeintCodex hängt sich
 an die Eingabezeilen des Spiels (`HookScript` auf `OnShow`/`OnTextChanged`,

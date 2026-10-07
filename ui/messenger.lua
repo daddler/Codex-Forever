@@ -865,11 +865,20 @@ function MS.OnReply()
     Touch(key)
     -- Ausdruecklich gedrueckt: auch im Kampf auf, und gelesen.
     MS.Show(key)
-    if Get("direct") then
-        if input then input:SetFocus() end
-        return
+    -- Erst im naechsten Bild (6.19.1.3, Beta-Test: "wenn ich r druecke,
+    -- ist im Chat auch schon direkt r im Eingabefenster"): die Taste ist
+    -- noch nicht fertig - ihr Zeichen landet in der Zeile, die WeintCodex
+    -- im selben Augenblick oeffnet. Danach ersetzt "/w Name" alles darin.
+    local function Hand()
+        if not (MS.Active() and conv[key]) then return end
+        if Get("direct") then
+            if input then input:SetFocus() end
+            return
+        end
+        if not MS.EditAimsAt(key) then OpenGameReply(conv[key]) end
     end
-    if not MS.EditAimsAt(key) then OpenGameReply(conv[key]) end
+    local t = _G.C_Timer
+    if type(t) == "table" and type(t.After) == "function" then t.After(0, Hand) else Hand() end
 end
 
 function MS.OnChatEdit(eb)
