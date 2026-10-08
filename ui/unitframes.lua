@@ -419,6 +419,7 @@ local function Create(unit)
     if okModel and type(model) == "table" then
         model:SetAllPoints(pf)
         pf.model = model
+        K.TrackModel(model)
         -- Kamera erst setzen, wenn das Modell geladen ist - vorher wirkt
         -- sie auf nichts, und das Portraet bleibt schwarz.
         pcall(model.SetScript, model, "OnModelLoaded", function(m)
@@ -439,6 +440,7 @@ local function Create(unit)
         local okBar, bm = pcall(CreateFrame, "PlayerModel", nil, f)
         if okBar and type(bm) == "table" then
             bm:SetAllPoints(health)
+            K.TrackModel(bm)
             bm:SetFrameLevel((health:GetFrameLevel() or 1) + 1)
             pcall(bm.SetScript, bm, "OnModelLoaded", function(m)
                 if m.SetPortraitZoom then m:SetPortraitZoom(1) end

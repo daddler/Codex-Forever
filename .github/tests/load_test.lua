@@ -1324,6 +1324,9 @@ do
         zoom = 4
         upd(DL.win, 0.5)
         assert(grads[#grads] == 10, "Tempo nicht wie eingestellt: " .. tostring(grads[#grads]))
+        -- 6.23.2.1: am Ende steht ALLES da (Verlauf hinter dem letzten Zeichen).
+        upd(DL.win, 100)
+        assert(grads[#grads] == DL.ALL, "Text am Ende nicht ganz sichtbar: " .. tostring(grads[#grads]))
         -- Hoechstens DL.CAM_MAX warten.
         DL.Close()
         queue = {}
@@ -1335,12 +1338,18 @@ do
         upd(DL.win, 0.5)
         assert(#grads > 0, "Text wartet ewig auf eine Kamera, die nicht kommt")
         -- Oberflaeche: langsam aus, danach wieder ein.
+        local model = CreateFrame("Frame")
+        model:Show()
+        K.TrackModel(model)
+        local mc = G.MinimapCluster
+        mc:Show()
         local fu = DL.fader:GetScript("OnUpdate")
         assert(DL.fade.on and DL.fader:IsShown(), "Oberflaeche blendet nicht aus")
         fu(DL.fader, DL.FADE_OUT / 2)
         assert(alpha > 0 and alpha < 1, "nicht langsam: " .. alpha)
         fu(DL.fader, DL.FADE_OUT)
         assert(alpha == 0, "nicht ganz aus: " .. alpha)
+        assert(not model:IsShown() and not mc:IsShown(), "Portraet oder Minikarte bleiben stehen")
         DL.win:Hide()
         local h = DL.win:GetScript("OnHide")
         h(DL.win)
@@ -1348,6 +1357,7 @@ do
         queue = {}
         fu(DL.fader, DL.FADE_BACK + 0.1)
         assert(alpha == 1 and not DL.fade.on, "Oberflaeche nicht zurueck: " .. alpha)
+        assert(model:IsShown() and mc:IsShown(), "Portraet oder Minikarte nicht zurueck")
         -- Kampf: sofort zurueck; im Kampf gar nicht erst aus.
         DL.cam.saved, DL.cam.target = nil, nil
         stub.FireEvent("GOSSIP_SHOW")

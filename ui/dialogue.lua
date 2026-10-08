@@ -297,6 +297,11 @@ local function OnKey(self, key)
     end
 end
 
+function DL.ShowAll()
+    if body and body.SetAlphaGradient then pcall(body.SetAlphaGradient, body, DL.ALL, 0) end
+end
+DL.ALL = 100000
+
 local function Gradient(at)
     if body.SetAlphaGradient then pcall(body.SetAlphaGradient, body, at, 30) end
 end
@@ -325,8 +330,9 @@ local function OnUpdate(self, el)
     reveal = reveal + el * DL.Speed()
     if reveal >= revealLen then
         reveal = nil
-        Gradient(0)
-        if body.SetAlphaGradient then pcall(body.SetAlphaGradient, body, 0, 0) end
+        -- Ganz zeigen: Verlauf HINTER dem letzten Zeichen. (0, 0) hiess
+        -- "ab Zeichen 0 nichts" - 6.23.2.0 blieb nur der Anfang stehen.
+        DL.ShowAll()
         return
     end
     Gradient(math.floor(reveal))
@@ -663,6 +669,7 @@ function DL.Draw(c)
         Gradient(0)
     else
         reveal, camWait = nil, nil
+        DL.ShowAll()
     end
     local combat = _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false)
     win:EnableKeyboard(keys and not combat and true or false)
@@ -907,6 +914,33 @@ DL.FADE_BACK = 0.5       -- und so lange wieder ein
 DL.FADE_TO = 0           -- bis auf diese Deckkraft
 DL.fade = { from = nil, to = nil, t = 0, dur = 1, orig = nil, on = false }
 
+-- Was der Durchsichtigkeit nicht folgt (6.23.2.1, Beta-Test: Portraets,
+-- Spielerpfeil und Symbole der Minikarte blieben stehen): 3D-Modelle
+-- (K.models) und die Minikarte werden versteckt, solange ausgeblendet ist,
+-- und nur die zurueckgezeigt, die vorher sichtbar waren.
+DL.hidden = {}
+DL.EXTRA = { "MinimapCluster", "Minimap" }
+local function Take(f)
+    local h = DL.hidden
+    if type(f) == "table" and f.IsShown and f:IsShown() and not h[f] then
+        h[f] = true
+        f:Hide()
+    end
+end
+function DL.HideExtras()
+    if DL.fade.extras then return end
+    DL.fade.extras = true
+    for m in pairs(K.models or {}) do Take(m) end
+    for _, name in ipairs(DL.EXTRA) do Take(_G[name]) end
+end
+function DL.ShowExtras()
+    DL.fade.extras = false
+    for f in pairs(DL.hidden) do
+        if f.Show then pcall(f.Show, f) end
+        DL.hidden[f] = nil
+    end
+end
+
 local fader = CreateFrame("Frame")
 fader:Hide()
 fader:SetScript("OnUpdate", function(self, el)
@@ -916,6 +950,8 @@ fader:SetScript("OnUpdate", function(self, el)
     local k = math.min(1, f.t / f.dur)
     k = k * k * (3 - 2 * k)                -- weich an beiden Enden
     if up then up:SetAlpha(f.from + (f.to - f.from) * k) end
+    -- Was nicht mitblendet, verschwindet auf halbem Weg.
+    if DL.fade.on and k >= 0.5 then DL.HideExtras() end
     if k >= 1 then self:Hide() end
 end)
 DL.fader = fader
@@ -944,6 +980,7 @@ end
 function DL.FadeBack(now)
     if not DL.fade.on then return false end
     DL.fade.on = false
+    DL.ShowExtras()
     local orig = DL.fade.orig or 1
     if now then
         fader:Hide()

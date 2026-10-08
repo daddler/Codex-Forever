@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.23.2.1] – 2026-10-08
+
+**Gespräche: der Text bleibt stehen.** Nach dem Einlaufen verschwand der Text bis auf die ersten Worte – jetzt steht er ganz da. Beim Ausblenden verschwinden auch die Porträts der Rahmen und die Minikarte mit Spielerpfeil und Symbolen; nach dem Gespräch kommen sie zurück.
+
+### Technisch
+
+- Beta-Test 6.23.2.0, Bild: nach dem Einlaufen nur „Ich kenne die W…“. Das Ende rief `SetAlphaGradient(0, 0)` – „ab Zeichen 0 nichts“. Jetzt `DL.ShowAll` mit dem Verlauf hinter dem letzten Zeichen (`DL.ALL`), auch ohne Einlaufen.
+- Porträts (3D-Modelle) und Minikarte (Spielerpfeil, Symbole) folgen der Durchsichtigkeit von `UIParent` nicht. Neu `K.TrackModel` (`ui/kit.lua`), die Modelle der Einheitenrahmen melden sich an; `DL.HideExtras` versteckt sie und `MinimapCluster`/`Minimap` auf halbem Weg des Ausblendens, `DL.ShowExtras` zeigt nur die vorher sichtbaren zurück.
+- Prüflauf: Text am Ende ganz, Modell und Minikarte weg und zurück; drei Gegenproben gefangen.
+
 ## [6.23.2.0] – 2026-10-08
 
 **Gespräche zum Eintauchen.** Sprichst du einen NPC an, blendet die Oberfläche langsam aus – nur das Gespräch bleibt, mit dem Bild des NPCs im goldenen Ring, Zierlinien und Antworten als Karten. Der Text läuft erst ein, wenn die Kamera angekommen ist, im Tempo, das du unter Komfort → Gespräche einstellst. Danach kommen Leisten und Rahmen sanft zurück; im Kampf oder bei einer Rückfrage des Spiels sofort.

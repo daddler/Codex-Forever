@@ -751,6 +751,11 @@ end
 
 local listeners = {}
 function K.Listen(fn) listeners[#listeners + 1] = fn end
+
+-- 3D-Modelle (Portraets) folgen der Durchsichtigkeit ihrer Eltern nicht -
+-- wer die Oberflaeche ausblendet (ui/dialogue.lua), muss sie kennen.
+K.models = setmetatable({}, { __mode = "k" })
+function K.TrackModel(m) if type(m) == "table" then K.models[m] = true end end
 function K.Fire(kind, ...)
     for _, fn in ipairs(listeners) do pcall(fn, kind, ...) end
 end

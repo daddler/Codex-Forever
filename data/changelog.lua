@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.23.2.1",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFGespräche: der Text bleibt stehen.|r Nach dem Einlaufen verschwand der Text bis auf die ersten Worte – jetzt steht er ganz da. Beim Ausblenden verschwinden auch die Porträts der Rahmen und die Minikarte mit Spielerpfeil und Symbolen; nach dem Gespräch kommen sie zurück.",
+        },
+    },
+    {
         version = "6.23.2.0",
         date    = "08.10.2026",
         notes   = {

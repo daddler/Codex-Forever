@@ -1600,6 +1600,9 @@ beide ab Werk aus.
   und eigener Tooltip ohne Elternteil (Maßstab von `UIParent`); nie im Kampf,
   Kampfbeginn und `StaticPopup1–4` holen sie sofort zurück. Gestaltung für
   Rollenspieler: Bild des NPCs im Ring, Zierlinien, Antworten als Karten.
+- 6.23.2.1: Ende des Einlaufens `SetAlphaGradient(DL.ALL, 0)` (nicht 0/0 –
+  das versteckt alles). 3D-Modelle und Minikarte folgen der Deckkraft nicht:
+  `K.TrackModel` + `DL.HideExtras`/`ShowExtras` (`MinimapCluster`, `Minimap`).
 - Nicht gebaut: Vorlesen.
 
 ### Kräuter und Erz im Wechsel (`ui/gathertrack.lua`, 6.22.0.0)
