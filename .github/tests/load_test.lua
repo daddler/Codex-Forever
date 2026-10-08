@@ -1442,6 +1442,69 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.23.3.0: gemerkter Blick ueber die Ansichten des Spiels.
+do
+    local G = _G
+    local names = { "C_GossipInfo", "UnitName", "SaveView", "SetView", "GetTime", "C_Timer", "GetCameraZoom",
+        "CameraZoomIn", "CameraZoomOut", "C_CVar" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local DL = WeintCodex.UIDialogue
+    local ok, err = pcall(function()
+        local calls, now, queue, cvars = {}, 100, {}, { test_cameraOverShoulder = "0" }
+        G.SaveView = function(n) calls[#calls + 1] = "save" .. n end
+        G.SetView = function(n) calls[#calls + 1] = "set" .. n end
+        G.GetTime = function() return now end
+        G.C_Timer = { After = function(_, fn) queue[#queue + 1] = fn end }
+        G.GetCameraZoom = function() return 15 end
+        G.CameraZoomIn = function() calls[#calls + 1] = "zoom" end
+        G.CameraZoomOut = function() end
+        G.C_CVar = { GetCVar = function(n) return cvars[n] end, SetCVar = function(n, v) cvars[n] = v return true end }
+        G.UnitName = function() return "Raene" end
+        G.C_GossipInfo = { GetText = function() return "Hallo" end, GetOptions = function() return {} end,
+            SelectOption = function() end, CloseGossip = function() end }
+        K.Set("comfort", "dlgOn", true)
+        K.Set("comfort", "dlgViewSaved", false)
+        -- Nichts gemerkt: zoomen wie bisher.
+        stub.FireEvent("GOSSIP_SHOW")
+        assert(calls[#calls] == "zoom", "ohne gemerkten Blick nicht gezoomt")
+        DL.Close()
+        DL.win:GetScript("OnHide")(DL.win)          -- wie im Spiel
+        for _, fn in ipairs(queue) do fn() end
+        assert(cvars.test_cameraOverShoulder == "0", "Schulter vom ersten Gespraech nicht zurueck")
+        queue, calls = {}, {}
+        DL.cam.saved, DL.cam.target = nil, nil
+        -- Merken, dann im Gespraech: alten Blick sichern, gemerkten nehmen, keine Schulter.
+        assert(DL.RememberView() and calls[1] == "save5" and K.Get("comfort", "dlgViewSaved"), "Blick nicht gemerkt")
+        calls = {}
+        stub.FireEvent("GOSSIP_SHOW")
+        assert(calls[1] == "save4" and calls[2] == "set5" and #calls == 2, "Blick nicht genommen: " .. table.concat(calls, ","))
+        assert(cvars.test_cameraOverShoulder == "0", "Schulter zusaetzlich zum gemerkten Blick")
+        assert(DL.CamMoving(), "Text wartet nicht auf das Gleiten")
+        now = now + DL.VIEW_TIME + 0.1
+        assert(not DL.CamMoving(), "Text wartet ewig")
+        -- Ende: zurueck in den alten Blick.
+        DL.win:Hide()
+        local h = DL.win:GetScript("OnHide")
+        h(DL.win)
+        for _, fn in ipairs(queue) do fn() end
+        assert(calls[#calls] == "set4" and DL.cam.view == nil, "nicht zurueck in den alten Blick")
+        -- Aus: wieder zoomen.
+        K.Set("comfort", "dlgView", false)
+        calls = {}
+        stub.FireEvent("GOSSIP_SHOW")
+        assert(calls[#calls] == "zoom", "gemerkter Blick, obwohl aus")
+        DL.Close()
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    K.Set("comfort", "dlgOn", false)
+    K.Set("comfort", "dlgView", true)
+    K.Set("comfort", "dlgViewSaved", false)
+    DL.cam.saved, DL.cam.target, DL.cam.view, DL.cam.shoulder = nil, nil, nil, false
+    Check(ok, "Gespraeche 3: gemerkter Blick - merken, nehmen, Text wartet aufs Gleiten, zurueck, ohne Schulter"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.21.1.1 (Absturz im Spiel, "L->top < L->ci->top"): Rahmen mit sehr
 -- vielen Kindern werden nicht mit GetChildren gelesen, und die Symbole der
 -- Karte haengen in einem Rahmen, nicht direkt auf der Flaeche.

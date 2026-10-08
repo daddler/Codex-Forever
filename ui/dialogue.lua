@@ -38,6 +38,8 @@ DL.DEFAULTS = {
     dlgType  = true,     -- Text laeuft ein
     dlgScale = 100,      -- Groesse in %
     dlgCam   = true,     -- Kamera heran, danach zurueck (6.23.1.0)
+    dlgView  = true,     -- gemerkten Blick nutzen, sobald einer gemerkt ist (6.23.3.0)
+    dlgViewSaved = false,
     dlgCamDist = 6,      -- so nah (Meter; 6.23.2.2: 6 statt 4)
     dlgShoulder = true,  -- NPC zur Seite (Schulterkamera, 6.23.1.0)
     dlgSpeed = 35,       -- Zeichen je Sekunde beim Einlaufen (6.23.2.0)
@@ -311,6 +313,10 @@ end
 
 -- Kamera noch unterwegs? Der Text wartet, hoechstens DL.CAM_MAX Sekunden.
 function DL.CamMoving()
+    if DL.cam and DL.cam.view then
+        local now = _G.GetTime and K.Plain(_G.GetTime())
+        return type(now) == "number" and now - DL.cam.view < DL.VIEW_TIME
+    end
     local target = DL.cam and DL.cam.target
     if not target then return false end
     local z = _G.GetCameraZoom and K.Plain(_G.GetCameraZoom())
@@ -799,10 +805,45 @@ local function SpeedBack()
 end
 DL.SpeedBack = SpeedBack
 
+-- GEMERKTER BLICK (6.23.3.0, Beta-Test: "Kamerawinkel aendern, immer
+-- diese Position"): Addons erfahren weder die Lage des NPCs noch die
+-- Richtung der Kamera - einen Winkel ausrechnen geht nicht. Die Ansichten
+-- des Spiels aber schon: der Spieler stellt den Blick einmal ein und merkt
+-- ihn (SaveView in Ansicht DL.VIEW_TALK); im Gespraech wird der Blick von
+-- vorher in DL.VIEW_BACK gelegt und der gemerkte genommen (SetView, das
+-- Spiel gleitet hinueber), danach zurueck. Die Ansicht gilt relativ zum
+-- eigenen Charakter. Belegt die Ansichten 4 und 5 des Spiels.
+DL.VIEW_TALK = 5
+DL.VIEW_BACK = 4
+DL.VIEW_TIME = 1.5       -- so lange gleitet die Kamera (Text wartet)
+
+function DL.ViewUsable()
+    return K.Get(KEY, "dlgView") and K.Get(KEY, "dlgViewSaved")
+        and type(_G.SaveView) == "function" and type(_G.SetView) == "function" and true or false
+end
+
+function DL.RememberView()
+    if type(_G.SaveView) ~= "function" then
+        Say("Das Spiel kennt keine gespeicherten Ansichten – der Blick lässt sich nicht merken.")
+        return false
+    end
+    _G.SaveView(DL.VIEW_TALK)
+    K.Set(KEY, "dlgViewSaved", true)
+    Say("Blick gemerkt – so schaut die Kamera ab jetzt bei jedem Gespräch.")
+    return true
+end
+
 function DL.CamIn()
-    if not K.Get(KEY, "dlgCam") or DL.cam.saved then return false end
+    if not K.Get(KEY, "dlgCam") or DL.cam.saved or DL.cam.view then return false end
     SpeedIn()
-    ShoulderIn()
+    if DL.ViewUsable() then
+        _G.SaveView(DL.VIEW_BACK)
+        _G.SetView(DL.VIEW_TALK)
+        local now = _G.GetTime and K.Plain(_G.GetTime())
+        DL.cam.view = type(now) == "number" and now or 0
+        return true
+    end
+    ShoulderIn()                       -- nur ohne gemerkten Blick
     local z = Zoom()
     local target = tonumber(K.Get(KEY, "dlgCamDist")) or DL.DEFAULTS.dlgCamDist
     if not (z and _G.CameraZoomIn) or z <= target + 0.5 then return false end
@@ -835,6 +876,13 @@ end
 function DL.CamOut()
     if win and win:IsShown() then return false end
     ShoulderOut()
+    if DL.cam.view then
+        DL.cam.view = nil
+        _G.SetView(DL.VIEW_BACK)
+        local t = _G.C_Timer
+        if t and t.After then t.After(DL.SPEED_BACK, SpeedBack) end
+        return true
+    end
     local saved = DL.cam.saved
     if not saved then return false end
     DL.cam.saved, DL.cam.target = nil, nil
@@ -848,7 +896,7 @@ end
 
 local function CamOutNow() DL.CamOut() end
 function DL.CamLater()
-    if not (DL.cam.saved or DL.cam.shoulder) then return end
+    if not (DL.cam.saved or DL.cam.shoulder or DL.cam.view) then return end
     local t = _G.C_Timer
     if t and t.After then t.After(DL.CAM_WAIT, CamOutNow) else DL.CamOut() end
 end
@@ -1107,6 +1155,8 @@ function DL.StatusLines()
     out[#out + 1] = string.format("Gezeigt %d · gewählt %d · gescheitert %d · Warnung zur Testeinstellung geschlossen %d",
         stats.shown, stats.picked, stats.failed, stats.warnHidden)
     if DL.lastError then out[#out + 1] = "Zuletzt gescheitert: " .. DL.lastError end
+    out[#out + 1] = "Gemerkter Blick: " .. (K.Get(KEY, "dlgViewSaved") and (K.Get(KEY, "dlgView") and "an" or "gemerkt, aber aus") or "keiner gemerkt")
+        .. " · Ansichten des Spiels (SaveView/SetView): " .. ((type(_G.SaveView) == "function" and type(_G.SetView) == "function") and "ja" or "nein")
     local l = DL.camLog
     if l.start then
         local parts = {}
@@ -1146,6 +1196,10 @@ local function Build(B)
             description = "Nutzt eine Testeinstellung des Spiels (Schulterkamera); danach zurück auf deinen Wert." },
           { type = "button", label = "Platz", text = "Zurück an den Platz des Questfensters", disabled = off,
             onClick = function() K.Set(KEY, "dlgPos", nil) DL.Place() end })
+    B:Row({ type = "toggle", label = "Gemerkten Blick nutzen", key = "dlgView", disabled = camOff,
+            description = "Statt nur heranzuzoomen: die Kamera gleitet in den Blick, den du gemerkt hast. Belegt die Ansichten 4 und 5 des Spiels." },
+          { type = "button", label = "Blick", text = "Diesen Blick merken", disabled = camOff,
+            onClick = function() DL.RememberView() end })
 end
 
 local mod = K.Module(KEY)

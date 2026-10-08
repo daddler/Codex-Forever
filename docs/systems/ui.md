@@ -1606,6 +1606,10 @@ beide ab Werk aus.
 - 6.23.2.2: Warnung zur Testeinstellung kommt doch als Dialog – `DL.OnPopup`
   schließt sie, ohne die Oberfläche zurückzuholen. Etiketten je Status
   (`DL.LOOK`). Abstand ab Werk 6 m. Gemessen: Kamera 21,9 → 4,0 in 3 s.
+- 6.23.3.0 gemerkter Blick: `SaveView(5)` per Knopf; im Gespräch `SaveView(4)`
+  + `SetView(5)`, danach `SetView(4)` (Ansichten 4/5 des Spiels belegt). Ohne
+  Schulter. Ein berechneter Winkel geht nicht – Lage des NPCs und Richtung
+  der Kamera gibt der Client Addons nicht.
 - Nicht gebaut: Vorlesen.
 
 ### Kräuter und Erz im Wechsel (`ui/gathertrack.lua`, 6.22.0.0)

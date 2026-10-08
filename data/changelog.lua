@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.23.3.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFGespräche: dein Blickwinkel.|r Stell die Kamera einmal so ein, wie sie im Gespräch stehen soll, und drück unter Komfort → Gespräche auf „Diesen Blick merken“. Ab dann gleitet sie bei jedem Gespräch in genau diesen Blick und danach zurück in deinen alten. Der Text wartet, bis sie angekommen ist.",
+        },
+    },
+    {
         version = "6.23.2.3",
         date    = "08.10.2026",
         notes   = {

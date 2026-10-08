@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.23.3.0] – 2026-10-08
+
+**Gespräche: dein Blickwinkel.** Stell die Kamera einmal so ein, wie sie im Gespräch stehen soll, und drück unter Komfort → Gespräche auf „Diesen Blick merken“. Ab dann gleitet sie bei jedem Gespräch in genau diesen Blick und danach zurück in deinen alten. Der Text wartet, bis sie angekommen ist.
+
+### Technisch
+
+- Beta-Test 6.23.2.3: Text nach der Kamera bestätigt; Wunsch: fester Blickwinkel wie auf dem Bild. Einen Winkel ausrechnen geht nicht (Lage des NPCs und Richtung der Kamera bekommen Addons nicht). Statt dessen die Ansichten des Spiels: `DL.RememberView` → `SaveView(5)`; im Gespräch `SaveView(4)` (Blick von vorher) und `SetView(5)`, danach `SetView(4)`. Belegt die Ansichten 4 und 5 des Spiels; gilt relativ zum Charakter. Text wartet `DL.VIEW_TIME` (1,5 s) aufs Gleiten. Mit gemerktem Blick keine Schulterkamera (sie verschöbe ihn). Schalter `dlgView` (an, wirkt erst mit gemerktem Blick), `/wcui prüfen` zeigt den Stand.
+- Prüflauf „Gespräche 3“ mit vier Gegenproben (alten Blick sichern, zurück, keine Schulter, Warten).
+
 ## [6.23.2.3] – 2026-10-08
 
 **Gespräche: kein Vorblitzen mehr.** Sprachst du jemanden ein zweites Mal an, stand der Text kurz ganz da und lief dann neu ein. Jetzt bleibt er unsichtbar, bis die Kamera da ist, und erscheint Zeichen für Zeichen. Die Leertaste zeigt ihn sofort, auch während die Kamera noch fährt.
