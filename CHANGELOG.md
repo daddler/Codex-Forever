@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.23.2.0] – 2026-10-08
+
+**Gespräche zum Eintauchen.** Sprichst du einen NPC an, blendet die Oberfläche langsam aus – nur das Gespräch bleibt, mit dem Bild des NPCs im goldenen Ring, Zierlinien und Antworten als Karten. Der Text läuft erst ein, wenn die Kamera angekommen ist, im Tempo, das du unter Komfort → Gespräche einstellst. Danach kommen Leisten und Rahmen sanft zurück; im Kampf oder bei einer Rückfrage des Spiels sofort.
+
+### Technisch
+
+- Beta-Test 6.23.1.1, Bild: Text fertig, Kamera noch weit weg; „alles ausblenden außer Questtext“, „schöner, für Rollenspieler“, Tempo des Textes einstellbar.
+- `ui/dialogue.lua`: Text wartet, bis `GetCameraZoom` am Ziel ist (höchstens `DL.CAM_MAX` 3 s); Tempo `dlgSpeed` (10–120 Zeichen/s, ab Werk 35). Messung in `/wcui prüfen`: Abstand beim Start und nach 0,5/1/2/3 s.
+- Oberfläche ausblenden (`dlgFade`, ab Werk an): `UIParent` weich auf 0 (0,8 s), danach zurück (0,5 s). Fenster und Tooltip (`WeintCodexDialogueTip`) ohne Elternteil, Maßstab von `UIParent` übernommen. Nie im Kampf; `PLAYER_REGEN_DISABLED` und `StaticPopup1–4` holen sie sofort zurück, ebenso Scheitern und Ausschalten.
+- Gestaltung: 500 px, Bild des NPCs (`SetPortraitTexture`) rund maskiert mit eigenem `disc` im goldenen Ring, Name 18 pt, Titel in Versalien, Zierlinie Linie–Raute–Linie mit Verlauf, Text 14 pt mit Zeilenabstand, Antworten als Karten mit Zahl im Rahmen und goldener Kante beim Überfahren, Belohnungen in Rahmen, Knöpfe mit Fläche, Fenster blendet ein. Alles Gold (`frameAccent`).
+- Prüflauf „Gespräche 2“ mit sieben Gegenproben (Warten, Höchstwartezeit, Tempo, Kampf, Dialog, nicht im Kampf, weiches Ausblenden).
+
 ## [6.23.1.1] – 2026-10-08
 
 **Gespräche: nur noch ein Fenster.** Beim Questgeber ging zusätzlich das Fenster des Spiels auf – jetzt nicht mehr. Das Gesprächsfenster steht ab Werk dort, wo sonst das Questfenster steht, und merkt sich, wohin du es ziehst. Die Kamera fährt sofort und langsamer heran, der NPC rückt nach rechts, weg vom Fenster.

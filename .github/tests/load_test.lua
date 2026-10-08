@@ -1145,11 +1145,17 @@ do
             SelectActiveQuest = Log("SelectActiveQuest"), CloseGossip = Log("CloseGossip"),
         }
         -- Kamera: heran beim ersten Fenster, zurueck nach dem letzten.
-        local zoom, later = 15, nil
+        local zoom, queue = 15, {}
+        -- Zeitgeber als Warteschlange: later() laesst alles Faellige laufen.
+        local function later()
+            local q = queue
+            queue = {}
+            for _, fn in ipairs(q) do fn() end
+        end
         G.GetCameraZoom = function() return zoom end
         G.CameraZoomIn = function(d) zoom = zoom - d end
         G.CameraZoomOut = function(d) zoom = zoom + d end
-        G.C_Timer = { After = function(_, fn) later = fn end }
+        G.C_Timer = { After = function(_, fn) queue[#queue + 1] = fn end }
         -- Schulter: Testeinstellung, Warnung des Spiels abgemeldet und zurueck.
         local cvars, popupHidden = { test_cameraOverShoulder = "0", cameraZoomSpeed = "20" }, 0
         G.C_CVar = { GetCVar = function(n) return cvars[n] end, SetCVar = function(n, v) cvars[n] = v return true end }
@@ -1162,7 +1168,7 @@ do
         up.IsEventRegistered = function(self, e) return e == "EXPERIMENTAL_CVAR_WARNING" and warn end
         -- Wie im Spiel: Hide loest OnHide aus (die Attrappe tut es nicht).
         local function Shut()
-            later = nil
+            queue = {}
             DL.win:Hide()
             local h = DL.win:GetScript("OnHide")
             if h then h(DL.win) end
@@ -1276,6 +1282,106 @@ do
     DL.cam.saved = nil
     DL.stats.failed, DL.lastError = 0, nil
     Check(ok, "Gespraeche: Fenster des Spiels abgemeldet und zurueck, Optionen/Quests, Tasten, Annehmen, Belohnung waehlen, Scheitern, Kamera heran und zurueck, Schulter still"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.23.2.0: Text wartet auf die Kamera, Tempo, Oberflaeche aus- und einblenden.
+do
+    local G = _G
+    local names = { "C_GossipInfo", "UnitName", "GetCameraZoom", "CameraZoomIn", "CameraZoomOut", "C_Timer",
+        "InCombatLockdown", "StaticPopup1" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local DL = WeintCodex.UIDialogue
+    local up = UIParent
+    local upGet, upSet = up.GetAlpha, up.SetAlpha
+    local ok, err = pcall(function()
+        local zoom, combat, alpha, grads, queue = 15, false, 1, {}, {}
+        G.GetCameraZoom = function() return zoom end
+        G.CameraZoomIn = function() end                -- Kamera faehrt erst noch
+        G.CameraZoomOut = function() end
+        G.C_Timer = { After = function(_, fn) queue[#queue + 1] = fn end }
+        G.InCombatLockdown = function() return combat end
+        G.UnitName = function() return "Raene" end
+        G.C_GossipInfo = { GetText = function() return string.rep("Wald ", 40) end, GetOptions = function() return {} end,
+            SelectOption = function() end, CloseGossip = function() end }
+        up.GetAlpha = function() return alpha end
+        up.SetAlpha = function(_, a) alpha = a end
+        local pop = CreateFrame("Frame", "StaticPopup1", UIParent)
+        G.StaticPopup1 = pop
+        K.Set("comfort", "dlgType", true)
+        K.Set("comfort", "dlgSpeed", 20)
+        K.Set("comfort", "dlgOn", true)
+        DL.Boot()                                       -- haengt die Dialoge an
+        stub.FireEvent("GOSSIP_SHOW")
+        local body = DL.body
+        body.SetAlphaGradient = function(_, at) grads[#grads + 1] = at end
+        local upd = DL.win:GetScript("OnUpdate")
+        -- Kamera unterwegs: kein Zeichen.
+        upd(DL.win, 0.5)
+        upd(DL.win, 0.5)
+        assert(#grads == 0, "Text laeuft, bevor die Kamera da ist")
+        zoom = 4
+        upd(DL.win, 0.5)
+        assert(grads[#grads] == 10, "Tempo nicht wie eingestellt: " .. tostring(grads[#grads]))
+        -- Hoechstens DL.CAM_MAX warten.
+        DL.Close()
+        queue = {}
+        DL.cam.saved, DL.cam.target = nil, nil
+        zoom = 15
+        stub.FireEvent("GOSSIP_SHOW")
+        grads = {}
+        upd(DL.win, DL.CAM_MAX + 0.1)
+        upd(DL.win, 0.5)
+        assert(#grads > 0, "Text wartet ewig auf eine Kamera, die nicht kommt")
+        -- Oberflaeche: langsam aus, danach wieder ein.
+        local fu = DL.fader:GetScript("OnUpdate")
+        assert(DL.fade.on and DL.fader:IsShown(), "Oberflaeche blendet nicht aus")
+        fu(DL.fader, DL.FADE_OUT / 2)
+        assert(alpha > 0 and alpha < 1, "nicht langsam: " .. alpha)
+        fu(DL.fader, DL.FADE_OUT)
+        assert(alpha == 0, "nicht ganz aus: " .. alpha)
+        DL.win:Hide()
+        local h = DL.win:GetScript("OnHide")
+        h(DL.win)
+        for _, fn in ipairs(queue) do fn() end
+        queue = {}
+        fu(DL.fader, DL.FADE_BACK + 0.1)
+        assert(alpha == 1 and not DL.fade.on, "Oberflaeche nicht zurueck: " .. alpha)
+        -- Kampf: sofort zurueck; im Kampf gar nicht erst aus.
+        DL.cam.saved, DL.cam.target = nil, nil
+        stub.FireEvent("GOSSIP_SHOW")
+        fu(DL.fader, 5)
+        assert(alpha == 0, "nicht aus")
+        stub.FireEvent("PLAYER_REGEN_DISABLED")
+        assert(alpha == 1 and not DL.fade.on, "Kampf holt die Oberflaeche nicht sofort zurueck")
+        combat = true
+        DL.Close()
+        stub.FireEvent("GOSSIP_SHOW")
+        assert(not DL.fade.on, "im Kampf ausgeblendet")
+        combat = false
+        DL.Close()
+        -- Dialog des Spiels: sofort zurueck.
+        stub.FireEvent("GOSSIP_SHOW")
+        fu(DL.fader, 5)
+        local onShow = pop:GetScript("OnShow")
+        assert(onShow, "Dialog des Spiels nicht angehaengt")
+        onShow(pop)
+        assert(alpha == 1, "Dialog des Spiels bleibt unsichtbar")
+        DL.Close()
+        -- Aus: nichts ausblenden.
+        K.Set("comfort", "dlgFade", false)
+        stub.FireEvent("GOSSIP_SHOW")
+        assert(not DL.fade.on and alpha == 1, "ausgeblendet, obwohl aus")
+        DL.Close()
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    up.GetAlpha, up.SetAlpha = upGet, upSet
+    K.Set("comfort", "dlgOn", false)
+    K.Set("comfort", "dlgFade", true)
+    K.Set("comfort", "dlgSpeed", 35)
+    DL.cam.saved, DL.cam.target, DL.fade.on = nil, nil, false
+    Check(ok, "Gespraeche 2: Text wartet auf die Kamera (hoechstens 3 s), Tempo, Oberflaeche langsam aus und ein, Kampf/Dialog sofort zurueck"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

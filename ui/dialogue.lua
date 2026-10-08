@@ -40,10 +40,14 @@ DL.DEFAULTS = {
     dlgCam   = true,     -- Kamera heran, danach zurueck (6.23.1.0)
     dlgCamDist = 4,      -- so nah (Meter)
     dlgShoulder = true,  -- NPC zur Seite (Schulterkamera, 6.23.1.0)
+    dlgSpeed = 35,       -- Zeichen je Sekunde beim Einlaufen (6.23.2.0)
+    dlgFade  = true,     -- Oberflaeche ausblenden (6.23.2.0)
 }
-DL.W = 460
-DL.BODY_MAX = 230        -- hoechstens so hoch, dann rollt der Text
-DL.SPEED = 90            -- Zeichen je Sekunde beim Einlaufen
+DL.W = 500
+DL.BODY_MAX = 240        -- hoechstens so hoch, dann rollt der Text
+DL.PORTRAIT = 56         -- Bild des NPCs
+DL.FADE_IN = 0.35        -- Fenster blendet ein (s)
+DL.CAM_MAX = 3           -- so lange wartet der Text hoechstens auf die Kamera (s)
 DL.MAX_ROWS = 12
 DL.MAX_ITEMS = 10
 
@@ -114,24 +118,74 @@ end
 -- Fenster
 --------------------------------------------------
 
-local win, head, sub, scroll, body, rowsTitle, foot, primary, secondary, close
+local win, portrait, ring, head, sub, scroll, body, rowsTitle, foot, primary, secondary, close, tip
 local rows, items = {}, {}
 local reveal, revealLen = nil, 0
+local fadeIn = nil                 -- Fenster blendet ein (0..1)
+local camWait = nil                -- Sekunden, die der Text schon auf die Kamera wartet
 
 local function Accent() local a = GC.frameAccent return a[1], a[2], a[3] end
 
-local function NewButton(parent, w)
+-- Tempo des Einlaufens (Zeichen je Sekunde), einstellbar seit 6.23.2.0.
+function DL.Speed()
+    local v = tonumber(K.Get(KEY, "dlgSpeed")) or DL.DEFAULTS.dlgSpeed
+    return math.max(5, v)
+end
+
+-- Linie, die zur Mitte hin in Gold aufleuchtet (oder umgekehrt).
+local function Fade(tex, fromA, toA)
+    local r, g, b = Accent()
+    tex:SetColorTexture(1, 1, 1, 1)
+    local CC = _G.CreateColor
+    if tex.SetGradient and CC then
+        local ok = pcall(tex.SetGradient, tex, "HORIZONTAL", CC(r, g, b, fromA), CC(r, g, b, toA))
+        if ok then return end
+    end
+    tex:SetColorTexture(r, g, b, math.max(fromA, toA) * 0.6)
+end
+
+-- Zierlinie: Linie – Raute – Linie, in Gold.
+local function Ornament(parent)
+    local o = CreateFrame("Frame", nil, parent)
+    o:SetHeight(9)
+    o.l = o:CreateTexture(nil, "ARTWORK")
+    o.l:SetHeight(1)
+    o.l:SetPoint("LEFT", o, "LEFT", 0, 0)
+    o.l:SetPoint("RIGHT", o, "CENTER", -7, 0)
+    Fade(o.l, 0, 0.7)
+    o.r = o:CreateTexture(nil, "ARTWORK")
+    o.r:SetHeight(1)
+    o.r:SetPoint("LEFT", o, "CENTER", 7, 0)
+    o.r:SetPoint("RIGHT", o, "RIGHT", 0, 0)
+    Fade(o.r, 0.7, 0)
+    o.d = o:CreateTexture(nil, "ARTWORK")
+    o.d:SetTexture(K.MEDIA .. "diamond")
+    o.d:SetSize(9, 9)
+    o.d:SetPoint("CENTER", o, "CENTER", 0, 0)
+    local r, g, b = Accent()
+    o.d:SetVertexColor(r, g, b, 0.9)
+    return o
+end
+
+local function NewButton(parent, w, main)
     local b = CreateFrame("Button", nil, parent)
-    b:SetSize(w, 26)
-    K.Kachel(b, { shadow = 0, alpha = 0.9 })
-    b.t = K.NewText(b, 12)
-    b.t:SetPoint("CENTER", b, "CENTER", 0, 0)
-    b.edge = b:CreateTexture(nil, "ARTWORK")
-    b.edge:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT", 1, 1)
-    b.edge:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -1, 1)
-    b.edge:SetHeight(2)
+    b:SetSize(w, 30)
+    b.bg = b:CreateTexture(nil, "BACKGROUND")
+    b.bg:SetAllPoints(b)
     local r, g, bl = Accent()
-    b.edge:SetColorTexture(r, g, bl, 0.9)
+    if main then b.bg:SetColorTexture(r, g, bl, 0.16) else
+        local s = C.surface2
+        b.bg:SetColorTexture(s[1], s[2], s[3], 0.9)
+    end
+    b.border = K.Border(b, 1, r, g, bl, main and 0.75 or 0.25, "BORDER")
+    b.t = K.NewText(b, 13)
+    b.t:SetPoint("CENTER", b, "CENTER", 0, 0)
+    b.hl = b:CreateTexture(nil, "ARTWORK")
+    b.hl:SetAllPoints(b)
+    b.hl:SetColorTexture(r, g, bl, 0.12)
+    b.hl:Hide()
+    b:SetScript("OnEnter", function(self) if self.enabled then self.hl:Show() end end)
+    b:SetScript("OnLeave", function(self) self.hl:Hide() end)
     return b
 end
 
@@ -140,7 +194,7 @@ local function SetButton(b, text, enabled)
     b.t:SetText(text)
     local c = enabled and C.textBright or C.textFaint
     b.t:SetTextColor(c[1], c[2], c[3])
-    b.edge:SetShown(enabled and true or false)
+    b:SetAlpha(enabled and 1 or 0.55)
     b.enabled = enabled and true or false
     b:Show()
 end
@@ -149,55 +203,79 @@ local function Row(i)
     local r = rows[i]
     if r then return r end
     r = CreateFrame("Button", nil, win)
-    r:SetHeight(22)
-    r.hl = r:CreateTexture(nil, "BACKGROUND")
+    r:SetHeight(30)
+    r.bg = r:CreateTexture(nil, "BACKGROUND")
+    r.bg:SetAllPoints(r)
+    local s = C.surface2
+    r.bg:SetColorTexture(s[1], s[2], s[3], 0.55)
+    r.hl = r:CreateTexture(nil, "BORDER")
     r.hl:SetAllPoints(r)
-    local s = C.surface3
-    r.hl:SetColorTexture(s[1], s[2], s[3], 0.8)
+    local s3 = C.surface3
+    r.hl:SetColorTexture(s3[1], s3[2], s3[3], 0.9)
     r.hl:Hide()
-    r.num = K.NewText(r, 12)
-    r.num:SetPoint("LEFT", r, "LEFT", 6, 0)
-    r.num:SetWidth(18)
-    r.mark = K.NewText(r, 12)
-    r.mark:SetPoint("LEFT", r, "LEFT", 26, 0)
+    local ar, ag, ab = Accent()
+    r.bar = r:CreateTexture(nil, "ARTWORK")
+    r.bar:SetPoint("TOPLEFT", r, "TOPLEFT", 0, 0)
+    r.bar:SetPoint("BOTTOMLEFT", r, "BOTTOMLEFT", 0, 0)
+    r.bar:SetWidth(2)
+    r.bar:SetColorTexture(ar, ag, ab, 0.9)
+    r.bar:Hide()
+    r.box = CreateFrame("Frame", nil, r)
+    r.box:SetSize(20, 20)
+    r.box:SetPoint("LEFT", r, "LEFT", 8, 0)
+    r.box.border = K.Border(r.box, 1, ar, ag, ab, 0.5, "BORDER")
+    r.num = K.NewText(r.box, 11)
+    r.num:SetPoint("CENTER", r.box, "CENTER", 0, 0)
+    r.num:SetTextColor(ar, ag, ab)
+    r.mark = K.NewText(r, 13)
+    r.mark:SetPoint("LEFT", r.box, "RIGHT", 10, 0)
     r.mark:SetWidth(12)
-    r.label = K.NewText(r, 12)
-    r.label:SetPoint("LEFT", r, "LEFT", 42, 0)
-    r.label:SetPoint("RIGHT", r, "RIGHT", -6, 0)
+    r.label = K.NewText(r, 13)
+    r.label:SetPoint("LEFT", r.mark, "RIGHT", 6, 0)
+    r.label:SetPoint("RIGHT", r, "RIGHT", -10, 0)
     r.label:SetJustifyH("LEFT")
     r.label:SetWordWrap(false)
-    r:SetScript("OnEnter", function(self) self.hl:Show() end)
-    r:SetScript("OnLeave", function(self) self.hl:Hide() end)
+    r:SetScript("OnEnter", function(self) self.hl:Show() self.bar:Show() end)
+    r:SetScript("OnLeave", function(self) self.hl:Hide() self.bar:Hide() end)
     r:SetScript("OnClick", function(self) DL.Pick(self.index) end)
     rows[i] = r
     return r
+end
+
+local function Tip()
+    if tip then return tip end
+    -- Eigener Tooltip ohne Elternteil: bleibt sichtbar, wenn die Oberflaeche
+    -- ausgeblendet ist (GameTooltip haengt an ihr).
+    tip = CreateFrame("GameTooltip", "WeintCodexDialogueTip", nil, "GameTooltipTemplate")
+    if tip.SetFrameStrata then tip:SetFrameStrata("TOOLTIP") end
+    return tip
 end
 
 local function Item(i)
     local b = items[i]
     if b then return b end
     b = CreateFrame("Button", nil, win)
-    b:SetSize(36, 36)
-    K.Kachel(b, { shadow = 0 })
+    b:SetSize(40, 40)
+    local s = C.surface2
+    b.bg = b:CreateTexture(nil, "BACKGROUND")
+    b.bg:SetAllPoints(b)
+    b.bg:SetColorTexture(s[1], s[2], s[3], 1)
+    local r, g, bl = Accent()
+    b.border = K.Border(b, 1, r, g, bl, 0.3, "BORDER")
     b.icon = b:CreateTexture(nil, "ARTWORK")
     b.icon:SetPoint("TOPLEFT", b, "TOPLEFT", 2, -2)
     b.icon:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -2, 2)
-    b.count = K.NewText(b, 10, "OVERLAY")
-    b.count:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -2, 2)
-    b.sel = b:CreateTexture(nil, "OVERLAY")
-    b.sel:SetPoint("TOPLEFT", b, "TOPLEFT", -2, 2)
-    b.sel:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", 2, -2)
-    local r, g, bl = Accent()
-    b.sel:SetColorTexture(r, g, bl, 0.35)
-    b.sel:Hide()
+    b.count = K.NewText(b, 11, "OVERLAY")
+    b.count:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -3, 3)
+    b.sel = K.Border(b, 2, r, g, bl, 1, "OVERLAY")
+    b.sel:SetShown(false)
     b:SetScript("OnEnter", function(self)
-        local gt = _G.GameTooltip
-        if not gt then return end
+        local gt = Tip()
         gt:SetOwner(self, "ANCHOR_RIGHT")
         if gt.SetQuestItem then pcall(gt.SetQuestItem, gt, self.kind, self.index) end
         gt:Show()
     end)
-    b:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+    b:SetScript("OnLeave", function() if tip then tip:Hide() end end)
     b:SetScript("OnClick", function(self) if self.kind == "choice" then DL.Choose(self.index) end end)
     items[i] = b
     return b
@@ -219,15 +297,39 @@ local function OnKey(self, key)
     end
 end
 
-local function OnUpdate(_, el)
+local function Gradient(at)
+    if body.SetAlphaGradient then pcall(body.SetAlphaGradient, body, at, 30) end
+end
+
+-- Kamera noch unterwegs? Der Text wartet, hoechstens DL.CAM_MAX Sekunden.
+function DL.CamMoving()
+    local target = DL.cam and DL.cam.target
+    if not target then return false end
+    local z = _G.GetCameraZoom and K.Plain(_G.GetCameraZoom())
+    return type(z) == "number" and z > target + 0.4
+end
+
+local function OnUpdate(self, el)
+    el = el or 0
+    if fadeIn then
+        fadeIn = fadeIn + el / DL.FADE_IN
+        if fadeIn >= 1 then fadeIn = nil self:SetAlpha(1) else self:SetAlpha(fadeIn) end
+    end
+    DL.CamSample(el)
     if not reveal then return end
-    reveal = reveal + (el or 0) * DL.SPEED
+    if camWait then
+        camWait = camWait + el
+        if DL.CamMoving() and camWait < DL.CAM_MAX then return end
+        camWait = nil
+    end
+    reveal = reveal + el * DL.Speed()
     if reveal >= revealLen then
         reveal = nil
+        Gradient(0)
         if body.SetAlphaGradient then pcall(body.SetAlphaGradient, body, 0, 0) end
         return
     end
-    if body.SetAlphaGradient then pcall(body.SetAlphaGradient, body, math.floor(reveal), 30) end
+    Gradient(math.floor(reveal))
 end
 
 -- Platz: gemerkt, sonst wo das Questfenster des Spiels steht (oben links).
@@ -243,9 +345,18 @@ function DL.Place()
     end
 end
 
+-- Masstab: ohne Elternteil folgt das Fenster nicht von selbst der Oberflaeche.
+local function Scale()
+    local us = _G.UIParent and K.Plain(_G.UIParent:GetScale())
+    us = type(us) == "number" and us > 0 and us or 1
+    return us * ((tonumber(K.Get(KEY, "dlgScale")) or 100) / 100)
+end
+
 function DL.Build()
     if win then return win end
-    win = CreateFrame("Frame", "WeintCodexDialogue", UIParent)
+    -- 6.23.2.0: ohne Elternteil - blendet die Oberflaeche aus, bleibt das
+    -- Gespraech stehen.
+    win = CreateFrame("Frame", "WeintCodexDialogue", nil)
     win:SetWidth(DL.W)
     win:SetFrameStrata("HIGH")
     win:SetToplevel(true)
@@ -257,50 +368,89 @@ function DL.Build()
     win:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
         local l, t = K.Plain(self:GetLeft()), K.Plain(self:GetTop())
-        if type(l) == "number" and type(t) == "number" then K.Set(KEY, "dlgPos", { x = l, y = t }) end
+        local sc = K.Plain(self:GetScale())
+        local us = _G.UIParent and K.Plain(_G.UIParent:GetScale())
+        if type(l) == "number" and type(t) == "number" and type(sc) == "number" and type(us) == "number" and us > 0 then
+            -- in Punkten der Oberflaeche merken
+            K.Set(KEY, "dlgPos", { x = l * sc / us, y = t * sc / us })
+            DL.Place()
+        end
     end)
-    DL.Place()
     win:Hide()
-    K.Kachel(win, { alpha = 0.95, shadow = 10 })
+    if type(_G.UISpecialFrames) == "table" then table.insert(_G.UISpecialFrames, "WeintCodexDialogue") end
+    K.Kachel(win, { alpha = 0.95, shadow = 14 })
     local r, g, b = Accent()
+    -- Schimmer von oben und Kante in Gold
+    local glow = win:CreateTexture(nil, "BACKGROUND", nil, -6)
+    glow:SetPoint("TOPLEFT", win, "TOPLEFT", 1, -1)
+    glow:SetPoint("TOPRIGHT", win, "TOPRIGHT", -1, -1)
+    glow:SetHeight(110)
+    glow:SetColorTexture(1, 1, 1, 1)
+    local CC = _G.CreateColor
+    if not (glow.SetGradient and CC and pcall(glow.SetGradient, glow, "VERTICAL", CC(r, g, b, 0), CC(r, g, b, 0.10))) then
+        glow:SetColorTexture(r, g, b, 0.04)
+    end
     local edge = win:CreateTexture(nil, "ARTWORK")
     edge:SetPoint("TOPLEFT", win, "TOPLEFT", 1, -1)
     edge:SetPoint("TOPRIGHT", win, "TOPRIGHT", -1, -1)
     edge:SetHeight(2)
-    edge:SetColorTexture(r, g, b, 0.8)
+    edge:SetColorTexture(r, g, b, 0.85)
 
-    head = K.NewText(win, 16)
-    head:SetPoint("TOPLEFT", win, "TOPLEFT", 16, -14)
-    head:SetPoint("RIGHT", win, "RIGHT", -40, 0)
+    -- Bild des NPCs im goldenen Ring
+    ring = win:CreateTexture(nil, "ARTWORK", nil, 1)
+    ring:SetTexture(K.MEDIA .. "disc")
+    ring:SetSize(DL.PORTRAIT + 6, DL.PORTRAIT + 6)
+    ring:SetPoint("TOPLEFT", win, "TOPLEFT", 18, -18)
+    ring:SetVertexColor(r, g, b, 0.9)
+    portrait = win:CreateTexture(nil, "ARTWORK", nil, 2)
+    portrait:SetSize(DL.PORTRAIT, DL.PORTRAIT)
+    portrait:SetPoint("CENTER", ring, "CENTER", 0, 0)
+    if win.CreateMaskTexture then
+        local mask = win:CreateMaskTexture()
+        mask:SetTexture(K.MEDIA .. "disc", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        mask:SetAllPoints(portrait)
+        if portrait.AddMaskTexture then pcall(portrait.AddMaskTexture, portrait, mask) end
+    end
+
+    head = K.NewText(win, 18)
+    head:SetPoint("TOPLEFT", ring, "TOPRIGHT", 14, -8)
+    head:SetPoint("RIGHT", win, "RIGHT", -44, 0)
     head:SetJustifyH("LEFT")
     head:SetWordWrap(false)
-    sub = K.NewText(win, 12)
-    sub:SetPoint("TOPLEFT", head, "BOTTOMLEFT", 0, -4)
-    sub:SetPoint("RIGHT", win, "RIGHT", -16, 0)
+    local tb = C.textBright
+    head:SetTextColor(tb[1], tb[2], tb[3])
+    sub = K.NewText(win, 11)
+    sub:SetPoint("TOPLEFT", head, "BOTTOMLEFT", 0, -5)
+    sub:SetPoint("RIGHT", win, "RIGHT", -20, 0)
     sub:SetJustifyH("LEFT")
+    sub:SetWordWrap(false)
     sub:SetTextColor(r, g, b)
 
     close = CreateFrame("Button", nil, win)
-    close:SetSize(24, 22)
-    close:SetPoint("TOPRIGHT", win, "TOPRIGHT", -8, -8)
-    local x = K.NewText(close, 14)
+    close:SetSize(26, 24)
+    close:SetPoint("TOPRIGHT", win, "TOPRIGHT", -10, -10)
+    local x = K.NewText(close, 15)
     x:SetPoint("CENTER", close, "CENTER", 0, 0)
     local m = C.textMuted
     x:SetTextColor(m[1], m[2], m[3])
     x:SetText("\195\151")
     close:SetScript("OnClick", function() DL.Close() end)
 
+    win.orn = Ornament(win)
+    win.orn:SetPoint("TOPLEFT", win, "TOPLEFT", 20, -(18 + DL.PORTRAIT + 6 + 14))
+    win.orn:SetPoint("RIGHT", win, "RIGHT", -20, 0)
+
     scroll = CreateFrame("ScrollFrame", nil, win)
-    scroll:SetPoint("TOPLEFT", sub, "BOTTOMLEFT", 0, -10)
-    scroll:SetWidth(DL.W - 32)
+    scroll:SetPoint("TOPLEFT", win.orn, "BOTTOMLEFT", 4, -14)
+    scroll:SetWidth(DL.W - 48)
     scroll:EnableMouseWheel(true)
     local child = CreateFrame("Frame", nil, scroll)
-    child:SetWidth(DL.W - 32)
-    body = K.NewText(child, 13)
+    child:SetWidth(DL.W - 48)
+    body = K.NewText(child, 14)
     body:SetPoint("TOPLEFT", child, "TOPLEFT", 0, 0)
-    body:SetWidth(DL.W - 32)
+    body:SetWidth(DL.W - 48)
     body:SetJustifyH("LEFT")
-    body:SetSpacing(3)
+    body:SetSpacing(5)
     local t = C.textNormal
     body:SetTextColor(t[1], t[2], t[3])
     scroll:SetScrollChild(child)
@@ -311,28 +461,32 @@ function DL.Build()
         self:SetVerticalScroll(math.max(0, math.min(type(max) == "number" and max or 0, v)))
     end)
 
+    win.orn2 = Ornament(win)
+    win.orn2:SetPoint("RIGHT", win, "RIGHT", -20, 0)
     rowsTitle = K.NewText(win, 11)
-    rowsTitle:SetTextColor(m[1], m[2], m[3])
+    rowsTitle:SetTextColor(r, g, b)
     rowsTitle:SetJustifyH("LEFT")
     foot = K.NewText(win, 10)
-    foot:SetPoint("BOTTOMLEFT", win, "BOTTOMLEFT", 16, 14)
+    foot:SetPoint("BOTTOMLEFT", win, "BOTTOMLEFT", 20, 22)
     local f = C.textFaint
     foot:SetTextColor(f[1], f[2], f[3])
 
-    primary = NewButton(win, 130)
-    primary:SetPoint("BOTTOMRIGHT", win, "BOTTOMRIGHT", -16, 10)
+    primary = NewButton(win, 140, true)
+    primary:SetPoint("BOTTOMRIGHT", win, "BOTTOMRIGHT", -20, 14)
     primary:SetScript("OnClick", function() DL.Primary() end)
-    secondary = NewButton(win, 110)
-    secondary:SetPoint("RIGHT", primary, "LEFT", -8, 0)
+    secondary = NewButton(win, 110, false)
+    secondary:SetPoint("RIGHT", primary, "LEFT", -10, 0)
     secondary:SetScript("OnClick", function() DL.Secondary() end)
 
     win:SetScript("OnKeyDown", OnKey)
     win:SetScript("OnUpdate", OnUpdate)
     win:SetScript("OnHide", function()
-        reveal = nil
+        reveal, camWait, fadeIn = nil, nil, nil
+        if tip then tip:Hide() end
         DL.CamLater()
+        DL.FadeLater()
     end)
-    DL.win = win
+    DL.win, DL.body = win, body
     return win
 end
 
@@ -418,10 +572,13 @@ end
 -- Zeichnen: was Collect gesammelt hat.
 function DL.Draw(c)
     DL.Build()
-    local scale = (tonumber(K.Get(KEY, "dlgScale")) or 100) / 100
-    win:SetScale(scale)
+    local first = not win:IsShown()
+    win:SetScale(Scale())
+    if first then DL.Place() end
     head:SetText(c.npc)
-    sub:SetText(c.title or "")
+    local subText = (c.title and c.title ~= "") and c.title or "Gespräch"
+    sub:SetText(WeintCodex.Upper and WeintCodex.Upper(subText) or subText)
+    if _G.SetPortraitTexture then pcall(_G.SetPortraitTexture, portrait, "npc") end
     body:SetText(c.text ~= "" and c.text or " ")
     local th = K.Plain(body:GetStringHeight())
     th = type(th) == "number" and th or 14
@@ -429,7 +586,7 @@ function DL.Draw(c)
     local bh = math.min(DL.BODY_MAX, th)
     scroll:SetHeight(bh)
     scroll:SetVerticalScroll(0)
-    local y = 14 + 20 + 4 + 16 + 10 + bh + 12        -- Kopf, Titel, Text
+    local y = 18 + DL.PORTRAIT + 6 + 14 + 9 + 14 + bh + 18     -- Kopf, Zierlinie, Text
 
     -- Belohnungen / benoetigte Gegenstaende
     local shownItems = 0
@@ -439,10 +596,11 @@ function DL.Draw(c)
     end
     if label then
         rowsTitle:ClearAllPoints()
-        rowsTitle:SetPoint("TOPLEFT", win, "TOPLEFT", 16, -y)
-        rowsTitle:SetText(label .. (c.extra and ("   " .. c.extra) or ""))
+        rowsTitle:SetPoint("TOPLEFT", win, "TOPLEFT", 22, -y)
+        local up = WeintCodex.Upper and WeintCodex.Upper(label) or label
+        rowsTitle:SetText(up .. (c.extra and ("     " .. WeintCodex.ColorText("textNormal", c.extra)) or ""))
         rowsTitle:Show()
-        y = y + 18
+        y = y + 20
         for i, rw in ipairs(DL.rewards) do
             local b = Item(i)
             b.kind, b.index = rw.kind, rw.index
@@ -450,34 +608,44 @@ function DL.Draw(c)
             b.count:SetText((type(rw.count) == "number" and rw.count > 1) and rw.count or "")
             b.sel:SetShown(rw.kind == "choice" and DL.choice == rw.index)
             b:ClearAllPoints()
-            b:SetPoint("TOPLEFT", win, "TOPLEFT", 16 + (i - 1) * 42, -y)
+            b:SetPoint("TOPLEFT", win, "TOPLEFT", 22 + (i - 1) * 46, -y)
             b:Show()
             shownItems = i
         end
-        if shownItems > 0 then y = y + 42 end
+        if shownItems > 0 then y = y + 46 end
+        y = y + 6
     else
         rowsTitle:Hide()
     end
     for i = shownItems + 1, #items do items[i]:Hide() end
 
-    -- Zeilen (Optionen, Quests)
+    -- Zeilen (Antworten, Quests), mit Zierlinie davor
+    if #DL.list > 0 then
+        win.orn2:ClearAllPoints()
+        win.orn2:SetPoint("TOPLEFT", win, "TOPLEFT", 20, -y)
+        win.orn2:SetPoint("RIGHT", win, "RIGHT", -20, 0)
+        win.orn2:Show()
+        y = y + 9 + 12
+    else
+        win.orn2:Hide()
+    end
     for i, l in ipairs(DL.list) do
         local r = Row(i)
         r.index = i
         r.num:SetText(i <= 9 and tostring(i) or "")
-        local m = C.textMuted
-        r.num:SetTextColor(m[1], m[2], m[3])
+        r.box:SetShown(i <= 9)
         r.mark:SetText(l.mark)
         local ar, ag, ab = Accent()
+        local m = C.textMuted
         if l.mark == "!" or l.mark == "?" then r.mark:SetTextColor(ar, ag, ab) else r.mark:SetTextColor(m[1], m[2], m[3]) end
         r.label:SetText(l.text)
         local t = C.textBright
         r.label:SetTextColor(t[1], t[2], t[3])
         r:ClearAllPoints()
-        r:SetPoint("TOPLEFT", win, "TOPLEFT", 10, -y)
-        r:SetPoint("RIGHT", win, "RIGHT", -10, 0)
+        r:SetPoint("TOPLEFT", win, "TOPLEFT", 18, -y)
+        r:SetPoint("RIGHT", win, "RIGHT", -18, 0)
         r:Show()
-        y = y + 24
+        y = y + 34
     end
     for i = #DL.list + 1, #rows do rows[i]:Hide() end
 
@@ -485,18 +653,23 @@ function DL.Draw(c)
     SetButton(secondary, c.secondary, true)
     local keys = K.Get(KEY, "dlgKeys")
     foot:SetText(keys and ((#DL.list > 0 and "1–9 wählen · " or "") .. (c.primary and "Leertaste: " .. c.primary .. " · " or "") .. "Esc schließt") or "")
-    win:SetHeight(y + 12 + 36)
+    win:SetHeight(y + 8 + 52)
 
-    -- Text laeuft ein
+    -- Text laeuft ein - erst, wenn die Kamera angekommen ist.
     if K.Get(KEY, "dlgType") and body.SetAlphaGradient then
         revealLen = (WeintCodex.Utf8Len and WeintCodex.Utf8Len(c.text)) or #c.text
         reveal = 0
-        pcall(body.SetAlphaGradient, body, 0, 30)
+        camWait = 0
+        Gradient(0)
     else
-        reveal = nil
+        reveal, camWait = nil, nil
     end
     local combat = _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false)
     win:EnableKeyboard(keys and not combat and true or false)
+    if first then
+        fadeIn = 0
+        win:SetAlpha(0)
+    end
     win:Show()
 end
 
@@ -590,9 +763,30 @@ function DL.CamIn()
     local z = Zoom()
     local target = tonumber(K.Get(KEY, "dlgCamDist")) or 4
     if not (z and _G.CameraZoomIn) or z <= target + 0.5 then return false end
-    DL.cam.saved = z
+    DL.cam.saved, DL.cam.target = z, target
+    DL.CamStartLog(z)
     _G.CameraZoomIn(z - target)
     return true
+end
+
+-- Messung fuer /wcui pruefen: Abstand beim Start und nach 0,5/1/2/3 s.
+DL.camLog = { start = nil, t = 0, at = {} }
+DL.CAM_MARKS = { 0.5, 1, 2, 3 }
+function DL.CamStartLog(z)
+    local l = DL.camLog
+    l.start, l.t = z, 0
+    for i = 1, #DL.CAM_MARKS do l.at[i] = nil end
+end
+function DL.CamSample(el)
+    local l = DL.camLog
+    if not l.start or l.t > DL.CAM_MARKS[#DL.CAM_MARKS] then return end
+    l.t = l.t + (el or 0)
+    for i, m in ipairs(DL.CAM_MARKS) do
+        if not l.at[i] and l.t >= m then
+            local z = _G.GetCameraZoom and K.Plain(_G.GetCameraZoom())
+            l.at[i] = type(z) == "number" and z or -1
+        end
+    end
 end
 
 function DL.CamOut()
@@ -600,7 +794,7 @@ function DL.CamOut()
     ShoulderOut()
     local saved = DL.cam.saved
     if not saved then return false end
-    DL.cam.saved = nil
+    DL.cam.saved, DL.cam.target = nil, nil
     local z = Zoom()
     local t = _G.C_Timer
     if t and t.After then t.After(DL.SPEED_BACK, SpeedBack) end
@@ -621,6 +815,7 @@ function DL.Show(state)
     if state ~= "complete" then DL.choice = nil end
     DL.state = state
     DL.CamIn()                         -- sofort, vor dem Aufbau
+    DL.FadeOut()
     local ok, err = pcall(function() DL.Draw(DL.Collect(state)) end)
     if not ok then DL.Fail(err) return false end
     stats.shown = stats.shown + 1
@@ -632,6 +827,7 @@ function DL.Fail(err)
     stats.failed = stats.failed + 1
     DL.lastError = tostring(err)
     DL.Release()
+    DL.FadeBack(true)
     if win then win:Hide() end
     K.Set(KEY, "dlgOn", false)
     Say("Das Gesprächsfenster konnte nicht aufgebaut werden – die Fenster des Spiels sind zurück. Bitte neu ansprechen. (" .. DL.lastError .. ")")
@@ -696,6 +892,76 @@ function DL.Close()
 end
 
 --------------------------------------------------
+-- Oberflaeche ausblenden (6.23.2.0, Beta-Test: "langsam das Interface
+-- ausblenden, ausser Questtext und Interaktion; danach alles wieder")
+--------------------------------------------------
+-- UIParent wird langsam durchsichtig; das Gespraechsfenster und sein
+-- Tooltip haben KEIN Elternteil und bleiben. Nur ausserhalb des Kampfes;
+-- beginnt ein Kampf oder erscheint ein Dialog des Spiels (StaticPopup,
+-- etwa eine Rueckfrage zur Antwort), kommt die Oberflaeche sofort zurueck.
+-- Mausklicks gehen weiter an die unsichtbaren Leisten - das ist der Preis
+-- dafuer, nichts zu verstecken, was das Spiel im Kampf braucht.
+
+DL.FADE_OUT = 0.8        -- so lange blendet die Oberflaeche aus (s)
+DL.FADE_BACK = 0.5       -- und so lange wieder ein
+DL.FADE_TO = 0           -- bis auf diese Deckkraft
+DL.fade = { from = nil, to = nil, t = 0, dur = 1, orig = nil, on = false }
+
+local fader = CreateFrame("Frame")
+fader:Hide()
+fader:SetScript("OnUpdate", function(self, el)
+    local f = DL.fade
+    local up = _G.UIParent
+    f.t = f.t + (el or 0)
+    local k = math.min(1, f.t / f.dur)
+    k = k * k * (3 - 2 * k)                -- weich an beiden Enden
+    if up then up:SetAlpha(f.from + (f.to - f.from) * k) end
+    if k >= 1 then self:Hide() end
+end)
+DL.fader = fader
+
+local function Run(to, dur)
+    local up = _G.UIParent
+    if not up then return end
+    local a = K.Plain(up:GetAlpha())
+    local f = DL.fade
+    f.from, f.to, f.t, f.dur = type(a) == "number" and a or 1, to, 0, dur
+    fader:Show()
+end
+
+function DL.FadeOut()
+    if not K.Get(KEY, "dlgFade") or DL.fade.on then return false end
+    if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false) then return false end
+    local up = _G.UIParent
+    local a = up and K.Plain(up:GetAlpha())
+    DL.fade.orig = type(a) == "number" and a or 1
+    DL.fade.on = true
+    Run(DL.FADE_TO, DL.FADE_OUT)
+    return true
+end
+
+-- Zurueck: weich (Ende des Gespraechs) oder sofort (Kampf, Dialog).
+function DL.FadeBack(now)
+    if not DL.fade.on then return false end
+    DL.fade.on = false
+    local orig = DL.fade.orig or 1
+    if now then
+        fader:Hide()
+        if _G.UIParent then _G.UIParent:SetAlpha(orig) end
+    else
+        Run(orig, DL.FADE_BACK)
+    end
+    return true
+end
+
+local function FadeBackSoft() if not (win and win:IsShown()) then DL.FadeBack(false) end end
+function DL.FadeLater()
+    if not DL.fade.on then return end
+    local t = _G.C_Timer
+    if t and t.After then t.After(DL.CAM_WAIT, FadeBackSoft) else FadeBackSoft() end
+end
+
+--------------------------------------------------
 -- Ereignisse
 --------------------------------------------------
 
@@ -706,6 +972,7 @@ local STATE = {
 
 local ev = CreateFrame("Frame")
 ev:SetScript("OnEvent", function(_, event)
+    if event == "PLAYER_REGEN_DISABLED" then DL.FadeBack(true) return end
     if not DL.Active() then return end
     local st = STATE[event]
     if st then DL.Show(st) return end
@@ -726,7 +993,9 @@ local function Apply()
             if on then pcall(ev.RegisterEvent, ev, e) else pcall(ev.UnregisterEvent, ev, e) end
         end
     end
+    if on then pcall(ev.RegisterEvent, ev, "PLAYER_REGEN_DISABLED") end
     if on then DL.TakeOver() else
+        DL.FadeBack(true)
         DL.Release()
         if win then win:Hide() end
         DL.state = nil
@@ -746,6 +1015,14 @@ function DL.StatusLines()
         .. " · Ereignisse übernommen: " .. n
     out[#out + 1] = string.format("Gezeigt %d · gewählt %d · gescheitert %d", stats.shown, stats.picked, stats.failed)
     if DL.lastError then out[#out + 1] = "Zuletzt gescheitert: " .. DL.lastError end
+    local l = DL.camLog
+    if l.start then
+        local parts = {}
+        for i, m in ipairs(DL.CAM_MARKS) do
+            parts[#parts + 1] = string.format("%.1f s: %s", m, l.at[i] and string.format("%.1f", l.at[i]) or "–")
+        end
+        out[#out + 1] = string.format("Kamera zuletzt: von %.1f · ", l.start) .. table.concat(parts, " · ")
+    end
     if stats.gameShown > 0 then
         out[#out + 1] = "Fenster des Spiels trotzdem offen: " .. stats.gameShown .. "× (zuletzt " .. tostring(DL.gameShownName) .. ")"
     end
@@ -760,7 +1037,12 @@ local function Build(B)
           { type = "toggle", label = "Tasten 1–9, Leertaste, Esc", key = "dlgKeys", disabled = off,
             description = "Nicht im Kampf – dort sperrt das Spiel die Tasten." })
     B:Row({ type = "toggle", label = "Text läuft ein", key = "dlgType", disabled = off,
-            description = "Leertaste zeigt ihn sofort ganz." },
+            description = "Erst wenn die Kamera da ist. Leertaste zeigt ihn sofort ganz." },
+          { type = "slider", label = "Tempo des Textes", key = "dlgSpeed", min = 10, max = 120, step = 5,
+            disabled = function() return off() or not K.Get(KEY, "dlgType") end,
+            format = function(v) return string.format("%d Zeichen/s", v) end })
+    B:Row({ type = "toggle", label = "Oberfläche ausblenden", key = "dlgFade", disabled = off,
+            description = "Leisten, Rahmen und Chat blenden langsam aus und danach wieder ein. Nicht im Kampf." },
           { type = "slider", label = "Größe", key = "dlgScale", min = 80, max = 130, step = 5, disabled = off,
             format = function(v) return string.format("%d %%", v) end })
     local camOff = function() return off() or not K.Get(KEY, "dlgCam") end
@@ -788,12 +1070,19 @@ end)
 
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
-boot:SetScript("OnEvent", function()
+function DL.Boot()
     -- Abgestuerzt mitten im Gespraech: die Schulter steht noch - zurueck.
     local PF = WeintCodex.UIProfile
     if PF and PF.Release then
         PF.Release(DL.SHOULDER)
         PF.Release(DL.ZOOM_SPEED_CVAR)
+    end
+    -- Ein Dialog des Spiels braucht die Oberflaeche: sofort zurueck.
+    for i = 1, 4 do
+        local pop = _G["StaticPopup" .. i]
+        if type(pop) == "table" and pop.HookScript then
+            pop:HookScript("OnShow", function() DL.FadeBack(true) end)
+        end
     end
     -- Zeigt sich ein Fenster des Spiels trotzdem, steht es im Bericht.
     for _, name in ipairs({ "GossipFrame", "QuestFrame" }) do
@@ -805,4 +1094,5 @@ boot:SetScript("OnEvent", function()
         end
     end
     Apply()
-end)
+end
+boot:SetScript("OnEvent", function() DL.Boot() end)

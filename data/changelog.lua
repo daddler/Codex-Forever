@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.23.2.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFGespräche zum Eintauchen.|r Sprichst du einen NPC an, blendet die Oberfläche langsam aus – nur das Gespräch bleibt, mit dem Bild des NPCs im goldenen Ring, Zierlinien und Antworten als Karten. Der Text läuft erst ein, wenn die Kamera angekommen ist, im Tempo, das du unter Komfort → Gespräche einstellst. Danach kommen Leisten und Rahmen sanft zurück; im Kampf oder bei einer Rückfrage des Spiels sofort.",
+        },
+    },
+    {
         version = "6.23.1.1",
         date    = "08.10.2026",
         notes   = {

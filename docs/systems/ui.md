@@ -1594,7 +1594,13 @@ beide ab Werk aus.
   `dlgPos` gemerkt. Schulter −1,0 (NPC nach rechts, weg vom Fenster). Kamera
   vor dem Aufbau, `cameraZoomSpeed` 8 während des Gesprächs, 2 s nach dem
   Ende zurück.
-- Nicht gebaut: Oberfläche ausblenden, Vorlesen.
+- 6.23.2.0: Text wartet auf die Kamera (`DL.CamMoving`, höchstens 3 s),
+  Tempo `dlgSpeed`; Messung der Kamerafahrt in `/wcui prüfen`. Oberfläche
+  ausblenden (`dlgFade`): `UIParent`-Deckkraft weich auf 0 und zurück; Fenster
+  und eigener Tooltip ohne Elternteil (Maßstab von `UIParent`); nie im Kampf,
+  Kampfbeginn und `StaticPopup1–4` holen sie sofort zurück. Gestaltung für
+  Rollenspieler: Bild des NPCs im Ring, Zierlinien, Antworten als Karten.
+- Nicht gebaut: Vorlesen.
 
 ### Kräuter und Erz im Wechsel (`ui/gathertrack.lua`, 6.22.0.0)
 
