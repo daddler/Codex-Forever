@@ -93,6 +93,7 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 - [ ] Raus da (6.25.0.0): die fünf eigenen Alarme hörbar
 - [ ] 6.26.1.0: nach dem Einloggen folgt die Kamera beim Laufen wie eingestellt; nach einem Gespräch weiterhin; `/wcui prüfen` → Gespräche „Kamera:“ ohne „nicht ab Werk“
 - [ ] 6.26.0.0: Maus über das Gold unter dem Chat – Sitzung (nach Kauf/Verkauf ändern sich Einnahmen/Ausgaben), alle Charaktere nach Einloggen mit Gold, Summe
+- [ ] 6.26.3.0: Kalender – kein Pergament/Holz, Wochentage Gold, Feiertage sichtbar, Monat wechseln bleibt so
 - [ ] 6.25.5.0: Vermächtnis – alle drei Seiten ohne Leder/Metall, Erreichtes in Gold
 - [ ] 6.25.4.0: Berufsfenster – kein Fach/keine Fläche am Rezeptsymbol; Fortschrittsanzeige ohne Leder, Leiste in Gold
 - [ ] Update 70291 (6.25.3.0): Charakterfenster ohne hellen Streifen oben; Berufsfenster – Rezeptsymbol ohne Fach/Fläche; Vermächtnis-Fenster in Gold; Lagerfeuer → „Treffer gemeldet“ > 0 und Ton

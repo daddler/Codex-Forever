@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.3.0] – 2026-10-09
+
+### Geändert
+
+- Kalender (`CalendarFrame`, Blizzard_Calendar) in Gold, gemessen mit `/wcui fenster`: neu in `W.WINDOWS` und `LF.HOSTS`. Die Teile sind Bilder per Nummer, kein Atlas – `LF.CALENDAR_FILE` nach den Regeln des Vermächtnisses: Rahmen (235430/235431) weg, Pergament (235428) dunkel, Kante je Tag (235438) und heute (235433) in Gold, Wochentage (`CalendarWeekday%dBackground`) gedämpftes Gold. Feiertagsbilder, Fledermaus-Rahmen und Termine bleiben. Bericht: „Kalender: ausgeblendet · dunkel · Gold“.
+
 ## [6.26.2.0] – 2026-10-09
 
 ### Behoben

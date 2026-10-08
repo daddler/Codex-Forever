@@ -96,7 +96,10 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               -- 6.25.3.0: Vermaechtnis (Fortschrittsanzeige), neu mit dem
               -- Client-Update Build 70291 - Rahmen aus Metall und Seitenreiter
               -- des Spiels, Inhalt (Karten, Leiste, Krone) bleibt.
-              "LegacySystemFrame" }
+              "LegacySystemFrame",
+              -- 6.26.3.0: Kalender (Blizzard_Calendar, erst beim Oeffnen
+              -- geladen) - Pergament dunkel, Rahmen weg, Feiertage bleiben.
+              "CalendarFrame" }
 
 -- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
 -- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus

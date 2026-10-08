@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.3.0",
+        date    = "09.10.2026",
+        notes   = {
+            "|cff7C6CFFKalender in Gold.|r Pergament und Holzrahmen sind weg: dunkle Tage mit goldener Kante, die Wochentage als goldene Kopfzeile, heute in Gold. Feiertage und Termine bleiben, wie sie sind.",
+        },
+    },
+    {
         version = "6.26.2.0",
         date    = "09.10.2026",
         notes   = {

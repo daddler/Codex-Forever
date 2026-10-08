@@ -1185,6 +1185,31 @@ do
             assert(won.wcTint and won.wcTint[1] == g[1], "erreichte Karte nicht in Gold")
             assert(icon.wcTint == nil and icon:GetAlpha() ~= 0, "Symbol angefasst")
             assert(L.hide == 2 and L.dark == 1 and L.gold == 1, "Zaehler")
+            -- 6.26.3.0: Kalender per Bildnummer.
+            local function File(id, name)
+                local t = Tex(nil, nil)
+                t.GetTexture = function() return id end
+                t.GetName = function() return name end
+                return t
+            end
+            local cal = CreateFrame("Frame")
+            local day = CreateFrame("Frame", nil, cal)
+            local rim = File(235431, "CalendarFrameTopLeftTexture")
+            local parch = File(235428, nil)
+            local head = File(235428, "CalendarWeekday1Background")
+            local edge = File(235438, nil)
+            local fest = File(235458, "CalendarDayButton7EventTexture")
+            cal.GetChildren = function() return day end
+            day.GetChildren = function() end
+            cal.GetRegions = function() return rim, head end
+            day.GetRegions = function() return parch, edge, fest end
+            local CL = LF.Calendar(cal)
+            assert(rim:GetAlpha() == 0, "Kalenderrahmen bleibt")
+            assert(parch.wcTint and parch.wcTint[1] == LF.DARK, "Pergament nicht dunkel")
+            assert(edge.wcTint and edge.wcTint[1] == g[1], "Kante nicht Gold")
+            assert(head.wcTint and math.abs(head.wcTint[1] - g[1] * LF.HEAD) < 1e-6, "Wochentag nicht gedaempft")
+            assert(fest.wcTint == nil and fest:GetAlpha() == 1, "Feiertag angefasst")
+            assert(CL.hide == 1 and CL.dark == 1 and CL.gold == 2, "Kalenderzaehler")
         end)
     end
     Check(ok, "Update 70291: Streifen im Charakterfenster weg, Rezeptsymbol ohne fremde Bilder"

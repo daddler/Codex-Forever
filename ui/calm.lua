@@ -69,10 +69,10 @@ LF.WINDOWS = { LFGParentFrame = "Suche nach Gruppe", PVEFrame = "Suche nach Grup
                BankFrame = "Bank", GuildBankFrame = "Gildenbank",
                MailFrame = "Post", OpenMailFrame = "Brief", FriendsFrame = "Kontakte",
                SocialUIFrame = "Kontakte", ClassTrainerFrame = "Lehrer",
-               LegacySystemFrame = "Vermächtnis" }
+               LegacySystemFrame = "Vermächtnis", CalendarFrame = "Kalender" }
 LF.HOSTS = { "LFGParentFrame", "PVEFrame", "CollectionsJournal", "SettingsPanel", "MacroFrame", "TradeFrame",
              "AuctionHouseFrame", "BankFrame", "GuildBankFrame", "MailFrame", "OpenMailFrame", "FriendsFrame",
-             "SocialUIFrame", "ClassTrainerFrame", "LegacySystemFrame" }
+             "SocialUIFrame", "ClassTrainerFrame", "LegacySystemFrame", "CalendarFrame" }
 -- Innenflaechen, die das Fenster selbst nicht als solche baut: Feld am
 -- Fenster oder globaler Name -> W.OwnBackground (eigene Bilder weg,
 -- Innenflaeche). Makros (6.9.0.0, ui/macroframe.lua): die Liste (Leder)
@@ -152,6 +152,22 @@ LF.LEGACY_DEPTH = 7
 LF.DARK = 0.32              -- Helligkeit der entsaettigten Teile
 LF.legacy = { hide = 0, dark = 0, gold = 0 }
 
+-- KALENDER (6.26.3.0, gemessen mit /wcui fenster): Pergament, Holzrahmen
+-- und orange Wochentage, alles Bilder per Nummer statt Atlas. Dieselben
+-- drei Regeln wie beim Vermaechtnis; Feiertage (Kuerbis, Angel, Fledermaus-
+-- Rahmen) und Termine bleiben - sie tragen Bedeutung.
+LF.CALENDAR_FILE = {
+    [235431] = "hide",      -- Rahmen oben/unten
+    [235430] = "hide",      -- Rahmen links/rechts
+    [235428] = "dark",      -- Pergament: Tage, Monat, Jahr
+    [235438] = "gold",      -- Kante je Tag
+    [235433] = "gold",      -- heute
+}
+-- Wochentage: Pergament in gedaempftem Gold statt dunkel - die Kopfzeile.
+LF.CALENDAR_HEAD = "^CalendarWeekday%dBackground$"
+LF.HEAD = 0.55              -- Helligkeit des Golds der Kopfzeile
+LF.CALENDAR_DEPTH = 4
+
 local function LegacyAtlas(r)
     local ok, a = pcall(r.GetAtlas, r)
     a = ok and K.Plain(a)
@@ -186,6 +202,52 @@ local function LegacyWalk(f, depth)
     if depth >= LF.LEGACY_DEPTH then return end
     local kids = W.Children(f, "legacy", depth)
     for i = 1, #kids do LegacyWalk(kids[i], depth + 1) end
+end
+
+LF.calendar = { hide = 0, dark = 0, gold = 0 }
+
+local function CalendarApply(r)
+    local ok, file = pcall(r.GetTexture, r)
+    file = ok and K.Plain(file)
+    local how = type(file) == "number" and LF.CALENDAR_FILE[file]
+    if not how then return end
+    local L = LF.calendar
+    if how == "hide" then
+        if K.Plain(r:GetAlpha()) ~= 0 then r:SetAlpha(0) end
+    else
+        if r.SetDesaturated then r:SetDesaturated(true) end
+        local nok, name = pcall(r.GetName, r)
+        name = nok and K.Plain(name)
+        if how == "dark" and type(name) == "string" and name:find(LF.CALENDAR_HEAD) then
+            local g, h = GC.frameAccent, LF.HEAD
+            r:SetVertexColor(g[1] * h, g[2] * h, g[3] * h)
+            how = "gold"
+        elseif how == "gold" then
+            local g = GC.frameAccent
+            r:SetVertexColor(g[1], g[2], g[3])
+        else
+            r:SetVertexColor(LF.DARK, LF.DARK, LF.DARK)
+        end
+    end
+    L[how] = L[how] + 1
+end
+
+local function CalendarWalk(f, depth)
+    local regs = W.Regions(f, "calendar", depth)
+    for i = 1, #regs do
+        local r = regs[i]
+        if r.GetTexture then CalendarApply(r) end
+    end
+    if depth >= LF.CALENDAR_DEPTH then return end
+    local kids = W.Children(f, "calendar", depth)
+    for i = 1, #kids do CalendarWalk(kids[i], depth + 1) end
+end
+
+function LF.Calendar(f)
+    local L = LF.calendar
+    L.hide, L.dark, L.gold = 0, 0, 0
+    CalendarWalk(f, 0)
+    return L
 end
 
 function LF.Legacy(f)
@@ -229,6 +291,7 @@ function LF.Update(f)
     w.tabs = 0
     local ok, name = pcall(f.GetName, f)
     if ok and name == "LegacySystemFrame" then LF.Legacy(f) end
+    if ok and name == "CalendarFrame" then LF.Calendar(f) end
     local spec = ok and LF.TABS[name]
     if spec then
         local owner = _G[spec.owner]
@@ -259,6 +322,11 @@ function LF.Report(f, out)
     if ok and name == "LegacySystemFrame" then
         local L = LF.legacy
         out[#out + 1] = string.format("   Vermächtnis: ausgeblendet %d · dunkel %d · Gold %d",
+            L.hide or 0, L.dark or 0, L.gold or 0)
+    end
+    if ok and name == "CalendarFrame" then
+        local L = LF.calendar
+        out[#out + 1] = string.format("   Kalender: ausgeblendet %d · dunkel %d · Gold %d",
             L.hide or 0, L.dark or 0, L.gold or 0)
     end
     return out
