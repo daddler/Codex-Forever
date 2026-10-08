@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.0.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFGold auf einen Blick.|r Mit der Maus über dein Gold in der Zeile unter dem Chat: Einnahmen, Ausgaben und Saldo seit dem Einloggen, darunter das Gold all deiner Charaktere auf diesem Realm samt Summe. Jeder Charakter wird beim nächsten Einloggen erfasst.",
+        },
+    },
+    {
         version = "6.25.5.0",
         date    = "08.10.2026",
         notes   = {

@@ -148,7 +148,111 @@ function IV.ScanBags()
     end
     c.worn = worn
     c.at = _G.time and _G.time() or 0
+    IV.OnMoney()
     return true
+end
+
+--------------------------------------------------
+-- Gold (6.26.0.0)
+--------------------------------------------------
+-- Beta-Test: "mit der Maus ueber mein Gold: Ausgabe und Einnahme der
+-- Sitzung, und das Gold aller anderen Charaktere". Jeder Charakter merkt
+-- sich sein Gold (c.money, Stand seines letzten Einloggens) im Bestand.
+-- Die Sitzung zaehlt jede Aenderung von GetMoney seit dem Einloggen:
+-- mehr = Einnahme, weniger = Ausgabe. Was davor war, weiss sie nicht.
+IV.session = { earned = 0, spent = 0 }
+
+function IV.OnMoney()
+    local m = _G.GetMoney and Plain(_G.GetMoney())
+    if type(m) ~= "number" then return false end
+    local s = IV.session
+    if type(s.last) == "number" then
+        local d = m - s.last
+        if d > 0 then s.earned = s.earned + d elseif d < 0 then s.spent = s.spent - d end
+    else
+        s.start = m
+    end
+    s.last = m
+    local c = IV.Active() and Char(true)
+    if c then c.money = m c.moneyAt = _G.time and _G.time() or 0 end
+    return true
+end
+
+-- Gold als Text ("12 g 34 s 5 k"), ohne Bilder.
+function IV.MoneyText(copper)
+    copper = math.floor(copper or 0)
+    local g, s, k = math.floor(copper / 10000), math.floor((copper % 10000) / 100), copper % 100
+    local big = (_G.BreakUpLargeNumbers and _G.BreakUpLargeNumbers(g)) or tostring(g)
+    if g > 0 then return big .. " g " .. s .. " s" end
+    if s > 0 then return s .. " s " .. k .. " k" end
+    return k .. " k"
+end
+
+-- Zeilen fuer den Tooltip: { links, rechts, Farbe links (r,g,b) oder nil }.
+function IV.MoneyLines()
+    local out = {}
+    local s = IV.session
+    out[#out + 1] = { "Sitzung", nil, "head" }
+    out[#out + 1] = { "Einnahmen", IV.MoneyText(s.earned), "green" }
+    out[#out + 1] = { "Ausgaben", IV.MoneyText(s.spent), "red" }
+    local net = s.earned - s.spent
+    out[#out + 1] = { "Saldo", (net < 0 and "−" or "+") .. IV.MoneyText(math.abs(net)), net < 0 and "red" or "green" }
+    local st = IV.Store(false)
+    local myKey, _, myRealm = IV.Me()
+    local all = K.Get(KEY, "invAllRealms")
+    local list, unknown, total = {}, 0, 0
+    for key, c in pairs(st and st.chars or {}) do
+        if all or c.realm == myRealm then
+            if type(c.money) == "number" then
+                list[#list + 1] = { key = key, c = c }
+                total = total + c.money
+            else
+                unknown = unknown + 1
+            end
+        end
+    end
+    table.sort(list, function(a, b)
+        if (a.key == myKey) ~= (b.key == myKey) then return a.key == myKey end
+        return a.c.money > b.c.money
+    end)
+    if #list > 0 then
+        out[#out + 1] = { "Charaktere", nil, "head" }
+        for _, e in ipairs(list) do
+            local name = e.c.name or "?"
+            if e.c.realm ~= myRealm then name = name .. "-" .. tostring(e.c.realm) end
+            out[#out + 1] = { name, IV.MoneyText(e.c.money), "class", e.c.class }
+        end
+        if #list > 1 then out[#out + 1] = { "Alle zusammen", IV.MoneyText(total), "total" } end
+    end
+    if unknown > 0 then
+        out[#out + 1] = { unknown .. (unknown == 1 and " Charakter" or " Charaktere") .. " noch ohne Stand – einmal einloggen", nil, "note" }
+    end
+    return out
+end
+
+-- In einen Tooltip schreiben (GameTooltip).
+function IV.MoneyTooltip(tt)
+    tt:SetText("Gold", 1, 1, 1)
+    local C = WeintCodex.Colors
+    for _, l in ipairs(IV.MoneyLines()) do
+        local kind = l[3]
+        if kind == "head" then
+            tt:AddLine(" ")
+            local c = C.textMuted
+            tt:AddLine(l[1], c[1], c[2], c[3])
+        elseif kind == "note" then
+            local c = C.textDim
+            tt:AddLine(l[1], c[1], c[2], c[3], true)
+        else
+            local r, g, b = 0.85, 0.85, 0.85
+            if kind == "class" then r, g, b = IV.ClassColor(l[4])
+            elseif kind == "green" then local c = C.green r, g, b = c[1], c[2], c[3]
+            elseif kind == "red" then local c = C.red r, g, b = c[1], c[2], c[3]
+            elseif kind == "total" then local c = C.textBright r, g, b = c[1], c[2], c[3] end
+            tt:AddDoubleLine(l[1], l[2], r, g, b, 1, 1, 1)
+        end
+    end
+    tt:Show()
 end
 
 IV.bankOpen = false
@@ -320,6 +424,9 @@ ev:SetScript("OnEvent", function(_, event)
     elseif event == "BANKFRAME_CLOSED" then
         IV.ScanBank()
         IV.bankOpen = false
+    elseif event == "PLAYER_MONEY" then
+        IV.OnMoney()
+        return
     elseif event == "PLAYERBANKSLOTS_CHANGED" then
         IV.ScanBank()
     else                                  -- BAG_UPDATE_DELAYED, PLAYER_EQUIPMENT_CHANGED, PLAYER_ENTERING_WORLD
@@ -331,7 +438,7 @@ ev:SetScript("OnEvent", function(_, event)
 end)
 IV.events = ev
 
-local EVENTS = { "BAG_UPDATE_DELAYED", "PLAYER_EQUIPMENT_CHANGED", "PLAYER_ENTERING_WORLD",
+local EVENTS = { "PLAYER_MONEY", "BAG_UPDATE_DELAYED", "PLAYER_EQUIPMENT_CHANGED", "PLAYER_ENTERING_WORLD",
     "BANKFRAME_OPENED", "BANKFRAME_CLOSED", "PLAYERBANKSLOTS_CHANGED" }
 
 local function Apply()

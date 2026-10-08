@@ -503,7 +503,10 @@ local function InfoCell(parent, onClick, tip)
     if onClick then b:SetScript("OnClick", onClick) end
     b:SetScript("OnEnter", function(self)
         self.text:SetTextColor(unpack(WeintCodex.Colors.textBright))
-        if tip then
+        if type(tip) == "function" then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            tip(GameTooltip)
+        elseif tip then
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
             GameTooltip:SetText(tip, 1, 1, 1)
             GameTooltip:Show()
@@ -561,7 +564,13 @@ local function BuildInfoBar()
         info.kachel = K.Kachel(info, { shadow = 6 })
         local function Bags() if _G.ToggleAllBags then _G.ToggleAllBags() end end
         info.clock = InfoCell(info, function() if _G.ToggleCalendar then pcall(_G.ToggleCalendar) end end, "Kalender")
-        info.money = InfoCell(info, Bags, "Taschen öffnen")
+        -- 6.26.0.0: Maus darauf - Einnahmen/Ausgaben der Sitzung und das
+        -- Gold aller Charaktere (ui/inventory.lua).
+        info.money = InfoCell(info, Bags, function(tt)
+            local IV = WeintCodex.UIInventory
+            if IV and IV.MoneyTooltip then IV.MoneyTooltip(tt)
+            else tt:SetText("Taschen öffnen", 1, 1, 1) tt:Show() end
+        end)
         info.bags = InfoCell(info, Bags, "Freie Taschenplätze")
         info.dur = InfoCell(info, nil, "Niedrigste Haltbarkeit deiner Ausrüstung")
         info.fps = InfoCell(info, nil, "Bildrate")

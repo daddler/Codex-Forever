@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.0.0] – 2026-10-08
+
+### Neu
+
+- Gold im Tooltip der Chat-Infozeile (Wunsch: „Ausgabe und Einnahme der Sitzung, zusätzlich das Gold aller anderen Charaktere“). `ui/inventory.lua`: `IV.OnMoney` (über `PLAYER_MONEY` und jedes Lesen der Taschen) zählt Einnahmen/Ausgaben seit dem Einloggen (`IV.session`, nur im Speicher) und merkt `c.money`/`c.moneyAt` je Charakter in `SavedData.inventory`. `IV.MoneyLines`/`IV.MoneyTooltip`: Sitzung, eigener Charakter zuerst, dann nach Gold, Summe, Realm wie der Bestand (`invAllRealms`); Charaktere ohne Stand werden gezählt genannt, nie als 0. `ui/chat.lua`: `InfoCell` nimmt als Tooltip auch eine Funktion.
+
+### Technisch
+
+- Prüflauf: Sitzung, Merken, Reihenfolge, Summe, anderer Realm, unbekannt; drei Gegenproben gefangen.
+
 ## [6.25.5.0] – 2026-10-08
 
 ### Geändert

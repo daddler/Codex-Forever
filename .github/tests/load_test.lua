@@ -1191,6 +1191,57 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.26.0.0: Gold - Sitzung (Einnahmen/Ausgaben) und alle Charaktere.
+do
+    local G = _G
+    local names = { "GetMoney", "UnitName", "GetRealmName", "UnitClass" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local IV = WeintCodex.UIInventory
+    local sdInv = WeintCodex.SavedData and WeintCodex.SavedData.inventory
+    local ok, err = pcall(function()
+        local money = 10000
+        G.GetMoney = function() return money end
+        G.UnitName = function() return "Shooty" end
+        G.GetRealmName = function() return "Everlook" end
+        G.UnitClass = function() return "Jäger", "HUNTER" end
+        K.Set("comfort", "invOn", true)
+        K.Set("comfort", "invAllRealms", false)
+        WeintCodex.SavedData.inventory = nil
+        IV.session = { earned = 0, spent = 0 }
+        IV.OnMoney()
+        money = 15000 IV.OnMoney()
+        money = 12000 IV.OnMoney()
+        assert(IV.session.earned == 5000 and IV.session.spent == 3000, "Sitzung falsch")
+        local st = IV.Store(false)
+        assert(st.chars["Everlook|Shooty"].money == 12000, "eigenes Gold nicht gemerkt")
+        st.chars["Everlook|Twink"] = { name = "Twink", realm = "Everlook", class = "MAGE", money = 500000 }
+        st.chars["Everlook|Neu"] = { name = "Neu", realm = "Everlook" }
+        st.chars["Andere|Fremd"] = { name = "Fremd", realm = "Andere", money = 1 }
+        local lines = IV.MoneyLines()
+        local text = {}
+        for _, l in ipairs(lines) do text[#text + 1] = l[1] .. "=" .. tostring(l[2]) end
+        text = table.concat(text, ";")
+        assert(text:find("Einnahmen=50 s 0 k", 1, true) and text:find("Ausgaben=30 s 0 k", 1, true), text)
+        assert(text:find("Saldo=+20 s 0 k", 1, true), "Saldo: " .. text)
+        assert(text:find("Shooty=1 g 20 s;Twink=50 g 0 s", 1, true), "eigener zuerst: " .. text)
+        assert(text:find("Alle zusammen=51 g 20 s", 1, true), "Summe: " .. text)
+        assert(not text:find("Fremd", 1, true), "anderer Realm ohne Wunsch")
+        assert(text:find("1 Charakter noch ohne Stand", 1, true), "unbekannt nicht genannt")
+        -- Tooltip schreibt Zeilen.
+        local n = 0
+        local tt = { SetText = function() end, AddLine = function() n = n + 1 end,
+                     AddDoubleLine = function() n = n + 1 end, Show = function() end }
+        IV.MoneyTooltip(tt)
+        assert(n >= 8, "Tooltip zu kurz: " .. n)
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    if WeintCodex.SavedData then WeintCodex.SavedData.inventory = sdInv end
+    IV.session = { earned = 0, spent = 0 }
+    Check(ok, "Gold: Einnahmen/Ausgaben der Sitzung, alle Charaktere, eigener zuerst, Summe, unbekannt genannt"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.25.0.0: Wechsel an/aus direkt im Aufspuermenue des Spiels.
 do
     local G = _G

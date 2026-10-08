@@ -1620,6 +1620,11 @@ beide ab Werk aus.
 
 ### Bestand aller Charaktere (`ui/inventory.lua`, 6.24.0.0)
 
+- 6.26.0.0 Gold: `c.money` je Charakter (Stand letztes Einloggen),
+  Sitzung `IV.session` (Einnahmen/Ausgaben seit dem Einloggen, nicht
+  gespeichert). Tooltip an der Goldzelle der Chat-Infozeile
+  (`IV.MoneyTooltip`). Charakter ohne Stand: „noch ohne Stand“, nie 0.
+
 - `SavedData.inventory.chars["Realm|Name"]` = `{ name, realm, class, faction,
   bags, worn, bank, at, bankAt }`, je `[itemID] = Anzahl`; `names[itemID]`
   aus dem Link. Taschen bei `BAG_UPDATE_DELAYED`/Einloggen, Ausrüstung bei
