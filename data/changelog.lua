@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.21.2.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFKontinentkarte aufgeräumt.|r Auf Kalimdor und den Östlichen Königreichen im Ganzen stehen nur noch Schiffe, Zeppeline, Trams und Portale. Geistheiler, Pfeile und Flugmeister siehst du, sobald du in ein Gebiet hineingehst.",
+        },
+    },
+    {
         version = "6.21.1.2",
         date    = "08.10.2026",
         notes   = {

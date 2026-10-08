@@ -96,14 +96,17 @@ local function AddZone(out, d, zone, x0, x1, y0, y1)
         return x0 + x * (x1 - x0), y0 + y * (y1 - y0)
     end
     local small = x0 ~= nil
-    if MK.Wants("spirit") then
+    -- 6.21.2.0: auf dem Kontinent nur die Reisen (Schiffe, Zeppeline, ...) -
+    -- Geistheiler, Pfeile und Flugmeister erst in der Zone (Wunsch aus dem
+    -- Test: die grosse Karte war zu voll).
+    if not small and MK.Wants("spirit") then
         local list = d.spirit and d.spirit[zone]
         for i = 1, list and #list or 0, 2 do
             local x, y = P(list[i], list[i + 1])
             out[#out + 1] = { kind = "spirit", x = x, y = y, small = small }
         end
     end
-    if MK.Wants("crossing") then
+    if not small and MK.Wants("crossing") then
         local list = d.crossings and d.crossings[zone]
         for i = 1, list and #list or 0, 4 do
             local to = list[i + 3]
@@ -113,7 +116,7 @@ local function AddZone(out, d, zone, x0, x1, y0, y1)
             end
         end
     end
-    if MK.Wants("flight") then
+    if not small and MK.Wants("flight") then
         local list = d.flights and d.flights[zone]
         for i = 1, list and #list or 0, 3 do
             if Shows(list[i + 2]) then
@@ -146,7 +149,7 @@ function MK.ForMap(mapID)
     local info = ME and ME.MapInfo(mapID)
     if K.Get(KEY, "mapMarksContinent") and info and K.Plain(info.mapType) == ME.CONTINENT then
         local zones, seen = {}, {}
-        for _, set in ipairs({ d.spirit, d.crossings, d.flights, d.travel }) do
+        for _, set in ipairs({ d.travel }) do
             for zone in pairs(set or {}) do
                 if not seen[zone] then seen[zone] = true zones[#zones + 1] = zone end
             end
@@ -397,8 +400,8 @@ function MK.BuildRows(B)
             description = "Ein Kreis in der Farbe der Fraktion. Maus darauf: wohin." })
     B:Row({ type = "toggle", label = "Auch die der anderen Fraktion", key = "mapMarksOther",
             description = "Sonst nur deine und die neutralen." },
-          { type = "toggle", label = "Auch auf der Kontinentkarte", key = "mapMarksContinent",
-            description = "Kalimdor und die Östlichen Königreiche im Ganzen, etwas kleiner." })
+          { type = "toggle", label = "Reisen auch auf der Kontinentkarte", key = "mapMarksContinent",
+            description = "Dort nur Schiffe, Zeppeline, Trams und Portale, etwas kleiner. Der Rest erst in der Zone." })
 end
 
 local mod = K.Module(KEY)

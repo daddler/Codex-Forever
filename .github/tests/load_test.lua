@@ -5849,13 +5849,17 @@ do
         assert(MK.Place() == 7 and not MK.pins[8]:IsShown(), "Pfeile bleiben stehen")
         -- 6.21.2.0: Kontinent - jede Zone darunter, kleiner; nur mit Rechteck.
         K.Set("comfort", "mapCrossings", true)
+        K.Set("comfort", "mapTravel", true)
+        K.Set("comfort", "mapMarksOther", true)
         mapID = 1414
         assert(MK.Place() == 0, "Kontinent ohne Rechteck zeigt Symbole")
         G.C_Map.GetMapRectOnMap = function(zone, top) if top == 1414 then return 0.4, 0.6, 0.5, 0.7 end end
         MK.Forget()
         local n = MK.Place()
-        assert(n > 50 and MK.pins[1].entry.small, "Kontinent: " .. tostring(n))
-        assert(math.abs(MK.pins[1].entry.x - (0.4 + D.spirit[1411][1] * 0.2)) < 1e-6, "Kontinent an falscher Stelle")
+        assert(n > 0 and MK.pins[1].entry.small, "Kontinent: " .. tostring(n))
+        -- 6.21.2.0: dort nur Reisen, kein Geistheiler, Pfeil, Flugmeister.
+        for i = 1, n do assert(MK.pins[i].entry.kind == "travel", "Kontinent zeigt " .. MK.pins[i].entry.kind) end
+        assert(MK.pins[1].entry.x >= 0.4 and MK.pins[1].entry.x <= 0.6, "Kontinent an falscher Stelle")
         -- 6.21.1.2: kleiner gemacht, aber an derselben Stelle - der Abstand
         -- gilt im Massstab des Symbols.
         local cpt, csc
@@ -5868,6 +5872,8 @@ do
         K.Set("comfort", "mapMarksContinent", false)
         assert(MK.Place() == 0, "Kontinent, obwohl abgeschaltet")
         K.Set("comfort", "mapMarksContinent", true)
+        K.Set("comfort", "mapTravel", false)
+        K.Set("comfort", "mapMarksOther", false)
         -- Flugmeister und Reisen, nach Fraktion.
         G.UnitFactionGroup = function() return "Horde" end
         K.Set("comfort", "mapSpirit", false)

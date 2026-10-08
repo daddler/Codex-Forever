@@ -1549,6 +1549,9 @@ beide ab Werk aus.
   `neutral`); ab Werk eigene Fraktion und neutrale (`mapMarksOther`).
   `mapMarksContinent` (an): auf dem Kontinent jede Zone darunter über
   `GetMapRectOnMap` (`ME.Under`/`ME.Rect`), Symbole auf 70 % (`MK.SMALL`).
+  Seit 6.21.2.0 dort **nur Reisen** (Schiffe, Zeppeline, Trams, Portale) –
+  Geistheiler, Pfeile und Flugmeister erst auf der Karte der Zone
+  (Beta-Test: die große Karte war zu voll).
   Der Bestand deckt alle 50 Karten der Quelle ab, auch die neuen Gebiete
   von Forever.
 

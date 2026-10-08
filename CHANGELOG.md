@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.21.2.0] – 2026-10-08
+
+**Kontinentkarte aufgeräumt.** Auf Kalimdor und den Östlichen Königreichen im Ganzen stehen nur noch Schiffe, Zeppeline, Trams und Portale. Geistheiler, Pfeile und Flugmeister siehst du, sobald du in ein Gebiet hineingehst.
+
+### Technisch
+
+- Beta-Test 6.21.1.2: „wenn ich die Map groß mache … nur die Schiffsrouten“. `ui/mapmarks.lua` `AddZone` nimmt auf dem Kontinent (`small`) nur noch `travel`; der Schalter heißt „Reisen auch auf der Kontinentkarte“. Prüflauf verlangt dort nur Reisen; Gegenprobe (Geistheiler zurück) gefangen.
+
 ## [6.21.1.2] – 2026-10-08
 
 **Kontinentkarte: Symbole an der richtigen Stelle.** Geistheiler, Pfeile, Flugmeister und Reisen standen auf Kalimdor und den Östlichen Königreichen zusammengedrängt am linken Rand. Jetzt stehen sie dort, wo sie hingehören.
