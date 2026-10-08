@@ -1191,6 +1191,52 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.26.1.0: Kamera - Rueckgabe vergleicht Zahlen als Zahlen; einmalige
+-- Reparatur der Testeinstellungen auf den Wert ab Werk.
+do
+    local G = _G
+    local savedCV = G.C_CVar
+    local PF = WeintCodex.UIProfile
+    local DL = WeintCodex.UIDialogue
+    local ok, err = pcall(function()
+        local cv = { test_cameraOverShoulder = "0", cameraZoomSpeed = "20",
+                     test_cameraTargetFocusInteractEnable = "0",
+                     test_cameraTargetFocusInteractStrengthYaw = "1.000000",
+                     test_cameraTargetFocusInteractStrengthPitch = "0.750000" }
+        local def = { test_cameraOverShoulder = "0", cameraZoomSpeed = "20",
+                      test_cameraTargetFocusInteractEnable = "0",
+                      test_cameraTargetFocusInteractStrengthYaw = "1",
+                      test_cameraTargetFocusInteractStrengthPitch = "0.75" }
+        G.C_CVar = {
+            GetCVar = function(n) return cv[n] end,
+            -- Wie der Client: Zahlen kommen mit sechs Stellen zurueck.
+            SetCVar = function(n, v) local x = tonumber(v) cv[n] = x and string.format("%.6f", x) or v return true end,
+            GetCVarDefault = function(n) return def[n] end,
+        }
+        assert(PF.Same("-1", "-1.000000") and not PF.Same("-1", "0"), "Zahlvergleich")
+        assert(PF.SetCVar("test_cameraOverShoulder", -1.0, "comfort"), "nicht gesetzt")
+        assert(cv.test_cameraOverShoulder == "-1.000000", "Attrappe")
+        assert(PF.Release("test_cameraOverShoulder") and tonumber(cv.test_cameraOverShoulder) == 0,
+            "Schulter bleibt nach dem Gespraech stehen")
+        -- Was alte Fassungen stehen liessen: Reparatur einmal beim Einloggen.
+        cv.test_cameraOverShoulder = "-1.000000"
+        cv.test_cameraTargetFocusInteractStrengthPitch = "0.600000"
+        K.Set("comfort", "dlgCamRepair", 0)
+        DL.Boot()
+        assert(tonumber(cv.test_cameraOverShoulder) == 0 and tonumber(cv.test_cameraTargetFocusInteractStrengthPitch) == 0.75,
+            "Reparatur setzt nicht zurueck")
+        assert(DL.repaired == 2 and tonumber(K.Get("comfort", "dlgCamRepair")) == DL.REPAIR_VERSION, "Reparatur: " .. tostring(DL.repaired))
+        cv.test_cameraOverShoulder = "-1.000000"
+        DL.Boot()
+        assert(cv.test_cameraOverShoulder == "-1.000000", "Reparatur laeuft bei jedem Einloggen")
+        assert(table.concat(DL.StatusLines(), "\n"):find("nicht ab Werk", 1, true), "Bericht ohne Kamera")
+    end)
+    G.C_CVar = savedCV
+    K.Set("comfort", "dlgCamRepair", 0)
+    Check(ok, "Kamera: Rueckgabe trotz \"-1.000000\", einmalige Reparatur auf Werte ab Werk, Bericht"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.26.0.0: Gold - Sitzung (Einnahmen/Ausgaben) und alle Charaktere.
 do
     local G = _G

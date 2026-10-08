@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.1.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Kamera folgt wieder.|r Nach Gesprächen blieben Testeinstellungen der Kamera stehen – dadurch folgte die Kamera beim Laufen nicht mehr wie eingestellt. Sie werden beim ersten Einloggen einmal auf den Wert ab Werk gesetzt und nach jedem Gespräch jetzt zuverlässig zurückgegeben. Unter Komfort → Gespräche gibt es dafür auch „Kamera zurücksetzen“.",
+        },
+    },
+    {
         version = "6.26.0.0",
         date    = "08.10.2026",
         notes   = {

@@ -206,6 +206,14 @@ end
 -- Spieleinstellungen
 --------------------------------------------------
 
+-- Wert ab Werk (nil, wenn der Client ihn nicht nennt).
+function PF.GetCVarDefault(name)
+    local cv = _G.C_CVar
+    local fn = (cv and cv.GetCVarDefault) or _G.GetCVarDefault
+    if type(fn) ~= "function" then return nil end
+    local ok, v = pcall(fn, name)
+    return (ok and type(v) == "string") and v or nil
+end
 function PF.GetCVar(name)
     local cv = _G.C_CVar
     local fn = (cv and cv.GetCVar) or _G.GetCVar
@@ -214,11 +222,28 @@ function PF.GetCVar(name)
     return (ok and type(v) == "string") and v or nil
 end
 
+-- 6.26.1.0 (Beta-Test: "seit dem Gespraechs-Feature folgt die Kamera nicht
+-- mehr"): der Client gibt Zahlen als "-1.000000" zurueck, gesetzt war "-1".
+-- Der Textvergleich hielt das fuer einen Wert des Spielers - die
+-- Einstellung blieb stehen, der Merker war trotzdem weg. Zahlen werden
+-- jetzt als Zahlen verglichen.
+function PF.Same(a, b)
+    if a == b then return true end
+    local x, y = tonumber(a), tonumber(b)
+    return x ~= nil and y ~= nil and math.abs(x - y) < 1e-4
+end
+
 local function RawSet(name, value)
     local cv = _G.C_CVar
     local fn = (cv and cv.SetCVar) or _G.SetCVar
     if type(fn) ~= "function" then return false end
     return (pcall(fn, name, value))
+end
+
+PF.RawSet = RawSet
+function PF.ForgetCVar(name)
+    local ui = Root()
+    if ui and ui.cvars then ui.cvars[name] = nil end
 end
 
 -- Eine Spieleinstellung setzen und den Wert von vorher merken (nur den
@@ -235,7 +260,7 @@ function PF.SetCVar(name, value, owner)
         local rec = ui.cvars[name]
         if rec then
             rec.set, rec.owner = value, owner or rec.owner
-        elseif old ~= value then
+        elseif not PF.Same(old, value) then
             ui.cvars[name] = { orig = old, set = value, owner = owner or "ui" }
         end
     end
@@ -256,7 +281,7 @@ function PF.Release(name)
     local rec = ui and ui.cvars and ui.cvars[name]
     if not rec then return false end
     ui.cvars[name] = nil
-    return PF.GetCVar(name) == rec.set and RawSet(name, rec.orig) or false
+    return PF.Same(PF.GetCVar(name), rec.set) and RawSet(name, rec.orig) or false
 end
 
 -- Gibt zurueck, was kein laufender Teil mehr braucht. Zahl der

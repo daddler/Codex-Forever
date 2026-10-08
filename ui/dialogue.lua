@@ -43,6 +43,7 @@ DL.DEFAULTS = {
     dlgViewSaved = false,
     dlgCamDist = 6,      -- so nah (Meter; 6.23.2.2: 6 statt 4)
     dlgShoulder = true,  -- NPC zur Seite (Schulterkamera, 6.23.1.0)
+    dlgCamRepair = 0,    -- 6.26.1.0: einmalige Kamerareparatur gelaufen (Fassung)
     dlgSpeed = 35,       -- Zeichen je Sekunde beim Einlaufen (6.23.2.0)
     dlgFade  = true,     -- Oberflaeche ausblenden (6.23.2.0)
 }
@@ -1206,6 +1207,17 @@ DL.Apply = Apply
 
 function DL.StatusLines()
     local out = {}
+    local PF = WeintCodex.UIProfile
+    if PF and PF.GetCVar then
+        local parts = {}
+        for _, name in ipairs(DL.REPAIR) do
+            local now, def = PF.GetCVar(name), PF.GetCVarDefault and PF.GetCVarDefault(name)
+            local mark = (now and def and not PF.Same(now, def)) and " (nicht ab Werk)" or ""
+            parts[#parts + 1] = name:gsub("^test_camera", "") .. "=" .. tostring(now) .. mark
+        end
+        out[#out + 1] = "Kamera: " .. table.concat(parts, " · ")
+            .. " · Reparatur: " .. (DL.repaired and (DL.repaired .. " zurückgesetzt") or "nicht gelaufen")
+    end
     local n = 0
     for _, took in pairs(DL.taken) do n = n + #took end
     out[#out + 1] = "Gesprächsdaten (C_GossipInfo): " .. (DL.Usable() and "ja" or "nein")
@@ -1269,6 +1281,14 @@ local function Build(B)
             description = "Nur ohne „Kamera auf den NPC richten“: die Kamera gleitet in den Blick, den du gemerkt hast. Belegt die Ansichten 4 und 5 des Spiels." },
           { type = "button", label = "Blick", text = "Diesen Blick merken", disabled = camOff,
             onClick = function() DL.RememberView() end })
+    B:Row({ type = "button", label = "Kamera", text = "Kamera zurücksetzen",
+            onClick = function()
+                local n = DL.RepairCamera()
+                Say(n == nil and "Erst das Gespräch schließen." or
+                    ("Kamera zurückgesetzt – " .. n .. " Testeinstellungen wieder ab Werk."))
+            end },
+          { type = "empty" })
+    B:Note("Folgt die Kamera beim Laufen nicht mehr wie eingestellt, setzt „Kamera zurücksetzen“ die Testeinstellungen der Kamera auf den Wert ab Werk.")
 end
 
 local mod = K.Module(KEY)
@@ -1285,7 +1305,40 @@ end)
 
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
+-- KAMERA REPARIEREN (6.26.1.0). Bis 6.26.0.0 konnte PF.Release einen
+-- Wert stehen lassen (Textvergleich "-1" gegen "-1.000000", siehe
+-- ui/profile.lua) - am haeufigsten die Schulter (test_cameraOverShoulder)
+-- und die Staerke des Blicks. Testeinstellungen der Kamera schalten die
+-- "Action Cam" des Spiels zu; mit ihr folgt die Kamera beim Laufen nicht
+-- mehr wie eingestellt. Die Reparatur setzt die Testeinstellungen und das
+-- Zoomtempo auf den Wert ab Werk, ausser mitten im Gespraech. Die beiden
+-- Schalter gegen Reiseuebelkeit fasst sie NICHT an - die kann der Spieler
+-- selbst gesetzt haben; der Bericht nennt sie.
+DL.REPAIR = { "test_cameraOverShoulder", "test_cameraTargetFocusInteractEnable",
+              "test_cameraTargetFocusInteractStrengthYaw", "test_cameraTargetFocusInteractStrengthPitch",
+              "cameraZoomSpeed" }
+DL.REPAIR_VERSION = 1
+DL.repaired = nil
+function DL.RepairCamera()
+    if win and win:IsShown() then return nil end
+    local PF = WeintCodex.UIProfile
+    if not (PF and PF.GetCVarDefault and PF.RawSet) then return nil end
+    local n = 0
+    for _, name in ipairs(DL.REPAIR) do
+        local def, now = PF.GetCVarDefault(name), PF.GetCVar(name)
+        if def and now and not PF.Same(def, now) and PF.RawSet(name, def) then n = n + 1 end
+        if PF.ForgetCVar then PF.ForgetCVar(name) end
+    end
+    DL.cam.shoulder, DL.cam.focus, DL.cam.speed = false, false, false
+    DL.repaired = n
+    return n
+end
+
 function DL.Boot()
+    -- Einmal je Konto: was alte Fassungen stehen liessen (6.26.1.0).
+    if (tonumber(K.Get(KEY, "dlgCamRepair")) or 0) < DL.REPAIR_VERSION then
+        if DL.RepairCamera() then K.Set(KEY, "dlgCamRepair", DL.REPAIR_VERSION) end
+    end
     -- Abgestuerzt mitten im Gespraech: die Schulter steht noch - zurueck.
     local PF = WeintCodex.UIProfile
     if PF and PF.Release then

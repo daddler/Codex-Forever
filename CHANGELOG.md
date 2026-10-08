@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.1.0] – 2026-10-08
+
+### Behoben
+
+- Kamera folgt beim Laufen nicht mehr (Beta-Test: „seit dem Dialogue-Feature … verfolgt die Kamera nicht mehr meinen Char“). Ursache: `PF.Release` gab eine Einstellung nur zurück, wenn der Text gleich war – gesetzt „-1“, der Client meldet „-1.000000“. Der Merker wurde trotzdem gelöscht, die Testeinstellung (am ehesten `test_cameraOverShoulder`, die Schulter der Action Cam) blieb dauerhaft stehen. `PF.Same` vergleicht Zahlen als Zahlen (auch in `PF.SetCVar`).
+- `DL.RepairCamera`: setzt `test_cameraOverShoulder`, die drei `test_cameraTargetFocusInteract*` und `cameraZoomSpeed` auf `GetCVarDefault`, einmal je Konto beim Einloggen (`dlgCamRepair`, `DL.REPAIR_VERSION`) und auf Knopfdruck („Kamera zurücksetzen“, Seite Gespräche). Die Schalter gegen Reiseübelkeit fasst sie nicht an. `/wcui prüfen` → Gespräche: Werte und „nicht ab Werk“.
+
+### Technisch
+
+- Prüflauf mit Attrappe, die Zahlen wie der Client mit sechs Stellen zurückgibt; drei Gegenproben gefangen.
+
 ## [6.26.0.0] – 2026-10-08
 
 ### Neu

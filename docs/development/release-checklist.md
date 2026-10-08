@@ -91,6 +91,7 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 - [ ] Raus da: alle neun Töne über „Ton abspielen“ hörbar (6.24.0.0)
 - [ ] Taschen (6.25.0.0): Leveln → Taschen; Charaktere links, × leert die Suche, Filter wirken, Raster füllt die Breite; Schalter „Im Tooltip zeigen“ wirkt
 - [ ] Raus da (6.25.0.0): die fünf eigenen Alarme hörbar
+- [ ] 6.26.1.0: nach dem Einloggen folgt die Kamera beim Laufen wie eingestellt; nach einem Gespräch weiterhin; `/wcui prüfen` → Gespräche „Kamera:“ ohne „nicht ab Werk“
 - [ ] 6.26.0.0: Maus über das Gold unter dem Chat – Sitzung (nach Kauf/Verkauf ändern sich Einnahmen/Ausgaben), alle Charaktere nach Einloggen mit Gold, Summe
 - [ ] 6.25.5.0: Vermächtnis – alle drei Seiten ohne Leder/Metall, Erreichtes in Gold
 - [ ] 6.25.4.0: Berufsfenster – kein Fach/keine Fläche am Rezeptsymbol; Fortschrittsanzeige ohne Leder, Leiste in Gold

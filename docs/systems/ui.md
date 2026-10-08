@@ -1641,6 +1641,13 @@ beide ab Werk aus.
 - `/wcui bestand [Suchwort]`. Bank, die nie offen war, ist **unbekannt**,
   nicht 0 – sie steht dann nicht im Tooltip und im Stand als „Bank unbekannt“.
 
+### Kamera nach Gesprächen (6.26.1.0)
+
+- `PF.Release`/`PF.SetCVar` vergleichen mit `PF.Same` (Zahlen als Zahlen) –
+  der Client gibt „-1.000000“ zurück; bis 6.26.0.0 blieben Testeinstellungen
+  der Kamera stehen, die Kamera folgte nicht mehr. `DL.RepairCamera` setzt sie
+  einmal je Konto (und auf Knopfdruck) auf den Wert ab Werk.
+
 ### Kräuter und Erz im Wechsel (`ui/gathertrack.lua`, 6.22.0.0)
 
 - Seit 6.25.0.0 ein Haken im Aufspürmenü des Spiels: `GT.HookMenu` über
