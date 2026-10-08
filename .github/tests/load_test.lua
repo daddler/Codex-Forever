@@ -1039,7 +1039,7 @@ end
 -- 6.22.0.0: Kraeuter- und Mineraliensuche im Wechsel.
 do
     local G = _G
-    local names = { "C_Minimap", "GetTime", "InCombatLockdown", "UnitCastingInfo", "GetSpellInfo", "C_Spell" }
+    local names = { "C_Minimap", "GetTime", "InCombatLockdown", "UnitCastingInfo", "UnitChannelInfo", "GetSpellInfo", "C_Spell" }
     local saved = {}
     for i, n in ipairs(names) do saved[i] = G[n] end
     local GT = WeintCodex.UIGatherTrack
@@ -1052,8 +1052,11 @@ do
         }
         G.GetTime = function() return now end
         G.InCombatLockdown = function() return combat end
-        G.UnitCastingInfo = function() return nil end
+        -- Wie im Spiel: ohne Zauber gar kein Rueckgabewert.
+        local casting = false
+        G.UnitCastingInfo = function() if casting then return "Frostblitz" end end
         G.C_Spell = nil
+        G.UnitChannelInfo = function() end
         G.GetSpellInfo = function(id) return id == 2383 and "Kräutersuche" or "Mineraliensuche" end
         G.C_Minimap = {
             GetNumTrackingTypes = function() return #list end,
@@ -1077,6 +1080,9 @@ do
         combat = true
         assert(GT.Swap() == false and #sets == 2, "im Kampf gewechselt")
         combat = false
+        casting = true
+        assert(GT.Swap() == false and #sets == 2, "beim Zaubern gewechselt")
+        casting = false
         -- Wirkungslos: nach drei Versuchen aus.
         works = false
         GT.Swap() GT.Swap() GT.Swap()

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.22.0.1",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFKräuter und Erz im Wechsel ohne Fehlermeldung.|r Der Wechsel brach mit einer Lua-Fehlermeldung ab, sobald du nicht gerade gezaubert hast – also fast immer. Jetzt wechselt er wirklich.",
+        },
+    },
+    {
         version = "6.22.0.0",
         date    = "08.10.2026",
         notes   = {

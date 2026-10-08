@@ -123,8 +123,12 @@ end
 function GT.Paused()
     if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false) then return "Kampf" end
     if _G.UnitIsDeadOrGhost and K.Bool(_G.UnitIsDeadOrGhost("player"), false) then return "tot" end
-    if _G.UnitCastingInfo and type(_G.UnitCastingInfo("player")) ~= "nil" then return "zaubert" end
-    if _G.UnitChannelInfo and type(_G.UnitChannelInfo("player")) ~= "nil" then return "zaubert" end
+    -- Ohne Zauber geben beide GAR NICHTS zurueck (nicht einmal nil) -
+    -- type() ohne Wert bricht ab (gemessen 6.22.0.0). Erst in eine Variable.
+    local cast = _G.UnitCastingInfo and _G.UnitCastingInfo("player")
+    if type(cast) ~= "nil" and cast ~= false then return "zaubert" end
+    local chan = _G.UnitChannelInfo and _G.UnitChannelInfo("player")
+    if type(chan) ~= "nil" and chan ~= false then return "zaubert" end
     return nil
 end
 

@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.22.0.1] – 2026-10-08
+
+**Kräuter und Erz im Wechsel ohne Fehlermeldung.** Der Wechsel brach mit einer Lua-Fehlermeldung ab, sobald du nicht gerade gezaubert hast – also fast immer. Jetzt wechselt er wirklich.
+
+### Technisch
+
+- Beta-Test 6.22.0.0: `gathertrack.lua:126: bad argument #1 to 'type' (value expected)`, 20×. `UnitCastingInfo`/`UnitChannelInfo` geben ohne Zauber **keinen** Wert zurück (nicht `nil`); `type(f())` bricht dann ab. Erst in eine Variable. Die Attrappe im Prüflauf gab `nil` zurück und verdeckte es – sie gibt jetzt nichts zurück wie das Spiel; Prüflauf deckt auch die Pause beim Zaubern ab. Gegenprobe (alter Code) fällt mit derselben Meldung wie im Spiel.
+
 ## [6.22.0.0] – 2026-10-08
 
 **Kräuter und Erz zugleich suchen.** Unter Komfort → Sammeln wechselt WeintCodex außerhalb des Kampfes zwischen Kräuter- und Mineraliensuche, ab Werk alle 2 Sekunden. Im Kampf und beim Zaubern macht es Pause. Lässt das Spiel den Wechsel nicht zu, schaltet er sich ab und sagt es dir.
