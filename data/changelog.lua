@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.23.4.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFGespräche: die Kamera schaut dein Gegenüber an.|r Sprichst du jemanden an, schwenkt die Kamera auf ihn – egal, wie du davor stehst. Der Text beginnt schon während der Fahrt und steht jetzt größer in einer Serifenschrift da, wie in einem Buch.",
+        },
+    },
+    {
         version = "6.23.3.0",
         date    = "08.10.2026",
         notes   = {

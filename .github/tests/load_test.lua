@@ -1339,16 +1339,17 @@ do
         stub.FireEvent("GOSSIP_SHOW")
         assert(bodyAlpha == 0, "Text vor dem Einlaufen sichtbar (zweites Ansprechen)")
         local upd = DL.win:GetScript("OnUpdate")
-        -- Kamera unterwegs: kein Zeichen.
-        upd(DL.win, 0.5)
-        upd(DL.win, 0.5)
+        -- Ein kurzer Atemzug (DL.TEXT_DELAY): noch kein Zeichen.
+        upd(DL.win, 0.15)
+        upd(DL.win, 0.15)
         for _, g in ipairs(grads) do assert(g == 0, "Text laeuft, bevor die Kamera da ist") end
-        assert(bodyAlpha == 0, "Text sichtbar, bevor die Kamera da ist")
+        assert(bodyAlpha == 0, "Text vor dem Atemzug sichtbar")
         grads = {}
-        zoom = 4
+        -- 6.23.4.0: der Text startet WAEHREND die Kamera noch faehrt.
+        upd(DL.win, 0.1)
         upd(DL.win, 0.5)
-        assert(bodyAlpha == 1, "Text nach der Kamera nicht sichtbar")
-        assert(grads[#grads] == 10, "Tempo nicht wie eingestellt: " .. tostring(grads[#grads]))
+        assert(zoom == 15 and bodyAlpha == 1, "Text wartet die ganze Kamerafahrt ab")
+        assert(grads[#grads] == 12, "Tempo nicht wie eingestellt: " .. tostring(grads[#grads]))
         -- 6.23.2.1: am Ende steht ALLES da (Verlauf hinter dem letzten Zeichen).
         upd(DL.win, 100)
         assert(grads[#grads] == DL.ALL, "Text am Ende nicht ganz sichtbar: " .. tostring(grads[#grads]))
@@ -1438,7 +1439,7 @@ do
     K.Set("comfort", "dlgFade", true)
     K.Set("comfort", "dlgSpeed", 35)
     DL.cam.saved, DL.cam.target, DL.fade.on = nil, nil, false
-    Check(ok, "Gespraeche 2: Text wartet auf die Kamera (hoechstens 3 s), Tempo, Oberflaeche langsam aus und ein, Kampf/Dialog sofort zurueck"
+    Check(ok, "Gespraeche 2: Text startet nach kurzem Atemzug waehrend der Kamerafahrt, Tempo, Oberflaeche langsam aus und ein, Kampf/Dialog sofort zurueck"
         .. (ok and "" or (": " .. tostring(err))))
 end
 
@@ -1464,6 +1465,7 @@ do
         G.C_GossipInfo = { GetText = function() return "Hallo" end, GetOptions = function() return {} end,
             SelectOption = function() end, CloseGossip = function() end }
         K.Set("comfort", "dlgOn", true)
+        K.Set("comfort", "dlgFocus", false)             -- gemerkter Blick nur ohne Fokus
         K.Set("comfort", "dlgViewSaved", false)
         -- Nichts gemerkt: zoomen wie bisher.
         stub.FireEvent("GOSSIP_SHOW")
@@ -1495,13 +1497,33 @@ do
         stub.FireEvent("GOSSIP_SHOW")
         assert(calls[#calls] == "zoom", "gemerkter Blick, obwohl aus")
         DL.Close()
+        DL.win:GetScript("OnHide")(DL.win)
+        for _, fn in ipairs(queue) do fn() end
+        queue = {}
+        -- 6.23.4.0: Blick auf den NPC - Testeinstellungen des Spiels, danach zurueck.
+        for _, c in ipairs(DL.FOCUS) do cvars[c[1]] = "9" end
+        K.Set("comfort", "dlgView", true)
+        K.Set("comfort", "dlgFocus", true)
+        calls = {}
+        stub.FireEvent("GOSSIP_SHOW")
+        for _, c in ipairs(DL.FOCUS) do
+            assert(cvars[c[1]] == tostring(c[2]), "Fokus nicht gesetzt: " .. c[1] .. "=" .. tostring(cvars[c[1]]))
+        end
+        for _, c in ipairs(calls) do assert(c ~= "set5" and c ~= "save4", "gemerkter Blick trotz Fokus") end
+        DL.Close()
+        DL.win:GetScript("OnHide")(DL.win)
+        for _, fn in ipairs(queue) do fn() end
+        for _, c in ipairs(DL.FOCUS) do
+            assert(cvars[c[1]] == "9", "Fokus nicht zurueck: " .. c[1])
+        end
     end)
     for i, n in ipairs(names) do G[n] = saved[i] end
     K.Set("comfort", "dlgOn", false)
     K.Set("comfort", "dlgView", true)
     K.Set("comfort", "dlgViewSaved", false)
-    DL.cam.saved, DL.cam.target, DL.cam.view, DL.cam.shoulder = nil, nil, nil, false
-    Check(ok, "Gespraeche 3: gemerkter Blick - merken, nehmen, Text wartet aufs Gleiten, zurueck, ohne Schulter"
+    K.Set("comfort", "dlgFocus", true)
+    DL.cam.saved, DL.cam.target, DL.cam.view, DL.cam.shoulder, DL.cam.focus = nil, nil, nil, false, false
+    Check(ok, "Gespraeche 3: gemerkter Blick (nur ohne Fokus) und Blick auf den NPC - setzen und zurueck"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

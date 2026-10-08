@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.23.4.0] – 2026-10-08
+
+**Gespräche: die Kamera schaut dein Gegenüber an.** Sprichst du jemanden an, schwenkt die Kamera auf ihn – egal, wie du davor stehst. Der Text beginnt schon während der Fahrt und steht jetzt größer in einer Serifenschrift da, wie in einem Buch.
+
+### Technisch
+
+- Beta-Test 6.23.3.0: gemerkter Blick passt nicht, wenn man anders steht; Bild aus DialogueUI als Ziel; Text klein; Text soll während des Zooms starten.
+- Blick auf den NPC (`dlgFocus`, ab Werk an, Vorrang vor dem gemerkten Blick): die Ziel-Kamera des Spiels (`test_cameraTargetFocusInteractEnable` = 1, `…StrengthYaw` = 1, `…StrengthPitch` = 0,6) mit `CameraKeepCharacterCentered` und `CameraReduceUnexpectedMovement` = 0 – ohne die greift sie nicht. Alle über `DL.QuietSet` (Wert von vorher gemerkt, Warnung still) und `PF.Release` zurück, auch beim Einloggen nach Absturz. Welche Einstellungen nötig sind, aus dem Verhalten von DialogueUI abgelesen – kein Code übernommen. `/wcui prüfen` zeigt die fünf Werte.
+- Text startet nach `DL.TEXT_DELAY` (0,4 s) statt nach der ganzen Kamerafahrt.
+- Schrift: Name und Erzähltext in Newsreader (liegt in `media/fonts`, freie Lizenz), Text 17 pt mit 6 px Zeilenabstand, Antworten 15 pt; Fenster 560 px, Bild 60 px.
+- Prüflauf: Atemzug statt Kamerafahrt, Fokus gesetzt und zurück, kein gemerkter Blick bei Fokus; vier Gegenproben gefangen (eine erst, nachdem der Prüflauf alle Aufrufe ansah).
+
 ## [6.23.3.0] – 2026-10-08
 
 **Gespräche: dein Blickwinkel.** Stell die Kamera einmal so ein, wie sie im Gespräch stehen soll, und drück unter Komfort → Gespräche auf „Diesen Blick merken“. Ab dann gleitet sie bei jedem Gespräch in genau diesen Blick und danach zurück in deinen alten. Der Text wartet, bis sie angekommen ist.

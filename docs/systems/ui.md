@@ -1610,6 +1610,10 @@ beide ab Werk aus.
   + `SetView(5)`, danach `SetView(4)` (Ansichten 4/5 des Spiels belegt). Ohne
   Schulter. Ein berechneter Winkel geht nicht – Lage des NPCs und Richtung
   der Kamera gibt der Client Addons nicht.
+- 6.23.4.0 Blick auf den NPC (`dlgFocus`, Vorrang): Ziel-Kamera des Spiels
+  über `test_cameraTargetFocusInteract*` + `CameraKeepCharacterCentered`/
+  `CameraReduceUnexpectedMovement` = 0, alles über `DL.QuietSet`/`PF.Release`.
+  Text startet nach 0,4 s. Newsreader für Name und Text (17 pt).
 - Nicht gebaut: Vorlesen.
 
 ### Kräuter und Erz im Wechsel (`ui/gathertrack.lua`, 6.22.0.0)

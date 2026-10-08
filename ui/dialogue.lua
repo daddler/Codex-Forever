@@ -38,6 +38,7 @@ DL.DEFAULTS = {
     dlgType  = true,     -- Text laeuft ein
     dlgScale = 100,      -- Groesse in %
     dlgCam   = true,     -- Kamera heran, danach zurueck (6.23.1.0)
+    dlgFocus = true,     -- Kamera schwenkt auf den NPC (6.23.4.0)
     dlgView  = true,     -- gemerkten Blick nutzen, sobald einer gemerkt ist (6.23.3.0)
     dlgViewSaved = false,
     dlgCamDist = 6,      -- so nah (Meter; 6.23.2.2: 6 statt 4)
@@ -45,11 +46,13 @@ DL.DEFAULTS = {
     dlgSpeed = 35,       -- Zeichen je Sekunde beim Einlaufen (6.23.2.0)
     dlgFade  = true,     -- Oberflaeche ausblenden (6.23.2.0)
 }
-DL.W = 500
-DL.BODY_MAX = 240        -- hoechstens so hoch, dann rollt der Text
-DL.PORTRAIT = 56         -- Bild des NPCs
+DL.W = 560
+DL.TEXT_SIZE = 17        -- Erzaehltext (6.23.4.0: groesser, Serife)
+DL.BODY_MAX = 300        -- hoechstens so hoch, dann rollt der Text
+DL.PORTRAIT = 60         -- Bild des NPCs
 DL.FADE_IN = 0.35        -- Fenster blendet ein (s)
-DL.CAM_MAX = 3           -- so lange wartet der Text hoechstens auf die Kamera (s)
+DL.CAM_MAX = 3           -- (bis 6.23.3.0) so lange wartete der Text hoechstens
+DL.TEXT_DELAY = 0.4      -- so lange nach dem Beginn der Kamerafahrt beginnt der Text (s)
 DL.MAX_ROWS = 12
 DL.MAX_ITEMS = 10
 
@@ -128,6 +131,22 @@ local camWait = nil                -- Sekunden, die der Text schon auf die Kamer
 
 local function Accent() local a = GC.frameAccent return a[1], a[2], a[3] end
 
+-- Serifenschrift fuer Name und Erzaehltext (6.23.4.0, Beta-Test: "etwas
+-- groesser und geschmeidiger"): Newsreader liegt seit Jahren in media/fonts
+-- (freie Lizenz). Geht sie nicht, bleibt die Schrift von K.NewText.
+local function Serif(fs, size, bold)
+    local F = WeintCodex.Fonts or {}
+    local path = bold and F.serifBold or F.serif
+    if not (path and fs and fs.SetFont) then return fs end
+    local ok = fs:SetFont(path, size, "")
+    if ok == false then K.SetFont(fs, size) return fs end
+    if fs.SetShadowOffset then
+        fs:SetShadowOffset(1, -1)
+        fs:SetShadowColor(0, 0, 0, 0.9)
+    end
+    return fs
+end
+
 -- Tempo des Einlaufens (Zeichen je Sekunde), einstellbar seit 6.23.2.0.
 function DL.Speed()
     local v = tonumber(K.Get(KEY, "dlgSpeed")) or DL.DEFAULTS.dlgSpeed
@@ -205,7 +224,7 @@ local function Row(i)
     local r = rows[i]
     if r then return r end
     r = CreateFrame("Button", nil, win)
-    r:SetHeight(30)
+    r:SetHeight(34)
     r.bg = r:CreateTexture(nil, "BACKGROUND")
     r.bg:SetAllPoints(r)
     local s = C.surface2
@@ -232,7 +251,7 @@ local function Row(i)
     r.mark = K.NewText(r, 13)
     r.mark:SetPoint("LEFT", r.box, "RIGHT", 10, 0)
     r.mark:SetWidth(12)
-    r.label = K.NewText(r, 13)
+    r.label = Serif(K.NewText(r, 15), 15)
     r.label:SetPoint("LEFT", r.mark, "RIGHT", 6, 0)
     r.tag = K.NewText(r, 11)
     r.tag:SetPoint("RIGHT", r, "RIGHT", -12, 0)
@@ -333,7 +352,9 @@ local function OnUpdate(self, el)
     if not reveal then return end
     if camWait then
         camWait = camWait + el
-        if DL.CamMoving() and camWait < DL.CAM_MAX then
+        -- 6.23.4.0 (Beta-Test: "Text soll schon starten waehrend des
+        -- Kamerazooms"): nur noch ein kurzer Atemzug, nicht die ganze Fahrt.
+        if camWait < DL.TEXT_DELAY then
             Gradient(0)                -- auch hier: nichts zeigen
             return
         end
@@ -436,7 +457,7 @@ function DL.Build()
         if portrait.AddMaskTexture then pcall(portrait.AddMaskTexture, portrait, mask) end
     end
 
-    head = K.NewText(win, 18)
+    head = Serif(K.NewText(win, 22), 22, true)
     head:SetPoint("TOPLEFT", ring, "TOPRIGHT", 14, -8)
     head:SetPoint("RIGHT", win, "RIGHT", -44, 0)
     head:SetJustifyH("LEFT")
@@ -470,11 +491,11 @@ function DL.Build()
     scroll:EnableMouseWheel(true)
     local child = CreateFrame("Frame", nil, scroll)
     child:SetWidth(DL.W - 48)
-    body = K.NewText(child, 14)
+    body = Serif(K.NewText(child, DL.TEXT_SIZE), DL.TEXT_SIZE)
     body:SetPoint("TOPLEFT", child, "TOPLEFT", 0, 0)
     body:SetWidth(DL.W - 48)
     body:SetJustifyH("LEFT")
-    body:SetSpacing(5)
+    body:SetSpacing(6)
     local t = C.textNormal
     body:SetTextColor(t[1], t[2], t[3])
     scroll:SetScrollChild(child)
@@ -691,7 +712,7 @@ function DL.Draw(c)
         r:SetPoint("TOPLEFT", win, "TOPLEFT", 18, -y)
         r:SetPoint("RIGHT", win, "RIGHT", -18, 0)
         r:Show()
-        y = y + 34
+        y = y + 38
     end
     for i = #DL.list + 1, #rows do rows[i]:Hide() end
 
@@ -817,8 +838,43 @@ DL.VIEW_TALK = 5
 DL.VIEW_BACK = 4
 DL.VIEW_TIME = 1.5       -- so lange gleitet die Kamera (Text wartet)
 
+-- BLICK AUF DEN NPC (6.23.4.0, Beta-Test: gemerkter Blick "sieht komisch
+-- aus, wenn ich mich anders positioniere"; Bild aus DialogueUI als Ziel).
+-- Das Spiel hat eine eigene Kamera, die beim Ansprechen auf das Ziel
+-- schwenkt (Testeinstellungen test_cameraTargetFocusInteract*). Sie greift
+-- nur, wenn die beiden Schalter gegen Reiseuebelkeit aus sind
+-- (CameraKeepCharacterCentered, CameraReduceUnexpectedMovement). Alle fuenf
+-- ueber DL.QuietSet (Warnung still, Wert von vorher gemerkt), nach dem
+-- Gespraech ueber PF.Release zurueck - auch nach einem Absturz beim
+-- Einloggen. Hat Vorrang vor dem gemerkten Blick.
+DL.FOCUS = {
+    { "test_cameraTargetFocusInteractEnable", 1 },
+    { "test_cameraTargetFocusInteractStrengthYaw", 1 },
+    { "test_cameraTargetFocusInteractStrengthPitch", 0.6 },
+    { "CameraKeepCharacterCentered", 0 },
+    { "CameraReduceUnexpectedMovement", 0 },
+}
+
+local function FocusIn()
+    if not K.Get(KEY, "dlgFocus") or DL.cam.focus then return false end
+    local any = false
+    for _, c in ipairs(DL.FOCUS) do
+        if DL.QuietSet(c[1], c[2]) then any = true end
+    end
+    DL.cam.focus = any
+    return any
+end
+local function FocusOut()
+    if not DL.cam.focus then return end
+    DL.cam.focus = false
+    local PF = WeintCodex.UIProfile
+    if not (PF and PF.Release) then return end
+    for _, c in ipairs(DL.FOCUS) do PF.Release(c[1]) end
+end
+DL.FocusOut = FocusOut
+
 function DL.ViewUsable()
-    return K.Get(KEY, "dlgView") and K.Get(KEY, "dlgViewSaved")
+    return K.Get(KEY, "dlgView") and K.Get(KEY, "dlgViewSaved") and not K.Get(KEY, "dlgFocus")
         and type(_G.SaveView) == "function" and type(_G.SetView) == "function" and true or false
 end
 
@@ -836,6 +892,7 @@ end
 function DL.CamIn()
     if not K.Get(KEY, "dlgCam") or DL.cam.saved or DL.cam.view then return false end
     SpeedIn()
+    FocusIn()
     if DL.ViewUsable() then
         _G.SaveView(DL.VIEW_BACK)
         _G.SetView(DL.VIEW_TALK)
@@ -876,6 +933,7 @@ end
 function DL.CamOut()
     if win and win:IsShown() then return false end
     ShoulderOut()
+    FocusOut()
     if DL.cam.view then
         DL.cam.view = nil
         _G.SetView(DL.VIEW_BACK)
@@ -896,7 +954,7 @@ end
 
 local function CamOutNow() DL.CamOut() end
 function DL.CamLater()
-    if not (DL.cam.saved or DL.cam.shoulder or DL.cam.view) then return end
+    if not (DL.cam.saved or DL.cam.shoulder or DL.cam.view or DL.cam.focus) then return end
     local t = _G.C_Timer
     if t and t.After then t.After(DL.CAM_WAIT, CamOutNow) else DL.CamOut() end
 end
@@ -1155,6 +1213,13 @@ function DL.StatusLines()
     out[#out + 1] = string.format("Gezeigt %d · gewählt %d · gescheitert %d · Warnung zur Testeinstellung geschlossen %d",
         stats.shown, stats.picked, stats.failed, stats.warnHidden)
     if DL.lastError then out[#out + 1] = "Zuletzt gescheitert: " .. DL.lastError end
+    local fv = {}
+    for _, c in ipairs(DL.FOCUS) do
+        local PF = WeintCodex.UIProfile
+        local v = PF and PF.GetCVar and PF.GetCVar(c[1])
+        fv[#fv + 1] = c[1]:gsub("^test_camera", ""):gsub("TargetFocusInteract", "Fokus") .. "=" .. tostring(v or "–")
+    end
+    out[#out + 1] = "Blick auf den NPC: " .. (K.Get(KEY, "dlgFocus") and "an" or "aus") .. " · " .. table.concat(fv, " · ")
     out[#out + 1] = "Gemerkter Blick: " .. (K.Get(KEY, "dlgViewSaved") and (K.Get(KEY, "dlgView") and "an" or "gemerkt, aber aus") or "keiner gemerkt")
         .. " · Ansichten des Spiels (SaveView/SetView): " .. ((type(_G.SaveView) == "function" and type(_G.SetView) == "function") and "ja" or "nein")
     local l = DL.camLog
@@ -1196,8 +1261,12 @@ local function Build(B)
             description = "Nutzt eine Testeinstellung des Spiels (Schulterkamera); danach zurück auf deinen Wert." },
           { type = "button", label = "Platz", text = "Zurück an den Platz des Questfensters", disabled = off,
             onClick = function() K.Set(KEY, "dlgPos", nil) DL.Place() end })
-    B:Row({ type = "toggle", label = "Gemerkten Blick nutzen", key = "dlgView", disabled = camOff,
-            description = "Statt nur heranzuzoomen: die Kamera gleitet in den Blick, den du gemerkt hast. Belegt die Ansichten 4 und 5 des Spiels." },
+    B:Row({ type = "toggle", label = "Kamera auf den NPC richten", key = "dlgFocus", disabled = camOff,
+            description = "Die Kamera des Spiels schwenkt auf dein Gegenüber. Nutzt Testeinstellungen des Spiels und schaltet dafür kurz „Charakter zentriert halten“ aus; danach alles zurück." },
+          { type = "empty" })
+    B:Row({ type = "toggle", label = "Gemerkten Blick nutzen", key = "dlgView",
+            disabled = function() return camOff() or K.Get(KEY, "dlgFocus") end,
+            description = "Nur ohne „Kamera auf den NPC richten“: die Kamera gleitet in den Blick, den du gemerkt hast. Belegt die Ansichten 4 und 5 des Spiels." },
           { type = "button", label = "Blick", text = "Diesen Blick merken", disabled = camOff,
             onClick = function() DL.RememberView() end })
 end
@@ -1222,6 +1291,7 @@ function DL.Boot()
     if PF and PF.Release then
         PF.Release(DL.SHOULDER)
         PF.Release(DL.ZOOM_SPEED_CVAR)
+        for _, c in ipairs(DL.FOCUS) do PF.Release(c[1]) end
     end
     -- Ein Dialog des Spiels braucht die Oberflaeche: sofort zurueck.
     for i = 1, 4 do
