@@ -183,7 +183,11 @@ end)
 -- Jetzt ein eigener Takt (FA.OUT_TICK) ausserhalb des Kampfes, gestartet
 -- beim Einloggen; /wcui prüfen zaehlt Blicke, offene/verdeckte Werte und
 -- Verluste - so sieht man, woran es haengt.
-FA.OUT_WINDOW = 3.0
+-- 6.26.4.0 (gemessen 6.26.3.0: "Treffer gemeldet 4", kein Ton): das
+-- Lagerfeuer trifft womoeglich seltener als alle 3 s. Fenster 5 s; der
+-- Bericht nennt jetzt die Art des letzten Treffers und den kuerzesten
+-- Abstand, damit die naechste Messung sagt, woran es lag.
+FA.OUT_WINDOW = 5.0
 FA.OUT_TICK = 0.25
 local lastHealth, lastDrop = nil, -math.huge
 
@@ -208,7 +212,9 @@ end
 -- Spiels): zweiter binnen FA.OUT_WINDOW -> Ton.
 function FA.Hit()
     local now = Now()
-    local again = now - lastDrop <= FA.OUT_WINDOW
+    local gap = now - lastDrop
+    if gap < (stats.minGap or math.huge) then stats.minGap = gap end
+    local again = gap <= FA.OUT_WINDOW
     lastDrop = now
     if not again or now - lastAlarm < FA.GAP then return false end
     lastAlarm = now
@@ -229,7 +235,11 @@ function FA.OnUnitCombat(unit, action)
     if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false) then return false end
     stats.wounds = (stats.wounds or 0) + 1
     local a = K.Plain(action)
-    if type(a) == "string" and a ~= "WOUND" then return false end
+    stats.lastAction = type(a) == "string" and a or (type(action) == "nil" and "keine" or "verdeckt")
+    if type(a) == "string" and a ~= "WOUND" then
+        stats.otherActions = (stats.otherActions or 0) + 1
+        return false
+    end
     return FA.Hit()
 end
 
@@ -285,6 +295,11 @@ function FA.StatusLines()
         .. " · außerhalb des Kampfes " .. (stats.outside or 0)
     out[#out + 1] = string.format("Außerhalb des Kampfes: Takt %s · Blicke aufs Leben %d · verdeckt %d · Verluste %d · Treffer gemeldet %d",
         outTicker:IsShown() and "läuft" or "steht", stats.hpLooks or 0, stats.hpHidden or 0, stats.hpDrops or 0, stats.wounds or 0)
+    if (stats.wounds or 0) > 0 then
+        out[#out + 1] = string.format("Letzte Art: %s · andere Arten %d · kürzester Abstand %s (Fenster %.0f s)",
+            stats.lastAction or "?", stats.otherActions or 0,
+            stats.minGap and stats.minGap < math.huge and string.format("%.1f s", stats.minGap) or "–", FA.OUT_WINDOW)
+    end
     if stats.secret > 0 and stats.plain == 0 then
         out[#out + 1] = "Im Kampf nur geheime Summen – dann kann WeintCodex nicht warnen."
     end

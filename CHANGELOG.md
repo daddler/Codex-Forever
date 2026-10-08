@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.4.0] – 2026-10-09
+
+### Geändert
+
+- „Raus da“ außerhalb des Kampfes, gemessen 6.26.3.0: „Treffer gemeldet 4“, aber kein Ton. Vermutung: die Treffer lagen weiter als `FA.OUT_WINDOW` (3 s) auseinander. Fenster jetzt 5 s. Der Bericht nennt zusätzlich die Art des letzten `UNIT_COMBAT` (offen/verdeckt), wie viele andere Arten verworfen wurden und den kürzesten Abstand zweier Treffer – ungeklärt, bis eine Messung das bestätigt.
+
 ## [6.26.3.0] – 2026-10-09
 
 ### Geändert

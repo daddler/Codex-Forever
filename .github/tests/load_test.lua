@@ -2005,6 +2005,15 @@ do
         combat = true
         assert(FA.OnUnitCombat("player", "WOUND") == false, "Ton im Kampf ueber Treffer")
         combat = false
+        -- 6.26.4.0: Treffer 4 s auseinander reichen (Lagerfeuer).
+        now = now + 10
+        FA.OnUnitCombat("player", "WOUND")
+        now = now + 4
+        local b4 = played
+        assert(FA.OnUnitCombat("player", "WOUND") == true and played == b4 + 1, "kein Ton bei 4 s Abstand")
+        assert(FA.stats.lastAction == "WOUND", "Art nicht gemerkt")
+        local lines = table.concat(FA.StatusLines(), "\n")
+        assert(lines:find("kürzester Abstand", 1, true), "Abstand fehlt im Bericht")
         -- 6.25.2.0: Takt startet beim Einloggen, steht, wenn abgestellt.
         K.Set("comfort", "fireOutside", true)
         FA.outTicker:Hide()

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.4.0",
+        date    = "09.10.2026",
+        notes   = {
+            "|cff7C6CFFRaus da außerhalb des Kampfes geduldiger.|r Zwei Treffer binnen 5 statt 3 Sekunden lösen den Ton aus – Lagerfeuer treffen seltener, als gedacht. /wcui prüfen nennt jetzt auch, welche Art Treffer kam und wie dicht sie aufeinander folgten.",
+        },
+    },
+    {
         version = "6.26.3.0",
         date    = "09.10.2026",
         notes   = {
