@@ -86,41 +86,55 @@ local function Ends(r, suffix)
     return type(name) == "string" and name:sub(-#suffix) == suffix
 end
 
+PR.FOREIGN = { ProfessionsFrameNormalTexture = true, ProfessionsFrameIconTexture = true }
+PR.DEPTH = 4
+
+-- 6.25.4.0 (gemessen 6.25.3.0: "2 ausgeblendet", trotzdem je eines
+-- sichtbar): es gibt ZWEI Knoepfe mit diesen Namen, _G kennt nur den
+-- letzten. Darum die ganze Seite ablaufen (bis PR.DEPTH tief, ohne die
+-- Rezeptliste) und jedes Bild mit genau diesem Namen ausblenden. Ohne
+-- Tabellen oder Funktionen je Durchlauf (W.Regions/W.Children).
+local W = WeintCodex.UIWindows
+local hidden, keepA, keepB, skip = 0, nil, nil, nil
+
+local function Hide(r)
+    if r and r ~= keepA and r ~= keepB and r.SetAlpha then
+        if K.Plain(r:GetAlpha()) ~= 0 then r:SetAlpha(0) end
+        hidden = hidden + 1
+    end
+end
+
+local function Walk(f, depth)
+    if f == skip then return end
+    local regs = W.Regions(f, "profOI", depth)
+    for i = 1, #regs do
+        local r = regs[i]
+        if PR.FOREIGN[K.Plain(r.GetName and r:GetName())] then Hide(r) end
+    end
+    if depth >= PR.DEPTH then return end
+    local kids = W.Children(f, "profOI", depth)
+    for i = 1, #kids do Walk(kids[i], depth + 1) end
+end
+
 function PR.CleanOutputIcon()
     local pf = _G.ProfessionsFrame
-    local form = type(pf) == "table" and pf.CraftingPage and pf.CraftingPage.SchematicForm
+    local page = type(pf) == "table" and pf.CraftingPage
+    local form = type(page) == "table" and page.SchematicForm
     local oi = type(form) == "table" and form.OutputIcon
     if type(oi) ~= "table" or not oi.GetRegions then return 0 end
-    local keep = { [oi.Icon or false] = true, [oi.IconBorder or false] = true }
-    if oi.GetHighlightTexture then keep[oi:GetHighlightTexture() or false] = true end
+    hidden, keepA, keepB, skip = 0, oi.Icon, oi.IconBorder, page.RecipeList
     local normal = oi.GetNormalTexture and oi:GetNormalTexture()
-    local n = 0
-    local function Hide(r)
-        if r and not keep[r] and r.SetAlpha then
-            if K.Plain(r:GetAlpha()) ~= 0 then r:SetAlpha(0) end
-            n = n + 1
-        end
-    end
-    for _, r in ipairs({ oi:GetRegions() }) do
+    local regs = W.Regions(oi, "profOIbtn", 0)
+    for i = 1, #regs do
+        local r = regs[i]
         if r.GetObjectType and r:GetObjectType() == "Texture"
            and (r == normal or Ends(r, "NormalTexture") or Ends(r, "IconTexture")) then
             Hide(r)
         end
     end
-    -- Die beiden Bilder haengen unter dem Namen des Fensters; nur, wenn sie
-    -- im Rezept liegen.
-    for _, g in ipairs({ "ProfessionsFrameNormalTexture", "ProfessionsFrameIconTexture" }) do
-        local r = _G[g]
-        local p = type(r) == "table" and r.GetParent and r:GetParent()
-        local inForm = false
-        while type(p) == "table" do
-            if p == form then inForm = true break end
-            p = p.GetParent and p:GetParent()
-        end
-        if inForm then Hide(r) end
-    end
-    PR.outputHidden = n
-    return n
+    Walk(page, 0)
+    PR.outputHidden = hidden
+    return hidden
 end
 
 do

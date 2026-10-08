@@ -1134,14 +1134,46 @@ do
         oi.Icon.GetName = function() return "OutputIconIconTexture" end
         fill.GetName = function() return "ProfessionsFrameIconTexture" end
         oi.GetRegions = function() return oi.Icon, oi.IconBorder, slot, fill end
-        G.ProfessionsFrame = { CraftingPage = { SchematicForm = form } }
+        -- 6.25.4.0: ein zweiter Knopf mit denselben Namen, nicht in _G.
+        local page = CreateFrame("Frame")
+        local other = CreateFrame("Button", nil, form)
+        local slot2 = other:CreateTexture()
+        slot2.GetName = function() return "ProfessionsFrameNormalTexture" end
+        other.GetRegions = function() return slot2 end
+        form.GetChildren = function() return oi, other end
+        page.GetChildren = function() return form end
+        page.SchematicForm = form
+        G.ProfessionsFrame = { CraftingPage = page }
         form.OutputIcon = oi
-        assert(PR.CleanOutputIcon() >= 2, "fremde Bilder nicht gefunden")
+        assert(PR.CleanOutputIcon() >= 3, "fremde Bilder nicht gefunden")
         assert(slot:GetAlpha() == 0 and fill:GetAlpha() == 0, "Fach/Flaeche sichtbar")
+        assert(slot2:GetAlpha() == 0, "zweiter Knopf gleichen Namens bleibt sichtbar")
         assert(oi.Icon:GetAlpha() ~= 0 and oi.IconBorder:GetAlpha() ~= 0, "Symbol oder Rahmen weg")
     end)
     G.PaperDollFrame, G.ProfessionsFrame = savedPD, savedPF
     G.ProfessionsFrameNormalTexture, G.ProfessionsFrameIconTexture = savedN, savedI
+    -- 6.25.4.0: Vermaechtnis - Leder und Metall weg, Leiste in Gold.
+    if ok then
+        ok, err = pcall(function()
+            local LF = WeintCodex.UICalm
+            local f = CreateFrame("Frame")
+            local rp = CreateFrame("Frame", nil, f)
+            f.RewardTrackPage = rp
+            rp.Background = rp:CreateTexture()
+            rp.ProgressBarBackground = rp:CreateTexture()
+            local bar = CreateFrame("Frame", nil, rp)
+            rp.LegacyRewardProgressBar = bar
+            bar.ProgressBarFrame = bar:CreateTexture()
+            local fill = bar:CreateTexture()
+            local col
+            fill.SetVertexColor = function(_, r, g, b) col = { r, g, b } end
+            bar.GetStatusBarTexture = function() return fill end
+            local L = LF.Legacy(f)
+            assert(rp.Background:GetAlpha() == 0 and bar.ProgressBarFrame:GetAlpha() == 0, "Leder/Metall bleibt")
+            local a = WeintCodex.GameColors.frameAccent
+            assert(col and col[1] == a[1] and col[3] == a[3] and L.track, "Leiste nicht in Gold")
+        end)
+    end
     Check(ok, "Update 70291: Streifen im Charakterfenster weg, Rezeptsymbol ohne fremde Bilder"
         .. (ok and "" or (": " .. tostring(err))))
 end

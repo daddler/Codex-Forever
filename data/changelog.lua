@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.25.4.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFBerufsfenster wieder sauber.|r Über dem Rezeptsymbol lagen noch ein dunkles Fach und eine Farbfläche – jetzt weg.",
+            "|cff7C6CFFFortschrittsanzeige im Gold der anderen Fenster.|r Das Leder dahinter und der Metallrahmen der Leiste sind weg, die Leiste füllt sich in Gold. Karten, Krone und Haken bleiben.",
+        },
+    },
+    {
         version = "6.25.3.0",
         date    = "08.10.2026",
         notes   = {

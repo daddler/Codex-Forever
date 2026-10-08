@@ -122,6 +122,44 @@ local function Title(f)
     return false
 end
 
+-- VERMAECHTNIS (6.25.4.0, gemessen 6.25.3.0 mit /wcui fenster): Rahmen und
+-- Reiter weg reichte nicht - der Inhalt traegt eigenes Leder
+-- (Legacy-Rewards-Tracker-background) und eine Leiste in Metall
+-- (Legacy-Progressbar-Frame). Leder weg (Kachel darunter), Metallrahmen
+-- der Leiste weg, Grund der Leiste dunkel, Fuellung in Gold. Karten,
+-- Krone, Symbole und Haken bleiben - sie zeigen, was erreicht ist.
+LF.legacy = {}
+function LF.Legacy(f)
+    local L = LF.legacy
+    L.parts = 0
+    local rp = f.RewardTrackPage
+    if type(rp) ~= "table" then return L end
+    local function Off(t)
+        if IsFrame(t) and t.SetAlpha then
+            if K.Plain(t:GetAlpha()) ~= 0 then t:SetAlpha(0) end
+            L.parts = L.parts + 1
+        end
+    end
+    Off(rp.Background)
+    local bar = rp.LegacyRewardProgressBar
+    if IsFrame(bar) then
+        Off(bar.ProgressBarFrame)
+        local fill = bar.GetStatusBarTexture and bar:GetStatusBarTexture()
+        if IsFrame(fill) and fill.SetVertexColor then
+            local a = GC.frameAccent
+            fill:SetVertexColor(a[1], a[2], a[3])
+            L.fill = true
+        end
+    end
+    local bg = rp.ProgressBarBackground
+    if IsFrame(bg) and bg.SetVertexColor then
+        local d = C.surface1
+        bg:SetVertexColor(d[1], d[2], d[3])
+        L.track = true
+    end
+    return L
+end
+
 function LF.Update(f)
     local w = windows[f]
     if not w then
@@ -155,6 +193,7 @@ function LF.Update(f)
     w.decks = n
     w.tabs = 0
     local ok, name = pcall(f.GetName, f)
+    if ok and name == "LegacySystemFrame" then LF.Legacy(f) end
     local spec = ok and LF.TABS[name]
     if spec then
         local owner = _G[spec.owner]
@@ -182,5 +221,10 @@ function LF.Report(f, out)
     out[#out + 1] = string.format("   %s (Stil %s): %d Innenflächen mit Kante in Gold%s%s", label, LF.STYLE.name,
         w.decks or 0, (w.decks or 0) == 0 and " (keine gefunden)" or "",
         (ok and LF.TABS[name]) and (" · Reiter oben " .. (w.tabs or 0)) or "")
+    if ok and name == "LegacySystemFrame" then
+        local L = LF.legacy
+        out[#out + 1] = string.format("   Vermächtnis: %d Teile aus Leder/Metall ausgeblendet · Füllung Gold %s · Grund dunkel %s",
+            L.parts or 0, L.fill and "ja" or "nein", L.track and "ja" or "nein")
+    end
     return out
 end

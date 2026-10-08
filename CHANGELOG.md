@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.25.4.0] – 2026-10-08
+
+### Behoben
+
+- Berufsfenster, gemessen 6.25.3.0: „2 fremde Bilder ausgeblendet“, aber `ProfessionsFrameNormalTexture` (130841) und `ProfessionsFrameIconTexture` je einmal noch sichtbar – zwei Knöpfe tragen dieselben Namen, `_G` kennt nur einen. `PR.CleanOutputIcon` läuft jetzt die ganze `CraftingPage` ab (ohne `RecipeList`, 4 tief, `W.Regions`/`W.Children`, ohne Tabellen je Durchlauf) und blendet jedes Bild mit genau diesem Namen aus.
+
+### Neu
+
+- Vermächtnis (`LegacySystemFrame`), gemessen 6.25.3.0: Rahmen und Reiter waren weg, Inhalt unverändert. `LF.Legacy`: `RewardTrackPage.Background` (Leder) und `ProgressBarFrame` (Metall) aus, `ProgressBarBackground` dunkel (`surface1`), Füllung in `frameAccent`. Zeile „Vermächtnis“ in `/wcui fenster`.
+
 ## [6.25.3.0] – 2026-10-08
 
 ### Behoben

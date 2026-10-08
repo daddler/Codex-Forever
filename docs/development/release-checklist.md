@@ -91,6 +91,7 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 - [ ] Raus da: alle neun Töne über „Ton abspielen“ hörbar (6.24.0.0)
 - [ ] Taschen (6.25.0.0): Leveln → Taschen; Charaktere links, × leert die Suche, Filter wirken, Raster füllt die Breite; Schalter „Im Tooltip zeigen“ wirkt
 - [ ] Raus da (6.25.0.0): die fünf eigenen Alarme hörbar
+- [ ] 6.25.4.0: Berufsfenster – kein Fach/keine Fläche am Rezeptsymbol; Fortschrittsanzeige ohne Leder, Leiste in Gold
 - [ ] Update 70291 (6.25.3.0): Charakterfenster ohne hellen Streifen oben; Berufsfenster – Rezeptsymbol ohne Fach/Fläche; Vermächtnis-Fenster in Gold; Lagerfeuer → „Treffer gemeldet“ > 0 und Ton
 - [ ] Raus da (6.25.1.0): vier neue Töne hörbar; ohne Kampf ins Lagerfeuer – Ton; einmal von der Kante springen – kein Ton
 - [ ] Sammeln (6.25.0.0): Aufspürmenü an der Minikarte zeigt unten „WeintCodex“ mit Haken; Haken schaltet den Wechsel; `/wcui prüfen` „gezeigt n×“
