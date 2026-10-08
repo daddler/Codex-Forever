@@ -122,41 +122,76 @@ local function Title(f)
     return false
 end
 
--- VERMAECHTNIS (6.25.4.0, gemessen 6.25.3.0 mit /wcui fenster): Rahmen und
--- Reiter weg reichte nicht - der Inhalt traegt eigenes Leder
--- (Legacy-Rewards-Tracker-background) und eine Leiste in Metall
--- (Legacy-Progressbar-Frame). Leder weg (Kachel darunter), Metallrahmen
--- der Leiste weg, Grund der Leiste dunkel, Fuellung in Gold. Karten,
--- Krone, Symbole und Haken bleiben - sie zeigen, was erreicht ist.
-LF.legacy = {}
+-- VERMAECHTNIS (6.25.4.0, gemessen mit /wcui fenster): Rahmen und Reiter
+-- weg reichte nicht - jede der drei Seiten traegt eigenes Leder, Metall und
+-- Karten. 6.25.5.0 (Beta-Test: "unterer Teil besser", Herausforderungen
+-- "komplett anders", Baum "angleichen"): eine Regel je Bild des Spiels
+-- (Atlas, gemessen auf allen drei Seiten), angewandt auf das ganze Fenster:
+--   hide  Leder und Metallrahmen weg (Kachel darunter)
+--   dark  Karten, Zeilen, Leistengrund: entsaettigt und dunkel
+--   gold  Erreichtes, Fuellungen, gewaehlte Zeile, Trenner: Gold
+-- Symbole, Krone, Haken, Rauten und Pfeile bleiben - sie tragen Bedeutung.
+LF.LEGACY_ATLAS = {
+    ["Legacy-Rewards-Tracker-background"] = "hide",
+    ["Legacy-Challenge-BG"]               = "hide",
+    ["Legacy-Tree-Frame-background"]      = "hide",
+    ["Legacy-Progressbar-Frame"]          = "hide",
+    ["Legacy-Progressbar-BG"]             = "dark",
+    ["Legacy-Rewards-Tracker-Cards-Disable"] = "dark",
+    ["Legacy-Rewards-Tracker-Icons-Frame-Disable"] = "dark",
+    ["Legacy-Challenge-Left-Sub-Tab"]     = "dark",
+    ["Legacy-Tree-Frame-Card"]            = "dark",
+    ["Legacy-Tree-Frame-Points-Bar"]      = "dark",
+    ["Legacy-Rewards-Tracker-Cards"]      = "gold",
+    ["Legacy-Rewards-Tracker-Icons-Frame"] = "gold",
+    ["Legacy-Progressbar-Fill"]           = "gold",
+    ["Legacy-Challenge-Left-Sub-Tab-selected"] = "gold",
+    ["Legacy-Tree-Frame-divider-Vertical"] = "gold",
+}
+LF.LEGACY_DEPTH = 7
+LF.DARK = 0.32              -- Helligkeit der entsaettigten Teile
+LF.legacy = { hide = 0, dark = 0, gold = 0 }
+
+local function LegacyAtlas(r)
+    local ok, a = pcall(r.GetAtlas, r)
+    a = ok and K.Plain(a)
+    return type(a) == "string" and a or nil
+end
+
+local function LegacyApply(r, how)
+    local L = LF.legacy
+    if how == "hide" then
+        if K.Plain(r:GetAlpha()) ~= 0 then r:SetAlpha(0) end
+    else
+        if r.SetDesaturated then r:SetDesaturated(true) end
+        if how == "gold" then
+            local g = GC.frameAccent
+            r:SetVertexColor(g[1], g[2], g[3])
+        else
+            r:SetVertexColor(LF.DARK, LF.DARK, LF.DARK)
+        end
+    end
+    L[how] = L[how] + 1
+end
+
+local function LegacyWalk(f, depth)
+    local regs = W.Regions(f, "legacy", depth)
+    for i = 1, #regs do
+        local r = regs[i]
+        if r.GetAtlas then
+            local how = LF.LEGACY_ATLAS[LegacyAtlas(r)]
+            if how then LegacyApply(r, how) end
+        end
+    end
+    if depth >= LF.LEGACY_DEPTH then return end
+    local kids = W.Children(f, "legacy", depth)
+    for i = 1, #kids do LegacyWalk(kids[i], depth + 1) end
+end
+
 function LF.Legacy(f)
     local L = LF.legacy
-    L.parts = 0
-    local rp = f.RewardTrackPage
-    if type(rp) ~= "table" then return L end
-    local function Off(t)
-        if IsFrame(t) and t.SetAlpha then
-            if K.Plain(t:GetAlpha()) ~= 0 then t:SetAlpha(0) end
-            L.parts = L.parts + 1
-        end
-    end
-    Off(rp.Background)
-    local bar = rp.LegacyRewardProgressBar
-    if IsFrame(bar) then
-        Off(bar.ProgressBarFrame)
-        local fill = bar.GetStatusBarTexture and bar:GetStatusBarTexture()
-        if IsFrame(fill) and fill.SetVertexColor then
-            local a = GC.frameAccent
-            fill:SetVertexColor(a[1], a[2], a[3])
-            L.fill = true
-        end
-    end
-    local bg = rp.ProgressBarBackground
-    if IsFrame(bg) and bg.SetVertexColor then
-        local d = C.surface1
-        bg:SetVertexColor(d[1], d[2], d[3])
-        L.track = true
-    end
+    L.hide, L.dark, L.gold = 0, 0, 0
+    LegacyWalk(f, 0)
     return L
 end
 
@@ -223,8 +258,8 @@ function LF.Report(f, out)
         (ok and LF.TABS[name]) and (" · Reiter oben " .. (w.tabs or 0)) or "")
     if ok and name == "LegacySystemFrame" then
         local L = LF.legacy
-        out[#out + 1] = string.format("   Vermächtnis: %d Teile aus Leder/Metall ausgeblendet · Füllung Gold %s · Grund dunkel %s",
-            L.parts or 0, L.fill and "ja" or "nein", L.track and "ja" or "nein")
+        out[#out + 1] = string.format("   Vermächtnis: ausgeblendet %d · dunkel %d · Gold %d",
+            L.hide or 0, L.dark or 0, L.gold or 0)
     end
     return out
 end

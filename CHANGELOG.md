@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.25.5.0] – 2026-10-08
+
+### Geändert
+
+- Vermächtnis (`LegacySystemFrame`), alle drei Seiten gemessen (Fortschritt, Herausforderungen, Baum): statt einzelner Felder eine Regel je Atlas (`LF.LEGACY_ATLAS`) über das ganze Fenster (`LegacyWalk`, 7 tief, `W.Regions`/`W.Children`, keine Tabellen je Durchlauf). `hide`: Leder der drei Seiten, Metallrahmen der Leisten. `dark` (entsättigt, `LF.DARK` 0.32): offene Karten und ihre Symbolrahmen, Zeilen der Kategorien, Baumkarten, Punkteleiste, Leistengrund. `gold` (`frameAccent`): erreichte Karte und ihr Rahmen, Füllungen, gewählte Zeile, senkrechter Trenner. Bericht: „ausgeblendet · dunkel · Gold“.
+
 ## [6.25.4.0] – 2026-10-08
 
 ### Behoben

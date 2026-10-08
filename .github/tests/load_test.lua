@@ -1152,26 +1152,39 @@ do
     end)
     G.PaperDollFrame, G.ProfessionsFrame = savedPD, savedPF
     G.ProfessionsFrameNormalTexture, G.ProfessionsFrameIconTexture = savedN, savedI
-    -- 6.25.4.0: Vermaechtnis - Leder und Metall weg, Leiste in Gold.
+    -- 6.25.5.0: Vermaechtnis - Regel je Bild auf allen drei Seiten.
     if ok then
         ok, err = pcall(function()
             local LF = WeintCodex.UICalm
+            -- Eigene Flaechen (die Attrappe teilt Flaechen eines Rahmens).
+            local function Tex(_, atlas)
+                local t = { alpha = 1 }
+                t.GetAtlas = function() return atlas end
+                t.GetAlpha = function(self) return self.alpha end
+                t.SetAlpha = function(self, a) self.alpha = a end
+                t.SetDesaturated = function(self, v) self.desat = v end
+                t.SetVertexColor = function(self, r, g, b) self.wcTint = { r, g, b } end
+                return t
+            end
             local f = CreateFrame("Frame")
-            local rp = CreateFrame("Frame", nil, f)
-            f.RewardTrackPage = rp
-            rp.Background = rp:CreateTexture()
-            rp.ProgressBarBackground = rp:CreateTexture()
-            local bar = CreateFrame("Frame", nil, rp)
-            rp.LegacyRewardProgressBar = bar
-            bar.ProgressBarFrame = bar:CreateTexture()
-            local fill = bar:CreateTexture()
-            local col
-            fill.SetVertexColor = function(_, r, g, b) col = { r, g, b } end
-            bar.GetStatusBarTexture = function() return fill end
+            local page = CreateFrame("Frame", nil, f)
+            local card = CreateFrame("Frame", nil, page)
+            local leather = Tex(page, "Legacy-Challenge-BG")
+            local metal = Tex(page, "Legacy-Progressbar-Frame")
+            local open = Tex(card, "Legacy-Rewards-Tracker-Cards-Disable")
+            local won = Tex(card, "Legacy-Rewards-Tracker-Cards")
+            local icon = Tex(card, nil)
+            f.GetChildren = function() return page end
+            page.GetChildren = function() return card end
+            page.GetRegions = function() return leather, metal end
+            card.GetRegions = function() return open, won, icon end
             local L = LF.Legacy(f)
-            assert(rp.Background:GetAlpha() == 0 and bar.ProgressBarFrame:GetAlpha() == 0, "Leder/Metall bleibt")
-            local a = WeintCodex.GameColors.frameAccent
-            assert(col and col[1] == a[1] and col[3] == a[3] and L.track, "Leiste nicht in Gold")
+            assert(leather:GetAlpha() == 0 and metal:GetAlpha() == 0, "Leder/Metall bleibt")
+            assert(open.desat and open.wcTint and open.wcTint[1] == LF.DARK, "offene Karte nicht dunkel")
+            local g = WeintCodex.GameColors.frameAccent
+            assert(won.wcTint and won.wcTint[1] == g[1], "erreichte Karte nicht in Gold")
+            assert(icon.wcTint == nil and icon:GetAlpha() ~= 0, "Symbol angefasst")
+            assert(L.hide == 2 and L.dark == 1 and L.gold == 1, "Zaehler")
         end)
     end
     Check(ok, "Update 70291: Streifen im Charakterfenster weg, Rezeptsymbol ohne fremde Bilder"

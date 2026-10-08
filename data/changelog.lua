@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.25.5.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFVermächtnis durchgehend im Codex-Stil.|r Fortschritt, Herausforderungen und Vermächtnisbaum ohne Leder und Metall: offene Karten und Zeilen dunkel, Erreichtes, die gewählte Zeile und die Leisten in Gold. Symbole, Krone und Haken bleiben, wie sie sind.",
+        },
+    },
+    {
         version = "6.25.4.0",
         date    = "08.10.2026",
         notes   = {
