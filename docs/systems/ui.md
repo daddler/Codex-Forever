@@ -1552,6 +1552,20 @@ beide ab Werk aus.
   Seit 6.21.2.0 dort **nur Reisen** (Schiffe, Zeppeline, Trams, Portale) –
   Geistheiler, Pfeile und Flugmeister erst auf der Karte der Zone
   (Beta-Test: die große Karte war zu voll).
+
+### Kräuter und Erz im Wechsel (`ui/gathertrack.lua`, 6.22.0.0)
+
+- Das Spiel lässt nur eine Suche zugleich laufen. Seite „Sammeln“ im
+  Komfort (`gatherSwap`, ab Werk aus; `gatherEvery` in Zehntelsekunden,
+  ab Werk 20, nie unter `GT.MIN` = 15 – globale Abklingzeit).
+- Setzt über `C_Minimap.SetTracking` (Rückfall globale `SetTracking`),
+  erkennt die Suchen an Zauber 2383/2580 oder deren Namen. Pause im Kampf,
+  tot, beim Zaubern.
+- **Ungemessen**, ob Forever das von Addons zulässt: `ADDON_ACTION_BLOCKED`/
+  `FORBIDDEN` binnen 0,5 s oder dreimal ohne Wirkung → aus, mit Meldung;
+  `/wcui prüfen` → „Sammeln“.
+- Nicht möglich: eigene Symbole für Kraut/Erz – die Punkte der Minikarte
+  zeichnet das Spiel, Lage und Art bekommen Addons nicht.
   Der Bestand deckt alle 50 Karten der Quelle ab, auch die neuen Gebiete
   von Forever.
 

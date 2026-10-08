@@ -528,6 +528,16 @@ Check("Raus da", function(add)
     for _, line in ipairs(FA.StatusLines()) do add("", "   " .. line) end
 end)
 
+-- Suche wechseln (6.22.0.0): darf ein Addon die Suche selbst setzen?
+Check("Sammeln", function(add)
+    local GT = WeintCodex.UIGatherTrack
+    if not GT then add(SC.OPEN, "Suche wechseln nicht geladen.") return end
+    local bad = GT.stopped or GT.stats.blocked > 0
+    add(bad and SC.BAD or (GT.Active() and SC.OK or SC.OPEN),
+        GT.Active() and "Kräuter/Erz wechseln an" or "Kräuter/Erz wechseln aus (Komfort → Sammeln)")
+    for _, line in ipairs(GT.StatusLines()) do add("", "   " .. line) end
+end)
+
 Check("Berufe", function(add)
     local PRO = WeintCodex.Professions
     if not (PRO and PRO.Skills) then

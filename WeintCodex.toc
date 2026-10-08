@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.21.2.0
+## Version: 6.22.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -221,6 +221,7 @@ ui/mapentrances.lua
 ui/mapmarks.lua
 # Warnton bei vermeidbarem Schaden (6.21.1.0, Seite "Feuer" im Komfort).
 ui/firealarm.lua
+ui/gathertrack.lua
 # Weltkarte aufdecken (6.20.0.0, Seite "Karte"): Daten aus data/mapreveal.lua, im Spiel gegengeprueft.
 ui/mapreveal.lua
 ui/tooltip.lua

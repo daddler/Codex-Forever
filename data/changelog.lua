@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.22.0.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFKräuter und Erz zugleich suchen.|r Unter Komfort → Sammeln wechselt WeintCodex außerhalb des Kampfes zwischen Kräuter- und Mineraliensuche, ab Werk alle 2 Sekunden. Im Kampf und beim Zaubern macht es Pause. Lässt das Spiel den Wechsel nicht zu, schaltet er sich ab und sagt es dir.",
+        },
+    },
+    {
         version = "6.21.2.0",
         date    = "08.10.2026",
         notes   = {

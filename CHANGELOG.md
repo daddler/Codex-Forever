@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.22.0.0] – 2026-10-08
+
+**Kräuter und Erz zugleich suchen.** Unter Komfort → Sammeln wechselt WeintCodex außerhalb des Kampfes zwischen Kräuter- und Mineraliensuche, ab Werk alle 2 Sekunden. Im Kampf und beim Zaubern macht es Pause. Lässt das Spiel den Wechsel nicht zu, schaltet er sich ab und sagt es dir.
+
+### Technisch
+
+- Beta-Test 6.21.2.0: beide Suchen zugleich. Neu `ui/gathertrack.lua` (Seite „Sammeln“ im Komfort, `gatherSwap`/`gatherEvery`): Takt über `C_Minimap.SetTracking` (Rückfall `SetTracking`), Suchen über die Zauber 2383/2580 bzw. deren Namen; Pause im Kampf, tot, beim Zaubern. Nicht unter 1,5 s (globale Abklingzeit); gewünscht waren 0,5 s. Ungemessen, ob Forever den Wechsel von Addons zulässt: `ADDON_ACTION_BLOCKED/FORBIDDEN` bis 0,5 s nach einem Wechsel oder dreimal ohne Wirkung schaltet ab; `/wcui prüfen` → „Sammeln“. Eigene Symbole für Kraut und Erz auf der Minikarte gehen nicht: die Punkte zeichnet das Spiel, Lage und Art erfahren Addons nicht. Prüflauf mit drei Gegenproben (Kampfpause, Mindesttakt, Abschalten ohne Wirkung) gefangen.
+
 ## [6.21.2.0] – 2026-10-08
 
 **Kontinentkarte aufgeräumt.** Auf Kalimdor und den Östlichen Königreichen im Ganzen stehen nur noch Schiffe, Zeppeline, Trams und Portale. Geistheiler, Pfeile und Flugmeister siehst du, sobald du in ein Gebiet hineingehst.

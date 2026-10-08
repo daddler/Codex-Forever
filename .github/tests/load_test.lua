@@ -1036,6 +1036,70 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.22.0.0: Kraeuter- und Mineraliensuche im Wechsel.
+do
+    local G = _G
+    local names = { "C_Minimap", "GetTime", "InCombatLockdown", "UnitCastingInfo", "GetSpellInfo", "C_Spell" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local GT = WeintCodex.UIGatherTrack
+    local ok, err = pcall(function()
+        local now, combat, sets, works = 100, false, {}, true
+        local list = {
+            { name = "Gastwirt", active = true },
+            { name = "Kräutersuche", active = false, spellID = 2383 },
+            { name = "Mineraliensuche", active = true, spellID = 2580 },
+        }
+        G.GetTime = function() return now end
+        G.InCombatLockdown = function() return combat end
+        G.UnitCastingInfo = function() return nil end
+        G.C_Spell = nil
+        G.GetSpellInfo = function(id) return id == 2383 and "Kräutersuche" or "Mineraliensuche" end
+        G.C_Minimap = {
+            GetNumTrackingTypes = function() return #list end,
+            GetTrackingInfo = function(i) return list[i] end,
+            SetTracking = function(i, on)
+                sets[#sets + 1] = i
+                if not works then return end
+                list[2].active, list[3].active = false, false
+                list[i].active = on
+            end,
+        }
+        K.Set("comfort", "gatherSwap", false)
+        assert(GT.Swap() == false and #sets == 0, "gewechselt, obwohl aus")
+        assert(GT.Every() == 2, "Takt ab Werk nicht 2 s")
+        K.Set("comfort", "gatherEvery", 5)
+        assert(GT.Every() == GT.MIN / 10, "schneller als die globale Abklingzeit")
+        K.Set("comfort", "gatherSwap", true)
+        assert(GT.ticker:IsShown(), "kein Takt, obwohl an")
+        assert(GT.Swap() and sets[1] == 2 and list[2].active, "nicht auf Kraeuter gewechselt")
+        assert(GT.Swap() and sets[2] == 3 and list[3].active and list[1].active, "nicht zurueck auf Erz / Gastwirt verloren")
+        combat = true
+        assert(GT.Swap() == false and #sets == 2, "im Kampf gewechselt")
+        combat = false
+        -- Wirkungslos: nach drei Versuchen aus.
+        works = false
+        GT.Swap() GT.Swap() GT.Swap()
+        assert(GT.Swap() == false and not K.Get("comfort", "gatherSwap") and GT.stopped == "ohne Wirkung",
+            "wirkungsloser Wechsel laeuft weiter")
+        assert(not GT.ticker:IsShown(), "Takt laeuft nach dem Abschalten")
+        -- Gesperrt: sofort aus.
+        works = true
+        K.Set("comfort", "gatherSwap", true)
+        assert(GT.stopped == nil, "Grund bleibt nach dem Einschalten")
+        GT.Swap()
+        stub.FireEvent("ADDON_ACTION_BLOCKED", "WeintCodex", "SetTracking")
+        assert(not K.Get("comfort", "gatherSwap") and GT.stopped == "gesperrt", "Sperre nicht erkannt")
+        local sc = table.concat(GT.StatusLines(), "\n")
+        assert(sc:find("Kräutersuche: gelernt", 1, true) and sc:find("gesperrt 1", 1, true), "Bericht: " .. sc)
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    K.Set("comfort", "gatherSwap", false)
+    K.Set("comfort", "gatherEvery", 20)
+    Check(ok, "Sammeln: Kraeuter/Erz im Wechsel, nicht im Kampf, nicht unter 1,5 s, aus bei Sperre oder ohne Wirkung"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.21.1.1 (Absturz im Spiel, "L->top < L->ci->top"): Rahmen mit sehr
 -- vielen Kindern werden nicht mit GetChildren gelesen, und die Symbole der
 -- Karte haengen in einem Rahmen, nicht direkt auf der Flaeche.
