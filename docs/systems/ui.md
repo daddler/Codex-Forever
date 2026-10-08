@@ -1579,7 +1579,12 @@ beide ab Werk aus.
   Kampf). Einlaufen über `FontString:SetAlphaGradient`; Leertaste zeigt alles.
 - Gold (`GameColors.frameAccent`): ersetzt die Gesprächsfenster des Spiels,
   die gold sind – keine eigene Seite des Addons.
-- Nicht gebaut: Kamera aufs Gesicht, Oberfläche ausblenden, Vorlesen.
+- Kamera (6.23.1.0, `dlgCam`, `dlgCamDist` 2–10 m, ab Werk 4): heran beim
+  ersten Fenster (`CameraZoomIn`), zurück 0,3 s nach dem letzten – ein
+  Zustandswechsel schließt kurz und darf nicht herauszoomen; zurück nur, wenn
+  der Spieler nicht selbst weiter heraus ist. Keine Schulterkamera
+  (`test_cameraOverShoulder` zeigt die Warnung zu Testfunktionen).
+- Nicht gebaut: Oberfläche ausblenden, Vorlesen.
 
 ### Kräuter und Erz im Wechsel (`ui/gathertrack.lua`, 6.22.0.0)
 

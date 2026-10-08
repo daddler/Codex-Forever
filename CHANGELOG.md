@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.23.1.0] – 2026-10-08
+
+**Gespräche: die Kamera kommt näher.** Sprichst du einen NPC an, fährt die Kamera heran – nach dem Gespräch zurück auf deinen Abstand. Wechselst du nur vom Gespräch in den Questtext, bleibt sie nah; hast du selbst weiter herausgezoomt, bleibt es so. Abstand unter Komfort → Gespräche.
+
+### Technisch
+
+- Beta-Test 6.23.0.0: „reinzoomen der Kamera und automatisch rauszoomen“. `ui/dialogue.lua`: `DL.CamIn` beim ersten Fenster (`GetCameraZoom`, `CameraZoomIn` auf `dlgCamDist`, ab Werk 4 m, 2–10), `DL.CamOut` erst `DL.CAM_WAIT` (0,3 s) nach dem Schließen und nur ohne neues Fenster (Zustandswechsel schließen kurz); zurück nur, wenn der Spieler nicht selbst weiter herausgezoomt hat. Keine Schulterkamera (Testeinstellungen des Spiels mit Warnung). Prüflauf mit drei Gegenproben (Wechsel, eigener Abstand, schon nah) gefangen; ungemessen im Spiel.
+
 ## [6.23.0.0] – 2026-10-08
 
 **Gespräche im Codex-Stil.** Unter Komfort → Gespräche: Gespräche mit NPCs und Questtexte erscheinen in einem ruhigen Fenster neben der Mitte. Zahlen 1–9 wählen eine Antwort oder Belohnung, die Leertaste nimmt an oder schließt ab, Esc beendet das Gespräch. Belohnungen, Gold und Erfahrung stehen auf einen Blick da, der Text läuft auf Wunsch Zeichen für Zeichen ein.

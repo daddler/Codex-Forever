@@ -1112,7 +1112,7 @@ do
     local names = { "C_GossipInfo", "GossipFrame", "QuestFrame", "UnitName", "GetTitleText", "GetQuestText",
         "GetObjectiveText", "GetNumQuestRewards", "GetNumQuestChoices", "GetQuestItemInfo", "AcceptQuest",
         "DeclineQuest", "GetRewardText", "GetQuestReward", "GetRewardMoney", "GetRewardXP", "CloseQuest",
-        "InCombatLockdown" }
+        "InCombatLockdown", "GetCameraZoom", "CameraZoomIn", "CameraZoomOut", "C_Timer" }
     local saved = {}
     for i, n in ipairs(names) do saved[i] = G[n] end
     local DL = WeintCodex.UIDialogue
@@ -1140,6 +1140,19 @@ do
             SelectOption = Log("SelectOption"), SelectAvailableQuest = Log("SelectAvailableQuest"),
             SelectActiveQuest = Log("SelectActiveQuest"), CloseGossip = Log("CloseGossip"),
         }
+        -- Kamera: heran beim ersten Fenster, zurueck nach dem letzten.
+        local zoom, later = 15, nil
+        G.GetCameraZoom = function() return zoom end
+        G.CameraZoomIn = function(d) zoom = zoom - d end
+        G.CameraZoomOut = function(d) zoom = zoom + d end
+        G.C_Timer = { After = function(_, fn) later = fn end }
+        -- Wie im Spiel: Hide loest OnHide aus (die Attrappe tut es nicht).
+        local function Shut()
+            later = nil
+            DL.win:Hide()
+            local h = DL.win:GetScript("OnHide")
+            if h then h(DL.win) end
+        end
         K.Set("comfort", "dlgOn", false)
         assert(G.GossipFrame:IsEventRegistered("GOSSIP_SHOW"), "Spiel ohne Gespraech, obwohl aus")
         K.Set("comfort", "dlgOn", true)
@@ -1147,6 +1160,34 @@ do
             "Fenster des Spiels bekommen weiter Ereignisse")
         stub.FireEvent("GOSSIP_SHOW")
         assert(DL.win and DL.win:IsShown() and DL.state == "gossip", "Gespraech nicht gezeigt")
+        assert(zoom == 4 and DL.cam.saved == 15, "Kamera nicht heran: " .. zoom)
+        -- Wechsel Gespraech -> Questtext: kurz zu, gleich wieder offen - bleibt nah.
+        Shut()
+        stub.FireEvent("GOSSIP_SHOW")
+        later()
+        assert(zoom == 4 and DL.cam.saved == 15, "Kamera beim Wechsel zurueck")
+        -- Ende: zurueck auf den alten Abstand.
+        Shut()
+        later()
+        assert(zoom == 15 and DL.cam.saved == nil, "Kamera nicht zurueck: " .. zoom)
+        -- Selbst weiter herausgezoomt: bleibt so.
+        stub.FireEvent("GOSSIP_SHOW")
+        zoom = 25
+        Shut()
+        later()
+        assert(zoom == 25, "eigener Abstand ueberschrieben")
+        -- Schon nah genug oder aus: nichts.
+        zoom = 3
+        stub.FireEvent("GOSSIP_SHOW")
+        assert(zoom == 3 and DL.cam.saved == nil, "Kamera weggezoomt, obwohl schon nah")
+        Shut()
+        zoom = 15
+        K.Set("comfort", "dlgCam", false)
+        stub.FireEvent("GOSSIP_SHOW")
+        assert(zoom == 15, "Kamera bewegt, obwohl aus")
+        K.Set("comfort", "dlgCam", true)
+        Shut()
+        stub.FireEvent("GOSSIP_SHOW")
         -- Reihenfolge: abgeschlossen, angeboten, Optionen nach orderIndex.
         assert(#DL.list == 4 and DL.list[1].kind == "active" and DL.list[1].mark == "?"
             and DL.list[2].kind == "available" and DL.list[3].text == "Erste" and DL.list[4].text == "Zweite",
@@ -1207,8 +1248,10 @@ do
     for i, n in ipairs(names) do G[n] = saved[i] end
     K.Set("comfort", "dlgOn", false)
     K.Set("comfort", "dlgType", true)
+    K.Set("comfort", "dlgCam", true)
+    DL.cam.saved = nil
     DL.stats.failed, DL.lastError = 0, nil
-    Check(ok, "Gespraeche: Fenster des Spiels abgemeldet und zurueck, Optionen/Quests, Tasten, Annehmen, Belohnung waehlen, Scheitern"
+    Check(ok, "Gespraeche: Fenster des Spiels abgemeldet und zurueck, Optionen/Quests, Tasten, Annehmen, Belohnung waehlen, Scheitern, Kamera heran und zurueck"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

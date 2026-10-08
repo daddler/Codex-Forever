@@ -37,6 +37,8 @@ DL.DEFAULTS = {
     dlgKeys  = true,     -- 1-9, Leertaste, Esc
     dlgType  = true,     -- Text laeuft ein
     dlgScale = 100,      -- Groesse in %
+    dlgCam   = true,     -- Kamera heran, danach zurueck (6.23.1.0)
+    dlgCamDist = 4,      -- so nah (Meter)
 }
 DL.W = 460
 DL.BODY_MAX = 230        -- hoechstens so hoch, dann rollt der Text
@@ -305,7 +307,10 @@ function DL.Build()
 
     win:SetScript("OnKeyDown", OnKey)
     win:SetScript("OnUpdate", OnUpdate)
-    win:SetScript("OnHide", function() reveal = nil end)
+    win:SetScript("OnHide", function()
+        reveal = nil
+        DL.CamLater()
+    end)
     DL.win = win
     return win
 end
@@ -472,6 +477,53 @@ function DL.Draw(c)
     local combat = _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false)
     win:EnableKeyboard(keys and not combat and true or false)
     win:Show()
+    DL.CamIn()
+end
+
+--------------------------------------------------
+-- Kamera (6.23.1.0, Beta-Test: "reinzoomen und automatisch rauszoomen")
+--------------------------------------------------
+-- Beim ersten Fenster eines Gespraechs naeher heran (CameraZoomIn), beim
+-- Ende zurueck auf den gemerkten Abstand. Wechselt das Gespraech nur den
+-- Zustand (Gespraech -> Questtext), schliesst sich das Fenster kurz -
+-- darum erst nach DL.CAM_WAIT zurueck, und nur, wenn kein neues Fenster
+-- offen ist. Hat der Spieler selbst weiter herausgezoomt, bleibt es so.
+-- Keine Schulterkamera: die laeuft ueber Testeinstellungen des Spiels,
+-- die beim ersten Mal eine Warnung zeigen.
+
+DL.CAM_WAIT = 0.3
+DL.cam = { saved = nil }
+
+local function Zoom()
+    local z = _G.GetCameraZoom and K.Plain(_G.GetCameraZoom())
+    return type(z) == "number" and z or nil
+end
+
+function DL.CamIn()
+    if not K.Get(KEY, "dlgCam") or DL.cam.saved then return false end
+    local z = Zoom()
+    local target = tonumber(K.Get(KEY, "dlgCamDist")) or 4
+    if not (z and _G.CameraZoomIn) or z <= target + 0.5 then return false end
+    DL.cam.saved = z
+    _G.CameraZoomIn(z - target)
+    return true
+end
+
+function DL.CamOut()
+    local saved = DL.cam.saved
+    if not saved or (win and win:IsShown()) then return false end
+    DL.cam.saved = nil
+    local z = Zoom()
+    if not (z and _G.CameraZoomOut) or z >= saved - 0.5 then return false end
+    _G.CameraZoomOut(saved - z)
+    return true
+end
+
+local function CamOutNow() DL.CamOut() end
+function DL.CamLater()
+    if not DL.cam.saved then return end
+    local t = _G.C_Timer
+    if t and t.After then t.After(DL.CAM_WAIT, CamOutNow) else DL.CamOut() end
 end
 
 function DL.Show(state)
@@ -617,6 +669,11 @@ local function Build(B)
             description = "Leertaste zeigt ihn sofort ganz." },
           { type = "slider", label = "Größe", key = "dlgScale", min = 80, max = 130, step = 5, disabled = off,
             format = function(v) return string.format("%d %%", v) end })
+    local camOff = function() return off() or not K.Get(KEY, "dlgCam") end
+    B:Row({ type = "toggle", label = "Kamera heranholen", key = "dlgCam", disabled = off,
+            description = "Beim Gespräch näher heran, danach zurück auf deinen Abstand." },
+          { type = "slider", label = "Abstand im Gespräch", key = "dlgCamDist", min = 2, max = 10, step = 1, disabled = camOff,
+            format = function(v) return string.format("%d m", v) end })
 end
 
 local mod = K.Module(KEY)
