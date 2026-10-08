@@ -1323,16 +1323,31 @@ do
         K.Set("comfort", "dlgSpeed", 20)
         K.Set("comfort", "dlgOn", true)
         DL.Boot()                                       -- haengt die Dialoge an
+        local body
+        -- 6.23.2.3: zweites Ansprechen - vom letzten Mal steht "alles sichtbar".
         stub.FireEvent("GOSSIP_SHOW")
-        local body = DL.body
+        body = DL.body
+        DL.ShowAll()
+        DL.Close()
+        queue = {}
+        DL.cam.saved, DL.cam.target = nil, nil
+        zoom = 15
+        local bodyAlpha = 1
+        body.SetAlpha = function(_, a) bodyAlpha = a end
+        body.GetAlpha = function() return bodyAlpha end
         body.SetAlphaGradient = function(_, at) grads[#grads + 1] = at end
+        stub.FireEvent("GOSSIP_SHOW")
+        assert(bodyAlpha == 0, "Text vor dem Einlaufen sichtbar (zweites Ansprechen)")
         local upd = DL.win:GetScript("OnUpdate")
         -- Kamera unterwegs: kein Zeichen.
         upd(DL.win, 0.5)
         upd(DL.win, 0.5)
-        assert(#grads == 0, "Text laeuft, bevor die Kamera da ist")
+        for _, g in ipairs(grads) do assert(g == 0, "Text laeuft, bevor die Kamera da ist") end
+        assert(bodyAlpha == 0, "Text sichtbar, bevor die Kamera da ist")
+        grads = {}
         zoom = 4
         upd(DL.win, 0.5)
+        assert(bodyAlpha == 1, "Text nach der Kamera nicht sichtbar")
         assert(grads[#grads] == 10, "Tempo nicht wie eingestellt: " .. tostring(grads[#grads]))
         -- 6.23.2.1: am Ende steht ALLES da (Verlauf hinter dem letzten Zeichen).
         upd(DL.win, 100)
@@ -1347,6 +1362,16 @@ do
         upd(DL.win, DL.CAM_MAX + 0.1)
         upd(DL.win, 0.5)
         assert(#grads > 0, "Text wartet ewig auf eine Kamera, die nicht kommt")
+        -- Leertaste, waehrend die Kamera noch faehrt: sofort alles.
+        DL.Close()
+        queue = {}
+        DL.cam.saved, DL.cam.target = nil, nil
+        zoom = 15
+        stub.FireEvent("GOSSIP_SHOW")
+        grads = {}
+        DL.Primary()
+        upd(DL.win, 0.1)
+        assert(grads[#grads] == DL.ALL and bodyAlpha == 1, "Leertaste zeigt den Text nicht sofort, solange die Kamera faehrt")
         -- Oberflaeche: langsam aus, danach wieder ein.
         local model = CreateFrame("Frame")
         model:Show()

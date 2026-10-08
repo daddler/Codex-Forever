@@ -327,9 +327,17 @@ local function OnUpdate(self, el)
     if not reveal then return end
     if camWait then
         camWait = camWait + el
-        if DL.CamMoving() and camWait < DL.CAM_MAX then return end
+        if DL.CamMoving() and camWait < DL.CAM_MAX then
+            Gradient(0)                -- auch hier: nichts zeigen
+            return
+        end
         camWait = nil
     end
+    -- Erst mit dem ersten Zeichen sichtbar (6.23.2.3, Beta-Test: nach
+    -- einem zweiten Ansprechen stand der Text kurz ganz da, dann lief er
+    -- neu ein - der Verlauf griff erst nach dem neuen Text).
+    local ba = K.Plain(body:GetAlpha())
+    if type(ba) ~= "number" or ba < 1 then body:SetAlpha(1) end
     reveal = reveal + el * DL.Speed()
     if reveal >= revealLen then
         reveal = nil
@@ -339,6 +347,7 @@ local function OnUpdate(self, el)
         return
     end
     Gradient(math.floor(reveal))
+    DL.revealAt = reveal
 end
 
 -- Platz: gemerkt, sonst wo das Questfenster des Spiels steht (oben links).
@@ -691,9 +700,11 @@ function DL.Draw(c)
         revealLen = (WeintCodex.Utf8Len and WeintCodex.Utf8Len(c.text)) or #c.text
         reveal = 0
         camWait = 0
+        body:SetAlpha(0)
         Gradient(0)
     else
         reveal, camWait = nil, nil
+        body:SetAlpha(1)
         DL.ShowAll()
     end
     local combat = _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false)
@@ -896,7 +907,7 @@ function DL.Primary()
     local c = DL.current
     if not (c and win and win:IsShown()) then return false end
     if reveal then                     -- erst den Text ganz zeigen
-        reveal = revealLen
+        reveal, camWait = revealLen, nil
         return true
     end
     if not (c.primary and c.canPrimary) then return false end

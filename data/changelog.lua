@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.23.2.3",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFGespräche: kein Vorblitzen mehr.|r Sprachst du jemanden ein zweites Mal an, stand der Text kurz ganz da und lief dann neu ein. Jetzt bleibt er unsichtbar, bis die Kamera da ist, und erscheint Zeichen für Zeichen. Die Leertaste zeigt ihn sofort, auch während die Kamera noch fährt.",
+        },
+    },
+    {
         version = "6.23.2.2",
         date    = "08.10.2026",
         notes   = {

@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.23.2.3] – 2026-10-08
+
+**Gespräche: kein Vorblitzen mehr.** Sprachst du jemanden ein zweites Mal an, stand der Text kurz ganz da und lief dann neu ein. Jetzt bleibt er unsichtbar, bis die Kamera da ist, und erscheint Zeichen für Zeichen. Die Leertaste zeigt ihn sofort, auch während die Kamera noch fährt.
+
+### Technisch
+
+- Beta-Test 6.23.2.2: nach Tempo ändern und erneutem Ansprechen Text erst ganz, dann Kamera, dann neu einlaufend. Vom letzten Gespräch steht „alles sichtbar“ (`DL.ShowAll`); der Verlauf auf 0 griff offenbar erst nach dem neuen Text. Jetzt Textfeld `SetAlpha(0)` beim Aufbau und während des Wartens auf die Kamera zusätzlich jedes Bild Verlauf 0; sichtbar erst mit dem ersten Zeichen. Leertaste beendet auch das Warten (`camWait`). Ursache im Spiel nicht gemessen – der Fix hält in beiden Fällen.
+- Prüflauf: zweites Ansprechen unsichtbar bis zur Kamera, danach sichtbar, Leertaste während der Fahrt; drei Gegenproben gefangen (die dritte erst mit eigenem Prüfschritt).
+
 ## [6.23.2.2] – 2026-10-08
 
 **Gespräche: abgabebereit auf einen Blick.** Quests, die du abgeben kannst, stehen golden mit grünem „Abgeben“ da, laufende grau mit „Läuft noch“, neue mit „Neu“. Die kurze Meldung des Spiels zur Testeinstellung beim ersten Gespräch schließt sich jetzt selbst und stört das Ausblenden nicht mehr. Die Kamera hält ab Werk 6 Meter Abstand.
