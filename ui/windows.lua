@@ -92,7 +92,11 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               -- erst beim Ansprechen geladen; ui/classtrainer.lua).
               "FriendsFrame", "ClassTrainerFrame",
               -- 6.20.0.0: das neue Kontaktfenster (ui/friends.lua).
-              "SocialUIFrame" }
+              "SocialUIFrame",
+              -- 6.25.3.0: Vermaechtnis (Fortschrittsanzeige), neu mit dem
+              -- Client-Update Build 70291 - Rahmen aus Metall und Seitenreiter
+              -- des Spiels, Inhalt (Karten, Leiste, Krone) bleibt.
+              "LegacySystemFrame" }
 
 -- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
 -- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus

@@ -1729,6 +1729,9 @@ sinkt (ein Sturz allein nicht). Geheimes Leben → stumm.
 6.25.2.0: statt `UNIT_HEALTH` ein eigener Takt (`FA.outTicker`, 0,25 s),
 gestartet beim Einloggen (vorher lief `Apply` nur beim Umschalten – im
 Spiel gemessen stumm). Bericht zählt Blicke, verdeckt, Verluste.
+6.25.3.0: gemessen – das Leben ist auch ohne Kampf verdeckt (228 von 228).
+Daher `UNIT_COMBAT` (`FA.OnUnitCombat`): „WOUND“ offen oder verdeckte Art
+zählt als Treffer, zwei binnen 3 s → Ton (`FA.Hit`).
 
 ## Eigene Farbe der Oberfläche *(6.21.1.0)*
 

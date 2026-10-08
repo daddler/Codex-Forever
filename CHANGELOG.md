@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.25.3.0] – 2026-10-08
+
+### Behoben
+
+- Client-Update (Build 70291): Charakterfenster zeigte einen hellen Streifen oben (`PaperDollFrame.TopBackgroundStripHost`: Bild 374155, `_UI-Frame-InnerTopTile`) – Bilder ausgeblendet (`CS.HideTopStrip`, Zeile im Bericht).
+- Berufsfenster: am Rezeptsymbol (`SchematicForm.OutputIcon`) neu ein dunkles Fach (Bild 130841, `ProfessionsFrameNormalTexture`) und eine Farbfläche (`ProfessionsFrameIconTexture`) – ausgeblendet (`PR.CleanOutputIcon`); `.Icon`/`.IconBorder` bleiben, auch wenn sie so heißen.
+- Raus da außerhalb des Kampfes, gemessen 6.25.2.0: „Blicke aufs Leben 228 · verdeckt 228“ – das eigene Leben kommt auf Forever auch ohne Kampf verdeckt. Dazu jetzt `UNIT_COMBAT` (Art offen „WOUND“ oder verdeckt = Treffer), gleiche Regel: zwei binnen 3 s. Zähler „Treffer gemeldet“ im Bericht. Ungemessen, ob das Ereignis bei Lagerfeuern kommt.
+
+### Neu
+
+- Fenster in Gold: `LegacySystemFrame` (Vermächtnis/Fortschrittsanzeige, neu mit 70291) in `W.WINDOWS`, `LF.HOSTS` (Stil ruhig), verschiebbar. Inhalt (Karten, Leiste, Krone) unverändert; ungemessen.
+
 ## [6.25.2.0] – 2026-10-08
 
 ### Behoben

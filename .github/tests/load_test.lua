@@ -1107,6 +1107,45 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.25.3.0: Client-Update 70291 - heller Streifen im Charakterfenster,
+-- fremde Bilder am Rezeptsymbol im Berufsfenster.
+do
+    local G = _G
+    local savedPD, savedPF = G.PaperDollFrame, G.ProfessionsFrame
+    local savedN, savedI = G.ProfessionsFrameNormalTexture, G.ProfessionsFrameIconTexture
+    local ok, err = pcall(function()
+        local CS = WeintCodex.UICharacter
+        local host = CreateFrame("Frame")
+        local strip = host:CreateTexture()
+        strip.GetObjectType = function() return "Texture" end
+        host.GetRegions = function() return strip end
+        G.PaperDollFrame = { TopBackgroundStripHost = host }
+        assert(CS.HideTopStrip() == 1 and strip:GetAlpha() == 0, "Streifen bleibt")
+        local PR = WeintCodex.UIProfessions
+        local form = CreateFrame("Frame")
+        local oi = CreateFrame("Button", nil, form)
+        oi.Icon = oi:CreateTexture()
+        oi.IconBorder = oi:CreateTexture()
+        local slot = oi:CreateTexture("ProfessionsFrameNormalTexture")
+        local fill = oi:CreateTexture("ProfessionsFrameIconTexture")
+        for _, t in ipairs({ oi.Icon, oi.IconBorder, slot, fill }) do t.GetObjectType = function() return "Texture" end end
+        slot.GetName = function() return "ProfessionsFrameNormalTexture" end
+        -- Das echte Symbol kann selbst so heissen (Vorlage des Spiels): bleibt.
+        oi.Icon.GetName = function() return "OutputIconIconTexture" end
+        fill.GetName = function() return "ProfessionsFrameIconTexture" end
+        oi.GetRegions = function() return oi.Icon, oi.IconBorder, slot, fill end
+        G.ProfessionsFrame = { CraftingPage = { SchematicForm = form } }
+        form.OutputIcon = oi
+        assert(PR.CleanOutputIcon() >= 2, "fremde Bilder nicht gefunden")
+        assert(slot:GetAlpha() == 0 and fill:GetAlpha() == 0, "Fach/Flaeche sichtbar")
+        assert(oi.Icon:GetAlpha() ~= 0 and oi.IconBorder:GetAlpha() ~= 0, "Symbol oder Rahmen weg")
+    end)
+    G.PaperDollFrame, G.ProfessionsFrame = savedPD, savedPF
+    G.ProfessionsFrameNormalTexture, G.ProfessionsFrameIconTexture = savedN, savedI
+    Check(ok, "Update 70291: Streifen im Charakterfenster weg, Rezeptsymbol ohne fremde Bilder"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.25.0.0: Wechsel an/aus direkt im Aufspuermenue des Spiels.
 do
     local G = _G
@@ -1776,6 +1815,22 @@ do
         now = now + 1 hp = 60 FA.OnHealth()
         now = now + 1 hp = 50
         assert(FA.OnHealth() == false and played == 1, "Ton, obwohl ausserhalb abgestellt")
+        -- 6.25.3.0: Leben verdeckt (gemessen) - Treffer ueber UNIT_COMBAT.
+        K.Set("comfort", "fireOutside", true)
+        G.UnitHealth = function() return nil end
+        local before = played
+        now = now + 10
+        assert(FA.OnUnitCombat("player", "WOUND") == false, "Ton beim ersten Treffer")
+        now = now + 1
+        assert(FA.OnUnitCombat("target", "WOUND") == false, "fremder Treffer zaehlt")
+        assert(FA.OnUnitCombat("player", "HEAL") == false, "Heilung zaehlt")
+        assert(FA.OnUnitCombat("player", "WOUND") == true and played == before + 1, "kein Ton beim zweiten Treffer")
+        now = now + 10
+        FA.OnUnitCombat("player", setmetatable({}, {}))
+        now = now + 1
+        combat = true
+        assert(FA.OnUnitCombat("player", "WOUND") == false, "Ton im Kampf ueber Treffer")
+        combat = false
         -- 6.25.2.0: Takt startet beim Einloggen, steht, wenn abgestellt.
         K.Set("comfort", "fireOutside", true)
         FA.outTicker:Hide()

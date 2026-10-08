@@ -67,3 +67,73 @@ WeintCodex.UIProfessions = WeintCodex.UIRegister.New({
     tail           = true,
     compact        = true,
 })
+
+--------------------------------------------------
+-- Symbol des Rezepts (6.25.3.0)
+--------------------------------------------------
+-- Client-Update Build 70291 (Beta-Test: "an der Optik des Icons oben
+-- gearbeitet"): das Symbol des Rezepts (SchematicForm.OutputIcon) traegt
+-- jetzt zusaetzlich die Bilder eines Gegenstandsknopfs - ein dunkles
+-- Fach (Bild 130841, "ProfessionsFrameNormalTexture") und eine Farbflaeche
+-- ("ProfessionsFrameIconTexture"), beide versetzt ueber dem Symbol. Weg
+-- damit; Symbol (.Icon) und Rahmen (.IconBorder) bleiben.
+local PR = WeintCodex.UIProfessions
+local K = WeintCodex.UIKit
+
+local function Ends(r, suffix)
+    local ok, name = pcall(r.GetName, r)
+    name = ok and K.Plain(name)
+    return type(name) == "string" and name:sub(-#suffix) == suffix
+end
+
+function PR.CleanOutputIcon()
+    local pf = _G.ProfessionsFrame
+    local form = type(pf) == "table" and pf.CraftingPage and pf.CraftingPage.SchematicForm
+    local oi = type(form) == "table" and form.OutputIcon
+    if type(oi) ~= "table" or not oi.GetRegions then return 0 end
+    local keep = { [oi.Icon or false] = true, [oi.IconBorder or false] = true }
+    if oi.GetHighlightTexture then keep[oi:GetHighlightTexture() or false] = true end
+    local normal = oi.GetNormalTexture and oi:GetNormalTexture()
+    local n = 0
+    local function Hide(r)
+        if r and not keep[r] and r.SetAlpha then
+            if K.Plain(r:GetAlpha()) ~= 0 then r:SetAlpha(0) end
+            n = n + 1
+        end
+    end
+    for _, r in ipairs({ oi:GetRegions() }) do
+        if r.GetObjectType and r:GetObjectType() == "Texture"
+           and (r == normal or Ends(r, "NormalTexture") or Ends(r, "IconTexture")) then
+            Hide(r)
+        end
+    end
+    -- Die beiden Bilder haengen unter dem Namen des Fensters; nur, wenn sie
+    -- im Rezept liegen.
+    for _, g in ipairs({ "ProfessionsFrameNormalTexture", "ProfessionsFrameIconTexture" }) do
+        local r = _G[g]
+        local p = type(r) == "table" and r.GetParent and r:GetParent()
+        local inForm = false
+        while type(p) == "table" do
+            if p == form then inForm = true break end
+            p = p.GetParent and p:GetParent()
+        end
+        if inForm then Hide(r) end
+    end
+    PR.outputHidden = n
+    return n
+end
+
+do
+    local update = PR.Update
+    PR.Update = function(f, ...)
+        local r = update(f, ...)
+        pcall(PR.CleanOutputIcon)
+        return r
+    end
+    local report = PR.Report
+    PR.Report = function(f, out, ...)
+        local o = report(f, out, ...)
+        out[#out + 1] = "   Berufe, Symbol des Rezepts: " .. (PR.outputHidden and (PR.outputHidden .. " fremde Bilder ausgeblendet") or "noch nicht gesehen")
+        return o
+    end
+end

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.25.3.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFNach dem Spiel-Update aufgeräumt.|r Der helle Streifen oben im Charakterfenster ist weg, das Rezeptsymbol im Berufsfenster wieder sauber. Das neue Fenster „Fortschrittsanzeige“ (Vermächtnis) trägt jetzt das Gold der anderen Fenster.",
+            "|cff7C6CFFRaus da außerhalb des Kampfes, zweiter Anlauf.|r Das Spiel verrät dein Leben nicht – WeintCodex hört jetzt darauf, ob du getroffen wirst. Zwei Treffer kurz hintereinander ohne Kampf, und der Ton kommt.",
+        },
+    },
+    {
         version = "6.25.2.0",
         date    = "08.10.2026",
         notes   = {

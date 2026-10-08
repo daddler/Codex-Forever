@@ -201,6 +201,12 @@ function FA.OnHealth()
     lastHealth = hp
     if not dropped then return false end
     stats.hpDrops = (stats.hpDrops or 0) + 1
+    return FA.Hit()
+end
+
+-- Ein Treffer ausserhalb des Kampfes (Leben gesunken oder Ereignis des
+-- Spiels): zweiter binnen FA.OUT_WINDOW -> Ton.
+function FA.Hit()
     local now = Now()
     local again = now - lastDrop <= FA.OUT_WINDOW
     lastDrop = now
@@ -211,6 +217,25 @@ function FA.OnHealth()
     FA.Play()
     return true
 end
+
+-- 6.25.3.0 (gemessen 6.25.2.0: "Blicke aufs Leben 228 · verdeckt 228"):
+-- Forever gibt das eigene Leben auch ausserhalb des Kampfes nur verdeckt
+-- heraus. UNIT_COMBAT meldet einen Treffer ("WOUND") ohne dass man eine
+-- Zahl vergleichen muss - die Art kommt offen oder verdeckt; verdeckt
+-- zaehlt als Treffer, offen nur "WOUND".
+function FA.OnUnitCombat(unit, action)
+    if K.Plain(unit) ~= "player" then return false end
+    if not (FA.Active() and K.Get(KEY, "fireOutside")) then return false end
+    if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false) then return false end
+    stats.wounds = (stats.wounds or 0) + 1
+    local a = K.Plain(action)
+    if type(a) == "string" and a ~= "WOUND" then return false end
+    return FA.Hit()
+end
+
+local cev = CreateFrame("Frame")
+cev:SetScript("OnEvent", function(_, _, unit, action) FA.OnUnitCombat(unit, action) end)
+FA.combatEvents = cev
 
 local outTicker = CreateFrame("Frame")
 outTicker:Hide()
@@ -226,8 +251,10 @@ FA.outTicker = outTicker
 local function Apply()
     if FA.Active() and K.Get(KEY, "fireOutside") then
         outTicker:Show()
+        pcall(cev.RegisterEvent, cev, "UNIT_COMBAT")
     else
         outTicker:Hide()
+        pcall(cev.UnregisterEvent, cev, "UNIT_COMBAT")
         lastHealth = nil
     end
     if FA.Active() then
@@ -256,8 +283,8 @@ function FA.StatusLines()
     out[#out + 1] = string.format("Gefragt %d · offen %d · geheim %d · keine Zeile %d · Töne %d",
         stats.checks, stats.plain, stats.secret, stats.none, stats.alarms)
         .. " · außerhalb des Kampfes " .. (stats.outside or 0)
-    out[#out + 1] = string.format("Außerhalb des Kampfes: Takt %s · Blicke aufs Leben %d · verdeckt %d · Verluste %d",
-        outTicker:IsShown() and "läuft" or "steht", stats.hpLooks or 0, stats.hpHidden or 0, stats.hpDrops or 0)
+    out[#out + 1] = string.format("Außerhalb des Kampfes: Takt %s · Blicke aufs Leben %d · verdeckt %d · Verluste %d · Treffer gemeldet %d",
+        outTicker:IsShown() and "läuft" or "steht", stats.hpLooks or 0, stats.hpHidden or 0, stats.hpDrops or 0, stats.wounds or 0)
     if stats.secret > 0 and stats.plain == 0 then
         out[#out + 1] = "Im Kampf nur geheime Summen – dann kann WeintCodex nicht warnen."
     end

@@ -198,6 +198,21 @@ function CS.PlaceGlass(g)
     g.body:SetPoint("BOTTOMRIGHT", g.target, "BOTTOMRIGHT", pad, -pad)
 end
 
+function CS.HideTopStrip()
+    local pd = _G.PaperDollFrame
+    local host = type(pd) == "table" and pd.TopBackgroundStripHost
+    if type(host) ~= "table" or not host.GetRegions then return 0 end
+    local n = 0
+    for _, r in ipairs({ host:GetRegions() }) do
+        if r.GetObjectType and r:GetObjectType() == "Texture" then
+            if K.Plain(r:GetAlpha()) ~= 0 then r:SetAlpha(0) end
+            n = n + 1
+        end
+    end
+    CS.topStrip = n
+    return n
+end
+
 function CS.Layout(f, d, theme)
     local L = layout[f]
     if not L then
@@ -213,6 +228,11 @@ function CS.Layout(f, d, theme)
         L.glass = Glass(f, theme)
         layout[f] = L
     end
+    -- 6.25.3.0 (Client-Update Build 70291, Beta-Test: "weisser Bereich"):
+    -- neu im Spiel ein heller Streifen hinter der Kopfzeile
+    -- (PaperDollFrame.TopBackgroundStripHost: Bild 374155 und
+    -- _UI-Frame-InnerTopTile). Nur seine Bilder weg, Knoepfe darin bleiben.
+    CS.HideTopStrip()
     -- Der Schein der Klasse oben (W.AddGlow): 6.6.4.2 in JEDEM Durchlauf
     -- gehalten. Einmal auf Deckkraft 0 gesetzt, war er im Beta-Test
     -- trotzdem da (gemessen: neutralgrau 99 oben, bis 260 px auslaufend -
@@ -818,6 +838,7 @@ function CS.ReportFrame(f, out)
     end
     local h = CS.head
     if h then
+        out[#out + 1] = "   Heller Streifen oben (TopBackgroundStripHost): " .. (CS.topStrip and (CS.topStrip .. " Bilder ausgeblendet") or "nicht da")
         out[#out + 1] = "   Doppelte Stufenzeile: " .. (CS.dup and "gefunden, ausgeblendet" or "nicht gefunden")
         local names = {}
         for _, t in ipairs(h.replaced) do
