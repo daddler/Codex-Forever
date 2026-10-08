@@ -1106,6 +1106,112 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.23.0.0: Gespraeche im Codex-Stil (nach dem Verhalten von DialogueUI).
+do
+    local G = _G
+    local names = { "C_GossipInfo", "GossipFrame", "QuestFrame", "UnitName", "GetTitleText", "GetQuestText",
+        "GetObjectiveText", "GetNumQuestRewards", "GetNumQuestChoices", "GetQuestItemInfo", "AcceptQuest",
+        "DeclineQuest", "GetRewardText", "GetQuestReward", "GetRewardMoney", "GetRewardXP", "CloseQuest",
+        "InCombatLockdown" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local DL = WeintCodex.UIDialogue
+    local ok, err = pcall(function()
+        local calls = {}
+        local function Log(name) return function(...) calls[#calls + 1] = { name, ... } end end
+        local function GameFrame(name)
+            local f = CreateFrame("Frame", name, UIParent)
+            f._reg = {}
+            f.RegisterEvent = function(self, e) self._reg[e] = true end
+            f.UnregisterEvent = function(self, e) self._reg[e] = nil end
+            f.IsEventRegistered = function(self, e) return self._reg[e] == true end
+            return f
+        end
+        G.GossipFrame, G.QuestFrame = GameFrame("GossipFrame"), GameFrame("QuestFrame")
+        for name, events in pairs(DL.EVENTS) do for _, e in ipairs(events) do G[name]:RegisterEvent(e) end end
+        G.InCombatLockdown = function() return false end
+        G.UnitName = function() return "Wache Thomas" end
+        G.C_GossipInfo = {
+            GetText = function() return "Seid gegrüßt." end,
+            GetOptions = function() return { { name = "Zweite", gossipOptionID = 22, orderIndex = 2 },
+                                             { name = "Erste", gossipOptionID = 11, orderIndex = 1 } } end,
+            GetAvailableQuests = function() return { { title = "Wölfe", questID = 501 } } end,
+            GetActiveQuests = function() return { { title = "Briefe", questID = 502, isComplete = true } } end,
+            SelectOption = Log("SelectOption"), SelectAvailableQuest = Log("SelectAvailableQuest"),
+            SelectActiveQuest = Log("SelectActiveQuest"), CloseGossip = Log("CloseGossip"),
+        }
+        K.Set("comfort", "dlgOn", false)
+        assert(G.GossipFrame:IsEventRegistered("GOSSIP_SHOW"), "Spiel ohne Gespraech, obwohl aus")
+        K.Set("comfort", "dlgOn", true)
+        assert(not G.GossipFrame:IsEventRegistered("GOSSIP_SHOW") and not G.QuestFrame:IsEventRegistered("QUEST_DETAIL"),
+            "Fenster des Spiels bekommen weiter Ereignisse")
+        stub.FireEvent("GOSSIP_SHOW")
+        assert(DL.win and DL.win:IsShown() and DL.state == "gossip", "Gespraech nicht gezeigt")
+        -- Reihenfolge: abgeschlossen, angeboten, Optionen nach orderIndex.
+        assert(#DL.list == 4 and DL.list[1].kind == "active" and DL.list[1].mark == "?"
+            and DL.list[2].kind == "available" and DL.list[3].text == "Erste" and DL.list[4].text == "Zweite",
+            "Zeilen: " .. #DL.list)
+        DL.win:GetScript("OnKeyDown")(DL.win, "3")
+        assert(calls[1][1] == "SelectOption" and calls[1][2] == 11, "Taste 3 waehlt nicht die erste Option")
+        DL.Pick(2)
+        assert(calls[2][1] == "SelectAvailableQuest" and calls[2][2] == 501, "Quest nicht gewaehlt")
+        -- Quest annehmen.
+        G.GetTitleText = function() return "Wölfe" end
+        G.GetQuestText = function() return "Die Wölfe sind eine Plage." end
+        G.GetObjectiveText = function() return "Tötet 8 Wölfe." end
+        G.GetNumQuestRewards = function() return 1 end
+        G.GetNumQuestChoices = function() return 0 end
+        G.GetQuestItemInfo = function(kind, i) return "Stiefel", 123, 1 end
+        G.GetRewardMoney = function() return 0 end
+        G.GetRewardXP = function() return 450 end
+        G.AcceptQuest, G.DeclineQuest = Log("AcceptQuest"), Log("DeclineQuest")
+        stub.FireEvent("QUEST_DETAIL")
+        assert(DL.state == "detail" and #DL.rewards == 1 and DL.current.extra:find("450 Erfahrung", 1, true),
+            "Questtext ohne Belohnung")
+        K.Set("comfort", "dlgType", false)
+        stub.FireEvent("QUEST_DETAIL")
+        DL.win:GetScript("OnKeyDown")(DL.win, "SPACE")
+        assert(calls[#calls][1] == "AcceptQuest", "Leertaste nimmt nicht an")
+        -- Abschliessen mit Auswahl: erst waehlen.
+        G.GetRewardText = function() return "Gut gemacht." end
+        G.GetNumQuestChoices = function() return 2 end
+        G.GetQuestReward = Log("GetQuestReward")
+        stub.FireEvent("QUEST_COMPLETE")
+        local n = #calls
+        assert(DL.Primary() == false and #calls == n, "abgeschlossen ohne gewaehlte Belohnung")
+        DL.win:GetScript("OnKeyDown")(DL.win, "2")
+        assert(DL.choice == 2 and DL.Primary() and calls[#calls][1] == "GetQuestReward" and calls[#calls][2] == 2,
+            "gewaehlte Belohnung nicht genommen")
+        G.CloseQuest = Log("CloseQuest")
+        stub.FireEvent("QUEST_FINISHED")
+        assert(not DL.win:IsShown(), "Fenster bleibt nach dem Ende offen")
+        -- Esc schliesst das Gespraech beim Spiel.
+        stub.FireEvent("GOSSIP_SHOW")
+        DL.win:GetScript("OnKeyDown")(DL.win, "ESCAPE")
+        assert(calls[#calls][1] == "CloseGossip" and not DL.win:IsShown(), "Esc schliesst nicht")
+        -- Scheitern: Fenster des Spiels zurueck, Schalter aus.
+        local gi = G.C_GossipInfo
+        G.C_GossipInfo = setmetatable({ GetOptions = function() error("kaputt") end }, { __index = gi })
+        stub.FireEvent("GOSSIP_SHOW")
+        assert(DL.stats.failed == 1 and not K.Get("comfort", "dlgOn") and G.GossipFrame:IsEventRegistered("GOSSIP_SHOW"),
+            "Scheitern gibt die Fenster des Spiels nicht zurueck")
+        G.C_GossipInfo = gi
+        -- Aus: alles zurueck.
+        K.Set("comfort", "dlgOn", true)
+        K.Set("comfort", "dlgOn", false)
+        assert(G.QuestFrame:IsEventRegistered("QUEST_DETAIL") and G.QuestFrame:IsEventRegistered("QUEST_FINISHED"),
+            "Ausschalten gibt die Ereignisse nicht zurueck")
+        local sc = table.concat(DL.StatusLines(), "\n")
+        assert(sc:find("gescheitert 1", 1, true), "Bericht: " .. sc)
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    K.Set("comfort", "dlgOn", false)
+    K.Set("comfort", "dlgType", true)
+    DL.stats.failed, DL.lastError = 0, nil
+    Check(ok, "Gespraeche: Fenster des Spiels abgemeldet und zurueck, Optionen/Quests, Tasten, Annehmen, Belohnung waehlen, Scheitern"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.21.1.1 (Absturz im Spiel, "L->top < L->ci->top"): Rahmen mit sehr
 -- vielen Kindern werden nicht mit GetChildren gelesen, und die Symbole der
 -- Karte haengen in einem Rahmen, nicht direkt auf der Flaeche.

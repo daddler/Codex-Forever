@@ -1561,6 +1561,26 @@ beide ab Werk aus.
   + 20; Eingänge + 10 darüber; höchstens einmal je Sekunde gelesen.
   `/wcui prüfen` → „Karte“ zeigt die Ebenen.
 
+### Gespräche im Codex-Stil (`ui/dialogue.lua`, 6.23.0.0)
+
+- Nach dem Verhalten von DialogueUI (keine Lizenz angegeben → nur Verhalten,
+  kein Code, keine Medien). Seite „Gespräche“ im Komfort, ab Werk aus.
+- `DL.TakeOver` meldet `GossipFrame` (`GOSSIP_SHOW/CLOSED`) und `QuestFrame`
+  (`QUEST_GREETING/DETAIL/PROGRESS/COMPLETE/FINISHED/ITEM_UPDATE`) die
+  Ereignisse ab, die dort angemeldet waren; `DL.Release` meldet genau diese
+  wieder an – beim Ausschalten (ohne Neuladen) und wenn der Aufbau scheitert
+  (`DL.Fail`: Schalter aus, Meldung, Grund in `/wcui prüfen`).
+- Zustände: Gespräch (abgeschlossene `?`, angebotene `!`, Optionen nach
+  `orderIndex`), Questgruß, Annehmen (Text, Ziele, Belohnung, Gold, Erfahrung),
+  Fortschritt (benötigte Gegenstände, „Weiter“ nur wenn abschließbar),
+  Abschließen (bei Auswahl erst wählen). Höchstens 12 Zeilen, 10 Gegenstände;
+  langer Text rollt (230 px).
+- Tasten 1–9 / Leertaste / Esc über `SetPropagateKeyboardInput` (nicht im
+  Kampf). Einlaufen über `FontString:SetAlphaGradient`; Leertaste zeigt alles.
+- Gold (`GameColors.frameAccent`): ersetzt die Gesprächsfenster des Spiels,
+  die gold sind – keine eigene Seite des Addons.
+- Nicht gebaut: Kamera aufs Gesicht, Oberfläche ausblenden, Vorlesen.
+
 ### Kräuter und Erz im Wechsel (`ui/gathertrack.lua`, 6.22.0.0)
 
 - Das Spiel lässt nur eine Suche zugleich laufen. Seite „Sammeln“ im

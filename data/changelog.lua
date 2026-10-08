@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.23.0.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFGespräche im Codex-Stil.|r Unter Komfort → Gespräche: Gespräche mit NPCs und Questtexte erscheinen in einem ruhigen Fenster neben der Mitte. Zahlen 1–9 wählen eine Antwort oder Belohnung, die Leertaste nimmt an oder schließt ab, Esc beendet das Gespräch. Belohnungen, Gold und Erfahrung stehen auf einen Blick da, der Text läuft auf Wunsch Zeichen für Zeichen ein.",
+        },
+    },
+    {
         version = "6.22.0.2",
         date    = "08.10.2026",
         notes   = {

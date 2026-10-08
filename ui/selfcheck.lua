@@ -538,6 +538,15 @@ Check("Sammeln", function(add)
     for _, line in ipairs(GT.StatusLines()) do add("", "   " .. line) end
 end)
 
+-- Gespraeche im Codex-Stil (6.23.0.0)
+Check("Gespräche", function(add)
+    local DL = WeintCodex.UIDialogue
+    if not DL then add(SC.OPEN, "Gespräche nicht geladen.") return end
+    add(DL.stats.failed > 0 and SC.BAD or (DL.Active() and SC.OK or SC.OPEN),
+        DL.Active() and "Gespräche im Codex-Stil an" or "Gespräche im Codex-Stil aus (Komfort → Gespräche)")
+    for _, line in ipairs(DL.StatusLines()) do add("", "   " .. line) end
+end)
+
 Check("Berufe", function(add)
     local PRO = WeintCodex.Professions
     if not (PRO and PRO.Skills) then

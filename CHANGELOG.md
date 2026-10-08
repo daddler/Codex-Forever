@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.23.0.0] – 2026-10-08
+
+**Gespräche im Codex-Stil.** Unter Komfort → Gespräche: Gespräche mit NPCs und Questtexte erscheinen in einem ruhigen Fenster neben der Mitte. Zahlen 1–9 wählen eine Antwort oder Belohnung, die Leertaste nimmt an oder schließt ab, Esc beendet das Gespräch. Belohnungen, Gold und Erfahrung stehen auf einen Blick da, der Text läuft auf Wunsch Zeichen für Zeichen ein.
+
+### Technisch
+
+- Beta-Test: „so etwas wie DialogueUI, nur im Codex-Stil“. Neu `ui/dialogue.lua` (Seite „Gespräche“ im Komfort, `dlgOn` ab Werk aus, `dlgKeys`, `dlgType`, `dlgScale`). Nach dem **Verhalten** von DialogueUI – das Paket nennt keine Lizenz, also kein Code, keine Bilder, keine Klänge. `GossipFrame`/`QuestFrame` werden ihre Ereignisse abgemeldet (`DL.TakeOver`) und beim Ausschalten oder Scheitern genau diese wieder angemeldet (`DL.Release`), ohne Neuladen. Gewählt wird über dieselben Aufrufe wie im Spiel (`C_GossipInfo.SelectOption`/`SelectAvailableQuest`/`SelectActiveQuest`, `SelectAvailableQuest(i)` im Questgruß, `AcceptQuest`, `CompleteQuest`, `GetQuestReward`). Gold (`frameAccent`), weil Gespräche nicht zur Klasse gehören. Tasten über `SetPropagateKeyboardInput`, im Kampf aus. Einlaufen über `SetAlphaGradient`, falls der Client es kennt. `/wcui prüfen` → „Gespräche“. Ungemessen auf Forever: alles davon. Prüflauf mit vier Gegenproben (Reihenfolge der Optionen, Rückgabe der Ereignisse, Belohnung vor dem Abschließen, gewählte Option) gefangen.
+
 ## [6.22.0.2] – 2026-10-08
 
 **Geistheiler und Pfeile wieder überall sichtbar.** Mitten in einem Gebiet lagen sie unter den Bildern der erkundeten Gegenden – mit der Maus fand man sie, sehen konnte man sie nicht. Jetzt liegen sie obenauf, auf jeder Karte; die Instanzeingänge auch.
