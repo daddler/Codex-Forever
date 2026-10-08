@@ -1316,6 +1316,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         if AP and AP.Start then AP.Start() end
         return
     end
+    if msg == "taschen" or msg == "bags" then
+        local BW = WeintCodex.UIBagsWindow
+        if BW then BW.Toggle() end
+        return
+    end
     if msg == "bestand" or msg:match("^bestand%s") then
         local IV = WeintCodex.UIInventory
         local q = msg:match("^bestand%s+(.+)$")

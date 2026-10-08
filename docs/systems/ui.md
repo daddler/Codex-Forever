@@ -1624,6 +1624,8 @@ beide ab Werk aus.
   `PLAYER_EQUIPMENT_CHANGED`, Bank nur, solange sie offen ist.
 - Tooltip (`IV.TooltipLines`): eigener Charakter zuerst, dann nach Anzahl;
   „Alle Charaktere“ ab zwei. Nur eigener Realm, außer `invAllRealms`.
+- Fenster `ui/bagswin.lua` (`/wcui taschen`): Charaktere links (`BW.ALL` =
+  alle), Suche + Filter Taschen/Bank/Angelegt, Raster mit Anzahl; nur Anzeige.
 - `/wcui bestand [Suchwort]`. Bank, die nie offen war, ist **unbekannt**,
   nicht 0 – sie steht dann nicht im Tooltip und im Stand als „Bank unbekannt“.
 

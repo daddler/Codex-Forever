@@ -11,13 +11,14 @@ nicht zusammen.
 
 ## [6.24.0.0] – 2026-10-08
 
-**Bestand aller Charaktere.** Fährst du über einen Gegenstand, steht im Tooltip, welche deiner Charaktere ihn haben und wo – Taschen, Bank, angelegt – samt Summe. Mit /wcui bestand <Name> suchst du über alle Charaktere. Jeder Charakter wird nach dem Einloggen erfasst, seine Bank beim nächsten Besuch. Unter Komfort → Bestand auch für andere Realms.
+**Bestand aller Charaktere.** Fährst du über einen Gegenstand, steht im Tooltip, welche deiner Charaktere ihn haben und wo – Taschen, Bank, angelegt – samt Summe. Dazu ein eigenes Fenster „Taschen aller Charaktere“ (/wcui taschen oder Komfort → Bestand): links deine Charaktere oder alle zusammen, oben Suche und Filter Taschen, Bank, Angelegt, rechts alles als Symbole mit Anzahl. Mit /wcui bestand <Name> suchst du auch im Chat. Jeder Charakter wird nach dem Einloggen erfasst, seine Bank beim nächsten Besuch. Unter Komfort → Bestand auch für andere Realms.
 
 **Raus da: mehr Töne.** Neun statt drei Warntöne zur Auswahl, alle aus dem Spiel – von Bosswarnung bis Flüstern.
 
 ### Technisch
 
 - Beta-Test: „accountweite Taschen“. Neu `ui/inventory.lua` (Seite „Bestand“ im Komfort, `invOn` an, `invAllRealms` aus): je Charakter in `WeintCodex_SavedData.inventory.chars["Realm|Name"]` nur Gegenstandsnummer → Anzahl für Taschen (`C_Container`, 0..NUM_BAG_SLOTS + Reagenzientasche), angelegt (`GetInventoryItemID` 1–19) und Bank (Fach + Taschen, nur zwischen `BANKFRAME_OPENED` und `…CLOSED` – sonst liest der Client sie nicht); Namen aus dem Link für die Suche. Tooltip über `TooltipDataProcessor` (Rückfall `OnTooltipSetItem`), eigener Charakter zuerst, Klassenfarbe, Summe ab zwei. `/wcui bestand` (Stand) und `/wcui bestand <Name>` (Suche, höchstens 40 Treffer). Stand, nicht live; Post und Auktionen zählen nicht. `/wcui prüfen` → „Bestand“.
+- Fenster „Taschen aller Charaktere“ (`ui/bagswin.lua`, Wunsch: „eine Option Taschen in WeintCodex, die das managed“): Charakterliste (eigener Realm, mit `invAllRealms` alle), Suche, Filter Taschen/Bank/Angelegt, Raster 12 Spalten mit Anzahl, rollbar; Tooltip des Spiels per `SetItemByID` (mit den Bestandszeilen). Nur Anzeige – für andere Charaktere kann ein Addon nichts bewegen. Fuß sagt „Bank unbekannt“, wenn sie nie offen war. `/wcui taschen`, Knopf auf der Seite „Bestand“. Prüflauf: Alle, ein Charakter, Filter, Suche, unbekannte Auswahl; drei Gegenproben gefangen.
 - „Raus da“: neun Töne des Spiels (`FA.ORDER`), je SOUNDKIT-Name mit Zahl als Rückfall.
 - Prüfläufe: Bestand (Bank nur offen, Realm, eigener zuerst, Suche, Tooltip, aus) mit fünf Gegenproben; Töne vollständig und ohne Doppel.
 

@@ -376,7 +376,10 @@ local function Build(B)
             description = "Suchen: /wcui bestand <Name>." },
           { type = "toggle", label = "Auch andere Realms", key = "invAllRealms", disabled = off,
             description = "Sonst nur Charaktere auf diesem Realm." })
-    B:Note("Post und Auktionen zählen nicht mit. Wer seine Bank seit dieser Version nie geöffnet hat, zeigt nur Taschen und Ausrüstung.")
+    B:Row({ type = "button", label = "Fenster", text = "Taschen aller Charaktere öffnen", disabled = off,
+            onClick = function() local BW = WeintCodex.UIBagsWindow if BW then BW.Show() end end },
+          { type = "empty" })
+    B:Note("Auch mit /wcui taschen. Post und Auktionen zählen nicht mit. Wer seine Bank seit dieser Version nie geöffnet hat, zeigt nur Taschen und Ausrüstung.")
 end
 
 local mod = K.Module(KEY)

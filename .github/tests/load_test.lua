@@ -1577,6 +1577,31 @@ do
         local rep = table.concat(IV.SearchReport("leinen"), "\n")
         assert(rep:find("Leinenstoff", 1, true) and rep:find("Twink 11", 1, true), "Suche: " .. rep)
         assert(table.concat(IV.SearchReport("gibtsnicht"), "\n"):find("Keiner", 1, true), "leere Suche")
+        -- Fenster "Taschen aller Charaktere": Alle, ein Charakter, Filter, Suche.
+        local BW = WeintCodex.UIBagsWindow
+        st.names[200] = "Helm"
+        assert(BW.Show() and BW.win:IsShown(), "Fenster nicht offen")
+        assert(#BW.shown == 2 and BW.shown[1].name == "Helm" and BW.shown[2].count == 27, "Alle: " .. #BW.shown)
+        BW.sel = "Everlook|Twink"
+        BW.Refresh()
+        assert(#BW.shown == 1 and BW.shown[1].count == 11, "ein Charakter")
+        BW.filter.bank = false
+        BW.Refresh()
+        assert(BW.shown[1].count == 9, "Filter Bank wirkt nicht")
+        BW.filter.bank = true
+        BW.sel = BW.ALL
+        BW.query = "helm"
+        BW.Refresh()
+        assert(#BW.shown == 1 and BW.shown[1].id == 200, "Suche im Fenster")
+        BW.query = ""
+        BW.filter.worn = false
+        BW.Refresh()
+        assert(#BW.shown == 1 and BW.shown[1].id == 100, "Filter Angelegt wirkt nicht")
+        BW.filter.worn = true
+        BW.sel = "gibt|esnicht"
+        BW.Refresh()
+        assert(BW.sel == BW.ALL, "unbekannte Auswahl bleibt stehen")
+        BW.win:Hide()
         -- Tooltip haengt Zeilen an.
         local added = 0
         local gt = G.GameTooltip
