@@ -1527,6 +1527,99 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.24.0.0: Bestand aller Charaktere.
+do
+    local G = _G
+    local names = { "C_Container", "UnitName", "GetRealmName", "UnitClass", "GetInventoryItemID", "UnitFactionGroup" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local IV = WeintCodex.UIInventory
+    local sdInv = WeintCodex.SavedData and WeintCodex.SavedData.inventory
+    local ok, err = pcall(function()
+        assert(type(WeintCodex.SavedData) == "table", "kein SavedData")
+        WeintCodex.SavedData.inventory = nil
+        local bags = {
+            [0] = { { itemID = 100, stackCount = 3, hyperlink = "|cffffffff|Hitem:100|h[Leinenstoff]|h|r" } },
+            [-1] = { { itemID = 100, stackCount = 4, hyperlink = "|Hitem:100|h[Leinenstoff]|h" } },
+        }
+        G.C_Container = {
+            GetContainerNumSlots = function(b) return bags[b] and #bags[b] or 0 end,
+            GetContainerItemInfo = function(b, s) return bags[b] and bags[b][s] end,
+        }
+        G.UnitName = function() return "Shooty" end
+        G.GetRealmName = function() return "Everlook" end
+        G.UnitClass = function() return "Jäger", "HUNTER" end
+        G.UnitFactionGroup = function() return "Alliance" end
+        G.GetInventoryItemID = function(_, slot) if slot == 1 then return 200 end end
+        K.Set("comfort", "invOn", true)
+        K.Set("comfort", "invAllRealms", false)
+        assert(IV.ScanBags(), "Taschen nicht gelesen")
+        local st = IV.Store(false)
+        local me = st.chars["Everlook|Shooty"]
+        assert(me and me.bags[100] == 3 and me.worn[200] == 1 and st.names[100] == "Leinenstoff", "eigener Bestand falsch")
+        -- Bank nur, solange sie offen ist.
+        assert(not IV.ScanBank() and me.bank == nil, "Bank gelesen, obwohl zu")
+        stub.FireEvent("BANKFRAME_OPENED")
+        assert(me.bank and me.bank[100] == 4, "Bank nicht gelesen")
+        stub.FireEvent("BANKFRAME_CLOSED")
+        -- Andere Charaktere: gleicher Realm ja, anderer nur auf Wunsch.
+        st.chars["Everlook|Twink"] = { name = "Twink", realm = "Everlook", class = "MAGE", bags = { [100] = 9 }, bank = { [100] = 2 } }
+        st.chars["Andere|Fremd"] = { name = "Fremd", realm = "Andere", class = "ROGUE", bags = { [100] = 9 } }
+        local lines = IV.TooltipLines(100)
+        assert(lines and #lines == 3 and lines[1][1] == "Shooty" and lines[1][2]:find("^7")
+            and lines[1][2]:find("Bank 4", 1, true) and lines[2][1] == "Twink" and lines[2][2]:find("^11")
+            and lines[3][2] == "18", "Tooltip: " .. (lines and #lines or 0))
+        K.Set("comfort", "invAllRealms", true)
+        lines = IV.TooltipLines(100)
+        assert(#lines == 4 and lines[4][2] == "27", "anderer Realm fehlt trotz Wunsch")
+        assert(IV.TooltipLines(999) == nil, "Zeile fuer einen Gegenstand, den keiner hat")
+        -- Suche
+        local rep = table.concat(IV.SearchReport("leinen"), "\n")
+        assert(rep:find("Leinenstoff", 1, true) and rep:find("Twink 11", 1, true), "Suche: " .. rep)
+        assert(table.concat(IV.SearchReport("gibtsnicht"), "\n"):find("Keiner", 1, true), "leere Suche")
+        -- Tooltip haengt Zeilen an.
+        local added = 0
+        local gt = G.GameTooltip
+        local old = gt.AddDoubleLine
+        gt.AddDoubleLine = function() added = added + 1 end
+        IV.OnItem(gt, { id = 100 })
+        gt.AddDoubleLine = old
+        assert(added == 4, "Tooltip-Zeilen: " .. added)
+        -- Aus: nichts.
+        K.Set("comfort", "invOn", false)
+        added = 0
+        gt.AddDoubleLine = function() added = added + 1 end
+        IV.OnItem(gt, { id = 100 })
+        gt.AddDoubleLine = old
+        assert(added == 0, "Tooltip, obwohl aus")
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    if WeintCodex.SavedData then WeintCodex.SavedData.inventory = sdInv end
+    K.Set("comfort", "invOn", true)
+    K.Set("comfort", "invAllRealms", false)
+    Check(ok, "Bestand: Taschen, Ausruestung, Bank nur offen, andere Charaktere, Realm, Suche, Tooltip"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.24.0.0: Raus da - mehr Toene, jeder mit Namen und Zahl.
+do
+    local FA = WeintCodex.UIFireAlarm
+    local ok, err = pcall(function()
+        assert(#FA.ORDER >= 9, "zu wenige Toene")
+        local seen = {}
+        for _, k in ipairs(FA.ORDER) do
+            local s = FA.SOUNDS[k]
+            assert(s and type(s.kit) == "string" and type(s.id) == "number" and s.text, "Ton unvollstaendig: " .. k)
+            assert(not seen[s.id], "Ton doppelt: " .. k)
+            seen[s.id] = true
+        end
+        local n = 0
+        for _ in pairs(FA.SOUNDS) do n = n + 1 end
+        assert(n == #FA.ORDER, "Ton fehlt in der Auswahl")
+    end)
+    Check(ok, "Raus da: neun Toene, je Name und Zahl, alle waehlbar" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.21.1.1 (Absturz im Spiel, "L->top < L->ci->top"): Rahmen mit sehr
 -- vielen Kindern werden nicht mit GetChildren gelesen, und die Symbole der
 -- Karte haengen in einem Rahmen, nicht direkt auf der Flaeche.

@@ -36,11 +36,20 @@ FA.DEFAULTS = {
 FA.TICK = 0.2        -- so oft im Kampf gefragt (s)
 FA.GAP = 1.0         -- hoechstens ein Ton je Sekunde
 -- Toene des Spiels (SOUNDKIT), Zahl als Rueckfall.
+-- 6.24.0.0 (Beta-Test: "mehr Sounds"): alles Toene des Spiels, keine
+-- eigenen Dateien. Kennt der Client einen Namen nicht, gilt die Zahl.
 FA.SOUNDS = {
-    raid  = { kit = "RAID_WARNING", id = 8959, text = "Schlachtzugswarnung" },
-    ready = { kit = "READY_CHECK", id = 8960, text = "Bereitschaftscheck" },
-    alarm = { kit = "ALARM_CLOCK_WARNING_3", id = 12889, text = "Wecker" },
+    raid    = { kit = "RAID_WARNING", id = 8959, text = "Schlachtzugswarnung" },
+    ready   = { kit = "READY_CHECK", id = 8960, text = "Bereitschaftscheck" },
+    alarm   = { kit = "ALARM_CLOCK_WARNING_3", id = 12889, text = "Wecker" },
+    alarm2  = { kit = "ALARM_CLOCK_WARNING_2", id = 12867, text = "Wecker, kurz" },
+    whisper = { kit = "TELL_MESSAGE", id = 3081, text = "Flüstern" },
+    boss    = { kit = "UI_RAID_BOSS_WHISPER_WARNING", id = 37666, text = "Bosswarnung" },
+    invite  = { kit = "IG_PLAYER_INVITE", id = 880, text = "Einladung" },
+    queue   = { kit = "PVP_THROUGH_QUEUE", id = 8459, text = "Warteschlange" },
+    toast   = { kit = "UI_BNET_TOAST", id = 18019, text = "Battle.net-Hinweis" },
 }
+FA.ORDER = { "raid", "boss", "ready", "alarm", "alarm2", "whisper", "invite", "queue", "toast" }
 
 local stats = { checks = 0, plain = 0, secret = 0, none = 0, alarms = 0 }
 FA.stats = stats
@@ -175,7 +184,7 @@ local function Build(B)
     local off = function() return not K.Get(KEY, "fireAlarm") end
     B:Section("Raus da!", "Ein Ton, sobald du in etwas stehst, das dir schadet und dem man ausweichen kann – nicht nur Feuer: alles am Boden (Gift, Leere, Eis, Blitze, Wirbel), Kegel und Wellen vor dem Gegner. Was vermeidbar ist, sagt das Spiel; ein Kampflog gibt es für Addons nicht.")
     local items = {}
-    for _, k in ipairs({ "raid", "ready", "alarm" }) do items[#items + 1] = { value = k, text = FA.SOUNDS[k].text } end
+    for _, k in ipairs(FA.ORDER) do items[#items + 1] = { value = k, text = FA.SOUNDS[k].text } end
     B:Row({ type = "toggle", label = "Warnton, wenn du in etwas stehst", key = "fireAlarm",
             description = "Höchstens einmal je Sekunde, nur im Kampf." },
           { type = "dropdown", label = "Ton", key = "fireSound", items = items, disabled = off })

@@ -538,6 +538,14 @@ Check("Sammeln", function(add)
     for _, line in ipairs(GT.StatusLines()) do add("", "   " .. line) end
 end)
 
+-- Bestand aller Charaktere (6.24.0.0)
+Check("Bestand", function(add)
+    local IV = WeintCodex.UIInventory
+    if not IV then add(SC.OPEN, "Bestand nicht geladen.") return end
+    add(IV.Active() and SC.OK or SC.OPEN, IV.Active() and "Bestand an" or "Bestand aus (Komfort → Bestand)")
+    for _, line in ipairs(IV.StatusLines()) do add("", "   " .. line) end
+end)
+
 -- Gespraeche im Codex-Stil (6.23.0.0)
 Check("Gespräche", function(add)
     local DL = WeintCodex.UIDialogue

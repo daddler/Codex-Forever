@@ -1316,6 +1316,15 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         if AP and AP.Start then AP.Start() end
         return
     end
+    if msg == "bestand" or msg:match("^bestand%s") then
+        local IV = WeintCodex.UIInventory
+        local q = msg:match("^bestand%s+(.+)$")
+        if IV then
+            if q then K.ShowReport("Bestand", IV.SearchReport(q))
+            else K.ShowReport("Bestand", IV.StatusLines()) end
+        end
+        return
+    end
     if msg == "selten" or msg == "rares" or msg == "rare" then
         local RA = WeintCodex.UIRares
         if RA and RA.Report then K.ShowReport("Seltene Gegner", RA.Report()) end

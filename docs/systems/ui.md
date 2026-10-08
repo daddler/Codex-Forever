@@ -1616,6 +1616,17 @@ beide ab Werk aus.
   Text startet nach 0,4 s. Newsreader für Name und Text (17 pt).
 - Nicht gebaut: Vorlesen.
 
+### Bestand aller Charaktere (`ui/inventory.lua`, 6.24.0.0)
+
+- `SavedData.inventory.chars["Realm|Name"]` = `{ name, realm, class, faction,
+  bags, worn, bank, at, bankAt }`, je `[itemID] = Anzahl`; `names[itemID]`
+  aus dem Link. Taschen bei `BAG_UPDATE_DELAYED`/Einloggen, Ausrüstung bei
+  `PLAYER_EQUIPMENT_CHANGED`, Bank nur, solange sie offen ist.
+- Tooltip (`IV.TooltipLines`): eigener Charakter zuerst, dann nach Anzahl;
+  „Alle Charaktere“ ab zwei. Nur eigener Realm, außer `invAllRealms`.
+- `/wcui bestand [Suchwort]`. Bank, die nie offen war, ist **unbekannt**,
+  nicht 0 – sie steht dann nicht im Tooltip und im Stand als „Bank unbekannt“.
+
 ### Kräuter und Erz im Wechsel (`ui/gathertrack.lua`, 6.22.0.0)
 
 - Das Spiel lässt nur eine Suche zugleich laufen. Seite „Sammeln“ im

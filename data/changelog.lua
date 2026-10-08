@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.24.0.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFBestand aller Charaktere.|r Fährst du über einen Gegenstand, steht im Tooltip, welche deiner Charaktere ihn haben und wo – Taschen, Bank, angelegt – samt Summe. Mit /wcui bestand <Name> suchst du über alle Charaktere. Jeder Charakter wird nach dem Einloggen erfasst, seine Bank beim nächsten Besuch. Unter Komfort → Bestand auch für andere Realms.",
+            "|cff7C6CFFRaus da: mehr Töne.|r Neun statt drei Warntöne zur Auswahl, alle aus dem Spiel – von Bosswarnung bis Flüstern.",
+        },
+    },
+    {
         version = "6.23.4.0",
         date    = "08.10.2026",
         notes   = {
