@@ -1210,9 +1210,12 @@ function DL.StatusLines()
     local PF = WeintCodex.UIProfile
     if PF and PF.GetCVar then
         local parts = {}
-        for _, name in ipairs(DL.REPAIR) do
+        local names = {}
+        for _, name in ipairs(DL.REPAIR) do names[#names + 1] = name end
+        for _, name in ipairs(DL.WATCH) do names[#names + 1] = name end
+        for _, name in ipairs(names) do
             local now, def = PF.GetCVar(name), PF.GetCVarDefault and PF.GetCVarDefault(name)
-            local mark = (now and def and not PF.Same(now, def)) and " (nicht ab Werk)" or ""
+            local mark = (now and def and not PF.Same(now, def)) and (" (ab Werk " .. def .. ")") or ""
             parts[#parts + 1] = name:gsub("^test_camera", "") .. "=" .. tostring(now) .. mark
         end
         out[#out + 1] = "Kamera: " .. table.concat(parts, " · ")
@@ -1283,12 +1286,12 @@ local function Build(B)
             onClick = function() DL.RememberView() end })
     B:Row({ type = "button", label = "Kamera", text = "Kamera zurücksetzen",
             onClick = function()
-                local n = DL.RepairCamera()
+                local n = DL.RepairCamera(true)
                 Say(n == nil and "Erst das Gespräch schließen." or
-                    ("Kamera zurückgesetzt – " .. n .. " Testeinstellungen wieder ab Werk."))
+                    ("Kamera zurückgesetzt – " .. n .. " Einstellungen wieder ab Werk."))
             end },
           { type = "empty" })
-    B:Note("Folgt die Kamera beim Laufen nicht mehr wie eingestellt, setzt „Kamera zurücksetzen“ die Testeinstellungen der Kamera auf den Wert ab Werk.")
+    B:Note("Folgt die Kamera beim Laufen nicht mehr wie eingestellt, setzt „Kamera zurücksetzen“ die Kamera-Einstellungen, die das Folgen steuern, auf den Wert ab Werk – auch „Charakter zentriert halten“ und den Kamera-Verfolgungsstil.")
 end
 
 local mod = K.Module(KEY)
@@ -1318,17 +1321,27 @@ DL.REPAIR = { "test_cameraOverShoulder", "test_cameraTargetFocusInteractEnable",
               "test_cameraTargetFocusInteractStrengthYaw", "test_cameraTargetFocusInteractStrengthPitch",
               "cameraZoomSpeed" }
 DL.REPAIR_VERSION = 1
+-- 6.26.2.0 (gemessen: alle aus DL.REPAIR ab Werk, die Kamera folgt trotzdem
+-- nicht): was das Folgen beim Laufen steuert, steht im Bericht samt Wert ab
+-- Werk. Der Knopf "Kamera zurücksetzen" (Wunsch des Spielers, kein
+-- Automatismus) setzt auch diese zurueck - auch die Ansicht, die
+-- SetView beim gemerkten Blick gewechselt hat (cameraView).
+DL.WATCH = { "cameraView", "cameraSmoothStyle", "cameraSmoothTrackingStyle",
+             "CameraKeepCharacterCentered", "CameraReduceUnexpectedMovement",
+             "test_cameraDynamicPitch", "test_cameraHeadMovementStrength" }
 DL.repaired = nil
-function DL.RepairCamera()
+function DL.RepairCamera(all)
     if win and win:IsShown() then return nil end
     local PF = WeintCodex.UIProfile
     if not (PF and PF.GetCVarDefault and PF.RawSet) then return nil end
     local n = 0
-    for _, name in ipairs(DL.REPAIR) do
+    local function One(name)
         local def, now = PF.GetCVarDefault(name), PF.GetCVar(name)
         if def and now and not PF.Same(def, now) and PF.RawSet(name, def) then n = n + 1 end
         if PF.ForgetCVar then PF.ForgetCVar(name) end
     end
+    for _, name in ipairs(DL.REPAIR) do One(name) end
+    if all then for _, name in ipairs(DL.WATCH) do One(name) end end
     DL.cam.shoulder, DL.cam.focus, DL.cam.speed = false, false, false
     DL.repaired = n
     return n

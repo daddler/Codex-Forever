@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.2.0",
+        date    = "09.10.2026",
+        notes   = {
+            "|cff7C6CFFGold-Tooltip erscheint.|r Die unsichtbare Eingabezeile des Chats lag über der Zeile darunter und fing die Maus ab – jetzt zeigt das Gold Einnahmen, Ausgaben und alle Charaktere.",
+            "|cff7C6CFFKamera zurücksetzen, gründlicher.|r Der Knopf unter Komfort → Gespräche setzt jetzt auch Ansicht, Verfolgungsstil und „Charakter zentriert halten“ auf den Wert ab Werk.",
+        },
+    },
+    {
         version = "6.26.1.0",
         date    = "08.10.2026",
         notes   = {

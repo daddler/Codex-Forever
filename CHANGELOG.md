@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.2.0] – 2026-10-09
+
+### Behoben
+
+- Gold-Tooltip erschien nicht (Beta-Test: „mit der Maus drüber passiert gar nichts“): `ChatFrame1EditBox` liegt an derselben Stelle wie die Infozeile, mit Deckkraft 0, und fing die Maus ab. `CH.UpdateEditState` schaltet ihre Maus ab, solange die Infozeile zu sehen ist, und beim Schreiben wieder an.
+
+### Geändert
+
+- Kamera, gemessen 6.26.1.0: alle Werte aus `DL.REPAIR` ab Werk, die Kamera folgt trotzdem nicht. Der Bericht nennt jetzt zusätzlich `DL.WATCH` (`cameraView`, `cameraSmoothStyle`, `cameraSmoothTrackingStyle`, `CameraKeepCharacterCentered`, `CameraReduceUnexpectedMovement`, `test_cameraDynamicPitch`, `test_cameraHeadMovementStrength`) mit Wert ab Werk; „Kamera zurücksetzen“ setzt auf Klick auch diese zurück (`DL.RepairCamera(true)`), die Automatik nicht. Ursache weiter ungeklärt.
+
 ## [6.26.1.0] – 2026-10-08
 
 ### Behoben

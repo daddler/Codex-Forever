@@ -752,6 +752,14 @@ function CH.UpdateEditState()
             covered = K.Bool(eb:IsShown(), false)
         end
         info:SetAlpha(covered and 0 or 1)
+        -- 6.26.2.0 (Beta-Test: "mit der Maus ueber das Gold passiert gar
+        -- nichts"): die Eingabezeile liegt an derselben Stelle, unsichtbar
+        -- (Deckkraft 0), und fing die Maus ab - kein Tooltip, kein Klick.
+        -- Solange die Infozeile zu sehen ist, nimmt die Zeile keine Maus.
+        if type(eb) == "table" and eb.EnableMouse then
+            pcall(eb.EnableMouse, eb, covered and true or false)
+            CH.editMouse = covered and true or false
+        end
     end
 end
 

@@ -1229,7 +1229,14 @@ do
         cv.test_cameraOverShoulder = "-1.000000"
         DL.Boot()
         assert(cv.test_cameraOverShoulder == "-1.000000", "Reparatur laeuft bei jedem Einloggen")
-        assert(table.concat(DL.StatusLines(), "\n"):find("nicht ab Werk", 1, true), "Bericht ohne Kamera")
+        assert(table.concat(DL.StatusLines(), "\n"):find("(ab Werk", 1, true), "Bericht ohne Kamera")
+        -- 6.26.2.0: Knopf setzt auch, was das Folgen steuert - automatisch nicht.
+        cv.cameraView, def.cameraView = "4", "2"
+        cv.CameraKeepCharacterCentered, def.CameraKeepCharacterCentered = "1", "0"
+        DL.RepairCamera()
+        assert(cv.cameraView == "4" and cv.CameraKeepCharacterCentered == "1", "Automatik fasst Einstellungen des Spielers an")
+        DL.RepairCamera(true)
+        assert(tonumber(cv.cameraView) == 2 and tonumber(cv.CameraKeepCharacterCentered) == 0, "Knopf setzt das Folgen nicht zurueck")
     end)
     G.C_CVar = savedCV
     K.Set("comfort", "dlgCamRepair", 0)
@@ -13342,6 +13349,30 @@ do
         assert(CH.FreeSlots() == nil, "geheime Zahl als Taschenplaetze gezaehlt")
         _G.issecretvalue = oldSecret
         _G.GetMoney, _G.C_Container = oldMoney, oldFree
+        -- 6.26.2.0: die unsichtbare Eingabezeile faengt keine Maus ab.
+        local eb = _G.ChatFrame1EditBox
+        local mouse
+        local oldEM, oldHF = eb.EnableMouse, eb.HasFocus
+        eb.EnableMouse = function(_, v) mouse = v end
+        local focus = false
+        eb.HasFocus = function() return focus end
+        CH.UpdateEditState()
+        assert(mouse == false, "unsichtbare Eingabezeile faengt die Maus")
+        focus = true
+        CH.UpdateEditState()
+        assert(mouse == true, "beim Schreiben keine Maus in der Zeile")
+        focus = false
+        CH.UpdateEditState()
+        eb.EnableMouse, eb.HasFocus = oldEM, oldHF
+        -- Gold: der Tooltip ist eine Funktion und schreibt.
+        local lines = 0
+        local tt = _G.GameTooltip
+        local oA, oD, oS = tt.AddLine, tt.AddDoubleLine, tt.SetText
+        tt.AddLine = function() lines = lines + 1 end
+        tt.AddDoubleLine = function() lines = lines + 1 end
+        info.money:GetScript("OnEnter")(info.money)
+        tt.AddLine, tt.AddDoubleLine, tt.SetText = oA, oD, oS
+        assert(lines >= 4, "Gold-Tooltip leer: " .. lines)
     end)
     Check(ok, "Chat: Infozeile (Gold, Taschen, Unbekanntes bleibt unbekannt)" .. (ok and "" or (": " .. tostring(err))))
 
