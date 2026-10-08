@@ -85,6 +85,7 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 - [ ] Kopf im Balken (6.20.0.0, Einheitenrahmen → Spieler/Ziel → Porträt „Im Balken (animiert)“): Kopf sichtbar und bewegt, mittig, nicht abgeschnitten oder riesig; Name und Werte gut lesbar; Deckkraft-Regler wirkt; Ziel außer Sichtweite – kein Kopf, kein schwarzer Balken; zurück auf „3D-Modell“ – Porträt wieder links
 - [ ] Kopf im Balken weiter weg (6.21.0.0): ab Werk mehr vom Kopf zu sehen; Regler „Kopf im Balken: Abstand“ (Feinheiten) wirkt sofort
 - [ ] Geistheiler und Übergänge (6.21.0.0, Komfort → Karte beide an): Eschental – sieben grüne Punkte, Pfeile zu Steinkrallengebirge, Teufelswald, Azshara, Brachland; zeigen sie in die richtige Richtung?; Maus auf Pfeil: „Nach <Gebiet>“ auf Deutsch; Kontinentkarte nur mit Reisen (Schiffe, Zeppeline), ohne Geistheiler, Pfeile, Flugmeister (6.21.2.0); `/wcui prüfen` → „Karte“
+- [ ] Geistheiler mitten in Eschental (Astranaar) sichtbar, nicht nur am Rand (6.22.0.2); `/wcui prüfen` → „Ebenen: … Symbole“ größer als „erkundete Gebiete“
 - [ ] Kräuter/Erz im Wechsel (6.22.0.0, Komfort → Sammeln an): mit Kräuterkunde und Bergbau wechselt das Häkchen im Suchmenü alle 2 s; im Kampf nicht; `/wcui prüfen` → „Sammeln“: gewechselt > 0, gesperrt 0
 - [ ] Feuer (6.21.1.0, Komfort → Feuer an): in eine Fläche stellen (Feuer, Gift) – Ton, nicht öfter als einmal je Sekunde; „Ton abspielen“ spielt; `/wcui prüfen` → „Feuer“: offen oder geheim?
 - [ ] Eigene Farbe (6.21.1.0): „Eigene Farbe“ wählen, Farbe setzen, neu laden – Oberfläche in der Farbe

@@ -5874,6 +5874,24 @@ do
             and not p.crossing[2]:IsShown(), "Hof oder Rand fehlt")
         -- Unter den Eingaengen.
         assert(p:GetFrameLevel() < (canvas:GetFrameLevel() or 0) + 1500, "Geistheiler ueber den Eingaengen")
+        -- 6.22.0.2: die erkundeten Gebiete liegen hoeher als Flaeche + 1500 -
+        -- dann ueber ihnen (Beta-Test: Geistheiler mitten in der Zone unsichtbar).
+        local MEm = WeintCodex.UIMapEntrances
+        local high = (canvas:GetFrameLevel() or 0) + 3000
+        local explorePin = CreateFrame("Frame")
+        explorePin:SetFrameLevel(high)
+        wm.EnumeratePinsByTemplate = function(_, tpl)
+            local done = tpl ~= "MapExplorationPinTemplate"
+            return function() if not done then done = true return explorePin end end
+        end
+        MEm.level.base = nil
+        MK.Place()
+        assert(p:GetFrameLevel() > high and MEm.level.explore == high, "Geistheiler unter den erkundeten Gebieten: "
+            .. tostring(p:GetFrameLevel()) .. " / " .. high)
+        assert(MEm.BaseLevel(canvas) + 10 > p:GetFrameLevel(), "Eingaenge nicht mehr ueber den Geistheilern")
+        wm.EnumeratePinsByTemplate = nil
+        MEm.level.base = nil
+        MK.Place()
 
         -- Uebergaenge dazu: sieben, drei davon nach Dunkelkueste - die kennt
         -- der Client nicht beim Namen, also keiner davon.

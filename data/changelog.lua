@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.22.0.2",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFGeistheiler und Pfeile wieder überall sichtbar.|r Mitten in einem Gebiet lagen sie unter den Bildern der erkundeten Gegenden – mit der Maus fand man sie, sehen konnte man sie nicht. Jetzt liegen sie obenauf, auf jeder Karte; die Instanzeingänge auch.",
+        },
+    },
+    {
         version = "6.22.0.1",
         date    = "08.10.2026",
         notes   = {

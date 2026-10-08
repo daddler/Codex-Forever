@@ -261,6 +261,51 @@ local function HideAll(from)
     for i = from or 1, #pins do pins[i]:Hide() end
 end
 
+--------------------------------------------------
+-- Ebene ueber den erkundeten Gebieten (6.22.0.2)
+--------------------------------------------------
+-- Beta-Test 6.22.0.1: Geistheiler mitten in Eschental unsichtbar, der
+-- Tooltip kam trotzdem. Sichtbar waren nur die am Rand der Karte, wo kein
+-- Gebietsbild liegt - die Bilder der erkundeten Gebiete (Kartennadel
+-- "MapExplorationPinTemplate") liegen auf einer HOEHEREN Ebene als Flaeche
+-- + 1500. Darum: ueber der hoechsten dieser Nadeln (und ueber der eigenen
+-- Schicht von "Ganze Karte"), hoechstens einmal je Sekunde nachgesehen.
+ME.LEVEL_GAP = 20
+ME.LEVEL_MAX = 9900
+ME.level = { canvas = nil, explore = nil, base = nil }
+local levelAt, levelCanvas = -math.huge, nil
+local scanTop
+
+local function ScanExplore()
+    local wm = _G.WorldMapFrame
+    if not (type(wm) == "table" and wm.EnumeratePinsByTemplate) then return end
+    for pin in wm:EnumeratePinsByTemplate("MapExplorationPinTemplate") do
+        local l = pin.GetFrameLevel and K.Plain(pin:GetFrameLevel())
+        if type(l) == "number" and (not scanTop or l > scanTop) then scanTop = l end
+    end
+end
+
+-- Grundebene fuer eigene Symbole (Geistheiler & Co.); Eingaenge +10.
+function ME.BaseLevel(canvas)
+    local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
+    if type(now) ~= "number" then now = 0 end
+    if levelCanvas == canvas and ME.level.base and now - levelAt < 1 then return ME.level.base end
+    levelAt, levelCanvas = now, canvas
+    local cl = K.Plain(canvas.GetFrameLevel and canvas:GetFrameLevel())
+    cl = type(cl) == "number" and cl or 0
+    scanTop = nil
+    pcall(ScanExplore)
+    local top = scanTop
+    local MR = WeintCodex.UIMapReveal
+    local ml = MR and MR.layer and K.Plain(MR.layer:GetFrameLevel())
+    if type(ml) == "number" and (not top or ml > top) then top = ml end
+    local base = cl + 1490
+    if top and top + ME.LEVEL_GAP > base then base = top + ME.LEVEL_GAP end
+    base = math.min(ME.LEVEL_MAX, base)
+    ME.level.canvas, ME.level.explore, ME.level.base = cl, top, base
+    return base
+end
+
 -- Symbole stellen: auf die Karte, die gerade offen ist.
 function ME.Place()
     local qm = QM()
@@ -285,8 +330,7 @@ function ME.Place()
     local cs = K.Plain(canvas.GetEffectiveScale and canvas:GetEffectiveScale())
     local ms = K.Plain(wm.GetEffectiveScale and wm:GetEffectiveScale())
     if type(cs) == "number" and type(ms) == "number" and cs > 0 and ms > 0 then s = cs / ms end
-    local lvl = K.Plain(canvas.GetFrameLevel and canvas:GetFrameLevel())
-    lvl = math.min(8000, (type(lvl) == "number" and lvl or 0) + 1500)
+    local lvl = ME.BaseLevel(canvas) + 10
     for i, e in ipairs(list) do
         local p = pins[i]
         if not p then
@@ -364,6 +408,11 @@ function ME.StatusLines()
     out[#out + 1] = "Kontinent (GetMapRectOnMap): " .. ((cm and type(cm.GetMapRectOnMap) == "function") and "ja" or "nein")
         .. " · Eingänge des Spiels (GetDungeonEntrancesForMap): "
         .. ((ej and type(ej.GetDungeonEntrancesForMap) == "function") and "ja" or "nein")
+    local L = ME.level
+    if L.base then
+        out[#out + 1] = "Ebenen: Fläche " .. L.canvas .. " · erkundete Gebiete "
+            .. (L.explore and tostring(L.explore) or "nicht gefunden") .. " · Symbole " .. L.base
+    end
     if shownMap then
         out[#out + 1] = "Zuletzt gezeigt: " .. shownCount .. " auf Karte " .. shownMap
             .. (ME.GameShows(shownMap) and " (das Spiel zeigt hier eigene)" or "")

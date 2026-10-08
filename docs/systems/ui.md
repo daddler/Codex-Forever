@@ -1553,6 +1553,14 @@ beide ab Werk aus.
   Geistheiler, Pfeile und Flugmeister erst auf der Karte der Zone
   (Beta-Test: die große Karte war zu voll).
 
+- **Ebene (6.22.0.2):** die Bilder der erkundeten Gebiete (Nadeln
+  `MapExplorationPinTemplate`) liegen auf Forever höher als Fläche + 1500 –
+  Geistheiler mitten in der Zone waren unsichtbar, nur der Tooltip kam.
+  `ME.BaseLevel` nimmt die höchste dieser Nadeln (über
+  `WorldMapFrame:EnumeratePinsByTemplate`) und die Schicht von „Ganze Karte“,
+  + 20; Eingänge + 10 darüber; höchstens einmal je Sekunde gelesen.
+  `/wcui prüfen` → „Karte“ zeigt die Ebenen.
+
 ### Kräuter und Erz im Wechsel (`ui/gathertrack.lua`, 6.22.0.0)
 
 - Das Spiel lässt nur eine Suche zugleich laufen. Seite „Sammeln“ im
@@ -1561,7 +1569,8 @@ beide ab Werk aus.
 - Setzt über `C_Minimap.SetTracking` (Rückfall globale `SetTracking`),
   erkennt die Suchen an Zauber 2383/2580 oder deren Namen. Pause im Kampf,
   tot, beim Zaubern.
-- **Ungemessen**, ob Forever das von Addons zulässt: `ADDON_ACTION_BLOCKED`/
+- **Gemessen 6.22.0.1** (Build 70245): Forever lässt es zu – 20 Wechsel,
+  gesperrt 0. Die Wache bleibt für spätere Clients: `ADDON_ACTION_BLOCKED`/
   `FORBIDDEN` binnen 0,5 s oder dreimal ohne Wirkung → aus, mit Meldung;
   `/wcui prüfen` → „Sammeln“.
 - Nicht möglich: eigene Symbole für Kraut/Erz – die Punkte der Minikarte

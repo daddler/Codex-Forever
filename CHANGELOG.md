@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.22.0.2] – 2026-10-08
+
+**Geistheiler und Pfeile wieder überall sichtbar.** Mitten in einem Gebiet lagen sie unter den Bildern der erkundeten Gegenden – mit der Maus fand man sie, sehen konnte man sie nicht. Jetzt liegen sie obenauf, auf jeder Karte; die Instanzeingänge auch.
+
+### Technisch
+
+- Beta-Test 6.22.0.1 (Eschental): von sieben Geistheilern nur die zwei am Kartenrand sichtbar, die übrigen nur per Tooltip; ebenso die Pfeile im Inneren. Ort der Daten gegen das Bild gehalten: sichtbar ist nur, was außerhalb der Gebietsbilder liegt. Die erkundeten Gebiete (`MapExplorationPinTemplate`) liegen höher als Fläche + 1490/1500. Neu `ME.BaseLevel` (`ui/mapentrances.lua`): höchste Nadel dieser Art über `EnumeratePinsByTemplate` und die Schicht von „Ganze Karte“, + 20, gemeinsam für `ui/mapmarks.lua` und die Eingänge (+ 10); einmal je Sekunde, ohne neue Tabellen im Takt. `/wcui prüfen` zeigt die Ebenen. Prüflauf mit Gebietsnadel auf Fläche + 3000; Gegenprobe (alte Ebene) gefangen.
+- Messung eingetragen: Suche wechseln ist auf Forever erlaubt (6.22.0.1, 20 Wechsel, gesperrt 0).
+
 ## [6.22.0.1] – 2026-10-08
 
 **Kräuter und Erz im Wechsel ohne Fehlermeldung.** Der Wechsel brach mit einer Lua-Fehlermeldung ab, sobald du nicht gerade gezaubert hast – also fast immer. Jetzt wechselt er wirklich.

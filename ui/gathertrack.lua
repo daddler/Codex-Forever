@@ -15,7 +15,9 @@
 --   * Eigene Symbole fuer Kraut und Erz: die Punkte sind ein Bild des
 --     Spiels fuer alle Suchen, Addons erfahren weder Lage noch Art.
 --
--- UNGEMESSEN: ob Forever Addons die Suche selbst wechseln laesst. Meldet
+-- GEMESSEN 6.22.0.1 (Beta, Client 1.60.1 Build 70245): Forever laesst
+-- Addons die Suche wechseln - 20 Wechsel, gesperrt 0, ohne Wirkung 0.
+-- Die Wache bleibt fuer spaetere Clients: meldet
 -- das Spiel ADDON_ACTION_BLOCKED/FORBIDDEN kurz nach einem Wechsel, oder
 -- bleibt der Wechsel dreimal ohne Wirkung, schaltet sich der Wechsel ab
 -- und sagt es; /wcui prüfen zeigt die Zaehler.

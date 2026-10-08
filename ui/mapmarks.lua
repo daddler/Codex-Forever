@@ -297,9 +297,10 @@ function MK.Place()
     local cs = K.Plain(canvas.GetEffectiveScale and canvas:GetEffectiveScale())
     local ms = K.Plain(wm.GetEffectiveScale and wm:GetEffectiveScale())
     if type(cs) == "number" and type(ms) == "number" and cs > 0 and ms > 0 then s = cs / ms end
-    -- Unter den Eingaengen (ui/mapentrances.lua: Flaeche + 1500).
-    local lvl = K.Plain(canvas.GetFrameLevel and canvas:GetFrameLevel())
-    lvl = math.min(7990, (type(lvl) == "number" and lvl or 0) + 1490)
+    -- Ueber den erkundeten Gebieten, unter den Eingaengen (6.22.0.2,
+    -- ui/mapentrances.lua ME.BaseLevel).
+    local ME = WeintCodex.UIMapEntrances
+    local lvl = ME.BaseLevel(canvas)
     for i, e in ipairs(list) do
         local p = pins[i]
         if not p then
