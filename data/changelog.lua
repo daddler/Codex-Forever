@@ -25,7 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.23.1.0",
         date    = "08.10.2026",
         notes   = {
-            "|cff7C6CFFGespräche: die Kamera kommt näher.|r Sprichst du einen NPC an, fährt die Kamera heran – nach dem Gespräch zurück auf deinen Abstand. Wechselst du nur vom Gespräch in den Questtext, bleibt sie nah; hast du selbst weiter herausgezoomt, bleibt es so. Abstand unter Komfort → Gespräche.",
+            "|cff7C6CFFGespräche: die Kamera kommt näher.|r Sprichst du einen NPC an, fährt die Kamera heran und rückt ihn neben das Gesprächsfenster – nach dem Gespräch zurück auf deinen Abstand. Wechselst du nur vom Gespräch in den Questtext, bleibt sie nah; hast du selbst weiter herausgezoomt, bleibt es so. Abstand unter Komfort → Gespräche.",
         },
     },
     {

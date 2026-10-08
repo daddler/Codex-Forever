@@ -11,11 +11,11 @@ nicht zusammen.
 
 ## [6.23.1.0] – 2026-10-08
 
-**Gespräche: die Kamera kommt näher.** Sprichst du einen NPC an, fährt die Kamera heran – nach dem Gespräch zurück auf deinen Abstand. Wechselst du nur vom Gespräch in den Questtext, bleibt sie nah; hast du selbst weiter herausgezoomt, bleibt es so. Abstand unter Komfort → Gespräche.
+**Gespräche: die Kamera kommt näher.** Sprichst du einen NPC an, fährt die Kamera heran und rückt ihn neben das Gesprächsfenster – nach dem Gespräch zurück auf deinen Abstand. Wechselst du nur vom Gespräch in den Questtext, bleibt sie nah; hast du selbst weiter herausgezoomt, bleibt es so. Abstand unter Komfort → Gespräche.
 
 ### Technisch
 
-- Beta-Test 6.23.0.0: „reinzoomen der Kamera und automatisch rauszoomen“. `ui/dialogue.lua`: `DL.CamIn` beim ersten Fenster (`GetCameraZoom`, `CameraZoomIn` auf `dlgCamDist`, ab Werk 4 m, 2–10), `DL.CamOut` erst `DL.CAM_WAIT` (0,3 s) nach dem Schließen und nur ohne neues Fenster (Zustandswechsel schließen kurz); zurück nur, wenn der Spieler nicht selbst weiter herausgezoomt hat. Keine Schulterkamera (Testeinstellungen des Spiels mit Warnung). Prüflauf mit drei Gegenproben (Wechsel, eigener Abstand, schon nah) gefangen; ungemessen im Spiel.
+- Beta-Test 6.23.0.0: „reinzoomen der Kamera und automatisch rauszoomen“. `ui/dialogue.lua`: `DL.CamIn` beim ersten Fenster (`GetCameraZoom`, `CameraZoomIn` auf `dlgCamDist`, ab Werk 4 m, 2–10), `DL.CamOut` erst `DL.CAM_WAIT` (0,3 s) nach dem Schließen und nur ohne neues Fenster (Zustandswechsel schließen kurz); zurück nur, wenn der Spieler nicht selbst weiter herausgezoomt hat. Auf Wunsch des Spielers auch die Schulterkamera (`dlgShoulder`, ab Werk an): `test_cameraOverShoulder` = 1,5 über `PF.SetCVar` (Wert von vorher gemerkt), zurück über `PF.Release`, auch beim Einloggen nach einem Absturz. Die Warnung des Spiels zu Testeinstellungen (`EXPERIMENTAL_CVAR_WARNING` an `UIParent`) wird nur für diesen Aufruf abgemeldet, 0,5 s später wieder angemeldet und ein offenes Fenster geschlossen; die Seite sagt, dass es eine Testeinstellung ist. Prüflauf mit sechs Gegenproben (Wechsel, eigener Abstand, schon nah, Warnung zurück, Warnung still, Schulter zurück) gefangen; ungemessen im Spiel.
 
 ## [6.23.0.0] – 2026-10-08
 

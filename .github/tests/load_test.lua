@@ -1112,7 +1112,7 @@ do
     local names = { "C_GossipInfo", "GossipFrame", "QuestFrame", "UnitName", "GetTitleText", "GetQuestText",
         "GetObjectiveText", "GetNumQuestRewards", "GetNumQuestChoices", "GetQuestItemInfo", "AcceptQuest",
         "DeclineQuest", "GetRewardText", "GetQuestReward", "GetRewardMoney", "GetRewardXP", "CloseQuest",
-        "InCombatLockdown", "GetCameraZoom", "CameraZoomIn", "CameraZoomOut", "C_Timer" }
+        "InCombatLockdown", "GetCameraZoom", "CameraZoomIn", "CameraZoomOut", "C_Timer", "C_CVar", "StaticPopup_Hide" }
     local saved = {}
     for i, n in ipairs(names) do saved[i] = G[n] end
     local DL = WeintCodex.UIDialogue
@@ -1146,6 +1146,16 @@ do
         G.CameraZoomIn = function(d) zoom = zoom - d end
         G.CameraZoomOut = function(d) zoom = zoom + d end
         G.C_Timer = { After = function(_, fn) later = fn end }
+        -- Schulter: Testeinstellung, Warnung des Spiels abgemeldet und zurueck.
+        local cvars, popupHidden = { test_cameraOverShoulder = "0" }, 0
+        G.C_CVar = { GetCVar = function(n) return cvars[n] end, SetCVar = function(n, v) cvars[n] = v return true end }
+        G.StaticPopup_Hide = function(which) if which == "EXPERIMENTAL_CVAR_WARNING" then popupHidden = popupHidden + 1 end end
+        local up = UIParent
+        local upReg, upUnreg, upIs = up.RegisterEvent, up.UnregisterEvent, up.IsEventRegistered
+        local warn = true
+        up.RegisterEvent = function(self, e) if e == "EXPERIMENTAL_CVAR_WARNING" then warn = true end end
+        up.UnregisterEvent = function(self, e) if e == "EXPERIMENTAL_CVAR_WARNING" then warn = false end end
+        up.IsEventRegistered = function(self, e) return e == "EXPERIMENTAL_CVAR_WARNING" and warn end
         -- Wie im Spiel: Hide loest OnHide aus (die Attrappe tut es nicht).
         local function Shut()
             later = nil
@@ -1161,6 +1171,9 @@ do
         stub.FireEvent("GOSSIP_SHOW")
         assert(DL.win and DL.win:IsShown() and DL.state == "gossip", "Gespraech nicht gezeigt")
         assert(zoom == 4 and DL.cam.saved == 15, "Kamera nicht heran: " .. zoom)
+        assert(cvars.test_cameraOverShoulder == "1.5" and not warn, "Schulter nicht gesetzt oder Warnung nicht still")
+        later()
+        assert(warn and popupHidden >= 1, "Warnung danach nicht wieder angemeldet")
         -- Wechsel Gespraech -> Questtext: kurz zu, gleich wieder offen - bleibt nah.
         Shut()
         stub.FireEvent("GOSSIP_SHOW")
@@ -1170,6 +1183,7 @@ do
         Shut()
         later()
         assert(zoom == 15 and DL.cam.saved == nil, "Kamera nicht zurueck: " .. zoom)
+        assert(cvars.test_cameraOverShoulder == "0", "Schulter nicht zurueck")
         -- Selbst weiter herausgezoomt: bleibt so.
         stub.FireEvent("GOSSIP_SHOW")
         zoom = 25
@@ -1187,6 +1201,7 @@ do
         assert(zoom == 15, "Kamera bewegt, obwohl aus")
         K.Set("comfort", "dlgCam", true)
         Shut()
+        up.RegisterEvent, up.UnregisterEvent, up.IsEventRegistered = upReg, upUnreg, upIs
         stub.FireEvent("GOSSIP_SHOW")
         -- Reihenfolge: abgeschlossen, angeboten, Optionen nach orderIndex.
         assert(#DL.list == 4 and DL.list[1].kind == "active" and DL.list[1].mark == "?"
@@ -1251,7 +1266,7 @@ do
     K.Set("comfort", "dlgCam", true)
     DL.cam.saved = nil
     DL.stats.failed, DL.lastError = 0, nil
-    Check(ok, "Gespraeche: Fenster des Spiels abgemeldet und zurueck, Optionen/Quests, Tasten, Annehmen, Belohnung waehlen, Scheitern, Kamera heran und zurueck"
+    Check(ok, "Gespraeche: Fenster des Spiels abgemeldet und zurueck, Optionen/Quests, Tasten, Annehmen, Belohnung waehlen, Scheitern, Kamera heran und zurueck, Schulter still"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

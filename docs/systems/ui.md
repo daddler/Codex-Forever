@@ -1582,8 +1582,12 @@ beide ab Werk aus.
 - Kamera (6.23.1.0, `dlgCam`, `dlgCamDist` 2–10 m, ab Werk 4): heran beim
   ersten Fenster (`CameraZoomIn`), zurück 0,3 s nach dem letzten – ein
   Zustandswechsel schließt kurz und darf nicht herauszoomen; zurück nur, wenn
-  der Spieler nicht selbst weiter heraus ist. Keine Schulterkamera
-  (`test_cameraOverShoulder` zeigt die Warnung zu Testfunktionen).
+  der Spieler nicht selbst weiter heraus ist. Schulter (`dlgShoulder`, an):
+  `test_cameraOverShoulder` = 1,5 über `PF.SetCVar`/`PF.Release` (auch beim
+  Einloggen, falls ein Absturz sie stehen ließ). Die Warnung zu
+  Testeinstellungen (`EXPERIMENTAL_CVAR_WARNING` an `UIParent`) wird nur für
+  diesen Aufruf abgemeldet und nach 0,5 s wieder angemeldet – andere Addons
+  bekommen sie weiter; die Seite nennt die Testeinstellung.
 - Nicht gebaut: Oberfläche ausblenden, Vorlesen.
 
 ### Kräuter und Erz im Wechsel (`ui/gathertrack.lua`, 6.22.0.0)
