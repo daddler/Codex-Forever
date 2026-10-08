@@ -195,8 +195,10 @@ GT.ticker = ticker
 
 local ev = CreateFrame("Frame")
 ev:SetScript("OnEvent", function(_, event, addon)
-    if event == "ADDON_ACTION_BLOCKED" or event == "ADDON_ACTION_FORBIDDEN" then GT.OnBlocked(addon) end
+    if event == "ADDON_ACTION_BLOCKED" or event == "ADDON_ACTION_FORBIDDEN" then GT.OnBlocked(addon)
+    elseif event == "PLAYER_LOGIN" then GT.HookMenu() end
 end)
+pcall(ev.RegisterEvent, ev, "PLAYER_LOGIN")
 
 local function Apply()
     if GT.Active() then
@@ -213,6 +215,39 @@ end
 GT.Apply = Apply
 
 --------------------------------------------------
+-- Eintrag im Aufspuermenue des Spiels
+--------------------------------------------------
+-- 6.25.0.0 (Beta-Test: "schneller zugaenglich ... in Aufspuermodus einen
+-- Extrapunkt mit dem Hinweis, dass es von WeintCodex kommt"). Das Menue an
+-- der Minikarte ist ein Menue des Spiels (Menu, Kennung
+-- MENU_MINIMAP_TRACKING); Menu.ModifyMenu haengt unten eine Ueberschrift
+-- "WeintCodex" und einen Haken an - es aendert nichts an den Eintraegen
+-- des Spiels. Gibt es Menu.ModifyMenu nicht, bleibt nur die Seite.
+GT.MENU_TAG = "MENU_MINIMAP_TRACKING"
+GT.menu = { hooked = false, built = 0 }
+
+function GT.FillMenu(root)
+    if type(root) ~= "table" or not root.CreateCheckbox then return false end
+    GT.menu.built = GT.menu.built + 1
+    if root.CreateDivider then root:CreateDivider() end
+    if root.CreateTitle then root:CreateTitle("WeintCodex") end
+    root:CreateCheckbox("Kräuter + Erz im Wechsel",
+        function() return K.Get(KEY, "gatherSwap") and true or false end,
+        function() K.Set(KEY, "gatherSwap", not K.Get(KEY, "gatherSwap")) end)
+    return true
+end
+
+function GT.HookMenu()
+    local M = _G.Menu
+    if GT.menu.hooked or type(M) ~= "table" or type(M.ModifyMenu) ~= "function" then return GT.menu.hooked end
+    local ok = pcall(M.ModifyMenu, GT.MENU_TAG, function(_, root)
+        if K.IsActive(KEY) and GT.API() then GT.FillMenu(root) end
+    end)
+    GT.menu.hooked = ok and true or false
+    return GT.menu.hooked
+end
+
+--------------------------------------------------
 -- Bericht und Seite
 --------------------------------------------------
 
@@ -227,14 +262,16 @@ function GT.StatusLines()
     out[#out + 1] = string.format("Gewechselt %d · pausiert %d · ohne Wirkung %d · gesperrt %d",
         stats.swaps, stats.paused, stats.noEffect, stats.blocked)
     if GT.stopped then out[#out + 1] = "Abgeschaltet: " .. GT.stopped end
+    out[#out + 1] = "Eintrag im Aufspürmenü: " .. (GT.menu.hooked and "angehängt" or "nicht möglich")
+        .. " · gezeigt " .. GT.menu.built .. "×"
     return out
 end
 
 local function Build(B)
     local off = function() return not K.Get(KEY, "gatherSwap") end
-    B:Section("Kräuter und Erz", "Das Spiel lässt nur eine Suche zugleich laufen. WeintCodex wechselt außerhalb des Kampfes zwischen Kräuter- und Mineraliensuche – auf der Minikarte steht jede Art jeden zweiten Takt.")
+    B:Section("Kräuter und Erz", "Das Spiel lässt nur eine Suche zugleich laufen. WeintCodex wechselt zwischen Kräuter- und Mineraliensuche – auf der Minikarte steht jede Art jeden zweiten Takt. Im Kampf wechselt nichts: dort bleibt die Suche, die gerade an ist. Schneller an und aus: unten im Aufspürmenü an der Minikarte, Eintrag „WeintCodex“.")
     B:Row({ type = "toggle", label = "Kräuter- und Mineraliensuche wechseln", key = "gatherSwap",
-            description = "Pause im Kampf und beim Zaubern." },
+            description = "Im Kampf, tot und beim Zaubern kein Wechsel." },
           { type = "slider", label = "Wechsel alle", key = "gatherEvery", min = GT.MIN, max = 100, step = 5,
             format = function(v) return string.format("%.1f s", v / 10) end, disabled = off })
     B:Note("Jeder Wechsel ist ein Zauber mit globaler Abklingzeit – darum nicht schneller als 1,5 s. Die Punkte bleiben gelb: welcher Punkt Kraut und welcher Erz ist, verrät das Spiel Addons nicht.")
@@ -251,3 +288,5 @@ end
 K.Listen(function(kind, key)
     if (kind == "active" or kind == "setting") and key == KEY then Apply() end
 end)
+
+GT.HookMenu()

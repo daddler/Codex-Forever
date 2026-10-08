@@ -1317,8 +1317,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         return
     end
     if msg == "taschen" or msg == "bags" then
-        local BW = WeintCodex.UIBagsWindow
-        if BW then BW.Toggle() end
+        -- 6.25.0.0: eine Seite im Codex, kein eigenes Fenster mehr.
+        if WeintCodex.MainFrame and WeintCodex.Navigation then
+            WeintCodex.MainFrame:Show()
+            WeintCodex.Navigation.GoToTab("taschen")
+        end
         return
     end
     if msg == "bestand" or msg:match("^bestand%s") then

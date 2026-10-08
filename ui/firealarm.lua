@@ -31,14 +31,23 @@ local FA = WeintCodex.UIFireAlarm
 
 FA.DEFAULTS = {
     fireAlarm = false,
-    fireSound = "raid",
+    fireSound = "hoch",
 }
 FA.TICK = 0.2        -- so oft im Kampf gefragt (s)
 FA.GAP = 1.0         -- hoechstens ein Ton je Sekunde
 -- Toene des Spiels (SOUNDKIT), Zahl als Rueckfall.
 -- 6.24.0.0 (Beta-Test: "mehr Sounds"): alles Toene des Spiels, keine
 -- eigenen Dateien. Kennt der Client einen Namen nicht, gilt die Zahl.
+-- 6.25.0.0 (Beta-Test: "praegnantere Toene, so wie GTFO"): fuenf eigene,
+-- gerechnete Alarme (media/sounds, .github/scripts/make_sounds.py) - keine
+-- Dateien aus GTFO. Sie stehen vorn; "hoch" ist der neue Standard.
+FA.SOUND_PATH = "Interface\\AddOns\\WeintCodex\\media\\sounds\\"
 FA.SOUNDS = {
+    hoch     = { file = "hoch.ogg", text = "Alarm hoch (zweifach)" },
+    tief     = { file = "tief.ogg", text = "Alarm tief (Brummen)" },
+    dreifach = { file = "dreifach.ogg", text = "Alarm dreifach" },
+    hupe     = { file = "hupe.ogg", text = "Hupe" },
+    sirene   = { file = "sirene.ogg", text = "Sirene" },
     raid    = { kit = "RAID_WARNING", id = 8959, text = "Schlachtzugswarnung" },
     ready   = { kit = "READY_CHECK", id = 8960, text = "Bereitschaftscheck" },
     alarm   = { kit = "ALARM_CLOCK_WARNING_3", id = 12889, text = "Wecker" },
@@ -49,7 +58,7 @@ FA.SOUNDS = {
     queue   = { kit = "PVP_THROUGH_QUEUE", id = 8459, text = "Warteschlange" },
     toast   = { kit = "UI_BNET_TOAST", id = 18019, text = "Battle.net-Hinweis" },
 }
-FA.ORDER = { "raid", "boss", "ready", "alarm", "alarm2", "whisper", "invite", "queue", "toast" }
+FA.ORDER = { "hoch", "tief", "dreifach", "hupe", "sirene", "raid", "boss", "ready", "alarm", "alarm2", "whisper", "invite", "queue", "toast" }
 
 local stats = { checks = 0, plain = 0, secret = 0, none = 0, alarms = 0 }
 FA.stats = stats
@@ -64,7 +73,11 @@ local function Now()
 end
 
 function FA.Play()
-    local s = FA.SOUNDS[K.Get(KEY, "fireSound")] or FA.SOUNDS.raid
+    local s = FA.SOUNDS[K.Get(KEY, "fireSound")] or FA.SOUNDS.hoch
+    if s.file then
+        if _G.PlaySoundFile then pcall(_G.PlaySoundFile, FA.SOUND_PATH .. s.file, "Master") end
+        return
+    end
     local kit = _G.SOUNDKIT and _G.SOUNDKIT[s.kit] or s.id
     if _G.PlaySound then pcall(_G.PlaySound, kit, "Master") end
 end

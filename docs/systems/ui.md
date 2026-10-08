@@ -525,6 +525,8 @@ Seit 6.2.0.0:
   und je Objekt angelegte und gezeigte Symbole mit Rahmengröße.
 * `/wcui chat`: Chatfenster, eigene Fläche, Reiter, Knöpfe, Eingabe- und
   Infozeile in je einer Zeile (`K.Describe`).
+* Sammelknopf schließt seit 6.25.0.0 nach dem Klick auf ein Addon
+  (`addonBagClose`, ab Werk an; `MM.HookClose` hängt ein `OnClick` an).
 * `/wcui addons` (seit 6.5.0.0): was der Sammelknopf der Minikarte
   gefunden hat, im Addon ausgeblendete Knöpfe, übrige benannte Rahmen an
   der Karte und die Einträge im Addon-Menü des Spiels. Der Sammelknopf
@@ -1624,12 +1626,23 @@ beide ab Werk aus.
   `PLAYER_EQUIPMENT_CHANGED`, Bank nur, solange sie offen ist.
 - Tooltip (`IV.TooltipLines`): eigener Charakter zuerst, dann nach Anzahl;
   „Alle Charaktere“ ab zwei. Nur eigener Realm, außer `invAllRealms`.
-- Fenster `ui/bagswin.lua` (`/wcui taschen`): Charaktere links (`BW.ALL` =
-  alle), Suche + Filter Taschen/Bank/Angelegt, Raster mit Anzahl; nur Anzeige.
+- Seit 6.25.0.0 kein Komfort mehr: `IV.Active` = nur `invOn`, Tooltip
+  getrennt (`invTooltip`). Gezeigt auf der Codex-Seite **Taschen**
+  (`modules/bags.lua`, `WeintCodex.Bags`, Spalte Leveln): Charaktere in der
+  Unternavigation (`BG.ALL` = alle), Suche mit × und Esc zum Leeren, Filter
+  Taschen/Bank/Angelegt, Raster mit Spalten aus der Breite (`BG.Columns`),
+  Detailbereich mit Bankstand und Schaltern. Das Fenster `ui/bagswin.lua`
+  (6.24) ist weg – es lag hinter dem Codex. Nur Anzeige.
 - `/wcui bestand [Suchwort]`. Bank, die nie offen war, ist **unbekannt**,
   nicht 0 – sie steht dann nicht im Tooltip und im Stand als „Bank unbekannt“.
 
 ### Kräuter und Erz im Wechsel (`ui/gathertrack.lua`, 6.22.0.0)
+
+- Seit 6.25.0.0 ein Haken im Aufspürmenü des Spiels: `GT.HookMenu` über
+  `Menu.ModifyMenu("MENU_MINIMAP_TRACKING")`, Trennlinie, Überschrift
+  „WeintCodex“, Haken „Kräuter + Erz im Wechsel“. Ändert keine Einträge des
+  Spiels. Ungemessen, ob Forever das Menü unter dieser Kennung baut –
+  `/wcui prüfen` zählt „gezeigt n×“.
 
 - Das Spiel lässt nur eine Suche zugleich laufen. Seite „Sammeln“ im
   Komfort (`gatherSwap`, ab Werk aus; `gatherEvery` in Zehntelsekunden,
@@ -1700,6 +1713,12 @@ Sekunde (`FA.GAP`). Was vermeidbar ist, entscheidet das Spiel. Kommt die
 Summe geheim, schweigt der Ton – mit Geheimem lässt sich nicht
 vergleichen; `/wcui prüfen` → „Feuer“ zählt offen/geheim/keine Zeile.
 **Ungemessen:** genau das – offen oder geheim im Kampf auf Forever.
+
+Seit 6.25.0.0 (Wunsch: „prägnantere Töne, so wie GTFO“) fünf eigene
+Alarme als Datei (`media/sounds/*.ogg`, gerechnet von
+`.github/scripts/make_sounds.py` – keine Dateien aus GTFO), gespielt mit
+`PlaySoundFile`; `FA.SOUNDS[k].file`, Standard `hoch`. Die Töne des
+Spiels (`kit`/`id`) bleiben wählbar.
 
 ## Eigene Farbe der Oberfläche *(6.21.1.0)*
 

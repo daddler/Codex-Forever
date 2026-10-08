@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.25.0.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFTaschen als eigene Seite.|r Was deine Charaktere tragen, steht jetzt unter Leveln → Taschen direkt im Codex statt in einem Extrafenster: links deine Charaktere oder alle zusammen, oben die Suche – mit × zum Leeren, Esc leert auch – und die Filter Taschen, Bank, Angelegt, darunter alles als Symbole mit Anzahl. Rechts, ob die Bank bekannt ist, und die Schalter für Tooltip und andere Realms. Läuft immer, auch ohne Oberfläche. /wc taschen öffnet die Seite.",
+            "|cff7C6CFFRaus da: fünf neue Alarme.|r Eigene, kurze und laute Warntöne – hoch, tief, dreifach, Hupe, Sirene; „Alarm hoch“ ist der neue Standard. Die Töne des Spiels bleiben zur Auswahl.",
+            "|cff7C6CFFSammeln aus dem Aufspürmenü.|r Unten im Aufspürmenü an der Minikarte steht jetzt „WeintCodex – Kräuter + Erz im Wechsel“ zum An- und Ausschalten. Im Kampf wechselt die Suche nicht – das steht jetzt auch auf der Seite.",
+            "|cff7C6CFFAddon-Knöpfe klappen zu.|r Ein Klick auf ein Addon schließt die gesammelten Knöpfe an der Minikarte wieder. Abstellbar unter Minikarte → Bedienung.",
+        },
+    },
+    {
         version = "6.24.0.0",
         date    = "08.10.2026",
         notes   = {

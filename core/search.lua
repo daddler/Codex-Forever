@@ -44,6 +44,7 @@ local PAGES = {
     { id = "lehrer",      label = "Lehrer" },
     { id = "klassenquests", label = "Klassenquests" },
     { id = "berufe",      label = "Berufe" },
+    { id = "taschen",     label = "Taschen" },
     { id = "dungeons",    label = "Dungeons" },
     { id = "gruppe",      label = "Gruppencheck" },
     { id = "raids",       label = "Schlachtzüge" },

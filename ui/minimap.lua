@@ -57,6 +57,7 @@ local defaults = {
     hideOtherCoords = true,
     -- Alle Addon-Knoepfe hinter einem Knopf unten links (6.3.1.1).
     addonBag    = true,
+    addonBagClose = true,   -- 6.25.0.0: Liste nach dem Klick auf ein Addon zu
 }
 
 local function Opt(k) return K.Get(KEY, k) end
@@ -505,12 +506,25 @@ function MM.LayoutBag()
         if type(strata) == "string" and b.SetFrameStrata then b:SetFrameStrata(strata) end
         if type(level) == "number" and b.SetFrameLevel then b:SetFrameLevel(level + 2) end
         KeepOpaque(b)
+        MM.HookClose(b)
         b:ClearAllPoints()
         local c, r = (i - 1) % BAG_PER_ROW, math.floor((i - 1) / BAG_PER_ROW)
         b:SetPoint("TOPLEFT", flyout, "TOPLEFT", 4 + c * BAG_CELL + inset, -4 - r * BAG_CELL - inset)
     end
 end
 MM.Bag = function() return bag, flyout end
+
+-- 6.25.0.0 (Beta-Test: "Der Addon-Sammelknopf schliesst sich nicht, nachdem
+-- man ein Addon ausgewaehlt hat - zumindest einstellbar"). Ein Haken an
+-- jedem Knopf in der Liste: nach dessen eigenem Klick klappt die Liste zu.
+local closeHooked = {}
+function MM.HookClose(b)
+    if closeHooked[b] or not b.HookScript then return end
+    closeHooked[b] = true
+    b:HookScript("OnClick", function(self)
+        if flyout and self:GetParent() == flyout and Opt("addonBagClose") then flyout:Hide() end
+    end)
+end
 
 --------------------------------------------------
 -- Karte nach oben
@@ -770,7 +784,9 @@ K.Register({
                     description = "Ein Knopf unten links neben der Karte klappt alle Addon-Knöpfe auf." })
             B:Row({ type = "toggle", label = "Knöpfe in einer Spalte links", key = "buttonColumn", reload = true,
                     description = "Verfolgung, Post und Schwierigkeit neben der Karte statt auf ihrem Rand." },
-                  { type = "empty" })
+                  { type = "toggle", label = "Liste nach der Auswahl schließen", key = "addonBagClose",
+                    description = "Ein Klick auf ein Addon klappt die gesammelten Knöpfe wieder zu.",
+                    disabled = function() return not K.Get(KEY, "addonBag") end })
             B:GameEditMode("Wo die Minikarte steht, stellst du im Bearbeitungsmodus des Spiels ein.")
             -- 6.10.1.0: Randfarbe, Lage der Texte und Kleinigkeiten zugeklappt.
             B:Advanced()

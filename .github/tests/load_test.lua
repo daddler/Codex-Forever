@@ -995,6 +995,7 @@ do
         mine = 0
         assert(FA.Check() == false and #played == 0, "Ton, obwohl aus")
         K.Set("comfort", "fireAlarm", true)
+        K.Set("comfort", "fireSound", "raid")   -- Ton des Spiels; Standard ist seit 6.25 eine Datei
         FA.Reset()
         assert(FA.Check() == false, "Ton beim ersten Blick")
         mine = 0
@@ -1104,6 +1105,44 @@ do
     K.Set("comfort", "gatherEvery", 20)
     Check(ok, "Sammeln: Kraeuter/Erz im Wechsel, nicht im Kampf, nicht unter 1,5 s, aus bei Sperre oder ohne Wirkung"
         .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.25.0.0: Wechsel an/aus direkt im Aufspuermenue des Spiels.
+do
+    local G = _G
+    local GT = WeintCodex.UIGatherTrack
+    local savedMenu, savedCM = G.Menu, G.C_Minimap
+    local ok, err = pcall(function()
+        local fn, tag
+        G.Menu = { ModifyMenu = function(t, f) tag, fn = t, f end }
+        G.C_Minimap = { GetNumTrackingTypes = function() return 0 end,
+                        GetTrackingInfo = function() end, SetTracking = function() end }
+        GT.menu.hooked = false
+        assert(GT.HookMenu() and tag == "MENU_MINIMAP_TRACKING" and fn, "nicht ins Menue gehaengt")
+        local items = {}
+        local root = {
+            CreateDivider = function() items[#items + 1] = { kind = "divider" } end,
+            CreateTitle = function(_, t) items[#items + 1] = { kind = "title", text = t } end,
+            CreateCheckbox = function(_, t, get, set) items[#items + 1] = { kind = "check", text = t, get = get, set = set } end,
+        }
+        K.Set("comfort", "gatherSwap", false)
+        fn(nil, root)
+        local title, box
+        for _, it in ipairs(items) do
+            if it.kind == "title" then title = it.text end
+            if it.kind == "check" then box = it end
+        end
+        assert(title == "WeintCodex", "Herkunft nicht genannt")
+        assert(box and box.get() == false, "Haken falsch")
+        box.set()
+        assert(K.Get("comfort", "gatherSwap") == true and box.get() == true, "Haken schaltet nicht ein")
+        box.set()
+        assert(K.Get("comfort", "gatherSwap") == false, "Haken schaltet nicht aus")
+        assert(table.concat(GT.StatusLines(), "\n"):find("angehängt", 1, true), "Bericht ohne Menue")
+    end)
+    G.Menu, G.C_Minimap = savedMenu, savedCM
+    K.Set("comfort", "gatherSwap", false)
+    Check(ok, "Sammeln: Haken im Aufspuermenue mit Ueberschrift WeintCodex" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.23.0.0: Gespraeche im Codex-Stil (nach dem Verhalten von DialogueUI).
@@ -1577,31 +1616,57 @@ do
         local rep = table.concat(IV.SearchReport("leinen"), "\n")
         assert(rep:find("Leinenstoff", 1, true) and rep:find("Twink 11", 1, true), "Suche: " .. rep)
         assert(table.concat(IV.SearchReport("gibtsnicht"), "\n"):find("Keiner", 1, true), "leere Suche")
-        -- Fenster "Taschen aller Charaktere": Alle, ein Charakter, Filter, Suche.
-        local BW = WeintCodex.UIBagsWindow
+        -- 6.25.0.0: Seite "Taschen" im Codex (kein eigenes Fenster mehr):
+        -- Alle, ein Charakter, Filter, Suche mit Loeschknopf, Spalten aus
+        -- der Breite, Charaktere in der Unternavigation.
+        assert(WeintCodex.UIBagsWindow == nil, "altes Fenster noch da")
+        local BG = WeintCodex.Bags
         st.names[200] = "Helm"
-        assert(BW.Show() and BW.win:IsShown(), "Fenster nicht offen")
-        assert(#BW.shown == 2 and BW.shown[1].name == "Helm" and BW.shown[2].count == 27, "Alle: " .. #BW.shown)
-        BW.sel = "Everlook|Twink"
-        BW.Refresh()
-        assert(#BW.shown == 1 and BW.shown[1].count == 11, "ein Charakter")
-        BW.filter.bank = false
-        BW.Refresh()
-        assert(BW.shown[1].count == 9, "Filter Bank wirkt nicht")
-        BW.filter.bank = true
-        BW.sel = BW.ALL
-        BW.query = "helm"
-        BW.Refresh()
-        assert(#BW.shown == 1 and BW.shown[1].id == 200, "Suche im Fenster")
-        BW.query = ""
-        BW.filter.worn = false
-        BW.Refresh()
-        assert(#BW.shown == 1 and BW.shown[1].id == 100, "Filter Angelegt wirkt nicht")
-        BW.filter.worn = true
-        BW.sel = "gibt|esnicht"
-        BW.Refresh()
-        assert(BW.sel == BW.ALL, "unbekannte Auswahl bleibt stehen")
-        BW.win:Hide()
+        K.Set("comfort", "invAllRealms", false)
+        WeintCodex.Navigation.SwitchTo("taschen")
+        assert(BG.page and BG.page:IsShown(), "Seite nicht offen")
+        assert(#BG.shown == 2 and BG.shown[1].name == "Helm" and BG.shown[2].count == 18, "Alle: " .. #BG.shown)
+        assert(BG.cols >= 1 and BG.cols == BG.Columns(BG.page.GridScroll:GetWidth() - 14), "Spalten nicht aus der Breite")
+        assert(BG.Columns(44 * 10 - 4) == 10 and BG.Columns(44 * 10 - 5) == 9, "Spaltenrechnung")
+        BG.sel = "Everlook|Twink"
+        BG.Show()
+        assert(#BG.shown == 1 and BG.shown[1].count == 11, "ein Charakter")
+        BG.filter.bank = false
+        BG.Show()
+        assert(BG.shown[1].count == 9, "Filter Bank wirkt nicht")
+        BG.filter.bank = true
+        BG.sel = BG.ALL
+        BG.Show()
+        BG.page.Search:SetText("helm")
+        BG.page.Search:GetScript("OnTextChanged")(BG.page.Search)
+        assert(#BG.shown == 1 and BG.shown[1].id == 200 and BG.page.Clear:IsShown(), "Suche auf der Seite")
+        BG.page.Clear:GetScript("OnClick")(BG.page.Clear)
+        assert(BG.query == "" and BG.page.Search:GetText() == "" and #BG.shown == 2, "Suche nicht geleert")
+        BG.page.Search:SetText("helm")
+        BG.page.Search:GetScript("OnTextChanged")(BG.page.Search)
+        BG.page.Search:GetScript("OnEscapePressed")(BG.page.Search)
+        assert(BG.query == "" and #BG.shown == 2, "Esc leert die Suche nicht")
+        BG.filter.worn = false
+        BG.Show()
+        assert(#BG.shown == 1 and BG.shown[1].id == 100, "Filter Angelegt wirkt nicht")
+        BG.filter.worn = true
+        BG.sel = "gibt|esnicht"
+        BG.Show()
+        assert(BG.sel == BG.ALL, "unbekannte Auswahl bleibt stehen")
+        -- Detailbereich: Schalter fuer Tooltip und Realms.
+        local blocks = BG.Inspector(BG.Chars())
+        local tipBtn
+        for _, bl in ipairs(blocks) do
+            if bl.type == "button" and bl.label:find("Tooltip", 1, true) then tipBtn = bl end
+        end
+        assert(tipBtn and tipBtn.label:find(": an", 1, true), "kein Tooltip-Schalter")
+        -- Ohne Komfortmodul: der Bestand laeuft trotzdem.
+        local m = K.Module("comfort")
+        local was = m._active
+        m._active = false
+        assert(IV.Active(), "Bestand haengt am Komfort")
+        m._active = was
+        K.Set("comfort", "invAllRealms", true)
         -- Tooltip haengt Zeilen an.
         local added = 0
         local gt = G.GameTooltip
@@ -1610,6 +1675,14 @@ do
         IV.OnItem(gt, { id = 100 })
         gt.AddDoubleLine = old
         assert(added == 4, "Tooltip-Zeilen: " .. added)
+        -- Tooltip aus, Bestand an: nichts im Tooltip.
+        K.Set("comfort", "invTooltip", false)
+        added = 0
+        gt.AddDoubleLine = function() added = added + 1 end
+        IV.OnItem(gt, { id = 100 })
+        gt.AddDoubleLine = old
+        assert(added == 0 and IV.Active(), "Tooltip, obwohl abgestellt")
+        K.Set("comfort", "invTooltip", true)
         -- Aus: nichts.
         K.Set("comfort", "invOn", false)
         added = 0
@@ -1627,22 +1700,45 @@ do
 end
 
 -- 6.24.0.0: Raus da - mehr Toene, jeder mit Namen und Zahl.
+-- 6.25.0.0: dazu fuenf eigene Alarme als Datei; die liegen wirklich im
+-- Ordner, laufen ueber PlaySoundFile, und "hoch" ist der Standard.
 do
     local FA = WeintCodex.UIFireAlarm
     local ok, err = pcall(function()
-        assert(#FA.ORDER >= 9, "zu wenige Toene")
-        local seen = {}
+        assert(#FA.ORDER >= 14, "zu wenige Toene")
+        assert(FA.DEFAULTS.fireSound == "hoch" and FA.ORDER[1] == "hoch", "eigener Alarm nicht vorn")
+        local seen, files = {}, 0
         for _, k in ipairs(FA.ORDER) do
             local s = FA.SOUNDS[k]
-            assert(s and type(s.kit) == "string" and type(s.id) == "number" and s.text, "Ton unvollstaendig: " .. k)
-            assert(not seen[s.id], "Ton doppelt: " .. k)
-            seen[s.id] = true
+            assert(s and s.text, "Ton ohne Namen: " .. k)
+            if s.file then
+                files = files + 1
+                local fh = io.open(ROOT .. "/media/sounds/" .. s.file, "rb")
+                assert(fh, "Datei fehlt: " .. s.file)
+                fh:close()
+            else
+                assert(type(s.kit) == "string" and type(s.id) == "number", "Ton unvollstaendig: " .. k)
+                assert(not seen[s.id], "Ton doppelt: " .. k)
+                seen[s.id] = true
+            end
         end
+        assert(files == 5, "eigene Alarme: " .. files)
         local n = 0
         for _ in pairs(FA.SOUNDS) do n = n + 1 end
         assert(n == #FA.ORDER, "Ton fehlt in der Auswahl")
+        local played, oldPSF, oldPS = {}, _G.PlaySoundFile, _G.PlaySound
+        _G.PlaySoundFile = function(f) played[#played + 1] = "file:" .. f end
+        _G.PlaySound = function(k) played[#played + 1] = "kit:" .. tostring(k) end
+        WeintCodex.UIKit.Set("comfort", "fireSound", "tief")
+        FA.Play()
+        WeintCodex.UIKit.Set("comfort", "fireSound", "raid")
+        FA.Play()
+        WeintCodex.UIKit.Set("comfort", "fireSound", "hoch")
+        _G.PlaySoundFile, _G.PlaySound = oldPSF, oldPS
+        assert(played[1] == "file:" .. FA.SOUND_PATH .. "tief.ogg", "Datei nicht gespielt: " .. tostring(played[1]))
+        assert(played[2] and played[2]:find("^kit:"), "Ton des Spiels nicht gespielt")
     end)
-    Check(ok, "Raus da: neun Toene, je Name und Zahl, alle waehlbar" .. (ok and "" or (": " .. tostring(err))))
+    Check(ok, "Raus da: eigene Alarme als Datei plus Toene des Spiels, alle waehlbar" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.21.1.1 (Absturz im Spiel, "L->top < L->ci->top"): Rahmen mit sehr
@@ -13166,6 +13262,15 @@ do
         assert(not flyout:IsShown(), "Liste steht offen")
         bag._scripts.OnClick(bag)
         assert(flyout:IsShown(), "Klick klappt nicht auf")
+        -- 6.25.0.0: Klick auf ein Addon klappt die Liste zu - einstellbar.
+        assert(addonBtn._scripts.OnClick, "Addon-Knopf ohne Haken")
+        addonBtn._scripts.OnClick(addonBtn)
+        assert(not flyout:IsShown(), "Liste bleibt nach der Auswahl offen")
+        K.Set("minimap", "addonBagClose", false)
+        bag._scripts.OnClick(bag)
+        addonBtn._scripts.OnClick(addonBtn)
+        assert(flyout:IsShown(), "Liste zu, obwohl abgestellt")
+        K.Set("minimap", "addonBagClose", true)
         bag._scripts.OnClick(bag)
         for _, b in ipairs(MM.ColumnButtons()) do assert(b ~= addonBtn, "Addon-Knopf zusaetzlich in der Spalte") end
         mm.GetChildren = oldKids
@@ -15602,7 +15707,7 @@ do
     local nav = WeintCodex.Navigation
     local ok, err = pcall(function()
         local want = {
-            { "uebersicht", "Leveln" }, { "charakter" }, { "lehrer" }, { "berufe" }, { "dungeons" },
+            { "uebersicht", "Leveln" }, { "charakter" }, { "lehrer" }, { "berufe" }, { "taschen" }, { "dungeons" },
             { "gruppe", "Gruppe" }, { "raids" }, { "anmeldung" }, { "kalender" },
             { "materialien", "Gilde" },
             { "companion", "System" }, { "settings" },

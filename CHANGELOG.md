@@ -9,6 +9,24 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.25.0.0] – 2026-10-08
+
+### Neu
+
+- Seite **Taschen** im Codex (Spalte Leveln, nach Berufe), statt des Fensters aus 6.24 (Wunsch: „standardmäßig in WeintCodex … kein neues Fenster, sondern ein interaktives Fenster direkt in der Rubrik“; das Fenster lag hinter dem Codex). Charaktere in der Unternavigation, Suche mit Löschknopf (×, auch Esc), Filter, Raster mit Spalten aus der Breite, Detailbereich mit Bankstand und Schaltern (Tooltip, andere Realms).
+- Raus da: fünf eigene Alarme als Datei (hoch, tief, dreifach, Hupe, Sirene), „hoch“ ist Standard. Wunsch: „prägnantere Töne, so wie GTFO“ – gerechnet, keine Dateien aus GTFO.
+- Sammeln: Haken „Kräuter + Erz im Wechsel“ unter der Überschrift „WeintCodex“ im Aufspürmenü des Spiels; Seite sagt deutlich, dass im Kampf nicht gewechselt wird.
+- Minikarte: „Liste nach der Auswahl schließen“ (ab Werk an) – ein Klick auf ein Addon im Sammelknopf klappt die Liste zu.
+
+### Technisch
+
+- `modules/bags.lua` (`WeintCodex.Bags`), Navigationseintrag `taschen` mit `media/icons/nav_taschen.tga` (`.github/scripts/make_nav_taschen.py`); `ui/bagswin.lua` entfernt. `/wc taschen|bestand`, `/wcui taschen` öffnen die Seite. Spalte: `NAV_ITEM_H` 38 → 35, `NAV_GROUP_TOP` 14 → 13 – sonst 0 px Luft (Prüflauf verlangt 40), jetzt 43.
+- `IV.Active` hängt nicht mehr am Komfortmodul (nur `invOn`); neu `invTooltip` (`IV.TooltipOn`); die Komfortseite „Bestand“ ist weg, die Werte bleiben im Speicher des Komforts. Der Bestand zeichnet die Seite nach jedem Lesen neu (`BG.Redraw`).
+- `FA.SOUNDS` mit `file`, gespielt über `PlaySoundFile` aus `media/sounds/`; Dateien aus `.github/scripts/make_sounds.py` (numpy, soundfile, Ogg Vorbis).
+- `GT.HookMenu`: `Menu.ModifyMenu("MENU_MINIMAP_TRACKING", …)`, Zähler in `/wcui prüfen`. Ungemessen, ob Forever das Menü unter dieser Kennung baut.
+- `MM.HookClose` hängt an jeden eingesammelten Knopf ein `OnClick`, `addonBagClose`.
+- Prüflauf: Seite Taschen (Alle, Charakter, Filter, Suche leeren per × und Esc, Spalten, Detailbereich, ohne Komfort), Tooltip-Schalter, Töne als Datei, Menüeintrag, Sammelknopf schließt / bleibt offen.
+
 ## [6.24.0.0] – 2026-10-08
 
 **Bestand aller Charaktere.** Fährst du über einen Gegenstand, steht im Tooltip, welche deiner Charaktere ihn haben und wo – Taschen, Bank, angelegt – samt Summe. Dazu ein eigenes Fenster „Taschen aller Charaktere“ (/wcui taschen oder Komfort → Bestand): links deine Charaktere oder alle zusammen, oben Suche und Filter Taschen, Bank, Angelegt, rechts alles als Symbole mit Anzahl. Mit /wcui bestand <Name> suchst du auch im Chat. Jeder Charakter wird nach dem Einloggen erfasst, seine Bank beim nächsten Besuch. Unter Komfort → Bestand auch für andere Realms.

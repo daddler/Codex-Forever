@@ -89,6 +89,10 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 - [ ] Gespräche (6.23.0.0, Komfort → Gespräche an): Wache ansprechen → Fenster neben der Mitte, Taste 1 wählt; Quest annehmen mit Leertaste; Abgabe mit Auswahl: erst 1/2, dann Leertaste; Esc schließt; nur EIN Fenster, oben links (6.23.1.1); Oberfläche blendet aus und danach wieder ein, Text läuft erst nach der Kamera, Bild des NPCs im Ring (6.23.2.0); Kamera schwenkt auf den NPC, auch seitlich stehend, danach zurück; Text in Serife, startet während der Fahrt (6.23.4.0); Kamera fährt sofort und langsam heran, NPC rechts neben dem Fenster, keine Warnung zu Testfunktionen, nach dem Gespräch zurück (6.23.1.0); ausschalten → Fenster des Spiels wieder da; `/wcui prüfen` → „Gespräche“: gescheitert 0
 - [ ] Bestand (6.24.0.0): mit Twink einloggen, Bank öffnen; zurück auf den Main – Tooltip eines Gegenstands zeigt beide mit Taschen/Bank; `/wcui bestand Leinen` findet ihn; `/wcui taschen` zeigt beide Charaktere, Filter und Suche wirken
 - [ ] Raus da: alle neun Töne über „Ton abspielen“ hörbar (6.24.0.0)
+- [ ] Taschen (6.25.0.0): Leveln → Taschen; Charaktere links, × leert die Suche, Filter wirken, Raster füllt die Breite; Schalter „Im Tooltip zeigen“ wirkt
+- [ ] Raus da (6.25.0.0): die fünf eigenen Alarme hörbar
+- [ ] Sammeln (6.25.0.0): Aufspürmenü an der Minikarte zeigt unten „WeintCodex“ mit Haken; Haken schaltet den Wechsel; `/wcui prüfen` „gezeigt n×“
+- [ ] Minikarte (6.25.0.0): Klick auf ein Addon im Sammelknopf schließt die Liste; abgeschaltet bleibt sie offen
 - [ ] Kräuter/Erz im Wechsel (6.22.0.0, Komfort → Sammeln an): mit Kräuterkunde und Bergbau wechselt das Häkchen im Suchmenü alle 2 s; im Kampf nicht; `/wcui prüfen` → „Sammeln“: gewechselt > 0, gesperrt 0
 - [ ] Feuer (6.21.1.0, Komfort → Feuer an): in eine Fläche stellen (Feuer, Gift) – Ton, nicht öfter als einmal je Sekunde; „Ton abspielen“ spielt; `/wcui prüfen` → „Feuer“: offen oder geheim?
 - [ ] Eigene Farbe (6.21.1.0): „Eigene Farbe“ wählen, Farbe setzen, neu laden – Oberfläche in der Farbe

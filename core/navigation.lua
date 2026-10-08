@@ -48,6 +48,9 @@ local tabs = {
     -- Seit 6.14.0.0: Rezepte nach deiner Fertigkeit und die Lehrer der
     -- Berufe (modules/professions.lua). Ohne feature, wie der Lehrer.
     { id = "berufe",     icon = ICON_PATH .. "nav_berufe",     label = "Berufe" },
+    -- Seit 6.25.0.0: was deine Charaktere tragen (modules/bags.lua). Ohne
+    -- feature: der eigene Bestand, aus dem eigenen Client.
+    { id = "taschen",    icon = ICON_PATH .. "nav_taschen",    label = "Taschen" },
 
     -- Die Dungeons, ohne feature: Namen, Gebiete und Stufenbereiche stehen
     -- in data/dungeons.lua. Gildenintern sind allein die Rollen-Tipps des
@@ -134,11 +137,11 @@ end
 
 local tabButtons = {}
 
-local NAV_ITEM_H   = 38
+local NAV_ITEM_H   = 35   -- 6.25.0.0: 38 -> 35, Platz fuer "Taschen" und Luft fuer einen weiteren
 local NAV_ITEM_GAP = 2
 local NAV_PAD      = 12
 local NAV_GROUP_H  = 24   -- Gruppenlabel inkl. 4 px Abstand darunter
-local NAV_GROUP_TOP= 14   -- Luft ueber einer neuen Gruppe (ausser der ersten)
+local NAV_GROUP_TOP= 13   -- Luft ueber einer neuen Gruppe (ausser der ersten)
 local NAV_GLYPH    = 18
 
 -- WAS DIE SPALTE BELEGT, UND WAS IHR ZUSTEHT - ausgerechnet statt
@@ -2424,6 +2427,10 @@ function WeintCodex.Navigation.SwitchTo(tabId)
     elseif tabId == "berufe" then
         if WeintCodex.Professions and WeintCodex.Professions.Show then
             WeintCodex.Professions.Show()
+        end
+    elseif tabId == "taschen" then
+        if WeintCodex.Bags and WeintCodex.Bags.Show then
+            WeintCodex.Bags.Show()
         end
     elseif tabId == "materialien" then
         if WeintCodex.Materials and WeintCodex.Materials.Show then

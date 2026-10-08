@@ -1,6 +1,11 @@
 --------------------------------------------------
 -- WeintCodex :: Bestand aller Charaktere (Komfort, Seite "Bestand")
 --------------------------------------------------
+-- Seit 6.25.0.0 kein Komfort mehr, sondern Teil des Codex (Beta-Test:
+-- "standardmaessig in WeintCodex"): laeuft ohne Oberflaeche und ohne das
+-- Komfortmodul, gezeigt auf der Seite "Taschen" (modules/bags.lua). Die
+-- Schalter liegen weiter im Speicher des Komforts (K.Get), bedient werden
+-- sie im Detailbereich der Seite.
 -- Seit 6.24.0.0 (Beta-Test: "accountweite Taschen - mit einem Char sehen,
 -- ob ein anderer Char meines Accounts das Item auch hat").
 --
@@ -26,10 +31,13 @@ local IV = WeintCodex.UIInventory
 IV.DEFAULTS = {
     invOn = true,            -- Bestand merken und im Tooltip zeigen
     invAllRealms = false,    -- auch Charaktere anderer Realms
+    invTooltip = true,       -- 6.25.0.0: Zeilen im Tooltip (getrennt vom Merken)
 }
 IV.MAX_RESULTS = 40
 
-function IV.Active() return K.IsActive(KEY) and K.Get(KEY, "invOn") and true or false end
+-- 6.25.0.0: nicht mehr an das Komfortmodul gebunden.
+function IV.Active() return K.Get(KEY, "invOn") and true or false end
+function IV.TooltipOn() return IV.Active() and K.Get(KEY, "invTooltip") and true or false end
 
 local function Plain(v) return K.Plain(v) end
 local function Str(v) v = Plain(v) return type(v) == "string" and v or nil end
@@ -232,7 +240,7 @@ local function ItemIdOf(tt, data)
 end
 
 local function OnItem(tt, data)
-    if not IV.Active() then return end
+    if not IV.TooltipOn() then return end
     if tt ~= _G.GameTooltip and tt ~= _G.ItemRefTooltip then return end
     if tt.IsForbidden and tt:IsForbidden() then return end
     local id = ItemIdOf(tt, data)
@@ -318,6 +326,8 @@ ev:SetScript("OnEvent", function(_, event)
         IV.ScanBags()
         if IV.bankOpen then IV.ScanBank() end
     end
+    local BG = WeintCodex.Bags
+    if BG and BG.Redraw then BG.Redraw() end
 end)
 IV.events = ev
 
@@ -369,25 +379,13 @@ function IV.Forget(key)
     return false
 end
 
-local function Build(B)
-    local off = function() return not K.Get(KEY, "invOn") end
-    B:Section("Bestand aller Charaktere", "Jeder Charakter merkt sich Taschen, Ausrüstung und Bank. Im Tooltip jedes Gegenstands steht, wer von deinen Charakteren ihn wie oft hat – Stand ihres letzten Einloggens, die Bank Stand ihres letzten Besuchs.")
-    B:Row({ type = "toggle", label = "Bestand merken und zeigen", key = "invOn",
-            description = "Suchen: /wcui bestand <Name>." },
-          { type = "toggle", label = "Auch andere Realms", key = "invAllRealms", disabled = off,
-            description = "Sonst nur Charaktere auf diesem Realm." })
-    B:Row({ type = "button", label = "Fenster", text = "Taschen aller Charaktere öffnen", disabled = off,
-            onClick = function() local BW = WeintCodex.UIBagsWindow if BW then BW.Show() end end },
-          { type = "empty" })
-    B:Note("Auch mit /wcui taschen. Post und Auktionen zählen nicht mit. Wer seine Bank seit dieser Version nie geöffnet hat, zeigt nur Taschen und Ausrüstung.")
-end
-
+-- Die Seite steht seit 6.25.0.0 im Codex (modules/bags.lua); hier nur die
+-- Standardwerte in den Speicher des Komforts.
 local mod = K.Module(KEY)
 if mod then
     for k, v in pairs(IV.DEFAULTS) do
         if mod.defaults[k] == nil then mod.defaults[k] = v end
     end
-    mod.pages[#mod.pages + 1] = { key = "bestand", label = "Bestand", build = Build }
 end
 
 K.Listen(function(kind, key)
