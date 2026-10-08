@@ -1726,6 +1726,9 @@ Spiels (`kit`/`id`) bleiben wählbar.
 der vermeidbare Schaden zählt dann nicht – `FA.OnHealth` hört auf
 `UNIT_HEALTH` des Spielers und tönt, wenn das Leben zweimal binnen 3 s
 sinkt (ein Sturz allein nicht). Geheimes Leben → stumm.
+6.25.2.0: statt `UNIT_HEALTH` ein eigener Takt (`FA.outTicker`, 0,25 s),
+gestartet beim Einloggen (vorher lief `Apply` nur beim Umschalten – im
+Spiel gemessen stumm). Bericht zählt Blicke, verdeckt, Verluste.
 
 ## Eigene Farbe der Oberfläche *(6.21.1.0)*
 

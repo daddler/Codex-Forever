@@ -1776,6 +1776,14 @@ do
         now = now + 1 hp = 60 FA.OnHealth()
         now = now + 1 hp = 50
         assert(FA.OnHealth() == false and played == 1, "Ton, obwohl ausserhalb abgestellt")
+        -- 6.25.2.0: Takt startet beim Einloggen, steht, wenn abgestellt.
+        K.Set("comfort", "fireOutside", true)
+        FA.outTicker:Hide()
+        FA.boot:GetScript("OnEvent")(FA.boot, "PLAYER_LOGIN")   -- nur dieses Modul wecken
+        assert(FA.outTicker:IsShown(), "Takt ausserhalb startet nicht beim Einloggen")
+        K.Set("comfort", "fireOutside", false)
+        assert(not FA.outTicker:IsShown(), "Takt laeuft, obwohl abgestellt")
+        assert(table.concat(FA.StatusLines(), "\n"):find("Verluste", 1, true), "Bericht ohne Lebenszaehler")
     end)
     for i, n in ipairs(names) do G[n] = saved[i] end
     K.Set("comfort", "fireOutside", true)

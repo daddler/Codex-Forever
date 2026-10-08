@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.25.2.0] – 2026-10-08
+
+### Behoben
+
+- Raus da außerhalb des Kampfes blieb im Lagerfeuer stumm (Bericht: „außerhalb des Kampfes 0“). Ursache: `UNIT_HEALTH` wurde nur in `Apply` angemeldet, und `Apply` lief nur beim Umschalten, nie beim Einloggen. Jetzt `PLAYER_LOGIN` → `Apply`, und statt des Ereignisses ein eigener Takt (`FA.OUT_TICK` 0,25 s, `FA.outTicker`) – unabhängig davon, ob der Client das Ereignis so nennt.
+
+### Technisch
+
+- `/wcui prüfen` → Raus da: „Takt läuft/steht · Blicke aufs Leben · verdeckt · Verluste“. Prüflauf: Takt startet beim Einloggen und steht abgeschaltet; Gegenprobe (Einloggen ohne `Apply`) gefangen.
+
 ## [6.25.1.0] – 2026-10-08
 
 ### Neu

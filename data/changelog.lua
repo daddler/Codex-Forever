@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.25.2.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFRaus da außerhalb des Kampfes wirkt jetzt.|r Im Lagerfeuer blieb es still – die Wache lief nach dem Einloggen gar nicht. Jetzt läuft sie von Anfang an.",
+        },
+    },
+    {
         version = "6.25.1.0",
         date    = "08.10.2026",
         notes   = {

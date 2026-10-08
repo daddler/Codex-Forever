@@ -178,17 +178,29 @@ end)
 -- ausserhalb des Kampfes ZWEIMAL binnen FA.OUT_WINDOW Sekunden, steht man
 -- in etwas. Einmal (Sturz) zaehlt nicht. Was es ist, weiss WeintCodex
 -- nicht - nur dass es wiederholt trifft.
+-- 6.25.2.0 (gemessen 6.25.1.0: "außerhalb des Kampfes 0" im Lagerfeuer):
+-- UNIT_HEALTH wurde nur beim Umschalten angemeldet, nie beim Einloggen.
+-- Jetzt ein eigener Takt (FA.OUT_TICK) ausserhalb des Kampfes, gestartet
+-- beim Einloggen; /wcui prüfen zaehlt Blicke, offene/verdeckte Werte und
+-- Verluste - so sieht man, woran es haengt.
 FA.OUT_WINDOW = 3.0
+FA.OUT_TICK = 0.25
 local lastHealth, lastDrop = nil, -math.huge
 
 function FA.OnHealth()
     if not (FA.Active() and K.Get(KEY, "fireOutside")) then return false end
     if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false) then lastHealth = nil return false end
+    stats.hpLooks = (stats.hpLooks or 0) + 1
     local hp = _G.UnitHealth and K.Plain(_G.UnitHealth("player"))
-    if type(hp) ~= "number" then lastHealth = nil return false end
+    if type(hp) ~= "number" then
+        stats.hpHidden = (stats.hpHidden or 0) + 1
+        lastHealth = nil
+        return false
+    end
     local dropped = type(lastHealth) == "number" and hp < lastHealth
     lastHealth = hp
     if not dropped then return false end
+    stats.hpDrops = (stats.hpDrops or 0) + 1
     local now = Now()
     local again = now - lastDrop <= FA.OUT_WINDOW
     lastDrop = now
@@ -200,16 +212,22 @@ function FA.OnHealth()
     return true
 end
 
-local hev = CreateFrame("Frame")
-hev:SetScript("OnEvent", function(_, _, unit) if unit == "player" then FA.OnHealth() end end)
-FA.healthEvents = hev
+local outTicker = CreateFrame("Frame")
+outTicker:Hide()
+local outAcc = 0
+outTicker:SetScript("OnUpdate", K.Measured("Raus da außerhalb", function(_, el)
+    outAcc = outAcc + (el or 0)
+    if outAcc < FA.OUT_TICK then return end
+    outAcc = 0
+    FA.OnHealth()
+end))
+FA.outTicker = outTicker
 
 local function Apply()
     if FA.Active() and K.Get(KEY, "fireOutside") then
-        if hev.RegisterUnitEvent then pcall(hev.RegisterUnitEvent, hev, "UNIT_HEALTH", "player")
-        else pcall(hev.RegisterEvent, hev, "UNIT_HEALTH") end
+        outTicker:Show()
     else
-        pcall(hev.UnregisterEvent, hev, "UNIT_HEALTH")
+        outTicker:Hide()
         lastHealth = nil
     end
     if FA.Active() then
@@ -238,6 +256,8 @@ function FA.StatusLines()
     out[#out + 1] = string.format("Gefragt %d · offen %d · geheim %d · keine Zeile %d · Töne %d",
         stats.checks, stats.plain, stats.secret, stats.none, stats.alarms)
         .. " · außerhalb des Kampfes " .. (stats.outside or 0)
+    out[#out + 1] = string.format("Außerhalb des Kampfes: Takt %s · Blicke aufs Leben %d · verdeckt %d · Verluste %d",
+        outTicker:IsShown() and "läuft" or "steht", stats.hpLooks or 0, stats.hpHidden or 0, stats.hpDrops or 0)
     if stats.secret > 0 and stats.plain == 0 then
         out[#out + 1] = "Im Kampf nur geheime Summen – dann kann WeintCodex nicht warnen."
     end
@@ -269,3 +289,9 @@ end
 K.Listen(function(kind, key)
     if (kind == "active" or kind == "setting") and key == KEY then Apply() end
 end)
+
+-- Beim Einloggen einmal anwenden (fehlte bis 6.25.1.0).
+local boot = CreateFrame("Frame")
+boot:RegisterEvent("PLAYER_LOGIN")
+boot:SetScript("OnEvent", function() Apply() end)
+FA.boot = boot
