@@ -91,6 +91,7 @@ doch: `/wcui fenster` und den Bericht kopieren (Strg+C).
 - [ ] Raus da: alle neun Töne über „Ton abspielen“ hörbar (6.24.0.0)
 - [ ] Taschen (6.25.0.0): Leveln → Taschen; Charaktere links, × leert die Suche, Filter wirken, Raster füllt die Breite; Schalter „Im Tooltip zeigen“ wirkt
 - [ ] Raus da (6.25.0.0): die fünf eigenen Alarme hörbar
+- [ ] Raus da (6.25.1.0): vier neue Töne hörbar; ohne Kampf ins Lagerfeuer – Ton; einmal von der Kante springen – kein Ton
 - [ ] Sammeln (6.25.0.0): Aufspürmenü an der Minikarte zeigt unten „WeintCodex“ mit Haken; Haken schaltet den Wechsel; `/wcui prüfen` „gezeigt n×“
 - [ ] Minikarte (6.25.0.0): Klick auf ein Addon im Sammelknopf schließt die Liste; abgeschaltet bleibt sie offen
 - [ ] Kräuter/Erz im Wechsel (6.22.0.0, Komfort → Sammeln an): mit Kräuterkunde und Bergbau wechselt das Häkchen im Suchmenü alle 2 s; im Kampf nicht; `/wcui prüfen` → „Sammeln“: gewechselt > 0, gesperrt 0

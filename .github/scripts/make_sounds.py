@@ -74,6 +74,22 @@ SOUNDS = {
                                         beep(1319, 0.07)]),
     # Hupe: zwei Saegezaehne im Abstand einer kleinen Sekunde, schwebend.
     "hupe": lambda: (lambda x: (saw(415, x) + saw(440, x)) * env(len(x), 0.006, 0.05))(t(0.32)),
+    # 6.25.1.0 (Beta-Test: "etwas aehnliches wie GTFO", Weg 1: nachbauen,
+    # nicht kopieren). Vier Arten wie dort, eigene Klaenge:
+    # Raus! - steigender, harter Doppelalarm: sofort weg.
+    "raus": lambda: np.concatenate([
+        (lambda x: np.sign(np.sin(2 * np.pi * np.cumsum(
+            np.linspace(900, 1600, len(x))) / RATE)) * 0.6 * env(len(x), 0.003, 0.02))(t(0.16)),
+        silence(0.03),
+        (lambda x: np.sign(np.sin(2 * np.pi * np.cumsum(
+            np.linspace(1100, 2000, len(x))) / RATE)) * 0.6 * env(len(x), 0.003, 0.03))(t(0.2))]),
+    # Achtung - tiefer, kurzer Brummer: leichter Schaden, nicht stehen bleiben.
+    "achtung": lambda: (lambda x: (saw(130, x) + 0.5 * saw(131.5, x)) * env(len(x), 0.005, 0.06))(t(0.28)),
+    # Fehler - zwei fallende Toene: das hat getroffen.
+    "fehler": lambda: np.concatenate([beep(880, 0.1, "sine") + 0.4 * beep(1760, 0.1, "sine"), silence(0.02),
+                                      beep(587, 0.18, "sine") + 0.4 * beep(1174, 0.18, "sine")]),
+    # Mitspieler - schnelles helles Trillern.
+    "trill": lambda: np.concatenate([beep(1568 if i % 2 == 0 else 1319, 0.045, "sine") for i in range(6)]),
     # Sirene: Ton gleitet schnell nach oben.
     "sirene": lambda: (lambda x: np.sin(2 * np.pi * np.cumsum(
         np.linspace(700, 1900, len(x))) / RATE) * env(len(x), 0.005, 0.04))(t(0.35)),

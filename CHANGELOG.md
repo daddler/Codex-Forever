@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.25.1.0] – 2026-10-08
+
+### Neu
+
+- Raus da: vier Töne nach den Arten von GTFO, nachgebaut statt kopiert (Wunsch: „etwas Ähnliches wie GTFO“, Weg 1): `raus` (Standard), `achtung`, `fehler`, `trill` – `media/sounds/`, `.github/scripts/make_sounds.py`.
+- Raus da außerhalb des Kampfes (Frage: „im Lagerfeuer kommt der Ton nicht – gewollt?“ – nein, eine Lücke: der vermeidbare Schaden zählt nur im Kampf, und Lagerfeuer/Lava setzen einen nicht in den Kampf). Ersatz: `UNIT_HEALTH` des Spielers außerhalb des Kampfes, Ton, wenn das Leben zweimal binnen `FA.OUT_WINDOW` (3 s) sinkt; einmal (Sturz) nicht. Schalter `fireOutside`, ab Werk an.
+
+### Technisch
+
+- `FA.OnHealth`, Zähler „außerhalb des Kampfes“ in `/wcui prüfen`. Prüflauf: zweiter Verlust → Ton, erster und nach Pause nicht, im Kampf nicht, abgestellt nicht; drei Gegenproben gefangen (eine erst nach Schärfen des Tests). Ungemessen: ob Lebenswerte außerhalb des Kampfes auf Forever offen kommen – geheim heißt stumm, nie geraten.
+
 ## [6.25.0.0] – 2026-10-08
 
 ### Neu

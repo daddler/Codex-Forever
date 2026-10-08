@@ -1720,6 +1720,13 @@ Alarme als Datei (`media/sounds/*.ogg`, gerechnet von
 `PlaySoundFile`; `FA.SOUNDS[k].file`, Standard `hoch`. Die Töne des
 Spiels (`kit`/`id`) bleiben wählbar.
 
+6.25.1.0: vier weitere nach den *Arten* von GTFO (nicht seinen Dateien):
+`raus` (Standard), `achtung`, `fehler`, `trill`. Außerhalb des Kampfes
+(`fireOutside`, ab Werk an): Lagerfeuer und Lava setzen nicht in den Kampf,
+der vermeidbare Schaden zählt dann nicht – `FA.OnHealth` hört auf
+`UNIT_HEALTH` des Spielers und tönt, wenn das Leben zweimal binnen 3 s
+sinkt (ein Sturz allein nicht). Geheimes Leben → stumm.
+
 ## Eigene Farbe der Oberfläche *(6.21.1.0)*
 
 `general.highlight` kennt `"custom"`: die Farbe aus `highlightColor`

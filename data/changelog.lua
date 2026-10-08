@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.25.1.0",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFRaus da: vier neue Warntöne.|r „Raus!“ (steigend, hart – der neue Standard), „Achtung“ (tiefes Brummen), „Fehler“ (fallend) und „Trillern“ – kurz, unverwechselbar, eigens gebaut.",
+            "|cff7C6CFFRaus da auch außerhalb des Kampfes.|r Stehst du in einem Lagerfeuer, in Lava oder Ähnlichem, ohne zu kämpfen, kommt der Ton jetzt auch: sobald dein Leben zweimal kurz hintereinander sinkt. Ein einzelner Sturz löst nichts aus. Abstellbar auf der Seite „Raus da“.",
+        },
+    },
+    {
         version = "6.25.0.0",
         date    = "08.10.2026",
         notes   = {

@@ -31,7 +31,8 @@ local FA = WeintCodex.UIFireAlarm
 
 FA.DEFAULTS = {
     fireAlarm = false,
-    fireSound = "hoch",
+    fireSound = "raus",
+    fireOutside = true,     -- 6.25.1.0: auch ausserhalb des Kampfes (Lagerfeuer, Lava)
 }
 FA.TICK = 0.2        -- so oft im Kampf gefragt (s)
 FA.GAP = 1.0         -- hoechstens ein Ton je Sekunde
@@ -42,7 +43,14 @@ FA.GAP = 1.0         -- hoechstens ein Ton je Sekunde
 -- gerechnete Alarme (media/sounds, .github/scripts/make_sounds.py) - keine
 -- Dateien aus GTFO. Sie stehen vorn; "hoch" ist der neue Standard.
 FA.SOUND_PATH = "Interface\\AddOns\\WeintCodex\\media\\sounds\\"
+-- 6.25.1.0 (Beta-Test: "etwas aehnliches wie GTFO", nachgebaut, nicht
+-- kopiert): vier Arten wie dort - Raus!, Achtung, Fehler, Trillern.
+-- "raus" ist der neue Standard.
 FA.SOUNDS = {
+    raus     = { file = "raus.ogg", text = "Raus! (steigend, hart)" },
+    achtung  = { file = "achtung.ogg", text = "Achtung (tiefes Brummen)" },
+    fehler   = { file = "fehler.ogg", text = "Fehler (fallend)" },
+    trill    = { file = "trill.ogg", text = "Trillern" },
     hoch     = { file = "hoch.ogg", text = "Alarm hoch (zweifach)" },
     tief     = { file = "tief.ogg", text = "Alarm tief (Brummen)" },
     dreifach = { file = "dreifach.ogg", text = "Alarm dreifach" },
@@ -58,7 +66,7 @@ FA.SOUNDS = {
     queue   = { kit = "PVP_THROUGH_QUEUE", id = 8459, text = "Warteschlange" },
     toast   = { kit = "UI_BNET_TOAST", id = 18019, text = "Battle.net-Hinweis" },
 }
-FA.ORDER = { "hoch", "tief", "dreifach", "hupe", "sirene", "raid", "boss", "ready", "alarm", "alarm2", "whisper", "invite", "queue", "toast" }
+FA.ORDER = { "raus", "achtung", "fehler", "trill", "hoch", "tief", "dreifach", "hupe", "sirene", "raid", "boss", "ready", "alarm", "alarm2", "whisper", "invite", "queue", "toast" }
 
 local stats = { checks = 0, plain = 0, secret = 0, none = 0, alarms = 0 }
 FA.stats = stats
@@ -161,7 +169,49 @@ ev:SetScript("OnEvent", function(_, event)
     end
 end)
 
+--------------------------------------------------
+-- Ausserhalb des Kampfes: Leben sinkt wiederholt
+--------------------------------------------------
+-- 6.25.1.0 (Beta-Test: "im Lagerfeuer kommt der Ton nicht"). Lagerfeuer,
+-- Lava, Schleim setzen einen nicht in den Kampf, und das Spiel fuehrt den
+-- vermeidbaren Schaden nur im Kampf. Ersatz: sinkt das eigene Leben
+-- ausserhalb des Kampfes ZWEIMAL binnen FA.OUT_WINDOW Sekunden, steht man
+-- in etwas. Einmal (Sturz) zaehlt nicht. Was es ist, weiss WeintCodex
+-- nicht - nur dass es wiederholt trifft.
+FA.OUT_WINDOW = 3.0
+local lastHealth, lastDrop = nil, -math.huge
+
+function FA.OnHealth()
+    if not (FA.Active() and K.Get(KEY, "fireOutside")) then return false end
+    if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false) then lastHealth = nil return false end
+    local hp = _G.UnitHealth and K.Plain(_G.UnitHealth("player"))
+    if type(hp) ~= "number" then lastHealth = nil return false end
+    local dropped = type(lastHealth) == "number" and hp < lastHealth
+    lastHealth = hp
+    if not dropped then return false end
+    local now = Now()
+    local again = now - lastDrop <= FA.OUT_WINDOW
+    lastDrop = now
+    if not again or now - lastAlarm < FA.GAP then return false end
+    lastAlarm = now
+    stats.outside = (stats.outside or 0) + 1
+    stats.alarms = stats.alarms + 1
+    FA.Play()
+    return true
+end
+
+local hev = CreateFrame("Frame")
+hev:SetScript("OnEvent", function(_, _, unit) if unit == "player" then FA.OnHealth() end end)
+FA.healthEvents = hev
+
 local function Apply()
+    if FA.Active() and K.Get(KEY, "fireOutside") then
+        if hev.RegisterUnitEvent then pcall(hev.RegisterUnitEvent, hev, "UNIT_HEALTH", "player")
+        else pcall(hev.RegisterEvent, hev, "UNIT_HEALTH") end
+    else
+        pcall(hev.UnregisterEvent, hev, "UNIT_HEALTH")
+        lastHealth = nil
+    end
     if FA.Active() then
         pcall(ev.RegisterEvent, ev, "PLAYER_REGEN_DISABLED")
         pcall(ev.RegisterEvent, ev, "PLAYER_REGEN_ENABLED")
@@ -187,6 +237,7 @@ function FA.StatusLines()
         .. ((DM and DM.Available() and e and e.AvoidableDamageTaken ~= nil) and "ja" or "nein")
     out[#out + 1] = string.format("Gefragt %d · offen %d · geheim %d · keine Zeile %d · Töne %d",
         stats.checks, stats.plain, stats.secret, stats.none, stats.alarms)
+        .. " · außerhalb des Kampfes " .. (stats.outside or 0)
     if stats.secret > 0 and stats.plain == 0 then
         out[#out + 1] = "Im Kampf nur geheime Summen – dann kann WeintCodex nicht warnen."
     end
@@ -199,10 +250,11 @@ local function Build(B)
     local items = {}
     for _, k in ipairs(FA.ORDER) do items[#items + 1] = { value = k, text = FA.SOUNDS[k].text } end
     B:Row({ type = "toggle", label = "Warnton, wenn du in etwas stehst", key = "fireAlarm",
-            description = "Höchstens einmal je Sekunde, nur im Kampf." },
+            description = "Höchstens einmal je Sekunde." },
           { type = "dropdown", label = "Ton", key = "fireSound", items = items, disabled = off })
     B:Row({ type = "button", label = "Probe", text = "Ton abspielen", onClick = FA.Play },
-          { type = "empty" })
+          { type = "toggle", label = "Auch außerhalb des Kampfes", key = "fireOutside", disabled = off,
+            description = "Lagerfeuer, Lava und Ähnliches: Ton, wenn dein Leben zweimal kurz hintereinander sinkt. Ein einzelner Sturz zählt nicht." })
     B:Note("Gibt das Spiel die Summe im Kampf nur verdeckt heraus, bleibt der Ton stumm – /wcui prüfen sagt dann „geheim“.")
 end
 

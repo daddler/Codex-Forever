@@ -1705,8 +1705,8 @@ end
 do
     local FA = WeintCodex.UIFireAlarm
     local ok, err = pcall(function()
-        assert(#FA.ORDER >= 14, "zu wenige Toene")
-        assert(FA.DEFAULTS.fireSound == "hoch" and FA.ORDER[1] == "hoch", "eigener Alarm nicht vorn")
+        assert(#FA.ORDER >= 18, "zu wenige Toene")
+        assert(FA.DEFAULTS.fireSound == "raus" and FA.ORDER[1] == "raus", "eigener Alarm nicht vorn")
         local seen, files = {}, 0
         for _, k in ipairs(FA.ORDER) do
             local s = FA.SOUNDS[k]
@@ -1722,7 +1722,7 @@ do
                 seen[s.id] = true
             end
         end
-        assert(files == 5, "eigene Alarme: " .. files)
+        assert(files == 9, "eigene Alarme: " .. files)
         local n = 0
         for _ in pairs(FA.SOUNDS) do n = n + 1 end
         assert(n == #FA.ORDER, "Ton fehlt in der Auswahl")
@@ -1733,12 +1733,56 @@ do
         FA.Play()
         WeintCodex.UIKit.Set("comfort", "fireSound", "raid")
         FA.Play()
-        WeintCodex.UIKit.Set("comfort", "fireSound", "hoch")
+        WeintCodex.UIKit.Set("comfort", "fireSound", "raus")
         _G.PlaySoundFile, _G.PlaySound = oldPSF, oldPS
         assert(played[1] == "file:" .. FA.SOUND_PATH .. "tief.ogg", "Datei nicht gespielt: " .. tostring(played[1]))
         assert(played[2] and played[2]:find("^kit:"), "Ton des Spiels nicht gespielt")
     end)
     Check(ok, "Raus da: eigene Alarme als Datei plus Toene des Spiels, alle waehlbar" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.25.1.0: Raus da ausserhalb des Kampfes (Lagerfeuer): zweimal Leben
+-- verloren binnen 3 s -> Ton; einmal (Sturz) nicht; im Kampf nicht.
+do
+    local G = _G
+    local FA = WeintCodex.UIFireAlarm
+    local names = { "UnitHealth", "InCombatLockdown", "GetTime", "PlaySoundFile" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local ok, err = pcall(function()
+        local hp, now, combat, played = 100, 50, false, 0
+        G.UnitHealth = function() return hp end
+        G.InCombatLockdown = function() return combat end
+        G.GetTime = function() return now end
+        G.PlaySoundFile = function() played = played + 1 end
+        K.Set("comfort", "fireAlarm", true)
+        FA.Reset()
+        assert(FA.OnHealth() == false, "erster Blick")
+        hp = 90
+        assert(FA.OnHealth() == false and played == 0, "Ton beim ersten Verlust (Sturz)")
+        now = now + 1.5 hp = 80
+        assert(FA.OnHealth() == true and played == 1, "kein Ton beim zweiten Verlust")
+        now = now + 10 hp = 70
+        assert(FA.OnHealth() == false, "Ton nach langer Pause")
+        now = now + 20 hp = 100
+        FA.OnHealth()
+        combat = true
+        now = now + 1 hp = 90 FA.OnHealth()
+        now = now + 1 hp = 80
+        assert(FA.OnHealth() == false and played == 1, "Ton im Kampf ueber das Leben")
+        combat = false
+        K.Set("comfort", "fireOutside", false)
+        now = now + 1 hp = 70 FA.OnHealth()
+        now = now + 1 hp = 60 FA.OnHealth()
+        now = now + 1 hp = 50
+        assert(FA.OnHealth() == false and played == 1, "Ton, obwohl ausserhalb abgestellt")
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    K.Set("comfort", "fireOutside", true)
+    K.Set("comfort", "fireAlarm", false)
+    FA.Reset()
+    Check(ok, "Raus da: ausserhalb des Kampfes bei wiederholtem Lebensverlust, nicht beim Sturz, nicht im Kampf"
+        .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.21.1.1 (Absturz im Spiel, "L->top < L->ci->top"): Rahmen mit sehr
