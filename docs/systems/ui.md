@@ -1603,6 +1603,9 @@ beide ab Werk aus.
 - 6.23.2.1: Ende des Einlaufens `SetAlphaGradient(DL.ALL, 0)` (nicht 0/0 –
   das versteckt alles). 3D-Modelle und Minikarte folgen der Deckkraft nicht:
   `K.TrackModel` + `DL.HideExtras`/`ShowExtras` (`MinimapCluster`, `Minimap`).
+- 6.23.2.2: Warnung zur Testeinstellung kommt doch als Dialog – `DL.OnPopup`
+  schließt sie, ohne die Oberfläche zurückzuholen. Etiketten je Status
+  (`DL.LOOK`). Abstand ab Werk 6 m. Gemessen: Kamera 21,9 → 4,0 in 3 s.
 - Nicht gebaut: Vorlesen.
 
 ### Kräuter und Erz im Wechsel (`ui/gathertrack.lua`, 6.22.0.0)

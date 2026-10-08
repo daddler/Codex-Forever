@@ -1181,7 +1181,7 @@ do
             "Fenster des Spiels bekommen weiter Ereignisse")
         stub.FireEvent("GOSSIP_SHOW")
         assert(DL.win and DL.win:IsShown() and DL.state == "gossip", "Gespraech nicht gezeigt")
-        assert(zoom == 4 and DL.cam.saved == 15, "Kamera nicht heran: " .. zoom)
+        assert(zoom == 6 and DL.cam.saved == 15, "Kamera nicht heran: " .. zoom)
         assert(cvars.test_cameraOverShoulder == "-1" and not warn, "Schulter nicht gesetzt oder Warnung nicht still")
         assert(cvars.cameraZoomSpeed == "8", "nicht langsamer heran")
         later()
@@ -1190,7 +1190,7 @@ do
         Shut()
         stub.FireEvent("GOSSIP_SHOW")
         later()
-        assert(zoom == 4 and DL.cam.saved == 15, "Kamera beim Wechsel zurueck")
+        assert(zoom == 6 and DL.cam.saved == 15, "Kamera beim Wechsel zurueck")
         -- Ende: zurueck auf den alten Abstand.
         Shut()
         later()
@@ -1222,6 +1222,16 @@ do
         assert(#DL.list == 4 and DL.list[1].kind == "active" and DL.list[1].mark == "?"
             and DL.list[2].kind == "available" and DL.list[3].text == "Erste" and DL.list[4].text == "Zweite",
             "Zeilen: " .. #DL.list)
+        -- 6.23.2.2: abgabebereit und neu unterscheidbar.
+        assert(DL.list[1].status == "done" and DL.list[2].status == "new" and DL.list[3].status == nil
+            and DL.LOOK.done.tag ~= DL.LOOK.open.tag and DL.LOOK.open.label ~= DL.LOOK.done.label,
+            "Status der Quests nicht unterscheidbar")
+        local giA = G.C_GossipInfo.GetActiveQuests
+        G.C_GossipInfo.GetActiveQuests = function() return { { title = "Briefe", questID = 502, isComplete = false } } end
+        DL.Collect("gossip")
+        assert(DL.list[1].status == "open", "laufende Quest als abgabebereit gezeigt")
+        G.C_GossipInfo.GetActiveQuests = giA
+        DL.Collect("gossip")
         DL.win:GetScript("OnKeyDown")(DL.win, "3")
         assert(calls[1][1] == "SelectOption" and calls[1][2] == 11, "Taste 3 waehlt nicht die erste Option")
         DL.Pick(2)
@@ -1370,6 +1380,18 @@ do
         stub.FireEvent("GOSSIP_SHOW")
         assert(not DL.fade.on, "im Kampf ausgeblendet")
         combat = false
+        DL.Close()
+        -- 6.23.2.2: die Warnung zur Testeinstellung wird geschlossen und holt
+        -- die Oberflaeche NICHT zurueck.
+        stub.FireEvent("GOSSIP_SHOW")
+        fu(DL.fader, 5)
+        local warnPop = CreateFrame("Frame")
+        warnPop.which = "EXPERIMENTAL_CVAR_WARNING"
+        warnPop:Show()
+        local before = DL.stats.warnHidden
+        DL.OnPopup(warnPop)
+        assert(alpha == 0 and DL.fade.on and DL.stats.warnHidden == before + 1 and not warnPop:IsShown(),
+            "Warnung zur Testeinstellung holt die Oberflaeche zurueck oder bleibt offen")
         DL.Close()
         -- Dialog des Spiels: sofort zurueck.
         stub.FireEvent("GOSSIP_SHOW")

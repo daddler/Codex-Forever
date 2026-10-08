@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.23.2.2",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFGespräche: abgabebereit auf einen Blick.|r Quests, die du abgeben kannst, stehen golden mit grünem „Abgeben“ da, laufende grau mit „Läuft noch“, neue mit „Neu“. Die kurze Meldung des Spiels zur Testeinstellung beim ersten Gespräch schließt sich jetzt selbst und stört das Ausblenden nicht mehr. Die Kamera hält ab Werk 6 Meter Abstand.",
+        },
+    },
+    {
         version = "6.23.2.1",
         date    = "08.10.2026",
         notes   = {

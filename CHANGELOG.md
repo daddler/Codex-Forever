@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.23.2.2] – 2026-10-08
+
+**Gespräche: abgabebereit auf einen Blick.** Quests, die du abgeben kannst, stehen golden mit grünem „Abgeben“ da, laufende grau mit „Läuft noch“, neue mit „Neu“. Die kurze Meldung des Spiels zur Testeinstellung beim ersten Gespräch schließt sich jetzt selbst und stört das Ausblenden nicht mehr. Die Kamera hält ab Werk 6 Meter Abstand.
+
+### Technisch
+
+- Beta-Test 6.23.2.1: Kamera gemessen von 21,9 auf 4,0 in 3 s (0,5 s: 17,8 · 1 s: 13,8 · 2 s: 5,8) – sie fährt sofort los. Alles ausgeblendet wie gewünscht.
+- Warnung zur Testeinstellung kam beim ersten Gespräch trotz abgemeldetem `EXPERIMENTAL_CVAR_WARNING` als Dialog und holte über den Dialog-Schutz die Oberfläche zurück. `DL.OnPopup` (an `StaticPopup1–4`) schließt sie (`which` = Warnung oder enthält „EXPERIMENTAL“), zählt sie in `/wcui prüfen` und lässt die Oberfläche aus; jeder andere Dialog holt sie weiter sofort zurück.
+- Status der Zeilen (`DL.LOOK`): abgabebereit Gold + „Abgeben“ grün, läuft grau + „Läuft noch“, neu Gold + „Neu“; im Questgruß aus der zweiten Rückgabe von `GetActiveTitle`, ohne Antwort kein Etikett.
+- `dlgCamDist` ab Werk 6 m.
+- Prüflauf: Warnung still, Status unterscheidbar, laufende nicht als abgabebereit; zwei Gegenproben gefangen (die zweite erst mit einer laufenden Quest im Prüflauf).
+
 ## [6.23.2.1] – 2026-10-08
 
 **Gespräche: der Text bleibt stehen.** Nach dem Einlaufen verschwand der Text bis auf die ersten Worte – jetzt steht er ganz da. Beim Ausblenden verschwinden auch die Porträts der Rahmen und die Minikarte mit Spielerpfeil und Symbolen; nach dem Gespräch kommen sie zurück.

@@ -38,7 +38,7 @@ DL.DEFAULTS = {
     dlgType  = true,     -- Text laeuft ein
     dlgScale = 100,      -- Groesse in %
     dlgCam   = true,     -- Kamera heran, danach zurueck (6.23.1.0)
-    dlgCamDist = 4,      -- so nah (Meter)
+    dlgCamDist = 6,      -- so nah (Meter; 6.23.2.2: 6 statt 4)
     dlgShoulder = true,  -- NPC zur Seite (Schulterkamera, 6.23.1.0)
     dlgSpeed = 35,       -- Zeichen je Sekunde beim Einlaufen (6.23.2.0)
     dlgFade  = true,     -- Oberflaeche ausblenden (6.23.2.0)
@@ -61,7 +61,7 @@ DL.EVENTS = {
                    "QUEST_FINISHED", "QUEST_ITEM_UPDATE" },
 }
 
-local stats = { shown = 0, picked = 0, failed = 0, gameShown = 0 }
+local stats = { shown = 0, picked = 0, failed = 0, gameShown = 0, warnHidden = 0 }
 DL.stats = stats
 DL.taken = {}            -- [Fenster] = { Ereignis, ... }, was abgemeldet ist
 DL.state = nil           -- "gossip", "greeting", "detail", "progress", "complete"
@@ -232,7 +232,10 @@ local function Row(i)
     r.mark:SetWidth(12)
     r.label = K.NewText(r, 13)
     r.label:SetPoint("LEFT", r.mark, "RIGHT", 6, 0)
-    r.label:SetPoint("RIGHT", r, "RIGHT", -10, 0)
+    r.tag = K.NewText(r, 11)
+    r.tag:SetPoint("RIGHT", r, "RIGHT", -12, 0)
+    r.tag:SetJustifyH("RIGHT")
+    r.label:SetPoint("RIGHT", r.tag, "LEFT", -10, 0)
     r.label:SetJustifyH("LEFT")
     r.label:SetWordWrap(false)
     r:SetScript("OnEnter", function(self) self.hl:Show() self.bar:Show() end)
@@ -500,13 +503,24 @@ end
 -- Inhalt je Zustand
 --------------------------------------------------
 
-DL.list = {}             -- { { text, mark, kind, id }, ... } die gezeigten Zeilen
+DL.list = {}             -- { { text, mark, kind, id, status }, ... } die gezeigten Zeilen
+-- Aussehen je Status (6.23.2.2, Beta-Test: abgeschlossen und offen sahen
+-- gleich aus). Abgabebereit: Gold und gruenes Etikett; laeuft: alles grau;
+-- neu: Gold. Gruen ist Statusfarbe, kein zweiter Akzent.
+DL.LOOK = {
+    done = { mark = "accent", label = "textBright", tag = "Abgeben", tagColor = "green" },
+    open = { mark = "textFaint", label = "textMuted", tag = "Läuft noch", tagColor = "textFaint" },
+    new  = { mark = "accent", label = "textBright", tag = "Neu", tagColor = "accent" },
+    none = { mark = "textMuted", label = "textBright" },
+}
 DL.rewards = {}          -- { { kind, index, name, tex, count }, ... }
 
-local function AddLine(text, mark, kind, id)
+-- status: "done" (abgabebereit), "open" (laeuft noch), "new" (angeboten),
+-- nil (Antwort, oder der Client sagt es nicht - dann kein Etikett).
+local function AddLine(text, mark, kind, id, status)
     local l = DL.list
     if #l >= DL.MAX_ROWS then return end
-    l[#l + 1] = { text = text, mark = mark, kind = kind, id = id }
+    l[#l + 1] = { text = text, mark = mark, kind = kind, id = id, status = status }
 end
 
 local function AddItems(kind, n)
@@ -530,18 +544,24 @@ function DL.Collect(state)
         local gi = _G.C_GossipInfo
         c.text = Str(gi.GetText and gi.GetText())
         for _, q in ipairs(gi.GetActiveQuests and gi.GetActiveQuests() or {}) do
-            AddLine(Str(q.title), K.Bool(q.isComplete, false) and "?" or "·", "active", Plain(q.questID))
+            local done = K.Bool(q.isComplete, false)
+            AddLine(Str(q.title), "?", "active", Plain(q.questID), done and "done" or "open")
         end
         for _, q in ipairs(gi.GetAvailableQuests and gi.GetAvailableQuests() or {}) do
-            AddLine(Str(q.title), "!", "available", Plain(q.questID))
+            AddLine(Str(q.title), "!", "available", Plain(q.questID), "new")
         end
         local opts = gi.GetOptions() or {}
         table.sort(opts, function(a, b) return (Plain(a.orderIndex) or 0) < (Plain(b.orderIndex) or 0) end)
         for _, o in ipairs(opts) do AddLine(Str(o.name), "›", "option", Plain(o.gossipOptionID)) end
     elseif state == "greeting" then
         c.text = Str(Call("GetGreetingText"))
-        for i = 1, Num("GetNumActiveQuests") do AddLine(Str(Call("GetActiveTitle", i)), "?", "gactive", i) end
-        for i = 1, Num("GetNumAvailableQuests") do AddLine(Str(Call("GetAvailableTitle", i)), "!", "gavailable", i) end
+        for i = 1, Num("GetNumActiveQuests") do
+            local title, done = Call("GetActiveTitle", i)
+            done = Plain(done)
+            local st = done == true and "done" or done == false and "open" or nil
+            AddLine(Str(title), "?", "gactive", i, st)
+        end
+        for i = 1, Num("GetNumAvailableQuests") do AddLine(Str(Call("GetAvailableTitle", i)), "!", "gavailable", i, "new") end
     elseif state == "detail" then
         c.title = Str(Call("GetTitleText"))
         c.text = Str(Call("GetQuestText"))
@@ -643,10 +663,15 @@ function DL.Draw(c)
         r.mark:SetText(l.mark)
         local ar, ag, ab = Accent()
         local m = C.textMuted
-        if l.mark == "!" or l.mark == "?" then r.mark:SetTextColor(ar, ag, ab) else r.mark:SetTextColor(m[1], m[2], m[3]) end
+        local look = DL.LOOK[l.status or "none"]
+        local mc = look.mark == "accent" and { ar, ag, ab } or C[look.mark]
+        r.mark:SetTextColor(mc[1], mc[2], mc[3])
         r.label:SetText(l.text)
-        local t = C.textBright
+        local t = C[look.label]
         r.label:SetTextColor(t[1], t[2], t[3])
+        r.tag:SetText(look.tag or "")
+        local tc = look.tagColor == "accent" and { ar, ag, ab } or C[look.tagColor or "textMuted"]
+        r.tag:SetTextColor(tc[1], tc[2], tc[3])
         r:ClearAllPoints()
         r:SetPoint("TOPLEFT", win, "TOPLEFT", 18, -y)
         r:SetPoint("RIGHT", win, "RIGHT", -18, 0)
@@ -768,7 +793,7 @@ function DL.CamIn()
     SpeedIn()
     ShoulderIn()
     local z = Zoom()
-    local target = tonumber(K.Get(KEY, "dlgCamDist")) or 4
+    local target = tonumber(K.Get(KEY, "dlgCamDist")) or DL.DEFAULTS.dlgCamDist
     if not (z and _G.CameraZoomIn) or z <= target + 0.5 then return false end
     DL.cam.saved, DL.cam.target = z, target
     DL.CamStartLog(z)
@@ -956,6 +981,24 @@ fader:SetScript("OnUpdate", function(self, el)
 end)
 DL.fader = fader
 
+-- Ein Dialog des Spiels erscheint. Die Warnung zu Testeinstellungen kam
+-- trotz abgemeldetem Ereignis (6.23.2.1, Beta-Test: beim ersten Gespraech
+-- kurz da, danach nichts ausgeblendet) - sie wird hier geschlossen und
+-- holt die Oberflaeche NICHT zurueck. Jeder andere Dialog schon.
+function DL.IsWarning(pop)
+    local which = type(pop) == "table" and K.Plain(pop.which)
+    return type(which) == "string" and (which == DL.WARNING or which:find("EXPERIMENTAL", 1, true) ~= nil)
+end
+function DL.OnPopup(pop)
+    if DL.IsWarning(pop) then
+        stats.warnHidden = stats.warnHidden + 1
+        if _G.StaticPopup_Hide then pcall(_G.StaticPopup_Hide, K.Plain(pop.which)) end
+        if pop.IsShown and pop:IsShown() then pop:Hide() end
+        return
+    end
+    DL.FadeBack(true)
+end
+
 local function Run(to, dur)
     local up = _G.UIParent
     if not up then return end
@@ -1050,7 +1093,8 @@ function DL.StatusLines()
     for _, took in pairs(DL.taken) do n = n + #took end
     out[#out + 1] = "Gesprächsdaten (C_GossipInfo): " .. (DL.Usable() and "ja" or "nein")
         .. " · Ereignisse übernommen: " .. n
-    out[#out + 1] = string.format("Gezeigt %d · gewählt %d · gescheitert %d", stats.shown, stats.picked, stats.failed)
+    out[#out + 1] = string.format("Gezeigt %d · gewählt %d · gescheitert %d · Warnung zur Testeinstellung geschlossen %d",
+        stats.shown, stats.picked, stats.failed, stats.warnHidden)
     if DL.lastError then out[#out + 1] = "Zuletzt gescheitert: " .. DL.lastError end
     local l = DL.camLog
     if l.start then
@@ -1118,7 +1162,7 @@ function DL.Boot()
     for i = 1, 4 do
         local pop = _G["StaticPopup" .. i]
         if type(pop) == "table" and pop.HookScript then
-            pop:HookScript("OnShow", function() DL.FadeBack(true) end)
+            pop:HookScript("OnShow", DL.OnPopup)
         end
     end
     -- Zeigt sich ein Fenster des Spiels trotzdem, steht es im Bericht.
