@@ -1588,6 +1588,12 @@ beide ab Werk aus.
   Testeinstellungen (`EXPERIMENTAL_CVAR_WARNING` an `UIParent`) wird nur für
   diesen Aufruf abgemeldet und nach 0,5 s wieder angemeldet – andere Addons
   bekommen sie weiter; die Seite nennt die Testeinstellung.
+- 6.23.1.1: `CustomGossipFrameManager` (neuer Client) öffnet das Gespräch –
+  mit in `DL.EVENTS`; `OnShow` von `GossipFrame`/`QuestFrame` zählt, falls doch
+  eins aufgeht. Platz ab Werk wie das Questfenster (oben links, `DL.HOME`),
+  `dlgPos` gemerkt. Schulter −1,0 (NPC nach rechts, weg vom Fenster). Kamera
+  vor dem Aufbau, `cameraZoomSpeed` 8 während des Gesprächs, 2 s nach dem
+  Ende zurück.
 - Nicht gebaut: Oberfläche ausblenden, Vorlesen.
 
 ### Kräuter und Erz im Wechsel (`ui/gathertrack.lua`, 6.22.0.0)

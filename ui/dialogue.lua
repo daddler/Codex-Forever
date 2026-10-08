@@ -48,13 +48,16 @@ DL.MAX_ROWS = 12
 DL.MAX_ITEMS = 10
 
 -- Ereignisse, die den Fenstern des Spiels genommen werden.
+-- 6.23.1.1 (Beta-Test: altes Fenster UND neues): auf dem neuen Client
+-- oeffnet nicht GossipFrame das Gespraech, sondern CustomGossipFrameManager.
 DL.EVENTS = {
+    CustomGossipFrameManager = { "GOSSIP_SHOW", "GOSSIP_CLOSED" },
     GossipFrame = { "GOSSIP_SHOW", "GOSSIP_CLOSED" },
     QuestFrame = { "QUEST_GREETING", "QUEST_DETAIL", "QUEST_PROGRESS", "QUEST_COMPLETE",
                    "QUEST_FINISHED", "QUEST_ITEM_UPDATE" },
 }
 
-local stats = { shown = 0, picked = 0, failed = 0 }
+local stats = { shown = 0, picked = 0, failed = 0, gameShown = 0 }
 DL.stats = stats
 DL.taken = {}            -- [Fenster] = { Ereignis, ... }, was abgemeldet ist
 DL.state = nil           -- "gossip", "greeting", "detail", "progress", "complete"
@@ -227,6 +230,19 @@ local function OnUpdate(_, el)
     if body.SetAlphaGradient then pcall(body.SetAlphaGradient, body, math.floor(reveal), 30) end
 end
 
+-- Platz: gemerkt, sonst wo das Questfenster des Spiels steht (oben links).
+DL.HOME = { x = 16, y = -116 }
+function DL.Place()
+    if not win then return end
+    win:ClearAllPoints()
+    local p = K.Get(KEY, "dlgPos")
+    if type(p) == "table" and type(p.x) == "number" and type(p.y) == "number" then
+        win:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", p.x, p.y)
+    else
+        win:SetPoint("TOPLEFT", UIParent, "TOPLEFT", DL.HOME.x, DL.HOME.y)
+    end
+end
+
 function DL.Build()
     if win then return win end
     win = CreateFrame("Frame", "WeintCodexDialogue", UIParent)
@@ -238,8 +254,12 @@ function DL.Build()
     win:SetMovable(true)
     win:RegisterForDrag("LeftButton")
     win:SetScript("OnDragStart", win.StartMoving)
-    win:SetScript("OnDragStop", win.StopMovingOrSizing)
-    win:SetPoint("LEFT", UIParent, "CENTER", 120, 40)
+    win:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local l, t = K.Plain(self:GetLeft()), K.Plain(self:GetTop())
+        if type(l) == "number" and type(t) == "number" then K.Set(KEY, "dlgPos", { x = l, y = t }) end
+    end)
+    DL.Place()
     win:Hide()
     K.Kachel(win, { alpha = 0.95, shadow = 10 })
     local r, g, b = Accent()
@@ -478,7 +498,6 @@ function DL.Draw(c)
     local combat = _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false)
     win:EnableKeyboard(keys and not combat and true or false)
     win:Show()
-    DL.CamIn()
 end
 
 --------------------------------------------------
@@ -501,7 +520,14 @@ end
 
 DL.CAM_WAIT = 0.3
 DL.SHOULDER = "test_cameraOverShoulder"
-DL.SHOULDER_VALUE = 1.5
+-- Negativ: die Kamera rueckt nach links, der NPC nach rechts - weg vom
+-- Fenster, das seit 6.23.1.1 links steht (Platz des Questfensters).
+DL.SHOULDER_VALUE = -1.0
+-- Langsamer heran (6.23.1.1, Beta-Test: "direkt und langsamer"):
+-- cameraZoomSpeed fuer die Dauer des Gespraechs, danach zurueck.
+DL.ZOOM_SPEED_CVAR = "cameraZoomSpeed"
+DL.ZOOM_SPEED = 8
+DL.SPEED_BACK = 2.0
 DL.WARNING = "EXPERIMENTAL_CVAR_WARNING"
 DL.cam = { saved = nil, shoulder = false }
 
@@ -544,8 +570,22 @@ local function Zoom()
     return type(z) == "number" and z or nil
 end
 
+local function SpeedIn()
+    if DL.cam.speed then return end
+    local PF = WeintCodex.UIProfile
+    DL.cam.speed = PF and PF.SetCVar and PF.SetCVar(DL.ZOOM_SPEED_CVAR, DL.ZOOM_SPEED, KEY) and true or false
+end
+local function SpeedBack()
+    if not DL.cam.speed or (win and win:IsShown()) then return end
+    DL.cam.speed = false
+    local PF = WeintCodex.UIProfile
+    if PF and PF.Release then PF.Release(DL.ZOOM_SPEED_CVAR) end
+end
+DL.SpeedBack = SpeedBack
+
 function DL.CamIn()
     if not K.Get(KEY, "dlgCam") or DL.cam.saved then return false end
+    SpeedIn()
     ShoulderIn()
     local z = Zoom()
     local target = tonumber(K.Get(KEY, "dlgCamDist")) or 4
@@ -562,6 +602,8 @@ function DL.CamOut()
     if not saved then return false end
     DL.cam.saved = nil
     local z = Zoom()
+    local t = _G.C_Timer
+    if t and t.After then t.After(DL.SPEED_BACK, SpeedBack) end
     if not (z and _G.CameraZoomOut) or z >= saved - 0.5 then return false end
     _G.CameraZoomOut(saved - z)
     return true
@@ -578,6 +620,7 @@ function DL.Show(state)
     if not DL.Active() then return false end
     if state ~= "complete" then DL.choice = nil end
     DL.state = state
+    DL.CamIn()                         -- sofort, vor dem Aufbau
     local ok, err = pcall(function() DL.Draw(DL.Collect(state)) end)
     if not ok then DL.Fail(err) return false end
     stats.shown = stats.shown + 1
@@ -703,6 +746,9 @@ function DL.StatusLines()
         .. " · Ereignisse übernommen: " .. n
     out[#out + 1] = string.format("Gezeigt %d · gewählt %d · gescheitert %d", stats.shown, stats.picked, stats.failed)
     if DL.lastError then out[#out + 1] = "Zuletzt gescheitert: " .. DL.lastError end
+    if stats.gameShown > 0 then
+        out[#out + 1] = "Fenster des Spiels trotzdem offen: " .. stats.gameShown .. "× (zuletzt " .. tostring(DL.gameShownName) .. ")"
+    end
     return out
 end
 
@@ -724,7 +770,8 @@ local function Build(B)
             format = function(v) return string.format("%d m", v) end })
     B:Row({ type = "toggle", label = "NPC zur Seite rücken", key = "dlgShoulder", disabled = camOff,
             description = "Nutzt eine Testeinstellung des Spiels (Schulterkamera); danach zurück auf deinen Wert." },
-          { type = "empty" })
+          { type = "button", label = "Platz", text = "Zurück an den Platz des Questfensters", disabled = off,
+            onClick = function() K.Set(KEY, "dlgPos", nil) DL.Place() end })
 end
 
 local mod = K.Module(KEY)
@@ -744,6 +791,18 @@ boot:RegisterEvent("PLAYER_LOGIN")
 boot:SetScript("OnEvent", function()
     -- Abgestuerzt mitten im Gespraech: die Schulter steht noch - zurueck.
     local PF = WeintCodex.UIProfile
-    if PF and PF.Release then PF.Release(DL.SHOULDER) end
+    if PF and PF.Release then
+        PF.Release(DL.SHOULDER)
+        PF.Release(DL.ZOOM_SPEED_CVAR)
+    end
+    -- Zeigt sich ein Fenster des Spiels trotzdem, steht es im Bericht.
+    for _, name in ipairs({ "GossipFrame", "QuestFrame" }) do
+        local f = _G[name]
+        if type(f) == "table" and f.HookScript then
+            f:HookScript("OnShow", function()
+                if DL.Active() then stats.gameShown = stats.gameShown + 1 DL.gameShownName = name end
+            end)
+        end
+    end
     Apply()
 end)

@@ -1109,7 +1109,7 @@ end
 -- 6.23.0.0: Gespraeche im Codex-Stil (nach dem Verhalten von DialogueUI).
 do
     local G = _G
-    local names = { "C_GossipInfo", "GossipFrame", "QuestFrame", "UnitName", "GetTitleText", "GetQuestText",
+    local names = { "C_GossipInfo", "GossipFrame", "QuestFrame", "CustomGossipFrameManager", "UnitName", "GetTitleText", "GetQuestText",
         "GetObjectiveText", "GetNumQuestRewards", "GetNumQuestChoices", "GetQuestItemInfo", "AcceptQuest",
         "DeclineQuest", "GetRewardText", "GetQuestReward", "GetRewardMoney", "GetRewardXP", "CloseQuest",
         "InCombatLockdown", "GetCameraZoom", "CameraZoomIn", "CameraZoomOut", "C_Timer", "C_CVar", "StaticPopup_Hide" }
@@ -1128,6 +1128,10 @@ do
             return f
         end
         G.GossipFrame, G.QuestFrame = GameFrame("GossipFrame"), GameFrame("QuestFrame")
+        -- 6.23.1.1: auf dem neuen Client oeffnet der Verwalter das Gespraech.
+        G.CustomGossipFrameManager = GameFrame("CustomGossipFrameManager")
+        G.CustomGossipFrameManager:RegisterEvent("GOSSIP_SHOW")
+        G.CustomGossipFrameManager:RegisterEvent("GOSSIP_CLOSED")
         for name, events in pairs(DL.EVENTS) do for _, e in ipairs(events) do G[name]:RegisterEvent(e) end end
         G.InCombatLockdown = function() return false end
         G.UnitName = function() return "Wache Thomas" end
@@ -1147,7 +1151,7 @@ do
         G.CameraZoomOut = function(d) zoom = zoom + d end
         G.C_Timer = { After = function(_, fn) later = fn end }
         -- Schulter: Testeinstellung, Warnung des Spiels abgemeldet und zurueck.
-        local cvars, popupHidden = { test_cameraOverShoulder = "0" }, 0
+        local cvars, popupHidden = { test_cameraOverShoulder = "0", cameraZoomSpeed = "20" }, 0
         G.C_CVar = { GetCVar = function(n) return cvars[n] end, SetCVar = function(n, v) cvars[n] = v return true end }
         G.StaticPopup_Hide = function(which) if which == "EXPERIMENTAL_CVAR_WARNING" then popupHidden = popupHidden + 1 end end
         local up = UIParent
@@ -1166,12 +1170,14 @@ do
         K.Set("comfort", "dlgOn", false)
         assert(G.GossipFrame:IsEventRegistered("GOSSIP_SHOW"), "Spiel ohne Gespraech, obwohl aus")
         K.Set("comfort", "dlgOn", true)
-        assert(not G.GossipFrame:IsEventRegistered("GOSSIP_SHOW") and not G.QuestFrame:IsEventRegistered("QUEST_DETAIL"),
+        assert(not G.GossipFrame:IsEventRegistered("GOSSIP_SHOW") and not G.QuestFrame:IsEventRegistered("QUEST_DETAIL")
+            and not G.CustomGossipFrameManager:IsEventRegistered("GOSSIP_SHOW"),
             "Fenster des Spiels bekommen weiter Ereignisse")
         stub.FireEvent("GOSSIP_SHOW")
         assert(DL.win and DL.win:IsShown() and DL.state == "gossip", "Gespraech nicht gezeigt")
         assert(zoom == 4 and DL.cam.saved == 15, "Kamera nicht heran: " .. zoom)
-        assert(cvars.test_cameraOverShoulder == "1.5" and not warn, "Schulter nicht gesetzt oder Warnung nicht still")
+        assert(cvars.test_cameraOverShoulder == "-1" and not warn, "Schulter nicht gesetzt oder Warnung nicht still")
+        assert(cvars.cameraZoomSpeed == "8", "nicht langsamer heran")
         later()
         assert(warn and popupHidden >= 1, "Warnung danach nicht wieder angemeldet")
         -- Wechsel Gespraech -> Questtext: kurz zu, gleich wieder offen - bleibt nah.
@@ -1184,6 +1190,9 @@ do
         later()
         assert(zoom == 15 and DL.cam.saved == nil, "Kamera nicht zurueck: " .. zoom)
         assert(cvars.test_cameraOverShoulder == "0", "Schulter nicht zurueck")
+        assert(cvars.cameraZoomSpeed == "8", "Tempo zu frueh zurueck - das Herauszoomen liefe schnell")
+        later()
+        assert(cvars.cameraZoomSpeed == "20", "Tempo nicht zurueck")
         -- Selbst weiter herausgezoomt: bleibt so.
         stub.FireEvent("GOSSIP_SHOW")
         zoom = 25

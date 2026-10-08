@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.23.1.1",
+        date    = "08.10.2026",
+        notes   = {
+            "|cff7C6CFFGespräche: nur noch ein Fenster.|r Beim Questgeber ging zusätzlich das Fenster des Spiels auf – jetzt nicht mehr. Das Gesprächsfenster steht ab Werk dort, wo sonst das Questfenster steht, und merkt sich, wohin du es ziehst. Die Kamera fährt sofort und langsamer heran, der NPC rückt nach rechts, weg vom Fenster.",
+        },
+    },
+    {
         version = "6.23.1.0",
         date    = "08.10.2026",
         notes   = {

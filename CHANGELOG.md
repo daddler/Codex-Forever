@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.23.1.1] – 2026-10-08
+
+**Gespräche: nur noch ein Fenster.** Beim Questgeber ging zusätzlich das Fenster des Spiels auf – jetzt nicht mehr. Das Gesprächsfenster steht ab Werk dort, wo sonst das Questfenster steht, und merkt sich, wohin du es ziehst. Die Kamera fährt sofort und langsamer heran, der NPC rückt nach rechts, weg vom Fenster.
+
+### Technisch
+
+- Beta-Test 6.23.1.0, Bild: altes Gesprächsfenster links und neues zugleich. Auf dem neuen Client öffnet `CustomGossipFrameManager` das Gespräch, nicht `GossipFrame` – jetzt in `DL.EVENTS`. Zeigt sich ein Fenster des Spiels trotzdem, zählt `/wcui prüfen` es („Fenster des Spiels trotzdem offen“).
+- Platz: ab Werk oben links wie das Questfenster (`DL.HOME`, 16/−116), gezogen in `dlgPos` gemerkt; Knopf „Zurück an den Platz des Questfensters“. Schulter darum −1,0 (NPC nach rechts).
+- Kamera: `DL.CamIn` vor dem Aufbau statt danach; `cameraZoomSpeed` = 8 für das Gespräch über `PF.SetCVar`, 2 s nach dem Ende über `PF.Release` zurück (das Herauszoomen bleibt sanft), auch nach Absturz beim Einloggen.
+- Prüflauf: Verwalter abgemeldet, Tempo gesetzt und erst nach dem Herauszoomen zurück; drei Gegenproben gefangen (die erste erst, nachdem der Prüflauf die Ereignisse des Verwalters fest anmeldet).
+
 ## [6.23.1.0] – 2026-10-08
 
 **Gespräche: die Kamera kommt näher.** Sprichst du einen NPC an, fährt die Kamera heran und rückt ihn neben das Gesprächsfenster – nach dem Gespräch zurück auf deinen Abstand. Wechselst du nur vom Gespräch in den Questtext, bleibt sie nah; hast du selbst weiter herausgezoomt, bleibt es so. Abstand unter Komfort → Gespräche.
