@@ -587,6 +587,12 @@ local function BuildInfoBar()
             if acc < 1 then return end
             acc = 0
             CH.UpdateInfoBar()
+            -- 6.26.5.0 (Beta-Test: "beim Einloggen ist die untere Leiste
+            -- manchmal weg, bis ich zweimal Enter druecke"): beim Einloggen
+            -- hat die Eingabezeile kurz den Fokus, und das Ende davon meldet
+            -- der Client nicht immer. Einmal je Sekunde nachsehen, ob die
+            -- Zeile wirklich noch geschrieben wird.
+            CH.UpdateEditState()
         end))
         for _, e in ipairs({ "PLAYER_MONEY", "BAG_UPDATE", "UPDATE_INVENTORY_DURABILITY", "PLAYER_ENTERING_WORLD" }) do
             pcall(info.RegisterEvent, info, e)

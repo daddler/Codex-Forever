@@ -13410,7 +13410,12 @@ do
         focus = true
         CH.UpdateEditState()
         assert(mouse == true, "beim Schreiben keine Maus in der Zeile")
+        assert(info:GetAlpha() == 0, "Infozeile beim Schreiben sichtbar")
+        -- 6.26.5.0: Fokus weg ohne Meldung (Einloggen) - der Sekundentakt holt
+        -- die Infozeile zurueck.
         focus = false
+        info:GetScript("OnUpdate")(info, 1.5)
+        assert(info:GetAlpha() == 1, "Infozeile bleibt nach stillem Fokusende weg")
         CH.UpdateEditState()
         eb.EnableMouse, eb.HasFocus = oldEM, oldHF
         -- Gold: der Tooltip ist eine Funktion und schreibt.
