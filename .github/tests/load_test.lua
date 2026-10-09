@@ -4279,6 +4279,8 @@ do
         assert(ES.BaseName() == "Modern", "Grundlage nicht die Vorlage des Spiels")
         local okA, why = ES.Apply()
         assert(okA, "Einrichten schlug fehl: " .. tostring(why))
+        assert(K.Root().setupVerify == true, "nach dem Einrichten keine Pruefung vorgemerkt")
+        K.Root().setupVerify = nil
         local l = saved and saved.layouts[2]
         assert(l and l.layoutName == "WeintCodex" and l.layoutType == 1, "Layout nicht angelegt")
         assert(saved.layouts[1].layoutName == "EllesmereUI Forever v4", "bisheriges Layout ueberschrieben")
@@ -16763,6 +16765,35 @@ do
         E.FinishAnim()
     end)
     Check(ok, "Gestaltungsmodus: X/Y eintippen, Einrasten an Nachbarn und Bildschirmrand" .. (ok and "" or (": " .. tostring(err))))
+end
+
+
+-- 6.26.18.0: Einrichten in zwei Klicks, danach prueft WeintCodex selbst.
+do
+    local ok, err = pcall(function()
+        local ES = WeintCodex.UISetup
+        local h, txt, kind = ES.ResultText({ layoutRead = true, active = false, scaleOk = true, bad = 0 })
+        assert(kind == "redo" and txt:find("nicht aktiv", 1, true), "inaktives Layout nicht erkannt")
+        h, txt, kind = ES.ResultText({ layoutRead = true, active = true, scaleOk = false, bad = 0 })
+        assert(kind == "redo" and h == "Größe passt nicht", "Skalierung nicht erkannt")
+        h, txt, kind = ES.ResultText({ layoutRead = true, active = true, scaleOk = true, bad = 3 })
+        assert(kind == "redo" and txt:find("3 Rahmen", 1, true), "Rahmen daneben nicht erkannt")
+        h, txt, kind = ES.ResultText({ layoutRead = true, active = true, scaleOk = true, bad = 0 })
+        assert(kind == "ok" and h == "Alles steht", "Erfolg nicht erkannt")
+        h, txt, kind = ES.ResultText({ layoutRead = false })
+        assert(kind == "unknown", "nicht lesbar als Erfolg gemeldet")
+        -- Nur nach "Einrichten", einmal.
+        local root = K.Root()
+        root.setupVerify = nil
+        assert(not ES.Verify(), "ungefragt geprueft")
+        root.setupVerify = true
+        assert(ES.Verify() and ES.IsShown() and root.setupVerify == nil, "nach dem Einrichten nicht geprueft")
+        assert(not ES.Verify(), "zweimal geprueft")
+        local b = ES.Button("redo") or ES.Button("done") or ES.Button("close")
+        assert(b, "Ergebnis ohne Knopf")
+        if ES.Button("close") then ES.Button("close"):Click() elseif ES.Button("done") then ES.Button("done"):Click() end
+    end)
+    Check(ok, "Einrichten: zwei Schritte, Pruefung nach dem Neuladen mit naechstem Schritt" .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then

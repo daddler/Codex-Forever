@@ -449,6 +449,9 @@ function ES.Apply()
     local ok, why = ApplyLayout(report)
     if not ok then return false, why end
     report.cvars, report.unknownCVars = ApplyCVars()
+    -- Nach dem Neuladen selbst nachsehen (6.26.18.0).
+    local root = K.Root()
+    if root then root.setupVerify = true end
     -- Die eigenen Rahmen bleiben, wo der Spieler sie im Gestaltungsmodus
     -- hingezogen hat (6.6.1.3 setzte sie zurueck - Beta-Test: die
     -- Schadensanzeige wanderte von oben links nach unten rechts). Ohne
@@ -532,6 +535,10 @@ function ES.Check()
     end
     out[#out + 1] = string.format("%d Rahmen am Platz, %d daneben, %d nicht messbar (versteckt oder nicht da).",
         good, #bad, #unknown)
+    local activeOk = ES.LayoutActive() == true
+    local uh = K.Plain(UIParent.GetHeight and UIParent:GetHeight())
+    ES.lastCheck = { layoutRead = info and true or false, active = activeOk, good = good, bad = #bad,
+                     unknown = #unknown, scaleOk = type(uh) ~= "number" or math.abs(uh - ES.DESIGN_HEIGHT) <= 2 }
     for _, line in ipairs(bad) do out[#out + 1] = line end
     if #unknown > 0 then out[#out + 1] = "Nicht messbar: " .. table.concat(unknown, ", ") end
     local cf = _G.ChatFrame1
@@ -647,30 +654,22 @@ end
 
 local ShowDone, ShowFailed
 
+-- 6.26.18.0 (Beta-Test: "Das Einrichten der UI muss einfacher gemacht
+-- werden, der Nutzer mehr an die Hand genommen"). Drei Saetze statt einer
+-- Seite, zwei Klicks (Einrichten, Neu laden), und nach dem Neuladen sieht
+-- WeintCodex selbst nach (ES.Verify) und sagt in einem Satz, was zu tun ist.
 local function ShowQuestion()
-    local baseName = ES.BaseName()
-    SetText("Einrichtung",
-        "WeintCodex einrichten?",
-        "WeintCodex stellt die ganze Oberfläche auf seinen Stand:\n"
-        .. "•  Alle Rahmen des Spiels an feste Plätze – Aktionsleisten, Chat, Minikarte, Buffs, Questliste,"
-        .. " Taschen, Menü, Gruppe (schlachtzugsartig, mit HoTs und Schilden) und Schlachtzug. Dafür entsteht im"
-        .. " Bearbeitungsmodus das Layout „WeintCodex“ auf Grundlage "
-        .. (baseName and ("der Vorlage „" .. tostring(baseName) .. "“") or "der Vorlage des Spiels")
-        .. ". Dein bisheriges Layout wird nicht verändert.\n"
-        .. "•  Abklingzeitmanager kleiner, nur Fähigkeiten und ihre Laufzeiten; seine Buff-Symbole klein über"
-        .. " dem Spielerrahmen – welche, wählst du im Abklingzeitmanager des Spiels.\n"
-        .. "•  Einige Spieleinstellungen (Chatstil, Flüstern im Chat, Leisten sperren, keine Tutorials) –"
-        .. " WeintCodex merkt sich deine bisherigen Werte.\n\n"
-        .. "Was du selbst gebaut hast, bleibt: die Plätze des Abklingzeitmanagers, deine verschobenen"
-        .. " WeintCodex-Rahmen, die Skalierung der Oberfläche und deine Chatreiter. Danach einmal neu laden."
-        .. " Schaltest du die Oberfläche aus, ist dein bisheriges Layout wieder aktiv und deine Einstellungen"
-        .. " stehen wie vorher.")
+    SetText("Schritt 1 von 2",
+        "Oberfläche einrichten",
+        "WeintCodex stellt Aktionsleisten, Chat, Minikarte, Questliste und Gruppe an feste Plätze"
+        .. " und passt die Größe an deinen Bildschirm an.\n\n"
+        .. "Dein eigenes Layout und deine Chatreiter bleiben – schaltest du die Oberfläche aus, ist alles wieder wie vorher.")
     SetButtons({
         { key = "later", text = "Später", kind = "secondary", onClick = function()
             Close()
             Say("Einrichten geht jederzeit mit /wcui einrichten.")
         end },
-        { key = "apply", text = "Alles einrichten", kind = "primary", onClick = function()
+        { key = "apply", text = "Einrichten", kind = "primary", onClick = function()
             local ok, why = ES.Apply()
             if ok then ShowDone() else ShowFailed(why) end
         end },
@@ -679,31 +678,72 @@ end
 
 ShowDone = function()
     local r = ES.report or {}
-    local lines = {
-        "•  " .. tostring(r.frames or 0) .. " Rahmen des Spiels im Layout „WeintCodex“ gesetzt, das Layout ist aktiv.",
-    }
-    if r.missing and #r.missing > 0 then
-        lines[#lines + 1] = "•  Nicht im Layout des Spiels gefunden: " .. table.concat(r.missing, ", ") .. "."
-    end
-    lines[#lines + 1] = "•  " .. tostring(r.cvars or 0) .. " Spieleinstellungen gesetzt"
-        .. ((r.unknownCVars and #r.unknownCVars > 0) and (", unbekannt: " .. table.concat(r.unknownCVars, ", ")) or "")
-        .. "."
-    local d = ES.done or {}
-    local size = d["essential.IconSize"] and "Symbole auf 80 %" or "Größe NICHT gesetzt (Regler des Spiels unbekannt)"
-    local buffs = (d["bufficon.VisibleSetting"] and "Buff-Symbole über dem Spielerrahmen")
-        or "Buff-Symbole NICHT eingeschaltet (Einstellung unbekannt)"
-    lines[#lines + 1] = "•  Abklingzeitmanager: " .. size .. ", " .. buffs .. "."
-    if (r.kept or 0) > 0 then
-        lines[#lines + 1] = "•  Abklingzeitmanager: " .. tostring(r.kept) .. " Plätze aus „" .. tostring(r.keptFrom)
-            .. "“ übernommen."
-    end
-    SetText("Einrichtung",
-        "Fertig – jetzt neu laden",
-        table.concat(lines, "\n") .. "\n\nErst nach dem Neuladen steht alles an seinem Platz – bis dahin bitte nicht"
-        .. " in den Kampf. Danach zeigt /wcui einrichten pruefen, ob jeder Rahmen dort steht, wo er soll.")
+    local miss = (r.missing and #r.missing > 0)
+        and ("\n\nNicht im Layout des Spiels gefunden: " .. table.concat(r.missing, ", ") .. ".") or ""
+    SetText("Schritt 2 von 2",
+        "Eingerichtet – jetzt neu laden",
+        "Erst nach dem Neuladen steht alles an seinem Platz. Danach prüft WeintCodex selbst, ob jeder Rahmen"
+        .. " richtig steht, und sagt dir Bescheid." .. miss)
     SetButtons({
         { key = "reload", text = "Jetzt neu laden", reload = true },
     })
+end
+
+-- Nach dem Neuladen: das Ergebnis in einem Satz, mit dem naechsten Schritt.
+function ES.ResultText(c)
+    c = c or ES.lastCheck or {}
+    if c.layoutRead == false then
+        return "Nicht prüfbar", "Das Spiel gibt seine Layouts nicht heraus. Sieh dich kurz um – steht etwas schief,"
+            .. " verschiebst du es im Gestaltungsmodus.", "unknown"
+    end
+    if not c.active then
+        return "Noch nicht eingerichtet", "Das Layout „WeintCodex“ ist bei diesem Charakter nicht aktiv."
+            .. " Ein Klick auf „Noch einmal einrichten“ behebt das.", "redo"
+    end
+    if not c.scaleOk then
+        return "Größe passt nicht", "Die Skalierung der Oberfläche wurde verändert. „Noch einmal einrichten“"
+            .. " stellt sie zurück.", "redo"
+    end
+    if (c.bad or 0) > 0 then
+        return "Fast fertig", string.format("%d Rahmen stehen nicht an ihrem Platz. „Noch einmal einrichten“ setzt"
+            .. " sie zurück; was du selbst verschieben willst, verschiebst du im Gestaltungsmodus.", c.bad), "redo"
+    end
+    return "Alles steht", "Die Oberfläche ist eingerichtet. Verschieben kannst du jeden Rahmen im Gestaltungsmodus"
+        .. " (ziehen, Rechtsklick: Einstellungen).", "ok"
+end
+
+function ES.ShowResult()
+    Build()
+    ES.Check()
+    local head, text, kind = ES.ResultText()
+    SetText("Einrichtung", head, text)
+    local defs = {}
+    if kind == "redo" then
+        defs[#defs + 1] = { key = "close", text = "Schließen", kind = "secondary", onClick = Close }
+        defs[#defs + 1] = { key = "redo", text = "Noch einmal einrichten", kind = "primary", onClick = function()
+            local ok, why = ES.Apply()
+            if ok then ShowDone() else ShowFailed(why) end
+        end }
+    else
+        defs[#defs + 1] = { key = "design", text = "Gestaltungsmodus", kind = "secondary", onClick = function()
+            Close()
+            K.SetUnlocked(true)
+        end }
+        defs[#defs + 1] = { key = "done", text = "Fertig", kind = "primary", onClick = Close }
+    end
+    SetButtons(defs)
+    dimmer:Show()
+    return kind
+end
+
+-- Einmal nach dem Neuladen, das auf "Einrichten" folgt.
+function ES.Verify()
+    local root = K.Root()
+    if not (root and root.setupVerify) then return false end
+    if K.InCombat() then K.AfterCombat(ES.Verify) return false end
+    root.setupVerify = nil
+    ES.ShowResult()
+    return true
 end
 
 ShowFailed = function(why)
@@ -760,6 +800,9 @@ ev:RegisterEvent("PLAYER_ENTERING_WORLD")
 ev:SetScript("OnEvent", function(_, _, isInitialLogin, isReloadingUi)
     if not (isInitialLogin or isReloadingUi) then return end
     ES._reload = isReloadingUi and true or false
-    if isReloadingUi or not K.UIEnabled() then return end
+    if not K.UIEnabled() then return end
+    -- Nach dem Einrichten: nachsehen, wenn alles steht (3 s).
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(3, ES.Verify) end
+    if isReloadingUi then return end
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(2, ES.MaybeAsk) end
 end)

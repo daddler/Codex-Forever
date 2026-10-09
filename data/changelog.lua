@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.18.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFEinrichten in zwei Schritten.|r Das Fenster sagt in drei Sätzen, was passiert: „Einrichten“, dann „Jetzt neu laden“.",
+            "|cff7C6CFFWeintCodex prüft danach selbst.|r Nach dem Neuladen siehst du, ob alles steht – und wenn nicht, was zu tun ist, mit dem passenden Knopf („Noch einmal einrichten“ oder „Gestaltungsmodus“).",
+        },
+    },
+    {
         version = "6.26.17.0",
         date    = "10.10.2026",
         notes   = {
