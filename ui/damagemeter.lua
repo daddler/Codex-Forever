@@ -2091,6 +2091,28 @@ function Win:CycleMode(back)
     self:Refresh()
 end
 
+-- 6.26.5.0 (Beta-Test: "direkt eine Kategorie per Dropdown statt durch
+-- alle durchzuklicken"): Linksklick auf den Titel oeffnet die Liste der
+-- Messarten (Menue des Spiels, MenuUtil). Ohne MenuUtil weiter wie vorher.
+function Win:SetMode(key)
+    K.Set(KEY, "w" .. self.index .. "mode", key)
+    self:Refresh()
+end
+
+function Win:ModeMenu(owner)
+    local MU = _G.MenuUtil
+    if not (MU and MU.CreateContextMenu) then self:CycleMode(false) return false end
+    local w = self
+    MU.CreateContextMenu(owner, function(_, root)
+        if root.CreateTitle then root:CreateTitle("Messart") end
+        for _, m in ipairs(Modes()) do
+            root:CreateRadio(m.label, function() return w:Mode().key == m.key end,
+                function() w:SetMode(m.key) end)
+        end
+    end)
+    return true
+end
+
 local function CreateWindow(i)
     local w = setmetatable({ index = i, rows = {} }, { __index = Win })
     local f = CreateFrame("Frame", i == 1 and "WeintCodexDamageMeter" or ("WeintCodexDamageMeter" .. i), UIParent)
@@ -2121,11 +2143,15 @@ local function CreateWindow(i)
     w.title = K.NewText(tb, 11)
     w.title:SetPoint("LEFT", tb, "LEFT", 0, 0)
     w.title:SetTextColor(unpack(C.textBright))
-    tb:SetScript("OnClick", function(_, button) w:CycleMode(button == "RightButton") end)
+    tb:SetScript("OnClick", function(self, button)
+        if button == "RightButton" then w:CycleMode(false) else w:ModeMenu(self) end
+    end)
+    if tb.EnableMouseWheel then tb:EnableMouseWheel(true) end
+    tb:SetScript("OnMouseWheel", function(_, delta) w:CycleMode(delta > 0) end)
     tb:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:SetText("Messart", 1, 1, 1)
-        GameTooltip:AddLine("Linksklick: nächste, Rechtsklick: vorige.", 0.7, 0.7, 0.75, true)
+        GameTooltip:AddLine("Linksklick: Liste aller Messarten. Rechtsklick oder Mausrad: weiterblättern.", 0.7, 0.7, 0.75, true)
         GameTooltip:Show()
     end)
     tb:SetScript("OnLeave", function() GameTooltip:Hide() end)

@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "09.10.2026",
         notes   = {
             "|cff7C6CFFAcht neue Schriften.|r Unter Allgemein → Schrift und Balken: Barlow, Roboto, Fira, Oswald, Rajdhani, Exo 2 und Inter, dazu Arial Narrow aus dem Spiel – für Plaketten, Rahmen und Hinweise.",
+            "|cff7C6CFFMessart der Schadensanzeige direkt wählen.|r Ein Klick auf den Titel öffnet die Liste aller Messarten; Rechtsklick oder Mausrad blättert weiter wie bisher.",
             "|cff7C6CFFInfozeile unter dem Chat bleibt da.|r Nach dem Einloggen fehlte sie manchmal, bis man zweimal Enter drückte – jetzt kommt sie von selbst zurück.",
             "|cff7C6CFFZielrahmen nach dem Einloggen mit Namen.|r Beim ersten Einloggen blieben Name, Stufe und Leben am Ziel leer, bis man ein paar Mal das Ziel gewechselt hatte – jetzt sind sie gleich da.",
         },

@@ -8475,6 +8475,21 @@ do
         assert(DM.RowsShown(2) == 2 and DM.Window(2):Mode().key == "HealingDone", "Fenster 2 misst Heilung")
         DM.Window(3):CycleMode()
         local third = DM.Window(3):Mode().key
+        -- 6.26.5.0: Linksklick auf den Titel oeffnet die Liste aller Messarten.
+        local oldMU = _G.MenuUtil
+        local radios, pick = {}, nil
+        _G.MenuUtil = { CreateContextMenu = function(_, fn)
+            fn(nil, { CreateTitle = function() end,
+                      CreateRadio = function(_, label, isSel, set) radios[#radios + 1] = { label, isSel, set } end })
+        end }
+        DM.Window(3).titleButton:GetScript("OnClick")(DM.Window(3).titleButton, "LeftButton")
+        assert(#radios >= 3, "Liste der Messarten: " .. #radios)
+        pick = radios[#radios]
+        assert(not pick[2](), "letzte Messart schon gewaehlt")
+        pick[3]()
+        assert(pick[2]() and not radios[1][2](), "Wahl aus der Liste wirkt nicht")
+        DM.Window(3):SetMode(third)
+        _G.MenuUtil = oldMU
         DM.RemoveWindow(2)
         assert(DM.WindowCount() == 2 and DM.Window(2):Mode().key == third, "Fenster 3 rueckt auf Platz 2")
         assert(not DM.Window(3).frame:IsShown(), "das dritte Fenster ist weg")

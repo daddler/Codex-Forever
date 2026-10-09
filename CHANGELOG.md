@@ -13,6 +13,7 @@ nicht zusammen.
 
 ### Neu
 
+- Schadensanzeige: Linksklick auf den Titel öffnet die Messarten als Liste (`MenuUtil.CreateContextMenu`, Radio je Messart, `Win:SetMode`); Rechtsklick und Mausrad blättern weiter (Beta-Test: „direkt per Dropdown statt durchklicken“). Ohne `MenuUtil` wie vorher.
 - Acht weitere Schriften für die Spielwelt (Beta-Test: „mehr Schriftarten“): Barlow Condensed, Roboto Condensed, Fira Sans Condensed, Oswald, Rajdhani, Exo 2, Inter – alle OFL, statisch, Umlaute geprüft, Lizenz je Familie in `media/fonts/` – und Arial Narrow aus dem Client (`Fonts\ARIALN.TTF`; fehlt sie, greift der Rückfall in `K.SetFont`). `load_test.lua` prüft je Wahl Datei und Lizenz.
 
 ### Behoben
