@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.9.2] – 2026-10-10
+
+### Behoben
+
+- `/wcui` ging hart auf (Beta-Test): `WeintCodex.SoftWindow` hängte sich vor `frame:SetScript("OnShow", SyncChrome)` ein – `SetScript` ersetzt einen vorher eingehängten Haken. Jetzt danach; der Prüflauf ruft das zuletzt gesetzte `OnShow`.
+
+### Geändert
+
+- Auftritt: Logo 220 → 300 Bildpunkte (`media/ui/logo_512.tga` statt `logo_256.tga`), Schweben 0,95 → 1,35 s.
+
 ## [6.26.9.1] – 2026-10-10
 
 ### Geändert

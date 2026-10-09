@@ -844,7 +844,6 @@ function O.Build()
     frame:EnableMouse(true)
     frame:Hide()
     O.frame = frame
-    WeintCodex.SoftWindow(frame)
     local bg = frame:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(frame)
     bg:SetColorTexture(unpack(C.bgDark))
@@ -947,6 +946,9 @@ function O.Build()
 
     frame:SetScale((K.Get("general", "windowScale") or 100) / 100)
     frame:SetScript("OnShow", SyncChrome)
+    -- Weich auf (6.26.9.2): NACH SetScript - SetScript ersetzt einen
+    -- vorher eingehaengten Haken; bis 6.26.9.1 ging /wcui deshalb hart auf.
+    WeintCodex.SoftWindow(frame)
 
     K.Listen(function(kind)
         if kind == "setting" or kind == "reload" or kind == "active" or kind == "unlock" then

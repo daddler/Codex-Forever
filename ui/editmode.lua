@@ -285,8 +285,10 @@ end
 E.LOGO_SMALL = 22
 -- 6.26.9.1 (Beta-Test: "Logo etwas groesser, darf etwas laenger brauchen"):
 -- 160 -> 220 Bildpunkte, Schweben 0,55 -> 0,95 s.
-E.LOGO_BIG = 220
-E.FADE, E.HOLD, E.FLY, E.OUT = 0.3, 0.75, 1.7, 0.25
+-- 6.26.9.2 ("noch groesser, noch etwas langsamer"): 300 Bildpunkte,
+-- Schweben 1,35 s.
+E.LOGO_BIG = 300
+E.FADE, E.HOLD, E.FLY, E.OUT = 0.3, 0.75, 2.1, 0.25
 E.SLIDE = 14             -- so weit gleitet die Leiste herab
 
 local anim, floater
@@ -364,7 +366,7 @@ local function Animator()
     anim:Hide()
     anim:SetScript("OnUpdate", Step)
     floater = UIParent:CreateTexture(nil, "OVERLAY")
-    floater:SetTexture(K.MEDIA .. "logo_256")
+    floater:SetTexture(K.MEDIA .. "logo_512")
     floater:Hide()
     E.floater = floater
 end

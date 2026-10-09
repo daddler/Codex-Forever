@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.9.2",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFDas Menü der Oberfläche blendet jetzt auch weich ein.|r Bisher ging nur das Ausblenden.",
+            "|cff7C6CFFNoch größerer Auftritt.|r Das Logo im Gestaltungsmodus ist größer und schwebt langsamer an seinen Platz.",
+        },
+    },
+    {
         version = "6.26.9.1",
         date    = "10.10.2026",
         notes   = {

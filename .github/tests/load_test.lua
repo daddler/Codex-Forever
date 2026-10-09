@@ -16508,7 +16508,9 @@ do
         for _, f in ipairs({ W.MainFrame, UO.frame }) do
             f:Hide()
             f:Show()
-            W.FadeIn(f)     -- das tut OnShow (die Attrappe ruft es bei Show nicht)
+            -- Der Haken muss am OnShow haengen, das zuletzt gesetzt wurde
+            -- (6.26.9.2: SetScript danach hatte ihn bei /wcui ersetzt).
+            f:GetScript("OnShow")(f)
             assert(f:GetAlpha() == 0 and W.fades[f], "oeffnet nicht weich")
             fader:GetScript("OnUpdate")(fader, W.FADE_IN / 2)
             assert(f:GetAlpha() > 0 and f:GetAlpha() < 1, "blendet nicht ein: " .. f:GetAlpha())
