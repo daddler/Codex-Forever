@@ -8506,6 +8506,16 @@ do
         assert(BG.UsedSlots() == 20, "falsche Zahl Plaetze: " .. tostring(BG.UsedSlots()))
         -- Belegt ist, was der Client meldet: je Tasche Platz 1.
         assert(BG._filled == 5, "falsche Zahl belegter Plaetze: " .. tostring(BG._filled))
+        -- 6.26.19.0: einzeln - je Tasche ein Block mit "frei von".
+        _G.C_Container.GetBagName = function(bag) if bag == 4 then return "Köcher" end end
+        K.Set("bags", "split", true)
+        BG.Refresh()
+        assert(#BG.blocks == 5 and BG.blocks[1].free == 3 and BG.blocks[1].slots == 4, "Bloecke je Tasche")
+        assert(BG.BagLabel(0) == "Rucksack" and BG.BagLabel(4) == "Köcher" and BG.BagLabel(2) == "Tasche 2",
+            "Namen der Taschen")
+        assert(BG.UsedSlots() == 20 and BG._filled == 5, "einzeln andere Zahlen")
+        K.Set("bags", "split", nil)
+        BG.Refresh()
         BG.Close()
         _G.C_Container = nil
     end)

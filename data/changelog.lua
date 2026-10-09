@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.19.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFTaschen einzeln anzeigen.|r Unter Taschen → „Taschen einzeln“: jede Tasche bleibt im selben Fenster, aber als eigener Block mit Namen und „frei von Plätzen“ – Köcher, Munitions- und Seelentaschen auf einen Blick. Ist eine Tasche voll, steht die Zeile in Warnfarbe.",
+        },
+    },
+    {
         version = "6.26.18.1",
         date    = "10.10.2026",
         notes   = {

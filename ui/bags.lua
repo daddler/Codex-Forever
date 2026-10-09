@@ -38,13 +38,20 @@ local defaults = {
     qualityBorder = true,
     dimJunk    = true,
     scale      = 100,
+    -- 6.26.19.0 (Beta-Test: "Taschen als einzelne anzeigen, mit Abstaenden
+    -- und eigener Slotzahl - Koecher, Splitter, Reagenzien: ich muss immer
+    -- zaehlen, was noch frei ist"). Ein Fenster bleibt; jede Tasche ein
+    -- eigener Block mit Name und "frei / Plaetze".
+    split      = false,
 }
+BG.HEAD_H, BG.BAG_GAP = 16, 10
 
 local function Opt(k) return K.Get(KEY, k) end
 
 local POOL = 180   -- Vorrat an Knoepfen; vier 36er-Taschen plus Rucksack sind 160
 
 local win, grid, gold, search, note
+local heads = {}   -- Kopfzeile je Tasche (nur "einzeln")
 local slots = {}   -- { holder, button } je Platz im Vorrat
 local used = 0
 
@@ -233,32 +240,63 @@ function BG.Refresh()
     if not win or not win:IsShown() then return end
     EnsurePool()
     local size, sp, cols = Opt("slotSize"), Opt("spacing"), Opt("columns")
+    local split = Opt("split") and true or false
     local n = 0
     local missing = 0
     local filled = 0
+    local y = 0          -- Oberkante des naechsten Blocks (einzeln)
+    local h = 0
+    BG.blocks = {}
     for _, bag in ipairs(BagIDs()) do
-        for slot = 1, NumSlots(bag) do
+        local count = NumSlots(bag)
+        local first = n
+        local bagFilled = 0
+        if split and count > 0 then y = y + BG.HEAD_H end
+        for slot = 1, count do
             n = n + 1
             local s = slots[n]
             if s then
                 s.holder:SetSize(size, size)
                 s.holder:ClearAllPoints()
-                local col = (n - 1) % cols
-                local row = math.floor((n - 1) / cols)
-                s.holder:SetPoint("TOPLEFT", grid, "TOPLEFT", col * (size + sp), -row * (size + sp))
+                local i = split and (n - first - 1) or (n - 1)
+                local col = i % cols
+                local row = math.floor(i / cols)
+                s.holder:SetPoint("TOPLEFT", grid, "TOPLEFT", col * (size + sp), -(split and y or 0) - row * (size + sp))
                 K.SetFont(s.d.ilvl, math.max(8, math.floor(size * 0.3)))
-                if PaintSlot(s, bag, slot) then filled = filled + 1 end
+                if PaintSlot(s, bag, slot) then filled = filled + 1 bagFilled = bagFilled + 1 end
             else
                 missing = missing + 1
             end
         end
+        if split and count > 0 then
+            local rows = math.ceil(count / cols)
+            local hd = heads[#BG.blocks + 1]
+            if not hd then
+                hd = K.NewText(grid)
+                hd:SetFont(F.sans, 11, "")
+                heads[#BG.blocks + 1] = hd
+            end
+            local free = count - bagFilled
+            BG.blocks[#BG.blocks + 1] = { bag = bag, slots = count, free = free }
+            hd:ClearAllPoints()
+            hd:SetPoint("BOTTOMLEFT", grid, "TOPLEFT", 0, -y + 3)
+            hd:SetText(BG.BagLabel(bag) .. "  ·  " .. free .. " frei von " .. count)
+            hd:SetTextColor(unpack(free == 0 and C.warningBright or C.textMuted))
+            hd:Show()
+            y = y + rows * (size + sp) - sp + BG.BAG_GAP
+        end
     end
     for i = n + 1, #slots do slots[i].holder:Hide() end
+    for i = (split and #BG.blocks or 0) + 1, #heads do heads[i]:Hide() end
     used = n
 
-    local rows = math.max(1, math.ceil(n / cols))
-    grid:SetSize(cols * (size + sp) - sp, rows * (size + sp) - sp)
-    win:SetSize(cols * (size + sp) - sp + 24, rows * (size + sp) - sp + 92)
+    if split then
+        h = math.max(size, y - BG.BAG_GAP)
+    else
+        h = math.max(1, math.ceil(n / cols)) * (size + sp) - sp
+    end
+    grid:SetSize(cols * (size + sp) - sp, h)
+    win:SetSize(cols * (size + sp) - sp + 24, h + 92)
 
     local money = _G.GetMoney and _G.GetMoney() or 0
     if _G.GetMoneyString then gold:SetText(_G.GetMoneyString(money, true))
@@ -276,6 +314,19 @@ function BG.Refresh()
     end
     note:Show()
     BG._filled = filled
+end
+
+-- Name einer Tasche fuer die Kopfzeile: vom Client, sonst "Tasche n".
+function BG.BagLabel(bag)
+    if bag == (_G.BACKPACK_CONTAINER or 0) then return "Rucksack" end
+    local cc = _G.C_Container
+    local f = (cc and cc.GetBagName) or _G.GetBagName
+    if f then
+        local ok, name = pcall(f, bag)
+        name = ok and K.Plain(name)
+        if type(name) == "string" and name ~= "" then return name end
+    end
+    return "Tasche " .. tostring(bag)
 end
 
 local function Build()
@@ -456,6 +507,9 @@ K.Register({
             B:Row({ type = "slider", label = "Abstand", key = "spacing", min = 0, max = 10, step = 1, format = px },
                   { type = "slider", label = "Fenstergröße", key = "scale", min = 60, max = 150, step = 5,
                     format = function(v) return string.format("%d %%", v) end })
+            B:Row({ type = "toggle", label = "Taschen einzeln", key = "split",
+                    description = "Jede Tasche ein eigener Block mit Namen und „frei von Plätze“ – Köcher, Munitions- und Seelentaschen auf einen Blick." },
+                  { type = "empty" })
             B:Section("Anzeigen")
             B:Row({ type = "toggle", label = "Gegenstandsstufe auf Ausrüstung", key = "itemLevel",
                     description = "Nennt das Spiel keine Stufe, bleibt das Feld leer – nie 0." },

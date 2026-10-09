@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.19.0] – 2026-10-10
+
+### Neu
+
+- Taschen (Beta-Test: „als einzelne anzeigen, mit Abständen und eigener Slotzahl – für Jäger/Hexer wegen Pfeilen und Splittern“): Schalter `split` in `ui/bags.lua`. Ein Fenster bleibt; je Tasche ein Block mit Kopfzeile (`BG.BagLabel`: Rucksack, Name vom Client, sonst „Tasche n“) und „X frei von Y“, voll in Warnfarbe, `BG.BAG_GAP` Abstand. `BG.blocks` für den Prüflauf.
+
 ## [6.26.18.1] – 2026-10-10
 
 ### Behoben
