@@ -365,7 +365,39 @@ ES.CVARS = {
     { name = "lockActionBars", value = "1" },
     -- Keine Tutorial-Fenster ueber den Rahmen.
     { name = "showTutorials", value = "0" },
+    -- AUFLOESUNG (6.26.14.0, Beta-Test auf 2560x1440: "alles verschoben").
+    -- Jeder Platz in ui/layout.lua ist in Einheiten einer Oberflaeche von
+    -- 768 Einheiten Hoehe gerechnet. Die Hoehe in Einheiten haengt nicht an
+    -- der Aufloesung, sondern an der Skalierung: 768 / uiScale - und ohne
+    -- "UI-Skalierung verwenden" rechnet das Spiel sie selbst aus der
+    -- Bildschirmhoehe (auf 1440p und 4K eine viel hoehere Oberflaeche). Mit
+    -- Skalierung 1 ist sie auf 1080p, 1440p und 4K gleich hoch, und alles
+    -- steht im selben Verhaeltnis zum Bildschirm. Zurueck beim Ausschalten
+    -- wie jede Einstellung hier (ui/profile.lua).
+    { name = "uiScale", value = "1" },
+    { name = "useUiScale", value = "1" },
 }
+ES.DESIGN_HEIGHT = 768
+
+-- Bildschirm und Oberflaeche, fuer den Bericht.
+function ES.ScreenLine()
+    local pw, ph
+    if _G.GetPhysicalScreenSize then
+        local ok, a, b = pcall(_G.GetPhysicalScreenSize)
+        if ok then pw, ph = K.Plain(a), K.Plain(b) end
+    end
+    local uh = K.Plain(UIParent.GetHeight and UIParent:GetHeight())
+    local uw = K.Plain(UIParent.GetWidth and UIParent:GetWidth())
+    if type(uh) ~= "number" then return nil end
+    local line = string.format("Oberfläche: %d × %d Einheiten", math.floor((uw or 0) + 0.5), math.floor(uh + 0.5))
+    if type(pw) == "number" and type(ph) == "number" then
+        line = line .. string.format(" auf %d × %d Bildpunkten", pw, ph)
+    end
+    if math.abs(uh - ES.DESIGN_HEIGHT) > 2 then
+        line = line .. string.format(" – entworfen für %d hoch: /wcui einrichten stellt die Skalierung ein", ES.DESIGN_HEIGHT)
+    end
+    return line
+end
 
 local function GetCVarValue(name)
     local cv = _G.C_CVar
@@ -491,9 +523,11 @@ function ES.Check()
         out[#out + 1] = string.format("Chatgröße: soll %d × %d, ist %d × %d", K.CHAT_SIZE.w, K.CHAT_SIZE.h,
             math.floor(w + 0.5), math.floor(h + 0.5))
     end
+    local sl = ES.ScreenLine()
+    if sl then out[#out + 1] = sl end
     for _, c in ipairs(ES.CVARS) do
         local v = GetCVarValue(c.name)
-        if type(v) == "string" and v ~= c.value then
+        if type(v) == "string" and v ~= c.value and not (tonumber(v) and tonumber(v) == tonumber(c.value)) then
             out[#out + 1] = "Einstellung " .. c.name .. ": soll " .. c.value .. ", ist " .. v
         end
     end

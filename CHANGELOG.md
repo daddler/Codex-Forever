@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.14.0] – 2026-10-10
+
+### Behoben
+
+- Auflösung (Beta-Test auf 2560 × 1440: „alles verschoben“): `ui/layout.lua` rechnet mit einer Oberfläche von 768 Einheiten Höhe. Die hängt an der Skalierung (768 / `uiScale`), ohne „UI-Skalierung verwenden“ rechnet das Spiel sie aus der Bildschirmhöhe – auf 1440p und 4K deutlich höher. Die Einrichtung setzt jetzt `uiScale = 1` und `useUiScale = 1` (über `PF.SetCVar`, beim Ausschalten zurück). Der Prüfbericht (`ES.ScreenLine`) nennt Bildpunkte und Einheiten und warnt, wenn die Höhe nicht passt.
+
 ## [6.26.13.0] – 2026-10-10
 
 ### Neu

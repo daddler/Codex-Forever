@@ -16681,6 +16681,32 @@ do
     Check(ok, "Erinnerungen: Dauerbuffs je Klasse, nur gelernt, einer der Reihe genuegt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+
+-- 6.26.14.0: 1080p, 1440p, 4K - die Einrichtung stellt die Skalierung so,
+-- dass die Oberflaeche so hoch ist, wie ui/layout.lua rechnet.
+do
+    local ok, err = pcall(function()
+        local ES = WeintCodex.UISetup
+        local pos = {}
+        for i, c in ipairs(ES.CVARS) do pos[c.name] = { i = i, v = c.value } end
+        assert(pos.uiScale and pos.uiScale.v == "1" and pos.useUiScale and pos.useUiScale.v == "1",
+            "Skalierung nicht in der Einrichtung")
+        assert(pos.uiScale.i < pos.useUiScale.i, "erst der Wert, dann einschalten")
+        local oH, oW, oP = UIParent.GetHeight, UIParent.GetWidth, _G.GetPhysicalScreenSize
+        _G.GetPhysicalScreenSize = function() return 2560, 1440 end
+        UIParent.GetWidth = function() return 2560 end
+        UIParent.GetHeight = function() return 1440 end
+        local l = ES.ScreenLine()
+        assert(l and l:find("2560 × 1440 Bildpunkten", 1, true) and l:find("einrichten", 1, true), "Bericht: " .. tostring(l))
+        UIParent.GetWidth = function() return 1365.3 end
+        UIParent.GetHeight = function() return 768 end
+        l = ES.ScreenLine()
+        assert(l and not l:find("einrichten", 1, true), "Warnung trotz passender Hoehe: " .. tostring(l))
+        UIParent.GetHeight, UIParent.GetWidth, _G.GetPhysicalScreenSize = oH, oW, oP
+    end)
+    Check(ok, "Aufloesung: Skalierung in der Einrichtung, Bericht nennt Bildschirm und Oberflaeche" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

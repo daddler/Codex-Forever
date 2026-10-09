@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.14.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFGleiches Bild auf 1080p, 1440p und 4K.|r Die Einrichtung der Oberfläche stellt jetzt auch die UI-Skalierung ein, damit alles dort steht, wofür es entworfen ist. Schaltest du die Oberfläche aus, gilt wieder deine Skalierung.",
+            "|cff7C6CFFSchon eingerichtet und etwas steht schief?|r Einmal /wcui einrichten, dann neu laden. „/wcui einrichten prüfen“ nennt Bildschirm und Größe der Oberfläche.",
+        },
+    },
+    {
         version = "6.26.13.0",
         date    = "10.10.2026",
         notes   = {
