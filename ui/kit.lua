@@ -794,6 +794,11 @@ end
 -- Seit 6.1.0.0 ist die schmale Plex (Condensed) der Standard: Namen und
 -- Zahlen auf Plaketten und Rahmen brauchen Breite, nicht Hoehe. Wer die
 -- breite Plex von vorher will, stellt sie unter Allgemein ein.
+-- 6.26.5.0: weitere Schriften (Schluessel = Feld in WeintCodex.Fonts).
+K.EXTRA_FONTS = { barlow = true, roboto = true, fira = true, rajdhani = true, exo = true, oswald = true, inter = true }
+-- Mit dem Spiel ausgeliefert, keine eigene Datei. Fehlt sie im Client,
+-- faellt K.SetFont auf die Schrift des Spiels zurueck.
+K.GAME_FONTS = { arialn = "Fonts\\ARIALN.TTF" }
 function K.FontPath()
     local choice = K.Get("general", "font")
     if choice == "game" then
@@ -802,6 +807,10 @@ function K.FontPath()
         return F.sansMedium
     elseif choice == "plexsemi" then
         return F.sansSemi
+    elseif choice == "arialn" then
+        return K.GAME_FONTS.arialn
+    elseif type(choice) == "string" and K.EXTRA_FONTS[choice] then
+        return F[choice] or F.hudSemi
     end
     return F.hudSemi
 end

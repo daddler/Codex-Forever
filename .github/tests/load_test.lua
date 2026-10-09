@@ -16134,6 +16134,39 @@ end
 --------------------------------------------------
 
 print("")
+
+-- 6.26.5.0: jede waehlbare Schrift zeigt auf eine Datei, die es gibt, und
+-- hat ihre Lizenz daneben.
+do
+    local ok, err = pcall(function()
+        local K = WeintCodex.UIKit
+        local opt = io.open(ROOT .. "/ui/options.lua"):read("*a")
+        local list = opt:match('key = "font", items = (%b{})')
+        assert(list, "Schriftliste nicht gefunden")
+        local saved = K.Get("general", "font")
+        local n = 0
+        for value in list:gmatch('value = "([%w]+)"') do
+            K.Set("general", "font", value)
+            local path = K.FontPath()
+            if value ~= "game" and value ~= "arialn" then
+                local rel = path:gsub("^Interface\\AddOns\\WeintCodex\\", ""):gsub("\\", "/")
+                local f = io.open(ROOT .. "/" .. rel, "rb")
+                assert(f, value .. ": Datei fehlt " .. rel)
+                f:close()
+                local fam = rel:match("fonts/([%w]+)")
+                if fam ~= "IBMPlexSans" and fam ~= "IBMPlexSansCondensed" then
+                    assert(io.open(ROOT .. "/media/fonts/" .. fam .. "-LICENSE.txt"), value .. ": Lizenz fehlt")
+                end
+            end
+            n = n + 1
+        end
+        K.Set("general", "font", saved)
+        assert(n >= 12, "nur " .. n .. " Schriften")
+    end)
+    Check(ok, "Schriften: jede Wahl hat Datei und Lizenz" .. (ok and "" or (": " .. tostring(err))))
+end
+
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

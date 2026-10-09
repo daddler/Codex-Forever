@@ -11,6 +11,10 @@ nicht zusammen.
 
 ## [6.26.5.0] – 2026-10-09
 
+### Neu
+
+- Acht weitere Schriften für die Spielwelt (Beta-Test: „mehr Schriftarten“): Barlow Condensed, Roboto Condensed, Fira Sans Condensed, Oswald, Rajdhani, Exo 2, Inter – alle OFL, statisch, Umlaute geprüft, Lizenz je Familie in `media/fonts/` – und Arial Narrow aus dem Client (`Fonts\ARIALN.TTF`; fehlt sie, greift der Rückfall in `K.SetFont`). `load_test.lua` prüft je Wahl Datei und Lizenz.
+
 ### Behoben
 
 - Zielrahmen nach kaltem Einloggen ohne Texte (Beta-Test, Screenshot: Balken da, Name/Stufe/Prozent leer, kommt „nach und nach“). Die eigene Schrift ist beim ersten `SetFont` noch nicht geladen; die Zeile zeichnet dann nichts, auch nicht bei neuem `SetText`. `UF.RedrawTexts` übersprang versteckte Rahmen – das Ziel ist beim Einloggen versteckt. Neu `K.Refont` (SetFont mit Größe+1 und zurück); aufgerufen bei jedem `OnShow` eines Einheitenrahmens und in `UF.RedrawTexts` für alle Rahmen.

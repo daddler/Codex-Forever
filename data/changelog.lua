@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.26.5.0",
         date    = "09.10.2026",
         notes   = {
+            "|cff7C6CFFAcht neue Schriften.|r Unter Allgemein → Schrift und Balken: Barlow, Roboto, Fira, Oswald, Rajdhani, Exo 2 und Inter, dazu Arial Narrow aus dem Spiel – für Plaketten, Rahmen und Hinweise.",
             "|cff7C6CFFZielrahmen nach dem Einloggen mit Namen.|r Beim ersten Einloggen blieben Name, Stufe und Leben am Ziel leer, bis man ein paar Mal das Ziel gewechselt hatte – jetzt sind sie gleich da.",
         },
     },

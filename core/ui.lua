@@ -455,6 +455,15 @@ WeintCodex.Fonts = {
     hud         = MEDIA .. "fonts\\IBMPlexSansCondensed-Medium.ttf",
     hudSemi     = MEDIA .. "fonts\\IBMPlexSansCondensed-SemiBold.ttf",
     hudBold     = MEDIA .. "fonts\\IBMPlexSansCondensed-Bold.ttf",
+    -- 6.26.5.0 (Beta-Test: "mehr Schriftarten"): zur Wahl fuer die
+    -- Spielwelt, alle OFL (Lizenz daneben in media/fonts/).
+    barlow      = MEDIA .. "fonts\\BarlowCondensed-SemiBold.ttf",
+    roboto      = MEDIA .. "fonts\\RobotoCondensed-SemiBold.ttf",
+    fira        = MEDIA .. "fonts\\FiraSansCondensed-Medium.ttf",
+    rajdhani    = MEDIA .. "fonts\\Rajdhani-SemiBold.ttf",
+    exo         = MEDIA .. "fonts\\Exo2-SemiBold.ttf",
+    oswald      = MEDIA .. "fonts\\Oswald-Medium.ttf",
+    inter       = MEDIA .. "fonts\\Inter-SemiBold.ttf",
     mono        = MEDIA .. "fonts\\IBMPlexMono-Regular.ttf",
     monoMedium  = MEDIA .. "fonts\\IBMPlexMono-Medium.ttf",
     monoBold    = MEDIA .. "fonts\\IBMPlexMono-SemiBold.ttf",
