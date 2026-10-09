@@ -842,6 +842,20 @@ function K.SetFont(fs, size)
     end
 end
 
+-- Schrift neu anmelden (6.26.5.0, Beta-Test: "beim ersten Einloggen kein
+-- Name am Ziel, erst nach ein paar Zielen"). Beim kalten Einloggen ist die
+-- eigene Schriftdatei beim ersten SetFont oft noch nicht geladen: die Zeile
+-- zeichnet dann nichts, auch nicht bei neuem SetText. Erst ein neues
+-- SetFont weckt sie - mit anderer Groesse, sonst ignoriert der Client es.
+function K.Refont(fs)
+    if type(fs) ~= "table" or type(fs.GetFont) ~= "function" then return false end
+    local path, size, flags = fs:GetFont()
+    if type(path) ~= "string" or type(size) ~= "number" or size <= 0 then return false end
+    fs:SetFont(path, size + 1, flags or "")
+    fs:SetFont(path, size, flags or "")
+    return true
+end
+
 -- Jede Textzeile der Oberflaeche entsteht HIER, mit Schrift. Text ohne
 -- Schrift ist im Client ein Fehler ("Font not set"), und bis 6.0.0.5
 -- bekam manche Zeile ihre Schrift erst in einem spaeteren Layout - wer

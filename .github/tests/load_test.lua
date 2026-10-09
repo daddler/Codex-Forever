@@ -8576,6 +8576,21 @@ do
         f.left:SetText("")
         UF.RedrawTexts()
         assert((f.left:GetText() or ""):find("Aloha", 1, true), "RedrawTexts setzt den Namen nicht")
+        -- 6.26.5.0: Schrift neu anmelden, auch am versteckten Zielrahmen.
+        local tf = UF.frames.target
+        assert(tf, "kein Zielrahmen")
+        tf:Hide()
+        local sets = 0
+        local oldSet = tf.left.SetFont
+        tf.left.GetFont = function() return "x.ttf", 12, "OUTLINE" end
+        tf.left.SetFont = function() sets = sets + 1 return true end
+        UF.RedrawTexts()
+        assert(sets == 2, "Zielrahmen versteckt: Schrift nicht neu angemeldet (" .. sets .. ")")
+        tf:Show()
+        local onShow = tf:GetScript("OnShow")
+        if onShow then onShow(tf) end
+        assert(sets >= 4, "OnShow meldet die Schrift nicht neu an")
+        tf.left.SetFont, tf.left.GetFont = oldSet, nil
         _G.UnitName, _G.C_Timer.After = oldName, oldAfter
         -- 6.6.0.6: eingehende Heilung und Schilde auch an Spieler und Ziel.
         local oldHeal, oldAbs, oldMax = _G.UnitGetIncomingHeals, _G.UnitGetTotalAbsorbs, _G.UnitHealthMax

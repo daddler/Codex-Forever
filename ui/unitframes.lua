@@ -584,6 +584,10 @@ local function Create(unit)
     -- zeichnet er sich sofort - nicht erst beim naechsten Ereignis.
     f:HookScript("OnShow", function(self)
         if self._testShown then return end
+        -- 6.26.5.0: Schrift jedes Mal neu anmelden - beim ersten Einloggen
+        -- blieb der Zielrahmen sonst leer (K.Refont).
+        K.Refont(self.left)
+        K.Refont(self.right)
         self:Refresh()
         self:UpdatePortrait()
     end)
@@ -1382,6 +1386,12 @@ local events = CreateFrame("Frame")
 -- einmal gesetzt aendert nichts.
 function UF.RedrawTexts()
     for _, f in pairs(frames) do
+        -- 6.26.5.0: auch versteckte Rahmen (Ziel beim Einloggen) bekommen
+        -- ihre Schrift neu, gezeichnet wird nur, was zu sehen ist.
+        if f.left and f.right then
+            K.Refont(f.left)
+            K.Refont(f.right)
+        end
         if f.left and f.right and f:IsShown() then
             f.left:SetText("")
             f.right:SetText("")

@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.5.0] – 2026-10-09
+
+### Behoben
+
+- Zielrahmen nach kaltem Einloggen ohne Texte (Beta-Test, Screenshot: Balken da, Name/Stufe/Prozent leer, kommt „nach und nach“). Die eigene Schrift ist beim ersten `SetFont` noch nicht geladen; die Zeile zeichnet dann nichts, auch nicht bei neuem `SetText`. `UF.RedrawTexts` übersprang versteckte Rahmen – das Ziel ist beim Einloggen versteckt. Neu `K.Refont` (SetFont mit Größe+1 und zurück); aufgerufen bei jedem `OnShow` eines Einheitenrahmens und in `UF.RedrawTexts` für alle Rahmen.
+
 ## [6.26.4.0] – 2026-10-09
 
 ### Geändert

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.5.0",
+        date    = "09.10.2026",
+        notes   = {
+            "|cff7C6CFFZielrahmen nach dem Einloggen mit Namen.|r Beim ersten Einloggen blieben Name, Stufe und Leben am Ziel leer, bis man ein paar Mal das Ziel gewechselt hatte – jetzt sind sie gleich da.",
+        },
+    },
+    {
         version = "6.26.4.0",
         date    = "09.10.2026",
         notes   = {
