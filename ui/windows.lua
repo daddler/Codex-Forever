@@ -2068,11 +2068,18 @@ local function MaskFor(frame, area)
     return mask
 end
 
+-- 6.26.5.0 (Beta-Test: "Wald von Elwynn zeigt rechts einen abgehackten
+-- Bereich"): die aufgedeckten Teile (ui/mapreveal.lua) werden in Stuecke
+-- geschnitten; das letzte Stueck am Rand ist oft schmal, unter
+-- W.MAP_TILE_MIN - es blieb ohne Maske und stand hart am Rand. Ihre
+-- Ebene bekommt die Maske fuer jedes Stueck.
 local function MaskTiles(frame, area)
+    local MR = WeintCodex.UIMapReveal
+    local min = (MR and MR.layer == frame) and 0 or W.MAP_TILE_MIN
     for _, r in ipairs(Regions(frame, "mapTiles")) do
         if not own[r] and not mapMask.masked[r] then
             local ok, a = pcall(TileArea, r)
-            if ok and a >= W.MAP_TILE_MIN then
+            if ok and a >= min and (min > 0 or a > 0) then
                 local mask = MaskFor(frame, area)
                 if mask and pcall(r.AddMaskTexture, r, mask) then
                     mapMask.masked[r] = true

@@ -9364,6 +9364,20 @@ do
         W.SoftMap(map)
         assert(#bigTile._masks == 1, "Maske doppelt")
         assert(table.concat(W.SoftReport(map), " "):find("Maske an 2 Bildern", 1, true), "Bericht ohne Maske")
+        -- 6.26.5.0: schmale Randstuecke der aufgedeckten Karte bekommen die
+        -- Maske auch (Wald von Elwynn, harte Kante rechts).
+        local MR = WeintCodex.UIMapReveal
+        local oldLayer = MR.layer
+        local rl = stub.NewObject("Frame")
+        local sliver = stub.NewObject("Texture")
+        sliver._width, sliver._height = 40, 256
+        rl.GetRegions = function() return sliver end
+        MR.layer = rl
+        inner.GetChildren = function() return layer, rl end
+        W.SoftMap(map)
+        assert(sliver._masks and #sliver._masks == 1, "schmales Randstueck der aufgedeckten Karte ohne Maske")
+        MR.layer = oldLayer
+        inner.GetChildren = function() return layer end
         -- 6.8.0.8: die Questdetails liegen ueber dem rechten Teil der Karte -
         -- der weiche Rand endet vor ihnen, nicht unter ihnen.
         local mask = bigTile._masks[1]

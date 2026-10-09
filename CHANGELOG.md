@@ -20,6 +20,7 @@ nicht zusammen.
 
 ### Behoben
 
+- Harte Kante am Kartenrand (Beta-Test, Wald von Elwynn rechts): `ui/mapreveal.lua` schneidet die aufgedeckten Teile in Stücke, das letzte am Rand ist oft schmal und lag unter `W.MAP_TILE_MIN` – ohne Maske. `MaskTiles` maskiert in der Ebene von `MR.layer` jedes Stück.
 - Infozeile unter dem Chat nach dem Einloggen manchmal weg, bis zweimal Enter (Beta-Test). Vermutung: die Eingabezeile hat beim Einloggen kurz den Fokus, das Ende meldet der Client nicht (`OnEditFocusLost` kommt nicht). Der Sekundentakt der Infozeile ruft jetzt auch `CH.UpdateEditState` auf.
 - Zielrahmen nach kaltem Einloggen ohne Texte (Beta-Test, Screenshot: Balken da, Name/Stufe/Prozent leer, kommt „nach und nach“). Die eigene Schrift ist beim ersten `SetFont` noch nicht geladen; die Zeile zeichnet dann nichts, auch nicht bei neuem `SetText`. `UF.RedrawTexts` übersprang versteckte Rahmen – das Ziel ist beim Einloggen versteckt. Neu `K.Refont` (SetFont mit Größe+1 und zurück); aufgerufen bei jedem `OnShow` eines Einheitenrahmens und in `UF.RedrawTexts` für alle Rahmen.
 

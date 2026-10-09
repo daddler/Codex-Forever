@@ -29,6 +29,7 @@ WeintCodex_ChangelogData = {
             "|cff7C6CFFStufen und Sammelberufe auf der Karte.|r Unten links steht, für welche Stufen ein Gebiet ist, ab welcher Fertigkeit man dort angeln kann und welche Kräuter und Erze es gibt – auf dem Kontinent für die Zone unter der Maus. Stand aus Classic. Abschalten unter Komfort → Karte.",
             "|cff7C6CFFDezentere Kartensymbole.|r Geistheiler, Pfeile, Flugmeister und Reisen sind kleiner und leiser; unter der Maus wieder voll.",
             "|cff7C6CFFMessart der Schadensanzeige direkt wählen.|r Ein Klick auf den Titel öffnet die Liste aller Messarten; Rechtsklick oder Mausrad blättert weiter wie bisher.",
+            "|cff7C6CFFKein harter Rand mehr auf der Karte.|r Mit „Ganze Karte“ stand am Rand mancher Zonen (Wald von Elwynn rechts) ein abgehacktes Stück – jetzt läuft auch das weich aus.",
             "|cff7C6CFFInfozeile unter dem Chat bleibt da.|r Nach dem Einloggen fehlte sie manchmal, bis man zweimal Enter drückte – jetzt kommt sie von selbst zurück.",
             "|cff7C6CFFZielrahmen nach dem Einloggen mit Namen.|r Beim ersten Einloggen blieben Name, Stufe und Leben am Ziel leer, bis man ein paar Mal das Ziel gewechselt hatte – jetzt sind sie gleich da.",
         },
