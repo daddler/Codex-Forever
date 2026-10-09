@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.18.1] – 2026-10-10
+
+### Behoben
+
+- Bearbeitungsmodus sprang nach jedem Charakterwechsel zurück auf „WeintCodex“ (Beta-Test nach 6.26.18.0): `ES.MaybeAsk` schaltete ein vorhandenes, nicht aktives Layout bei jedem Einloggen still um. Jetzt nur, solange der Charakter noch keinen Eintrag in `ui.setupAsked` hat – das Umschalten selbst setzt ihn. Ein danach gewähltes eigenes Layout fasst WeintCodex nie wieder an.
+
 ## [6.26.18.0] – 2026-10-10
 
 ### Behoben

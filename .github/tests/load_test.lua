@@ -16811,10 +16811,17 @@ do
                          SaveLayouts = function() saves = saves + 1 end,
                          SetActiveLayout = function(i) active = i stored.activeLayout = i end }
         if ES.IsShown() then ES.Button("later"):Click() end
+        K.Root().setupAsked = nil
         ES._ResetAsked()
         ES.MaybeAsk()
         assert(active == 4 and saves == 0 and not ES.IsShown(), "vorhandenes Layout neu gebaut oder gefragt")
         assert(stored.layouts[2].mine, "Layout ersetzt")
+        -- Spieler waehlt danach sein eigenes: beim naechsten Einloggen bleibt es.
+        stored.activeLayout = 3
+        active = nil
+        ES._ResetAsked()
+        ES.MaybeAsk()
+        assert(active == nil and stored.activeLayout == 3, "eigenes Layout nach Charwechsel wieder umgeschaltet")
         -- Kein Layout: einmal fragen, danach nie wieder fuer diesen Charakter.
         stored = { activeLayout = 1, layouts = {} }
         local root = K.Root()

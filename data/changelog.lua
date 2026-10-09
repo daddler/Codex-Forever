@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.18.1",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFDein eigenes Layout bleibt aktiv.|r WeintCodex schaltet das Layout im Bearbeitungsmodus höchstens einmal je Charakter um. Wählst du danach ein eigenes, bleibt es – auch nach einem Charakterwechsel oder Neustart.",
+        },
+    },
+    {
         version = "6.26.18.0",
         date    = "10.10.2026",
         notes   = {

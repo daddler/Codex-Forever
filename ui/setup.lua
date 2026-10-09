@@ -820,14 +820,20 @@ ES.CharAsked = CharAsked
 local asked = false
 function ES.MaybeAsk()
     if asked or ES.LayoutActive() ~= false then return end
+    -- 6.26.18.1 (Beta-Test: "nach einem Charwechsel springt der
+    -- Bearbeitungsmodus immer wieder auf WeintCodex - ich hatte mir ein
+    -- eigenes, charakterspezifisches gemacht"): wer bei diesem Charakter
+    -- schon einmal gefragt bzw. umgeschaltet wurde, entscheidet selbst.
+    -- Ein anderes aktives Layout ist dann seine Wahl - nie wieder anfassen.
+    if CharAsked() then return end
     if ES.HasLayout() == true then
         asked = true
+        MarkCharAsked()
         if not K.InCombat() and ES.ActivateExisting() then
             Say("Layout „" .. ES.LAYOUT_NAME .. "“ für diesen Charakter aktiviert.")
         end
         return
     end
-    if CharAsked() then return end
     if WeintCodex.Onboarding and WeintCodex.Onboarding.IsShowing and WeintCodex.Onboarding.IsShowing() then
         return   -- kommt ueber OnClosed wieder
     end
