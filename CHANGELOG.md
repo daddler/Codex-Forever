@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.6.0] – 2026-10-10
+
+### Geändert
+
+- Gebietstafel auf der Weltkarte (`ui/zoneinfo.lua`) eingeklappt (Beta-Test: „stört, wenn dort eine Quest ist“): auf der Zonenkarte nur die Kopfzeile, so breit wie ihr Text; `OnEnter` klappt Angeln/Kräuter/Erz/Herkunft auf, `OnLeave` zu. Auf dem Kontinent wie bisher ganz.
+
 ## [6.26.5.0] – 2026-10-09
 
 ### Neu

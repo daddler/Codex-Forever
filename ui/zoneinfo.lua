@@ -5,7 +5,7 @@
 -- welche Berufe dort am besten ausgeuebt werden koennen wie Angeln,
 -- Kraeuter, Erze"). Seite "Karte" im Komfort, geht ohne Oberflaeche.
 --
--- WAS: unten links auf der Karte eine Tafel mit Stufenbereich, Angeln ab,
+-- WAS (seit 6.26.6.0 eingeklappt, siehe unten): unten links auf der Karte eine Tafel mit Stufenbereich, Angeln ab,
 -- Kraeutern und Erzen des Gebiets. Auf der Zonenkarte fuer die Zone, auf
 -- dem Kontinent fuer die Zone unter der Maus.
 --
@@ -70,8 +70,13 @@ function ZI.Lines(mapID, name, out)
     return out
 end
 
+-- 6.26.6.0 (Beta-Test: "stoert von der Platzierung, wenn gerade dort eine
+-- Quest ist"): auf der Zonenkarte nur noch eine Zeile (Name und Stufe);
+-- die ganze Tafel erst mit der Maus darauf. Auf dem Kontinent - dort zeigt
+-- man ohnehin mit der Maus auf eine Zone - die ganze Tafel.
 local panel, texts
 local lines = {}
+local expanded, continent, lastTarget, lastName = false, false, nil, nil
 
 local function Build(parent)
     panel = CreateFrame("Frame", nil, parent)
@@ -90,16 +95,33 @@ local function Build(parent)
         if fs.SetWordWrap then fs:SetWordWrap(true) end
         texts[i] = fs
     end
+    if panel.EnableMouse then panel:EnableMouse(true) end
+    panel:SetScript("OnEnter", function()
+        expanded = true
+        if lastTarget then ZI.Show(lastTarget, lastName) end
+    end)
+    panel:SetScript("OnLeave", function()
+        expanded = false
+        if lastTarget then ZI.Show(lastTarget, lastName) end
+    end)
     panel:Hide()
-    ZI.panel = panel
+    ZI.panel, ZI.texts = panel, texts
+end
+
+-- Wie viele Zeilen zu sehen sind: eingeklappt nur der Kopf.
+function ZI.Visible(n)
+    if expanded or continent then return n end
+    return math.min(n, 1)
 end
 
 local function Show(mapID, name)
+    lastTarget, lastName = mapID, name
     ZI.Lines(mapID, name, lines)
     if #lines == 0 then panel:Hide() return false end
+    local count = ZI.Visible(#lines)
     local y, prev = 8, nil
     for i, fs in ipairs(texts) do
-        local l = lines[i]
+        local l = i <= count and lines[i] or nil
         fs:ClearAllPoints()
         if l then
             if prev then fs:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -3)
@@ -115,17 +137,27 @@ local function Show(mapID, name)
         end
     end
     panel:SetHeight(y + 5)
+    -- Eingeklappt nur so breit wie die Zeile.
+    local w = ZI.WIDTH
+    if count == 1 and texts[1].GetStringWidth then
+        local sw = K.Plain(texts[1]:GetStringWidth())
+        if type(sw) == "number" and sw > 0 then w = math.min(ZI.WIDTH, sw + 16) end
+    end
+    panel:SetWidth(w)
     panel:Show()
     return true
 end
+ZI.Show = Show
 
 -- Welche Karte die Tafel gerade zeigen soll: die Zone selbst, auf dem
 -- Kontinent die Zone unter der Maus.
 function ZI.Target(mapID)
     local cm = _G.C_Map
+    continent = false
     if not (cm and cm.GetMapInfo) then return mapID end
     local ok, info = pcall(cm.GetMapInfo, mapID)
     if not (ok and type(info) == "table" and K.Plain(info.mapType) == ZI.CONTINENT) then return mapID end
+    continent = true
     local wm = _G.WorldMapFrame
     local sc = wm and wm.ScrollContainer
     if not (sc and sc.IsMouseOver and sc:IsMouseOver() and sc.GetNormalizedCursorPosition and cm.GetMapInfoAtPosition) then
@@ -176,7 +208,7 @@ local function Apply()
     if not hooked and type(wm) == "table" and wm.HookScript then
         hooked = true
         wm:HookScript("OnShow", function() if ZI.Active() then shown = false acc = ZI.TICK ticker:Show() end end)
-        wm:HookScript("OnHide", function() ticker:Hide() if panel then panel:Hide() end shown = false end)
+        wm:HookScript("OnHide", function() ticker:Hide() if panel then panel:Hide() end shown = false expanded = false end)
     end
     if ZI.Active() and type(wm) == "table" and wm.IsShown and wm:IsShown() then
         shown = false
@@ -190,7 +222,7 @@ ZI.Apply = Apply
 
 function ZI.BuildRows(B)
     B:Row({ type = "toggle", label = "Stufen und Sammelberufe der Gebiete", key = "mapZoneInfo",
-            description = "Unten links auf der Karte: Stufenbereich, Angeln ab, Kräuter und Erze. Auf dem Kontinent für die Zone unter der Maus." })
+            description = "Unten links auf der Karte eine Zeile mit Stufenbereich; Maus darauf: Angeln, Kräuter und Erze. Auf dem Kontinent für die Zone unter der Maus." })
 end
 
 local mod = K.Module(KEY)

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.6.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFGebietsinfo auf der Karte eingeklappt.|r Unten links steht nur noch eine Zeile mit Name und Stufe – Angeln, Kräuter und Erze erst mit der Maus darauf. So deckt sie keine Quest mehr zu. Auf dem Kontinent bleibt die ganze Tafel für die Zone unter der Maus.",
+        },
+    },
+    {
         version = "6.26.5.0",
         date    = "09.10.2026",
         notes   = {

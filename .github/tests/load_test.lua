@@ -16239,6 +16239,31 @@ do
         assert(#ZI.Lines(999999, "x") == 0, "unbekanntes Gebiet zeigt etwas")
         _G.UnitLevel = oldLvl
         assert(WeintCodex.UIKit.Module("comfort").defaults.mapZoneInfo == true, "Schalter fehlt")
+        -- 6.26.6.0: auf der Zonenkarte eingeklappt (eine Zeile), Maus darauf: alles.
+        local G = _G
+        local oldWM, oldCM, oldCur = G.WorldMapFrame, G.C_Map, WeintCodex.QuestMap.CurrentMap
+        local wm = CreateFrame("Frame")
+        wm:Show()
+        wm.ScrollContainer = CreateFrame("Frame", nil, wm)
+        G.WorldMapFrame = wm
+        G.C_Map = { GetMapInfo = function(id) return { mapID = id, mapType = 3, name = "Eschental" } end }
+        WeintCodex.QuestMap.CurrentMap = function() return 1440 end
+        assert(ZI.Update(), "Tafel nicht gezeigt")
+        local P = ZI.panel
+        local function shownLines()
+            local c = 0
+            for _, r in ipairs(ZI.texts) do
+                if r:IsShown() then c = c + 1 end
+            end
+            return c
+        end
+        local folded = shownLines()
+        P:GetScript("OnEnter")(P)
+        local open = shownLines()
+        P:GetScript("OnLeave")(P)
+        assert(folded == 1 and open >= 4 and shownLines() == 1, "eingeklappt " .. folded .. ", offen " .. open)
+        G.WorldMapFrame, G.C_Map, WeintCodex.QuestMap.CurrentMap = oldWM, oldCM, oldCur
+        ZI.Update()
     end)
     Check(ok, "Karte: Stufen und Sammelberufe je Gebiet, nur Bekanntes, Herkunft genannt" .. (ok and "" or (": " .. tostring(err))))
 end
