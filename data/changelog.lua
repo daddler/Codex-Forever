@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.9.4",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Profilfrage kommt bei jedem neuen Charakter.|r Direkt nach dem Willkommen fragt WeintCodex, ob der Charakter ein eigenes Profil bekommt – auch ohne die Oberfläche. Wer nach dem Willkommen neu lädt, wird danach gefragt.",
+        },
+    },
+    {
         version = "6.26.9.3",
         date    = "10.10.2026",
         notes   = {

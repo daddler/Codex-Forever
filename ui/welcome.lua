@@ -353,8 +353,14 @@ local step = "start"
 local applied = false
 local shown = "overview"
 
-local function Close()
+-- 6.26.9.4 (Beta-Test: "bei einem neuen Charakter MUSS nach dem Willkommen
+-- die Frage nach dem Profil kommen"): beim Einloggen steht der Assistent
+-- noch, die Profilfrage wartet - also fragt sie, sobald er schliesst.
+-- Nicht vor "Jetzt neu laden": dann kommt sie nach dem Neuladen.
+local function Close(reloading)
     if dimmer then dimmer:Hide() end
+    local PR = WeintCodex.UIProfiles
+    if not reloading and PR and PR.MaybeAsk and Asked() then PR.MaybeAsk() end
 end
 WL.Close = Close
 
@@ -727,7 +733,7 @@ local function StepDone(report)
                               Close()
                               Say("Deine Wahl gilt nach dem nächsten Neuladen (/reload).")
                           end },
-                          { key = "reload", text = "Jetzt neu laden", reload = true, onClick = function() Close() end } })
+                          { key = "reload", text = "Jetzt neu laden", reload = true, onClick = function() Close(true) end } })
     else
         SetButtons(nil, { { key = "done", text = "Schließen", kind = "primary", onClick = function() Close() end } })
     end

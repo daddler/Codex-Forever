@@ -16044,12 +16044,13 @@ do
         local oldEnabled, oldAsked = K.CharState().enabled, ui.asked
         K.CharState().enabled, ui.asked = true, true
         me = "Neuling"
+        if PR.AskFrame() then PR.AskFrame().decided = true PR.AskFrame():Hide() end
         PR.ResetLater()
         assert(not PR.Answered() and PR.ShouldAsk(), "Neuling wird nicht gefragt")
         ui.asked = nil
         assert(not PR.ShouldAsk(), "Frage vor dem Willkommen")
         ui.asked, K.CharState().enabled = true, false
-        assert(not PR.ShouldAsk(), "Frage ohne Oberflaeche")
+        assert(PR.ShouldAsk(), "ohne Oberflaeche nicht gefragt")
         K.CharState().enabled = true
         local OB = WeintCodex.Onboarding
         local oldShowing = OB.IsShowing
@@ -16064,6 +16065,11 @@ do
         WLm.ReloadBlocks = function() return true end
         assert(not PR.ShouldAsk(), "Frage nach /reload, obwohl der Client nicht speichert")
         WLm.ReloadBlocks = oldBlocks
+        -- 6.26.9.4: schliesst das Willkommen, kommt die Profilfrage sofort.
+        WLm.Close()
+        assert(PR.AskFrame() and PR.AskFrame():IsShown(), "keine Profilfrage nach dem Willkommen")
+        PR.AskFrame().decided = true
+        PR.AskFrame():Hide()
         assert(PR.MaybeAsk(), "MaybeAsk fragt nicht")
         local a = PR.AskFrame()
         assert(a and a:IsShown() and a.state == "frage" and a.title:GetText():find("Neuling", 1, true)

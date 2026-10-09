@@ -332,7 +332,7 @@ end
 --   "Standard behalten"       gilt als Antwort - nie wieder gefragt.
 --   "×" oben rechts, Esc       "Spaeter": bis zum naechsten Einloggen.
 -- Gemerkt in ui.profileAsked["Name-Realm"] (ganzes Konto). Gefragt wird
--- nur mit Oberflaeche, nie zugleich mit dem Willkommen oder dem Hinweis
+-- (seit 6.26.9.4 auch ohne Oberflaeche; direkt nach dem Willkommen), nie zugleich mit dem Willkommen oder dem Hinweis
 -- auf ein Update, nie im Kampf, nach /reload nur, wenn der Client
 -- speichert (dieselbe Regel wie ui/welcome.lua - sonst kaeme die Frage
 -- nach jedem Neuladen wieder).
@@ -359,7 +359,7 @@ end
 -- Soll jetzt gefragt werden? (Ohne Kampf - das prueft MaybeAsk.)
 function PR.ShouldAsk()
     if later or PR.Answered() then return false end
-    if not K.UIEnabled() then return false end
+    -- Seit 6.26.9.4 auch ohne Oberflaeche: das Profil traegt auch den Komfort.
     local WL = WeintCodex.UIWelcome
     if WL then
         if WL.IsShown() then return false end
