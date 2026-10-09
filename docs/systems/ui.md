@@ -1271,8 +1271,10 @@ Anlass (Beta-Test): ForeverGuide zeigte Preise „vor 6 Minuten“ ohne
 Besuch im Auktionshaus – das Spielernetz von ForeverGuide 1.25
 (`Net.lua`: versteckter Kanal `FGLayers`, Kennung `FGD`, ab Werk an). Die
 **einzige Ausnahme** vom Grundsatz „nichts verlässt den Client“ (CLAUDE.md),
-nur auf Wunsch: zwei Schalter unter `comfort`, ab Werk aus, nur mit
-`ahPrices`.
+nur auf Wunsch: zwei Schalter unter `comfort`, nur mit `ahPrices`. Bis
+6.26.11.1 ab Werk aus; seit 6.26.12.0 ab Werk an (Beta-Test: „standardmäßig
+aktiv, wenn Auktionshaus an“) – wer Auktionspreise einschaltet, teilt und
+hört zu, bis er einen der beiden Schalter abschaltet.
 
 - **Gilde** (`ahShareGuild`, Kennung `AS.PREFIX` = `WCAH`, an `GUILD`):
   Nachrichten `Art:1:Seite:Zeit36[:…]` mit der Zeit des Servers

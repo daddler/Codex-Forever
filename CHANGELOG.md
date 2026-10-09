@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.12.0] – 2026-10-10
+
+### Geändert
+
+- Auktionspreise: `ahShareGuild` und `ahListenFG` ab Werk an (Beta-Test). Wirken weiter nur mit `ahPrices`; wer einen Schalter selbst gesetzt hat, behält seinen Wert. Willkommen nennt das Teilen beim Helfer „Auktionspreise“.
+
 ## [6.26.11.1] – 2026-10-10
 
 ### Behoben

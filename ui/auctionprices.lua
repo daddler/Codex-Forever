@@ -50,8 +50,9 @@ AP.DEFAULTS = {
     ahStack   = true,    -- in den Taschen auch der Preis des ganzen Stapels
     ahPassive = true,    -- auch merken, was deine eigene Suche zeigt
     -- 6.18.0.0 (ui/auctionshare.lua): Preise von anderen Spielern.
-    ahShareGuild = false, -- mit der Gilde teilen (senden und empfangen)
-    ahListenFG   = false, -- aus dem Kanal von ForeverGuide nur empfangen
+    ahShareGuild = true,  -- mit der Gilde teilen (senden und empfangen); seit 6.26.12.0 an
+                          -- (Beta-Test: "standardmaessig aktiv, wenn Auktion an")
+    ahListenFG   = true,  -- aus dem Kanal von ForeverGuide nur empfangen; seit 6.26.12.0 an
 }
 
 AP.REPLICATE_WAIT  = 35          -- so lange auf den Vollscan warten (s)

@@ -49,7 +49,8 @@ arrives either through `WeintCodex_SavedData`/`WeintCompanionDB`/
 reads/writes), through `data/companion_live.lua` (which the Companion
 rewrites), or through a copy-pasted `WCIMPORT:` string.
 **One exception inside the game, since 6.18.0.0 and only on request:**
-auction prices (`ui/auctionshare.lua`, two switches, both off by default).
+auction prices (`ui/auctionshare.lua`, two switches – off by default until
+6.26.11.1, on by default with `ahPrices` since 6.26.12.0 at the owner's request).
 With „Mit der Gilde teilen“ WeintCodex sends and receives prices as addon
 messages to the guild (prefix `WCAH`); with „Preise aus ForeverGuide
 übernehmen“ it joins ForeverGuide's hidden channel and **only listens** –

@@ -140,7 +140,7 @@ WL.HELPERS = {
       text = "Ton und Hinweis, sobald ein seltener Gegner in der Nähe ist." },
     -- Handel und Gespraeche
     { group = "handel", module = "comfort", key = "ahPrices", label = "Auktionspreise",
-      text = "Merkt sich Preise im Auktionshaus und zeigt sie im Tooltip." },
+      text = "Merkt sich Preise im Auktionshaus und zeigt sie im Tooltip – und teilt sie mit der Gilde (abschaltbar)." },
     { group = "handel", module = "comfort", key = "msgOn", label = "Flüstern als Messenger",
       text = "Jedes Gespräch in einem eigenen Fenster." },
     { group = "handel", module = "comfort", key = "dlgOn", label = "Gespräche im Codex-Stil",

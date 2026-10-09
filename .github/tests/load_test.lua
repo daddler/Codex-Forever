@@ -5907,8 +5907,12 @@ do
         st.items[777] = AP.Pack(5, 1, today, true)        -- von Spielern: nie weiterreichen
 
         -- Aus: nichts gehoert, nichts gesendet.
+        -- 6.26.12.0: beide von Haus aus an, sobald Auktionspreise an sind.
+        local mdef = K.Module("comfort").defaults
+        assert(mdef.ahShareGuild == true and mdef.ahListenFG == true, "Teilen/Zuhoeren nicht von Haus aus an")
         K.Set("comfort", "ahPrices", true)
         K.Set("comfort", "ahShareGuild", false)
+        K.Set("comfort", "ahListenFG", false)
         Msg("W:1:H:" .. E(Server()) .. ":Ich", "Anna")
         AS.OnOwnScan("Horde")
         Run(10)

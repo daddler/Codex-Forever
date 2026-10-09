@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.12.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFAuktionspreise teilen von Haus aus.|r Mit Auktionspreisen an sind jetzt auch „Mit der Gilde teilen“ und „Preise von anderen Auktionshaus-Addons übernehmen“ an. Beides lässt sich im Komfort unter Auktion abschalten; eigene Einstellungen bleiben.",
+        },
+    },
+    {
         version = "6.26.11.1",
         date    = "10.10.2026",
         notes   = {
