@@ -1286,10 +1286,13 @@ function K.RegisterMover(frame, key, label, default, opts)
             if m.secure and K.InCombat() then return end
             m.frame:SetMovable(true)
             m.frame:StartMoving()
+            K.dragging = key
+            K.Fire("moverDrag", key)
         end)
         ov:SetScript("OnDragStop", function()
             local frame = m.frame
             frame:StopMovingOrSizing()
+            K.dragging = nil
             SavePosition(key, frame)
             -- Einrasten: die gespeicherte Stelle um den Rest zum Raster bzw.
             -- zur Mittelachse verschieben (derselbe Anker, nur genauer).
@@ -1402,6 +1405,38 @@ function K.NudgeMover(dx, dy)
     K.ApplyPosition(selected)
     K.Fire("moverSelect", selected)
     return true
+end
+
+-- X/Y von Hand (6.26.15.0, Beta-Test: "x und y Koordinaten wie bei ElvUI").
+-- Derselbe Anker wie gespeichert, nur andere Zahlen.
+function K.SetMoverPosition(key, x, y)
+    local m = movers[key]
+    if not m or (m.secure and K.InCombat()) then return false end
+    if type(x) ~= "number" or type(y) ~= "number" then return false end
+    local ui = K.Profile()
+    if not ui then return false end
+    local cur = ui.positions[key] or m.default
+    ui.positions[key] = { point = cur.point, relPoint = cur.relPoint or cur.point,
+        x = math.floor(x + 0.5), y = math.floor(y + 0.5) }
+    K.ApplyPosition(key)
+    K.Fire("moverSelect", key)
+    return true
+end
+
+function K.MoverFrame(key) local m = movers[key] return m and m.frame or nil end
+
+-- Die anderen sichtbaren Rahmen (fuer das Einrasten aneinander). Eine
+-- Liste, die wiederverwendet wird - gerufen nur beim Loslassen.
+local others = {}
+function K.OtherMoverFrames(exclude)
+    for i = #others, 1, -1 do others[i] = nil end
+    for key, m in pairs(movers) do
+        local f = m.frame
+        if key ~= exclude and m.enabled and f and f ~= exclude and f.IsShown and f:IsShown() then
+            others[#others + 1] = f
+        end
+    end
+    return others
 end
 
 -- Wo der Rahmen gerade steht, fuer die Anzeige im Gestaltungsmodus.

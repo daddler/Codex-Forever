@@ -16707,6 +16707,47 @@ do
     Check(ok, "Aufloesung: Skalierung in der Einrichtung, Bericht nennt Bildschirm und Oberflaeche" .. (ok and "" or (": " .. tostring(err))))
 end
 
+
+-- 6.26.15.0: Gestaltungsmodus - X/Y eintippen, Einrasten an Nachbarn.
+do
+    local ok, err = pcall(function()
+        local E = WeintCodex.UIEditMode
+        K.SetUnlocked(true)
+        local function Fake(l, b, w, h)
+            return { GetLeft = function() return l end, GetBottom = function() return b end,
+                     GetWidth = function() return w end, GetHeight = function() return h end,
+                     IsShown = function() return true end }
+        end
+        local other = Fake(300, 100, 100, 40)        -- 300..400 x 100..140
+        local oOthers = K.OtherMoverFrames
+        K.OtherMoverFrames = function() return { other } end
+        -- 7 Einheiten rechts neben dem Nachbarn, auf gleicher Hoehe (b = 103): rastet mit Luft an.
+        local me = Fake(407, 103, 50, 30)
+        local dx, dy = E.SnapOffset(me)
+        assert(dx == 400 + E.MAGNET_GAP - 407, "nicht an den Nachbarn gezogen: " .. tostring(dx))
+        assert(dy == 100 - 103, "Unterkante nicht buendig: " .. tostring(dy))
+        -- Weit weg: Raster wie vorher.
+        me = Fake(103, 403, 50, 30)
+        dx = E.SnapOffset(me)
+        assert(dx == 1, "Raster: " .. tostring(dx))
+        K.OtherMoverFrames = oOthers
+        -- Zahlen eintippen.
+        K.SelectMover("uf_player")
+        assert(E.coords and E.coords:IsShown(), "keine Koordinaten zum ausgewaehlten Rahmen")
+        E.coords.x:SetText("-250")
+        E.coords.y:SetText("300")
+        assert(E.ApplyCoords(), "Eingabe nicht uebernommen")
+        local pos = K.MoverPosition("uf_player")
+        assert(pos.x == -250 and pos.y == 300, "Platz: " .. tostring(pos.x) .. ", " .. tostring(pos.y))
+        E.coords.x:SetText("abc")
+        assert(not E.ApplyCoords() and K.MoverPosition("uf_player").x == -250, "Unsinn uebernommen")
+        K.ResetAllPositions()
+        K.SetUnlocked(false)
+        E.FinishAnim()
+    end)
+    Check(ok, "Gestaltungsmodus: X/Y eintippen, Einrasten an Nachbarn und Bildschirmrand" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

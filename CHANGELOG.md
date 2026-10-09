@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.15.0] – 2026-10-10
+
+### Neu
+
+- Gestaltungsmodus (Beta-Test: „x und y Koordinaten und einen Einraster wie bei ElvUI“): Feld mit X/Y des gewählten Rahmens unter der Leiste (`E.coords`, `E.ApplyCoords`, `K.SetMoverPosition`), live beim Ziehen aus `GetPoint(1)` (`K.dragging`). Einrasten an Kanten anderer sichtbarer Rahmen und des Bildschirms (`E.MagnetOffset`, `E.MAGNET` = 10, Luft `E.MAGNET_GAP` = 2) geht vor Mittelachse und Raster.
+
 ## [6.26.14.0] – 2026-10-10
 
 ### Behoben

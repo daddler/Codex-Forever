@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.15.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFKoordinaten im Gestaltungsmodus.|r Unter der Leiste stehen X und Y des gewählten Rahmens – sie laufen beim Ziehen mit, und du kannst sie eintippen (Enter übernimmt).",
+            "|cff7C6CFFRahmen rasten aneinander ein.|r Schiebst du einen Rahmen nah an einen anderen oder an den Bildschirmrand, springt er bündig oder mit kleinem Abstand daneben. „Einrasten“ in der Leiste schaltet das ab.",
+        },
+    },
+    {
         version = "6.26.14.0",
         date    = "10.10.2026",
         notes   = {

@@ -34,6 +34,11 @@ local K = WeintCodex.UIKit
 local C = WeintCodex.Colors
 
 local GRID, GRID_LINE, AXIS_SNAP = 8, 16, 6
+-- 6.26.15.0 (Beta-Test: "einen Einraster, wenn ich etwas in die Naehe
+-- geschoben habe, so wie bei ElvUI"): Kanten anderer Rahmen und des
+-- Bildschirms ziehen an, naeher als E.MAGNET Einheiten. Aneinander mit
+-- E.MAGNET_GAP Luft, buendig ohne. Geht vor Raster und Mittelachse.
+E.MAGNET, E.MAGNET_GAP = 10, 2
 E.state = { test = true, grid = true, snap = true }
 local state = E.state
 
@@ -61,16 +66,66 @@ function E.SnapOffset(frame)
         if type(a) == "number" and type(u) == "number" and u > 0 then es = a / u end
     end
     l, b, w = l * es, b * es, (w or 0) * es
+    h = (h or 0) * es
+    local mx, my = E.MagnetOffset(frame, l, b, w, h)
     local uw = UIParent:GetWidth()
-    local dx
+    local dx, dy = mx, my
     local cx = l + w / 2
-    if type(uw) == "number" and math.abs(cx - uw / 2) <= AXIS_SNAP then
+    if dx then
+        -- angezogen
+    elseif type(uw) == "number" and math.abs(cx - uw / 2) <= AXIS_SNAP then
         dx = uw / 2 - cx
     else
         dx = Round(l, GRID) - l
     end
-    local dy = Round(b, GRID) - b
+    if not dy then dy = Round(b, GRID) - b end
     return dx / es, dy / es
+end
+
+-- Rechteck eines Rahmens in Einheiten von UIParent: l, b, r, t oder nil.
+local function Rect(f)
+    local l, b, w, h = f:GetLeft(), f:GetBottom(), f:GetWidth(), f:GetHeight()
+    l, b, w, h = K.Plain(l), K.Plain(b), K.Plain(w), K.Plain(h)
+    if type(l) ~= "number" or type(b) ~= "number" or type(w) ~= "number" or type(h) ~= "number" then return nil end
+    local es = 1
+    if f.GetEffectiveScale and UIParent.GetEffectiveScale then
+        local a, u = K.Plain(f:GetEffectiveScale()), K.Plain(UIParent:GetEffectiveScale())
+        if type(a) == "number" and type(u) == "number" and u > 0 then es = a / u end
+    end
+    return l * es, b * es, (l + w) * es, (b + h) * es
+end
+E.Rect = Rect
+
+-- Kleinste Verschiebung innerhalb E.MAGNET zu einer Kante: dx, dy (je nil,
+-- wenn nichts in der Naehe ist).
+function E.MagnetOffset(frame, l, b, w, h)
+    local r, t = l + w, b + h
+    local bestX, bestY = nil, nil
+    local function tryX(d) if math.abs(d) <= E.MAGNET and (not bestX or math.abs(d) < math.abs(bestX)) then bestX = d end end
+    local function tryY(d) if math.abs(d) <= E.MAGNET and (not bestY or math.abs(d) < math.abs(bestY)) then bestY = d end end
+    local g = E.MAGNET_GAP
+    local uw, uh = K.Plain(UIParent:GetWidth()), K.Plain(UIParent:GetHeight())
+    if type(uw) == "number" then tryX(0 - l) tryX(uw - r) end
+    if type(uh) == "number" then tryY(0 - b) tryY(uh - t) end
+    for _, o in ipairs(K.OtherMoverFrames and K.OtherMoverFrames(frame) or {}) do
+        local ol, ob, orr, ot = Rect(o)
+        if ol then
+            -- nur, was sich in der anderen Richtung ueberhaupt nahe kommt
+            local nearY = b <= ot + E.MAGNET and t >= ob - E.MAGNET
+            local nearX = l <= orr + E.MAGNET and r >= ol - E.MAGNET
+            if nearY then
+                tryX(orr + g - l)            -- rechts daneben
+                tryX(ol - g - r)             -- links daneben
+                tryX(ol - l) tryX(orr - r)   -- buendig
+            end
+            if nearX then
+                tryY(ot + g - b)             -- darueber
+                tryY(ob - g - t)             -- darunter
+                tryY(ob - b) tryY(ot - t)    -- buendig
+            end
+        end
+    end
+    return bestX, bestY
 end
 K.SnapOffset = E.SnapOffset
 
@@ -151,9 +206,31 @@ local function Sync()
     E.UpdateInfo()
 end
 
+function E.ShowCoords(x, y, point)
+    local c = E.coords
+    if not c then return end
+    if not c.x:HasFocus() then c.x:SetText(tostring(math.floor((x or 0) + 0.5))) end
+    if not c.y:HasFocus() then c.y:SetText(tostring(math.floor((y or 0) + 0.5))) end
+    c.anchor:SetText(point or "")
+    c:Show()
+end
+
+function E.ApplyCoords()
+    local c, key = E.coords, K.SelectedMover()
+    if not (c and key) then return false end
+    local x, y = tonumber(c.x:GetText()), tonumber(c.y:GetText())
+    local ok = K.SetMoverPosition(key, x, y)
+    if not ok then E.UpdateInfo() end
+    return ok
+end
+
 function E.UpdateInfo()
     if not info then return end
     local key = K.SelectedMover()
+    if E.coords then
+        local pos = key and K.MoverPosition(key)
+        if pos then E.ShowCoords(pos.x, pos.y, pos.point) else E.coords:Hide() end
+    end
     if not key then
         info:SetText("Rahmen anklicken zum Auswählen · ziehen verschiebt · Pfeiltasten schieben genau (Umschalt: 8) · Doppelklick: Einstellungen · Esc: fertig")
         return
@@ -241,6 +318,45 @@ local function BuildBar()
     info = K.NewText(bar, 11)
     info:SetPoint("TOP", bar, "BOTTOM", 0, -6)
     info:SetTextColor(unpack(C.textMuted))
+
+    -- X und Y des gewaehlten Rahmens (6.26.15.0): eintippen, Enter setzt.
+    local coords = CreateFrame("Frame", nil, bar)
+    coords:SetSize(250, 30)
+    coords:SetPoint("TOP", info, "BOTTOM", 0, -6)
+    K.Kachel(coords)
+    local function Field(label, anchor)
+        local t = K.NewText(coords, 11)
+        t:SetText(label)
+        t:SetTextColor(unpack(C.textMuted))
+        if anchor then t:SetPoint("LEFT", anchor, "RIGHT", 14, 0) else t:SetPoint("LEFT", coords, "LEFT", 10, 0) end
+        local eb = CreateFrame("EditBox", nil, coords)
+        eb:SetSize(70, 20)
+        eb:SetAutoFocus(false)
+        if eb.SetTextInsets then eb:SetTextInsets(6, 6, 0, 0) end
+        K.SetFont(eb, 11)
+        local bg = eb:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints(eb)
+        bg:SetColorTexture(unpack(C.bgDark))
+        eb:SetPoint("LEFT", t, "RIGHT", 6, 0)
+        eb:SetScript("OnEscapePressed", function(self) self:ClearFocus() E.UpdateInfo() end)
+        eb:SetScript("OnEnterPressed", function(self) self:ClearFocus() E.ApplyCoords() end)
+        return eb
+    end
+    coords.x = Field("X", nil)
+    coords.y = Field("Y", coords.x)
+    coords.anchor = K.NewText(coords, 10)
+    coords.anchor:SetPoint("LEFT", coords.y, "RIGHT", 10, 0)
+    coords.anchor:SetTextColor(unpack(C.textFaint))
+    coords:SetScript("OnUpdate", function()
+        -- Waehrend des Ziehens laufen die Zahlen mit.
+        local key = K.dragging
+        if not key then return end
+        local m = K.MoverFrame and K.MoverFrame(key)
+        local p, _, rp, x, y = m and m:GetPoint(1)
+        if p and type(x) == "number" then E.ShowCoords(x, y, p) end
+    end)
+    coords:Hide()
+    E.coords = coords
 
     -- Tastatur: Pfeile schieben, Esc beendet; alles andere geht ans Spiel.
     if bar.EnableKeyboard then bar:EnableKeyboard(true) end
