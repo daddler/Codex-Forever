@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "10.10.2026",
         notes   = {
             "|cff7C6CFFDer Willkommens-Assistent kennt jetzt alle Komfortfunktionen.|r Nach Themen – Alltag, Kampf und Gruppe, Welt und Karte, Handel und Gespräche – je ein Satz und ein Schalter. Mit der Oberfläche ist alles vorgewählt; ohne sie wählst du selbst. Wieder zeigen: /wcui willkommen.",
+            "|cff7C6CFFNeues beim Lehrer nach dem Stufenaufstieg.|r Ein Fenster zeigt, welche Zauber du jetzt lernen kannst, was sie kosten und ob dein Gold reicht – ein Klick führt zur Seite „Lehrer“. Geht mit und ohne Oberfläche; abschalten unter Komfort → Anzeigen.",
             "|cff7C6CFFKomfort nach Themen geordnet.|r Die Seiten stehen in derselben Reihenfolge wie im Assistenten: Gespräche neben Flüstern, Karte neben Sammeln.",
         },
     },

@@ -16328,6 +16328,41 @@ do
     Check(ok, "Komfort nach Thema geordnet, Assistent bietet nur echte Einstellungen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+
+-- 6.26.7.0: nach dem Stufenaufstieg zeigt ein Fenster, was beim Lehrer lernbar ist.
+do
+    local ok, err = pcall(function()
+        local LU, G = WeintCodex.UILevelUp, _G
+        assert(LU, "ui/levelup.lua nicht geladen")
+        assert(K.Module("comfort").defaults.levelUpPopup == true, "von Haus aus aus")
+        local oC, oR, oF, oL, oM = G.UnitClass, G.UnitRace, G.UnitFactionGroup, G.UnitLevel, G.GetMoney
+        G.UnitClass = function() return "Magier", "MAGE" end
+        G.UnitRace = function() return "Mensch", "Human", 1 end
+        G.UnitFactionGroup = function() return "Alliance" end
+        G.UnitLevel = function() return 9 end
+        G.GetMoney = function() return 5 end
+        local info = LU.Learnable(10)
+        assert(info and info.level == 10 and info.count > 0 and #info.fresh > 0, "Stufe 10 Magier: nichts lernbar")
+        for _, sp in ipairs(info.fresh) do assert(sp.level == 10, "als neu gezaehlt, aber Stufe " .. sp.level) end
+        K.Set("comfort", "levelUpPopup", true)
+        assert(LU.OnLevelUp(10) == true and LU.popup:IsShown(), "kein Fenster nach dem Aufstieg")
+        assert(LU.popup.title:GetText():find("Stufe 10", 1, true), "Titel: " .. tostring(LU.popup.title:GetText()))
+        assert(LU.popup.sub:GetText():find("es fehlen", 1, true), "Goldrechnung fehlt: " .. LU.popup.sub:GetText())
+        LU.popup.close:Click()
+        assert(not LU.popup:IsShown(), "Schliessen schliesst nicht")
+        -- Abgeschaltet: kein Fenster. Klasse unbekannt: keins, nichts geraten.
+        K.Set("comfort", "levelUpPopup", false)
+        assert(LU.OnLevelUp(10) == false and not LU.popup:IsShown(), "Fenster trotz Schalter aus")
+        K.Set("comfort", "levelUpPopup", true)
+        G.UnitClass = function() return nil end
+        assert(LU.Learnable(10) == nil and LU.OnLevelUp(10) == false, "ohne Klasse eine Liste")
+        G.UnitClass, G.UnitRace, G.UnitFactionGroup, G.UnitLevel, G.GetMoney = oC, oR, oF, oL, oM
+        -- Geht ohne Oberflaeche: das Modul ist Komfort, nicht Oberflaeche.
+        assert(K.Module("comfort").group == "qol", "Komfort haengt an der Oberflaeche")
+    end)
+    Check(ok, "Stufenaufstieg: Fenster mit Neuem beim Lehrer, Gold, abschaltbar, nichts geraten" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

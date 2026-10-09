@@ -469,6 +469,9 @@ K.Register({
                   { type = "slider", label = "Warnen ab", key = "durabilityThreshold", min = 5, max = 50, step = 5,
                     format = function(v) return string.format("%d %%", v) end,
                     disabled = function() return not K.Get(KEY, "durability") end })
+            B:Section("Stufenaufstieg")
+            B:Row(Row2({ type = "toggle", label = "Neues beim Lehrer zeigen", key = "levelUpPopup",
+                         description = "Nach dem Aufstieg ein Fenster mit den Zaubern, die du jetzt lernen kannst, und was sie kosten." }))
             B:Section("Karte")
             B:Row(Row2({ type = "toggle", label = "Koordinaten auf der Weltkarte", key = "mapCoords",
                          description = "Deine Position und die des Mauszeigers." }))

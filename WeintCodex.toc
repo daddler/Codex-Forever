@@ -226,6 +226,8 @@ ui/mapentrances.lua
 ui/mapmarks.lua
 # Stufen und Sammelberufe auf der Weltkarte (6.26.5.0, Seite "Karte").
 ui/zoneinfo.lua
+# Neues beim Lehrer nach dem Stufenaufstieg (6.26.7.0, Komfort, auch ohne Oberflaeche).
+ui/levelup.lua
 # Warnton bei vermeidbarem Schaden (6.21.1.0, Seite "Feuer" im Komfort).
 ui/firealarm.lua
 ui/gathertrack.lua

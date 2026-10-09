@@ -106,6 +106,8 @@ WL.HELPERS = {
       text = "Nimmt alles sofort, wenn automatisches Plündern an ist." },
     { group = "alltag", module = "comfort", key = "skipCinematics", label = "Filmsequenzen überspringen",
       text = "Zwischensequenzen enden von selbst." },
+    { group = "alltag", module = "comfort", key = "levelUpPopup", label = "Neues beim Lehrer",
+      text = "Nach dem Stufenaufstieg: was du jetzt lernen kannst." },
     { group = "alltag", module = "comfort", key = "durability", label = "Haltbarkeitswarnung",
       text = "Meldet sich, bevor deine Ausrüstung bricht." },
     { group = "alltag", module = "comfort", key = "mapCoords", label = "Koordinaten auf der Karte",
