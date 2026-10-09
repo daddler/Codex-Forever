@@ -13,6 +13,7 @@ mehr als das Doppelte verkleinert, flimmert an den feinen Goldkanten:
 
     logo_32.tga   Symbol an der Minikarte (~20 px), Tooltip (16 px)
     logo_64.tga   Willkommens-Assistent (64 px), Seitenleiste von /wcui (40 px)
+    logo_256.tga  Auftritt beim Betreten des Gestaltungsmodus (bis 160 px, 6.26.9.0)
 
 Verkleinert wird mit vormultipliziertem Alpha (RGBa), sonst bekommen die
 Ränder einen dunklen Saum.
@@ -26,7 +27,7 @@ from PIL import Image
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SRC = os.path.join(ROOT, ".github", "scripts", "logo", "wcui.png")
 OUT = os.path.join(ROOT, "media", "ui")
-SIZES = {"logo_32": 32, "logo_64": 64}
+SIZES = {"logo_32": 32, "logo_64": 64, "logo_256": 256}
 
 
 def main():

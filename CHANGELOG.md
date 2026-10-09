@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.9.0] – 2026-10-10
+
+### Neu
+
+- Auftritt des Gestaltungsmodus (`ui/editmode.lua`, `E.Intro`/`E.Outro`, Beta-Test: „schön animieren, Logo groß, schwebt an den Reiter“): Einstellungsfenster blendet aus (0,3 s), Logo groß in der Mitte (`media/ui/logo_256.tga`, neu aus `.github/scripts/make_logo.py`), schwebt in 0,55 s weich an seinen Platz am Anfang der Leiste und wird dabei klein, die Leiste blendet ein und gleitet 14 px herab. „Fertig“/Esc: Leiste blendet aus, Fenster weich ein. Ein Rahmen, OnUpdate nur während des Auftritts, keine Tabellen je Bild; im Kampf ohne Auftritt; Abbruch setzt alles ans Ziel (`E.Settle`).
+
 ## [6.26.8.0] – 2026-10-10
 
 ### Geändert

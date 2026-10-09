@@ -126,11 +126,11 @@ local function ToggleText(label, on) return label .. (on and ": an" or ": aus") 
 
 -- Von rechts nach links, mit dem Abstand zum rechten Nachbarn.
 local ORDER = { { "done", 8 }, { "reset", 10 }, { "snap", 6 }, { "grid", 6 }, { "test", 6 }, { "game", 10 } }
-E.BAR_MIN = 760
+E.BAR_MIN = 790
 
 -- Die Leiste so breit wie Titel und Knoepfe - die Beschriftungen wechseln.
 local function FitBar()
-    local w = 14 + 20
+    local w = 9 + E.LOGO_SMALL + 7 + 20
     local tw = bar.title.GetStringWidth and bar.title:GetStringWidth()
     w = w + ((type(tw) == "number" and tw > 0) and tw or 120)
     for _, o in ipairs(ORDER) do
@@ -180,8 +180,15 @@ local function BuildBar()
     bar:EnableMouse(true)
     K.Kachel(bar)
 
+    -- Das Logo am Anfang der Leiste (6.26.9.0): hier landet das grosse
+    -- Logo vom Auftritt (E.Intro).
+    bar.logo = bar:CreateTexture(nil, "ARTWORK")
+    bar.logo:SetSize(E.LOGO_SMALL, E.LOGO_SMALL)
+    bar.logo:SetPoint("LEFT", bar, "LEFT", 9, 0)
+    bar.logo:SetTexture(K.MEDIA .. "logo_64")
+
     local title = K.NewText(bar, 13)
-    title:SetPoint("LEFT", bar, "LEFT", 14, 0)
+    title:SetPoint("LEFT", bar.logo, "RIGHT", 7, 0)
     title:SetTextColor(unpack(C.textBright))
     title:SetText("Gestaltungsmodus")
     bar.title = title
@@ -260,13 +267,158 @@ end
 -- Betreten und Verlassen
 --------------------------------------------------
 
+--------------------------------------------------
+-- Auftritt (6.26.9.0)
+--------------------------------------------------
+-- Beta-Test: "beim Betreten des Gestaltungsbereichs soll es sich schoen
+-- animieren: Reiter oben langsam einblenden, das Menuefenster langsam
+-- ausblenden, das Logo erst gross einblenden, dann nach oben links an den
+-- Reiter schweben und sich dort festmachen". Ablauf (Sekunden):
+--   0    - FADE   Einstellungsfenster blendet aus, Logo blendet gross ein
+--   FADE - HOLD   Logo steht in der Mitte
+--   HOLD - FLY    Logo schwebt an seinen Platz in der Leiste und wird
+--                 kleiner, die Leiste blendet ein und gleitet herab
+-- Ein Rahmen mit einem OnUpdate, nur waehrend des Auftritts; je Bild keine
+-- Tabelle, keine Funktion. "Fertig", Esc oder ein Kampf brechen ab - dann
+-- steht alles sofort am Ziel. Beim Verlassen blendet die Leiste aus und
+-- das Fenster wieder ein (OUT).
+E.LOGO_SMALL = 22
+E.LOGO_BIG = 160
+E.FADE, E.HOLD, E.FLY, E.OUT = 0.3, 0.75, 1.3, 0.25
+E.SLIDE = 14             -- so weit gleitet die Leiste herab
+
+local anim, floater
+local fadeFrameRef
+local A = { t = 0, phase = nil, opt = nil, x0 = 0, y0 = 0, x1 = 0, y1 = 0 }
+E.anim = A
+
+local function Ease(p)  -- weich an, weich aus
+    if p <= 0 then return 0 elseif p >= 1 then return 1 end
+    return p * p * (3 - 2 * p)
+end
+
+local function BarAt(off) bar:ClearAllPoints() bar:SetPoint("TOP", UIParent, "TOP", 0, -14 + off) end
+
+local function Settle()
+    -- Alles an seinen Platz: Ende des Auftritts oder Abbruch.
+    if anim then anim:Hide() end
+    if floater then floater:Hide() end
+    if A.phase == "in" then
+        BarAt(0)
+        bar:SetAlpha(1)
+        bar.logo:SetAlpha(1)
+        if A.opt then A.opt:Hide() A.opt:SetAlpha(1) end
+    elseif A.phase == "out" then
+        bar:Hide()
+        bar:SetAlpha(1)
+        BarAt(0)
+    end
+    A.opt, A.phase = nil, nil
+end
+E.Settle = Settle
+
+local function Step(_, el)
+    A.t = A.t + (el or 0)
+    local t = A.t
+    if A.phase == "out" then
+        local p = Ease(t / E.OUT)
+        bar:SetAlpha(1 - p)
+        BarAt(p * E.SLIDE)
+        if t >= E.OUT then
+            local cb = A.after
+            A.after = nil
+            Settle()
+            if cb then cb() end
+        end
+        return
+    end
+    -- Fenster aus, Logo gross ein.
+    local f = Ease(t / E.FADE)
+    if A.opt then A.opt:SetAlpha(1 - f) end
+    if A.opt and t >= E.FADE then A.opt:Hide() A.opt:SetAlpha(1) A.opt = nil end
+    if t < E.HOLD then
+        floater:SetSize(E.LOGO_BIG * (0.7 + 0.3 * f), E.LOGO_BIG * (0.7 + 0.3 * f))
+        floater:SetAlpha(f)
+        floater:ClearAllPoints()
+        floater:SetPoint("CENTER", UIParent, "BOTTOMLEFT", A.x0, A.y0)
+        return
+    end
+    -- Schweben an den Platz, Leiste ein.
+    local p = Ease((t - E.HOLD) / (E.FLY - E.HOLD))
+    local size = E.LOGO_BIG + (E.LOGO_SMALL - E.LOGO_BIG) * p
+    floater:SetSize(size, size)
+    floater:SetAlpha(1)
+    floater:ClearAllPoints()
+    floater:SetPoint("CENTER", UIParent, "BOTTOMLEFT", A.x0 + (A.x1 - A.x0) * p, A.y0 + (A.y1 - A.y0) * p)
+    bar:SetAlpha(p)
+    BarAt((1 - p) * E.SLIDE)
+    if t >= E.FLY then Settle() end
+end
+
+E.Step = Step
+
+local function Animator()
+    if anim then return end
+    anim = CreateFrame("Frame", nil, UIParent)
+    anim:Hide()
+    anim:SetScript("OnUpdate", Step)
+    floater = UIParent:CreateTexture(nil, "OVERLAY")
+    floater:SetTexture(K.MEDIA .. "logo_256")
+    floater:Hide()
+    E.floater = floater
+end
+
+-- Den Auftritt starten (Leiste steht schon, unsichtbar). Ohne Bildschirm-
+-- groesse oder Ziel (Attrappe, sehr frueher Aufruf): sofort am Ziel.
+function E.Intro(opt)
+    Animator()
+    A.t, A.phase, A.opt = 0, "in", opt
+    local w, h = UIParent:GetWidth(), UIParent:GetHeight()
+    BarAt(0)
+    local lx, ly = bar.logo:GetCenter()
+    if type(w) ~= "number" or type(h) ~= "number" or w <= 0 or type(lx) ~= "number" or type(ly) ~= "number" then
+        Settle()
+        return false
+    end
+    A.x0, A.y0, A.x1, A.y1 = w / 2, h * 0.55, lx, ly
+    bar:SetAlpha(0)
+    bar.logo:SetAlpha(0)
+    floater:SetAlpha(0)
+    floater:Show()
+    anim:Show()
+    return true
+end
+
+-- Laufenden Auftritt sofort beenden (Prueflauf; dort laeuft kein Bild).
+function E.FinishAnim()
+    if anim and anim:IsShown() then Step(nil, 999) end
+    if fadeFrameRef and fadeFrameRef:IsShown() then fadeFrameRef:GetScript("OnUpdate")(fadeFrameRef, 999) end
+end
+
+-- Ausblenden der Leiste; `after` laeuft danach (Fenster wieder auf).
+function E.Outro(after)
+    if not (bar and bar:IsShown()) or K.InCombat() then
+        if anim and A.phase then Settle() end
+        if bar then bar:Hide() end
+        if after then after() end
+        return false
+    end
+    Animator()
+    if A.phase == "in" then Settle() end
+    A.t, A.phase, A.after = 0, "out", after
+    floater:Hide()
+    anim:Show()
+    return true
+end
+
 function E.Enter()
     BuildBar()
     local O = WeintCodex.UIOptions
+    local opt
     if O and O.frame and O.frame:IsShown() then
         reopen = true
         E.reopenWhere = O.Where and O.Where() or nil
-        O.frame:Hide()
+        opt = O.frame
     end
     local T = WeintCodex.UITestMode
     if state.test and T and not T.IsOn() then
@@ -277,6 +429,12 @@ function E.Enter()
     armedReset = false
     bar:Show()
     Sync()
+    -- Im Kampf kein Auftritt: dort zaehlt nur, dass es sofort steht.
+    if K.InCombat() then
+        if opt then opt:Hide() end
+    else
+        E.Intro(opt)
+    end
 end
 
 function E.Leave()
@@ -285,17 +443,41 @@ function E.Leave()
         E.bridge.reopen = reopen
         reopen = false
     end
-    if bar then bar:Hide() end
     if grid then grid:Hide() end
     local T = WeintCodex.UITestMode
     if startedTest and T and T.IsOn() then T.Set(false) end
     startedTest = false
     -- Zurueck ins Fenster - nicht, wenn ein Kampf den Modus beendet hat.
-    if reopen and not K.InCombat() then
-        local O = WeintCodex.UIOptions
-        if O and O.Return then O.Return(E.reopenWhere) elseif O and O.Show then O.Show() end
-    end
+    -- Erst blendet die Leiste aus, dann blendet das Fenster ein.
+    local back = reopen and not K.InCombat() and not E.bridge.leaving
     reopen = false
+    local where = E.reopenWhere
+    E.Outro(function()
+        if not back then return end
+        local O = WeintCodex.UIOptions
+        if O and O.Return then O.Return(where) elseif O and O.Show then O.Show() end
+        local f = O and O.frame
+        if f and f.SetAlpha and f:IsShown() and not K.InCombat() then E.FadeIn(f) end
+    end)
+end
+
+-- Ein Fenster weich einblenden (eigener kleiner Takt, einmal gebaut).
+local fadeFrame, fadeTarget, fadeT = nil, nil, 0
+function E.FadeIn(f)
+    if not fadeFrame then
+        fadeFrame = CreateFrame("Frame", nil, UIParent)
+        fadeFrame:Hide()
+        fadeFrameRef = fadeFrame
+        fadeFrame:SetScript("OnUpdate", function(self, el)
+            fadeT = fadeT + (el or 0)
+            local p = Ease(fadeT / E.OUT)
+            if fadeTarget then fadeTarget:SetAlpha(p) end
+            if p >= 1 then self:Hide() fadeTarget = nil end
+        end)
+    end
+    fadeTarget, fadeT = f, 0
+    f:SetAlpha(0)
+    fadeFrame:Show()
 end
 
 -- Welche Einstellungsseite zu welchem Rahmen gehoert.

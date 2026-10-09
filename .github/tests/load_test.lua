@@ -2655,6 +2655,7 @@ do
         K.Set("unitframes", "player_right", "healthBoth")
         assert(K.SetUnlocked(true), "Entsperren verweigert")
         K.SetUnlocked(false)
+        WeintCodex.UIEditMode.FinishAnim()
     end)
     Check(ok, "Einheitenrahmen: Zielwechsel, Treffer, Kraft, Auren, Entsperren"
         .. (ok and "" or (": " .. tostring(err))))
@@ -9015,6 +9016,7 @@ do
         local pos = K.MoverPosition("uf_player")
         assert(pos.y == y0 + 1, "Pfeiltaste schiebt nicht: " .. tostring(pos.y))
         bar._scripts.OnKeyDown(bar, "ESCAPE")
+        WeintCodex.UIEditMode.FinishAnim()
         assert(not K.IsUnlocked() and not bar:IsShown() and not T.IsOn() and UO.frame:IsShown(),
             "Esc beendet nicht sauber")
         K.ResetAllPositions()
@@ -9031,6 +9033,7 @@ do
         dx = E.SnapOffset(fake)
         assert(dx == 1, "Raster: " .. dx)
         K.SetUnlocked(false)
+        WeintCodex.UIEditMode.FinishAnim()
     end)
     Check(ok, "6.3: Zielrahmen beim Erscheinen, Symbole des Spiels, Schadensanzeige wie Details, Gestaltungsmodus"
         .. (ok and "" or (": " .. tostring(err))))
@@ -13975,6 +13978,7 @@ do
         assert(not E.StripShown(), "Leiste bleibt nach dem Schliessen")
         assert(K.IsUnlocked(), "nach dem Schliessen nicht zurueck im Gestaltungsmodus")
         K.SetUnlocked(false)
+        WeintCodex.UIEditMode.FinishAnim()
 
         -- 2. Aus dem Einstellungsfenster hinueber und zurueck auf dieselbe Seite.
         UO.Show("general", 1)
@@ -14001,6 +14005,7 @@ do
         game.CloseButton:Click()              -- das Spiel fuehrt den Klick aus
         assert(not E.GameShown() and K.IsUnlocked() and not UO.frame:IsShown(), "zurueck: nicht im Gestaltungsmodus")
         K.SetUnlocked(false)
+        WeintCodex.UIEditMode.FinishAnim()
         assert(UO.frame:IsShown(), "nach Fertig nicht zurueck im Einstellungsfenster")
         -- Rueckfrage abgebrochen (das X schliesst nicht): nichts geht auf,
         -- bis man wirklich schliesst.
@@ -14010,6 +14015,7 @@ do
         game:Hide()
         assert(K.IsUnlocked(), "nach dem Schliessen nicht im Gestaltungsmodus")
         K.SetUnlocked(false)
+        WeintCodex.UIEditMode.FinishAnim()
         -- Ohne X: der Rueckweg wird gemerkt, ein Satz sagt den Rest.
         local x = game.CloseButton
         game.CloseButton = nil
@@ -14023,6 +14029,7 @@ do
         game:Hide()
         assert(K.IsUnlocked(), "ohne X: nach dem Schliessen nicht im Gestaltungsmodus")
         K.SetUnlocked(false)
+        WeintCodex.UIEditMode.FinishAnim()
         game.CloseButton = x
         -- Die Leiste traegt einen geschuetzten Knopf: im Kampf nie
         -- ausblenden, beim Kampfbeginn (vor der Sperre) schon.
@@ -14048,6 +14055,7 @@ do
         game:Hide()
         assert(K.IsUnlocked() and not UO.frame:IsShown(), "zurueck: nicht im Gestaltungsmodus")
         K.SetUnlocked(false)
+        WeintCodex.UIEditMode.FinishAnim()
         assert(UO.frame:IsShown(), "nach Fertig nicht zurueck im Fenster, aus dem man kam")
 
         -- 4. Geht er nicht auf: sofort zurueck, wo man war.
@@ -14057,6 +14065,7 @@ do
         E.buttons.game:Click()
         assert(K.IsUnlocked() and E.bridge.from == nil, "nicht geoeffnet und trotzdem weg")
         K.SetUnlocked(false)
+        WeintCodex.UIEditMode.FinishAnim()
         _G.ShowUIPanel = function(f) f:Show() end
 
         -- 5. Im Kampf: nichts aendert sich.
@@ -14086,6 +14095,7 @@ do
         game:Hide()
         assert(K.IsUnlocked(), "mit Befehl: nicht zurueck im Gestaltungsmodus")
         K.SetUnlocked(false)
+        WeintCodex.UIEditMode.FinishAnim()
         -- 6.9.0.7, Beta-Test: das Spiel SCHLIESST beim Oeffnen selbst das
         -- Einstellungsfenster (UISpecialFrames). Der Rueckweg muss vorher
         -- gemerkt sein - und zurueck geht es auf dieselbe Seite.
@@ -14107,6 +14117,7 @@ do
         game:Hide()
         assert(K.IsUnlocked(), "ueber den Gestaltungsmodus: nicht zurueck")
         K.SetUnlocked(false)
+        WeintCodex.UIEditMode.FinishAnim()
         after = UO.Where()
         assert(UO.frame:IsShown() and after.module == "actionbars" and after.page == 2,
             "nach Fertig nicht auf derselben Seite: " .. tostring(after.module) .. "/" .. tostring(after.page))
@@ -16438,6 +16449,50 @@ do
         ui.chars, ui.enabled = savedChars, savedEnabled
     end)
     Check(ok, "Oberflaeche je Charakter: eigener Schalter, Uebernahme nur fuer bekannte" .. (ok and "" or (": " .. tostring(err))))
+end
+
+
+-- 6.26.9.0: Auftritt des Gestaltungsmodus - Fenster aus, Logo gross, schwebt
+-- an die Leiste, Leiste blendet ein; Fertig blendet aus und das Fenster ein.
+do
+    local ok, err = pcall(function()
+        local E, UO = WeintCodex.UIEditMode, WeintCodex.UIOptions
+        local P = _G.UIParent
+        local oW, oH = P.GetWidth, P.GetHeight
+        P.GetWidth = function() return 1600 end
+        P.GetHeight = function() return 900 end
+        if K.IsUnlocked() then K.SetUnlocked(false) E.FinishAnim() end
+        UO.Show()
+        K.SetUnlocked(true)
+        local bar = _G.WeintCodexDesignBar
+        bar.logo.GetCenter = function() return 500, 870 end
+        -- Neu starten mit Mass (die Attrappe hatte beim Betreten keins).
+        UO.frame:Show()
+        assert(E.Intro(UO.frame), "Auftritt startet nicht")
+        local A, fl = E.anim, E.floater
+        assert(bar:GetAlpha() == 0 and fl:IsShown() and UO.frame:IsShown(), "Anfang: Leiste schon da oder Fenster schon weg")
+        E.Step(nil, E.FADE / 2)
+        assert(UO.frame:GetAlpha() < 1 and UO.frame:GetAlpha() > 0 and fl:GetAlpha() > 0, "Fenster blendet nicht aus / Logo nicht ein")
+        E.Step(nil, E.FADE)
+        assert(not UO.frame:IsShown(), "Fenster nach dem Ausblenden noch offen")
+        local w0 = fl:GetWidth()
+        assert(w0 >= E.LOGO_BIG * 0.9, "Logo nicht gross: " .. tostring(w0))
+        E.Step(nil, (E.HOLD - E.FADE * 1.5) + (E.FLY - E.HOLD) / 2)
+        assert(fl:GetWidth() < w0 and fl:GetWidth() > E.LOGO_SMALL and bar:GetAlpha() > 0 and bar:GetAlpha() < 1,
+            "Mitte des Flugs: Logo nicht kleiner oder Leiste nicht halb da")
+        E.Step(nil, E.FLY)
+        assert(not fl:IsShown() and bar:GetAlpha() == 1 and bar.logo:GetAlpha() == 1, "Logo nicht an der Leiste festgemacht")
+        -- Fertig: Leiste blendet aus, danach geht das Fenster weich auf.
+        K.SetUnlocked(false)
+        assert(bar:IsShown() and not UO.frame:IsShown(), "Leiste sofort weg oder Fenster zu frueh")
+        E.Step(nil, E.OUT)
+        assert(not bar:IsShown() and UO.frame:IsShown() and UO.frame:GetAlpha() == 0, "Fenster nicht zurueck oder nicht weich")
+        E.FinishAnim()
+        assert(UO.frame:GetAlpha() == 1, "Fenster blendet nicht ganz ein")
+        P.GetWidth, P.GetHeight = oW, oH
+        UO.frame:Hide()
+    end)
+    Check(ok, "Gestaltungsmodus: Auftritt mit Logo, Leiste blendet ein, Fenster aus und zurueck" .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then

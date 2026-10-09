@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.9.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Gestaltungsmodus hat einen Auftritt.|r Das Einstellungsfenster blendet aus, das WCUI-Logo erscheint groß in der Mitte, schwebt nach oben an die Leiste und macht sich dort fest, während die Leiste einblendet. Bei „Fertig“ blendet sie wieder aus und das Fenster weich ein.",
+        },
+    },
+    {
         version = "6.26.8.0",
         date    = "10.10.2026",
         notes   = {
