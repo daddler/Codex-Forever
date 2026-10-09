@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.11.1",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFZurück aus den Optionen des Spiels.|r Schließt du die Optionen nach „Leiste hinzufügen“, öffnen sich die Einstellungen der Oberfläche wieder.",
+        },
+    },
+    {
         version = "6.26.11.0",
         date    = "10.10.2026",
         notes   = {

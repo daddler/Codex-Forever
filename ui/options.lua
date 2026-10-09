@@ -1022,17 +1022,13 @@ function O.OpenGameSettings(names)
     local st, sp = _G.Settings, _G.SettingsPanel
     if type(st) ~= "table" or type(st.OpenToCategory) ~= "function" or type(sp) ~= "table" then return false end
     O.SETTINGS_BACK = O.Where and O.Where() or { module = current.module, page = current.page }
-    if not O.settingsHooked and sp.HookScript then
-        O.settingsHooked = true
-        sp:HookScript("OnHide", function()
-            local back = O.SETTINGS_BACK
-            O.SETTINGS_BACK = nil
-            if not back then return end
-            K.AfterCombat(function()
-                if O.Return then O.Return(back) else O.Show(back.module, back.page) end
-            end)
-        end)
-    end
+    -- 6.26.11.1 (Beta-Test: "schliesse ich die Einstellungen, kommt
+    -- WeintCodexUI nicht wieder"): kein OnHide-Haken mehr - der feuerte
+    -- womoeglich schon beim Oeffnen (das Spiel blendet die Optionen beim
+    -- Wechsel der Kategorie einmal aus und wieder ein) und verbrauchte den
+    -- Rueckweg. Jetzt ein Waechter: erst offen gesehen, dann zu - zurueck.
+    O.settingsSeen, O.settingsWait = false, 0
+    O.SettingsWatcher():Show()
     if frame and frame:IsShown() then frame:Hide() end
     local id = O.GameCategory(names)
     local ok = pcall(st.OpenToCategory, id)
@@ -1046,6 +1042,30 @@ function O.OpenGameSettings(names)
 end
 
 -- Ohne Luecke: ein nil vorn liesse ipairs nichts finden.
+O.SETTINGS_GIVEUP = 3     -- Sekunden: nie aufgegangen -> sofort zurueck
+local watcher
+function O.SettingsTick(el)
+    local sp = _G.SettingsPanel
+    local back = O.SETTINGS_BACK
+    if not back then if watcher then watcher:Hide() end return end
+    local shown = type(sp) == "table" and sp.IsShown and sp:IsShown() and true or false
+    if shown then O.settingsSeen = true return end
+    O.settingsWait = (O.settingsWait or 0) + (el or 0)
+    if not O.settingsSeen and O.settingsWait < O.SETTINGS_GIVEUP then return end
+    O.SETTINGS_BACK = nil
+    if watcher then watcher:Hide() end
+    K.AfterCombat(function()
+        if O.Return then O.Return(back) else O.Show(back.module, back.page) end
+    end)
+end
+function O.SettingsWatcher()
+    if watcher then return watcher end
+    watcher = CreateFrame("Frame")
+    watcher:Hide()
+    watcher:SetScript("OnUpdate", function(_, el) O.SettingsTick(el) end)
+    return watcher
+end
+
 O.ACTIONBAR_NAMES = { "Aktionsleisten", "Action Bars" }
 if type(_G.ACTIONBARS_LABEL) == "string" then table.insert(O.ACTIONBAR_NAMES, 1, _G.ACTIONBARS_LABEL) end
 function O.BuilderGameSettings(self, note, text, names)

@@ -16599,10 +16599,9 @@ do
         local cat = { GetName = function() return "Aktionsleisten" end, GetID = function() return 42 end }
         local sp = CreateFrame("Frame", "SettingsPanel", UIParent)
         sp.GetAllCategories = function() return { { GetName = function() return "Grafik" end, GetID = function() return 1 end }, cat } end
-        local onHide
-        sp.HookScript = function(_, ev, fn) if ev == "OnHide" then onHide = fn end end
+        sp:Hide()
         G.SettingsPanel = sp
-        G.Settings = { OpenToCategory = function(id) opened = id end }
+        G.Settings = { OpenToCategory = function(id) opened = id sp:Show() end }
         assert(O.GameCategory(O.ACTIONBAR_NAMES) == 42, "Kategorie Aktionsleisten nicht gefunden")
         O.Show("actionbars", O.PageIndex("actionbars", "leisten"))
         local btn
@@ -16610,8 +16609,11 @@ do
         assert(btn, "kein Knopf zu den Optionen auf der Seite Aktionsleisten")
         btn:Click()
         assert(opened == 42 and not O.frame:IsShown(), "Optionen nicht geoeffnet oder Menue offen")
-        assert(onHide, "kein Rueckweg")
-        onHide()
+        -- Das Spiel blendet beim Oeffnen kurz aus und ein: kein Rueckweg dabei.
+        O.SettingsTick(0.05)
+        assert(not O.frame:IsShown() and O.SETTINGS_BACK, "Rueckweg schon beim Oeffnen verbraucht")
+        sp:Hide()
+        O.SettingsTick(0.05)
         assert(O.frame:IsShown(), "WeintCodexUI kommt nach dem Schliessen nicht wieder")
         O.frame:Hide()
         G.Settings, G.SettingsPanel = oSt, oSp

@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.11.1] – 2026-10-10
+
+### Behoben
+
+- Rückweg aus den Optionen des Spiels (Beta-Test: „WeintCodexUI kommt nicht wieder“): statt eines `OnHide`-Hakens an `SettingsPanel` ein Wächter (`O.SettingsTick`): erst offen gesehen, dann zu – zurück. Vermutung: das Spiel blendet die Optionen beim Öffnen einer Kategorie einmal aus und ein, der Haken verbrauchte den Rückweg dabei. Geht die Seite nie auf, nach 3 s zurück.
+
 ## [6.26.11.0] – 2026-10-10
 
 ### Neu
