@@ -323,7 +323,11 @@ local function OnKey(self, key)
 end
 
 function DL.ShowAll()
-    if body and body.SetAlphaGradient then pcall(body.SetAlphaGradient, body, DL.ALL, 0) end
+    -- Laenge 1, nicht 0: eine Laenge 0 laesst der Client womoeglich nicht
+    -- gelten (pcall schluckt den Fehler) - am Textende fiel das nie auf,
+    -- mitten im Text blieb er stehen (6.26.10.1). Hinter dem letzten Zeichen
+    -- ist ein Verlauf der Laenge 1 unsichtbar.
+    if body and body.SetAlphaGradient then pcall(body.SetAlphaGradient, body, DL.ALL, 1) end
 end
 DL.ALL = 100000
 
@@ -1014,7 +1018,12 @@ function DL.Primary()
     local c = DL.current
     if not (c and win and win:IsShown()) then return false end
     if reveal then                     -- erst den Text ganz zeigen
-        reveal, camWait = revealLen, nil
+        -- 6.26.10.1 (Beta-Test: "Leertaste - der Text bleibt stehen"): sofort
+        -- ganz, nicht erst ueber den naechsten Takt.
+        reveal, camWait = nil, nil
+        DL.revealAt = nil
+        if body then body:SetAlpha(1) end
+        DL.ShowAll()
         return true
     end
     if not (c.primary and c.canPrimary) then return false end

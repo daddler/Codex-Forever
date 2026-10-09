@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.10.1",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFLeertaste zeigt den ganzen Text.|r Drückst du beim Questgeber die Leertaste, während der Text noch einläuft, steht er sofort vollständig da, statt stehen zu bleiben.",
+        },
+    },
+    {
         version = "6.26.10.0",
         date    = "10.10.2026",
         notes   = {

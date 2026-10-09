@@ -1644,6 +1644,8 @@ do
         stub.FireEvent("GOSSIP_SHOW")
         grads = {}
         DL.Primary()
+        -- 6.26.10.1: ganz, ohne auf den naechsten Takt zu warten - und bleibt so.
+        assert(grads[#grads] == DL.ALL and bodyAlpha == 1, "Leertaste zeigt den Text nicht im selben Augenblick")
         upd(DL.win, 0.1)
         assert(grads[#grads] == DL.ALL and bodyAlpha == 1, "Leertaste zeigt den Text nicht sofort, solange die Kamera faehrt")
         -- Oberflaeche: langsam aus, danach wieder ein.
