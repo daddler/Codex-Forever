@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.7.0] – 2026-10-10
+
+### Geändert
+
+- Prüfung „was braucht die Oberfläche?“ (Beta-Test): alle Seiten unter Komfort hängen am Modul `comfort` (`group = "qol"`) und laufen ohne Hauptschalter; Entfluchen speichert bei `groupframes`, wirkt aber auch an den Rahmen des Spiels. An die Oberfläche gebunden bleiben nur die Module, die Rahmen des Spiels ersetzen (`group = "ui"`: Plaketten, Einheiten-/Gruppenrahmen, Leisten, Minikarte, Chat, Taschen, Questliste) und die Fenster in Gold. Nichts verschoben – die Trennung stimmte; `load_test.lua` hält jetzt fest, dass jeder Schalter im Assistenten eine echte Einstellung außerhalb der Oberflächenmodule ist.
+- Willkommens-Assistent (`ui/welcome.lua`) mit allen Komfortfunktionen: acht Schritte (Willkommen, Oberfläche, Anzeigen, Alltag, Kampf und Gruppe, Welt und Karte, Handel und Gespräche, Bereit), `WL.GROUPS`, `WL.HELPERS` mit `group`; Sammelschalter für Geistheiler/Wege/Flugmeister/Reisen (`keys`). Mit Oberfläche ist jeder Helfer vorgewählt („komplettes Programm“), ohne steht er wie gespeichert. Zusammenfassung je Thema („alles“, „nichts“ oder die Namen).
+- Komfortseiten nach Thema (`QoL.PAGE_ORDER`, `O.SortPages`): Automatik, Anzeigen · Raus da, Automark, Klickzauber, Makros · Karte, Sammeln, Seltene Gegner · Auktionshaus, Flüstern, Gespräche.
+
 ## [6.26.6.0] – 2026-10-10
 
 ### Geändert

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.7.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Willkommens-Assistent kennt jetzt alle Komfortfunktionen.|r Nach Themen – Alltag, Kampf und Gruppe, Welt und Karte, Handel und Gespräche – je ein Satz und ein Schalter. Mit der Oberfläche ist alles vorgewählt; ohne sie wählst du selbst. Wieder zeigen: /wcui willkommen.",
+            "|cff7C6CFFKomfort nach Themen geordnet.|r Die Seiten stehen in derselben Reihenfolge wie im Assistenten: Gespräche neben Flüstern, Karte neben Sammeln.",
+        },
+    },
+    {
         version = "6.26.6.0",
         date    = "10.10.2026",
         notes   = {

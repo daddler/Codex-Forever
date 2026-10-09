@@ -657,9 +657,26 @@ local function Layout()
     scroller:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -PAD, FOOT_H + 8)
 end
 
+-- Seiten nach Thema (6.26.7.0, Beta-Test: "Komfort logischer, themen-
+-- bezogener"): ein Modul mit `pageOrder` ({ [Seitenschluessel] = Rang })
+-- ordnet seine Seiten danach - sie kommen aus vielen Dateien in der
+-- Reihenfolge des .toc. Einmal je Seitenzahl, vor dem ersten Aufbau.
+function O.SortPages(m)
+    if not (m and m.pageOrder and m.pages) or m._sortedFor == #m.pages then return end
+    local rank, pos = m.pageOrder, {}
+    for i, p in ipairs(m.pages) do pos[p] = i end
+    table.sort(m.pages, function(a, b)
+        local ra, rb = rank[a.key] or 999, rank[b.key] or 999
+        if ra ~= rb then return ra < rb end
+        return pos[a] < pos[b]
+    end)
+    m._sortedFor = #m.pages
+end
+
 function O.Select(key, pageIndex)
     local m = K.Module(key)
     if not m then return false end
+    O.SortPages(m)
     O.Build()
     current.module = key
     current.page = pageIndex or 1
@@ -954,6 +971,7 @@ end
 
 -- Stelle einer Seite in einem Modul (nach ihrem Schluessel), sonst 1.
 function O.PageIndex(moduleKey, pageKey)
+    O.SortPages(K.Module(moduleKey))
     local m = K.Module(moduleKey)
     for i, p in ipairs(m and m.pages or {}) do
         if p.key == pageKey then return i end

@@ -7,7 +7,9 @@
 -- das UI entscheidet, soll dennoch eine Abfrage kommen, ob man die
 -- Komfortfunktionen haben moechte. Ein komplettes An-die-Hand-Nehmen."
 --
--- FUENF SCHRITTE, EIN FENSTER:
+-- SCHRITTE (bis 6.26.6.0 fuenf, seit 6.26.7.0 acht: statt "Helfer" je
+-- Thema einer - Alltag, Kampf und Gruppe, Welt und Karte, Handel und
+-- Gespraeche, siehe WL.GROUPS). Urspruenglich:
 --   1 Willkommen   was WeintCodex ist, was jetzt gefragt wird
 --   2 Oberflaeche  Bilder, Vorteile, "dein Profil bleibt deins" -> ja/nein
 --   3 Anzeigen     Schadensanzeige, Erinnerungen, Questpfeil
@@ -69,29 +71,95 @@ WL.SHOTS = {
 }
 WL.GALLERY = { "overview", "plates", "group", "windows" }
 
-WL.STEPS = { "start", "ui", "anzeigen", "helfer", "bereit" }
+-- 6.26.7.0 (Beta-Test: "alle Komfortfunktionen aufgefuehrt, kurz
+-- angesprochen, an- oder abwaehlbar"): statt eines Schritts "Helfer" je
+-- Thema ein Schritt - dieselben Themen und dieselbe Reihenfolge wie die
+-- Seiten unter Komfort (WL.GROUPS, ui/comfort.lua COMFORT_ORDER). Alles
+-- dort geht auch ohne Oberflaeche; mit Oberflaeche ist alles vorgewaehlt
+-- (das komplette Programm), ohne steht es, wie es ist.
+WL.STEPS = { "start", "ui", "anzeigen", "alltag", "kampf", "welt", "handel", "bereit" }
+
+WL.GROUPS = {
+    { key = "alltag", eyebrow = "Komfort · Alltag", title = "Was dir unterwegs Klicks spart", shot = "helpers" },
+    { key = "kampf",  eyebrow = "Komfort · Kampf und Gruppe", title = "Im Kampf und in der Gruppe", shot = "group" },
+    { key = "welt",   eyebrow = "Komfort · Welt und Karte", title = "Auf der Karte und unterwegs", shot = "arrow" },
+    { key = "handel", eyebrow = "Komfort · Handel und Gespräche", title = "Handeln und miteinander reden", shot = "helpers" },
+}
 
 -- Die Anzeigen (Module) und Helfer (Einstellungen) zum Waehlen.
 WL.SHOWS = {
     { key = "damagemeter", shot = "damage", label = "Schadensanzeige",
-      text = "Wer wie viel Schaden und Heilung macht – die Zahlen des Spiels, mit Aufschlüsselung per Klick. Ersetzt die Anzeige des Spiels." },
+      text = "Wer wie viel Schaden und Heilung macht – mit Aufschlüsselung per Klick." },
     { key = "reminders", shot = "reminders", label = "Erinnerungen",
-      text = "Fehlender Buff, Waffe ohne Öl, Begleiter vergessen – bevor der Kampf beginnt. Dazu Procs und Abklingzeiten als Symbole." },
+      text = "Fehlender Buff, Waffe, Begleiter – vor dem Kampf. Dazu Procs und Abklingzeiten." },
     { key = "questarrow", shot = "arrow", label = "Questpfeil",
-      text = "Zeigt zur gewählten Quest oder Kartenmarkierung, mit Entfernung und Ankunftszeit." },
+      text = "Zeigt zur gewählten Quest, mit Entfernung und Ankunftszeit." },
 }
+-- `keys`: ein Schalter fuer mehrere Einstellungen (an, wenn eine an ist).
 WL.HELPERS = {
-    { module = "comfort", key = "autoRepair", shot = "helpers", label = "Automatisch reparieren",
+    -- Alltag
+    { group = "alltag", module = "comfort", key = "autoRepair", label = "Automatisch reparieren",
       text = "Beim Händler, ohne Klick. Die Summe steht im Chat." },
-    { module = "comfort", key = "sellJunk", shot = "helpers", label = "Graue Gegenstände verkaufen",
-      text = "Nur Qualität „Schlecht“ – nichts, was einen Wert hat, den du übersehen könntest." },
-    { module = "comfort", key = "fastLoot", shot = "helpers", label = "Schneller plündern",
+    { group = "alltag", module = "comfort", key = "sellJunk", label = "Graue Gegenstände verkaufen",
+      text = "Nur Qualität „Schlecht“ – nichts, was einen Wert hat." },
+    { group = "alltag", module = "comfort", key = "fastLoot", label = "Schneller plündern",
       text = "Nimmt alles sofort, wenn automatisches Plündern an ist." },
-    { module = "comfort", key = "autoMark", shot = "helpers", label = "Automark",
-      text = "Als Gruppenleiter fragt WeintCodex beim Betreten einer Instanz nach – ein Klick markiert Tank und Heiler." },
-    { module = "groupframes", key = "clickDispel", shot = "group", label = "Entfluchen auf Klick", dispel = true,
-      text = "Strg + Klick auf einen Gruppenrahmen entfernt Flüche, Gifte, Krankheiten oder Magie – mit den Zaubern deiner Klasse." },
+    { group = "alltag", module = "comfort", key = "skipCinematics", label = "Filmsequenzen überspringen",
+      text = "Zwischensequenzen enden von selbst." },
+    { group = "alltag", module = "comfort", key = "durability", label = "Haltbarkeitswarnung",
+      text = "Meldet sich, bevor deine Ausrüstung bricht." },
+    { group = "alltag", module = "comfort", key = "mapCoords", label = "Koordinaten auf der Karte",
+      text = "Deine Position und die des Mauszeigers." },
+    -- Kampf und Gruppe
+    { group = "kampf", module = "comfort", key = "fireAlarm", label = "Raus da!",
+      text = "Ein Ton, sobald du in etwas stehst, das dir schadet." },
+    { group = "kampf", module = "comfort", key = "autoMark", label = "Automark",
+      text = "Als Gruppenleiter: ein Klick beim Betreten markiert Tank und Heiler." },
+    { group = "kampf", module = "comfort", key = "markHover", label = "Markieren per Maus und Taste",
+      text = "Maus über den Gegner, Taste drücken – nächste freie Markierung." },
+    { group = "kampf", module = "groupframes", key = "clickDispel", label = "Entfluchen auf Klick", dispel = true, shot = "group",
+      text = "Strg + Klick auf einen Gruppenrahmen entfernt, was deine Klasse entfernen kann." },
+    { group = "kampf", module = "comfort", key = "combatAlert", label = "Kampfhinweis",
+      text = "„+ Kampf“ und „− Kampf“ kurz in der Bildschirmmitte." },
+    { group = "kampf", module = "comfort", key = "hideErrorsInCombat", label = "Fehlermeldungen im Kampf aus",
+      text = "„Außer Reichweite“ und Co. – danach kommen sie wieder." },
+    -- Welt und Karte
+    { group = "welt", module = "comfort", key = "mapEntrances", label = "Instanzeingänge auf der Karte",
+      text = "Ein Symbol an jedem Eingang, den der Codex kennt." },
+    { group = "welt", module = "comfort", key = "mapMarks", keys = { "mapSpirit", "mapCrossings", "mapFlight", "mapTravel" },
+      label = "Geistheiler, Wege, Flugmeister", text = "Dazu Schiffe, Zeppeline und Portale – Maus darauf: wohin." },
+    { group = "welt", module = "comfort", key = "mapReveal", label = "Ganze Karte zeigen",
+      text = "Auch Unerkundetes, etwas dunkler." },
+    { group = "welt", module = "comfort", key = "mapZoneInfo", label = "Stufen und Sammelberufe",
+      text = "Für welche Stufe ein Gebiet ist, Angeln, Kräuter, Erze." },
+    { group = "welt", module = "comfort", key = "gatherSwap", label = "Kräuter und Erz im Wechsel",
+      text = "Beide Suchen auf der Minikarte – außerhalb des Kampfes." },
+    { group = "welt", module = "comfort", key = "rareAlert", label = "Seltene Gegner melden",
+      text = "Ton und Hinweis, sobald ein seltener Gegner in der Nähe ist." },
+    -- Handel und Gespraeche
+    { group = "handel", module = "comfort", key = "ahPrices", label = "Auktionspreise",
+      text = "Merkt sich Preise im Auktionshaus und zeigt sie im Tooltip." },
+    { group = "handel", module = "comfort", key = "msgOn", label = "Flüstern als Messenger",
+      text = "Jedes Gespräch in einem eigenen Fenster." },
+    { group = "handel", module = "comfort", key = "dlgOn", label = "Gespräche im Codex-Stil",
+      text = "Questgeber und Händler in einem ruhigen Fenster, mit Kamera." },
 }
+
+function WL.HelperGet(h)
+    if h.keys then
+        for _, k in ipairs(h.keys) do if K.Get(h.module, k) then return true end end
+        return false
+    end
+    return K.Get(h.module, h.key) and true or false
+end
+
+function WL.HelperSet(h, v)
+    for _, k in ipairs(h.keys or { h.key }) do
+        if (K.Get(h.module, k) and true or false) ~= v then K.Set(h.module, k, v) end
+    end
+end
+
+function WL.Offered(h) return not h.dispel or WL.CanDispel() end
 
 -- Ist diese Sitzung ein /reload? Gesetzt beim ersten PLAYER_ENTERING_WORLD
 -- (siehe unten). Steht hier oben, weil MaybeAsk sie liest.
@@ -146,10 +214,16 @@ end
 
 -- Oberflaeche gewaehlt: die Anzeigen auf das passende Paket setzen (nur,
 -- wenn sich die Wahl aendert - wer zurueckblaettert, behaelt seine Haken).
+-- Mit Oberflaeche ist auch jeder Helfer vorgewaehlt (6.26.7.0: "die Nutzer
+-- der Oberflaeche bekommen das komplette Programm"); ohne steht er, wie
+-- er gespeichert ist.
 function WL.Decide(ui)
     ui = ui and true or false
     if choice.picked ~= ui then
         for _, s in ipairs(WL.SHOWS) do choice.shows[s.key] = ShowDefault(s.key, ui) end
+        for _, h in ipairs(WL.HELPERS) do
+            choice.helpers[h.key] = ui or WL.HelperGet(h)
+        end
         choice.picked = ui
     end
     choice.ui = ui
@@ -160,7 +234,7 @@ local function ResetChoice()
     wipe(choice.shows)
     wipe(choice.helpers)
     for _, h in ipairs(WL.HELPERS) do
-        choice.helpers[h.key] = K.Get(h.module, h.key) and true or false
+        choice.helpers[h.key] = WL.HelperGet(h)
     end
     -- Wer schon geantwortet hat (/wcui willkommen), sieht seinen Stand.
     if Asked() and K.OPT_IN then WL.Decide(K.UIEnabled()) end
@@ -178,11 +252,18 @@ function WL.Summary()
     local on = {}
     for _, s in ipairs(WL.SHOWS) do if choice.shows[s.key] then on[#on + 1] = s.label end end
     lines[#lines + 1] = "•  Anzeigen: " .. (#on > 0 and table.concat(on, ", ") or "keine")
-    local help = {}
-    for _, h in ipairs(WL.HELPERS) do
-        if choice.helpers[h.key] and (not h.dispel or WL.CanDispel()) then help[#help + 1] = h.label end
+    for _, g in ipairs(WL.GROUPS) do
+        local help, all = {}, 0
+        for _, h in ipairs(WL.HELPERS) do
+            if h.group == g.key and WL.Offered(h) then
+                all = all + 1
+                if choice.helpers[h.key] then help[#help + 1] = h.label end
+            end
+        end
+        local name = g.eyebrow:gsub("^Komfort · ", "")
+        lines[#lines + 1] = "•  " .. name .. ": " .. (#help == 0 and "nichts"
+            or #help == all and "alles" or table.concat(help, ", "))
     end
-    lines[#lines + 1] = "•  Helfer: " .. (#help > 0 and table.concat(help, ", ") or "keine")
     return lines
 end
 
@@ -199,9 +280,9 @@ function WL.Apply()
     end
     local anyHelper = false
     for _, h in ipairs(WL.HELPERS) do
-        if not h.dispel or WL.CanDispel() then
+        if WL.Offered(h) then
             local want = choice.helpers[h.key] and true or false
-            if (K.Get(h.module, h.key) and true or false) ~= want then K.Set(h.module, h.key, want) end
+            if WL.HelperGet(h) ~= want then WL.HelperSet(h, want) end
             if want and h.module == "comfort" then anyHelper = true end
         end
     end
@@ -427,9 +508,9 @@ local function Rows(list, kind)
                     if kind == "show" then choice.shows[e.key] = v and true or false
                     else choice.helpers[e.key] = v and true or false end
                 end,
-                onChange = function() WL.ShowShot(e.shot) end,
+                onChange = function() if e.shot then WL.ShowShot(e.shot) end end,
             })
-            r:HookScript("OnEnter", function() WL.ShowShot(e.shot) end)
+            r:HookScript("OnEnter", function() if e.shot then WL.ShowShot(e.shot) end end)
             rows[id] = r
         end
         r:ClearAllPoints()
@@ -487,9 +568,8 @@ function WL.Text(key)
             .. "Dein Profil bleibt deins: Die Oberfläche bekommt im Bearbeitungsmodus ein eigenes Layout."
             .. " Dein jetziges, deine Chatreiter und deine Einstellungen werden nicht überschrieben –"
             .. " ausschalten bringt alles zurück."
-    elseif key == "helfer" then
-        return "Klickzauber (heilen per Klick auf den Rahmen) und den Makro-Helfer richtest du später unter"
-            .. " /wcui → Komfort ein – dort wählst du die Zauber aus deinem Zauberbuch."
+    elseif key == "kampf" then
+        return "Klickzauber und Makros richtest du später unter /wcui → Komfort ein."
     end
     return ""
 end
@@ -518,7 +598,7 @@ local function StepUI()
 end
 
 local function StepShows()
-    Head(3, "Komfort",
+    Head(3, "Komfort · Anzeigen",
         choice.ui and "Dein Komplettpaket: Anzeigen" or "Was darf WeintCodex dir zeigen?")
     body:Hide()
     rowsHost:Show()
@@ -526,28 +606,43 @@ local function StepShows()
     WL.rowsHeight = Rows(WL.SHOWS, "show")
     WL.ShowShot("damage")
     SetButtons({ { key = "back", text = "Zurück", onClick = function() Go("ui") end } },
-        { { key = "next", text = "Weiter", kind = "primary", onClick = function() Go("helfer") end } })
+        { { key = "next", text = "Weiter", kind = "primary", onClick = function() Go(WL.STEPS[4]) end } })
 end
 
-local function StepHelpers()
-    Head(4, "Komfort", "Kleine Helfer")
+local function StepIndex(key)
+    for i, k in ipairs(WL.STEPS) do if k == key then return i end end
+    return 1
+end
+
+-- Die Helfer eines Themas (nur, was die Klasse kann).
+function WL.GroupList(key)
     local list = {}
     for _, h in ipairs(WL.HELPERS) do
-        if not h.dispel or WL.CanDispel() then list[#list + 1] = h end
+        if h.group == key and WL.Offered(h) then list[#list + 1] = h end
     end
+    return list
+end
+
+local function StepGroup(g)
+    local n = StepIndex(g.key)
+    Head(n, g.eyebrow, g.title)
     rowsHost:Show()
     ShowGallery(false)
-    local y = Rows(list, "help")
+    local y = Rows(WL.GroupList(g.key), "help")
     WL.rowsHeight = y
-    -- Darunter der Hinweis auf Klickzauber und Makros.
-    body:ClearAllPoints()
-    body:SetPoint("TOPLEFT", win, "TOPLEFT", WL.PAD, -(WL.BODY_TOP + y + 6))
-    body:SetText(WL.Text("helfer"))
-    body:SetTextColor(unpack(C.textDim))
-    body:Show()
-    WL.ShowShot("helpers")
-    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go("anzeigen") end } },
-        { { key = "next", text = "Weiter", kind = "primary", onClick = function() Go("bereit") end } })
+    local hint = WL.Text(g.key)
+    if hint ~= "" then
+        body:ClearAllPoints()
+        body:SetPoint("TOPLEFT", win, "TOPLEFT", WL.PAD, -(WL.BODY_TOP + y + 6))
+        body:SetText(hint)
+        body:SetTextColor(unpack(C.textDim))
+        body:Show()
+    else
+        body:Hide()
+    end
+    WL.ShowShot(g.shot)
+    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go(WL.STEPS[n - 1]) end } },
+        { { key = "next", text = "Weiter", kind = "primary", onClick = function() Go(WL.STEPS[n + 1]) end } })
 end
 
 function WL.ReadyText()
@@ -558,19 +653,19 @@ function WL.ReadyText()
 end
 
 local function StepReady()
-    Head(5, "Zusammenfassung", "Bereit")
+    Head(#WL.STEPS, "Zusammenfassung", "Bereit")
     rowsHost:Hide()
     ShowGallery(false)
     body:SetText(WL.ReadyText())
     body:Show()
     WL.ShowShot(choice.ui and "overview" or "helpers")
-    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go("helfer") end } },
+    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go(WL.STEPS[#WL.STEPS - 1]) end } },
         { { key = "apply", text = "Übernehmen", kind = "primary", onClick = function() WL.Finish() end } })
 end
 
 -- Nach "Uebernehmen": was geschah, und das Neuladen.
 local function StepDone(report)
-    Head(5, "Fertig", report.reload and "Fertig – jetzt neu laden" or "Fertig")
+    Head(#WL.STEPS, "Fertig", report.reload and "Fertig – jetzt neu laden" or "Fertig")
     local lines = {}
     if report.layout == true then
         lines[#lines + 1] = "•  Layout „WeintCodex“ im Bearbeitungsmodus angelegt und aktiv. Dein bisheriges ist gemerkt."
@@ -603,8 +698,13 @@ Go = function(key)
     if key == "start" then StepStart()
     elseif key == "ui" then StepUI()
     elseif key == "anzeigen" then StepShows()
-    elseif key == "helfer" then StepHelpers()
-    else StepReady() end
+    elseif key == "bereit" then StepReady()
+    else
+        for _, g in ipairs(WL.GROUPS) do
+            if g.key == key then StepGroup(g) return end
+        end
+        StepReady()
+    end
 end
 
 function WL.Step() return applied and "fertig" or step end

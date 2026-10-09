@@ -492,6 +492,20 @@ do
     end
 end
 
+-- Reihenfolge der Seiten nach Thema (6.26.7.0; ui/options.lua O.SortPages).
+-- Dieselben Themen wie im Willkommens-Assistenten (WL.GROUPS):
+--   Alltag            Automatik, Anzeigen
+--   Kampf und Gruppe  Raus da, Automark, Klickzauber, Makros
+--   Welt und Karte    Karte, Sammeln, Seltene Gegner
+--   Handel, Gespraeche Auktionshaus, Fluestern, Gespraeche
+QoL.PAGE_ORDER = {
+    automatik = 1, anzeigen = 2,
+    rausda = 10, automark = 11, klickzauber = 12, makros = 13,
+    karte = 20, sammeln = 21, selten = 22,
+    auktion = 30, fluestern = 31, gespraeche = 32,
+}
+K.Module(KEY).pageOrder = QoL.PAGE_ORDER
+
 -- Nach dem Einschalten (K.Activate setzt _active erst nach Enable) die
 -- Ereignisse einmal nach Lage verteilen.
 K.Listen(function(kind, key)

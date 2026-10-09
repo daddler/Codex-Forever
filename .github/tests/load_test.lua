@@ -2206,17 +2206,27 @@ do
         assert(c.shows.damagemeter and WL.ShownShot() == "damage", "Schadensanzeige laesst sich nicht waehlen")
         assert(not K.WantsActive("damagemeter") and not sd.ui.asked, "vor Uebernehmen schon geschaltet")
         WL.Button("next"):Click()
-        assert(WL.Step() == "helfer" and WL.BodyText():find("Klickzauber", 1, true), "Helfer ohne Hinweis auf Klickzauber")
+        -- 6.26.7.0: je Thema ein Schritt, alle Komfortfunktionen.
+        assert(WL.Step() == "alltag", "nach den Anzeigen kein Schritt Alltag: " .. WL.Step())
+        assert(not c.helpers.autoRepair and not c.helpers.fireAlarm, "ohne Oberflaeche Helfer vorgewaehlt")
         WL.Row("help", "autoRepair"):Click()
         assert(c.helpers.autoRepair and not K.Get("comfort", "autoRepair"), "Helfer vor Uebernehmen geschaltet")
+        WL.Button("next"):Click()
+        assert(WL.Step() == "kampf" and WL.BodyText():find("Klickzauber", 1, true), "Kampf ohne Hinweis auf Klickzauber")
+        assert(WL.Row("help", "fireAlarm") and WL.Row("help", "markHover"), "Raus da oder Markieren fehlen")
+        WL.Button("next"):Click()
+        assert(WL.Step() == "welt" and WL.Row("help", "mapZoneInfo") and WL.Row("help", "mapMarks"), "Welt und Karte fehlt")
+        WL.Row("help", "mapMarks"):Click()
+        WL.Button("next"):Click()
+        assert(WL.Step() == "handel" and WL.Row("help", "msgOn") and WL.Row("help", "dlgOn"), "Handel und Gespraeche fehlt")
         -- Zurueckblaettern bis zur Oberflaeche und wieder Nein: Haken bleiben.
-        WL.Button("back"):Click()
+        for _ = 1, 4 do WL.Button("back"):Click() end
+        assert(WL.Step() == "anzeigen", "Zurueck landet nicht bei den Anzeigen: " .. WL.Step())
         WL.Button("back"):Click()
         WL.Button("no"):Click()
-        assert(c.shows.damagemeter, "Zurueckblaettern verliert die Wahl")
-        WL.Button("next"):Click()
-        WL.Button("next"):Click()
-        assert(WL.Step() == "bereit", "keine Zusammenfassung")
+        assert(c.shows.damagemeter and c.helpers.autoRepair, "Zurueckblaettern verliert die Wahl")
+        for _ = 1, 5 do WL.Button("next"):Click() end
+        assert(WL.Step() == "bereit", "keine Zusammenfassung: " .. WL.Step())
         local txt = WL.BodyText()
         assert(txt:find("Oberfläche: nein", 1, true) and txt:find("Schadensanzeige", 1, true)
             and txt:find("Automatisch reparieren", 1, true) and txt:find("/wcui", 1, true),
@@ -2225,6 +2235,9 @@ do
         assert(WL.Step() == "fertig" and sd.ui.asked == true and not K.UIEnabled(), "Uebernehmen ohne Oberflaeche falsch")
         assert(K.WantsActive("damagemeter") and WeintCodex.UIKit.Profile().modules.damagemeter.enabled == true, "Schadensanzeige nicht gewaehlt")
         assert(not K.WantsActive("reminders") and K.Get("comfort", "autoRepair") == true, "Helfer oder Erinnerungen falsch")
+        assert(K.Get("comfort", "mapSpirit") and K.Get("comfort", "mapTravel") and not K.Get("comfort", "fireAlarm"),
+            "Sammelschalter Karte nicht auf alle Teile, oder Ungewaehltes geschaltet")
+        for _, k in ipairs({ "mapSpirit", "mapCrossings", "mapFlight", "mapTravel" }) do K.Set("comfort", k, false) end
         assert(WL.Button("reload") and WL.Button("close"), "Anzeige gewaehlt, aber kein Neuladen angeboten")
         WL.Button("close"):Click()
         assert(not WL.IsShown(), "Spaeter schliesst nicht")
@@ -2245,10 +2258,16 @@ do
         WL.Button("next"):Click()
         WL.Button("yes"):Click()
         assert(c.ui and c.shows.damagemeter and c.shows.reminders, "mit Oberflaeche kein Komplettpaket")
+        for _, h in ipairs(WL.HELPERS) do
+            assert(c.helpers[h.key], "mit Oberflaeche nicht vorgewaehlt: " .. h.label)
+        end
         assert(setupRan == 0 and not K.UIEnabled(), "vor Uebernehmen eingerichtet")
-        WL.Button("next"):Click()
-        WL.Button("next"):Click()
+        for _ = 1, 5 do WL.Button("next"):Click() end
+        assert(WL.Step() == "bereit", "mit Oberflaeche keine Zusammenfassung: " .. WL.Step())
+        assert(WL.BodyText():find("Alltag: alles", 1, true), "Zusammenfassung sagt nicht 'alles': " .. WL.BodyText())
         WL.Button("apply"):Click()
+        assert(K.Get("comfort", "fireAlarm") and K.Get("comfort", "dlgOn") and K.Get("comfort", "mapFlight"),
+            "komplettes Programm nicht geschaltet")
         ES.HasLayout, ES.Apply = oldHas, oldApply
         assert(K.UIEnabled() and setupRan == 1, "Oberflaeche nicht an oder Layout nicht eingerichtet")
         assert(WL.BodyText():find("Layout „WeintCodex“", 1, true), "Bericht nennt das Layout nicht")
@@ -2260,6 +2279,10 @@ do
         WL.Button("close"):Click()
 
         -- Zurueck auf den Ausgangszustand fuer die Pruefungen darunter.
+        for _, h in ipairs(WL.HELPERS) do
+            local m = K.Module(h.module)
+            for _, k in ipairs(h.keys or { h.key }) do K.Set(h.module, k, m and m.defaults[k] or false) end
+        end
         K.SetUIEnabled(false)
     end)
     if WL.IsShown() then WL.Close() end
@@ -2286,13 +2309,17 @@ do
     for _, s in ipairs(WL.SHOWS) do WL.choice.shows[s.key] = true end
     for _, h in ipairs(WL.HELPERS) do WL.choice.helpers[h.key] = true end
     Measure("bereit", WL.ReadyText())
-    -- Helfer: jede Zeile Name + Erlaeuterung (Mono 9 auf der Zeilenbreite),
+    -- Je Thema: jede Zeile Name + Erlaeuterung (Mono 9 auf der Zeilenbreite),
     -- darunter der Hinweis.
-    local rowsH = 0
-    for _, h in ipairs(WL.HELPERS) do
-        rowsH = rowsH + 23 + WeintCodex.EstimateLines(h.text, math.floor((WL.COL_W - 58) / (9 * 0.60))) * 13 + 6 + 6
+    for _, g in ipairs(WL.GROUPS) do
+        local rowsH = 0
+        for _, h in ipairs(WL.HELPERS) do
+            if h.group == g.key then
+                rowsH = rowsH + 23 + WeintCodex.EstimateLines(h.text, math.floor((WL.COL_W - 58) / (9 * 0.60))) * 13 + 6 + 6
+            end
+        end
+        Measure(g.key, string.rep("\n", math.ceil(rowsH / line)) .. WL.Text(g.key))
     end
-    Measure("helfer", string.rep("\n", math.ceil(rowsH / line)) .. WL.Text("helfer"))
     Check(worst <= budget, "Assistent: laengster Schritt (" .. worstName .. ") " .. worst .. " von " .. budget .. " px")
     -- Jedes Bild, das er zeigt, gibt es als Datei.
     local missing = {}
@@ -2507,8 +2534,7 @@ do
         WL.Ask()
         WL.Button("next"):Click()
         WL.Button("yes"):Click()
-        WL.Button("next"):Click()
-        WL.Button("next"):Click()
+        for _ = 1, #WL.STEPS - 3 do WL.Button("next"):Click() end
         WL.Button("apply"):Click()
         local btn = WL.Button("reload")
         assert(btn and btn._reloadOverlay, "Neuladeknopf ohne Makroknopf")
@@ -2520,6 +2546,12 @@ do
         assert(not WL.IsShown(), "Klick auf Neuladen schliesst die Frage nicht")
         K.SetUIEnabled(false)
     end)
+    -- 6.26.7.0: "Oberflaeche ja" schaltet alle Helfer - fuer die Pruefungen
+    -- darunter zurueck auf den Standard der Module.
+    for _, h in ipairs(WL.HELPERS) do
+        local m = K.Module(h.module)
+        for _, k in ipairs(h.keys or { h.key }) do K.Set(h.module, k, m and m.defaults[k] or false) end
+    end
     Check(ok and blocked == 0, "Neuladen laeuft ueber den Makroknopf, nie ueber eine geschuetzte Funktion"
         .. (ok and "" or (": " .. tostring(err))))
     _G.ReloadUI, _G.C_UI = nil, nil
@@ -16266,6 +16298,34 @@ do
         ZI.Update()
     end)
     Check(ok, "Karte: Stufen und Sammelberufe je Gebiet, nur Bekanntes, Herkunft genannt" .. (ok and "" or (": " .. tostring(err))))
+end
+
+
+-- 6.26.7.0: Komfort nach Thema; jede Seite hat einen Rang; jeder Helfer im
+-- Assistenten ist eine Einstellung, die es gibt, und braucht keine Oberflaeche.
+do
+    local ok, err = pcall(function()
+        local O, QoL, WL = WeintCodex.UIOptions, WeintCodex.UIComfort, WeintCodex.UIWelcome
+        local m = K.Module("comfort")
+        O.SortPages(m)
+        local keys = {}
+        for i, p in ipairs(m.pages) do
+            keys[i] = p.key
+            assert(QoL.PAGE_ORDER[p.key], "Seite ohne Thema: " .. p.key)
+        end
+        local order = table.concat(keys, ",")
+        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,karte,sammeln,selten,auktion,fluestern,gespraeche",
+            "Reihenfolge: " .. order)
+        assert(O.PageIndex("comfort", "gespraeche") == 12 and O.PageIndex("comfort", "fluestern") == 11, "Index nach Sortieren")
+        for _, h in ipairs(WL.HELPERS) do
+            local mod = K.Module(h.module)
+            assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")
+            for _, k in ipairs(h.keys or { h.key }) do
+                assert(mod.defaults[k] ~= nil, h.label .. ": Einstellung " .. k .. " gibt es nicht")
+            end
+        end
+    end)
+    Check(ok, "Komfort nach Thema geordnet, Assistent bietet nur echte Einstellungen" .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then
