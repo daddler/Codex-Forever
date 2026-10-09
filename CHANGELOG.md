@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.9.1] – 2026-10-10
+
+### Geändert
+
+- Auftritt des Gestaltungsmodus (Beta-Test: „Logo etwas größer, etwas länger schweben“): `E.LOGO_BIG` 160 → 220, Schweben 0,55 → 0,95 s (`E.FLY` 1,3 → 1,7).
+
 ## [6.26.9.0] – 2026-10-10
 
 ### Neu

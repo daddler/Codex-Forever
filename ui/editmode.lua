@@ -283,8 +283,10 @@ end
 -- steht alles sofort am Ziel. Beim Verlassen blendet die Leiste aus und
 -- das Fenster wieder ein (OUT).
 E.LOGO_SMALL = 22
-E.LOGO_BIG = 160
-E.FADE, E.HOLD, E.FLY, E.OUT = 0.3, 0.75, 1.3, 0.25
+-- 6.26.9.1 (Beta-Test: "Logo etwas groesser, darf etwas laenger brauchen"):
+-- 160 -> 220 Bildpunkte, Schweben 0,55 -> 0,95 s.
+E.LOGO_BIG = 220
+E.FADE, E.HOLD, E.FLY, E.OUT = 0.3, 0.75, 1.7, 0.25
 E.SLIDE = 14             -- so weit gleitet die Leiste herab
 
 local anim, floater

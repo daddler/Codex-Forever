@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.9.1",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFGrößerer Auftritt.|r Das Logo beim Betreten des Gestaltungsmodus ist größer und schwebt gemächlicher an die Leiste.",
+        },
+    },
+    {
         version = "6.26.9.0",
         date    = "10.10.2026",
         notes   = {
