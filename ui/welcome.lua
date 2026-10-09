@@ -167,14 +167,55 @@ function WL.Offered(h) return not h.dispel or WL.CanDispel() end
 -- (siehe unten). Steht hier oben, weil MaybeAsk sie liest.
 local reloadSession = false
 
+-- JE CHARAKTER (6.26.8.0, Beta-Test: "wenn ich einen neuen Charakter
+-- erstelle, soll der Willkommensbildschirm kommen"). Bis 6.26.7.0 galt
+-- die Antwort fuer den ganzen Account (`ui.asked`). Jetzt merkt sich
+-- `ui.welcomed[Charakter]`, wer gefragt wurde; `ui.asked` bleibt als
+-- "der Account hat schon einmal geantwortet". Beim ersten Einloggen nach
+-- dem Update (WL.Migrate) gelten alle Charaktere, die WeintCodex schon
+-- kennt (Bestand, Profilfrage), als gefragt - gefragt wird nur ein neuer.
 local function Asked()
     local ui = K.Root()
-    return ui == nil or ui.asked == true
+    if ui == nil then return true end
+    if ui.asked ~= true then return false end
+    local key = K.CharKey()
+    if not key or type(ui.welcomed) ~= "table" then return true end
+    return ui.welcomed[key] == true
 end
+WL.Asked = Asked
 
 local function MarkAsked()
     local ui = K.Root()
-    if ui then ui.asked = true end
+    if not ui then return end
+    ui.asked = true
+    local key = K.CharKey()
+    if key then
+        ui.welcomed = ui.welcomed or {}
+        ui.welcomed[key] = true
+    end
+end
+
+-- Einmal je Account: die Charaktere von vorher als gefragt eintragen.
+-- Der Charakter, der gerade einloggt, zaehlt nur dazu, wenn WeintCodex ihn
+-- schon kennt oder er ueber Stufe 1 ist - ein frischer Charakter wird gefragt.
+function WL.Migrate()
+    local ui = K.Root()
+    if not ui or type(ui.welcomed) == "table" then return false end
+    ui.welcomed = {}
+    if ui.asked ~= true then return true end
+    for key in pairs(ui.profileAsked or {}) do ui.welcomed[key] = true end
+    for key in pairs(ui.profileOf or {}) do ui.welcomed[key] = true end
+    local sd = WeintCodex.SavedData
+    local inv = type(sd) == "table" and sd.inventory
+    for _, c in pairs(inv and inv.chars or {}) do
+        if type(c) == "table" and type(c.name) == "string" and type(c.realm) == "string" then
+            ui.welcomed[c.name .. "-" .. c.realm] = true
+        end
+    end
+    local key = K.CharKey()
+    local lvl = _G.UnitLevel and K.Plain(_G.UnitLevel("player"))
+    if key and type(lvl) == "number" and lvl > 1 then ui.welcomed[key] = true end
+    return true
 end
 
 local function Say(text)
@@ -751,7 +792,9 @@ end
 -- davor steht.
 function WL.MaybeAsk()
     if not K.OPT_IN then return end
-    if Asked() or K.UIEnabled() then return end
+    -- Seit 6.26.8.0 auch mit Oberflaeche: ein neuer Charakter waehlt
+    -- seinen Komfort (Oberflaeche ja/nein gilt fuer den Account).
+    if Asked() then return end
     if WL.ReloadBlocks() then return end   -- siehe unten: keine Schleife nach /reload
     local ui = K.Root()
     if ui and ui.later then return end     -- "Spaeter" gilt bis zum Einloggen
@@ -762,7 +805,7 @@ function WL.MaybeAsk()
     end
     -- Nie mitten im Kampf: wer nach einem /reload kaempft, hat anderes zu tun.
     K.AfterCombat(function()
-        if Asked() or K.UIEnabled() then return end
+        if Asked() then return end
         WL.Ask()
     end)
 end
@@ -818,6 +861,7 @@ ev:SetScript("OnEvent", function(_, _, isInitialLogin, isReloadingUi)
         local ui = K.Root()
         if ui then ui.later = nil end
     end
+    WL.Migrate()
 
     -- Schliesst jemand das Hauptfenster samt Popup, ohne das Popup selbst
     -- wegzuklicken, soll der Assistent trotzdem kommen.

@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.8.0] – 2026-10-10
+
+### Behoben
+
+- Willkommens-Assistent bei neuem Charakter (Beta-Test: „kommt nicht“): die Antwort galt für den Account (`ui.asked`). Jetzt je Charakter (`ui.welcomed[Name-Realm]`), `ui.asked` bleibt als „Account hat geantwortet“. `WL.Migrate` beim ersten Einloggen nach dem Update: bekannte Charaktere (Profilfrage, `profileOf`, Bestand) und der einloggende ab Stufe 2 gelten als gefragt. `MaybeAsk` fragt jetzt auch bei eingeschalteter Oberfläche; die Profilfrage wartet auf die Antwort dieses Charakters (`WL.Asked`).
+
 ## [6.26.7.0] – 2026-10-10
 
 ### Geändert

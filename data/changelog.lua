@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.8.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFNeuer Charakter, neuer Willkommensgruß.|r Der Assistent kommt jetzt für jeden neuen Charakter, nicht nur einmal je Account – deine bisherigen Charaktere fragt er nicht noch einmal.",
+        },
+    },
+    {
         version = "6.26.7.0",
         date    = "10.10.2026",
         notes   = {

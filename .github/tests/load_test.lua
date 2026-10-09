@@ -16363,6 +16363,51 @@ do
     Check(ok, "Stufenaufstieg: Fenster mit Neuem beim Lehrer, Gold, abschaltbar, nichts geraten" .. (ok and "" or (": " .. tostring(err))))
 end
 
+
+-- 6.26.8.0: der Willkommens-Assistent je Charakter - ein neuer wird gefragt,
+-- die von vorher nicht.
+do
+    local ok, err = pcall(function()
+        local WL, G = WeintCodex.UIWelcome, _G
+        local ui = K.Root()
+        local key = K.CharKey()
+        assert(key, "kein Charakterschluessel in der Attrappe")
+        local saved = { asked = ui.asked, welcomed = ui.welcomed, later = ui.later }
+        local oldLvl = G.UnitLevel
+        if WL.IsShown() then WL.Close() end
+        -- Update von 6.26.7.0: Account hat geantwortet, dieser Charakter ist Stufe 20.
+        ui.asked, ui.welcomed, ui.later = true, nil, nil
+        G.UnitLevel = function() return 20 end
+        assert(WL.Migrate() and ui.welcomed[key] and WL.Asked(), "alter Charakter nach dem Update erneut gefragt")
+        -- Neuer Charakter (Stufe 1, unbekannt): wird gefragt.
+        local sd = WeintCodex.SavedData
+        local oPA, oPO, oInv = ui.profileAsked, ui.profileOf, sd.inventory
+        ui.profileAsked, ui.profileOf, sd.inventory = {}, {}, nil
+        ui.welcomed = nil
+        G.UnitLevel = function() return 1 end
+        WL.Migrate()
+        ui.profileAsked, ui.profileOf, sd.inventory = oPA, oPO, oInv
+        assert(not ui.welcomed[key] and not WL.Asked(), "neuer Charakter gilt als gefragt")
+        WL.MaybeAsk()
+        assert(WL.IsShown(), "neuer Charakter sieht den Assistenten nicht")
+        WL.Close()
+        -- Ein anderer Charakter hat geantwortet - zaehlt nicht fuer diesen.
+        ui.welcomed = { ["Anderer-Realm"] = true }
+        assert(not WL.Asked(), "Antwort eines anderen Charakters gilt fuer diesen")
+        -- Nach Uebernehmen ist dieser gemerkt.
+        WL.Ask()
+        WL.Button("next"):Click()
+        WL.Button("no"):Click()
+        for _ = 1, #WL.STEPS - 3 do WL.Button("next"):Click() end
+        WL.Button("apply"):Click()
+        assert(ui.welcomed[key] == true and ui.welcomed["Anderer-Realm"] and WL.Asked(), "Antwort nicht je Charakter gemerkt")
+        if WL.IsShown() then WL.Close() end
+        G.UnitLevel = oldLvl
+        ui.asked, ui.welcomed, ui.later = saved.asked, saved.welcomed, saved.later
+    end)
+    Check(ok, "Willkommen je Charakter: neuer gefragt, alte nach dem Update nicht" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

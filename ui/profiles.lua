@@ -364,9 +364,8 @@ function PR.ShouldAsk()
     if WL then
         if WL.IsShown() then return false end
         if WL.ReloadBlocks() then return false end
-        local ui = K.Root()
         -- Das Willkommen kommt zuerst; gefragt wird beim naechsten Mal.
-        if K.OPT_IN and not (ui and ui.asked == true) then return false end
+        if K.OPT_IN and not WL.Asked() then return false end
     end
     local OB = WeintCodex.Onboarding
     if OB and OB.IsShowing and OB.IsShowing() then return false end
