@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.16.0] – 2026-10-10
+
+### Geändert
+
+- Gestaltungsmodus (Beta-Test): Rechtsklick auf einen Rahmen öffnet seine Einstellungen (`moverOpen`, wie der Doppelklick); zurücksetzen auf den Standardplatz jetzt mit Umschalt+Rechtsklick. Texte in Leiste, Tooltip und Aktionsleisten angepasst.
+
 ## [6.26.15.0] – 2026-10-10
 
 ### Neu

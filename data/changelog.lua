@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.16.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFRechtsklick öffnet die Einstellungen.|r Im Gestaltungsmodus führt ein Rechtsklick auf einen Rahmen direkt zu seiner Einstellungsseite. Zurück an den Standardplatz geht jetzt mit Umschalt+Rechtsklick.",
+        },
+    },
+    {
         version = "6.26.15.0",
         date    = "10.10.2026",
         notes   = {

@@ -1062,7 +1062,7 @@ K.Register({
                         { value = "game",  text = "Wie im Spiel" } } },
                   { type = "toggle", label = "Taschenleiste im WeintCodex-Stil", key = "bagsSkin", reload = true,
                     description = "Flache Taschenplätze mit feinem Rand statt der goldenen Rahmen." })
-            B:Note("Solange hier nicht „Wie im Spiel“ steht, bestimmt WeintCodex den Platz von Mikromenü und Taschenleiste: verschieben im Gestaltungsmodus von WeintCodex (ziehen, Rechtsklick setzt zurück), nicht im Bearbeitungsmodus des Spiels – dort bleibt der Platz von WeintCodex. Mit „Wie im Spiel“ verschiebt sie der Bearbeitungsmodus.")
+            B:Note("Solange hier nicht „Wie im Spiel“ steht, bestimmt WeintCodex den Platz von Mikromenü und Taschenleiste: verschieben im Gestaltungsmodus von WeintCodex (ziehen, Umschalt+Rechtsklick setzt zurück), nicht im Bearbeitungsmodus des Spiels – dort bleibt der Platz von WeintCodex. Mit „Wie im Spiel“ verschiebt sie der Bearbeitungsmodus.")
             B:Section("Welche Leisten es gibt")
             B:Note("Welche Leisten es überhaupt gibt, bestimmt das Spiel (Esc → Optionen → Aktionsleisten). Eigene Leisten baut WeintCodex bewusst nicht: fürs Umblättern bei Haltung, Gestalt und Fahrzeug bräuchten sie eine Funktion, die dem Forever-Client derzeit fehlt – WeintCodex ordnet die Knöpfe des Spiels.")
             -- 6.10.1.0: Randfarbe, Schriftgroessen und Kleinigkeiten am Symbol zugeklappt.

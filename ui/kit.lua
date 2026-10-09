@@ -1317,8 +1317,15 @@ function K.RegisterMover(frame, key, label, default, opts)
         if ov.SetScript then
             ov:SetScript("OnDoubleClick", function() K.Fire("moverOpen", key) end)
         end
+        -- 6.26.16.0 (Beta-Test: "mit Rechtsklick in die Optionen des
+        -- Fensters"): Rechtsklick oeffnet die Einstellungen, Umschalt+
+        -- Rechtsklick setzt zurueck (bis dahin tat das der Rechtsklick).
         ov:SetScript("OnClick", function(_, button)
             if button ~= "RightButton" then return end
+            if not (_G.IsShiftKeyDown and _G.IsShiftKeyDown()) then
+                K.Fire("moverOpen", key)
+                return
+            end
             local ui = K.Profile()
             if ui then ui.positions[key] = nil end
             K.ApplyPosition(key)
@@ -1326,7 +1333,7 @@ function K.RegisterMover(frame, key, label, default, opts)
         ov:SetScript("OnEnter", function(self)
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
             GameTooltip:SetText(label, 1, 1, 1)
-            GameTooltip:AddLine("Ziehen verschiebt, Pfeiltasten schieben genau (Umschalt: 8). Doppelklick: Einstellungen. Rechtsklick: zurück an den Standardplatz.", 0.7, 0.7, 0.75, true)
+            GameTooltip:AddLine("Ziehen verschiebt, Pfeiltasten schieben genau (Umschalt: 8). Rechtsklick oder Doppelklick: Einstellungen. Umschalt+Rechtsklick: zurück an den Standardplatz.", 0.7, 0.7, 0.75, true)
             GameTooltip:Show()
         end)
         ov:SetScript("OnLeave", function() GameTooltip:Hide() end)

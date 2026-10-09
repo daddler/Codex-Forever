@@ -232,12 +232,12 @@ function E.UpdateInfo()
         if pos then E.ShowCoords(pos.x, pos.y, pos.point) else E.coords:Hide() end
     end
     if not key then
-        info:SetText("Rahmen anklicken zum Auswählen · ziehen verschiebt · Pfeiltasten schieben genau (Umschalt: 8) · Doppelklick: Einstellungen · Esc: fertig")
+        info:SetText("Rahmen anklicken zum Auswählen · ziehen verschiebt · Pfeiltasten schieben genau (Umschalt: 8) · Rechtsklick: Einstellungen · Esc: fertig")
         return
     end
     local pos, label = K.MoverPosition(key)
     if pos then
-        info:SetFormattedText("%s  ·  %s %d, %d  ·  Pfeiltasten schieben, Umschalt: 8, Rechtsklick: Standardplatz",
+        info:SetFormattedText("%s  ·  %s %d, %d  ·  Pfeiltasten schieben, Umschalt: 8, Rechtsklick: Einstellungen, Umschalt+Rechtsklick: Standardplatz",
             label or key, pos.point or "", pos.x or 0, pos.y or 0)
     end
 end

@@ -14700,8 +14700,18 @@ do
         AB.Place()
         assert(micro._pt[4] == 4 and micro._scale == nil, "im Kampf versetzt oder skaliert")
         _G.InCombatLockdown = function() return false end
-        -- Rechtsklick: zurueck an den Standardplatz.
+        -- Rechtsklick: Einstellungen; Umschalt+Rechtsklick: zurueck an den Standardplatz.
+        local opened
+        local unlisten = K.Listen(function(kind, a) if kind == "moverOpen" then opened = a end end)
         m.overlay._scripts.OnClick(m.overlay, "RightButton")
+        assert(opened == "hud_micro" and pos.hud_micro, "Rechtsklick oeffnet nicht die Einstellungen")
+        local oShift = _G.IsShiftKeyDown
+        _G.IsShiftKeyDown = function() return true end
+        m.overlay._scripts.OnClick(m.overlay, "RightButton")
+        _G.IsShiftKeyDown = oShift
+        if type(unlisten) == "function" then unlisten() end
+        local UO = WeintCodex.UIOptions
+        if UO and UO.frame then UO.frame:Hide() end
         assert(not pos.hud_micro and micro._pt[4] == 4 and micro._pt[5] == 4, "Rechtsklick setzt nicht zurueck")
         -- "Wie im Spiel": WeintCodex laesst den Platz in Ruhe.
         K.Set("actionbars", "microMenu", "game")
