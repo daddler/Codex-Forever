@@ -525,6 +525,8 @@ function Builder:GameEditMode(note)
     return b
 end
 
+function Builder:GameSettings(...) return O.BuilderGameSettings(self, ...) end
+
 O.NewBuilder = NewBuilder   -- fuer den Prueflauf
 
 --------------------------------------------------
@@ -986,6 +988,81 @@ function O.PageIndex(moduleKey, pageKey)
     return 1
 end
 
+-- OPTIONEN DES SPIELS (6.26.11.0, Beta-Test: "eine Verlinkung bei
+-- Aktionsleisten, wenn ich eine Leiste hinzufuegen will - das Menue
+-- schliesst sich, die Einstellung von Blizzard (Optionen -> Aktionsleisten)
+-- oeffnet sich, beim Schliessen kommt WeintCodexUI wieder"). Welche Leisten
+-- es gibt, schaltet nur das Spiel ein; WeintCodex schreibt das nicht.
+-- Die Kategorie wird ueber ihren Namen im Client gefunden (ACTIONBARS_LABEL),
+-- nie ueber eine geratene Nummer; fehlt sie, gehen die Optionen ohne sie auf.
+O.SETTINGS_BACK = nil
+function O.GameCategory(names)
+    local sp, st = _G.SettingsPanel, _G.Settings
+    if type(sp) ~= "table" or type(sp.GetAllCategories) ~= "function" then return nil end
+    local ok, cats = pcall(sp.GetAllCategories, sp)
+    if not ok or type(cats) ~= "table" then return nil end
+    for _, cat in ipairs(cats) do
+        local nok, name = pcall(function() return cat:GetName() end)
+        name = nok and K.Plain(name)
+        for _, want in ipairs(names) do
+            if type(want) == "string" and name == want then
+                local iok, id = pcall(function() return cat:GetID() end)
+                return iok and id or nil
+            end
+        end
+    end
+    return nil
+end
+
+function O.OpenGameSettings(names)
+    if K.InCombat() then
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Im Kampf öffnen sich die Optionen des Spiels nicht.")
+        return false
+    end
+    local st, sp = _G.Settings, _G.SettingsPanel
+    if type(st) ~= "table" or type(st.OpenToCategory) ~= "function" or type(sp) ~= "table" then return false end
+    O.SETTINGS_BACK = O.Where and O.Where() or { module = current.module, page = current.page }
+    if not O.settingsHooked and sp.HookScript then
+        O.settingsHooked = true
+        sp:HookScript("OnHide", function()
+            local back = O.SETTINGS_BACK
+            O.SETTINGS_BACK = nil
+            if not back then return end
+            K.AfterCombat(function()
+                if O.Return then O.Return(back) else O.Show(back.module, back.page) end
+            end)
+        end)
+    end
+    if frame and frame:IsShown() then frame:Hide() end
+    local id = O.GameCategory(names)
+    local ok = pcall(st.OpenToCategory, id)
+    if not ok and id then ok = pcall(st.OpenToCategory) end
+    if not ok then
+        local back = O.SETTINGS_BACK
+        O.SETTINGS_BACK = nil
+        if back then O.Show(back.module, back.page) end
+    end
+    return ok
+end
+
+-- Ohne Luecke: ein nil vorn liesse ipairs nichts finden.
+O.ACTIONBAR_NAMES = { "Aktionsleisten", "Action Bars" }
+if type(_G.ACTIONBARS_LABEL) == "string" then table.insert(O.ACTIONBAR_NAMES, 1, _G.ACTIONBARS_LABEL) end
+function O.BuilderGameSettings(self, note, text, names)
+    if self.skip then return end
+    if note then self:Note(note) end
+    local b = WeintCodex.CreateButton(self.parent, {
+        text = text, kind = "secondary", height = 26, size = 11, backdrop = "bgDark",
+        tooltip = "Öffnet die Optionen des Spiels; schließt du sie, bist du wieder hier.",
+        onClick = function() O.OpenGameSettings(names) end,
+    })
+    b:SetPoint("TOPLEFT", self.parent, "TOPLEFT", 0, self.y)
+    b._gameSettings = b
+    self.widgets[#self.widgets + 1] = b
+    self.y = self.y - 26 - 14
+    return b
+end
+
 function O.Show(key, pageIndex)
     O.Build()
     frame:Show()
@@ -1045,6 +1122,7 @@ function Recorder:Cell(spec)
 end
 function Recorder:Row(a, b) self:Cell(a) self:Cell(b) end
 function Recorder:GameEditMode() self:Add(O.GAME_EDIT_TEXT) end
+function Recorder:GameSettings(_, text) self:Add(text) end
 
 -- Klein, auch Umlaute: string.lower kennt nur ASCII.
 local UMLAUT = { ["\195\132"] = "\195\164", ["\195\150"] = "\195\182", ["\195\156"] = "\195\188" }

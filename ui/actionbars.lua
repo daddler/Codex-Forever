@@ -1094,6 +1094,10 @@ K.Register({
                 spec.set = function(v) K.Set(KEY, "b" .. Sel() .. "_" .. k, v) end
                 return spec
             end
+            -- 6.26.11.0: welche Leisten es gibt, schaltet das Spiel ein.
+            B:Section("Leisten des Spiels")
+            B:GameSettings("Weitere Leisten schaltet das Spiel ein: Optionen → Aktionsleisten.",
+                "Leiste hinzufügen (Optionen des Spiels)", WeintCodex.UIOptions.ACTIONBAR_NAMES)
             B:Section("Anordnung")
             B:Row({ type = "dropdown", label = "Wer ordnet die Knöpfe", key = "layout", items = {
                         { value = "wc",   text = "WeintCodex (je Leiste)" },

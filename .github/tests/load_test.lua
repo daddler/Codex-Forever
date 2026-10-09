@@ -16588,6 +16588,37 @@ do
     Check(ok, "Weich auf und zu: Codex und Einstellungen blenden ein und aus" .. (ok and "" or (": " .. tostring(err))))
 end
 
+
+-- 6.26.11.0: Aktionsleisten - Knopf zu den Optionen des Spiels und zurueck.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local O = WeintCodex.UIOptions
+        local oSt, oSp = G.Settings, G.SettingsPanel
+        local opened
+        local cat = { GetName = function() return "Aktionsleisten" end, GetID = function() return 42 end }
+        local sp = CreateFrame("Frame", "SettingsPanel", UIParent)
+        sp.GetAllCategories = function() return { { GetName = function() return "Grafik" end, GetID = function() return 1 end }, cat } end
+        local onHide
+        sp.HookScript = function(_, ev, fn) if ev == "OnHide" then onHide = fn end end
+        G.SettingsPanel = sp
+        G.Settings = { OpenToCategory = function(id) opened = id end }
+        assert(O.GameCategory(O.ACTIONBAR_NAMES) == 42, "Kategorie Aktionsleisten nicht gefunden")
+        O.Show("actionbars", O.PageIndex("actionbars", "leisten"))
+        local btn
+        for _, w in ipairs(O.CurrentWidgets()) do if w._gameSettings then btn = w end end
+        assert(btn, "kein Knopf zu den Optionen auf der Seite Aktionsleisten")
+        btn:Click()
+        assert(opened == 42 and not O.frame:IsShown(), "Optionen nicht geoeffnet oder Menue offen")
+        assert(onHide, "kein Rueckweg")
+        onHide()
+        assert(O.frame:IsShown(), "WeintCodexUI kommt nach dem Schliessen nicht wieder")
+        O.frame:Hide()
+        G.Settings, G.SettingsPanel = oSt, oSp
+    end)
+    Check(ok, "Aktionsleisten: Leiste hinzufuegen fuehrt in die Optionen des Spiels und zurueck" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

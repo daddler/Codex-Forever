@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.11.0] – 2026-10-10
+
+### Neu
+
+- Aktionsleisten → Leisten: Knopf „Leiste hinzufügen (Optionen des Spiels)“ (`Builder:GameSettings`, `O.OpenGameSettings` in `ui/options.lua`). Schließt `/wcui`, öffnet `Settings.OpenToCategory` mit der Kategorie, die der Client „Aktionsleisten“ nennt (`ACTIONBARS_LABEL`, nie eine geratene Nummer), und kehrt beim Schließen von `SettingsPanel` an dieselbe Stelle zurück (`O.Return`). Nicht im Kampf.
+
 ## [6.26.10.1] – 2026-10-10
 
 ### Behoben

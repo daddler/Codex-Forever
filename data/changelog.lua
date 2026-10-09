@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.11.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFLeisten hinzufügen mit einem Klick.|r Unter Aktionsleisten → Leisten führt ein Knopf direkt in die Optionen des Spiels zu den Aktionsleisten; schließt du sie, bist du wieder in den Einstellungen der Oberfläche.",
+        },
+    },
+    {
         version = "6.26.10.1",
         date    = "10.10.2026",
         notes   = {
