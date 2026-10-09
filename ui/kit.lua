@@ -1247,7 +1247,10 @@ function K.ApplyPosition(key)
     local frame = m.frame
     local function apply()
         frame:ClearAllPoints()
-        frame:SetPoint(pos.point, UIParent, pos.relPoint or pos.point, pos.x or 0, pos.y or 0)
+        -- 6.26.10.0: ein Standardplatz darf an einem Rahmen des Spiels
+        -- haengen (`rel`, z. B. die Minikarte); gespeicherte nie.
+        local rel = pos.rel and type(_G[pos.rel]) == "table" and _G[pos.rel] or UIParent
+        frame:SetPoint(pos.point, rel, pos.relPoint or pos.point, pos.x or 0, pos.y or 0)
     end
     if m.secure then K.AfterCombat(apply) else apply() end
 end

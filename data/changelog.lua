@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.10.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFNeue Zauber beim Lehrer zeigen eine Zahl.|r Am Addon-Knopf neben der Minikarte und am Symbol von WeintCodex steht, wie viele Zauber du gerade lernen kannst.",
+            "|cff7C6CFFDas Flüster-Symbol sitzt neben der Minikarte.|r Von Haus aus über dem Addon-Knopf; wer es verschoben hat, behält seinen Platz.",
+            "|cff7C6CFFDie Abklingzeit-Einstellungen in Gold.|r Rahmen, Leder und Seitenreiter des Spiels sind weg, die Gruppen haben dunkle Kopfzeilen.",
+        },
+    },
+    {
         version = "6.26.9.4",
         date    = "10.10.2026",
         notes   = {

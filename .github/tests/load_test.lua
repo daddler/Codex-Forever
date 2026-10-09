@@ -1215,6 +1215,22 @@ do
             assert(head.wcTint and math.abs(head.wcTint[1] - g[1] * LF.HEAD) < 1e-6, "Wochentag nicht gedaempft")
             assert(fest.wcTint == nil and fest:GetAlpha() == 1, "Feiertag angefasst")
             assert(CL.hide == 1 and CL.dark == 1 and CL.gold == 2, "Kalenderzaehler")
+            -- 6.26.10.0: Abklingzeit-Einstellungen - Leder weg, Kopfzeilen dunkel.
+            local cd = CreateFrame("Frame")
+            local grp = CreateFrame("Frame", nil, cd)
+            local bgL = Tex(cd, "character-panel-background")
+            local hd = Tex(grp, "_Options_ListExpand_Middle")
+            local spell = Tex(grp, nil)
+            cd.GetChildren = function() return grp end
+            grp.GetChildren = function() end
+            cd.GetRegions = function() return bgL end
+            grp.GetRegions = function() return hd, spell end
+            local CD = LF.Cooldown(cd)
+            assert(bgL:GetAlpha() == 0 and hd.wcTint and hd.wcTint[1] == LF.DARK and spell.wcTint == nil
+                and CD.hide == 1 and CD.dark == 1, "Abklingzeiten nicht gestaltet")
+            local inW = false
+            for _, n in ipairs(WeintCodex.UIWindows.WINDOWS) do if n == "CooldownViewerSettings" then inW = true end end
+            assert(inW, "Abklingzeit-Einstellungen nicht in W.WINDOWS")
         end)
     end
     Check(ok, "Update 70291: Streifen im Charakterfenster weg, Rezeptsymbol ohne fremde Bilder"
@@ -16376,7 +16392,19 @@ do
         K.Set("comfort", "levelUpPopup", false)
         assert(LU.OnLevelUp(10) == false and not LU.popup:IsShown(), "Fenster trotz Schalter aus")
         K.Set("comfort", "levelUpPopup", true)
+        -- 6.26.10.0: die Zahl am Addon-Knopf und am Symbol von WeintCodex.
+        G.UnitLevel = function() return 10 end
+        local bagB = CreateFrame("Button", "WeintCodexMinimapAddons", UIParent)
+        local icoB = CreateFrame("Button", "LibDBIcon10_WeintCodex", UIParent)
+        local n = LU.UpdateBadges()
+        assert(n == info.count and LU.badges[bagB] and LU.badges[bagB]:IsShown() and LU.badges[icoB]:IsShown()
+            and LU.badges[bagB].text:GetText() == (n > 9 and "9+" or tostring(n)), "keine Zahl am Knopf: " .. tostring(n))
+        K.Set("comfort", "levelUpPopup", false)
+        assert(LU.UpdateBadges() == nil and not LU.badges[bagB]:IsShown(), "Zahl trotz Schalter aus")
+        K.Set("comfort", "levelUpPopup", true)
         G.UnitClass = function() return nil end
+        assert(LU.UpdateBadges() == nil and not LU.badges[icoB]:IsShown(), "Zahl ohne Klasse")
+        G.WeintCodexMinimapAddons, G.LibDBIcon10_WeintCodex = nil, nil
         assert(LU.Learnable(10) == nil and LU.OnLevelUp(10) == false, "ohne Klasse eine Liste")
         G.UnitClass, G.UnitRace, G.UnitFactionGroup, G.UnitLevel, G.GetMoney = oC, oR, oF, oL, oM
         -- Geht ohne Oberflaeche: das Modul ist Komfort, nicht Oberflaeche.

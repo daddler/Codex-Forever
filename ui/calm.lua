@@ -69,10 +69,12 @@ LF.WINDOWS = { LFGParentFrame = "Suche nach Gruppe", PVEFrame = "Suche nach Grup
                BankFrame = "Bank", GuildBankFrame = "Gildenbank",
                MailFrame = "Post", OpenMailFrame = "Brief", FriendsFrame = "Kontakte",
                SocialUIFrame = "Kontakte", ClassTrainerFrame = "Lehrer",
-               LegacySystemFrame = "Vermächtnis", CalendarFrame = "Kalender" }
+               LegacySystemFrame = "Vermächtnis", CalendarFrame = "Kalender",
+               CooldownViewerSettings = "Abklingzeiten" }
 LF.HOSTS = { "LFGParentFrame", "PVEFrame", "CollectionsJournal", "SettingsPanel", "MacroFrame", "TradeFrame",
              "AuctionHouseFrame", "BankFrame", "GuildBankFrame", "MailFrame", "OpenMailFrame", "FriendsFrame",
-             "SocialUIFrame", "ClassTrainerFrame", "LegacySystemFrame", "CalendarFrame" }
+             "SocialUIFrame", "ClassTrainerFrame", "LegacySystemFrame", "CalendarFrame",
+             "CooldownViewerSettings" }
 -- Innenflaechen, die das Fenster selbst nicht als solche baut: Feld am
 -- Fenster oder globaler Name -> W.OwnBackground (eigene Bilder weg,
 -- Innenflaeche). Makros (6.9.0.0, ui/macroframe.lua): die Liste (Leder)
@@ -174,8 +176,8 @@ local function LegacyAtlas(r)
     return type(a) == "string" and a or nil
 end
 
-local function LegacyApply(r, how)
-    local L = LF.legacy
+local function LegacyApply(r, how, L)
+    L = L or LF.legacy
     if how == "hide" then
         if K.Plain(r:GetAlpha()) ~= 0 then r:SetAlpha(0) end
     else
@@ -202,6 +204,42 @@ local function LegacyWalk(f, depth)
     if depth >= LF.LEGACY_DEPTH then return end
     local kids = W.Children(f, "legacy", depth)
     for i = 1, #kids do LegacyWalk(kids[i], depth + 1) end
+end
+
+-- ABKLINGZEIT-EINSTELLUNGEN (6.26.10.0, gemessen mit /wcui fenster:
+-- CooldownViewerSettings). Rahmen, Seitenreiter und Suche nimmt der
+-- allgemeine Durchgang (W.WINDOWS); hier das Leder dahinter und die
+-- Kopfzeilen der Gruppen (aufklappbare Balken des Spiels) - dunkel wie die
+-- Zeilen beim Vermaechtnis. Symbole der Zauber bleiben.
+LF.COOLDOWN_ATLAS = {
+    ["character-panel-background"]       = "hide",
+    ["Options_ListExpand_Left"]          = "dark",
+    ["_Options_ListExpand_Middle"]       = "dark",
+    ["Options_ListExpand_Right_Expanded"] = "dark",
+    ["Options_ListExpand_Right"]         = "dark",
+}
+LF.COOLDOWN_DEPTH = 7
+LF.cooldown = { hide = 0, dark = 0, gold = 0 }
+
+local function CooldownWalk(f, depth)
+    local regs = W.Regions(f, "cooldown", depth)
+    for i = 1, #regs do
+        local r = regs[i]
+        if r.GetAtlas then
+            local how = LF.COOLDOWN_ATLAS[LegacyAtlas(r)]
+            if how then LegacyApply(r, how, LF.cooldown) end
+        end
+    end
+    if depth >= LF.COOLDOWN_DEPTH then return end
+    local kids = W.Children(f, "cooldown", depth)
+    for i = 1, #kids do CooldownWalk(kids[i], depth + 1) end
+end
+
+function LF.Cooldown(f)
+    local L = LF.cooldown
+    L.hide, L.dark, L.gold = 0, 0, 0
+    CooldownWalk(f, 0)
+    return L
 end
 
 LF.calendar = { hide = 0, dark = 0, gold = 0 }
@@ -292,6 +330,7 @@ function LF.Update(f)
     local ok, name = pcall(f.GetName, f)
     if ok and name == "LegacySystemFrame" then LF.Legacy(f) end
     if ok and name == "CalendarFrame" then LF.Calendar(f) end
+    if ok and name == "CooldownViewerSettings" then LF.Cooldown(f) end
     local spec = ok and LF.TABS[name]
     if spec then
         local owner = _G[spec.owner]
@@ -323,6 +362,10 @@ function LF.Report(f, out)
         local L = LF.legacy
         out[#out + 1] = string.format("   Vermächtnis: ausgeblendet %d · dunkel %d · Gold %d",
             L.hide or 0, L.dark or 0, L.gold or 0)
+    end
+    if ok and name == "CooldownViewerSettings" then
+        local L = LF.cooldown
+        out[#out + 1] = string.format("   Abklingzeiten: ausgeblendet %d · dunkel %d", L.hide or 0, L.dark or 0)
     end
     if ok and name == "CalendarFrame" then
         local L = LF.calendar

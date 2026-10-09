@@ -521,12 +521,12 @@ end
 local function BuildIcon()
     if icon then return icon end
     icon = CreateFrame("Button", "WeintCodexMessengerIcon", UIParent)
-    icon:SetSize(32, 32)
+    icon:SetSize(26, 26)
     icon:SetFrameStrata("MEDIUM")
     icon:SetClampedToScreen(true)
     K.Kachel(icon, { shadow = 4 })
     icon.tex = icon:CreateTexture(nil, "ARTWORK")
-    icon.tex:SetSize(20, 20)
+    icon.tex:SetSize(16, 16)
     icon.tex:SetPoint("CENTER", icon, "CENTER", 0, 0)
     icon.tex:SetTexture(K.MEDIA .. "icon_report")
     -- Die Zahl der Ungelesenen auf einem Punkt im Akzent, ueber der Ecke.

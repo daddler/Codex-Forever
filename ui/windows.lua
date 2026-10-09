@@ -99,7 +99,10 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               "LegacySystemFrame",
               -- 6.26.3.0: Kalender (Blizzard_Calendar, erst beim Oeffnen
               -- geladen) - Pergament dunkel, Rahmen weg, Feiertage bleiben.
-              "CalendarFrame" }
+              "CalendarFrame",
+              -- 6.26.10.0: Einstellungen des Abklingzeitmanagers (Metallrahmen,
+              -- Seitenreiter, Leder; ui/calm.lua LF.Cooldown).
+              "CooldownViewerSettings" }
 
 -- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
 -- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus

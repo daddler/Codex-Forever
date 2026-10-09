@@ -201,6 +201,79 @@ ev:SetScript("OnEvent", function(_, _, level)
 end)
 LU.events = ev
 
+-- ZAHL AM KNOPF (6.26.10.0, Beta-Test: "wenn ich neue Zauber erlernen
+-- kann, soll im 9-Punkte-Knopf fuer Addons eine 1 stehen und dann auch bei
+-- WeintCodex"). Die Zahl ist, was jetzt beim Lehrer lernbar ist - dieselbe
+-- Rechnung wie das Fenster. Kennt der Client zu wenig: keine Zahl (nie 0
+-- als gemessen). Am Sammelknopf der Minikarte und am Symbol von WeintCodex.
+LU.BADGE_TARGETS = { "WeintCodexMinimapAddons", "LibDBIcon10_WeintCodex" }
+
+function LU.Pending()
+    if not LU.Active() then return nil end
+    local info = LU.Learnable()
+    return info and info.count or nil
+end
+
+local badges = setmetatable({}, { __mode = "k" })
+LU.badges = badges
+local function Badge(f)
+    if badges[f] then return badges[f] end
+    local b = CreateFrame("Frame", nil, f)
+    b:SetSize(14, 14)
+    b:SetPoint("CENTER", f, "TOPRIGHT", -2, -2)
+    b:SetFrameLevel((f.GetFrameLevel and K.Plain(f:GetFrameLevel()) or 1) + 5)
+    b.dot = b:CreateTexture(nil, "OVERLAY")
+    b.dot:SetAllPoints(b)
+    b.dot:SetTexture(K.MEDIA .. "disc")
+    b.text = K.NewText(b, 9, "OVERLAY", 2)
+    b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
+    b:Hide()
+    badges[f] = b
+    return b
+end
+
+function LU.UpdateBadges()
+    local n = LU.Pending()
+    for _, name in ipairs(LU.BADGE_TARGETS) do
+        local f = _G[name]
+        if type(f) == "table" and f.CreateTexture then
+            if type(n) == "number" and n > 0 then
+                local b = Badge(f)
+                local a = C.accent
+                b.dot:SetVertexColor(a[1], a[2], a[3], 1)
+                b.text:SetText(n > 9 and "9+" or tostring(n))
+                b:Show()
+            elseif badges[f] then
+                badges[f]:Hide()
+            end
+        end
+    end
+    LU.badgeCount = n
+    return n
+end
+
+local queued = false
+function LU.QueueBadges()
+    if queued then return end
+    if _G.C_Timer and _G.C_Timer.After then
+        queued = true
+        _G.C_Timer.After(1.5, function() queued = false LU.UpdateBadges() end)
+    else
+        LU.UpdateBadges()
+    end
+end
+
+local bev = CreateFrame("Frame")
+for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_LEVEL_UP", "LEARNED_SPELL_IN_SKILL_LINE",
+                     "LEARNED_SPELL_IN_TAB", "SPELLS_CHANGED", "TRAINER_CLOSED" }) do
+    pcall(bev.RegisterEvent, bev, e)
+end
+bev:SetScript("OnEvent", function() LU.QueueBadges() end)
+LU.badgeEvents = bev
+K.Listen(function(kind, key)
+    if (kind == "active" or kind == "setting") and key == KEY then LU.QueueBadges() end
+end)
+
 local mod = K.Module(KEY)
 if mod then
     for k, v in pairs(LU.DEFAULTS) do

@@ -471,7 +471,7 @@ K.Register({
                     disabled = function() return not K.Get(KEY, "durability") end })
             B:Section("Stufenaufstieg")
             B:Row(Row2({ type = "toggle", label = "Neues beim Lehrer zeigen", key = "levelUpPopup",
-                         description = "Nach dem Aufstieg ein Fenster mit den Zaubern, die du jetzt lernen kannst, und was sie kosten." }))
+                         description = "Nach dem Aufstieg ein Fenster mit den Zaubern, die du jetzt lernen kannst, und was sie kosten. Ihre Zahl steht am Symbol an der Minikarte." }))
             B:Section("Karte")
             B:Row(Row2({ type = "toggle", label = "Koordinaten auf der Weltkarte", key = "mapCoords",
                          description = "Deine Position und die des Mauszeigers." }))

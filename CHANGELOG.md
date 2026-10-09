@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.10.0] – 2026-10-10
+
+### Neu
+
+- Zahl der lernbaren Zauber am Sammelknopf der Minikarte (`WeintCodexMinimapAddons`) und am Symbol von WeintCodex (`LibDBIcon10_WeintCodex`): `LU.UpdateBadges` in `ui/levelup.lua`, dieselbe Rechnung wie das Fenster nach dem Aufstieg, am Schalter „Neues beim Lehrer zeigen“. Kennt der Client zu wenig, keine Zahl.
+- Abklingzeit-Einstellungen (`CooldownViewerSettings`) in Gold: in `W.WINDOWS` und `LF.HOSTS`; `LF.Cooldown` blendet das Leder (`character-panel-background`) aus und dunkelt die Kopfzeilen der Gruppen (`Options_ListExpand_*`).
+
+### Geändert
+
+- Flüster-Symbol: Standardplatz links an der Minikarte über dem Addon-Knopf (`rel = "Minimap"` in `ui/layout.lua`, neu von `K.ApplyPosition` verstanden), 26 statt 32 Bildpunkte. Gespeicherte Plätze bleiben.
+
 ## [6.26.9.4] – 2026-10-10
 
 ### Behoben

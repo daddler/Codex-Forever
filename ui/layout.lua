@@ -77,7 +77,8 @@ K.LAYOUT = {
     -- Fluestern (ui/messenger.lua, 6.19.0.0): das Fenster links ueber dem Chat.
     messenger       = { point = "BOTTOMLEFT",  relPoint = "BOTTOMLEFT", x = 20, y = 330 },
     -- Sein Symbol (6.19.1.0): rechts neben der Unterkante des Fensters.
-    messengerIcon   = { point = "BOTTOMLEFT",  relPoint = "BOTTOMLEFT", x = 448, y = 330 },
+    -- 6.26.10.0 (Beta-Test): links an der Minikarte, ueber dem Addon-Knopf.
+    messengerIcon   = { point = "BOTTOMRIGHT", relPoint = "BOTTOMLEFT", rel = "Minimap", x = -4, y = 28 },
     -- Automark (ui/automark.lua, 6.9.0.2): der Knopf "Markieren" unter den
     -- Erinnerungen - erscheint nur beim Betreten einer Instanz.
     automark        = { point = "TOP",         relPoint = "TOP", x = 0, y = -170 },
