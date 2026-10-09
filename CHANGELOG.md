@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.13.0] – 2026-10-10
+
+### Neu
+
+- Erinnerungen: Dauerbuffs je Klasse (`R.CLASS_BUFFS` in `ui/reminders.lua`) als Vorschläge – Magier (Arkane Intelligenz; Frost-/Eis-/Magische Rüstung), Priester (Seelenstärke, Inneres Feuer), Druide (Mal der Wildnis), Paladin (ein Segen, eine Aura), Hexenmeister (Dämonenhaut/-rüstung), Jäger (ein Aspekt), Schamane (Blitzschlagschild). IDs aus Classic, jede im Lehrerbestand (`load_test.lua` prüft das). Neue Regelfelder `any` (einer der Reihe genügt), `label`, `learned` (gilt nur, wenn der Client einen davon als gelernt meldet). Krieger und Schurke ohne Buff (Schlachtruf kostet Wut; Gifte deckt die Waffe ab). Wer noch keine eigenen Regeln hat, bekommt sie sofort; sonst über „Für meine Klasse“.
+
 ## [6.26.12.0] – 2026-10-10
 
 ### Geändert

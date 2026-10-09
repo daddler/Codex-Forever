@@ -27,10 +27,13 @@
 -- Abklingzeiten zeigen, was der Client herausgibt - nennt er eine Aura
 -- nur geheim, bleibt ihr Symbol aus, statt zu raten.
 --
--- KEIN BESTAND OHNE HERKUNFT. Es gibt keine eingebaute Liste von
--- Zauber-IDs - niemand hier hat die Zauber des Forever-Clients gelesen.
--- Zauber nennt der Spieler selbst (Name oder ID); die Vorschlaege fuer
--- eine Klasse kommen ohne Zauber aus (Waffe, Begleiter).
+-- KEIN BESTAND OHNE HERKUNFT. Bis 6.26.12.0 gab es keine eingebaute Liste
+-- von Zauber-IDs. Seit 6.26.13.0 (Beta-Test: "fuer alle Klassen
+-- vernuenftige Reminder") schlaegt jede Klasse ihre Dauerbuffs vor
+-- (R.CLASS_BUFFS) - IDs aus Classic, dieselben wie im Lehrerbestand
+-- (data/trainer.lua, Art `classic`). Sie gelten nur, wenn der Client sagt,
+-- dass der Charakter einen davon gelernt hat (`learned`); kennt der Client
+-- die ID nicht, gilt die Regel nicht - nie eine geratene Erinnerung.
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -107,7 +110,25 @@ local function PlayerClass()
     return K.Plain(class)
 end
 
--- Vorschlaege je Klasse - nur, was ohne Zauber-ID geht.
+-- Dauerbuffs je Klasse (6.26.13.0). `any`: einer davon genuegt (Raenge
+-- heissen gleich - die Aura wird auch ueber den Namen gefunden; bei
+-- Ruestungen, Aspekten, Segen und Auren zaehlt jede der Reihe). `label`:
+-- der Text der Erinnerung, wenn es mehrere gibt. Krieger und Schurke haben
+-- keinen Buff, den man ausserhalb des Kampfes halten koennte (Schlachtruf
+-- kostet Wut) - sie bekommen nur, was ohne Zauber geht.
+R.CLASS_BUFFS = {
+    MAGE    = { { any = { 1459 } },
+                { any = { 6117, 7302, 168 }, label = "Rüstung (Frost, Eis oder Magie)" } },
+    PRIEST  = { { any = { 1243 } }, { any = { 588 } } },
+    DRUID   = { { any = { 1126 } } },
+    PALADIN = { { any = { 19740, 19742, 20217, 1038, 19977 }, label = "Segen" },
+                { any = { 465, 7294, 19746, 19876, 19888, 19891 }, label = "Aura" } },
+    WARLOCK = { { any = { 706, 687 }, label = "Dämonenrüstung oder Dämonenhaut" } },
+    HUNTER  = { { any = { 13165, 13163, 5118, 13159, 20043, 13161 }, label = "Aspekt" } },
+    SHAMAN  = { { any = { 324 } } },
+}
+
+-- Vorschlaege je Klasse.
 function R.Suggestions(class)
     class = class or PlayerClass()
     local out = {}
@@ -120,6 +141,11 @@ function R.Suggestions(class)
                 { kind = "happy", below = R.DEFAULT_BELOW } }
     elseif class == "WARLOCK" then
         out = { { kind = "pet" } }
+    end
+    for _, b in ipairs(R.CLASS_BUFFS[class] or {}) do
+        local any = {}
+        for i, id in ipairs(b.any) do any[i] = tostring(id) end
+        out[#out + 1] = { kind = "buff", spell = any[1], any = any, label = b.label, learned = true }
     end
     for _, r in ipairs(out) do r.class = class end
     return out
@@ -162,7 +188,18 @@ local function SpellKnown(id)
 end
 R._SpellKnown = SpellKnown
 
+-- Hat der Charakter einen Zauber der Regel gelernt? true / false / nil.
+function R.Learned(rule)
+    if not CanAskSpells() then return nil end
+    for _, t in ipairs(rule.any or { rule.spell }) do
+        local id = tonumber(t)
+        if id and SpellKnown(id) then return true end
+    end
+    return false
+end
+
 function R.Applies(rule, class)
+    if rule.learned and R.Learned(rule) == false then return false end
     if rule.class == R.ALL then return true end
     class = class or PlayerClass()
     if rule.class then return class == nil or rule.class == class end
@@ -297,6 +334,16 @@ end
 -- Die Aura einer Regel am Spieler: Tabelle, false (sicher nicht da) oder
 -- nil (der Client sagt es nicht - geheim oder Fehler).
 function R.PlayerAura(rule)
+    if type(rule.any) == "table" then
+        -- Einer der Reihe genuegt; "weiss nicht" schlaegt "fehlt".
+        local result = false
+        for _, t in ipairs(rule.any) do
+            local a = R.PlayerAura({ spell = t })
+            if a then return a end
+            if a == nil and R.Resolve(t) and R.Resolve(t).name then result = nil end
+        end
+        return result
+    end
     local sp = R.Resolve(rule.spell)
     if not sp then return nil end
     local ua = _G.C_UnitAuras
@@ -442,7 +489,7 @@ function R.Check(rule)
         local aura = R.PlayerAura(rule)
         if aura == false then
             local sp = R.Resolve(rule.spell) or {}
-            return { text = (sp.name or rule.spell or "?") .. " fehlt", icon = sp.icon }
+            return { text = (rule.label or sp.name or rule.spell or "?") .. " fehlt", icon = sp.icon }
         end
         return nil
     elseif kind == "weapon" then
@@ -830,7 +877,7 @@ function R.BaseRuleText(rule)
     local kind = KIND_TEXT[rule.kind] or rule.kind
     if R.NeedsSpell(rule.kind) then
         local sp = R.Resolve(rule.spell)
-        local name = sp and sp.name or rule.spell or "?"
+        local name = rule.label or (sp and sp.name) or rule.spell or "?"
         local known = sp and sp.id and "" or "  (unbekannt)"
         return kind .. ": " .. tostring(name) .. known
     elseif rule.kind == "weapon" then

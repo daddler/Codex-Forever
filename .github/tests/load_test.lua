@@ -4756,11 +4756,35 @@ do
                         _G.GetInventoryItemID, _G.C_Item, _G.UnitExists, _G.InCombatLockdown, _G.issecretvalue }
         -- Vorschlaege ohne Zauber-ID.
         assert(#R.Suggestions("ROGUE") == 2 and R.Suggestions("ROGUE")[1].kind == "weapon", "Schurke ohne Waffengift-Vorschlag")
-        assert(#R.Suggestions("HUNTER") == 3 and R.Suggestions("HUNTER")[1].kind == "pet"
+        assert(#R.Suggestions("HUNTER") == 4 and R.Suggestions("HUNTER")[1].kind == "pet"
             and R.Suggestions("HUNTER")[2].kind == "ammo" and R.Suggestions("HUNTER")[3].kind == "happy",
             "Jaeger ohne Begleiter-, Munitions- und Laune-Vorschlag")
-        assert(#R.Suggestions("WARLOCK") == 1, "Hexenmeister mit Laune-Vorschlag (Daemonen haben keine)")
-        assert(#R.Suggestions("WARRIOR") == 0, "Vorschlag mit geratener Zauber-ID")
+        assert(#R.Suggestions("WARLOCK") == 2 and R.Suggestions("WARLOCK")[1].kind == "pet",
+            "Hexenmeister mit Laune-Vorschlag (Daemonen haben keine)")
+        assert(#R.Suggestions("WARRIOR") == 0, "Krieger mit Buff, der Wut kostet")
+        -- 6.26.13.0: Dauerbuffs je Klasse - jede Klasse ausser Krieger und
+        -- Schurke hat welche, alle mit Zauber-IDs aus dem Lehrerbestand,
+        -- alle nur, wenn gelernt.
+        local TD = WeintCodex.TrainerData
+        for _, cls in ipairs({ "MAGE", "PRIEST", "DRUID", "PALADIN", "WARLOCK", "HUNTER", "SHAMAN" }) do
+            local n = 0
+            for _, sg in ipairs(R.Suggestions(cls)) do
+                if sg.kind == "buff" then
+                    n = n + 1
+                    assert(sg.learned and sg.class == cls and type(sg.any) == "table", cls .. ": Buff ohne Bedingung")
+                end
+            end
+            assert(n > 0, cls .. " ohne Dauerbuff")
+        end
+        local src = io.open(ROOT .. "/data/trainer.lua"):read("*a")
+        for cls, list in pairs(R.CLASS_BUFFS) do
+            for _, b in ipairs(list) do
+                for _, id in ipairs(b.any) do
+                    assert(src:find("%f[%d]" .. id .. "%f[%D]"), cls .. ": Zauber " .. id .. " nicht im Lehrerbestand")
+                end
+            end
+        end
+        _ = TD
         -- Ohne Angabe: die Klasse des Spielers (zweiter Rueckgabewert).
         local oldClass = _G.UnitClass
         _G.UnitClass = function() return "Schurkin", "ROGUE", 4 end
@@ -5025,7 +5049,7 @@ do
         -- "Fuer meine Klasse" ergaenzt die Laune nicht doppelt, auch bei anderer Schwelle.
         R.SetRules({ { kind = "happy", below = 2, class = "HUNTER" } })
         local added = R.AddSuggestions("HUNTER")
-        assert(added == 2 and #R.Rules() == 3, "Laune doppelt ergaenzt: " .. added)
+        assert(added == 3 and #R.Rules() == 4, "Laune doppelt ergaenzt: " .. added)
         K.Set("reminders", "rules", nil)
 
         -- Punkt am Begleiterrahmen: Farbe der Laune, sonst aus.
@@ -16623,6 +16647,38 @@ do
         G.Settings, G.SettingsPanel = oSt, oSp
     end)
     Check(ok, "Aktionsleisten: Leiste hinzufuegen fuehrt in die Optionen des Spiels und zurueck" .. (ok and "" or (": " .. tostring(err))))
+end
+
+
+-- 6.26.13.0: Dauerbuffs der Klasse - nur gelernt, einer der Reihe genuegt.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local R = WeintCodex.UIReminders
+        local oIPS, oUA, oCS = G.IsPlayerSpell, G.C_UnitAuras, G.C_Spell
+        local known, auras = {}, {}
+        G.IsPlayerSpell = function(id) return known[id] == true end
+        G.C_Spell = { GetSpellInfo = function(k)
+            local n = ({ [6117] = "Magische Rüstung", [7302] = "Eisrüstung", [168] = "Frostrüstung", [1459] = "Arkane Intelligenz" })[tonumber(k)]
+            return n and { name = n, spellID = tonumber(k), iconID = 1 } or nil
+        end }
+        G.C_UnitAuras = { GetPlayerAuraBySpellID = function(id) return auras[id] end,
+                          GetAuraDataBySpellName = function() return nil end }
+        R.ClearCache()
+        local armor
+        for _, sg in ipairs(R.Suggestions("MAGE")) do if sg.label and sg.label:find("Rüstung") then armor = sg end end
+        assert(armor, "Magier ohne Ruestung")
+        assert(not R.Applies(armor, "MAGE"), "Erinnerung an nie gelernten Zauber")
+        known[168] = true
+        assert(R.Applies(armor, "MAGE"), "gelernte Ruestung gilt nicht")
+        local c = R.Check(armor)
+        assert(c and c.text == "Rüstung (Frost, Eis oder Magie) fehlt", "Text: " .. tostring(c and c.text))
+        auras[7302] = { icon = 1 }
+        assert(R.Check(armor) == nil, "Eisruestung zaehlt nicht als Ruestung")
+        G.IsPlayerSpell, G.C_UnitAuras, G.C_Spell = oIPS, oUA, oCS
+        R.ClearCache()
+    end)
+    Check(ok, "Erinnerungen: Dauerbuffs je Klasse, nur gelernt, einer der Reihe genuegt" .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then

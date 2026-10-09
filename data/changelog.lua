@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.13.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFErinnerungen kennen jetzt die Buffs deiner Klasse.|r Magier: Arkane Intelligenz und Rüstung. Priester: Seelenstärke und Inneres Feuer. Druide: Mal der Wildnis. Paladin: Segen und Aura. Hexenmeister: Dämonenhaut/-rüstung. Jäger: Aspekt. Schamane: Blitzschlagschild. Erinnert wird nur an Gelerntes.",
+            "|cff7C6CFFSchon eigene Regeln angelegt?|r Dann holt „Für meine Klasse“ unter Erinnerungen die neuen Vorschläge dazu – ohne deine Regeln anzufassen.",
+        },
+    },
+    {
         version = "6.26.12.0",
         date    = "10.10.2026",
         notes   = {
