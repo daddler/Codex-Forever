@@ -13,6 +13,8 @@ nicht zusammen.
 
 ### Neu
 
+- Stufen und Sammelberufe auf der Weltkarte (`ui/zoneinfo.lua`, `data/zoneinfo.lua`, Seite „Karte“, an; Beta-Test: „Levelbereich und welche Berufe dort, wie bei Leatrix“). Tafel unten links: Stufenbereich (Farbe nach eigener Stufe), Angeln ab, Kräuter, Erz, Herkunft. Auf dem Kontinent die Zone unter der Maus (`C_Map.GetMapInfoAtPosition`). Stufen und Angeln aus der Tabelle von Leatrix Maps (Classic; vier neue Gebiete nur Stufen, `community`); Kräuter und Erze aus Classic von Hand – **nicht** gegen Forever geprüft.
+- Kartensymbole dezenter (Beta-Test: „sehr prägnant“): Geistheiler 20→14, Pfeile 30→22 Bildpunkte, Hof und Rand leiser, Deckkraft 0,8, unter der Maus 1.
 - Schadensanzeige: Linksklick auf den Titel öffnet die Messarten als Liste (`MenuUtil.CreateContextMenu`, Radio je Messart, `Win:SetMode`); Rechtsklick und Mausrad blättern weiter (Beta-Test: „direkt per Dropdown statt durchklicken“). Ohne `MenuUtil` wie vorher.
 - Acht weitere Schriften für die Spielwelt (Beta-Test: „mehr Schriftarten“): Barlow Condensed, Roboto Condensed, Fira Sans Condensed, Oswald, Rajdhani, Exo 2, Inter – alle OFL, statisch, Umlaute geprüft, Lizenz je Familie in `media/fonts/` – und Arial Narrow aus dem Client (`Fonts\ARIALN.TTF`; fehlt sie, greift der Rückfall in `K.SetFont`). `load_test.lua` prüft je Wahl Datei und Lizenz.
 

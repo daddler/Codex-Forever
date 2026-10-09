@@ -108,6 +108,8 @@ data/rares.lua
 data/mapreveal.lua
 # Geistheiler und Uebergaenge auf der Weltkarte (6.21.0.0, erzeugt); gelesen von ui/mapmarks.lua.
 data/mapmarks.lua
+# Stufen und Sammelberufe je Gebiet (6.26.5.0); gelesen von ui/zoneinfo.lua.
+data/zoneinfo.lua
 
 #
 # data/roles.lua steht NACH data/specs.lua: es liest die Talentbaeume,
@@ -222,6 +224,8 @@ ui/messenger.lua
 ui/mapentrances.lua
 # Geistheiler und Uebergaenge auf der Weltkarte (6.21.0.0, Seite "Karte").
 ui/mapmarks.lua
+# Stufen und Sammelberufe auf der Weltkarte (6.26.5.0, Seite "Karte").
+ui/zoneinfo.lua
 # Warnton bei vermeidbarem Schaden (6.21.1.0, Seite "Feuer" im Komfort).
 ui/firealarm.lua
 ui/gathertrack.lua

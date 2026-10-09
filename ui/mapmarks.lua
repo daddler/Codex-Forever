@@ -47,8 +47,14 @@ MK.FACTION = { "Allianz", "Horde", "neutral" }
 -- 6.21.0.1 (Beta-Test: "zwar drin, aber nicht gut zu sehen"): groesser,
 -- heller (GameColors.mapMark), mit hellem Rand und dunklem Hof - auf dem
 -- Gruen und Braun der Karte hob sich das Gruen allein nicht ab.
-MK.SPIRIT = 20       -- Groesse des Punkts (Bildpunkte, bei jedem Zoom)
-MK.ARROW = 30        -- Groesse des Pfeils
+-- 6.26.5.0 (Beta-Test: "sehr praegnant, ein bisschen dezenter"): kleiner,
+-- Hof und Rand leiser, das ganze Symbol etwas durchsichtig - unter der Maus
+-- wieder voll.
+MK.SPIRIT = 14       -- Groesse des Punkts (Bildpunkte, bei jedem Zoom)
+MK.ARROW = 22        -- Groesse des Pfeils
+MK.ALPHA = 0.8       -- Deckkraft ohne Maus
+MK.HALO = 0.35       -- dunkler Hof
+MK.RIM = 0.7         -- heller Rand
 MK.TICK = 0.05
 
 local WANT = { spirit = "mapSpirit", crossing = "mapCrossings", flight = "mapFlight", travel = "mapTravel" }
@@ -231,18 +237,22 @@ local function NewPin(canvas)
     local g, w = GC.mapMark, C.textBright
     local disc, arrow = K.MEDIA .. "disc", K.ARROW_TEXTURE
     -- Punkt: dunkler Hof, heller Ring, gruener Kern (eigene Bilder).
-    p.spirit = { Layer(p, disc, 1, BLACK, 0.6, 3), Layer(p, disc, 2, w, 1, 0), Layer(p, disc, 3, g, 1, -3) }
+    p.spirit = { Layer(p, disc, 1, BLACK, MK.HALO, 2), Layer(p, disc, 2, w, MK.RIM, 0), Layer(p, disc, 3, g, 1, -2) }
     -- Pfeil: dunkler Schatten, heller Rand, gruener Pfeil.
-    p.crossing = { Layer(p, arrow, 1, BLACK, 0.9, 4), Layer(p, arrow, 2, w, 1, 2), Layer(p, arrow, 3, g, 1, 0) }
+    p.crossing = { Layer(p, arrow, 1, BLACK, MK.HALO, 3), Layer(p, arrow, 2, w, MK.RIM, 1), Layer(p, arrow, 3, g, 1, 0) }
     -- Flugmeister: Raute; Reise: Kreis mit hellem Kern - je in der Farbe
     -- der Fraktion (der Kern wird beim Einrichten gefaerbt).
     local diamond = K.MEDIA .. "diamond"
-    p.flight = { Layer(p, diamond, 1, BLACK, 0.7, 3), Layer(p, diamond, 2, w, 1, 0), Layer(p, diamond, 3, g, 1, -3) }
-    p.travel = { Layer(p, disc, 1, BLACK, 0.7, 3), Layer(p, disc, 2, g, 1, 0), Layer(p, disc, 3, w, 1, -6) }
+    p.flight = { Layer(p, diamond, 1, BLACK, MK.HALO, 2), Layer(p, diamond, 2, w, MK.RIM, 0), Layer(p, diamond, 3, g, 1, -2) }
+    p.travel = { Layer(p, disc, 1, BLACK, MK.HALO, 2), Layer(p, disc, 2, g, 1, 0), Layer(p, disc, 3, w, MK.RIM, -4) }
     p.rim, p.dot = p.spirit[2], p.spirit[3]
     p.shade, p.arrow = p.crossing[1], p.crossing[3]
-    p:SetScript("OnEnter", Tooltip)
-    p:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+    p:SetAlpha(MK.ALPHA)
+    p:SetScript("OnEnter", function(self) self:SetAlpha(1) Tooltip(self) end)
+    p:SetScript("OnLeave", function(self)
+        self:SetAlpha(MK.ALPHA)
+        if _G.GameTooltip then _G.GameTooltip:Hide() end
+    end)
     p:Hide()
     return p
 end

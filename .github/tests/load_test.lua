@@ -6793,7 +6793,13 @@ do
         -- Gruen mit hellem Rand und dunklem Hof.
         local gc = WeintCodex.GameColors.mapMark
         local cr, cg, cb = p.dot:GetVertexColor()
-        assert(MK.SPIRIT >= 20 and MK.ARROW >= 30 and cr == gc[1] and cg == gc[2] and cb == gc[3]
+        -- 6.26.5.0 ("ein bisschen dezenter"): kleiner, leiser, aber nicht weg.
+        assert(MK.SPIRIT >= 12 and MK.SPIRIT < 20 and MK.ARROW >= 18 and MK.ARROW < 30
+            and MK.ALPHA >= 0.6 and MK.ALPHA < 1 and p:GetAlpha() == MK.ALPHA, "Geistheiler nicht dezenter")
+        p:GetScript("OnEnter")(p)
+        assert(p:GetAlpha() == 1, "unter der Maus nicht voll")
+        p:GetScript("OnLeave")(p)
+        assert(cr == gc[1] and cg == gc[2] and cb == gc[3]
             and gc[2] > WeintCodex.GameColors.friendly[2], "Geistheiler zu klein oder zu dunkel")
         assert(#p.spirit == 3 and #p.crossing == 3 and p.spirit[1]:IsShown() and p.rim:IsShown()
             and not p.crossing[2]:IsShown(), "Hof oder Rand fehlt")
@@ -16186,6 +16192,42 @@ do
     Check(ok, "Schriften: jede Wahl hat Datei und Lizenz" .. (ok and "" or (": " .. tostring(err))))
 end
 
+
+
+-- 6.26.5.0: Stufen und Sammelberufe auf der Weltkarte.
+do
+    local ok, err = pcall(function()
+        local ZI = WeintCodex.UIZoneInfo
+        assert(ZI, "ui/zoneinfo.lua nicht geladen")
+        local D = WeintCodex.ZoneInfoData
+        local n = 0
+        for id, d in pairs(D) do
+            n = n + 1
+            assert(d.kind == "classic" or d.kind == "community", id .. ": Art fehlt")
+            assert(d.lvl or d.fish, id .. ": weder Stufe noch Angeln")
+            if d.lvl then assert(d.lvl[1] <= d.lvl[2], id .. ": Stufen verdreht") end
+        end
+        assert(n >= 45, "nur " .. n .. " Gebiete")
+        local oldLvl = _G.UnitLevel
+        _G.UnitLevel = function() return 20 end
+        local L = ZI.Lines(1440, "Eschental")
+        assert(L[1][1] == "Eschental · Stufe 18–30", "Kopf: " .. L[1][1])
+        local all = {}
+        for _, l in ipairs(L) do all[#all + 1] = l[1] end
+        all = table.concat(all, "\n")
+        assert(all:find("Angeln ab 55", 1, true) and all:find("Kräuter: ", 1, true) and all:find("Erz: ", 1, true)
+            and all:find("Classic", 1, true), "Zeilen: " .. all)
+        L = ZI.Lines(1434, "Schlingendorn")
+        assert(table.concat({ L[2][1] }):find("Angeln ab 130, sicher ab 205", 1, true), "Angeln mit Klammer: " .. L[2][1])
+        -- Neues Gebiet: nur Stufe, unbestaetigt, kein Angeln.
+        L = ZI.Lines(2521, "Zephras")
+        assert(#L == 2 and L[2][1]:find("unbestätigt", 1, true), "neues Gebiet")
+        assert(#ZI.Lines(999999, "x") == 0, "unbekanntes Gebiet zeigt etwas")
+        _G.UnitLevel = oldLvl
+        assert(WeintCodex.UIKit.Module("comfort").defaults.mapZoneInfo == true, "Schalter fehlt")
+    end)
+    Check(ok, "Karte: Stufen und Sammelberufe je Gebiet, nur Bekanntes, Herkunft genannt" .. (ok and "" or (": " .. tostring(err))))
+end
 
 if failures == 0 then
     print("BESTANDEN")

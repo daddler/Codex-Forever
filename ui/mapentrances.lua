@@ -434,6 +434,8 @@ local function BuildPage(B)
     B:Note("Die Lagen sind der Wissensstand aus der Beta und unbestätigt. Wo der Codex keinen Eingang kennt, steht kein Symbol.")
     local MK = WeintCodex.UIMapMarks
     if MK and MK.BuildRows then MK.BuildRows(B) end
+    local ZI = WeintCodex.UIZoneInfo
+    if ZI and ZI.BuildRows then ZI.BuildRows(B) end
     local MR = WeintCodex.UIMapReveal
     if MR and MR.BuildRows then MR.BuildRows(B) end
 end
