@@ -16796,6 +16796,44 @@ do
     Check(ok, "Einrichten: zwei Schritte, Pruefung nach dem Neuladen mit naechstem Schritt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+
+-- 6.26.18.0: beim Einloggen nicht nerven - vorhandenes Layout nur aktiv
+-- schalten, fragen hoechstens einmal je Charakter.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local ES = WeintCodex.UISetup
+        local oEM, oPM = G.C_EditMode, G.EditModePresetLayoutManager
+        G.EditModePresetLayoutManager = { GetCopyOfPresetLayouts = function() return { {}, {} } end }
+        local saves, active = 0, nil
+        local stored = { activeLayout = 1, layouts = { { layoutName = "Eigenes" }, { layoutName = "WeintCodex", mine = true } } }
+        G.C_EditMode = { GetLayouts = function() return stored end,
+                         SaveLayouts = function() saves = saves + 1 end,
+                         SetActiveLayout = function(i) active = i stored.activeLayout = i end }
+        if ES.IsShown() then ES.Button("later"):Click() end
+        ES._ResetAsked()
+        ES.MaybeAsk()
+        assert(active == 4 and saves == 0 and not ES.IsShown(), "vorhandenes Layout neu gebaut oder gefragt")
+        assert(stored.layouts[2].mine, "Layout ersetzt")
+        -- Kein Layout: einmal fragen, danach nie wieder fuer diesen Charakter.
+        stored = { activeLayout = 1, layouts = {} }
+        local root = K.Root()
+        local key = K.CharKey()
+        root.setupAsked = nil
+        ES._ResetAsked()
+        ES.MaybeAsk()
+        assert(ES.IsShown(), "Charakter ohne Layout nicht gefragt")
+        ES.Button("later"):Click()
+        assert(root.setupAsked and root.setupAsked[key], "Frage nicht gemerkt")
+        ES._ResetAsked()      -- neue Sitzung
+        ES.MaybeAsk()
+        assert(not ES.IsShown(), "beim naechsten Einloggen wieder gefragt")
+        root.setupAsked = nil
+        G.C_EditMode, G.EditModePresetLayoutManager = oEM, oPM
+    end)
+    Check(ok, "Einloggen: vorhandenes Layout still aktiv, Frage nur einmal je Charakter" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

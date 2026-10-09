@@ -11,6 +11,10 @@ nicht zusammen.
 
 ## [6.26.18.0] – 2026-10-10
 
+### Behoben
+
+- Einrichten-Fenster bei jedem Einloggen und auf jedem Charakter (Beta-Test: „nach ‚Alles einrichten‘ muss ich das Profil und die UI-Einstellung von Blizzard wieder laden“): `ES.MaybeAsk` schaltet ein vorhandenes Layout „WeintCodex“ nur aktiv (`ES.ActivateExisting`, kein `SaveLayouts`), fragt nur, wenn es fehlt, und das höchstens einmal je Charakter (`ui.setupAsked[Name-Realm]`, auch „Später“). Der Willkommens-Assistent schaltet ebenfalls nur aktiv, statt neu zu bauen.
+
 ### Geändert
 
 - Einrichten der Oberfläche (Beta-Test: „muss einfacher gemacht werden, der Nutzer mehr an die Hand genommen“): das Fenster in `ui/setup.lua` als „Schritt 1 von 2“/„Schritt 2 von 2“ mit drei Sätzen statt einer Seite. `ES.Apply` merkt `ui.setupVerify` vor; nach dem Neuladen (3 s, nicht im Kampf) zeigt `ES.Verify` → `ES.ShowResult` das Ergebnis aus `ES.Check` in einem Satz (`ES.ResultText`: nicht aktiv, Größe, Rahmen daneben, alles steht, nicht prüfbar) mit dem nächsten Schritt als Knopf.

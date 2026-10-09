@@ -775,18 +775,66 @@ function ES.Button(key)
 end
 function ES.BodyText() return body and body:GetText() or "" end
 
--- Beim ersten echten Einloggen fragen, wenn es noch kein Layout gibt -
--- nie nach einem /reload (sonst stuende die Frage nach "Später" bei jedem
--- Neuladen wieder da), nie ueber der Einfuehrung, nie im Kampf.
+-- Ein vorhandenes Layout "WeintCodex" nur aktiv schalten - nie neu bauen.
+-- true, wenn es danach aktiv ist.
+function ES.ActivateExisting()
+    local info = Layouts()
+    if not info then return false end
+    local presets = Presets()
+    local n = presets and #presets or 2
+    for i, l in ipairs(info.layouts) do
+        if l.layoutName == ES.LAYOUT_NAME then
+            local em = _G.C_EditMode
+            if not (em and em.SetActiveLayout) then return false end
+            return (pcall(em.SetActiveLayout, n + i))
+        end
+    end
+    return false
+end
+
+-- Hat dieser Charakter die Frage schon gesehen? (6.26.18.0)
+local function CharAsked()
+    local ui, key = K.Root(), K.CharKey()
+    return ui and key and type(ui.setupAsked) == "table" and ui.setupAsked[key] == true
+end
+local function MarkCharAsked()
+    local ui, key = K.Root(), K.CharKey()
+    if not (ui and key) then return end
+    ui.setupAsked = ui.setupAsked or {}
+    ui.setupAsked[key] = true
+end
+ES.CharAsked = CharAsked
+
+-- BEIM EINLOGGEN (6.26.18.0, Beta-Test: "wann immer ich auf andere Chars
+-- gehe oder WoW neu starte, kommt das Fenster WeintCodex einrichten - und
+-- nach 'Alles einrichten' muss ich mein Profil und die UI-Einstellung von
+-- Blizzard wieder laden"). Bis dahin fragte es bei jedem Einloggen, solange
+-- das Layout fehlte bzw. (6.26.17.0) nicht aktiv war, und "Einrichten"
+-- baute das Layout neu - eigene Aenderungen darin waren weg. Jetzt:
+--   Layout aktiv                -> nichts.
+--   Layout da, nicht aktiv      -> still aktiv schalten, ein Satz im Chat.
+--   Layout fehlt                -> fragen, aber nur EINMAL je Charakter
+--                                  (auch "Später" zaehlt); danach nur noch
+--                                  /wcui einrichten.
+-- Nie nach einem /reload, nie ueber der Einfuehrung, nie im Kampf.
 local asked = false
 function ES.MaybeAsk()
     if asked or ES.LayoutActive() ~= false then return end
+    if ES.HasLayout() == true then
+        asked = true
+        if not K.InCombat() and ES.ActivateExisting() then
+            Say("Layout „" .. ES.LAYOUT_NAME .. "“ für diesen Charakter aktiviert.")
+        end
+        return
+    end
+    if CharAsked() then return end
     if WeintCodex.Onboarding and WeintCodex.Onboarding.IsShowing and WeintCodex.Onboarding.IsShowing() then
         return   -- kommt ueber OnClosed wieder
     end
     local WL = WeintCodex.UIWelcome
     if WL and WL.IsShown and WL.IsShown() then return end
     asked = true
+    MarkCharAsked()
     K.AfterCombat(ES.Show)
 end
 ES._ResetAsked = function() asked = false end

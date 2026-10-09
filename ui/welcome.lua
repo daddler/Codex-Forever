@@ -335,8 +335,14 @@ function WL.Apply()
     -- 6.26.17.0: auch, wenn es das Layout schon gibt, es hier aber nicht
     -- aktiv ist (zweiter Charakter) oder der Client es nicht sagt.
     if ui and ES and ES.LayoutActive() ~= true then
-        local ok, why = ES.Apply()
-        report.layout = ok and true or tostring(why)
+        -- Gibt es das Layout schon (anderer Charakter, frueher eingerichtet),
+        -- wird es nur aktiv geschaltet - nie neu gebaut (6.26.18.0).
+        if ES.HasLayout() == true and ES.ActivateExisting() then
+            report.layout = true
+        else
+            local ok, why = ES.Apply()
+            report.layout = ok and true or tostring(why)
+        end
     end
     report.reload = K.ReloadPending()
     WL.report = report

@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.26.18.0",
         date    = "10.10.2026",
         notes   = {
+            "|cff7C6CFFKein Einrichten-Fenster mehr bei jedem Einloggen.|r Gibt es das Layout „WeintCodex“ schon, schaltet WeintCodex es beim Charakter still aktiv – ohne es neu zu bauen, deine Änderungen darin bleiben. Gefragt wird höchstens einmal je Charakter, auch nach „Später“; danach geht es nur noch über /wcui einrichten.",
             "|cff7C6CFFEinrichten in zwei Schritten.|r Das Fenster sagt in drei Sätzen, was passiert: „Einrichten“, dann „Jetzt neu laden“.",
             "|cff7C6CFFWeintCodex prüft danach selbst.|r Nach dem Neuladen siehst du, ob alles steht – und wenn nicht, was zu tun ist, mit dem passenden Knopf („Noch einmal einrichten“ oder „Gestaltungsmodus“).",
         },
