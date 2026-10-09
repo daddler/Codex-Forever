@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.9.3",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFWeiche Übergänge beim Rubrikwechsel.|r Im Codex und im Menü der Oberfläche blendet jede neue Seite sanft ein, statt hart umzuspringen.",
+        },
+    },
+    {
         version = "6.26.9.2",
         date    = "10.10.2026",
         notes   = {

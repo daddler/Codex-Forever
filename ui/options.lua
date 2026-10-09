@@ -608,6 +608,10 @@ local function ShowPage()
         b.pages[current.page] = page
     end
     page.frame:Show()
+    -- 6.26.9.3: jede Seite blendet weich ein, wie der Codex beim Wechsel.
+    if frame and frame:IsShown() and not (WeintCodex.fades and WeintCodex.fades[frame]) then
+        WeintCodex.FadeIn(page.frame)
+    end
     inner:SetHeight(page.height)
     scroller:SetVerticalScroll(0)
     local bar = scroller.WCScrollBar

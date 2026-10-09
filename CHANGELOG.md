@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.9.3] – 2026-10-10
+
+### Neu
+
+- Weicher Rubrikwechsel (Beta-Test: „die Animation auf alle Punkte in Codex und UI ausweiten“): `Navigation.SwitchTo` blendet `WeintCodex.ContentPanel` ein, `ShowPage` in `ui/options.lua` die neue Seite – über denselben Takt wie das Öffnen (`WeintCodex.FadeIn`). Nicht, solange das Fenster selbst noch einblendet.
+
 ## [6.26.9.2] – 2026-10-10
 
 ### Behoben

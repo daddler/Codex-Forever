@@ -16530,6 +16530,22 @@ do
             fader:GetScript("OnUpdate")(fader, 1)
             assert(not f:IsShown() and f:GetAlpha() == 1, "nicht zu, oder Deckkraft bleibt stehen")
         end
+        -- 6.26.9.3: Rubrik wechseln blendet den Inhalt ein - Codex und /wcui.
+        W.MainFrame:Show()
+        for k in pairs(W.fades) do W.fades[k] = nil end
+        W.Navigation.SwitchTo("lehrer")
+        assert(W.fades[W.ContentPanel] and W.ContentPanel:GetAlpha() == 0, "Codex: Rubrik wechselt hart")
+        fader:GetScript("OnUpdate")(fader, 1)
+        assert(W.ContentPanel:GetAlpha() == 1, "Codex: Inhalt nicht ganz da")
+        UO.frame:Show()
+        for k in pairs(W.fades) do W.fades[k] = nil end
+        UO.Select("comfort", 2)
+        local faded = false
+        for f in pairs(W.fades) do if f ~= UO.frame then faded = true end end
+        assert(faded, "/wcui: Seite wechselt hart")
+        fader:GetScript("OnUpdate")(fader, 1)
+        UO.frame:Hide()
+        W.MainFrame:Hide()
         W.NoFade = true
     end)
     WeintCodex.NoFade = true

@@ -2375,6 +2375,13 @@ function WeintCodex.Navigation.SwitchTo(tabId)
     WeintCodex.Navigation.ClearInspector()
     WeintCodex.Navigation.ClearTitleActions()
     ClearContentPanel()
+    -- 6.26.9.3 (Beta-Test: "beim Wechsel der Rubrik ein weicher Uebergang"):
+    -- der Inhalt blendet ein (core/ui.lua, WeintCodex.FadeIn). Nur, wenn
+    -- das Fenster schon offen ist - beim Oeffnen blendet es selbst.
+    local main, cp = WeintCodex.MainFrame, WeintCodex.ContentPanel
+    if cp and main and main:IsShown() and not (WeintCodex.fades and WeintCodex.fades[main]) then
+        WeintCodex.FadeIn(cp)
+    end
 
     -- Ein Reiter unter einem anderen Eintrag (SUBTABS): dessen Bereich,
     -- aufgeschlagen auf dem Reiter.
