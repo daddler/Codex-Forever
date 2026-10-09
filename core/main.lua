@@ -191,7 +191,7 @@ SlashCmdList["WEINTCODEX"] = function(msg)
     end
 
     if WeintCodex.MainFrame:IsShown() then
-        WeintCodex.MainFrame:Hide()
+        WeintCodex.FadeHide(WeintCodex.MainFrame)
     else
         if WeintCodex.ResetToHome then
             WeintCodex.ResetToHome()

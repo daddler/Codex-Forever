@@ -13,6 +13,7 @@ nicht zusammen.
 
 ### Geändert
 
+- Codex-Fenster und Einstellungen der Oberfläche blenden weich auf (0,2 s, jedes Öffnen über `OnShow`) und zu (0,18 s; Kreuz, `/wc`, `/wcui`, Minikartenknopf über `WeintCodex.FadeHide`). Ein gemeinsamer Takt in `core/ui.lua` (`WeintCodex.SoftWindow`), läuft nur während einer Blende. **Esc schließt sofort** – Esc läuft über `UISpecialFrames` im Code des Spiels; ein eigenes `Hide` dort würde ihn beschmutzen (Taint). Prüflauf: `WeintCodex.NoFade`.
 - Auftritt des Gestaltungsmodus (Beta-Test: „Logo etwas größer, etwas länger schweben“): `E.LOGO_BIG` 160 → 220, Schweben 0,55 → 0,95 s (`E.FLY` 1,3 → 1,7).
 
 ## [6.26.9.0] – 2026-10-10

@@ -26,6 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "10.10.2026",
         notes   = {
             "|cff7C6CFFGrößerer Auftritt.|r Das Logo beim Betreten des Gestaltungsmodus ist größer und schwebt gemächlicher an die Leiste.",
+            "|cff7C6CFFCodex und Einstellungen blenden weich auf und zu.|r Jedes Öffnen blendet ein, Schließen über das Kreuz, den Befehl oder den Minikartenknopf blendet aus. Esc schließt weiter sofort.",
         },
     },
     {

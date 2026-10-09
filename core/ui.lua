@@ -2439,6 +2439,70 @@ if frame.SetResizeBounds then
 end
 frame:Hide()
 
+--------------------------------------------------
+-- Weich auf und zu (6.26.9.1)
+--------------------------------------------------
+-- Beta-Test: "das weiche Einblenden, wenn man Codex oder das Menue der
+-- Oberflaeche aufmacht, immer mit rein. Auch das Schliessen." Auf geht
+-- jedes Oeffnen weich (OnShow). Zu geht weich ueber die eigenen Wege -
+-- Kreuz, Befehl, Minikartenknopf (WeintCodex.FadeHide). Esc schliesst
+-- weiter sofort: Esc laeuft ueber den Code des Spiels (UISpecialFrames),
+-- und ein eigenes Hide dort wuerde ihn mit Addon-Code beschmutzen.
+-- Ein Takt fuer alle Fenster, laeuft nur, solange etwas blendet.
+WeintCodex.FADE_IN, WeintCodex.FADE_OUT = 0.2, 0.18
+local fades = {}        -- [Fenster] = { t, dir }
+local fader = CreateFrame("Frame")
+fader:Hide()
+fader:SetScript("OnUpdate", function(self, el)
+    local any = false
+    for f, st in pairs(fades) do
+        st.t = st.t + (el or 0)
+        local dur = st.dir > 0 and WeintCodex.FADE_IN or WeintCodex.FADE_OUT
+        local p = math.min(1, st.t / dur)
+        p = p * p * (3 - 2 * p)
+        if st.dir > 0 then
+            f:SetAlpha(p)
+        else
+            f:SetAlpha(1 - p)
+        end
+        if st.t >= dur then
+            fades[f] = nil
+            if st.dir < 0 then f:Hide() f:SetAlpha(1) end
+        else
+            any = true
+        end
+    end
+    if not any and next(fades) == nil then self:Hide() end
+end)
+WeintCodex.fades, WeintCodex.fader = fades, fader
+
+function WeintCodex.FadeIn(f)
+    if WeintCodex.NoFade then f:SetAlpha(1) fades[f] = nil return end
+    local st = fades[f]
+    if st and st.dir > 0 then return end
+    -- Kam es mitten aus dem Ausblenden: von der jetzigen Deckkraft weiter.
+    local start = (st and st.dir < 0) and (1 - math.min(1, st.t / WeintCodex.FADE_OUT)) or 0
+    fades[f] = { t = start * WeintCodex.FADE_IN, dir = 1 }
+    f:SetAlpha(start)
+    fader:Show()
+end
+
+function WeintCodex.FadeHide(f)
+    if not (f and f:IsShown()) then return end
+    if WeintCodex.NoFade then f:Hide() return end
+    local st = fades[f]
+    if st and st.dir < 0 then return end
+    fades[f] = { t = 0, dir = -1 }
+    fader:Show()
+end
+
+-- Fenster weich machen: jedes Oeffnen blendet ein.
+function WeintCodex.SoftWindow(f)
+    f:HookScript("OnShow", function(self) WeintCodex.FadeIn(self) end)
+    f:HookScript("OnHide", function(self) fades[self] = nil self:SetAlpha(1) end)
+end
+WeintCodex.SoftWindow(frame)
+
 local frameBg = frame:CreateTexture(nil, "BACKGROUND")
 frameBg:SetAllPoints(frame)
 frameBg:SetColorTexture(unpack(C.bgDark))
@@ -2596,7 +2660,7 @@ closeX:SetFont(F.sans, 14, "")
 closeX:SetPoint("CENTER", closeBtn, "CENTER", 0, 0)
 closeX:SetTextColor(unpack(C.textMuted))
 closeX:SetText("\195\151")
-closeBtn:SetScript("OnClick", function() frame:Hide() end)
+closeBtn:SetScript("OnClick", function() WeintCodex.FadeHide(frame) end)
 closeBtn:SetScript("OnEnter", function() closeX:SetTextColor(unpack(C.textBright)) end)
 closeBtn:SetScript("OnLeave", function() closeX:SetTextColor(unpack(C.textMuted)) end)
 

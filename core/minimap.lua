@@ -37,7 +37,7 @@ if not WeintCodex.MainFrame then
 
     if WeintCodex.MainFrame:IsShown() then
 
-        WeintCodex.MainFrame:Hide()
+        WeintCodex.FadeHide(WeintCodex.MainFrame)
 
         else
 

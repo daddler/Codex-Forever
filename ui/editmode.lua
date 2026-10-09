@@ -290,7 +290,6 @@ E.FADE, E.HOLD, E.FLY, E.OUT = 0.3, 0.75, 1.7, 0.25
 E.SLIDE = 14             -- so weit gleitet die Leiste herab
 
 local anim, floater
-local fadeFrameRef
 local A = { t = 0, phase = nil, opt = nil, x0 = 0, y0 = 0, x1 = 0, y1 = 0 }
 E.anim = A
 
@@ -394,7 +393,6 @@ end
 -- Laufenden Auftritt sofort beenden (Prueflauf; dort laeuft kein Bild).
 function E.FinishAnim()
     if anim and anim:IsShown() then Step(nil, 999) end
-    if fadeFrameRef and fadeFrameRef:IsShown() then fadeFrameRef:GetScript("OnUpdate")(fadeFrameRef, 999) end
 end
 
 -- Ausblenden der Leiste; `after` laeuft danach (Fenster wieder auf).
@@ -458,29 +456,9 @@ function E.Leave()
         if not back then return end
         local O = WeintCodex.UIOptions
         if O and O.Return then O.Return(where) elseif O and O.Show then O.Show() end
-        local f = O and O.frame
-        if f and f.SetAlpha and f:IsShown() and not K.InCombat() then E.FadeIn(f) end
     end)
 end
 
--- Ein Fenster weich einblenden (eigener kleiner Takt, einmal gebaut).
-local fadeFrame, fadeTarget, fadeT = nil, nil, 0
-function E.FadeIn(f)
-    if not fadeFrame then
-        fadeFrame = CreateFrame("Frame", nil, UIParent)
-        fadeFrame:Hide()
-        fadeFrameRef = fadeFrame
-        fadeFrame:SetScript("OnUpdate", function(self, el)
-            fadeT = fadeT + (el or 0)
-            local p = Ease(fadeT / E.OUT)
-            if fadeTarget then fadeTarget:SetAlpha(p) end
-            if p >= 1 then self:Hide() fadeTarget = nil end
-        end)
-    end
-    fadeTarget, fadeT = f, 0
-    f:SetAlpha(0)
-    fadeFrame:Show()
-end
 
 -- Welche Einstellungsseite zu welchem Rahmen gehoert.
 local MODULE_OF = {

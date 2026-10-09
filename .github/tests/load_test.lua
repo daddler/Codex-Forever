@@ -92,6 +92,11 @@ Check(WeintCodex.SavedData == _G.WeintCodex_SavedData,
 -- prueft ein eigener Abschnitt.
 WeintCodex.UIKit.Set("groupframes", "source", "own")
 
+-- 6.26.9.1: weiches Auf und Zu. In der Attrappe laeuft kein Bild - ohne
+-- diesen Schalter bliebe jedes Fenster nach dem Schliessen offen. Den
+-- Ablauf selbst prueft der Abschnitt "Weich auf und zu" (Schalter aus).
+WeintCodex.NoFade = true
+
 -- Seit 6.9.0.0 ist die Oberflaeche wieder freiwillig (UIKit.OPT_IN). Der
 -- Prueflauf spielt einen Spieler, der "Ja" gesagt hat - sonst liefe nach
 -- dem Anmelden kein ui-Modul, und alles darunter prueft sie. Den Weg ohne
@@ -16486,13 +16491,47 @@ do
         K.SetUnlocked(false)
         assert(bar:IsShown() and not UO.frame:IsShown(), "Leiste sofort weg oder Fenster zu frueh")
         E.Step(nil, E.OUT)
-        assert(not bar:IsShown() and UO.frame:IsShown() and UO.frame:GetAlpha() == 0, "Fenster nicht zurueck oder nicht weich")
-        E.FinishAnim()
-        assert(UO.frame:GetAlpha() == 1, "Fenster blendet nicht ganz ein")
+        assert(not bar:IsShown() and UO.frame:IsShown(), "Fenster nicht zurueck")
         P.GetWidth, P.GetHeight = oW, oH
         UO.frame:Hide()
     end)
     Check(ok, "Gestaltungsmodus: Auftritt mit Logo, Leiste blendet ein, Fenster aus und zurueck" .. (ok and "" or (": " .. tostring(err))))
+end
+
+
+-- 6.26.9.1: Codex und Einstellungen blenden weich auf und zu.
+do
+    local ok, err = pcall(function()
+        local W, UO = WeintCodex, WeintCodex.UIOptions
+        local fader = W.fader
+        W.NoFade = false
+        for _, f in ipairs({ W.MainFrame, UO.frame }) do
+            f:Hide()
+            f:Show()
+            W.FadeIn(f)     -- das tut OnShow (die Attrappe ruft es bei Show nicht)
+            assert(f:GetAlpha() == 0 and W.fades[f], "oeffnet nicht weich")
+            fader:GetScript("OnUpdate")(fader, W.FADE_IN / 2)
+            assert(f:GetAlpha() > 0 and f:GetAlpha() < 1, "blendet nicht ein: " .. f:GetAlpha())
+            fader:GetScript("OnUpdate")(fader, W.FADE_IN)
+            assert(f:GetAlpha() == 1 and not W.fades[f], "nicht ganz da")
+            W.FadeHide(f)
+            assert(f:IsShown(), "schliesst sofort statt weich")
+            fader:GetScript("OnUpdate")(fader, W.FADE_OUT / 2)
+            assert(f:IsShown() and f:GetAlpha() < 1, "blendet nicht aus")
+            -- Wieder auf, mitten im Ausblenden: von dort weiter, nicht von 0.
+            local a = f:GetAlpha()
+            f:Show()
+            W.FadeIn(f)
+            assert(math.abs(f:GetAlpha() - a) < 0.01, "springt beim Wiederoeffnen")
+            fader:GetScript("OnUpdate")(fader, 1)
+            W.FadeHide(f)
+            fader:GetScript("OnUpdate")(fader, 1)
+            assert(not f:IsShown() and f:GetAlpha() == 1, "nicht zu, oder Deckkraft bleibt stehen")
+        end
+        W.NoFade = true
+    end)
+    WeintCodex.NoFade = true
+    Check(ok, "Weich auf und zu: Codex und Einstellungen blenden ein und aus" .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then

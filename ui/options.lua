@@ -844,6 +844,7 @@ function O.Build()
     frame:EnableMouse(true)
     frame:Hide()
     O.frame = frame
+    WeintCodex.SoftWindow(frame)
     local bg = frame:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(frame)
     bg:SetColorTexture(unpack(C.bgDark))
@@ -892,7 +893,7 @@ function O.Build()
     x:SetPoint("CENTER", close, "CENTER", 0, 0)
     x:SetTextColor(unpack(C.textMuted))
     x:SetText("\195\151")
-    close:SetScript("OnClick", function() frame:Hide() end)
+    close:SetScript("OnClick", function() WeintCodex.FadeHide(frame) end)
     close:SetScript("OnEnter", function() x:SetTextColor(unpack(C.textBright)) end)
     close:SetScript("OnLeave", function() x:SetTextColor(unpack(C.textMuted)) end)
     BuildSearch(head, close)
@@ -1207,7 +1208,7 @@ end
 
 function O.Toggle()
     O.Build()
-    if frame:IsShown() then frame:Hide() else O.Show() end
+    if frame:IsShown() then WeintCodex.FadeHide(frame) else O.Show() end
 end
 
 SLASH_WEINTCODEXUI1 = "/wcui"
