@@ -193,7 +193,7 @@ internet; any further outward message needs the same explicit request.
   never touches the gold. Never use it in the addon's
   own pages, never next to the class colour in the same region.
 - **The UI (`ui/`) is opt-in again since 6.9.0.0, and switching it on
-  never overwrites the player's own setup.** `K.OPT_IN = true` in
+  never overwrites the player's own setup – and since 6.26.8.0 it is chosen per character** (`ui.chars[Name-Realm]` via `K.CharState`, also the remembered layout and CVars). `K.OPT_IN = true` in
   `ui/kit.lua` (6.0.0.3–6.8.1.0 it was `false`: the beta client did not
   persist SavedVariables); flipping it back to `false` makes the UI on for
   everyone again, and `load_test.lua` tests both states. The first login

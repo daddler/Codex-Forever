@@ -25,6 +25,7 @@ WeintCodex_ChangelogData = {
         version = "6.26.8.0",
         date    = "10.10.2026",
         notes   = {
+            "|cff7C6CFFOberfläche je Charakter.|r Ob ein Charakter die WeintCodex-Oberfläche nutzt, entscheidest du jetzt für jeden einzeln – an auf dem einen heißt nicht an auf allen. Deine bisherigen Charaktere behalten, was sie hatten.",
             "|cff7C6CFFNeuer Charakter, neuer Willkommensgruß.|r Der Assistent kommt jetzt für jeden neuen Charakter, nicht nur einmal je Account – deine bisherigen Charaktere fragt er nicht noch einmal.",
         },
     },

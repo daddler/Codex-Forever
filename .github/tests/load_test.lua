@@ -96,7 +96,7 @@ WeintCodex.UIKit.Set("groupframes", "source", "own")
 -- Prueflauf spielt einen Spieler, der "Ja" gesagt hat - sonst liefe nach
 -- dem Anmelden kein ui-Modul, und alles darunter prueft sie. Den Weg ohne
 -- Oberflaeche prueft der Abschnitt "Ohne Oberflaeche".
-WeintCodex.UIKit.Root().enabled = true
+WeintCodex.UIKit.Root().enabled = true; WeintCodex.UIKit.CharState().enabled = true
 
 -- PLAYER_LOGIN dazu: dort melden sich Charakter und Twinkliste an die
 -- Companion, die Rosternamen werden aufgeloest und die Einfuehrung
@@ -2165,7 +2165,7 @@ do
     Check(not WL.IsShown() and K.UIEnabled(), "ohne OPT_IN fragt WeintCodex nie, und die Oberflaeche ist an")
     K.OPT_IN = true
     -- Ab hier ein Spieler, der noch nicht geantwortet hat.
-    sd.ui.enabled = nil
+    sd.ui.enabled = nil; K.CharState().enabled = nil
     Check(K.UIEnabled() == false, "mit OPT_IN liest der Hauptschalter den Speicher (keine Antwort = aus)")
 end
 
@@ -2589,7 +2589,7 @@ K.SetUIEnabled(false)
 Check(not K.WantsActive("nameplates") and K.WantsActive("questarrow"),
     "Oberflaeche aus: Plaketten nicht mehr, Questpfeil weiter")
 -- Zurueck auf den Spieler mit "Ja" fuer alles darunter.
-K.Root().enabled = true
+K.Root().enabled = true; K.CharState().enabled = true
 Check(K.UIEnabled() and K.WantsActive("groupframes"), "zurueck auf Ja: wieder alles an")
 
 -- Eine Welt mit einer feindlichen Plakette und einem Ziel.
@@ -4250,7 +4250,7 @@ do
         }
         local chatReset = 0
         _G.FCF_ResetChatWindows = function() chatReset = chatReset + 1 end
-        K.Root().before, K.Root().cvars = nil, nil
+        K.CharState().before, K.CharState().cvars = nil, nil
         assert(ES.HasLayout() == false, "Layout vor der Einrichtung schon da")
         assert(ES.BaseName() == "Modern", "Grundlage nicht die Vorlage des Spiels")
         local okA, why = ES.Apply()
@@ -4290,9 +4290,9 @@ do
         assert(chatReset == 0 and r.chat == nil, "Chatfenster angefasst (eigene Reiter weg)")
         assert(cvars.chatStyle == "im" and cvars.whisperMode == "inline" and cvars.lockActionBars == "1", "Spieleinstellungen nicht gesetzt")
         -- ... und vorher gemerkt, was galt: das Layout und die alten Werte.
-        local before = K.Root().before
+        local before = K.CharState().before
         assert(before and before.layout and before.layout.name == "EllesmereUI Forever v4", "Layout von vorher nicht gemerkt")
-        local rec = K.Root().cvars and K.Root().cvars.chatStyle
+        local rec = K.CharState().cvars and K.CharState().cvars.chatStyle
         assert(rec and rec.orig == "classic" and rec.set == "im" and rec.owner == "ui", "alter Wert nicht gemerkt")
         assert(r.cvars == 3 and #r.unknownCVars == #ES.CVARS - 3, "unbekannte Einstellungen nicht ehrlich gemeldet")
         -- 6.6.1.4: eigene Rahmen bleiben, wo der Spieler sie hingezogen hat.
@@ -4438,7 +4438,7 @@ end
 -- Spieleinstellungen, aber nur, wo noch UNSER Wert steht.
 do
     local PF = WeintCodex.UIProfile
-    local ui = K.Root()
+    local ui = K.CharState()
     local oldEM, oldPM, oldCV = _G.C_EditMode, _G.EditModePresetLayoutManager, _G.C_CVar
     local oldEnabled = ui.enabled
     local ok, err = pcall(function()
@@ -4525,7 +4525,7 @@ end
 -- erst, wenn man es waehlt. Klickzauber gelten dann auf den Rahmen des
 -- Spiels.
 do
-    local ui = K.Root()
+    local ui = K.CharState()
     local oldEnabled = ui.enabled
     local CC = WeintCodex.UIClickCast
     local gf = K.Module("groupframes")
@@ -16025,16 +16025,16 @@ do
         -- 6.12.0.1: beim Einloggen fragen - einmal je Charakter ohne Wahl,
         -- nur mit Oberflaeche, nie vor dem Willkommen, nicht neben dem
         -- Hinweis auf ein Update.
-        local oldEnabled, oldAsked = ui.enabled, ui.asked
-        ui.enabled, ui.asked = true, true
+        local oldEnabled, oldAsked = K.CharState().enabled, ui.asked
+        K.CharState().enabled, ui.asked = true, true
         me = "Neuling"
         PR.ResetLater()
         assert(not PR.Answered() and PR.ShouldAsk(), "Neuling wird nicht gefragt")
         ui.asked = nil
         assert(not PR.ShouldAsk(), "Frage vor dem Willkommen")
-        ui.asked, ui.enabled = true, false
+        ui.asked, K.CharState().enabled = true, false
         assert(not PR.ShouldAsk(), "Frage ohne Oberflaeche")
-        ui.enabled = true
+        K.CharState().enabled = true
         local OB = WeintCodex.Onboarding
         local oldShowing = OB.IsShowing
         OB.IsShowing = function() return true end
@@ -16092,7 +16092,7 @@ do
         a:Hide()
         ui.profiles = keepProfiles
         me = "Shooty"
-        ui.enabled, ui.asked = oldEnabled, oldAsked
+        K.CharState().enabled, ui.asked = oldEnabled, oldAsked
     end)
     counting = false
     sd.ui, _G.UnitName = savedUI, oldName
@@ -16406,6 +16406,38 @@ do
         ui.asked, ui.welcomed, ui.later = saved.asked, saved.welcomed, saved.later
     end)
     Check(ok, "Willkommen je Charakter: neuer gefragt, alte nach dem Update nicht" .. (ok and "" or (": " .. tostring(err))))
+end
+
+
+-- 6.26.8.0: die Oberflaeche je Charakter - an auf einem heisst nicht an auf allen.
+do
+    local ok, err = pcall(function()
+        local G, ui = _G, K.Root()
+        local oldName, oldLvl = G.UnitName, G.UnitLevel
+        local savedChars, savedEnabled = ui.chars, ui.enabled
+        local me = "Erster"
+        G.UnitName = function(u) if u == "player" then return me end return oldName(u) end
+        ui.chars = {}
+        -- Vor dem Update: Account-Schalter an. Ein bekannter Charakter
+        -- (ueber Stufe 1) uebernimmt ihn, ein neuer (Stufe 1, unbekannt) nicht.
+        ui.enabled = true
+        G.UnitLevel = function() return 30 end
+        assert(K.UIEnabled() == true, "bekannter Charakter verliert die Oberflaeche beim Update")
+        me = "Neuling"
+        G.UnitLevel = function() return 1 end
+        assert(K.UIEnabled() == false, "neuer Charakter bekommt die Oberflaeche des Accounts")
+        -- Jeder fuer sich: Neuling schaltet ein, Erster bleibt, wie er war.
+        K.SetUIEnabled(true)
+        me = "Erster"
+        K.SetUIEnabled(false)
+        assert(K.UIEnabled() == false, "Erster nicht aus")
+        me = "Neuling"
+        assert(K.UIEnabled() == true, "Ausschalten auf einem Charakter schaltet den anderen aus")
+        assert(ui.enabled == true, "Account-Wert von vorher ueberschrieben")
+        G.UnitName, G.UnitLevel = oldName, oldLvl
+        ui.chars, ui.enabled = savedChars, savedEnabled
+    end)
+    Check(ok, "Oberflaeche je Charakter: eigener Schalter, Uebernahme nur fuer bekannte" .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then

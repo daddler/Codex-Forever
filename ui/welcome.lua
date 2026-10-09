@@ -287,10 +287,10 @@ end
 function WL.Summary()
     local lines = {}
     if choice.ui then
-        lines[#lines + 1] = "•  Oberfläche: ja – mit eigenem Layout „WeintCodex“. Dein Layout, deine Chatreiter"
+        lines[#lines + 1] = "•  Oberfläche: ja (dieser Charakter) – mit eigenem Layout „WeintCodex“. Dein Layout, deine Chatreiter"
             .. " und Einstellungen bleiben und kommen beim Ausschalten zurück."
     else
-        lines[#lines + 1] = "•  Oberfläche: nein – das Spiel zeigt seine Rahmen wie bisher."
+        lines[#lines + 1] = "•  Oberfläche: nein (dieser Charakter) – das Spiel zeigt seine Rahmen wie bisher."
     end
     local on = {}
     for _, s in ipairs(WL.SHOWS) do if choice.shows[s.key] then on[#on + 1] = s.label end end
@@ -610,7 +610,7 @@ function WL.Text(key)
             .. "•  Dazu das Komplettpaket: Schadensanzeige und Erinnerungen sind gleich an.\n\n"
             .. "Dein Profil bleibt deins: Die Oberfläche bekommt im Bearbeitungsmodus ein eigenes Layout."
             .. " Dein jetziges, deine Chatreiter und deine Einstellungen werden nicht überschrieben –"
-            .. " ausschalten bringt alles zurück."
+            .. " ausschalten bringt alles zurück. Die Wahl gilt nur für diesen Charakter."
     elseif key == "kampf" then
         return "Klickzauber und Makros richtest du später unter /wcui → Komfort ein."
     end

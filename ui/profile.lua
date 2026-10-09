@@ -54,7 +54,10 @@ local function Say(text)
     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. text)
 end
 
-local function Root() return K.Root() end
+-- Seit 6.26.8.0 je Charakter (K.CharState): das Layout ist im Spiel ohnehin
+-- je Charakter gewaehlt, und wer die Oberflaeche nur auf einem Charakter
+-- nutzt, soll auf den anderen nichts davon zurueckgeben muessen.
+local function Root() return K.CharState() or K.Root() end
 
 --------------------------------------------------
 -- Layouts des Bearbeitungsmodus

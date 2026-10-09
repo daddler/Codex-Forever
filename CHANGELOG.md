@@ -11,6 +11,10 @@ nicht zusammen.
 
 ## [6.26.8.0] – 2026-10-10
 
+### Geändert
+
+- Oberfläche je Charakter (Beta-Test: „für jeden einzelnen Charakter entscheiden“): Hauptschalter, gemerktes Layout und gemerkte Spieleinstellungen liegen in `ui.chars[Name-Realm]` (`K.CharState`; `K.UIEnabled`/`K.SetUIEnabled`, `ui/profile.lua` liest dort). Übernahme der Account-Werte von vorher (`ui.enabled`, `ui.before`, `ui.cvars`) nur für Charaktere, die WeintCodex kennt (`K.KnownChar`: Willkommen, Profilfrage, Bestand, Stufe > 1); ist die Stufe beim Laden noch unbekannt, wird nicht entschieden. `ui.enabled` bleibt unberührt. Grenze: Spieleinstellungen, die das Spiel für den Account speichert, teilen sich die Charaktere weiterhin.
+
 ### Behoben
 
 - Willkommens-Assistent bei neuem Charakter (Beta-Test: „kommt nicht“): die Antwort galt für den Account (`ui.asked`). Jetzt je Charakter (`ui.welcomed[Name-Realm]`), `ui.asked` bleibt als „Account hat geantwortet“. `WL.Migrate` beim ersten Einloggen nach dem Update: bekannte Charaktere (Profilfrage, `profileOf`, Bestand) und der einloggende ab Stufe 2 gelten als gefragt. `MaybeAsk` fragt jetzt auch bei eingeschalteter Oberfläche; die Profilfrage wartet auf die Antwort dieses Charakters (`WL.Asked`).

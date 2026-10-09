@@ -474,8 +474,68 @@ end
 -- Ausschalten zurueck - der Hauptschalter ruft es (PF.OnSwitch).
 K.OPT_IN = true
 
+-- JE CHARAKTER (6.26.8.0, Beta-Test: "Nutzer sollen fuer jeden einzelnen
+-- Charakter entscheiden, ob sie die Oberflaeche nutzen"). Der Schalter, das
+-- gemerkte Layout von vorher und die gemerkten Spieleinstellungen
+-- (ui/profile.lua) liegen in `ui.chars[Name-Realm]`. Die Werte von vorher
+-- (`ui.enabled`, `ui.before`, `ui.cvars`, bis 6.26.7.0 fuer den Account)
+-- uebernimmt ein Charakter beim ersten Einloggen nach dem Update - aber nur
+-- einer, den WeintCodex schon kennt (K.KnownChar). Ein neuer beginnt ohne
+-- Oberflaeche und wird gefragt (ui/welcome.lua).
+local function DeepCopy(t)
+    if type(t) ~= "table" then return t end
+    local c = {}
+    for k, v in pairs(t) do c[k] = DeepCopy(v) end
+    return c
+end
+
+function K.KnownChar(key)
+    local ui = Root()
+    if not (ui and key) then return false end
+    if (ui.welcomed and ui.welcomed[key]) or (ui.profileAsked and ui.profileAsked[key])
+       or (ui.profileOf and ui.profileOf[key]) then
+        return true
+    end
+    local sd = WeintCodex.SavedData
+    local inv = type(sd) == "table" and sd.inventory
+    for _, c in pairs(inv and inv.chars or {}) do
+        if type(c) == "table" and c.name and c.realm and (c.name .. "-" .. c.realm) == key then return true end
+    end
+    if key == K.CharKey() then
+        local lvl = _G.UnitLevel and K.Plain(_G.UnitLevel("player"))
+        if type(lvl) == "number" and lvl > 1 then return true end
+        -- Stufe noch unbekannt (sehr frueh beim Laden): nicht entscheiden.
+        if type(lvl) ~= "number" or lvl < 1 then return nil end
+    end
+    return false
+end
+
+-- Der Stand dieses Charakters, oder nil ohne Charakterschluessel.
+function K.CharState()
+    local ui = Root()
+    local key = K.CharKey()
+    if not (ui and key) then return nil end
+    ui.chars = ui.chars or {}
+    local st = ui.chars[key]
+    if not st then
+        local known = ui.enabled ~= nil and K.KnownChar(key)
+        -- Unentschieden: noch nichts anlegen, bis dahin gilt der alte Wert.
+        if ui.enabled ~= nil and known == nil then return nil end
+        st = {}
+        if known then
+            st.enabled = ui.enabled == true
+            st.before = DeepCopy(ui.before)
+            st.cvars = DeepCopy(ui.cvars)
+        end
+        ui.chars[key] = st
+    end
+    return st
+end
+
 function K.UIEnabled()
     if not K.OPT_IN then return true end
+    local st = K.CharState()
+    if st then return st.enabled == true end
     local ui = Root()
     return ui ~= nil and ui.enabled == true
 end
@@ -489,8 +549,9 @@ function K.SetUIEnabled(on)
     local ui = Root()
     if not ui then return end
     on = on and true or false
-    local was = ui.enabled == true
-    ui.enabled = on
+    local was = K.UIEnabled()
+    local st = K.CharState()
+    if st then st.enabled = on else ui.enabled = on end
     if was ~= on then K.MarkReload() end
     K.Fire("setting", "general", "enabled")
     local PF = WeintCodex.UIProfile
