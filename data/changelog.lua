@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.17.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFJeder Charakter bekommt die fertige Anordnung.|r Wählst du im Willkommen die Oberfläche, richtet WeintCodex das Layout jetzt auch dann ein, wenn ein anderer Charakter es schon angelegt hat – vorher blieb ein neuer Charakter auf der Vorlage des Spiels, und die Rahmen lagen übereinander.",
+        },
+    },
+    {
         version = "6.26.16.0",
         date    = "10.10.2026",
         notes   = {

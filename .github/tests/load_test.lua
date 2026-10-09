@@ -4283,6 +4283,13 @@ do
         assert(l and l.layoutName == "WeintCodex" and l.layoutType == 1, "Layout nicht angelegt")
         assert(saved.layouts[1].layoutName == "EllesmereUI Forever v4", "bisheriges Layout ueberschrieben")
         assert(saved.activeLayout == 4 and active == 4, "Layout nicht aktiv (2 Vorlagen + 2)")
+        -- 6.26.17.0: aktiv je Charakter - ein zweiter Charakter hat das
+        -- Layout schon, aber ein anderes aktiv: dann einrichten.
+        stored = saved
+        assert(ES.LayoutActive() == true, "eigenes aktives Layout nicht erkannt")
+        stored = { activeLayout = 1, layouts = saved.layouts }
+        assert(ES.HasLayout() == true and ES.LayoutActive() == false, "anderes Layout aktiv nicht erkannt")
+        stored = saved
         local function Get(system, idx)
             for _, sy in ipairs(l.systems) do if sy.system == system and sy.systemIndex == idx then return sy end end
         end

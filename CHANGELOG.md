@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.17.0] – 2026-10-10
+
+### Behoben
+
+- Erste Einrichtung je Charakter (Beta-Test: „nach der Installation sehr durcheinander“): Layouts des Bearbeitungsmodus gelten für den Account, das aktive je Charakter. Willkommen (`WL.Apply`) und die Frage beim Einloggen (`ES.MaybeAsk`) richteten nur ein, wenn es das Layout „WeintCodex“ noch nicht gab – ein weiterer Charakter blieb auf der Vorlage des Spiels. Jetzt zählt `ES.LayoutActive()`: eingerichtet wird, solange es bei diesem Charakter nicht aktiv ist (auch, wenn der Client es nicht sagt).
+
 ## [6.26.16.0] – 2026-10-10
 
 ### Geändert

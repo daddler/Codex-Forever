@@ -332,7 +332,9 @@ function WL.Apply()
     if anyHelper and not K.ModuleEnabled("comfort") then K.SetModuleEnabled("comfort", true) end
     -- Mit Oberflaeche gleich einrichten: ein Neuladen statt zwei.
     local ES = WeintCodex.UISetup
-    if ui and ES and ES.HasLayout() == false then
+    -- 6.26.17.0: auch, wenn es das Layout schon gibt, es hier aber nicht
+    -- aktiv ist (zweiter Charakter) oder der Client es nicht sagt.
+    if ui and ES and ES.LayoutActive() ~= true then
         local ok, why = ES.Apply()
         report.layout = ok and true or tostring(why)
     end

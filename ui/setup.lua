@@ -106,6 +106,23 @@ local function Presets()
     return nil
 end
 
+-- Ist das Layout bei DIESEM Charakter aktiv? true / false / nil.
+-- 6.26.17.0 (Beta-Test: "nach der Installation ist alles durcheinander"):
+-- Layouts gelten fuer den Account, welches aktiv ist, je Charakter. Bis
+-- dahin richtete der Assistent nur ein, wenn es das Layout noch nicht gab -
+-- ein zweiter Charakter blieb auf der Vorlage des Spiels, waehrend die
+-- Rahmen von WeintCodex schon auf ihren Plaetzen standen.
+function ES.LayoutActive()
+    local info = Layouts()
+    if not info then return nil end
+    local presets = Presets()
+    local n = presets and #presets or 2
+    for i, l in ipairs(info.layouts) do
+        if l.layoutName == ES.LAYOUT_NAME then return K.Plain(info.activeLayout) == n + i end
+    end
+    return false
+end
+
 local function SetSetting(sys, setting, value)
     if type(setting) ~= "number" then return false end
     sys.settings = sys.settings or {}
@@ -723,7 +740,7 @@ function ES.BodyText() return body and body:GetText() or "" end
 -- Neuladen wieder da), nie ueber der Einfuehrung, nie im Kampf.
 local asked = false
 function ES.MaybeAsk()
-    if asked or ES.HasLayout() ~= false then return end
+    if asked or ES.LayoutActive() ~= false then return end
     if WeintCodex.Onboarding and WeintCodex.Onboarding.IsShowing and WeintCodex.Onboarding.IsShowing() then
         return   -- kommt ueber OnClosed wieder
     end
