@@ -108,7 +108,9 @@ local defaults = {
     dpsNear    = K.ColorDefault("dpsNear"),
     -- 6.10.3.4 (Beta-Test: "die Bedrohungsleiste in den Einstellungen
     -- einstellen - Farbe, Prozent etc."): was bis dahin fest war.
-    threatLow  = K.ColorDefault("threatLow"),  -- Leiste: weit weg
+    threatLow  = K.ColorDefault("threatLow"),  -- Leiste: weit weg (grau)
+    threatOk   = K.ColorDefault("threatOk"),   -- Leiste: geht noch (gruen, 6.27.1.0)
+    threatOkAt = 50,       -- ab hier gruen statt grau (6.27.1.0)
     threatWarn = 80,       -- ab hier "kurz davor" (DD) bzw. "der Naechste ist nah" (Tank)
     threatSolo = false,    -- auch allein ohne Begleiter (dann immer 100 %)
     tankLead   = true,     -- als Tank den Naechsten zeigen statt der eigenen
@@ -1395,6 +1397,18 @@ function NP.ThreatTint(status, scaled, tank, lead)
     return nil
 end
 
+-- Farbe der LEISTE in vier Stufen (6.27.1.0, Beta-Test: "grau
+-- hervorragend, gruen geht noch, gelb Achtung, rot Aggro"): rot und gelb
+-- wie NP.ThreatTint, darunter gruen ab threatOkAt, sonst grau. Der
+-- Lebensbalken bleibt bei rot/gelb - gruen und grau waeren dort nur Rauschen.
+function NP.BarTint(status, scaled, tank, lead)
+    local c = NP.ThreatTint(status, scaled, tank, lead)
+    if c then return c end
+    local v = K.Plain(scaled)
+    if type(v) == "number" and v >= (tonumber(S.threatOkAt) or 50) then return S.threatOk end
+    return S.threatLow
+end
+
 -- Wer den Gegner gerade haelt. In Classic ist das sein Ziel (waehrend
 -- eines Zaubers kann es kurz ein anderes sein - dann steht kurz ein
 -- anderer Name da, das Spiel sagt es nicht genauer). Nur Freunde unter
@@ -1529,12 +1543,8 @@ local function UpdateThreatText(p)
 
     if contested and S.threatBar then
         if lead then bar:SetValue(math.min(lead, 100)) else bar:SetValue(scaled) end
-        if c then
-            K.PaintBar(bar, c.r, c.g, c.b)
-        else
-            local low = S.threatLow
-            K.PaintBar(bar, low.r, low.g, low.b)
-        end
+        local bc = c or NP.BarTint(status, scaled, tank, lead)
+        K.PaintBar(bar, bc.r, bc.g, bc.b)
         bar:Show()
     else
         bar:Hide()
@@ -2061,8 +2071,13 @@ K.Register({
             B:Row({ type = "color", label = "Tank: hält die Aggro", key = "tankAggro", disabled = noThreat },
                   { type = "color", label = "Tank: der Nächste ist nah", key = "tankLosing", disabled = noThreat })
             B:Row({ type = "color", label = "Weit weg (nur Leiste)", key = "threatLow", disabled = noBar },
-                  { type = "empty" })
+                  { type = "color", label = "Geht noch (nur Leiste)", key = "threatOk", disabled = noBar })
             B:Advanced()
+            B:Section("Bedrohungsleiste fein")
+            B:Row({ type = "slider", label = "Grün ab", key = "threatOkAt", min = 10, max = 95, step = 5,
+                    format = function(v) return string.format("%d %%", v) end, disabled = noBar,
+                    description = "Darunter grau (hervorragend), darüber grün (geht noch), ab „Warnen ab“ gelb, mit Aggro rot." },
+                  { type = "empty" })
             B:Section("Gegner")
             B:Row({ type = "color", label = "Feind im Kampf", key = "enemyInCombat" },
                   { type = "color", label = "Feind außerhalb des Kampfes", key = "hostile",

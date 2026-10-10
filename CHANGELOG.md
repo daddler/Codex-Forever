@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.27.1.0] – 2026-10-10
+
+### Geändert
+
+- Bedrohungsleiste an den Plaketten (Beta-Test: „grau hervorragend, grün geht noch, gelb Achtung, rot Aggro“): vier Stufen über `NP.BarTint` – rot/gelb wie `NP.ThreatTint`, darunter grün ab `threatOkAt` (50 %, einstellbar unter „Bedrohungsleiste fein“), sonst grau. Neue Farbe `GameColors.threatOk`; `dpsAggro` jetzt rot statt orange, `dpsNear` gelb statt bernstein. Der Lebensbalken nimmt weiter nur rot und gelb. Wie bisher nur, wenn dir jemand die Aggro abnehmen kann (Gruppe oder Begleiter). Wer die Farben schon selbst gesetzt hatte, behält sie.
+
 ## [6.27.0.7] – 2026-10-10
 
 ### Behoben

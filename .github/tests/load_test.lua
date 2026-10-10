@@ -14522,12 +14522,17 @@ do
         mine[1], mine[2], mine[3] = false, 0, 85
         Run()
         assert(p._threatTint == dn and painted[1] == dn.r and healthPaint[1] == dn.r, "DD bei 85 %: nicht orange")
-        -- DD weit weg: keine Lage, Leiste grau, Leben in seiner Farbe.
+        -- DD bei 50 %: keine Lage, Leiste gruen (geht noch, 6.27.1.0), Leben in seiner Farbe.
         mine[3] = 50
         Run()
+        local okc = WeintCodex.GameColors.threatOk
+        assert(p._threatTint == nil and painted[1] == okc[1] and healthPaint[1] ~= da.r and healthPaint[1] ~= dn.r,
+            "DD bei 50 %: nicht gruen oder Leben gefaerbt")
+        -- DD weit weg (30 %): Leiste grau.
+        mine[3] = 30
+        Run()
         local low = WeintCodex.GameColors.threatLow
-        assert(p._threatTint == nil and painted[1] == low[1] and healthPaint[1] ~= da.r and healthPaint[1] ~= dn.r,
-            "DD bei 50 %: gefaerbt")
+        assert(p._threatTint == nil and painted[1] == low[1], "DD bei 30 %: nicht grau")
         -- Tank hat sie verloren: rot.
         roles.player = "TANK"
         mine[1], mine[2], mine[3] = false, 1, 95

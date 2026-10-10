@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.27.1.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Bedrohungsleiste in vier Farben.|r Grau: hervorragend. Grün: geht noch. Gelb: Achtung, kurz vor der Aggro. Rot: du hast sie. Ab wann grün und gelb gelten, stellst du bei den Plaketten ein.",
+        },
+    },
+    {
         version = "6.27.0.7",
         date    = "10.10.2026",
         notes   = {

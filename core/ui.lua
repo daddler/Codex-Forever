@@ -220,8 +220,11 @@ WeintCodex.GameColors = {
 
     tankAggro     = {0.204, 0.780, 0.482, 1.0},
     tankLosing    = {0.941, 0.651, 0.227, 1.0},
-    dpsAggro      = {1.000, 0.500, 0.000, 1.0},
-    dpsNear       = {0.941, 0.651, 0.227, 1.0},
+    -- 6.27.1.0 (Beta-Test: "grau hervorragend, gruen geht noch, gelb
+    -- Achtung, rot Aggro"): Aggro rot statt orange, kurz davor gelb.
+    dpsAggro      = {0.900, 0.160, 0.160, 1.0},
+    dpsNear       = {1.000, 0.840, 0.150, 1.0},
+    threatOk      = {0.300, 0.780, 0.300, 1.0},   -- Bedrohungsleiste: geht noch (6.27.1.0)
     threatLow     = {0.520, 0.560, 0.640, 1.0},   -- Bedrohungsleiste: weit weg von der Aggro (6.9.0.8)
     threatBarBg   = {0.000, 0.000, 0.000, 0.6},   -- Grund der Bedrohungsleiste
 
