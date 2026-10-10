@@ -148,9 +148,11 @@ local defaults = {
     -- (ui/auras.lua). Seit 6.3.0.0 ist "game" der Standard: mit den
     -- eigenen erschienen im Beta-Client in drei Fassungen keine Debuffs.
     auraSource = "game",
-    gameAuraScale = 100,
+    -- 6.27.0.6 (Beta-Test: "Debuffs auf dem Ziel vergroessern - Gifte,
+    -- Bluten"): groesser ab Werk, bis 250 % einstellbar.
+    gameAuraScale = 140,
     auraOnlyMine = true,
-    auraSize = 22,
+    auraSize = 28,
     auraMax = 5,
     auraTimer = true,          -- Restzeit oben links am Symbol
     -- Ausrichtung der Debuffs ueber der Plakette (Beta-Test 6.3.1.8:
@@ -2117,13 +2119,13 @@ K.Register({
             B:Row({ type = "dropdown", label = "Symbole", key = "auraSource", disabled = off, items = {
                         { value = "game", text = "Die des Spiels (verlässlich)" },
                         { value = "own",  text = "Eigene von WeintCodex" } } },
-                  { type = "slider", label = "Größe der Symbole des Spiels", key = "gameAuraScale", min = 60, max = 160, step = 5,
+                  { type = "slider", label = "Größe der Symbole des Spiels", key = "gameAuraScale", min = 60, max = 250, step = 5,
                     format = pct, disabled = function() return off() or K.Get(KEY, "auraSource") ~= "game" end })
             B:Note("„Die des Spiels“ zeigt die Debuff-Symbole der Plakette des Spiels an ihrem Platz über der WeintCodex-Plakette – das Spiel pflegt sie selbst, WeintCodex blendet nur den Rest der Spielplakette aus. Die eigenen Symbole (mit Restzeit oben links) zeigten im Beta-Client bisher keine Debuffs; sie bleiben wählbar, bis klar ist, woran es liegt.")
             B:Row({ type = "toggle", label = "Debuffs anzeigen", key = "auraEnabled" },
                   { type = "toggle", label = "Nur meine", key = "auraOnlyMine", disabled = own,
                     description = "Aus: alle Debuffs, auch die anderer Spieler (nur eigene Symbole)." })
-            B:Row({ type = "slider", label = "Symbolgröße", key = "auraSize", min = 14, max = 40, step = 1, format = px, disabled = own },
+            B:Row({ type = "slider", label = "Symbolgröße", key = "auraSize", min = 14, max = 56, step = 1, format = px, disabled = own },
                   { type = "slider", label = "Höchstens", key = "auraMax", min = 1, max = 10, step = 1,
                     format = function(v) return tostring(v) end, disabled = own })
             B:Row({ type = "toggle", label = "Restzeit am Symbol", key = "auraTimer", disabled = own,

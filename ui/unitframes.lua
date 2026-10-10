@@ -124,6 +124,8 @@ end
 -- Symbol, wenn man im Kampf ist, im Ruhemodus (Gasthaus)"). Eigene
 -- Grafiken (make_ui_media.py), keine des Spiels.
 defaults.player_stateIcon = true
+-- Totems unter dem Spielerrahmen, Rechtsklick entfernt (6.27.0.6, ui/totems.lua).
+defaults.player_totems = true
 
 local function Opt(key) return K.Get(KEY, key) end
 
@@ -1740,6 +1742,10 @@ local function UnitPage(u)
         -- der Auren zugeklappt.
         B:Advanced()
         B:Section("Feinheiten")
+        if u == "player" then
+            B:Row({ type = "toggle", label = "Totems unter dem Rahmen", key = "player_totems",
+                    description = "Schamane: gestellte Totems mit Restzeit, Rechtsklick entfernt eins. Wirkt nach dem Neuladen." }, nil)
+        end
         B:Row({ type = "toggle", label = "Porträt rechts", key = u .. "_portraitRight",
                 disabled = function() local k = K.Get(KEY, u .. "_portrait") return off() or k == "none" or k == "bar" end },
               { type = "slider", label = "Höhe der Kraftleiste", key = u .. "_powerHeight", min = 2, max = 20, step = 1, format = px,

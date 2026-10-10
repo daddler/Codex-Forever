@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.27.0.6",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFTotems am Spielerrahmen.|r Als Schamane stehen deine gestellten Totems mit Restzeit unter dem Rahmen – Rechtsklick entfernt eins, wie im Spiel.",
+            "|cff7C6CFFGrößere Debuffs auf den Plaketten.|r Gifte, Blutungen und Co. sind ab Werk deutlich größer und lassen sich bis zur zweieinhalbfachen Größe einstellen.",
+        },
+    },
+    {
         version = "6.27.0.5",
         date    = "10.10.2026",
         notes   = {

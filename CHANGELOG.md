@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.27.0.6] – 2026-10-10
+
+### Neu
+
+- Totems (Beta-Test: „im Original Rechtsklick auf das Totem an der Spielerleiste entfernt es – im Addon nicht“): `ui/totems.lua`, vier geschützte Knöpfe unter dem eigenen Spielerrahmen (`type2 = "destroytotem"`, `totem-slot`), Symbol und Restzeit aus `GetTotemInfo`, Tooltip `SetTotem`. Leerer Platz unsichtbar (Alpha 0 – geschützte Knöpfe lassen sich im Kampf nicht verstecken). Nur Schamane, Schalter `player_totems` (an), wirkt nach dem Neuladen.
+
+### Geändert
+
+- Plaketten (Beta-Test: „Debuffs auf dem Ziel vergrößern“): `gameAuraScale` ab Werk 140 % (bis 250 %), eigene Symbole `auraSize` 28 px (bis 56). Wer die Größe schon eingestellt hatte, behält seine.
+
 ## [6.27.0.5] – 2026-10-10
 
 ### Behoben

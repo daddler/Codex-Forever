@@ -16994,6 +16994,25 @@ do
     Check(ok, "Schamane: Waffenbuffs mit Namen; Gespraech: Vergleich mit Angelegtem" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.27.0.6: Totems unter dem Spielerrahmen; groessere Debuffs ab Werk.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local TT = WeintCodex.UITotems
+        local oT, oG = G.GetTotemInfo, G.GetTime
+        G.GetTime = function() return 100 end
+        G.GetTotemInfo = function(i) if i == 1 then return true, "Totem der Erdstärke", 90, 120, 136097 end return false end
+        local have, name, finish, icon = TT.Info(1)
+        assert(have and name == "Totem der Erdstärke" and finish == 210 and icon == 136097, "Totem nicht gelesen")
+        assert(TT.Info(2) == false, "leerer Platz nicht leer")
+        G.GetTotemInfo = nil
+        assert(TT.Info(1) == nil, "ohne Abfrage geraten")
+        G.GetTotemInfo, G.GetTime = oT, oG
+        assert(WeintCodex.UIKit.Module("nameplates").defaults.gameAuraScale == 140, "Debuffs nicht groesser")
+    end)
+    Check(ok, "Totems: Platz, Name, Ende aus GetTotemInfo; Debuffs groesser" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

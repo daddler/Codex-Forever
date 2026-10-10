@@ -1789,6 +1789,18 @@ Name im Tooltip – seit 6.27.0.5 Aura gleichen Namens, Kern des Namens
 Gespräche (`ui/dialogue.lua`): Belohnungen zeigen den Vergleich des Spiels
 (`DL.Compare`, `GameTooltip_ShowCompareItem` an `ShoppingTooltip1/2`).
 
+## Totems am Spielerrahmen *(6.27.0.6, `ui/totems.lua`)*
+
+Mit der Oberfläche ist der Spielerrahmen des Spiels samt Totemleiste weg.
+Ersatz: vier `SecureActionButtonTemplate` unter `WeintCodexUF_player`,
+`type2 = "destroytotem"` + `totem-slot` (das Spiel entfernt, Lua ruft nie
+`DestroyTotem`). Leer = Alpha 0, nie `Hide` (geschützt im Kampf). Nur
+Schamane, `player_totems` in `unitframes`, gebaut beim Einloggen (nach dem
+Kampf, falls nötig).
+
+Plaketten: Debuffs ab 6.27.0.6 größer (`gameAuraScale` 140, bis 250;
+`auraSize` 28, bis 56).
+
 ## Erinnerungen aus der Tasche *(6.27.0.0, `ui/reminders.lua`)*
 
 `R.BagBuffs` hängt sich außerhalb des Kampfes an `R.Active` (gleiche
