@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.27.0.2] – 2026-10-10
+
+### Behoben
+
+- Erinnerung ans Essen (Beta-Test mit Video: verlangte die Suppe – das erste Essen in der Tasche –, obwohl das Fleisch mit demselben Erfahrungsbuff gegessen war; mit getauschter Tasche wechselte die Forderung). `R.BagBuffs` nennt keine Sorte mehr, nur „Nicht satt – Essen mit (Erfahrungs-)Buff in der Tasche (n Sorten)“. Satt ist, wer einen Buff namens „Satt“/„Wohlgenährt“ hat **oder** einen beliebigen Buff, dessen Tooltip (`C_TooltipInfo.GetUnitBuffByAuraInstanceID`, je Zauber gemerkt in `R._auraTips`) Erfahrung oder Sättigung nennt. Im Video lief noch 6.27.0.0, das „Satt“ nicht kannte.
+
 ## [6.27.0.1] – 2026-10-10
 
 ### Behoben

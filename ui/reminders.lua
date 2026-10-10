@@ -631,18 +631,43 @@ function R.BagItemKind(id)
 end
 
 -- Namen der eigenen hilfreichen Auren, oder nil (der Client sagt es nicht).
+-- Dazu (6.27.0.2) je Aura ihr Tooltiptext: "Satt" sagt im Namen nichts
+-- von Erfahrung, sein Tooltip schon ("Durch Siege erhaltene Erfahrung um
+-- 5 % erhoeht"). So gilt jeder Buff, der Erfahrung gibt, egal wie er heisst.
+local auraTips = {}
+R._auraTips = auraTips
+local function AuraTip(a)
+    local sid = K.Plain(a.spellId)
+    if type(sid) == "number" and auraTips[sid] ~= nil then return auraTips[sid] or nil end
+    local ti = _G.C_TooltipInfo
+    local inst = K.Plain(a.auraInstanceID)
+    if not (ti and ti.GetUnitBuffByAuraInstanceID and type(inst) == "number") then return nil end
+    local ok, data = pcall(ti.GetUnitBuffByAuraInstanceID, "player", inst)
+    if not ok or type(data) ~= "table" or type(data.lines) ~= "table" then return nil end
+    local parts = {}
+    for _, l in ipairs(data.lines) do
+        local t = K.Plain(l.leftText)
+        if type(t) == "string" then parts[#parts + 1] = t end
+    end
+    local text = #parts > 0 and table.concat(parts, "\n"):lower() or nil
+    if type(sid) == "number" and text then auraTips[sid] = text end
+    return text
+end
+
 local function HelpfulNames()
     local ua = _G.C_UnitAuras
     if not (ua and ua.GetAuraDataByIndex) then return nil end
-    local names = {}
+    local names, tips = {}, {}
     for i = 1, 40 do
         local ok, a = pcall(ua.GetAuraDataByIndex, "player", i, "HELPFUL")
         if not ok or K.IsSecret(a) then return nil end
         if not a then break end
         local n = K.Plain(a.name)
         if type(n) == "string" then names[#names + 1] = n:lower() end
+        local tip = AuraTip(a)
+        if tip then tips[#tips + 1] = tip end
     end
-    return names
+    return names, tips
 end
 local function AnyName(names, words)
     for _, n in ipairs(names) do
@@ -662,14 +687,18 @@ function R.BagBuffs(out)
        or K.Bool(_G.UnitIsDeadOrGhost and _G.UnitIsDeadOrGhost("player"), false) then
         return out
     end
-    local names = HelpfulNames()
+    local names, tips = HelpfulNames()
     if not names then return out end
     if AnyName(names, R.EATING_WORDS) then return out end   -- isst gerade
     local level = K.Plain(_G.UnitLevel and _G.UnitLevel("player"))
     level = type(level) == "number" and level or 0
     local maxLevel = K.Plain(_G.GetMaxPlayerLevel and _G.GetMaxPlayerLevel())
     local leveling = type(maxLevel) == "number" and level < maxLevel
+    -- Keine Sorte vorschreiben (6.27.0.2, Beta-Test: "er moechte, dass ich
+    -- die Suppe nehme - ich nehme aber das Fleisch"): die Erinnerung nennt,
+    -- dass Buff-Essen da ist und wie viele Sorten, nicht welches.
     local food, xp, elixir, elixirHas = nil, nil, nil, false
+    local foodKinds, xpKinds = 0, 0
     for bag = 0, tonumber(_G.NUM_BAG_SLOTS) or 4 do
         local okN, n = pcall(cc.GetContainerNumSlots, bag)
         n = okN and K.Plain(n)
@@ -678,8 +707,14 @@ function R.BagBuffs(out)
             id = okI and K.Plain(id)
             local e = type(id) == "number" and R.BagItemKind(id)
             if e and e.minLevel <= level then
-                if e.kind == "xp" and leveling then xp = xp or { id = id, e = e }
-                elseif e.kind == "food" or e.kind == "xp" then food = food or { id = id, e = e }
+                if e.kind == "xp" or e.kind == "food" then
+                    if not e._counted then
+                        e._counted = true
+                        foodKinds = foodKinds + 1
+                        if e.kind == "xp" then xpKinds = xpKinds + 1 end
+                    end
+                    if e.kind == "xp" and leveling then xp = xp or { id = id, e = e } end
+                    food = food or { id = id, e = e }
                 elseif e.kind == "elixir" then
                     elixir = elixir or { id = id, e = e }
                     if AnyName(names, { e.spell:lower() }) then elixirHas = true end
@@ -687,12 +722,18 @@ function R.BagBuffs(out)
             end
         end
     end
+    for _, e in pairs(bagCache) do if e then e._counted = nil end end
     if wantFood then
-        local fed = AnyName(names, R.FED_WORDS)
-        if xp and not fed and not AnyName(names, R.XP_WORDS) then
-            out[#out + 1] = { text = xp.e.name .. " essen – „Satt“ fehlt", icon = ItemIcon(xp.id) }
-        elseif food and not fed then
-            out[#out + 1] = { text = food.e.name .. " essen – „Satt“ fehlt", icon = ItemIcon(food.id) }
+        -- Satt ist, wer einen Essensbuff hat (Name) oder irgendeinen Buff,
+        -- der laut Tooltip Erfahrung gibt oder satt macht.
+        local fed = AnyName(names, R.FED_WORDS) or AnyName(tips, R.FED_WORDS) or AnyName(tips, R.XP_WORDS)
+        local pick = (xp and leveling) and xp or food
+        if pick and not fed then
+            local kinds = (xp and leveling) and xpKinds or foodKinds
+            local what = (xp and leveling) and "Essen mit Erfahrungsbuff" or "Essen mit Buff"
+            out[#out + 1] = { text = string.format("Nicht satt – %s in der Tasche%s", what,
+                                  kinds > 1 and string.format(" (%d Sorten)", kinds) or ""),
+                              icon = ItemIcon(pick.id) }
         end
     end
     if wantElixir and elixir and not elixirHas then

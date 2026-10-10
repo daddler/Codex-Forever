@@ -16912,7 +16912,14 @@ do
         for k in pairs(R._bagCache) do R._bagCache[k] = nil end
         K.Set("reminders", "bagFood", true)
         local out = R.BagBuffs({})
-        assert(#out == 1 and out[1].text:find("Satt", 1, true), "keine Erinnerung ans Essen")
+        assert(#out == 1 and out[1].text:find("Nicht satt", 1, true), "keine Erinnerung ans Essen")
+        -- Buff mit anderem Namen, der laut Tooltip Erfahrung gibt: satt.
+        local oTI2 = G.C_TooltipInfo
+        G.C_TooltipInfo = { GetItemByID = oTI2.GetItemByID,
+            GetUnitBuffByAuraInstanceID = function() return { lines = { { leftText = "Durch Siege erhaltene Erfahrung um 5% erhöht." } } } end }
+        helpful = { { name = "Festmahl", spellId = 777, auraInstanceID = 1 } }
+        assert(#R.BagBuffs({}) == 0, "Erfahrungsbuff am Tooltip nicht erkannt")
+        G.C_TooltipInfo = oTI2
         helpful = { { name = "Satt" } }
         assert(#R.BagBuffs({}) == 0, "Erinnerung trotz Satt")
         helpful = { { name = "Sattelfest" } }

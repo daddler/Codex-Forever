@@ -1784,7 +1784,7 @@ Unterklasse 5 zählt nur, wenn der Tooltip (`C_TooltipInfo.GetItemByID`)
 Unterklasse 2–4 (Elixier, Fläschchen, Rolle) über `GetItemSpell`.
 Ergebnis je Gegenstand in `R._bagCache`; „weiß noch nicht“ wird nicht
 gemerkt. Still beim Essen/Trinken, reitend, im Flug, tot und wenn der
-Client die Auren geheim gibt. Seit 6.27.0.1 zählt „Satt“ (Name des Essensbuffs auf Forever, vom Spieler gemeldet) als ganzes Wort. **Ungemessen:** der Name des
+Client die Auren geheim gibt. Seit 6.27.0.2 zählt zusätzlich jeder Buff, dessen Tooltip Erfahrung nennt (`R._auraTips`), und die Erinnerung nennt keine Sorte mehr. Seit 6.27.0.1 zählt „Satt“ (Name des Essensbuffs auf Forever, vom Spieler gemeldet) als ganzes Wort. **Ungemessen:** der Name des
 Erfahrungsbuffs auf Forever – erkannt an „Erfahrung“/„Experience“ in
 einem Aurennamen.
 

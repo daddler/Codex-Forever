@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.27.0.2",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Erinnerung ans Essen schreibt dir nichts mehr vor.|r Sie sagt nur noch „Nicht satt – Essen mit Erfahrungsbuff in der Tasche“ und wie viele Sorten du dabeihast – welches du isst, entscheidest du.",
+            "|cff7C6CFFJeder Erfahrungsbuff zählt.|r Ob Fleisch, Suppe oder etwas anderes: gibt ein Buff auf dir laut seiner Beschreibung Erfahrung, bleibt die Erinnerung still.",
+        },
+    },
+    {
         version = "6.27.0.1",
         date    = "10.10.2026",
         notes   = {
