@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.27.0.3",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFRechtsklick auf die Minikarte ohne Ping.|r Er öffnet nur noch die Weltkarte – der Linksklick pingt wie gewohnt.",
+        },
+    },
+    {
         version = "6.27.0.2",
         date    = "10.10.2026",
         notes   = {

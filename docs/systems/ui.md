@@ -1771,8 +1771,9 @@ man nicht heraus. `/wcui prüfen` zählt „wegen Effekt still“.
 
 ## Rechtsklick auf die Minikarte *(6.27.0.0, `ui/minimapclick.lua`, Seite „Karte“)*
 
-`minimapRightMap` (an): `HookScript("OnMouseUp")` an `Minimap`, rechts →
-`ToggleWorldMap`. Nur außerhalb des Kampfes (Weltkarte ist geschützt,
+`minimapRightMap` (an): ersetzt `OnMouseUp` an `Minimap` (seit 6.27.0.3, vorher
+`HookScript` – das Spiel pingte dann zusätzlich), rechts → `ToggleWorldMap`
+ohne Weitergabe, sonst der gemerkte Klick des Spiels (`MC.orig`). Nur außerhalb des Kampfes (Weltkarte ist geschützt,
 `ADDON_ACTION_BLOCKED` fängt kein `pcall`). Komfort, geht ohne Oberfläche.
 
 ## Erinnerungen aus der Tasche *(6.27.0.0, `ui/reminders.lua`)*

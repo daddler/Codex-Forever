@@ -16936,6 +16936,19 @@ do
         MC.Active = function() return true end
         assert(MC.OnClick("LeftButton") == false and opened == 0, "Linksklick oeffnet die Karte")
         assert(MC.OnClick("RightButton") == true and opened == 1, "Rechtsklick oeffnet die Karte nicht")
+        -- Rechts kein Ping: der Klick des Spiels laeuft nur links.
+        local pinged = 0
+        local oMM = G.Minimap
+        local scripts = { OnMouseUp = function() pinged = pinged + 1 end }
+        G.Minimap = { GetScript = function(_, k) return scripts[k] end, SetScript = function(_, k, f) scripts[k] = f end,
+                      HookScript = function() end }
+        local oH = MC.Hook
+        assert(MC.Hook(), "Haken an der Minikarte nicht gesetzt")
+        scripts.OnMouseUp(G.Minimap, "RightButton")
+        assert(pinged == 0 and opened == 2, "Rechtsklick pingt oder oeffnet nicht")
+        scripts.OnMouseUp(G.Minimap, "LeftButton")
+        assert(pinged == 1, "Linksklick pingt nicht mehr")
+        G.Minimap = oMM
         G.ToggleWorldMap, MC.Active = oTW, oA
         G.C_UnitAuras, G.GetTime, G.IsInInstance = oUA, oT, oII
     end)

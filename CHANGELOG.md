@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.27.0.3] – 2026-10-10
+
+### Behoben
+
+- Rechtsklick auf die Minikarte pingte zusätzlich (Beta-Test). `ui/minimapclick.lua` hängt sich nicht mehr mit `HookScript` an, sondern ersetzt `OnMouseUp` der Minikarte: rechts (Schalter an) öffnet die Weltkarte und geht nicht an das Spiel weiter, alles andere ruft den gemerkten Klick des Spiels (`MC.orig`).
+
 ## [6.27.0.2] – 2026-10-10
 
 ### Behoben

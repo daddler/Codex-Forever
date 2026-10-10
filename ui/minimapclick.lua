@@ -3,8 +3,11 @@
 --------------------------------------------------
 -- Seit 6.27.0.0 (Beta-Test: "Rechtsklick auf die Minikarte duerfte gerne
 -- die Map oeffnen"). Komfort, geht ohne Oberflaeche; Schalter auf der
--- Seite "Karte". Ein Haken an der Minikarte des Spiels (HookScript) -
--- der Linksklick (Ping) bleibt, wie er ist.
+-- Seite "Karte". Seit 6.27.0.3 (Beta-Test: "er macht dennoch einen Ping")
+-- ersetzt WeintCodex den Klick der Minikarte, statt sich nur anzuhaengen:
+-- rechts oeffnet die Karte und geht NICHT an das Spiel weiter (kein Ping),
+-- alles andere ruft den Klick des Spiels wie bisher. Ist der Schalter aus,
+-- geht auch rechts unveraendert an das Spiel.
 --
 -- Im Kampf nicht: die Weltkarte ist ein geschuetztes Fenster, und ein
 -- Aufruf aus einem Addon wird dann gesperrt (ADDON_ACTION_BLOCKED faengt
@@ -33,12 +36,20 @@ function MC.OnClick(button)
     return true
 end
 
-local hooked = false
+local hooked     -- die Minikarte, an der der Klick schon haengt
 function MC.Hook()
     local mm = _G.Minimap
-    if hooked or type(mm) ~= "table" or not mm.HookScript then return false end
-    hooked = true
-    mm:HookScript("OnMouseUp", function(_, button) MC.OnClick(button) end)
+    if type(mm) ~= "table" or hooked == mm or not (mm.GetScript and mm.SetScript) then return false end
+    hooked = mm
+    local orig = mm:GetScript("OnMouseUp")
+    MC.orig = orig
+    mm:SetScript("OnMouseUp", function(self, button, ...)
+        if button == "RightButton" and MC.Active() then
+            MC.OnClick(button)   -- im Kampf ohne Wirkung, aber auch ohne Ping
+            return
+        end
+        if orig then return orig(self, button, ...) end
+    end)
     return true
 end
 
