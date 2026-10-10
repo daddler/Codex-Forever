@@ -16955,6 +16955,37 @@ do
     Check(ok, "Raus da still bei Dots, Seltene per Klick, Essen aus der Tasche, Minikarte rechts" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.27.0.4: Waffenbuffs des Schamanen mit Namen; Vergleich im Gespraech.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local R, DL = WeintCodex.UIReminders, WeintCodex.UIDialogue
+        local oC, oW, oID, oK, oTI = G.UnitClass, G.GetWeaponEnchantInfo, G.GetInventoryItemID, R._SpellKnown, G.C_TooltipInfo
+        G.UnitClass = function() return "Schamane", "SHAMAN" end
+        G.GetWeaponEnchantInfo = function() return false, 0, 0, 0, false end
+        G.GetInventoryItemID = function() return 1234 end
+        local oRes = R.Resolve
+        R.Resolve = function(t) return ({ ["8017"] = { name = "Waffe des Felsbeißers" }, ["8024"] = { name = "Waffe der Flammenzunge" } })[t] or { name = "?" .. t } end
+        G.C_TooltipInfo = { GetInventoryItem = function() return { lines = { { leftText = "Bärenhammer" } } } end }
+        local hit = R.Check({ kind = "weapon", hand = "main" })
+        assert(hit and hit.text:find("Flammenzunge", 1, true) and hit.text:find("Felsbeißers", 1, true), "Schamane: " .. tostring(hit and hit.text))
+        G.C_TooltipInfo = { GetInventoryItem = function() return { lines = { { leftText = "Waffe der Flammenzunge 3" } } } end }
+        assert(R.Check({ kind = "weapon", hand = "main" }) == nil, "Flammenzunge im Tooltip nicht erkannt")
+        R.Resolve = oRes
+        G.UnitClass, G.GetWeaponEnchantInfo, G.GetInventoryItemID, G.C_TooltipInfo = oC, oW, oID, oTI
+        -- Vergleich: das Spiel wird mit dem eigenen Tooltip gefragt.
+        local asked
+        local oS, oS1 = G.GameTooltip_ShowCompareItem, G.ShoppingTooltip1
+        G.ShoppingTooltip1 = { Hide = function() end }
+        G.GameTooltip_ShowCompareItem = function(t) asked = t end
+        local gt = {}
+        DL.Compare(gt)
+        assert(asked == gt and gt.shoppingTooltips, "kein Vergleich gezeigt")
+        G.GameTooltip_ShowCompareItem, G.ShoppingTooltip1 = oS, oS1
+    end)
+    Check(ok, "Schamane: Waffenbuffs mit Namen; Gespraech: Vergleich mit Angelegtem" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

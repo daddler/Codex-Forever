@@ -486,6 +486,44 @@ local function ItemIcon(id)
     return ok and K.Plain(ic) or nil
 end
 
+-- Waffenbuffs des Schamanen (6.27.0.4, Beta-Test: "Verzauberung Waffe
+-- fehlt" - gewuenscht ist "Waffe der Flammenzunge" / "des Felsbeissers").
+-- IDs aus Classic wie im Lehrerbestand (Art `classic`): Felsbeisser,
+-- Flammenzunge, Frostbrand, Windzorn. Genannt werden nur die gelernten,
+-- mit dem Namen, den der Client sagt.
+R.SHAMAN_IMBUES = { 8017, 8024, 8033, 8232 }
+
+-- Namen der gelernten Waffenbuffs, oder nil (kein Schamane, nichts gelernt).
+function R.ImbueNames()
+    if PlayerClass() ~= "SHAMAN" then return nil end
+    local names = {}
+    for _, id in ipairs(R.SHAMAN_IMBUES) do
+        if SpellKnown(id) ~= false then
+            local sp = R.Resolve(tostring(id))
+            if sp and type(sp.name) == "string" then names[#names + 1] = sp.name end
+        end
+    end
+    return #names > 0 and names or nil
+end
+
+-- Steht einer der Waffenbuffs im Tooltip der Waffe? Rueckfall, falls der
+-- Client einen Schamanenbuff nicht als Verzauberung meldet.
+function R.WeaponTipHas(slot, names)
+    local ti = _G.C_TooltipInfo
+    if not (ti and ti.GetInventoryItem and names) then return false end
+    local ok, data = pcall(ti.GetInventoryItem, "player", slot)
+    if not ok or type(data) ~= "table" or type(data.lines) ~= "table" then return false end
+    for _, l in ipairs(data.lines) do
+        local t = K.Plain(l.leftText)
+        if type(t) == "string" then
+            for _, n in ipairs(names) do
+                if t:find(n, 1, true) then return true end
+            end
+        end
+    end
+    return false
+end
+
 -- Eine Erinnerung: { text, icon } oder nil.
 function R.Check(rule)
     local kind = rule.kind
@@ -504,7 +542,15 @@ function R.Check(rule)
         if rule.hand == "off" then has, exp = K.Plain(hasOff), K.Plain(offExp)
         else has, exp = K.Plain(hasMain), K.Plain(mainExp) end
         if has == nil then return nil end
-        if not has then return { text = "Waffe (" .. WeaponText(rule.hand) .. ") ohne Verzauberung" } end
+        local imbues = R.ImbueNames()
+        if not has and imbues and R.WeaponTipHas(rule.hand == "off" and 17 or 16, imbues) then return nil end
+        if not has then
+            if imbues then
+                local sp = R.Resolve(tostring(R.SHAMAN_IMBUES[2]))
+                return { text = table.concat(imbues, " oder ") .. " fehlt", icon = sp and sp.icon }
+            end
+            return { text = "Waffe (" .. WeaponText(rule.hand) .. ") ohne Verzauberung" }
+        end
         local limit = (Opt("weaponMinutes") or 5) * 60000
         if type(exp) == "number" and exp < limit then
             return { text = string.format("Waffe (%s): noch %d min", WeaponText(rule.hand), math.max(1, math.floor(exp / 60000 + 0.5))) }

@@ -276,6 +276,28 @@ local function Tip()
     return tip
 end
 
+-- Vergleich mit dem Angelegten (6.27.0.4, Beta-Test: "im Spiel wurde mir
+-- bei Wahl eines Items immer der Vergleich angezeigt"). Die Vergleichs-
+-- Tooltips des Spiels (ShoppingTooltip1/2) an den eigenen Tooltip; was
+-- verglichen wird, entscheidet das Spiel.
+function DL.Compare(gt)
+    if not gt.shoppingTooltips and _G.ShoppingTooltip1 then
+        gt.shoppingTooltips = { _G.ShoppingTooltip1, _G.ShoppingTooltip2 }
+    end
+    local show = _G.GameTooltip_ShowCompareItem
+    if type(show) == "function" and gt.shoppingTooltips then
+        pcall(show, gt)
+        DL.compared = (DL.compared or 0) + 1
+    end
+end
+
+function DL.HideCompare()
+    for _, n in ipairs({ "ShoppingTooltip1", "ShoppingTooltip2" }) do
+        local t = _G[n]
+        if t and t.Hide then t:Hide() end
+    end
+end
+
 local function Item(i)
     local b = items[i]
     if b then return b end
@@ -299,8 +321,9 @@ local function Item(i)
         gt:SetOwner(self, "ANCHOR_RIGHT")
         if gt.SetQuestItem then pcall(gt.SetQuestItem, gt, self.kind, self.index) end
         gt:Show()
+        DL.Compare(gt)
     end)
-    b:SetScript("OnLeave", function() if tip then tip:Hide() end end)
+    b:SetScript("OnLeave", function() if tip then tip:Hide() end DL.HideCompare() end)
     b:SetScript("OnClick", function(self) if self.kind == "choice" then DL.Choose(self.index) end end)
     items[i] = b
     return b

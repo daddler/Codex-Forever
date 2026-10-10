@@ -1776,6 +1776,17 @@ man nicht heraus. `/wcui prüfen` zählt „wegen Effekt still“.
 ohne Weitergabe, sonst der gemerkte Klick des Spiels (`MC.orig`). Nur außerhalb des Kampfes (Weltkarte ist geschützt,
 `ADDON_ACTION_BLOCKED` fängt kein `pcall`). Komfort, geht ohne Oberfläche.
 
+## Waffenbuffs des Schamanen *(6.27.0.4, `ui/reminders.lua`)*
+
+Regel „Waffe“ beim Schamanen: Text aus `R.ImbueNames` (gelernte von
+`R.SHAMAN_IMBUES` = 8017, 8024, 8033, 8232, Art `classic`); meldet
+`GetWeaponEnchantInfo` nichts, zählt ein Name im Tooltip der Waffe
+(`R.WeaponTipHas`). **Ungemessen:** ob Forever die Buffs als Verzauberung
+meldet.
+
+Gespräche (`ui/dialogue.lua`): Belohnungen zeigen den Vergleich des Spiels
+(`DL.Compare`, `GameTooltip_ShowCompareItem` an `ShoppingTooltip1/2`).
+
 ## Erinnerungen aus der Tasche *(6.27.0.0, `ui/reminders.lua`)*
 
 `R.BagBuffs` hängt sich außerhalb des Kampfes an `R.Active` (gleiche

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.27.0.4",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFBelohnungen im Gespräch mit Vergleich.|r Fährst du über einen Gegenstand zur Wahl, steht wieder dein angelegter daneben – wie im Spiel.",
+            "|cff7C6CFFSchamanen werden an ihren Waffenbuff erinnert.|r Statt „ohne Verzauberung“ steht da „Waffe der Flammenzunge oder Waffe des Felsbeißers fehlt“ – nur, was du gelernt hast.",
+        },
+    },
+    {
         version = "6.27.0.3",
         date    = "10.10.2026",
         notes   = {

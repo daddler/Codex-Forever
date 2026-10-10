@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.27.0.4] – 2026-10-10
+
+### Behoben
+
+- Gespräche im Codex-Stil: Belohnungen zur Wahl zeigten keinen Vergleich mit dem Angelegten (Beta-Test). `DL.Compare` gibt dem eigenen Tooltip die Vergleichs-Tooltips des Spiels (`ShoppingTooltip1/2`) und ruft `GameTooltip_ShowCompareItem`; `DL.HideCompare` beim Verlassen.
+- Erinnerungen, Schamane (Beta-Test: „Verzauberung Waffe fehlt“ – gewünscht „Waffe der Flammenzunge“/„des Felsbeißers“): `R.ImbueNames` nennt die gelernten Waffenbuffs (`R.SHAMAN_IMBUES`, IDs aus Classic, Art `classic`) mit dem Namen vom Client. Meldet der Client keinen Waffenbuff, steht aber einer davon im Tooltip der Waffe (`R.WeaponTipHas`), gilt er als da.
+
 ## [6.27.0.3] – 2026-10-10
 
 ### Behoben
