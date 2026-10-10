@@ -43,6 +43,7 @@ local defaults = {
     partyShowPlayer = true,
     partyHorizontal = false,
     raidEnabled = true,
+    raidHorizontal = false,     -- 6.27.2.0: Gruppen des Schlachtzugs als Zeilen statt Spalten
     raidWidth = 88, raidHeight = 40, raidSpacing = 3,
 
     classColor  = true,
@@ -506,11 +507,14 @@ end
 local function LayoutAttributes(kind, h)
     local sp = Opt(kind .. "Spacing")
     if kind == "raid" then
-        h:SetAttribute("point", "TOP")
-        h:SetAttribute("xOffset", 0)
-        h:SetAttribute("yOffset", -sp)
+        -- Untereinander (ab Werk): je Gruppe eine Spalte. Nebeneinander:
+        -- je Gruppe eine Zeile (6.27.2.0).
+        local horiz = Opt("raidHorizontal")
+        h:SetAttribute("point", horiz and "LEFT" or "TOP")
+        h:SetAttribute("xOffset", horiz and sp or 0)
+        h:SetAttribute("yOffset", horiz and 0 or -sp)
         h:SetAttribute("columnSpacing", sp)
-        h:SetAttribute("columnAnchorPoint", "LEFT")
+        h:SetAttribute("columnAnchorPoint", horiz and "TOP" or "LEFT")
     else
         local horiz = Opt("partyHorizontal")
         h:SetAttribute("point", horiz and "LEFT" or "TOP")
@@ -532,7 +536,9 @@ local function Configure(kind)
         b:Refresh()
     end
     LayoutAttributes(kind, h)
-    if kind == "raid" then
+    if kind == "raid" and Opt("raidHorizontal") then
+        hd.anchor:SetSize(5 * w + 4 * sp, 8 * ht + 7 * sp)
+    elseif kind == "raid" then
         hd.anchor:SetSize(8 * w + 7 * sp, 5 * ht + 4 * sp)
     elseif Opt("partyHorizontal") then
         hd.anchor:SetSize(5 * w + 4 * sp, ht)
@@ -830,9 +836,25 @@ local function Enable()
     ticker:SetScript("OnUpdate", K.Measured("Gruppenrahmen", OnTick))
 end
 
-local function OnSetting()
+-- Ausrichtung der Rahmen des Spiels (6.27.2.0): in das eigene Layout
+-- "WeintCodex" schreiben; sonst einmal sagen, wo es geht.
+function GF.ApplyGameOrientation(key)
+    local kind = (key == "partyHorizontal" and "party") or (key == "raidHorizontal" and "raid") or nil
+    if not kind or Opt("source") ~= "game" then return nil end
+    local ES = WeintCodex.UISetup
+    if not (ES and ES.SetGroupHorizontal) then return false end
+    local ok, why = ES.SetGroupHorizontal(kind, Opt(key))
+    if not ok then
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Ausrichtung nicht übernommen (" .. tostring(why)
+            .. "). Im Bearbeitungsmodus des Spiels: Gruppenrahmen → „Horizontale Gruppen“.")
+    end
+    return ok
+end
+
+local function OnSetting(key)
     K.AfterCombat(function()
         for kind in pairs(headers) do Configure(kind) end
+        GF.ApplyGameOrientation(key)
     end)
 end
 
@@ -919,7 +941,8 @@ K.Register({
             B:Row({ type = "slider", label = "Breite", key = "partyWidth", min = 60, max = 220, step = 1, format = px, disabled = off },
                   { type = "slider", label = "Höhe", key = "partyHeight", min = 20, max = 80, step = 1, format = px, disabled = off })
             B:Row({ type = "slider", label = "Abstand", key = "partySpacing", min = 0, max = 20, step = 1, format = px, disabled = off },
-                  { type = "toggle", label = "Nebeneinander", key = "partyHorizontal", disabled = off })
+                  { type = "toggle", label = "Nebeneinander", key = "partyHorizontal", disabled = off,
+                    description = "Aus: untereinander (senkrecht). An: nebeneinander (waagerecht). Gilt auch für die Rahmen des Spiels." })
         end },
         { key = "raid", label = "Schlachtzug", build = function(B)
             local off = function() return not K.Get(KEY, "raidEnabled") end
@@ -930,7 +953,8 @@ K.Register({
             B:Row({ type = "slider", label = "Breite", key = "raidWidth", min = 50, max = 160, step = 1, format = px, disabled = off },
                   { type = "slider", label = "Höhe", key = "raidHeight", min = 20, max = 70, step = 1, format = px, disabled = off })
             B:Row({ type = "slider", label = "Abstand", key = "raidSpacing", min = 0, max = 12, step = 1, format = px, disabled = off },
-                  { type = "empty" })
+                  { type = "toggle", label = "Gruppen nebeneinander", key = "raidHorizontal", disabled = off,
+                    description = "Aus: jede Gruppe eine Spalte (senkrecht). An: jede Gruppe eine Zeile (waagerecht). Gilt auch für die Rahmen des Spiels." })
             B:Note("Die Seitenleiste des Spiels (Zielmarkierungen, Bereitschaftscheck) verschwindet mit den Schlachtzugsrahmen. Markierungen gehen weiter über Tastenbelegung oder das Einheitenmenü.")
         end },
     },

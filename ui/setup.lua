@@ -233,6 +233,12 @@ function ES.Adjust(systems)
                 local raw = type(value) == "number" and ES.RawValue(sys.system, SE and SE[name], value, e.clamp) or nil
                 if type(raw) == "number" and SetSetting(sys, SE[name], raw) then done[e.key .. "." .. name] = true end
             end
+            -- Ausrichtung der Gruppe/des Schlachtzugs nach der Einstellung
+            -- der Gruppenrahmen (6.27.2.0).
+            local horiz = ES.HORIZONTAL_KEY[e.key]
+            if horiz and SetSetting(sys, SE and SE.UseHorizontalGroups, K.Get("groupframes", horiz) and 1 or 0) then
+                done[e.key .. ".UseHorizontalGroups"] = true
+            end
             for name, pair in pairs(e.enum or {}) do
                 local EN = EnumTable(pair[1])
                 local v = EN and EN[pair[2]]
@@ -244,6 +250,36 @@ function ES.Adjust(systems)
         end
     end
     return done, missing
+end
+
+-- Gruppe und Schlachtzug nebeneinander oder untereinander (6.27.2.0,
+-- Beta-Test: "Gruppenanzeige vertikal und horizontal einstellbar"). Die
+-- Rahmen des Spiels lesen das aus dem Bearbeitungsmodus
+-- (UseHorizontalGroups). WeintCodex schreibt es NUR in sein eigenes Layout
+-- "WeintCodex" - nie in eines des Spielers. Gibt true oder false, Grund.
+ES.HORIZONTAL_KEY = { party = "partyHorizontal", raid = "raidHorizontal" }
+function ES.SetGroupHorizontal(kind, on)
+    local info, why = Layouts()
+    if not info then return false, why end
+    local layout, slot
+    for i, l in ipairs(info.layouts) do
+        if l.layoutName == ES.LAYOUT_NAME then layout, slot = l, i end
+    end
+    if not (layout and type(layout.systems) == "table") then return false, "kein Layout „WeintCodex“" end
+    local entry
+    for _, e in ipairs(K.GAME_LAYOUT) do if e.key == kind then entry = e end end
+    local sys = entry and Find(layout.systems, entry)
+    local SE = EnumTable(SETTINGS.UnitFrame)
+    if not (sys and SE and type(SE.UseHorizontalGroups) == "number") then return false, "Einstellung im Client unbekannt" end
+    SetSetting(sys, SE.UseHorizontalGroups, on and 1 or 0)
+    local em = _G.C_EditMode
+    local ok, err = pcall(em.SaveLayouts, info)
+    if not ok then return false, "SaveLayouts: " .. tostring(err) end
+    -- Ist es das aktive Layout, neu anwenden, damit die Rahmen es sofort zeigen.
+    local presets = Presets()
+    local index = (presets and #presets or 2) + slot
+    if K.Plain(info.activeLayout) == index and em.SetActiveLayout then pcall(em.SetActiveLayout, index) end
+    return true
 end
 
 -- WORAUF WIRD AUFGEBAUT? Auf der Vorlage des Spiels ("Modern", die erste)

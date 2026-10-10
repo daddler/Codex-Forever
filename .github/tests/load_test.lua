@@ -17034,6 +17034,34 @@ do
     Check(ok, "Flüstern-Symbol: einmal an die Minikarte, danach frei" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.27.2.0: Gruppe/Schlachtzug waagerecht oder senkrecht - eigene Kacheln und Rahmen des Spiels.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local ES, K = WeintCodex.UISetup, WeintCodex.UIKit
+        local oEM, oE = G.C_EditMode, G.Enum
+        local party = { system = 3, systemIndex = 2, settings = {} }
+        local saved
+        G.Enum = setmetatable({ EditModeSystem = { UnitFrame = 3 },
+            EditModeUnitFrameSystemIndices = { Party = 2, Raid = 3 },
+            EditModeUnitFrameSetting = { UseHorizontalGroups = 9 } }, { __index = oE })
+        G.C_EditMode = { GetLayouts = function() return { activeLayout = 3, layouts = { { layoutName = ES.LAYOUT_NAME, systems = { party } } } } end,
+                         SaveLayouts = function(i) saved = i end, SetActiveLayout = function() end }
+        local done, why = ES.SetGroupHorizontal("party", true)
+        assert(done, "nicht geschrieben: " .. tostring(why))
+        assert(saved and party.settings[1].setting == 9 and party.settings[1].value == 1, "Einstellung nicht gesetzt")
+        ES.SetGroupHorizontal("party", false)
+        assert(party.settings[1].value == 0, "nicht zurueck auf senkrecht")
+        -- Ohne eigenes Layout: nichts schreiben.
+        G.C_EditMode.GetLayouts = function() return { activeLayout = 3, layouts = { { layoutName = "Meins", systems = { party } } } } end
+        saved = nil
+        assert(not ES.SetGroupHorizontal("party", true) and saved == nil, "fremdes Layout beschrieben")
+        G.C_EditMode, G.Enum = oEM, oE
+        assert(K.Module("groupframes").defaults.raidHorizontal == false, "Schalter Schlachtzug fehlt")
+    end)
+    Check(ok, "Gruppenrahmen: waagerecht/senkrecht, auch die des Spiels nur im eigenen Layout" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

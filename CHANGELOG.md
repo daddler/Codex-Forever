@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.27.2.0] – 2026-10-10
+
+### Neu
+
+- Gruppenrahmen waagerecht/senkrecht (Beta-Test: „vertikal als auch horizontal einstellbar“). `partyHorizontal` gab es, wirkte aber nur auf die eigenen Kacheln – ab Werk laufen die Rahmen des Spiels (`source = "game"`). Jetzt schreibt `ES.SetGroupHorizontal` die Einstellung `UseHorizontalGroups` des Bearbeitungsmodus – **nur** in das eigene Layout „WeintCodex“, nie in eines des Spielers (dann ein Hinweis im Chat, wo es im Bearbeitungsmodus geht); `ES.Adjust` übernimmt sie beim Einrichten. Neu `raidHorizontal` für den Schlachtzug (eigene Kacheln: je Gruppe eine Zeile statt Spalte).
+
 ## [6.27.1.0] – 2026-10-10
 
 ### Geändert

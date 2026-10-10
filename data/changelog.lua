@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.27.2.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFGruppe und Schlachtzug waagerecht oder senkrecht.|r Unter Gruppenrahmen → Gruppe „Nebeneinander“ und → Schlachtzug „Gruppen nebeneinander“. Gilt jetzt auch für die Rahmen des Spiels, nicht nur für die eigenen Kacheln.",
+        },
+    },
+    {
         version = "6.27.1.0",
         date    = "10.10.2026",
         notes   = {
