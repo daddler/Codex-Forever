@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.27.0.7",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFDas Flüstern-Symbol sitzt an der Minikarte.|r Unten rechts in der Karte statt irgendwo am Bildschirmrand. Ziehen verschiebt es wie bisher – dein neuer Platz bleibt.",
+        },
+    },
+    {
         version = "6.27.0.6",
         date    = "10.10.2026",
         notes   = {

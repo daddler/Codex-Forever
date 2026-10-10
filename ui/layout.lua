@@ -78,7 +78,9 @@ K.LAYOUT = {
     messenger       = { point = "BOTTOMLEFT",  relPoint = "BOTTOMLEFT", x = 20, y = 330 },
     -- Sein Symbol (6.19.1.0): rechts neben der Unterkante des Fensters.
     -- 6.26.10.0 (Beta-Test): links an der Minikarte, ueber dem Addon-Knopf.
-    messengerIcon   = { point = "BOTTOMRIGHT", relPoint = "BOTTOMLEFT", rel = "Minimap", x = -4, y = 28 },
+    -- 6.27.0.7: in die Minikarte, unten rechts ueber dem Gebietsstreifen -
+    -- links daneben stehen die Knoepfe der Minikarte.
+    messengerIcon   = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", rel = "Minimap", x = -3, y = 24 },
     -- Automark (ui/automark.lua, 6.9.0.2): der Knopf "Markieren" unter den
     -- Erinnerungen - erscheint nur beim Betreten einer Instanz.
     automark        = { point = "TOP",         relPoint = "TOP", x = 0, y = -170 },
@@ -248,5 +250,7 @@ K.GAME_LAYOUT = {
 function K.Layout(key, dx, dy)
     local p = K.LAYOUT[key]
     assert(p, "UIKit.Layout: unbekannter Rahmen '" .. tostring(key) .. "'")
-    return { point = p.point, relPoint = p.relPoint, x = p.x + (dx or 0), y = p.y + (dy or 0) }
+    -- `rel` mitgeben (fehlte bis 6.27.0.7: der Platz an der Minikarte galt
+    -- nie, das Flüstern-Symbol stand unten links am Bildschirm).
+    return { point = p.point, relPoint = p.relPoint, rel = p.rel, x = p.x + (dx or 0), y = p.y + (dy or 0) }
 end

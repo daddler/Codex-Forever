@@ -518,6 +518,17 @@ function MS.Unread()
     return n
 end
 
+function MS.ResetIconOnce()
+    local ui = K.Profile and K.Profile()
+    if type(ui) ~= "table" or ui.msgIconAtMap then return false end
+    ui.msgIconAtMap = true
+    if type(ui.positions) == "table" and ui.positions.messengerIcon then
+        ui.positions.messengerIcon = nil
+        return true
+    end
+    return false
+end
+
 local function BuildIcon()
     if icon then return icon end
     icon = CreateFrame("Button", "WeintCodexMessengerIcon", UIParent)
@@ -548,6 +559,11 @@ local function BuildIcon()
     end)
     icon:SetScript("OnLeave", function() GameTooltip:Hide() end)
     icon:Hide()
+    -- 6.27.0.7 (Beta-Test: "der Messenger-Button schwirrt immer noch
+    -- irgendwo rum"): ein frueher gespeicherter Platz (relativ zum
+    -- Bildschirm) wird EINMAL je Profil verworfen - das Symbol sitzt dann an
+    -- der Minikarte. Wer es danach verschiebt, behaelt seinen Platz.
+    MS.ResetIconOnce()
     K.RegisterMover(icon, "messengerIcon", "Flüstern-Symbol", K.Layout("messengerIcon"))
     K.DragToMove(icon, "messengerIcon")
     MS.icon = icon

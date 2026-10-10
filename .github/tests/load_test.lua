@@ -17013,6 +17013,22 @@ do
     Check(ok, "Totems: Platz, Name, Ende aus GetTotemInfo; Debuffs groesser" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.27.0.7: Flüstern-Symbol einmal zurueck an die Minikarte.
+do
+    local ok, err = pcall(function()
+        local K, MS = WeintCodex.UIKit, WeintCodex.UIMessenger
+        local ui = K.Profile()
+        ui.msgIconAtMap = nil
+        ui.positions.messengerIcon = { point = "CENTER", relPoint = "CENTER", x = 300, y = -200 }
+        assert(MS.ResetIconOnce() == true and ui.positions.messengerIcon == nil, "alter Platz nicht verworfen")
+        ui.positions.messengerIcon = { point = "CENTER", relPoint = "CENTER", x = 10, y = 10 }
+        assert(MS.ResetIconOnce() == false and ui.positions.messengerIcon, "eigener Platz danach verworfen")
+        ui.positions.messengerIcon = nil
+        assert(K.Layout("messengerIcon").rel == "Minimap", "Standard nicht an der Minikarte")
+    end)
+    Check(ok, "Flüstern-Symbol: einmal an die Minikarte, danach frei" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

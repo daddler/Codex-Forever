@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.27.0.7] – 2026-10-10
+
+### Behoben
+
+- Flüstern-Symbol „schwirrte irgendwo rum“ (Beta-Test): `K.Layout` gab `rel` nie weiter – der Standardplatz an der Minikarte (seit 6.26.10.0 gedacht) galt nie, das Symbol stand unten links am Bildschirm. `K.Layout` reicht `rel` jetzt durch; neuer Platz unten rechts in der Minikarte über dem Gebietsstreifen. Ein früher gespeicherter Platz wird einmal je Profil verworfen (`MS.ResetIconOnce`, `ui.msgIconAtMap`); danach bleibt jeder selbst gewählte.
+
 ## [6.27.0.6] – 2026-10-10
 
 ### Neu
