@@ -34,6 +34,10 @@ RA.DEFAULTS = {
     rareToast     = true,    -- Hinweis oben
     rareInstances = false,   -- auch in Dungeons und Schlachtzuegen
     rareDead      = false,   -- auch, wenn er schon tot ist
+    -- 6.27.0.0 (Beta-Test: "ueber die Meldung ins Ziel nehmen ... und gleich
+    -- ein Mark"): ein Klick auf den Hinweis nimmt ihn ins Ziel und markiert.
+    rareClick     = true,
+    rareMark      = 8,       -- 0: nicht markieren, sonst Nummer der Markierung (8 Totenkopf)
 }
 
 RA.REALERT = 300     -- derselbe Gegner meldet sich hoechstens alle 5 Minuten
@@ -184,6 +188,7 @@ local function EnsureToast()
     end))
     toast:EnableMouse(true)
     toast:SetScript("OnMouseUp", function(self) self:Hide() end)
+    toast:SetScript("OnHide", function() RA.DisarmClick() end)
     toast.WCShowForUnlock = function(self, on)
         self._unlock = on and true or nil
         if on then
@@ -197,6 +202,77 @@ local function EnsureToast()
     K.RegisterMover(toast, "rarealert", "Seltene Gegner", K.Layout("rarealert"))
     RA.toast = toast
     return toast
+end
+
+--------------------------------------------------
+-- Klick: ins Ziel und markieren
+--------------------------------------------------
+-- Ins Ziel nehmen und markieren darf ein Addon nur auf einen Klick des
+-- Spielers (Ziel waehlen und Markieren sind geschuetzt; Automark misst
+-- das seit 6.9.0.1). "Automatisch ins Ziel, wenn ich keins habe" geht
+-- deshalb nicht - nur ein Klick auf den Hinweis. Darueber liegt ein
+-- geschuetzter Knopf mit einem Makro. Er haengt NICHT am Hinweis (dann
+-- liesse sich der Hinweis im Kampf nicht mehr verstecken), sondern an
+-- UIParent, und wird nur ausserhalb des Kampfes scharf gemacht.
+-- "/cleartarget" zuerst: findet "/targetexact" ihn nicht mehr, wird nicht
+-- das alte Ziel markiert.
+
+function RA.Macro(name, mark)
+    local m = "/cleartarget\n/targetexact " .. name
+    mark = tonumber(mark) or 0
+    if mark >= 1 and mark <= 8 then m = m .. "\n/tm [@target,exists] " .. mark end
+    return m
+end
+
+local clickBtn
+function RA.ClickButton()
+    if clickBtn ~= nil then return clickBtn or nil end
+    local ok, b = pcall(CreateFrame, "Button", "WeintCodexRareTarget", UIParent, "SecureActionButtonTemplate")
+    if not ok or not b then clickBtn = false return nil end
+    if b.RegisterForClicks then b:RegisterForClicks("AnyUp") end
+    b:SetAttribute("useOnKeyDown", false)
+    b:SetAttribute("type1", "macro")
+    b:SetFrameStrata("DIALOG")
+    b:HookScript("OnClick", function(_, which)
+        RA.clicked = (RA.clicked or 0) + 1
+        if toast and not K.InCombat() then toast:Hide() end
+    end)
+    b:SetScript("OnEnter", function(self)
+        if not GameTooltip then return end
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:AddLine(self._name or "Seltener Gegner")
+        GameTooltip:AddLine(self._mark and "Klick: ins Ziel nehmen und markieren." or "Klick: ins Ziel nehmen.", 1, 1, 1, true)
+        GameTooltip:AddLine("Automatisch geht es nicht – das Spiel lässt Addons nur auf deinen Klick ein Ziel wählen.", 0.7, 0.7, 0.7, true)
+        GameTooltip:Show()
+    end)
+    b:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
+    b:Hide()
+    clickBtn = b
+    RA.clickBtn = b
+    return b
+end
+
+-- Scharf machen fuer einen Gegner; im Kampf nicht (geschuetzt).
+function RA.ArmClick(name)
+    if not Get("rareClick") or type(name) ~= "string" or name == "" then return false end
+    if K.InCombat() then return false end
+    local b = RA.ClickButton()
+    if not b or not toast then return false end
+    local mark = tonumber(K.Get(KEY, "rareMark")) or 0
+    b._name, b._mark = name, mark >= 1 and mark <= 8
+    b:ClearAllPoints()
+    b:SetAllPoints(toast)
+    b:SetAttribute("macrotext1", RA.Macro(name, mark))
+    b:Show()
+    return true
+end
+
+function RA.DisarmClick()
+    if not clickBtn then return end
+    if K.InCombat() then K.AfterCombat(RA.DisarmClick) return end
+    if toast and toast:IsShown() then return end
+    clickBtn:SetAttribute("macrotext1", nil)
+    clickBtn:Hide()
 end
 
 function RA.FillToast(title, sub)
@@ -239,6 +315,10 @@ function RA.Alert(name, info, level, elite, how)
         if not t._unlock then
             local sub = desc
             if rs then sub = (sub ~= "" and (sub .. "  ·  ") or "") .. rs end
+            local armed = RA.ArmClick(name)
+            if armed then
+                sub = (sub ~= "" and (sub .. "  ·  ") or "") .. "Klick: ins Ziel"
+            end
             RA.FillToast("Seltener Gegner: " .. name, sub)
             t._t = 0
             t:SetAlpha(1)
@@ -398,6 +478,14 @@ local function Build(B)
     B:Row({ type = "toggle", label = "Auch in Dungeons", key = "rareInstances", disabled = off },
           { type = "toggle", label = "Auch tote melden", key = "rareDead", disabled = off,
             description = "Gemerkt wird jeder gesehene, auch ohne Meldung." })
+    B:Row({ type = "toggle", label = "Klick auf den Hinweis: ins Ziel", key = "rareClick", disabled = off,
+            description = "Automatisch ins Ziel nehmen oder markieren lässt das Spiel Addons nicht – nur auf deinen Klick. Im Kampf nicht." },
+          { type = "dropdown", label = "Dabei markieren", key = "rareMark",
+            disabled = function() return off() or not K.Get(KEY, "rareClick") end, items = {
+                { value = 0, text = "Nicht markieren" }, { value = 8, text = "Totenkopf" },
+                { value = 7, text = "Kreuz" }, { value = 1, text = "Stern" }, { value = 2, text = "Kreis" },
+                { value = 3, text = "Diamant" }, { value = 4, text = "Dreieck" }, { value = 5, text = "Mond" },
+                { value = 6, text = "Quadrat" } } })
     B:Note("Welche es in deinem Gebiet gibt, wann du sie zuletzt gesehen hast und wie lange sie in Classic zum Wiederkommen brauchten: /wcui selten.")
 end
 

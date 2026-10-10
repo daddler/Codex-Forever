@@ -98,6 +98,7 @@ local defaults = {
     targetAuraGap    = 3,
     auraSize      = 20,
     onlyOwnDebuffs = false,
+    classBadge     = true,    -- Elite/selten/Boss an Ziel und Fokus (6.27.0.0)
 }
 for _, u in ipairs(UNITS) do
     local s = SHAPE[u]
@@ -487,6 +488,22 @@ local function Create(unit)
     f.raid = K.NewRaidIcon(textHost, 18)
     f.raid:SetPoint("CENTER", f, "TOP", 0, 2)
 
+    -- Elite, selten, Boss (6.27.0.0, Beta-Test: "mir fehlt ein Ziel-Frame,
+    -- der Elite/Rare von den normalen abhebt"): ein Schild ueber der Ecke
+    -- und der Rand in derselben Farbe. Nur, was UnitClassification sagt.
+    if unit == "target" or unit == "focus" then
+        local cb = CreateFrame("Frame", nil, f)
+        cb:SetFrameLevel(textHost:GetFrameLevel() + 2)
+        cb:SetSize(60, 14)
+        cb:SetPoint("BOTTOMLEFT", f, "TOPLEFT", 0, 2)
+        cb.bg = cb:CreateTexture(nil, "BACKGROUND")
+        cb.bg:SetAllPoints(cb)
+        cb.text = K.NewText(cb, 10, "OVERLAY")
+        cb.text:SetPoint("CENTER", cb, "CENTER", 0, 0)
+        cb:Hide()
+        f._class = cb
+    end
+
     if unit == "player" then
         -- Oben links an der Ecke, halb ueber dem Rahmen; ein schwarzer
         -- Schatten darunter, damit es auf jedem Portraet lesbar bleibt.
@@ -732,6 +749,7 @@ function Frame:Layout()
     self.border:SetShown(Opt("showBorder"))
     local bc = K.GetColor(KEY, "borderColor")
     self.border:SetColor(bc.r, bc.g, bc.b, 1)
+    if self._class then self._classBorder = true self:UpdateClassification() end
 
     K.SetFont(self.left, Opt("nameSize"))
     K.SetFont(self.right, Opt("textSize"))
@@ -887,11 +905,51 @@ function Frame:Refresh()
     end
 
     K.ShowRaidIcon(self.raid, u)
+    if self._class then self:UpdateClassification() end
 
     if self._cast and Opt(u .. "_cast") then self._cast:Update() end
     if self._combo then self:UpdateCombo() end
     if self._auras then self:UpdateAuras() end
     if self._happy then self:UpdateHappiness() end
+end
+
+-- Klasse des Gegners: Text und Farbe, oder nil (normal, Spieler, weiss
+-- nicht). "minus"/"trivial" sind schwaecher als normal - kein Schild.
+UF.CLASSIFICATION = {
+    elite     = { text = "ELITE", color = "elite" },
+    rare      = { text = "SELTEN", color = "rare" },
+    rareelite = { text = "SELTENE ELITE", color = "rare" },
+    worldboss = { text = "BOSS", color = "boss" },
+}
+function UF.Classification(unit)
+    if _G.UnitIsPlayer and K.Bool(_G.UnitIsPlayer(unit), true) then return nil end
+    local cls = K.Plain(_G.UnitClassification and _G.UnitClassification(unit))
+    return type(cls) == "string" and UF.CLASSIFICATION[cls] or nil
+end
+
+function Frame:UpdateClassification()
+    local cb = self._class
+    local c = Opt("classBadge") and (self._unlockShown and UF.CLASSIFICATION.rareelite or UF.Classification(self.unit))
+    if not c then
+        cb:Hide()
+        if self._classBorder then
+            self._classBorder = nil
+            self.border:SetShown(Opt("showBorder"))
+            local bc = K.GetColor(KEY, "borderColor")
+            self.border:SetColor(bc.r, bc.g, bc.b, 1)
+        end
+        return
+    end
+    local col = WeintCodex.GameColors[c.color]
+    cb.text:SetText(c.text)
+    cb.text:SetTextColor(col[1], col[2], col[3])
+    cb.bg:SetColorTexture(0, 0, 0, 0.75)
+    local w = K.Plain(cb.text:GetStringWidth())
+    cb:SetWidth((type(w) == "number" and w or 40) + 10)
+    cb:Show()
+    self._classBorder = true
+    self.border:SetColor(col[1], col[2], col[3], 1)
+    self.border:SetShown(true)
 end
 
 -- Im Tooltip des Begleiters die Laune als Wort - der Punkt allein sagt
@@ -1733,7 +1791,9 @@ local pages = {
               { type = "toggle", label = "Schilde", key = "absorbs",
                 description = "Eine blaue Fläche vom rechten Rand über dem Leben: wie viel Schaden Schilde noch abfangen." })
         B:Row({ type = "toggle", label = "Treffer und Heilung als Zahl", key = "combatFeedback",
-                description = "Spieler und Ziel: erlittener Schaden rot mit Minus, erhaltene Heilung grün mit Plus – kurz im Rahmen." })
+                description = "Spieler und Ziel: erlittener Schaden rot mit Minus, erhaltene Heilung grün mit Plus – kurz im Rahmen." },
+              { type = "toggle", label = "Elite und Seltene kennzeichnen", key = "classBadge",
+                description = "Ziel und Fokus: ein Schild „Elite“, „Selten“ oder „Boss“ über der Ecke, der Rand in derselben Farbe." })
         B:Advanced()
         B:Section("Schrift")
         B:Row({ type = "slider", label = "Größe links", key = "nameSize", min = 8, max = 20, step = 1, format = px },

@@ -54,6 +54,10 @@ local defaults = {
     cdSize        = 32,       -- Abklingzeiten
     weaponMinutes = 5,        -- "laeuft ab" ab so vielen Minuten Rest
     rules         = nil,      -- nil: Vorschlaege der Klasse
+    -- 6.27.0.0 (Beta-Test: "Essensbuff 5 % EP in der Levelphase ... items in
+    -- der Tasche scannen, die einen nuetzlichen Buff haben"):
+    bagFood       = true,     -- Essen mit Buff in der Tasche, Buff fehlt
+    bagElixir     = false,    -- Elixiere, Flaeschchen, Rollen in der Tasche
 }
 R.DEFAULTS = defaults
 
@@ -542,6 +546,157 @@ function R.Check(rule)
     return nil
 end
 
+--------------------------------------------------
+-- Buffs aus der Tasche (6.27.0.0)
+--------------------------------------------------
+-- Auch hier keine eingebaute Liste von Gegenstaenden: was in der Tasche
+-- liegt, sagt der Client, und was es tut, sein Tooltip. Essen zaehlt nur,
+-- wenn sein Tooltip "Wohlgenaehrt" oder Erfahrung nennt (also einen Buff
+-- gibt, nicht nur Leben); Elixier, Flaeschchen und Rolle (Verbrauchsgut,
+-- Unterklasse 2-4) nennen ihren Zauber selbst (GetItemSpell). Gilt einer
+-- davon schon, keine Erinnerung. Wie der Erfahrungsbuff von Forever heisst,
+-- ist ungemessen - erkannt wird er an "Erfahrung"/"Experience" im Namen
+-- einer Aura auf dir, oder an "Wohlgenaehrt"/"Well Fed".
+
+R.FED_WORDS = { "wohlgenährt", "well fed" }
+R.XP_WORDS = { "erfahrung", "experience" }
+R.EATING_WORDS = { "essen", "food", "trinken", "drink" }
+
+local function HasWord(text, words)
+    if type(text) ~= "string" then return false end
+    text = text:lower()
+    for _, w in ipairs(words) do
+        if text:find(w, 1, true) then return true end
+    end
+    return false
+end
+
+local bagCache = {}
+R._bagCache = bagCache
+
+local function TooltipText(id)
+    local ti = _G.C_TooltipInfo
+    if not (ti and ti.GetItemByID) then return nil end
+    local ok, data = pcall(ti.GetItemByID, id)
+    if not ok or type(data) ~= "table" or type(data.lines) ~= "table" then return nil end
+    local parts = {}
+    for _, l in ipairs(data.lines) do
+        local t = K.Plain(l.leftText)
+        if type(t) == "string" then parts[#parts + 1] = t end
+    end
+    if #parts == 0 then return nil end
+    return table.concat(parts, "\n")
+end
+
+-- Was ein Gegenstand gibt: { kind = "food"|"xp"|"elixir", spell, name }
+-- oder false (nichts Nuetzliches). nil: der Client weiss es noch nicht.
+function R.BagItemKind(id)
+    local c = bagCache[id]
+    if c ~= nil then return c end
+    local ci = _G.C_Item
+    local instant = (ci and ci.GetItemInfoInstant) or _G.GetItemInfoInstant
+    if not instant then return nil end
+    local ok, _, _, _, _, _, classID, subID = pcall(instant, id)
+    classID, subID = ok and K.Plain(classID), ok and K.Plain(subID)
+    if classID ~= 0 or type(subID) ~= "number" then bagCache[id] = false return false end
+    local getSpell = (ci and ci.GetItemSpell) or _G.GetItemSpell
+    local spell
+    if getSpell then
+        local okS, sp = pcall(getSpell, id)
+        spell = okS and K.Plain(sp) or nil
+    end
+    local info = (ci and ci.GetItemInfo) or _G.GetItemInfo
+    local name, minLevel
+    if info then
+        local okI, n, _, _, _, ml = pcall(info, id)
+        if okI then name, minLevel = K.Plain(n), K.Plain(ml) end
+    end
+    if type(name) ~= "string" then return nil end
+    local entry = false
+    if subID == 5 then
+        local tip = TooltipText(id)
+        if not tip then return nil end
+        if HasWord(tip, R.XP_WORDS) then entry = { kind = "xp" }
+        elseif HasWord(tip, R.FED_WORDS) then entry = { kind = "food" } end
+    elseif subID >= 2 and subID <= 4 and type(spell) == "string" then
+        entry = { kind = "elixir", spell = spell }
+    end
+    if entry then entry.name, entry.minLevel = name, type(minLevel) == "number" and minLevel or 0 end
+    bagCache[id] = entry
+    return entry
+end
+
+-- Namen der eigenen hilfreichen Auren, oder nil (der Client sagt es nicht).
+local function HelpfulNames()
+    local ua = _G.C_UnitAuras
+    if not (ua and ua.GetAuraDataByIndex) then return nil end
+    local names = {}
+    for i = 1, 40 do
+        local ok, a = pcall(ua.GetAuraDataByIndex, "player", i, "HELPFUL")
+        if not ok or K.IsSecret(a) then return nil end
+        if not a then break end
+        local n = K.Plain(a.name)
+        if type(n) == "string" then names[#names + 1] = n:lower() end
+    end
+    return names
+end
+local function AnyName(names, words)
+    for _, n in ipairs(names) do
+        if HasWord(n, words) then return true end
+    end
+    return false
+end
+
+-- Erinnerungen aus der Tasche: Liste von { text, icon }.
+function R.BagBuffs(out)
+    out = out or {}
+    local wantFood, wantElixir = Opt("bagFood"), Opt("bagElixir")
+    if not (wantFood or wantElixir) then return out end
+    local cc = _G.C_Container
+    if not (cc and cc.GetContainerNumSlots and cc.GetContainerItemID) then return out end
+    if K.Bool(_G.IsMounted and _G.IsMounted(), false) or K.Bool(_G.UnitOnTaxi and _G.UnitOnTaxi("player"), false)
+       or K.Bool(_G.UnitIsDeadOrGhost and _G.UnitIsDeadOrGhost("player"), false) then
+        return out
+    end
+    local names = HelpfulNames()
+    if not names then return out end
+    if AnyName(names, R.EATING_WORDS) then return out end   -- isst gerade
+    local level = K.Plain(_G.UnitLevel and _G.UnitLevel("player"))
+    level = type(level) == "number" and level or 0
+    local maxLevel = K.Plain(_G.GetMaxPlayerLevel and _G.GetMaxPlayerLevel())
+    local leveling = type(maxLevel) == "number" and level < maxLevel
+    local food, xp, elixir, elixirHas = nil, nil, nil, false
+    for bag = 0, tonumber(_G.NUM_BAG_SLOTS) or 4 do
+        local okN, n = pcall(cc.GetContainerNumSlots, bag)
+        n = okN and K.Plain(n)
+        for slot = 1, type(n) == "number" and n or 0 do
+            local okI, id = pcall(cc.GetContainerItemID, bag, slot)
+            id = okI and K.Plain(id)
+            local e = type(id) == "number" and R.BagItemKind(id)
+            if e and e.minLevel <= level then
+                if e.kind == "xp" and leveling then xp = xp or { id = id, e = e }
+                elseif e.kind == "food" or e.kind == "xp" then food = food or { id = id, e = e }
+                elseif e.kind == "elixir" then
+                    elixir = elixir or { id = id, e = e }
+                    if AnyName(names, { e.spell:lower() }) then elixirHas = true end
+                end
+            end
+        end
+    end
+    if wantFood then
+        local fed = AnyName(names, R.FED_WORDS)
+        if xp and not fed and not AnyName(names, R.XP_WORDS) then
+            out[#out + 1] = { text = xp.e.name .. " essen – Erfahrungsbuff fehlt", icon = ItemIcon(xp.id) }
+        elseif food and not fed then
+            out[#out + 1] = { text = food.e.name .. " essen – Wohlgenährt fehlt", icon = ItemIcon(food.id) }
+        end
+    end
+    if wantElixir and elixir and not elixirHas then
+        out[#out + 1] = { text = elixir.e.name .. " in der Tasche – Buff fehlt", icon = ItemIcon(elixir.id) }
+    end
+    return out
+end
+
 -- Alle Erinnerungen, die jetzt gelten.
 function R.Active()
     local out = {}
@@ -557,6 +712,7 @@ function R.Active()
             if hit then out[#out + 1] = hit end
         end
     end
+    if not K.InCombat() then R.BagBuffs(out) end
     return out
 end
 
@@ -1109,6 +1265,11 @@ K.Register({
                     description = "Im Kampf nennt der Client Buffs oft nur verschlüsselt – dann bleibt die Erinnerung aus, statt zu raten." },
                   { type = "slider", label = "Waffe: erinnern ab", key = "weaponMinutes", min = 1, max = 30, step = 1,
                     format = function(v) return string.format("%d min Rest", v) end })
+            B:Section("Aus der Tasche")
+            B:Row({ type = "toggle", label = "Essen mit Buff", key = "bagFood",
+                    description = "Liegt Essen in der Tasche, das „Wohlgenährt“ oder Erfahrung gibt, und der Buff fehlt: Erinnerung. Erfahrungsessen nur beim Leveln." },
+                  { type = "toggle", label = "Elixiere, Fläschchen, Rollen", key = "bagElixir",
+                    description = "Liegt eins in der Tasche und keiner seiner Buffs ist auf dir: Erinnerung." })
             B:Section("Symbole")
             B:Row({ type = "toggle", label = "Buffs und Procs", key = "showProcs" },
                   { type = "slider", label = "Größe", key = "iconSize", min = 20, max = 64, step = 2, format = px })

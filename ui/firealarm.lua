@@ -33,6 +33,11 @@ FA.DEFAULTS = {
     fireAlarm = false,
     fireSound = "raus",
     fireOutside = true,     -- 6.25.1.0: auch ausserhalb des Kampfes (Lagerfeuer, Lava)
+    -- 6.27.0.0 (Beta-Test: "Gift-Dot beim Leveln ... jeder Gegner verpasst
+    -- mir einen Dot - NOWAY"): Unterpunkte zum Ein- und Ausschalten.
+    fireInCombat  = true,   -- im Kampf (vermeidbarer Schaden des Spiels)
+    fireNoDots    = true,   -- nicht, solange ein schaedlicher Effekt auf dir liegt
+    fireWhere     = "all",  -- all | group | instance
 }
 FA.TICK = 0.2        -- so oft im Kampf gefragt (s)
 FA.GAP = 1.0         -- hoechstens ein Ton je Sekunde
@@ -113,7 +118,7 @@ end
 
 -- Ein Blick: Ton, wenn die Summe gewachsen ist. Liefert true bei Ton.
 function FA.Check()
-    if not FA.Active() then return false end
+    if not FA.Active() or not K.Get(KEY, "fireInCombat") or not FA.Here() then return false end
     stats.checks = stats.checks + 1
     local v = FA.Mine()
     if v == "secret" then
@@ -133,6 +138,40 @@ function FA.Check()
     stats.alarms = stats.alarms + 1
     FA.Play()
     return true
+end
+
+-- Wo der Ton gilt (6.27.0.0): ueberall, nur in einer Gruppe, nur in
+-- Dungeons und Schlachtzuegen. Beim Leveln allein ist er sonst Laerm.
+function FA.Here()
+    local where = K.Get(KEY, "fireWhere")
+    if where == "group" then
+        return K.Bool(_G.IsInGroup and _G.IsInGroup(), false) or K.Bool(_G.IsInRaid and _G.IsInRaid(), false)
+    elseif where == "instance" then
+        if not _G.IsInInstance then return false end
+        local _, kind = _G.IsInInstance()
+        kind = K.Plain(kind)
+        return type(kind) == "string" and kind ~= "none"
+    end
+    return true
+end
+
+-- Liegt ein schaedlicher Effekt auf dir (Gift, Krankheit, Fluch, Blutung)?
+-- true, false oder nil (der Client sagt es nicht - dann zaehlt der Treffer
+-- wie bisher). Ein Dot trifft wiederholt und sieht fuer "Leben sinkt
+-- zweimal" aus wie ein Lagerfeuer - nur dass man aus ihm nicht
+-- herausgehen kann. Lagerfeuer und Lava legen keinen Effekt auf einen.
+function FA.HasDebuff()
+    local ua = _G.C_UnitAuras
+    local ok, a
+    if ua and ua.GetAuraDataByIndex then
+        ok, a = pcall(ua.GetAuraDataByIndex, "player", 1, "HARMFUL")
+    elseif _G.UnitDebuff then
+        ok, a = pcall(_G.UnitDebuff, "player", 1)
+    else
+        return nil
+    end
+    if not ok or K.IsSecret(a) then return nil end
+    return a ~= nil
 end
 
 -- Kampfbeginn: was vorher war, zaehlt nicht.
@@ -211,6 +250,11 @@ end
 -- Ein Treffer ausserhalb des Kampfes (Leben gesunken oder Ereignis des
 -- Spiels): zweiter binnen FA.OUT_WINDOW -> Ton.
 function FA.Hit()
+    if not FA.Here() then return false end
+    if K.Get(KEY, "fireNoDots") and FA.HasDebuff() then
+        stats.dotSkips = (stats.dotSkips or 0) + 1
+        return false
+    end
     local now = Now()
     local gap = now - lastDrop
     if gap < (stats.minGap or math.huge) then stats.minGap = gap end
@@ -293,6 +337,7 @@ function FA.StatusLines()
     out[#out + 1] = string.format("Gefragt %d · offen %d · geheim %d · keine Zeile %d · Töne %d",
         stats.checks, stats.plain, stats.secret, stats.none, stats.alarms)
         .. " · außerhalb des Kampfes " .. (stats.outside or 0)
+        .. " · wegen Effekt still " .. (stats.dotSkips or 0)
     out[#out + 1] = string.format("Außerhalb des Kampfes: Takt %s · Blicke aufs Leben %d · verdeckt %d · Verluste %d · Treffer gemeldet %d",
         outTicker:IsShown() and "läuft" or "steht", stats.hpLooks or 0, stats.hpHidden or 0, stats.hpDrops or 0, stats.wounds or 0)
     if (stats.wounds or 0) > 0 then
@@ -315,8 +360,17 @@ local function Build(B)
             description = "Höchstens einmal je Sekunde." },
           { type = "dropdown", label = "Ton", key = "fireSound", items = items, disabled = off })
     B:Row({ type = "button", label = "Probe", text = "Ton abspielen", onClick = FA.Play },
+          { type = "dropdown", label = "Wo", key = "fireWhere", disabled = off, items = {
+                { value = "all",      text = "Überall" },
+                { value = "group",    text = "Nur in einer Gruppe" },
+                { value = "instance", text = "Nur in Dungeons und Schlachtzügen" } } })
+    B:Section("Wann")
+    B:Row({ type = "toggle", label = "Im Kampf", key = "fireInCombat", disabled = off,
+            description = "Wenn das Spiel vermeidbaren Schaden zählt." },
           { type = "toggle", label = "Auch außerhalb des Kampfes", key = "fireOutside", disabled = off,
             description = "Lagerfeuer, Lava und Ähnliches: Ton, wenn dein Leben zweimal kurz hintereinander sinkt. Ein einzelner Sturz zählt nicht." })
+    B:Row({ type = "toggle", label = "Still bei Gift, Krankheit, Fluch", key = "fireNoDots", disabled = off,
+            description = "Außerhalb des Kampfes kein Ton, solange ein schädlicher Effekt auf dir liegt – aus einem Dot kannst du nicht herausgehen, ob du ihn entfernen kannst oder nicht." }, nil)
     B:Note("Gibt das Spiel die Summe im Kampf nur verdeckt heraus, bleibt der Ton stumm – /wcui prüfen sagt dann „geheim“.")
 end
 

@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.27.0.0] – 2026-10-10
+
+### Neu
+
+- „Raus da“ (Beta-Test: „Gift-Dot beim Leveln … jeder Gegner verpasst mir einen Dot – NOWAY“): Unterpunkte `fireInCombat`, `fireWhere` (überall / Gruppe / Instanz) und `fireNoDots` (ab Werk an) in `ui/firealarm.lua`. Mit `fireNoDots` zählt ein Treffer außerhalb des Kampfes nicht, solange ein schädlicher Effekt auf dem Spieler liegt (`FA.HasDebuff`; sagt der Client es nicht, zählt der Treffer wie bisher). Lagerfeuer und Lava legen keinen Effekt auf einen – ungemessen, ob das auf Forever durchweg gilt.
+- Seltene Gegner (Beta-Test: „über die Meldung ins Ziel nehmen … und gleich ein Mark“): Klick auf den Hinweis nimmt ins Ziel (`/cleartarget`, `/targetexact`) und markiert auf Wunsch (`/tm [@target,exists] n`, Standard Totenkopf) – über einen geschützten Knopf (`RA.ClickButton`, an `UIParent`, nur außerhalb des Kampfes scharf). Automatisch ins Ziel nehmen oder markieren ist für Addons gesperrt; der Wunsch geht so nicht.
+- Ziel- und Fokusrahmen (Beta-Test: „Elite/Rare von den normalen abheben“): Schild „Elite“, „Selten“, „Seltene Elite“, „Boss“ und Rand in derselben Farbe (`UF.Classification`, `classBadge`), nur aus `UnitClassification`. Neue Farbe `GameColors.rare`. Gilt für die Rahmen der WeintCodex-Oberfläche.
+- Erinnerungen (Beta-Test: „Essensbuff 5 % EP … Items in der Tasche scannen“): `R.BagBuffs` – Essen, dessen Tooltip „Wohlgenährt“ oder Erfahrung nennt, Buff fehlt → Erinnerung (Erfahrungsessen nur unter Höchststufe; nicht beim Essen, reitend, tot). Schalter `bagFood` (an), `bagElixir` (aus) für Elixiere, Fläschchen, Rollen. Keine Liste von Gegenständen; wie der Erfahrungsbuff auf Forever heißt, ist ungemessen – erkannt an „Erfahrung“/„Experience“ im Aurennamen.
+- Komfort → Karte: Rechtsklick auf die Minikarte öffnet die Weltkarte (`ui/minimapclick.lua`, `minimapRightMap`, an), außerhalb des Kampfes.
+
 ## [6.26.20.0] – 2026-10-10
 
 ### Behoben

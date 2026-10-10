@@ -22,6 +22,17 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.27.0.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFF„Raus da“ lässt dich beim Leveln in Ruhe.|r Neue Unterpunkte: im Kampf, außerhalb des Kampfes, wo (überall, in Gruppe, in Dungeons) – und von Haus aus kein Ton mehr, solange Gift, Krankheit oder Fluch auf dir liegt. Aus einem Dot kann man nicht herausgehen.",
+            "|cff7C6CFFSeltene Gegner per Klick ins Ziel.|r Ein Klick auf den Hinweis nimmt ihn ins Ziel und setzt auf Wunsch gleich einen Totenkopf. Ganz von selbst lässt das Spiel Addons kein Ziel wählen.",
+            "|cff7C6CFFElite und Seltene auf einen Blick.|r Ziel- und Fokusrahmen tragen ein Schild „Elite“, „Selten“, „Seltene Elite“ oder „Boss“, der Rand in derselben Farbe.",
+            "|cff7C6CFFErinnerung ans Essen.|r Liegt Essen mit „Wohlgenährt“ oder Erfahrungsbuff in der Tasche und der Buff fehlt, erinnern die Erinnerungen daran – Erfahrungsessen nur beim Leveln. Auf Wunsch auch Elixiere, Fläschchen und Rollen.",
+            "|cff7C6CFFRechtsklick auf die Minikarte öffnet die Weltkarte.|r Abschaltbar unter Komfort → Karte.",
+        },
+    },
+    {
         version = "6.26.20.0",
         date    = "10.10.2026",
         notes   = {

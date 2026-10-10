@@ -432,6 +432,8 @@ local function BuildPage(B)
           { type = "toggle", label = "Auch auf der Kontinentkarte", key = "mapContinent", disabled = off,
             description = "Kalimdor und die Östlichen Königreiche im Ganzen." })
     B:Note("Die Lagen sind der Wissensstand aus der Beta und unbestätigt. Wo der Codex keinen Eingang kennt, steht kein Symbol.")
+    local MC = WeintCodex.UIMinimapClick
+    if MC and MC.BuildRows then MC.BuildRows(B) end
     local MK = WeintCodex.UIMapMarks
     if MK and MK.BuildRows then MK.BuildRows(B) end
     local ZI = WeintCodex.UIZoneInfo

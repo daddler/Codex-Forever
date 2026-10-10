@@ -16869,6 +16869,68 @@ do
     Check(ok, "Filmsequenzen: Anfangsvideo eines neuen Charakters nie ueberspringen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.27.0.0: Raus da still bei Dots, Klick auf Seltene, Taschenbuffs, Minikarte.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local K = WeintCodex.UIKit
+        local FA, RA, R, MC = WeintCodex.UIFireAlarm, WeintCodex.UIRares, WeintCodex.UIReminders, WeintCodex.UIMinimapClick
+        local oUA, oT, oII = G.C_UnitAuras, G.GetTime, G.IsInInstance
+        local t = 1000
+        G.GetTime = function() return t end
+        local debuff = { name = "Gift" }
+        G.C_UnitAuras = { GetAuraDataByIndex = function(_, i, f) if f == "HARMFUL" and i == 1 then return debuff end end }
+        K.Set("comfort", "fireNoDots", true)
+        K.Set("comfort", "fireWhere", "all")
+        assert(FA.HasDebuff() == true, "Dot nicht erkannt")
+        FA.Hit() t = t + 2
+        assert(FA.Hit() == false, "Ton trotz Dot")
+        debuff = nil
+        t = t + 10 FA.Hit() t = t + 2
+        assert(FA.Hit() == true, "kein Ton ohne Dot")
+        K.Set("comfort", "fireWhere", "instance")
+        G.IsInInstance = function() return false, "none" end
+        t = t + 10 FA.Hit() t = t + 2
+        assert(FA.Hit() == false, "Ton draussen trotz nur in Instanzen")
+        K.Set("comfort", "fireWhere", "all")
+        -- Seltene: Makro waehlt erst ab, dann genau den Namen, markiert nur mit Ziel.
+        local m = RA.Macro("Mor'Ladim", 8)
+        assert(m == "/cleartarget\n/targetexact Mor'Ladim\n/tm [@target,exists] 8", "Makro: " .. m)
+        assert(not RA.Macro("X", 0):find("/tm", 1, true), "markiert trotz aus")
+        -- Taschen: Essen mit Wohlgenaehrt, Buff fehlt -> Erinnerung; mit Buff nicht.
+        local oCC, oCI, oTI, oL, oML = G.C_Container, G.C_Item, G.C_TooltipInfo, G.UnitLevel, G.GetMaxPlayerLevel
+        G.C_Container = { GetContainerNumSlots = function(b) return b == 0 and 1 or 0 end,
+                          GetContainerItemID = function() return 4242 end }
+        G.C_Item = { GetItemInfoInstant = function() return 4242, "", "", "", 1, 0, 5 end,
+                     GetItemInfo = function() return "Gebratener Eber", nil, nil, nil, 5 end,
+                     GetItemIconByID = function() return 1 end }
+        G.C_TooltipInfo = { GetItemByID = function() return { lines = { { leftText = "Benutzen: Wenn Ihr 10 Sek. esst, seid Ihr wohlgenährt." } } } end }
+        G.UnitLevel = function() return 20 end
+        G.GetMaxPlayerLevel = function() return 60 end
+        local helpful = {}
+        G.C_UnitAuras = { GetAuraDataByIndex = function(_, i, f) if f == "HELPFUL" then return helpful[i] end end }
+        for k in pairs(R._bagCache) do R._bagCache[k] = nil end
+        K.Set("reminders", "bagFood", true)
+        local out = R.BagBuffs({})
+        assert(#out == 1 and out[1].text:find("Wohlgenährt fehlt", 1, true), "keine Erinnerung ans Essen")
+        helpful = { { name = "Wohlgenährt" } }
+        assert(#R.BagBuffs({}) == 0, "Erinnerung trotz Buff")
+        helpful = { { name = "Essen" } }
+        assert(#R.BagBuffs({}) == 0, "Erinnerung beim Essen")
+        G.C_Container, G.C_Item, G.C_TooltipInfo, G.UnitLevel, G.GetMaxPlayerLevel = oCC, oCI, oTI, oL, oML
+        -- Minikarte: rechts oeffnet die Karte, links nicht.
+        local opened = 0
+        local oTW, oA = G.ToggleWorldMap, MC.Active
+        G.ToggleWorldMap = function() opened = opened + 1 end
+        MC.Active = function() return true end
+        assert(MC.OnClick("LeftButton") == false and opened == 0, "Linksklick oeffnet die Karte")
+        assert(MC.OnClick("RightButton") == true and opened == 1, "Rechtsklick oeffnet die Karte nicht")
+        G.ToggleWorldMap, MC.Active = oTW, oA
+        G.C_UnitAuras, G.GetTime, G.IsInInstance = oUA, oT, oII
+    end)
+    Check(ok, "Raus da still bei Dots, Seltene per Klick, Essen aus der Tasche, Minikarte rechts" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

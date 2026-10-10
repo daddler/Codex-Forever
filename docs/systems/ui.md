@@ -1205,6 +1205,21 @@ Gebiets mit Wiederkehr und zuletzt gesehen. **`/wcui prüfen`**:
 „Seltene Gegner“ (an/aus, Abfragen da, GUID des Ziels offen oder geheim,
 Vignetten, zuletzt gemeldet).
 
+6.27.0.0: Klick auf den Hinweis nimmt ins Ziel und markiert (`rareClick`,
+`rareMark`, Standard 8). Geschützter Knopf `WeintCodexRareTarget` an
+`UIParent` (nicht am Hinweis – sonst ließe der sich im Kampf nicht
+verstecken), `SetAllPoints(toast)`, Makro `RA.Macro`: `/cleartarget`,
+`/targetexact Name`, `/tm [@target,exists] n` – das Leeren zuerst, damit
+nie das alte Ziel markiert wird. Scharf nur außerhalb des Kampfes;
+`RA.DisarmClick` beim Verstecken (im Kampf danach). „Automatisch ins
+Ziel, wenn keins da ist“ gibt es nicht: Ziel wählen und Markieren gehen
+nur auf einen Klick.
+
+Elite/selten am Ziel- und Fokusrahmen (6.27.0.0, `ui/unitframes.lua`,
+`classBadge`): `UF.Classification` → Schild über der linken oberen Ecke
+und Rand in `GameColors.elite`/`rare`/`boss`; Spieler, normal, „minus“
+und Unbekanntes bekommen nichts.
+
 ## Auktionspreise *(6.17.0.0, `ui/auctionprices.lua`, Seite im Komfort)*
 
 Wunsch des Spielers nach dem Vorbild von ForeverGuide (Verhalten, kein
@@ -1746,6 +1761,32 @@ Spiel gemessen stumm). Bericht zählt Blicke, verdeckt, Verluste.
 6.25.3.0: gemessen – das Leben ist auch ohne Kampf verdeckt (228 von 228).
 Daher `UNIT_COMBAT` (`FA.OnUnitCombat`): „WOUND“ offen oder verdeckte Art
 zählt als Treffer, zwei binnen 3 s → Ton (`FA.Hit`).
+6.27.0.0 (Beta-Test: Gift-Dot beim Leveln löste den Ton aus, auch ohne
+Möglichkeit, ihn zu entfernen): Unterpunkte `fireInCombat`, `fireWhere`
+(`all`/`group`/`instance`, `FA.Here`) und `fireNoDots` (an). Mit
+`fireNoDots` zählt `FA.Hit` nicht, solange `FA.HasDebuff()` einen
+schädlichen Effekt am Spieler meldet; `nil` (geheim, keine Schnittstelle)
+zählt wie bisher. Ob „entfernbar“ – das fragt niemand: aus einem Dot geht
+man nicht heraus. `/wcui prüfen` zählt „wegen Effekt still“.
+
+## Rechtsklick auf die Minikarte *(6.27.0.0, `ui/minimapclick.lua`, Seite „Karte“)*
+
+`minimapRightMap` (an): `HookScript("OnMouseUp")` an `Minimap`, rechts →
+`ToggleWorldMap`. Nur außerhalb des Kampfes (Weltkarte ist geschützt,
+`ADDON_ACTION_BLOCKED` fängt kein `pcall`). Komfort, geht ohne Oberfläche.
+
+## Erinnerungen aus der Tasche *(6.27.0.0, `ui/reminders.lua`)*
+
+`R.BagBuffs` hängt sich außerhalb des Kampfes an `R.Active` (gleiche
+„Wo“-Regel). Keine Liste von Gegenständen: Verbrauchsgut (Klasse 0)
+Unterklasse 5 zählt nur, wenn der Tooltip (`C_TooltipInfo.GetItemByID`)
+„Wohlgenährt“/„Well Fed“ oder „Erfahrung“/„Experience“ nennt;
+Unterklasse 2–4 (Elixier, Fläschchen, Rolle) über `GetItemSpell`.
+Ergebnis je Gegenstand in `R._bagCache`; „weiß noch nicht“ wird nicht
+gemerkt. Still beim Essen/Trinken, reitend, im Flug, tot und wenn der
+Client die Auren geheim gibt. **Ungemessen:** der Name des
+Erfahrungsbuffs auf Forever – erkannt an „Erfahrung“/„Experience“ in
+einem Aurennamen.
 
 ## Eigene Farbe der Oberfläche *(6.21.1.0)*
 

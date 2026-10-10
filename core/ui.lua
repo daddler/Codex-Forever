@@ -208,6 +208,9 @@ WeintCodex.GameColors = {
     horde         = {0.950, 0.250, 0.200, 1.0},
     boss          = {0.860, 0.400, 0.120, 1.0},
     elite         = {0.620, 0.220, 0.460, 1.0},
+    -- 6.27.0.0: seltene Gegner am Zielrahmen - silbern-blau, wie der
+    -- silberne Drache des Spiels; anders als Elite (Violett) und Boss.
+    rare          = {0.700, 0.800, 0.950, 1.0},
     focus         = {0.250, 0.700, 0.850, 1.0},
     -- 6.6.2.2: Plaketten nach NPC (ui/npccolors.lua). Zaubernde blau -
     -- sichtbar anders als Fokus (Tuerkis), Elite (Violett) und Feind (Rot).
