@@ -558,7 +558,9 @@ end
 -- ist ungemessen - erkannt wird er an "Erfahrung"/"Experience" im Namen
 -- einer Aura auf dir, oder an "Wohlgenaehrt"/"Well Fed".
 
-R.FED_WORDS = { "wohlgenährt", "well fed" }
+-- "satt" (6.27.0.1, gemeldet vom Spieler: so heisst der Essensbuff auf
+-- Forever) nur als ganzes Wort - "Sattel" ist keiner.
+R.FED_WORDS = { "wohlgenährt", "well fed", "%f[%a]satt%f[%A]" }
 R.XP_WORDS = { "erfahrung", "experience" }
 R.EATING_WORDS = { "essen", "food", "trinken", "drink" }
 
@@ -566,7 +568,9 @@ local function HasWord(text, words)
     if type(text) ~= "string" then return false end
     text = text:lower()
     for _, w in ipairs(words) do
-        if text:find(w, 1, true) then return true end
+        if w:find("%f", 1, true) then
+            if text:find(w) then return true end
+        elseif text:find(w, 1, true) then return true end
     end
     return false
 end
@@ -686,9 +690,9 @@ function R.BagBuffs(out)
     if wantFood then
         local fed = AnyName(names, R.FED_WORDS)
         if xp and not fed and not AnyName(names, R.XP_WORDS) then
-            out[#out + 1] = { text = xp.e.name .. " essen – Erfahrungsbuff fehlt", icon = ItemIcon(xp.id) }
+            out[#out + 1] = { text = xp.e.name .. " essen – „Satt“ fehlt", icon = ItemIcon(xp.id) }
         elseif food and not fed then
-            out[#out + 1] = { text = food.e.name .. " essen – Wohlgenährt fehlt", icon = ItemIcon(food.id) }
+            out[#out + 1] = { text = food.e.name .. " essen – „Satt“ fehlt", icon = ItemIcon(food.id) }
         end
     end
     if wantElixir and elixir and not elixirHas then

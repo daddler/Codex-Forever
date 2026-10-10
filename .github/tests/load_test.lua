@@ -16912,7 +16912,11 @@ do
         for k in pairs(R._bagCache) do R._bagCache[k] = nil end
         K.Set("reminders", "bagFood", true)
         local out = R.BagBuffs({})
-        assert(#out == 1 and out[1].text:find("Wohlgenährt fehlt", 1, true), "keine Erinnerung ans Essen")
+        assert(#out == 1 and out[1].text:find("Satt", 1, true), "keine Erinnerung ans Essen")
+        helpful = { { name = "Satt" } }
+        assert(#R.BagBuffs({}) == 0, "Erinnerung trotz Satt")
+        helpful = { { name = "Sattelfest" } }
+        assert(#R.BagBuffs({}) == 1, "Sattel als Satt erkannt")
         helpful = { { name = "Wohlgenährt" } }
         assert(#R.BagBuffs({}) == 0, "Erinnerung trotz Buff")
         helpful = { { name = "Essen" } }

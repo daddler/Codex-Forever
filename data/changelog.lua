@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.27.0.1",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Erinnerung ans Essen kennt „Satt“.|r So heißt der Essensbuff auf Forever – ist er auf dir, bleibt die Erinnerung still.",
+        },
+    },
+    {
         version = "6.27.0.0",
         date    = "10.10.2026",
         notes   = {

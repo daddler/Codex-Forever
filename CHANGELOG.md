@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.27.0.1] – 2026-10-10
+
+### Behoben
+
+- Erinnerung ans Essen: der Essensbuff heißt auf Forever „Satt“ (Meldung des Spielers). `R.FED_WORDS` erkennt „satt“ als ganzes Wort (nicht „Sattel“), in Aurennamen und Tooltips; der Text der Erinnerung nennt „Satt“.
+
 ## [6.27.0.0] – 2026-10-10
 
 ### Neu
