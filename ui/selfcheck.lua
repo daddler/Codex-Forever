@@ -366,6 +366,8 @@ Check("Waffe", function(add)
     if names then
         add(R.WeaponTipHas(16, names) and SC.OK or SC.OPEN,
             "Waffenbuff " .. (R.WeaponTipHas(16, names) and "erkannt" or "nicht erkannt") .. " (" .. table.concat(names, ", ") .. ")")
+    else
+        add(SC.OPEN, "Kein Waffenbuff gelernt (Schamane) – die Zeilen oben zeigen, was der Client zur Waffe sagt.")
     end
 end)
 
