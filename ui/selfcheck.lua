@@ -341,6 +341,34 @@ function SC.HappinessNames()
     return out
 end
 
+-- 6.27.0.5: was der Client zur Verzauberung der Waffe sagt (Schamane:
+-- "Waffe des Felsbeißers ist aktiv", Erinnerung kam trotzdem).
+Check("Waffe", function(add)
+    local R = WeintCodex.UIReminders
+    if _G.GetWeaponEnchantInfo then
+        local ok, hasMain, expMain, _, idMain = pcall(_G.GetWeaponEnchantInfo)
+        add("", "   GetWeaponEnchantInfo: " .. (ok and (tostring(K.Plain(hasMain)) .. ", Rest " .. tostring(K.Plain(expMain))
+            .. ", ID " .. tostring(K.Plain(idMain))) or "Fehler"))
+    else
+        add("", "   GetWeaponEnchantInfo: gibt es nicht")
+    end
+    local ti = _G.C_TooltipInfo
+    if ti and ti.GetInventoryItem then
+        local ok, data = pcall(ti.GetInventoryItem, "player", 16)
+        if ok and type(data) == "table" and type(data.lines) == "table" then
+            for i, l in ipairs(data.lines) do
+                local t = K.Plain(l.leftText)
+                if i > 1 and i <= 8 and type(t) == "string" then add("", "   Tooltip " .. i .. ": " .. t) end
+            end
+        end
+    end
+    local names = R and R.ImbueNames and R.ImbueNames()
+    if names then
+        add(R.WeaponTipHas(16, names) and SC.OK or SC.OPEN,
+            "Waffenbuff " .. (R.WeaponTipHas(16, names) and "erkannt" or "nicht erkannt") .. " (" .. table.concat(names, ", ") .. ")")
+    end
+end)
+
 Check("Begleiter", function(add)
     local has = K.Bool(_G.UnitExists and _G.UnitExists("pet"), false)
     if not has then

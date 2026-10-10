@@ -16969,8 +16969,16 @@ do
         G.C_TooltipInfo = { GetInventoryItem = function() return { lines = { { leftText = "Bärenhammer" } } } end }
         local hit = R.Check({ kind = "weapon", hand = "main" })
         assert(hit and hit.text:find("Flammenzunge", 1, true) and hit.text:find("Felsbeißers", 1, true), "Schamane: " .. tostring(hit and hit.text))
-        G.C_TooltipInfo = { GetInventoryItem = function() return { lines = { { leftText = "Waffe der Flammenzunge 3" } } } end }
-        assert(R.Check({ kind = "weapon", hand = "main" }) == nil, "Flammenzunge im Tooltip nicht erkannt")
+        G.C_TooltipInfo = { GetInventoryItem = function() return { lines = { { leftText = "Bärenhammer" }, { leftText = "Felsbeißer 3" } } } end }
+        assert(R.Check({ kind = "weapon", hand = "main" }) == nil, "Felsbeißer im Tooltip nicht erkannt")
+        G.C_TooltipInfo = { GetInventoryItem = function() return { lines = { { leftText = "Bärenhammer" }, { leftText = "Irgendwas (29 Min.)" } } } end }
+        assert(R.Check({ kind = "weapon", hand = "main" }) == nil, "Restzeit im Tooltip nicht erkannt")
+        G.C_TooltipInfo = { GetInventoryItem = function() return { lines = { { leftText = "Bärenhammer" } } } end }
+        local oUA = G.C_UnitAuras
+        G.C_UnitAuras = { GetAuraDataBySpellName = function(_, n) if n == "Waffe des Felsbeißers" then return { name = n } end end }
+        assert(R.Check({ kind = "weapon", hand = "main" }) == nil, "Felsbeißer als Aura nicht erkannt")
+        G.C_UnitAuras = oUA
+        assert(R.ImbueStem("Waffe des Felsbeißers") == "Felsbeißer" and R.ImbueStem("Waffe der Flammenzunge") == "Flammenzunge", "Kern falsch")
         R.Resolve = oRes
         G.UnitClass, G.GetWeaponEnchantInfo, G.GetInventoryItemID, G.C_TooltipInfo = oC, oW, oID, oTI
         -- Vergleich: das Spiel wird mit dem eigenen Tooltip gefragt.

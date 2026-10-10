@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.27.0.5] – 2026-10-10
+
+### Behoben
+
+- Schamane: „Waffe des Felsbeißers … fehlt“, obwohl aktiv (gemessen 6.27.0.4). Der Tooltip der Waffe nennt den Buff ohne „Waffe des“ und ohne Genitiv („Felsbeißer 3“) – gesucht wurde der volle Name. `R.WeaponTipHas` prüft jetzt drei Wege: Aura gleichen Namens am Spieler, Kern des Namens (`R.ImbueStem`) im Tooltip, oder eine Tooltipzeile mit Restzeit („(30 Min.)“). `/wcui prüfen` → „Waffe“ zeigt `GetWeaponEnchantInfo` und die Tooltipzeilen.
+
 ## [6.27.0.4] – 2026-10-10
 
 ### Behoben

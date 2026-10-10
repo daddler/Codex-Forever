@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.27.0.5",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Waffenbuff des Schamanen wird erkannt.|r Ist Felsbeißer oder Flammenzunge auf der Waffe, bleibt die Erinnerung still. Falls nicht: /wcui prüfen zeigt unter „Waffe“, was das Spiel meldet.",
+        },
+    },
+    {
         version = "6.27.0.4",
         date    = "10.10.2026",
         notes   = {

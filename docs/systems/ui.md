@@ -1781,8 +1781,10 @@ ohne Weitergabe, sonst der gemerkte Klick des Spiels (`MC.orig`). Nur außerhalb
 Regel „Waffe“ beim Schamanen: Text aus `R.ImbueNames` (gelernte von
 `R.SHAMAN_IMBUES` = 8017, 8024, 8033, 8232, Art `classic`); meldet
 `GetWeaponEnchantInfo` nichts, zählt ein Name im Tooltip der Waffe
-(`R.WeaponTipHas`). **Ungemessen:** ob Forever die Buffs als Verzauberung
-meldet.
+(`R.WeaponTipHas`). Gemessen 6.27.0.4: weder Verzauberung noch voller
+Name im Tooltip – seit 6.27.0.5 Aura gleichen Namens, Kern des Namens
+(`R.ImbueStem`: „Felsbeißer“) oder Zeile mit Restzeit. `/wcui prüfen` →
+„Waffe“ zeigt, was der Client sagt.
 
 Gespräche (`ui/dialogue.lua`): Belohnungen zeigen den Vergleich des Spiels
 (`DL.Compare`, `GameTooltip_ShowCompareItem` an `ShoppingTooltip1/2`).

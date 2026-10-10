@@ -506,18 +506,43 @@ function R.ImbueNames()
     return #names > 0 and names or nil
 end
 
--- Steht einer der Waffenbuffs im Tooltip der Waffe? Rueckfall, falls der
--- Client einen Schamanenbuff nicht als Verzauberung meldet.
+-- Kern eines Namens fuer den Tooltip der Waffe: dort steht der Buff ohne
+-- "Waffe des/der" und ohne Genitiv ("Felsbeißer 3", nicht "Waffe des
+-- Felsbeißers") - 6.27.0.4 suchte den vollen Namen und fand ihn nie.
+function R.ImbueStem(name)
+    local stem = name:gsub("^Waffe de[rs] ", ""):gsub(" Weapon$", "")
+    if stem ~= name and stem:sub(-1) == "s" then stem = stem:sub(1, -2) end
+    return stem
+end
+
+-- Liegt ein Waffenbuff an? (6.27.0.5, gemessen 6.27.0.4: "Waffe des
+-- Felsbeißers ist aktiv", trotzdem Erinnerung.) Drei Wege, jeder genuegt:
+-- eine Aura gleichen Namens auf dir (so fuehren neuere Clients die Buffs),
+-- der Kern des Namens im Tooltip der Waffe, oder dort eine Zeile mit
+-- Restzeit ("(30 Min.)") - die hat nur eine zeitweise Verzauberung.
 function R.WeaponTipHas(slot, names)
+    if names then
+        local any = {}
+        for i, id in ipairs(R.SHAMAN_IMBUES) do any[i] = tostring(id) end
+        if R.PlayerAura({ any = any }) then return true end
+        local ua = _G.C_UnitAuras
+        if ua and ua.GetAuraDataBySpellName then
+            for _, n in ipairs(names) do
+                local ok, a = pcall(ua.GetAuraDataBySpellName, "player", n, "HELPFUL")
+                if ok and a and not K.IsSecret(a) then return true end
+            end
+        end
+    end
     local ti = _G.C_TooltipInfo
-    if not (ti and ti.GetInventoryItem and names) then return false end
+    if not (ti and ti.GetInventoryItem) then return false end
     local ok, data = pcall(ti.GetInventoryItem, "player", slot)
     if not ok or type(data) ~= "table" or type(data.lines) ~= "table" then return false end
-    for _, l in ipairs(data.lines) do
+    for i, l in ipairs(data.lines) do
         local t = K.Plain(l.leftText)
-        if type(t) == "string" then
-            for _, n in ipairs(names) do
-                if t:find(n, 1, true) then return true end
+        if type(t) == "string" and i > 1 then
+            if t:find("%(%d+ [Mm]in") or t:find("%(%d+ [Ss]ek") or t:find("%(%d+ sec") then return true end
+            for _, n in ipairs(names or {}) do
+                if t:find(R.ImbueStem(n), 1, true) then return true end
             end
         end
     end
@@ -543,7 +568,7 @@ function R.Check(rule)
         else has, exp = K.Plain(hasMain), K.Plain(mainExp) end
         if has == nil then return nil end
         local imbues = R.ImbueNames()
-        if not has and imbues and R.WeaponTipHas(rule.hand == "off" and 17 or 16, imbues) then return nil end
+        if not has and R.WeaponTipHas(rule.hand == "off" and 17 or 16, imbues) then return nil end
         if not has then
             if imbues then
                 local sp = R.Resolve(tostring(R.SHAMAN_IMBUES[2]))
