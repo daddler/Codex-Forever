@@ -105,7 +105,7 @@ WL.HELPERS = {
     { group = "alltag", module = "comfort", key = "fastLoot", label = "Schneller plündern",
       text = "Nimmt alles sofort, wenn automatisches Plündern an ist." },
     { group = "alltag", module = "comfort", key = "skipCinematics", label = "Filmsequenzen überspringen",
-      text = "Zwischensequenzen enden von selbst." },
+      text = "Zwischensequenzen enden von selbst – das Anfangsvideo eines neuen Charakters läuft immer." },
     { group = "alltag", module = "comfort", key = "levelUpPopup", label = "Neues beim Lehrer",
       text = "Nach dem Stufenaufstieg: was du jetzt lernen kannst." },
     { group = "alltag", module = "comfort", key = "durability", label = "Haltbarkeitswarnung",

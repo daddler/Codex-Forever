@@ -128,7 +128,17 @@ local function FillDelete()
     end
 end
 
+-- 6.26.20.0 (Beta-Test: "beim neuen Charakter wird das Anfangsvideo
+-- geskipt - ueberhaupt nicht gut"): das Anfangsvideo eines neuen
+-- Charakters laeuft auf Stufe 1 - dort wird nie uebersprungen. Kennt der
+-- Client die Stufe nicht: auch nicht (lieber ein Video zu viel).
+function QoL.SkipAllowed()
+    local lvl = _G.UnitLevel and K.Plain(_G.UnitLevel("player"))
+    return type(lvl) == "number" and lvl > 1
+end
+
 local function SkipCinematic(event)
+    if not QoL.SkipAllowed() then return false end
     if event == "CINEMATIC_START" then
         if _G.CinematicFrame_CancelCinematic then
             pcall(_G.CinematicFrame_CancelCinematic)
@@ -456,7 +466,8 @@ K.Register({
                   { type = "toggle", label = "Löschbestätigung ausfüllen", key = "deleteFill",
                     description = "Schreibt das Bestätigungswort vor. Klicken musst du selbst." })
             B:Section("Spiel")
-            B:Row({ type = "toggle", label = "Filmsequenzen überspringen", key = "skipCinematics" },
+            B:Row({ type = "toggle", label = "Filmsequenzen überspringen", key = "skipCinematics",
+                    description = "Nie das Anfangsvideo eines neuen Charakters (Stufe 1)." },
                   { type = "toggle", label = "Fehlermeldungen im Kampf ausblenden", key = "hideErrorsInCombat",
                     description = "„Außer Reichweite“ und Co. — außerhalb des Kampfes kommen sie wieder." })
         end },

@@ -16851,6 +16851,24 @@ do
     Check(ok, "Einloggen: vorhandenes Layout still aktiv, Frage nur einmal je Charakter" .. (ok and "" or (": " .. tostring(err))))
 end
 
+
+-- 6.26.20.0: das Anfangsvideo eines neuen Charakters laeuft immer.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local QoL = WeintCodex.UIComfort
+        local oL = G.UnitLevel
+        G.UnitLevel = function() return 1 end
+        assert(not QoL.SkipAllowed(), "Anfangsvideo auf Stufe 1 uebersprungen")
+        G.UnitLevel = function() return nil end
+        assert(not QoL.SkipAllowed(), "ohne Stufe uebersprungen")
+        G.UnitLevel = function() return 12 end
+        assert(QoL.SkipAllowed(), "spaetere Sequenzen nicht mehr uebersprungen")
+        G.UnitLevel = oL
+    end)
+    Check(ok, "Filmsequenzen: Anfangsvideo eines neuen Charakters nie ueberspringen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

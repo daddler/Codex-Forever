@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.26.20.0",
+        date    = "10.10.2026",
+        notes   = {
+            "|cff7C6CFFDas Anfangsvideo läuft wieder.|r „Filmsequenzen überspringen“ lässt das Video eines neuen Charakters (Stufe 1) immer laufen und überspringt erst danach.",
+        },
+    },
+    {
         version = "6.26.19.0",
         date    = "10.10.2026",
         notes   = {

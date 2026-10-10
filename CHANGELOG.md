@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.26.20.0] – 2026-10-10
+
+### Behoben
+
+- „Filmsequenzen überspringen“ übersprang das Anfangsvideo eines neuen Charakters (Beta-Test: „überhaupt nicht gut“) – der Assistent wählt den Helfer mit der Oberfläche vor, und die Einstellung gilt für den Account. `QoL.SkipAllowed` in `ui/comfort.lua`: auf Stufe 1 (und ohne bekannte Stufe) nie überspringen.
+
 ## [6.26.19.0] – 2026-10-10
 
 ### Neu
