@@ -4624,6 +4624,21 @@ do
         K.Set("general", "wideArea", "edge")
         assert(K.WideInset(2731, 768) == 0, "„Bis an den Rand“ verschiebt")
         K.Set("general", "wideArea", old)
+        -- Von selbst: eingerichtet fuer 16:9, jetzt breiter -> einmal Hinweis.
+        local ES = WeintCodex.UISetup
+        if ES and ES.WideMismatch then
+            local oldActive, oldIns, root = ES.LayoutActive, K.WideInset, K.Root()
+            local was = root.wideInset
+            ES.LayoutActive = function() return true end
+            root.wideInset = 0
+            K.WideInset = function() return 234 end
+            assert(ES.WideMismatch(), "breiterer Bildschirm nicht erkannt")
+            root.wideInset = 234
+            assert(not ES.WideMismatch(), "passende Breite als falsch gemeldet")
+            ES.LayoutActive, K.WideInset, root.wideInset = oldActive, oldIns, was
+        else
+            error("ES.WideMismatch fehlt")
+        end
         local oldInset = K.WideInset
         K.WideInset = function() return 100 end
         local l, r, m = K.Layout("fps"), K.Layout("bags"), K.Layout("reminders")

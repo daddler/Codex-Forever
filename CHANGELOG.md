@@ -18,7 +18,10 @@ nicht zusammen.
   linken/rechten Rand zur Mitte rücken; `K.Layout` und der Platz der Rahmen
   des Spiels in der Einrichtung (`ES.Target`) wenden es an, das Cockpit an
   der Mitte bleibt. Auf 16:9 und schmaler: Versatz 0. Gespeicherte Positionen
-  gehen weiter vor. Im Spiel ungeprüft.
+  gehen weiter vor. Erkennung von selbst aus der Breite; passt das Layout des
+  Bearbeitungsmodus nicht mehr zur Breite beim Einrichten (`root.wideInset`,
+  `ES.WideMismatch`, auch nach `DISPLAY_SIZE_CHANGED`), ein Hinweis auf
+  `/wcui einrichten` – nie ungefragt neu eingerichtet. Im Spiel ungeprüft.
 
 ## [6.29.9.0] – 2026-10-11
 

@@ -490,6 +490,8 @@ function ES.Apply()
     -- Nach dem Neuladen selbst nachsehen (6.26.18.0).
     local root = K.Root()
     if root then root.setupVerify = true end
+    -- Fuer welche Breite eingerichtet wurde (Breitbild, ES.CheckWide).
+    if root then root.wideInset = K.WideInset() end
     -- Die eigenen Rahmen bleiben, wo der Spieler sie im Gestaltungsmodus
     -- hingezogen hat (6.6.1.3 setzte sie zurueck - Beta-Test: die
     -- Schadensanzeige wanderte von oben links nach unten rechts). Ohne
@@ -887,9 +889,39 @@ if WeintCodex.Onboarding and WeintCodex.Onboarding.OnClosed then
     WeintCodex.Onboarding.OnClosed(function() if not ES._reload then ES.MaybeAsk() end end)
 end
 
+-- BREITBILD VON SELBST (6.29.10.0). Das Seitenverhaeltnis erkennt die
+-- Oberflaeche aus der Breite von UIParent (K.WideInset) - die eigenen
+-- Rahmen stehen damit bei jedem Laden richtig. Die Rahmen des Spiels aber
+-- stehen im Layout des Bearbeitungsmodus, eingerichtet fuer die Breite von
+-- damals. Passt der Versatz nicht mehr (anderer Bildschirm, Fenster,
+-- Einstellung), sagt es WeintCodex einmal - neu einrichten ueberschreibt
+-- das Layout und laedt neu, das geschieht nie ungefragt.
+-- Vor 6.29.10.0 eingerichtet: damals war der Versatz 0.
+local wideTold = false
+function ES.WideMismatch()
+    local root = K.Root()
+    if not root or ES.LayoutActive() ~= true then return false end
+    local was = type(root.wideInset) == "number" and root.wideInset or 0
+    return math.abs(K.WideInset() - was) > 2
+end
+
+function ES.CheckWide()
+    if wideTold or not K.UIEnabled() or not ES.WideMismatch() then return false end
+    wideTold = true
+    Say("Dein Bildschirm ist breiter oder schmaler als beim Einrichten – Chat, Minikarte und Questliste"
+        .. " stehen noch für die alte Breite. /wcui einrichten rückt sie zurecht.")
+    return true
+end
+
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("PLAYER_ENTERING_WORLD")
-ev:SetScript("OnEvent", function(_, _, isInitialLogin, isReloadingUi)
+for _, e in ipairs({ "DISPLAY_SIZE_CHANGED", "UI_SCALE_CHANGED" }) do pcall(ev.RegisterEvent, ev, e) end
+ev:SetScript("OnEvent", function(_, event, isInitialLogin, isReloadingUi)
+    if event ~= "PLAYER_ENTERING_WORLD" then
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(1, ES.CheckWide) end
+        return
+    end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(5, ES.CheckWide) end
     if not (isInitialLogin or isReloadingUi) then return end
     ES._reload = isReloadingUi and true or false
     if not K.UIEnabled() then return end
