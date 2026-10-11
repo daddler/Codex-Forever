@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.17.0] – 2026-10-11
+
+### Behoben
+
+- **Gruppenwerkzeuge richteten sich nach dem Loslassen nicht neu aus:**
+  `RT.Orient` setzt Griff und Pfeil schon während des Ziehens
+  (`K.dragging`, im Takt), nach dem Loslassen läuft `RT.Reanchor` sofort und
+  im nächsten Bild noch einmal – falls der Client die neue Lage erst dann
+  meldet. Die Ursache im Spiel ist nicht gemessen.
+
 ## [6.29.16.0] – 2026-10-11
 
 ### Behoben

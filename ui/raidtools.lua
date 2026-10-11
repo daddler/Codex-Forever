@@ -365,6 +365,20 @@ function RT.Reanchor()
     return true
 end
 
+-- Nur die Seite bestimmen (ohne zu speichern) - waehrend des Ziehens.
+function RT.Orient()
+    if not panel then return false end
+    local l, b, r, t = Num(panel, "GetLeft"), Num(panel, "GetBottom"), Num(panel, "GetRight"), Num(panel, "GetTop")
+    local W, H = Num(UIParent, "GetWidth"), Num(UIParent, "GetHeight")
+    if not (l and b and r and t and W and H) then return false end
+    local _, _, _, vert, horiz = RT.Corner(l, b, r, t, W, H)
+    if vert == RT.vert and horiz == RT.horiz then return false end
+    RT.vert, RT.horiz = vert, horiz
+    RT.PlaceHandle()
+    RT.Sync()
+    return true
+end
+
 -- Griff auf der Seite zur Mitte, oben oder unten buendig.
 function RT.PlaceHandle()
     if not handle then return end
@@ -460,7 +474,11 @@ local function Enable()
             acc = acc + (el or 0)
             if acc < 0.1 then return end
             acc = 0
-            if panel and panel:IsShown() then RT.Fade() end
+            if panel and panel:IsShown() then
+                RT.Fade()
+                -- Beim Ziehen im Gestaltungsmodus wandern Griff und Pfeil mit.
+                if K.dragging == MOVER then RT.Orient() end
+            end
         end)
     end
     RT.Apply()
@@ -514,7 +532,11 @@ K.Listen(function(kind, module, key)
     if kind == "unlock" then RT.Apply() return end
     -- Nach dem Ziehen (das Ziehen waehlt den Rahmen an): neue Ecke.
     if kind == "moverSelect" and module == MOVER then
-        if RT.Reanchor() then RT.PlaceHandle() RT.Sync() end
+        local function settle() if RT.Reanchor() then RT.PlaceHandle() RT.Sync() end end
+        settle()
+        -- Und im naechsten Bild noch einmal: nach dem Loslassen kennt der
+        -- Client die neue Lage womoeglich erst dann (6.29.17.0).
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, settle) end
         return
     end
     if kind == "setting" and module == KEY and type(key) == "string" and key:sub(1, 2) == "rt" then

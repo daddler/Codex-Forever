@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.17.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFGriff und Pfeil der Gruppenwerkzeuge folgen beim Ziehen.|r Im Gestaltungsmodus wandert der Griff schon beim Ziehen auf die Seite zur Bildschirmmitte, und nach dem Loslassen am Rand richtet sich das Menü sofort neu aus.",
+        },
+    },
+    {
         version = "6.29.16.0",
         date    = "11.10.2026",
         notes   = {

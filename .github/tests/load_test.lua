@@ -4659,6 +4659,25 @@ do
         assert(c2[1] == "TOPRIGHT" and c2[2] == -24 and c2[3] == -68, "oben rechts falsch: " .. tostring(c2[1]))
         local c3 = { RT.Corner(1100, 5, 1341, 300, 1365, 768) }
         assert(c3[1] == "BOTTOMRIGHT", "unten rechts nicht unten rechts verankert")
+        -- Im Gestaltungsmodus rechts unten losgelassen: Griff und Pfeil folgen.
+        local oldL, oldB, oldR, oldT = p.GetLeft, p.GetBottom, p.GetRight, p.GetTop
+        p.GetLeft = function() return 1100 end
+        p.GetRight = function() return 1341 end
+        p.GetBottom = function() return 5 end
+        p.GetTop = function() return 300 end
+        K.SelectMover("raidtools")
+        assert(RT.horiz == "RIGHT" and RT.vert == "BOTTOM", "nach dem Loslassen keine neue Ecke: "
+            .. tostring(RT.horiz) .. "/" .. tostring(RT.vert))
+        -- Waehrend des Ziehens: Seite folgt, ohne zu speichern.
+        p.GetLeft = function() return 10 end
+        p.GetRight = function() return 251 end
+        p.GetBottom = function() return 400 end
+        p.GetTop = function() return 700 end
+        K.dragging = "raidtools"
+        assert(RT.Orient() and RT.horiz == "LEFT" and RT.vert == "TOP", "beim Ziehen folgt die Seite nicht")
+        K.dragging = nil
+        p.GetLeft, p.GetBottom, p.GetRight, p.GetTop = oldL, oldB, oldR, oldT
+        K.SelectMover(nil)
         assert(#RT.secure == 18, "nicht 9 + 9 Markierknoepfe: " .. #RT.secure)
         -- Mouseover: blass ohne Maus, voll mit Maus.
         RT.Fade()
