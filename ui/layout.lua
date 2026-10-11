@@ -76,6 +76,8 @@ K.LAYOUT = {
     rarealert       = { point = "TOP",         relPoint = "TOP", x = 0, y = -210 },
     -- Fluestern (ui/messenger.lua, 6.19.0.0): das Fenster links ueber dem Chat.
     messenger       = { point = "BOTTOMLEFT",  relPoint = "BOTTOMLEFT", x = 20, y = 330 },
+    -- Gruppenwerkzeuge (6.29.13.0): links, wo das Menue des Spiels stand.
+    raidtools       = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 4, y = -200 },
     -- Sein Symbol (6.19.1.0): rechts neben der Unterkante des Fensters.
     -- 6.26.10.0 (Beta-Test): links an der Minikarte, ueber dem Addon-Knopf.
     -- 6.27.0.7: in die Minikarte, unten rechts ueber dem Gebietsstreifen -

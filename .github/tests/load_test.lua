@@ -4611,6 +4611,65 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.29.13.0: Gruppenwerkzeuge statt des Menues des Spiels.
+do
+    local RT = WeintCodex.UIRaidTools
+    local names = { "IsInGroup", "InCombatLockdown", "DoReadyCheck", "MouseIsOver", "CompactRaidFrameManager" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = _G[n] end
+    local ok, err = pcall(function()
+        assert(RT and RT.Start, "ui/raidtools.lua fehlt")
+        local page = false
+        for _, pg in ipairs(K.Module("groupframes").pages) do if pg.key == "gruppenwerkzeuge" then page = true end end
+        assert(page, "kein Reiter Gruppenwerkzeuge bei den Gruppenrahmen")
+        local inGroup = false
+        _G.IsInGroup = function() return inGroup end
+        _G.InCombatLockdown = function() return false end
+        _G.CompactRaidFrameManager = CreateFrame("Frame")
+        _G.CompactRaidFrameManager:Show()
+        local readies = 0
+        _G.DoReadyCheck = function() readies = readies + 1 end
+        local over = false
+        _G.MouseIsOver = function() return over end
+        local sdui, opt = WeintCodex.SavedData.ui.enabled, K.OPT_IN
+        WeintCodex.SavedData.ui.enabled = true
+        assert(RT.Start(), "startet nicht mit Oberflaeche")
+        local p = _G.WeintCodexRaidTools
+        assert(p and not p:IsShown(), "ohne Gruppe sichtbar")
+        assert(not _G.CompactRaidFrameManager:IsShown(), "Menue des Spiels nicht ausgeblendet")
+        inGroup = true
+        RT.Apply()
+        assert(p:IsShown(), "in der Gruppe nicht sichtbar")
+        -- Markieren nur ueber Makros des Spiels.
+        local macros = {}
+        for _, b in ipairs(RT.secure) do macros[b:GetAttribute("macrotext")] = b:GetAttribute("type") end
+        assert(macros["/tm 8"] == "macro" and macros["/tm 0"] and macros["/wm 1"] and macros["/cwm all"],
+            "Markierknoepfe nicht als Makro /tm, /wm, /cwm")
+        assert(#RT.secure == 18, "nicht 9 + 9 Markierknoepfe: " .. #RT.secure)
+        -- Mouseover: blass ohne Maus, voll mit Maus.
+        RT.Fade()
+        assert(math.abs(p:GetAlpha() - 0.15) < 0.02, "ohne Maus nicht blass")
+        over = true
+        RT.Fade()
+        assert(p:GetAlpha() == 1, "mit Maus nicht voll da")
+        over = false
+        -- Einklappen.
+        assert(RT.Toggle() and K.Get("groupframes", "rtCollapsed") == true, "einklappen geht nicht")
+        RT.Toggle()
+        -- Bereitschaftscheck, Verlassen mit zweitem Klick.
+        RT.ReadyCheck()
+        assert(readies == 1, "Bereitschaftscheck nicht ausgeloest")
+        assert(RT.ArmOrLeave("party") == false, "Gruppe beim ersten Klick verlassen")
+        inGroup = false
+        RT.Apply()
+        assert(not p:IsShown(), "nach dem Verlassen noch sichtbar")
+        WeintCodex.SavedData.ui.enabled, K.OPT_IN = sdui, opt
+    end)
+    for i, n in ipairs(names) do _G[n] = saved[i] end
+    Check(ok, "Gruppenwerkzeuge: nur in der Gruppe, Markieren als Makro, Mouseover, einklappen, Verlassen mit zweitem Klick"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.29.12.0: Auren am Zielrahmen ueber oder unter dem Rahmen.
 do
     local ok, err = pcall(function()

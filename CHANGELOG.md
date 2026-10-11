@@ -9,6 +9,25 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.13.0] – 2026-10-11
+
+### Neu
+
+- **Gruppenwerkzeuge** (`ui/raidtools.lua`) statt `CompactRaidFrameManager`:
+  Bereitschaftscheck (`DoReadyCheck`), Rollenabfrage (`InitiateRolePoll`),
+  Countdown (`C_PartyInfo.DoCountdown`, rechts bricht ab), Ziel- und
+  Bodenmarkierungen als geschützte Makroknöpfe (`/tm n`, `/tm 0`, `/wm n`,
+  `/cwm all` – Addons dürfen nicht markieren), Pings beschränken (nur
+  Anführer, `C_PartyInfo.SetRestrictPings`), Gruppe/Instanzgruppe verlassen
+  mit zweitem Klick. Nur in der Gruppe und im Gestaltungsmodus (Mover
+  `raidtools`), Mouseover über Deckkraft (geschützte Knöpfe dürfen im Kampf
+  nicht ein-/ausgeblendet werden), Einklappen nur außerhalb des Kampfes.
+  Einstellungen als Reiter der Gruppenrahmen (`rt*`) – die Seitenleiste fasst
+  kein Modul mehr. Das Menü des Spiels weicht (`rtHideBlizzard`); trägt es die
+  Schlachtzugsrahmen des Spiels als Kind, nur unsichtbar und ohne Maus. Nicht
+  übernommen: Auswahl Gruppe/Schlachtzug der Rahmen des Spiels, Knopf in den
+  Bearbeitungsmodus. Im Spiel ungeprüft.
+
 ## [6.29.12.0] – 2026-10-11
 
 ### Neu

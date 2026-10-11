@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.13.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFEigene Gruppenwerkzeuge statt des Menüs links.|r In der Gruppe: Ziel und Boden markieren, Bereitschaftscheck, Rollenabfrage, Countdown, Pings beschränken, Gruppe verlassen. Blass, bis die Maus darüber ist, mit dem Griff am Rand ein- und ausklappbar, im Gestaltungsmodus frei verschiebbar. Einstellungen: Gruppenrahmen → Gruppenwerkzeuge.",
+        },
+    },
+    {
         version = "6.29.12.0",
         date    = "11.10.2026",
         notes   = {

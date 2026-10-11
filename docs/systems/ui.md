@@ -4304,3 +4304,17 @@ vor. Im Spiel ungeprüft.
   und schließt ihn über dessen X (`E.AttachGameClose`,
   `E.SyncGameToggle`). Solange der Gestaltungsmodus offen ist, gibt es keine
   Leiste unter dem Fenster des Spiels (`E.ShowStrip`).
+
+## Gruppenwerkzeuge (6.29.13.0)
+
+`ui/raidtools.lua` ersetzt das ausklappbare Menü des Spiels links
+(`CompactRaidFrameManager`). Markieren nur über geschützte Makroknöpfe
+(`/tm`, `/wm`, `/cwm`), alles andere über ungeschützte Funktionen des
+Clients. Sichtbar nur in der Gruppe (und im Gestaltungsmodus, Mover
+`raidtools`, Platz in `K.LAYOUT`). Mouseover nur als Deckkraft, Einklappen
+nur außerhalb des Kampfes – die Fläche trägt geschützte Knöpfe.
+Einstellungen `rt*` bei den Gruppenrahmen, Seite „Gruppenwerkzeuge“ als
+Reiter dort (die Seitenleiste fasst kein weiteres Modul). Läuft mit der
+Oberfläche, auch wenn die Gruppenrahmen aus sind. Im Spiel ungeprüft:
+ob `/wm` auf Forever die Zielmarke zum Platzieren öffnet, und ob
+`CompactRaidFrameContainer` am Menü hängt (`RT.blizzardWay`).

@@ -590,7 +590,7 @@ local MODULE_OF = {
     uf_ = "unitframes", gf_ = "groupframes", damagemeter = "damagemeter", bags = "bags",
     questarrow = "questarrow", combatalert = "comfort", fps = "comfort", durability = "comfort",
     rarealert = "comfort", messenger = "comfort", messengerIcon = "comfort",
-    hud_ = "actionbars",
+    hud_ = "actionbars", raidtools = "groupframes",
 }
 function E.ModuleFor(key)
     for prefix, mod in pairs(MODULE_OF) do
