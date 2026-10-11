@@ -278,6 +278,9 @@ local function QuestLocation(questID, playerMap, onMap, final)
     return nil
 end
 
+QA.QuestLocation = QuestLocation
+QA.QuestTitle = QuestTitle
+
 -- Liefert: status, mapID, x, y, title
 --   "none"     nichts ausgewaehlt
 --   "ok"       Ziel bekannt

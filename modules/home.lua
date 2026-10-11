@@ -488,6 +488,22 @@ HM.LIST_H    = 10
 
 local page
 
+-- Abgabeort der ersten fertigen Quest auf der Karte. true, wenn gezeigt.
+function HM.ShowTurnIn()
+    local XB, QA, QM = WeintCodex.UIXPBar, WeintCodex.UIQuestArrow, WeintCodex.QuestMap
+    if not (XB and XB.FirstReadyQuest and QA and QA.QuestLocation and QM and QM.Show) then return false end
+    local id = XB.FirstReadyQuest()
+    if not id then return false end
+    local cm = _G.C_Map
+    local here = cm and cm.GetBestMapForUnit and select(2, pcall(cm.GetBestMapForUnit, "player"))
+    local ok, mapID, x, y = pcall(QA.QuestLocation, id, Plain(here), nil, true)
+    mapID, x, y = ok and Plain(mapID), ok and Plain(x), ok and Plain(y)
+    if type(mapID) ~= "number" or type(x) ~= "number" or type(y) ~= "number" then return false end
+    local title = QA.QuestTitle and select(2, pcall(QA.QuestTitle, id))
+    title = type(title) == "string" and title or "Quest"
+    return QM.Show({ map = mapID, x = x, y = y, who = "Abgeben: " .. title }, title, "Abgeben: " .. title) and true or false
+end
+
 local function Go(step)
     local go = step and step.go
     if not go then return end
@@ -496,6 +512,14 @@ local function Go(step)
         -- alles andere schrieb in die Weltkarte und liess das Spiel im
         -- Kampf blockieren, 6.6.0.1).
         local QM = WeintCodex.QuestMap
+        -- 6.29.1.0 (Beta-Test: "die Karte kommt hinter WeintCodex und zeigt
+        -- nur, wo ich stehe"): den Abgabeort der ersten fertigen Quest, wie
+        -- ihn der Client nennt, mit Marke - QM.Show schliesst dafuer den
+        -- Codex und bietet den Weg zurueck. Kennt der Client keinen Ort:
+        -- Codex zu, Karte auf der eigenen Zone.
+        if HM.ShowTurnIn() then return end
+        local main = WeintCodex.MainFrame
+        if type(main) == "table" and main.IsShown and main:IsShown() and not InCombatLockdown() then main:Hide() end
         local ok, why = false, "api"
         if QM and QM._OpenMap then ok, why = QM._OpenMap(nil) end
         if not ok then

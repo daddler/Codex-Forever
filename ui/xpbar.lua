@@ -121,6 +121,21 @@ function XB.QuestReady(id)
     return true
 end
 
+-- Die erste abgabebereite Quest im Log (Nummer) oder nil (6.29.1.0).
+function XB.FirstReadyQuest()
+    local ql = _G.C_QuestLog
+    if not (ql and ql.GetNumQuestLogEntries and ql.GetInfo) then return nil end
+    local found
+    pcall(function()
+        for i = 1, (Num(ql.GetNumQuestLogEntries()) or 0) do
+            local info = ql.GetInfo(i)
+            local id = type(info) == "table" and Num(info.questID)
+            if id and id > 0 and not info.isHeader and XB.QuestReady(id) then found = id return end
+        end
+    end)
+    return found
+end
+
 function XB.QuestXP()
     local ql = _G.C_QuestLog
     local reward = _G.GetQuestLogRewardXP

@@ -17198,6 +17198,23 @@ do
     Check(ok, "Glitzern: Kraut/Erz am Mauszeiger, Werte gesetzt und zurueckgegeben" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.29.1.0: "Auf der Karte zeigen" zeigt den Abgabeort der fertigen Quest.
+do
+    local ok, err = pcall(function()
+        local HM, XB, QA, QM = WeintCodex.Home, WeintCodex.UIXPBar, WeintCodex.UIQuestArrow, WeintCodex.QuestMap
+        local oF, oL, oS = XB.FirstReadyQuest, QA.QuestLocation, QM.Show
+        local shown
+        XB.FirstReadyQuest = function() return 42 end
+        QA.QuestLocation = function(id, _, _, final) assert(id == 42 and final) return 1429, 0.4, 0.6 end
+        QM.Show = function(place) shown = place return true end
+        assert(HM.ShowTurnIn() == true and shown.map == 1429 and shown.x == 0.4, "Abgabeort nicht gezeigt")
+        XB.FirstReadyQuest = function() return nil end
+        assert(HM.ShowTurnIn() == false, "ohne fertige Quest gezeigt")
+        XB.FirstReadyQuest, QA.QuestLocation, QM.Show = oF, oL, oS
+    end)
+    Check(ok, "Startseite: Karte mit Abgabeort der fertigen Quest" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

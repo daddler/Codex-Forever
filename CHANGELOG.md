@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.1.0] – 2026-10-11
+
+### Behoben
+
+- Startseite „Auf der Karte zeigen“ (Beta-Test: „Karte hinter WeintCodex, und nur da, wo ich stehe“): `HM.ShowTurnIn` nimmt die erste fertige Quest (`XB.FirstReadyQuest`), ihren Ort vom Client (`QA.QuestLocation` – Wegpunkt oder Questmarke auf der Karte) und zeigt ihn über `QM.Show` mit Marke; dort schließt sich der Codex, sobald die Karte steht, und bietet den Weg zurück. Ohne Ort vom Client: Codex zu, Karte auf der eigenen Zone.
+
 ## [6.29.0.1] – 2026-10-11
 
 ### Geändert

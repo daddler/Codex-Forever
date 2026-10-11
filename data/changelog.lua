@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.1.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFF„Auf der Karte zeigen“ zeigt den Abgabeort.|r Die Startseite öffnet die Weltkarte jetzt dort, wo die fertige Quest abgegeben wird, mit Marke – und der Codex geht dafür zu, statt die Karte zu verdecken.",
+        },
+    },
+    {
         version = "6.29.0.1",
         date    = "11.10.2026",
         notes   = {
