@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.0.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFGlitzern.|r Neue Komfortseite: Questgegenstände glitzern immer – auch nach einem Wechsel der Grafikstufe –, und über dem nächsten Kraut oder der nächsten Erzader funkelt es golden (grau, wenn du es noch nicht sammeln kannst). Beides einzeln einschaltbar.",
+        },
+    },
+    {
         version = "6.28.1.0",
         date    = "11.10.2026",
         notes   = {

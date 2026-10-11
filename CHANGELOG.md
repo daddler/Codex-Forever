@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.0.0] – 2026-10-11
+
+### Neu
+
+- Glitzern (Wunsch: ForeverLootSparkles als Komfort): `ui/sparkles.lua`, Seite „Glitzern“. Nach dem Verhalten des Addons, eigener Code (es steht unter GPL-3.0, WeintCodex unter MIT). `sparkleLoot`: Umrisse aus, Glitzern an (`outlineModeShowLootEffectWhenDisabled`, `graphicsOutlineMode` u. a.), neu gesetzt 1 s nach jeder Grafikänderung (`CVAR_UPDATE`), nie im Kampf. `sparkleNodes`: weiche Zielerfassung (`SoftTargetInteract` u. a.), Art des Ziels aus dem Mauszeiger des Spiels (`SetUnitCursorTexture`), Funken (`Interface\Cooldown\star4`) an der Plakette des Krauts/der Erzader, grau bei „Unable…“; die Plakette des Objekts nur dann an. Alle Werte über `PF.SetCVar`, beim Ausschalten zurück. Beide ab Werk aus.
+- Plaketten bemalen keine Objekte mehr (`NP.IsObjectPlate`) – die weiche Zielerfassung gibt Kräutern und Truhen eine Plakette ohne Leben.
+
 ## [6.28.1.0] – 2026-10-11
 
 ### Geändert

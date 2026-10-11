@@ -1584,6 +1584,24 @@ end
 NP.IsPlateToken = IsPlateToken
 
 local Detach
+function NP.IsObjectPlate(unit)
+    local f = _G.UnitIsGameObject
+    if type(f) == "function" then
+        local ok, v = pcall(f, unit)
+        if ok and K.Bool(v, false) then return true end
+    end
+    local isUnit = _G.UnitIsUnit
+    if type(isUnit) == "function" then
+        local ok, v = pcall(isUnit, unit, "softinteract")
+        if ok and K.Bool(v, false) and not K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(unit), false)
+           and type(K.Plain(_G.UnitHealthMax and _G.UnitHealthMax(unit))) == "number"
+           and K.Plain(_G.UnitHealthMax(unit)) <= 0 then
+            return true
+        end
+    end
+    return false
+end
+
 local function Attach(unit)
     if not (_G.C_NamePlate and _G.C_NamePlate.GetNamePlateForUnit) or not IsPlateToken(unit) then return end
     if plates[unit] then Detach(unit) end
@@ -1594,6 +1612,10 @@ local function Attach(unit)
     -- In Instanzen sind freundliche Plaketten fuer Addons gesperrt
     -- ("forbidden"): dann bleiben die des Spiels, ohne Fehler.
     if nameplate.IsForbidden and nameplate:IsForbidden() then return end
+    -- Objekte (Kraut, Erz, Truhe) bekommen ueber die weiche Zielerfassung
+    -- eine Plakette des Spiels - keine Einheit, kein Leben: nicht bemalen
+    -- (6.29.0.0, Glitzern haengt dort seine Funken an).
+    if NP.IsObjectPlate(unit) then return end
     local friendly = not K.Bool(_G.UnitCanAttack and _G.UnitCanAttack("player", unit), false)
     if friendly and not S.friendlyEnabled then return end
 

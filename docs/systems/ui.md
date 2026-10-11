@@ -1789,6 +1789,18 @@ Name im Tooltip – seit 6.27.0.5 Aura gleichen Namens, Kern des Namens
 Gespräche (`ui/dialogue.lua`): Belohnungen zeigen den Vergleich des Spiels
 (`DL.Compare`, `GameTooltip_ShowCompareItem` an `ShoppingTooltip1/2`).
 
+## Glitzern *(6.29.0.0, `ui/sparkles.lua`, Seite „Glitzern“)*
+
+Verhalten von ForeverLootSparkles (GPL-3.0), kein Code daraus. Quest:
+`SP.LOOT_CVARS`, neu gesetzt bei `CVAR_UPDATE` der Grafikstufe (1 s später).
+Kraut/Erz: `SP.NODE_CVARS`, alle 0,12 s `SP.Look` – Einheit `softinteract`,
+Art über `SetUnitCursorTexture` auf einer versteckten Textur (Pfad, Datei-ID
+oder Atlas mit „herb/gather“, „mine“, „unable“), `SoftTargetNameplateInteract`
+nur bei Kraut/Erz an, Funken an `GetNamePlateForUnit("softinteract")`. Im
+Kampf aus. `NP.IsObjectPlate` hält die eigenen Plaketten von Objekten fern.
+**Ungemessen** auf Forever: `SetUnitCursorTexture`, die Plakette des
+Objekts, der Abstand der Funken zum Objekt.
+
 ## Profil teilen *(6.28.0.0, `ui/share.lua`)*
 
 Export: `WCUI1:` + Base64(`SH.Serialize{ v = 1, name, profile, layout, addon }`).

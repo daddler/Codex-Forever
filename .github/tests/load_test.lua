@@ -16420,9 +16420,9 @@ do
             assert(QoL.PAGE_ORDER[p.key], "Seite ohne Thema: " .. p.key)
         end
         local order = table.concat(keys, ",")
-        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,karte,sammeln,selten,auktion,fluestern,gespraeche",
+        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,karte,sammeln,glitzern,selten,auktion,fluestern,gespraeche",
             "Reihenfolge: " .. order)
-        assert(O.PageIndex("comfort", "gespraeche") == 12 and O.PageIndex("comfort", "fluestern") == 11, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 13 and O.PageIndex("comfort", "fluestern") == 12, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")
@@ -17168,6 +17168,34 @@ do
         G.C_QuestLog = oQL
     end)
     Check(ok, "Quests: abgabebereit nur mit klarem Ja und erfuellten Zielen" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.29.0.0: Glitzern - Mauszeiger lesen, Werte setzen und zurueckgeben.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local K, SP, PF = WeintCodex.UIKit, WeintCodex.UISparkles, WeintCodex.UIProfile
+        assert(SP.ReadCursor("Interface\\Cursor\\GatherHerbs") == "herb", "Kraut nicht erkannt")
+        local k, b = SP.ReadCursor("Cursor_Crosshair_UnableMine_64")
+        assert(k == "ore" and b == true, "ausgegraute Erzader nicht erkannt")
+        assert(SP.ReadCursor("Interface\\Cursor\\Interact") == "other", "Briefkasten als Kraut")
+        local cv = { graphicsOutlineMode = "2", outlineModeShowLootEffectWhenDisabled = "0", OutlineEngineMode = "2",
+                     raidGraphicsOutlineMode = "2", RAIDOutlineEngineMode = "2" }
+        local oC = G.C_CVar
+        G.C_CVar = { GetCVar = function(n) return cv[n] end, SetCVar = function(n, v) cv[n] = v return true end }
+        K.Set("comfort", "sparkleLoot", true)
+        local oA = SP.LootActive
+        SP.LootActive = function() return true end
+        SP.ApplyLoot()
+        assert(cv.graphicsOutlineMode == "0" and cv.outlineModeShowLootEffectWhenDisabled == "1", "Glitzern nicht gesetzt")
+        SP.LootActive = function() return false end
+        K.Set("comfort", "sparkleLoot", false)
+        SP.Apply()
+        assert(cv.graphicsOutlineMode == "2" and cv.outlineModeShowLootEffectWhenDisabled == "0", "Werte nicht zurueck")
+        SP.LootActive = oA
+        G.C_CVar = oC
+    end)
+    Check(ok, "Glitzern: Kraut/Erz am Mauszeiger, Werte gesetzt und zurueckgegeben" .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then
