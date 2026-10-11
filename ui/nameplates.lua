@@ -1996,8 +1996,12 @@ end
 -- noch unser Wert steht. Nur ausserhalb des Kampfes (geschuetzt).
 NP.OFF_CVARS = { "nameplateShowEnemies", "nameplateShowFriends" }
 
+-- 6.29.22.0: auch OHNE Oberflaeche (Spielerbericht: "Plaketten muessen
+-- wirklich aus sein, wenn man sie abwaehlt und die UI nicht nutzt").
+-- Dann ist der Schalter "Modul an" der Plaketten dieser Wahl zugeordnet
+-- (ui/options.lua, offToggle) - die eigenen laufen ohne Oberflaeche nie.
 function NP.WantHideGame()
-    return K.UIEnabled() and not K.WantsActive(KEY) and K.Get(KEY, "offGamePlates") == "hide"
+    return not K.WantsActive(KEY) and K.Get(KEY, "offGamePlates") == "hide"
 end
 
 function NP.ApplyOff()
@@ -2007,7 +2011,8 @@ function NP.ApplyOff()
     local hide = NP.WantHideGame()
     local applied = K.Get(KEY, "offHidden") == true
     if hide then
-        for _, n in ipairs(NP.OFF_CVARS) do PF.SetCVar(n, "0", "ui") end
+        -- Eigener Besitzer: haelt auch ohne Oberflaeche (PF.OwnerWants).
+        for _, n in ipairs(NP.OFF_CVARS) do PF.SetCVar(n, "0", "npoff") end
         if not applied then K.Set(KEY, "offHidden", true) end
     elseif applied then
         for _, n in ipairs(NP.OFF_CVARS) do PF.Release(n) end
@@ -2099,6 +2104,8 @@ end
 
 K.Register({
     key = KEY, group = "ui", order = 10,
+    -- Ohne Oberflaeche schaltet "Modul an" die Plaketten des Spiels.
+    offToggle = { key = "offGamePlates", on = "show", off = "hide", label = "Plaketten an" },
     title = "Namensplaketten",
     description = "Eigene Plaketten: Gegner mit Farben nach Lage, Stufe, Debuffs, Zauberbalken und Zielrahmen; Freunde als Name in Klassenfarbe.",
     defaults = defaults,

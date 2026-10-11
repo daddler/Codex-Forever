@@ -765,6 +765,15 @@ function O.HeadToggle(key)
             get = function() return K.UIEnabled() end,
             set = function(on) K.SetUIEnabled(on) end,
         }
+    elseif m.group == "ui" and m.offToggle and not K.UIEnabled() then
+        -- Ohne Oberflaeche laeuft das Modul nie; der Schalter sagt dann,
+        -- ob das Spiel seine eigenen zeigt (6.29.22.0, Namensplaketten).
+        local o = m.offToggle
+        opts = {
+            label = o.label,
+            get = function() return K.Get(key, o.key) ~= o.off end,
+            set = function(on) K.Set(key, o.key, on and o.on or o.off) end,
+        }
     elseif m.group == "ui" then
         opts = {
             label = "Modul an",

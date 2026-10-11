@@ -4649,6 +4649,15 @@ do
         assert(cv.nameplateShowEnemies == "0" and cv.nameplateShowFriends == "0", "Plaketten des Spiels nicht aus")
         K.Set("nameplates", "offGamePlates", "show")
         assert(cv.nameplateShowEnemies == "1" and cv.nameplateShowFriends == "1", "nicht zurueckgegeben")
+        -- 6.29.22.0: ohne Oberflaeche ebenso, und das Aufraeumen beim
+        -- Anmelden gibt sie nicht wieder frei.
+        WeintCodex.SavedData.ui.enabled = false
+        K.Set("nameplates", "offGamePlates", "hide")
+        assert(cv.nameplateShowEnemies == "0", "ohne Oberflaeche nicht aus")
+        WeintCodex.UIProfile.Sweep()
+        assert(cv.nameplateShowEnemies == "0", "Aufraeumen ohne Oberflaeche gibt die Plaketten zurueck")
+        K.Set("nameplates", "offGamePlates", "show")
+        assert(cv.nameplateShowEnemies == "1", "ohne Oberflaeche nicht zurueck")
         K.WantsActive = sw
         WeintCodex.SavedData.ui.enabled = sdui
     end)

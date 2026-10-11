@@ -273,6 +273,11 @@ end
 -- Laeuft der Besitzer (nach dem naechsten Laden)?
 function PF.OwnerWants(owner)
     if owner == "ui" or owner == nil then return K.UIEnabled() end
+    -- Plaketten des Spiels aus (ui/nameplates.lua), mit oder ohne Oberflaeche.
+    if owner == "npoff" then
+        local NP = WeintCodex.UINameplates
+        return NP ~= nil and NP.WantHideGame ~= nil and NP.WantHideGame() == true
+    end
     return K.WantsActive(owner)
 end
 

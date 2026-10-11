@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.22.0] – 2026-10-11
+
+### Behoben
+
+- **Namensplaketten ohne Oberfläche nicht abschaltbar:** der Schalter „Modul
+  an“ war ohne Oberfläche gesperrt und zeigte „aus“, während das Spiel seine
+  Plaketten zeigte. Jetzt schaltet er ohne Oberfläche `offGamePlates`
+  (`offToggle` am Modul, `ui/options.lua`); `NP.WantHideGame` verlangt die
+  Oberfläche nicht mehr, die Spieleinstellungen gehören dem eigenen Besitzer
+  „npoff“ (`PF.OwnerWants`) und überstehen das Aufräumen beim Anmelden.
+
 ## [6.29.21.0] – 2026-10-11
 
 ### Geändert

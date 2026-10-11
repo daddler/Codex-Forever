@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.22.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFNamensplaketten lassen sich auch ohne Oberfläche abschalten.|r Ohne die Oberfläche von WeintCodex heißt der Schalter bei den Namensplaketten „Plaketten an“ – aus heißt: gar keine Plaketten, auch nicht die des Spiels. Mit V holst du sie jederzeit zurück.",
+        },
+    },
+    {
         version = "6.29.21.0",
         date    = "11.10.2026",
         notes   = {
