@@ -852,6 +852,9 @@ function GF.ApplyGameOrientation(key)
 end
 
 local function OnSetting(key)
+    -- Krone an den Rahmen des Spiels (ui/gamegroup.lua) sofort.
+    local GG = WeintCodex.UIGameGroup
+    if (key == "leaderIcon" or key == "*") and GG and GG.UpdateLeaders then GG.UpdateLeaders() end
     K.AfterCombat(function()
         for kind in pairs(headers) do Configure(kind) end
         GF.ApplyGameOrientation(key)

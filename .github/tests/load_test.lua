@@ -4205,6 +4205,16 @@ do
         GG.Color(f)
         assert(col == nil, "Tote umgefaerbt (das Spiel zeigt sie grau)")
         _G.UnitIsPlayer, _G.UnitClass, _G.RAID_CLASS_COLORS, _G.UnitIsConnected, _G.UnitIsDeadOrGhost = oUP, oUC, oRCC, oCon, oDead
+        -- 6.29.23.0: Krone beim Gruppenleiter auch an den Rahmen des Spiels.
+        local oLead = _G.UnitIsGroupLeader
+        local leader = true
+        _G.UnitIsGroupLeader = function() return leader end
+        rawset(f, "unit", "party1")
+        assert(GG.Leader(f) and GG.styled[f].leader:IsShown(), "keine Krone beim Gruppenleiter")
+        leader = false
+        GG.UpdateLeaders()
+        assert(not GG.styled[f].leader:IsShown(), "Krone bleibt nach dem Wechsel")
+        _G.UnitIsGroupLeader = oLead
         -- Anders benannt: im Behaelter des Spiels gefunden.
         local box = CreateFrame("Frame", nil, UIParent)
         local odd = CreateFrame("Button", nil, box)

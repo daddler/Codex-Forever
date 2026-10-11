@@ -173,9 +173,36 @@ function GG.Style(f)
         local bc = K.GetColor(KEY, "borderColor")
         s.border:SetColor(bc.r, bc.g, bc.b, 1)
         s.border:SetShown(Opt("showBorder") and true or false)
+        GG.Leader(f)
     end)
     if not ok then K.Report("gruppe", err) end
     return ok
+end
+
+-- Krone beim Gruppenleiter (6.29.23.0, Spielerbericht: "das Gruppenfenster
+-- muesste anzeigen, wer den Lead hat"). Die Rahmen des Spiels zeigen es
+-- nicht; die eigenen Kacheln hatten die Krone (leaderIcon) schon. Dasselbe
+-- Bild, dieselbe Farbe, oben links, auf einer eigenen Textur am Rahmen.
+function GG.Leader(f)
+    local s = styled[f]
+    if not s then return false end
+    if not s.leader then
+        s.leader = f:CreateTexture(nil, "OVERLAY", nil, 7)
+        s.leader:SetSize(12, 12)
+        s.leader:SetPoint("TOPLEFT", f, "TOPLEFT", 2, -2)
+        s.leader:SetTexture(K.MEDIA .. "icon_leader")
+        local lc = WeintCodex.GameColors.leader
+        s.leader:SetVertexColor(lc[1], lc[2], lc[3], 1)
+    end
+    local unit = type(f.displayedUnit) == "string" and f.displayedUnit or f.unit
+    local lead = type(unit) == "string" and Opt("leaderIcon")
+        and K.Bool(_G.UnitIsGroupLeader and _G.UnitIsGroupLeader(unit), false)
+    s.leader:SetShown(lead and true or false)
+    return lead and true or false
+end
+
+function GG.UpdateLeaders()
+    for f in pairs(styled) do GG.Leader(f) end
 end
 
 -- Die Behaelter des Spiels: Ueberschrift ("Gruppe") und Rahmen weg - die
@@ -251,16 +278,24 @@ function GG.Enable()
         -- Das Spiel faerbt bei jedem Einheitenwechsel neu ein.
         for _, fn in ipairs({ "CompactUnitFrame_UpdateHealthColor", "CompactUnitFrame_UpdateAll" }) do
             if type(_G[fn]) == "function" then
-                _G.hooksecurefunc(fn, K.Measured("Gruppenrahmen des Spiels", function(f) GG.Color(f) end))
+                _G.hooksecurefunc(fn, K.Measured("Gruppenrahmen des Spiels", function(f)
+                    GG.Color(f)
+                    GG.Leader(f)
+                end))
                 GG.hooks = (GG.hooks or 0) + 1
             end
         end
     end
     local ev = CreateFrame("Frame")
-    for _, e in ipairs({ "GROUP_ROSTER_UPDATE", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED" }) do
+    for _, e in ipairs({ "GROUP_ROSTER_UPDATE", "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED",
+                         "PARTY_LEADER_CHANGED" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
-    ev:SetScript("OnEvent", K.Measured("Gruppenrahmen des Spiels", Later))
+    ev:SetScript("OnEvent", K.Measured("Gruppenrahmen des Spiels", function(_, event)
+        -- Nur die Krone: geht auch im Kampf (eine eigene Textur).
+        if event == "PARTY_LEADER_CHANGED" then GG.UpdateLeaders() return end
+        Later()
+    end))
     GG.state = "Rahmen des Spiels im WeintCodex-Stil"
     Later()
 end

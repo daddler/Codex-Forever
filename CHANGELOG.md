@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.23.0] – 2026-10-11
+
+### Neu
+
+- **Krone beim Gruppenleiter an den Rahmen des Spiels** (`GG.Leader`,
+  `ui/gamegroup.lua`): eigene Textur oben links, Bild und Farbe wie an den
+  eigenen Kacheln, Schalter `leaderIcon`. Neu bei `PARTY_LEADER_CHANGED`
+  (auch im Kampf) und nach jedem `CompactUnitFrame_UpdateAll`.
+  Im Spiel ungeprüft.
+
 ## [6.29.22.0] – 2026-10-11
 
 ### Behoben

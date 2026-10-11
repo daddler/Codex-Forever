@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.23.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Gruppe zeigt, wer führt.|r Eine Krone oben links am Rahmen des Gruppenleiters – jetzt auch an den Gruppenrahmen des Spiels im WeintCodex-Stil, nicht nur an den eigenen Kacheln. Abschaltbar unter Gruppenrahmen.",
+        },
+    },
+    {
         version = "6.29.22.0",
         date    = "11.10.2026",
         notes   = {
