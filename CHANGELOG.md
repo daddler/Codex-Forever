@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.6.0] – 2026-10-11
+
+### Behoben
+
+- **Bossbilder in Dungeons ohne Reihenfolge und Kennzeichen** (Excavation Site):
+  die Karten blieben flach und zeigten kein Bild. Ein Bossbild erlaubt jetzt die
+  hohe Karte.
+
 ## [6.29.5.0] – 2026-10-11
 
 ### Neu

@@ -1403,6 +1403,12 @@ local function DrawBosses(f, y, dungeon, bossOpen)
         local headline, longest = false, 1
         for _, boss in ipairs(shown) do
             if boss.order or BossTag(boss) then headline = true end
+            -- 6.29.6.0: Ein eigenes Bossbild traegt die hohe Karte auch
+            -- ohne Nummer und Kennzeichen - auf der flachen Karte gaebe
+            -- es kein Bild (Excavation Site: ungeordnet, ohne Kennzeichen).
+            if WeintCodex.Art and WeintCodex.Art.Boss(dungeon and dungeon.id, boss.id) then
+                headline = true
+            end
             local len = WeintCodex.Utf8Len(boss.name or "?")
             if len > longest then longest = len end
         end

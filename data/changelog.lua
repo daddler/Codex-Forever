@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.6.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFBossbilder auch in Excavation Site.|r Die Bosskarten blieben flach und ohne Bild, weil die Reihenfolge der Bosse unbekannt ist. Gibt es ein Bild, ist die Karte jetzt hoch und zeigt es.",
+        },
+    },
+    {
         version = "6.29.5.0",
         date    = "11.10.2026",
         notes   = {
