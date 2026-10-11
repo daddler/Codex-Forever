@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.14.0] – 2026-10-11
+
+### Behoben
+
+- **Gruppenwerkzeuge blieben blass:** Mouseover fragte das globale
+  `MouseIsOver` über einen `C_Timer`-Takt; jetzt wie die Aktionsleisten
+  `frame:IsMouseOver` mit 6 Einheiten Luft, Antwort über `K.Bool`, Takt über
+  `OnUpdate` (0,1 s). Welcher der beiden Teile im Spiel versagte, ist nicht
+  gemessen – der neue Weg ist der, der an den Leisten läuft.
+
 ## [6.29.13.0] – 2026-10-11
 
 ### Neu

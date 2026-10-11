@@ -4630,7 +4630,8 @@ do
         local readies = 0
         _G.DoReadyCheck = function() readies = readies + 1 end
         local over = false
-        _G.MouseIsOver = function() return over end
+        _G.MouseIsOver = function() error("globales MouseIsOver gefragt") end
+        _G.WeintCodexRaidTools.IsMouseOver = function() return over end
         local sdui, opt = WeintCodex.SavedData.ui.enabled, K.OPT_IN
         WeintCodex.SavedData.ui.enabled = true
         assert(RT.Start(), "startet nicht mit Oberflaeche")

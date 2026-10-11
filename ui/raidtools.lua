@@ -322,11 +322,22 @@ function RT.Apply()
     RT.Fade()
 end
 
+-- Maus ueber der Flaeche? Wie die Leisten (ui/actionbars.lua):
+-- IsMouseOver des Rahmens mit etwas Luft, Antwort ueber K.Bool (kann
+-- geheim sein). 6.29.13.0 fragte das globale MouseIsOver - die Flaeche
+-- blieb im Spiel blass (Spielerbericht 6.29.14.0).
+local HOVER_MARGIN = 6
+function RT.MouseOver(f)
+    if type(f) ~= "table" or type(f.IsMouseOver) ~= "function" then return false end
+    local m = HOVER_MARGIN
+    local ok, v = pcall(f.IsMouseOver, f, m, -m, -m, m)
+    return ok and K.Bool(v, false) or false
+end
+
 -- Mouseover: nur Deckkraft (geht auch im Kampf).
 function RT.Fade()
     if not panel then return end
-    local over = K.IsUnlocked() or not Opt("rtHover")
-        or (_G.MouseIsOver and _G.MouseIsOver(panel)) or (handle and _G.MouseIsOver and _G.MouseIsOver(handle))
+    local over = K.IsUnlocked() or not Opt("rtHover") or RT.MouseOver(panel) or RT.MouseOver(handle)
     local a = over and 1 or (Opt("rtFadeAlpha") or 15) / 100
     if panel.GetAlpha and math.abs((panel:GetAlpha() or 1) - a) > 0.01 then panel:SetAlpha(a) end
 end
@@ -367,8 +378,15 @@ local function Enable()
         pcall(ev.RegisterEvent, ev, e)
     end
     ev:SetScript("OnEvent", K.Measured("Gruppenwerkzeuge", function() RT.Apply() end))
-    if _G.C_Timer and _G.C_Timer.NewTicker and not ticker then
-        ticker = _G.C_Timer.NewTicker(0.15, function()
+    -- Ein Takt ueber OnUpdate (wie die Leisten), gedrosselt, ohne
+    -- Tabellen je Bild.
+    if not ticker then
+        ticker = CreateFrame("Frame")
+        local acc = 0
+        ticker:SetScript("OnUpdate", function(_, el)
+            acc = acc + (el or 0)
+            if acc < 0.1 then return end
+            acc = 0
             if panel and panel:IsShown() then RT.Fade() end
         end)
     end

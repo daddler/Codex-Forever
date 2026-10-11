@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.14.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFGruppenwerkzeuge werden beim Drüberfahren wieder voll sichtbar.|r Die Fläche blieb blass, auch mit der Maus darauf.",
+        },
+    },
+    {
         version = "6.29.13.0",
         date    = "11.10.2026",
         notes   = {
