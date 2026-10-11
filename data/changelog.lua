@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.0.1",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFGlitzern im Willkommens-Assistenten.|r Im Schritt „Welt und Karte“ lässt es sich gleich beim ersten Einloggen wählen. Dafür stehen „Ganze Karte“ und „Stufen und Sammelberufe“ dort jetzt in einer Zeile.",
+        },
+    },
+    {
         version = "6.29.0.0",
         date    = "11.10.2026",
         notes   = {

@@ -130,12 +130,13 @@ WL.HELPERS = {
       text = "Ein Symbol an jedem Eingang, den der Codex kennt." },
     { group = "welt", module = "comfort", key = "mapMarks", keys = { "mapSpirit", "mapCrossings", "mapFlight", "mapTravel" },
       label = "Geistheiler, Wege, Flugmeister", text = "Dazu Schiffe, Zeppeline und Portale – Maus darauf: wohin." },
-    { group = "welt", module = "comfort", key = "mapReveal", label = "Ganze Karte zeigen",
-      text = "Auch Unerkundetes, etwas dunkler." },
-    { group = "welt", module = "comfort", key = "mapZoneInfo", label = "Stufen und Sammelberufe",
-      text = "Für welche Stufe ein Gebiet ist, Angeln, Kräuter, Erze." },
+    -- 6.29.0.1: zwei Kartenhelfer in einer Zeile - Platz fuer das Glitzern.
+    { group = "welt", module = "comfort", key = "mapReveal", keys = { "mapReveal", "mapZoneInfo" },
+      label = "Ganze Karte, Stufen und Sammelberufe", text = "Auch Unerkundetes, dazu Stufen, Angeln, Kräuter und Erze je Gebiet." },
     { group = "welt", module = "comfort", key = "gatherSwap", label = "Kräuter und Erz im Wechsel",
       text = "Beide Suchen auf der Minikarte – außerhalb des Kampfes." },
+    { group = "welt", module = "comfort", key = "sparkleLoot", keys = { "sparkleLoot", "sparkleNodes" }, label = "Glitzern",
+      text = "Questgegenstände glitzern immer, Kräuter und Erz funkeln in der Nähe." },
     { group = "welt", module = "comfort", key = "rareAlert", label = "Seltene Gegner melden",
       text = "Ton und Hinweis, sobald ein seltener Gegner in der Nähe ist." },
     -- Handel und Gespraeche

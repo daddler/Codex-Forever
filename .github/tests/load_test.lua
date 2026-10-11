@@ -2238,7 +2238,7 @@ do
         assert(WL.Step() == "kampf" and WL.BodyText():find("Klickzauber", 1, true), "Kampf ohne Hinweis auf Klickzauber")
         assert(WL.Row("help", "fireAlarm") and WL.Row("help", "markHover"), "Raus da oder Markieren fehlen")
         WL.Button("next"):Click()
-        assert(WL.Step() == "welt" and WL.Row("help", "mapZoneInfo") and WL.Row("help", "mapMarks"), "Welt und Karte fehlt")
+        assert(WL.Step() == "welt" and WL.Row("help", "mapReveal") and WL.Row("help", "sparkleLoot") and WL.Row("help", "mapMarks"), "Welt und Karte fehlt")
         WL.Row("help", "mapMarks"):Click()
         WL.Button("next"):Click()
         assert(WL.Step() == "handel" and WL.Row("help", "msgOn") and WL.Row("help", "dlgOn"), "Handel und Gespraeche fehlt")

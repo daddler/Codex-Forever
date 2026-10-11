@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.0.1] – 2026-10-11
+
+### Geändert
+
+- Willkommens-Assistent: „Glitzern“ im Schritt „Welt und Karte“ (`keys = { sparkleLoot, sparkleNodes }`). Damit der Schritt in die Höhe passt (Prüflauf: 408 von 390 px), sind „Ganze Karte zeigen“ und „Stufen und Sammelberufe“ eine Zeile (`keys = { mapReveal, mapZoneInfo }`); einzeln bleiben beide auf der Seite „Karte“.
+
 ## [6.29.0.0] – 2026-10-11
 
 ### Neu
