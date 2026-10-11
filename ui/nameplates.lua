@@ -111,6 +111,8 @@ local defaults = {
     threatLow  = K.ColorDefault("threatLow"),  -- Leiste: weit weg (grau)
     threatOk   = K.ColorDefault("threatOk"),   -- Leiste: geht noch (gruen, 6.27.1.0)
     threatOkAt = 50,       -- ab hier gruen statt grau (6.27.1.0)
+    threatYellowAt = 75,   -- Leiste ab hier gelb (6.29.8.0)
+    threatRedAt = 90,      -- Leiste ab hier rot (6.29.8.0)
     threatWarn = 80,       -- ab hier "kurz davor" (DD) bzw. "der Naechste ist nah" (Tank)
     threatSolo = false,    -- auch allein ohne Begleiter (dann immer 100 %)
     tankLead   = true,     -- als Tank den Naechsten zeigen statt der eigenen
@@ -1402,11 +1404,61 @@ end
 -- wie NP.ThreatTint, darunter gruen ab threatOkAt, sonst grau. Der
 -- Lebensbalken bleibt bei rot/gelb - gruen und grau waeren dort nur Rauschen.
 function NP.BarTint(status, scaled, tank, lead)
-    local c = NP.ThreatTint(status, scaled, tank, lead)
-    if c then return c end
-    local v = K.Plain(scaled)
+    -- Tank: wie bisher (haelt / der Naechste ist nah).
+    if tank then
+        local c = NP.ThreatTint(status, scaled, tank, lead)
+        if c then return c end
+    end
+    -- 6.29.8.0 (Beta-Test: "ab 50 % gruen, 75 % gelb, ab 90 % rot"): fuer
+    -- alle ausser dem Tank nach der Prozentzahl. Aggro (Status 2/3) ist
+    -- immer rot, Status 1 (ueber dem Tank) mindestens gelb.
+    local st, v = K.Plain(status), K.Plain(scaled)
+    if type(st) == "number" and st >= 2 then return S.dpsAggro end
+    if type(v) == "number" then
+        if v >= (tonumber(S.threatRedAt) or 90) then return S.dpsAggro end
+        if v >= (tonumber(S.threatYellowAt) or 75) then return S.dpsNear end
+    end
+    if type(st) == "number" and st == 1 then return S.dpsNear end
     if type(v) == "number" and v >= (tonumber(S.threatOkAt) or 50) then return S.threatOk end
     return S.threatLow
+end
+
+-- Ist die Prozentzahl geheim (12.x im Kampf), kann Lua sie nicht
+-- vergleichen. Dann faerbt eine Stufenkurve des Spiels (C_CurveUtil) -
+-- die Farbe bleibt geheim und geht direkt an die Textur. Gibt es die
+-- Kurve nicht, bleibt die Leiste grau wie bisher. Ungemessen auf Forever.
+local threatCurve, curveFor
+function NP.ThreatCurve()
+    local key = tostring(S.threatOkAt) .. "/" .. tostring(S.threatYellowAt) .. "/" .. tostring(S.threatRedAt)
+        .. tostring(S.threatLow) .. tostring(S.threatOk) .. tostring(S.dpsNear) .. tostring(S.dpsAggro)
+    if threatCurve and curveFor == key then return threatCurve end
+    local CU, E = _G.C_CurveUtil, _G.Enum
+    if type(CU) ~= "table" or type(CU.CreateColorCurve) ~= "function" or type(_G.CreateColor) ~= "function" then return nil end
+    local ok, curve = pcall(CU.CreateColorCurve)
+    if not ok or type(curve) == "nil" then return nil end
+    if E and E.LuaCurveType and E.LuaCurveType.Step and curve.SetType then pcall(curve.SetType, curve, E.LuaCurveType.Step) end
+    local function Add(x, c) pcall(curve.AddPoint, curve, x, _G.CreateColor(c.r, c.g, c.b, 1)) end
+    Add(0, S.threatLow)
+    Add(tonumber(S.threatOkAt) or 50, S.threatOk)
+    Add(tonumber(S.threatYellowAt) or 75, S.dpsNear)
+    Add(tonumber(S.threatRedAt) or 90, S.dpsAggro)
+    threatCurve, curveFor = curve, key
+    return curve
+end
+
+function NP.PaintSecret(bar, scaled)
+    local curve = NP.ThreatCurve()
+    local tex = bar.GetStatusBarTexture and bar:GetStatusBarTexture()
+    if not curve or not tex or not curve.Evaluate then return false end
+    local ok, col = pcall(curve.Evaluate, curve, scaled)
+    if not ok or type(col) == "nil" or not col.GetRGB then return false end
+    local ok2 = pcall(function()
+        local r, g, b = col:GetRGB()
+        tex:SetVertexColor(r, g, b, 1)
+    end)
+    -- Der Zwischenspeicher von K.PaintBar kennt diese Farbe nicht.
+    bar._wcR, bar._wcG, bar._wcB = nil, nil, nil
+    return ok2
 end
 
 -- Wer den Gegner gerade haelt. In Classic ist das sein Ziel (waehrend
@@ -1450,6 +1502,8 @@ local function UpdateAggro(p, onList, iHold)
         if role == "TANK" then fs:Hide() return end
     end
     local label = WeintCodex.ColorText("textMuted", "Aggro:")
+    -- 6.29.8.0: Hast du sie selbst, sagt es die rote Leiste - kein "Du".
+    if me and S.threatBar and NP.Contested() then fs:Hide() return end
     if me then
         fs:SetText(label .. " Du")
         local c = S.dpsAggro
@@ -1543,8 +1597,12 @@ local function UpdateThreatText(p)
 
     if contested and S.threatBar then
         if lead then bar:SetValue(math.min(lead, 100)) else bar:SetValue(scaled) end
-        local bc = c or NP.BarTint(status, scaled, tank, lead)
-        K.PaintBar(bar, bc.r, bc.g, bc.b)
+        local secret = not lead and type(scaled) ~= "nil" and type(K.Plain(scaled)) ~= "number"
+            and type(K.Plain(status)) ~= "number"
+        if not (secret and NP.PaintSecret(bar, scaled)) then
+            local bc = NP.BarTint(status, scaled, tank, lead)
+            K.PaintBar(bar, bc.r, bc.g, bc.b)
+        end
         bar:Show()
     else
         bar:Hide()
@@ -2098,7 +2156,12 @@ K.Register({
             B:Section("Bedrohungsleiste fein")
             B:Row({ type = "slider", label = "Grün ab", key = "threatOkAt", min = 10, max = 95, step = 5,
                     format = function(v) return string.format("%d %%", v) end, disabled = noBar,
-                    description = "Darunter grau (hervorragend), darüber grün (geht noch), ab „Warnen ab“ gelb, mit Aggro rot." },
+                    description = "Darunter grau (hervorragend), darüber grün (geht noch)." },
+                  { type = "slider", label = "Gelb ab", key = "threatYellowAt", min = 20, max = 100, step = 5,
+                    format = function(v) return string.format("%d %%", v) end, disabled = noBar })
+            B:Row({ type = "slider", label = "Rot ab", key = "threatRedAt", min = 30, max = 100, step = 5,
+                    format = function(v) return string.format("%d %%", v) end, disabled = noBar,
+                    description = "Mit Aggro immer rot. Gilt für die Leiste; der Lebensbalken folgt „Warnen ab“." },
                   { type = "empty" })
             B:Section("Gegner")
             B:Row({ type = "color", label = "Feind im Kampf", key = "enemyInCombat" },

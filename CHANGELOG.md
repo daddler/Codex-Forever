@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.8.0] – 2026-10-11
+
+### Geändert
+
+- **Beute verschiebbar:** `LootFrame` behält seinen Platz dauerhaft (Profil),
+  `GroupLootFrame1..4` ziehen den `GroupLootContainer`. Umschalt + Rechtsklick
+  setzt zurück.
+- **Bedrohungsleiste nach Prozent** (außer Tank): ab 50 % grün, 75 % gelb, 90 %
+  rot, Aggro rot; „Aggro: Du“ entfällt, solange die Leiste an ist. Geheime Werte
+  im Kampf färbt eine Stufenkurve des Spiels, wenn der Client sie hat.
+
 ## [6.29.7.0] – 2026-10-11
 
 ### Geändert

@@ -56,6 +56,14 @@ MW.WINDOWS = {
     "ClickBindingFrame", "CooldownViewerSettings",
 }
 MW.CONFLICTS = { "MoveAny", "BlizzMove" }
+-- 6.29.8.0 (Beta-Test: "Das Beutefenster ... muss auch frei verschiebbar
+-- sein"): Beute behaelt ihren Platz dauerhaft (je Profil), sonst stuende
+-- sie bei jedem Pluendern wieder am Platz des Spiels. Auch dann, wenn das
+-- Spiel sie nicht direkt an UIParent haengt.
+MW.KEEP = { LootFrame = true }
+-- Wuerfeln um Beute: GroupLootFrame1..4 haengen am GroupLootContainer;
+-- gezogen wird der Behaelter, damit alle Wuerfe zusammen wandern.
+MW.ROLLS = { "GroupLootFrame1", "GroupLootFrame2", "GroupLootFrame3", "GroupLootFrame4" }
 
 local hooked = setmetatable({}, { __mode = "k" })    -- Fenster -> Name
 local moving = setmetatable({}, { __mode = "k" })
@@ -94,6 +102,25 @@ local function Maximized(f)
 end
 
 local function Round(v) return math.floor(v + 0.5) end
+
+-- Dauerhafte Plaetze (MW.KEEP, Wuerfe) im Profil.
+local function KeepStore()
+    local prof = K.Profile and K.Profile()
+    if type(prof) ~= "table" then return nil end
+    prof.positions = prof.positions or {}
+    return prof.positions
+end
+function MW.KeepGet(name)
+    local st = KeepStore()
+    local v = st and st["win:" .. name]
+    return type(v) == "table" and type(v.x) == "number" and type(v.y) == "number" and v or nil
+end
+function MW.KeepSet(name, x, y)
+    local st = KeepStore()
+    if not st then return false end
+    st["win:" .. name] = (x and y) and { x = x, y = y } or nil
+    return true
+end
 
 -- Ist der erste Anker der, den WeintCodex zuletzt gesetzt hat?
 local function IsMine(f)
@@ -136,6 +163,7 @@ function MW.Save(f)
     local pos = open[f] or {}
     pos.x, pos.y = Round(l), Round(t)
     open[f] = pos
+    if MW.KEEP[hooked[f]] then MW.KeepSet(hooked[f], pos.x, pos.y) end
     -- Neu an den gemerkten Platz verankert (StopMovingOrSizing hinterlaesst
     -- einen Anker an der naechsten Ecke) - so ist er beim Zeigen "unserer".
     f:ClearAllPoints()
@@ -189,14 +217,20 @@ end
 
 local function OnMouseUp(f, button)
     if button == "RightButton" and K.Bool(_G.IsShiftKeyDown and _G.IsShiftKeyDown(), false) then
+        if MW.KEEP[hooked[f]] then MW.KeepSet(hooked[f], nil, nil) end
         MW.Reset(f)
     end
 end
 
-local function OnShow(f) MW.Apply(f) end
--- Zu: der Platz gilt nur, solange das Fenster offen ist.
+local function OnShow(f)
+    local keep = MW.KEEP[hooked[f]] and MW.KeepGet(hooked[f])
+    if keep then open[f] = { x = keep.x, y = keep.y } end
+    MW.Apply(f)
+end
+-- Zu: der Platz gilt nur, solange das Fenster offen ist (Beute: dauerhaft).
 local function OnHide(f)
     StopMove(f)
+    if MW.KEEP[hooked[f]] then return end
     MW.Reset(f)
 end
 local function OnDragStop(f) StopMove(f) end
@@ -205,7 +239,7 @@ local function OnDragStop(f) StopMove(f) end
 function MW.Hook(f, name)
     if type(f) ~= "table" or hooked[f] or not f.HookScript or not f.SetMovable then return false end
     if f.IsForbidden and f:IsForbidden() then return false end
-    if f.GetParent and f:GetParent() ~= _G.UIParent then return false end
+    if f.GetParent and f:GetParent() ~= _G.UIParent and not MW.KEEP[name] then return false end
     if Blocked(f) then pending[f] = name return false end
     pending[f] = nil
     hooked[f] = name
@@ -223,9 +257,78 @@ function MW.Hook(f, name)
     return true
 end
 
+-- Wuerfeln um Beute: ziehen an einem Wurf bewegt den Behaelter (oder, wo
+-- es ihn nicht gibt, den Wurf selbst). Der Platz bleibt (Profil), weil ein
+-- Wurf nur Sekunden steht. Umschalt + Rechtsklick: zurueck.
+local function RollTarget(f)
+    local c = _G.GroupLootContainer
+    if type(c) == "table" and c.StartMoving and f.GetParent and f:GetParent() == c then return c end
+    return f
+end
+MW.RollTarget = RollTarget
+
+function MW.ApplyRoll(f)
+    local t = RollTarget(f)
+    local pos = MW.KeepGet("GroupLoot")
+    if not pos or Blocked(t) then return false end
+    if not default[t] then
+        local ok, p, rel, rp, x, y = pcall(t.GetPoint, t, 1)
+        if ok and type(p) == "string" then default[t] = { p = p, rel = rel, rp = rp, x = K.Plain(x), y = K.Plain(y) } end
+    end
+    t:ClearAllPoints()
+    t:SetPoint("TOPLEFT", _G.UIParent, "BOTTOMLEFT", pos.x, pos.y)
+    return true
+end
+
+function MW.HookRoll(f)
+    if type(f) ~= "table" or hooked[f] or not f.HookScript then return false end
+    if f.IsForbidden and f:IsForbidden() then return false end
+    hooked[f] = "GroupLoot"
+    local t = RollTarget(f)
+    if t.SetMovable then t:SetMovable(true) end
+    if t.SetClampedToScreen then t:SetClampedToScreen(true) end
+    if f.RegisterForDrag then f:RegisterForDrag("LeftButton") end
+    if f.EnableMouse then f:EnableMouse(true) end
+    f:HookScript("OnDragStart", function(self)
+        local tt = RollTarget(self)
+        if Blocked(tt) then return end
+        if tt.SetMovable then tt:SetMovable(true) end
+        moving[tt] = true
+        tt:StartMoving()
+    end)
+    f:HookScript("OnDragStop", function(self)
+        local tt = RollTarget(self)
+        if not moving[tt] then return end
+        moving[tt] = nil
+        tt:StopMovingOrSizing()
+        if tt.SetUserPlaced then pcall(tt.SetUserPlaced, tt, false) end
+        local l, top = K.Plain(tt:GetLeft()), K.Plain(tt:GetTop())
+        if type(l) == "number" and type(top) == "number" then
+            MW.KeepSet("GroupLoot", Round(l), Round(top))
+            MW.ApplyRoll(self)
+        end
+    end)
+    f:HookScript("OnMouseUp", function(self, button)
+        if button == "RightButton" and K.Bool(_G.IsShiftKeyDown and _G.IsShiftKeyDown(), false) then
+            MW.KeepSet("GroupLoot", nil, nil)
+            local tt = RollTarget(self)
+            local d = default[tt]
+            if d and not Blocked(tt) then
+                tt:ClearAllPoints()
+                tt:SetPoint(d.p, d.rel, d.rp, d.x, d.y)
+            end
+        end
+    end)
+    f:HookScript("OnShow", function(self) MW.ApplyRoll(self) end)
+    return true
+end
+
 function MW.HookAll()
     if not MW.active then return 0 end
     local n = 0
+    for _, name in ipairs(MW.ROLLS) do
+        if MW.HookRoll(_G[name]) then n = n + 1 end
+    end
     for _, name in ipairs(MW.WINDOWS) do
         if MW.Hook(_G[name], name) then n = n + 1 end
     end
@@ -251,6 +354,16 @@ function MW.Start()
     if not MW._uiHook and type(_G.UpdateUIPanelPositions) == "function" and _G.hooksecurefunc then
         MW._uiHook = true
         _G.hooksecurefunc("UpdateUIPanelPositions", MW.Reapply)
+    end
+    -- Das Spiel ordnet die Wuerfe neu (neuer Wurf, einer faellt weg).
+    for _, fn in ipairs({ "GroupLootContainer_Update", "GroupLootContainer_AddFrame", "GroupLootContainer_RemoveFrame" }) do
+        if not MW["_h" .. fn] and type(_G[fn]) == "function" and _G.hooksecurefunc then
+            MW["_h" .. fn] = true
+            _G.hooksecurefunc(fn, function()
+                local f = _G.GroupLootFrame1
+                if type(f) == "table" then MW.ApplyRoll(f) end
+            end)
+        end
     end
     MW.HookAll()
     return true

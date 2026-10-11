@@ -14451,7 +14451,24 @@ do
         K.Set("nameplates", "aggroName", nil)
         mine[1] = true
         NP.UpdateThreatText(p)
-        assert(p.aggro:IsShown() and p.aggro:GetText():find("Du", 1, true), "eigene Aggro als DD nicht gemeldet")
+        -- 6.29.8.0: mit Leiste kein "Du" mehr - die rote Leiste sagt es.
+        assert(not p.aggro:IsShown(), "eigene Aggro trotz Leiste als Text")
+        K.Set("nameplates", "threatBar", false)
+        NP.UpdateThreatText(p)
+        assert(p.aggro:IsShown() and p.aggro:GetText():find("Du", 1, true), "ohne Leiste eigene Aggro nicht gemeldet")
+        K.Set("nameplates", "threatBar", nil)
+        do -- Farbstufen der Leiste (DD): 50 gruen, 75 gelb, 90 rot, Aggro rot.
+            local S0 = NP.S or {}
+            local function T(st, v) return NP.BarTint(st, v, false, nil) end
+            local GCx = WeintCodex.GameColors
+            local function Is(c, key) local g = GCx[key]; return c and math.abs(c.r - g[1]) < 0.01 and math.abs(c.g - g[2]) < 0.01 end
+            assert(Is(T(0, 40), "threatLow"), "40 % nicht grau")
+            assert(Is(T(0, 60), "threatOk"), "60 % nicht gruen")
+            assert(Is(T(0, 80), "dpsNear"), "80 % nicht gelb")
+            assert(Is(T(1, 92), "dpsAggro"), "92 % nicht rot")
+            assert(Is(T(3, 100), "dpsAggro"), "Aggro nicht rot")
+            assert(Is(T(1, 30), "dpsNear"), "ueber dem Tank nicht gelb")
+        end
         -- 6.10.3.2, Tank: die Leiste zeigt den Naechsten, nicht sich selbst.
         local GC = WeintCodex.GameColors
         local painted
@@ -17058,6 +17075,24 @@ do
         assert(MS.PlayerLink({ name = "x" }) == nil, "ohne Ziel ein Link")
     end)
     Check(ok, "Messenger: Name als Spielerlink, Rechtsklick oeffnet das Menue" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.29.8.0: Beute und Wuerfeln um Beute ziehbar, Platz bleibt.
+do
+    local ok, err = pcall(function()
+        local MW = WeintCodex.UIMoveWindows
+        assert(MW.KEEP.LootFrame, "Beute behaelt keinen Platz")
+        assert(MW.KeepSet("LootFrame", 100, 500) and MW.KeepGet("LootFrame").y == 500, "Platz nicht gemerkt")
+        MW.KeepSet("LootFrame", nil, nil)
+        assert(MW.KeepGet("LootFrame") == nil, "Platz nicht vergessen")
+        local f = CreateFrame("Frame", nil, UIParent)
+        assert(MW.HookRoll(f) and MW.hooked[f] == "GroupLoot", "Wurf nicht eingerichtet")
+        MW.KeepSet("GroupLoot", 300, 400)
+        assert(MW.ApplyRoll(f), "Wurf nicht an den Platz")
+        MW.KeepSet("GroupLoot", nil, nil)
+        MW.hooked[f] = nil
+    end)
+    Check(ok, "Beute und Würfeln: ziehbar, Platz bleibt" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.27.2.0: Gruppe/Schlachtzug waagerecht oder senkrecht - eigene Kacheln und Rahmen des Spiels.

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.8.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFBeute und Würfeln lassen sich verschieben.|r Das Beutefenster und die Würfelfenster in der Gruppe ziehst du mit der Maus, der Platz bleibt. Umschalt + Rechtsklick setzt sie zurück.",
+            "|cff7C6CFFDie Bedrohungsleiste zeigt Farbe nach Prozent.|r Ab 50 % grün, ab 75 % gelb, ab 90 % rot, mit Aggro immer rot – statt „Aggro: Du“. Die Grenzen sind einstellbar.",
+        },
+    },
+    {
         version = "6.29.7.0",
         date    = "11.10.2026",
         notes   = {
