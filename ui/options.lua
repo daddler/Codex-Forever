@@ -78,7 +78,9 @@ K.Register({
         local d = { font = "cond", outline = "thin", barStyle = "glanz", shadows = true, windowScale = 100,
                     highlight = "class", highlightColor = WeintCodex.VioletRGB(),
                     -- 6.10.0.0: Feineinstellungen jeder Seite zugeklappt (Builder:Advanced).
-                    showAdvanced = false }
+                    showAdvanced = false,
+                    -- 6.29.10.0: Breitbild, ui/layout.lua (K.WideInset).
+                    wideArea = "169" }
         -- Ruhe und Kampf (ui/presence.lua): dort definiert, hier gespeichert.
         for k, v in pairs(WeintCodex.UIPresence.DEFAULTS) do d[k] = v end
         -- Tooltip (ui/tooltip.lua): ebenso.
@@ -169,6 +171,11 @@ K.Register({
                   { type = "color", label = "Eigene Farbe", key = "highlightColor", reload = true,
                     disabled = function() return K.Get("general", "highlight") ~= "custom" end,
                     tooltip = "Gilt mit „Eigene Farbe“ nach dem Neuladen. Sehr dunkle Farben machen Text in dieser Farbe schwer lesbar." })
+            B:Section("Breitbild",
+                "Auf 21:9 oder 32:9 stünden Chat, Minikarte, Questliste und Schadensanzeige ganz am Rand. Hier rücken sie in einen Bereich in der Mitte. Auf 16:9 ändert sich nichts.")
+            B:Row({ type = "dropdown", label = "Rahmen am Rand", key = "wideArea", reload = true, items = K.WIDE_AREAS,
+                    tooltip = "Gilt nach dem Neuladen für die Rahmen von WeintCodex. Die Rahmen des Spiels (Chat, Minikarte, Questliste) setzt „/wcui einrichten“ neu. Selbst verschobene Rahmen bleiben, wo du sie hingezogen hast." },
+                  { type = "empty" })
             B:Section("Testmodus",
                 "Zeigt Ziel, Fokus, Gruppe, Zauberbalken und Schadensanzeige mit Beispielwerten – so siehst du alles auf einem Bildschirm, ohne Gruppe und ohne Kampf. Auch mit /wcui test.")
             B:Row({ type = "button", label = "Beispieldaten",

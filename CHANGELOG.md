@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.10.0] – 2026-10-11
+
+### Neu
+
+- **Breitbild:** `general.wideArea` („169“ ab Werk, „219“, „edge“).
+  `K.WideInset` rechnet aus Breite und Höhe von UIParent, wie weit Rahmen am
+  linken/rechten Rand zur Mitte rücken; `K.Layout` und der Platz der Rahmen
+  des Spiels in der Einrichtung (`ES.Target`) wenden es an, das Cockpit an
+  der Mitte bleibt. Auf 16:9 und schmaler: Versatz 0. Gespeicherte Positionen
+  gehen weiter vor. Im Spiel ungeprüft.
+
 ## [6.29.9.0] – 2026-10-11
 
 ### Geändert

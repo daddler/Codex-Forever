@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.10.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFBreitbild wird unterstützt.|r Auf 21:9 und 32:9 rücken Chat, Minikarte, Questliste, Schadensanzeige und Taschen in einen Bereich in der Mitte, statt am äußersten Rand zu kleben. Einstellbar unter Allgemein: 16:9, 21:9 oder bis an den Rand. Danach einmal /wcui einrichten.",
+        },
+    },
+    {
         version = "6.29.9.0",
         date    = "11.10.2026",
         notes   = {

@@ -4277,3 +4277,17 @@ Vorgesehen: Berufsübersicht (nach Messung), Gilde (mittlere Atmosphäre), Talen
 (Klassenfarbe). Migrieren heißt: Name in
 `S.SCOPES`, ein Modul nach dem Muster von `ui/reputation.lua` nur dort,
 wo das Fenster mehr braucht als die Bausteine.
+
+## Breitbild (6.29.10.0)
+
+Die Höhe der Oberfläche ist mit Skalierung 1 immer 768 Einheiten, die
+Breite folgt dem Seitenverhältnis (1365 auf 16:9, ~1835 auf 3440 × 1440,
+~2731 auf 32:9). `K.WideInset()` (`ui/layout.lua`) liefert den Versatz,
+um den alles rückt, was am linken oder rechten Rand von UIParent hängt –
+`K.Layout` und `ES.Target` (`ui/setup.lua`) wenden ihn über
+`K.WideShift(relPoint, rel)` an; Plätze an der Mitte oder an einem anderen
+Rahmen (`rel`) nie. Wahl `general.wideArea`: „169“ (ab Werk), „219“
+(Verhältnis 3440/1440 – „21:9“ ist eigentlich 43:18) oder „edge“. Wirkt
+nach dem Neuladen; die Rahmen des Spiels erst mit `/wcui einrichten`, weil
+sie im Layout des Bearbeitungsmodus stehen. Gespeicherte Positionen gehen
+vor. Im Spiel ungeprüft.

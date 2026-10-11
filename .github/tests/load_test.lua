@@ -4611,6 +4611,30 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.29.10.0: Breitbild - Rahmen am Rand ruecken in einen mittigen Bereich.
+do
+    local ok, err = pcall(function()
+        local old = K.Get("general", "wideArea")
+        assert(old == "169", "Breitbild nicht ab Werk mittig in 16:9")
+        assert(K.WideInset(1365, 768) == 0, "16:9 verschoben")
+        assert(K.WideInset(1024, 768) == 0, "4:3 verschoben")
+        assert(K.WideInset(1835, 768) == 234, "21:9 nicht um 234 eingerueckt")
+        K.Set("general", "wideArea", "219")
+        assert(K.WideInset(1835, 768) == 0 and K.WideInset(2731, 768) > 0, "21:9-Bereich falsch")
+        K.Set("general", "wideArea", "edge")
+        assert(K.WideInset(2731, 768) == 0, "„Bis an den Rand“ verschiebt")
+        K.Set("general", "wideArea", old)
+        local oldInset = K.WideInset
+        K.WideInset = function() return 100 end
+        local l, r, m = K.Layout("fps"), K.Layout("bags"), K.Layout("reminders")
+        local base = K.LAYOUT
+        K.WideInset = oldInset
+        assert(l.x == base.fps.x + 100 and r.x == base.bags.x - 100 and m.x == base.reminders.x,
+            "Rand nicht zur Mitte versetzt oder Mitte verschoben")
+    end)
+    Check(ok, "Breitbild: Rand rückt in 16:9/21:9, Mitte bleibt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.6.0.7: Klickzauber - Maustaste + Zusatztaste wirkt einen Zauber auf
 -- die Einheit des Rahmens. Nur Klick-Attribute, je Klasse gespeichert.
 do

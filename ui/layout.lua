@@ -245,6 +245,50 @@ K.GAME_LAYOUT = {
       set = { DisplayBorder = 0 }, frames = { "CompactRaidFrameContainer" } },
 }
 
+--------------------------------------------------
+-- Breitbild (6.29.10.0)
+--------------------------------------------------
+-- Die Hoehe ist mit Skalierung 1 immer 768 Einheiten (ui/setup.lua); die
+-- BREITE folgt dem Seitenverhaeltnis: 1365 auf 16:9, 1835 auf 21:9
+-- (3440 x 1440), 2731 auf 32:9. Alles an der Mitte (Cockpit, Leisten)
+-- bleibt davon unberuehrt - was am linken oder rechten Rand haengt (Chat,
+-- Minikarte, Questliste, Schadensanzeige, Taschen), stuende auf einem
+-- breiten Bildschirm am Rand des Blickfelds, weit weg vom Geschehen.
+-- Wie es grosse UIs halten: diese Rahmen ruecken in einen mittigen
+-- Bereich im gewaehlten Verhaeltnis ("wideArea": 16:9, 21:9 oder "edge" =
+-- bis an den Rand). Auf 16:9 und schmaler ist der Versatz 0.
+K.WIDE_AREAS = {
+    { value = "169",  text = "Mittig in 16:9",  ratio = 16 / 9 },
+    { value = "219",  text = "Mittig in 21:9",  ratio = 3440 / 1440 },   -- "21:9" ist 43:18
+    { value = "edge", text = "Bis an den Rand" },
+}
+
+-- Wie weit Rahmen am linken/rechten Rand nach innen ruecken (Einheiten).
+function K.WideInset(w, h)
+    if not (w and h) then
+        local ui = _G.UIParent
+        local ok, a, b = pcall(function() return ui:GetWidth(), ui:GetHeight() end)
+        if not ok then return 0 end
+        w, h = K.Plain(a), K.Plain(b)
+    end
+    if type(w) ~= "number" or type(h) ~= "number" or h <= 0 then return 0 end
+    local choice = K.Get and K.Get("general", "wideArea") or nil
+    local ratio = 16 / 9
+    for _, e in ipairs(K.WIDE_AREAS) do
+        if e.value == choice then ratio = e.ratio end
+    end
+    if not ratio then return 0 end
+    return math.max(0, math.floor((w - h * ratio) / 2))
+end
+
+-- Versatz fuer einen Platz am Bildschirm: nur am Rand von UIParent.
+function K.WideShift(relPoint, rel)
+    if rel or type(relPoint) ~= "string" then return 0 end
+    if relPoint:find("LEFT") then return K.WideInset() end
+    if relPoint:find("RIGHT") then return -K.WideInset() end
+    return 0
+end
+
 -- Eine frische Kopie: wer sie veraendert (weitere Fenster der
 -- Schadensanzeige versetzt), veraendert nicht die Tabelle.
 function K.Layout(key, dx, dy)
@@ -252,5 +296,6 @@ function K.Layout(key, dx, dy)
     assert(p, "UIKit.Layout: unbekannter Rahmen '" .. tostring(key) .. "'")
     -- `rel` mitgeben (fehlte bis 6.27.0.7: der Platz an der Minikarte galt
     -- nie, das Flüstern-Symbol stand unten links am Bildschirm).
-    return { point = p.point, relPoint = p.relPoint, rel = p.rel, x = p.x + (dx or 0), y = p.y + (dy or 0) }
+    return { point = p.point, relPoint = p.relPoint, rel = p.rel,
+             x = p.x + K.WideShift(p.relPoint, p.rel) + (dx or 0), y = p.y + (dy or 0) }
 end

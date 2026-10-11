@@ -137,7 +137,9 @@ end
 -- eines eigenen Rahmens aus K.LAYOUT).
 local function Target(e)
     local p = e.from and K.LAYOUT[e.from] or e
-    return { point = p.point, relPoint = p.relPoint or p.point, x = p.x, y = p.y }
+    local rel = p.relPoint or p.point
+    -- Breitbild: am Rand Haengendes rueckt zur Mitte (ui/layout.lua).
+    return { point = p.point, relPoint = rel, x = p.x + K.WideShift(rel, p.rel), y = p.y }
 end
 ES.Target = Target
 
