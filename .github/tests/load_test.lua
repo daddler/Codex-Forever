@@ -4611,6 +4611,24 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.29.21.0: Taschen ohne Gestaltungsmodus ziehbar.
+do
+    local ok, err = pcall(function()
+        local BG = WeintCodex.UIBags
+        local win = _G.WeintCodexBags
+        assert(BG and win and BG.SavePlace, "Taschenfenster fehlt")
+        assert(win:GetScript("OnDragStart") and win:GetScript("OnDragStop"), "Taschen nicht ziehbar")
+        local og = win.GetPoint
+        win.GetPoint = function() return "BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -77.4, 133.6 end
+        assert(BG.SavePlace(), "Platz nicht gespeichert")
+        local pos = K.Profile().positions.bags
+        assert(pos.point == "BOTTOMRIGHT" and pos.x == -77 and pos.y == 134, "falscher Platz gespeichert")
+        win.GetPoint = og
+        K.Profile().positions.bags = nil
+    end)
+    Check(ok, "Taschen: ohne Gestaltungsmodus ziehen, Platz bleibt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.29.20.0: Plaketten-Modul aus -> auf Wunsch auch die des Spiels aus.
 do
     local NP = WeintCodex.UINameplates

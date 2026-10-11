@@ -410,6 +410,31 @@ local function Build()
     end)
     win.WCShowForUnlock = function(self, on) if on then self:Show() end end
     K.RegisterMover(win, "bags", "Taschen", K.Layout("bags"))
+    -- Frei ziehen ohne Gestaltungsmodus (6.29.21.0, Spielerbericht): die
+    -- Flaeche des Fensters (nicht die Faecher - die ziehen Gegenstaende)
+    -- mit links ziehen; der Platz wird wie im Gestaltungsmodus gespeichert.
+    win:SetMovable(true)
+    win:RegisterForDrag("LeftButton")
+    win:SetScript("OnDragStart", function(self)
+        if K.IsUnlocked() then return end
+        self:StartMoving()
+    end)
+    win:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        BG.SavePlace()
+    end)
+end
+
+-- Den Platz nach dem Ziehen speichern (Profil, wie der Gestaltungsmodus).
+function BG.SavePlace()
+    if not win then return false end
+    local point, _, relPoint, x, y = win:GetPoint(1)
+    local ui = K.Profile()
+    if not (point and ui) then return false end
+    ui.positions.bags = { point = point, relPoint = relPoint or point,
+        x = math.floor((x or 0) + 0.5), y = math.floor((y or 0) + 0.5) }
+    K.ApplyPosition("bags")
+    return true
 end
 
 function BG.Toggle()

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.21.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFTaschen frei verschieben.|r Das Taschenfenster ziehst du jetzt jederzeit mit der Maus an seiner Fläche – ohne Gestaltungsmodus. Der Platz bleibt.",
+            "|cff7C6CFFQuestfortschritt neben der Plakette.|r Die Zahl („8/10“) steht jetzt links neben dem Balken und liegt nicht mehr über dem Namen.",
+        },
+    },
+    {
         version = "6.29.20.0",
         date    = "11.10.2026",
         notes   = {

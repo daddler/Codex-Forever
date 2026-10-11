@@ -893,8 +893,7 @@ local function Layout(p)
     p.auras:ApplyLayout({ filter = AuraFilter(), max = S.auraMax, size = S.auraSize,
         spacing = 2, anchor = anchor, growth = align == "right" and "LEFT" or "RIGHT", growthV = "UP",
         perRow = S.auraMax, timer = S.auraTimer })
-    -- Questfortschritt links neben der Namenszeile, ausserhalb des Balkens:
-    -- so ueberdeckt er weder Namen noch Stufe.
+    -- Questfortschritt links neben dem Balken (siehe unten).
     K.SetFont(p.threat, S.textSize)
     p.threat:ClearAllPoints()
     if S.threatText == "right" then
@@ -905,9 +904,17 @@ local function Layout(p)
         p.threat:SetPoint("BOTTOMLEFT", p, "TOPLEFT", 1, 2)
         p.threat:SetJustifyH("LEFT")
     end
-    K.SetFont(p.quest, S.nameSize + 2)
+    -- 6.29.21.0 (Spielerbericht: "der Questfortschritt ueberschreibt die
+    -- Beschriftung"): bis dahin unten rechts an der oberen linken Ecke - die
+    -- Namenszeile ist aber 20 breiter als der Balken und mittig, ein langer
+    -- Name lief unter die Zahl. Jetzt in Hoehe des Balkens links daneben
+    -- (bzw. links neben der Zielmarke, wenn die links steht): ausserhalb
+    -- jeder Textzeile der Plakette. Etwas kleiner als der Name.
+    K.SetFont(p.quest, S.nameSize)
     p.quest:ClearAllPoints()
-    p.quest:SetPoint("BOTTOMRIGHT", p, "TOPLEFT", -2, 2)
+    local qx = -4
+    if S.raidMarker == "left" then qx = qx - (S.raidMarkerSize or 20) - 4 end
+    p.quest:SetPoint("RIGHT", p, "LEFT", qx, 0)
     local qc = WeintCodex.GameColors.questObjective
     p.quest:SetTextColor(qc[1], qc[2], qc[3], 1)
     p.auras:ClearAllPoints()

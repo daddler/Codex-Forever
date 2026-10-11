@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.21.0] – 2026-10-11
+
+### Geändert
+
+- **Taschen ohne Gestaltungsmodus ziehbar:** `WeintCodexBags` ist `Movable`,
+  Ziehen an der Fläche (nicht an den Fächern) speichert über `BG.SavePlace`
+  in `positions.bags` – derselbe Platz wie im Gestaltungsmodus.
+- **Questfortschritt an Plaketten** stand an der oberen linken Ecke; die
+  Namenszeile ist 20 breiter als der Balken und lief darunter. Jetzt links
+  neben dem Balken auf seiner Höhe (bei Zielmarke links: links daneben),
+  in Namensgröße. Im Spiel ungeprüft.
+
 ## [6.29.20.0] – 2026-10-11
 
 ### Neu
