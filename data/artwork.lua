@@ -264,6 +264,30 @@ WeintCodex.Artworks = {
         },
     },
 
+    excavation_site = {
+        -- Alle Originale 1983x793. Banner: x 0, y 0, 1983x496 (ganz oben).
+        -- Bossbilder 512x128 (Karten sind hoechstens ~425x80):
+        -- saltspine y 150, shadetooth y 20, relic_guardian y 30.
+        header = {
+            file = ART .. "excavation_site/header",
+            w = 1024, h = 256, focusX = 0.60,
+        },
+        bosses = {
+            saltspine = {
+                file = ART .. "excavation_site/saltspine",
+                w = 512, h = 128, focusX = 0.65,
+            },
+            shadetooth = {
+                file = ART .. "excavation_site/shadetooth",
+                w = 512, h = 128, focusX = 0.62,
+            },
+            relic_guardian = {
+                file = ART .. "excavation_site/relic_guardian",
+                w = 512, h = 128, focusX = 0.58,
+            },
+        },
+    },
+
     wailing_caverns = {
         -- Schnitt aus header(2).png (1672x941): x 0, y 240, 1672x418.
         header = {

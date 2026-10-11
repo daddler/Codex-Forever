@@ -115,6 +115,13 @@ JOBS = [
     ("dungeons/shadowfang_keep/fenrus",                  "shadowfang_keep/fenrus.png",                  (  0,   0, 1672, 418)),
     ("dungeons/shadowfang_keep/wolf_master_nandos",       "shadowfang_keep/wolf_master_nandos.png",       (  0,   0, 1672, 418)),
     ("dungeons/shadowfang_keep/archmage_arugal",          "shadowfang_keep/archmage_arugal.png",          (  0,   0, 1672, 418)),
+    # Excavation Site (6.29.3.0): Banner ganz oben. Bossbilder nur noch
+    # 512x128 (32 statt 128 KB) - eine Bosskarte ist hoechstens rund
+    # 425x80 px gross, mehr Pixel sieht dort niemand.
+    ("dungeons/excavation_site/header",          "excavation_site/banner.png",         (  0,   0, 1983, 496)),
+    ("dungeons/excavation_site/saltspine",       "excavation_site/saltspine.png",      (  0, 150, 1983, 496), (512, 128)),
+    ("dungeons/excavation_site/shadetooth",      "excavation_site/shadetooth.png",     (  0,  20, 1983, 496), (512, 128)),
+    ("dungeons/excavation_site/relic_guardian",  "excavation_site/relic_guardian.png", (  0,  30, 1983, 496), (512, 128)),
 ]
 
 TARGET_W, TARGET_H = 1024, 256
@@ -202,7 +209,12 @@ def main():
         return 2
 
     source_dir = os.path.expanduser(sys.argv[1])
-    for target, filename, (x, y, crop_w, crop_h) in JOBS:
+    only = os.environ.get("ONLY")
+    for job in JOBS:
+        target, filename, (x, y, crop_w, crop_h) = job[:3]
+        TW, TH = job[3] if len(job) > 3 else (TARGET_W, TARGET_H)
+        if only and only not in target:
+            continue
         source = os.path.join(source_dir, filename)
         if not os.path.exists(source):
             print("fehlt: " + source)
@@ -214,18 +226,18 @@ def main():
             return 1
         # Kein Verzerren: der Ausschnitt hat schon das Seitenverhaeltnis
         # des Ziels, skaliert wird nur noch gleichmaessig.
-        if abs(crop_w / crop_h - TARGET_W / TARGET_H) > 0.01:
+        if abs(crop_w / crop_h - TW / TH) > 0.01:
             print("Ausschnitt von " + filename + " ist nicht 4:1")
             return 1
 
         scaled = original.crop((x, y, x + crop_w, y + crop_h)) \
-                         .resize((TARGET_W, TARGET_H), Image.LANCZOS)
+                         .resize((TW, TH), Image.LANCZOS)
 
         with tempfile.TemporaryDirectory() as workdir:
             level0 = dxt1_blocks(scaled, workdir)
 
         path = os.path.join(REPO, "media", target + ".blp")
-        write_blp(path, level0, TARGET_W, TARGET_H)
+        write_blp(path, level0, TW, TH)
         print("%-46s %7d B  (%s, %dx%d)"
               % (target + ".blp", os.path.getsize(path), filename, crop_w, crop_h))
 

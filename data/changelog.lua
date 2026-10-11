@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.3.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFExcavation Site hat jetzt Bilder.|r Ein Banner oben auf der Seite und ein eigenes Bild für jeden der drei Bosse.",
+        },
+    },
+    {
         version = "6.29.2.0",
         date    = "11.10.2026",
         notes   = {

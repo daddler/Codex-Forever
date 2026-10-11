@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.3.0] – 2026-10-11
+
+### Neu
+
+- **Excavation Site bebildert:** Banner und Bilder für Saltspine, Shadetooth und
+  Relic Guardian. Die Bossbilder sind 512x128 statt 1024x256 (32 statt 128 KB).
+
 ## [6.29.2.0] – 2026-10-11
 
 ### Neu
