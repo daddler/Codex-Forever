@@ -261,7 +261,7 @@ local function BuildImport()
     local f = CreateFrame("Frame", "WeintCodexImportProfile", UIParent)
     f:SetSize(K.REPORT_W, 300)
     f:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
-    f:SetFrameStrata("DIALOG")
+    f:SetFrameStrata("FULLSCREEN_DIALOG")   -- ueber /wcui (6.28.0.1)
     f:SetToplevel(true)
     f:EnableMouse(true)
     f:SetMovable(true)
@@ -318,6 +318,7 @@ function SH.ShowImport()
     win.hint:SetText("Text einfügen (Strg+V) und „Importieren“. Ersetzt alle Einstellungen von „" .. PR.Chosen() .. "“ – wirkt nach dem Neuladen.")
     win.edit:SetText("")
     win:Show()
+    if win.Raise then win:Raise() end
     win.edit:SetFocus()
     SH.win = win
     return win
@@ -328,6 +329,9 @@ function SH.ImportFrom(text)
     if not data then Say("Import nicht möglich: " .. tostring(why) .. ".") return false end
     local PR = WeintCodex.UIProfiles
     local from = type(data.name) == "string" and data.name or "?"
+    -- Die Rueckfrage des Spiels liegt in einer tieferen Schicht - das
+    -- Fenster weicht ihr, der Text ist schon gelesen.
+    if win then win:Hide() end
     PR.Confirm("Profil „" .. from .. "“ importieren? Alle Einstellungen und Plätze von „" .. PR.Chosen() .. "“ werden ersetzt"
         .. (data.layout and ", dazu das Layout „WeintCodex“ des Bearbeitungsmodus." or "."), function()
         local ok, target, note = SH.Apply(data)

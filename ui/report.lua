@@ -34,7 +34,9 @@ local function Build()
     local f = CreateFrame("Frame", "WeintCodexReport", UIParent)
     f:SetSize(K.REPORT_W, K.REPORT_H)
     f:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
-    f:SetFrameStrata("DIALOG")
+    -- Ueber den Einstellungen (/wcui, Schicht DIALOG): sonst lag der
+    -- Export dahinter (6.28.0.1, Beta-Test).
+    f:SetFrameStrata("FULLSCREEN_DIALOG")
     f:SetToplevel(true)
     f:EnableMouse(true)
     f:SetMovable(true)
@@ -112,6 +114,7 @@ function K.ShowReport(title, lines)
     report.title:SetText(K.PlainText(title or "Bericht"))
     report.edit:SetText(text)
     report:Show()
+    if report.Raise then report:Raise() end
     report.edit:SetFocus()
     report.edit:HighlightText()
     K.report = report

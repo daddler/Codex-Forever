@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.28.0.1",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFExport und Import liegen vorn.|r Das Fenster mit dem Text erscheint jetzt über den Einstellungen statt dahinter – das gilt auch für die Berichte aus /wcui prüfen.",
+        },
+    },
+    {
         version = "6.28.0.0",
         date    = "11.10.2026",
         notes   = {

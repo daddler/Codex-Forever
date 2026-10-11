@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.28.0.1] – 2026-10-11
+
+### Behoben
+
+- Export-Fenster lag hinter /wcui (Beta-Test): beide in der Schicht `DIALOG`. Bericht (`ui/report.lua`) und Import-Fenster (`ui/share.lua`) jetzt `FULLSCREEN_DIALOG` und `Raise()`; das Import-Fenster weicht vor der Rückfrage des Spiels.
+
 ## [6.28.0.0] – 2026-10-11
 
 ### Neu
