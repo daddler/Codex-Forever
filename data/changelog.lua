@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.4.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFFünf weitere Dungeons mit Bildern.|r Blackfathom Deeps, Das Verlies, City of Dalaran, Scharlachrotes Kloster (Friedhof) und Gnomeregan haben jetzt ein Banner und Bilder ihrer Bosse.",
+        },
+    },
+    {
         version = "6.29.3.0",
         date    = "11.10.2026",
         notes   = {

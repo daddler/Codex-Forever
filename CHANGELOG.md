@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.4.0] – 2026-10-11
+
+### Neu
+
+- **Bebildert:** Blackfathom Deeps (8 Bosse), The Stockade (6), City of Dalaran
+  (8), Scarlet Monastery – nur Friedhof (5), Gnomeregan (6). Bossbilder 512x128.
+
 ## [6.29.3.0] – 2026-10-11
 
 ### Neu

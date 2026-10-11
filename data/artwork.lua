@@ -288,6 +288,188 @@ WeintCodex.Artworks = {
         },
     },
 
+    blackfathom_deeps = {
+        -- Originale 1983x793, Banner y 0, Bosse 512x128 (siehe make_artwork.py).
+        header = {
+            file = ART .. "blackfathom_deeps/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            ghamoora = {
+                file = ART .. "blackfathom_deeps/ghamoora",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            lady_sarevess = {
+                file = ART .. "blackfathom_deeps/lady_sarevess",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            gelihast = {
+                file = ART .. "blackfathom_deeps/gelihast",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            lorgus_jett = {
+                file = ART .. "blackfathom_deeps/lorgus_jett",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            baron_aquanis = {
+                file = ART .. "blackfathom_deeps/baron_aquanis",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            old_serrakis = {
+                file = ART .. "blackfathom_deeps/old_serrakis",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            twilight_lord_kelris = {
+                file = ART .. "blackfathom_deeps/twilight_lord_kelris",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            akumai = {
+                file = ART .. "blackfathom_deeps/akumai",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
+    the_stockade = {
+        -- Originale 1983x793, Banner y 0, Bosse 512x128 (siehe make_artwork.py).
+        header = {
+            file = ART .. "the_stockade/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            targorr = {
+                file = ART .. "the_stockade/targorr",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            kam_deepfury = {
+                file = ART .. "the_stockade/kam_deepfury",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            hamhock = {
+                file = ART .. "the_stockade/hamhock",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            bazil_thredd = {
+                file = ART .. "the_stockade/bazil_thredd",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            dextren_ward = {
+                file = ART .. "the_stockade/dextren_ward",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            bruegal = {
+                file = ART .. "the_stockade/bruegal",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
+    city_of_dalaran = {
+        -- Originale 1983x793, Banner y 0, Bosse 512x128 (siehe make_artwork.py).
+        header = {
+            file = ART .. "city_of_dalaran/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            atrexis = {
+                file = ART .. "city_of_dalaran/atrexis",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            arcane_anomaly = {
+                file = ART .. "city_of_dalaran/arcane_anomaly",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            fel_ancient = {
+                file = ART .. "city_of_dalaran/fel_ancient",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            unstable_sentinel = {
+                file = ART .. "city_of_dalaran/unstable_sentinel",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            mana_devourer = {
+                file = ART .. "city_of_dalaran/mana_devourer",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            arcanic_enigma = {
+                file = ART .. "city_of_dalaran/arcanic_enigma",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            lyn_the_ignored = {
+                file = ART .. "city_of_dalaran/lyn_the_ignored",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            shade_of_the_archmage = {
+                file = ART .. "city_of_dalaran/shade_of_the_archmage",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
+    scarlet_monastery = {
+        -- Originale 1983x793, Banner y 0, Bosse 512x128 (siehe make_artwork.py).
+        header = {
+            file = ART .. "scarlet_monastery/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            interrogator_vishas = {
+                file = ART .. "scarlet_monastery/interrogator_vishas",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            bloodmage_thalnos = {
+                file = ART .. "scarlet_monastery/bloodmage_thalnos",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            ironspine = {
+                file = ART .. "scarlet_monastery/ironspine",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            azshir = {
+                file = ART .. "scarlet_monastery/azshir",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            fallen_champion = {
+                file = ART .. "scarlet_monastery/fallen_champion",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
+    gnomeregan = {
+        -- Originale 1983x793, Banner y 0, Bosse 512x128 (siehe make_artwork.py).
+        header = {
+            file = ART .. "gnomeregan/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            grubbis = {
+                file = ART .. "gnomeregan/grubbis",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            viscous_fallout = {
+                file = ART .. "gnomeregan/viscous_fallout",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            electrocutioner = {
+                file = ART .. "gnomeregan/electrocutioner",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            crowd_pummeler = {
+                file = ART .. "gnomeregan/crowd_pummeler",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            dark_iron_ambassador = {
+                file = ART .. "gnomeregan/dark_iron_ambassador",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            thermaplugg = {
+                file = ART .. "gnomeregan/thermaplugg",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
     wailing_caverns = {
         -- Schnitt aus header(2).png (1672x941): x 0, y 240, 1672x418.
         header = {
