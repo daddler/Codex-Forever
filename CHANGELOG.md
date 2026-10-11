@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.2.0] – 2026-10-11
+
+### Neu
+
+- **Messenger: Rechtsklick auf einen Namen** öffnet das Menü des Spiels wie im
+  Chat (Einladen, Flüstern, Freund, Melden …) – im Verlauf und in der Liste.
+
 ## [6.29.1.0] – 2026-10-11
 
 ### Behoben

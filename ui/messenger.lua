@@ -170,6 +170,30 @@ function MS.NameText(c)
     return c.name
 end
 
+-- Der Spielerlink wie im Chat: Rechtsklick oeffnet ueber SetItemRef dasselbe
+-- Menue des Spiels (Einladen, Fluestern, Ziel, Melden ...).
+function MS.PlayerLink(c)
+    if type(c) ~= "table" or type(c.target) == "nil" then return nil end
+    if c.bn then
+        return "BNplayer:" .. tostring(c.name) .. ":" .. tostring(c.target) .. ":0:BN_WHISPER:" .. tostring(c.name)
+    end
+    return "player:" .. tostring(c.target)
+end
+
+function MS.LinkedName(c)
+    local link = MS.PlayerLink(c)
+    if not link then return MS.NameText(c) end
+    return "|H" .. link .. "|h" .. MS.NameText(c) .. "|h"
+end
+
+-- Kontextmenue zum Gespraech (Rechtsklick auf die Liste oder den Namen).
+function MS.OpenMenu(c)
+    local link = MS.PlayerLink(c)
+    if not link or not _G.SetItemRef then return false end
+    local ok = pcall(_G.SetItemRef, link, "|H" .. link .. "|h" .. tostring(c.name) .. "|h", "RightButton")
+    return ok
+end
+
 function MS.Format(c, line)
     local out = ""
     if Get("stamps") and _G.date then
@@ -178,7 +202,7 @@ function MS.Format(c, line)
     if line.kind == "sys" then
         return out .. "|c" .. Hex(C.textMuted) .. line.text .. "|r"
     end
-    local who = line.kind == "out" and ("|c" .. Hex(C.accent) .. "Du|r") or MS.NameText(c)
+    local who = line.kind == "out" and ("|c" .. Hex(C.accent) .. "Du|r") or MS.LinkedName(c)
     local col = line.kind == "out" and C.textNormal or C.textBright
     return out .. who .. ": |c" .. Hex(col) .. line.text .. "|r"
 end
@@ -234,7 +258,14 @@ local function NewRow(i)
     local m = C.textMuted
     r.x.t:SetTextColor(m[1], m[2], m[3])
     r.x:SetScript("OnClick", function(self) MS.Close(self:GetParent().key) end)
-    r:SetScript("OnClick", function(self) MS.Select(self.key) end)
+    if r.RegisterForClicks then r:RegisterForClicks("LeftButtonUp", "RightButtonUp") end
+    r:SetScript("OnClick", function(self, button)
+        if button == "RightButton" then
+            MS.OpenMenu(conv[self.key])
+        else
+            MS.Select(self.key)
+        end
+    end)
     rows[i] = r
     return r
 end

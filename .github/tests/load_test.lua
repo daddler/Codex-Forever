@@ -17038,6 +17038,28 @@ do
     Check(ok, "Flüstern-Symbol: einmal an die Minikarte, danach frei" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.29.2.0: Messenger - Rechtsklick auf den Namen oeffnet das Menue des Spiels.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local MS = WeintCodex.UIMessenger
+        local c = { name = "Thrall", target = "Thrall-Testrealm", lines = {} }
+        assert(MS.PlayerLink(c) == "player:Thrall-Testrealm", "Spielerlink falsch")
+        assert(MS.LinkedName(c):find("|Hplayer:Thrall-Testrealm|h", 1, true), "Name ohne Link")
+        assert(MS.Format(c, { t = 0, kind = "in", text = "hi" }):find("|Hplayer:", 1, true), "Zeile ohne Link")
+        local bn = { name = "Jaina", target = 42, bn = true, lines = {} }
+        assert(MS.PlayerLink(bn):find("^BNplayer:Jaina:42:"), "BNet-Link falsch")
+        local oS, got = G.SetItemRef
+        G.SetItemRef = function(link, _, button) got = link .. "/" .. button end
+        assert(MS.OpenMenu(c) and got == "player:Thrall-Testrealm/RightButton", "Menue nicht geoeffnet")
+        G.SetItemRef = nil
+        assert(MS.OpenMenu(c) == false, "ohne SetItemRef geraten")
+        G.SetItemRef = oS
+        assert(MS.PlayerLink({ name = "x" }) == nil, "ohne Ziel ein Link")
+    end)
+    Check(ok, "Messenger: Name als Spielerlink, Rechtsklick oeffnet das Menue" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.27.2.0: Gruppe/Schlachtzug waagerecht oder senkrecht - eigene Kacheln und Rahmen des Spiels.
 do
     local G = _G

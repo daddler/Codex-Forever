@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.2.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFRechtsklick auf einen Namen im Messenger.|r Er öffnet dasselbe Menü wie im Chat – einladen, anflüstern, als Freund hinzufügen, melden. Das geht auf dem Namen im Verlauf und auf dem Gespräch in der Liste links.",
+        },
+    },
+    {
         version = "6.29.1.0",
         date    = "11.10.2026",
         notes   = {
