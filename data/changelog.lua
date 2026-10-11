@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.18.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFGruppenwerkzeuge klappen am oberen und unteren Rand senkrecht.|r Oben öffnet das Menü nach unten, unten nach oben – der Griff liegt dann quer unter bzw. über der Fläche. An der Seite bleibt es wie gehabt.",
+        },
+    },
+    {
         version = "6.29.17.0",
         date    = "11.10.2026",
         notes   = {

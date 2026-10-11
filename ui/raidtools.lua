@@ -317,8 +317,14 @@ function RT.Sync()
     panel.leaveInst:SetText(armed == "instance" and "Wirklich verlassen?" or "Instanzgruppe verlassen")
     if panel.leaveInst.SetEnabled then panel.leaveInst:SetEnabled(RT.InInstanceGroup()) end
     -- Der Pfeil zeigt, wohin es aufklappt bzw. wohin es einklappt.
-    local toward = RT.horiz == "RIGHT" and "<" or ">"
-    local back = RT.horiz == "RIGHT" and ">" or "<"
+    local toward, back
+    if RT.axis == "V" then
+        toward = RT.vert == "BOTTOM" and "^" or "v"
+        back = RT.vert == "BOTTOM" and "v" or "^"
+    else
+        toward = RT.horiz == "RIGHT" and "<" or ">"
+        back = RT.horiz == "RIGHT" and ">" or "<"
+    end
     handle.text:SetText(Opt("rtCollapsed") and toward or back)
 end
 
@@ -338,7 +344,13 @@ function RT.Corner(l, b, r, t, W, H)
     local vert = ((b + t) / 2 < H / 2) and "BOTTOM" or "TOP"
     local x = horiz == "LEFT" and l or (r - W)
     local y = vert == "TOP" and (t - H) or b
-    return vert .. horiz, math.floor(x + 0.5), math.floor(y + 0.5), vert, horiz
+    -- Klapprichtung (6.29.18.0, Spieler: "oben oder unten soll es sich von
+    -- oben nach unten bzw. unten nach oben oeffnen"): naeher am oberen oder
+    -- unteren Rand als an der Seite -> senkrecht ("V"), sonst waagerecht.
+    local dx = math.min(l, W - r)
+    local dy = math.min(H - t, b)
+    local axis = dy < dx and "V" or "H"
+    return vert .. horiz, math.floor(x + 0.5), math.floor(y + 0.5), vert, horiz, axis
 end
 
 local function Num(f, m)
@@ -353,8 +365,8 @@ function RT.Reanchor()
     local l, b, r, t = Num(panel, "GetLeft"), Num(panel, "GetBottom"), Num(panel, "GetRight"), Num(panel, "GetTop")
     local W, H = Num(UIParent, "GetWidth"), Num(UIParent, "GetHeight")
     if not (l and b and r and t and W and H) then return false end
-    local point, x, y, vert, horiz = RT.Corner(l, b, r, t, W, H)
-    RT.vert, RT.horiz = vert, horiz
+    local point, x, y, vert, horiz, axis = RT.Corner(l, b, r, t, W, H)
+    RT.vert, RT.horiz, RT.axis = vert, horiz, axis
     local ui = K.Profile()
     if not ui then return false end
     local cur = ui.positions[MOVER]
@@ -371,9 +383,10 @@ function RT.Orient()
     local l, b, r, t = Num(panel, "GetLeft"), Num(panel, "GetBottom"), Num(panel, "GetRight"), Num(panel, "GetTop")
     local W, H = Num(UIParent, "GetWidth"), Num(UIParent, "GetHeight")
     if not (l and b and r and t and W and H) then return false end
-    local _, _, _, vert, horiz = RT.Corner(l, b, r, t, W, H)
-    if vert == RT.vert and horiz == RT.horiz then return false end
-    RT.vert, RT.horiz = vert, horiz
+    local _, _, _, vert, horiz, axis = RT.Corner(l, b, r, t, W, H)
+    if vert == RT.vert and horiz == RT.horiz and axis == RT.axis then return false end
+    RT.vert, RT.horiz, RT.axis = vert, horiz, axis
+    if not Opt("rtCollapsed") or K.IsUnlocked() then RT.Size() end
     RT.PlaceHandle()
     RT.Sync()
     return true
@@ -386,10 +399,37 @@ function RT.PlaceHandle()
     local v = bottom and "BOTTOM" or "TOP"
     local dy = bottom and RT.PAD or -RT.PAD
     handle:ClearAllPoints()
+    if RT.axis == "V" then
+        -- Senkrecht: Griff waagerecht unter (oben) bzw. ueber (unten) der
+        -- Flaeche, an der Seite, an der sie haengt.
+        local h = right and "RIGHT" or "LEFT"
+        local dx = right and -RT.PAD or RT.PAD
+        handle:SetSize(40, 14)
+        if bottom then
+            handle:SetPoint("BOTTOM" .. h, panel, "TOP" .. h, dx, 1)
+        else
+            handle:SetPoint("TOP" .. h, panel, "BOTTOM" .. h, dx, -1)
+        end
+        return
+    end
+    handle:SetSize(14, 40)
     if right then
         handle:SetPoint(v .. "RIGHT", panel, v .. "LEFT", -1, dy)
     else
         handle:SetPoint(v .. "LEFT", panel, v .. "RIGHT", 1, dy)
+    end
+end
+
+-- Groesse offen/eingeklappt; eingeklappt ein Streifen quer zur Klapprichtung.
+function RT.Size(open)
+    if not panel or K.InCombat() then return end
+    if open == nil then open = not Opt("rtCollapsed") or K.IsUnlocked() end
+    if open then
+        panel:SetSize(RT.W, RT.FULL_H)
+    elseif RT.axis == "V" then
+        panel:SetSize(56, 14)
+    else
+        panel:SetSize(14, 56)
     end
 end
 
@@ -403,8 +443,7 @@ function RT.Apply()
     if show then RT.Reanchor() end
     RT.PlaceHandle()
     content:SetShown(open)
-    panel:SetHeight(open and RT.FULL_H or 56)
-    panel:SetWidth(open and RT.W or 14)
+    RT.Size(open)
     RT.Sync()
     RT.Fade()
 end

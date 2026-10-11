@@ -4657,6 +4657,10 @@ do
         assert(c1[1] == "BOTTOMLEFT" and c1[2] == 10 and c1[3] == 10, "unten links nicht unten verankert")
         local c2 = { RT.Corner(1100, 400, 1341, 700, 1365, 768) }
         assert(c2[1] == "TOPRIGHT" and c2[2] == -24 and c2[3] == -68, "oben rechts falsch: " .. tostring(c2[1]))
+        local c4 = { RT.Corner(600, 2, 841, 300, 1365, 768) }
+        assert(c4[1]:find("BOTTOM", 1, true) and c4[6] == "V", "unten mittig klappt nicht senkrecht")
+        local c5 = { RT.Corner(4, 200, 245, 500, 1365, 768) }
+        assert(c5[6] == "H", "am linken Rand nicht waagerecht")
         local c3 = { RT.Corner(1100, 5, 1341, 300, 1365, 768) }
         assert(c3[1] == "BOTTOMRIGHT", "unten rechts nicht unten rechts verankert")
         -- Im Gestaltungsmodus rechts unten losgelassen: Griff und Pfeil folgen.
