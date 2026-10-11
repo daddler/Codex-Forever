@@ -317,6 +317,21 @@ end
 
 local keyOwner
 local keyButtons = {}
+CC.keyBound = {}   -- [Taste] = was darauf liegen soll
+
+-- Liegen unsere Tasten noch? Beim ersten Einloggen laedt das Spiel die
+-- Tastenbelegung erst NACH PLAYER_ENTERING_WORLD - was davor gesetzt war,
+-- war danach weg. Gefragt wird nach jedem UPDATE_BINDINGS; neu gesetzt
+-- nur, wenn etwas fehlt (unser Setzen loest selbst UPDATE_BINDINGS aus).
+function CC.KeysIntact()
+    local get = _G.GetBindingAction
+    if type(get) ~= "function" then return true end
+    for key, want in pairs(CC.keyBound) do
+        local ok, have = pcall(get, key, true)
+        if ok and have ~= want then return false end
+    end
+    return true
+end
 
 function CC.KeyMacro(b)
     if b.action == "spell" then
@@ -340,6 +355,7 @@ function CC.ApplyKeys(list)
         keyOwner = CreateFrame("Frame", "WeintCodexClickKeys", UIParent)
     end
     if type(_G.ClearOverrideBindings) == "function" then _G.ClearOverrideBindings(keyOwner) end
+    CC.keyBound = {}
     local n = 0
     for _, b in ipairs(list) do
         local text = CC.IsKey(b) and CC.KeyMacro(b)
@@ -357,7 +373,12 @@ function CC.ApplyKeys(list)
                 keyButtons[n] = btn
             end
             btn:SetAttribute("macrotext", text)
-            _G.SetOverrideBindingClick(keyOwner, false, CC.BindingKey(b), "WeintCodexClickKey" .. n, "LeftButton")
+            -- Vorrang (true): Leisten-Addons wie Bartender legen ihre
+            -- Tasten ebenfalls als Vorrang-Belegung - wer nach uns kommt,
+            -- gewinnt sonst (6.29.11.0, Spieler: "nach dem Einloggen ging
+            -- der Zauber auf der Taste nicht mehr").
+            _G.SetOverrideBindingClick(keyOwner, true, CC.BindingKey(b), "WeintCodexClickKey" .. n, "LeftButton")
+            CC.keyBound[CC.BindingKey(b)] = "CLICK WeintCodexClickKey" .. n .. ":LeftButton"
         end
     end
     for i = n + 1, #keyButtons do keyButtons[i]:SetAttribute("macrotext", "") end
@@ -881,9 +902,20 @@ end
 CC.ApplySoon = ApplySoon
 
 local ev = CreateFrame("Frame")
-for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "GROUP_ROSTER_UPDATE" }) do pcall(ev.RegisterEvent, ev, e) end
+for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "GROUP_ROSTER_UPDATE", "UPDATE_BINDINGS" }) do
+    pcall(ev.RegisterEvent, ev, e)
+end
 ev:SetScript("OnEvent", function(_, event)
-    if event == "PLAYER_ENTERING_WORLD" then CC.Apply() return end
+    if event == "PLAYER_ENTERING_WORLD" then
+        CC.Apply()
+        -- Nach dem Laden der Tastenbelegung noch einmal (siehe CC.KeysIntact).
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(2, ApplySoon) end
+        return
+    end
+    if event == "UPDATE_BINDINGS" then
+        if not CC.KeysIntact() then ApplySoon() end
+        return
+    end
     local GG = WeintCodex.UIGameGroup
     if not (GG and GG.active) then ApplySoon() end
 end)

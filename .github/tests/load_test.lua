@@ -4695,7 +4695,10 @@ do
         -- 6.29.9.0: Maustasten 6-12 als "-Button7", Tastatur-Tasten als
         -- Vorrang-Belegung auf einen Mouseover-Knopf, Fläche "Taste zuweisen".
         local binds, oldSet, oldClear = {}, _G.SetOverrideBindingClick, _G.ClearOverrideBindings
-        _G.SetOverrideBindingClick = function(_, _, key, name) binds[key] = name end
+        _G.SetOverrideBindingClick = function(_, prio, key, name)
+            assert(prio == true, "Taste ohne Vorrang belegt – Leisten-Addons gewinnen")
+            binds[key] = name
+        end
         _G.ClearOverrideBindings = function() for k in pairs(binds) do binds[k] = nil end end
         assert(CC.CaptureValue("Button7", true) == 7 and CC.CaptureValue("LeftButton", true) == 1,
             "Maustaste nicht erkannt")
@@ -4712,6 +4715,15 @@ do
         assert(_G.WeintCodexClickKey1:GetAttribute("macrotext") == "/cast [@mouseover,exists] Erneuerung",
             "Makro der Taste falsch")
         assert(f1:GetAttribute("shift-type3") == nil, "Tastatur-Taste als Maustaste 3 gesetzt")
+        -- 6.29.11.0: nach dem Einloggen weg (Belegung des Spiels geladen) -> erkannt.
+        local oldGBA = _G.GetBindingAction
+        _G.GetBindingAction = function(k) return binds[k] and ("CLICK " .. binds[k] .. ":LeftButton") or "" end
+        assert(CC.KeysIntact(), "liegende Taste als fehlend gemeldet")
+        binds["SHIFT-3"] = nil
+        assert(not CC.KeysIntact(), "verlorene Taste nicht erkannt")
+        CC.Apply()
+        assert(binds["SHIFT-3"] == "WeintCodexClickKey1" and CC.KeysIntact(), "verlorene Taste nicht neu gelegt")
+        _G.GetBindingAction = oldGBA
         assert(CC.KeyText(CC.Current()):find("Taste", 1, true), "Tastentext ohne „Taste“")
         local nb = #CC.Bindings()
         CC.Remove(nb)   -- Tastatur-Tasten sortieren hinter Maustasten
@@ -14107,19 +14119,23 @@ do
         assert(E.HookGame(), "Fenster des Spiels nicht eingehakt")
         assert(E.GamePath() == "direct", "ohne Befehl nicht der direkte Weg: " .. E.GamePath())
 
-        -- 1. Aus dem Gestaltungsmodus hinueber und zurueck.
+        -- 1. Seit 6.29.11.0: aus dem Gestaltungsmodus DAZU - beide offen,
+        -- derselbe Knopf schliesst den des Spiels ueber dessen X.
         UO.frame:Hide()
         assert(K.SetUnlocked(true), "Gestaltungsmodus geht nicht an")
         local gb = E.buttons.game
         assert(gb and gb:GetScript("OnClick"), "Knopf zum Bearbeitungsmodus fehlt in der Leiste")
         gb:Click()
         assert(opens == 1 and E.GameShown(), "Bearbeitungsmodus des Spiels nicht geoeffnet")
-        assert(not K.IsUnlocked(), "Gestaltungsmodus bleibt offen unter dem des Spiels")
-        assert(E.StripShown(), "keine Leiste unter dem Bearbeitungsmodus des Spiels")
-        assert(E.bridge.from == "design", "Rueckweg nicht gemerkt: " .. tostring(E.bridge.from))
-        game:Hide()
-        assert(not E.StripShown(), "Leiste bleibt nach dem Schliessen")
-        assert(K.IsUnlocked(), "nach dem Schliessen nicht zurueck im Gestaltungsmodus")
+        assert(K.IsUnlocked(), "Gestaltungsmodus geht zu, statt offen zu bleiben")
+        assert(not E.StripShown(), "zweite Leiste, obwohl die des Gestaltungsmodus steht")
+        assert(E.bridge.from == nil, "Rueckweg gemerkt, obwohl beide offen sind")
+        local cl = gb._gameClose
+        assert(cl and cl:IsShown() and cl:GetAttribute("clickbutton") == game.CloseButton,
+            "zweiter Klick schliesst nicht ueber das X des Spiels")
+        game.CloseButton:Click()
+        assert(not E.GameShown() and K.IsUnlocked(), "Schliessen beendet den Gestaltungsmodus")
+        assert(not cl:IsShown(), "Knopf schliesst weiter, obwohl das Spiel zu ist")
         K.SetUnlocked(false)
         WeintCodex.UIEditMode.FinishAnim()
 

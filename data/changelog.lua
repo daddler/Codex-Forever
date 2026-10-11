@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.11.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber auf Tastatur-Tasten bleiben nach dem Einloggen.|r Die Seitentasten mehrtastiger Mäuse wirkten bis zum nächsten Einloggen – danach war die Belegung weg. Jetzt legt WeintCodex sie neu, sobald das Spiel seine Tastenbelegung geladen hat, und vor der von Leisten-Addons.",
+            "|cff7C6CFFIm Gestaltungsmodus den Bearbeitungsmodus des Spiels dazuschalten.|r „Rahmen des Spiels: an“ oben in der Leiste öffnet ihn zusätzlich – du siehst, wo Blizzards Rahmen liegen, und verschiebst beides nebeneinander. Noch ein Klick schließt ihn wieder.",
+        },
+    },
+    {
         version = "6.29.10.0",
         date    = "11.10.2026",
         notes   = {

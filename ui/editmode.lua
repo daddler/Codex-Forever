@@ -201,6 +201,8 @@ local function Sync()
     buttons.grid:SetText(ToggleText("Raster", state.grid))
     buttons.snap:SetText(ToggleText("Einrasten", state.snap))
     buttons.reset:SetText(armedReset and "Wirklich alles?" or "Alles zurücksetzen")
+    buttons.game:SetText(ToggleText("Rahmen des Spiels", E.GameShown()))
+    E.SyncGameToggle()
     FitBar()
     if grid then grid:SetShown(state.grid and K.IsUnlocked()) end
     E.UpdateInfo()
@@ -306,9 +308,14 @@ local function BuildBar()
         Sync()
     end)
     buttons.done = Button("Fertig", "primary", function() K.SetUnlocked(false) end)
-    -- Hinueber in den Bearbeitungsmodus des Spiels (Bruecke, unten).
-    buttons.game = Button(E.GAME_LABEL, "secondary", nil, E.GAME_TOOLTIP)
-    E.AttachGame(buttons.game)
+    -- Der Bearbeitungsmodus des Spiels DAZU (6.29.11.0, Spieler: "im
+    -- Gestaltungsmodus zusaetzlich den Bearbeitungsmodus an, so sehe ich,
+    -- wo bei Blizzard was liegt"). Bis dahin fuehrte der Knopf hinueber
+    -- und schloss den Gestaltungsmodus. Jetzt bleibt er offen; derselbe
+    -- Knopf schliesst den des Spiels wieder (Bruecke, unten).
+    buttons.game = Button(ToggleText("Rahmen des Spiels", false), "secondary", nil, E.TOGETHER_TOOLTIP)
+    E.AttachGame(buttons.game, true)
+    E.AttachGameClose(buttons.game)
 
     for i, o in ipairs(ORDER) do
         local right = i == 1 and bar or buttons[ORDER[i - 1][1]]
@@ -635,6 +642,9 @@ E.GAME_OWNS = "Aktionsleisten, Minikarte, Buffs, Questliste, Abklingzeitmanager,
 E.GAME_TOOLTIP = E.GAME_OWNS .. " stellt das Spiel – Platz und Größe dort. "
     .. "Öffnet seinen Bearbeitungsmodus; schließt du ihn, bist du wieder hier."
 E.CHECK_DELAY = 0.3
+E.TOGETHER_TOOLTIP = "Öffnet den Bearbeitungsmodus des Spiels zusätzlich – der Gestaltungsmodus bleibt offen. "
+    .. "So siehst du, wo " .. E.GAME_OWNS .. " liegen, und kannst beides nebeneinander verschieben. "
+    .. "Noch ein Klick schließt den des Spiels (mit seiner Rückfrage bei ungespeicherten Änderungen)."
 
 -- from: wohin es nach dem Schliessen geht ("design", "options" oder nil);
 -- reopen: nach dem Gestaltungsmodus noch ins Einstellungsfenster.
@@ -692,8 +702,9 @@ end
 -- Bildlauf des Fensters), MakeRoom raeumt danach auf (PostClick).
 local function Options() return WeintCodex.UIOptions end
 
-function E.NoteOrigin()
+function E.NoteOrigin(together)
     bridge.from, bridge.reopen, bridge.pending, bridge.where = nil, false, false, nil
+    bridge.together = together == true
     if K.InCombat() then
         Say("Im Kampf öffnet das Spiel seinen Bearbeitungsmodus nicht.")
         return false
@@ -703,7 +714,10 @@ function E.NoteOrigin()
         return false
     end
     local O = Options()
-    if K.IsUnlocked() then
+    if bridge.together then
+        -- Beides offen: nichts schliessen, nirgends hin zurueck.
+        bridge.from = nil
+    elseif K.IsUnlocked() then
         bridge.from = "design"
     elseif O and O.frame and O.frame:IsShown() then
         bridge.from = "options"
@@ -776,8 +790,9 @@ function E.AfterGameClick()
 end
 
 -- Der direkte Weg, nur ohne Befehl des Spiels.
-function E.OpenGame()
-    if not E.LeaveForGame() then return false end
+function E.OpenGame(together)
+    if not E.NoteOrigin(together) then return false end
+    E.MakeRoom()
     local f = E.GameFrame()
     local show = _G.ShowUIPanel
     local ok, err = pcall(function()
@@ -791,12 +806,12 @@ end
 -- Macht aus einem Knopf den Weg hinueber. Mit Befehl: ein sicherer Knopf
 -- darueber fuehrt ihn als Makro aus (wie WeintCodex.AttachReload);
 -- angelegt wird der nur ausserhalb des Kampfes.
-function E.AttachGame(button)
+function E.AttachGame(button, together)
     E.HookGame()
     local slash = E.GameSlash()
     if slash and K.InCombat() then
-        button:SetScript("OnClick", function() E.LeaveForGame() end)
-        K.AfterCombat(function() E.AttachGame(button) end)
+        button:SetScript("OnClick", function() if E.NoteOrigin(together) then E.MakeRoom() end end)
+        K.AfterCombat(function() E.AttachGame(button, together) end)
         return nil
     end
     if slash then
@@ -811,7 +826,7 @@ function E.AttachGame(button)
             -- Erst NACH dem Makro Platz machen: der Knopf liegt in der
             -- Leiste, die dabei zugeht, und ein Klick soll nicht davon
             -- abhaengen, ob ein versteckter Knopf ihn noch ausfuehrt.
-            ov:SetScript("PreClick", E.NoteOrigin)
+            ov:SetScript("PreClick", together and function() E.NoteOrigin(true) end or E.NoteOrigin)
             ov:SetScript("PostClick", E.AfterGameClick)
             ov:SetScript("OnEnter", function()
                 local f = button:GetScript("OnEnter")
@@ -825,8 +840,44 @@ function E.AttachGame(button)
             return ov
         end
     end
-    button:SetScript("OnClick", function() E.OpenGame() end)
+    button:SetScript("OnClick", function() E.OpenGame(together) end)
     return nil
+end
+
+-- Der zweite Klick: das X des Spiels, als geschuetzter Knopf ueber dem
+-- ersten (wie E.AttachBack). Welcher von beiden obenauf liegt, stellt
+-- E.SyncGameToggle - ausserhalb des Kampfes.
+function E.AttachGameClose(button)
+    local close = E.GameClose()
+    if not close or K.InCombat() then return nil end
+    local ok, ov = pcall(CreateFrame, "Button", nil, button, "SecureActionButtonTemplate")
+    if not (ok and ov) then return nil end
+    ov:SetAllPoints(button)
+    ov:SetFrameLevel((button:GetFrameLevel() or 1) + 7)
+    if ov.RegisterForClicks then ov:RegisterForClicks("AnyUp") end
+    ov:SetAttribute("useOnKeyDown", false)
+    ov:SetAttribute("type", "click")
+    ov:SetAttribute("clickbutton", close)
+    ov:SetScript("PreClick", function() bridge.from, bridge.together = nil, false end)
+    ov:SetScript("OnEnter", function()
+        local f = button:GetScript("OnEnter")
+        if f then f(button) end
+    end)
+    ov:SetScript("OnLeave", function()
+        local f = button:GetScript("OnLeave")
+        if f then f(button) end
+    end)
+    ov:Hide()
+    button._gameClose = ov
+    return ov
+end
+
+function E.SyncGameToggle()
+    local b = buttons.game
+    if not b or K.InCombat() then return end
+    local ov = b._gameClose or E.AttachGameClose(b)
+    if not ov then return end
+    ov:SetShown(E.GameShown())
 end
 
 --------------------------------------------------
@@ -929,6 +980,8 @@ local function PlaceStrip()
 end
 
 function E.ShowStrip()
+    -- Beide offen: die Leiste des Gestaltungsmodus steht schon oben.
+    if K.IsUnlocked() then Sync() return end
     if not (K.UIEnabled and K.UIEnabled()) or not E.GameFrame() then return end
     if not strip then
         strip = CreateFrame("Frame", "WeintCodexGameEditBar", UIParent)
@@ -979,6 +1032,8 @@ function E.HookGame()
     f:HookScript("OnShow", E.ShowStrip)
     f:HookScript("OnHide", function()
         E.HideStrip()
+        bridge.together = false
+        Sync()
         bridge.pending = false
         -- Erst wenn das Spiel fertig ist (es speichert beim Schliessen).
         if _G.C_Timer and _G.C_Timer.After then

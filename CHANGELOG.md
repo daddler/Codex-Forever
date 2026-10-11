@@ -9,6 +9,29 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.11.0] – 2026-10-11
+
+### Behoben
+
+- **Klickzauber auf Tastatur-Tasten nach dem Einloggen weg:** Beim ersten
+  Einloggen lädt das Spiel die Tastenbelegung erst nach
+  `PLAYER_ENTERING_WORLD`; die dort gesetzten Vorrang-Belegungen waren danach
+  nicht mehr da. Jetzt: `CC.KeysIntact` prüft nach jedem `UPDATE_BINDINGS`
+  (und 2 s nach dem Laden), ob `GetBindingAction(key, true)` noch auf
+  `WeintCodexClickKeyN` zeigt, und legt sonst neu. Außerdem mit Vorrang
+  (`SetOverrideBindingClick(…, true, …)`), damit Leisten-Addons, die später
+  laden, die Taste nicht überdecken. Ursache im Spiel nicht gemessen – beides
+  zusammen deckt die zwei plausiblen Wege ab.
+
+### Geändert
+
+- **Gestaltungsmodus + Bearbeitungsmodus des Spiels gleichzeitig:** Der Knopf
+  in der Leiste heißt „Rahmen des Spiels: an/aus“ und öffnet den
+  Bearbeitungsmodus zusätzlich (`E.NoteOrigin(true)`, kein Rückweg, keine
+  zweite Leiste); ein zweiter geschützter Knopf darüber klickt das X des
+  Spiels (`E.AttachGameClose`). Aus Einstellungsseiten bleibt der Weg
+  hinüber und zurück wie bisher. Im Spiel ungeprüft.
+
 ## [6.29.10.0] – 2026-10-11
 
 ### Neu

@@ -4291,3 +4291,16 @@ Rahmen (`rel`) nie. Wahl `general.wideArea`: „169“ (ab Werk), „219“
 nach dem Neuladen; die Rahmen des Spiels erst mit `/wcui einrichten`, weil
 sie im Layout des Bearbeitungsmodus stehen. Gespeicherte Positionen gehen
 vor. Im Spiel ungeprüft.
+
+## Klickzauber-Tasten nach dem Einloggen, Bearbeitungsmodus dazu (6.29.11.0)
+
+* Tastatur-Belegungen der Klickzauber werden nach jedem `UPDATE_BINDINGS`
+  geprüft (`CC.KeysIntact`, `GetBindingAction(key, true)`) und bei Bedarf
+  neu gelegt – mit Vorrang. Grund: nach dem Einloggen waren sie weg
+  (Spielerbericht), vermutlich weil das Spiel seine Belegung nach
+  `PLAYER_ENTERING_WORLD` lädt.
+* Gestaltungsmodus: „Rahmen des Spiels: an/aus“ öffnet den
+  Bearbeitungsmodus des Spiels **zusätzlich** (`E.AttachGame(button, true)`)
+  und schließt ihn über dessen X (`E.AttachGameClose`,
+  `E.SyncGameToggle`). Solange der Gestaltungsmodus offen ist, gibt es keine
+  Leiste unter dem Fenster des Spiels (`E.ShowStrip`).
