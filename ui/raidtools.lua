@@ -270,7 +270,6 @@ local function Build()
     -- Der Griff am rechten Rand: ein- und ausklappen.
     handle = CreateFrame("Button", nil, panel)
     handle:SetSize(14, 40)
-    handle:SetPoint("TOPLEFT", panel, "TOPRIGHT", 1, -RT.PAD)
     K.Kachel(handle)
     handle.text = K.NewText(handle, 12)
     handle.text:SetPoint("CENTER", handle, "CENTER", 0, 0)
@@ -305,7 +304,67 @@ function RT.Sync()
     panel.leave:SetText(armed == "party" and "Wirklich verlassen?" or "Gruppe verlassen")
     panel.leaveInst:SetText(armed == "instance" and "Wirklich verlassen?" or "Instanzgruppe verlassen")
     if panel.leaveInst.SetEnabled then panel.leaveInst:SetEnabled(RT.InInstanceGroup()) end
-    handle.text:SetText(Opt("rtCollapsed") and ">" or "<")
+    -- Der Pfeil zeigt, wohin es aufklappt bzw. wohin es einklappt.
+    local toward = RT.horiz == "RIGHT" and "<" or ">"
+    local back = RT.horiz == "RIGHT" and ">" or "<"
+    handle.text:SetText(Opt("rtCollapsed") and toward or back)
+end
+
+--------------------------------------------------
+-- Aufklappen zur Bildschirmmitte (6.29.15.0)
+--------------------------------------------------
+-- Spieler: "an den unteren Rand gezogen soll es nach oben aufklappen, am
+-- rechten Rand nach links, oben nach unten". Die Flaeche haengt deshalb
+-- immer an der Ecke, die dem naechsten Bildschirmrand zugewandt ist: in
+-- der unteren Haelfte unten, in der rechten Haelfte rechts. Ein- und
+-- Ausklappen aendert die Groesse - die angehaengte Ecke bleibt stehen,
+-- die Flaeche waechst zur Mitte. Der Griff sitzt auf der Seite zur Mitte.
+
+-- Ecke fuer eine Flaeche mit diesen Kanten auf einem Bildschirm W x H.
+function RT.Corner(l, b, r, t, W, H)
+    local horiz = ((l + r) / 2 > W / 2) and "RIGHT" or "LEFT"
+    local vert = ((b + t) / 2 < H / 2) and "BOTTOM" or "TOP"
+    local x = horiz == "LEFT" and l or (r - W)
+    local y = vert == "TOP" and (t - H) or b
+    return vert .. horiz, math.floor(x + 0.5), math.floor(y + 0.5), vert, horiz
+end
+
+local function Num(f, m)
+    local ok, v = pcall(f[m], f)
+    v = ok and K.Plain(v) or nil
+    return type(v) == "number" and v or nil
+end
+
+-- Den gespeicherten Platz auf die passende Ecke umrechnen (dieselbe Stelle).
+function RT.Reanchor()
+    if not panel or K.InCombat() then return false end
+    local l, b, r, t = Num(panel, "GetLeft"), Num(panel, "GetBottom"), Num(panel, "GetRight"), Num(panel, "GetTop")
+    local W, H = Num(UIParent, "GetWidth"), Num(UIParent, "GetHeight")
+    if not (l and b and r and t and W and H) then return false end
+    local point, x, y, vert, horiz = RT.Corner(l, b, r, t, W, H)
+    RT.vert, RT.horiz = vert, horiz
+    local ui = K.Profile()
+    if not ui then return false end
+    local cur = ui.positions[MOVER]
+    if not (cur and cur.point == point and cur.x == x and cur.y == y) then
+        ui.positions[MOVER] = { point = point, relPoint = point, x = x, y = y }
+        K.ApplyPosition(MOVER)
+    end
+    return true
+end
+
+-- Griff auf der Seite zur Mitte, oben oder unten buendig.
+function RT.PlaceHandle()
+    if not handle then return end
+    local right, bottom = RT.horiz == "RIGHT", RT.vert == "BOTTOM"
+    local v = bottom and "BOTTOM" or "TOP"
+    local dy = bottom and RT.PAD or -RT.PAD
+    handle:ClearAllPoints()
+    if right then
+        handle:SetPoint(v .. "RIGHT", panel, v .. "LEFT", -1, dy)
+    else
+        handle:SetPoint(v .. "LEFT", panel, v .. "RIGHT", 1, dy)
+    end
 end
 
 -- Zeigen, einklappen: nur ausserhalb des Kampfes (geschuetzte Knoepfe).
@@ -315,6 +374,8 @@ function RT.Apply()
     local show = RT.InGroup() or K.IsUnlocked()
     panel:SetShown(show)
     local open = not Opt("rtCollapsed") or K.IsUnlocked()
+    if show then RT.Reanchor() end
+    RT.PlaceHandle()
     content:SetShown(open)
     panel:SetHeight(open and RT.FULL_H or 56)
     panel:SetWidth(open and RT.W or 14)
@@ -439,6 +500,11 @@ end
 
 K.Listen(function(kind, module, key)
     if kind == "unlock" then RT.Apply() return end
+    -- Nach dem Ziehen (das Ziehen waehlt den Rahmen an): neue Ecke.
+    if kind == "moverSelect" and module == MOVER then
+        if RT.Reanchor() then RT.PlaceHandle() RT.Sync() end
+        return
+    end
     if kind == "setting" and module == KEY and type(key) == "string" and key:sub(1, 2) == "rt" then
         if key == "rtHideBlizzard" then return end   -- Neuladen
         if key == "rtEnabled" then RT.Start() return end

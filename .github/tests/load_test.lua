@@ -4646,6 +4646,13 @@ do
         for _, b in ipairs(RT.secure) do macros[b:GetAttribute("macrotext")] = b:GetAttribute("type") end
         assert(macros["/tm 8"] == "macro" and macros["/tm 0"] and macros["/wm 1"] and macros["/cwm all"],
             "Markierknoepfe nicht als Makro /tm, /wm, /cwm")
+        -- Ecke zur naechsten Bildschirmkante (Bildschirm 1365 x 768).
+        local c1 = { RT.Corner(10, 10, 251, 300, 1365, 768) }
+        assert(c1[1] == "BOTTOMLEFT" and c1[2] == 10 and c1[3] == 10, "unten links nicht unten verankert")
+        local c2 = { RT.Corner(1100, 400, 1341, 700, 1365, 768) }
+        assert(c2[1] == "TOPRIGHT" and c2[2] == -24 and c2[3] == -68, "oben rechts falsch: " .. tostring(c2[1]))
+        local c3 = { RT.Corner(1100, 5, 1341, 300, 1365, 768) }
+        assert(c3[1] == "BOTTOMRIGHT", "unten rechts nicht unten rechts verankert")
         assert(#RT.secure == 18, "nicht 9 + 9 Markierknoepfe: " .. #RT.secure)
         -- Mouseover: blass ohne Maus, voll mit Maus.
         RT.Fade()

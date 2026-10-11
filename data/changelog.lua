@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.15.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFGruppenwerkzeuge klappen zur Bildschirmmitte auf.|r Am unteren Rand nach oben, am rechten Rand nach links, oben nach unten – der Griff sitzt immer auf der Seite zur Mitte.",
+        },
+    },
+    {
         version = "6.29.14.0",
         date    = "11.10.2026",
         notes   = {

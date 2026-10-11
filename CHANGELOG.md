@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.15.0] – 2026-10-11
+
+### Geändert
+
+- **Gruppenwerkzeuge klappen zur Mitte auf:** `RT.Corner` wählt die Ecke zur
+  nächsten Bildschirmkante (untere Hälfte → unten, rechte Hälfte → rechts),
+  `RT.Reanchor` rechnet den gespeicherten Platz nach dem Ziehen und vor jedem
+  Ein-/Ausklappen auf diese Ecke um (gleiche Stelle). Der Griff sitzt auf der
+  Seite zur Mitte, der Pfeil zeigt die Richtung. Im Spiel ungeprüft.
+
 ## [6.29.14.0] – 2026-10-11
 
 ### Behoben
