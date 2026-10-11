@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.5.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFRazorfen Kraul hat jetzt Bilder.|r Ein Banner oben auf der Seite und ein Bild für jeden der sechs Bosse.",
+        },
+    },
+    {
         version = "6.29.4.0",
         date    = "11.10.2026",
         notes   = {

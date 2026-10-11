@@ -161,6 +161,14 @@ JOBS = [
     ("dungeons/gnomeregan/crowd_pummeler", "gnomeregan/crowd_pummeler_9-60.png", (0, 40, 1983, 496), (512, 128)),
     ("dungeons/gnomeregan/dark_iron_ambassador", "gnomeregan/dark_iron_ambassador.png", (0, 10, 1983, 496), (512, 128)),
     ("dungeons/gnomeregan/thermaplugg", "gnomeregan/mekgineer_thermaplugg.png", (0, 60, 1983, 496), (512, 128)),
+    # 6.29.5.0: Razorfen Kraul.
+    ("dungeons/razorfen_kraul/header", "razorfen_kraul/banner.png", (0, 0, 1983, 496)),
+    ("dungeons/razorfen_kraul/roogug", "razorfen_kraul/roogug.png", (0, 20, 1983, 496), (512, 128)),
+    ("dungeons/razorfen_kraul/aggem_thorncurse", "razorfen_kraul/aggem_thorncurse.png", (0, 20, 1983, 496), (512, 128)),
+    ("dungeons/razorfen_kraul/death_speaker_jargba", "razorfen_kraul/death_speaker_jargba.png", (0, 20, 1983, 496), (512, 128)),
+    ("dungeons/razorfen_kraul/overlord_ramtusk", "razorfen_kraul/overlord_ramtusk.png", (0, 30, 1983, 496), (512, 128)),
+    ("dungeons/razorfen_kraul/agathelos", "razorfen_kraul/agathelos_the_raging.png", (0, 40, 1983, 496), (512, 128)),
+    ("dungeons/razorfen_kraul/charlga_razorflank", "razorfen_kraul/charlga_razorflank.png", (0, 10, 1983, 496), (512, 128)),
 ]
 
 TARGET_W, TARGET_H = 1024, 256

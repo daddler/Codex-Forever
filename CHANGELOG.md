@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.5.0] – 2026-10-11
+
+### Neu
+
+- **Razorfen Kraul bebildert:** Banner und alle sechs Bosse (512x128).
+
 ## [6.29.4.0] – 2026-10-11
 
 ### Neu

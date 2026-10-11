@@ -470,6 +470,40 @@ WeintCodex.Artworks = {
         },
     },
 
+    razorfen_kraul = {
+        -- Originale 1983x793, Banner y 0, Bosse 512x128 (siehe make_artwork.py).
+        header = {
+            file = ART .. "razorfen_kraul/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            roogug = {
+                file = ART .. "razorfen_kraul/roogug",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            aggem_thorncurse = {
+                file = ART .. "razorfen_kraul/aggem_thorncurse",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            death_speaker_jargba = {
+                file = ART .. "razorfen_kraul/death_speaker_jargba",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            overlord_ramtusk = {
+                file = ART .. "razorfen_kraul/overlord_ramtusk",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            agathelos = {
+                file = ART .. "razorfen_kraul/agathelos",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            charlga_razorflank = {
+                file = ART .. "razorfen_kraul/charlga_razorflank",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
     wailing_caverns = {
         -- Schnitt aus header(2).png (1672x941): x 0, y 240, 1672x418.
         header = {
