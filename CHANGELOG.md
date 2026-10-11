@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.28.0.0] – 2026-10-11
+
+### Neu
+
+- Profil exportieren/importieren (Beta-Test: „komplettes Layout inkl. aller Einstellungen – Backup und Teilen“): `ui/share.lua`, Seite Profile → „Sichern und teilen“. Text `WCUI1:` + Base64 eines eigenen Datenformats (Zahl, Text, Wahrheitswert, Tabelle) mit dem gewählten Profil und – wo der Client es kann – dem Layout „WeintCodex“ (`C_EditMode.ConvertLayoutInfoToString`). Eingelesen mit eigenem Leser, nie als Code (kein `loadstring`), Grenzen für Tiefe und Länge. Import nach Rückfrage, ersetzt nur das gewählte Profil und nur das Layout „WeintCodex“, wirkt nach dem Neuladen. Nicht im Text: Hauptschalter, Willkommen, Änderungen am Spiel.
+
 ## [6.27.4.0] – 2026-10-11
 
 ### Geändert

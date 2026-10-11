@@ -17120,6 +17120,36 @@ do
     Check(ok, "Erinnerungen: Groesse, Deckkraft, an ruhigen Orten aus" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.28.0.0: Profil exportieren und importieren - nur Daten, nie Code.
+do
+    local ok, err = pcall(function()
+        local K, SH, PR = WeintCodex.UIKit, WeintCodex.UIShare, WeintCodex.UIProfiles
+        local v = { a = 1.5, b = "Ä|x:y", c = true, d = { 1, 2, { e = false } }, [7] = "sieben" }
+        local back = SH.Deserialize(SH.Serialize(v))
+        assert(back.a == 1.5 and back.b == "Ä|x:y" and back.c == true and back.d[3].e == false and back[7] == "sieben", "Rundweg kaputt")
+        for _, t in ipairs({ "", "a", "abc", "abcd", "Grüße|\0" }) do assert(SH.Decode(SH.Encode(t)) == t, "Base64: " .. t) end
+        assert(not SH.Encode(SH.Serialize(v)):find("[|%s]"), "Zeichen, die der Chat verdirbt")
+        -- Fremder Text: nie ausgefuehrt, sauber abgelehnt.
+        assert(SH.Parse("os.exit()") == nil, "fremder Text angenommen")
+        assert(SH.Parse(SH.PREFIX .. "!!!!") == nil, "kaputter Text angenommen")
+        assert(SH.Parse(SH.PREFIX .. SH.Encode("t" .. string.rep("t", 100))) == nil, "zu tief angenommen")
+        -- Export -> Import ersetzt das gewaehlte Profil.
+        local ui = K.Root()
+        local p = ui.profiles[PR.Chosen()]
+        p.modules = p.modules or {}
+        p.modules.reminders = { alpha = 55 }
+        local text = SH.Export()
+        assert(type(text) == "string" and text:sub(1, #SH.PREFIX) == SH.PREFIX, "kein Export")
+        p.modules.reminders = { alpha = 90 }
+        local data = assert(SH.Parse(text))
+        assert(SH.Apply(data) == true, "Import nicht uebernommen")
+        assert(ui.profiles[PR.Chosen()].modules.reminders.alpha == 55, "Einstellung nicht zurueck")
+        p = ui.profiles[PR.Chosen()]
+        p.modules.reminders = nil
+    end)
+    Check(ok, "Profil exportieren/importieren: Rundweg, fremder Text abgelehnt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

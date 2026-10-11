@@ -1789,6 +1789,15 @@ Name im Tooltip – seit 6.27.0.5 Aura gleichen Namens, Kern des Namens
 Gespräche (`ui/dialogue.lua`): Belohnungen zeigen den Vergleich des Spiels
 (`DL.Compare`, `GameTooltip_ShowCompareItem` an `ShoppingTooltip1/2`).
 
+## Profil teilen *(6.28.0.0, `ui/share.lua`)*
+
+Export: `WCUI1:` + Base64(`SH.Serialize{ v = 1, name, profile, layout, addon }`).
+`layout` ist der Text des Spiels für das Layout „WeintCodex“
+(`ConvertLayoutInfoToString`), falls vorhanden. Import: `SH.Parse` (eigener
+Leser, nie `loadstring` – Texte kommen von Fremden), `SH.Apply` ersetzt das
+gewählte Profil in derselben Tabelle und schreibt das Layout nur als
+„WeintCodex“. Rückfrage über `PR.Confirm`, Neuladen über `K.MarkReload`.
+
 ## Totems am Spielerrahmen *(6.27.0.6, `ui/totems.lua`)*
 
 Mit der Oberfläche ist der Spielerrahmen des Spiels samt Totemleiste weg.

@@ -316,6 +316,14 @@ function PR.BuildPage(B)
             end,
             tooltip = "„Standard“, das laufende und das gewählte Profil lassen sich nicht löschen." },
           { type = "empty" })
+    -- 6.28.0.0: als Text sichern und teilen (ui/share.lua).
+    B:Section("Sichern und teilen", "Das gewählte Profil als Text: alle Einstellungen, die Plätze der Rahmen und das Layout „WeintCodex“ des Bearbeitungsmodus. Zum Sichern ablegen oder mit anderen teilen.")
+    B:Row({ type = "button", label = "Exportieren", text = "Profil exportieren",
+            tooltip = "Zeigt den Text zum Kopieren (Strg+C).",
+            onClick = function() WeintCodex.UIShare.ShowExport() end },
+          { type = "button", label = "Importieren", text = "Profil importieren",
+            tooltip = "Text einfügen – ersetzt das gewählte Profil nach Rückfrage. Wirkt nach dem Neuladen.",
+            onClick = function() WeintCodex.UIShare.ShowImport() end })
     B:Note("Hauptschalter, Willkommen, das Symbol an der Minikarte und was WeintCodex am Spiel geändert hat (Layout, Spieleinstellungen), gelten für alle Charaktere – sie sind nicht im Profil.")
 end
 

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.28.0.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFProfil exportieren und importieren.|r Unter Allgemein → Profile → „Sichern und teilen“ wird dein Profil zu einem Text: alle Einstellungen, die Plätze der Rahmen und das Layout „WeintCodex“. Zum Sichern ablegen oder mit anderen teilen – eingefügt ersetzt er das gewählte Profil nach Rückfrage.",
+        },
+    },
+    {
         version = "6.27.4.0",
         date    = "11.10.2026",
         notes   = {
