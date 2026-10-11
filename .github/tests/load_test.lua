@@ -4621,6 +4621,29 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.29.24.0: Objekte (Tisch, Laterne) bekommen keine Plakette von WeintCodex.
+do
+    local NP = WeintCodex.UINameplates
+    local sgo, sp, shm = _G.UnitIsGameObject, _G.UnitIsPlayer, _G.UnitHealthMax
+    local ok, err = pcall(function()
+        _G.UnitIsGameObject = nil
+        _G.UnitIsPlayer = function() return false end
+        local hm
+        _G.UnitHealthMax = function() return hm end
+        hm = 0
+        assert(NP.IsObjectPlate("nameplate3"), "Objekt ohne Leben bekommt eine Plakette")
+        hm = nil
+        assert(NP.IsObjectPlate("nameplate3"), "Objekt ohne Lebensangabe bekommt eine Plakette")
+        hm = 120
+        assert(not NP.IsObjectPlate("nameplate3"), "Gegner als Objekt gezaehlt")
+        _G.UnitIsPlayer = function() return true end
+        hm = nil
+        assert(not NP.IsObjectPlate("nameplate3"), "Spieler als Objekt gezaehlt")
+    end)
+    _G.UnitIsGameObject, _G.UnitIsPlayer, _G.UnitHealthMax = sgo, sp, shm
+    Check(ok, "Plaketten: Objekte in der Naehe ohne Plakette, Einheiten mit" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.29.21.0: Taschen ohne Gestaltungsmodus ziehbar.
 do
     local ok, err = pcall(function()

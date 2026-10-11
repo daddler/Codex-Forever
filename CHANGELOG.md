@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.24.0] – 2026-10-11
+
+### Behoben
+
+- **Leere Plakette an Objekten** (Client 1.60.1 Build 70338: Interaktions-
+  symbole an Objekten in der Nähe): `NP.IsObjectPlate` erkannte ein Objekt
+  ohne `UnitIsGameObject` nur als weiche Interaktion („softinteract“). Jetzt
+  zählt jede Plakette ohne Spieler und mit fehlendem oder 0 Höchstleben als
+  Objekt; geheime Werte gelten als Einheit. Im Spiel ungeprüft.
+
 ## [6.29.23.0] – 2026-10-11
 
 ### Neu

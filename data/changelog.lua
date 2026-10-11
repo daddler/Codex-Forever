@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.24.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFKein dunkler Kasten mehr unter Zahnrad und Sprechblase.|r An Tischen, Laternen und anderen Objekten in der Nähe zeigt das Spiel jetzt seine Hinweise – WeintCodex legte dort eine leere Plakette darunter. Objekte bekommen keine mehr.",
+        },
+    },
+    {
         version = "6.29.23.0",
         date    = "11.10.2026",
         notes   = {

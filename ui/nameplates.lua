@@ -1659,16 +1659,21 @@ function NP.IsObjectPlate(unit)
         local ok, v = pcall(f, unit)
         if ok and K.Bool(v, false) then return true end
     end
-    local isUnit = _G.UnitIsUnit
-    if type(isUnit) == "function" then
-        local ok, v = pcall(isUnit, unit, "softinteract")
-        if ok and K.Bool(v, false) and not K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(unit), false)
-           and type(K.Plain(_G.UnitHealthMax and _G.UnitHealthMax(unit))) == "number"
-           and K.Plain(_G.UnitHealthMax(unit)) <= 0 then
-            return true
-        end
-    end
-    return false
+    -- 6.29.24.0 (Spielerbericht mit Bild: an Tischen, Laternen u. ae. stand
+    -- ein leerer dunkler Kasten unter dem Zahnrad der Interaktion): bis
+    -- dahin zaehlte ein Objekt nur, wenn es GENAU die weiche Interaktion
+    -- war ("softinteract"). Das Spiel gibt Objekten in der Naehe aber eigene
+    -- Plaketten, auch ohne Ziel. Jetzt: kein Spieler, und das Spiel nennt
+    -- KEIN Leben (fehlt) oder ein Hoechstleben von 0 - das hat keine
+    -- Einheit. Ein geheimer Wert (im Kampf) ist eine Einheit: nie raten.
+    if K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(unit), false) then return false end
+    local hm = _G.UnitHealthMax
+    if type(hm) ~= "function" then return false end
+    local ok, raw = pcall(hm, unit)
+    if not ok then return false end
+    if type(raw) == "nil" then return true end
+    local v = K.Plain(raw)
+    return type(v) == "number" and v <= 0
 end
 
 local function Attach(unit)
