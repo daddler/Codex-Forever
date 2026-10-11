@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.19.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFKombopunkte beim Schurken zeigen wieder etwas.|r WeintCodex liest sie jetzt auf beiden Wegen des Spiels und merkt selbst, welcher stimmt. Zeigt es trotzdem nichts: /wcui kombo nennt, was das Spiel meldet.",
+        },
+    },
+    {
         version = "6.29.18.0",
         date    = "11.10.2026",
         notes   = {

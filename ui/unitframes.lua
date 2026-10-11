@@ -998,6 +998,70 @@ local function UsesCombo()
     return false
 end
 
+-- WOHER DER STAND (6.29.19.0, Spielerbericht: "Kombopunkte beim Schurken
+-- funktionieren nicht"). Bis dahin nur GetComboPoints("player", "target")
+-- - so hatte EllesmereUI es auf Client 1.60.1 gemessen (Punkte gehoeren
+-- dem Ziel, UnitPower meldet beim Zielwechsel den alten Stand). Auf dem
+-- aktuellen Client liefert GetComboPoints offenbar nichts Brauchbares.
+-- Jetzt werden BEIDE Wege gelesen, und welcher stimmt, entscheidet der
+-- Client selbst: hat GetComboPoints einmal mehr als 0 gemeldet, gilt es
+-- (Punkte am Ziel, wie gemessen); meldet UnitPower Punkte, waehrend
+-- GetComboPoints bei 0 bleibt, gehoeren sie dem Spieler - dann UnitPower.
+-- Geheime Werte (im Kampf moeglich) werden nie verglichen: dann gilt der
+-- Weg, der zuletzt als richtig erkannt war (ohne Wissen: UnitPower).
+UF.cpSource = nil   -- nil (noch unbekannt), "target" oder "player"
+
+function UF.CP_TYPE()
+    local E = _G.Enum and _G.Enum.PowerType
+    return (E and E.ComboPoints) or 4
+end
+
+local function ReadCP()
+    local a, b
+    if _G.GetComboPoints then
+        local ok, v = pcall(_G.GetComboPoints, "player", "target")
+        if ok then a = v end
+    end
+    if _G.UnitPower then
+        local ok, v = pcall(_G.UnitPower, "player", UF.CP_TYPE())
+        if ok then b = v end
+    end
+    return a, b
+end
+UF.ReadCP = ReadCP
+
+function UF.ComboPoints()
+    local a, b = ReadCP()
+    local pa, pb = K.Plain(a), K.Plain(b)
+    pa = type(pa) == "number" and pa or nil
+    pb = type(pb) == "number" and pb or nil
+    if pa and pa > 0 then UF.cpSource = "target"
+    elseif pa == 0 and pb and pb > 0 and UF.cpSource ~= "target" then UF.cpSource = "player" end
+    if UF.cpSource == "target" then
+        if type(a) ~= "nil" then return a end
+        return b
+    end
+    if type(b) ~= "nil" then return b end
+    return a
+end
+
+function UF.ComboReport()
+    local a, b = ReadCP()
+    local function show(v)
+        if type(v) == "nil" then return "fehlt" end
+        local p = K.Plain(v)
+        return type(p) == "number" and tostring(p) or "geheim"
+    end
+    local _, class = _G.UnitClass and _G.UnitClass("player")
+    return {
+        string.format("Kombopunkte: GetComboPoints(Ziel) = %s · UnitPower(Spieler) = %s · gilt: %s",
+            show(a), show(b), UF.cpSource == "target" and "am Ziel" or (UF.cpSource == "player" and "am Spieler" or "noch unbekannt (Spieler)")),
+        string.format("Klasse %s · Anzeige %s · Ziel %s", tostring(class),
+            Opt("comboPoints") and "an" or "aus",
+            K.Bool(_G.UnitExists and _G.UnitExists("target"), false) and "da" or "keins"),
+    }
+end
+
 function Frame:UpdateCombo()
     local cp = self._combo
     if self._testShown then return end
@@ -1006,15 +1070,11 @@ function Frame:UpdateCombo()
         cp:Hide()
         return
     end
-    local cur
-    if _G.GetComboPoints then
-        cur = _G.GetComboPoints("player", "target")
-    elseif _G.UnitPower and _G.Enum and _G.Enum.PowerType then
-        cur = _G.UnitPower("player", _G.Enum.PowerType.ComboPoints)
-    end
+    local cur = UF.ComboPoints()
     local max = 5
-    if _G.UnitPowerMax and _G.Enum and _G.Enum.PowerType then
-        local m = K.Plain(_G.UnitPowerMax("player", _G.Enum.PowerType.ComboPoints))
+    if _G.UnitPowerMax then
+        local ok, m = pcall(_G.UnitPowerMax, "player", UF.CP_TYPE())
+        m = ok and K.Plain(m) or nil
         if type(m) == "number" and m > 0 then max = m end
     end
     if type(cur) == "nil" then cp:Hide() return end

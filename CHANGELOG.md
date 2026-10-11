@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.19.0] – 2026-10-11
+
+### Behoben
+
+- **Kombopunkte (Schurke) blieben leer:** gelesen wurde nur
+  `GetComboPoints("player", "target")` (gemessen auf Client 1.60.1 von
+  EllesmereUI). Jetzt `UF.ComboPoints`: liest auch
+  `UnitPower("player", ComboPoints)` und entscheidet nach Auskunft des
+  Clients (`UF.cpSource`) – GetComboPoints einmal > 0 → am Ziel; UnitPower > 0
+  bei GetComboPoints = 0 → am Spieler. Geheime Werte werden nicht verglichen.
+  `/wcui kombo` nennt beide Werte. Ursache im Spiel nicht gemessen.
+
 ## [6.29.18.0] – 2026-10-11
 
 ### Geändert

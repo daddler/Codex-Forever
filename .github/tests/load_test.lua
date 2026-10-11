@@ -4611,6 +4611,33 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.29.19.0: Kombopunkte - der Client entscheidet, ob Ziel oder Spieler.
+do
+    local UF = WeintCodex.UIUnitFrames
+    local sg, su = _G.GetComboPoints, _G.UnitPower
+    local ok, err = pcall(function()
+        local tgt, ply = 0, 0
+        _G.GetComboPoints = function() return tgt end
+        _G.UnitPower = function(u, t) if u == "player" and t == UF.CP_TYPE() then return ply end return 0 end
+        UF.cpSource = nil
+        ply = 3
+        assert(UF.ComboPoints() == 3 and UF.cpSource == "player", "Punkte am Spieler nicht erkannt")
+        ply, tgt = 2, 2
+        assert(UF.ComboPoints() == 2 and UF.cpSource == "target", "Punkte am Ziel nicht erkannt")
+        -- Zielwechsel: UnitPower meldet noch den alten Stand, das Ziel 0.
+        ply, tgt = 4, 0
+        assert(UF.ComboPoints() == 0, "alter Stand nach dem Zielwechsel")
+        _G.GetComboPoints = nil
+        UF.cpSource = nil
+        ply = 5
+        assert(UF.ComboPoints() == 5, "ohne GetComboPoints nichts")
+        assert(#UF.ComboReport() == 2, "/wcui kombo ohne Auskunft")
+        UF.cpSource = nil
+    end)
+    _G.GetComboPoints, _G.UnitPower = sg, su
+    Check(ok, "Kombopunkte: Ziel oder Spieler nach Auskunft des Clients, /wcui kombo" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.29.13.0: Gruppenwerkzeuge statt des Menues des Spiels.
 do
     local RT = WeintCodex.UIRaidTools
