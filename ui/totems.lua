@@ -76,7 +76,11 @@ local function Build(anchor)
         b.slot = i
         b:SetSize(TT.SIZE, TT.SIZE)
         b:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", (i - 1) * (TT.SIZE + TT.GAP), -4)
-        if b.RegisterForClicks then b:RegisterForClicks("RightButtonUp") end
+        -- Wie Automark (im Spiel gemessen): auf Loslassen, nie beim Druecken.
+        -- Ohne useOnKeyDown = false loest der Client geschuetzte Knoepfe beim
+        -- Druecken aus - registriert war nur das Loslassen, also nie (6.27.2.1).
+        if b.RegisterForClicks then b:RegisterForClicks("AnyUp") end
+        b:SetAttribute("useOnKeyDown", false)
         b:SetAttribute("type2", "destroytotem")
         b:SetAttribute("totem-slot", i)
         b.border = K.Border(b, 1, 0, 0, 0, 1, "BORDER")
@@ -132,7 +136,20 @@ end
 
 local boot = CreateFrame("Frame")
 boot:RegisterEvent("PLAYER_LOGIN")
+boot:RegisterEvent("PLAYER_ENTERING_WORLD")
 boot:SetScript("OnEvent", function()
     if K.InCombat() then K.AfterCombat(TT.Enable) else TT.Enable() end
 end)
 TT.boot = boot
+
+-- Fuer /wcui prüfen: gebaut? und was der Client zu den Plaetzen sagt.
+function TT.StatusLines()
+    local out = { "Totemleiste: " .. (#buttons > 0 and "gebaut" or "nicht gebaut")
+        .. " · Klasse " .. tostring(PlayerClass()) .. " · Schalter " .. tostring(K.Get(KEY, "player_totems"))
+        .. " · Spielerrahmen " .. (type(_G.WeintCodexUF_player) == "table" and "da" or "fehlt") }
+    for i = 1, TT.SLOTS do
+        local have, name = TT.Info(i)
+        out[#out + 1] = "  Platz " .. i .. ": " .. (have and tostring(name) or (have == false and "leer" or "weiß nicht"))
+    end
+    return out
+end

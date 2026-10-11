@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.27.2.1",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFF„Raus da“ schweigt bei eigenen Zaubern.|r Wer mit Lebenslinie seinen Dämon heilt (oder einen anderen Zauber wirkt, der eigenes Leben kostet), bekommt außerhalb des Kampfes keinen Dauerton mehr.",
+            "|cff7C6CFFWasserschild zählt.|r Die Erinnerung des Schamanen nimmt Blitzschlagschild oder Wasserschild – egal welches du trägst.",
+            "|cff7C6CFFTotems per Rechtsklick entfernen – zweiter Anlauf.|r Die Totemleiste unter dem Spielerrahmen entsteht jetzt zuverlässig und reagiert auf den Rechtsklick. /wcui prüfen zeigt unter „Totems“, ob sie gebaut ist.",
+        },
+    },
+    {
         version = "6.27.2.0",
         date    = "10.10.2026",
         notes   = {

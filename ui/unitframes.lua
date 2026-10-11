@@ -1637,6 +1637,10 @@ local function Build()
     -- Ruhe und Kampf (ui/presence.lua): der Spielerrahmen tritt ausserhalb
     -- des Kampfes zurueck, der Begleiter mit ihm.
     WeintCodex.UIPresence.Register("player", function() return { frames.player, frames.pet } end, "fade_player")
+    -- Totems haengen am Spielerrahmen - erst jetzt gibt es ihn (6.27.2.1:
+    -- beim Einloggen war er oft noch nicht da, die Leiste entstand nie).
+    local TT = WeintCodex.UITotems
+    if TT and TT.Enable then TT.Enable() end
 end
 
 local function Enable()

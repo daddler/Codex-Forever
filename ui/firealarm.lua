@@ -249,8 +249,37 @@ end
 
 -- Ein Treffer ausserhalb des Kampfes (Leben gesunken oder Ereignis des
 -- Spiels): zweiter binnen FA.OUT_WINDOW -> Ton.
+-- Wirkst oder kanalisierst du gerade? (6.27.2.1, Beta-Test: "dauerhafter
+-- Ton, wenn ich meinen Daemon per Lebenslinie heile".) Lebenslinie,
+-- Aderlass und Co. kosten eigenes Leben - das ist kein Feuer. Solange ein
+-- eigener Zauber laeuft, zaehlt ein Treffer ausserhalb des Kampfes nicht.
+-- Auch ein verdeckter Wert heisst "es laeuft etwas".
+function FA.Casting()
+    for _, f in ipairs({ _G.UnitChannelInfo, _G.UnitCastingInfo }) do
+        if type(f) == "function" then
+            local ok, name = pcall(f, "player")
+            if ok and type(name) ~= "nil" then return true end
+        end
+    end
+    return false
+end
+
+-- Nach einem eigenen Zauber noch kurz still: der letzte Abzug kommt oft
+-- erst nach dem Ende des Kanals.
+FA.CAST_GRACE = 1.5
+local lastCast = -math.huge
+
 function FA.Hit()
     if not FA.Here() then return false end
+    if FA.Casting() then
+        lastCast = Now()
+        stats.castSkips = (stats.castSkips or 0) + 1
+        return false
+    end
+    if Now() - lastCast < FA.CAST_GRACE then
+        stats.castSkips = (stats.castSkips or 0) + 1
+        return false
+    end
     if K.Get(KEY, "fireNoDots") and FA.HasDebuff() then
         stats.dotSkips = (stats.dotSkips or 0) + 1
         return false
@@ -338,6 +367,7 @@ function FA.StatusLines()
         stats.checks, stats.plain, stats.secret, stats.none, stats.alarms)
         .. " · außerhalb des Kampfes " .. (stats.outside or 0)
         .. " · wegen Effekt still " .. (stats.dotSkips or 0)
+        .. " · wegen eigenem Zauber still " .. (stats.castSkips or 0)
     out[#out + 1] = string.format("Außerhalb des Kampfes: Takt %s · Blicke aufs Leben %d · verdeckt %d · Verluste %d · Treffer gemeldet %d",
         outTicker:IsShown() and "läuft" or "steht", stats.hpLooks or 0, stats.hpHidden or 0, stats.hpDrops or 0, stats.wounds or 0)
     if (stats.wounds or 0) > 0 then

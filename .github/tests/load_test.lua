@@ -17062,6 +17062,40 @@ do
     Check(ok, "Gruppenrahmen: waagerecht/senkrecht, auch die des Spiels nur im eigenen Layout" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.27.2.1: Raus da still bei eigenem Kanal; Wasserschild zaehlt; Totemknopf auf Loslassen.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local K, FA, R = WeintCodex.UIKit, WeintCodex.UIFireAlarm, WeintCodex.UIReminders
+        local oT, oCh, oUA = G.GetTime, G.UnitChannelInfo, G.C_UnitAuras
+        local t = 5000
+        G.GetTime = function() return t end
+        G.C_UnitAuras = { GetAuraDataByIndex = function() return nil end }
+        K.Set("comfort", "fireWhere", "all")
+        G.UnitChannelInfo = function() return "Lebenslinie" end
+        FA.Hit() t = t + 1
+        assert(FA.Hit() == false, "Ton beim eigenen Kanal")
+        G.UnitChannelInfo = function() return nil end
+        t = t + 1   -- noch in der Nachfrist
+        assert(FA.Hit() == false, "Ton direkt nach dem Kanal")
+        t = t + 10 FA.Hit() t = t + 2
+        assert(FA.Hit() == true, "kein Ton ohne Kanal")
+        G.UnitChannelInfo = oCh
+        -- Wasserschild: Regel "Blitzschlagschild" (gespeichert, alt) gilt als erfuellt.
+        G.C_UnitAuras = { GetAuraDataBySpellName = function(_, n) if n == "Wasserschild" then return { name = n } end end,
+                          GetPlayerAuraBySpellID = function() return nil end }
+        local oRes = R.Resolve
+        R.Resolve = function(s) if s == "324" then return { id = 324, name = "Blitzschlagschild" } end end
+        assert(R.Check({ kind = "buff", spell = "324", any = { "324" } }) == nil, "Wasserschild nicht erkannt")
+        G.C_UnitAuras = { GetAuraDataBySpellName = function() return nil end, GetPlayerAuraBySpellID = function() return nil end }
+        local hit = R.Check({ kind = "buff", spell = "324", any = { "324" } })
+        assert(hit and hit.text:find("Wasserschild", 1, true), "Text nennt Wasserschild nicht: " .. tostring(hit and hit.text))
+        R.Resolve = oRes
+        G.GetTime, G.C_UnitAuras = oT, oUA
+    end)
+    Check(ok, "Raus da still bei eigenem Kanal; Wasserschild zaehlt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

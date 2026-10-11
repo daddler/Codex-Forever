@@ -343,6 +343,15 @@ end
 
 -- 6.27.0.5: was der Client zur Verzauberung der Waffe sagt (Schamane:
 -- "Waffe des Felsbeißers ist aktiv", Erinnerung kam trotzdem).
+-- 6.27.2.1: Totemleiste (Beta-Test: "Rechtsklick auf das Totem klappt nicht").
+Check("Totems", function(add)
+    local TT = WeintCodex.UITotems
+    if not (TT and TT.StatusLines) then add(SC.OPEN, "Totemleiste nicht geladen.") return end
+    local lines = TT.StatusLines()
+    add(#TT.buttons > 0 and SC.OK or SC.OPEN, lines[1])
+    for i = 2, #lines do add("", "   " .. lines[i]) end
+end)
+
 Check("Waffe", function(add)
     local R = WeintCodex.UIReminders
     if _G.GetWeaponEnchantInfo then

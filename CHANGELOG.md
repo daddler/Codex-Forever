@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.27.2.1] – 2026-10-11
+
+### Behoben
+
+- „Raus da“: Dauerton beim Heilen des Dämons per Lebenslinie (Beta-Test). `FA.Casting` – solange ein eigener Zauber läuft oder kanalisiert wird (auch verdeckt), zählt ein Treffer außerhalb des Kampfes nicht, danach `FA.CAST_GRACE` (1,5 s) Nachfrist. Bericht zählt „wegen eigenem Zauber still“. Im Kampf unverändert (dort entscheidet das Spiel, was vermeidbar ist).
+- Erinnerung Schamane: Wasserschild wurde nicht erkannt, verlangt wurde Blitzschlagschild. `R.ALSO` – nennt eine Regel Blitzschlagschild (324), zählen auch Wasserschild (IDs 24398/52127 aus TBC/WotLK) und eine Aura namens „Wasserschild“/„Water Shield“; gilt auch für schon gespeicherte Regeln. Text: „Blitzschlagschild oder Wasserschild fehlt“.
+- Totems per Rechtsklick (Beta-Test: „klappt nicht“): die Leiste wurde beim Einloggen gebaut, bevor es den Spielerrahmen gab – also nie. Jetzt baut sie der Spielerrahmen selbst (`TT.Enable` am Ende von `Build`), dazu `PLAYER_ENTERING_WORLD`. Die Knöpfe lösen auf Loslassen aus (`useOnKeyDown = false`, `AnyUp` – wie Automark). `/wcui prüfen` → „Totems“.
+
 ## [6.27.2.0] – 2026-10-10
 
 ### Neu

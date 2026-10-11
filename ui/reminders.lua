@@ -129,7 +129,9 @@ R.CLASS_BUFFS = {
                 { any = { 465, 7294, 19746, 19876, 19888, 19891 }, label = "Aura" } },
     WARLOCK = { { any = { 706, 687 }, label = "Dämonenrüstung oder Dämonenhaut" } },
     HUNTER  = { { any = { 13165, 13163, 5118, 13159, 20043, 13161 }, label = "Aspekt" } },
-    SHAMAN  = { { any = { 324 } } },
+    -- 6.27.2.1 (Beta-Test: "Wasserschild wird nicht erkannt, verlangt
+    -- Blitzschlagschild"): eines der beiden Schilde genuegt (R.ALSO).
+    SHAMAN  = { { any = { 324 }, label = "Blitzschlagschild oder Wasserschild" } },
 }
 
 -- Vorschlaege je Klasse.
@@ -337,11 +339,46 @@ end
 
 -- Die Aura einer Regel am Spieler: Tabelle, false (sicher nicht da) oder
 -- nil (der Client sagt es nicht - geheim oder Fehler).
+-- Was zusaetzlich zaehlt, wenn eine Regel einen dieser Zauber nennt - auch
+-- fuer schon gespeicherte Regeln (6.27.2.1). Wasserschild gibt es in Classic
+-- nicht; IDs aus TBC/WotLK, dazu der Name, den der Client fuer die Aura
+-- nennt (gefragt mit GetAuraDataBySpellName - braucht keine ID).
+R.ALSO = {
+    ["324"] = { ids = { "24398", "52127" }, names = { "Wasserschild", "Water Shield" },
+                label = "Blitzschlagschild oder Wasserschild" },
+}
+
+local function AuraByName(name)
+    local ua = _G.C_UnitAuras
+    if not (ua and ua.GetAuraDataBySpellName) then return nil end
+    local ok, a = pcall(ua.GetAuraDataBySpellName, "player", name, "HELPFUL")
+    if not ok or K.IsSecret(a) then return nil end
+    return a or false
+end
+
+function R.Also(rule)
+    for _, t in ipairs(rule.any or { rule.spell }) do
+        local x = R.ALSO[tostring(t)]
+        if x then return x end
+    end
+    return nil
+end
+
 function R.PlayerAura(rule)
     if type(rule.any) == "table" then
         -- Einer der Reihe genuegt; "weiss nicht" schlaegt "fehlt".
         local result = false
-        for _, t in ipairs(rule.any) do
+        local also = R.Also(rule)
+        local list = rule.any
+        if also then
+            list = {}
+            for _, t in ipairs(rule.any) do list[#list + 1] = t end
+            for _, t in ipairs(also.ids) do list[#list + 1] = t end
+            for _, n in ipairs(also.names) do
+                if AuraByName(n) then return AuraByName(n) end
+            end
+        end
+        for _, t in ipairs(list) do
             local a = R.PlayerAura({ spell = t })
             if a then return a end
             if a == nil and R.Resolve(t) and R.Resolve(t).name then result = nil end
@@ -556,7 +593,8 @@ function R.Check(rule)
         local aura = R.PlayerAura(rule)
         if aura == false then
             local sp = R.Resolve(rule.spell) or {}
-            return { text = (rule.label or sp.name or rule.spell or "?") .. " fehlt", icon = sp.icon }
+            local also = R.Also(rule)
+            return { text = (rule.label or (also and also.label) or sp.name or rule.spell or "?") .. " fehlt", icon = sp.icon }
         end
         return nil
     elseif kind == "weapon" then
