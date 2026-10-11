@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.7.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFDas Addon ist ein gutes Drittel kleiner.|r Boss- und Klassenbilder liegen jetzt in der Größe vor, in der das Fenster sie zeigt – zu sehen ist derselbe Ausschnitt in derselben Schärfe, nur der Download ist kleiner.",
+        },
+    },
+    {
         version = "6.29.6.0",
         date    = "11.10.2026",
         notes   = {

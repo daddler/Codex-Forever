@@ -13,9 +13,9 @@ bzw. media/classes/.
 Charakterfenster. Sie werden NICHT zugeschnitten: das Modellfeld misst
 im Spiel rund 397x464, die Originale sind 2:3 - welcher Streifen zu
 sehen ist, rechnet `WeintCodex.CoverCoords` aus `focusY` im Spiel
-(data/artwork.lua). Gespeichert wird das ganze Bild auf 1024x1024
+(data/artwork.lua). Gespeichert wird das ganze Bild auf 1024x512 (seit 6.29.7.0; vorher 1024x1024)
 (Zweierpotenz), also senkrecht gestaucht; data/artwork.lua nennt die
-Masse des ORIGINALS, damit der Ausschnitt unverzerrt bleibt. 512 KB je
+Masse des ORIGINALS, damit der Ausschnitt unverzerrt bleibt. 256 KB je
 Klasse, geladen wird nur die eigene.
 
 **Warum es das gibt.** Was in media/ liegt, sind siebenundvierzig Binärdateien,
@@ -173,7 +173,7 @@ JOBS = [
 
 TARGET_W, TARGET_H = 1024, 256
 
-# Ziel, Quelldatei. Ganzes Bild, Ziel 1024x1024 (siehe oben).
+# Ziel, Quelldatei. Ganzes Bild, Ziel 1024x512 (siehe oben).
 CLASS_JOBS = [
     ("classes/priest", "priest.webp"),
     ("classes/hunter", "hunter.webp"),   # Querformat 1496x1051, 6.6.4.4
@@ -186,7 +186,7 @@ CLASS_JOBS = [
     ("classes/paladin", "paladin.png"),
     ("classes/shaman", "shaman.png"),
 ]
-CLASS_W, CLASS_H = 1024, 1024
+CLASS_W, CLASS_H = 1024, 512   # 6.29.7.0, vorher 1024x1024
 
 
 def dxt1_blocks(image, workdir):
@@ -248,7 +248,41 @@ def classes(source_dir):
     return 0
 
 
+def shrink():
+    """6.29.7.0: vorhandene BLPs verkleinern, ohne die Originale.
+
+    Bossbilder 1024x256 -> 512x128 (eine Bosskarte ist hoechstens rund
+    425x80 px), Klassenbilder 1024x1024 -> 1024x512 (das Modellfeld ist
+    rund 397x464 px hoch; die Breite bleibt, weil dort nur ein Streifen
+    des Querformats zu sehen ist). Gelesen wird die DXT1-Fassung selbst
+    (Pillow liest BLP2); das Verkleinern mittelt je zwei Pixel und glaettet
+    dabei auch die Bloecke der alten Kompression. Koepfe (header.blp)
+    bleiben 1024x256 - die Kopfkarte ist im breiten Fenster groesser.
+    Laeuft mehrfach ohne Schaden: was schon klein ist, bleibt liegen.
+    """
+    jobs = []
+    for root, _, files in os.walk(os.path.join(REPO, "media", "dungeons")):
+        for name in files:
+            if name.endswith(".blp") and name != "header.blp":
+                jobs.append((os.path.join(root, name), (1024, 256), (512, 128)))
+    for name in os.listdir(os.path.join(REPO, "media", "classes")):
+        if name.endswith(".blp"):
+            jobs.append((os.path.join(REPO, "media", "classes", name), (1024, 1024), (1024, 512)))
+    for path, big, small in sorted(jobs):
+        image = Image.open(path).convert("RGB")
+        if image.size != big:
+            continue
+        scaled = image.resize(small, Image.LANCZOS)
+        with tempfile.TemporaryDirectory() as workdir:
+            level0 = dxt1_blocks(scaled, workdir)
+        write_blp(path, level0, small[0], small[1])
+        print("%-60s %7d B" % (os.path.relpath(path, REPO), os.path.getsize(path)))
+    return 0
+
+
 def main():
+    if len(sys.argv) == 2 and sys.argv[1] == "shrink":
+        return shrink()
     if len(sys.argv) == 3 and sys.argv[1] == "classes":
         return classes(os.path.expanduser(sys.argv[2]))
     if len(sys.argv) != 2:
@@ -260,6 +294,9 @@ def main():
     for job in JOBS:
         target, filename, (x, y, crop_w, crop_h) = job[:3]
         TW, TH = job[3] if len(job) > 3 else (TARGET_W, TARGET_H)
+        # 6.29.7.0: jedes Bossbild 512x128, nur Koepfe 1024x256.
+        if not target.endswith("/header") and len(job) == 3:
+            TW, TH = 512, 128
         if only and only not in target:
             continue
         source = os.path.join(source_dir, filename)

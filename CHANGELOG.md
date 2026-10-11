@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.7.0] – 2026-10-11
+
+### Geändert
+
+- **Kleiner:** alle Bossbilder 512x128 statt 1024x256 (83 Dateien, je 32 statt
+  128 KB), Klassenbilder 1024x512 statt 1024x1024 (je 256 statt 512 KB).
+  ZIP rund 15,1 → 9,8 MB, entpackt 25,5 → 19,1 MB. Köpfe der Dungeonseiten
+  bleiben 1024x256. `make_artwork.py shrink` verkleinert aus den vorhandenen
+  BLPs; neue Bossbilder entstehen gleich in 512x128.
+
 ## [6.29.6.0] – 2026-10-11
 
 ### Behoben

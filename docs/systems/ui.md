@@ -2664,7 +2664,7 @@ Jäger-Akzent neutral bleiben und das Priester-Thema unverändert ist.
 
 **Krieger, Druide, Magier, Schurke, Hexenmeister, Paladin, Schamane (6.6.4.5).** Wie der
 Jäger: je ein Bild (Querformat 1496×1051 → `media/classes/<klasse>.blp`,
-1024×1024, 512 KB; geladen wird nur das der eigenen Klasse), ein Eintrag
+1024×512 seit 6.29.7.0, 256 KB; geladen wird nur das der eigenen Klasse), ein Eintrag
 in `ClassArtworks` mit `focusX` auf das Motiv der Mitte (Thron 0.54,
 Geweihtor 0.56, Sphäre 0.55, Treppe 0.55, Portal 0.60, Altar 0.60,
 Steintor 0.59) und ein Thema mit
@@ -2692,8 +2692,8 @@ nicht (zweite Zierfarbe neben dem Akzent, eigene Werteanzeige).
   (`UI-Character-Info-RaceBG-Overlay`, `BORDER/0`), im Kasten des
   Bildes und mit **derselben Maske** – es läuft also genauso weich aus.
   Ausschnitt über `WeintCodex.CoverCoords` mit den Maßen des Originals,
-  nur wenn sich die Lage ändert. Die Datei ist 1024x1024 (senkrecht
-  gestaucht, Zweierpotenz), 512 KB, geladen nur die eigene Klasse
+  nur wenn sich die Lage ändert. Die Datei ist 1024x512 (senkrecht
+  gestaucht, Zweierpotenz), 256 KB, geladen nur die eigene Klasse
   (`make_artwork.py classes <ordner>`). Ohne Eintrag: nichts, wie
   bisher; `/wcui fenster` nennt „Klassenbild: …“ oder „keines für …“.
   Hängt an „Stimmung statt Schwarz“.
