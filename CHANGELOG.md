@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.16.0] – 2026-10-11
+
+### Behoben
+
+- **„Alle Bodenmarkierungen entfernen“ tat nichts:** `/cwm all` ersetzt durch
+  ein Makro mit `/cwm 1` … `/cwm 8`.
+
+### Neu
+
+- **Rechtsklick auf ein Bodenzeichen** entfernt nur dieses (`macrotext2` =
+  `/cwm n` am geschützten Knopf).
+
 ## [6.29.15.0] – 2026-10-11
 
 ### Geändert

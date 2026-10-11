@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.16.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFBodenmarkierungen einzeln entfernen.|r Rechtsklick auf ein Zeichen unter „Boden markieren“ nimmt genau dieses weg. „Alle entfernen“ räumt jetzt wirklich alle acht ab.",
+        },
+    },
+    {
         version = "6.29.15.0",
         date    = "11.10.2026",
         notes   = {

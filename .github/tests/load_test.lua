@@ -4644,8 +4644,14 @@ do
         -- Markieren nur ueber Makros des Spiels.
         local macros = {}
         for _, b in ipairs(RT.secure) do macros[b:GetAttribute("macrotext")] = b:GetAttribute("type") end
-        assert(macros["/tm 8"] == "macro" and macros["/tm 0"] and macros["/wm 1"] and macros["/cwm all"],
+        local allClear = RT.WorldMacro(0)
+        assert(macros["/tm 8"] == "macro" and macros["/tm 0"] and macros["/wm 1"] and macros[allClear],
             "Markierknoepfe nicht als Makro /tm, /wm, /cwm")
+        assert(allClear:find("/cwm 1", 1, true) and allClear:find("/cwm 8", 1, true) and not allClear:find("all"),
+            "Alle entfernen nicht als /cwm 1..8")
+        local right = {}
+        for _, b in ipairs(RT.secure) do if b:GetAttribute("macrotext2") then right[b:GetAttribute("macrotext2")] = true end end
+        assert(right["/cwm 3"] and right["/cwm 8"], "Rechtsklick entfernt das Bodenzeichen nicht")
         -- Ecke zur naechsten Bildschirmkante (Bildschirm 1365 x 768).
         local c1 = { RT.Corner(10, 10, 251, 300, 1365, 768) }
         assert(c1[1] == "BOTTOMLEFT" and c1[2] == 10 and c1[3] == 10, "unten links nicht unten verankert")

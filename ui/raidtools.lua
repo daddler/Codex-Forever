@@ -104,7 +104,16 @@ function RT.Countdown(secs)
 end
 
 function RT.UnitMacro(i) return i == 0 and "/tm 0" or ("/tm " .. i) end
-function RT.WorldMacro(i) return i == 0 and "/cwm all" or ("/wm " .. i) end
+-- "Alle entfernen": "/cwm all" tat im Spiel nichts (Spielerbericht
+-- 6.29.16.0) - jetzt jede der acht einzeln, das geht sicher, wo /cwm n geht.
+function RT.WorldMacro(i)
+    if i ~= 0 then return "/wm " .. i end
+    local t = {}
+    for n = 1, 8 do t[n] = "/cwm " .. n end
+    return table.concat(t, "\n")
+end
+-- Rechtsklick auf ein Bodenzeichen: nur dieses entfernen.
+function RT.WorldClear(i) return "/cwm " .. i end
 
 function RT.PingValue()
     local P, E = _G.C_PartyInfo, _G.Enum and _G.Enum.RestrictPingsTo
@@ -168,7 +177,7 @@ local function Tooltip(owner, title, line)
 end
 
 -- Ein Symbolknopf, darauf ein geschuetzter Makroknopf.
-local function MarkerButton(parent, x, y, icon, macro, title, line)
+local function MarkerButton(parent, x, y, icon, macro, title, line, macro2)
     local b = CreateFrame("Frame", nil, parent)
     b:SetSize(RT.ICON, RT.ICON)
     b:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
@@ -186,6 +195,8 @@ local function MarkerButton(parent, x, y, icon, macro, title, line)
     s:SetAttribute("useOnKeyDown", false)
     s:SetAttribute("type", "macro")
     s:SetAttribute("macrotext", macro)
+    -- Rechts eine eigene Aktion: macrotext2 geht vor macrotext.
+    if macro2 then s:SetAttribute("macrotext2", macro2) end
     s:SetScript("OnEnter", function(self) Tooltip(self, title, line) end)
     s:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
     secure[#secure + 1] = s
@@ -248,7 +259,8 @@ local function Build()
             or "Interface\\Buttons\\UI-GroupLoot-Pass-Up"
         MarkerButton(content, RT.PAD + (i - 1) * (RT.ICON + RT.GAP), y, icon, RT.WorldMacro(n),
             n > 0 and "Boden markieren" or "Alle Bodenmarkierungen entfernen",
-            n > 0 and "Danach auf den Boden klicken, wo das Zeichen liegen soll." or nil)
+            n > 0 and "Links: danach auf den Boden klicken, wo das Zeichen liegen soll. Rechts: dieses Zeichen entfernen."
+                or nil, n > 0 and RT.WorldClear(n) or nil)
     end
     y = y - RT.ICON - 10
     local fw = RT.W - RT.PAD * 2
