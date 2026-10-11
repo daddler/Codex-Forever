@@ -95,6 +95,10 @@ local defaults = {
     -- Lage der Symbole ueber dem Zielrahmen (Beta-Test 6.4.0.3: "optional
     -- einstellbar"): links- oder rechtsbuendig, Abstand zum Rahmen.
     targetAuraAlign  = "left",
+    -- 6.29.12.0 (Spieler: "die Debuffs, die ich verteilt habe, auch
+    -- unterhalb des Rahmens"): ueber ("above") oder unter ("below") dem
+    -- Rahmen - unter dem Platz des Zauberbalkens.
+    targetAuraSide   = "above",
     targetAuraGap    = 3,
     auraSize      = 20,
     onlyOwnDebuffs = false,
@@ -1073,9 +1077,25 @@ local UseGameAuras   -- siehe "Auren des Spiels am Zielrahmen"
 
 -- Unterkante der Symbole ueber dem Rahmen: der eingestellte Abstand, bei
 -- Kombopunkten ueber dem Rahmen (nicht mittig) zusaetzlich deren Hoehe.
+function UF.AuraBelow() return Opt("targetAuraSide") == "below" end
+
+-- Unter dem Rahmen: Abstand nach unten, unter dem Platz des Zauberbalkens
+-- (er steht nur beim Zaubern da - die Symbole springen dann nicht).
 function UF.AuraBaseY(f)
     local gap = Opt("targetAuraGap") or 3
+    if UF.AuraBelow() then
+        return gap + (f._cast and (4 + (Opt("castHeight") or 14)) or 0)
+    end
     return gap + ((f._combo and Opt("comboPoints") and not Opt("comboCentered")) and 7 or 0)
+end
+
+-- Ankerpunkte fuer Ausrichtung und Seite: Punkt der Symbole, Punkt am
+-- Rahmen, Vorzeichen fuer y.
+function UF.AuraAnchor()
+    local right = Opt("targetAuraAlign") == "right"
+    local side = right and "RIGHT" or "LEFT"
+    if UF.AuraBelow() then return "TOP" .. side, "BOTTOM" .. side, -1 end
+    return "BOTTOM" .. side, "TOP" .. side, 1
 end
 
 function Frame:LayoutAuras()
@@ -1086,7 +1106,7 @@ function Frame:LayoutAuras()
     local size = Opt("auraSize")
     local y0 = UF.AuraBaseY(self)
     local right = Opt("targetAuraAlign") == "right"
-    local pt, rel = right and "BOTTOMRIGHT" or "BOTTOMLEFT", right and "TOPRIGHT" or "TOPLEFT"
+    local pt, rel, sign = UF.AuraAnchor()
     local debuffFilter = Opt("onlyOwnDebuffs") and "HARMFUL|PLAYER" or "HARMFUL"
     local rows = {
         { self._auras.HARMFUL, debuffFilter, y0 },
@@ -1095,9 +1115,10 @@ function Frame:LayoutAuras()
     for _, r in ipairs(rows) do
         local obj = r[1]
         obj:ApplyLayout({ filter = r[2], max = 8, size = size, spacing = 3,
-            anchor = pt, growth = right and "LEFT" or "RIGHT", growthV = "UP", perRow = 8, timer = true })
+            anchor = pt, growth = right and "LEFT" or "RIGHT", growthV = sign > 0 and "UP" or "DOWN",
+            perRow = 8, timer = true })
         obj:ClearAllPoints()
-        obj:SetPoint(pt, self, rel, 0, r[3])
+        obj:SetPoint(pt, self, rel, 0, sign * r[3])
     end
 end
 
@@ -1234,15 +1255,18 @@ ConfigureGameAuras = function()
     else
         Call(gameAuras, "SetScale", scale)
     end
-    Call(gameAuras, "SetFlowLayoutMirroredVertically", true)
+    -- Ueber dem Rahmen gespiegelt (waechst nach oben), darunter wie im Spiel.
+    local below = UF.AuraBelow()
+    Call(gameAuras, "SetFlowLayoutMirroredVertically", not below)
     -- Rechtsbuendig: von rechts nach links, jede Reihe endet am rechten Rand.
     -- SetFlowLayoutMirroredVertically setzt den Ankerpunkt auf BOTTOMLEFT,
     -- darum danach.
     local FD = _G.AnchorUtil and _G.AnchorUtil.FlowDirection
     if FD then
         local right = Opt("targetAuraAlign") == "right"
-        Call(gameAuras, "SetFlowLayoutAnchorPoint", right and "BOTTOMRIGHT" or "BOTTOMLEFT")
-        Call(gameAuras, "SetFlowLayoutGrowthDirection", right and FD.Left or FD.Right, FD.Up)
+        local pt = UF.AuraAnchor()
+        Call(gameAuras, "SetFlowLayoutAnchorPoint", pt)
+        Call(gameAuras, "SetFlowLayoutGrowthDirection", right and FD.Left or FD.Right, below and FD.Down or FD.Up)
     end
     Call(gameAuras, "SetNumConstrainedFlowLayoutLines", 0)
     local w = K.Plain(f:GetWidth())
@@ -1259,13 +1283,13 @@ function UF.AnchorGameAuras()
     if Locked() then K.AfterCombat(UF.AnchorGameAuras) return end
     anchoringGame = true
     local y = UF.AuraBaseY(f)
-    local right = Opt("targetAuraAlign") == "right"
+    local pt, rel, sign = UF.AuraAnchor()
     local ok, err = pcall(function()
         gameAuras:ClearAllPoints()
-        gameAuras:SetPoint(right and "BOTTOMRIGHT" or "BOTTOMLEFT", f, right and "TOPRIGHT" or "TOPLEFT", 0, y * Ratio(f))
+        gameAuras:SetPoint(pt, f, rel, 0, sign * y * Ratio(f))
     end)
     anchoringGame = false
-    UF.gameAuraState = ok and "Symbole des Spiels über dem Zielrahmen"
+    UF.gameAuraState = ok and ("Symbole des Spiels " .. (sign > 0 and "über" or "unter") .. " dem Zielrahmen")
         or ("vom Spiel abgelehnt: " .. tostring(err))
 end
 
@@ -1773,6 +1797,11 @@ local function UnitPage(u)
                         { value = "right", text = "Rechtsbündig" } } },
                   { type = "slider", label = "Abstand zum Rahmen", key = "targetAuraGap", min = 0, max = 30, step = 1,
                     format = px, disabled = noAuras })
+            B:Row({ type = "dropdown", label = "Seite", key = "targetAuraSide", disabled = noAuras, items = {
+                        { value = "above", text = "Über dem Rahmen" },
+                        { value = "below", text = "Unter dem Rahmen" } },
+                    tooltip = "Unter dem Rahmen stehen die Symbole unter dem Platz des Zauberbalkens." },
+                  { type = "empty" })
             B:Row({ type = "toggle", label = "Nur eigene Debuffs", key = "onlyOwnDebuffs",
                     disabled = notOwn },
                   { type = "toggle", label = "Kombopunkte mittig", key = "comboCentered",

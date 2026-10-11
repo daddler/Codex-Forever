@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.12.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFDebuffs am Zielrahmen auch darunter.|r Unter Einheitenrahmen → Ziel → Auren im Einzelnen wählst du „Über dem Rahmen“ oder „Unter dem Rahmen“ – darunter stehen sie unter dem Platz des Zauberbalkens, links- oder rechtsbündig.",
+        },
+    },
+    {
         version = "6.29.11.0",
         date    = "11.10.2026",
         notes   = {

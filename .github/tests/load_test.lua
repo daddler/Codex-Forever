@@ -4611,6 +4611,25 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.29.12.0: Auren am Zielrahmen ueber oder unter dem Rahmen.
+do
+    local ok, err = pcall(function()
+        local UF = WeintCodex.UIUnitFrames
+        assert(K.Get("unitframes", "targetAuraSide") == "above", "Auren ab Werk nicht ueber dem Rahmen")
+        local pt, rel, sign = UF.AuraAnchor()
+        assert(pt == "BOTTOMLEFT" and rel == "TOPLEFT" and sign == 1, "ueber dem Rahmen falsch verankert")
+        K.Set("unitframes", "targetAuraSide", "below")
+        K.Set("unitframes", "targetAuraAlign", "right")
+        pt, rel, sign = UF.AuraAnchor()
+        assert(pt == "TOPRIGHT" and rel == "BOTTOMRIGHT" and sign == -1, "unter dem Rahmen falsch verankert")
+        local y = UF.AuraBaseY({ _cast = true })
+        assert(y >= 4 + (K.Get("unitframes", "castHeight") or 14), "unter dem Rahmen: Zauberbalken ueberdeckt")
+        K.Set("unitframes", "targetAuraSide", "above")
+        K.Set("unitframes", "targetAuraAlign", "left")
+    end)
+    Check(ok, "Zielrahmen: Auren ueber oder unter dem Rahmen, unter dem Zauberbalken" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.29.10.0: Breitbild - Rahmen am Rand ruecken in einen mittigen Bereich.
 do
     local ok, err = pcall(function()

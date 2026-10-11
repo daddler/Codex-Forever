@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.12.0] – 2026-10-11
+
+### Neu
+
+- **Auren am Zielrahmen unter dem Rahmen:** `targetAuraSide` („above“ ab
+  Werk, „below“). Gilt für den Aurenbehälter des Spiels (nicht gespiegelt,
+  wächst nach unten) und für die eigenen Symbole. Darunter beginnt die Reihe
+  unter dem Platz des Zauberbalkens (`castHeight` + 4 + Abstand), damit sie
+  beim Zaubern nicht springt. Buffs und Debuffs wandern zusammen – getrennt
+  geht über den Behälter des Spiels nicht (ein Behälter, das Spiel füllt
+  ihn). Im Spiel ungeprüft.
+
 ## [6.29.11.0] – 2026-10-11
 
 ### Behoben
