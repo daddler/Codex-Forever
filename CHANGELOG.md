@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.20.0] – 2026-10-11
+
+### Neu
+
+- **Plaketten des Spiels mit ausblenden** (`offGamePlates`, „show“ ab Werk):
+  Bericht „Modul aus, trotzdem Plaketten“ – das waren die des Spiels, die
+  WeintCodex bei laufendem Modul nur überdeckt. Mit „hide“ setzt `NP.ApplyOff`
+  bei ausgeschaltetem Modul `nameplateShowEnemies`/`nameplateShowFriends` auf 0
+  (über `PF.SetCVar`, Besitzer „ui“) und gibt sie zurück, sobald das Modul
+  wieder an ist oder „zeigen“ gewählt wird. Nur außerhalb des Kampfes.
+
 ## [6.29.19.0] – 2026-10-11
 
 ### Behoben

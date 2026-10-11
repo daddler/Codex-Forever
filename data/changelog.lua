@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.20.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFNamensplaketten ganz aus.|r Wer die Plaketten von WeintCodex abschaltet, sah bisher die des Spiels. Unter Namensplaketten → Allgemein → „Plaketten des Spiels: Ausblenden“ sind dann gar keine mehr da; mit V holst du sie jederzeit zurück.",
+        },
+    },
+    {
         version = "6.29.19.0",
         date    = "11.10.2026",
         notes   = {

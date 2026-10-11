@@ -43,6 +43,10 @@ local KEY = "nameplates"
 -- hellt eine Plakette auf (wie Plater), und mit Ziel treten die anderen
 -- auf 70 % zurueck.
 local defaults = {
+    -- 6.29.20.0 (Spielerin: "Modul aus, trotzdem Plaketten"): Ist dieses
+    -- Modul aus, zeigt das Spiel seine eigenen Plaketten - das ist kein
+    -- Rest von WeintCodex, sondern das Spiel. "hide" blendet auch die aus.
+    offGamePlates = "show",
     width  = 150,
     height = 14,
     targetScale    = 110,      -- Prozent
@@ -1976,6 +1980,45 @@ local function Enable()
     end
 end
 
+--------------------------------------------------
+-- Modul aus: auch die Plaketten des Spiels aus? (6.29.20.0)
+--------------------------------------------------
+-- Ueber die Spieleinstellungen nameplateShowEnemies/-Friends, gemerkt
+-- ueber ui/profile.lua (Besitzer "ui": mit der Oberflaeche aus kommt der
+-- alte Wert zurueck). Wieder "zeigen" oder Modul wieder an: zurueck, wenn
+-- noch unser Wert steht. Nur ausserhalb des Kampfes (geschuetzt).
+NP.OFF_CVARS = { "nameplateShowEnemies", "nameplateShowFriends" }
+
+function NP.WantHideGame()
+    return K.UIEnabled() and not K.WantsActive(KEY) and K.Get(KEY, "offGamePlates") == "hide"
+end
+
+function NP.ApplyOff()
+    local PF = WeintCodex.UIProfile
+    if not PF then return false end
+    if K.InCombat() then K.AfterCombat(NP.ApplyOff) return false end
+    local hide = NP.WantHideGame()
+    local applied = K.Get(KEY, "offHidden") == true
+    if hide then
+        for _, n in ipairs(NP.OFF_CVARS) do PF.SetCVar(n, "0", "ui") end
+        if not applied then K.Set(KEY, "offHidden", true) end
+    elseif applied then
+        for _, n in ipairs(NP.OFF_CVARS) do PF.Release(n) end
+        K.Set(KEY, "offHidden", nil)
+    end
+    return hide
+end
+
+do
+    local boot = CreateFrame("Frame")
+    boot:RegisterEvent("PLAYER_LOGIN")
+    boot:SetScript("OnEvent", function() NP.ApplyOff() end)
+end
+K.Listen(function(kind, module, key)
+    if kind == "setting" and module == KEY and (key == "offGamePlates" or key == "enabled") then NP.ApplyOff() end
+    if kind == "setting" and module == "general" and key == "enabled" then NP.ApplyOff() end
+end)
+
 -- Farben aller Plaketten neu (NPC-Regeln geaendert).
 function NP.RecolorAll()
     for _, p in pairs(plates) do UpdateColor(p) end
@@ -2057,6 +2100,12 @@ K.Register({
     preview = NP.CreatePreview,
     pages = {
         { key = "allgemein", label = "Allgemein", build = function(B)
+            B:Section("Wenn dieses Modul aus ist")
+            B:Row({ type = "dropdown", label = "Plaketten des Spiels", key = "offGamePlates", items = {
+                        { value = "show", text = "Zeigen (wie das Spiel)" },
+                        { value = "hide", text = "Ausblenden – gar keine Plaketten" } },
+                    tooltip = "Schaltest du die Plaketten von WeintCodex aus, zeigt das Spiel seine eigenen. „Ausblenden“ schaltet auch die ab (Gegner und Freunde). Mit V bzw. Strg+V holst du sie im Spiel jederzeit zurück." },
+                  { type = "empty" })
             B:Section("Größe")
             B:Row({ type = "slider", label = "Breite", key = "width", min = 80, max = 250, step = 1, format = px },
                   { type = "slider", label = "Höhe", key = "height", min = 6, max = 30, step = 1, format = px })

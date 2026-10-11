@@ -4611,6 +4611,33 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.29.20.0: Plaketten-Modul aus -> auf Wunsch auch die des Spiels aus.
+do
+    local NP = WeintCodex.UINameplates
+    local PF = WeintCodex.UIProfile
+    local cv = { nameplateShowEnemies = "1", nameplateShowFriends = "1" }
+    local scv, sgc, ssc, sw = _G.C_CVar, _G.GetCVar, _G.SetCVar, K.WantsActive
+    local ok, err = pcall(function()
+        _G.C_CVar = { GetCVar = function(n) return cv[n] end, SetCVar = function(n, v) cv[n] = v return true end,
+                      GetCVarDefault = function() return "1" end }
+        _G.GetCVar = _G.C_CVar.GetCVar
+        _G.SetCVar = _G.C_CVar.SetCVar
+        local sdui = WeintCodex.SavedData.ui.enabled
+        WeintCodex.SavedData.ui.enabled = true
+        K.WantsActive = function(k) if k == "nameplates" then return false end return sw(k) end
+        assert(K.Get("nameplates", "offGamePlates") == "show", "ab Werk nicht „zeigen“")
+        assert(not NP.ApplyOff() and cv.nameplateShowEnemies == "1", "ohne Wahl ausgeblendet")
+        K.Set("nameplates", "offGamePlates", "hide")
+        assert(cv.nameplateShowEnemies == "0" and cv.nameplateShowFriends == "0", "Plaketten des Spiels nicht aus")
+        K.Set("nameplates", "offGamePlates", "show")
+        assert(cv.nameplateShowEnemies == "1" and cv.nameplateShowFriends == "1", "nicht zurueckgegeben")
+        K.WantsActive = sw
+        WeintCodex.SavedData.ui.enabled = sdui
+    end)
+    _G.C_CVar, _G.GetCVar, _G.SetCVar, K.WantsActive = scv, sgc, ssc, sw
+    Check(ok, "Plaketten: Modul aus, Plaketten des Spiels auf Wunsch aus und zurueck" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.29.19.0: Kombopunkte - der Client entscheidet, ob Ziel oder Spieler.
 do
     local UF = WeintCodex.UIUnitFrames
