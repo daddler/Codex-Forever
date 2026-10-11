@@ -17096,6 +17096,26 @@ do
     Check(ok, "Raus da still bei eigenem Kanal; Wasserschild zaehlt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.27.3.0: Erinnerungen - Groesse, Deckkraft, an ruhigen Orten aus.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local K, R = WeintCodex.UIKit, WeintCodex.UIReminders
+        local oRest = G.IsResting
+        G.IsResting = function() return true end
+        K.Set("reminders", "hideResting", true)
+        assert(R.Quiet() == true and #R.Active() == 0, "im Gasthaus nicht still")
+        K.Set("reminders", "hideResting", false)
+        assert(R.Quiet() == false, "ohne Schalter still")
+        G.IsResting = oRest
+        K.Set("reminders", "alpha", 40)
+        assert(math.abs(R.Alpha() - 0.4) < 0.001, "Deckkraft falsch")
+        K.Set("reminders", "alpha", nil)
+        assert(K.Module("reminders").defaults.bannerScale == 100, "Groesse fehlt")
+    end)
+    Check(ok, "Erinnerungen: Groesse, Deckkraft, an ruhigen Orten aus" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

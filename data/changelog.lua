@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.27.3.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFErinnerungen in Größe und Deckkraft einstellbar.|r Unter Erinnerungen → Anzeige → Aussehen: „Größe der Erinnerungen“ (50–250 %) und „Deckkraft“ für Erinnerungen, Buffs/Procs und Abklingzeiten.",
+            "|cff7C6CFFRuhe in Stadt und Gasthaus.|r Mit „An ruhigen Orten ausblenden“ zeigen die Erinnerungen dort nichts – kein Hinweis, kein Symbol.",
+        },
+    },
+    {
         version = "6.27.2.1",
         date    = "11.10.2026",
         notes   = {

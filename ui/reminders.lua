@@ -58,6 +58,11 @@ local defaults = {
     -- der Tasche scannen, die einen nuetzlichen Buff haben"):
     bagFood       = true,     -- Essen mit Buff in der Tasche, Buff fehlt
     bagElixir     = false,    -- Elixiere, Flaeschchen, Rollen in der Tasche
+    -- 6.27.3.0 (Beta-Test: "Skalierung geht nicht ... Transparenz ... an
+    -- ruhigen Orten wie Stadt, Gasthaus nichts sichtbar"):
+    bannerScale   = 100,      -- Groesse der Erinnerungen in Prozent
+    alpha         = 100,      -- Deckkraft von Erinnerungen und Symbolen in Prozent
+    hideResting   = false,    -- in Stadt und Gasthaus (ruhend) nichts zeigen
 }
 R.DEFAULTS = defaults
 
@@ -851,9 +856,19 @@ function R.BagBuffs(out)
     return out
 end
 
+-- An einem ruhigen Ort (Stadt, Gasthaus - das Spiel sagt "ruhend") und
+-- der Schalter an? Dann zeigt WeintCodex keine Erinnerung und kein Symbol.
+function R.Quiet()
+    return Opt("hideResting") and K.Bool(_G.IsResting and _G.IsResting(), false) or false
+end
+
+local function Alpha() return math.max(0.1, math.min(1, (tonumber(Opt("alpha")) or 100) / 100)) end
+R.Alpha = Alpha
+
 -- Alle Erinnerungen, die jetzt gelten.
 function R.Active()
     local out = {}
+    if R.Quiet() then return out end
     if not Opt("showReminders") then return out end
     if K.InCombat() and not Opt("remindInCombat") then return out end
     local where = Opt("where")
@@ -926,6 +941,8 @@ function R.UpdateBanner()
         end
     end
     if n == 0 then banner:Hide() return end
+    banner:SetScale(math.max(0.5, math.min(2.5, (tonumber(Opt("bannerScale")) or 100) / 100)))
+    banner:SetAlpha(banner._unlock and 1 or Alpha())
     banner:SetSize(math.max(200, widest + 46), n * 24 + 12)
     banner:Show()
 end
@@ -999,7 +1016,8 @@ end
 function R.UpdateProcs()
     if not procRow then return end
     local shown = {}
-    if Opt("showProcs") then
+    procRow:SetAlpha(procRow._unlock and 1 or Alpha())
+    if Opt("showProcs") and (procRow._unlock or not R.Quiet()) then
         for _, rule in ipairs(R.Here()) do
             if rule.kind == "proc" then
                 local aura = procRow._unlock and { icon = 136116 } or R.PlayerAura(rule)
@@ -1056,7 +1074,8 @@ end
 function R.UpdateCooldowns()
     if not cdRow then return end
     local list = {}
-    if Opt("showCooldowns") then
+    cdRow:SetAlpha(Alpha())
+    if Opt("showCooldowns") and not R.Quiet() then
         for _, rule in ipairs(R.Here()) do
             if rule.kind == "cooldown" then
                 local sp = R.Resolve(rule.spell)
@@ -1132,7 +1151,7 @@ local function Enable()
     for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED", "PLAYER_REGEN_DISABLED",
         "UNIT_AURA", "UNIT_PET", "UNIT_INVENTORY_CHANGED", "GROUP_ROSTER_UPDATE", "ZONE_CHANGED_NEW_AREA",
         "SPELL_UPDATE_COOLDOWN", "SPELL_UPDATE_CHARGES", "READY_CHECK", "PLAYER_MOUNT_DISPLAY_CHANGED",
-        "BAG_UPDATE_DELAYED", "UNIT_HAPPINESS" }) do
+        "BAG_UPDATE_DELAYED", "UNIT_HAPPINESS", "PLAYER_UPDATE_RESTING" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
     pcall(ev.RegisterEvent, ev, "SPELLS_CHANGED")
@@ -1146,7 +1165,7 @@ local function Enable()
             return
         end
         R.Schedule(true, event == "UNIT_AURA", false)
-        if event == "PLAYER_ENTERING_WORLD" then R.Schedule(true, true, true) end
+        if event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_UPDATE_RESTING" then R.Schedule(true, true, true) end
     end))
     -- Waffenverzauberungen laufen ab, ohne dass ein Ereignis kommt: ein
     -- ruhiger Takt, alle fuenf Sekunden.
@@ -1419,6 +1438,14 @@ K.Register({
                     description = "Im Kampf nennt der Client Buffs oft nur verschlüsselt – dann bleibt die Erinnerung aus, statt zu raten." },
                   { type = "slider", label = "Waffe: erinnern ab", key = "weaponMinutes", min = 1, max = 30, step = 1,
                     format = function(v) return string.format("%d min Rest", v) end })
+            B:Section("Aussehen")
+            B:Row({ type = "slider", label = "Größe der Erinnerungen", key = "bannerScale", min = 50, max = 250, step = 5,
+                    format = function(v) return string.format("%d %%", v) end },
+                  { type = "slider", label = "Deckkraft", key = "alpha", min = 10, max = 100, step = 5,
+                    format = function(v) return string.format("%d %%", v) end,
+                    description = "Für Erinnerungen, Buffs/Procs und Abklingzeiten." })
+            B:Row({ type = "toggle", label = "An ruhigen Orten ausblenden", key = "hideResting",
+                    description = "In Städten und Gasthäusern (wo das Spiel „ruhend“ sagt) keine Erinnerung und kein Symbol." }, nil)
             B:Section("Aus der Tasche")
             B:Row({ type = "toggle", label = "Essen mit Buff", key = "bagFood",
                     description = "Liegt Essen in der Tasche, das „Wohlgenährt“ oder Erfahrung gibt, und der Buff fehlt: Erinnerung. Erfahrungsessen nur beim Leveln." },

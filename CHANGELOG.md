@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.27.3.0] – 2026-10-11
+
+### Neu
+
+- Erinnerungen (Beta-Test: „Skalierung geht nicht … Transparenz … an ruhigen Orten nichts sichtbar“): Die Liste der Erinnerungen hatte keine Größe – nur die Symbole. Neu `bannerScale` (50–250 %), `alpha` (10–100 %, für Liste, Procs und Abklingzeiten), `hideResting` (aus; `R.Quiet`: `IsResting()` – Stadt und Gasthaus – dann keine Erinnerung und kein Symbol, neu gezeichnet bei `PLAYER_UPDATE_RESTING`). Im Gestaltungsmodus bleibt alles voll sichtbar.
+
 ## [6.27.2.1] – 2026-10-11
 
 ### Behoben
