@@ -320,10 +320,12 @@ WeintCodex_Dungeons = {
         -- vollständig (Atrexis in der Unterstadt am Anfang, der Shade of
         -- the Archmage in der Violetten Zitadelle am Ende), also keine
         -- Pullnummern. Lyn the Ignored ist ein seltener Elite.
+        -- 6.28.1.0: Dungeon Journal 1.6.2 - "Mana Elemental" heisst jetzt
+        -- Arcanic Enigma, Mana Wraith ist kein Boss mehr: acht Kaempfe.
         bossSource     = SRC.COMMUNITY,
         bossesComplete = true,
         orderKnown     = false,
-        bossCount      = 9,
+        bossCount      = 8,
         bosses = {
             {
                 id   = "atrexis",
@@ -345,9 +347,8 @@ WeintCodex_Dungeons = {
                 name = "Unstable Sentinel",
                 position = "Arkaner Golem bei der Magus Commerce Exchange. „Malfunction“ trifft alle im Umkreis von 25 Metern.",
             },
-            { id = "mana_wraith",    name = "Mana Wraith" },
             { id = "mana_devourer",  name = "Mana Devourer" },
-            { id = "mana_elemental", name = "Mana Elemental" },
+            { id = "arcanic_enigma", name = "Arcanic Enigma" },
             {
                 id       = "lyn_the_ignored",
                 name     = "Lyn the Ignored",

@@ -675,7 +675,7 @@ do
         back()
         Check(contested, "Zustand 'Quellen widersprechen sich' wird gezeichnet (geliehene Tabelle)")
         Check(counted, "Zustand 'gezaehlt, Namen offen' wird gezeichnet, samt Teilliste (geliehene Tabelle)")
-        Check(#D.Get("excavation_site").bosses == 3 and #D.Get("city_of_dalaran").bosses == 9,
+        Check(#D.Get("excavation_site").bosses == 3 and #D.Get("city_of_dalaran").bosses == 8,
             "nach dem Leihen stehen die echten Listen wieder da")
     end
 
@@ -17148,6 +17148,26 @@ do
         p.modules.reminders = nil
     end)
     Check(ok, "Profil exportieren/importieren: Rundweg, fremder Text abgelehnt" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.28.1.0: abgabebereit nur mit klarem Ja und erfuellten Zielen.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local XB = WeintCodex.UIXPBar
+        local oQL = G.C_QuestLog
+        local objs = { { finished = false } }
+        G.C_QuestLog = { IsComplete = function() return 0 end, GetQuestObjectives = function() return objs end }
+        assert(XB.QuestReady(1) == false, "0 als fertig gezaehlt")
+        G.C_QuestLog.IsComplete = function() return true end
+        assert(XB.QuestReady(1) == false, "offenes Ziel als fertig gezaehlt")
+        objs = { { finished = true } }
+        assert(XB.QuestReady(1) == true, "fertige Quest nicht erkannt")
+        G.C_QuestLog.IsComplete = function() return -1 end
+        assert(XB.QuestReady(1) == false, "gescheiterte als fertig gezaehlt")
+        G.C_QuestLog = oQL
+    end)
+    Check(ok, "Quests: abgabebereit nur mit klarem Ja und erfuellten Zielen" .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then

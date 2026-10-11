@@ -307,6 +307,9 @@ end
 
 local function IsComplete(questID)
     local ql = _G.C_QuestLog
+    -- Dieselbe strenge Pruefung wie die Erfahrungsleiste (6.28.1.0).
+    local XB = WeintCodex.UIXPBar
+    if XB and XB.QuestReady then return XB.QuestReady(questID) end
     return ql and ql.IsComplete and K.Bool(ql.IsComplete(questID), false) or false
 end
 

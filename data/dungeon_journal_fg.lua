@@ -1,5 +1,5 @@
 --------------------------------------------------
--- WeintCodex :: Dungeon-Journal, Abgleich mit ForeverGuide 1.25.6
+-- WeintCodex :: Dungeon-Journal, Abgleich mit ForeverGuide 1.34.0
 --------------------------------------------------
 -- ERZEUGT von .github/scripts/import_foreverguide.py - nicht von Hand
 -- aendern; neu erzeugen. Ergaenzt data/dungeon_journal.lua (das bleibt,
@@ -27,7 +27,7 @@ local J = WeintCodex.DungeonJournal
 
 J.FG_SOURCE = {
     kind  = "community",
-    date  = "06.10.2026",
+    date  = "11.10.2026",
     label = "Quests: Wissensstand aus der Beta",
 }
 J.CLASSIC_LOOT_SOURCE = {
@@ -1067,6 +1067,38 @@ J.CLASSIC_LOOT = {
             { 22254, "Wand of Eternal Light", "Distanz, Zauberstab", 3 },
         },
     } end,
+    city_of_dalaran = function() return {
+        arcane_anomaly = {
+            { 273031, "Runemender's Seal", "Finger", 3 },
+            { 273034, "Ephemeral Grips", "Hände", 3 },
+            { 273035, "Mana-Warped Chain Shirt", "Brust", 3 },
+        },
+        arcanic_enigma = {
+            { 273045, "Drape of Shifting Energy", "Rücken", 3 },
+            { 273044, "Violet Sorcerer's Robes", "Brust", 3 },
+            { 273043, "Wand of Mana Concentration", "Distanz", 3 },
+        },
+        atrexis = {
+            { 273036, "Graveweave Bindings", "Handgelenke", 3 },
+            { 273032, "Bonebinder's Signet", "Finger", 3 },
+            { 273033, "Gravespike Repeater", "Distanz", 3 },
+        },
+        fel_ancient = {
+            { 273039, "Blightleaf Rope", "Taille", 3 },
+            { 273038, "Garb of Fallen Felbark", "Brust", 3 },
+            { 273037, "Felbough Arm", "Zweihändig", 3 },
+        },
+        lyn_the_ignored = {
+            { 273054, "Cartilage Shapers", "Hände", 3 },
+            { 273053, "Tendonscraper Dagger", "Waffenhand", 3 },
+            { 273055, "Bonepile Gaze", "Schild", 3 },
+        },
+        mana_devourer = {
+            { 273040, "Spine of the Devourer", "Zweihändig", 3 },
+            { 273042, "Manascale Treads", "Füße", 3 },
+            { 273041, "Slitherwrap Girdle", "Taille", 3 },
+        },
+    } end,
     dire_maul = function() return {
         alzzin = {
             { 18328, "Shadewood Cloak", "Rücken, Stoff", 3 },
@@ -1971,6 +2003,11 @@ J.CLASSIC_OTHERS = {
             { 18483, "Mana Channeling Wand", "Distanz, Zauberstab", 3 },
             { 18485, "Observer's Shield", "Schildhand, Schild", 3 },
             { 18484, "Cho'Rush's Blade", "Einhändig, Schwert", 3 },
+        } },
+    } end,
+    excavation_site = function() return {
+        { name = "Highland Horror", items = {
+            { 270180, "Horrible Rootcore", "Gegenstand", nil },
         } },
     } end,
     gnomeregan = function() return {

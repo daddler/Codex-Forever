@@ -343,6 +343,36 @@ end
 
 -- 6.27.0.5: was der Client zur Verzauberung der Waffe sagt (Schamane:
 -- "Waffe des Felsbeißers ist aktiv", Erinnerung kam trotzdem).
+-- 6.28.1.0: abgabebereite Quests (Beta-Test: "4 abgabebereit, keine fertig").
+Check("Quests", function(add)
+    local ql = _G.C_QuestLog
+    local XB = WeintCodex.UIXPBar
+    if not (ql and ql.GetNumQuestLogEntries and ql.GetInfo and XB and XB.QuestReady) then
+        add(SC.OPEN, "Questlog nicht lesbar.") return
+    end
+    local n, ready = 0, 0
+    for i = 1, (K.Plain(ql.GetNumQuestLogEntries()) or 0) do
+        local info = ql.GetInfo(i)
+        local id = type(info) == "table" and K.Plain(info.questID)
+        if type(id) == "number" and id > 0 and not info.isHeader then
+            n = n + 1
+            local rt = ql.ReadyForTurnIn and select(2, pcall(ql.ReadyForTurnIn, id))
+            local ic = ql.IsComplete and select(2, pcall(ql.IsComplete, id))
+            local objs = ql.GetQuestObjectives and select(2, pcall(ql.GetQuestObjectives, id))
+            local fin, all = 0, 0
+            for _, o in ipairs(type(objs) == "table" and objs or {}) do
+                all = all + 1
+                if type(o) == "table" and o.finished == true then fin = fin + 1 end
+            end
+            local yes = XB.QuestReady(id)
+            if yes then ready = ready + 1 end
+            add("", string.format("   %d: Abgabe %s · fertig %s · Ziele %d/%d → %s", id, tostring(K.Plain(rt)),
+                tostring(K.Plain(ic)), fin, all, yes and "abgabebereit" or "nicht fertig"))
+        end
+    end
+    add(SC.OK, string.format("%d Quests im Log, %d abgabebereit.", n, ready))
+end)
+
 -- 6.27.2.1: Totemleiste (Beta-Test: "Rechtsklick auf das Totem klappt nicht").
 Check("Totems", function(add)
     local TT = WeintCodex.UITotems

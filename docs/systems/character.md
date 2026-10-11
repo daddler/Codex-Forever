@@ -123,7 +123,7 @@ Waffenfertigkeit lernt.
   und Lage). Herkunft **`community`**: übernommen aus *What's Training?*
   (Forever-Fassung 11.0.0-beta7, MIT-Lizenz – der Lizenztext steht im Kopf
   der Datei, wie die Lizenz es verlangt). Nur Daten, kein Code, keine
-  Bilder. 6.9.0.6: gegen Fassung 11.0.0-beta10 abgeglichen (Zauber aller neun
+  Bilder. 6.28.1.0: neu erzeugt aus Fassung 11.0.0-beta18 (Tigerfuror, Katzengestalt, Schleichen, Klaue, Zerfetzen nicht mehr beim Lehrer; 117 Preise). 6.9.0.6: gegen Fassung 11.0.0-beta10 abgeglichen (Zauber aller neun
   Klassen, Ränge, Tierausbildung, Waffenfertigkeiten, Waffenmeister) –
   keine Abweichung; neu dort sind nur Rufrabatte, die WeintCodex
   weiterhin nicht einrechnet. Seit 6.14.0.2 ist jede Klasse eine
@@ -190,7 +190,7 @@ Druiden – 90 der 801 Quests lehren einen Zauber.
 
 * **Was es gibt** – `data/classquests.lua`, **erzeugt** von
   `.github/scripts/import_foreverguide.py` aus dem Addon ForeverGuide
-  1.25.6 (Questie-Datenbank für Forever, Herkunft `community`): Nummer,
+  1.34.0 (seit 6.28.1.0; vorher 1.25.6) (Questie-Datenbank für Forever, Herkunft `community`): Nummer,
   englischer Name (nur Rückfall), Stufe, Mindeststufe, Völker (`ra`, Bit
   `1 << (Volk - 1)`), Geber/Abgabe als NPC-Nummer, Start an Gegenstand
   oder Objekt, Vor- und Folgequest, gelehrter Zauber, Belohnungen (aus
@@ -231,7 +231,7 @@ der nächste Berufslehrer steht.
 
 * **Was es gibt** – `data/professions.lua`, **erzeugt** von
   `.github/scripts/import_foreverguide.py` aus dem Addon ForeverGuide
-  1.25.6: 2.216 Rezepte in zwölf Berufen (Zauber, Gegenstand, Lernstufe,
+  1.34.0 (6.28.1.0, vorher 1.25.6): 2.216 Rezepte in zwölf Berufen (Zauber, Gegenstand, Lernstufe,
   Schwellen gelb/grün/grau, Reagenzien, Lehrer oder Rezeptgegenstand,
   Händlergunst, Stand *neu/geändert/wie Classic*), 223 Lehrer mit Lage,
   Fraktion und Rang (1 bis 75 … 4 bis 300). ForeverGuide hat die Rezepte

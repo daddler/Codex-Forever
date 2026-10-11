@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.28.1.0] – 2026-10-11
+
+### Geändert
+
+- Daten neu abgeglichen mit ForeverGuide 1.34.0 (vorher 1.25.6; `import_foreverguide.py`): neue Beute für City of Dalaran (Forever-Gegenstände) und Excavation Site, Quests, Rezepte, Klassenquests, seltene Gegner. Leatrix Maps 1.60.20: Kartenteile und Symbole unverändert (nur Fassung). What's Training? 11.0.0-beta18: `data/trainer.lua` neu erzeugt (Werkzeug außerhalb des Repos) – weg beim Lehrer: Tigerfuror, Katzengestalt, Schleichen, Klaue, Zerfetzen, Lichtbrunnen-Ränge; neu Urbiss 2–4; 117 Preise geändert; Tierausbildung mit Vorstufen.
+- City of Dalaran (Dungeon Journal 1.6.2): „Mana Elemental“ heißt Arcanic Enigma, Mana Wraith ist kein Boss mehr – acht statt neun Kämpfe.
+
+### Behoben
+
+- Startseite „4 Quests abgabebereit“, obwohl keine fertig war (Beta-Test): `XB.QuestReady` zählt nur ein klares Ja (`true`/`1` – eine `0` ist in Lua wahr, `-1` heißt gescheitert) und verlangt alle Ziele erfüllt (`GetQuestObjectives`). Gilt auch für den Questpfeil. `/wcui prüfen` → „Quests“ zeigt je Quest, was der Client sagt.
+
 ## [6.28.0.1] – 2026-10-11
 
 ### Behoben

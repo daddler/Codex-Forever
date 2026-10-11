@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.28.1.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFLehrer auf neuem Stand.|r Was der Lehrer lehrt und kostet, ist neu abgeglichen – Tigerfuror und andere Zauber, die es beim Lehrer nicht mehr gibt, stehen nicht mehr in „Als Nächstes“, und viele Preise stimmen jetzt.",
+            "|cff7C6CFF„Abgabebereit“ zählt nur fertige Quests.|r Die Startseite meldete Quests als abgabebereit, die es nicht waren. Jetzt zählt eine Quest erst, wenn alle Ziele erfüllt sind.",
+            "|cff7C6CFFCity of Dalaran mit acht Bossen.|r Arcanic Enigma statt Mana Elemental, Mana Wraith ist kein Boss mehr – dazu Beute für die Bosse von Dalaran und neue Daten zu Quests, Rezepten und seltenen Gegnern.",
+        },
+    },
+    {
         version = "6.28.0.1",
         date    = "11.10.2026",
         notes   = {

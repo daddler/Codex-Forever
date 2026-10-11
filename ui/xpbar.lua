@@ -89,6 +89,38 @@ end
 -- abgabebereit (Ziele erfuellt) und allen. Kennt der Client die Funktion
 -- nicht, gibt es die Auskunft nicht (nil) - nie eine 0.
 -- { ready = EP, readyCount = n, all = EP, allCount = n } oder nil.
+-- Ist eine Quest wirklich abgabebereit? (6.28.1.0, Beta-Test: "4 Quests
+-- abgabebereit - es ist keine fertig".) Nur ein klares Ja zaehlt: true oder
+-- 1 - eine 0 ist in Lua wahr, "-1" heisst in Classic "gescheitert". Und
+-- nennt der Client Ziele, muessen alle erfuellt sein - sonst nicht fertig.
+local function Yes(v)
+    v = K.Plain(v)
+    return v == true or v == 1
+end
+function XB.QuestReady(id)
+    local ql = _G.C_QuestLog
+    if not ql then return false end
+    local done = false
+    if ql.ReadyForTurnIn then
+        local ok, v = pcall(ql.ReadyForTurnIn, id)
+        done = ok and Yes(v)
+    end
+    if not done and ql.IsComplete then
+        local ok, v = pcall(ql.IsComplete, id)
+        done = ok and Yes(v)
+    end
+    if not done then return false end
+    if ql.GetQuestObjectives then
+        local ok, objs = pcall(ql.GetQuestObjectives, id)
+        if ok and type(objs) == "table" then
+            for _, o in ipairs(objs) do
+                if type(o) == "table" and not Yes(o.finished) then return false end
+            end
+        end
+    end
+    return true
+end
+
 function XB.QuestXP()
     local ql = _G.C_QuestLog
     local reward = _G.GetQuestLogRewardXP
@@ -103,10 +135,7 @@ function XB.QuestXP()
                 xp = okX and Num(xp) or nil
                 if xp and xp > 0 then
                     out.all, out.allCount = out.all + xp, out.allCount + 1
-                    local done = false
-                    if ql.ReadyForTurnIn then done = K.Bool(ql.ReadyForTurnIn(id), false) end
-                    if not done and ql.IsComplete then done = K.Bool(ql.IsComplete(id), false) end
-                    if done then out.ready, out.readyCount = out.ready + xp, out.readyCount + 1 end
+                    if XB.QuestReady(id) then out.ready, out.readyCount = out.ready + xp, out.readyCount + 1 end
                 end
             end
         end

@@ -1193,7 +1193,7 @@ Bestand kennt die NPC-Nummer aus der GUID (`RA.NpcId`, nur `Creature`/
 `Vehicle`). Geheime GUID oder geheimer Name: keine Meldung.
 **Bestand:** `data/rares.lua`, **erzeugt** von
 `.github/scripts/import_foreverguide.py` – 404 Gegner aus ForeverGuide
-1.25.6 (Questie-Datenbank für Forever, `community`), je eine Zeile, gelesen
+1.34.0 (seit 6.28.1.0; vorher 1.25.6) (Questie-Datenbank für Forever, `community`), je eine Zeile, gelesen
 bei Bedarf (`RA.Info`): Name, Stufen, Merkmale (Elite, Platzhalter,
 zähmbar, nachts, beschworen), Wiederkehr (aus Classic, `classic`, im
 Hinweis „Wiederkehr in Classic 1:30–2:30 h“), Lagen. Nicht übernommen:
