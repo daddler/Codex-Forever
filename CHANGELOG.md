@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.27.4.0] – 2026-10-11
+
+### Geändert
+
+- Auktionspreise im Tooltip (Beta-Test: „oben der Verkaufspreis mit Silbermünze, unten K und S – wirkt nicht stimmig, zu viel zu lesen“): `AP.Money` zeichnet ohne `GetCoinTextureString` (fehlt offenbar auf Forever) die Münzen des Spiels als Bild im Text (`AP.COIN`, `Interface\MoneyFrame\UI-*Icon`). `AP.TooltipLines`: keine Stückzahl, kein „von Spielern“; eine Alterszeile nur, wenn der Preis nicht von heute ist („Preis von gestern“) oder zuletzt fehlte.
+
 ## [6.27.3.0] – 2026-10-11
 
 ### Neu

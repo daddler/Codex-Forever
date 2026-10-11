@@ -5664,7 +5664,9 @@ do
         assert(AP.Day(os.time({ year = 2026, month = 1, day = 1, hour = 12 })) == 0
             and AP.Day(os.time({ year = 2026, month = 3, day = 1, hour = 12 })) == 59, "Tagesnummer")
         assert(AP.AgeText(10, 10) == "heute" and AP.AgeText(9, 10) == "gestern" and AP.AgeText(5, 10) == "vor 5 Tagen", "Alter")
-        assert(AP.Money(12345) == "1 G 23 S 45 K" and AP.Money(80) == "80 K", "Geld: " .. AP.Money(12345))
+        assert(AP.Money(12345) == "1" .. AP.COIN.gold .. " 23" .. AP.COIN.silver .. " 45" .. AP.COIN.copper
+            and AP.Money(80) == "80" .. AP.COIN.copper, "Geld: " .. AP.Money(12345))
+        assert(not AP.Money(12345):find(" [GSK]$") and not AP.Money(12345):find(" [GSK] "), "Buchstaben statt Muenzen")
 
         local lines = {}
         G.print = function(...) lines[#lines + 1] = table.concat({ ... }, " ") end
@@ -5756,12 +5758,13 @@ do
         G.C_Container = { GetContainerItemInfo = function(b, sl) return (b == 0 and sl == 3) and { stackCount = 20 } or nil end }
         AP.OnItem(gt, { id = 100 })
         local txt = table.concat(tl, "\n")
-        assert(tl[1] == "Auktionshaus = ab 80 K" and tl[2] == "Stapel (20) = 16 S" and tl[3] == "heute · 8 Stück im Angebot",
+        local AC = WeintCodex.UIAuctionPrices.COIN
+        assert(tl[1] == "Auktionshaus = ab 80" .. AC.copper and tl[2] == "Stapel (20) = 16" .. AC.silver and #tl == 2,
             "Tooltip: " .. txt)
         tl = {}
         K.Set("comfort", "ahStack", false)
         AP.OnItem(gt, { id = 100 })
-        assert(#tl == 2, "Stapel trotz Schalter")
+        assert(#tl == 1, "Stapel trotz Schalter")
         K.Set("comfort", "ahStack", true)
         tl = {}
         AP.OnItem(gt, { id = 999 })
@@ -5812,7 +5815,7 @@ do
         tl = {}
         gt.GetPrimaryTooltipInfo = nil
         AP.OnItem(gt, { id = 300 })
-        assert(tl[2] == "zuletzt vor 2 Tagen · beim letzten Scan nicht im Angebot", "Fehlt: " .. table.concat(tl, " | "))
+        assert(tl[2] == "Preis von vor 2 Tagen, zuletzt nicht im Angebot", "Fehlt: " .. table.concat(tl, " | "))
 
         -- 3. Drei Tage lang gleich die Suche; ohne neue Seite nach AP.STALL s
         -- ist Schluss - ohne Ergebnis ehrlich gesagt.
@@ -5853,7 +5856,7 @@ do
         Fire("AUCTION_HOUSE_CLOSED")
         tl = {}
         AP.OnItem(gt, { id = 800 })
-        assert(tl[1] == "Auktionshaus (neutral) = ab 5 S 55 K", "neutral im Tooltip: " .. tostring(tl[1]))
+        assert(tl[1] == "Auktionshaus (neutral) = ab 5" .. AC.silver .. " 55" .. AC.copper, "neutral im Tooltip: " .. tostring(tl[1]))
 
         -- Nach 30 Tagen faellt es heraus.
         st.items[900] = AP.Pack(1, 1, AP.Day() - AP.KEEP_DAYS - 1)
@@ -6010,7 +6013,8 @@ do
         assert(select(1, AP.Unpack(st.items[555])) == 60, "bestaetigter Ausreisser nicht uebernommen")
         -- Tooltip: "von Spielern".
         local lines = AP.TooltipLines(400)
-        assert(lines[2][1] == "von Spielern, heute · 3 Stück im Angebot", "Tooltip: " .. tostring(lines[2][1]))
+        -- 6.27.4.0: Preis von heute - keine Zeile mit Alter oder Stueckzahl.
+        assert(#lines == 1, "Tooltip ueberladen: " .. tostring(lines[2] and lines[2][1]))
         -- Fremder Realm, ich selbst, Zukunft: nichts.
         assert(AS.OnBulk("Zed-Andersrealm", "Gilde", "Horde", fresh, E(401) .. ",1,1", clock) == 0
             and AS.OnBulk("Ich", "Gilde", "Horde", fresh, E(402) .. ",1,1", clock) == 0

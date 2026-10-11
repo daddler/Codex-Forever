@@ -221,19 +221,29 @@ end
 -- Geld und Alter als Text
 --------------------------------------------------
 
+-- Die Muenzen des Spiels (dieselben Bilder wie am Verkaufspreis).
+AP.COIN = {
+    gold   = "|TInterface\\MoneyFrame\\UI-GoldIcon:0:0:2:0|t",
+    silver = "|TInterface\\MoneyFrame\\UI-SilverIcon:0:0:2:0|t",
+    copper = "|TInterface\\MoneyFrame\\UI-CopperIcon:0:0:2:0|t",
+}
+
 function AP.Money(copper)
     if type(copper) ~= "number" then return "—" end
     if _G.GetCoinTextureString then
         local ok, s = pcall(_G.GetCoinTextureString, copper)
         if ok and type(s) == "string" then return s end
     end
+    -- 6.27.4.0 (Beta-Test: "oben das Silber als Muenze, unten K und S -
+    -- wirkt nicht stimmig"): Forever kennt GetCoinTextureString offenbar
+    -- nicht - dann die Muenzen selbst, als Bild im Text, wie das Spiel.
     local g = math.floor(copper / 10000)
     local s = math.floor((copper % 10000) / 100)
     local c = copper % 100
     local parts = {}
-    if g > 0 then parts[#parts + 1] = Thousands(g) .. " G" end
-    if s > 0 then parts[#parts + 1] = s .. " S" end
-    if c > 0 or #parts == 0 then parts[#parts + 1] = c .. " K" end
+    if g > 0 then parts[#parts + 1] = Thousands(g) .. AP.COIN.gold end
+    if s > 0 then parts[#parts + 1] = s .. AP.COIN.silver end
+    if c > 0 or #parts == 0 then parts[#parts + 1] = c .. AP.COIN.copper end
     return table.concat(parts, " ")
 end
 
@@ -298,15 +308,14 @@ function AP.TooltipLines(id, stack)
     if stack and stack > 1 then
         lines[#lines + 1] = { "Stapel (" .. stack .. ")", AP.Money(e.price * stack) }
     end
-    local info
+    -- Weniger lesen (6.27.4.0, Beta-Test: "zu ueberladen ... wie viele heute
+    -- angeboten wurden interessiert keine Sau"): keine Stueckzahl mehr, und
+    -- eine Zeile zum Alter nur, wenn der Preis nicht von heute ist.
     if e.missing then
-        info = "zuletzt " .. AP.AgeText(e.day) .. " · beim letzten Scan nicht im Angebot"
-    else
-        info = (e.shared and "von Spielern, " or "") .. AP.AgeText(e.day)
-        local q = AP.QtyText(e.qty)
-        if q then info = info .. " · " .. q end
+        lines[#lines + 1] = { "Preis von " .. AP.AgeText(e.day) .. ", zuletzt nicht im Angebot" }
+    elseif AP.AgeText(e.day) ~= "heute" then
+        lines[#lines + 1] = { "Preis von " .. AP.AgeText(e.day) }
     end
-    lines[#lines + 1] = { info }
     return lines
 end
 

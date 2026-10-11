@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.27.4.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFAuktionspreise mit Münzen.|r Im Tooltip stehen Gold, Silber und Kupfer jetzt als Münzen wie beim Verkaufspreis – keine G, S, K mehr.",
+            "|cff7C6CFFWeniger Text im Tooltip.|r Keine Stückzahl mehr; eine Zeile zum Alter nur, wenn der Preis nicht von heute ist.",
+        },
+    },
+    {
         version = "6.27.3.0",
         date    = "11.10.2026",
         notes   = {
