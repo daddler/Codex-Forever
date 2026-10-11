@@ -2517,13 +2517,39 @@ frameBg:SetColorTexture(unpack(C.bgDark))
 -- die Spielwelt, deren Farbe wir nicht kennen. Der Entwurf zeigt hier einen
 -- Radius, den WoW ohne echte Transparenz im Frame nicht liefern kann.
 
+-- PASST AUFS BILD (6.29.25.0, Spielerbericht: "bei Neuinstallation wird
+-- alles richtig gross dargestellt"). Die Vorgabe ist 1500 x 800 Einheiten;
+-- mit der Skalierung, die die Oberflaeche einstellt (UIParent 768 hoch),
+-- war das Fenster hoeher als der Bildschirm. Jetzt wird es auf hoechstens
+-- den Bildschirm (mit 24 Einheiten Rand) verkleinert - ueber die
+-- Skalierung, nicht ueber die Groesse: die Seiten sind fuer mindestens
+-- 780 hoch gerechnet ("Nichts muss scrollen") und bleiben es.
+function WeintCodex.WindowFit(w, h)
+    local ok, sw, sh = pcall(function() return UIParent:GetWidth(), UIParent:GetHeight() end)
+    if not ok or type(sw) ~= "number" or type(sh) ~= "number" or sw <= 0 or sh <= 0 then return 1 end
+    if type(w) ~= "number" or type(h) ~= "number" or w <= 0 or h <= 0 then return 1 end
+    return math.min(1, (sw - 24) / w, (sh - 24) / h)
+end
+
 local function ApplySavedWindow()
     if WeintCodex.SavedData and WeintCodex.SavedData.window then
         local w = WeintCodex.SavedData.window
         if w.width  then frame:SetWidth(w.width)   end
         if w.height then frame:SetHeight(w.height)  end
-        if w.scale  then frame:SetScale(w.scale)    end
+        local fit = WeintCodex.WindowFit(w.width or frame:GetWidth(), w.height or frame:GetHeight())
+        frame:SetScale((w.scale or 1) * fit)
     end
+end
+WeintCodex.ApplySavedWindow = ApplySavedWindow
+-- Nachrechnen, wenn sich die Skalierung des Spiels aendert (Einrichten
+-- der Oberflaeche, anderer Bildschirm) und beim Einloggen. Kein Haken am
+-- OnShow: der gehoert dem weichen Einblenden (SoftWindow).
+do
+    local fit = CreateFrame("Frame")
+    for _, e in ipairs({ "PLAYER_LOGIN", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED" }) do
+        pcall(fit.RegisterEvent, fit, e)
+    end
+    fit:SetScript("OnEvent", function() ApplySavedWindow() end)
 end
 
 --------------------------------------------------

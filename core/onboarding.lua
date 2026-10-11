@@ -757,6 +757,14 @@ function WeintCodex.Onboarding.Check()
     -- sollen weiterhin das kurze Popup zeigen.
     local seenEdition = tonumber(sd.onboarding.tourEdition) or 0
 
+    -- 6.29.25.0 (Spielerbericht: "bei Neuinstallation kein Willkommens-
+    -- bildschirm"): die Tour oeffnete das Hauptfenster, und der Assistent
+    -- (ui/welcome.lua) wartete, bis sie zu ist - kam also oft nie. Die Wahl
+    -- der Oberflaeche ist das Wichtigere: steht sie noch aus, kommt die Tour
+    -- beim naechsten Einloggen (nach "Uebernehmen" wird ohnehin neu geladen).
+    local WL = WeintCodex.UIWelcome
+    if WL and WL.Pending and WL.Pending() then return end
+
     if (not last) or seenEdition < TOUR_EDITION then
         WeintCodex.Onboarding.ShowTour()
         return

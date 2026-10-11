@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.25.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFNach der Installation kommt zuerst der Willkommensbildschirm.|r Bisher öffnete sich die Einführung im Codex und der Willkommensbildschirm wartete dahinter – oft für immer. Die Einführung folgt jetzt beim nächsten Einloggen.",
+            "|cff7C6CFFDer Codex passt immer auf den Bildschirm.|r Ist er größer als das Bild, wird er verkleinert, statt über den Rand zu ragen.",
+        },
+    },
+    {
         version = "6.29.24.0",
         date    = "11.10.2026",
         notes   = {

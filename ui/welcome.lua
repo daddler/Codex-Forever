@@ -825,6 +825,12 @@ function WL.MaybeAsk()
     end)
 end
 
+-- Steht die Frage noch aus? (core/onboarding.lua laesst ihr den Vortritt.)
+function WL.Pending()
+    if not K.OPT_IN then return false end
+    return not Asked()
+end
+
 -- Fuer den Prueflauf.
 function WL.Button(key)
     for _, b in ipairs(buttons) do

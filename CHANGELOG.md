@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.25.0] – 2026-10-11
+
+### Behoben
+
+- **Kein Willkommensbildschirm nach Neuinstallation:** `Onboarding.Check`
+  zeigte beim ersten Einloggen die Tour im Hauptfenster; `WL.MaybeAsk` wartet,
+  bis sie zu ist. Jetzt hat der Assistent den Vortritt (`WL.Pending`), die
+  Tour kommt beim nächsten Einloggen.
+- **Codex größer als der Bildschirm:** Vorgabe 1500 × 800 bei einer
+  Oberfläche von 768 Höhe. `WeintCodex.WindowFit` verkleinert das Fenster über
+  die Skalierung auf den Bildschirm (24 Rand), neu bei `PLAYER_LOGIN`,
+  `UI_SCALE_CHANGED`, `DISPLAY_SIZE_CHANGED`. Größe in Einheiten unverändert
+  (Seiten bleiben für ≥ 780 gerechnet). Im Spiel ungeprüft.
+
 ## [6.29.24.0] – 2026-10-11
 
 ### Behoben

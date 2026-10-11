@@ -2200,13 +2200,12 @@ do
     local WL = WeintCodex.UIWelcome
     local sd = WeintCodex.SavedData
     local ok, err = pcall(function()
-        assert(WeintCodex.Onboarding.IsShowing(), "Einfuehrung steht nicht (Voraussetzung)")
+        -- 6.29.25.0: frisch installiert hat der Assistent den Vortritt -
+        -- die Einfuehrung kommt erst beim naechsten Einloggen.
+        assert(WL.Pending(), "frisch: keine Frage offen")
+        assert(not WeintCodex.Onboarding.IsShowing(), "Einfuehrung steht vor dem Assistenten")
         WL.MaybeAsk()
-        assert(not WL.IsShown(), "Assistent erscheint ueber der Einfuehrung")
-
-        -- Einfuehrung wegklicken: jetzt kommt der Assistent, Schritt 1.
-        WeintCodex.Onboarding.Dismiss()
-        assert(WL.IsShown(), "nach der Einfuehrung kommt kein Assistent")
+        assert(WL.IsShown(), "frisch installiert kommt kein Assistent")
         assert(WL.Step() == "start" and WL.ShownShot() == "overview", "Assistent beginnt nicht bei Willkommen mit Bild")
 
         -- "Spaeter": nichts gemerkt, nichts geschaltet - beim naechsten Mal wieder.
@@ -4619,6 +4618,22 @@ do
     ui.enabled, gf._active = oldEnabled, oldActive
     Check(ok, "Ohne Oberflaeche: Komfort ja, Oberflaeche nein, Fenster nur gewaehlt, Klickzauber auf Rahmen des Spiels"
         .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.29.25.0: Hauptfenster passt aufs Bild.
+do
+    local ok, err = pcall(function()
+        local oW, oH = UIParent.GetWidth, UIParent.GetHeight
+        UIParent.GetWidth = function() return 1365 end
+        UIParent.GetHeight = function() return 768 end
+        local f = WeintCodex.WindowFit(1500, 800)
+        assert(f < 1 and 800 * f <= 768 - 24 + 0.01 and 1500 * f <= 1365 - 24 + 0.01, "Fenster groesser als der Bildschirm")
+        UIParent.GetHeight = function() return 1440 end
+        UIParent.GetWidth = function() return 2560 end
+        assert(WeintCodex.WindowFit(1500, 800) == 1, "auf grossem Bildschirm verkleinert")
+        UIParent.GetWidth, UIParent.GetHeight = oW, oH
+    end)
+    Check(ok, "Hauptfenster: nie groesser als der Bildschirm" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.29.24.0: Objekte (Tisch, Laterne) bekommen keine Plakette von WeintCodex.
