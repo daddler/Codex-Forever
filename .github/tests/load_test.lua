@@ -4653,6 +4653,36 @@ do
         -- Tooltip-Zeilen, Tastentext.
         local lines = CC.TooltipLines()
         assert(#lines == 2 and lines[1][1] == "Umschalt + Links" and lines[1][2] == "Heilen", "Tooltip-Zeilen falsch")
+        -- 6.29.9.0: Maustasten 6-12 als "-Button7", Tastatur-Tasten als
+        -- Vorrang-Belegung auf einen Mouseover-Knopf, Fläche "Taste zuweisen".
+        local binds, oldSet, oldClear = {}, _G.SetOverrideBindingClick, _G.ClearOverrideBindings
+        _G.SetOverrideBindingClick = function(_, _, key, name) binds[key] = name end
+        _G.ClearOverrideBindings = function() for k in pairs(binds) do binds[k] = nil end end
+        assert(CC.CaptureValue("Button7", true) == 7 and CC.CaptureValue("LeftButton", true) == 1,
+            "Maustaste nicht erkannt")
+        assert(CC.CaptureValue("Button13", true) == nil and CC.CaptureValue("LSHIFT", false) == nil
+            and CC.CaptureValue("ESCAPE", false) == nil, "Zusatztaste/Escape/Taste 13 als Belegung genommen")
+        assert(CC.Capture("Button7", true, "alt-") and CC.draft.button == 7 and CC.draft.mod == "alt-",
+            "Fläche hat die Maustaste nicht übernommen")
+        CC.Pick("spell", "Heilen")
+        assert(f1:GetAttribute("alt-type-Button7") == "spell" and f1:GetAttribute("alt-spell-Button7") == "Heilen",
+            "Maustaste 7 nicht als -Button7 belegt")
+        assert(CC.Capture("3", false, "shift-") and CC.draft.button == "3", "Tastatur-Taste nicht übernommen")
+        CC.Pick("spell", "Erneuerung")
+        assert(binds["SHIFT-3"] == "WeintCodexClickKey1", "Taste nicht auf den Mouseover-Knopf gelegt")
+        assert(_G.WeintCodexClickKey1:GetAttribute("macrotext") == "/cast [@mouseover,exists] Erneuerung",
+            "Makro der Taste falsch")
+        assert(f1:GetAttribute("shift-type3") == nil, "Tastatur-Taste als Maustaste 3 gesetzt")
+        assert(CC.KeyText(CC.Current()):find("Taste", 1, true), "Tastentext ohne „Taste“")
+        local nb = #CC.Bindings()
+        CC.Remove(nb)   -- Tastatur-Tasten sortieren hinter Maustasten
+        assert(binds["SHIFT-3"] == nil, "entfernte Taste bleibt belegt")
+        for i = #CC.Bindings(), 1, -1 do
+            if CC.Bindings()[i].button == 7 then CC.Remove(i) end
+        end
+        assert(f1:GetAttribute("alt-type-Button7") == nil, "Maustaste 7 nicht weggeräumt")
+        _G.SetOverrideBindingClick, _G.ClearOverrideBindings = oldSet, oldClear
+        CC.draft.button, CC.draft.mod = 1, "shift-"
         -- Entfernen raeumt die Attribute weg; "Rechts" faellt aufs Menue zurueck.
         CC.Remove(2)
         assert(f1:GetAttribute("type2") == nil and f1:GetAttribute("spell2") == nil, "entfernte Belegung haengt noch")

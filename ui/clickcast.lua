@@ -65,6 +65,12 @@ CC.BUTTONS = {
     { value = 4, text = "Maustaste 4",       short = "Maus 4" },
     { value = 5, text = "Maustaste 5",       short = "Maus 5" },
 }
+-- Seit 6.29.9.0 (Spieler: "Corsair Scimitar mit 12 Tasten"): Maustasten
+-- 6 bis 12. Der Client nennt sie "Button6" usw.; das Attribut heisst dann
+-- "type-Button6" (SecureButton_GetButtonSuffix), nicht "type6".
+for n = 6, 12 do
+    CC.BUTTONS[#CC.BUTTONS + 1] = { value = n, text = "Maustaste " .. n, short = "Maus " .. n }
+end
 CC.MODS = {
     { value = "",       text = "ohne" },
     { value = "shift-", text = "Umschalt",  short = "Umschalt" },
@@ -134,7 +140,12 @@ function CC.Add(b)
     end
     list[#list + 1] = b
     table.sort(list, function(x, y)
-        if x.button ~= y.button then return x.button < y.button end
+        if x.button ~= y.button then
+            -- Maustasten vor Tastatur-Tasten, dann nach Zahl bzw. Name.
+            local nx, ny = type(x.button) == "number", type(y.button) == "number"
+            if nx ~= ny then return nx end
+            return x.button < y.button
+        end
         return x.mod < y.mod
     end)
     CC.SetBindings(list)
@@ -164,9 +175,25 @@ function CC.Effective()
     return out
 end
 
+-- Eine Belegung auf einer Tastatur-Taste ("1", "F", "NUMPAD3") statt
+-- einer Maustaste: button ist dann der Name der Taste.
+function CC.IsKey(b) return type(b.button) == "string" end
+
+-- Was hinter "type" im Attribut steht: 1..5 wie gehabt, ab 6 "-Button6".
+function CC.Suffix(n)
+    if n <= 5 then return tostring(n) end
+    return "-Button" .. n
+end
+
 -- "Umschalt + Links"
 function CC.KeyText(b)
-    local key = Short(CC.BUTTONS, b.button)
+    local key
+    if CC.IsKey(b) then
+        local t = type(_G.GetBindingText) == "function" and _G.GetBindingText(b.button)
+        key = "Taste " .. ((type(t) == "string" and t ~= "") and t or b.button)
+    else
+        key = Short(CC.BUTTONS, b.button)
+    end
     if b.mod == "" then return key end
     return Short(CC.MODS, b.mod) .. " + " .. key
 end
@@ -205,12 +232,12 @@ function CC.ApplyTo(f, list)
     local keys = {}
     for _, b in ipairs(list) do
         local kind = ATTR_ACTION[b.action]
-        if kind and not (b.action == "spell" and not b.spell) then
-            local t = b.mod .. "type" .. b.button
+        if kind and not CC.IsKey(b) and not (b.action == "spell" and not b.spell) then
+            local t = b.mod .. "type" .. CC.Suffix(b.button)
             f:SetAttribute(t, kind)
             keys[#keys + 1] = t
             if b.action == "spell" then
-                local s = b.mod .. "spell" .. b.button
+                local s = b.mod .. "spell" .. CC.Suffix(b.button)
                 f:SetAttribute(s, CC.SpellAttr(b))
                 keys[#keys + 1] = s
             end
@@ -271,7 +298,71 @@ function CC.Apply()
     for f in pairs(applied) do
         if not seen[f] then CC.ApplyTo(f, {}) end
     end
+    CC.ApplyKeys(list)
     return true
+end
+
+--------------------------------------------------
+-- Tastatur-Tasten (6.29.9.0)
+--------------------------------------------------
+-- Viele Mäuse mit vielen Tasten (Corsair Scimitar, Razer Naga) schicken
+-- ihre Seitentasten als Tastatur-Tasten 1 bis 12 - als Maustaste kommen
+-- sie nie an einem Rahmen an. Clique löst das mit Snippets beim
+-- Drüberfahren; die fehlen dem Forever-Client. Was geht, ohne Snippet und
+-- auch im Kampf: die Taste fest (ausserhalb des Kampfes gesetzt) auf
+-- einen geschützten Knopf legen, der "/cast [@mouseover,exists] Zauber"
+-- wirkt. Der Preis, offen gesagt: solange die Belegung steht, tut die
+-- Taste nichts anderes mehr - und sie wirkt auf jede Einheit unter der
+-- Maus, auch auf Plaketten und in der Welt, nicht nur auf Rahmen.
+
+local keyOwner
+local keyButtons = {}
+
+function CC.KeyMacro(b)
+    if b.action == "spell" then
+        local s = CC.SpellAttr(b)
+        return s and ("/cast [@mouseover,exists] " .. s) or nil
+    elseif b.action == "target" then
+        return "/target [@mouseover,exists]"
+    end
+    return nil   -- Menü: ohne Snippet nicht über eine Taste zu öffnen
+end
+
+-- "shift-" + "1" -> "SHIFT-1", wie SetBinding es will.
+function CC.BindingKey(b)
+    return string.upper(b.mod or "") .. b.button
+end
+
+function CC.ApplyKeys(list)
+    local set = type(_G.SetOverrideBindingClick) == "function"
+    if not keyOwner then
+        if not set then return 0 end
+        keyOwner = CreateFrame("Frame", "WeintCodexClickKeys", UIParent)
+    end
+    if type(_G.ClearOverrideBindings) == "function" then _G.ClearOverrideBindings(keyOwner) end
+    local n = 0
+    for _, b in ipairs(list) do
+        local text = CC.IsKey(b) and CC.KeyMacro(b)
+        if text and set then
+            n = n + 1
+            local btn = keyButtons[n]
+            if not btn then
+                local ok, made = pcall(CreateFrame, "Button", "WeintCodexClickKey" .. n, UIParent,
+                    "SecureActionButtonTemplate")
+                if not ok then break end
+                btn = made
+                if btn.RegisterForClicks then btn:RegisterForClicks("AnyUp") end
+                btn:SetAttribute("useOnKeyDown", false)
+                btn:SetAttribute("type", "macro")
+                keyButtons[n] = btn
+            end
+            btn:SetAttribute("macrotext", text)
+            _G.SetOverrideBindingClick(keyOwner, false, CC.BindingKey(b), "WeintCodexClickKey" .. n, "LeftButton")
+        end
+    end
+    for i = n + 1, #keyButtons do keyButtons[i]:SetAttribute("macrotext", "") end
+    CC.keyCount = n
+    return n
 end
 
 --------------------------------------------------
@@ -630,6 +721,102 @@ end
 
 local function DraftChanged() K.Fire("setting", KEY, "clickDraft") end
 
+--------------------------------------------------
+-- Taste zuweisen: Maus drüber, Taste drücken (6.29.9.0)
+--------------------------------------------------
+-- Spieler: "einen Bereich, über den man mit der Maus geht und dann die
+-- Taste drückt". Statt Dropdowns mit Namen, die keiner Maus aufgedruckt
+-- sind: die Fläche nimmt jede Maustaste (1-12) und, solange die Maus über
+-- ihr steht, jede Tastatur-Taste - mit der gehaltenen Zusatztaste.
+
+local MOUSE = { LeftButton = 1, RightButton = 2, MiddleButton = 3 }
+local MODKEYS = { LSHIFT = true, RSHIFT = true, LCTRL = true, RCTRL = true, LALT = true, RALT = true,
+                  LMETA = true, RMETA = true }
+
+local function HeldMod()
+    if _G.IsShiftKeyDown and _G.IsShiftKeyDown() then return "shift-" end
+    if _G.IsControlKeyDown and _G.IsControlKeyDown() then return "ctrl-" end
+    if _G.IsAltKeyDown and _G.IsAltKeyDown() then return "alt-" end
+    return ""
+end
+
+-- Was die Fläche aus einem Druck macht: Maustaste -> Zahl, Taste -> Name;
+-- nil = nicht belegbar (Zusatztaste allein, Escape, Maustaste über 12).
+function CC.CaptureValue(input, isMouse)
+    if type(input) ~= "string" or input == "" then return nil end
+    if isMouse then
+        if MOUSE[input] then return MOUSE[input] end
+        local n = tonumber(input:match("^Button(%d+)$"))
+        if n and n >= 4 and n <= 12 then return n end
+        return nil
+    end
+    if MODKEYS[input] or input == "ESCAPE" or input == "UNKNOWN" then return nil end
+    return input
+end
+
+function CC.Capture(input, isMouse, mod)
+    local v = CC.CaptureValue(input, isMouse)
+    if v == nil then return false end
+    draft.button, draft.mod = v, mod or HeldMod()
+    DraftChanged()
+    return true
+end
+
+function CC.BuildCapture(parent, width)
+    local f = CreateFrame("Button", nil, parent)
+    f:SetSize(width, 34)
+    f.bg = f:CreateTexture(nil, "BACKGROUND")
+    f.bg:SetAllPoints(f)
+    f.bg:SetColorTexture(unpack(C.surface2))
+    local hc = K.Highlight()
+    f.ring = K.Border(f, 1, hc[1], hc[2], hc[3], 1, "OVERLAY")
+    f.ring:SetShown(false)
+    f.text = K.NewText(f, 12)
+    f.text:SetPoint("LEFT", f, "LEFT", 10, 0)
+    f.text:SetPoint("RIGHT", f, "RIGHT", -10, 0)
+    f.text:SetJustifyH("LEFT")
+    f.text:SetWordWrap(false)
+    if f.RegisterForClicks then f:RegisterForClicks("AnyUp") end
+    local function Sync()
+        if f.hover then
+            f.text:SetText(CC.KeyText(draft) .. "   –   jetzt drücken: Maustaste oder Taste, gern mit Umschalt, Strg oder Alt")
+        else
+            f.text:SetText("Taste zuweisen:  " .. CC.KeyText(draft) .. "   –   Maus hierher, dann die Taste drücken.")
+        end
+    end
+    f.Sync = Sync
+    f:SetScript("OnEnter", function(self)
+        self.hover = true
+        self.ring:SetShown(true)
+        -- Tastatur nur ausserhalb des Kampfes: dort ist das Weiterreichen
+        -- der Tasten (SetPropagateKeyboardInput) erlaubt.
+        if not K.InCombat() and self.EnableKeyboard then
+            self:EnableKeyboard(true)
+            if self.SetPropagateKeyboardInput then self:SetPropagateKeyboardInput(false) end
+        end
+        Sync()
+    end)
+    f:SetScript("OnLeave", function(self)
+        self.hover = false
+        self.ring:SetShown(false)
+        if not K.InCombat() and self.EnableKeyboard then self:EnableKeyboard(false) end
+        Sync()
+    end)
+    f:SetScript("OnMouseDown", function(_, button) CC.Capture(button, true) end)
+    f:SetScript("OnKeyDown", function(self, key)
+        -- Escape schliesst weiter das Fenster, Zusatztasten allein warten.
+        local pass = not CC.CaptureValue(key, false)
+        if self.SetPropagateKeyboardInput and not K.InCombat() then self:SetPropagateKeyboardInput(pass) end
+        if not pass then CC.Capture(key, false) end
+    end)
+    f:SetScript("OnHide", function(self)
+        self.hover = false
+        if not K.InCombat() and self.EnableKeyboard then self:EnableKeyboard(false) end
+    end)
+    Sync()
+    return f
+end
+
 function CC.BuildPage(B)
     local class = PlayerClass()
     local label = class and WeintCodex.Names and WeintCodex.Names.ClassLabel(class) or "deine Klasse"
@@ -638,9 +825,13 @@ function CC.BuildPage(B)
     B:Row({ type = "custom", height = LIST_ROWS * 26 + 18, create = function(parent, width)
                 return CC.BuildList(parent, width)
             end }, nil)
-    B:Section("Neue Belegung", "Erst die Taste wählen, dann den Zauber anklicken.")
+    B:Section("Neue Belegung", "Erst die Taste zuweisen – Maus auf das Feld, Taste drücken –, dann den Zauber anklicken.")
+    B:Row({ type = "custom", height = 34, create = function(parent, width)
+                return CC.BuildCapture(parent, width)
+            end }, nil)
     B:Row({ type = "dropdown", label = "Maustaste", items = CC.BUTTONS,
-            get = function() return draft.button end, set = function(v) draft.button = v DraftChanged() end },
+            get = function() return type(draft.button) == "number" and draft.button or nil end,
+            set = function(v) draft.button = v DraftChanged() end },
           { type = "dropdown", label = "Zusatztaste", items = CC.MODS,
             get = function() return draft.mod end, set = function(v) draft.mod = v DraftChanged() end })
     B:Row({ type = "custom", height = CC.PickerHeight(), create = function(parent, width)
@@ -656,7 +847,7 @@ function CC.BuildPage(B)
             description = "Spieler, Ziel, Fokus, Ziel des Ziels und Begleiter von WeintCodex – nur mit der Oberfläche." },
           { type = "toggle", label = "Belegung im Tooltip", key = "clickTooltip",
             description = "Maus über einem Rahmen zeigt, welche Taste welchen Zauber wirkt." })
-    B:Note("Links ohne Zusatztaste wählt sonst das Ziel, Rechts öffnet das Menü – belegst du sie, gilt deine Belegung. Tastatur-Tasten beim Drüberfahren (wie in Clique) kann der Forever-Client für Addons nicht, ebenso keine Kombinationen wie Strg + Umschalt.")
+    B:Note("Links ohne Zusatztaste wählt sonst das Ziel, Rechts öffnet das Menü – belegst du sie, gilt deine Belegung. Maustasten 6 bis 12 wirken auf dem Rahmen wie Links und Rechts. Schickt deine Maus ihre Seitentasten als Tastatur-Tasten (Corsair Scimitar, Razer Naga ab Werk), wirkt die Taste auf die Einheit unter der Maus – überall, auch auf Plaketten – und tut sonst nichts mehr, solange sie belegt ist. Das Menü geht nur mit Maustasten, Kombinationen wie Strg + Umschalt gar nicht.")
 end
 
 -- Die Standardwerte stehen bei den Gruppenrahmen (dort waren sie immer;

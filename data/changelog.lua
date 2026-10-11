@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.9.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber nehmen jede Maustaste.|r Auf der Seite Klickzauber die Maus auf „Taste zuweisen“, Taste drücken – Maustasten bis 12 wirken direkt auf dem Rahmen. Schickt deine Maus Tastatur-Tasten (Corsair Scimitar, Razer Naga), wirkt die Taste auf die Einheit unter der Maus und tut sonst nichts mehr, solange sie belegt ist.",
+            "|cff7C6CFFDer Chat geht bis in die Ecke.|r Oben links und rechts lässt er sich jetzt bündig an den Bildschirmrand schieben.",
+        },
+    },
+    {
         version = "6.29.8.0",
         date    = "11.10.2026",
         notes   = {

@@ -203,6 +203,41 @@ local function PinBack(d)
 end
 CH.PinBack = PinBack
 
+-- Bis an den Rand (6.29.9.0, Spieler: "das Chatfenster laesst sich nicht
+-- nach oben links schieben"). Das Spiel haelt den Chat mit seinen
+-- Klemmraendern (ClampRectInsets) so weit vom Bildschirmrand, dass seine
+-- eigene Knopfleiste links und die Reiter oben noch Platz haetten - die
+-- Knopfleiste ist hier aber weg, die Kachel kleiner. Die Raender sind
+-- deshalb genau die Kachel: Reiterzeile oben, Infozeile bzw.
+-- Eingabezeile unten, Knopfspalte links nur, wenn sie dort steht.
+function CH.ClampInsets()
+    local top = TAB_H + 4
+    if Opt("editBoxTop") then top = top + INFO_H + 2 end
+    local bottom = PAD
+    if Opt("infoBar") or not Opt("editBoxTop") then bottom = PAD + 2 + INFO_H end
+    local left = PAD
+    if Opt("buttons") == "column" then left = PAD + 32 end
+    return -left, PAD, top, -bottom
+end
+
+function CH.Clamp(cf)
+    if not (cf and cf.SetClampRectInsets) or Opt("buttons") == "game" then return end
+    K.AfterCombat(function()
+        local l, r, t, b = CH.ClampInsets()
+        CH.clampGuard = true
+        cf:SetClampRectInsets(l, r, t, b)
+        CH.clampGuard = false
+        -- Das Spiel setzt sie beim Andocken neu - dann wieder unsere.
+        if not CH.clampHooked then CH.clampHooked = {} end
+        if not CH.clampHooked[cf] and _G.hooksecurefunc then
+            CH.clampHooked[cf] = true
+            _G.hooksecurefunc(cf, "SetClampRectInsets", function(self)
+                if not CH.clampGuard and done[self] then CH.Clamp(self) end
+            end)
+        end
+    end)
+end
+
 local function ApplyFrame(cf, d)
     PinBack(d)
     if not d.pinHooked and _G.hooksecurefunc and cf.SetFrameStrata then
@@ -282,7 +317,7 @@ local function ApplyFrame(cf, d)
     -- beim Ueberfahren selbst wieder ein (in 6.0.0.3 blieben die Knoepfe
     -- deshalb sichtbar). Die Knoepfe, die zaehlen, stehen dann in der
     -- Spalte (siehe unten).
-    if d.buttonFrame and Opt("buttons") ~= "game" then K.HideBlizzard(d.buttonFrame, true) end
+    if d.buttonFrame and Opt("buttons") ~= "game" then K.HideBlizzard(d.buttonFrame, true) end    CH.Clamp(cf)
 end
 
 -- Reiter sichtbar halten. Das Spiel blendet sie ein paar Sekunden nach

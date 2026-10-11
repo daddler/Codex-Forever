@@ -817,6 +817,17 @@ Seit 6.2.0.0:
   beim Drüberfahren (brauchen Snippets, die dem Forever-Client fehlen,
   oder Tastenbelegungen, die im Kampf gesperrt sind) und Kombinationen
   mehrerer Zusatztasten. Keine eingebaute Zauberliste – die Tafel zeigt, was das Zauberbuch nennt. Im Spiel ungeprüft.
+  **Viele Maustasten** (6.29.9.0, Spieler: Corsair Scimitar mit 12
+  Tasten): Fläche „Taste zuweisen“ (`CC.BuildCapture`) – Maus drüber,
+  Taste drücken, gehaltene Zusatztaste kommt mit (`CC.Capture`).
+  Maustasten 6–12 setzen `type-ButtonN` (`CC.Suffix`, so heißt das
+  Attribut beim Client). Tastatur-Tasten (`button` ist dann der Name der
+  Taste, `CC.IsKey`) gehen ohne Snippet nur so: Vorrang-Belegung
+  außerhalb des Kampfes auf `WeintCodexClickKeyN` mit
+  `/cast [@mouseover,exists] Zauber` (`CC.ApplyKeys`). Das wirkt auf jede
+  Einheit unter der Maus, auch Plaketten, und die Taste tut solange nichts
+  anderes – auf der Seite so gesagt. „Menü“ nur mit Maustasten. Im Spiel
+  ungeprüft.
   **Ränge** (6.6.2.0, seit 6.6.2.1 als Liste am Symbol; Beta-Test:
   „die einzelnen Ränge auswählen und nicht immer den höchsten“, dann
   „ein Dropdown mit den Rängen, wenn ich den Zauber wähle“): hat ein

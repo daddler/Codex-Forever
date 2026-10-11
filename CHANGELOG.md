@@ -9,6 +9,21 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.9.0] – 2026-10-11
+
+### Geändert
+
+- **Klickzauber mit vielen Maustasten:** Fläche „Taste zuweisen“ (Maus drüber,
+  Taste drücken, Zusatztaste wird mitgenommen). Maustasten 6–12 über die
+  Attribute `type-ButtonN`. Tastatur-Tasten (Seitentasten von Scimitar/Naga ab
+  Werk) als Vorrang-Belegung auf einen geschützten Knopf mit
+  `/cast [@mouseover,exists] Zauber` – wirkt auf jede Einheit unter der Maus,
+  die Taste verliert solange ihre eigene Belegung; „Menü“ nur mit Maustasten.
+  Im Spiel ungeprüft.
+- **Chat bis an den Rand:** die Klemmränder des Chats (`SetClampRectInsets`)
+  entsprechen jetzt der Kachel statt der ausgeblendeten Knopfleiste des Spiels;
+  oben links/rechts bündig möglich. Im Spiel ungeprüft.
+
 ## [6.29.8.0] – 2026-10-11
 
 ### Geändert
