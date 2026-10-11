@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.26.0",
+        date    = "11.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Oberfläche behält deine Größe.|r Beim Einrichten stellte WeintCodex die Skalierung des Spiels fest auf 1 – auf 1440p und 4K wurden Leisten und Rahmen dadurch fast doppelt so groß. Jetzt bleibt die Skalierung, die du im Spiel hast. Wer das feste Raster will: Allgemein → Bildschirm → „Fest auf 1“.",
+        },
+    },
+    {
         version = "6.29.25.0",
         date    = "11.10.2026",
         notes   = {

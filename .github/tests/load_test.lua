@@ -4620,6 +4620,30 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.29.26.0: Skalierung - frueher eingerichtet bleibt fest, "wie im Spiel" gibt zurueck.
+do
+    local ES = WeintCodex.UISetup
+    local scv = _G.C_CVar
+    local ok, err = pcall(function()
+        local cv = { uiScale = "1", useUiScale = "1" }
+        _G.C_CVar = { GetCVar = function(n) return cv[n] end, SetCVar = function(n, v) cv[n] = v return true end }
+        local st = K.CharState() or K.Root()
+        st.cvars = st.cvars or {}
+        st.cvars.uiScale = { orig = "0.64", set = "1", owner = "ui" }
+        st.cvars.useUiScale = { orig = "0", set = "1", owner = "ui" }
+        local g = K.Profile().modules.general
+        if g then g.uiScaleMode = nil end
+        st.scaleChoice = nil
+        ES.ApplyScaleChoice()
+        assert(K.Get("general", "uiScaleMode") == "fixed" and cv.uiScale == "1", "fruehere Einrichtung umgestellt")
+        K.Set("general", "uiScaleMode", "game")
+        assert(cv.uiScale == "0.64" and cv.useUiScale == "0", "„Wie im Spiel“ gibt die Skalierung nicht zurueck")
+        assert(st.cvars.uiScale == nil, "Merker bleibt")
+    end)
+    _G.C_CVar = scv
+    Check(ok, "Skalierung: frueher eingerichtet bleibt, „wie im Spiel“ gibt zurueck" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.29.25.0: Hauptfenster passt aufs Bild.
 do
     local ok, err = pcall(function()
@@ -17072,9 +17096,14 @@ do
     local ok, err = pcall(function()
         local ES = WeintCodex.UISetup
         local pos = {}
-        for i, c in ipairs(ES.CVARS) do pos[c.name] = { i = i, v = c.value } end
+        -- 6.29.26.0: ab Werk bleibt die Skalierung des Spielers; nur "fest" setzt sie.
+        for _, c in ipairs(ES.AllCVars()) do
+            assert(c.name ~= "uiScale" and c.name ~= "useUiScale", "Skalierung ohne Wahl gesetzt")
+        end
+        K.Set("general", "uiScaleMode", "fixed")
+        for i, c in ipairs(ES.AllCVars()) do pos[c.name] = { i = i, v = c.value } end
         assert(pos.uiScale and pos.uiScale.v == "1" and pos.useUiScale and pos.useUiScale.v == "1",
-            "Skalierung nicht in der Einrichtung")
+            "Skalierung „fest“ nicht in der Einrichtung")
         assert(pos.uiScale.i < pos.useUiScale.i, "erst der Wert, dann einschalten")
         local oH, oW, oP = UIParent.GetHeight, UIParent.GetWidth, _G.GetPhysicalScreenSize
         _G.GetPhysicalScreenSize = function() return 2560, 1440 end
@@ -17086,6 +17115,11 @@ do
         UIParent.GetHeight = function() return 768 end
         l = ES.ScreenLine()
         assert(l and not l:find("einrichten", 1, true), "Warnung trotz passender Hoehe: " .. tostring(l))
+        -- Ohne "fest" keine Warnung zur Hoehe.
+        K.Set("general", "uiScaleMode", "game")
+        UIParent.GetHeight = function() return 1440 end
+        l = ES.ScreenLine()
+        assert(l and not l:find("einrichten", 1, true), "Warnung ohne feste Skalierung: " .. tostring(l))
         UIParent.GetHeight, UIParent.GetWidth, _G.GetPhysicalScreenSize = oH, oW, oP
     end)
     Check(ok, "Aufloesung: Skalierung in der Einrichtung, Bericht nennt Bildschirm und Oberflaeche" .. (ok and "" or (": " .. tostring(err))))

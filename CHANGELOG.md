@@ -9,6 +9,21 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.26.0] – 2026-10-11
+
+### Geändert
+
+- **Skalierung bleibt die des Spielers** (viele Berichte: „Leisten extrem groß,
+  bevor eingerichtet war“): `uiScale`/`useUiScale` stehen nicht mehr in
+  `ES.CVARS`, sondern in `ES.SCALE_CVARS` und werden nur mit
+  `general.uiScaleMode = "fixed"` gesetzt (ab Werk „game“). Wer vor dieser
+  Fassung eingerichtet hat, behält „fest“ (einmal je Charakter,
+  `scaleChoice`); „Wie im Spiel“ gibt eine von WeintCodex gesetzte Skalierung
+  sofort zurück (`ES.ApplyScaleChoice`). Die Warnung zur Höhe 768 kommt nur
+  noch mit „fest“. Seite Allgemein: Skalierung und Breitbild als ein Abschnitt
+  „Bildschirm“, Testmodus und Fenstergröße unter „Erweitert“ (15 sichtbare
+  Einstellungen). Im Spiel ungeprüft.
+
 ## [6.29.25.0] – 2026-10-11
 
 ### Behoben

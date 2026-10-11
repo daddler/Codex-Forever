@@ -429,10 +429,60 @@ ES.CVARS = {
     -- Skalierung 1 ist sie auf 1080p, 1440p und 4K gleich hoch, und alles
     -- steht im selben Verhaeltnis zum Bildschirm. Zurueck beim Ausschalten
     -- wie jede Einstellung hier (ui/profile.lua).
+}
+-- 6.29.26.0 (viele Berichte: "beim Aktivieren wurden die Leisten extrem
+-- gross, bevor ueberhaupt etwas eingerichtet war"): Skalierung 1 ist auf
+-- 1440p und 4K fast doppelt so gross wie die des Spiels. Seitdem bleibt
+-- die Skalierung des Spielers, wie sie ist (general.uiScaleMode = "game",
+-- ab Werk). Die Plaetze in ui/layout.lua sind Einheiten vom Bildschirmrand
+-- bzw. von der Mitte aus und stimmen bei jeder Hoehe zueinander - nur
+-- nimmt die Oberflaeche dann weniger vom Bild ein. "fixed" stellt wie bis
+-- 6.29.25.0 auf 1 (gleiches Verhaeltnis auf jedem Bildschirm).
+ES.SCALE_CVARS = {
     { name = "uiScale", value = "1" },
     { name = "useUiScale", value = "1" },
 }
 ES.DESIGN_HEIGHT = 768
+
+function ES.FixedScale() return K.Get("general", "uiScaleMode") == "fixed" end
+
+-- Was die Einrichtung setzt: immer ES.CVARS, die Skalierung nur auf Wunsch.
+function ES.AllCVars()
+    local out = {}
+    for _, c in ipairs(ES.CVARS) do out[#out + 1] = c end
+    if ES.FixedScale() then
+        for _, c in ipairs(ES.SCALE_CVARS) do out[#out + 1] = c end
+    end
+    return out
+end
+
+-- Wahl "wie im Spiel": eine frueher gesetzte Skalierung zurueckgeben (nur,
+-- wenn noch UNSER Wert steht - sonst gilt, was der Spieler gewaehlt hat).
+-- Wer vor 6.29.26.0 eingerichtet hat und nichts gewaehlt hat, behaelt sie:
+-- die gemerkte Skalierung gilt dann als Wahl "fest".
+function ES.ApplyScaleChoice()
+    local PF = WeintCodex.UIProfile
+    if not PF then return false end
+    if K.InCombat() then K.AfterCombat(ES.ApplyScaleChoice) return false end
+    local st = K.CharState() or K.Root()
+    local rec = st and st.cvars and st.cvars.uiScale
+    local p = K.Profile()
+    local raw = p and p.modules.general and p.modules.general.uiScaleMode
+    -- Einmal je Charakter: frueher eingerichtet, nie gewaehlt -> "fest"
+    -- (so lassen, wie es ist). Danach heisst "nichts gespeichert" die Vorgabe.
+    if st and not st.scaleChoice then
+        st.scaleChoice = true
+        if rec and raw == nil then
+            K.Set("general", "uiScaleMode", "fixed")
+            return false
+        end
+    end
+    if raw ~= "fixed" and rec then
+        for _, c in ipairs(ES.SCALE_CVARS) do PF.Release(c.name) end
+        return true
+    end
+    return false
+end
 
 -- Bildschirm und Oberflaeche, fuer den Bericht.
 function ES.ScreenLine()
@@ -448,7 +498,7 @@ function ES.ScreenLine()
     if type(pw) == "number" and type(ph) == "number" then
         line = line .. string.format(" auf %d × %d Bildpunkten", pw, ph)
     end
-    if math.abs(uh - ES.DESIGN_HEIGHT) > 2 then
+    if ES.FixedScale() and math.abs(uh - ES.DESIGN_HEIGHT) > 2 then
         line = line .. string.format(" – entworfen für %d hoch: /wcui einrichten stellt die Skalierung ein", ES.DESIGN_HEIGHT)
     end
     return line
@@ -467,7 +517,7 @@ end
 local function ApplyCVars()
     local PF = WeintCodex.UIProfile
     local n, unknown = 0, {}
-    for _, c in ipairs(ES.CVARS) do
+    for _, c in ipairs(ES.AllCVars()) do
         if PF.SetCVar(c.name, c.value, "ui") then
             n = n + 1
         else
@@ -578,7 +628,7 @@ function ES.Check()
     local activeOk = ES.LayoutActive() == true
     local uh = K.Plain(UIParent.GetHeight and UIParent:GetHeight())
     ES.lastCheck = { layoutRead = info and true or false, active = activeOk, good = good, bad = #bad,
-                     unknown = #unknown, scaleOk = type(uh) ~= "number" or math.abs(uh - ES.DESIGN_HEIGHT) <= 2 }
+                     unknown = #unknown, scaleOk = not ES.FixedScale() or type(uh) ~= "number" or math.abs(uh - ES.DESIGN_HEIGHT) <= 2 }
     for _, line in ipairs(bad) do out[#out + 1] = line end
     if #unknown > 0 then out[#out + 1] = "Nicht messbar: " .. table.concat(unknown, ", ") end
     local cf = _G.ChatFrame1
@@ -589,7 +639,7 @@ function ES.Check()
     end
     local sl = ES.ScreenLine()
     if sl then out[#out + 1] = sl end
-    for _, c in ipairs(ES.CVARS) do
+    for _, c in ipairs(ES.AllCVars()) do
         local v = GetCVarValue(c.name)
         if type(v) == "string" and v ~= c.value and not (tonumber(v) and tonumber(v) == tonumber(c.value)) then
             out[#out + 1] = "Einstellung " .. c.name .. ": soll " .. c.value .. ", ist " .. v
@@ -911,6 +961,15 @@ function ES.CheckWide()
     Say("Dein Bildschirm ist breiter oder schmaler als beim Einrichten – Chat, Minikarte und Questliste"
         .. " stehen noch für die alte Breite. /wcui einrichten rückt sie zurecht.")
     return true
+end
+
+K.Listen(function(kind, module, key)
+    if kind == "setting" and module == "general" and key == "uiScaleMode" then ES.ApplyScaleChoice() end
+end)
+do
+    local boot = CreateFrame("Frame")
+    boot:RegisterEvent("PLAYER_LOGIN")
+    boot:SetScript("OnEvent", function() ES.ApplyScaleChoice() end)
 end
 
 local ev = CreateFrame("Frame")
