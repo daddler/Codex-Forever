@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.49.0] – 2026-10-12
+
+### Behoben
+- Plaketten: Questfortschritt links neben dem Balken lässt Platz für die
+  Zielmarken (Höhe × 1,35 + `NP.MARK_SWAY`) – lag unter dem linken Pfeil.
+
 ## [6.30.48.0] – 2026-10-12
 
 ### Neu

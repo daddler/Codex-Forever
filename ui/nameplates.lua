@@ -964,7 +964,11 @@ local function Layout(p)
     -- jeder Textzeile der Plakette. Etwas kleiner als der Name.
     K.SetFont(p.quest, S.nameSize)
     p.quest:ClearAllPoints()
-    local qx = -4
+    -- 6.30.49.0 (Spielerin: "der Questfortschritt beisst sich mit den
+    -- Pfeilen"): links neben dem Balken stehen beim Ziel die Zielmarken
+    -- (Hoehe x 1,35, atmen NP.MARK_SWAY nach aussen). Ihr Platz bleibt immer
+    -- frei - sonst springt die Zahl beim Anwaehlen.
+    local qx = -4 - math.floor(S.height * 1.35 + 0.5) - NP.MARK_SWAY - 2
     if S.raidMarker == "left" then qx = qx - (S.raidMarkerSize or 20) - 4 end
     p.quest:SetPoint("RIGHT", p, "LEFT", qx, 0)
     local qc = WeintCodex.GameColors.questObjective

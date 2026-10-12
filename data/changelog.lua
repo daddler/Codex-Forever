@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.49.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFQuestfortschritt und Zielpfeile überlappen nicht mehr.|r Die Zahl neben der Namensplakette rückt um den Platz der Zielpfeile nach links.",
+        },
+    },
+    {
         version = "6.30.48.0",
         date    = "12.10.2026",
         notes   = {
