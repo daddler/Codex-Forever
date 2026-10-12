@@ -1618,6 +1618,15 @@ function NP.RunnerUp(unit)
     return best
 end
 
+-- Ziel, Fokus oder Maus statt "nameplateN", wenn es dieselbe Einheit ist.
+NP.OPEN_TOKENS = { "target", "focus", "mouseover" }
+function NP.ThreatToken(unit)
+    for _, t in ipairs(NP.OPEN_TOKENS) do
+        if IsUnit(unit, t) then return t end
+    end
+    return unit
+end
+
 local function UpdateThreatText(p)
     local fs, bar = p.threat, p.threatBar
     if p._friendly or not p.unit or not _G.UnitDetailedThreatSituation then
@@ -1625,7 +1634,10 @@ local function UpdateThreatText(p)
         p._threatTint, p._threatLead = nil, nil
         return
     end
-    local ok, tanking, status, scaled = pcall(_G.UnitDetailedThreatSituation, "player", p.unit)
+    -- 6.30.12.0 (Beta-Test, gemessen: ueber "target" offen, ueber
+    -- "nameplateN" geheim - die Leiste blieb grau): dieselbe Einheit ueber
+    -- eine Kennung fragen, die der Client offen beantwortet.
+    local ok, tanking, status, scaled = pcall(_G.UnitDetailedThreatSituation, "player", NP.ThreatToken(p.unit))
     local onList = ok and type(scaled) ~= "nil"
     local plain = onList and K.Plain(scaled)
     if type(plain) == "number" and plain <= 0 then onList = false end

@@ -157,8 +157,12 @@ Check("Bedrohung", function(add)
         if tex and tex.GetVertexColor then r, g, b = tex:GetVertexColor() end
         r, g, b = K.Plain(r), K.Plain(g), K.Plain(b)
         local v = K.Plain(bar:GetValue())
-        local _, st, sc = pcall(fn, "player", mine.unit)
+        local _, _, st, sc = pcall(fn, "player", NP.ThreatToken(mine.unit))
         local want = NP.BarTint(st, sc, false, nil)
+        local _, _, st2, sc2 = pcall(fn, "player", mine.unit)
+        add("", "   Über " .. tostring(mine.unit) .. ": Status " .. (K.Plain(st2) ~= nil and tostring(st2) or "geheim")
+            .. " · Prozent " .. (K.Plain(sc2) ~= nil and tostring(sc2) or "geheim")
+            .. " · gefragt wird über " .. NP.ThreatToken(mine.unit))
         add(SC.OK, string.format("Leiste: %s · Wert %s · Höhe %s · Farbe %s · soll %s · Gruppe/Begleiter (Contested) %s · Schwellen %s/%s/%s",
             bar:IsShown() and "sichtbar" or "versteckt", tostring(v), tostring(K.Plain(bar:GetHeight())),
             type(r) == "number" and string.format("%.2f %.2f %.2f", r, g or 0, b or 0) or "geheim",

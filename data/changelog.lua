@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.12.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Bedrohungsleiste deines Ziels färbt sich.|r Das Spiel verriet die Bedrohung über die Plakette nur verschlüsselt, über dein Ziel aber offen – WeintCodex fragt jetzt dort. Für Ziel, Fokus und den Gegner unter der Maus.",
+        },
+    },
+    {
         version = "6.30.11.0",
         date    = "12.10.2026",
         notes   = {

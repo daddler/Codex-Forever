@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.12.0] – 2026-10-12
+
+### Behoben
+- Bedrohungsleiste grau: gemessen offen über „target“, geheim über
+  „nameplateN“. `NP.ThreatToken` fragt über target/focus/mouseover, wenn die
+  Plakette diese Einheit ist. Bericht: Sollfarbe richtig gelesen, Werte je Kennung.
+
 ## [6.30.11.0] – 2026-10-12
 
 ### Geändert

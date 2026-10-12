@@ -8753,6 +8753,19 @@ do
     Check(ok, "Plaketten: Bedrohungsleiste faerbt auch bei geheimer Prozentzahl" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.30.12.0: Bedrohung ueber "target" fragen, wenn die Plakette das Ziel ist.
+do
+    local NP = WeintCodex.UINameplates
+    local oU = _G.UnitIsUnit
+    local ok, err = pcall(function()
+        _G.UnitIsUnit = function(a, b) return a == "nameplate4" and b == "target" end
+        assert(NP.ThreatToken("nameplate4") == "target", "Ziel nicht ueber target gefragt")
+        assert(NP.ThreatToken("nameplate5") == "nameplate5", "fremde Plakette umgeleitet")
+    end)
+    _G.UnitIsUnit = oU
+    Check(ok, "Plaketten: Bedrohung ueber offene Kennung" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.5: Zauberbalken nennt das Ziel des Zaubers ("» Dich" rot).
 do
     local ok, err = pcall(function()
