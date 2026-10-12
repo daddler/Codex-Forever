@@ -40,6 +40,7 @@ local MAX_WINDOWS = 4
 local MEDIA = "Interface\\AddOns\\WeintCodex\\media\\ui\\"
 
 local defaults = {
+    locked    = false,     -- 6.30.32.0: an der Kopfzeile ziehen, ohne Gestaltungsmodus
     windows   = 1,
     width     = 260,
     bars      = 8,
@@ -2191,6 +2192,24 @@ local function CreateWindow(i)
     local s2 = C.surface2
     hb:SetColorTexture(s2[1], s2[2], s2[3], 1)
     w.header = header
+    -- Ziehen an der Kopfzeile (6.30.32.0, Wunsch: "verschieben und fixieren
+    -- auch ohne den Gestaltungsmodus"). Der Platz ist derselbe wie im
+    -- Gestaltungsmodus (ui.positions), "Fenster fixieren" sperrt das Ziehen.
+    header:EnableMouse(true)
+    if f.SetMovable then f:SetMovable(true) end
+    if f.SetClampedToScreen then f:SetClampedToScreen(true) end
+    header:RegisterForDrag("LeftButton")
+    header:SetScript("OnDragStart", function()
+        if Opt("locked") or K.InCombat() then return end
+        f._dragging = true
+        f:StartMoving()
+    end)
+    header:SetScript("OnDragStop", function()
+        if not f._dragging then return end
+        f._dragging = nil
+        f:StopMovingOrSizing()
+        if K.SavePosition then K.SavePosition(MoverKey(i), f) end
+    end)
 
     -- Der Titel ist der Schalter fuer die Messart.
     local tb = CreateFrame("Button", nil, header)
@@ -2655,6 +2674,8 @@ K.Register({
             B:Row({ type = "slider", label = "Deckkraft des Hintergrunds", key = "bgAlpha", min = 0, max = 100, step = 5,
                     format = function(v) return string.format("%d %%", v) end },
                   { type = "toggle", label = "Kampfdauer in der Kopfzeile", key = "showTime" })
+            B:Row({ type = "toggle", label = "Fenster fixieren", key = "locked",
+                    description = "Aus: an der Kopfzeile ziehen verschiebt das Fenster, auch ohne Gestaltungsmodus. An: es bleibt, wo es ist." })
             B:Row({ type = "toggle", label = "Höhe nach Inhalt", key = "fitRows",
                     description = "So hoch wie die gezeigten Zeilen, statt immer Platz für alle Balken." },
                   { type = "toggle", label = "Klassensymbole", key = "classIcons" })

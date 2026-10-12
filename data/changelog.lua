@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.32.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFSchadensanzeige direkt verschieben.|r An der Kopfzeile ziehen setzt das Fenster um – ohne Gestaltungsmodus. „Fenster fixieren“ in den Einstellungen hält es fest.",
+        },
+    },
+    {
         version = "6.30.31.0",
         date    = "12.10.2026",
         notes   = {

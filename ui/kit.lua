@@ -1242,6 +1242,8 @@ local function SavePosition(key, frame)
     }
 end
 
+K.SavePosition = SavePosition
+
 function K.ApplyPosition(key)
     local m = movers[key]
     if not m then return end
