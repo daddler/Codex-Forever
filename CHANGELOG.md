@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.33.0] – 2026-10-12
+
+### Neu
+- Schadensanzeige, Aufschlüsselung: `creatureName` am Namen, Tooltip mit
+  `overkillAmount`, `isAvoidable`, `isDeadly` und Zielen aus
+  `combatSpellDetails` (`DM.SpellExtra`). Gemessen mit `/wcui messung`:
+  Treffer, Krits und Uptime liefert `C_DamageMeter` nicht.
+
 ## [6.30.32.0] – 2026-10-12
 
 ### Neu

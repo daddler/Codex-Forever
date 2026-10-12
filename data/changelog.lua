@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.33.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFMehr in der Aufschlüsselung.|r Fähigkeiten des Begleiters tragen seinen Namen, der Tooltip einer Fähigkeit zeigt Overkill, Ziele mit Anteil und ob sie vermeidbar oder tödlich war – soweit das Spiel es nennt.",
+        },
+    },
+    {
         version = "6.30.32.0",
         date    = "12.10.2026",
         notes   = {

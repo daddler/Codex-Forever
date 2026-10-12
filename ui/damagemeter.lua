@@ -895,6 +895,52 @@ function DM.FieldReport()
     return out
 end
 
+-- Was C_DamageMeter je Zauber ueber die Summe hinaus nennt (gemessen
+-- 6.30.33.0, /wcui messung als Jaeger): creatureName (wer ihn wirkte - der
+-- Begleiter), overkillAmount, isAvoidable, isDeadly und combatSpellDetails
+-- (je Ziel: unitName, amount, ...). KEINE Treffer, keine Krits, keine
+-- Uptime - die gibt es nicht. Nur offene Zahlen, nichts geschaetzt.
+function DM.SpellExtra(sp)
+    if type(sp) ~= "table" then return end
+    local muted = C.textMuted
+    local who = K.Plain(sp.creatureName)
+    local over = K.Plain(sp.overkillAmount)
+    local total = K.Plain(sp.totalAmount)
+    local lines = false
+    local function Gap() if not lines then GameTooltip:AddLine(" ") lines = true end end
+    if type(who) == "string" and who ~= "" then
+        Gap()
+        GameTooltip:AddDoubleLine("Gewirkt von", who, muted[1], muted[2], muted[3], 1, 1, 1)
+    end
+    if type(over) == "number" and over > 0 then
+        Gap()
+        local t = DM.Format(over)
+        if type(total) == "number" and total > 0 then t = string.format("%s (%d%%)", t, math.floor(over / total * 100 + 0.5)) end
+        GameTooltip:AddDoubleLine("Überschuss (Overkill)", t, muted[1], muted[2], muted[3], 1, 1, 1)
+    end
+    if K.Bool(sp.isAvoidable, false) then Gap() GameTooltip:AddLine("Vermeidbar", 1, 0.6, 0.3) end
+    if K.Bool(sp.isDeadly, false) then Gap() GameTooltip:AddLine("Tödlich", 1, 0.3, 0.3) end
+    local det = K.Plain(sp.combatSpellDetails)
+    if type(det) == "table" and #det > 0 then
+        local rows = {}
+        for _, d in ipairs(det) do
+            local n, a = K.Plain(d.unitName), K.Plain(d.amount)
+            if type(n) == "string" and n ~= "" and type(a) == "number" then rows[#rows + 1] = { n, a } end
+        end
+        table.sort(rows, function(x, y) return x[2] > y[2] end)
+        if #rows > 0 then
+            Gap()
+            local a = C.accent
+            GameTooltip:AddLine("Ziele", a[1], a[2], a[3])
+            for i = 1, math.min(6, #rows) do
+                local t = DM.Format(rows[i][2])
+                if type(total) == "number" and total > 0 then t = string.format("%s  %d%%", t, math.floor(rows[i][2] / total * 100 + 0.5)) end
+                GameTooltip:AddDoubleLine(rows[i][1], t, 0.93, 0.93, 0.95, 1, 1, 1)
+            end
+        end
+    end
+end
+
 local function SpellName(id)
     if type(id) == "nil" then return nil end
     local cs = _G.C_Spell
@@ -1308,6 +1354,7 @@ local function SpellRow(parent)
         if type(self._spell) == "nil" or not GameTooltip.SetSpellByID then return end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         pcall(GameTooltip.SetSpellByID, GameTooltip, self._spell)
+        DM.SpellExtra(self._entry)
         GameTooltip:Show()
     end)
     r:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -1710,9 +1757,13 @@ local function DrawSpells(session, mode, src, rank, cmpSrc, cmpRank, secs, total
         local e = rows[i]
         if e and i <= shown then
             row._spell = e.id
+            row._entry = e.a
             local icon = SpellIcon(e.id)
             if type(icon) ~= "nil" then row.icon:SetTexture(icon) row.icon:Show() else row.icon:Hide() end
-            row.name:SetText(SpellName(e.id) or "?")
+            local who = (e.a or e.b) and K.Plain((e.a or e.b).creatureName)
+            local label = SpellName(e.id) or "?"
+            if type(who) == "string" and who ~= "" then label = label .. " (" .. who .. ")" end
+            row.name:SetText(label)
             local ta = shared or topA
             if type(ta) ~= "nil" then row.bar:SetMinMaxValues(0, ta) end
             -- Geheime Werte nie in "a and b or c": ausdruecklich verzweigen.
@@ -1748,6 +1799,7 @@ local function DrawSpells(session, mode, src, rank, cmpSrc, cmpRank, secs, total
             row:Show()
         else
             row._spell = nil
+            row._entry = nil
             row:Hide()
         end
     end
