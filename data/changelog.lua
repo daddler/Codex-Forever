@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.47.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFVerlauf mit Gesprächsliste und „Zurück“.|r Im Verlauf stehen links alle Gespräche der letzten 7 Tage – ein Klick zeigt das ganze Gespräch nach Tagen. „Zurück“ verlässt den Verlauf. Die Namen im Verlauf sind wieder richtige Links.",
+        },
+    },
+    {
         version = "6.30.46.0",
         date    = "12.10.2026",
         notes   = {

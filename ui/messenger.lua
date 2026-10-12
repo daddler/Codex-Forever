@@ -171,7 +171,8 @@ function MS.Visible(c) return c ~= nil and (not c.restored or c.live or c.showAl
 local vis = {}
 function MS.VisibleOrder()
     for i = #vis, 1, -1 do vis[i] = nil end
-    for _, key in ipairs(order) do if MS.Visible(conv[key]) then vis[#vis + 1] = key end end
+    -- Im Verlauf: alle Gespraeche, auch die gespeicherten (6.30.47.0).
+    for _, key in ipairs(order) do if MS.historyMode or MS.Visible(conv[key]) then vis[#vis + 1] = key end end
     return vis
 end
 function MS.ShownLines(c, out)
@@ -375,7 +376,7 @@ local function NewRow(i)
         if button == "RightButton" then
             MS.OpenMenu(conv[self.key])
         else
-            MS.Select(self.key)
+            if MS.historyMode then MS.HistorySelect(self.key) else MS.Select(self.key) end
         end
     end)
     rows[i] = r
@@ -495,8 +496,12 @@ local function Build()
     if smf.SetHyperlinksEnabled then smf:SetHyperlinksEnabled(true) end
     smf:SetScript("OnHyperlinkClick", function(_, link, text, button)
         -- Verlauf: ein Klick auf einen Namen oeffnet das Gespraech.
-        local key = type(link) == "string" and link:match("^wcmsg:(.+)$")
-        if key then MS.OpenFromHistory(key) return end
+        local n = type(link) == "string" and tonumber(link:match("^wcmsg:(%d+)$"))
+        if n then
+            local key = MS.histKeys[n]
+            if key then MS.HistorySelect(key) end
+            return
+        end
         if _G.SetItemRef then pcall(_G.SetItemRef, link, text, button) end
     end)
     smf:EnableMouseWheel(true)
@@ -696,7 +701,7 @@ function MS.Redraw()
         local kc = c.bn and C.battlenet or C.whisper
         r.kind:SetText(c.bn and "BN" or "W")
         r.kind:SetTextColor(kc[1], kc[2], kc[3])
-        local sel = key == MS.current
+        local sel = (MS.historyMode and key == MS.histSel) or (not MS.historyMode and key == MS.current)
         local s = sel and C.surface3 or C.surface1
         r.bg:SetColorTexture(s[1], s[2], s[3], sel and 1 or 0)
         r.mark:SetShown(sel)
@@ -719,9 +724,15 @@ function MS.Redraw()
     local hm = C.textMuted
     local ha = MS.historyMode and C.accent or hm
     histBtn.t:SetTextColor(ha[1], ha[2], ha[3])
+    histBtn.t:SetText(MS.historyMode and "Zurück" or "Verlauf")
     if MS.historyMode then
-        MS.DrawHistory()
-        foot:SetText("Klick auf einen Namen öffnet das Gespräch  ·  „Verlauf“ zurück")
+        if MS.histSel and conv[MS.histSel] then
+            MS.DrawHistoryConv(conv[MS.histSel])
+            foot:SetText("Ganzes Gespräch der letzten 7 Tage  ·  „Zurück“ verlässt den Verlauf")
+        else
+            MS.DrawHistory()
+            foot:SetText("Links ein Gespräch wählen oder einen Namen anklicken  ·  „Zurück“ verlässt den Verlauf")
+        end
         return
     end
     if not c then
@@ -781,6 +792,46 @@ function MS.DayLabel(t)
     return _G.date("%d.%m.%Y", t)
 end
 
+-- Links tragen eine Nummer, nicht den Schluessel: der enthaelt "|" (andere
+-- Charaktere, "Char|w:Name") und zerbrach den Link (6.30.47.0, Beta-Test).
+MS.histKeys = {}
+local function HistLink(key, text)
+    local hk = MS.histKeys
+    local n = hk[key]
+    if not n then
+        hk[#hk + 1] = key
+        n = #hk
+        hk[key] = n
+    end
+    return "|Hwcmsg:" .. n .. "|h" .. text .. "|h"
+end
+
+function MS.DrawHistoryConv(c)
+    local rcv = MS.Receiver(c)
+    title:SetText("Verlauf · " .. MS.NameText(c))
+    sub:SetText(#c.lines .. " Nachrichten" .. (rcv and ("  ·  erhalten mit " .. rcv) or ""))
+    local prev, day
+    for _, line in ipairs(c.lines) do
+        local dl = MS.DayLabel(line.t)
+        if dl ~= day then
+            if day then smf:AddMessage(" ") end
+            smf:AddMessage("|c" .. Hex(C.accent) .. dl .. "|r")
+            day, prev = dl, nil
+        elseif prev and not MS.SameBlock(prev, line) then
+            smf:AddMessage(" ")
+        end
+        smf:AddMessage(MS.Format(c, line, prev))
+        prev = line
+    end
+end
+
+function MS.HistorySelect(key)
+    if not conv[key] then return end
+    MS.histSel = key
+    MS.current = key            -- antworten geht auch hier
+    MS.Redraw()
+end
+
 function MS.DrawHistory()
     title:SetText("Verlauf")
     local all = MS.HistoryLines()
@@ -798,7 +849,7 @@ function MS.DrawHistory()
             day = dl
         end
         local c = e.c
-        local who = "|Hwcmsg:" .. c.key .. "|h" .. MS.NameText(c) .. "|h"
+        local who = HistLink(c.key, MS.NameText(c))
         local rcv = MS.Receiver(c)
         local tag = c.bn and ("|c" .. Hex(C.battlenet) .. "BN|r ") or ("|c" .. Hex(C.whisper) .. "W|r ")
         local dir = e.line.kind == "out" and ("|c" .. Hex(ColorArr("msgColorMe")) .. "Du → |r" .. who)
@@ -813,6 +864,8 @@ function MS.SetHistoryMode(on)
     Build()
     if on and MS.copyMode then MS.SetCopyMode(false) end
     MS.historyMode = on and true or false
+    MS.histSel = nil
+    MS.listOffset = 0
     MS.Redraw()
 end
 

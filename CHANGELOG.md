@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.47.0] – 2026-10-12
+
+### Geändert / Behoben
+- Flüstern, Verlauf: links alle Gespräche (`MS.VisibleOrder` im Verlauf),
+  Auswahl zeigt das ganze Gespräch mit Tagen (`MS.HistorySelect`,
+  `MS.DrawHistoryConv`); Knopf heißt im Verlauf „Zurück“.
+- Links im Verlauf als Nummer (`MS.histKeys`): Schlüssel mit „|“ (andere
+  Charaktere) zerbrachen den Link („|Hwcmsg:…“ stand als Text da).
+
 ## [6.30.46.0] – 2026-10-12
 
 ### Geändert
