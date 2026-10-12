@@ -1707,6 +1707,16 @@ function NP.IsObjectPlate(unit)
     -- Plaketten, auch ohne Ziel. Jetzt: kein Spieler, und das Spiel nennt
     -- KEIN Leben (fehlt) oder ein Hoechstleben von 0 - das hat keine
     -- Einheit. Ein geheimer Wert (im Kampf) ist eine Einheit: nie raten.
+    -- 6.30.8.0 (Spielerbericht mit Bild: derselbe Kasten am Briefkasten -
+    -- er nennt offenbar ein Leben): die Kennung sagt es eindeutig.
+    -- "GameObject-..." ist ein Objekt. Eine geheime Kennung sagt nichts.
+    if _G.UnitGUID then
+        local okG, guid = pcall(_G.UnitGUID, unit)
+        guid = okG and K.Plain(guid) or nil
+        if type(guid) == "string" then
+            if guid:find("^GameObject%-") then return true end
+        end
+    end
     if K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(unit), false) then return false end
     local hm = _G.UnitHealthMax
     if type(hm) ~= "function" then return false end

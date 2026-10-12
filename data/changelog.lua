@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.8.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFKein dunkler Kasten mehr am Briefkasten.|r Objekte, die dem Spiel ein Leben nennen, bekamen noch eine Namensplakette – jetzt erkennt WeintCodex sie an ihrer Kennung.",
+        },
+    },
+    {
         version = "6.30.7.0",
         date    = "12.10.2026",
         notes   = {

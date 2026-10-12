@@ -4931,6 +4931,15 @@ do
         _G.UnitIsPlayer = function() return true end
         hm = nil
         assert(not NP.IsObjectPlate("nameplate3"), "Spieler als Objekt gezaehlt")
+        -- 6.30.8.0: Briefkasten mit Leben - die Kennung entscheidet.
+        local sg = _G.UnitGUID
+        _G.UnitIsPlayer = function() return false end
+        hm = 1
+        _G.UnitGUID = function() return "GameObject-0-1-2-3-4-5" end
+        assert(NP.IsObjectPlate("nameplate3"), "Briefkasten mit Leben bekommt eine Plakette")
+        _G.UnitGUID = function() return "Creature-0-1-2-3-4-5" end
+        assert(not NP.IsObjectPlate("nameplate3"), "NPC mit Leben als Objekt")
+        _G.UnitGUID = sg
     end)
     _G.UnitIsGameObject, _G.UnitIsPlayer, _G.UnitHealthMax = sgo, sp, shm
     Check(ok, "Plaketten: Objekte in der Naehe ohne Plakette, Einheiten mit" .. (ok and "" or (": " .. tostring(err))))
