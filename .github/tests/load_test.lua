@@ -1584,7 +1584,7 @@ do
         local oS = CC.SpellAttr
         CC.SpellAttr = function() return "Heilen" end
         local m = CC.KeyMacro(up)
-        assert(m:find("/cast [@mouseover,exists] Heilen", 1, true) and m:find("CameraZoomIn", 1, true), "ohne Einheit zoomt nicht")
+        assert(m:find("/cast [@mouseover,exists] Heilen", 1, true) and not m:find("/run", 1, true), "Skriptbefehl im Makro (Warnung des Spiels)")
         local ms = CC.KeyMacro({ button = "MOUSEWHEELUP", mod = "shift-", action = "spell", spell = "Heilen" })
         assert(not ms:find("Camera", 1, true), "mit Umschalt zoomt trotzdem")
         CC.SpellAttr = oS
@@ -2877,7 +2877,7 @@ end
 -- ausgenommen), und die Knoepfe, die neu laden, tun es ueber den
 -- Makroknopf, ohne selbst etwas Geschuetztes aufzurufen.
 do
-    local offenders, marking = {}, {}
+    local offenders, marking, scripts = {}, {}, {}
     for _, folder in ipairs({ "core", "modules", "ui" }) do
         local pipe = io.popen and io.popen('ls "' .. ROOT .. "/" .. folder .. '" 2>/dev/null')
         if pipe then
@@ -2894,6 +2894,11 @@ do
                     if code:find("SetRaidTarget") then
                         marking[#marking + 1] = folder .. "/" .. name
                     end
+                    -- 6.30.26.0: "/run" oder "/script" in einem Makro loest die
+                    -- Warnung des Spiels aus ("kann dein Konto kompromittieren").
+                    if code:find("/run%s") or code:find("/script%s") then
+                        scripts[#scripts + 1] = folder .. "/" .. name
+                    end
                 end
             end
             pipe:close()
@@ -2901,6 +2906,8 @@ do
     end
     Check(#offenders == 0, "kein direkter Aufruf von ReloadUI/C_UI.Reload"
         .. (#offenders == 0 and "" or (": " .. table.concat(offenders, ", "))))
+    Check(#scripts == 0, "kein /run oder /script in Makros"
+        .. (#scripts == 0 and "" or (": " .. table.concat(scripts, ", "))))
     Check(#marking == 0, "kein Aufruf von SetRaidTarget (Markieren nur ueber den Klick auf einen Makroknopf)"
         .. (#marking == 0 and "" or (": " .. table.concat(marking, ", "))))
 

@@ -349,12 +349,11 @@ function CC.KeyMacro(b)
     elseif b.action == "target" then
         text = "/target [@mouseover,exists]"
     end
-    -- Mausrad ohne Zusatztaste: die Belegung nimmt dem Spiel das Zoomen.
-    -- Ohne Einheit unter der Maus zoomt die Kamera deshalb weiter.
-    local dir = CC.WHEEL[b.button]
-    if text and dir and (b.mod or "") == "" then
-        text = text .. "\n/run if not UnitExists(\"mouseover\") then CameraZoom" .. dir .. "(1) end"
-    end
+    -- Kein "/run" im Makro (6.30.26.0, Beta-Test): ein Skriptbefehl aus
+    -- einem Addon-Makro loest die Warnung des Spiels aus ("Skripte koennen
+    -- dein Konto kompromittieren"). Bis 6.30.25.0 zoomte das Mausrad ohne
+    -- Zusatztaste so die Kamera weiter - jetzt nimmt die Belegung dem Spiel
+    -- das Zoomen, solange sie besteht (Hinweis auf der Seite).
     return text   -- Menü: ohne Snippet nicht über eine Taste zu öffnen
 end
 
@@ -890,7 +889,7 @@ function CC.BuildPage(B)
             description = "Spieler, Ziel, Fokus, Ziel des Ziels und Begleiter von WeintCodex – nur mit der Oberfläche." },
           { type = "toggle", label = "Belegung im Tooltip", key = "clickTooltip",
             description = "Maus über einem Rahmen zeigt, welche Taste welchen Zauber wirkt." })
-    B:Note("Links ohne Zusatztaste wählt sonst das Ziel, Rechts öffnet das Menü – belegst du sie, gilt deine Belegung. Maustasten 6 bis 12 wirken auf dem Rahmen wie Links und Rechts. Schickt deine Maus ihre Seitentasten als Tastatur-Tasten (Corsair Scimitar, Razer Naga ab Werk), wirkt die Taste auf die Einheit unter der Maus – überall, auch auf Plaketten – und tut sonst nichts mehr, solange sie belegt ist. Das Menü geht nur mit Maustasten, Kombinationen wie Strg + Umschalt gar nicht.")
+    B:Note("Links ohne Zusatztaste wählt sonst das Ziel, Rechts öffnet das Menü – belegst du sie, gilt deine Belegung. Maustasten 6 bis 12 wirken auf dem Rahmen wie Links und Rechts. Schickt deine Maus ihre Seitentasten als Tastatur-Tasten (Corsair Scimitar, Razer Naga ab Werk), wirkt die Taste auf die Einheit unter der Maus – überall, auch auf Plaketten – und tut sonst nichts mehr, solange sie belegt ist. Das Menü geht nur mit Maustasten, Kombinationen wie Strg + Umschalt gar nicht. Das Mausrad ohne Zusatztaste zoomt die Kamera nicht mehr, solange es belegt ist – nimm besser Umschalt, Strg oder Alt dazu.")
 end
 
 -- Die Standardwerte stehen bei den Gruppenrahmen (dort waren sie immer;

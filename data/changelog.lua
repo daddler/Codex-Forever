@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.26.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFKeine Skript-Warnung mehr beim Mausrad-Klickzauber.|r Die Belegung nutzt keinen Skriptbefehl mehr. Dafür zoomt das Mausrad ohne Umschalt, Strg oder Alt die Kamera nicht mehr, solange es belegt ist.",
+        },
+    },
+    {
         version = "6.30.25.0",
         date    = "12.10.2026",
         notes   = {

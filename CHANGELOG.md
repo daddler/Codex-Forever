@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.26.0] – 2026-10-12
+
+### Behoben
+- Klickzauber: kein `/run` mehr im Makro des Mausrads – es löste die
+  Skript-Warnung des Spiels aus. `load_test.lua` verbietet `/run` und
+  `/script` in `core`, `modules`, `ui`.
+
 ## [6.30.25.0] – 2026-10-12
 
 ### Behoben
