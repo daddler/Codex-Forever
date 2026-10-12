@@ -607,6 +607,22 @@ Check("Sammeln", function(add)
     for _, line in ipairs(GT.StatusLines()) do add("", "   " .. line) end
 end)
 
+-- Glitzern und Questhilfe (6.30.9.0 - fehlten bis dahin im Bericht)
+Check("Glitzern", function(add)
+    local SP = WeintCodex.UISparkles
+    if not SP then add(SC.OPEN, "Glitzern nicht geladen.") return end
+    local on = SP.LootActive() or SP.NodesActive()
+    add(on and SC.OK or SC.OPEN, on and "Glitzern an" or "Glitzern aus (Komfort → Glitzern)")
+    for _, line in ipairs(SP.StatusLines()) do add("", "   " .. line) end
+end)
+
+Check("Questhilfe", function(add)
+    local QH = WeintCodex.UIQuestHelper
+    if not QH then add(SC.OPEN, "Questhilfe nicht geladen.") return end
+    add(QH.Active() and SC.OK or SC.OPEN, QH.Active() and "Questhilfe an" or "Questhilfe aus (Komfort → Questhilfe)")
+    for _, line in ipairs(QH.StatusLines()) do add("", "   " .. line) end
+end)
+
 -- Bestand aller Charaktere (6.24.0.0)
 Check("Bestand", function(add)
     local IV = WeintCodex.UIInventory

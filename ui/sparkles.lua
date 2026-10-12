@@ -315,11 +315,41 @@ ev:SetScript("OnEvent", function(_, event, name)
 end)
 SP.events = ev
 
+-- Was jetzt vor dir steht (6.30.9.0): fuer /wcui prüfen, damit ein Bericht
+-- zeigt, woran Glitzern und Plakette haengen - nur Fakten.
+function SP.Probe()
+    local u = SP.UNIT
+    if not (_G.UnitExists and K.Bool(_G.UnitExists(u), false)) then
+        return "Vor dir: kein Objekt der weichen Zielerfassung (direkt vor ein Kraut stellen, dann prüfen)"
+    end
+    local name = _G.UnitName and K.Plain(_G.UnitName(u))
+    local guid = _G.UnitGUID and K.Plain(_G.UnitGUID(u))
+    local hm = _G.UnitHealthMax and K.Plain(_G.UnitHealthMax(u))
+    local kindC, blC = SP.ClassifyCursor(u)
+    local kindT, blT = SP.ReadTooltip(u)
+    local tex = K.Plain(probe:GetTexture())
+    local np = _G.C_NamePlate and _G.C_NamePlate.GetNamePlateForUnit
+    local plate = np and select(2, pcall(np, u))
+    local NP = WeintCodex.UINameplates
+    local ours = false
+    if type(plate) == "table" and NP and NP.plates then
+        for _, p in pairs(NP.plates) do if p.nameplate == plate and p:IsShown() then ours = true end end
+    end
+    local pw = type(plate) == "table" and K.Plain(plate:GetWidth())
+    local ph = type(plate) == "table" and K.Plain(plate:GetHeight())
+    return string.format("Vor dir: %s · Kennung %s · Leben %s · Mauszeiger %s (%s) · Tooltip %s · Plakette %s%s · von WeintCodex bemalt: %s",
+        tostring(name), type(guid) == "string" and (guid:match("^[^%-]+") or guid) or "geheim/keine",
+        tostring(hm), tostring(kindC), tostring(tex), tostring(kindT),
+        type(plate) == "table" and "da" or "keine",
+        type(pw) == "number" and string.format(" %dx%d", pw, ph or 0) or "",
+        ours and "ja" or "nein")
+end
+
 function SP.StatusLines()
     return { string.format("Glitzern: Quest %s · Kraut/Erz %s · Blicke %d · Kraut %d · Erz %d · anderes %d · über Tooltip %d · ohne Plakette %d · Werte gesetzt %d · Mauszeiger-Abfrage %s",
         SP.LootActive() and "an" or "aus", SP.NodesActive() and "an" or "aus",
         stats.looks, stats.herb, stats.ore, stats.other, stats.bytip, stats.noplate, stats.applied,
-        type(_G.SetUnitCursorTexture) == "function" and "da" or "fehlt") }
+        type(_G.SetUnitCursorTexture) == "function" and "da" or "fehlt"), SP.Probe() }
 end
 
 local function Build(B)

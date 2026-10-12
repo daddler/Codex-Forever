@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.9.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFF/wcui prüfen nennt Glitzern und Questhilfe.|r Stell dich vor ein Kraut und prüfe: der Bericht zeigt, was WeintCodex über das Objekt vor dir weiß – daran lässt sich sehen, warum es nicht glitzert.",
+        },
+    },
+    {
         version = "6.30.8.0",
         date    = "12.10.2026",
         notes   = {

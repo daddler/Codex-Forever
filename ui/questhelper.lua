@@ -817,6 +817,11 @@ function QH.StatusLines()
     local st = QH.stats
     local out = { string.format("Questhilfe: %s · %d Quests im Bestand · zuletzt Karte %s: %d neu, %d Abgabe, %d Ziele",
         QH.Active() and "an" or "aus", nq, tostring(shownMap), st.avail, st.turnin, st.target) }
+    local ql = _G.C_QuestLog
+    out[#out + 1] = "Erledigt abfragen (IsQuestFlaggedCompleted): "
+        .. ((ql and ql.IsQuestFlaggedCompleted or _G.IsQuestFlaggedCompleted) and "ja" or "fehlt – dann keine „!“")
+        .. " · Minikarte: " .. (QH.MinimapActive() and "an" or "aus")
+        .. " · Halbmesser " .. tostring(QH.MinimapYards())
     return out
 end
 

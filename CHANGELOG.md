@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.9.0] – 2026-10-12
+
+### Neu
+- `/wcui prüfen`: Zeilen „Glitzern“ (mit `SP.Probe`: Name, Kennung, Leben,
+  Mauszeiger, Tooltip, Plakette und ob WeintCodex sie bemalt) und
+  „Questhilfe“ (Bestand, `IsQuestFlaggedCompleted`, Minikarte).
+
 ## [6.30.8.0] – 2026-10-12
 
 ### Behoben
