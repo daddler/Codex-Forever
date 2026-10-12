@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.45.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFKnopf „Verlauf“ im Flüster-Messenger.|r Zeigt alle Nachrichten der letzten 7 Tage aller Charaktere nach Zeit, mit „Heute“, „Gestern“ und Datum. Ein Klick auf einen Namen öffnet das Gespräch.",
+        },
+    },
+    {
         version = "6.30.44.0",
         date    = "12.10.2026",
         notes   = {

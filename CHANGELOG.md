@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.45.0] – 2026-10-12
+
+### Neu
+- Flüstern: Knopf „Verlauf“ (`MS.SetHistoryMode`, `MS.DrawHistory`): alle
+  Nachrichten nach Zeit mit Tagesüberschriften, Empfänger, BN/W; Namen als
+  Link `wcmsg:` ins Gespräch (`MS.OpenFromHistory`).
+
 ## [6.30.44.0] – 2026-10-12
 
 ### Geändert

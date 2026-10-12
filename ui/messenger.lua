@@ -285,7 +285,7 @@ end
 -- Fenster
 --------------------------------------------------
 
-local win, list, smf, input, title, sub, foot, copy, copyEdit, markBtn
+local win, list, smf, input, title, sub, foot, copy, copyEdit, markBtn, histBtn
 local rows = {}
 MS.copyMode = false
 
@@ -403,7 +403,7 @@ local function Build()
 
     title = K.NewText(win, 14)
     title:SetPoint("TOPLEFT", win, "TOPLEFT", MS.LIST_W + 12, -10)
-    title:SetPoint("RIGHT", win, "RIGHT", -120, 0)   -- Platz fuer "Markieren" und x
+    title:SetPoint("RIGHT", win, "RIGHT", -200, 0)   -- Platz fuer "Markieren" und x
     title:SetJustifyH("LEFT")
     title:SetWordWrap(false)
     sub = K.NewText(win, 10)
@@ -451,7 +451,16 @@ local function Build()
     end)
     gear:SetScript("OnClick", function() MS.OpenSettings() end)
     MS.gear = gear
+    -- Verlauf (6.30.45.0, Wunsch: "ein Button Historie, dort alles aufgelistet").
+    histBtn = CreateFrame("Button", nil, win)
+    histBtn:SetSize(58, 20)
+    histBtn.t = K.NewText(histBtn, 11)
+    histBtn.t:SetPoint("CENTER", histBtn, "CENTER", 0, 0)
+    histBtn.t:SetTextColor(m[1], m[2], m[3])
+    histBtn.t:SetText("Verlauf")
+    histBtn:SetScript("OnClick", function() MS.SetHistoryMode(not MS.historyMode) end)
     markBtn:SetPoint("RIGHT", gear, "LEFT", -4, 0)
+    histBtn:SetPoint("RIGHT", markBtn, "LEFT", -2, 0)
 
     smf = CreateFrame("ScrollingMessageFrame", nil, win)
     smf:SetPoint("TOPLEFT", win, "TOPLEFT", MS.LIST_W + 12, -44)
@@ -459,9 +468,12 @@ local function Build()
     smf:SetFont(F.sans, 12, "")
     smf:SetJustifyH("LEFT")
     smf:SetFading(false)
-    smf:SetMaxLines(MS.MAX_LINES)
+    smf:SetMaxLines(2000)   -- 6.30.45.0: der Verlauf ueber alle Gespraeche
     if smf.SetHyperlinksEnabled then smf:SetHyperlinksEnabled(true) end
     smf:SetScript("OnHyperlinkClick", function(_, link, text, button)
+        -- Verlauf: ein Klick auf einen Namen oeffnet das Gespraech.
+        local key = type(link) == "string" and link:match("^wcmsg:(.+)$")
+        if key then MS.OpenFromHistory(key) return end
         if _G.SetItemRef then pcall(_G.SetItemRef, link, text, button) end
     end)
     smf:EnableMouseWheel(true)
@@ -679,6 +691,14 @@ function MS.Redraw()
 
     local c = conv[MS.current]
     smf:Clear()
+    local hm = C.textMuted
+    local ha = MS.historyMode and C.accent or hm
+    histBtn.t:SetTextColor(ha[1], ha[2], ha[3])
+    if MS.historyMode then
+        MS.DrawHistory()
+        foot:SetText("Klick auf einen Namen öffnet das Gespräch  ·  „Verlauf“ zurück")
+        return
+    end
     if not c then
         title:SetText("Flüstern")
         sub:SetText("Noch kein Gespräch in dieser Sitzung.")
@@ -712,6 +732,70 @@ function MS.Redraw()
     MS.UpdateHint()
 end
 
+-- Alles der letzten 7 Tage, ueber alle Gespraeche und Charaktere, nach
+-- Zeit, mit Tagesueberschriften. Namen sind Links ins Gespraech.
+MS.historyMode = false
+function MS.HistoryLines()
+    local all = {}
+    for _, key in ipairs(order) do
+        local c = conv[key]
+        for _, line in ipairs(c and c.lines or {}) do
+            if line.kind ~= "sys" then all[#all + 1] = { c = c, line = line } end
+        end
+    end
+    table.sort(all, function(a, b) return (a.line.t or 0) < (b.line.t or 0) end)
+    return all
+end
+
+function MS.DayLabel(t)
+    if not _G.date then return "" end
+    local d, today = _G.date("%Y%m%d", t), _G.date("%Y%m%d", Time())
+    if d == today then return "Heute" end
+    if d == _G.date("%Y%m%d", Time() - 86400) then return "Gestern" end
+    return _G.date("%d.%m.%Y", t)
+end
+
+function MS.DrawHistory()
+    title:SetText("Verlauf")
+    local all = MS.HistoryLines()
+    local people = 0
+    for _ in pairs(conv) do people = people + 1 end
+    sub:SetText(#all .. " Nachrichten · " .. people .. " Gespräche · letzte " .. MS.KEEP_DAYS .. " Tage")
+    if #all == 0 then smf:AddMessage("|c" .. Hex(C.textMuted) .. "Noch nichts im Verlauf." .. "|r") return end
+    local day
+    local a = C.accent
+    for _, e in ipairs(all) do
+        local dl = MS.DayLabel(e.line.t)
+        if dl ~= day then
+            if day then smf:AddMessage(" ") end
+            smf:AddMessage("|c" .. Hex(a) .. dl .. "|r")
+            day = dl
+        end
+        local c = e.c
+        local who = "|Hwcmsg:" .. c.key .. "|h" .. MS.NameText(c) .. "|h"
+        local rcv = MS.Receiver(c)
+        local tag = c.bn and ("|c" .. Hex(C.battlenet) .. "BN|r ") or ("|c" .. Hex(C.whisper) .. "W|r ")
+        local dir = e.line.kind == "out" and ("|c" .. Hex(ColorArr("msgColorMe")) .. "Du → |r" .. who)
+            or (who .. (rcv and ("|c" .. Hex(C.textMuted) .. " → " .. rcv .. "|r") or ""))
+        local col = ColorArr(e.line.kind == "out" and "msgColorOut" or "msgColorIn")
+        local stamp = _G.date and _G.date("%H:%M", e.line.t) or ""
+        smf:AddMessage("|c" .. Hex(C.textMuted) .. stamp .. "|r  " .. tag .. dir .. ": |c" .. Hex(col) .. e.line.text .. "|r")
+    end
+end
+
+function MS.SetHistoryMode(on)
+    Build()
+    if on and MS.copyMode then MS.SetCopyMode(false) end
+    MS.historyMode = on and true or false
+    MS.Redraw()
+end
+
+function MS.OpenFromHistory(key)
+    if not conv[key] then return end
+    MS.historyMode = false
+    MS.Select(key)
+end
+
 function MS.SetCopyMode(on)
     Build()
     MS.copyMode = on and true or false
@@ -740,6 +824,7 @@ end
 
 function MS.Select(key)
     if not conv[key] then return end
+    MS.historyMode = false
     MS.current = key
     conv[key].unread = 0
     MS.Redraw()
