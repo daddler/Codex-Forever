@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.4.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Symbole der Questhilfe sehen aus wie die des Spiels.|r Goldener Kreis mit dunklem „!“ oder „?“ für das, was jetzt geht, grauer Kreis für zu leichte oder noch nicht fertige Quests.",
+        },
+    },
+    {
         version = "6.30.3.0",
         date    = "12.10.2026",
         notes   = {

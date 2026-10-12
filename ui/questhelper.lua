@@ -55,7 +55,7 @@ QH.FILTERS = {
     { key = "qhTargets", text = "Ziele" },
     { key = "qhAllTargets", text = "Alle Ziele" },
 }
-QH.SIZE = 18          -- "!" und "?"
+QH.SIZE = 20          -- "!" und "?" (so gross wie die des Spiels)
 QH.DOT = 9            -- Ziel
 QH.TICK = 0.05
 QH.GRAY_DIFF = 8      -- Ersatz, wenn der Client keinen Bereich nennt
@@ -380,11 +380,17 @@ local function Dress(p, e)
         p.core:SetVertexColor(b[1], b[2], b[3], 1)
         p.mark:SetText("")
     else
-        p.core:SetVertexColor(0.08, 0.08, 0.1, 0.9)
+        -- 6.30.4.0 (Beta-Test mit Bild: "abgabebereit wieder im Blizzard-
+        -- Design - das muss einheitlich"): wie die Questsymbole des Spiels -
+        -- gefuellter Kreis, dunkles Zeichen; gold = jetzt (annehmen,
+        -- abgeben), grau = noch nicht (zu leicht, nicht fertig). Kein
+        -- Durchscheinen mehr: grau ist die Aussage, nicht die Deckkraft.
+        local c = e.faint and C.textMuted or g
+        p.core:SetVertexColor(c[1], c[2], c[3], 1)
         p.mark:SetText(e.kind == "avail" and "!" or "?")
-        p.mark:SetTextColor(g[1], g[2], g[3], 1)
+        p.mark:SetTextColor(0.1, 0.07, 0.02, 1)
     end
-    p:SetAlpha(e.faint and 0.5 or 1)
+    p:SetAlpha(1)
 end
 
 local holders = setmetatable({}, { __mode = "k" })
