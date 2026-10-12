@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.30.38.0
+## Version: 6.30.39.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -289,6 +289,7 @@ ui/macroframe.lua
 # Bausteine fuer Fenster in Gold (6.10.0.0): Handel, Bank, Post beschreiben nur noch.
 ui/calmparts.lua
 ui/trade.lua
+ui/transmog.lua
 # Auktionshaus in Gold (6.9.0.4): Kategorien als Kacheln, Listen auf Flaeche, Spaltenkoepfe flach.
 ui/auction.lua
 # Bank in Gold (6.9.1.1): Plaetze flach, Grund und Geld auf Flaeche.

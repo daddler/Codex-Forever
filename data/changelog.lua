@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.39.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFTransmogrifizieren im WeintCodex-Design.|r Ohne Metallrahmen und roten Knöpfe, ruhige Flächen in Gold – und hinter deiner Figur das große Bild deiner Klasse, wie im Charakterfenster.",
+        },
+    },
+    {
         version = "6.30.38.0",
         date    = "12.10.2026",
         notes   = {

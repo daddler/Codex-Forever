@@ -79,6 +79,9 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               "MacroFrame",
               -- 6.9.0.2: Handel (ui/trade.lua).
               "TradeFrame",
+              -- 6.30.39.0: Transmogrifizieren (ui/transmog.lua, Bilder
+              -- gemessen mit /wcui fenster).
+              "TransmogFrame",
               -- 6.9.0.4: Auktionshaus (Blizzard_AuctionHouseUI, erst beim
               -- Ansprechen geladen; ui/auction.lua).
               "AuctionHouseFrame",

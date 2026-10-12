@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.39.0] – 2026-10-12
+
+### Neu
+- Transmogrifizieren (`ui/transmog.lua`, `TransmogFrame` in `W.WINDOWS`):
+  Gold (S.CALM) aus Bausteinen, Atlanten gemessen mit `/wcui fenster`;
+  Klassenbild aus `data/classthemes.lua` hinter der Vorschau statt
+  `transmog-locationBG`, mit Abdunklung zu den Rändern.
+
 ## [6.30.38.0] – 2026-10-12
 
 ### Neu
