@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.27.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Knöpfe an der Minikarte stehen, wo du willst.|r Aufspüren, Kalender, Post und Schwierigkeit lassen sich links, rechts, über oder unter die Karte setzen: Minikarte → Allgemein → „Seite der Knöpfe“.",
+        },
+    },
+    {
         version = "6.29.26.0",
         date    = "11.10.2026",
         notes   = {

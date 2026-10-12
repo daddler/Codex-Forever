@@ -3992,6 +3992,33 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.29.27.0: Knoepfe der Minikarte auf jeder Seite.
+do
+    local ok, err = pcall(function()
+        local MM = WeintCodex.UIMinimap
+        local cl = _G.MinimapCluster
+        local tr = CreateFrame("Button", nil, cl)
+        local pt
+        tr.SetPoint = function(_, p, rel, rp, x, y) pt = { p, rp, x, y } end
+        local old = cl.Tracking
+        cl.Tracking = tr
+        local want = { LEFT = { "TOPRIGHT", "TOPLEFT" }, RIGHT = { "TOPLEFT", "TOPRIGHT" },
+            TOP = { "BOTTOMLEFT", "TOPLEFT" }, BOTTOM = { "TOPLEFT", "BOTTOMLEFT" } }
+        for side, w in pairs(want) do
+            K.Set("minimap", "buttonSide", side)
+            pt = nil
+            MM.LayoutButtons()
+            assert(pt and pt[1] == w[1] and pt[2] == w[2], "Knoepfe nicht auf Seite " .. side)
+        end
+        K.Set("minimap", "buttonSide", "Quatsch")
+        assert(MM.ButtonSide() == "LEFT", "unbekannte Seite nicht links")
+        K.Set("minimap", "buttonSide", nil)
+        cl.Tracking = old
+    end)
+    Check(ok, "Minikarte: Knoepfe links, rechts, darueber, darunter"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.1.6: Tageszeit in waehlbarer Ecke; LibDBIcon-Knoepfe mit
 -- eingefrorener Schicht werden geloest; das Charakterfenster verliert
 -- seinen Schmuck, nicht seinen Inhalt; /wcui fenster fasst zusammen.

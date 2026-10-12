@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.27.0] – 2026-10-12
+
+### Neu
+- Minikarte: Seite der Knöpfe (Aufspüren, Kalender, Post, Schwierigkeit)
+  wählbar – links, rechts, darüber, darunter (`buttonSide`).
+
 ## [6.29.26.0] – 2026-10-11
 
 ### Geändert

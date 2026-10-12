@@ -41,6 +41,9 @@ local defaults = {
     coords      = true,
     coordDecimals = false,
     buttonColumn = true,
+    -- 6.29.27.0 (Wunsch: "rechts, darueber oder darunter - freie
+    -- Platzwahl"): Seite der Knoepfe an der Karte.
+    buttonSide  = "LEFT",
     clock       = true,
     wheelZoom   = true,
     hideZoomButtons = true,
@@ -377,25 +380,45 @@ function MM.LayoutButtons()
         return
     end
 
-    -- Von oben nach unten; reicht die Hoehe der Karte nicht, beginnt links
-    -- daneben eine zweite Spalte.
+    -- Links/rechts von oben nach unten; reicht die Hoehe der Karte nicht,
+    -- beginnt nach aussen eine zweite Spalte. Oben/unten von links nach
+    -- rechts; reicht die Breite nicht, eine zweite Reihe nach aussen.
+    local side = MM.ButtonSide()
     local limit = Opt("size") or 200
-    local x, y, colW = 0, 0, 0
+    local along, across, depth = 0, 0, 0
+    -- Ueber der Karte steht womoeglich das Gebiet: darueber hinaus.
+    local topGap = (Opt("zoneText") and not Opt("zoneInside")) and 22 or 4
     for _, b in ipairs(ColumnButtons()) do
         Watch(b)
         local h = K.Plain(b.GetHeight and b:GetHeight())
         local w = K.Plain(b.GetWidth and b:GetWidth())
         if type(h) ~= "number" or h <= 0 or h > 60 then h = 20 end
         if type(w) ~= "number" or w <= 0 or w > 60 then w = 20 end
-        if y > 0 and y + h > limit then
-            x, y, colW = x + colW + 2, 0, 0
+        local vertical = side == "LEFT" or side == "RIGHT"
+        local len, thick = vertical and h or w, vertical and w or h
+        if along > 0 and along + len > limit then
+            along, across, depth = 0, across + depth + 2, 0
         end
         b:ClearAllPoints()
-        b:SetPoint("TOPRIGHT", mm, "TOPLEFT", -4 - x, -y)
-        y = y + h + 2
-        colW = math.max(colW, w)
+        if side == "RIGHT" then
+            b:SetPoint("TOPLEFT", mm, "TOPRIGHT", 4 + across, -along)
+        elseif side == "TOP" then
+            b:SetPoint("BOTTOMLEFT", mm, "TOPLEFT", along, topGap + across)
+        elseif side == "BOTTOM" then
+            b:SetPoint("TOPLEFT", mm, "BOTTOMLEFT", along, -4 - across)
+        else
+            b:SetPoint("TOPRIGHT", mm, "TOPLEFT", -4 - across, -along)
+        end
+        along = along + len + 2
+        depth = math.max(depth, thick)
     end
     laying = false
+end
+
+MM.SIDES = { LEFT = true, RIGHT = true, TOP = true, BOTTOM = true }
+function MM.ButtonSide()
+    local s = Opt("buttonSide")
+    return MM.SIDES[s] and s or "LEFT"
 end
 MM.ColumnButtons = ColumnButtons
 
@@ -782,11 +805,18 @@ K.Register({
             B:Row({ type = "toggle", label = "Zoom mit dem Mausrad", key = "wheelZoom" },
                   { type = "toggle", label = "Addon-Knöpfe sammeln", key = "addonBag", reload = true,
                     description = "Ein Knopf unten links neben der Karte klappt alle Addon-Knöpfe auf." })
-            B:Row({ type = "toggle", label = "Knöpfe in einer Spalte links", key = "buttonColumn", reload = true,
-                    description = "Verfolgung, Post und Schwierigkeit neben der Karte statt auf ihrem Rand." },
+            B:Row({ type = "toggle", label = "Knöpfe neben der Karte", key = "buttonColumn", reload = true,
+                    description = "Aufspüren, Kalender, Post und Schwierigkeit neben der Karte statt auf ihrem Rand." },
                   { type = "toggle", label = "Liste nach der Auswahl schließen", key = "addonBagClose",
                     description = "Ein Klick auf ein Addon klappt die gesammelten Knöpfe wieder zu.",
                     disabled = function() return not K.Get(KEY, "addonBag") end })
+            B:Row({ type = "dropdown", label = "Seite der Knöpfe", key = "buttonSide", items = {
+                        { value = "LEFT",   text = "Links" },
+                        { value = "RIGHT",  text = "Rechts" },
+                        { value = "TOP",    text = "Darüber" },
+                        { value = "BOTTOM", text = "Darunter" } },
+                    disabled = function() return not K.Get(KEY, "buttonColumn") end },
+                  { type = "empty" })
             B:GameEditMode("Wo die Minikarte steht, stellst du im Bearbeitungsmodus des Spiels ein.")
             -- 6.10.1.0: Randfarbe, Lage der Texte und Kleinigkeiten zugeklappt.
             B:Advanced()
