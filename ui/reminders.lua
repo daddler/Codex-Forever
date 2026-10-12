@@ -697,7 +697,7 @@ end
 
 -- "satt" (6.27.0.1, gemeldet vom Spieler: so heisst der Essensbuff auf
 -- Forever) nur als ganzes Wort - "Sattel" ist keiner.
-R.FED_WORDS = { "wohlgenährt", "well fed", "%f[%a]satt%f[%A]" }
+R.FED_WORDS = { "wohlgenährt", "well fed", "%f[%a]satt%f[%A]", "gesättigt" }
 R.XP_WORDS = { "erfahrung", "experience" }
 R.EATING_WORDS = { "essen", "food", "trinken", "drink" }
 
@@ -754,13 +754,18 @@ function R.BagItemKind(id)
     end
     if type(name) ~= "string" then return nil end
     local entry = false
-    if subID == 5 then
+    if subID >= 2 and subID <= 4 and type(spell) == "string" then
+        entry = { kind = "elixir", spell = spell }
+    elseif type(spell) == "string" or subID == 5 then
+        -- 6.30.28.0 (Beta-Test: "Kraeutergebackenes Ei" und das Essen fuer
+        -- mehr Erfahrung fehlten): Essen steht auf Forever nicht immer in
+        -- Unterklasse 5 (Classic: 0 "Verbrauchbar"). Jedes benutzbare
+        -- Verbrauchsgut ausser Elixier/Flaeschchen/Rolle zaehlt, wenn sein
+        -- Tooltip satt macht oder Erfahrung gibt.
         local tip = TooltipText(id)
         if not tip then return nil end
         if HasWord(tip, R.XP_WORDS) then entry = { kind = "xp" }
         elseif HasWord(tip, R.FED_WORDS) then entry = { kind = "food" } end
-    elseif subID >= 2 and subID <= 4 and type(spell) == "string" then
-        entry = { kind = "elixir", spell = spell }
     end
     if entry then entry.name, entry.minLevel = name, type(minLevel) == "number" and minLevel or 0 end
     bagCache[id] = entry
@@ -811,6 +816,43 @@ local function AnyName(names, words)
         if HasWord(n, words) then return true end
     end
     return false
+end
+
+-- /wcui essen (6.30.28.0): was WeintCodex in der Tasche fuer Essen haelt -
+-- je Verbrauchsgut Klasse/Unterklasse, Zauber und Urteil. Messen statt raten.
+function R.FoodReport()
+    local out = {}
+    local cc, ci = _G.C_Container, _G.C_Item
+    local instant = (ci and ci.GetItemInfoInstant) or _G.GetItemInfoInstant
+    if not (cc and cc.GetContainerNumSlots and cc.GetContainerItemID and instant) then
+        return { "Taschen nicht lesbar." }
+    end
+    local seen = {}
+    for bag = 0, tonumber(_G.NUM_BAG_SLOTS) or 4 do
+        local okN, n = pcall(cc.GetContainerNumSlots, bag)
+        n = okN and K.Plain(n)
+        for slot = 1, type(n) == "number" and n or 0 do
+            local okI, id = pcall(cc.GetContainerItemID, bag, slot)
+            id = okI and K.Plain(id)
+            if type(id) == "number" and not seen[id] then
+                seen[id] = true
+                local ok, _, _, _, _, _, classID, subID = pcall(instant, id)
+                if ok and K.Plain(classID) == 0 then
+                    bagCache[id] = nil
+                    local e = R.BagItemKind(id)
+                    local name = (type(e) == "table" and e.name) or ("Gegenstand " .. id)
+                    local getSpell = (ci and ci.GetItemSpell) or _G.GetItemSpell
+                    local okS, sp = pcall(getSpell or function() end, id)
+                    local verdict = e == nil and "Client weiß es noch nicht" or (e and e.kind) or "kein Buff erkannt"
+                    out[#out + 1] = string.format("%s: Unterklasse %s, Zauber %s → %s",
+                        tostring(type(e) == "table" and e.name or name), tostring(K.Plain(subID)),
+                        tostring(okS and K.Plain(sp) or "-"), verdict)
+                end
+            end
+        end
+    end
+    if #out == 0 then out[1] = "Keine Verbrauchsgüter in den Taschen." end
+    return out
 end
 
 -- Erinnerungen aus der Tasche: Liste von { text, icon }.

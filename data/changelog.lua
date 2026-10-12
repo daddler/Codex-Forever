@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.28.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Essens-Erinnerung erkennt mehr Essen.|r Auch Essen, das das Spiel anders einsortiert – etwa Kräutergebackenes Ei oder Essen für mehr Erfahrung – zählt jetzt, sobald sein Tooltip satt macht oder Erfahrung gibt. „/wcui essen“ zeigt, was erkannt wird.",
+        },
+    },
+    {
         version = "6.30.27.0",
         date    = "12.10.2026",
         notes   = {

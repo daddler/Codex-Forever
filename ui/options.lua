@@ -1511,6 +1511,13 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    if msg == "essen" or msg == "food" then
+        local R = WeintCodex.UIReminders
+        for _, line in ipairs(R and R.FoodReport and R.FoodReport() or { "Erinnerungen nicht geladen." }) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+        return
+    end
     if msg == "auren" or msg == "auras" then
         for _, line in ipairs(WeintCodex.UIAuras.Inspect()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)

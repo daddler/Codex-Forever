@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.28.0] – 2026-10-12
+
+### Behoben
+- Erinnerungen, Essen: jedes benutzbare Verbrauchsgut (nicht nur
+  Unterklasse 5) wird über den Tooltip geprüft; „gesättigt“ zählt als satt.
+  Neu `/wcui essen` (`R.FoodReport`): Unterklasse, Zauber, Urteil je Gegenstand.
+
 ## [6.30.27.0] – 2026-10-12
 
 ### Geändert
