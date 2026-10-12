@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.1.0] – 2026-10-12
+
+### Geändert
+- Questhilfe: Ziele ab Werk nur der gewählten Quest (`QH.Focus`: eigener
+  Klick, sonst `C_SuperTrack`, sonst Questpfeil); `qhAllTargets` für alle.
+  Klick auf ein Symbol wählt, Rechtsklick löst; die Leiste nennt die Wahl.
+
 ## [6.30.0.0] – 2026-10-12
 
 ### Neu

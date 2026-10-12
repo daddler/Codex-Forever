@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.1.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Questhilfe zeigt nur noch die Ziele der Quest, die du gerade machst.|r Wählen: Klick auf ihr „?“ auf der Karte oder auf die Quest im Questlog – der Questpfeil folgt mit. Rechtsklick löst die Wahl. Alle Ziele auf einmal gibt es weiter über „Alle Ziele“.",
+        },
+    },
+    {
         version = "6.30.0.0",
         date    = "12.10.2026",
         notes   = {

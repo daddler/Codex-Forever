@@ -1342,6 +1342,13 @@ do
         G.C_QuestLog.IsQuestFlaggedCompleted = function(id) return done[id] == true end
         K.Set("comfort", "qhOn", true)
         QH.Refresh()
+        local oST = G.C_SuperTrack
+        G.C_SuperTrack = nil
+        QH.focus = nil
+        local none = 0
+        for _, e in ipairs(QH.ForMap(1429)) do if e.kind == "target" then none = none + 1 end end
+        assert(none == 0, "Ziele ohne gewaehlte Quest")
+        QH.SetFocus(5)
         local list = QH.ForMap(1429)
         local kinds = {}
         for _, e in ipairs(list) do kinds[e.kind] = (kinds[e.kind] or 0) + 1 end
@@ -1375,6 +1382,16 @@ do
         QH.bar.chips[1]:GetScript("OnClick")(QH.bar.chips[1])
         wm.IsShown, wm.GetMapID, wm.GetCanvas = oShown, oMap, oCanvas
         G.WorldMapFrame = hadMap
+        QH.SetFocus(nil)
+        K.Set("comfort", "qhAllTargets", true)
+        QH.Refresh()
+        local all = 0
+        for _, e in ipairs(QH.ForMap(1429)) do if e.kind == "target" then all = all + 1 end end
+        assert(all == 3, "alle Ziele: " .. all)
+        K.Set("comfort", "qhAllTargets", nil)
+        G.C_SuperTrack = { GetSuperTrackedQuestID = function() return 5 end }
+        assert(QH.Focus() == 5, "Quest aus dem Questlog des Spiels nicht gewaehlt")
+        G.C_SuperTrack = oST
         K.Set("comfort", "qhLow", nil)
         K.Set("comfort", "qhOn", nil)
         G.UnitLevel, G.UnitRace, G.UnitClass, G.C_QuestLog, G.UnitQuestTrivialLevelRange = oL, oR, oC, oQ, oT

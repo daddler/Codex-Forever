@@ -1805,6 +1805,11 @@ Klasse, Grau-Bereich (`UnitQuestTrivialLevelRange`, sonst 8).
 nur nach Ereignissen neu (`QUEST_LOG_UPDATE` gebündelt, 0,2 s), nie im Takt.
 Filterleiste oben links auf der Karte (`WeintCodexQuestFilter`).
 Nur Zonenkarten, keine Minikarte (noch nicht).
+**Ziele nur der gewählten Quest** (6.30.1.0, Beta-Test: „immer alles
+angezeigt“): `QH.Focus()` – eigener Klick auf ein Symbol (`QH.SetFocus`,
+der Questpfeil folgt über `QA.manual`), sonst die vom Spiel verfolgte Quest
+(`C_SuperTrack`, Klick im Questlog), sonst die des Questpfeils; nur Quests
+im Log. `qhAllTargets` zeigt alle.
 
 ## Rechtsklick auf die Minikarte *(6.27.0.0, `ui/minimapclick.lua`, Seite „Karte“)*
 

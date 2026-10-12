@@ -42,6 +42,10 @@ QH.DEFAULTS = {
     qhLow     = false,   -- auch graue
     qhTurnin  = true,    -- Abgabe
     qhTargets = true,    -- Ziele
+    -- 6.30.1.0 (Beta-Test mit Bild: "es wird immer alles angezeigt, egal
+    -- welche Quest ich als erstes machen will"): Ziele ab Werk nur der
+    -- gewaehlten Quest; alle nur auf Wunsch.
+    qhAllTargets = false,
     qhBar     = true,    -- Filterleiste auf der Karte
 }
 QH.FILTERS = {
@@ -49,6 +53,7 @@ QH.FILTERS = {
     { key = "qhLow",     text = "Graue" },
     { key = "qhTurnin",  text = "Abgabe" },
     { key = "qhTargets", text = "Ziele" },
+    { key = "qhAllTargets", text = "Alle Ziele" },
 }
 QH.SIZE = 18          -- "!" und "?"
 QH.DOT = 9            -- Ziel
@@ -118,6 +123,32 @@ function QH.Me()
     return { level = type(lvl) == "number" and lvl or nil,
              race = type(race) == "number" and race or nil,
              class = type(class) == "number" and class or nil, gray = gray }
+end
+
+-- Die gewaehlte Quest: eigener Klick auf ein Symbol, sonst die Quest, die
+-- das Spiel verfolgt (Klick im Questlog), sonst die des Questpfeils - nur,
+-- solange sie im Questlog steht.
+QH.focus = nil
+function QH.Focus()
+    if QH.focus and log[QH.focus] then return QH.focus end
+    local st = _G.C_SuperTrack
+    local game = st and st.GetSuperTrackedQuestID and K.Plain(st.GetSuperTrackedQuestID())
+    if type(game) == "number" and log[game] then return game end
+    local QA = WeintCodex.UIQuestArrow
+    local qa = QA and (QA.manual or QA.Chosen)
+    if type(qa) == "number" and log[qa] then return qa end
+    return nil
+end
+
+-- Eine Quest waehlen (nil: Wahl loesen). Der Questpfeil folgt mit.
+function QH.SetFocus(id)
+    local QA = WeintCodex.UIQuestArrow
+    -- Loesen gibt den Pfeil nur frei, wenn er noch unserer Wahl folgt.
+    if QA and QH.focus and QA.manual == QH.focus then QA.manual = nil end
+    QH.focus = id
+    if QA and id then QA.manual = id end
+    QH.Forget()
+    QH.PaintBar()
 end
 
 -- "avail", "low" oder nil: kann ich die Quest annehmen?
@@ -196,6 +227,9 @@ function QH.ForMap(mapID)
     local me = QH.Me()
     local wantA, wantL = Get("qhAvail"), Get("qhLow")
     local wantT, wantZ = Get("qhTurnin"), Get("qhTargets")
+    local focus = QH.Focus()
+    QH.builtFocus = focus
+    local allZ = Get("qhAllTargets")
     for id, q in pairs(d.q) do
         if wantA then
             local offer = QH.Offer(id, q, me)
@@ -218,7 +252,7 @@ function QH.ForMap(mapID)
                     QH.Places(d.o[ob], mapID, function(x, y) Add(out, seen, "turnin", ob, true, id, x, y, not done) end)
                 end
             end
-            if wantZ and not done then
+            if wantZ and not done and (allZ or id == focus) then
                 for _, npc in ipairs(q[10]) do
                     QH.Places(d.n[npc], mapID, function(x, y) Add(out, seen, "target", npc, false, id, x, y) end)
                 end
@@ -292,6 +326,9 @@ local function Tooltip(self)
         if e.kind == "turnin" then extra = logDone[id] and "  (fertig)" or "  (noch nicht fertig)" end
         gt:AddLine(QuestLine(id) .. extra, n[1], n[2], n[3])
     end
+    if e.kind ~= "avail" then
+        gt:AddLine("Klick: diese Quest wählen · Rechtsklick: Wahl lösen", m[1], m[2], m[3], true)
+    end
     gt:AddLine("Unbestätigt – Wissensstand der Community.", m[1], m[2], m[3], true)
     gt:Show()
 end
@@ -311,6 +348,22 @@ local function NewPin(holder)
     p.mark = K.NewText(p, 13, "OVERLAY")
     p.mark:SetPoint("CENTER", p, "CENTER", 0, 0)
     p:SetScript("OnEnter", function(self) Tooltip(self) end)
+    -- Links: diese Quest waehlen (mehrere: bei jedem Klick die naechste);
+    -- rechts: Wahl loesen. Nur Quests aus dem Questlog.
+    p:SetScript("OnMouseUp", function(self, button)
+        local e = self.entry
+        if not e then return end
+        if button == "RightButton" then QH.SetFocus(nil) return end
+        local mine = {}
+        for _, id in ipairs(e.quests) do if log[id] then mine[#mine + 1] = id end end
+        if #mine == 0 then return end
+        local pick = mine[1]
+        for i, id in ipairs(mine) do
+            if id == QH.focus then pick = mine[i % #mine + 1] break end
+        end
+        QH.SetFocus(pick)
+        Tooltip(self)
+    end)
     p:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
     p:Hide()
     return p
@@ -361,6 +414,8 @@ function QH.Place()
     local mapID = qm.CurrentMap and qm.CurrentMap()
     local canvas = qm.Canvas and qm.Canvas()
     if not (mapID and canvas) then HideAll() return 0 end
+    -- Die Wahl kann sich ohne Ereignis aendern (Questpfeil, Questlog).
+    if QH.Focus() ~= QH.builtFocus then QH.Forget() QH.PaintBar() end
     local list = QH.ForMap(mapID)
     local w, h = K.Plain(canvas:GetWidth()), K.Plain(canvas:GetHeight())
     if type(w) ~= "number" or type(h) ~= "number" or w <= 1 or h <= 1 then return 0 end
@@ -429,6 +484,10 @@ function QH.BuildBar()
         end)
         bar.chips[#bar.chips + 1] = b
     end
+    bar.focus = K.NewText(bar, 11)
+    bar.focus:SetPoint("LEFT", bar, "LEFT", x + 6, 0)
+    bar.focus:SetJustifyH("LEFT")
+    bar.base = x + 4
     bar:SetWidth(x + 4)
     QH.bar = bar
     return bar
@@ -437,9 +496,21 @@ end
 function QH.PaintBar()
     if not bar then return end
     local a, m, n = K.Highlight(), C.textMuted, C.textNormal
+    local focus = QH.Focus()
+    local q = focus and Data().q[focus]
+    if Get("qhTargets") and not Get("qhAllTargets") then
+        bar.focus:SetText(q and ("Ziele von: " .. q[1]) or "Klick auf ein „?“: Ziele dieser Quest")
+    else
+        bar.focus:SetText("")
+    end
+    local tw = K.Plain(bar.focus.GetStringWidth and bar.focus:GetStringWidth())
+    bar:SetWidth(bar.base + ((type(tw) == "number" and tw > 0) and (tw + 14) or 0))
+    local fc = q and C.textBright or m
+    bar.focus:SetTextColor(fc[1], fc[2], fc[3], 1)
     for _, b in ipairs(bar.chips) do
         local on = Get(b.key) and true or false
         if b.key == "qhLow" then b:SetEnabled(Get("qhAvail") and true or false) end
+        if b.key == "qhAllTargets" then b:SetEnabled(Get("qhTargets") and true or false) end
         local c = on and a or m
         b.edge:SetColor(c[1], c[2], c[3], on and 1 or 0.5)
         local tc = on and C.textBright or n
@@ -486,7 +557,8 @@ local function Refresh()
 end
 QH.Refresh = Refresh
 
-local REFRESH = { "QUEST_LOG_UPDATE", "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_REMOVED", "PLAYER_LEVEL_UP" }
+local REFRESH = { "QUEST_LOG_UPDATE", "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_REMOVED", "PLAYER_LEVEL_UP",
+                  "SUPER_TRACKING_CHANGED" }
 local pending = false
 local ev = CreateFrame("Frame")
 ev:SetScript("OnEvent", function(_, event, name)
@@ -555,8 +627,12 @@ local function Build(B)
             description = "Ein „?“, wo du eine Quest aus dem Questlog abgibst – gold, wenn sie fertig ist.",
             disabled = function() return not K.Get(KEY, "qhOn") end },
           { type = "toggle", label = "Ziele", key = "qhTargets",
-            description = "Blaue Punkte, wo die Gegner, Objekte und Beute deiner offenen Quests sind.",
+            description = "Blaue Punkte, wo Gegner, Objekte und Beute der gewählten Quest sind. Wählen: Klick auf ihr „?“ oder im Questlog.",
             disabled = function() return not K.Get(KEY, "qhOn") end })
+    B:Row({ type = "toggle", label = "Ziele aller Quests", key = "qhAllTargets",
+            description = "Statt nur der gewählten Quest die Ziele jeder offenen Quest im Questlog – wird schnell voll.",
+            disabled = function() return not (K.Get(KEY, "qhOn") and K.Get(KEY, "qhTargets")) end },
+          { type = "empty" })
 end
 
 local mod = K.Module(KEY)
