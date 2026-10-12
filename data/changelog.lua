@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.42.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDas Klassenbild bleibt dir vorbehalten.|r Beim Betrachten anderer Spieler steht hinter der Figur wieder der Hintergrund des Spiels, passend zu ihrem Volk.",
+        },
+    },
+    {
         version = "6.30.41.0",
         date    = "12.10.2026",
         notes   = {

@@ -11,8 +11,8 @@
 --              (W.WINDOWS, "InspectFrame").
 --   Plaetze    flach mit 1 px Rand wie im Charakterfenster (W.SkinSlots,
 --              Inspect...Slot); Rahmen "UI-Character-Info-GearSlot" weg.
---   Szene      Grund und Rahmen der Modellflaeche weg, dahinter das Bild
---              der Klasse des BETRACHTETEN Spielers (data/classthemes.lua).
+--   Szene      Rahmen der Modellflaeche weg, der Grund des Spiels (Volk)
+--              bleibt - das Klassenbild gehoert nur dem eigenen Charakter.
 --
 -- GEMESSEN (6.30.38.0, /wcui fenster, Beta-Test): InspectModelFrame-
 -- BackgroundTopLeft/TopRight/BotLeft/BotRight (Bilder 131093-131096),
@@ -24,12 +24,10 @@ WeintCodex = WeintCodex or {}
 local K = WeintCodex.UIKit
 local CP = WeintCodex.UICalmParts
 local S = WeintCodex.UIStyle
-local TM = WeintCodex.UITransmog
 
 local IN = CP.New({
     label = "Betrachten", host = "InspectFrame", depth = 4, style = S.CALM,
     files = {
-        [131093] = "decor", [131094] = "decor", [131095] = "decor", [131096] = "decor",
         [410247] = "decor", [410248] = "decor", [410249] = "decor",
         [130841] = "slot",     -- Grund des Platzes: flach wie die Aktionsknoepfe
     },
@@ -37,7 +35,7 @@ local IN = CP.New({
     report = function(_, m, H)
         local nh = 0
         for _ in pairs(H.hidden) do nh = nh + 1 end
-        return string.format("Bilder weg %d · Innenflächen %d · Klassenbild %s (%s)",
+        return string.format("Bilder weg %d · Innenflächen %d · Klassenbild %s (%s, nur beim eigenen)",
             nh, m.insets + m.bg, m.scene and "ja" or "nein", tostring(WeintCodex.UIInspect.lastClass or "?"))
     end,
 })
@@ -52,14 +50,14 @@ function IN.Class(f)
     return type(token) == "string" and token or nil
 end
 
+-- 6.30.42.0 (Beta-Test: "das epische Klassenbild sollte einem selbst
+-- vorbehalten bleiben"): beim Betrachten kein Klassenbild - der Grund des
+-- Spiels (je Volk, gemessen: Gnom im Schnee) bleibt, nur die schwarze
+-- Flaeche darueber geht.
 function IN.Scene(f)
-    local host = _G.InspectModelFrame
-    if type(host) ~= "table" then return nil end
     local token = IN.Class(f)
     IN.lastClass = token
-    -- Schwarze Flaeche ueber dem Grund (gemessen: Overlay, Bild 0) weg,
-    -- sonst liegt sie ueber dem Klassenbild.
     local ov = _G.InspectModelFrameBackgroundOverlay
     if type(ov) == "table" and ov.SetAlpha and K.Plain(ov:GetAlpha()) ~= 0 then ov:SetAlpha(0) end
-    return TM.ClassScene(host, token)
+    return false
 end

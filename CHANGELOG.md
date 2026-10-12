@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.42.0] – 2026-10-12
+
+### Geändert
+- Betrachten: kein Klassenbild, der Grund des Spiels (je Volk) bleibt.
+
 ## [6.30.41.0] – 2026-10-12
 
 ### Behoben
