@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.40.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFBetrachten anderer Spieler im WeintCodex-Design.|r Ohne Metallrahmen, flache Ausrüstungsplätze – und hinter der Figur das Bild ihrer Klasse.",
+        },
+    },
+    {
         version = "6.30.39.0",
         date    = "12.10.2026",
         notes   = {

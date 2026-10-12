@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.40.0] – 2026-10-12
+
+### Neu
+- Betrachten (`ui/inspect.lua`, `InspectFrame` in `W.WINDOWS`, Stil
+  S.CHARACTER_INFO): Plätze flach (`W.SkinSlots` auch `Inspect…Slot`, nicht in
+  `W.SlotList`), Modellgrund und -rahmen weg, Klassenbild des Betrachteten
+  (`TM.ClassScene`, gemeinsam mit Transmogrifizieren).
+
 ## [6.30.39.0] – 2026-10-12
 
 ### Neu

@@ -65,37 +65,42 @@ local function Num(v)
     return type(v) == "number" and v or nil
 end
 
--- Das Bild der Klasse hinter der Figur. Einmal je Fenster angelegt, bei
--- jeder Groessenaenderung neu eingepasst.
-function TM.Scene(f)
-    local preview = type(f) == "table" and f.CharacterPreview
-    if type(preview) ~= "table" or not preview.CreateTexture then return nil end
-    local token
-    local ok, _, t = pcall(_G.UnitClass, "player")
-    if ok then token = K.Plain(t) end
+-- Das Bild der Klasse hinter einer Figur (auch fuer Betrachten,
+-- ui/inspect.lua). Einmal je Flaeche angelegt, bei jeder Groessenaenderung
+-- neu eingepasst; wechselt die Klasse (anderer Spieler), das Bild mit.
+TM.scenes = setmetatable({}, { __mode = "k" })
+function TM.ClassScene(host, token)
+    if type(host) ~= "table" or not host.CreateTexture then return nil end
     local theme = WeintCodex.ClassTheme and WeintCodex.ClassTheme(token)
     local art = theme and theme.art
-    if not art then return nil end
-    local sc = TM.scene
+    local sc = TM.scenes[host]
+    if not art then
+        if sc then sc.art:Hide() for _, v in pairs(sc.v) do v:Hide() end end
+        return nil
+    end
     if not sc then
-        sc = {}
-        sc.art = preview:CreateTexture(nil, "BACKGROUND", nil, -6)
-        sc.art:SetAllPoints(preview)
-        sc.art:SetTexture("Interface\\AddOns\\WeintCodex\\media\\" .. string.gsub(art.file, "/", "\\"))
-        local dim = art.dim or 1
-        sc.art:SetVertexColor(dim, dim, dim, 1)
-        sc.v = {}
+        sc = { v = {} }
+        sc.art = host:CreateTexture(nil, "BACKGROUND", nil, -6)
+        sc.art:SetAllPoints(host)
         for _, side in ipairs({ "TOP", "BOTTOM", "LEFT", "RIGHT" }) do
-            local v = preview:CreateTexture(nil, "BACKGROUND", nil, -5)
+            local v = host:CreateTexture(nil, "BACKGROUND", nil, -5)
             if side == "TOP" then S.Gradient(v, "VERTICAL", BLACK, 0, TM.VIGNETTE)
             elseif side == "BOTTOM" then S.Gradient(v, "VERTICAL", BLACK, TM.VIGNETTE, 0)
             elseif side == "LEFT" then S.Gradient(v, "HORIZONTAL", BLACK, TM.VIGNETTE, 0)
             else S.Gradient(v, "HORIZONTAL", BLACK, 0, TM.VIGNETTE) end
             sc.v[side] = v
         end
-        TM.scene = sc
+        TM.scenes[host] = sc
     end
-    local okW, w, h = pcall(function() return preview:GetWidth(), preview:GetHeight() end)
+    sc.art:Show()
+    for _, v in pairs(sc.v) do v:Show() end
+    if sc.file ~= art.file then
+        sc.file, sc.w = art.file, nil
+        sc.art:SetTexture("Interface\\AddOns\\WeintCodex\\media\\" .. string.gsub(art.file, "/", "\\"))
+        local dim = art.dim or 1
+        sc.art:SetVertexColor(dim, dim, dim, 1)
+    end
+    local okW, w, h = pcall(function() return host:GetWidth(), host:GetHeight() end)
     w, h = okW and Num(w) or nil, okW and Num(h) or nil
     if w and h and w > 0 and h > 0 and (sc.w ~= w or sc.h ~= h) then
         sc.w, sc.h = w, h
@@ -105,15 +110,21 @@ function TM.Scene(f)
         for side, v in pairs(sc.v) do
             v:ClearAllPoints()
             if side == "TOP" or side == "BOTTOM" then
-                v:SetPoint(side .. "LEFT", preview, side .. "LEFT", 0, 0)
-                v:SetPoint(side .. "RIGHT", preview, side .. "RIGHT", 0, 0)
+                v:SetPoint(side .. "LEFT", host, side .. "LEFT", 0, 0)
+                v:SetPoint(side .. "RIGHT", host, side .. "RIGHT", 0, 0)
                 v:SetHeight(h * TM.EDGE_SHARE)
             else
-                v:SetPoint("TOP" .. side, preview, "TOP" .. side, 0, 0)
-                v:SetPoint("BOTTOM" .. side, preview, "BOTTOM" .. side, 0, 0)
+                v:SetPoint("TOP" .. side, host, "TOP" .. side, 0, 0)
+                v:SetPoint("BOTTOM" .. side, host, "BOTTOM" .. side, 0, 0)
                 v:SetWidth(w * TM.EDGE_SHARE)
             end
         end
     end
     return sc
+end
+
+function TM.Scene(f)
+    local preview = type(f) == "table" and f.CharacterPreview
+    local ok, _, t = pcall(_G.UnitClass, "player")
+    return TM.ClassScene(preview, ok and K.Plain(t) or nil)
 end

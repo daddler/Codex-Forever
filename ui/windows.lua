@@ -82,6 +82,8 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               -- 6.30.39.0: Transmogrifizieren (ui/transmog.lua, Bilder
               -- gemessen mit /wcui fenster).
               "TransmogFrame",
+              -- 6.30.40.0: Betrachten anderer Spieler (ui/inspect.lua).
+              "InspectFrame",
               -- 6.9.0.4: Auktionshaus (Blizzard_AuctionHouseUI, erst beim
               -- Ansprechen geladen; ui/auction.lua).
               "AuctionHouseFrame",
@@ -1062,13 +1064,19 @@ local function SkinSlots(f, depth)
     if depth > 12 then return end
     for _, ch in ipairs(Children(f, "slots", depth)) do
         local n = type(ch) == "table" and ch.GetName and ch:GetName()
-        if type(n) == "string" and n:find("^Character[%a%d]+Slot$") and not slotDone[ch] then
+        -- 6.30.40.0: auch die Plaetze beim Betrachten (Inspect...Slot) -
+        -- flach, aber nicht in W.SlotList (die faerbt ui/character.lua).
+        local own = type(n) == "string" and n:find("^Character[%a%d]+Slot$")
+        local other = type(n) == "string" and n:find("^Inspect[%a%d]+Slot$")
+        if (own or other) and not slotDone[ch] then
             slotDone[ch] = true
             local normal = ch.GetNormalTexture and ch:GetNormalTexture()
             if type(normal) == "table" then Hide(normal) end
             local border = K.Border(ch, 1, 0, 0, 0, 1, "OVERLAY")
-            W.SlotList[#W.SlotList + 1] = ch
-            W.SlotBorder[ch] = border
+            if own then
+                W.SlotList[#W.SlotList + 1] = ch
+                W.SlotBorder[ch] = border
+            end
         end
         if type(ch) == "table" then SkinSlots(ch, depth + 1) end
     end
