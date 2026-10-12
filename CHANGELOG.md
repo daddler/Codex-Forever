@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.34.0] – 2026-10-12
+
+### Geändert
+- Flüstern: `msgDirect` ab Werk an (Sperre schaltet weiter selbst ab und
+  fällt auf die Chatzeile zurück); Platzhalter im Eingabefeld, Fokus bleibt
+  nach Enter; Liste zweizeilig mit letzter Nachricht und Zeit (`MS.Preview`);
+  Blöcke je Absender innerhalb von 2 Min. (`MS.SameBlock`); Größe ziehbar
+  (`msgW`/`msgH`, 380×220 bis 900×700).
+
 ## [6.30.33.0] – 2026-10-12
 
 ### Neu

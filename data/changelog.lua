@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.34.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Flüster-Messenger fühlt sich mehr nach Messenger an.|r Schreiben und Enter direkt im Fenster, das Feld bleibt zum Weiterschreiben aktiv. Die Liste zeigt die letzte Nachricht und wann, aufeinanderfolgende Nachrichten stehen als Block, und das Fenster lässt sich unten rechts größer ziehen.",
+        },
+    },
+    {
         version = "6.30.33.0",
         date    = "12.10.2026",
         notes   = {

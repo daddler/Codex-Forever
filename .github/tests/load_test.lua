@@ -7045,7 +7045,9 @@ do
         MS.markBtn:GetScript("OnClick")(MS.markBtn)
         assert(not MS.copyMode, "Knopf Markieren zurueck")
 
-        -- Antworten: ab Werk ueber die Chatzeile des Spiels.
+        -- Antworten ueber die Chatzeile des Spiels (ohne "direkt senden";
+        -- seit 6.30.34.0 ist direkt ab Werk an).
+        K.Set("comfort", "msgDirect", false)
         MS.Select("w:Anna")
         MS.input:GetScript("OnEditFocusGained")(MS.input)
         assert(opened[#opened] == "/w Anna-Testrealm ", "Klick in die Antwortzeile: " .. tostring(opened[#opened]))

@@ -67,7 +67,7 @@ MS.DEFAULTS = {
     msgCombat   = false,  -- auch im Kampf offen (sonst einklappen, danach wieder auf)
     msgOutgoing = true,   -- auch aufgehen, wenn du selbst jemandem fluesterst
     msgStamps   = true,   -- Uhrzeit vor jeder Zeile
-    msgDirect   = false,  -- selbst senden (ungemessen)
+    msgDirect   = true,   -- selbst senden; 6.30.34.0 ab Werk an (sperrt das Spiel, schaltet es sich ab)
     msgHideChat = true,   -- Gefluestertes nur im Fenster, nicht im Chat (6.19.1.0)
     msgIcon     = true,   -- Symbol zum Oeffnen (6.19.1.0)
 }
@@ -75,8 +75,11 @@ MS.DEFAULTS = {
 MS.MAX_LINES = 200        -- je Gespraech, nur diese Sitzung
 MS.MAX_CONV  = 8          -- so viele Gespraeche in der Liste
 MS.W, MS.H   = 420, 260
-MS.LIST_W    = 120
-MS.ROW_H     = 24
+MS.LIST_W    = 140
+MS.ROW_H     = 36         -- 6.30.34.0: zwei Zeilen - Name, letzte Nachricht
+MS.MIN_W, MS.MIN_H = 380, 220
+MS.MAX_W, MS.MAX_H = 900, 700
+MS.GROUP_GAP = 120        -- so lange (s) gilt eine Folge desselben Absenders als ein Block
 MS.BLOCK_WINDOW = 1
 MS.SEEN_EVERY = 0.2       -- so oft fragt das offene Fenster, ob die Maus darueber liegt (s)       -- so lange nach einem Sendeversuch zaehlt eine Sperrmeldung (s)
 
@@ -194,7 +197,19 @@ function MS.OpenMenu(c)
     return ok
 end
 
-function MS.Format(c, line)
+-- prev: die Zeile davor. Schreibt dieselbe Person kurz danach weiter,
+-- steht ihr Name nicht noch einmal da (wie in einem Messenger, 6.30.34.0).
+function MS.SameBlock(prev, line)
+    return type(prev) == "table" and prev.kind == line.kind and line.kind ~= "sys"
+        and (line.t or 0) - (prev.t or 0) <= MS.GROUP_GAP
+end
+
+function MS.Format(c, line, prev)
+    if MS.SameBlock(prev, line) then
+        local col = line.kind == "out" and C.textNormal or C.textBright
+        local pad = (Get("stamps") and _G.date) and "|c" .. Hex(C.textMuted) .. _G.date("%H:%M", line.t) .. "|r  " or ""
+        return pad .. "|c" .. Hex(col) .. line.text .. "|r"
+    end
     local out = ""
     if Get("stamps") and _G.date then
         out = "|c" .. Hex(C.textMuted) .. _G.date("%H:%M", line.t) .. "|r  "
@@ -243,10 +258,18 @@ local function NewRow(i)
     local a = C.accent
     r.mark:SetColorTexture(a[1], a[2], a[3], 1)
     r.label = K.NewText(r, 12)
-    r.label:SetPoint("LEFT", r, "LEFT", 8, 0)
+    r.label:SetPoint("TOPLEFT", r, "TOPLEFT", 8, -5)
     r.label:SetPoint("RIGHT", r, "RIGHT", -34, 0)
     r.label:SetJustifyH("LEFT")
     r.label:SetWordWrap(false)
+    -- Zweite Zeile: die letzte Nachricht und wann (6.30.34.0).
+    r.preview = K.NewText(r, 10)
+    r.preview:SetPoint("TOPLEFT", r.label, "BOTTOMLEFT", 0, -3)
+    r.preview:SetPoint("RIGHT", r, "RIGHT", -6, 0)
+    r.preview:SetJustifyH("LEFT")
+    r.preview:SetWordWrap(false)
+    local pm = C.textMuted
+    r.preview:SetTextColor(pm[1], pm[2], pm[3])
     r.badge = K.NewText(r, 11)
     r.badge:SetPoint("RIGHT", r, "RIGHT", -20, 0)
     r.x = CreateFrame("Button", nil, r)
@@ -398,7 +421,16 @@ local function Build()
         local text = self:GetText() or ""
         self:SetText("")
         if text ~= "" then MS.Send(MS.current, text) end
+        -- Weiterschreiben wie im Messenger: das Feld bleibt aktiv.
+        if Get("direct") and self.SetFocus then self:SetFocus() end
     end)
+    -- Platzhalter (6.30.34.0): woran man sieht, wohin es geht.
+    input.hint = K.NewText(input, 12)
+    input.hint:SetPoint("LEFT", input, "LEFT", 6, 0)
+    local hm = C.textDim or C.textMuted
+    input.hint:SetTextColor(hm[1], hm[2], hm[3])
+    input:HookScript("OnTextChanged", function(self) MS.UpdateHint() end)
+    input:HookScript("OnEditFocusLost", function() MS.UpdateHint() end)
     input:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
 
     foot = K.NewText(win, 10)
@@ -407,6 +439,30 @@ local function Build()
     foot:SetJustifyH("LEFT")
     foot:SetWordWrap(false)
     foot:SetTextColor(m[1], m[2], m[3])
+
+    -- Groesse aendern (6.30.34.0): Griff unten rechts, gemerkt je Profil.
+    if win.SetResizable then win:SetResizable(true) end
+    if win.SetResizeBounds then pcall(win.SetResizeBounds, win, MS.MIN_W, MS.MIN_H, MS.MAX_W, MS.MAX_H) end
+    local grip = CreateFrame("Button", nil, win)
+    grip:SetSize(14, 14)
+    grip:SetPoint("BOTTOMRIGHT", win, "BOTTOMRIGHT", -2, 2)
+    local gt = grip:CreateTexture(nil, "OVERLAY")
+    gt:SetAllPoints(grip)
+    gt:SetTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    grip:SetScript("OnMouseDown", function() if win.StartSizing then win:StartSizing("BOTTOMRIGHT") end end)
+    grip:SetScript("OnMouseUp", function()
+        win:StopMovingOrSizing()
+        local w, h = K.Plain(win:GetWidth()), K.Plain(win:GetHeight())
+        if type(w) == "number" and type(h) == "number" then
+            K.Set(KEY, "msgW", math.floor(w + 0.5))
+            K.Set(KEY, "msgH", math.floor(h + 0.5))
+        end
+        MS.Resized()
+    end)
+    MS.grip = grip
+    local sw, sh = tonumber(K.Get(KEY, "msgW")), tonumber(K.Get(KEY, "msgH"))
+    if sw and sh then win:SetSize(math.max(MS.MIN_W, math.min(MS.MAX_W, sw)), math.max(MS.MIN_H, math.min(MS.MAX_H, sh))) end
+    win:SetScript("OnSizeChanged", function() MS.Resized() end)
 
     K.RegisterMover(win, "messenger", "Flüstern", K.Layout("messenger"))
     -- Ziehen am Fenster selbst (6.19.1.0), nicht nur im Gestaltungsmodus.
@@ -430,6 +486,40 @@ local function Build()
 end
 MS.Build = Build
 
+-- Breite des Textfelds zum Markieren folgt dem Fenster.
+function MS.Resized()
+    if not (win and copyEdit) then return end
+    local w = K.Plain(win:GetWidth())
+    if type(w) == "number" then copyEdit:SetWidth(math.max(100, w - MS.LIST_W - 52)) end
+end
+
+function MS.UpdateHint()
+    if not (input and input.hint) then return end
+    local c = conv[MS.current or ""]
+    local empty = (input:GetText() or "") == ""
+    input.hint:SetShown(empty and c ~= nil)
+    if c then
+        input.hint:SetText(Get("direct") and ("Nachricht an " .. c.name .. " – Enter sendet")
+            or ("Klick: an " .. c.name .. " über die Chatzeile"))
+    end
+end
+
+-- "Du: bis gleich · 5 Min." - die letzte Zeile eines Gespraechs, kurz.
+function MS.Ago(t)
+    local d = Time() - (t or 0)
+    if d < 60 then return "jetzt" end
+    if d < 3600 then return math.floor(d / 60) .. " Min." end
+    return _G.date and _G.date("%H:%M", t) or ""
+end
+function MS.Preview(c)
+    local last = c and c.lines[#c.lines]
+    if not last then return "" end
+    local text = K.PlainText(((last.text or ""):gsub("|H.-|h(.-)|h", "%1")))
+    if last.kind == "out" then text = "Du: " .. text end
+    text = WeintCodex.Truncate and WeintCodex.Truncate(text, 16) or text
+    return text .. "  ·  " .. MS.Ago(last.t)
+end
+
 function MS.Redraw()
     if not win then return end
     for i, key in ipairs(order) do
@@ -437,6 +527,7 @@ function MS.Redraw()
         local r = rows[i] or NewRow(i)
         r.key = key
         r.label:SetText(WeintCodex.Truncate and WeintCodex.Truncate(c.name, 14) or c.name)
+        r.preview:SetText(MS.Preview(c))
         local sel = key == MS.current
         local s = sel and C.surface3 or C.surface1
         r.bg:SetColorTexture(s[1], s[2], s[3], sel and 1 or 0)
@@ -462,7 +553,12 @@ function MS.Redraw()
     else
         title:SetText(MS.NameText(c))
         sub:SetText(c.bn and "Battle.net" or "")
-        for _, line in ipairs(c.lines) do smf:AddMessage(MS.Format(c, line)) end
+        local prev
+        for _, line in ipairs(c.lines) do
+            if prev and not MS.SameBlock(prev, line) then smf:AddMessage(" ") end
+            smf:AddMessage(MS.Format(c, line, prev))
+            prev = line
+        end
     end
     if MS.copyMode then
         copyEdit:SetText(MS.PlainHistory(c))
@@ -478,6 +574,7 @@ function MS.Redraw()
         hint = hint .. "  ·  " .. MS.locked .. " während einer Sperre nur im Chat"
     end
     foot:SetText(hint)
+    MS.UpdateHint()
 end
 
 function MS.SetCopyMode(on)
@@ -1070,7 +1167,7 @@ local function BuildPage(B)
             description = "Klick öffnet das Fenster, die Zahl zeigt Ungelesenes. Ziehen verschiebt." },
           { type = "toggle", label = "Uhrzeit", key = "msgStamps", disabled = off })
     B:Row({ type = "toggle", label = "Direkt aus dem Fenster senden", key = "msgDirect", disabled = off,
-            description = "Ungetestet: ob das Spiel es WeintCodex erlaubt. Sperrt es, schaltet sich das ab, und Antworten gehen wieder über die Chatzeile." })
+            description = "Schreiben und Enter direkt im Fenster. Sperrt das Spiel es, schaltet sich das von selbst ab, und Antworten gehen über die Chatzeile." })
     B:Note("Fenster und Symbol lassen sich mit der Maus ziehen. Esc schließt das Fenster, die Gespräche bleiben bis zum Ausloggen.")
 end
 MS.BuildPage = BuildPage
