@@ -183,11 +183,11 @@ local function EnsureToast()
         self._t = (self._t or 0) + (el or 0)
         if self._t > RA.TOAST_TIME then
             local a = 1 - (self._t - RA.TOAST_TIME) / 0.6
-            if a <= 0 then self:Hide() else self:SetAlpha(a) end
+            if a <= 0 then RA.HideToast() else self:SetAlpha(a) end
         end
     end))
     toast:EnableMouse(true)
-    toast:SetScript("OnMouseUp", function(self) self:Hide() end)
+    toast:SetScript("OnMouseUp", function() RA.HideToast() end)
     toast:SetScript("OnHide", function() RA.DisarmClick() end)
     toast.WCShowForUnlock = function(self, on)
         self._unlock = on and true or nil
@@ -224,6 +224,29 @@ function RA.Macro(name, mark)
     return m
 end
 
+-- Hinweis weg (6.30.30.0, Fehlerbericht: ADDON_ACTION_BLOCKED
+-- "WeintCodexRareAlert:Hide()" im Kampf). Der geschuetzte Zielknopf liegt
+-- auf dem Hinweis (SetAllPoints) - damit ist der Hinweis im Kampf selbst
+-- geschuetzt. Im Kampf wird er nur unsichtbar und still, versteckt erst
+-- danach.
+function RA.HideToast()
+    if not toast then return end
+    if K.InCombat() then
+        toast:SetAlpha(0)
+        toast._unlock = true          -- Ausblenden steht still
+        if not toast._hidePending then
+            toast._hidePending = true
+            K.AfterCombat(function()
+                toast._hidePending = nil
+                toast._unlock = nil
+                toast:Hide()
+            end)
+        end
+        return
+    end
+    toast:Hide()
+end
+
 local clickBtn
 function RA.ClickButton()
     if clickBtn ~= nil then return clickBtn or nil end
@@ -235,7 +258,7 @@ function RA.ClickButton()
     b:SetFrameStrata("DIALOG")
     b:HookScript("OnClick", function(_, which)
         RA.clicked = (RA.clicked or 0) + 1
-        if toast and not K.InCombat() then toast:Hide() end
+        RA.HideToast()
     end)
     b:SetScript("OnEnter", function(self)
         if not GameTooltip then return end
@@ -312,7 +335,10 @@ function RA.Alert(name, info, level, elite, how)
     end
     if Get("toast") then
         local t = EnsureToast()
-        if not t._unlock then
+        -- Im Kampf geschuetzt (Zielknopf darauf): nicht anfassen, Ton und
+        -- Chat melden trotzdem.
+        local locked = K.InCombat() and t.IsProtected and K.Bool(t:IsProtected(), false)
+        if not t._unlock and not locked then
             local sub = desc
             if rs then sub = (sub ~= "" and (sub .. "  ·  ") or "") .. rs end
             local armed = RA.ArmClick(name)
@@ -461,7 +487,7 @@ local function Apply()
     end
     if on then EnsureToast() end
     if toast and K.SetMoverEnabled then K.SetMoverEnabled("rarealert", on and Get("toast")) end
-    if not on and toast then toast:Hide() end
+    if not on and toast then RA.HideToast() end
 end
 RA.Apply = Apply
 ev:SetScript("OnEvent", K.Measured("Seltene Gegner", OnEvent))

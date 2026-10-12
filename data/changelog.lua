@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.30.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFKein Lua-Fehler mehr beim Hinweis auf seltene Gegner im Kampf.|r Der Hinweis wird im Kampf nur unsichtbar und verschwindet ganz, sobald der Kampf vorbei ist.",
+        },
+    },
+    {
         version = "6.30.29.0",
         date    = "12.10.2026",
         notes   = {

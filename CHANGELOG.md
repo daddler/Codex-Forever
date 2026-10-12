@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.30.0] – 2026-10-12
+
+### Behoben
+- Seltene Gegner: `ADDON_ACTION_BLOCKED` „WeintCodexRareAlert:Hide()“ –
+  der geschützte Zielknopf liegt auf dem Hinweis; `RA.HideToast` blendet im
+  Kampf nur aus und versteckt danach, `Show` im Kampf unterbleibt.
+
 ## [6.30.29.0] – 2026-10-12
 
 ### Behoben
