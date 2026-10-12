@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.6.0] – 2026-10-12
+
+### Geändert
+- Questhilfe: „!“/„?“ als Questsymbole des Spiels (Atlas `QuestNormal`/
+  `QuestTurnin`, wenn der Client ihn kennt, sonst `GossipFrame`-Bilder),
+  grau entsättigt. Ziele als Schwert/Beutel/Zahnrad (`media/questhelper/`,
+  aus pfQuest unter MIT, Lizenz beiliegend).
+
 ## [6.30.5.0] – 2026-10-12
 
 ### Geändert

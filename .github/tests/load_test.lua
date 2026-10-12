@@ -1312,6 +1312,20 @@ do
         assert(QH.Name(saved.n[823]) == "Deputy Willem", "Name aus Text")
         local it = QH.Item(saved.i[159])
         assert(#it[1] > 0 and #it[2] > 0, "Beute aus Text")
+        -- 6.30.6.0: Bilder - Atlas nur, wenn der Client ihn kennt; Ziele aus
+        -- media/questhelper mit Lizenz.
+        for _, f in ipairs({ "slay_mono", "loot_mono", "object_mono" }) do
+            assert(io.open(ROOT .. "/media/questhelper/" .. f .. ".tga", "rb"), f .. " fehlt")
+        end
+        assert(io.open(ROOT .. "/media/questhelper/LICENSE-pfQuest.txt"), "Lizenz der Zielbilder fehlt")
+        local tex = CreateFrame("Frame"):CreateTexture()
+        local oCT = G.C_Texture
+        G.C_Texture = { GetAtlasInfo = function(n) return n == "QuestNormal" and {} or nil end }
+        assert(QH.SetIcon(tex, "avail") == "atlas", "bekannter Atlas nicht genommen")
+        assert(QH.SetIcon(tex, "turnin") == "file", "unbekannter Atlas genommen")
+        G.C_Texture = nil
+        assert(QH.SetIcon(tex, "avail") == "file", "ohne Abfrage Atlas geraten")
+        G.C_Texture = oCT
         WeintCodex.QuestDBData = {
             q = {
                 [1] = { "Erste", 5, 3, 77, 0, {10}, {}, {11}, {}, {12}, {}, {}, {}, {}, {} },

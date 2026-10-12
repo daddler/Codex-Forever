@@ -1810,6 +1810,12 @@ angezeigt“): `QH.Focus()` – eigener Klick auf ein Symbol (`QH.SetFocus`,
 der Questpfeil folgt über `QA.manual`), sonst die vom Spiel verfolgte Quest
 (`C_SuperTrack`, Klick im Questlog), sonst die des Questpfeils; nur Quests
 im Log. `qhAllTargets` zeigt alle.
+**Bilder** (6.30.6.0, nach „die Symbole sehen scheiße aus“): „!“/„?“ sind
+die des Spiels (`QH.ICONS`: Atlas nur, wenn `C_Texture.GetAtlasInfo` ihn
+kennt, sonst `Interface\GossipFrame\…QuestIcon`), grau entsättigt. Ziele:
+`media/questhelper/{slay,loot,object}_mono.tga` aus pfQuest (MIT,
+`LICENSE-pfQuest.txt`) – die übrigen Questie-Bilder sind „all rights
+reserved“ und bleiben draußen.
 
 ## Rechtsklick auf die Minikarte *(6.27.0.0, `ui/minimapclick.lua`, Seite „Karte“)*
 

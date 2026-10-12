@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.6.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Questhilfe nutzt die Questsymbole des Spiels.|r Gelbes „!“ und „?“ wie beim Questgeber, grau, wenn eine Quest zu leicht oder noch nicht fertig ist. Ziele zeigen, was zu tun ist: Schwert zum Besiegen, Beutel für Beute, Zahnrad für Objekte.",
+        },
+    },
+    {
         version = "6.30.5.0",
         date    = "12.10.2026",
         notes   = {

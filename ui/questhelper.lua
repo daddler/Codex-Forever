@@ -56,7 +56,7 @@ QH.FILTERS = {
     { key = "qhAllTargets", text = "Alle Ziele" },
 }
 QH.SIZE = 20          -- "!" und "?" (so gross wie die des Spiels)
-QH.DOT = 9            -- Ziel
+QH.DOT = 16           -- Ziel (Bild: Schwert, Beutel, Zahnrad)
 QH.TICK = 0.05
 QH.GRAY_DIFF = 8      -- Ersatz, wenn der Client keinen Bereich nennt
 
@@ -264,7 +264,7 @@ end
 local forMap = {}
 QH.stats = { built = 0, avail = 0, turnin = 0, target = 0 }
 
-local function Add(out, seen, kind, who, isObj, quest, x, y, faint)
+local function Add(out, seen, kind, who, isObj, quest, x, y, faint, sub)
     local key = kind .. (isObj and "o" or "n") .. who .. ":" .. x .. ":" .. y
     local e = seen[key]
     if e then
@@ -272,7 +272,7 @@ local function Add(out, seen, kind, who, isObj, quest, x, y, faint)
         if not faint then e.faint = false end
         return
     end
-    e = { kind = kind, who = who, obj = isObj, x = x, y = y, quests = { quest }, faint = faint }
+    e = { kind = kind, who = who, obj = isObj, x = x, y = y, quests = { quest }, faint = faint, sub = sub }
     seen[key] = e
     out[#out + 1] = e
 end
@@ -314,19 +314,19 @@ function QH.ForMap(mapID)
             end
             if wantZ and not done and (allZ or id == focus) then
                 for _, npc in ipairs(q[10]) do
-                    QH.Places(d.n[npc], mapID, function(x, y) Add(out, seen, "target", npc, false, id, x, y) end)
+                    QH.Places(d.n[npc], mapID, function(x, y) Add(out, seen, "target", npc, false, id, x, y, nil, "slay") end)
                 end
                 for _, ob in ipairs(q[11]) do
-                    QH.Places(d.o[ob], mapID, function(x, y) Add(out, seen, "target", ob, true, id, x, y) end)
+                    QH.Places(d.o[ob], mapID, function(x, y) Add(out, seen, "target", ob, true, id, x, y, nil, "object") end)
                 end
                 for _, item in ipairs(q[12]) do
                     local src = QH.Item(d.i[item])
                     if src then
                         for _, npc in ipairs(src[1]) do
-                            QH.Places(d.n[npc], mapID, function(x, y) Add(out, seen, "target", npc, false, id, x, y) end)
+                            QH.Places(d.n[npc], mapID, function(x, y) Add(out, seen, "target", npc, false, id, x, y, nil, "loot") end)
                         end
                         for _, ob in ipairs(src[2]) do
-                            QH.Places(d.o[ob], mapID, function(x, y) Add(out, seen, "target", ob, true, id, x, y) end)
+                            QH.Places(d.o[ob], mapID, function(x, y) Add(out, seen, "target", ob, true, id, x, y, nil, "loot") end)
                         end
                     end
                 end
@@ -396,17 +396,10 @@ end
 local function NewPin(holder)
     local p = CreateFrame("Frame", nil, holder)
     p:EnableMouse(true)
-    local disc = K.MEDIA .. "disc"
-    p.halo = p:CreateTexture(nil, "ARTWORK", nil, 1)
-    p.halo:SetTexture(disc)
-    p.halo:SetPoint("TOPLEFT", p, "TOPLEFT", -2, 2)
-    p.halo:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", 2, -2)
-    p.halo:SetVertexColor(0, 0, 0, 0.6)
-    p.core = p:CreateTexture(nil, "ARTWORK", nil, 2)
-    p.core:SetTexture(disc)
-    p.core:SetAllPoints(p)
-    p.mark = K.NewText(p, 13, "OVERLAY")
-    p.mark:SetPoint("CENTER", p, "CENTER", 0, 0)
+    -- Ein Bild je Symbol (6.30.6.0): "!" und "?" vom Spiel, Ziele aus
+    -- media/questhelper (siehe QH.ICONS).
+    p.icon = p:CreateTexture(nil, "ARTWORK")
+    p.icon:SetAllPoints(p)
     p:SetScript("OnEnter", function(self) Tooltip(self) end)
     -- Links: diese Quest waehlen (mehrere: bei jedem Klick die naechste);
     -- rechts: Wahl loesen. Nur Quests aus dem Questlog.
@@ -429,26 +422,56 @@ local function NewPin(holder)
     return p
 end
 
+-- 6.30.6.0 (Beta-Test mit Bild: "die Symbole sehen richtig scheisse aus -
+-- nutz, was Blizzard zur Verfuegung stellt"). "!" und "?" sind die
+-- Questsymbole des Spiels: zuerst als Atlas (nur, wenn der Client ihn
+-- kennt - C_Texture.GetAtlasInfo), sonst die Bilder des Gespraechsfensters,
+-- die es seit dem ersten Tag gibt. Grau = entsaettigt (zu leicht, nicht
+-- fertig). Die Ziele zeigen, was zu tun ist - Schwert (toeten), Beutel
+-- (Beute), Zahnrad (Objekt): Bilder aus pfQuest unter MIT
+-- (media/questhelper/LICENSE-pfQuest.txt), weiss, hier eingefaerbt.
+QH.ICONS = {
+    avail  = { atlas = "QuestNormal",  file = "Interface\\GossipFrame\\AvailableQuestIcon" },
+    turnin = { atlas = "QuestTurnin",  file = "Interface\\GossipFrame\\ActiveQuestIcon" },
+    slay   = { file = "Interface\\AddOns\\WeintCodex\\media\\questhelper\\slay_mono" },
+    loot   = { file = "Interface\\AddOns\\WeintCodex\\media\\questhelper\\loot_mono" },
+    object = { file = "Interface\\AddOns\\WeintCodex\\media\\questhelper\\object_mono" },
+}
+
+local function HasAtlas(name)
+    local ct = _G.C_Texture
+    if not (name and ct and ct.GetAtlasInfo) then return false end
+    local ok, info = pcall(ct.GetAtlasInfo, name)
+    return ok and type(info) == "table"
+end
+
+function QH.SetIcon(tex, which)
+    local d = QH.ICONS[which]
+    if d.atlas and tex.SetAtlas and HasAtlas(d.atlas) then
+        tex:SetAtlas(d.atlas)
+        return "atlas"
+    end
+    tex:SetTexture(d.file)
+    tex:SetTexCoord(0, 1, 0, 1)
+    return "file"
+end
+
 local function Dress(p, e)
     if p.entry == e then return end
     p.entry = e
     local target = e.kind == "target"
     local size = target and QH.DOT or QH.SIZE
     p:SetSize(size, size)
-    local g, b = C.gold, C.blue
+    local which = target and (e.sub or "slay") or e.kind
+    QH.SetIcon(p.icon, which)
+    if p.icon.SetDesaturated then p.icon:SetDesaturated(e.faint and true or false) end
     if target then
-        p.core:SetVertexColor(b[1], b[2], b[3], 1)
-        p.mark:SetText("")
+        local c = C.infoBright
+        p.icon:SetVertexColor(c[1], c[2], c[3], 1)
+    elseif e.faint then
+        p.icon:SetVertexColor(0.85, 0.85, 0.85, 1)
     else
-        -- 6.30.4.0 (Beta-Test mit Bild: "abgabebereit wieder im Blizzard-
-        -- Design - das muss einheitlich"): wie die Questsymbole des Spiels -
-        -- gefuellter Kreis, dunkles Zeichen; gold = jetzt (annehmen,
-        -- abgeben), grau = noch nicht (zu leicht, nicht fertig). Kein
-        -- Durchscheinen mehr: grau ist die Aussage, nicht die Deckkraft.
-        local c = e.faint and C.textMuted or g
-        p.core:SetVertexColor(c[1], c[2], c[3], 1)
-        p.mark:SetText(e.kind == "avail" and "!" or "?")
-        p.mark:SetTextColor(0.1, 0.07, 0.02, 1)
+        p.icon:SetVertexColor(1, 1, 1, 1)
     end
     p:SetAlpha(1)
 end
