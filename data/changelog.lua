@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.29.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFF„Einsamer Wolf“ wird jetzt erkannt.|r Das Talent wird über die Talente des Spiels, den Zauber und deine Buffs gesucht – dann schweigt „Begleiter fehlt“. „/wcui wolf“ zeigt, was gefunden wurde.",
+        },
+    },
+    {
         version = "6.30.28.0",
         date    = "12.10.2026",
         notes   = {

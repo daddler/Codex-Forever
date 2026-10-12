@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.29.0] – 2026-10-12
+
+### Behoben
+- Erinnerungen: „Einsamer Wolf“ über `C_Traits` (aktive Knoten), Zauber
+  (`IsPlayerSpell`) und Aura statt `GetTalentInfo`, das Forever nicht
+  beantwortet. Neu `/wcui wolf` (`R.PetlessReport`).
+
 ## [6.30.28.0] – 2026-10-12
 
 ### Behoben

@@ -434,26 +434,119 @@ end
 local petSeen = false
 
 -- Talent "Einsamer Wolf" (6.30.22.0, Beta-Test: wer ihn nimmt, laesst den
--- Begleiter absichtlich weg - dann ist "Begleiter fehlt" falsch). Gelesen
--- aus den Talenten des Clients, nach Namen; hoechstens alle 5 s.
+-- Begleiter absichtlich weg - dann ist "Begleiter fehlt" falsch).
+-- 6.30.29.0 (Beta-Test: "klappt immer noch nicht"): die alte Abfrage
+-- GetTalentInfo(Baum, Talent) beantwortet Forever nicht - die Talente sind
+-- die des heutigen Spiels (C_ClassTalents/C_Traits, gemessen schon in
+-- 6.8.0.x: GetTalentTabInfo liefert keine Namen). Gefragt wird jetzt auf
+-- drei Wegen, der erste Treffer gilt:
+--   1. die aktiven Talente (C_Traits): ein Knoten mit Rang > 0, dessen
+--      Zauber so heisst
+--   2. der Zauber selbst: der Name loest sich zu einer ID auf und der
+--      Spieler kann ihn (IsPlayerSpell)
+--   3. eine Aura dieses Namens auf dir
+-- Hoechstens alle 5 s; R.petlessFrom sagt, welcher Weg traf (/wcui wolf).
 R.PETLESS = { ["Einsamer Wolf"] = true, ["Lone Wolf"] = true }
 local petlessAt, petless = -10, false
-function R.Petless()
-    local now = (_G.GetTime and _G.GetTime()) or 0
-    if now - petlessAt < 5 then return petless end
-    petlessAt, petless = now, false
-    local tabs = type(_G.GetNumTalentTabs) == "function" and _G.GetNumTalentTabs() or 0
-    for t = 1, (type(tabs) == "number" and tabs or 0) do
-        local n = type(_G.GetNumTalents) == "function" and _G.GetNumTalents(t) or 0
-        for i = 1, (type(n) == "number" and n or 0) do
-            local ok, name, _, _, _, rank = pcall(_G.GetTalentInfo, t, i)
-            if ok and type(name) == "string" and R.PETLESS[name] and type(rank) == "number" and rank > 0 then
-                petless = true
-                return true
+R.petlessFrom = nil
+
+local function Call(fn, ...)
+    if type(fn) ~= "function" then return nil end
+    local ok, a = pcall(fn, ...)
+    if not ok then return nil end
+    return a
+end
+
+local function SpellName(id)
+    local cs = _G.C_Spell
+    local n = cs and Call(cs.GetSpellName, id)
+    if type(K.Plain(n)) ~= "string" then n = Call(_G.GetSpellInfo, id) end
+    n = K.Plain(n)
+    return type(n) == "string" and n or nil
+end
+
+function R.PetlessByTraits()
+    local ct, tr = _G.C_ClassTalents, _G.C_Traits
+    if not (ct and tr and ct.GetActiveConfigID and tr.GetConfigInfo and tr.GetTreeNodes and tr.GetNodeInfo
+            and tr.GetEntryInfo and tr.GetDefinitionInfo) then return nil end
+    local cfg = K.Plain(Call(ct.GetActiveConfigID))
+    if type(cfg) ~= "number" then return nil end
+    local info = Call(tr.GetConfigInfo, cfg)
+    if type(info) ~= "table" or type(info.treeIDs) ~= "table" then return nil end
+    for _, tree in ipairs(info.treeIDs) do
+        local nodes = Call(tr.GetTreeNodes, tree)
+        for _, node in ipairs(type(nodes) == "table" and nodes or {}) do
+            local ni = Call(tr.GetNodeInfo, cfg, node)
+            local rank = type(ni) == "table" and K.Plain(ni.activeRank)
+            if type(rank) == "number" and rank > 0 then
+                local entry = ni.activeEntry and K.Plain(ni.activeEntry.entryID)
+                local ids = type(entry) == "number" and { entry } or ni.entryIDs or {}
+                for _, eid in ipairs(ids) do
+                    local ei = Call(tr.GetEntryInfo, cfg, eid)
+                    local def = type(ei) == "table" and Call(tr.GetDefinitionInfo, ei.definitionID)
+                    local sid = type(def) == "table" and K.Plain(def.spellID)
+                    local n = type(sid) == "number" and SpellName(sid)
+                    if n and R.PETLESS[n] then return true end
+                end
             end
         end
     end
     return false
+end
+
+function R.PetlessBySpell()
+    local cs = _G.C_Spell
+    for name in pairs(R.PETLESS) do
+        local id
+        if cs and cs.GetSpellInfo then
+            local si = Call(cs.GetSpellInfo, name)
+            id = type(si) == "table" and K.Plain(si.spellID) or nil
+        elseif _G.GetSpellInfo then
+            local ok, _, _, _, _, _, _, sid = pcall(_G.GetSpellInfo, name)
+            id = ok and K.Plain(sid) or nil
+        end
+        if type(id) == "number" and K.Bool(Call(_G.IsPlayerSpell, id), false) then return true end
+    end
+    return false
+end
+
+function R.PetlessByAura()
+    local ua = _G.C_UnitAuras
+    if not (ua and ua.GetAuraDataByIndex) then return false end
+    for i = 1, 40 do
+        local a = Call(ua.GetAuraDataByIndex, "player", i, "HELPFUL")
+        if type(a) ~= "table" or K.IsSecret(a) then break end
+        local n = K.Plain(a.name)
+        if type(n) == "string" and R.PETLESS[n] then return true end
+    end
+    return false
+end
+
+function R.Petless()
+    local now = (_G.GetTime and K.Plain(_G.GetTime())) or 0
+    if type(now) ~= "number" then now = 0 end
+    if now - petlessAt < 5 then return petless end
+    petlessAt, petless, R.petlessFrom = now, false, nil
+    for _, way in ipairs({ { "Talente", R.PetlessByTraits }, { "Zauber", R.PetlessBySpell },
+                           { "Aura", R.PetlessByAura } }) do
+        local ok, v = pcall(way[2])
+        if ok and v == true then petless, R.petlessFrom = true, way[1] return true end
+    end
+    return false
+end
+
+-- /wcui wolf: was jeder Weg sagt.
+function R.PetlessReport()
+    petlessAt = -10
+    local out = {}
+    for _, way in ipairs({ { "Talente (C_Traits)", R.PetlessByTraits }, { "Zauber (IsPlayerSpell)", R.PetlessBySpell },
+                           { "Aura", R.PetlessByAura } }) do
+        local ok, v = pcall(way[2])
+        out[#out + 1] = way[1] .. ": " .. (not ok and ("Fehler " .. tostring(v)) or v == nil and "nicht abfragbar"
+            or v and "Einsamer Wolf gefunden" or "nicht gefunden")
+    end
+    out[#out + 1] = "Begleiter-Erinnerung " .. (R.Petless() and "schweigt" or "aktiv")
+    return out
 end
 R._petSeen = function(v) if v ~= nil then petSeen = v end return petSeen end
 
