@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.38.0] – 2026-10-12
+
+### Neu
+- Profil teilen, Fassung 2 (`ui/share.lua`): Hauptschalter, aktives Layout
+  des Spielers (`SH.ImportGameLayout`, als „<Name> (Import)“), abweichende
+  CVars der Kategorien Spiel/Kampf/Standard/Ton (`SH.CVarList`, Grafik, Netz,
+  Konto ausgeschlossen), Tastenbelegung (`SH.ApplyBindings`), Platz des
+  Minikarten-Symbols. Fassung 1 bleibt lesbar. Import nicht im Kampf.
+
 ## [6.30.37.0] – 2026-10-12
 
 ### Neu

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.38.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFProfil-Export nimmt jetzt alles mit.|r Neben allen WeintCodex-Einstellungen auch das aktive Layout des Bearbeitungsmodus (auch ein eigenes), die Einstellungen des Spiels (ohne Grafik), die Tastenbelegung und ob die Oberfläche an ist. Ein importiertes Layout kommt als neues Layout dazu, nie über ein bestehendes.",
+        },
+    },
+    {
         version = "6.30.37.0",
         date    = "12.10.2026",
         notes   = {

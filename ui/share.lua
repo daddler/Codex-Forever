@@ -15,8 +15,21 @@
 -- "WeintCodex" - nie ein Layout des Spielers -, nach Rueckfrage, und wirkt
 -- nach dem Neuladen.
 --
--- Nicht im Text (ganzes Konto, wie bei den Profilen): Hauptschalter,
--- Willkommen, was WeintCodex am Spiel geaendert hat.
+-- SEIT 6.30.38.0 (Wunsch: "Profilimport und Export muss ALLES enthalten,
+-- damit das Interface komplett so nutzbar ist - auch Blizzards
+-- Bearbeitungsmodus, saemtliche Einstellungen"), Fassung 2, zusaetzlich:
+--   * der Hauptschalter der Oberflaeche (an/aus fuer diesen Charakter)
+--   * das AKTIVE Layout des Bearbeitungsmodus, auch ein eigenes des Spielers
+--     (ohne Oberflaeche) - beim Import als NEUES Layout "<Name> (Import)"
+--     angelegt und aktiviert, nie ueber ein bestehendes geschrieben
+--   * die Einstellungen des Spiels (CVars), die vom Standard abweichen -
+--     nur Spiel, Kampf, Oberflaeche und Ton (C_Console-Kategorien), NIE
+--     Grafik, Netz, Konto oder Debug (haengt am Rechner bzw. ist privat)
+--   * die Tastenbelegung des Spiels (alle belegten Befehle)
+--   * der Platz des Minikarten-Symbols
+-- Nicht moeglich ohne Risiko und deshalb nicht dabei: was auf den
+-- Aktionsleisten liegt (je Charakter, Zauber muessen gelernt sein) und
+-- die Chatfenster des Spiels.
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -191,9 +204,140 @@ function SH.ImportLayout(str)
     return true
 end
 
+-- Ein Layout des Spielers als NEUES Layout "<Name> (Import)" (ein
+-- frueheres gleichen Namens wird ersetzt), auf Wunsch aktiv. true, Name / false, Grund.
+function SH.ImportGameLayout(str, name, activate)
+    local em = _G.C_EditMode
+    local PF = WeintCodex.UIProfile
+    if not (em and em.ConvertStringToLayoutInfo and em.SaveLayouts and em.GetLayouts and PF and PF.PresetCount) then
+        return false, "Bearbeitungsmodus kann nicht einlesen"
+    end
+    local ok, l = pcall(em.ConvertStringToLayoutInfo, str)
+    if not ok or type(l) ~= "table" then return false, "Layout nicht lesbar" end
+    local okI, info = pcall(em.GetLayouts)
+    if not okI or type(info) ~= "table" or type(info.layouts) ~= "table" then return false, "Layouts nicht lesbar" end
+    local target = tostring(name or "Layout"):gsub(" %(Import%)$", "") .. " (Import)"
+    l.layoutName = target
+    local LT = _G.Enum and _G.Enum.EditModeLayoutType
+    l.layoutType = LT and LT.Account or l.layoutType
+    local slot
+    for i, x in ipairs(info.layouts) do if x.layoutName == target then slot = i end end
+    slot = slot or (#info.layouts + 1)
+    info.layouts[slot] = l
+    if activate then info.activeLayout = PF.PresetCount() + slot end
+    local okS, err = pcall(em.SaveLayouts, info)
+    if not okS then return false, "SaveLayouts: " .. tostring(err) end
+    if activate and em.SetActiveLayout then pcall(em.SetActiveLayout, info.activeLayout) end
+    return true, target
+end
+
+function SH.ApplyCVars(list)
+    local cv = _G.C_CVar
+    local n, bad = 0, 0
+    if not (cv and cv.SetCVar) then return 0, 0 end
+    for name, v in pairs(list) do
+        local skip = type(name) ~= "string" or type(v) ~= "string"
+        for _, pat in ipairs(SH.CVAR_SKIP) do if not skip and name:find(pat) then skip = true end end
+        if not skip then
+            local ok, r = pcall(cv.SetCVar, name, v)
+            if ok and r ~= false then n = n + 1 else bad = bad + 1 end
+        end
+    end
+    return n, bad
+end
+
+-- Ersetzt die Tastenbelegung: erst alles Belegte loesen, dann setzen, dann
+-- speichern (in den Satz, der gerade gilt: Konto oder Charakter).
+function SH.ApplyBindings(list)
+    local G = _G
+    if type(G.SetBinding) ~= "function" or type(G.GetNumBindings) ~= "function" then return false, 0 end
+    for _, b in ipairs(SH.Bindings() or {}) do
+        for _, key in ipairs(b.k) do pcall(G.SetBinding, key) end
+    end
+    local n = 0
+    for _, b in ipairs(list) do
+        if type(b) == "table" and type(b.c) == "string" and type(b.k) == "table" then
+            for _, key in ipairs(b.k) do
+                if type(key) == "string" and pcall(G.SetBinding, key, b.c) then n = n + 1 end
+            end
+        end
+    end
+    if type(G.SaveBindings) == "function" then
+        local set = type(G.GetCurrentBindingSet) == "function" and G.GetCurrentBindingSet() or 1
+        pcall(G.SaveBindings, set)
+    end
+    return true, #list
+end
+
 --------------------------------------------------
 -- Export und Import
 --------------------------------------------------
+
+-- Das aktive Layout des Spielers (wenn es nicht "WeintCodex" ist): Text, Name.
+function SH.ActiveLayoutString()
+    local em = _G.C_EditMode
+    local PF = WeintCodex.UIProfile
+    if not (em and em.GetLayouts and em.ConvertLayoutInfoToString and PF and PF.PresetCount) then return nil end
+    local ok, info = pcall(em.GetLayouts)
+    if not ok or type(info) ~= "table" or type(info.layouts) ~= "table" then return nil end
+    local a = tonumber(K.Plain(info.activeLayout)) or 0
+    local l = info.layouts[a - PF.PresetCount()]
+    if type(l) ~= "table" or l.layoutName == WeintCodex.UISetup.LAYOUT_NAME then return nil end
+    local okS, str = pcall(em.ConvertLayoutInfoToString, l)
+    if not okS or type(str) ~= "string" or str == "" then return nil end
+    return str, l.layoutName
+end
+
+-- C_Console-Kategorien, die mitgehen (Namen wie im Enum; fehlt das Enum,
+-- gelten die Zahlen des heutigen Spiels).
+SH.CVAR_CATS = { "Game", "Combat", "Default", "Sound" }
+SH.CVAR_SKIP = { "^gx", "^graphics", "^raidGraphics", "^render", "^portal", "^realm", "^account",
+                 "^lastCharacter", "^lastAddon", "^agentUID", "^telemetry", "^launcher", "^cache",
+                 "^installLocale", "^textLocale", "^audioLocale", "^Sound_OutputDriver", "^Sound_.*Device",
+                 "^lastSelected", "^seenTutorial", "^closedInfoFrames", "^flagged", "^moviePlayed",
+                 "^trackedQuests", "^trackedAchievements", "^uiScale$", "^useUiScale$" }
+
+function SH.CVarList()
+    local cc, cv = _G.C_Console, _G.C_CVar
+    if not (cc and cc.GetAllCommands and cv and cv.GetCVar and cv.GetCVarDefault) then return nil end
+    local ok, all = pcall(cc.GetAllCommands)
+    if not ok or type(all) ~= "table" then return nil end
+    local E = _G.Enum and _G.Enum.ConsoleCategory
+    local want = {}
+    for _, n in ipairs(SH.CVAR_CATS) do if E and E[n] then want[E[n]] = true end end
+    local CVAR = _G.Enum and _G.Enum.ConsoleCommandType and _G.Enum.ConsoleCommandType.Cvar
+    local out = {}
+    for _, c in ipairs(all) do
+        local name = type(c) == "table" and K.Plain(c.command)
+        local isVar = CVAR == nil or K.Plain(c.commandType) == CVAR
+        if type(name) == "string" and isVar and (not E or want[K.Plain(c.category)]) then
+            local skip = false
+            for _, pat in ipairs(SH.CVAR_SKIP) do if name:find(pat) then skip = true break end end
+            if not skip then
+                local okV, v = pcall(cv.GetCVar, name)
+                local okD, d = pcall(cv.GetCVarDefault, name)
+                v, d = okV and K.Plain(v), okD and K.Plain(d)
+                if type(v) == "string" and v ~= d then out[name] = v end
+            end
+        end
+    end
+    return out
+end
+
+function SH.Bindings()
+    if type(_G.GetNumBindings) ~= "function" or type(_G.GetBinding) ~= "function" then return nil end
+    local out = {}
+    local ok, n = pcall(_G.GetNumBindings)
+    for i = 1, (ok and tonumber(n) or 0) do
+        local t = { pcall(_G.GetBinding, i, 1) }
+        if t[1] and type(t[2]) == "string" and t[4] then
+            local keys = {}
+            for j = 4, #t do if type(t[j]) == "string" and t[j] ~= "" then keys[#keys + 1] = t[j] end end
+            if #keys > 0 then out[#out + 1] = { c = t[2], k = keys } end
+        end
+    end
+    return out
+end
 
 function SH.Export()
     local ui = K.Root()
@@ -201,9 +345,27 @@ function SH.Export()
     local name = PR.Chosen()
     local p = ui and ui.profiles[name]
     if type(p) ~= "table" then return nil end
-    local data = { v = 1, name = name, profile = p, layout = SH.LayoutString(),
-                   addon = WeintCodex.Version }
+    local gl, gln = SH.ActiveLayoutString()
+    local data = { v = 2, name = name, profile = p, layout = SH.LayoutString(),
+                   addon = WeintCodex.Version,
+                   uiEnabled = K.UIEnabled() and true or false,
+                   gameLayout = gl, gameLayoutName = gln,
+                   cvars = SH.CVarList(), bindings = SH.Bindings(),
+                   launcher = type(ui.launcher) == "table" and ui.launcher or nil }
     return SH.PREFIX .. SH.Encode(SH.Serialize(data))
+end
+
+-- Was ein Text enthaelt, in Worten (fuer die Rueckfrage und den Bericht).
+function SH.Contents(data)
+    local parts = { "alle WeintCodex-Einstellungen und Plätze" }
+    if data.layout then parts[#parts + 1] = "Layout „WeintCodex“" end
+    if data.gameLayout then parts[#parts + 1] = "Layout „" .. tostring(data.gameLayoutName) .. "“ (als neues Layout)" end
+    local n = 0
+    for _ in pairs(type(data.cvars) == "table" and data.cvars or {}) do n = n + 1 end
+    if n > 0 then parts[#parts + 1] = n .. " Spieleinstellungen" end
+    if type(data.bindings) == "table" and #data.bindings > 0 then parts[#parts + 1] = "Tastenbelegung (" .. #data.bindings .. " Befehle)" end
+    if data.uiEnabled ~= nil then parts[#parts + 1] = "Oberfläche " .. (data.uiEnabled and "an" or "aus") end
+    return table.concat(parts, ", ")
 end
 
 -- Liest einen Text: Tabelle oder nil, Grund. Aendert nichts.
@@ -216,8 +378,14 @@ function SH.Parse(text)
     if not raw then return nil, "Text beschädigt" end
     local data, why = SH.Deserialize(raw)
     if type(data) ~= "table" then return nil, why or "Text beschädigt" end
-    if data.v ~= 1 or type(data.profile) ~= "table" then return nil, "unbekannte Fassung" end
+    if (data.v ~= 1 and data.v ~= 2) or type(data.profile) ~= "table" then return nil, "unbekannte Fassung" end
     if data.layout ~= nil and type(data.layout) ~= "string" then data.layout = nil end
+    if type(data.gameLayout) ~= "string" then data.gameLayout, data.gameLayoutName = nil, nil end
+    if type(data.gameLayoutName) ~= "string" then data.gameLayoutName = "Layout" end
+    if type(data.cvars) ~= "table" then data.cvars = nil end
+    if type(data.bindings) ~= "table" then data.bindings = nil end
+    if type(data.launcher) ~= "table" then data.launcher = nil end
+    if type(data.uiEnabled) ~= "boolean" then data.uiEnabled = nil end
     return data
 end
 
@@ -231,11 +399,28 @@ function SH.Apply(data)
     -- Dieselbe Tabelle behalten (K.Profile hat sie vielleicht in der Hand).
     for k in pairs(p) do p[k] = nil end
     for k, v in pairs(PR.DeepCopy(data.profile)) do p[k] = v end
-    local layoutNote
+    local notes = {}
     if data.layout then
         local ok, why = SH.ImportLayout(data.layout)
-        layoutNote = ok and "Layout „WeintCodex“ übernommen." or ("Layout nicht übernommen: " .. tostring(why) .. ".")
+        notes[#notes + 1] = ok and "Layout „WeintCodex“ übernommen." or ("Layout nicht übernommen: " .. tostring(why) .. ".")
     end
+    if data.gameLayout then
+        local ok, why = SH.ImportGameLayout(data.gameLayout, data.gameLayoutName, not data.uiEnabled)
+        notes[#notes + 1] = ok and ("Layout „" .. why .. "“ angelegt.") or ("Layout nicht übernommen: " .. tostring(why) .. ".")
+    end
+    if data.cvars then
+        local n, bad = SH.ApplyCVars(data.cvars)
+        notes[#notes + 1] = n .. " Spieleinstellungen gesetzt" .. (bad > 0 and (", " .. bad .. " nicht") or "") .. "."
+    end
+    if data.bindings then
+        local ok, n = SH.ApplyBindings(data.bindings)
+        notes[#notes + 1] = ok and ("Tastenbelegung übernommen (" .. n .. " Befehle).") or "Tastenbelegung nicht übernommen."
+    end
+    if data.launcher and type(ui.launcher) == "table" then
+        for k, v in pairs(PR.DeepCopy(data.launcher)) do ui.launcher[k] = v end
+    end
+    if data.uiEnabled ~= nil and K.SetUIEnabled then pcall(K.SetUIEnabled, data.uiEnabled) end
+    local layoutNote = #notes > 0 and table.concat(notes, " ") or nil
     if target == PR.Active() then K.MarkReload() end
     K.Fire("setting", "general", "profile")
     return true, target, layoutNote
@@ -332,8 +517,9 @@ function SH.ImportFrom(text)
     -- Die Rueckfrage des Spiels liegt in einer tieferen Schicht - das
     -- Fenster weicht ihr, der Text ist schon gelesen.
     if win then win:Hide() end
-    PR.Confirm("Profil „" .. from .. "“ importieren? Alle Einstellungen und Plätze von „" .. PR.Chosen() .. "“ werden ersetzt"
-        .. (data.layout and ", dazu das Layout „WeintCodex“ des Bearbeitungsmodus." or "."), function()
+    if K.InCombat() then Say("Import nicht im Kampf – Tastenbelegung und Spieleinstellungen sind dann gesperrt.") return false end
+    PR.Confirm("Profil „" .. from .. "“ importieren? Ersetzt wird: " .. SH.Contents(data)
+        .. ". Die WeintCodex-Einstellungen landen in „" .. PR.Chosen() .. "“.", function()
         local ok, target, note = SH.Apply(data)
         if ok then
             Say("Profil in „" .. target .. "“ importiert. " .. (note and (note .. " ") or "") .. "Neu laden, damit es gilt.")
