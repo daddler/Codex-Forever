@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.0.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFQuesthilfe auf der Weltkarte.|r Ein „!“ zeigt, wo neue Quests auf dich warten, ein „?“, wo du abgibst – gold, wenn die Quest fertig ist –, blaue Punkte, wo die Ziele deiner Quests sind. Oben links auf der Karte schaltest du, was du sehen willst. Einschalten: Komfort → Questhilfe.",
+        },
+    },
+    {
         version = "6.29.30.0",
         date    = "12.10.2026",
         notes   = {

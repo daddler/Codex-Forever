@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.29.30.0
+## Version: 6.30.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
 
 #
@@ -108,6 +108,8 @@ data/rares.lua
 data/mapreveal.lua
 # Geistheiler und Uebergaenge auf der Weltkarte (6.21.0.0, erzeugt); gelesen von ui/mapmarks.lua.
 data/mapmarks.lua
+# Questhilfe: Quests, Geber, Ziele (6.30.0.0, erzeugt); gelesen von ui/questhelper.lua.
+data/questdb.lua
 # Stufen und Sammelberufe je Gebiet (6.26.5.0); gelesen von ui/zoneinfo.lua.
 data/zoneinfo.lua
 
@@ -232,6 +234,8 @@ ui/minimapclick.lua
 ui/mapentrances.lua
 # Geistheiler und Uebergaenge auf der Weltkarte (6.21.0.0, Seite "Karte").
 ui/mapmarks.lua
+# Questhilfe auf der Weltkarte (6.30.0.0, Komfort): Verhalten von Questie, eigener Code.
+ui/questhelper.lua
 # Stufen und Sammelberufe auf der Weltkarte (6.26.5.0, Seite "Karte").
 ui/zoneinfo.lua
 # Neues beim Lehrer nach dem Stufenaufstieg (6.26.7.0, Komfort, auch ohne Oberflaeche).

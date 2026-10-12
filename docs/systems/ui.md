@@ -1780,6 +1780,32 @@ schädlichen Effekt am Spieler meldet; `nil` (geheim, keine Schnittstelle)
 zählt wie bisher. Ob „entfernbar“ – das fragt niemand: aus einem Dot geht
 man nicht heraus. `/wcui prüfen` zählt „wegen Effekt still“.
 
+## Questhilfe auf der Karte *(6.30.0.0, `ui/questhelper.lua`, Seite „Questhilfe“)*
+
+Wunsch des Spielers: „so etwas wie Questie, inklusive Karte, mit Filter“.
+Verhalten von Questie, **kein Code** (GPL-3.0). Von Haus aus **aus**, geht
+ohne Oberfläche (`comfort`: `qhOn`, `qhAvail`, `qhLow`, `qhTurnin`,
+`qhTargets`, `qhBar`).
+
+**Bestand:** `data/questdb.lua`, **erzeugt** von
+`.github/scripts/import_questdb.py` aus der Questdatenbank der Community für
+Forever (`QuestieDB_Forever.toc`, Metadaten als Base64 + zlib + CBOR; braucht
+`cbor2`). Nur Namen (deutsch, wo übersetzt), Stufen, Rassen-/Klassenmasken,
+Geber/Abgabe, Ziele (NPC, Objekt, Gegenstand → wer ihn fallen lässt),
+Voraussetzungen, Ausschlüsse, Lagen je uiMapID (Gebiete über
+`areaIdToUiMapId.lua` der Datenbank). Lagen gedeckelt: 6 je Geber, 10 je
+Ziel und Karte. 5010 Quests, ~1 MB. Herkunft `community`: jeder Tooltip
+sagt „Unbestätigt“, kein Spielertext nennt die Quelle.
+
+**Was der Client weiß, fragt die Hilfe ihn:** erledigt
+(`C_QuestLog.IsQuestFlaggedCompleted` – fehlt sie, wird nichts angeboten),
+Questlog und „fertig“ (`C_QuestLog.GetInfo`/`IsComplete`), Stufe, Rasse,
+Klasse, Grau-Bereich (`UnitQuestTrivialLevelRange`, sonst 8).
+**Zeichnen** wie Geistheiler: ein Halter auf `QM.Canvas`, Liste je Karte
+nur nach Ereignissen neu (`QUEST_LOG_UPDATE` gebündelt, 0,2 s), nie im Takt.
+Filterleiste oben links auf der Karte (`WeintCodexQuestFilter`).
+Nur Zonenkarten, keine Minikarte (noch nicht).
+
 ## Rechtsklick auf die Minikarte *(6.27.0.0, `ui/minimapclick.lua`, Seite „Karte“)*
 
 `minimapRightMap` (an): ersetzt `OnMouseUp` an `Minimap` (seit 6.27.0.3, vorher

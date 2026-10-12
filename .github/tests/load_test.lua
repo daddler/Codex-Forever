@@ -1295,6 +1295,96 @@ do
     Check(ok, "Plaketten: Elite goldener Rahmen, Boss rot, sonst keiner" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.30.0.0: Questhilfe - was angenommen werden kann, Abgabe, Ziele je Karte.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local QH = WeintCodex.UIQuestHelper
+        local saved = WeintCodex.QuestDBData
+        WeintCodex.QuestDBData = {
+            q = {
+                [1] = { "Erste", 5, 3, 77, 0, {10}, {}, {11}, {}, {12}, {}, {}, {}, {}, {} },
+                [2] = { "Folge", 6, 4, 0, 0, {10}, {}, {11}, {}, {}, {}, {}, {1}, {}, {} },
+                [3] = { "Horde", 5, 1, 178, 0, {10}, {}, {11}, {}, {}, {}, {}, {}, {}, {} },
+                [4] = { "Alt", 1, 1, 0, 0, {10}, {}, {11}, {}, {}, {}, {}, {}, {}, {} },
+                [5] = { "Im Log", 5, 1, 0, 0, {10}, {}, {11}, {}, {12}, {}, {50}, {}, {}, {} },
+            },
+            n = { [10] = { "Geber", 1429, 0.5, 0.5 }, [11] = { "Abgabe", 1429, 0.6, 0.6, 0, 1411, 0.1, 0.1 },
+                  [12] = { "Wolf", 1429, 0.2, 0.2, 0.3, 0.3 }, [13] = { "Dieb", 1429, 0.9, 0.9 } },
+            o = {},
+            i = { [50] = { {13}, {} } },
+        }
+        local oL, oR, oC, oQ, oT = G.UnitLevel, G.UnitRace, G.UnitClass, G.C_QuestLog, G.UnitQuestTrivialLevelRange
+        G.UnitLevel = function() return 6 end
+        G.UnitRace = function() return "Mensch", "Human", 1 end
+        G.UnitClass = function() return "Krieger", "WARRIOR", 1 end
+        G.UnitQuestTrivialLevelRange = function() return 3 end
+        local done = {}
+        G.C_QuestLog = {
+            IsQuestFlaggedCompleted = function(id) return done[id] == true end,
+            GetNumQuestLogEntries = function() return 1 end,
+            GetInfo = function() return { questID = 5, isHeader = false } end,
+            IsComplete = function() return false end,
+        }
+        QH.ReadLog()
+        local me = QH.Me()
+        local d = WeintCodex.QuestDBData
+        assert(QH.Offer(1, d.q[1], me) == "avail", "Allianzquest nicht angeboten")
+        assert(QH.Offer(2, d.q[2], me) == nil, "Folgequest ohne Vorquest")
+        done[1] = true
+        assert(QH.Offer(2, d.q[2], me) == "avail", "Folgequest nach Vorquest fehlt")
+        assert(QH.Offer(1, d.q[1], me) == nil, "erledigte Quest angeboten")
+        assert(QH.Offer(3, d.q[3], me) == nil, "Hordequest fuer Menschen")
+        assert(QH.Offer(4, d.q[4], me) == "low", "Stufe 1 bei 6 nicht grau")
+        assert(QH.Offer(5, d.q[5], me) == nil, "Quest im Log angeboten")
+        G.C_QuestLog.IsQuestFlaggedCompleted = nil
+        assert(QH.Done(1) == nil, "ohne Abfrage geraten")
+        G.C_QuestLog.IsQuestFlaggedCompleted = function(id) return done[id] == true end
+        K.Set("comfort", "qhOn", true)
+        QH.Refresh()
+        local list = QH.ForMap(1429)
+        local kinds = {}
+        for _, e in ipairs(list) do kinds[e.kind] = (kinds[e.kind] or 0) + 1 end
+        assert(kinds.avail == 1, "Geber nicht zusammengefasst: " .. tostring(kinds.avail))
+        assert(kinds.turnin == 1, "Abgabe fehlt")
+        assert(kinds.target == 3, "Ziele (2 Woelfe + Dieb aus Beute): " .. tostring(kinds.target))
+        local giver
+        for _, e in ipairs(list) do if e.kind == "avail" then giver = e end end
+        assert(#giver.quests == 1, "nur Quest 2 ist offen (1 erledigt, 3 Horde, 4 grau aus)")
+        K.Set("comfort", "qhLow", true)
+        QH.Refresh()
+        for _, e in ipairs(QH.ForMap(1429)) do if e.kind == "avail" then giver = e end end
+        assert(#giver.quests == 2, "graue Quest nicht dazu")
+        assert(#QH.ForMap(1411) == 1, "Abgabe auf zweiter Karte fehlt")
+        -- Filterleiste und Symbole auf der Karte
+        local hadMap = G.WorldMapFrame
+        local wm = type(hadMap) == "table" and hadMap or CreateFrame("Frame")
+        G.WorldMapFrame = wm
+        local oShown, oMap, oCanvas = wm.IsShown, wm.GetMapID, wm.GetCanvas
+        local canvas = CreateFrame("Frame")
+        canvas.GetWidth = function() return 1000 end
+        canvas.GetHeight = function() return 660 end
+        wm.IsShown = function() return true end
+        wm.GetMapID = function() return 1429 end
+        wm.GetCanvas = function() return canvas end
+        QH.ShowBar()
+        assert(QH.bar and #QH.bar.chips == #QH.FILTERS, "Filterleiste fehlt")
+        assert(QH.Place() == #QH.ForMap(1429), "Symbole nicht gesetzt")
+        QH.bar.chips[1]:GetScript("OnClick")(QH.bar.chips[1])
+        assert(K.Get("comfort", "qhAvail") == false, "Filter schaltet nicht")
+        QH.bar.chips[1]:GetScript("OnClick")(QH.bar.chips[1])
+        wm.IsShown, wm.GetMapID, wm.GetCanvas = oShown, oMap, oCanvas
+        G.WorldMapFrame = hadMap
+        K.Set("comfort", "qhLow", nil)
+        K.Set("comfort", "qhOn", nil)
+        G.UnitLevel, G.UnitRace, G.UnitClass, G.C_QuestLog, G.UnitQuestTrivialLevelRange = oL, oR, oC, oQ, oT
+        WeintCodex.QuestDBData = saved
+        QH.Refresh()
+    end)
+    Check(ok, "Questhilfe: Angebot nach Stufe/Rasse/Vorquest, Abgabe, Ziele samt Beute je Karte"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.26.1.0: Kamera - Rueckgabe vergleicht Zahlen als Zahlen; einmalige
 -- Reparatur der Testeinstellungen auf den Wert ab Werk.
 do
@@ -16875,9 +16965,9 @@ do
             assert(QoL.PAGE_ORDER[p.key], "Seite ohne Thema: " .. p.key)
         end
         local order = table.concat(keys, ",")
-        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,karte,sammeln,glitzern,selten,auktion,fluestern,gespraeche",
+        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,gespraeche",
             "Reihenfolge: " .. order)
-        assert(O.PageIndex("comfort", "gespraeche") == 13 and O.PageIndex("comfort", "fluestern") == 12, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 14 and O.PageIndex("comfort", "fluestern") == 13, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")
@@ -16950,7 +17040,7 @@ do
         if WL.IsShown() then WL.Close() end
         -- Update von 6.26.7.0: Account hat geantwortet, dieser Charakter ist Stufe 20.
         ui.asked, ui.welcomed, ui.later = true, nil, nil
-        G.UnitLevel = function() return 20 end
+        G.UnitLevel = function() return 6 end
         assert(WL.Migrate() and ui.welcomed[key] and WL.Asked(), "alter Charakter nach dem Update erneut gefragt")
         -- Neuer Charakter (Stufe 1, unbekannt): wird gefragt.
         local sd = WeintCodex.SavedData
@@ -17379,7 +17469,7 @@ do
                      GetItemInfo = function() return "Gebratener Eber", nil, nil, nil, 5 end,
                      GetItemIconByID = function() return 1 end }
         G.C_TooltipInfo = { GetItemByID = function() return { lines = { { leftText = "Benutzen: Wenn Ihr 10 Sek. esst, seid Ihr wohlgenährt." } } } end }
-        G.UnitLevel = function() return 20 end
+        G.UnitLevel = function() return 6 end
         G.GetMaxPlayerLevel = function() return 60 end
         local helpful = {}
         G.C_UnitAuras = { GetAuraDataByIndex = function(_, i, f) if f == "HELPFUL" then return helpful[i] end end }

@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.0.0] – 2026-10-12
+
+### Neu
+- Questhilfe auf der Weltkarte (`ui/questhelper.lua`, Komfort → Questhilfe,
+  ab Werk aus): neue Quests („!“), Abgabe („?“), Ziele (Punkte) mit
+  Filterleiste auf der Karte. Bestand `data/questdb.lua`, erzeugt von
+  `.github/scripts/import_questdb.py` (5010 Quests, Herkunft `community`).
+
 ## [6.29.30.0] – 2026-10-12
 
 ### Neu
