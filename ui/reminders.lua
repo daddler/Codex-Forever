@@ -432,6 +432,29 @@ local function InInstance()
 end
 
 local petSeen = false
+
+-- Talent "Einsamer Wolf" (6.30.22.0, Beta-Test: wer ihn nimmt, laesst den
+-- Begleiter absichtlich weg - dann ist "Begleiter fehlt" falsch). Gelesen
+-- aus den Talenten des Clients, nach Namen; hoechstens alle 5 s.
+R.PETLESS = { ["Einsamer Wolf"] = true, ["Lone Wolf"] = true }
+local petlessAt, petless = -10, false
+function R.Petless()
+    local now = (_G.GetTime and _G.GetTime()) or 0
+    if now - petlessAt < 5 then return petless end
+    petlessAt, petless = now, false
+    local tabs = type(_G.GetNumTalentTabs) == "function" and _G.GetNumTalentTabs() or 0
+    for t = 1, (type(tabs) == "number" and tabs or 0) do
+        local n = type(_G.GetNumTalents) == "function" and _G.GetNumTalents(t) or 0
+        for i = 1, (type(n) == "number" and n or 0) do
+            local ok, name, _, _, _, rank = pcall(_G.GetTalentInfo, t, i)
+            if ok and type(name) == "string" and R.PETLESS[name] and type(rank) == "number" and rank > 0 then
+                petless = true
+                return true
+            end
+        end
+    end
+    return false
+end
 R._petSeen = function(v) if v ~= nil then petSeen = v end return petSeen end
 
 local function WeaponText(hand)
@@ -627,7 +650,7 @@ function R.Check(rule)
     elseif kind == "pet" then
         local has = K.Bool(_G.UnitExists and _G.UnitExists("pet"), true)
         if has then petSeen = true return nil end
-        if not petSeen then return nil end
+        if not petSeen or R.Petless() then return nil end
         if K.Bool(_G.IsMounted and _G.IsMounted(), false) or K.Bool(_G.UnitOnTaxi and _G.UnitOnTaxi("player"), false)
            or K.Bool(_G.UnitIsDeadOrGhost and _G.UnitIsDeadOrGhost("player"), false) then
             return nil

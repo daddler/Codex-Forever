@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.22.0] – 2026-10-12
+
+### Behoben
+- Erinnerungen: „Begleiter fehlt“ schweigt, wenn das Talent „Einsamer Wolf“
+  gelernt ist (`R.Petless`, Talente des Clients nach Namen, alle 5 s).
+  Wirkt auf bestehende Regeln ohne Änderung.
+
 ## [6.30.21.0] – 2026-10-12
 
 ### Neu

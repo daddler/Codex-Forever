@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.22.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFKeine Begleiter-Erinnerung mit „Einsamer Wolf“.|r Wer als Jäger das Talent gelernt hat, lässt den Begleiter absichtlich weg – „Begleiter fehlt“ meldet sich dann nicht mehr. Bestehende Erinnerungen gelten sofort.",
+        },
+    },
+    {
         version = "6.30.21.0",
         date    = "12.10.2026",
         notes   = {
