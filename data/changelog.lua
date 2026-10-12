@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.2.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Filterleiste der Questhilfe verdeckt nichts mehr.|r Sie hängt jetzt unter dem Kartenfenster statt oben links auf der Karte, wo sie deinen Pfeil zudeckte.",
+        },
+    },
+    {
         version = "6.30.1.0",
         date    = "12.10.2026",
         notes   = {

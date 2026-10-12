@@ -1803,7 +1803,7 @@ Questlog und „fertig“ (`C_QuestLog.GetInfo`/`IsComplete`), Stufe, Rasse,
 Klasse, Grau-Bereich (`UnitQuestTrivialLevelRange`, sonst 8).
 **Zeichnen** wie Geistheiler: ein Halter auf `QM.Canvas`, Liste je Karte
 nur nach Ereignissen neu (`QUEST_LOG_UPDATE` gebündelt, 0,2 s), nie im Takt.
-Filterleiste oben links auf der Karte (`WeintCodexQuestFilter`).
+Filterleiste unter dem Kartenfenster (`WeintCodexQuestFilter`, seit 6.30.2.0 – auf der Karte verdeckte sie den Spielerpfeil).
 Nur Zonenkarten, keine Minikarte (noch nicht).
 **Ziele nur der gewählten Quest** (6.30.1.0, Beta-Test: „immer alles
 angezeigt“): `QH.Focus()` – eigener Klick auf ein Symbol (`QH.SetFocus`,

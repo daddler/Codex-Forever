@@ -10,7 +10,7 @@
 -- der Questdatenbank der Community fuer Forever - nur Namen, Stufen und
 -- Lagen. Herkunft `community`: jeder Tooltip sagt "Unbestätigt".
 --
--- WAS GEZEIGT WIRD, je Filter (Leiste oben links auf der Karte, dieselben
+-- WAS GEZEIGT WIRD, je Filter (Leiste unter dem Kartenfenster, dieselben
 -- Schalter auf der Seite "Questhilfe" im Komfort):
 --   Neue Quests  "!" am Geber jeder Quest, die du annehmen kannst: Stufe
 --                erreicht, Rasse/Klasse passt, nicht erledigt, nicht im
@@ -454,9 +454,13 @@ function QH.BuildBar()
     if bar then return bar end
     local wm = _G.WorldMapFrame
     if type(wm) ~= "table" then return nil end
-    local host = type(wm.ScrollContainer) == "table" and wm.ScrollContainer or wm
+    -- 6.30.2.0 (Beta-Test mit Bild: "die Leiste verdeckt meinen
+    -- Charakterpfeil"): nicht mehr auf der Karte, sondern unter dem
+    -- Fenster - sie verdeckt nichts von der Karte. Am unteren Bildrand
+    -- haelt das Spiel sie im Bild (ClampedToScreen).
     bar = CreateFrame("Frame", "WeintCodexQuestFilter", wm)
-    bar:SetPoint("TOPLEFT", host, "TOPLEFT", 8, -8)
+    bar:SetPoint("TOPLEFT", wm, "BOTTOMLEFT", 0, -4)
+    if bar.SetClampedToScreen then bar:SetClampedToScreen(true) end
     bar:SetHeight(24)
     bar:SetFrameStrata("HIGH")
     bar.kachel = K.Kachel(bar, { shadow = 3 })
@@ -612,7 +616,7 @@ function QH.StatusLines()
 end
 
 local function Build(B)
-    B:Section("Questhilfe", "Auf der Weltkarte: wo neue Quests warten, wo du abgibst und wo die Ziele deiner Quests sind. Oben links auf der Karte schaltest du, was du sehen willst.")
+    B:Section("Questhilfe", "Auf der Weltkarte: wo neue Quests warten, wo du abgibst und wo die Ziele deiner Quests sind. Unter dem Kartenfenster schaltest du, was du sehen willst.")
     B:Row({ type = "toggle", label = "Questhilfe auf der Karte", key = "qhOn",
             description = "Wissensstand der Community für Forever – unbestätigt. Nur auf der Karte einer Zone." },
           { type = "toggle", label = "Filterleiste auf der Karte", key = "qhBar",

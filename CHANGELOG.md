@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.2.0] – 2026-10-12
+
+### Behoben
+- Questhilfe: Filterleiste unter dem Kartenfenster statt auf der Karte –
+  sie verdeckte den Spielerpfeil.
+
 ## [6.30.1.0] – 2026-10-12
 
 ### Geändert
