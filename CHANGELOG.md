@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.36.0] – 2026-10-12
+
+### Neu
+- Flüstern: Zahnrad in der Kopfzeile (`MS.OpenSettings`, Seite „Flüstern“);
+  Abschnitt „Schrift“ mit `msgFont` (`MS.FONTS`), `msgSize` 9–20,
+  `msgColorIn`/`msgColorOut`/`msgColorMe` (`MS.ApplyFont`).
+
 ## [6.30.35.0] – 2026-10-12
 
 ### Behoben

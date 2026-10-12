@@ -70,7 +70,41 @@ MS.DEFAULTS = {
     msgDirect   = true,   -- selbst senden; 6.30.34.0 ab Werk an (sperrt das Spiel, schaltet es sich ab)
     msgHideChat = true,   -- Gefluestertes nur im Fenster, nicht im Chat (6.19.1.0)
     msgIcon     = true,   -- Symbol zum Oeffnen (6.19.1.0)
+    -- 6.30.36.0 (Wunsch: "Schriftfarbe, Schriftart etc."):
+    msgFont     = "sans",
+    msgSize     = 12,
+    msgColorIn  = K.ColorDefault("textBright"),
+    msgColorOut = K.ColorDefault("textNormal"),
+    msgColorMe  = K.ColorDefault("accent"),
 }
+
+-- Schriften zur Wahl: Schluessel in WeintCodex.Fonts, dazu die des Spiels.
+MS.FONTS = {
+    { value = "sans",     text = "IBM Plex Sans (Standard)" },
+    { value = "hudSemi",  text = "IBM Plex Condensed" },
+    { value = "inter",    text = "Inter" },
+    { value = "roboto",   text = "Roboto Condensed" },
+    { value = "fira",     text = "Fira Sans Condensed" },
+    { value = "barlow",   text = "Barlow Condensed" },
+    { value = "exo",      text = "Exo 2" },
+    { value = "serif",    text = "Newsreader (Serif)" },
+    { value = "mono",     text = "IBM Plex Mono" },
+    { value = "game",     text = "Schrift des Spiels" },
+}
+function MS.FontPath()
+    local k = K.Get(KEY, "msgFont")
+    if k == "game" then return _G.STANDARD_TEXT_FONT or F.sans end
+    return (type(k) == "string" and F[k]) or F.sans
+end
+function MS.FontSize()
+    local n = tonumber(K.Get(KEY, "msgSize")) or 12
+    return math.max(9, math.min(20, n))
+end
+local function ColorArr(key)
+    local c = K.GetColor(KEY, key)
+    return { c.r, c.g, c.b }
+end
+MS.ColorArr = ColorArr
 
 MS.MAX_LINES = 200        -- je Gespraech, nur diese Sitzung
 MS.MAX_CONV  = 8          -- so viele Gespraeche in der Liste
@@ -206,7 +240,7 @@ end
 
 function MS.Format(c, line, prev)
     if MS.SameBlock(prev, line) then
-        local col = line.kind == "out" and C.textNormal or C.textBright
+        local col = ColorArr(line.kind == "out" and "msgColorOut" or "msgColorIn")
         local pad = (Get("stamps") and _G.date) and "|c" .. Hex(C.textMuted) .. _G.date("%H:%M", line.t) .. "|r  " or ""
         return pad .. "|c" .. Hex(col) .. line.text .. "|r"
     end
@@ -217,8 +251,8 @@ function MS.Format(c, line, prev)
     if line.kind == "sys" then
         return out .. "|c" .. Hex(C.textMuted) .. line.text .. "|r"
     end
-    local who = line.kind == "out" and ("|c" .. Hex(C.accent) .. "Du|r") or MS.LinkedName(c)
-    local col = line.kind == "out" and C.textNormal or C.textBright
+    local who = line.kind == "out" and ("|c" .. Hex(ColorArr("msgColorMe")) .. "Du|r") or MS.LinkedName(c)
+    local col = ColorArr(line.kind == "out" and "msgColorOut" or "msgColorIn")
     return out .. who .. ": |c" .. Hex(col) .. line.text .. "|r"
 end
 
@@ -362,6 +396,30 @@ local function Build()
     markBtn.t:SetTextColor(m[1], m[2], m[3])
     markBtn.t:SetText("Markieren")
     markBtn:SetScript("OnClick", function() MS.SetCopyMode(not MS.copyMode) end)
+    markBtn:ClearAllPoints()
+
+    -- Zahnrad (6.30.36.0): direkt zu den Einstellungen des Messengers.
+    local gear = CreateFrame("Button", nil, win)
+    gear:SetSize(18, 18)
+    gear:SetPoint("RIGHT", close, "LEFT", -4, 0)
+    gear.tex = gear:CreateTexture(nil, "ARTWORK")
+    gear.tex:SetAllPoints(gear)
+    gear.tex:SetTexture(K.MEDIA .. "icon_gear")
+    gear.tex:SetVertexColor(m[1], m[2], m[3])
+    gear:SetScript("OnEnter", function(self)
+        local b = C.textBright
+        self.tex:SetVertexColor(b[1], b[2], b[3])
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText("Einstellungen", 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    gear:SetScript("OnLeave", function(self)
+        self.tex:SetVertexColor(m[1], m[2], m[3])
+        GameTooltip:Hide()
+    end)
+    gear:SetScript("OnClick", function() MS.OpenSettings() end)
+    MS.gear = gear
+    markBtn:SetPoint("RIGHT", gear, "LEFT", -4, 0)
 
     smf = CreateFrame("ScrollingMessageFrame", nil, win)
     smf:SetPoint("TOPLEFT", win, "TOPLEFT", MS.LIST_W + 12, -44)
@@ -482,9 +540,30 @@ local function Build()
     win:SetScript("OnShow", function() MS.UpdateIcon() end)
     MS.win, MS.smf, MS.input, MS.title, MS.sub, MS.foot, MS.rows = win, smf, input, title, sub, foot, rows
     MS.copy, MS.copyEdit, MS.markBtn = copy, copyEdit, markBtn
+    MS.ApplyFont()
     return win
 end
 MS.Build = Build
+
+function MS.OpenSettings()
+    local O = WeintCodex.UIOptions
+    local m = K.Module(KEY)
+    if not (O and O.Show and m) then return false end
+    if O.SortPages then O.SortPages(m) end
+    local idx
+    for i, pg in ipairs(m.pages) do if pg.key == "fluestern" then idx = i end end
+    O.Show(KEY, idx)
+    return true
+end
+
+-- Schrift auf Verlauf, Eingabe und Markieren (nach jeder Einstellung).
+function MS.ApplyFont()
+    if not win then return end
+    local path, size = MS.FontPath(), MS.FontSize()
+    for _, w in ipairs({ smf, input, copyEdit }) do
+        if w and w.SetFont and not pcall(w.SetFont, w, path, size, "") then pcall(w.SetFont, w, F.sans, size, "") end
+    end
+end
 
 -- Breite des Textfelds zum Markieren folgt dem Fenster.
 function MS.Resized()
@@ -1137,6 +1216,7 @@ local function Apply()
         MS.pending, MS.folded = nil, nil
         if win then win:Hide() end
     elseif win and win:IsShown() then
+        MS.ApplyFont()
         MS.Redraw()
     end
     MS.UpdateIcon()
@@ -1187,6 +1267,14 @@ local function BuildPage(B)
           { type = "toggle", label = "Uhrzeit", key = "msgStamps", disabled = off })
     B:Row({ type = "toggle", label = "Direkt aus dem Fenster senden", key = "msgDirect", disabled = off,
             description = "Schreiben und Enter direkt im Fenster. Sperrt das Spiel es, schaltet sich das von selbst ab, und Antworten gehen über die Chatzeile." })
+    B:Section("Schrift", "Gilt für Verlauf und Eingabe im Fenster.")
+    B:Row({ type = "dropdown", label = "Schriftart", key = "msgFont", items = MS.FONTS, disabled = off },
+          { type = "slider", label = "Größe", key = "msgSize", min = 9, max = 20, step = 1, disabled = off,
+            format = function(v) return string.format("%d px", v) end })
+    B:Row({ type = "color", label = "Text anderer", key = "msgColorIn", disabled = off },
+          { type = "color", label = "Eigener Text", key = "msgColorOut", disabled = off })
+    B:Row({ type = "color", label = "„Du“", key = "msgColorMe", disabled = off,
+            description = "Die Namen der anderen stehen in ihrer Klassenfarbe." })
     B:Note("Fenster und Symbol lassen sich mit der Maus ziehen. Esc schließt das Fenster, die Gespräche bleiben bis zum Ausloggen.")
 end
 MS.BuildPage = BuildPage

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.36.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFZahnrad und Schrift im Flüster-Messenger.|r Das Zahnrad oben im Fenster führt zu seinen Einstellungen. Dort lassen sich Schriftart, Größe und die Farben für fremden Text, eigenen Text und „Du“ einstellen.",
+        },
+    },
+    {
         version = "6.30.35.0",
         date    = "12.10.2026",
         notes   = {
