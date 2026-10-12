@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.23.0] – 2026-10-12
+
+### Behoben
+- Minikarte: `MinimapCluster` nimmt selbst keine Maus mehr; Auren unter
+  seiner Fläche zeigen wieder Tooltips (gemessen mit `/wcui maus`).
+
 ## [6.30.22.0] – 2026-10-12
 
 ### Behoben

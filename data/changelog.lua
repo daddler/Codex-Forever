@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.23.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFTooltips für Buffs und Debuffs neben der Minikarte.|r Der Bereich um die Karte fing die Maus ab, sodass Auren dort keinen Tooltip zeigten.",
+        },
+    },
+    {
         version = "6.30.22.0",
         date    = "12.10.2026",
         notes   = {

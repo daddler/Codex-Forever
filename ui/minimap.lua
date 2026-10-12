@@ -695,6 +695,14 @@ local function Apply()
         f:SetAlpha(off and 0 or 1)
         if f.EnableMouse then f:EnableMouse(not off) end
     end
+    -- Der Bereich selbst nimmt die Maus nicht (6.30.23.0, Beta-Test: Buffs
+    -- und Debuffs neben der Karte zeigten keinen Tooltip - /wcui maus nannte
+    -- MinimapCluster als Rahmen unter der Maus). Seine Kinder (Karte,
+    -- Knoepfe) behalten sie; der Bearbeitungsmodus hat eigene Auswahlflaechen.
+    if type(cluster) == "table" and cluster.EnableMouse
+       and not (cluster.IsProtected and cluster:IsProtected() and _G.InCombatLockdown and _G.InCombatLockdown()) then
+        pcall(cluster.EnableMouse, cluster, false)
+    end
     if type(cluster) == "table" then
         Fade(cluster.BorderTop, square)
         Fade(cluster.ZoneTextButton, Opt("zoneText"))
