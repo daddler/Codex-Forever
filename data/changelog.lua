@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.3.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFKeine doppelten Koordinaten mehr auf der Weltkarte.|r Zeigt die Karte schon eigene Koordinaten, blendet WeintCodex seine Zeile aus.",
+        },
+    },
+    {
         version = "6.30.2.0",
         date    = "12.10.2026",
         notes   = {

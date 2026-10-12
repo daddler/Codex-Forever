@@ -325,6 +325,36 @@ local function FormatCoord(x, y)
     return (string.format("%.1f · %.1f", x * 100, y * 100):gsub("%.(%d)", ",%1"))
 end
 
+-- 6.30.3.0 (Beta-Test mit Bild: "2x Koordinaten - lass die der Karte"):
+-- zeigt die Karte schon eigene Koordinaten ("Spielercharakter: 35.6, 6.6",
+-- vom Spiel oder einem anderen Addon), tritt unsere Zeile zurueck. Gesucht
+-- wird beim Oeffnen der Karte, vier Ebenen tief, nur nach Schrift.
+QoL.FOREIGN_COORDS = { "spielercharakter", "mauszeiger", "player:", "cursor:" }
+function QoL.MapHasCoords(root)
+    local found = false
+    local function Look(f, depth)
+        if found or type(f) ~= "table" or depth > 4 or f == coords then return end
+        if f.GetRegions then
+            for _, r in ipairs({ f:GetRegions() }) do
+                if r.GetObjectType and r:GetObjectType() == "FontString" and r.GetText then
+                    local t = K.Plain(r:GetText())
+                    if type(t) == "string" then
+                        t = t:lower()
+                        for _, w in ipairs(QoL.FOREIGN_COORDS) do
+                            if t:find(w, 1, true) then found = true return end
+                        end
+                    end
+                end
+            end
+        end
+        if f.GetChildren then
+            for _, c in ipairs({ f:GetChildren() }) do Look(c, depth + 1) end
+        end
+    end
+    Look(root, 0)
+    return found
+end
+
 local function EnsureCoords()
     if coords then return coords end
     local wm = _G.WorldMapFrame
@@ -335,12 +365,20 @@ local function EnsureCoords()
     coords:SetFrameStrata("HIGH")
     coords.text = K.NewText(coords)
     coords.text:SetPoint("CENTER", coords, "CENTER", 0, 0)
+    local function Check() coords.foreign = QoL.MapHasCoords(wm) end
+    -- Kind der Karte: zeigt sich mit ihr - kein Haken am Rahmen des Spiels.
+    coords:SetScript("OnShow", function()
+        Check()
+        local t = _G.C_Timer
+        if t and t.After then t.After(1, Check) end
+    end)
+    Check()
     local acc = 0
     coords:SetScript("OnUpdate", K.Measured("Komfort", function(self, el)
         acc = acc + (el or 0)
         if acc < 0.1 then return end
         acc = 0
-        if not On("mapCoords") then self.text:SetText("") return end
+        if not On("mapCoords") or self.foreign then self.text:SetText("") return end
         K.SetFont(self.text, 12)
         local mapID = wm.GetMapID and wm:GetMapID()
         -- Ohne Vektor je Abfrage (K.PlayerMapXY, 6.14.0.2).
@@ -485,7 +523,7 @@ K.Register({
                          description = "Nach dem Aufstieg ein Fenster mit den Zaubern, die du jetzt lernen kannst, und was sie kosten. Ihre Zahl steht am Symbol an der Minikarte." }))
             B:Section("Karte")
             B:Row(Row2({ type = "toggle", label = "Koordinaten auf der Weltkarte", key = "mapCoords",
-                         description = "Deine Position und die des Mauszeigers." }))
+                         description = "Deine Position und die des Mauszeigers. Zeigt die Karte schon eigene Koordinaten, bleibt diese Zeile weg." }))
             B:Note("Kampfhinweis, Bildrate und Haltbarkeitswarnung verschiebst du im Gestaltungsmodus.")
         end },
     },

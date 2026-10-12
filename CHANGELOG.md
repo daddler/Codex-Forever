@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.3.0] – 2026-10-12
+
+### Behoben
+- Komfort „Koordinaten auf der Weltkarte“: tritt zurück, wenn die Karte
+  schon Koordinaten zeigt (`QoL.MapHasCoords`, Suche beim Öffnen).
+
 ## [6.30.2.0] – 2026-10-12
 
 ### Behoben

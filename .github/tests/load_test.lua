@@ -1402,6 +1402,24 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.30.3.0: eigene Kartenkoordinaten treten zurueck, wenn die Karte schon welche zeigt.
+do
+    local ok, err = pcall(function()
+        local QoL = WeintCodex.UIComfort
+        local root = CreateFrame("Frame")
+        local kid = CreateFrame("Frame", nil, root)
+        local fs = { GetObjectType = function() return "FontString" end, GetText = function() return "Spielercharakter: 35.6, 6.6" end }
+        root.GetChildren = function() return kid end
+        root.GetRegions = function() return end
+        kid.GetChildren = function() return end
+        kid.GetRegions = function() return fs end
+        assert(QoL.MapHasCoords(root), "Koordinaten der Karte nicht gefunden")
+        fs.GetText = function() return "Steinkrallengebirge" end
+        assert(not QoL.MapHasCoords(root), "Gebietsname als Koordinaten")
+    end)
+    Check(ok, "Kartenkoordinaten: eigene Zeile weicht denen der Karte" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.26.1.0: Kamera - Rueckgabe vergleicht Zahlen als Zahlen; einmalige
 -- Reparatur der Testeinstellungen auf den Wert ab Werk.
 do
