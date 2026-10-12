@@ -167,7 +167,7 @@ function MS.Ensure(key, name, target, bn)
         -- Battle.net: die Nummer gilt nur eine Sitzung - ein gespeichertes
         -- Gespraech derselben Person (Name) wird das neue.
         for k, old in pairs(conv) do
-            if old.bn and old.name == name and old.restored then
+            if old.bn and old.name == name and old.restored and (old.char == nil or old.char == MS.Me()) then
                 conv[k] = nil
                 for i = #order, 1, -1 do if order[i] == k then table.remove(order, i) end end
                 if MS.current == k then MS.current = key end
@@ -655,7 +655,8 @@ function MS.Redraw()
         local r = rows[i] or NewRow(i)
         r.key = key
         r.label:SetText(WeintCodex.Truncate and WeintCodex.Truncate(c.name, 14) or c.name)
-        r.preview:SetText(MS.Preview(c))
+        local rcv = MS.Receiver(c)
+        r.preview:SetText((rcv and ("@" .. rcv .. " · ") or "") .. MS.Preview(c))
         local kc = c.bn and C.battlenet or C.whisper
         r.kind:SetText(c.bn and "BN" or "W")
         r.kind:SetTextColor(kc[1], kc[2], kc[3])
@@ -684,7 +685,9 @@ function MS.Redraw()
     else
         title:SetText(MS.NameText(c))
         local kc = c.bn and C.battlenet or C.whisper
-        sub:SetText("|c" .. Hex(kc) .. (c.bn and "Battle.net" or "Flüstern im Spiel") .. "|r")
+        local rcv = MS.Receiver(c)
+        sub:SetText("|c" .. Hex(kc) .. (c.bn and "Battle.net" or "Flüstern im Spiel") .. "|r"
+            .. (rcv and ("  ·  erhalten mit " .. rcv) or ""))
         local prev
         for _, line in ipairs(c.lines) do
             if prev and not MS.SameBlock(prev, line) then smf:AddMessage(" ") end
@@ -951,41 +954,80 @@ function MS.Prune(lines, now)
     return out
 end
 
-function MS.Restore(store)
-    store = store or _G.WeintCodex_Whispers
-    if not Get("keep") or type(store) ~= "table" or type(store.conv) ~= "table" then return 0 end
+-- 6.30.44.0 (Wunsch: "accountweit - Whisper mit einem Char einsehen, die
+-- ein anderer erhalten hat", vom Spieler entschieden im Wissen, dass diese
+-- Datei im Konto-Ordner liegt, den auch die Companion-App liest):
+-- WeintCodex_WhispersAccount = { v = 2, chars = { ["Name-Realm"] = { conv, order } } }.
+-- Jedes Gespraech merkt sich, wer es erhalten hat (c.char); Gespraeche
+-- anderer Charaktere stehen mit in der Liste, Schluessel "Char|key".
+-- Die Datei je Charakter (6.30.43.0) wird einmal uebernommen und geleert.
+
+local function Me() return K.CharKey and K.CharKey() or nil end
+MS.Me = Me
+
+local function RestoreOne(charKey, store, mine)
+    if type(store) ~= "table" or type(store.conv) ~= "table" then return 0 end
     local n = 0
     local keys = type(store.order) == "table" and store.order or {}
     for i = #keys, 1, -1 do
         local key = keys[i]
         local s = store.conv[key]
-        if type(key) == "string" and type(s) == "table" and type(s.name) == "string" and not conv[key] then
+        local ck = mine and key or (tostring(charKey) .. "|" .. tostring(key))
+        if type(key) == "string" and type(s) == "table" and type(s.name) == "string" and not conv[ck] then
             local lines = MS.Prune(s.lines)
             if #lines > 0 then
-                conv[key] = { key = key, name = s.name, target = (not s.bn) and s.target or nil, bn = s.bn and true or false,
-                              class = s.class, lines = lines, unread = 0, restored = true }
-                Touch(key)
+                conv[ck] = { key = ck, name = s.name, target = (not s.bn) and s.target or nil, bn = s.bn and true or false,
+                             class = s.class, lines = lines, unread = 0, restored = true, char = charKey }
+                Touch(ck)
                 n = n + 1
             end
         end
     end
+    return n
+end
+
+function MS.Restore(account, perChar)
+    account = account or _G.WeintCodex_WhispersAccount
+    perChar = perChar or _G.WeintCodex_Whispers
+    if not Get("keep") then return 0 end
+    local me = Me()
+    local n = 0
+    if type(account) == "table" and type(account.chars) == "table" then
+        for charKey, store in pairs(account.chars) do
+            if charKey ~= me then n = n + RestoreOne(charKey, store, false) end
+        end
+        if me then n = n + RestoreOne(me, account.chars[me], true) end
+    end
+    -- Alt (6.30.43.0, je Charakter): einmal uebernehmen.
+    if type(perChar) == "table" then n = n + RestoreOne(me, perChar, true) end
     MS.restored = n
     return n
 end
 
 function MS.Snapshot()
     if not Get("keep") then return nil end
-    local out = { v = 1, conv = {}, order = {} }
+    local me = Me() or "?"
+    local out = { v = 2, chars = {} }
     for _, key in ipairs(order) do
         local c = conv[key]
         local lines = c and MS.Prune(c.lines)
         if lines and #lines > 0 then
-            out.conv[key] = { name = c.name, target = (not c.bn) and c.target or nil, bn = c.bn or nil,
-                              class = c.class, lines = lines }
-            out.order[#out.order + 1] = key
+            local owner = c.char or me
+            local raw = (owner ~= me and key:match("^.-|(.+)$")) or key
+            local st = out.chars[owner]
+            if not st then st = { conv = {}, order = {} } out.chars[owner] = st end
+            st.conv[raw] = { name = c.name, target = (not c.bn) and c.target or nil, bn = c.bn or nil,
+                             class = c.class, lines = lines }
+            st.order[#st.order + 1] = raw
         end
     end
     return out
+end
+
+-- Wer hat dieses Gespraech erhalten? nil = du selbst (dieser Charakter).
+function MS.Receiver(c)
+    if not c or not c.char or c.char == Me() then return nil end
+    return (c.char:match("^([^%-]+)")) or c.char
 end
 
 local keeper = CreateFrame("Frame")
@@ -996,7 +1038,8 @@ keeper:SetScript("OnEvent", function(_, event)
         local ok, err = pcall(MS.Restore)
         if not ok then K.Report("flüstern", err) end
     else
-        _G.WeintCodex_Whispers = MS.Snapshot()
+        _G.WeintCodex_WhispersAccount = MS.Snapshot()
+        _G.WeintCodex_Whispers = nil
     end
 end)
 
@@ -1385,7 +1428,7 @@ local function BuildPage(B)
           { type = "toggle", label = "Nur im Fenster, nicht im Chat", key = "msgHideChat", disabled = off,
             description = "Was das Fenster nicht lesen darf (Sperre des Spiels), bleibt im Chat. Die Taste „Antworten“ (R) öffnet das Fenster beim Letzten, der dir geflüstert hat, und richtet die Chatzeile auf ihn." })
     B:Row({ type = "toggle", label = "Verlauf 7 Tage behalten", key = "msgKeep", disabled = off,
-            description = "Wer dir geschrieben hat und was – nur für diesen Charakter, in einer eigenen Datei, die die Companion-App nicht liest. Aus: alles Gespeicherte wird beim Ausloggen gelöscht." })
+            description = "Wer dir geschrieben hat und was – für alle Charaktere des Kontos, mit dem Namen des Empfängers. Liegt in der Datei von WeintCodex im Konto-Ordner. Aus: alles Gespeicherte wird beim Ausloggen gelöscht." })
     B:Row({ type = "toggle", label = "Im Kampf offen lassen", key = "msgCombat", disabled = off,
             description = "Sonst klappt es im Kampf ein und geht danach wieder auf." },
           { type = "toggle", label = "Bei eigenem Flüstern aufgehen", key = "msgOutgoing", disabled = off,

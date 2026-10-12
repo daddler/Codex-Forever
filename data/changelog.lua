@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.44.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFFlüster-Verlauf für das ganze Konto.|r Jeder Charakter sieht auch, was die anderen in den letzten 7 Tagen geflüstert bekommen haben – mit „@Name“ in der Liste und „erhalten mit …“ oben im Gespräch.",
+        },
+    },
+    {
         version = "6.30.43.0",
         date    = "12.10.2026",
         notes   = {

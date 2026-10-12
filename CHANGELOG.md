@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.44.0] – 2026-10-12
+
+### Geändert
+- Flüstern: Verlauf kontoweit in `WeintCodex_WhispersAccount` (`chars[Name-Realm]`),
+  Gespräche anderer Charaktere als `Char|key` mit Empfänger (`MS.Receiver`);
+  die Datei je Charakter aus 6.30.43.0 wird einmal übernommen und geleert.
+  Auf ausdrücklichen Wunsch – die Datei liegt im Konto-Ordner, den auch die
+  Companion liest.
+
 ## [6.30.43.0] – 2026-10-12
 
 ### Neu
