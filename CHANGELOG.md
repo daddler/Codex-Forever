@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.30.0] – 2026-10-12
+
+### Neu
+- Plaketten: Elite mit goldenem Rahmen und Drachen-Atlas, Bosse rot
+  (`eliteFrame`, `NP.EliteFrame`).
+
+### Behoben
+- Gespräche: zweites Gespräch während des Zurückblendens merkte sich den
+  Zwischenstand als Deckkraft „vorher“ – Oberfläche blieb fast unsichtbar
+  bis `/reload`.
+
 ## [6.29.29.0] – 2026-10-12
 
 ### Behoben

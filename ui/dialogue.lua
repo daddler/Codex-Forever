@@ -790,6 +790,7 @@ end
 -- Testeinstellung ist.
 
 DL.CAM_WAIT = 0.3
+DL.MIN_ORIG = 0.5
 DL.SHOULDER = "test_cameraOverShoulder"
 -- Negativ: die Kamera rueckt nach links, der NPC nach rechts - weg vom
 -- Fenster, das seit 6.23.1.1 links steht (Platz des Questfensters).
@@ -1163,7 +1164,16 @@ function DL.FadeOut()
     if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false) then return false end
     local up = _G.UIParent
     local a = up and K.Plain(up:GetAlpha())
-    DL.fade.orig = type(a) == "number" and a or 1
+    -- 6.29.30.0 (Beta-Test: "Questgeber mit zwei Quests - danach fast
+    -- leerer Bildschirm, nach /reload wieder da"): nach der ersten Quest
+    -- blendete die Oberflaeche gerade zurueck, als das naechste Gespraech
+    -- begann - gemerkt wurde der halbe Zwischenstand als "vorher", und
+    -- dorthin ging es am Ende zurueck. Laeuft das Zurueckblenden noch, gilt
+    -- sein Ziel; ein Rest unter DL.MIN_ORIG ist nie ein gewollter Wert.
+    if not (fader:IsShown() and type(DL.fade.orig) == "number") then
+        DL.fade.orig = type(a) == "number" and a or 1
+    end
+    if DL.fade.orig < DL.MIN_ORIG then DL.fade.orig = 1 end
     DL.fade.on = true
     Run(DL.FADE_TO, DL.FADE_OUT)
     return true

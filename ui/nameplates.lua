@@ -132,6 +132,7 @@ local defaults = {
     textSize = 10,
     levelColor = true,
     eliteMark  = true,
+    eliteFrame = true,    -- 6.29.30.0: goldener Rahmen und Drache an Elite
     raidMarker = "topright",
     raidMarkerSize = 20,
 
@@ -1021,9 +1022,49 @@ local function HealthTexts(unit)
 end
 
 local TEXT_KEYS = { top = "textTop", left = "textLeft", right = "textRight", center = "textCenter" }
+-- 6.29.30.0 (Beta-Test: "man erkennt echt schlecht, dass da ein hoher
+-- Elite mitten drin steht"): die Farbe allein reichte nicht - im Kampf
+-- ueberdeckt sie die Bedrohung, und das "+" ist klein. Jetzt ein goldener
+-- Rahmen um den Balken und der Drache des Spiels links daneben; rot fuer
+-- Bosse und "??". Bleibt in jeder Lage, unabhaengig von der Balkenfarbe.
+NP.ELITE_ATLAS = "nameplates-icon-elite-gold"
+NP.BOSS_ATLAS = "nameplates-icon-elite-silver"
+function NP.EliteKind(unit)
+    local cls = K.Plain(_G.UnitClassification and _G.UnitClassification(unit))
+    local lvl = K.Plain(_G.UnitLevel and _G.UnitLevel(unit))
+    if cls == "worldboss" or lvl == -1 then return "boss" end
+    if cls == "elite" or cls == "rareelite" then return "elite" end
+    return nil
+end
+function NP.EliteFrame(p, unit)
+    local kind = (S.eliteFrame and not p._friendly) and NP.EliteKind(unit) or nil
+    if not kind then
+        if type(p.eliteBox) == "table" then p.eliteBox:Hide() end
+        return nil
+    end
+    local box = p.eliteBox
+    if type(box) ~= "table" then
+        box = CreateFrame("Frame", nil, p.health)
+        box:SetPoint("TOPLEFT", p.health, "TOPLEFT", -3, 3)
+        box:SetPoint("BOTTOMRIGHT", p.health, "BOTTOMRIGHT", 3, -3)
+        box.edge = K.Border(box, 2, 1, 1, 1, 1, "OVERLAY")
+        box.icon = box:CreateTexture(nil, "OVERLAY")
+        box.icon:SetSize(22, 22)
+        box.icon:SetPoint("RIGHT", box, "LEFT", 2, 0)
+        p.eliteBox = box
+    end
+    local c = kind == "boss" and WeintCodex.Colors.red or WeintCodex.Colors.gold
+    box.edge:SetColor(c[1], c[2], c[3], 1)
+    local ok = box.icon.SetAtlas and pcall(box.icon.SetAtlas, box.icon, kind == "boss" and NP.BOSS_ATLAS or NP.ELITE_ATLAS)
+    box.icon:SetShown(ok and true or false)
+    box:Show()
+    return kind
+end
+
 local function FillTexts(p, onlyHealth)
     local unit = p.unit
     if not unit then return end
+    if not onlyHealth then NP.EliteFrame(p, unit) end
     if p._friendly then
         if onlyHealth then return end
         local t = p.texts.top
@@ -2270,6 +2311,9 @@ K.Register({
             B:Section("Stufe")
             B:Row({ type = "toggle", label = "Stufe nach Schwierigkeit färben", key = "levelColor" },
                   { type = "toggle", label = "Elite mit + kennzeichnen", key = "eliteMark" })
+            B:Row({ type = "toggle", label = "Elite mit goldenem Rahmen", key = "eliteFrame",
+                    description = "Rahmen und Drache um die Plakette – gold für Elite, rot für Bosse. Bleibt auch im Kampf." },
+                  { type = "empty" })
             B:Section("Schlachtzugsmarkierung")
             B:Row({ type = "dropdown", label = "Position", key = "raidMarker", items = {
                         { value = "topright", text = "Oben rechts" },

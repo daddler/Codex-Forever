@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.30.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFElite-Gegner fallen auf.|r Ihre Plakette trägt einen goldenen Rahmen und den Drachen des Spiels, Bosse einen roten – auch im Kampf. Abschalten: Namensplaketten → Stufe.",
+            "|cff7C6CFFDie Oberfläche bleibt nach Questgebern mit mehreren Quests sichtbar.|r Begann das nächste Gespräch, während sie noch zurückblendete, blieb sie danach fast unsichtbar.",
+        },
+    },
+    {
         version = "6.29.29.0",
         date    = "12.10.2026",
         notes   = {

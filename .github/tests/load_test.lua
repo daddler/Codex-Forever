@@ -1237,6 +1237,64 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.29.30.0: zweites Gespraech waehrend des Zurueckblendens merkt sich
+-- nicht den Zwischenstand als "vorher".
+do
+    local ok, err = pcall(function()
+        local DL, K = WeintCodex.UIDialogue, WeintCodex.UIKit
+        local up = _G.UIParent
+        local alpha = 1
+        local oS, oG = up.SetAlpha, up.GetAlpha
+        up.SetAlpha = function(_, a) alpha = a end
+        up.GetAlpha = function() return alpha end
+        local oF = K.Get("comfort", "dlgFade")
+        K.Set("comfort", "dlgFade", true)
+        DL.fade.on, DL.fade.orig = false, nil
+        DL.fader:Hide()
+        assert(DL.FadeOut(), "blendet nicht aus")
+        alpha = 0
+        DL.FadeBack(false)               -- weich zurueck, laeuft noch
+        alpha = 0.2
+        DL.fader:Show()
+        assert(DL.FadeOut(), "zweites Gespraech blendet nicht aus")
+        assert(DL.fade.orig == 1, "Zwischenstand als vorher gemerkt: " .. tostring(DL.fade.orig))
+        DL.FadeBack(true)
+        assert(alpha == 1, "nicht ganz zurueck")
+        DL.fade.on, DL.fade.orig = false, 0.1
+        DL.fader:Hide()
+        alpha = 0.1
+        DL.FadeOut()
+        assert(DL.fade.orig == 1, "Rest unter 0,5 als vorher")
+        DL.FadeBack(true)
+        K.Set("comfort", "dlgFade", oF)
+        up.SetAlpha, up.GetAlpha = oS, oG
+    end)
+    Check(ok, "Gespraeche: zweite Quest beim Zurueckblenden laesst die Oberflaeche nicht durchsichtig"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.29.30.0: Elite mit goldenem Rahmen, Boss rot, normale ohne.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local NP = WeintCodex.UINameplates
+        local oC, oL = G.UnitClassification, G.UnitLevel
+        local cls, lvl = "elite", 30
+        G.UnitClassification = function() return cls end
+        G.UnitLevel = function() return lvl end
+        local p = { health = CreateFrame("Frame") }
+        assert(NP.EliteFrame(p, "nameplate1") == "elite" and p.eliteBox, "Elite ohne Rahmen")
+        cls, lvl = "normal", -1
+        assert(NP.EliteFrame(p, "nameplate1") == "boss", "Boss nicht erkannt")
+        lvl = 30
+        assert(NP.EliteFrame(p, "nameplate1") == nil, "normaler Gegner mit Rahmen")
+        p._friendly, cls = true, "elite"
+        assert(NP.EliteFrame(p, "nameplate1") == nil, "freundlicher Elite mit Rahmen")
+        G.UnitClassification, G.UnitLevel = oC, oL
+    end)
+    Check(ok, "Plaketten: Elite goldener Rahmen, Boss rot, sonst keiner" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.26.1.0: Kamera - Rueckgabe vergleicht Zahlen als Zahlen; einmalige
 -- Reparatur der Testeinstellungen auf den Wert ab Werk.
 do
