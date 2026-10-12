@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.19.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFKein graues Fragezeichen mehr auf der Minikarte.|r Dort steht ein „?“ nur noch, wenn du die Quest abgeben kannst – grau verwechselt man sonst mit einer Abgabe im Gebäude.",
+        },
+    },
+    {
         version = "6.30.18.0",
         date    = "12.10.2026",
         notes   = {

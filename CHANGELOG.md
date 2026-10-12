@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.19.0] – 2026-10-12
+
+### Geändert
+- Questhilfe: auf der Minikarte keine grauen „?“ (nicht fertige Abgaben).
+
 ## [6.30.18.0] – 2026-10-12
 
 ### Geändert

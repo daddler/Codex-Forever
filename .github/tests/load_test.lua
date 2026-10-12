@@ -1524,6 +1524,25 @@ do
     Check(ok, "Suche wechseln: Ruhe ohne Kraeuter- und Erzsuche" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.30.19.0: auf der Minikarte kein graues "?" (Abgabe noch nicht fertig).
+do
+    local QH = WeintCodex.UIQuestHelper
+    local oBM, oPW, oY, oFM, oA = K.BestMap, K.PlayerWorld, QH.MinimapYards, QH.ForMap, QH.MinimapActive
+    local ok, err = pcall(function()
+        K.BestMap = function() return 1429 end
+        K.PlayerWorld = function() return 0, 100, 100 end
+        QH.MinimapYards = function() return 100 end
+        QH.MinimapActive = function() return true end
+        local done = { kind = "turnin", faint = false, quests = { 1 }, x = 0.5, y = 0.5, wc = 0, wn = 110, ww = 100 }
+        local open = { kind = "turnin", faint = true, quests = { 2 }, x = 0.5, y = 0.5, wc = 0, wn = 120, ww = 100 }
+        QH.ForMap = function() return { done, open } end
+        _G.Minimap.GetWidth = function() return 200 end
+        assert(QH.PlaceMinimap() == 1, "graues ? auf der Minikarte")
+    end)
+    K.BestMap, K.PlayerWorld, QH.MinimapYards, QH.ForMap, QH.MinimapActive = oBM, oPW, oY, oFM, oA
+    Check(ok, "Questhilfe: Minikarte ohne graues ?" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.26.1.0: Kamera - Rueckgabe vergleicht Zahlen als Zahlen; einmalige
 -- Reparatur der Testeinstellungen auf den Wert ab Werk.
 do

@@ -721,7 +721,13 @@ function QH.PlaceMinimap()
     local half = w / 2
     local n = 0
     for _, e in ipairs(QH.ForMap(mapID)) do
-        local dx, dy = QH.MinimapOffset(e, mapID, pc, pn, pw, yards, half, facing, square)
+        -- 6.30.19.0 (Beta-Test: "graues Fragezeichen beim Questgeber auf der
+        -- Minimap irritiert - grau heisst dort sonst Abgabe im Gebaeude"):
+        -- auf der Minikarte nur abgabebereite Quests, kein graues "?".
+        local dx, dy
+        if not (e.kind == "turnin" and e.faint) then
+            dx, dy = QH.MinimapOffset(e, mapID, pc, pn, pw, yards, half, facing, square)
+        end
         if dx then
             n = n + 1
             local p = mmPins[n]
