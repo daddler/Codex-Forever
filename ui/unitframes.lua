@@ -103,6 +103,10 @@ local defaults = {
     auraSize      = 20,
     onlyOwnDebuffs = false,
     classBadge     = true,    -- Elite/selten/Boss an Ziel und Fokus (6.27.0.0)
+    -- 6.30.20.0 (Beta-Test: "das Dunkelblau auf Schwarz ist schwer zu
+    -- erkennen"): Farbe der Kraftleisten - wie im Spiel, heller, eigene.
+    powerColorMode = "game",
+    powerCustom    = K.ColorDefault("powerFallback"),
 }
 for _, u in ipairs(UNITS) do
     local s = SHAPE[u]
@@ -211,11 +215,31 @@ local function PowerColor(unit)
     local pbc = _G.PowerBarColor
     -- Erst ueber den Namen ("ENERGY"), dann ueber die Nummer: in 6.0.0.5
     -- fand der Name keine Farbe, und die Energie des Schurken stand blau da.
+    local mode = Opt("powerColorMode")
+    if mode == "custom" then
+        local cc = K.GetColor(KEY, "powerCustom")
+        return cc.r, cc.g, cc.b
+    end
     local c = pbc and ((token and pbc[token]) or (type(ptype) == "number" and pbc[ptype]))
-    if type(c) == "table" and c.r then return c.r, c.g, c.b end
-    local d = K.ColorDefault("powerFallback")
-    return d.r, d.g, d.b
+    local r, g, b
+    if type(c) == "table" and c.r then
+        r, g, b = c.r, c.g, c.b
+    else
+        local d = K.ColorDefault("powerFallback")
+        r, g, b = d.r, d.g, d.b
+    end
+    if mode == "bright" then return UF.Brighten(r, g, b) end
+    return r, g, b
 end
+
+-- Heller, ohne den Ton zu verlieren: ein Teil Richtung Weiss, Mana (0,0,1)
+-- wird ein klares Hellblau.
+UF.BRIGHTEN = 0.45
+function UF.Brighten(r, g, b)
+    local k = UF.BRIGHTEN
+    return r + (1 - r) * k, g + (1 - g) * k, b + (1 - b) * k
+end
+UF.PowerColor = PowerColor
 
 local function HealthColor(unit)
     if K.Bool(_G.UnitIsTapDenied and _G.UnitIsTapDenied(unit), false) then
@@ -1795,7 +1819,16 @@ local function UnitPage(u)
         B:Row({ type = "slider", label = "Breite", key = u .. "_width", min = 60, max = 320, step = 1, format = px, disabled = off },
               { type = "slider", label = "Höhe", key = u .. "_height", min = 10, max = 80, step = 1, format = px, disabled = off })
         B:Row({ type = "toggle", label = "Kraftleiste", key = u .. "_power", disabled = off },
-              { type = "empty" })
+              { type = "slider", label = "Höhe der Kraftleiste", key = u .. "_powerHeight", min = 2, max = 20, step = 1, format = px,
+                disabled = function() return off() or not K.Get(KEY, u .. "_power") end })
+        B:Row({ type = "dropdown", label = "Farbe der Kraftleiste", key = "powerColorMode", disabled = off,
+                description = "Gilt für alle Rahmen. Heller: Mana als klares Hellblau, auch auf dunklem Grund gut lesbar.",
+                items = {
+                    { value = "game",   text = "Wie im Spiel" },
+                    { value = "bright", text = "Heller" },
+                    { value = "custom", text = "Eigene Farbe" } } },
+              { type = "color", label = "Eigene Farbe", key = "powerCustom",
+                disabled = function() return off() or K.Get(KEY, "powerColorMode") ~= "custom" end })
         B:Section("Texte")
         B:Row({ type = "dropdown", label = "Links", key = u .. "_left", items = TEXT_ITEMS, disabled = off },
               { type = "dropdown", label = "Rechts", key = u .. "_right", items = TEXT_ITEMS, disabled = off })
@@ -1836,8 +1869,7 @@ local function UnitPage(u)
         end
         B:Row({ type = "toggle", label = "Porträt rechts", key = u .. "_portraitRight",
                 disabled = function() local k = K.Get(KEY, u .. "_portrait") return off() or k == "none" or k == "bar" end },
-              { type = "slider", label = "Höhe der Kraftleiste", key = u .. "_powerHeight", min = 2, max = 20, step = 1, format = px,
-                disabled = function() return off() or not K.Get(KEY, u .. "_power") end })
+              { type = "empty" })
         if u == "player" or u == "target" then
             B:Row({ type = "slider", label = "Kopf im Balken: Deckkraft", key = u .. "_barAlpha", min = 10, max = 100, step = 5,
                     format = function(v) return string.format("%d %%", v) end,

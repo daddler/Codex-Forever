@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.20.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Kraftleiste lässt sich besser lesen.|r Farbe „Heller“ macht Mana zu einem klaren Hellblau, oder du wählst eine eigene Farbe – und die Höhe steht jetzt direkt daneben statt unter „Erweitert“. Einheitenrahmen → Spieler.",
+            "|cff7C6CFF/wcui maus|r nennt, was unter der Maus liegt – hilft, wenn ein Symbol keinen Tooltip zeigt.",
+        },
+    },
+    {
         version = "6.30.19.0",
         date    = "12.10.2026",
         notes   = {

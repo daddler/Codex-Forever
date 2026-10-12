@@ -1503,6 +1503,14 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    -- 6.30.20.0 (Beta-Test: "Debuff bei Mouseover ohne Tooltip"): was liegt
+    -- unter der Maus? Maus auf das Symbol halten, Befehl per Taste/Makro.
+    if msg == "maus" or msg == "mouse" then
+        for _, line in ipairs(O.MouseReport()) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+        return
+    end
     if msg == "auren" or msg == "auras" then
         for _, line in ipairs(WeintCodex.UIAuras.Inspect()) do
             print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
@@ -1510,4 +1518,37 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         return
     end
     O.Toggle()
+end
+
+
+-- Rahmen unter der Maus, oberster zuerst, mit Eltern bis zur UIParent.
+function O.MouseReport()
+    local K = WeintCodex.UIKit
+    local out = {}
+    local foci
+    if _G.GetMouseFoci then
+        local ok, list = pcall(_G.GetMouseFoci)
+        if ok and type(list) == "table" then foci = list end
+    elseif _G.GetMouseFocus then
+        local ok, f = pcall(_G.GetMouseFocus)
+        if ok and f then foci = { f } end
+    end
+    if not foci or #foci == 0 then
+        out[1] = "Unter der Maus: nichts, das Mausklicks annimmt."
+        return out
+    end
+    for i, f in ipairs(foci) do
+        if i > 4 then break end
+        local chain, cur, depth = {}, f, 0
+        while type(cur) == "table" and depth < 6 do
+            local n = cur.GetName and K.Plain(cur:GetName())
+            local dbg = cur.GetDebugName and K.Plain(cur:GetDebugName())
+            chain[#chain + 1] = tostring(n or dbg or "(ohne Namen)")
+            if cur == _G.UIParent then break end
+            cur = cur.GetParent and cur:GetParent()
+            depth = depth + 1
+        end
+        out[#out + 1] = i .. ". " .. table.concat(chain, " < ")
+    end
+    return out
 end

@@ -1543,6 +1543,36 @@ do
     Check(ok, "Questhilfe: Minikarte ohne graues ?" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.30.20.0: Farbe der Kraftleiste waehlbar; was liegt unter der Maus.
+do
+    local ok, err = pcall(function()
+        local UF = WeintCodex.UIUnitFrames
+        local oT, oP = _G.UnitPowerType, _G.PowerBarColor
+        _G.UnitPowerType = function() return 0, "MANA" end
+        _G.PowerBarColor = { MANA = { r = 0, g = 0, b = 1 } }
+        local r, g, b = UF.PowerColor("player")
+        assert(r == 0 and g == 0 and b == 1, "Farbe des Spiels veraendert")
+        K.Set("unitframes", "powerColorMode", "bright")
+        r, g, b = UF.PowerColor("player")
+        assert(r > 0.3 and g > 0.3 and b == 1, "Mana nicht heller")
+        K.Set("unitframes", "powerColorMode", "custom")
+        K.Set("unitframes", "powerCustom", { r = 0.1, g = 0.9, b = 0.2 })
+        r, g, b = UF.PowerColor("player")
+        assert(r == 0.1 and g == 0.9 and b == 0.2, "eigene Farbe nicht genommen")
+        K.Set("unitframes", "powerColorMode", nil)
+        K.Set("unitframes", "powerCustom", nil)
+        _G.UnitPowerType, _G.PowerBarColor = oT, oP
+        local O = WeintCodex.UIOptions
+        local oF = _G.GetMouseFoci
+        local f = CreateFrame("Frame", "TestUnterDerMaus", UIParent)
+        _G.GetMouseFoci = function() return { f } end
+        local lines = O.MouseReport()
+        assert(lines[1]:find("TestUnterDerMaus", 1, true), "Rahmen unter der Maus nicht genannt: " .. tostring(lines[1]))
+        _G.GetMouseFoci = oF
+    end)
+    Check(ok, "Kraftleiste: Farbe wie im Spiel/heller/eigene; /wcui maus" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.26.1.0: Kamera - Rueckgabe vergleicht Zahlen als Zahlen; einmalige
 -- Reparatur der Testeinstellungen auf den Wert ab Werk.
 do

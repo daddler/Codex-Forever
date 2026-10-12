@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.20.0] – 2026-10-12
+
+### Neu
+- Einheitenrahmen: Farbe der Kraftleiste (`powerColorMode` game/bright/custom,
+  `powerCustom`, `UF.Brighten`); Höhe aus „Erweitert“ nach vorn.
+- `/wcui maus`: Rahmen unter der Maus samt Eltern (`O.MouseReport`).
+
 ## [6.30.19.0] – 2026-10-12
 
 ### Geändert
