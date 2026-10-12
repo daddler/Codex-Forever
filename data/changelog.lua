@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.31.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFNeu: „/wcui messung“.|r Zeigt nach einem Kampf, welche Zahlen das Spiel der Schadensanzeige überhaupt gibt – Grundlage für kritische Treffer, Trefferzahlen und mehr in der Aufschlüsselung.",
+        },
+    },
+    {
         version = "6.30.30.0",
         date    = "12.10.2026",
         notes   = {

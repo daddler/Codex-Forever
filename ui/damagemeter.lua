@@ -836,6 +836,64 @@ function DM.Spells(session, modeKey, guid)
     return type(list) == "table" and list or {}
 end
 
+-- /wcui messung (6.30.31.0, Wunsch: "Uptimes, Crit von Faehigkeiten,
+-- Durchschnitt je Faehigkeit - viel mehr zum Analysieren"). Ob Forever mehr
+-- als Summen herausgibt, weiss niemand: dieser Bericht listet ALLE Felder,
+-- die C_DamageMeter fuer den letzten Kampf liefert - beim Spieler, bei
+-- seinem ersten Zauber und eine Ebene tiefer. Erst messen, dann bauen.
+local function Fields(out, prefix, t, depth)
+    if type(t) ~= "table" then return end
+    local keys = {}
+    for k in pairs(t) do keys[#keys + 1] = k end
+    table.sort(keys, function(a, b) return tostring(a) < tostring(b) end)
+    for _, k in ipairs(keys) do
+        local v = t[k]
+        local pv = K.Plain(v)
+        local shown
+        if K.IsSecret(v) then shown = "geheim"
+        elseif type(pv) == "table" then shown = "Tabelle (" .. #pv .. ")"
+        else shown = tostring(pv) end
+        if #out < 60 then out[#out + 1] = prefix .. tostring(k) .. " = " .. shown end
+        if type(pv) == "table" and depth < 2 and type(k) ~= "number" then
+            Fields(out, prefix .. tostring(k) .. ".", pv[1] or pv, depth + 1)
+        end
+    end
+end
+
+function DM.FieldReport()
+    local out = {}
+    local cdm, e = _G.C_DamageMeter, _G.Enum
+    if not (cdm and e and e.DamageMeterType) then return { "C_DamageMeter fehlt." } end
+    local ok, data = DM.Fetch("Current", "DamageDone")
+    if not ok or type(data) ~= "table" then return { "Kein Kampf gemessen – erst kämpfen, dann /wcui messung." } end
+    local srcs = type(data.combatSources) == "table" and data.combatSources or {}
+    local me
+    for _, src in ipairs(srcs) do if K.Bool(src.isLocalPlayer, false) then me = src break end end
+    me = me or srcs[1]
+    out[#out + 1] = "Zeitraum:"
+    Fields(out, "  ", { durationSeconds = data.durationSeconds, maxAmount = data.maxAmount, totalAmount = data.totalAmount }, 2)
+    for k, v in pairs(data) do
+        if k ~= "combatSources" then
+            local pv = K.Plain(v)
+            if #out < 60 then out[#out + 1] = "  [" .. tostring(k) .. "] " .. (K.IsSecret(v) and "geheim" or tostring(pv)) end
+        end
+    end
+    if not me then out[#out + 1] = "Keine Einträge." return out end
+    out[#out + 1] = "Eintrag (du):"
+    Fields(out, "  ", me, 2)
+    local spells = DM.Spells("Current", "DamageDone", me.sourceGUID)
+    out[#out + 1] = "Erster Zauber (" .. #spells .. " Zauber):"
+    Fields(out, "  ", spells[1], 0)
+    if cdm.GetCombatSessionSourceFromType then
+        out[#out + 1] = "Funktionen von C_DamageMeter:"
+        local names = {}
+        for k in pairs(cdm) do names[#names + 1] = tostring(k) end
+        table.sort(names)
+        out[#out + 1] = "  " .. table.concat(names, ", ")
+    end
+    return out
+end
+
 local function SpellName(id)
     if type(id) == "nil" then return nil end
     local cs = _G.C_Spell

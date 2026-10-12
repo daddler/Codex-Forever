@@ -1511,6 +1511,13 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    if msg == "messung" then
+        local DMx = WeintCodex.UIDamageMeter
+        for _, line in ipairs(DMx and DMx.FieldReport and DMx.FieldReport() or { "Schadensanzeige nicht geladen." }) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+        return
+    end
     if msg == "wolf" then
         local R = WeintCodex.UIReminders
         for _, line in ipairs(R and R.PetlessReport and R.PetlessReport() or { "Erinnerungen nicht geladen." }) do

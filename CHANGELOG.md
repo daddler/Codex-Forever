@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.31.0] – 2026-10-12
+
+### Neu
+- Schadensanzeige: `/wcui messung` (`DM.FieldReport`) listet alle Felder,
+  die `C_DamageMeter` für Zeitraum, eigenen Eintrag und ersten Zauber
+  liefert, dazu die Funktionen der Schnittstelle. Grundlage für Krit,
+  Treffer, Uptime – nur was der Client hergibt.
+
 ## [6.30.30.0] – 2026-10-12
 
 ### Behoben
