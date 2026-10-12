@@ -239,9 +239,20 @@ function SP.Look()
     if not (_G.UnitExists and K.Bool(_G.UnitExists(u), false)) then
         glow:Hide()
         SetGate(false)
+        SP.lastGuid = nil
         return nil
     end
-    local kind, blocked = SP.Classify(u)
+    -- 6.30.18.0 (Messung /wcui speicher: "Glitzern" 8,6 KB/s): dasselbe
+    -- Objekt nicht bei jedem Blick neu einordnen - Mauszeiger und vor allem
+    -- der Tooltip (eine grosse Tabelle) nur, wenn ein anderes davorsteht.
+    local guid = _G.UnitGUID and K.Plain(_G.UnitGUID(u))
+    local kind, blocked
+    if type(guid) == "string" and guid == SP.lastGuid then
+        kind, blocked = SP.lastKind, SP.lastBlocked
+    else
+        kind, blocked = SP.Classify(u)
+        SP.lastGuid, SP.lastKind, SP.lastBlocked = type(guid) == "string" and guid or nil, kind, blocked
+    end
     if kind == "herb" or kind == "ore" then
         stats[kind] = stats[kind] + 1
         SetGate(true)

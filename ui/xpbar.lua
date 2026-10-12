@@ -312,9 +312,17 @@ local function Over()
 end
 
 -- Laeuft nur, solange "nur bei Maus darueber" gilt.
+-- 6.30.18.0 (Messung /wcui speicher: "Erfahrungsbalken" 7,6 KB/s bei 143
+-- Aufrufen je Sekunde): die Maus nur noch alle XB.FADE_TICK s pruefen.
+XB.FADE_TICK = 0.05
+local fadeAcc = 0
 local function FadeStep(_, elapsed)
     if not frame then return end
+    fadeAcc = fadeAcc + (elapsed or 0.1)
+    if fadeAcc < XB.FADE_TICK then return end
+    elapsed, fadeAcc = fadeAcc, 0
     local target = (Over() or frame._unlock) and 1 or 0
+    if fadeAlpha == target then return end
     local step = (elapsed or 0.1) * 6
     if fadeAlpha < target then fadeAlpha = math.min(target, fadeAlpha + step)
     elseif fadeAlpha > target then fadeAlpha = math.max(target, fadeAlpha - step) end

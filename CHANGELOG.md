@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.18.0] – 2026-10-12
+
+### Geändert
+- Nach Messung im Kampf: Glitzern ordnet ein Objekt je GUID nur einmal ein
+  (Tooltip-Tabelle); Erfahrungsbalken prüft die Maus alle 0,05 s statt je Bild.
+
 ## [6.30.17.0] – 2026-10-12
 
 ### Geändert

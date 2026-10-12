@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.18.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFNoch weniger Arbeit im Hintergrund.|r Glitzern prüft dasselbe Objekt nur einmal, der Erfahrungsbalken schaut seltener nach der Maus.",
+        },
+    },
+    {
         version = "6.30.17.0",
         date    = "12.10.2026",
         notes   = {
