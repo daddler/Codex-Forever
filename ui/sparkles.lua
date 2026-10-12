@@ -63,7 +63,7 @@ SP.UNIT = "softinteract"
 SP.TICK = 0.12
 SP.GLINTS = 6
 SP.TEXTURE = "Interface\\Cooldown\\star4"   -- Funke des Spiels
-local stats = { looks = 0, herb = 0, ore = 0, other = 0, applied = 0 }
+local stats = { looks = 0, herb = 0, ore = 0, other = 0, applied = 0, noplate = 0, bytip = 0 }
 SP.stats = stats
 
 local function PF() return WeintCodex.UIProfile end
@@ -139,7 +139,45 @@ if _G.GetFileIDFromPath then
     end
 end
 
+-- 6.29.29.0 (Beta-Test: "Glitzern beim Kraeutern ohne Effekt"): der
+-- Mauszeiger ist nicht der einzige Weg. Der Tooltip eines Krauts oder einer
+-- Ader nennt den Beruf ("Kraeuterkunde"/"Bergbau", rot wenn zu niedrig).
+SP.TIP_WORDS = {
+    { "kräuterkunde", "herb" }, { "herbalism", "herb" },
+    { "bergbau", "ore" }, { "mining", "ore" },
+}
+function SP.ReadTooltip(unit)
+    local TI = _G.C_TooltipInfo
+    if not (TI and TI.GetUnit) then return nil, false end
+    local ok, data = pcall(TI.GetUnit, unit)
+    if not ok or type(data) ~= "table" or type(data.lines) ~= "table" then return nil, false end
+    for _, line in ipairs(data.lines) do
+        local text = K.Plain(line.leftText)
+        if type(text) == "string" then
+            local low = text:lower()
+            for _, w in ipairs(SP.TIP_WORDS) do
+                if low:find(w[1], 1, true) then
+                    local c = line.leftColor
+                    local r = type(c) == "table" and K.Plain(c.r) or nil
+                    local g = type(c) == "table" and K.Plain(c.g) or nil
+                    local blocked = type(r) == "number" and type(g) == "number" and r > 0.9 and g < 0.3
+                    return w[2], blocked
+                end
+            end
+        end
+    end
+    return nil, false
+end
+
 function SP.Classify(unit)
+    local kind, blocked = SP.ClassifyCursor(unit)
+    if kind == "herb" or kind == "ore" then return kind, blocked end
+    local k2, b2 = SP.ReadTooltip(unit)
+    if k2 then stats.bytip = stats.bytip + 1 return k2, b2 end
+    return kind, blocked
+end
+
+function SP.ClassifyCursor(unit)
     if type(_G.SetUnitCursorTexture) ~= "function" then return nil, false end
     local ok, set = pcall(_G.SetUnitCursorTexture, probe, unit, nil, true)
     if not ok or not K.Plain(set) then return nil, false end
@@ -216,6 +254,9 @@ function SP.Look()
             Paint(blocked)
             glow:Show()
         else
+            -- Ohne Plakette (das Spiel baut sie erst nach dem Schalter):
+            -- mitten auf dem Bildschirm waere falsch - im naechsten Blick.
+            stats.noplate = stats.noplate + 1
             glow:Hide()
         end
         return kind
@@ -275,9 +316,10 @@ end)
 SP.events = ev
 
 function SP.StatusLines()
-    return { string.format("Glitzern: Quest %s · Kraut/Erz %s · Blicke %d · Kraut %d · Erz %d · anderes %d · Werte gesetzt %d",
+    return { string.format("Glitzern: Quest %s · Kraut/Erz %s · Blicke %d · Kraut %d · Erz %d · anderes %d · über Tooltip %d · ohne Plakette %d · Werte gesetzt %d · Mauszeiger-Abfrage %s",
         SP.LootActive() and "an" or "aus", SP.NodesActive() and "an" or "aus",
-        stats.looks, stats.herb, stats.ore, stats.other, stats.applied) }
+        stats.looks, stats.herb, stats.ore, stats.other, stats.bytip, stats.noplate, stats.applied,
+        type(_G.SetUnitCursorTexture) == "function" and "da" or "fehlt") }
 end
 
 local function Build(B)

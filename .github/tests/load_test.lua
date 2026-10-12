@@ -17655,6 +17655,17 @@ do
         local k, b = SP.ReadCursor("Cursor_Crosshair_UnableMine_64")
         assert(k == "ore" and b == true, "ausgegraute Erzader nicht erkannt")
         assert(SP.ReadCursor("Interface\\Cursor\\Interact") == "other", "Briefkasten als Kraut")
+        local oTI = _G.C_TooltipInfo
+        _G.C_TooltipInfo = { GetUnit = function() return { lines = {
+            { leftText = "Friedensblume" },
+            { leftText = "Benötigt Kräuterkunde (75)", leftColor = { r = 1, g = 0.12, b = 0.12 } } } } end }
+        local tk, tb = SP.ReadTooltip("softinteract")
+        assert(tk == "herb" and tb, "Kraut im Tooltip nicht erkannt oder nicht grau")
+        _G.C_TooltipInfo = { GetUnit = function() return { lines = { { leftText = "Mining" } } } end }
+        assert(SP.ReadTooltip("softinteract") == "ore", "Erz im Tooltip nicht erkannt")
+        _G.C_TooltipInfo = { GetUnit = function() return { lines = { { leftText = "Briefkasten" } } } end }
+        assert(SP.ReadTooltip("softinteract") == nil, "Briefkasten als Kraut")
+        _G.C_TooltipInfo = oTI
         local cv = { graphicsOutlineMode = "2", outlineModeShowLootEffectWhenDisabled = "0", OutlineEngineMode = "2",
                      raidGraphicsOutlineMode = "2", RAIDOutlineEngineMode = "2" }
         local oC = G.C_CVar

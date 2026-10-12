@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.29.0] – 2026-10-12
+
+### Behoben
+- Glitzern (Kräuter/Erz): zweiter Erkennungsweg über den Tooltip
+  (`C_TooltipInfo.GetUnit`, Kräuterkunde/Bergbau), wenn der Mauszeiger nichts
+  hergibt; `/wcui prüfen` zählt „über Tooltip“, „ohne Plakette“ und ob die
+  Mauszeiger-Abfrage existiert.
+
 ## [6.29.28.0] – 2026-10-12
 
 ### Behoben

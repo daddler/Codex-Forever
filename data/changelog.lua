@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.29.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFKräuter und Erz glitzern zuverlässiger.|r Erkennt WeintCodex ein Kraut oder eine Erzader nicht am Mauszeiger des Spiels, liest es jetzt den Tooltip (Kräuterkunde/Bergbau). Was dabei geschieht, zeigt /wcui prüfen in der Zeile „Glitzern“.",
+        },
+    },
+    {
         version = "6.29.28.0",
         date    = "12.10.2026",
         notes   = {
