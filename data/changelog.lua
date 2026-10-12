@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.11.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFBedrohungsleiste: Farbe auch über den Balken selbst.|r Dazu nennt /wcui prüfen im Kampf, welche Farbe die Leiste am Ziel gerade hat und welche sie haben sollte.",
+        },
+    },
+    {
         version = "6.30.10.0",
         date    = "12.10.2026",
         notes   = {

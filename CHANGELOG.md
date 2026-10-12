@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.11.0] – 2026-10-12
+
+### Geändert
+- `K.PaintBar` setzt die Farbe zusätzlich über `SetStatusBarColor`.
+- `/wcui prüfen` → Bedrohung: Zustand der Leiste am Ziel (sichtbar, Wert,
+  Höhe, Ist- und Sollfarbe, Contested, Schwellen).
+
 ## [6.30.10.0] – 2026-10-12
 
 ### Behoben

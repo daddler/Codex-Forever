@@ -1117,6 +1117,9 @@ function K.PaintBar(bar, r, g, b)
             tex:SetGradient("VERTICAL", _G.CreateColor(1, 1, 1, 1), _G.CreateColor(1, 1, 1, 1))
         end
         tex:SetVertexColor(r, g, b, 1)
+        -- 6.30.11.0: auch ueber den Balken selbst - manche Clients setzen
+        -- die Farbe der Fuelltextur beim Wertwechsel aus SetStatusBarColor.
+        if bar.SetStatusBarColor then bar:SetStatusBarColor(r, g, b, 1) end
     end
     tex._wcGradient = (K.Get("general", "barStyle") == "gradient") or nil
 end

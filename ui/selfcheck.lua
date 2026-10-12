@@ -139,6 +139,33 @@ Check("Bedrohung", function(add)
         end
     end
     Judge("Bedrohung", "player")
+    -- 6.30.11.0 (Beta-Test: "weiterhin keine Farbe" bei offenen Werten):
+    -- was die Leiste an der Plakette des Ziels wirklich zeigt.
+    local NP = WeintCodex.UINameplates
+    local np = _G.C_NamePlate and _G.C_NamePlate.GetNamePlateForUnit
+    local plate = np and select(2, pcall(np, "target"))
+    local mine
+    if type(plate) == "table" and NP and NP.plates then
+        for _, p in pairs(NP.plates) do if p.nameplate == plate then mine = p end end
+    end
+    if not mine then
+        add(SC.OPEN, "Leiste: keine Plakette von WeintCodex am Ziel.")
+    else
+        local bar = mine.threatBar
+        local tex = bar.GetStatusBarTexture and bar:GetStatusBarTexture()
+        local r, g, b = 0, 0, 0
+        if tex and tex.GetVertexColor then r, g, b = tex:GetVertexColor() end
+        r, g, b = K.Plain(r), K.Plain(g), K.Plain(b)
+        local v = K.Plain(bar:GetValue())
+        local _, st, sc = pcall(fn, "player", mine.unit)
+        local want = NP.BarTint(st, sc, false, nil)
+        add(SC.OK, string.format("Leiste: %s · Wert %s · Höhe %s · Farbe %s · soll %s · Gruppe/Begleiter (Contested) %s · Schwellen %s/%s/%s",
+            bar:IsShown() and "sichtbar" or "versteckt", tostring(v), tostring(K.Plain(bar:GetHeight())),
+            type(r) == "number" and string.format("%.2f %.2f %.2f", r, g or 0, b or 0) or "geheim",
+            want and string.format("%.2f %.2f %.2f", want.r, want.g, want.b) or "keine",
+            tostring(NP.Contested and NP.Contested()), tostring(NP.Resolved("threatOkAt")),
+            tostring(NP.Resolved("threatYellowAt")), tostring(NP.Resolved("threatRedAt"))))
+    end
     local mate = SC.GroupMate()
     if mate then
         Judge("Bedrohung von " .. mate, mate)
