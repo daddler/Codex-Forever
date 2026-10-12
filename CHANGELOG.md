@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.10.0] – 2026-10-12
+
+### Behoben
+- Plaketten: Bedrohungsleiste blieb grau, wenn nur die Prozentzahl geheim
+  und der Status offen war – jetzt geht jede geheime Prozentzahl an die
+  Farbkurve des Spiels (`NP.PaintSecret`), außer der Status sagt Aggro.
+
 ## [6.30.9.0] – 2026-10-12
 
 ### Neu

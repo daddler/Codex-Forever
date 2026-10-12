@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.10.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Bedrohungsleiste färbt sich im Kampf.|r Sie blieb grau, wenn das Spiel die Prozentzahl im Kampf verbirgt – jetzt färbt sie das Spiel selbst nach deinen Schwellen grün, gelb und rot.",
+        },
+    },
+    {
         version = "6.30.9.0",
         date    = "12.10.2026",
         notes   = {

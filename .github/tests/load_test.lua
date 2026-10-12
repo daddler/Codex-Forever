@@ -8720,6 +8720,39 @@ do
     Check(ok, "Plaketten: Bedrohung in Prozent" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.30.10.0: geheime Prozentzahl bei offenem Status faerbt ueber die Kurve.
+do
+    local NP = WeintCodex.UINameplates
+    local oT, oS, oP = _G.UnitDetailedThreatSituation, _G.issecretvalue, NP.PaintSecret
+    local ok, err = pcall(function()
+        local SECRET = {}
+        local status, scaled = 0, 50
+        _G.UnitDetailedThreatSituation = function() return false, status, scaled, scaled, 1000 end
+        local painted = 0
+        NP.PaintSecret = function() painted = painted + 1 return true end
+        K.Set("nameplates", "threatBar", true)
+        K.Set("nameplates", "threatText", "none")
+        stub.FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        local p = NP.plates["nameplate1"]
+        _G.issecretvalue = function(v) return v == SECRET end
+        scaled = SECRET
+        local oSV = p.threatBar.SetValue
+        p.threatBar.SetValue = function() end
+        painted = 0
+        NP.UpdateThreatText(p)
+        assert(painted >= 1, "geheime Prozentzahl bei offenem Status nicht ueber die Kurve gefaerbt")
+        status, painted = 3, 0
+        NP.UpdateThreatText(p)
+        assert(painted == 0, "Aggro (offener Status) nicht direkt rot")
+        p.threatBar.SetValue = oSV
+    end)
+    _G.UnitDetailedThreatSituation, _G.issecretvalue, NP.PaintSecret = oT, oS, oP
+    pcall(stub.FireEvent, "NAME_PLATE_UNIT_REMOVED", "nameplate1")
+    K.Set("nameplates", "threatBar", nil)
+    K.Set("nameplates", "threatText", nil)
+    Check(ok, "Plaketten: Bedrohungsleiste faerbt auch bei geheimer Prozentzahl" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.3.2.5: Zauberbalken nennt das Ziel des Zaubers ("» Dich" rot).
 do
     local ok, err = pcall(function()

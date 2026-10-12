@@ -1649,8 +1649,15 @@ local function UpdateThreatText(p)
 
     if contested and S.threatBar then
         if lead then bar:SetValue(math.min(lead, 100)) else bar:SetValue(scaled) end
+        -- 6.30.10.0 (Beta-Test mit Bild: "die Aggroleiste verfaerbt sich
+        -- immer noch nicht" - 100 %, Leiste grau): bis hier ging nur dann an
+        -- die Kurve des Spiels, wenn AUCH der Status geheim war. Im Kampf
+        -- ist oft nur die Prozentzahl geheim, der Status offen - dann sah
+        -- BarTint keine Zahl und blieb grau. Jetzt: geheime Prozentzahl ->
+        -- Kurve, ausser der offene Status sagt schon "Aggro" (rot).
+        local stPlain = K.Plain(status)
         local secret = not lead and type(scaled) ~= "nil" and type(K.Plain(scaled)) ~= "number"
-            and type(K.Plain(status)) ~= "number"
+            and not (type(stPlain) == "number" and stPlain >= 2)
         if not (secret and NP.PaintSecret(bar, scaled)) then
             local bc = NP.BarTint(status, scaled, tank, lead)
             K.PaintBar(bar, bc.r, bc.g, bc.b)
