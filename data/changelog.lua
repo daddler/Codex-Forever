@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.50.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFQuestfortschritt rückt nur bei Zielpfeilen zur Seite.|r Ohne Zielpfeile (Ziel hervorheben: Ring) steht die Zahl wieder direkt neben dem Balken.",
+        },
+    },
+    {
         version = "6.30.49.0",
         date    = "12.10.2026",
         notes   = {
