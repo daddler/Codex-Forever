@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.48.0] – 2026-10-12
+
+### Neu
+- Aktionsleisten: roter Punkt oben links, wenn eine Kontrolle beim Ziel nicht
+  wirkt (`AB.CC_RULES`, Art `classic`: Verwandlung, Winterschlaf, Untote
+  fesseln, Verbannen, Kopfnuss, Wildtier ängstigen, Untote vertreiben;
+  Kreaturenart vom Client, unbekannt = kein Punkt). Schalter `ccDot`.
+
 ## [6.30.47.0] – 2026-10-12
 
 ### Geändert / Behoben

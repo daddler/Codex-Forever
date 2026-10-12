@@ -78,6 +78,7 @@ local defaults = {
     macroNames   = false,
     countSize    = 12,
     rangeColor   = true,
+    ccDot        = true,     -- 6.30.48.0: roter Punkt, wenn die Kontrolle beim Ziel nicht wirkt
     hideEndCaps  = true,
     microMenu    = "left",   -- left | game
     microScale   = 85,
@@ -213,6 +214,13 @@ local function Skin(b)
         d.range:SetAllPoints(icon)
         d.range:SetColorTexture(danger[1], danger[2], danger[3], 0.45)
         d.range:Hide()
+        -- Kontrolle wirkt beim Ziel nicht (6.30.48.0): Punkt oben links.
+        d.cc = b:CreateTexture(nil, "OVERLAY", nil, 7)
+        d.cc:SetSize(9, 9)
+        d.cc:SetPoint("TOPLEFT", icon, "TOPLEFT", 2, -2)
+        d.cc:SetTexture(K.MEDIA .. "disc")
+        d.cc:SetVertexColor(danger[1], danger[2], danger[3], 1)
+        d.cc:Hide()
     end
 
     d.bg = b:CreateTexture(nil, "BACKGROUND", nil, -7)
@@ -1001,6 +1009,100 @@ function AB.RefreshSoon()
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.2, Run) else Run() end
 end
 
+--------------------------------------------------
+-- Kontrolle wirkt nicht (6.30.48.0)
+--------------------------------------------------
+-- Beta-Test: "Wenn ich einen Zauber nicht auf jemanden nutzen kann, wie
+-- Sheep auf Untote, oben links ein kleiner roter Punkt." Welche Kontrolle
+-- auf welche Kreaturenart wirkt, sagt der Client nicht - die Regeln sind
+-- die von Classic (Art `classic`), je Zauber ueber die ID des ersten
+-- Rangs, verglichen wird der Name (jeder Rang). Die Art des Ziels kommt vom
+-- Client (UnitCreatureType); unbekannt, geheim oder "Nicht angegeben" ->
+-- kein Punkt ("weiss nicht" ist nicht "wirkt nicht").
+AB.CC_SOURCE = "classic"
+AB.CC_RULES = {
+    [118]  = { Humanoid = true, Beast = true, Critter = true },   -- Verwandlung
+    [2637] = { Beast = true, Dragonkin = true },                  -- Winterschlaf
+    [9484] = { Undead = true },                                   -- Untote fesseln
+    [710]  = { Demon = true, Elemental = true },                  -- Verbannen
+    [6770] = { Humanoid = true },                                 -- Kopfnuss
+    [1513] = { Beast = true },                                    -- Wildtier aengstigen
+    [2878] = { Undead = true },                                   -- Untote vertreiben
+}
+-- Kreaturenarten des Clients (deutsch und englisch) -> Schluessel.
+AB.CREATURE = {
+    ["Humanoid"] = "Humanoid", ["Humanoide"] = "Humanoid",
+    ["Beast"] = "Beast", ["Wildtier"] = "Beast",
+    ["Critter"] = "Critter", ["Kleintier"] = "Critter", ["Tier"] = "Critter",
+    ["Undead"] = "Undead", ["Untoter"] = "Undead", ["Untote"] = "Undead",
+    ["Demon"] = "Demon", ["Dämon"] = "Demon",
+    ["Elemental"] = "Elemental", ["Elementar"] = "Elemental",
+    ["Dragonkin"] = "Dragonkin", ["Drachkin"] = "Dragonkin", ["Drache"] = "Dragonkin",
+    ["Giant"] = "Giant", ["Riese"] = "Giant",
+    ["Mechanical"] = "Mechanical", ["Mechanisch"] = "Mechanical",
+}
+local ccByName
+local function CCRules()
+    if ccByName then return ccByName end
+    local cs = _G.C_Spell
+    local t, any = {}, false
+    for id, rule in pairs(AB.CC_RULES) do
+        local ok, n = pcall(cs and cs.GetSpellName or _G.GetSpellInfo, id)
+        n = ok and K.Plain(n) or nil
+        if type(n) == "string" and n ~= "" then t[n] = rule any = true end
+    end
+    if any then ccByName = t end
+    return t
+end
+AB.CCRules = CCRules
+
+-- Art des Ziels als Schluessel, oder nil (kein Ziel, unbekannt, geheim).
+function AB.TargetKind()
+    if not K.Bool(_G.UnitExists and _G.UnitExists("target"), false) then return nil end
+    if not K.Bool(_G.UnitCanAttack and _G.UnitCanAttack("player", "target"), false) then return nil end
+    local ok, ct = pcall(_G.UnitCreatureType, "target")
+    ct = ok and K.Plain(ct) or nil
+    return type(ct) == "string" and AB.CREATURE[ct] or nil
+end
+
+-- Wirkt die Aktion beim Ziel nicht? true nur, wenn sicher.
+function AB.CCBlocked(slot, kind)
+    if not kind or type(slot) ~= "number" or type(_G.GetActionInfo) ~= "function" then return false end
+    local ok, at, id = pcall(_G.GetActionInfo, slot)
+    at, id = ok and K.Plain(at) or nil, ok and K.Plain(id) or nil
+    if at ~= "spell" or type(id) ~= "number" then return false end
+    local cs = _G.C_Spell
+    local okN, n = pcall(cs and cs.GetSpellName or _G.GetSpellInfo, id)
+    n = okN and K.Plain(n) or nil
+    local rule = type(n) == "string" and CCRules()[n]
+    return rule and not rule[kind] or false
+end
+
+function AB.UpdateCC()
+    local kind = Opt("ccDot") and AB.TargetKind() or nil
+    for b, d in pairs(skinned) do
+        if d.cc then
+            local slot = K.Plain(b.action)
+            local blocked = kind and AB.CCBlocked(slot, kind) or false
+            if blocked ~= d.ccShown then
+                d.ccShown = blocked
+                d.cc:SetShown(blocked)
+            end
+        end
+    end
+end
+
+local ccEv = CreateFrame("Frame")
+ccEv:RegisterEvent("PLAYER_TARGET_CHANGED")
+ccEv:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
+ccEv:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
+ccEv:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
+ccEv:SetScript("OnEvent", function()
+    if not K.IsActive(KEY) then return end
+    local ok, err = pcall(AB.UpdateCC)
+    if not ok then K.Report("aktionsleisten", err) end
+end)
+
 local function px(v) return string.format("%d px", v) end
 
 K.Register({
@@ -1068,6 +1170,9 @@ K.Register({
             -- 6.10.1.0: Randfarbe, Schriftgroessen und Kleinigkeiten am Symbol zugeklappt.
             B:Advanced()
             B:Section("Feinheiten der Knöpfe")
+            B:Row({ type = "toggle", label = "Roter Punkt: Kontrolle wirkt nicht", key = "ccDot",
+                    description = "Oben links am Knopf, wenn Verwandlung, Kopfnuss, Fesseln, Verbannen & Co. beim Ziel nicht wirken – etwa Verwandlung auf Untote. Regeln wie in Classic." },
+                  { type = "empty" })
             B:Row({ type = "color", label = "Randfarbe", key = "borderColor",
                     disabled = function() return not K.Get(KEY, "border") end },
                   { type = "toggle", label = "Schatten am Symbol", key = "iconShade" })

@@ -7114,6 +7114,32 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.30.48.0: roter Punkt, wenn Kontrolle beim Ziel nicht wirkt.
+do
+    local G = _G
+    local names = { "UnitExists", "UnitCanAttack", "UnitCreatureType", "GetActionInfo", "C_Spell" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local ok, err = pcall(function()
+        local AB = WeintCodex.UIActionBars
+        local ctype = "Untoter"
+        G.UnitExists = function() return true end
+        G.UnitCanAttack = function() return true end
+        G.UnitCreatureType = function() return ctype end
+        G.C_Spell = { GetSpellName = function(id) return (id == 118 or id == 12824) and "Verwandlung" or ("Zauber" .. id) end }
+        G.GetActionInfo = function(slot) return "spell", slot == 1 and 12824 or 133 end
+        assert(AB.TargetKind() == "Undead", "Art: " .. tostring(AB.TargetKind()))
+        assert(AB.CCBlocked(1, "Undead") == true, "Verwandlung auf Untote nicht erkannt")
+        assert(AB.CCBlocked(2, "Undead") == false, "Feuerball markiert")
+        ctype = "Humanoide"
+        assert(AB.CCBlocked(1, AB.TargetKind()) == false, "Verwandlung auf Humanoide markiert")
+        ctype = "Nicht angegeben"
+        assert(AB.TargetKind() == nil, "unbekannte Art geraten")
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    Check(ok, "Aktionsleisten: roter Punkt, wenn Kontrolle nicht wirkt (Classic-Regeln, unbekannt = kein Punkt)" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.30.43.0/6.30.44.0: Verlauf 7 Tage, kontoweit (alte Datei je Charakter wird uebernommen).
 do
     local ok, err = pcall(function()

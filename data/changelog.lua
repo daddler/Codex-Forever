@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.48.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFRoter Punkt, wenn Kontrolle nicht wirkt.|r Verwandlung auf einen Untoten, Fesseln auf einen Humanoiden: oben links am Knopf zeigt ein roter Punkt, dass der Zauber beim Ziel nicht greift. Abschaltbar unter Aktionsleisten → Erweitert.",
+        },
+    },
+    {
         version = "6.30.47.0",
         date    = "12.10.2026",
         notes   = {
