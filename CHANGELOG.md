@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.29.28.0] – 2026-10-12
+
+### Behoben
+- Totems: im Kampf gestellte Totems (geheime Werte aus `GetTotemInfo`)
+  wurden als leer gelesen – Knopf unsichtbar, Rechtsklick ging ins Leere.
+  Werte gehen jetzt ungelesen an Textur, `SetAlphaFromBoolean` und eine
+  Abklingspirale.
+
 ## [6.29.27.0] – 2026-10-12
 
 ### Neu

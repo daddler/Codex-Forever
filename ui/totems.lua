@@ -54,10 +54,37 @@ local function Left(b)
     return tostring(math.floor(s))
 end
 
+-- 6.29.28.0 (Beta-Test: "Totem im Kampf gesetzt erscheint nicht unter
+-- dem Rahmen, entfernen geht nicht"): im Kampf gibt GetTotemInfo geheime
+-- Werte zurueck. TT.Info machte daraus "leer", der Knopf blieb unsichtbar.
+-- Jetzt gehen die geheimen Werte ungelesen ans Spiel: Symbol an die
+-- Textur, "hat Totem" an SetAlphaFromBoolean, die Restzeit an eine
+-- Abklingspirale. Lua vergleicht nichts davon.
+function TT.Secret(b)
+    if not _G.GetTotemInfo then return false end
+    local ok, have, _, start, duration, icon = pcall(_G.GetTotemInfo, b.slot)
+    if not ok or not K.IsSecret(have) then return false end
+    b._finish, b._name = nil, nil
+    b.time:SetText("")
+    pcall(b.icon.SetTexture, b.icon, icon)
+    if type(b.cd) == "table" and b.cd.SetCooldown then pcall(b.cd.SetCooldown, b.cd, start, duration) end
+    if b.SetAlphaFromBoolean then
+        b:SetAlphaFromBoolean(have, 1, 0)
+    else
+        -- Ohne das Mittel lieber sichtbar (leer) als ein Totem, das man
+        -- nicht entfernen kann.
+        b:SetAlpha(1)
+    end
+    return true
+end
+
 function TT.Update()
     for i, b in ipairs(buttons) do
         local have, name, finish, icon = TT.Info(b.slot)
-        if have then
+        if TT.Secret(b) then
+            -- im Kampf: siehe oben
+        elseif have then
+            if type(b.cd) == "table" and b.cd.Clear then b.cd:Clear() end
             b.icon:SetTexture(icon)
             b._finish, b._name = finish, name
             b.time:SetText(Left(b))
@@ -88,6 +115,13 @@ local function Build(anchor)
         b.icon:SetPoint("TOPLEFT", b, "TOPLEFT", 1, -1)
         b.icon:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -1, 1)
         b.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        local okCd, cd = pcall(CreateFrame, "Cooldown", nil, b, "CooldownFrameTemplate")
+        if okCd and cd then
+            cd:SetAllPoints(b.icon)
+            if cd.SetDrawEdge then cd:SetDrawEdge(false) end
+            if cd.SetHideCountdownNumbers then cd:SetHideCountdownNumbers(false) end
+            b.cd = cd
+        end
         b.time = K.NewText(b, 11, "OVERLAY")
         b.time:SetPoint("CENTER", b, "CENTER", 0, 0)
         b:SetScript("OnEnter", function(self)

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.29.28.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFTotems aus dem Kampf erscheinen unter dem Spielerrahmen.|r Im Kampf gestellte Totems fehlten dort und ließen sich nicht per Rechtsklick entfernen. Im Kampf läuft die Restzeit als Spirale statt als Zahl.",
+        },
+    },
+    {
         version = "6.29.27.0",
         date    = "12.10.2026",
         notes   = {

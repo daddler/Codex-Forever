@@ -17429,6 +17429,35 @@ do
     Check(ok, "Totems: Platz, Name, Ende aus GetTotemInfo; Debuffs groesser" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.29.28.0: Totem im Kampf (geheime Werte) wird gezeigt, nicht als leer verworfen.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local TT = WeintCodex.UITotems
+        local SECRET = {}
+        local oT, oS = G.GetTotemInfo, G.issecretvalue
+        G.issecretvalue = function(v) return v == SECRET end
+        G.GetTotemInfo = function() return SECRET, SECRET, SECRET, SECRET, SECRET end
+        local b = CreateFrame("Button")
+        b.slot = 1
+        b.icon = b:CreateTexture()
+        b.time = WeintCodex.UIKit.NewText(b, 11)
+        local alpha, fromBool
+        b.SetAlpha = function(_, a) alpha = a end
+        b.SetAlphaFromBoolean = function(_, v, x, y) fromBool = (v == SECRET and x == 1 and y == 0) end
+        assert(TT.Secret(b), "geheimer Wert nicht erkannt")
+        assert(fromBool, "Sichtbarkeit nicht ans Spiel gegeben")
+        b.SetAlphaFromBoolean = false
+        TT.Secret(b)
+        assert(alpha == 1, "ohne SetAlphaFromBoolean unsichtbar")
+        G.issecretvalue = nil
+        G.GetTotemInfo = function() return true, "x", 1, 2, 3 end
+        assert(not TT.Secret(b), "offener Wert als geheim behandelt")
+        G.GetTotemInfo, G.issecretvalue = oT, oS
+    end)
+    Check(ok, "Totems im Kampf: geheime Werte ans Spiel, Knopf bleibt da" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.27.0.7: Flüstern-Symbol einmal zurueck an die Minikarte.
 do
     local ok, err = pcall(function()
