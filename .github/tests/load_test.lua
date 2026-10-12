@@ -1326,6 +1326,24 @@ do
         G.C_Texture = nil
         assert(QH.SetIcon(tex, "avail") == "file", "ohne Abfrage Atlas geraten")
         G.C_Texture = oCT
+        -- 6.30.7.0: Minikarte - Abstand in Bildpunkten, Norden oben, Osten rechts,
+        -- mitgedreht, ausserhalb weg, andere Welt weg.
+        local e = { wc = 0, wn = 110, ww = 100 }          -- 10 m noerdlich
+        local dx, dy = QH.MinimapOffset(e, 1429, 0, 100, 100, 100, 50, nil, false)
+        assert(math.abs(dx) < 1e-6 and math.abs(dy - 5) < 1e-6, "Norden nicht oben")
+        e = { wc = 0, wn = 100, ww = 90 }                  -- 10 m oestlich
+        dx, dy = QH.MinimapOffset(e, 1429, 0, 100, 100, 100, 50, nil, false)
+        assert(math.abs(dx - 5) < 1e-6 and math.abs(dy) < 1e-6, "Osten nicht rechts")
+        e = { wc = 0, wn = 100, ww = 110 }                 -- 10 m westlich, Blick nach Westen
+        dx, dy = QH.MinimapOffset(e, 1429, 0, 100, 100, 100, 50, math.pi / 2, false)
+        assert(math.abs(dx) < 1e-6 and math.abs(dy - 5) < 1e-6, "gedrehte Minikarte: Blickrichtung nicht oben")
+        e = { wc = 0, wn = 190, ww = 100 }                 -- 90 m: rund draussen, eckig drin
+        assert(QH.MinimapOffset(e, 1429, 0, 100, 100, 100, 50, nil, false), "90 m bei 100 m Halbmesser fehlt")
+        e = { wc = 0, wn = 175, ww = 25 }                  -- Ecke: rund draussen, eckig drin
+        assert(not QH.MinimapOffset(e, 1429, 0, 100, 100, 100, 50, nil, false), "Ecke auf runder Karte")
+        assert(QH.MinimapOffset(e, 1429, 0, 100, 100, 100, 50, nil, true), "Ecke auf eckiger Karte fehlt")
+        e = { wc = 1, wn = 100, ww = 100 }
+        assert(not QH.MinimapOffset(e, 1429, 0, 100, 100, 100, 50, nil, false), "andere Welt gezeigt")
         WeintCodex.QuestDBData = {
             q = {
                 [1] = { "Erste", 5, 3, 77, 0, {10}, {}, {11}, {}, {12}, {}, {}, {}, {}, {} },

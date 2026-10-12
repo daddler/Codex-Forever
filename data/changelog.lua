@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.7.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Questhilfe auch auf der Minikarte.|r Dieselben Symbole und Filter wie auf der Weltkarte, solange sie in Reichweite der Minikarte liegen – auch mit gedrehter Minikarte. Abschalten: Komfort → Questhilfe → „Auch auf der Minikarte“.",
+            "|cff7C6CFFMehr Fundorte für Questziele.|r Je Ziel und Gebiet zeigt die Karte jetzt bis zu 25 Stellen statt 10.",
+        },
+    },
+    {
         version = "6.30.6.0",
         date    = "12.10.2026",
         notes   = {

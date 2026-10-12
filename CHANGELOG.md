@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.7.0] – 2026-10-12
+
+### Neu
+- Questhilfe auf der Minikarte (`qhMinimap`, ab Werk an mit der Questhilfe):
+  Lagen einmal in Weltkoordinaten (`K.ToWorld`), im Takt nur der Abstand;
+  Halbmesser je Zoom drinnen/draußen, `rotateMinimap`, rund/eckig.
+
+### Geändert
+- Questhilfe: bis zu 25 Lagen je Ziel und Karte (vorher 10).
+
 ## [6.30.6.0] – 2026-10-12
 
 ### Geändert

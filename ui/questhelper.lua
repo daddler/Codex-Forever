@@ -47,6 +47,7 @@ QH.DEFAULTS = {
     -- gewaehlten Quest; alle nur auf Wunsch.
     qhAllTargets = false,
     qhBar     = true,    -- Filterleiste auf der Karte
+    qhMinimap = true,    -- dieselben Symbole auf der Minikarte (6.30.7.0)
 }
 QH.FILTERS = {
     { key = "qhAvail",   text = "Neue Quests" },
@@ -643,10 +644,121 @@ local function EnsureDriver()
     return driver
 end
 
+--------------------------------------------------
+-- Minikarte (6.30.7.0, Wunsch: "die Questhilfe auch auf der Minikarte")
+--------------------------------------------------
+-- Dieselbe Liste wie auf der Weltkarte, fuer die Karte, auf der du stehst
+-- (K.BestMap). Jede Lage wird einmal in Weltkoordinaten umgerechnet
+-- (K.ToWorld, im Eintrag gemerkt); im Takt nur der Abstand zum Spieler,
+-- in Bildpunkte ueber den Halbmesser der Minikarte in Metern je Zoomstufe.
+-- Dreht sich die Minikarte mit (rotateMinimap), dreht der Abstand mit.
+-- Was ausserhalb liegt, ist nicht da. Die Symbole nehmen nur die Maus
+-- fuer den Tooltip - Klicks gehen an die Minikarte (Ping).
+QH.MM_RADIUS = {
+    outside = { [0] = 233.33, 200, 166.67, 133.33, 100, 66.67 },
+    inside  = { [0] = 150, 120, 90, 60, 40, 25 },
+}
+QH.MM_SCALE = 0.75
+QH.MM_TICK = 0.05
+
+local mmPins = {}
+QH.mmPins = mmPins
+local function MMHide(from) for i = from or 1, #mmPins do mmPins[i]:Hide() end end
+
+function QH.MinimapActive() return QH.Active() and Get("qhMinimap") and true or false end
+
+-- Halbmesser der Minikarte in Metern (Spieleinheiten), oder nil.
+function QH.MinimapYards()
+    local mm = _G.Minimap
+    if type(mm) ~= "table" or not mm.GetZoom then return nil end
+    local z = K.Plain(mm:GetZoom())
+    if type(z) ~= "number" then return nil end
+    local indoors = _G.IsIndoors and K.Plain(_G.IsIndoors())
+    local t = indoors and QH.MM_RADIUS.inside or QH.MM_RADIUS.outside
+    return t[z] or t[0]
+end
+
+-- Lage eines Eintrags auf der Minikarte in Bildpunkten vom Mittelpunkt,
+-- oder nil (andere Welt, ausserhalb). `pc, pn, pw`: Spieler in der Welt.
+function QH.MinimapOffset(e, mapID, pc, pn, pw, yards, half, facing, square)
+    if e.wc == nil then
+        local c, n, w = K.ToWorld(mapID, e.x, e.y)
+        e.wc, e.wn, e.ww = c or false, n, w
+    end
+    if e.wc ~= pc then return nil end
+    local east, north = pw - e.ww, e.wn - pn
+    if facing then
+        local cs, sn = math.cos(-facing), math.sin(-facing)
+        east, north = east * cs - north * sn, east * sn + north * cs
+    end
+    local f = half / yards
+    local dx, dy = east * f, north * f
+    if square then
+        if math.abs(dx) > half or math.abs(dy) > half then return nil end
+    elseif dx * dx + dy * dy > half * half then
+        return nil
+    end
+    return dx, dy
+end
+
+function QH.PlaceMinimap()
+    local mm = _G.Minimap
+    if not (QH.MinimapActive() and type(mm) == "table" and mm.IsShown and mm:IsShown()) then
+        MMHide()
+        return 0
+    end
+    local mapID = K.BestMap and K.BestMap()
+    local yards = QH.MinimapYards()
+    local pc, pn, pw = K.PlayerWorld()
+    local w = K.Plain(mm:GetWidth())
+    if not (mapID and yards and pc and type(w) == "number" and w > 1) then MMHide() return 0 end
+    local facing
+    if _G.GetCVar and K.Plain(_G.GetCVar("rotateMinimap")) == "1" and _G.GetPlayerFacing then
+        facing = K.Plain(_G.GetPlayerFacing())
+        if type(facing) ~= "number" then MMHide() return 0 end
+    end
+    local square = K.IsActive("minimap") and K.Get("minimap", "square") and true or false
+    local half = w / 2
+    local n = 0
+    for _, e in ipairs(QH.ForMap(mapID)) do
+        local dx, dy = QH.MinimapOffset(e, mapID, pc, pn, pw, yards, half, facing, square)
+        if dx then
+            n = n + 1
+            local p = mmPins[n]
+            if not p then
+                p = NewPin(mm)
+                if p.EnableMouseClicks then p:EnableMouseClicks(false) end
+                if p.EnableMouseMotion then p:EnableMouseMotion(true) end
+                p:SetScale(QH.MM_SCALE)
+                mmPins[n] = p
+            end
+            Dress(p, e)
+            p:SetFrameLevel((K.Plain(mm:GetFrameLevel()) or 0) + (e.kind == "target" and 5 or 7))
+            p:ClearAllPoints()
+            p:SetPoint("CENTER", mm, "CENTER", dx / QH.MM_SCALE, dy / QH.MM_SCALE)
+            p:Show()
+        end
+    end
+    MMHide(n + 1)
+    return n
+end
+
+local mmAcc = 0
+local mmTicker = CreateFrame("Frame")
+mmTicker:Hide()
+mmTicker:SetScript("OnUpdate", K.Measured("Minikarte: Questhilfe", function(_, el)
+    mmAcc = mmAcc + (el or 0)
+    if mmAcc < QH.MM_TICK then return end
+    mmAcc = 0
+    QH.PlaceMinimap()
+end))
+QH.mmTicker = mmTicker
+
 local function Refresh()
     QH.ReadLog()
     QH.Forget()
     for _, p in ipairs(pins) do p.entry = nil end
+    for _, p in ipairs(mmPins) do p.entry = nil end
 end
 QH.Refresh = Refresh
 
@@ -660,7 +772,7 @@ ev:SetScript("OnEvent", function(_, event, name)
         return
     end
     if event == "PLAYER_LOGIN" then
-        if QH.Active() then Refresh() EnsureDriver() end
+        if QH.Active() then Refresh() EnsureDriver() mmTicker:SetShown(QH.MinimapActive()) end
         return
     end
     -- QUEST_LOG_UPDATE kommt in Schauern - einmal je Bild genuegt.
@@ -680,7 +792,11 @@ local function Apply()
         for _, e in ipairs(REFRESH) do pcall(ev.RegisterEvent, ev, e) end
         EnsureDriver()
         QH.Place()
+        mmTicker:SetShown(QH.MinimapActive())
+        if not QH.MinimapActive() then MMHide() end
     else
+        mmTicker:Hide()
+        MMHide()
         pcall(ev.UnregisterEvent, ev, "ADDON_LOADED")
         for _, e in ipairs(REFRESH) do pcall(ev.UnregisterEvent, ev, e) end
         HideAll()
@@ -707,9 +823,13 @@ end
 local function Build(B)
     B:Section("Questhilfe", "Auf der Weltkarte: wo neue Quests warten, wo du abgibst und wo die Ziele deiner Quests sind. Unter dem Kartenfenster schaltest du, was du sehen willst.")
     B:Row({ type = "toggle", label = "Questhilfe auf der Karte", key = "qhOn",
-            description = "Wissensstand der Community für Forever – unbestätigt. Nur auf der Karte einer Zone." },
+            description = "Wissensstand der Community für Forever – unbestätigt. Auf der Karte einer Zone und auf der Minikarte." },
           { type = "toggle", label = "Filterleiste auf der Karte", key = "qhBar",
             disabled = function() return not K.Get(KEY, "qhOn") end })
+    B:Row({ type = "toggle", label = "Auch auf der Minikarte", key = "qhMinimap",
+            description = "Dieselben Symbole und Filter, solange sie auf der Minikarte liegen.",
+            disabled = function() return not K.Get(KEY, "qhOn") end },
+          { type = "empty" })
     B:Row({ type = "toggle", label = "Neue Quests", key = "qhAvail",
             description = "Ein „!“ am Geber jeder Quest, die du jetzt annehmen kannst.",
             disabled = function() return not K.Get(KEY, "qhOn") end },

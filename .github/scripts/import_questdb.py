@@ -25,7 +25,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 OUT = os.path.join(ROOT, "data", "questdb.lua")
 
 GIVER_SPAWNS = 6       # Lagen je Geber/Abgabe und Karte
-TARGET_SPAWNS = 10     # Lagen je Ziel und Karte (gleichmaessig ausgewaehlt)
+TARGET_SPAWNS = 25     # Lagen je Ziel und Karte (gleichmaessig ausgewaehlt; 6.30.7.0: 10 -> 25)
 ITEM_SOURCES = 6       # hoechstens so viele Quellen je Gegenstand
 
 

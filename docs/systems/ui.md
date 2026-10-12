@@ -1804,7 +1804,15 @@ Klasse, Grau-Bereich (`UnitQuestTrivialLevelRange`, sonst 8).
 **Zeichnen** wie Geistheiler: ein Halter auf `QM.Canvas`, Liste je Karte
 nur nach Ereignissen neu (`QUEST_LOG_UPDATE` gebündelt, 0,2 s), nie im Takt.
 Filterleiste unter dem Kartenfenster (`WeintCodexQuestFilter`, seit 6.30.2.0 – auf der Karte verdeckte sie den Spielerpfeil).
-Nur Zonenkarten, keine Minikarte (noch nicht).
+Nur Zonenkarten. **Minikarte** seit 6.30.7.0 (`qhMinimap`): dieselbe Liste
+für `K.BestMap()`, Lagen einmal über `K.ToWorld` in Weltkoordinaten (im
+Eintrag gemerkt), im Takt (`QH.MM_TICK`) nur `QH.MinimapOffset`: Meter →
+Bildpunkte über den Halbmesser je Zoom (`QH.MM_RADIUS`, drinnen/draußen –
+Werte aus Classic, nicht gemessen), mitgedreht bei `rotateMinimap`,
+außerhalb (rund/eckig) weg. Symbole nur mit Maus-Bewegung (Tooltip),
+Klicks gehen an die Minikarte. Lücken im Bestand (gezählt 6.30.7.0): 518
+Quests ohne Geber-NPC/-Objekt (Start per Gegenstand o. Ä.), 277 Geber und
+538 Abgaben ohne Lage; Ziele bis 25 Lagen je Karte.
 **Ziele nur der gewählten Quest** (6.30.1.0, Beta-Test: „immer alles
 angezeigt“): `QH.Focus()` – eigener Klick auf ein Symbol (`QH.SetFocus`,
 der Questpfeil folgt über `QA.manual`), sonst die vom Spiel verfolgte Quest
