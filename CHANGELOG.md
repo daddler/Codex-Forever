@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.35.0] – 2026-10-12
+
+### Behoben
+- Flüstern: öffnet die Chatzeile ein Gespräch (Menü „Flüstern“, „/w Name“),
+  nimmt mit „direkt senden“ das Eingabefeld des Fensters den Fokus
+  (`MS.TakeFocus`), solange in der Chatzeile nichts getippt ist.
+
 ## [6.30.34.0] – 2026-10-12
 
 ### Geändert

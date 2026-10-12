@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.35.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFF„Flüstern“ aus dem Menü schreibt im Messenger.|r Öffnet „/w Name“ oder „Flüstern“ im Rechtsklickmenü den Messenger, liegt die Eingabe gleich dort – nicht mehr zusätzlich unten im Chat.",
+        },
+    },
+    {
         version = "6.30.34.0",
         date    = "12.10.2026",
         notes   = {

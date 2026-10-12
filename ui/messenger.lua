@@ -1043,6 +1043,25 @@ function MS.OnChatEdit(eb)
         MS.current = key
         Pop(key)
     end
+    -- 6.30.35.0 (Beta-Test: "Rechtsklick > Fluestern oeffnet den Messenger,
+    -- aber unten ist trotzdem die Eingabe"): mit "direkt senden" schreibt
+    -- man im Fenster - es nimmt den Fokus, die Chatzeile des Spiels schliesst
+    -- sich dabei von selbst (so wie bei jedem Klick woanders hin). Nur wenn
+    -- dort noch nichts getippt ist ("/w Name Text" bleibt, wie es ist).
+    MS.TakeFocus(eb)
+end
+
+function MS.TakeFocus(eb)
+    if not Get("direct") or not (win and win:IsShown()) or not input then return false end
+    local function Take()
+        if not (win and win:IsShown()) then return end
+        local text = eb and eb.GetText and K.Plain(eb:GetText())
+        if type(text) == "string" and text:find("%S") then return end
+        input:SetFocus()
+    end
+    local t = _G.C_Timer
+    if type(t) == "table" and type(t.After) == "function" then t.After(0, Take) else Take() end
+    return true
 end
 
 local editHooked, headerHooked, replyHooked = {}, false, false
