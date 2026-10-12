@@ -4980,6 +4980,7 @@ do
         assert(NP.DimObject(plate, "nameplate9") == 1, "Teile der Objekt-Plakette nicht ausgeblendet")
         assert(health:GetAlpha() == 0, "Lebensbalken des Spiels bleibt am Objekt")
         assert(soft:GetAlpha() ~= 0, "Interaktionssymbol ausgeblendet")
+        assert(NP.softMoved, "Interaktionssymbol nicht an den unteren Rand gesetzt")
         NP.UndimObject("nameplate9")
         assert(health:GetAlpha() == 1, "Plakette nach dem Objekt nicht zurueck")
     end)

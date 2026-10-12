@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.15.0] – 2026-10-12
+
+### Geändert
+- Objekt-Plaketten: `SoftTargetFrame` an den unteren Rand der Plakette
+  (`NP.SOFT_Y`). Glitzern: Beschreibung nennt, dass der Beruf nötig ist.
+
 ## [6.30.14.0] – 2026-10-12
 
 ### Behoben

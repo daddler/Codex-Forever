@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.15.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDas Interaktionssymbol über Objekten sitzt tiefer.|r Es steht jetzt dicht über Briefkasten, Kraut oder Erz statt weit darüber.",
+        },
+    },
+    {
         version = "6.30.14.0",
         date    = "12.10.2026",
         notes   = {

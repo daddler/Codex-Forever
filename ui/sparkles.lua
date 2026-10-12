@@ -357,7 +357,7 @@ local function Build(B)
     B:Row({ type = "toggle", label = "Questgegenstände glitzern immer", key = "sparkleLoot",
             description = "Schaltet die Umrisse aus und das Glitzern des Spiels an – auch nach einem Wechsel der Grafikstufe. Aus: die Umrisse kommen erst nach einem Neustart des Spiels zurück." },
           { type = "toggle", label = "Kräuter und Erz glitzern", key = "sparkleNodes",
-            description = "Golden über dem nächsten Kraut oder der nächsten Erzader (bis etwa 15 m), grau, wenn du es noch nicht sammeln kannst. Dazu das Symbol des Spiels. Im Kampf nicht." })
+            description = "Golden über dem nächsten Kraut oder der nächsten Erzader (bis etwa 15 m), grau, wenn deine Fertigkeit noch zu niedrig ist. Nur mit Kräuterkunde bzw. Bergbau – ohne den Beruf zeigt das Spiel das Objekt nicht an. Im Kampf nicht." })
     B:Note("Kräuter und Erz nutzen die weiche Zielerfassung des Spiels. Nicht zusammen mit ForeverLootSparkles oder Lueur benutzen – sie stellen dieselben Werte um.")
 end
 

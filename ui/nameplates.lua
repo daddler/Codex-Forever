@@ -399,6 +399,7 @@ end
 -- dunkle Kasten. Jetzt blendet WeintCodex an Objekt-Plaketten alles aus
 -- ausser dem Interaktionssymbol des Spiels (SoftTargetFrame).
 local objectPlates = {}
+NP.SOFT_Y = 0          -- Abstand des Interaktionssymbols ueber dem unteren Rand
 NP.objectPlates = objectPlates
 local function IsSoftTarget(f, uf)
     if f == uf.SoftTargetFrame then return true end
@@ -424,6 +425,16 @@ function NP.DimObject(nameplate, unit)
     for _, part in ipairs(parts) do Dim(part) end
     partsOf[uf] = parts
     objectPlates[unit] = uf
+    -- 6.30.15.0 (Beta-Test: "das Symbol ziemlich weit oben"): es sass am
+    -- oberen Rand der unsichtbaren Plakette des Spiels. Jetzt an ihrem
+    -- unteren Rand - dort, wo das Objekt steht. Nur gesetzt, nie gelesen.
+    local soft = uf.SoftTargetFrame
+    if type(soft) == "table" and soft.SetPoint and not (soft.IsProtected and soft:IsProtected()) then
+        NP.softMoved = pcall(function()
+            soft:ClearAllPoints()
+            soft:SetPoint("BOTTOM", nameplate, "BOTTOM", 0, NP.SOFT_Y)
+        end)
+    end
     return #parts
 end
 function NP.UndimObject(unit)
