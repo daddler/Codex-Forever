@@ -2,8 +2,10 @@
 -- WeintCodex :: Oberflaeche - Betrachten (6.30.40.0)
 --------------------------------------------------
 -- Wunsch: "Das Gleiche (wie Transmogrifizieren) muss fuer den Inspect von
--- anderen Spielern passieren." Das Fenster gehoert zu einem Charakter -
--- Akzent der Klasse (S.CHARACTER_INFO), wie das eigene Charakterfenster.
+-- anderen Spielern passieren." 6.30.41.0 (Beta-Test: "ich inspiziere einen
+-- Magier, aber das Fenster ist gruen - das macht keinen Sinn"): der Akzent
+-- der Klasse ist immer der EIGENE (C.accent); ein fremder Charakter traegt
+-- deshalb Gold (S.CALM). Seine Klasse zeigen Name und Klassenbild.
 --
 --   Huelle     Metallrahmen, Streifen, Seitenreiter: allgemeiner Durchlauf
 --              (W.WINDOWS, "InspectFrame").
@@ -25,7 +27,7 @@ local S = WeintCodex.UIStyle
 local TM = WeintCodex.UITransmog
 
 local IN = CP.New({
-    label = "Betrachten", host = "InspectFrame", depth = 4, style = S.CHARACTER_INFO,
+    label = "Betrachten", host = "InspectFrame", depth = 4, style = S.CALM,
     files = {
         [131093] = "decor", [131094] = "decor", [131095] = "decor", [131096] = "decor",
         [410247] = "decor", [410248] = "decor", [410249] = "decor",
@@ -55,5 +57,9 @@ function IN.Scene(f)
     if type(host) ~= "table" then return nil end
     local token = IN.Class(f)
     IN.lastClass = token
+    -- Schwarze Flaeche ueber dem Grund (gemessen: Overlay, Bild 0) weg,
+    -- sonst liegt sie ueber dem Klassenbild.
+    local ov = _G.InspectModelFrameBackgroundOverlay
+    if type(ov) == "table" and ov.SetAlpha and K.Plain(ov:GetAlpha()) ~= 0 then ov:SetAlpha(0) end
     return TM.ClassScene(host, token)
 end

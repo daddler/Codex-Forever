@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.41.0] – 2026-10-12
+
+### Behoben
+- Betrachten: Stil S.CALM statt S.CHARACTER_INFO (Akzent wäre die eigene
+  Klasse); `InspectModelFrameBackgroundOverlay` ausgeblendet.
+
 ## [6.30.40.0] – 2026-10-12
 
 ### Neu

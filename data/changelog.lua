@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.41.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFBetrachten trägt nicht mehr deine Klassenfarbe.|r Ein fremder Charakter bekommt das neutrale Gold; seine Klasse zeigen Name und Klassenbild. Die schwarze Fläche über dem Klassenbild ist weg.",
+        },
+    },
+    {
         version = "6.30.40.0",
         date    = "12.10.2026",
         notes   = {
