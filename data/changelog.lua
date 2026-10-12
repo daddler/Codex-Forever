@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.13.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Vergleich mit deiner Ausrüstung erscheint im Gespräch.|r Fährst du über eine Belohnung, steht daneben wieder, was du gerade trägst – auch wenn die Oberfläche im Gespräch ausgeblendet ist.",
+        },
+    },
+    {
         version = "6.30.12.0",
         date    = "12.10.2026",
         notes   = {

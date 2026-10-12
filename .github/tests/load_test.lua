@@ -1463,6 +1463,25 @@ do
     Check(ok, "Kartenkoordinaten: eigene Zeile weicht denen der Karte" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.30.13.0: Vergleich im Gespraech mit eigenen Tooltips ohne Elternteil
+-- (die des Spiels haengen an der ausgeblendeten UIParent).
+do
+    local ok, err = pcall(function()
+        local DL = WeintCodex.UIDialogue
+        local tips = DL.CompareTips()
+        assert(tips and #tips == 2, "keine eigenen Vergleichs-Tooltips")
+        local gt = CreateFrame("GameTooltip")
+        gt.shoppingTooltips = { "des Spiels" }
+        local oS = _G.GameTooltip_ShowCompareItem
+        local used
+        _G.GameTooltip_ShowCompareItem = function(t) used = t.shoppingTooltips end
+        DL.Compare(gt)
+        _G.GameTooltip_ShowCompareItem = oS
+        assert(used == tips, "Vergleich nutzt die Tooltips an der UIParent")
+    end)
+    Check(ok, "Gespraeche: Vergleich mit eigenen Tooltips" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.26.1.0: Kamera - Rueckgabe vergleicht Zahlen als Zahlen; einmalige
 -- Reparatur der Testeinstellungen auf den Wert ab Werk.
 do

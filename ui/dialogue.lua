@@ -280,8 +280,36 @@ end
 -- bei Wahl eines Items immer der Vergleich angezeigt"). Die Vergleichs-
 -- Tooltips des Spiels (ShoppingTooltip1/2) an den eigenen Tooltip; was
 -- verglichen wird, entscheidet das Spiel.
+--
+-- 6.30.13.0 (Beta-Test: "der Vergleich funktioniert noch immer nicht, wenn
+-- Gespraeche aktiv sind"): ShoppingTooltip1/2 haengen an UIParent - und die
+-- blendet das Gespraech aus (DL.FadeOut). Der Vergleich lief, war aber
+-- durchsichtig. Jetzt zwei eigene Vergleichs-Tooltips ohne Elternteil, wie
+-- der eigene Tooltip selbst.
+local compare
+function DL.CompareTips()
+    if compare then return compare end
+    local list = {}
+    for i = 1, 2 do
+        local ok, t = pcall(CreateFrame, "GameTooltip", "WeintCodexDialogueCompare" .. i, nil, "ShoppingTooltipTemplate")
+        if not ok or not t then
+            ok, t = pcall(CreateFrame, "GameTooltip", "WeintCodexDialogueCompare" .. i, nil, "GameTooltipTemplate")
+        end
+        if ok and t then
+            if t.SetFrameStrata then t:SetFrameStrata("TOOLTIP") end
+            list[#list + 1] = t
+        end
+    end
+    if #list == 2 then compare = list end
+    return compare
+end
+
 function DL.Compare(gt)
-    if not gt.shoppingTooltips and _G.ShoppingTooltip1 then
+    -- Immer die eigenen: die Vorlage kann schon die des Spiels eintragen.
+    local own = DL.CompareTips()
+    if own then
+        gt.shoppingTooltips = own
+    elseif not gt.shoppingTooltips and _G.ShoppingTooltip1 then
         gt.shoppingTooltips = { _G.ShoppingTooltip1, _G.ShoppingTooltip2 }
     end
     local show = _G.GameTooltip_ShowCompareItem
@@ -292,7 +320,7 @@ function DL.Compare(gt)
 end
 
 function DL.HideCompare()
-    for _, n in ipairs({ "ShoppingTooltip1", "ShoppingTooltip2" }) do
+    for _, n in ipairs({ "ShoppingTooltip1", "ShoppingTooltip2", "WeintCodexDialogueCompare1", "WeintCodexDialogueCompare2" }) do
         local t = _G[n]
         if t and t.Hide then t:Hide() end
     end

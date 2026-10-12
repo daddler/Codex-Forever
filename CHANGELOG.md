@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.13.0] – 2026-10-12
+
+### Behoben
+- Gespräche: Vergleichs-Tooltips unsichtbar – ShoppingTooltip1/2 hängen an
+  der ausgeblendeten UIParent. Jetzt eigene ohne Elternteil (`DL.CompareTips`).
+
 ## [6.30.12.0] – 2026-10-12
 
 ### Behoben
