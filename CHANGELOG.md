@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.21.0] – 2026-10-12
+
+### Neu
+- Klickzauber: Mausrad hoch/runter (`CC.WHEEL`, Weg der Tasten); Aufnahme
+  per Scrollen im Feld; ohne Zusatztaste zoomt das Rad ohne Einheit unter
+  der Maus weiter (`/run CameraZoomIn/Out`).
+
 ## [6.30.20.0] – 2026-10-12
 
 ### Neu

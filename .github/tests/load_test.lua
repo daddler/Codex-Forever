@@ -1573,6 +1573,26 @@ do
     Check(ok, "Kraftleiste: Farbe wie im Spiel/heller/eigene; /wcui maus" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.30.21.0: Klickzauber auch auf dem Mausrad.
+do
+    local ok, err = pcall(function()
+        local CC = WeintCodex.UIClickCast
+        local up = { button = "MOUSEWHEELUP", mod = "", action = "spell", spell = "Heilen" }
+        assert(CC.IsKey(up), "Mausrad nicht als Taste")
+        assert(CC.KeyText(up) == "Mausrad hoch", "Name: " .. tostring(CC.KeyText(up)))
+        assert(CC.BindingKey({ button = "MOUSEWHEELDOWN", mod = "shift-" }) == "SHIFT-MOUSEWHEELDOWN", "Belegung mit Umschalt")
+        local oS = CC.SpellAttr
+        CC.SpellAttr = function() return "Heilen" end
+        local m = CC.KeyMacro(up)
+        assert(m:find("/cast [@mouseover,exists] Heilen", 1, true) and m:find("CameraZoomIn", 1, true), "ohne Einheit zoomt nicht")
+        local ms = CC.KeyMacro({ button = "MOUSEWHEELUP", mod = "shift-", action = "spell", spell = "Heilen" })
+        assert(not ms:find("Camera", 1, true), "mit Umschalt zoomt trotzdem")
+        CC.SpellAttr = oS
+        assert(CC.CaptureValue("MOUSEWHEELDOWN", false) == "MOUSEWHEELDOWN", "Mausrad nicht aufgenommen")
+    end)
+    Check(ok, "Klickzauber: Mausrad hoch/runter, Zoom bleibt ohne Einheit" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.26.1.0: Kamera - Rueckgabe vergleicht Zahlen als Zahlen; einmalige
 -- Reparatur der Testeinstellungen auf den Wert ab Werk.
 do

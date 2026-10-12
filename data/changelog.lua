@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.21.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber auf dem Mausrad.|r Mausrad hoch und runter lassen sich belegen, auch mit Umschalt, Strg oder Alt – einfach über dem Feld „Taste zuweisen“ scrollen. Ohne Einheit unter der Maus zoomt das Rad weiter die Kamera.",
+        },
+    },
+    {
         version = "6.30.20.0",
         date    = "12.10.2026",
         notes   = {

@@ -71,6 +71,12 @@ CC.BUTTONS = {
 for n = 6, 12 do
     CC.BUTTONS[#CC.BUTTONS + 1] = { value = n, text = "Maustaste " .. n, short = "Maus " .. n }
 end
+-- 6.30.21.0 (Wunsch: "auch Scrollen, hoch und runter"): das Mausrad ist fuer
+-- das Spiel eine Taste ("MOUSEWHEELUP") - es geht den Weg der Tasten
+-- (Vorrang-Belegung, Zauber auf die Einheit unter der Maus).
+CC.WHEEL = { MOUSEWHEELUP = "In", MOUSEWHEELDOWN = "Out" }
+CC.BUTTONS[#CC.BUTTONS + 1] = { value = "MOUSEWHEELUP",   text = "Mausrad hoch",   short = "Mausrad hoch" }
+CC.BUTTONS[#CC.BUTTONS + 1] = { value = "MOUSEWHEELDOWN", text = "Mausrad runter", short = "Mausrad runter" }
 CC.MODS = {
     { value = "",       text = "ohne" },
     { value = "shift-", text = "Umschalt",  short = "Umschalt" },
@@ -188,7 +194,9 @@ end
 -- "Umschalt + Links"
 function CC.KeyText(b)
     local key
-    if CC.IsKey(b) then
+    if CC.WHEEL[b.button] then
+        key = Short(CC.BUTTONS, b.button)
+    elseif CC.IsKey(b) then
         local t = type(_G.GetBindingText) == "function" and _G.GetBindingText(b.button)
         key = "Taste " .. ((type(t) == "string" and t ~= "") and t or b.button)
     else
@@ -334,13 +342,20 @@ function CC.KeysIntact()
 end
 
 function CC.KeyMacro(b)
+    local text
     if b.action == "spell" then
         local s = CC.SpellAttr(b)
-        return s and ("/cast [@mouseover,exists] " .. s) or nil
+        text = s and ("/cast [@mouseover,exists] " .. s) or nil
     elseif b.action == "target" then
-        return "/target [@mouseover,exists]"
+        text = "/target [@mouseover,exists]"
     end
-    return nil   -- Menü: ohne Snippet nicht über eine Taste zu öffnen
+    -- Mausrad ohne Zusatztaste: die Belegung nimmt dem Spiel das Zoomen.
+    -- Ohne Einheit unter der Maus zoomt die Kamera deshalb weiter.
+    local dir = CC.WHEEL[b.button]
+    if text and dir and (b.mod or "") == "" then
+        text = text .. "\n/run if not UnitExists(\"mouseover\") then CameraZoom" .. dir .. "(1) end"
+    end
+    return text   -- Menü: ohne Snippet nicht über eine Taste zu öffnen
 end
 
 -- "shift-" + "1" -> "SHIFT-1", wie SetBinding es will.
@@ -800,7 +815,7 @@ function CC.BuildCapture(parent, width)
     if f.RegisterForClicks then f:RegisterForClicks("AnyUp") end
     local function Sync()
         if f.hover then
-            f.text:SetText(CC.KeyText(draft) .. "   –   jetzt drücken: Maustaste oder Taste, gern mit Umschalt, Strg oder Alt")
+            f.text:SetText(CC.KeyText(draft) .. "   –   jetzt drücken oder scrollen: Maustaste, Mausrad oder Taste, gern mit Umschalt, Strg oder Alt")
         else
             f.text:SetText("Taste zuweisen:  " .. CC.KeyText(draft) .. "   –   Maus hierher, dann die Taste drücken.")
         end
@@ -824,6 +839,10 @@ function CC.BuildCapture(parent, width)
         Sync()
     end)
     f:SetScript("OnMouseDown", function(_, button) CC.Capture(button, true) end)
+    if f.EnableMouseWheel then f:EnableMouseWheel(true) end
+    f:SetScript("OnMouseWheel", function(_, delta)
+        CC.Capture((delta or 0) > 0 and "MOUSEWHEELUP" or "MOUSEWHEELDOWN", false)
+    end)
     f:SetScript("OnKeyDown", function(self, key)
         -- Escape schliesst weiter das Fenster, Zusatztasten allein warten.
         local pass = not CC.CaptureValue(key, false)
@@ -851,7 +870,10 @@ function CC.BuildPage(B)
                 return CC.BuildCapture(parent, width)
             end }, nil)
     B:Row({ type = "dropdown", label = "Maustaste", items = CC.BUTTONS,
-            get = function() return type(draft.button) == "number" and draft.button or nil end,
+            get = function()
+                if type(draft.button) == "number" or CC.WHEEL[draft.button] then return draft.button end
+                return nil
+            end,
             set = function(v) draft.button = v DraftChanged() end },
           { type = "dropdown", label = "Zusatztaste", items = CC.MODS,
             get = function() return draft.mod end, set = function(v) draft.mod = v DraftChanged() end })
