@@ -163,8 +163,8 @@ def lua_str(s):
     return '"' + s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ") + '"'
 
 
-def lua_list(xs):
-    return "{" + ",".join(str(x) for x in xs) + "}"
+def csv(xs):
+    return ",".join(str(x) for x in xs)
 
 
 def num(v):
@@ -216,12 +216,15 @@ def main():
         "-- Questtexte. Herkunft: Datenbank der Community fuer Forever (`community`).",
         "-- Gelesen von ui/questhelper.lua.",
         "--",
-        "-- q[Quest] = { Name, Stufe, ab Stufe, Rassen, Klassen,",
-        "--              {Geber-NPC}, {Geber-Objekt}, {Abgabe-NPC}, {Abgabe-Objekt},",
-        "--              {Ziel-NPC}, {Ziel-Objekt}, {Gegenstand}, {alle vorher},",
-        "--              {eine vorher}, {schliesst aus} }",
-        "-- n[NPC] / o[Objekt] = { Name, Karte, x1, y1, x2, y2, ..., 0, Karte, ... }",
-        "-- i[Gegenstand] = { {NPC}, {Objekt} }   (wer ihn fallen laesst)",
+        "-- JE EINTRAG EIN TEXT (6.30.5.0): als Tabellen belegte der Bestand 7 MB",
+        "-- Speicher (80 000 kleine Tabellen), als Text gut 1 MB. ui/questhelper.lua",
+        "-- liest einen Eintrag erst, wenn die Karte ihn braucht. Felder durch",
+        "-- Tabulator getrennt, Listen durch Komma:",
+        "-- q[Quest] = Name, Stufe, ab Stufe, Rassen, Klassen, Geber-NPC, Geber-Objekt,",
+        "--            Abgabe-NPC, Abgabe-Objekt, Ziel-NPC, Ziel-Objekt, Gegenstand,",
+        "--            alle vorher, eine vorher, schliesst aus",
+        "-- n[NPC] / o[Objekt] = Name, dann je Karte \"Karte:x,y,x,y\" durch \";\" getrennt",
+        "-- i[Gegenstand] = NPCs, Objekte   (wer ihn fallen laesst)",
         "--------------------------------------------------",
         "",
         "WeintCodex = WeintCodex or {}",
@@ -242,12 +245,12 @@ def main():
         def targets(k):
             return [el(e, 0) for e in vals(el(ob, k)) if isinstance(el(e, 0), int)]
         races = int(q.get(6) or 0) & 0xFFFFFFFF
-        fields = [lua_str(name), str(int(q.get(5) or 0)), str(int(q.get(4) or 0)),
+        fields = [name.replace("\t", " "), str(int(q.get(5) or 0)), str(int(q.get(4) or 0)),
                   str(races), str(int(q.get(7) or 0)),
-                  lua_list(grp(sb, 0)), lua_list(grp(sb, 1)), lua_list(grp(fb, 0)), lua_list(grp(fb, 1)),
-                  lua_list(targets(0)), lua_list(targets(1)), lua_list(targets(2)),
-                  lua_list(ids(q.get(12))), lua_list(ids(q.get(13))), lua_list(ids(q.get(16)))]
-        lines.append("        [%d] = {%s}," % (i, ",".join(fields)))
+                  csv(grp(sb, 0)), csv(grp(sb, 1)), csv(grp(fb, 0)), csv(grp(fb, 1)),
+                  csv(targets(0)), csv(targets(1)), csv(targets(2)),
+                  csv(ids(q.get(12))), csv(ids(q.get(13))), csv(ids(q.get(16)))]
+        lines.append("        [%d] = %s," % (i, lua_str("\t".join(fields)).replace("\t", "\\t")))
         nq += 1
     lines.append("    },")
 
@@ -260,14 +263,10 @@ def main():
             per = spawns_by_map(rec.get(key), zmap, GIVER_SPAWNS if i in givers else TARGET_SPAWNS)
             if not name or not per:
                 continue
-            parts = [lua_str(name)]
+            segs = []
             for ui in sorted(per):
-                if len(parts) > 1:
-                    parts.append("0")
-                parts.append(str(ui))
-                for x, y in per[ui]:
-                    parts += [num(x), num(y)]
-            lines.append("        [%d] = {%s}," % (i, ",".join(parts)))
+                segs.append("%d:%s" % (ui, ",".join(num(x) + "," + num(y) for x, y in per[ui])))
+            lines.append("        [%d] = %s," % (i, lua_str(name.replace("\t", " ")) [:-1] + "\\t" + ";".join(segs) + '"'))
             n += 1
         lines.append("    },")
         return n
@@ -278,7 +277,7 @@ def main():
         it = items[i]
         a, b = ids(it.get(2))[:ITEM_SOURCES], ids(it.get(3))[:ITEM_SOURCES]
         if a or b:
-            lines.append("        [%d] = {%s,%s}," % (i, lua_list(a), lua_list(b)))
+            lines.append('        [%d] = "%s\\t%s",' % (i, csv(a), csv(b)))
     lines.append("    },")
     lines.append("}")
     with open(OUT, "w", encoding="utf-8") as f:

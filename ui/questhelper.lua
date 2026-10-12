@@ -182,8 +182,67 @@ end
 -- Liste je Karte
 --------------------------------------------------
 
+--------------------------------------------------
+-- Bestand lesen (6.30.5.0)
+--------------------------------------------------
+-- Jeder Eintrag ist EIN Text (data/questdb.lua): als Tabellen belegte der
+-- Bestand 7 MB, als Text 1,6 MB. Gelesen wird ein Eintrag erst, wenn die
+-- Karte ihn braucht, und nicht aufbewahrt. Tabellen (Pruefung) gehen durch.
+
+local function List(text)
+    local out = {}
+    if text and text ~= "" then
+        for v in text:gmatch("[^,]+") do out[#out + 1] = tonumber(v) end
+    end
+    return out
+end
+
+local fields = {}
+function QH.Parse(raw)
+    if type(raw) ~= "string" then return raw end
+    local n = 0
+    for f in (raw .. "\t"):gmatch("([^\t]*)\t") do
+        n = n + 1
+        fields[n] = f
+    end
+    local q = { fields[1] }
+    for i = 2, 5 do q[i] = tonumber(fields[i]) or 0 end
+    for i = 6, 15 do q[i] = List(fields[i]) end
+    return q
+end
+function QH.Quest(id) return QH.Parse(Data().q[id]) end
+
+function QH.Name(rec)
+    if type(rec) == "table" then return rec[1] end
+    if type(rec) == "string" then return rec:match("^([^\t]*)") end
+    return nil
+end
+
+-- Wer einen Gegenstand fallen laesst: {NPCs}, {Objekte}.
+function QH.Item(raw)
+    if type(raw) ~= "string" then return raw end
+    local a, b = raw:match("^([^\t]*)\t(.*)$")
+    return { List(a), List(b) }
+end
+
 -- Lagen eines NPC/Objekts auf `mapID`: ruft add(x, y) je Lage.
 function QH.Places(rec, mapID, add)
+    if type(rec) == "string" then
+        local key = mapID .. ":"
+        local at = rec:find("\t" .. key, 1, true) or rec:find(";" .. key, 1, true)
+        if not at then return 0 end
+        local seg = rec:match("^[^;]*", at + 1 + #key)
+        local count, x = 0, nil
+        for v in seg:gmatch("[^,]+") do
+            if x then
+                add(x, tonumber(v))
+                count, x = count + 1, nil
+            else
+                x = tonumber(v)
+            end
+        end
+        return count
+    end
     if type(rec) ~= "table" then return 0 end
     local i, n = 2, #rec
     local count = 0
@@ -230,7 +289,8 @@ function QH.ForMap(mapID)
     local focus = QH.Focus()
     QH.builtFocus = focus
     local allZ = Get("qhAllTargets")
-    for id, q in pairs(d.q) do
+    for id, raw in pairs(d.q) do
+        local q = QH.Parse(raw)
         if wantA then
             local offer = QH.Offer(id, q, me)
             if offer == "avail" or (offer == "low" and wantL) then
@@ -260,7 +320,7 @@ function QH.ForMap(mapID)
                     QH.Places(d.o[ob], mapID, function(x, y) Add(out, seen, "target", ob, true, id, x, y) end)
                 end
                 for _, item in ipairs(q[12]) do
-                    local src = d.i[item]
+                    local src = QH.Item(d.i[item])
                     if src then
                         for _, npc in ipairs(src[1]) do
                             QH.Places(d.n[npc], mapID, function(x, y) Add(out, seen, "target", npc, false, id, x, y) end)
@@ -299,7 +359,7 @@ local pins = {}
 QH.pins = pins
 
 local function QuestLine(id)
-    local q = Data().q[id]
+    local q = QH.Quest(id)
     if not q then return "?" end
     local lvl = q[2] or 0
     return (lvl > 0 and ("[" .. lvl .. "] ") or "") .. q[1]
@@ -313,7 +373,7 @@ local function Tooltip(self)
     gt:SetOwner(self, "ANCHOR_RIGHT")
     local rec = e.obj and d.o[e.who] or d.n[e.who]
     local t, n, m = C.textBright, C.textNormal, C.textMuted
-    gt:SetText(rec and rec[1] or "?", t[1], t[2], t[3])
+    gt:SetText(QH.Name(rec) or "?", t[1], t[2], t[3])
     local head = e.kind == "avail" and "Neue Quest" or e.kind == "turnin" and "Abgabe" or "Ziel"
     local g = C.gold
     gt:AddLine(head, g[1], g[2], g[3])
@@ -507,7 +567,7 @@ function QH.PaintBar()
     if not bar then return end
     local a, m, n = K.Highlight(), C.textMuted, C.textNormal
     local focus = QH.Focus()
-    local q = focus and Data().q[focus]
+    local q = focus and QH.Quest(focus)
     if Get("qhTargets") and not Get("qhAllTargets") then
         bar.focus:SetText(q and ("Ziele von: " .. q[1]) or "Klick auf ein „?“: Ziele dieser Quest")
     else

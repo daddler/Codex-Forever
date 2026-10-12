@@ -1794,7 +1794,7 @@ Forever (`QuestieDB_Forever.toc`, Metadaten als Base64 + zlib + CBOR; braucht
 Geber/Abgabe, Ziele (NPC, Objekt, Gegenstand → wer ihn fallen lässt),
 Voraussetzungen, Ausschlüsse, Lagen je uiMapID (Gebiete über
 `areaIdToUiMapId.lua` der Datenbank). Lagen gedeckelt: 6 je Geber, 10 je
-Ziel und Karte. 5010 Quests, ~1 MB. Herkunft `community`: jeder Tooltip
+Ziel und Karte. 5010 Quests, ~1 MB Datei. Seit 6.30.5.0 je Eintrag **ein Text** (Tabulator/Komma), gelesen bei Bedarf – als Tabellen waren es 7,3 MB Speicher (80 000 Tabellen), jetzt 1,6 MB. Herkunft `community`: jeder Tooltip
 sagt „Unbestätigt“, kein Spielertext nennt die Quelle.
 
 **Was der Client weiß, fragt die Hilfe ihn:** erledigt

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.5.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFWeintCodex braucht deutlich weniger Speicher.|r Der Bestand der Questhilfe belegte über 7 MB – jetzt knapp 2, gelesen wird nur, was die Karte gerade zeigt.",
+        },
+    },
+    {
         version = "6.30.4.0",
         date    = "12.10.2026",
         notes   = {

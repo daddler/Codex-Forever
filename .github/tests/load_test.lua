@@ -1301,6 +1301,17 @@ do
     local ok, err = pcall(function()
         local QH = WeintCodex.UIQuestHelper
         local saved = WeintCodex.QuestDBData
+        -- 6.30.5.0: der echte Bestand als Text - gelesen erst bei Bedarf.
+        local real = QH.Quest(783)
+        assert(real and real[1] == "Die Bedrohung von innen" and real[3] == 1 and real[6][1] == 823
+            and real[8][1] == 197 and #real[13] == 0, "Quest aus Text falsch gelesen")
+        local px, py
+        assert(QH.Places(saved.n[823], 1429, function(x, y) px, py = x, y end) == 1
+            and math.abs(px - 0.482) < 1e-6 and math.abs(py - 0.429) < 1e-6, "Lage aus Text falsch")
+        assert(QH.Places(saved.n[823], 142, function() end) == 0, "Karte 142 in 1429 gefunden")
+        assert(QH.Name(saved.n[823]) == "Deputy Willem", "Name aus Text")
+        local it = QH.Item(saved.i[159])
+        assert(#it[1] > 0 and #it[2] > 0, "Beute aus Text")
         WeintCodex.QuestDBData = {
             q = {
                 [1] = { "Erste", 5, 3, 77, 0, {10}, {}, {11}, {}, {12}, {}, {}, {}, {}, {} },

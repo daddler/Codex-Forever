@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.5.0] – 2026-10-12
+
+### Geändert
+- Questhilfe: Bestand je Eintrag als ein Text statt verschachtelter Tabellen
+  (7,3 → 1,6 MB Lua-Speicher, gemessen offline); gelesen bei Bedarf
+  (`QH.Parse`, `QH.Places`, `QH.Item`, `QH.Name`).
+
 ## [6.30.4.0] – 2026-10-12
 
 ### Geändert
