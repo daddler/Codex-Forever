@@ -7144,11 +7144,14 @@ do
         -- Verlauf: alles nach Zeit, Namen als Link ins Gespraech.
         local hl = MS.HistoryLines()
         assert(#hl == 3 and hl[#hl].line.text == "an den Twink", "Verlauf nach Zeit")
+        -- Gespeichertes nur im Verlauf, nicht in der Liste (6.30.46.0).
+        assert(not MS.Visible(MS.conv["Twink-Realm|w:Bob"]) and #MS.VisibleOrder() == 0, "Gespeichertes in der Liste")
         MS.Build()
         MS.SetHistoryMode(true)
         assert(MS.historyMode, "Verlauf nicht an")
         MS.OpenFromHistory("Twink-Realm|w:Bob")
         assert(not MS.historyMode and MS.current == "Twink-Realm|w:Bob", "Link oeffnet nicht")
+        assert(MS.Visible(MS.conv["Twink-Realm|w:Bob"]) and #MS.ShownLines(MS.conv["Twink-Realm|w:Bob"]) == 1, "aus dem Verlauf geoeffnet")
         local snap = MS.Snapshot()
         assert(snap.chars[me].conv["w:Neu"] and snap.chars[me].conv["bn:99"] and snap.chars["Twink-Realm"].conv["w:Bob"], "Schnappschuss")
         K.Set("comfort", "msgKeep", false)

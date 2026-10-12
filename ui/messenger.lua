@@ -161,6 +161,28 @@ local function Touch(key)
     end
 end
 
+-- 6.30.46.0 (Beta-Test: "den Verlauf nur sehen, wenn ich auf Verlauf
+-- klicke"): Liste und Gespraech zeigen nur diese Sitzung. Gespeichertes
+-- (restored) steht erst dann in der Liste, wenn in dieser Sitzung etwas
+-- dazukommt (c.live) oder es aus dem Verlauf geoeffnet wird (c.showAll);
+-- im Gespraech dann nur Zeilen dieser Sitzung - ausser aus dem Verlauf.
+MS.sessionStart = (_G.time and _G.time()) or 0
+function MS.Visible(c) return c ~= nil and (not c.restored or c.live or c.showAll) and true or false end
+local vis = {}
+function MS.VisibleOrder()
+    for i = #vis, 1, -1 do vis[i] = nil end
+    for _, key in ipairs(order) do if MS.Visible(conv[key]) then vis[#vis + 1] = key end end
+    return vis
+end
+function MS.ShownLines(c, out)
+    out = out or {}
+    for i = #out, 1, -1 do out[i] = nil end
+    for _, l in ipairs(c and c.lines or {}) do
+        if c.showAll or not c.restored or (l.t or 0) >= MS.sessionStart then out[#out + 1] = l end
+    end
+    return out
+end
+
 function MS.Ensure(key, name, target, bn)
     local c = conv[key]
     if not c and bn and name then
@@ -171,7 +193,7 @@ function MS.Ensure(key, name, target, bn)
                 conv[k] = nil
                 for i = #order, 1, -1 do if order[i] == k then table.remove(order, i) end end
                 if MS.current == k then MS.current = key end
-                old.key, old.restored = key, nil
+                old.key = key
                 c = old
                 conv[key] = c
                 break
@@ -190,6 +212,7 @@ end
 
 -- kind: "in", "out", "sys"
 function MS.Add(c, kind, text)
+    c.live = true
     local lines = c.lines
     lines[#lines + 1] = { t = Time(), kind = kind, text = text }
     while #lines > MS.MAX_LINES do table.remove(lines, 1) end
@@ -200,7 +223,7 @@ function MS.Close(key)
     for i = #order, 1, -1 do
         if order[i] == key then table.remove(order, i) end
     end
-    if MS.current == key then MS.current = order[1] end
+    if MS.current == key then MS.current = MS.VisibleOrder()[1] end
     MS.Redraw()
     MS.UpdateIcon()
 end
@@ -301,7 +324,7 @@ end
 function MS.PlainHistory(c)
     if not c then return "" end
     local out = {}
-    for i, line in ipairs(c.lines) do out[i] = MS.PlainLine(c, line) end
+    for i, line in ipairs(MS.ShownLines(c)) do out[i] = MS.PlainLine(c, line) end
     return table.concat(out, "\n")
 end
 
@@ -650,7 +673,7 @@ function MS.ListRows()
     return math.max(1, math.floor((type(h) == "number" and h or MS.H) / MS.ROW_H))
 end
 function MS.ScrollList(d)
-    local maxOff = math.max(0, #order - MS.ListRows())
+    local maxOff = math.max(0, #MS.VisibleOrder() - MS.ListRows())
     MS.listOffset = math.max(0, math.min(maxOff, MS.listOffset - (d or 0)))
     MS.Redraw()
 end
@@ -658,10 +681,11 @@ end
 function MS.Redraw()
     if not win then return end
     local fit = MS.ListRows()
-    MS.listOffset = math.max(0, math.min(MS.listOffset, #order - fit))
+    local vorder = MS.VisibleOrder()
+    MS.listOffset = math.max(0, math.min(MS.listOffset, #vorder - fit))
     local shown = 0
-    for i = 1, math.min(fit, #order - MS.listOffset) do
-        local key = order[i + MS.listOffset]
+    for i = 1, math.min(fit, #vorder - MS.listOffset) do
+        local key = vorder[i + MS.listOffset]
         shown = i
         local c = conv[key]
         local r = rows[i] or NewRow(i)
@@ -690,6 +714,7 @@ function MS.Redraw()
     for i = shown + 1, #rows do rows[i]:Hide() end
 
     local c = conv[MS.current]
+    if not MS.Visible(c) then c = nil end
     smf:Clear()
     local hm = C.textMuted
     local ha = MS.historyMode and C.accent or hm
@@ -709,7 +734,8 @@ function MS.Redraw()
         sub:SetText("|c" .. Hex(kc) .. (c.bn and "Battle.net" or "Flüstern im Spiel") .. "|r"
             .. (rcv and ("  ·  erhalten mit " .. rcv) or ""))
         local prev
-        for _, line in ipairs(c.lines) do
+        MS._shown = MS.ShownLines(c, MS._shown)
+        for _, line in ipairs(MS._shown) do
             if prev and not MS.SameBlock(prev, line) then smf:AddMessage(" ") end
             smf:AddMessage(MS.Format(c, line, prev))
             prev = line
@@ -792,6 +818,7 @@ end
 
 function MS.OpenFromHistory(key)
     if not conv[key] then return end
+    conv[key].showAll = true
     MS.historyMode = false
     MS.Select(key)
 end
@@ -837,7 +864,7 @@ end
 function MS.Show(key, auto)
     Build()
     if key then MS.current = key end
-    if not conv[MS.current or ""] then MS.current = order[1] end
+    if not MS.Visible(conv[MS.current or ""]) then MS.current = MS.VisibleOrder()[1] end
     if not auto and MS.current and conv[MS.current] then conv[MS.current].unread = 0 end
     MS.pending, MS.folded = nil, nil
     win:Show()

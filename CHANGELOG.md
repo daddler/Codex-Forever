@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.46.0] – 2026-10-12
+
+### Geändert
+- Flüstern: Gespeichertes nur im Verlauf (`MS.Visible`, `MS.VisibleOrder`,
+  `MS.ShownLines`); in Liste und Gespräch erst mit neuer Nachricht dieser
+  Sitzung (`c.live`) und dann nur die Zeilen der Sitzung; aus dem Verlauf
+  geöffnet (`c.showAll`) das ganze Gespräch.
+
 ## [6.30.45.0] – 2026-10-12
 
 ### Neu

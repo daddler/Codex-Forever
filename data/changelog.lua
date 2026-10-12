@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.46.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFAlte Nachrichten nur noch im Verlauf.|r Liste und Gespräch zeigen nur, was in dieser Sitzung geschrieben wurde. Die letzten 7 Tage stehen hinter dem Knopf „Verlauf“ – ein Klick auf einen Namen dort öffnet das ganze Gespräch.",
+        },
+    },
+    {
         version = "6.30.45.0",
         date    = "12.10.2026",
         notes   = {
