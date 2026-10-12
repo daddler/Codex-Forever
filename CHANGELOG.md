@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.43.0] – 2026-10-12
+
+### Neu
+- Flüstern: Verlauf 7 Tage (`msgKeep`, ab Werk an) in
+  `SavedVariablesPerCharacter: WeintCodex_Whispers` – nicht in
+  `WeintCodex_SavedData`, das die Companion liest. `MS.Restore`/`MS.Snapshot`
+  (PLAYER_LOGIN/LOGOUT), `MS.Prune`; Battle.net-Gespräche über den Namen
+  zusammengeführt; Liste bis 40 Gespräche mit Bildlauf; Datum vor älteren Zeilen.
+
 ## [6.30.42.0] – 2026-10-12
 
 ### Geändert

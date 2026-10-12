@@ -2,8 +2,9 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.30.42.0
+## Version: 6.30.43.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB
+## SavedVariablesPerCharacter: WeintCodex_Whispers
 
 #
 # ZUR SCHNITTSTELLENNUMMER OBEN: SIE IST EINE VERMUTUNG, KEIN WISSEN.

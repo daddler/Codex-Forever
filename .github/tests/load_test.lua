@@ -7114,6 +7114,36 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.30.43.0: Verlauf 7 Tage in einer eigenen Datei je Charakter.
+do
+    local ok, err = pcall(function()
+        local MS = WeintCodex.UIMessenger
+        local now = os.time()
+        local store = { v = 1, order = { "w:Alt", "w:Neu", "bn:7" }, conv = {
+            ["w:Alt"] = { name = "Alt", target = "Alt-R", lines = { { t = now - 9 * 86400, kind = "in", text = "alt" } } },
+            ["w:Neu"] = { name = "Neu", target = "Neu-R", lines = { { t = now - 86400, kind = "in", text = "gestern" },
+                                                                   { t = now - 8 * 86400, kind = "in", text = "zu alt" } } },
+            ["bn:7"]  = { name = "Freund", bn = true, lines = { { t = now - 3600, kind = "out", text = "hi" } } } } }
+        for k in pairs(MS.conv) do MS.conv[k] = nil end
+        for i = #MS.order, 1, -1 do MS.order[i] = nil end
+        WeintCodex.UIKit.Set("comfort", "msgKeep", true)
+        assert(MS.Restore(store) == 2, "falsch wiederhergestellt: " .. tostring(MS.restored))
+        assert(MS.conv["w:Alt"] == nil and #MS.conv["w:Neu"].lines == 1 and MS.conv["w:Neu"].target == "Neu-R", "7 Tage")
+        -- Battle.net: neue Sitzungsnummer, derselbe Name -> dasselbe Gespraech.
+        local c = MS.Ensure("bn:99", "Freund", 99, true)
+        assert(MS.conv["bn:7"] == nil and c.lines[1].text == "hi" and c.target == 99, "Battle.net nicht zusammengefuehrt")
+        local snap = MS.Snapshot()
+        assert(snap.conv["w:Neu"] and snap.conv["bn:99"] and snap.conv["bn:99"].target == nil, "Schnappschuss")
+        WeintCodex.UIKit.Set("comfort", "msgKeep", false)
+        assert(MS.Snapshot() == nil, "aus: nichts gespeichert")
+        assert(WeintCodex.SavedData.whispers == nil, "Gefluestertes in SavedData")
+        for k in pairs(MS.conv) do MS.conv[k] = nil end
+        for i = #MS.order, 1, -1 do MS.order[i] = nil end
+        WeintCodex.UIKit.Set("comfort", "msgKeep", true)
+    end)
+    Check(ok, "Fluestern: Verlauf 7 Tage je Charakter, Battle.net nach Name, aus = geloescht" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.19.1.0 (Beta-Test: "das Fenster ist nicht verschiebbar", "Whisper
 -- sollen nicht parallel auch im Chat zu sehen sein", "infight minimieren
 -- und wieder aufploppen", "/w Name oder Name anklicken -> Fenster",

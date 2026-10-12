@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.43.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Flüster-Messenger merkt sich 7 Tage.|r Wer dir geschrieben hat und was, bleibt über das Ausloggen hinaus – je Charakter, in einer eigenen Datei. Ältere Nachrichten tragen das Datum, das Mausrad blättert durch die Liste. Abschaltbar unter „Verlauf 7 Tage behalten“.",
+        },
+    },
+    {
         version = "6.30.42.0",
         date    = "12.10.2026",
         notes   = {

@@ -70,6 +70,7 @@ MS.DEFAULTS = {
     msgDirect   = true,   -- selbst senden; 6.30.34.0 ab Werk an (sperrt das Spiel, schaltet es sich ab)
     msgHideChat = true,   -- Gefluestertes nur im Fenster, nicht im Chat (6.19.1.0)
     msgIcon     = true,   -- Symbol zum Oeffnen (6.19.1.0)
+    msgKeep     = true,   -- 6.30.43.0: Verlauf der letzten 7 Tage behalten (je Charakter)
     -- 6.30.36.0 (Wunsch: "Schriftfarbe, Schriftart etc."):
     msgFont     = "sans",
     msgSize     = 12,
@@ -107,7 +108,8 @@ end
 MS.ColorArr = ColorArr
 
 MS.MAX_LINES = 200        -- je Gespraech, nur diese Sitzung
-MS.MAX_CONV  = 8          -- so viele Gespraeche in der Liste
+MS.MAX_CONV  = 40         -- so viele Gespraeche in der Liste (6.30.43.0: 8 -> 40, mit Bildlauf)
+MS.KEEP_DAYS = 7          -- so lange bleibt der Verlauf (msgKeep)
 MS.W, MS.H   = 420, 260
 MS.LIST_W    = 140
 MS.ROW_H     = 36         -- 6.30.34.0: zwei Zeilen - Name, letzte Nachricht
@@ -117,7 +119,7 @@ MS.GROUP_GAP = 120        -- so lange (s) gilt eine Folge desselben Absenders al
 MS.BLOCK_WINDOW = 1
 MS.SEEN_EVERY = 0.2       -- so oft fragt das offene Fenster, ob die Maus darueber liegt (s)       -- so lange nach einem Sendeversuch zaehlt eine Sperrmeldung (s)
 
-local SETTING = { combat = "msgCombat", outgoing = "msgOutgoing", stamps = "msgStamps", direct = "msgDirect",
+local SETTING = { keep = "msgKeep", combat = "msgCombat", outgoing = "msgOutgoing", stamps = "msgStamps", direct = "msgDirect",
                   hide = "msgHideChat", icon = "msgIcon" }
 local function Get(k) return K.Get(KEY, SETTING[k] or k) end
 function MS.Active() return K.IsActive(KEY) and K.Get(KEY, "msgOn") and true or false end
@@ -161,10 +163,26 @@ end
 
 function MS.Ensure(key, name, target, bn)
     local c = conv[key]
+    if not c and bn and name then
+        -- Battle.net: die Nummer gilt nur eine Sitzung - ein gespeichertes
+        -- Gespraech derselben Person (Name) wird das neue.
+        for k, old in pairs(conv) do
+            if old.bn and old.name == name and old.restored then
+                conv[k] = nil
+                for i = #order, 1, -1 do if order[i] == k then table.remove(order, i) end end
+                if MS.current == k then MS.current = key end
+                old.key, old.restored = key, nil
+                c = old
+                conv[key] = c
+                break
+            end
+        end
+    end
     if not c then
         c = { key = key, name = name, target = target, bn = bn, lines = {}, unread = 0 }
         conv[key] = c
     end
+    if target ~= nil then c.target = target end
     if name then c.name = name end
     Touch(key)
     return c
@@ -233,6 +251,13 @@ end
 
 -- prev: die Zeile davor. Schreibt dieselbe Person kurz danach weiter,
 -- steht ihr Name nicht noch einmal da (wie in einem Messenger, 6.30.34.0).
+-- Uhrzeit, aelter als heute mit Datum (gespeicherter Verlauf, 6.30.43.0).
+function MS.Stamp(t)
+    if not _G.date then return "" end
+    if _G.date("%Y%m%d", t) ~= _G.date("%Y%m%d", Time()) then return _G.date("%d.%m. %H:%M", t) end
+    return _G.date("%H:%M", t)
+end
+
 function MS.SameBlock(prev, line)
     return type(prev) == "table" and prev.kind == line.kind and line.kind ~= "sys"
         and (line.t or 0) - (prev.t or 0) <= MS.GROUP_GAP
@@ -241,12 +266,12 @@ end
 function MS.Format(c, line, prev)
     if MS.SameBlock(prev, line) then
         local col = ColorArr(line.kind == "out" and "msgColorOut" or "msgColorIn")
-        local pad = (Get("stamps") and _G.date) and "|c" .. Hex(C.textMuted) .. _G.date("%H:%M", line.t) .. "|r  " or ""
+        local pad = (Get("stamps") and _G.date) and "|c" .. Hex(C.textMuted) .. MS.Stamp(line.t) .. "|r  " or ""
         return pad .. "|c" .. Hex(col) .. line.text .. "|r"
     end
     local out = ""
     if Get("stamps") and _G.date then
-        out = "|c" .. Hex(C.textMuted) .. _G.date("%H:%M", line.t) .. "|r  "
+        out = "|c" .. Hex(C.textMuted) .. MS.Stamp(line.t) .. "|r  "
     end
     if line.kind == "sys" then
         return out .. "|c" .. Hex(C.textMuted) .. line.text .. "|r"
@@ -267,7 +292,7 @@ MS.copyMode = false
 -- Eine Zeile als reiner Text (zum Kopieren): ohne Farben, Bilder, Link-Kodes.
 function MS.PlainLine(c, line)
     local t = ""
-    if Get("stamps") and _G.date then t = _G.date("%H:%M", line.t) .. " " end
+    if Get("stamps") and _G.date then t = MS.Stamp(line.t) .. " " end
     local text = (line.text or ""):gsub("|H.-|h(.-)|h", "%1")
     if line.kind == "sys" then return K.PlainText(t .. text) end
     return K.PlainText(t .. (line.kind == "out" and "Du" or c.name) .. ": " .. text)
@@ -284,6 +309,8 @@ local function NewRow(i)
     local r = CreateFrame("Button", nil, list)
     r:SetSize(MS.LIST_W, MS.ROW_H)
     r:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -(i - 1) * MS.ROW_H)
+    r:EnableMouseWheel(true)
+    r:SetScript("OnMouseWheel", function(_, d) MS.ScrollList(d) end)
     r.bg = r:CreateTexture(nil, "BACKGROUND")
     r.bg:SetAllPoints(r)
     r.mark = r:CreateTexture(nil, "ARTWORK")
@@ -604,9 +631,26 @@ function MS.Preview(c)
     return text .. "  ·  " .. MS.Ago(last.t)
 end
 
+-- Bildlauf der Liste (6.30.43.0: bis zu 40 Gespraeche).
+MS.listOffset = 0
+function MS.ListRows()
+    local h = list and K.Plain(list:GetHeight())
+    return math.max(1, math.floor((type(h) == "number" and h or MS.H) / MS.ROW_H))
+end
+function MS.ScrollList(d)
+    local maxOff = math.max(0, #order - MS.ListRows())
+    MS.listOffset = math.max(0, math.min(maxOff, MS.listOffset - (d or 0)))
+    MS.Redraw()
+end
+
 function MS.Redraw()
     if not win then return end
-    for i, key in ipairs(order) do
+    local fit = MS.ListRows()
+    MS.listOffset = math.max(0, math.min(MS.listOffset, #order - fit))
+    local shown = 0
+    for i = 1, math.min(fit, #order - MS.listOffset) do
+        local key = order[i + MS.listOffset]
+        shown = i
         local c = conv[key]
         local r = rows[i] or NewRow(i)
         r.key = key
@@ -630,7 +674,7 @@ function MS.Redraw()
         end
         r:Show()
     end
-    for i = #order + 1, #rows do rows[i]:Hide() end
+    for i = shown + 1, #rows do rows[i]:Hide() end
 
     local c = conv[MS.current]
     smf:Clear()
@@ -882,6 +926,79 @@ function MS.OnBlocked(addon)
     Say("Das Spiel lässt WeintCodex nicht selbst flüstern – Antworten gehen ab jetzt über die Chatzeile (Enter sendet).")
     return true
 end
+
+--------------------------------------------------
+-- Verlauf ueber das Ausloggen hinaus (6.30.43.0)
+--------------------------------------------------
+-- Wunsch des Spielers: "wer mich in den letzten 7 Tagen angefluestert hat
+-- und was geschrieben wurde". Bis dahin bewusst nur die Sitzung, weil die
+-- Datei WeintCodex_SavedData auch die Companion-App liest. Deshalb jetzt
+-- eine EIGENE Datei je Charakter (SavedVariablesPerCharacter
+-- WeintCodex_Whispers) - die liest die Companion nicht, und
+-- WeintCodex_SavedData bleibt frei von Gefluestertem. Schalter msgKeep;
+-- aus = beim Ausloggen leer. Was aelter als MS.KEEP_DAYS ist, faellt weg.
+
+function MS.Prune(lines, now)
+    local limit = (now or Time()) - MS.KEEP_DAYS * 86400
+    local out = {}
+    for _, l in ipairs(lines or {}) do
+        if type(l) == "table" and type(l.t) == "number" and l.t >= limit and type(l.text) == "string"
+           and (l.kind == "in" or l.kind == "out" or l.kind == "sys") then
+            out[#out + 1] = { t = l.t, kind = l.kind, text = l.text }
+        end
+    end
+    while #out > MS.MAX_LINES do table.remove(out, 1) end
+    return out
+end
+
+function MS.Restore(store)
+    store = store or _G.WeintCodex_Whispers
+    if not Get("keep") or type(store) ~= "table" or type(store.conv) ~= "table" then return 0 end
+    local n = 0
+    local keys = type(store.order) == "table" and store.order or {}
+    for i = #keys, 1, -1 do
+        local key = keys[i]
+        local s = store.conv[key]
+        if type(key) == "string" and type(s) == "table" and type(s.name) == "string" and not conv[key] then
+            local lines = MS.Prune(s.lines)
+            if #lines > 0 then
+                conv[key] = { key = key, name = s.name, target = (not s.bn) and s.target or nil, bn = s.bn and true or false,
+                              class = s.class, lines = lines, unread = 0, restored = true }
+                Touch(key)
+                n = n + 1
+            end
+        end
+    end
+    MS.restored = n
+    return n
+end
+
+function MS.Snapshot()
+    if not Get("keep") then return nil end
+    local out = { v = 1, conv = {}, order = {} }
+    for _, key in ipairs(order) do
+        local c = conv[key]
+        local lines = c and MS.Prune(c.lines)
+        if lines and #lines > 0 then
+            out.conv[key] = { name = c.name, target = (not c.bn) and c.target or nil, bn = c.bn or nil,
+                              class = c.class, lines = lines }
+            out.order[#out.order + 1] = key
+        end
+    end
+    return out
+end
+
+local keeper = CreateFrame("Frame")
+keeper:RegisterEvent("PLAYER_LOGIN")
+keeper:RegisterEvent("PLAYER_LOGOUT")
+keeper:SetScript("OnEvent", function(_, event)
+    if event == "PLAYER_LOGIN" then
+        local ok, err = pcall(MS.Restore)
+        if not ok then K.Report("flüstern", err) end
+    else
+        _G.WeintCodex_Whispers = MS.Snapshot()
+    end
+end)
 
 --------------------------------------------------
 -- Ereignisse
@@ -1262,11 +1379,13 @@ end
 
 local function BuildPage(B)
     local off = function() return not K.Get(KEY, "msgOn") end
-    B:Section("Flüstern", "Wird dir etwas zugeflüstert, geht ein Fenster auf wie bei einem Messenger. Der Verlauf gilt nur bis zum Ausloggen.")
+    B:Section("Flüstern", "Wird dir etwas zugeflüstert, geht ein Fenster auf wie bei einem Messenger. Auf Wunsch bleibt der Verlauf 7 Tage.")
     B:Row({ type = "toggle", label = "Flüstern im eigenen Fenster", key = "msgOn",
             description = "Auch Battle.net-Flüstern. Das Symbol oder /wcui flüstern öffnet es jederzeit." },
           { type = "toggle", label = "Nur im Fenster, nicht im Chat", key = "msgHideChat", disabled = off,
             description = "Was das Fenster nicht lesen darf (Sperre des Spiels), bleibt im Chat. Die Taste „Antworten“ (R) öffnet das Fenster beim Letzten, der dir geflüstert hat, und richtet die Chatzeile auf ihn." })
+    B:Row({ type = "toggle", label = "Verlauf 7 Tage behalten", key = "msgKeep", disabled = off,
+            description = "Wer dir geschrieben hat und was – nur für diesen Charakter, in einer eigenen Datei, die die Companion-App nicht liest. Aus: alles Gespeicherte wird beim Ausloggen gelöscht." })
     B:Row({ type = "toggle", label = "Im Kampf offen lassen", key = "msgCombat", disabled = off,
             description = "Sonst klappt es im Kampf ein und geht danach wieder auf." },
           { type = "toggle", label = "Bei eigenem Flüstern aufgehen", key = "msgOutgoing", disabled = off,
@@ -1284,7 +1403,7 @@ local function BuildPage(B)
           { type = "color", label = "Eigener Text", key = "msgColorOut", disabled = off })
     B:Row({ type = "color", label = "„Du“", key = "msgColorMe", disabled = off,
             description = "Die Namen der anderen stehen in ihrer Klassenfarbe." })
-    B:Note("Fenster und Symbol lassen sich mit der Maus ziehen. Esc schließt das Fenster, die Gespräche bleiben bis zum Ausloggen.")
+    B:Note("Fenster und Symbol lassen sich mit der Maus ziehen. Esc schließt das Fenster. Mausrad über der Liste blättert durch ältere Gespräche, × löscht ein Gespräch samt Verlauf.")
 end
 MS.BuildPage = BuildPage
 
