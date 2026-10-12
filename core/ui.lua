@@ -94,6 +94,10 @@ local C = {
     warning     = {0.941, 0.651, 0.227, 1.0},
     danger      = {0.957, 0.388, 0.400, 1.0},
     info        = {0.306, 0.659, 0.961, 1.0},
+    -- Herkunft im Fluester-Messenger (6.30.37.0): Battle.net-Blau und das
+    -- Rosa, in dem das Spiel Gefluestertes zeigt.
+    battlenet   = {0.000, 0.706, 1.000, 1.0},
+    whisper     = {1.000, 0.502, 1.000, 1.0},
 
     -- Helle Varianten auch unter den Grundfarbnamen, damit
     -- `farbe .. "Bright"` fuer jeden der Toene aufgeht (z.B. Rollenkoepfe,

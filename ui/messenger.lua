@@ -291,14 +291,19 @@ local function NewRow(i)
     r.mark:SetPoint("LEFT", r, "LEFT", 0, 0)
     local a = C.accent
     r.mark:SetColorTexture(a[1], a[2], a[3], 1)
+    -- Herkunft (6.30.37.0): "BN" blau oder "W" rosa vor dem Namen.
+    r.kind = K.NewText(r, 9)
+    r.kind:SetPoint("TOPLEFT", r, "TOPLEFT", 8, -7)
+    r.kind:SetWidth(16)
+    r.kind:SetJustifyH("LEFT")
     r.label = K.NewText(r, 12)
-    r.label:SetPoint("TOPLEFT", r, "TOPLEFT", 8, -5)
+    r.label:SetPoint("TOPLEFT", r, "TOPLEFT", 26, -5)
     r.label:SetPoint("RIGHT", r, "RIGHT", -34, 0)
     r.label:SetJustifyH("LEFT")
     r.label:SetWordWrap(false)
     -- Zweite Zeile: die letzte Nachricht und wann (6.30.34.0).
     r.preview = K.NewText(r, 10)
-    r.preview:SetPoint("TOPLEFT", r.label, "BOTTOMLEFT", 0, -3)
+    r.preview:SetPoint("TOPLEFT", r, "TOPLEFT", 8, -21)
     r.preview:SetPoint("RIGHT", r, "RIGHT", -6, 0)
     r.preview:SetJustifyH("LEFT")
     r.preview:SetWordWrap(false)
@@ -607,6 +612,9 @@ function MS.Redraw()
         r.key = key
         r.label:SetText(WeintCodex.Truncate and WeintCodex.Truncate(c.name, 14) or c.name)
         r.preview:SetText(MS.Preview(c))
+        local kc = c.bn and C.battlenet or C.whisper
+        r.kind:SetText(c.bn and "BN" or "W")
+        r.kind:SetTextColor(kc[1], kc[2], kc[3])
         local sel = key == MS.current
         local s = sel and C.surface3 or C.surface1
         r.bg:SetColorTexture(s[1], s[2], s[3], sel and 1 or 0)
@@ -631,7 +639,8 @@ function MS.Redraw()
         sub:SetText("Noch kein Gespräch in dieser Sitzung.")
     else
         title:SetText(MS.NameText(c))
-        sub:SetText(c.bn and "Battle.net" or "")
+        local kc = c.bn and C.battlenet or C.whisper
+        sub:SetText("|c" .. Hex(kc) .. (c.bn and "Battle.net" or "Flüstern im Spiel") .. "|r")
         local prev
         for _, line in ipairs(c.lines) do
             if prev and not MS.SameBlock(prev, line) then smf:AddMessage(" ") end

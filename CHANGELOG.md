@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.37.0] – 2026-10-12
+
+### Neu
+- Flüstern: Herkunft je Gespräch – „BN“ (`Colors.battlenet`) oder „W“
+  (`Colors.whisper`) in der Liste, Untertitel „Battle.net“/„Flüstern im Spiel“.
+
 ## [6.30.36.0] – 2026-10-12
 
 ### Neu

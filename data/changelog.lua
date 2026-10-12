@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.37.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFBattle.net oder Flüstern im Spiel – auf einen Blick.|r In der Gesprächsliste steht vor jedem Namen ein blaues „BN“ oder ein rosa „W“, oben im Gespräch „Battle.net“ oder „Flüstern im Spiel“.",
+        },
+    },
+    {
         version = "6.30.36.0",
         date    = "12.10.2026",
         notes   = {
