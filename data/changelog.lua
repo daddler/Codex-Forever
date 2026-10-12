@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.27.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFMausrad-Klickzauber nur über den Rahmen.|r Außerhalb des Kampfes zoomt das Mausrad wie gewohnt und zaubert nur über Gruppen- und Einheitenrahmen. Im Kampf wirkt es auf jede Einheit unter der Maus – dort lässt das Spiel keinen Wechsel zu.",
+        },
+    },
+    {
         version = "6.30.26.0",
         date    = "12.10.2026",
         notes   = {

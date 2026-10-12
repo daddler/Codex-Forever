@@ -253,6 +253,7 @@ function CC.ApplyTo(f, list)
     end
     applied[f] = keys
     CC.HookTooltip(f)
+    CC.HookWheel(f)
 end
 
 -- Jeder Rahmen, der eine Einheit zeigt.
@@ -325,6 +326,8 @@ end
 
 local keyOwner
 local keyButtons = {}
+local wheelKeys
+local wheelHooked = setmetatable({}, { __mode = "k" })
 CC.keyBound = {}   -- [Taste] = was darauf liegen soll
 
 -- Liegen unsere Tasten noch? Beim ersten Einloggen laedt das Spiel die
@@ -370,6 +373,7 @@ function CC.ApplyKeys(list)
     end
     if type(_G.ClearOverrideBindings) == "function" then _G.ClearOverrideBindings(keyOwner) end
     CC.keyBound = {}
+    wheelKeys = {}
     local n = 0
     for _, b in ipairs(list) do
         local text = CC.IsKey(b) and CC.KeyMacro(b)
@@ -391,14 +395,77 @@ function CC.ApplyKeys(list)
             -- Tasten ebenfalls als Vorrang-Belegung - wer nach uns kommt,
             -- gewinnt sonst (6.29.11.0, Spieler: "nach dem Einloggen ging
             -- der Zauber auf der Taste nicht mehr").
-            _G.SetOverrideBindingClick(keyOwner, true, CC.BindingKey(b), "WeintCodexClickKey" .. n, "LeftButton")
-            CC.keyBound[CC.BindingKey(b)] = "CLICK WeintCodexClickKey" .. n .. ":LeftButton"
+            if CC.WHEEL[b.button] then
+                -- Mausrad: nur ueber den Rahmen (CC.WheelOn), sonst zoomt es.
+                wheelKeys[#wheelKeys + 1] = { CC.BindingKey(b), "WeintCodexClickKey" .. n }
+            else
+                _G.SetOverrideBindingClick(keyOwner, true, CC.BindingKey(b), "WeintCodexClickKey" .. n, "LeftButton")
+                CC.keyBound[CC.BindingKey(b)] = "CLICK WeintCodexClickKey" .. n .. ":LeftButton"
+            end
         end
     end
     for i = n + 1, #keyButtons do keyButtons[i]:SetAttribute("macrotext", "") end
     CC.keyCount = n
+    CC.WheelSync()
     return n
 end
+
+--------------------------------------------------
+-- Mausrad nur ueber den Rahmen (6.30.27.0)
+--------------------------------------------------
+-- Wunsch: "Mausrad soll sonst rein- und rauszoomen, nur ueber dem
+-- Gruppenrahmen soll der Klickzauber funktionieren." Ohne Snippets (siehe
+-- oben) geht das nur ausserhalb des Kampfes: beim Drueberfahren legt Lua
+-- die Belegung, beim Verlassen nimmt es sie wieder weg. Im Kampf darf Lua
+-- keine Belegung aendern - deshalb gilt sie dort von Anfang bis Ende des
+-- Kampfes (gesetzt bei PLAYER_REGEN_DISABLED, das noch vor der Sperre
+-- kommt): das Rad wirkt im Kampf auf die Einheit unter der Maus und zoomt
+-- nicht; ohne Einheit tut es nichts. Ehrlicher ging es nicht ohne Skript
+-- (/run loest die Warnung des Spiels aus, 6.30.26.0).
+
+wheelKeys = {}
+local wheelOwner
+local wheelOn = false
+local hoverFrame
+
+function CC.WheelOn()
+    if wheelOn or #wheelKeys == 0 or type(_G.SetOverrideBindingClick) ~= "function" then return false end
+    if not wheelOwner then wheelOwner = CreateFrame("Frame", "WeintCodexClickWheel", UIParent) end
+    for _, w in ipairs(wheelKeys) do
+        _G.SetOverrideBindingClick(wheelOwner, true, w[1], w[2], "LeftButton")
+    end
+    wheelOn = true
+    return true
+end
+
+function CC.WheelOff()
+    if not wheelOn then return false end
+    if wheelOwner and type(_G.ClearOverrideBindings) == "function" then _G.ClearOverrideBindings(wheelOwner) end
+    wheelOn = false
+    return true
+end
+
+-- Was jetzt gelten soll: im Kampf an, sonst nur ueber einem Rahmen.
+function CC.WheelSync()
+    if K.InCombat() then return end
+    CC.WheelOff()
+    local over = hoverFrame and hoverFrame.IsMouseOver and K.Bool(hoverFrame:IsMouseOver(), false)
+    if over then CC.WheelOn() end
+end
+
+function CC.HookWheel(f)
+    if wheelHooked[f] or not f.HookScript then return end
+    wheelHooked[f] = true
+    f:HookScript("OnEnter", function(self)
+        hoverFrame = self
+        if not K.InCombat() then CC.WheelOn() end
+    end)
+    f:HookScript("OnLeave", function(self)
+        if hoverFrame == self then hoverFrame = nil end
+        if not K.InCombat() then CC.WheelOff() end
+    end)
+end
+CC._wheel = function() return wheelOn, wheelKeys end
 
 --------------------------------------------------
 -- Tooltip: was tut welche Taste hier?
@@ -889,7 +956,7 @@ function CC.BuildPage(B)
             description = "Spieler, Ziel, Fokus, Ziel des Ziels und Begleiter von WeintCodex – nur mit der Oberfläche." },
           { type = "toggle", label = "Belegung im Tooltip", key = "clickTooltip",
             description = "Maus über einem Rahmen zeigt, welche Taste welchen Zauber wirkt." })
-    B:Note("Links ohne Zusatztaste wählt sonst das Ziel, Rechts öffnet das Menü – belegst du sie, gilt deine Belegung. Maustasten 6 bis 12 wirken auf dem Rahmen wie Links und Rechts. Schickt deine Maus ihre Seitentasten als Tastatur-Tasten (Corsair Scimitar, Razer Naga ab Werk), wirkt die Taste auf die Einheit unter der Maus – überall, auch auf Plaketten – und tut sonst nichts mehr, solange sie belegt ist. Das Menü geht nur mit Maustasten, Kombinationen wie Strg + Umschalt gar nicht. Das Mausrad ohne Zusatztaste zoomt die Kamera nicht mehr, solange es belegt ist – nimm besser Umschalt, Strg oder Alt dazu.")
+    B:Note("Links ohne Zusatztaste wählt sonst das Ziel, Rechts öffnet das Menü – belegst du sie, gilt deine Belegung. Maustasten 6 bis 12 wirken auf dem Rahmen wie Links und Rechts. Schickt deine Maus ihre Seitentasten als Tastatur-Tasten (Corsair Scimitar, Razer Naga ab Werk), wirkt die Taste auf die Einheit unter der Maus – überall, auch auf Plaketten – und tut sonst nichts mehr, solange sie belegt ist. Das Menü geht nur mit Maustasten, Kombinationen wie Strg + Umschalt gar nicht. Das Mausrad wirkt außerhalb des Kampfes nur über den Rahmen und zoomt sonst die Kamera; im Kampf wirkt es auf jede Einheit unter der Maus und zoomt nicht – das Spiel lässt dort keinen Wechsel zu.")
 end
 
 -- Die Standardwerte stehen bei den Gruppenrahmen (dort waren sie immer;
@@ -923,7 +990,8 @@ end
 CC.ApplySoon = ApplySoon
 
 local ev = CreateFrame("Frame")
-for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "GROUP_ROSTER_UPDATE", "UPDATE_BINDINGS" }) do
+for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "GROUP_ROSTER_UPDATE", "UPDATE_BINDINGS",
+                     "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 ev:SetScript("OnEvent", function(_, event)
@@ -937,6 +1005,9 @@ ev:SetScript("OnEvent", function(_, event)
         if not CC.KeysIntact() then ApplySoon() end
         return
     end
+    -- Mausrad: im Kampf durchgehend, danach wieder nur ueber dem Rahmen.
+    if event == "PLAYER_REGEN_DISABLED" then CC.WheelOn() return end
+    if event == "PLAYER_REGEN_ENABLED" then CC.WheelSync() return end
     local GG = WeintCodex.UIGameGroup
     if not (GG and GG.active) then ApplySoon() end
 end)

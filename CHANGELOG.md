@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.27.0] – 2026-10-12
+
+### Geändert
+- Klickzauber, Mausrad: Belegung nur beim Drüberfahren über einen Rahmen
+  (`CC.HookWheel`, `CC.WheelOn/Off/Sync`, eigener Besitzer
+  `WeintCodexClickWheel`); im Kampf durchgehend von `PLAYER_REGEN_DISABLED`
+  bis `PLAYER_REGEN_ENABLED`, weil Lua dort keine Belegung ändern darf.
+
 ## [6.30.26.0] – 2026-10-12
 
 ### Behoben

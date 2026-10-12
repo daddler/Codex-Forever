@@ -1589,8 +1589,34 @@ do
         assert(not ms:find("Camera", 1, true), "mit Umschalt zoomt trotzdem")
         CC.SpellAttr = oS
         assert(CC.CaptureValue("MOUSEWHEELDOWN", false) == "MOUSEWHEELDOWN", "Mausrad nicht aufgenommen")
+        -- 6.30.27.0: das Rad liegt nur ueber dem Rahmen (und im Kampf).
+        local G = _G
+        local oSet, oClr, oCombat = G.SetOverrideBindingClick, G.ClearOverrideBindings, WeintCodex.UIKit.InCombat
+        local bound = {}
+        G.SetOverrideBindingClick = function(_, _, key, name) bound[key] = name end
+        G.ClearOverrideBindings = function() bound = {} end
+        WeintCodex.UIKit.InCombat = function() return false end
+        CC.SpellAttr = function() return "Heilen" end
+        CC.WheelOff()
+        CC.ApplyKeys({ up })
+        CC.SpellAttr = oS
+        assert(not bound.MOUSEWHEELUP, "Rad ohne Rahmen belegt - Zoom weg")
+        local scripts = {}
+        local f = { HookScript = function(_, n, fn) scripts[n] = fn end, IsMouseOver = function() return true end }
+        CC.HookWheel(f)
+        scripts.OnEnter(f)
+        assert(bound.MOUSEWHEELUP, "Rad ueber dem Rahmen nicht belegt")
+        scripts.OnLeave(f)
+        assert(not bound.MOUSEWHEELUP, "Rad nach dem Verlassen noch belegt")
+        CC.WheelOn()
+        assert(bound.MOUSEWHEELUP, "Rad im Kampf nicht belegt")
+        CC.WheelSync()
+        assert(not bound.MOUSEWHEELUP, "Rad nach dem Kampf noch belegt")
+        CC.WheelOff()
+        CC.ApplyKeys({})
+        G.SetOverrideBindingClick, G.ClearOverrideBindings, WeintCodex.UIKit.InCombat = oSet, oClr, oCombat
     end)
-    Check(ok, "Klickzauber: Mausrad hoch/runter, Zoom bleibt ohne Einheit" .. (ok and "" or (": " .. tostring(err))))
+    Check(ok, "Klickzauber: Mausrad hoch/runter, nur ueber dem Rahmen, im Kampf durchgehend" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.26.1.0: Kamera - Rueckgabe vergleicht Zahlen als Zahlen; einmalige
