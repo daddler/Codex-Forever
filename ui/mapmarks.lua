@@ -39,6 +39,9 @@ MK.DEFAULTS = {
     mapTravel    = false,    -- Schiffe, Zeppeline, Trams, Portale
     mapMarksOther = false,   -- auch die der anderen Fraktion
     mapMarksContinent = true, -- auch auf der Kontinentkarte
+    -- 6.30.16.0 (Wunsch: "die Schiffsanleger muessten auch auf der
+    -- Minimap zu sehen sein"): Reisen auch auf der Minikarte.
+    mapTravelMinimap = true,
 }
 MK.SMALL = 0.7       -- auf dem Kontinent kleiner (es sind ueber zweihundert)
 MK.VEHICLE = { "Schiff", "Zeppelin", "Tram", "Portal" }
@@ -361,6 +364,78 @@ local function EnsureDriver()
 end
 MK.EnsureDriver = EnsureDriver
 
+--------------------------------------------------
+-- Minikarte (6.30.16.0): Schiffe, Zeppeline, Trams, Portale
+--------------------------------------------------
+-- Dieselbe Umrechnung wie die Questhilfe (QH.MinimapOffset: Lage einmal in
+-- Weltkoordinaten, im Takt nur der Abstand). Nur die Reisen der Zone, in der
+-- du stehst; Tooltip wie auf der Weltkarte, Klicks gehen an die Minikarte.
+MK.MM_TICK = 0.1
+MK.MM_SCALE = 0.8
+local mmPins = {}
+MK.mmPins = mmPins
+local function MMHide(from) for i = from or 1, #mmPins do mmPins[i]:Hide() end end
+
+function MK.MinimapActive()
+    return MK.Wants("travel") and K.Get(KEY, "mapTravelMinimap") and true or false
+end
+
+function MK.PlaceMinimap()
+    local mm = _G.Minimap
+    local QH = WeintCodex.UIQuestHelper
+    if not (MK.MinimapActive() and QH and type(mm) == "table" and mm.IsShown and mm:IsShown()) then
+        MMHide()
+        return 0
+    end
+    local mapID = K.BestMap and K.BestMap()
+    local yards = QH.MinimapYards()
+    local pc, pn, pw = K.PlayerWorld()
+    local w = K.Plain(mm:GetWidth())
+    if not (mapID and yards and pc and type(w) == "number" and w > 1) then MMHide() return 0 end
+    local facing
+    if _G.GetCVar and K.Plain(_G.GetCVar("rotateMinimap")) == "1" and _G.GetPlayerFacing then
+        facing = K.Plain(_G.GetPlayerFacing())
+        if type(facing) ~= "number" then MMHide() return 0 end
+    end
+    local square = K.IsActive("minimap") and K.Get("minimap", "square") and true or false
+    local half = w / 2
+    local n = 0
+    for _, e in ipairs(MK.ForMap(mapID)) do
+        if e.kind == "travel" and not e.small then
+            local dx, dy = QH.MinimapOffset(e, mapID, pc, pn, pw, yards, half, facing, square)
+            if dx then
+                n = n + 1
+                local p = mmPins[n]
+                if not p then
+                    p = NewPin(mm)
+                    if p.EnableMouseClicks then p:EnableMouseClicks(false) end
+                    if p.EnableMouseMotion then p:EnableMouseMotion(true) end
+                    p:SetScale(MK.MM_SCALE)
+                    mmPins[n] = p
+                end
+                Dress(p, e)
+                p:SetFrameLevel((K.Plain(mm:GetFrameLevel()) or 0) + 6)
+                p:ClearAllPoints()
+                p:SetPoint("CENTER", mm, "CENTER", dx / MK.MM_SCALE, dy / MK.MM_SCALE)
+                p:Show()
+            end
+        end
+    end
+    MMHide(n + 1)
+    return n
+end
+
+local mmAcc = 0
+local mmTicker = CreateFrame("Frame")
+mmTicker:Hide()
+mmTicker:SetScript("OnUpdate", K.Measured("Minikarte: Reisen", function(_, el)
+    mmAcc = mmAcc + (el or 0)
+    if mmAcc < MK.MM_TICK then return end
+    mmAcc = 0
+    MK.PlaceMinimap()
+end))
+MK.mmTicker = mmTicker
+
 local ev = CreateFrame("Frame")
 ev:SetScript("OnEvent", function(_, event, name)
     if event == "ADDON_LOADED" and name ~= "Blizzard_WorldMap" then return end
@@ -371,6 +446,9 @@ local function Apply()
     MK.Forget()
     -- Ein Symbol, das vorher etwas anderes war, wird neu eingerichtet.
     for _, p in ipairs(pins) do p.entry = nil end
+    for _, p in ipairs(mmPins) do p.entry = nil end
+    mmTicker:SetShown(MK.MinimapActive())
+    if not MK.MinimapActive() then MMHide() end
     if MK.Active() then
         pcall(ev.RegisterEvent, ev, "ADDON_LOADED")
         EnsureDriver()
@@ -413,6 +491,10 @@ function MK.BuildRows(B)
             description = "Sonst nur deine und die neutralen." },
           { type = "toggle", label = "Reisen auch auf der Kontinentkarte", key = "mapMarksContinent",
             description = "Dort nur Schiffe, Zeppeline, Trams und Portale, etwas kleiner. Der Rest erst in der Zone." })
+    B:Row({ type = "toggle", label = "Reisen auch auf der Minikarte", key = "mapTravelMinimap",
+            description = "Schiffe, Zeppeline, Trams und Portale in deiner Nähe. Maus darauf: wohin.",
+            disabled = function() return not K.Get(KEY, "mapTravel") end },
+          { type = "empty" })
 end
 
 local mod = K.Module(KEY)

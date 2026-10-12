@@ -1482,6 +1482,32 @@ do
     Check(ok, "Gespraeche: Vergleich mit eigenen Tooltips" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.30.16.0: Reisen (Schiffe usw.) auch auf der Minikarte.
+do
+    local MK, QH = WeintCodex.UIMapMarks, WeintCodex.UIQuestHelper
+    local oBM, oPW, oY, oFM = K.BestMap, K.PlayerWorld, QH.MinimapYards, MK.ForMap
+    local ok, err = pcall(function()
+        K.Set("comfort", "mapTravel", true)
+        K.Set("comfort", "mapTravelMinimap", true)
+        assert(MK.MinimapActive(), "Reisen auf der Minikarte nicht an")
+        K.BestMap = function() return 1429 end
+        K.PlayerWorld = function() return 0, 100, 100 end
+        QH.MinimapYards = function() return 100 end
+        local near = { kind = "travel", x = 0.5, y = 0.5, vehicle = 1, faction = 3, to = 1411, wc = 0, wn = 120, ww = 100 }
+        local far = { kind = "travel", x = 0.1, y = 0.1, vehicle = 1, faction = 3, to = 1411, wc = 0, wn = 900, ww = 100 }
+        local spirit = { kind = "spirit", x = 0.5, y = 0.5, wc = 0, wn = 110, ww = 100 }
+        MK.ForMap = function() return { near, far, spirit } end
+        _G.Minimap.GetWidth = function() return 200 end
+        assert(MK.PlaceMinimap() == 1, "nahe Reise nicht (oder Ferne/Geistheiler mit) auf der Minikarte")
+        K.Set("comfort", "mapTravelMinimap", false)
+        assert(MK.PlaceMinimap() == 0, "abgeschaltet und trotzdem da")
+    end)
+    K.BestMap, K.PlayerWorld, QH.MinimapYards, MK.ForMap = oBM, oPW, oY, oFM
+    K.Set("comfort", "mapTravel", nil)
+    K.Set("comfort", "mapTravelMinimap", nil)
+    Check(ok, "Karte: Reisen auf der Minikarte" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.26.1.0: Kamera - Rueckgabe vergleicht Zahlen als Zahlen; einmalige
 -- Reparatur der Testeinstellungen auf den Wert ab Werk.
 do

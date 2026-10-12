@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.16.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFSchiffe, Zeppeline, Trams und Portale auch auf der Minikarte.|r In der Farbe der Fraktion, Maus darauf zeigt, wohin es geht. Abschalten: Komfort → Karte → „Reisen auch auf der Minikarte“.",
+        },
+    },
+    {
         version = "6.30.15.0",
         date    = "12.10.2026",
         notes   = {

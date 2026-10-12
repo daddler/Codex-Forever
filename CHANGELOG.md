@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.16.0] – 2026-10-12
+
+### Neu
+- Reisen (Schiffe, Zeppeline, Trams, Portale) auf der Minikarte
+  (`mapTravelMinimap`, `MK.PlaceMinimap`, Umrechnung über `QH.MinimapOffset`).
+
 ## [6.30.15.0] – 2026-10-12
 
 ### Geändert
