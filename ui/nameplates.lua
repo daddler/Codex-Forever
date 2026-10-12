@@ -393,6 +393,46 @@ local function Suppress(nameplate, unit, p)
     if type(cast) == "table" and cast.UnregisterAllEvents then cast:UnregisterAllEvents() end
 end
 
+-- 6.30.14.0 (Spielerbericht mit Bild, Briefkasten unter 6.30.13.0): seit
+-- 6.29.24.0 bekommen Objekte keine Plakette von WeintCodex - aber die des
+-- Spiels blieb ganz stehen, mit ihrem leeren Lebensbalken: DAS war der
+-- dunkle Kasten. Jetzt blendet WeintCodex an Objekt-Plaketten alles aus
+-- ausser dem Interaktionssymbol des Spiels (SoftTargetFrame).
+local objectPlates = {}
+NP.objectPlates = objectPlates
+local function IsSoftTarget(f, uf)
+    if f == uf.SoftTargetFrame then return true end
+    local n = f.GetName and f:GetName()
+    if type(n) == "string" and n:find("SoftTarget", 1, true) then return true end
+    local key = f.GetParentKey and f:GetParentKey()
+    return type(key) == "string" and key:find("SoftTarget", 1, true) ~= nil
+end
+function NP.DimObject(nameplate, unit)
+    local uf = nameplate and nameplate.UnitFrame
+    if type(uf) ~= "table" or (uf.IsForbidden and uf:IsForbidden()) then return 0 end
+    Undim(uf)
+    local parts = {}
+    local ok = pcall(function()
+        for _, ch in ipairs({ uf:GetChildren() }) do
+            if type(ch) == "table" and ch.SetAlpha and not IsSoftTarget(ch, uf) then parts[#parts + 1] = ch end
+        end
+        for _, rg in ipairs({ uf:GetRegions() }) do
+            if type(rg) == "table" and rg.SetAlpha then parts[#parts + 1] = rg end
+        end
+    end)
+    if not ok then return 0 end
+    for _, part in ipairs(parts) do Dim(part) end
+    partsOf[uf] = parts
+    objectPlates[unit] = uf
+    return #parts
+end
+function NP.UndimObject(unit)
+    local uf = objectPlates[unit]
+    if not uf then return end
+    objectPlates[unit] = nil
+    Undim(uf)
+end
+
 local function Restore(nameplate)
     local uf = nameplate and nameplate.UnitFrame
     if type(uf) ~= "table" then return end
@@ -1759,7 +1799,8 @@ local function Attach(unit)
     -- Objekte (Kraut, Erz, Truhe) bekommen ueber die weiche Zielerfassung
     -- eine Plakette des Spiels - keine Einheit, kein Leben: nicht bemalen
     -- (6.29.0.0, Glitzern haengt dort seine Funken an).
-    if NP.IsObjectPlate(unit) then return end
+    NP.UndimObject(unit)
+    if NP.IsObjectPlate(unit) then NP.DimObject(nameplate, unit) return end
     local friendly = not K.Bool(_G.UnitCanAttack and _G.UnitCanAttack("player", unit), false)
     if friendly and not S.friendlyEnabled then return end
 
@@ -1835,6 +1876,7 @@ local function OnEvent(_, event, unit)
         Attach(unit)
         return
     elseif event == "NAME_PLATE_UNIT_REMOVED" then
+        NP.UndimObject(unit)
         Detach(unit)
         return
     elseif event == "UNIT_FACTION" then

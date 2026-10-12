@@ -4964,6 +4964,28 @@ do
     Check(ok, "Plaketten: Objekte in der Naehe ohne Plakette, Einheiten mit" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.30.14.0: an Objekt-Plaketten bleibt nur das Interaktionssymbol des Spiels.
+do
+    local NP = WeintCodex.UINameplates
+    local ok, err = pcall(function()
+        local plate = CreateFrame("Frame")
+        local uf = CreateFrame("Frame", nil, plate)
+        plate.UnitFrame = uf
+        local health = CreateFrame("Frame", nil, uf)
+        local soft = CreateFrame("Frame", nil, uf)
+        uf.SoftTargetFrame = soft
+        uf.GetChildren = function() return health, soft end
+        uf.GetRegions = function() return end
+        uf.IsForbidden = function() return false end
+        assert(NP.DimObject(plate, "nameplate9") == 1, "Teile der Objekt-Plakette nicht ausgeblendet")
+        assert(health:GetAlpha() == 0, "Lebensbalken des Spiels bleibt am Objekt")
+        assert(soft:GetAlpha() ~= 0, "Interaktionssymbol ausgeblendet")
+        NP.UndimObject("nameplate9")
+        assert(health:GetAlpha() == 1, "Plakette nach dem Objekt nicht zurueck")
+    end)
+    Check(ok, "Plaketten: Objekt-Plakette ohne leeren Balken, Symbol bleibt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.29.21.0: Taschen ohne Gestaltungsmodus ziehbar.
 do
     local ok, err = pcall(function()

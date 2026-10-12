@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.14.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFDer dunkle Kasten an Briefkästen, Kräutern und anderen Objekten ist weg.|r Es war der leere Lebensbalken der Plakette des Spiels – WeintCodex blendet ihn jetzt aus und lässt nur das Interaktionssymbol stehen.",
+        },
+    },
+    {
         version = "6.30.13.0",
         date    = "12.10.2026",
         notes   = {

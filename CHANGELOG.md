@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.14.0] – 2026-10-12
+
+### Behoben
+- Dunkler Kasten an Objekten: seit 6.29.24.0 blieb die Plakette des Spiels
+  an Objekten ganz stehen (leerer Lebensbalken). `NP.DimObject` blendet alle
+  Teile aus außer `SoftTargetFrame`; `NP.UndimObject` beim Entfernen.
+
 ## [6.30.13.0] – 2026-10-12
 
 ### Behoben
