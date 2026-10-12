@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.25.0] – 2026-10-12
+
+### Behoben
+- Gespräche: Wächter `DL.Watch` – Fenster zu bei ausgeblendeter Oberfläche
+  blendet zurück; NPC (`npc`) seit 0,75 s fort schließt das Gespräch.
+  Zwei Spieler meldeten verschwundene Leisten, wenn der Questgeber weglief.
+
 ## [6.30.24.0] – 2026-10-12
 
 ### Behoben

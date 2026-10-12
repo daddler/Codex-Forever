@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.25.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFLeisten kommen nach Gesprächen zuverlässig zurück.|r Läuft ein Questgeber weg, schließt sich das Gespräch jetzt selbst und die Oberfläche blendet wieder ein – auch wenn das Spiel das Ende nicht meldet.",
+        },
+    },
+    {
         version = "6.30.24.0",
         date    = "12.10.2026",
         notes   = {

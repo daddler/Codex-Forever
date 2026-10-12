@@ -1022,6 +1022,7 @@ function DL.Show(state)
     DL.state = state
     DL.CamIn()                         -- sofort, vor dem Aufbau
     DL.FadeOut()
+    DL.Watch()
     local ok, err = pcall(function() DL.Draw(DL.Collect(state)) end)
     if not ok then DL.Fail(err) return false end
     stats.shown = stats.shown + 1
@@ -1228,6 +1229,51 @@ function DL.FadeLater()
     local t = _G.C_Timer
     if t and t.After then t.After(DL.CAM_WAIT, FadeBackSoft) else FadeBackSoft() end
 end
+
+-- Waechter (6.30.25.0, Beta-Test zweier Spieler: "auf einmal alle Leisten
+-- weg, z. B. wenn der Questgeber weglaeuft"). Laeuft der NPC weg, endet das
+-- Gespraech nicht immer mit dem Ereignis, das zum Zustand passt - das
+-- Fenster blieb offen oder die Oberflaeche ausgeblendet. Solange
+-- ausgeblendet ist, prueft er alle DL.WATCH_TICK s:
+--   * Fenster zu, Oberflaeche noch weg  -> zurueckblenden
+--   * Fenster offen, aber der Gespraechspartner ("npc") war da und ist
+--     seit DL.WATCH_GONE s fort         -> Gespraech schliessen
+-- Quests aus Gegenstaenden haben keinen "npc" - die laesst er in Ruhe.
+DL.WATCH_TICK, DL.WATCH_GONE = 0.25, 0.75
+local function NpcThere()
+    return K.Bool(_G.UnitExists and _G.UnitExists("npc"), false)
+end
+local watch = CreateFrame("Frame")
+watch:Hide()
+watch.t, watch.gone, watch.hadNpc = 0, 0, false
+watch:SetScript("OnUpdate", function(self, el)
+    self.t = self.t + (el or 0)
+    if self.t < DL.WATCH_TICK then return end
+    local step = self.t
+    self.t = 0
+    if not DL.fade.on and not (win and win:IsShown()) then self:Hide() return end
+    if not (win and win:IsShown()) then
+        if not fader:IsShown() then DL.FadeBack(false) end
+        return
+    end
+    if NpcThere() then
+        self.hadNpc, self.gone = true, 0
+    elseif self.hadNpc then
+        self.gone = self.gone + step
+        if self.gone >= DL.WATCH_GONE then
+            stats.walkedAway = (stats.walkedAway or 0) + 1
+            self.hadNpc, self.gone = false, 0
+            DL.Close()
+            DL.FadeBack(false)
+        end
+    end
+end)
+function DL.Watch()
+    watch.t, watch.gone = 0, 0
+    watch.hadNpc = NpcThere()
+    watch:Show()
+end
+DL.watch = watch
 
 --------------------------------------------------
 -- Ereignisse
