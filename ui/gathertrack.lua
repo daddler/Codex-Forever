@@ -158,7 +158,11 @@ function GT.Swap()
     end
     if GT.Paused() then stats.paused = stats.paused + 1 return false end
     local herb, ore, on = GT.Find()
-    if not (herb and ore) then return false end
+    -- 6.30.17.0: ohne beide Suchen (kein Kraeuter- UND Bergbau) gibt es
+    -- nichts zu wechseln - dann nur noch alle GT.IDLE s nachsehen statt
+    -- alle 1,5 s die Suchliste des Spiels zu lesen (Speicher).
+    if not (herb and ore) then GT.idle = true return false end
+    GT.idle = false
     local target = (on == herb) and ore or herb
     local _, _, set = API()
     swapAt = Now()
@@ -182,12 +186,13 @@ end
 -- Takt
 --------------------------------------------------
 
+GT.IDLE = 30
 local ticker = CreateFrame("Frame")
 ticker:Hide()
 local acc = 0
 ticker:SetScript("OnUpdate", K.Measured("Suche wechseln", function(_, el)
     acc = acc + (el or 0)
-    if acc < GT.Every() then return end
+    if acc < (GT.idle and GT.IDLE or GT.Every()) then return end
     acc = 0
     GT.Swap()
 end))

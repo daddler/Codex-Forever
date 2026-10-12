@@ -2636,7 +2636,9 @@ end
 -- nach dem Oeffnen und nach jedem Klick (Reiterwechsel, neue Zeilen),
 -- danach nur noch alle zwei Sekunden - falls das Spiel ein Bild von sich
 -- aus zurueckholt.
-W.TICK_FAST, W.TICK_SLOW, W.FAST_FOR = 0.3, 2, 1.5
+-- 6.30.17.0 (Messung /wcui speicher: "Fenster" 31 KB/s, 30 ms/s): der
+-- langsame Takt 2 -> 5 s; nach Oeffnen und Klicks bleibt er schnell.
+W.TICK_FAST, W.TICK_SLOW, W.FAST_FOR = 0.3, 5, 1.5
 local tick = { last = -math.huge, fastUntil = 0 }
 W.tick = tick
 

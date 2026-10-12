@@ -74,6 +74,10 @@ local function PlayerCoords()
     return K.PlayerMapXY()
 end
 
+-- 6.30.17.0 (Messung /wcui speicher: "Minikarte" 4 KB/s): ein neuer Text
+-- nur, wenn sich die gerundete Lage bzw. die Minute geaendert hat - vorher
+-- zwei Mal je Sekunde neu formatiert, auch im Stehen.
+local lastXY, lastMin = nil, nil
 local function UpdateTexts()
     if not frame then return end
     if Opt("zoneText") and _G.GetMinimapZoneText then
@@ -84,22 +88,34 @@ local function UpdateTexts()
     end
     if Opt("coords") then
         local x, y = PlayerCoords()
-        -- Ohne Position (Instanz): ein Strich, keine 0,0.
-        if not x then
-            coords:SetText("–")
-        elseif Opt("coordDecimals") then
-            coords:SetText((string.format("%.1f · %.1f", x * 100, y * 100):gsub("%.(%d)", ",%1")))
-        else
-            coords:SetText(string.format("%d, %d", math.floor(x * 100 + 0.5), math.floor(y * 100 + 0.5)))
+        local dec = Opt("coordDecimals")
+        local f = dec and 1000 or 100
+        local key = x and (math.floor(x * f + 0.5) * 100000 + math.floor(y * f + 0.5) + (dec and 0.5 or 0)) or -1
+        if key ~= lastXY then
+            lastXY = key
+            -- Ohne Position (Instanz): ein Strich, keine 0,0.
+            if not x then
+                coords:SetText("–")
+            elseif dec then
+                coords:SetText((string.format("%.1f · %.1f", x * 100, y * 100):gsub("%.(%d)", ",%1")))
+            else
+                coords:SetText(string.format("%d, %d", math.floor(x * 100 + 0.5), math.floor(y * 100 + 0.5)))
+            end
         end
         coords:Show()
     else
+        lastXY = nil
         coords:Hide()
     end
+    local minute = _G.time and math.floor(_G.time() / 60)
     if Opt("clock") then
-        clock:SetText(date("%H:%M"))
+        if minute ~= lastMin or not minute then
+            lastMin = minute
+            clock:SetText(date("%H:%M"))
+        end
         clock:Show()
     else
+        lastMin = nil
         clock:Hide()
     end
 end

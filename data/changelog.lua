@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.17.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFWeintCodex arbeitet sparsamer im Hintergrund.|r Offene Fenster werden seltener nachgestaltet, der Suchwechsel ruht ohne Kräuter- und Bergbau, die Minikarte schreibt Koordinaten und Uhr nur neu, wenn sie sich ändern.",
+        },
+    },
+    {
         version = "6.30.16.0",
         date    = "12.10.2026",
         notes   = {

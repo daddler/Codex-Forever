@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.17.0] – 2026-10-12
+
+### Geändert
+- Nach Messung `/wcui speicher`: `W.TICK_SLOW` 2 → 5 s; Suche wechseln ruht
+  ohne beide Suchen (`GT.IDLE` 30 s); Minikarte formatiert Koordinaten und
+  Uhr nur bei Änderung.
+
 ## [6.30.16.0] – 2026-10-12
 
 ### Neu

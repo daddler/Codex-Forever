@@ -1508,6 +1508,22 @@ do
     Check(ok, "Karte: Reisen auf der Minikarte" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.30.17.0: Suche wechseln ruht, wenn es nichts zu wechseln gibt.
+do
+    local GT = WeintCodex.UIGatherTrack
+    local oF, oA, oP = GT.Find, GT.Active, GT.Paused
+    local ok, err = pcall(function()
+        GT.Active = function() return true end
+        GT.Paused = function() return false end
+        GT.Find = function() return nil, nil, nil end
+        GT.Swap()
+        assert(GT.idle == true and GT.IDLE >= 10, "ohne Suchen nicht in Ruhe")
+    end)
+    GT.Find, GT.Active, GT.Paused = oF, oA, oP
+    GT.idle = false
+    Check(ok, "Suche wechseln: Ruhe ohne Kraeuter- und Erzsuche" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.26.1.0: Kamera - Rueckgabe vergleicht Zahlen als Zahlen; einmalige
 -- Reparatur der Testeinstellungen auf den Wert ab Werk.
 do
