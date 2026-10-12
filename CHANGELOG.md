@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.24.0] – 2026-10-12
+
+### Behoben
+- Fenster: `W.Children`/`W.Regions` lassen verbotene Rahmen aus; behebt
+  „calling '?' on bad self … forbidden object“ in `SkinSlots`.
+
 ## [6.30.23.0] – 2026-10-12
 
 ### Behoben

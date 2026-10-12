@@ -210,8 +210,16 @@ local regionPool, childPool = {}, {}
 local function Pack(t, ok, ...)
     local n = 0
     if ok then
-        n = select("#", ...)
-        for i = 1, n do t[i] = (select(i, ...)) end
+        -- Verbotene Rahmen des Spiels (6.30.24.0, Beta-Test: "calling '?' on
+        -- bad self ... forbidden object" in SkinSlots) faellt jeder Aufruf
+        -- an - sie kommen gar nicht erst in die Liste.
+        for i = 1, select("#", ...) do
+            local v = (select(i, ...))
+            if not (type(v) == "table" and v.IsForbidden and v:IsForbidden()) then
+                n = n + 1
+                t[n] = v
+            end
+        end
     end
     for i = n + 1, t.n do t[i] = nil end
     t.n = n

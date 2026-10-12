@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.24.0",
+        date    = "12.10.2026",
+        notes   = {
+            "|cff7C6CFFKeine Fehlermeldung „forbidden object“ mehr im Chat.|r Beim Einkleiden der Fenster stieß WeintCodex auf geschützte Teile des Spiels – die werden jetzt übergangen.",
+        },
+    },
+    {
         version = "6.30.23.0",
         date    = "12.10.2026",
         notes   = {
