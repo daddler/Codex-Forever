@@ -67,6 +67,7 @@ MS.DEFAULTS = {
     msgCombat   = false,  -- auch im Kampf offen (sonst einklappen, danach wieder auf)
     msgOutgoing = true,   -- auch aufgehen, wenn du selbst jemandem fluesterst
     msgStamps   = true,   -- Uhrzeit vor jeder Zeile
+    msgStayTyping = false,  -- 6.30.55.7: nach Enter im Feld bleiben (ab Werk aus)
     msgDirect   = true,   -- selbst senden; 6.30.34.0 ab Werk an (sperrt das Spiel, schaltet es sich ab)
     msgHideChat = true,   -- Gefluestertes nur im Fenster, nicht im Chat (6.19.1.0)
     msgIcon     = true,   -- Symbol zum Oeffnen (6.19.1.0)
@@ -554,8 +555,9 @@ local function Build()
         -- 6.30.55.6 (Spieler: "nach dem Senden will ich mich schnell wieder
         -- bewegen, er ist aber noch im Schreibmodus"): wie die Chatzeile des
         -- Spiels - Enter sendet und gibt die Tastatur zurueck. Weiterschreiben:
-        -- ins Feld klicken oder R.
-        self:ClearFocus()
+        -- ins Feld klicken oder R. 6.30.55.7: auf Wunsch bleibt das Feld
+        -- aktiv (msgStayTyping); Enter auf leerem Feld gibt immer frei.
+        if text ~= "" and Get("msgStayTyping") and self.SetFocus then self:SetFocus() else self:ClearFocus() end
     end)
     -- Platzhalter (6.30.34.0): woran man sieht, wohin es geht.
     input.hint = K.NewText(input, 12)
@@ -1605,7 +1607,10 @@ local function BuildPage(B)
             description = "Klick öffnet das Fenster, die Zahl zeigt Ungelesenes. Ziehen verschiebt." },
           { type = "toggle", label = "Uhrzeit", key = "msgStamps", disabled = off })
     B:Row({ type = "toggle", label = "Direkt aus dem Fenster senden", key = "msgDirect", disabled = off,
-            description = "Schreiben und Enter direkt im Fenster. Sperrt das Spiel es, schaltet sich das von selbst ab, und Antworten gehen über die Chatzeile." })
+            description = "Schreiben und Enter direkt im Fenster. Sperrt das Spiel es, schaltet sich das von selbst ab, und Antworten gehen über die Chatzeile." },
+          { type = "toggle", label = "Nach dem Senden weiterschreiben", key = "msgStayTyping",
+            disabled = function() return off() or not K.Get(KEY, "msgDirect") end,
+            description = "Aus: Enter sendet und gibt die Tastatur frei, du kannst sofort laufen. An: das Feld bleibt aktiv für die nächste Nachricht." })
     B:Section("Schrift", "Gilt für Verlauf und Eingabe im Fenster.")
     B:Row({ type = "dropdown", label = "Schriftart", key = "msgFont", items = MS.FONTS, disabled = off },
           { type = "slider", label = "Größe", key = "msgSize", min = 9, max = 20, step = 1, disabled = off,

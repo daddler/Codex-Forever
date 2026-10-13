@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.55.7",
+        date    = "13.10.2026",
+        notes   = {
+            "|cff7C6CFFMessenger: „Nach dem Senden weiterschreiben“.|r Neuer Schalter, ab Werk aus. An bleibt das Eingabefeld nach Enter aktiv für die nächste Nachricht; Enter auf leerem Feld gibt die Tastatur immer frei.",
+        },
+    },
+    {
         version = "6.30.55.6",
         date    = "13.10.2026",
         notes   = {
