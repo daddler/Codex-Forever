@@ -954,7 +954,10 @@ function R.BagItemKind(id)
         -- geringen Hervorrufung"): wirkt etwas sofort (Mana, Leben) statt
         -- als Buff ueber Minuten, ist es kein fehlender Buff. Ohne Tooltip
         -- (tip leer) unbekannt - dann wie bisher.
-        if tip ~= "" and not HasWord(tip, R.DURATION_WORDS) then bagCache[id] = false return false end
+        -- 6.30.55.4 (gemessen: "Stellt im Verlauf von 4 Sek. 300 Mana wieder
+        -- her. (8 Min. Abklingzeit)"): die Abklingzeit ist keine Wirkdauer.
+        local effect = tip:gsub("%d+[^%d\n]-abklingzeit", ""):gsub("%d+[^%d\n]-cooldown", "")
+        if tip ~= "" and not HasWord(effect, R.DURATION_WORDS) then bagCache[id] = false return false end
         entry = { kind = "elixir", spell = spell, scroll = subID == 4 or HasWord(name, R.SCROLL_WORDS),
                   stats = R.TipStats(tip), weapons = R.TipWeapons(tip) }
     elseif type(spell) == "string" or subID == 5 then

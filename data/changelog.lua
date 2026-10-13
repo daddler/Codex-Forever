@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.55.4",
+        date    = "13.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Rolle der geringeren Hervorrufung erinnert nicht mehr.|r Ihre Abklingzeit von 8 Minuten wurde als Wirkdauer gelesen.",
+        },
+    },
+    {
         version = "6.30.55.3",
         date    = "13.10.2026",
         notes   = {

@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.55.4] – 2026-10-13
+
+### Behoben
+- Erinnerungen aus der Tasche: die Abklingzeit im Tooltip („(8 Min.
+  Abklingzeit)“) galt als Wirkdauer, die Rolle der geringeren Hervorrufung
+  löste darum weiter eine Erinnerung aus. Abklingzeiten zählen nicht mehr.
+
 ## [6.30.55.3] – 2026-10-13
 
 ### Behoben

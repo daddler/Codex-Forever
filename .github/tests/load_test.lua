@@ -17937,6 +17937,8 @@ do
         assert(Run("Benutzen: Erhöht Intelligenz um 8 für 30 Min.") == 1, "unbekannte Klasse gefiltert")
         G.UnitClass = function() return "Magier", "MAGE" end
         assert(Run("Benutzen: Stellt sofort 600 Mana wieder her.") == 0, "Sofortwirkung als fehlender Buff")
+        assert(Run("Benutzen: Stellt im Verlauf von 4 Sek. 300 Mana wieder her. (8 Min. Abklingzeit)") == 0, "Abklingzeit als Wirkdauer gelesen")
+        assert(Run("Benutzen: Erhöht Intelligenz um 8 für 30 Min. (1 Min. Abklingzeit)") == 1, "Buff mit Abklingzeit verloren")
         G.GetInventoryItemID, G.UnitClass, G.GetWeaponEnchantInfo = oGII, oUC, oWE
         K.Set("reminders", "bagElixir", false)
         G.C_Container, G.C_Item, G.C_TooltipInfo, G.UnitLevel, G.GetMaxPlayerLevel = oCC, oCI, oTI, oL, oML
