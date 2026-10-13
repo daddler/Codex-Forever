@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.55.0] – 2026-10-13
+
+### Geändert
+- Profil-Import fragt nach dem Einfügen, was übernommen wird: Liste zum
+  Anhaken je WeintCodex-Bereich, Plätze der Rahmen, Layouts, Spieleinstellungen,
+  Minikarten-Symbol, Hauptschalter und Tastenbelegung; „Alle“/„Keine“.
+  Nicht Angehaktes bleibt unverändert. Die Tastenbelegung ist nie vorgewählt.
+
 ## [6.30.54.0] – 2026-10-13
 
 ### Behoben

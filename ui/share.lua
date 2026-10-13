@@ -39,6 +39,7 @@ local SH = WeintCodex.UIShare
 local K  = WeintCodex.UIKit
 local C  = WeintCodex.Colors
 local error = _G.error
+local next  = _G.next
 
 SH.PREFIX = "WCUI1:"
 SH.MAX_DEPTH = 32
@@ -389,37 +390,111 @@ function SH.Parse(text)
     return data
 end
 
+-- Was ein Text enthaelt, als Liste zum Anhaken (6.30.55.0, Wunsch: "nach
+-- dem Einfuegen eine Abfrage, was ich alles uebernehmen moechte - gerade
+-- beim Teilen, Tastaturbelegungen sind individuell"). Je Eintrag
+-- { id, label, game, on }: on = vorausgewaehlt. Die Tastenbelegung ist
+-- NIE vorausgewaehlt - sie gehoert zur Hand, nicht zum Aussehen.
+function SH.Items(data)
+    local out = {}
+    local src = data.profile
+    local mods = type(src.modules) == "table" and src.modules or {}
+    local keys = {}
+    for key, v in pairs(mods) do
+        if type(key) == "string" and type(v) == "table" and next(v) ~= nil then keys[#keys + 1] = key end
+    end
+    local function Title(key)
+        local m = K.Module(key)
+        return m and type(m.title) == "string" and m.title or key
+    end
+    table.sort(keys, function(x, y) return Title(x):lower() < Title(y):lower() end)
+    for _, key in ipairs(keys) do
+        out[#out + 1] = { id = "mod:" .. key, label = Title(key), on = true }
+    end
+    if type(src.positions) == "table" and next(src.positions) ~= nil then
+        out[#out + 1] = { id = "positions", label = "Plätze der WeintCodex-Rahmen", on = true }
+    end
+    for k in pairs(src) do
+        if k ~= "modules" and k ~= "positions" then
+            out[#out + 1] = { id = "rest", label = "Weitere Profilwerte", on = true }
+            break
+        end
+    end
+    if data.layout then out[#out + 1] = { id = "layout", label = "Layout „WeintCodex“ (Bearbeitungsmodus)", game = true, on = true } end
+    if data.gameLayout then
+        out[#out + 1] = { id = "gameLayout", label = "Layout „" .. tostring(data.gameLayoutName) .. "“ (als neues Layout)", game = true, on = true }
+    end
+    local n = 0
+    for _ in pairs(data.cvars or {}) do n = n + 1 end
+    if n > 0 then out[#out + 1] = { id = "cvars", label = "Spieleinstellungen (" .. n .. ")", game = true, on = true } end
+    if data.bindings and #data.bindings > 0 then
+        out[#out + 1] = { id = "bindings", label = "Tastenbelegung (" .. #data.bindings .. " Befehle) – ersetzt deine", game = true, on = false }
+    end
+    if data.launcher then out[#out + 1] = { id = "launcher", label = "Platz des Minikarten-Symbols", game = true, on = true } end
+    if data.uiEnabled ~= nil then
+        out[#out + 1] = { id = "uiEnabled", label = "Oberfläche " .. (data.uiEnabled and "an" or "aus") .. " (Hauptschalter)", game = true, on = true }
+    end
+    return out
+end
+
+-- Vorauswahl als Menge { [id] = true }.
+function SH.DefaultSelection(data)
+    local sel = {}
+    for _, it in ipairs(SH.Items(data)) do if it.on then sel[it.id] = true end end
+    return sel
+end
+
 -- Uebernimmt einen gelesenen Text ins gewaehlte Profil. true / false, Grund, Layout-Hinweis.
-function SH.Apply(data)
+-- sel: Menge der Eintraege aus SH.Items; nil = alles (wie vor 6.30.55.0).
+-- Nicht Gewaehltes bleibt, wie es ist.
+function SH.Apply(data, sel)
     local ui = K.Root()
     local PR = WeintCodex.UIProfiles
     local target = PR.Chosen()
     local p = ui and ui.profiles[target]
     if type(p) ~= "table" then return false, "kein Profil gewählt" end
-    -- Dieselbe Tabelle behalten (K.Profile hat sie vielleicht in der Hand).
-    for k in pairs(p) do p[k] = nil end
-    for k, v in pairs(PR.DeepCopy(data.profile)) do p[k] = v end
+    local function Want(id) return sel == nil or sel[id] == true end
+    local src = data.profile
+    if sel == nil then
+        -- Dieselbe Tabelle behalten (K.Profile hat sie vielleicht in der Hand).
+        for k in pairs(p) do p[k] = nil end
+        for k, v in pairs(PR.DeepCopy(src)) do p[k] = v end
+    else
+        if type(p.modules) ~= "table" then p.modules = {} end
+        for key, v in pairs(type(src.modules) == "table" and src.modules or {}) do
+            if Want("mod:" .. tostring(key)) then p.modules[key] = PR.DeepCopy(v) end
+        end
+        if Want("positions") and type(src.positions) == "table" then p.positions = PR.DeepCopy(src.positions) end
+        if Want("rest") then
+            for k, v in pairs(src) do
+                if k ~= "modules" and k ~= "positions" then p[k] = PR.DeepCopy(v) end
+            end
+        end
+        if type(p.positions) ~= "table" then p.positions = {} end
+    end
     local notes = {}
-    if data.layout then
+    if data.layout and Want("layout") then
         local ok, why = SH.ImportLayout(data.layout)
         notes[#notes + 1] = ok and "Layout „WeintCodex“ übernommen." or ("Layout nicht übernommen: " .. tostring(why) .. ".")
     end
-    if data.gameLayout then
-        local ok, why = SH.ImportGameLayout(data.gameLayout, data.gameLayoutName, not data.uiEnabled)
+    local uiOn = data.uiEnabled
+    if not Want("uiEnabled") then uiOn = K.UIEnabled() and true or false end
+    if data.gameLayout and Want("gameLayout") then
+        local ok, why = SH.ImportGameLayout(data.gameLayout, data.gameLayoutName, not uiOn)
         notes[#notes + 1] = ok and ("Layout „" .. why .. "“ angelegt.") or ("Layout nicht übernommen: " .. tostring(why) .. ".")
     end
-    if data.cvars then
+    if data.cvars and Want("cvars") then
         local n, bad = SH.ApplyCVars(data.cvars)
         notes[#notes + 1] = n .. " Spieleinstellungen gesetzt" .. (bad > 0 and (", " .. bad .. " nicht") or "") .. "."
     end
-    if data.bindings then
+    if data.bindings and Want("bindings") then
         local ok, n = SH.ApplyBindings(data.bindings)
         notes[#notes + 1] = ok and ("Tastenbelegung übernommen (" .. n .. " Befehle).") or "Tastenbelegung nicht übernommen."
     end
-    if data.launcher and type(ui.launcher) == "table" then
+    if data.launcher and Want("launcher") and type(ui.launcher) == "table" then
         for k, v in pairs(PR.DeepCopy(data.launcher)) do ui.launcher[k] = v end
     end
-    if data.uiEnabled ~= nil and K.SetUIEnabled then pcall(K.SetUIEnabled, data.uiEnabled) end
+    if data.uiEnabled ~= nil and Want("uiEnabled") and K.SetUIEnabled then pcall(K.SetUIEnabled, data.uiEnabled) end
     local layoutNote = #notes > 0 and table.concat(notes, " ") or nil
     if target == PR.Active() then K.MarkReload() end
     K.Fire("setting", "general", "profile")
@@ -489,19 +564,148 @@ local function BuildImport()
     local close = WeintCodex.CreateButton(f, { text = "Abbrechen", kind = "secondary", width = 120, height = 28,
         onClick = function() f:Hide() end })
     close:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -14, 14)
-    local go = WeintCodex.CreateButton(f, { text = "Importieren", kind = "primary", width = 150, height = 28,
+    local go = WeintCodex.CreateButton(f, { text = "Weiter", kind = "primary", width = 150, height = 28,
         onClick = function() SH.ImportFrom(eb:GetText()) end })
     go:SetPoint("RIGHT", close, "LEFT", -8, 0)
     f.go, f.close = go, close
+    f.box = box
+
+    -- Zweiter Schritt: Auswahl, was uebernommen wird (6.30.55.0).
+    local pick = CreateFrame("Frame", nil, f)
+    pick:SetPoint("TOPLEFT", box, "TOPLEFT", 0, 0)
+    pick:SetPoint("BOTTOMRIGHT", box, "BOTTOMRIGHT", 0, 0)
+    local pbg = pick:CreateTexture(nil, "BACKGROUND")
+    pbg:SetAllPoints(pick)
+    pbg:SetColorTexture(unpack(C.bgDark))
+    K.Border(pick, 1, 0, 0, 0, 1, "BORDER")
+    local ps = CreateFrame("ScrollFrame", nil, pick, "UIPanelScrollFrameTemplate")
+    ps:SetPoint("TOPLEFT", pick, "TOPLEFT", 8, -8)
+    ps:SetPoint("BOTTOMRIGHT", pick, "BOTTOMRIGHT", -26, 8)
+    local list = CreateFrame("Frame", nil, ps)
+    list:SetSize(K.REPORT_W - 70, 10)
+    ps:SetScrollChild(list)
+    pick.list, pick.rows, pick.heads = list, {}, {}
+    pick:Hide()
+    f.pick = pick
+    local apply = WeintCodex.CreateButton(f, { text = "Übernehmen", kind = "primary", width = 150, height = 28,
+        onClick = function() SH.ApplyChoice() end })
+    apply:SetPoint("RIGHT", close, "LEFT", -8, 0)
+    local all = WeintCodex.CreateButton(f, { text = "Alle", kind = "secondary", width = 80, height = 28,
+        onClick = function() SH.SelectAll(true) end })
+    all:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 14, 14)
+    local none = WeintCodex.CreateButton(f, { text = "Keine", kind = "secondary", width = 80, height = 28,
+        onClick = function() SH.SelectAll(false) end })
+    none:SetPoint("LEFT", all, "RIGHT", 8, 0)
+    f.apply, f.all, f.none = apply, all, none
+    apply:Hide() all:Hide() none:Hide()
     return f
+end
+
+-- Schritt umschalten: "paste" (Text einfuegen) oder "pick" (anhaken).
+local function Step(step)
+    local pickMode = step == "pick"
+    win.box:SetShown(not pickMode)
+    win.go:SetShown(not pickMode)
+    win.pick:SetShown(pickMode)
+    win.apply:SetShown(pickMode)
+    win.all:SetShown(pickMode)
+    win.none:SetShown(pickMode)
+    win:SetHeight(pickMode and 480 or 300)
+end
+
+local function Head(i, text)
+    local h = win.pick.heads[i]
+    if not h then
+        h = K.NewText(win.pick.list, 10)
+        h:SetTextColor(unpack(C.textMuted))
+        win.pick.heads[i] = h
+    end
+    h:SetText(text)
+    h:Show()
+    return h
+end
+
+-- Baut die Liste zum Anhaken.
+function SH.ShowChoice(data)
+    win = win or BuildImport()
+    SH.win = win
+    SH.pending = data
+    SH.sel = SH.DefaultSelection(data)
+    local items = SH.Items(data)
+    local from = type(data.name) == "string" and data.name or "?"
+    local PR = WeintCodex.UIProfiles
+    win.title:SetText("Profil „" .. from .. "“ – was übernehmen?")
+    win.hint:SetText("Angehakt wird übernommen, der Rest bleibt, wie er ist. WeintCodex-Teile landen in „"
+        .. PR.Chosen() .. "“. Die Tastenbelegung ist bewusst nicht vorgewählt.")
+    local list = win.pick.list
+    for _, r in ipairs(win.pick.rows) do r:Hide() end
+    for _, h in ipairs(win.pick.heads) do h:Hide() end
+    local y, n, hn, lastGame = 0, 0, 0, nil
+    local W = K.REPORT_W - 70
+    for _, it in ipairs(items) do
+        if it.game ~= lastGame then
+            hn = hn + 1
+            local h = Head(hn, it.game and "SPIEL" or "WEINTCODEX")
+            h:ClearAllPoints()
+            h:SetPoint("TOPLEFT", list, "TOPLEFT", 2, -y - (y > 0 and 8 or 0))
+            y = y + (y > 0 and 8 or 0) + 16
+            lastGame = it.game
+        end
+        n = n + 1
+        local id = it.id
+        local row = win.pick.rows[n]
+        if not row then
+            local r
+            r = WeintCodex.CreateToggle(list, { label = "", width = W, height = 24,
+                get = function() return r and SH.sel and SH.sel[r._id] == true or false end,
+                set = function(on) if r and SH.sel then SH.sel[r._id] = on or nil end end })
+            row = r
+            win.pick.rows[n] = row
+        end
+        row._id = id
+        row._label:SetText(it.label)
+        row:ClearAllPoints()
+        row:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -y)
+        if row.Sync then row:Sync() end
+        row:Show()
+        y = y + 26
+    end
+    list:SetHeight(math.max(y, 10))
+    Step("pick")
+    win:Show()
+    if win.Raise then win:Raise() end
+    return win
+end
+
+function SH.SelectAll(on)
+    if not SH.pending then return end
+    for _, it in ipairs(SH.Items(SH.pending)) do SH.sel[it.id] = on or nil end
+    for _, r in ipairs(win.pick.rows) do if r:IsShown() and r.Sync then r:Sync() end end
+end
+
+function SH.ApplyChoice()
+    local data, sel = SH.pending, SH.sel
+    if not data then return false end
+    if K.InCombat() then Say("Import nicht im Kampf – Tastenbelegung und Spieleinstellungen sind dann gesperrt.") return false end
+    if not next(sel) then Say("Nichts angehakt – nichts übernommen.") return false end
+    local ok, target, note = SH.Apply(data, sel)
+    if ok then
+        Say("Profil in „" .. target .. "“ importiert. " .. (note and (note .. " ") or "") .. "Neu laden, damit es gilt.")
+        SH.pending, SH.sel = nil, nil
+        if win then win:Hide() end
+    else
+        Say("Import nicht möglich: " .. tostring(target) .. ".")
+    end
+    return ok
 end
 
 function SH.ShowImport()
     win = win or BuildImport()
     local PR = WeintCodex.UIProfiles
     win.title:SetText("Profil importieren")
-    win.hint:SetText("Text einfügen (Strg+V) und „Importieren“. Ersetzt alle Einstellungen von „" .. PR.Chosen() .. "“ – wirkt nach dem Neuladen.")
+    win.hint:SetText("Text einfügen (Strg+V) und „Weiter“ – danach wählst du, was übernommen wird (Ziel: „" .. PR.Chosen() .. "“).")
     win.edit:SetText("")
+    Step("paste")
     win:Show()
     if win.Raise then win:Raise() end
     win.edit:SetFocus()
@@ -512,19 +716,7 @@ end
 function SH.ImportFrom(text)
     local data, why = SH.Parse(text)
     if not data then Say("Import nicht möglich: " .. tostring(why) .. ".") return false end
-    local PR = WeintCodex.UIProfiles
-    local from = type(data.name) == "string" and data.name or "?"
-    -- Die Rueckfrage des Spiels liegt in einer tieferen Schicht - das
-    -- Fenster weicht ihr, der Text ist schon gelesen.
-    if win then win:Hide() end
     if K.InCombat() then Say("Import nicht im Kampf – Tastenbelegung und Spieleinstellungen sind dann gesperrt.") return false end
-    PR.Confirm("Profil „" .. from .. "“ importieren? Ersetzt wird: " .. SH.Contents(data)
-        .. ". Die WeintCodex-Einstellungen landen in „" .. PR.Chosen() .. "“.", function()
-        local ok, target, note = SH.Apply(data)
-        if ok then
-            Say("Profil in „" .. target .. "“ importiert. " .. (note and (note .. " ") or "") .. "Neu laden, damit es gilt.")
-            if win then win:Hide() end
-        end
-    end)
+    SH.ShowChoice(data)
     return true
 end

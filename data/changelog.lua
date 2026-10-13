@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.55.0",
+        date    = "13.10.2026",
+        notes   = {
+            "|cff7C6CFFProfil-Import mit Auswahl.|r Nach dem Einfügen hakst du an, was übernommen wird – jeder WeintCodex-Bereich einzeln, Plätze, Layouts, Spieleinstellungen, Tastenbelegung. „Alle“ und „Keine“ inklusive; die Tastenbelegung ist nicht vorgewählt.",
+        },
+    },
+    {
         version = "6.30.54.0",
         date    = "13.10.2026",
         notes   = {

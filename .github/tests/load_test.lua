@@ -18178,7 +18178,27 @@ do
         assert(SH.Apply(data) == true, "Import nicht uebernommen")
         assert(ui.profiles[PR.Chosen()].modules.reminders.alpha == 55, "Einstellung nicht zurueck")
         p = ui.profiles[PR.Chosen()]
-        p.modules.reminders = nil
+        -- 6.30.55.0: nur Angehaktes; Tastenbelegung nie vorgewaehlt.
+        data.bindings = { { "JUMP", "SPACE" } }
+        p.modules.reminders = { alpha = 90 }
+        p.modules.zztest = { keep = 1 }
+        local sel = SH.DefaultSelection(data)
+        assert(sel["mod:reminders"] and not sel.bindings, "Vorauswahl falsch")
+        local applied = false
+        local oAB = SH.ApplyBindings
+        SH.ApplyBindings = function() applied = true return true, 1 end
+        sel["mod:reminders"] = nil
+        assert(SH.Apply(data, sel) == true, "Auswahl nicht uebernommen")
+        p = ui.profiles[PR.Chosen()]
+        assert(p.modules.reminders.alpha == 90, "abgewaehlter Bereich ueberschrieben")
+        assert(p.modules.zztest and p.modules.zztest.keep == 1, "nicht enthaltener Bereich geloescht")
+        assert(not applied, "Tastenbelegung ohne Haken")
+        SH.ApplyBindings = oAB
+        SH.ShowChoice(data)
+        SH.SelectAll(false)
+        assert(SH.ApplyChoice() == false, "ohne Haken uebernommen")
+        SH.win:Hide()
+        p.modules.reminders, p.modules.zztest = nil, nil
     end)
     Check(ok, "Profil exportieren/importieren: Rundweg, fremder Text abgelehnt" .. (ok and "" or (": " .. tostring(err))))
 end
