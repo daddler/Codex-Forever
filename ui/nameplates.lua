@@ -888,15 +888,21 @@ local function Layout(p)
     p._bgR = nil
     p.shadow:SetShown(S.shadow)
     local ms = math.floor(S.height * 1.35 + 0.5)
+    -- 6.30.55.1 (Spieler: "es ueberlappt sich wieder was"): der goldene
+    -- Elite-Rahmen steht 3 px ueber den Balken hinaus - die Zielmarken
+    -- ruecken um diesen Rand nach aussen, immer wenn der Rahmen
+    -- eingeschaltet ist (sonst springen sie zwischen Elite und normal).
+    local mx = 2 + (S.eliteFrame and NP.ELITE_EDGE or 0)
     for i, m in ipairs(p.marks) do
         m:SetSize(ms, ms)
         m:ClearAllPoints()
         if i == 1 then
-            m:SetPoint("RIGHT", p.health, "LEFT", -2, 0)
+            m:SetPoint("RIGHT", p.health, "LEFT", -mx, 0)
         else
-            m:SetPoint("LEFT", p.health, "RIGHT", 2, 0)
+            m:SetPoint("LEFT", p.health, "RIGHT", mx, 0)
         end
     end
+    p._eliteX = nil
     p.exec:ClearAllPoints()
     p.exec:SetPoint("TOP", p.health, "TOPLEFT", S.width * S.executeAt / 100, 0)
     p.exec:SetPoint("BOTTOM", p.health, "BOTTOMLEFT", S.width * S.executeAt / 100, 0)
@@ -950,7 +956,7 @@ local function Layout(p)
     p.threat:ClearAllPoints()
     if S.threatText == "right" then
         -- Rechts neben dem Balken, hinter der Zielmarke.
-        p.threat:SetPoint("LEFT", p, "RIGHT", math.floor(S.height * 1.35 + 0.5) + 4, 0)
+        p.threat:SetPoint("LEFT", p, "RIGHT", math.floor(S.height * 1.35 + 0.5) + 4 + (S.eliteFrame and NP.ELITE_EDGE or 0), 0)
         p.threat:SetJustifyH("LEFT")
     else
         p.threat:SetPoint("BOTTOMLEFT", p, "TOPLEFT", 1, 2)
@@ -969,10 +975,10 @@ local function Layout(p)
     -- (Hoehe x 1,35, atmen NP.MARK_SWAY nach aussen). Ihr Platz bleibt immer
     -- frei - sonst springt die Zahl beim Anwaehlen.
     -- Nur, wenn es Zielmarken ueberhaupt gibt (Hervorhebung "glow"/"both").
-    local qx = -4
-    if S.targetStyle == "glow" or S.targetStyle == "both" then
-        qx = qx - math.floor(S.height * 1.35 + 0.5) - NP.MARK_SWAY - 2
-    end
+    -- Links neben dem Balken also, von innen nach aussen: Zielmarke,
+    -- Drache (Elite), Markierung, Questfortschritt. Jeder Platz bleibt frei.
+    local qx = NP.EliteIconX() - 2
+    if S.eliteFrame then qx = qx - NP.ELITE_ICON + 2 end
     if S.raidMarker == "left" then qx = qx - (S.raidMarkerSize or 20) - 4 end
     p.quest:SetPoint("RIGHT", p, "LEFT", qx, 0)
     local qc = WeintCodex.GameColors.questObjective
@@ -1088,6 +1094,18 @@ local TEXT_KEYS = { top = "textTop", left = "textLeft", right = "textRight", cen
 -- Bosse und "??". Bleibt in jeder Lage, unabhaengig von der Balkenfarbe.
 NP.ELITE_ATLAS = "nameplates-icon-elite-gold"
 NP.BOSS_ATLAS = "nameplates-icon-elite-silver"
+NP.ELITE_EDGE = 3
+NP.ELITE_ICON = 22
+-- Rechte Kante des Drachen relativ zur linken Balkenkante: links der
+-- Zielmarke samt Atmen, wenn es Zielmarken gibt (bis 6.30.55.1 stand er auf
+-- der Marke), sonst direkt am Rahmen.
+function NP.EliteIconX()
+    local x = -(S.eliteFrame and NP.ELITE_EDGE or 0) - 2
+    if S.targetStyle == "glow" or S.targetStyle == "both" then
+        x = x - math.floor(S.height * 1.35 + 0.5) - NP.MARK_SWAY - 2
+    end
+    return x
+end
 function NP.EliteKind(unit)
     local cls = K.Plain(_G.UnitClassification and _G.UnitClassification(unit))
     local lvl = K.Plain(_G.UnitLevel and _G.UnitLevel(unit))
@@ -1103,14 +1121,19 @@ function NP.EliteFrame(p, unit)
     end
     local box = p.eliteBox
     if type(box) ~= "table" then
+        local e = NP.ELITE_EDGE
         box = CreateFrame("Frame", nil, p.health)
-        box:SetPoint("TOPLEFT", p.health, "TOPLEFT", -3, 3)
-        box:SetPoint("BOTTOMRIGHT", p.health, "BOTTOMRIGHT", 3, -3)
+        box:SetPoint("TOPLEFT", p.health, "TOPLEFT", -e, e)
+        box:SetPoint("BOTTOMRIGHT", p.health, "BOTTOMRIGHT", e, -e)
         box.edge = K.Border(box, 2, 1, 1, 1, 1, "OVERLAY")
         box.icon = box:CreateTexture(nil, "OVERLAY")
-        box.icon:SetSize(22, 22)
-        box.icon:SetPoint("RIGHT", box, "LEFT", 2, 0)
+        box.icon:SetSize(NP.ELITE_ICON, NP.ELITE_ICON)
         p.eliteBox = box
+    end
+    if p._eliteX ~= NP.EliteIconX() then
+        p._eliteX = NP.EliteIconX()
+        box.icon:ClearAllPoints()
+        box.icon:SetPoint("RIGHT", p.health, "LEFT", p._eliteX, 0)
     end
     local c = kind == "boss" and WeintCodex.Colors.red or WeintCodex.Colors.gold
     box.edge:SetColor(c[1], c[2], c[3], 1)

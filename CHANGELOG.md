@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.55.1] – 2026-10-13
+
+### Behoben
+- Namensplaketten: Elite-Drache und linke Zielmarke lagen übereinander, die
+  Zielmarken berührten den goldenen Elite-Rahmen. Reihenfolge links neben
+  dem Balken jetzt fest: Zielmarke, Drache, Markierung, Questfortschritt.
+
 ## [6.30.55.0] – 2026-10-13
 
 ### Geändert

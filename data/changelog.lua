@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.55.1",
+        date    = "13.10.2026",
+        notes   = {
+            "|cff7C6CFFNamensplaketten von Elite-Gegnern überlappen nicht mehr.|r Der Drache steht jetzt links neben den Zielpfeilen statt auf ihnen, und die Pfeile halten Abstand zum goldenen Rahmen.",
+        },
+    },
+    {
         version = "6.30.55.0",
         date    = "13.10.2026",
         notes   = {
