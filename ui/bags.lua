@@ -176,13 +176,13 @@ end
 -- /wcui taschen: welche Felder der Knoepfe sind "tainted"? (issecurevariable)
 BG.WATCH_FIELDS = { "count", "hasItem", "bagID", "readable", "isBag", "icon", "Count", "itemLink", "BattlepayItemTexture" }
 -- Letzte Sperren gegen WeintCodex (Ereignis und Funktion), fuer den Bericht.
-BG.blocks = {}
+BG.lockLog = {}
 local blockEv = CreateFrame("Frame")
 blockEv:RegisterEvent("ADDON_ACTION_FORBIDDEN")
 blockEv:RegisterEvent("ADDON_ACTION_BLOCKED")
 blockEv:SetScript("OnEvent", function(_, event, addon, func)
     if K.Plain(addon) ~= "WeintCodex" then return end
-    local b = BG.blocks
+    local b = BG.lockLog
     b[#b + 1] = string.format("%s %s: %s", _G.date and _G.date("%H:%M:%S") or "", event, tostring(K.Plain(func)))
     while #b > 10 do table.remove(b, 1) end
 end)
@@ -212,8 +212,8 @@ function BG.TaintReport()
     local isv = _G.issecurevariable
     if type(isv) ~= "function" then out[#out + 1] = "issecurevariable fehlt." return out end
     out[#out + 1] = "Sperren gegen WeintCodex (zuletzt):"
-    if #BG.blocks == 0 then out[#out + 1] = "   keine seit dem Laden" end
-    for _, l in ipairs(BG.blocks) do out[#out + 1] = "   " .. l end
+    if #BG.lockLog == 0 then out[#out + 1] = "   keine seit dem Laden" end
+    for _, l in ipairs(BG.lockLog) do out[#out + 1] = "   " .. l end
     local s = slots[1]
     if not s then out[#out + 1] = "Noch keine Taschenknöpfe angelegt." return out end
     local btn = s.button

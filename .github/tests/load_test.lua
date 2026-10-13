@@ -9447,6 +9447,9 @@ do
         assert(#BG.blocks == 5 and BG.blocks[1].free == 3 and BG.blocks[1].slots == 4, "Bloecke je Tasche")
         assert(BG.BagLabel(0) == "Rucksack" and BG.BagLabel(4) == "Köcher" and BG.BagLabel(2) == "Tasche 2",
             "Namen der Taschen")
+        -- 6.30.54.0: der Sperrbericht teilte sich den Namen mit den Bloecken.
+        local rep = BG.TaintReport()
+        assert(type(rep) == "table" and #rep > 1, "Sperrbericht bei offenen Bloecken")
         assert(BG.UsedSlots() == 20 and BG._filled == 5, "einzeln andere Zahlen")
         K.Set("bags", "split", nil)
         BG.Refresh()

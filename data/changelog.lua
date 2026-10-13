@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.54.0",
+        date    = "13.10.2026",
+        notes   = {
+            "|cff7C6CFF/wcui sperre öffnet jetzt immer|r – auch nachdem die Taschen geöffnet waren.",
+        },
+    },
+    {
         version = "6.30.53.0",
         date    = "13.10.2026",
         notes   = {

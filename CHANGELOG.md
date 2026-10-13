@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.54.0] – 2026-10-13
+
+### Behoben
+- `/wcui sperre` brach ab, sobald die Taschen offen waren: die Liste der
+  Sperren teilte sich den Namen mit den Abschnitten je Tasche.
+
 ## [6.30.53.0] – 2026-10-13
 
 ### Behoben
