@@ -808,6 +808,96 @@ end
 local bagCache = {}
 R._bagCache = bagCache
 
+-- Schriftrollen (6.30.55.2, Spieler: "es muss unterschieden werden, was
+-- die Schriftrolle kann, ob es sich fuer die Klasse lohnt, ob schon eine
+-- aktiv ist - und mit Dolch keine Erinnerung, eine Rolle auf den Stab zu
+-- setzen"). Erkannt am Tooltip, nicht an einer Liste von Gegenstaenden.
+R.SCROLL_WORDS = { "rolle", "scroll" }
+R.STAT_WORDS = {
+    str = { "stärke", "strength" },
+    agi = { "beweglichkeit", "agility" },
+    int = { "intelligenz", "intellect" },
+    spi = { "willenskraft", "spirit" },
+    sta = { "ausdauer", "stamina" },
+    arm = { "rüstung", "armor" },
+}
+-- Wem welcher Wert nuetzt - Wissensstand aus Classic (Art `classic`), fuer
+-- Forever nicht bestaetigt. Ausdauer und Ruestung nuetzen jedem; eine
+-- Klasse, die hier fehlt, wird nicht gefiltert.
+R.STAT_CLASSES = {
+    str = { WARRIOR = true, PALADIN = true, SHAMAN = true, DRUID = true },
+    agi = { ROGUE = true, HUNTER = true, DRUID = true, SHAMAN = true, WARRIOR = true },
+    int = { MAGE = true, PRIEST = true, WARLOCK = true, PALADIN = true, SHAMAN = true, DRUID = true, HUNTER = true },
+    spi = { MAGE = true, PRIEST = true, WARLOCK = true, PALADIN = true, SHAMAN = true, DRUID = true },
+}
+R.KNOWN_CLASSES = { WARRIOR = true, PALADIN = true, HUNTER = true, ROGUE = true, PRIEST = true,
+    SHAMAN = true, MAGE = true, WARLOCK = true, DRUID = true }
+-- Waffenart im Tooltip -> Unterklassen (Klasse 2). Zauberstab vor Stab.
+R.WEAPON_WORDS = {
+    { { "zauberstab", "zauberstäbe", "wand" }, { 19 } },
+    { { "stab%f[%A]", "stäbe", "staff", "staves" }, { 10 } },
+    { { "dolch", "dagger" }, { 15 } },
+    { { "axt%f[%A]", "äxte", "%f[%a]axe" }, { 0, 1 } },
+    { { "streitkolben", "%f[%a]mace" }, { 4, 5 } },
+    { { "schwert", "sword" }, { 7, 8 } },
+    { { "stangenwaffe", "polearm" }, { 6 } },
+    { { "faustwaffe", "fist weapon" }, { 13 } },
+}
+
+function R.TipStats(tip)
+    local out
+    for k, words in pairs(R.STAT_WORDS) do
+        if HasWord(tip, words) then out = out or {} out[k] = true end
+    end
+    return out
+end
+
+function R.TipWeapons(tip)
+    local out
+    for _, w in ipairs(R.WEAPON_WORDS) do
+        if HasWord(tip, w[1]) then
+            out = out or {}
+            for _, sub in ipairs(w[2]) do out[sub] = true end
+            -- "Zauberstab" enthaelt "stab" nicht als ganzes Wort - trotzdem
+            -- den Rest ohne ihn pruefen.
+            for _, word in ipairs(w[1]) do if not word:find("%", 1, true) then tip = tip:gsub(word, "") end end
+        end
+    end
+    return out
+end
+
+-- Nuetzt die Rolle dieser Klasse? Unbekannte Werte oder Klasse: ja.
+function R.StatsUseful(stats, class)
+    if not stats or not class or not R.KNOWN_CLASSES[class] then return true end
+    for k in pairs(stats) do
+        local cs = R.STAT_CLASSES[k]
+        if not cs or cs[class] then return true end
+    end
+    return false
+end
+
+-- Welche Hand traegt eine Waffe der verlangten Art? "main"/"off" oder nil.
+function R.WeaponHandFor(weapons)
+    local info = _G.C_Item and _G.C_Item.GetItemInfoInstant or _G.GetItemInfoInstant
+    if not (info and _G.GetInventoryItemID) then return nil end
+    for _, h in ipairs({ { 16, "main" }, { 17, "off" } }) do
+        local id = K.Plain(_G.GetInventoryItemID("player", h[1]))
+        if type(id) == "number" then
+            local ok, _, _, _, _, _, classID, subID = pcall(info, id)
+            if ok and K.Plain(classID) == 2 and weapons[K.Plain(subID)] then return h[2] end
+        end
+    end
+    return nil
+end
+
+-- Liegt auf dieser Hand schon eine zeitweise Verzauberung?
+local function HandEnchanted(hand)
+    if not _G.GetWeaponEnchantInfo then return false end
+    local ok, hasMain, _, _, _, hasOff = pcall(_G.GetWeaponEnchantInfo)
+    if not ok then return false end
+    return K.Bool(hand == "off" and hasOff or hasMain, false)
+end
+
 local function TooltipText(id)
     local ti = _G.C_TooltipInfo
     if not (ti and ti.GetItemByID) then return nil end
@@ -848,7 +938,17 @@ function R.BagItemKind(id)
     if type(name) ~= "string" then return nil end
     local entry = false
     if subID >= 2 and subID <= 4 and type(spell) == "string" then
-        entry = { kind = "elixir", spell = spell }
+        -- 6.30.55.2: was die Rolle kann, steht in ihrem Tooltip - Werte und,
+        -- wenn sie auf eine Waffe gehoert, welche. Ohne Tooltip-API bleibt
+        -- beides leer (unbekannt, nicht "nichts").
+        local tip = ""
+        if _G.C_TooltipInfo and _G.C_TooltipInfo.GetItemByID then
+            tip = TooltipText(id)
+            if not tip then return nil end
+        end
+        tip = tip:lower()
+        entry = { kind = "elixir", spell = spell, scroll = subID == 4 or HasWord(name, R.SCROLL_WORDS),
+                  stats = R.TipStats(tip), weapons = R.TipWeapons(tip) }
     elseif type(spell) == "string" or subID == 5 then
         -- 6.30.28.0 (Beta-Test: "Kraeutergebackenes Ei" und das Essen fuer
         -- mehr Erfahrung fehlten): Essen steht auf Forever nicht immer in
@@ -969,7 +1069,8 @@ function R.BagBuffs(out)
     -- Keine Sorte vorschreiben (6.27.0.2, Beta-Test: "er moechte, dass ich
     -- die Suppe nehme - ich nehme aber das Fleisch"): die Erinnerung nennt,
     -- dass Buff-Essen da ist und wie viele Sorten, nicht welches.
-    local food, xp, elixir, elixirHas = nil, nil, nil, false
+    local food, xp, elixir = nil, nil, nil
+    local class = PlayerClass()
     local foodKinds, xpKinds = 0, 0
     for bag = 0, tonumber(_G.NUM_BAG_SLOTS) or 4 do
         local okN, n = pcall(cc.GetContainerNumSlots, bag)
@@ -987,9 +1088,23 @@ function R.BagBuffs(out)
                     end
                     if e.kind == "xp" and leveling then xp = xp or { id = id, e = e } end
                     food = food or { id = id, e = e }
-                elseif e.kind == "elixir" then
-                    elixir = elixir or { id = id, e = e }
-                    if AnyName(names, { e.spell:lower() }) then elixirHas = true end
+                elseif e.kind == "elixir" and not elixir and R.StatsUseful(e.stats, class) then
+                    local hand = e.weapons and R.WeaponHandFor(e.weapons)
+                    -- Gehoert auf eine Waffe, die nicht getragen wird: keine
+                    -- Erinnerung (kein Stab in der Hand, keine Rolle fuer den Stab).
+                    if not e.weapons or hand then
+                        local has = AnyName(names, { e.spell:lower() })
+                            or (hand and HandEnchanted(hand))
+                        -- Eine Rolle ist schon aktiv, wenn ein Buff denselben
+                        -- Wert hebt (Rollen werden von gleichartigen Buffs
+                        -- ueberschrieben).
+                        if not has and e.scroll and e.stats then
+                            for k in pairs(e.stats) do
+                                if AnyName(tips, R.STAT_WORDS[k]) then has = true break end
+                            end
+                        end
+                        if not has then elixir = { id = id, e = e } end
+                    end
                 end
             end
         end
@@ -1008,7 +1123,7 @@ function R.BagBuffs(out)
                               icon = ItemIcon(pick.id) }
         end
     end
-    if wantElixir and elixir and not elixirHas then
+    if wantElixir and elixir then
         out[#out + 1] = { text = elixir.e.name .. " in der Tasche – Buff fehlt", icon = ItemIcon(elixir.id) }
     end
     return out
@@ -1608,7 +1723,7 @@ K.Register({
             B:Row({ type = "toggle", label = "Essen mit Buff", key = "bagFood",
                     description = "Liegt Essen in der Tasche, das „Wohlgenährt“ oder Erfahrung gibt, und der Buff fehlt: Erinnerung. Erfahrungsessen nur beim Leveln." },
                   { type = "toggle", label = "Elixiere, Fläschchen, Rollen", key = "bagElixir",
-                    description = "Liegt eins in der Tasche und keiner seiner Buffs ist auf dir: Erinnerung." })
+                    description = "Liegt eins in der Tasche und keiner seiner Buffs ist auf dir: Erinnerung. Rollen nur, wenn ihr Wert deiner Klasse nützt und – falls sie auf eine Waffe gehören – diese Waffe getragen wird." })
             B:Section("Symbole")
             B:Row({ type = "toggle", label = "Buffs und Procs", key = "showProcs" },
                   { type = "slider", label = "Größe", key = "iconSize", min = 20, max = 64, step = 2, format = px })

@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.55.2] – 2026-10-13
+
+### Behoben
+- Erinnerungen „Elixiere, Fläschchen, Rollen“: Schriftrollen werden am Tooltip
+  unterschieden – Werte (Stärke, Beweglichkeit, Intelligenz, Willenskraft,
+  Ausdauer, Rüstung) und verlangte Waffenart. Keine Erinnerung, wenn der Wert
+  der Klasse nicht nützt (Zuordnung Wissensstand aus Classic, unbekannte Klasse
+  wird nicht gefiltert), wenn die Waffe nicht getragen wird (Dolch statt Stab),
+  wenn auf der Hand schon eine Verzauberung liegt oder ein Buff denselben Wert
+  hebt. Mehrere Rollen in der Tasche: erinnert wird an die erste, die fehlt.
+
 ## [6.30.55.1] – 2026-10-13
 
 ### Behoben

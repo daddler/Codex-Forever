@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.55.2",
+        date    = "13.10.2026",
+        notes   = {
+            "|cff7C6CFFSchriftrollen erinnern nur noch, wenn es passt.|r Eine Rolle, deren Wert deiner Klasse nichts bringt, bleibt still; ebenso eine, die auf eine Waffe gehört, die du nicht trägst (kein Stab, keine Rune für den Stab). Hebt schon ein Buff denselben Wert oder liegt die Rune auf der Waffe, gilt sie als aktiv.",
+        },
+    },
+    {
         version = "6.30.55.1",
         date    = "13.10.2026",
         notes   = {

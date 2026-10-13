@@ -17901,6 +17901,42 @@ do
         assert(#R.BagBuffs({}) == 0, "Erinnerung trotz Buff")
         helpful = { { name = "Essen" } }
         assert(#R.BagBuffs({}) == 0, "Erinnerung beim Essen")
+        -- 6.30.55.2 Schriftrollen: Waffe, Klasse, schon aktiv.
+        K.Set("reminders", "bagFood", false)
+        K.Set("reminders", "bagElixir", true)
+        local tipText, sub, rname = "", 4, "Rolle"
+        local equipped = 15
+        local oGII, oUC, oWE = G.GetInventoryItemID, G.UnitClass, G.GetWeaponEnchantInfo
+        G.GetInventoryItemID = function(_, slot) return slot == 16 and 9000 or nil end
+        G.UnitClass = function() return "Krieger", "WARRIOR" end
+        G.GetWeaponEnchantInfo = function() return false end
+        G.C_Item = { GetItemInfoInstant = function(id)
+                         if id == 9000 then return 9000, "", "", "", 1, 2, equipped end
+                         return id, "", "", "", 1, 0, sub end,
+                     GetItemInfo = function() return rname, nil, nil, nil, 1 end,
+                     GetItemSpell = function() return "Rollenzauber" end,
+                     GetItemIconByID = function() return 1 end }
+        G.C_TooltipInfo = { GetItemByID = function() return { lines = { { leftText = tipText } } } end,
+            GetUnitBuffByAuraInstanceID = function(_, inst) return { lines = { { leftText = inst == 5 and "Ausdauer um 10 erhöht." or "" } } } end }
+        local function Run(tip) tipText = tip for k in pairs(R._bagCache) do R._bagCache[k] = nil end return #R.BagBuffs({}) end
+        helpful = {}
+        assert(Run("Benutzen: Belegt einen Stab mit einer Rune.") == 0, "Rolle fuer den Stab trotz Dolch")
+        assert(Run("Benutzen: Belegt einen Zauberstab mit einer Rune.") == 0, "Zauberstab als Dolch erkannt")
+        equipped = 10
+        assert(Run("Benutzen: Belegt einen Stab mit einer Rune.") == 1, "keine Erinnerung mit Stab")
+        G.GetWeaponEnchantInfo = function() return true end
+        assert(Run("Benutzen: Belegt einen Stab mit einer Rune.") == 0, "Erinnerung trotz Rune auf dem Stab")
+        G.GetWeaponEnchantInfo = function() return false end
+        assert(Run("Benutzen: Erhöht Intelligenz um 8.") == 0, "Intelligenz-Rolle fuer den Krieger")
+        assert(Run("Benutzen: Erhöht Stärke um 8.") == 1, "Staerke-Rolle fuer den Krieger fehlt")
+        assert(Run("Benutzen: Erhöht Ausdauer um 8.") == 1, "Ausdauer-Rolle fehlt")
+        helpful = { { name = "Seelenstärke", spellId = 55, auraInstanceID = 5 } }
+        assert(Run("Benutzen: Erhöht Ausdauer um 8.") == 0, "Ausdauer-Rolle trotz Ausdauerbuff")
+        G.UnitClass = function() return "?", "UNBEKANNT" end
+        helpful = {}
+        assert(Run("Benutzen: Erhöht Intelligenz um 8.") == 1, "unbekannte Klasse gefiltert")
+        G.GetInventoryItemID, G.UnitClass, G.GetWeaponEnchantInfo = oGII, oUC, oWE
+        K.Set("reminders", "bagElixir", false)
         G.C_Container, G.C_Item, G.C_TooltipInfo, G.UnitLevel, G.GetMaxPlayerLevel = oCC, oCI, oTI, oL, oML
         -- Minikarte: rechts oeffnet die Karte, links nicht.
         local opened = 0
