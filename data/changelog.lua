@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.55.3",
+        date    = "13.10.2026",
+        notes   = {
+            "|cff7C6CFFKeine Erinnerung mehr an Rollen mit Sofortwirkung.|r Was sofort Mana oder Leben gibt – etwa die Rolle der geringen Hervorrufung – ist kein fehlender Buff; erinnert wird nur an Rollen, Elixiere und Fläschchen, die über Minuten wirken.",
+        },
+    },
+    {
         version = "6.30.55.2",
         date    = "13.10.2026",
         notes   = {

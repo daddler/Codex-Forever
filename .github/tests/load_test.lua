@@ -17920,21 +17920,23 @@ do
             GetUnitBuffByAuraInstanceID = function(_, inst) return { lines = { { leftText = inst == 5 and "Ausdauer um 10 erhöht." or "" } } } end }
         local function Run(tip) tipText = tip for k in pairs(R._bagCache) do R._bagCache[k] = nil end return #R.BagBuffs({}) end
         helpful = {}
-        assert(Run("Benutzen: Belegt einen Stab mit einer Rune.") == 0, "Rolle fuer den Stab trotz Dolch")
-        assert(Run("Benutzen: Belegt einen Zauberstab mit einer Rune.") == 0, "Zauberstab als Dolch erkannt")
+        assert(Run("Benutzen: Belegt einen Stab mit einer Rune. Hält 30 Min.") == 0, "Rolle fuer den Stab trotz Dolch")
+        assert(Run("Benutzen: Belegt einen Zauberstab mit einer Rune. Hält 30 Min.") == 0, "Zauberstab als Dolch erkannt")
         equipped = 10
-        assert(Run("Benutzen: Belegt einen Stab mit einer Rune.") == 1, "keine Erinnerung mit Stab")
+        assert(Run("Benutzen: Belegt einen Stab mit einer Rune. Hält 30 Min.") == 1, "keine Erinnerung mit Stab")
         G.GetWeaponEnchantInfo = function() return true end
-        assert(Run("Benutzen: Belegt einen Stab mit einer Rune.") == 0, "Erinnerung trotz Rune auf dem Stab")
+        assert(Run("Benutzen: Belegt einen Stab mit einer Rune. Hält 30 Min.") == 0, "Erinnerung trotz Rune auf dem Stab")
         G.GetWeaponEnchantInfo = function() return false end
-        assert(Run("Benutzen: Erhöht Intelligenz um 8.") == 0, "Intelligenz-Rolle fuer den Krieger")
-        assert(Run("Benutzen: Erhöht Stärke um 8.") == 1, "Staerke-Rolle fuer den Krieger fehlt")
-        assert(Run("Benutzen: Erhöht Ausdauer um 8.") == 1, "Ausdauer-Rolle fehlt")
+        assert(Run("Benutzen: Erhöht Intelligenz um 8 für 30 Min.") == 0, "Intelligenz-Rolle fuer den Krieger")
+        assert(Run("Benutzen: Erhöht Stärke um 8 für 30 Min.") == 1, "Staerke-Rolle fuer den Krieger fehlt")
+        assert(Run("Benutzen: Erhöht Ausdauer um 8 für 30 Min.") == 1, "Ausdauer-Rolle fehlt")
         helpful = { { name = "Seelenstärke", spellId = 55, auraInstanceID = 5 } }
-        assert(Run("Benutzen: Erhöht Ausdauer um 8.") == 0, "Ausdauer-Rolle trotz Ausdauerbuff")
+        assert(Run("Benutzen: Erhöht Ausdauer um 8 für 30 Min.") == 0, "Ausdauer-Rolle trotz Ausdauerbuff")
         G.UnitClass = function() return "?", "UNBEKANNT" end
         helpful = {}
-        assert(Run("Benutzen: Erhöht Intelligenz um 8.") == 1, "unbekannte Klasse gefiltert")
+        assert(Run("Benutzen: Erhöht Intelligenz um 8 für 30 Min.") == 1, "unbekannte Klasse gefiltert")
+        G.UnitClass = function() return "Magier", "MAGE" end
+        assert(Run("Benutzen: Stellt sofort 600 Mana wieder her.") == 0, "Sofortwirkung als fehlender Buff")
         G.GetInventoryItemID, G.UnitClass, G.GetWeaponEnchantInfo = oGII, oUC, oWE
         K.Set("reminders", "bagElixir", false)
         G.C_Container, G.C_Item, G.C_TooltipInfo, G.UnitLevel, G.GetMaxPlayerLevel = oCC, oCI, oTI, oL, oML

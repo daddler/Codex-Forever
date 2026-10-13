@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.55.3] – 2026-10-13
+
+### Behoben
+- Erinnerungen aus der Tasche: Rollen, Elixiere und Fläschchen zählen nur noch,
+  wenn ihr Tooltip eine Wirkdauer in Minuten oder Stunden nennt. Sofortwirkungen
+  (z. B. Rolle der geringen Hervorrufung: Mana) lösten beim vollen Magier eine
+  Erinnerung aus. Ohne lesbaren Tooltip bleibt es beim bisherigen Verhalten.
+
 ## [6.30.55.2] – 2026-10-13
 
 ### Behoben

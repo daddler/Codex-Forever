@@ -798,7 +798,7 @@ local function HasWord(text, words)
     if type(text) ~= "string" then return false end
     text = text:lower()
     for _, w in ipairs(words) do
-        if w:find("%f", 1, true) then
+        if w:find("%", 1, true) then
             if text:find(w) then return true end
         elseif text:find(w, 1, true) then return true end
     end
@@ -813,6 +813,9 @@ R._bagCache = bagCache
 -- aktiv ist - und mit Dolch keine Erinnerung, eine Rolle auf den Stab zu
 -- setzen"). Erkannt am Tooltip, nicht an einer Liste von Gegenstaenden.
 R.SCROLL_WORDS = { "rolle", "scroll" }
+-- Ein Buff haelt Minuten oder Stunden; "8 Sek." (Wiederherstellung ueber
+-- Zeit) ist keiner.
+R.DURATION_WORDS = { "%d%s*min", "%d%s*std", "stunde", "%d%s*hour", "%d%s*hr" }
 R.STAT_WORDS = {
     str = { "stärke", "strength" },
     agi = { "beweglichkeit", "agility" },
@@ -947,6 +950,11 @@ function R.BagItemKind(id)
             if not tip then return nil end
         end
         tip = tip:lower()
+        -- 6.30.55.3 (Spieler: Magier voll Mana, Erinnerung an die "Rolle der
+        -- geringen Hervorrufung"): wirkt etwas sofort (Mana, Leben) statt
+        -- als Buff ueber Minuten, ist es kein fehlender Buff. Ohne Tooltip
+        -- (tip leer) unbekannt - dann wie bisher.
+        if tip ~= "" and not HasWord(tip, R.DURATION_WORDS) then bagCache[id] = false return false end
         entry = { kind = "elixir", spell = spell, scroll = subID == 4 or HasWord(name, R.SCROLL_WORDS),
                   stats = R.TipStats(tip), weapons = R.TipWeapons(tip) }
     elseif type(spell) == "string" or subID == 5 then
