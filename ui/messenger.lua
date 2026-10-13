@@ -551,8 +551,11 @@ local function Build()
         local text = self:GetText() or ""
         self:SetText("")
         if text ~= "" then MS.Send(MS.current, text) end
-        -- Weiterschreiben wie im Messenger: das Feld bleibt aktiv.
-        if Get("direct") and self.SetFocus then self:SetFocus() end
+        -- 6.30.55.6 (Spieler: "nach dem Senden will ich mich schnell wieder
+        -- bewegen, er ist aber noch im Schreibmodus"): wie die Chatzeile des
+        -- Spiels - Enter sendet und gibt die Tastatur zurueck. Weiterschreiben:
+        -- ins Feld klicken oder R.
+        self:ClearFocus()
     end)
     -- Platzhalter (6.30.34.0): woran man sieht, wohin es geht.
     input.hint = K.NewText(input, 12)

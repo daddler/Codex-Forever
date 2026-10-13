@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.55.6",
+        date    = "13.10.2026",
+        notes   = {
+            "|cff7C6CFFNach dem Senden im Messenger kannst du sofort weiterlaufen.|r Enter schickt die Nachricht ab und gibt die Tastatur frei – wie die Chatzeile des Spiels. Weiterschreiben: ins Feld klicken oder R drücken.",
+        },
+    },
+    {
         version = "6.30.55.5",
         date    = "13.10.2026",
         notes   = {

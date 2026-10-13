@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.55.6] – 2026-10-13
+
+### Geändert
+- Messenger („direkt senden“): Enter sendet und verlässt das Eingabefeld, statt
+  im Schreibmodus zu bleiben – Bewegungstasten gehen sofort wieder. Weiter-
+  schreiben per Klick ins Feld oder mit R.
+
 ## [6.30.55.5] – 2026-10-13
 
 ### Behoben
