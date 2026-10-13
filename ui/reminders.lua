@@ -628,10 +628,43 @@ function R.Ammo()
             local okC, c = pcall(_G.GetInventoryItemCount, "player", AMMO_SLOT)
             n = okC and K.Plain(c) or nil
         end
-        if type(n) ~= "number" then n = ItemCount(id) end
+        -- 6.30.55.5 (Spieler: "neue Munition gekauft, der Reminder
+        -- funktioniert nicht mehr"): die Zahl des Platzes und die der
+        -- Taschen koennen auseinanderliegen - es gilt die groessere.
+        local bagN = ItemCount(id)
+        if type(n) ~= "number" or (type(bagN) == "number" and bagN > n) then n = bagN end
         return id, n
     end
-    if ammoSeen then return ammoSeen, ItemCount(ammoSeen) or 0 end
+    if ammoSeen then
+        local n = ItemCount(ammoSeen) or 0
+        -- Alte Sorte verschossen, neue in der Tasche, aber nicht angelegt:
+        -- das ist keine leere Munition, sondern ein Handgriff.
+        if n == 0 then
+            local other = R.BagAmmo(ammoSeen)
+            if other then return other, ItemCount(other) or 0, true end
+        end
+        return ammoSeen, n
+    end
+    return nil
+end
+
+-- Andere Munition (Gegenstandsklasse 6, Projektil) in den Taschen, oder nil.
+function R.BagAmmo(except)
+    local cc, ci = _G.C_Container, _G.C_Item
+    local instant = (ci and ci.GetItemInfoInstant) or _G.GetItemInfoInstant
+    if not (cc and cc.GetContainerNumSlots and cc.GetContainerItemID and instant) then return nil end
+    for bag = 0, tonumber(_G.NUM_BAG_SLOTS) or 4 do
+        local okN, n = pcall(cc.GetContainerNumSlots, bag)
+        n = okN and K.Plain(n)
+        for slot = 1, type(n) == "number" and n or 0 do
+            local okI, id = pcall(cc.GetContainerItemID, bag, slot)
+            id = okI and K.Plain(id)
+            if type(id) == "number" and id ~= except then
+                local ok, _, _, _, _, _, classID = pcall(instant, id)
+                if ok and K.Plain(classID) == 6 then return id end
+            end
+        end
+    end
     return nil
 end
 
@@ -757,8 +790,9 @@ function R.Check(rule)
         if not h or h >= Below(rule) then return nil end
         return { text = "Begleiter " .. K.HAPPINESS[h].text .. " – füttern" }
     elseif kind == "ammo" then
-        local id, n = R.Ammo()
+        local id, n, loose = R.Ammo()
         if not id or type(n) ~= "number" then return nil end
+        if loose then return { text = "Neue Munition in der Tasche – nicht angelegt", icon = ItemIcon(id) } end
         local min = tonumber(rule.min) or R.DEFAULT_MIN.ammo
         if n >= min then return nil end
         if n == 0 then return { text = "Munition leer", icon = ItemIcon(id) } end

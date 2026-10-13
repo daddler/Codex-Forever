@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.55.5] – 2026-10-13
+
+### Behoben
+- Erinnerung „Munition knapp“ nach dem Kauf einer neuen Sorte: war die alte
+  verschossen, zählte nur sie (0). Jetzt meldet die Erinnerung neue Munition in
+  der Tasche als „nicht angelegt“; bei angelegter Munition gilt die größere
+  Zahl aus Platz und Taschen.
+
 ## [6.30.55.4] – 2026-10-13
 
 ### Behoben

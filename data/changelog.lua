@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.55.5",
+        date    = "13.10.2026",
+        notes   = {
+            "|cff7C6CFFMunition erinnert auch nach dem Sortenwechsel.|r Liegt neue Munition in der Tasche, die alte ist aber verschossen, heißt es „nicht angelegt“ statt „leer“; angelegt zählt die Menge in den Taschen.",
+        },
+    },
+    {
         version = "6.30.55.4",
         date    = "13.10.2026",
         notes   = {

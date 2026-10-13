@@ -5738,6 +5738,22 @@ do
         ammoId = nil
         a = R.Active()
         assert(#a == 1 and a[1].text == "Munition leer", "verschossene Munition nicht erinnert")
+        -- 6.30.55.5: neue Sorte in der Tasche, nicht angelegt.
+        local oCC = _G.C_Container
+        _G.C_Container = { GetContainerNumSlots = function(b) return b == 0 and 1 or 0 end,
+                           GetContainerItemID = function() return 3030 end }
+        _G.C_Item.GetItemInfoInstant = function(k)
+            if k == 3030 then return 3030, "", "", "", 1, 6 end
+            if k == 118 or k == "Schwacher Heiltrank" then return 118, "Trank", "", "", 134829 end
+        end
+        bag[3030] = 400
+        a = R.Active()
+        assert(#a == 1 and a[1].text:find("nicht angelegt", 1, true), "neue Munition in der Tasche nicht erkannt")
+        -- angelegt: Platz sagt 1, Taschen 400 -> genug.
+        ammoId, ammoN = 3030, 1
+        assert(#R.Active() == 0, "neue Munition angelegt und trotzdem erinnert")
+        ammoId = nil bag[3030] = nil
+        _G.C_Container = oCC
         R._ammoSeen(false)
         assert(#R.Active() == 0, "ohne je gesehene Munition erinnert (weiss nicht ist nicht leer)")
         -- Vorrat: Name oder ID, Mindestmenge.
