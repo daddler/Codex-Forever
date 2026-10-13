@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.52.0] – 2026-10-13
+
+### Neu
+- `/wcui taschen` im Berichtsfenster: letzte `ADDON_ACTION_FORBIDDEN/BLOCKED`
+  gegen WeintCodex mit Funktion, tainted Felder an Knopf und Halter, globale
+  Namen, die WeintCodex angefasst hat (`issecurevariable`).
+
 ## [6.30.51.0] – 2026-10-13
 
 ### Behoben

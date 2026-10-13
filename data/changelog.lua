@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.52.0",
+        date    = "13.10.2026",
+        notes   = {
+            "|cff7C6CFF„/wcui taschen“ als Bericht zum Kopieren.|r Zeigt die letzten Sperren gegen WeintCodex und alles, was an den Taschenknöpfen und im Spiel als von WeintCodex angefasst gilt – Grundlage, um die Sperre beim Benutzen aus den Taschen zu finden.",
+        },
+    },
+    {
         version = "6.30.51.0",
         date    = "13.10.2026",
         notes   = {

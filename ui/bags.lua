@@ -175,18 +175,66 @@ end
 
 -- /wcui taschen: welche Felder der Knoepfe sind "tainted"? (issecurevariable)
 BG.WATCH_FIELDS = { "count", "hasItem", "bagID", "readable", "isBag", "icon", "Count", "itemLink", "BattlepayItemTexture" }
-function BG.TaintReport()
-    local out = {}
+-- Letzte Sperren gegen WeintCodex (Ereignis und Funktion), fuer den Bericht.
+BG.blocks = {}
+local blockEv = CreateFrame("Frame")
+blockEv:RegisterEvent("ADDON_ACTION_FORBIDDEN")
+blockEv:RegisterEvent("ADDON_ACTION_BLOCKED")
+blockEv:SetScript("OnEvent", function(_, event, addon, func)
+    if K.Plain(addon) ~= "WeintCodex" then return end
+    local b = BG.blocks
+    b[#b + 1] = string.format("%s %s: %s", _G.date and _G.date("%H:%M:%S") or "", event, tostring(K.Plain(func)))
+    while #b > 10 do table.remove(b, 1) end
+end)
+
+local function TaintedKeys(t, label, out, limit)
     local isv = _G.issecurevariable
-    if type(isv) ~= "function" then return { "issecurevariable fehlt." } end
-    local s = slots[1]
-    if not s then return { "Noch keine Taschenknöpfe angelegt." } end
-    local bad = {}
-    for _, f in ipairs(BG.WATCH_FIELDS) do
-        local ok, sec, who = pcall(isv, s.button, f)
-        if ok and not sec then bad[#bad + 1] = f .. " (" .. tostring(who) .. ")" end
+    local n = 0
+    for k in pairs(t) do
+        if type(k) == "string" then
+            local ok, sec, who = pcall(isv, t, k)
+            if ok and not sec then
+                n = n + 1
+                if n <= limit then out[#out + 1] = "   " .. label .. "." .. k .. "  (" .. tostring(who) .. ")" end
+            end
+        end
     end
-    out[#out + 1] = #bad == 0 and "Knöpfe: keine Felder tainted." or ("Knöpfe tainted: " .. table.concat(bad, ", "))
+    if n > limit then out[#out + 1] = "   … und " .. (n - limit) .. " weitere" end
+    return n
+end
+
+-- Bericht (6.30.52.0, Wunsch: "/wcui taschen als Fenster zum Kopieren").
+-- Sucht, was an den Taschenknoepfen und im Spiel von WeintCodex angefasst
+-- (tainted) ist - genau das macht einen Klick des Spiels zu einem Klick
+-- des Addons.
+function BG.TaintReport()
+    local out = { "WeintCodex " .. tostring(WeintCodex.Version) .. " · Taschen, Taint-Bericht" }
+    local isv = _G.issecurevariable
+    if type(isv) ~= "function" then out[#out + 1] = "issecurevariable fehlt." return out end
+    out[#out + 1] = "Sperren gegen WeintCodex (zuletzt):"
+    if #BG.blocks == 0 then out[#out + 1] = "   keine seit dem Laden" end
+    for _, l in ipairs(BG.blocks) do out[#out + 1] = "   " .. l end
+    local s = slots[1]
+    if not s then out[#out + 1] = "Noch keine Taschenknöpfe angelegt." return out end
+    local btn = s.button
+    out[#out + 1] = "Knopf: " .. tostring(btn.GetObjectType and btn:GetObjectType()) .. ", geschützt: "
+        .. tostring(btn.IsProtected and btn:IsProtected())
+    out[#out + 1] = "Felder am Knopf, tainted:"
+    if TaintedKeys(btn, "Knopf", out, 40) == 0 then out[#out + 1] = "   keine" end
+    out[#out + 1] = "Felder am Halter, tainted:"
+    if TaintedKeys(s.holder, "Halter", out, 20) == 0 then out[#out + 1] = "   keine" end
+    out[#out + 1] = "Globale Namen des Spiels, von WeintCodex angefasst:"
+    local n = 0
+    for k in pairs(_G) do
+        if type(k) == "string" and not k:find("^WeintCodex") and not k:find("^SLASH_WEINT") then
+            local ok, sec, who = pcall(isv, k)
+            if ok and not sec and who == "WeintCodex" then
+                n = n + 1
+                if n <= 80 then out[#out + 1] = "   " .. k end
+            end
+        end
+    end
+    if n == 0 then out[#out + 1] = "   keine" elseif n > 80 then out[#out + 1] = "   … und " .. (n - 80) .. " weitere" end
     return out
 end
 

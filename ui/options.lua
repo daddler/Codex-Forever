@@ -1513,9 +1513,9 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
     end
     if msg == "taschen" then
         local BGx = WeintCodex.UIBags
-        for _, line in ipairs(BGx and BGx.TaintReport and BGx.TaintReport() or { "Taschen nicht geladen." }) do
-            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
-        end
+        local lines = BGx and BGx.TaintReport and BGx.TaintReport() or { "Taschen nicht geladen." }
+        if K.ShowReport then K.ShowReport("Taschen – Bericht zum Kopieren (Strg+A, Strg+C)", lines)
+        else for _, line in ipairs(lines) do print(line) end end
         return
     end
     if msg == "messung" then
