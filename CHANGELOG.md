@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.53.0] – 2026-10-13
+
+### Behoben
+- Der Taint-Bericht war unter `/wcui taschen` nicht erreichbar (der Befehl
+  öffnete schon die Codex-Seite „Taschen“). Jetzt `/wcui sperre`
+  (auch `taint`, `taschenbericht`).
+
 ## [6.30.52.0] – 2026-10-13
 
 ### Neu

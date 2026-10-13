@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.53.0",
+        date    = "13.10.2026",
+        notes   = {
+            "|cff7C6CFFSperr-Bericht heißt jetzt „/wcui sperre“.|r „/wcui taschen“ öffnete weiter die Taschen-Seite im Codex – der Bericht zum Kopieren kommt mit „/wcui sperre“.",
+        },
+    },
+    {
         version = "6.30.52.0",
         date    = "13.10.2026",
         notes   = {

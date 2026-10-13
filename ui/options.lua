@@ -1511,7 +1511,7 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
-    if msg == "taschen" then
+    if msg == "taint" or msg == "sperre" or msg == "taschenbericht" then
         local BGx = WeintCodex.UIBags
         local lines = BGx and BGx.TaintReport and BGx.TaintReport() or { "Taschen nicht geladen." }
         if K.ShowReport then K.ShowReport("Taschen – Bericht zum Kopieren (Strg+A, Strg+C)", lines)
