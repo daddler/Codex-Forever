@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.30.51.0",
+        date    = "13.10.2026",
+        notes   = {
+            "|cff7C6CFFGegenstände aus den Taschen benutzen, ohne Sperrmeldung.|r Wer etwa eine Fackel mit „Benutzen“-Zauber aus den WeintCodex-Taschen anklickte, bekam „WeintCodex wurde geblockt“. Die Taschen fassen die Knöpfe des Spiels jetzt so an, dass das Spiel den Klick als seinen eigenen erkennt.",
+        },
+    },
+    {
         version = "6.30.50.0",
         date    = "12.10.2026",
         notes   = {

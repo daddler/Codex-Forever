@@ -1511,6 +1511,13 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    if msg == "taschen" then
+        local BGx = WeintCodex.UIBags
+        for _, line in ipairs(BGx and BGx.TaintReport and BGx.TaintReport() or { "Taschen nicht geladen." }) do
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line)
+        end
+        return
+    end
     if msg == "messung" then
         local DMx = WeintCodex.UIDamageMeter
         for _, line in ipairs(DMx and DMx.FieldReport and DMx.FieldReport() or { "Schadensanzeige nicht geladen." }) do

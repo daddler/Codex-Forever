@@ -173,28 +173,51 @@ local function ItemLevel(bag, slot, info)
     return lvl
 end
 
+-- /wcui taschen: welche Felder der Knoepfe sind "tainted"? (issecurevariable)
+BG.WATCH_FIELDS = { "count", "hasItem", "bagID", "readable", "isBag", "icon", "Count", "itemLink", "BattlepayItemTexture" }
+function BG.TaintReport()
+    local out = {}
+    local isv = _G.issecurevariable
+    if type(isv) ~= "function" then return { "issecurevariable fehlt." } end
+    local s = slots[1]
+    if not s then return { "Noch keine Taschenknöpfe angelegt." } end
+    local bad = {}
+    for _, f in ipairs(BG.WATCH_FIELDS) do
+        local ok, sec, who = pcall(isv, s.button, f)
+        if ok and not sec then bad[#bad + 1] = f .. " (" .. tostring(who) .. ")" end
+    end
+    out[#out + 1] = #bad == 0 and "Knöpfe: keine Felder tainted." or ("Knöpfe tainted: " .. table.concat(bad, ", "))
+    return out
+end
+
 local function PaintSlot(s, bag, slot)
     local btn, d = s.button, s.d
     s.holder:SetID(bag)
     btn:SetID(slot)
     local info = Info(bag, slot)
 
+    -- 6.30.51.0 (Beta-Test: "Fackel des Nachtwaechters" aus der Tasche
+    -- benutzt -> "WeintCodex wurde geblockt", ADDON_ACTION_FORBIDDEN): die
+    -- Helfer der Vorlage (SetItemButtonTexture/Count/Desaturated) schreiben
+    -- FELDER in den Knopf (count, hasItem ...). Aus Addon-Code geschrieben
+    -- sind diese Felder "tainted"; der Klick des Spiels liest sie und laeuft
+    -- dann selbst tainted - Gegenstaende, die einen Zauber wirken, sperrt
+    -- das Spiel dann. Deshalb nur noch Bilder und Texte setzen, nie Felder.
     local tex = info and info.iconFileID or nil
-    if btn.SetItemButtonTexture then btn:SetItemButtonTexture(tex)
-    elseif _G.SetItemButtonTexture then _G.SetItemButtonTexture(btn, tex) end
-    -- Zusaetzlich unmittelbar: das Symbol zeigen, auch wenn die Vorlage
-    -- des Clients es anders verwaltet als erwartet.
     if s.icon then
         s.icon:SetTexture(tex)
         s.icon:SetShown(tex ~= nil)
     end
     local count = info and info.stackCount or 0
-    if btn.SetItemButtonCount then btn:SetItemButtonCount(count)
-    elseif _G.SetItemButtonCount then _G.SetItemButtonCount(btn, count) end
+    local ct = btn.Count or _G[(btn:GetName() or "") .. "Count"]
+    if type(ct) == "table" and ct.SetText then
+        ct:SetText(count > 1 and tostring(count) or "")
+        ct:SetShown(count > 1)
+    end
 
     local junk = info and info.quality == 0 and Opt("dimJunk")
-    if _G.SetItemButtonDesaturated then
-        _G.SetItemButtonDesaturated(btn, info and (info.isLocked or junk) and true or false)
+    if s.icon and s.icon.SetDesaturated then
+        s.icon:SetDesaturated(info and (info.isLocked or junk) and true or false)
     end
     btn:SetAlpha(info and info.isFiltered and 0.2 or 1)
 

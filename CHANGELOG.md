@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.30.51.0] – 2026-10-13
+
+### Behoben
+- Taschen: keine Helfer der Vorlage mehr (`SetItemButtonTexture/Count/
+  Desaturated` schreiben Felder in den Knopf → tainted → Benutzen eines
+  Gegenstands mit Zauber `ADDON_ACTION_FORBIDDEN`); nur noch Bild und Text.
+  Neu `/wcui taschen` (`BG.TaintReport`, `issecurevariable`).
+
 ## [6.30.50.0] – 2026-10-12
 
 ### Geändert
