@@ -4129,6 +4129,30 @@ do
     Check(ok, "Weltkarte: Schiffslinien der Fraktion, Route dem Gelaende nach, nur bei Aenderung" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.33.6.0: Kombopunkte an der Plakette des Ziels.
+do
+    local NP, UF = WeintCodex.UINameplates, WeintCodex.UIUnitFrames
+    local saved = { UF.UsesCombo, UF.ComboPoints, NP.ComboPlate }
+    local ok, err = pcall(function()
+        local plate = CreateFrame("Frame")
+        plate.health = CreateFrame("Frame", nil, plate)
+        UF.UsesCombo = function() return true end
+        UF.ComboPoints = function() return 3 end
+        NP.ComboPlate = function() return plate end
+        NP.UpdateCombo()
+        local row = NP.combo
+        assert(row and row:IsShown(), "Kombopunkte nicht gezeigt")
+        local shown = 0
+        for _, pip in ipairs(row.pips) do if pip:IsShown() then shown = shown + 1 end end
+        assert(shown == 5, "Segmente: " .. shown)
+        UF.UsesCombo = function() return false end
+        NP.UpdateCombo()
+        assert(not row:IsShown(), "Kombopunkte ohne Schurke/Katze")
+    end)
+    UF.UsesCombo, UF.ComboPoints, NP.ComboPlate = unpack(saved, 1, 3)
+    Check(ok, "Plaketten: Kombopunkte am Ziel nur fuer Schurke/Katze" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Questpfeil: die 3D-Ansichten und die Farbe.
 do
     local idx, l, r, t, b = QA.Frame(0)

@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.33.6.0] – 2026-10-14
+
+### Hinzugefügt
+- Plaketten: Kombopunkte unter der Plakette des Ziels (`NP.UpdateCombo`,
+  Schalter `comboPoints`). Klasse/Gestalt und Stand aus dem Zielrahmen
+  (`UF.UsesCombo`, `UF.ComboPoints`); Segmente als Balken i-1..i, geheime
+  Werte werden nur weitergereicht.
+
 ## [6.33.5.0] – 2026-10-14
 
 ### Behoben

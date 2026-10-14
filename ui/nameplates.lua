@@ -132,6 +132,7 @@ local defaults = {
     textSize = 10,
     levelColor = true,
     eliteMark  = true,
+    comboPoints = true,   -- 6.33.6.0: Kombopunkte an der Plakette des Ziels (Schurke, Druide in Katzengestalt)
     eliteFrame = true,    -- 6.29.30.0: goldener Rahmen und Drache an Elite
     raidMarker = "topright",
     raidMarkerSize = 20,
@@ -2119,6 +2120,98 @@ function NP.RefreshPreview()
     if S.castEnabled then p.cast:ShowPreview(true) else p.cast:ShowPreview(false) end
 end
 
+
+--------------------------------------------------
+-- Kombopunkte an der Plakette des Ziels (6.33.6.0)
+--------------------------------------------------
+-- Eine Reihe fuer alle: sie haengt an der Plakette, die gerade das Ziel
+-- ist. Ob die Klasse Punkte sammelt (Schurke; Druide nur als Katze) und
+-- woher der Stand kommt, weiss schon der Zielrahmen (ui/unitframes.lua,
+-- UF.UsesCombo/UF.ComboPoints, gemessen 6.29.19.0) - hier nur gelesen.
+-- Der Stand darf geheim sein: jedes Segment ist ein Balken von i-1 bis i,
+-- der Wert wird nur weitergereicht, nie verglichen.
+NP.COMBO_H, NP.COMBO_GAP = 4, 2
+local combo
+function NP.ComboRow()
+    if combo then return combo end
+    combo = CreateFrame("Frame", nil, UIParent)
+    combo:SetHeight(NP.COMBO_H)
+    combo.pips = {}
+    combo:Hide()
+    NP.combo = combo
+    return combo
+end
+
+function NP.ComboPlate()
+    for _, p in pairs(plates) do
+        if p._isTarget and p:IsShown() then return p end
+    end
+end
+
+function NP.UpdateCombo()
+    local UF = WeintCodex.UIUnitFrames
+    local row = combo
+    local p = S.comboPoints and UF and UF.UsesCombo and UF.UsesCombo() and NP.ComboPlate()
+    if not p then if row then row:Hide() end return end
+    local cur = UF.ComboPoints()
+    if type(cur) == "nil" then if row then row:Hide() end return end
+    local max = 5
+    if _G.UnitPowerMax then
+        local ok, m = pcall(_G.UnitPowerMax, "player", UF.CP_TYPE())
+        m = ok and K.Plain(m) or nil
+        if type(m) == "number" and m > 0 and m <= 10 then max = m end
+    end
+    row = NP.ComboRow()
+    row:SetParent(p)
+    row:ClearAllPoints()
+    row:SetPoint("TOPLEFT", p.health, "BOTTOMLEFT", 0, -3)
+    row:SetPoint("TOPRIGHT", p.health, "BOTTOMRIGHT", 0, -3)
+    row:SetFrameLevel((K.Plain(p:GetFrameLevel()) or 5) + 3)
+    local w = K.Plain(p.health:GetWidth())
+    if type(w) ~= "number" or w <= 0 then w = defaults.width end
+    local pw = (w - NP.COMBO_GAP * (max - 1)) / max
+    local col = WeintCodex.GameColors.comboPoint
+    for i = 1, math.max(max, #row.pips) do
+        local pip = row.pips[i]
+        if i <= max then
+            if not pip then
+                pip = K.NewBar(row)
+                local bg = pip:CreateTexture(nil, "BACKGROUND")
+                bg:SetAllPoints(pip)
+                local dark = WeintCodex.GameColors.plateBg
+                bg:SetColorTexture(dark[1], dark[2], dark[3], 0.6)
+                pip._border = K.Border(pip, 1, 0, 0, 0, 1, "BORDER")
+                row.pips[i] = pip
+            end
+            pip:SetMinMaxValues(i - 1, i)
+            K.PaintBar(pip, col[1], col[2], col[3])
+            pip:ClearAllPoints()
+            pip:SetPoint("TOPLEFT", row, "TOPLEFT", (i - 1) * (pw + NP.COMBO_GAP), 0)
+            pip:SetSize(pw, NP.COMBO_H)
+            pip:SetValue(cur)
+            pip:Show()
+        elseif pip then
+            pip:Hide()
+        end
+    end
+    row:Show()
+end
+
+local comboEvents = CreateFrame("Frame")
+comboEvents:SetScript("OnEvent", function(_, event, unit)
+    if (event == "UNIT_POWER_UPDATE" or event == "UNIT_POWER_FREQUENT") and unit ~= "player" then return end
+    -- Erst nach den Plaketten: die wissen nach PLAYER_TARGET_CHANGED/ADDED
+    -- erst im selben Durchlauf, welche das Ziel ist.
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, NP.UpdateCombo) else NP.UpdateCombo() end
+end)
+function NP.EnableCombo()
+    for _, e in ipairs({ "PLAYER_TARGET_CHANGED", "UNIT_POWER_UPDATE", "UNIT_POWER_FREQUENT",
+        "UPDATE_SHAPESHIFT_FORM", "NAME_PLATE_UNIT_ADDED", "NAME_PLATE_UNIT_REMOVED", "PLAYER_ENTERING_WORLD" }) do
+        Register(comboEvents, e)
+    end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, NP.UpdateCombo) end
+end
+
 --------------------------------------------------
 -- Modul
 --------------------------------------------------
@@ -2134,6 +2227,7 @@ local function Enable()
     for e in pairs(UNIT_EVENTS) do Register(events, e) end
     for e in pairs(CAST_EVENTS) do Register(events, e) end
     events:SetScript("OnEvent", K.Measured("Plaketten", OnEvent))
+    NP.EnableCombo()
 
     -- Plaketten, die beim Einschalten schon stehen (Neuladen mitten in
     -- der Welt), bekommen kein ADDED mehr.
@@ -2426,7 +2520,8 @@ K.Register({
                   { type = "toggle", label = "Elite mit + kennzeichnen", key = "eliteMark" })
             B:Row({ type = "toggle", label = "Elite mit goldenem Rahmen", key = "eliteFrame",
                     description = "Rahmen und Drache um die Plakette – gold für Elite, rot für Bosse. Bleibt auch im Kampf." },
-                  { type = "empty" })
+                  { type = "toggle", label = "Kombopunkte am Ziel", key = "comboPoints",
+                    description = "Unter der Plakette deines Ziels – nur beim Schurken und beim Druiden in Katzengestalt." })
             B:Section("Schlachtzugsmarkierung")
             B:Row({ type = "dropdown", label = "Position", key = "raidMarker", items = {
                         { value = "topright", text = "Oben rechts" },

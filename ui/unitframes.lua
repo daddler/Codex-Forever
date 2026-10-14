@@ -1011,6 +1011,7 @@ end
 --------------------------------------------------
 
 local function UsesCombo()
+    if not _G.UnitClass then return false end
     local _, class = _G.UnitClass("player")
     if class == "ROGUE" then return true end
     if class == "DRUID" then
@@ -1033,6 +1034,7 @@ end
 -- GetComboPoints bei 0 bleibt, gehoeren sie dem Spieler - dann UnitPower.
 -- Geheime Werte (im Kampf moeglich) werden nie verglichen: dann gilt der
 -- Weg, der zuletzt als richtig erkannt war (ohne Wissen: UnitPower).
+UF.UsesCombo = UsesCombo
 UF.cpSource = nil   -- nil (noch unbekannt), "target" oder "player"
 
 function UF.CP_TYPE()

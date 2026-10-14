@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.33.6.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFKombopunkte an der Namensplakette.|r Schurken und Druiden in Katzengestalt sehen ihre Punkte als Reihe unter der Plakette ihres Ziels – andere Klassen und Gestalten nicht. Abschaltbar bei den Plaketten.",
+        },
+    },
+    {
         version = "6.33.5.0",
         date    = "14.10.2026",
         notes   = {
