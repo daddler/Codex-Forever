@@ -3678,64 +3678,6 @@ do
     Check(ok, "Questpfeil plant: naechstes lohnendes Ziel, kein Hin und Her, eigene Wahl bis zur Abgabe"
         .. (ok and "" or (": " .. tostring(err))))
 
-    -- 6.31.0.0: Routenplaner Shortest Path Forever ueber seine
-    -- Schnittstelle. Ohne das Addon nichts; fremde Reise nie ersetzt;
-    -- abgebrochen gilt fuer dieses Ziel; Leiche bleibt beim Pfeil.
-    ok, err = pcall(function()
-        local oldGT = _G.GetTime
-        local now = 100
-        _G.GetTime = function() return now end
-        assert(QA.RouteAPI() == nil and QA.RouteMode() == "off", "ohne Addon an")
-        local calls, stop, ended, foreign, est = {}, nil, nil, false, 270
-        _G.ShortestPathForever = { API = { version = 1,
-            Navigate = function(o, m, x, y, title, kind)
-                calls[#calls + 1] = { o = o, m = m, title = title, kind = kind }
-                stop, foreign = 1, false
-                return true
-            end,
-            CurrentStop = function(o) return o == "WeintCodex" and stop or nil end,
-            Cancel = function() stop, ended = nil, "cancelled" return true end,
-            Ended = function() return ended end,
-            Active = function() return stop ~= nil or foreign end,
-            EstimateDetail = function()
-                return { seconds = est, legs = { { mode = "walk", to = "Flugmeister" },
-                    { mode = "flight", to = "Sturmwind" }, { mode = "walk", to = "Ziel" } } }
-            end,
-        } }
-        K.Set("questarrow", "route", "guide")
-        local t = { status = "ok", tm = 1, tx = 0.2, ty = 0.3, title = "Abgeben: Axt", kind = "quest" }
-        assert(QA.RouteSync(t) and #calls == 1 and calls[1].kind == "turnin" and calls[1].o == "WeintCodex", "nicht uebergeben")
-        assert(QA.RouteSync(t) and #calls == 1, "dasselbe Ziel doppelt uebergeben")
-        local e, leg = QA.RouteEstimate(t)
-        assert(e == 270 and leg == "Flug nach Sturmwind", "Reisezeit/Etappe: " .. tostring(e) .. " " .. tostring(leg))
-        assert(QA.FormatEta(270) == "4:30" and QA.FormatEta(3725) == "1:02:05", "Zeitformat")
-        -- Der Spieler bricht ab: dieses Ziel nicht wieder.
-        stop, ended = nil, "cancelled"
-        assert(not QA.RouteSync(t) and not QA.RouteSync(t) and #calls == 1, "abgebrochenes Ziel erneut")
-        -- Neues Ziel, aber eine eigene Reise des Spielers laeuft: nicht ersetzen.
-        foreign = true
-        local t2 = { status = "ok", tm = 1, tx = 0.6, ty = 0.3, title = "Wolf", kind = "quest" }
-        assert(not QA.RouteSync(t2) and #calls == 1, "fremde Reise ersetzt")
-        foreign = false
-        assert(QA.RouteSync(t2) and #calls == 2 and calls[2].kind == "objective", "neues Ziel nicht uebergeben")
-        -- Leiche: Reise beenden, nicht uebergeben.
-        assert(not QA.RouteSync({ status = "ok", tm = 1, tx = 0.1, ty = 0.1, kind = "corpse" }) and stop == nil, "Leiche")
-        -- Unerreichbar: keine Zahl.
-        est = nil
-        now = now + 10
-        assert(QA.RouteEstimate(t2) == nil, "Reisezeit ohne Antwort")
-        -- Modus aus.
-        K.Set("questarrow", "route", "off")
-        assert(not QA.RouteSync(t2) and QA.RouteEstimate(t2) == nil, "aus und trotzdem genutzt")
-        K.Set("questarrow", "route", "guide")
-        _G.ShortestPathForever = nil
-        QA._route.key, QA._route.own, QA._route.refused = nil, false, nil
-        _G.GetTime = oldGT
-    end)
-    _G.ShortestPathForever = nil
-    Check(ok, "Questpfeil + Shortest Path Forever: Ziel uebergeben, Reisezeit, fremde Reise und Abbruch respektiert"
-        .. (ok and "" or (": " .. tostring(err))))
-
     -- 6.14.0.2: die eigene Lage ueber UnitPosition, wenn es mit der Karte
     -- uebereinstimmt - dann keine Vektoren mehr je Lauf.
     local saved = { _G.GetTime, _G.UnitPosition, _G.C_Map.GetPlayerMapPosition }
@@ -3822,6 +3764,89 @@ do
     _G.GetTime, _G.UnitPosition, _G.C_Map.GetPlayerMapPosition = saved[1], saved[2], saved[3]
     WeintCodex.UIKit._posFast.ok = false
     Check(ok, "Questpfeil: eigene Lage ueber UnitPosition nur nach Abgleich mit der Karte"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.31.0.0: Routenplaner (ui/route.lua) - eigener Code, kein Addon.
+-- Flug nur ueber Flugpunkte, die der Client als bekannt gemeldet hat;
+-- gemessene Zeit vor geschaetzter; Schiff zum anderen Kontinent; kleiner
+-- Gewinn bleibt Luftlinie; fremde Fraktion nie.
+do
+    local RT = WeintCodex.UIRoute
+    local saved = { _G.C_Map, _G.CreateVector2D, WeintCodex.MapMarksData, RT.Store, _G.UnitFactionGroup,
+        _G.GetUnitSpeed, _G.GetTime, _G.C_TaxiMap, _G.GetTaxiMapID }
+    local ok, err = pcall(function()
+        _G.CreateVector2D = function(x, y) return { x = x, y = y } end
+        _G.C_Map = {
+            -- Karte 1 und 3: Kontinent 0; Karte 2: Kontinent 1. 1000 x 1000.
+            GetWorldPosFromMapPos = function(m, v)
+                return (m == 2) and 1 or 0, { x = 1000 - v.y * 1000, y = 1000 - v.x * 1000 }
+            end,
+            GetMapInfo = function(m) return { name = "Zone " .. m } end,
+        }
+        _G.UnitFactionGroup = function() return "Alliance" end
+        _G.GetUnitSpeed = function() return 0, 7 end
+        local now = 1000
+        _G.GetTime = function() return now end
+        local store = { taxi = {}, times = {} }
+        RT.Store = function() return store end
+        WeintCodex.MapMarksData = {
+            flights = { [1] = { 0.1, 0.1, 3, 0.9, 0.9, 1, 0.5, 0.95, 2 } },
+            travel = { [1] = { 0.95, 0.95, 1, 1, 2 }, [2] = { 0.05, 0.05, 1, 1, 1 } },
+        }
+        local nodes = RT.Build(true)
+        assert(#nodes == 5, "Knoten: " .. #nodes)
+        local A, B, H, D1, D2 = nodes[1], nodes[2], nodes[3], nodes[4], nodes[5]
+        assert(D1.pair == D2 and D2.pair == D1, "Anleger ohne Gegenstueck")
+        local pc, pN, pW = RT.World(1, 0.11, 0.1)
+        local gc, gN, gW = RT.World(1, 0.88, 0.9)
+        -- Nichts bekannt: laufen.
+        local r = RT.Solve(pc, pN, pW, gc, gN, gW)
+        assert(r and r.direct and RT.Next(r) == nil, "ohne bekannte Flugpunkte geflogen")
+        -- Bekannt: ueber den Flugmeister A nach B.
+        store.taxi[A.key], store.taxi[B.key], store.taxi[H.key] = "Nordhain", "Suedwacht", "Horde"
+        r = RT.Solve(pc, pN, pW, gc, gN, gW)
+        local hop = RT.Next(r)
+        assert(hop and hop.node == A and hop.mode == "flight" and hop.leg == "Flug nach Suedwacht",
+            "Flug nicht geplant: " .. tostring(hop and hop.leg))
+        assert(r.seconds < 100, "Reisezeit " .. r.seconds)
+        -- Gemessen: langsamer Flug - dann wieder laufen.
+        store.times[A.key .. ">" .. B.key] = 400
+        assert(RT.Solve(pc, pN, pW, gc, gN, gW).direct, "gemessene Flugzeit ueberhoert")
+        store.times[A.key .. ">" .. B.key] = nil
+        -- Hordeflugpunkt H nahe am Ziel: nie benutzt.
+        local hc, hN, hW = RT.World(1, 0.5, 0.94)
+        r = RT.Solve(pc, pN, pW, hc, hN, hW)
+        for _, leg in ipairs(r.legs) do assert(leg.node ~= H, "fremde Fraktion benutzt") end
+        -- Anderer Kontinent: nur ueber das Schiff.
+        local oc, oN, oW = RT.World(2, 0.2, 0.2)
+        r = RT.Solve(pc, pN, pW, oc, oN, oW)
+        assert(r and not r.direct, "kein Weg zum anderen Kontinent")
+        local boat
+        for _, leg in ipairs(r.legs) do if leg.mode == "boat" then boat = true end end
+        assert(boat, "nicht ueber das Schiff")
+        -- Kein Verkehr: kein Weg, keine Zahl.
+        WeintCodex.MapMarksData = { flights = {}, travel = {} }
+        RT.Build(true)
+        assert(RT.Solve(pc, pN, pW, oc, oN, oW) == nil, "Weg erfunden")
+        assert(RT.FormatTime(270) == "4:30" and RT.FormatTime(3725) == "1:02:05", "Zeitformat")
+        -- Flugpunkte vom Client lernen.
+        WeintCodex.MapMarksData = { flights = { [1] = { 0.1, 0.1, 3, 0.9, 0.9, 1 } }, travel = {} }
+        nodes = RT.Build(true)
+        store.taxi = {}
+        _G.GetTaxiMapID = function() return 1 end
+        _G.C_TaxiMap = { GetAllTaxiNodes = function()
+            return { { state = 0, name = "Nordhain", position = { x = 0.1005, y = 0.1 } },
+                     { state = 2, name = "Fern", position = { x = 0.9, y = 0.9 } } }
+        end }
+        assert(RT.LearnTaxi() == 1 and store.taxi[nodes[1].key] == "Nordhain" and store.taxi[nodes[2].key] == nil,
+            "Flugpunkte falsch gelernt")
+    end)
+    _G.C_Map, _G.CreateVector2D, WeintCodex.MapMarksData, RT.Store, _G.UnitFactionGroup,
+        _G.GetUnitSpeed, _G.GetTime, _G.C_TaxiMap, _G.GetTaxiMapID = unpack(saved, 1, 9)
+    RT.Build(true)
+    RT.Invalidate()
+    Check(ok, "Routenplaner: nur bekannte Flugpunkte, gemessen vor geschaetzt, Schiff, Fraktion, kein erfundener Weg"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

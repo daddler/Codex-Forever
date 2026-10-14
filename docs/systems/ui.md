@@ -164,7 +164,8 @@ weil sie genau das sind, wofür er steht.
 | `ui/setup.lua` | **Einrichtung beim ersten Mal**: stellt alles – Layout „WeintCodex“ im Bearbeitungsmodus mit jedem Rahmen des Spiels an festem Platz (`K.GAME_LAYOUT`), Chatfenster, einige Spieleinstellungen, eigene Rahmen –, danach neu laden (`/wcui einrichten`, prüfen: `/wcui einrichten pruefen`) |
 | `ui/gamegroup.lua` | **Gruppenrahmen des Spiels im WeintCodex-Stil** (Standard seit 6.6.0.9): nur sie zeigen HoTs, Buffs, Schilde und Debuffs im Kampf |
 | `ui/clickcast.lua` | **Klickzauber**: Maustaste + Zusatztaste wirkt einen Zauber auf die Einheit des Rahmens (Reiter der Gruppenrahmen) |
-| `ui/questarrow.lua` | Questpfeil; seit 6.31.0.0 mit Routenplaner Shortest Path Forever über `ShortestPathForever.API` (nur Aufrufe, kein Code – GPL): Ziel übergeben (`route = "guide"`), Reisezeit/erste Etappe, fremde Reise nie ersetzt, Abbruch gilt je Ziel |
+| `ui/questarrow.lua` | Questpfeil |
+| `ui/route.lua` | Routenplaner des Questpfeils (6.31.1.0): Dijkstra über Flugmeister/Anleger aus `data/mapmarks.lua`; Flug nur über vom Client gemeldete Flugpunkte (Flugkarte), Flugzeiten gemessen sonst geschätzt, Schiffe & Co. feste Annahme; Pfeil zeigt auf den nächsten Wegpunkt |
 | `ui/comfort.lua` | Komfortfunktionen |
 | `ui/automark.lua` | Automark (6.8.1.0): Tank und Heiler beim Betreten einer Instanz markieren – seit 6.9.0.2 über einen Knopf (Markieren ist geschützt) – Seite im Komfort |
 | `ui/macros.lua` | Makro-Helfer (6.8.1.0): was, auf wen, welcher Zauber → Makrotext mit Erklärung, anlegen/ersetzen/aufnehmen – Seite der Aktionsleisten |

@@ -2,10 +2,9 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.31.0.0
+## Version: 6.31.1.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
-## OptionalDeps: ShortestPathForever
 
 #
 # ZUR SCHNITTSTELLENNUMMER OBEN: SIE IST EINE VERMUTUNG, KEIN WISSEN.
@@ -215,6 +214,7 @@ ui/damagemeter.lua
 ui/reminders.lua
 ui/cooldowns.lua
 ui/questtracker.lua
+ui/route.lua
 ui/questarrow.lua
 ui/comfort.lua
 # Automark (6.8.1.0): Tank und Heiler beim Betreten einer Instanz markieren.

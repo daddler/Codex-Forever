@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.31.1.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Questpfeil plant den Weg jetzt selbst.|r Ist ein Flug, ein Schiff, ein Zeppelin, die Tiefenbahn oder ein Portal schneller als laufen, zeigt er zuerst zum Flugmeister oder Anleger und sagt, wohin es von dort geht – mit ungefährer Reisezeit, auch auf einen anderen Kontinent. Kein zusätzliches Addon nötig.",
+            "|cff7C6CFFFlugpunkte lernt er von dir.|r Öffne einmal beim Flugmeister die Flugkarte: dann kennt er deine Flugpunkte. Jeder Flug, den du machst, ersetzt seine Schätzung durch die gemessene Zeit. Ein- und ausschalten im Questpfeil unter „Routenplaner“.",
+        },
+    },
+    {
         version = "6.31.0.0",
         date    = "14.10.2026",
         notes   = {

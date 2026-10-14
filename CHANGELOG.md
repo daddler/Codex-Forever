@@ -9,6 +9,24 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.31.1.0] – 2026-10-14
+
+### Geändert
+- Questpfeil: **eigener Routenplaner** (`ui/route.lua`) statt der Anbindung an
+  Shortest Path Forever – kein zusätzliches Addon mehr. Die Einstellungen
+  `route`/`routeArrow` und `## OptionalDeps` sind entfernt; neu ist
+  `routePlan` (ab Werk an).
+- Graph aus `data/mapmarks.lua` (Flugmeister mit Fraktion, Schiffe,
+  Zeppeline, Tiefenbahn, Portale – Lagen aus Classic, auf Forever
+  ungeprüft), Dijkstra über Start, Ziel und alle Knoten. Laufen als
+  Luftlinie mit `GetUnitSpeed`; Flug nur zwischen Flugpunkten, die der Client
+  beim Öffnen einer Flugkarte als bekannt meldet (`C_TaxiMap.GetAllTaxiNodes`,
+  je Charakter gespeichert); Flugzeit gemessen (Start bis Landung) oder
+  geschätzt aus der Luftlinie; Schiffe & Co. mit fester Annahme je Art. Ein
+  Umweg nur ab 30 s Gewinn. Der Pfeil zeigt auf den nächsten Wegpunkt, darunter
+  „Route ca. …“ und die nächste Etappe; „Im Flug“ während des Flugs.
+  `/wcui pfeil` nennt Knoten, bekannte Flugpunkte und gemessene Zeiten.
+
 ## [6.31.0.0] – 2026-10-14
 
 ### Hinzugefügt
