@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.34.0.0] – 2026-10-14
+
+### Hinzugefügt
+- Chat, Seite „Infozeile“: `infoPlace` (chat/minimap) und je Wert ein Schalter
+  (`infoClock`, `infoMoney`, `infoCoords`, `infoGuild`, `infoBags`, `infoDur`,
+  `infoFps`, `infoMs`). Neue Werte Koordinaten (`CH.Coords`) und Gilde online
+  (`CH.GuildOnline`). Felder fließen und brechen um (`CH.FlowInfo`). Unter der
+  Minikarte keine Kopplung an die Eingabezeile und keine Klemmränder dafür.
+
 ## [6.33.7.1] – 2026-10-14
 
 ### Geändert

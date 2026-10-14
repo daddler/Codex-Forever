@@ -39,6 +39,16 @@ local defaults = {
     -- Haltbarkeit, Bildrate, Latenz. Beim Schreiben legt sich die
     -- Eingabezeile darueber (wie bei ElvUI).
     infoBar     = true,
+    -- 6.34.0.0: wo die Infozeile steht und was sie zeigt
+    infoPlace   = "chat",   -- chat | minimap
+    infoClock   = true,
+    infoMoney   = true,
+    infoBags    = true,
+    infoDur     = true,
+    infoFps     = true,
+    infoMs      = true,
+    infoCoords  = false,
+    infoGuild   = false,
     -- Die Bildlaufleiste und der "nach unten"-Knopf am rechten Rand:
     -- halbdurchsichtige Striche, die im Beta-Test stoerten (6.3.0.8).
     -- Blaettern geht weiter mit dem Mausrad.
@@ -214,7 +224,7 @@ function CH.ClampInsets()
     local top = TAB_H + 4
     if Opt("editBoxTop") then top = top + INFO_H + 2 end
     local bottom = PAD
-    if Opt("infoBar") or not Opt("editBoxTop") then bottom = PAD + 2 + INFO_H end
+    if CH.InfoAtChat() or not Opt("editBoxTop") then bottom = PAD + 2 + INFO_H end
     local left = PAD
     if Opt("buttons") == "column" then left = PAD + 32 end
     return -left, PAD, top, -bottom
@@ -321,7 +331,7 @@ local function ApplyFrame(cf, d)
             if Opt("editBoxTop") then
                 d.edit:SetPoint("BOTTOMLEFT", cf, "TOPLEFT", -PAD, TAB_H + 6)
                 d.edit:SetPoint("BOTTOMRIGHT", cf, "TOPRIGHT", PAD, TAB_H + 6)
-            elseif Opt("infoBar") then
+            elseif CH.InfoAtChat() then
                 -- Genau ueber der Infozeile: beim Schreiben ersetzt sie sie.
                 d.edit:SetPoint("TOPLEFT", cf, "BOTTOMLEFT", -PAD, -PAD - 2)
                 d.edit:SetPoint("TOPRIGHT", cf, "BOTTOMRIGHT", PAD, -PAD - 2)
@@ -520,6 +530,22 @@ end
 -- steht sie immer offen (Chatstil "klassisch"), bleibt die Infozeile weg.
 
 local info
+function CH.InfoAtChat() return Opt("infoBar") and Opt("infoPlace") ~= "minimap" end
+
+-- Was die Zeile zeigen kann, in dieser Reihenfolge (6.34.0.0): Schalter,
+-- Feld. Links und rechts gibt es nicht mehr - die Felder fliessen von
+-- links nach rechts und brechen um, wenn die Breite (Minikarte) nicht reicht.
+CH.INFO_ITEMS = {
+    { key = "infoClock",  cell = "clock",  label = "Uhrzeit" },
+    { key = "infoMoney",  cell = "money",  label = "Gold" },
+    { key = "infoCoords", cell = "coords", label = "Koordinaten" },
+    { key = "infoGuild",  cell = "guild",  label = "Gilde online" },
+    { key = "infoBags",   cell = "bags",   label = "Freie Taschenplätze" },
+    { key = "infoDur",    cell = "dur",    label = "Haltbarkeit" },
+    { key = "infoFps",    cell = "fps",    label = "Bildrate" },
+    { key = "infoMs",     cell = "ms",     label = "Latenz" },
+}
+
 local function Money()
     local m = K.Plain(_G.GetMoney and _G.GetMoney())
     if type(m) ~= "number" then return "–" end
@@ -619,6 +645,63 @@ function CH.UpdateInfoBar()
         lat = type(world) == "number" and world or (type(home) == "number" and home or nil)
     end
     Set(info.ms, type(lat) == "number" and (tostring(lat) .. dim("textDim", " ms")) or "–")
+    if Opt("infoCoords") then
+        local x, y = CH.Coords()
+        Set(info.coords, x and string.format("%.1f, %.1f", x, y) or "–")
+    end
+    if Opt("infoGuild") then
+        local on = CH.GuildOnline()
+        Set(info.guild, dim("textDim", "Gilde ") .. (on and tostring(on) or "–"))
+    end
+    CH.FlowInfo()
+end
+
+-- Eigene Lage in Prozent der Gebietskarte, oder nil (Instanz, kein Client).
+function CH.Coords()
+    local cm = _G.C_Map
+    if not (cm and cm.GetBestMapForUnit and cm.GetPlayerMapPosition) then return nil end
+    local ok, id = pcall(cm.GetBestMapForUnit, "player")
+    id = ok and K.Plain(id)
+    if type(id) ~= "number" then return nil end
+    local ok2, pos = pcall(cm.GetPlayerMapPosition, id, "player")
+    if not ok2 or type(pos) ~= "table" then return nil end
+    local x, y = pos.x, pos.y
+    if pos.GetXY then x, y = pos:GetXY() end
+    x, y = K.Plain(x), K.Plain(y)
+    if type(x) ~= "number" or type(y) ~= "number" or (x == 0 and y == 0) then return nil end
+    return x * 100, y * 100
+end
+
+-- Gildenmitglieder online, oder nil (keine Gilde, Client sagt nichts).
+function CH.GuildOnline()
+    if not (_G.IsInGuild and K.Bool(_G.IsInGuild(), false)) or not _G.GetNumGuildMembers then return nil end
+    local ok, _, online = pcall(_G.GetNumGuildMembers)
+    online = ok and K.Plain(online)
+    return type(online) == "number" and online or nil
+end
+
+-- Die gewaehlten Felder von links nach rechts, umbrechen bei zu wenig Breite.
+function CH.FlowInfo()
+    if not info then return end
+    local W = K.Plain(info:GetWidth())
+    if type(W) ~= "number" or W < 20 then W = 400 end
+    local x, row, rows = 2, 0, 1
+    for _, it in ipairs(CH.INFO_ITEMS) do
+        local cell = info[it.cell]
+        if cell then
+            if Opt(it.key) then
+                local w = K.Plain(cell:GetWidth()) or 40
+                if x > 2 and x + w > W - 2 then x, row, rows = 2, row + 1, rows + 1 end
+                cell:ClearAllPoints()
+                cell:SetPoint("TOPLEFT", info, "TOPLEFT", x, -row * INFO_H)
+                cell:Show()
+                x = x + w + 2
+            else
+                cell:Hide()
+            end
+        end
+    end
+    info:SetHeight(INFO_H * rows)
 end
 
 local function BuildInfoBar()
@@ -642,12 +725,8 @@ local function BuildInfoBar()
         info.dur = InfoCell(info, nil, "Niedrigste Haltbarkeit deiner Ausrüstung")
         info.fps = InfoCell(info, nil, "Bildrate")
         info.ms = InfoCell(info, nil, "Latenz (Welt)")
-        info.clock:SetPoint("LEFT", info, "LEFT", 2, 0)
-        info.money:SetPoint("LEFT", info.clock, "RIGHT", 2, 0)
-        info.ms:SetPoint("RIGHT", info, "RIGHT", -2, 0)
-        info.fps:SetPoint("RIGHT", info.ms, "LEFT", -2, 0)
-        info.dur:SetPoint("RIGHT", info.fps, "LEFT", -2, 0)
-        info.bags:SetPoint("RIGHT", info.dur, "LEFT", -2, 0)
+        info.coords = InfoCell(info, function() if _G.ToggleWorldMap then pcall(_G.ToggleWorldMap) end end, "Deine Lage im Gebiet – Klick: Karte")
+        info.guild = InfoCell(info, function() if _G.ToggleGuildFrame then pcall(_G.ToggleGuildFrame) end end, "Gildenmitglieder online – Klick: Gilde")
         local acc = 0
         info:SetScript("OnUpdate", K.Measured("Chat-Infozeile", function(_, el)
             acc = acc + (el or 0)
@@ -661,7 +740,8 @@ local function BuildInfoBar()
             -- Zeile wirklich noch geschrieben wird.
             CH.UpdateEditState()
         end))
-        for _, e in ipairs({ "PLAYER_MONEY", "BAG_UPDATE", "UPDATE_INVENTORY_DURABILITY", "PLAYER_ENTERING_WORLD" }) do
+        for _, e in ipairs({ "PLAYER_MONEY", "BAG_UPDATE", "UPDATE_INVENTORY_DURABILITY", "PLAYER_ENTERING_WORLD",
+            "GUILD_ROSTER_UPDATE" }) do
             pcall(info.RegisterEvent, info, e)
         end
         info:SetScript("OnEvent", K.Measured("Chat-Infozeile", function() CH.UpdateInfoBar() end))
@@ -669,10 +749,18 @@ local function BuildInfoBar()
         CH.HookEdit(_G.ChatFrame1EditBox)
     end
     info:ClearAllPoints()
-    info:SetPoint("TOPLEFT", cf, "BOTTOMLEFT", -PAD, -PAD - 2)
-    info:SetPoint("TOPRIGHT", cf, "BOTTOMRIGHT", PAD, -PAD - 2)
+    local mm = _G.Minimap
+    if Opt("infoPlace") == "minimap" and type(mm) == "table" then
+        -- Unter der Minikarte, so breit wie sie.
+        info:SetPoint("TOPLEFT", mm, "BOTTOMLEFT", 0, -6)
+        info:SetPoint("TOPRIGHT", mm, "BOTTOMRIGHT", 0, -6)
+        info:SetFrameStrata(mm:GetFrameStrata() or "LOW")
+    else
+        info:SetPoint("TOPLEFT", cf, "BOTTOMLEFT", -PAD, -PAD - 2)
+        info:SetPoint("TOPRIGHT", cf, "BOTTOMRIGHT", PAD, -PAD - 2)
+        info:SetFrameStrata(cf:GetFrameStrata() or "LOW")
+    end
     info:SetHeight(INFO_H)
-    info:SetFrameStrata(cf:GetFrameStrata() or "LOW")
     info:Show()
     CH.UpdateEditState()
     CH.UpdateInfoBar()
@@ -814,7 +902,8 @@ function CH.UpdateEditState()
         editFaded[eb] = Opt("editOnEnter") or nil
         editGuard = false
     end
-    if info and Opt("infoBar") then
+    if info and Opt("infoBar") and not CH.InfoAtChat() then info:SetAlpha(1) end
+    if info and CH.InfoAtChat() then
         local eb = _G.ChatFrame1EditBox
         local covered
         if type(eb) ~= "table" then
@@ -891,8 +980,8 @@ K.Register({
                         { value = "game",   text = "Wie im Spiel" } } },
                   { type = "empty" })
             B:Section("Infozeile und Eingabe")
-            B:Row({ type = "toggle", label = "Infozeile unter dem Chat", key = "infoBar",
-                    description = "Uhrzeit, Gold, freie Taschenplätze, Haltbarkeit, Bildrate und Latenz. Beim Schreiben liegt die Eingabezeile darüber." },
+            B:Row({ type = "toggle", label = "Infozeile", key = "infoBar",
+                    description = "Uhrzeit, Gold, freie Taschenplätze, Haltbarkeit, Bildrate, Latenz und mehr – was genau, steht auf der Seite „Infozeile“." },
                   { type = "toggle", label = "Erst mit Enter zeigen", key = "editOnEnter",
                     description = "Die Zeile ist unsichtbar, bis du Enter drückst, und geht nach dem Abschicken wieder. Solange steht dort die Infozeile." })
             -- 6.10.1.0: Reiter, Bildlaufleiste und Lage der Eingabezeile zugeklappt.
@@ -911,6 +1000,22 @@ K.Register({
             B:EndAdvanced()
             B:Section("Was es hier nicht gibt")
             B:Note("Kurze Kanalnamen, anklickbare Links und Zeitstempel im Text bräuchten das Umschreiben jeder Nachricht. Auf dem neuen Client können Nachrichten im Kampf für Addons gesperrt sein, und ein Fehler dabei würde die Nachricht verschlucken. Zeitstempel bietet das Spiel selbst an: Optionen → Soziales.")
+        end },
+        { key = "info", label = "Infozeile", build = function(B)
+            local off = function() return not K.Get(KEY, "infoBar") end
+            B:Section("Wo")
+            B:Row({ type = "dropdown", label = "Infozeile steht", key = "infoPlace", disabled = off, items = {
+                        { value = "chat",    text = "Unter dem Chat" },
+                        { value = "minimap", text = "Unter der Minikarte" } } },
+                  { type = "empty" })
+            B:Note("Unter dem Chat legt sich die Eingabezeile beim Schreiben darüber. Unter der Minikarte bricht die Zeile um, wenn die Werte nicht nebeneinander passen.")
+            B:Section("Was")
+            local items = CH.INFO_ITEMS
+            for i = 1, #items, 2 do
+                local a, b = items[i], items[i + 1]
+                B:Row({ type = "toggle", label = a.label, key = a.key, disabled = off },
+                      b and { type = "toggle", label = b.label, key = b.key, disabled = off } or { type = "empty" })
+            end
         end },
     },
 })

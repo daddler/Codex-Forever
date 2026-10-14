@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.34.0.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFInfozeile auch unter der Minikarte.|r Beim Chat gibt es dafür eine eigene Seite: unter dem Chat oder unter der Minikarte, und jeder Wert einzeln an oder aus. Neu dabei: Koordinaten (Klick öffnet die Karte) und Gildenmitglieder online (Klick öffnet die Gilde). Passt nicht alles nebeneinander, bricht die Zeile um.",
+        },
+    },
+    {
         version = "6.33.7.1",
         date    = "14.10.2026",
         notes   = {

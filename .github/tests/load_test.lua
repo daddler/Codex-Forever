@@ -14917,6 +14917,15 @@ do
         info.money:GetScript("OnEnter")(info.money)
         tt.AddLine, tt.AddDoubleLine, tt.SetText = oA, oD, oS
         assert(lines >= 4, "Gold-Tooltip leer: " .. lines)
+        -- 6.34.0.0: einzelne Werte aus, unter der Minikarte.
+        K.Set("chat", "infoFps", false)
+        K.Set("chat", "infoPlace", "minimap")
+        CH.ApplyAll()
+        assert(not info.fps:IsShown() and info.ms:IsShown(), "Bildrate trotz Schalter gezeigt")
+        assert(not CH.InfoAtChat() and info:GetAlpha() == 1, "Infozeile an der Minikarte folgt der Eingabezeile")
+        K.Set("chat", "infoFps", true)
+        K.Set("chat", "infoPlace", "chat")
+        CH.ApplyAll()
     end)
     Check(ok, "Chat: Infozeile (Gold, Taschen, Unbekanntes bleibt unbekannt)" .. (ok and "" or (": " .. tostring(err))))
 
