@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.33.3.0] – 2026-10-14
+
+### Hinzugefügt
+- Erinnerungen: Regel `weapon` mit `oil = true` als Vorschlag für Magier,
+  Priester, Hexenmeister, Druide, Paladin (`R.OIL_CLASSES`). Meldet nur,
+  wenn die Waffe keine Verzauberung trägt **und** ein Öl aus `R.OILS`
+  (Zauber-/Manaöle, Item-IDs aus Classic, Art `classic`) in der Tasche
+  liegt; Text „<Öl> auftragen“ mit Symbol. Bestehende Regellisten bekommen
+  den Vorschlag über „Für meine Klasse“.
+
 ## [6.33.2.0] – 2026-10-14
 
 ### Geändert

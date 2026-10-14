@@ -5927,7 +5927,8 @@ do
         assert(#R.Suggestions("HUNTER") == 4 and R.Suggestions("HUNTER")[1].kind == "pet"
             and R.Suggestions("HUNTER")[2].kind == "ammo" and R.Suggestions("HUNTER")[3].kind == "happy",
             "Jaeger ohne Begleiter-, Munitions- und Laune-Vorschlag")
-        assert(#R.Suggestions("WARLOCK") == 2 and R.Suggestions("WARLOCK")[1].kind == "pet",
+        assert(#R.Suggestions("WARLOCK") == 3 and R.Suggestions("WARLOCK")[1].kind == "pet"
+            and R.Suggestions("WARLOCK")[2].oil,
             "Hexenmeister mit Laune-Vorschlag (Daemonen haben keine)")
         assert(#R.Suggestions("WARRIOR") == 0, "Krieger mit Buff, der Wut kostet")
         -- 6.26.13.0: Dauerbuffs je Klasse - jede Klasse ausser Krieger und

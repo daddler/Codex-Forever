@@ -139,6 +139,20 @@ R.CLASS_BUFFS = {
     SHAMAN  = { { any = { 324 }, label = "Blitzschlagschild oder Wasserschild" } },
 }
 
+-- Zauberoele (Verzauberkunst), staerkstes zuerst. IDs aus Classic
+-- (Art classic) - auf Forever nicht gemessen; ein Oel, das der Client nicht
+-- kennt, zaehlt schlicht nicht (GetItemCount 0).
+R.OILS = {
+    20749, -- Hervorragendes Zauberoel
+    20748, -- Hervorragendes Manaoel
+    20750, -- Zauberoel
+    20747, -- Geringes Manaoel
+    20746, -- Geringes Zauberoel
+    20745, -- Schwaches Manaoel
+    20744, -- Schwaches Zauberoel
+}
+R.OIL_CLASSES = { MAGE = true, PRIEST = true, WARLOCK = true, DRUID = true, PALADIN = true }
+
 -- Vorschlaege je Klasse.
 function R.Suggestions(class)
     class = class or PlayerClass()
@@ -152,6 +166,12 @@ function R.Suggestions(class)
                 { kind = "happy", below = R.DEFAULT_BELOW } }
     elseif class == "WARLOCK" then
         out = { { kind = "pet" } }
+    end
+    -- 6.33.3.0 (Beta-Test): Zauberoele der Verzauberer staerken Schaden
+    -- und Heilung - fuer Zauberwirker eine Waffenverzauberung wie Gifte.
+    -- Erinnert wird nur, wenn ein Oel in der Tasche liegt (R.OILS).
+    if R.OIL_CLASSES[class] then
+        out[#out + 1] = { kind = "weapon", hand = "main", oil = true }
     end
     for _, b in ipairs(R.CLASS_BUFFS[class] or {}) do
         local any = {}
@@ -677,6 +697,23 @@ local function ItemIcon(id)
     return ok and K.Plain(ic) or nil
 end
 
+-- Das staerkste Zauberoel in den Taschen, oder nil.
+function R.OilInBags()
+    for _, id in ipairs(R.OILS) do
+        local n = ItemCount(id)
+        if n and n > 0 then return id end
+    end
+end
+
+function R.ItemName(id)
+    local ci = _G.C_Item
+    local f = (ci and ci.GetItemNameByID) or (ci and ci.GetItemInfo) or _G.GetItemInfo
+    if not f then return nil end
+    local ok, name = pcall(f, id)
+    name = ok and K.Plain(name)
+    return type(name) == "string" and name ~= "" and name or nil
+end
+
 -- Waffenbuffs des Schamanen (6.27.0.4, Beta-Test: "Verzauberung Waffe
 -- fehlt" - gewuenscht ist "Waffe der Flammenzunge" / "des Felsbeissers").
 -- IDs aus Classic wie im Lehrerbestand (Art `classic`): Felsbeisser,
@@ -761,6 +798,11 @@ function R.Check(rule)
         if has == nil then return nil end
         local imbues = R.ImbueNames()
         if not has and R.WeaponTipHas(rule.hand == "off" and 17 or 16, imbues) then return nil end
+        if not has and rule.oil then
+            local oil = R.OilInBags()
+            if not oil then return nil end
+            return { text = (R.ItemName(oil) or "Zauberöl") .. " auftragen", icon = ItemIcon(oil) }
+        end
         if not has then
             if imbues then
                 local sp = R.Resolve(tostring(R.SHAMAN_IMBUES[2]))
@@ -1527,6 +1569,8 @@ function R.BaseRuleText(rule)
         local name = rule.label or (sp and sp.name) or rule.spell or "?"
         local known = sp and sp.id and "" or "  (unbekannt)"
         return kind .. ": " .. tostring(name) .. known
+    elseif rule.kind == "weapon" and rule.oil then
+        return "Zauberöl auf der Waffe (wenn eins in der Tasche liegt)"
     elseif rule.kind == "weapon" then
         return kind .. " (" .. WeaponText(rule.hand) .. ")"
     elseif rule.kind == "happy" then

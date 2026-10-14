@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.33.3.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFErinnerung an Zauberöl für Zauberwirker.|r Magier, Priester, Hexenmeister, Druiden und Paladine werden erinnert, wenn ein Zauber- oder Manaöl in der Tasche liegt und die Waffe keins trägt – mit dem stärksten Öl als Vorschlag. Ohne Öl in der Tasche bleibt es still. Wer schon eigene Regeln hat, ergänzt sie mit „Für meine Klasse“.",
+        },
+    },
+    {
         version = "6.33.2.0",
         date    = "14.10.2026",
         notes   = {
