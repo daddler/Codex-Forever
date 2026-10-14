@@ -265,7 +265,8 @@ local ORTH_Y = { [5] = 3, [6] = 4, [7] = 3, [8] = 4 }
 
 -- Kosten (Zellen) von einer Zelle aus, im Abschnitt. Liefert dist und
 -- prev (Tabellen, wiederverwendbar ueber `into`).
-function NV.Grid(st, cl, start, into)
+-- Mit `target`: A* bis zu dieser Zelle (fuer das Verfeinern der Linie).
+function NV.Grid(st, cl, start, into, target)
     local C = st.C
     local dist, prev = into.dist, into.prev
     for i in pairs(dist) do dist[i] = nil end
@@ -275,9 +276,13 @@ function NV.Grid(st, cl, start, into)
     HeapClear(h)
     dist[start] = 0
     HeapPush(h, 0, start)
+    local tx, ty = target and floor(target / C), target and target % C
     while h.n > 0 do
-        local d, a = HeapPop(h)
-        if d <= dist[a] then
+        local f, a = HeapPop(h)
+        if a == target then break end
+        local d = dist[a]
+        local hA = target and math.sqrt((floor(a / C) - tx) ^ 2 + (a % C - ty) ^ 2) or 0
+        if f <= d + hA + 1e-6 then
             Slice()
             local ax, ay = floor(a / C), a % C
             for dir = 1, 8 do
@@ -301,7 +306,8 @@ function NV.Grid(st, cl, start, into)
                             local nd = d + step
                             if not dist[b] or nd < dist[b] then
                                 dist[b], prev[b] = nd, a
-                                HeapPush(h, nd, b)
+                                local hb = target and math.sqrt((bx - tx) ^ 2 + (by - ty) ^ 2) or 0
+                                HeapPush(h, nd + hb, b)
                             end
                         end
                     end
@@ -471,8 +477,25 @@ function NV.Search(c, sN, sW, gN, gW)
     if l1 == 0 and cs and distS[c1] then
         GridChain(st, ks, prevS, c1, out, false)
     end
+    -- Eingaenge der Reihe nach; zwei Eingaenge im selben Abschnitt auf der
+    -- Grundflaeche werden ueber die Zellen verbunden (6.32.4.0: die Linie
+    -- lief vorher gerade von Eingang zu Eingang - "Luftlinie" auf der Karte).
+    local scratchR = scratchA
     for i = #chain, 1, -1 do
-        local n, w = NV.NodePos(st, chain[i])
+        local id = chain[i]
+        if i < #chain then
+            local prevId = chain[i + 1]
+            local ka, ca, la = NV.NodeCell(st, prevId)
+            local kb, cb, lb = NV.NodeCell(st, id)
+            if ka and ka == kb and la == 0 and lb == 0 and ca ~= cb then
+                local cl = NV.Cluster(st, ka)
+                if cl and cl.cells then
+                    local _, p = NV.Grid(st, cl, ca, scratchR, cb)
+                    if p[cb] then GridChain(st, ka, p, cb, out, false) end
+                end
+            end
+        end
+        local n, w = NV.NodePos(st, id)
         out[#out + 1], out[#out + 2] = n, w
     end
     local _, c2, l2 = NV.NodeCell(st, bestNode)

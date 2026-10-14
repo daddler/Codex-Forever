@@ -875,7 +875,12 @@ function QA.Update(force)
     if K.Get(KEY, "hideInInstance") and QA.InInstance() then frame:Hide() return end
 
     local playerMap = BestMap()
-    local t = Target(playerMap, force)
+    -- Ohne Karte, aber mit Lage (Tiefenbahn, K.RAW_WORLD): das zuletzt
+    -- gefundene Ziel gilt weiter - den Ort einer Quest sucht man ueber die
+    -- Karte, auf der man steht, und die gibt es hier nicht.
+    local rawC, rawN, rawW
+    if not playerMap and K.PlayerWorldRaw then rawC, rawN, rawW = K.PlayerWorldRaw() end
+    local t = (rawC and cache.status == "ok" and cache.tc) and cache or Target(playerMap, force)
     local status, name = t.status, t.title
     if status == "none" then frame:Hide() return end
 
@@ -889,7 +894,7 @@ function QA.Update(force)
     -- Quest nicht suchen (er haengt an der Karte, auf der man steht), und
     -- "Ort unbekannt" waere dann eine Behauptung ueber die Quest statt
     -- ueber den Client.
-    if not playerMap then
+    if not playerMap and not rawC then
         arrow:Hide()
         dist:SetText("Position unbekannt")
         frame:Show()
@@ -903,6 +908,7 @@ function QA.Update(force)
     end
 
     local pc, pN, pW = PlayerWorld()
+    if not pc and rawC then pc, pN, pW = rawC, rawN, rawW end
     local tc, tN, tW = t.tc, t.tN, t.tW
     if not pc then
         arrow:Hide()

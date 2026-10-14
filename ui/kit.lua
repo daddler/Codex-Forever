@@ -163,6 +163,17 @@ local function WorldSlow(now)
     return pc, pN, pW
 end
 
+-- Orte ohne Karte, an denen UnitPosition trotzdem gilt (6.32.4.0, Beta-
+-- Test: in der Tiefenbahn "Position unbekannt"). Die Tiefenbahn (369) hat
+-- keine Karte des Spiels; UnitPosition nennt dort Lagen im selben Rahmen
+-- wie der Reisebestand (data/travel.lua, Anleger und Bahn auf 369). Nur hier,
+-- nirgends sonst ungeprueft.
+K.RAW_WORLD = { [369] = true }
+function K.PlayerWorldRaw()
+    local c, n, w = UnitWorld()
+    if c and K.RAW_WORLD[c] then return c, n, w end
+end
+
 -- Kontinent, Norden, Westen des Spielers - oder nil.
 function K.PlayerWorld()
     local now = Now()

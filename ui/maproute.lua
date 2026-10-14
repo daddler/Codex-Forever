@@ -21,6 +21,7 @@ local C  = WeintCodex.Colors
 local KEY = "questarrow"
 
 MP.TICK = 0.5
+MP.MOVE = 6            -- so weit bewegt: Route ab dem jetzigen Ort neu legen
 MP.ROUTE_WIDTH, MP.LINE_WIDTH = 4, 2.5
 
 local layer, canvasRef
@@ -214,21 +215,43 @@ function MP.DrawLines(mapID)
     end
 end
 
--- Die Route: vom Spieler ueber alle Etappen bis zum Ziel.
-function MP.DrawRoute(mapID, route, navPath)
+-- Laufweg in Kartenkoordinaten, einmal je Karte und Weg umgerechnet: beim
+-- Mitlaufen wird nur neu gelegt, nicht neu umgerechnet.
+local navCache = { xs = {}, ys = {} }
+local function NavOnMap(mapID, c, navPath)
+    if navCache.path == navPath and navCache.map == mapID then return navCache end
+    navCache.path, navCache.map, navCache.n = navPath, mapID, #navPath / 2
+    for i = 1, navCache.n do
+        navCache.xs[i], navCache.ys[i] = MP.ToMap(mapID, c, navPath[i * 2 - 1], navPath[i * 2])
+    end
+    return navCache
+end
+
+-- Die Route: vom Spieler (jetzt, nicht vom Start der Planung) ueber alle
+-- Etappen bis zum Ziel. Der erste Laufweg beginnt am Spieler und folgt dem
+-- Gelaende ab dem Stueck, auf dem er steht (6.32.4.0).
+function MP.DrawRoute(mapID, route, navPath, nowC, nowN, nowW)
     routeCol = MP.RouteColor(mapID)
     local col = routeCol
     local s, g = route.start, route.goal
     if not (s and g) then return end
     local pc, pn, pw = s[1], s[2], s[3]
+    if nowC == pc then pn, pw = nowN, nowW end
     for idx, leg in ipairs(route.legs) do
         local node = leg.node
         local tc, tn, tw
         if node then tc, tn, tw = node.c, node.n, node.w else tc, tn, tw = g[1], g[2], g[3] end
         if leg.mode == "walk" then
-            if idx == 1 and navPath and #navPath >= 4 then
-                Poly(mapID, #navPath / 2, function(i) return pc, navPath[i * 2 - 1], navPath[i * 2] end,
-                    MP.ROUTE_WIDTH, col, 0.95)
+            local NV = WeintCodex.UINav
+            if idx == 1 and navPath and #navPath >= 4 and NV then
+                local nc = NavOnMap(mapID, pc, navPath)
+                local _, _, _, at = NV.Steer(navPath, pn, pw)
+                local px, py = MP.ToMap(mapID, pc, pn, pw)
+                for k = (at + 1) / 2 + 1, nc.n do
+                    local x, y = nc.xs[k], nc.ys[k]
+                    if x and px then RouteLine(px, py, x, y, MP.ROUTE_WIDTH, col, 0.95) end
+                    px, py = x, y
+                end
             elseif pc == tc then
                 local x1, y1 = MP.ToMap(mapID, pc, pn, pw)
                 local x2, y2 = MP.ToMap(mapID, tc, tn, tw)
@@ -267,16 +290,23 @@ function MP.Update()
     local route = wantR and QA and QA.route or nil
     local navPath = wantR and QA and QA.navPath or nil
     local colorPick = Get("routeColor")
+    -- Mitlaufen: wer sich MP.MOVE weit bewegt hat, bekommt die Route ab
+    -- seinem jetzigen Ort neu gelegt.
+    local nowC, nowN, nowW = K.PlayerWorld()
+    if not nowC and K.PlayerWorldRaw then nowC, nowN, nowW = K.PlayerWorldRaw() end
+    local moved = route and nowC and (drawn.pc ~= nowC or not drawn.pN
+        or (nowN - drawn.pN) ^ 2 + (nowW - drawn.pW) ^ 2 >= MP.MOVE ^ 2)
     if drawn.map == mapID and drawn.canvas == canvas and drawn.route == route and drawn.nav == navPath
-       and drawn.lines == wantL and drawn.color == colorPick then
+       and drawn.lines == wantL and drawn.color == colorPick and not moved then
         return used
     end
     drawn.map, drawn.canvas, drawn.route, drawn.nav, drawn.lines = mapID, canvas, route, navPath, wantL
     drawn.color = colorPick
+    drawn.pc, drawn.pN, drawn.pW = nowC, nowN, nowW
     Layer(canvas)
     used = 0
     if wantL then MP.DrawLines(mapID) end
-    if route then MP.DrawRoute(mapID, route, navPath) end
+    if route then MP.DrawRoute(mapID, route, navPath, nowC, nowN, nowW) end
     HideFrom(used + 1)
     layer:Show()
     return used

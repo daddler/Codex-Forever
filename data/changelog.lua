@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.32.4.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFIn der Tiefenbahn weiß der Pfeil jetzt, wo du bist.|r Statt „Position unbekannt“ führt er weiter zum Ziel – und misst dabei die Abfahrtszeiten der Bahn.",
+            "|cff7C6CFFDie Route auf der Karte läuft mit.|r Sie beginnt bei dir, nicht dort, wo geplant wurde, und folgt dem Gelände auch in der Ferne statt von Abschnitt zu Abschnitt gerade zu laufen.",
+        },
+    },
+    {
         version = "6.32.3.0",
         date    = "14.10.2026",
         notes   = {

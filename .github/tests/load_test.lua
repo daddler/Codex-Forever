@@ -3760,6 +3760,18 @@ do
         print(string.format("  --    Questpfeil: 100 Laeufe %.1f KB, %d Kartenabfragen", used, vecs))
         assert(vecs <= 3, "Questpfeil fragt die Karte je Lauf: " .. vecs)
         assert(used < 6, string.format("Questpfeil: %.1f KB fuer 100 Laeufe", used))
+        -- 6.32.4.0: Tiefenbahn - keine Karte, aber eine Lage (369): kein
+        -- "Position unbekannt", das letzte Ziel gilt weiter.
+        local oldBM = _G.C_Map.GetBestMapForUnit
+        _G.C_Map.GetBestMapForUnit = function() return nil end
+        _G.UnitPosition = function() return -45.5, 414.2, 0, 369 end
+        WeintCodex.UIKit._posFast.ok = false
+        now = now + 5
+        QA.Update()
+        local txt = tostring(QA.texts.dist:GetText())
+        _G.C_Map.GetBestMapForUnit = oldBM
+        assert(txt ~= "Position unbekannt", "Tiefenbahn: " .. txt)
+        assert(select(1, K.PlayerWorldRaw()) == 369, "Lage in der Tiefenbahn nicht gelesen")
     end)
     _G.GetTime, _G.UnitPosition, _G.C_Map.GetPlayerMapPosition = saved[1], saved[2], saved[3]
     WeintCodex.UIKit._posFast.ok = false

@@ -981,6 +981,8 @@ local function OnUpdate(_, elapsed)
     bindAcc = bindAcc + acc
     acc = 0
     local c, n, w = K.PlayerWorld()
+    -- In der Tiefenbahn gibt es keine Karte, aber eine Lage: dort messen.
+    if not c and K.PlayerWorldRaw then c, n, w = K.PlayerWorldRaw() end
     RT.Sample(c, n, w, RT.ServerMs())
     if bindAcc >= 5 then
         bindAcc = 0

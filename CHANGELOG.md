@@ -9,6 +9,21 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.32.4.0] – 2026-10-14
+
+### Behoben
+- Tiefenbahn (Karte 369, keine Karte des Spiels): „Position unbekannt“. Neu
+  `K.RAW_WORLD`/`K.PlayerWorldRaw` – nur dort gilt UnitPosition ohne Abgleich
+  mit der Karte; der Pfeil nimmt das zuletzt gefundene Ziel, der Planer
+  misst dort Takte (vorher nie, deshalb „0 Fahrpläne“).
+- Weltkarte: die Route begann am Ort der Planung und wurde nur bei neuer Route
+  neu gelegt. Jetzt ab dem eigenen Ort, neu gelegt nach 6 Einheiten Bewegung,
+  der Laufweg ab dem Stück, auf dem man steht; umgerechnet wird der Weg
+  einmal je Karte.
+- Geländekarte: zwischen zwei Eingängen im selben Abschnitt verband die Linie
+  gerade; jetzt A* über die Zellen der Grundfläche (`NV.Grid` mit Ziel).
+  Rotkammgebirge → Gnomeregan: 314 statt 55 Punkte, gleiche Länge.
+
 ## [6.32.3.0] – 2026-10-14
 
 ### Geändert
