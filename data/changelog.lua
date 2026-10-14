@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.33.4.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFChat bei 0 % Deckkraft ganz durchsichtig.|r Reiterzeile, Rand und Infozeile verschwinden mit, nur die Schrift bleibt.",
+            "|cff7C6CFFChat bleibt nach dem Neuladen bündig am Rand.|r Vorher rückte ihn das Spiel beim Laden ein Stück nach innen.",
+            "|cff7C6CFFMikromenü und Taschenleiste bleiben, wo du sie hinziehst.|r Das Spiel setzte sie bei manchen nach dem Anordnen zurück.",
+            "|cff7C6CFFNeue Regelart „Zauberöl auf der Waffe“.|r Kein Öl auswählen nötig – die Regel nimmt das stärkste Öl in deiner Tasche und schweigt, wenn keins da ist.",
+        },
+    },
+    {
         version = "6.33.3.0",
         date    = "14.10.2026",
         notes   = {

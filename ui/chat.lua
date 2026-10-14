@@ -227,6 +227,20 @@ function CH.Clamp(cf)
         CH.clampGuard = true
         cf:SetClampRectInsets(l, r, t, b)
         CH.clampGuard = false
+        -- 6.33.4.0 (Beta-Test: buendig am Rand gesetzt, nach dem Neuladen
+        -- ein Stueck nach innen): beim Laden setzt das Spiel den gespeicherten
+        -- Platz, BEVOR unsere Raender gelten, und klemmt mit seinen eigenen
+        -- nach innen. Einmal je Fenster den gespeicherten Platz danach neu
+        -- setzen lassen - jetzt mit unseren Raendern.
+        CH.replaced = CH.replaced or {}
+        if not CH.replaced[cf] then
+            CH.replaced[cf] = true
+            if type(cf.ApplySystemAnchor) == "function" and cf.systemInfo then
+                pcall(cf.ApplySystemAnchor, cf)
+            elseif _G.FCF_RestorePositionAndDimensions then
+                pcall(_G.FCF_RestorePositionAndDimensions, cf)
+            end
+        end
         -- Das Spiel setzt sie beim Andocken neu - dann wieder unsere.
         if not CH.clampHooked then CH.clampHooked = {} end
         if not CH.clampHooked[cf] and _G.hooksecurefunc then
@@ -256,9 +270,14 @@ local function ApplyFrame(cf, d)
     local fill = WeintCodex.GameColors.kachelFill
     d.bg:SetColorTexture(fill[1], fill[2], fill[3], a)
     local panel = WeintCodex.Colors.bgPanel
-    d.strip:SetColorTexture(panel[1], panel[2], panel[3], math.min(1, a + 0.15))
+    -- 6.33.4.0 (Beta-Test): bei 0 % ganz durchsichtig - vorher blieben
+    -- Reiterzeile (+15 %), Linie und Rand stehen.
+    local clear = a <= 0
+    d.strip:SetColorTexture(panel[1], panel[2], panel[3], clear and 0 or math.min(1, a + 0.15))
     local hair = WeintCodex.Colors.border
-    d.hair:SetColorTexture(hair[1], hair[2], hair[3], 1)
+    d.hair:SetColorTexture(hair[1], hair[2], hair[3], clear and 0 or 1)
+    for _, e in ipairs(d.edges or {}) do e:SetShown(not clear) end
+    if CH.infoFrame and CH.infoFrame.kachel then CH.infoFrame.kachel:SetShown(not clear) end
 
     if d.tab and Opt("flatTabs") then
         for _, suffix in ipairs({ "Left", "Middle", "Right", "SelectedLeft", "SelectedMiddle",
@@ -597,6 +616,8 @@ local function BuildInfoBar()
     if not info then
         info = CreateFrame("Frame", "WeintCodexChatInfo", UIParent)
         info.kachel = K.Kachel(info, { shadow = 6 })
+        CH.infoFrame = info
+        info.kachel:SetShown((Opt("bgAlpha") or 60) > 0)
         local function Bags() if _G.ToggleAllBags then _G.ToggleAllBags() end end
         info.clock = InfoCell(info, function() if _G.ToggleCalendar then pcall(_G.ToggleCalendar) end end, "Kalender")
         -- 6.26.0.0: Maus darauf - Einnahmen/Ausgaben der Sitzung und das

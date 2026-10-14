@@ -9,6 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.33.4.0] – 2026-10-14
+
+### Behoben
+- Chat: bei `bgAlpha` 0 auch Reiterzeile, Linie, Rand und Kachel der
+  Infozeile aus.
+- Chat: nach dem ersten eigenen `SetClampRectInsets` einmal je Fenster den
+  gespeicherten Platz neu setzen lassen (`ApplySystemAnchor` bzw.
+  `FCF_RestorePositionAndDimensions`) – das Spiel klemmte beim Laden mit
+  seinen eigenen Rändern nach innen.
+- Mikromenü/Taschenleiste: `AB.HoldPlace` – jedes fremde `SetPoint`
+  wird mit dem eigenen Platz beantwortet (nicht beim Ziehen, nicht im
+  Kampf), `ignoreFramePositionManager` gesetzt.
+
+### Hinzugefügt
+- Erinnerungen: Art „Zauberöl auf der Waffe“ (`weapon` + `oil`). Regeln ohne
+  Klasse mit/ohne `oil` gelten nur, wo die Klasse genau diese vorschlägt.
+
 ## [6.33.3.0] – 2026-10-14
 
 ### Hinzugefügt

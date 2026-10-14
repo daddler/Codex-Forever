@@ -950,6 +950,34 @@ local PLACED = {
 AB.PLACED = PLACED
 local registered = {}
 
+-- 6.33.4.0 (Beta-Test: "bei vielen ist die Mikroleiste gar nicht frei
+-- platzierbar", schon einmal gemeldet). Das Spiel setzt Mikromenue und
+-- Taschenleiste nicht nur ueber ApplySystemAnchor neu, sondern auch ueber
+-- seine Verwaltung der Rahmen am unteren Rand (UIParent-Layout, Fahrzeug,
+-- Haustierkampf) - dann sprangen sie zurueck, und ein Ziehen hielt nur bis
+-- zum naechsten Anordnen. Jetzt: jedes fremde SetPoint wird beantwortet,
+-- indem unser Platz neu gesetzt wird (nicht waehrend des Ziehens, nie im
+-- Kampf). Die Verwaltung des Spiels wird ausserdem gebeten, die Rahmen
+-- in Ruhe zu lassen (ignoreFramePositionManager).
+function AB.HoldPlace(f, e)
+    f.ignoreFramePositionManager = true
+    if f.SetMovable then pcall(f.SetMovable, f, true) end
+    if AB.held and AB.held[f] then return end
+    AB.held = AB.held or {}
+    AB.held[f] = true
+    if not _G.hooksecurefunc then return end
+    _G.hooksecurefunc(f, "SetPoint", function()
+        if AB.placeGuard or K.dragging == e.key then return end
+        if Opt(e.opt) ~= e.want then return end
+        K.AfterCombat(function()
+            if AB.placeGuard or K.dragging == e.key then return end
+            AB.placeGuard = true
+            K.ApplyPosition(e.key)
+            AB.placeGuard = false
+        end)
+    end)
+end
+
 local placing = false
 local function Place()
     if placing or K.InCombat() then return end
@@ -961,8 +989,11 @@ local function Place()
             if registered[e.key] ~= f then
                 registered[e.key] = f
                 K.RegisterMover(f, e.key, e.label, K.Layout(e.key), { secure = true })
+                AB.HoldPlace(f, e)
             else
+                AB.placeGuard = true
                 K.ApplyPosition(e.key)
+                AB.placeGuard = false
             end
             -- Gezogen wird mit StartMoving; den Platz merkt sich WeintCodex,
             -- nicht die Layout-Datei des Spiels.

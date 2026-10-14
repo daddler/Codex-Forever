@@ -75,6 +75,7 @@ local function Opt(k) return K.Get(KEY, k) end
 R.KINDS = {
     { value = "buff",     text = "Buff fehlt" },
     { value = "weapon",   text = "Waffe ohne Verzauberung" },
+    { value = "oil",      text = "Zauberöl auf der Waffe" },
     { value = "pet",      text = "Begleiter fehlt" },
     { value = "happy",    text = "Begleiter nicht glücklich" },
     { value = "proc",     text = "Buff/Proc anzeigen" },
@@ -241,7 +242,8 @@ function R.Applies(rule, class)
         return SpellKnown(id) ~= false
     elseif R.CLASS_KINDS[rule.kind] then
         for _, sg in ipairs(R.Suggestions(class)) do
-            if sg.kind == rule.kind and (rule.kind ~= "weapon" or sg.hand == rule.hand) then return true end
+            if sg.kind == rule.kind and (rule.kind ~= "weapon" or (sg.hand == rule.hand
+                and (sg.oil and true or false) == (rule.oil and true or false))) then return true end
         end
         return false
     end
@@ -290,6 +292,7 @@ local function SameRule(a, b)
     -- Eine alte Regel ohne Klasse zaehlt als dieselbe (sonst kaeme die
     -- Waffe des Schurken doppelt).
     return a.kind == b.kind and a.hand == b.hand and a.spell == b.spell and a.item == b.item
+        and (a.oil and true or false) == (b.oil and true or false)
         and (a.class == b.class or a.class == nil or b.class == nil)
 end
 
@@ -1594,6 +1597,10 @@ function R.AddDraft()
         rule.spell = text
     elseif draft.kind == "weapon" then
         rule.hand = draft.hand
+    elseif draft.kind == "oil" then
+        -- Eine Waffenregel, die nur meldet, wenn ein Oel in der Tasche liegt;
+        -- welches, sucht sie selbst (R.OILS, staerkstes zuerst).
+        rule.kind, rule.hand, rule.oil = "weapon", "main", true
     elseif draft.kind == "happy" then
         rule.below = Below(draft)
     elseif R.NeedsItem(draft.kind) then
