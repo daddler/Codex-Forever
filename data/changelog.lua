@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.33.7.1",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFKombopunkte in der Vorschau.|r Die Plakette in den Einstellungen zeigt 3 von 5 mit deinen Farben und deiner Form – bei jeder Klasse. Die Punkte liegen unter der Bedrohungsleiste, der Zauberbalken rückt darunter.",
+        },
+    },
+    {
         version = "6.33.7.0",
         date    = "14.10.2026",
         notes   = {

@@ -1024,8 +1024,10 @@ local function Layout(p)
     p._aggroAt = nil
     local cast = p.cast
     cast:ClearAllPoints()
-    cast:SetPoint("TOPLEFT", p, "BOTTOMLEFT", 0, -2 - (tbh > 0 and tbh + 1 or 0))
-    cast:SetPoint("TOPRIGHT", p, "BOTTOMRIGHT", 0, -2 - (tbh > 0 and tbh + 1 or 0))
+    -- 6.33.7.1: Platz fuer die Kombopunkte darunter (nur wo es sie gibt).
+    local cy = -2 - (tbh > 0 and tbh + 1 or 0) - NP.ComboSpace(p)
+    cast:SetPoint("TOPLEFT", p, "BOTTOMLEFT", 0, cy)
+    cast:SetPoint("TOPRIGHT", p, "BOTTOMRIGHT", 0, cy)
     cast:ApplyStyle({
         height = S.castHeight, icon = S.castIcon, timer = S.castTimer,
         shield = S.castShield, cast = S.castColor, locked = S.castLocked,
@@ -2063,6 +2065,14 @@ function NP.RefreshPreview()
     Layout(p)
     p.health:SetMinMaxValues(0, 100)
     p.health:SetValue(64)
+    -- 6.33.7.1: Kombopunkte in der Vorschau, 3 von 5 - fuer jede Klasse,
+    -- damit Farben und Form vorher zu sehen sind.
+    if NP.DrawCombo then
+        if NP.previewCombo == nil or NP.previewComboOf ~= p then
+            NP.previewCombo, NP.previewComboOf = NP.NewComboRow(p), p
+        end
+        if S.comboPoints then NP.DrawCombo(NP.previewCombo, p, 3, 5) else NP.previewCombo:Hide() end
+    end
     local kinds = { top = S.textTop, left = S.textLeft, right = S.textRight, center = S.textCenter }
     local sample = {
         name = "Kobold-Tunnelgräber", level = S.eliteMark and "14+" or "14",
@@ -2145,12 +2155,17 @@ end
 -- der Wert wird nur weitergereicht, nie verglichen.
 NP.COMBO_H, NP.COMBO_GAP = 4, 2
 local combo
+function NP.NewComboRow(parent)
+    local row = CreateFrame("Frame", nil, parent or UIParent)
+    row:SetHeight(NP.COMBO_H)
+    row.pips = {}
+    row:Hide()
+    return row
+end
+
 function NP.ComboRow()
     if combo then return combo end
-    combo = CreateFrame("Frame", nil, UIParent)
-    combo:SetHeight(NP.COMBO_H)
-    combo.pips = {}
-    combo:Hide()
+    combo = NP.NewComboRow()
     NP.combo = combo
     return combo
 end
@@ -2175,6 +2190,19 @@ function NP.UpdateCombo()
         if type(m) == "number" and m > 0 and m <= 10 then max = m end
     end
     row = NP.ComboRow()
+    NP.DrawCombo(row, p, cur, max)
+end
+
+-- Wie viel Platz die Reihe unter einer Plakette braucht (0 = keiner).
+function NP.ComboSpace(p)
+    if not S.comboPoints or S.comboSide == "above" then return 0 end
+    local UF = WeintCodex.UIUnitFrames
+    if p ~= preview and not (UF and UF.UsesCombo and UF.UsesCombo()) then return 0 end
+    return (S.comboHeight or 4) + (S.comboOffset or 3)
+end
+
+-- Eine Reihe an eine Plakette legen und fuellen (Ziel und Vorschau).
+function NP.DrawCombo(row, p, cur, max)
     row:SetParent(p)
     row:ClearAllPoints()
     local h, gap, off = S.comboHeight or 4, S.comboGap or 2, S.comboOffset or 3
@@ -2183,8 +2211,11 @@ function NP.UpdateCombo()
         row:SetPoint("BOTTOMLEFT", p.health, "TOPLEFT", 0, off)
         row:SetPoint("BOTTOMRIGHT", p.health, "TOPRIGHT", 0, off)
     else
-        row:SetPoint("TOPLEFT", p.health, "BOTTOMLEFT", 0, -off)
-        row:SetPoint("TOPRIGHT", p.health, "BOTTOMRIGHT", 0, -off)
+        -- Unter der Bedrohungsleiste, nicht auf ihr.
+        local tbh = S.threatBar and (S.threatBarHeight or 3) or 0
+        local y = -off - (tbh > 0 and tbh + 1 or 0)
+        row:SetPoint("TOPLEFT", p.health, "BOTTOMLEFT", 0, y)
+        row:SetPoint("TOPRIGHT", p.health, "BOTTOMRIGHT", 0, y)
     end
     row:SetFrameLevel((K.Plain(p:GetFrameLevel()) or 5) + 3)
     local w = K.Plain(p.health:GetWidth())

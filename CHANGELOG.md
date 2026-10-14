@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.33.7.1] – 2026-10-14
+
+### Geändert
+- Plaketten: `NP.DrawCombo` auch für die Vorschau (3 von 5); Reihe unter der
+  Bedrohungsleiste; `NP.ComboSpace` schiebt den Zauberbalken darunter.
+
 ## [6.33.7.0] – 2026-10-14
 
 ### Hinzugefügt
