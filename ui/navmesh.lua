@@ -37,7 +37,7 @@ NV.MAX_EXPAND = 80000  -- Eingaenge je Suche, dann aufgeben
 NV.SNAP = 6            -- Zellen Umkreis, wenn man nicht auf einer Zelle steht
 NV.REPATH_MOVE = 40    -- so weit weg vom Weg: neu suchen
 NV.LOOKAHEAD = 30      -- der Pfeil zeigt so weit voraus auf den Weg
-NV.CACHE = 48          -- entpackte Abschnitte im Speicher
+NV.CACHE = 32          -- entpackte Abschnitte im Speicher
 
 local byte, floor, sqrt, huge = string.byte, math.floor, math.sqrt, math.huge
 local coroutine, os = _G.coroutine, _G.os
@@ -118,20 +118,24 @@ function NV.Cluster(st, k)
         pos = pos + B64[byte(s, 3 + i * 7 + 6)] * 7
     end
     -- Gitter: Wert * 16 + Schalter; ab 48 Wiederholung des vorigen.
+    -- Gehalten als Zeichenkette, ein Byte je Zelle (6.32.2.0): zwei Tabellen
+    -- mit je 4489 Zahlen kosteten rund 140 KB je Abschnitt, so 4,5 KB.
     local g = Field(st.D, "grid", k + 1)
     if g then
-        local val, flg, i, last = {}, {}, 0, 0
+        local parts, n, last = {}, 0, 0
+        local char = string.char
         for p = 1, #g do
             local sym = B64[byte(g, p)]
             if sym >= 48 then
-                for _ = 1, sym - 47 do i = i + 1 val[i], flg[i] = floor(last / 16), last % 16 end
+                n = n + 1
+                parts[n] = string.rep(char(last), sym - 47)
             else
                 last = sym
-                i = i + 1
-                val[i], flg[i] = floor(sym / 16), sym % 16
+                n = n + 1
+                parts[n] = char(sym)
             end
         end
-        cl.val, cl.flg = val, flg
+        cl.cells = table.concat(parts)
     end
     cl.fs = Field(st.D, "fcell", k + 1)
     st.clusters[k] = cl
@@ -239,16 +243,19 @@ end
 -- Gitter im Abschnitt
 --------------------------------------------------
 
-local function Walk(cl, cell) return cl.val and cl.val[cell + 1] or 0 end
+local function Walk(cl, cell)
+    local b = cl.cells and byte(cl.cells, cell + 1)
+    return b and floor(b / 16) or 0
+end
+local function Flag(cl, cell) return byte(cl.cells, cell + 1) % 16 end
 
 -- Schritt von a nach b (Nachbarn) offen? dir: 1 +x, 2 -x, 3 +y, 4 -y,
 -- 5 +x+y, 6 +x-y, 7 -x+y, 8 -x-y.
 local function StepOpen(cl, C, a, dir)
-    local flg = cl.flg
-    if dir == 1 then return flg[a + 1] % 2 == 0
-    elseif dir == 2 then return flg[a - C + 1] % 2 == 0
-    elseif dir == 3 then return floor(flg[a + 1] / 2) % 2 == 0
-    elseif dir == 4 then return floor(flg[a] / 2) % 2 == 0 end
+    if dir == 1 then return Flag(cl, a) % 2 == 0
+    elseif dir == 2 then return Flag(cl, a - C) % 2 == 0
+    elseif dir == 3 then return floor(Flag(cl, a) / 2) % 2 == 0
+    elseif dir == 4 then return floor(Flag(cl, a - 1) / 2) % 2 == 0 end
 end
 
 local DX = { 1, -1, 0, 0, 1, 1, -1, -1 }
@@ -263,7 +270,7 @@ function NV.Grid(st, cl, start, into)
     local dist, prev = into.dist, into.prev
     for i in pairs(dist) do dist[i] = nil end
     for i in pairs(prev) do prev[i] = nil end
-    if not cl.val then return dist, prev end
+    if not cl.cells then return dist, prev end
     local h = into.heap
     HeapClear(h)
     dist[start] = 0
@@ -307,7 +314,7 @@ end
 
 -- Die naechste begehbare Zelle im Umkreis NV.SNAP, oder nil.
 function NV.Snap(st, cl, cell)
-    if not cl.val then return nil end
+    if not cl.cells then return nil end
     if Walk(cl, cell) ~= 0 then return cell end
     local C = st.C
     local cx, cy = floor(cell / C), cell % C

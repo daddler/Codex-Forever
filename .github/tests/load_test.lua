@@ -3814,8 +3814,10 @@ do
         assert(math.abs(r.seconds - (10 / 7 + 5 + 60 + 10 / 7)) < 0.01, "Reisezeit " .. r.seconds)
         -- Gemessen langsam: laufen.
         store.times["1>2"] = 500
+        RT.timesDirty = true
         assert(RT.Solve(0, 10, 0, 0, -2990, 0).direct, "gemessene Flugzeit ueberhoert")
         store.times["1>2"] = nil
+        RT.timesDirty = true
         -- Anderer Kontinent: Schiff, ohne Messung "Fahrplan unbekannt" (halber Umlauf).
         store.taxi = {}
         r = RT.Solve(0, 10, 0, 1, 520, 500)
@@ -3866,6 +3868,25 @@ do
         assert(RT.CheckBind() and store.bind and store.bind.n == -9400 and not RT.BindPoint().guessed, "Rasten misst nicht")
         _G.GetBindLocation, _G.IsResting, _G.GetMinimapZoneText, K.PlayerWorld = oldBL, oldIR, oldMZ, oldPW
         store.bind, store.names[5] = nil, nil
+        -- Erinnerung an Flugpunkte: unbekannter der eigenen Fraktion in der
+        -- Naehe einmal, bekannter nie, fremder nie.
+        RT._print = _G.print
+        _G.print = function() end
+        store.taxi = { [2] = true }
+        local t5 = saved[1].taxi[5]
+        assert(RT.CheckTaxiNear(0, t5[2] + 20, t5[3]) == 5, "keine Erinnerung am unbekannten Flugpunkt")
+        assert(RT.lastReminder:find("sprich mit dem Flugmeister", 1, true), RT.lastReminder)
+        assert(RT.CheckTaxiNear(0, t5[2] + 20, t5[3]) == nil, "zweimal erinnert")
+        store.taxi[6] = true
+        local t6 = saved[1].taxi[6]
+        assert(RT.CheckTaxiNear(0, t6[2], t6[3]) == nil, "an bekannten Flugpunkt erinnert")
+        for id, t in pairs(saved[1].taxi) do
+            if t[4] == 2 then
+                local got = RT.CheckTaxiNear(t[1], t[2], t[3])
+                assert(got == nil or saved[1].taxi[got][4] ~= 2, "an Flugpunkt der Horde erinnert")
+            end
+        end
+        for k in pairs(RT._reminded) do RT._reminded[k] = nil end
         -- Kein Verkehr: kein Weg, keine Zahl.
         WeintCodex.TravelData = { taxi = {}, flights = {}, docks = {}, routes = {}, portals = {}, teleports = {} }
         RT.Build(true)
@@ -3912,6 +3933,7 @@ do
     end)
     WeintCodex.TravelData, RT.Store, RT.Anchors, _G.UnitFactionGroup, _G.GetUnitSpeed, _G.GetTime,
         _G.C_TaxiMap, _G.GetTaxiMapID, _G.GetServerTime, _G.C_Item, _G.GetBindLocation, RT.Teleports = unpack(saved, 1, 12)
+    if RT._print then _G.print, RT._print = RT._print, nil end
     RT.Build(true)
     RT.Invalidate()
     RT.Sample(nil)
@@ -3998,14 +4020,21 @@ do
         K.Set("questarrow", "mapLines", true)
         QA.route, QA.navPath = nil, nil
         MP.Forget()
-        local n = MP.Update()
-        assert(n == 2, "Schiffslinie: " .. n .. " Striche (Horde-Zeppelin darf fehlen)")
+        local n1 = MP.Update()
+        assert(n1 > 0, "keine Schiffslinie")
+        _G.UnitFactionGroup = function() return "Horde" end
+        MP.Forget()
+        assert(MP.Update() > n1, "Zeppelin der Horde fehlt fuer die Horde")
+        _G.UnitFactionGroup = function() return "Alliance" end
+        MP.Forget()
+        assert(MP.Update() == n1, "Zeppelin der Horde fuer die Allianz gezeichnet")
+        local n
         -- Route: zu Fuss dem Gelaende nach (3 Punkte) bis zum Ziel.
         QA.route = { direct = true, legs = { { mode = "walk" } }, start = { 0, 0, 0 }, goal = { 0, 200, 0 } }
         QA.navPath = { 0, 0, 100, 50, 200, 0 }
         n = MP.Update()
-        assert(n == 4, "Route auf dem Gelaende: " .. n)
-        assert(MP.Update() == 4, "ohne Aenderung neu gezeichnet")
+        assert(n == n1 + 2, "Route auf dem Gelaende: " .. n)
+        assert(MP.Update() == n1 + 2, "ohne Aenderung neu gezeichnet")
         K.Set("questarrow", "mapLines", false)
         assert(MP.Update() == 2, "Linien aus, trotzdem gezeichnet")
         K.Set("questarrow", "mapLines", true)

@@ -113,6 +113,7 @@ local defaults = {
     shareTimes = true,     -- Abfahrtszeiten mit Gilde und Gruppe teilen (6.32.0.0)
     mapRoute   = true,     -- Route auf der Weltkarte (6.32.1.0, ui/maproute.lua)
     mapLines   = true,     -- Schiffs-, Zeppelin- und Bahnlinien auf der Weltkarte
+    taxiReminder = true,   -- unbekannter Flugpunkt in der Naehe: erinnern (6.32.2.0)
 }
 
 local SHEET = "Interface\\AddOns\\WeintCodex\\media\\ui\\arrow3d"
@@ -194,6 +195,39 @@ function QA.FormatDistance(yards, units)
         return (string.format("%.1f km", v / 1000):gsub("%.", ","))
     end
     return string.format("%d m", math.floor(v + 0.5))
+end
+
+-- Texte, die fuenfmal je Sekunde gesetzt werden, nur neu bauen, wenn sich
+-- die angezeigte Zahl aendert (6.32.2.0: /wcui speicher nannte den Pfeil
+-- mit 2,9 KB/s den groessten Abfall). Je Feld ein Merker.
+local memo = { dist = {}, eta = {}, title = {} }
+QA._memo = memo
+local function DistKey(yards, units)
+    if units == "yards" then return math.floor(yards + 0.5) end
+    local v = (units == "metric") and (yards * 0.9144) or yards
+    if v >= 1000 then return 100000 + math.floor(v / 100 + 0.5) end
+    return math.floor(v + 0.5)
+end
+function QA.DistText(yards, units, suffix)
+    local m = memo.dist
+    local key = DistKey(yards, units)
+    if m.key ~= key or m.units ~= units or m.suffix ~= suffix then
+        m.key, m.units, m.suffix = key, units, suffix
+        m.text = QA.FormatDistance(yards, units) .. (suffix or "")
+    end
+    return m.text
+end
+function QA.EtaText(secs)
+    local m = memo.eta
+    if m.secs ~= secs then m.secs, m.text = secs, string.format("ca. %d:%02d", math.floor(secs / 60), secs % 60) end
+    return m.text
+end
+local function ViaTitle(name, waypoint)
+    local m = memo.title
+    if m.name ~= name or m.waypoint ~= waypoint then
+        m.name, m.waypoint, m.text = name, waypoint, (name or "") .. " – über " .. waypoint
+    end
+    return m.text
 end
 
 --------------------------------------------------
@@ -905,12 +939,16 @@ function QA.Update(force)
     end
     if hop then
         tc, tN, tW = hop.node.c, hop.node.n, hop.node.w
-        if showTitle then title:SetText((name or "") .. " – über " .. hop.waypoint) end
+        if showTitle then title:SetText(ViaTitle(name, hop.waypoint)) end
     end
     -- Gelaendekarte (ui/navmesh.lua): der Pfeil folgt dem Laufweg, die
     -- Minikarte zeichnet ihn. Bis er berechnet ist: Luftlinie.
     local NV = WeintCodex.UINav
     local navPath, navRest
+    -- Luftlinie zum Ziel selbst: die Hoehe rechnet gegen sie, nicht gegen
+    -- den Punkt voraus auf dem Weg (6.32.2.0, Beta-Test: "414 m
+    -- Hoehenunterschied bei 570 m" - es war der Abstand zum Punkt voraus).
+    local flatGoal = math.sqrt((tN - pN) ^ 2 + (tW - pW) ^ 2)
     if planning and NV and pc == tc and K.Get(KEY, "terrain") ~= false then
         navPath = NV.Path(pc, pN, pW, tN, tW)
         if navPath then
@@ -953,11 +991,11 @@ function QA.Update(force)
         local units = K.Get(KEY, "units")
         if K.Get(KEY, "showHeight") then
             local first, second
-            local dh = QA.Height(nav.dist, yards)
+            local dh = QA.Height(nav.dist, flatGoal)
             local dir = QA.TrackHeight(QA.PlayerZ(), dh)
             -- Erst in der Naehe verlaesslich: Kartenort und Navigationspunkt
             -- liegen auf Entfernung nicht genau aufeinander.
-            if dh and dh >= 8 and yards <= 300 then
+            if dh and dh >= 8 and flatGoal <= 300 then
                 local word = (dir == "up" and " höher") or (dir == "down" and " tiefer") or ""
                 first = (word ~= "" and "Ziel " or "Höhenunterschied ") .. "≈ "
                     .. QA.FormatDistance(dh, units) .. word
@@ -988,7 +1026,7 @@ function QA.Update(force)
         return
     end
 
-    dist:SetText(QA.FormatDistance(navRest or yards, K.Get(KEY, "units")) .. (hop and (" bis " .. hop.waypoint) or ""))
+    dist:SetText(QA.DistText(navRest or yards, K.Get(KEY, "units"), hop and hop.suffix or nil))
     if rotation then
         PointArrow(rotation)
         SetArrowColor(rotation)
@@ -1011,7 +1049,7 @@ function QA.Update(force)
             QA._speed = (QA._speed or speed) * 0.85 + speed * 0.15
             if QA._speed > 0.5 then
                 local secs = math.floor(yards / QA._speed + 0.5)
-                eta:SetText(string.format("ca. %d:%02d", math.floor(secs / 60), secs % 60))
+                eta:SetText(QA.EtaText(secs))
             end
         end
         lastYards, lastTime = yards, now
@@ -1291,8 +1329,9 @@ K.Register({
                   { type = "toggle", label = "Route auf der Weltkarte", key = "mapRoute",
                     description = "Zeichnet den ganzen Weg auf der Weltkarte: zu Fuß dem Gelände nach, Flüge, Schiffe." })
             B:Row({ type = "toggle", label = "Schiffslinien auf der Weltkarte", key = "mapLines",
-                    description = "Schiffe, Zeppeline und Tiefenbahn deiner Fraktion als Linien auf der Karte." },
-                  { type = "empty" })
+                    description = "Schiffe und Zeppeline deiner Fraktion als gestrichelte Linien zwischen den Anlegern." },
+                  { type = "toggle", label = "An Flugpunkte erinnern", key = "taxiReminder",
+                    description = "Kommst du an einem Flugmeister vorbei, dessen Flugpunkt du noch nicht hast, sagt der Pfeil Bescheid – fürs spätere Reisenetz." })
             B:Section("Nach einer Quest")
             B:Row({ type = "dropdown", label = "Wenn die Ziele erfüllt sind", key = "onComplete", items = {
                         { value = "turnin", text = "Zur Abgabe führen" },

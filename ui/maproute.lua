@@ -23,8 +23,9 @@ local KEY = "questarrow"
 MP.TICK = 0.5
 MP.ROUTE_WIDTH, MP.LINE_WIDTH = 4, 2.5
 
-local layer
+local layer, canvasRef
 local lines, used = {}, 0
+MP.DASH, MP.GAP = 10, 7
 local drawn = {}
 MP._drawn = drawn
 
@@ -57,6 +58,7 @@ local function Inside(x, y) return x >= -0.02 and x <= 1.02 and y >= -0.02 and y
 --------------------------------------------------
 
 local function Layer(canvas)
+    canvasRef = canvas
     if not layer then
         layer = CreateFrame("Frame", nil, canvas)
         MP.layer = layer
@@ -80,12 +82,32 @@ local function Line(x1, y1, x2, y2, width, col, alpha)
         l = MP.NewLine(layer)
         lines[used] = l
     end
-    local W, H = layer:GetWidth(), layer:GetHeight()
+    -- Groesse der Karte selbst: die eigene Ebene hat direkt nach dem Anlegen
+    -- noch keine (6.32.2.0 - die Route lag dadurch unsichtbar in der Ecke).
+    local W, H = K.Plain(canvasRef:GetWidth()), K.Plain(canvasRef:GetHeight())
+    if type(W) ~= "number" or W < 1 then return end
     l:SetThickness(width)
     l:SetColorTexture(col[1], col[2], col[3], alpha)
     l:SetStartPoint("TOPLEFT", layer, x1 * W, -y1 * H)
     l:SetEndPoint("TOPLEFT", layer, x2 * W, -y2 * H)
     l:Show()
+end
+
+-- Gestrichelt: Striche von MP.DASH Bildpunkten mit Luecken.
+local function Dashed(x1, y1, x2, y2, width, col, alpha)
+    local W, H = K.Plain(canvasRef:GetWidth()), K.Plain(canvasRef:GetHeight())
+    if type(W) ~= "number" or W < 1 then return end
+    local dx, dy = (x2 - x1) * W, (y2 - y1) * H
+    local len = math.sqrt(dx * dx + dy * dy)
+    if len < 1 then return end
+    local step = MP.DASH + MP.GAP
+    local d = 0
+    while d < len do
+        local e = math.min(d + MP.DASH, len)
+        Line(x1 + (x2 - x1) * d / len, y1 + (y2 - y1) * d / len, x1 + (x2 - x1) * e / len, y1 + (y2 - y1) * e / len,
+            width, col, alpha)
+        d = d + step
+    end
 end
 
 local function HideFrom(i)
@@ -113,31 +135,54 @@ local function Faction()
     return (f == "Alliance" and 1) or (f == "Horde" and 2) or nil
 end
 
--- Bahn einer Linie, Abschnitte zwischen zwei Zeiten (ms im Umlauf).
-local function RoutePath(mapID, route, from, to, width, col, alpha)
+-- Verbindung zweier Anleger einer Linie: gerade von Anleger zu Anleger.
+-- Liegt das Gegenueber auf einem anderen Kontinent, faehrt das Schiff aus
+-- der Karte hinaus: bis zu dem Punkt der Fahrt, an dem es den Kontinent
+-- wechselt (Bahn im Bestand), und vom ersten Punkt danach zum Ziel.
+-- Die Bahn selbst (Anlegemanoever) sah auf der Karte wie Gekritzel aus.
+function MP.Connect(mapID, route, a, b, draw, width, col, alpha)
+    if not (a and b) then return end
+    if a.c == b.c then
+        local x1, y1 = MP.ToMap(mapID, a.c, a.n, a.w)
+        local x2, y2 = MP.ToMap(mapID, b.c, b.n, b.w)
+        if x1 and x2 then draw(x1, y1, x2, y2, width, col, alpha) end
+        return
+    end
+    -- Auf jeder Karte, die beide zeigt (Weltkarte): ganz durch.
+    local x1, y1 = MP.ToMap(mapID, a.c, a.n, a.w)
+    local x2, y2 = MP.ToMap(mapID, b.c, b.n, b.w)
+    if x1 and x2 then draw(x1, y1, x2, y2, width, col, alpha) return end
     local f = route.frames or {}
-    local px, py, pc
-    for k = 1, #f - 4, 5 do
-        local t, c, n, w = f[k], f[k + 2], f[k + 3], f[k + 4]
-        local inRange = not from or (from <= to and t >= from and t <= to) or (from > to and (t >= from or t <= to))
-        if inRange then
-            local x, y = MP.ToMap(mapID, c, n, w)
-            if x and px and pc == c then Line(px, py, x, y, width, col, alpha) end
-            px, py, pc = x, y, c
-        else
-            px = nil
+    for k = 1, #f - 9, 5 do
+        if f[k + 2] == a.c and f[k + 7] == b.c then
+            if x1 then
+                local ex, ey = MP.ToMap(mapID, a.c, f[k + 3], f[k + 4])
+                if ex then draw(x1, y1, ex, ey, width, col, alpha) end
+            end
+            if x2 then
+                local sx, sy = MP.ToMap(mapID, b.c, f[k + 8], f[k + 9])
+                if sx then draw(sx, sy, x2, y2, width, col, alpha) end
+            end
+            return
         end
     end
 end
 
 function MP.DrawLines(mapID)
     local RT = WeintCodex.UIRoute
-    if not (RT and RT.Routes) then return end
+    if not (RT and RT.Routes and RT.DockNode) then return end
     local mine = Faction()
     local col = C.blue
     for _, route in ipairs(RT.Routes()) do
-        if route.kind ~= "lift" and (route.faction == 0 or route.faction == mine) then
-            RoutePath(mapID, route, nil, nil, MP.LINE_WIDTH, col, 0.55)
+        if (route.kind == "boat" or route.kind == "zeppelin") and (route.faction == 0 or route.faction == mine) then
+            local s = route.stops
+            -- Zwei Halte: eine Verbindung; mehr: jeder zum naechsten, im Kreis.
+            local count = #s / 3
+            for i = 1, (count == 2) and 1 or count do
+                local j = i % count + 1
+                MP.Connect(mapID, route, RT.DockNode(s[i * 3 - 2]), RT.DockNode(s[j * 3 - 2]), Dashed,
+                    MP.LINE_WIDTH, col, 0.75)
+            end
         end
     end
 end
@@ -168,13 +213,8 @@ function MP.DrawRoute(mapID, route, navPath)
                 if x1 and x2 then Line(x1, y1, x2, y2, MP.ROUTE_WIDTH - 1, col, 0.8) end
             end
         elseif leg.info and leg.info.stops then
-            -- Schiff, Zeppelin, Bahn: auf ihrer Bahn vom Anleger bis zum Anleger.
-            local stops, from, to = leg.info.stops, nil, nil
-            for k = 1, #stops, 3 do
-                if leg.from and stops[k] == leg.from.id then from = stops[k + 2] end
-                if node and stops[k] == node.id then to = stops[k + 1] end
-            end
-            if from and to then RoutePath(mapID, leg.info, from, to, MP.ROUTE_WIDTH, col, 0.95) end
+            -- Schiff, Zeppelin, Bahn: von Anleger zu Anleger.
+            MP.Connect(mapID, leg.info, leg.from, node, Line, MP.ROUTE_WIDTH, col, 0.95)
         end
         if node then pc, pn, pw = node.c, node.n, node.w end
     end

@@ -22,6 +22,18 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.32.2.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Route auf der Weltkarte ist jetzt zu sehen.|r Sie lag bisher unsichtbar in der Ecke der Karte.",
+            "|cff7C6CFFSchiffslinien neu gezeichnet:|r gestrichelt und gerade von Anleger zu Anleger, auf der Weltkarte quer übers Meer – statt der Kringel an den Häfen.",
+            "|cff7C6CFFHöhenunterschied stimmt wieder.|r Er rechnete gegen einen Punkt auf dem Weg statt gegen das Ziel und zeigte deshalb Hunderte Meter, wo keine sind.",
+            "|cff7C6CFFAn Flugpunkte erinnern.|r Kommst du an einem Flugmeister vorbei, dessen Flugpunkt du noch nicht hast, sagt WeintCodex Bescheid – fürs spätere Reisenetz.",
+            "|cff7C6CFFTiefenbahn:|r Der Pfeil sagt jetzt „Tiefenbahn nehmen“ und führt zum Eingang, statt die Luftlinie zu zeigen.",
+            "|cff7C6CFFWeniger Speicher:|r Die Geländekarte braucht im Spiel ein Dreißigstel des Speichers, der Questpfeil legt einen Bruchteil des Abfalls an.",
+        },
+    },
+    {
         version = "6.32.1.0",
         date    = "14.10.2026",
         notes   = {

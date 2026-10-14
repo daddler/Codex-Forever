@@ -51,6 +51,7 @@ RT.HEARTH_SAVE = 120   -- s: so viel muss der Ruhestein sparen
 RT.ANCHOR_AGE  = 6 * 3600
 RT.REPLAN_EVERY, RT.REPLAN_MOVE = 3, 20
 RT.HEARTH_ITEM = 6948
+RT.TRAM_MAP = 369      -- die Tiefenbahn liegt auf einer eigenen Karte
 
 local KIND_LEG = { flight = "Flug nach", boat = "Schiff nach", zeppelin = "Zeppelin nach",
     tram = "Tiefenbahn nach", lift = "Aufzug nach", portal = "Portal nach", teleport = "Teleport nach" }
@@ -193,7 +194,7 @@ function RT.Build(force)
         walkTo[a][b] = dry
         if rev == 0 then walkTo[b][a] = dry else walkTo[b][a] = rev end
     end
-    for _, node in ipairs(nodes) do node.place = RT.NearestPlace(node, 40) end
+    for i, node in ipairs(nodes) do node.place, node.idx = RT.NearestPlace(node, 40), i end
     return nodes
 end
 
@@ -210,6 +211,7 @@ function RT.NearestPlace(node, within)
     if best and bestD <= within * within then return best, math.sqrt(bestD) end
 end
 function RT.Routes() RT.Build() return routeList end
+function RT.DockNode(id) RT.Build() return dockNode[id] end
 
 local function Faction()
     local f = _G.UnitFactionGroup and K.Plain(_G.UnitFactionGroup("player"))
@@ -354,21 +356,28 @@ end
 RT.BindPoint = BindPoint
 
 -- Was man jetzt von hier aus wirken kann: { t, c, n, w, wait, name }.
-local usable = {}
+local usable, spare = {}, {}
 function RT.Teleports()
-    for i = #usable, 1, -1 do usable[i] = nil end
+    for i = #usable, 1, -1 do spare[#spare + 1] = usable[i] usable[i] = nil end
     local bind = BindPoint()
     for _, t in ipairs(Data().teleports or {}) do
         local known = t.item and ItemCount(t.item) > 0 or (not t.item and SpellKnown(t.spell))
-        local to = t.to or (t.bind and bind and { bind.c, bind.n, bind.w })
+        local tc, tn, tw
+        if t.to then tc, tn, tw = t.to[1], t.to[2], t.to[3]
+        elseif t.bind and bind then tc, tn, tw = bind.c, bind.n, bind.w end
+        local to = tc
         local stocked = true
         for item, count in pairs(t.reagents or {}) do
             if ItemCount(item) < count then stocked = false end
         end
         local cd = known and to and stocked and Cooldown(t)
         if cd then
-            usable[#usable + 1] = { t = t, c = to[1], n = to[2], w = to[3], wait = cd + (t.cast or 10000) / 1000
-                + RT.LOADING, name = t.bind and bind and bind.name or nil, hearth = t.bind }
+            -- Eintraege wiederverwendet (6.32.2.0): kein Abfall je Plan.
+            local e = table.remove(spare) or {}
+            e.t, e.c, e.n, e.w = t, tc, tn, tw
+            e.wait = cd + (t.cast or 10000) / 1000 + RT.LOADING
+            e.name, e.hearth = t.bind and bind and bind.name or nil, t.bind
+            usable[#usable + 1] = e
         end
     end
     return usable
@@ -381,6 +390,46 @@ end
 local cost, prev, how, via, wait, done = {}, {}, {}, {}, {}, {}
 local START, GOAL = { kind = "start", faction = 0 }, { kind = "goal", faction = 0 }
 local TELE = {}   -- Teleportziele als Knoten, je Plan neu belegt
+-- Fuer die Suche: ohne Funktionen und Tabellen je Plan (6.32.2.0 - je
+-- Plan entstanden ein Abbild aller Knoten, zwei Funktionen und je Flug-
+-- strecke ein Text "a>b"; zusammen der groesste Abfall des Pfeils).
+local sList, sS, sG, sT0
+local function At(i)
+    if i == sS then return START elseif i == sG then return GOAL elseif i > sT0 then return TELE[i - sT0] end
+    return sList[i]
+end
+local function Relax(v, c, mode, info, w)
+    if not done[v] and c < cost[v] then cost[v], how[v], via[v], wait[v] = c, mode, info, w return true end
+end
+-- Gemessene Flugzeiten als timeOf[von][nach], neu nur nach einer Messung.
+local timeOf, timeOfFor = {}, nil
+local function FlightTimes(store)
+    if timeOfFor == store and not RT.timesDirty then return timeOf end
+    timeOf, timeOfFor, RT.timesDirty = {}, store, false
+    for key, secs in pairs(store and store.times or {}) do
+        local a, b = key:match("^(%d+)>(%d+)$")
+        a, b = tonumber(a), tonumber(b)
+        if a and b and type(secs) == "number" then
+            timeOf[a] = timeOf[a] or {}
+            timeOf[a][b] = secs
+        end
+    end
+    return timeOf
+end
+
+-- Nur laufen: eine Tabelle je Ziel, wiederverwendet (die Karte zeichnet
+-- nur neu, wenn sich die Tabelle aendert - hier aendert sich nur die Zeit).
+local directRoute
+function RT.Direct(seconds, pc, pN, pW, gc, gN, gW)
+    local r = directRoute
+    if not (r and r.goal[1] == gc and r.goal[2] == gN and r.goal[3] == gW) then
+        r = { legs = { { mode = "walk" } }, direct = true, start = {}, goal = { gc, gN, gW } }
+        directRoute = r
+    end
+    r.seconds = seconds
+    r.start[1], r.start[2], r.start[3] = pc, pN, pW
+    return r
+end
 
 function RT.Solve(pc, pN, pW, gc, gN, gW)
     local list = RT.Build()
@@ -408,21 +457,14 @@ function RT.Solve(pc, pN, pW, gc, gN, gW)
     end
     local T0 = count
     local S, G = count + #tps + 1, count + #tps + 2
-    local function At(i)
-        if i == S then return START elseif i == G then return GOAL elseif i > T0 then return TELE[i - T0] end
-        return list[i]
-    end
-    local index = {}
-    for i = 1, count do index[list[i]] = i end
+    sList, sS, sG, sT0 = list, S, G, T0
+    local times = FlightTimes(store)
     for i = 1, G do cost[i], prev[i], how[i], via[i], wait[i], done[i] = math.huge, nil, nil, nil, nil, false end
     cost[S] = 0
     -- Teleports nur vom Start aus: gewirkt wird, wo man steht.
     for k = 1, #tps do
         local penalty = tps[k].hearth and RT.HEARTH_SAVE or 0
         cost[T0 + k], prev[T0 + k], how[T0 + k], via[T0 + k] = tps[k].wait + penalty, S, "teleport", tps[k]
-    end
-    local function Relax(v, c, mode, info, w)
-        if not done[v] and c < cost[v] then cost[v], prev[v], how[v], via[v], wait[v] = c, nil, mode, info, w return true end
     end
     while true do
         local u, best = nil, math.huge
@@ -449,8 +491,8 @@ function RT.Solve(pc, pN, pW, gc, gN, gW)
             for k = 1, out and #out or 0, 2 do
                 local b = taxiNode[out[k]]
                 if b and known[b.id] and Usable(b.faction, mine) then
-                    local v = index[b]
-                    local measured = store and store.times[a.id .. ">" .. b.id]
+                    local v = b.idx
+                    local measured = times[a.id] and times[a.id][b.id]
                     local secs = type(measured) == "number" and measured or out[k + 1]
                     if Relax(v, best + secs + extra, "flight") then prev[v] = u end
                 end
@@ -465,19 +507,34 @@ function RT.Solve(pc, pN, pW, gc, gN, gW)
                         local b = dockNode[s[j * 3 - 2]]
                         if j ~= i and b then
                             local w, ride, timed = RT.Ride(route, i, j, best)
-                            if Relax(index[b], best + w + ride, route.kind, route, timed and w or false) then
-                                prev[index[b]] = u
+                            if Relax(b.idx, best + w + ride, route.kind, route, timed and w or false) then
+                                prev[b.idx] = u
                             end
                         end
                     end
                 end
             end
         elseif a.kind == "portal" then
-            local v = index[a.to]
+            local v = a.to.idx
             if Relax(v, best + a.seconds + RT.LOADING, "portal") then prev[v] = u end
         end
     end
     if cost[G] == math.huge then return nil end
+    -- Erst ohne Tabellen pruefen, ob ein Umweg ueberhaupt lohnt.
+    do
+        local secs, hops, k = cost[G], 0, G
+        while prev[k] do
+            hops = hops + 1
+            if how[k] == "teleport" and via[k].hearth then secs = secs - RT.HEARTH_SAVE end
+            k = prev[k]
+        end
+        local dy0 = RT.WalkYards(START, GOAL)
+        local direct0 = dy0 and dy0 / speed or nil
+        if hops <= 1 or (direct0 and direct0 - secs < RT.MIN_GAIN) then
+            if not direct0 then return nil end
+            return RT.Direct(direct0, pc, pN, pW, gc, gN, gW)
+        end
+    end
     -- Weg rueckwaerts einsammeln.
     local legs, i = {}, G
     while prev[i] do
@@ -495,8 +552,7 @@ function RT.Solve(pc, pN, pW, gc, gN, gW)
     local direct = dy and dy / speed or nil
     if #legs <= 1 or (direct and direct - seconds < RT.MIN_GAIN) then
         if not direct then return nil end
-        return { seconds = direct, legs = { { mode = "walk" } }, direct = true,
-            start = { pc, pN, pW }, goal = { gc, gN, gW } }
+        return RT.Direct(direct, pc, pN, pW, gc, gN, gW)
     end
     return { seconds = seconds, legs = legs, start = { pc, pN, pW }, goal = { gc, gN, gW } }
 end
@@ -528,8 +584,14 @@ end
 
 -- Was der Pfeil jetzt sagt. { node = Wegpunkt oder nil, mode, waypoint, leg,
 -- departIn = s bis zur Abfahrt (gemessen) oder nil, untimed = true }.
+-- Je Route einmal gebaut und gemerkt (route._hop): der Pfeil fragt fuenfmal
+-- je Sekunde, die Route aendert sich hoechstens alle REPLAN_EVERY Sekunden.
 function RT.Next(route)
     if not route or route.direct then return nil end
+    if route._hop == nil then route._hop = RT.BuildNext(route) or false end
+    return route._hop or nil
+end
+function RT.BuildNext(route)
     local legs = route.legs
     local first = legs[1]
     if first.mode == "teleport" then
@@ -539,17 +601,31 @@ function RT.Next(route)
             leg = (t.hearth and "Ruhestein" or "Teleport") .. (name and (" nach " .. name) or ""),
             waitCd = t.wait - (t.t.cast or 10000) / 1000 - RT.LOADING }
     end
-    local second = legs[2]
-    if first.mode ~= "walk" or not second or second.mode == "walk" then return nil end
+    if first.mode ~= "walk" then return nil end
+    -- Die erste Etappe, die nicht Laufen ist; davor koennen mehrere Laufwege
+    -- ueber Zwischenpunkte liegen (6.32.2.0: Sturmwind -> Tiefenbahn lief
+    -- ueber einen Anleger, der Pfeil fand den Einstieg nicht).
+    local k0
+    for k = 2, #legs do
+        if legs[k].mode ~= "walk" then k0 = k break end
+    end
+    if not k0 then return nil end
+    local second, board = legs[k0], legs[k0 - 1].node
+    if not board then return nil end
     -- Mehrere Fluege hintereinander: das Ziel ist die letzte Landung.
     local last = second
-    for k = 3, #legs do
+    for k = k0 + 1, #legs do
         if legs[k].mode == second.mode and second.mode == "flight" then last = legs[k] else break end
     end
     local name = RT.NodeName(last.node)
-    local hop = { node = first.node, mode = second.mode,
-        waypoint = KIND_WAYPOINT[second.mode] or "Wegpunkt",
-        leg = (KIND_LEG[second.mode] or "weiter nach") .. (name and (" " .. name) or "") }
+    local wp = KIND_WAYPOINT[second.mode] or "Wegpunkt"
+    -- Portal in die Tiefenbahn (eigene Karte 369): so heisst es auch.
+    if second.mode == "portal" and last.node and last.node.c == RT.TRAM_MAP then
+        wp, name = "Tiefenbahn", nil
+    end
+    local hop = { node = board, mode = second.mode, waypoint = wp, suffix = " bis " .. wp,
+        leg = (wp == "Tiefenbahn" and "Tiefenbahn nehmen")
+            or ((KIND_LEG[second.mode] or "weiter nach") .. (name and (" " .. name) or "")) }
     if second.mode ~= "flight" and second.mode ~= "portal" then
         if second.wait then
             hop.departIn = second.at + second.wait
@@ -569,8 +645,18 @@ function RT.FormatTime(secs)
 end
 
 -- Zeile unter dem Pfeil. Mit gemessenem Takt die Abfahrt, sonst ehrlich.
+-- Gemerkt je Route, Etappe und angezeigter Sekunde (kein Text je Takt).
+local lineMemo = {}
 function RT.Line(route, hop)
     if not route or route.direct then return nil end
+    local now = _G.GetTime and _G.GetTime() or 0
+    local tick = math.floor(now)
+    if lineMemo.route == route and lineMemo.hop == hop and lineMemo.tick == tick then return lineMemo.text end
+    lineMemo.route, lineMemo.hop, lineMemo.tick = route, hop, tick
+    lineMemo.text = RT.BuildLine(route, hop)
+    return lineMemo.text
+end
+function RT.BuildLine(route, hop)
     local s = "Route ca. " .. RT.FormatTime(route.seconds)
     if hop then
         s = s .. " · " .. hop.leg
@@ -609,6 +695,7 @@ function RT.Plan(pc, pN, pW, gc, gN, gW)
     last.at, last.gc, last.gN, last.gW = now, gc, gN, gW
     last.pc, last.pN, last.pW = pc, pN, pW
     local ok, route = pcall(RT.Solve, pc, pN, pW, gc, gN, gW)
+    if not ok then RT.lastError = route end
     last.route = ok and route or nil
     if last.route then last.route.at = now end
     return last.route
@@ -788,6 +875,7 @@ function RT.OnControlGained()
     local secs = _G.GetTime() - f.at
     if to and st and to ~= f.from and secs > 5 then
         st.times[f.from .. ">" .. to] = math.floor(secs + 0.5)
+        RT.timesDirty = true
         RT.Invalidate()
     end
 end
@@ -893,8 +981,55 @@ local function OnUpdate(_, elapsed)
     acc = 0
     local c, n, w = K.PlayerWorld()
     RT.Sample(c, n, w, RT.ServerMs())
-    if bindAcc >= 5 then bindAcc = 0 RT.CheckBind() end
+    if bindAcc >= 5 then
+        bindAcc = 0
+        RT.CheckBind()
+        RT.CheckTaxiNear(c, n, w)
+    end
     RT.SendNext()
+end
+
+-- Erinnerung (6.32.2.0, Wunsch des Spielers): ein Flugmeister in der Naehe,
+-- dessen Flugpunkt dieser Charakter nicht kennt - mitnehmen fuer spaeter.
+-- Je Flugpunkt einmal je Sitzung; nie im Kampf, nicht im Flug. "Kennt" heisst:
+-- vom Client gemeldet (Flugkarte); hat der Charakter noch nie eine geoeffnet,
+-- sagt die Meldung das - sie raet nicht, ob er ihn schon hat.
+RT.TAXI_NEAR = 80
+local reminded = {}
+RT._reminded = reminded
+function RT.CheckTaxiNear(c, n, w)
+    if not c or K.Get("questarrow", "taxiReminder") == false then return nil end
+    if K.InCombat and K.InCombat() then return nil end
+    if _G.UnitOnTaxi and K.Bool(_G.UnitOnTaxi("player"), false) then return nil end
+    local st = RT.Store()
+    if not st then return nil end
+    RT.Build()
+    local mine = Faction()
+    for id, node in pairs(taxiNode) do
+        if node.c == c and not st.taxi[id] and not reminded[id] and Usable(node.faction, mine)
+           and (node.n - n) ^ 2 + (node.w - w) ^ 2 <= RT.TAXI_NEAR ^ 2 then
+            reminded[id] = true
+            local any = false
+            for _ in pairs(st.taxi) do any = true break end
+            RT.RemindTaxi(any)
+            return id
+        end
+    end
+end
+
+function RT.RemindTaxi(anyKnown)
+    local place = _G.GetMinimapZoneText and K.Plain(_G.GetMinimapZoneText())
+    local head = "Flugpunkt in der Nähe" .. ((type(place) == "string" and place ~= "") and (": " .. place) or "")
+    local tail = anyKnown and "noch nicht bekannt – sprich mit dem Flugmeister und nimm ihn mit."
+        or "öffne beim Flugmeister einmal die Flugkarte, dann kennt der Pfeil alle deine Flugpunkte."
+    local text = head .. " – " .. tail
+    RT.lastReminder = text
+    local col = C.gold
+    if _G.RaidNotice_AddMessage and _G.RaidWarningFrame then
+        pcall(_G.RaidNotice_AddMessage, _G.RaidWarningFrame, head, { r = col[1], g = col[2], b = col[3] })
+    end
+    print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. text)
+    if _G.PlaySound and _G.SOUNDKIT and _G.SOUNDKIT.MAP_PING then pcall(_G.PlaySound, _G.SOUNDKIT.MAP_PING, "Master") end
 end
 
 -- Zauber des Ruhesteins, wie der Client ihn nennt (einmal gefragt).
@@ -1101,5 +1236,8 @@ function RT.Inspect(out)
             or "unbekannt (im Gasthaus des Bindeorts einmal vorbeischauen)")
     if n == 0 then
         out[#out + 1] = "   Flugpunkte lernt er, wenn du beim Flugmeister die Flugkarte öffnest."
+    end
+    if RT.lastError then
+        out[#out + 1] = "   Fehler beim letzten Planen: " .. tostring(RT.lastError)
     end
 end

@@ -9,6 +9,36 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.32.2.0] – 2026-10-14
+
+### Behoben
+- Weltkarte: Linien wurden mit der Größe der eigenen Ebene platziert, die
+  direkt nach dem Anlegen 0 ist – die Route lag unsichtbar in der Ecke und
+  wurde im Stand nie neu gezeichnet. Jetzt mit der Größe der Karte.
+- Schiffslinien: statt der Bahn (Anlegemanöver, „Kringel“) gestrichelt von
+  Anleger zu Anleger; über Kontinente auf der Weltkarte ganz durch, auf der
+  Kontinentkarte bis zum Wechselpunkt der Fahrt (`MP.Connect`).
+- Höhenunterschied: gerechnet gegen den Punkt 30 Einheiten voraus auf dem
+  Laufweg statt gegen das Ziel (414 m bei 570 m Weg). Jetzt Luftlinie zum Ziel.
+- Pfeil fand den Einstieg nicht, wenn der Laufweg über Zwischenpunkte führte
+  (Sturmwind → Tiefenbahn); jetzt die erste Etappe, die nicht Laufen ist.
+  Tiefenbahn heißt „Tiefenbahn nehmen“.
+
+### Hinzugefügt
+- Erinnerung an unbekannte Flugpunkte der eigenen Fraktion im Umkreis von
+  80 Einheiten (`taxiReminder`, ab Werk an): Bildschirmmitte, Chat, Ton;
+  einmal je Flugpunkt und Sitzung, nie im Kampf oder Flug.
+- `/wcui pfeil` nennt einen Fehler beim letzten Planen.
+
+### Speicher
+- Geländekarte: Gitter je Abschnitt als Zeichenkette (4,5 KB statt rund
+  140 KB in zwei Tabellen), höchstens 32 Abschnitte entpackt.
+- Planer: keine Funktionen, Knotenabbilder und „a>b“-Texte je Plan mehr;
+  Teleport-Einträge und reine Laufroute wiederverwendet (8,4 → 2,8 KB je Plan
+  mit Umweg, 6,5 → 0 KB ohne).
+- Pfeil: Texte (Entfernung, Ankunft, Titel, Routenzeile) und der nächste
+  Wegpunkt nur neu gebaut, wenn sich die angezeigte Zahl ändert.
+
 ## [6.32.1.0] – 2026-10-14
 
 ### Hinzugefügt
