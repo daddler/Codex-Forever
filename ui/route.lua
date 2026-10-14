@@ -178,6 +178,21 @@ function RT.Build(force)
             end
         end
     end
+    -- Geschwister: Linien gleicher Art ueber dieselben Anleger.
+    for _, r in ipairs(routeList) do
+        r.siblings = {}
+        for _, o in ipairs(routeList) do
+            if o ~= r and o.kind == r.kind and #o.stops == #r.stops then
+                local same = true
+                for k = 1, #r.stops, 3 do
+                    local found = false
+                    for m = 1, #o.stops, 3 do if o.stops[m] == r.stops[k] then found = true end end
+                    if not found then same = false end
+                end
+                if same then r.siblings[#r.siblings + 1] = o end
+            end
+        end
+    end
     for _, p in ipairs(d.portals or {}) do
         local a = Node("portal", nil, p[1], p[2], p[3])
         local b = Node("land", nil, p[4], p[5], p[6])
@@ -281,6 +296,14 @@ function RT.Ride(route, i, j, at)
     if anchor then
         local phase = (RT.ServerMs() + at * 1000 - anchor.epoch) % period
         return ((depart - phase) % period) / 1000, ride, true
+    end
+    -- Fahren zwischen denselben Anlegern mehrere Linien (Tiefenbahn: zwei
+    -- Zuege auf eigenen Gleisen) und eine davon ist gemessen, rechnet die
+    -- ungemessene mit dem schlechtesten Fall (ein ganzer Umlauf). Sonst
+    -- "gewann" ihr Mittelwert gegen die echte Wartezeit der gemessenen, und
+    -- der Pfeil sagte "Fahrplan unbekannt" (Beta-Test 6.32.4.0).
+    for _, other in ipairs(route.siblings or {}) do
+        if RT.Anchor(other) then return period / 1000, ride, false end
     end
     return period / 2000, ride, false
 end
@@ -626,11 +649,14 @@ function RT.BuildNext(route)
     local hop = { node = board, mode = second.mode, waypoint = wp, suffix = " bis " .. wp,
         leg = (wp == "Tiefenbahn" and "Tiefenbahn nehmen")
             or ((KIND_LEG[second.mode] or "weiter nach") .. (name and (" " .. name) or "")) }
-    if second.mode ~= "flight" and second.mode ~= "portal" then
-        if second.wait then
-            hop.departIn = second.at + second.wait
-        else
-            hop.untimed = true
+    -- Abfahrt der ersten Fahrt mit Fahrplan - auch hinter dem Portal in die
+    -- Tiefenbahn (6.32.5.0: dort stand sonst nie eine Abfahrtszeit).
+    for k = k0, #legs do
+        local m = legs[k].mode
+        if m == "flight" then break end
+        if m == "boat" or m == "zeppelin" or m == "tram" or m == "lift" then
+            if legs[k].wait then hop.departIn = legs[k].at + legs[k].wait else hop.untimed = true end
+            break
         end
     end
     return hop

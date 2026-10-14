@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.32.5.0] – 2026-10-14
+
+### Behoben
+- Tiefenbahn „Fahrplan unbekannt“ trotz gemessenem Takt: zwei Züge fahren
+  über dieselben Anleger; der ungemessene rechnete mit dem halben Umlauf und
+  schlug die echte, längere Wartezeit des gemessenen. Linien gleicher Art
+  über dieselben Anleger sind jetzt Geschwister (`route.siblings`); ist eines
+  gemessen, rechnet das ungemessene mit einem ganzen Umlauf.
+- Abfahrt fehlte, wenn vor der Bahn noch das Portal in die Tiefenbahn lag:
+  `RT.BuildNext` schaut bis zur ersten Fahrt mit Fahrplan voraus.
+
 ## [6.32.4.0] – 2026-10-14
 
 ### Behoben

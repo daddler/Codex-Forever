@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.32.5.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFAbfahrtszeit der Tiefenbahn wird angezeigt.|r Nach einer Fahrt steht unter dem Pfeil „Tiefenbahn nehmen, Abfahrt in 1:20“ – auch, solange du noch vor dem Eingang stehst. Vorher wählte er manchmal den zweiten, nie gemessenen Zug und schrieb „Fahrplan unbekannt“.",
+        },
+    },
+    {
         version = "6.32.4.0",
         date    = "14.10.2026",
         notes   = {

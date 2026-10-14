@@ -3843,6 +3843,18 @@ do
         -- Jetzt Phase 0 (+ 0 s Weg): Abfahrt bei 60 s.
         assert(hop and hop.departIn and math.abs(hop.departIn - 60) < 1, "Abfahrt: " .. tostring(hop and hop.departIn))
         assert(RT.Line(r, hop):find("Abfahrt in 1:00", 1, true), "Zeile: " .. RT.Line(r, hop))
+        -- 6.32.5.0: zwei Linien ueber dieselben Anleger, eine gemessen - die
+        -- gemessene gewinnt, auch wenn sie laenger wartet; Abfahrt steht da.
+        local td = WeintCodex.TravelData
+        td.routes[98] = { "boat", 0, 300000, { 10, 0, 60000, 11, 150000, 210000 }, {} }
+        RT.Build(true)
+        anchors[99] = { epoch = (50000 * 1000 - 200000) % 300000, seen = 50000 }
+        r = RT.Solve(0, -3100, -100, 1, 520, 500)
+        hop = RT.Next(r)
+        assert(hop and hop.departIn and not hop.untimed, "ungemessene Linie gewann gegen die gemessene")
+        td.routes[98] = nil
+        RT.Build(true)
+        anchors[99] = { epoch = 50000 * 1000 - 0, seen = 50000 }
         -- Insel auf Kontinent 1: nicht zu Fuss vom Anleger.
         assert(RT.Solve(0, 10, 0, 1, 5500, 5500) == nil, "zur Insel gelaufen")
         -- Ruhestein: nur, wenn er HEARTH_SAVE spart.
