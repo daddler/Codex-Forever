@@ -106,6 +106,11 @@ local defaults = {
     plan       = "smart",
     autoNext   = true,     -- nach dem Abgeben die naechste Quest
     onComplete = "turnin", -- turnin | next: was nach erfuellten Zielen kommt
+    -- Routenplaner (6.31.0.0): ist das Addon Shortest Path Forever da,
+    -- "guide" uebergibt ihm das Ziel des Pfeils (Flug, Schiff, Portal),
+    -- "info" fragt nur die Reisezeit ab, "off" nie.
+    route      = "guide",
+    routeArrow = false,    -- bei Uebergabe den eigenen Pfeil zusaetzlich
 }
 
 local SHEET = "Interface\\AddOns\\WeintCodex\\media\\ui\\arrow3d"
@@ -821,6 +826,133 @@ function QA.InInstance()
     return K.Bool(inside, false)
 end
 
+--------------------------------------------------
+-- Routenplaner (6.31.0.0)
+--------------------------------------------------
+-- Der Pfeil zeigt Luftlinie. Shortest Path Forever (eigenes Addon, GPL -
+-- hier steht KEIN Code daraus, nur Aufrufe seiner oeffentlichen
+-- Schnittstelle ShortestPathForever.API, version 1) kennt Flugrouten,
+-- Schiffe, Zeppeline, Portale und Fahrplaene. Zusammen: WeintCodex
+-- waehlt das Ziel (Planen oben), Shortest Path plant den Weg dorthin.
+--
+-- Regeln:
+--   * Ohne das Addon ist alles wie vorher - kein Text, keine Frage.
+--   * Eine Reise, die der Spieler selbst dort gestartet hat, wird nie
+--     ueberschrieben (API.Active ohne eigene CurrentStop).
+--   * Bricht der Spieler unsere Reise ab oder ersetzt sie, gilt das fuer
+--     dieses Ziel; erst ein neues Ziel wird wieder uebergeben.
+--   * Die Leiche bleibt beim Pfeil: Shortest Path fuehrt Geister selbst.
+--   * Im Kampf lehnt die Schnittstelle ab ("combat"); dann spaeter erneut.
+--   * Die Reisezeit ist die des Planers, nie geschaetzt - fehlt sie
+--     ("unreachable"), steht keine Zahl da.
+
+local OWNER = "WeintCodex"
+local route = { key = nil, own = false, refused = nil, tryAt = 0, estAt = -10, est = nil, leg = nil }
+QA._route = route
+QA.ROUTE_RETRY, QA.ROUTE_ESTIMATE_EVERY = 2, 2
+
+function QA.RouteAPI()
+    local spf = _G.ShortestPathForever
+    local api = type(spf) == "table" and spf.API
+    if type(api) ~= "table" or type(api.version) ~= "number" or api.version < 1 then return nil end
+    return api
+end
+
+local function RouteMode()
+    if not QA.RouteAPI() then return "off" end
+    return K.Get(KEY, "route") or "guide"
+end
+QA.RouteMode = RouteMode
+
+local function RouteKey(t)
+    return string.format("%d:%.3f:%.3f", t.tm, t.tx, t.ty)
+end
+
+function QA.RouteCancel()
+    local api = QA.RouteAPI()
+    if api and route.own and api.CurrentStop and api.CurrentStop(OWNER) then pcall(api.Cancel, OWNER) end
+    route.key, route.own = nil, false
+end
+
+-- Uebergibt das Ziel, wenn es neu ist. Liefert true, solange Shortest
+-- Path unser Ziel fuehrt.
+function QA.RouteSync(t)
+    local api = QA.RouteAPI()
+    if not api or RouteMode() ~= "guide" or t.status ~= "ok" or not t.tm or t.kind == "corpse" then
+        if route.own then QA.RouteCancel() end
+        return false
+    end
+    local key = RouteKey(t)
+    if route.own and route.key == key then
+        if api.CurrentStop(OWNER) then return true end
+        -- Zu Ende: angekommen laesst das Ziel stehen; abgebrochen oder
+        -- ersetzt heisst, der Spieler will es so - fuer dieses Ziel.
+        local why = api.Ended and api.Ended(OWNER)
+        route.own = false
+        if why ~= "arrived" then route.refused = key end
+        return false
+    end
+    if route.refused == key then return false end
+    if route.own then QA.RouteCancel() end
+    -- Eine eigene Reise des Spielers geht vor.
+    if api.Active and api.Active() and not api.CurrentStop(OWNER) then return false end
+    local now = _G.GetTime and _G.GetTime() or 0
+    if route.key == key and now < route.tryAt then return false end
+    route.key, route.tryAt = key, now + QA.ROUTE_RETRY
+    local kind = t.kind == "quest" and ((t.title or ""):find("^Abgeben: ") and "turnin" or "objective") or nil
+    local ok, started = pcall(api.Navigate, OWNER, t.tm, t.tx, t.ty, t.title, kind)
+    route.own = ok and started == true
+    if route.own then route.refused = nil end
+    return route.own
+end
+
+-- Reisezeit und erste Etappe, die nicht Laufen ist ("Flug nach ...").
+-- Hoechstens alle zwei Sekunden; Shortest Path haelt selbst fuenf vor.
+function QA.RouteEstimate(t)
+    local api = QA.RouteAPI()
+    if not api or RouteMode() == "off" or t.status ~= "ok" or not t.tm then return nil end
+    local now = _G.GetTime and _G.GetTime() or 0
+    if now - route.estAt < QA.ROUTE_ESTIMATE_EVERY and route.estKey == RouteKey(t) then return route.est, route.leg end
+    route.estAt, route.estKey, route.est, route.leg = now, RouteKey(t), nil, nil
+    local map, x, y = PlayerMapPos()
+    if not map or not api.EstimateDetail then return nil end
+    local ok, d = pcall(api.EstimateDetail, map, x, y, t.tm, t.tx, t.ty)
+    if ok and type(d) == "table" and type(d.seconds) == "number" then
+        route.est = d.seconds
+        for _, leg in ipairs(type(d.legs) == "table" and d.legs or {}) do
+            if leg.mode ~= "walk" and type(leg.to) == "string" and leg.to ~= "" then
+                route.leg = QA.LegText(leg.mode, leg.to)
+                break
+            end
+        end
+    end
+    return route.est, route.leg
+end
+
+-- Die Arten der Etappen, wie Shortest Path sie nennt (Planner.lua).
+local LEG_WORDS = { flight = "Flug nach", boat = "Schiff nach", zeppelin = "Zeppelin nach",
+    tram = "Tiefenbahn nach", lift = "Aufzug nach", portal = "Portal nach", teleport = "Teleport nach",
+    passage = "Durchgang nach" }
+function QA.LegText(mode, to)
+    return (LEG_WORDS[mode] or "dann") .. " " .. to
+end
+
+function QA.FormatEta(secs)
+    secs = math.floor(secs + 0.5)
+    if secs >= 3600 then
+        return string.format("%d:%02d:%02d", math.floor(secs / 3600), math.floor(secs / 60) % 60, secs % 60)
+    end
+    return string.format("%d:%02d", math.floor(secs / 60), secs % 60)
+end
+
+-- Text unter dem Pfeil, wenn der Planer etwas weiss: "Route ca. 4:30 ·
+-- Flug nach Sturmwind". nil ohne Planer oder ohne Antwort.
+local function RouteLine(t)
+    local est, leg = QA.RouteEstimate(t)
+    if not est then return nil end
+    return "Route ca. " .. QA.FormatEta(est) .. (leg and (" · " .. leg) or "")
+end
+
 function QA.Update(force)
     aim.ok = false
     -- Die Zielmarke zeigt sich nur, wenn dieser Durchlauf sie setzt.
@@ -833,7 +965,13 @@ function QA.Update(force)
     local playerMap = BestMap()
     local t = Target(playerMap, force)
     local status, name = t.status, t.title
-    if status == "none" then frame:Hide() return end
+    if status == "none" then
+        if route.own then QA.RouteCancel() end
+        frame:Hide()
+        return
+    end
+    local guided = QA.RouteSync(t)
+    local routeLine = RouteLine(t)
 
     local showTitle = K.Get(KEY, "showTitle")
     title:SetText(showTitle and name or "")
@@ -874,7 +1012,9 @@ function QA.Update(force)
     end
     if pc ~= tc then
         arrow:Hide()
+        -- Mit Routenplaner weiss jemand den Weg: Reisezeit statt Achselzucken.
         dist:SetText("Anderer Kontinent")
+        if routeLine then eta:SetText(routeLine) end
         frame:Show()
         return
     end
@@ -918,7 +1058,12 @@ function QA.Update(force)
     end
 
     dist:SetText(QA.FormatDistance(yards, K.Get(KEY, "units")))
-    if rotation then
+    -- Fuehrt Shortest Path, zeigt sein Pfeil den Weg (nicht die Luftlinie).
+    if guided and not K.Get(KEY, "routeArrow") then rotation = nil end
+    if guided and not rotation then
+        arrow:Hide()
+        dist:SetText(QA.FormatDistance(yards, K.Get(KEY, "units")) .. " Luftlinie")
+    elseif rotation then
         PointArrow(rotation)
         SetArrowColor(rotation)
         arrow:Show()
@@ -931,7 +1076,9 @@ function QA.Update(force)
     -- Ankunftszeit aus der tatsaechlichen Annaeherung, nicht aus der
     -- Laufgeschwindigkeit: wer im Zickzack um einen Berg laeuft, kommt
     -- nicht mit Laufgeschwindigkeit naeher.
-    if K.Get(KEY, "showEta") and _G.GetTime then
+    if routeLine and K.Get(KEY, "showEta") then
+        eta:SetText(routeLine)
+    elseif K.Get(KEY, "showEta") and _G.GetTime then
         local now = _G.GetTime()
         if lastYards and lastTime and now > lastTime then
             local speed = (lastYards - yards) / (now - lastTime)
@@ -1118,6 +1265,10 @@ function QA.Inspect()
                 c.weight ~= 1 and string.format(" (× %.1f)", c.weight):gsub("%.", ",") or "")
         end
     end
+    local api = QA.RouteAPI()
+    out[#out + 1] = "Routenplaner: " .. (not api and "Shortest Path Forever nicht geladen"
+        or ("Shortest Path Forever, Modus " .. RouteMode() .. (route.own and " – führt gerade zum Ziel des Pfeils"
+            or (api.Active and api.Active() and " – führt eine eigene Reise") or "")))
     return out
 end
 
@@ -1146,6 +1297,7 @@ local function Enable()
 end
 
 local function Disable()
+    QA.RouteCancel()
     events:UnregisterAllEvents()
     ticker:SetScript("OnUpdate", nil)
     if frame then frame:Hide() end
@@ -1205,6 +1357,14 @@ K.Register({
             B:Row({ type = "slider", label = "„Am Ziel“ ab", key = "arriveDistance", min = 2, max = 30, step = 1,
                     format = function(v) return string.format("%d m", v) end },
                   { type = "empty" })
+            B:Section("Routenplaner")
+            B:Row({ type = "dropdown", label = "Shortest Path Forever", key = "route", items = {
+                        { value = "guide", text = "Weg planen lassen (Flug, Schiff, Portal)" },
+                        { value = "info",  text = "Nur Reisezeit zeigen" },
+                        { value = "off",   text = "Nicht nutzen" } },
+                    tooltip = "Nur, wenn das Addon Shortest Path Forever installiert ist. Der Questpfeil wählt das Ziel, Shortest Path plant den schnellsten Weg dorthin und führt mit seinem eigenen Pfeil. Eine Reise, die du dort selbst startest, wird nie ersetzt." },
+                  { type = "toggle", label = "Eigenen Pfeil zusätzlich", key = "routeArrow",
+                    description = "Während Shortest Path führt, zeigt der Questpfeil weiter die Luftlinie." })
             B:Section("Nach einer Quest")
             B:Row({ type = "dropdown", label = "Wenn die Ziele erfüllt sind", key = "onComplete", items = {
                         { value = "turnin", text = "Zur Abgabe führen" },

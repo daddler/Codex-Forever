@@ -9,6 +9,21 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.31.0.0] – 2026-10-14
+
+### Hinzugefügt
+- Questpfeil: Anbindung an das Addon **Shortest Path Forever** über dessen
+  öffentliche Schnittstelle `ShortestPathForever.API` (version 1) – kein Code
+  daraus übernommen (GPL-3.0). Neue Einstellung „Routenplaner“ (`route`:
+  `guide`/`info`/`off`, ab Werk `guide`) und „Eigenen Pfeil zusätzlich“
+  (`routeArrow`, ab Werk aus). Bei `guide` übergibt der Pfeil sein Ziel per
+  `API.Navigate` (Besitzer „WeintCodex“), Shortest Path führt mit eigenem
+  Pfeil; der Questpfeil zeigt Reisezeit und erste Etappe aus
+  `API.EstimateDetail`, auch bei „Anderer Kontinent“. Eine Reise des Spielers
+  wird nie ersetzt, eine abgebrochene für dasselbe Ziel nicht neu gestartet,
+  die Leiche bleibt beim Pfeil. Ohne das Addon ändert sich nichts.
+- `WeintCodex.toc`: `## OptionalDeps: ShortestPathForever`.
+
 ## [6.30.55.7] – 2026-10-13
 
 ### Hinzugefügt

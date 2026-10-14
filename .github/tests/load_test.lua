@@ -3678,6 +3678,64 @@ do
     Check(ok, "Questpfeil plant: naechstes lohnendes Ziel, kein Hin und Her, eigene Wahl bis zur Abgabe"
         .. (ok and "" or (": " .. tostring(err))))
 
+    -- 6.31.0.0: Routenplaner Shortest Path Forever ueber seine
+    -- Schnittstelle. Ohne das Addon nichts; fremde Reise nie ersetzt;
+    -- abgebrochen gilt fuer dieses Ziel; Leiche bleibt beim Pfeil.
+    ok, err = pcall(function()
+        local oldGT = _G.GetTime
+        local now = 100
+        _G.GetTime = function() return now end
+        assert(QA.RouteAPI() == nil and QA.RouteMode() == "off", "ohne Addon an")
+        local calls, stop, ended, foreign, est = {}, nil, nil, false, 270
+        _G.ShortestPathForever = { API = { version = 1,
+            Navigate = function(o, m, x, y, title, kind)
+                calls[#calls + 1] = { o = o, m = m, title = title, kind = kind }
+                stop, foreign = 1, false
+                return true
+            end,
+            CurrentStop = function(o) return o == "WeintCodex" and stop or nil end,
+            Cancel = function() stop, ended = nil, "cancelled" return true end,
+            Ended = function() return ended end,
+            Active = function() return stop ~= nil or foreign end,
+            EstimateDetail = function()
+                return { seconds = est, legs = { { mode = "walk", to = "Flugmeister" },
+                    { mode = "flight", to = "Sturmwind" }, { mode = "walk", to = "Ziel" } } }
+            end,
+        } }
+        K.Set("questarrow", "route", "guide")
+        local t = { status = "ok", tm = 1, tx = 0.2, ty = 0.3, title = "Abgeben: Axt", kind = "quest" }
+        assert(QA.RouteSync(t) and #calls == 1 and calls[1].kind == "turnin" and calls[1].o == "WeintCodex", "nicht uebergeben")
+        assert(QA.RouteSync(t) and #calls == 1, "dasselbe Ziel doppelt uebergeben")
+        local e, leg = QA.RouteEstimate(t)
+        assert(e == 270 and leg == "Flug nach Sturmwind", "Reisezeit/Etappe: " .. tostring(e) .. " " .. tostring(leg))
+        assert(QA.FormatEta(270) == "4:30" and QA.FormatEta(3725) == "1:02:05", "Zeitformat")
+        -- Der Spieler bricht ab: dieses Ziel nicht wieder.
+        stop, ended = nil, "cancelled"
+        assert(not QA.RouteSync(t) and not QA.RouteSync(t) and #calls == 1, "abgebrochenes Ziel erneut")
+        -- Neues Ziel, aber eine eigene Reise des Spielers laeuft: nicht ersetzen.
+        foreign = true
+        local t2 = { status = "ok", tm = 1, tx = 0.6, ty = 0.3, title = "Wolf", kind = "quest" }
+        assert(not QA.RouteSync(t2) and #calls == 1, "fremde Reise ersetzt")
+        foreign = false
+        assert(QA.RouteSync(t2) and #calls == 2 and calls[2].kind == "objective", "neues Ziel nicht uebergeben")
+        -- Leiche: Reise beenden, nicht uebergeben.
+        assert(not QA.RouteSync({ status = "ok", tm = 1, tx = 0.1, ty = 0.1, kind = "corpse" }) and stop == nil, "Leiche")
+        -- Unerreichbar: keine Zahl.
+        est = nil
+        now = now + 10
+        assert(QA.RouteEstimate(t2) == nil, "Reisezeit ohne Antwort")
+        -- Modus aus.
+        K.Set("questarrow", "route", "off")
+        assert(not QA.RouteSync(t2) and QA.RouteEstimate(t2) == nil, "aus und trotzdem genutzt")
+        K.Set("questarrow", "route", "guide")
+        _G.ShortestPathForever = nil
+        QA._route.key, QA._route.own, QA._route.refused = nil, false, nil
+        _G.GetTime = oldGT
+    end)
+    _G.ShortestPathForever = nil
+    Check(ok, "Questpfeil + Shortest Path Forever: Ziel uebergeben, Reisezeit, fremde Reise und Abbruch respektiert"
+        .. (ok and "" or (": " .. tostring(err))))
+
     -- 6.14.0.2: die eigene Lage ueber UnitPosition, wenn es mit der Karte
     -- uebereinstimmt - dann keine Vektoren mehr je Lauf.
     local saved = { _G.GetTime, _G.UnitPosition, _G.C_Map.GetPlayerMapPosition }

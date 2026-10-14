@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.31.0.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFQuestpfeil und Routenplaner arbeiten zusammen.|r Ist Shortest Path Forever installiert, wählt der Questpfeil weiter das nächste lohnende Ziel – und lässt sich von Shortest Path den schnellsten Weg dorthin planen, mit Flugrouten, Schiffen und Portalen. Unter dem Pfeil steht dann die echte Reisezeit und die nächste Etappe, auch auf einem anderen Kontinent.",
+            "|cff7C6CFFDeine eigenen Reisen bleiben deine.|r Startest du in Shortest Path selbst eine Reise, ersetzt der Questpfeil sie nie; brichst du seine ab, fragt er für dieses Ziel nicht wieder. Einstellbar im Questpfeil unter „Routenplaner“.",
+        },
+    },
+    {
         version = "6.30.55.7",
         date    = "13.10.2026",
         notes   = {
