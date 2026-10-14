@@ -271,6 +271,13 @@ WeintCodex.GameColors = {
     healthFallback= {0.240, 0.720, 0.360, 1.0},
     powerFallback = {0.300, 0.500, 0.900, 1.0},
     comboPoint    = {1.000, 0.820, 0.000, 1.0},
+    -- Kombopunkte an der Plakette, je Stand (6.33.7.0, einstellbar): von
+    -- "noch nicht" (rot) bis "Spender jetzt" (gruen).
+    combo1        = {0.902, 0.251, 0.251, 1.0},
+    combo2        = {0.949, 0.502, 0.200, 1.0},
+    combo3        = {1.000, 0.820, 0.000, 1.0},
+    combo4        = {0.659, 0.859, 0.251, 1.0},
+    combo5        = {0.204, 0.780, 0.482, 1.0},
     questObjective= {1.000, 0.867, 0.400, 1.0},   -- "8/10" neben dem Namen
 
     -- UI 2.0 (docs/design/ui-2.0.md): Tiefe statt Rahmen. Keine davon ist

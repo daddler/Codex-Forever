@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.33.7.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFKombopunkte nach Wunsch einfärben.|r Eigene Seite bei den Plaketten: eine Farbe je Stand von 1 bis 5 – ab Werk von Rot bis Grün –, alle Punkte in der Farbe des Stands, jeder Punkt in seiner Farbe oder eine Farbe für alle. Dazu Höhe, Abstände, über oder unter der Plakette und leere Plätze an oder aus.",
+        },
+    },
+    {
         version = "6.33.6.0",
         date    = "14.10.2026",
         notes   = {

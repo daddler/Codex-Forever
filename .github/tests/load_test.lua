@@ -4145,6 +4145,9 @@ do
         local shown = 0
         for _, pip in ipairs(row.pips) do if pip:IsShown() then shown = shown + 1 end end
         assert(shown == 5, "Segmente: " .. shown)
+        -- 6.33.7.0: Farbe des Stands (3 von 5) fuer alle Punkte.
+        local r = row.pips[1]
+        assert(r._bg and r:IsShown(), "Punkt ohne Grund")
         UF.UsesCombo = function() return false end
         NP.UpdateCombo()
         assert(not row:IsShown(), "Kombopunkte ohne Schurke/Katze")

@@ -133,6 +133,19 @@ local defaults = {
     levelColor = true,
     eliteMark  = true,
     comboPoints = true,   -- 6.33.6.0: Kombopunkte an der Plakette des Ziels (Schurke, Druide in Katzengestalt)
+    -- 6.33.7.0: wie sie aussehen
+    comboMode   = "steps",  -- single | steps (alle in der Farbe des Stands) | pips (jeder Punkt eigene Farbe)
+    comboColor1 = K.ColorDefault("combo1"),
+    comboColor2 = K.ColorDefault("combo2"),
+    comboColor3 = K.ColorDefault("combo3"),
+    comboColor4 = K.ColorDefault("combo4"),
+    comboColor5 = K.ColorDefault("combo5"),
+    comboColor  = K.ColorDefault("comboPoint"),
+    comboHeight = 4,
+    comboGap    = 2,
+    comboSide   = "below",  -- below | above
+    comboEmpty  = true,     -- leere Plaetze als dunkle Felder
+    comboOffset = 3,
     eliteFrame = true,    -- 6.29.30.0: goldener Rahmen und Drache an Elite
     raidMarker = "topright",
     raidMarkerSize = 20,
@@ -2164,30 +2177,47 @@ function NP.UpdateCombo()
     row = NP.ComboRow()
     row:SetParent(p)
     row:ClearAllPoints()
-    row:SetPoint("TOPLEFT", p.health, "BOTTOMLEFT", 0, -3)
-    row:SetPoint("TOPRIGHT", p.health, "BOTTOMRIGHT", 0, -3)
+    local h, gap, off = S.comboHeight or 4, S.comboGap or 2, S.comboOffset or 3
+    row:SetHeight(h)
+    if S.comboSide == "above" then
+        row:SetPoint("BOTTOMLEFT", p.health, "TOPLEFT", 0, off)
+        row:SetPoint("BOTTOMRIGHT", p.health, "TOPRIGHT", 0, off)
+    else
+        row:SetPoint("TOPLEFT", p.health, "BOTTOMLEFT", 0, -off)
+        row:SetPoint("TOPRIGHT", p.health, "BOTTOMRIGHT", 0, -off)
+    end
     row:SetFrameLevel((K.Plain(p:GetFrameLevel()) or 5) + 3)
     local w = K.Plain(p.health:GetWidth())
     if type(w) ~= "number" or w <= 0 then w = defaults.width end
-    local pw = (w - NP.COMBO_GAP * (max - 1)) / max
-    local col = WeintCodex.GameColors.comboPoint
+    local pw = (w - gap * (max - 1)) / max
+    -- Farbe je Punkt: "steps" braucht den Stand als Zahl; ist er geheim,
+    -- wird er nicht verglichen - dann jeder Punkt in seiner Farbe.
+    local mode = S.comboMode or "steps"
+    local plain = K.Plain(cur)
+    if mode == "steps" and type(plain) ~= "number" then mode = "pips" end
+    local dark = WeintCodex.GameColors.plateBg
     for i = 1, math.max(max, #row.pips) do
         local pip = row.pips[i]
         if i <= max then
             if not pip then
                 pip = K.NewBar(row)
-                local bg = pip:CreateTexture(nil, "BACKGROUND")
-                bg:SetAllPoints(pip)
-                local dark = WeintCodex.GameColors.plateBg
-                bg:SetColorTexture(dark[1], dark[2], dark[3], 0.6)
+                pip._bg = pip:CreateTexture(nil, "BACKGROUND")
+                pip._bg:SetAllPoints(pip)
                 pip._border = K.Border(pip, 1, 0, 0, 0, 1, "BORDER")
                 row.pips[i] = pip
             end
+            local c
+            if mode == "single" then c = S.comboColor
+            elseif mode == "steps" then c = S["comboColor" .. math.max(1, math.min(5, math.floor(plain * 5 / max + 0.5)))]
+            else c = S["comboColor" .. math.max(1, math.min(5, math.floor(i * 5 / max + 0.5)))] end
+            c = c or K.ColorDefault("comboPoint")
+            pip._bg:SetColorTexture(dark[1], dark[2], dark[3], S.comboEmpty and 0.6 or 0)
+            pip._border:SetShown(S.comboEmpty and true or false)
             pip:SetMinMaxValues(i - 1, i)
-            K.PaintBar(pip, col[1], col[2], col[3])
+            K.PaintBar(pip, c.r, c.g, c.b)
             pip:ClearAllPoints()
-            pip:SetPoint("TOPLEFT", row, "TOPLEFT", (i - 1) * (pw + NP.COMBO_GAP), 0)
-            pip:SetSize(pw, NP.COMBO_H)
+            pip:SetPoint("TOPLEFT", row, "TOPLEFT", (i - 1) * (pw + gap), 0)
+            pip:SetSize(pw, h)
             pip:SetValue(cur)
             pip:Show()
         elseif pip then
@@ -2301,6 +2331,7 @@ local function OnSetting()
         end
     end
     NP.RefreshPreview()
+    if NP.UpdateCombo then NP.UpdateCombo() end
 end
 
 local function CVarToggle(label, cvar, onValue, offValue, tooltip)
@@ -2520,8 +2551,7 @@ K.Register({
                   { type = "toggle", label = "Elite mit + kennzeichnen", key = "eliteMark" })
             B:Row({ type = "toggle", label = "Elite mit goldenem Rahmen", key = "eliteFrame",
                     description = "Rahmen und Drache um die Plakette – gold für Elite, rot für Bosse. Bleibt auch im Kampf." },
-                  { type = "toggle", label = "Kombopunkte am Ziel", key = "comboPoints",
-                    description = "Unter der Plakette deines Ziels – nur beim Schurken und beim Druiden in Katzengestalt." })
+                  { type = "empty" })
             B:Section("Schlachtzugsmarkierung")
             B:Row({ type = "dropdown", label = "Position", key = "raidMarker", items = {
                         { value = "topright", text = "Oben rechts" },
@@ -2585,6 +2615,38 @@ K.Register({
                   { type = "empty" })
             B:Row(CVarToggle("Freundliche Spieler zeigen", "nameplateShowFriends", "1", "0"),
                   CVarToggle("Freundliche NPCs zeigen", "nameplateShowFriendlyNPCs", "1", "0"))
+        end },
+        { key = "kombo", label = "Kombopunkte", build = function(B)
+            local off = function() return not K.Get(KEY, "comboPoints") end
+            B:Section("Kombopunkte")
+            B:Row({ type = "toggle", label = "Kombopunkte am Ziel", key = "comboPoints",
+                    description = "An der Plakette deines Ziels – nur beim Schurken und beim Druiden in Katzengestalt." },
+                  { type = "dropdown", label = "Färbung", key = "comboMode", disabled = off, items = {
+                        { value = "steps",  text = "Alle in der Farbe des Stands" },
+                        { value = "pips",   text = "Jeder Punkt eigene Farbe" },
+                        { value = "single", text = "Eine Farbe" } } })
+            B:Note("„Farbe des Stands“: bei 3 von 5 leuchten alle drei in der Farbe für 3 – so siehst du auf einen Blick, wann sich ein Finisher lohnt. Gibt der Client den Stand im Kampf nur verdeckt heraus, fällt die Anzeige auf „Jeder Punkt eigene Farbe“ zurück.")
+            B:Section("Farben")
+            B:Row({ type = "color", label = "1 von 5", key = "comboColor1", disabled = off },
+                  { type = "color", label = "2 von 5", key = "comboColor2", disabled = off })
+            B:Row({ type = "color", label = "3 von 5", key = "comboColor3", disabled = off },
+                  { type = "color", label = "4 von 5", key = "comboColor4", disabled = off })
+            B:Row({ type = "color", label = "5 von 5", key = "comboColor5", disabled = off },
+                  { type = "color", label = "Eine Farbe", key = "comboColor",
+                    disabled = function() return off() or K.Get(KEY, "comboMode") ~= "single" end })
+            B:Section("Form")
+            B:Row({ type = "slider", label = "Höhe", key = "comboHeight", min = 2, max = 12, step = 1, disabled = off,
+                    format = function(v) return v .. " px" end },
+                  { type = "slider", label = "Abstand zwischen den Punkten", key = "comboGap", min = 0, max = 8, step = 1,
+                    disabled = off, format = function(v) return v .. " px" end })
+            B:Row({ type = "dropdown", label = "Lage", key = "comboSide", disabled = off, items = {
+                        { value = "below", text = "Unter der Plakette" },
+                        { value = "above", text = "Über der Plakette" } } },
+                  { type = "slider", label = "Abstand zur Plakette", key = "comboOffset", min = 0, max = 20, step = 1,
+                    disabled = off, format = function(v) return v .. " px" end })
+            B:Row({ type = "toggle", label = "Leere Plätze zeigen", key = "comboEmpty", disabled = off,
+                    description = "Dunkle Felder für noch fehlende Punkte – aus: nur die gesammelten." },
+                  { type = "empty" })
         end },
         { key = "zauber", label = "Zauberbalken", build = function(B)
             local off = function() return not K.Get(KEY, "castEnabled") end

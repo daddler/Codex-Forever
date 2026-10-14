@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.33.7.0] – 2026-10-14
+
+### Hinzugefügt
+- Plaketten, Seite „Kombopunkte“: `comboMode` (steps/pips/single),
+  `comboColor1..5` (Standard `GameColors.combo1..5`), `comboColor`,
+  `comboHeight`, `comboGap`, `comboSide`, `comboOffset`, `comboEmpty`.
+  „steps“ braucht den Stand als Zahl; geheim → wie „pips“.
+
 ## [6.33.6.0] – 2026-10-14
 
 ### Hinzugefügt
