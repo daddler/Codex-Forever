@@ -4101,6 +4101,18 @@ do
         end
         assert(yellow == 2, "Einstellung Immer Gelb ueberhoert")
         K.Set("questarrow", "routeColor", "auto")
+        -- 6.33.1.0: Weltkarte ohne Route.
+        _G.C_Map.GetMapInfo = function() return { mapType = 1 } end
+        MP.Forget()
+        assert(MP.Update() == n1, "Route auf der Weltkarte gezeichnet")
+        -- Steigende Linie biegt nach oben, fallende nach unten.
+        local got = {}
+        local function rec(x1, y1, x2, y2) got[#got + 1] = y2 end
+        MP.Curve(0.1, 0.5, 0.9, 0.3, rec)
+        assert(got[#got / 2] < 0.4, "steigend nicht nach oben gebogen")
+        got = {}
+        MP.Curve(0.1, 0.3, 0.9, 0.5, rec)
+        assert(got[#got / 2] > 0.4, "fallend nicht nach unten gebogen")
         _G.C_Map.GetMapInfo = nil
         MP.Forget()
         MP.Update()

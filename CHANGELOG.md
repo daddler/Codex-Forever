@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.33.1.0] – 2026-10-14
+
+### Geändert
+- `MP.Curve`: Biegung folgt der Richtung (links→rechts steigend nach oben,
+  fallend nach unten) statt immer zur selben Seite.
+- Route nicht auf der Weltkarte (`MP.IsWorld`, mapType ≤ 1); Linien und
+  Anleger bleiben dort.
+
 ## [6.33.0.0] – 2026-10-14
 
 ### Hinzugefügt

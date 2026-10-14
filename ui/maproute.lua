@@ -108,6 +108,15 @@ MP.RouteLine = RouteLine
 -- einer Stelle verraet der Client nicht; bekannt ist ihre Art: Welt- und
 -- Kontinentkarten sind durchgehend gelb-orange, dort Tuerkis. Einstellbar.
 MP.CONTINENT = 2   -- Enum.UIMapType.Continent: alles bis dahin ist gelb
+MP.WORLD = 1       -- Enum.UIMapType.World (und Cosmic darunter)
+function MP.IsWorld(mapID)
+    local cm = _G.C_Map
+    if not (cm and cm.GetMapInfo) then return false end
+    local ok, info = pcall(cm.GetMapInfo, mapID)
+    local kind = ok and type(info) == "table" and K.Plain(info.mapType)
+    return type(kind) == "number" and kind <= MP.WORLD
+end
+
 function MP.RouteColor(mapID)
     local pick = Get("routeColor") or "auto"
     if pick == "yellow" then return C.routeYellow end
@@ -146,9 +155,11 @@ local function Faction()
 end
 
 -- Geschwungen statt gerade (6.33.0.0): eine Parabel (quadratische Bezier-
--- kurve) mit dem Scheitel MP.BEND der Strecke seitlich der Mitte. Die Seite
--- haengt nur an den Endpunkten, nicht an der Richtung - Hin- und Rueckweg
--- und die Route darueber liegen auf derselben Kurve.
+-- kurve) mit dem Scheitel MP.BEND der Strecke seitlich der Mitte. Seit
+-- 6.33.1.0 folgt die Biegung der Richtung: was (von links nach rechts)
+-- steigt, biegt nach oben, was faellt, nach unten - vorher bogen alle
+-- gleich und die Karte sah aus wie ein Christbaum. Die Seite haengt nur an
+-- den Endpunkten: Hin- und Rueckweg und die Route liegen auf derselben Kurve.
 MP.BEND, MP.SEG = 0.16, 14
 function MP.Curve(x1, y1, x2, y2, draw, width, col, alpha)
     local W, H = K.Plain(canvasRef:GetWidth()), K.Plain(canvasRef:GetHeight())
@@ -156,9 +167,13 @@ function MP.Curve(x1, y1, x2, y2, draw, width, col, alpha)
     local dx, dy = (x2 - x1) * W, (y2 - y1) * H
     local len = math.sqrt(dx * dx + dy * dy)
     if len < 3 * MP.SEG then draw(x1, y1, x2, y2, width, col, alpha) return end
-    local sign = (x1 < x2 or (x1 == x2 and y1 < y2)) and 1 or -1
-    local cx = (x1 + x2) / 2 - sign * dy / len * len * MP.BEND / W
-    local cy = (y1 + y2) / 2 + sign * dx / len * len * MP.BEND / H
+    -- Normale der links-nach-rechts-Richtung zeigt auf dem Bildschirm nach unten.
+    local ox, oy = dx, dy
+    if x1 > x2 or (x1 == x2 and y1 > y2) then ox, oy = -dx, -dy end
+    local nx, ny = -oy / len, ox / len
+    local sign = (oy < 0) and -1 or 1   -- steigend: nach oben
+    local cx = (x1 + x2) / 2 + sign * nx * len * MP.BEND / W
+    local cy = (y1 + y2) / 2 + sign * ny * len * MP.BEND / H
     local n = math.max(6, math.min(32, math.floor(len / MP.SEG)))
     local px, py = x1, y1
     for k = 1, n do
@@ -437,7 +452,9 @@ function MP.Update()
     end
     local mapID, canvas = QM.CurrentMap(), QM.Canvas()
     if not (mapID and canvas) then return 0 end
-    local route = wantR and QA and QA.route or nil
+    -- 6.33.1.0: auf der Weltkarte (alle Kontinente) keine Route - erst ab
+    -- der Kontinent- und Gebietskarte.
+    local route = wantR and QA and not MP.IsWorld(mapID) and QA.route or nil
     local navPath = wantR and QA and QA.navPath or nil
     local colorPick = Get("routeColor")
     -- Mitlaufen: wer sich MP.MOVE weit bewegt hat, bekommt die Route ab

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.33.1.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFRuhigere Weltkarte.|r Schiffslinien biegen jetzt mit ihrer Richtung – steigende nach oben, fallende nach unten – statt alle gleich. Deine Route erscheint erst auf der Karte des Kontinents oder Gebiets, nicht mehr quer über die ganze Welt.",
+        },
+    },
+    {
         version = "6.33.0.0",
         date    = "14.10.2026",
         notes   = {
