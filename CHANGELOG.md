@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.32.3.0] – 2026-10-14
+
+### Geändert
+- Route auf Welt- und Minikarte in Gelb (`routeYellow`) statt der
+  Klassenfarbe, auf der Weltkarte immer mit dunkler Kontur darunter
+  (`routeOutline`, 3 px breiter, eigene Unterebene). Automatisch Türkis
+  (`routeAlt`) auf Karten bis zur Art „Kontinent“ (Welt, Kontinent – dort ist
+  der Grund durchgehend gelb-orange). Einstellung `routeColor`:
+  `auto`/`yellow`/`alt`. Die Farbe der Karte an einer Stelle nennt der Client
+  nicht; deshalb Kontur plus Art der Karte, keine Farbmessung.
+
 ## [6.32.2.0] – 2026-10-14
 
 ### Behoben

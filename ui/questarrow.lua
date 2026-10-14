@@ -114,6 +114,7 @@ local defaults = {
     mapRoute   = true,     -- Route auf der Weltkarte (6.32.1.0, ui/maproute.lua)
     mapLines   = true,     -- Schiffs-, Zeppelin- und Bahnlinien auf der Weltkarte
     taxiReminder = true,   -- unbekannter Flugpunkt in der Naehe: erinnern (6.32.2.0)
+    routeColor = "auto",   -- auto | yellow | alt: Farbe der Route auf der Weltkarte (6.32.3.0)
 }
 
 local SHEET = "Interface\\AddOns\\WeintCodex\\media\\ui\\arrow3d"
@@ -1328,6 +1329,12 @@ K.Register({
                     description = "Gemessene Abfahrtszeiten von Schiffen, Zeppelinen und Tiefenbahn mit Gilde und Gruppe tauschen. Geteilt wird nur der Takt, nie dein Ort." },
                   { type = "toggle", label = "Route auf der Weltkarte", key = "mapRoute",
                     description = "Zeichnet den ganzen Weg auf der Weltkarte: zu Fuß dem Gelände nach, Flüge, Schiffe." })
+            B:Row({ type = "dropdown", label = "Farbe der Route", key = "routeColor", items = {
+                        { value = "auto",   text = "Selbst wählen (Gelb, auf Welt- und Kontinentkarte Türkis)" },
+                        { value = "yellow", text = "Immer Gelb" },
+                        { value = "alt",    text = "Immer Türkis" } },
+                    tooltip = "Die Route hat immer eine dunkle Kontur, damit sie auch auf gelbem Grund zu sehen ist." },
+                  { type = "empty" })
             B:Row({ type = "toggle", label = "Schiffslinien auf der Weltkarte", key = "mapLines",
                     description = "Schiffe und Zeppeline deiner Fraktion als gestrichelte Linien zwischen den Anlegern." },
                   { type = "toggle", label = "An Flugpunkte erinnern", key = "taxiReminder",

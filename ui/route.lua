@@ -714,7 +714,8 @@ local function BuildDots()
     local mm = _G.Minimap
     if dots or type(mm) ~= "table" or not mm.CreateTexture then return dots ~= nil end
     dots = {}
-    local col = C.accent
+    -- Gelb wie auf der Weltkarte (6.32.3.0), nicht die Klassenfarbe.
+    local col = C.routeYellow
     for i = 1, RT.DOTS do
         local t = mm:CreateTexture(nil, "OVERLAY")
         t:SetTexture("Interface\\AddOns\\WeintCodex\\media\\ui\\dot")

@@ -74,7 +74,7 @@ end
 
 function MP.NewLine(parent) return parent:CreateLine(nil, "OVERLAY") end
 
-local function Line(x1, y1, x2, y2, width, col, alpha)
+local function Line(x1, y1, x2, y2, width, col, alpha, sub)
     if not (Inside(x1, y1) or Inside(x2, y2)) then return end
     used = used + 1
     local l = lines[used]
@@ -86,11 +86,38 @@ local function Line(x1, y1, x2, y2, width, col, alpha)
     -- noch keine (6.32.2.0 - die Route lag dadurch unsichtbar in der Ecke).
     local W, H = K.Plain(canvasRef:GetWidth()), K.Plain(canvasRef:GetHeight())
     if type(W) ~= "number" or W < 1 then return end
+    if l.SetDrawLayer then l:SetDrawLayer("OVERLAY", sub or 0) end
     l:SetThickness(width)
     l:SetColorTexture(col[1], col[2], col[3], alpha)
     l:SetStartPoint("TOPLEFT", layer, x1 * W, -y1 * H)
     l:SetEndPoint("TOPLEFT", layer, x2 * W, -y2 * H)
     l:Show()
+end
+
+-- Route: gelb (oder Ausweichfarbe) auf dunkler Kontur - sichtbar auf
+-- jedem Grund, auch auf gelbem (6.32.3.0).
+MP.OUTLINE = 3
+local routeCol = C.routeYellow
+local function RouteLine(x1, y1, x2, y2, width, _, alpha)
+    Line(x1, y1, x2, y2, width + MP.OUTLINE, C.routeOutline, C.routeOutline[4], 1)
+    Line(x1, y1, x2, y2, width, routeCol, alpha, 3)
+end
+MP.RouteLine = RouteLine
+
+-- Welche Farbe die Route auf dieser Karte traegt. Die Farbe der Karte an
+-- einer Stelle verraet der Client nicht; bekannt ist ihre Art: Welt- und
+-- Kontinentkarten sind durchgehend gelb-orange, dort Tuerkis. Einstellbar.
+MP.CONTINENT = 2   -- Enum.UIMapType.Continent: alles bis dahin ist gelb
+function MP.RouteColor(mapID)
+    local pick = Get("routeColor") or "auto"
+    if pick == "yellow" then return C.routeYellow end
+    if pick == "alt" then return C.routeAlt end
+    local cm = _G.C_Map
+    local ok, info = false, nil
+    if cm and cm.GetMapInfo then ok, info = pcall(cm.GetMapInfo, mapID) end
+    local kind = ok and type(info) == "table" and K.Plain(info.mapType)
+    if type(kind) == "number" and kind <= MP.CONTINENT then return C.routeAlt end
+    return C.routeYellow
 end
 
 -- Gestrichelt: Striche von MP.DASH Bildpunkten mit Luecken.
@@ -121,7 +148,7 @@ local function Poly(mapID, count, at, width, col, alpha)
         local c, n, w = at(i)
         local x, y
         if c then x, y = MP.ToMap(mapID, c, n, w) end
-        if x and px then Line(px, py, x, y, width, col, alpha) end
+        if x and px then RouteLine(px, py, x, y, width, col, alpha) end
         px, py = x, y
     end
 end
@@ -189,7 +216,8 @@ end
 
 -- Die Route: vom Spieler ueber alle Etappen bis zum Ziel.
 function MP.DrawRoute(mapID, route, navPath)
-    local col = C.accent
+    routeCol = MP.RouteColor(mapID)
+    local col = routeCol
     local s, g = route.start, route.goal
     if not (s and g) then return end
     local pc, pn, pw = s[1], s[2], s[3]
@@ -204,17 +232,17 @@ function MP.DrawRoute(mapID, route, navPath)
             elseif pc == tc then
                 local x1, y1 = MP.ToMap(mapID, pc, pn, pw)
                 local x2, y2 = MP.ToMap(mapID, tc, tn, tw)
-                if x1 and x2 then Line(x1, y1, x2, y2, MP.ROUTE_WIDTH, col, 0.95) end
+                if x1 and x2 then RouteLine(x1, y1, x2, y2, MP.ROUTE_WIDTH, col, 0.95) end
             end
         elseif leg.mode == "flight" or leg.mode == "portal" then
             if pc == tc then
                 local x1, y1 = MP.ToMap(mapID, pc, pn, pw)
                 local x2, y2 = MP.ToMap(mapID, tc, tn, tw)
-                if x1 and x2 then Line(x1, y1, x2, y2, MP.ROUTE_WIDTH - 1, col, 0.8) end
+                if x1 and x2 then RouteLine(x1, y1, x2, y2, MP.ROUTE_WIDTH - 1, col, 0.9) end
             end
         elseif leg.info and leg.info.stops then
             -- Schiff, Zeppelin, Bahn: von Anleger zu Anleger.
-            MP.Connect(mapID, leg.info, leg.from, node, Line, MP.ROUTE_WIDTH, col, 0.95)
+            MP.Connect(mapID, leg.info, leg.from, node, RouteLine, MP.ROUTE_WIDTH, col, 0.95)
         end
         if node then pc, pn, pw = node.c, node.n, node.w end
     end
@@ -238,11 +266,13 @@ function MP.Update()
     if not (mapID and canvas) then return 0 end
     local route = wantR and QA and QA.route or nil
     local navPath = wantR and QA and QA.navPath or nil
+    local colorPick = Get("routeColor")
     if drawn.map == mapID and drawn.canvas == canvas and drawn.route == route and drawn.nav == navPath
-       and drawn.lines == wantL then
+       and drawn.lines == wantL and drawn.color == colorPick then
         return used
     end
     drawn.map, drawn.canvas, drawn.route, drawn.nav, drawn.lines = mapID, canvas, route, navPath, wantL
+    drawn.color = colorPick
     Layer(canvas)
     used = 0
     if wantL then MP.DrawLines(mapID) end

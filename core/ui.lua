@@ -117,6 +117,14 @@ local C = {
     skillGreen    = {0.251, 0.753, 0.251, 1.0},
     skillGrey     = {0.502, 0.502, 0.502, 1.0},
 
+    -- Route des Questpfeils auf Welt- und Minikarte (6.32.3.0, Wunsch des
+    -- Spielers: gelb, nicht in der Klassenfarbe - auf der Karte am besten zu
+    -- sehen). Auf den gelb-orangen Welt- und Kontinentkarten weicht sie auf
+    -- Tuerkis aus; darunter liegt immer eine dunkle Kontur. Status, nie Klasse.
+    routeYellow   = {1.000, 0.863, 0.102, 1.0}, -- FFDC1A
+    routeAlt      = {0.208, 0.894, 1.000, 1.0}, -- 35E4FF
+    routeOutline  = {0.000, 0.000, 0.000, 0.85},
+
     -- Textstufen (bright > normal > muted > dim > faint > ghost)
     textBright  = {0.969, 0.969, 0.980, 1.0},   -- F7F7FA
     textNormal  = {0.929, 0.929, 0.949, 1.0},   -- EDEDF2

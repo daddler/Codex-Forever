@@ -4001,7 +4001,7 @@ do
         MP.NewLine = function()
             local l = { shown = false }
             function l:SetThickness(t) self.t = t end
-            function l:SetColorTexture(r, g, b, a) self.a = a end
+            function l:SetColorTexture(r, g, b, a) self.r, self.g, self.b, self.a = r, g, b, a end
             function l:SetStartPoint(_, _, x, y) self.x1, self.y1 = x, y end
             function l:SetEndPoint(_, _, x, y) self.x2, self.y2 = x, y end
             function l:Show() self.shown = true end
@@ -4033,10 +4033,38 @@ do
         QA.route = { direct = true, legs = { { mode = "walk" } }, start = { 0, 0, 0 }, goal = { 0, 200, 0 } }
         QA.navPath = { 0, 0, 100, 50, 200, 0 }
         n = MP.Update()
-        assert(n == n1 + 2, "Route auf dem Gelaende: " .. n)
-        assert(MP.Update() == n1 + 2, "ohne Aenderung neu gezeichnet")
+        -- Zwei Abschnitte, je Kontur und Farbe.
+        assert(n == n1 + 4, "Route auf dem Gelaende: " .. n)
+        assert(MP.Update() == n1 + 4, "ohne Aenderung neu gezeichnet")
+        -- 6.32.3.0: Gelb auf dunkler Kontur, nie die Klassenfarbe; auf der
+        -- Kontinentkarte Tuerkis.
+        local yellow, outline = 0, 0
+        for _, l in ipairs(made) do
+            if l.shown and l.r == C.routeYellow[1] and l.g == C.routeYellow[2] then yellow = yellow + 1 end
+            if l.shown and l.r == 0 and l.g == 0 and l.b == 0 then outline = outline + 1 end
+        end
+        assert(yellow == 2 and outline == 2, "Route nicht gelb mit Kontur: " .. yellow .. "/" .. outline)
+        _G.C_Map.GetMapInfo = function() return { mapType = 2 } end
+        MP.Forget()
+        MP.Update()
+        local alt = 0
+        for _, l in ipairs(made) do
+            if l.shown and l.r == C.routeAlt[1] and l.g == C.routeAlt[2] then alt = alt + 1 end
+        end
+        assert(alt == 2, "Kontinentkarte: Route nicht in der Ausweichfarbe")
+        K.Set("questarrow", "routeColor", "yellow")
+        MP.Update()
+        yellow = 0
+        for _, l in ipairs(made) do
+            if l.shown and l.r == C.routeYellow[1] and l.g == C.routeYellow[2] then yellow = yellow + 1 end
+        end
+        assert(yellow == 2, "Einstellung Immer Gelb ueberhoert")
+        K.Set("questarrow", "routeColor", "auto")
+        _G.C_Map.GetMapInfo = nil
+        MP.Forget()
+        MP.Update()
         K.Set("questarrow", "mapLines", false)
-        assert(MP.Update() == 2, "Linien aus, trotzdem gezeichnet")
+        assert(MP.Update() == 4, "Linien aus, trotzdem gezeichnet")
         K.Set("questarrow", "mapLines", true)
         _G.WorldMapFrame = { IsShown = function() return false end }
         assert(MP.Update() == 0, "Karte zu, Linien bleiben")

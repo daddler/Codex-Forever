@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.32.3.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Route ist jetzt gelb – mit dunkler Kontur.|r So hebt sie sich auf der Karte am besten ab, auch auf gelbem Grund. Auf der Welt- und den Kontinentkarten, die selbst gelb-orange sind, wechselt sie von selbst auf Türkis. Unter „Farbe der Route“ lässt sich das festlegen.",
+        },
+    },
+    {
         version = "6.32.2.0",
         date    = "14.10.2026",
         notes   = {
