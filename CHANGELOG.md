@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.33.0.0] – 2026-10-14
+
+### Hinzugefügt
+- Weltkarte (`ui/maproute.lua`): Schiffs-/Zeppelinlinien und die Route darüber
+  als quadratische Bezierkurve (`MP.Curve`, Scheitel 16 % der Strecke, Seite
+  nur von den Endpunkten abhängig). Anleger als Punkte (`MP.Pin`) mit
+  Tooltip je Linie: Ziel (Gebietsname vom Client), „liegt an · fährt in“ bzw.
+  „kommt in · fährt in“ aus dem gemessenen/geteilten Takt, sonst „noch nicht
+  gemessen“; Alter der Messung. Gestrichelte Linien entfallen.
+- Artwork: Razorfen Downs (Kopf + sechs Bosse) und Drowned City (Kopf +
+  Zul'Alai). Die übrigen sechs gelieferten Bilder der Drowned City zeigen
+  Bosse, die nicht im Bestand stehen – nicht eingebaut (Herkunftsregel).
+  Bossbilder 512x128, Köpfe 1024x256, BLP2/DXT1 ohne Mipmaps (≈0,5 MB).
+
 ## [6.32.6.0] – 2026-10-14
 
 ### Geändert

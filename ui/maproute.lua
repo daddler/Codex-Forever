@@ -26,7 +26,6 @@ MP.ROUTE_WIDTH, MP.LINE_WIDTH = 4, 2.5
 
 local layer, canvasRef
 local lines, used = {}, 0
-MP.DASH, MP.GAP = 10, 7
 local drawn = {}
 MP._drawn = drawn
 
@@ -121,23 +120,6 @@ function MP.RouteColor(mapID)
     return C.routeYellow
 end
 
--- Gestrichelt: Striche von MP.DASH Bildpunkten mit Luecken.
-local function Dashed(x1, y1, x2, y2, width, col, alpha)
-    local W, H = K.Plain(canvasRef:GetWidth()), K.Plain(canvasRef:GetHeight())
-    if type(W) ~= "number" or W < 1 then return end
-    local dx, dy = (x2 - x1) * W, (y2 - y1) * H
-    local len = math.sqrt(dx * dx + dy * dy)
-    if len < 1 then return end
-    local step = MP.DASH + MP.GAP
-    local d = 0
-    while d < len do
-        local e = math.min(d + MP.DASH, len)
-        Line(x1 + (x2 - x1) * d / len, y1 + (y2 - y1) * d / len, x1 + (x2 - x1) * e / len, y1 + (y2 - y1) * e / len,
-            width, col, alpha)
-        d = d + step
-    end
-end
-
 local function HideFrom(i)
     for k = i, #lines do lines[k]:Hide() end
 end
@@ -163,23 +145,44 @@ local function Faction()
     return (f == "Alliance" and 1) or (f == "Horde" and 2) or nil
 end
 
--- Verbindung zweier Anleger einer Linie: gerade von Anleger zu Anleger.
+-- Geschwungen statt gerade (6.33.0.0): eine Parabel (quadratische Bezier-
+-- kurve) mit dem Scheitel MP.BEND der Strecke seitlich der Mitte. Die Seite
+-- haengt nur an den Endpunkten, nicht an der Richtung - Hin- und Rueckweg
+-- und die Route darueber liegen auf derselben Kurve.
+MP.BEND, MP.SEG = 0.16, 14
+function MP.Curve(x1, y1, x2, y2, draw, width, col, alpha)
+    local W, H = K.Plain(canvasRef:GetWidth()), K.Plain(canvasRef:GetHeight())
+    if type(W) ~= "number" or W < 1 then return end
+    local dx, dy = (x2 - x1) * W, (y2 - y1) * H
+    local len = math.sqrt(dx * dx + dy * dy)
+    if len < 3 * MP.SEG then draw(x1, y1, x2, y2, width, col, alpha) return end
+    local sign = (x1 < x2 or (x1 == x2 and y1 < y2)) and 1 or -1
+    local cx = (x1 + x2) / 2 - sign * dy / len * len * MP.BEND / W
+    local cy = (y1 + y2) / 2 + sign * dx / len * len * MP.BEND / H
+    local n = math.max(6, math.min(32, math.floor(len / MP.SEG)))
+    local px, py = x1, y1
+    for k = 1, n do
+        local t = k / n
+        local u = 1 - t
+        local x = u * u * x1 + 2 * u * t * cx + t * t * x2
+        local y = u * u * y1 + 2 * u * t * cy + t * t * y2
+        draw(px, py, x, y, width, col, alpha)
+        px, py = x, y
+    end
+end
+
+-- Verbindung zweier Anleger einer Linie: geschwungen von Anleger zu Anleger.
 -- Liegt das Gegenueber auf einem anderen Kontinent, faehrt das Schiff aus
 -- der Karte hinaus: bis zu dem Punkt der Fahrt, an dem es den Kontinent
 -- wechselt (Bahn im Bestand), und vom ersten Punkt danach zum Ziel.
 -- Die Bahn selbst (Anlegemanoever) sah auf der Karte wie Gekritzel aus.
 function MP.Connect(mapID, route, a, b, draw, width, col, alpha)
     if not (a and b) then return end
-    if a.c == b.c then
-        local x1, y1 = MP.ToMap(mapID, a.c, a.n, a.w)
-        local x2, y2 = MP.ToMap(mapID, b.c, b.n, b.w)
-        if x1 and x2 then draw(x1, y1, x2, y2, width, col, alpha) end
-        return
-    end
-    -- Auf jeder Karte, die beide zeigt (Weltkarte): ganz durch.
+    -- Auf jeder Karte, die beide zeigt: ganz durch.
     local x1, y1 = MP.ToMap(mapID, a.c, a.n, a.w)
     local x2, y2 = MP.ToMap(mapID, b.c, b.n, b.w)
-    if x1 and x2 then draw(x1, y1, x2, y2, width, col, alpha) return end
+    if x1 and x2 then MP.Curve(x1, y1, x2, y2, draw, width, col, alpha) return end
+    if a.c == b.c then return end
     local f = route.frames or {}
     for k = 1, #f - 9, 5 do
         if f[k + 2] == a.c and f[k + 7] == b.c then
@@ -208,11 +211,157 @@ function MP.DrawLines(mapID)
             local count = #s / 3
             for i = 1, (count == 2) and 1 or count do
                 local j = i % count + 1
-                MP.Connect(mapID, route, RT.DockNode(s[i * 3 - 2]), RT.DockNode(s[j * 3 - 2]), Dashed,
-                    MP.LINE_WIDTH, col, 0.75)
+                MP.Connect(mapID, route, RT.DockNode(s[i * 3 - 2]), RT.DockNode(s[j * 3 - 2]), Line,
+                    MP.LINE_WIDTH, col, 0.7)
+            end
+            for i = 1, count do MP.Pin(mapID, RT.DockNode(s[i * 3 - 2]), mine) end
+        end
+    end
+end
+
+--------------------------------------------------
+-- Anleger auf der Karte, mit Abfahrten im Tooltip (6.33.0.0)
+--------------------------------------------------
+
+local pins, pinUsed, pinSeen = {}, 0, {}
+MP.PIN = 10
+MP._pins = pins
+
+-- Name des Gebiets an einem Weltpunkt, vom Client (in der Sprache des
+-- Spielers); einmal je Anleger gefragt.
+local zoneCache = {}
+function MP.ZoneName(node)
+    if not node then return nil end
+    if zoneCache[node] ~= nil then return zoneCache[node] or nil end
+    local cm = _G.C_Map
+    local name = false
+    if cm and cm.GetMapPosFromWorldPos and cm.GetMapInfo and _G.CreateVector2D then
+        local ok, id = pcall(cm.GetMapPosFromWorldPos, node.c, _G.CreateVector2D(node.n, node.w))
+        id = ok and K.Plain(id)
+        if type(id) == "number" then
+            local ok2, info = pcall(cm.GetMapInfo, id)
+            local n = ok2 and type(info) == "table" and K.Plain(info.name)
+            if type(n) == "string" and n ~= "" then name = n end
+        end
+    end
+    zoneCache[node] = name
+    return name or nil
+end
+
+local function Clock(sec)
+    sec = math.floor(sec + 0.5)
+    return string.format("%d:%02d", math.floor(sec / 60), sec % 60)
+end
+MP.Clock = Clock
+
+-- Was ein Anleger zu einer Linie weiss: Zeilen links/rechts. Ohne Takt
+-- steht dort, dass noch keiner gemessen ist - nie eine erfundene Zeit.
+function MP.DockLines(node, mine)
+    local RT = WeintCodex.UIRoute
+    local out = {}
+    for _, route in ipairs(node.routes or {}) do
+        if (route.kind == "boat" or route.kind == "zeppelin") and (route.faction == 0 or route.faction == mine) then
+            local s, count = route.stops, #route.stops / 3
+            local here
+            for i = 1, count do if RT.DockNode(s[i * 3 - 2]) == node then here = i end end
+            if here then
+                local names = {}
+                for k = 1, count - 1 do
+                    local other = RT.DockNode(s[((here + k - 1) % count + 1) * 3 - 2])
+                    names[#names + 1] = MP.ZoneName(other) or "?"
+                end
+                local left = "nach " .. table.concat(names, ", dann ")
+                local right
+                local anchor = RT.Anchor(route)
+                if anchor then
+                    local phase = (RT.ServerMs() - anchor.epoch) % route.period
+                    local toArrive = ((s[here * 3 - 1] - phase) % route.period) / 1000
+                    local toDepart = ((s[here * 3] - phase) % route.period) / 1000
+                    if toDepart < toArrive then
+                        right = "liegt an · fährt in " .. Clock(toDepart)
+                    else
+                        right = "kommt in " .. Clock(toArrive) .. " · fährt in " .. Clock(toDepart)
+                    end
+                else
+                    right = "noch nicht gemessen"
+                end
+                out[#out + 1] = { left = left, right = right, known = anchor ~= nil, anchor = anchor }
             end
         end
     end
+    return out
+end
+
+function MP.DockTooltip(pin)
+    local tt = _G.GameTooltip
+    local node = pin.node
+    if not (tt and node) then return end
+    local RT = WeintCodex.UIRoute
+    tt:SetOwner(pin, "ANCHOR_RIGHT")
+    local kind = node.kind2 == "zeppelin" and "Zeppelin" or "Schiff"
+    tt:SetText(kind .. (MP.ZoneName(node) and (" · " .. MP.ZoneName(node)) or ""), 1, 1, 1)
+    local newest
+    for _, row in ipairs(MP.DockLines(node, pin.mine)) do
+        local g = row.known and C.green or C.textMuted
+        tt:AddDoubleLine(row.left, row.right, C.gold[1], C.gold[2], C.gold[3], g[1], g[2], g[3])
+        if row.anchor and (not newest or (row.anchor.seen or 0) > (newest.seen or 0)) then newest = row.anchor end
+    end
+    if newest and RT then
+        local ago = math.max(0, math.floor((RT.ServerMs() / 1000 - (newest.seen or 0)) / 60))
+        local who = newest.from == "shared" and "geteilt" or "von dir"
+        tt:AddLine("Gemessen vor " .. ago .. " min, " .. who, C.textMuted[1], C.textMuted[2], C.textMuted[3])
+    else
+        tt:AddLine("Fahr einmal mit, dann kennt der Codex den Fahrplan.", C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
+    end
+    tt:Show()
+end
+
+local function PinEnter(pin)
+    MP.DockTooltip(pin)
+    pin.acc = 0
+    pin:SetScript("OnUpdate", function(self, el)
+        self.acc = self.acc + (el or 0)
+        if self.acc >= 1 then self.acc = 0 MP.DockTooltip(self) end
+    end)
+end
+local function PinLeave(pin)
+    pin:SetScript("OnUpdate", nil)
+    if _G.GameTooltip then _G.GameTooltip:Hide() end
+end
+
+function MP.Pin(mapID, node, mine)
+    if not node or pinSeen[node] then return end
+    pinSeen[node] = true
+    local x, y = MP.ToMap(mapID, node.c, node.n, node.w)
+    if not (x and x >= 0 and x <= 1 and y >= 0 and y <= 1) then return end
+    local W, H = K.Plain(canvasRef:GetWidth()), K.Plain(canvasRef:GetHeight())
+    if type(W) ~= "number" or W < 1 then return end
+    pinUsed = pinUsed + 1
+    local pin = pins[pinUsed]
+    if not pin then
+        pin = CreateFrame("Button", nil, layer)
+        pin.ring = pin:CreateTexture(nil, "ARTWORK", nil, 1)
+        pin.ring:SetAllPoints(pin)
+        pin.dot = pin:CreateTexture(nil, "ARTWORK", nil, 2)
+        pin.dot:SetPoint("TOPLEFT", pin, "TOPLEFT", 2, -2)
+        pin.dot:SetPoint("BOTTOMRIGHT", pin, "BOTTOMRIGHT", -2, 2)
+        pin:SetScript("OnEnter", PinEnter)
+        pin:SetScript("OnLeave", PinLeave)
+        pins[pinUsed] = pin
+    end
+    pin.node, pin.mine = node, mine
+    local o, a = C.routeOutline, C.routeAlt
+    pin.ring:SetColorTexture(o[1], o[2], o[3], o[4])
+    pin.dot:SetColorTexture(a[1], a[2], a[3], 1)
+    pin:SetSize(MP.PIN, MP.PIN)
+    pin:ClearAllPoints()
+    pin:SetPoint("CENTER", layer, "TOPLEFT", x * W, -y * H)
+    pin:SetFrameLevel((K.Plain(layer:GetFrameLevel()) or 0) + 1)
+    pin:Show()
+end
+
+local function HidePins()
+    for k = pinUsed + 1, #pins do pins[k]:Hide() end
 end
 
 -- Laufweg in Kartenkoordinaten, einmal je Karte und Weg umgerechnet: beim
@@ -282,6 +431,7 @@ function MP.Update()
     local wantR, wantL = MP.WantsRoute(), MP.WantsLines()
     if not ((wantR or wantL) and QM and type(wm) == "table" and wm.IsShown and wm:IsShown()) then
         if used > 0 then HideFrom(1) used = 0 end
+        if pinUsed > 0 then pinUsed = 0 HidePins() end
         drawn.map = nil
         return 0
     end
@@ -304,10 +454,12 @@ function MP.Update()
     drawn.color = colorPick
     drawn.pc, drawn.pN, drawn.pW = nowC, nowN, nowW
     Layer(canvas)
-    used = 0
+    used, pinUsed = 0, 0
+    for k in pairs(pinSeen) do pinSeen[k] = nil end
     if wantL then MP.DrawLines(mapID) end
     if route then MP.DrawRoute(mapID, route, navPath, nowC, nowN, nowW) end
     HideFrom(used + 1)
+    HidePins()
     layer:Show()
     return used
 end

@@ -504,6 +504,56 @@ WeintCodex.Artworks = {
         },
     },
 
+    razorfen_downs = {
+        -- Originale 1983x793, Banner y 100, Bosse 512x128 (siehe make_artwork.py).
+        header = {
+            file = ART .. "razorfen_downs/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            tutenkash = {
+                file = ART .. "razorfen_downs/tutenkash",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            mordresh = {
+                file = ART .. "razorfen_downs/mordresh",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            glutton = {
+                file = ART .. "razorfen_downs/glutton",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            plaguemaw = {
+                file = ART .. "razorfen_downs/plaguemaw",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            ragglesnout = {
+                file = ART .. "razorfen_downs/ragglesnout",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            amnennar = {
+                file = ART .. "razorfen_downs/amnennar",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
+    drowned_city = {
+        -- Originale 1983x793, Banner y 60. Bilder liegen fuer sieben Gestalten
+        -- vor, im Bestand steht aber nur Zul'Alai (data/dungeons.lua) - die
+        -- anderen bekommen erst ein Bild, wenn sie eine Herkunft haben.
+        header = {
+            file = ART .. "drowned_city/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            zulalai = {
+                file = ART .. "drowned_city/zulalai",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
     wailing_caverns = {
         -- Schnitt aus header(2).png (1672x941): x 0, y 240, 1672x418.
         header = {

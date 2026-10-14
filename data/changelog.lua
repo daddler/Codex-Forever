@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.33.0.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFSchiffs- und Zeppelinlinien auf der Weltkarte geschwungen, mit Abfahrten am Anleger.|r Fährst du mit der Maus über einen Anleger, steht dort jede Linie mit Ziel und – sobald gemessen – „liegt an · fährt in 0:47“ oder „kommt in 3:23“. Ungemessene Linien sagen das, statt eine Zeit zu raten.",
+            "|cff7C6CFFRazorfen Downs und die Drowned City sind bebildert.|r Kopfbild und Bossbilder; in der Drowned City nur Zul'Alai, weil die anderen Bosse noch nicht feststehen.",
+        },
+    },
+    {
         version = "6.32.6.0",
         date    = "14.10.2026",
         notes   = {

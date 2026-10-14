@@ -4049,6 +4049,20 @@ do
         MP.Forget()
         local n1 = MP.Update()
         assert(n1 > 0, "keine Schiffslinie")
+        -- 6.33.0.0: geschwungen (mehrere Stuecke) und zwei Anleger mit Tooltip.
+        assert(n1 >= 6, "Schiffslinie nicht geschwungen: " .. n1)
+        local pins = 0
+        for _, p in ipairs(MP._pins) do if p:IsShown() then pins = pins + 1 end end
+        assert(pins == 2, "Anleger auf der Karte: " .. pins)
+        local rows = MP.DockLines(RT.DockNode(1), 1)
+        assert(#rows == 1 and rows[1].right == "noch nicht gemessen", "ohne Takt eine Zeit erfunden")
+        local nowMs = RT.ServerMs()
+        RT.Anchors()[7] = { epoch = (nowMs - 5000) % 100000, seen = math.floor(nowMs / 1000) }
+        rows = MP.DockLines(RT.DockNode(1), 1)
+        assert(rows[1].right == "liegt an · fährt in 0:05", "Anleger 1: " .. rows[1].right)
+        rows = MP.DockLines(RT.DockNode(2), 1)
+        assert(rows[1].right == "kommt in 0:45 · fährt in 0:55", "Anleger 2: " .. rows[1].right)
+        RT.Anchors()[7] = nil
         _G.UnitFactionGroup = function() return "Horde" end
         MP.Forget()
         assert(MP.Update() > n1, "Zeppelin der Horde fehlt fuer die Horde")

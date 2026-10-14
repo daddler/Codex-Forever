@@ -169,6 +169,16 @@ JOBS = [
     ("dungeons/razorfen_kraul/overlord_ramtusk", "razorfen_kraul/overlord_ramtusk.png", (0, 30, 1983, 496), (512, 128)),
     ("dungeons/razorfen_kraul/agathelos", "razorfen_kraul/agathelos_the_raging.png", (0, 40, 1983, 496), (512, 128)),
     ("dungeons/razorfen_kraul/charlga_razorflank", "razorfen_kraul/charlga_razorflank.png", (0, 10, 1983, 496), (512, 128)),
+    # 6.33.0.0: Razorfen Downs und Drowned City (nur Zul'Alai ist ein Boss im Bestand).
+    ("dungeons/razorfen_downs/header", "razorfen_down/banner.png", (0, 100, 1983, 496)),
+    ("dungeons/razorfen_downs/tutenkash", "razorfen_down/tuten-kash.png", (0, 60, 1983, 496), (512, 128)),
+    ("dungeons/razorfen_downs/mordresh", "razorfen_down/mordresh_fire_eye.png", (0, 40, 1983, 496), (512, 128)),
+    ("dungeons/razorfen_downs/glutton", "razorfen_down/glutton.png", (0, 40, 1983, 496), (512, 128)),
+    ("dungeons/razorfen_downs/plaguemaw", "razorfen_down/plaguemaw_the_rotting.png", (0, 60, 1983, 496), (512, 128)),
+    ("dungeons/razorfen_downs/ragglesnout", "razorfen_down/ragglesnout.png", (0, 60, 1983, 496), (512, 128)),
+    ("dungeons/razorfen_downs/amnennar", "razorfen_down/amnennar_the_coldbringer.png", (0, 30, 1983, 496), (512, 128)),
+    ("dungeons/drowned_city/header", "the_drowned_city/banner.png", (0, 60, 1983, 496)),
+    ("dungeons/drowned_city/zulalai", "the_drowned_city/zul-alai.png", (0, 40, 1983, 496), (512, 128)),
 ]
 
 TARGET_W, TARGET_H = 1024, 256
