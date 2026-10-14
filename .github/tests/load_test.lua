@@ -3767,86 +3767,121 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
--- 6.31.0.0: Routenplaner (ui/route.lua) - eigener Code, kein Addon.
+-- 6.31.2.0: Routenplaner (ui/route.lua) - eigener Code, kein Addon.
 -- Flug nur ueber Flugpunkte, die der Client als bekannt gemeldet hat;
--- gemessene Zeit vor geschaetzter; Schiff zum anderen Kontinent; kleiner
--- Gewinn bleibt Luftlinie; fremde Fraktion nie.
+-- gemessene Zeit vor Bestand; Schiff mit Fahrplan zum anderen Kontinent;
+-- Ruhestein nur, wenn er genug spart; Abfahrt erst nach Messung; Insel
+-- nicht zu Fuss; fremde Fraktion nie; kein erfundener Weg.
 do
     local RT = WeintCodex.UIRoute
-    local saved = { _G.C_Map, _G.CreateVector2D, WeintCodex.MapMarksData, RT.Store, _G.UnitFactionGroup,
-        _G.GetUnitSpeed, _G.GetTime, _G.C_TaxiMap, _G.GetTaxiMapID }
+    local saved = { WeintCodex.TravelData, RT.Store, RT.Anchors, _G.UnitFactionGroup, _G.GetUnitSpeed, _G.GetTime,
+        _G.C_TaxiMap, _G.GetTaxiMapID, _G.GetServerTime, _G.C_Item, _G.GetBindLocation, RT.Teleports }
     local ok, err = pcall(function()
-        _G.CreateVector2D = function(x, y) return { x = x, y = y } end
-        _G.C_Map = {
-            -- Karte 1 und 3: Kontinent 0; Karte 2: Kontinent 1. 1000 x 1000.
-            GetWorldPosFromMapPos = function(m, v)
-                return (m == 2) and 1 or 0, { x = 1000 - v.y * 1000, y = 1000 - v.x * 1000 }
-            end,
-            GetMapInfo = function(m) return { name = "Zone " .. m } end,
-        }
         _G.UnitFactionGroup = function() return "Alliance" end
         _G.GetUnitSpeed = function() return 0, 7 end
         local now = 1000
         _G.GetTime = function() return now end
-        local store = { taxi = {}, times = {} }
+        _G.GetServerTime = function() return 50000 end
+        local store, anchors = { taxi = {}, names = {}, times = {} }, {}
         RT.Store = function() return store end
-        WeintCodex.MapMarksData = {
-            flights = { [1] = { 0.1, 0.1, 3, 0.9, 0.9, 1, 0.5, 0.95, 2 } },
-            travel = { [1] = { 0.95, 0.95, 1, 1, 2 }, [2] = { 0.05, 0.05, 1, 1, 1 } },
+        RT.Anchors = function() return anchors end
+        RT.Teleports = function() return {} end
+        -- Kontinent 0: Flugpunkte 1 (Nord) und 2 (Sued), Horde 3; Anleger 10 -> 11 auf Kontinent 1.
+        WeintCodex.TravelData = {
+            taxi = { [1] = { 0, 0, 0, 0, "Nordhain, Wald" }, [2] = { 0, -3000, 0, 1, "Suedwacht, Tal" },
+                     [3] = { 0, -3000, 200, 2, "Hordeposten" } },
+            flights = { 1, 2, 60, 2, 1, 60, 1, 3, 30, 3, 1, 30 },
+            docks = { [10] = { 0, -3100, -100 }, [11] = { 1, 500, 500 } },
+            routes = { [99] = { "boat", 0, 300000, { 10, 0, 60000, 11, 150000, 210000 }, {} } },
+            portals = {}, teleports = {},
+            landmasses = { { 1, 5000, 6000, 5000, 6000 } },
         }
-        local nodes = RT.Build(true)
-        assert(#nodes == 5, "Knoten: " .. #nodes)
-        local A, B, H, D1, D2 = nodes[1], nodes[2], nodes[3], nodes[4], nodes[5]
-        assert(D1.pair == D2 and D2.pair == D1, "Anleger ohne Gegenstueck")
-        local pc, pN, pW = RT.World(1, 0.11, 0.1)
-        local gc, gN, gW = RT.World(1, 0.88, 0.9)
-        -- Nichts bekannt: laufen.
-        local r = RT.Solve(pc, pN, pW, gc, gN, gW)
-        assert(r and r.direct and RT.Next(r) == nil, "ohne bekannte Flugpunkte geflogen")
-        -- Bekannt: ueber den Flugmeister A nach B.
-        store.taxi[A.key], store.taxi[B.key], store.taxi[H.key] = "Nordhain", "Suedwacht", "Horde"
-        r = RT.Solve(pc, pN, pW, gc, gN, gW)
-        local hop = RT.Next(r)
-        assert(hop and hop.node == A and hop.mode == "flight" and hop.leg == "Flug nach Suedwacht",
-            "Flug nicht geplant: " .. tostring(hop and hop.leg))
-        assert(r.seconds < 100, "Reisezeit " .. r.seconds)
-        -- Gemessen: langsamer Flug - dann wieder laufen.
-        store.times[A.key .. ">" .. B.key] = 400
-        assert(RT.Solve(pc, pN, pW, gc, gN, gW).direct, "gemessene Flugzeit ueberhoert")
-        store.times[A.key .. ">" .. B.key] = nil
-        -- Hordeflugpunkt H nahe am Ziel: nie benutzt.
-        local hc, hN, hW = RT.World(1, 0.5, 0.94)
-        r = RT.Solve(pc, pN, pW, hc, hN, hW)
-        for _, leg in ipairs(r.legs) do assert(leg.node ~= H, "fremde Fraktion benutzt") end
-        -- Anderer Kontinent: nur ueber das Schiff.
-        local oc, oN, oW = RT.World(2, 0.2, 0.2)
-        r = RT.Solve(pc, pN, pW, oc, oN, oW)
-        assert(r and not r.direct, "kein Weg zum anderen Kontinent")
-        local boat
-        for _, leg in ipairs(r.legs) do if leg.mode == "boat" then boat = true end end
-        assert(boat, "nicht ueber das Schiff")
-        -- Kein Verkehr: kein Weg, keine Zahl.
-        WeintCodex.MapMarksData = { flights = {}, travel = {} }
         RT.Build(true)
-        assert(RT.Solve(pc, pN, pW, oc, oN, oW) == nil, "Weg erfunden")
-        assert(RT.FormatTime(270) == "4:30" and RT.FormatTime(3725) == "1:02:05", "Zeitformat")
-        -- Flugpunkte vom Client lernen.
-        WeintCodex.MapMarksData = { flights = { [1] = { 0.1, 0.1, 3, 0.9, 0.9, 1 } }, travel = {} }
-        nodes = RT.Build(true)
+        -- Nichts bekannt: laufen (3000 Einheiten = 428 s), Hinweis.
+        local r = RT.Solve(0, 10, 0, 0, -2990, 0)
+        assert(r and r.direct and RT.Next(r) == nil, "ohne bekannte Flugpunkte geflogen")
+        assert(RT.NoTaxiHint(r, 0, 0, 3000), "kein Hinweis auf die Flugkarte")
+        -- Flugkarte geoeffnet: 1 und 2 bekannt, 3 (Horde) gemeldet, aber fremd.
+        _G.GetTaxiMapID = function() return 1415 end
+        _G.C_TaxiMap = { GetAllTaxiNodes = function() return {
+            { nodeID = 1, state = 0, name = "Nordhain" }, { nodeID = 2, state = 1, name = "Südwacht" },
+            { nodeID = 3, state = 2, name = "Hordeposten" }, { nodeID = 77, state = 1, name = "Unbekannt" } } end }
+        assert(RT.LearnTaxi() == 2 and store.taxi[1] and store.taxi[2] and not store.taxi[3], "Flugpunkte falsch gelernt")
+        r = RT.Solve(0, 10, 0, 0, -2990, 0)
+        local hop = RT.Next(r)
+        assert(hop and hop.node.id == 1 and hop.mode == "flight" and hop.leg == "Flug nach Südwacht",
+            "Flug nicht geplant: " .. tostring(hop and hop.leg))
+        assert(math.abs(r.seconds - (10 / 7 + 5 + 60 + 10 / 7)) < 0.01, "Reisezeit " .. r.seconds)
+        -- Gemessen langsam: laufen.
+        store.times["1>2"] = 500
+        assert(RT.Solve(0, 10, 0, 0, -2990, 0).direct, "gemessene Flugzeit ueberhoert")
+        store.times["1>2"] = nil
+        -- Anderer Kontinent: Schiff, ohne Messung "Fahrplan unbekannt" (halber Umlauf).
         store.taxi = {}
-        _G.GetTaxiMapID = function() return 1 end
-        _G.C_TaxiMap = { GetAllTaxiNodes = function()
-            return { { state = 0, name = "Nordhain", position = { x = 0.1005, y = 0.1 } },
-                     { state = 2, name = "Fern", position = { x = 0.9, y = 0.9 } } }
-        end }
-        assert(RT.LearnTaxi() == 1 and store.taxi[nodes[1].key] == "Nordhain" and store.taxi[nodes[2].key] == nil,
-            "Flugpunkte falsch gelernt")
+        r = RT.Solve(0, 10, 0, 1, 520, 500)
+        hop = RT.Next(r)
+        assert(hop and hop.mode == "boat" and hop.untimed and not hop.departIn, "Schiff ohne Fahrplan")
+        assert(RT.Line(r, hop):find("Fahrplan unbekannt", 1, true), "Zeile: " .. tostring(RT.Line(r, hop)))
+        -- Gemessener Takt: Abfahrt genau.
+        anchors[99] = { epoch = 50000 * 1000 - 0, seen = 50000 }
+        r = RT.Solve(0, -3100, -100, 1, 520, 500)
+        hop = RT.Next(r)
+        -- Jetzt Phase 0 (+ 0 s Weg): Abfahrt bei 60 s.
+        assert(hop and hop.departIn and math.abs(hop.departIn - 60) < 1, "Abfahrt: " .. tostring(hop and hop.departIn))
+        assert(RT.Line(r, hop):find("Abfahrt in 1:00", 1, true), "Zeile: " .. RT.Line(r, hop))
+        -- Insel auf Kontinent 1: nicht zu Fuss vom Anleger.
+        assert(RT.Solve(0, 10, 0, 1, 5500, 5500) == nil, "zur Insel gelaufen")
+        -- Ruhestein: nur, wenn er HEARTH_SAVE spart.
+        RT.Teleports = function() return { { t = { spell = 8690, item = 6948, cast = 10000, bind = true },
+            c = 0, n = -2900, w = 0, wait = 15, name = "Südwacht", hearth = true } } end
+        store.taxi = {}
+        r = RT.Solve(0, 10, 0, 0, -2990, 0)
+        hop = RT.Next(r)
+        assert(hop and hop.mode == "teleport" and hop.hearth and hop.leg == "Ruhestein nach Südwacht",
+            "Ruhestein nicht genommen: " .. tostring(hop and hop.leg))
+        r = RT.Solve(0, 10, 0, 0, -400, 0)
+        assert(r.direct, "Ruhestein fuer kleinen Gewinn")
+        RT.Teleports = saved[12]
+        -- Echter Bestand (Beta-Test 6.31.1.0: Rotkammgebirge -> Gnomeregan lief
+        -- 5 km Luftlinie): alle Allianz-Flugpunkte bekannt, Landung in
+        -- Eisenschmiede, nicht in Thorium Point und dann ueber die Berge.
+        WeintCodex.TravelData = saved[1]
+        RT.Build(true)
+        store.taxi = {}
+        for id, t in pairs(saved[1].taxi) do if t[4] ~= 2 then store.taxi[id] = true end end
+        r = RT.Solve(0, -9300, -2000, 0, -5163, 925)
+        local landed
+        for _, leg in ipairs(r.legs) do if leg.mode == "flight" then landed = leg.node.id end end
+        assert(landed == 6, "nicht in Eisenschmiede gelandet: " .. tostring(landed))
+        -- Kein Verkehr: kein Weg, keine Zahl.
+        WeintCodex.TravelData = { taxi = {}, flights = {}, docks = {}, routes = {}, portals = {}, teleports = {} }
+        RT.Build(true)
+        assert(RT.Solve(0, 10, 0, 1, 520, 500) == nil, "Weg erfunden")
+        assert(RT.FormatTime(270) == "4:30" and RT.FormatTime(3725) == "1:02:05", "Zeitformat")
+        -- Abfahrt messen: fuenf Proben auf der Bahn ergeben den Takt.
+        WeintCodex.TravelData = { taxi = {}, flights = {}, docks = { [10] = { 0, 0, 0 } }, portals = {}, teleports = {},
+            routes = { [5] = { "boat", 0, 100000, { 10, 0, 10000 }, { 0, 10000, 0, 0, 0, 40000, 40000, 0, 900, 0 } } } }
+        RT.Build(true)
+        anchors = {}
+        local epoch = 7000000
+        for k = 0, 6 do
+            local tau = 12000 + k * 1000              -- 30 Einheiten je Sekunde
+            RT.Sample(0, (tau - 10000) / 1000 * 30, 0, epoch + tau)
+        end
+        local a = anchors[5]
+        assert(a and math.abs(a.epoch - epoch % 100000) < 50, "Takt nicht gemessen: " .. tostring(a and a.epoch))
+        -- Laufen (7/s) ist keine Fahrt.
+        anchors = {}
+        RT.Sample(nil)
+        for k = 0, 6 do RT.Sample(0, k * 7, 0, epoch + k * 1000) end
+        assert(not anchors[5], "Laufen als Fahrt gemessen")
     end)
-    _G.C_Map, _G.CreateVector2D, WeintCodex.MapMarksData, RT.Store, _G.UnitFactionGroup,
-        _G.GetUnitSpeed, _G.GetTime, _G.C_TaxiMap, _G.GetTaxiMapID = unpack(saved, 1, 9)
+    WeintCodex.TravelData, RT.Store, RT.Anchors, _G.UnitFactionGroup, _G.GetUnitSpeed, _G.GetTime,
+        _G.C_TaxiMap, _G.GetTaxiMapID, _G.GetServerTime, _G.C_Item, _G.GetBindLocation, RT.Teleports = unpack(saved, 1, 12)
     RT.Build(true)
     RT.Invalidate()
-    Check(ok, "Routenplaner: nur bekannte Flugpunkte, gemessen vor geschaetzt, Schiff, Fraktion, kein erfundener Weg"
+    RT.Sample(nil)
+    Check(ok, "Routenplaner: Flugkarte, Fluege, Fahrplan gemessen/unbekannt, Ruhestein, Insel, Fraktion, kein erfundener Weg"
         .. (ok and "" or (": " .. tostring(err))))
 end
 

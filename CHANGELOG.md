@@ -9,6 +9,33 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.31.2.0] – 2026-10-14
+
+### Geändert
+- Routenplaner (`ui/route.lua`) neu auf `data/travel.lua`, **erzeugt** von
+  `.github/scripts/import_travel.py` aus den Datendateien von Shortest Path
+  Forever (nur gelesen, nie ausgeführt; Herkunft dort: wago.tools DB2
+  1.60.1.70338, cmangos classic-db, InFlight/MIT). Flugpunkte mit Kennung
+  (Abgleich mit `C_TaxiMap.GetAllTaxiNodes` über `nodeID` statt Lage),
+  Flugzeit je Strecke, Fahrpläne (Umlauf, Halte, Bahn), Portale, Teleports,
+  Inseln, vorberechnete Laufstrecken zwischen festen Orten. Spieler/Ziel:
+  Luftlinie, mindestens echte Strecke ab dem nächsten festen Ort minus dessen
+  Abstand (`RT.NEAR`).
+- Gespeichert in `WeintCodex_SavedData.route` (je Charakter: Flugpunkte,
+  Namen, gemessene Flugzeiten, Ruhesteinort; je Realm: gemessene Takte).
+
+### Hinzugefügt
+- Ruhestein (nur mit ≥ 120 s Gewinn) und Teleports (bekannt, Reagenzien,
+  Abklingzeit) als erste Etappe. Ort des Ruhesteins aus `HEARTHSTONE_BOUND`
+  oder der Ankunft danach; gilt nur, solange `GetBindLocation` gleich bleibt.
+- Abfahrtszeiten: Mitfahren misst die Lage auf der Bahn (Richtung, Tempo,
+  ≤ 25 Einheiten), fünf übereinstimmende Proben ergeben den Takt, sechs
+  Stunden gültig. Ohne Messung halber Umlauf und „Fahrplan unbekannt“.
+- Minikarte: gepunktete gerade Linie zum nächsten Wegpunkt.
+- Hinweis „Flugpunkte unbekannt – öffne beim Flugmeister die Flugkarte“.
+- Prüflauf: Rotkammgebirge → Gnomeregan landet mit dem echten Bestand in
+  Eisenschmiede.
+
 ## [6.31.1.0] – 2026-10-14
 
 ### Geändert

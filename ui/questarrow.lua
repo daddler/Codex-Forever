@@ -826,6 +826,8 @@ end
 
 function QA.Update(force)
     aim.ok = false
+    -- Die Linie auf der Minikarte zeigt sich nur, wenn dieser Lauf sie zieht.
+    if WeintCodex.UIRoute then WeintCodex.UIRoute.HideMinimap() end
     -- Die Zielmarke zeigt sich nur, wenn dieser Durchlauf sie setzt.
     if marker then marker:Hide() end
     if not frame or frame._unlock then return end
@@ -875,22 +877,33 @@ function QA.Update(force)
         frame:Show()
         return
     end
-    -- Routenplaner (ui/route.lua): schneller ueber Flug, Schiff oder
-    -- Portal? Dann zeigt der Pfeil auf den naechsten Wegpunkt. Die
-    -- Navigation des Spiels (Hoehe, Zielmarke) gilt dem Ziel, nicht ihm.
+    -- Routenplaner (ui/route.lua): schneller ueber Flug, Schiff, Portal
+    -- oder Ruhestein? Dann zeigt der Pfeil auf den naechsten Wegpunkt, die
+    -- Minikarte die Linie dorthin. Die Navigation des Spiels (Hoehe,
+    -- Zielmarke) gilt dem Ziel, nicht dem Wegpunkt.
     local RT = WeintCodex.UIRoute
+    local planning = RT and K.Get(KEY, "routePlan") ~= false
     local route, hop
-    if RT and K.Get(KEY, "routePlan") ~= false then
+    if planning then
         route = RT.Plan(pc, pN, pW, tc, tN, tW)
         hop = RT.Next(route)
     end
     QA.route, QA.hop = route, hop
-    local routeLine = route and not route.direct and ("Route ca. " .. RT.FormatTime(route.seconds)
-        .. (hop and (" · " .. hop.leg) or "")) or nil
+    local routeLine = planning and (RT.Line(route, hop)
+        or (not route or route.direct) and RT.NoTaxiHint(route, pc, tc,
+            pc == tc and math.sqrt((tN - pN) ^ 2 + (tW - pW) ^ 2) or nil)) or nil
+    if hop and hop.mode == "teleport" then
+        arrow:Hide()
+        dist:SetText(hop.hearth and "Ruhestein benutzen" or "Teleport wirken")
+        eta:SetText(routeLine or "")
+        frame:Show()
+        return
+    end
     if hop then
         tc, tN, tW = hop.node.c, hop.node.n, hop.node.w
         if showTitle then title:SetText((name or "") .. " – über " .. hop.waypoint) end
     end
+    if planning then RT.DrawMinimap(pc, pN, pW, tc, tN, tW) end
     if _G.UnitOnTaxi and K.Bool(_G.UnitOnTaxi("player"), false) then
         arrow:Hide()
         dist:SetText("Im Flug")
@@ -898,9 +911,17 @@ function QA.Update(force)
         frame:Show()
         return
     end
+    if planning and RT.Riding() then
+        arrow:Hide()
+        dist:SetText("An Bord")
+        eta:SetText(routeLine or "")
+        frame:Show()
+        return
+    end
     if pc ~= tc then
         arrow:Hide()
         dist:SetText("Anderer Kontinent")
+        eta:SetText(routeLine or "")
         frame:Show()
         return
     end
@@ -938,7 +959,7 @@ function QA.Update(force)
 
     if hop and yards <= math.max(K.Get(KEY, "arriveDistance") or 5, 10) then
         arrow:Hide()
-        dist:SetText(hop.mode == "flight" and ("Beim Flugmeister: " .. hop.leg) or hop.leg)
+        dist:SetText((hop.mode == "flight" and "Beim Flugmeister: " or "Hier einsteigen: ") .. hop.leg)
         eta:SetText(routeLine or "")
         frame:Show()
         return
@@ -1245,7 +1266,7 @@ K.Register({
                   { type = "empty" })
             B:Section("Routenplaner")
             B:Row({ type = "toggle", label = "Schnellsten Weg planen", key = "routePlan",
-                    description = "Zeigt über Flugmeister, Schiffe, Zeppeline, Tiefenbahn und Portale, wenn das schneller ist als laufen. Flugpunkte lernt er, wenn du eine Flugkarte öffnest." },
+                    description = "Zeigt über Flugmeister, Schiffe, Zeppeline, Tiefenbahn, Portale und Ruhestein, wenn das schneller ist als laufen, mit Linie auf der Minikarte. Flugpunkte lernt er, wenn du eine Flugkarte öffnest; Abfahrtszeiten, wenn du mitfährst." },
                   { type = "empty" })
             B:Section("Nach einer Quest")
             B:Row({ type = "dropdown", label = "Wenn die Ziele erfüllt sind", key = "onComplete", items = {

@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.31.2.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Routenplaner kennt jetzt die echten Wege.|r Echte Flugzeiten jeder Strecke, echte Laufwege zwischen Flugmeistern, Anlegern und Portalen – er lässt dich nicht mehr über Berge laufen, die man nicht überqueren kann. Inseln wie Teldrassil erreicht er nur per Schiff oder Portal.",
+            "|cff7C6CFFRuhestein, Teleports, Abfahrtszeiten.|r Spart der Ruhestein mindestens zwei Minuten, schlägt der Pfeil ihn vor; Magier-Teleports ebenso. Fährst du einmal mit einem Schiff, Zeppelin oder der Tiefenbahn, kennt er ihren Takt auf deinem Realm und sagt „Abfahrt in 1:20“ – vorher ehrlich „Fahrplan unbekannt“.",
+            "|cff7C6CFFLinie auf der Minikarte.|r Gepunktet bis zum nächsten Wegpunkt. Und: kennt er noch keinen deiner Flugpunkte, sagt er dir, dass du beim Flugmeister einmal die Flugkarte öffnen musst.",
+        },
+    },
+    {
         version = "6.31.1.0",
         date    = "14.10.2026",
         notes   = {

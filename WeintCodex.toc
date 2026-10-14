@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.31.1.0
+## Version: 6.31.2.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -109,6 +109,8 @@ data/rares.lua
 data/mapreveal.lua
 # Geistheiler und Uebergaenge auf der Weltkarte (6.21.0.0, erzeugt); gelesen von ui/mapmarks.lua.
 data/mapmarks.lua
+# Reisedaten des Routenplaners (6.31.2.0, erzeugt von .github/scripts/import_travel.py); gelesen von ui/route.lua.
+data/travel.lua
 # Questhilfe: Quests, Geber, Ziele (6.30.0.0, erzeugt); gelesen von ui/questhelper.lua.
 data/questdb.lua
 # Stufen und Sammelberufe je Gebiet (6.26.5.0); gelesen von ui/zoneinfo.lua.
