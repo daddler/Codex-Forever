@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.32.6.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFBeide Züge der Tiefenbahn im Fahrplan.|r Eine Fahrt reicht: Der zweite Zug fährt im selben Takt versetzt, und der Pfeil nennt immer den, der zuerst abfährt. Verpasst du einen, steht sofort die Abfahrt des anderen da.",
+        },
+    },
+    {
         version = "6.32.5.0",
         date    = "14.10.2026",
         notes   = {

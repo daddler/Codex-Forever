@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.32.6.0] – 2026-10-14
+
+### Geändert
+- `RT.Anchor`: eine Linie ohne eigenen Takt übernimmt den einer Geschwister-
+  linie mit gleichem Umlauf (`RT.OwnAnchor` für den eigenen). Grund: alle
+  Bahnen laufen ab dem Serverstart (Fahrplanmodell des Bestands, cmangos),
+  die Fahrpläne im Bestand sind gegeneinander schon versetzt. Im Spiel
+  bestätigt (Beta-Test): zweiter Zug kam an, der gemessene fuhr laut Plan
+  85 s später – der Pfeil zeigte „Abfahrt in 1:25“. Der schlechteste Fall
+  für Geschwister aus 6.32.5.0 entfällt; längste Wartezeit an der Tiefenbahn
+  ~75 statt ~143 s.
+
 ## [6.32.5.0] – 2026-10-14
 
 ### Behoben

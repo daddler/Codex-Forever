@@ -276,7 +276,24 @@ end
 -- Fahrplan
 --------------------------------------------------
 
+-- Der Takt einer Linie: gemessen oder geteilt - oder der einer Geschwister-
+-- linie mit gleichem Umlauf. Alle Bahnen laufen ab dem Serverstart (Fahrplan-
+-- modell des Bestands, cmangos TransportMgr): gleicher Umlauf heisst gleicher
+-- Beginn, die Fahrplaene im Bestand sind schon gegeneinander versetzt.
+-- Beta-Test 6.32.5.0 bestaetigt: zweiter Zug kam an, der gemessene fuhr
+-- laut Plan genau 85 s spaeter ("Abfahrt in 1:25").
 function RT.Anchor(route)
+    local own = RT.OwnAnchor(route)
+    if own then return own end
+    for _, other in ipairs(route.siblings or {}) do
+        if other.period == route.period then
+            local a = RT.OwnAnchor(other)
+            if a then return a end
+        end
+    end
+end
+
+function RT.OwnAnchor(route)
     local anchors = RT.Anchors()
     local a = anchors and anchors[route.id]
     if not a then return nil end
@@ -296,14 +313,6 @@ function RT.Ride(route, i, j, at)
     if anchor then
         local phase = (RT.ServerMs() + at * 1000 - anchor.epoch) % period
         return ((depart - phase) % period) / 1000, ride, true
-    end
-    -- Fahren zwischen denselben Anlegern mehrere Linien (Tiefenbahn: zwei
-    -- Zuege auf eigenen Gleisen) und eine davon ist gemessen, rechnet die
-    -- ungemessene mit dem schlechtesten Fall (ein ganzer Umlauf). Sonst
-    -- "gewann" ihr Mittelwert gegen die echte Wartezeit der gemessenen, und
-    -- der Pfeil sagte "Fahrplan unbekannt" (Beta-Test 6.32.4.0).
-    for _, other in ipairs(route.siblings or {}) do
-        if RT.Anchor(other) then return period / 1000, ride, false end
     end
     return period / 2000, ride, false
 end
