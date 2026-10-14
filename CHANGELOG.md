@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.33.5.0] – 2026-10-14
+
+### Behoben
+- Chat bei `bgAlpha` 0: Schatten (`d.shadow`) und die Grundflächen des
+  Spiels als Felder des Fensters (`CH.GAME_BG`) ebenfalls aus.
+- Mikromenü/Taschenleiste: Ziehen im Bearbeitungsmodus des Spiels wird
+  übernommen (`OnDragStart`/`OnDragStop` gehakt, `AB.Adopt` speichert die
+  linke untere Ecke); während des Ziehens setzt `AB.HoldPlace` nichts zurück.
+
 ## [6.33.4.0] – 2026-10-14
 
 ### Behoben

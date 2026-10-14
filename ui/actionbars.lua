@@ -966,8 +966,22 @@ function AB.HoldPlace(f, e)
     AB.held = AB.held or {}
     AB.held[f] = true
     if not _G.hooksecurefunc then return end
+    -- 6.33.5.0 (Beta-Test: im Bearbeitungsmodus des Spiels verschoben, nach
+    -- dem Loslassen sprang es zurueck): wer es dort zieht, meint diesen
+    -- Platz. Nach dem Ziehen im Bearbeitungsmodus wird er unser Platz.
+    -- Waehrend des Ziehens (Start bis Ende des Loslassens, samt dem SetPoint
+    -- des Spiels darin) wird nichts zurueckgesetzt.
+    AB.editDrag = AB.editDrag or {}
+    if type(f.OnDragStart) == "function" then
+        _G.hooksecurefunc(f, "OnDragStart", function() AB.editDrag[f] = true end)
+    end
+    if type(f.OnDragStop) == "function" then
+        _G.hooksecurefunc(f, "OnDragStop", function()
+            if AB.editDrag[f] then AB.editDrag[f] = nil AB.Adopt(f, e) end
+        end)
+    end
     _G.hooksecurefunc(f, "SetPoint", function()
-        if AB.placeGuard or K.dragging == e.key then return end
+        if AB.placeGuard or K.dragging == e.key or AB.editDrag[f] then return end
         if Opt(e.opt) ~= e.want then return end
         K.AfterCombat(function()
             if AB.placeGuard or K.dragging == e.key then return end
@@ -975,6 +989,22 @@ function AB.HoldPlace(f, e)
             K.ApplyPosition(e.key)
             AB.placeGuard = false
         end)
+    end)
+end
+
+-- Den jetzigen Platz eines Rahmens als unseren uebernehmen: linke untere
+-- Ecke in Einheiten des Rahmens (er ist skaliert), an UIParent.
+function AB.Adopt(f, e)
+    if Opt(e.opt) ~= e.want then return end
+    local ui = K.Profile()
+    local left, bottom = Num(f, "GetLeft"), Num(f, "GetBottom")
+    if not (ui and ui.positions and left and bottom) then return end
+    ui.positions[e.key] = { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT",
+        x = math.floor(left + 0.5), y = math.floor(bottom + 0.5) }
+    K.AfterCombat(function()
+        AB.placeGuard = true
+        K.ApplyPosition(e.key)
+        AB.placeGuard = false
     end)
 end
 

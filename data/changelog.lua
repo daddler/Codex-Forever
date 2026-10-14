@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.33.5.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFChat bei 0 % wirklich unsichtbar.|r Auch der Schatten um das Fenster und der Grund des Spiels verschwinden – sichtbar bleibt nur die Schrift, in jedem Chatfenster.",
+            "|cff7C6CFFMikromenü im Bearbeitungsmodus verschieben.|r Wo du es dort loslässt, bleibt es jetzt stehen, statt nach unten links zurückzuspringen.",
+        },
+    },
+    {
         version = "6.33.4.0",
         date    = "14.10.2026",
         notes   = {

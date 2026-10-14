@@ -252,6 +252,9 @@ function CH.Clamp(cf)
     end)
 end
 
+CH.GAME_BG = { "Background", "TopLeftTexture", "TopRightTexture", "BottomLeftTexture",
+    "BottomRightTexture", "TopTexture", "BottomTexture", "LeftTexture", "RightTexture" }
+
 local function ApplyFrame(cf, d)
     PinBack(d)
     if not d.pinHooked and _G.hooksecurefunc and cf.SetFrameStrata then
@@ -277,6 +280,14 @@ local function ApplyFrame(cf, d)
     local hair = WeintCodex.Colors.border
     d.hair:SetColorTexture(hair[1], hair[2], hair[3], clear and 0 or 1)
     for _, e in ipairs(d.edges or {}) do e:SetShown(not clear) end
+    -- 6.33.5.0: auch der Schatten um die Kachel (zweites Fenster im
+    -- Beta-Test: dunkler Hof blieb stehen) und der Grund des Spiels in
+    -- neueren Clients (cf.Background und die Rahmenteile als Felder).
+    if d.shadow then d.shadow:SetShown(not clear) end
+    for _, k in ipairs(CH.GAME_BG) do
+        local r = cf[k]
+        if type(r) == "table" and r.SetAlpha and not (r.IsForbidden and r:IsForbidden()) then Hide(r) end
+    end
     if CH.infoFrame and CH.infoFrame.kachel then CH.infoFrame.kachel:SetShown(not clear) end
 
     if d.tab and Opt("flatTabs") then
