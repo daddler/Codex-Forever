@@ -67,8 +67,17 @@ local function Layer(canvas)
     end
     layer:ClearAllPoints()
     layer:SetAllPoints(canvas)
-    local lvl = K.Plain(canvas.GetFrameLevel and canvas:GetFrameLevel())
-    layer:SetFrameLevel((type(lvl) == "number" and lvl or 0) + 3)
+    -- 6.33.2.0: ueber den erkundeten Gebieten und der Abdunklung des
+    -- Unerkundeten (ui/mapreveal.lua) - vorher lag die Route darunter.
+    -- Dieselbe Ebene wie die eigenen Kartensymbole, knapp darunter.
+    local ME = WeintCodex.UIMapEntrances
+    local base = ME and ME.BaseLevel and ME.BaseLevel(canvas)
+    if type(base) == "number" then
+        layer:SetFrameLevel(math.max(0, base - 2))
+    else
+        local lvl = K.Plain(canvas.GetFrameLevel and canvas:GetFrameLevel())
+        layer:SetFrameLevel((type(lvl) == "number" and lvl or 0) + 3)
+    end
     return layer
 end
 

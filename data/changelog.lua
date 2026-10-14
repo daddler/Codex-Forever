@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.33.2.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Route liegt über dem Unerkundeten der Karte.|r Vorher verschwand sie unter der Abdunklung, sobald sie durch ein Gebiet lief, das du noch nicht aufgedeckt hast.",
+            "|cff7C6CFFMikromenü und Taschenleiste ohne goldene Rahmen.|r Das Mikromenü steht auf einer Kachel wie die Aktionsleisten, die Taschenleiste verliert ihren Rahmen und die Trenner; auch der Schlüsselbund ist flach.",
+        },
+    },
+    {
         version = "6.33.1.0",
         date    = "14.10.2026",
         notes   = {

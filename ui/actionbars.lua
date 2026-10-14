@@ -96,6 +96,7 @@ local defaults = {
     -- Bearbeitungsmodus des Spiels bestimmt alles.
     layout       = "wc",     -- wc | game
     bagsSkin     = true,     -- Taschenleiste wie die Aktionsknoepfe (6.3.0.7)
+    microSkin    = true,     -- Mikromenue ohne Rahmen des Spiels, auf Kachel (6.33.2.0)
     microShow    = "always", -- always | mouseover (6.3.0.8)
     bagsShow     = "always", -- always | mouseover
     editBar      = 1,        -- welche Leiste die Einstellungsseite zeigt
@@ -716,7 +717,8 @@ local function Faded()
     for _, e in ipairs(EXTRA) do
         local f = Frame(unpack(e.frames))
         if f then
-            list[#list + 1] = { frame = f, on = Opt(e.key) == "mouseover", bags = e.key == "bagsShow" }
+            list[#list + 1] = { frame = f, on = Opt(e.key) == "mouseover", bags = e.key == "bagsShow",
+                micro = e.key == "microShow" }
         end
     end
     return list
@@ -725,6 +727,7 @@ end
 local function Extra(t)
     if t.bar then return AB.backdrops[t.frame] end
     if t.bags then return AB.bagsBackdrop end
+    if t.micro then return AB.microBackdrop end
     return nil
 end
 
@@ -808,7 +811,7 @@ AB.HidePaging = HidePaging
 -- des Spiels (Tasche oeffnen, Taschen ziehen); keine geschuetzten Rahmen.
 
 local BAG_BUTTONS = { "MainMenuBarBackpackButton", "CharacterBag0Slot", "CharacterBag1Slot",
-    "CharacterBag2Slot", "CharacterBag3Slot", "CharacterReagentBag0Slot" }
+    "CharacterBag2Slot", "CharacterBag3Slot", "CharacterReagentBag0Slot", "KeyRingButton" }
 AB.BAG_BUTTONS = BAG_BUTTONS
 
 local function SkinBags()
@@ -839,6 +842,9 @@ local function SkinBags()
         end
     end
     if type(bar) == "table" and not (bar.IsForbidden and bar:IsForbidden()) then
+        -- 6.33.2.0 (/wcui fenster BagsBar): Rahmen der Leiste und die Trenner
+        -- zwischen den Plaetzen (TopEdge/BottomEdge/Center) blieben stehen.
+        AB.HideArt(bar)
         if not AB.bagsBackdrop then
             local bd = CreateFrame("Frame", nil, bar)
             bd.kachel = K.Kachel(bd, { shadow = 6 })
@@ -852,9 +858,68 @@ local function SkinBags()
 end
 AB.SkinBags = SkinBags
 
+--------------------------------------------------
+-- Mikromenue (6.33.2.0)
+--------------------------------------------------
+-- /wcui fenster MicroMenuContainer: Hintergrund und Rahmen der Leiste
+-- (MicroMenu.BackgroundArt/BorderArt) und hinter jedem Knopf eine eigene
+-- Flaeche (.Background) und am Charakterknopf ein Schatten - alles goldene
+-- Kunst des Spiels. Weg damit; die Symbole der Knoepfe bleiben, dahinter
+-- eine Kachel wie bei der Taschenleiste.
+
+-- Rahmenkunst einer Leiste und der Trenner in ihren Kindern ausblenden.
+local ART_KEYS = { "BorderArt", "BackgroundArt", "EndCaps" }
+local EDGE_KEYS = { "TopEdge", "BottomEdge", "Center" }
+function AB.HideArt(bar)
+    for _, k in ipairs(ART_KEYS) do
+        local r = bar[k]
+        if type(r) == "table" and r.SetAlpha then KeepHidden(r) end
+    end
+    if not bar.GetChildren then return end
+    for _, child in ipairs({ bar:GetChildren() }) do
+        local kind = type(child) == "table" and child.GetObjectType and child:GetObjectType()
+        if kind ~= "Button" and kind ~= "CheckButton" then
+            for _, k in ipairs(EDGE_KEYS) do
+                local r = child[k]
+                if type(r) == "table" and r.SetAlpha then KeepHidden(r) end
+            end
+        end
+    end
+end
+
+local MICRO_PARTS = { "Background", "Shadow", "PushedBackground", "FlashBorder" }
+local function SkinMicro()
+    if not Opt("microSkin") then return end
+    local menu = Frame("MicroMenu", "MicroMenuContainer")
+    if not menu or (menu.IsForbidden and menu:IsForbidden()) then return end
+    AB.HideArt(menu)
+    if menu.GetChildren then
+        for _, b in ipairs({ menu:GetChildren() }) do
+            if type(b) == "table" and not (b.IsForbidden and b:IsForbidden()) then
+                for _, k in ipairs(MICRO_PARTS) do
+                    local r = b[k]
+                    if type(r) == "table" and r.SetAlpha then KeepHidden(r) end
+                end
+            end
+        end
+    end
+    local holder = Frame("MicroMenuContainer", "MicroMenu")
+    if holder and not AB.microBackdrop then
+        local bd = CreateFrame("Frame", nil, holder)
+        bd.kachel = K.Kachel(bd, { shadow = 6 })
+        bd:SetPoint("TOPLEFT", menu, "TOPLEFT", -BACKDROP_PAD, BACKDROP_PAD)
+        bd:SetPoint("BOTTOMRIGHT", menu, "BOTTOMRIGHT", BACKDROP_PAD, -BACKDROP_PAD)
+        bd:SetFrameLevel(math.max(0, (Num(menu, "GetFrameLevel") or 1) - 1))
+        AB.microBackdrop = bd
+    end
+    if AB.microBackdrop then AB.microBackdrop:SetShown(Opt("barBackdrop") and true or false) end
+end
+AB.SkinMicro = SkinMicro
+
 local function Arrange()
     LayoutAll()
     SkinBags()
+    SkinMicro()
     SkinAll()
     UpdateBackdrops()
     HidePaging()
@@ -1170,6 +1235,9 @@ K.Register({
             -- 6.10.1.0: Randfarbe, Schriftgroessen und Kleinigkeiten am Symbol zugeklappt.
             B:Advanced()
             B:Section("Feinheiten der Knöpfe")
+            B:Row({ type = "toggle", label = "Mikromenü im WeintCodex-Stil", key = "microSkin", reload = true,
+                    description = "Die Symbole auf einer Kachel, ohne Rahmen und Flächen des Spiels." },
+                  { type = "empty" })
             B:Row({ type = "toggle", label = "Roter Punkt: Kontrolle wirkt nicht", key = "ccDot",
                     description = "Oben links am Knopf, wenn Verwandlung, Kopfnuss, Fesseln, Verbannen & Co. beim Ziel nicht wirken – etwa Verwandlung auf Untote. Regeln wie in Classic." },
                   { type = "empty" })

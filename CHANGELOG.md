@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.33.2.0] – 2026-10-14
+
+### Geändert
+- Weltkarte: Ebene der Route über `ME.BaseLevel` (über Erkundetem und
+  `ui/mapreveal.lua`), knapp unter den eigenen Kartensymbolen.
+- Aktionsleisten: `AB.SkinMicro` (Schalter `microSkin`, Erweitert) blendet
+  `MicroMenu.BackgroundArt/BorderArt`, je Knopf `Background`/`Shadow` aus,
+  Kachel dahinter; `AB.HideArt` nimmt der Taschenleiste `BorderArt` und die
+  Trenner (`TopEdge/BottomEdge/Center`); `KeyRingButton` wird mitgestaltet.
+
 ## [6.33.1.0] – 2026-10-14
 
 ### Geändert
