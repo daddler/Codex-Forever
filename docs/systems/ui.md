@@ -165,7 +165,8 @@ weil sie genau das sind, wofür er steht.
 | `ui/gamegroup.lua` | **Gruppenrahmen des Spiels im WeintCodex-Stil** (Standard seit 6.6.0.9): nur sie zeigen HoTs, Buffs, Schilde und Debuffs im Kampf |
 | `ui/clickcast.lua` | **Klickzauber**: Maustaste + Zusatztaste wirkt einen Zauber auf die Einheit des Rahmens (Reiter der Gruppenrahmen) |
 | `ui/questarrow.lua` | Questpfeil |
-| `ui/route.lua` | Routenplaner des Questpfeils (seit 6.31.2.0 auf `data/travel.lua`, erzeugt von `.github/scripts/import_travel.py`): Flug nur über vom Client gemeldete Flugpunkte (Flugkarte, `nodeID`), Flugzeiten je Strecke/gemessen, echte Laufstrecken zwischen festen Orten, Fahrpläne mit gemessenem Takt (sonst „Fahrplan unbekannt“), Ruhestein/Teleports, Inseln; gerade Linie auf der Minikarte – kein Gelände im Addon |
+| `ui/navmesh.lua` | Geländekarte (6.32.0.0): Laufweg über `data/nav/*.lua` (erzeugt von `.github/scripts/import_nav.py`), Zellen im Start-/Zielabschnitt, A* über Eingänge, Coroutine 2 ms/Bild; `NV.Path`/`NV.Steer` für Pfeil und Minikarte |
+| `ui/route.lua` | Routenplaner des Questpfeils (seit 6.31.2.0 auf `data/travel.lua`, erzeugt von `.github/scripts/import_travel.py`): Flug nur über vom Client gemeldete Flugpunkte (Flugkarte, `nodeID`), Flugzeiten je Strecke/gemessen, echte Laufstrecken zwischen festen Orten, Fahrpläne mit gemessenem Takt (sonst „Fahrplan unbekannt“), Ruhestein/Teleports, Inseln; Linie auf der Minikarte (dem Gelände folgend mit `ui/navmesh.lua`); Abfahrtszeiten teilen über `WCRT` (6.32.0.0); Ruhestein aus Rasten im Bindeort |
 | `ui/comfort.lua` | Komfortfunktionen |
 | `ui/automark.lua` | Automark (6.8.1.0): Tank und Heiler beim Betreten einer Instanz markieren – seit 6.9.0.2 über einen Knopf (Markieren ist geschützt) – Seite im Komfort |
 | `ui/macros.lua` | Makro-Helfer (6.8.1.0): was, auf wen, welcher Zauber → Makrotext mit Erklärung, anlegen/ersetzen/aufnehmen – Seite der Aktionsleisten |

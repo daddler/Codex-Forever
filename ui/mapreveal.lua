@@ -228,6 +228,9 @@ function MR.Draw(mapID, canvas)
         end
     end
     HideFrom(n + 1)
+    -- Weicher Rand der Karte auch fuer neue Kacheln (ui/windows.lua).
+    local W = WeintCodex.UIWindows
+    if W and W.MaskMapLayer then W.MaskMapLayer(layer) end
     layer:Show()
     drawnMap, drawnCanvas = mapID, canvas
     dirty = false

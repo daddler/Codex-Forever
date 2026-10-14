@@ -3853,6 +3853,19 @@ do
         local landed
         for _, leg in ipairs(r.legs) do if leg.mode == "flight" then landed = leg.node.id end end
         assert(landed == 6, "nicht in Eisenschmiede gelandet: " .. tostring(landed))
+        -- Ruhestein: ohne Messung vom Flugpunkt gleichen Namens; Rasten im
+        -- Bindeort misst ihn.
+        local oldBL, oldIR, oldMZ, oldPW = _G.GetBindLocation, _G.IsResting, _G.GetMinimapZoneText, K.PlayerWorld
+        _G.GetBindLocation = function() return "Seenhain" end
+        store.names[5] = "Seenhain, Rotkammgebirge"
+        local b = RT.BindPoint()
+        assert(b and b.guessed and math.abs(b.n - saved[1].taxi[5][2]) < 1, "Ruhestein nicht vom Flugpunkt")
+        _G.IsResting = function() return true end
+        _G.GetMinimapZoneText = function() return "Seenhain" end
+        K.PlayerWorld = function() return 0, -9400, -2200 end
+        assert(RT.CheckBind() and store.bind and store.bind.n == -9400 and not RT.BindPoint().guessed, "Rasten misst nicht")
+        _G.GetBindLocation, _G.IsResting, _G.GetMinimapZoneText, K.PlayerWorld = oldBL, oldIR, oldMZ, oldPW
+        store.bind, store.names[5] = nil, nil
         -- Kein Verkehr: kein Weg, keine Zahl.
         WeintCodex.TravelData = { taxi = {}, flights = {}, docks = {}, routes = {}, portals = {}, teleports = {} }
         RT.Build(true)
@@ -3870,6 +3883,27 @@ do
         end
         local a = anchors[5]
         assert(a and math.abs(a.epoch - epoch % 100000) < 50, "Takt nicht gemessen: " .. tostring(a and a.epoch))
+        -- Teilen: juengerer Takt aus der Gilde gilt, aelterer nicht, eigener nicht.
+        local oldIG, oldUN = _G.IsInGuild, _G.UnitName
+        _G.IsInGuild = function() return true end
+        _G.UnitName = function() return "Ich" end
+        local nowS = math.floor(RT.ServerMs() / 1000)
+        anchors = {}
+        assert(RT.OnAddon("WCRT", "A:5:1234:" .. nowS, "GUILD", "Freund-Realm"), "Takt der Gilde abgelehnt")
+        assert(anchors[5] and anchors[5].epoch == 1234, "Takt nicht uebernommen")
+        assert(not RT.OnAddon("WCRT", "A:5:999:" .. (nowS - 100), "GUILD", "Freund"), "aelterer Takt uebernommen")
+        assert(not RT.OnAddon("WCRT", "A:5:999:" .. (nowS + 5), "GUILD", "Ich"), "eigene Nachricht uebernommen")
+        assert(not RT.OnAddon("WCRT", "A:5:999:" .. (nowS + 5), "WHISPER", "Fremd"), "Fluestern uebernommen")
+        assert(not RT.OnAddon("WCRT", "A:5:200000:" .. (nowS + 5), "GUILD", "Freund"), "Takt ausserhalb des Umlaufs")
+        local _, h0, t0 = RT._queue()
+        assert(RT.OnAddon("WCRT", "Q", "GUILD", "Freund"), "Frage nicht beantwortet")
+        local q, h1, t1 = RT._queue()
+        assert(t1 == t0 + 1 and q[t1]:find("^A:5:1234:"), "Antwort nicht in der Schlange")
+        K.Set("questarrow", "shareTimes", false)
+        assert(not RT.OnAddon("WCRT", "A:5:777:" .. (nowS + 5), "GUILD", "Freund"), "Teilen aus, trotzdem uebernommen")
+        K.Set("questarrow", "shareTimes", true)
+        while RT.SendNext() ~= false do end
+        _G.IsInGuild, _G.UnitName = oldIG, oldUN
         -- Laufen (7/s) ist keine Fahrt.
         anchors = {}
         RT.Sample(nil)
@@ -3883,6 +3917,45 @@ do
     RT.Sample(nil)
     Check(ok, "Routenplaner: Flugkarte, Fluege, Fahrplan gemessen/unbekannt, Ruhestein, Insel, Fraktion, kein erfundener Weg"
         .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
+-- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
+-- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.
+do
+    local NV = WeintCodex.UINav
+    local ok, err = pcall(function()
+        local A = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        local function E(v, w)
+            local s = ""
+            for _ = 1, w do s = A:sub(v % 64 + 1, v % 64 + 1) .. s v = math.floor(v / 64) end
+            return s
+        end
+        -- Knoten: Zelle(3) Ebene(1) Teil(2) Grad(1); Kante: Versatz(1) Knoten(2) Kosten(2) Kosten(2).
+        local g0 = E(1, 2) .. E(13, 3) .. E(0, 1) .. E(0, 2) .. E(1, 1) .. E(7, 1) .. E(0, 2) .. E(10, 2) .. E(10, 2)
+        local g1 = E(1, 2) .. E(1, 3) .. E(0, 1) .. E(0, 2) .. E(1, 1) .. E(1, 1) .. E(0, 2) .. E(10, 2) .. E(10, 2)
+        WeintCodex.NavData[99] = { cx0 = 0, cy0 = 0, nx = 2, ny = 1, cells = 4, swim = 3, graph = {}, grid = {}, fcell = {},
+            raw = { graph = { [1] = g0, [2] = g1 }, grid = { [1] = "Q+", [2] = "Q+" }, fcell = {} } }
+        local cs = NV.TILE / 4
+        assert(NV.Num(E(4000, 3), 1, 3) == 4000, "Base64")
+        local path, len = NV.Search(99, 0.5 * cs, 1.5 * cs, NV.TILE + 3.5 * cs, 1.5 * cs)
+        assert(path and #path >= 6, "kein Weg")
+        assert(math.abs(path[#path - 1] - (NV.TILE + 3.5 * cs)) < 0.01, "Ende nicht am Ziel")
+        assert(len > 10 and len < 2000, "Laenge " .. tostring(len))
+        -- Verteilt: NV.Path startet, Pump rechnet fertig.
+        NV.Reset()
+        assert(NV.Path(99, 0.5 * cs, 1.5 * cs, NV.TILE + 3.5 * cs, 1.5 * cs) == nil, "sofort fertig")
+        for _ = 1, 50 do NV.Pump() end
+        local p2 = NV.Path(99, 0.5 * cs, 1.5 * cs, NV.TILE + 3.5 * cs, 1.5 * cs)
+        assert(p2, "Pump ohne Ergebnis")
+        local sN, sW, rest = NV.Steer(p2, 0.5 * cs, 1.5 * cs)
+        assert(sN > 0.5 * cs and rest > 0, "Pfeil nicht voraus")
+        -- Ohne Karte fuer den Kontinent: nichts.
+        assert(NV.Path(98, 0, 0, 10, 10) == nil, "Weg ohne Karte")
+    end)
+    WeintCodex.NavData[99] = nil
+    NV.Reset()
+    Check(ok, "Gelaendekarte: Eingaenge, Gitter, verteilt, Pfeil voraus" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- Questpfeil: die 3D-Ansichten und die Farbe.

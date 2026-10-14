@@ -334,11 +334,22 @@ local function Cooldown(t)
 end
 RT.Cooldown = Cooldown
 
+-- Wohin der Ruhestein fuehrt. Gemessen (st.bind) oder, solange nicht
+-- gemessen, der Flugpunkt, dessen Name mit dem Bindeort beginnt
+-- ("Seenhain" -> "Seenhain, Rotkammgebirge") - das Gasthaus liegt im Ort.
 local function BindPoint()
     local st = RT.Store()
     local b = st and st.bind
     local name = _G.GetBindLocation and K.Plain(_G.GetBindLocation())
-    if b and type(name) == "string" and b.name == name then return b end
+    if type(name) ~= "string" or name == "" then return nil end
+    if b and b.name == name then return b end
+    RT.Build()
+    for id, node in pairs(taxiNode or {}) do
+        local n = st and st.names[id] or node.name
+        if type(n) == "string" and (n == name or n:sub(1, #name + 1) == name .. ",") then
+            return { name = name, c = node.c, n = node.n, w = node.w, guessed = true }
+        end
+    end
 end
 RT.BindPoint = BindPoint
 
@@ -606,7 +617,7 @@ function RT.Invalidate() last.at = -100 last.gc = nil end
 -- Minikarte: gerade Linie zum naechsten Wegpunkt
 --------------------------------------------------
 
-RT.DOTS, RT.DOT_GAP = 24, 9
+RT.DOTS, RT.DOT_GAP = 40, 8
 local dots, pin
 RT._dots = function() return dots end
 
@@ -637,8 +648,16 @@ function RT.HideMinimap()
     pin:Hide()
 end
 
--- pc/pN/pW: Spieler; tc/tN/tW: Wegpunkt oder Ziel.
-function RT.DrawMinimap(pc, pN, pW, tc, tN, tW)
+-- Bildpunkte auf der Minikarte zu einer Weltlage (vom Spieler aus).
+local function MiniXY(pN, pW, n, w, f, cs, sn)
+    local east, north = pW - w, n - pN
+    if cs then east, north = east * cs - north * sn, east * sn + north * cs end
+    return east * f, north * f
+end
+
+-- pc/pN/pW: Spieler; tc/tN/tW: Wegpunkt oder Ziel. path (flach n, w, ...):
+-- der Laufweg ueber das Gelaende - dann folgen die Punkte ihm, sonst gerade.
+function RT.DrawMinimap(pc, pN, pW, tc, tN, tW, path)
     local QH = WeintCodex.UIQuestHelper
     local mm = _G.Minimap
     if pc ~= tc or not (QH and QH.MinimapYards) or type(mm) ~= "table" or not (mm.IsShown and mm:IsShown())
@@ -650,34 +669,57 @@ function RT.DrawMinimap(pc, pN, pW, tc, tN, tW)
     local half = K.Plain(mm:GetWidth())
     if not yards or type(half) ~= "number" or half < 2 then RT.HideMinimap() return 0 end
     half = half / 2
-    local east, north = pW - tW, tN - pN
+    local f = half / yards
+    local cs, sn
     if _G.GetCVar and K.Plain(_G.GetCVar("rotateMinimap")) == "1" and _G.GetPlayerFacing then
         local facing = K.Plain(_G.GetPlayerFacing())
-        if type(facing) == "number" then
-            local cs, sn = math.cos(-facing), math.sin(-facing)
-            east, north = east * cs - north * sn, east * sn + north * cs
-        end
+        if type(facing) == "number" then cs, sn = math.cos(-facing), math.sin(-facing) end
     end
-    local len = math.sqrt(east * east + north * north)
-    if len < 0.01 then RT.HideMinimap() return 0 end
-    local px = len * half / yards
-    local ux, uy = east / len, north / len
-    local reach = math.min(px, half - 6)
+    local limit = half - 6
     local shown = 0
-    for i = 1, #dots do
-        local d = 6 + i * RT.DOT_GAP
-        if d < reach then
-            dots[i]:ClearAllPoints()
-            dots[i]:SetPoint("CENTER", mm, "CENTER", ux * d, uy * d)
-            dots[i]:Show()
-            shown = shown + 1
-        else
-            dots[i]:Hide()
-        end
+    -- Punkte entlang der Linie: vom Spieler, dann ueber die Wegpunkte.
+    local ax, ay = 0, 0
+    local carry = 6
+    local count = path and #path or 2
+    local i = 1
+    if path then
+        -- Ab dem Abschnitt, auf dem man steht.
+        local WN = WeintCodex.UINav
+        local _, _, _, at = WN.Steer(path, pN, pW)
+        i = at + 2
     end
-    if px <= half - 6 then
+    local ended = false
+    while not ended and shown < #dots do
+        local bn, bw
+        if path then
+            if i > count - 1 then break end
+            bn, bw = path[i], path[i + 1]
+        else
+            bn, bw = tN, tW
+            ended = true
+        end
+        local bx, by = MiniXY(pN, pW, bn, bw, f, cs, sn)
+        local dx, dy = bx - ax, by - ay
+        local len = math.sqrt(dx * dx + dy * dy)
+        local d = carry
+        while d < len and shown < #dots do
+            local x, y = ax + dx * d / len, ay + dy * d / len
+            if x * x + y * y > limit * limit then ended = true break end
+            shown = shown + 1
+            dots[shown]:ClearAllPoints()
+            dots[shown]:SetPoint("CENTER", mm, "CENTER", x, y)
+            dots[shown]:Show()
+            d = d + RT.DOT_GAP
+        end
+        carry = d - len
+        ax, ay = bx, by
+        i = i + 2
+    end
+    for k = shown + 1, #dots do dots[k]:Hide() end
+    local ex, ey = MiniXY(pN, pW, path and path[count - 1] or tN, path and path[count] or tW, f, cs, sn)
+    if ex * ex + ey * ey <= limit * limit then
         pin:ClearAllPoints()
-        pin:SetPoint("CENTER", mm, "CENTER", ux * px, uy * px)
+        pin:SetPoint("CENTER", mm, "CENTER", ex, ey)
         pin:Show()
     else
         pin:Hide()
@@ -821,9 +863,12 @@ function RT.Sample(c, n, w, ms)
                 end
                 local anchors = ok and RT.Anchors()
                 if anchors then
+                    local fresh = not anchors[route.id] or anchors[route.id].from == "shared"
+                        or math.floor(ms / 1000) - (anchors[route.id].seen or 0) > 600
                     anchors[route.id] = { epoch = (ref + sum / RT.RIDE_SAMPLES) % route.period,
                         seen = math.floor(ms / 1000) }
                     RT.Invalidate()
+                    if fresh then RT.Share(route.id) end
                 end
             end
         end
@@ -838,36 +883,196 @@ end
 
 local events = CreateFrame("Frame")
 local acc = 0
+local bindAcc = 0
 local function OnUpdate(_, elapsed)
     acc = acc + (elapsed or 0)
     if acc < 1 then return end
+    bindAcc = bindAcc + acc
     acc = 0
     local c, n, w = K.PlayerWorld()
     RT.Sample(c, n, w, RT.ServerMs())
+    if bindAcc >= 5 then bindAcc = 0 RT.CheckBind() end
+    RT.SendNext()
 end
-events:SetScript("OnEvent", function(_, event, unit, _, spell)
+
+-- Zauber des Ruhesteins, wie der Client ihn nennt (einmal gefragt).
+local hearthSpell
+function RT.HearthSpell()
+    if hearthSpell == nil then
+        hearthSpell = false
+        local ci = _G.C_Item
+        local f = (ci and ci.GetItemSpell) or _G.GetItemSpell
+        if f then
+            local ok, _, id = pcall(f, RT.HEARTH_ITEM)
+            id = ok and K.Plain(id)
+            if type(id) == "number" then hearthSpell = id end
+        end
+    end
+    return hearthSpell or nil
+end
+
+-- Den Ort des Ruhesteins merken: nach dem Ruhestein (sobald die Lage da
+-- ist), oder wenn man im Gasthaus des Bindeorts rastet (IsResting, Ort =
+-- GetBindLocation). Beides ohne Raten.
+function RT.CheckBind()
+    local now = _G.GetTime and _G.GetTime() or 0
+    if RT.pendingBind then
+        if now > RT.pendingBind then RT.pendingBind = nil
+        elseif RT.RecordBind() then RT.pendingBind = nil return true end
+        return false
+    end
+    local name = _G.GetBindLocation and K.Plain(_G.GetBindLocation())
+    local st = RT.Store()
+    if type(name) ~= "string" or not st or (st.bind and st.bind.name == name) then return false end
+    local resting = _G.IsResting and K.Bool(_G.IsResting(), false)
+    if not resting then return false end
+    for _, f in ipairs({ "GetMinimapZoneText", "GetSubZoneText", "GetZoneText" }) do
+        local z = _G[f] and K.Plain(_G[f]())
+        if z == name then return RT.RecordBind() end
+    end
+    return false
+end
+events:SetScript("OnEvent", function(_, event, unit, arg2, spell, sender)
+    if event == "CHAT_MSG_ADDON" then return RT.OnAddon(unit, arg2, spell, sender) end
+    if event == "GROUP_ROSTER_UPDATE" then return RT.Ask("group") end
     if event == "TAXIMAP_OPENED" then RT.LearnTaxi()
     elseif event == "PLAYER_CONTROL_LOST" then RT.OnControlLost()
     elseif event == "PLAYER_CONTROL_GAINED" then RT.OnControlGained()
     elseif event == "HEARTHSTONE_BOUND" then RT.RecordBind()
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" and unit == "player" then
-        -- Nach dem Ruhestein: hier ist der gebundene Ort.
-        if spell == 8690 or spell == 556 then
-            RT.pendingBind = true
-            if _G.C_Timer and _G.C_Timer.After then
-                _G.C_Timer.After(3, function() if RT.pendingBind then RT.pendingBind = nil RT.RecordBind() end end)
-            end
+        -- Nach dem Ruhestein: hier ist der gebundene Ort. Die Kennung kann
+        -- auf Forever anders sein - auch ueber den Zauber des Gegenstands.
+        spell = K.Plain(spell)
+        if spell == 8690 or spell == 556 or (spell ~= nil and spell == RT.HearthSpell()) then
+            RT.pendingBind = (_G.GetTime and _G.GetTime() or 0) + 60
         end
-    elseif event == "PLAYER_ENTERING_WORLD" and RT.pendingBind then
-        RT.pendingBind = nil
-        RT.RecordBind()
+    elseif event == "PLAYER_CHANNEL_START" or event == "PLAYER_ENTERING_WORLD" then
+        RT.CheckBind()
     end
 end)
 
+--------------------------------------------------
+-- Abfahrtszeiten teilen (6.32.0.0, auf Wunsch des Spielers)
+--------------------------------------------------
+-- Gemessene Takte gehen als Addon-Nachricht (Kennung RT.PREFIX) an Gilde
+-- und Gruppe; empfangene gelten, wenn sie juenger sind als die eigenen.
+-- "A:Linie:Takt:Zeitpunkt" teilt einen Takt, "Q" fragt nach allen.
+-- Geschickt wird hoechstens eine Nachricht je Sekunde, nur, was man selbst
+-- gemessen oder schon empfangen hat, nie Lage oder Name. Aus mit
+-- questarrow.shareTimes.
+
+RT.PREFIX = "WCRT"
+RT.ASK_EVERY = 300
+local queue, qHead, qTail = {}, 1, 0
+local lastAsk, lastAnswer = {}, {}
+
+function RT.Sharing() return K.Get and K.Get("questarrow", "shareTimes") ~= false end
+
+local function InGuild() return _G.IsInGuild and K.Bool(_G.IsInGuild(), false) end
+local function GroupChannel()
+    if _G.IsInRaid and K.Bool(_G.IsInRaid(), false) then return "RAID" end
+    if _G.IsInGroup and K.Bool(_G.IsInGroup(), false) then return "PARTY" end
+end
+
+local function Queue(text, channel)
+    qTail = qTail + 1
+    queue[qTail] = text .. "\001" .. channel
+end
+RT._queue = function() return queue, qHead, qTail end
+
+function RT.SendNext()
+    if qHead > qTail then return false end
+    local item = queue[qHead]
+    queue[qHead] = nil
+    qHead = qHead + 1
+    local text, channel = item:match("^(.*)\001(%u+)$")
+    local cc = _G.C_ChatInfo
+    if not (cc and cc.SendAddonMessage and text and RT.Sharing()) then return false end
+    return pcall(cc.SendAddonMessage, RT.PREFIX, text, channel)
+end
+
+local function Channels(fn)
+    if InGuild() then fn("GUILD") end
+    local g = GroupChannel()
+    if g then fn(g) end
+end
+
+-- Einen Takt an alle teilen.
+function RT.Share(id)
+    local anchors = RT.Anchors()
+    local a = anchors and anchors[id]
+    if not (a and RT.Sharing()) then return end
+    local text = string.format("A:%d:%d:%d", id, math.floor(a.epoch + 0.5), a.seen)
+    Channels(function(ch) Queue(text, ch) end)
+end
+
+-- Nach Takten fragen, hoechstens alle ASK_EVERY Sekunden je Weg.
+function RT.Ask(kind)
+    if not RT.Sharing() then return end
+    local now = _G.GetTime and _G.GetTime() or 0
+    if lastAsk[kind or "all"] and now - lastAsk[kind or "all"] < RT.ASK_EVERY then return end
+    lastAsk[kind or "all"] = now
+    if kind == "group" then
+        local g = GroupChannel()
+        if g then Queue("Q", g) end
+    else
+        Channels(function(ch) Queue("Q", ch) end)
+    end
+end
+
+local function IsMe(sender)
+    local me = _G.UnitName and K.Plain(_G.UnitName("player"))
+    sender = type(sender) == "string" and sender:match("^([^%-]+)") or sender
+    return me ~= nil and sender == me
+end
+
+local ACCEPT = { GUILD = true, PARTY = true, RAID = true, INSTANCE_CHAT = true }
+function RT.OnAddon(prefix, text, channel, sender)
+    prefix, text, channel = K.Plain(prefix), K.Plain(text), K.Plain(channel)
+    if prefix ~= RT.PREFIX or not ACCEPT[channel] or type(text) ~= "string" or IsMe(sender) or not RT.Sharing() then
+        return false
+    end
+    if text == "Q" then
+        -- Antworten mit allem, was frisch ist - je Weg hoechstens jede Minute.
+        local now = _G.GetTime and _G.GetTime() or 0
+        if lastAnswer[channel] and now - lastAnswer[channel] < 60 then return false end
+        lastAnswer[channel] = now
+        for id in pairs(RT.Anchors() or {}) do
+            local route = RT.RouteById(id)
+            if route and RT.Anchor(route) then
+                local a = RT.Anchors()[id]
+                Queue(string.format("A:%d:%d:%d", id, math.floor(a.epoch + 0.5), a.seen), channel)
+            end
+        end
+        return true
+    end
+    local id, epoch, seen = text:match("^A:(%d+):(%d+):(%d+)$")
+    id, epoch, seen = tonumber(id), tonumber(epoch), tonumber(seen)
+    local route = id and RT.RouteById(id)
+    if not (route and epoch and seen and epoch < route.period) then return false end
+    local nowS = RT.ServerMs() / 1000
+    if seen > nowS + 60 or nowS - seen > RT.ANCHOR_AGE then return false end
+    local anchors = RT.Anchors()
+    if not anchors then return false end
+    local mine = anchors[id]
+    if mine and (mine.seen or 0) >= seen then return false end
+    anchors[id] = { epoch = epoch, seen = seen, from = "shared" }
+    RT.Invalidate()
+    return true
+end
+
+function RT.RouteById(id)
+    for _, r in ipairs(RT.Routes()) do if r.id == id then return r end end
+end
+
 RT.ON = true
 function RT.Start()
+    local cc = _G.C_ChatInfo
+    if cc and cc.RegisterAddonMessagePrefix then pcall(cc.RegisterAddonMessagePrefix, RT.PREFIX) end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(20, function() RT.Ask("all") end) end
     for _, e in ipairs({ "TAXIMAP_OPENED", "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED", "HEARTHSTONE_BOUND",
-                         "UNIT_SPELLCAST_SUCCEEDED", "PLAYER_ENTERING_WORLD" }) do
+                         "UNIT_SPELLCAST_SUCCEEDED", "PLAYER_ENTERING_WORLD", "CHAT_MSG_ADDON",
+                         "GROUP_ROSTER_UPDATE" }) do
         pcall(events.RegisterEvent, events, e)
     end
     events:SetScript("OnUpdate", K.Measured and K.Measured("Routenplaner", OnUpdate) or OnUpdate)
@@ -889,8 +1094,9 @@ function RT.Inspect(out)
     local a = 0
     for _ in pairs(RT.Anchors() or {}) do a = a + 1 end
     local bind = BindPoint()
-    out[#out + 1] = string.format("Routenplaner: %d Flugpunkte bekannt, %d Flugzeiten gemessen, %d Fahrpläne gemessen, Ruhestein %s",
-        n, m, a, bind and ("→ " .. bind.name) or "unbekannt (einmal benutzen oder neu binden)")
+    out[#out + 1] = string.format("Routenplaner: %d Flugpunkte bekannt, %d Flugzeiten gemessen, %d Fahrpläne bekannt, Ruhestein %s",
+        n, m, a, bind and ("→ " .. bind.name .. (bind.guessed and " (Lage vom Flugpunkt; genau, sobald du dort im Gasthaus bist)" or ""))
+            or "unbekannt (im Gasthaus des Bindeorts einmal vorbeischauen)")
     if n == 0 then
         out[#out + 1] = "   Flugpunkte lernt er, wenn du beim Flugmeister die Flugkarte öffnest."
     end

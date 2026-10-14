@@ -109,6 +109,8 @@ local defaults = {
     -- Routenplaner (6.31.0.0, ui/route.lua): zeigt auf den naechsten
     -- Wegpunkt - Flugmeister, Anleger, Portal -, wenn das schneller ist.
     routePlan  = true,
+    terrain    = true,     -- Laufweg ueber das Gelaende (6.32.0.0, ui/navmesh.lua)
+    shareTimes = true,     -- Abfahrtszeiten mit Gilde und Gruppe teilen (6.32.0.0)
 }
 
 local SHEET = "Interface\\AddOns\\WeintCodex\\media\\ui\\arrow3d"
@@ -903,7 +905,20 @@ function QA.Update(force)
         tc, tN, tW = hop.node.c, hop.node.n, hop.node.w
         if showTitle then title:SetText((name or "") .. " – über " .. hop.waypoint) end
     end
-    if planning then RT.DrawMinimap(pc, pN, pW, tc, tN, tW) end
+    -- Gelaendekarte (ui/navmesh.lua): der Pfeil folgt dem Laufweg, die
+    -- Minikarte zeichnet ihn. Bis er berechnet ist: Luftlinie.
+    local NV = WeintCodex.UINav
+    local navPath, navRest
+    if planning and NV and pc == tc and K.Get(KEY, "terrain") ~= false then
+        navPath = NV.Path(pc, pN, pW, tN, tW)
+        if navPath then
+            local sN, sW, rest = NV.Steer(navPath, pN, pW)
+            navRest = rest
+            tN, tW = sN, sW
+        end
+    end
+    QA.navPath = navPath
+    if planning then RT.DrawMinimap(pc, pN, pW, tc, tN, tW, navPath) end
     if _G.UnitOnTaxi and K.Bool(_G.UnitOnTaxi("player"), false) then
         arrow:Hide()
         dist:SetText("Im Flug")
@@ -957,21 +972,21 @@ function QA.Update(force)
         PlaceMarker(nav, QA.FormatDistance(nav.dist, units))
     end
 
-    if hop and yards <= math.max(K.Get(KEY, "arriveDistance") or 5, 10) then
+    if hop and (navRest or yards) <= math.max(K.Get(KEY, "arriveDistance") or 5, 10) then
         arrow:Hide()
         dist:SetText((hop.mode == "flight" and "Beim Flugmeister: " or "Hier einsteigen: ") .. hop.leg)
         eta:SetText(routeLine or "")
         frame:Show()
         return
     end
-    if yards <= (K.Get(KEY, "arriveDistance") or 5) then
+    if (navRest or yards) <= (K.Get(KEY, "arriveDistance") or 5) then
         arrow:Hide()
         dist:SetText(t.kind == "corpse" and "Bei deiner Leiche" or "Am Ziel")
         frame:Show()
         return
     end
 
-    dist:SetText(QA.FormatDistance(yards, K.Get(KEY, "units")) .. (hop and (" bis " .. hop.waypoint) or ""))
+    dist:SetText(QA.FormatDistance(navRest or yards, K.Get(KEY, "units")) .. (hop and (" bis " .. hop.waypoint) or ""))
     if rotation then
         PointArrow(rotation)
         SetArrowColor(rotation)
@@ -1267,6 +1282,10 @@ K.Register({
             B:Section("Routenplaner")
             B:Row({ type = "toggle", label = "Schnellsten Weg planen", key = "routePlan",
                     description = "Zeigt über Flugmeister, Schiffe, Zeppeline, Tiefenbahn, Portale und Ruhestein, wenn das schneller ist als laufen, mit Linie auf der Minikarte. Flugpunkte lernt er, wenn du eine Flugkarte öffnest; Abfahrtszeiten, wenn du mitfährst." },
+                  { type = "toggle", label = "Laufweg übers Gelände", key = "terrain",
+                    description = "Der Pfeil folgt dem echten Weg um Berge und Wasser herum, die Minikarte zeichnet ihn. Aus: Luftlinie." })
+            B:Row({ type = "toggle", label = "Abfahrtszeiten teilen", key = "shareTimes",
+                    description = "Gemessene Abfahrtszeiten von Schiffen, Zeppelinen und Tiefenbahn mit Gilde und Gruppe tauschen. Geteilt wird nur der Takt, nie dein Ort." },
                   { type = "empty" })
             B:Section("Nach einer Quest")
             B:Row({ type = "dropdown", label = "Wenn die Ziele erfüllt sind", key = "onComplete", items = {

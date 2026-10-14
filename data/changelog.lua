@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.32.0.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Pfeil folgt jetzt dem Gelände.|r Statt der Luftlinie zeigt er auf den echten Laufweg um Berge, Seen und Schluchten herum, und die Minikarte zeichnet ihn gepunktet. Die Entfernung ist die des Weges, nicht der Luftlinie. Ausschaltbar unter „Laufweg übers Gelände“.",
+            "|cff7C6CFFRuhestein wird erkannt.|r Rastest du im Gasthaus deines Bindeorts, merkt sich der Planer die Lage; bis dahin nimmt er den Flugpunkt des Ortes. Der Ruhestein muss dafür nicht mehr benutzt werden.",
+            "|cff7C6CFFAbfahrtszeiten mit Gilde und Gruppe teilen.|r Wer mitfährt, misst den Takt – und alle anderen mit WeintCodex sehen danach „Abfahrt in 1:20“. Geteilt wird nur der Takt, nie dein Ort.",
+            "|cff7C6CFFWeltkarte:|r Ein hartes, helles Rechteck am Rand (z. B. unten rechts im Rotkammgebirge) ist weg – aufgedeckte Kartenteile bekommen jetzt auch den weichen Rand.",
+        },
+    },
+    {
         version = "6.31.2.0",
         date    = "14.10.2026",
         notes   = {

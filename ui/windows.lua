@@ -2112,6 +2112,23 @@ local function MaskTiles(frame, area)
     end
 end
 
+-- Kacheln von "Karte aufdecken" (ui/mapreveal.lua) entstehen oft NACH dem
+-- Maskieren (neue Karte, neuer Ausschnitt): ohne Maske lagen sie hart und
+-- hell ueber dem weichen Rand - Beta-Test 6.31.2.0, Rotkammgebirge unten
+-- rechts. MR.Draw maskiert seine Ebene deshalb selbst, sobald der weiche
+-- Rand aktiv ist.
+function W.MaskMapLayer(frame)
+    local any = false
+    for _ in pairs(mapMask.masks) do any = true break end
+    if not any then return 0 end
+    local map = _G.WorldMapFrame
+    local sc = type(map) == "table" and map.ScrollContainer
+    if type(sc) ~= "table" then return 0 end
+    local before = mapMask.count
+    MaskTiles(frame, sc)
+    return mapMask.count - before
+end
+
 -- ZWEITE KANTE (6.8.0.8, Beta-Test: "Wenn ich eine Quest auswaehle, ist
 -- es wieder abgehackt"): die Questdetails (QuestMapFrame.DetailsFrame)
 -- liegen UEBER dem rechten Teil der Karte - der weiche Rand lief unter

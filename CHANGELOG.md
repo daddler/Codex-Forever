@@ -9,6 +9,32 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.32.0.0] – 2026-10-14
+
+### Hinzugefügt
+- Geländekarte für den Questpfeil (`ui/navmesh.lua`, Daten `data/nav/*.lua`
+  **erzeugt** von `.github/scripts/import_nav.py` aus den Geländedaten von
+  Shortest Path Forever – nur Daten, Art `beta`; Wegenetz und Gitter
+  unverändert gepackt, je Ebene nur die Zelle, ohne Höhen: 5,2 MB). Suche:
+  Dijkstra über die Zellen im Abschnitt von Start und Ziel, A* über die
+  Eingänge dazwischen, in einer Coroutine mit 2 ms je Bild, nie im Kampf neu.
+  Pfeil zeigt 30 Einheiten voraus auf den Weg, Entfernung = Rest des Weges,
+  Minikarte zeichnet den Weg (`terrain`, ab Werk an).
+- Abfahrtszeiten teilen (`shareTimes`, ab Werk an; Prefix `WCRT`, Gilde und
+  Gruppe, höchstens eine Nachricht je Sekunde; „A:Linie:Takt:Zeit“, „Q“
+  fragt). Empfangen nur jüngere Takte, nie vom eigenen Namen, nie aus dem
+  Flüstern.
+- Ruhestein: Lage wird gemessen, wenn man im Bindeort rastet (`IsResting`,
+  Gebietsname = `GetBindLocation`); bis dahin der Flugpunkt, dessen Name mit
+  dem Bindeort beginnt. Der Zauber des Ruhesteins kommt vom Client
+  (`GetItemSpell`), nicht nur 8690; eine Messung nach dem Ruhestein wartet bis
+  zu 60 s auf die Lage (vorher ging sie im Ladebildschirm verloren).
+
+### Behoben
+- Weltkarte: Kacheln von „Karte aufdecken“, die nach dem Maskieren entstanden,
+  lagen ohne weichen Rand hart und hell über der Karte (Rotkammgebirge unten
+  rechts). `W.MaskMapLayer` maskiert sie beim Zeichnen.
+
 ## [6.31.2.0] – 2026-10-14
 
 ### Geändert

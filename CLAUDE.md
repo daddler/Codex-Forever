@@ -54,7 +54,11 @@ auction prices (`ui/auctionshare.lua`, two switches – off by default until
 With „Mit der Gilde teilen“ WeintCodex sends and receives prices as addon
 messages to the guild (prefix `WCAH`); with „Preise aus ForeverGuide
 übernehmen“ it joins ForeverGuide's hidden channel and **only listens** –
-it never sends there. Nothing else leaves the client, nothing goes to the
+it never sends there. **Second exception since 6.32.0.0, also on request:**
+departure times of boats/zeppelins/tram (`ui/route.lua`, prefix `WCRT`,
+switch `questarrow.shareTimes`, on by default) go to guild and group as
+addon messages – only the measured timetable phase, never position or name.
+Nothing else leaves the client, nothing goes to the
 internet; any further outward message needs the same explicit request.
 
 ## Critical invariants (always relevant, keep in mind for any change)
