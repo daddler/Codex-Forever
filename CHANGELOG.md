@@ -9,6 +9,27 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.32.1.0] – 2026-10-14
+
+### Hinzugefügt
+- Weltkarte (`ui/maproute.lua`): Route des Questpfeils (Laufweg aus der
+  Geländekarte, sonst gerade; Flug von Knoten zu Knoten; Schiff/Zeppelin/Bahn
+  auf der Bahn ihrer Fahrt zwischen Abfahrt und Ankunft) und alle Linien der
+  eigenen Fraktion (`mapRoute`, `mapLines`, ab Werk an). Eigene Ebene mit
+  `CreateLine`, neu gezeichnet nur bei neuer Karte, Route oder Weg.
+- Planer: jede Etappe kennt ihren Ausgangspunkt, die Route Start und Ziel.
+
+### Behoben
+- Weltkarte: das harte Rechteck blieb (6.32.0.0 traf die falsche Ursache).
+  Es war ein erkundetes Gebiet des Spiels, letztes Stück 256 × 43, unter der
+  Mindestfläche der Maske (128 × 128). In den Ebenen der Karte genügt jetzt
+  eine Seite ab 128 (`W.MAP_TILE_SIDE`); Marken bleiben unmaskiert.
+
+### Nicht gebaut
+- Höhendaten der Geländekarte: der Client nennt auf Forever keine eigene Höhe
+  (`/wcui pfeil`: „Höhe 0.0“). Ohne sie lässt sich keine Ebene wählen; 7,5 MB
+  Daten ohne Wirkung.
+
 ## [6.32.0.0] – 2026-10-14
 
 ### Hinzugefügt

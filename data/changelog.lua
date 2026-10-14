@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.32.1.0",
+        date    = "14.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Route steht jetzt auch auf der Weltkarte.|r Öffnest du die Karte, siehst du den ganzen Weg des Questpfeils: zu Fuß dem Gelände nach, Flüge von Flugmeister zu Flugmeister, Schiffe und Zeppeline auf ihrer echten Fahrstrecke.",
+            "|cff7C6CFFSchiffslinien auf der Karte.|r Alle Schiffe, Zeppeline und die Tiefenbahn deiner Fraktion als Linien zwischen den Anlegern. Beides einzeln abschaltbar im Questpfeil.",
+            "|cff7C6CFFWeltkarte:|r Das helle Rechteck am Rand (Rotkammgebirge unten rechts) ist jetzt wirklich weg – schmale Randstücke erkundeter Gebiete bekommen den weichen Rand.",
+        },
+    },
+    {
         version = "6.32.0.0",
         date    = "14.10.2026",
         notes   = {

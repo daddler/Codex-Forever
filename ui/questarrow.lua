@@ -111,6 +111,8 @@ local defaults = {
     routePlan  = true,
     terrain    = true,     -- Laufweg ueber das Gelaende (6.32.0.0, ui/navmesh.lua)
     shareTimes = true,     -- Abfahrtszeiten mit Gilde und Gruppe teilen (6.32.0.0)
+    mapRoute   = true,     -- Route auf der Weltkarte (6.32.1.0, ui/maproute.lua)
+    mapLines   = true,     -- Schiffs-, Zeppelin- und Bahnlinien auf der Weltkarte
 }
 
 local SHEET = "Interface\\AddOns\\WeintCodex\\media\\ui\\arrow3d"
@@ -1286,6 +1288,10 @@ K.Register({
                     description = "Der Pfeil folgt dem echten Weg um Berge und Wasser herum, die Minikarte zeichnet ihn. Aus: Luftlinie." })
             B:Row({ type = "toggle", label = "Abfahrtszeiten teilen", key = "shareTimes",
                     description = "Gemessene Abfahrtszeiten von Schiffen, Zeppelinen und Tiefenbahn mit Gilde und Gruppe tauschen. Geteilt wird nur der Takt, nie dein Ort." },
+                  { type = "toggle", label = "Route auf der Weltkarte", key = "mapRoute",
+                    description = "Zeichnet den ganzen Weg auf der Weltkarte: zu Fuß dem Gelände nach, Flüge, Schiffe." })
+            B:Row({ type = "toggle", label = "Schiffslinien auf der Weltkarte", key = "mapLines",
+                    description = "Schiffe, Zeppeline und Tiefenbahn deiner Fraktion als Linien auf der Karte." },
                   { type = "empty" })
             B:Section("Nach einer Quest")
             B:Row({ type = "dropdown", label = "Wenn die Ziele erfüllt sind", key = "onComplete", items = {

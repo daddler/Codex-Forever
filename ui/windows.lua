@@ -2095,13 +2095,28 @@ end
 -- geschnitten; das letzte Stueck am Rand ist oft schmal, unter
 -- W.MAP_TILE_MIN - es blieb ohne Maske und stand hart am Rand. Ihre
 -- Ebene bekommt die Maske fuer jedes Stueck.
-local function MaskTiles(frame, area)
+-- 6.32.1.0 (Beta-Test: Rotkammgebirge unten rechts, hartes helles
+-- Rechteck): dasselbe bei den erkundeten Gebieten des SPIELS - das letzte
+-- Stueck eines Gebiets war 256 x 43 gross, unter W.MAP_TILE_MIN. In den
+-- Ebenen der Karte (mapLayers) zaehlt deshalb auch ein schmales Stueck,
+-- wenn EINE Seite Kachelmass hat (W.MAP_TILE_SIDE) - Marken sind auf
+-- beiden Seiten klein und bleiben (`strips`).
+W.MAP_TILE_SIDE = 128
+local function TileSide(r)
+    if r:GetObjectType() ~= "Texture" then return 0 end
+    local w, h = K.Plain(r:GetWidth()), K.Plain(r:GetHeight())
+    if type(w) ~= "number" or type(h) ~= "number" then return 0 end
+    return math.max(w, h)
+end
+local function MaskTiles(frame, area, strips)
     local MR = WeintCodex.UIMapReveal
     local min = (MR and MR.layer == frame) and 0 or W.MAP_TILE_MIN
     for _, r in ipairs(Regions(frame, "mapTiles")) do
         if not own[r] and not mapMask.masked[r] then
             local ok, a = pcall(TileArea, r)
-            if ok and a >= min and (min > 0 or a > 0) then
+            local okS, side = true, 0
+            if strips and ok and a < min then okS, side = pcall(TileSide, r) end
+            if ok and ((a >= min and (min > 0 or a > 0)) or (okS and side >= W.MAP_TILE_SIDE)) then
                 local mask = MaskFor(frame, area)
                 if mask and pcall(r.AddMaskTexture, r, mask) then
                     mapMask.masked[r] = true
@@ -2187,7 +2202,7 @@ function W.SoftMap(map)
         MaskTiles(canvas, sc)
         for _, layer in ipairs(Children(canvas, "mapLayers")) do
             if type(layer) == "table" and layer.GetRegions and not (layer.IsForbidden and layer:IsForbidden()) then
-                MaskTiles(layer, sc)
+                MaskTiles(layer, sc, true)
             end
         end
         local o = softOverlay[sc]

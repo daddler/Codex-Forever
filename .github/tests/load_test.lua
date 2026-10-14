@@ -3958,6 +3958,67 @@ do
     Check(ok, "Gelaendekarte: Eingaenge, Gitter, verteilt, Pfeil voraus" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.32.1.0: Route und Schiffslinien auf der Weltkarte (ui/maproute.lua).
+do
+    local MP, RT, QA = WeintCodex.UIMapRoute, WeintCodex.UIRoute, WeintCodex.UIQuestArrow
+    local QM = WeintCodex.QuestMap
+    local saved = { _G.WorldMapFrame, QM.CurrentMap, QM.Canvas, _G.C_Map, MP.NewLine, WeintCodex.TravelData,
+        _G.UnitFactionGroup, QA.route, QA.navPath }
+    local ok, err = pcall(function()
+        local canvas = CreateFrame("Frame")
+        _G.WorldMapFrame = { IsShown = function() return true end }
+        QM.CurrentMap = function() return 1415 end
+        QM.Canvas = function() return canvas end
+        -- Karte = 10000 x 10000 Einheiten um 0/0.
+        _G.C_Map = { GetMapPosFromWorldPos = function(c, v)
+            if c ~= 0 then return nil end
+            return 1415, { x = 0.5 - v.y / 10000, y = 0.5 - v.x / 10000 }
+        end }
+        _G.CreateVector2D = _G.CreateVector2D or function(x, y) return { x = x, y = y } end
+        local made = {}
+        MP.NewLine = function()
+            local l = { shown = false }
+            function l:SetThickness(t) self.t = t end
+            function l:SetColorTexture(r, g, b, a) self.a = a end
+            function l:SetStartPoint(_, _, x, y) self.x1, self.y1 = x, y end
+            function l:SetEndPoint(_, _, x, y) self.x2, self.y2 = x, y end
+            function l:Show() self.shown = true end
+            function l:Hide() self.shown = false end
+            made[#made + 1] = l
+            return l
+        end
+        _G.UnitFactionGroup = function() return "Alliance" end
+        WeintCodex.TravelData = { taxi = {}, flights = {}, docks = { [1] = { 0, 0, 0 }, [2] = { 0, 1000, 0 } }, portals = {},
+            teleports = {}, routes = {
+                [7] = { "boat", 0, 100000, { 1, 0, 10000, 2, 50000, 60000 },
+                    { 0, 10000, 0, 0, 0, 30000, 30000, 0, 500, 0, 50000, 60000, 0, 1000, 0 } },
+                [8] = { "zeppelin", 2, 100000, { 1, 0, 10000, 2, 50000, 60000 }, { 0, 0, 0, 0, 0, 50000, 50000, 0, 900, 0 } } } }
+        RT.Build(true)
+        K.Set("questarrow", "mapRoute", true)
+        K.Set("questarrow", "mapLines", true)
+        QA.route, QA.navPath = nil, nil
+        MP.Forget()
+        local n = MP.Update()
+        assert(n == 2, "Schiffslinie: " .. n .. " Striche (Horde-Zeppelin darf fehlen)")
+        -- Route: zu Fuss dem Gelaende nach (3 Punkte) bis zum Ziel.
+        QA.route = { direct = true, legs = { { mode = "walk" } }, start = { 0, 0, 0 }, goal = { 0, 200, 0 } }
+        QA.navPath = { 0, 0, 100, 50, 200, 0 }
+        n = MP.Update()
+        assert(n == 4, "Route auf dem Gelaende: " .. n)
+        assert(MP.Update() == 4, "ohne Aenderung neu gezeichnet")
+        K.Set("questarrow", "mapLines", false)
+        assert(MP.Update() == 2, "Linien aus, trotzdem gezeichnet")
+        K.Set("questarrow", "mapLines", true)
+        _G.WorldMapFrame = { IsShown = function() return false end }
+        assert(MP.Update() == 0, "Karte zu, Linien bleiben")
+    end)
+    _G.WorldMapFrame, QM.CurrentMap, QM.Canvas, _G.C_Map, MP.NewLine, WeintCodex.TravelData,
+        _G.UnitFactionGroup, QA.route, QA.navPath = unpack(saved, 1, 9)
+    RT.Build(true)
+    MP.Forget()
+    Check(ok, "Weltkarte: Schiffslinien der Fraktion, Route dem Gelaende nach, nur bei Aenderung" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Questpfeil: die 3D-Ansichten und die Farbe.
 do
     local idx, l, r, t, b = QA.Frame(0)
@@ -10608,11 +10669,18 @@ do
         W.SoftMap(map)
         assert(bigTile._masks and #bigTile._masks == 1, "Kachel ohne Maske")
         assert(not pin._masks, "Marke maskiert")
+        -- 6.32.1.0: schmales Randstueck eines Gebiets (256 x 43) bekommt die Maske.
+        local strip = stub.NewObject("Texture")
+        strip._width, strip._height = 256, 43
+        layer.GetRegions = function() return bigTile, pin, strip end
+        W.SoftMap(map)
+        assert(strip._masks and #strip._masks == 1, "Randstueck ohne Maske")
+        assert(not pin._masks, "Marke maskiert")
         assert(own0._masks and #own0._masks == 1, "Bild am Inhalt selbst ohne Maske")
         assert(not o:IsShown(), "dunkler Verlauf bleibt ueber der maskierten Karte")
         W.SoftMap(map)
         assert(#bigTile._masks == 1, "Maske doppelt")
-        assert(table.concat(W.SoftReport(map), " "):find("Maske an 2 Bildern", 1, true), "Bericht ohne Maske")
+        assert(table.concat(W.SoftReport(map), " "):find("Maske an 3 Bildern", 1, true), "Bericht ohne Maske")
         -- 6.26.5.0: schmale Randstuecke der aufgedeckten Karte bekommen die
         -- Maske auch (Wald von Elwynn, harte Kante rechts).
         local MR = WeintCodex.UIMapReveal

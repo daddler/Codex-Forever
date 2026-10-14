@@ -482,8 +482,9 @@ function RT.Solve(pc, pN, pW, gc, gN, gW)
     local legs, i = {}, G
     while prev[i] do
         local node = At(i)
+        local fromNode = At(prev[i])
         table.insert(legs, 1, { mode = how[i], node = (i ~= G) and node or nil, info = via[i], wait = wait[i],
-            at = cost[prev[i]] })
+            at = cost[prev[i]], from = fromNode ~= START and fromNode or nil })
         i = prev[i]
     end
     local seconds = cost[G]
@@ -494,9 +495,10 @@ function RT.Solve(pc, pN, pW, gc, gN, gW)
     local direct = dy and dy / speed or nil
     if #legs <= 1 or (direct and direct - seconds < RT.MIN_GAIN) then
         if not direct then return nil end
-        return { seconds = direct, legs = { { mode = "walk" } }, direct = true }
+        return { seconds = direct, legs = { { mode = "walk" } }, direct = true,
+            start = { pc, pN, pW }, goal = { gc, gN, gW } }
     end
-    return { seconds = seconds, legs = legs }
+    return { seconds = seconds, legs = legs, start = { pc, pN, pW }, goal = { gc, gN, gW } }
 end
 
 --------------------------------------------------
