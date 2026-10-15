@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.38.1.0] – 2026-10-15
+
+### Hinzugefügt
+- `ui/swingskin.lua` (Einheitenrahmen, `swingSkin`): Schwungtimer des Clients
+  über seine Beschriftung (`INVTYPE_WEAPONMAINHAND` …) gefunden – Name
+  unbekannt, nimmt keine Maus an; gesucht bei Kampf-/Angriffsbeginn, höchstens
+  alle 10 s, bis drei gefunden. Textur, Grund, Rand, Schrift; Zierrahmen
+  unsichtbar. Selbstprüfung „Schwungtimer“.
+- `/wcui fenster <Name oder Text>` (`K.FindFrame`).
+
 ## [6.38.0.0] – 2026-10-15
 
 ### Hinzugefügt

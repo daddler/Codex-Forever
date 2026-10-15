@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.38.0.0
+## Version: 6.38.1.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -206,6 +206,7 @@ ui/nameplates.lua
 # Plaketten nach NPC: Zaubernde, eigene Farben (6.6.2.2); haengt sich an die Plaketten.
 ui/npccolors.lua
 ui/unitframes.lua
+ui/swingskin.lua
 # Totems am eigenen Spielerrahmen, Rechtsklick entfernt (6.27.0.6).
 ui/totems.lua
 ui/groupframes.lua

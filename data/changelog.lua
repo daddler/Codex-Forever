@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.38.1.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Schwungtimer des Spiels im WeintCodex-Stil.|r Die Balken bekommen Textur, Rand und Schrift von WeintCodex – sie werden beim ersten Angriff gefunden. Abschaltbar unter Einheitenrahmen → Allgemein.",
+            "|cff7C6CFF/wcui fenster mit Namen oder Text.|r Für Fenster, die keine Maus annehmen: „/wcui fenster Waffenhand“ findet den Rahmen über seine Beschriftung.",
+        },
+    },
+    {
         version = "6.38.0.0",
         date    = "15.10.2026",
         notes   = {

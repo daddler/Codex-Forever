@@ -3968,6 +3968,22 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.38.1.0: Schwungtimer ueber seine Beschriftung gefunden und gestaltet;
+-- /wcui fenster findet Rahmen ueber Namen.
+do
+    local SW = WeintCodex.UISwingSkin
+    local ok, err = pcall(function()
+        local holder = CreateFrame("Frame", "WCTestSwing", UIParent)
+        local sb = CreateFrame("StatusBar", nil, holder)
+        assert(SW.BarOf(holder) == sb or SW.BarOf(holder) == nil, "Balken falsch")
+        assert(SW.Labels()["Waffenhand"], "Beschriftung fehlt")
+        assert(WeintCodex.UIKit.FindFrame("WCTestSwing") == holder, "Fenster ueber Namen nicht gefunden")
+        assert(WeintCodex.UIKit.FindFrame("") == nil, "leerer Text findet etwas")
+        assert(SW.StatusLine():find("Schwungtimer"), "Statuszeile")
+    end)
+    Check(ok, "Schwungtimer: Beschriftung, Balken, Suche nach Namen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.38.0.0: Haendlerfenster gross ziehen (ui/merchantsize.lua): Raster
 -- aus der gemessenen Groesse, nie kleiner als das Spiel, Zahl je Seite.
 do

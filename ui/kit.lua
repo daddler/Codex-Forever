@@ -1713,10 +1713,39 @@ end
 -- ohne Grenze bei 24 Zeilen, und die Art, unter der die Bausteine des
 -- Fensters (ui/calmparts.lua) das Bild kennen. Die Ausgabe geht in ein
 -- Fenster zum Kopieren (K.ShowReport) statt in den Chat.
-function K.InspectWindow()
+-- 6.38.1.0: ein Fenster ohne Maus (Schwungtimer) ueber seinen Namen oder
+-- einen Text darin finden: "/wcui fenster Waffenhand".
+function K.FindFrame(text)
+    if type(text) ~= "string" or text == "" then return nil end
+    local g = _G[text]
+    if type(g) == "table" and type(g.GetObjectType) == "function" then return g end
+    if type(_G.EnumerateFrames) ~= "function" then return nil end
+    local want = text:lower()
+    local f = _G.EnumerateFrames()
+    while f do
+        local ok, hit = pcall(function()
+            if f:IsForbidden() or not f:IsVisible() then return false end
+            for i = 1, select("#", f:GetRegions()) do
+                local r = select(i, f:GetRegions())
+                if r:GetObjectType() == "FontString" then
+                    local t = r:GetText()
+                    if type(t) == "string" and t:lower() == want then return true end
+                end
+            end
+            return false
+        end)
+        if ok and hit then return f end
+        f = _G.EnumerateFrames(f)
+    end
+    return nil
+end
+
+function K.InspectWindow(target)
     local out = {}
-    local focus
-    if type(_G.GetMouseFoci) == "function" then
+    local focus = target
+    if focus then
+        -- gefunden, nicht unter der Maus
+    elseif type(_G.GetMouseFoci) == "function" then
         local ok, t = pcall(_G.GetMouseFoci)
         if ok and type(t) == "table" then focus = t[1] end
     elseif type(_G.GetMouseFocus) == "function" then

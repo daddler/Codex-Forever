@@ -645,6 +645,13 @@ Check("Buffs", function(add)
     add(BS.Active() and SC.OK or SC.OPEN, BS.StatusLine())
 end)
 
+-- Schwungtimer des Spiels (6.38.1.0)
+Check("Schwungtimer", function(add)
+    local SW = WeintCodex.UISwingSkin
+    if not SW then add(SC.OPEN, "Schwungtimer-Stil nicht geladen.") return end
+    add(SW.state.found > 0 and SC.OK or SC.OPEN, SW.StatusLine())
+end)
+
 -- Haendlerfenster gross ziehen (6.38.0.0)
 Check("Händler", function(add)
     local MS = WeintCodex.UIMerchantSize

@@ -1339,7 +1339,8 @@ end
 
 SLASH_WEINTCODEXUI1 = "/wcui"
 SlashCmdList["WEINTCODEXUI"] = function(msg)
-    msg = (msg or ""):lower()
+    local input = msg or ""
+    msg = input:lower()
     if msg == "entsperren" or msg == "unlock" then
         K.SetUnlocked(not K.IsUnlocked())
         return
@@ -1378,6 +1379,22 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         local n = WeintCodex.UIMoveWindows.ResetAll()
         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. string.format(
             " %d verschobene Fenster stehen wieder am Platz des Spiels.", n))
+        return
+    end
+    local what = msg:match("^fenster%s+(.+)$") or msg:match("^window%s+(.+)$")
+    if what then
+        -- Name oder Text, Gross/Klein wie eingegeben (msg ist klein).
+        local raw = input:match("^%S+%s+(.+)$") or what
+        local f = K.FindFrame(raw) or K.FindFrame(what)
+        if not f then
+            print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Kein sichtbares Fenster mit „" .. raw
+                .. "“ gefunden – es muss gerade zu sehen sein (Schwungtimer: im Kampf).")
+            return
+        end
+        local lines = K.InspectWindow(f)
+        K.ShowReport("Fenster: " .. raw, lines)
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. lines[1]
+            .. " – Bericht im Fenster, Strg+C kopiert.")
         return
     end
     if msg == "fenster" or msg == "window" then
