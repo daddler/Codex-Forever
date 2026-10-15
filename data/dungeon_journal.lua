@@ -18,6 +18,23 @@
 -- Quests ohne Nummer (fuenf in der Excavation Site) fehlen - keine Quest
 -- ohne Nummer, siehe unten.
 --
+-- Abgleich vom 15.10.2026: abgeglichen mit Dungeon Journal 1.6.3. Neu:
+-- 8 Quests der City of Dalaran (die ersten dort), 6 der Excavation Site
+-- (jetzt mit Nummer), 2 in Gnomeregan (Schluss der Ringreihe), 2 im
+-- Scharlachroten Kloster (Final Passage, Past Due), die Paladinquest 1806
+-- in drei Dungeons und 1740 auch in Blackfathom Deeps; vier weitere
+-- Belohnungen an bekannten Quests; 168 Gegenstaende: 119 an Bossen (meist
+-- Plaene/Muster/Bauplaene aus dem gemeinsamen Topf, dazu u. a. die
+-- Stockade-Beute aus 1.4.4), Arcanist Doan als eigene Liste (6, vorher nur
+-- Classic), 20 am Fel Steed, 23 von Gegnern unterwegs (Razorfen Kraul, Ruins
+-- of Lordaeron, The Deadmines, Scharlachrotes Kloster); Eingaenge der drei
+-- Forever-Dungeons ohne Abgleich-Eingang (J.HAND_ENTRANCES). NICHT
+-- uebernommen: Erfahrung (das Addon rechnet jetzt in Client-Cache-Werten,
+-- rund ein Viertel der bisher beobachteten - zwei Massstaebe, keiner
+-- belegt), Gegenstaende ohne Nummer, die sechs geteilten Lederhelme,
+-- Boss-Stufen (hier kein Feld), Widersprueche zum Abgleich (6521, Eingang
+-- der Hall of Thanes).
+--
 -- HERKUNFT: `community`, wie die Bosslisten der Forever-Dungeons.
 -- Zusammengetragen aus oeffentlichen Beta-Berichten (wowforevertalents,
 -- foreverchanges, Wowhead Forever, Stand 22.-25.09.2026) - NICHT aus dem
@@ -59,7 +76,7 @@ local J = WeintCodex.DungeonJournal
 
 J.SOURCE = {
     kind  = "community",
-    date  = "02.10.2026",
+    date  = "15.10.2026",
     label = "Beta-Berichte der Community (Beute und Quests)",
 }
 
@@ -150,21 +167,33 @@ J.DATA = {
                 { 272999, "Barbaric Crossbow", "Distanz, Armbrust", 3 },
                 { 272996, "Trogg Scepter", "Waffenhand, Streitkolben", 3 },
                 { 272998, "Bone Knuckles", "Waffenhand, Faustwaffe", 3 },
+                { 252781, "Pattern: Stormrider's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+                { 252782, "Pattern: Wisdom's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
             },
             taragaman = {
                 { 14149, "Subterranean Cape", "Rücken, Stoff", 3 },
                 { 14148, "Crystalline Cuffs", "Handgelenke, Stoff", 3 },
                 { 14145, "Cursed Felblade", "Waffenhand, Schwert", 3 },
+                { 251361, "Plans: Guard's Gloves", "Schmiedekunst (Pläne)", 3 },
+                { 251362, "Plans: Protector's Gloves", "Schmiedekunst (Pläne)", 3 },
+                { 251363, "Plans: Acolyte's Gloves", "Schmiedekunst (Pläne)", 3 },
+                { 252782, "Pattern: Wisdom's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
             },
             jergosh = {
                 { 14150, "Robe of Evocation", "Brust, Stoff", 3 },
                 { 14147, "Cavedweller Bracers", "Handgelenke, Schwere Rüstung", 3 },
                 { 14151, "Chanting Blade", "Einhändig, Dolch", 3 },
+                { 251360, "Plans: Veteran's Gloves", "Schmiedekunst (Pläne)", 3 },
+                { 253906, "Pattern: Filigreed Flame Gown", "Schneiderei (Muster)", 3 },
             },
             bazzalan = {
                 { 273003, "Searing Dagger", "Waffenhand, Dolch", 3 },
                 { 273007, "Chasm Walkers", "Füße, Leder", 3 },
                 { 273005, "Satyrskin Cloak", "Rücken, Stoff", 3 },
+                { 252780, "Pattern: Totemic Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+                { 252782, "Pattern: Wisdom's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+                { 253908, "Pattern: Filigreed Shadow Gown", "Schneiderei (Muster)", 3 },
+                { 253910, "Pattern: Filigreed Pearly Gown", "Schneiderei (Muster)", 3 },
             },
         },
         quests = {
@@ -274,6 +303,7 @@ J.DATA = {
             deviate_faerie_dragon = {
                 { 5243, "Firebelcher", "Distanz, Zauberstab", 3 },
                 { 6632, "Feyscale Cloak", "Rücken, Stoff", 3 },
+                { 252781, "Pattern: Stormrider's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
             },
         },
         others = {
@@ -377,6 +407,8 @@ J.DATA = {
                 { 271213, "Mirror of Rath'mael", "Schildhand, Schild", 3 },
                 { 271214, "Frostbane Treads", "Füße, Stoff", 3 },
                 { 271215, "Coldspire Staff", "Zweihändig, Stab", 3 },
+                { 273085, "Blueprint: Fermenter", "Bauplan", 2 },
+                { 273103, "Blueprint: Arcane Salvager", "Bauplan", 2 },
             },
             viktor_the_vile = {
                 { 271211, "Vilewalkers", "Füße, Schwere Rüstung", 3 },
@@ -387,6 +419,23 @@ J.DATA = {
                 { 6641, "Haunting Blade", "Zweihändig, Schwert", 3 },
                 { 6642, "Phantom Armor", "Brust, Schwere Rüstung", 3 },
             },
+        },
+        others = {
+            { name = "Skeleton / Skeletal Soldier / Skeletal Mage / Fallen Necromancer", items = {
+                { 286981, "Death Bindings", "Handgelenke, Schwere Rüstung", 3 },
+            } },
+            { name = "Ghoul / Ragged Ghoul / Plague Ghoul", items = {
+                { 286977, "Sword of the Fallen", "Zweihändig, Schwert", 3 },
+            } },
+            { name = "Flesh Golem", items = {
+                { 286978, "Rotmender's Garb", "Brust, Stoff", 3 },
+            } },
+            { name = "Stone Watcher", items = {
+                { 286979, "Rotmender's Gloves", "Hände, Stoff", 3 },
+            } },
+            { name = "Shrieking Banshee", items = {
+                { 286980, "Rotmender's Sash", "Taille, Stoff", 3 },
+            } },
         },
         quests = {
             {
@@ -500,6 +549,9 @@ J.DATA = {
                 { 872, "Rockslicer", "Zweihändig, Axt", 3 },
                 { 5187, "Rhahk'Zor's Hammer", "Zweihändig, Streitkolben", 3 },
                 { 273289, "Ogre Loincloth", "Beine, Stoff", 3 },
+                { 251362, "Plans: Protector's Gloves", "Schmiedekunst (Pläne)", 3 },
+                { 251364, "Plans: Crusader's Gloves", "Schmiedekunst (Pläne)", 3 },
+                { 253906, "Pattern: Filigreed Flame Gown", "Schneiderei (Muster)", 3 },
             },
             miner_johnson = {
                 { 5443, "Gold-plated Buckler", "Schildhand, Schild", 3 },
@@ -513,17 +565,32 @@ J.DATA = {
                 { 5195, "Gold-flecked Gloves", "Hände, Stoff", 3, from = "Sneed" },
                 { 273293, "Bandsaw Wristbands", "Handgelenke, Schwere Rüstung", 3, from = "Sneed" },
                 { 273092, "Blueprint: Repair Bot", "Ingenieurskunst (Bauplan)", 2, from = "Sneed" },
+                { 251360, "Plans: Veteran's Gloves", "Schmiedekunst (Pläne)", 3, from = "Sneed" },
+                { 251364, "Plans: Crusader's Gloves", "Schmiedekunst (Pläne)", 3, from = "Sneed" },
+                { 253902, "Pattern: Filigreed Pristine Gown", "Schneiderei (Muster)", 3, from = "Sneed" },
             },
             gilnid = {
                 { 1156, "Lavishly Jeweled Ring", "Finger", 3 },
                 { 5199, "Smelting Pants", "Beine, Leder", 3 },
                 { 273297, "Goblin Hammer", "Waffenhand, Streitkolben", 3 },
+                { 252777, "Pattern: Brawler's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+                { 252778, "Pattern: Trapper's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+                { 252780, "Pattern: Totemic Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+                { 252782, "Pattern: Wisdom's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+                { 253904, "Pattern: Filigreed Silky Gown", "Schneiderei (Muster)", 3 },
+                { 253906, "Pattern: Filigreed Flame Gown", "Schneiderei (Muster)", 3 },
+                { 273086, "Blueprint: Anvil", "Bauplan", 2 },
             },
             mr_smite = {
                 { 7230, "Smite's Mighty Hammer", "Zweihändig, Streitkolben", 3 },
                 { 5192, "Thief's Blade", "Einhändig, Schwert", 3 },
                 { 5196, "Smite's Reaver", "Einhändig, Axt", 3 },
                 { 284715, "First Mate Band", "Finger", 3 },
+                { 251362, "Plans: Protector's Gloves", "Schmiedekunst (Pläne)", 3 },
+                { 252779, "Pattern: Defender's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+                { 252780, "Pattern: Totemic Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+                { 252781, "Pattern: Stormrider's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+                { 252782, "Pattern: Wisdom's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
             },
             captain_greenskin = {
                 { 5201, "Emberstone Staff", "Zweihändig, Stab", 3 },
@@ -536,11 +603,23 @@ J.DATA = {
                 { 10399, "Blackened Defias Armor", "Brust, Leder", 3 },
                 { 5191, "Cruel Barb", "Einhändig, Schwert", 3 },
                 { 2874, "An Unsent Letter", "Questgegenstand", 1 },
+                { 252799, "Pattern: Trapper's Leather Hood", "Lederverarbeitung (Muster)", 3 },
+                { 252800, "Pattern: Defender's Leather Hood", "Lederverarbeitung (Muster)", 3 },
+                { 252801, "Pattern: Totemic Leather Hood", "Lederverarbeitung (Muster)", 3 },
+                { 252803, "Pattern: Wisdom's Leather Hood", "Lederverarbeitung (Muster)", 3 },
+                { 253938, "Pattern: Filigreed Pristine Leggings", "Schneiderei (Muster)", 3 },
+                { 253948, "Pattern: Filigreed Shining Leggings", "Schneiderei (Muster)", 3 },
             },
             cookie = {
                 { 5198, "Cookie's Stirring Rod", "Distanz, Zauberstab", 3 },
                 { 5197, "Cookie's Tenderizer", "Einhändig, Streitkolben", 3 },
                 { 273298, "Lookie's Spyglass", "Schmuck", 3 },
+                { 251360, "Plans: Veteran's Gloves", "Schmiedekunst (Pläne)", 3 },
+                { 252778, "Pattern: Trapper's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+                { 252779, "Pattern: Defender's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+                { 253910, "Pattern: Filigreed Pearly Gown", "Schneiderei (Muster)", 3 },
+                { 253912, "Pattern: Filigreed Shining Gown", "Schneiderei (Muster)", 3 },
+                { 273102, "Blueprint: Cookie's Feast", "Bauplan", 2 },
             },
         },
         others = {
@@ -550,6 +629,18 @@ J.DATA = {
             { name = "Defias Overseer / Defias Taskmaster", items = {
                 { 10401, "Blackened Defias Gloves", "Hände, Leder", 3 },
                 { 10400, "Blackened Defias Leggings", "Beine, Leder", 3 },
+            } },
+            { name = "Defias Pirate / Defias Squallshaper", items = {
+                { 1951, "Blackwater Cutlass", "Einhändig, Schwert", 3 },
+            } },
+            { name = "Defias Evoker / Defias Wizard", items = {
+                { 1929, "Silk-threaded Trousers", "Beine, Stoff", 3 },
+            } },
+            { name = "Defias Blackguard", items = {
+                { 1934, "Stonemason Trousers", "Beine, Leder", 3 },
+            } },
+            { name = "Goblin Engineer", items = {
+                { 1936, "Goblin Screwdriver", "Einhändig, Dolch", 3 },
             } },
         },
         quests = {
@@ -628,6 +719,15 @@ J.DATA = {
                 startItem = { 2874, "An Unsent Letter" },
                 note = "Beginnt eine Folgereihe, die mit Bazil Thredd weitergeht.",
             },
+            {
+                id = 1806, name = "The Test of Righteousness", level = 22, requires = 20, faction = "alliance",
+                class = "PALADIN",
+                giver = "Jordan Stilwell, vor den Toren von Eisenschmiede, Dun Morogh",
+                objective = "Warten, bis Jordan Stilwell die Waffe geschmiedet hat.",
+                turnin = "Jordan Stilwell, vor den Toren von Eisenschmiede, Dun Morogh",
+                rewards = { { 6953, "Verigan's Fist", 3 } },
+                note = "Klassenquest für Paladine (Menschen und Zwerge). Hier: Whitestone Oak Lumber von den Goblin Woodcarvers. Die übrigen Teile: Jordan's Smithing Hammer (Shadowfang Keep), Kor Gem (Blackfathom Deeps), Jordans Erzlieferung (Loch Modan).",
+            },
         },
     },
     shadowfang_keep = {
@@ -651,6 +751,7 @@ J.DATA = {
                 { 6320, "Commander's Crest", "Schildhand, Schild", 3 },
                 { 3191, "Arced War Axe", "Zweihändig, Axt", 3 },
                 { 273643, "Worgenbane Talisman", "Schmuck", 3 },
+                { 273105, "Blueprint: Toxin Study", "Bauplan", 2 },
             },
             odo = {
                 { 6318, "Odo's Ley Staff", "Zweihändig, Stab", 3 },
@@ -665,10 +766,12 @@ J.DATA = {
                 { 6340, "Fenrus' Hide", "Rücken, Stoff", 3 },
                 { 3230, "Black Wolf Bracers", "Handgelenke, Leder", 3 },
                 { 273646, "Half-Eaten Boots", "Füße, Schwere Rüstung", 3 },
+                { 251380, "Plans: Veteran's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
             },
             wolf_master_nandos = {
                 { 3748, "Feline Mantle", "Schulter, Stoff", 3 },
                 { 6314, "Wolfmaster Cape", "Rücken, Stoff", 3 },
+                { 273647, "Worgpelt Leggings", "Beine, Leder", 3 },
             },
             archmage_arugal = {
                 { 6324, "Robes of Arugal", "Brust, Stoff", 3 },
@@ -680,6 +783,26 @@ J.DATA = {
             { name = "Fel Steed / Shadow Charger", items = {
                 { 6341, "Eerie Stable Lantern", "In Schildhand geführt", 3 },
                 { 932, "Fel Steed Saddlebags", "Tasche", 2 },
+                { 251341, "Plans: Guard's Chain Shirt", "Schmiedekunst (Pläne)", 3 },
+                { 251362, "Plans: Protector's Gloves", "Schmiedekunst (Pläne)", 3 },
+                { 251363, "Plans: Acolyte's Gloves", "Schmiedekunst (Pläne)", 3 },
+                { 251364, "Plans: Crusader's Gloves", "Schmiedekunst (Pläne)", 3 },
+                { 252781, "Pattern: Stormrider's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+                { 252782, "Pattern: Wisdom's Leather Gloves", "Lederverarbeitung (Muster)", 3 },
+                { 253902, "Pattern: Filigreed Pristine Gown", "Schneiderei (Muster)", 3 },
+                { 253904, "Pattern: Filigreed Silky Gown", "Schneiderei (Muster)", 3 },
+                { 253906, "Pattern: Filigreed Flame Gown", "Schneiderei (Muster)", 3 },
+                { 253908, "Pattern: Filigreed Shadow Gown", "Schneiderei (Muster)", 3 },
+                { 253910, "Pattern: Filigreed Pearly Gown", "Schneiderei (Muster)", 3 },
+                { 253912, "Pattern: Filigreed Shining Gown", "Schneiderei (Muster)", 3 },
+                { 251381, "Plans: Guard's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
+                { 251382, "Plans: Protector's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
+                { 252799, "Pattern: Trapper's Leather Hood", "Lederverarbeitung (Muster)", 3 },
+                { 252801, "Pattern: Totemic Leather Hood", "Lederverarbeitung (Muster)", 3 },
+                { 252803, "Pattern: Wisdom's Leather Hood", "Lederverarbeitung (Muster)", 3 },
+                { 253940, "Pattern: Filigreed Silky Leggings", "Schneiderei (Muster)", 3 },
+                { 253946, "Pattern: Filigreed Pearly Leggings", "Schneiderei (Muster)", 3 },
+                { 253948, "Pattern: Filigreed Shining Leggings", "Schneiderei (Muster)", 3 },
             } },
             { name = "Arugal's Voidwalker", items = {
                 { 5943, "Rift Bracers", "Handgelenke, Schwere Rüstung", 3 },
@@ -742,6 +865,15 @@ J.DATA = {
                 rewards = { { 6414, "Seal of Sylvanas", 3 } },
                 note = "Laut den Questdaten von Forever gibt es zusätzlich den Zauber Arkane Intelligenz.",
             },
+            {
+                id = 1806, name = "The Test of Righteousness", level = 22, requires = 20, faction = "alliance",
+                class = "PALADIN",
+                giver = "Jordan Stilwell, vor den Toren von Eisenschmiede, Dun Morogh",
+                objective = "Warten, bis Jordan Stilwell die Waffe geschmiedet hat.",
+                turnin = "Jordan Stilwell, vor den Toren von Eisenschmiede, Dun Morogh",
+                rewards = { { 6953, "Verigan's Fist", 3 } },
+                note = "Klassenquest für Paladine (Menschen und Zwerge). Hier: Jordan's Smithing Hammer, das Objekt Jordan's Hammer im Hof. Die übrigen Teile: Whitestone Oak Lumber (The Deadmines), Kor Gem (Blackfathom Deeps), Jordans Erzlieferung (Loch Modan).",
+            },
         },
     },
     blackfathom_deeps = {
@@ -750,20 +882,41 @@ J.DATA = {
                 { 6907, "Tortoise Armor", "Brust, Schwere Rüstung", 3 },
                 { 6908, "Ghamoo-ra's Bind", "Taille, Stoff", 3 },
                 { 273839, "Spiked Shell Band", "Finger", 3 },
+                { 251382, "Plans: Protector's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
+                { 252801, "Pattern: Totemic Leather Hood", "Lederverarbeitung (Muster)", 3 },
+                { 253940, "Pattern: Filigreed Silky Leggings", "Schneiderei (Muster)", 3 },
+                { 253942, "Pattern: Filigreed Flame Leggings", "Schneiderei (Muster)", 3 },
             },
             lady_sarevess = {
                 { 888, "Naga Battle Gloves", "Hände, Leder", 3 },
                 { 3078, "Naga Heartpiercer", "Distanz, Bogen", 2 },
                 { 11121, "Darkwater Talwar", "Waffenhand, Schwert", 2 },
                 { 252798, "Pattern: Brawler's Leather Hood", "Lederverarbeitung (Muster)", 3 },
+                { 251382, "Plans: Protector's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
+                { 251383, "Plans: Acolyte's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
+                { 253944, "Pattern: Filigreed Shadow Leggings", "Schneiderei (Muster)", 3 },
             },
             gelihast = {
                 { 6906, "Algae Fists", "Hände, Schwere Rüstung", 3 },
                 { 6905, "Reef Axe", "Zweihändig, Axt", 3 },
                 { 1470, "Murloc Skin Bag", "Tasche", 1 },
+                { 273840, "Cursed Murloc Eye", "Schmuck", 3 },
+                { 251375, "Plans: Veteran's Silvered Chain Leggings", "Schmiedekunst (Pläne)", 3 },
+                { 251377, "Plans: Protector's Silvered Chain Leggings", "Schmiedekunst (Pläne)", 3 },
+                { 252820, "Pattern: Brawler's Leather Legguards", "Lederverarbeitung (Muster)", 3 },
+                { 252821, "Pattern: Trapper's Leather Legguards", "Lederverarbeitung (Muster)", 3 },
+                { 252825, "Pattern: Wisdom's Leather Leggings", "Lederverarbeitung (Muster)", 3 },
+                { 253978, "Pattern: Filigreed Silky Circlet", "Schneiderei (Muster)", 3 },
+                { 253980, "Pattern: Filigreed Flame Circlet", "Schneiderei (Muster)", 3 },
+                { 273141, "Blueprint: Fishing Rack", "Bauplan", 2 },
             },
             lorgus_jett = {
                 { 273843, "Fallenroot Longbow", "Distanz, Bogen", 3 },
+                { 273841, "Twilight Maul", "Zweihändig, Streitkolben", 3 },
+                { 273842, "Treacherous Treads", "Füße, Schwere Rüstung", 3 },
+                { 253978, "Pattern: Filigreed Silky Circlet", "Schneiderei (Muster)", 3 },
+                { 253982, "Pattern: Filigreed Shadow Circlet", "Schneiderei (Muster)", 3 },
+                { 251377, "Plans: Protector's Silvered Chain Leggings", "Schmiedekunst (Pläne)", 3 },
             },
             baron_aquanis = {
                 { 16782, "Strange Water Globe", "Questgegenstand", 1 },
@@ -772,16 +925,33 @@ J.DATA = {
                 { 6901, "Glowing Thresher Cape", "Rücken, Stoff", 3 },
                 { 6904, "Bite of Serra'kis", "Einhändig, Dolch", 3 },
                 { 6902, "Bands of Serra'kis", "Handgelenke, Leder", 3 },
+                { 251375, "Plans: Veteran's Silvered Chain Leggings", "Schmiedekunst (Pläne)", 3 },
+                { 252825, "Pattern: Wisdom's Leather Leggings", "Lederverarbeitung (Muster)", 3 },
+                { 253978, "Pattern: Filigreed Silky Circlet", "Schneiderei (Muster)", 3 },
+                { 253982, "Pattern: Filigreed Shadow Circlet", "Schneiderei (Muster)", 3 },
             },
             twilight_lord_kelris = {
                 { 1155, "Rod of the Sleepwalker", "Zweihändig, Stab", 3 },
                 { 6903, "Gaze Dreamer Pants", "Beine, Stoff", 3 },
                 { 273846, "Twilight Lord Girdle", "Taille, Schwere Rüstung", 3 },
+                { 252820, "Pattern: Brawler's Leather Legguards", "Lederverarbeitung (Muster)", 3 },
+                { 252821, "Pattern: Trapper's Leather Legguards", "Lederverarbeitung (Muster)", 3 },
+                { 252822, "Pattern: Defender's Leather Kilt", "Lederverarbeitung (Muster)", 3 },
+                { 252823, "Pattern: Totemic Leather Leggings", "Lederverarbeitung (Muster)", 3 },
+                { 252825, "Pattern: Wisdom's Leather Leggings", "Lederverarbeitung (Muster)", 3 },
+                { 253982, "Pattern: Filigreed Shadow Circlet", "Schneiderei (Muster)", 3 },
             },
             akumai = {
                 { 6911, "Moss Cinch", "Taille, Leder", 3 },
                 { 6910, "Leech Pants", "Beine, Stoff", 3 },
                 { 6909, "Strike of the Hydra", "Zweihändig, Schwert", 3 },
+                { 251376, "Plans: Guard's Silvered Chain Leggings", "Schmiedekunst (Pläne)", 3 },
+                { 251377, "Plans: Protector's Silvered Chain Leggings", "Schmiedekunst (Pläne)", 3 },
+                { 251378, "Plans: Acolyte's Silvered Chain Leggings", "Schmiedekunst (Pläne)", 3 },
+                { 252821, "Pattern: Trapper's Leather Legguards", "Lederverarbeitung (Muster)", 3 },
+                { 252824, "Pattern: Stormrider's Leather Kilt", "Lederverarbeitung (Muster)", 3 },
+                { 253980, "Pattern: Filigreed Flame Circlet", "Schneiderei (Muster)", 3 },
+                { 253984, "Pattern: Filigreed Pearly Circlet", "Schneiderei (Muster)", 3 },
             },
         },
         others = {
@@ -914,6 +1084,26 @@ J.DATA = {
                 money = 4500,
                 note = "Am Tiefenstein lässt sich auch Baron Aquanis beschwören (optional).",
             },
+            {
+                id = 1806, name = "The Test of Righteousness", level = 22, requires = 20, faction = "alliance",
+                class = "PALADIN",
+                giver = "Jordan Stilwell, vor den Toren von Eisenschmiede, Dun Morogh",
+                objective = "Warten, bis Jordan Stilwell die Waffe geschmiedet hat.",
+                turnin = "Jordan Stilwell, vor den Toren von Eisenschmiede, Dun Morogh",
+                rewards = { { 6953, "Verigan's Fist", 3 } },
+                note = "Klassenquest für Paladine (Menschen und Zwerge). Hier: der Corrupted Kor Gem von den Blackfathom Sea Witches drinnen und von Tide Priestesses und Oracles am Eingang im Eschental; Thundris Windweaver in Auberdine reinigt ihn. Die übrigen Teile: Whitestone Oak Lumber (The Deadmines), Jordan's Smithing Hammer (Shadowfang Keep), Jordans Erzlieferung (Loch Modan).",
+            },
+            {
+                id = 1740, name = "The Orb of Soran'ruk", level = 25, requires = 20, faction = "both",
+                class = "WARLOCK",
+                giver = "Doan Karhan, Brachland",
+                objective = "3 Soran'ruk-Bruchstücke und 1 großes Soran'ruk-Bruchstück zu Doan Karhan bringen.",
+                turnin = "Doan Karhan, Brachland",
+                xp = 2550,
+                choice = true,
+                rewards = { { 6898, "Orb of Soran'ruk", 3 }, { 15109, "Staff of Soran'ruk", 3 } },
+                note = "Klassenquest für Hexenmeister. Die Bruchstücke gibt es in Shadowfang Keep und in Blackfathom Deeps.",
+            },
         },
     },
     the_stockade = {
@@ -922,23 +1112,40 @@ J.DATA = {
                 { 273805, "Blackrock Harness", "Brust, Leder", 3 },
                 { 273804, "Executioner Mantle", "Schulter, Leder", 3 },
                 { 273806, "Dark Horde Band", "Finger", 3 },
+                { 251380, "Plans: Veteran's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
+                { 251382, "Plans: Protector's Silvered Chain Helm", "Schmiedekunst (Pläne)", 3 },
+                { 253942, "Pattern: Filigreed Flame Leggings", "Schneiderei (Muster)", 3 },
             },
             kam_deepfury = {
                 { 2280, "Kam's Walking Stick", "Zweihändig, Stab", 4 },
                 { 273808, "Bridgebreaker Bindings", "Handgelenke, Stoff", 3 },
+                { 273807, "Demolition Girdle", "Taille, Leder", 3 },
+                { 251379, "Plans: Crusader's Silvered Chain Leggings", "Schmiedekunst (Pläne)", 3 },
+                { 252825, "Pattern: Wisdom's Leather Leggings", "Lederverarbeitung (Muster)", 3 },
             },
             hamhock = {
                 { 273809, "Hamhock's Cleaver", "Waffenhand, Axt", 3 },
                 { 273810, "Ogre Grips", "Hände, Schwere Rüstung", 3 },
+                { 273811, "Repurposed Rack", "Schildhand, Schild", 3 },
+                { 251377, "Plans: Protector's Silvered Chain Leggings", "Schmiedekunst (Pläne)", 3 },
             },
             dextren_ward = {
                 { 273820, "Nightskulker Ring", "Finger", 3 },
+                { 273817, "Graverobber's Shovel", "Zweihändig, Streitkolben", 3 },
+                { 273819, "Boneslicer", "Zweihändig, Stangenwaffe", 3 },
+                { 251375, "Plans: Veteran's Silvered Chain Leggings", "Schmiedekunst (Pläne)", 3 },
+                { 251376, "Plans: Guard's Silvered Chain Leggings", "Schmiedekunst (Pläne)", 3 },
+                { 252820, "Pattern: Brawler's Leather Legguards", "Lederverarbeitung (Muster)", 3 },
+                { 252821, "Pattern: Trapper's Leather Legguards", "Lederverarbeitung (Muster)", 3 },
             },
             bazil_thredd = {
                 { 273827, "Debt Collector", "Waffenhand, Schwert", 3 },
                 { 273824, "Defias Jailbreakers", "Hände, Leder", 3 },
                 { 273825, "Red Wool Cloak", "Rücken, Stoff", 3 },
                 { 273829, "Concealed Hand Crossbow", "Distanz, Armbrust", 3 },
+                { 252824, "Pattern: Stormrider's Leather Kilt", "Lederverarbeitung (Muster)", 3 },
+                { 253976, "Pattern: Filigreed Pristine Circlet", "Schneiderei (Muster)", 3 },
+                { 253986, "Pattern: Filigreed Shining Circlet", "Schneiderei (Muster)", 3 },
             },
             bruegal = {
                 { 3228, "Jimmied Handcuffs", "Handgelenke, Schwere Rüstung", 3 },
@@ -998,7 +1205,7 @@ J.DATA = {
                 turnin = "Motley Garmason, Dun Modr, Sumpfland",
                 reputation = { { "Eisenschmiede", 150 } },
                 choice = true,
-                rewards = { { 3562, "Belt of Vindication", 3 }, { 1264, "Headbasher", 3 } },
+                rewards = { { 3562, "Belt of Vindication", 3 }, { 1264, "Headbasher", 3 }, { 270036, "Magistrate's Pantaloons", 3 } },
                 note = "Erst nach „The Dark Iron War“ zu haben.",
             },
             {
@@ -1017,6 +1224,8 @@ J.DATA = {
         loot = {
             grubbis = {
                 { 9445, "Grubbis Paws", "Hände, Schwere Rüstung", 3 },
+                { 274043, "Irradiated Shield", "Schildhand, Schild", 3 },
+                { 274042, "Skullduggery Belt", "Taille, Leder", 3 },
             },
             viscous_fallout = {
                 { 9452, "Hydrocane", "Zweihändig, Stab", 3 },
@@ -1031,6 +1240,7 @@ J.DATA = {
             crowd_pummeler = {
                 { 9449, "Manual Crowd Pummeler", "Zweihändig, Streitkolben", 3 },
                 { 9450, "Gnomebot Operating Boots", "Füße, Leder", 3 },
+                { 274068, "Thermaplugg Medal of Honor", "Hals", 3 },
             },
             dark_iron_ambassador = {
                 { 9455, "Emissary Cuffs", "Handgelenke, Schwere Rüstung", 3 },
@@ -1123,7 +1333,7 @@ J.DATA = {
                 giver = "Scooty, Beutebucht, Schlingendorntal",
                 objective = "Warten, bis Scooty den Goblin-Transponder geeicht hat.",
                 turnin = "Scooty, Beutebucht, Schlingendorntal",
-                note = "Belohnung ist der Goblin-Transponder.",
+                rewards = { { 9173, "Goblin Transponder", 1 } },
             },
             {
                 id = 2841, name = "Rig Wars", level = 35, requires = 25, faction = "horde",
@@ -1158,6 +1368,22 @@ J.DATA = {
                 startItem = { 9326, "Grime-Encrusted Ring" },
                 note = "Weiter mit „Return of the Ring“: Allianz zu Talvash del Kissel in Eisenschmiede, Horde zu Nogg in Orgrimmar.",
             },
+            {
+                id = 2948, name = "Gnome Improvement", level = 35, requires = 28, faction = "alliance",
+                giver = "Talvash del Kissel, Eisenschmiede",
+                objective = "Den Brilliant Gold Ring, einen Silberbarren, einen Moosachat und 30 Silber zu Talvash del Kissel bringen.",
+                turnin = "Talvash del Kissel, Eisenschmiede",
+                rewards = { { 9538, "Talvash's Gold Ring", 3 } },
+                note = "Schluss der Reihe um den Grime-Encrusted Ring, nach „Return of the Ring“.",
+            },
+            {
+                id = 2950, name = "Nogg's Ring Redo", level = 35, requires = 28, faction = "horde",
+                giver = "Nogg, Tal der Ehre, Orgrimmar",
+                objective = "Den Brilliant Gold Ring, einen Silberbarren, einen Moosachat und 30 Silber zu Nogg bringen.",
+                turnin = "Nogg, Tal der Ehre, Orgrimmar",
+                rewards = { { 9588, "Nogg's Gold Ring", 3 } },
+                note = "Schluss der Reihe um den Grime-Encrusted Ring, nach „Return of the Ring“.",
+            },
         },
     },
     razorfen_kraul = {
@@ -1165,10 +1391,13 @@ J.DATA = {
             roogug = {
                 { 274155, "Geomancer Headdress", "Kopf, Leder", 3 },
                 { 274152, "Roogug's Severed Head", "Schmuck", 3 },
+                { 274149, "Thornweaver Drape", "Rücken, Stoff", 3 },
             },
             aggem_thorncurse = {
                 { 6681, "Thornspike", "Einhändig, Dolch", 3 },
                 { 274158, "Death Prophet Spine", "Zweihändig, Stab", 3 },
+                { 274159, "Thorncursed Grips", "Hände, Leder", 3 },
+                { 252820, "Pattern: Brawler's Leather Legguards", "Lederverarbeitung (Muster)", 3 },
             },
             death_speaker_jargba = {
                 { 2816, "Death Speaker Scepter", "Waffenhand, Streitkolben", 3 },
@@ -1179,16 +1408,20 @@ J.DATA = {
                 { 6687, "Corpsemaker", "Zweihändig, Axt", 3 },
                 { 6686, "Tusken Helm", "Kopf, Schwere Rüstung", 3 },
                 { 274161, "Quillord Mail Leggings", "Beine, Schwere Rüstung", 3 },
+                { 251379, "Plans: Crusader's Silvered Chain Leggings", "Schmiedekunst (Pläne)", 3 },
+                { 252821, "Pattern: Trapper's Leather Legguards", "Lederverarbeitung (Muster)", 3 },
             },
             agathelos = {
                 { 6691, "Swinetusk Shank", "Waffenhand, Dolch", 3 },
                 { 6690, "Ferine Leggings", "Beine, Leder", 3 },
                 { 274160, "Quilrager Throwing Axe", "Wurfwaffe", 3 },
+                { 251378, "Plans: Acolyte's Silvered Chain Leggings", "Schmiedekunst (Pläne)", 3 },
             },
             charlga_razorflank = {
                 { 6693, "Agamaggan's Clutch", "Finger", 3 },
                 { 6694, "Heart of Agamaggan", "Schildhand, Schild", 3 },
                 { 6692, "Pronged Reaver", "Einhändig, Axt", 3 },
+                { 273103, "Blueprint: Arcane Salvager", "Bauplan", 2 },
             },
         },
         others = {
@@ -1200,6 +1433,17 @@ J.DATA = {
             { name = "Earthcaller Halmgar (seltener Spawn)", items = {
                 { 6689, "Wind Spirit Staff", "Zweihändig, Stab", 3 },
                 { 6688, "Whisperwind Headdress", "Kopf, Leder", 3 },
+            } },
+            { name = "Gegner unterwegs", items = {
+                { 776, "Vendetta", "Einhändig, Dolch", 3 },
+                { 1727, "Sword of Decay", "Waffenhand, Schwert", 3 },
+                { 1975, "Pysan's Old Greatsword", "Zweihändig, Schwert", 3 },
+                { 1976, "Slaghammer", "Zweihändig, Streitkolben", 3 },
+                { 2549, "Staff of the Shade", "Zweihändig, Stab", 3 },
+                { 1978, "Wolfclaw Gloves", "Hände, Leder", 3 },
+                { 2264, "Mantle of Thieves", "Schulter, Leder", 3 },
+                { 4438, "Pugilist Bracers", "Handgelenke, Schwere Rüstung", 3 },
+                { 2039, "Plains Ring", "Finger", 3 },
             } },
         },
         quests = {
@@ -1218,7 +1462,7 @@ J.DATA = {
                 turnin = "Willix the Importer, am Ausgang des Krals",
                 xp = 7468,
                 choice = true,
-                rewards = { { 6748, "Monkey Ring", 2 }, { 6750, "Snake Hoop", 2 }, { 6749, "Tiger Band", 2 } },
+                rewards = { { 6748, "Monkey Ring", 2 }, { 6750, "Snake Hoop", 2 }, { 6749, "Tiger Band", 2 }, { 274078, "Boar Signet", 3 } },
             },
             {
                 id = 1142, name = "Mortality Wanes", level = 30, requires = 25, faction = "alliance",
@@ -1226,7 +1470,7 @@ J.DATA = {
                 objective = "Treshalas Anhänger finden und zu Treshala Fallowbrook nach Darnassus bringen.",
                 turnin = "Treshala Fallowbrook, Darnassus",
                 choice = true,
-                rewards = { { 6751, "Mourning Shawl", 2 }, { 6752, "Lancer Boots", 2 } },
+                rewards = { { 6751, "Mourning Shawl", 2 }, { 6752, "Lancer Boots", 2 }, { 270047, "Sentinel's Boots", 2 } },
             },
             {
                 id = 1101, name = "The Crone of the Kraul", level = 34, requires = 29, faction = "alliance",
@@ -1288,6 +1532,15 @@ J.DATA = {
                 { 7685, "Orb of the Forgotten Seer", "In Schildhand geführt", 3 },
                 { 7684, "Bloodmage Mantle", "Schulter, Stoff", 3 },
                 { 274291, "Polished Skullcap", "Kopf, Schwere Rüstung", 3 },
+                { 252822, "Pattern: Defender's Leather Kilt", "Lederverarbeitung (Muster)", 3 },
+            },
+            arcanist_doan = {
+                { 7714, "Hypnotic Blade", "Waffenhand, Dolch", 3 },
+                { 7713, "Illusionary Rod", "Zweihändig, Stab", 3 },
+                { 274293, "Spellsever Crossbow", "Distanz, Armbrust", 3 },
+                { 7712, "Mantle of Doan", "Schulter, Stoff", 2 },
+                { 7711, "Robe of Doan", "Brust, Stoff", 2 },
+                { 7146, "The Scarlet Key", "Schlüssel", 2 },
             },
         },
         others = {
@@ -1298,6 +1551,13 @@ J.DATA = {
                 { 10331, "Scarlet Gauntlets", "Hände, Schwere Rüstung", 2 },
                 { 10333, "Scarlet Wristguards", "Handgelenke, Schwere Rüstung", 2 },
                 { 10332, "Scarlet Boots", "Füße, Schwere Rüstung", 2 },
+            } },
+            { name = "Gegner unterwegs (sehr selten)", items = {
+                { 5819, "Sunblaze Coif", "Kopf, Schwere Rüstung", 3 },
+                { 7730, "Cobalt Crusher", "Zweihändig, Streitkolben", 3 },
+                { 7757, "Windweaver Staff", "Zweihändig, Stab", 3 },
+                { 7761, "Steelclaw Reaver", "Waffenhand, Axt", 3 },
+                { 7787, "Resplendent Guardian", "Schildhand, Schild", 3 },
             } },
         },
         quests = {
@@ -1316,6 +1576,24 @@ J.DATA = {
                 objective = "20 Herzen des Eifers aus dem Scharlachroten Kloster zu Faranell bringen.",
                 turnin = "Master Apothecary Faranell, Apothekarium, Unterstadt",
             },
+            {
+                id = 1394, name = "Final Passage", level = 36, requires = 25, faction = "horde",
+                giver = "Parqual Fintallas, Unterstadt",
+                objective = "Mit Dorn Plainstalker in Tausend Nadeln sprechen.",
+                turnin = "Dorn Plainstalker, Tausend Nadeln",
+                choice = true,
+                rewards = { { 6804, "Windstorm Hammer", 3 }, { 6806, "Dancing Flame", 3 } },
+                note = "Schluss der Reihe um „Test of Lore“ (Bibliothek).",
+            },
+            {
+                id = 96800, name = "Past Due", level = 38, requires = 30, faction = "alliance",
+                giver = "Magus Olvek, Dalaran, Alteracgebirge",
+                objective = "„The Lost Magic of the Runemasters“ aus dem Scharlachroten Kloster holen.",
+                turnin = "Magus Olvek, Dalaran, Alteracgebirge",
+                money = 4500,
+                choice = true,
+                rewards = { { 276898, "Salve and Salvation", 3 }, { 276899, "Knucklebound Thimble", 3 } },
+            },
         },
     },
     excavation_site = {
@@ -1328,12 +1606,15 @@ J.DATA = {
             shadetooth = {
                 { 273025, "Raptorclaw Greaves", "Füße, Schwere Rüstung", 3 },
                 { 273027, "Raptor's Gaze", "In Schildhand geführt", 3 },
+                { 273026, "Garb of Florid Feathers", "Brust, Leder", 3 },
+                { 273106, "Blueprint: Greenhouse", "Bauplan", 2 },
             },
             relic_guardian = {
                 { 273028, "Reliquary Mantle", "Schulter, Schwere Rüstung", 3 },
                 { 273029, "Golemsight Long Gun", "Distanz, Schusswaffe", 3 },
                 { 273030, "Ring of Power Regulation", "Finger", 3 },
                 { 270866, "Titan Relic", "Questgegenstand", 1 },
+                { 273097, "Blueprint: Rock Garden", "Bauplan", 2 },
             },
         },
         quests = {
@@ -1363,18 +1644,147 @@ J.DATA = {
                 rewards = { { 1710, "Greater Healing Potion", 1 }, { 3827, "Mana Potion", 1 } },
                 note = "Folgequest von „Lost in the Thicket Things“. Zusätzlich gibt es einen Swiftness Potion und einen Satchel of Potions.",
             },
+            {
+                id = 95682, name = "Open the Maw", level = 31, requires = 24, faction = "horde",
+                giver = "Deathstalker Agent, direkt vor der Excavation Site",
+                objective = "2 Dragonmaw Saboteurs und 4 Dragonmaw Warders besiegen, den Dragonmaw Dispatch bergen und dem Deathstalker Agent vor dem Dungeon berichten.",
+                turnin = "Deathstalker Agent, direkt vor der Excavation Site",
+                choice = true,
+                rewards = { { 271740, "Knife-Polishing Rag", 3 }, { 271732, "Dirt-Heavy Bracers", 3 } },
+                fixed = { { 271745, "Bloody Map", 1 } },
+                note = "Davor, nicht Pflicht: „Dragonmaw Rumors“ (95663). Den Dispatch tragen die Dragonmaw im Dungeon.",
+            },
+            {
+                id = 95697, name = "Changing Tastes", level = 31, requires = 24, faction = "horde",
+                giver = "Borstan, Orgrimmar",
+                objective = "4 Thicket Raptor Meat aus der Excavation Site bringen.",
+                turnin = "Borstan, Orgrimmar",
+                choice = true,
+                rewards = { { 280766, "Satchel of Potions", 3 }, { 280805, "Serrated Raptor Claw", 3 } },
+                fixed = { { 250185, "Recipe: Twice-Spiced Raptor Slice", 1 }, { 250077, "Twice-Spiced Raptor Slice", 1 } },
+                note = "Das Fleisch geben die Raptoren im Stalker's Thicket, wo Shadetooth steht.",
+            },
+            {
+                id = 95795, name = "Fallen in the Fen", level = 31, requires = 24, faction = "alliance",
+                giver = "Daewyn Songblade, in der Excavation Site",
+                objective = "Dorin Songblade in Seenhain von Daewyns Schicksal berichten.",
+                turnin = "Dorin Songblade, Seenhain, Rotkammgebirge",
+                choice = true,
+                rewards = { { 271769, "Daewyn's Girdle", 3 }, { 271768, "Songblade Stabilizer", 3 } },
+            },
+            {
+                id = 98815, name = "Highland Hides", level = 28, requires = 24, faction = "alliance",
+                giver = "James Halloran, Hafen von Menethil, Sumpfland",
+                objective = "4 Thicket Raptor Hides zu James Halloran bringen.",
+                turnin = "James Halloran, Hafen von Menethil, Sumpfland",
+                money = 1200,
+                reputation = { { "Sturmwind", 50 } },
+                note = "Erst nach „Young Crocolisk Skins“ (484).",
+            },
+            {
+                id = 98823, name = "Earthen Echo", level = 31, requires = 24, faction = "horde",
+                giver = "Bashana Runetotem, Anhöhe der Ältesten, Donnerfels",
+                objective = "Das Titan Relic zu Muln Earthfury bringen.",
+                turnin = "Muln Earthfury, Skywatcher Plateau, Mulgore",
+                money = 6000,
+                choice = true,
+                rewards = { { 271766, "Heavehammer", 3 }, { 271767, "Healer's Staff", 3 }, { 271719, "Furs of the Earthen Ring", 3 } },
+                note = "Erst nach „Elder Knowledge“ (95664); das Titan Relic lässt der Relic Guardian fallen.",
+            },
+            {
+                id = 98824, name = "Prehistoric Prism", level = 31, requires = 24, faction = "alliance",
+                giver = "Prospector Whelgar, Whelgar's Excavation Site, Sumpfland",
+                objective = "Das Titan Relic zu High Explorer Magellas in Eisenschmiede bringen.",
+                turnin = "High Explorer Magellas, Halle der Forscher, Eisenschmiede",
+                money = 6000,
+                choice = true,
+                rewards = { { 271716, "Explorer's League Dustcover", 3 }, { 271767, "Healer's Staff", 3 }, { 271766, "Heavehammer", 3 } },
+                note = "Erst nach „Lost Relic Carry“ (95810); das Titan Relic lässt der Relic Guardian fallen.",
+            },
         },
     },
     city_of_dalaran = {
         loot = {
             unstable_sentinel = {
                 { 273046, "Guardian's Dualblade", "Waffe", 3 },
+                { 273099, "Blueprint: Spinning Wheel", "Bauplan", 2 },
             },
             shade_of_the_archmage = {
                 { 273052, "Ponderous Orb", "In Schildhand geführt", 3 },
+                { 273103, "Blueprint: Arcane Salvager", "Bauplan", 2 },
             },
         },
         quests = {
+            {
+                id = 92456, name = "A Green Sample", level = 33, requires = 24, faction = "alliance",
+                giver = "Shylamiir, Sturmwind",
+                objective = "Eine Fel Infused Blossom aus dem Garten in der Mitte von Dalaran holen.",
+                turnin = "Shylamiir, Sturmwind",
+                choice = true,
+                rewards = { { 279835, "Vine Pruner's Cloak", 3 }, { 279836, "Thorn Protecting Girdle", 3 } },
+            },
+            {
+                id = 92489, name = "Power Overwhelming", level = 33, requires = 24, faction = "alliance",
+                giver = "High Sorcerer Andromath, Sturmwind",
+                objective = "Arcanic Enigma in der City of Dalaran besiegen.",
+                turnin = "High Sorcerer Andromath, Sturmwind",
+                money = 10000,
+                choice = true,
+                rewards = { { 251962, "Violet Sash", 3 }, { 279849, "Runebound Gloves", 3 } },
+            },
+            {
+                id = 92457, name = "Starving Arcane", level = 33, requires = 24, faction = "alliance",
+                giver = "Image of Archmage Modera, am Lordameresee vor Dalaran",
+                objective = "Je 8 Seeking Remnants, Saturated Remnants und Mana Echoes in der City of Dalaran besiegen.",
+                turnin = "Image of Archmage Modera, am Lordameresee vor Dalaran",
+                reputation = { { "Kirin Tor", 100 } },
+                choice = true,
+                rewards = { { 279837, "Fallen Guard's Pendant", 3 }, { 279838, "Arcane Infused Rod", 3 } },
+                note = "Erst nach „An Alarming Request“ (92432). Ein Durchgang reicht womöglich nicht für alle 24.",
+            },
+            {
+                id = 92458, name = "Heart of Disruption", level = 33, requires = 30, faction = "alliance",
+                giver = "Image of Archmage Modera, am Lordameresee vor Dalaran",
+                objective = "Das Arcane Mote aus der City of Dalaran holen.",
+                turnin = "Image of Archmage Modera, am Lordameresee vor Dalaran",
+                reputation = { { "Kirin Tor", 100 } },
+                choice = true,
+                rewards = { { 279839, "Spellguard Pauldrons", 3 }, { 279840, "Renewing Footpads", 3 }, { 279841, "Defender of Dalaran", 3 } },
+                note = "Erst nach „An Alarming Request“ (92432). Beim Annehmen gibt es den Dalaran Sewer Key.",
+            },
+            {
+                id = 96984, name = "Heart of Disruption", level = 33, requires = 30, faction = "horde",
+                giver = "Image of Archmage Modera, am Lordameresee vor Dalaran",
+                objective = "Das Arcane Mote aus der City of Dalaran holen.",
+                turnin = "Magus Wordeen Voidglare, Tarrens Mühle, Vorgebirge des Hügellands",
+                choice = true,
+                rewards = { { 279842, "Battle Spaulders", 3 }, { 279843, "Enchanted Sandals", 3 }, { 279844, "Striking Staff", 3 } },
+                note = "Schluss der Zugangsreihe der Horde, davor „Prison Break In“, „Key to the City“, „Dalaran Patrols“ und „Blood in the Streets“. Beim Annehmen gibt es den Dalaran Sewer Key.",
+            },
+            {
+                id = 96986, name = "The Grave Knight", level = 33, requires = 24, faction = "horde",
+                giver = "Melisara, Tarrens Mühle, Vorgebirge des Hügellands",
+                objective = "Atrexis the Grave Knight im Underbelly von Dalaran besiegen.",
+                turnin = "Melisara, Tarrens Mühle, Vorgebirge des Hügellands",
+                money = 10000,
+                choice = true,
+                rewards = { { 251963, "Gravewalker Boots", 3 }, { 251965, "Undead Knight's Bracers", 3 } },
+            },
+            {
+                id = 96987, name = "Opportunistic Education", level = 33, requires = 24, faction = "horde",
+                giver = "Rexxie Copperclutch, im Dungeon nahe dem Eingang aus der Kanalisation",
+                objective = "„The Founding of Dalaran“ finden und Rexxie Copperclutch bringen.",
+                turnin = "Rexxie Copperclutch, im Dungeon",
+                note = "Zwei Belohnungen zur Wahl; welche, ist noch nicht berichtet.",
+            },
+            {
+                id = 96988, name = "Source of Power", level = 33, requires = 24, faction = "horde",
+                giver = "Doctor Martin Felben, Unterstadt",
+                objective = "6 Cracked Sentry Cores von den Konstrukten in Dalaran sammeln.",
+                turnin = "Doctor Martin Felben, Unterstadt",
+                choice = true,
+                rewards = { { 279847, "Unstable Power Core", 3 }, { 279848, "Construct Cloak", 3 } },
+            },
         },
     },
 }
@@ -1466,6 +1876,31 @@ J.PLACES = {
     -- Excavation Site
     [95772] = { map = 1433, x = 0.2560, y = 0.4660, who = "Dorin Songblade" },
     [95646] = { map = 1437, x = 0.5620, y = 0.4060, who = "Rethiel the Greenwarden" },
+    [95682] = { map = 1437, x = 0.4780, y = 0.5630, who = "Deathstalker Agent" },
+    [95697] = { map = 1454, x = 0.5720, y = 0.5330, who = "Borstan" },
+    [98815] = { map = 1437, x = 0.0800, y = 0.5500, who = "James Halloran" },
+    [98823] = { map = 1456, x = 0.7080, y = 0.3340, who = "Bashana Runetotem" },
+    -- City of Dalaran (Dungeon Journal 1.6.3)
+    [92456] = { map = 1453, x = 0.3140, y = 0.6280, who = "Shylamiir" },
+    [92489] = { map = 1453, x = 0.4880, y = 0.8760, who = "High Sorcerer Andromath" },
+    [92457] = { map = 1416, x = 0.0920, y = 0.6000, who = "Image of Archmage Modera" },
+    [92458] = { map = 1416, x = 0.0920, y = 0.6000, who = "Image of Archmage Modera" },
+    [96984] = { map = 1416, x = 0.0920, y = 0.6000, who = "Image of Archmage Modera" },
+    [96986] = { map = 1424, x = 0.6260, y = 0.2060, who = "Melisara" },
+    [96988] = { map = 1458, x = 0.4660, y = 0.7410, who = "Doctor Martin Felben" },
+    -- Scarlet Monastery / Paladin
+    [96800] = { map = 1416, x = 0.0970, y = 0.6190, who = "Magus Olvek" },
+    [1806]  = { map = 1426, x = 0.5260, y = 0.3680, who = "Jordan Stilwell" },
+}
+
+-- Eingaenge, die der Abgleich (J.ENTRANCES, erzeugt) nicht kennt: die
+-- Forever-Dungeons. Seit dem Abgleich mit Dungeon Journal 1.6.3, Lage auf
+-- der Classic-Weltkarte wie J.PLACES. Was der Abgleich kennt, bleibt dessen;
+-- J.MergeForeverGuide() fuellt nur Luecken.
+J.HAND_ENTRANCES = {
+    city_of_dalaran    = { { map = 1416, x = 0.085, y = 0.593 } },
+    excavation_site    = { { map = 1437, x = 0.477, y = 0.562 } },
+    ruins_of_lordaeron = { { map = 1420, x = 0.634, y = 0.674 } },
 }
 
 --------------------------------------------------
@@ -1510,6 +1945,9 @@ function J.MergeForeverGuide()
     end
     for id, p in pairs(J.FG_PLACES or {}) do
         if not J.PLACES[id] then J.PLACES[id] = p end
+    end
+    for did, list in pairs(J.HAND_ENTRANCES or {}) do
+        if not J.ENTRANCES[did] then J.ENTRANCES[did] = list end
     end
     -- Beute: was schon als Tabelle dasteht, gleich; je Dungeon gebaute
     -- (Funktionen) erst beim ersten Blick auf diesen Dungeon.

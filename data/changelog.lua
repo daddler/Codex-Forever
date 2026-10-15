@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.41.6.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFMehr Quests auf der Karte.|r Die Questhilfe kennt rund 400 Einträge mehr, mit zusätzlichen Gebern, Objekten und Lagen.",
+            "|cff7C6CFFDungeons vollständiger.|r Die ersten Quests in Dalaran, Quests der Ausgrabungsstätte, Gnomeregan und Kloster, dazu rund 170 Gegenstände an Bossen und Gegnern und neue Questgeber auf der Karte.",
+            "|cff7C6CFFKein Leichnam mehr mit leerer Plakette.|r Ein getöteter Gegner zeigte mit eingeschaltetem Glitzern für Kraut und Erz bis zum Plündern eine Plakette mit 0 % Leben.",
+        },
+    },
+    {
         version = "6.41.5.0",
         date    = "15.10.2026",
         notes   = {

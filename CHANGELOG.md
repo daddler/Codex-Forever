@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.41.6.0] – 2026-10-16
+
+### Geändert
+- Questdatenbank neu eingelesen (Stand 16.10.): 402 Einträge neu, 11 weg; Ladetest-Stichprobe Silberblatt (765) statt Quellwasser (159, kein Questgegenstand mehr).
+- Dungeon-Journal abgeglichen mit „Dungeon Journal“ 1.6.3: 20 Quests (Dalaran, Excavation Site, Gnomeregan, Kloster, Paladin 1806), 168 Gegenstände, `J.HAND_ENTRANCES`, 15 Orte. Erfahrung (andere Maßstäbe) und Gegenstände ohne Nummer bewusst nicht übernommen.
+- ForeverGuide 1.35.1, Leatrix Maps 1.60.23, What's Training beta19, Shortest Path Forever 1.15.0 geprüft: inhaltlich unverändert.
+
+### Behoben
+- Glitzern: `SoftTargetNameplateInteract` bei `PLAYER_REGEN_DISABLED` zu – sonst Plakette mit 0 % an getöteten Gegnern (wie ForeverLootSparkles 1.2.1).
+
 ## [6.41.5.0] – 2026-10-15
 
 ### Behoben

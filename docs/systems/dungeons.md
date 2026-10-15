@@ -937,6 +937,40 @@ of Rath'mael“ gibt in der Beta beobachtet keine Erfahrung (Hinweis, kein
 *What's Training?* (Fassung 11.0.0-beta10) brachte für `data/trainer.lua`
 keine Änderung.
 
+**15.10.2026: abgeglichen mit dem Addon „Dungeon Journal“ 1.6.3** – von
+Hand, nur Fakten wie bei 1.4.2. Neu: **20 Quests** – die ersten acht der
+City of Dalaran (Allianz: A Green Sample, Power Overwhelming, Starving
+Arcane, Heart of Disruption; Horde: Heart of Disruption, The Grave Knight,
+Opportunistic Education, Source of Power), sechs der Excavation Site, die
+jetzt Nummern tragen, Gnome Improvement / Nogg's Ring Redo (Gnomeregan),
+Final Passage und Past Due (Scharlachrotes Kloster), dazu die Paladinquest
+„The Test of Righteousness“ (1806) in The Deadmines, Shadowfang Keep und
+Blackfathom Deeps und „The Orb of Soran'ruk“ auch in Blackfathom Deeps.
+Vier bekannte Quests haben eine Belohnung mehr (Forever-Gegenstände 270036,
+270047, 274078; Goblin Transponder). **168 Gegenstände**: 119 an Bossen –
+meist Pläne, Muster und Baupläne aus dem gemeinsamen Topf, den Wowhead
+Forever je Boss verzeichnet, dazu die Stockade-Beute (Demolition Girdle,
+Repurposed Rack, Graverobber's Shovel, Boneslicer), Twilight Maul,
+Treacherous Treads, Cursed Murloc Eye, Grubbis' Gürtel und Schild,
+Thermaplugg Medal of Honor, Roogug und Aggem in Razorfen Kraul, Worgpelt
+Leggings –, Arcanist Doan als eigene Liste (vorher nur Classic), 20 am
+Fel Steed und 23 von Gegnern unterwegs (Razorfen Kraul, Ruins of
+Lordaeron, The Deadmines, Kloster). Eingänge der City of Dalaran, der
+Excavation Site und der Ruins of Lordaeron (`J.HAND_ENTRANCES`, füllt nur
+Lücken des erzeugten `J.ENTRANCES`). Orte der neuen Questgeber in
+`J.PLACES`. **Nicht übernommen:** Erfahrung – das Addon führt jetzt
+Client-Cache-Werte, rund ein Viertel der bisher beobachteten (Red Silk
+Bandanas 1250 statt 4688); zwei Maßstäbe, keiner belegt, also bleibt es
+beim alten, und neue Quests stehen ohne Erfahrung da. Gegenstände ohne
+Nummer (in Dalaran neun; die Nummern dort kennt nur der ForeverGuide-
+Abgleich). Die sechs geteilten Lederhelme (eigene Gruppe „geteilte Beute“
+im Addon, hier kein Begriff dafür). Boss-Stufen (kein Feld). Belohnungen
+von Opportunistic Education (nur Nummern, keine Namen). **Widersprüche,
+stehen gelassen:** „An Unholy Alliance“ 6521 steht dort in Razorfen Kraul,
+im ForeverGuide-Abgleich in Razorfen Downs; der Eingang der Hall of Thanes
+liegt dort bei 43,5; 52,0, im Abgleich bei 31,8; 46,4. Bosslisten: nichts
+Neues seit 1.6.2 (Dalaran schon in 6.28.1.0).
+
 **6.14.0.0: abgeglichen mit dem Addon ForeverGuide 1.25.6** – erzeugt,
 nicht von Hand: `.github/scripts/import_foreverguide.py <Ordner>` liest
 dessen Datendateien in einer leeren Umgebung (`fg_dump.lua`), den eigenen

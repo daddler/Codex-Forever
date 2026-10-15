@@ -8321,7 +8321,7 @@ do
 
         -- Kontinent: nur, wo der Client das Rechteck nennt.
         mapID = 1415
-        assert(ME.Place() == 12, "Oestliche Koenigreiche: " .. tostring(ME.Place()))
+        assert(ME.Place() == 15, "Oestliche Koenigreiche: " .. tostring(ME.Place()))
         mapID = 1414
         assert(ME.Place() == 8, "Kalimdor: " .. tostring(ME.Place()))
         mapID = 1415
@@ -8375,7 +8375,7 @@ do
 
         -- Selbstpruefung.
         local sc = table.concat(ME.StatusLines(), "\n")
-        assert(sc:find("Eingänge im Bestand: 22 an 20 Stellen", 1, true) and sc:find("GetMapRectOnMap): ja", 1, true), "Selbstpruefung: " .. sc)
+        assert(sc:find("Eingänge im Bestand: 25 an 23 Stellen", 1, true) and sc:find("GetMapRectOnMap): ja", 1, true), "Selbstpruefung: " .. sc)
         local page
         for _, pg in ipairs(K.Module("comfort").pages) do if pg.key == "karte" then page = pg end end
         assert(page and page.label == "Karte", "Seite fehlt")
@@ -9372,8 +9372,9 @@ do
         DP.Select("the_deadmines", nil)
         WeintCodex.Navigation.SwitchTo("dungeons")
         -- 6.14.0.0: dazu der Eingang (Westfalen) - fuenf Geber, ein Eingang.
-        assert(DP.mapLinks == 6 and DP.entranceLinks == 1,
-            "Kartenlinks in The Deadmines: " .. tostring(DP.mapLinks) .. " statt 6, Eingaenge " .. tostring(DP.entranceLinks))
+        -- Dungeon Journal 1.6.3: dazu Jordan Stilwell (Paladinquest 1806).
+        assert(DP.mapLinks == 7 and DP.entranceLinks == 1,
+            "Kartenlinks in The Deadmines: " .. tostring(DP.mapLinks) .. " statt 7, Eingaenge " .. tostring(DP.entranceLinks))
         -- 6.5.1.1: jede Quest in ihrer Kachel (sieben in The Deadmines).
         assert(DP.questTiles == #J.Quests("the_deadmines", nil) or DP.questTiles == #J.Quests("the_deadmines", "alliance"),
             "Questkacheln: " .. tostring(DP.questTiles))
