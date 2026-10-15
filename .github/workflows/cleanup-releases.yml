@@ -3,6 +3,8 @@ name: Alte Releases aufräumen
 # Löscht alle GitHub-Releases bis auf die neuesten N (nach Erstellungsdatum)
 # und mit ihnen ihre Tags. Nur auf Knopfdruck unter "Actions".
 # Die Companion lädt immer das neueste Release - ältere braucht niemand.
+# Nur Fassungen (veröffentlicht, Tag "v..."); Entwürfe und andere
+# Releases (z. B. "daten-questie") bleiben immer stehen.
 
 on:
   workflow_dispatch:
@@ -34,7 +36,7 @@ jobs:
           case "$KEEP" in ''|*[!0-9]*) echo "keep muss eine Zahl sein"; exit 1;; esac
           if [ "$KEEP" -lt 5 ]; then echo "Weniger als 5 behalten ist hier nicht erlaubt"; exit 1; fi
           gh api --paginate "repos/$REPO/releases?per_page=100" \
-            --jq '.[] | [.created_at, .tag_name] | @tsv' | sort -r > all.tsv
+            --jq '.[] | select(.draft == false and (.tag_name | startswith("v"))) | [.created_at, .tag_name] | @tsv' | sort -r > all.tsv
           total=$(wc -l < all.tsv)
           echo "Releases gesamt: $total, behalten: $KEEP"
           tail -n +$((KEEP + 1)) all.tsv | cut -f2 > drop.txt
