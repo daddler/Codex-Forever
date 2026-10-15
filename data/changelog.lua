@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.38.3.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFHändler: nach dem Blättern fehlen keine Waren mehr.|r Wer auf „Weiter“ und wieder „Zurück“ klickte, sah auf der ersten Seite nur noch so viele Waren wie auf der letzten.",
+        },
+    },
+    {
         version = "6.38.2.0",
         date    = "15.10.2026",
         notes   = {

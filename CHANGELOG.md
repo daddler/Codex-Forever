@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.38.3.0] – 2026-10-15
+
+### Behoben
+- `ui/merchantsize.lua`: seit 6.38.2.0 verborgene leere Plätze zeigte das
+  Spiel beim Zurückblättern nie wieder (es ruft für sie kein `Show`) –
+  `MS.Layout` zeigt die Plätze bis zur letzten Ware jetzt selbst.
+
 ## [6.38.2.0] – 2026-10-15
 
 ### Behoben

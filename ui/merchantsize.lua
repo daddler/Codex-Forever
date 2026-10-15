@@ -142,7 +142,9 @@ function MS.Layout()
         local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
         it:ClearAllPoints()
         it:SetPoint("TOPLEFT", f, "TOPLEFT", n.x + col * n.dx, n.y - row * n.dy)
-        if i > shown then it:Hide() end
+        -- 6.38.3.0 (Beta-Test: nach "Weiter" und "Zurueck" nur noch zwei
+        -- Waren): das Spiel zeigt verborgene Plaetze nie wieder - also selbst.
+        if i > shown then it:Hide() else it:Show() end
     end
     for _, p in ipairs(n.pins) do
         p.r:ClearAllPoints()
