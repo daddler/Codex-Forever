@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.41.8.0] – 2026-10-16
+
+### Geändert
+- Willkommens-Assistent: „Danke für Buffs“ (`comfort.thanks`) als Eintrag in `WL.HELPERS`, Gruppe „handel“ – es flüstert Fremde an, darum gefragt statt still an.
+
 ## [6.41.7.0] – 2026-10-16
 
 ### Geändert

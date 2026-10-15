@@ -146,6 +146,9 @@ WL.HELPERS = {
       text = "Jedes Gespräch in einem eigenen Fenster." },
     { group = "handel", module = "comfort", key = "dlgOn", label = "Gespräche im Codex-Stil",
       text = "Questgeber und Händler in einem ruhigen Fenster, mit Kamera." },
+    -- 6.41.8.0: flüstert Fremde an - darum hier gefragt, nicht still an.
+    { group = "handel", module = "comfort", key = "thanks", label = "Danke für Buffs",
+      text = "Fremde, die dich draußen buffen, bekommen ein kurzes Flüstern." },
 }
 
 function WL.HelperGet(h)

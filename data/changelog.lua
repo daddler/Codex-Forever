@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.41.8.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Willkommens-Assistent fragt nach dem Danke für Buffs.|r Wer neu anfängt, entscheidet dort bei Handel und Gespräche selbst, ob Fremde für ihre Buffs ein Flüstern bekommen.",
+        },
+    },
+    {
         version = "6.41.7.0",
         date    = "16.10.2026",
         notes   = {
