@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.35.0.0] – 2026-10-15
+
+### Hinzugefügt
+- `ui/compass.lua`: linearer Kompass zum Questpfeil (Einstellung `compass`
+  off/both/only, `compassScale`, Mover `compass`). Striche alle 15°, N/W/S/O,
+  Ausblenden zu den Enden, weiches Nachdrehen; Zeichen für Ziel, nächsten Halt
+  und Punkt voraus mit Entfernung, Verdecken nach Rang. Daten aus `QA.cmp`.
+  Verhalten nach Shortest Path Forever, eigener Code (Vorbild ist GPL).
+
 ## [6.34.0.0] – 2026-10-14
 
 ### Hinzugefügt

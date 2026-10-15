@@ -271,6 +271,10 @@ WeintCodex.GameColors = {
     healthFallback= {0.240, 0.720, 0.360, 1.0},
     powerFallback = {0.300, 0.500, 0.900, 1.0},
     comboPoint    = {1.000, 0.820, 0.000, 1.0},
+    -- Kompass des Questpfeils (6.35.0.0): Striche im Pergamentgold der
+    -- Karte, geradeaus im Gold des eigenen Orts.
+    compassTick   = {0.720, 0.670, 0.550, 0.70},
+    compassAhead  = {1.000, 0.820, 0.000, 0.85},
     -- Kombopunkte an der Plakette, je Stand (6.33.7.0, einstellbar): von
     -- "noch nicht" (rot) bis "Spender jetzt" (gruen).
     combo1        = {0.902, 0.251, 0.251, 1.0},

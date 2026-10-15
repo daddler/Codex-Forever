@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.35.0.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFKompass für den Questpfeil.|r Auf Wunsch ein schmales Band oben am Bildschirm mit N, O, S, W: das Ziel als Nadel, der nächste Flugmeister oder Anleger und der Punkt voraus auf dem Weg mit Entfernung. Wahlweise neben dem Pfeil oder statt ihm, Größe einstellbar, verschiebbar im Gestaltungsmodus.",
+        },
+    },
+    {
         version = "6.34.0.0",
         date    = "14.10.2026",
         notes   = {

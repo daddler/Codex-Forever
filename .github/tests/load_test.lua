@@ -4156,6 +4156,50 @@ do
     Check(ok, "Plaketten: Kombopunkte am Ziel nur fuer Schurke/Katze" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.35.0.0: Kompass des Questpfeils.
+do
+    local CP, QA = WeintCodex.UICompass, WeintCodex.UIQuestArrow
+    local ok, err = pcall(function()
+        -- Geradeaus Mitte, Westen (90 Grad links gedreht) links, Osten rechts.
+        assert(math.abs(CP.Offset(0, 0)) < 1e-9, "geradeaus nicht in der Mitte")
+        assert(CP.Offset(math.pi / 2, 0) < 0 and CP.Offset(-math.pi / 2, 0) > 0, "Westen/Osten vertauscht")
+        -- Ziel genau im Norden, Spieler schaut nach Norden: Peilung 0.
+        assert(math.abs(CP.Bearing(0, 0, 100, 0)) < 1e-9, "Peilung Norden")
+        assert(math.abs(CP.Bearing(0, 0, 0, 100) - math.pi / 2) < 1e-9, "Peilung Westen")
+        local saved = { _G.GetPlayerFacing, K.Get("questarrow", "compass"), QA.frame }
+        CP._saved = { K.IsActive, saved }
+        _G.GetPlayerFacing = function() return 0 end
+        K.Set("questarrow", "compass", "both")
+        QA.frame = QA.frame or CreateFrame("Frame")
+        QA.frame:Show()
+        local was = K.IsActive
+        K.IsActive = function() return true end
+        local c = QA.cmp
+        c.ok, c.c, c.pN, c.pW, c.bN, c.bW, c.gN, c.gW, c.dist, c.n = true, 0, 0, 0, 50, 0, 200, 0, 50, 1
+        CP.Refresh()
+        local f, st = CP.frame, CP.state
+        assert(f and f:IsShown(), "Kompass nicht gezeigt")
+        -- Ziel und Punkt voraus beide geradeaus: das Ziel verdeckt den Punkt,
+        -- die Entfernung steht unter dem Ziel.
+        assert(st.goal:IsShown() and not st.bend:IsShown() and st.dist:IsShown(), "Verdecken der Zeichen")
+        K.Set("questarrow", "compass", "off")
+        CP.Refresh()
+        assert(not f:IsShown(), "Kompass trotz Aus")
+        K.IsActive = was
+        c.ok = false
+        _G.GetPlayerFacing = saved[1]
+        K.Set("questarrow", "compass", saved[2])
+    end)
+    if CP._saved then
+        K.IsActive = CP._saved[1]
+        _G.GetPlayerFacing = CP._saved[2][1]
+        K.Set("questarrow", "compass", CP._saved[2][2])
+        CP._saved = nil
+    end
+    QA.cmp.ok = false
+    Check(ok, "Questpfeil: Kompass (Richtungen, Verdecken, Aus)" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Questpfeil: die 3D-Ansichten und die Farbe.
 do
     local idx, l, r, t, b = QA.Frame(0)

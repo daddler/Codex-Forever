@@ -69,6 +69,7 @@ K.LAYOUT = {
     damagemeter     = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -36 },
     bags            = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20, y = 110 },
     questarrow      = { point = "TOP",         relPoint = "TOP", x = 0, y = -8 },
+    compass         = { point = "TOP",         relPoint = "TOP", x = 0, y = -100 },
     combatalert     = { point = "CENTER",      relPoint = "CENTER", x = 0, y = 220 },
     fps             = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -12 },
     durability      = { point = "TOP",         relPoint = "TOP", x = 0, y = -90 },

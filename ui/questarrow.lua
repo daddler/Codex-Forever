@@ -115,6 +115,9 @@ local defaults = {
     mapLines   = true,     -- Schiffs-, Zeppelin- und Bahnlinien auf der Weltkarte
     taxiReminder = true,   -- unbekannter Flugpunkt in der Naehe: erinnern (6.32.2.0)
     routeColor = "auto",   -- auto | yellow | alt: Farbe der Route auf der Weltkarte (6.32.3.0)
+    -- Kompass (6.35.0.0, ui/compass.lua): Band mit Himmelsrichtungen.
+    compass    = "off",    -- off | both (Pfeil und Kompass) | only (nur Kompass)
+    compassScale = 100,
 }
 
 local SHEET = "Interface\\AddOns\\WeintCodex\\media\\ui\\arrow3d"
@@ -823,6 +826,11 @@ QA.RESOLVE_EVERY = 3
 -- den gemerkten Punkten (reine Rechnung, keine neuen Tabellen).
 local aim = { ok = false }
 QA._aim = aim
+-- Was der Kompass braucht (ui/compass.lua): eigener Ort, der Punkt voraus
+-- (Laufweg oder Wegpunkt), das Ziel, der naechste Halt - alles auf dem
+-- Kontinent, auf dem man steht. ok = false: nichts zu zeigen.
+local cmp = { ok = false }
+QA.cmp = cmp
 function QA.Turn()
     if not aim.ok or not (arrow and arrow:IsShown()) then return false end
     local facing = _G.GetPlayerFacing and K.Plain(_G.GetPlayerFacing())
@@ -865,6 +873,7 @@ end
 
 function QA.Update(force)
     aim.ok = false
+    cmp.ok = false
     -- Die Linie auf der Minikarte zeigt sich nur, wenn dieser Lauf sie zieht.
     if WeintCodex.UIRoute then WeintCodex.UIRoute.HideMinimap() end
     -- Die Zielmarke zeigt sich nur, wenn dieser Durchlauf sie setzt.
@@ -991,6 +1000,15 @@ function QA.Update(force)
     local facing = _G.GetPlayerFacing and K.Plain(_G.GetPlayerFacing())
     local yards, rotation, bearing = QA.Solve(pN, pW, tN, tW, facing)
     aim.ok, aim.pN, aim.pW, aim.tN, aim.tW = false, pN, pW, tN, tW
+    cmp.ok, cmp.c, cmp.pN, cmp.pW, cmp.bN, cmp.bW = true, pc, pN, pW, tN, tW
+    cmp.gN, cmp.gW = nil, nil
+    if t.tc == pc then cmp.gN, cmp.gW = t.tN, t.tW end
+    cmp.sN, cmp.sW, cmp.stop = nil, nil, nil
+    if hop and hop.node and hop.node.c == pc then
+        cmp.sN, cmp.sW, cmp.stop = hop.node.n, hop.node.w, hop.mode
+    end
+    cmp.dist = navRest or yards
+    cmp.n = (cmp.n or 0) + 1
 
     -- Hoehe und Zielmarke aus der Navigation des Spiels (siehe Kopf).
     local nav = t.nav and not hop and QA.Nav() or nil
@@ -1037,7 +1055,8 @@ function QA.Update(force)
     if rotation then
         PointArrow(rotation)
         SetArrowColor(rotation)
-        arrow:Show()
+        -- "Nur Kompass": der Pfeil weicht, die Zeilen darunter bleiben.
+        arrow:SetShown(K.Get(KEY, "compass") ~= "only")
         aim.ok = true
     else
         arrow:Hide()
@@ -1089,6 +1108,7 @@ local function OnTick(_, elapsed)
     if full >= QA.FULL_EVERY or not QA.Turn() then
         full = 0
         QA.Update()
+        if WeintCodex.UICompass then WeintCodex.UICompass.Refresh() end
     end
     -- Auswahl weg (oder im Kampf ausgeblendet): der Takt steht, bis ein
     -- Ereignis ihn wieder anwirft.
@@ -1271,6 +1291,7 @@ local function Disable()
     ticker:SetScript("OnUpdate", nil)
     if frame then frame:Hide() end
     K.SetMoverEnabled("questarrow", false)
+    if WeintCodex.UICompass then WeintCodex.UICompass.Refresh() end
 end
 
 --------------------------------------------------
@@ -1288,6 +1309,7 @@ K.Register({
     OnSetting = function()
         ApplyStyle()
         Refresh()
+        if WeintCodex.UICompass then WeintCodex.UICompass.Refresh() end
     end,
     pages = {
         { key = "allgemein", label = "Allgemein", build = function(B)
@@ -1301,6 +1323,14 @@ K.Register({
             B:Row({ type = "toggle", label = "Name der Quest", key = "showTitle" },
                   { type = "toggle", label = "Zielmarke im Raum", key = "worldMarker",
                     description = "Eine Nadel genau am Ziel, auf dem Berg oder am Höhleneingang. Nur für die Quest, die das Spiel verfolgt, und für Kartenmarkierungen." })
+            B:Row({ type = "dropdown", label = "Kompass", key = "compass", items = {
+                        { value = "off",  text = "Aus" },
+                        { value = "both", text = "Pfeil und Kompass" },
+                        { value = "only", text = "Nur Kompass" } },
+                    tooltip = "Ein schmales Band mit den Himmelsrichtungen: das Ziel als Nadel, der nächste Halt, der Punkt voraus auf dem Weg mit Entfernung. Verschieben im Gestaltungsmodus." },
+                  { type = "slider", label = "Größe des Kompasses", key = "compassScale", min = 50, max = 200, step = 10,
+                    format = function(v) return string.format("%d %%", v) end,
+                    disabled = function() return K.Get(KEY, "compass") == "off" end })
             B:Row({ type = "toggle", label = "Im Kampf ausblenden", key = "hideInCombat" },
                   { type = "toggle", label = "In Dungeons ausblenden", key = "hideInInstance",
                     description = "Auch in Schlachtzügen, auf Schlachtfeldern und in Arenen. Dort nennt das Spiel keine Position." })
