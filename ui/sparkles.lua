@@ -231,6 +231,33 @@ local function SetGate(on)
     if P and P.SetCVar then P.SetCVar(SP.GATE, on and "1" or "0", KEY) end
 end
 
+-- Die Plakette des weichen Ziels. 6.35.2.0 (Beta-Test: Erz glitzert nicht,
+-- obwohl an): GetNamePlateForUnit kennt nicht jede Kennung - fuer
+-- "softinteract" kann es nichts liefern oder einen Fehler werfen. Dann die
+-- Plaketten durchgehen und die nehmen, deren Einheit das weiche Ziel ist.
+function SP.PlateFor(u)
+    local NPm = _G.C_NamePlate
+    if not NPm then return nil end
+    if NPm.GetNamePlateForUnit then
+        local ok, plate = pcall(NPm.GetNamePlateForUnit, u)
+        if ok and type(plate) == "table" then return plate, "direkt" end
+    end
+    if NPm.GetNamePlates and _G.UnitIsUnit then
+        local ok, list = pcall(NPm.GetNamePlates)
+        if ok and type(list) == "table" then
+            for _, plate in ipairs(list) do
+                local token = type(plate) == "table" and (plate.namePlateUnitToken
+                    or (plate.UnitFrame and plate.UnitFrame.unit))
+                if type(token) == "string" then
+                    local ok2, same = pcall(_G.UnitIsUnit, token, u)
+                    if ok2 and K.Bool(same, false) then return plate, "gesucht" end
+                end
+            end
+        end
+    end
+    return nil
+end
+
 -- Ein Blick: Funken an die Plakette des weichen Ziels, wenn es Kraut/Erz ist.
 function SP.Look()
     if not SP.NodesActive() or K.InCombat() then glow:Hide() return nil end
@@ -256,8 +283,12 @@ function SP.Look()
     if kind == "herb" or kind == "ore" then
         stats[kind] = stats[kind] + 1
         SetGate(true)
-        local np = _G.C_NamePlate and _G.C_NamePlate.GetNamePlateForUnit
-        local plate = np and select(2, pcall(np, u))
+        -- Dieselbe Plakette fuer dasselbe Objekt: nicht bei jedem Blick suchen.
+        local plate = SP.lastPlateGuid == SP.lastGuid and SP.lastPlate or nil
+        if not (plate and plate.IsShown and plate:IsShown()) then
+            plate = SP.PlateFor(u)
+            SP.lastPlate, SP.lastPlateGuid = plate, SP.lastGuid
+        end
         if type(plate) == "table" then
             glow:SetParent(plate)
             glow:ClearAllPoints()
@@ -339,8 +370,7 @@ function SP.Probe()
     local kindC, blC = SP.ClassifyCursor(u)
     local kindT, blT = SP.ReadTooltip(u)
     local tex = K.Plain(probe:GetTexture())
-    local np = _G.C_NamePlate and _G.C_NamePlate.GetNamePlateForUnit
-    local plate = np and select(2, pcall(np, u))
+    local plate, how = SP.PlateFor(u)
     local NP = WeintCodex.UINameplates
     local ours = false
     if type(plate) == "table" and NP and NP.plates then
@@ -351,7 +381,7 @@ function SP.Probe()
     return string.format("Vor dir: %s · Kennung %s · Leben %s · Mauszeiger %s (%s) · Tooltip %s · Plakette %s%s · von WeintCodex bemalt: %s",
         tostring(name), type(guid) == "string" and (guid:match("^[^%-]+") or guid) or "geheim/keine",
         tostring(hm), tostring(kindC), tostring(tex), tostring(kindT),
-        type(plate) == "table" and "da" or "keine",
+        type(plate) == "table" and ("da (" .. tostring(how) .. ")") or "keine",
         type(pw) == "number" and string.format(" %dx%d", pw, ph or 0) or "",
         ours and "ja" or "nein")
 end

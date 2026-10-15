@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.35.2.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFDeutlich weniger Speicherabfall beim Laufen mit dem Questpfeil.|r Die Wegsuche übers Gelände legte bei jeder Neuberechnung große Tabellen neu an und packte Kartenabschnitte immer wieder aus; jetzt nutzt sie dieselben Tabellen weiter und behält die zuletzt gebrauchten Abschnitte. Die Wege bleiben dieselben.",
+            "|cff7C6CFFErz und Kräuter finden ihre Plakette zuverlässiger.|r Fand das Glitzern die Plakette des Objekts nicht direkt, blieb es aus – jetzt sucht es sie unter allen Plaketten.",
+        },
+    },
+    {
         version = "6.35.1.0",
         date    = "15.10.2026",
         notes   = {

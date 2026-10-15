@@ -114,7 +114,7 @@ local function Build()
     st.markers = { st.goal, st.stop, st.bend }
     st.dist = K.NewText(frame, 11)
     st.dist:SetShadowOffset(1, -1)
-    frame:SetScript("OnUpdate", function(_, el) CP.Step(el or 0) end)
+    frame:SetScript("OnUpdate", K.Measured("Kompass", function(_, el) CP.Step(el or 0) end))
     frame:Hide()
     CP.frame = frame
     K.RegisterMover(frame, "compass", "Kompass", K.Layout("compass"))
@@ -161,7 +161,12 @@ function CP.Render()
     local owner = st.bend._visible and st.bend or st.bend._cover
     if owner and d.dist then
         local QA = WeintCodex.UIQuestArrow
-        st.dist:SetText(QA.FormatDistance(d.dist, K.Get(KEY, "units")))
+        -- Text nur neu, wenn sich die Zahl aendert (beim Drehen jedes Bild).
+        local key = math.floor(d.dist)
+        if st.distKey ~= key then
+            st.distKey = key
+            st.dist:SetText(QA.FormatDistance(d.dist, K.Get(KEY, "units")))
+        end
         st.dist:ClearAllPoints()
         st.dist:SetPoint("TOP", owner, "BOTTOM", 0, -2)
         st.dist:Show()
@@ -213,6 +218,7 @@ function CP.Refresh()
     K.SetMoverEnabled("compass", (K.Get(KEY, "compass") or "off") ~= "off")
     if want then
         if not frame:IsShown() then st.facing, st.stamp = nil, nil end
+        st.distKey = nil
         frame:Show()
         CP.Step(0)
     else

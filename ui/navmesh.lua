@@ -37,7 +37,7 @@ NV.MAX_EXPAND = 80000  -- Eingaenge je Suche, dann aufgeben
 NV.SNAP = 6            -- Zellen Umkreis, wenn man nicht auf einer Zelle steht
 NV.REPATH_MOVE = 40    -- so weit weg vom Weg: neu suchen
 NV.LOOKAHEAD = 30      -- der Pfeil zeigt so weit voraus auf den Weg
-NV.CACHE = 32          -- entpackte Abschnitte im Speicher
+NV.CACHE = 48          -- entpackte Abschnitte im Speicher (je rund 10 KB)
 
 local byte, floor, sqrt, huge = string.byte, math.floor, math.sqrt, math.huge
 local coroutine, os = _G.coroutine, _G.os
@@ -59,7 +59,7 @@ NV.Num = Num
 --------------------------------------------------
 
 local states = {}
-local cached, cachedCount = {}, 0
+local cachedCount, useTick = 0, 0
 
 function NV.Available(c)
     local D = WeintCodex.NavData and WeintCodex.NavData[c]
@@ -104,11 +104,15 @@ NV.State = State
 -- cl = { s = Wegenetz, n, edge = { [i] = Lage der Kanten }, val, flg, fs }
 function NV.Cluster(st, k)
     local cl = st.clusters[k]
-    if cl ~= nil then return cl or nil end
-    if cachedCount >= NV.CACHE then
-        for _, s in pairs(states) do s.clusters = {} end
-        cached, cachedCount = {}, 0
+    if cl ~= nil then
+        if cl then useTick = useTick + 1 cl.used = useTick end
+        return cl or nil
     end
+    -- 6.35.2.0 (/wcui speicher: 600 KB/s beim Laufen): voll heisst nicht
+    -- mehr "alles weg" - eine lange Suche brauchte mehr als NV.CACHE
+    -- Abschnitte und entpackte dann bei jeder Suche alles neu. Jetzt geht
+    -- nur der am laengsten nicht gebrauchte.
+    if cachedCount >= NV.CACHE then NV.Evict() end
     local s = Field(st.D, "graph", k + 1)
     if not s then st.clusters[k] = false return nil end
     cl = { s = s, n = Num(s, 1, 2), edge = {} }
@@ -140,7 +144,25 @@ function NV.Cluster(st, k)
     cl.fs = Field(st.D, "fcell", k + 1)
     st.clusters[k] = cl
     cachedCount = cachedCount + 1
+    useTick = useTick + 1
+    cl.used = useTick
     return cl
+end
+
+-- Den am laengsten nicht gebrauchten Abschnitt freigeben.
+function NV.Evict()
+    local bestSt, bestK, bestUsed
+    for _, st in pairs(states) do
+        for k, cl in pairs(st.clusters) do
+            if cl and (not bestUsed or cl.used < bestUsed) then bestSt, bestK, bestUsed = st, k, cl.used end
+        end
+    end
+    if bestSt then
+        bestSt.clusters[bestK] = nil
+        cachedCount = cachedCount - 1
+    else
+        cachedCount = 0
+    end
 end
 
 -- Lage einer Zelle (0-basiert) im Abschnitt k: Norden, Westen.
@@ -340,8 +362,15 @@ end
 -- Suche
 --------------------------------------------------
 
+-- Feste Arbeitstabellen (6.35.2.0): jede Suche kopierte vorher die Gitter
+-- von Start und Ziel in neue Tabellen (je einige tausend Eintraege) und
+-- legte Kosten, Herkunft und Haufen neu an - rund ein halbes MB Abfall je
+-- Suche. Jetzt werden sie geleert und wiederverwendet.
 local scratchA = { dist = {}, prev = {}, heap = HeapNew() }
 local scratchB = { dist = {}, prev = {}, heap = HeapNew() }
+local scratchR = { dist = {}, prev = {}, heap = HeapNew() }
+local work = { g = {}, from = {}, goalCost = {}, heap = HeapNew() }
+local function Wipe(t) for key in pairs(t) do t[key] = nil end end
 
 -- Polylinie (flach n, w, n, w ...) im Abschnitt von Zelle a rueckwaerts
 -- ueber prev bis zum Start; jede vierte Zelle reicht fuer die Linie.
@@ -378,26 +407,18 @@ function NV.Search(c, sN, sW, gN, gW)
     if not (cls and clg) then return nil end
     local cs, cg = NV.Snap(st, cls, cs0), NV.Snap(st, clg, cg0)
     local size = st.cs
-    -- Vom Start: Zellen im eigenen Abschnitt.
-    local distS, prevS = {}, {}
-    local ds, ps = {}, {}
-    if cs then
-        local d, p = NV.Grid(st, cls, cs, scratchA)
-        for key, v in pairs(d) do ds[key] = v end
-        for key, v in pairs(p) do ps[key] = v end
-    end
-    distS, prevS = ds, ps
-    local dg, pg = {}, {}
-    if cg then
-        local d, p = NV.Grid(st, clg, cg, scratchB)
-        for key, v in pairs(d) do dg[key] = v end
-        for key, v in pairs(p) do pg[key] = v end
-    end
+    -- Vom Start und zum Ziel: Zellen im eigenen Abschnitt (feste Tabellen).
+    Wipe(scratchA.dist) Wipe(scratchA.prev) Wipe(scratchB.dist) Wipe(scratchB.prev)
+    if cs then NV.Grid(st, cls, cs, scratchA) end
+    if cg then NV.Grid(st, clg, cg, scratchB) end
+    local distS, prevS = scratchA.dist, scratchA.prev
+    local dg, pg = scratchB.dist, scratchB.prev
     -- Im selben Abschnitt und auf dem Gitter verbunden: fertig.
     local best, bestNode = huge, nil
     if ks == kg and cs and cg and distS[cg] then best = distS[cg] * size end
     -- Ziel-Eingaenge mit ihren Kosten bis zum Ziel.
-    local goalCost = {}
+    local goalCost = work.goalCost
+    Wipe(goalCost)
     for i = 0, clg.n - 1 do
         local id = kg * 4096 + i
         local _, cell, layer = NV.NodeCell(st, id)
@@ -411,8 +432,10 @@ function NV.Search(c, sN, sW, gN, gW)
         end
     end
     -- A* ueber die Eingaenge.
-    local g, from = {}, {}
-    local heap = HeapNew()
+    local g, from = work.g, work.from
+    Wipe(g) Wipe(from)
+    local heap = work.heap
+    HeapClear(heap)
     for i = 0, cls.n - 1 do
         local id = ks * 4096 + i
         local _, cell, layer = NV.NodeCell(st, id)
@@ -480,7 +503,6 @@ function NV.Search(c, sN, sW, gN, gW)
     -- Eingaenge der Reihe nach; zwei Eingaenge im selben Abschnitt auf der
     -- Grundflaeche werden ueber die Zellen verbunden (6.32.4.0: die Linie
     -- lief vorher gerade von Eingang zu Eingang - "Luftlinie" auf der Karte).
-    local scratchR = scratchA
     for i = #chain, 1, -1 do
         local id = chain[i]
         if i < #chain then
@@ -515,7 +537,8 @@ local result = { path = nil }
 NV._job, NV._result = job, result
 local pump = CreateFrame("Frame")
 
-local function Pump()
+local Pump
+Pump = function()
     if not job.co then pump:SetScript("OnUpdate", nil) return end
     deadline = Clock() + NV.BUDGET
     local ok, path, len = coroutine.resume(job.co)
@@ -533,6 +556,7 @@ local function Pump()
         pump:SetScript("OnUpdate", nil)
     end
 end
+Pump = K.Measured and K.Measured("Geländekarte", Pump) or Pump
 NV.Pump = Pump
 
 local function Start(c, sN, sW, gN, gW)

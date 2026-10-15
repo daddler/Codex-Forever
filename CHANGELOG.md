@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.35.2.0] – 2026-10-15
+
+### Geändert
+- `ui/navmesh.lua`: feste Arbeitstabellen für Start-/Zielgitter, Kosten,
+  Herkunft und Haufen (vorher je Suche neu, Gitter kopiert); Cache verdrängt
+  den am längsten ungenutzten Abschnitt (`NV.Evict`) statt alles zu leeren,
+  `NV.CACHE` 48; Verfeinern über eigene Tabelle (`scratchR`, überschrieb vorher
+  das Startgitter mitten in der Kette); Pumpe gemessen („Geländekarte“).
+- Kompass: Entfernungstext nur bei neuer Zahl, gemessen („Kompass“).
+- Glitzern: `SP.PlateFor` sucht die Plakette des weichen Ziels auch über
+  `GetNamePlates` + `UnitIsUnit`; `/wcui prüfen` nennt, wie sie gefunden wurde.
+
 ## [6.35.1.0] – 2026-10-15
 
 ### Geändert
