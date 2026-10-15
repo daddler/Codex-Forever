@@ -9,6 +9,21 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.40.0.0] – 2026-10-15
+
+### Hinzugefügt
+- `ui/rings.lua` (Komfort, Seite „Ringe“, `rings`/`ringList`/`ringScale`):
+  Ringmenüs nach dem Verhalten von OPie („All rights reserved“ – kein Code,
+  keine Bilder). Ring = `SecureHandlerBaseTemplate`, Plätze =
+  `SecureActionButtonTemplate`, Taste = `SetOverrideBindingClick` auf einen
+  Auslöser mit umhülltem `OnClick`: Drücken zeigt den Ring am Mauszeiger
+  (`$cursor`), Loslassen wählt (Symbol unter der Maus, sonst größtes
+  Skalarprodukt mit der Richtung je Platz – keine Winkel im Schnipsel) und
+  benutzt. Modus „Klicken“. Feste Ringe: Reittiere (`C_MountJournal`, sonst
+  Reittier-Gegenstände), Reisen und Berufe (IDs `classic`, nur gelernt),
+  Markierungen (`/tm`). Umwandeln in eigene Ringe; Eintrag per Ziehen
+  (`GetCursorInfo`) oder Eintippen. Inhalte nur außerhalb des Kampfes.
+
 ## [6.39.0.0] – 2026-10-15
 
 ### Hinzugefügt

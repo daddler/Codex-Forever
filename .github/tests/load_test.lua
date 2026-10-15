@@ -3968,6 +3968,35 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.40.0.0: Ringe (ui/rings.lua): vier feste Ringe, Markierungen,
+-- Umwandeln in einen eigenen, Eintippen, Fuellen der sicheren Rahmen.
+do
+    local RG = WeintCodex.UIRings
+    local saved = { _G.SecureHandlerSetFrameRef, _G.SecureHandlerWrapScript, K.Get("comfort", "ringList") }
+    local ok, err = pcall(function()
+        K.Set("comfort", "ringList", nil)
+        local list = RG.List()
+        assert(#list == 4 and list[3].preset == "marks", "feste Ringe")
+        local marks = RG.Slots(list[3])
+        assert(#marks == 9 and marks[1].macrotext == "/tm 1" and marks[9].macrotext == "/tm 0", "Markierungen")
+        RG.Convert(list[3])
+        assert(list[3].preset == "custom" and #list[3].entries == 9 and list[3].entries[8].kind == "mark", "umwandeln")
+        local m = RG.Parse("/cast Heilung")
+        assert(m and m.kind == "macro", "Makro eintippen")
+        assert(RG.Parse("") == nil, "leer")
+        _G.SecureHandlerSetFrameRef = function() end
+        _G.SecureHandlerWrapScript = function() end
+        local f = RG.Fill(1, list[3])
+        assert(f.count == 9 and f.ring:GetAttribute("count") == 9, "Ring nicht gefuellt")
+        assert(math.abs(f.vx[1]) < 1e-6 and math.abs(f.vy[1] - 1) < 1e-6, "erster Platz nicht oben")
+        assert(f.slots[1]:GetAttribute("macrotext") == "/tm 1", "Platz ohne Makro")
+        assert(RG.StatusLine():find("4 Ringe"), "Statuszeile")
+    end)
+    _G.SecureHandlerSetFrameRef, _G.SecureHandlerWrapScript = saved[1], saved[2]
+    K.Set("comfort", "ringList", saved[3])
+    Check(ok, "Ringe: feste Ringe, Markierungen, umwandeln, eintippen, sicher gefuellt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.39.0.0: Erinnerung anklicken (Ring), Manaeffizienz, Danke fuer Buffs.
 do
     local RP, SI, TH, K = WeintCodex.UIReminderPick, WeintCodex.UISpellInfo, WeintCodex.UIThanks, WeintCodex.UIKit
@@ -18018,9 +18047,9 @@ do
             assert(QoL.PAGE_ORDER[p.key], "Seite ohne Thema: " .. p.key)
         end
         local order = table.concat(keys, ",")
-        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,gespraeche",
+        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,ringe,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,gespraeche",
             "Reihenfolge: " .. order)
-        assert(O.PageIndex("comfort", "gespraeche") == 14 and O.PageIndex("comfort", "fluestern") == 13, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 15 and O.PageIndex("comfort", "fluestern") == 14, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")

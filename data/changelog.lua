@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.40.0.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFRinge auf einer Taste.|r Taste halten, Maus in eine Richtung, loslassen – oder drücken und klicken. Dabei: Reittiere, Reisen (Ruhestein, Teleporte, Portale), Markierungen und Berufe; dazu bis zu acht eigene Ringe mit Zaubern, Gegenständen, Reittieren und Makros – hineinziehen oder eintippen. Komfort → Ringe, die Tasten legst du dort fest.",
+        },
+    },
+    {
         version = "6.39.0.0",
         date    = "15.10.2026",
         notes   = {

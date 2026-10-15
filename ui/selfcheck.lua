@@ -652,6 +652,13 @@ Check("Schwungtimer", function(add)
     add(SW.state.found > 0 and SC.OK or SC.OPEN, SW.StatusLine())
 end)
 
+-- Ringe (6.40.0.0)
+Check("Ringe", function(add)
+    local RG = WeintCodex.UIRings
+    if not RG then add(SC.OPEN, "Ringe nicht geladen.") return end
+    add(RG.Active() and SC.OK or SC.OPEN, RG.StatusLine())
+end)
+
 -- Danke fuer Buffs (6.39.0.0)
 Check("Danke", function(add)
     local TH = WeintCodex.UIThanks
