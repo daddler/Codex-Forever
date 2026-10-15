@@ -3,7 +3,7 @@
 --------------------------------------------------
 -- ERZEUGT von .github/scripts/import_mapreveal.py - nicht von Hand
 -- aendern. Quelle: die Tabelle "Reveal Data for Forever" im Addon
--- Leatrix Maps 1.60.20 (nur die Daten: Bildnummern, Groesse, Lage -
+-- Leatrix Maps 1.60.23 (nur die Daten: Bildnummern, Groesse, Lage -
 -- Tatsachen aus den Spieldaten, kein Code). Gelesen von ui/mapreveal.lua,
 -- das sie im Spiel gegen die schon erkundeten Teile haelt.
 --

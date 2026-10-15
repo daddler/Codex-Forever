@@ -4,7 +4,7 @@
 -- ERZEUGT von .github/scripts/import_foreverguide.py - nicht von Hand
 -- aendern; neu erzeugen.
 --
--- HERKUNFT `community`: das Addon ForeverGuide 1.34.0 hat die Rezepte aus dem
+-- HERKUNFT `community`: das Addon ForeverGuide 1.35.1 hat die Rezepte aus dem
 -- Forever-Client gelesen (Build 1.60.1, ueber wowforevertalents.com) und
 -- die Lehrer aus der Questie-Datenbank fuer Forever. Uebernommen sind nur
 -- Fakten (Nummern, Fertigkeitsstufen, Reagenzien, Lagen). Die Haendler
@@ -26,7 +26,7 @@ local P = WeintCodex.ProfessionData
 
 P.SOURCE = {
     kind  = "community",
-    date  = "11.10.2026",
+    date  = "15.10.2026",
     label = "Rezepte aus dem Forever-Client (Build 1.60.1), Lehrer: Wissensstand aus der Beta",
 }
 P.VENDOR_SOURCE = {

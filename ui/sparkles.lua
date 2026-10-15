@@ -224,8 +224,8 @@ local function Paint(blocked)
 end
 
 local gate     -- was SP.GATE gerade sagt (unserer)
-local function SetGate(on)
-    if gate == on or K.InCombat() then return end
+local function SetGate(on, force)
+    if gate == on or (K.InCombat() and not force) then return end
     gate = on
     local P = PF()
     if P and P.SetCVar then P.SetCVar(SP.GATE, on and "1" or "0", KEY) end
@@ -360,7 +360,12 @@ ev:SetScript("OnEvent", function(_, event, name)
         SP.Apply()
         SP.ApplyLater(5)
     elseif event == "PLAYER_REGEN_DISABLED" then
+        -- 6.41.6.0: Plakette des weichen Ziels zu, bevor der Kampf sperrt -
+        -- sonst behielt ein getoeteter Gegner (pluenderbar = weiches Ziel)
+        -- bis zum Pluendern eine Plakette mit 0 % Leben. Nach dem Kampf
+        -- oeffnet SP.Tick sie wieder fuer Kraut und Erz.
         glow:Hide()
+        if gate then SetGate(false, true) end
     elseif SP.LootActive() and type(name) == "string" and WATCH[name:lower()] then
         SP.ApplyLater(1)
     end

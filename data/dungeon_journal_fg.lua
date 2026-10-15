@@ -1,5 +1,5 @@
 --------------------------------------------------
--- WeintCodex :: Dungeon-Journal, Abgleich mit ForeverGuide 1.34.0
+-- WeintCodex :: Dungeon-Journal, Abgleich mit ForeverGuide 1.35.1
 --------------------------------------------------
 -- ERZEUGT von .github/scripts/import_foreverguide.py - nicht von Hand
 -- aendern; neu erzeugen. Ergaenzt data/dungeon_journal.lua (das bleibt,
@@ -27,7 +27,7 @@ local J = WeintCodex.DungeonJournal
 
 J.FG_SOURCE = {
     kind  = "community",
-    date  = "11.10.2026",
+    date  = "15.10.2026",
     label = "Quests: Wissensstand aus der Beta",
 }
 J.CLASSIC_LOOT_SOURCE = {
