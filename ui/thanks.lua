@@ -63,7 +63,7 @@ TH.LINES = {
         "Gesegnet seist du. Wortwörtlich.",
         "Möge das Licht deine Segen segnen.",
         "Danke, glänzender Ritter!",
-        "Dein Segen ist ein Geschenk. Deine Blase ein Lebensstil.",
+        "Dein Segen ist ein Geschenk. Deine Bubble ein Lebensstil.",
     },
 }
 
@@ -96,9 +96,18 @@ local function Now() return (_G.GetTime and _G.GetTime()) or 0 end
 -- loeschen, hinzufuegen"): Saetze und Erkennungswoerter je Sorte gehoeren
 -- dem Spieler (thanksLines/thanksWords); bis zur ersten Aenderung gelten
 -- die von WeintCodex.
+-- 6.41.2.0: "Blase" heisst unter Spielern "Bubble" - auch in schon
+-- uebernommenen eigenen Listen berichtigt (nur genau dieser Satz).
+TH.FIXES = { ["Dein Segen ist ein Geschenk. Deine Blase ein Lebensstil."] = "Dein Segen ist ein Geschenk. Deine Bubble ein Lebensstil." }
 function TH.Lines(kind)
     local own = K.Get(KEY, "thanksLines")
-    if type(own) == "table" and type(own[kind]) == "table" then return own[kind] end
+    if type(own) == "table" and type(own[kind]) == "table" then
+        local list = own[kind]
+        for i, t in ipairs(list) do
+            if TH.FIXES[t] then list[i] = TH.FIXES[t] end
+        end
+        return list
+    end
     return TH.LINES[kind] or {}
 end
 

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.41.2.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFDanke für Segen: „Bubble“ statt „Blase“.|r Auch wer die Sprüche schon bearbeitet hatte, bekommt den Satz berichtigt.",
+        },
+    },
+    {
         version = "6.41.1.0",
         date    = "15.10.2026",
         notes   = {

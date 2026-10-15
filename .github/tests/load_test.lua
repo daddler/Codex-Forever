@@ -4025,7 +4025,11 @@ do
         assert(TH.Lines("spirit")[#TH.Lines("spirit")] == "Testspruch", "eigener Spruch fehlt")
         TH.SetWords("spirit", "Geisterkraft, xyz")
         assert(TH.Kind("Große Geisterkraft") == "spirit", "eigenes Wort nicht erkannt")
+        local bl = TH.OwnLines("blessing")
+        bl[#bl + 1] = "Dein Segen ist ein Geschenk. Deine Blase ein Lebensstil."
+        for _, t in ipairs(TH.Lines("blessing")) do assert(not t:find("Blase"), "Blase nicht berichtigt") end
         K.Set("comfort", "thanksLines", nil) K.Set("comfort", "thanksWords", nil)
+        for _, t in ipairs(TH.Lines("blessing")) do assert(not t:find("Blase"), "Blase in den Voreinstellungen") end
         assert(TH.Kind("Göttlicher Wille") == "spirit", "zurueck auf WeintCodex")
         _G.UnitIsUnit = function() return false end
         _G.UnitIsPlayer = function() return true end

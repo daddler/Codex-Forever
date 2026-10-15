@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.41.2.0] – 2026-10-15
+
+### Behoben
+- Danke, Segen: „Deine Bubble ein Lebensstil“ statt „Blase“; `TH.FIXES`
+  berichtigt den Satz auch in schon gespeicherten eigenen Listen.
+
 ## [6.41.1.0] – 2026-10-15
 
 ### Geändert
