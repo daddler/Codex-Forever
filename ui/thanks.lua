@@ -87,7 +87,7 @@ local st = { last = {}, at = -1e9, sendAt = -1e9, sent = 0, queued = 0 }
 TH.state = st
 
 function TH.Active()
-    return K.IsActive(KEY) and K.Get(KEY, "thanks") == true
+    return K.IsActive(KEY) and K.Get(KEY, "thanks") ~= false
 end
 
 local function Now() return (_G.GetTime and _G.GetTime()) or 0 end
@@ -356,7 +356,7 @@ local function LineList(parent, width)
 end
 
 local function Build(B)
-    local off = function() return not K.Get(KEY, "thanks") end
+    local off = function() return K.Get(KEY, "thanks") == false end
     B:Section("Danke für Buffs", "Draußen in der Welt, außerhalb von Gruppe und Kampf: ein Flüstern mit Augenzwinkern, passend zum Buff. Nur wenn das Spiel sagt, wer gebufft hat.")
     B:Row({ type = "toggle", label = "Fremden für Buffs danken", key = "thanks" },
           { type = "toggle", label = "Auch der Gilde", key = "thanksGuild", disabled = off })
@@ -400,7 +400,7 @@ end
 
 local mod = K.Module(KEY)
 if mod then
-    if mod.defaults.thanks == nil then mod.defaults.thanks = false end
+    if mod.defaults.thanks == nil then mod.defaults.thanks = true end
     if mod.defaults.thanksGuild == nil then mod.defaults.thanksGuild = false end
     if mod.defaults.thanksDelay == nil then mod.defaults.thanksDelay = 2 end
     if mod.defaults.thanksMix == nil then mod.defaults.thanksMix = 30 end

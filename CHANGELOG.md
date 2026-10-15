@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.41.7.0] – 2026-10-16
+
+### Geändert
+- Danke für Buffs (`comfort.thanks`) ab Werk an (Wunsch des Spielers); wer es selbst ausgeschaltet hat, behält aus.
+
 ## [6.41.6.0] – 2026-10-16
 
 ### Geändert

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.41.7.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDanke für Buffs ist ab Werk an.|r Fremde, die dich draußen buffen, bekommen ein kurzes Flüstern – ausschalten lässt es sich wie bisher in den Komforteinstellungen unter „Danke“.",
+        },
+    },
+    {
         version = "6.41.6.0",
         date    = "16.10.2026",
         notes   = {
