@@ -9,6 +9,20 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.40.1.0] – 2026-10-15
+
+### Behoben
+- Geländekarte: `data/nav/*` jetzt mit `floor` (vollständig) und `height`
+  (`import_nav.py`, +7,8 MB). `NV.Surf` dekodiert je Abschnitt die Ebenen und
+  ihre Übergänge (Schritte zur Fläche nächster Höhe, ausdrückliche
+  Übergänge, Umkehrung zur Grundfläche); `NV.Grid` sucht über alle Flächen,
+  Start und Ziel von allen Flächen der Zelle (Höhe des Spielers unbekannt).
+- `NV.Anchor`: Start/Ziel nur an Flächen, von denen ein Eingang erreichbar
+  ist (Beta-Test Shadowglen: Tasche aus sieben Zellen → Umweg über den
+  Kartenrand). Ausdrücklich offene Schrägen (Schalter 4/8) beachtet.
+- Linie: Kanten über die Abschnittsgrenze über `NV.Bridge` gezeichnet,
+  Kanten zu Ebenen über die Ebenen; Weg beginnt am Spieler, endet am Ziel.
+
 ## [6.40.0.0] – 2026-10-15
 
 ### Hinzugefügt

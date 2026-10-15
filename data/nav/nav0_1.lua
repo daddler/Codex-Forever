@@ -1,10 +1,10 @@
 -- ERZEUGT von .github/scripts/import_nav.py - nicht von Hand aendern.
--- Gelaendekarte, Kontinent 0, Teil 1/3. Herkunft: eigenes Backen des
+-- Gelaendekarte, Kontinent 0, Teil 1/7. Herkunft: eigenes Backen des
 -- Clients (wow_classic_beta, Mappster/DotRecast) durch Shortest Path Forever. Art: beta.
 -- Gelesen von ui/navmesh.lua.
 WeintCodex = WeintCodex or {}
 WeintCodex.NavData = WeintCodex.NavData or {}
-WeintCodex.NavData[0] = WeintCodex.NavData[0] or { cx0 = -30, cy0 = -14, nx = 42, ny = 23, cells = 67, swim = 3.000000, graph = {}, grid = {}, fcell = {} }
+WeintCodex.NavData[0] = WeintCodex.NavData[0] or { cx0 = -30, cy0 = -14, nx = 42, ny = 23, cells = 67, swim = 3.000000, zstep = 2, graph = {}, grid = {}, fcell = {}, floor = {}, height = {} }
 local D = WeintCodex.NavData[0]
 for k, v in pairs({
     [12] = { "eNo9UdluwjAQ/CRKy0Nf1443juOQswe8ggQtiEo9BJ/f7M62LxnZcyQzoScKmYgKyocZAo1LhW1UOOwULjeFn0JhuVF4/BZwfiF2xwnQ6yW/AvaAE+ATcAOsAAuFksUujw1VgZy/0CpQfewzByI5MXlwHlzev6d7U/L8OcoVvqNroGb7UH2Icj4xleACfOuXr3gSpfoqcAyunah8NiVTDa5EZtdNXIpSMxtwEb6+SaEQpfpacBW4odr5O1My9eASMsdwdWdRauYIbnJneptLo3sWX/zfBaVrRDfgnO2C0tlqSmb826xA6QavbeErbBeUXsPXgbM9GaVbq4lMtl1QukPmAJ9tHVG6h28EF20XlB7ATci0/5DQfcRlkstfsqbAEA==" },

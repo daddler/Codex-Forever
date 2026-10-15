@@ -155,7 +155,7 @@ function NV.Cells(st, cl)
                 if c2 and c2.cells and (not vu or c2.cellsUsed < vu) then victim, vu = c2, c2.cellsUsed end
             end
         end
-        if victim then victim.cells = nil cellsCount = cellsCount - 1 else cellsCount = 0 end
+        if victim then victim.cells, victim.surf = nil, nil cellsCount = cellsCount - 1 else cellsCount = 0 end
     end
     local g = Field(st.D, "grid", cl.k + 1)
     if not g then cl.cells = false return nil end
@@ -316,60 +316,322 @@ local DY = { 0, 0, 1, -1, 1, -1, 1, -1 }
 local ORTH_X = { [5] = 1, [6] = 1, [7] = 2, [8] = 2 }
 local ORTH_Y = { [5] = 3, [6] = 4, [7] = 3, [8] = 4 }
 
--- Kosten (Zellen) von einer Zelle aus, im Abschnitt. Liefert dist und
--- prev (Tabellen, wiederverwendbar ueber `into`).
--- Mit `target`: A* bis zu dieser Zelle (fuer das Verfeinern der Linie).
-function NV.Grid(st, cl, start, into, target)
-    NV.Cells(st, cl)
+--------------------------------------------------
+-- Ebenen (6.40.1.0)
+--------------------------------------------------
+-- Eine Zelle hat ihre Grundflaeche und, wo Flaechen uebereinander liegen
+-- (Wurzeln und Aeste in Teldrassil, Stadt unter dem Berg, Rampen, Bruecken),
+-- weitere Ebenen. Knoten im Abschnitt: 0 .. C*C-1 die Grundflaeche, ab C*C
+-- die Ebenen in der Reihenfolge der Daten. Uebergaenge:
+--   * Grundflaeche zu Grundflaeche: die acht Nachbarn, Waende aus dem Gitter;
+--   * eine Ebene: je Richtung (Bit) zur Flaeche der Nachbarzelle, die ihrer
+--     Hoehe am naechsten liegt; dazu ausdrueckliche Uebergaenge;
+--   * Grundflaeche zu einer Ebene: die Umkehrung der Uebergaenge der Ebenen.
+-- Ohne die Ebenen (bis 6.40.0.0) lief die Linie quer durch Fels.
+
+-- Hoehen der Grundflaeche (in Schritten zstep, je gegen den -y-Nachbarn,
+-- sonst den -x-Nachbarn, sonst die vorige Zelle).
+local function Heights(st, cl, hs)
+    local C, z = st.C, {}
+    local step = st.D.zstep or 2
+    local pos, rep, delta, last = 1, 0, 0, 0
+    local n = #hs
+    for i = 0, C * C - 1 do
+        if floor(byte(cl.cells, i + 1) / 16) ~= 0 then
+            local pred = (i % C > 0 and z[i - 1]) or (i >= C and z[i - C]) or last
+            local v
+            if rep > 0 then
+                rep, v = rep - 1, pred + delta
+            else
+                local sym = B64[byte(hs, pos)]
+                if sym == 47 then
+                    v, pos = Num(hs, pos + 1, 2) - 2048, pos + 3
+                else
+                    delta, pos = sym - 23, pos + 1
+                    while pos <= n and B64[byte(hs, pos)] >= 48 do
+                        rep, pos = rep + B64[byte(hs, pos)] - 47, pos + 1
+                    end
+                    v = pred + delta
+                end
+            end
+            last, z[i] = v, v
+        end
+    end
+    for i, v in pairs(z) do z[i] = v * step end
+    return z
+end
+
+local function AddLink(lk, a, b, dir)
+    local l = lk[a]
+    if not l then l = {} lk[a] = l end
+    l[#l + 1] = b
+    l[#l + 1] = dir
+end
+
+-- Ebenen eines Abschnitts: cl.surf = { fat, fval, first, lk } oder false.
+function NV.Surf(st, cl)
+    if cl.surf ~= nil then return cl.surf end
+    if not NV.Cells(st, cl) then cl.surf = false return false end
+    local fs = Field(st.D, "floor", cl.k + 1)
     local C = st.C
+    local CC = C * C
+    local sf = { fat = {}, fval = {}, first = {}, lk = {} }
+    if not fs or fs == "" then cl.surf = sf return sf end
+    local hs = Field(st.D, "height", cl.k + 1)
+    local zb = hs and Heights(st, cl, hs) or {}
+    local fz, steps = {}, {}
+    local node, pos = CC, 4
+    for _ = 1, Num(fs, 1, 3) do
+        local lc, count = Num(fs, pos, 3), B64[byte(fs, pos + 3)]
+        pos = pos + 4
+        sf.first[lc] = node
+        for _ = 1, count do
+            sf.fval[node] = B64[byte(fs, pos)]
+            fz[node] = Num(fs, pos + 1, 2) - 2048
+            sf.fat[node] = lc
+            steps[node] = Num(fs, pos + 3, 2)
+            pos, node = pos + 5, node + 1
+        end
+    end
+    local last = node
+    -- Flaeche in Zelle lc: Schicht (0 Grund, i i-te Ebene) oder die der
+    -- Hoehe h naechste.
+    local function Surface(lc, layer, h)
+        if layer == 0 then return floor(byte(cl.cells, lc + 1) / 16) ~= 0 and lc or nil end
+        local f0 = sf.first[lc]
+        if layer and layer > 0 then
+            local f = f0 and f0 + layer - 1
+            return f and sf.fat[f] == lc and f or nil
+        end
+        local best, gap
+        if floor(byte(cl.cells, lc + 1) / 16) ~= 0 then
+            -- Ohne Hoehe der Grundflaeche: nur, wenn keine Ebene passt.
+            best, gap = lc, zb[lc] and math.abs(zb[lc] - h) or 1e9
+        end
+        local f = f0
+        while f and sf.fat[f] == lc do
+            local d = math.abs(fz[f] - h)
+            if not gap or d < gap then best, gap = f, d end
+            f = f + 1
+        end
+        return best
+    end
+    local function Neighbour(lc, d)
+        local x, y = floor(lc / C) + DX[d], lc % C + DY[d]
+        if x < 0 or y < 0 or x >= C or y >= C then return nil end
+        return x * C + y
+    end
+    local REV = { 2, 1, 4, 3, 8, 7, 6, 5 }
+    local own = {}
+    for f = CC, last - 1 do
+        local bits, lc = steps[f], sf.fat[f]
+        for d = 1, 8 do
+            if bits % 2 == 1 then
+                local nc = Neighbour(lc, d)
+                local t = nc and Surface(nc, nil, fz[f])
+                if t and t ~= f then AddLink(sf.lk, f, t, d) own[#own + 1] = { f, t, d } end
+            end
+            bits = floor(bits / 2)
+        end
+    end
+    -- Ausdrueckliche Uebergaenge: Knoten(3) Richtung(1) Schicht(1).
+    local m = Num(fs, pos, 3)
+    for _ = 1, m do
+        local nd, d, layer = Num(fs, pos + 3, 3), B64[byte(fs, pos + 6)] + 1, B64[byte(fs, pos + 7)]
+        pos = pos + 5
+        local lc = nd < CC and nd or sf.fat[nd]
+        local nc = lc and DX[d] and Neighbour(lc, d)
+        local t = nc and Surface(nc, layer)
+        if t then
+            AddLink(sf.lk, nd, t, d)
+            if nd >= CC then own[#own + 1] = { nd, t, d } end
+        end
+    end
+    -- Grundflaeche zu den Ebenen: die Umkehrung.
+    for _, o in ipairs(own) do
+        if o[2] < CC then AddLink(sf.lk, o[2], o[1], REV[o[3]]) end
+    end
+    cl.surf = sf
+    return sf
+end
+
+-- Zelle und Wert eines Knotens.
+local function NodeCellOf(sf, CC, node)
+    if node < CC then return node end
+    return sf.fat[node]
+end
+local function NodeWalk(cl, sf, CC, node)
+    if node < CC then return Walk(cl, node) end
+    return sf.fval[node] or 0
+end
+NV.NodeCellOf = NodeCellOf
+
+-- Kosten (Zellen) von Knoten aus, im Abschnitt, ueber alle Ebenen. start:
+-- ein Knoten oder eine Liste. Liefert dist und prev (wiederverwendbar ueber
+-- `into`). Mit `target`: A* bis zu diesem Knoten.
+function NV.Grid(st, cl, start, into, target)
+    local C = st.C
+    local CC = C * C
     local dist, prev = into.dist, into.prev
     for i in pairs(dist) do dist[i] = nil end
     for i in pairs(prev) do prev[i] = nil end
-    if not cl.cells then return dist, prev end
+    local sf = NV.Surf(st, cl)
+    if not (cl.cells and sf) then return dist, prev end
     local h = into.heap
     HeapClear(h)
-    dist[start] = 0
-    HeapPush(h, 0, start)
-    local tx, ty = target and floor(target / C), target and target % C
+    if type(start) == "table" then
+        for _, s0 in ipairs(start) do dist[s0] = 0 HeapPush(h, 0, s0) end
+    else
+        dist[start] = 0
+        HeapPush(h, 0, start)
+    end
+    local tc = target and NodeCellOf(sf, CC, target)
+    local tx, ty = tc and floor(tc / C), tc and tc % C
+    local lk = sf.lk
+    local function Relax(a, b, dir, d)
+        local v = NodeWalk(cl, sf, CC, b)
+        if v == 0 then return end
+        local nd = d + (dir <= 4 and 1 or 1.4142) * (v == 2 and st.swim or 1)
+        if not dist[b] or nd < dist[b] then
+            dist[b], prev[b] = nd, a
+            local hb = 0
+            if tc then
+                local bc = NodeCellOf(sf, CC, b)
+                hb = math.sqrt((floor(bc / C) - tx) ^ 2 + (bc % C - ty) ^ 2)
+            end
+            HeapPush(h, nd + hb, b)
+        end
+    end
     while h.n > 0 do
         local f, a = HeapPop(h)
         if a == target then break end
         local d = dist[a]
-        local hA = target and math.sqrt((floor(a / C) - tx) ^ 2 + (a % C - ty) ^ 2) or 0
+        local ac = NodeCellOf(sf, CC, a)
+        local hA = tc and math.sqrt((floor(ac / C) - tx) ^ 2 + (ac % C - ty) ^ 2) or 0
         if f <= d + hA + 1e-6 then
             Slice()
-            local ax, ay = floor(a / C), a % C
-            for dir = 1, 8 do
-                local bx, by = ax + DX[dir], ay + DY[dir]
-                if bx >= 0 and by >= 0 and bx < C and by < C then
-                    local b = bx * C + by
-                    local v = Walk(cl, b)
-                    if v ~= 0 then
-                        local open
-                        if dir <= 4 then
-                            open = StepOpen(cl, C, a, dir)
-                        else
-                            -- Schraeg: offen, wenn einer der beiden Winkel offen ist.
-                            local ox, oy = ORTH_X[dir], ORTH_Y[dir]
-                            local mx, my = (ax + DX[ox]) * C + ay, ax * C + ay + DY[oy]
-                            open = (Walk(cl, mx) ~= 0 and StepOpen(cl, C, a, ox) and StepOpen(cl, C, mx, oy))
-                                or (Walk(cl, my) ~= 0 and StepOpen(cl, C, a, oy) and StepOpen(cl, C, my, ox))
-                        end
-                        if open then
-                            local step = (dir <= 4 and 1 or 1.4142) * (v == 2 and st.swim or 1)
-                            local nd = d + step
-                            if not dist[b] or nd < dist[b] then
-                                dist[b], prev[b] = nd, a
-                                local hb = target and math.sqrt((bx - tx) ^ 2 + (by - ty) ^ 2) or 0
-                                HeapPush(h, nd + hb, b)
+            if a < CC then
+                local ax, ay = floor(a / C), a % C
+                for dir = 1, 8 do
+                    local bx, by = ax + DX[dir], ay + DY[dir]
+                    if bx >= 0 and by >= 0 and bx < C and by < C then
+                        local b = bx * C + by
+                        if Walk(cl, b) ~= 0 then
+                            local open
+                            if dir <= 4 then
+                                open = StepOpen(cl, C, a, dir)
+                            else
+                                local ox, oy = ORTH_X[dir], ORTH_Y[dir]
+                                local mx, my = (ax + DX[ox]) * C + ay, ax * C + ay + DY[oy]
+                                open = (Walk(cl, mx) ~= 0 and StepOpen(cl, C, a, ox) and StepOpen(cl, C, mx, oy))
+                                    or (Walk(cl, my) ~= 0 and StepOpen(cl, C, a, oy) and StepOpen(cl, C, my, ox))
+                                -- Ausdruecklich offene Schraegen (Schalter 4/8).
+                                if not open then
+                                    if dir == 5 then open = Flag(cl, a) >= 4 and floor(Flag(cl, a) / 4) % 2 == 1
+                                    elseif dir == 6 then open = Flag(cl, a) >= 8
+                                    elseif dir == 7 then open = Flag(cl, b) >= 8
+                                    elseif dir == 8 then open = floor(Flag(cl, b) / 4) % 2 == 1 end
+                                end
                             end
+                            if open then Relax(a, b, dir, d) end
                         end
                     end
                 end
             end
+            local l = lk[a]
+            if l then
+                for j = 1, #l, 2 do Relax(a, l[j], l[j + 1], d) end
+            end
         end
     end
     return dist, prev
+end
+
+-- 6.40.1.0 (Beta-Test Nachtelf, Shadowglen: "erst nach Norden an den
+-- Kartenrand, dann nach Sueden"): die naechste begehbare Zelle lag in einer
+-- abgeschlossenen Tasche (sieben Zellen, ringsum Waende). Von dort war kein
+-- Eingang erreichbar, die Suche nahm die Luftlinie zu einem fernen Eingang
+-- und lief dorthin und zurueck. Jetzt zaehlt nur eine Zelle, von der aus
+-- mindestens ein Eingang der Grundflaeche erreichbar ist - die naechste
+-- solche im Umkreis NV.SNAP_FAR, sonst wie vorher die naechste ueberhaupt.
+NV.SNAP_FAR = 12
+NV.SNAP_TRIES = 10
+
+-- Zellen um `cell` mit irgendeiner begehbaren Flaeche, nach Abstand.
+local function Around(st, cl, sf, cell, radius, out)
+    local C = st.C
+    local cx, cy = floor(cell / C), cell % C
+    local function Has(c) return Walk(cl, c) ~= 0 or (sf and sf.first[c] ~= nil) end
+    if Has(cell) then out[#out + 1] = cell end
+    for r = 1, radius do
+        for dx = -r, r do
+            for dy = -r, r do
+                if math.abs(dx) == r or math.abs(dy) == r then
+                    local x, y = cx + dx, cy + dy
+                    if x >= 0 and y >= 0 and x < C and y < C and Has(x * C + y) then out[#out + 1] = x * C + y end
+                end
+            end
+        end
+    end
+    return out
+end
+
+-- Alle Flaechen einer Zelle: Grund (wenn begehbar) und ihre Ebenen. Wie
+-- hoch der Spieler steht, sagt der Client nicht (UnitPosition: Hoehe 0) -
+-- die Suche geht von allen aus und nimmt den kuerzesten Weg.
+function NV.Surfaces(st, cl, sf, cell, out)
+    out = out or {}
+    if Walk(cl, cell) ~= 0 then out[#out + 1] = cell end
+    local f = sf and sf.first[cell]
+    while f and sf.fat[f] == cell do
+        if (sf.fval[f] or 0) ~= 0 then out[#out + 1] = f end
+        f = f + 1
+    end
+    return out
+end
+
+-- Knoten eines Eingangs im Abschnitt (Grund: Zelle, Ebene: C*C + Nummer).
+function NV.NodeLocal(st, id)
+    local k, i = floor(id / 4096), id % 4096
+    local cl = NV.Cluster(st, k)
+    if not cl or i >= cl.n then return nil end
+    return k, Num(cl.s, 3 + i * 7, 3)
+end
+
+-- Flaechen nahe `cell`, die mit dem Wegenetz verbunden sind, und ihr
+-- Gitter (into). Liefert die Liste der Startknoten oder nil.
+function NV.Anchor(st, cl, k, cell, into, extra)
+    if not NV.Cells(st, cl) then return nil end
+    local sf = NV.Surf(st, cl)
+    local list = Around(st, cl, sf, cell, NV.SNAP_FAR, {})
+    if #list == 0 then return nil end
+    local tries, bad = 0, {}
+    local fallback
+    for _, c in ipairs(list) do
+        if not bad[c] then
+            tries = tries + 1
+            if tries > NV.SNAP_TRIES then break end
+            local src = NV.Surfaces(st, cl, sf, c)
+            if #src > 0 then
+                fallback = fallback or src
+                local dist = NV.Grid(st, cl, src, into)
+                if extra then
+                    for x in pairs(extra) do if dist[x] then return src end end
+                end
+                for i = 0, cl.n - 1 do
+                    local _, ln = NV.NodeLocal(st, k * 4096 + i)
+                    if ln and dist[ln] then return src end
+                end
+                for x in pairs(dist) do
+                    local xc = x < st.C * st.C and x or (sf and sf.fat[x])
+                    if xc then bad[xc] = true end
+                end
+            end
+        end
+    end
+    -- Nichts verbunden (Insel, Hoehle ohne Eingang): die naechste, wie bisher.
+    if fallback then NV.Grid(st, cl, fallback, into) end
+    return fallback
 end
 
 -- Die naechste begehbare Zelle im Umkreis NV.SNAP, oder nil.
@@ -449,37 +711,162 @@ NV.PULL = 24   -- so viele Zellen weit schaut das Glaetten hoechstens
 -- Raum ohne Tuer"): vorher blieb jede vierte Zelle stehen, die Linie
 -- dazwischen schnitt Ecken durch Waende. Jetzt bleibt nur, wo die Sicht
 -- endet - die Linie knickt an den Ecken und kreuzt nie eine Wand.
+-- Aus einer Kette von Zellen (vom Start aus) nur die behalten, an denen die
+-- Sicht endet.
+local function Pull(cl, C, cells, list)
+    local n = #cells
+    if n == 0 then return list end
+    list[#list + 1] = cells[1]
+    if not (cl and cl.cells) then
+        for i = 2, n do list[#list + 1] = cells[i] end
+        return list
+    end
+    local anchor, i = 1, 2
+    while i <= n do
+        Slice()
+        if i < n and i - anchor < NV.PULL and Sees(cl, C, cells[anchor], cells[i + 1]) then
+            i = i + 1
+        else
+            list[#list + 1] = cells[i]
+            anchor, i = i, i + 1
+        end
+    end
+    return list
+end
+
 local function GridChain(st, k, prev, from, out, reverse)
-    local cells, c = {}, from
-    while c do cells[#cells + 1] = c c = prev[c] end
+    local nodes, c = {}, from
+    while c do nodes[#nodes + 1] = c c = prev[c] end
     if not reverse then
         -- prev zeigt zum Start: umdrehen, damit die Linie vom Start kommt.
-        local i, j = 1, #cells
-        while i < j do cells[i], cells[j] = cells[j], cells[i] i, j = i + 1, j - 1 end
+        local i, j = 1, #nodes
+        while i < j do nodes[i], nodes[j] = nodes[j], nodes[i] i, j = i + 1, j - 1 end
     end
     local cl = NV.Cluster(st, k)
-    local C = st.C
-    local list = { cells[1] }
-    local anchor, n = 1, #cells
-    if cl and cl.cells then
-        local i = anchor + 1
-        while i <= n do
-            Slice()
-            if i < n and i - anchor < NV.PULL and Sees(cl, C, cells[anchor], cells[i + 1]) then
-                i = i + 1
-            else
-                list[#list + 1] = cells[i]
-                anchor, i = i, i + 1
-            end
-        end
-    else
-        for i = 2, n do list[#list + 1] = cells[i] end
+    local sf = cl and NV.Surf(st, cl)
+    local CC = st.C * st.C
+    -- Laeufe auf der Grundflaeche glaetten; Ebenen bleiben Punkt fuer Punkt
+    -- (die Sicht ueber das Gitter gilt nur am Boden).
+    local list, run = {}, {}
+    local function Flush()
+        if #run > 0 then Pull(cl, st.C, run, list) end
+        run = {}
     end
+    for _, n in ipairs(nodes) do
+        if n < CC then run[#run + 1] = n
+        else
+            Flush()
+            local lc = sf and sf.fat[n]
+            if lc then list[#list + 1] = lc end
+        end
+    end
+    Flush()
+    local lastCell
     for i = 1, #list do
-        local pn, pw = NV.CellPos(st, k, list[i])
-        out[#out + 1], out[#out + 2] = pn, pw
+        if list[i] ~= lastCell then
+            local pn, pw = NV.CellPos(st, k, list[i])
+            out[#out + 1], out[#out + 2] = pn, pw
+            lastCell = list[i]
+        end
     end
 end
+
+-- 6.40.1.0: eine Kante des Wegenetzes kann von einem Eingang quer durch den
+-- Nachbarabschnitt zum naechsten fuehren - gezeichnet war das eine gerade
+-- Linie ueber Fels und Wasser (Beta-Test Teldrassil). Jetzt: A* ueber die
+-- Zellen beider Abschnitte zusammen (Gitter ueber den ganzen Kontinent
+-- gedacht: gx = Abschnitt-x * C + Zelle-x).
+local function GKey(gx, gy) return gx * 65536 + gy end
+local bridge = { dist = {}, prev = {}, heap = HeapNew() }
+function NV.Bridge(st, ka, ca, kb, cb, out, limit)
+    local C = st.C
+    local cla, clb = NV.Cluster(st, ka), NV.Cluster(st, kb)
+    if not (cla and clb and NV.Cells(st, cla) and NV.Cells(st, clb)) then return false end
+    local allowed = { [ka] = cla, [kb] = clb }
+    local function Split(gx, gy)
+        local ix, iy = floor(gx / C), floor(gy / C)
+        local k = ix * st.ny + iy
+        local cl = allowed[k]
+        if not cl or iy < 0 or iy >= st.ny then return nil end
+        return k, cl, (gx - ix * C) * C + (gy - iy * C)
+    end
+    local function GW(gx, gy)
+        local _, cl, c = Split(gx, gy)
+        return cl and Walk(cl, c) or 0
+    end
+    local function Open(gx, gy, dir)
+        -- +x/+y: Schalter der eigenen Zelle; -x/-y: der des Nachbarn.
+        if dir == 1 or dir == 3 then
+            local _, cl, c = Split(gx, gy)
+            return cl and (dir == 1 and Flag(cl, c) % 2 == 0 or dir == 3 and floor(Flag(cl, c) / 2) % 2 == 0)
+        end
+        local nx, ny = gx + DX[dir], gy + DY[dir]
+        local _, cl, c = Split(nx, ny)
+        return cl and (dir == 2 and Flag(cl, c) % 2 == 0 or dir == 4 and floor(Flag(cl, c) / 2) % 2 == 0)
+    end
+    local ax0, ay0 = floor(ka / st.ny) * C + floor(ca / C), (ka % st.ny) * C + ca % C
+    local bx0, by0 = floor(kb / st.ny) * C + floor(cb / C), (kb % st.ny) * C + cb % C
+    local dist, prev, h = bridge.dist, bridge.prev, bridge.heap
+    Wipe(dist) Wipe(prev) HeapClear(h)
+    local s0, t0 = GKey(ax0, ay0), GKey(bx0, by0)
+    dist[s0] = 0
+    HeapPush(h, 0, s0)
+    local found = false
+    while h.n > 0 do
+        local f, a = HeapPop(h)
+        if a == t0 then found = true break end
+        local ax, ay = floor(a / 65536), a % 65536
+        local d = dist[a]
+        if f <= d + sqrt((ax - bx0) ^ 2 + (ay - by0) ^ 2) + 1e-6 then
+            Slice()
+            for dir = 1, 8 do
+                local bx, by = ax + DX[dir], ay + DY[dir]
+                local v = GW(bx, by)
+                if v ~= 0 then
+                    local open
+                    if dir <= 4 then open = Open(ax, ay, dir)
+                    else
+                        local ox, oy = ORTH_X[dir], ORTH_Y[dir]
+                        open = (GW(ax + DX[ox], ay) ~= 0 and Open(ax, ay, ox) and Open(ax + DX[ox], ay, oy))
+                            or (GW(ax, ay + DY[oy]) ~= 0 and Open(ax, ay, oy) and Open(ax, ay + DY[oy], ox))
+                    end
+                    if open then
+                        local nd = d + (dir <= 4 and 1 or 1.4142) * (v == 2 and st.swim or 1)
+                        local b = GKey(bx, by)
+                        if (not dist[b] or nd < dist[b]) and (not limit or nd <= limit) then
+                            dist[b], prev[b] = nd, a
+                            HeapPush(h, nd + sqrt((bx - bx0) ^ 2 + (by - by0) ^ 2), b)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    if not found then return false end
+    -- Kette vom Start, je Abschnitt geglaettet.
+    local keys, c = {}, t0
+    while c do keys[#keys + 1] = c c = prev[c] end
+    local runK, run = nil, {}
+    local function Flush()
+        if runK then
+            local list = Pull(allowed[runK], C, run, {})
+            for i = 1, #list do
+                local pn, pw = NV.CellPos(st, runK, list[i])
+                out[#out + 1], out[#out + 2] = pn, pw
+            end
+        end
+        run = {}
+    end
+    for i = #keys, 1, -1 do
+        local key = keys[i]
+        local k, _, cell = Split(floor(key / 65536), key % 65536)
+        if k ~= runK then Flush() runK = k end
+        run[#run + 1] = cell
+    end
+    Flush()
+    return true
+end
+
 NV.GridChain = GridChain
 
 -- Laeuft in einer Coroutine. Liefert { n, w, ... } von Start bis Ziel und die
@@ -492,29 +879,38 @@ function NV.Search(c, sN, sW, gN, gW)
     if not (ks and kg) then return nil end
     local cls, clg = NV.Cluster(st, ks), NV.Cluster(st, kg)
     if not (cls and clg) then return nil end
-    local cs, cg = NV.Snap(st, cls, cs0), NV.Snap(st, clg, cg0)
     local size = st.cs
-    -- Vom Start und zum Ziel: Zellen im eigenen Abschnitt (feste Tabellen).
+    -- Vom Start und zum Ziel: alle Flaechen der Zelle (feste Tabellen),
+    -- verankert an Flaechen, die mit dem Wegenetz verbunden sind.
     Wipe(scratchA.dist) Wipe(scratchA.prev) Wipe(scratchB.dist) Wipe(scratchB.prev)
-    if cs then NV.Grid(st, cls, cs, scratchA) end
-    if cg then NV.Grid(st, clg, cg, scratchB) end
+    local gsrc = NV.Anchor(st, clg, kg, cg0, scratchB)
+    local goalSet
+    if gsrc and ks == kg then
+        goalSet = {}
+        for _, x in ipairs(gsrc) do goalSet[x] = true end
+    end
+    local ssrc = NV.Anchor(st, cls, ks, cs0, scratchA, goalSet)
     local distS, prevS = scratchA.dist, scratchA.prev
     local dg, pg = scratchB.dist, scratchB.prev
-    -- Im selben Abschnitt und auf dem Gitter verbunden: fertig.
-    local best, bestNode = huge, nil
-    if ks == kg and cs and cg and distS[cg] then best = distS[cg] * size end
+    -- Im selben Abschnitt und verbunden: fertig (das beste Ziel).
+    local best, bestNode, bestGoal = huge, nil, nil
+    if goalSet and ssrc then
+        for x in pairs(goalSet) do
+            if distS[x] and distS[x] * size < best then best, bestGoal = distS[x] * size, x end
+        end
+    end
     -- Ziel-Eingaenge mit ihren Kosten bis zum Ziel.
     local goalCost = work.goalCost
     Wipe(goalCost)
     for i = 0, clg.n - 1 do
         local id = kg * 4096 + i
-        local _, cell, layer = NV.NodeCell(st, id)
-        if cell then
-            if layer == 0 and cg and dg[cell] then
-                goalCost[id] = dg[cell] * size
-            elseif not cg or layer ~= 0 then
-                local n, w = NV.CellPos(st, kg, cell)
-                goalCost[id] = sqrt((n - gN) ^ 2 + (w - gW) ^ 2) * 1.5
+        local _, ln = NV.NodeLocal(st, id)
+        if ln then
+            if gsrc and dg[ln] then
+                goalCost[id] = dg[ln] * size
+            elseif not gsrc then
+                local n, w = NV.NodePos(st, id)
+                if n then goalCost[id] = sqrt((n - gN) ^ 2 + (w - gW) ^ 2) * 1.5 end
             end
         end
     end
@@ -525,19 +921,19 @@ function NV.Search(c, sN, sW, gN, gW)
     HeapClear(heap)
     for i = 0, cls.n - 1 do
         local id = ks * 4096 + i
-        local _, cell, layer = NV.NodeCell(st, id)
+        local _, ln = NV.NodeLocal(st, id)
         local cost
-        if cell then
-            if layer == 0 and cs and distS[cell] then
-                cost = distS[cell] * size
-            elseif not cs or layer ~= 0 then
-                local n, w = NV.CellPos(st, ks, cell)
-                cost = sqrt((n - sN) ^ 2 + (w - sW) ^ 2) * 1.5
+        if ln then
+            if ssrc and distS[ln] then
+                cost = distS[ln] * size
+            elseif not ssrc then
+                local n, w = NV.NodePos(st, id)
+                if n then cost = sqrt((n - sN) ^ 2 + (w - sW) ^ 2) * 1.5 end
             end
         end
         if cost then
             g[id] = cost
-            local n, w = NV.CellPos(st, ks, cell)
+            local n, w = NV.NodePos(st, id)
             HeapPush(heap, cost + sqrt((n - gN) ^ 2 + (w - gW) ^ 2), id)
         end
     end
@@ -575,42 +971,45 @@ function NV.Search(c, sN, sW, gN, gW)
     local out = {}
     if not bestNode then
         -- Ganz im eigenen Abschnitt.
-        GridChain(st, ks, prevS, cg, out, false)
+        out[1], out[2] = sN, sW
+        GridChain(st, ks, prevS, bestGoal, out, false)
+        out[#out + 1], out[#out + 2] = gN, gW
         return out, best
     end
     -- Eingaenge rueckwaerts sammeln.
     local chain, u = {}, bestNode
     while u do chain[#chain + 1] = u u = from[u] end
     out[1], out[2] = sN, sW
-    local first = chain[#chain]
-    local _, c1, l1 = NV.NodeCell(st, first)
-    if l1 == 0 and cs and distS[c1] then
-        GridChain(st, ks, prevS, c1, out, false)
-    end
-    -- Eingaenge der Reihe nach; zwei Eingaenge im selben Abschnitt auf der
-    -- Grundflaeche werden ueber die Zellen verbunden (6.32.4.0: die Linie
-    -- lief vorher gerade von Eingang zu Eingang - "Luftlinie" auf der Karte).
+    local _, l1 = NV.NodeLocal(st, chain[#chain])
+    if ssrc and l1 and distS[l1] then GridChain(st, ks, prevS, l1, out, false) end
+    -- Eingaenge der Reihe nach, dazwischen ueber die Zellen und Ebenen
+    -- (6.32.4.0 im Abschnitt, 6.40.1.0 auch ueber die Grenze und Ebenen).
     for i = #chain, 1, -1 do
         local id = chain[i]
         if i < #chain then
             local prevId = chain[i + 1]
-            local ka, ca, la = NV.NodeCell(st, prevId)
-            local kb, cb, lb = NV.NodeCell(st, id)
-            if ka and ka == kb and la == 0 and lb == 0 and ca ~= cb then
+            local ka, la = NV.NodeLocal(st, prevId)
+            local kb, lb = NV.NodeLocal(st, id)
+            local edge = (g[id] or 0) - (g[prevId] or 0)
+            if ka and kb and ka ~= kb then
+                local _, ca = NV.NodeCell(st, prevId)
+                local _, cb = NV.NodeCell(st, id)
+                if ca and cb then NV.Bridge(st, ka, ca, kb, cb, out, (edge * 1.3 + 16) / size) end
+            elseif ka and ka == kb and la ~= lb then
                 local cl = NV.Cluster(st, ka)
                 if cl and NV.Cells(st, cl) then
-                    local _, p = NV.Grid(st, cl, ca, scratchR, cb)
-                    if p[cb] then GridChain(st, ka, p, cb, out, false) end
+                    local d, p = NV.Grid(st, cl, la, scratchR, lb)
+                    if p[lb] and d[lb] * size <= edge * 1.3 + 16 then
+                        GridChain(st, ka, p, lb, out, false)
+                    end
                 end
             end
         end
         local n, w = NV.NodePos(st, id)
         out[#out + 1], out[#out + 2] = n, w
     end
-    local _, c2, l2 = NV.NodeCell(st, bestNode)
-    if l2 == 0 and cg and dg[c2] then
-        GridChain(st, kg, pg, c2, out, true)
-    end
+    local _, l2 = NV.NodeLocal(st, bestNode)
+    if gsrc and l2 and dg[l2] then GridChain(st, kg, pg, l2, out, true) end
     out[#out + 1], out[#out + 2] = gN, gW
     return out, best
 end

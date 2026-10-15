@@ -13,10 +13,11 @@ Uebernommen werden je Kartenabschnitt (ADT-Kachel):
          unveraendert; entpackt im Spiel mit C_EncodingUtil)
   grid   begehbare Zellen der Grundflaeche (ebenso unveraendert)
   fcell  NEU: zu jeder Ebene (Hoehle, Stadt unter dem Berg) die Zelle, in der
-         sie liegt - je 3 Zeichen Base64, zlib + Base64. Aus "floor" gerechnet;
-         Hoehen und Uebergaenge der Ebenen bleiben weg (6 MB, die der Planer
-         nicht braucht).
-Die Hoehen der Grundflaeche (height) bleiben ebenfalls weg.
+         sie liegt - je 3 Zeichen Base64, zlib + Base64. Aus "floor" gerechnet
+         (die Suche ueber die Eingaenge braucht nur sie).
+  floor  seit 6.40.1.0 vollstaendig (unveraendert): Ebenen mit Hoehe und
+         Uebergaengen - ohne sie lief die Linie quer durch Fels (Teldrassil).
+  height seit 6.40.1.0: Hoehen der Grundflaeche, fuer die Uebergaenge.
 
 Aufruf:
     python3 -I .github/scripts/import_nav.py <Ordner ShortestPathForever>
@@ -32,8 +33,8 @@ OUT = os.path.join(ROOT, "data", "nav")
 B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 VAL = {c: i for i, c in enumerate(B64)}
 
-HEAD = re.compile(r"^\s*(cx0|cy0|nx|ny|cells|swim)\s*=\s*(-?[\d.]+),", re.M)
-LINE = re.compile(r'^data\.packed\.(graph|grid|floor)\[(\d+)\]\s*=\s*\{(.*)\}\s*$')
+HEAD = re.compile(r"^\s*(cx0|cy0|nx|ny|cells|swim|zstep)\s*=\s*(-?[\d.]+),", re.M)
+LINE = re.compile(r'^data\.packed\.(graph|grid|floor|height)\[(\d+)\]\s*=\s*\{(.*)\}\s*$')
 STR = re.compile(r'"([A-Za-z0-9+/=]*)"')
 MAX_FILE = 900_000
 
@@ -86,7 +87,7 @@ def main():
     for m in maps:
         with open(os.path.join(nav, f"Nav{m}.lua"), encoding="utf-8") as f:
             head = dict(HEAD.findall(f.read()))
-        fields = {"graph": {}, "grid": {}, "floor": {}}
+        fields = {"graph": {}, "grid": {}, "floor": {}, "height": {}}
         parts = sorted((f for f in os.listdir(nav) if re.match(rf"Nav{m}_\d+\.lua$", f)),
                        key=lambda f: int(re.search(r"_(\d+)\.", f).group(1)))
         for part in parts:
@@ -101,12 +102,18 @@ def main():
                 for k, blocks in sorted(fields["grid"].items())]
         fcell = [f'    [{k}] = "{pack(floor_cells(unpack(blocks)))}",'
                  for k, blocks in sorted(fields["floor"].items())]
+        # 6.40.1.0: Ebenen und Hoehen vollstaendig (unveraendert gepackt) -
+        # ohne sie zeichnete der Planer Wege quer durch Fels (Teldrassil).
+        floor = [f"    [{k}] = {{ {', '.join(chr(34) + b + chr(34) for b in blocks)} }},"
+                 for k, blocks in sorted(fields["floor"].items())]
+        height = [f"    [{k}] = {{ {', '.join(chr(34) + b + chr(34) for b in blocks)} }},"
+                  for k, blocks in sorted(fields["height"].items())]
         header = (f"WeintCodex.NavData[{m}] = WeintCodex.NavData[{m}] or {{ cx0 = {head['cx0']}, cy0 = {head['cy0']}, "
                   f"nx = {head['nx']}, ny = {head['ny']}, cells = {head['cells']}, swim = {head['swim']}, "
-                  f"graph = {{}}, grid = {{}}, fcell = {{}} }}")
+                  f"zstep = {head.get('zstep', 2)}, graph = {{}}, grid = {{}}, fcell = {{}}, floor = {{}}, height = {{}} }}")
         # In Dateien unter MAX_FILE aufteilen.
         chunks, cur, size = [], [], 0
-        for kind, rows in (("graph", lines), ("grid", grid), ("fcell", fcell)):
+        for kind, rows in (("graph", lines), ("grid", grid), ("fcell", fcell), ("floor", floor), ("height", height)):
             for row in rows:
                 if size + len(row) > MAX_FILE and cur:
                     chunks.append(cur)

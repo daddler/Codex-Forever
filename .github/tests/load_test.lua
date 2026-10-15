@@ -4128,13 +4128,23 @@ do
             local _, b = NV.Locate(st97, wp[i + 2], wp[i + 3])
             assert(NV.Sees(cl97, 8, a, b), "Linie kreuzt die Wand bei Punkt " .. i)
         end
-        assert(#wp <= 12, "nicht geglaettet: " .. #wp / 2 .. " Punkte")
+        assert(#wp <= 16, "nicht geglaettet: " .. #wp / 2 .. " Punkte")
         assert(not NV.Sees(cl97, 8, 1 * 8 + 0, 6 * 8 + 0), "Sicht durch die Wand")
         -- Pfeil zeigt auf die naechste Ecke, nicht hinter die Wand.
         local aN, aW = NV.Steer(wp, 1.5 * c8, 0.5 * c8)
         local _, ac = NV.Locate(st97, aN, aW)
         assert(NV.Sees(cl97, 8, 1 * 8 + 0, ac), "Pfeil zeigt durch die Wand")
         WeintCodex.NavData[97] = nil
+        -- 6.40.1.0: Ebenen. Grund nur an den Enden begehbar, dazwischen zwei
+        -- Ebenen (Bruecke) mit Uebergaengen +y/-y: der Weg fuehrt darueber.
+        WeintCodex.NavData[96] = { cx0 = 0, cy0 = 0, nx = 1, ny = 1, cells = 4, swim = 3, zstep = 2,
+            graph = {}, grid = {}, fcell = {}, floor = {}, height = {},
+            raw = { graph = { [1] = E(0, 2) }, grid = { [1] = "QAAQAAAAAAAAAAAA" }, fcell = {},
+                    floor = { [1] = "AAC" .. "AABBBgAAM" .. "AACBBgAAM" .. "AAA" }, height = { [1] = "vgAX" } } }
+        local c4 = NV.TILE / 4
+        local bp, blen = NV.Search(96, 0.5 * c4, 0.5 * c4, 0.5 * c4, 3.5 * c4)
+        assert(bp and blen and math.abs(blen - 3 * c4) < 1, "kein Weg ueber die Ebene: " .. tostring(blen))
+        WeintCodex.NavData[96] = nil
         -- Ohne Karte fuer den Kontinent: nichts.
         assert(NV.Path(98, 0, 0, 10, 10) == nil, "Weg ohne Karte")
     end)

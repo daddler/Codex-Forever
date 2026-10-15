@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.40.1.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Questpfeil kennt jetzt alle Ebenen.|r Wurzeln, Äste, Rampen, Brücken und Städte unter dem Berg fehlten bisher – in Teldrassil lief der Weg deshalb erst an den Kartenrand und zurück, anderswo quer durch Fels. Der Weg beginnt außerdem nie mehr in einer abgeschlossenen Ecke, sondern an der nächsten Stelle, die wirklich irgendwohin führt.",
+        },
+    },
+    {
         version = "6.40.0.0",
         date    = "15.10.2026",
         notes   = {
