@@ -199,7 +199,9 @@ local defaults = {
 local S = {}   -- aufgeloeste Einstellungen, neu gelesen bei jeder Aenderung
 -- Die vier lauten Bewegungen, die die Stufe (motion) schaltet.
 NP.MOTION_KEYS = { "targetPulse", "targetSheen", "hitFlash", "markMotion" }
+NP.layoutGen = 0
 local function Resolve()
+    NP.layoutGen = NP.layoutGen + 1
     for k in pairs(defaults) do S[k] = K.Get(KEY, k) end
     -- Die Stufe gilt, ohne die eigenen Schalter zu ueberschreiben: wer auf
     -- "Eigene" zurueckwechselt, findet seine Wahl wieder.
@@ -1873,19 +1875,32 @@ local function Attach(unit)
     if NC and not friendly then NC.Identify(p, unit) end
     -- Erst einrichten, dann verbinden: SetUnit zeichnet sofort, wenn der
     -- Gegner schon zaubert.
-    Layout(p)
-    p.cast:SetUnit(unit)
-    if not friendly then p.auras:SetUnit((S.auraEnabled and S.auraSource == "own") and unit or nil) end
-    Suppress(nameplate, unit, p)
+    -- 6.41.5.0 (/wcui speicher: "Erscheinen" 80 KB je Plakette): neu
+    -- eingerichtet wird nur, wenn sich Einstellungen oder Freund/Feind
+    -- geaendert haben - eine Plakette aus dem Vorrat ist schon fertig.
+    if p._lgen ~= NP.layoutGen or p._lfriendly ~= friendly then
+        NP.MeasuredLayout(p)
+        p._lgen, p._lfriendly = NP.layoutGen, friendly
+    end
+    NP.MeasuredUnits(p, unit, friendly)
+    NP.MeasuredSuppress(nameplate, unit, p)
     plates[unit] = p
     byPlate[nameplate] = unit
-    FullUpdate(p)
+    NP.MeasuredFull(p)
     p:Show()
 end
 
 -- 6.41.4.0 (/wcui speicher: "Plaketten 45,8 KB/s bei 4 Aufrufen/s"):
 -- einzeln gemessen, damit der Bericht sagt, welcher Teil anlegt.
+-- 6.41.5.0: auch die Schritte darin.
 Attach = K.Measured("Plaketten: Erscheinen", Attach)
+NP.MeasuredLayout = K.Measured("Plaketten: Einrichten", function(p) Layout(p) end)
+NP.MeasuredUnits = K.Measured("Plaketten: Zauber/Auren verbinden", function(p, unit, friendly)
+    p.cast:SetUnit(unit)
+    if not friendly then p.auras:SetUnit((S.auraEnabled and S.auraSource == "own") and unit or nil) end
+end)
+NP.MeasuredSuppress = K.Measured("Plaketten: Spiel ausblenden", function(np, unit, p) Suppress(np, unit, p) end)
+NP.MeasuredFull = K.Measured("Plaketten: Werte", function(p) FullUpdate(p) end)
 
 function Detach(unit)
     local p = plates[unit]
@@ -2358,6 +2373,7 @@ local function OnSetting()
     Resolve()
     for unit, p in pairs(plates) do
         Layout(p)
+        p._lgen, p._lfriendly = NP.layoutGen, p._friendly
         FullUpdate(p)
         -- Quelle der Symbole kann gewechselt haben: neu verteilen.
         if not p._friendly then

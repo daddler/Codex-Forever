@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.41.5.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFNamensplaketten erscheinen sparsamer.|r Eine Plakette wird nur noch neu eingerichtet, wenn sich etwas an den Einstellungen geändert hat – bisher bei jedem Erscheinen. /wcui speicher zeigt die Schritte jetzt einzeln.",
+        },
+    },
+    {
         version = "6.41.4.0",
         date    = "15.10.2026",
         notes   = {

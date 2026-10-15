@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.41.5.0] – 2026-10-15
+
+### Behoben
+- Plaketten: `Layout` beim Erscheinen nur, wenn `NP.layoutGen` (steigt mit
+  `Resolve`) oder Freund/Feind sich geändert hat (gemessen: „Erscheinen“
+  159 KB/s bei 2 Aufrufen/s). Schritte einzeln gemessen: Einrichten,
+  Zauber/Auren verbinden, Spiel ausblenden, Werte.
+
 ## [6.41.4.0] – 2026-10-15
 
 ### Geändert
