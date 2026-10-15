@@ -1262,6 +1262,7 @@ end
 
 -- /wcui pfeil: was der Planer weiss.
 function RT.Inspect(out)
+    if WeintCodex.UINav and WeintCodex.UINav.StatusLine then out[#out + 1] = WeintCodex.UINav.StatusLine() end
     local st = RT.Store()
     local n, m = 0, 0
     for _ in pairs(st and st.taxi or {}) do n = n + 1 end

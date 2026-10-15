@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.35.3.2] – 2026-10-15
+
+### Behoben
+- `ui/navmesh.lua`: Ergebnisse je Ziel gemerkt (`NV.MEMO` 6, auch
+  Fehlschläge), laufende Suche erst nach `NV.MIN_RUN` 3 s ersetzt,
+  `NV.MAX_EXPAND` 30000, Zähler `NV.stats` in `/wcui pfeil`. Gemessen vorher:
+  „Geländekarte“ 45 Aufrufe/s über 30 s, 260 KB/s.
+
 ## [6.35.3.1] – 2026-10-15
 
 ### Behoben

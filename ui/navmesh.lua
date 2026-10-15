@@ -33,7 +33,7 @@ local K  = WeintCodex.UIKit
 
 NV.TILE = 1600 / 3
 NV.BUDGET = 2          -- ms Rechenzeit je Bild
-NV.MAX_EXPAND = 80000  -- Eingaenge je Suche, dann aufgeben
+NV.MAX_EXPAND = 30000  -- Eingaenge je Suche, dann aufgeben
 NV.SNAP = 6            -- Zellen Umkreis, wenn man nicht auf einer Zelle steht
 NV.REPATH_MOVE = 40    -- so weit weg vom Weg: neu suchen
 NV.LOOKAHEAD = 30      -- der Pfeil zeigt so weit voraus auf den Weg
@@ -564,9 +564,39 @@ end
 --------------------------------------------------
 
 local job = { co = nil }
-local result = { path = nil }
+local result = { path = nil }       -- das zuletzt fertige Ergebnis (Pruefung)
 NV._job, NV._result = job, result
 local pump = CreateFrame("Frame")
+
+-- 6.35.3.2 (/wcui speicher: Gelaendekarte lief 30 s ohne Pause): der Pfeil
+-- wechselt sein Ziel mit dem Planer (Wegpunkt, Flugmeister, Quest), und
+-- jede neue Suche brach die laufende ab - fertig wurde keine. Jetzt:
+--   * Ergebnisse je Ziel gemerkt (NV.MEMO Stueck), auch Fehlschlaege;
+--   * eine laufende Suche wird erst nach NV.MIN_RUN ms ersetzt;
+--   * Zaehler fuer /wcui pfeil.
+NV.MEMO, NV.MIN_RUN = 6, 3000
+local memo = {}
+NV._memo = memo
+NV.stats = { started = 0, done = 0, failed = 0, replaced = 0, reused = 0 }
+
+local function Same(e, c, gN, gW)
+    return e.c == c and math.abs(e.gN - gN) < 2 and math.abs(e.gW - gW) < 2
+end
+local function Find(c, gN, gW)
+    for _, e in ipairs(memo) do if Same(e, c, gN, gW) then return e end end
+end
+local function Remember(c, gN, gW, path, len, sN, sW)
+    local e = Find(c, gN, gW)
+    if not e then
+        if #memo >= NV.MEMO then table.remove(memo, 1) end
+        e = {}
+        memo[#memo + 1] = e
+    end
+    e.c, e.gN, e.gW, e.path, e.len, e.failed = c, gN, gW, path, len, path == nil
+    e.fN, e.fW = sN, sW
+    result.path, result.len, result.c, result.gN, result.gW = path, len, c, gN, gW
+    result.sN, result.sW, result.failed = sN, sW, path == nil
+end
 
 local Pump
 Pump = function()
@@ -576,14 +606,15 @@ Pump = function()
     deadline = huge
     if not ok then
         job.co = nil
-        result.failed = true
+        NV.stats.failed = NV.stats.failed + 1
+        Remember(job.c, job.gN, job.gW, nil, nil, job.sN, job.sW)
         pump:SetScript("OnUpdate", nil)
         return
     end
     if coroutine.status(job.co) == "dead" then
         job.co = nil
-        result.path, result.len, result.c, result.gN, result.gW = path, len, job.c, job.gN, job.gW
-        result.sN, result.sW, result.failed = job.sN, job.sW, path == nil
+        if path then NV.stats.done = NV.stats.done + 1 else NV.stats.failed = NV.stats.failed + 1 end
+        Remember(job.c, job.gN, job.gW, path, len, job.sN, job.sW)
         pump:SetScript("OnUpdate", nil)
     end
 end
@@ -591,8 +622,10 @@ Pump = K.Measured and K.Measured("Geländekarte", Pump) or Pump
 NV.Pump = Pump
 
 local function Start(c, sN, sW, gN, gW)
-    job.c, job.sN, job.sW, job.gN, job.gW = c, sN, sW, gN, gW
+    if job.co then NV.stats.replaced = NV.stats.replaced + 1 end
+    job.c, job.sN, job.sW, job.gN, job.gW, job.t0 = c, sN, sW, gN, gW, Clock()
     job.co = coroutine.create(function() return NV.Search(c, sN, sW, gN, gW) end)
+    NV.stats.started = NV.stats.started + 1
     pump:SetScript("OnUpdate", Pump)
 end
 
@@ -600,26 +633,35 @@ end
 -- Neu gesucht bei neuem Ziel oder wenn man sich vom Weg entfernt hat.
 function NV.Path(c, sN, sW, gN, gW)
     if not NV.Available(c) then return nil end
-    local sameGoal = result.c == c and result.gN and math.abs(result.gN - gN) < 2 and math.abs(result.gW - gW) < 2
-    local jobGoal = job.co and job.c == c and math.abs(job.gN - gN) < 2 and math.abs(job.gW - gW) < 2
-    if sameGoal and result.path then
-        local off = NV.OffPath(result.path, sN, sW)
-        if off <= NV.REPATH_MOVE then return result.path, result.len end
+    local e = Find(c, gN, gW)
+    local have = e and e.path or nil
+    if have and NV.OffPath(have, sN, sW) <= NV.REPATH_MOVE then
+        NV.stats.reused = NV.stats.reused + 1
+        return have, e.len
     end
-    if jobGoal then return sameGoal and result.path or nil end
-    if sameGoal and result.failed and job.lastFail and (sN - job.lastFail[1]) ^ 2 + (sW - job.lastFail[2]) ^ 2 < 900 then
-        return nil
+    if job.co then
+        -- Dieselbe Suche laeuft schon - oder eine andere, die noch nicht
+        -- lange genug lief, um sie aufzugeben.
+        if Same(job, c, gN, gW) or Clock() - (job.t0 or 0) < NV.MIN_RUN then return have end
     end
-    if K.InCombat and K.InCombat() then return sameGoal and result.path or nil end
-    if sameGoal and result.failed then job.lastFail = { sN, sW } end
+    -- Kein Weg zu diesem Ziel von hier: erst nach 30 Einheiten neu versuchen.
+    if e and e.failed and e.fN and (sN - e.fN) ^ 2 + (sW - e.fW) ^ 2 < 900 then return nil end
+    if K.InCombat and K.InCombat() then return have end
     Start(c, sN, sW, gN, gW)
-    return sameGoal and result.path or nil
+    return have
 end
 
 function NV.Reset()
     job.co = nil
     result.path, result.c, result.failed = nil, nil, nil
+    for i = #memo, 1, -1 do memo[i] = nil end
     pump:SetScript("OnUpdate", nil)
+end
+
+function NV.StatusLine()
+    local s2 = NV.stats
+    return string.format("Geländekarte: Suchen %d · fertig %d · ohne Weg %d · abgebrochen %d · wiederverwendet %d · läuft %s",
+        s2.started, s2.done, s2.failed, s2.replaced, s2.reused, job.co and "ja" or "nein")
 end
 
 -- Abstand zur Linie (naechster Abschnitt).

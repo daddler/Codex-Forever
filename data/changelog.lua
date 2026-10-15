@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.35.3.2",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Wegsuche rechnet nicht mehr im Dauerlauf.|r Wechselte der Pfeil sein Ziel, begann sie von vorn und wurde nie fertig. Jetzt merkt sie sich Wege je Ziel und lässt eine laufende Suche zu Ende rechnen. /wcui pfeil zeigt, wie oft sie sucht.",
+        },
+    },
+    {
         version = "6.35.3.1",
         date    = "15.10.2026",
         notes   = {
