@@ -37,6 +37,7 @@ NV.MAX_EXPAND = 30000  -- Eingaenge je Suche, dann aufgeben
 NV.SNAP = 6            -- Zellen Umkreis, wenn man nicht auf einer Zelle steht
 NV.REPATH_MOVE = 40    -- so weit weg vom Weg: neu suchen
 NV.LOOKAHEAD = 30      -- der Pfeil zeigt so weit voraus auf den Weg
+NV.CORNER = 6          -- so nah an einer Ecke: schon um sie herum zeigen
 NV.CACHE = 600         -- entpackte Wegenetze im Speicher (je rund 1 KB)
 NV.CELLS = 32          -- entpackte Gitter im Speicher (je rund 4,5 KB)
 
@@ -403,28 +404,83 @@ local scratchR = { dist = {}, prev = {}, heap = HeapNew() }
 local work = { g = {}, from = {}, goalCost = {}, heap = HeapNew() }
 local function Wipe(t) for key in pairs(t) do t[key] = nil end end
 
+-- Sicht ueber das Gitter (6.37.1.0): von Zelle a geradeaus nach Zelle b,
+-- ohne eine Wand (geschlossene Kante), eine gesperrte Zelle oder - wenn man
+-- nicht schon schwimmt - Wasser zu kreuzen. Schritt fuer Schritt durch die
+-- Zellen, die die Linie zwischen den Mitten beruehrt; trifft sie genau eine
+-- Ecke, reicht einer der beiden Umwege (wie in der Suche).
+local function Sees(cl, C, a, b)
+    local x, y = floor(a / C), a % C
+    local x1, y1 = floor(b / C), b % C
+    local nx, ny = math.abs(x1 - x), math.abs(y1 - y)
+    local sx, sy = x1 > x and 1 or -1, y1 > y and 1 or -1
+    local dirX, dirY = sx > 0 and 1 or 2, sy > 0 and 3 or 4
+    local water = Walk(cl, a) == 2
+    local function Ok(c) local v = Walk(cl, c) return v == 1 or (v == 2 and water) end
+    local ix, iy = 0, 0
+    local cur = a
+    while ix < nx or iy < ny do
+        local tx, ty = (ix + 0.5) * ny, (iy + 0.5) * nx
+        if ix < nx and (iy >= ny or tx < ty) then
+            local nb = cur + sx * C
+            if not (Ok(nb) and StepOpen(cl, C, cur, dirX)) then return false end
+            cur, ix = nb, ix + 1
+        elseif iy < ny and (ix >= nx or ty < tx) then
+            local nb = cur + sy
+            if not (Ok(nb) and StepOpen(cl, C, cur, dirY)) then return false end
+            cur, iy = nb, iy + 1
+        else
+            -- Genau ueber die Ecke.
+            local mx, my, d = cur + sx * C, cur + sy, cur + sx * C + sy
+            local open = (Ok(mx) and StepOpen(cl, C, cur, dirX) and StepOpen(cl, C, mx, dirY))
+                or (Ok(my) and StepOpen(cl, C, cur, dirY) and StepOpen(cl, C, my, dirX))
+            if not (open and Ok(d)) then return false end
+            cur, ix, iy = d, ix + 1, iy + 1
+        end
+    end
+    return true
+end
+NV.Sees = Sees
+
+NV.PULL = 24   -- so viele Zellen weit schaut das Glaetten hoechstens
+
 -- Polylinie (flach n, w, n, w ...) im Abschnitt von Zelle a rueckwaerts
--- ueber prev bis zum Start; jede vierte Zelle reicht fuer die Linie.
+-- ueber prev bis zum Start. 6.37.1.0 (Beta-Test Ironforge: "durch einen
+-- Raum ohne Tuer"): vorher blieb jede vierte Zelle stehen, die Linie
+-- dazwischen schnitt Ecken durch Waende. Jetzt bleibt nur, wo die Sicht
+-- endet - die Linie knickt an den Ecken und kreuzt nie eine Wand.
 local function GridChain(st, k, prev, from, out, reverse)
     local cells, c = {}, from
     while c do cells[#cells + 1] = c c = prev[c] end
-    local list = {}
-    for i = 1, #cells do
-        if i == 1 or i == #cells or i % 4 == 0 then list[#list + 1] = cells[i] end
-    end
     if not reverse then
         -- prev zeigt zum Start: umdrehen, damit die Linie vom Start kommt.
-        for i = #list, 1, -1 do
-            local n, w = NV.CellPos(st, k, list[i])
-            out[#out + 1], out[#out + 2] = n, w
+        local i, j = 1, #cells
+        while i < j do cells[i], cells[j] = cells[j], cells[i] i, j = i + 1, j - 1 end
+    end
+    local cl = NV.Cluster(st, k)
+    local C = st.C
+    local list = { cells[1] }
+    local anchor, n = 1, #cells
+    if cl and cl.cells then
+        local i = anchor + 1
+        while i <= n do
+            Slice()
+            if i < n and i - anchor < NV.PULL and Sees(cl, C, cells[anchor], cells[i + 1]) then
+                i = i + 1
+            else
+                list[#list + 1] = cells[i]
+                anchor, i = i, i + 1
+            end
         end
     else
-        for i = 1, #list do
-            local n, w = NV.CellPos(st, k, list[i])
-            out[#out + 1], out[#out + 2] = n, w
-        end
+        for i = 2, n do list[#list + 1] = cells[i] end
+    end
+    for i = 1, #list do
+        local pn, pw = NV.CellPos(st, k, list[i])
+        out[#out + 1], out[#out + 2] = pn, pw
     end
 end
+NV.GridChain = GridChain
 
 -- Laeuft in einer Coroutine. Liefert { n, w, ... } von Start bis Ziel und die
 -- Laenge in Einheiten, oder nil.
@@ -701,20 +757,21 @@ function NV.Steer(path, pN, pW)
         rest = rest + sqrt((path[i + 2] - path[i]) ^ 2 + (path[i + 3] - path[i + 1]) ^ 2)
     end
     rest = rest + bestD
-    -- Voraus schauen.
+    -- Voraus schauen - aber nie ueber eine Ecke hinweg (6.37.1.0): der
+    -- Weg knickt dort, wo die Sicht endet; ein Punkt hinter der Ecke laege
+    -- hinter der Wand. Erst kurz vor der Ecke (NV.CORNER) zeigt der Pfeil
+    -- schon den naechsten Abschnitt entlang.
     local need = NV.LOOKAHEAD
-    if left >= need then
-        local t = bestU + need / math.max(seg, 0.01)
+    if left >= NV.CORNER then
+        local t = bestU + math.min(need, left) / math.max(seg, 0.01)
         return aN + (bN - aN) * t, aW + (bW - aW) * t, rest, bestI
     end
-    need = need - left
     for i = bestI + 2, #path - 3, 2 do
         local l = sqrt((path[i + 2] - path[i]) ^ 2 + (path[i + 3] - path[i + 1]) ^ 2)
-        if l >= need then
-            local t = need / l
+        if l >= NV.CORNER or i + 4 > #path - 1 then
+            local t = math.min(need, l) / math.max(l, 0.01)
             return path[i] + (path[i + 2] - path[i]) * t, path[i + 1] + (path[i + 3] - path[i + 1]) * t, rest, bestI
         end
-        need = need - l
     end
     return path[#path - 1], path[#path], rest, bestI
 end

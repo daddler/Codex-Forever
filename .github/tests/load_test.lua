@@ -3999,6 +3999,31 @@ do
         assert(p2, "Pump ohne Ergebnis")
         local sN, sW, rest = NV.Steer(p2, 0.5 * cs, 1.5 * cs)
         assert(sN > 0.5 * cs and rest > 0, "Pfeil nicht voraus")
+        -- 6.37.1.0: Wand quer durch den Abschnitt, Luecke nur am Rand - die
+        -- geglaettete Linie geht durch die Luecke, kein Stueck kreuzt die Wand.
+        local cells = {}
+        for x = 0, 7 do
+            for y = 0, 7 do cells[#cells + 1] = (x == 4 and y < 7) and "A" or "Q" end
+        end
+        WeintCodex.NavData[97] = { cx0 = 0, cy0 = 0, nx = 1, ny = 1, cells = 8, swim = 3, graph = {}, grid = {}, fcell = {},
+            raw = { graph = { [1] = E(0, 2) }, grid = { [1] = table.concat(cells) }, fcell = {} } }
+        local c8 = NV.TILE / 8
+        local wp = NV.Search(97, 1.5 * c8, 0.5 * c8, 6.5 * c8, 0.5 * c8)
+        assert(wp and #wp >= 6, "kein Weg um die Wand")
+        local st97 = NV.State(97)
+        local cl97 = NV.Cluster(st97, 0)
+        for i = 1, #wp - 3, 2 do
+            local _, a = NV.Locate(st97, wp[i], wp[i + 1])
+            local _, b = NV.Locate(st97, wp[i + 2], wp[i + 3])
+            assert(NV.Sees(cl97, 8, a, b), "Linie kreuzt die Wand bei Punkt " .. i)
+        end
+        assert(#wp <= 12, "nicht geglaettet: " .. #wp / 2 .. " Punkte")
+        assert(not NV.Sees(cl97, 8, 1 * 8 + 0, 6 * 8 + 0), "Sicht durch die Wand")
+        -- Pfeil zeigt auf die naechste Ecke, nicht hinter die Wand.
+        local aN, aW = NV.Steer(wp, 1.5 * c8, 0.5 * c8)
+        local _, ac = NV.Locate(st97, aN, aW)
+        assert(NV.Sees(cl97, 8, 1 * 8 + 0, ac), "Pfeil zeigt durch die Wand")
+        WeintCodex.NavData[97] = nil
         -- Ohne Karte fuer den Kontinent: nichts.
         assert(NV.Path(98, 0, 0, 10, 10) == nil, "Weg ohne Karte")
     end)

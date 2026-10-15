@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.37.1.0] – 2026-10-15
+
+### Behoben
+- Geländekarte (`ui/navmesh.lua`): `GridChain` behielt jede vierte Zelle, die
+  Linie dazwischen schnitt Ecken durch Wände (Beta-Test Ironforge). Jetzt
+  Glätten über Sicht im Gitter (`NV.Sees`: Wände, gesperrte Zellen, Wasser),
+  höchstens `NV.PULL` Zellen weit. `NV.Steer` zeigt nie über eine Ecke hinweg
+  (erst `NV.CORNER` davor um sie herum). Prüfung mit Wand und Lücke.
+
 ## [6.37.0.1] – 2026-10-15
 
 ### Behoben

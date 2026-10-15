@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.37.1.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Laufweg geht nicht mehr durch Wände.|r Die Linie auf der Minikarte knickt jetzt an den Ecken, statt sie abzuschneiden, und der Pfeil zeigt auf die nächste Ecke statt durch einen Raum ohne Tür. Gemeldet aus Ironforge.",
+        },
+    },
+    {
         version = "6.37.0.1",
         date    = "15.10.2026",
         notes   = {
