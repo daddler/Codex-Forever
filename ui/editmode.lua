@@ -255,8 +255,23 @@ local function BuildBar()
     bar = CreateFrame("Frame", "WeintCodexDesignBar", UIParent)
     bar:SetFrameStrata("FULLSCREEN_DIALOG")
     bar:SetSize(E.BAR_MIN, 38)
-    bar:SetPoint("TOP", UIParent, "TOP", 0, -14)
+    bar:SetPoint("TOP", UIParent, "TOP", E.BarPos())
     bar:EnableMouse(true)
+    bar:SetMovable(true)
+    bar:SetClampedToScreen(true)
+    bar:RegisterForDrag("LeftButton")
+    bar:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    bar:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local ui = K.Profile()
+        local top, left, w = K.Plain(self:GetTop()), K.Plain(self:GetLeft()), K.Plain(self:GetWidth())
+        local pw, ph = K.Plain(UIParent:GetWidth()), K.Plain(UIParent:GetHeight())
+        if ui and ui.positions and type(top) == "number" and type(left) == "number" and type(w) == "number"
+           and type(pw) == "number" and type(ph) == "number" then
+            ui.positions.designbar = { x = math.floor(left + w / 2 - pw / 2 + 0.5), y = math.floor(top - ph + 0.5) }
+        end
+        E.PlaceBar(0)
+    end)
     K.Kachel(bar)
 
     -- Das Logo am Anfang der Leiste (6.26.9.0): hier landet das grosse
@@ -423,7 +438,20 @@ local function Ease(p)  -- weich an, weich aus
     return p * p * (3 - 2 * p)
 end
 
-local function BarAt(off) bar:ClearAllPoints() bar:SetPoint("TOP", UIParent, "TOP", 0, -14 + off) end
+-- Die Leiste laesst sich ziehen (6.35.1.0, Beta-Test: sie lag ueber den
+-- Rahmen oben); ihr Platz steht im Profil (positions.designbar).
+function E.BarPos()
+    local ui = K.Profile()
+    local p = ui and ui.positions and ui.positions.designbar
+    if type(p) == "table" and type(p.x) == "number" and type(p.y) == "number" then return p.x, p.y end
+    return 0, -14
+end
+local function BarAt(off)
+    local x, y = E.BarPos()
+    bar:ClearAllPoints()
+    bar:SetPoint("TOP", UIParent, "TOP", x, y + off)
+end
+E.PlaceBar = BarAt
 
 local function Settle()
     -- Alles an seinen Platz: Ende des Auftritts oder Abbruch.

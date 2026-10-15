@@ -4200,6 +4200,27 @@ do
     Check(ok, "Questpfeil: Kompass (Richtungen, Verdecken, Aus)" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.35.1.0: Eintrag "WeintCodex UI" im Spielmenue.
+do
+    local O = WeintCodex.UIOptions
+    local ok, err = pcall(function()
+        local added
+        local gm = { InitButtons = function() end }
+        function gm:AddButton(text, fn) added = { text, fn } end
+        O._savedGM = { _G.GameMenuFrame, _G.hooksecurefunc }
+        _G.hooksecurefunc = function(obj, name, fn)
+            local orig = obj[name]
+            obj[name] = function(...) orig(...) fn(...) end
+        end
+        _G.GameMenuFrame, O.gameMenuHooked = gm, nil
+        assert(O.HookGameMenu(), "Haken nicht gesetzt")
+        gm:InitButtons()
+        assert(added and added[1] == "WeintCodex UI" and type(added[2]) == "function", "kein Eintrag im Spielmenue")
+    end)
+    if O._savedGM then _G.GameMenuFrame, _G.hooksecurefunc = O._savedGM[1], O._savedGM[2] O._savedGM = nil end
+    Check(ok, "Spielmenue: Eintrag WeintCodex UI" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Questpfeil: die 3D-Ansichten und die Farbe.
 do
     local idx, l, r, t, b = QA.Frame(0)

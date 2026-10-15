@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.35.1.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFGestaltungsmodus aufgeräumt.|r Questpfeil, Kompass, Haltbarkeit, Erinnerungen, Markieren, Seltene Gegner und Kampfhinweis liegen ab Werk untereinander statt übereinander. Die Leiste des Gestaltungsmodus lässt sich wegziehen, und das Band des Testmodus verschwindet, solange der Gestaltungsmodus offen ist – seine Leiste zeigt „Testdaten“ ohnehin.",
+            "|cff7C6CFF„WeintCodex UI“ im Spielmenü.|r Esc drücken und den Eintrag wählen – die Einstellungen öffnen sich.",
+        },
+    },
+    {
         version = "6.35.0.0",
         date    = "15.10.2026",
         notes   = {

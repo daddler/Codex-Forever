@@ -60,21 +60,26 @@ K.LAYOUT = {
     gf_raid         = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 20, y = -260 },
 
     -- Rand
+    -- OBEN MITTE (6.35.1.0, Beta-Test: "im Gestaltungsmodus ist vieles
+    -- uebereinander"): von oben nach unten, nach den Hoehen der Rahmen -
+    -- Questpfeil 96 (-8), Kompass 52 (-106), Haltbarkeit 20 (-160),
+    -- Erinnerungen bis ~60 (-186), Markieren ~80 (-255), Seltene 52 (-340);
+    -- der Kampfhinweis darunter in der Mitte.
     -- Erinnerungen (ui/reminders.lua): die Hinweise oben, die Symbole
     -- ueber dem Cockpit - Procs zuoberst, darunter die Abklingzeiten.
-    reminders       = { point = "TOP",         relPoint = "TOP", x = 0, y = -130 },
+    reminders       = { point = "TOP",         relPoint = "TOP", x = 0, y = -186 },
     procs           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 268 },
     cooldowns       = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 228 },
     xpbar           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 4 },
     damagemeter     = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -36 },
     bags            = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20, y = 110 },
     questarrow      = { point = "TOP",         relPoint = "TOP", x = 0, y = -8 },
-    compass         = { point = "TOP",         relPoint = "TOP", x = 0, y = -100 },
-    combatalert     = { point = "CENTER",      relPoint = "CENTER", x = 0, y = 220 },
+    compass         = { point = "TOP",         relPoint = "TOP", x = 0, y = -106 },
+    combatalert     = { point = "CENTER",      relPoint = "CENTER", x = 0, y = 110 },
     fps             = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -12 },
-    durability      = { point = "TOP",         relPoint = "TOP", x = 0, y = -90 },
+    durability      = { point = "TOP",         relPoint = "TOP", x = 0, y = -160 },
     -- Seltene Gegner (ui/rares.lua, 6.16.0.0): Hinweis unter dem Questpfeil.
-    rarealert       = { point = "TOP",         relPoint = "TOP", x = 0, y = -210 },
+    rarealert       = { point = "TOP",         relPoint = "TOP", x = 0, y = -340 },
     -- Fluestern (ui/messenger.lua, 6.19.0.0): das Fenster links ueber dem Chat.
     messenger       = { point = "BOTTOMLEFT",  relPoint = "BOTTOMLEFT", x = 20, y = 330 },
     -- Gruppenwerkzeuge (6.29.13.0): links, wo das Menue des Spiels stand.
@@ -86,7 +91,7 @@ K.LAYOUT = {
     messengerIcon   = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", rel = "Minimap", x = -3, y = 24 },
     -- Automark (ui/automark.lua, 6.9.0.2): der Knopf "Markieren" unter den
     -- Erinnerungen - erscheint nur beim Betreten einer Instanz.
-    automark        = { point = "TOP",         relPoint = "TOP", x = 0, y = -170 },
+    automark        = { point = "TOP",         relPoint = "TOP", x = 0, y = -255 },
     -- Mikromenue und Taschenleiste des Spiels (6.9.1.0): seitdem Rahmen des
     -- Gestaltungsmodus (ui/actionbars.lua) - hier ihr Standardplatz, den
     -- auch das Layout im Bearbeitungsmodus bekommt (K.GAME_LAYOUT, `from`).

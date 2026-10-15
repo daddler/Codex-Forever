@@ -73,11 +73,21 @@ function T.Set(want)
         if K.IsActive(key) then mod.ShowTest(on) end
     end)
     WeintCodex.UIPresence.Force("test", on)
-    if on then Banner():Show() elseif banner then banner:Hide() end
+    T.SyncBanner()
     K.Fire("test", on)
 end
 
 function T.Toggle() T.Set(not on) end
+
+K.Listen(function(kind) if kind == "unlock" then T.SyncBanner() end end)
+
+-- Im Gestaltungsmodus nennt dessen Leiste den Testmodus ("Testdaten: an")
+-- und beendet ihn auch - das Band laege dort nur ueber den Rahmen oben
+-- (6.35.1.0, Beta-Test).
+function T.SyncBanner()
+    local show = on and not (K.IsUnlocked and K.IsUnlocked())
+    if show then Banner():Show() elseif banner then banner:Hide() end
+end
 
 local ev = CreateFrame("Frame")
 ev:RegisterEvent("PLAYER_REGEN_DISABLED")

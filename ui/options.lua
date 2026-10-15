@@ -1580,3 +1580,29 @@ function O.MouseReport()
     end
     return out
 end
+
+--------------------------------------------------
+-- Eintrag im Spielmenue (6.35.1.0)
+--------------------------------------------------
+-- Esc -> "WeintCodex UI" oeffnet diese Einstellungen (Beta-Test-Wunsch).
+-- Das Menue baut seine Knoepfe bei jedem Oeffnen neu (InitButtons); danach
+-- haengt ein Haken einen eigenen an - ueber AddButton des Menues, ohne
+-- dessen Knoepfe anzufassen. Fehlt AddButton (aelterer Client), bleibt das
+-- Menue, wie es ist; /wcui geht immer.
+O.GAME_MENU_LABEL = "WeintCodex UI"
+function O.HookGameMenu()
+    local gm = _G.GameMenuFrame
+    if O.gameMenuHooked or type(gm) ~= "table" or type(gm.InitButtons) ~= "function" or not _G.hooksecurefunc then
+        return false
+    end
+    O.gameMenuHooked = true
+    _G.hooksecurefunc(gm, "InitButtons", function(self)
+        if type(self.AddButton) ~= "function" then return end
+        pcall(self.AddButton, self, O.GAME_MENU_LABEL, function()
+            if _G.HideUIPanel then pcall(_G.HideUIPanel, self) else self:Hide() end
+            O.Show()
+        end)
+    end)
+    return true
+end
+O.HookGameMenu()

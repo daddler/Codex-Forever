@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.35.1.0] – 2026-10-15
+
+### Geändert
+- `ui/layout.lua`: Standardplätze oben Mitte nach Höhen gestaffelt (Kompass
+  -106, Haltbarkeit -160, Erinnerungen -186, Markieren -255, Seltene -340,
+  Kampfhinweis Mitte +110). Gespeicherte Plätze bleiben.
+- Gestaltungsmodus: Leiste ziehbar (`positions.designbar`, `E.BarPos`).
+- Testmodus: Band aus, solange der Gestaltungsmodus offen ist (`T.SyncBanner`).
+
+### Hinzugefügt
+- Spielmenü: Eintrag „WeintCodex UI“ über `GameMenuFrame:AddButton` nach
+  `InitButtons` (`O.HookGameMenu`).
+
 ## [6.35.0.0] – 2026-10-15
 
 ### Hinzugefügt
