@@ -506,15 +506,20 @@ function AS.Step(now)
     end
 end
 
-local drv = CreateFrame("Frame")
-drv:Hide()
+-- 6.41.4.0 (/wcui speicher: 142 Aufrufe/s): statt jedes Bild zu zaehlen
+-- ein Takt alle AS.TICK s - nur, solange Teilen oder Zuhoeren an ist.
+local drv = { ticker = nil }
 AS.driver = drv
-drv:SetScript("OnUpdate", K.Measured("Auktionspreise teilen", function(_, el)
-    acc = acc + (el or 0)
-    if acc < AS.TICK then return end
-    acc = 0
-    AS.Step()
-end))
+local Step = K.Measured("Auktionspreise teilen", function() AS.Step() end)
+function drv:Show()
+    if self.ticker or not (_G.C_Timer and _G.C_Timer.NewTicker) then return end
+    self.ticker = _G.C_Timer.NewTicker(AS.TICK, Step)
+end
+function drv:Hide()
+    if self.ticker and self.ticker.Cancel then self.ticker:Cancel() end
+    self.ticker = nil
+end
+function drv:IsShown() return self.ticker ~= nil end
 
 --------------------------------------------------
 -- Bericht

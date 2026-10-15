@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.41.4.0] – 2026-10-15
+
+### Geändert
+- Plaketten: `Attach`, Questziele, `UNIT_HEALTH`, Bedrohung einzeln über
+  `K.Measured` (Beta-Messung: „Plaketten 45,8 KB/s bei 4 Aufrufen/s“, Quelle
+  offen). `K.ProfileReport` zeigt 12 statt 8 Teile.
+- `ui/auctionshare.lua`: Treiber per `C_Timer.NewTicker(AS.TICK)` statt
+  `OnUpdate` in jedem Bild (gemessen 142 Aufrufe/s).
+
 ## [6.41.3.0] – 2026-10-15
 
 ### Geändert

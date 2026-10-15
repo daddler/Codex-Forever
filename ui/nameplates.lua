@@ -1496,10 +1496,10 @@ end
 -- der groesste Teil des Wegwerf-Speichers der Plaketten.
 NP.QUEST_DELAY = 0.5
 local questQueued = false
-local function QuestRefresh()
+local QuestRefresh = K.Measured("Plaketten: Questziele", function()
     questQueued = false
     for _, p in pairs(plates) do UpdateQuest(p) end
-end
+end)
 function NP.QueueQuestRefresh()
     if questQueued then return end
     if _G.C_Timer and _G.C_Timer.After then
@@ -1883,6 +1883,10 @@ local function Attach(unit)
     p:Show()
 end
 
+-- 6.41.4.0 (/wcui speicher: "Plaketten 45,8 KB/s bei 4 Aufrufen/s"):
+-- einzeln gemessen, damit der Bericht sagt, welcher Teil anlegt.
+Attach = K.Measured("Plaketten: Erscheinen", Attach)
+
 function Detach(unit)
     local p = plates[unit]
     if not p then return end
@@ -1911,14 +1915,14 @@ end
 local events = CreateFrame("Frame")
 
 local UNIT_EVENTS = {
-    UNIT_HEALTH = function(p) UpdateHealth(p, true) end,
+    UNIT_HEALTH = K.Measured("Plaketten: Leben", function(p) UpdateHealth(p, true) end),
     UNIT_MAXHEALTH = function(p) UpdateHealth(p) end,
     UNIT_NAME_UPDATE = function(p) FillTexts(p, false) UpdateColor(p) end,
     UNIT_LEVEL = function(p) FillTexts(p, false) end,
     UNIT_CLASSIFICATION_CHANGED = function(p) FillTexts(p, false) UpdateColor(p) end,
     UNIT_FLAGS = function(p) UpdateColor(p) end,
-    UNIT_THREAT_SITUATION_UPDATE = function(p) UpdateThreatText(p) UpdateColor(p) end,
-    UNIT_THREAT_LIST_UPDATE = function(p) UpdateThreatText(p) UpdateColor(p) end,
+    UNIT_THREAT_SITUATION_UPDATE = K.Measured("Plaketten: Bedrohung", function(p) UpdateThreatText(p) UpdateColor(p) end),
+    UNIT_THREAT_LIST_UPDATE = K.Measured("Plaketten: Bedrohung", function(p) UpdateThreatText(p) UpdateColor(p) end),
 }
 
 local CAST_EVENTS = {

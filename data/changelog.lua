@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.41.4.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFGenauer messen, wo Speicher entsteht.|r /wcui speicher zeigt die Namensplaketten jetzt aufgeteilt (Erscheinen, Questziele, Leben, Bedrohung) und bis zu zwölf Teile. Das Teilen der Auktionspreise läuft nur noch in einem ruhigen Takt statt in jedem Bild.",
+        },
+    },
+    {
         version = "6.41.3.0",
         date    = "15.10.2026",
         notes   = {

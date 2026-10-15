@@ -776,7 +776,7 @@ function K.ProfileReport(secs)
     end
     if not GcCount() then out[#out + 1] = "Speicher je Teil nicht messbar (collectgarbage fehlt) – nur Zeit." end
     out[#out + 1] = string.format("Gemessene Teile zusammen: %.1f KB/s", sum / secs)
-    for i = 1, math.min(8, #list) do
+    for i = 1, math.min(12, #list) do
         local e = list[i].e
         out[#out + 1] = string.format("%d. %s: %.1f KB/s, %.0f Aufrufe/s, %.2f ms/s", i, list[i].name,
             e.kb / secs, e.calls / secs, e.ms / secs)
