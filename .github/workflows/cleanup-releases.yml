@@ -1,0 +1,50 @@
+name: Alte Releases aufräumen
+
+# Löscht alle GitHub-Releases bis auf die neuesten N (nach Erstellungsdatum)
+# und mit ihnen ihre Tags. Nur auf Knopfdruck unter "Actions".
+# Die Companion lädt immer das neueste Release - ältere braucht niemand.
+
+on:
+  workflow_dispatch:
+    inputs:
+      keep:
+        description: "So viele neueste Releases bleiben"
+        required: true
+        default: "20"
+      tags:
+        description: "Tags der gelöschten Releases mit löschen (ja/nein)"
+        required: true
+        default: "ja"
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Alte Releases löschen
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          KEEP: ${{ github.event.inputs.keep }}
+          TAGS: ${{ github.event.inputs.tags }}
+        run: |
+          set -euo pipefail
+          case "$KEEP" in ''|*[!0-9]*) echo "keep muss eine Zahl sein"; exit 1;; esac
+          if [ "$KEEP" -lt 5 ]; then echo "Weniger als 5 behalten ist hier nicht erlaubt"; exit 1; fi
+          gh api --paginate "repos/$REPO/releases?per_page=100" \
+            --jq '.[] | [.created_at, .tag_name] | @tsv' | sort -r > all.tsv
+          total=$(wc -l < all.tsv)
+          echo "Releases gesamt: $total, behalten: $KEEP"
+          tail -n +$((KEEP + 1)) all.tsv | cut -f2 > drop.txt
+          echo "Zu löschen: $(wc -l < drop.txt)"
+          flag=""
+          if [ "$TAGS" = "ja" ]; then flag="--cleanup-tag"; fi
+          while read -r tag; do
+            [ -z "$tag" ] && continue
+            echo "lösche $tag"
+            gh release delete "$tag" --repo "$REPO" --yes $flag || echo "  übersprungen: $tag"
+          done < drop.txt
+          echo "Bleiben:"
+          head -n "$KEEP" all.tsv
