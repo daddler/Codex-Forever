@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.35.3.0] – 2026-10-15
+
+### Geändert
+- Spielmenü: Eintrag farbig (`brandWeint`, `brandCodex`, `brandUI` in
+  `core/ui.lua`, bewusst nicht das Akzent-Violett) und per `layoutIndex`
+  direkt hinter dem Bearbeitungsmodus (`O.PlaceGameMenuButton`).
+
 ## [6.35.2.0] – 2026-10-15
 
 ### Geändert

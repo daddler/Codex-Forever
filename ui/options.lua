@@ -1590,6 +1590,30 @@ end
 -- dessen Knoepfe anzufassen. Fehlt AddButton (aelterer Client), bleibt das
 -- Menue, wie es ist; /wcui geht immer.
 O.GAME_MENU_LABEL = "WeintCodex UI"
+function O.GameMenuText()
+    local CT = WeintCodex.ColorText
+    return CT("brandWeint", "Weint") .. CT("brandCodex", "Codex") .. " " .. CT("brandUI", "UI")
+end
+
+-- 6.35.3.0 (Wunsch: unter "Bearbeitungsmodus", ueber "Support"): das Menue
+-- ordnet seine Knoepfe nach layoutIndex. Unser Knopf bekommt den Platz
+-- direkt hinter dem Bearbeitungsmodus (erkannt am Text des Spiels,
+-- HUD_EDIT_MODE_MENU); findet er ihn nicht, bleibt er unten.
+function O.PlaceGameMenuButton(gm, mine)
+    if type(mine) ~= "table" or not (gm.buttonPool and gm.buttonPool.EnumerateActive) then return false end
+    local want = _G.HUD_EDIT_MODE_MENU or "Bearbeitungsmodus"
+    local anchor
+    for b in gm.buttonPool:EnumerateActive() do
+        local t = b.GetText and K.Plain(b:GetText())
+        if t == want then anchor = b end
+    end
+    local idx = anchor and K.Plain(anchor.layoutIndex)
+    if type(idx) ~= "number" then return false end
+    mine.layoutIndex = idx + 0.5
+    if gm.MarkDirty then pcall(gm.MarkDirty, gm) elseif gm.Layout then pcall(gm.Layout, gm) end
+    return true
+end
+
 function O.HookGameMenu()
     local gm = _G.GameMenuFrame
     if O.gameMenuHooked or type(gm) ~= "table" or type(gm.InitButtons) ~= "function" or not _G.hooksecurefunc then
@@ -1598,10 +1622,18 @@ function O.HookGameMenu()
     O.gameMenuHooked = true
     _G.hooksecurefunc(gm, "InitButtons", function(self)
         if type(self.AddButton) ~= "function" then return end
-        pcall(self.AddButton, self, O.GAME_MENU_LABEL, function()
+        local ok, b = pcall(self.AddButton, self, O.GameMenuText(), function()
             if _G.HideUIPanel then pcall(_G.HideUIPanel, self) else self:Hide() end
             O.Show()
         end)
+        -- Gibt AddButton den Knopf nicht zurueck: am eigenen Text erkennen.
+        if ok and type(b) ~= "table" and self.buttonPool and self.buttonPool.EnumerateActive then
+            local mine = O.GameMenuText()
+            for x in self.buttonPool:EnumerateActive() do
+                if x.GetText and x:GetText() == mine then b = x end
+            end
+        end
+        if ok then pcall(O.PlaceGameMenuButton, self, b) end
     end)
     return true
 end

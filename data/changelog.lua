@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.35.3.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFWeintCodex UI im Spielmenü an seinem Platz.|r Direkt unter „Bearbeitungsmodus“, in Farbe: Weint grün, Codex lila, UI türkis.",
+        },
+    },
+    {
         version = "6.35.2.0",
         date    = "15.10.2026",
         notes   = {

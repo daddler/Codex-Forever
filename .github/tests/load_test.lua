@@ -4215,7 +4215,13 @@ do
         _G.GameMenuFrame, O.gameMenuHooked = gm, nil
         assert(O.HookGameMenu(), "Haken nicht gesetzt")
         gm:InitButtons()
-        assert(added and added[1] == "WeintCodex UI" and type(added[2]) == "function", "kein Eintrag im Spielmenue")
+        assert(added and added[1]:find("Weint", 1, true) and added[1]:find("Codex", 1, true)
+            and type(added[2]) == "function", "kein Eintrag im Spielmenue")
+        -- Platz direkt hinter dem Bearbeitungsmodus.
+        local edit = { layoutIndex = 4, GetText = function() return _G.HUD_EDIT_MODE_MENU or "Bearbeitungsmodus" end }
+        local mine = { layoutIndex = 9 }
+        local pool = { EnumerateActive = function() return pairs({ [edit] = true, [mine] = true }) end }
+        assert(O.PlaceGameMenuButton({ buttonPool = pool }, mine) and mine.layoutIndex == 4.5, "nicht unter dem Bearbeitungsmodus")
     end)
     if O._savedGM then _G.GameMenuFrame, _G.hooksecurefunc = O._savedGM[1], O._savedGM[2] O._savedGM = nil end
     Check(ok, "Spielmenue: Eintrag WeintCodex UI" .. (ok and "" or (": " .. tostring(err))))

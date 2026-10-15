@@ -123,6 +123,13 @@ local C = {
     -- Tuerkis aus; darunter liegt immer eine dunkle Kontur. Status, nie Klasse.
     routeYellow   = {1.000, 0.863, 0.102, 1.0}, -- FFDC1A
     routeAlt      = {0.208, 0.894, 1.000, 1.0}, -- 35E4FF
+    -- Schriftzug "WeintCodex UI" im Spielmenue (6.35.3.0, Wunsch: gruenes
+    -- Weint, lila Codex). Feste Farben, nicht der Akzent: das Lila ist
+    -- bewusst NICHT das Violett der Palette (sonst faerbte SetAccent es in
+    -- die Klassenfarbe um), UI im Tuerkis des WCUI-Logos.
+    brandWeint    = {0.204, 0.800, 0.400, 1.0}, -- 34CC66
+    brandCodex    = {0.600, 0.400, 1.000, 1.0}, -- 9966FF
+    brandUI       = {0.240, 0.860, 0.960, 1.0}, -- 3DDBF5
     routeOutline  = {0.000, 0.000, 0.000, 0.85},
 
     -- Textstufen (bright > normal > muted > dim > faint > ghost)
