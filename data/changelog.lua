@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.37.0.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFFestquests nur, wenn das Fest läuft.|r Die Questhilfe kennt die Quests von Mondfest, Liebe liegt in der Luft, Kinderwoche, Sonnenwendfest, Erntedankfest, Schlotternächte, Winterhauchfest und Dunkelmond-Jahrmarkt und zeigt sie nur, solange der Kalender des Spiels das Fest nennt. Eigener Schalter „Feste“ unter der Karte; auf Wunsch auch alle.",
+            "|cff7C6CFFBuffs im WeintCodex-Stil greifen jetzt.|r Die Gestaltung lief bisher gar nicht an. /wcui prüfen zeigt, wie viele Symbole gestaltet sind.",
+        },
+    },
+    {
         version = "6.36.0.0",
         date    = "15.10.2026",
         notes   = {

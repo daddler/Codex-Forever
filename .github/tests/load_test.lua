@@ -4247,6 +4247,30 @@ do
     Check(ok, "Buffs: Symbol beschnitten, Rand, Restzeit" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.37.0.0: Festquests nur, solange das Fest laut Kalender laeuft.
+do
+    local QH = WeintCodex.UIQuestHelper
+    local saved = { _G.C_Calendar, _G.C_DateAndTime }
+    local ok, err = pcall(function()
+        local ev = QH.EventOf(8636)
+        assert(ev and ev.key == "lunar", "Urahne Rumblerock nicht dem Mondfest zugeordnet")
+        assert(QH.EventOf(7) == nil, "gewoehnliche Quest als Fest")
+        _G.C_DateAndTime = { GetCurrentCalendarTime = function() return { month = 2, year = 2027, monthDay = 3 } end }
+        local titles = {}
+        _G.C_Calendar = { GetNumDayEvents = function() return #titles end,
+            GetDayEvent = function(_, _, i) return { title = titles[i], calendarType = "HOLIDAY" } end }
+        QH.ReadCalendar()
+        assert(QH.fest.known and not QH.EventAllowed(ev), "Mondfest ausserhalb des Fests gezeigt")
+        titles[1] = "Mondfest"
+        QH.ReadCalendar()
+        assert(QH.EventAllowed(ev), "Mondfest laeuft, Quest fehlt")
+        assert(QH.EventAllowed(nil), "gewoehnliche Quest gefiltert")
+    end)
+    _G.C_Calendar, _G.C_DateAndTime = saved[1], saved[2]
+    QH.ReadCalendar()
+    Check(ok, "Questhilfe: Festquests nach Kalender" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Questpfeil: die 3D-Ansichten und die Farbe.
 do
     local idx, l, r, t, b = QA.Frame(0)

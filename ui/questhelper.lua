@@ -48,6 +48,11 @@ QH.DEFAULTS = {
     qhAllTargets = false,
     qhBar     = true,    -- Filterleiste auf der Karte
     qhMinimap = true,    -- dieselben Symbole auf der Minikarte (6.30.7.0)
+    -- 6.37.0.0 (Beta-Test: "Urahne Rumblerock" stand ausserhalb des
+    -- Mondfests auf der Karte): Quests der Feste nur, solange ihr Fest laut
+    -- Kalender des Spiels laeuft - oder auf Wunsch alle.
+    qhEvents    = true,  -- Feste: Quests laufender Feste zeigen
+    qhEventsAll = false, -- auch Feste, die gerade nicht laufen
 }
 QH.FILTERS = {
     { key = "qhAvail",   text = "Neue Quests" },
@@ -55,6 +60,7 @@ QH.FILTERS = {
     { key = "qhTurnin",  text = "Abgabe" },
     { key = "qhTargets", text = "Ziele" },
     { key = "qhAllTargets", text = "Alle Ziele" },
+    { key = "qhEvents",  text = "Feste" },
 }
 QH.SIZE = 20          -- "!" und "?" (so gross wie die des Spiels)
 QH.DOT = 16           -- Ziel (Bild: Schwert, Beutel, Zahnrad)
@@ -180,6 +186,71 @@ function QH.Offer(id, q, me)
 end
 
 --------------------------------------------------
+-- Feste (6.37.0.0)
+--------------------------------------------------
+-- Welche Quest zu welchem Fest gehoert: data/questevents.lua (Classic).
+-- Welches Fest laeuft: der Kalender des Spiels, Feiertage des heutigen
+-- Tages. Kann der Client das nicht sagen, gilt keines als laufend - eine
+-- Festquest ausserhalb ihres Fests waere eine Quest, die es nicht gibt.
+
+local eventOf
+function QH.EventOf(id)
+    if not eventOf then
+        eventOf = {}
+        for _, ev in ipairs(WeintCodex.QuestEvents or {}) do
+            for _, q in ipairs(ev.quests) do eventOf[q] = ev end
+        end
+    end
+    return eventOf[id]
+end
+
+QH.fest = { known = false, active = {}, titles = {} }
+function QH.ReadCalendar()
+    local E = QH.fest
+    local cal, dt = _G.C_Calendar, _G.C_DateAndTime
+    if not (cal and cal.GetNumDayEvents and cal.GetDayEvent and dt and dt.GetCurrentCalendarTime) then
+        E.known = false
+        return E
+    end
+    local ok, now = pcall(dt.GetCurrentCalendarTime)
+    if not ok or type(now) ~= "table" then E.known = false return E end
+    -- Monat 0 ist der, den der Kalender gerade zeigt: auf heute stellen,
+    -- aber nicht, waehrend der Spieler darin blaettert.
+    local cf = _G.CalendarFrame
+    if cal.SetAbsMonth and not (type(cf) == "table" and cf.IsShown and cf:IsShown()) then
+        pcall(cal.SetAbsMonth, now.month, now.year)
+    end
+    local okN, n = pcall(cal.GetNumDayEvents, 0, now.monthDay)
+    n = okN and K.Plain(n)
+    if type(n) ~= "number" then E.known = false return E end
+    for k in pairs(E.active) do E.active[k] = nil end
+    for i = #E.titles, 1, -1 do E.titles[i] = nil end
+    for i = 1, n do
+        local okE, ev = pcall(cal.GetDayEvent, 0, now.monthDay, i)
+        local title = okE and type(ev) == "table" and K.Plain(ev.title)
+        if type(title) == "string" and (ev.calendarType == "HOLIDAY" or ev.calendarType == nil) then
+            E.titles[#E.titles + 1] = title
+            local low = title:lower()
+            for _, def in ipairs(WeintCodex.QuestEvents or {}) do
+                for _, w in ipairs(def.words) do
+                    if low:find(w, 1, true) then E.active[def.key] = true end
+                end
+            end
+        end
+    end
+    E.known = true
+    return E
+end
+
+-- Darf eine Festquest als neue Quest erscheinen?
+function QH.EventAllowed(ev)
+    if not ev then return true end
+    if not Get("qhEvents") then return false end
+    if Get("qhEventsAll") then return true end
+    return QH.fest.active[ev.key] and true or false
+end
+
+--------------------------------------------------
 -- Liste je Karte
 --------------------------------------------------
 
@@ -292,7 +363,7 @@ function QH.ForMap(mapID)
     local allZ = Get("qhAllTargets")
     for id, raw in pairs(d.q) do
         local q = QH.Parse(raw)
-        if wantA then
+        if wantA and QH.EventAllowed(QH.EventOf(id)) then
             local offer = QH.Offer(id, q, me)
             if offer == "avail" or (offer == "low" and wantL) then
                 for _, npc in ipairs(q[6]) do
@@ -385,6 +456,8 @@ local function Tooltip(self)
         end
         local extra = ""
         if e.kind == "turnin" then extra = logDone[id] and "  (fertig)" or "  (noch nicht fertig)" end
+        local ev = QH.EventOf(id)
+        if ev then extra = extra .. "  · " .. ev.name end
         gt:AddLine(QuestLine(id) .. extra, n[1], n[2], n[3])
     end
     if e.kind ~= "avail" then
@@ -762,6 +835,7 @@ QH.mmTicker = mmTicker
 
 local function Refresh()
     QH.ReadLog()
+    QH.ReadCalendar()
     QH.Forget()
     for _, p in ipairs(pins) do p.entry = nil end
     for _, p in ipairs(mmPins) do p.entry = nil end
@@ -769,7 +843,7 @@ end
 QH.Refresh = Refresh
 
 local REFRESH = { "QUEST_LOG_UPDATE", "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_REMOVED", "PLAYER_LEVEL_UP",
-                  "SUPER_TRACKING_CHANGED" }
+                  "SUPER_TRACKING_CHANGED", "CALENDAR_UPDATE_EVENT_LIST" }
 local pending = false
 local ev = CreateFrame("Frame")
 ev:SetScript("OnEvent", function(_, event, name)
@@ -778,6 +852,9 @@ ev:SetScript("OnEvent", function(_, event, name)
         return
     end
     if event == "PLAYER_LOGIN" then
+        -- Der Kalender liefert erst nach einer Anfrage (CALENDAR_UPDATE_EVENT_LIST).
+        local cal = _G.C_Calendar
+        if QH.Active() and cal and cal.OpenCalendar then pcall(cal.OpenCalendar) end
         if QH.Active() then Refresh() EnsureDriver() mmTicker:SetShown(QH.MinimapActive()) end
         return
     end
@@ -828,6 +905,11 @@ function QH.StatusLines()
         .. ((ql and ql.IsQuestFlaggedCompleted or _G.IsQuestFlaggedCompleted) and "ja" or "fehlt – dann keine „!“")
         .. " · Minikarte: " .. (QH.MinimapActive() and "an" or "aus")
         .. " · Halbmesser " .. tostring(QH.MinimapYards())
+    local E = QH.ReadCalendar()
+    local act = {}
+    for _, def in ipairs(WeintCodex.QuestEvents or {}) do if E.active[def.key] then act[#act + 1] = def.name end end
+    out[#out + 1] = "Feste: " .. (E.known and ((#act > 0 and table.concat(act, ", ") or "keines läuft")
+        .. " · Kalender heute: " .. (#E.titles > 0 and table.concat(E.titles, ", ") or "nichts")) or "Kalender gibt nichts heraus – Festquests aus")
     return out
 end
 

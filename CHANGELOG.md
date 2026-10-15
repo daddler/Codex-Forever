@@ -9,6 +9,18 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.37.0.0] – 2026-10-15
+
+### Hinzugefügt
+- `data/questevents.lua` (Art `classic`): Festquests je Fest, nur Kennungen,
+  die im Bestand stehen. Questhilfe: `qhEvents` (Leiste „Feste“), `qhEventsAll`;
+  laufende Feste aus `C_Calendar` (heutige Feiertage, `QH.ReadCalendar`);
+  ohne Kalender gilt keines als laufend. Tooltip nennt das Fest.
+
+### Behoben
+- Buff-Stil startete nicht (hing am Einschalten der Minikarte): eigene
+  Ereignisse `PLAYER_LOGIN`/`PLAYER_ENTERING_WORLD`; Zeile in `/wcui prüfen`.
+
 ## [6.36.0.0] – 2026-10-15
 
 ### Hinzugefügt

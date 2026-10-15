@@ -638,6 +638,13 @@ Check("Sammeln", function(add)
     for _, line in ipairs(GT.StatusLines()) do add("", "   " .. line) end
 end)
 
+-- Buffs im WeintCodex-Stil (6.37.0.0)
+Check("Buffs", function(add)
+    local BS = WeintCodex.UIBuffSkin
+    if not BS then add(SC.OPEN, "Buff-Stil nicht geladen.") return end
+    add(BS.Active() and SC.OK or SC.OPEN, BS.StatusLine())
+end)
+
 -- Glitzern und Questhilfe (6.30.9.0 - fehlten bis dahin im Bericht)
 Check("Glitzern", function(add)
     local SP = WeintCodex.UISparkles

@@ -167,14 +167,26 @@ function BS.Start()
     BS.Scan()
 end
 
+-- 6.37.0.0 (Beta-Test: "geaendert hat sich gar nichts"): nicht mehr am
+-- Einschalten der Minikarte haengen - eigene Ereignisse, und bei jedem
+-- Betreten der Welt nachsehen, ob es jetzt laufen soll.
+local boot = CreateFrame("Frame")
+pcall(boot.RegisterEvent, boot, "PLAYER_LOGIN")
+pcall(boot.RegisterEvent, boot, "PLAYER_ENTERING_WORLD")
+boot:SetScript("OnEvent", function() BS.Start() BS.Soon() end)
+
+function BS.StatusLine()
+    local n = 0
+    for _ in pairs(done) do n = n + 1 end
+    local bf = _G.BuffFrame
+    return string.format("Buffs: %s · gestaltet %d Knöpfe · Haken %s · AuraContainer %s",
+        BS.Active() and "an" or "aus", n, hooked and "gesetzt" or "nicht gesetzt",
+        (type(bf) == "table" and type(bf.AuraContainer) == "table") and "da" or "fehlt")
+end
+
 local mod = K.Module(KEY)
 if mod then
     if mod.defaults.buffSkin == nil then mod.defaults.buffSkin = true end
-    local enable = mod.Enable
-    mod.Enable = function(...)
-        if enable then enable(...) end
-        BS.Start()
-    end
     local page = mod.pages and mod.pages[1]
     if page then
         local build = page.build
