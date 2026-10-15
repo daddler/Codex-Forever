@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.41.3.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFRinge in eigenen Farben und in der Mitte.|r Jeder Ring hat seine Farbe – Reittiere Glut, Reisen Eis, Markierungen Blut, Berufe Gift, eigene Neon –, wählbar unter Komfort → Ringe. Ein Ring öffnet jetzt in der Bildschirmmitte, gezielt wird von dort zur Maus, egal wo sie steht (abschaltbar).",
+            "|cff7C6CFFWeniger Speicher für den Questpfeil.|r Die Geländekarte liegt ein Viertel kleiner im Speicher (rund 3 MB weniger).",
+        },
+    },
+    {
         version = "6.41.2.0",
         date    = "15.10.2026",
         notes   = {

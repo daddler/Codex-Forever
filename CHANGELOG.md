@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.41.3.0] – 2026-10-15
+
+### Geändert
+- Ringe: Farbe je Ring (`ring.color`, `RG.COLORS`, `ringNeonA2..6`/`B2..6`,
+  Vorgabe je Inhalt `RG.PRESET_COLOR`, `RG.Paint`). Öffnen in der
+  Bildschirmmitte (`ringCenter`, an ab Werk; Schnipsel `$parent`), Raster
+  der Felder dann über den ganzen Bildschirm (`RG.LayoutZones`).
+- Geländekarte: `data/nav/*` mit den rohen zlib-Bytes als Lua-Zeichenkette
+  (`bin = true`, Steuerzeichen als `\ddd`) statt Base64 – gemessen 17,5 → 14,6 MB
+  für alle Daten. `.gitattributes`: `data/nav/*.lua -diff -text`.
+
 ## [6.41.2.0] – 2026-10-15
 
 ### Behoben

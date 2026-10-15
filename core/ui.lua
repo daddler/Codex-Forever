@@ -285,6 +285,18 @@ WeintCodex.GameColors = {
     ringNeonA     = {0.200, 0.900, 1.000, 1.00},  -- Cyan
     ringNeonB     = {0.950, 0.300, 0.900, 1.00},  -- Magenta
     ringCore      = {0.030, 0.035, 0.060, 0.90},
+    -- Farben je Ring (6.41.3.0, Beta-Test: "jede Kategorie eine eigene
+    -- Farbe"): Band oben, Band unten.
+    ringNeonA2    = {1.000, 0.550, 0.150, 1.00},  -- Glut: Orange
+    ringNeonB2    = {1.000, 0.850, 0.200, 1.00},  --       Gold
+    ringNeonA3    = {0.350, 0.650, 1.000, 1.00},  -- Eis: Blau
+    ringNeonB3    = {0.650, 1.000, 1.000, 1.00},  --      Hellcyan
+    ringNeonA4    = {1.000, 0.250, 0.300, 1.00},  -- Blut: Rot
+    ringNeonB4    = {0.700, 0.300, 1.000, 1.00},  --       Violett
+    ringNeonA5    = {0.450, 1.000, 0.350, 1.00},  -- Gift: Gruen
+    ringNeonB5    = {0.150, 0.850, 0.700, 1.00},  --       Tuerkis
+    ringNeonA6    = {1.000, 0.400, 0.750, 1.00},  -- Bluete: Pink
+    ringNeonB6    = {1.000, 0.700, 0.400, 1.00},  --         Pfirsich
     ringSlot      = {0.060, 0.070, 0.110, 0.95},
     compassAhead  = {1.000, 0.820, 0.000, 0.85},
     -- Kombopunkte an der Plakette, je Stand (6.33.7.0, einstellbar): von

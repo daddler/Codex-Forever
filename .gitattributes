@@ -1,1 +1,2 @@
 graphify-out/graph.json merge=graphify
+data/nav/*.lua -diff -text

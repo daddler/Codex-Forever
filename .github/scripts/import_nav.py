@@ -50,6 +50,19 @@ def unpack(blocks):
     return b"".join(zlib.decompress(base64.b64decode(b)) for b in blocks).decode("ascii")
 
 
+def lit(b64):
+    """6.41.3.0: Base64-Block -> Lua-Zeichenkette mit den rohen zlib-Bytes.
+    Steuerzeichen, Anfuehrungszeichen und Rueckstrich als \\ddd; alles
+    andere roh. Im Speicher des Spiels ein Viertel kleiner als Base64."""
+    out = []
+    for b in base64.b64decode(b64):
+        if b < 32 or b == 127 or b == 34 or b == 92:
+            out.append("\\%03d" % b)
+        else:
+            out.append(chr(b))
+    return '"' + "".join(out) + '"'
+
+
 def pack(text):
     raw = zlib.compress(text.encode("ascii"), 9)
     return base64.b64encode(raw).decode("ascii")
@@ -96,21 +109,21 @@ def main():
                     mm = LINE.match(line.strip())
                     if mm:
                         fields[mm.group(1)][int(mm.group(2))] = STR.findall(mm.group(3))
-        lines = [f"    [{k}] = {{ {', '.join(chr(34) + b + chr(34) for b in blocks)} }},"
+        lines = [f"    [{k}] = {{ {', '.join(lit(b) for b in blocks)} }},"
                  for k, blocks in sorted(fields["graph"].items())]
-        grid = [f"    [{k}] = {{ {', '.join(chr(34) + b + chr(34) for b in blocks)} }},"
+        grid = [f"    [{k}] = {{ {', '.join(lit(b) for b in blocks)} }},"
                 for k, blocks in sorted(fields["grid"].items())]
-        fcell = [f'    [{k}] = "{pack(floor_cells(unpack(blocks)))}",'
+        fcell = [f'    [{k}] = {lit(pack(floor_cells(unpack(blocks))))},'
                  for k, blocks in sorted(fields["floor"].items())]
         # 6.40.1.0: Ebenen und Hoehen vollstaendig (unveraendert gepackt) -
         # ohne sie zeichnete der Planer Wege quer durch Fels (Teldrassil).
-        floor = [f"    [{k}] = {{ {', '.join(chr(34) + b + chr(34) for b in blocks)} }},"
+        floor = [f"    [{k}] = {{ {', '.join(lit(b) for b in blocks)} }},"
                  for k, blocks in sorted(fields["floor"].items())]
-        height = [f"    [{k}] = {{ {', '.join(chr(34) + b + chr(34) for b in blocks)} }},"
+        height = [f"    [{k}] = {{ {', '.join(lit(b) for b in blocks)} }},"
                   for k, blocks in sorted(fields["height"].items())]
         header = (f"WeintCodex.NavData[{m}] = WeintCodex.NavData[{m}] or {{ cx0 = {head['cx0']}, cy0 = {head['cy0']}, "
                   f"nx = {head['nx']}, ny = {head['ny']}, cells = {head['cells']}, swim = {head['swim']}, "
-                  f"zstep = {head.get('zstep', 2)}, graph = {{}}, grid = {{}}, fcell = {{}}, floor = {{}}, height = {{}} }}")
+                  f"zstep = {head.get('zstep', 2)}, bin = true, graph = {{}}, grid = {{}}, fcell = {{}}, floor = {{}}, height = {{}} }}")
         # In Dateien unter MAX_FILE aufteilen.
         chunks, cur, size = [], [], 0
         for kind, rows in (("graph", lines), ("grid", grid), ("fcell", fcell), ("floor", floor), ("height", height)):
@@ -143,7 +156,7 @@ def main():
             out.append("}) do D." + kind_now + "[k] = v end")
             out.append("")
             text = "\n".join(out)
-            with open(os.path.join(OUT, name), "w", encoding="ascii") as f:
+            with open(os.path.join(OUT, name), "w", encoding="latin-1", newline="\n") as f:
                 f.write(text)
             files.append(f"data/nav/{name}")
             total += len(text)

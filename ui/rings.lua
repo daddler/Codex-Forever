@@ -93,6 +93,23 @@ RG.CONDS = {
     { value = "[mod:shift]", text = "Mit Umschalt gedrückt" },
 }
 
+-- Farben: 1 Neon, 2 Glut, 3 Eis, 4 Blut, 5 Gift, 6 Bluete (core/ui.lua).
+RG.COLORS = {
+    { value = 1, text = "Neon (Cyan/Magenta)" },
+    { value = 2, text = "Glut (Orange/Gold)" },
+    { value = 3, text = "Eis (Blau/Hellcyan)" },
+    { value = 4, text = "Blut (Rot/Violett)" },
+    { value = 5, text = "Gift (Grün/Türkis)" },
+    { value = 6, text = "Blüte (Pink/Pfirsich)" },
+}
+RG.PRESET_COLOR = { mounts = 2, travel = 3, marks = 4, prof = 5, custom = 1 }
+function RG.Palette(ring)
+    local GC = WeintCodex.GameColors
+    local n = tonumber(ring and ring.color) or RG.PRESET_COLOR[ring and ring.preset or "custom"] or 1
+    if n == 1 then return GC.ringNeonA, GC.ringNeonB end
+    return GC["ringNeonA" .. n] or GC.ringNeonA, GC["ringNeonB" .. n] or GC.ringNeonB
+end
+
 RG.MODES = {
     { value = "hold",  text = "Halten, zielen, loslassen" },
     { value = "click", text = "Drücken öffnet, Klick benutzt" },
@@ -409,7 +426,11 @@ local OPEN = [[
         end
     end
     self:ClearAllPoints()
-    self:SetPoint("CENTER", "$cursor")
+    if self:GetAttribute("center") then
+        self:SetPoint("CENTER", "$parent", "CENTER", 0, 0)
+    else
+        self:SetPoint("CENTER", "$cursor")
+    end
     self:Show()
 ]]
 
@@ -594,6 +615,41 @@ local function BuildRing(i)
 end
 RG.BuildRing = BuildRing
 
+-- Raster der unsichtbaren Felder ueber `span` Bildpunkte legen.
+function RG.LayoutZones(f, span)
+    local Z = RG.ZONES
+    local cell = span / Z
+    local nz = 0
+    for zx = 1, Z do
+        for zy = 1, Z do
+            nz = nz + 1
+            local z = f.zones[nz]
+            local ox, oy = (zx - 0.5) * cell - span / 2, (zy - 0.5) * cell - span / 2
+            z:SetSize(cell, cell)
+            z:ClearAllPoints()
+            z:SetPoint("CENTER", f.ring, "CENTER", ox, oy)
+            z:SetAttribute("zx", ox)
+            z:SetAttribute("zy", oy)
+        end
+    end
+end
+
+-- Farben eines Rings anlegen (beim Fuellen, ausserhalb des Kampfes).
+function RG.Paint(f, A, B)
+    f.A, f.B = A, B
+    local function Tint(t, c, a) t:SetVertexColor(c[1], c[2], c[3], a) end
+    Tint(f.halo, A, 0.10)
+    Tint(f.bandA, A, 0.55)
+    Tint(f.bandB, B, 0.55)
+    Tint(f.inner, A, 0.10)
+    Tint(f.hubEdge, B, 0.6)
+    f.title:SetTextColor(A[1], A[2], A[3], 1)
+    for _, b in ipairs(f.slots) do
+        Tint(b.edge, A, 0.7)
+        Tint(b.glow, A, b.glow:GetAlpha() or 0)
+    end
+end
+
 -- Abklingzeit eines Platzes: start, dauer oder nil.
 local function Cooldown(e)
     if e.type == "spell" and e.spell then
@@ -676,7 +732,7 @@ function RG.Tick(i, el)
             if l > 0 then
                 f.pointer:ClearAllPoints()
                 f.pointer:SetPoint("CENTER", f.ring, "CENTER", vx / l * (RG.DEAD + 7), vy / l * (RG.DEAD + 7))
-                local B = WeintCodex.GameColors.ringNeonB
+                local B = f.B or WeintCodex.GameColors.ringNeonB
                 f.pointer:SetVertexColor(B[1], B[2], B[3], 1)
                 f.pointer:Show()
             end
@@ -696,6 +752,19 @@ function RG.Fill(i, ring)
     f.ring:SetAttribute("mode", ring.mode or "hold")
     f.ring:SetScale(math.max(0.5, math.min(2, (tonumber(K.Get(KEY, "ringScale")) or 100) / 100)))
     f.title:SetText(ring.name or "")
+    RG.Paint(f, RG.Palette(ring))
+    local center = K.Get(KEY, "ringCenter") ~= false
+    f.ring:SetAttribute("center", center)
+    -- In der Mitte geoeffnet steht die Maus irgendwo: das Raster deckt dann
+    -- den ganzen Bildschirm ab (6.41.3.0).
+    local span = RG.RADIUS * RG.REACH * 2
+    if center then
+        local sc = f.ring:GetScale() or 1
+        local h = (UIParent and UIParent:GetHeight()) or 768
+        local w = (UIParent and UIParent:GetWidth()) or 1024
+        span = math.max(span, math.max(w, h) / sc * 1.1)
+    end
+    RG.LayoutZones(f, span)
     for s = 1, RG.MAX do
         local b, e = f.slots[s], slots[s]
         if e then
@@ -969,6 +1038,11 @@ local function Build(B)
     local off = function() return not K.Get(KEY, "rings") end
     B:Section("Ringe", "Taste halten, Maus in eine Richtung, loslassen – oder umstellen auf Drücken und Klicken. Benutzt wird auch im Kampf; ändern kannst du einen Ring nur außerhalb.")
     B:Row({ type = "toggle", label = "Ringe benutzen", key = "rings" },
+          { type = "toggle", label = "In der Bildschirmmitte öffnen", key = "ringCenter", disabled = off,
+            description = "Sonst dort, wo der Mauszeiger steht. Gewählt wird immer die Richtung von der Mitte des Rings zur Maus." })
+    B:Row({ type = "dropdown", label = "Farbe dieses Rings", items = RG.COLORS,
+            get = function() local r = Current() return r and (tonumber(r.color) or RG.PRESET_COLOR[r.preset or "custom"] or 1) end,
+            set = function(v) local r = Current() if r then r.color = v Changed() end end },
           { type = "slider", label = "Größe", key = "ringScale", min = 50, max = 200, step = 10, disabled = off,
             format = function(v) return string.format("%d %%", v) end })
     B:Row({ type = "dropdown", label = "Ring bearbeiten", items = RingItems,
@@ -1037,6 +1111,7 @@ local mod = K.Module(KEY)
 if mod then
     if mod.defaults.rings == nil then mod.defaults.rings = true end
     if mod.defaults.ringScale == nil then mod.defaults.ringScale = 100 end
+    if mod.defaults.ringCenter == nil then mod.defaults.ringCenter = true end
     mod.pages[#mod.pages + 1] = { key = "ringe", label = "Ringe", build = Build }
     if type(mod.pageOrder) == "table" then mod.pageOrder.ringe = 14 end
 end

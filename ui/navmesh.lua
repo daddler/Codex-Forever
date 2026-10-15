@@ -68,7 +68,7 @@ function NV.Available(c)
     if not D then return false end
     if D.raw then return true end
     local eu = _G.C_EncodingUtil
-    return eu ~= nil and eu.DecodeBase64 ~= nil and eu.DecompressString ~= nil
+    return eu ~= nil and (D.bin or eu.DecodeBase64 ~= nil) and eu.DecompressString ~= nil
 end
 
 -- Roher Text eines Feldes, oder nil. D.raw (Pruefung) liefert ihn ungepackt.
@@ -81,7 +81,10 @@ local function Field(D, field, k)
     local method = _G.Enum and _G.Enum.CompressionMethod and _G.Enum.CompressionMethod.Zlib
     local parts = {}
     for i, b in ipairs(blocks) do
-        local ok, bin = pcall(eu.DecodeBase64, b)
+        -- 6.41.3.0: D.bin - die rohen zlib-Bytes stehen direkt in der Datei
+        -- (ein Viertel weniger Speicher als Base64).
+        local ok, bin
+        if D.bin then ok, bin = true, b else ok, bin = pcall(eu.DecodeBase64, b) end
         local ok2, raw = false, nil
         if ok and bin then ok2, raw = pcall(eu.DecompressString, bin, method) end
         if not (ok2 and type(raw) == "string") then return nil end
