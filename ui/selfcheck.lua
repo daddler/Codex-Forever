@@ -652,6 +652,13 @@ Check("Schwungtimer", function(add)
     add(SW.state.found > 0 and SC.OK or SC.OPEN, SW.StatusLine())
 end)
 
+-- Danke fuer Buffs (6.39.0.0)
+Check("Danke", function(add)
+    local TH = WeintCodex.UIThanks
+    if not TH then add(SC.OPEN, "Danke für Buffs nicht geladen.") return end
+    add(TH.Active() and SC.OK or SC.OPEN, TH.StatusLine())
+end)
+
 -- Haendlerfenster gross ziehen (6.38.0.0)
 Check("Händler", function(add)
     local MS = WeintCodex.UIMerchantSize

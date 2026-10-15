@@ -9,6 +9,23 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.39.0.0] – 2026-10-15
+
+### Hinzugefügt
+- `ui/reminderpick.lua` (Erinnerungen, `clickPick`): Erinnerungen mit `pick`
+  (Waffe: Gift/Öl/Wetzstein/Gewichtsstein nach Name und Klasse 0, `R.BagItems`;
+  Buff-Essen; Elixier) als sichere Makro-Knöpfe auf UIParent; mehrere Sorten
+  als Ring um den Mauszeiger (Verhalten nach OPie, „All rights reserved“ –
+  kein Code). Links `/use 16`, rechts `/use 17`. Mit `PLAYER_REGEN_DISABLED`
+  weg, nie im Kampf.
+- `ui/spellinfo.lua` (Komfort, `spellEfficiency`): Zeile im Zauber-Tooltip –
+  Menge aus dem Tooltiptext, Mana aus `GetSpellPowerCost`, Zeit aus
+  `castTime` (mind. 1,5 s); nichts Geratenes.
+- `ui/thanks.lua` (Komfort, `thanks`, ab Werk aus): Dank-Flüstern an Fremde
+  für Buffs ≥ 60 s, außerhalb von Gruppe/Instanz/Kampf, nur mit bekannter
+  `sourceUnit`; 15 min je Spieler, 20 s gesamt. Sperre gemessen →
+  `thanksBlocked`, ab dann über die Chatzeile.
+
 ## [6.38.3.0] – 2026-10-15
 
 ### Behoben

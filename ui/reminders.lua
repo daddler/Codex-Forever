@@ -717,6 +717,54 @@ function R.ItemName(id)
     return type(name) == "string" and name ~= "" and name or nil
 end
 
+-- Was sich auf eine Waffe auftragen laesst (6.39.0.0, Wunsch aus dem
+-- Forum: "bei fehlendem Gift die Gifte zur Auswahl, Links Haupthand, Rechts
+-- Nebenhand"): Verbrauchsgut (Klasse 0) in den Taschen, dessen Name Gift,
+-- Oel, Wetz- oder Gewichtsstein nennt - so heisst es der Client selbst,
+-- keine eingebaute Liste. Zauberoele (R.OILS) immer. Je Sorte einmal.
+R.WEAPON_ITEM_WORDS = { "gift", "poison", "öl", "oil", "wetzstein", "sharpening", "gewichtsstein", "weightstone" }
+local weaponItemCache = {}
+function R.IsWeaponItem(id)
+    local c = weaponItemCache[id]
+    if c ~= nil then return c end
+    for _, o in ipairs(R.OILS) do if o == id then weaponItemCache[id] = true return true end end
+    local ci = _G.C_Item
+    local instant = (ci and ci.GetItemInfoInstant) or _G.GetItemInfoInstant
+    local name = R.ItemName(id)
+    if not (instant and name) then return false end   -- noch nicht geladen: spaeter wieder fragen
+    local ok, _, _, _, _, _, classID = pcall(instant, id)
+    local hit = false
+    if ok and K.Plain(classID) == 0 then
+        local low = name:lower()
+        for _, w in ipairs(R.WEAPON_ITEM_WORDS) do
+            if low:find(w, 1, true) then hit = true break end
+        end
+    end
+    weaponItemCache[id] = hit
+    return hit
+end
+
+-- Alle Gegenstaende der Taschen, fuer die test(id) wahr ist, je Sorte einmal.
+function R.BagItems(test, limit)
+    local out, seen = {}, {}
+    local cc = _G.C_Container
+    if not (cc and cc.GetContainerNumSlots and cc.GetContainerItemID) then return out end
+    for bag = 0, tonumber(_G.NUM_BAG_SLOTS) or 4 do
+        local okN, n = pcall(cc.GetContainerNumSlots, bag)
+        n = okN and K.Plain(n)
+        for slot = 1, type(n) == "number" and n or 0 do
+            local okI, id = pcall(cc.GetContainerItemID, bag, slot)
+            id = okI and K.Plain(id)
+            if type(id) == "number" and not seen[id] and test(id) then
+                seen[id] = true
+                out[#out + 1] = id
+                if #out >= (limit or 8) then return out end
+            end
+        end
+    end
+    return out
+end
+
 -- Waffenbuffs des Schamanen (6.27.0.4, Beta-Test: "Verzauberung Waffe
 -- fehlt" - gewuenscht ist "Waffe der Flammenzunge" / "des Felsbeissers").
 -- IDs aus Classic wie im Lehrerbestand (Art `classic`): Felsbeisser,
@@ -804,18 +852,27 @@ function R.Check(rule)
         if not has and rule.oil then
             local oil = R.OilInBags()
             if not oil then return nil end
-            return { text = (R.ItemName(oil) or "Zauberöl") .. " auftragen", icon = ItemIcon(oil) }
+            return { text = (R.ItemName(oil) or "Zauberöl") .. " auftragen", icon = ItemIcon(oil),
+                     pick = { hand = rule.hand, items = R.BagItems(function(id)
+                         for _, o in ipairs(R.OILS) do if o == id then return true end end
+                         return false
+                     end) } }
         end
         if not has then
             if imbues then
                 local sp = R.Resolve(tostring(R.SHAMAN_IMBUES[2]))
                 return { text = table.concat(imbues, " oder ") .. " fehlt", icon = sp and sp.icon }
             end
-            return { text = "Waffe (" .. WeaponText(rule.hand) .. ") ohne Verzauberung" }
+            local items = R.BagItems(R.IsWeaponItem)
+            return { text = "Waffe (" .. WeaponText(rule.hand) .. ") ohne Verzauberung",
+                     icon = items[1] and ItemIcon(items[1]) or nil,
+                     pick = #items > 0 and { hand = rule.hand, items = items } or nil }
         end
         local limit = (Opt("weaponMinutes") or 5) * 60000
         if type(exp) == "number" and exp < limit then
-            return { text = string.format("Waffe (%s): noch %d min", WeaponText(rule.hand), math.max(1, math.floor(exp / 60000 + 0.5))) }
+            local items = R.BagItems(R.IsWeaponItem)
+            return { text = string.format("Waffe (%s): noch %d min", WeaponText(rule.hand), math.max(1, math.floor(exp / 60000 + 0.5))),
+                     pick = #items > 0 and { hand = rule.hand, items = items } or nil }
         end
         return nil
     elseif kind == "pet" then
@@ -1162,6 +1219,7 @@ function R.BagBuffs(out)
     local food, xp, elixir = nil, nil, nil
     local class = PlayerClass()
     local foodKinds, xpKinds = 0, 0
+    local foodIds, xpIds = {}, {}
     for bag = 0, tonumber(_G.NUM_BAG_SLOTS) or 4 do
         local okN, n = pcall(cc.GetContainerNumSlots, bag)
         n = okN and K.Plain(n)
@@ -1174,7 +1232,8 @@ function R.BagBuffs(out)
                     if not e._counted then
                         e._counted = true
                         foodKinds = foodKinds + 1
-                        if e.kind == "xp" then xpKinds = xpKinds + 1 end
+                        foodIds[#foodIds + 1] = id
+                        if e.kind == "xp" then xpKinds = xpKinds + 1 xpIds[#xpIds + 1] = id end
                     end
                     if e.kind == "xp" and leveling then xp = xp or { id = id, e = e } end
                     food = food or { id = id, e = e }
@@ -1210,11 +1269,14 @@ function R.BagBuffs(out)
             local what = (xp and leveling) and "Essen mit Erfahrungsbuff" or "Essen mit Buff"
             out[#out + 1] = { text = string.format("Nicht satt – %s in der Tasche%s", what,
                                   kinds > 1 and string.format(" (%d Sorten)", kinds) or ""),
-                              icon = ItemIcon(pick.id) }
+                              icon = ItemIcon(pick.id),
+                              -- 6.39.0.0: anklicken isst (eine Sorte) oder zeigt die Auswahl.
+                              pick = { items = (xp and leveling) and xpIds or foodIds } }
         end
     end
     if wantElixir and elixir then
-        out[#out + 1] = { text = elixir.e.name .. " in der Tasche – Buff fehlt", icon = ItemIcon(elixir.id) }
+        out[#out + 1] = { text = elixir.e.name .. " in der Tasche – Buff fehlt", icon = ItemIcon(elixir.id),
+                          pick = { items = { elixir.id }, hand = elixir.e.weapons and R.WeaponHandFor(elixir.e.weapons) or nil } }
     end
     return out
 end
@@ -1303,6 +1365,8 @@ function R.UpdateBanner()
             line.icon:Hide()
         end
     end
+    -- 6.39.0.0: Klick auf eine Erinnerung (ui/reminderpick.lua).
+    if R.OnBanner then R.OnBanner(banner, list, n) end
     if n == 0 then banner:Hide() return end
     banner:SetScale(math.max(0.5, math.min(2.5, (tonumber(Opt("bannerScale")) or 100) / 100)))
     banner:SetAlpha(banner._unlock and 1 or Alpha())
@@ -1807,6 +1871,9 @@ K.Register({
                     description = "Im Kampf nennt der Client Buffs oft nur verschlüsselt – dann bleibt die Erinnerung aus, statt zu raten." },
                   { type = "slider", label = "Waffe: erinnern ab", key = "weaponMinutes", min = 1, max = 30, step = 1,
                     format = function(v) return string.format("%d min Rest", v) end })
+            B:Row({ type = "toggle", label = "Anklicken zum Benutzen", key = "clickPick",
+                    description = "Gift, Öl, Wetzstein oder Essen aus der Tasche: eine Sorte benutzt der Klick gleich, mehrere zeigt ein Ring. Bei Waffen links Haupthand, rechts Nebenhand. Nicht im Kampf." },
+                  { type = "empty" })
             B:Section("Aussehen")
             B:Row({ type = "slider", label = "Größe der Erinnerungen", key = "bannerScale", min = 50, max = 250, step = 5,
                     format = function(v) return string.format("%d %%", v) end },

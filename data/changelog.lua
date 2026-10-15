@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.39.0.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFErinnerungen zum Anklicken.|r Fehlt Gift, Öl, Wetzstein oder Essen und liegt etwas davon in der Tasche, genügt ein Klick: eine Sorte wird gleich benutzt, bei mehreren öffnet sich ein Ring um den Mauszeiger. Bei Waffen links Haupthand, rechts Nebenhand. Nicht im Kampf.",
+            "|cff7C6CFFManaeffizienz im Zauber-Tooltip.|r Heilung oder Schaden je Mana und je Sekunde, aus den Zahlen des Tooltips – praktisch, um Ränge zu vergleichen. Komfort → Anzeigen.",
+            "|cff7C6CFFDanke für Buffs.|r Bufft dich draußen ein Fremder, flüstert WeintCodex ihm einen Dank mit Augenzwinkern, passend zum Buff. Ab Werk aus, Komfort → Automatik.",
+        },
+    },
+    {
         version = "6.38.3.0",
         date    = "15.10.2026",
         notes   = {

@@ -3968,6 +3968,43 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.39.0.0: Erinnerung anklicken (Ring), Manaeffizienz, Danke fuer Buffs.
+do
+    local RP, SI, TH, K = WeintCodex.UIReminderPick, WeintCodex.UISpellInfo, WeintCodex.UIThanks, WeintCodex.UIKit
+    local saved = { _G.UnitIsUnit, _G.UnitIsPlayer, _G.UnitInParty, _G.UnitInRaid, _G.UnitIsInMyGuild, _G.GetUnitName }
+    local ok, err = pcall(function()
+        assert(RP.Macro(123, "main") == "/use item:123\n/use 16", "Makro Haupthand")
+        assert(RP.Macro(123, "off") == "/use item:123\n/use 17", "Makro Nebenhand")
+        assert(RP.Macro(5) == "/use item:5", "Makro benutzen")
+        local p = SI.Parse("Heilt ein befreundetes Ziel um 47 bis 58.")
+        assert(p and p.kind == "heal" and p.amount == 52.5, "Heilung nicht gelesen")
+        p = SI.Parse("Verursacht 13 bis 21 Feuerschaden.")
+        assert(p and p.kind == "damage" and p.amount == 17, "Schaden nicht gelesen")
+        p = SI.Parse("Heilt das Ziel um 120 über 15 Sek.")
+        assert(p and p.over == 15, "ueber Zeit nicht gelesen")
+        assert(SI.Parse("Erhöht die Ausdauer um 3.") == nil, "Buff als Heilung gelesen")
+        assert(TH.Kind("Machtwort: Seelenstärke") == "stamina", "Ausdauer")
+        assert(TH.Kind("Segen der Macht") == "blessing", "Segen")
+        assert(TH.Kind("Arkane Intelligenz") == "intellect", "Intelligenz")
+        assert(TH.Kind("Mal der Wildnis") == "general", "allgemein")
+        assert(type(TH.Pick("blessing", 0.9)) == "string", "kein Satz")
+        _G.UnitIsUnit = function() return false end
+        _G.UnitIsPlayer = function() return true end
+        _G.UnitInParty = function() return false end
+        _G.UnitInRaid = function() return nil end
+        _G.UnitIsInMyGuild = function() return false end
+        _G.GetUnitName = function() return "Fremder" end
+        assert(TH.Eligible({ isHelpful = true, sourceUnit = "target", duration = 1800 }) == "Fremder", "Fremder nicht erkannt")
+        assert(TH.Eligible({ isHelpful = true, sourceUnit = "target", duration = 10 }) == nil, "kurzer Buff gedankt")
+        assert(TH.Eligible({ isHelpful = true, duration = 1800 }) == nil, "ohne Quelle gedankt")
+        _G.UnitInParty = function() return true end
+        assert(TH.Eligible({ isHelpful = true, sourceUnit = "party1", duration = 1800 }) == nil, "Gruppe gedankt")
+        assert(TH.StatusLine():find("Danke"), "Statuszeile")
+    end)
+    _G.UnitIsUnit, _G.UnitIsPlayer, _G.UnitInParty, _G.UnitInRaid, _G.UnitIsInMyGuild, _G.GetUnitName = unpack(saved, 1, 6)
+    Check(ok, "Erinnerung anklicken, Manaeffizienz, Danke fuer Buffs" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.38.1.0: Schwungtimer ueber seine Beschriftung gefunden und gestaltet;
 -- /wcui fenster findet Rahmen ueber Namen.
 do
