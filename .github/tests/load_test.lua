@@ -1310,7 +1310,7 @@ do
             and math.abs(px - 0.482) < 1e-6 and math.abs(py - 0.429) < 1e-6, "Lage aus Text falsch")
         assert(QH.Places(saved.n[823], 142, function() end) == 0, "Karte 142 in 1429 gefunden")
         assert(QH.Name(saved.n[823]) == "Deputy Willem", "Name aus Text")
-        local it = QH.Item(saved.i[159])
+        local it = QH.Item(saved.i[765])
         assert(#it[1] > 0 and #it[2] > 0, "Beute aus Text")
         -- 6.30.6.0: Bilder - Atlas nur, wenn der Client ihn kennt; Ziele aus
         -- media/questhelper mit Lizenz.
