@@ -216,13 +216,21 @@ function QH.ReadCalendar()
     if not ok or type(now) ~= "table" then E.known = false return E end
     -- Monat 0 ist der, den der Kalender gerade zeigt: auf heute stellen,
     -- aber nicht, waehrend der Spieler darin blaettert.
+    -- 6.37.0.1 (/wcui speicher: Questhilfe 36 MB/s): SetAbsMonth loest selbst
+    -- CALENDAR_UPDATE_EVENT_LIST aus - darauf wurde neu gelesen, wieder
+    -- gestellt ... eine Schleife, und die Minikarte rechnete jedes Bild alle
+    -- Quests neu. Jetzt nur stellen, wenn der Kalender einen anderen Monat
+    -- zeigt, und nie, waehrend er offen ist.
     local cf = _G.CalendarFrame
-    if cal.SetAbsMonth and not (type(cf) == "table" and cf.IsShown and cf:IsShown()) then
+    local shown = cal.GetMonthInfo and select(2, pcall(cal.GetMonthInfo, 0))
+    local month = type(shown) == "table" and K.Plain(shown.month)
+    if cal.SetAbsMonth and month ~= now.month and not (type(cf) == "table" and cf.IsShown and cf:IsShown()) then
         pcall(cal.SetAbsMonth, now.month, now.year)
     end
     local okN, n = pcall(cal.GetNumDayEvents, 0, now.monthDay)
     n = okN and K.Plain(n)
     if type(n) ~= "number" then E.known = false return E end
+    local before = E.sig
     for k in pairs(E.active) do E.active[k] = nil end
     for i = #E.titles, 1, -1 do E.titles[i] = nil end
     for i = 1, n do
@@ -239,6 +247,11 @@ function QH.ReadCalendar()
         end
     end
     E.known = true
+    local sig = ""
+    for _, def in ipairs(WeintCodex.QuestEvents or {}) do
+        if E.active[def.key] then sig = sig .. def.key .. " " end
+    end
+    E.sig, E.changed = sig, sig ~= before
     return E
 end
 
@@ -835,7 +848,6 @@ QH.mmTicker = mmTicker
 
 local function Refresh()
     QH.ReadLog()
-    QH.ReadCalendar()
     QH.Forget()
     for _, p in ipairs(pins) do p.entry = nil end
     for _, p in ipairs(mmPins) do p.entry = nil end
@@ -843,12 +855,17 @@ end
 QH.Refresh = Refresh
 
 local REFRESH = { "QUEST_LOG_UPDATE", "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_REMOVED", "PLAYER_LEVEL_UP",
-                  "SUPER_TRACKING_CHANGED", "CALENDAR_UPDATE_EVENT_LIST" }
+                  "SUPER_TRACKING_CHANGED" }
 local pending = false
 local ev = CreateFrame("Frame")
 ev:SetScript("OnEvent", function(_, event, name)
     if event == "ADDON_LOADED" then
         if name == "Blizzard_WorldMap" and QH.Active() then EnsureDriver() end
+        return
+    end
+    -- Kalender: nur neu rechnen, wenn sich die laufenden Feste aendern.
+    if event == "CALENDAR_UPDATE_EVENT_LIST" then
+        if QH.ReadCalendar().changed then QH.Forget() end
         return
     end
     if event == "PLAYER_LOGIN" then
@@ -873,6 +890,7 @@ local function Apply()
     if QH.Active() then
         pcall(ev.RegisterEvent, ev, "ADDON_LOADED")
         for _, e in ipairs(REFRESH) do pcall(ev.RegisterEvent, ev, e) end
+        pcall(ev.RegisterEvent, ev, "CALENDAR_UPDATE_EVENT_LIST")
         EnsureDriver()
         QH.Place()
         mmTicker:SetShown(QH.MinimapActive())

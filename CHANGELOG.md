@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.37.0.1] – 2026-10-15
+
+### Behoben
+- Questhilfe: Schleife `SetAbsMonth` → `CALENDAR_UPDATE_EVENT_LIST` →
+  `Refresh` → `SetAbsMonth` (gemessen 36 MB/s, 298 ms/s). Monat nur stellen,
+  wenn der Kalender einen anderen zeigt; Kalender-Ereignis rechnet nur bei
+  geänderten Festen neu; `Refresh` liest den Kalender nicht mehr.
+
 ## [6.37.0.0] – 2026-10-15
 
 ### Hinzugefügt

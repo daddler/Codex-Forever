@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.37.0.1",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFKein Ruckeln mehr mit der Questhilfe.|r Das Nachsehen im Kalender löste sich selbst immer wieder aus, und die Minikarte rechnete dadurch jedes Bild alle Quests neu. Jetzt wird nur neu gerechnet, wenn sich die laufenden Feste wirklich ändern.",
+        },
+    },
+    {
         version = "6.37.0.0",
         date    = "15.10.2026",
         notes   = {
