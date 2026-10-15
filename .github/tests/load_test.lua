@@ -4227,6 +4227,26 @@ do
     Check(ok, "Spielmenue: Eintrag WeintCodex UI" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.36.0.0: Buffs im WeintCodex-Stil.
+do
+    local BS = WeintCodex.UIBuffSkin
+    local ok, err = pcall(function()
+        local b = CreateFrame("Button", "BuffButton1", UIParent)
+        local crop
+        b.Icon = b:CreateTexture()
+        b.Icon.SetTexCoord = function(_, l) crop = l end
+        b.Duration = b:CreateFontString()
+        local was = K.IsActive
+        K.IsActive = function() return true end
+        _G.BuffButton1 = b
+        BS.Scan()
+        K.IsActive = was
+        _G.BuffButton1 = nil
+        assert(BS.done[b] and crop == BS.CROP, "Buff nicht gestaltet")
+    end)
+    Check(ok, "Buffs: Symbol beschnitten, Rand, Restzeit" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Questpfeil: die 3D-Ansichten und die Farbe.
 do
     local idx, l, r, t, b = QA.Frame(0)

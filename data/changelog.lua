@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.36.0.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFBuffs im WeintCodex-Stil.|r Die Symbole oben rechts sind beschnitten wie die Aktionsknöpfe, mit feinem dunklem Rand und kleiner Restzeit in der Schrift von WeintCodex. Debuffs zeigen ihre Art weiter als Farbe am Rand. Abschaltbar bei der Minikarte.",
+        },
+    },
+    {
         version = "6.35.3.2",
         date    = "15.10.2026",
         notes   = {

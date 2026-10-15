@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.36.0.0] – 2026-10-15
+
+### Hinzugefügt
+- `ui/buffskin.lua`: Buff-/Debuff-/Waffenknöpfe des Spiels gestaltet
+  (Schalter `buffSkin` bei der Minikarte): TexCoord-Zuschnitt, eigener Rand
+  in Debuff-Farbe (vom Rand des Spiels gelesen), Restzeit/Stapel in eigener
+  Schrift. Neue Clients (`AuraContainer`) und alte (`BuffButtonN`).
+
 ## [6.35.3.2] – 2026-10-15
 
 ### Behoben
