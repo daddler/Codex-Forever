@@ -37,7 +37,8 @@ NV.MAX_EXPAND = 80000  -- Eingaenge je Suche, dann aufgeben
 NV.SNAP = 6            -- Zellen Umkreis, wenn man nicht auf einer Zelle steht
 NV.REPATH_MOVE = 40    -- so weit weg vom Weg: neu suchen
 NV.LOOKAHEAD = 30      -- der Pfeil zeigt so weit voraus auf den Weg
-NV.CACHE = 48          -- entpackte Abschnitte im Speicher (je rund 10 KB)
+NV.CACHE = 600         -- entpackte Wegenetze im Speicher (je rund 1 KB)
+NV.CELLS = 32          -- entpackte Gitter im Speicher (je rund 4,5 KB)
 
 local byte, floor, sqrt, huge = string.byte, math.floor, math.sqrt, math.huge
 local coroutine, os = _G.coroutine, _G.os
@@ -121,32 +122,60 @@ function NV.Cluster(st, k)
         cl.edge[i] = pos
         pos = pos + B64[byte(s, 3 + i * 7 + 6)] * 7
     end
-    -- Gitter: Wert * 16 + Schalter; ab 48 Wiederholung des vorigen.
-    -- Gehalten als Zeichenkette, ein Byte je Zelle (6.32.2.0): zwei Tabellen
-    -- mit je 4489 Zahlen kosteten rund 140 KB je Abschnitt, so 4,5 KB.
-    local g = Field(st.D, "grid", k + 1)
-    if g then
-        local parts, n, last = {}, 0, 0
-        local char = string.char
-        for p = 1, #g do
-            local sym = B64[byte(g, p)]
-            if sym >= 48 then
-                n = n + 1
-                parts[n] = string.rep(char(last), sym - 47)
-            else
-                last = sym
-                n = n + 1
-                parts[n] = char(sym)
-            end
-        end
-        cl.cells = table.concat(parts)
-    end
+    -- Das Gitter wird erst entpackt, wenn eine Suche es braucht (NV.Cells):
+    -- die Suche ueber die Eingaenge liest nur das Wegenetz.
+    cl.k = k
     cl.fs = Field(st.D, "fcell", k + 1)
     st.clusters[k] = cl
     cachedCount = cachedCount + 1
     useTick = useTick + 1
     cl.used = useTick
     return cl
+end
+
+-- Gitter eines Abschnitts (Wert * 16 + Schalter; ab 48 Wiederholung des
+-- vorigen), ein Byte je Zelle (6.32.2.0: Tabellen kosteten 140 KB, so 4,5 KB).
+-- 6.35.3.1 (/wcui speicher: Gelaendekarte 4,4 MB/s): getrennt vom Wegenetz
+-- gehalten - hoechstens NV.CELLS Gitter, der am laengsten ungenutzte geht.
+-- Das Wegenetz (im Mittel rund 1 KB je Abschnitt) bleibt fuer NV.CACHE
+-- Abschnitte; vorher flog es mit dem Gitter und wurde bei einer langen Suche
+-- immer wieder entpackt - die Suche wurde dadurch nie fertig.
+local cellsCount = 0
+function NV.Cells(st, cl)
+    if cl.cells ~= nil then
+        useTick = useTick + 1
+        cl.cellsUsed = useTick
+        return cl.cells or nil
+    end
+    if cellsCount >= NV.CELLS then
+        local victim, vu
+        for _, s2 in pairs(states) do
+            for _, c2 in pairs(s2.clusters) do
+                if c2 and c2.cells and (not vu or c2.cellsUsed < vu) then victim, vu = c2, c2.cellsUsed end
+            end
+        end
+        if victim then victim.cells = nil cellsCount = cellsCount - 1 else cellsCount = 0 end
+    end
+    local g = Field(st.D, "grid", cl.k + 1)
+    if not g then cl.cells = false return nil end
+    local parts, n, last = {}, 0, 0
+    local char = string.char
+    for p = 1, #g do
+        local sym = B64[byte(g, p)]
+        if sym >= 48 then
+            n = n + 1
+            parts[n] = string.rep(char(last), sym - 47)
+        else
+            last = sym
+            n = n + 1
+            parts[n] = char(sym)
+        end
+    end
+    cl.cells = table.concat(parts)
+    cellsCount = cellsCount + 1
+    useTick = useTick + 1
+    cl.cellsUsed = useTick
+    return cl.cells
 end
 
 -- Den am laengsten nicht gebrauchten Abschnitt freigeben.
@@ -158,6 +187,7 @@ function NV.Evict()
         end
     end
     if bestSt then
+        if bestSt.clusters[bestK].cells then cellsCount = cellsCount - 1 end
         bestSt.clusters[bestK] = nil
         cachedCount = cachedCount - 1
     else
@@ -289,6 +319,7 @@ local ORTH_Y = { [5] = 3, [6] = 4, [7] = 3, [8] = 4 }
 -- prev (Tabellen, wiederverwendbar ueber `into`).
 -- Mit `target`: A* bis zu dieser Zelle (fuer das Verfeinern der Linie).
 function NV.Grid(st, cl, start, into, target)
+    NV.Cells(st, cl)
     local C = st.C
     local dist, prev = into.dist, into.prev
     for i in pairs(dist) do dist[i] = nil end
@@ -342,7 +373,7 @@ end
 
 -- Die naechste begehbare Zelle im Umkreis NV.SNAP, oder nil.
 function NV.Snap(st, cl, cell)
-    if not cl.cells then return nil end
+    if not NV.Cells(st, cl) then return nil end
     if Walk(cl, cell) ~= 0 then return cell end
     local C = st.C
     local cx, cy = floor(cell / C), cell % C
@@ -511,7 +542,7 @@ function NV.Search(c, sN, sW, gN, gW)
             local kb, cb, lb = NV.NodeCell(st, id)
             if ka and ka == kb and la == 0 and lb == 0 and ca ~= cb then
                 local cl = NV.Cluster(st, ka)
-                if cl and cl.cells then
+                if cl and NV.Cells(st, cl) then
                     local _, p = NV.Grid(st, cl, ca, scratchR, cb)
                     if p[cb] then GridChain(st, ka, p, cb, out, false) end
                 end

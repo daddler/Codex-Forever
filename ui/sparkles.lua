@@ -231,6 +231,16 @@ local function SetGate(on)
     if P and P.SetCVar then P.SetCVar(SP.GATE, on and "1" or "0", KEY) end
 end
 
+-- Gibt es ein weiches Ziel? 6.35.3.1 (Beta-Test: Spitzhacke ueber der Ader,
+-- aber /wcui pruefen "kein Objekt"): UnitExists sagt bei Objekten (Erz,
+-- Kraut sind keine Einheiten) offenbar nein - die Kennung (UnitGUID) gibt es
+-- trotzdem. Eines von beiden reicht.
+function SP.HasSoft(u)
+    if _G.UnitExists and K.Bool(_G.UnitExists(u), false) then return true end
+    local guid = _G.UnitGUID and _G.UnitGUID(u)
+    return type(guid) ~= "nil" and (type(K.Plain(guid)) ~= "string" or K.Plain(guid) ~= "")
+end
+
 -- Die Plakette des weichen Ziels. 6.35.2.0 (Beta-Test: Erz glitzert nicht,
 -- obwohl an): GetNamePlateForUnit kennt nicht jede Kennung - fuer
 -- "softinteract" kann es nichts liefern oder einen Fehler werfen. Dann die
@@ -263,7 +273,7 @@ function SP.Look()
     if not SP.NodesActive() or K.InCombat() then glow:Hide() return nil end
     stats.looks = stats.looks + 1
     local u = SP.UNIT
-    if not (_G.UnitExists and K.Bool(_G.UnitExists(u), false)) then
+    if not SP.HasSoft(u) then
         glow:Hide()
         SetGate(false)
         SP.lastGuid = nil
@@ -361,8 +371,12 @@ SP.events = ev
 -- zeigt, woran Glitzern und Plakette haengen - nur Fakten.
 function SP.Probe()
     local u = SP.UNIT
-    if not (_G.UnitExists and K.Bool(_G.UnitExists(u), false)) then
-        return "Vor dir: kein Objekt der weichen Zielerfassung (direkt vor ein Kraut stellen, dann prüfen)"
+    if not SP.HasSoft(u) then
+        local P = PF()
+        local cv = P and P.GetCVar and P.GetCVar("SoftTargetInteract")
+        local np = P and P.GetCVar and P.GetCVar(SP.GATE)
+        return string.format("Vor dir: kein Objekt der weichen Zielerfassung (UnitExists und UnitGUID leer) · SoftTargetInteract=%s · %s=%s – direkt vor ein Kraut stellen, dann prüfen",
+            tostring(cv), SP.GATE, tostring(np))
     end
     local name = _G.UnitName and K.Plain(_G.UnitName(u))
     local guid = _G.UnitGUID and K.Plain(_G.UnitGUID(u))

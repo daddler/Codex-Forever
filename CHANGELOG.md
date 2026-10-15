@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.35.3.1] – 2026-10-15
+
+### Behoben
+- `ui/navmesh.lua`: Wegenetz und Gitter getrennt gecacht (`NV.CACHE` 600
+  Netze, `NV.CELLS` 32 Gitter, je LRU); Gitter erst bei Bedarf (`NV.Cells`).
+  Gemessen vorher: „Geländekarte“ 4,4 MB/s, Suche lief ohne Ende.
+- Glitzern: weiches Ziel auch über `UnitGUID` (`SP.HasSoft`) – `UnitExists`
+  ist bei Objekten leer; `/wcui prüfen` nennt die Werte der Zielerfassung.
+
 ## [6.35.3.0] – 2026-10-15
 
 ### Geändert

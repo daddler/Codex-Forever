@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.35.3.1",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Wegsuche übers Gelände frisst keinen Speicher mehr.|r Bei langen Wegen packte sie Kartenabschnitte immer wieder neu aus und wurde dadurch nie fertig – jetzt behält sie das kleine Wegenetz und entpackt das große Gitter nur, wo sie es braucht.",
+            "|cff7C6CFFGlitzern erkennt Erz und Kräuter vor dir.|r Das Spiel meldet ein Objekt nicht als Einheit; jetzt reicht seine Kennung.",
+        },
+    },
+    {
         version = "6.35.3.0",
         date    = "15.10.2026",
         notes   = {
