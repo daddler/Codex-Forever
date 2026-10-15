@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.41.0.0] – 2026-10-15
+
+### Geändert
+- Ringe: Wahl über ein Raster unsichtbarer Felder (`RG.ZONES`², je Feld `zx/zy`)
+  statt `GetMousePosition` im Schnipsel (Beta-Test: nur auf dem Symbol).
+  Öffnen als Schnipsel `open`: Bedingungen je Platz (`cond`,
+  `SecureCmdOptionParse`), sichtbare Plätze neu im Kreis (Richtungen je Anzahl
+  vorberechnet `u<n>_<i>x/y`). Abklingzeiten und Anzahl beim Öffnen
+  (`RG.Refresh`). Aussehen: Neonband `ringNeonA/B`, Kern `ringCore`, runde
+  Symbole, Puls, Zeiger. Editor: Eintrag wählen, Bedingung aus Liste oder Text.
+- `RG.List`/`TH.OwnLines`/`TH.SetWords`: nach `K.Set` die gespeicherte Tabelle
+  holen (`K.Set` kopiert) – Änderungen der ersten Sitzung gingen verloren.
+- Danke: eigene Komfortseite „Danke“ – Sorten (`TH.KINDS`), Erkennungswörter
+  (`thanksWords`), Sprüche (`thanksLines`), Wartezeit `thanksDelay`, Anteil
+  allgemeiner Sprüche `thanksMix`.
+
 ## [6.40.1.0] – 2026-10-15
 
 ### Behoben

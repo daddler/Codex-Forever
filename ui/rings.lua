@@ -74,6 +74,25 @@ RG.PRESETS = {
     { value = "marks",   text = "Markierungen" },
     { value = "prof",    text = "Berufe" },
 }
+-- Bedingungen je Eintrag: Makrobedingungen des Spiels, geprueft beim
+-- Oeffnen (auch im Kampf). Eigene gehen als Text ("[combat,group]").
+RG.CONDS = {
+    { value = "",            text = "Immer" },
+    { value = "[combat]",    text = "Nur im Kampf" },
+    { value = "[nocombat]",  text = "Nur außerhalb des Kampfes" },
+    { value = "[outdoors]",  text = "Nur im Freien" },
+    { value = "[indoors]",   text = "Nur drinnen" },
+    { value = "[mounted]",   text = "Nur beritten" },
+    { value = "[nomounted]", text = "Nicht beritten" },
+    { value = "[swimming]",  text = "Beim Schwimmen" },
+    { value = "[group]",     text = "In einer Gruppe" },
+    { value = "[nogroup]",   text = "Allein" },
+    { value = "[exists]",    text = "Mit Ziel" },
+    { value = "[harm]",      text = "Ziel feindlich" },
+    { value = "[help]",      text = "Ziel freundlich" },
+    { value = "[mod:shift]", text = "Mit Umschalt gedrückt" },
+}
+
 RG.MODES = {
     { value = "hold",  text = "Halten, zielen, loslassen" },
     { value = "click", text = "Drücken öffnet, Klick benutzt" },
@@ -94,8 +113,10 @@ function RG.Active() return K.IsActive(KEY) and K.Get(KEY, "rings") ~= false end
 function RG.List()
     local list = K.Get(KEY, "ringList")
     if type(list) ~= "table" then
-        list = Default()
-        K.Set(KEY, "ringList", list)
+        -- K.Set speichert eine Kopie: danach die gespeicherte holen, damit
+        -- Aenderungen an der Liste auch dort landen.
+        K.Set(KEY, "ringList", Default())
+        list = K.Get(KEY, "ringList")
     end
     return list
 end
@@ -267,7 +288,7 @@ function RG.Slots(ring)
         out = {}
         for _, e in ipairs(ring.entries or {}) do
             local r = RG.Resolve(e)
-            if r then out[#out + 1] = r end
+            if r then r.cond = e.cond out[#out + 1] = r end
         end
     end
     while #out > RG.MAX do table.remove(out) end
@@ -279,8 +300,8 @@ function RG.Convert(ring)
     if not ring.preset or ring.preset == "custom" then return end
     local entries = {}
     for _, s in ipairs(RG.Slots(ring)) do
-        if s.type == "spell" then entries[#entries + 1] = { kind = "spell", value = s.spell }
-        elseif s.type == "item" then entries[#entries + 1] = { kind = "item", value = tonumber(s.item:match("%d+")) }
+        if s.type == "spell" then entries[#entries + 1] = { kind = "spell", value = s.spell, cond = s.cond }
+        elseif s.type == "item" then entries[#entries + 1] = { kind = "item", value = tonumber(s.item:match("%d+")), cond = s.cond }
         elseif s.type == "macro" then
             local n = s.macrotext:match("^/tm (%d+)$")
             if n then entries[#entries + 1] = { kind = "mark", value = tonumber(n) }
@@ -343,29 +364,82 @@ end
 -- Die sicheren Rahmen
 --------------------------------------------------
 
-local frames = {}   -- [i] = { ring, trigger, slots }
+local frames = {}   -- [i] = { ring, trigger, slots, zones }
 RG.frames = frames
 local owner          -- Tastenbelegungen
 
--- Waehlt im Schnipsel: zuerst das Symbol unter der Maus, sonst die
--- Richtung mit dem groessten Skalarprodukt (ohne Winkelrechnung).
-local PICK = [[
-    local n = self:GetAttribute("count") or 0
-    if n == 0 then return nil end
-    for i = 1, n do
+RG.ZONES = 13        -- Raster unsichtbarer Felder je Seite (6.41.0.0)
+RG.REACH = 1.9       -- so weit reicht das Raster, in Ringradien
+
+-- 6.41.0.0 (Beta-Test: "man muss immer mit der Maus auf dem Symbol sein"):
+-- die Mausposition gibt der geschuetzte Schnipsel im Client nicht heraus.
+-- Darum liegt ein Raster unsichtbarer Felder ueber dem ganzen Ring; jedes
+-- kennt seine Lage zur Mitte (Attribute zx/zy). Gewaehlt wird das Symbol
+-- unter der Maus, sonst die Richtung des Feldes unter der Maus: der
+-- sichtbare Platz mit dem groessten Skalarprodukt. Bedingungen ([combat],
+-- [mounted] ...) prueft der Schnipsel beim Oeffnen mit
+-- SecureCmdOptionParse und ordnet die sichtbaren Plaetze neu im Kreis -
+-- die Richtungen je Anzahl stehen vorberechnet als Attribute (u<n>_<i>).
+local OPEN = [[
+    local total = self:GetAttribute("count") or 0
+    local n = 0
+    for i = 1, total do
         local s = self:GetFrameRef("s" .. i)
-        if s and s:IsUnderMouse(true) then return i end
+        local cond = s:GetAttribute("cond")
+        if not cond or cond == "" or SecureCmdOptionParse(cond) then
+            n = n + 1
+            s:SetAttribute("vis", n)
+        else
+            s:SetAttribute("vis", 0)
+        end
     end
-    local x, y = self:GetMousePosition()
-    if not x then return nil end
-    local w, h = self:GetWidth(), self:GetHeight()
-    local dx, dy = (x - 0.5) * w, (y - 0.5) * h
+    self:SetAttribute("shown", n)
+    local r = self:GetAttribute("radius") or 80
+    for i = 1, total do
+        local s = self:GetFrameRef("s" .. i)
+        local v = s:GetAttribute("vis")
+        if v > 0 then
+            local x = self:GetAttribute("u" .. n .. "_" .. v .. "x")
+            local y = self:GetAttribute("u" .. n .. "_" .. v .. "y")
+            s:ClearAllPoints()
+            s:SetPoint("CENTER", self, "CENTER", x * r, y * r)
+            s:Show()
+        else
+            s:Hide()
+        end
+    end
+    self:ClearAllPoints()
+    self:SetPoint("CENTER", "$cursor")
+    self:Show()
+]]
+
+local PICK = [[
+    local total = self:GetAttribute("count") or 0
+    local n = self:GetAttribute("shown") or 0
+    if n == 0 then return nil end
+    for i = 1, total do
+        local s = self:GetFrameRef("s" .. i)
+        if s:IsShown() and s:IsUnderMouse(true) then return i end
+    end
+    local zx, zy
+    for z = 1, self:GetAttribute("zones") or 0 do
+        local f = self:GetFrameRef("z" .. z)
+        if f:IsUnderMouse() then
+            zx, zy = f:GetAttribute("zx"), f:GetAttribute("zy")
+            break
+        end
+    end
+    if not zx then return nil end
     local dead = self:GetAttribute("dead") or 0
-    if dx * dx + dy * dy < dead * dead then return nil end
-    local best, bi = nil, nil
-    for i = 1, n do
-        local d = dx * (self:GetAttribute("vx" .. i) or 0) + dy * (self:GetAttribute("vy" .. i) or 0)
-        if not best or d > best then best, bi = d, i end
+    if zx * zx + zy * zy < dead * dead then return nil end
+    local best, bi
+    for i = 1, total do
+        local s = self:GetFrameRef("s" .. i)
+        local v = s:GetAttribute("vis")
+        if v and v > 0 then
+            local d = zx * self:GetAttribute("u" .. n .. "_" .. v .. "x") + zy * self:GetAttribute("u" .. n .. "_" .. v .. "y")
+            if not best or d > best then best, bi = d, i end
+        end
     end
     return bi
 ]]
@@ -374,18 +448,12 @@ local TRIGGER = [[
     local mode = owner:GetAttribute("mode")
     if mode == "click" then
         if down then
-            if owner:IsShown() then owner:Hide() else
-                owner:ClearAllPoints()
-                owner:SetPoint("CENTER", "$cursor")
-                owner:Show()
-            end
+            if owner:IsShown() then owner:Hide() else owner:RunAttribute("open") end
         end
         return false
     end
     if down then
-        owner:ClearAllPoints()
-        owner:SetPoint("CENTER", "$cursor")
-        owner:Show()
+        owner:RunAttribute("open")
         return false
     end
     if not owner:IsShown() then return false end
@@ -401,97 +469,220 @@ local TRIGGER = [[
 
 local function Locked() return (_G.InCombatLockdown and _G.InCombatLockdown()) and true or false end
 
+local CIRCLE = "Interface\\Common\\CommonMaskCircle"
+
+local function Disc(parent, layer, sub, size, col, alpha)
+    local t = parent:CreateTexture(nil, layer, nil, sub)
+    t:SetTexture(CIRCLE)
+    t:SetSize(size, size)
+    t:SetPoint("CENTER")
+    t:SetVertexColor(col[1], col[2], col[3], alpha or col[4] or 1)
+    return t
+end
+
 local function BuildRing(i)
-    local f = { slots = {} }
-    local size = RG.RADIUS * 2 + RG.SLOT + 24
+    local GC = WeintCodex.GameColors
+    local f = { slots = {}, zones = {} }
+    local R, S = RG.RADIUS, RG.SLOT
+    local size = math.floor(R * RG.REACH * 2)
     local ring = CreateFrame("Frame", "WeintCodexRing" .. i, UIParent, "SecureHandlerBaseTemplate")
     ring:SetSize(size, size)
     ring:SetFrameStrata("DIALOG")
     ring:SetClampedToScreen(true)
     ring:SetAttribute("dead", RG.DEAD)
+    ring:SetAttribute("radius", R)
+    ring:SetAttribute("open", OPEN)
     ring:SetAttribute("pick", PICK)
-    local hub = ring:CreateTexture(nil, "BACKGROUND")
-    hub:SetSize(RG.RADIUS * 2 - 6, RG.RADIUS * 2 - 6)
-    hub:SetPoint("CENTER")
-    hub:SetTexture("Interface\\Common\\CommonMaskCircle")
-    local fill = WeintCodex.GameColors.kachelFill
-    hub:SetVertexColor(fill[1], fill[2], fill[3], 0.6)
-    local dot = ring:CreateTexture(nil, "ARTWORK")
-    dot:SetSize(RG.DEAD * 2, RG.DEAD * 2)
-    dot:SetPoint("CENTER")
-    dot:SetTexture("Interface\\Common\\CommonMaskCircle")
-    dot:SetVertexColor(0, 0, 0, 0.5)
-    f.label = K.NewText(ring, 12)
-    f.label:SetPoint("CENTER", ring, "CENTER", 0, 0)
-    f.label:SetWidth(RG.RADIUS * 2 - RG.SLOT - 10)
-    f.title = K.NewText(ring, 11)
-    f.title:SetPoint("BOTTOM", ring, "TOP", 0, -6)
-    local m = C.textMuted
-    f.title:SetTextColor(m[1], m[2], m[3], 1)
+    -- Vorberechnete Richtungen je Anzahl: oben beginnen, im Uhrzeigersinn.
+    for n = 1, RG.MAX do
+        for k = 1, n do
+            local a = math.pi / 2 - (k - 1) * 2 * math.pi / n
+            ring:SetAttribute("u" .. n .. "_" .. k .. "x", math.cos(a))
+            ring:SetAttribute("u" .. n .. "_" .. k .. "y", math.sin(a))
+        end
+    end
+    -- Aussehen: Halo, Neonband in zwei Farben (oben Cyan, unten Magenta),
+    -- dunkler Kern, Zeiger zur Wahl.
+    local A, B, core = GC.ringNeonA, GC.ringNeonB, GC.ringCore
+    f.halo = Disc(ring, "BACKGROUND", -8, R * 2 + S + 46, A, 0.10)
+    f.bandA = Disc(ring, "BACKGROUND", -7, R * 2 + S + 14, A, 0.55)
+    f.bandA:SetTexCoord(0, 1, 0, 0.5)
+    f.bandA:SetHeight((R * 2 + S + 14) / 2)
+    f.bandA:ClearAllPoints()
+    f.bandA:SetPoint("BOTTOM", ring, "CENTER", 0, 0)
+    f.bandB = Disc(ring, "BACKGROUND", -7, R * 2 + S + 14, B, 0.55)
+    f.bandB:SetTexCoord(0, 1, 0.5, 1)
+    f.bandB:SetHeight((R * 2 + S + 14) / 2)
+    f.bandB:ClearAllPoints()
+    f.bandB:SetPoint("TOP", ring, "CENTER", 0, 0)
+    f.core = Disc(ring, "BACKGROUND", -6, R * 2 + S + 8, core)
+    f.inner = Disc(ring, "BORDER", 0, R * 2 - S - 6, A, 0.10)
+    f.hub = Disc(ring, "BORDER", 1, RG.DEAD * 2, core, 1)
+    f.hubEdge = Disc(ring, "BORDER", 0, RG.DEAD * 2 + 4, B, 0.6)
+    f.pointer = ring:CreateTexture(nil, "ARTWORK")
+    f.pointer:SetTexture(CIRCLE)
+    f.pointer:SetSize(10, 10)
+    f.pointer:Hide()
+    f.label = K.NewText(ring, 13)
+    f.label:SetPoint("TOP", ring, "CENTER", 0, -RG.DEAD - 8)
+    f.label:SetWidth(R * 2 - S)
+    f.title = K.NewText(ring, 12)
+    f.title:SetPoint("BOTTOM", ring, "CENTER", 0, RG.DEAD + 8)
+    f.title:SetTextColor(A[1], A[2], A[3], 1)
     for s = 1, RG.MAX do
         local b = CreateFrame("Button", nil, ring, "SecureActionButtonTemplate")
-        b:SetSize(RG.SLOT, RG.SLOT)
+        b:SetSize(S, S)
         b:RegisterForClicks("AnyUp")
         b:SetAttribute("useOnKeyDown", false)
+        b.plate = Disc(b, "BACKGROUND", 0, S + 10, GC.ringSlot)
+        b.edge = Disc(b, "BACKGROUND", 1, S + 4, A, 0.7)
+        b.glow = Disc(b, "BACKGROUND", -1, S + 30, A, 0.0)
         b.icon = b:CreateTexture(nil, "ARTWORK")
-        b.icon:SetAllPoints(b)
-        b.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-        b.border = K.Border(b, 1, 0, 0, 0, 1, "OVERLAY")
+        b.icon:SetSize(S - 4, S - 4)
+        b.icon:SetPoint("CENTER")
+        local mask = b:CreateMaskTexture()
+        mask:SetTexture(CIRCLE, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        mask:SetAllPoints(b.icon)
+        b.icon:AddMaskTexture(mask)
+        b.cd = CreateFrame("Cooldown", nil, b, "CooldownFrameTemplate")
+        b.cd:SetAllPoints(b.icon)
+        if b.cd.SetSwipeTexture then b.cd:SetSwipeTexture(CIRCLE) end
+        if b.cd.SetDrawEdge then b.cd:SetDrawEdge(false) end
         b.count = K.NewText(b, 11)
-        b.count:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -2, 2)
-        b.glow = b:CreateTexture(nil, "OVERLAY")
-        b.glow:SetPoint("TOPLEFT", b, "TOPLEFT", -3, 3)
-        b.glow:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", 3, -3)
-        local a = C.accent
-        b.glow:SetColorTexture(a[1], a[2], a[3], 0.35)
-        b.glow:Hide()
+        b.count:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", 2, -2)
         _G.SecureHandlerSetFrameRef(ring, "s" .. s, b)
         -- Ein Klick auf ein Symbol benutzt es und schliesst den Ring.
         _G.SecureHandlerWrapScript(b, "OnClick", ring, "return nil, true", "owner:Hide()")
         b:Hide()
         f.slots[s] = b
     end
+    -- Raster unsichtbarer Felder (keine Maus noetig: IsUnderMouse misst).
+    local Z = RG.ZONES
+    local cell = size / Z
+    local nz = 0
+    for zx = 1, Z do
+        for zy = 1, Z do
+            nz = nz + 1
+            local z = CreateFrame("Frame", nil, ring)
+            z:SetSize(cell, cell)
+            local ox, oy = (zx - 0.5) * cell - size / 2, (zy - 0.5) * cell - size / 2
+            z:SetPoint("CENTER", ring, "CENTER", ox, oy)
+            z:SetAttribute("zx", ox)
+            z:SetAttribute("zy", oy)
+            _G.SecureHandlerSetFrameRef(ring, "z" .. nz, z)
+            f.zones[nz] = z
+        end
+    end
+    ring:SetAttribute("zones", nz)
     local trig = CreateFrame("Button", "WeintCodexRingKey" .. i, UIParent, "SecureActionButtonTemplate")
     trig:RegisterForClicks("AnyUp", "AnyDown")
     trig:SetAttribute("useOnKeyDown", false)
     _G.SecureHandlerWrapScript(trig, "OnClick", ring, TRIGGER)
-    -- Waehrend der Ring steht: die Wahl hervorheben (nur Anzeige, unsicher
-    -- erlaubt - Texturen und Text, keine geschuetzten Aufrufe).
-    ring:SetScript("OnUpdate", function() RG.Highlight(i) end)
+    -- Waehrend der Ring steht: Wahl hervorheben, Band drehen, Abklingzeiten
+    -- (nur Anzeige - Texturen und Text, keine geschuetzten Aufrufe).
+    ring:SetScript("OnUpdate", function(_, el) RG.Tick(i, el or 0) end)
+    ring:SetScript("OnShow", function() RG.Refresh(i) end)
     ring:SetScript("OnHide", function()
-        for _, b in ipairs(f.slots) do b.glow:Hide() end
+        for _, b in ipairs(f.slots) do b.glow:SetAlpha(0) end
+        f.pointer:Hide()
+        f.shown = nil
     end)
     ring:Hide()
     f.ring, f.trigger = ring, trig
     frames[i] = f
     return f
 end
+RG.BuildRing = BuildRing
 
--- Hervorheben wie der Schnipsel waehlt.
-function RG.Highlight(i)
-    local f = frames[i]
-    if not f then return end
-    local n = f.count or 0
-    local x, y = _G.GetCursorPosition()
-    local cx, cy = f.ring:GetCenter()
-    local s = f.ring:GetEffectiveScale()
-    if not (cx and x) then return end
-    local dx, dy = x / s - cx, y / s - cy
-    local pick
-    for k = 1, n do
-        if f.slots[k]:IsMouseOver() then pick = k break end
-    end
-    if not pick and dx * dx + dy * dy >= RG.DEAD * RG.DEAD then
-        local best
-        for k = 1, n do
-            local d = dx * (f.vx[k] or 0) + dy * (f.vy[k] or 0)
-            if not best or d > best then best, pick = d, k end
+-- Abklingzeit eines Platzes: start, dauer oder nil.
+local function Cooldown(e)
+    if e.type == "spell" and e.spell then
+        local cs = _G.C_Spell
+        if cs and cs.GetSpellCooldown then
+            local ok, info = pcall(cs.GetSpellCooldown, e.spell)
+            if ok and type(info) == "table" then return info.startTime, info.duration end
+        elseif _G.GetSpellCooldown then
+            local ok, st0, dur = pcall(_G.GetSpellCooldown, e.spell)
+            if ok then return st0, dur end
+        end
+    elseif e.type == "item" and e.item then
+        local id = tonumber(e.item:match("%d+"))
+        local cc = _G.C_Container
+        local f = (cc and cc.GetItemCooldown) or _G.GetItemCooldown
+        if id and f then
+            local ok, st0, dur = pcall(f, id)
+            if ok then return st0, dur end
         end
     end
+    return nil
+end
+
+-- Beim Oeffnen: Abklingzeiten und Zahl aktuell (auch im Kampf - nur Anzeige).
+function RG.Refresh(i)
+    local f = frames[i]
+    if not f or not f.entries then return end
+    for s, e in ipairs(f.entries) do
+        local b = f.slots[s]
+        local st0, dur = Cooldown(e)
+        local ok = pcall(function()
+            if st0 and dur and dur > 1.5 then b.cd:SetCooldown(st0, dur) b.icon:SetDesaturated(true)
+            else b.cd:Clear() b.icon:SetDesaturated(false) end
+        end)
+        if not ok then pcall(b.cd.Clear, b.cd) end
+        if e.type == "item" then
+            local n = ItemCount(tonumber(e.item:match("%d+")) or 0)
+            b.count:SetText(n and n > 1 and tostring(n) or "")
+        end
+    end
+end
+
+-- Hervorheben wie der Schnipsel waehlt; die Wahl pulsiert.
+function RG.Tick(i, el)
+    local f = frames[i]
+    if not f then return end
+    local x, y = _G.GetCursorPosition()
+    local cx, cy = f.ring:GetCenter()
+    local sc = f.ring:GetEffectiveScale()
+    if not (cx and x) then return end
+    local dx, dy = x / sc - cx, y / sc - cy
+    local pick, best
+    for k = 1, f.count or 0 do
+        local b = f.slots[k]
+        if b:IsShown() and b:IsMouseOver() then pick = k break end
+    end
+    if not pick and dx * dx + dy * dy >= RG.DEAD * RG.DEAD then
+        for k = 1, f.count or 0 do
+            local b = f.slots[k]
+            if b:IsShown() then
+                local bx, by = b:GetCenter()
+                if bx then
+                    local vx, vy = bx - cx, by - cy
+                    local l = math.sqrt(vx * vx + vy * vy)
+                    local d = l > 0 and (dx * vx + dy * vy) / l or 0
+                    if not best or d > best then best, pick = d, k end
+                end
+            end
+        end
+    end
+    local pulse = 0.55 + 0.25 * math.sin(((_G.GetTime and _G.GetTime()) or 0) * 6)
+    for k = 1, f.count or 0 do f.slots[k].glow:SetAlpha(k == pick and pulse or 0) end
     if f.shown ~= pick then
         f.shown = pick
-        for k = 1, n do f.slots[k].glow:SetShown(k == pick) end
         f.label:SetText(pick and f.labels[pick] or "")
+        if pick then
+            local bx, by = f.slots[pick]:GetCenter()
+            local vx, vy = bx - cx, by - cy
+            local l = math.sqrt(vx * vx + vy * vy)
+            if l > 0 then
+                f.pointer:ClearAllPoints()
+                f.pointer:SetPoint("CENTER", f.ring, "CENTER", vx / l * (RG.DEAD + 7), vy / l * (RG.DEAD + 7))
+                local B = WeintCodex.GameColors.ringNeonB
+                f.pointer:SetVertexColor(B[1], B[2], B[3], 1)
+                f.pointer:Show()
+            end
+        else
+            f.pointer:Hide()
+        end
     end
 end
 
@@ -500,7 +691,7 @@ function RG.Fill(i, ring)
     local f = frames[i] or BuildRing(i)
     local slots = RG.Slots(ring)
     local n = #slots
-    f.count, f.labels, f.vx, f.vy, f.shown = n, {}, {}, {}, nil
+    f.count, f.labels, f.entries, f.shown = n, {}, slots, nil
     f.ring:SetAttribute("count", n)
     f.ring:SetAttribute("mode", ring.mode or "hold")
     f.ring:SetScale(math.max(0.5, math.min(2, (tonumber(K.Get(KEY, "ringScale")) or 100) / 100)))
@@ -508,27 +699,27 @@ function RG.Fill(i, ring)
     for s = 1, RG.MAX do
         local b, e = f.slots[s], slots[s]
         if e then
-            -- Oben beginnen, im Uhrzeigersinn.
             local a = math.pi / 2 - (s - 1) * 2 * math.pi / n
-            local vx, vy = math.cos(a), math.sin(a)
-            f.vx[s], f.vy[s] = vx, vy
-            f.ring:SetAttribute("vx" .. s, vx)
-            f.ring:SetAttribute("vy" .. s, vy)
             b:ClearAllPoints()
-            b:SetPoint("CENTER", f.ring, "CENTER", vx * RG.RADIUS, vy * RG.RADIUS)
+            b:SetPoint("CENTER", f.ring, "CENTER", math.cos(a) * RG.RADIUS, math.sin(a) * RG.RADIUS)
             b:SetAttribute("type", e.type)
             b:SetAttribute("spell", e.spell)
             b:SetAttribute("item", e.item)
             b:SetAttribute("macrotext", e.macrotext)
+            b:SetAttribute("cond", e.cond)
+            b:SetAttribute("vis", s)
             b.icon:SetTexture(e.icon or 134400)
             b.count:SetText(e.count and e.count > 1 and tostring(e.count) or "")
             f.labels[s] = e.label or ""
             b:Show()
         else
             b:SetAttribute("type", nil)
+            b:SetAttribute("cond", nil)
+            b:SetAttribute("vis", 0)
             b:Hide()
         end
     end
+    f.ring:SetAttribute("shown", n)
     return f
 end
 
@@ -587,7 +778,7 @@ end
 -- Einstellungen
 --------------------------------------------------
 
-local edit = { index = 1, input = "" }
+local edit = { index = 1, input = "", entry = 1 }
 RG.edit = edit
 
 local function Current()
@@ -663,13 +854,26 @@ local function EntryList(parent, width)
         local r = CreateFrame("Frame", nil, w)
         r:SetSize(cw, ROW_H - 4)
         r:SetPoint("TOPLEFT", w, "TOPLEFT", math.floor((i - 1) / ROWS) * (cw + 16), -((i - 1) % ROWS) * ROW_H)
+        r.sel = r:CreateTexture(nil, "BACKGROUND")
+        r.sel:SetAllPoints(r)
+        local ac = C.accent
+        r.sel:SetColorTexture(ac[1], ac[2], ac[3], 0.18)
+        r.sel:Hide()
+        r:EnableMouse(true)
+        r:SetScript("OnMouseDown", function()
+            if r.index then edit.entry = r.index K.Fire("setting", KEY, "ringEdit") end
+        end)
+        r.cond = K.NewText(r, 10)
+        r.cond:SetPoint("RIGHT", r, "RIGHT", -48, 0)
+        local gm = C.textMuted
+        r.cond:SetTextColor(gm[1], gm[2], gm[3], 1)
         r.icon = r:CreateTexture(nil, "ARTWORK")
         r.icon:SetSize(20, 20)
         r.icon:SetPoint("LEFT")
         r.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
         r.text = K.NewText(r, 12)
         r.text:SetPoint("LEFT", r.icon, "RIGHT", 6, 0)
-        r.text:SetPoint("RIGHT", r, "RIGHT", -48, 0)
+        r.text:SetPoint("RIGHT", r.cond, "LEFT", -4, 0)
         r.text:SetJustifyH("LEFT")
         r.up = WeintCodex.CreateButton(r, { text = "▲", kind = "secondary", height = 20, size = 10, backdrop = "bgDark",
             onClick = function()
@@ -713,6 +917,9 @@ local function EntryList(parent, width)
                 r.icon:SetTexture(e and e.icon or 134400)
                 r.text:SetText(e and e.label or "(nicht verfügbar)")
                 r.up:SetShown(custom and i > 1)
+                local cond = custom and entries[i].cond or nil
+                r.cond:SetText(cond and cond ~= "" and cond or "")
+                r.sel:SetShown(custom and i == edit.entry)
                 r.del:SetShown(custom)
                 r:Show()
             else
@@ -805,6 +1012,17 @@ local function Build(B)
                 edit.input = ""
                 Changed()
             end })
+    local function Entry()
+        local r = Current()
+        return r and (r.preset == nil or r.preset == "custom") and r.entries and r.entries[edit.entry] or nil
+    end
+    B:Row({ type = "dropdown", label = "Bedingung des gewählten Eintrags", items = RG.CONDS,
+            disabled = function() return Entry() == nil end,
+            get = function() local e = Entry() return e and (e.cond or "") or "" end,
+            set = function(v) local e = Entry() if e then e.cond = v ~= "" and v or nil Changed() end end },
+          { type = "input", label = "Oder eigene, z. B. [combat,group]",
+            get = function() local e = Entry() return e and e.cond or "" end,
+            set = function(v) local e = Entry() if e then e.cond = (v ~= "" and v) or nil Changed() end end })
     B:Row({ type = "button", label = "Fester Ring", text = "In eigenen Ring umwandeln", onClick = function()
                 local r = Current()
                 if r then RG.Convert(r) Changed() end

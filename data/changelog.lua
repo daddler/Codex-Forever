@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.41.0.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFRinge: zielen statt treffen.|r Die Richtung reicht – die Maus muss nicht mehr auf dem Symbol liegen. Neues Aussehen mit Neonband, runden Symbolen, pulsierender Wahl und Zeiger.",
+            "|cff7C6CFFRinge: Bedingungen und Abklingzeiten.|r Jeder Eintrag eines eigenen Rings kann nur im Kampf, nur beritten, nur drinnen … erscheinen – oder mit eigener Bedingung wie [combat,group]. Abklingzeiten laufen auf den Symbolen.",
+            "|cff7C6CFFDanke für Buffs: eigene Seite.|r Alle Sprüche je Sorte einsehen, bearbeiten, löschen und hinzufügen, die Erkennungswörter anpassen, die Wartezeit vor dem Flüstern und den Anteil allgemeiner Sprüche einstellen.",
+        },
+    },
+    {
         version = "6.40.1.0",
         date    = "15.10.2026",
         notes   = {

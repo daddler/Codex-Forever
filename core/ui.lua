@@ -281,6 +281,11 @@ WeintCodex.GameColors = {
     -- Kompass des Questpfeils (6.35.0.0): Striche im Pergamentgold der
     -- Karte, geradeaus im Gold des eigenen Orts.
     compassTick   = {0.720, 0.670, 0.550, 0.70},
+    -- Ringe (6.41.0.0): Neonband aussen, Kern dunkel, Flaeche je Platz.
+    ringNeonA     = {0.200, 0.900, 1.000, 1.00},  -- Cyan
+    ringNeonB     = {0.950, 0.300, 0.900, 1.00},  -- Magenta
+    ringCore      = {0.030, 0.035, 0.060, 0.90},
+    ringSlot      = {0.060, 0.070, 0.110, 0.95},
     compassAhead  = {1.000, 0.820, 0.000, 0.85},
     -- Kombopunkte an der Plakette, je Stand (6.33.7.0, einstellbar): von
     -- "noch nicht" (rot) bis "Spender jetzt" (gruen).

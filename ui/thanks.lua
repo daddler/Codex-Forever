@@ -67,6 +67,14 @@ TH.LINES = {
     },
 }
 
+TH.KINDS = {
+    { value = "general",   text = "Allgemein (jeder andere Buff)" },
+    { value = "stamina",   text = "Ausdauer" },
+    { value = "spirit",    text = "Willenskraft" },
+    { value = "intellect", text = "Intelligenz" },
+    { value = "blessing",  text = "Segen" },
+}
+
 -- Welche Sorte: nach dem Namen des Buffs, wie der Client ihn nennt.
 TH.WORDS = {
     { "stamina",   { "seelenstärke", "ausdauer", "fortitude", "stamina" } },
@@ -84,11 +92,50 @@ end
 
 local function Now() return (_G.GetTime and _G.GetTime()) or 0 end
 
+-- 6.41.0.0 (Wunsch: "einsehen, was zu was eingestellt ist, bearbeiten,
+-- loeschen, hinzufuegen"): Saetze und Erkennungswoerter je Sorte gehoeren
+-- dem Spieler (thanksLines/thanksWords); bis zur ersten Aenderung gelten
+-- die von WeintCodex.
+function TH.Lines(kind)
+    local own = K.Get(KEY, "thanksLines")
+    if type(own) == "table" and type(own[kind]) == "table" then return own[kind] end
+    return TH.LINES[kind] or {}
+end
+
+-- Zum Bearbeiten: eigene Kopie anlegen (einmal je Sorte).
+function TH.OwnLines(kind)
+    local own = K.Get(KEY, "thanksLines")
+    if type(own) ~= "table" then K.Set(KEY, "thanksLines", {}) own = K.Get(KEY, "thanksLines") end
+    if type(own[kind]) ~= "table" then
+        own[kind] = {}
+        for i, t in ipairs(TH.LINES[kind] or {}) do own[kind][i] = t end
+    end
+    return own[kind]
+end
+
+function TH.Words(kind)
+    local own = K.Get(KEY, "thanksWords")
+    if type(own) == "table" and type(own[kind]) == "table" then return own[kind] end
+    for _, w in ipairs(TH.WORDS) do if w[1] == kind then return w[2] end end
+    return {}
+end
+
+function TH.SetWords(kind, text)
+    local own = K.Get(KEY, "thanksWords")
+    if type(own) ~= "table" then K.Set(KEY, "thanksWords", {}) own = K.Get(KEY, "thanksWords") end
+    local list = {}
+    for w in tostring(text or ""):gmatch("[^,]+") do
+        w = w:gsub("^%s+", ""):gsub("%s+$", ""):lower()
+        if w ~= "" then list[#list + 1] = w end
+    end
+    own[kind] = list
+end
+
 function TH.Kind(name)
     if type(name) ~= "string" then return "general" end
     local low = name:lower()
     for _, w in ipairs(TH.WORDS) do
-        for _, word in ipairs(w[2]) do
+        for _, word in ipairs(TH.Words(w[1])) do
             if low:find(word, 1, true) then return w[1] end
         end
     end
@@ -96,10 +143,12 @@ function TH.Kind(name)
 end
 
 function TH.Pick(kind, roll)
-    local list = TH.LINES[kind] or TH.LINES.general
-    -- Haeufig auch ein allgemeiner Satz: sonst hoert ein Priester immer
-    -- dieselben drei.
-    if kind ~= "general" and (roll or math.random()) < 0.3 then list = TH.LINES.general end
+    local list = TH.Lines(kind)
+    -- Ab und zu ein allgemeiner Satz (einstellbar): sonst hoert ein Priester
+    -- immer dieselben drei.
+    local mix = (tonumber(K.Get(KEY, "thanksMix")) or 30) / 100
+    if kind ~= "general" and ((roll or math.random()) < mix or #list == 0) then list = TH.Lines("general") end
+    if #list == 0 then return nil end
     return list[math.random(#list)]
 end
 
@@ -169,7 +218,21 @@ function TH.OnAura(info)
     for _, aura in ipairs(added) do
         local name = TH.Eligible(aura)
         if name and now - (st.last[name] or -1e9) >= TH.PER_PLAYER then
-            TH.Send(name, TH.Pick(TH.Kind(K.Plain(aura.name))))
+            local text = TH.Pick(TH.Kind(K.Plain(aura.name)))
+            if not text then return end
+            st.last[name], st.at = now, now
+            -- Wartezeit (6.41.0.0, einstellbar): nicht im selben Augenblick
+            -- wie der Buff - wirkt menschlicher.
+            local delay = tonumber(K.Get(KEY, "thanksDelay")) or 2
+            if delay > 0 and _G.C_Timer and _G.C_Timer.After then
+                st.queued = st.queued + 1
+                _G.C_Timer.After(delay, function()
+                    st.queued = st.queued - 1
+                    if TH.Active() and not K.InCombat() then TH.Send(name, text) end
+                end)
+            else
+                TH.Send(name, text)
+            end
             return
         end
     end
@@ -203,22 +266,114 @@ function TH.StatusLine()
         K.Get(KEY, "thanksBlocked") and "Flüstern gesperrt, über die Chatzeile" or "flüstert selbst")
 end
 
+--------------------------------------------------
+-- Einstellungen: eigene Seite "Danke" (6.41.0.0)
+--------------------------------------------------
+
+local edit = { kind = "general", line = 1, input = "" }
+TH.edit = edit
+
+local ROWS = 8
+local function LineList(parent, width)
+    local w = CreateFrame("Frame", nil, parent)
+    local rows = {}
+    for i = 1, ROWS do
+        local r = CreateFrame("Frame", nil, w)
+        r:SetSize(width, 22)
+        r:SetPoint("TOPLEFT", w, "TOPLEFT", 0, -(i - 1) * 24)
+        r.sel = r:CreateTexture(nil, "BACKGROUND")
+        r.sel:SetAllPoints(r)
+        local ac = WeintCodex.Colors.accent
+        r.sel:SetColorTexture(ac[1], ac[2], ac[3], 0.18)
+        r.text = K.NewText(r, 12)
+        r.text:SetPoint("LEFT", r, "LEFT", 6, 0)
+        r.text:SetPoint("RIGHT", r, "RIGHT", -30, 0)
+        r.text:SetJustifyH("LEFT")
+        r:EnableMouse(true)
+        r:SetScript("OnMouseDown", function()
+            if r.index then edit.line = r.index edit.input = TH.Lines(edit.kind)[r.index] or "" K.Fire("setting", KEY, "thanksEdit") end
+        end)
+        r.del = WeintCodex.CreateButton(r, { text = "×", kind = "secondary", height = 20, size = 12, backdrop = "bgDark",
+            onClick = function()
+                local list = TH.OwnLines(edit.kind)
+                if r.index then table.remove(list, r.index) K.Fire("setting", KEY, "thanksLines") end
+            end })
+        r.del:SetWidth(22)
+        r.del:SetPoint("RIGHT", r, "RIGHT", 0, 0)
+        rows[i] = r
+    end
+    w.more = K.NewText(w, 11)
+    w.more:SetPoint("TOPLEFT", w, "TOPLEFT", 6, -ROWS * 24)
+    w.Sync = function()
+        local list = TH.Lines(edit.kind)
+        for i, r in ipairs(rows) do
+            local t = list[i]
+            if t then
+                r.index = i
+                r.text:SetText(t)
+                r.sel:SetShown(i == edit.line)
+                r:Show()
+            else
+                r.index = nil
+                r:Hide()
+            end
+        end
+        w.more:SetText(#list > ROWS and string.format("… und %d weitere", #list - ROWS) or (#list == 0 and "Keine Sprüche – dann gilt ein allgemeiner." or ""))
+    end
+    w.Sync()
+    return w
+end
+
+local function Build(B)
+    local off = function() return not K.Get(KEY, "thanks") end
+    B:Section("Danke für Buffs", "Draußen in der Welt, außerhalb von Gruppe und Kampf: ein Flüstern mit Augenzwinkern, passend zum Buff. Nur wenn das Spiel sagt, wer gebufft hat.")
+    B:Row({ type = "toggle", label = "Fremden für Buffs danken", key = "thanks" },
+          { type = "toggle", label = "Auch der Gilde", key = "thanksGuild", disabled = off })
+    B:Row({ type = "slider", label = "Warten vor dem Flüstern", key = "thanksDelay", min = 0, max = 30, step = 1, disabled = off,
+            format = function(v) return v == 0 and "sofort" or string.format("%d s", v) end },
+          { type = "slider", label = "Allgemeine Sprüche beimischen", key = "thanksMix", min = 0, max = 100, step = 10, disabled = off,
+            format = function(v) return string.format("%d %%", v) end })
+    B:Section("Sprüche", "Sorte wählen: darunter, woran der Buff erkannt wird, und ihre Sprüche. Anklicken bearbeitet, × löscht.")
+    B:Row({ type = "dropdown", label = "Sorte", items = TH.KINDS,
+            get = function() return edit.kind end,
+            set = function(v) edit.kind, edit.line, edit.input = v, 1, "" K.Fire("setting", KEY, "thanksEdit") end },
+          { type = "input", label = "Erkannt an (Wörter im Buffnamen, mit Komma)",
+            disabled = function() return edit.kind == "general" end,
+            get = function() return edit.kind == "general" and "– alles andere –" or table.concat(TH.Words(edit.kind), ", ") end,
+            set = function(v) if edit.kind ~= "general" then TH.SetWords(edit.kind, v) end end })
+    B:Row({ type = "custom", height = ROWS * 24 + 18, create = function(parent, width) return LineList(parent, width) end }, nil)
+    B:Row({ type = "input", label = "Spruch (anklicken zum Bearbeiten, oder neu schreiben)",
+            get = function() return edit.input end, set = function(v) edit.input = v end },
+          { type = "button", label = "Neuer Spruch", text = "Hinzufügen", onClick = function()
+                local t = (edit.input or ""):gsub("^%s+", ""):gsub("%s+$", "")
+                if t == "" then return end
+                local list = TH.OwnLines(edit.kind)
+                list[#list + 1] = t
+                edit.line, edit.input = #list, ""
+                K.Fire("setting", KEY, "thanksLines")
+            end })
+    B:Row({ type = "button", label = "Ausgewählter Spruch", text = "Ersetzen durch den Text oben", onClick = function()
+                local t = (edit.input or ""):gsub("^%s+", ""):gsub("%s+$", "")
+                local list = TH.OwnLines(edit.kind)
+                if t ~= "" and list[edit.line] then list[edit.line] = t K.Fire("setting", KEY, "thanksLines") end
+            end },
+          { type = "button", label = "Diese Sorte", text = "Sprüche von WeintCodex zurück", onClick = function()
+                local own = K.Get(KEY, "thanksLines")
+                if type(own) == "table" then own[edit.kind] = nil end
+                local ow = K.Get(KEY, "thanksWords")
+                if type(ow) == "table" then ow[edit.kind] = nil end
+                K.Fire("setting", KEY, "thanksLines")
+            end })
+end
+
 local mod = K.Module(KEY)
 if mod then
     if mod.defaults.thanks == nil then mod.defaults.thanks = false end
     if mod.defaults.thanksGuild == nil then mod.defaults.thanksGuild = false end
-    local page = mod.pages and mod.pages[1]
-    if page then
-        local build = page.build
-        page.build = function(B)
-            build(B)
-            B:Section("Danke für Buffs")
-            B:Row({ type = "toggle", label = "Fremden für Buffs danken", key = "thanks",
-                    description = "Draußen in der Welt, außerhalb von Gruppe und Kampf: ein Flüstern mit Augenzwinkern, passend zum Buff. Nur wenn das Spiel sagt, wer gebufft hat." },
-                  { type = "toggle", label = "Auch der Gilde", key = "thanksGuild",
-                    disabled = function() return not K.Get(KEY, "thanks") end })
-        end
-    end
+    if mod.defaults.thanksDelay == nil then mod.defaults.thanksDelay = 2 end
+    if mod.defaults.thanksMix == nil then mod.defaults.thanksMix = 30 end
+    mod.pages[#mod.pages + 1] = { key = "danke", label = "Danke", build = Build }
+    if type(mod.pageOrder) == "table" then mod.pageOrder.danke = 31.5 end
     local view = mod.pages and mod.pages[2]
     if view then
         local build = view.build

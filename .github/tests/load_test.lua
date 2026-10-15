@@ -3988,7 +3988,9 @@ do
         _G.SecureHandlerWrapScript = function() end
         local f = RG.Fill(1, list[3])
         assert(f.count == 9 and f.ring:GetAttribute("count") == 9, "Ring nicht gefuellt")
-        assert(math.abs(f.vx[1]) < 1e-6 and math.abs(f.vy[1] - 1) < 1e-6, "erster Platz nicht oben")
+        assert(math.abs(f.ring:GetAttribute("u9_1x")) < 1e-6 and math.abs(f.ring:GetAttribute("u9_1y") - 1) < 1e-6, "erster Platz nicht oben")
+        assert(f.ring:GetAttribute("zones") == RG.ZONES * RG.ZONES, "Raster fehlt")
+        assert(f.zones[1]:GetAttribute("zx") < 0, "Feld ohne Lage")
         assert(f.slots[1]:GetAttribute("macrotext") == "/tm 1", "Platz ohne Makro")
         assert(RG.StatusLine():find("4 Ringe"), "Statuszeile")
     end)
@@ -4017,6 +4019,14 @@ do
         assert(TH.Kind("Arkane Intelligenz") == "intellect", "Intelligenz")
         assert(TH.Kind("Mal der Wildnis") == "general", "allgemein")
         assert(type(TH.Pick("blessing", 0.9)) == "string", "kein Satz")
+        -- 6.41.0.0: eigene Sprueche und Woerter.
+        local own = TH.OwnLines("spirit")
+        own[#own + 1] = "Testspruch"
+        assert(TH.Lines("spirit")[#TH.Lines("spirit")] == "Testspruch", "eigener Spruch fehlt")
+        TH.SetWords("spirit", "Geisterkraft, xyz")
+        assert(TH.Kind("Große Geisterkraft") == "spirit", "eigenes Wort nicht erkannt")
+        K.Set("comfort", "thanksLines", nil) K.Set("comfort", "thanksWords", nil)
+        assert(TH.Kind("Göttlicher Wille") == "spirit", "zurueck auf WeintCodex")
         _G.UnitIsUnit = function() return false end
         _G.UnitIsPlayer = function() return true end
         _G.UnitInParty = function() return false end
@@ -18057,9 +18067,9 @@ do
             assert(QoL.PAGE_ORDER[p.key], "Seite ohne Thema: " .. p.key)
         end
         local order = table.concat(keys, ",")
-        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,ringe,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,gespraeche",
+        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,ringe,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,danke,gespraeche",
             "Reihenfolge: " .. order)
-        assert(O.PageIndex("comfort", "gespraeche") == 15 and O.PageIndex("comfort", "fluestern") == 14, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 16 and O.PageIndex("comfort", "fluestern") == 14, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")
