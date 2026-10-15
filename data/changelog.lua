@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.38.2.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFGroßes Händlerfenster aufgeräumt.|r Leere Plätze stehen nicht mehr verstreut im Raster, zwischen den Zeilen bleibt Luft, und der Rückkauf-Platz bleibt unten im Fuß statt mitten im Fenster.",
+        },
+    },
+    {
         version = "6.38.1.0",
         date    = "15.10.2026",
         notes   = {

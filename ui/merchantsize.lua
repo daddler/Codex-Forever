@@ -28,6 +28,7 @@ local KEY = "comfort"
 
 MS.MAX = 60                 -- so viele Plaetze hoechstens
 MS.BUYBACK = 12             -- Rueckkauf: immer zwoelf, wie im Spiel
+MS.GAP = 8                  -- Luft zwischen zwei Plaetzen
 MS.FALLBACK = { dx = 165, dy = 45, x = 11, y = -69 }
 
 local st = { cols = 2, per = nil }
@@ -57,10 +58,16 @@ function MS.Measure()
     local bl, ct = b and b:GetLeft(), c and c:GetTop()
     n.dx = (type(bl) == "number" and type(al) == "number" and bl - al > 20) and (bl - al) or MS.FALLBACK.dx
     n.dy = (type(ct) == "number" and type(at) == "number" and at - ct > 20) and (at - ct) or MS.FALLBACK.dy
+    -- 6.38.2.0 (Beta-Test: Zeilen lagen aufeinander): nie enger als der
+    -- Platz selbst plus Luft, Spalten ebenso.
+    n.rawDy = n.dy
+    local ih, iw = a:GetHeight(), a:GetWidth()
+    if type(ih) == "number" and ih > 0 then n.dy = math.max(n.dy, ih + MS.GAP) end
+    if type(iw) == "number" and iw > 0 then n.dx = math.max(n.dx, iw + MS.GAP) end
     n.iw, n.ih = a:GetWidth(), a:GetHeight()
     if not (type(n.w) == "number" and n.w > 100 and type(n.h) == "number" and n.h > 100) then return nil end
     -- Fuss: was unter fuenf Zeilen bleibt (Rueckkauf-Platz, Geld, Reiter).
-    n.foot = n.h + n.y - 5 * n.dy
+    n.foot = n.h + n.y - 5 * n.rawDy
     -- Feste Teile unten: an der Ecke halten, an der sie stehen.
     n.pins = {}
     for _, name in ipairs({ "MerchantBuyBackItem", "MerchantPrevPageButton", "MerchantNextPageButton", "MerchantPageText" }) do
@@ -70,6 +77,9 @@ function MS.Measure()
             local fx, fb = f:GetLeft(), f:GetBottom()
             if type(x) == "number" and type(y) == "number" and type(fx) == "number" and type(fb) == "number" then
                 local right = (x - fx) > n.w * 0.6
+                -- Nur, was wirklich im Fuss steht: der Rueckkauf-Platz hing im
+                -- Spiel an Ware 10 und landete gross gezogen mitten im Fenster.
+                if y - fb > n.foot + 10 then y = fb + n.foot - 20 end
                 n.pins[#n.pins + 1] = { r = r, right = right, x = right and (x - fx - n.w) or (x - fx), y = y - fb }
             end
         end
@@ -115,6 +125,16 @@ function MS.Layout()
     if not (n and f and st.per and MS.Active()) then return end
     local buyback = K.Plain(f.selectedTab) == 2
     local shown = buyback and MS.BUYBACK or st.per
+    if not buyback then
+        -- Leere Plaetze am Ende nicht zeigen: im Raster sahen sie aus wie
+        -- verstreute Kaesten (Beta-Test 6.38.0.0).
+        local total = K.Plain(_G.GetMerchantNumItems and _G.GetMerchantNumItems())
+        local page = K.Plain(f.page)
+        if type(total) == "number" then
+            local first = ((type(page) == "number" and page or 1) - 1) * st.per
+            shown = math.max(0, math.min(shown, total - first))
+        end
+    end
     local cols = st.cols
     for i = 1, MS.MAX do
         local it = Item(i)
