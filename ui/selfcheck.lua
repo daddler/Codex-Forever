@@ -645,6 +645,13 @@ Check("Buffs", function(add)
     add(BS.Active() and SC.OK or SC.OPEN, BS.StatusLine())
 end)
 
+-- Haendlerfenster gross ziehen (6.38.0.0)
+Check("Händler", function(add)
+    local MS = WeintCodex.UIMerchantSize
+    if not MS then add(SC.OPEN, "Händlerfenster nicht geladen.") return end
+    add(MS.Active() and SC.OK or SC.OPEN, MS.StatusLine())
+end)
+
 -- Glitzern und Questhilfe (6.30.9.0 - fehlten bis dahin im Bericht)
 Check("Glitzern", function(add)
     local SP = WeintCodex.UISparkles

@@ -51,7 +51,8 @@ MC.EDGE = 0.5               -- Kante oben am Fenster in Gold
 MC.PAD = 6                  -- Flaeche so weit ueber die Waren hinaus
 MC.SHADOW_PAD = 10
 MC.LIST_EDGE = 0.45         -- Kante oben an der Flaeche in Gold
-MC.MAX_ITEMS = 12           -- Rueckkauf zeigt zwoelf Plaetze, der Haendler zehn
+MC.MAX_ITEMS = 60           -- Rueckkauf zeigt zwoelf Plaetze, der Haendler zehn - gross gezogen
+                            -- bis zu 60 (ui/merchantsize.lua)
 MC.TABS = 2
 
 -- Namen einmal bauen: im Takt keine Zeichenketten zusammensetzen.
@@ -102,15 +103,23 @@ end
 local function Goods(f, g)
     local last = LastItem()
     local on = last ~= nil and Visible(g.first)
-    if on and g.last ~= last then
-        g.last = last
+    -- Rechte Kante: die letzte Spalte der ersten Zeile (6.38.0.0: das Raster
+    -- kann breiter sein als die letzte Zeile).
+    local MS = WeintCodex.UIMerchantSize
+    local cols = MS and MS.Columns() or 2
+    local right = _G[MC.ITEM_NAMES[cols]]
+    if not (IsFrame(right) and Visible(right)) then right = last end
+    if on and (g.last ~= last or g.right ~= right) then
+        g.last, g.right = last, right
         g.body:ClearAllPoints()
         g.body:SetPoint("TOPLEFT", g.first, "TOPLEFT", -MC.PAD, MC.PAD)
-        g.body:SetPoint("BOTTOMRIGHT", last, "BOTTOMRIGHT", MC.PAD, -MC.PAD)
+        g.body:SetPoint("BOTTOM", last, "BOTTOM", 0, -MC.PAD)
+        g.body:SetPoint("RIGHT", right, "RIGHT", MC.PAD, 0)
         local sp = MC.PAD + MC.SHADOW_PAD
         g.shadow:ClearAllPoints()
         g.shadow:SetPoint("TOPLEFT", g.first, "TOPLEFT", -sp, sp)
-        g.shadow:SetPoint("BOTTOMRIGHT", last, "BOTTOMRIGHT", sp, -sp)
+        g.shadow:SetPoint("BOTTOM", last, "BOTTOM", 0, -sp)
+        g.shadow:SetPoint("RIGHT", right, "RIGHT", sp, 0)
     end
     if g.on ~= on then
         g.on = on

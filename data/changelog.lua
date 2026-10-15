@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.38.0.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFDas Händlerfenster lässt sich groß ziehen.|r Am Griff unten rechts – so viele Waren, wie hineinpassen, stehen nebeneinander und untereinander, Blättern nur noch, wenn es mehr sind. Die Größe bleibt gemerkt. Abschaltbar unter Komfort → Automatik.",
+        },
+    },
+    {
         version = "6.37.1.0",
         date    = "15.10.2026",
         notes   = {

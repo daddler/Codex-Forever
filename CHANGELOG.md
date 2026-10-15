@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.38.0.0] – 2026-10-15
+
+### Hinzugefügt
+- `ui/merchantsize.lua` (Komfort, `vendorGrow`, an ab Werk): `MerchantFrame`
+  am Griff größer ziehen; `MERCHANT_ITEMS_PER_PAGE` nach Größe, fehlende
+  `MerchantItemN` aus `MerchantItemTemplate` (höchstens 60), Raster nach den
+  beim ersten Öffnen gemessenen Abständen; Rückkauf-Platz und Blättern an
+  ihrer Ecke gehalten. Größe in `vendorW`/`vendorH`. Verhalten nach Extended
+  Vendor Forever (ohne Lizenz) – kein Code übernommen. `ui/merchant.lua`:
+  Fläche über das ganze Raster. Selbstprüfung „Händler“.
+
 ## [6.37.1.0] – 2026-10-15
 
 ### Behoben

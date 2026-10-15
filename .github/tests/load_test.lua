@@ -3968,6 +3968,35 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.38.0.0: Haendlerfenster gross ziehen (ui/merchantsize.lua): Raster
+-- aus der gemessenen Groesse, nie kleiner als das Spiel, Zahl je Seite.
+do
+    local MS = WeintCodex.UIMerchantSize
+    local saved = { _G.MerchantFrame, MS.state.native, _G.MERCHANT_ITEMS_PER_PAGE, _G.GetMerchantNumItems, _G.CreateFrame }
+    -- Keine Plaetze anlegen: die Pruefung des Haendler-Stils zaehlt sie.
+    _G.CreateFrame = function() end
+    local ok, err = pcall(function()
+        local w, h = 336, 444
+        _G.MerchantFrame = { GetWidth = function() return w end, GetHeight = function() return h end, page = 9 }
+        _G.GetMerchantNumItems = function() return 40 end
+        MS.state.native = { w = 336, h = 444, x = 11, y = -69, dx = 165, dy = 45, iw = 153, ih = 37,
+            foot = 444 - 69 - 5 * 45, pins = {} }
+        local c, r = MS.Grid()
+        assert(c == 2 and r == 5, "Spiel-Groesse nicht 2x5: " .. c .. "x" .. r)
+        w, h = 336 + 165 * 2, 444 + 45 * 3
+        c, r = MS.Grid()
+        assert(c == 4 and r == 8, "gross gezogen nicht 4x8: " .. c .. "x" .. r)
+        MS.Prepare()
+        assert(_G.MERCHANT_ITEMS_PER_PAGE == 32, "Waren je Seite " .. tostring(_G.MERCHANT_ITEMS_PER_PAGE))
+        assert(_G.MerchantFrame.page == 2, "Seite hinter dem Ende")
+        assert(MS.Columns() == 4, "Spalten fuer die Flaeche")
+        assert(MS.StatusLine():find("4 Spalten"), "Statuszeile")
+    end)
+    _G.MerchantFrame, MS.state.native, _G.MERCHANT_ITEMS_PER_PAGE, _G.GetMerchantNumItems, _G.CreateFrame = unpack(saved, 1, 5)
+    MS.state.per = nil
+    Check(ok, "Haendlerfenster: Raster nach Groesse, Zahl je Seite, Seite begrenzt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.
