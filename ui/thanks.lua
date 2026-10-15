@@ -270,7 +270,7 @@ end
 -- Einstellungen: eigene Seite "Danke" (6.41.0.0)
 --------------------------------------------------
 
-local edit = { kind = "general", line = 1, input = "" }
+local edit = { kind = "general", line = 1, input = "", top = 0 }
 TH.edit = edit
 
 local ROWS = 8
@@ -302,23 +302,45 @@ local function LineList(parent, width)
         r.del:SetPoint("RIGHT", r, "RIGHT", 0, 0)
         rows[i] = r
     end
+    -- Blaettern (6.41.1.0): Mausrad ueber der Liste oder die Pfeile.
+    local function Scroll(delta)
+        local n = #TH.Lines(edit.kind)
+        edit.top = math.max(0, math.min(math.max(0, n - ROWS), edit.top - delta))
+        w.Sync()
+    end
+    w:EnableMouseWheel(true)
+    w:SetScript("OnMouseWheel", function(_, delta) Scroll(delta) end)
+    w.up = WeintCodex.CreateButton(w, { text = "▲", kind = "secondary", height = 20, size = 10, backdrop = "bgDark",
+        onClick = function() Scroll(ROWS) end })
+    w.up:SetWidth(28)
+    w.up:SetPoint("TOPRIGHT", w, "TOPLEFT", width - 0, -ROWS * 24 - 2)
+    w.down = WeintCodex.CreateButton(w, { text = "▼", kind = "secondary", height = 20, size = 10, backdrop = "bgDark",
+        onClick = function() Scroll(-ROWS) end })
+    w.down:SetWidth(28)
+    w.down:SetPoint("RIGHT", w.up, "LEFT", -4, 0)
     w.more = K.NewText(w, 11)
-    w.more:SetPoint("TOPLEFT", w, "TOPLEFT", 6, -ROWS * 24)
+    w.more:SetPoint("TOPLEFT", w, "TOPLEFT", 6, -ROWS * 24 - 4)
     w.Sync = function()
         local list = TH.Lines(edit.kind)
+        edit.top = math.max(0, math.min(edit.top, math.max(0, #list - ROWS)))
         for i, r in ipairs(rows) do
-            local t = list[i]
+            local idx = edit.top + i
+            local t = list[idx]
             if t then
-                r.index = i
+                r.index = idx
                 r.text:SetText(t)
-                r.sel:SetShown(i == edit.line)
+                r.sel:SetShown(idx == edit.line)
                 r:Show()
             else
                 r.index = nil
                 r:Hide()
             end
         end
-        w.more:SetText(#list > ROWS and string.format("… und %d weitere", #list - ROWS) or (#list == 0 and "Keine Sprüche – dann gilt ein allgemeiner." or ""))
+        local many = #list > ROWS
+        w.up:SetShown(many)
+        w.down:SetShown(many)
+        w.more:SetText(many and string.format("%d–%d von %d · Mausrad oder Pfeile", edit.top + 1, math.min(#list, edit.top + ROWS), #list)
+            or (#list == 0 and "Keine Sprüche – dann gilt ein allgemeiner." or ""))
     end
     w.Sync()
     return w
@@ -336,12 +358,12 @@ local function Build(B)
     B:Section("Sprüche", "Sorte wählen: darunter, woran der Buff erkannt wird, und ihre Sprüche. Anklicken bearbeitet, × löscht.")
     B:Row({ type = "dropdown", label = "Sorte", items = TH.KINDS,
             get = function() return edit.kind end,
-            set = function(v) edit.kind, edit.line, edit.input = v, 1, "" K.Fire("setting", KEY, "thanksEdit") end },
+            set = function(v) edit.kind, edit.line, edit.input, edit.top = v, 1, "", 0 K.Fire("setting", KEY, "thanksEdit") end },
           { type = "input", label = "Erkannt an (Wörter im Buffnamen, mit Komma)",
             disabled = function() return edit.kind == "general" end,
             get = function() return edit.kind == "general" and "– alles andere –" or table.concat(TH.Words(edit.kind), ", ") end,
             set = function(v) if edit.kind ~= "general" then TH.SetWords(edit.kind, v) end end })
-    B:Row({ type = "custom", height = ROWS * 24 + 18, create = function(parent, width) return LineList(parent, width) end }, nil)
+    B:Row({ type = "custom", height = ROWS * 24 + 26, create = function(parent, width) return LineList(parent, width) end }, nil)
     B:Row({ type = "input", label = "Spruch (anklicken zum Bearbeiten, oder neu schreiben)",
             get = function() return edit.input end, set = function(v) edit.input = v end },
           { type = "button", label = "Neuer Spruch", text = "Hinzufügen", onClick = function()
@@ -350,6 +372,7 @@ local function Build(B)
                 local list = TH.OwnLines(edit.kind)
                 list[#list + 1] = t
                 edit.line, edit.input = #list, ""
+                edit.top = math.max(0, #list - ROWS)
                 K.Fire("setting", KEY, "thanksLines")
             end })
     B:Row({ type = "button", label = "Ausgewählter Spruch", text = "Ersetzen durch den Text oben", onClick = function()

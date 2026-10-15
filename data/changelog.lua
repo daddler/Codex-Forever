@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.41.1.0",
+        date    = "15.10.2026",
+        notes   = {
+            "|cff7C6CFFDanke: alle Sprüche erreichbar.|r Hat eine Sorte mehr als acht Sprüche, blätterst du mit dem Mausrad über der Liste oder mit den Pfeilen; darunter steht, welche du gerade siehst. Ein neuer Spruch springt gleich ins Bild.",
+        },
+    },
+    {
         version = "6.41.0.0",
         date    = "15.10.2026",
         notes   = {

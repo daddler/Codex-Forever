@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.41.1.0] – 2026-10-15
+
+### Geändert
+- Danke-Seite: Spruchliste blättert (`edit.top`, Mausrad, ▲/▼, „x–y von n“);
+  ein neuer Spruch wird sichtbar; Sortenwechsel beginnt oben.
+
 ## [6.41.0.0] – 2026-10-15
 
 ### Geändert
