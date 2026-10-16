@@ -1512,6 +1512,15 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    if msg == "fehler" or msg == "errors" then
+        WeintCodex.UIErrors.ShowAll()
+        return
+    end
+    if msg == "fehler leeren" or msg == "errors clear" then
+        WeintCodex.UIErrors.Clear()
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Gespeicherte Fehler gelöscht.")
+        return
+    end
     if msg == "speicher" or msg == "memory" then
         local say = function(line) print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. line) end
         if K.prof.on then say("Die Messung läuft schon.") return end

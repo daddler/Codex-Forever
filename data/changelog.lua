@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.50.0.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFFehler direkt zum Kopieren.|r Geht in WeintCodex etwas schief, öffnet sich ein Fenster mit allem, was zum Beheben nötig ist – markieren, Strg+C, an den Entwickler schicken. Im Kampf erst danach. Alle gespeicherten Fehler: /wcui fehler. Abschaltbar unter Komfort › Anzeigen.",
+        },
+    },
+    {
         version = "6.49.1.0",
         date    = "16.10.2026",
         notes   = {

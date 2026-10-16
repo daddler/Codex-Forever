@@ -23,6 +23,7 @@ local C   = WeintCodex.Colors
 local KEY = "comfort"
 
 local defaults = {
+    errorCatch = true,          -- 6.50.0.0: Fehler zum Kopieren (ui/errors.lua)
     autoRepair     = false,
     repairGuild    = true,
     sellJunk       = false,
@@ -524,6 +525,11 @@ K.Register({
             B:Section("Karte")
             B:Row(Row2({ type = "toggle", label = "Koordinaten auf der Weltkarte", key = "mapCoords",
                          description = "Deine Position und die des Mauszeigers. Zeigt die Karte schon eigene Koordinaten, bleibt diese Zeile weg." }))
+            B:Section("Fehler")
+            B:Row({ type = "toggle", label = "Fehler zum Kopieren zeigen", key = "errorCatch",
+                    description = "Geht in WeintCodex etwas schief, öffnet sich ein Fenster mit allem, was zum Beheben nötig ist – markiert, Strg+C, an den Entwickler." },
+                  { type = "button", label = "Gespeicherte Fehler", text = "Alle zeigen (/wcui fehler)",
+                    onClick = function() WeintCodex.UIErrors.ShowAll() end })
             B:Note("Kampfhinweis, Bildrate und Haltbarkeitswarnung verschiebst du im Gestaltungsmodus.")
         end },
     },

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.50.0.0] – 2026-10-16
+
+### Neu
+- Fehlerfänger `ui/errors.lua`: eigene Lua-Fehler und blockierte Aufrufe, gezählt und gespeichert (20), Bericht zum Kopieren mit Fassung, Build, Klasse/Stufe/Gebiet und Aufrufkette; vorheriger Fehlerweg (BugSack, Spiel) bleibt. `/wcui fehler`, `/wcui fehler leeren`, Schalter `comfort.errorCatch`.
+
 ## [6.49.1.0] – 2026-10-16
 
 ### Neu

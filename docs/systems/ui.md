@@ -4388,3 +4388,16 @@ eigene (`media/ui/bar_*.tga`, erzeugt von `make_ui_media.py`, `make_bar_styles`)
 Gewählt unter Allgemein › „Balkentextur – gilt für alle Balken“, mit Vorschau
 in der Liste (`item.texture` in `OpenDropMenu`/`CreateDropdown`). Die Lichtkante
 oben nur bei Glanz und Verlauf.
+
+## Fehler zum Kopieren (6.50.0.0)
+
+`ui/errors.lua` (`WeintCodex.UIErrors`) hängt sich vor den Fehlerweg des Spiels
+(`seterrorhandler`, der vorige wird **immer** weitergerufen; beim Einloggen erneut
+davor, falls BugGrabber übernommen hat) und fängt **nur** Fehler, deren Text oder
+Aufrufkette „WeintCodex“ nennt, dazu `ADDON_ACTION_BLOCKED/FORBIDDEN` mit Addon
+„WeintCodex“. Gleiche Fehler werden gezählt (Schlüssel ohne Adressen), die letzten
+20 bleiben in `SavedData.errors`. Je neuem Fehler einmal je Sitzung das Fenster von
+`/wcui fenster` (`K.ShowReport`) mit Fassung, Spiel-Build, Sprache, Klasse/Stufe/
+Gebiet, Anzahl, Zeiten und gekürzter Aufrufkette – nie im Kampf, dann danach.
+`/wcui fehler` zeigt alle, `/wcui fehler leeren` löscht. Schalter `comfort.errorCatch`
+(an), Seite Komfort › Anzeigen.

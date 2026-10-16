@@ -18960,6 +18960,48 @@ do
     Check(ok, "Profil exportieren/importieren: Rundweg, fremder Text abgelehnt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.50.0.0: Fehler fangen - nur eigene, weitergereicht, gezaehlt, Bericht.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local ER = WeintCodex.UIErrors
+        assert(ER and ER.Handler, "ui/errors.lua nicht geladen")
+        local passed = 0
+        local oS, oG, oD = G.seterrorhandler, G.geterrorhandler, G.debugstack
+        local current = function() passed = passed + 1 end
+        G.geterrorhandler = function() return current end
+        G.seterrorhandler = function(f) current = f end
+        G.debugstack = function() return "[WeintCodex/ui/minimap.lua]:42: in function 'X'" end
+        assert(ER.Hook() and current == ER.Handler, "nicht eingehaengt")
+        local shownLines
+        local oR = K.ShowReport
+        K.ShowReport = function(_, lines) shownLines = lines end
+        ER.Clear()
+        current("Interface/AddOns/WeintCodex/ui/minimap.lua:42: attempt to index nil")
+        current("Interface/AddOns/WeintCodex/ui/minimap.lua:42: attempt to index nil")
+        assert(passed == 2, "vorigen Fehlerweg nicht weitergerufen")
+        local list = G.WeintCodex_SavedData.errors
+        assert(#list == 1 and list[1].count == 2, "nicht gezaehlt")
+        G.debugstack = function() return "[Fremd/x.lua]:1" end
+        current("Interface/AddOns/Fremd/x.lua:1: boom")
+        assert(#list == 1, "fremder Fehler gefangen")
+        local lines = ER.Lines(list)
+        local text = table.concat(lines, "\n")
+        assert(text:find("WeintCodex " .. WeintCodex.Version, 1, true) and text:find("minimap.lua:42", 1, true)
+            and text:find("2x", 1, true), "Bericht unvollstaendig")
+        assert(ER.ShowAll() and shownLines, "Fenster nicht gezeigt")
+        -- Blockiert: ueber das Ereignis.
+        ER.events:GetScript("OnEvent")(ER.events, "ADDON_ACTION_BLOCKED", "WeintCodex", "WeintCodexRareAlert:Hide()")
+        assert(#list == 2 and list[1].kind == "blocked", "Blockierung nicht gefangen")
+        ER.events:GetScript("OnEvent")(ER.events, "ADDON_ACTION_BLOCKED", "Fremd", "X:Hide()")
+        assert(#list == 2, "fremde Blockierung gefangen")
+        ER.Clear()
+        K.ShowReport = oR
+        G.seterrorhandler, G.geterrorhandler, G.debugstack = oS, oG, oD
+    end)
+    Check(ok, "Fehler: nur eigene, weitergereicht, gezaehlt, Bericht zum Kopieren" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.43.0.0: Glanz - Schimmer, Gleiten, Spur an jedem angemeldeten Balken.
 do
     local G = _G
