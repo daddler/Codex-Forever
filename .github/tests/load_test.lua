@@ -3904,6 +3904,17 @@ do
         assert(RT.CheckTaxiNear(0, t5[2] + 20, t5[3]) == 5, "keine Erinnerung am unbekannten Flugpunkt")
         assert(RT.lastReminder:find("sprich mit dem Flugmeister", 1, true), RT.lastReminder)
         assert(RT.CheckTaxiNear(0, t5[2] + 20, t5[3]) == nil, "zweimal erinnert")
+        -- 6.45.1.0: beim Flugmeister gelernt (Karte offen oder "neu entdeckt"),
+        -- auch wenn die Kennung des Clients nicht passt.
+        local oPW2 = K.PlayerWorld
+        K.PlayerWorld = function() return 0, t5[2] + 10, t5[3] end
+        store.taxi[5] = nil
+        local oErr = _G.ERR_NEWTAXIPATH
+        _G.ERR_NEWTAXIPATH = "Neue Flugroute entdeckt!"
+        assert(RT.OnInfoMessage("Neue Flugroute entdeckt!") == 5 and store.taxi[5], "Entdeckung nicht gemerkt")
+        RT._reminded[5] = nil
+        assert(RT.CheckTaxiNear(0, t5[2] + 20, t5[3]) == nil, "nach Entdeckung erinnert")
+        _G.ERR_NEWTAXIPATH, K.PlayerWorld = oErr, oPW2
         store.taxi[6] = true
         local t6 = saved[1].taxi[6]
         assert(RT.CheckTaxiNear(0, t6[2], t6[3]) == nil, "an bekannten Flugpunkt erinnert")

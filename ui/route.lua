@@ -883,6 +883,41 @@ function RT.LearnTaxi()
     return learned
 end
 
+-- 6.45.1.0 (Beta-Test: "die Erinnerung kommt immer wieder, obwohl ich
+-- den Flugpunkt habe"): gemerkt wurde bisher nur, was die Flugkarte des
+-- Clients unter UNSERER Kennung meldet. Weicht die Kennung auf Forever ab
+-- oder wurde die Karte beim Entdecken nicht geoeffnet, blieb der Punkt
+-- unbekannt. Jetzt gilt zusaetzlich: wer beim Flugmeister steht und die
+-- Karte oeffnet oder "Neue Flugroute entdeckt" bekommt, kennt den naechsten
+-- Flugpunkt - gespeichert je Charakter, also fuer immer.
+RT.LEARN_NEAR = 60
+function RT.LearnHere()
+    local st = RT.Store()
+    if not st then return nil end
+    local c, n, w = K.PlayerWorld()
+    if not c then return nil end
+    RT.Build()
+    local best, bestD
+    for id, t in pairs(taxiNode or {}) do
+        if t.c == c then
+            local d = (t.n - n) ^ 2 + (t.w - w) ^ 2
+            if not bestD or d < bestD then best, bestD = id, d end
+        end
+    end
+    if best and bestD <= RT.LEARN_NEAR ^ 2 then
+        if not st.taxi[best] then
+            st.taxi[best] = true
+            RT.Invalidate()
+        end
+        return best
+    end
+end
+
+function RT.OnInfoMessage(msg)
+    local want = _G.ERR_NEWTAXIPATH
+    if type(msg) == "string" and type(want) == "string" and msg == want then return RT.LearnHere() end
+end
+
 function RT.OnControlLost()
     local f = RT.flying
     if f and _G.UnitOnTaxi and K.Bool(_G.UnitOnTaxi("player"), false) then
@@ -1110,7 +1145,8 @@ end
 events:SetScript("OnEvent", function(_, event, unit, arg2, spell, sender)
     if event == "CHAT_MSG_ADDON" then return RT.OnAddon(unit, arg2, spell, sender) end
     if event == "GROUP_ROSTER_UPDATE" then return RT.Ask("group") end
-    if event == "TAXIMAP_OPENED" then RT.LearnTaxi()
+    if event == "TAXIMAP_OPENED" then RT.LearnTaxi() RT.LearnHere()
+    elseif event == "UI_INFO_MESSAGE" then RT.OnInfoMessage(K.Plain(arg2) or K.Plain(unit))
     elseif event == "PLAYER_CONTROL_LOST" then RT.OnControlLost()
     elseif event == "PLAYER_CONTROL_GAINED" then RT.OnControlGained()
     elseif event == "HEARTHSTONE_BOUND" then RT.RecordBind()
@@ -1247,7 +1283,7 @@ function RT.Start()
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(20, function() RT.Ask("all") end) end
     for _, e in ipairs({ "TAXIMAP_OPENED", "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED", "HEARTHSTONE_BOUND",
                          "UNIT_SPELLCAST_SUCCEEDED", "PLAYER_ENTERING_WORLD", "CHAT_MSG_ADDON",
-                         "GROUP_ROSTER_UPDATE" }) do
+                         "GROUP_ROSTER_UPDATE", "UI_INFO_MESSAGE" }) do
         pcall(events.RegisterEvent, events, e)
     end
     events:SetScript("OnUpdate", K.Measured and K.Measured("Routenplaner", OnUpdate) or OnUpdate)

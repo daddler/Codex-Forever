@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.45.1.0] – 2026-10-16
+
+### Behoben
+- Flugpunkt-Erinnerung: `RT.LearnHere` merkt den nächsten Flugpunkt (≤ 60) als bekannt bei `TAXIMAP_OPENED` und bei „Neue Flugroute entdeckt“ (`UI_INFO_MESSAGE`, `ERR_NEWTAXIPATH`) – bisher nur, wenn die Kennung des Clients zu unseren Daten passte.
+
 ## [6.45.0.0] – 2026-10-16
 
 ### Geändert

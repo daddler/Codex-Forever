@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.45.1.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Flugpunkt-Erinnerung merkt sich eingesammelte Punkte.|r Wer einen Flugpunkt entdeckt oder beim Flugmeister die Karte öffnet, hat ihn ab dann für diesen Charakter gespeichert – die Erinnerung kommt dort nicht wieder.",
+        },
+    },
+    {
         version = "6.45.0.0",
         date    = "16.10.2026",
         notes   = {
