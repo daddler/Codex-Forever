@@ -5064,6 +5064,13 @@ do
             MM.LayoutButtons()
             assert(pt and pt[1] == w[1] and pt[2] == w[2], "Knoepfe nicht auf Seite " .. side)
         end
+        -- 6.44.1.0: offener Bearbeitungsmodus des Spiels - Haende weg.
+        local oE = _G.EditModeManagerFrame
+        _G.EditModeManagerFrame = { IsEditModeActive = function() return true end }
+        pt = nil
+        MM.LayoutButtons()
+        assert(pt == nil, "Knoepfe im Bearbeitungsmodus des Spiels verschoben")
+        _G.EditModeManagerFrame = oE
         K.Set("minimap", "buttonSide", "Quatsch")
         assert(MM.ButtonSide() == "LEFT", "unbekannte Seite nicht links")
         K.Set("minimap", "buttonSide", nil)

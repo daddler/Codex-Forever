@@ -317,12 +317,35 @@ MM.HookNewIcons = HookNewIcons
 -- meldet deshalb, wenn ihn jemand anderes verschiebt - dann ordnen wir
 -- einen Takt spaeter neu. Eigene Verschiebungen (laying) zaehlen nicht.
 local watched = {}
+-- 6.44.1.0 (Berichte: "nach dem Einrichten stuerzt der Gestaltungsmodus
+-- ab, meist beim Einstellen der Karte - nur ein Neustart hilft"): solange
+-- der Bearbeitungsmodus des Spiels offen ist, gehoert ihm die Karte. Wir
+-- ruecken dann NICHTS zurecht (sonst schieben Spiel und WeintCodex sich
+-- die Karte und ihre Knoepfe gegenseitig zu) und ordnen nach dem
+-- Schliessen einmal neu. Und: je Takt hoechstens EIN Nachziehen, egal wie
+-- viele SetPoint-Aufrufe es ausloesen.
+function MM.GameEditing()
+    local emf = _G.EditModeManagerFrame
+    if type(emf) ~= "table" or type(emf.IsEditModeActive) ~= "function" then return false end
+    local ok, on = pcall(emf.IsEditModeActive, emf)
+    return ok and on and true or false
+end
+
+local queued = {}
+function MM.Later(fn)
+    if queued[fn] then return end
+    if not (_G.C_Timer and _G.C_Timer.After) then return end
+    queued[fn] = true
+    _G.C_Timer.After(0, function() queued[fn] = nil fn() end)
+end
+MM.queued = queued
+
 local function Watch(b)
     if watched[b] or not _G.hooksecurefunc then return end
     watched[b] = true
     _G.hooksecurefunc(b, "SetPoint", function()
-        if laying then return end
-        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, MM.LayoutButtons) end
+        if laying or MM.GameEditing() then return end
+        MM.Later(MM.LayoutButtons)
     end)
 end
 
@@ -373,7 +396,7 @@ MM.AXIS = 22   -- Breite der Knopfspalte, Knoepfe mittig darin
 
 function MM.LayoutButtons()
     local mm = _G.Minimap
-    if laying or type(mm) ~= "table" or not frame then return end
+    if laying or type(mm) ~= "table" or not frame or MM.GameEditing() then return end
     laying = true
     local tb = MM.TimeButton()
     if tb and not Opt("hideCalendar") then
@@ -583,7 +606,7 @@ end
 local placingMap = false
 function MM.PlaceMap()
     local mm, cl = _G.Minimap, _G.MinimapCluster
-    if placingMap or type(mm) ~= "table" or type(cl) ~= "table" or not Opt("atTop") then return end
+    if placingMap or type(mm) ~= "table" or type(cl) ~= "table" or not Opt("atTop") or MM.GameEditing() then return end
     placingMap = true
     -- Steht das Gebiet ueber der Karte, braucht es seine Zeile.
     local top = (Opt("zoneText") and not Opt("zoneInside")) and 22 or 6
@@ -598,8 +621,8 @@ local function HookMap()
     if mapHooked or type(mm) ~= "table" or not _G.hooksecurefunc then return end
     mapHooked = true
     _G.hooksecurefunc(mm, "SetPoint", function()
-        if placingMap or not Opt("atTop") then return end
-        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, MM.PlaceMap) end
+        if placingMap or not Opt("atTop") or MM.GameEditing() then return end
+        MM.Later(MM.PlaceMap)
     end)
 end
 
@@ -803,7 +826,8 @@ local function Enable()
     end
     local emf = _G.EditModeManagerFrame
     if _G.hooksecurefunc and type(emf) == "table" and type(emf.ExitEditMode) == "function" then
-        _G.hooksecurefunc(emf, "ExitEditMode", function() MM.LayoutButtons() end)
+        -- Einen Takt spaeter: dann meldet IsEditModeActive schon "aus".
+        _G.hooksecurefunc(emf, "ExitEditMode", function() MM.Later(MM.PlaceMap) MM.Later(MM.LayoutButtons) end)
     end
     HookNewIcons()
     Apply()

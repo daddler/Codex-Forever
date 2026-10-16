@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.44.1.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Minikarte gehört im Bearbeitungsmodus dem Spiel.|r Solange er offen ist, rückt WeintCodex Karte und Knöpfe nicht mehr zurecht und ordnet sie erst nach dem Schließen neu – Spiel und WeintCodex haben sich die Karte vorher gegenseitig zugeschoben.",
+        },
+    },
+    {
         version = "6.44.0.0",
         date    = "16.10.2026",
         notes   = {
