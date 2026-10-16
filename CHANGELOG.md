@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.47.0.0] – 2026-10-16
+
+### Geändert
+- Logo der Oberfläche neu, aus Zahlen gezeichnet (`.github/scripts/make_logo_mark.py` → `logo/wcui.png` → `make_logo.py`); das Wappen von 6.9.0.2 liegt als `logo/wcui_2026_09.png` daneben.
+
 ## [6.46.0.0] – 2026-10-16
 
 ### Geändert

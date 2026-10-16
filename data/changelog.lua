@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.47.0.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFEin neues, ruhiges Logo.|r Eine dunkle Münze mit Goldrand und einem klaren W – gut erkennbar auch klein an der Minikarte, in den Einstellungen und im Willkommens-Assistenten.",
+        },
+    },
+    {
         version = "6.46.0.0",
         date    = "16.10.2026",
         notes   = {

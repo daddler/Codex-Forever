@@ -3,7 +3,8 @@ Das Logo der Oberfläche ("WCUI") in den Größen bauen, in denen das Spiel es z
 
     python3 .github/scripts/make_logo.py
 
-Quelle ist .github/scripts/logo/wcui.png (512x512, mit Alphakanal) - das
+Quelle ist .github/scripts/logo/wcui.png (512x512, mit Alphakanal), seit
+6.47.0.0 gezeichnet von make_logo_mark.py; davor das
 Logo, das der Projektinhaber für die WeintCodex-Oberfläche vorgegeben hat
 (Beta-Test 6.9.0.2). Kein Spielmaterial.
 
