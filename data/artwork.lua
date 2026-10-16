@@ -710,6 +710,104 @@ WeintCodex.Artworks = {
         },
     },
 
+    blackrock_depths = {
+        -- Originale 1983x793, Banner y 80, Bosse y 60, 512x128 (siehe make_artwork.py).
+        header = {
+            file = ART .. "blackrock_depths/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            lord_roccor = {
+                file = ART .. "blackrock_depths/lord_roccor",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            high_interrogator_gerstahn = {
+                file = ART .. "blackrock_depths/high_interrogator_gerstahn",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            houndmaster_grebmar = {
+                file = ART .. "blackrock_depths/houndmaster_grebmar",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            ring_of_law = {
+                file = ART .. "blackrock_depths/ring_of_law",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            theldren = {
+                file = ART .. "blackrock_depths/theldren",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            pyromancer_loregrain = {
+                file = ART .. "blackrock_depths/pyromancer_loregrain",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            golem_lord_argelmach = {
+                file = ART .. "blackrock_depths/golem_lord_argelmach",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            hurley_blackbreath = {
+                file = ART .. "blackrock_depths/hurley_blackbreath",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            phalanx = {
+                file = ART .. "blackrock_depths/phalanx",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            ribbly_screwspigot = {
+                file = ART .. "blackrock_depths/ribbly_screwspigot",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            plugger_spazzring = {
+                file = ART .. "blackrock_depths/plugger_spazzring",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            lord_incendius = {
+                file = ART .. "blackrock_depths/lord_incendius",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            warder_stilgiss = {
+                file = ART .. "blackrock_depths/warder_stilgiss",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            watchman_doomgrip = {
+                file = ART .. "blackrock_depths/watchman_doomgrip",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            fineous_darkvire = {
+                file = ART .. "blackrock_depths/fineous_darkvire",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            baelgar = {
+                file = ART .. "blackrock_depths/baelgar",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            general_angerforge = {
+                file = ART .. "blackrock_depths/general_angerforge",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            ambassador_flamelash = {
+                file = ART .. "blackrock_depths/ambassador_flamelash",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            panzor = {
+                file = ART .. "blackrock_depths/panzor",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            the_seven = {
+                file = ART .. "blackrock_depths/the_seven",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            magmus = {
+                file = ART .. "blackrock_depths/magmus",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            dagran_thaurissan = {
+                file = ART .. "blackrock_depths/dagran_thaurissan",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
     drowned_city = {
         -- Originale 1983x793, Banner y 60. Bilder liegen fuer sieben Gestalten
         -- vor, im Bestand steht aber nur Zul'Alai (data/dungeons.lua) - die

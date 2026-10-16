@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.49.1.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Blackrocktiefen sind bebildert.|r Ein Kopfbild und Bilder zu allen 22 Begegnungen in Gefängnistrakt, Schattenschmiede und Kaisersitz – vom Ring des Gesetzes bis zu Imperator Dagran Thaurissan.",
+        },
+    },
+    {
         version = "6.49.0.0",
         date    = "16.10.2026",
         notes   = {

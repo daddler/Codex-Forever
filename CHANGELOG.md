@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.49.1.0] – 2026-10-16
+
+### Neu
+- Artwork Blackrocktiefen: Kopfbild und 22 Begegnungen (Banner y 80, Bosse y 60); Datentest prüft den Rückfall jetzt an Düsterbruch.
+
 ## [6.49.0.0] – 2026-10-16
 
 ### Neu
