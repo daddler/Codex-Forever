@@ -181,6 +181,7 @@ local defaults = {
     -- Ausrichtung der Debuffs ueber der Plakette (Beta-Test 6.3.1.8:
     -- "mittig, rechts, links - Stand jetzt nur links").
     auraAlign = "left",        -- left | center | right
+    pvpMark = true,            -- 6.52.4.0: "PvP" unter Spielern mit PvP-Markierung
 
     -- Questfortschritt links vom Namen ("8/10"), wenn der Gegner zu einer
     -- deiner Quests gehoert - aus dem Tooltip des Spiels, nur draussen.
@@ -358,6 +359,27 @@ local function AlignGameAuras(auras, p)
     NP.gameAlign = ok and ("gesetzt: " .. pt) or ("vom Spiel abgelehnt: " .. tostring(err))
 end
 
+-- 6.52.4.0 (Beta-Test: "Mob gestunnt - rechts an der Leiste nur ganz
+-- leicht angezeigt", /wcui fenster: AurasFrame.CrowdControlListFrame).
+-- Kontrollverlust (Betaeubung, Furcht ...) zeigt das Spiel in einer
+-- eigenen kleinen Liste. Lesen darf WeintCodex sie im Kampf nicht - aber
+-- setzen: gross und links neben die Plakette, wo der Blick hingeht.
+NP.CC_SCALE = 1.8
+NP.ccPlace = "noch nicht versucht"
+function NP.PlaceCC(auras, p)
+    local list = auras and auras.CrowdControlListFrame
+    if type(list) ~= "table" or not list.SetPoint or type(p) ~= "table"
+       or (list.IsProtected and list:IsProtected()) then return false end
+    local ok, err = pcall(function()
+        list:SetScale(NP.CC_SCALE)
+        list:ClearAllPoints()
+        list:SetPoint("RIGHT", p.health or p, "LEFT", -(NP.ELITE_ICON or 16) - 6, 0)
+        list:SetAlpha(1)
+    end)
+    NP.ccPlace = ok and "links neben der Plakette" or ("vom Spiel abgelehnt: " .. tostring(err))
+    return ok
+end
+
 local function ShowGameAuras(uf, auras, p)
     local parts = OtherParts(uf, auras)
     if not parts then return false end
@@ -372,6 +394,7 @@ local function ShowGameAuras(uf, auras, p)
     auras:SetAlpha(1)
     auras:Show()
     AlignGameAuras(auras, p)
+    NP.PlaceCC(auras, p)
     uf:SetAlpha(1)
     inPlace[auras] = true
     return true
@@ -495,8 +518,8 @@ function NP.GameAuraInfo(unit)
         end
     end
     pcall(Walk, auras, 1)
-    return string.format("Symbole des Spiels: %s, %d sichtbare Knöpfe · Ausrichtung %s · Markierung %s",
-        inPlace[auras] and "sichtbar an ihrem Platz" or "ausgeblendet", shown, NP.gameAlign, NP.raidInfo)
+    return string.format("Symbole des Spiels: %s, %d sichtbare Knöpfe · Ausrichtung %s · Kontrollverlust %s · Markierung %s",
+        inPlace[auras] and "sichtbar an ihrem Platz" or "ausgeblendet", shown, NP.gameAlign, NP.ccPlace, NP.raidInfo)
 end
 
 --------------------------------------------------
@@ -1161,10 +1184,36 @@ function NP.EliteFrame(p, unit)
     return kind
 end
 
+-- 6.52.4.0 (Beta-Test: "PvP-Flagging muss auch mit rein, das kann man
+-- noch nicht erkennen"): Spieler mit PvP-Markierung tragen links neben
+-- dem Balken ein rotes "PvP". Nur Spieler - feindliche NPCs sind immer
+-- markiert, da saehe man es ueberall. Gefragt wird der Client
+-- (UnitIsPVP); ein geheimer oder fehlender Wert zeigt nichts.
+function NP.PvPMark(p, unit)
+    local on = S.pvpMark ~= false and _G.UnitIsPVP
+        and K.Bool(_G.UnitIsPlayer and _G.UnitIsPlayer(unit), false)
+        and K.Bool(_G.UnitIsPVP(unit), false)
+    if not on then
+        if type(p.pvp) == "table" then p.pvp:Hide() end
+        return false
+    end
+    if type(p.pvp) ~= "table" then
+        local bar = p.health or p
+        p.pvp = K.NewText(bar, 10, "OVERLAY")
+        p.pvp:SetFont(WeintCodex.Fonts.sansSemi, 10, "OUTLINE")
+        local c = WeintCodex.Colors.red
+        p.pvp:SetTextColor(c[1], c[2], c[3], 1)
+        p.pvp:SetText("PvP")
+        p.pvp:SetPoint("TOPLEFT", bar, "BOTTOMLEFT", 0, -2)
+    end
+    p.pvp:Show()
+    return true
+end
+
 local function FillTexts(p, onlyHealth)
     local unit = p.unit
     if not unit then return end
-    if not onlyHealth then NP.EliteFrame(p, unit) end
+    if not onlyHealth then NP.EliteFrame(p, unit) NP.PvPMark(p, unit) end
     if p._friendly then
         if onlyHealth then return end
         local t = p.texts.top
@@ -1939,7 +1988,7 @@ local UNIT_EVENTS = {
     UNIT_NAME_UPDATE = function(p) FillTexts(p, false) UpdateColor(p) end,
     UNIT_LEVEL = function(p) FillTexts(p, false) end,
     UNIT_CLASSIFICATION_CHANGED = function(p) FillTexts(p, false) UpdateColor(p) end,
-    UNIT_FLAGS = function(p) UpdateColor(p) end,
+    UNIT_FLAGS = function(p) UpdateColor(p) NP.PvPMark(p, p.unit) end,
     UNIT_THREAT_SITUATION_UPDATE = K.Measured("Plaketten: Bedrohung", function(p) UpdateThreatText(p) UpdateColor(p) end),
     UNIT_THREAT_LIST_UPDATE = K.Measured("Plaketten: Bedrohung", function(p) UpdateThreatText(p) UpdateColor(p) end),
 }
@@ -2606,7 +2655,8 @@ K.Register({
                   { type = "toggle", label = "Elite mit + kennzeichnen", key = "eliteMark" })
             B:Row({ type = "toggle", label = "Elite mit goldenem Rahmen", key = "eliteFrame",
                     description = "Rahmen und Drache um die Plakette – gold für Elite, rot für Bosse. Bleibt auch im Kampf." },
-                  { type = "empty" })
+                  { type = "toggle", label = "PvP-Markierung zeigen", key = "pvpMark",
+                    description = "Rotes „PvP“ unter Spielern, die für PvP markiert sind." })
             B:Section("Schlachtzugsmarkierung")
             B:Row({ type = "dropdown", label = "Position", key = "raidMarker", items = {
                         { value = "topright", text = "Oben rechts" },

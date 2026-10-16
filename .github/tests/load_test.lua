@@ -18818,6 +18818,40 @@ do
     Check(ok, "Charakterfenster: Gegenstandsstufe vom Client, keine 0" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.52.4.0: Kontrollverlust gross neben der Plakette, PvP-Markierung, geheimer Name.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local NP, K = WeintCodex.UINameplates, WeintCodex.UIKit
+        local p = CreateFrame("Frame")
+        p.health = CreateFrame("StatusBar", nil, p)
+        local list = CreateFrame("Frame")
+        local sc, pt
+        list.SetScale = function(_, v) sc = v end
+        list.SetPoint = function(_, a, rel, b) pt = { a, rel, b } end
+        assert(NP.PlaceCC({ CrowdControlListFrame = list }, p), "Liste nicht gesetzt")
+        assert(sc == NP.CC_SCALE and pt[1] == "RIGHT" and pt[2] == p.health and pt[3] == "LEFT", "nicht gross links neben der Plakette")
+        assert(NP.PlaceCC({}, p) == false, "ohne Liste trotzdem gesetzt")
+        local oP, oV = G.UnitIsPlayer, G.UnitIsPVP
+        G.UnitIsPlayer = function() return true end
+        G.UnitIsPVP = function() return true end
+        assert(NP.PvPMark(p, "nameplate1") and p.pvp:IsShown(), "PvP-Spieler ohne Markierung")
+        G.UnitIsPVP = function() return false end
+        assert(not NP.PvPMark(p, "nameplate1") and not p.pvp:IsShown(), "Markierung ohne PvP")
+        G.UnitIsPlayer = function() return false end
+        G.UnitIsPVP = function() return true end
+        assert(not NP.PvPMark(p, "nameplate1"), "NPC als PvP markiert")
+        G.UnitIsPlayer, G.UnitIsPVP = oP, oV
+        local f = CreateFrame("Frame")
+        local oPl = K.Plain
+        f.GetDebugName = function() return "geheim" end
+        K.Plain = function(v) if v == "geheim" then return nil end return oPl(v) end
+        assert(K.NameOf(f) == "(ohne Namen)", "geheimer Name verglichen")
+        K.Plain = oPl
+    end)
+    Check(ok, "Plaketten: Kontrollverlust gross, PvP-Markierung, geheimer Name in /wcui fenster" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.52.2.0: Platz "belegt" ohne Namen und Symbol gilt als leer.
 do
     local G = _G

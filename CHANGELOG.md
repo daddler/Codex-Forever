@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.53.0.0] – 2026-10-16
+
+### Neu
+- Plaketten: `AurasFrame.CrowdControlListFrame` (Kontrollverlust, gemessen per `/wcui fenster`) Maßstab 1,8 links neben der Plakette (`NP.PlaceCC`, Stand in `/wcui auren`).
+- Plaketten: „PvP“ unter Spielern mit `UnitIsPVP` (`NP.PvPMark`, Schalter `pvpMark`, an; aktualisiert bei `UNIT_FLAGS`).
+
+### Behoben
+- `K.NameOf`: geheimer Name (Abklingspirale an Plaketten) wurde verglichen – Fehler bei `/wcui fenster`.
+
 ## [6.52.3.0] – 2026-10-16
 
 ### Behoben

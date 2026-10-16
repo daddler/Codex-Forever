@@ -1624,7 +1624,9 @@ local function NameOf(f)
     local ok, n = pcall(function()
         return (f.GetDebugName and f:GetDebugName()) or (f.GetName and f:GetName())
     end)
-    if ok and type(n) == "string" and n ~= "" then return n end
+    -- 6.52.4.0: Namen an Plaketten koennen geheim sein (Vergleich verboten).
+    n = ok and K.Plain(n) or nil
+    if type(n) == "string" and n ~= "" then return n end
     return "(ohne Namen)"
 end
 K.NameOf = NameOf

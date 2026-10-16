@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.53.0.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFBetäubung und Furcht sind an den Plaketten gut zu sehen.|r Das Symbol steht jetzt groß links neben dem Balken statt klein und blass am Rand.",
+            "|cff7C6CFFSpieler mit PvP-Markierung erkennst du sofort.|r Unter ihrer Plakette steht ein rotes „PvP“ – abschaltbar bei den Plaketten.",
+            "|cff7C6CFF„/wcui fenster“ über einer Plakette löst keinen Fehler mehr aus.|r",
+        },
+    },
+    {
         version = "6.52.3.0",
         date    = "16.10.2026",
         notes   = {
