@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.51.1.0] – 2026-10-16
+
+### Behoben
+- Erinnerungen: „Cannot anchor protected frames to regions“ (reminderpick.lua:234). Der sichere Knopf hing am Symbol der Zeile; er steht jetzt an UIParent, Lage aus `GetRect` (`RP.Place`), wie `RA.ArmClick` seit 6.48.3.0.
+
 ## [6.51.0.0] – 2026-10-16
 
 ### Neu

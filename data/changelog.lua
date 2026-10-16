@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.51.1.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFKein Fehler mehr beim Klick-Knopf der Erinnerungen.|r Der Knopf zum Anwenden eines fehlenden Buffs löste beim Erscheinen des Hinweises einen Fehler aus.",
+        },
+    },
+    {
         version = "6.51.0.0",
         date    = "16.10.2026",
         notes   = {

@@ -220,6 +220,27 @@ local function Line(i)
     return b
 end
 
+-- Knopf ueber Symbol bis rechten Rand des Hinweises, in UIParent-Massen.
+function RP.Place(b, icon, banner)
+    b:ClearAllPoints()
+    local il, ib, _, ih = icon:GetRect()
+    local bl, _, bw = banner:GetRect()
+    local us = UIParent:GetEffectiveScale() or 1
+    local is = (icon.GetEffectiveScale and icon:GetEffectiveScale()) or banner:GetEffectiveScale() or 1
+    local bs = banner:GetEffectiveScale() or 1
+    if type(il) == "number" and type(ib) == "number" and type(ih) == "number"
+       and type(bl) == "number" and type(bw) == "number" and us > 0 then
+        local fi, fb = is / us, bs / us
+        local left, bottom = il * fi - 4, ib * fi - 3
+        local right = (bl + bw) * fb
+        b:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", left, bottom)
+        b:SetSize(math.max(1, right - left), ih * fi + 6)
+    else
+        b:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+        b:SetSize(1, 1)
+    end
+end
+
 -- Von R.UpdateBanner: Knoepfe passend zu den sichtbaren Zeilen.
 function RP.Sync(banner, list, n)
     if Locked() then return end
@@ -230,10 +251,11 @@ function RP.Sync(banner, list, n)
         if pick and pick.items and #pick.items > 0 then
             local b = Line(i)
             local row = banner.lines[i]
-            b:ClearAllPoints()
-            b:SetPoint("TOPLEFT", row.icon, "TOPLEFT", -4, 3)
-            b:SetPoint("BOTTOMLEFT", row.icon, "BOTTOMLEFT", -4, -3)
-            b:SetPoint("RIGHT", banner, "RIGHT", 0, 0)
+            -- 6.51.1.0 (Fehlerbericht: "Cannot anchor protected frames to
+            -- regions"): ein geschuetzter Knopf darf nicht an einem Bild
+            -- haengen - und an einem Rahmen machte er diesen geschuetzt.
+            -- Er steht an UIParent, Lage einmal abgelesen (wie RA.ArmClick).
+            RP.Place(b, row.icon, banner)
             b._pick = pick
             if #pick.items == 1 then
                 b._single = pick.items[1]
