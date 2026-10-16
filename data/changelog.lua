@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.52.3.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFAlchemie heißt wieder Alchemie.|r Die Berufsseite schrieb „Alchimie“, so wie das Spiel den Zauber nennt.",
+        },
+    },
+    {
         version = "6.52.2.0",
         date    = "16.10.2026",
         notes   = {

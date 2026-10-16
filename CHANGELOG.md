@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.52.3.0] – 2026-10-16
+
+### Behoben
+- Berufe: auf deDE der eigene Name aus `data/professions.lua` statt des Zaubernamens (`C_Spell.GetSpellName(2259)` liefert „Alchimie“).
+
 ## [6.52.2.0] – 2026-10-16
 
 ### Behoben

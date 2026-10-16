@@ -89,6 +89,10 @@ PRO.SpellIndex = SpellIndex
 function PRO.ProfName(key)
     local p = byKey[key]
     if not p then return key end
+    -- 6.52.3.0 (Beta-Test: "Alchimie ist falsch, muss Alchemie heissen"):
+    -- der deutsche Client nennt den Zauber 2259 "Alchimie". Auf Deutsch
+    -- gilt der eigene Name; der Zauber nur fuer andere Sprachen.
+    if _G.GetLocale and _G.GetLocale() == "deDE" and p.name then return p.name end
     local cs = _G.C_Spell
     if cs and cs.GetSpellName then
         local ok, n = pcall(cs.GetSpellName, p.spell)
