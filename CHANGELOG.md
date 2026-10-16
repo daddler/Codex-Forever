@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.53.1.0] – 2026-10-16
+
+### Behoben
+- Aktionsleisten, roter Punkt: Exorzismus (879) und Heiliger Zorn (2812) nur auf Untote/Dämonen (`AB.CC_RULES`, Art `classic`).
+
 ## [6.53.0.0] – 2026-10-16
 
 ### Neu

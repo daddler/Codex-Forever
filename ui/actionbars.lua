@@ -1154,6 +1154,10 @@ AB.CC_RULES = {
     [6770] = { Humanoid = true },                                 -- Kopfnuss
     [1513] = { Beast = true },                                    -- Wildtier aengstigen
     [2878] = { Undead = true },                                   -- Untote vertreiben
+    -- 6.53.1.0 (Beta-Test: "Exorzismus vom Paladin ist nicht drin"):
+    -- keine Kontrolle, aber dieselbe Frage - wirkt nur auf Untote und Daemonen.
+    [879]  = { Undead = true, Demon = true },                     -- Exorzismus
+    [2812] = { Undead = true, Demon = true },                     -- Heiliger Zorn
 }
 -- Kreaturenarten des Clients (deutsch und englisch) -> Schluessel.
 AB.CREATURE = {
@@ -1300,7 +1304,7 @@ K.Register({
                     description = "Die Symbole auf einer Kachel, ohne Rahmen und Flächen des Spiels." },
                   { type = "empty" })
             B:Row({ type = "toggle", label = "Roter Punkt: Kontrolle wirkt nicht", key = "ccDot",
-                    description = "Oben links am Knopf, wenn Verwandlung, Kopfnuss, Fesseln, Verbannen & Co. beim Ziel nicht wirken – etwa Verwandlung auf Untote. Regeln wie in Classic." },
+                    description = "Oben links am Knopf, wenn Verwandlung, Kopfnuss, Fesseln, Verbannen, Exorzismus & Co. beim Ziel nicht wirken – etwa Verwandlung auf Untote. Regeln wie in Classic." },
                   { type = "empty" })
             B:Row({ type = "color", label = "Randfarbe", key = "borderColor",
                     disabled = function() return not K.Get(KEY, "border") end },

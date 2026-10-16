@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.53.1.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDer rote Punkt kennt jetzt auch Exorzismus und Heiligen Zorn.|r Auf alles außer Untote und Dämonen zeigt der Knopf, dass der Zauber dort nicht wirkt.",
+        },
+    },
+    {
         version = "6.53.0.0",
         date    = "16.10.2026",
         notes   = {
