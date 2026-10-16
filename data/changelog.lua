@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.51.0.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Knöpfe an der Minikarte tragen das WeintCodex-Design.|r Aufspüren, Kalender und Post sind dunkle Kacheln mit schlichtem Zeichen statt goldener Knöpfe; eine offene Kalendereinladung zeigt ein Punkt. Abschaltbar unter Minikarte → Bedienung.",
+        },
+    },
+    {
         version = "6.50.2.0",
         date    = "16.10.2026",
         notes   = {

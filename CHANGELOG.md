@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.51.0.0] – 2026-10-16
+
+### Neu
+- Minikarte: Aufspüren, Kalender und Post als Kachel mit eigenen Zeichen (`icon_search`/`icon_calendar`/`icon_mail` aus `make_ui_media.py`), Bilder des Spiels stumm, Klick bleibt beim Spiel. Punkt im Akzent bei offener Einladung. Schalter `skinButtons` (an).
+
 ## [6.50.2.0] – 2026-10-16
 
 ### Neu

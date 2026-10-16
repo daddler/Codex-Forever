@@ -685,6 +685,36 @@ def icon_hammer(x, y):
     return handle or head
 
 
+def icon_search(x, y):
+    # Lupe: Ring oben links, Griff nach unten rechts (y waechst nach unten).
+    r = math.hypot(x + 0.16, y + 0.16)
+    return abs(r - 0.44) <= 0.11 or _seg(x, y, 0.20, 0.20, 0.70, 0.70, 0.13)
+
+
+def icon_calendar(x, y):
+    # Kalenderblatt: Rahmen, dicke Kopfleiste, zwei Ringe, Punkte.
+    if not (-0.74 <= x <= 0.74 and -0.58 <= y <= 0.76):
+        return _seg(x, y, -0.36, -0.78, -0.36, -0.46, 0.09) or _seg(x, y, 0.36, -0.78, 0.36, -0.46, 0.09)
+    if y <= -0.22:
+        return True
+    if x <= -0.62 or x >= 0.62 or y >= 0.64:
+        return True
+    for cx in (-0.34, 0.0, 0.34):
+        for cy in (0.06, 0.38):
+            if abs(x - cx) <= 0.09 and abs(y - cy) <= 0.09:
+                return True
+    return False
+
+
+def icon_mail(x, y):
+    # Briefumschlag: Rahmen und Klappe.
+    if not (-0.80 <= x <= 0.80 and -0.54 <= y <= 0.54):
+        return False
+    if x <= -0.68 or x >= 0.68 or y <= -0.42 or y >= 0.42:
+        return True
+    return _seg(x, y, -0.74, -0.48, 0.0, 0.10, LW) or _seg(x, y, 0.0, 0.10, 0.74, -0.48, LW)
+
+
 def make_home_media():
     os.makedirs(OUT, exist_ok=True)
     files = []
@@ -695,7 +725,9 @@ def make_home_media():
     files.append(("diamond", 32, render_diamond(32)))
     files.append(("stripes", 32, render_stripes(32, 16, 8)))
     for name, fn in (("icon_book", icon_book), ("icon_quest", icon_quest),
-                     ("icon_gate", icon_gate), ("icon_hammer", icon_hammer)):
+                     ("icon_gate", icon_gate), ("icon_hammer", icon_hammer),
+                     ("icon_search", icon_search), ("icon_calendar", icon_calendar),
+                     ("icon_mail", icon_mail)):
         files.append((name, ICON, render_shape(ICON, fn)))
     for name, size, pixels in files:
         target = os.path.join(OUT, name + ".tga")

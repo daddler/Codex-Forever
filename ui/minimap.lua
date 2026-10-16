@@ -61,6 +61,10 @@ local defaults = {
     -- Alle Addon-Knoepfe hinter einem Knopf unten links (6.3.1.1).
     addonBag    = true,
     addonBagClose = true,   -- 6.25.0.0: Liste nach dem Klick auf ein Addon zu
+    -- 6.51.0.0 (Wunsch: "Die Icons bei der Minimap muessen auch im
+    -- WeintCodex Design"): Aufspueren, Kalender und Post als Kachel mit
+    -- eigenem Zeichen statt der goldenen Knoepfe des Spiels.
+    skinButtons = true,
 }
 
 local function Opt(k) return K.Get(KEY, k) end
@@ -416,6 +420,7 @@ function MM.LayoutButtons()
         tb:SetPoint(corner, mm, corner, x, y)
     end
     MM.LayoutBag()
+    MM.SkinButtons()
     if not Opt("buttonColumn") then
         laying = false
         return
@@ -458,6 +463,124 @@ function MM.LayoutButtons()
         depth = math.max(depth, thick)
     end
     laying = false
+end
+
+--------------------------------------------------
+-- Knoepfe im Codex-Stil (6.51.0.0)
+--------------------------------------------------
+-- Die Knoepfe des Spiels bleiben (Klick, Menue, Tooltip gehoeren ihm);
+-- nur ihre Bilder werden unsichtbar, darueber liegt eine Kachel wie der
+-- Sammelknopf mit eigenem Zeichen (media/ui/icon_*.tga, aus
+-- make_ui_media.py - kein Spielmaterial). Der Kalender behaelt seine
+-- Nachricht: steht eine Einladung offen (AddTexture des Spiels sichtbar),
+-- leuchtet ein Punkt im Akzent.
+
+MM.SKIN_SIZE = 22
+local skins = {}
+MM.skins = skins
+
+local function SkinTargets()
+    local cl = _G.MinimapCluster
+    local ind = type(cl) == "table" and cl.IndicatorFrame or nil
+    return {
+        { f = type(cl) == "table" and cl.Tracking or _G.MiniMapTracking, icon = "icon_search" },
+        -- Ist der Kalender zugleich die Tageszeit (aeltere Clients), bleibt
+        -- er, wie er ist - die Sonne/der Mond ist ein Bild mit Aussage.
+        { f = (_G.GameTimeFrame ~= MM.TimeButton()) and _G.GameTimeFrame or nil, icon = "icon_calendar", invite = true },
+        { f = (type(ind) == "table" and ind.MailFrame) or _G.MiniMapMailFrame, icon = "icon_mail" },
+    }
+end
+
+-- Alle Bilder des Knopfs und seiner Kinder unsichtbar - ausser unseren.
+local function MuteRegions(f, own, depth)
+    if type(f) ~= "table" or depth > 2 then return end
+    if f.GetRegions then
+        for _, r in ipairs({ f:GetRegions() }) do
+            if not own[r] and r.GetObjectType and r:GetObjectType() == "Texture" and r.SetAlpha then
+                r:SetAlpha(0)
+            end
+        end
+    end
+    if f.GetChildren then
+        for _, c in ipairs({ f:GetChildren() }) do
+            if not own[c] then MuteRegions(c, own, depth + 1) end
+        end
+    end
+end
+
+local function Tint(sk, hot)
+    local col = hot and C.textBright or C.textMuted
+    sk.glyph:SetVertexColor(col[1], col[2], col[3], 1)
+end
+
+function MM.SkinButton(f, icon, invite)
+    if type(f) ~= "table" or not f.CreateTexture or (f.IsForbidden and f:IsForbidden()) then return nil end
+    local sk = skins[f]
+    if not sk then
+        sk = CreateFrame("Frame", nil, f)
+        sk:SetSize(MM.SKIN_SIZE, MM.SKIN_SIZE)
+        sk:SetPoint("CENTER", f, "CENTER", 0, 0)
+        sk:EnableMouse(false)
+        sk.kachel = K.Kachel(sk, { shadow = 4 })
+        sk.glyph = sk:CreateTexture(nil, "ARTWORK")
+        sk.glyph:SetSize(14, 14)
+        sk.glyph:SetPoint("CENTER")
+        sk.glyph:SetTexture(K.MEDIA .. icon)
+        sk.own = { [sk] = true }
+        sk.inviteDot = false
+        if invite then
+            sk.inviteDot = sk:CreateTexture(nil, "OVERLAY")
+            sk.inviteDot:SetSize(6, 6)
+            sk.inviteDot:SetPoint("TOPRIGHT", sk, "TOPRIGHT", 1, 1)
+            sk.inviteDot:SetTexture(K.MEDIA .. "disc")
+            sk.inviteDot:SetVertexColor(C.accent[1], C.accent[2], C.accent[3], 1)
+            sk.inviteDot:Hide()
+            local add = f.AddTexture
+            if type(add) == "table" and _G.hooksecurefunc then
+                local function Sync() sk.inviteDot:SetShown(sk:IsShown() and add:IsShown() and true or false) end
+                pcall(_G.hooksecurefunc, add, "Show", Sync)
+                pcall(_G.hooksecurefunc, add, "Hide", Sync)
+                pcall(_G.hooksecurefunc, add, "SetShown", Sync)
+            end
+        end
+        skins[f] = sk
+        Tint(sk, false)
+        if f.HookScript then
+            pcall(f.HookScript, f, "OnEnter", function() if sk:IsShown() then Tint(sk, true) end end)
+            pcall(f.HookScript, f, "OnLeave", function() Tint(sk, false) end)
+        end
+        -- Das Spiel tauscht seine Bilder bei Maus und Klick (SetAtlas) -
+        -- danach wieder stumm.
+        if _G.hooksecurefunc then
+            local function Again() if sk:IsShown() then MM.Later(MM.SkinButtons) end end
+            for _, r in ipairs({ f:GetRegions() }) do
+                if r.GetObjectType and r:GetObjectType() == "Texture" then
+                    pcall(_G.hooksecurefunc, r, "SetAlpha", function(self, a)
+                        if sk:IsShown() and K.Plain(a) ~= 0 then Again() end
+                    end)
+                end
+            end
+        end
+    end
+    if sk.inviteDot then
+        local add = f.AddTexture
+        sk.inviteDot:SetShown(type(add) == "table" and add.IsShown and add:IsShown() and true or false)
+    end
+    sk:Show()
+    MuteRegions(f, sk.own, 0)
+    return sk
+end
+
+function MM.SkinButtons()
+    local on = Opt("skinButtons")
+    for _, t in ipairs(SkinTargets()) do
+        if on then
+            MM.SkinButton(t.f, t.icon, t.invite)
+        elseif skins[t.f] then
+            -- Aus: Kachel weg; die Bilder des Spiels kommen mit dem Neuladen.
+            skins[t.f]:Hide()
+        end
+    end
 end
 
 MM.SIDES = { LEFT = true, RIGHT = true, TOP = true, BOTTOM = true }
@@ -870,7 +993,8 @@ K.Register({
                         { value = "TOP",    text = "Darüber" },
                         { value = "BOTTOM", text = "Darunter" } },
                     disabled = function() return not K.Get(KEY, "buttonColumn") end },
-                  { type = "empty" })
+                  { type = "toggle", label = "Knöpfe im WeintCodex-Stil", key = "skinButtons", reload = true,
+                    description = "Aufspüren, Kalender und Post als dunkle Kachel mit eigenem Zeichen." })
             B:GameEditMode("Wo die Minikarte steht, stellst du im Bearbeitungsmodus des Spiels ein.")
             -- 6.10.1.0: Randfarbe, Lage der Texte und Kleinigkeiten zugeklappt.
             B:Advanced()

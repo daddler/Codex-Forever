@@ -19002,6 +19002,45 @@ do
     Check(ok, "Fehler: nur eigene, weitergereicht, gezaehlt, Bericht zum Kopieren" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.51.0.0: Knoepfe an der Minikarte im Codex-Stil.
+do
+    local ok, err = pcall(function()
+        local MM = WeintCodex.UIMinimap
+        local cl = _G.MinimapCluster
+        local tr = CreateFrame("Button", nil, cl)
+        local gold = tr:CreateTexture()
+        gold:SetAlpha(1)
+        gold.GetObjectType = function() return "Texture" end
+        tr.GetRegions = function() return gold end
+        local oT, oC = cl.Tracking, _G.GameTimeFrame
+        cl.Tracking = tr
+        local cal = CreateFrame("Button", "GameTimeFrameTest", cl)
+        cal.AddTexture = cal:CreateTexture()
+        cal.AddTexture:Hide()
+        _G.GameTimeFrame = cal
+        local oD, oH = cl.DielFrame, _G.hooksecurefunc
+        cl.DielFrame = CreateFrame("Frame", nil, cl)   -- Tageszeit ist nicht der Kalender
+        _G.hooksecurefunc = function(obj, name, fn)
+            local orig = obj[name]
+            obj[name] = function(...) local r = orig(...) fn(...) return r end
+        end
+        K.Set("minimap", "skinButtons", true)
+        MM.SkinButtons()
+        assert(MM.skins[tr] and MM.skins[tr]:IsShown(), "Verfolgung ohne Kachel")
+        assert(gold:GetAlpha() == 0, "Bild des Spiels bleibt sichtbar")
+        local sk = MM.skins[cal]
+        assert(sk and sk.inviteDot and not sk.inviteDot:IsShown(), "Kalender ohne Kachel/Punkt")
+        cal.AddTexture:Show()
+        assert(sk.inviteDot:IsShown(), "offene Einladung ohne Punkt")
+        K.Set("minimap", "skinButtons", false)
+        MM.SkinButtons()
+        assert(not MM.skins[tr]:IsShown(), "Kachel bleibt nach dem Ausschalten")
+        K.Set("minimap", "skinButtons", nil)
+        cl.Tracking, _G.GameTimeFrame, cl.DielFrame, _G.hooksecurefunc = oT, oC, oD, oH
+    end)
+    Check(ok, "Minikarte: Knoepfe im Codex-Stil, Punkt bei Einladung" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.43.0.0: Glanz - Schimmer, Gleiten, Spur an jedem angemeldeten Balken.
 do
     local G = _G
