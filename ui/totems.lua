@@ -44,6 +44,10 @@ function TT.Info(slot)
     return true, K.Plain(name), finish, K.Plain(icon)
 end
 
+local function Locked()
+    return _G.InCombatLockdown and _G.InCombatLockdown() and true or false
+end
+
 local function Left(b)
     if not b._finish or not _G.GetTime then return "" end
     local now = K.Plain(_G.GetTime())
@@ -68,6 +72,7 @@ function TT.Secret(b)
     b.time:SetText("")
     pcall(b.icon.SetTexture, b.icon, icon)
     if type(b.cd) == "table" and b.cd.SetCooldown then pcall(b.cd.SetCooldown, b.cd, start, duration) end
+    if not Locked() then b:Show() end
     if b.SetAlphaFromBoolean then
         b:SetAlphaFromBoolean(have, 1, 0)
     else
@@ -76,6 +81,23 @@ function TT.Secret(b)
         b:SetAlpha(1)
     end
     return true
+end
+
+-- 6.51.3.0 (Beta-Test: "Unter dem Spielerfenster ist ohne Totem immer
+-- noch ein Rechteck - transparent, aber ich sehe es"): Alpha 0 allein
+-- reichte nicht. Ausserhalb des Kampfes wird ein leerer Platz versteckt
+-- (das darf man mit geschuetzten Knoepfen dann); nur im Kampf bleibt er
+-- stehen, unsichtbar, damit ein Totem dort erscheinen kann. Vor dem Kampf
+-- (PLAYER_REGEN_DISABLED kommt vor der Sperre) stehen alle bereit.
+function TT.Visible(b, on)
+    if not Locked() then
+        b:SetShown(on)
+    end
+    b:SetAlpha(on and 1 or 0)
+    if not on then
+        b.icon:SetTexture(nil)
+        if type(b.cd) == "table" and b.cd.Clear then b.cd:Clear() end
+    end
 end
 
 function TT.Update()
@@ -88,10 +110,11 @@ function TT.Update()
             b.icon:SetTexture(icon)
             b._finish, b._name = finish, name
             b.time:SetText(Left(b))
-            b:SetAlpha(1)
+            TT.Visible(b, true)
         else
             b._finish, b._name = nil, nil
-            b:SetAlpha(0)
+            b.time:SetText("")
+            TT.Visible(b, false)
         end
     end
 end
@@ -134,6 +157,7 @@ local function Build(anchor)
         end)
         b:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
         b:SetAlpha(0)
+        b:Hide()
         buttons[i] = b
     end
     return true
@@ -161,7 +185,15 @@ function TT.Enable()
     local ev = CreateFrame("Frame")
     pcall(ev.RegisterEvent, ev, "PLAYER_TOTEM_UPDATE")
     pcall(ev.RegisterEvent, ev, "PLAYER_ENTERING_WORLD")
-    ev:SetScript("OnEvent", function() TT.Update() end)
+    pcall(ev.RegisterEvent, ev, "PLAYER_REGEN_DISABLED")
+    pcall(ev.RegisterEvent, ev, "PLAYER_REGEN_ENABLED")
+    ev:SetScript("OnEvent", function(_, event)
+        if event == "PLAYER_REGEN_DISABLED" then
+            -- Gleich gesperrt: alle Plaetze stehen, leere unsichtbar.
+            for _, b in ipairs(buttons) do b:Show() end
+        end
+        TT.Update()
+    end)
     TT.events = ev
     ticker:Show()
     TT.Update()

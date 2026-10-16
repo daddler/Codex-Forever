@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.51.3.0] – 2026-10-16
+
+### Behoben
+- Totems: leerer Platz außerhalb des Kampfes `Hide()` statt nur Alpha 0 (`TT.Visible`), Symbol und Spirale geleert; vor dem Kampf (`PLAYER_REGEN_DISABLED`) stehen alle Plätze unsichtbar bereit, danach wieder versteckt.
+
 ## [6.51.2.0] – 2026-10-16
 
 ### Geändert

@@ -18772,6 +18772,28 @@ do
     Check(ok, "Totems im Kampf: geheime Werte ans Spiel, Knopf bleibt da" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.51.3.0: leerer Totemplatz ausserhalb des Kampfes versteckt, nicht nur Alpha 0.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local TT = WeintCodex.UITotems
+        local b = CreateFrame("Button")
+        b.icon = b:CreateTexture()
+        local oL = G.InCombatLockdown
+        G.InCombatLockdown = function() return false end
+        b:Show()
+        TT.Visible(b, false)
+        assert(not b:IsShown(), "leerer Platz ausserhalb des Kampfes noch da")
+        TT.Visible(b, true)
+        assert(b:IsShown(), "Totem nicht gezeigt")
+        G.InCombatLockdown = function() return true end
+        TT.Visible(b, false)
+        assert(b:IsShown(), "im Kampf versteckt (geschuetzt, verboten)")
+        G.InCombatLockdown = oL
+    end)
+    Check(ok, "Totems: leerer Platz ausserhalb des Kampfes versteckt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.27.0.7: Flüstern-Symbol einmal zurueck an die Minikarte.
 do
     local ok, err = pcall(function()

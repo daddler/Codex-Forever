@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.51.3.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFKein leeres Kästchen mehr unter dem Spielerrahmen.|r Ohne gesetztes Totem verschwinden die Totemplätze außerhalb des Kampfes ganz.",
+        },
+    },
+    {
         version = "6.51.2.0",
         date    = "16.10.2026",
         notes   = {
