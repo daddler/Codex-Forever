@@ -538,6 +538,178 @@ WeintCodex.Artworks = {
         },
     },
 
+    uldaman = {
+        -- Originale 1983x793, Banner y 80, Bosse y 60, 512x128 (siehe make_artwork.py).
+        header = {
+            file = ART .. "uldaman/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            revelosh = {
+                file = ART .. "uldaman/revelosh",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            the_lost_dwarves = {
+                file = ART .. "uldaman/the_lost_dwarves",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            ironaya = {
+                file = ART .. "uldaman/ironaya",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            ancient_stone_keeper = {
+                file = ART .. "uldaman/ancient_stone_keeper",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            galgann = {
+                file = ART .. "uldaman/galgann",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            grimlok = {
+                file = ART .. "uldaman/grimlok",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            archaedas = {
+                file = ART .. "uldaman/archaedas",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
+    zulfarrak = {
+        -- Originale 1983x793, Banner y 80, Bosse y 60, 512x128 (siehe make_artwork.py).
+        header = {
+            file = ART .. "zulfarrak/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            antusul = {
+                file = ART .. "zulfarrak/antusul",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            theka = {
+                file = ART .. "zulfarrak/theka",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            zumrah = {
+                file = ART .. "zulfarrak/zumrah",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            sergeant_bly = {
+                file = ART .. "zulfarrak/sergeant_bly",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            nekrum = {
+                file = ART .. "zulfarrak/nekrum",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            sezzziz = {
+                file = ART .. "zulfarrak/sezzziz",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            ukorz = {
+                file = ART .. "zulfarrak/ukorz",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            gahzrilla = {
+                file = ART .. "zulfarrak/gahzrilla",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
+    maraudon = {
+        -- Originale 1983x793, Banner y 80, Bosse y 60, 512x128 (siehe make_artwork.py).
+        header = {
+            file = ART .. "maraudon/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            noxxion = {
+                file = ART .. "maraudon/noxxion",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            razorlash = {
+                file = ART .. "maraudon/razorlash",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            lord_vyletongue = {
+                file = ART .. "maraudon/lord_vyletongue",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            meshlok = {
+                file = ART .. "maraudon/meshlok",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            tinkerer_gizlock = {
+                file = ART .. "maraudon/tinkerer_gizlock",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            celebras = {
+                file = ART .. "maraudon/celebras",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            landslide = {
+                file = ART .. "maraudon/landslide",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            rotgrip = {
+                file = ART .. "maraudon/rotgrip",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            princess_theradras = {
+                file = ART .. "maraudon/princess_theradras",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
+    sunken_temple = {
+        -- Originale 1983x793, Banner y 80, Bosse y 60, 512x128 (siehe make_artwork.py).
+        header = {
+            file = ART .. "sunken_temple/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            atalalarion = {
+                file = ART .. "sunken_temple/atalalarion",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            jammalan = {
+                file = ART .. "sunken_temple/jammalan",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            ogom = {
+                file = ART .. "sunken_temple/ogom",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            dreamscythe = {
+                file = ART .. "sunken_temple/dreamscythe",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            weaver = {
+                file = ART .. "sunken_temple/weaver",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            morphaz = {
+                file = ART .. "sunken_temple/morphaz",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            hazzas = {
+                file = ART .. "sunken_temple/hazzas",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            eranikus = {
+                file = ART .. "sunken_temple/eranikus",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            avatar_of_hakkar = {
+                file = ART .. "sunken_temple/avatar_of_hakkar",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
     drowned_city = {
         -- Originale 1983x793, Banner y 60. Bilder liegen fuer sieben Gestalten
         -- vor, im Bestand steht aber nur Zul'Alai (data/dungeons.lua) - die

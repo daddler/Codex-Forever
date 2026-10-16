@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.49.0.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFVier weitere Dungeons bebildert.|r Uldaman, Zul'Farrak, Maraudon und der Tempel von Atal'Hakkar haben jetzt ein eigenes Kopfbild und Bilder zu jedem Boss – auch zu Gahz'rilla, Atal'alarion und dem Avatar von Hakkar.",
+        },
+    },
+    {
         version = "6.48.3.0",
         date    = "16.10.2026",
         notes   = {

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.49.0.0] – 2026-10-16
+
+### Neu
+- Artwork für Uldaman (7 Bosse), Zul'Farrak (8), Maraudon (9) und Tempel von Atal'Hakkar (9), je Kopfbild; Ausschnitte in `make_artwork.py` (Banner y 80, Bosse y 60), Einträge in `data/artwork.lua`. Datentest prüft den Rückfall jetzt an Blackrocktiefen.
+
 ## [6.48.3.0] – 2026-10-16
 
 ### Behoben

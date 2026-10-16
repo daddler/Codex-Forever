@@ -850,11 +850,11 @@ for dungeonId, entry in pairs(WeintCodex.Artworks or {}) do
     end
 end
 
--- Kein Soll. Bebildert ist, wofuer es Material gibt (sechs Dungeons von
+-- Kein Soll. Bebildert ist, wofuer es Material gibt (einige Dungeons von
 -- neunundzwanzig); alle anderen zeichnen sich wie vorher. Geprueft
 -- wird nur, dass die Zugriffsfunktionen fuer den unbebilderten Fall
 -- nil liefern - das IST der Rueckfall.
-Check(WeintCodex.Art.Dungeon("maraudon") == nil,
+Check(WeintCodex.Art.Dungeon("blackrock_depths") == nil,
     "ein Dungeon ohne Artwork liefert nil und keine leere Tabelle")
 Check(WeintCodex.Art.Boss("hall_of_thanes", "gibtesnicht") == nil,
     "ein Boss ohne Artwork liefert nil")
