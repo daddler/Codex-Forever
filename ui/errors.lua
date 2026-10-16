@@ -78,7 +78,7 @@ local function Now()
 end
 
 -- Einen Fehler aufnehmen. kind: "lua" oder "blocked". Liefert den Eintrag.
-function ER.Record(kind, msg, stack)
+function ER.Record(kind, msg, stack, extra)
     local list = Store() or session
     msg = tostring(msg or "?")
     if #msg > ER.MAX_MSG then msg = msg:sub(1, ER.MAX_MSG) .. " …" end
@@ -90,7 +90,9 @@ function ER.Record(kind, msg, stack)
         e.last = Now()
         e.version = WeintCodex.Version
     else
-        e = { key = key, kind = kind, msg = msg, stack = ER.Trim(stack), count = 1,
+        local st = ER.Trim(stack)
+        if type(extra) == "string" and extra ~= "" then st = st .. "\n" .. extra end
+        e = { key = key, kind = kind, msg = msg, stack = st, count = 1,
               first = Now(), last = Now(), version = WeintCodex.Version }
         table.insert(list, 1, e)
         while #list > ER.MAX do table.remove(list) end
@@ -210,6 +212,20 @@ end
 
 ER.Hook()
 
+-- 6.51.2.0 (Fehlerbericht: "Verboten: UseContainerItem()" beim Klick in
+-- die Tasche): ein Gegenstand aus der Tasche gesperrt heisst, ein Feld am
+-- Taschenknopf ist "tainted". Welches, sagt nur der Taint-Bericht der
+-- Taschen - er haengt gleich mit am Fehler, im Augenblick der Sperre.
+function ER.Extra(func)
+    local f = tostring(K.Plain(func) or "")
+    if not (f:find("ContainerItem", 1, true) or f:find("UseItem", 1, true)) then return nil end
+    local BG = WeintCodex.UIBags
+    if not (BG and BG.TaintReport) then return nil end
+    local ok, lines = pcall(BG.TaintReport)
+    if not ok or type(lines) ~= "table" then return nil end
+    return "--- Taschen, Taint-Bericht ---\n" .. table.concat(lines, "\n")
+end
+
 local ev = CreateFrame("Frame")
 for _, e in ipairs({ "PLAYER_LOGIN", "ADDON_ACTION_BLOCKED", "ADDON_ACTION_FORBIDDEN" }) do
     pcall(ev.RegisterEvent, ev, e)
@@ -224,6 +240,6 @@ ev:SetScript("OnEvent", function(_, event, addon, func)
     if addon ~= "WeintCodex" then return end
     local msg = (event == "ADDON_ACTION_FORBIDDEN" and "Verboten: " or "Blockiert: ") .. tostring(func or "?")
     local stack = _G.debugstack and _G.debugstack(2) or ""
-    ER.Announce(ER.Record("blocked", msg, stack))
+    ER.Announce(ER.Record("blocked", msg, stack, ER.Extra(func)))
 end)
 ER.events = ev

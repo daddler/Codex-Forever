@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.51.2.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFFehlerberichte zu gesperrten Taschengegenständen sind ausführlicher.|r Wird ein Gegenstand aus der Tasche vom Spiel gesperrt, hängt der Bericht gleich an, woran es liegt – bitte einfach mitschicken.",
+        },
+    },
+    {
         version = "6.51.1.0",
         date    = "16.10.2026",
         notes   = {

@@ -19002,6 +19002,24 @@ do
     Check(ok, "Fehler: nur eigene, weitergereicht, gezaehlt, Bericht zum Kopieren" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.51.2.0: gesperrter Taschengegenstand bringt den Taint-Bericht mit.
+do
+    local ok, err = pcall(function()
+        local ER = WeintCodex.UIErrors
+        local BG = WeintCodex.UIBags
+        local o = BG.TaintReport
+        BG.TaintReport = function() return { "Knopf.count  (WeintCodex)" } end
+        local x = ER.Extra("UseContainerItem()")
+        assert(x and x:find("Knopf.count", 1, true), "Taint-Bericht fehlt am Fehler")
+        assert(ER.Extra("CastSpellByName()") == nil, "Taint-Bericht an fremder Sperre")
+        local e = ER.Record("blocked", "Verboten: UseContainerItem() test", "", x)
+        assert(e.stack:find("Taint-Bericht", 1, true), "Bericht nicht im Eintrag")
+        BG.TaintReport = o
+        ER.Clear()
+    end)
+    Check(ok, "Fehler: gesperrter Taschengegenstand mit Taint-Bericht" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.51.0.0: Knoepfe an der Minikarte im Codex-Stil.
 do
     local ok, err = pcall(function()

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.51.2.0] – 2026-10-16
+
+### Geändert
+- Fehlerfänger: Sperre von `UseContainerItem`/`UseItem` hängt den Taint-Bericht der Taschen (`BG.TaintReport`) an den Eintrag (`ER.Extra`). Anlass: Fehlerbericht „Verboten: UseContainerItem()“ aus `ContainerFrameItemButton_OnClick`, Ursache noch nicht gefunden.
+
 ## [6.51.1.0] – 2026-10-16
 
 ### Behoben
