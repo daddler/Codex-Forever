@@ -372,17 +372,22 @@ function Builder:Note(text)
     fs:SetTextColor(unpack(C.textMuted))
     fs:SetText(text)
     local h = TextHeight(fs, 14) + 16
-    local card = self.parent:CreateTexture(nil, "BACKGROUND")
+    -- 6.48.0.0: eine runde Karte; die Kante links als schmale Pille innen.
+    local card = CreateFrame("Frame", nil, self.parent)
     card:SetPoint("TOPLEFT", self.parent, "TOPLEFT", 0, self.y)
     card:SetSize(CONTENT_W, h)
+    card:SetFrameLevel(math.max(0, (self.parent:GetFrameLevel() or 1) - 1))
+    local cbg = card:CreateTexture(nil, "BACKGROUND")
+    cbg:SetAllPoints(card)
     local s1 = C.surface1
-    card:SetColorTexture(s1[1], s1[2], s1[3], 0.6)
-    local rule = self.parent:CreateTexture(nil, "ARTWORK")
-    rule:SetPoint("TOPLEFT", card, "TOPLEFT", 0, 0)
-    rule:SetPoint("BOTTOMLEFT", card, "BOTTOMLEFT", 0, 0)
+    cbg:SetColorTexture(s1[1], s1[2], s1[3], 1)
+    WeintCodex.CutCorners(card, 10, "bgDark")
+    local rule = card:CreateTexture(nil, "ARTWORK")
+    rule:SetPoint("TOPLEFT", card, "TOPLEFT", 4, -8)
+    rule:SetPoint("BOTTOMLEFT", card, "BOTTOMLEFT", 4, 8)
     rule:SetWidth(2)
     local a = C.accent
-    rule:SetColorTexture(a[1], a[2], a[3], 0.7)
+    rule:SetColorTexture(a[1], a[2], a[3], 0.8)
     self.y = self.y - h - 10
 end
 
@@ -484,10 +489,11 @@ function Builder:Cell(spec)
         eb:SetAutoFocus(false)
         if eb.SetTextInsets then eb:SetTextInsets(8, 8, 0, 0) end
         K.SetFont(eb, 12)
+        -- 6.48.0.0: runde Felder wie Knoepfe und Listen - Flaeche statt Strich.
         local bg = eb:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints(eb)
-        bg:SetColorTexture(unpack(C.bgDark))
-        K.Border(eb, 1, 0, 0, 0, 1, "BORDER")
+        bg:SetColorTexture(unpack(C.surface3))
+        WeintCodex.CutCorners(eb, 8, "bgDark")
         eb:SetScript("OnTextChanged", function(self, user)
             if user then rawSet(self:GetText()) end
         end)
@@ -868,6 +874,8 @@ local function BuildSidebar()
                 row.strip:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 0, 8)
                 row.strip:SetWidth(3)
                 row.strip:SetColorTexture(unpack(C.accent))
+                -- 6.48.0.0: Auswahl als abgerundete Flaeche.
+                WeintCodex.CutCorners(row, 8, "bgPanel", "ARTWORK", 7)
                 row.label = Label(row, F.sansSemi, 13, "textMuted")
                 row.label:SetPoint("LEFT", row, "LEFT", 14, 0)
                 row.label:SetText(key == "general" and "Allgemein" or m.title)
@@ -1356,10 +1364,11 @@ BuildSearch = function(parent, anchor)
     K.SetFont(eb, 12)
     local bg = eb:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(eb)
-    bg:SetColorTexture(unpack(C.bgDark))
-    K.Border(eb, 1, 0, 0, 0, 1, "BORDER")
+    bg:SetColorTexture(unpack(C.surface3))
+    WeintCodex.CutCorners(eb, 12, "bgDark")
+    if eb.SetTextInsets then eb:SetTextInsets(12, 12, 0, 0) end
     local hint = Label(eb, F.sans, 12, "textFaint")
-    hint:SetPoint("LEFT", eb, "LEFT", 8, 0)
+    hint:SetPoint("LEFT", eb, "LEFT", 12, 0)
     hint:SetText("Einstellung suchen …")
     eb:SetScript("OnTextChanged", function(self)
         local t = self:GetText() or ""

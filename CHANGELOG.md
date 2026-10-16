@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.48.0.0] – 2026-10-16
+
+### Geändert
+- Einstellungsfenster runder: Eingabe und Suche als Fläche mit Radius 8/12 statt Strichrahmen, Auswahllisten Radius 8, Knöpfe Radius 8 (vorher 6), `Builder:Note` als runde Karte mit innerer Akzentpille, Auswahl der Seitenleiste mit runden Ecken.
+
 ## [6.47.0.0] – 2026-10-16
 
 ### Geändert

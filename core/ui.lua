@@ -1374,7 +1374,7 @@ function WeintCodex.CreateButton(parent, opts)
     b:SetWidth(opts.width or (lbl:GetStringWidth() + (opts.padding or 36)))
 
     if opts.radius ~= 0 then
-        WeintCodex.CutCorners(b, opts.radius or 6, opts.backdrop or "bgDark")
+        WeintCodex.CutCorners(b, opts.radius or 8, opts.backdrop or "bgDark")
     end
 
     b:SetScript("OnEnter", function(self)
@@ -2266,6 +2266,8 @@ function WeintCodex.CreateDropdown(parent, opts)
     btn:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 2)
     local bg = btn:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(btn)
+    -- 6.48.0.0: rund wie Knoepfe und Felder.
+    WeintCodex.CutCorners(btn, 8, opts.backdrop or "bgDark")
 
     local preview = btn:CreateTexture(nil, "BORDER")
     preview:SetPoint("TOPLEFT", btn, "TOPLEFT", 4, -4)

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.48.0.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Einstellungen sind runder.|r Felder, Suche, Auswahllisten, Knöpfe, Hinweise und die Auswahl in der Seitenleiste haben weiche Ecken – passend zum neuen Logo, deine Klassenfarbe bleibt.",
+        },
+    },
+    {
         version = "6.47.0.0",
         date    = "16.10.2026",
         notes   = {
