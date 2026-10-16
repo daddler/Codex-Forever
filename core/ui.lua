@@ -366,6 +366,8 @@ WeintCodex.GameColors = {
     damageTrail   = {0.957, 0.851, 0.722, 0.85},  -- Schadensspur: was ein Treffer nahm, hell (6.8.1.0)
     hitFlash      = {1.000, 1.000, 1.000, 0.45},  -- Treffer am Ziel: kurzes Aufblitzen (additiv)
     plateSheen    = {1.000, 1.000, 1.000, 0.30},  -- Glanz, der ueber den Balken des Ziels laeuft
+    glanzSheen    = {1.000, 1.000, 1.000, 0.45},  -- Glanz ueberall (6.43.0.0): Schimmer, Staerke einstellbar
+    glanzTrail    = {0.957, 0.851, 0.722, 0.75},  -- = damageTrail, etwas ruhiger: Spur in Rahmen
     iconShade     = {0.000, 0.000, 0.000, 0.45},  -- Schatten unten am Aktionssymbol
     castSpark     = {1.000, 1.000, 1.000, 0.85},  -- helle Kante am Ende der Fuellung
     castLatency   = {0.800, 0.100, 0.100, 0.40},  -- = castFailed, halb: Latenz am Ende des eigenen Zaubers

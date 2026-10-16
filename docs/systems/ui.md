@@ -4366,3 +4366,19 @@ Reiter dort (die Seitenleiste fasst kein weiteres Modul). Läuft mit der
 Oberfläche, auch wenn die Gruppenrahmen aus sind. Im Spiel ungeprüft:
 ob `/wm` auf Forever die Zielmarke zum Platzieren öffnet, und ob
 `CompactRaidFrameContainer` am Menü hängt (`RT.blizzardWay`).
+
+## Glanz überall (6.43.0.0)
+
+`ui/glanz.lua` (`WeintCodex.UIGlanz`) gibt jedem angemeldeten Balken, was die
+Plaketten seit 6.8.1.0 haben: Schimmer (Animation des Spiels, abgeschnitten am
+Balken, je Balken versetzt gestartet), Gleiten (`SetValue` mit
+`Enum.StatusBarInterpolation`, sonst Sprung) und – bei Leben – die
+Schadensspur (eigener StatusBar eine Ebene unter dem Balken; ein Grund, der am
+Balken selbst hängt, zieht mit `GZ.Bar(bar, area, "health", bg)` darunter).
+Angemeldet: Einheitenrahmen (Leben, Kraft), Gruppenrahmen, Schadensanzeige
+(gleitet nur, solange dieselbe Person in der Zeile steht), Zauberleiste (nur
+Schimmer), Erfahrungsbalken. Neue Einheit im Balken (`GZ.Changed`, GUID):
+Sprung ohne Spur. Werte bleiben unberührt (geheim möglich), kein Lua je Bild,
+der einzige Takt läuft nur, solange eine Spur wartet. Standard: **aus**;
+Komfortseite „Glanz“ (`ui/glanzpage.lua`): an/aus, je Bereich, je Wirkung,
+Stärke, Ruhe, Dauer. Farben `GameColors.glanzSheen`/`glanzTrail`.

@@ -268,7 +268,10 @@ function XB.Update()
     if mode == "xp" then
         local xp = XB.Experience()
         frame.bar:SetMinMaxValues(0, xp.max)
-        frame.bar:SetValue(xp.cur)
+        -- Glanz: neue Stufe oder Wechsel vom Ruf - dann springen.
+        local snap = frame._gzKey ~= xp.max
+        frame._gzKey = xp.max
+        WeintCodex.UIGlanz.Set(frame.bar, xp.cur, snap)
         local c = GC.xpBar
         K.PaintBar(frame.bar, c[1], c[2], c[3])
         local rest = Opt("rested") and xp.rested or 0
@@ -289,7 +292,9 @@ function XB.Update()
     else
         local r = XB.Reputation()
         frame.bar:SetMinMaxValues(0, r.max)
-        frame.bar:SetValue(r.cur)
+        local snap = frame._gzKey ~= "rep" .. tostring(r.max)
+        frame._gzKey = "rep" .. tostring(r.max)
+        WeintCodex.UIGlanz.Set(frame.bar, r.cur, snap)
         K.PaintBar(frame.bar, RepColor(r.reaction))
         frame.rest:Hide()
         frame.quest:Hide()
@@ -430,6 +435,7 @@ local function Build()
     frame.bar = K.NewBar(frame)
     frame.bar:SetAllPoints(frame.rest)
     frame.bar:SetFrameLevel((frame.rest:GetFrameLevel() or 1) + 2)
+    WeintCodex.UIGlanz.Bar(frame.bar, "xp")
     frame.text = K.NewText(frame.bar, 10, "OVERLAY")
     frame.text:SetPoint("CENTER", frame, "CENTER", 0, 0)
     frame:EnableMouse(true)

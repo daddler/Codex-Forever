@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.43.0.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFGlanz für deine Balken.|r Einheiten- und Gruppenrahmen, Schadensanzeige, Zauberleiste und Erfahrungsbalken können jetzt leben wie die Namensplaketten: ein Schimmer läuft ab und zu darüber, Werte gleiten, und was ein Treffer nahm, bleibt kurz hell stehen. Einschalten und einstellen unter Komfort › Glanz – je Bereich, je Wirkung, Stärke und Takt.",
+        },
+    },
+    {
         version = "6.42.0.0",
         date    = "16.10.2026",
         notes   = {

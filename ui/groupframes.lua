@@ -204,10 +204,12 @@ function Btn:Refresh()
     local c = self._wc
     if not unit or not K.Bool(_G.UnitExists and _G.UnitExists(unit), false) then return end
 
+    local GZ = WeintCodex.UIGlanz
+    local snap = GZ.Changed(c.health, unit)
     local max = _G.UnitHealthMax and _G.UnitHealthMax(unit)
-    if type(max) ~= "nil" then c.health:SetMinMaxValues(0, max) end
+    if type(max) ~= "nil" then GZ.Range(c.health, 0, max) end
     local cur = _G.UnitHealth and _G.UnitHealth(unit)
-    if type(cur) ~= "nil" then c.health:SetValue(cur) end
+    if type(cur) ~= "nil" then GZ.Set(c.health, cur, snap) end
     if K.Bool(_G.UnitIsConnected and _G.UnitIsConnected(unit), true) then
         K.PaintBar(c.health, HealthColor(unit))
     else
@@ -219,7 +221,7 @@ function Btn:Refresh()
         local pmax = _G.UnitPowerMax and _G.UnitPowerMax(unit)
         if type(pmax) ~= "nil" then c.power:SetMinMaxValues(0, pmax) end
         local p = _G.UnitPower and _G.UnitPower(unit)
-        if type(p) ~= "nil" then c.power:SetValue(p) end
+        if type(p) ~= "nil" then GZ.Set(c.power, p, snap) end
         local ptype, token
         if _G.UnitPowerType then ptype, token = _G.UnitPowerType(unit) end
         token, ptype = K.Plain(token), K.Plain(ptype)
@@ -376,6 +378,9 @@ local function Style(b)
     c.bg:SetAllPoints(c)
     c.health = K.NewBar(c)
     c.power = K.NewBar(c, true)
+    -- Glanz (6.43.0.0): vor der Klammer ueber dem Leben.
+    WeintCodex.UIGlanz.Bar(c.health, "group", "health")
+    WeintCodex.UIGlanz.Bar(c.power, "group")
     c.border = K.Border(c, 1, 0, 0, 0, 1, "BORDER")
     c.shadow = K.Glow(c, { spread = 4, shadow = true })
     local danger = WeintCodex.Colors.danger

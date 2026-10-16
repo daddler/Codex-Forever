@@ -18073,9 +18073,9 @@ do
             assert(QoL.PAGE_ORDER[p.key], "Seite ohne Thema: " .. p.key)
         end
         local order = table.concat(keys, ",")
-        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,ringe,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,danke,gespraeche",
+        assert(order == "automatik,anzeigen,glanz,rausda,automark,klickzauber,makros,ringe,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,danke,gespraeche",
             "Reihenfolge: " .. order)
-        assert(O.PageIndex("comfort", "gespraeche") == 16 and O.PageIndex("comfort", "fluestern") == 14, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 17 and O.PageIndex("comfort", "fluestern") == 15, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")
@@ -18940,6 +18940,47 @@ do
         p.modules.reminders, p.modules.zztest = nil, nil
     end)
     Check(ok, "Profil exportieren/importieren: Rundweg, fremder Text abgelehnt" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.43.0.0: Glanz - Schimmer, Gleiten, Spur an jedem angemeldeten Balken.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local GZ = WeintCodex.UIGlanz
+        assert(GZ and GZ.Bar and GZ.Set, "ui/glanz.lua nicht geladen")
+        local parent = CreateFrame("Frame", nil, UIParent)
+        local bar = K.NewBar(parent)
+        local bg = bar:CreateTexture(nil, "BACKGROUND")
+        local st = GZ.Bar(bar, "unit", "health", bg)
+        assert(st and st.trail and st.under, "Spur oder Grund fehlt")
+        -- Aus (Standard): wie vorher, keine Spur.
+        K.Set("comfort", "glanz", false)
+        assert(not st.trailOn and not st.smooth, "aus, aber Glanz wirkt")
+        GZ.Range(bar, 0, 100)
+        GZ.Set(bar, 50)
+        assert(G.next(GZ.pending) == nil, "aus, aber Spur wartet")
+        -- An: Spur wartet, dann folgt sie.
+        K.Set("comfort", "glanz", true)
+        assert(st.trailOn and st.smooth, "an, aber kein Glanz")
+        assert(st.sheen and st.ag, "kein Schimmer")
+        GZ.Set(bar, 40)
+        assert(GZ.pending[st], "Spur wartet nicht")
+        local oT = G.GetTime
+        G.GetTime = function() return 1e9 end
+        GZ.Tick()
+        G.GetTime = oT
+        assert(not GZ.pending[st], "Spur folgt nicht")
+        -- Sprung (andere Einheit): keine Spur.
+        GZ.Set(bar, 90, true)
+        assert(not GZ.pending[st], "Sprung mit Spur")
+        -- Bereich aus: nur dort aus.
+        K.Set("comfort", "glanzUnit", false)
+        assert(not st.trailOn, "Bereich aus, Spur an")
+        K.Set("comfort", "glanzUnit", nil)
+        K.Set("comfort", "glanz", nil)
+        assert(not GZ.On(), "Standard ist nicht aus")
+    end)
+    Check(ok, "Glanz: aus wie vorher, an mit Schimmer, Gleiten und Spur, je Bereich" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.42.0.0: Aktionsleisten im Profil - erkannt, exportiert, gesetzt.

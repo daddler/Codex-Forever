@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.43.0.0] – 2026-10-16
+
+### Neu
+- Glanz (`ui/glanz.lua`, Seite `ui/glanzpage.lua`): Schimmer, Gleiten und Schadensspur für Einheitenrahmen, Gruppenrahmen, Schadensanzeige, Zauberleiste (nur Schimmer) und Erfahrungsbalken. Standard aus; je Bereich und Wirkung schaltbar, Stärke/Ruhe/Dauer einstellbar. Keine Rechnung mit Werten (geheim möglich), kein Lua je Bild.
+
 ## [6.42.0.0] – 2026-10-16
 
 ### Neu

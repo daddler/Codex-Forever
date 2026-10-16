@@ -216,6 +216,7 @@ local function Row(w)
     r.icon:SetPoint("TOPLEFT", r, "TOPLEFT", 0, 0)
     r.icon:SetPoint("BOTTOMLEFT", r, "BOTTOMLEFT", 0, 0)
     r.bar = K.NewBar(r)
+    WeintCodex.UIGlanz.Bar(r.bar, "meter")
     r.bar:SetPoint("TOPRIGHT", r, "TOPRIGHT", 0, 0)
     r.bar:SetPoint("BOTTOMRIGHT", r, "BOTTOMRIGHT", 0, 0)
     r.bg = r:CreateTexture(nil, "BACKGROUND")
@@ -568,7 +569,13 @@ function Win:Refresh()
                 -- Kein `or 0`: ein Wahrheitstest auf einem geheimen Wert
                 -- waere ein Fehler.
                 local v = src[field]
-                if type(v) ~= "nil" then r.bar:SetValue(v) else r.bar:SetValue(0) end
+                -- Glanz: gleitet, solange dieselbe Person in der Zeile steht;
+                -- rueckt jemand anderes nach, springt sie.
+                local who = K.Plain(src.name)
+                if type(who) ~= "string" then who = nil end
+                local snap = who == nil or r._gzWho ~= who
+                r._gzWho = who
+                if type(v) ~= "nil" then WeintCodex.UIGlanz.Set(r.bar, v, snap) else r.bar:SetValue(0) end
             end
             local cr, cg, cb = C.info[1], C.info[2], C.info[3]
             local class = K.Plain(src.classFilename)

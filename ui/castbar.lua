@@ -59,6 +59,8 @@ function CB.Create(parent)
     sb:SetMinMaxValues(0, 1)
     sb:SetValue(0)
     f._bar = sb
+    -- Glanz (6.43.0.0): nur der Schimmer - der Fortschritt laeuft schon.
+    WeintCodex.UIGlanz.Bar(sb, "cast")
 
     -- Grund nur unter dem Balken: das Symbol steht seit 6.3.0.8 abgesetzt
     -- daneben, mit eigenem Rand (Beta-Test: "muss schoener sein").

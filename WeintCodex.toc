@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.42.0.0
+## Version: 6.43.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -210,6 +210,8 @@ ui/style.lua
 ui/layout.lua
 ui/presence.lua
 ui/auras.lua
+# Glanz ueberall (6.43.0.0): Schimmer, Gleiten, Spur fuer jeden Balken.
+ui/glanz.lua
 ui/castbar.lua
 ui/nameplates.lua
 # Plaketten nach NPC: Zaubernde, eigene Farben (6.6.2.2); haengt sich an die Plaketten.
@@ -311,6 +313,7 @@ ui/merchant.lua
 ui/merchantsize.lua
 ui/spellinfo.lua
 ui/thanks.lua
+ui/glanzpage.lua
 ui/rings.lua
 # Beute in Gold (6.9.0.0): Liste auf Flaeche, Karten ohne Rahmen.
 ui/loot.lua

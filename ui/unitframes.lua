@@ -391,6 +391,8 @@ local function Create(unit)
     local hbg = health:CreateTexture(nil, "BACKGROUND")
     hbg:SetAllPoints(health)
     f.healthBg = hbg
+    -- Glanz (6.43.0.0): vor der Klammer, die eine Ebene ueber dem Balken liegt.
+    WeintCodex.UIGlanz.Bar(health, "unit", "health", hbg)
 
     -- Heilung und Schild in einer Klammer ueber dem Lebensbalken (wie in
     -- den Gruppenrahmen): links an der Kante der Fuellung, so breit wie
@@ -421,6 +423,7 @@ local function Create(unit)
 
     local power = K.NewBar(f, true)
     f.power = power
+    WeintCodex.UIGlanz.Bar(power, "unit")
     local pbg = power:CreateTexture(nil, "BACKGROUND")
     pbg:SetAllPoints(power)
     f.powerBg = pbg
@@ -893,10 +896,12 @@ function Frame:Refresh()
     local u = self.unit
     if not K.Bool(_G.UnitExists and _G.UnitExists(u), false) and not self._unlockShown then return end
 
+    local GZ = WeintCodex.UIGlanz
+    local snap = GZ.Changed(self.health, u)
     local max = _G.UnitHealthMax and _G.UnitHealthMax(u)
-    if type(max) ~= "nil" then self.health:SetMinMaxValues(0, max) end
+    if type(max) ~= "nil" then GZ.Range(self.health, 0, max) end
     local cur = _G.UnitHealth and _G.UnitHealth(u)
-    if type(cur) ~= "nil" then self.health:SetValue(cur) end
+    if type(cur) ~= "nil" then GZ.Set(self.health, cur, snap) end
     local hr, hg, hb = HealthColor(u)
     K.PaintBar(self.health, hr, hg, hb)
     self:PaintBg(hr, hg, hb)
@@ -906,7 +911,7 @@ function Frame:Refresh()
         local pmax = _G.UnitPowerMax and _G.UnitPowerMax(u)
         if type(pmax) ~= "nil" then self.power:SetMinMaxValues(0, pmax) end
         local p = _G.UnitPower and _G.UnitPower(u)
-        if type(p) ~= "nil" then self.power:SetValue(p) end
+        if type(p) ~= "nil" then GZ.Set(self.power, p, snap) end
         K.PaintBar(self.power, PowerColor(u))
     end
 
@@ -1650,7 +1655,7 @@ local function OnEvent(_, event, unit, ...)
             local pmax = _G.UnitPowerMax and _G.UnitPowerMax(unit)
             if type(pmax) ~= "nil" then f.power:SetMinMaxValues(0, pmax) end
             local p = _G.UnitPower and _G.UnitPower(unit)
-            if type(p) ~= "nil" then f.power:SetValue(p) end
+            if type(p) ~= "nil" then WeintCodex.UIGlanz.Set(f.power, p) end
             if event == "UNIT_DISPLAYPOWER" then K.PaintBar(f.power, PowerColor(unit)) end
         end
         if Opt(unit .. "_left") == "power" or Opt(unit .. "_right") == "power" then
