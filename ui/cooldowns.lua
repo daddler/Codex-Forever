@@ -345,6 +345,70 @@ function CD.OpenSettings()
 end
 
 --------------------------------------------------
+-- Im Gestaltungsmodus: ehrlich sagen, wer die Anzeigen verschiebt
+--------------------------------------------------
+-- 6.52.1.0 (Beta-Test: "Abklingzeitenmanager wird im Gestaltungsmodus so
+-- angezeigt, aber ich kann es nicht ziehen - irrefuehrend"). Die Anzeigen
+-- gehoeren dem Spiel; ihren Platz speichert nur dessen Bearbeitungsmodus.
+-- Statt nichts zu sagen, liegt ueber jeder sichtbaren Anzeige eine graue
+-- Flaeche (nicht die Farbe der ziehbaren Rahmen) mit Hinweis; ein Klick
+-- oeffnet den Bearbeitungsmodus des Spiels.
+
+local marks = {}
+CD.marks = marks
+
+local function Mark(name)
+    local m = marks[name]
+    if m then return m end
+    local C = WeintCodex.Colors
+    m = CreateFrame("Button", nil, UIParent)
+    m:SetFrameStrata("DIALOG")
+    m:EnableMouse(true)
+    local bg = m:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(m)
+    local g = C.textDim
+    bg:SetColorTexture(g[1], g[2], g[3], 0.18)
+    m.edge = K.Border(m, 1, g[1], g[2], g[3], 0.7, "ARTWORK")
+    m.text = K.NewText(m, 10, "OVERLAY")
+    m.text:SetPoint("CENTER", m, "CENTER", 0, 0)
+    m.text:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
+    m.text:SetText("Abklingzeitmanager (Spiel)")
+    m:SetScript("OnEnter", function(self)
+        if not _G.GameTooltip then return end
+        _G.GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        _G.GameTooltip:SetText("Abklingzeitmanager", 1, 1, 1)
+        _G.GameTooltip:AddLine("Diese Anzeige gehört dem Spiel – hier lässt sie sich nicht ziehen. Klick: Bearbeitungsmodus des Spiels, dort verschieben.", 0.7, 0.7, 0.75, true)
+        _G.GameTooltip:Show()
+    end)
+    m:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+    local E = WeintCodex.UIEditMode
+    if E and E.AttachGame then pcall(E.AttachGame, m) end
+    m:Hide()
+    marks[name] = m
+    return m
+end
+
+function CD.MarkGame(on)
+    for _, name in ipairs(CD.VIEWERS) do
+        local v = _G[name]
+        local shown = on and type(v) == "table" and v.IsShown and v:IsShown()
+        local w = shown and K.Plain(v:GetWidth()) or 0
+        if shown and type(w) == "number" and w >= 4 then
+            local m = Mark(name)
+            m:ClearAllPoints()
+            m:SetAllPoints(v)
+            m:Show()
+        elseif marks[name] then
+            marks[name]:Hide()
+        end
+    end
+end
+
+K.Listen(function(kind, on)
+    if kind == "unlock" then CD.MarkGame(on) end
+end)
+
+--------------------------------------------------
 -- Reiter der Erinnerungen
 --------------------------------------------------
 

@@ -18772,6 +18772,25 @@ do
     Check(ok, "Totems im Kampf: geheime Werte ans Spiel, Knopf bleibt da" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.52.1.0: Abklingzeitmanager im Gestaltungsmodus als Rahmen des Spiels markiert.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local CD = WeintCodex.UICooldowns
+        assert(CD and CD.MarkGame, "CD.MarkGame fehlt")
+        local v = CreateFrame("Frame", "EssentialCooldownViewer", UIParent)
+        v:SetSize(200, 40)
+        v:Show()
+        CD.MarkGame(true)
+        local m = CD.marks.EssentialCooldownViewer
+        assert(m and m:IsShown(), "keine Markierung ueber der Anzeige des Spiels")
+        CD.MarkGame(false)
+        assert(not m:IsShown(), "Markierung bleibt nach dem Gestaltungsmodus")
+        G.EssentialCooldownViewer = nil
+    end)
+    Check(ok, "Abklingzeitmanager: im Gestaltungsmodus als Rahmen des Spiels markiert" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.52.0.0: Gegenstandsstufe an den Plaetzen des Charakterfensters.
 do
     local G = _G

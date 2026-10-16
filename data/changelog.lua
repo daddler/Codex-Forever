@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.52.1.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Abklingzeitmanager ist im Gestaltungsmodus klar gekennzeichnet.|r Seine Anzeigen gehören dem Spiel: sie tragen jetzt eine graue Markierung, und ein Klick darauf öffnet den Bearbeitungsmodus des Spiels, wo sie sich verschieben lassen.",
+        },
+    },
+    {
         version = "6.52.0.0",
         date    = "16.10.2026",
         notes   = {

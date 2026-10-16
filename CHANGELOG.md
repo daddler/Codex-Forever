@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.52.1.0] – 2026-10-16
+
+### Geändert
+- Gestaltungsmodus: über den sichtbaren Anzeigen des Abklingzeitmanagers (`CD.VIEWERS`) eine graue Markierung mit Hinweis und Tooltip, Klick öffnet den Bearbeitungsmodus des Spiels (`E.AttachGame`). Anlass: Anzeigen sahen ziehbar aus, waren es aber nicht (`CD.MarkGame` am Ereignis `unlock`).
+
 ## [6.52.0.0] – 2026-10-16
 
 ### Neu
