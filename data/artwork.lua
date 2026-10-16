@@ -808,6 +808,93 @@ WeintCodex.Artworks = {
         },
     },
 
+    dire_maul = {
+        -- Originale meist 1983x793 (Bosse y 60); Banner und die Oger im Norden
+        -- haben eigene Masse und Ausschnitte (siehe make_artwork.py).
+        header = {
+            file = ART .. "dire_maul/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            pusillin = {
+                file = ART .. "dire_maul/pusillin",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            zevrim_thornhoof = {
+                file = ART .. "dire_maul/zevrim_thornhoof",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            hydrospawn = {
+                file = ART .. "dire_maul/hydrospawn",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            lethtendris = {
+                file = ART .. "dire_maul/lethtendris",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            alzzin = {
+                file = ART .. "dire_maul/alzzin",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            isalien = {
+                file = ART .. "dire_maul/isalien",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            tendris_warpwood = {
+                file = ART .. "dire_maul/tendris_warpwood",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            illyanna_ravenoak = {
+                file = ART .. "dire_maul/illyanna_ravenoak",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            magister_kalendris = {
+                file = ART .. "dire_maul/magister_kalendris",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            tsuzee = {
+                file = ART .. "dire_maul/tsuzee",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            immolthar = {
+                file = ART .. "dire_maul/immolthar",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            prince_tortheldrin = {
+                file = ART .. "dire_maul/prince_tortheldrin",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            lord_helnurath = {
+                file = ART .. "dire_maul/lord_helnurath",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            guard_moldar = {
+                file = ART .. "dire_maul/guard_moldar",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            stomper_kreeg = {
+                file = ART .. "dire_maul/stomper_kreeg",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            guard_fengus = {
+                file = ART .. "dire_maul/guard_fengus",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            guard_slipkik = {
+                file = ART .. "dire_maul/guard_slipkik",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            captain_kromcrush = {
+                file = ART .. "dire_maul/captain_kromcrush",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            king_gordok = {
+                file = ART .. "dire_maul/king_gordok",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
     drowned_city = {
         -- Originale 1983x793, Banner y 60. Bilder liegen fuer sieben Gestalten
         -- vor, im Bestand steht aber nur Zul'Alai (data/dungeons.lua) - die

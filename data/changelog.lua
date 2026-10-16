@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.50.1.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Düsterbruch ist bebildert.|r Ein Kopfbild und Bilder zu allen 19 Begegnungen in Ost, West und Nord – von Pusillin bis König Gordok.",
+        },
+    },
+    {
         version = "6.50.0.0",
         date    = "16.10.2026",
         notes   = {
