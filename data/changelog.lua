@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.48.1.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDas Suchfeld oben ist jetzt wirklich rund.|r Vorher blieben auf dem farbigen Kopf trotz Rundung Ecken sichtbar.",
+        },
+    },
+    {
         version = "6.48.0.0",
         date    = "16.10.2026",
         notes   = {

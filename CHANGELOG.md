@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.48.1.0] – 2026-10-16
+
+### Behoben
+- Suchfeld der Einstellungen als echte Pille (Mittelstück + runde Kappen) statt Eckmasken – auf dem Verlauf des Kopfes blieben Ecken sichtbar.
+
 ## [6.48.0.0] – 2026-10-16
 
 ### Geändert

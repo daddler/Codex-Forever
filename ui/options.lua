@@ -1362,10 +1362,21 @@ BuildSearch = function(parent, anchor)
     eb:SetAutoFocus(false)
     if eb.SetTextInsets then eb:SetTextInsets(8, 8, 0, 0) end
     K.SetFont(eb, 12)
+    -- 6.48.1.0: echte Pille aus Mittelstueck und zwei runden Kappen. Der
+    -- Kopf hat einen Farbverlauf - Eckmasken in einer Farbe blieben dort als
+    -- Ecken sichtbar (Beta-Test).
+    local c3 = C.surface3
     local bg = eb:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints(eb)
-    bg:SetColorTexture(unpack(C.surface3))
-    WeintCodex.CutCorners(eb, 12, "bgDark")
+    bg:SetPoint("TOPLEFT", eb, "TOPLEFT", 12, 0)
+    bg:SetPoint("BOTTOMRIGHT", eb, "BOTTOMRIGHT", -12, 0)
+    bg:SetColorTexture(c3[1], c3[2], c3[3], 1)
+    for _, side in ipairs({ "LEFT", "RIGHT" }) do
+        local cap = eb:CreateTexture(nil, "BACKGROUND")
+        cap:SetSize(24, 24)
+        cap:SetPoint("CENTER", eb, side, side == "LEFT" and 12 or -12, 0)
+        cap:SetTexture(K.MEDIA .. "disc")
+        cap:SetVertexColor(c3[1], c3[2], c3[3], 1)
+    end
     if eb.SetTextInsets then eb:SetTextInsets(12, 12, 0, 0) end
     local hint = Label(eb, F.sans, 12, "textFaint")
     hint:SetPoint("LEFT", eb, "LEFT", 12, 0)
