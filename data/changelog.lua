@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.48.3.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFProfil-Import übernimmt das Layout ganz.|r Mit Oberfläche wird das importierte Layout „WeintCodex“ jetzt auch gleich aktiv – ein neuer Charakter blieb vorher auf der Vorlage des Spiels.",
+            "|cff7C6CFFKein Fehler mehr beim Hinweis auf seltene Gegner.|r Das Ausblenden im oder kurz vor dem Kampf wurde vom Spiel blockiert.",
+        },
+    },
+    {
         version = "6.48.2.0",
         date    = "16.10.2026",
         notes   = {

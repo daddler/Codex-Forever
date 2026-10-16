@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.48.3.0] – 2026-10-16
+
+### Behoben
+- Profil-Import: `SH.ImportLayout(str, activate)` setzt „WeintCodex“ aktiv, wenn die Oberfläche an ist (vorher nur gespeichert; neuer Charakter blieb auf der Vorlage). Layout von vorher wird gemerkt (`PF.Remember`).
+- Seltene Gegner: Zielknopf an UIParent an der Lage des Hinweises statt `SetAllPoints(toast)` – der Hinweis wurde dadurch selbst geschützt (`ADDON_ACTION_BLOCKED WeintCodexRareAlert:Hide()`).
+
 ## [6.48.2.0] – 2026-10-16
 
 ### Behoben

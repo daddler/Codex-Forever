@@ -191,7 +191,12 @@ function SH.LayoutString()
 end
 
 -- Schreibt das Layout als "WeintCodex" (ersetzt nur dieses). true / false, Grund.
-function SH.ImportLayout(str)
+-- activate (6.48.3.0, Beta-Test: "beim neuen Charakter wird das Layout von
+-- Blizzard nicht mit uebernommen"): auch gleich aktiv setzen - vorher stand
+-- es nur in der Liste, und ein neuer Charakter blieb auf der Vorlage des
+-- Spiels. Das Layout von vorher wird gemerkt (PF.Remember), wie beim
+-- Einrichten.
+function SH.ImportLayout(str, activate)
     local em = _G.C_EditMode
     if not (em and em.ConvertStringToLayoutInfo and em.SaveLayouts) then return false, "Bearbeitungsmodus kann nicht einlesen" end
     local ok, l = pcall(em.ConvertStringToLayoutInfo, str)
@@ -203,8 +208,14 @@ function SH.ImportLayout(str)
     l.layoutType = LT and LT.Account or l.layoutType
     slot = slot or (#info.layouts + 1)
     info.layouts[slot] = l
+    local PF = WeintCodex.UIProfile
+    if activate and PF and PF.PresetCount then
+        if PF.Remember then pcall(PF.Remember) end
+        info.activeLayout = PF.PresetCount() + slot
+    end
     local okS, err = pcall(em.SaveLayouts, info)
     if not okS then return false, "SaveLayouts: " .. tostring(err) end
+    if activate and info.activeLayout and em.SetActiveLayout then pcall(em.SetActiveLayout, info.activeLayout) end
     return true
 end
 
@@ -583,12 +594,12 @@ function SH.Apply(data, sel)
         if type(p.positions) ~= "table" then p.positions = {} end
     end
     local notes = {}
-    if data.layout and Want("layout") then
-        local ok, why = SH.ImportLayout(data.layout)
-        notes[#notes + 1] = ok and "Layout „WeintCodex“ übernommen." or ("Layout nicht übernommen: " .. tostring(why) .. ".")
-    end
     local uiOn = data.uiEnabled
-    if not Want("uiEnabled") then uiOn = K.UIEnabled() and true or false end
+    if not Want("uiEnabled") or uiOn == nil then uiOn = K.UIEnabled() and true or false end
+    if data.layout and Want("layout") then
+        local ok, why = SH.ImportLayout(data.layout, uiOn)
+        notes[#notes + 1] = ok and ("Layout „WeintCodex“ übernommen" .. (uiOn and " und aktiv." or ".")) or ("Layout nicht übernommen: " .. tostring(why) .. ".")
+    end
     if data.gameLayout and Want("gameLayout") then
         local ok, why = SH.ImportGameLayout(data.gameLayout, data.gameLayoutName, not uiOn)
         notes[#notes + 1] = ok and ("Layout „" .. why .. "“ angelegt.") or ("Layout nicht übernommen: " .. tostring(why) .. ".")

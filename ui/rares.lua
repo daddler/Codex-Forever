@@ -283,8 +283,22 @@ function RA.ArmClick(name)
     if not b or not toast then return false end
     local mark = tonumber(K.Get(KEY, "rareMark")) or 0
     b._name, b._mark = name, mark >= 1 and mark <= 8
+    -- 6.48.3.0 (Fehlerbericht: wieder "WeintCodexRareAlert:Hide()" blockiert):
+    -- NICHT am Hinweis verankern - ein geschuetzter Knopf, der an einem
+    -- Rahmen haengt, macht diesen Rahmen selbst geschuetzt, auch ausserhalb
+    -- der Pruefung K.InCombat(). Der Knopf steht an UIParent, an derselben
+    -- Stelle wie der Hinweis (Lage einmal abgelesen).
     b:ClearAllPoints()
-    b:SetAllPoints(toast)
+    local l, bt, w, h = toast:GetRect()
+    local ts, us = toast:GetEffectiveScale() or 1, UIParent:GetEffectiveScale() or 1
+    if type(l) == "number" and type(w) == "number" and us > 0 then
+        local f = ts / us
+        b:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", l * f, bt * f)
+        b:SetSize(w * f, h * f)
+    else
+        b:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+        b:SetSize(1, 1)
+    end
     b:SetAttribute("macrotext1", RA.Macro(name, mark))
     b:Show()
     return true
