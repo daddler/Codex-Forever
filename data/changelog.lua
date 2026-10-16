@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.45.0.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Einstellungen wirken ruhiger und klarer.|r Runde Schalter, gut lesbare Erläuterungen, sachliche Überschriften, Hinweise als eigene Karte und in der Seitenleiste ein Punkt statt „an/aus“ unter jedem Eintrag – in Worten nur noch, wenn etwas zu tun ist.",
+        },
+    },
+    {
         version = "6.44.1.0",
         date    = "16.10.2026",
         notes   = {

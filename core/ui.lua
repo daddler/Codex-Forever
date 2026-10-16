@@ -1559,12 +1559,28 @@ function WeintCodex.CreateToggle(parent, opts)
     -- Grafiksprache mit und faellt in dieser Oberflaeche sofort auf. Beide
     -- bleiben eckig: CutCorners deckt Ecken mit der Farbe des Untergrunds ab
     -- und braucht dafuer einen Frame, eine Textur hat keine.
+    -- 6.45.0.0 (Wunsch: "professioneller, nicht wie ein Fanprojekt"):
+    -- Bahn als Pille (zwei runde Kappen und ein Mittelstueck), Knauf rund.
     local track = row:CreateTexture(nil, "ARTWORK")
-    track:SetSize(34, 16)
-    track:SetPoint("LEFT", row, "LEFT", 0, 0)
+    track:SetSize(16, 16)
+    track:SetPoint("LEFT", row, "LEFT", 8, 0)
+    local capL = row:CreateTexture(nil, "ARTWORK")
+    capL:SetSize(16, 16)
+    capL:SetPoint("CENTER", track, "LEFT", 0, 0)
+    capL:SetTexture(MEDIA .. "ui\\disc")
+    local capR = row:CreateTexture(nil, "ARTWORK")
+    capR:SetSize(16, 16)
+    capR:SetPoint("CENTER", track, "RIGHT", 0, 0)
+    capR:SetTexture(MEDIA .. "ui\\disc")
+    local function PaintTrack(r, g, b, a)
+        track:SetColorTexture(r, g, b, a)
+        capL:SetVertexColor(r, g, b, a)
+        capR:SetVertexColor(r, g, b, a)
+    end
 
     local knob = row:CreateTexture(nil, "OVERLAY")
     knob:SetSize(12, 12)
+    knob:SetTexture(MEDIA .. "ui\\disc")
 
     local label = row:CreateFontString(nil, "OVERLAY")
     label:SetFont(F.sans, 13, "")
@@ -1585,12 +1601,12 @@ function WeintCodex.CreateToggle(parent, opts)
         if textW then label:SetWidth(textW) else label:SetPoint("TOPRIGHT", row, "TOPRIGHT", -12, -2) end
         label:SetWordWrap(true)
         hint = row:CreateFontString(nil, "OVERLAY")
-        hint:SetFont(F.mono, 9, "")
-        hint:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 0, -4)
+        hint:SetFont(F.sans, 11, "")
+        hint:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 0, -3)
         if textW then hint:SetWidth(textW) else hint:SetPoint("TOPRIGHT", label, "BOTTOMRIGHT", 0, -4) end
         hint:SetWordWrap(true)
         hint:SetJustifyH("LEFT")
-        hint:SetTextColor(unpack(C.textFaint))
+        hint:SetTextColor(unpack(C.textDim))
         hint:SetText(opts.description)
     else
         label:SetPoint("LEFT",  row, "LEFT",   46, 0)
@@ -1627,8 +1643,8 @@ function WeintCodex.CreateToggle(parent, opts)
             return
         end
         local lh = Height(label, 13, 7, 15)
-        local hh = Height(hint, 9, 5.4, 11)
-        row:SetHeight(math.max(baseH, 2 + lh + 4 + hh + 8))
+        local hh = Height(hint, 11, 5.8, 14)
+        row:SetHeight(math.max(baseH, 2 + lh + 3 + hh + 8))
     end
 
     row.Sync = function(self)
@@ -1636,15 +1652,21 @@ function WeintCodex.CreateToggle(parent, opts)
         local on  = (not off) and opts.get and opts.get() and true or false
         knob:ClearAllPoints()
         if on then
-            track:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.85)
-            knob:SetColorTexture(unpack(C.ink))
-            knob:SetPoint("RIGHT", track, "RIGHT", -2, 0)
+            local a = C.accent
+            PaintTrack(a[1], a[2], a[3], 1)
+            -- Heller Knauf auf dunkler Farbe, dunkler auf heller (Priester).
+            local lum = 0.299 * a[1] + 0.587 * a[2] + 0.114 * a[3]
+            local k = lum > 0.62 and C.ink or C.textBright
+            knob:SetVertexColor(k[1], k[2], k[3], 1)
+            knob:SetPoint("CENTER", track, "RIGHT", 0, 0)
             label:SetTextColor(unpack(C.textBright))
         else
-            track:SetColorTexture(C.surface3[1], C.surface3[2], C.surface3[3], 1.0)
-            knob:SetColorTexture(unpack(off and C.textGhost or C.textDim))
-            knob:SetPoint("LEFT", track, "LEFT", 2, 0)
-            label:SetTextColor(unpack(off and C.textDim or C.textMuted))
+            local s3 = C.surface3
+            PaintTrack(s3[1], s3[2], s3[3], 1)
+            local k = off and C.textGhost or C.textMuted
+            knob:SetVertexColor(k[1], k[2], k[3], 1)
+            knob:SetPoint("CENTER", track, "LEFT", 0, 0)
+            label:SetTextColor(unpack(off and C.textDim or C.textNormal))
         end
         if hint then
             hint:SetText((off and opts.disabledHint) or opts.description or "")

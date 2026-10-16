@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.45.0.0] – 2026-10-16
+
+### Geändert
+- Einstellungsfenster, nur Aussehen: Schalter als Pille mit rundem Knauf (Knauf hell/dunkel nach Helligkeit des Akzents), Erläuterungen in Sans 11 statt Mono 9, Abschnittsköpfe Halbfett 14 statt gesperrter Versalien, `Builder:Note` als Karte mit Akzentkante, Seitenleiste mit Zustandspunkt (Text nur bei „Neu laden“, sonst im Tooltip), Gruppenköpfe und Kopfzeile ohne Sperrung.
+
 ## [6.44.1.0] – 2026-10-16
 
 ### Behoben (vermutlich)

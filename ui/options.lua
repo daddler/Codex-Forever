@@ -334,9 +334,14 @@ end
 function Builder:Section(title, note)
     if self.skip then return end
     if self.y < -4 then self.y = self.y - 14 end
-    local eb = WeintCodex.Eyebrow(self.parent, title, { color = "accent", size = 10 })
+    -- 6.45.0.0: ruhige Ueberschrift (Halbfett, hell) statt gesperrter
+    -- Versalien in Akzentfarbe - sachlicher, wie eine Anwendung.
+    local eb = K.NewText(self.parent)
+    eb:SetFont(F.sansSemi, 14, "")
+    eb:SetTextColor(unpack(C.textBright))
+    eb:SetText(title or "")
     eb:SetPoint("TOPLEFT", self.parent, "TOPLEFT", 0, self.y)
-    self.y = self.y - 18
+    self.y = self.y - 20
     if note then
         local fs = K.NewText(self.parent)
         fs:SetFont(F.sans, 11, "")
@@ -355,16 +360,30 @@ function Builder:Section(title, note)
     self.y = self.y - 12
 end
 
+-- 6.45.0.0: Hinweise als ruhige Karte mit feiner Kante links, statt
+-- losem Fliesstext zwischen den Einstellungen.
 function Builder:Note(text)
     if self.skip then return end
     local fs = K.NewText(self.parent)
     fs:SetFont(F.sans, 11, "")
-    fs:SetPoint("TOPLEFT", self.parent, "TOPLEFT", 0, self.y)
-    fs:SetWidth(CONTENT_W)
+    fs:SetPoint("TOPLEFT", self.parent, "TOPLEFT", 14, self.y - 8)
+    fs:SetWidth(CONTENT_W - 28)
     fs:SetJustifyH("LEFT")
-    fs:SetTextColor(unpack(C.textDim))
+    fs:SetTextColor(unpack(C.textMuted))
     fs:SetText(text)
-    self.y = self.y - TextHeight(fs, 14) - 10
+    local h = TextHeight(fs, 14) + 16
+    local card = self.parent:CreateTexture(nil, "BACKGROUND")
+    card:SetPoint("TOPLEFT", self.parent, "TOPLEFT", 0, self.y)
+    card:SetSize(CONTENT_W, h)
+    local s1 = C.surface1
+    card:SetColorTexture(s1[1], s1[2], s1[3], 0.6)
+    local rule = self.parent:CreateTexture(nil, "ARTWORK")
+    rule:SetPoint("TOPLEFT", card, "TOPLEFT", 0, 0)
+    rule:SetPoint("BOTTOMLEFT", card, "BOTTOMLEFT", 0, 0)
+    rule:SetWidth(2)
+    local a = C.accent
+    rule:SetColorTexture(a[1], a[2], a[3], 0.7)
+    self.y = self.y - h - 10
 end
 
 -- Eine Zelle nach ihrer Beschreibung bauen. Liefert den Rahmen oder nil.
@@ -566,8 +585,16 @@ local function SyncChrome()
     if not frame then return end
     for key, row in pairs(sideRows) do
         local text, tone = O.ModuleStatus(key)
-        row.status:SetText(text)
+        local say = tone == "warning"
+        row.status:SetText(say and text or "")
         row.status:SetTextColor(unpack(C[tone] or C.textDim))
+        row.label:ClearAllPoints()
+        row.label:SetPoint(say and "TOPLEFT" or "LEFT", row, say and "TOPLEFT" or "LEFT", 14, say and -5 or 0)
+        local dc = C[tone] or C.textDim
+        if tone ~= "success" and tone ~= "warning" then dc = C.textGhost end
+        row.dot:SetVertexColor(dc[1], dc[2], dc[3], 1)
+        row.dot:SetShown(text ~= "")
+        row.status._full = text
         local active = (key == current.module)
         row.bg:SetColorTexture(unpack(active and C.surface3 or C.bgPanel))
         row.strip:SetShown(active)
@@ -741,7 +768,7 @@ function O.Select(key, pageIndex)
     -- Kopf
     local groupLabel = ""
     for _, g in ipairs(GROUPS) do if g.key == m.group then groupLabel = g.label end end
-    headEyebrow:SetText(WeintCodex.Spaced(WeintCodex.Upper(groupLabel)))
+    headEyebrow:SetText(WeintCodex.Upper(groupLabel))
     headTitle:SetText(m.title or key)
     headDesc:SetText(m.description or "")
 
@@ -812,7 +839,8 @@ local function BuildSidebar()
     local brand = Label(sidebar, F.display, 20, "textBright")
     brand:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 14 + LOGO + 8, y)
     brand:SetText("WeintCodex")
-    local sub = WeintCodex.Eyebrow(sidebar, "Oberfläche", { color = "accent", size = 9 })
+    local sub = Label(sidebar, F.sans, 11, "textDim")
+    sub:SetText("Oberfläche")
     sub:SetPoint("TOPLEFT", brand, "BOTTOMLEFT", 1, -4)
     y = y - 62
 
@@ -823,7 +851,8 @@ local function BuildSidebar()
         end
         if #members > 0 then
             if g.key ~= "general" then
-                local gh = WeintCodex.Eyebrow(sidebar, g.label, { size = 9 })
+                local gh = Label(sidebar, F.sansSemi, 10, "textFaint")
+                gh:SetText(WeintCodex.Upper(g.label))
                 gh:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 20, y - 12)
                 y = y - 30
             end
@@ -840,13 +869,29 @@ local function BuildSidebar()
                 row.strip:SetWidth(3)
                 row.strip:SetColorTexture(unpack(C.accent))
                 row.label = Label(row, F.sansSemi, 13, "textMuted")
-                row.label:SetPoint("TOPLEFT", row, "TOPLEFT", 14, -5)
+                row.label:SetPoint("LEFT", row, "LEFT", 14, 0)
                 row.label:SetText(key == "general" and "Allgemein" or m.title)
-                row.status = Label(row, F.mono, 9, "textDim")
-                row.status:SetPoint("TOPLEFT", row.label, "BOTTOMLEFT", 0, -3)
-                row.status:SetWidth(SIDE_W - 40)
+                -- 6.45.0.0: Zustand als Punkt rechts (an: gruen, aus: matt);
+                -- in Worten nur, wenn etwas zu tun ist (Neu laden).
+                row.dot = row:CreateTexture(nil, "ARTWORK")
+                row.dot:SetSize(7, 7)
+                row.dot:SetPoint("RIGHT", row, "RIGHT", -12, 0)
+                row.dot:SetTexture(K.MEDIA .. "disc")
+                row.status = Label(row, F.sans, 10, "textDim")
+                row.status:SetPoint("TOPLEFT", row.label, "BOTTOMLEFT", 0, -2)
+                row.status:SetWidth(SIDE_W - 60)
                 row.status:SetWordWrap(false)
                 row:SetScript("OnClick", function() O.Select(key) end)
+                -- Der Zustand in Worten, wenn nur der Punkt steht.
+                row:SetScript("OnEnter", function(self)
+                    local t = self.status._full
+                    if not t or t == "" or not _G.GameTooltip then return end
+                    _G.GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                    _G.GameTooltip:SetText(self.label:GetText() or "", 1, 1, 1)
+                    _G.GameTooltip:AddLine(t, 0.8, 0.8, 0.8)
+                    _G.GameTooltip:Show()
+                end)
+                row:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
                 sideRows[key] = row
                 y = y - SIDE_ROW_STEP
             end
@@ -902,7 +947,7 @@ function O.Build()
     hbg:SetAllPoints(head)
     WeintCodex.ApplyVerticalGradient(hbg, "washAccent", "washNone")
 
-    headEyebrow = WeintCodex.Eyebrow(head, "Allgemein", { size = 9 })
+    headEyebrow = Label(head, F.sansSemi, 10, "textDim")
     headEyebrow:SetPoint("TOPLEFT", head, "TOPLEFT", PAD, -20)
     headTitle = Label(head, F.display, 22, "textBright")
     headTitle:SetPoint("TOPLEFT", headEyebrow, "BOTTOMLEFT", 0, -4)
