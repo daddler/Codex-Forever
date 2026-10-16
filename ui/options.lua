@@ -828,7 +828,7 @@ function O.HeadToggle(key)
     end
     opts.width = 170
     local t = WeintCodex.CreateToggle(head, opts)
-    t:SetPoint("TOPRIGHT", head, "TOPRIGHT", -PAD, -26)
+    t:SetPoint("TOPRIGHT", head, "TOPRIGHT", -44, -2)
     t:Hide()
     headToggles[key] = t
     return t
@@ -1358,7 +1358,10 @@ end
 BuildSearch = function(parent, anchor)
     local eb = CreateFrame("EditBox", nil, parent)
     eb:SetSize(180, 24)
-    eb:SetPoint("RIGHT", anchor, "LEFT", -10, 0)
+    -- 6.48.2.0 (Beta-Test: Schalter "Oberflaeche an" stiess an die Suche):
+    -- die Suche rechts in der Mitte des Kopfes, der Schalter oben daneben
+    -- am Schliessen-Knopf.
+    eb:SetPoint("RIGHT", parent, "TOPRIGHT", -PAD, -HEAD_H / 2 - 4)
     eb:SetAutoFocus(false)
     if eb.SetTextInsets then eb:SetTextInsets(8, 8, 0, 0) end
     K.SetFont(eb, 12)

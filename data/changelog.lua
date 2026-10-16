@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.48.2.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFSuche und Hauptschalter haben Platz.|r Die Suche steht rechts in der Mitte des Kopfes, der Schalter oben daneben – nichts überlappt mehr.",
+        },
+    },
+    {
         version = "6.48.1.0",
         date    = "16.10.2026",
         notes   = {
