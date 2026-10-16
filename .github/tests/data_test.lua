@@ -854,7 +854,7 @@ end
 -- neunundzwanzig); alle anderen zeichnen sich wie vorher. Geprueft
 -- wird nur, dass die Zugriffsfunktionen fuer den unbebilderten Fall
 -- nil liefern - das IST der Rueckfall.
-Check(WeintCodex.Art.Dungeon("lower_blackrock_spire") == nil,
+Check(WeintCodex.Art.Dungeon("stratholme") == nil,
     "ein Dungeon ohne Artwork liefert nil und keine leere Tabelle")
 Check(WeintCodex.Art.Boss("hall_of_thanes", "gibtesnicht") == nil,
     "ein Boss ohne Artwork liefert nil")

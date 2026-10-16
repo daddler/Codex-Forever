@@ -179,6 +179,18 @@ JOBS = [
     ("dungeons/razorfen_downs/amnennar", "razorfen_down/amnennar_the_coldbringer.png", (0, 30, 1983, 496), (512, 128)),
     ("dungeons/drowned_city/header", "the_drowned_city/banner.png", (0, 60, 1983, 496)),
     ("dungeons/drowned_city/zulalai", "the_drowned_city/zul-alai.png", (0, 40, 1983, 496), (512, 128)),
+    # 6.50.2.0: Untere Schwarzfelsspitze. Alle Originale hochkant (1514x1039,
+    # Banner 1672x941) - Ausschnitt 4:1 je Bild dort, wo der Kopf steht.
+    ("dungeons/lower_blackrock_spire/header", "lower_blackrock_spire/banner.png", (0, 250, 1672, 418)),
+    ("dungeons/lower_blackrock_spire/highlord_omokk", "lower_blackrock_spire/highlord_omokk.png", (0, 0, 1513, 378), (512, 128)),
+    ("dungeons/lower_blackrock_spire/shadow_hunter_voshgajin", "lower_blackrock_spire/shadow_hunter_vosh-gajin.png", (0, 50, 1514, 378), (512, 128)),
+    ("dungeons/lower_blackrock_spire/war_master_voone", "lower_blackrock_spire/war_master_voone.png", (0, 0, 1514, 378), (512, 128)),
+    ("dungeons/lower_blackrock_spire/urok_doomhowl", "lower_blackrock_spire/urok_doomhowl.png", (0, 0, 1514, 378), (512, 128)),
+    ("dungeons/lower_blackrock_spire/mother_smolderweb", "lower_blackrock_spire/mother_smolderweb.png", (0, 200, 1514, 378), (512, 128)),
+    ("dungeons/lower_blackrock_spire/quartermaster_zigris", "lower_blackrock_spire/quartermaster_zigris.png", (0, 50, 1514, 378), (512, 128)),
+    ("dungeons/lower_blackrock_spire/halycon", "lower_blackrock_spire/halycon.png", (0, 300, 1514, 378), (512, 128)),
+    ("dungeons/lower_blackrock_spire/gizrul", "lower_blackrock_spire/gizrul_the_slavener.png", (0, 150, 1514, 378), (512, 128)),
+    ("dungeons/lower_blackrock_spire/overlord_wyrmthalak", "lower_blackrock_spire/overlord_wyrmthalak.png", (0, 0, 1514, 378), (512, 128)),
     # 6.50.1.0: Duesterbruch (drei Fluegel, ein Kopfbild). Banner 2172x724, die
     # drei grossen Oger 1515x1038 bzw. 1672x941 - Ausschnitt von oben, 4:1.
     ("dungeons/dire_maul/header", "dire_maul/banner.png", (0, 90, 2172, 543)),

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.50.2.0] – 2026-10-16
+
+### Neu
+- Artwork Untere Schwarzfelsspitze: Kopfbild und 9 Begegnungen, Originale hochkant – Ausschnitt je Bild. Datentest prüft den Rückfall jetzt an Stratholme.
+
 ## [6.50.1.0] – 2026-10-16
 
 ### Neu

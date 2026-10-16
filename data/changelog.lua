@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.50.2.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Untere Schwarzfelsspitze ist bebildert.|r Ein Kopfbild und Bilder zu allen neun Begegnungen – von Hochlord Omokk bis Oberanführer Wyrmthalak.",
+        },
+    },
+    {
         version = "6.50.1.0",
         date    = "16.10.2026",
         notes   = {

@@ -895,6 +895,52 @@ WeintCodex.Artworks = {
         },
     },
 
+    lower_blackrock_spire = {
+        -- Originale hochkant, Ausschnitt je Bild (siehe make_artwork.py).
+        header = {
+            file = ART .. "lower_blackrock_spire/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            highlord_omokk = {
+                file = ART .. "lower_blackrock_spire/highlord_omokk",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            shadow_hunter_voshgajin = {
+                file = ART .. "lower_blackrock_spire/shadow_hunter_voshgajin",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            war_master_voone = {
+                file = ART .. "lower_blackrock_spire/war_master_voone",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            urok_doomhowl = {
+                file = ART .. "lower_blackrock_spire/urok_doomhowl",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            mother_smolderweb = {
+                file = ART .. "lower_blackrock_spire/mother_smolderweb",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            quartermaster_zigris = {
+                file = ART .. "lower_blackrock_spire/quartermaster_zigris",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            halycon = {
+                file = ART .. "lower_blackrock_spire/halycon",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            gizrul = {
+                file = ART .. "lower_blackrock_spire/gizrul",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            overlord_wyrmthalak = {
+                file = ART .. "lower_blackrock_spire/overlord_wyrmthalak",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
+
     drowned_city = {
         -- Originale 1983x793, Banner y 60. Bilder liegen fuer sieben Gestalten
         -- vor, im Bestand steht aber nur Zul'Alai (data/dungeons.lua) - die
