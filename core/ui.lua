@@ -1019,8 +1019,13 @@ end
 -- Eyebrow: mono, versal, weit gesperrt. WoW kennt kein letter-spacing, die
 -- Sperrung wird deshalb durch eingefuegte Haarspatien nachgebildet - je
 -- Zeichen eine, nicht je Byte (siehe oben).
+-- 6.46.0.0 (Wunsch: "nicht wie ein Fanprojekt, sondern seriös"): keine
+-- Sperrung mehr - weit gesperrte Versalien an jeder Ecke wirkten bemueht.
+-- Die Funktion bleibt (viele Aufrufer); SPACED = true holt sie zurueck.
+WeintCodex.SPACED = false
 local function Spaced(text)
     if not text then return "" end
+    if not WeintCodex.SPACED then return tostring(text) end
     local s = tostring(text)
     local out, i = {}, 1
     while i <= #s do
@@ -1035,7 +1040,7 @@ WeintCodex.Spaced = Spaced
 function WeintCodex.Eyebrow(parent, text, opts)
     opts = opts or {}
     local fs = parent:CreateFontString(nil, "OVERLAY")
-    fs:SetFont(F.mono, opts.size or 10, "")
+    fs:SetFont(F.sansSemi, (opts.size or 10) + 1, "")
     fs:SetTextColor(unpack(Col(opts.color or "textDim")))
     fs:SetText(Spaced(Upper(text or "")))
     fs:SetJustifyH(opts.justify or "LEFT")
@@ -1288,7 +1293,7 @@ function WeintCodex.Chip(parent, opts)
     DrawBorder(chip, col[1], col[2], col[3], opts.borderAlpha or 0.38, 1)
 
     local lbl = chip:CreateFontString(nil, "OVERLAY")
-    lbl:SetFont(F.monoBold, opts.size or 10, "")
+    lbl:SetFont(F.sansSemi, (opts.size or 10) + 1, "")
     lbl:SetTextColor(textCol[1], textCol[2], textCol[3], 1.0)
     lbl:SetText(Spaced(Upper(opts.text or "")))
     lbl:SetPoint("CENTER", chip, "CENTER", 0, 0)
@@ -1900,9 +1905,94 @@ function WeintCodex.CreateScrollArea(parent, x, y, w, h, slim)
                 thumb:SetVertexColor(C.textFaint[1], C.textFaint[2], C.textFaint[3], 0.65)
                 thumb:SetSize(4, 40)
             end
+            WeintCodex.SlimRail(sf, bar)
         end
     end
     return sf, inner
+end
+
+-- 6.46.0.0: eigene schlanke Bildlaufleiste. Die Leiste des Spiels
+-- brachte je nach Client Reste mit (Kappen, Pfeile, eine weisse Kante); sie
+-- bleibt als Traeger (Show/Hide der Aufrufer wirken weiter), alles
+-- Sichtbare an ihr wird ausgeblendet, darueber liegen Schiene und Griff.
+-- Kein Lua je Bild: der Griff folgt dem Bildlauf (OnVerticalScroll) und
+-- nur beim Ziehen laeuft ein Takt.
+function WeintCodex.SlimRail(sf, bar)
+    if not (sf and bar) or bar._wcRail then return end
+    local function Mute(f)
+        for _, r in ipairs({ f:GetRegions() }) do
+            if r.SetAlpha then r:SetAlpha(0) end
+        end
+        for _, c in ipairs({ f:GetChildren() }) do
+            if c.SetAlpha then c:SetAlpha(0) end
+            if c.EnableMouse then c:EnableMouse(false) end
+        end
+    end
+    pcall(Mute, bar)
+    if bar.EnableMouse then bar:EnableMouse(false) end
+    local rail = CreateFrame("Frame", nil, bar)
+    rail:SetPoint("TOP", bar, "TOP", 0, 0)
+    rail:SetPoint("BOTTOM", bar, "BOTTOM", 0, 0)
+    rail:SetWidth(8)
+    rail:SetFrameLevel((bar:GetFrameLevel() or 1) + 5)
+    local track = rail:CreateTexture(nil, "BACKGROUND")
+    track:SetPoint("TOP", rail, "TOP", 0, 0)
+    track:SetPoint("BOTTOM", rail, "BOTTOM", 0, 0)
+    track:SetWidth(2)
+    local s3 = C.surface3
+    track:SetColorTexture(s3[1], s3[2], s3[3], 0.8)
+    local grip = CreateFrame("Button", nil, rail)
+    grip:SetWidth(8)
+    local gt = grip:CreateTexture(nil, "ARTWORK")
+    gt:SetPoint("TOP", grip, "TOP", 0, 0)
+    gt:SetPoint("BOTTOM", grip, "BOTTOM", 0, 0)
+    gt:SetWidth(4)
+    local function Paint(hot)
+        local c = hot and C.textMuted or C.textDim
+        gt:SetColorTexture(c[1], c[2], c[3], hot and 0.9 or 0.6)
+    end
+    Paint(false)
+    local function Place()
+        local view = sf:GetHeight() or 0
+        local range = sf:GetVerticalScrollRange() or 0
+        local h = rail:GetHeight() or 0
+        if view <= 0 or h <= 0 then return end
+        local gh = math.max(28, h * view / (view + range))
+        grip:SetHeight(gh)
+        local off = range > 0 and ((sf:GetVerticalScroll() or 0) / range) * (h - gh) or 0
+        grip:ClearAllPoints()
+        grip:SetPoint("TOP", rail, "TOP", 0, -off)
+    end
+    sf:HookScript("OnVerticalScroll", Place)
+    sf:HookScript("OnScrollRangeChanged", Place)
+    sf:HookScript("OnSizeChanged", Place)
+    rail:SetScript("OnShow", Place)
+    grip:SetScript("OnEnter", function() Paint(true) end)
+    grip:SetScript("OnLeave", function(self) if not self.drag then Paint(false) end end)
+    grip:RegisterForClicks("LeftButtonDown", "LeftButtonUp")
+    local startY, startScroll
+    local function Drag()
+        local _, y = GetCursorPosition()
+        local s = rail:GetEffectiveScale() or 1
+        local h = (rail:GetHeight() or 0) - (grip:GetHeight() or 0)
+        local range = sf:GetVerticalScrollRange() or 0
+        if h <= 0 or range <= 0 then return end
+        local v = startScroll + (startY - y / s) / h * range
+        sf:SetVerticalScroll(math.max(0, math.min(range, v)))
+    end
+    grip:SetScript("OnMouseDown", function(self)
+        local _, y = GetCursorPosition()
+        startY, startScroll = y / (rail:GetEffectiveScale() or 1), sf:GetVerticalScroll() or 0
+        self.drag = true
+        self:SetScript("OnUpdate", Drag)
+    end)
+    grip:SetScript("OnMouseUp", function(self)
+        self.drag = false
+        self:SetScript("OnUpdate", nil)
+        if not self:IsMouseOver() then Paint(false) end
+    end)
+    bar._wcRail = rail
+    Place()
 end
 
 --------------------------------------------------
@@ -2772,7 +2862,7 @@ wordDiv:SetPoint("LEFT", wordmark, "RIGHT", 12, 0)
 wordDiv:SetColorTexture(unpack(C.borderStrong))
 
 local breadcrumb = titleBar:CreateFontString(nil, "OVERLAY")
-breadcrumb:SetFont(F.mono, 10, "")
+breadcrumb:SetFont(F.sansSemi, 11, "")
 breadcrumb:SetPoint("LEFT", wordDiv, "RIGHT", 12, 0)
 breadcrumb:SetJustifyH("LEFT")
 breadcrumb:SetTextColor(unpack(C.textFaint))
@@ -2802,7 +2892,7 @@ closeBtn:SetScript("OnEnter", function() closeX:SetTextColor(unpack(C.textBright
 closeBtn:SetScript("OnLeave", function() closeX:SetTextColor(unpack(C.textMuted)) end)
 
 local versionLbl = titleBar:CreateFontString(nil, "OVERLAY")
-versionLbl:SetFont(F.mono, 10, "")
+versionLbl:SetFont(F.sans, 11, "")
 versionLbl:SetPoint("RIGHT", closeBtn, "LEFT", -8, 0)
 versionLbl:SetTextColor(unpack(C.textFaint))
 versionLbl:SetText(Spaced("V" .. (WeintCodex.Version or "5.0.0.0")))

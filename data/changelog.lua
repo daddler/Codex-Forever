@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.46.0.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFAuch das Codex-Fenster wirkt ruhiger.|r Überschriften, Pfad, Marken und Versionsangabe ohne gesperrte Schreibmaschinenschrift, und überall eine eigene, schlanke Bildlaufleiste mit Griff zum Ziehen statt der Reste der Leiste des Spiels.",
+        },
+    },
+    {
         version = "6.45.1.0",
         date    = "16.10.2026",
         notes   = {

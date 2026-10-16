@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.46.0.0] – 2026-10-16
+
+### Geändert
+- `WeintCodex.Spaced` sperrt nicht mehr (`WeintCodex.SPACED = false`); Eyebrow, Chips, Pfad und Version in Sans-Halbfett statt Mono.
+- Schlanke Bildlaufleiste: `WeintCodex.SlimRail` – eigene Schiene und ziehbarer Griff über der stummgeschalteten Leiste des Spiels, in jeder `CreateScrollArea(…, slim)`.
+
 ## [6.45.1.0] – 2026-10-16
 
 ### Behoben
