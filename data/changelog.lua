@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.41.9.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Knöpfe neben der Minikarte stehen in einer Linie.|r Der Kalender saß seit dem neuen Spielstand versetzt unter der Verfolgung – jetzt stehen alle mittig in ihrer Spalte.",
+            "|cff7C6CFF/wcui speicher zeigt beim Erscheinen der Namensplaketten den Rest.|r Neu bauen, NPC erkennen und Lösen stehen einzeln da.",
+        },
+    },
+    {
         version = "6.41.8.0",
         date    = "16.10.2026",
         notes   = {

@@ -369,6 +369,8 @@ function MM.TimeButton()
     return nil
 end
 
+MM.AXIS = 22   -- Breite der Knopfspalte, Knoepfe mittig darin
+
 function MM.LayoutButtons()
     local mm = _G.Minimap
     if laying or type(mm) ~= "table" or not frame then return end
@@ -413,17 +415,21 @@ function MM.LayoutButtons()
         local vertical = side == "LEFT" or side == "RIGHT"
         local len, thick = vertical and h or w, vertical and w or h
         if along > 0 and along + len > limit then
-            along, across, depth = 0, across + depth + 2, 0
+            along, across, depth = 0, across + math.max(depth, MM.AXIS) + 2, 0
         end
         b:ClearAllPoints()
+        -- 6.41.9.0 (Beta-Test, neuer Build: der Kalender stand schief unter
+        -- der Verfolgung): auf einer gemeinsamen Mittellinie statt buendig
+        -- an der Karte - Knoepfe verschiedener Breite stehen sonst versetzt.
+        local mid = across + MM.AXIS / 2
         if side == "RIGHT" then
-            b:SetPoint("TOPLEFT", mm, "TOPRIGHT", 4 + across, -along)
+            b:SetPoint("CENTER", mm, "TOPRIGHT", 4 + mid, -along - h / 2)
         elseif side == "TOP" then
-            b:SetPoint("BOTTOMLEFT", mm, "TOPLEFT", along, topGap + across)
+            b:SetPoint("CENTER", mm, "TOPLEFT", along + w / 2, topGap + mid)
         elseif side == "BOTTOM" then
-            b:SetPoint("TOPLEFT", mm, "BOTTOMLEFT", along, -4 - across)
+            b:SetPoint("CENTER", mm, "BOTTOMLEFT", along + w / 2, -4 - mid)
         else
-            b:SetPoint("TOPRIGHT", mm, "TOPLEFT", -4 - across, -along)
+            b:SetPoint("CENTER", mm, "TOPLEFT", -4 - mid, -along - h / 2)
         end
         along = along + len + 2
         depth = math.max(depth, thick)

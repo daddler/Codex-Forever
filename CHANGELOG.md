@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.41.9.0] – 2026-10-16
+
+### Behoben
+- Minikarte: Knöpfe der Spalte mittig auf einer Achse (`MM.AXIS` = 22) statt bündig an der Karte – der Kalender des neuen Builds stand versetzt.
+
+### Geändert
+- Plaketten: „Neu bauen“, „NPC erkennen“, „Lösen“ einzeln gemessen (Erscheinen noch ~30 KB je Aufruf, Einrichten 0).
+
 ## [6.41.8.0] – 2026-10-16
 
 ### Geändert

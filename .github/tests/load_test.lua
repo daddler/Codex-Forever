@@ -5055,8 +5055,9 @@ do
         tr.SetPoint = function(_, p, rel, rp, x, y) pt = { p, rp, x, y } end
         local old = cl.Tracking
         cl.Tracking = tr
-        local want = { LEFT = { "TOPRIGHT", "TOPLEFT" }, RIGHT = { "TOPLEFT", "TOPRIGHT" },
-            TOP = { "BOTTOMLEFT", "TOPLEFT" }, BOTTOM = { "TOPLEFT", "BOTTOMLEFT" } }
+        -- 6.41.9.0: mittig auf der Achse der Spalte.
+        local want = { LEFT = { "CENTER", "TOPLEFT" }, RIGHT = { "CENTER", "TOPRIGHT" },
+            TOP = { "CENTER", "TOPLEFT" }, BOTTOM = { "CENTER", "BOTTOMLEFT" } }
         for side, w in pairs(want) do
             K.Set("minimap", "buttonSide", side)
             pt = nil

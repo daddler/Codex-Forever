@@ -1848,11 +1848,11 @@ end
 
 local function Attach(unit)
     if not (_G.C_NamePlate and _G.C_NamePlate.GetNamePlateForUnit) or not IsPlateToken(unit) then return end
-    if plates[unit] then Detach(unit) end
+    if plates[unit] then NP.MeasuredDetach(unit) end
     local okNp, nameplate = pcall(_G.C_NamePlate.GetNamePlateForUnit, unit)
     if not okNp or not nameplate then return end
     local prev = byPlate[nameplate]
-    if prev and plates[prev] then Detach(prev) end
+    if prev and plates[prev] then NP.MeasuredDetach(prev) end
     -- In Instanzen sind freundliche Plaketten fuer Addons gesperrt
     -- ("forbidden"): dann bleiben die des Spiels, ohne Fehler.
     if nameplate.IsForbidden and nameplate:IsForbidden() then return end
@@ -1864,7 +1864,7 @@ local function Attach(unit)
     local friendly = not K.Bool(_G.UnitCanAttack and _G.UnitCanAttack("player", unit), false)
     if friendly and not S.friendlyEnabled then return end
 
-    local p = table.remove(pool) or Build(nameplate)
+    local p = table.remove(pool) or NP.MeasuredBuild(nameplate)
     p._friendly = friendly
     p:SetParent(nameplate)
     p:ClearAllPoints()
@@ -1872,7 +1872,7 @@ local function Attach(unit)
     p.unit, p.nameplate = unit, nameplate
     -- Welcher NPC (Kennung, Name, zaubert?) - einmal beim Erscheinen.
     local NC = WeintCodex.UINpcColors
-    if NC and not friendly then NC.Identify(p, unit) end
+    if NC and not friendly then NP.MeasuredIdentify(NC, p, unit) end
     -- Erst einrichten, dann verbinden: SetUnit zeichnet sofort, wenn der
     -- Gegner schon zaubert.
     -- 6.41.5.0 (/wcui speicher: "Erscheinen" 80 KB je Plakette): neu
@@ -1901,6 +1901,10 @@ NP.MeasuredUnits = K.Measured("Plaketten: Zauber/Auren verbinden", function(p, u
 end)
 NP.MeasuredSuppress = K.Measured("Plaketten: Spiel ausblenden", function(np, unit, p) Suppress(np, unit, p) end)
 NP.MeasuredFull = K.Measured("Plaketten: Werte", function(p) FullUpdate(p) end)
+-- 6.41.9.0 (/wcui speicher: "Erscheinen" noch 30 KB, Einrichten 0): der Rest.
+NP.MeasuredBuild = K.Measured("Plaketten: Neu bauen", function(np) return Build(np) end)
+NP.MeasuredIdentify = K.Measured("Plaketten: NPC erkennen", function(NC, p, unit) NC.Identify(p, unit) end)
+NP.MeasuredDetach = K.Measured("Plaketten: Lösen", function(unit) Detach(unit) end)
 
 function Detach(unit)
     local p = plates[unit]
