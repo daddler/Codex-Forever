@@ -4380,5 +4380,11 @@ Angemeldet: Einheitenrahmen (Leben, Kraft), Gruppenrahmen, Schadensanzeige
 Schimmer), Erfahrungsbalken. Neue Einheit im Balken (`GZ.Changed`, GUID):
 Sprung ohne Spur. Werte bleiben unberührt (geheim möglich), kein Lua je Bild,
 der einzige Takt läuft nur, solange eine Spur wartet. Standard: **aus**;
-Komfortseite „Glanz“ (`ui/glanzpage.lua`): an/aus, je Bereich, je Wirkung,
+Seite „Glanz“ unter Allgemein (`ui/glanzpage.lua`, seit 6.44.0.0; vorher Komfort, Werte ziehen einmal um): an/aus, je Bereich, je Wirkung,
 Stärke, Ruhe, Dauer. Farben `GameColors.glanzSheen`/`glanzTrail`.
+
+**Balkentexturen (6.44.0.0):** `K.BAR_STYLES` – Glanz, Flach, Verlauf und sieben
+eigene (`media/ui/bar_*.tga`, erzeugt von `make_ui_media.py`, `make_bar_styles`).
+Gewählt unter Allgemein › „Balkentextur – gilt für alle Balken“, mit Vorschau
+in der Liste (`item.texture` in `OpenDropMenu`/`CreateDropdown`). Die Lichtkante
+oben nur bei Glanz und Verlauf.

@@ -703,6 +703,70 @@ def make_home_media():
         print("geschrieben:", os.path.relpath(target, ROOT))
 
 
+# --------------------------------------------------------------------
+# Balkentexturen zur Wahl (6.44.0.0, Wunsch: "Texturen direkt einstellen,
+# die dann fuer alle gelten"). Eigene, aus Zahlen - nichts aus dem Spiel
+# oder aus anderen Addons. Grau, gefaerbt wird im Spiel. Je Stil eine
+# Funktion f(x, y) -> Helligkeit 0..1 fuer x, y in 0..1 (y = 0 oben).
+# --------------------------------------------------------------------
+
+def _smooth(a, b, t):
+    t = max(0.0, min(1.0, t))
+    return a + (b - a) * (t * t * (3 - 2 * t))
+
+
+def _bar_seide(x, y):          # weich, hell in der Mitte
+    return 0.74 + 0.26 * math.cos((y - 0.42) * math.pi) ** 2
+
+
+def _bar_kante(x, y):          # flach mit heller Ober- und dunkler Unterkante
+    if y < 0.09:
+        return 1.0
+    if y > 0.88:
+        return 0.62
+    return 0.86
+
+
+def _bar_glas(x, y):           # obere Haelfte hell, harte Teilung
+    return _smooth(1.0, 0.9, y / 0.5) if y < 0.5 else _smooth(0.72, 0.8, (y - 0.5) / 0.5)
+
+
+def _bar_matt(x, y):           # kaum Verlauf
+    return 0.93 - 0.1 * y
+
+
+def _bar_neon(x, y):           # dunkle Raender, heller Kern
+    return 0.55 + 0.45 * math.exp(-((y - 0.5) / 0.22) ** 2)
+
+
+def _bar_rillen(x, y):         # feine waagerechte Linien
+    row = int(y * BAR_H)
+    return (0.95 if row % 4 < 2 else 0.8) - 0.12 * y
+
+
+def _bar_streifen(x, y):       # schraege Streifen, kachelbar
+    px, py = x * BAR_W, y * BAR_H
+    return (0.97 if int((px + py) / 6) % 2 == 0 else 0.82) - 0.1 * y
+
+
+BAR_STYLES = (("seide", _bar_seide), ("kante", _bar_kante), ("glas", _bar_glas),
+              ("matt", _bar_matt), ("neon", _bar_neon), ("rillen", _bar_rillen),
+              ("streifen", _bar_streifen))
+
+
+def make_bar_styles():
+    for name, fn in BAR_STYLES:
+        pixels = []
+        for yy in range(BAR_H):
+            for xx in range(BAR_W):
+                v = fn((xx + 0.5) / BAR_W, (yy + 0.5) / BAR_H)
+                c = round(255 * max(0.0, min(1.0, v)))
+                pixels.append((c, c, c, 255))
+        target = os.path.join(OUT, "bar_" + name + ".tga")
+        write_tga(target, BAR_W, BAR_H, pixels)
+        print("geschrieben:", os.path.relpath(target, ROOT))
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     make_home_media()
@@ -728,6 +792,8 @@ def main():
         target = os.path.join(OUT, name + ".tga")
         write_tga(target, w, h, pixels)
         print("geschrieben:", os.path.relpath(target, ROOT))
+
+    make_bar_styles()
 
     size, sheet = render_arrow_sheet()
     target = os.path.join(OUT, "arrow3d.tga")

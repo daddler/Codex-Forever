@@ -20,7 +20,8 @@
 --     verglichen - der Balken bekommt sie nur durchgereicht.
 --   * Aus (Standard) ist alles wie vorher: kein Schimmer, keine Spur,
 --     SetValue wie immer.
--- Einstellungen auf der Komfortseite "Glanz" (ui/glanzpage.lua).
+-- Einstellungen: Seite "Glanz" unter Allgemein (ui/glanzpage.lua; bis
+-- 6.43.0.0 im Komfort - Wunsch: "gehoert zur Grundeinstellung").
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
@@ -28,7 +29,7 @@ WeintCodex.UIGlanz = {}
 
 local GZ = WeintCodex.UIGlanz
 local K  = WeintCodex.UIKit
-local KEY = "comfort"
+local KEY = "general"   -- 6.44.0.0: Grundeinstellung, nicht Komfort
 
 GZ.TRAIL_DELAY = 0.35   -- so lange bleibt, was ein Treffer nahm, hell stehen
 GZ.SHEEN_W     = 40     -- Breite des Schimmers in px

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.44.0.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFZehn Balkentexturen für alles.|r Unter Allgemein wählst du die Textur mit Vorschau in der Liste – sie gilt für jeden Balken: Rahmen, Plaketten, Schadensanzeige, Zauber- und Erfahrungsbalken. Neu: Seide, Kante, Glas, Matt, Neon, Rillen und Streifen.",
+            "|cff7C6CFFGlanz steht jetzt unter Allgemein.|r Es gehört zum Aussehen, nicht zum Komfort – deine Einstellungen ziehen mit um.",
+        },
+    },
+    {
         version = "6.43.0.0",
         date    = "16.10.2026",
         notes   = {

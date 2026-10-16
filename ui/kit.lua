@@ -966,10 +966,40 @@ K.ARROW_TEXTURE = K.MEDIA .. "arrow"
 
 -- Welche Textur ein Balken traegt. "glanz" (Standard): die eigene
 -- Verlaufstextur; "flat": eine Farbe; "gradient": die Stufe von vorher.
-function K.BarTexture()
-    local style = K.Get("general", "barStyle")
+-- 6.44.0.0: eigene Texturen zur Wahl (media/ui/bar_*.tga, erzeugt von
+-- .github/scripts/make_ui_media.py) - gelten fuer jeden Balken.
+K.BAR_STYLES = {
+    { value = "glanz",    text = "Mit Glanz (WeintCodex)" },
+    { value = "flat",     text = "Flach" },
+    { value = "gradient", text = "Mit leichtem Verlauf" },
+    { value = "seide",    text = "Seide – hell in der Mitte", file = "bar_seide" },
+    { value = "kante",    text = "Kante – helle Oberkante", file = "bar_kante" },
+    { value = "glas",     text = "Glas – geteilt", file = "bar_glas" },
+    { value = "matt",     text = "Matt", file = "bar_matt" },
+    { value = "neon",     text = "Neon – leuchtender Kern", file = "bar_neon" },
+    { value = "rillen",   text = "Rillen", file = "bar_rillen" },
+    { value = "streifen", text = "Streifen", file = "bar_streifen" },
+}
+
+function K.BarTextureOf(style)
     if style == "flat" or style == "gradient" then return K.BAR_TEXTURE end
+    for _, it in ipairs(K.BAR_STYLES) do
+        if it.value == style and it.file then return K.MEDIA .. it.file end
+    end
     return K.GLOSS_TEXTURE
+end
+
+function K.BarTexture()
+    return K.BarTextureOf(K.Get("general", "barStyle"))
+end
+
+-- Liste fuer Auswahlfelder, mit Vorschau je Eintrag.
+function K.BarStyleItems()
+    local out = {}
+    for i, it in ipairs(K.BAR_STYLES) do
+        out[i] = { value = it.value, text = it.text, texture = K.BarTextureOf(it.value) }
+    end
+    return out
 end
 
 -- Jeder Balken der Oberflaeche entsteht HIER: mit Textur und einer feinen
@@ -982,7 +1012,8 @@ local function BarLight(sb)
     if not l then return end
     local c = WeintCodex.GameColors.barLight
     l:SetColorTexture(c[1], c[2], c[3], c[4])
-    if K.Get("general", "barStyle") == "flat" then l:Hide() else l:Show() end
+    local st = K.Get("general", "barStyle")
+    if st == nil or st == "glanz" or st == "gradient" then l:Show() else l:Hide() end
 end
 
 function K.NewBar(parent, noLight)

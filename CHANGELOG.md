@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.44.0.0] – 2026-10-16
+
+### Neu
+- Balkentexturen: `K.BAR_STYLES` mit sieben eigenen Texturen (`media/ui/bar_*.tga`), Auswahl mit Vorschau (`item.texture` in Auswahllisten); gilt für alle Balken.
+
+### Geändert
+- Glanz: Einstellungen unter Allgemein (`general`) statt Komfort; einmalige Übernahme (`migrated.glanzGeneral`).
+
 ## [6.43.0.0] – 2026-10-16
 
 ### Neu

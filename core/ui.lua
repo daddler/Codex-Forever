@@ -2074,6 +2074,12 @@ local function OpenDropMenu(owner, items, current, onPick, minWidth)
             t:SetJustifyH("LEFT")
             t:SetWordWrap(false)
             b._text = t
+            -- 6.44.0.0: Vorschau (Balkentexturen) hinter dem Text.
+            local pv = b:CreateTexture(nil, "BORDER")
+            pv:SetPoint("TOPLEFT", b, "TOPLEFT", 6, -3)
+            pv:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -6, 3)
+            pv:Hide()
+            b._preview = pv
             b:SetScript("OnEnter", function(self) self._hl:SetColorTexture(1, 1, 1, 0.06) end)
             b:SetScript("OnLeave", function(self) self._hl:SetColorTexture(1, 1, 1, 0) end)
             menu._buttons[i] = b
@@ -2083,7 +2089,19 @@ local function OpenDropMenu(owner, items, current, onPick, minWidth)
         b:SetPoint("TOPRIGHT", menu, "TOPRIGHT", -1, -1 - (i - 1) * ITEM_H)
         b._text:SetText(item.text or tostring(item.value))
         local selected = (item.value == current)
-        b._text:SetTextColor(unpack(selected and C.textBright or C.textMuted))
+        b._text:SetTextColor(unpack((selected or item.texture) and C.textBright or C.textMuted))
+        if item.texture then
+            local a = C.accent
+            b._preview:SetTexture(item.texture)
+            -- Gedaempft und mit Schatten am Text: auch in heller
+            -- Klassenfarbe (Priester: weiss) bleibt er lesbar.
+            b._preview:SetVertexColor(a[1] * 0.6, a[2] * 0.6, a[3] * 0.6, selected and 1 or 0.7)
+            b._text:SetShadowOffset(1, -1)
+            b._text:SetShadowColor(0, 0, 0, 1)
+            b._preview:Show()
+        else
+            b._preview:Hide()
+        end
         if selected then b._mark:Show() else b._mark:Hide() end
         b:SetScript("OnClick", function()
             menu:Hide()
@@ -2137,6 +2155,11 @@ function WeintCodex.CreateDropdown(parent, opts)
     local bg = btn:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(btn)
 
+    local preview = btn:CreateTexture(nil, "BORDER")
+    preview:SetPoint("TOPLEFT", btn, "TOPLEFT", 4, -4)
+    preview:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", -24, 4)
+    preview:Hide()
+
     local value = btn:CreateFontString(nil, "OVERLAY")
     value:SetFont(F.sans, 12, "")
     value:SetPoint("LEFT",  btn, "LEFT",  10, 0)
@@ -2173,10 +2196,21 @@ function WeintCodex.CreateDropdown(parent, opts)
     row.Sync = function()
         local current = opts.get and opts.get()
         local text = (opts.disabled and Disabled() and opts.disabledHint) or nil
+        local tex
         if not text then
             for _, item in ipairs(Items()) do
-                if item.value == current then text = item.text break end
+                if item.value == current then text, tex = item.text, item.texture break end
             end
+        end
+        if tex then
+            local a = C.accent
+            preview:SetTexture(tex)
+            preview:SetVertexColor(a[1] * 0.6, a[2] * 0.6, a[3] * 0.6, 1)
+            value:SetShadowOffset(1, -1)
+            value:SetShadowColor(0, 0, 0, 1)
+            preview:Show()
+        else
+            preview:Hide()
         end
         -- Ein gespeicherter Wert, den die Liste nicht (mehr) kennt, wird
         -- genannt statt verschwiegen - ein leeres Feld saehe aus wie "aus".

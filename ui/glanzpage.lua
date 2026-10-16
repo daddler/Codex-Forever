@@ -1,12 +1,12 @@
 --------------------------------------------------
--- WeintCodex :: Komfort - Seite "Glanz" (6.43.0.0)
+-- WeintCodex :: Allgemein - Seite "Glanz" (6.43.0.0, seit 6.44.0.0 hier)
 --------------------------------------------------
 -- Einstellungen zu ui/glanz.lua: an/aus, wo, was, wie stark, wie oft.
 --------------------------------------------------
 
 local GZ = WeintCodex.UIGlanz
 local K  = WeintCodex.UIKit
-local KEY = "comfort"
+local KEY = "general"
 
 local function Build(B)
     local off = function() return not GZ.On() end
@@ -43,5 +43,29 @@ if mod and GZ then
     for k, v in pairs(GZ.DEFAULTS) do
         if mod.defaults[k] == nil then mod.defaults[k] = v end
     end
-    mod.pages[#mod.pages + 1] = { key = "glanz", label = "Glanz", build = Build }
+    -- Gleich hinter "Allgemein".
+    local at = #mod.pages + 1
+    for i, p in ipairs(mod.pages) do if p.key == "allgemein" then at = i + 1 break end end
+    table.insert(mod.pages, at, { key = "glanz", label = "Glanz", build = Build })
+end
+
+-- 6.44.0.0: was 6.43.0.0 im Komfort gespeichert hat, zieht einmal um.
+function GZ.Migrate()
+    local ui = K.Root and K.Root()
+    if type(ui) ~= "table" then return end
+    ui.migrated = ui.migrated or {}
+    if ui.migrated.glanzGeneral then return end
+    ui.migrated.glanzGeneral = true
+    for k in pairs(GZ.DEFAULTS) do
+        local v = K.Get("comfort", k)
+        if v ~= nil then
+            K.Set("comfort", k, nil)
+            K.Set(KEY, k, v)
+        end
+    end
+end
+do
+    local ev = CreateFrame("Frame")
+    ev:RegisterEvent("PLAYER_LOGIN")
+    ev:SetScript("OnEvent", function() pcall(GZ.Migrate) GZ.ApplyAll() end)
 end

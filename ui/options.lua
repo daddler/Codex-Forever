@@ -94,6 +94,8 @@ K.Register({
     OnSetting = function(key)
         -- Nur die Ansicht dieses Fensters - kein Modul muss neu zeichnen.
         if key == "showAdvanced" then return end
+        -- Glanz (6.44.0.0 hier gespeichert) regelt sich selbst (K.Listen).
+        if type(key) == "string" and key:sub(1, 5) == "glanz" then return end
         if key == "barStyle" or key == "*" then K.RestyleBars() end
         if key == "shadows" or key == "*" then K.ApplyShadows() end
         if key == "windowScale" then
@@ -159,10 +161,7 @@ K.Register({
                         { value = "none",  text = "Keine (mit Schatten)" },
                         { value = "thin",  text = "Dünn" },
                         { value = "thick", text = "Dick" } } })
-            B:Row({ type = "dropdown", label = "Balken", key = "barStyle", items = {
-                        { value = "glanz",    text = "Mit Glanz (WeintCodex)" },
-                        { value = "flat",     text = "Flach" },
-                        { value = "gradient", text = "Mit leichtem Verlauf" } } },
+            B:Row({ type = "dropdown", label = "Balkentextur – gilt für alle Balken", key = "barStyle", items = K.BarStyleItems },
                   { type = "toggle", label = "Weiche Schatten", key = "shadows",
                     description = "Rahmen, Leisten und Fenster heben sich mit einem Schatten von der Spielwelt ab." })
             B:Row({ type = "dropdown", label = "Farbe der Oberfläche", key = "highlight", reload = true, items = {

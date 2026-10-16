@@ -551,7 +551,7 @@ end
 --   Welt und Karte    Karte, Sammeln, Seltene Gegner
 --   Handel, Gespraeche Auktionshaus, Fluestern, Gespraeche
 QoL.PAGE_ORDER = {
-    automatik = 1, anzeigen = 2, glanz = 3,
+    automatik = 1, anzeigen = 2,
     rausda = 10, automark = 11, klickzauber = 12, makros = 13,
     karte = 20, questhilfe = 20.5, sammeln = 21, glitzern = 22, selten = 23,
     auktion = 30, fluestern = 31, gespraeche = 32,

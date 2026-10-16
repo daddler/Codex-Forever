@@ -18073,9 +18073,9 @@ do
             assert(QoL.PAGE_ORDER[p.key], "Seite ohne Thema: " .. p.key)
         end
         local order = table.concat(keys, ",")
-        assert(order == "automatik,anzeigen,glanz,rausda,automark,klickzauber,makros,ringe,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,danke,gespraeche",
+        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,ringe,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,danke,gespraeche",
             "Reihenfolge: " .. order)
-        assert(O.PageIndex("comfort", "gespraeche") == 17 and O.PageIndex("comfort", "fluestern") == 15, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 16 and O.PageIndex("comfort", "fluestern") == 14, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")
@@ -18954,13 +18954,13 @@ do
         local st = GZ.Bar(bar, "unit", "health", bg)
         assert(st and st.trail and st.under, "Spur oder Grund fehlt")
         -- Aus (Standard): wie vorher, keine Spur.
-        K.Set("comfort", "glanz", false)
+        K.Set("general", "glanz", false)
         assert(not st.trailOn and not st.smooth, "aus, aber Glanz wirkt")
         GZ.Range(bar, 0, 100)
         GZ.Set(bar, 50)
         assert(G.next(GZ.pending) == nil, "aus, aber Spur wartet")
         -- An: Spur wartet, dann folgt sie.
-        K.Set("comfort", "glanz", true)
+        K.Set("general", "glanz", true)
         assert(st.trailOn and st.smooth, "an, aber kein Glanz")
         assert(st.sheen and st.ag, "kein Schimmer")
         GZ.Set(bar, 40)
@@ -18974,11 +18974,25 @@ do
         GZ.Set(bar, 90, true)
         assert(not GZ.pending[st], "Sprung mit Spur")
         -- Bereich aus: nur dort aus.
-        K.Set("comfort", "glanzUnit", false)
+        K.Set("general", "glanzUnit", false)
         assert(not st.trailOn, "Bereich aus, Spur an")
-        K.Set("comfort", "glanzUnit", nil)
-        K.Set("comfort", "glanz", nil)
+        K.Set("general", "glanzUnit", nil)
+        K.Set("general", "glanz", nil)
         assert(not GZ.On(), "Standard ist nicht aus")
+        -- 6.44.0.0: Seite unter Allgemein, nicht im Komfort; Texturen fuer alle.
+        local has
+        for _, pg in ipairs(K.Module("general").pages) do if pg.key == "glanz" then has = true end end
+        assert(has, "Glanz nicht unter Allgemein")
+        for _, pg in ipairs(K.Module("comfort").pages) do assert(pg.key ~= "glanz", "Glanz noch im Komfort") end
+        local items = K.BarStyleItems()
+        assert(#items >= 10 and items[4].texture and items[4].texture:find("bar_seide", 1, true), "Texturen fehlen")
+        for _, it in ipairs(items) do
+            local f = it.texture:match("WeintCodex\\media\\ui\\(.+)$")
+            if f then assert(io.open(ROOT .. "/media/ui/" .. f .. ".tga", "rb"), f .. ".tga fehlt") end
+        end
+        K.Set("general", "barStyle", "neon")
+        assert(K.BarTexture():find("bar_neon", 1, true), "Textur gilt nicht")
+        K.Set("general", "barStyle", nil)
     end)
     Check(ok, "Glanz: aus wie vorher, an mit Schimmer, Gleiten und Spur, je Bereich" .. (ok and "" or (": " .. tostring(err))))
 end
