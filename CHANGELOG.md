@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.52.2.0] – 2026-10-16
+
+### Behoben
+- Totems: `GetTotemInfo` meldet auf Forever einen Platz als belegt ohne Namen und Symbol (gemessen per `/wcui fenster`: `WeintCodexTotem2` sichtbar, Symbol leer). `TT.Info` wertet das als leer.
+
 ## [6.52.1.0] – 2026-10-16
 
 ### Geändert

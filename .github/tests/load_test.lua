@@ -18818,6 +18818,21 @@ do
     Check(ok, "Charakterfenster: Gegenstandsstufe vom Client, keine 0" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.52.2.0: Platz "belegt" ohne Namen und Symbol gilt als leer.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local TT = WeintCodex.UITotems
+        local oT = G.GetTotemInfo
+        G.GetTotemInfo = function() return true, "", 0, 0, nil end
+        assert(TT.Info(2) == false, "Platz ohne Namen und Symbol als Totem gezeigt")
+        G.GetTotemInfo = function() return true, "Totem", 0, 0, 136097 end
+        assert(TT.Info(2) == true, "echtes Totem verworfen")
+        G.GetTotemInfo = oT
+    end)
+    Check(ok, "Totems: belegt ohne Namen und Symbol ist leer" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.51.3.0: leerer Totemplatz ausserhalb des Kampfes versteckt, nicht nur Alpha 0.
 do
     local G = _G

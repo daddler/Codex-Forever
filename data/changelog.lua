@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.52.2.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDas leere Kästchen unter dem Spielerrahmen ist weg.|r Ein Totemplatz, den das Spiel als belegt meldet, ohne Totem darin, bleibt jetzt versteckt.",
+        },
+    },
+    {
         version = "6.52.1.0",
         date    = "16.10.2026",
         notes   = {

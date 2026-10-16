@@ -40,6 +40,11 @@ function TT.Info(slot)
     if not ok then return nil end
     have, start, duration = K.Plain(have), K.Plain(start), K.Plain(duration)
     if not have then return false end
+    -- 6.52.2.0 (/wcui fenster: WeintCodexTotem2 sichtbar, nur Farbflaechen,
+    -- ohne Totem): der Client meldet einen Platz als belegt, ohne Symbol
+    -- und Namen. Ein Totem ohne beides ist keins, das man zeigen koennte.
+    local nm, ic = K.Plain(name), K.Plain(icon)
+    if (type(nm) ~= "string" or nm == "") and (ic == nil or ic == 0 or ic == "") then return false end
     local finish = (type(start) == "number" and type(duration) == "number" and duration > 0) and (start + duration) or nil
     return true, K.Plain(name), finish, K.Plain(icon)
 end
