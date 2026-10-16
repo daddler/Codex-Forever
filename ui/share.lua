@@ -27,6 +27,9 @@
 --     Grafik, Netz, Konto oder Debug (haengt am Rechner bzw. ist privat)
 --   * die Tastenbelegung des Spiels (alle belegten Befehle)
 --   * der Platz des Minikarten-Symbols
+--   * seit 6.42.0.0: welche Aktionsleisten an sind (GetActionBarToggles) -
+--     im Profil als `bars`; ein Charakter, der das Profil zum ersten Mal
+--     nutzt (neu erstellt), bekommt sie beim Einloggen gesetzt
 -- Nicht moeglich ohne Risiko und deshalb nicht dabei: was auf den
 -- Aktionsleisten liegt (je Charakter, Zauber muessen gelernt sein) und
 -- die Chatfenster des Spiels.
@@ -340,6 +343,102 @@ function SH.Bindings()
     return out
 end
 
+--------------------------------------------------
+-- Aktionsleisten an/aus (6.42.0.0)
+--------------------------------------------------
+-- Wunsch: "erkennen, wie viele Leisten aktiv sind - beim neuen Charakter
+-- mit dem Profil direkt die Aktionsleisten aktivieren". Der Client sagt es
+-- mit GetActionBarToggles (je Leiste ab der zweiten ein Wahrheitswert),
+-- gesetzt wird mit SetActionBarToggles - dieselben Aufrufe wie die
+-- Optionen des Spiels. Nie im Kampf.
+
+SH.NEW_LEVEL = 5   -- bis hier gilt ein Charakter ohne Eintrag als neu
+
+-- Liste { true, false, ... } oder nil (Client kann es nicht).
+function SH.BarToggles()
+    local get = _G.GetActionBarToggles
+    if type(get) ~= "function" then return nil end
+    local res = { pcall(get) }
+    if not res[1] then return nil end
+    local out = {}
+    for i = 2, #res do out[#out + 1] = K.Bool(res[i], false) end
+    return #out > 0 and out or nil
+end
+
+function SH.CountBars(list)
+    local n = 0
+    for _, v in ipairs(list or {}) do if v then n = n + 1 end end
+    return n
+end
+
+-- Setzt die Leisten. true / false, Grund.
+function SH.ApplyBars(list)
+    if type(list) ~= "table" or #list == 0 then return false, "nichts gespeichert" end
+    if K.InCombat() then return false, "im Kampf" end
+    local set = _G.SetActionBarToggles
+    if type(set) ~= "function" then return false, "vom Spiel nicht angeboten" end
+    local cur = SH.BarToggles() or {}
+    local vals, same = {}, true
+    for i = 1, math.max(#list, #cur) do
+        local v = list[i]
+        if v == nil then v = cur[i] or false end
+        vals[i] = v and true or false
+        if vals[i] ~= (cur[i] or false) then same = false end
+    end
+    if same then return true end
+    local ok = pcall(set, unpack(vals))
+    if not ok then return false, "vom Spiel abgelehnt" end
+    if type(_G.MultiActionBar_Update) == "function" then pcall(_G.MultiActionBar_Update) end
+    return true
+end
+
+-- Merkt die Leisten dieses Charakters im aktiven Profil.
+function SH.RememberBars()
+    local p = K.Profile and K.Profile()
+    local bars = SH.BarToggles()
+    if type(p) == "table" and bars then p.bars = bars end
+end
+
+-- Beim Einloggen: nutzt dieser Charakter das Profil zum ersten Mal (neu
+-- erstellt oder gerade gewaehlt), bekommt er dessen Leisten.
+function SH.OnLogin()
+    local p = K.Profile and K.Profile()
+    local st = K.CharState and K.CharState()
+    if type(p) ~= "table" or type(st) ~= "table" then return end
+    local name = K.ActiveProfile and K.ActiveProfile()
+    if st.barsFrom == name then return end
+    -- Charaktere von vor 6.42.0.0 (noch kein Eintrag, schon gespielt):
+    -- nur merken, nichts umstellen - ihre Leisten hat der Spieler gesetzt.
+    local lvl = K.Plain(_G.UnitLevel and _G.UnitLevel("player"))
+    if st.barsFrom == nil and type(lvl) == "number" and lvl > SH.NEW_LEVEL then
+        st.barsFrom = name
+        return
+    end
+    if type(p.bars) == "table" and #p.bars > 0 then
+        local ok = SH.ApplyBars(p.bars)
+        if not ok then return end
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Aktionsleisten aus dem Profil „" .. tostring(name)
+            .. "“ eingeschaltet (" .. SH.CountBars(p.bars) .. " zusätzliche an).")
+    end
+    st.barsFrom = name
+end
+
+do
+    local ev = CreateFrame("Frame")
+    ev:RegisterEvent("PLAYER_ENTERING_WORLD")
+    ev:RegisterEvent("PLAYER_LOGOUT")
+    ev:SetScript("OnEvent", function(self, event)
+        if event == "PLAYER_LOGOUT" then
+            pcall(SH.RememberBars)
+        else
+            self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+            if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(3, function() pcall(SH.OnLogin) end)
+            else pcall(SH.OnLogin) end
+        end
+    end)
+    SH.events = ev
+end
+
 function SH.Export()
     local ui = K.Root()
     local PR = WeintCodex.UIProfiles
@@ -347,6 +446,7 @@ function SH.Export()
     local p = ui and ui.profiles[name]
     if type(p) ~= "table" then return nil end
     local gl, gln = SH.ActiveLayoutString()
+    SH.RememberBars()
     local data = { v = 2, name = name, profile = p, layout = SH.LayoutString(),
                    addon = WeintCodex.Version,
                    uiEnabled = K.UIEnabled() and true or false,
@@ -366,6 +466,7 @@ function SH.Contents(data)
     if n > 0 then parts[#parts + 1] = n .. " Spieleinstellungen" end
     if type(data.bindings) == "table" and #data.bindings > 0 then parts[#parts + 1] = "Tastenbelegung (" .. #data.bindings .. " Befehle)" end
     if data.uiEnabled ~= nil then parts[#parts + 1] = "Oberfläche " .. (data.uiEnabled and "an" or "aus") end
+    if type(data.profile.bars) == "table" then parts[#parts + 1] = SH.CountBars(data.profile.bars) .. " zusätzliche Aktionsleisten an" end
     return table.concat(parts, ", ")
 end
 
@@ -387,6 +488,11 @@ function SH.Parse(text)
     if type(data.bindings) ~= "table" then data.bindings = nil end
     if type(data.launcher) ~= "table" then data.launcher = nil end
     if type(data.uiEnabled) ~= "boolean" then data.uiEnabled = nil end
+    if data.profile.bars ~= nil then
+        local ok = type(data.profile.bars) == "table" and #data.profile.bars <= 16
+        for _, v in ipairs(ok and data.profile.bars or {}) do if type(v) ~= "boolean" then ok = false end end
+        if not ok then data.profile.bars = nil end
+    end
     return data
 end
 
@@ -415,10 +521,13 @@ function SH.Items(data)
         out[#out + 1] = { id = "positions", label = "Plätze der WeintCodex-Rahmen", on = true }
     end
     for k in pairs(src) do
-        if k ~= "modules" and k ~= "positions" then
+        if k ~= "modules" and k ~= "positions" and k ~= "bars" then
             out[#out + 1] = { id = "rest", label = "Weitere Profilwerte", on = true }
             break
         end
+    end
+    if type(src.bars) == "table" then
+        out[#out + 1] = { id = "bars", label = "Aktionsleisten (" .. SH.CountBars(src.bars) .. " zusätzliche an)", game = true, on = true }
     end
     if data.layout then out[#out + 1] = { id = "layout", label = "Layout „WeintCodex“ (Bearbeitungsmodus)", game = true, on = true } end
     if data.gameLayout then
@@ -467,9 +576,10 @@ function SH.Apply(data, sel)
         if Want("positions") and type(src.positions) == "table" then p.positions = PR.DeepCopy(src.positions) end
         if Want("rest") then
             for k, v in pairs(src) do
-                if k ~= "modules" and k ~= "positions" then p[k] = PR.DeepCopy(v) end
+                if k ~= "modules" and k ~= "positions" and k ~= "bars" then p[k] = PR.DeepCopy(v) end
             end
         end
+        if Want("bars") and type(src.bars) == "table" then p.bars = PR.DeepCopy(src.bars) end
         if type(p.positions) ~= "table" then p.positions = {} end
     end
     local notes = {}
@@ -482,6 +592,13 @@ function SH.Apply(data, sel)
     if data.gameLayout and Want("gameLayout") then
         local ok, why = SH.ImportGameLayout(data.gameLayout, data.gameLayoutName, not uiOn)
         notes[#notes + 1] = ok and ("Layout „" .. why .. "“ angelegt.") or ("Layout nicht übernommen: " .. tostring(why) .. ".")
+    end
+    if type(src.bars) == "table" and Want("bars") then
+        local ok, why = SH.ApplyBars(src.bars)
+        notes[#notes + 1] = ok and (SH.CountBars(src.bars) .. " zusätzliche Aktionsleisten an.") or ("Aktionsleisten nicht gesetzt: " .. tostring(why) .. ".")
+        -- Dieser Charakter hat sie schon - beim Einloggen nicht noch einmal.
+        local st = K.CharState and K.CharState()
+        if ok and type(st) == "table" and target == PR.Active() then st.barsFrom = target end
     end
     if data.cvars and Want("cvars") then
         local n, bad = SH.ApplyCVars(data.cvars)

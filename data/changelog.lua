@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.42.0.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDas Profil kennt jetzt deine Aktionsleisten.|r Export und Import nehmen mit, welche Leisten an sind, und ein neuer Charakter mit dem Profil bekommt sie beim Einloggen gleich eingeschaltet – kein Haken mehr in den Optionen des Spiels.",
+        },
+    },
+    {
         version = "6.41.9.0",
         date    = "16.10.2026",
         notes   = {

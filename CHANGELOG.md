@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.42.0.0] – 2026-10-16
+
+### Neu
+- Profil: Aktionsleisten an/aus (`GetActionBarToggles`) als `profile.bars` – gemerkt beim Ausloggen und Export, beim Import als eigener Haken („Aktionsleisten (n zusätzliche an)“) und sofort gesetzt (`SetActionBarToggles`, nie im Kampf). Ein Charakter bis Stufe 5, der das Profil zum ersten Mal nutzt, bekommt die Leisten beim Einloggen; ältere Charaktere werden nur vermerkt (`chars[..].barsFrom`).
+
 ## [6.41.9.0] – 2026-10-16
 
 ### Behoben

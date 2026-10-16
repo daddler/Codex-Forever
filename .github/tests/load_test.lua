@@ -18942,6 +18942,50 @@ do
     Check(ok, "Profil exportieren/importieren: Rundweg, fremder Text abgelehnt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.42.0.0: Aktionsleisten im Profil - erkannt, exportiert, gesetzt.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local K, SH = WeintCodex.UIKit, WeintCodex.UIShare
+        local oG, oS, oL = G.GetActionBarToggles, G.SetActionBarToggles, G.UnitLevel
+        local cur = { true, false, false, false }
+        G.GetActionBarToggles = function() return unpack(cur) end
+        G.SetActionBarToggles = function(...) cur = { ... } end
+        local t = SH.BarToggles()
+        assert(t and #t == 4 and t[1] == true and t[2] == false, "Leisten nicht erkannt")
+        assert(SH.CountBars({ true, true, false }) == 2, "Zaehlung")
+        assert(SH.ApplyBars({ true, true, true, false }) and cur[3] == true and cur[4] == false, "Leisten nicht gesetzt")
+        local p = K.Profile()
+        local had = p.bars
+        p.bars = nil
+        SH.RememberBars()
+        assert(p.bars and p.bars[2] == true, "Leisten nicht im Profil")
+        local data = SH.Parse(SH.Export())
+        assert(data and data.profile.bars and SH.CountBars(data.profile.bars) == 3, "Leisten nicht im Export")
+        local found
+        for _, it in ipairs(SH.Items(data)) do if it.id == "bars" then found = it end end
+        assert(found and found.on, "Leisten nicht zum Anhaken")
+        -- Neuer Charakter: Profil bringt die Leisten mit.
+        local st = K.CharState()
+        if type(st) == "table" then
+            cur = { false, false, false, false }
+            st.barsFrom = nil
+            G.UnitLevel = function() return 1 end
+            SH.OnLogin()
+            assert(cur[1] and cur[2] and cur[3] and not cur[4], "neuer Charakter ohne Leisten")
+            -- Alter Charakter ohne Eintrag: nichts umstellen.
+            cur = { false, false, false, false }
+            st.barsFrom = nil
+            G.UnitLevel = function() return 40 end
+            SH.OnLogin()
+            assert(not cur[1] and st.barsFrom ~= nil, "alter Charakter umgestellt")
+        end
+        p.bars = had
+        G.GetActionBarToggles, G.SetActionBarToggles, G.UnitLevel = oG, oS, oL
+    end)
+    Check(ok, "Profil: Aktionsleisten erkannt, exportiert, beim neuen Charakter gesetzt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.28.1.0: abgabebereit nur mit klarem Ja und erfuellten Zielen.
 do
     local G = _G
