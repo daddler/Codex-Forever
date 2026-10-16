@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.52.0.0] – 2026-10-16
+
+### Neu
+- Charakterfenster: Gegenstandsstufe an den Ausrüstungsplätzen (`ui/charilvl.lua`), aus `C_Item.GetCurrentItemLevel` am Platz, Farbe der Qualität; ohne Meldung keine Zahl. Schrift auf eigenem Kind-Rahmen, keine Felder in den Knöpfen des Spiels. Nur mit Oberfläche.
+
 ## [6.51.3.0] – 2026-10-16
 
 ### Behoben

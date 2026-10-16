@@ -18772,6 +18772,33 @@ do
     Check(ok, "Totems im Kampf: geheime Werte ans Spiel, Knopf bleibt da" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.52.0.0: Gegenstandsstufe an den Plaetzen des Charakterfensters.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local CI = WeintCodex.UICharItemLevel
+        local K = WeintCodex.UIKit
+        local oI, oL, oQ, oH, oE = G.C_Item, G.ItemLocation, G.GetInventoryItemQuality, G.CharacterHeadSlot, K.UIEnabled
+        K.UIEnabled = function() return true end
+        G.ItemLocation = { CreateFromEquipmentSlot = function(_, id) return { id = id } end }
+        G.C_Item = { GetCurrentItemLevel = function(loc) return loc.id == 1 and 27 or 0 end,
+                     DoesItemExist = function() return true end,
+                     GetItemQualityColor = function() return 0.1, 1, 0 end }
+        G.GetInventoryItemQuality = function() return 2 end
+        local head = CreateFrame("Button", "CharacterHeadSlot")
+        head.GetID = function() return 1 end
+        local neck = CreateFrame("Button", "CharacterNeckSlot")
+        neck.GetID = function() return 2 end
+        CI.Update()
+        assert(CI.labels[head]:GetText() == "27", "Stufe am Kopf fehlt")
+        assert(CI.labels[neck]:GetText() == "", "keine Stufe gemeldet, trotzdem Zahl")
+        assert(rawget(head, "ilvl") == nil, "Feld in den Knopf des Spiels geschrieben")
+        G.C_Item, G.ItemLocation, G.GetInventoryItemQuality, G.CharacterHeadSlot, K.UIEnabled = oI, oL, oQ, oH, oE
+        G.CharacterNeckSlot = nil
+    end)
+    Check(ok, "Charakterfenster: Gegenstandsstufe vom Client, keine 0" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.51.3.0: leerer Totemplatz ausserhalb des Kampfes versteckt, nicht nur Alpha 0.
 do
     local G = _G

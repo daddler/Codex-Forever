@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.52.0.0",
+        date    = "16.10.2026",
+        notes   = {
+            "|cff7C6CFFDas Charakterfenster zeigt die Gegenstandsstufe.|r An jedem angelegten Gegenstand steht oben links seine Stufe in der Farbe seiner Qualität – wie in den Taschen.",
+        },
+    },
+    {
         version = "6.51.3.0",
         date    = "16.10.2026",
         notes   = {
