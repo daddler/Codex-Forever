@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.62.2.0
+## Version: 6.62.3.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -349,6 +349,7 @@ ui/bank.lua
 ui/mail.lua
 # Kontakte in Gold (6.10.1.0): das erste Fenster, das von Anfang an aus Bausteinen besteht.
 ui/friends.lua
+ui/channels.lua
 # Lehrer in Gold (6.10.1.0): Pergament und Zeilen nach Rolle, nicht nach Bild.
 ui/classtrainer.lua
 # Karte & Questlog (6.7.9.0, 6.8.0.9): Questlog und Questdetails auf Flaeche, Gold, Karte unberuehrt.

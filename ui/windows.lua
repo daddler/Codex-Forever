@@ -107,7 +107,9 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               "CalendarFrame",
               -- 6.26.10.0: Einstellungen des Abklingzeitmanagers (Metallrahmen,
               -- Seitenreiter, Leder; ui/calm.lua LF.Cooldown).
-              "CooldownViewerSettings" }
+              "CooldownViewerSettings",
+              -- 6.62.3.0: Chat-Kanaele (Blizzard_Channels; ui/channels.lua).
+              "ChannelFrame" }
 
 -- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
 -- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.62.3.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFChat-Kanäle in Gold|r – das Fenster der Chat-Kanäle trägt jetzt den Stil der übrigen Fenster: kein Metallrahmen, dunkle Flächen, die Gruppenköpfe als ruhige Leisten.",
+        },
+    },
+    {
         version = "6.62.2.0",
         date    = "17.10.2026",
         notes   = {

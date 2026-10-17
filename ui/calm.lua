@@ -69,11 +69,11 @@ LF.WINDOWS = { LFGParentFrame = "Suche nach Gruppe", PVEFrame = "Suche nach Grup
                BankFrame = "Bank", GuildBankFrame = "Gildenbank",
                MailFrame = "Post", OpenMailFrame = "Brief", FriendsFrame = "Kontakte",
                SocialUIFrame = "Kontakte", ClassTrainerFrame = "Lehrer",
-               LegacySystemFrame = "Vermächtnis", CalendarFrame = "Kalender",
+               LegacySystemFrame = "Vermächtnis", CalendarFrame = "Kalender", ChannelFrame = "Chat-Kanäle",
                CooldownViewerSettings = "Abklingzeiten" }
 LF.HOSTS = { "LFGParentFrame", "PVEFrame", "CollectionsJournal", "SettingsPanel", "MacroFrame", "TradeFrame",
              "AuctionHouseFrame", "BankFrame", "GuildBankFrame", "MailFrame", "OpenMailFrame", "FriendsFrame",
-             "SocialUIFrame", "ClassTrainerFrame", "LegacySystemFrame", "CalendarFrame",
+             "SocialUIFrame", "ClassTrainerFrame", "LegacySystemFrame", "CalendarFrame", "ChannelFrame",
              "CooldownViewerSettings" }
 -- Innenflaechen, die das Fenster selbst nicht als solche baut: Feld am
 -- Fenster oder globaler Name -> W.OwnBackground (eigene Bilder weg,

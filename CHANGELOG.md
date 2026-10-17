@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.62.3.0] – 2026-10-17
+
+### Geändert
+- Chat-Kanäle (`ChannelFrame`) in Gold (`ui/channels.lua`): Rahmen, Innenflächen und Kante wie die übrigen Fenster; Gruppenköpfe als Leiste ohne Rand, Zeilenhintergründe weg, Leuchten und Auswahl bleiben.
+
 ## [6.62.2.0] – 2026-10-17
 
 ### Geändert
