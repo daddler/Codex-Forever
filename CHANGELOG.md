@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.11.0] – 2026-10-17
+
+### Neu
+- Weltkarten-Marke (`modules/questmap.lua`): Linksklick setzt den Questpfeil (`QM.Guide` → `QA.SetCustom`); erledigt in der Instanz (Eingänge, `place.gate`) oder näher als `QM.ARRIVE` auf der Karte.
+
+### Geändert
+- Marke neu gezeichnet: runde Plakette (Rand, Akzentring, dunkler Grund, Zeichen – Tor bei Eingängen, sonst Punkt) mit Spitze statt Tropfen; Namensschild am Kopf.
+
 ## [6.61.10.0] – 2026-10-17
 
 ### Behoben

@@ -9459,6 +9459,14 @@ do
         assert(not main:IsShown(), "Codex liegt weiter ueber der Karte")
         local back = QM.BackButton()
         assert(back and back:IsShown() and QM.FromCodex(), "kein Knopf zurueck zum Codex")
+        -- 6.61.11.0: Klick auf die Marke setzt den Questpfeil.
+        do
+            local QA = WeintCodex.UIQuestArrow
+            local oS, got = QA.SetCustom, nil
+            QA.SetCustom = function(t) got = t end
+            assert(QM.Guide() and got and got.map == J.Place(214).map and got.done() == false, "Pfeil nicht zur Marke")
+            QA.SetCustom = oS
+        end
         -- 6.6.0.1: Leiste mit Namen, Nadel mit Spitze auf dem Ort.
         assert(back.title:GetText() == "Scout Riell", "Leiste nennt den Markierten nicht")
         assert(back.button and back.button._scripts.OnClick, "Leiste ohne Knopf")

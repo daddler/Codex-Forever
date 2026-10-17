@@ -130,32 +130,44 @@ local function BuildPin(canvas)
         pin.pulse = ag
     end
 
-    -- Nadel: Rand, Fuellung, Kern.
+    -- 6.61.11.0 (Beta-Test: "der selbstgemachte Pin muss schoener sein"):
+    -- statt der Tropfenform eine runde Marke wie die der Questhilfe -
+    -- dunkler Rand, Ring im Akzent, dunkler Grund, helles Zeichen -, darunter
+    -- eine kleine Spitze, die auf die Stelle zeigt. Ein Tor fuer Eingaenge,
+    -- sonst ein Punkt.
+    local HEAD = 26
+    local spike = pin:CreateTexture(nil, "ARTWORK", nil, 0)
+    spike:SetTexture(UI .. "diamond")
+    spike:SetSize(12, 12)
+    spike:SetPoint("CENTER", pin, "BOTTOM", 0, 8)
+    spike:SetVertexColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    pin.spike = spike
     local rim = pin:CreateTexture(nil, "ARTWORK", nil, 1)
-    rim:SetTexture(UI .. "pin")
-    rim:SetAllPoints(pin)
+    rim:SetTexture(UI .. "disc")
+    rim:SetSize(HEAD + 4, HEAD + 4)
+    rim:SetPoint("CENTER", pin, "TOP", 0, -HEAD / 2 - 1)
     rim:SetVertexColor(C.bgPanel[1], C.bgPanel[2], C.bgPanel[3], 1)
-    local fill = pin:CreateTexture(nil, "ARTWORK", nil, 2)
-    fill:SetTexture(UI .. "pin")
-    fill:SetPoint("TOPLEFT", pin, "TOPLEFT", 3, -3)
-    fill:SetPoint("BOTTOMRIGHT", pin, "BOTTOMRIGHT", -3, 5)
-    if fill.SetGradient and _G.CreateColor then
-        pcall(fill.SetGradient, fill, "VERTICAL",
-            _G.CreateColor(C.accent[1], C.accent[2], C.accent[3], 1),
-            _G.CreateColor(C.accentBright[1], C.accentBright[2], C.accentBright[3], 1))
-    else
-        fill:SetVertexColor(C.accentBright[1], C.accentBright[2], C.accentBright[3], 1)
-    end
-    local core = pin:CreateTexture(nil, "ARTWORK", nil, 3)
-    core:SetTexture(UI .. "dot")
-    core:SetSize(9, 9)
-    core:SetPoint("CENTER", pin, "TOP", 0, -14)
+    local ring = pin:CreateTexture(nil, "ARTWORK", nil, 2)
+    ring:SetTexture(UI .. "disc")
+    ring:SetSize(HEAD, HEAD)
+    ring:SetPoint("CENTER", rim, "CENTER")
+    ring:SetVertexColor(C.accentBright[1], C.accentBright[2], C.accentBright[3], 1)
+    local well = pin:CreateTexture(nil, "ARTWORK", nil, 3)
+    well:SetTexture(UI .. "disc")
+    well:SetSize(HEAD - 6, HEAD - 6)
+    well:SetPoint("CENTER", rim, "CENTER")
+    well:SetVertexColor(C.bgCard[1], C.bgCard[2], C.bgCard[3], 1)
+    local core = pin:CreateTexture(nil, "ARTWORK", nil, 4)
+    core:SetSize(14, 14)
+    core:SetPoint("CENTER", rim, "CENTER")
     core:SetVertexColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
+    pin.core = core
+    pin.head = rim
 
     -- Namensschild rechts vom Kopf.
     local tag = CreateFrame("Frame", nil, pin)
     tag:SetHeight(20)
-    tag:SetPoint("LEFT", pin, "TOPRIGHT", 2, -14)
+    tag:SetPoint("LEFT", pin.head, "RIGHT", 4, 0)
     local tbg = tag:CreateTexture(nil, "BACKGROUND")
     tbg:SetAllPoints(tag)
     tbg:SetColorTexture(C.bgPanel[1], C.bgPanel[2], C.bgPanel[3], 0.92)
@@ -170,8 +182,11 @@ local function BuildPin(canvas)
     pin.label:SetPoint("LEFT", tag, "LEFT", 9, 0)
     pin.tag = tag
 
+    -- 6.61.11.0 (Wunsch: "den Ping direkt fuer den Questpfeil nutzen"):
+    -- Linksklick schickt den Questpfeil hierhin.
     pin:SetScript("OnClick", function(_, button)
-        if button == "RightButton" then QM.Clear() end
+        if button == "RightButton" then QM.Clear() return end
+        if QM.Guide() then Say("Questpfeil zeigt jetzt auf: " .. (target and target.who or "die Marke") .. ".") end
     end)
     pin:SetScript("OnEnter", function(self)
         local gt = _G.GameTooltip
@@ -183,7 +198,7 @@ local function BuildPin(canvas)
             gt:AddLine(what, C.textNormal[1], C.textNormal[2], C.textNormal[3], true)
         end
         gt:AddLine("Lage aus Beta-Berichten – unbestätigt.", C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
-        gt:AddLine("Rechtsklick: Marke entfernen", C.textMuted[1], C.textMuted[2], C.textMuted[3])
+        gt:AddLine("Klick: Questpfeil hierhin · Rechtsklick: Marke entfernen", C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
         gt:Show()
     end)
     pin:SetScript("OnLeave", function()
@@ -192,6 +207,29 @@ local function BuildPin(canvas)
     pin:SetScript("OnShow", function(self) if self.pulse then self.pulse:Play() end end)
     pin:SetScript("OnHide", function(self) if self.pulse then self.pulse:Stop() end end)
     pin:Hide()
+end
+
+-- Questpfeil zur Marke (6.61.11.0). Erledigt, wenn man dort ist: in einer
+-- Instanz (Eingang) oder auf der Karte naeher als QM.ARRIVE.
+QM.ARRIVE = 0.004
+function QM.Guide()
+    local QA = WeintCodex.UIQuestArrow
+    local t = target
+    if not (t and QA and QA.SetCustom) then return false end
+    QA.SetCustom({ map = t.map, x = t.x, y = t.y, title = t.who,
+        done = function()
+            if t.gate and _G.IsInInstance and _G.IsInInstance() then return true end
+            local cm = _G.C_Map
+            if not (cm and cm.GetBestMapForUnit and cm.GetPlayerMapPosition) then return false end
+            local m = Plain(cm.GetBestMapForUnit("player"))
+            if m ~= t.map then return false end
+            local pos = cm.GetPlayerMapPosition(m, "player")
+            if not pos then return false end
+            local x, y = Plain(pos.x), Plain(pos.y)
+            if type(x) ~= "number" or type(y) ~= "number" then return false end
+            return (x - t.x) ^ 2 + (y - t.y) ^ 2 < QM.ARRIVE ^ 2
+        end })
+    return true
 end
 
 -- Marke an ihre Stelle. Die Flaeche der Karte ist beim Zoomen skaliert;
@@ -226,6 +264,11 @@ function QM.Place()
     if pin.label:GetText() ~= target.who then
         pin.label:SetText(target.who)
         pin.tag:SetWidth(18 + math.ceil(WeintCodex.Utf8Len(target.who) * 11 * 0.58))
+    end
+    if pin.core._gate ~= (target.gate and true or false) then
+        pin.core._gate = target.gate and true or false
+        pin.core:SetTexture(UI .. (target.gate and "icon_gate" or "dot"))
+        pin.core:SetSize(target.gate and 14 or 8, target.gate and 14 or 8)
     end
     pin:Show()
     return true
@@ -366,7 +409,7 @@ QM._OpenMap = OpenMap
 function QM.Show(place, questName, line)
     if type(place) ~= "table" or type(place.map) ~= "number" then return false end
     target = { map = place.map, x = place.x, y = place.y, who = place.who,
-               item = place.item, quest = questName, line = line }
+               item = place.item, quest = questName, line = line, gate = place.gate }
     EnsureDriver()
     local zone = QM.MapName(place.map)
     local asked, why = OpenMap(place.map)
@@ -399,7 +442,7 @@ function QM.Show(place, questName, line)
         end
         QM.Place()
         Say("Auf der Karte: " .. place.who .. (zone and (" (" .. zone .. ")") or "")
-            .. ". Rechtsklick auf die Marke entfernt sie" .. (fromCodex and "; „Zurück zum Codex“ oben auf der Karte bringt dich zurück." or "."))
+            .. ". Klick auf die Marke: Questpfeil dorthin, Rechtsklick entfernt sie" .. (fromCodex and "; „Zurück zum Codex“ oben auf der Karte bringt dich zurück." or "."))
     end
     Arrived()
     if _G.C_Timer and _G.C_Timer.After then

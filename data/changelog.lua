@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.11.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFKlick auf die Marke schickt den Questpfeil hin|r – ob Dungeoneingang, Lehrer oder Questgeber aus dem Codex: ein Klick auf die Marke auf der Weltkarte, und der Pfeil führt dich dorthin.",
+            "|cff7C6CFFNeue Marke auf der Karte|r – rund mit Ring in deiner Farbe und kleiner Spitze, Eingänge mit Tor-Zeichen.",
+        },
+    },
+    {
         version = "6.61.10.0",
         date    = "17.10.2026",
         notes   = {

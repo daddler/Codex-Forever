@@ -2216,7 +2216,7 @@ local function DrawEntrances(inner, y, w, dungeon)
     y = y - 10
     for _, e in ipairs(list) do
         local text = e.label and ("Eingang auf der Karte: " .. e.label) or "Eingang auf der Karte"
-        local place = { map = e.map, x = e.x, y = e.y, who = dungeon.name .. (e.label and (" – " .. e.label) or "") }
+        local place = { map = e.map, x = e.x, y = e.y, who = dungeon.name .. (e.label and (" – " .. e.label) or ""), gate = true }
         y = MapLink(inner, y, place, nil, text, "Eingang: " .. dungeon.name)
         WeintCodex.DungeonPages.entranceLinks = (WeintCodex.DungeonPages.entranceLinks or 0) + 1
     end
