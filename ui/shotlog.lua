@@ -79,7 +79,8 @@ SL.events = ev
 for _, e in ipairs({ "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "START_AUTOREPEAT_SPELL",
                      "STOP_AUTOREPEAT_SPELL", "PLAYER_ENTER_COMBAT", "PLAYER_LEAVE_COMBAT",
                      "UNIT_SPELLCAST_SENT", "UNIT_SPELLCAST_SUCCEEDED", "UNIT_SPELLCAST_FAILED",
-                     "UNIT_SPELLCAST_INTERRUPTED", "PLAYER_TARGET_CHANGED", "UI_ERROR_MESSAGE" }) do
+                     "UNIT_SPELLCAST_INTERRUPTED", "PLAYER_TARGET_CHANGED", "UI_ERROR_MESSAGE",
+                     "UNIT_HEALTH", "PLAYER_SOFT_ENEMY_CHANGED", "PLAYER_SOFT_INTERACT_CHANGED" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4)
@@ -93,6 +94,18 @@ ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4)
         SL.pendingFail = nil
         SL.Add("Zauber gescheitert: " .. fail)
     end
+    -- 6.61.24.0: stirbt das Ziel? (Ziel verloren kam immer kurz nach einem
+    -- Treffer.) Und die weiche Zielerfassung des Spiels, falls sie wechselt.
+    if event == "UNIT_HEALTH" then
+        if K.Plain(a1) == "target" and not SL.deadSaid and _G.UnitIsDead and K.Bool(_G.UnitIsDead("target"), false) then
+            SL.deadSaid = true
+            SL.Add("ZIEL STIRBT")
+        end
+        return
+    end
+    if event == "PLAYER_SOFT_ENEMY_CHANGED" then SL.Add("weiche Zielerfassung (Gegner) wechselt") return end
+    if event == "PLAYER_SOFT_INTERACT_CHANGED" then return end
+    if event == "PLAYER_TARGET_CHANGED" then SL.deadSaid = nil end
     if event == "START_AUTOREPEAT_SPELL" then SL.Add("AUTOSHOT AN")
     elseif event == "STOP_AUTOREPEAT_SPELL" then SL.Add("AUTOSHOT AUS · Ziel: " .. SL.TargetText())
     elseif event == "PLAYER_ENTER_COMBAT" then SL.Add("NAHKAMPF AN (Autohit) · Ziel: " .. SL.TargetText())

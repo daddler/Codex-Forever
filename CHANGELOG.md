@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.24.0] – 2026-10-17
+
+### Geändert
+- Kampfprotokoll: „ZIEL STIRBT“ (`UNIT_HEALTH` target + `UnitIsDead`), `PLAYER_SOFT_ENEMY_CHANGED`. Bericht 3 zeigte „Ziel verloren“ jeweils kurz nach einem Treffer – zu klären, ob das Spiel nach dem Tod selbst ein neues Ziel wählt.
+
 ## [6.61.23.0] – 2026-10-17
 
 ### Behoben

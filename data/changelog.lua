@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.24.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFKampfprotokoll: Tod des Ziels|r – „/wcui schuss“ schreibt jetzt mit, wann dein Ziel stirbt und wann die weiche Zielerfassung des Spiels wechselt.",
+        },
+    },
+    {
         version = "6.61.23.0",
         date    = "17.10.2026",
         notes   = {
