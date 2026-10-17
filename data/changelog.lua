@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.6.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Tasche öffnet und schließt im Kampf ohne Meldung|r – der Sonder-Rechtsklick für Zauberöl ist ausgebaut, der Rechtsklick ist wieder der des Spiels.",
+        },
+    },
+    {
         version = "6.61.5.0",
         date    = "17.10.2026",
         notes   = {

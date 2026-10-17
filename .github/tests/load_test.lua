@@ -18982,6 +18982,10 @@ do
     local ok, err = pcall(function()
         local BG = WeintCodex.UIBags
         BG.busy = false   -- fruehere Pruefungen oeffnen Haendler & Co.
+        -- 6.61.6.0: ausgebaut - die Tasche bekommt keinen geschuetzten Knopf.
+        assert(BG.SECURE_USE == false and BG.SecureUse(CreateFrame("Button")) == nil, "geschuetzter Knopf wieder in der Tasche")
+        for _, sl in ipairs(BG.slotsForTest()) do assert(sl.use == nil, "Platz mit geschuetztem Knopf") end
+        BG.SECURE_USE = true   -- die Mechanik selbst bleibt geprueft
         local btn = CreateFrame("Button")
         local passed
         local oCF = G.CreateFrame
@@ -19036,6 +19040,7 @@ do
             assert(BG.Rehook() and hs.use:GetParent() == hb and hs.use:IsShown(), "nach dem Kampf nicht zurueck")
             table.remove(BG.slotsForTest())
         end
+        BG.SECURE_USE = false
         G.InCombatLockdown = oL
     end)
     Check(ok, "Taschen: Rechtsklick ueber geschuetzten Knopf, Linksklick durchgereicht" .. (ok and "" or (": " .. tostring(err))))

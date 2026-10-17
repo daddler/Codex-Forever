@@ -95,8 +95,16 @@ end
 -- "item", "Tasche Platz" - wie das Makro /use), Linksklick und Maus gehen
 -- durch ihn hindurch an die Vorlage (ziehen, verlinken, Tooltip).
 -- Kann der Client das Durchreichen nicht, bleibt alles wie bisher.
+-- 6.61.6.0 AUSGEBAUT (Beta-Test: "ich moechte einfach nur meine Tasche im
+-- Kampf oeffnen"): jeder geschuetzte Knopf in der Tasche macht sie zum
+-- geschuetzten Rahmen, den das Spiel im Kampf weder zeigt noch verbirgt -
+-- auch ausgehaengt blieb er verankert (6.61.5.0 half nicht). Vier Releases
+-- Folgefehler fuer einen Rechtsklick auf Zauberoel. Der Rechtsklick ist
+-- wieder der des Spiels; Zauberoel geht notfalls ueber die Taschen des
+-- Spiels oder eine Aktionsleiste.
+BG.SECURE_USE = false
 function BG.SecureUse(btn)
-    -- Im Kampf keinen anlegen: er machte die Tasche geschuetzt.
+    if not BG.SECURE_USE then return nil end
     if _G.InCombatLockdown and _G.InCombatLockdown() then return nil end
     local ok, sec = pcall(CreateFrame, "Button", nil, btn, "SecureActionButtonTemplate")
     if not (ok and sec) then return nil end
@@ -187,7 +195,7 @@ function BG.Rehook()
     for _, s in ipairs(slots) do
         local sec, btn = s.use, s.button
         -- Im Kampf angelegte Plaetze bekommen ihren Knopf jetzt.
-        if not sec and btn then
+        if not sec and btn and BG.SECURE_USE then
             sec = BG.SecureUse(btn)
             s.use, s._useBag, s._useSlot = sec, nil, nil
         end
