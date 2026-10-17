@@ -1718,7 +1718,7 @@ end
 -- (.Header) weg, der Titel selbst bleibt. Eingabefelder (Left/Middle/Right
 -- des InputBoxTemplate) werden flache Felder mit 1 px Rand, rote Knoepfe
 -- flach. Nur Bilder, kein Skript.
-W.DIALOGS = { "CreateChannelPopup" }
+W.SMALL_DIALOGS = { "CreateChannelPopup" }
 W.DIALOG_KEYS = { "Border", "NineSlice", "Bg", "BG", "Header" }
 function W.SkinDialog(f)
     if type(f) ~= "table" or popupDone[f] or not f.CreateTexture or (f.IsForbidden and f:IsForbidden()) then
@@ -2748,7 +2748,7 @@ function W.Apply()
     for _, path in ipairs(W.OWN_BG_PATHS) do W.OwnBackground(W.Resolve(path)) end
     for _, n in ipairs(W.POPUPS) do W.SkinPopup(_G[n]) end
     W.SkinStackSplit(_G.StackSplitFrame)
-    for _, n in ipairs(W.DIALOGS) do W.SkinDialog(_G[n]) end
+    for _, n in ipairs(W.SMALL_DIALOGS) do W.SkinDialog(_G[n]) end
     -- Wuerfeln um Beute (ui/lootroll.lua, 6.10.3.1), laedt nach dieser Datei.
     local LR = WeintCodex.UILootRoll
     if LR then LR.Apply() end
