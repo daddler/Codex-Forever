@@ -323,12 +323,21 @@ end)
 
 local frame = WeintCodex.MainFrame
 frame:EnableKeyboard(true)
+-- 6.61.15.0 (Fehlerbericht: "Blockiert: SetPropagateKeyboardInput" - Codex
+-- offen im Kampf): das Durchreichen darf im Kampf nicht umgestellt werden.
+-- Es steht deshalb immer auf "durch"; nur fuer Strg+K ausserhalb des
+-- Kampfes kurz nicht, und gleich danach wieder durch. Im Kampf greift
+-- Strg+K nicht - jede Taste geht ans Spiel.
+if frame.SetPropagateKeyboardInput then frame:SetPropagateKeyboardInput(true) end
+local function InCombat() return InCombatLockdown and InCombatLockdown() and true or false end
 frame:SetScript("OnKeyDown", function(self, key)
-    if IsControlKeyDown() and key == "K" then
-        self:SetPropagateKeyboardInput(false)
-        WeintCodex.SearchBox:SetFocus()
-    else
-        self:SetPropagateKeyboardInput(true)
+    if InCombat() or not (IsControlKeyDown() and key == "K") then return end
+    self:SetPropagateKeyboardInput(false)
+    WeintCodex.SearchBox:SetFocus()
+    if C_Timer and C_Timer.After then
+        C_Timer.After(0, function()
+            if not InCombat() then self:SetPropagateKeyboardInput(true) end
+        end)
     end
 end)
 

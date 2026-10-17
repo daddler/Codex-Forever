@@ -19118,6 +19118,28 @@ do
     Check(ok, "Raidplanung: Anmeldung + Kalender je Freigabe, Neuladen ohne Verankerung" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.61.15.0: Strg+K stellt im Kampf das Durchreichen der Tasten nicht um.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local f = WeintCodex.MainFrame
+        local calls = 0
+        local oP, oL, oC = f.SetPropagateKeyboardInput, G.InCombatLockdown, G.IsControlKeyDown
+        f.SetPropagateKeyboardInput = function() calls = calls + 1 end
+        G.InCombatLockdown = function() return true end
+        G.IsControlKeyDown = function() return true end
+        f:GetScript("OnKeyDown")(f, "K")
+        f:GetScript("OnKeyDown")(f, "W")
+        assert(calls == 0, "im Kampf umgestellt: " .. calls)
+        G.InCombatLockdown = function() return false end
+        G.IsControlKeyDown = function() return false end
+        f:GetScript("OnKeyDown")(f, "W")
+        assert(calls == 0, "gewoehnliche Taste stellt um")
+        f.SetPropagateKeyboardInput, G.InCombatLockdown, G.IsControlKeyDown = oP, oL, oC
+    end)
+    Check(ok, "Suche: Strg+K ohne Umstellen im Kampf" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.54.0.0: Flugzeit - Ziel vom Klick, Dauer gemessen/Daten/unbekannt, gemessen nach der Landung.
 do
     local G = _G

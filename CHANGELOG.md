@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.15.0] – 2026-10-17
+
+### Behoben
+- Suche (`core/search.lua`): „Blockiert: WeintCodexMainFrame:SetPropagateKeyboardInput()“ bei Tastendruck mit offenem Codex im Kampf. Durchreichen steht immer auf an; nur Strg+K außerhalb des Kampfes schaltet es für einen Takt ab.
+
 ## [6.61.14.0] – 2026-10-17
 
 ### Neu

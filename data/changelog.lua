@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.15.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFKein „Blockiert“ mehr bei offenem Codex im Kampf|r – Tasten gehen dann immer ans Spiel; Strg+K für die Suche wirkt außerhalb des Kampfes.",
+        },
+    },
+    {
         version = "6.61.14.0",
         date    = "17.10.2026",
         notes   = {
