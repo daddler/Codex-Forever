@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.54.1.0] – 2026-10-17
+
+### Behoben
+- Plaketten: „SetPoint would result in anchor family connection“ (nameplates.lua und Blizzard_NamePlateUnitFrame.lua:877) seit 6.53.0.0. `NP.PlaceCC` verankerte die `CrowdControlListFrame` an unserer Plakette, die aus dem Vorrat an eine andere Plakette des Spiels wandert – Kreis. Jetzt an der Plakette des Spiels selbst, Abstand gerechnet.
+
 ## [6.54.0.0] – 2026-10-17
 
 ### Neu

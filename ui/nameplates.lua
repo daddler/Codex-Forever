@@ -370,10 +370,20 @@ function NP.PlaceCC(auras, p)
     local list = auras and auras.CrowdControlListFrame
     if type(list) ~= "table" or not list.SetPoint or type(p) ~= "table"
        or (list.IsProtected and list:IsProtected()) then return false end
+    -- 6.54.1.0 (Fehlerbericht: "SetPoint would result in anchor family
+    -- connection", auch im Code des Spiels): NIE an unsere Plakette - die
+    -- kommt aus einem Vorrat und haengt danach an einer anderen Plakette
+    -- des Spiels; deren Liste hing dann im Kreis. Verankert wird an der
+    -- Plakette des Spiels selbst (ein Vorfahr der Liste, kein Kreis
+    -- moeglich); unsere sitzt mittig auf ihr, der Abstand ist gerechnet.
+    local host = p.nameplate
+    if type(host) ~= "table" then return false end
+    local scale = NP.CC_SCALE * (S.gameAuraScale or 100) / 100
+    local x = -(S.width / 2 + (NP.ELITE_ICON or 16) + 6) / scale
     local ok, err = pcall(function()
         list:SetScale(NP.CC_SCALE)
         list:ClearAllPoints()
-        list:SetPoint("RIGHT", p.health or p, "LEFT", -(NP.ELITE_ICON or 16) - 6, 0)
+        list:SetPoint("RIGHT", host, "CENTER", x, 0)
         list:SetAlpha(1)
     end)
     NP.ccPlace = ok and "links neben der Plakette" or ("vom Spiel abgelehnt: " .. tostring(err))

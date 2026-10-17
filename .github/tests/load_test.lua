@@ -18892,8 +18892,12 @@ do
         local sc, pt
         list.SetScale = function(_, v) sc = v end
         list.SetPoint = function(_, a, rel, b) pt = { a, rel, b } end
+        assert(not NP.PlaceCC({ CrowdControlListFrame = list }, p), "ohne Plakette des Spiels gesetzt")
+        p.nameplate = CreateFrame("Frame")
         assert(NP.PlaceCC({ CrowdControlListFrame = list }, p), "Liste nicht gesetzt")
-        assert(sc == NP.CC_SCALE and pt[1] == "RIGHT" and pt[2] == p.health and pt[3] == "LEFT", "nicht gross links neben der Plakette")
+        -- 6.54.1.0: an der Plakette des Spiels, nie an unserer (Kreis).
+        assert(sc == NP.CC_SCALE and pt[1] == "RIGHT" and pt[2] == p.nameplate and pt[3] == "CENTER", "nicht an der Plakette des Spiels")
+        assert(pt[2] ~= p and pt[2] ~= p.health, "an unserer Plakette verankert")
         assert(NP.PlaceCC({}, p) == false, "ohne Liste trotzdem gesetzt")
         local oP, oV = G.UnitIsPlayer, G.UnitIsPVP
         G.UnitIsPlayer = function() return true end

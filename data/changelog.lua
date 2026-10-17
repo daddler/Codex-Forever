@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.54.1.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFKeine Fehlermeldungen mehr an den Plaketten beim Einloggen.|r Das große Symbol für Betäubung und Furcht hing an der falschen Stelle fest und brachte die Plaketten des Spiels durcheinander.",
+        },
+    },
+    {
         version = "6.54.0.0",
         date    = "17.10.2026",
         notes   = {
