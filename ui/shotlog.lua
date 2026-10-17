@@ -40,11 +40,20 @@ end
 function SL.Add(text)
     local f = cur
     if not f then return end
+    -- Gleiche Zeile direkt hintereinander (der Client wiederholt "zu nah"
+    -- bis zu 100-mal je Sekunde): eine Zeile mit Zaehler.
+    if f.last == text then
+        f.rep = (f.rep or 1) + 1
+        f.lines[#f.lines] = f.lastLine .. "  (" .. f.rep .. "×)"
+        return
+    end
+    f.last, f.rep = text, 1
     if #f.lines >= SL.MAX_LINES then
         if not f.cut then f.cut = true f.lines[#f.lines + 1] = "… gekürzt" end
         return
     end
-    f.lines[#f.lines + 1] = string.format("%6.2f  %s", Now() - start, text)
+    f.lastLine = string.format("%6.2f  %s", Now() - start, text)
+    f.lines[#f.lines + 1] = f.lastLine
 end
 
 function SL.Begin()
@@ -59,6 +68,8 @@ function SL.Begin()
 end
 
 function SL.End()
+    if cur and SL.pendingFail then SL.Add("Zauber gescheitert: " .. SL.pendingFail) end
+    SL.pendingFail = nil
     if cur then SL.Add("Kampf endet") end
     cur = nil
 end
@@ -75,16 +86,30 @@ ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4)
     if event == "PLAYER_REGEN_DISABLED" then SL.Begin() return end
     if event == "PLAYER_REGEN_ENABLED" then SL.End() return end
     if not cur then return end
+    -- Gescheitert + Meldung des Spiels werden eine Zeile (die Meldung kommt
+    -- gleich danach); so faellt die Wiederholung zu einer Zeile mit Zaehler.
+    local fail = SL.pendingFail
+    if fail and event ~= "UI_ERROR_MESSAGE" then
+        SL.pendingFail = nil
+        SL.Add("Zauber gescheitert: " .. fail)
+    end
     if event == "START_AUTOREPEAT_SPELL" then SL.Add("AUTOSHOT AN")
-    elseif event == "STOP_AUTOREPEAT_SPELL" then SL.Add("AUTOSHOT AUS")
-    elseif event == "PLAYER_ENTER_COMBAT" then SL.Add("NAHKAMPF AN (Autohit)")
+    elseif event == "STOP_AUTOREPEAT_SPELL" then SL.Add("AUTOSHOT AUS · Ziel: " .. SL.TargetText())
+    elseif event == "PLAYER_ENTER_COMBAT" then SL.Add("NAHKAMPF AN (Autohit) · Ziel: " .. SL.TargetText())
     elseif event == "PLAYER_LEAVE_COMBAT" then SL.Add("NAHKAMPF AUS")
     elseif event == "PLAYER_TARGET_CHANGED" then
-        local n = _G.UnitName and K.Plain(_G.UnitName("target"))
-        SL.Add("Ziel: " .. (type(n) == "string" and n or "keins"))
+        SL.Add("Ziel: " .. SL.TargetText())
     elseif event == "UI_ERROR_MESSAGE" then
         local msg = K.Plain(a2)
-        if type(msg) == "string" then SL.Add("Meldung: " .. msg) end
+        msg = type(msg) == "string" and msg or "?"
+        if fail then
+            SL.pendingFail = nil
+            SL.Add("Zauber gescheitert: " .. fail .. " – " .. msg)
+        else
+            SL.Add("Meldung: " .. msg)
+        end
+    elseif event == "UNIT_SPELLCAST_FAILED" and K.Plain(a1) == "player" then
+        SL.pendingFail = SpellName(a3)
     elseif K.Plain(a1) == "player" then
         -- SENT: unit, target, castGUID, spellID; die anderen: unit, castGUID, spellID
         local id = event == "UNIT_SPELLCAST_SENT" and a4 or a3
@@ -93,6 +118,28 @@ ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4)
         SL.Add("Zauber " .. what .. ": " .. SpellName(id))
     end
 end)
+
+-- 6.61.21.0: "Ziel: keins" war mehrdeutig - im Kampf ist der Name eines
+-- Gegners oft geheim. Jetzt: gibt es ein Ziel, Freund/Feind, tot, Name
+-- wenn lesbar, und grob die Entfernung (Nahkampf/Wurf/weiter weg).
+function SL.TargetText()
+    local ex = _G.UnitExists and K.Bool(_G.UnitExists("target"), nil)
+    if ex == false then return "keins (Ziel verloren)" end
+    if ex == nil then return "unbekannt" end
+    local parts = {}
+    local n = _G.UnitName and K.Plain(_G.UnitName("target"))
+    parts[#parts + 1] = type(n) == "string" and n or "Name verborgen"
+    local enemy = _G.UnitCanAttack and K.Bool(_G.UnitCanAttack("player", "target"), nil)
+    if enemy ~= nil then parts[#parts + 1] = enemy and "Gegner" or "kein Gegner" end
+    if _G.UnitIsDead and K.Bool(_G.UnitIsDead("target"), false) then parts[#parts + 1] = "tot" end
+    if _G.CheckInteractDistance then
+        local ok, near = pcall(_G.CheckInteractDistance, "target", 3)
+        near = ok and K.Bool(near, nil)
+        if near == true then parts[#parts + 1] = "Nahkampfnähe (unter 10 m)"
+        elseif near == false then parts[#parts + 1] = "über 10 m" end
+    end
+    return table.concat(parts, ", ")
+end
 
 function SL.Lines()
     local out = { "WeintCodex " .. tostring(WeintCodex.Version) .. " · Kampfprotokoll Autoshot/Nahkampf" }

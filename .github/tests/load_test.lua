@@ -19188,10 +19188,15 @@ do
         h(SL.events, "UNIT_SPELLCAST_SUCCEEDED", "party1", "guid", 1)
         h(SL.events, "STOP_AUTOREPEAT_SPELL")
         h(SL.events, "PLAYER_ENTER_COMBAT")
+        for _ = 1, 3 do
+            h(SL.events, "UNIT_SPELLCAST_FAILED", "player", "guid", 75)
+            h(SL.events, "UI_ERROR_MESSAGE", 1, "Ziel ist zu nah.")
+        end
         h(SL.events, "PLAYER_REGEN_ENABLED")
         local text = table.concat(SL.Lines(), "\n")
         assert(text:find("AUTOSHOT AN", 1, true) and text:find("AUTOSHOT AUS", 1, true)
             and text:find("NAHKAMPF AN", 1, true) and text:find("1978", 1, true), "Protokoll unvollstaendig: " .. text)
+        assert(text:find("Ziel ist zu nah.  (3×)", 1, true), "Wiederholung nicht zusammengefasst: " .. text)
         assert(not text:find("(1)", 1, true) and not text:find("gewirkt: 1\n", 1, true), "fremder Zauber mitgeschrieben")
         SlashCmdList["WEINTCODEXUI"]("schuss")
     end)

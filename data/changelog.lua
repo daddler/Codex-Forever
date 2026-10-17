@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.21.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFKampfprotokoll genauer|r – „/wcui schuss“ nennt beim Ziel jetzt, ob es eins gibt, Gegner oder nicht und ob es in Nahkampfnähe steht; Wiederholungen stehen als eine Zeile mit Zähler.",
+        },
+    },
+    {
         version = "6.61.20.0",
         date    = "17.10.2026",
         notes   = {
