@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.22.0] – 2026-10-17
+
+### Behoben
+- Erinnerungen: fehlender Buff erst nach `R.BUFF_GRACE` (2 s) gemeldet, `R.missingSince` je Regel, Nachsehen per Timer. Beta-Test: „Aspekt des Falken“ ploppte beim Aspektwechsel kurz vor dem Kampf auf.
+
 ## [6.61.21.0] – 2026-10-17
 
 ### Geändert

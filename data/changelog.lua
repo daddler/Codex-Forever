@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.22.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFKein kurzes Aufploppen mehr beim Wechsel eines Aspekts|r – ein fehlender Buff wird erst gemeldet, wenn er zwei Sekunden lang fehlt. Beim Wechsel von Aspekt, Segen oder Rüstung fällt der alte einen Augenblick vor dem neuen weg.",
+        },
+    },
+    {
         version = "6.61.21.0",
         date    = "17.10.2026",
         notes   = {

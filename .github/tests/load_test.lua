@@ -6361,6 +6361,9 @@ do
             for _, a in ipairs(R.Active()) do t[#t + 1] = a.text end
             return table.concat(t, " | ")
         end
+        -- 6.61.22.0: die Frist fuer fehlende Buffs eigens geprueft.
+        local oGrace = R.BUFF_GRACE
+        R.BUFF_GRACE = 0
         R.Check({ kind = "pet" })        -- Begleiter einmal gesehen
         pet = false
         local now = texts()
@@ -6376,6 +6379,16 @@ do
         assert(not now:find("Kampfschrei", 1, true), "im Kampf Buff als fehlend gemeldet: " .. now)
         K.Set(R.KEY or "reminders", "remindInCombat", oIC)
         R.fighting = false
+        -- Mit Frist: erst nach 2 s gemeldet (Wechsel eines Aspekts).
+        R.BUFF_GRACE = oGrace
+        local oT = _G.GetTime
+        local t = 100
+        _G.GetTime = function() return t end
+        assert(not texts():find("Kampfschrei", 1, true), "Buff sofort gemeldet, ohne Frist")
+        t = 103
+        assert(texts():find("Kampfschrei", 1, true), "Buff nach der Frist nicht gemeldet")
+        _G.GetTime = oT
+        R.BUFF_GRACE = 0
         hasBuff, enchanted, expMs, pet = true, true, 2 * 60000, true
         now = texts()
         assert(not now:find("Kampfschrei", 1, true), "Buff da und trotzdem erinnert")

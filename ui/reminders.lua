@@ -1303,6 +1303,15 @@ function R.Fighting()
 end
 R.BLIND_IN_COMBAT = { buff = true }
 
+R.BUFF_GRACE = 2
+R.missingSince = setmetatable({}, { __mode = "k" })
+-- Noch einmal nachsehen, wenn die Frist um ist (kein Ereignis sagt es).
+function R.Recheck(delay)
+    if _G.C_Timer and _G.C_Timer.After then
+        _G.C_Timer.After(delay + 0.05, function() R.Schedule(true, false, false) end)
+    end
+end
+
 -- Alle Erinnerungen, die jetzt gelten.
 function R.Active()
     local out = {}
@@ -1318,6 +1327,25 @@ function R.Active()
         if (k == "buff" or k == "weapon" or k == "pet" or k == "happy" or k == "ammo" or k == "item")
            and not (fighting and R.BLIND_IN_COMBAT[k]) then
             local hit = R.Check(rule)
+            -- 6.61.22.0 (Beta-Test: "Aspekt des Falken ploppte kurz vor
+            -- Kampfbeginn auf"): beim Wechsel eines Aspekts (Segens, einer
+            -- Ruestung) faellt der alte einen Augenblick vor dem neuen weg.
+            -- Ein fehlender Buff zaehlt erst nach R.BUFF_GRACE Sekunden.
+            if k == "buff" and R.BUFF_GRACE > 0 then
+                if hit then
+                    local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
+                    local since = R.missingSince[rule]
+                    if not since then
+                        R.missingSince[rule] = now
+                        R.Recheck(R.BUFF_GRACE)
+                        hit = nil
+                    elseif now - since < R.BUFF_GRACE then
+                        hit = nil
+                    end
+                else
+                    R.missingSince[rule] = nil
+                end
+            end
             if hit then out[#out + 1] = hit end
         end
     end
