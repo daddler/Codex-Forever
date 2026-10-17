@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.54.2.0] – 2026-10-17
+
+### Behoben
+- Flugzeit: gelandet, sobald `UnitOnTaxi` falsch ist (im Takt geprüft) – `PLAYER_CONTROL_GAINED` kam, während der Client noch „im Flug“ meldete.
+- Fehlerfänger: „tainted by '<anderes Addon>'“ gilt nicht als WeintCodex-Fehler (`ER.Ours`). Anlass: Questie-Fehler im Fenster.
+
 ## [6.54.1.0] – 2026-10-17
 
 ### Behoben

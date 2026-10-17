@@ -133,10 +133,18 @@ function FT.Fill(title, time, part)
     if part then frame.bar:SetValue(math.max(0, math.min(1, part))) end
 end
 
+local function OnTaxi()
+    return _G.UnitOnTaxi and K.Bool(_G.UnitOnTaxi("player"), false)
+end
+
 function FT.Tick()
     if not frame or frame._unlock then return end
     if not flight then frame:Hide() return end
     local gone = Now() - flight.start
+    -- 6.54.2.0 (Beta-Test: "nach der Landung ist der Balken noch da"):
+    -- PLAYER_CONTROL_GAINED kam, waehrend der Client noch "im Flug"
+    -- meldete. Gelandet ist, wer nicht mehr auf dem Flugweg ist.
+    if gone > 2 and not OnTaxi() then FT.Land() return end
     local title = flight.name and ("Flug nach " .. flight.name) or "Im Flug"
     if flight.total then
         local left = flight.total - gone
@@ -202,10 +210,6 @@ function FT.Land()
         own[f.from .. ">" .. f.to] = math.floor(secs + 0.5)
         return own[f.from .. ">" .. f.to]
     end
-end
-
-local function OnTaxi()
-    return _G.UnitOnTaxi and K.Bool(_G.UnitOnTaxi("player"), false)
 end
 
 local ev = CreateFrame("Frame")

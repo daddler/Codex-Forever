@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.54.2.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Flugzeit verschwindet nach der Landung.|r Die Leiste blieb manchmal mit „Landung gleich“ stehen.",
+            "|cff7C6CFFDas Fehlerfenster meldet keine Fehler anderer Addons mehr.|r Nennt ein Fehler selbst ein anderes Addon als Verursacher, bleibt er dessen Sache.",
+        },
+    },
+    {
         version = "6.54.1.0",
         date    = "17.10.2026",
         notes   = {

@@ -18826,6 +18826,7 @@ do
         local oT, oM, oG, oTaxi = G.C_TaxiMap, G.GetTaxiMapID, G.GetTime, G.UnitOnTaxi
         local now = 100
         G.GetTime = function() return now end
+        G.UnitOnTaxi = function() return true end
         G.GetTaxiMapID = function() return 1415 end
         G.C_TaxiMap = { GetAllTaxiNodes = function() return {
             { nodeID = 6, slotIndex = 1, state = 0, name = "Ironforge, Dun Morogh" },
@@ -18855,6 +18856,16 @@ do
         FT.Tick()
         assert(FT.frame.time:GetText():find("unbekannt", 1, true), "unbekannte Strecke mit Landezeit")
         FT.Land()
+        -- 6.54.2.0: gelandet, obwohl kein PLAYER_CONTROL_GAINED gewirkt hat.
+        FT.ReadMap()
+        FT.OnTake(2)
+        FT.Start()
+        G.UnitOnTaxi = function() return false end
+        now = 200
+        FT.Tick()
+        assert(FT.state() == nil and not FT.frame:IsShown(), "Balken nach der Landung noch da")
+        assert(WeintCodex.UIErrors.Ours("x tainted by 'Questie'", "WeintCodex/ui/a.lua") == false, "fremder Taint als unserer")
+        assert(WeintCodex.UIErrors.Ours("x tainted by 'WeintCodex'", "") == true, "eigener Taint nicht erkannt")
         WeintCodex_SavedData.flightTimes = nil
         G.C_TaxiMap, G.GetTaxiMapID, G.GetTime, G.UnitOnTaxi = oT, oM, oG, oTaxi
     end)

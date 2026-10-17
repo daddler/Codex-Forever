@@ -49,7 +49,13 @@ end
 
 -- Gehoert der Fehler zu uns?
 function ER.Ours(msg, stack)
-    local s = tostring(msg or "") .. "\n" .. tostring(stack or "")
+    msg = tostring(msg or "")
+    -- 6.54.2.0 (Bericht: "tainted by 'Questie'" im WeintCodex-Fenster):
+    -- nennt der Fehler selbst ein anderes Addon als Verursacher, ist er
+    -- nicht unserer - auch wenn WeintCodex irgendwo in der Kette steht.
+    local by = msg:match("tainted by '([^']+)'")
+    if by and by ~= "WeintCodex" then return false end
+    local s = msg .. "\n" .. tostring(stack or "")
     return s:find("WeintCodex", 1, true) ~= nil
 end
 
