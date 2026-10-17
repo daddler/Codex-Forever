@@ -230,6 +230,17 @@ JOBS = [
     ("dungeons/stratholme/magistrate_barthilas", "stratholme/magistrate_barthilas.png", (0, 60, 1514, 378), (512, 128)),
     ("dungeons/stratholme/ramstein", "stratholme/ramstein.png", (0, 100, 1983, 495), (512, 128)),
     ("dungeons/stratholme/baron_rivendare", "stratholme/baron_rivendare.png", (0, 60, 1514, 378), (512, 128)),
+    # 6.61.0.0: Obere Schwarzfelsspitze. Banner 2168x725, Bosse 1448x1086
+    # (Emberseer 1515x1038, Bestie 1402x1122) - Ausschnitt von oben, 4:1.
+    ("dungeons/upper_blackrock_spire/header", "upper_blackrock_spire/banner.png", (0, 90, 2168, 542)),
+    ("dungeons/upper_blackrock_spire/pyroguard_emberseer", "upper_blackrock_spire/pyroguard_emberseer.png", (0, 80, 1515, 379), (512, 128)),
+    ("dungeons/upper_blackrock_spire/solakar_flamewreath", "upper_blackrock_spire/solakar_flamewreath.png", (0, 0, 1448, 362), (512, 128)),
+    ("dungeons/upper_blackrock_spire/goraluk_anvilcrack", "upper_blackrock_spire/goraluk_anvilcrack.png", (0, 100, 1448, 362), (512, 128)),
+    ("dungeons/upper_blackrock_spire/jed_runewatcher", "upper_blackrock_spire/jed_runewatcher.png", (0, 100, 1448, 362), (512, 128)),
+    ("dungeons/upper_blackrock_spire/warchief_rend_blackhand", "upper_blackrock_spire/warchief_rend_blackhand.png", (0, 100, 1448, 362), (512, 128)),
+    ("dungeons/upper_blackrock_spire/the_beast", "upper_blackrock_spire/the_beast.png", (0, 120, 1402, 350), (512, 128)),
+    ("dungeons/upper_blackrock_spire/lord_valthalak", "upper_blackrock_spire/lord_valthalak.png", (0, 0, 1448, 362), (512, 128)),
+    ("dungeons/upper_blackrock_spire/general_drakkisath", "upper_blackrock_spire/general_drakkisath.png", (0, 230, 1448, 362), (512, 128)),
     # 6.50.1.0: Duesterbruch (drei Fluegel, ein Kopfbild). Banner 2172x724, die
     # drei grossen Oger 1515x1038 bzw. 1672x941 - Ausschnitt von oben, 4:1.
     ("dungeons/dire_maul/header", "dire_maul/banner.png", (0, 90, 2172, 543)),

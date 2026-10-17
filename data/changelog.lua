@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.0.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Obere Schwarzfelsspitze ist bebildert|r – ein Kopfbild und alle acht Bosse, von Feuerwache Glutseher bis General Drakkisath.",
+        },
+    },
+    {
         version = "6.60.4.0",
         date    = "17.10.2026",
         notes   = {

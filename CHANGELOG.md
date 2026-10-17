@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.0.0] – 2026-10-17
+
+### Neu
+- Artwork für die Obere Schwarzfelsspitze (`media/dungeons/upper_blackrock_spire/`, Kopfbild und acht Bosse, `data/artwork.lua`, Ausschnitte in `make_artwork.py`).
+
 ## [6.60.4.0] – 2026-10-17
 
 ### Behoben

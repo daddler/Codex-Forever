@@ -940,6 +940,47 @@ WeintCodex.Artworks = {
             },
         },
     },
+    upper_blackrock_spire = {
+        -- Originale 1448x1086 u. a., Ausschnitt je Bild (siehe make_artwork.py).
+        header = {
+            file = ART .. "upper_blackrock_spire/header",
+            w = 1024, h = 256, focusX = 0.6,
+        },
+        bosses = {
+            pyroguard_emberseer = {
+                file = ART .. "upper_blackrock_spire/pyroguard_emberseer",
+                w = 512, h = 128, focusX = 0.5,
+            },
+            solakar_flamewreath = {
+                file = ART .. "upper_blackrock_spire/solakar_flamewreath",
+                w = 512, h = 128, focusX = 0.45,
+            },
+            goraluk_anvilcrack = {
+                file = ART .. "upper_blackrock_spire/goraluk_anvilcrack",
+                w = 512, h = 128, focusX = 0.45,
+            },
+            jed_runewatcher = {
+                file = ART .. "upper_blackrock_spire/jed_runewatcher",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            warchief_rend_blackhand = {
+                file = ART .. "upper_blackrock_spire/warchief_rend_blackhand",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            the_beast = {
+                file = ART .. "upper_blackrock_spire/the_beast",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            lord_valthalak = {
+                file = ART .. "upper_blackrock_spire/lord_valthalak",
+                w = 512, h = 128, focusX = 0.4,
+            },
+            general_drakkisath = {
+                file = ART .. "upper_blackrock_spire/general_drakkisath",
+                w = 512, h = 128, focusX = 0.6,
+            },
+        },
+    },
     stratholme = {
         -- Originale 1514x1039, Ausschnitt je Bild (siehe make_artwork.py).
         header = {
