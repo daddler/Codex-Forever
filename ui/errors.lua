@@ -95,6 +95,9 @@ function ER.Record(kind, msg, stack, extra)
         e.count = (e.count or 1) + 1
         e.last = Now()
         e.version = WeintCodex.Version
+        -- 6.54.3.0: der Anhang (Taint-Bericht) gilt fuer DIESE Sperre - ein
+        -- aelterer Eintrag ohne ihn bekam ihn bisher nie.
+        if type(extra) == "string" and extra ~= "" then e.stack = ER.Trim(stack) .. "\n" .. extra end
     else
         local st = ER.Trim(stack)
         if type(extra) == "string" and extra ~= "" then st = st .. "\n" .. extra end

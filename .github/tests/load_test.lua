@@ -18818,6 +18818,43 @@ do
     Check(ok, "Charakterfenster: Gegenstandsstufe vom Client, keine 0" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.54.3.0: Rechtsklick in der Tasche ueber geschuetzten Knopf (Zauberoel).
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local BG = WeintCodex.UIBags
+        local btn = CreateFrame("Button")
+        local passed
+        local oCF = G.CreateFrame
+        local sec = BG.SecureUse(btn)
+        if sec == nil then
+            -- Attrappe ohne SetPassThroughButtons: alles bleibt wie bisher.
+            local f = CreateFrame("Button")
+            assert(f.SetPassThroughButtons == nil, "Rueckfall ohne Grund")
+        else
+            assert(sec:GetAttribute("type2") == "item", "Rechtsklick nicht 'item'")
+        end
+        -- Mit Durchreichen:
+        G.CreateFrame = function(...)
+            local f = oCF(...)
+            f.SetPassThroughButtons = function(_, b) passed = b end
+            return f
+        end
+        sec = BG.SecureUse(btn)
+        G.CreateFrame = oCF
+        assert(sec and passed == "LeftButton", "Linksklick nicht durchgereicht")
+        assert(sec:GetAttribute("type2") == "item", "Rechtsklick nicht 'item'")
+        local s = { use = sec }
+        local oL = G.InCombatLockdown
+        G.InCombatLockdown = function() return false end
+        assert(BG.ArmUse(s, 2, 7) and sec:GetAttribute("item") == "2 7", "Platz nicht gesetzt")
+        G.InCombatLockdown = function() return true end
+        assert(not BG.ArmUse(s, 3, 1) and sec:GetAttribute("item") == "2 7", "im Kampf gesetzt")
+        G.InCombatLockdown = oL
+    end)
+    Check(ok, "Taschen: Rechtsklick ueber geschuetzten Knopf, Linksklick durchgereicht" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.54.0.0: Flugzeit - Ziel vom Klick, Dauer gemessen/Daten/unbekannt, gemessen nach der Landung.
 do
     local G = _G

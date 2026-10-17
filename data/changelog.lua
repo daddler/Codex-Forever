@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.54.3.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFZauberöl, Wetzsteine & Co. lassen sich wieder aus den Taschen benutzen.|r Der Rechtsklick geht jetzt über einen geschützten Knopf des Spiels – das Spiel sperrte ihn bisher als Addon-Aktion.",
+        },
+    },
+    {
         version = "6.54.2.0",
         date    = "17.10.2026",
         notes   = {

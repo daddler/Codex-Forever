@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.54.3.0] – 2026-10-17
+
+### Behoben
+- Taschen: „Verboten: UseContainerItem()“ (Zauberöl, dreimal gemeldet). Rechtsklick über `SecureActionButtonTemplate` (`type2 = "item"`, `item = "Tasche Platz"`, `BG.SecureUse`/`BG.ArmUse`, nur außerhalb des Kampfes gesetzt), Linksklick per `SetPassThroughButtons` an die Vorlage, Maus per `SetPropagateMouseMotion`. Ohne Durchreichen im Client: wie bisher.
+- Fehlerfänger: Anhang (Taint-Bericht) auch bei wiederholtem Fehler.
+
 ## [6.54.2.0] – 2026-10-17
 
 ### Behoben

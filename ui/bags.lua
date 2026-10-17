@@ -87,6 +87,40 @@ end
 -- Knoepfe
 --------------------------------------------------
 
+-- 6.54.3.0 (Fehlerbericht, dreimal: "Verboten: UseContainerItem()" beim
+-- Zauberoel - Gegenstaende, die einen Zauber wirken). Der Klick der
+-- Vorlage laeuft durch Code, den dieses Addon beim Anlegen beruehrt hat;
+-- fuer solche Gegenstaende sperrt das Spiel ihn. Der Rechtsklick (benutzen)
+-- geht deshalb ueber einen geschuetzten Knopf des Spiels darueber (Art
+-- "item", "Tasche Platz" - wie das Makro /use), Linksklick und Maus gehen
+-- durch ihn hindurch an die Vorlage (ziehen, verlinken, Tooltip).
+-- Kann der Client das Durchreichen nicht, bleibt alles wie bisher.
+function BG.SecureUse(btn)
+    local ok, sec = pcall(CreateFrame, "Button", nil, btn, "SecureActionButtonTemplate")
+    if not (ok and sec) then return nil end
+    if not (sec.SetPassThroughButtons and pcall(sec.SetPassThroughButtons, sec, "LeftButton")) then
+        sec:Hide()
+        return nil
+    end
+    if sec.SetPropagateMouseMotion then pcall(sec.SetPropagateMouseMotion, sec, true) end
+    sec:SetAllPoints(btn)
+    sec:SetFrameLevel((btn:GetFrameLevel() or 1) + 2)
+    if sec.RegisterForClicks then sec:RegisterForClicks("RightButtonUp") end
+    sec:SetAttribute("useOnKeyDown", false)
+    sec:SetAttribute("type2", "item")
+    return sec
+end
+
+-- Platz des geschuetzten Knopfs setzen - nur ausserhalb des Kampfes.
+function BG.ArmUse(s, bag, slot)
+    local sec = s.use
+    if not sec or (_G.InCombatLockdown and _G.InCombatLockdown()) then return false end
+    if s._useBag == bag and s._useSlot == slot then return true end
+    sec:SetAttribute("item", bag .. " " .. slot)
+    s._useBag, s._useSlot = bag, slot
+    return true
+end
+
 local function CreateSlot()
     local holder = CreateFrame("Frame", nil, grid)
     local ok, btn = pcall(CreateFrame, "ItemButton", nil, holder, "ContainerFrameItemButtonTemplate")
@@ -137,7 +171,7 @@ local function CreateSlot()
         if type(r) == "table" and r.SetAlpha then r:SetAlpha(0) end
     end
     holder:Hide()
-    return { holder = holder, button = btn, d = d, icon = icon }
+    return { holder = holder, button = btn, d = d, icon = icon, use = BG.SecureUse(btn) }
 end
 
 local function EnsurePool()
@@ -242,6 +276,7 @@ local function PaintSlot(s, bag, slot)
     local btn, d = s.button, s.d
     s.holder:SetID(bag)
     btn:SetID(slot)
+    BG.ArmUse(s, bag, slot)
     local info = Info(bag, slot)
 
     -- 6.30.51.0 (Beta-Test: "Fackel des Nachtwaechters" aus der Tasche
