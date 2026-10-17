@@ -842,36 +842,37 @@ end
 -- Modul anzeigen
 --------------------------------------------------
 
-function WeintCodex.Signup.Show()
+-- 6.61.1.0: Anmeldung und Kalender sind ein Eintrag ("Raidplanung",
+-- core/navigation.lua). Open zeigt die Seite, Items liefert die Eintraege
+-- fuer die gemeinsame Spalte.
+function WeintCodex.Signup.Open()
     local cp = WeintCodex.ContentPanel
     for _, child in pairs({cp:GetChildren()}) do child:Hide() end
+    WeintCodex.Navigation.ClearTitleActions()
 
     local f = CreateRaidFrame()
     f:Show()
     reloadBtn:Show()
     clearBtn:SetShown(MayEdit())
+    return f
+end
 
-    local sidebarItems = {
-        {
-            label = "Mittwoch",
-            onClick = function()
-                activeDay = "wednesday"
-                RefreshRaidDisplay(WeintCodex.SavedData and WeintCodex.SavedData.raidWednesday)
-            end,
-        },
-        {
-            label = "Donnerstag",
-            onClick = function()
-                activeDay = "thursday"
-                RefreshRaidDisplay(WeintCodex.SavedData and WeintCodex.SavedData.raidThursday)
-            end,
-        },
+local function ShowDay(day, key)
+    WeintCodex.Signup.Open()
+    activeDay = day
+    RefreshRaidDisplay(WeintCodex.SavedData and WeintCodex.SavedData[key])
+end
+
+function WeintCodex.Signup.Items()
+    return {
+        { label = "Mittwoch",   onClick = function() ShowDay("wednesday", "raidWednesday") end },
+        { label = "Donnerstag", onClick = function() ShowDay("thursday", "raidThursday") end },
     }
+end
 
-    WeintCodex.Navigation.BuildSidebar("Raids", sidebarItems)
-
-    activeDay = "wednesday"
-    RefreshRaidDisplay(WeintCodex.SavedData and WeintCodex.SavedData.raidWednesday)
+function WeintCodex.Signup.Show()
+    WeintCodex.Navigation.BuildSidebar("Raids", WeintCodex.Signup.Items())
+    WeintCodex.Navigation.ActivateIndex(1)
 end
 
 -- Called by sync.lua after import

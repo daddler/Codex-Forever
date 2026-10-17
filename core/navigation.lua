@@ -74,12 +74,12 @@ local tabs = {
     -- data/raids.lua und kommt nicht vom Bot.
     { id = "raids",      icon = ICON_PATH .. "nav_bosse",      label = "Schlachtzüge" },
 
-    -- Die Anmeldeliste dagegen ist eine gildeninterne Lieferung.
-    { id = "anmeldung",  icon = ICON_PATH .. "nav_raids",      label = "Anmeldung",
-      feature = "raids.view" },
-
-    { id = "kalender",   icon = ICON_PATH .. "nav_kalender",   label = "Kalender",
-      feature = "calendar.view" },
+    -- Die Anmeldeliste und der Kalender dagegen sind gildeninterne
+    -- Lieferungen. Seit 6.61.1.0 ein Eintrag ("Kalender und Anmeldung als
+    -- ein Punkt", Wunsch des Spielers): die Spalte zeigt beide als Gruppen,
+    -- gesperrt wird je Gruppe (raids.view / calendar.view), nicht der Eintrag.
+    -- Die ID "kalender" lebt als Reiter weiter (SUBTABS).
+    { id = "anmeldung",  icon = ICON_PATH .. "nav_kalender",   label = "Raidplanung" },
 
     { id = "materialien", icon = ICON_PATH .. "nav_materialien", label = "Materialien",
       group = "Gilde", feature = "materials.view" },
@@ -103,7 +103,12 @@ local SUBTABS = {
     import = { tab = "companion", sub = "import" },
     -- 6.15.0.0: Klassenquests als Reiter unter Lehrer.
     klassenquests = { tab = "lehrer", sub = "quests" },
+    -- 6.61.1.0: Kalender als Gruppe unter Raidplanung.
+    kalender = { tab = "anmeldung", sub = "kalender" },
 }
+
+-- Freigaben innerhalb der Raidplanung: je Gruppe, nicht je Eintrag.
+WeintCodex.Navigation.PLAN_FEATURES = { anmeldung = "raids.view", kalender = "calendar.view" }
 WeintCodex.Navigation.SUBTABS = SUBTABS
 
 -- Die Spalte zum Nachlesen (Pruefung, Doku): id, label, group, feature.
@@ -1110,6 +1115,30 @@ function WeintCodex.Navigation.ClearInspector()
     -- Ohne Bloecke gibt es keinen Detailbereich: der Inhalt bekommt die
     -- volle Breite zurueck. Frueher blieb die Spalte als leere Flaeche stehen.
     WeintCodex.SetDetailShown(false)
+end
+
+-- Raidplanung (6.61.1.0): Anmeldung und Kalender in einer Spalte, je
+-- Gruppe nur mit ihrer Freigabe. Ohne beide: die Sperrseite.
+function WeintCodex.Navigation.ShowPlanning(sub)
+    local PF = WeintCodex.Navigation.PLAN_FEATURES
+    local items, firstCal = {}, nil
+    local count = 0
+    local S, CAL = WeintCodex.Signup, WeintCodex.Calendar
+    if S and S.Items and Can(PF.anmeldung) then
+        items[#items + 1] = { isGroup = true, label = "Anmeldung" }
+        for _, it in ipairs(S.Items()) do items[#items + 1] = it count = count + 1 end
+    end
+    if CAL and CAL.Items and Can(PF.kalender) then
+        items[#items + 1] = { isGroup = true, label = "Kalender" }
+        firstCal = count + 1
+        for _, it in ipairs(CAL.Items()) do items[#items + 1] = it count = count + 1 end
+    end
+    if count == 0 then
+        WeintCodex.Navigation.ShowAccessLock("anmeldung", PF.anmeldung)
+        return
+    end
+    WeintCodex.Navigation.BuildSidebar("Raidplanung", items)
+    WeintCodex.Navigation.ActivateIndex((sub == "kalender" and firstCal) or 1)
 end
 
 -- Verbirgt frei belegte Aktions-Buttons in der Titelleiste (z.B. "Companion",
@@ -2427,13 +2456,7 @@ function WeintCodex.Navigation.SwitchTo(tabId)
             WeintCodex.DungeonPages.Show()
         end
     elseif tabId == "anmeldung" then
-        if WeintCodex.Signup and WeintCodex.Signup.Show then
-            WeintCodex.Signup.Show()
-        end
-    elseif tabId == "kalender" then
-        if WeintCodex.Calendar and WeintCodex.Calendar.Show then
-            WeintCodex.Calendar.Show()
-        end
+        WeintCodex.Navigation.ShowPlanning(sub)
     elseif tabId == "gruppe" then
         if WeintCodex.GroupCheck and WeintCodex.GroupCheck.Show then
             WeintCodex.GroupCheck.Show()
@@ -2516,7 +2539,7 @@ end
 --------------------------------------------------
 
 local AREA_LABEL = {
-    anmeldung   = "Anmeldung",
+    anmeldung   = "Raidplanung",
     materialien = "Materialien",
     kalender    = "Kalender",
 }

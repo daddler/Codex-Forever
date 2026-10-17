@@ -17892,7 +17892,7 @@ do
     local ok, err = pcall(function()
         local want = {
             { "uebersicht", "Leveln" }, { "charakter" }, { "lehrer" }, { "berufe" }, { "taschen" }, { "buecher" }, { "dungeons" },
-            { "gruppe", "Gruppe" }, { "raids" }, { "anmeldung" }, { "kalender" },
+            { "gruppe", "Gruppe" }, { "raids" }, { "anmeldung" },
             { "materialien", "Gilde" },
             { "companion", "System" }, { "settings" },
         }
@@ -17904,7 +17904,7 @@ do
         end
         -- Freigaben unveraendert, Import ohne Eintrag und ohne Sperre.
         local feat = nav.GetTabFeatures()
-        assert(feat.anmeldung == "raids.view" and feat.kalender == "calendar.view"
+        assert(feat.anmeldung == nil and nav.PLAN_FEATURES.anmeldung == "raids.view" and nav.PLAN_FEATURES.kalender == "calendar.view"
             and feat.materialien == "materials.view" and feat.import == nil and feat.companion == nil,
             "Freigaben veraendert")
         assert(nav.SUBTABS.import and nav.SUBTABS.import.tab == "companion", "Import ohne Platz")
@@ -17948,7 +17948,7 @@ do
         local cases = {
             { "import", "companion" }, { "companion", "companion" }, { "einstellungen", "settings" },
             { "dungeons", "dungeons" }, { "raids", "raids" }, { "anmeldung", "anmeldung" },
-            { "kalender", "kalender" }, { "charakter", "charakter" }, { "materialien", "materialien" },
+            { "kalender", "anmeldung" }, { "charakter", "charakter" }, { "materialien", "materialien" },
             { "lehrer", "lehrer" }, { "gruppe", "gruppe" },
         }
         for _, c in ipairs(cases) do
@@ -19011,6 +19011,42 @@ do
         G.InCombatLockdown = oL
     end)
     Check(ok, "Taschen: Rechtsklick ueber geschuetzten Knopf, Linksklick durchgereicht" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.61.1.0: Neuladen-Knopf an einem Knopf, der an einem Text haengt;
+-- Raidplanung mit Anmeldung und Kalender, gesperrt je Gruppe.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local btn = CreateFrame("Button")
+        local oCF = G.CreateFrame
+        G.CreateFrame = function(...)
+            local f = oCF(...)
+            if select(4, ...) == "SecureActionButtonTemplate" then
+                f.SetAllPoints = function() error("Cannot anchor protected frames to regions") end
+            end
+            return f
+        end
+        local ov = WeintCodex.AttachReload(btn)
+        G.CreateFrame = oCF
+        assert(ov and WeintCodex.ReloadArmed(ov), "ohne Verankerung nicht scharf")
+        assert(ov:GetScript("OnUpdate"), "folgt dem Knopf nicht")
+
+        local nav = WeintCodex.Navigation
+        local oA = WeintCodex.Access
+        WeintCodex.Access = { Can = function(k) return k == "calendar.view" end }
+        local built
+        local oB = nav.BuildSidebar
+        nav.BuildSidebar = function(title, items) built = items return oB(title, items) end
+        nav.ShowPlanning()
+        assert(built and built[1].isGroup and built[1].label == "Kalender", "Anmeldung trotz Sperre gezeigt")
+        WeintCodex.Access = { Can = function() return true end }
+        nav.ShowPlanning("kalender")
+        assert(built[1].label == "Anmeldung" and built[4].label == "Kalender", "beide Gruppen fehlen")
+        nav.BuildSidebar = oB
+        WeintCodex.Access = oA
+    end)
+    Check(ok, "Raidplanung: Anmeldung + Kalender je Freigabe, Neuladen ohne Verankerung" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.54.0.0: Flugzeit - Ziel vom Klick, Dauer gemessen/Daten/unbekannt, gemessen nach der Landung.

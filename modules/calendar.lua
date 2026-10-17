@@ -2050,12 +2050,34 @@ end
 -- Modul anzeigen
 --------------------------------------------------
 
-function WeintCodex.Calendar.Show()
+-- 6.61.1.0: Items liefert die Eintraege fuer die gemeinsame Spalte mit der
+-- Anmeldung ("Raidplanung", core/navigation.lua); jeder Eintrag zeigt die
+-- Seite selbst, weil davor die Anmeldung offen gewesen sein kann.
+function WeintCodex.Calendar.Items()
+    local f
+    local function Open()
+        local cp = WeintCodex.ContentPanel
+        for _, child in pairs({cp:GetChildren()}) do child:Hide() end
+        WeintCodex.Navigation.ClearTitleActions()
+        f = CreateCalendarFrame()
+        f:Show()
+    end
+    local items = WeintCodex.Calendar.Show(true)
+    for _, it in ipairs(items) do
+        local click = it.onClick
+        it.onClick = function() Open() click() end
+    end
+    return items
+end
+
+function WeintCodex.Calendar.Show(collect)
     local cp = WeintCodex.ContentPanel
-    for _, child in pairs({cp:GetChildren()}) do child:Hide() end
+    if not collect then
+        for _, child in pairs({cp:GetChildren()}) do child:Hide() end
+    end
 
     local f = CreateCalendarFrame()
-    f:Show()
+    if not collect then f:Show() end
     f.StatusText:SetText("")
 
     -- Den Spielkalender laden lassen, solange noch niemand auf etwas
@@ -2136,6 +2158,12 @@ function WeintCodex.Calendar.Show()
         },
     }
 
+    if collect then
+        local initData = WeintCodex.SavedData and WeintCodex.SavedData.raidWednesday
+        AutoFillFromData(f, initData)
+        RefreshPlayerPreview(f, initData)
+        return sidebarItems
+    end
     WeintCodex.Navigation.BuildSidebar("Kalender", sidebarItems)
 
     -- Das Formular schon befuellen, damit der Wechsel auf "Mittwoch" nicht

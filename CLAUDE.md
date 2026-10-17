@@ -132,8 +132,10 @@ internet; any further outward message needs the same explicit request.
   `SubNavHeight()` and `MeasureSidebar()` compute what each occupies,
   `load_test.lua` holds them against the smallest allowed window
   (780 px) and additionally demands headroom for one more entry — except
-  the nav column, which is **full since 6.59.0.0** (owner's decision,
-  „Bücher“): a new entry there must replace or merge an old one, or
+  the nav column, which was **full in 6.59.0.0** (owner's decision,
+  „Bücher“) and got one slot back in 6.61.1.0 (Anmeldung + Kalender merged
+  into „Raidplanung“, `Navigation.ShowPlanning`, gated per group via
+  `PLAN_FEATURES`): a new entry there must replace or merge an old one, or
   become a tab under an existing one (`Navigation.SUBTABS`). Page
   content that grows from bot-supplied data is capped (raids, see
   `RolePanel.BossCards`) or goes into the one surface built to scroll

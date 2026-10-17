@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.1.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFKalender und Anmeldung sind ein Eintrag|r – „Raidplanung“ zeigt beide nebeneinander in der Spalte.",
+            "|cff7C6CFFKein Fehler mehr beim Öffnen der Anmeldung|r – der Knopf „Neu laden“ löste beim Anwählen eine Lua-Meldung aus.",
+        },
+    },
+    {
         version = "6.61.0.0",
         date    = "17.10.2026",
         notes   = {

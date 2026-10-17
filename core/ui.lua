@@ -2539,6 +2539,29 @@ end
 -- Fuer den Prueflauf und fuer Hinweise: ist der Knopf scharf?
 function WeintCodex.ReloadArmed(ov) return armed[ov] == true end
 
+-- Geschuetzten Knopf ueber `target` legen, ohne an ihm zu haengen: Platz
+-- vom Bildschirm gemessen, nachgefuehrt nur ausserhalb des Kampfes und nur,
+-- wenn er sich bewegt hat (keine Tabelle je Bild).
+function WeintCodex.FollowRect(ov, target)
+    local lx, ly, lw, lh
+    local function Place()
+        if InCombatLockdown and InCombatLockdown() then return end
+        local x, y, w, h = target:GetRect()
+        if not x then return end
+        local s = (target:GetEffectiveScale() or 1) / (UIParent:GetEffectiveScale() or 1)
+        x, y, w, h = x * s, y * s, w * s, h * s
+        if x == lx and y == ly and w == lw and h == lh then return end
+        lx, ly, lw, lh = x, y, w, h
+        ov:ClearAllPoints()
+        ov:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x, y)
+        ov:SetSize(w, h)
+    end
+    ov:SetScale((UIParent:GetEffectiveScale() or 1) / (ov:GetParent() and ov:GetParent():GetEffectiveScale() or 1))
+    Place()
+    ov:SetScript("OnUpdate", Place)
+    return Place
+end
+
 function WeintCodex.AttachReload(button, onClick)
     -- Im Kampf laesst sich ein geschuetzter Knopf weder anlegen noch
     -- verankern: bis dahin ein Hinweis, danach der Makroknopf.
@@ -2567,7 +2590,15 @@ function WeintCodex.AttachReload(button, onClick)
         return nil
     end
 
-    ov:SetAllPoints(button)
+    -- 6.61.1.0 (Fehlerbericht: "Cannot anchor protected frames to regions",
+    -- Kalender/Anmeldung): haengt der Knopf irgendwo in seiner Kette an
+    -- einem Text oder Bild, darf der geschuetzte Knopf nicht an ihm haengen.
+    -- Dann liegt er am Bildschirm, an der gemessenen Stelle, und folgt ihr
+    -- ausserhalb des Kampfes.
+    if not pcall(ov.SetAllPoints, ov, button) then
+        ov:ClearAllPoints()
+        WeintCodex.FollowRect(ov, button)
+    end
     ov:SetFrameLevel((button:GetFrameLevel() or 1) + 5)
     -- Nur beim Loslassen, und das Attribut sagt es auch: ungesetzt folgt
     -- der Klick der Spieleinstellung "beim Druecken ausloesen", und die

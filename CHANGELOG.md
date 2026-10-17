@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.1.0] – 2026-10-17
+
+### Geändert
+- Navigation: „Anmeldung“ und „Kalender“ sind ein Eintrag „Raidplanung“ (`Navigation.ShowPlanning`, Gruppen je Freigabe `PLAN_FEATURES`; `kalender` ist Reiter in `SUBTABS`, `/wc kalender` bleibt). Die Navigationsspalte hat damit wieder einen Platz frei.
+
+### Behoben
+- `AttachReload`: „Cannot anchor protected frames to regions“ beim Öffnen der Anmeldung. Hängt der Knopf an einem Text oder Bild, liegt der geschützte Knopf jetzt am Bildschirm an der gemessenen Stelle (`WeintCodex.FollowRect`) und folgt ihr außerhalb des Kampfes.
+
 ## [6.61.0.0] – 2026-10-17
 
 ### Neu
