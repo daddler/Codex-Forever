@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.12.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFWiederbelebungen bei den Klickzaubern|r – Wiedergeburt, Auferstehung, Erlösung und Geist der Ahnen stehen jetzt in der Auswahl der hilfreichen Zauber.",
+        },
+    },
+    {
         version = "6.61.11.0",
         date    = "17.10.2026",
         notes   = {

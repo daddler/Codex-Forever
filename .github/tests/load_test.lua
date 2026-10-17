@@ -6206,6 +6206,12 @@ do
             "Untertitel falsch als Rang gelesen")
         local helpful = CC.Spellbook(true)
         assert(#helpful == 1 and helpful[1].name == "Geringes Heilen", "Pein als hilfreich gelistet")
+        -- 6.61.12.0: Wiedergeburt bleibt, auch wenn der Client sie nicht hilfreich nennt.
+        book[3] = { spellID = 20484, name = "Wiedergeburt", iconID = 2, itemType = 1, subName = "Rang 1" }
+        _G.C_Spell = { IsSpellHelpful = function(id) return id ~= 20484 end }
+        local rev = CC.Spellbook(true)
+        assert(#rev == 2 and rev[2].name == "Wiedergeburt", "Wiedergeburt fehlt bei den hilfreichen")
+        book[3] = { spellID = 585, name = "Göttliche Pein", iconID = 2, itemType = 1 }
         _G.C_Spell = {}
         assert(#CC.Spellbook(true) == 2, "ohne Antwort des Clients Zauber versteckt")
         -- Die Tafel: Klick auf ein Symbol legt den Zauber auf die Taste.

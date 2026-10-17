@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.12.0] – 2026-10-17
+
+### Behoben
+- Klickzauber: Wiederbelebungen fehlten unter „nur hilfreiche“ – der Client nennt Zauber auf Tote nicht hilfreich. `CC.REVIVE` (alle Ränge von Wiedergeburt, Auferstehung, Erlösung, Geist der Ahnen) gilt immer als hilfreich.
+
 ## [6.61.11.0] – 2026-10-17
 
 ### Neu

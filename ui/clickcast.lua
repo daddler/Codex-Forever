@@ -513,7 +513,19 @@ end
 -- (C_Spell.IsSpellHelpful / IsHelpfulSpell); kann er es nicht sagen,
 -- bleibt der Zauber drin - "weiss nicht" ist nicht "schaedlich".
 
+-- 6.61.12.0 (Beta-Test: "beim Druiden fehlt Wiedergeburt"): Wiederbelebungen
+-- wirken nur auf Tote, und der Client nennt sie nicht "hilfreich". Fuer
+-- Klickzauber auf Gruppenrahmen sind sie es - alle Raenge aus dem
+-- Lehrerbestand (data/trainer.lua, Art classic).
+CC.REVIVE = {
+    [20484] = true, [20739] = true, [20742] = true, [20747] = true, [20748] = true,  -- Wiedergeburt
+    [2006] = true, [2010] = true, [10880] = true, [10881] = true, [20770] = true,    -- Auferstehung
+    [7328] = true, [10322] = true, [10324] = true, [20772] = true, [20773] = true,   -- Erloesung (Rang 1 per Quest)
+    [2008] = true, [20609] = true, [20610] = true, [20776] = true, [20777] = true,   -- Geist der Ahnen
+}
+
 local function Helpful(id, name)
+    if CC.REVIVE[id] then return true end
     local cs = _G.C_Spell
     local f = (cs and cs.IsSpellHelpful) or _G.IsHelpfulSpell
     if not f then return nil end
@@ -599,7 +611,9 @@ function CC.Spellbook(helpfulOnly)
     if helpfulOnly then
         local keep = {}
         for _, sp in ipairs(out) do
-            if Helpful(sp.id, sp.name) ~= false then keep[#keep + 1] = sp end
+            local h = Helpful(sp.id, sp.name)
+            for _, r in ipairs(sp.ranks) do if CC.REVIVE[r.id] then h = true end end
+            if h ~= false then keep[#keep + 1] = sp end
         end
         out = keep
     end
