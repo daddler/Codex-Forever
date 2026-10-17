@@ -19972,6 +19972,39 @@ do
         EN.AddTip(tip, "HandsSlot")
         assert(first >= 2 and lines == 2 * first, "Tooltip nicht bei jedem Neubau")
         EN.state.HandsSlot = nil
+        -- 6.65.0.0: Bewertung - Text "Verzaubert: ..." gegen Rezeptbeschreibung.
+        assert(EN.TextMatches("Waffenschaden +4", "Verzaubert eine Waffe dauerhaft, sodass sie +4 Schaden verursacht."),
+            "Waffenschaden nicht erkannt")
+        assert(not EN.TextMatches("Waffenschaden +4", "... sodass sie +3 Schaden verursacht."), "falsche Zahl erkannt")
+        assert(not EN.TextMatches("+7 Beweglichkeit", "... +7 Ausdauer."), "falscher Wert erkannt")
+        assert(EN.TextMatches("+7 Beweglichkeit", "Verzaubert Handschuhe dauerhaft, sodass sie +7 Beweglichkeit verleihen."),
+            "Beweglichkeit nicht erkannt")
+        local oD = _G.C_Spell
+        local hands = EN.recipes.Gloves
+        local agi, top
+        for _, r in ipairs(hands) do
+            if r.effect == "Agility" then agi = r end
+            if r.effect == "Superior Agility" then top = r end
+        end
+        assert(agi and top, "Handschuh-Rezepte fehlen")
+        _G.C_Spell = { GetSpellDescription = function(id)
+            if id == agi.spell then return "Verzaubert Handschuhe, +5 Beweglichkeit." end
+            if id == top.spell then return "Verzaubert Handschuhe, +15 Beweglichkeit." end
+            return "Verzaubert Handschuhe, +99 Irgendwas."
+        end }
+        for k in pairs(EN) do end
+        loc = "INVTYPE_HAND"
+        local v = EN.Judge("HandsSlot", "l", "+5 Beweglichkeit", "HUNTER", false)
+        assert(v.recipe == agi and v.fits == true, "passende Verzauberung nicht erkannt")
+        v = EN.Judge("HandsSlot", "l", "+5 Beweglichkeit", "MAGE", false)
+        assert(v.fits == false, "Beweglichkeit passt zum Magier")
+        v = EN.Judge("HandsSlot", "l", "+5 Beweglichkeit", "HUNTER", true)
+        assert(v.best == false and v.better and #v.better > 0, "auf 60 nicht als schwaecher erkannt")
+        v = EN.Judge("HandsSlot", "l", "+15 Beweglichkeit", "HUNTER", true)
+        assert(v.best == true, "staerkste nicht erkannt")
+        v = EN.Judge("HandsSlot", "l", "+42 Unbekannt", "HUNTER", true)
+        assert(v.recipe == nil and v.best == nil, "Unbekanntes bewertet")
+        _G.C_Spell = oD
         _G.C_Item.GetItemInfoInstant, _G.GetItemInfoInstant = oI, oG
     end)
     Check(ok, "Verzauberungen: erkannt je Klasse, unbekannt bleibt unbekannt" .. (ok and "" or (": " .. tostring(err))))

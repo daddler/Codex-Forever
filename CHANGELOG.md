@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.65.0.0] – 2026-10-17
+
+### Neu
+- Bewertung vorhandener Verzauberungen (`EN.Judge`): Zeile „Verzaubert: …“ aus `C_TooltipInfo.GetInventoryItem` gegen die Beschreibung der Rezeptzauber (Zahlen gleich, ein Wort gemeinsam; mehrdeutig/kein Treffer = unbekannt, kein Wort). Beim Leveln „passt zu Klasse“ bzw. passendere Rezepte; auf der Höchststufe „stärkste passende“ oder goldener Punkt mit „Stärker möglich“.
+
 ## [6.64.1.0] – 2026-10-17
 
 ### Behoben

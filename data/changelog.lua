@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.65.0.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFVerzauberungen: hast du die richtige drauf?|r – der Tooltip eines verzauberten Platzes sagt beim Leveln, ob die Verzauberung zu deiner Klasse passt, und nennt sonst passendere. Auf Stufe 60 zeigt er, ob es die stärkste passende ist; wenn nicht, bekommt der Platz einen goldenen Punkt und die Zeile über den Waffen nennt ihn unter „Stärker möglich“.",
+        },
+    },
+    {
         version = "6.64.1.0",
         date    = "17.10.2026",
         notes   = {

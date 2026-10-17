@@ -147,6 +147,106 @@ function EN.Suggest(slotName, link, class, level, atMax)
     return list, #fit == 0 and #list > 0
 end
 
+-- Bewertung der vorhandenen Verzauberung (6.65.0.0, Beta-Test: "beim
+-- Leveln sehen, ob man das richtig gemacht hat; mit Highlevel die beste").
+-- Welche Verzauberung drauf ist, sagt die Zeile "Verzaubert: ..." aus den
+-- Tooltipdaten des Clients; welchem Rezept sie gehoert, der Abgleich mit
+-- der Beschreibung des Rezeptzaubers (Zahlen gleich, ein Wort gemeinsam).
+-- Passt kein Rezept eindeutig: unbekannt - dann sagt der Tooltip nichts.
+-- "Stärkste Stufe" heisst: kein zur Klasse passendes Rezept fuer diesen
+-- Platz verlangt mehr Fertigkeit. Zwischen Werten (Beweglichkeit oder
+-- Ausdauer) waehlt das nicht - dafuer gibt es fuer Forever keine Zahlen.
+local descs = {}
+local function Desc(spell)
+    if descs[spell] then return descs[spell] end
+    local cs = _G.C_Spell
+    local d = cs and cs.GetSpellDescription and K.Plain(cs.GetSpellDescription(spell))
+    if type(d) == "string" and d ~= "" then descs[spell] = d return d end
+    if cs and cs.RequestLoadSpellData then pcall(cs.RequestLoadSpellData, spell) end
+    return nil
+end
+EN.Desc = Desc
+
+local function Words(s)
+    local out = {}
+    for w in s:gmatch("[%a\128-\255]+") do
+        if #w >= 5 then out[#out + 1] = w:lower() end
+    end
+    return out
+end
+
+-- Gehoert der Text "Verzaubert: <text>" zu dieser Beschreibung?
+function EN.TextMatches(text, desc)
+    if type(text) ~= "string" or type(desc) ~= "string" then return false end
+    local dnums = {}
+    for n in desc:gmatch("%d+") do dnums[n] = true end
+    local any = false
+    for n in text:gmatch("%d+") do
+        any = true
+        if not dnums[n] then return false end
+    end
+    if not any then return false end
+    local dl = desc:lower()
+    local dwords = Words(desc)
+    for _, w in ipairs(Words(text)) do
+        if dl:find(w, 1, true) then return true end
+        for _, d in ipairs(dwords) do
+            if w:find(d, 1, true) then return true end
+        end
+    end
+    return false
+end
+
+local enchantFmt
+function EN.EnchantText(id)
+    local ti = _G.C_TooltipInfo
+    if not (ti and ti.GetInventoryItem) then return nil end
+    if not enchantFmt then
+        local g = type(_G.ENCHANTED_TOOLTIP_LINE) == "string" and _G.ENCHANTED_TOOLTIP_LINE or "Verzaubert: %s"
+        enchantFmt = "^" .. g:gsub("([%^%$%(%)%.%[%]%*%+%-%?])", "%%%1"):gsub("%%s", "(.+)") .. "$"
+    end
+    local ok, data = pcall(ti.GetInventoryItem, "player", id)
+    if not ok or type(data) ~= "table" or type(data.lines) ~= "table" then return nil end
+    for _, line in ipairs(data.lines) do
+        local t = K.Plain(line.leftText)
+        local m = type(t) == "string" and t:match(enchantFmt)
+        if m then return m end
+    end
+    return nil
+end
+
+-- { recipe = Rezept oder nil, fits = true/false/nil, best = true/false/nil,
+--   better = { staerkere passende Rezepte } }
+function EN.Judge(slotName, link, text, class, atMax)
+    local v = {}
+    if not EN.Kinds() or type(text) ~= "string" then return v end
+    local found, pending
+    for _, w in ipairs(EN.WordsFor(slotName, link)) do
+        for _, r in ipairs(EN.recipes[w] or {}) do
+            local d = Desc(r.spell)
+            if not d then pending = true
+            elseif EN.TextMatches(text, d) then
+                if found and found.effect ~= r.effect then return v end  -- mehrdeutig
+                found = found or r
+            end
+        end
+    end
+    if not found then v.pending = pending return v end
+    v.recipe = found
+    local words = class and EN.CLASS_WORDS[class]
+    if not words then return v end
+    v.fits = Matches(found.effect, words) or Matches(found.effect, EN.ALWAYS)
+    local top = 0
+    for _, w in ipairs(EN.WordsFor(slotName, link)) do
+        for _, r in ipairs(EN.recipes[w] or {}) do
+            if (Matches(r.effect, words) or Matches(r.effect, EN.ALWAYS)) and r.learn > top then top = r.learn end
+        end
+    end
+    v.best = v.fits and found.learn >= top
+    if atMax and not v.best then v.better = EN.Suggest(slotName, link, class, 60, true) end
+    return v
+end
+
 local function RecipeName(r)
     local cs = _G.C_Spell
     local ok, n = pcall(function()
@@ -203,6 +303,7 @@ function EN.Applies(slot, link, kinds)
 end
 
 EN.missing = {}     -- Namen in Reihenfolge
+EN.weaker = {}      -- auf der Hoechststufe: verzaubert, aber nicht die staerkste passende
 EN.state = {}       -- [Platzname] = "missing" / "ok" / "unknown" / nil (gilt nicht)
 EN.dirty = true
 
@@ -210,7 +311,12 @@ function EN.Scan()
     EN.dirty = false
     local missing, state = EN.missing, EN.state
     for i = #missing, 1, -1 do missing[i] = nil end
+    for i = #EN.weaker, 1, -1 do EN.weaker[i] = nil end
     for k in pairs(state) do state[k] = nil end
+    local atMax = EN.AtMax()
+    local class
+    if _G.UnitClass then class = select(2, _G.UnitClass("player")) end
+    class = K.Plain(class)
     if not (_G.GetInventorySlotInfo and _G.GetInventoryItemLink) then return missing end
     local kinds = EN.Kinds()
     if not kinds then return missing end
@@ -226,7 +332,15 @@ function EN.Scan()
                 elseif applies then
                     local has = EN.HasEnchant(link)
                     if has == nil then state[s[1]] = "unknown"
-                    elseif has then state[s[1]] = "ok"
+                    elseif has then
+                        state[s[1]] = "ok"
+                        if atMax then
+                            local v = EN.Judge(s[1], link, EN.EnchantText(id), class, true)
+                            if v.recipe and v.best == false then
+                                state[s[1]] = "weaker"
+                                EN.weaker[#EN.weaker + 1] = s[2]
+                            end
+                        end
                     else
                         state[s[1]] = "missing"
                         missing[#missing + 1] = s[2]
@@ -262,8 +376,10 @@ end
 -- dem naechsten Neubau weg. Darum am Neubau selbst: nach jedem
 -- SetInventoryItem("player", Platz) haengen wir unsere Zeilen wieder an.
 function EN.AddTip(tip, name)
-    if EN.state[name] ~= "missing" or not Opt() then return end
-    if not (tip and tip.AddLine) then return end
+    if not Opt() or not (tip and tip.AddLine) then return end
+    local st = EN.state[name]
+    if st == "ok" or st == "weaker" then return EN.AddJudgement(tip, name) end
+    if st ~= "missing" then return end
     local atMax = EN.AtMax()
     local c = atMax and C.dangerBright or C.warning
     tip:AddLine(" ")
@@ -279,6 +395,42 @@ function EN.AddTip(tip, name)
             .. (later and ", erst auf höherer Stufe üblich:" or ":"), m[1], m[2], m[3])
         local t = C.textNormal
         for _, r in ipairs(list) do
+            tip:AddDoubleLine("  " .. RecipeName(r), "Verzauberkunst " .. r.learn, t[1], t[2], t[3], m[1], m[2], m[3])
+        end
+    end
+    tip:Show()
+end
+
+-- Verzauberter Platz: passt sie zur Klasse, und auf der Hoechststufe:
+-- ist es die staerkste passende? Unbekannt -> kein Wort.
+function EN.AddJudgement(tip, name)
+    local id = EN.SlotId(name)
+    local link = id and K.Plain(_G.GetInventoryItemLink("player", id)) or nil
+    local cname, class
+    if _G.UnitClass then cname, class = _G.UnitClass("player") end
+    cname = K.Plain(cname)
+    local atMax = EN.AtMax()
+    local v = EN.Judge(name, link, id and EN.EnchantText(id), K.Plain(class), atMax)
+    if not v.recipe or v.fits == nil then return end
+    local who = type(cname) == "string" and cname or "deine Klasse"
+    local g, w, m, t = C.green or C.textNormal, C.warning, C.textMuted, C.textNormal
+    tip:AddLine(" ")
+    if not v.fits then
+        tip:AddLine("Verzauberung passt nicht zu " .. who .. " (Faustregel)", w[1], w[2], w[3])
+        local list = EN.Suggest(name, link, K.Plain(class), Level() or 1, atMax)
+        if #list > 0 then
+            tip:AddLine("Passender wäre:", m[1], m[2], m[3])
+            for _, r in ipairs(list) do
+                tip:AddDoubleLine("  " .. RecipeName(r), "Verzauberkunst " .. r.learn, t[1], t[2], t[3], m[1], m[2], m[3])
+            end
+        end
+    elseif not atMax then
+        tip:AddLine("Verzauberung passt zu " .. who, g[1], g[2], g[3])
+    elseif v.best then
+        tip:AddLine("Stärkste passende Verzauberung", g[1], g[2], g[3])
+    else
+        tip:AddLine("Passt zu " .. who .. ", stärker möglich:", w[1], w[2], w[3])
+        for _, r in ipairs(v.better or {}) do
             tip:AddDoubleLine("  " .. RecipeName(r), "Verzauberkunst " .. r.learn, t[1], t[2], t[3], m[1], m[2], m[3])
         end
     end
@@ -342,26 +494,32 @@ function EN.Paint()
     local size = strong and EN.DOT_BIG or EN.DOT_SMALL
     local alpha = strong and 1 or 0.85
     for _, s in ipairs(EN.SLOTS) do
-        local miss = on and EN.state[s[1]] == "missing"
+        local st = on and EN.state[s[1]]
+        local miss = st == "missing" or st == "weaker"
         local d = (miss or dots[s[1]]) and Dot(s[1])
         if d then
             if miss then
+                local cc = st == "weaker" and C.warning or col
                 d:SetSize(size, size)
-                d:SetVertexColor(col[1], col[2], col[3], alpha)
+                d:SetVertexColor(cc[1], cc[2], cc[3], alpha)
             end
             d:SetShown(miss)
         end
     end
     local l = Line()
     if not l then return end
-    local n = #EN.missing
+    local n, nw = #EN.missing, #EN.weaker
     -- 6.64.0.0: beim Leveln steht der Hinweis nur am Platz (Punkt, Tooltip),
     -- die Zeile ueber den Waffen erst auf der Hoechststufe.
-    if not on or n == 0 or not strong then l:Hide() return end
+    if not on or (n == 0 and nw == 0) or not strong then l:Hide() return end
     if strong then
-        local c = C.dangerBright
+        local c = n > 0 and C.dangerBright or C.warningBright
         l:SetTextColor(c[1], c[2], c[3], 1)
-        l:SetText(n .. (n == 1 and " Verzauberung fehlt: " or " Verzauberungen fehlen: ") .. table.concat(EN.missing, ", "))
+        local txt = n > 0 and (n .. (n == 1 and " Verzauberung fehlt: " or " Verzauberungen fehlen: ") .. table.concat(EN.missing, ", ")) or ""
+        if nw > 0 then
+            txt = txt .. (n > 0 and "  ·  " or "") .. "Stärker möglich: " .. table.concat(EN.weaker, ", ")
+        end
+        l:SetText(txt)
     else
         local c = C.textMuted
         l:SetTextColor(c[1], c[2], c[3], 0.8)
@@ -383,7 +541,8 @@ end
 
 local ev = CreateFrame("Frame")
 EN.events = ev
-for _, e in ipairs({ "PLAYER_EQUIPMENT_CHANGED", "UNIT_INVENTORY_CHANGED", "PLAYER_LEVEL_UP", "PLAYER_ENTERING_WORLD" }) do
+for _, e in ipairs({ "PLAYER_EQUIPMENT_CHANGED", "UNIT_INVENTORY_CHANGED", "PLAYER_LEVEL_UP", "PLAYER_ENTERING_WORLD",
+                     "SPELL_DATA_LOAD_RESULT" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 ev:SetScript("OnEvent", function() EN.dirty = true end)
