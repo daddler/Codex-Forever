@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.62.4.0] – 2026-10-17
+
+### Geändert
+- Dialog „Neuer Channel“ (`CreateChannelPopup`) in Gold: `W.SkinDialog` (ui/windows.lua) – Rahmen, Grund und Titelband weg, Eingabefelder flach mit 1 px Rand, Knöpfe flach. Ungemessen.
+
 ## [6.62.3.0] – 2026-10-17
 
 ### Geändert

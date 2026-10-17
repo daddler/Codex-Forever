@@ -1711,6 +1711,44 @@ function W.SkinStackSplit(f)
     return d
 end
 
+-- Kleine Dialoge der Teilfenster (6.62.4.0, Beta-Test: "Hinzufuegen" in
+-- den Chat-Kanaelen oeffnet "Neuer Channel" noch im Stil des Spiels).
+-- UNGEMESSEN - beschrieben wie W.SkinPopup, nur breiter gegriffen: Rahmen
+-- (.Border/.NineSlice), Grund (.Bg/.BG) und die Bilder des Titelbands
+-- (.Header) weg, der Titel selbst bleibt. Eingabefelder (Left/Middle/Right
+-- des InputBoxTemplate) werden flache Felder mit 1 px Rand, rote Knoepfe
+-- flach. Nur Bilder, kein Skript.
+W.DIALOGS = { "CreateChannelPopup" }
+W.DIALOG_KEYS = { "Border", "NineSlice", "Bg", "BG", "Header" }
+function W.SkinDialog(f)
+    if type(f) ~= "table" or popupDone[f] or not f.CreateTexture or (f.IsForbidden and f:IsForbidden()) then
+        return popupDone[f]
+    end
+    for _, k in ipairs(W.DIALOG_KEYS) do HideDecor(f[k]) end
+    local d = W.SkinPopup(f)
+    if not d then return nil end
+    d.fields = 0
+    for _, ch in ipairs(Children(f, "dialog", 0)) do
+        if type(ch) == "table" and not (ch.IsForbidden and ch:IsForbidden()) and ch.CreateTexture then
+            local ok, kind = pcall(ch.GetObjectType, ch)
+            if ok and kind == "EditBox" and type(ch.Middle) == "table" then
+                for _, k in ipairs({ "Left", "Middle", "Right" }) do Hide(ch[k]) end
+                local bg = ch:CreateTexture(nil, "BACKGROUND")
+                bg:SetPoint("TOPLEFT", -5, 0)
+                bg:SetPoint("BOTTOMRIGHT", 0, 0)
+                local s0 = C.surface0 or C.surface1
+                bg:SetColorTexture(s0[1], s0[2], s0[3], 0.95)
+                own[bg] = true
+                W.EdgeBorder(ch)
+                d.fields = d.fields + 1
+            elseif ok and kind == "Button" and type(ch.Middle) == "table" then
+                pcall(SkinPanelButton, ch, true)
+            end
+        end
+    end
+    return d
+end
+
 local function SkinPanelButtons(f, depth)
     if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
     local ok, isButton = pcall(IsButton, f)
@@ -2710,6 +2748,7 @@ function W.Apply()
     for _, path in ipairs(W.OWN_BG_PATHS) do W.OwnBackground(W.Resolve(path)) end
     for _, n in ipairs(W.POPUPS) do W.SkinPopup(_G[n]) end
     W.SkinStackSplit(_G.StackSplitFrame)
+    for _, n in ipairs(W.DIALOGS) do W.SkinDialog(_G[n]) end
     -- Wuerfeln um Beute (ui/lootroll.lua, 6.10.3.1), laedt nach dieser Datei.
     local LR = WeintCodex.UILootRoll
     if LR then LR.Apply() end

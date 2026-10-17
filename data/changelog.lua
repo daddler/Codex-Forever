@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.62.4.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFNeuer Channel in Gold|r – der Dialog hinter „Hinzufügen“ in den Chat-Kanälen passt jetzt zum Fenster: dunkle Fläche, flache Eingabefelder und Knöpfe.",
+        },
+    },
+    {
         version = "6.62.3.0",
         date    = "17.10.2026",
         notes   = {
