@@ -107,9 +107,37 @@ function BG.SecureUse(btn)
     sec:SetFrameLevel((btn:GetFrameLevel() or 1) + 2)
     if sec.RegisterForClicks then sec:RegisterForClicks("RightButtonUp") end
     sec:SetAttribute("useOnKeyDown", false)
-    sec:SetAttribute("type2", "item")
+    sec:SetAttribute("type2", (not BG.busy) and "item" or nil)
     return sec
 end
+
+-- 6.60.3.0 (Beta-Test: "Rechtsklick beim Haendler verkauft nicht, sondern
+-- tauscht mit dem angelegten Gegenstand"): der geschuetzte Knopf wirkt wie
+-- /use - beim Haendler, an der Bank, Post, Handel, Auktionshaus heisst
+-- Rechtsklick aber verkaufen bzw. hineinlegen, und das macht nur die
+-- Vorlage. Solange eines dieser Fenster offen ist, ruht der Knopf (kein
+-- type2), der Klick geht wie frueher an die Vorlage.
+BG.INTERACT = {
+    MERCHANT_SHOW = true, BANKFRAME_OPENED = true, MAIL_SHOW = true, TRADE_SHOW = true,
+    AUCTION_HOUSE_SHOW = true, GUILDBANKFRAME_OPENED = true,
+    MERCHANT_CLOSED = false, BANKFRAME_CLOSED = false, MAIL_CLOSED = false, TRADE_CLOSED = false,
+    AUCTION_HOUSE_CLOSED = false, GUILDBANKFRAME_CLOSED = false,
+}
+BG.busy = false
+function BG.SetUseMode(on)
+    if _G.InCombatLockdown and _G.InCombatLockdown() then return false end
+    for _, s in ipairs(slots) do
+        if s.use then s.use:SetAttribute("type2", on and "item" or nil) end
+    end
+    return true
+end
+local interactEv = CreateFrame("Frame")
+for e in pairs(BG.INTERACT) do pcall(interactEv.RegisterEvent, interactEv, e) end
+interactEv:SetScript("OnEvent", function(_, event)
+    BG.busy = BG.INTERACT[event] and true or false
+    BG.SetUseMode(not BG.busy)
+end)
+BG.interactEv = interactEv
 
 -- Platz des geschuetzten Knopfs setzen - nur ausserhalb des Kampfes.
 function BG.ArmUse(s, bag, slot)

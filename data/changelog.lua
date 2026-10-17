@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.60.3.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFRechtsklick beim Händler verkauft wieder.|r Seit dem Zauberöl-Fix legte er den Gegenstand an, statt ihn zu verkaufen. Ebenso wieder richtig an Bank, Post, Handel und Auktionshaus.",
+        },
+    },
+    {
         version = "6.60.2.0",
         date    = "17.10.2026",
         notes   = {

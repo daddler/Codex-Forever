@@ -18963,6 +18963,7 @@ do
     local G = _G
     local ok, err = pcall(function()
         local BG = WeintCodex.UIBags
+        BG.busy = false   -- fruehere Pruefungen oeffnen Haendler & Co.
         local btn = CreateFrame("Button")
         local passed
         local oCF = G.CreateFrame
@@ -18990,6 +18991,15 @@ do
         assert(BG.ArmUse(s, 2, 7) and sec:GetAttribute("item") == "2 7", "Platz nicht gesetzt")
         G.InCombatLockdown = function() return true end
         assert(not BG.ArmUse(s, 3, 1) and sec:GetAttribute("item") == "2 7", "im Kampf gesetzt")
+        -- 6.60.3.0: beim Haendler ruht der Knopf (verkaufen statt anlegen).
+        G.InCombatLockdown = function() return false end
+        local h = BG.interactEv:GetScript("OnEvent")
+        h(BG.interactEv, "MERCHANT_SHOW")
+        assert(BG.busy, "Haendler nicht bemerkt")
+        local s2 = { use = BG.SecureUse(btn) }
+        assert(s2.use == nil or s2.use:GetAttribute("type2") == nil, "beim Haendler neu angelegt mit /use")
+        h(BG.interactEv, "MERCHANT_CLOSED")
+        assert(not BG.busy, "Haendler zu nicht bemerkt")
         G.InCombatLockdown = oL
     end)
     Check(ok, "Taschen: Rechtsklick ueber geschuetzten Knopf, Linksklick durchgereicht" .. (ok and "" or (": " .. tostring(err))))
