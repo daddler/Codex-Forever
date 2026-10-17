@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.5.0] – 2026-10-17
+
+### Behoben
+- Taschen: „Blockiert: WeintCodexBags:Show()/Hide()“ im Kampf. Die geschützten Rechtsklick-Knöpfe (6.54.3.0) machten den Taschenrahmen geschützt. Bei `PLAYER_REGEN_DISABLED` hängen sie aus (`BG.Unhook`, geparkt), bei `PLAYER_REGEN_ENABLED` wieder ein (`BG.Rehook`, im Kampf angelegte Plätze bekommen ihren Knopf nach).
+
 ## [6.61.4.0] – 2026-10-17
 
 ### Behoben

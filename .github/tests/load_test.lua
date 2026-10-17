@@ -19026,6 +19026,16 @@ do
         local busy = BG.busy
         for _, n in ipairs(BG.FRAMES) do G[n] = saved[n] end
         assert(not busy, "Haendler zu nicht bemerkt")
+        -- 6.61.5.0: im Kampf haengen die Knoepfe aus (Tasche bleibt frei).
+        local hb = CreateFrame("Button")
+        local hs = { button = hb, use = BG.SecureUse(hb) }
+        if hs.use then
+            table.insert(BG.slotsForTest(), hs)
+            BG.Unhook()
+            assert(hs.use:GetParent() == BG.park and not hs.use:IsShown(), "im Kampf noch in der Tasche")
+            assert(BG.Rehook() and hs.use:GetParent() == hb and hs.use:IsShown(), "nach dem Kampf nicht zurueck")
+            table.remove(BG.slotsForTest())
+        end
         G.InCombatLockdown = oL
     end)
     Check(ok, "Taschen: Rechtsklick ueber geschuetzten Knopf, Linksklick durchgereicht" .. (ok and "" or (": " .. tostring(err))))

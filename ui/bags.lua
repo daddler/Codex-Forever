@@ -96,6 +96,8 @@ end
 -- durch ihn hindurch an die Vorlage (ziehen, verlinken, Tooltip).
 -- Kann der Client das Durchreichen nicht, bleibt alles wie bisher.
 function BG.SecureUse(btn)
+    -- Im Kampf keinen anlegen: er machte die Tasche geschuetzt.
+    if _G.InCombatLockdown and _G.InCombatLockdown() then return nil end
     local ok, sec = pcall(CreateFrame, "Button", nil, btn, "SecureActionButtonTemplate")
     if not (ok and sec) then return nil end
     if not (sec.SetPassThroughButtons and pcall(sec.SetPassThroughButtons, sec, "LeftButton")) then
@@ -164,6 +166,48 @@ interactEv:SetScript("OnEvent", function(_, event)
     end
 end)
 BG.interactEv = interactEv
+
+-- 6.61.5.0 (Fehlerbericht: "Blockiert: WeintCodexBags:Show()/Hide()" beim
+-- Oeffnen der Tasche im Kampf): ein geschuetzter Knopf macht die ganze
+-- Tasche zum geschuetzten Rahmen, und den darf im Kampf niemand zeigen
+-- oder verbergen. Vor dem Kampf (PLAYER_REGEN_DISABLED, letzter erlaubter
+-- Augenblick) haengen die Knoepfe deshalb aus der Tasche aus und danach
+-- wieder ein. Im Kampf gilt der Rechtsklick der Vorlage wie frueher.
+local park = CreateFrame("Frame", nil, UIParent)
+park:Hide()
+BG.park = park
+function BG.slotsForTest() return slots end
+function BG.Unhook()
+    for _, s in ipairs(slots) do
+        if s.use then s.use:Hide() s.use:SetParent(park) end
+    end
+end
+function BG.Rehook()
+    if _G.InCombatLockdown and _G.InCombatLockdown() then return false end
+    for _, s in ipairs(slots) do
+        local sec, btn = s.use, s.button
+        -- Im Kampf angelegte Plaetze bekommen ihren Knopf jetzt.
+        if not sec and btn then
+            sec = BG.SecureUse(btn)
+            s.use, s._useBag, s._useSlot = sec, nil, nil
+        end
+        if sec and btn then
+            sec:SetParent(btn)
+            sec:ClearAllPoints()
+            sec:SetAllPoints(btn)
+            sec:SetFrameLevel((btn:GetFrameLevel() or 1) + 2)
+        end
+    end
+    BG.SetUseMode(not BG.busy)
+    return true
+end
+local combatEv = CreateFrame("Frame")
+pcall(combatEv.RegisterEvent, combatEv, "PLAYER_REGEN_DISABLED")
+pcall(combatEv.RegisterEvent, combatEv, "PLAYER_REGEN_ENABLED")
+combatEv:SetScript("OnEvent", function(_, event)
+    if event == "PLAYER_REGEN_DISABLED" then BG.Unhook() else BG.Rehook() end
+end)
+BG.combatEv = combatEv
 
 -- Platz des geschuetzten Knopfs setzen - nur ausserhalb des Kampfes.
 function BG.ArmUse(s, bag, slot)

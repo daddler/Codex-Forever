@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.5.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Tasche öffnet im Kampf wieder ohne Meldung|r – „Blockiert: WeintCodexBags“ kam vom Rechtsklick-Knopf für Zauberöl. Im Kampf ruht er; danach wirkt Zauberöl wieder per Rechtsklick.",
+        },
+    },
+    {
         version = "6.61.4.0",
         date    = "17.10.2026",
         notes   = {
