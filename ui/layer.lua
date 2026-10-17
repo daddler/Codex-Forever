@@ -32,9 +32,12 @@ WeintCodex.UILayer = {}
 local LY = WeintCodex.UILayer
 local K  = WeintCodex.UIKit
 local C  = WeintCodex.Colors
-local KEY = "comfort"
+-- 6.62.2.0 (Wunsch: "Einstellung unter Minikarte, nicht unter Komfort;
+-- Layersystem optional - Schalter an und aus"): eigene Seite "Layer" im
+-- Modul Minikarte, Schalter layerOn.
+local KEY = "minimap"
 
-LY.DEFAULTS = { layerShow = true }
+LY.DEFAULTS = { layerOn = true }
 LY.CHANNEL = "layer"
 LY.PREFIX = "LayerSwap"
 LY.VOTES = 5
@@ -49,7 +52,7 @@ LY.current = nil
 LY.ask = nil            -- { at, from, joinedAt, moved }
 
 function LY.Active()
-    return K.IsActive(KEY) and K.Get(KEY, "layerShow") ~= false
+    return K.IsActive(KEY) and K.Get(KEY, "layerOn") ~= false
 end
 
 local function Now() return _G.GetTime and K.Plain(_G.GetTime()) or 0 end
@@ -97,7 +100,10 @@ function LY.Observe(unit)
     local id = server .. "-" .. zone
     votes[#votes + 1] = id
     if #votes > LY.VOTES then table.remove(votes, 1) end
-    if id == LY.current then return end
+    if id == LY.current then
+        if LY.seen[id] then LY.seen[id].last = Now() end
+        return
+    end
     local n = 0
     for _, v in ipairs(votes) do if v == id then n = n + 1 end end
     if n >= (LY.current and 3 or 2) then LY.Set(id) end
@@ -109,8 +115,25 @@ function LY.Forget()
     LY.Paint()
 end
 
+-- Wie viele Layer: die in dieser Zone in der letzten Stunde gesehenen
+-- (6.62.2.0, Wunsch: "sehen, wie viele Layer es gibt"). Das Spiel nennt
+-- keine Zahl - es koennen mehr sein, als man gesehen hat.
+LY.SEEN_TTL = 3600
+LY.seen = {}            -- [id] = { zone, last }
+function LY.Seen(zone)
+    local now, out = Now(), {}
+    zone = zone or LY.Zone()
+    for id, v in pairs(LY.seen) do
+        if now - v.last > LY.SEEN_TTL then LY.seen[id] = nil
+        elseif v.zone == zone then out[#out + 1] = id end
+    end
+    table.sort(out, function(a, b) return LY.Letter(a) < LY.Letter(b) end)
+    return out
+end
+
 function LY.Set(id)
     local from = LY.current
+    LY.seen[id] = { zone = LY.Zone(), last = Now() }
     LY.current = id
     LY.Letter(id)
     local a = LY.ask
@@ -184,22 +207,27 @@ end
 
 function LY.Text()
     local a = LY.ask
-    if a and a.joinedAt and not a.moved then return "Layer " .. (LY.Letter(LY.current) or "?") .. " · Gruppe …" end
-    if a and not a.joinedAt and Now() - a.at < LY.ASK_TTL then return "Layer " .. (LY.Letter(LY.current) or "?") .. " · bittet …" end
+    local cur = LY.Letter(LY.current) or "?"
+    if a and a.joinedAt and not a.moved then return "Layer " .. cur .. " · Gruppe" end
+    if a and not a.joinedAt then
+        local left = LY.ASK_TTL - (Now() - a.at)
+        if left > 0 then return string.format("Layer %s · %d s", cur, math.ceil(left)) end
+    end
     if not LY.current then return "Layer ?" end
-    return "Layer " .. LY.Letter(LY.current)
+    local n = #LY.Seen()
+    return n > 1 and string.format("Layer %s · %d", cur, n) or ("Layer " .. cur)
 end
 
 -- 6.62.0.0 (Wunsch: "die Layer-Anzeige an der Minimap; mit Klick auf den
 -- Layer oeffnet sich die Option"): ein kleines Schild oben mittig auf der
 -- Minikarte (links stehen die Koordinaten, rechts die Uhr). Klick oeffnet
--- die Komfortseite "Karte"; dort der Knopf zum Wechseln.
+-- die Seite "Layer" der Minikarte; dort der Knopf zum Wechseln.
 function LY.OpenOptions()
     local O = WeintCodex.UIOptions
     local mod = K.Module(KEY)
     if not (O and O.Show and mod) then return false end
     local idx
-    for i, page in ipairs(mod.pages) do if page.key == "karte" then idx = i end end
+    for i, page in ipairs(mod.pages) do if page.key == "layer" then idx = i end end
     O.Show(KEY, idx)
     return true
 end
@@ -209,7 +237,7 @@ local function Build()
     local mm = _G.Minimap
     if type(mm) ~= "table" then return nil end
     frame = CreateFrame("Button", "WeintCodexLayer", mm)
-    frame:SetSize(64, 16)
+    frame:SetSize(92, 16)
     frame:SetPoint("TOP", mm, "TOP", 0, -3)
     frame:SetFrameLevel((K.Plain(mm:GetFrameLevel()) or 1) + 10)
     frame.kachel = K.Kachel(frame, { shadow = 0 })
@@ -223,6 +251,14 @@ local function Build()
         gt:SetText(LY.Text(), 1, 1, 1)
         local m = C.textMuted
         if LY.current then gt:AddLine("Kennung " .. LY.current, m[1], m[2], m[3]) end
+        local seen = LY.Seen()
+        if #seen > 0 then
+            local names = {}
+            for _, id in ipairs(seen) do names[#names + 1] = LY.Letter(id) end
+            gt:AddLine(string.format("In dieser Zone gesehen (letzte Stunde): %d – %s", #seen, table.concat(names, ", ")),
+                C.textNormal[1], C.textNormal[2], C.textNormal[3], true)
+            gt:AddLine("Das Spiel nennt keine Zahl – es kann mehr Layer geben, als du gesehen hast.", m[1], m[2], m[3], true)
+        end
         gt:AddLine(LY.current and "Gelesen an den Gegnern um dich herum." or
             "Noch unbekannt – nimm einen Gegner ins Ziel oder fahr mit der Maus darüber.", m[1], m[2], m[3], true)
         gt:AddLine("Klick: Einstellungen – dort um einen anderen Layer bitten.", m[1], m[2], m[3], true)
@@ -289,37 +325,44 @@ ev:SetScript("OnEvent", function(_, event, a1)
 end)
 
 --------------------------------------------------
--- Einstellungen: Komfortseite "Karte"
+-- Einstellungen: Seite "Layer" der Minikarte
 --------------------------------------------------
 
-local function BuildSection(B)
-    B:Section("Layer", "Auf welchem Layer du bist – und auf Klick um einen anderen bitten.")
-    B:Row({ type = "button", label = "Wechseln", text = "Um anderen Layer bitten",
+local function BuildPage(B)
+    local off = function() return K.Get(KEY, "layerOn") == false end
+    B:Section("Layer", "Auf welchem Layer du bist – gelesen an den Gegnern um dich herum. Das Spiel selbst nennt keinen.")
+    B:Row({ type = "toggle", label = "Layersystem", key = "layerOn",
+            description = "Schild oben mittig auf der Minikarte; ein Klick darauf öffnet diese Seite. Aus: nichts wird gelesen oder gesendet." },
+          { type = "button", label = "Wechseln", text = "Um anderen Layer bitten", disabled = off,
             onClick = function() LY.Ask() end,
-            description = "Schreibt „inv layer“ in den Kanal „layer“ – nur auf diesen Klick. Ein Spieler auf einem anderen Layer lädt dich ein; solange du in seiner Gruppe bist, bist du dort." },
-          { type = "empty" })
-    B:Advanced()
-    B:Row({ type = "toggle", label = "Layer an der Minikarte", key = "layerShow",
-            description = "Oben mittig auf der Minikarte. Klick darauf öffnet diese Seite." },
-          { type = "empty" })
+            description = "Schreibt „inv layer“ in den Kanal „layer“ – nur auf diesen Klick. Ein Spieler auf einem anderen Layer lädt dich ein; solange du in seiner Gruppe bist, bist du dort." })
+    B:Note("Wie lange: meist wenige Sekunden – wenn gerade jemand mit LayerSwap in deiner Zone hostet. Kommt in 2 Minuten keine Einladung, hostet vermutlich niemand; dann später noch einmal. Die Zahl hinter dem Layer: wie viele Layer du in dieser Zone in der letzten Stunde gesehen hast.")
 end
-LY.BuildSection = BuildSection
+LY.BuildPage = BuildPage
 
 local mod = K.Module(KEY)
 if mod then
     for k, v in pairs(LY.DEFAULTS) do
         if mod.defaults[k] == nil then mod.defaults[k] = v end
     end
-    for _, page in ipairs(mod.pages) do
-        if page.key == "karte" then
-            local orig = page.build
-            page.build = function(B, ...)
-                if orig then orig(B, ...) end
-                BuildSection(B)
-            end
-        end
-    end
+    mod.pages[#mod.pages + 1] = { key = "layer", label = "Layer", build = BuildPage }
 end
+
+-- Waehrend einer Bitte: Restzeit im Schild, und Bescheid, wenn sie ablaeuft.
+local tick = CreateFrame("Frame")
+LY.tick = tick
+tick:SetScript("OnUpdate", function(self, el)
+    self.acc = (self.acc or 0) + (el or 0)
+    if self.acc < 1 then return end
+    self.acc = 0
+    local a = LY.ask
+    if not a or a.joinedAt then return end
+    if Now() - a.at >= LY.ASK_TTL then
+        LY.ask = nil
+        Say("Keine Einladung in " .. LY.ASK_TTL .. " s – vermutlich hostet gerade niemand mit LayerSwap in deiner Zone. Später noch einmal versuchen.")
+    end
+    LY.Paint()
+end)
 
 K.Listen(function(kind, key)
     if (kind == "active" or kind == "setting") and key == KEY then

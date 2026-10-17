@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.62.2.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFLayer: eigene Seite unter Minikarte, abschaltbar|r – Einstellungen → Minikarte → Layer. Das Schild zeigt jetzt auch, wie viele Layer du in der Zone gesehen hast, und während einer Bitte die Restzeit. Nach 2 Minuten ohne Einladung sagt WeintCodex Bescheid.",
+        },
+    },
+    {
         version = "6.62.1.0",
         date    = "17.10.2026",
         notes   = {

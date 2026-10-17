@@ -19269,6 +19269,7 @@ do
         end
         G.UnitGUID = function(u) return guids[u] end
         LY.Forget()
+        for k in pairs(LY.seen) do LY.seen[k] = nil end
         guids.target = "Creature-0-5250-0-1428-100-0001"
         LY.Observe("target")
         assert(LY.current == nil, "ein Gegner genuegt nicht")
@@ -19278,6 +19279,13 @@ do
         guids.nameplate1 = "Pet-0-9999-0-1-1-1"
         LY.Observe("nameplate1")
         assert(LY.current == "5250-1428", "Begleiter zaehlt")
+        -- 6.62.2.0: gesehene Layer der Zone zaehlen.
+        assert(#LY.Seen(LY.Zone()) == 1, "gesehener Layer nicht gezaehlt")
+        LY.seen["9-9"] = { zone = LY.Zone(), last = LY.seen["5250-1428"].last }
+        LY.Letter("9-9")
+        assert(#LY.Seen(LY.Zone()) == 2 and LY.Text():find("· 2", 1, true), "Zahl der Layer fehlt: " .. LY.Text())
+        LY.seen["9-9"] = nil
+        assert(WeintCodex.UIKit.Module("minimap").pages[#WeintCodex.UIKit.Module("minimap").pages].key == "layer", "Seite nicht unter Minikarte")
         assert(LY.AskText():find("^inv layer <LS") and LY.AskText():find("not 5250%-1428>"), "Format: " .. LY.AskText())
         -- Bitte: in Gruppe nein; ohne Kanal erst betreten; sonst senden.
         local oIG, oGCN, oJoin, oCI = G.IsInGroup, G.GetChannelName, G.JoinChannelByName, G.C_ChatInfo

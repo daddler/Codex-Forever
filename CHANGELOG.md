@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.62.2.0] – 2026-10-17
+
+### Geändert
+- Layer: Einstellungen als eigene Seite „Layer“ im Modul Minikarte (statt Komfort → Karte), Schalter `layerOn`. Schild: Zahl der in dieser Zone in der letzten Stunde gesehenen Layer (`LY.Seen`), während einer Bitte die Restzeit (120 s), danach Hinweis „vermutlich hostet niemand“.
+
 ## [6.62.1.0] – 2026-10-17
 
 ### Behoben
