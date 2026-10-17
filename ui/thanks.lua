@@ -189,7 +189,9 @@ function TH.Where()
     if K.InCombat() then return false end
     if _G.IsInInstance then
         local ok, inside = pcall(_G.IsInInstance)
-        if ok and K.Bool(inside, false) then return false end
+        -- 6.53.3.0 (Wunsch: "in Instanzen ein-/ausschaltbar, voreingestellt
+        -- aus"): bis dahin fest aus.
+        if ok and K.Bool(inside, false) and not K.Get(KEY, "thanksInstance") then return false end
     end
     return true
 end
@@ -360,6 +362,9 @@ local function Build(B)
     B:Section("Danke für Buffs", "Draußen in der Welt, außerhalb von Gruppe und Kampf: ein Flüstern mit Augenzwinkern, passend zum Buff. Nur wenn das Spiel sagt, wer gebufft hat.")
     B:Row({ type = "toggle", label = "Fremden für Buffs danken", key = "thanks" },
           { type = "toggle", label = "Auch der Gilde", key = "thanksGuild", disabled = off })
+    B:Row({ type = "toggle", label = "Auch in Instanzen", key = "thanksInstance", disabled = off,
+            description = "Dungeons, Schlachtzüge, Schlachtfelder. Aus: nur in der freien Welt." },
+          { type = "empty" })
     B:Row({ type = "slider", label = "Warten vor dem Flüstern", key = "thanksDelay", min = 0, max = 30, step = 1, disabled = off,
             format = function(v) return v == 0 and "sofort" or string.format("%d s", v) end },
           { type = "slider", label = "Allgemeine Sprüche beimischen", key = "thanksMix", min = 0, max = 100, step = 10, disabled = off,
@@ -402,6 +407,7 @@ local mod = K.Module(KEY)
 if mod then
     if mod.defaults.thanks == nil then mod.defaults.thanks = true end
     if mod.defaults.thanksGuild == nil then mod.defaults.thanksGuild = false end
+    if mod.defaults.thanksInstance == nil then mod.defaults.thanksInstance = false end
     if mod.defaults.thanksDelay == nil then mod.defaults.thanksDelay = 2 end
     if mod.defaults.thanksMix == nil then mod.defaults.thanksMix = 30 end
     mod.pages[#mod.pages + 1] = { key = "danke", label = "Danke", build = Build }

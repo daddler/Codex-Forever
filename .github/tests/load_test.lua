@@ -18818,6 +18818,26 @@ do
     Check(ok, "Charakterfenster: Gegenstandsstufe vom Client, keine 0" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.53.3.0: Danke in Instanzen schaltbar, ab Werk aus.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local TH, K = WeintCodex.UIThanks, WeintCodex.UIKit
+        local oI, oC = G.IsInInstance, K.InCombat
+        K.InCombat = function() return false end
+        G.IsInInstance = function() return true, "party" end
+        assert(K.Get("comfort", "thanksInstance") == false, "ab Werk an")
+        assert(TH.Where() == false, "in der Instanz trotzdem gedankt")
+        K.Set("comfort", "thanksInstance", true)
+        assert(TH.Where() == true, "Schalter wirkt nicht")
+        K.Set("comfort", "thanksInstance", nil)
+        G.IsInInstance = function() return false, "none" end
+        assert(TH.Where() == true, "in der freien Welt aus")
+        G.IsInInstance, K.InCombat = oI, oC
+    end)
+    Check(ok, "Danke: in Instanzen schaltbar, ab Werk nur in der freien Welt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.52.4.0: Kontrollverlust gross neben der Plakette, PvP-Markierung, geheimer Name.
 do
     local G = _G

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.53.3.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDanke lässt sich jetzt auch in Instanzen einschalten.|r Ab Werk dankt WeintCodex nur in der freien Welt; der neue Schalter „Auch in Instanzen“ nimmt Dungeons, Schlachtzüge und Schlachtfelder dazu.",
+        },
+    },
+    {
         version = "6.53.2.0",
         date    = "17.10.2026",
         notes   = {

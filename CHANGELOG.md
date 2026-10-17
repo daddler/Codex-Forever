@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.53.3.0] – 2026-10-17
+
+### Neu
+- Danke: Schalter `thanksInstance` („Auch in Instanzen“, aus). Bisher in Instanzen fest aus (`TH.Where`).
+
 ## [6.53.2.0] – 2026-10-17
 
 ### Geändert
