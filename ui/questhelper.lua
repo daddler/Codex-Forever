@@ -443,12 +443,51 @@ end
 local pins = {}
 QH.pins = pins
 
+-- 6.55.0.0 (Wunsch: "Questhilfe insgesamt viel besser und
+-- professioneller"): Tooltip mit Ordnung - Name, Art, je Quest Stufe in
+-- der Schwierigkeitsfarbe des Spiels, bei Quests im Log der Stand der
+-- Ziele vom Client ("3/8"), Erledigtes gedaempft mit Haken.
+local MEDIA_UI = "Interface\\AddOns\\WeintCodex\\media\\ui\\"
+local CHECK = "|T" .. MEDIA_UI .. "icon_check:12:12:0:0|t "
+
+function QH.Hue(id)
+    local GC = WeintCodex.GameColors
+    return GC["questHue" .. ((tonumber(id) or 0) % 6 + 1)] or C.textBright
+end
+
+local function LevelColor(lvl)
+    if type(lvl) == "number" and lvl > 0 and _G.GetQuestDifficultyColor then
+        local ok, c = pcall(_G.GetQuestDifficultyColor, lvl)
+        if ok and type(c) == "table" and type(c.r) == "number" then return c.r, c.g, c.b end
+    end
+    local n = C.textNormal
+    return n[1], n[2], n[3]
+end
+
+-- Ziele einer Quest im Log, vom Client: { { text, done } ... } oder nil.
+function QH.Objectives(id)
+    local ql = _G.C_QuestLog
+    if not (log[id] and ql and ql.GetQuestObjectives) then return nil end
+    local ok, objs = pcall(ql.GetQuestObjectives, id)
+    if not ok or type(objs) ~= "table" then return nil end
+    local out = {}
+    for _, o in ipairs(objs) do
+        local text = type(o) == "table" and K.Plain(o.text)
+        if type(text) == "string" and text ~= "" then
+            out[#out + 1] = { text = text, done = K.Bool(o.finished, false) }
+        end
+    end
+    return #out > 0 and out or nil
+end
+
 local function QuestLine(id)
     local q = QH.Quest(id)
     if not q then return "?" end
     local lvl = q[2] or 0
     return (lvl > 0 and ("[" .. lvl .. "] ") or "") .. q[1]
 end
+
+QH.KIND_TEXT = { avail = "Neue Quest", turnin = "Abgabe", target = "Questziel" }
 
 local function Tooltip(self)
     local gt = _G.GameTooltip
@@ -459,22 +498,47 @@ local function Tooltip(self)
     local rec = e.obj and d.o[e.who] or d.n[e.who]
     local t, n, m = C.textBright, C.textNormal, C.textMuted
     gt:SetText(QH.Name(rec) or "?", t[1], t[2], t[3])
-    local head = e.kind == "avail" and "Neue Quest" or e.kind == "turnin" and "Abgabe" or "Ziel"
-    local g = C.gold
-    gt:AddLine(head, g[1], g[2], g[3])
+    local head = QH.KIND_TEXT[e.kind] or "Quest"
+    if e.kind == "target" then
+        head = ({ slay = "Gegner", loot = "Beute", object = "Gegenstand in der Welt" })[e.sub or "slay"] or head
+    end
+    local hc = e.kind == "avail" and C.gold or (e.kind == "turnin" and C.green) or C.infoBright
+    gt:AddLine(head, hc[1], hc[2], hc[3])
+    gt:AddLine(" ")
     for i, id in ipairs(e.quests) do
-        if i > 8 then
-            gt:AddLine("… und " .. (#e.quests - 8) .. " weitere", n[1], n[2], n[3])
+        if i > 6 then
+            gt:AddLine("… und " .. (#e.quests - 6) .. " weitere", m[1], m[2], m[3])
             break
         end
-        local extra = ""
-        if e.kind == "turnin" then extra = logDone[id] and "  (fertig)" or "  (noch nicht fertig)" end
+        local q = QH.Quest(id)
+        local r, g, b = LevelColor(q and q[2])
+        local right, rr, rg, rb = "", m[1], m[2], m[3]
+        if e.kind == "turnin" then
+            if logDone[id] then right, rr, rg, rb = "fertig", C.green[1], C.green[2], C.green[3]
+            else right = "noch offen" end
+        end
         local ev = QH.EventOf(id)
-        if ev then extra = extra .. "  · " .. ev.name end
-        gt:AddLine(QuestLine(id) .. extra, n[1], n[2], n[3])
+        if ev then right = (right ~= "" and (right .. " · ") or "") .. ev.name end
+        if e.kind == "target" then
+            local hue = QH.Hue(id)
+            gt:AddDoubleLine("|cff" .. string.format("%02x%02x%02x", hue[1] * 255, hue[2] * 255, hue[3] * 255)
+                .. "●|r " .. QuestLine(id), right, r, g, b, rr, rg, rb)
+        else
+            gt:AddDoubleLine(QuestLine(id), right, r, g, b, rr, rg, rb)
+        end
+        if e.kind ~= "avail" then
+            for _, o in ipairs(QH.Objectives(id) or {}) do
+                if o.done then
+                    gt:AddLine("    " .. CHECK .. o.text, m[1], m[2], m[3])
+                else
+                    gt:AddLine("    " .. o.text, n[1], n[2], n[3])
+                end
+            end
+        end
     end
+    gt:AddLine(" ")
     if e.kind ~= "avail" then
-        gt:AddLine("Klick: diese Quest wählen · Rechtsklick: Wahl lösen", m[1], m[2], m[3], true)
+        gt:AddLine("Klick: diese Quest verfolgen · Rechtsklick: lösen", m[1], m[2], m[3], true)
     end
     gt:AddLine("Unbestätigt – Wissensstand der Community.", m[1], m[2], m[3], true)
     gt:Show()
@@ -485,9 +549,27 @@ local function NewPin(holder)
     p:EnableMouse(true)
     -- Ein Bild je Symbol (6.30.6.0): "!" und "?" vom Spiel, Ziele aus
     -- media/questhelper (siehe QH.ICONS).
+    -- 6.55.0.0: "!" und "?" auf weichem Schatten (lesbar auf heller
+    -- Karte); Ziele als runde Marke - dunkler Grund, Ring in der Farbe der
+    -- Quest, Zeichen hell. Unter der Maus waechst die Marke etwas.
+    p.halo = p:CreateTexture(nil, "BACKGROUND")
+    p.halo:SetPoint("CENTER")
+    p.halo:SetTexture(MEDIA_UI .. "halo")
+    p.ring = p:CreateTexture(nil, "BORDER")
+    p.ring:SetAllPoints(p)
+    p.ring:SetTexture(MEDIA_UI .. "disc")
+    p.disc = p:CreateTexture(nil, "BORDER", nil, 1)
+    p.disc:SetPoint("TOPLEFT", p, "TOPLEFT", 2, -2)
+    p.disc:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", -2, 2)
+    p.disc:SetTexture(MEDIA_UI .. "disc")
+    local pd = WeintCodex.GameColors.pinDisc
+    p.disc:SetVertexColor(pd[1], pd[2], pd[3], pd[4])
     p.icon = p:CreateTexture(nil, "ARTWORK")
-    p.icon:SetAllPoints(p)
-    p:SetScript("OnEnter", function(self) Tooltip(self) end)
+    p.icon:SetPoint("CENTER")
+    p:SetScript("OnEnter", function(self)
+        self.icon:SetSize(self._glyph * 1.2, self._glyph * 1.2)
+        Tooltip(self)
+    end)
     -- Links: diese Quest waehlen (mehrere: bei jedem Klick die naechste);
     -- rechts: Wahl loesen. Nur Quests aus dem Questlog.
     p:SetScript("OnMouseUp", function(self, button)
@@ -504,7 +586,11 @@ local function NewPin(holder)
         QH.SetFocus(pick)
         Tooltip(self)
     end)
-    p:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+    p:SetScript("OnLeave", function(self)
+        self.icon:SetSize(self._glyph, self._glyph)
+        if _G.GameTooltip then _G.GameTooltip:Hide() end
+    end)
+    p._glyph = QH.SIZE
     p:Hide()
     return p
 end
@@ -543,24 +629,45 @@ function QH.SetIcon(tex, which)
     return "file"
 end
 
+local function Has(list, v)
+    for _, x in ipairs(list) do if x == v then return true end end
+    return false
+end
+
+QH.GLYPH = 10         -- Zeichen in der Zielmarke
+QH.DIM = 0.5          -- Ziele anderer Quests, wenn eine gewaehlt ist
+
 local function Dress(p, e)
-    if p.entry == e then return end
-    p.entry = e
+    local focus = QH.focus
+    if p.entry == e and p._focus == focus then return end
+    p.entry, p._focus = e, focus
     local target = e.kind == "target"
     local size = target and QH.DOT or QH.SIZE
     p:SetSize(size, size)
     local which = target and (e.sub or "slay") or e.kind
     QH.SetIcon(p.icon, which)
     if p.icon.SetDesaturated then p.icon:SetDesaturated(e.faint and true or false) end
+    p.ring:SetShown(target)
+    p.disc:SetShown(target)
+    p.halo:SetShown(not target)
+    local alpha = 1
     if target then
-        local c = C.infoBright
-        p.icon:SetVertexColor(c[1], c[2], c[3], 1)
-    elseif e.faint then
-        p.icon:SetVertexColor(0.85, 0.85, 0.85, 1)
+        p._glyph = QH.GLYPH
+        local hue = QH.Hue((focus and Has(e.quests, focus)) and focus or e.quests[1])
+        p.ring:SetVertexColor(hue[1], hue[2], hue[3], 1)
+        local t = C.textBright
+        p.icon:SetVertexColor(t[1], t[2], t[3], 1)
+        if focus and not Has(e.quests, focus) then alpha = QH.DIM end
     else
-        p.icon:SetVertexColor(1, 1, 1, 1)
+        p._glyph = size
+        p.halo:SetSize(size * 1.9, size * 1.9)
+        p.halo:SetVertexColor(0, 0, 0, 0.55)
+        local v = e.faint and 0.85 or 1
+        p.icon:SetVertexColor(v, v, v, 1)
+        if e.faint then alpha = 0.75 end
     end
-    p:SetAlpha(1)
+    p.icon:SetSize(p._glyph, p._glyph)
+    p:SetAlpha(alpha)
 end
 
 local holders = setmetatable({}, { __mode = "k" })
@@ -637,16 +744,21 @@ function QH.BuildBar()
     bar = CreateFrame("Frame", "WeintCodexQuestFilter", wm)
     bar:SetPoint("TOPLEFT", wm, "BOTTOMLEFT", 0, -4)
     if bar.SetClampedToScreen then bar:SetClampedToScreen(true) end
-    bar:SetHeight(24)
+    bar:SetHeight(28)
     bar:SetFrameStrata("HIGH")
     bar.kachel = K.Kachel(bar, { shadow = 3 })
-    bar.title = K.NewText(bar, 11)
-    bar.title:SetPoint("LEFT", bar, "LEFT", 8, 0)
+    bar.mark = bar:CreateTexture(nil, "ARTWORK")
+    bar.mark:SetSize(16, 16)
+    bar.mark:SetPoint("LEFT", bar, "LEFT", 8, 0)
+    QH.SetIcon(bar.mark, "avail")
+    bar.title = K.NewText(bar, 12)
+    bar.title:SetFont(WeintCodex.Fonts.sansSemi, 12, "")
+    bar.title:SetPoint("LEFT", bar.mark, "RIGHT", 4, 0)
     bar.title:SetText("Quests")
-    local gc = C.gold
-    bar.title:SetTextColor(gc[1], gc[2], gc[3], 1)
+    local tc = C.textBright
+    bar.title:SetTextColor(tc[1], tc[2], tc[3], 1)
     bar.chips = {}
-    local x = 8 + 46
+    local x = 8 + 16 + 4 + 50
     for _, f in ipairs(QH.FILTERS) do
         local b = CreateFrame("Button", nil, bar)
         b.key = f.key
@@ -654,11 +766,29 @@ function QH.BuildBar()
         b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
         b.text:SetText(f.text)
         local tw = K.Plain(b.text.GetStringWidth and b.text:GetStringWidth())
-        local bw = (type(tw) == "number" and tw > 0 and tw or 60) + 14
+        local bw = (type(tw) == "number" and tw > 0 and tw or 60) + 20
         b:SetSize(bw, 18)
         b:SetPoint("LEFT", bar, "LEFT", x, 0)
         x = x + bw + 4
-        b.edge = K.Border(b, 1, 1, 1, 1, 1, "BORDER")
+        -- 6.55.0.0: Pille (zwei runde Kappen, Mittelstueck), an = Akzent.
+        b.fill = b:CreateTexture(nil, "BACKGROUND")
+        b.fill:SetPoint("TOPLEFT", b, "TOPLEFT", 9, 0)
+        b.fill:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -9, 0)
+        b.capL = b:CreateTexture(nil, "BACKGROUND")
+        b.capL:SetSize(18, 18)
+        b.capL:SetPoint("LEFT", b, "LEFT", 0, 0)
+        b.capL:SetTexture(MEDIA_UI .. "disc")
+        b.capR = b:CreateTexture(nil, "BACKGROUND")
+        b.capR:SetSize(18, 18)
+        b.capR:SetPoint("RIGHT", b, "RIGHT", 0, 0)
+        b.capR:SetTexture(MEDIA_UI .. "disc")
+        function b:Paint(r, g, bl, a)
+            self.fill:SetColorTexture(r, g, bl, a)
+            self.capL:SetVertexColor(r, g, bl, a)
+            self.capR:SetVertexColor(r, g, bl, a)
+        end
+        b:SetScript("OnEnter", function(self) self._hot = true QH.PaintBar() end)
+        b:SetScript("OnLeave", function(self) self._hot = nil QH.PaintBar() end)
         b:SetScript("OnClick", function(self)
             K.Set(KEY, self.key, not Get(self.key))
         end)
@@ -691,10 +821,15 @@ function QH.PaintBar()
         local on = Get(b.key) and true or false
         if b.key == "qhLow" then b:SetEnabled(Get("qhAvail") and true or false) end
         if b.key == "qhAllTargets" then b:SetEnabled(Get("qhTargets") and true or false) end
-        local c = on and a or m
-        b.edge:SetColor(c[1], c[2], c[3], on and 1 or 0.5)
+        local enabled = not (b.IsEnabled and not b:IsEnabled())
+        if on then
+            b:Paint(a[1], a[2], a[3], b._hot and 0.42 or 0.30)
+        else
+            local s1 = C.surface3 or C.surface1
+            b:Paint(s1[1], s1[2], s1[3], b._hot and 1 or 0.85)
+        end
         local tc = on and C.textBright or n
-        b.text:SetTextColor(tc[1], tc[2], tc[3], on and 1 or 0.7)
+        b.text:SetTextColor(tc[1], tc[2], tc[3], enabled and (on and 1 or 0.8) or 0.35)
     end
 end
 

@@ -18818,6 +18818,27 @@ do
     Check(ok, "Charakterfenster: Gegenstandsstufe vom Client, keine 0" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.55.0.0: Questhilfe - Kennfarbe je Quest, Ziele vom Client.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local QH = WeintCodex.UIQuestHelper
+        local GC = WeintCodex.GameColors
+        assert(QH.Hue(7) == GC.questHue2 and QH.Hue(12) == GC.questHue1, "Kennfarbe nicht stabil")
+        local oQ = G.C_QuestLog
+        G.C_QuestLog = { GetQuestObjectives = function() return {
+            { text = "Kobolde getötet: 3/8", finished = false },
+            { text = "Kerze: 1/1", finished = true } } end }
+        QH.log[4711] = true
+        local o = QH.Objectives(4711)
+        assert(o and #o == 2 and o[2].done and not o[1].done, "Ziele nicht gelesen")
+        QH.log[4711] = nil
+        assert(QH.Objectives(4711) == nil, "Ziele einer Quest ausserhalb des Logs")
+        G.C_QuestLog = oQ
+    end)
+    Check(ok, "Questhilfe: Kennfarbe je Quest, Stand der Ziele vom Client" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.54.3.0: Rechtsklick in der Tasche ueber geschuetzten Knopf (Zauberoel).
 do
     local G = _G

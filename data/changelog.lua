@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.55.0.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Questhilfe sieht aufgeräumter aus.|r Questziele sind runde Marken in einer eigenen Farbe je Quest; ist eine Quest gewählt, treten die anderen zurück. „!“ und „?“ stehen auf einem weichen Schatten und bleiben auch auf heller Karte lesbar.",
+            "Der Tooltip zeigt je Quest die Stufe in ihrer Schwierigkeitsfarbe und bei Quests im Log den Stand der Ziele – Erledigtes mit Haken.",
+            "Die Filterleiste unter der Karte hat runde Schalter: eingeschaltet in deiner Klassenfarbe.",
+        },
+    },
+    {
         version = "6.54.3.0",
         date    = "17.10.2026",
         notes   = {

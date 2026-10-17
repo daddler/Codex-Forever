@@ -312,6 +312,16 @@ WeintCodex.GameColors = {
     -- eine Bedeutungsfarbe - Schatten schwarz, Licht weiss; das Leuchten
     -- des Ziels ist `targetRing`, also der Akzent.
     kachelFill    = {0.047, 0.047, 0.059, 0.88},  -- = bgDark, 88 % deckend
+    -- Questhilfe (6.55.0.0): Ziele einer Quest teilen eine Farbe, damit
+    -- man sie auf der Karte auseinanderhaelt. Kennfarben wie Klassenfarben,
+    -- keine Bedeutung (nicht gut/schlecht) - nie Akzent, nie Status.
+    questHue1     = {0.980, 0.780, 0.300, 1.00},  -- Bernstein
+    questHue2     = {0.400, 0.780, 0.980, 1.00},  -- Himmel
+    questHue3     = {0.560, 0.900, 0.420, 1.00},  -- Lind
+    questHue4     = {0.980, 0.520, 0.620, 1.00},  -- Rose
+    questHue5     = {0.760, 0.600, 0.980, 1.00},  -- Flieder
+    questHue6     = {0.360, 0.900, 0.820, 1.00},  -- Tuerkis
+    pinDisc       = {0.035, 0.035, 0.050, 0.92},  -- Grund der Kartenmarken
     shadow        = {0.000, 0.000, 0.000, 0.60},  -- weicher Schatten unter jeder Flaeche
     lightEdge     = {1.000, 1.000, 1.000, 0.06},  -- Lichtkante oben an der Kachel
     barLight      = {1.000, 1.000, 1.000, 0.16},  -- Lichtkante oben am Balken

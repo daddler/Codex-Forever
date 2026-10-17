@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.55.0.0] – 2026-10-17
+
+### Geändert
+- Questhilfe (Aussehen, Wunsch „viel professioneller“): Zielmarken rund (`pinDisc`-Grund, Ring in `questHue1..6` je Quest, `QH.Hue`), andere Quests bei gewählter auf 50 %; „!“/„?“ auf `halo`; Marke wächst unter der Maus. Tooltip: Art farbig, Quests mit Stufe in `GetQuestDifficultyColor`, rechts fertig/offen, Ziele aus `C_QuestLog.GetQuestObjectives` (`QH.Objectives`). Filterleiste: Pillen-Schalter, Questsymbol im Titel. Nur Verhalten von Questie (GPL), kein Code.
+
 ## [6.54.3.0] – 2026-10-17
 
 ### Behoben
