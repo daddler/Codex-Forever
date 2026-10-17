@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.18.0] – 2026-10-17
+
+### Behoben
+- Questlog: gemessen „common-button-list-collapseExpand 20× SOLLTE WEG SEIN“ – kein Hotfix, sondern `QuestScrollFrame.Contents` mit über `W.MAX_KIDS` (100) Kindern bei 31 Quests; der Durchlauf lässt so große Rahmen aus, auch `QL.Headers` (6.61.17.0) über `W.Children`. Jetzt direkt über die Argumentliste (`select`), ohne Tabelle.
+
 ## [6.61.17.0] – 2026-10-17
 
 ### Behoben

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.18.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDie braunen Balken im Questlog sind wirklich weg|r – bei vielen Quests war die Liste zu lang für den Durchlauf und wurde übersprungen.",
+        },
+    },
+    {
         version = "6.61.17.0",
         date    = "17.10.2026",
         notes   = {

@@ -104,24 +104,42 @@ QL.details = details
 -- Kopfzeile jetzt auch an dem, was sie ist: eine Zeile der Liste mit
 -- Knopf zum Auf- und Zuklappen (.CollapseButton). Ihre Bilder gehen, die
 -- Zeile wird ein Abschnitt wie im Ruf (W.ListHeader). Der Knopf bleibt.
+-- 6.61.18.0 (gemessen mit /wcui fenster: "common-button-list-collapseExpand
+-- 20x SOLLTE WEG SEIN"): der Bildname ist der alte - aber die Liste hat bei
+-- vielen Quests mehr Kinder als W.MAX_KIDS, und der Durchlauf laesst so
+-- grosse Rahmen aus. Die Zeilen der Liste werden hier deshalb direkt
+-- gelesen, ohne Tabelle (Argumentliste des Clients, select).
+local widest, ww
+local function EachTex(...)
+    for i = 1, select("#", ...) do
+        local r = select(i, ...)
+        if r.GetObjectType and r:GetObjectType() == "Texture" and not W.own[r] then
+            local w = K.Plain(r:GetWidth()) or 0
+            if not widest or w > ww then widest, ww = r, w end
+            W.Hide(r)
+        end
+    end
+end
+
+local function HeaderRow(row)
+    if type(row) ~= "table" or type(row.CollapseButton) ~= "table" or not row.GetRegions then return 0 end
+    widest, ww = nil, nil
+    EachTex(row:GetRegions())
+    local r = widest
+    widest = nil
+    return (r and W.ListHeader(row, r, QL.STYLE)) and 1 or 0
+end
+
+local function EachRow(...)
+    local n = 0
+    for i = 1, select("#", ...) do n = n + HeaderRow((select(i, ...))) end
+    return n
+end
+
 function QL.Headers(list)
     local contents = list and list.Contents
     if not IsFrame(contents) or not contents.GetChildren then return 0 end
-    local n = 0
-    for _, row in ipairs(W.Children(contents, "qlHeadRows")) do
-        if type(row) == "table" and type(row.CollapseButton) == "table" and row.GetRegions then
-            local widest, ww
-            for _, r in ipairs(W.Regions(row, "qlHeadRegs")) do
-                if r.GetObjectType and r:GetObjectType() == "Texture" and not W.own[r] then
-                    local w = K.Plain(r:GetWidth()) or 0
-                    if not widest or w > ww then widest, ww = r, w end
-                    W.Hide(r)
-                end
-            end
-            if widest and W.ListHeader(row, widest, QL.STYLE) then n = n + 1 end
-        end
-    end
-    return n
+    return EachRow(contents:GetChildren())
 end
 
 function QL.Update(f)
