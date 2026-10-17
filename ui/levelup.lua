@@ -281,9 +281,12 @@ for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_LEVEL_UP", "LEARNED_SPELL_
 end
 bev:SetScript("OnEvent", function()
     local mf = WeintCodex.MainFrame
-    if not LU.seenHooked and type(mf) == "table" and mf.HookScript then
+    -- Am Aufruf, nicht am OnShow: dort haengt das weiche Einblenden, das
+    -- zuletzt gesetzt sein muss (core/ui.lua).
+    if not LU.seenHooked and type(mf) == "table" and _G.hooksecurefunc then
         LU.seenHooked = true
-        mf:HookScript("OnShow", LU.MarkSeen)
+        _G.hooksecurefunc(mf, "Show", LU.MarkSeen)
+        _G.hooksecurefunc(mf, "SetShown", function(_, on) if on then LU.MarkSeen() end end)
     end
     LU.QueueBadges()
 end)
