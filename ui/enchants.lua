@@ -252,35 +252,70 @@ local function Dot(name)
         d:SetTexture(K.MEDIA .. "dot")
         d:SetPoint("TOPRIGHT", slot, "TOPRIGHT", -2, -2)
         dots[name] = d
-        if slot.HookScript then
-            slot:HookScript("OnEnter", function()
-                if EN.state[name] ~= "missing" or not Opt() then return end
-                local tip = _G.GameTooltip
-                if not (tip and tip.AddLine) then return end
-                local atMax = EN.AtMax()
-                local c = atMax and C.dangerBright or C.warning
-                tip:AddLine(" ")
-                tip:AddLine("Ohne Verzauberung", c[1], c[2], c[3])
-                local id = _G.GetInventorySlotInfo and select(2, pcall(_G.GetInventorySlotInfo, name))
-                local link = type(K.Plain(id)) == "number" and K.Plain(_G.GetInventoryItemLink("player", id)) or nil
-                local cname, class
-                if _G.UnitClass then cname, class = _G.UnitClass("player") end
-                local list, later = EN.Suggest(name, link, K.Plain(class), (function()
-                    local l = _G.UnitLevel and K.Plain(_G.UnitLevel("player")) return type(l) == "number" and l or 1 end)(), atMax)
-                if #list > 0 then
-                    local m = C.textMuted
-                    tip:AddLine("Passend für " .. tostring(K.Plain(cname) or "deine Klasse") .. " (Faustregel)"
-                        .. (later and ", erst auf höherer Stufe üblich:" or ":"), m[1], m[2], m[3])
-                    local t = C.textNormal
-                    for _, r in ipairs(list) do
-                        tip:AddDoubleLine("  " .. RecipeName(r), "Verzauberkunst " .. r.learn, t[1], t[2], t[3], m[1], m[2], m[3])
-                    end
-                end
-                tip:Show()
-            end)
-        end
     end
     return d
+end
+
+-- Tooltip (6.64.1.0, Beta-Test: "wird nur ganz kurz angezeigt"): das
+-- Spiel baut den Tooltip eines Platzes laufend neu (SetInventoryItem im
+-- Takt des Platzes) - ein einmal bei OnEnter angehaengter Text ist nach
+-- dem naechsten Neubau weg. Darum am Neubau selbst: nach jedem
+-- SetInventoryItem("player", Platz) haengen wir unsere Zeilen wieder an.
+function EN.AddTip(tip, name)
+    if EN.state[name] ~= "missing" or not Opt() then return end
+    if not (tip and tip.AddLine) then return end
+    local atMax = EN.AtMax()
+    local c = atMax and C.dangerBright or C.warning
+    tip:AddLine(" ")
+    tip:AddLine("Ohne Verzauberung", c[1], c[2], c[3])
+    local id = EN.SlotId(name)
+    local link = id and K.Plain(_G.GetInventoryItemLink("player", id)) or nil
+    local cname, class
+    if _G.UnitClass then cname, class = _G.UnitClass("player") end
+    local list, later = EN.Suggest(name, link, K.Plain(class), Level() or 1, atMax)
+    if #list > 0 then
+        local m = C.textMuted
+        tip:AddLine("Passend für " .. tostring(K.Plain(cname) or "deine Klasse") .. " (Faustregel)"
+            .. (later and ", erst auf höherer Stufe üblich:" or ":"), m[1], m[2], m[3])
+        local t = C.textNormal
+        for _, r in ipairs(list) do
+            tip:AddDoubleLine("  " .. RecipeName(r), "Verzauberkunst " .. r.learn, t[1], t[2], t[3], m[1], m[2], m[3])
+        end
+    end
+    tip:Show()
+end
+
+local slotIds, slotNames = {}, {}
+function EN.SlotId(name)
+    if slotIds[name] == nil and _G.GetInventorySlotInfo then
+        local ok, id = pcall(_G.GetInventorySlotInfo, name)
+        id = ok and K.Plain(id) or nil
+        slotIds[name] = type(id) == "number" and id or false
+        if type(id) == "number" then slotNames[id] = name end
+    end
+    return slotIds[name] or nil
+end
+
+-- Neuere Clients bauen ueber TooltipDataProcessor (ohne SetInventoryItem
+-- beim Auffrischen): dort nach jedem Gegenstand-Tooltip, wenn sein Besitzer
+-- ein Platz des Charakterfensters ist. Sonst der alte Weg.
+local TDP = _G.TooltipDataProcessor
+local itemType = _G.Enum and _G.Enum.TooltipDataType and _G.Enum.TooltipDataType.Item
+if TDP and TDP.AddTooltipPostCall and itemType then
+    TDP.AddTooltipPostCall(itemType, function(tip)
+        if tip ~= _G.GameTooltip or not tip.GetOwner then return end
+        local owner = tip:GetOwner()
+        local n = owner and owner.GetName and owner:GetName()
+        n = type(n) == "string" and n:match("^Character(.+Slot)$")
+        if n then pcall(EN.AddTip, tip, n) end
+    end)
+elseif _G.hooksecurefunc and _G.GameTooltip and _G.GameTooltip.SetInventoryItem then
+    _G.hooksecurefunc(_G.GameTooltip, "SetInventoryItem", function(tip, unit, id)
+        if K.Plain(unit) ~= "player" then return end
+        for _, s in ipairs(EN.SLOTS) do EN.SlotId(s[1]) end
+        local name = slotNames[K.Plain(id)]
+        if name then pcall(EN.AddTip, tip, name) end
+    end)
 end
 
 local function Line()

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.64.1.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFVerzauberungs-Vorschläge bleiben im Tooltip stehen|r – sie verschwanden nach einem Augenblick, weil das Spiel den Tooltip laufend neu aufbaut.",
+        },
+    },
+    {
         version = "6.64.0.0",
         date    = "17.10.2026",
         notes   = {

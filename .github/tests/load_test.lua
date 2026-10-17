@@ -19962,6 +19962,16 @@ do
         for _, r in ipairs(EN.Suggest("MainHandSlot", "l", "MAGE", 60, true)) do
             assert(not r.effect:find("Impact"), "Zweihand-Rezept fuer Einhandwaffe")
         end
+        -- 6.64.1.0: der Tooltip haengt sich an jeden Neubau (AddTip mehrfach).
+        local lines = 0
+        local tip = { AddLine = function() lines = lines + 1 end, AddDoubleLine = function() lines = lines + 1 end,
+                      Show = function() end }
+        EN.state.HandsSlot = "missing"
+        EN.AddTip(tip, "HandsSlot")
+        local first = lines
+        EN.AddTip(tip, "HandsSlot")
+        assert(first >= 2 and lines == 2 * first, "Tooltip nicht bei jedem Neubau")
+        EN.state.HandsSlot = nil
         _G.C_Item.GetItemInfoInstant, _G.GetItemInfoInstant = oI, oG
     end)
     Check(ok, "Verzauberungen: erkannt je Klasse, unbekannt bleibt unbekannt" .. (ok and "" or (": " .. tostring(err))))

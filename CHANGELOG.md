@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.64.1.0] – 2026-10-17
+
+### Behoben
+- Verzauberungshinweis im Tooltip des Platzes verschwand nach dem ersten Neubau des Tooltips: angehängt jetzt nach jedem Aufbau (`TooltipDataProcessor`, sonst `SetInventoryItem`) statt einmal bei `OnEnter`.
+
 ## [6.64.0.0] – 2026-10-17
 
 ### Neu
