@@ -19177,6 +19177,27 @@ do
     Check(ok, "Questlog: Zonen-Kopfzeilen am Klappknopf erkannt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.61.20.0: Kampfprotokoll Autoshot/Nahkampf, /wcui schuss.
+do
+    local ok, err = pcall(function()
+        local SL = WeintCodex.UIShotLog
+        local h = SL.events:GetScript("OnEvent")
+        h(SL.events, "PLAYER_REGEN_DISABLED")
+        h(SL.events, "START_AUTOREPEAT_SPELL")
+        h(SL.events, "UNIT_SPELLCAST_SUCCEEDED", "player", "guid", 1978)
+        h(SL.events, "UNIT_SPELLCAST_SUCCEEDED", "party1", "guid", 1)
+        h(SL.events, "STOP_AUTOREPEAT_SPELL")
+        h(SL.events, "PLAYER_ENTER_COMBAT")
+        h(SL.events, "PLAYER_REGEN_ENABLED")
+        local text = table.concat(SL.Lines(), "\n")
+        assert(text:find("AUTOSHOT AN", 1, true) and text:find("AUTOSHOT AUS", 1, true)
+            and text:find("NAHKAMPF AN", 1, true) and text:find("1978", 1, true), "Protokoll unvollstaendig: " .. text)
+        assert(not text:find("(1)", 1, true) and not text:find("gewirkt: 1\n", 1, true), "fremder Zauber mitgeschrieben")
+        SlashCmdList["WEINTCODEXUI"]("schuss")
+    end)
+    Check(ok, "Kampfprotokoll Autoshot: an/aus, Nahkampf, eigene Zauber, /wcui schuss" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.54.0.0: Flugzeit - Ziel vom Klick, Dauer gemessen/Daten/unbekannt, gemessen nach der Landung.
 do
     local G = _G

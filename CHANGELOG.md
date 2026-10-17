@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.20.0] – 2026-10-17
+
+### Neu
+- `ui/shotlog.lua`, `/wcui schuss`: Protokoll der letzten zwei Kämpfe (nur im Speicher) – `START/STOP_AUTOREPEAT_SPELL`, `PLAYER_ENTER/LEAVE_COMBAT`, eigene Zauber (gesendet/gewirkt/gescheitert/unterbrochen, Name und ID), Zielwechsel, `UI_ERROR_MESSAGE`. Für den Beta-Test „Jäger fällt nach Schlangengift/Arkanem Schuss in den Nahkampf“.
+
 ## [6.61.19.0] – 2026-10-17
 
 ### Behoben

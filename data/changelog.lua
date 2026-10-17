@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.20.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFKampfprotokoll für Autoshot|r – „/wcui schuss“ zeigt nach einem Kampf, wann Autoshot und Nahkampf an- und ausgingen und welche Fähigkeiten dazwischen kamen. Zum Kopieren, für die Fehlersuche.",
+        },
+    },
+    {
         version = "6.61.19.0",
         date    = "17.10.2026",
         notes   = {

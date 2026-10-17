@@ -1464,6 +1464,12 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
             .. " – Bericht im Fenster, Strg+C kopiert.")
         return
     end
+    -- 6.61.20.0: was Autoshot und Nahkampf im letzten Kampf taten.
+    if msg == "schuss" or msg == "autoshot" then
+        WeintCodex.UIShotLog.Report()
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Kampfprotokoll im Fenster – Strg+C kopiert.")
+        return
+    end
     if msg == "fenster" or msg == "window" then
         local lines = K.InspectWindow()
         K.ShowReport("Fenster unter der Maus", lines)
