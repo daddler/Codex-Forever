@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.60.1.0] – 2026-10-17
+
+### Behoben
+- Bücher: Knöpfe als deckende Pillen (`BP.Pill`) statt `CreateButton` (dessen Eckenrundung passt nur zu einem Untergrund); Inspector-Knopf über Block `custom`. Kurze Beschriftungen der Schwellen, Liste tiefer.
+- Questpfeil: eigenes Ziel (Buch) wird gelöst, sobald der Spieler eine Quest wählt (`SUPER_TRACKING_CHANGED`-Pfad und `QH.SetFocus`).
+
 ## [6.60.0.0] – 2026-10-17
 
 ### Neu

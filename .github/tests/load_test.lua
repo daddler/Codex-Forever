@@ -18905,6 +18905,13 @@ do
         assert(QA.custom.done(), "abgegebenes Buch haelt den Pfeil")
         QA.Skip()
         assert(QA.custom == nil, "Pfeil nicht geloest")
+        -- 6.60.1.0: eine Quest waehlen loest das Buch.
+        doneSet[b[1]] = nil
+        LB.Guide(b)
+        QH.SetFocus(4242)
+        assert(QA.custom == nil, "Quest gewaehlt, Pfeil haengt am Buch")
+        QH.SetFocus(nil)
+        doneSet[b[1]] = true
         QH.Forget()
         G.C_QuestLog, G.UnitFactionGroup, G.C_Item = oQ, oF, oC
     end)

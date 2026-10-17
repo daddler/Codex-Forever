@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.60.1.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Knöpfe auf der Bücherseite sind sauber rund.|r In der Liste „Pfeil hierhin“, rechts „Questpfeil hierhin“ in deiner Klassenfarbe.",
+            "|cff7C6CFFWählst du nach einem Buch doch eine Quest, folgt der Pfeil der Quest.|r Bisher blieb er beim Buch hängen.",
+            "Die Marken der Belohnungen und die erste Zeile der Liste überlappen nicht mehr.",
+        },
+    },
+    {
         version = "6.60.0.0",
         date    = "17.10.2026",
         notes   = {

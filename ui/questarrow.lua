@@ -1190,6 +1190,10 @@ local function OnSmartEvent(event, questID, game)
                 local still = st and st.GetSuperTrackedQuestID and st.GetSuperTrackedQuestID()
                 if still ~= game or math.abs(autoAt - changedAt) <= QA.AUTO_WINDOW then return end
                 QA.manual, QA.Chosen = game, nil
+                -- 6.60.1.0 (Beta-Test: "Buch gewaehlt, dann doch eine Quest
+                -- angeklickt - der Pfeil aendert sich nicht mehr"): wer
+                -- selbst eine Quest waehlt, loest das eigene Ziel.
+                QA.custom = nil
                 Refresh()
             end)
         end

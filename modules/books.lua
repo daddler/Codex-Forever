@@ -28,6 +28,9 @@ BP.HEAD = 84
 BP.ROW_H = 44
 BP.MAP_RATIO = 668 / 1002
 BP.cat = "all"
+-- Kurz unter den Marken: 20 und 25 liegen nah beieinander (Bild: die
+-- Beschriftungen liefen ineinander).
+BP.SHORT = { neck = "Halskette", ring = "Ring", library25 = "Bonus" }
 BP.sel = nil            -- Abgabequest des gewaehlten Buches
 
 local page
@@ -49,6 +52,56 @@ end
 
 local function CatOf(key)
     for _, c in ipairs(LB().CATS) do if c.key == key then return c end end
+end
+
+--------------------------------------------------
+-- Pillen-Knopf (6.60.1.0, Beta-Test: "die Buttons fuer den Questpfeil
+-- sehen noch nicht gut aus"). Die Knoepfe aus core/ui.lua runden ihre
+-- Ecken mit der Farbe EINES Untergrunds ab - auf der hervorgehobenen Zeile
+-- stimmte die nicht, die Ecken standen eckig da. Hier: zwei runde Kappen
+-- und ein Mittelstueck, deckend - auf jedem Untergrund gleich.
+--------------------------------------------------
+
+local DISC = "Interface\\AddOns\\WeintCodex\\media\\ui\\disc"
+
+local function Mix(a, b, k) return { a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k, a[3] + (b[3] - a[3]) * k } end
+
+function BP.Pill(parent, text, opts)
+    opts = opts or {}
+    local h = opts.height or 24
+    local b = CreateFrame("Button", nil, parent)
+    b:SetHeight(h)
+    b.mid = b:CreateTexture(nil, "BACKGROUND")
+    b.mid:SetPoint("TOPLEFT", b, "TOPLEFT", h / 2, 0)
+    b.mid:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -h / 2, 0)
+    b.capL = b:CreateTexture(nil, "BACKGROUND")
+    b.capL:SetTexture(DISC)
+    b.capL:SetSize(h, h)
+    b.capL:SetPoint("LEFT")
+    b.capR = b:CreateTexture(nil, "BACKGROUND")
+    b.capR:SetTexture(DISC)
+    b.capR:SetSize(h, h)
+    b.capR:SetPoint("RIGHT")
+    b.label = WeintCodex.Label(b, text, { size = opts.size or 11, color = "textBright" })
+    b.label:SetPoint("CENTER", b, "CENTER", 0, 0)
+    b.primary = opts.primary
+    function b:Paint(hot)
+        local c
+        if self.primary then
+            c = Mix(C.bgDark, C.accent, hot and 0.55 or 0.40)
+        else
+            c = hot and C.borderStrong or C.surface3
+        end
+        self.mid:SetColorTexture(c[1], c[2], c[3], 1)
+        self.capL:SetVertexColor(c[1], c[2], c[3], 1)
+        self.capR:SetVertexColor(c[1], c[2], c[3], 1)
+        local t = (hot or self.primary) and C.textBright or C.textNormal
+        self.label:SetTextColor(t[1], t[2], t[3], 1)
+    end
+    b:SetScript("OnEnter", function(self) self:Paint(true) end)
+    b:SetScript("OnLeave", function(self) self:Paint(false) end)
+    b:Paint(false)
+    return b
 end
 
 --------------------------------------------------
@@ -152,9 +205,9 @@ local function Row(i, body)
     r.sub:SetPoint("TOPLEFT", r.name, "BOTTOMLEFT", 0, -3)
     r.sub:SetPoint("RIGHT", r, "RIGHT", -110, 0)
     r.sub:SetJustifyH("LEFT")
-    r.go = WeintCodex.CreateButton(r, { text = "Questpfeil", kind = "secondary", height = 26, size = 11 })
-    r.go:SetWidth(92)
-    r.go:SetPoint("RIGHT", r, "RIGHT", -8, 0)
+    r.go = BP.Pill(r, "Pfeil hierhin", { height = 24 })
+    r.go:SetWidth(96)
+    r.go:SetPoint("RIGHT", r, "RIGHT", -10, 0)
     r:SetScript("OnEnter", function(self) self._hot = true BP.PaintRow(self) end)
     r:SetScript("OnLeave", function(self) self._hot = nil BP.PaintRow(self) end)
     r:SetScript("OnClick", function(self)
@@ -204,7 +257,7 @@ local function BuildPage()
     f.Fill:SetHeight(6)
     f.Ticks = {}
 
-    f.ListScroll, f.ListBody = WeintCodex.CreateScrollArea(card, 12, -66, 400, 300, true)
+    f.ListScroll, f.ListBody = WeintCodex.CreateScrollArea(card, 12, -84, 400, 300, true)
     f.Foot = WeintCodex.Label(card, "", { size = 11, color = "textFaint" })
     f.Foot:SetPoint("BOTTOMLEFT", card, "BOTTOMLEFT", 20, 12)
     f:SetScript("OnSizeChanged", function(self, width)
@@ -249,7 +302,7 @@ local function PaintProgress(f, p)
         t.mark:SetColorTexture(c[1], c[2], c[3], 1)
         t.mark:ClearAllPoints()
         t.mark:SetPoint("CENTER", f.Track, "LEFT", x, 0)
-        t.text:SetText(r.goal .. " · " .. lb.RewardName(r))
+        t.text:SetText(r.goal .. " " .. (BP.SHORT[r.key] or ""))
         t.text:ClearAllPoints()
         t.text:SetPoint("TOP", t.mark, "BOTTOM", 0, -2)
         t.mark:Show()
@@ -319,8 +372,14 @@ local function Inspector(e, p)
         { type = "text", text = e.why },
     }
     if e.cat ~= "done" and e.cat ~= "bag" then
-        blocks[#blocks + 1] = { type = "button", style = "primary", label = "Questpfeil hierhin",
-            onClick = function() lb.Guide(b) end }
+        blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
+            if not BP.guideBtn then BP.guideBtn = BP.Pill(parent, "Questpfeil hierhin", { height = 32, size = 12, primary = true }) end
+            local g = BP.guideBtn
+            g:SetWidth(width)
+            g:SetScript("OnClick", function() lb.Guide(b) end)
+            g:Paint(false)
+            return g
+        end }
     elseif e.cat == "bag" then
         local who, place = lb.Librarian()
         if who then blocks[#blocks + 1] = { type = "text", text = "Abgeben bei " .. who .. ", " .. place .. "." } end
@@ -367,7 +426,7 @@ function BP.Show()
     local w = Plain(f.Card:GetWidth()) or 460
     local h = Plain(f.Card:GetHeight()) or 360
     w = (type(w) == "number" and w or 460) - 24
-    h = (type(h) == "number" and h or 360) - 66 - 34
+    h = (type(h) == "number" and h or 360) - 84 - 34
     f.ListScroll:SetSize(w, math.max(60, h))
     f.ListBody:SetWidth(w - 10)
     for i, e in ipairs(list) do
