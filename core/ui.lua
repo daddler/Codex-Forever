@@ -1981,7 +1981,17 @@ function WeintCodex.SlimRail(sf, bar)
     grip:SetScript("OnLeave", function(self) if not self.drag then Paint(false) end end)
     grip:RegisterForClicks("LeftButtonDown", "LeftButtonUp")
     local startY, startScroll
+    local function Stop()
+        grip.drag = false
+        grip:SetScript("OnUpdate", nil)
+        if not grip:IsMouseOver() then Paint(false) end
+    end
     local function Drag()
+        -- 6.61.26.0 (Beta-Test: "der Balken bleibt an der Maus kleben, bis
+        -- ich noch einmal klicke"): das Loslassen kommt nicht immer beim
+        -- Griff an (Maus ausserhalb, Fenster gewechselt). Ist die Taste
+        -- nicht mehr gedrueckt, endet das Ziehen - egal wo.
+        if IsMouseButtonDown and not IsMouseButtonDown("LeftButton") then Stop() return end
         local _, y = GetCursorPosition()
         local s = rail:GetEffectiveScale() or 1
         local h = (rail:GetHeight() or 0) - (grip:GetHeight() or 0)
@@ -1996,11 +2006,8 @@ function WeintCodex.SlimRail(sf, bar)
         self.drag = true
         self:SetScript("OnUpdate", Drag)
     end)
-    grip:SetScript("OnMouseUp", function(self)
-        self.drag = false
-        self:SetScript("OnUpdate", nil)
-        if not self:IsMouseOver() then Paint(false) end
-    end)
+    grip:SetScript("OnMouseUp", Stop)
+    grip:HookScript("OnHide", Stop)
     bar._wcRail = rail
     Place()
 end

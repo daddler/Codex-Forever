@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.26.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Scrollbalken klebt nicht mehr an der Maus|r – Loslassen beendet das Ziehen jetzt immer, auch wenn die Maus dabei neben dem Balken steht.",
+        },
+    },
+    {
         version = "6.61.25.0",
         date    = "17.10.2026",
         notes   = {

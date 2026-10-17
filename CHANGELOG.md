@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.26.0] – 2026-10-17
+
+### Behoben
+- Scrollbalken des Codex (`core/ui.lua`, Griff): blieb nach dem Ziehen an der Maus, wenn `OnMouseUp` nicht beim Griff ankam. Das Ziehen prüft jetzt in jedem Takt `IsMouseButtonDown("LeftButton")`, endet auch beim Verbergen.
+
 ## [6.61.25.0] – 2026-10-17
 
 ### Behoben
