@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.62.4.0
+## Version: 6.63.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -358,6 +358,7 @@ ui/questlog.lua
 ui/calm.lua
 ui/testmode.lua
 ui/options.lua
+ui/enchants.lua
 ui/glanzpage.lua
 # Symbol der Oberflaeche an der Minikarte (6.9.0.0), nur mit Oberflaeche.
 ui/launcher.lua

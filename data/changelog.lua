@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.63.0.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFFehlende Verzauberungen im Charakterfenster|r – ein Punkt an jedem Platz ohne Verzauberung, für jeden Platz, den die Verzauberkunst in Forever bedienen kann – auch die Halskette. Die Nebenhand nur mit Schild oder Waffe. Beim Leveln dezent, auf 60 deutlich mit den Namen der Plätze. Abschaltbar unter Tooltip & Fenster.",
+        },
+    },
+    {
         version = "6.62.4.0",
         date    = "17.10.2026",
         notes   = {

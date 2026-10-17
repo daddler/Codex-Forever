@@ -227,7 +227,8 @@ K.Register({
             B:Row({ type = "toggle", label = "Weltkarte im WeintCodex-Stil", key = "mapSkin", reload = true,
                     disabled = function() return not K.Get("general", "windowSkin") end,
                     description = "Rahmen, Pergament und Holz der Karte (M) weg – die Karte selbst bleibt, wie sie ist." },
-                  { type = "empty" })
+                  { type = "toggle", label = "Fehlende Verzauberungen zeigen", key = "enchantHint",
+                    description = "Im Charakterfenster: ein Punkt an jedem Platz ohne Verzauberung, für jeden Platz, den die Verzauberkunst bedienen kann. Beim Leveln dezent, auf Stufe 60 deutlich." })
             B:Note("Was in einem Fenster noch nach Holz aussieht, nennt /wcui fenster – Maus über das Fenster halten und abschicken. Der Bericht kommt in einem Fenster zum Kopieren.")
             -- 6.10.4.0: Verschieben ist immer an - hier steht nur, wie es geht.
             B:Note("Fenster verschieben: mit der linken Maustaste an einer freien Stelle ziehen (Titel, Rand). Der Platz gilt, bis du das Fenster schließt – danach öffnet es wieder an seinem gewohnten Platz. Umschalt + Rechtsklick setzt ein offenes Fenster sofort zurück.")

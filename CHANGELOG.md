@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.63.0.0] – 2026-10-17
+
+### Neu
+- Fehlende Verzauberungen im Charakterfenster (`ui/enchants.lua`, Schalter `general.enchantHint`): Punkt am Platz, Zeile über den Waffen, Hinweis im Tooltip. Plätze aus den Rezepten der Verzauberkunst (`data/professions.lua`, zur Laufzeit gelesen – ein neuer Import zieht mit), Verzauberung aus dem Link; unlesbar zählt nie als fehlend. Unter der Höchststufe gedämpft, auf der Höchststufe rot.
+
 ## [6.62.4.0] – 2026-10-17
 
 ### Geändert

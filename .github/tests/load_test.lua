@@ -19920,6 +19920,38 @@ do
     Check(ok, "Startseite: Karte mit Abgabeort der fertigen Quest" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.63.0.0: fehlende Verzauberungen - Feld 2 des Links, klassenspezifisch,
+-- unbekannt zaehlt nie als "fehlt".
+do
+    local ok, err = pcall(function()
+        local EN = WeintCodex.UIEnchants
+        assert(EN, "Modul fehlt")
+        assert(EN.HasEnchant("|Hitem:2000:1887::::|h[x]|h") == true, "Verzauberung nicht erkannt")
+        assert(EN.HasEnchant("|Hitem:2000::::::|h[x]|h") == false and EN.HasEnchant("item:2000:0:0") == false,
+            "leeres Feld nicht als fehlend erkannt")
+        assert(EN.HasEnchant(nil) == nil and EN.HasEnchant("kein Link") == nil, "Unlesbares nicht unbekannt")
+        local kinds = EN.Kinds()
+        assert(kinds and kinds.Cloak and kinds.Necklace and kinds.Shield and kinds.Weapon,
+            "Plaetze nicht aus den Rezepten der Verzauberkunst gelesen")
+        assert(not kinds.Ring and not kinds.Scope, "Platz ohne Rezept")
+        local oI = _G.C_Item and _G.C_Item.GetItemInfoInstant
+        local oG = _G.GetItemInfoInstant
+        local loc = "INVTYPE_HOLDABLE"
+        _G.C_Item = _G.C_Item or {}
+        _G.C_Item.GetItemInfoInstant = function() return 1, "", "", loc end
+        local off
+        for _, sl in ipairs(EN.SLOTS) do if sl[1] == "SecondaryHandSlot" then off = sl end end
+        assert(EN.Applies(off, "l", kinds) == false, "Nebenhand-Gegenstand verlangt")
+        loc = "INVTYPE_SHIELD"
+        assert(EN.Applies(off, "l", kinds) == true, "Schild nicht verlangt")
+        loc = "INVTYPE_WEAPON"
+        assert(EN.Applies(off, "l", kinds) == true, "Zweitwaffe nicht verlangt")
+        assert(EN.Applies(EN.SLOTS[1], "l", { Cloak = 1 }) == false, "Hals ohne Rezept verlangt")
+        _G.C_Item.GetItemInfoInstant, _G.GetItemInfoInstant = oI, oG
+    end)
+    Check(ok, "Verzauberungen: erkannt je Klasse, unbekannt bleibt unbekannt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
