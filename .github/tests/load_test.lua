@@ -4086,6 +4086,18 @@ do
         _G.UnitInParty = function() return true end
         assert(TH.Eligible({ isHelpful = true, sourceUnit = "party1", duration = 1800 }) == nil, "Gruppe gedankt")
         assert(TH.StatusLine():find("Danke"), "Statuszeile")
+        -- 6.61.25.0: Grund ohne Dank in der Statuszeile; erneuerter Buff zaehlt.
+        TH.Eligible({ isHelpful = true, duration = 1800 })
+        assert(TH.StatusLine():find("Spender unbekannt", 1, true), "Grund fehlt: " .. TH.StatusLine())
+        local oUA, oGT = _G.C_UnitAuras, _G.GetTime
+        _G.GetTime = function() return 1000 end
+        _G.C_UnitAuras = { GetAuraDataByAuraInstanceID = function(_, id)
+            if id == 1 then return { duration = 1800, expirationTime = 2799, sourceUnit = "target", isHelpful = true } end
+            return { duration = 1800, expirationTime = 1500 }
+        end }
+        local fresh = TH.Refreshed({ updatedAuraInstanceIDs = { 1, 2 } })
+        _G.C_UnitAuras, _G.GetTime = oUA, oGT
+        assert(#fresh == 1 and fresh[1].expirationTime == 2799, "erneuerter Buff nicht erkannt: " .. #fresh)
     end)
     _G.UnitIsUnit, _G.UnitIsPlayer, _G.UnitInParty, _G.UnitInRaid, _G.UnitIsInMyGuild, _G.GetUnitName = unpack(saved, 1, 6)
     Check(ok, "Erinnerung anklicken, Manaeffizienz, Danke fuer Buffs" .. (ok and "" or (": " .. tostring(err))))

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.25.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDanke auch für erneuerte Buffs|r – frischt ein Fremder einen Buff auf, den du schon hattest, bedankt sich WeintCodex jetzt ebenfalls. „/wcui danke“ sagt, warum zuletzt kein Dank kam.",
+        },
+    },
+    {
         version = "6.61.24.0",
         date    = "17.10.2026",
         notes   = {

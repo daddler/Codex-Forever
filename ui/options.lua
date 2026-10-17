@@ -1464,6 +1464,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
             .. " – Bericht im Fenster, Strg+C kopiert.")
         return
     end
+    -- 6.61.25.0: warum der letzte Buff keinen Dank bekam.
+    if msg == "danke" or msg == "thanks" then
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. WeintCodex.UIThanks.StatusLine())
+        return
+    end
     -- 6.61.20.0: was Autoshot und Nahkampf im letzten Kampf taten.
     if msg == "schuss" or msg == "autoshot" then
         WeintCodex.UIShotLog.Report()

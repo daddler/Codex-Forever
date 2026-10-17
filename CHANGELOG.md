@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.25.0] – 2026-10-17
+
+### Behoben
+- Danke für Buffs: erneuerte Buffs kamen nur als `updatedAuraInstanceIDs`, nie als `addedAuras` – kein Dank. `TH.Refreshed` nimmt Auren, die wieder (fast) die volle Dauer haben. Grund für jeden ausgebliebenen Dank (`st.why`) in der Statuszeile und mit `/wcui danke`.
+
 ## [6.61.24.0] – 2026-10-17
 
 ### Geändert

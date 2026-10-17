@@ -168,30 +168,36 @@ local function Bool(fn, ...)
 end
 
 -- Soll dieser Buff einen Dank bekommen? Liefert den Namen des Spielers.
+-- 6.61.25.0 (Beta-Test: "die Danke-Funktion klappt manchmal nicht"): jeder
+-- Grund, warum ein Buff keinen Dank bekam, wird gemerkt (TH.state.why) und
+-- in der Statuszeile genannt - "manchmal" laesst sich sonst nicht klaeren.
+local function No(why) st.why = why return nil end
 function TH.Eligible(aura)
     if type(aura) ~= "table" then return nil end
     local helpful = K.Plain(aura.isHelpful)
     if helpful == false then return nil end
-    local src = K.Plain(aura.sourceUnit)
-    if type(src) ~= "string" or src == "" then return nil end
     local dur = K.Plain(aura.duration)
     if type(dur) ~= "number" or dur < TH.MIN_DURATION then return nil end
+    local src = K.Plain(aura.sourceUnit)
+    if type(src) ~= "string" or src == "" then
+        return No("Spender unbekannt – das Spiel nennt ihn nur, wenn er sichtbar ist (Ziel, Maus, Namensplakette)")
+    end
     if Bool(_G.UnitIsUnit, src, "player") then return nil end
     if not Bool(_G.UnitIsPlayer, src) then return nil end
-    if Bool(_G.UnitInParty, src) or Bool(_G.UnitInRaid, src) then return nil end
-    if not K.Get(KEY, "thanksGuild") and Bool(_G.UnitIsInMyGuild, src) then return nil end
+    if Bool(_G.UnitInParty, src) or Bool(_G.UnitInRaid, src) then return No("Spender in deiner Gruppe") end
+    if not K.Get(KEY, "thanksGuild") and Bool(_G.UnitIsInMyGuild, src) then return No("Spender in deiner Gilde (Gilde ist aus)") end
     local name = _G.GetUnitName and K.Plain(_G.GetUnitName(src, true))
-    if type(name) ~= "string" or name == "" then return nil end
+    if type(name) ~= "string" or name == "" then return No("Name des Spenders nicht lesbar") end
     return name
 end
 
 function TH.Where()
-    if K.InCombat() then return false end
+    if K.InCombat() then st.why = "im Kampf" return false end
     if _G.IsInInstance then
         local ok, inside = pcall(_G.IsInInstance)
         -- 6.53.3.0 (Wunsch: "in Instanzen ein-/ausschaltbar, voreingestellt
         -- aus"): bis dahin fest aus.
-        if ok and K.Bool(inside, false) and not K.Get(KEY, "thanksInstance") then return false end
+        if ok and K.Bool(inside, false) and not K.Get(KEY, "thanksInstance") then st.why = "in einer Instanz (dort aus)" return false end
     end
     return true
 end
@@ -220,18 +226,42 @@ function TH.Send(name, text)
     return "sent"
 end
 
-function TH.OnAura(info)
-    if not (TH.Active() and type(info) == "table") then return end
-    local added = info.addedAuras
-    if type(added) ~= "table" or not TH.Where() then return end
+-- Erneuerte Buffs (6.61.25.0): bufft ein Fremder einen Buff, den du schon
+-- hast, meldet das Spiel ihn nicht als neu (addedAuras), sondern als
+-- geaendert (updatedAuraInstanceIDs). Neu aufgelegt ist er, wenn er wieder
+-- (fast) die volle Dauer vor sich hat.
+TH.REFRESH_SLACK = 3
+function TH.Refreshed(info)
+    local out = {}
+    local ids = info.updatedAuraInstanceIDs
+    local ua = _G.C_UnitAuras
+    if type(ids) ~= "table" or not (ua and ua.GetAuraDataByAuraInstanceID) then return out end
     local now = Now()
-    if now - st.at < TH.GLOBAL then return end
-    for _, aura in ipairs(added) do
+    for _, id in ipairs(ids) do
+        local ok, a = pcall(ua.GetAuraDataByAuraInstanceID, "player", id)
+        if ok and type(a) == "table" then
+            local dur, exp = K.Plain(a.duration), K.Plain(a.expirationTime)
+            if type(dur) == "number" and type(exp) == "number" and dur >= TH.MIN_DURATION
+               and exp - now >= dur - TH.REFRESH_SLACK then
+                out[#out + 1] = a
+            end
+        end
+    end
+    return out
+end
+
+function TH.Try(list, now)
+    for _, aura in ipairs(list) do
         local name = TH.Eligible(aura)
-        if name and now - (st.last[name] or -1e9) >= TH.PER_PLAYER then
+        if name and now - (st.last[name] or -1e9) < TH.PER_PLAYER then
+            st.why = name .. " wurde vor weniger als 15 Minuten schon gedankt"
+            name = nil
+        end
+        if name then
             local text = TH.Pick(TH.Kind(K.Plain(aura.name)))
-            if not text then return end
+            if not text then st.why = "keine Sätze für diese Sorte" return true end
             st.last[name], st.at = now, now
+            st.why = nil
             -- Wartezeit (6.41.0.0, einstellbar): nicht im selben Augenblick
             -- wie der Buff - wirkt menschlicher.
             local delay = tonumber(K.Get(KEY, "thanksDelay")) or 2
@@ -239,14 +269,28 @@ function TH.OnAura(info)
                 st.queued = st.queued + 1
                 _G.C_Timer.After(delay, function()
                     st.queued = st.queued - 1
-                    if TH.Active() and not K.InCombat() then TH.Send(name, text) end
+                    if TH.Active() and not K.InCombat() then TH.Send(name, text)
+                    else st.why = "Kampf begann in der Wartezeit" end
                 end)
             else
                 TH.Send(name, text)
             end
-            return
+            return true
         end
     end
+    return false
+end
+
+function TH.OnAura(info)
+    if not (TH.Active() and type(info) == "table") then return end
+    local added = info.addedAuras
+    local fresh = TH.Refreshed(info)
+    if type(added) ~= "table" and #fresh == 0 then return end
+    if not TH.Where() then return end
+    local now = Now()
+    if now - st.at < TH.GLOBAL then st.why = "gerade erst gedankt (höchstens alle 20 s)" return end
+    if type(added) == "table" and TH.Try(added, now) then return end
+    TH.Try(fresh, now)
 end
 
 -- Sperre kurz nach dem eigenen Versuch: gemessen, merken.
@@ -272,9 +316,10 @@ ev:SetScript("OnEvent", function(_, event, a1, a2)
 end)
 
 function TH.StatusLine()
-    return string.format("Danke für Buffs: %s · gedankt %d× · %s",
+    return string.format("Danke für Buffs: %s · gedankt %d× · %s%s",
         TH.Active() and "an" or "aus", st.sent,
-        K.Get(KEY, "thanksBlocked") and "Flüstern gesperrt, über die Chatzeile" or "flüstert selbst")
+        K.Get(KEY, "thanksBlocked") and "Flüstern gesperrt, über die Chatzeile" or "flüstert selbst",
+        st.why and (" · zuletzt kein Dank: " .. st.why) or "")
 end
 
 --------------------------------------------------
