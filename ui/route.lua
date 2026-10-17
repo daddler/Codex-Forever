@@ -261,6 +261,15 @@ function RT.WalkYards(a, b)
     if not Walkable(a, b) then return nil end
     local straight = Dist(a, b)
     local pa, pb = a.place or a.near, b.place or b.near
+    -- 6.60.2.0 (Beta-Test mit Bild, Teldrassil: von Shadowglen zu einer
+    -- Quest 400 Einheiten entfernt fuehrte die Route hinunter, durchs Portal
+    -- nach Darnassus und zurueck). Start und Ziel lagen je rund 1800 vom
+    -- naechsten festen Ort - unten am Baum bzw. in Darnassus, zwischen denen
+    -- es nur das Portal gibt. Liegen zwei Lagen naeher beieinander als an
+    -- ihren Orten, sagt die Strecke zwischen den Orten nichts ueber sie.
+    local da = a.place and 0 or (a.nearD or 0)
+    local db = b.place and 0 or (b.nearD or 0)
+    if straight < da + db then return straight end
     if pa and pb and pa ~= pb then
         local y = walkTo[pa] and walkTo[pa][pb]
         if y == false then return nil end

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.60.2.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFKeine Umwege mehr über Portale zu Zielen in der Nähe.|r In Teldrassil schickte die Route vom Schattenhain zu einer nahen Quest hinunter, durchs Portal nach Darnassus und zurück.",
+        },
+    },
+    {
         version = "6.60.1.0",
         date    = "17.10.2026",
         notes   = {

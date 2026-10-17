@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.60.2.0] – 2026-10-17
+
+### Behoben
+- Routenplaner (`RT.WalkYards`): die Strecke zwischen festen Orten (`walkTo`) gilt nur, wenn Start und Ziel nicht näher beieinander liegen als an ihren Orten (`nearD`). Teldrassil: Start/Ziel je ~1800 von Ort 77 (Baumfuß) und 78 (Darnassus), zwischen denen nur das Portal führt – Route lief hinunter, durchs Portal und zurück. Offline nachgerechnet; das Spinnengebiet im Norden des Schattenhains hat zudem keine Verbindung im Wegenetz (Pfeil dort: Luftlinie).
+
 ## [6.60.1.0] – 2026-10-17
 
 ### Behoben

@@ -18824,6 +18824,25 @@ do
     Check(ok, "Charakterfenster: Gegenstandsstufe vom Client, keine 0" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.60.2.0: Routenplaner - ferne feste Orte bestimmen den Fussweg nicht.
+do
+    local ok, err = pcall(function()
+        local RT = WeintCodex.UIRoute
+        RT.Build()
+        -- Shadowglen -> Spinnen: je ~1800 von Ort 77 (unten) und 78 (Darnassus),
+        -- zwischen denen nur das Portal fuehrt.
+        local a = { c = 1, mass = 1, n = 10620, w = 673, near = 77, nearD = 1845 }
+        local b = { c = 1, mass = 1, n = 10847, w = 1014, near = 78, nearD = 1835 }
+        local y = RT.WalkYards(a, b)
+        assert(y and math.abs(y - 410) < 2, "Fussweg nicht die Luftlinie: " .. tostring(y))
+        -- Nahe an ihren Orten gilt der Bestand weiter.
+        a.nearD, b.nearD = 10, 10
+        a.n, a.w, b.n, b.w = 8799, 970, 9946, 2613
+        assert(RT.WalkYards(a, b) == nil, "Portal-Orte ohne Fussweg trotzdem gelaufen")
+    end)
+    Check(ok, "Routenplaner: ferne feste Orte bestimmen den Fussweg nicht (Teldrassil)" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.59.0.0: Seite "Buecher" - Bewertung nach Stufe/Lage, Karte, Pfeil.
 do
     local G = _G
