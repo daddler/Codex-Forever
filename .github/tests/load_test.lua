@@ -19149,6 +19149,28 @@ do
     Check(ok, "Suche: Strg+K ohne Umstellen im Kampf" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.61.17.0: Zonen-Kopfzeilen im Questlog am Klappknopf erkannt, nicht am Bildnamen.
+do
+    local ok, err = pcall(function()
+        local QL, W = WeintCodex.UIQuestLog, WeintCodex.UIWindows
+        local list = CreateFrame("Frame")
+        list.Contents = CreateFrame("Frame", nil, list)
+        local row = CreateFrame("Button", nil, list.Contents)
+        row.CollapseButton = CreateFrame("Button", nil, row)
+        local bar = row:CreateTexture()
+        bar:SetSize(200, 24)
+        local fs = row:CreateFontString()
+        fs:SetFont("Fonts\\FRIZQT__.TTF", 12, "")
+        fs:SetText("Silberwald")
+        list.Contents.GetChildren = function() return row end
+        row.GetRegions = function() return bar, fs end
+        local n = QL.Headers(list)
+        assert(n == 1 and W.ListHeaders[row], "Kopfzeile nicht gestaltet: " .. tostring(n) .. " kids " .. #W.Children(list.Contents, "dbg") .. " regs " .. #W.Regions(row, "dbg2"))
+        assert(not bar:IsShown() or bar:GetAlpha() == 0, "brauner Balken noch da")
+    end)
+    Check(ok, "Questlog: Zonen-Kopfzeilen am Klappknopf erkannt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.54.0.0: Flugzeit - Ziel vom Klick, Dauer gemessen/Daten/unbekannt, gemessen nach der Landung.
 do
     local G = _G

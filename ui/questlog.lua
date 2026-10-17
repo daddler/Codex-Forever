@@ -45,6 +45,7 @@ local S = WeintCodex.UIStyle
 local RG = WeintCodex.UIRegister
 
 local Visible, IsFrame = RG.Visible, RG.IsFrame
+local K = WeintCodex.UIKit
 
 QL.LABEL = "Questlog"
 QL.HOST = "WorldMapFrame"
@@ -97,10 +98,37 @@ end
 local details = setmetatable({}, { __mode = "k" })
 QL.details = details
 
+-- 6.61.17.0 (Beta-Test: "die Leisten sind rechts wieder braun -
+-- wahrscheinlich ein Hotfix"): die Zonen-Kopfzeilen tragen einen Balken mit
+-- neuem Bildnamen, den W.HEADER_ATLAS nicht kennt. Erkannt wird eine
+-- Kopfzeile jetzt auch an dem, was sie ist: eine Zeile der Liste mit
+-- Knopf zum Auf- und Zuklappen (.CollapseButton). Ihre Bilder gehen, die
+-- Zeile wird ein Abschnitt wie im Ruf (W.ListHeader). Der Knopf bleibt.
+function QL.Headers(list)
+    local contents = list and list.Contents
+    if not IsFrame(contents) or not contents.GetChildren then return 0 end
+    local n = 0
+    for _, row in ipairs(W.Children(contents, "qlHeadRows")) do
+        if type(row) == "table" and type(row.CollapseButton) == "table" and row.GetRegions then
+            local widest, ww
+            for _, r in ipairs(W.Regions(row, "qlHeadRegs")) do
+                if r.GetObjectType and r:GetObjectType() == "Texture" and not W.own[r] then
+                    local w = K.Plain(r:GetWidth()) or 0
+                    if not widest or w > ww then widest, ww = r, w end
+                    W.Hide(r)
+                end
+            end
+            if widest and W.ListHeader(row, widest, QL.STYLE) then n = n + 1 end
+        end
+    end
+    return n
+end
+
 function QL.Update(f)
     local list = QL.List()
     local col
     if list then
+        QL.Headers(list)
         col = cols[f]
         if not col then col = Column(f, list) cols[f] = col end
         Sync(col, Visible(list))

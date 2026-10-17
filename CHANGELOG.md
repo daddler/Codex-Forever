@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.17.0] – 2026-10-17
+
+### Behoben
+- Questlog an der Karte: Zonen-Kopfzeilen wieder braun (Balken mit neuem Atlasnamen, vermutlich Hotfix). `QL.Headers` erkennt Kopfzeilen jetzt am `.CollapseButton` statt nur am Atlas, blendet ihre Bilder aus und macht sie zu `W.ListHeader`.
+
 ## [6.61.16.0] – 2026-10-17
 
 ### Behoben

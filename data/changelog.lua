@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.17.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Zonen im Questlog sind wieder Abschnitte|r – nach einer Änderung des Spiels trugen sie wieder braune Balken.",
+        },
+    },
+    {
         version = "6.61.16.0",
         date    = "17.10.2026",
         notes   = {
