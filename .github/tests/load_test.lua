@@ -431,8 +431,14 @@ Check(navUsed <= navBudget,
 -- faellt erst der Eintrag auf, der schon nicht mehr passt - und dann
 -- ist die Frage nicht mehr "passt er?", sondern "was werfen wir
 -- raus?".
-Check(navBudget - navUsed >= 40,
-    "Navigationsspalte hat Luft fuer einen weiteren Eintrag ("
+-- 6.59.0.0 (Entscheidung des Projektinhabers): "Buecher" bekommt einen
+-- eigenen Eintrag, die Spalte ist damit VOLL - keine Luft mehr fuer einen
+-- weiteren. Ein neuer Eintrag muss ab jetzt einen alten ersetzen oder mit
+-- ihm zusammengelegt werden (oder als Reiter unter einen bestehenden,
+-- Navigation.SUBTABS). Geprueft wird weiter, dass alles passt (oben) -
+-- und dass nichts mehr dazukommt, ohne dass diese Zahl angefasst wird.
+Check(#WeintCodex.Navigation.Tabs() <= 14,
+    "Navigationsspalte voll (seit 6.59.0.0): neuer Eintrag nur gegen einen alten ("
     .. (navBudget - navUsed) .. " px frei)")
 
 local subBudget = WeintCodex.Navigation.SubNavBudget()
@@ -17885,7 +17891,7 @@ do
     local nav = WeintCodex.Navigation
     local ok, err = pcall(function()
         local want = {
-            { "uebersicht", "Leveln" }, { "charakter" }, { "lehrer" }, { "berufe" }, { "taschen" }, { "dungeons" },
+            { "uebersicht", "Leveln" }, { "charakter" }, { "lehrer" }, { "berufe" }, { "taschen" }, { "buecher" }, { "dungeons" },
             { "gruppe", "Gruppe" }, { "raids" }, { "anmeldung" }, { "kalender" },
             { "materialien", "Gilde" },
             { "companion", "System" }, { "settings" },
@@ -18816,6 +18822,48 @@ do
         G.CharacterNeckSlot = nil
     end)
     Check(ok, "Charakterfenster: Gegenstandsstufe vom Client, keine 0" .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- 6.59.0.0: Seite "Buecher" - Bewertung nach Stufe/Lage, Karte, Pfeil.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local LB, BP, K = WeintCodex.Library, WeintCodex.BooksPage, WeintCodex.UIKit
+        local oQ, oF, oC, oL, oPW, oTW, oM = G.C_QuestLog, G.UnitFactionGroup, G.C_Item, G.UnitLevel, K.PlayerWorld, K.ToWorld, G.C_Map
+        G.UnitFactionGroup = function() return "Horde", "Horde" end
+        G.C_Item = { GetItemCount = function() return 0 end }
+        G.C_QuestLog = { IsQuestFlaggedCompleted = function() return false end }
+        G.UnitLevel = function() return 12 end
+        K.PlayerWorld = function() return 1, 0, 0 end
+        -- Brachland (1413) auf Kontinent 1, alles andere woanders.
+        K.ToWorld = function(map, x, y) if map == 1413 then return 1, x * 1000, y * 1000 end return 0, 0, 0 end
+        local rated = LB.Rated()
+        local seen = {}
+        for _, e in ipairs(rated) do
+            seen[e.cat] = true
+            if e.b[5] == 1416 then assert(e.cat == "risky", "Alterac (30-40) mit Stufe 12 nicht abgeraten") end
+            if e.b[5] == 1413 then assert(e.cat == "good" and e.dist, "Brachland nicht empfohlen") end
+        end
+        assert(rated[1].cat == "good", "Empfohlenes nicht zuerst")
+        -- Seite zeichnet, Detailbereich mit Karte.
+        local tiles = 0
+        G.C_Map = setmetatable({
+            GetMapArtLayers = function() return { { layerWidth = 1002, layerHeight = 668, tileWidth = 256, tileHeight = 256 } } end,
+            GetMapArtLayerTextures = function() local t = {} for i = 1, 12 do t[i] = 1000 + i end return t end,
+            GetMapInfo = function() return { name = "Brachland" } end,
+        }, { __index = oM })
+        BP.sel = rated[1].b[1]
+        BP.Show()
+        assert(BP.page and BP.page:IsShown(), "Seite nicht gezeigt")
+        local w = BP.MapWidget(UIParent, 300)
+        assert(BP.PaintMap(w, 1413, 0.5, 0.5) and BP.mapOk, "Karte nicht aus den Kacheln des Clients")
+        G.C_Map = { }
+        assert(not BP.PaintMap(w, 1413, 0.5, 0.5) and w.none:IsShown(), "ohne Kacheln keine ehrliche Lücke")
+        assert(BP.Meters(1094) == "1.0 km" and BP.Meters(100) == "90 m", "Entfernung falsch")
+        G.C_QuestLog, G.UnitFactionGroup, G.C_Item, G.UnitLevel, K.PlayerWorld, K.ToWorld, G.C_Map = oQ, oF, oC, oL, oPW, oTW, oM
+        BP.sel = nil
+    end)
+    Check(ok, "Buecher-Seite: Bewertung nach Stufe und Lage, Karte aus dem Client, Liste" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.56.0.0: Buecher der Bibliothek - gezaehlt vom Client, naechste Belohnung.

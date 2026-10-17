@@ -131,7 +131,10 @@ internet; any further outward message needs the same explicit request.
   feature that does not exist, not like a bug. `NavColumnHeight()`,
   `SubNavHeight()` and `MeasureSidebar()` compute what each occupies,
   `load_test.lua` holds them against the smallest allowed window
-  (780 px) and additionally demands headroom for one more entry. Page
+  (780 px) and additionally demands headroom for one more entry — except
+  the nav column, which is **full since 6.59.0.0** (owner's decision,
+  „Bücher“): a new entry there must replace or merge an old one, or
+  become a tab under an existing one (`Navigation.SUBTABS`). Page
   content that grows from bot-supplied data is capped (raids, see
   `RolePanel.BossCards`) or goes into the one surface built to scroll
   (the detail column; on the dungeon page its detail card). Text

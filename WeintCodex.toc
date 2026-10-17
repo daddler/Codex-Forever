@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.58.0.0
+## Version: 6.59.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -178,6 +178,8 @@ modules/settings.lua
 modules/clientcheck.lua
 # Buecher der Bibliothek: abgegeben, naechste Belohnung (6.56.0.0).
 modules/library.lua
+# Seite "Buecher" im Codex (6.59.0.0).
+modules/books.lua
 # Startseite (6.11.0.0): fragt Lehrer, Quests und Dungeons - nach ihnen.
 modules/home.lua
 

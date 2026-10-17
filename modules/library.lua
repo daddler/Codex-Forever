@@ -169,6 +169,76 @@ function LB.BookName(b)
     return b[4]
 end
 
+-- 6.59.0.0 (Wunsch: "geprueft auf Standort und Stufe, wo ich die Buecher am
+-- besten sammeln kann und was abgeraten wird"). Bewertet wird nur mit dem,
+-- was feststeht: deine Stufe (Client), der Stufenbereich des Gebiets
+-- (data/zoneinfo.lua, Art classic) und die Luftlinie auf deinem Kontinent.
+-- Gefahr unterwegs, Wege und Feinde in der Naehe kennt kein Bestand.
+LB.TOO_HIGH = 3       -- Gebiet beginnt mehr als so viele Stufen ueber dir
+LB.CATS = {
+    { key = "bag",   label = "Abgeben",     color = "green" },
+    { key = "good",  label = "Empfohlen",   color = "accent" },
+    { key = "far",   label = "Möglich",     color = "textNormal" },
+    { key = "risky", label = "Abgeraten",   color = "danger" },
+    { key = "done",  label = "Abgegeben",   color = "textMuted" },
+}
+
+local function Level()
+    if not _G.UnitLevel then return nil end
+    local ok, l = pcall(_G.UnitLevel, "player")
+    l = ok and Plain(l) or nil
+    return type(l) == "number" and l > 0 and l or nil
+end
+
+function LB.ZoneLevel(map)
+    local z = WeintCodex.ZoneInfoData and WeintCodex.ZoneInfoData[map]
+    return z and z.lvl and z.lvl[1], z and z.lvl and z.lvl[2]
+end
+
+-- Kategorie, Begruendung, Luftlinie (Meter) oder nil.
+function LB.Rate(b, pc, pn, pw, level)
+    local d = LB.Done(b[1])
+    if d == true then return "done", "schon abgegeben" end
+    if InBags(b[2]) then return "bag", "liegt in deiner Tasche" end
+    local lo, hi = LB.ZoneLevel(b[5])
+    if level and lo and lo > level + LB.TOO_HIGH then
+        return "risky", "Gebiet Stufe " .. lo .. "–" .. hi .. ", du bist " .. level
+    end
+    local K = WeintCodex.UIKit
+    local dist
+    if pc and K and K.ToWorld then
+        local c, n, w = K.ToWorld(b[5], b[6] / 100, b[7] / 100)
+        if c == pc and n then dist = math.sqrt((n - pn) ^ 2 + (w - pw) ^ 2) end
+    end
+    local range = lo and ("Gebiet Stufe " .. lo .. "–" .. hi) or "Stufe des Gebiets unbekannt"
+    if dist then return "good", range, dist end
+    return "far", range .. " · anderer Kontinent"
+end
+
+-- Alle Buecher deiner Fraktion, bewertet und sortiert: { b, cat, why, dist }.
+function LB.Rated()
+    local K = WeintCodex.UIKit
+    local pc, pn, pw
+    if K and K.PlayerWorld then pc, pn, pw = K.PlayerWorld() end
+    local level = Level()
+    local out = {}
+    for _, b in ipairs(LB.Mine()) do
+        local cat, why, dist = LB.Rate(b, pc, pn, pw, level)
+        out[#out + 1] = { b = b, cat = cat, why = why, dist = dist }
+    end
+    local rank = {}
+    for i, c in ipairs(LB.CATS) do rank[c.key] = i end
+    table.sort(out, function(x, y)
+        if x.cat ~= y.cat then return rank[x.cat] < rank[y.cat] end
+        if x.dist and y.dist then return x.dist < y.dist end
+        if (LB.ZoneLevel(x.b[5]) or 99) ~= (LB.ZoneLevel(y.b[5]) or 99) then
+            return (LB.ZoneLevel(x.b[5]) or 99) < (LB.ZoneLevel(y.b[5]) or 99)
+        end
+        return x.b[1] < y.b[1]
+    end)
+    return out
+end
+
 -- Questpfeil auf ein Buch (nil: auf das naechste). Der Pfeil zeigt dorthin,
 -- bis das Buch in der Tasche liegt oder abgegeben ist.
 function LB.Guide(b)

@@ -51,6 +51,9 @@ local tabs = {
     -- Seit 6.25.0.0: was deine Charaktere tragen (modules/bags.lua). Ohne
     -- feature: der eigene Bestand, aus dem eigenen Client.
     { id = "taschen",    icon = ICON_PATH .. "nav_taschen",    label = "Taschen" },
+    -- Seit 6.59.0.0: Buecher der Bibliothek - wo sie liegen, was passt
+    -- (modules/books.lua). Ohne feature: Stand aus dem eigenen Client.
+    { id = "buecher",    icon = ICON_PATH .. "nav_buecher",    label = "Bücher" },
 
     -- Die Dungeons, ohne feature: Namen, Gebiete und Stufenbereiche stehen
     -- in data/dungeons.lua. Gildenintern sind allein die Rollen-Tipps des
@@ -2320,6 +2323,18 @@ function WeintCodex.Navigation.SetInspector(blocks)
             y = InspectorDivider(parent, y)
         elseif block.type == "spacer" then
             y = y - (block.height or 12)
+        elseif block.type == "custom" and block.create then
+            -- 6.59.0.0: eigene Flaeche (z. B. Kartenausschnitt der Buecher).
+            -- create(parent, breite) liefert einen Rahmen; seine Hoehe zaehlt.
+            local okC, w = pcall(block.create, parent, INSPECTOR_CONTENT_W)
+            if okC and type(w) == "table" and w.SetPoint then
+                w:SetParent(parent)
+                w:ClearAllPoints()
+                w:SetPoint("TOPLEFT", parent, "TOPLEFT", INSPECTOR_PAD, y)
+                w:Show()
+                table.insert(inspectorWidgets, w)
+                y = y - (w:GetHeight() or 0) - 8
+            end
         end
     end
 
@@ -2438,6 +2453,10 @@ function WeintCodex.Navigation.SwitchTo(tabId)
     elseif tabId == "taschen" then
         if WeintCodex.Bags and WeintCodex.Bags.Show then
             WeintCodex.Bags.Show()
+        end
+    elseif tabId == "buecher" then
+        if WeintCodex.BooksPage and WeintCodex.BooksPage.Show then
+            WeintCodex.BooksPage.Show()
         end
     elseif tabId == "materialien" then
         if WeintCodex.Materials and WeintCodex.Materials.Show then

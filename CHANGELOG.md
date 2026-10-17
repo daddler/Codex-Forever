@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.59.0.0] – 2026-10-17
+
+### Neu
+- Codex-Seite „Bücher“ (`modules/books.lua`, Spalte unter Taschen, Symbol `nav_buecher` aus `make_nav_buecher.py`): Unternavigation nach Einschätzung, Stand mit Schwellen, Liste mit Questpfeil, Detailbereich mit Kartenausschnitt aus `C_Map.GetMapArtLayerTextures` (neuer Inspector-Block `custom`). Einschätzung `LB.Rate`: abgeraten, wenn das Gebiet mehr als 3 Stufen über dir beginnt (`zoneinfo`, classic); empfohlen auf deinem Kontinent nach Luftlinie. `/wc bücher`, Suche.
+
+### Geändert
+- Navigationsspalte voll (Entscheidung des Projektinhabers): Prüfung auf Luft für einen weiteren Eintrag ersetzt durch Obergrenze 14 Einträge.
+
 ## [6.58.0.0] – 2026-10-17
 
 ### Neu

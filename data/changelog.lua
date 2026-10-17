@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.59.0.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFNeu im Codex: „Bücher“.|r Alle Bücher der Bibliothek in einer Liste – mit deinem Stand bis zur nächsten Belohnung, einem Kartenausschnitt mit Fundort und dem Questpfeil auf Klick.",
+            "Nach deiner Stufe und deinem Standort sortiert: Empfohlen (passt und liegt auf deinem Kontinent, das nächste zuerst), Möglich (anderer Kontinent) und Abgeraten (das Gebiet ist deutlich über deiner Stufe). Auch mit /wc bücher.",
+        },
+    },
+    {
         version = "6.58.0.0",
         date    = "17.10.2026",
         notes   = {
