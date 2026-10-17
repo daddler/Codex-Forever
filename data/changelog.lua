@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.63.1.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFVerzauberungen: der Platz steht jetzt dabei|r – „Ohne Verzauberung: Hände“ statt nur einer Zahl, die über der Waffe nach der Waffe aussah.",
+        },
+    },
+    {
         version = "6.63.0.0",
         date    = "17.10.2026",
         notes   = {

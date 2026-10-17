@@ -223,7 +223,9 @@ function EN.Paint()
     else
         local c = C.textMuted
         l:SetTextColor(c[1], c[2], c[3], 0.8)
-        l:SetText(n .. " ohne Verzauberung")
+        -- 6.63.1.0: ohne Namen las sich die Zeile ueber der Waffe als "die
+        -- Waffe fehlt" (Beta-Test) - der Platz steht immer dabei.
+        l:SetText("Ohne Verzauberung: " .. table.concat(EN.missing, ", "))
     end
     l:Show()
 end

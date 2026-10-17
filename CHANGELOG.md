@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.63.1.0] – 2026-10-17
+
+### Behoben
+- Hinweis auf fehlende Verzauberungen nennt auch unter der Höchststufe die Plätze – die bloße Zahl über der Waffenhand las sich wie „Waffe fehlt“.
+
 ## [6.63.0.0] – 2026-10-17
 
 ### Neu
