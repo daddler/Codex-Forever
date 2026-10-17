@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.9.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Zahl beim Stapel teilen ist lesbar|r – hell auf dem dunklen Feld statt dunkel.",
+        },
+    },
+    {
         version = "6.61.8.0",
         date    = "17.10.2026",
         notes   = {

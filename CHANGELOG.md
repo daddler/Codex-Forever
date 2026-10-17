@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.9.0] – 2026-10-17
+
+### Behoben
+- Stapel teilen: `StackSplitText` war dunkel (fürs helle Feld des Spiels) – jetzt `textBright` mit Schatten, Ebene OVERLAY.
+
 ## [6.61.8.0] – 2026-10-17
 
 ### Neu

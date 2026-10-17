@@ -1692,6 +1692,16 @@ function W.SkinStackSplit(f)
         d.field:SetColorTexture(s0[1], s0[2], s0[3], 0.95)
         own[d.field] = true
     end
+    -- 6.61.9.0 (Beta-Test: "die Zahl ist zu dunkel"): das Spiel schreibt
+    -- sie dunkel auf sein helles Feld - auf unserem dunklen hell.
+    local txt = f.StackSplitText or _G.StackSplitText
+    if type(txt) == "table" and txt.SetTextColor then
+        local t = C.textBright
+        txt:SetTextColor(t[1], t[2], t[3], 1)
+        if txt.SetShadowColor then txt:SetShadowColor(0, 0, 0, 1) txt:SetShadowOffset(1, -1) end
+        if txt.SetDrawLayer then txt:SetDrawLayer("OVERLAY") end
+        d.text = txt
+    end
     for _, k in ipairs({ "OkayButton", "CancelButton" }) do
         local b = f[k]
         if type(b) == "table" and b.CreateTexture then pcall(SkinPanelButton, b, true) end

@@ -13389,11 +13389,13 @@ do
         local ss = stub.NewObject("Frame", "StackSplitFrame")
         ss.SingleItemSplitBackground = ss:CreateTexture()
         ss.LeftButton, ss.RightButton = stub.NewObject("Button"), stub.NewObject("Button")
+        ss.StackSplitText = ss:CreateFontString()
         ss.OkayButton, ss.CancelButton = stub.NewObject("Button"), stub.NewObject("Button")
         for _, b in ipairs({ ss.OkayButton, ss.CancelButton }) do
             b.Left, b.Middle, b.Right = b:CreateTexture(), b:CreateTexture(), b:CreateTexture()
         end
         local sd = W.SkinStackSplit(ss)
+        assert(sd and sd.text, "Zahl nicht aufgehellt")
         assert(sd and sd.field and sd.edge and (not ss.SingleItemSplitBackground:IsShown() or ss.SingleItemSplitBackground:GetAlpha() == 0)
             and W.ButtonSkin[ss.OkayButton] and W.ButtonSkin[ss.CancelButton], "Stapel teilen nicht gestaltet")
         W.done[menu] = nil
