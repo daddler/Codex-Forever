@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.58.0.0] – 2026-10-17
+
+### Neu
+- Artwork Scholomance: Kopfbild und 14 Begegnungen, Originale 1514×1039 – Ausschnitt 4:1 je Bild am Kopf.
+
 ## [6.57.0.0] – 2026-10-17
 
 ### Neu

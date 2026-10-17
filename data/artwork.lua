@@ -940,6 +940,71 @@ WeintCodex.Artworks = {
             },
         },
     },
+    scholomance = {
+        -- Originale 1514x1039, Ausschnitt je Bild (siehe make_artwork.py).
+        header = {
+            file = ART .. "scholomance/header",
+            w = 1024, h = 256, focusX = 0.58,
+        },
+        bosses = {
+            blood_steward = {
+                file = ART .. "scholomance/blood_steward",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            kirtonos = {
+                file = ART .. "scholomance/kirtonos",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            jandice_barov = {
+                file = ART .. "scholomance/jandice_barov",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            rattlegore = {
+                file = ART .. "scholomance/rattlegore",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            marduk_blackpool = {
+                file = ART .. "scholomance/marduk_blackpool",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            vectus = {
+                file = ART .. "scholomance/vectus",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            ras_frostwhisper = {
+                file = ART .. "scholomance/ras_frostwhisper",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            instructor_malicia = {
+                file = ART .. "scholomance/instructor_malicia",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            theolen_krastinov = {
+                file = ART .. "scholomance/theolen_krastinov",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            lorekeeper_polkelt = {
+                file = ART .. "scholomance/lorekeeper_polkelt",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            the_ravenian = {
+                file = ART .. "scholomance/the_ravenian",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            lord_alexei_barov = {
+                file = ART .. "scholomance/lord_alexei_barov",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            lady_illucia_barov = {
+                file = ART .. "scholomance/lady_illucia_barov",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            darkmaster_gandling = {
+                file = ART .. "scholomance/darkmaster_gandling",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
 
     drowned_city = {
         -- Originale 1983x793, Banner y 60. Bilder liegen fuer sieben Gestalten

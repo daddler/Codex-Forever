@@ -191,6 +191,23 @@ JOBS = [
     ("dungeons/lower_blackrock_spire/halycon", "lower_blackrock_spire/halycon.png", (0, 300, 1514, 378), (512, 128)),
     ("dungeons/lower_blackrock_spire/gizrul", "lower_blackrock_spire/gizrul_the_slavener.png", (0, 150, 1514, 378), (512, 128)),
     ("dungeons/lower_blackrock_spire/overlord_wyrmthalak", "lower_blackrock_spire/overlord_wyrmthalak.png", (0, 0, 1514, 378), (512, 128)),
+    # 6.58.0.0: Scholomance. Bosse 1514x1039, Banner 2172x724 - Ausschnitt 4:1
+    # je Bild am Kopf.
+    ("dungeons/scholomance/header", "scholomance/banner.png", (0, 90, 2172, 543)),
+    ("dungeons/scholomance/blood_steward", "scholomance/blood_steward.png", (0, 0, 1514, 378), (512, 128)),
+    ("dungeons/scholomance/kirtonos", "scholomance/kirtonos.png", (0, 0, 1514, 378), (512, 128)),
+    ("dungeons/scholomance/jandice_barov", "scholomance/jandice_barov.png", (0, 20, 1514, 378), (512, 128)),
+    ("dungeons/scholomance/rattlegore", "scholomance/rattlegore.png", (0, 60, 1514, 378), (512, 128)),
+    ("dungeons/scholomance/marduk_blackpool", "scholomance/marduk_blackpool.png", (0, 40, 1514, 378), (512, 128)),
+    ("dungeons/scholomance/vectus", "scholomance/vectus.png", (0, 60, 1514, 378), (512, 128)),
+    ("dungeons/scholomance/ras_frostwhisper", "scholomance/ras_frostwhisper.png", (0, 20, 1514, 378), (512, 128)),
+    ("dungeons/scholomance/instructor_malicia", "scholomance/instructor_malicia.png", (0, 0, 1514, 378), (512, 128)),
+    ("dungeons/scholomance/theolen_krastinov", "scholomance/theolen_krastinov.png", (0, 60, 1514, 378), (512, 128)),
+    ("dungeons/scholomance/lorekeeper_polkelt", "scholomance/lorekeeper_polkelt.png", (0, 50, 1514, 378), (512, 128)),
+    ("dungeons/scholomance/the_ravenian", "scholomance/the_ravenian.png", (0, 150, 1514, 378), (512, 128)),
+    ("dungeons/scholomance/lord_alexei_barov", "scholomance/lord_alexei_barov.png", (0, 80, 1514, 378), (512, 128)),
+    ("dungeons/scholomance/lady_illucia_barov", "scholomance/lady_illucia_barov.png", (0, 20, 1514, 378), (512, 128)),
+    ("dungeons/scholomance/darkmaster_gandling", "scholomance/darkmaster_gandling.png", (0, 30, 1514, 378), (512, 128)),
     # 6.50.1.0: Duesterbruch (drei Fluegel, ein Kopfbild). Banner 2172x724, die
     # drei grossen Oger 1515x1038 bzw. 1672x941 - Ausschnitt von oben, 4:1.
     ("dungeons/dire_maul/header", "dire_maul/banner.png", (0, 90, 2172, 543)),

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.58.0.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Scholomance ist bebildert.|r Ein Kopfbild und Bilder zu allen vierzehn Begegnungen – vom Blutdiener Kirtonos' bis zu Dunkelmeister Gandling.",
+        },
+    },
+    {
         version = "6.57.0.0",
         date    = "17.10.2026",
         notes   = {
