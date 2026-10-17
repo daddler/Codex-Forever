@@ -822,11 +822,18 @@ function QH.PaintBar()
         if b.key == "qhLow" then b:SetEnabled(Get("qhAvail") and true or false) end
         if b.key == "qhAllTargets" then b:SetEnabled(Get("qhTargets") and true or false) end
         local enabled = not (b.IsEnabled and not b:IsEnabled())
+        -- 6.55.1.0 (Beta-Test mit Bild: "die Buttons muessen schoener"):
+        -- halb durchsichtig ueberlappten Kappen und Mittelstueck - helle
+        -- Ringe an den Enden. Jetzt deckend gemischt (Akzent auf dem Grund
+        -- der Leiste), Kappen und Mitte sind eine Flaeche.
+        local base = WeintCodex.GameColors.kachelFill
         if on then
-            b:Paint(a[1], a[2], a[3], b._hot and 0.42 or 0.30)
+            local k = b._hot and 0.55 or 0.40
+            b:Paint(base[1] + (a[1] - base[1]) * k, base[2] + (a[2] - base[2]) * k,
+                base[3] + (a[3] - base[3]) * k, 1)
         else
-            local s1 = C.surface3 or C.surface1
-            b:Paint(s1[1], s1[2], s1[3], b._hot and 1 or 0.85)
+            local s1 = b._hot and (C.borderStrong or C.surface3) or C.surface3
+            b:Paint(s1[1], s1[2], s1[3], 1)
         end
         local tc = on and C.textBright or n
         b.text:SetTextColor(tc[1], tc[2], tc[3], enabled and (on and 1 or 0.8) or 0.35)

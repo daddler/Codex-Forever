@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.55.1.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Schalter der Questhilfe sind sauber rund.|r Keine hellen Ringe mehr an den Enden; eingeschaltet eine ruhige Fläche in deiner Klassenfarbe.",
+        },
+    },
+    {
         version = "6.55.0.0",
         date    = "17.10.2026",
         notes   = {
