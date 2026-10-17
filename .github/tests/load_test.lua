@@ -18144,6 +18144,13 @@ do
         local n = LU.UpdateBadges()
         assert(n == info.count and LU.badges[bagB] and LU.badges[bagB]:IsShown() and LU.badges[icoB]:IsShown()
             and LU.badges[bagB].text:GetText() == (n > 9 and "9+" or tostring(n)), "keine Zahl am Knopf: " .. tostring(n))
+        -- 6.61.3.0: Codex geoeffnet - Zahl weg bis zum Neuladen.
+        LU.MarkSeen()
+        assert(not LU.badges[bagB]:IsShown() and not LU.badges[icoB]:IsShown(), "Zahl nach dem Oeffnen noch da")
+        LU.seen = n - 1
+        LU.UpdateBadges()
+        assert(LU.badges[bagB]:IsShown(), "neue Zauber nach dem Oeffnen ohne Zahl")
+        LU.seen = nil
         K.Set("comfort", "levelUpPopup", false)
         assert(LU.UpdateBadges() == nil and not LU.badges[bagB]:IsShown(), "Zahl trotz Schalter aus")
         K.Set("comfort", "levelUpPopup", true)

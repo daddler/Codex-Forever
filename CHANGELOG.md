@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.3.0] – 2026-10-17
+
+### Geändert
+- Zahl der lernbaren Zauber an Sammelknopf und Codex-Symbol: nach dem Öffnen des Codex weg bis zum nächsten Laden (`LU.seen`, nicht gespeichert); steigt die Zahl danach, steht sie wieder da.
+
 ## [6.61.2.0] – 2026-10-17
 
 ### Behoben

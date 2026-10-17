@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.3.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Zahl an der Minikarte verschwindet, sobald du den Codex öffnest|r – beim nächsten Einloggen erinnert sie wieder, und neue Zauber nach einem Stufenaufstieg zeigt sie sofort.",
+        },
+    },
+    {
         version = "6.61.2.0",
         date    = "17.10.2026",
         notes   = {

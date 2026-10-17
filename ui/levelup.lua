@@ -232,8 +232,19 @@ local function Badge(f)
     return b
 end
 
+-- 6.61.3.0 (Beta-Test: "die Zahl soll verschwinden, wenn man Codex
+-- geoeffnet hat; beim naechsten Einloggen gerne wieder"): gesehen gilt bis
+-- zum Neuladen (nicht gespeichert) und nur fuer die gesehene Zahl - kommt
+-- spaeter mehr dazu (Stufenaufstieg), steht die Zahl wieder da.
+LU.seen = nil
+function LU.MarkSeen()
+    LU.seen = LU.Pending()
+    LU.UpdateBadges()
+end
+
 function LU.UpdateBadges()
     local n = LU.Pending()
+    if type(n) == "number" and type(LU.seen) == "number" and n <= LU.seen then n = 0 end
     for _, name in ipairs(LU.BADGE_TARGETS) do
         local f = _G[name]
         if type(f) == "table" and f.CreateTexture then
@@ -268,7 +279,14 @@ for _, e in ipairs({ "PLAYER_ENTERING_WORLD", "PLAYER_LEVEL_UP", "LEARNED_SPELL_
                      "LEARNED_SPELL_IN_TAB", "SPELLS_CHANGED", "TRAINER_CLOSED" }) do
     pcall(bev.RegisterEvent, bev, e)
 end
-bev:SetScript("OnEvent", function() LU.QueueBadges() end)
+bev:SetScript("OnEvent", function()
+    local mf = WeintCodex.MainFrame
+    if not LU.seenHooked and type(mf) == "table" and mf.HookScript then
+        LU.seenHooked = true
+        mf:HookScript("OnShow", LU.MarkSeen)
+    end
+    LU.QueueBadges()
+end)
 LU.badgeEvents = bev
 K.Listen(function(kind, key)
     if (kind == "active" or kind == "setting") and key == KEY then LU.QueueBadges() end
