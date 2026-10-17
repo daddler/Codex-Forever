@@ -132,6 +132,23 @@ local function Join(cond, spell)
     return cond .. " " .. spell
 end
 
+function MH.IsHunter()
+    if not _G.UnitClass then return false end
+    local _, class = _G.UnitClass("player")
+    return class == "HUNTER"
+end
+
+-- Name des Autoshots (Zauber 75) vom Client; ohne Antwort der deutsche.
+MH.AUTO_SHOT = 75
+function MH.AutoShotName()
+    local cs = _G.C_Spell
+    local n
+    if cs and cs.GetSpellName then n = cs.GetSpellName(MH.AUTO_SHOT)
+    elseif _G.GetSpellInfo then n = _G.GetSpellInfo(MH.AUTO_SHOT) end
+    if type(n) == "string" and n ~= "" then return n end
+    return "Automatischer Schuss"
+end
+
 -- Der Text des Makros fuer einen Entwurf. Rueckgabe: Text (oder nil),
 -- Liste der Erklaerungen (je Zeile), Fehlermeldung.
 function MH.Build(d)
@@ -146,7 +163,19 @@ function MH.Build(d)
     end
     if d.tooltip then Line("#showtooltip", "zeigt auf der Leiste Symbol, Abklingzeit und Reichweite des Zaubers") end
     if d.stopcasting then Line("/stopcasting", "bricht ab, was du gerade wirkst – der Zauber kommt sofort") end
-    if d.startattack then Line("/startattack", "beginnt den automatischen Angriff auf dein Ziel") end
+    if d.startattack then
+        -- 6.61.19.0 (Beta-Test: "nach Schlangengift oder Arkanem Schuss geht
+        -- der Jaeger in den Autohit statt Autoshot"): /startattack ist der
+        -- NAHKAMPF-Angriff und ersetzt den Autoshot. Beim Jaeger deshalb
+        -- der Autoshot selbst, mit "!" - erneut gedrueckt schaltet er sich
+        -- sonst wieder aus.
+        local shot = MH.IsHunter() and MH.AutoShotName()
+        if shot then
+            Line("/cast !" .. shot, "startet den Autoshot auf dein Ziel und schaltet ihn nie aus")
+        else
+            Line("/startattack", "beginnt den automatischen Nahkampfangriff auf dein Ziel")
+        end
+    end
     if d.kind == "modifier" then
         if s2 == "" then return nil, {}, "Wähle den zweiten Zauber (mit Zusatztaste)." end
         local m = Find(MH.MODS, d.mod)
@@ -478,7 +507,7 @@ function MH.BuildPage(B)
     B:Section("Extras")
     B:Row({ type = "toggle", label = "Symbol des Zaubers zeigen", description = "#showtooltip – Symbol, Abklingzeit, Reichweite.",
             get = function() return draft.tooltip end, set = function(v) draft.tooltip = v and true or false Changed() end },
-          { type = "toggle", label = "Angriff starten", description = "/startattack – für Nahkämpfer und Jäger.",
+          { type = "toggle", label = "Angriff starten", description = "Nahkampf: /startattack. Jäger: startet den Autoshot (/cast !Automatischer Schuss).",
             get = function() return draft.startattack end, set = function(v) draft.startattack = v and true or false Changed() end })
     B:Row({ type = "toggle", label = "Laufenden Zauber abbrechen", description = "/stopcasting – zum Unterbrechen und Notfallheilen.",
             get = function() return draft.stopcasting end, set = function(v) draft.stopcasting = v and true or false Changed() end },

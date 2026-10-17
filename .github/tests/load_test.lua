@@ -3299,6 +3299,12 @@ do
             == "/castsequence [@focus,exists,nodead][] A, B", "Abfolge ohne Neubeginn, mit Fokus")
         assert(Text({ startattack = true, stopcasting = true, spells = { "Tritt", "", "" } })
             == "#showtooltip\n/stopcasting\n/startattack\n/cast Tritt", "Extras")
+        -- 6.61.19.0: beim Jaeger der Autoshot statt Nahkampf.
+        local oUC = _G.UnitClass
+        _G.UnitClass = function() return "Jäger", "HUNTER", 3 end
+        local ht = Text({ startattack = true, spells = { "Arkaner Schuss", "", "" } })
+        _G.UnitClass = oUC
+        assert(ht:find("/cast !", 1, true) and not ht:find("/startattack", 1, true), "Jaeger bekommt /startattack: " .. ht)
         local x, e = Text({ spells = { "", "", "" } })
         assert(x == nil and e:find("Zauber", 1, true), "leer ohne Hinweis")
         x, e = Text({ kind = "sequence", spells = { "A", "", "" } })

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.19.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFJäger-Makros starten den Autoshot statt den Nahkampf|r – „Angriff starten“ im Makro-Helfer schreibt beim Jäger jetzt „/cast !Automatischer Schuss“. Bereits angelegte Makros bitte neu erstellen oder die Zeile „/startattack“ entfernen.",
+        },
+    },
+    {
         version = "6.61.18.0",
         date    = "17.10.2026",
         notes   = {

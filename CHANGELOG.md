@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.19.0] – 2026-10-17
+
+### Behoben
+- Makro-Helfer: „Angriff starten“ schrieb auch beim Jäger `/startattack` (Beschreibung empfahl es sogar „für Jäger“) – das ist der Nahkampfangriff und ersetzt den Autoshot. Beim Jäger jetzt `/cast !<Autoshot>` (Name vom Client, Zauber 75).
+
 ## [6.61.18.0] – 2026-10-17
 
 ### Behoben
