@@ -118,6 +118,69 @@ function LB.Line(p)
 end
 
 --------------------------------------------------
+-- Wo liegen sie? (6.57.0.0)
+--------------------------------------------------
+-- Fundort je Buch aus dem Bestand (Karte, x, y in Prozent). Gezeigt nur,
+-- was du noch nicht abgegeben hast und nicht schon in der Tasche traegst.
+
+function LB.Missing()
+    local out = {}
+    for _, b in ipairs(LB.Mine()) do
+        if LB.Done(b[1]) == false and not InBags(b[2]) and type(b[5]) == "number" and b[5] > 0 then
+            out[#out + 1] = b
+        end
+    end
+    return out
+end
+
+-- Naechstes fehlendes Buch auf deinem Kontinent (Luftlinie), oder nil.
+function LB.Nearest()
+    local K = WeintCodex.UIKit
+    if not (K and K.PlayerWorld and K.ToWorld) then return nil end
+    local pc, pn, pw = K.PlayerWorld()
+    if not pc then return nil end
+    local best, bestD
+    for _, b in ipairs(LB.Missing()) do
+        local c, n, w = K.ToWorld(b[5], b[6] / 100, b[7] / 100)
+        if c == pc and n then
+            local d = (n - pn) ^ 2 + (w - pw) ^ 2
+            if not bestD or d < bestD then best, bestD = b, d end
+        end
+    end
+    return best, bestD and math.sqrt(bestD) or nil
+end
+
+function LB.ZoneName(map)
+    local cm = _G.C_Map
+    if not (cm and cm.GetMapInfo) then return nil end
+    local ok, info = pcall(cm.GetMapInfo, map)
+    local n = ok and type(info) == "table" and Plain(info.name)
+    return type(n) == "string" and n or nil
+end
+
+-- Name im Spiel (Client), sonst der englische aus dem Bestand.
+function LB.BookName(b)
+    local ci = _G.C_Item
+    if ci and ci.GetItemNameByID then
+        local ok, n = pcall(ci.GetItemNameByID, b[2])
+        n = ok and Plain(n) or nil
+        if type(n) == "string" and n ~= "" then return n end
+    end
+    return b[4]
+end
+
+-- Questpfeil auf ein Buch (nil: auf das naechste). Der Pfeil zeigt dorthin,
+-- bis das Buch in der Tasche liegt oder abgegeben ist.
+function LB.Guide(b)
+    b = b or LB.Nearest()
+    local QA = WeintCodex.UIQuestArrow
+    if not (b and QA and QA.SetCustom) then return false end
+    QA.SetCustom({ map = b[5], x = b[6] / 100, y = b[7] / 100, title = "Buch: " .. LB.BookName(b),
+        done = function() return InBags(b[2]) or LB.Done(b[1]) == true end })
+    return true
+end
+
+--------------------------------------------------
 -- Tooltip jedes Buches
 --------------------------------------------------
 

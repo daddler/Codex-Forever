@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.57.0.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Bücher der Bibliothek stehen auf der Karte.|r Jedes Buch, das dir noch fehlt, hat ein goldenes Buchsymbol am Fundort – ein Klick darauf stellt den Questpfeil dorthin. Filter „Bücher“ in der Leiste der Questhilfe.",
+            "Auf der Startseite nennt die Karte „Bibliothek“ das nächste fehlende Buch; „Pfeil zum Buch“ führt hin. Liegt es in der Tasche, gibt der Pfeil frei.",
+        },
+    },
+    {
         version = "6.56.0.0",
         date    = "17.10.2026",
         notes   = {

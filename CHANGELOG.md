@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.57.0.0] – 2026-10-17
+
+### Neu
+- Bücher: Fundorte (`LB.Missing`, `LB.Nearest` über `K.ToWorld`), Kartenmarken in der Questhilfe (Art `book`, Filter `qhBooks`, Klick → Pfeil), Questpfeil mit eigenem Ziel (`QA.SetCustom`, endet bei Buch in der Tasche/abgegeben oder `QA.Skip`), Startseite: nächstes Buch mit „Pfeil zum Buch“.
+
 ## [6.56.0.0] – 2026-10-17
 
 ### Neu

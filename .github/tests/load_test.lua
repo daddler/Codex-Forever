@@ -18842,6 +18842,22 @@ do
         local lines = LB.TooltipLines(item)
         assert(lines and lines[1]:find("schon abgegeben", 1, true), "Tooltip des Buches")
         for _, l in ipairs(lines) do assert(not l:find("ForeverGuide", 1, true), "fremder Name im Spiel") end
+        -- 6.57.0.0: Fundorte - fehlende auf der Karte, Questpfeil dorthin.
+        local miss = LB.Missing()
+        assert(#miss == #mine - 10, "fehlende Buecher falsch")
+        local b = miss[1]
+        local QH = WeintCodex.UIQuestHelper
+        QH.Forget()
+        local found
+        for _, e in ipairs(QH.ForMap(b[5])) do if e.kind == "book" and e.book == b then found = e end end
+        assert(found and math.abs(found.x - b[6] / 100) < 1e-9, "Buch nicht auf seiner Karte")
+        local QA = WeintCodex.UIQuestArrow
+        assert(LB.Guide(b) and QA.custom and QA.custom.map == b[5], "Pfeil nicht gesetzt")
+        doneSet[b[1]] = true
+        assert(QA.custom.done(), "abgegebenes Buch haelt den Pfeil")
+        QA.Skip()
+        assert(QA.custom == nil, "Pfeil nicht geloest")
+        QH.Forget()
         G.C_QuestLog, G.UnitFactionGroup, G.C_Item = oQ, oF, oC
     end)
     Check(ok, "Bibliothek: Buecher vom Client gezaehlt, naechste Belohnung, Tooltip" .. (ok and "" or (": " .. tostring(err))))

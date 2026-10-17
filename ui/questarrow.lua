@@ -365,6 +365,17 @@ local function ResolveTarget(playerMap)
     local cs, cmap, cx, cy = CorpseTarget(playerMap)
     if cs then return cs, cmap, cx, cy, "Deine Leiche", "corpse" end
 
+    -- 6.57.0.0: eigenes Ziel (Buch der Bibliothek, modules/library.lua) -
+    -- bis es erledigt ist oder der Spieler es loest (QA.Skip).
+    local cu = QA.custom
+    if cu then
+        if cu.done and cu.done() then
+            QA.custom = nil
+        else
+            return "ok", cu.map, cu.x, cu.y, cu.title, "custom"
+        end
+    end
+
     local st = _G.C_SuperTrack
     if not st then return "none" end
 
@@ -558,7 +569,13 @@ function QA.Replan()
 end
 
 -- "/wcui pfeil weiter": das jetzige Ziel 10 Minuten auslassen.
+function QA.SetCustom(t)
+    QA.custom = t
+    if QA.Update then pcall(QA.Update, true) end
+end
+
 function QA.Skip()
+    if QA.custom then QA.custom = nil return end
     local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
     local id = QA.manual or QA.Chosen
     if id then QA.skipped[id] = now + 600 end

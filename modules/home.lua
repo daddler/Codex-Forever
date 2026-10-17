@@ -360,8 +360,16 @@ function HM.Steps(ctx)
             headline = "Bibliothek: " .. bk.done .. " von " .. bk.next.goal .. " Büchern"
         end
         local detail = LB.Line(bk) .. (who and (" · bei " .. who .. ", " .. place) or "")
+        -- 6.57.0.0: nichts abzugeben - dann das naechste fehlende Buch, mit
+        -- Questpfeil auf Klick.
+        local near = not bk.claim and bk.bag == 0 and LB.Nearest and LB.Nearest() or nil
+        if near then
+            detail = LB.Line(bk) .. " · nächstes: " .. LB.BookName(near)
+                .. (LB.ZoneName(near[5]) and (", " .. LB.ZoneName(near[5])) or "")
+        end
         add({ key = "books", label = "Bibliothek", title = title, headline = headline,
-              detail = detail, sub = LB.Line(bk), optional = not bk.claim and bk.bag == 0 })
+              detail = detail, sub = LB.Line(bk), optional = not bk.claim and bk.bag == 0,
+              action = near and "Pfeil zum Buch" or nil, go = near and { book = near } or nil })
     end
 
     local pr = ctx.professions and ctx.professions[1]
@@ -532,6 +540,11 @@ end
 local function Go(step)
     local go = step and step.go
     if not go then return end
+    if go.book then
+        local LB = WeintCodex.Library
+        if LB and LB.Guide then LB.Guide(go.book) end
+        return
+    end
     if go.map then
         -- Ueber modules/questmap.lua (nur C_Map.OpenWorldMap, nie im Kampf -
         -- alles andere schrieb in die Weltkarte und liess das Spiel im

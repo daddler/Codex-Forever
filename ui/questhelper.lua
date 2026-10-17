@@ -53,6 +53,7 @@ QH.DEFAULTS = {
     -- Kalender des Spiels laeuft - oder auf Wunsch alle.
     qhEvents    = true,  -- Feste: Quests laufender Feste zeigen
     qhEventsAll = false, -- auch Feste, die gerade nicht laufen
+    qhBooks     = true,  -- 6.57.0.0: Buecher der Bibliothek, die noch fehlen
 }
 QH.FILTERS = {
     { key = "qhAvail",   text = "Neue Quests" },
@@ -61,6 +62,7 @@ QH.FILTERS = {
     { key = "qhTargets", text = "Ziele" },
     { key = "qhAllTargets", text = "Alle Ziele" },
     { key = "qhEvents",  text = "Feste" },
+    { key = "qhBooks",   text = "Bücher" },
 }
 QH.SIZE = 20          -- "!" und "?" (so gross wie die des Spiels)
 QH.DOT = 16           -- Ziel (Bild: Schwert, Beutel, Zahnrad)
@@ -347,7 +349,7 @@ function QH.Places(rec, mapID, add)
 end
 
 local forMap = {}
-QH.stats = { built = 0, avail = 0, turnin = 0, target = 0 }
+QH.stats = { built = 0, avail = 0, turnin = 0, target = 0, book = 0 }
 
 local function Add(out, seen, kind, who, isObj, quest, x, y, faint, sub)
     local key = kind .. (isObj and "o" or "n") .. who .. ":" .. x .. ":" .. y
@@ -418,15 +420,24 @@ function QH.ForMap(mapID)
             end
         end
     end
+    -- 6.57.0.0: Buecher der Bibliothek, die noch fehlen (modules/library.lua).
+    local LB = WeintCodex.Library
+    if Get("qhBooks") and LB and LB.Missing then
+        for _, b in ipairs(LB.Missing()) do
+            if b[5] == mapID then
+                out[#out + 1] = { kind = "book", book = b, x = b[6] / 100, y = b[7] / 100, quests = {} }
+            end
+        end
+    end
     -- Ziele unten, Geber oben.
-    local order = { target = 1, turnin = 2, avail = 3 }
+    local order = { target = 1, book = 2, turnin = 3, avail = 4 }
     table.sort(out, function(a, b)
         if a.kind ~= b.kind then return order[a.kind] < order[b.kind] end
         if a.x ~= b.x then return a.x < b.x end
         return a.y < b.y
     end)
     local st = QH.stats
-    st.built, st.avail, st.turnin, st.target = st.built + 1, 0, 0, 0
+    st.built, st.avail, st.turnin, st.target, st.book = st.built + 1, 0, 0, 0, 0
     for _, e in ipairs(out) do st[e.kind] = st[e.kind] + 1 end
     forMap[mapID] = out
     return out
@@ -495,6 +506,21 @@ local function Tooltip(self)
     if not (gt and e) then return end
     local d = Data()
     gt:SetOwner(self, "ANCHOR_RIGHT")
+    if e.kind == "book" then
+        local LB = WeintCodex.Library
+        local b = e.book
+        local t, m, g = C.textBright, C.textMuted, C.gold
+        gt:SetText(LB.BookName(b), t[1], t[2], t[3])
+        gt:AddLine("Buch der Bibliothek · noch nicht abgegeben", g[1], g[2], g[3])
+        local line = LB.Line(LB.Progress())
+        if line then gt:AddLine(line, C.textNormal[1], C.textNormal[2], C.textNormal[3]) end
+        gt:AddLine(string.format("%s %.1f, %.1f", LB.ZoneName(b[5]) or "", b[6], b[7]), m[1], m[2], m[3])
+        gt:AddLine(" ")
+        gt:AddLine("Klick: Questpfeil dorthin", m[1], m[2], m[3])
+        gt:AddLine("Unbestätigt – Wissensstand aus der Beta.", m[1], m[2], m[3], true)
+        gt:Show()
+        return
+    end
     local rec = e.obj and d.o[e.who] or d.n[e.who]
     local t, n, m = C.textBright, C.textNormal, C.textMuted
     gt:SetText(QH.Name(rec) or "?", t[1], t[2], t[3])
@@ -575,6 +601,10 @@ local function NewPin(holder)
     p:SetScript("OnMouseUp", function(self, button)
         local e = self.entry
         if not e then return end
+        if e.kind == "book" then
+            if button == "LeftButton" and WeintCodex.Library then WeintCodex.Library.Guide(e.book) end
+            return
+        end
         if button == "RightButton" then QH.SetFocus(nil) return end
         local mine = {}
         for _, id in ipairs(e.quests) do if log[id] then mine[#mine + 1] = id end end
@@ -609,6 +639,7 @@ QH.ICONS = {
     slay   = { file = "Interface\\AddOns\\WeintCodex\\media\\questhelper\\slay_mono" },
     loot   = { file = "Interface\\AddOns\\WeintCodex\\media\\questhelper\\loot_mono" },
     object = { file = "Interface\\AddOns\\WeintCodex\\media\\questhelper\\object_mono" },
+    book   = { file = "Interface\\AddOns\\WeintCodex\\media\\ui\\icon_book" },
 }
 
 local function HasAtlas(name)
@@ -641,10 +672,12 @@ local function Dress(p, e)
     local focus = QH.focus
     if p.entry == e and p._focus == focus then return end
     p.entry, p._focus = e, focus
-    local target = e.kind == "target"
+    local book = e.kind == "book"
+    local target = e.kind == "target" or book
     local size = target and QH.DOT or QH.SIZE
+    if book then size = QH.DOT + 2 end
     p:SetSize(size, size)
-    local which = target and (e.sub or "slay") or e.kind
+    local which = book and "book" or (e.kind == "target" and (e.sub or "slay")) or e.kind
     QH.SetIcon(p.icon, which)
     if p.icon.SetDesaturated then p.icon:SetDesaturated(e.faint and true or false) end
     p.ring:SetShown(target)
@@ -653,11 +686,11 @@ local function Dress(p, e)
     local alpha = 1
     if target then
         p._glyph = QH.GLYPH
-        local hue = QH.Hue((focus and Has(e.quests, focus)) and focus or e.quests[1])
+        local hue = book and C.gold or QH.Hue((focus and Has(e.quests, focus)) and focus or e.quests[1])
         p.ring:SetVertexColor(hue[1], hue[2], hue[3], 1)
         local t = C.textBright
         p.icon:SetVertexColor(t[1], t[2], t[3], 1)
-        if focus and not Has(e.quests, focus) then alpha = QH.DIM end
+        if not book and focus and not Has(e.quests, focus) then alpha = QH.DIM end
     else
         p._glyph = size
         p.halo:SetSize(size * 1.9, size * 1.9)
