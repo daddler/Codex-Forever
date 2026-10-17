@@ -1269,6 +1269,16 @@ end
 --------------------------------------------------
 
 print("")
+-- Reisedaten: Menethil <-> Auberdine faehrt auf Forever nur im Dreieck
+-- ueber Suederstade (Linie 11167), die alte Direktfahrt 295 nicht mehr.
+do
+    local r = WeintCodex.TravelData and WeintCodex.TravelData.routes
+    Check(r and r[295] == nil, "Reisedaten: alte Direktfahrt Menethil-Auberdine (295) entfernt")
+    local tri = r and r[11167]
+    Check(tri and tri[4][1] == 9 and tri[4][4] == 17 and tri[4][7] == 10,
+        "Reisedaten: Dreieck Menethil -> Suederstade -> Auberdine (11167) vorhanden")
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

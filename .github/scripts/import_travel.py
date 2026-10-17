@@ -148,6 +148,13 @@ def q(s):
 FACTION = {"Alliance": 1, "Horde": 2}
 
 
+# Linien, die es auf Forever nicht mehr gibt. 295: Menethil <-> Auberdine
+# direkt - auf Forever faehrt das Schiff im Dreieck Menethil -> Suederstade
+# -> Auberdine -> Menethil (Linie 11167, steht im Bestand). Beta-Test
+# 17.10.2026: der Planer bot die alte Direktfahrt an.
+DROP_ROUTES = {295}
+
+
 def items(t):
     if isinstance(t, list):
         return list(enumerate(t, 1))
@@ -184,6 +191,8 @@ def write(ns):
           "    --                { an, ab, Kontinent, n, w, ... } } (Bahn, zum Messen der Abfahrt)",
           "    routes = {"]
     for k, r in items(ns["Routes"]):
+        if int(k) in DROP_ROUTES:
+            continue
         stops = ", ".join(f"{s['dock']}, {s['arrive']}, {s['depart']}" for _, s in items(r["stops"]))
         frames = ", ".join(f"{f[1]}, {f[2]}, {f[3]}, {num(f[4])}, {num(f[5])}" for _, f in items(r["frames"])
                            for f in [dict(items(f))])

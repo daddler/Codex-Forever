@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.10.0] – 2026-10-17
+
+### Behoben
+- Routenplaner: Linie 295 (Schiff Menethil ↔ Auberdine direkt) entfernt – auf Forever fährt nur das Dreieck Menethil → Süderstade → Auberdine → Menethil (11167, war schon im Bestand). `import_travel.py` lässt sie über `DROP_ROUTES` weg; `data_test.lua` prüft beides.
+
 ## [6.61.9.0] – 2026-10-17
 
 ### Behoben

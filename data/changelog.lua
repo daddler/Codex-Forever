@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.10.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDas Schiff Menethil–Auberdine fährt im Planer wie im Spiel|r – über Süderstade im Dreieck. Die alte Direktfahrt, die es nicht mehr gibt, schlägt der Routenplaner nicht mehr vor.",
+        },
+    },
+    {
         version = "6.61.9.0",
         date    = "17.10.2026",
         notes   = {
