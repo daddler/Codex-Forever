@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.13.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFKlickzauber zeigen ihre Nummer|r – im Tooltip der Zaubertafel steht jetzt „Zauber 12345“, damit ein falscher Eintrag eindeutig gemeldet werden kann.",
+        },
+    },
+    {
         version = "6.61.12.0",
         date    = "17.10.2026",
         notes   = {

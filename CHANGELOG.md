@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.13.0] – 2026-10-17
+
+### Geändert
+- Klickzauber: Tooltip der Zaubertafel nennt die Zauber-ID (Beta-Test: zwei „Wiederbeleb…“ beim Druiden, einer falsch – Kennung fehlt zum Aussortieren).
+
 ## [6.61.12.0] – 2026-10-17
 
 ### Behoben

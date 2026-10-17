@@ -793,6 +793,12 @@ function CC.BuildPicker(parent, width)
             tip:SetOwner(self, "ANCHOR_TOP")
             if e.id and tip.SetSpellByID then tip:SetSpellByID(e.id) else tip:SetText(e.name, 1, 1, 1) end
             local a = C.accent
+            -- 6.61.13.0: die Nummer des Zaubers, damit ein falscher Eintrag
+            -- eindeutig gemeldet werden kann (Beta-Test: zwei "Wiederbeleb…").
+            if type(e.id) == "number" then
+                local d = C.textMuted
+                tip:AddLine("Zauber " .. e.id, d[1], d[2], d[3])
+            end
             tip:AddLine("Klick: auf " .. CC.KeyText(draft) .. " legen", a[1], a[2], a[3])
             local ranks = e.ranks or {}
             if #ranks > 1 then
