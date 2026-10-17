@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.14.0] – 2026-10-17
+
+### Neu
+- Eigene Gruppenrahmen: Buffs (`HELPFUL`, über `UIAuras` wie die Debuffs) unten links; Schalter `buffs`, `buffSize` (14), `buffMax` (4).
+
 ## [6.61.13.0] – 2026-10-17
 
 ### Geändert

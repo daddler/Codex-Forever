@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.14.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFBuffs in den Gruppenrahmen|r – Segen, Intelligenz, Mal der Wildnis & Co. stehen unten links in jedem Rahmen, die Debuffs weiter unten rechts. Größe und Anzahl unter Gruppenrahmen einstellbar.",
+        },
+    },
+    {
         version = "6.61.13.0",
         date    = "17.10.2026",
         notes   = {

@@ -60,6 +60,11 @@ local defaults = {
     debuffs     = true,
     debuffSize  = 16,
     debuffMax   = 3,
+    -- 6.61.14.0 (Beta-Test: "die Buffs im Gruppenfenster muessten angezeigt
+    -- werden - SdK, Int etc."): Buffs unten links, Debuffs unten rechts.
+    buffs       = true,
+    buffSize    = 14,
+    buffMax     = 4,
     onlyDispellable = true,
     -- Seit 6.3.2.4 (Beta-Test: "muss etwas detaillierter werden"):
     healPrediction = true,   -- eingehende Heilung als heller Balken hinter dem Leben
@@ -197,6 +202,13 @@ function Btn:Layout(w, h)
     c.debuffs:ClearAllPoints()
     c.debuffs:SetPoint("BOTTOMRIGHT", c, "BOTTOMRIGHT", -2, ph + 3)
     c.debuffs:SetShown(Opt("debuffs"))
+    if c.buffs then
+        c.buffs:ApplyLayout({ filter = "HELPFUL", max = Opt("buffMax"), size = Opt("buffSize"), spacing = 1,
+            anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = Opt("buffMax") })
+        c.buffs:ClearAllPoints()
+        c.buffs:SetPoint("BOTTOMLEFT", c, "BOTTOMLEFT", 2, ph + 3)
+        c.buffs:SetShown(Opt("buffs"))
+    end
 end
 
 function Btn:Refresh()
@@ -450,6 +462,8 @@ local function Style(b)
     c.flash:SetShown(false)
     c.debuffs = WeintCodex.UIAuras.Create(host, { filter = "HARMFUL|RAID", max = 3, size = 16,
         spacing = 1, anchor = "BOTTOMRIGHT", growth = "LEFT", growthV = "UP", perRow = 3 })
+    c.buffs = WeintCodex.UIAuras.Create(host, { filter = "HELPFUL", max = 4, size = 14,
+        spacing = 1, anchor = "BOTTOMLEFT", growth = "RIGHT", growthV = "UP", perRow = 4 })
 
     for k, v in pairs(Btn) do b[k] = v end
 
@@ -460,6 +474,7 @@ local function Style(b)
         self._wcUnit = value
         Remap()
         self._wc.debuffs:SetUnit(value)
+        if self._wc.buffs then self._wc.buffs:SetUnit(value) end
         self:Refresh()
     end)
     b:HookScript("OnShow", function(self) self:Refresh() self:UpdateRange() end)
@@ -903,13 +918,14 @@ K.Register({
                         { value = "none",    text = "Nichts" },
                         { value = "percent", text = "Leben in %" },
                         { value = "deficit", text = "Fehlendes Leben" } } })
-            B:Section("Kraft und Debuffs")
+            B:Section("Kraft, Buffs und Debuffs")
             B:Row({ type = "toggle", label = "Kraftleiste", key = "power" },
                   { type = "toggle", label = "Debuffs", key = "debuffs" })
             B:Row({ type = "toggle", label = "Nur bannbare", key = "onlyDispellable",
                     disabled = function() return not K.Get(KEY, "debuffs") end,
                     description = "Was du selbst entfernen kannst." },
-                  { type = "empty" })
+                  { type = "toggle", label = "Buffs", key = "buffs",
+                    description = "Unten links im Rahmen, z. B. Segen, Intelligenz, Mal der Wildnis." })
             B:Section("Mehr im Rahmen")
             B:Row({ type = "toggle", label = "Eingehende Heilung", key = "healPrediction",
                     description = "Ein heller grüner Balken hinter dem Leben: so weit reichen Heilungen, die gerade gewirkt werden." },
@@ -937,6 +953,11 @@ K.Register({
                   { type = "slider", label = "Höchstens Debuffs", key = "debuffMax", min = 1, max = 6, step = 1,
                     format = function(v) return tostring(v) end,
                     disabled = function() return not K.Get(KEY, "debuffs") end })
+            B:Row({ type = "slider", label = "Symbolgröße der Buffs", key = "buffSize", min = 10, max = 24, step = 1, format = px,
+                    disabled = function() return not K.Get(KEY, "buffs") end },
+                  { type = "slider", label = "Höchstens Buffs", key = "buffMax", min = 1, max = 8, step = 1,
+                    format = function(v) return tostring(v) end,
+                    disabled = function() return not K.Get(KEY, "buffs") end })
             B:Row({ type = "toggle", label = "Krone beim Gruppenleiter", key = "leaderIcon" },
                   { type = "empty" })
         end },
