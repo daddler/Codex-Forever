@@ -13385,6 +13385,17 @@ do
         _G.StaticPopup3 = nil
         assert(d and not d.glow and d.light and d.edge and goldy > 0, "Dialog mit Schein der Klasse oder ohne Kante in Gold")
         assert(classy == 0, "Klassenfarbe in Menue oder Dialog: " .. classy)
+        -- 6.61.8.0: Stapel teilen wie die Dialoge, Zahlenfeld zwischen den Pfeilen.
+        local ss = stub.NewObject("Frame", "StackSplitFrame")
+        ss.SingleItemSplitBackground = ss:CreateTexture()
+        ss.LeftButton, ss.RightButton = stub.NewObject("Button"), stub.NewObject("Button")
+        ss.OkayButton, ss.CancelButton = stub.NewObject("Button"), stub.NewObject("Button")
+        for _, b in ipairs({ ss.OkayButton, ss.CancelButton }) do
+            b.Left, b.Middle, b.Right = b:CreateTexture(), b:CreateTexture(), b:CreateTexture()
+        end
+        local sd = W.SkinStackSplit(ss)
+        assert(sd and sd.field and sd.edge and (not ss.SingleItemSplitBackground:IsShown() or ss.SingleItemSplitBackground:GetAlpha() == 0)
+            and W.ButtonSkin[ss.OkayButton] and W.ButtonSkin[ss.CancelButton], "Stapel teilen nicht gestaltet")
         W.done[menu] = nil
     end)
     Check(okM, "Spielmenue und Dialoge: Gold, Linie unter dem Titel, Haarlinien zwischen Gruppen, kein Schein der Klasse"

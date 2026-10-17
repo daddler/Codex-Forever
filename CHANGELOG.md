@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.8.0] – 2026-10-17
+
+### Neu
+- `StackSplitFrame` in Gold wie die Dialoge (`W.SkinStackSplit`): Grund `.SingleItemSplitBackground` aus, eigenes Zahlenfeld zwischen den Pfeilen, OK/Abbrechen als Flächenknöpfe. Nur Bilder, kein Skript.
+
 ## [6.61.7.0] – 2026-10-17
 
 ### Geändert

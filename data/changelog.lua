@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.8.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFStapel teilen im WeintCodex-Stil|r – das kleine Fenster mit Zahl, OK und Abbrechen sieht jetzt aus wie die übrigen Dialoge.",
+        },
+    },
+    {
         version = "6.61.7.0",
         date    = "17.10.2026",
         notes   = {

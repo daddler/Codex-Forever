@@ -1668,6 +1668,37 @@ function W.SkinPopup(f)
     return d
 end
 
+-- Stapel teilen (6.61.8.0, Beta-Test: "dieses Fenster soll auch im Stil
+-- von WeintCodex"). Gemessen mit /wcui fenster: ein Bild als Grund samt
+-- Zahlenfeld (.SingleItemSplitBackground), rote Knoepfe OkayButton/
+-- CancelButton (Left/Middle/Right), Pfeile LeftButton/RightButton. Wie die
+-- Dialoge: nur Bilder, kein Skript - Gold (S.CALM), das Fenster gehoert
+-- nicht zur Klasse. Das Zahlenfeld war Teil des Grundes, es kommt als
+-- eigene Flaeche zwischen die Pfeile zurueck.
+function W.SkinStackSplit(f)
+    if type(f) ~= "table" or popupDone[f] or not f.CreateTexture or (f.IsForbidden and f:IsForbidden()) then
+        return popupDone[f]
+    end
+    local d = W.SkinPopup(f)
+    if not d then return nil end
+    HideDecor(f.SingleItemSplitBackground)
+    HideDecor(f.MultiItemSplitBackground)
+    local l, r = f.LeftButton, f.RightButton
+    if type(l) == "table" and type(r) == "table" then
+        d.field = f:CreateTexture(nil, "BORDER")
+        d.field:SetPoint("TOPLEFT", l, "TOPRIGHT", 2, 2)
+        d.field:SetPoint("BOTTOMRIGHT", r, "BOTTOMLEFT", -2, -2)
+        local s0 = C.surface0 or C.surface1
+        d.field:SetColorTexture(s0[1], s0[2], s0[3], 0.95)
+        own[d.field] = true
+    end
+    for _, k in ipairs({ "OkayButton", "CancelButton" }) do
+        local b = f[k]
+        if type(b) == "table" and b.CreateTexture then pcall(SkinPanelButton, b, true) end
+    end
+    return d
+end
+
 local function SkinPanelButtons(f, depth)
     if depth > 10 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
     local ok, isButton = pcall(IsButton, f)
@@ -2666,6 +2697,7 @@ function W.Apply()
     end
     for _, path in ipairs(W.OWN_BG_PATHS) do W.OwnBackground(W.Resolve(path)) end
     for _, n in ipairs(W.POPUPS) do W.SkinPopup(_G[n]) end
+    W.SkinStackSplit(_G.StackSplitFrame)
     -- Wuerfeln um Beute (ui/lootroll.lua, 6.10.3.1), laedt nach dieser Datei.
     local LR = WeintCodex.UILootRoll
     if LR then LR.Apply() end
