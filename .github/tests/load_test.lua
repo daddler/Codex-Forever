@@ -18818,6 +18818,49 @@ do
     Check(ok, "Charakterfenster: Gegenstandsstufe vom Client, keine 0" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.54.0.0: Flugzeit - Ziel vom Klick, Dauer gemessen/Daten/unbekannt, gemessen nach der Landung.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local FT, K = WeintCodex.UIFlightTimer, WeintCodex.UIKit
+        local oT, oM, oG, oTaxi = G.C_TaxiMap, G.GetTaxiMapID, G.GetTime, G.UnitOnTaxi
+        local now = 100
+        G.GetTime = function() return now end
+        G.GetTaxiMapID = function() return 1415 end
+        G.C_TaxiMap = { GetAllTaxiNodes = function() return {
+            { nodeID = 6, slotIndex = 1, state = 0, name = "Ironforge, Dun Morogh" },
+            { nodeID = 8, slotIndex = 2, state = 1, name = "Thelsamar, Loch Modan" },
+            { nodeID = 999, slotIndex = 3, state = 1, name = "Nirgendwo, Testland" } } end }
+        WeintCodex_SavedData.flightTimes = nil
+        -- Daten: aus travel.lua, falls vorhanden
+        FT.ReadMap()
+        FT.OnTake(2)
+        assert(FT.Start(), "Flug nicht begonnen")
+        local f = FT.state()
+        assert(f.from == 6 and f.to == 8 and f.name == "Thelsamar", "Start/Ziel falsch")
+        now = 160
+        FT.Tick()
+        assert(FT.frame:IsShown(), "Anzeige im Flug nicht da")
+        if f.total then
+            assert(FT.frame.time:GetText():find("Landung", 1, true), "keine Landezeit trotz Dauer")
+        end
+        assert(FT.Land() == 60, "Flug nicht gemessen")
+        assert(FT.Seconds(6, 8) == 60, "Messung geht nicht vor")
+        assert(not FT.frame:IsShown(), "Anzeige nach der Landung noch da")
+        -- Unbekannte Strecke: keine Landezeit, ehrlich unbekannt.
+        FT.ReadMap()
+        FT.OnTake(3)
+        FT.Start()
+        now = 170
+        FT.Tick()
+        assert(FT.frame.time:GetText():find("unbekannt", 1, true), "unbekannte Strecke mit Landezeit")
+        FT.Land()
+        WeintCodex_SavedData.flightTimes = nil
+        G.C_TaxiMap, G.GetTaxiMapID, G.GetTime, G.UnitOnTaxi = oT, oM, oG, oTaxi
+    end)
+    Check(ok, "Flugzeit: Ziel vom Klick, Dauer gemessen vor Daten, unbekannt ehrlich" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.53.3.0: Danke in Instanzen schaltbar, ab Werk aus.
 do
     local G = _G

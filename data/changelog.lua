@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.54.0.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFNeu: die Flugzeit.|r Beim Fliegen zeigt eine Leiste, wohin es geht, wann du landest und wie weit du bist. Verschieben im Gestaltungsmodus, abschaltbar unter Komfort → Karte.",
+            "Kennt WeintCodex eine Strecke noch nicht, steht dort ehrlich „unbekannt“ und die Zeit seit dem Abflug – nach der Landung ist sie gemessen, für alle deine Charaktere.",
+        },
+    },
+    {
         version = "6.53.3.0",
         date    = "17.10.2026",
         notes   = {

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.54.0.0] – 2026-10-17
+
+### Neu
+- Flugzeit (`ui/flighttimer.lua`): Ziel aus `TakeTaxiNode` + `C_TaxiMap.GetAllTaxiNodes` (slotIndex), Start = Punkt „Current“. Dauer: eigene Messung (`SavedData.flightTimes`, kontoweit) → Messung des Routenplaners → `TravelData.flights` (classic) → sonst „unbekannt“ mit Zeit seit Abflug. Mover `flighttimer`, Schalter `flightTimer` (an) auf der Komfortseite „Karte“.
+
 ## [6.53.3.0] – 2026-10-17
 
 ### Neu
