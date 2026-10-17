@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.16.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFKeine falsche Buff-Erinnerung mehr beim Kampfbeginn|r – im Kampf verrät das Spiel die eigenen Buffs nicht; „Mal der Wildnis fehlt“ erschien deshalb, obwohl er da war. Im Kampf meldet WeintCodex keinen Buff mehr als fehlend.",
+        },
+    },
+    {
         version = "6.61.15.0",
         date    = "17.10.2026",
         notes   = {

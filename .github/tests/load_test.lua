@@ -6361,6 +6361,15 @@ do
         assert(now:find("Kampfschrei fehlt", 1, true), "fehlender Buff nicht erinnert: " .. now)
         assert(now:find("ohne Verzauberung", 1, true), "Waffe ohne Verzauberung nicht erinnert: " .. now)
         assert(now:find("Begleiter fehlt", 1, true), "fehlender Begleiter nicht erinnert: " .. now)
+        -- 6.61.16.0: beim Einstieg in den Kampf (Ereignis vor der Sperre)
+        -- meldet keine Buff-Regel "fehlt", auch mit "Auch im Kampf".
+        R.fighting = true
+        local oIC = K.Get(R.KEY or "reminders", "remindInCombat")
+        K.Set(R.KEY or "reminders", "remindInCombat", true)
+        now = texts()
+        assert(not now:find("Kampfschrei", 1, true), "im Kampf Buff als fehlend gemeldet: " .. now)
+        K.Set(R.KEY or "reminders", "remindInCombat", oIC)
+        R.fighting = false
         hasBuff, enchanted, expMs, pet = true, true, 2 * 60000, true
         now = texts()
         assert(not now:find("Kampfschrei", 1, true), "Buff da und trotzdem erinnert")

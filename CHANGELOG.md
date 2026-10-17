@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.16.0] – 2026-10-17
+
+### Behoben
+- Erinnerungen: Buff-Regeln meldeten beim Kampfbeginn „fehlt“ – der Client gibt im Kampf keine Auren heraus (Antwort leer, nicht geheim), und `PLAYER_REGEN_DISABLED` kommt vor `InCombatLockdown`. `R.Fighting()` (Sperre oder Ereignis); im Kampf keine Buff-Regel (`R.BLIND_IN_COMBAT`), auch mit „Auch im Kampf“.
+
 ## [6.61.15.0] – 2026-10-17
 
 ### Behoben

@@ -1290,23 +1290,38 @@ end
 local function Alpha() return math.max(0.1, math.min(1, (tonumber(Opt("alpha")) or 100) / 100)) end
 R.Alpha = Alpha
 
+-- 6.61.16.0 (Beta-Test: "Mal der Wildnis wurde beim Einstieg in den Kampf
+-- angezeigt, obwohl alle den Buff hatten"): im Kampf gibt der Client die
+-- eigenen Auren nicht mehr heraus - die Abfrage antwortet "nichts", nicht
+-- "geheim", und das las sich als "fehlt". Und PLAYER_REGEN_DISABLED kommt,
+-- bevor InCombatLockdown "ja" sagt. Kampf ist deshalb: Sperre ODER das
+-- Ereignis. Im Kampf wird
+-- kein Buff als fehlend gemeldet - "weiss nicht" ist nicht "fehlt".
+R.fighting = false
+function R.Fighting()
+    return (R.fighting or K.InCombat()) and true or false
+end
+R.BLIND_IN_COMBAT = { buff = true }
+
 -- Alle Erinnerungen, die jetzt gelten.
 function R.Active()
     local out = {}
     if R.Quiet() then return out end
     if not Opt("showReminders") then return out end
-    if K.InCombat() and not Opt("remindInCombat") then return out end
+    local fighting = R.Fighting()
+    if fighting and not Opt("remindInCombat") then return out end
     local where = Opt("where")
     if where == "group" and not InGroup() then return out end
     if where == "instance" and not InInstance() then return out end
     for _, rule in ipairs(R.Here()) do
         local k = rule.kind
-        if k == "buff" or k == "weapon" or k == "pet" or k == "happy" or k == "ammo" or k == "item" then
+        if (k == "buff" or k == "weapon" or k == "pet" or k == "happy" or k == "ammo" or k == "item")
+           and not (fighting and R.BLIND_IN_COMBAT[k]) then
             local hit = R.Check(rule)
             if hit then out[#out + 1] = hit end
         end
     end
-    if not K.InCombat() then R.BagBuffs(out) end
+    if not fighting then R.BagBuffs(out) end
     return out
 end
 
@@ -1586,6 +1601,8 @@ local function Enable()
         if event == "UNIT_AURA" or event == "UNIT_INVENTORY_CHANGED" or event == "UNIT_PET" then
             if unit ~= "player" then return end
         end
+        if event == "PLAYER_REGEN_DISABLED" then R.fighting = true
+        elseif event == "PLAYER_REGEN_ENABLED" then R.fighting = false end
         if event == "SPELLS_CHANGED" or event == "PLAYER_ENTERING_WORLD" then R.ClearCache() end
         if event == "SPELL_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_CHARGES" then
             R.Schedule(false, false, true)
