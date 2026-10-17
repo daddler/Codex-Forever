@@ -18997,9 +18997,17 @@ do
         h(BG.interactEv, "MERCHANT_SHOW")
         assert(BG.busy, "Haendler nicht bemerkt")
         local s2 = { use = BG.SecureUse(btn) }
-        assert(s2.use == nil or s2.use:GetAttribute("type2") == nil, "beim Haendler neu angelegt mit /use")
+        assert(s2.use == nil or (s2.use:GetAttribute("type2") == nil and not s2.use:IsShown()), "beim Haendler neu angelegt und im Weg")
+        local saved = {}
+        for _, n in ipairs(BG.FRAMES) do saved[n] = G[n]; G[n] = nil end
+        G.MerchantFrame = { IsShown = function() return true end }
+        h(BG.interactEv, "PLAYER_INTERACTION_MANAGER_FRAME_SHOW")
+        assert(BG.busy, "offenes Haendlerfenster nicht bemerkt")
+        G.MerchantFrame = { IsShown = function() return false end }
         h(BG.interactEv, "MERCHANT_CLOSED")
-        assert(not BG.busy, "Haendler zu nicht bemerkt")
+        local busy = BG.busy
+        for _, n in ipairs(BG.FRAMES) do G[n] = saved[n] end
+        assert(not busy, "Haendler zu nicht bemerkt")
         G.InCombatLockdown = oL
     end)
     Check(ok, "Taschen: Rechtsklick ueber geschuetzten Knopf, Linksklick durchgereicht" .. (ok and "" or (": " .. tostring(err))))

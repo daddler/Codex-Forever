@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.60.4.0] – 2026-10-17
+
+### Behoben
+- Rechtsklick beim Händler verkauft wieder: der geschützte Knopf aus 6.54.3.0
+  wurde in 6.60.3.0 nur geleert, fing den Rechtsklick aber weiter ab. Er wird
+  jetzt versteckt; ob ein Fenster offen ist, sagt zusätzlich das Fenster selbst
+  (`PLAYER_INTERACTION_MANAGER_FRAME_SHOW/HIDE`, Nachprüfung nach 0,2 s).
+
 ## [6.60.3.0] – 2026-10-17
 
 ### Behoben

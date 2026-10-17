@@ -108,6 +108,7 @@ function BG.SecureUse(btn)
     if sec.RegisterForClicks then sec:RegisterForClicks("RightButtonUp") end
     sec:SetAttribute("useOnKeyDown", false)
     sec:SetAttribute("type2", (not BG.busy) and "item" or nil)
+    if BG.busy then sec:Hide() end
     return sec
 end
 
@@ -122,20 +123,45 @@ BG.INTERACT = {
     AUCTION_HOUSE_SHOW = true, GUILDBANKFRAME_OPENED = true,
     MERCHANT_CLOSED = false, BANKFRAME_CLOSED = false, MAIL_CLOSED = false, TRADE_CLOSED = false,
     AUCTION_HOUSE_CLOSED = false, GUILDBANKFRAME_CLOSED = false,
+    PLAYER_INTERACTION_MANAGER_FRAME_SHOW = "check", PLAYER_INTERACTION_MANAGER_FRAME_HIDE = "check",
 }
+-- 6.60.4.0 (Beta-Test: "kann immer noch nicht mit Rechtsklick verkaufen"):
+-- ein Knopf ohne type2 faengt den Rechtsklick trotzdem ab und tut nichts.
+-- Er muss deshalb VERSTECKT werden, nicht nur leer. Und ob ein Fenster offen
+-- ist, sagt das Fenster selbst - die alten Ereignisse kommen im neuen Client
+-- nicht immer (PLAYER_INTERACTION_MANAGER_FRAME_SHOW).
+BG.FRAMES = { "MerchantFrame", "BankFrame", "MailFrame", "TradeFrame", "AuctionHouseFrame", "GuildBankFrame" }
+function BG.AnyOpen()
+    for _, n in ipairs(BG.FRAMES) do
+        local f = _G[n]
+        if type(f) == "table" and f.IsShown and f:IsShown() then return true end
+    end
+    return false
+end
 BG.busy = false
 function BG.SetUseMode(on)
     if _G.InCombatLockdown and _G.InCombatLockdown() then return false end
     for _, s in ipairs(slots) do
-        if s.use then s.use:SetAttribute("type2", on and "item" or nil) end
+        if s.use then
+            s.use:SetAttribute("type2", on and "item" or nil)
+            s.use:SetShown(on and true or false)
+        end
     end
     return true
 end
 local interactEv = CreateFrame("Frame")
 for e in pairs(BG.INTERACT) do pcall(interactEv.RegisterEvent, interactEv, e) end
-interactEv:SetScript("OnEvent", function(_, event)
-    BG.busy = BG.INTERACT[event] and true or false
+pcall(interactEv.RegisterEvent, interactEv, "PLAYER_REGEN_ENABLED")
+function BG.Recheck(event)
+    BG.busy = BG.INTERACT[event] == true or BG.AnyOpen()
     BG.SetUseMode(not BG.busy)
+end
+interactEv:SetScript("OnEvent", function(_, event)
+    BG.Recheck(event)
+    -- Fenster oeffnen/schliessen sich oft erst nach dem Ereignis: nachsehen.
+    if _G.C_Timer and _G.C_Timer.After then
+        _G.C_Timer.After(0.2, function() BG.Recheck(event) end)
+    end
 end)
 BG.interactEv = interactEv
 

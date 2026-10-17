@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.60.4.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFVerkaufen per Rechtsklick geht jetzt wirklich|r – der Knopf für Zauberöl lag beim Händler leer, aber weiter über der Tasche, und schluckte den Klick. Jetzt verschwindet er, solange Händler, Bank, Post, Handel oder Auktionshaus offen sind.",
+        },
+    },
+    {
         version = "6.60.3.0",
         date    = "17.10.2026",
         notes   = {
