@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.53.2.0] – 2026-10-17
+
+### Geändert
+- Lehrerdaten abgeglichen mit What's Training? 11.0.0-beta20 (15 Unterschiede, danach 0): Siegel des Furors 20163 ab 26; Anspringen 5221 ab 20/2400; Schamane 17354→38, 17359→48, 1238299→40, 1238300 entfernt, neu 1325256 (58) und 1326047 (60), 36936 kostet 2200; Magier neu 1326053–55 und 1326080–82.
+
 ## [6.53.1.0] – 2026-10-16
 
 ### Behoben

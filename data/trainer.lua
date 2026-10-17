@@ -27,6 +27,14 @@
 -- einem Patch entfernt") und Lichtbrunnen-Raenge; neu Urbiss 2-4; 117
 -- Preise geaendert (vor allem Jaeger), Tierausbildung mit Vorstufen.
 --
+-- 6.53.2.0: abgeglichen mit Fassung 11.0.0-beta20 (Classes/Camelot, per
+-- Vergleichsskript, nur Zauberlisten): Siegel des Furors (20163) ab 26
+-- statt 25 (Beta-Test bestaetigt), Anspringen (5221) ab 20 fuer 24 Silber,
+-- Schamane: Erdschock-/Heilungsraenge frueher (17354 ab 38, 17359 ab 48,
+-- 1238299 ab 40), 1238300 nicht mehr beim Lehrer, neu 1325256 und
+-- 1326047, 36936 kostet 22 Silber; Magier: sechs neue Zauber (1326053-55,
+-- 1326080-82). Danach 0 Unterschiede.
+--
 -- LIZENZ der uebernommenen Daten (Zaubernummern, Stufen, Kosten,
 -- Voraussetzungen, Waffenmeister):
 --
@@ -338,14 +346,12 @@ local BUILD = {
         { id = 10322, cost = 5000, requiredIds = { 7328 } },
         { id = 2878, cost = 5000 },
       },
-      [25] = {
-        { id = 20163, cost = 6000, requiredIds = { 1311656 } },
-      },
       [26] = {
         { id = 1038, cost = 6000 },
         { id = 19939, cost = 6000, requiredIds = { 19750 } },
         { id = 10298, cost = 6000, requiredIds = { 7294 } },
         { id = 20289, cost = 6000, requiredIds = { 20288 } },
+        { id = 20163, cost = 6000, requiredIds = { 1311656 } },
       },
       [28] = {
         { id = 5614, cost = 9000, requiredIds = { 879 } },
@@ -1251,7 +1257,7 @@ local BUILD = {
         { id = 8004, cost = 2200 },
         { id = 915, cost = 2200, requiredIds = { 548 } },
         { id = 6363, cost = 2200, requiredIds = { 3599 } },
-        { id = 36936, cost = 7000 },
+        { id = 36936, cost = 2200 },
       },
       [22] = {
         { id = 2870, cost = 3000 },
@@ -1328,6 +1334,7 @@ local BUILD = {
         { id = 10391, cost = 11000, requiredIds = { 6041 } },
         { id = 6392, cost = 11000, requiredIds = { 6391 } },
         { id = 8161, cost = 11000, requiredIds = { 8160 } },
+        { id = 17354, cost = 800, requiredIds = { 16190 }, requiredTalentId = 16190 },
       },
       [40] = {
         { id = 66844, cost = 7000, requiredIds = { 66843 } },
@@ -1340,6 +1347,7 @@ local BUILD = {
         { id = 8737, cost = 12000 },
         { id = 6365, cost = 12000, requiredIds = { 6364 } },
         { id = 8235, cost = 12000, requiredIds = { 8232 } },
+        { id = 1238299, cost = 24000, requiredIds = { 408490 }, requiredTalentId = 408490 },
       },
       [42] = {
         { id = 408344, cost = 16000, requiredIds = { 408343 } },
@@ -1370,12 +1378,11 @@ local BUILD = {
         { id = 16355, cost = 22000, requiredIds = { 10456 } },
         { id = 10395, cost = 22000, requiredIds = { 8005 } },
         { id = 10431, cost = 22000, requiredIds = { 8134 } },
-        { id = 17354, cost = 800, requiredIds = { 16190 }, requiredTalentId = 16190 },
         { id = 10427, cost = 22000, requiredIds = { 6392 } },
+        { id = 17359, cost = 1600, requiredIds = { 17354 }, requiredTalentId = 16190 },
       },
       [50] = {
         { id = 10462, cost = 24000, requiredIds = { 6377 } },
-        { id = 1238299, cost = 24000, requiredIds = { 408490 }, requiredTalentId = 408490 },
         { id = 15207, cost = 24000, requiredIds = { 10392 } },
         { id = 1239242, cost = 800, requiredIds = { 408521 }, requiredTalentId = 408521 },
         { id = 10437, cost = 24000, requiredIds = { 6365 } },
@@ -1410,19 +1417,19 @@ local BUILD = {
         { id = 16387, cost = 32000, requiredIds = { 10526 } },
         { id = 10473, cost = 32000, requiredIds = { 10472 } },
         { id = 16356, cost = 32000, requiredIds = { 16355 } },
-        { id = 17359, cost = 1600, requiredIds = { 17354 }, requiredTalentId = 16190 },
         { id = 10428, cost = 32000, requiredIds = { 10427 } },
+        { id = 1325256, cost = 2000, requiredIds = { 17359 }, requiredTalentId = 16190 },
       },
       [60] = {
         { id = 20777, cost = 34000, requiredIds = { 20776 } },
         { id = 10414, cost = 34000, requiredIds = { 10413 } },
         { id = 10463, cost = 34000, requiredIds = { 10462 } },
-        { id = 1238300, cost = 34000, requiredIds = { 1238299 }, requiredTalentId = 408490 },
         { id = 10468, cost = 34000, requiredIds = { 10467 } },
         { id = 10601, cost = 34000, requiredIds = { 10600 } },
         { id = 1239243, cost = 1600, requiredIds = { 1239242 }, requiredTalentId = 408521 },
         { id = 10438, cost = 34000, requiredIds = { 10437 } },
         { id = 16362, cost = 34000, requiredIds = { 10486 } },
+        { id = 1326047, cost = 34000, requiredIds = { 1238300 }, requiredTalentId = 408490 },
       },
     },
   } end,
@@ -1501,6 +1508,7 @@ local BUILD = {
         { id = 8400, cost = 4000, requiredIds = { 3140 } },
         { id = 2121, cost = 4000, requiredIds = { 2120 } },
         { id = 12505, cost = 200, requiredIds = { 11366 }, requiredTalentId = 11366 },
+        { id = 1326053, cost = 4300 },
       },
       [26] = {
         { id = 120, cost = 5000 },
@@ -1548,6 +1556,8 @@ local BUILD = {
         { id = 8402, cost = 13000, requiredIds = { 8401 } },
         { id = 8495, cost = 13000, requiredIds = { 8494 } },
         { id = 12523, cost = 650, requiredIds = { 12522 }, requiredTalentId = 11366 },
+        { id = 1326054, cost = 11000, requiredIds = { 1326053 } },
+        { id = 1326080, cost = 11000, requiredIds = { 1326079 }, requiredTalentId = 1326079 },
       },
       [38] = {
         { id = 8439, cost = 14000, requiredIds = { 8438 } },
@@ -1602,6 +1612,8 @@ local BUILD = {
         { id = 10215, cost = 28000, requiredIds = { 8423 } },
         { id = 1240046, cost = 32000, requiredIds = { 1240045 }, requiredTalentId = 1312002 },
         { id = 12525, cost = 1400, requiredIds = { 12524 }, requiredTalentId = 11366 },
+        { id = 1326055, cost = 22000, requiredIds = { 1326054 } },
+        { id = 1326081, cost = 22000, requiredIds = { 1326080 }, requiredTalentId = 1326079 },
       },
       [50] = {
         { id = 1239699, cost = 32000, requiredIds = { 1239697 }, requiredTalentId = 400574 },
@@ -1657,6 +1669,7 @@ local BUILD = {
         { id = 10193, cost = 42000, requiredIds = { 10192 } },
         { id = 12826, cost = 42000, requiredIds = { 12825 } },
         { id = 18809, cost = 2100, requiredIds = { 12526 }, requiredTalentId = 11366 },
+        { id = 1326082, cost = 31000, requiredIds = { 1326081 }, requiredTalentId = 1326079 },
       },
     },
   } end,
@@ -1926,11 +1939,11 @@ local BUILD = {
         { id = 16864, cost = 2400 },
         { id = 20484, cost = 2400 },
         { id = 2912, cost = 2400 },
+        { id = 5221, cost = 2400, requiredIds = { 768 } },
       },
       [22] = {
         { id = 8926, cost = 3300, requiredIds = { 8925 } },
         { id = 2090, cost = 3300, requiredIds = { 1430 } },
-        { id = 5221, cost = 3300, requiredIds = { 768 } },
         { id = 2908, cost = 3300 },
         { id = 5179, cost = 3300, requiredIds = { 5178 } },
       },

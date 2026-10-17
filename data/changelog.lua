@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.53.2.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Lehrer kennt den neuesten Stand.|r Siegel des Furors erst ab Stufe 26, neue Zauber für Magier und Schamanen, einige Stufen und Preise angepasst.",
+        },
+    },
+    {
         version = "6.53.1.0",
         date    = "16.10.2026",
         notes   = {
