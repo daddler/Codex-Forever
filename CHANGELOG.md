@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.7.0] – 2026-10-17
+
+### Geändert
+- Questhilfe: Ziele derselben Quest und Art näher als 6 % der Kartenbreite werden ein Punkt in ihrer Mitte (`QH.Cluster`, `e.count` im Tooltip). Iverrons Gegengift in Teldrassil: 105 → 7 Punkte. Gilt für Weltkarte und Minikarte.
+
 ## [6.61.6.0] – 2026-10-17
 
 ### Entfernt

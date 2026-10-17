@@ -1415,6 +1415,15 @@ do
         assert(kinds.avail == 1, "Geber nicht zusammengefasst: " .. tostring(kinds.avail))
         assert(kinds.turnin == 1, "Abgabe fehlt")
         assert(kinds.target == 3, "Ziele (2 Woelfe + Dieb aus Beute): " .. tostring(kinds.target))
+        -- 6.61.7.0: nahe Ziele derselben Quest werden ein Punkt.
+        local cl = QH.Cluster({
+            { kind = "target", quests = { 9 }, x = 0.50, y = 0.50, sub = "loot" },
+            { kind = "target", quests = { 9 }, x = 0.52, y = 0.50, sub = "loot" },
+            { kind = "target", quests = { 9 }, x = 0.90, y = 0.90, sub = "loot" },
+            { kind = "target", quests = { 8 }, x = 0.51, y = 0.50, sub = "loot" },
+            { kind = "avail", quests = { 9 }, x = 0.50, y = 0.50 },
+        })
+        assert(#cl == 4 and cl[1].count == 2 and math.abs(cl[1].x - 0.51) < 1e-9, "Ziele nicht zusammengefasst: " .. #cl)
         local giver
         for _, e in ipairs(list) do if e.kind == "avail" then giver = e end end
         assert(#giver.quests == 1, "nur Quest 2 ist offen (1 erledigt, 3 Horde, 4 grau aus)")

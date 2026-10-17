@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.7.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFKarte und Minikarte sind wieder lesbar|r – Questziele, die nah beieinander liegen, sind jetzt ein Punkt statt Dutzender. Der Tooltip sagt, wie viele Fundstellen er umfasst.",
+        },
+    },
+    {
         version = "6.61.6.0",
         date    = "17.10.2026",
         notes   = {

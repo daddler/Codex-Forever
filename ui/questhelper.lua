@@ -369,6 +369,47 @@ local function Add(out, seen, kind, who, isObj, quest, x, y, faint, sub)
     out[#out + 1] = e
 end
 
+-- 6.61.7.0 (Beta-Test: Minikarte und Karte voller Ziel-Punkte - jede
+-- Fundstelle eines Pilzes ein eigener Punkt, "sieht scheisse aus, man
+-- erkennt nichts mehr"): Ziele derselben Quest und Art, die naeher als
+-- QH.CLUSTER (Anteil der Kartenbreite) beieinander liegen, werden EIN
+-- Punkt in ihrer Mitte; e.count sagt, wie viele Stellen er vertritt.
+QH.CLUSTER = 0.06
+function QH.Cluster(list)
+    local out, groups = {}, {}
+    local r2 = QH.CLUSTER * QH.CLUSTER
+    for _, e in ipairs(list) do
+        if e.kind ~= "target" then
+            out[#out + 1] = e
+        else
+            local key = (e.quests[1] or 0) .. (e.sub or "")
+            local g = groups[key]
+            if not g then g = {} groups[key] = g end
+            local hit
+            for _, c in ipairs(g) do
+                local dx, dy = c.x - e.x, c.y - e.y
+                if dx * dx + dy * dy <= r2 then hit = c break end
+            end
+            if hit then
+                local n = hit.count
+                hit.x = (hit.x * n + e.x) / (n + 1)
+                hit.y = (hit.y * n + e.y) / (n + 1)
+                hit.count = n + 1
+                for _, q in ipairs(e.quests) do
+                    local known = false
+                    for _, h in ipairs(hit.quests) do if h == q then known = true break end end
+                    if not known then hit.quests[#hit.quests + 1] = q end
+                end
+            else
+                e.count = 1
+                g[#g + 1] = e
+                out[#out + 1] = e
+            end
+        end
+    end
+    return out
+end
+
 function QH.ForMap(mapID)
     if type(mapID) ~= "number" then return {} end
     local cached = forMap[mapID]
@@ -425,6 +466,7 @@ function QH.ForMap(mapID)
             end
         end
     end
+    out = QH.Cluster(out)
     -- 6.57.0.0: Buecher der Bibliothek, die noch fehlen (modules/library.lua).
     local LB = WeintCodex.Library
     if Get("qhBooks") and LB and LB.Missing then
@@ -536,6 +578,9 @@ local function Tooltip(self)
     end
     local hc = e.kind == "avail" and C.gold or (e.kind == "turnin" and C.green) or C.infoBright
     gt:AddLine(head, hc[1], hc[2], hc[3])
+    if (e.count or 1) > 1 then
+        gt:AddLine("Gebiet · " .. e.count .. " Fundstellen in der Nähe", m[1], m[2], m[3])
+    end
     gt:AddLine(" ")
     for i, id in ipairs(e.quests) do
         if i > 6 then
