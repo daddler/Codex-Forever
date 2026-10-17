@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.4.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFKein „!“ mehr für Quests, die du noch nicht annehmen kannst|r – eine Folgequest erscheint erst, wenn die Vorquest abgegeben ist, nicht schon, solange sie im Questlog steht.",
+            "|cff7C6CFFKlick auf ein „!“ führt dich hin|r – auf Karte und Minikarte setzt ein Klick den Questpfeil auf den Questgeber, bis du seine Quest angenommen hast.",
+        },
+    },
+    {
         version = "6.61.3.0",
         date    = "17.10.2026",
         notes   = {

@@ -177,7 +177,10 @@ function QH.Offer(id, q, me)
     if single and #single > 0 then
         local any = false
         for _, p in ipairs(single) do
-            if QH.Done(p) == true or log[p] then any = true break end
+            -- 6.61.4.0 (Beta-Test: "Quests, die ich noch nicht annehmen
+            -- kann" - Waldweberei, solange Waldwebergift im Log stand):
+            -- Voraussetzung heisst ABGEGEBEN, im Log genuegt nicht.
+            if QH.Done(p) == true then any = true break end
         end
         if not any then return nil end
     end
@@ -431,6 +434,7 @@ function QH.ForMap(mapID)
             end
         end
     end
+    for _, e in ipairs(out) do e.map = mapID end
     -- Ziele unten, Geber oben.
     local order = { target = 1, book = 2, turnin = 3, avail = 4 }
     table.sort(out, function(a, b)
@@ -565,11 +569,28 @@ local function Tooltip(self)
         end
     end
     gt:AddLine(" ")
-    if e.kind ~= "avail" then
+    if e.kind == "avail" then
+        gt:AddLine("Klick: Questpfeil zu diesem Questgeber", m[1], m[2], m[3], true)
+    else
         gt:AddLine("Klick: diese Quest verfolgen · Rechtsklick: lösen", m[1], m[2], m[3], true)
     end
     gt:AddLine("Unbestätigt – Wissensstand der Community.", m[1], m[2], m[3], true)
     gt:Show()
+end
+
+function QH.GuideTo(e)
+    local QA = WeintCodex.UIQuestArrow
+    if not (e and e.map and QA and QA.SetCustom) then return false end
+    local d = Data()
+    local rec = e.obj and d.o[e.who] or d.n[e.who]
+    local quests = e.quests
+    QA.SetCustom({ map = e.map, x = e.x, y = e.y,
+        title = "Questgeber: " .. (QH.Name(rec) or "?"),
+        done = function()
+            for _, id in ipairs(quests) do if log[id] then return true end end
+            return false
+        end })
+    return true
 end
 
 local function NewPin(holder)
@@ -608,6 +629,14 @@ local function NewPin(holder)
             return
         end
         if button == "RightButton" then QH.SetFocus(nil) return end
+        -- 6.61.4.0 (Wunsch: "mit einem Klick diesen Questgeber anwaehlen,
+        -- damit mich der Pfeil hinleitet"): Pfeil zum Geber, bis eine
+        -- seiner Quests im Questlog steht.
+        if e.kind == "avail" then
+            QH.GuideTo(e)
+            Tooltip(self)
+            return
+        end
         local mine = {}
         for _, id in ipairs(e.quests) do if log[id] then mine[#mine + 1] = id end end
         if #mine == 0 then return end
@@ -915,8 +944,8 @@ end
 -- (K.ToWorld, im Eintrag gemerkt); im Takt nur der Abstand zum Spieler,
 -- in Bildpunkte ueber den Halbmesser der Minikarte in Metern je Zoomstufe.
 -- Dreht sich die Minikarte mit (rotateMinimap), dreht der Abstand mit.
--- Was ausserhalb liegt, ist nicht da. Die Symbole nehmen nur die Maus
--- fuer den Tooltip - Klicks gehen an die Minikarte (Ping).
+-- Was ausserhalb liegt, ist nicht da. Seit 6.61.4.0 nehmen die Symbole
+-- auch Klicks (Pfeil zum Geber) - der Ping geht daneben weiter.
 QH.MM_RADIUS = {
     outside = { [0] = 233.33, 200, 166.67, 133.33, 100, 66.67 },
     inside  = { [0] = 150, 120, 90, 60, 40, 25 },
@@ -996,8 +1025,7 @@ function QH.PlaceMinimap()
             local p = mmPins[n]
             if not p then
                 p = NewPin(mm)
-                if p.EnableMouseClicks then p:EnableMouseClicks(false) end
-                if p.EnableMouseMotion then p:EnableMouseMotion(true) end
+                -- 6.61.4.0: anklickbar (Pfeil zum Geber, Quest waehlen).
                 p:SetScale(QH.MM_SCALE)
                 mmPins[n] = p
             end

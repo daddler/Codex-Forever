@@ -1357,6 +1357,7 @@ do
                 [3] = { "Horde", 5, 1, 178, 0, {10}, {}, {11}, {}, {}, {}, {}, {}, {}, {} },
                 [4] = { "Alt", 1, 1, 0, 0, {10}, {}, {11}, {}, {}, {}, {}, {}, {}, {} },
                 [5] = { "Im Log", 5, 1, 0, 0, {10}, {}, {11}, {}, {12}, {}, {50}, {}, {}, {} },
+                [6] = { "Nach Log", 5, 1, 0, 0, {10}, {}, {11}, {}, {}, {}, {}, {}, {5}, {} },
             },
             n = { [10] = { "Geber", 1429, 0.5, 0.5 }, [11] = { "Abgabe", 1429, 0.6, 0.6, 0, 1411, 0.1, 0.1 },
                   [12] = { "Wolf", 1429, 0.2, 0.2, 0.3, 0.3 }, [13] = { "Dieb", 1429, 0.9, 0.9 } },
@@ -1386,6 +1387,16 @@ do
         assert(QH.Offer(3, d.q[3], me) == nil, "Hordequest fuer Menschen")
         assert(QH.Offer(4, d.q[4], me) == "low", "Stufe 1 bei 6 nicht grau")
         assert(QH.Offer(5, d.q[5], me) == nil, "Quest im Log angeboten")
+        -- 6.61.4.0: Vorquest nur im Log genuegt nicht (Waldweberei).
+        assert(QH.Offer(6, d.q[6], me) == nil, "Folgequest, solange die Vorquest erst im Log steht")
+        do
+            local QA = WeintCodex.UIQuestArrow
+            local oS, got = QA.SetCustom, nil
+            QA.SetCustom = function(t) got = t end
+            assert(QH.GuideTo({ kind = "avail", who = 10, map = 1429, x = 0.5, y = 0.5, quests = { 1 } }), "kein Pfeil zum Geber")
+            assert(got and got.map == 1429 and got.title == "Questgeber: Geber" and got.done() == false, "Pfeilziel falsch")
+            QA.SetCustom = oS
+        end
         G.C_QuestLog.IsQuestFlaggedCompleted = nil
         assert(QH.Done(1) == nil, "ohne Abfrage geraten")
         G.C_QuestLog.IsQuestFlaggedCompleted = function(id) return done[id] == true end

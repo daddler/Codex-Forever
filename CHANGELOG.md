@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.4.0] – 2026-10-17
+
+### Behoben
+- Questhilfe (`QH.Offer`): „eine vorher“ (Feld 14) galt schon als erfüllt, solange die Vorquest im Questlog stand – z. B. Waldweberei (917) neben Waldwebergift (916). Jetzt nur abgegeben.
+
+### Neu
+- Klick auf „!“ (Weltkarte und Minikarte): Questpfeil zum Geber (`QH.GuideTo` → `QA.SetCustom`), bis eine seiner Quests im Questlog steht. Minikartensymbole nehmen dafür Klicks.
+
 ## [6.61.3.0] – 2026-10-17
 
 ### Geändert
