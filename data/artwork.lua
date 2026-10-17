@@ -940,6 +940,91 @@ WeintCodex.Artworks = {
             },
         },
     },
+    stratholme = {
+        -- Originale 1514x1039, Ausschnitt je Bild (siehe make_artwork.py).
+        header = {
+            file = ART .. "stratholme/header",
+            w = 1024, h = 256, focusX = 0.5,
+        },
+        bosses = {
+            fras_siabi = {
+                file = ART .. "stratholme/fras_siabi",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            hearthsinger_forresten = {
+                file = ART .. "stratholme/hearthsinger_forresten",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            the_unforgiven = {
+                file = ART .. "stratholme/the_unforgiven",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            timmy_the_cruel = {
+                file = ART .. "stratholme/timmy_the_cruel",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            malor_the_zealous = {
+                file = ART .. "stratholme/malor_the_zealous",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            crimson_hammersmith = {
+                file = ART .. "stratholme/crimson_hammersmith",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            cannon_master_willey = {
+                file = ART .. "stratholme/cannon_master_willey",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            archivist_galford = {
+                file = ART .. "stratholme/archivist_galford",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            balnazzar = {
+                file = ART .. "stratholme/balnazzar",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            postmaster_malown = {
+                file = ART .. "stratholme/postmaster_malown",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            jarien_and_sothos = {
+                file = ART .. "stratholme/jarien_and_sothos",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            skul = {
+                file = ART .. "stratholme/skul",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            stonespine = {
+                file = ART .. "stratholme/stonespine",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            baroness_anastari = {
+                file = ART .. "stratholme/baroness_anastari",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            nerubenkan = {
+                file = ART .. "stratholme/nerubenkan",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            maleki_the_pallid = {
+                file = ART .. "stratholme/maleki_the_pallid",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            magistrate_barthilas = {
+                file = ART .. "stratholme/magistrate_barthilas",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            ramstein = {
+                file = ART .. "stratholme/ramstein",
+                w = 512, h = 128, focusX = 0.55,
+            },
+            baron_rivendare = {
+                file = ART .. "stratholme/baron_rivendare",
+                w = 512, h = 128, focusX = 0.55,
+            },
+        },
+    },
     scholomance = {
         -- Originale 1514x1039, Ausschnitt je Bild (siehe make_artwork.py).
         header = {

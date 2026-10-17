@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.60.0.0] – 2026-10-17
+
+### Neu
+- Artwork Stratholme: Kopfbild und 19 Begegnungen (Originale 1514×1039, Ramstein 1983×793), Ausschnitt je Bild am Kopf. Datentest prüft den Rückfall jetzt an der Oberen Schwarzfelsspitze.
+
 ## [6.59.0.0] – 2026-10-17
 
 ### Neu

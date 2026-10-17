@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.60.0.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFStratholme ist bebildert.|r Ein Kopfbild und Bilder zu allen neunzehn Begegnungen – auf der scharlachroten Seite wie auf der untoten, bis zu Baron Totenschwur.",
+        },
+    },
+    {
         version = "6.59.0.0",
         date    = "17.10.2026",
         notes   = {

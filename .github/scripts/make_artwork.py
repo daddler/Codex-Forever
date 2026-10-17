@@ -208,6 +208,28 @@ JOBS = [
     ("dungeons/scholomance/lord_alexei_barov", "scholomance/lord_alexei_barov.png", (0, 80, 1514, 378), (512, 128)),
     ("dungeons/scholomance/lady_illucia_barov", "scholomance/lady_illucia_barov.png", (0, 20, 1514, 378), (512, 128)),
     ("dungeons/scholomance/darkmaster_gandling", "scholomance/darkmaster_gandling.png", (0, 30, 1514, 378), (512, 128)),
+    # 6.60.0.0: Stratholme. Bosse 1514x1039 (Ramstein 1983x793), Banner
+    # 1514x1039 - Ausschnitt 4:1 je Bild am Kopf.
+    ("dungeons/stratholme/header", "stratholme/banner.png", (0, 260, 1514, 378)),
+    ("dungeons/stratholme/fras_siabi", "stratholme/fras_siabi.png", (0, 100, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/hearthsinger_forresten", "stratholme/hearthsinger_forresten.png", (0, 50, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/the_unforgiven", "stratholme/the_unforgiven.png", (0, 60, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/timmy_the_cruel", "stratholme/timmy_the_cruel.png", (0, 100, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/malor_the_zealous", "stratholme/malor_the_zealous.png", (0, 70, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/crimson_hammersmith", "stratholme/crimson_hammersmith.png", (0, 60, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/cannon_master_willey", "stratholme/cannon_master_willey.png", (0, 100, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/archivist_galford", "stratholme/archivist_galford.png", (0, 0, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/balnazzar", "stratholme/balnazzar.png", (0, 0, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/postmaster_malown", "stratholme/postmaster_malown.png", (0, 30, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/jarien_and_sothos", "stratholme/jarien_and_sothos.png", (0, 100, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/skul", "stratholme/skul.png", (0, 30, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/stonespine", "stratholme/stonespine.png", (0, 200, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/baroness_anastari", "stratholme/baroness_anastari.png", (0, 60, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/nerubenkan", "stratholme/nerubenkan.png", (0, 200, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/maleki_the_pallid", "stratholme/maleki_the_pallid.png", (0, 60, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/magistrate_barthilas", "stratholme/magistrate_barthilas.png", (0, 60, 1514, 378), (512, 128)),
+    ("dungeons/stratholme/ramstein", "stratholme/ramstein.png", (0, 100, 1983, 495), (512, 128)),
+    ("dungeons/stratholme/baron_rivendare", "stratholme/baron_rivendare.png", (0, 60, 1514, 378), (512, 128)),
     # 6.50.1.0: Duesterbruch (drei Fluegel, ein Kopfbild). Banner 2172x724, die
     # drei grossen Oger 1515x1038 bzw. 1672x941 - Ausschnitt von oben, 4:1.
     ("dungeons/dire_maul/header", "dire_maul/banner.png", (0, 90, 2172, 543)),
