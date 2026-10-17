@@ -19216,6 +19216,23 @@ do
     Check(ok, "Kampfprotokoll Autoshot: an/aus, Nahkampf, eigene Zauber, /wcui schuss" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.61.23.0: Zielknopf der seltenen Gegner vor dem Kampf entschaerft.
+do
+    local ok, err = pcall(function()
+        local RA = WeintCodex.UIRares
+        local b = RA.ClickButton()
+        if b then
+            b:SetAttribute("type1", "macro")
+            b:SetAttribute("macrotext1", "/cleartarget\n/targetexact X")
+            b:Show()
+            RA.combatEv:GetScript("OnEvent")(RA.combatEv, "PLAYER_REGEN_DISABLED")
+            assert(not b:IsShown() and b:GetAttribute("type1") == nil and b:GetAttribute("macrotext1") == nil,
+                "Zielknopf im Kampf scharf")
+        end
+    end)
+    Check(ok, "Seltene Gegner: Zielknopf vor dem Kampf entschaerft" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.54.0.0: Flugzeit - Ziel vom Klick, Dauer gemessen/Daten/unbekannt, gemessen nach der Landung.
 do
     local G = _G

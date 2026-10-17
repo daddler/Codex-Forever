@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.23.0] – 2026-10-17
+
+### Behoben
+- Seltene Gegner (`ui/rares.lua`): der geschützte Zielknopf (`/cleartarget` + `/targetexact`) blieb im Kampf scharf, auch wenn der Hinweis nur noch unsichtbar war. Kampfprotokoll (`/wcui schuss`): „AUTOSHOT AUS · Ziel verloren“, im selben Augenblick neues Ziel. Bei `PLAYER_REGEN_DISABLED` jetzt entschärft (`RA.DisarmForCombat`), nach dem Kampf wieder scharf, wenn der Hinweis noch steht.
+
 ## [6.61.22.0] – 2026-10-17
 
 ### Behoben

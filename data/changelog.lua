@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.23.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDein Ziel springt im Kampf nicht mehr weg|r – der Klickbereich des Hinweises „seltener Gegner“ blieb im Kampf unsichtbar liegen; ein Klick in die Welt an dieser Stelle wechselte das Ziel und beendete beim Jäger den Autoshot. Er ist jetzt im Kampf immer aus.",
+        },
+    },
+    {
         version = "6.61.22.0",
         date    = "17.10.2026",
         notes   = {

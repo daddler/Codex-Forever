@@ -299,6 +299,7 @@ function RA.ArmClick(name)
         b:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
         b:SetSize(1, 1)
     end
+    b:SetAttribute("type1", "macro")
     b:SetAttribute("macrotext1", RA.Macro(name, mark))
     b:Show()
     return true
@@ -311,6 +312,33 @@ function RA.DisarmClick()
     clickBtn:SetAttribute("macrotext1", nil)
     clickBtn:Hide()
 end
+
+-- 6.61.23.0 (Kampfprotokoll eines Jaegers: "AUTOSHOT AUS · Ziel verloren",
+-- im selben Augenblick ein neues Ziel - mitten im Kampf, mehrmals): der
+-- unsichtbar gewordene Zielknopf blieb im Kampf scharf liegen, wo der
+-- Hinweis gestanden hatte. Ein Klick in die Welt an dieser Stelle fuehrte
+-- "/cleartarget" + "/targetexact" aus - Ziel weg, Autoshot aus, anderes
+-- Ziel. Vor dem Kampf (PLAYER_REGEN_DISABLED, letzter erlaubter Augenblick)
+-- wird er jetzt immer entschaerft; im Kampf ist der Hinweis nur Anzeige.
+function RA.DisarmForCombat()
+    if not clickBtn then return false end
+    clickBtn:SetAttribute("macrotext1", nil)
+    clickBtn:SetAttribute("type1", nil)
+    clickBtn:Hide()
+    return true
+end
+local combatEv = CreateFrame("Frame")
+pcall(combatEv.RegisterEvent, combatEv, "PLAYER_REGEN_DISABLED")
+pcall(combatEv.RegisterEvent, combatEv, "PLAYER_REGEN_ENABLED")
+combatEv:SetScript("OnEvent", function(_, event)
+    if event == "PLAYER_REGEN_DISABLED" then
+        RA.DisarmForCombat()
+    elseif clickBtn and toast and toast:IsShown() and toast:GetAlpha() > 0 and clickBtn._name then
+        clickBtn:SetAttribute("type1", "macro")
+        RA.ArmClick(clickBtn._name)
+    end
+end)
+RA.combatEv = combatEv
 
 function RA.FillToast(title, sub)
     local t = EnsureToast()
