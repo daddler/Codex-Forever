@@ -145,12 +145,9 @@ function SL.TargetText()
     local enemy = _G.UnitCanAttack and K.Bool(_G.UnitCanAttack("player", "target"), nil)
     if enemy ~= nil then parts[#parts + 1] = enemy and "Gegner" or "kein Gegner" end
     if _G.UnitIsDead and K.Bool(_G.UnitIsDead("target"), false) then parts[#parts + 1] = "tot" end
-    if _G.CheckInteractDistance then
-        local ok, near = pcall(_G.CheckInteractDistance, "target", 3)
-        near = ok and K.Bool(near, nil)
-        if near == true then parts[#parts + 1] = "Nahkampfnähe (unter 10 m)"
-        elseif near == false then parts[#parts + 1] = "über 10 m" end
-    end
+    -- 6.62.1.0 (Fehlerbericht "Blockiert: UNKNOWN()" aus TargetText):
+    -- CheckInteractDistance ist im Kampf geschuetzt - pcall faengt das nicht,
+    -- das Spiel meldet die Sperre trotzdem. Die Entfernung entfaellt.
     return table.concat(parts, ", ")
 end
 

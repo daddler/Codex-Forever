@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.62.1.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFKein „Blockiert“ mehr beim Zielwechsel im Kampf|r – das Kampfprotokoll fragte eine Entfernung ab, die das Spiel im Kampf sperrt.",
+            "|cff7C6CFFDanke: „Immer danken“|r – neuer Schalter: auch im Kampf und für jeden Buff, ohne Pausen zwischen den Danksagungen.",
+        },
+    },
+    {
         version = "6.62.0.0",
         date    = "17.10.2026",
         notes   = {

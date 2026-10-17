@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.62.1.0] – 2026-10-17
+
+### Behoben
+- Kampfprotokoll: „Blockiert: UNKNOWN()“ – `CheckInteractDistance` ist im Kampf geschützt (pcall fängt die Sperre nicht). Entfernung entfällt.
+
+### Neu
+- Danke für Buffs: Schalter `thanksAlways` („Immer danken“) – hebt Kampf, 20-s-Pause und 15 Minuten je Spieler auf; Gruppe, Gilde, Instanz und Mindestdauer bleiben.
+
 ## [6.62.0.0] – 2026-10-17
 
 ### Neu

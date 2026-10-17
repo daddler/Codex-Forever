@@ -191,8 +191,13 @@ function TH.Eligible(aura)
     return name
 end
 
+-- 6.62.1.0 (Wunsch: "Schalter, ob immer gedankt werden soll, auch im
+-- Kampf, jedes Buffen"): thanksAlways hebt Kampf, die 20-s-Pause und die
+-- 15 Minuten je Spieler auf. Gruppe, Gilde, Instanz und Dauer bleiben.
+function TH.Always() return K.Get(KEY, "thanksAlways") and true or false end
+
 function TH.Where()
-    if K.InCombat() then st.why = "im Kampf" return false end
+    if K.InCombat() and not TH.Always() then st.why = "im Kampf" return false end
     if _G.IsInInstance then
         local ok, inside = pcall(_G.IsInInstance)
         -- 6.53.3.0 (Wunsch: "in Instanzen ein-/ausschaltbar, voreingestellt
@@ -253,7 +258,7 @@ end
 function TH.Try(list, now)
     for _, aura in ipairs(list) do
         local name = TH.Eligible(aura)
-        if name and now - (st.last[name] or -1e9) < TH.PER_PLAYER then
+        if name and not TH.Always() and now - (st.last[name] or -1e9) < TH.PER_PLAYER then
             st.why = name .. " wurde vor weniger als 15 Minuten schon gedankt"
             name = nil
         end
@@ -269,7 +274,7 @@ function TH.Try(list, now)
                 st.queued = st.queued + 1
                 _G.C_Timer.After(delay, function()
                     st.queued = st.queued - 1
-                    if TH.Active() and not K.InCombat() then TH.Send(name, text)
+                    if TH.Active() and (TH.Always() or not K.InCombat()) then TH.Send(name, text)
                     else st.why = "Kampf begann in der Wartezeit" end
                 end)
             else
@@ -288,7 +293,7 @@ function TH.OnAura(info)
     if type(added) ~= "table" and #fresh == 0 then return end
     if not TH.Where() then return end
     local now = Now()
-    if now - st.at < TH.GLOBAL then st.why = "gerade erst gedankt (höchstens alle 20 s)" return end
+    if not TH.Always() and now - st.at < TH.GLOBAL then st.why = "gerade erst gedankt (höchstens alle 20 s)" return end
     if type(added) == "table" and TH.Try(added, now) then return end
     TH.Try(fresh, now)
 end
@@ -409,7 +414,8 @@ local function Build(B)
           { type = "toggle", label = "Auch der Gilde", key = "thanksGuild", disabled = off })
     B:Row({ type = "toggle", label = "Auch in Instanzen", key = "thanksInstance", disabled = off,
             description = "Dungeons, Schlachtzüge, Schlachtfelder. Aus: nur in der freien Welt." },
-          { type = "empty" })
+          { type = "toggle", label = "Immer danken", key = "thanksAlways", disabled = off,
+            description = "Auch im Kampf und für jeden Buff – ohne Pause zwischen zwei Danksagungen und auch, wenn derselbe Spieler gerade erst gebufft hat." })
     B:Row({ type = "slider", label = "Warten vor dem Flüstern", key = "thanksDelay", min = 0, max = 30, step = 1, disabled = off,
             format = function(v) return v == 0 and "sofort" or string.format("%d s", v) end },
           { type = "slider", label = "Allgemeine Sprüche beimischen", key = "thanksMix", min = 0, max = 100, step = 10, disabled = off,
@@ -453,6 +459,7 @@ if mod then
     if mod.defaults.thanks == nil then mod.defaults.thanks = true end
     if mod.defaults.thanksGuild == nil then mod.defaults.thanksGuild = false end
     if mod.defaults.thanksInstance == nil then mod.defaults.thanksInstance = false end
+    if mod.defaults.thanksAlways == nil then mod.defaults.thanksAlways = false end
     if mod.defaults.thanksDelay == nil then mod.defaults.thanksDelay = 2 end
     if mod.defaults.thanksMix == nil then mod.defaults.thanksMix = 30 end
     mod.pages[#mod.pages + 1] = { key = "danke", label = "Danke", build = Build }

@@ -4098,6 +4098,16 @@ do
         local fresh = TH.Refreshed({ updatedAuraInstanceIDs = { 1, 2 } })
         _G.C_UnitAuras, _G.GetTime = oUA, oGT
         assert(#fresh == 1 and fresh[1].expirationTime == 2799, "erneuerter Buff nicht erkannt: " .. #fresh)
+        -- 6.62.1.0: "Immer danken" hebt den Kampf auf.
+        local oIC = _G.InCombatLockdown
+        _G.InCombatLockdown = function() return true end
+        local oA = TH.Always
+        TH.Always = function() return false end
+        assert(TH.Where() == false, "im Kampf gedankt ohne Schalter")
+        TH.Always = function() return true end
+        assert(TH.Where() == true, "Immer danken wirkt nicht im Kampf")
+        TH.Always = oA
+        _G.InCombatLockdown = oIC
     end)
     _G.UnitIsUnit, _G.UnitIsPlayer, _G.UnitInParty, _G.UnitInRaid, _G.UnitIsInMyGuild, _G.GetUnitName = unpack(saved, 1, 6)
     Check(ok, "Erinnerung anklicken, Manaeffizienz, Danke fuer Buffs" .. (ok and "" or (": " .. tostring(err))))
