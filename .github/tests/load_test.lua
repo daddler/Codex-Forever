@@ -19947,6 +19947,21 @@ do
         loc = "INVTYPE_WEAPON"
         assert(EN.Applies(off, "l", kinds) == true, "Zweitwaffe nicht verlangt")
         assert(EN.Applies(EN.SLOTS[1], "l", { Cloak = 1 }) == false, "Hals ohne Rezept verlangt")
+        -- 6.64.0.0: Vorschlaege aus den Rezepten, je Klasse und Stufe.
+        loc = "INVTYPE_HAND"
+        local hl = EN.Suggest("HandsSlot", "l", "HUNTER", 27, false)
+        assert(#hl >= 1 and #hl <= EN.SUGGEST_MAX, "keine Vorschlaege fuer Jaeger-Handschuhe")
+        for _, r in ipairs(hl) do
+            assert(not r.effect:find("Spell") and not r.effect:find("Healing"), "Zaubermacht fuer Jaeger: " .. r.effect)
+        end
+        for _, r in ipairs(EN.Suggest("BackSlot", "l", "HUNTER", 20, false)) do
+            assert(r.learn <= 20 * EN.SKILL_PER_LEVEL, "Vorschlag ueber der Stufe: " .. r.effect)
+        end
+        assert(#EN.Suggest("HandsSlot", "l", nil, 27, false) == 0, "ohne Klasse vorgeschlagen")
+        loc = "INVTYPE_WEAPONMAINHAND"
+        for _, r in ipairs(EN.Suggest("MainHandSlot", "l", "MAGE", 60, true)) do
+            assert(not r.effect:find("Impact"), "Zweihand-Rezept fuer Einhandwaffe")
+        end
         _G.C_Item.GetItemInfoInstant, _G.GetItemInfoInstant = oI, oG
     end)
     Check(ok, "Verzauberungen: erkannt je Klasse, unbekannt bleibt unbekannt" .. (ok and "" or (": " .. tostring(err))))

@@ -39,9 +39,10 @@ local EN = WeintCodex.UIEnchants
 local K = WeintCodex.UIKit
 local C = WeintCodex.Colors
 local CS = WeintCodex.UICharacter
+local EquipInfo
 
 EN.MAX_LEVEL = 60
-EN.DOT_SMALL, EN.DOT_BIG = 6, 9
+EN.DOT_SMALL, EN.DOT_BIG = 8, 10
 
 -- { Platz des Clients, Name, Rezeptworte }
 EN.SLOTS = {
@@ -64,11 +65,98 @@ function EN.Kinds()
     local P = WeintCodex.ProfessionData
     local raw = P and P.RAW and P.RAW.enchanting
     if type(raw) ~= "string" then EN.kinds = false return nil end
-    local k = {}
-    for w in raw:gmatch("|Enchant ([^|\n]-) %- ") do k[w] = (k[w] or 0) + 1 end
+    local k, r = {}, {}
+    for line in raw:gmatch("[^\n]+") do
+        local spell, learn, w, effect = line:match("^(%d+) %S+ (%S+) .-|Enchant ([^|]-) %- (.+)$")
+        if spell then
+            k[w] = (k[w] or 0) + 1
+            r[w] = r[w] or {}
+            r[w][#r[w] + 1] = { spell = tonumber(spell), learn = tonumber(learn) or 0, effect = effect }
+        end
+    end
     EN.kinds = _G.next(k) and k or false
+    EN.recipes = r
     return EN.kinds or nil
 end
+
+-- Vorschlaege (6.64.0.0, Beta-Test: "was ich darauf verzaubern sollte").
+-- KEINE Wertung, nur ein Filter: Rezepte des Verzauberers fuer den Platz,
+-- deren Wirkung eine Hauptwerte-Faustregel der Klasse nennt (Stand aus
+-- Classic, im Spiel "Faustregel") - und in einer Stufe, die zum Charakter
+-- passt (Fertigkeit bis Stufe x 6; auf der Hoechststufe alle). Die
+-- staerksten zuerst, hoechstens drei. Welche die beste ist, sagt das nicht.
+EN.CLASS_WORDS = {
+    WARRIOR = { "Strength", "Agility", "Stamina", "Defense", "Striking", "Impact", "Crusader", "Fiery", "Icy Chill" },
+    ROGUE   = { "Agility", "Strength", "Stamina", "Striking", "Crusader", "Fiery", "Lifestealing" },
+    HUNTER  = { "Agility", "Stamina", "Intellect" },
+    PALADIN = { "Strength", "Intellect", "Stamina", "Healing", "Impact", "Crusader" },
+    SHAMAN  = { "Intellect", "Strength", "Agility", "Stamina", "Healing", "Spell Power", "Impact", "Crusader" },
+    DRUID   = { "Intellect", "Agility", "Strength", "Stamina", "Spirit", "Healing", "Impact" },
+    PRIEST  = { "Intellect", "Spirit", "Stamina", "Healing", "Spell Power", "Spellpower" },
+    MAGE    = { "Intellect", "Spirit", "Stamina", "Spell Power", "Spellpower", "Frost Power", "Fire Power" },
+    WARLOCK = { "Intellect", "Stamina", "Spirit", "Spell Power", "Spellpower", "Shadow Power", "Fire Power" },
+}
+EN.ALWAYS = { "Stats" }      -- "+x auf alle Werte" passt jeder Klasse
+EN.SUGGEST_MAX = 3
+EN.SKILL_PER_LEVEL = 6
+
+local function Matches(effect, words)
+    for _, w in ipairs(words) do
+        if effect:find(w, 1, true) then return true end
+    end
+    return false
+end
+
+-- Rezeptworte, die zum angelegten Gegenstand passen.
+function EN.WordsFor(slotName, link)
+    for _, s in ipairs(EN.SLOTS) do
+        if s[1] == slotName then
+            if s[4] == "offhand" then
+                local w = EN.OFFHAND[EquipInfo(link) or ""]
+                return w and { w } or {}
+            end
+            if slotName == "MainHandSlot" then
+                return EquipInfo(link) == "INVTYPE_2HWEAPON" and { "2H Weapon", "Weapon" } or { "Weapon" }
+            end
+            return s[3]
+        end
+    end
+    return {}
+end
+
+function EN.Suggest(slotName, link, class, level, atMax)
+    if not EN.Kinds() or not EN.recipes then return {} end
+    local words = class and EN.CLASS_WORDS[class]
+    if not words then return {} end
+    local cap = atMax and math.huge or (level or 1) * EN.SKILL_PER_LEVEL
+    local fit, any = {}, {}
+    for _, w in ipairs(EN.WordsFor(slotName, link)) do
+        for _, r in ipairs(EN.recipes[w] or {}) do
+            if Matches(r.effect, words) or Matches(r.effect, EN.ALWAYS) then
+                any[#any + 1] = r
+                if r.learn <= cap then fit[#fit + 1] = r end
+            end
+        end
+    end
+    local list = #fit > 0 and fit or any
+    table.sort(list, function(a, b) if a.learn ~= b.learn then return a.learn > b.learn end return a.spell < b.spell end)
+    if #fit == 0 then   -- nichts in Reichweite: die kleinsten
+        table.sort(list, function(a, b) return a.learn < b.learn end)
+    end
+    for i = #list, EN.SUGGEST_MAX + 1, -1 do list[i] = nil end
+    return list, #fit == 0 and #list > 0
+end
+
+local function RecipeName(r)
+    local cs = _G.C_Spell
+    local ok, n = pcall(function()
+        if cs and cs.GetSpellName then return cs.GetSpellName(r.spell) end
+        return _G.GetSpellInfo and (_G.GetSpellInfo(r.spell)) or nil
+    end)
+    n = ok and K.Plain(n) or nil
+    return type(n) == "string" and n ~= "" and n or r.effect
+end
+EN.RecipeName = RecipeName
 
 local function Opt() return K.Get("general", "enchantHint") ~= false end
 
@@ -92,7 +180,7 @@ function EN.HasEnchant(link)
     return (tonumber(ench) or 0) ~= 0
 end
 
-local function EquipInfo(link)
+function EquipInfo(link)
     local f = (_G.C_Item and _G.C_Item.GetItemInfoInstant) or _G.GetItemInfoInstant
     if not f then return nil end
     local ok, _, _, _, loc = pcall(f, link)
@@ -169,8 +257,25 @@ local function Dot(name)
                 if EN.state[name] ~= "missing" or not Opt() then return end
                 local tip = _G.GameTooltip
                 if not (tip and tip.AddLine) then return end
-                local c = EN.AtMax() and C.dangerBright or C.textMuted
+                local atMax = EN.AtMax()
+                local c = atMax and C.dangerBright or C.warning
+                tip:AddLine(" ")
                 tip:AddLine("Ohne Verzauberung", c[1], c[2], c[3])
+                local id = _G.GetInventorySlotInfo and select(2, pcall(_G.GetInventorySlotInfo, name))
+                local link = type(K.Plain(id)) == "number" and K.Plain(_G.GetInventoryItemLink("player", id)) or nil
+                local cname, class
+                if _G.UnitClass then cname, class = _G.UnitClass("player") end
+                local list, later = EN.Suggest(name, link, K.Plain(class), (function()
+                    local l = _G.UnitLevel and K.Plain(_G.UnitLevel("player")) return type(l) == "number" and l or 1 end)(), atMax)
+                if #list > 0 then
+                    local m = C.textMuted
+                    tip:AddLine("Passend für " .. tostring(K.Plain(cname) or "deine Klasse") .. " (Faustregel)"
+                        .. (later and ", erst auf höherer Stufe üblich:" or ":"), m[1], m[2], m[3])
+                    local t = C.textNormal
+                    for _, r in ipairs(list) do
+                        tip:AddDoubleLine("  " .. RecipeName(r), "Verzauberkunst " .. r.learn, t[1], t[2], t[3], m[1], m[2], m[3])
+                    end
+                end
                 tip:Show()
             end)
         end
@@ -200,7 +305,7 @@ function EN.Paint()
     painted.on, painted.strong = on, strong
     local col = strong and C.danger or C.warning
     local size = strong and EN.DOT_BIG or EN.DOT_SMALL
-    local alpha = strong and 1 or 0.6
+    local alpha = strong and 1 or 0.85
     for _, s in ipairs(EN.SLOTS) do
         local miss = on and EN.state[s[1]] == "missing"
         local d = (miss or dots[s[1]]) and Dot(s[1])
@@ -215,7 +320,9 @@ function EN.Paint()
     local l = Line()
     if not l then return end
     local n = #EN.missing
-    if not on or n == 0 then l:Hide() return end
+    -- 6.64.0.0: beim Leveln steht der Hinweis nur am Platz (Punkt, Tooltip),
+    -- die Zeile ueber den Waffen erst auf der Hoechststufe.
+    if not on or n == 0 or not strong then l:Hide() return end
     if strong then
         local c = C.dangerBright
         l:SetTextColor(c[1], c[2], c[3], 1)

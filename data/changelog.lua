@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.64.0.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFVerzauberungen: Vorschläge direkt am Gegenstand|r – Maus über einen Platz mit Punkt zeigt, welche Verzauberungen des Verzauberers zu deiner Klasse und Stufe passen (Faustregel, keine Wertung). Beim Leveln steht der Hinweis nur noch am Platz, die Zeile über den Waffen erst auf Stufe 60.",
+        },
+    },
+    {
         version = "6.63.1.0",
         date    = "17.10.2026",
         notes   = {

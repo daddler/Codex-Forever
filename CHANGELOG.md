@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.64.0.0] – 2026-10-17
+
+### Neu
+- Tooltip eines unverzauberten Platzes: bis zu drei Rezepte der Verzauberkunst als Vorschlag (`EN.Suggest`) – Wirkung passend zur Klasse (`EN.CLASS_WORDS`, Faustregel), Fertigkeit bis Stufe × 6, sonst die kleinsten mit Hinweis „erst auf höherer Stufe“. Zweihand-Rezepte nur für Zweihandwaffen. Namen vom Client.
+
+### Geändert
+- Beim Leveln nur Punkt (größer) und Tooltip; die Zeile über den Waffen erst auf der Höchststufe.
+
 ## [6.63.1.0] – 2026-10-17
 
 ### Behoben
