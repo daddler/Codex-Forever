@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.62.0.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDein Layer an der Minikarte|r – oben mittig steht „Layer A“, „Layer B“ …, gelesen an den Gegnern um dich herum. Ein Klick öffnet die Einstellungen.",
+            "|cff7C6CFFLayer wechseln auf Klick|r – Komfort → Karte → „Um anderen Layer bitten“ fragt im Kanal „layer“ nach einer Einladung; Spieler mit LayerSwap verstehen die Bitte. Solange du in der Gruppe bleibst, bleibst du auf dem neuen Layer.",
+        },
+    },
+    {
         version = "6.61.26.0",
         date    = "17.10.2026",
         notes   = {

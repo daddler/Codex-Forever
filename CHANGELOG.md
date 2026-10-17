@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.62.0.0] – 2026-10-17
+
+### Neu
+- `ui/layer.lua`: Layer aus Gegner-GUIDs (Server + Zonen-UID, zwei Gegner einig, Wechsel bei 3 von 5; Begleiter zählen nicht; vergessen bei `SHARD_TRANSFER`/Zonenwechsel), Buchstabe je Sitzung, Schild oben mittig an der Minikarte, Klick öffnet Komfort → Karte. Dort „Um anderen Layer bitten“: Kanal `layer` betreten, Notizen `zone`/`not` (Präfix `LayerSwap`), Zeile `inv layer <LS zone not id>` – das Format von LayerSwap, nach seinem Verhalten ohne Code (keine Lizenz). Gruppe beigetreten: Wechsel erkannt oder nach 8 s „Host auf deinem Layer“. Kein Hosten. Dritte Nachricht nach außen, nur auf Klick (CLAUDE.md).
+
 ## [6.61.26.0] – 2026-10-17
 
 ### Behoben

@@ -58,6 +58,12 @@ it never sends there. **Second exception since 6.32.0.0, also on request:**
 departure times of boats/zeppelins/tram (`ui/route.lua`, prefix `WCRT`,
 switch `questarrow.shareTimes`, on by default) go to guild and group as
 addon messages – only the measured timetable phase, never position or name.
+**Third exception since 6.62.0.0, on request („Layer wechseln“, after the
+behaviour of LayerSwap, `ui/layer.lua`):** only on the player's click on
+„Um anderen Layer bitten“, WeintCodex joins the public channel `layer` and
+posts `inv layer <LS [zone map id] not [layer id]>` there, preceded by two
+addon messages (prefix `LayerSwap`: `zone …`, `not …`) – the format
+LayerSwap hosts read. Never by itself, no hosting, no invites sent.
 Nothing else leaves the client, nothing goes to the
 internet; any further outward message needs the same explicit request.
 

@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.61.26.0
+## Version: 6.62.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -275,6 +275,8 @@ ui/minimapclick.lua
 ui/mapentrances.lua
 # Flugzeit beim Fliegen (6.54.0.0), Abschnitt auf der Komfortseite "Karte".
 ui/flighttimer.lua
+# Layer anzeigen und wechseln (6.62.0.0, nach dem Verhalten von LayerSwap).
+ui/layer.lua
 # Geistheiler und Uebergaenge auf der Weltkarte (6.21.0.0, Seite "Karte").
 ui/mapmarks.lua
 # Questhilfe auf der Weltkarte (6.30.0.0, Komfort): Verhalten von Questie, eigener Code.

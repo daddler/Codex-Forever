@@ -19245,6 +19245,52 @@ do
     Check(ok, "Seltene Gegner: Zielknopf vor dem Kampf entschaerft" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.62.0.0: Layer lesen (zwei Gegner einig) und auf Klick um einen anderen bitten.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local LY = WeintCodex.UILayer
+        local guids = {}
+        local oGUID, oSplit = G.UnitGUID, G.strsplit
+        G.strsplit = function(sep, str)
+            local out = {}
+            for p in (str .. sep):gmatch("(.-)" .. sep:gsub("%-", "%%-")) do out[#out + 1] = p end
+            return unpack(out)
+        end
+        G.UnitGUID = function(u) return guids[u] end
+        LY.Forget()
+        guids.target = "Creature-0-5250-0-1428-100-0001"
+        LY.Observe("target")
+        assert(LY.current == nil, "ein Gegner genuegt nicht")
+        guids.mouseover = "Creature-0-5250-0-1428-200-0002"
+        LY.Observe("mouseover")
+        assert(LY.current == "5250-1428", "Layer nicht gelesen: " .. tostring(LY.current))
+        guids.nameplate1 = "Pet-0-9999-0-1-1-1"
+        LY.Observe("nameplate1")
+        assert(LY.current == "5250-1428", "Begleiter zaehlt")
+        assert(LY.AskText():find("^inv layer <LS") and LY.AskText():find("not 5250%-1428>"), "Format: " .. LY.AskText())
+        -- Bitte: in Gruppe nein; ohne Kanal erst betreten; sonst senden.
+        local oIG, oGCN, oJoin, oCI = G.IsInGroup, G.GetChannelName, G.JoinChannelByName, G.C_ChatInfo
+        G.IsInGroup = function() return true end
+        assert(LY.Ask() == "group", "in der Gruppe gebeten")
+        G.IsInGroup = function() return false end
+        local joined, sent, notes = false, nil, 0
+        G.GetChannelName = function() return joined and 5 or 0 end
+        G.JoinChannelByName = function() joined = true end
+        G.C_ChatInfo = { SendAddonMessage = function() notes = notes + 1 end,
+                         SendChatMessage = function(text, kind, _, ch) sent = { text, kind, ch } end }
+        LY.ask = nil
+        assert(LY.Ask() == "joined" and joined, "Kanal nicht betreten")
+        assert(LY.Ask() == "sent" and sent and sent[2] == "CHANNEL" and sent[3] == 5 and notes >= 1, "Bitte nicht gesendet")
+        assert(LY.Ask() == "cooldown", "zweimal hintereinander gebeten")
+        G.IsInGroup, G.GetChannelName, G.JoinChannelByName, G.C_ChatInfo = oIG, oGCN, oJoin, oCI
+        G.UnitGUID, G.strsplit = oGUID, oSplit
+        LY.ask = nil
+        LY.Forget()
+    end)
+    Check(ok, "Layer: aus Gegnern gelesen, Bitte im Format von LayerSwap, nur auf Klick" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.54.0.0: Flugzeit - Ziel vom Klick, Dauer gemessen/Daten/unbekannt, gemessen nach der Landung.
 do
     local G = _G
