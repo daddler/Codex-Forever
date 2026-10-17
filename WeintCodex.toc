@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.55.1.0
+## Version: 6.56.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -105,6 +105,8 @@ data/professions.lua
 data/classquests.lua
 # Seltene Gegner (6.16.0.0, erzeugt); gelesen von ui/rares.lua.
 data/rares.lua
+# Buecher der Bibliothek (6.56.0.0, erzeugt); gelesen von modules/library.lua.
+data/books.lua
 # Kartenteile zum Aufdecken der Weltkarte (6.20.0.0, erzeugt); gelesen von ui/mapreveal.lua.
 data/mapreveal.lua
 # Geistheiler und Uebergaenge auf der Weltkarte (6.21.0.0, erzeugt); gelesen von ui/mapmarks.lua.
@@ -174,6 +176,8 @@ modules/sync.lua
 modules/settings.lua
 # Abgleich mit dem Client (6.10.3.0): /wc abgleich, liest nur.
 modules/clientcheck.lua
+# Buecher der Bibliothek: abgegeben, naechste Belohnung (6.56.0.0).
+modules/library.lua
 # Startseite (6.11.0.0): fragt Lehrer, Quests und Dungeons - nach ihnen.
 modules/home.lua
 

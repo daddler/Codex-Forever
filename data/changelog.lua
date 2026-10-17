@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.56.0.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFNeu: die Bücher der Bibliothek.|r Die Startseite zeigt, wie viele du abgegeben hast und wie viele bis zur nächsten Belohnung fehlen – Halskette bei 10, Ring bei 20. Steht eine Belohnung zum Abholen bereit, sagt sie es auch.",
+            "Im Tooltip jedes Buches steht, ob es schon abgegeben ist, dein Stand und wo du es abgibst.",
+        },
+    },
+    {
         version = "6.55.1.0",
         date    = "17.10.2026",
         notes   = {

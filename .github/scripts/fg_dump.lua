@@ -8,7 +8,7 @@
 -- Benutzt von .github/scripts/import_foreverguide.py.
 
 local dir = assert(arg[1], "Ordner fehlt")
-local FILES = { "DungeonData.lua", "DungeonLoot.lua", "ProfessionData.lua", "ItemCatalogData.lua", "ClassData.lua", "RareData.lua" }
+local FILES = { "DungeonData.lua", "DungeonLoot.lua", "ProfessionData.lua", "ItemCatalogData.lua", "ClassData.lua", "RareData.lua", "Data.lua" }
 
 local ns = {}
 for _, name in ipairs(FILES) do
@@ -58,7 +58,8 @@ end
 
 local keep = { "DUNGEONS", "DQ", "DNPC", "DOBJ", "DRITEM", "DITEM", "LOOT",
                "PROFS", "PREC", "PTRAIN", "PVEND", "PVNPC", "PNAME", "CAT_DATA",
-               "CLASS_Q", "CLASS_NPC", "CLASS_TRAINERS", "RARE" }
+               "CLASS_Q", "CLASS_NPC", "CLASS_TRAINERS", "RARE",
+               "BOOKS", "BOOK_REWARDS", "LIBRARIANS" }
 local sel = {}
 for _, k in ipairs(keep) do sel[k] = ns[k] end
 dump(sel)

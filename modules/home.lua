@@ -183,6 +183,8 @@ function HM.Context()
     ctx.professions = HM.Professions()
     local CQ = WeintCodex.ClassQuests
     ctx.classQuest = CQ and CQ.NextSpellQuest and CQ.NextSpellQuest() or nil
+    local LB = WeintCodex.Library
+    ctx.books = LB and LB.Progress and LB.Progress() or nil
     return ctx
 end
 
@@ -337,6 +339,29 @@ function HM.Steps(ctx)
               headline = d.name .. " passt zu deiner Stufe",
               detail = table.concat(parts, " · "), action = "Ansehen",
               go = { tab = "dungeons", dungeon = d.id } })
+    end
+
+    -- 6.56.0.0 (Wunsch: "wie viele Buecher schon abgegeben - bei 10 gibt's
+    -- einen Hals"): nur, wer schon angefangen hat (eins abgegeben oder in
+    -- der Tasche) - sonst draengte die Karte jeden in die Bibliothek.
+    local bk = ctx.books
+    local LB = WeintCodex.Library
+    if bk and LB and not bk.finished and (bk.done > 0 or bk.bag > 0) then
+        local who, place = LB.Librarian()
+        local title, headline
+        if bk.claim then
+            title = LB.RewardName(bk.claim) .. " abholen"
+            headline = bk.done .. " Bücher abgegeben – " .. LB.RewardName(bk.claim) .. " wartet"
+        elseif bk.bag > 0 then
+            title = Plural(bk.bag, "Ein Buch abgeben", "Bücher abgeben")
+            headline = title
+        else
+            title = "Bücher: " .. bk.done .. " von " .. bk.next.goal
+            headline = "Bibliothek: " .. bk.done .. " von " .. bk.next.goal .. " Büchern"
+        end
+        local detail = LB.Line(bk) .. (who and (" · bei " .. who .. ", " .. place) or "")
+        add({ key = "books", label = "Bibliothek", title = title, headline = headline,
+              detail = detail, sub = LB.Line(bk), optional = not bk.claim and bk.bag == 0 })
     end
 
     local pr = ctx.professions and ctx.professions[1]

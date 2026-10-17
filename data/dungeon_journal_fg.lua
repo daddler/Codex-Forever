@@ -1,5 +1,5 @@
 --------------------------------------------------
--- WeintCodex :: Dungeon-Journal, Abgleich mit ForeverGuide 1.35.1
+-- WeintCodex :: Dungeon-Journal, Abgleich mit ForeverGuide 1.36.0
 --------------------------------------------------
 -- ERZEUGT von .github/scripts/import_foreverguide.py - nicht von Hand
 -- aendern; neu erzeugen. Ergaenzt data/dungeon_journal.lua (das bleibt,
@@ -27,7 +27,7 @@ local J = WeintCodex.DungeonJournal
 
 J.FG_SOURCE = {
     kind  = "community",
-    date  = "15.10.2026",
+    date  = "17.10.2026",
     label = "Quests: Wissensstand aus der Beta",
 }
 J.CLASSIC_LOOT_SOURCE = {
@@ -1398,12 +1398,6 @@ J.CLASSIC_LOOT = {
         },
     } end,
     scarlet_monastery = function() return {
-        arcanist_doan = {
-            { 7714, "Hypnotic Blade", "Waffenhand, Dolch", 3 },
-            { 7713, "Illusionary Rod", "Zweihändig, Stab", 3 },
-            { 7712, "Mantle of Doan", "Schulter, Stoff", 2 },
-            { 7711, "Robe of Doan", "Brust, Stoff", 2 },
-        },
         herod = {
             { 7719, "Raging Berserker's Helm", "Kopf, Schwere Rüstung", 3 },
             { 7718, "Herod's Shoulder", "Schulter, Schwere Rüstung", 3 },

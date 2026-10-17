@@ -11,6 +11,7 @@ Schreibt zwei Dateien, beide erzeugt - nicht von Hand aendern:
                                   Beute der alten Dungeons, gegen den Bestand
                                   von data/dungeon_journal.lua abgeglichen
     data/professions.lua          Rezepte und Lehrer der Berufe
+    data/books.lua                Buecher der Bibliothek (6.56.0.0)
 
 und druckt einen Bericht: was uebernommen ist, was nicht, und warum.
 
@@ -30,8 +31,8 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-FG_VERSION = "1.35.1"
-FG_DATE = "15.10.2026"
+FG_VERSION = "1.36.0"
+FG_DATE = "17.10.2026"
 
 # ForeverGuide-Schluessel -> Dungeon des Codex (Fluegel zusammengefasst).
 DUNGEON_MAP = {
@@ -899,6 +900,74 @@ def write_rares(rd):
     say(f"  -> {os.path.relpath(path, ROOT)} ({os.path.getsize(path) // 1024} KB)")
 
 
+def build_books(fg):
+    books = []
+    fac = {"Horde": 2, "Alliance": 1}
+    for b in fg["BOOKS"]:
+        sp = (as_list(b.get("spawns")) or [[0, 0, 0]])[0]
+        books.append({
+            "quest": int(b["quest"]), "item": int(b["item"]), "faction": fac.get(b.get("faction"), 0),
+            "name": b.get("en") or "", "map": int(sp[0]), "x": num(sp[1]), "y": num(sp[2]),
+            "set": int(b.get("set") or 0),
+        })
+    rw = fg["BOOK_REWARDS"]
+    rewards = []
+    for key in ("neck", "ring", "library25"):
+        r = rw[key]
+        rewards.append({"key": key, "goal": int(r["goal"]), "quest": int(r["quest"]),
+                        "items": [int(i) for i in as_list(r.get("items"))],
+                        "minLevel": int(r.get("minLevel") or 0)})
+    rewards.sort(key=lambda r: r["goal"])
+    lib = {}
+    for side, v in fg["LIBRARIANS"].items():
+        lib[side] = {"npc": int(v["npc"]), "name": v.get("nameEN") or "", "map": int(v["map"]),
+                     "x": num(v["x"]), "y": num(v["y"])}
+    say("Bibliotheksbuecher")
+    say(f"  {len(books)} Buecher, Belohnungen bei {', '.join(str(r['goal']) for r in rewards)}")
+    return {"books": books, "rewards": rewards, "librarians": lib, "each": rw.get("each", {})}
+
+
+def write_books(bd):
+    L = []
+    w = L.append
+    w("--------------------------------------------------")
+    w("-- WeintCodex :: Buecher der Bibliothek")
+    w("--------------------------------------------------")
+    w("-- ERZEUGT von .github/scripts/import_foreverguide.py - nicht von Hand")
+    w("-- aendern; neu erzeugen.")
+    w("--")
+    w("-- HERKUNFT `community`: das Addon ForeverGuide " + FG_VERSION + " (Quest- und")
+    w("-- Gegenstandsnummern aus der Questie-Datenbank, abgeglichen mit der Beta).")
+    w("-- Nur Fakten: Abgabequest, Gegenstand, Fraktion, englischer Name (im Spiel")
+    w("-- nennt der Client seinen), Fundort; Belohnungsquests ab 10/20/25 Buechern.")
+    w("-- OB ein Buch abgegeben ist, fragt WeintCodex den Client - nie der Bestand.")
+    w("--------------------------------------------------")
+    w("")
+    w("WeintCodex = WeintCodex or {}")
+    w("WeintCodex.BooksData = {")
+    w(f'    source = {{ kind = "community", date = "{FG_DATE}" }},')
+    w("    -- { Abgabequest, Gegenstand, Fraktion (0 beide, 1 Allianz, 2 Horde), Name, Karte, x, y }")
+    w("    books = {")
+    for b in bd["books"]:
+        w(f"        {{ {b['quest']}, {b['item']}, {b['faction']}, {lua_str(b['name'])}, {b['map']}, {b['x']}, {b['y']} }},")
+    w("    },")
+    w("    rewards = {")
+    for r in bd["rewards"]:
+        items = ", ".join(str(i) for i in r["items"])
+        w(f"        {{ key = {lua_str(r['key'])}, goal = {r['goal']}, quest = {r['quest']}, minLevel = {r['minLevel']}, items = {{ {items} }} }},")
+    w("    },")
+    w("    librarians = {")
+    for side in sorted(bd["librarians"]):
+        v = bd["librarians"][side]
+        w(f"        {side} = {{ npc = {v['npc']}, name = {lua_str(v['name'])}, map = {v['map']}, x = {v['x']}, y = {v['y']} }},")
+    w("    },")
+    w("}")
+    path = os.path.join(ROOT, "data", "books.lua")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(L) + "\n")
+    say(f"  -> {os.path.relpath(path, ROOT)} ({os.path.getsize(path) // 1024} KB)")
+
+
 def main():
     if len(sys.argv) != 2:
         print(__doc__)
@@ -909,6 +978,7 @@ def main():
     write_professions(build_professions(fg))
     write_classquests(build_classquests(fg))
     write_rares(build_rares(fg))
+    write_books(build_books(fg))
     print("\n".join(report))
 
 

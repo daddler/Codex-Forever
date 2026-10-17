@@ -18818,6 +18818,35 @@ do
     Check(ok, "Charakterfenster: Gegenstandsstufe vom Client, keine 0" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.56.0.0: Buecher der Bibliothek - gezaehlt vom Client, naechste Belohnung.
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local LB, HM = WeintCodex.Library, WeintCodex.Home
+        assert(LB and WeintCodex.BooksData and #WeintCodex.BooksData.books > 30, "Bestand fehlt")
+        local oQ, oF, oC = G.C_QuestLog, G.UnitFactionGroup, G.C_Item
+        G.UnitFactionGroup = function() return "Horde", "Horde" end
+        G.C_Item = { GetItemCount = function() return 0 end }
+        assert((function() G.C_QuestLog = {} return LB.Progress() == nil end)(), "ohne Antwort des Clients eine Zahl")
+        local doneSet = {}
+        local mine = LB.Mine()
+        for i = 1, 7 do doneSet[mine[i][1]] = true end
+        G.C_QuestLog = { IsQuestFlaggedCompleted = function(q) return doneSet[q] == true end }
+        local p = LB.Progress()
+        assert(p.done == 7 and p.next.goal == 10 and not p.claim, "7 abgegeben falsch gezaehlt")
+        assert(LB.Line(p):find("noch 3 bis zur Halskette", 1, true), "Zeile: " .. tostring(LB.Line(p)))
+        for i = 8, 10 do doneSet[mine[i][1]] = true end
+        p = LB.Progress()
+        assert(p.claim and p.claim.key == "neck", "Halskette nicht zum Abholen")
+        local item = mine[1][2]
+        local lines = LB.TooltipLines(item)
+        assert(lines and lines[1]:find("schon abgegeben", 1, true), "Tooltip des Buches")
+        for _, l in ipairs(lines) do assert(not l:find("ForeverGuide", 1, true), "fremder Name im Spiel") end
+        G.C_QuestLog, G.UnitFactionGroup, G.C_Item = oQ, oF, oC
+    end)
+    Check(ok, "Bibliothek: Buecher vom Client gezaehlt, naechste Belohnung, Tooltip" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.55.0.0: Questhilfe - Kennfarbe je Quest, Ziele vom Client.
 do
     local G = _G

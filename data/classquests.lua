@@ -4,7 +4,7 @@
 -- ERZEUGT von .github/scripts/import_foreverguide.py - nicht von Hand
 -- aendern; neu erzeugen.
 --
--- HERKUNFT `community`: das Addon ForeverGuide 1.35.1 sammelt die
+-- HERKUNFT `community`: das Addon ForeverGuide 1.36.0 sammelt die
 -- Klassenquests aus der Questie-Datenbank fuer Forever. Uebernommen sind
 -- nur Fakten: Nummer, Stufe, Mindeststufe, Klassen, Voelker, Geber und
 -- Abgabe (NPC-Nummer), Vor- und Folgequest, gelehrter Zauber, Belohnungen.
@@ -27,7 +27,7 @@ local Q = WeintCodex.ClassQuestData
 
 Q.SOURCE = {
     kind  = "community",
-    date  = "15.10.2026",
+    date  = "17.10.2026",
     label = "Klassenquests: Wissensstand aus der Beta",
 }
 Q.REWARD_SOURCE = {

@@ -4,7 +4,7 @@
 -- ERZEUGT von .github/scripts/import_foreverguide.py - nicht von Hand
 -- aendern; neu erzeugen.
 --
--- HERKUNFT `community`: das Addon ForeverGuide 1.35.1 nennt die seltenen
+-- HERKUNFT `community`: das Addon ForeverGuide 1.36.0 nennt die seltenen
 -- Gegner aus der Questie-Datenbank fuer Forever (Liste, Stufen, Lagen). Die
 -- WIEDERKEHR stammt aus Classic (cmangos) und heisst so (`classic`).
 -- Uebernommen sind nur Fakten - keine Faehigkeiten, keine Texte, keine
@@ -23,7 +23,7 @@ local R = WeintCodex.RareData
 
 R.SOURCE = {
     kind  = "community",
-    date  = "15.10.2026",
+    date  = "17.10.2026",
     label = "Seltene Gegner: Wissensstand aus der Beta",
 }
 R.RESPAWN_SOURCE = {

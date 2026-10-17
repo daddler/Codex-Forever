@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.56.0.0] – 2026-10-17
+
+### Neu
+- Bücher der Bibliothek (`modules/library.lua`, `data/books.lua` **erzeugt** von `import_foreverguide.py`, Art `community`): 37 Bücher mit Abgabequest, Belohnungsquests bei 10/20/25. Gezählt über `C_QuestLog.IsQuestFlaggedCompleted` je Fraktion; ohne Antwort keine Zahl. Startseite: Karte „Bibliothek“ (nur wer angefangen hat), Tooltip jedes Buches.
+
+### Geändert
+- Daten aus ForeverGuide 1.36.0 neu erzeugt (Dungeon-Journal, Berufe, Klassenquests, seltene Gegner).
+
 ## [6.55.1.0] – 2026-10-17
 
 ### Behoben
