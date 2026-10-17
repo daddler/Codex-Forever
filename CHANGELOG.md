@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.61.2.0] – 2026-10-17
+
+### Behoben
+- Minikarte, Sammelknopf: Tooltip verdeckte die aufgeklappte Addon-Liste. Bei offener Liste kein Tooltip (Klick schließt ihn), sonst `ANCHOR_BOTTOMLEFT` – die Liste wächst nach oben.
+
 ## [6.61.1.0] – 2026-10-17
 
 ### Geändert

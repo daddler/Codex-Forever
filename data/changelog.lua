@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.61.2.0",
+        date    = "17.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Addon-Liste an der Minikarte ist frei|r – der Hinweis zum Sammelknopf verschwindet beim Aufklappen und steht sonst darunter statt über der Liste.",
+        },
+    },
+    {
         version = "6.61.1.0",
         date    = "17.10.2026",
         notes   = {

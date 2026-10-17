@@ -619,7 +619,11 @@ local function BuildBag()
     Tint(C.textMuted)
     bag:SetScript("OnEnter", function(self)
         Tint(C.textBright)
-        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+        -- 6.61.2.0 (Beta-Test: "der Tooltip verdeckt alle Addons"): offen
+        -- braucht es keine Erklaerung, und zu unten heraus - die Liste
+        -- waechst nach oben.
+        if flyout and flyout:IsShown() then return end
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
         GameTooltip:SetText("Addons", 1, 1, 1)
         GameTooltip:AddLine("Klick: alle Addon-Knöpfe der Minikarte", 0.7, 0.7, 0.75, true)
         GameTooltip:Show()
@@ -636,6 +640,7 @@ local function BuildBag()
     flyout:Hide()
     bag:SetScript("OnClick", function()
         flyout:SetShown(not flyout:IsShown())
+        if flyout:IsShown() and GameTooltip.IsOwned and GameTooltip:IsOwned(bag) then GameTooltip:Hide() end
         MM.LayoutBag()
     end)
 end
