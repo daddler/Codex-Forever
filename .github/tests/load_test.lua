@@ -20470,6 +20470,12 @@ do
     end
 end
 
+do
+    local QA = WeintCodex.UIQuestArrow
+    Check(QA.MarkerText(2.4, 0.8) == "hier" and QA.MarkerText(60, 10) == QA.FormatDistance(60),
+        "Zielmarke: nah am Boden gemessen, weit wie die Navigation")
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

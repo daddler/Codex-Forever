@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.80.4.0] – 2026-10-18
+
+### Behoben
+- Zielmarke im Raum: unter 15 m Abstand am Boden (`QA.MarkerText`), unter
+  2 m „hier“ – die Navigation misst schräg bis über den Kopf.
+
 ## [6.80.3.0] – 2026-10-18
 
 ### Geändert

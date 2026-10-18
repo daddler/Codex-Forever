@@ -949,6 +949,17 @@ function QA.MarkerFade(want, now)
     return cur
 end
 
+-- 6.80.4.0 (Beta-Test: neben dem Questgeber "2 m", beim Springen 1 m
+-- weniger): die Navigation misst schraeg bis zum Punkt ueber dem Kopf. In
+-- der Naehe zaehlt der Abstand am Boden (Kartenort), unter 2 m "hier".
+QA.MARK_FLAT = 15
+function QA.MarkerText(d3, flat, units)
+    local d = d3
+    if type(flat) == "number" and type(d3) == "number" and d3 <= QA.MARK_FLAT then d = math.min(d3, flat) end
+    if type(d) == "number" and d < 2 then return "hier" end
+    return QA.FormatDistance(d, units)
+end
+
 local function PlaceMarker(n, text, key)
     if not K.Get(KEY, "worldMarker") or not n or not n.frame or not n.onScreen then
         if marker then marker:Hide() end
@@ -1315,7 +1326,7 @@ function QA.Update(force)
             height:SetText(first and second and (first .. " · " .. second) or first or second or "")
         end
         local fades = t.kind == "quest" and type(name) == "string" and not name:find("^Abgeben: ")
-        PlaceMarker(nav, QA.FormatDistance(nav.dist, units), fades and ("quest:" .. name) or nil)
+        PlaceMarker(nav, QA.MarkerText(nav.dist, flatGoal, units), fades and ("quest:" .. name) or nil)
     end
 
     if hop and (navRest or yards) <= math.max(K.Get(KEY, "arriveDistance") or 5, 10) then

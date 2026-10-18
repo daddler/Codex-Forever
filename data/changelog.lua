@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.80.4.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFZielmarke im Raum|r – in der Nähe zählt der Abstand am Boden statt schräg zum Punkt über dem Kopf; direkt davor steht „hier“ statt „2 m“, und Springen ändert die Zahl nicht mehr.",
+        },
+    },
+    {
         version = "6.80.3.0",
         date    = "18.10.2026",
         notes   = {
