@@ -910,6 +910,17 @@ function Frame:Refresh()
     local NP = WeintCodex.UINameplates
     if NP and NP.TintByMark and not K.Bool(_G.UnitIsFriend and _G.UnitIsFriend("player", u), false) then
         NP.TintByMark(self.health, u)
+        if NP.ShowMarkTint and K.Get("nameplates", "raidMarkColor") ~= false then
+            if not self._markTint then
+                self._markTint = K.NewText(self.health, 10)
+                self._markTint:SetPoint("CENTER", self.health, "CENTER", 0, 0)
+            end
+            NP.ShowMarkTint(self._markTint, self.health, u)
+        elseif self._markTint then
+            self._markTint:Hide()
+        end
+    elseif self._markTint then
+        self._markTint:Hide()
     end
     self:UpdatePrediction()
 

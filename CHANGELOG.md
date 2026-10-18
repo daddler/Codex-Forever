@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.76.4.0] – 2026-10-18
+
+### Geändert
+- Markierungsfarbe ohne Lesen des Index: Farbfläche als Bild im Text (`NP.ShowMarkTint`, `|T…media/ui/mark%d:h:w|t` über `SetFormattedText` mit dem – auch geheimen – Index, wie das Symbol in `K.ShowRaidIndex`). Neue Bilder `media/ui/mark1..8.tga` (8×8, Alpha 140). Auf Plaketten und Einheitenrahmen. Anlass: Farbkurve wirkte im Kampf nicht (Beta-Test, zwei Bilder).
+
 ## [6.76.3.0] – 2026-10-18
 
 ### Behoben

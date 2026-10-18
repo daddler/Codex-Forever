@@ -816,6 +816,14 @@ local function Build(parent)
     rg:SetPoint("CENTER", raid, "CENTER", 0, 0)
     rg:Hide()
     p.raidGlow = rg
+    -- 6.76.4.0: Farbflaeche der Markierung ueber dem Balken - als Bild im
+    -- Text, wie das Symbol selbst. So geht auch eine GEHEIME Markierung (im
+    -- Kampf) hinein, ohne dass Lua sie lesen muss: der Client setzt die Zahl
+    -- in den Pfad ein (media/ui/mark1..8, halb durchsichtig).
+    local tint = K.NewText(health, 10)
+    tint:SetPoint("CENTER", health, "CENTER", 0, 0)
+    tint:Hide()
+    p.markTint = tint
 
     -- Zielmarken: zwei gestaffelte Winkel links und rechts, die auf den
     -- Balken zeigen. Eine Datei, rechts gespiegelt.
@@ -1496,10 +1504,31 @@ function NP.MarkColor(idx)
     return idx and WeintCodex.GameColors["raidMark" .. idx] or nil
 end
 
+-- Die Farbflaeche (siehe Aufbau). true, wenn gesetzt.
+function NP.ShowMarkTint(fs, bar, unit)
+    if not (fs and bar and unit and _G.GetRaidTargetIndex) then return false end
+    local ok, idx = pcall(_G.GetRaidTargetIndex, unit)
+    if not ok or type(idx) == "nil" then fs:Hide() return false end
+    if not K.IsSecret(idx) then
+        local n = K.Plain(idx)
+        if type(n) ~= "number" or n < 1 or n > 8 then fs:Hide() return false end
+    end
+    local w, h = K.Plain(bar:GetWidth()), K.Plain(bar:GetHeight())
+    if type(w) ~= "number" or type(h) ~= "number" or w <= 0 or h <= 0 then fs:Hide() return false end
+    local fmt = "|TInterface\\AddOns\\WeintCodex\\media\\ui\\mark%d:" .. math.floor(h + 0.5) .. ":" .. math.floor(w + 0.5) .. "|t"
+    local okS = pcall(fs.SetFormattedText, fs, fmt, idx)
+    if okS then fs:Show() else fs:Hide() end
+    return okS
+end
+
 local function UpdateRaidIcon(p)
     if p.raidGlow then p.raidGlow:Hide() end
+    if p.markTint then p.markTint:Hide() end
     if not p.unit or S.raidMarker == "none" then p.raid:Hide() return end
     local shown, secret = K.ShowRaidIcon(p.raid, p.unit)
+    if shown and S.raidMarkColor and not p._friendly and p.markTint then
+        NP.markTintInfo = NP.ShowMarkTint(p.markTint, p.health, p.unit) and "gesetzt" or "nicht gesetzt"
+    end
     if shown then
         NP.raidInfo = secret and "geheim, als Bild aus dem Text gezeigt" or "offen lesbar, gezeigt"
         if secret and S.raidMarkColor and not p._friendly then

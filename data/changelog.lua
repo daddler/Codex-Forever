@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.76.4.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFMarkierte Gegner – neuer Weg|r – über dem Lebensbalken liegt jetzt eine Fläche in der Farbe der Markierung. Sie kommt auf demselben Weg wie das Symbol selbst und funktioniert deshalb auch im Kampf, wo das Spiel die Markierung verschlüsselt. Auf Namensplakette und Zielrahmen.",
+        },
+    },
+    {
         version = "6.76.3.0",
         date    = "18.10.2026",
         notes   = {
