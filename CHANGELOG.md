@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.66.0.0] – 2026-10-18
+
+### Neu
+- Berufe: kaufbare Rezepte mit Kennzeichen „Händler“, im Tooltip Händler mit Gebiet und Koordinaten (nur eigene Fraktion, `PRO.Vendors`), Klick setzt den Questpfeil zum Händler (`PRO.GuideToVendor`). Händlerbestand weiter `classic` (262 Rezepte).
+
 ## [6.65.0.0] – 2026-10-17
 
 ### Neu

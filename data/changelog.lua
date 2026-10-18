@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.66.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFRezepte vom Händler: Klick führt hin|r – in den Berufen tragen kaufbare Rezepte das Zeichen „Händler“. Der Tooltip nennt Händler, Gebiet und Lage (nur deiner Fraktion), ein Klick setzt den Pfeil zum Händler. Umschalt-Klick verlinkt das Rezept weiter im Chat.",
+        },
+    },
+    {
         version = "6.65.0.0",
         date    = "17.10.2026",
         notes   = {

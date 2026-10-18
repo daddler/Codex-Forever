@@ -20010,6 +20010,35 @@ do
     Check(ok, "Verzauberungen: erkannt je Klasse, unbekannt bleibt unbekannt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.66.0.0: Rezepte beim Haendler - Pfeil zum Haendler der eigenen Fraktion.
+do
+    local ok, err = pcall(function()
+        local PRO, P = WeintCodex.Professions, WeintCodex.ProfessionData
+        assert(PRO and PRO.Vendors and PRO.GuideToVendor, "Haendler-Verknuepfung fehlt")
+        local item, npcs
+        for k, v in pairs(P.VENDORS) do item, npcs = k, v break end
+        local r = { recipeItem = item }
+        local oF = _G.UnitFactionGroup
+        _G.UnitFactionGroup = function() return "Alliance" end
+        for _, v in ipairs(PRO.Vendors(r)) do assert(v[5] ~= "Horde", "Hordehaendler fuer Allianz") end
+        _G.UnitFactionGroup = function() return "Horde" end
+        for _, v in ipairs(PRO.Vendors(r)) do assert(v[5] ~= "Alliance", "Allianzhaendler fuer Horde") end
+        _G.UnitFactionGroup = oF
+        local QA = WeintCodex.UIQuestArrow
+        local oS, got = QA.SetCustom, nil
+        QA.SetCustom = function(t) got = t end
+        local any
+        for k in pairs(P.VENDORS) do
+            if PRO.GuideToVendor({ recipeItem = k }) then any = k break end
+        end
+        QA.SetCustom = oS
+        assert(any and got and got.map and got.x > 0 and got.x <= 1 and got.title:find("Rezept bei", 1, true),
+            "Pfeil zum Haendler nicht gesetzt")
+        assert(PRO.GuideToVendor({}) == false, "Pfeil ohne Haendler")
+    end)
+    Check(ok, "Berufe: Rezepte beim Haendler, Pfeil dorthin" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

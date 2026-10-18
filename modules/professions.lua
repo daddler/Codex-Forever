@@ -535,6 +535,32 @@ local function BuildPage()
     return f
 end
 
+-- Haendler eines Rezepts (6.66.0.0, Beta-Test: "die Verlinkung von allen
+-- Rezepten, die gekauft werden koennen, und wo"). Nur Haendler der eigenen
+-- Fraktion oder beider; ohne Fraktion des Spielers alle. Die Liste der
+-- Haendler ist der Stand aus Classic (P.VENDOR_SOURCE) und sagt das.
+function PRO.Vendors(r)
+    local out = {}
+    if not (r and r.recipeItem and P and P.VENDORS) then return out end
+    local mine = _G.UnitFactionGroup and _G.UnitFactionGroup("player")
+    if type(mine) ~= "string" then mine = nil end
+    for _, npc in ipairs(P.VENDORS[r.recipeItem] or {}) do
+        local v = P.VENDOR_NPC and P.VENDOR_NPC[npc]
+        if v and (not mine or not v[5] or v[5] == mine) then out[#out + 1] = v end
+    end
+    return out
+end
+
+-- Pfeil zum ersten Haendler (Kartennummer und Lage aus dem Bestand).
+function PRO.GuideToVendor(r)
+    local QA = WeintCodex.UIQuestArrow
+    local v = PRO.Vendors(r)[1]
+    if not (v and v[2] and v[3] and v[4] and QA and QA.SetCustom) then return false end
+    QA.SetCustom({ map = v[2], x = v[3] / 100, y = v[4] / 100,
+        title = "Rezept bei " .. v[1] })
+    return true
+end
+
 local function Tooltip(row)
     local gt = _G.GameTooltip
     local r = row.recipe
@@ -559,13 +585,13 @@ local function Tooltip(row)
     elseif r.recipeItem then
         line("Herkunft: Rezept „" .. PRO.ItemName(r.recipeItem) .. "“" .. (r.bop and " (beim Aufheben gebunden)" or ""), "textMuted")
         local QM = WeintCodex.QuestMap
-        for _, npc in ipairs(P.VENDORS[r.recipeItem] or {}) do
-            local v = P.VENDOR_NPC[npc]
-            if v then
-                local zone = v[2] and QM and QM.MapName(v[2])
-                line("  Händler: " .. v[1] .. (zone and (", " .. zone) or "") .. " (aus Classic)", "textDim")
-            end
+        local vs = PRO.Vendors(r)
+        for _, v in ipairs(vs) do
+            local zone = v[2] and QM and QM.MapName(v[2])
+            line("  Händler: " .. v[1] .. (zone and (", " .. zone) or "")
+                .. (v[3] and string.format(" (%.0f, %.0f)", v[3], v[4]) or "") .. " – aus Classic", "textDim")
         end
+        if #vs > 0 and WeintCodex.UIQuestArrow then line("Klick: Pfeil zum Händler", "accent") end
         if r.favor then line("  Für " .. r.favor .. " Händlergunst", "textDim") end
     else
         line("Herkunft unbekannt", "textDim")
@@ -597,7 +623,10 @@ local function RecipeRow(body, y, w, r, opts)
         row:SetScript("OnEnter", Tooltip)
         row:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
         row:SetScript("OnClick", function(self)
-            if not (_G.IsModifiedClick and _G.IsModifiedClick("CHATLINK") and _G.ChatEdit_InsertLink) then return end
+            if not (_G.IsModifiedClick and _G.IsModifiedClick("CHATLINK") and _G.ChatEdit_InsertLink) then
+                PRO.GuideToVendor(self.recipe)
+                return
+            end
             local cs = _G.C_Spell
             local link = cs and cs.GetSpellLink and cs.GetSpellLink(self.recipe.spell)
             if type(link) == "string" then _G.ChatEdit_InsertLink(link) end
@@ -623,6 +652,9 @@ local function RecipeRow(body, y, w, r, opts)
     elseif r.state == "c" then
         row.tag:SetText("Geändert")
         row.tag:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3])
+    elseif not r.trainer and #PRO.Vendors(r) > 0 then
+        row.tag:SetText("Händler")
+        row.tag:SetTextColor(C.goldBright[1], C.goldBright[2], C.goldBright[3])
     else
         row.tag:SetText("")
     end
