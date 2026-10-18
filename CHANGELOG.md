@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.71.1.0] – 2026-10-18
+
+### Geändert
+- Danke: `C_ChatInfo.InChatMessagingLockdown()` – gesperrtes Flüstern wird alle 2 s bis 30 s nachgeholt, danach Fehlerbericht; `C_Secrets.ShouldAurasBeSecret()` – geheime Auren werden übergangen. Verhalten nach einem anderen Forever-Addon (NaowhForever, „all rights reserved“ – kein Code übernommen).
+
 ## [6.71.0.0] – 2026-10-18
 
 ### Neu

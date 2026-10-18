@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.71.1.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFDanke geht nicht mehr ins Leere|r – sperrt das Spiel das Flüstern gerade, wartet WeintCodex und holt den Dank nach. Sind Buffs gerade geheim, versucht es gar nicht erst.",
+        },
+    },
+    {
         version = "6.71.0.0",
         date    = "18.10.2026",
         notes   = {

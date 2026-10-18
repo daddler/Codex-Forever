@@ -20188,6 +20188,25 @@ do
     Check(ok, "Danke: Namensplaketten kurz an, alter Wert zurueck" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.71.1.0: gesperrtes Fluestern wird nachgeholt, nicht ins Leere gesendet.
+do
+    local ok, err = pcall(function()
+        local TH = WeintCodex.UIThanks
+        local oCI, oT = _G.C_ChatInfo, _G.C_Timer
+        local locked, sentMsg, later = true, nil, nil
+        _G.C_ChatInfo = { InChatMessagingLockdown = function() return locked end,
+                          SendChatMessage = function(t) sentMsg = t end }
+        _G.C_Timer = { After = function(_, f) later = f end }
+        assert(TH.Send("Fremder", "Danke!") == "waiting" and not sentMsg, "trotz Sperre gesendet")
+        locked = false
+        later()
+        assert(sentMsg == "Danke!", "nach der Sperre nicht nachgeholt")
+        _G.C_ChatInfo, _G.C_Timer = oCI, oT
+        TH.state.echo = nil
+    end)
+    Check(ok, "Danke: gesperrtes Fluestern nachgeholt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

@@ -314,8 +314,28 @@ local function OpenChat(text)
     if _G.ChatFrame_OpenChat then pcall(_G.ChatFrame_OpenChat, text) end
 end
 
-function TH.Send(name, text)
+-- Sperrt das Spiel gerade das Fluestern (C_ChatInfo.InChatMessagingLockdown,
+-- 6.71.1.0)? Dann nicht ins Leere senden, sondern nachholen.
+TH.LOCK_RETRY, TH.LOCK_MAX = 2, 30
+function TH.ChatLocked()
+    local ci = _G.C_ChatInfo
+    if not (ci and ci.InChatMessagingLockdown) then return false end
+    local ok, v = pcall(ci.InChatMessagingLockdown)
+    return ok and K.Bool(v, false) or false
+end
+
+function TH.Send(name, text, waited)
     local now = Now()
+    if TH.ChatLocked() then
+        waited = waited or 0
+        if waited == 0 then TH.Trace("Flüstern gerade vom Spiel gesperrt – wird nachgeholt") end
+        if waited < TH.LOCK_MAX and _G.C_Timer and _G.C_Timer.After then
+            _G.C_Timer.After(TH.LOCK_RETRY, function() TH.Send(name, text, waited + TH.LOCK_RETRY) end)
+            return "waiting"
+        end
+        TH.Fail("Flüstern an " .. name .. " blieb " .. TH.LOCK_MAX .. " s vom Spiel gesperrt")
+        return "locked"
+    end
     st.last[name], st.at = now, now
     local whisper = text
     if K.Get(KEY, "thanksBlocked") then
@@ -426,6 +446,13 @@ end
 function TH.OnAura(info)
     if not (TH.Active() and type(info) == "table") then return end
     if K.Plain(info.isFullUpdate) == true then return end
+    -- 6.71.1.0 (Abgleich mit einem anderen Forever-Addon): sagt das Spiel,
+    -- dass Auren gerade geheim sind, ist nichts lesbar - nicht versuchen.
+    local sec = _G.C_Secrets
+    if sec and sec.ShouldAurasBeSecret then
+        local ok, v = pcall(sec.ShouldAurasBeSecret)
+        if ok and K.Bool(v, false) then TH.Trace("Buffs gerade geheim (Spiel) – übergangen") return end
+    end
     local added = info.addedAuras
     if type(added) == "table" then
         local fresh = {}
