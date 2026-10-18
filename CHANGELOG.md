@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.79.3.0] – 2026-10-18
+
+### Geändert
+- `K.NeedsWideFont`/`K.MatchFont`: Zeilen mit Zeichen außerhalb Latein/Kyrillisch (UTF-8-Leitbytes 0xD8–0xDB, 0xE3–0xED) nehmen `ChatFontNormal` (Schriftfamilie mit Ausweichschriften). In der Spruchliste von Danke und in allen Eingabefeldern der Einstellungen. Arabisch unterstützt WoW nicht.
+
 ## [6.79.2.0] – 2026-10-18
 
 ### Geändert

@@ -20447,6 +20447,13 @@ do
     Check(ok, "Flugspiele: " .. tostring(err))
 end
 
+-- 6.79.3.0: fremde Schriften in eigenen Texten.
+do
+    local K = WeintCodex.UIKit
+    Check(K.NeedsWideFont("ありがとう") and K.NeedsWideFont("谢谢") and K.NeedsWideFont("شكرا")
+        and not K.NeedsWideFont("Danke – schön! Größe") and not K.NeedsWideFont("Спасибо"), "Fremde Schrift erkannt, Deutsch und Kyrillisch nicht")
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

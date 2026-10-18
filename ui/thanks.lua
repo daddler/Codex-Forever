@@ -881,6 +881,7 @@ local function LineList(parent, width)
             local t = list[idx]
             if t then
                 r.index = idx
+                K.MatchFont(r.text, 12, t)
                 r.text:SetText(t)
                 r.sel:SetShown(idx == edit.line)
                 r:Show()

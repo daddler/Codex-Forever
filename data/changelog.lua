@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.79.3.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFDankessprüche in fremden Schriften|r – steht in einem eigenen Spruch Japanisch, Chinesisch oder Koreanisch, zeigen Liste und Eingabefeld ihn in der Chatschrift des Spiels statt in Rechtecken – soweit dein Spiel diese Schriften installiert hat.",
+        },
+    },
+    {
         version = "6.79.2.0",
         date    = "18.10.2026",
         notes   = {

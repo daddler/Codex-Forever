@@ -496,6 +496,7 @@ function Builder:Cell(spec)
         bg:SetColorTexture(unpack(C.surface3))
         WeintCodex.CutCorners(eb, 8, "bgDark")
         eb:SetScript("OnTextChanged", function(self, user)
+            K.MatchFont(self, 12, self:GetText())
             if user then rawSet(self:GetText()) end
         end)
         eb:SetScript("OnEnterPressed", function(self) set(self:GetText()) self:ClearFocus() end)

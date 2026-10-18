@@ -897,6 +897,29 @@ end
 -- Die Schrift des Spiels als letzter Rueckfall: sie ist immer geladen.
 local FALLBACK_FONT = "Fonts\\FRIZQT__.TTF"
 
+-- 6.79.3.0 (Wunsch: Dankessprueche auf Japanisch, Chinesisch, Arabisch -
+-- "nur Rechtecke"): die Schrift von WeintCodex kennt nur lateinische und
+-- kyrillische Zeichen. Steht anderes im Text, nimmt die Zeile die
+-- Chatschrift des Spiels (ChatFontNormal) - eine Schriftfamilie, die je
+-- nach installierten Schriften auf Koreanisch und Chinesisch ausweicht.
+-- Arabisch kennt WoW gar nicht (keine Schrift, keine Schreibrichtung).
+function K.NeedsWideFont(text)
+    if type(text) ~= "string" then return false end
+    return text:find("[\216-\219\227-\237]") ~= nil
+end
+function K.MatchFont(fs, size, text)
+    if type(fs) ~= "table" then return end
+    local wide = K.NeedsWideFont(text)
+    if wide == fs._wcWide then return end
+    fs._wcWide = wide
+    local chat = _G.ChatFontNormal
+    if wide and type(chat) == "table" and fs.SetFontObject then
+        fs:SetFontObject(chat)
+    else
+        K.SetFont(fs, size)
+    end
+end
+
 function K.SetFont(fs, size)
     -- type() und nicht nur `fs and`: ein Feld, das es nicht gibt oder das
     -- etwas anderes ist als eine Schriftzeile, soll uebersprungen werden,
