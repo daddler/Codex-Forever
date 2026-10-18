@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.76.2.0] – 2026-10-18
+
+### Geändert
+- Einheitenrahmen (Ziel, Fokus …): feindliche markierte Einheiten bekommen die Markierungsfarbe (`NP.TintByMark`, offen über `GameColors.raidMarkN`, geheim über `NP.MarkCurve`). Schalter wie bei den Plaketten (`nameplates.raidMarkColor`).
+
 ## [6.76.1.0] – 2026-10-18
 
 ### Behoben

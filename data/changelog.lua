@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.76.2.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFMarkierungsfarbe auch im Zielrahmen|r – ist dein Ziel markiert, zeigt jetzt auch der Zielrahmen oben den Lebensbalken in der Farbe der Markierung, nicht nur die Namensplakette.",
+        },
+    },
+    {
         version = "6.76.1.0",
         date    = "18.10.2026",
         notes   = {

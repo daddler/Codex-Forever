@@ -1745,6 +1745,29 @@ function NP.PaintMarkSecret(p)
     return done
 end
 
+-- Fuer andere Rahmen (Zielrahmen, ui/unitframes.lua, 6.76.2.0): einen
+-- Balken in der Farbe der Markierung von unit faerben - offen oder geheim.
+-- true, wenn gefaerbt. Schalter: der der Plaketten.
+function NP.TintByMark(bar, unit)
+    if K.Get(KEY, "raidMarkColor") == false or not (bar and unit) then return false end
+    local c = NP.MarkColor(NP.MarkIndex(unit))
+    if c then K.PaintBar(bar, c[1], c[2], c[3]) return true end
+    if not _G.GetRaidTargetIndex then return false end
+    local ok, idx = pcall(_G.GetRaidTargetIndex, unit)
+    if not ok or not K.IsSecret(idx) then return false end
+    local curve = NP.MarkCurve()
+    local tex = bar.GetStatusBarTexture and bar:GetStatusBarTexture()
+    if not (curve and curve.Evaluate and tex) then return false end
+    local okE, col = pcall(curve.Evaluate, curve, idx)
+    if not okE or type(col) == "nil" or not col.GetRGB then return false end
+    local done = pcall(function()
+        local r, g, b = col:GetRGB()
+        tex:SetVertexColor(r, g, b, 1)
+    end)
+    bar._wcR, bar._wcG, bar._wcB = nil, nil, nil
+    return done
+end
+
 function NP.PaintSecret(bar, scaled)
     if bar._wcMarkSecret then return true end   -- die Markierung geht vor
     local curve = NP.ThreatCurve()
