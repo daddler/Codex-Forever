@@ -221,11 +221,27 @@ end
 R._SpellKnown = SpellKnown
 
 -- Hat der Charakter einen Zauber der Regel gelernt? true / false / nil.
+-- 6.69.2.0 (Beta-Test: "Es wird nicht an Daemonenhaut erinnert"): die
+-- Regel nennt Rang 1 (687); wer Rang 2 (696) gelernt hat, "kennt" Rang 1
+-- fuer das Spiel nicht mehr - die Regel galt als nicht gelernt und
+-- schwieg. Darum auch ueber den Namen: das Spiel loest einen Zaubernamen
+-- nur zu einem Zauber auf, den der Charakter hat (hoechster Rang).
+function R.KnownByName(id)
+    local cs = _G.C_Spell
+    if not (cs and cs.GetSpellInfo) then return false end
+    local ok, info = pcall(cs.GetSpellInfo, id)
+    local name = ok and type(info) == "table" and K.Plain(info.name) or nil
+    if type(name) ~= "string" or name == "" then return false end
+    local ok2, mine = pcall(cs.GetSpellInfo, name)
+    local mid = ok2 and type(mine) == "table" and K.Plain(mine.spellID) or nil
+    return type(mid) == "number" and SpellKnown(mid) == true
+end
+
 function R.Learned(rule)
     if not CanAskSpells() then return nil end
     for _, t in ipairs(rule.any or { rule.spell }) do
         local id = tonumber(t)
-        if id and SpellKnown(id) then return true end
+        if id and (SpellKnown(id) or R.KnownByName(id)) then return true end
     end
     return false
 end

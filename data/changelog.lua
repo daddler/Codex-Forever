@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.69.2.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFErinnerung an Dämonenhaut und andere Ränge|r – wer einen höheren Rang eines Klassenbuffs gelernt hat, bekommt die Erinnerung jetzt wieder. Bisher galt der Buff dann als nicht gelernt, und die Erinnerung blieb stumm.",
+        },
+    },
+    {
         version = "6.69.1.0",
         date    = "18.10.2026",
         notes   = {

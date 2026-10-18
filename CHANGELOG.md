@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.69.2.0] – 2026-10-18
+
+### Behoben
+- Erinnerungen: Klassenbuff-Regeln (`learned = true`) schwiegen, wenn nur ein höherer Rang gelernt war (Daemonenhaut Rang 2, 696, Regel nennt 687; die Rangkette fehlt im Lehrerbestand). `R.Learned` prüft jetzt auch über den Namen (`R.KnownByName`).
+
 ## [6.69.1.0] – 2026-10-18
 
 ### Behoben

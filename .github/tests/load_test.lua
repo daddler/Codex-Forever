@@ -20102,6 +20102,27 @@ do
     Check(ok, "Danke: Fehlerbericht bei ungewollten Gruenden, gedrosselt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.69.2.0: Klassenbuff mit hoeherem Rang gilt als gelernt (Daemonenhaut).
+do
+    local ok, err = pcall(function()
+        local R = WeintCodex.UIReminders
+        local TR = WeintCodex.Trainer
+        local oK, oC, oP = TR.Known, _G.C_Spell, _G.IsPlayerSpell
+        TR.Known = function(id) return id == 696 end
+        _G.IsPlayerSpell = function(id) return id == 696 end
+        _G.C_Spell = { GetSpellInfo = function(k)
+            if k == 687 or k == 696 or k == "Dämonenhaut" then return { name = "Dämonenhaut", spellID = 696 } end
+            if k == 706 or k == "Dämonenrüstung" then return { name = "Dämonenrüstung", spellID = 706 } end
+            return nil
+        end }
+        local rule = { kind = "buff", any = { "706", "687" }, learned = true }
+        local v = R.Learned(rule)
+        TR.Known, _G.C_Spell, _G.IsPlayerSpell = oK, oC, oP
+        assert(v == true, "Rang 2 von Daemonenhaut nicht als gelernt erkannt")
+    end)
+    Check(ok, "Erinnerungen: hoeherer Rang zaehlt als gelernt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
