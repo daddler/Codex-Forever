@@ -20035,6 +20035,17 @@ do
         assert(any and got and got.map and got.x > 0 and got.x <= 1 and got.title:find("Rezept bei", 1, true),
             "Pfeil zum Haendler nicht gesetzt")
         assert(PRO.GuideToVendor({}) == false, "Pfeil ohne Haendler")
+        -- 6.67.0.0: Herkunft und Detailbereich je Rezept.
+        assert(PRO.Origin({ trainer = true }) == "trainer", "Lehrer nicht erkannt")
+        assert(PRO.Origin({ recipeItem = any }) == "vendor", "Haendler nicht erkannt")
+        assert(PRO.Origin({ recipeItem = -1, favor = 5 }) == "favor", "Gunst nicht erkannt")
+        assert(PRO.Origin({ recipeItem = -1, bop = true }) == "drop", "Fundstueck nicht erkannt")
+        assert(PRO.Origin({ recipeItem = -1 }) == "item" and PRO.Origin({}) == "unknown", "Rest falsch")
+        local blocks = PRO.RecipeInspector({ spell = 1, recipeItem = any, reagents = { { 2589, 2 } }, name = "Test" })
+        local hasGuide
+        for _, b in ipairs(blocks) do if b.type == "custom" then hasGuide = true end end
+        assert(hasGuide, "kein Pfeil-Knopf / keine Karte beim Haendler-Rezept")
+        PRO.SelectRecipe(nil)
     end)
     Check(ok, "Berufe: Rezepte beim Haendler, Pfeil dorthin" .. (ok and "" or (": " .. tostring(err))))
 end

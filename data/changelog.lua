@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.67.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFRezepte: Details rechts wie bei den Büchern|r – ein Klick auf ein Rezept zeigt rechts, woher es kommt (Lehrer, Händler, Händlergunst oder selbst finden), beim Händler mit Karte, Lage und dem Knopf „Questpfeil hierhin“. Auch der Tooltip sagt jetzt, ob ein Rezept käuflich ist.",
+        },
+    },
+    {
         version = "6.66.0.0",
         date    = "18.10.2026",
         notes   = {

@@ -591,7 +591,9 @@ local function Tooltip(row)
             line("  Händler: " .. v[1] .. (zone and (", " .. zone) or "")
                 .. (v[3] and string.format(" (%.0f, %.0f)", v[3], v[4]) or "") .. " – aus Classic", "textDim")
         end
-        if #vs > 0 and WeintCodex.UIQuestArrow then line("Klick: Pfeil zum Händler", "accent") end
+        local _, origin = PRO.Origin(r)
+        line(origin, #vs > 0 and "goldBright" or "textMuted")
+        line("Klick: Details rechts", "accent")
         if r.favor then line("  Für " .. r.favor .. " Händlergunst", "textDim") end
     else
         line("Herkunft unbekannt", "textDim")
@@ -605,6 +607,10 @@ local function RecipeRow(body, y, w, r, opts)
     if not row then
         row = CreateFrame("Button", nil, body)
         row:SetHeight(ROW_H)
+        row.sel = row:CreateTexture(nil, "BACKGROUND")
+        row.sel:SetAllPoints(row)
+        row.sel:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.14)
+        row.sel:Hide()
         local hl = row:CreateTexture(nil, "HIGHLIGHT")
         hl:SetAllPoints(row)
         hl:SetColorTexture(C.textBright[1], C.textBright[2], C.textBright[3], 0.05)
@@ -624,7 +630,7 @@ local function RecipeRow(body, y, w, r, opts)
         row:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
         row:SetScript("OnClick", function(self)
             if not (_G.IsModifiedClick and _G.IsModifiedClick("CHATLINK") and _G.ChatEdit_InsertLink) then
-                PRO.GuideToVendor(self.recipe)
+                PRO.SelectRecipe(self.recipe)
                 return
             end
             local cs = _G.C_Spell
@@ -638,6 +644,7 @@ local function RecipeRow(body, y, w, r, opts)
     row:SetPoint("TOPLEFT", body, "TOPLEFT", 0, y)
     row:SetWidth(w)
     row.recipe = r
+    row.sel:SetShown(PRO.selRecipe ~= nil and PRO.selRecipe == r)
     local icon = Icon(r)
     if icon then row.icon:SetTexture(icon) else row.icon:SetColorTexture(C.surface3[1], C.surface3[2], C.surface3[3], 1) end
     if row.icon.SetDesaturated then row.icon:SetDesaturated(opts.dim and true or false) end
@@ -862,6 +869,85 @@ local function Faction()
     return (f == "Alliance" or f == "Horde") and f or nil
 end
 
+-- Woher ein Rezept kommt (6.67.0.0, Beta-Test: "ob es kaeuflich zu
+-- erwerben ist oder ob man was anderes dafuer machen muss"). Nur was der
+-- Bestand sagt: Lehrer, Haendler (Classic), Haendlergunst, sonst ein
+-- Rezeptgegenstand ohne bekannten Haendler - dann sagen wir genau das und
+-- raten keine Quelle (Beute, Quest, Ruf sind nicht im Bestand).
+function PRO.Origin(r)
+    if not r then return "unknown", "Herkunft unbekannt" end
+    if r.trainer then return "trainer", "Beim Lehrer lernbar" end
+    if not r.recipeItem then return "unknown", "Herkunft unbekannt" end
+    if #PRO.Vendors(r) > 0 then return "vendor", "Käuflich beim Händler" end
+    if r.favor then return "favor", "Gegen " .. r.favor .. " Händlergunst" end
+    if r.bop then return "drop", "Rezept muss selbst gefunden werden (beim Aufheben gebunden) – Fundort nicht im Bestand" end
+    return "item", "Rezept als Gegenstand – kein Händler bekannt (Beute, Quest oder Auktionshaus)"
+end
+
+PRO.selRecipe = nil
+local function RecipeInspector(r)
+    local BP = WeintCodex.BooksPage
+    local QM = WeintCodex.QuestMap
+    local kind, text = PRO.Origin(r)
+    local rows = { { label = "Herkunft", value = ({ trainer = "Lehrer", vendor = "Händler", favor = "Händlergunst",
+        drop = "Fundstück", item = "Gegenstand", unknown = "unbekannt" })[kind] } }
+    local steps = PRO.StepsText(r)
+    if steps ~= "" then rows[#rows + 1] = { label = "Fertigkeit", value = steps } end
+    local blocks = {
+        { type = "header", text = PRO.RecipeName(r) },
+        { type = "text", text = text .. "." },
+    }
+    local v = PRO.Vendors(r)[1]
+    if kind == "vendor" and v then
+        rows[#rows + 1] = { label = "Händler", value = v[1] }
+        local zone = v[2] and QM and QM.MapName(v[2])
+        if zone then rows[#rows + 1] = { label = "Gebiet", value = zone } end
+        if v[3] then rows[#rows + 1] = { label = "Lage", value = string.format("%.1f, %.1f", v[3], v[4]) } end
+        if BP and BP.MapWidget and v[2] and v[3] then
+            blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
+                local w = BP.MapWidget(parent, width)
+                BP.PaintMap(w, v[2], v[3] / 100, v[4] / 100)
+                return w
+            end }
+        end
+    end
+    blocks[#blocks + 1] = { type = "rows", rows = rows }
+    if kind == "vendor" and v and BP and BP.Pill and WeintCodex.UIQuestArrow then
+        blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
+            if not PRO.guideBtn then PRO.guideBtn = BP.Pill(parent, "Questpfeil hierhin", { height = 32, size = 12, primary = true }) end
+            local g = PRO.guideBtn
+            g:SetParent(parent)
+            g:SetWidth(width)
+            g:SetScript("OnClick", function() PRO.GuideToVendor(r) end)
+            g:Paint(false)
+            return g
+        end }
+        local more = #PRO.Vendors(r) - 1
+        if more > 0 then blocks[#blocks + 1] = { type = "text", text = "Auch bei " .. more .. " weiteren Händlern – siehe Tooltip." } end
+    end
+    if #r.reagents > 0 then
+        local lines = {}
+        for _, e in ipairs(r.reagents) do lines[#lines + 1] = e[2] .. "× " .. PRO.ItemName(e[1]) end
+        blocks[#blocks + 1] = { type = "divider" }
+        blocks[#blocks + 1] = { type = "header", text = "Reagenzien" }
+        blocks[#blocks + 1] = { type = "card", lines = lines }
+    end
+    blocks[#blocks + 1] = { type = "divider" }
+    blocks[#blocks + 1] = { type = "text", text = kind == "vendor" and "Händler und Lage aus Classic – in Forever unbestätigt."
+        or "Unbestätigt – Wissensstand aus der Beta." }
+    return blocks
+end
+PRO.RecipeInspector = RecipeInspector
+
+function PRO.SelectRecipe(r)
+    PRO.selRecipe = r
+    for _, row in ipairs(rowPool) do
+        if row.sel then row.sel:SetShown(r ~= nil and row.recipe == r) end
+    end
+    local nav = WeintCodex.Navigation
+    if r and nav and nav.SetInspector then nav.SetInspector(RecipeInspector(r)) end
+end
+
 local function InspectorBlocks(key, skill, cat)
     local total, new, changed = 0, 0, 0
     for _, r in ipairs(PRO.Recipes(key)) do
@@ -940,7 +1026,9 @@ function PRO.Show()
     wipe(pending)
     -- Erst der Detailbereich, dann messen (wie beim Lehrer).
     local cat = PRO.Categorize(selected, skill)
-    nav.SetInspector(InspectorBlocks(selected, skill, cat))
+    if PRO.selRecipe and PRO.selRecipe.key ~= selected then PRO.selRecipe = nil end
+    if PRO.selRecipe then nav.SetInspector(RecipeInspector(PRO.selRecipe))
+    else nav.SetInspector(InspectorBlocks(selected, skill, cat)) end
 
     local total = Plain(f:GetWidth())
     if type(total) == "number" and total > 400 then

@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.67.0.0] – 2026-10-18
+
+### Neu
+- Berufe: Klick auf ein Rezept wählt es und zeigt im Detailbereich Herkunft (`PRO.Origin`: Lehrer/Händler/Händlergunst/Fundstück/Gegenstand/unbekannt – nur aus dem Bestand, keine geratene Quelle), beim Händler Karte, Gebiet, Lage und „Questpfeil hierhin“, dazu die Reagenzien. Tooltip nennt die Herkunft.
+
+### Geändert
+- Klick auf eine Rezeptzeile setzt den Pfeil nicht mehr direkt, sondern wählt das Rezept (Pfeil über den Knopf rechts).
+
 ## [6.66.0.0] – 2026-10-18
 
 ### Neu
