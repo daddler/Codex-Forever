@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.70.0.0] – 2026-10-18
+
+### Neu
+- Danke: Buffs ohne Spender werden 90 s vorgemerkt (`TH.Remember`) und bei Zielwechsel, Mouseover, neuer Namensplakette, Gruppenänderung, Tooltip des Buffs und jede Sekunde neu gefragt (`TH.Recheck`, `GetAuraDataByAuraInstanceID` – `sourceUnit` wird beim Fragen aufgelöst; auf Forever ungemessen). Tooltip eigener Buffs: „Von: Name“ (`TH.TipSource`).
+
 ## [6.69.3.0] – 2026-10-18
 
 ### Behoben

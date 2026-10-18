@@ -27,6 +27,7 @@ WeintCodex.UIThanks = {}
 
 local TH = WeintCodex.UIThanks
 local K  = WeintCodex.UIKit
+local C  = WeintCodex.Colors
 local KEY = "comfort"
 
 TH.MIN_DURATION = 60
@@ -153,9 +154,9 @@ function TH.HintUnknown()
     if st.hinted then return end
     st.hinted = true
     print(WeintCodex.ColorText("accent", "[WeintCodex]")
-        .. " Danke: das Spiel hat nicht verraten, wer dich gebufft hat – es nennt den Spender nur, wenn er"
-        .. " für dich eine Einheit ist (Ziel, Maus, Namensplakette). Mit Namensplaketten für freundliche"
-        .. " Spieler (Einstellungen → Namensplaketten) klappt es öfter.")
+        .. " Danke: das Spiel hat nicht verraten, wer dich gebufft hat. Fahr in den 90 s danach mit der Maus"
+        .. " über den Spieler oder klick ihn an – dann geht der Dank noch raus. Mit Namensplaketten für"
+        .. " freundliche Spieler (Einstellungen → Namensplaketten) klappt es von selbst öfter.")
 end
 
 function TH.Report(problem)
@@ -275,7 +276,9 @@ function TH.Eligible(aura)
         -- 6.69.3.0: kein Fehler mehr, sondern eine Grenze des Spiels (Bericht
         -- eines Spielers: "Spender nil" bei Seelenstaerke und Arkaner
         -- Intelligenz). Einmal je Sitzung ein Hinweis, was hilft.
-        if TH.Kind(K.Plain(aura.name)) ~= "general" then TH.HintUnknown() end
+        -- 6.70.0.0: vormerken - das Spiel nennt den Spender spaeter, sobald
+        -- er fuer dich eine Einheit wird (TH.Recheck).
+        TH.Remember(aura)
         return nil
     end
     if Bool(_G.UnitIsUnit, src, "player") then return nil end
@@ -455,8 +458,105 @@ function TH.OnBlocked(addon)
     return true
 end
 
+
+-- Spaeter danken (6.70.0.0, Wunsch: "wenn man mit der Maus ueber den Buff
+-- geht, von wem man das bekommen hat - und das Danke-System zieht sich den
+-- Namen raus"). Der Tooltip eines Buffs nennt den Spender nicht; das Spiel
+-- merkt ihn sich aber am Buff und nennt ihn (sourceUnit), sobald er fuer
+-- dich eine Einheit ist - Ziel, Maus, Namensplakette, Gruppe. Darum wird
+-- ein Buff ohne Spender TH.PENDING_TTL Sekunden vorgemerkt und bei jeder
+-- Gelegenheit neu gefragt: Zielwechsel, Maus ueber einem Spieler, neue
+-- Namensplakette, Maus ueber dem Buff, und einmal je Sekunde.
+TH.PENDING_TTL = 90
+st.pending = {}
+
+function TH.Remember(aura)
+    local id = K.Plain(aura.auraInstanceID)
+    if type(id) ~= "number" or st.pending[id] then return end
+    st.pending[id] = Now() + TH.PENDING_TTL
+    TH.Trace("vorgemerkt: " .. Str(aura.name) .. " – Spender noch unbekannt, wird bis zu " .. TH.PENDING_TTL .. " s nachgefragt")
+    TH.StartTicker()
+end
+
+function TH.Recheck()
+    local ua = _G.C_UnitAuras
+    if not (ua and ua.GetAuraDataByAuraInstanceID) then return end
+    local now = Now()
+    for id, untilAt in pairs(st.pending) do
+        local ok, a = pcall(ua.GetAuraDataByAuraInstanceID, "player", id)
+        if not ok or type(a) ~= "table" then
+            st.pending[id] = nil
+        else
+            local src = K.Plain(a.sourceUnit)
+            if type(src) == "string" and src ~= "" then
+                st.pending[id] = nil
+                if TH.Active() and TH.Where() then
+                    if not TH.Always() and now - st.at < TH.GLOBAL then
+                        TH.Trace("Spender erkannt, aber gerade erst gedankt (höchstens alle 20 s)")
+                    else
+                        TH.Try({ a }, now, "später erkannt")
+                    end
+                end
+            elseif now > untilAt then
+                st.pending[id] = nil
+                TH.Trace("Spender blieb unbekannt: " .. Str(a.name))
+                if TH.Kind(K.Plain(a.name)) ~= "general" then TH.HintUnknown() end
+            end
+        end
+    end
+    if not _G.next(st.pending) and st.ticker then
+        if st.ticker.Cancel then st.ticker:Cancel() end
+        st.ticker = nil
+    end
+end
+
+function TH.StartTicker()
+    if st.ticker or not (_G.C_Timer and _G.C_Timer.NewTicker) then return end
+    st.ticker = _G.C_Timer.NewTicker(1, function() pcall(TH.Recheck) end)
+end
+
+-- Tooltip eines eigenen Buffs: "Von: Name", wenn das Spiel ihn kennt -
+-- und gleich nachfragen, ob ein vorgemerkter Dank jetzt raus kann.
+function TH.TipSource(tip, unit, id)
+    if K.Plain(unit) ~= "player" or type(K.Plain(id)) ~= "number" then return end
+    local ua = _G.C_UnitAuras
+    local ok, a = pcall(ua.GetAuraDataByAuraInstanceID, "player", K.Plain(id))
+    if not ok or type(a) ~= "table" or K.Plain(a.isHelpful) == false then return end
+    local src = K.Plain(a.sourceUnit)
+    if type(src) == "string" and src ~= "" and not Bool(_G.UnitIsUnit, src, "player") then
+        local n = _G.GetUnitName and K.Plain(_G.GetUnitName(src, true))
+        if type(n) == "string" and n ~= "" then
+            local m = C and C.textMuted or { 0.7, 0.7, 0.7 }
+            tip:AddLine("Von: " .. n, m[1], m[2], m[3])
+            tip:Show()
+        end
+    end
+    if st.pending[K.Plain(id)] then pcall(TH.Recheck) end
+end
+
+function TH.HookTips()
+    local gt = _G.GameTooltip
+    if TH._tips or not (gt and _G.hooksecurefunc) then return end
+    TH._tips = true
+    if gt.SetUnitBuffByAuraInstanceID then
+        _G.hooksecurefunc(gt, "SetUnitBuffByAuraInstanceID", function(tip, unit, id) pcall(TH.TipSource, tip, unit, id) end)
+    end
+    if gt.SetUnitAura then
+        _G.hooksecurefunc(gt, "SetUnitAura", function(tip, unit, index, filter)
+            local ua = _G.C_UnitAuras
+            if not (ua and ua.GetAuraDataByIndex) then return end
+            local ok, a = pcall(ua.GetAuraDataByIndex, unit, index, filter)
+            if ok and type(a) == "table" then pcall(TH.TipSource, tip, unit, a.auraInstanceID) end
+        end)
+    end
+end
+
 local ev = CreateFrame("Frame")
 pcall(ev.RegisterUnitEvent, ev, "UNIT_AURA", "player")
+for _, e in ipairs({ "PLAYER_TARGET_CHANGED", "UPDATE_MOUSEOVER_UNIT", "NAME_PLATE_UNIT_ADDED",
+                     "GROUP_ROSTER_UPDATE", "PLAYER_LOGIN" }) do
+    pcall(ev.RegisterEvent, ev, e)
+end
 pcall(ev.RegisterEvent, ev, "ADDON_ACTION_BLOCKED")
 pcall(ev.RegisterEvent, ev, "ADDON_ACTION_FORBIDDEN")
 pcall(ev.RegisterEvent, ev, "CHAT_MSG_WHISPER_INFORM")
@@ -464,6 +564,11 @@ pcall(ev.RegisterEvent, ev, "CHAT_MSG_SYSTEM")
 ev:SetScript("OnEvent", function(_, event, a1, a2)
     if event == "UNIT_AURA" then
         if a1 == "player" then pcall(TH.OnAura, a2) end
+    elseif event == "PLAYER_LOGIN" then
+        TH.HookTips()
+    elseif event == "PLAYER_TARGET_CHANGED" or event == "UPDATE_MOUSEOVER_UNIT"
+        or event == "NAME_PLATE_UNIT_ADDED" or event == "GROUP_ROSTER_UPDATE" then
+        if _G.next(st.pending) then pcall(TH.Recheck) end
     elseif event == "CHAT_MSG_WHISPER_INFORM" then
         -- Bestaetigung des Spiels: der Text kam bei ihm an.
         local e = st.echo

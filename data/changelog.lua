@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.70.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFDanke auch, wenn der Spender erst später sichtbar wird|r – verrät das Spiel beim Buff nicht, wer gebufft hat, merkt sich WeintCodex den Buff 90 Sekunden. Fährst du in der Zeit mit der Maus über den Spieler, klickst ihn an oder erscheint seine Namensplakette, geht der Dank noch raus. Im Tooltip deiner Buffs steht jetzt „Von: Name“, wenn das Spiel den Spender kennt.",
+        },
+    },
+    {
         version = "6.69.3.0",
         date    = "18.10.2026",
         notes   = {

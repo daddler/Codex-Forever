@@ -20127,6 +20127,43 @@ do
     Check(ok, "Erinnerungen: hoeherer Rang zaehlt als gelernt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.70.0.0: Danke spaeter - unbekannter Spender wird vorgemerkt und nachgefragt.
+do
+    local ok, err = pcall(function()
+        local TH = WeintCodex.UIThanks
+        local st = TH.state
+        local oUA, oP, oU, oN, oG = _G.C_UnitAuras, _G.UnitIsPlayer, _G.UnitIsUnit, _G.GetUnitName, _G.UnitInParty
+        local src = nil
+        _G.C_UnitAuras = { GetAuraDataByAuraInstanceID = function(_, id)
+            if id == 77 then return { auraInstanceID = 77, name = "Seelenstärke", duration = 1800, isHelpful = true, sourceUnit = src } end
+        end }
+        _G.UnitIsPlayer = function() return true end
+        _G.UnitIsUnit = function() return false end
+        _G.UnitInParty = function() return false end
+        _G.GetUnitName = function() return "Fremder" end
+        local sent
+        local oS = TH.Send
+        TH.Send = function(name) sent = name end
+        st.at, st.last = -1e9, {}
+        wipe(st.pending)
+        TH.Try({ { auraInstanceID = 77, name = "Seelenstärke", duration = 1800, isHelpful = true } }, 1e6, "neu")
+        assert(st.pending[77], "nicht vorgemerkt")
+        TH.Recheck()
+        assert(st.pending[77] and not sent, "ohne Spender gedankt")
+        src = "mouseover"
+        local oD = _G.C_Timer
+        _G.C_Timer = nil   -- ohne Wartezeit senden
+        TH.Recheck()
+        _G.C_Timer = oD
+        assert(not st.pending[77], "nach Erkennen noch vorgemerkt")
+        assert(sent == "Fremder", "spaeter erkannter Spender nicht gedankt: " .. tostring(sent))
+        TH.Send = oS
+        _G.C_UnitAuras, _G.UnitIsPlayer, _G.UnitIsUnit, _G.GetUnitName, _G.UnitInParty = oUA, oP, oU, oN, oG
+        st.ticker = nil
+    end)
+    Check(ok, "Danke: unbekannter Spender vorgemerkt, spaeter gedankt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
