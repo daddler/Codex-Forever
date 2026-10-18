@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.69.1.0] – 2026-10-18
+
+### Behoben
+- Knopf „Kopieren“ (`ui/chatcopy.lua`) über dem Chatfenster rechts auf Höhe der Reiter statt im Fenster, wo der Chattext darüber lief; gedämpft 60 % statt 25 %.
+
 ## [6.69.0.0] – 2026-10-18
 
 ### Neu

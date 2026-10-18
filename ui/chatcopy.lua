@@ -4,8 +4,8 @@
 -- Beta-Test (Frage einer Spielerin): "wie kann ich Text aus Allgemein
 -- raus kopieren, oder Handel?" - das Spiel kann es nicht.
 --
--- An jedem Chatfenster oben rechts ein kleiner Knopf "Kopieren", kaum
--- sichtbar, deutlich unter der Maus. Ein Klick legt den Verlauf DIESES
+-- An jedem Chatfenster oben rechts (ueber dem Fenster, auf Hoehe der
+-- Reiter) ein kleiner Knopf "Kopieren", gedaempft, deutlich unter der Maus. Ein Klick legt den Verlauf DIESES
 -- Fensters (Reiter Allgemein, Handel, ... - was gerade offen ist) in das
 -- Fenster zum Kopieren (K.ShowReport): markiert, Strg+C. Nur gelesen,
 -- nichts umgeschrieben; Farben, Symbole und Links als blosser Text.
@@ -22,7 +22,7 @@ local C = WeintCodex.Colors
 local KEY = "comfort"
 
 CC.MAX = 500            -- hoechstens so viele Zeilen (die neuesten)
-CC.IDLE, CC.HOVER = 0.25, 1
+CC.IDLE, CC.HOVER = 0.6, 1
 
 function CC.Active() return K.IsActive(KEY) and K.Get(KEY, "chatCopy") ~= false end
 
@@ -61,7 +61,10 @@ local function Make(cf)
     if buttons[cf] or not cf.CreateTexture then return buttons[cf] end
     local b = CreateFrame("Button", nil, cf)
     b:SetSize(56, 16)
-    b:SetPoint("TOPRIGHT", cf, "TOPRIGHT", 0, 0)
+    -- 6.69.1.0 (Beta-Test: "man sieht es nicht, weil der Text von den
+    -- Leuten drueber schwappt"): nicht mehr IM Fenster, sondern darueber,
+    -- rechts auf Hoehe der Reiter - dort schreibt kein Chat hin.
+    b:SetPoint("BOTTOMRIGHT", cf, "TOPRIGHT", 0, 4)
     b:SetFrameLevel((cf:GetFrameLevel() or 1) + 5)
     local bg = b:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(b)

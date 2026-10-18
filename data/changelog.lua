@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.69.1.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFChat kopieren: Knopf gut sichtbar|r – er sitzt jetzt über dem Chatfenster auf Höhe der Reiter, statt unter dem Text der anderen zu verschwinden.",
+        },
+    },
+    {
         version = "6.69.0.0",
         date    = "18.10.2026",
         notes   = {
