@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.67.1.0] – 2026-10-18
+
+### Behoben (Verdacht, ungemessen)
+- „Verboten: UseContainerItem()“ beim Klick in die Tasche (Fehlerbericht einer Spielerin, Paladin 16): `ui/merchantsize.lua` schreibt `MerchantFrame.page` nicht mehr und `MERCHANT_ITEMS_PER_PAGE` nur, wenn sich die Zahl ändert – beides liest der Klick des Spiels über den Händler.
+
+### Geändert
+- Taint-Bericht der Taschen: zuerst die Felder/Namen, die `ContainerFrameItemButton_OnClick` liest (`BG.CLICK_FRAMES`, `BG.CLICK_GLOBALS`); Tooltipzeilen und LibDBIcon aus der Liste der globalen Namen gefiltert.
+
 ## [6.67.0.0] – 2026-10-18
 
 ### Neu

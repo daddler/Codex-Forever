@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.67.1.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFTaschen: weniger Sperren beim Rechtsklick|r – „Händlerfenster groß ziehen“ fasst den Händler des Spiels nur noch an, wenn das Fenster wirklich vergrößert ist. Der Fehlerbericht zu „Verboten: UseContainerItem()“ nennt jetzt zuerst, was der Klick des Spiels liest.",
+        },
+    },
+    {
         version = "6.67.0.0",
         date    = "18.10.2026",
         notes   = {

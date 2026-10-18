@@ -4149,7 +4149,10 @@ do
         assert(c == 4 and r == 8, "gross gezogen nicht 4x8: " .. c .. "x" .. r)
         MS.Prepare()
         assert(_G.MERCHANT_ITEMS_PER_PAGE == 32, "Waren je Seite " .. tostring(_G.MERCHANT_ITEMS_PER_PAGE))
-        assert(_G.MerchantFrame.page == 2, "Seite hinter dem Ende")
+        -- 6.67.1.0: die Seite des Haendlers fasst das Addon nicht mehr an (Taint).
+        local oldPage = _G.MerchantFrame.page
+        MS.Prepare()
+        assert(_G.MerchantFrame.page == oldPage, "Seite des Haendlers aus Addon-Code geschrieben")
         assert(MS.Columns() == 4, "Spalten fuer die Flaeche")
         assert(MS.StatusLine():find("4 Spalten"), "Statuszeile")
     end)

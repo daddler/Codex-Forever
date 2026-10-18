@@ -347,10 +347,29 @@ end
 -- Sucht, was an den Taschenknoepfen und im Spiel von WeintCodex angefasst
 -- (tainted) ist - genau das macht einen Klick des Spiels zu einem Klick
 -- des Addons.
+BG.CLICK_FRAMES = { "MerchantFrame", "BankFrame", "MailFrame", "TradeFrame", "AuctionHouseFrame",
+                    "GuildBankFrame", "StackSplitFrame" }
+BG.CLICK_GLOBALS = { "MerchantFrame_ResetRefundItem", "MerchantFrame_SetRefundItem", "ContainerFrame_GetExtendedPriceString",
+                     "MERCHANT_ITEMS_PER_PAGE", "SpellCanTargetItem", "GetCursorInfo", "CursorHasItem", "ItemLocation" }
 function BG.TaintReport()
     local out = { "WeintCodex " .. tostring(WeintCodex.Version) .. " · Taschen, Taint-Bericht" }
     local isv = _G.issecurevariable
     if type(isv) ~= "function" then out[#out + 1] = "issecurevariable fehlt." return out end
+    -- 6.67.1.0 (Fehlerbericht einer Spielerin, abgeschnitten nach den
+    -- Tooltipzeilen): ZUERST, was der Klick des Spiels liest
+    -- (ContainerFrameItemButton_OnClick: Haendler, Bank, Post, Handel,
+    -- Auktionshaus, Stapel teilen) - das ist der Verdacht, der Rest danach.
+    out[#out + 1] = "Vom Klick gelesen, tainted:"
+    local hits = 0
+    for _, name in ipairs(BG.CLICK_FRAMES) do
+        local t = _G[name]
+        if type(t) == "table" then hits = hits + TaintedKeys(t, name, out, 8) end
+    end
+    for _, g in ipairs(BG.CLICK_GLOBALS) do
+        local ok, sec, who = pcall(isv, g)
+        if ok and not sec then hits = hits + 1 out[#out + 1] = "   " .. g .. "  (" .. tostring(who) .. ")" end
+    end
+    if hits == 0 then out[#out + 1] = "   nichts" end
     out[#out + 1] = "Sperren gegen WeintCodex (zuletzt):"
     if #BG.lockLog == 0 then out[#out + 1] = "   keine seit dem Laden" end
     for _, l in ipairs(BG.lockLog) do out[#out + 1] = "   " .. l end
@@ -366,7 +385,11 @@ function BG.TaintReport()
     out[#out + 1] = "Globale Namen des Spiels, von WeintCodex angefasst:"
     local n = 0
     for k in pairs(_G) do
-        if type(k) == "string" and not k:find("^WeintCodex") and not k:find("^SLASH_WEINT") then
+        -- Textzeilen der Tooltips (GameTooltipTextLeft7 ...) legt das Spiel
+        -- erst an, wenn ein Addon eine Zeile mehr braucht - harmlos und
+        -- lang; sie verdraengten das Wichtige aus dem Bericht.
+        if type(k) == "string" and not k:find("^WeintCodex") and not k:find("^SLASH_WEINT")
+           and not k:find("Text[LR][ei][fg]h?t?%d+$") and not k:find("^LibDBIcon") then
             local ok, sec, who = pcall(isv, k)
             if ok and not sec and who == "WeintCodex" then
                 n = n + 1

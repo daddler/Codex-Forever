@@ -111,12 +111,16 @@ function MS.Prepare()
             if not ok then st.per = i - 1 break end
         end
     end
-    _G.MERCHANT_ITEMS_PER_PAGE = st.per
-    local f = F()
-    if f then
-        local pages = math.max(1, math.ceil((K.Plain(_G.GetMerchantNumItems and _G.GetMerchantNumItems()) or 0) / st.per))
-        if type(f.page) == "number" and f.page > pages then f.page = pages end
-    end
+    -- 6.67.1.0: nur schreiben, wenn sich die Zahl wirklich aendert - jede
+    -- Zuweisung macht die Zahl "tainted", und der Code des Haendlers, der
+    -- sie liest, laeuft danach als Addon-Code. In Spielgroesse (10) bleibt
+    -- sie so unberuehrt.
+    if K.Plain(_G.MERCHANT_ITEMS_PER_PAGE) ~= st.per then _G.MERCHANT_ITEMS_PER_PAGE = st.per end
+    -- 6.67.1.0: MerchantFrame.page nicht mehr selbst setzen - ein Feld des
+    -- Haendlers, aus Addon-Code geschrieben, ist "tainted", und der Klick in
+    -- die Tasche liest den Haendler (Verdacht beim Fehlerbericht
+    -- "Verboten: UseContainerItem()"). Eine Seite hinter dem Ende zeigt das
+    -- Spiel leer; die Pfeile fuehren zurueck.
 end
 
 -- Nach dem Aufbau: Raster ab der ersten Ware, ueberzaehlige verbergen.
