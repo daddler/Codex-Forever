@@ -83,14 +83,93 @@ TH.WORDS = {
     { "blessing",  { "segen", "blessing" } },
 }
 
+local function Now() return (_G.GetTime and _G.GetTime()) or 0 end
+
 local st = { last = {}, at = -1e9, sendAt = -1e9, sent = 0, queued = 0 }
 TH.state = st
+
+-- Fehlerbericht (6.69.0.0, Wunsch: "wenn ein Buff kommt und kein Whisper
+-- rausgeht, soll ein Fehler aufploppen wie bei /wcui fenster, den der
+-- Nutzer mir schicken kann"). Mitgeschrieben wird jeder Buff, den das
+-- Spiel meldet, mit dem, was daraus wurde. Ein FEHLER ist nur, was nicht
+-- gewollt ist: Spender oder Name nicht lesbar, keine Saetze, Fluestern
+-- gesperrt oder vom Spiel nicht bestaetigt. Gewollte Gruende (Gruppe,
+-- Gilde, Kampf, 15 Minuten ...) stehen im Protokoll, ploppen aber nie auf.
+TH.TRACE_MAX = 25
+TH.REPORT_GAP = 120         -- Sekunden zwischen zwei Berichten
+TH.REPORT_MAX = 3           -- Berichte je Sitzung
+TH.ECHO_WAIT = 4            -- so lange auf die Bestaetigung des Spiels warten
+st.trace, st.reports, st.reportAt = {}, 0, -1e9
+
+local function Clock() return _G.date and _G.date("%H:%M:%S") or "" end
+local function Str(v)
+    v = K.Plain(v)
+    if type(v) == "nil" then return "nil" end
+    return tostring(v)
+end
+
+function TH.Trace(text)
+    local t = st.trace
+    t[#t + 1] = Clock() .. "  " .. text
+    while #t > TH.TRACE_MAX do table.remove(t, 1) end
+end
+
+function TH.AuraText(a)
+    if type(a) ~= "table" then return "?" end
+    return string.format("%s (ID %s) · Dauer %s · hilfreich %s · Spender %s",
+        Str(a.name), Str(a.spellId), Str(a.duration), Str(a.isHelpful), Str(a.sourceUnit))
+end
+
+function TH.ReportLines(problem)
+    local v, b = "?", "?"
+    if _G.GetBuildInfo then
+        local ok, ver, build = pcall(_G.GetBuildInfo)
+        if ok then v, b = tostring(ver), tostring(build) end
+    end
+    local cls = _G.UnitClass and select(2, _G.UnitClass("player"))
+    local out = {
+        "WeintCodex " .. tostring(WeintCodex.Version) .. " · Spiel " .. v .. " (" .. b .. ") · "
+            .. tostring(_G.GetLocale and _G.GetLocale() or "?") .. " · Danke für Buffs",
+        "Klasse " .. Str(cls) .. " · Stufe " .. Str(_G.UnitLevel and _G.UnitLevel("player"))
+            .. " · " .. Str(_G.GetZoneText and _G.GetZoneText())
+            .. " · Kampf " .. tostring(K.InCombat() and true or false),
+        "Einstellungen: an " .. tostring(TH.Active()) .. " · immer " .. tostring(TH.Always())
+            .. " · Gilde " .. tostring(K.Get(KEY, "thanksGuild") and true or false)
+            .. " · Instanz " .. tostring(K.Get(KEY, "thanksInstance") and true or false)
+            .. " · Wartezeit " .. Str(K.Get(KEY, "thanksDelay"))
+            .. " · Flüstern gesperrt " .. tostring(K.Get(KEY, "thanksBlocked") and true or false),
+        "Gedankt in dieser Sitzung: " .. st.sent,
+        "",
+        "PROBLEM: " .. tostring(problem or "keins – Bericht von Hand"),
+        "",
+        "Letzte Buffs (neueste unten):",
+    }
+    if #st.trace == 0 then out[#out + 1] = "   keine seit dem Laden" end
+    for _, l in ipairs(st.trace) do out[#out + 1] = "   " .. l end
+    return out
+end
+
+function TH.Report(problem)
+    return K.ShowReport("Danke für Buffs – Fehlerbericht", TH.ReportLines(problem))
+end
+
+-- Ein ungewollter Grund: protokollieren und (gedrosselt) aufploppen.
+function TH.Fail(problem)
+    TH.Trace("FEHLER: " .. problem)
+    if K.Get(KEY, "thanksReport") == false then return false end
+    local now = Now()
+    if st.reports >= TH.REPORT_MAX or now - st.reportAt < TH.REPORT_GAP then return false end
+    st.reports, st.reportAt = st.reports + 1, now
+    pcall(TH.Report, problem)
+    print(WeintCodex.ColorText("accent", "[WeintCodex]")
+        .. " Danke ging nicht raus – Bericht im Fenster, Strg+C kopiert. Schick ihn an WeintCodex.")
+    return true
+end
 
 function TH.Active()
     return K.IsActive(KEY) and K.Get(KEY, "thanks") ~= false
 end
 
-local function Now() return (_G.GetTime and _G.GetTime()) or 0 end
 
 -- 6.41.0.0 (Wunsch: "einsehen, was zu was eingestellt ist, bearbeiten,
 -- loeschen, hinzufuegen"): Saetze und Erkennungswoerter je Sorte gehoeren
@@ -180,14 +259,23 @@ function TH.Eligible(aura)
     if type(dur) ~= "number" or dur < TH.MIN_DURATION then return nil end
     local src = K.Plain(aura.sourceUnit)
     if type(src) ~= "string" or src == "" then
-        return No("Spender unbekannt – das Spiel nennt ihn nur, wenn er sichtbar ist (Ziel, Maus, Namensplakette)")
+        No("Spender unbekannt – das Spiel nennt ihn nur, wenn er sichtbar ist (Ziel, Maus, Namensplakette)")
+        -- Nur Buffs, die nach Spieler aussehen (eine eigene Sorte: Ausdauer,
+        -- Willenskraft, Intelligenz, Segen), sind ein Fehler - Buffs von
+        -- NPCs und Gegenstaenden kommen oft ohne Spender.
+        if TH.Kind(K.Plain(aura.name)) ~= "general" then st.fail = st.why end
+        return nil
     end
     if Bool(_G.UnitIsUnit, src, "player") then return nil end
     if not Bool(_G.UnitIsPlayer, src) then return nil end
     if Bool(_G.UnitInParty, src) or Bool(_G.UnitInRaid, src) then return No("Spender in deiner Gruppe") end
     if not K.Get(KEY, "thanksGuild") and Bool(_G.UnitIsInMyGuild, src) then return No("Spender in deiner Gilde (Gilde ist aus)") end
     local name = _G.GetUnitName and K.Plain(_G.GetUnitName(src, true))
-    if type(name) ~= "string" or name == "" then return No("Name des Spenders nicht lesbar") end
+    if type(name) ~= "string" or name == "" then
+        No("Name des Spenders nicht lesbar")
+        st.fail = st.why
+        return nil
+    end
     return name
 end
 
@@ -220,14 +308,27 @@ function TH.Send(name, text)
         return "chat"
     end
     st.sendAt = now
-    st.blockedNow = nil
+    st.blockedNow, st.sysMsg = nil, nil
     local f = (_G.C_ChatInfo and _G.C_ChatInfo.SendChatMessage) or _G.SendChatMessage
     local ok = f and pcall(f, whisper, "WHISPER", nil, name)
     if not ok or st.blockedNow then
+        TH.Trace("Flüstern gesperrt – Dank in die Chatzeile gelegt (Enter sendet)")
         OpenChat("/w " .. name .. " " .. whisper)
         return "chat"
     end
     st.sent = st.sent + 1
+    TH.Trace("geflüstert an " .. name .. ": " .. whisper)
+    st.echo = { name = name, text = whisper, at = now }
+    if _G.C_Timer and _G.C_Timer.After then
+        local mine = st.echo
+        _G.C_Timer.After(TH.ECHO_WAIT, function()
+            if st.echo == mine then
+                st.echo = nil
+                TH.Fail("Flüstern an " .. name .. " abgeschickt, aber das Spiel hat es nicht bestätigt"
+                    .. (st.sysMsg and (" – Meldung des Spiels: " .. st.sysMsg) or ""))
+            end
+        end)
+    end
     return "sent"
 end
 
@@ -255,16 +356,27 @@ function TH.Refreshed(info)
     return out
 end
 
-function TH.Try(list, now)
+function TH.Try(list, now, how)
     for _, aura in ipairs(list) do
+        st.why, st.fail = nil, nil
         local name = TH.Eligible(aura)
+        local helpful, src = K.Plain(aura.isHelpful), K.Plain(aura.sourceUnit)
+        local own = type(src) == "string" and src ~= "" and Bool(_G.UnitIsUnit, src, "player")
+        if helpful ~= false and not own and (name or st.why) then
+            TH.Trace((how or "neu") .. ": " .. TH.AuraText(aura) .. (name and (" -> " .. name) or (" -> kein Dank: " .. tostring(st.why))))
+        end
+        if st.fail then TH.Fail(st.fail .. " · " .. TH.AuraText(aura)) end
         if name and not TH.Always() and now - (st.last[name] or -1e9) < TH.PER_PLAYER then
             st.why = name .. " wurde vor weniger als 15 Minuten schon gedankt"
             name = nil
         end
         if name then
             local text = TH.Pick(TH.Kind(K.Plain(aura.name)))
-            if not text then st.why = "keine Sätze für diese Sorte" return true end
+            if not text then
+                st.why = "keine Sätze für diese Sorte"
+                TH.Fail(st.why .. " · " .. TH.AuraText(aura))
+                return true
+            end
             st.last[name], st.at = now, now
             st.why = nil
             -- Wartezeit (6.41.0.0, einstellbar): nicht im selben Augenblick
@@ -291,11 +403,15 @@ function TH.OnAura(info)
     local added = info.addedAuras
     local fresh = TH.Refreshed(info)
     if type(added) ~= "table" and #fresh == 0 then return end
-    if not TH.Where() then return end
+    if not TH.Where() then TH.Trace("Buff übergangen: " .. tostring(st.why)) return end
     local now = Now()
-    if not TH.Always() and now - st.at < TH.GLOBAL then st.why = "gerade erst gedankt (höchstens alle 20 s)" return end
-    if type(added) == "table" and TH.Try(added, now) then return end
-    TH.Try(fresh, now)
+    if not TH.Always() and now - st.at < TH.GLOBAL then
+        st.why = "gerade erst gedankt (höchstens alle 20 s)"
+        TH.Trace("Buff übergangen: " .. st.why)
+        return
+    end
+    if type(added) == "table" and TH.Try(added, now, "neu") then return end
+    TH.Try(fresh, now, "erneuert")
 end
 
 -- Sperre kurz nach dem eigenen Versuch: gemessen, merken.
@@ -303,6 +419,7 @@ function TH.OnBlocked(addon)
     if K.Plain(addon) ~= "WeintCodex" or Now() - st.sendAt > TH.BLOCK_WINDOW then return false end
     st.blockedNow = true
     K.Set(KEY, "thanksBlocked", true)
+    TH.Fail("das Spiel hat das Flüstern gesperrt (" .. tostring(K.Plain(addon)) .. ") – ab jetzt über die Chatzeile")
     print(WeintCodex.ColorText("accent", "[WeintCodex]")
         .. " Das Spiel lässt WeintCodex nicht selbst flüstern – der Dank steht ab jetzt in der Chatzeile, Enter sendet.")
     return true
@@ -312,9 +429,21 @@ local ev = CreateFrame("Frame")
 pcall(ev.RegisterUnitEvent, ev, "UNIT_AURA", "player")
 pcall(ev.RegisterEvent, ev, "ADDON_ACTION_BLOCKED")
 pcall(ev.RegisterEvent, ev, "ADDON_ACTION_FORBIDDEN")
+pcall(ev.RegisterEvent, ev, "CHAT_MSG_WHISPER_INFORM")
+pcall(ev.RegisterEvent, ev, "CHAT_MSG_SYSTEM")
 ev:SetScript("OnEvent", function(_, event, a1, a2)
     if event == "UNIT_AURA" then
         if a1 == "player" then pcall(TH.OnAura, a2) end
+    elseif event == "CHAT_MSG_WHISPER_INFORM" then
+        -- Bestaetigung des Spiels: der Text kam bei ihm an.
+        local e = st.echo
+        if e and K.Plain(a1) == e.text then st.echo = nil TH.Trace("vom Spiel bestätigt") end
+    elseif event == "CHAT_MSG_SYSTEM" then
+        -- "Spieler nicht gefunden" u. ae. gleich nach dem Versuch merken.
+        if st.echo then
+            local m = K.Plain(a1)
+            if type(m) == "string" then st.sysMsg = m TH.Trace("Meldung des Spiels: " .. m) end
+        end
     else
         TH.OnBlocked(a1)
     end
@@ -420,6 +549,9 @@ local function Build(B)
             format = function(v) return v == 0 and "sofort" or string.format("%d s", v) end },
           { type = "slider", label = "Allgemeine Sprüche beimischen", key = "thanksMix", min = 0, max = 100, step = 10, disabled = off,
             format = function(v) return string.format("%d %%", v) end })
+    B:Row({ type = "toggle", label = "Fehlerbericht, wenn kein Dank rausgeht", key = "thanksReport", disabled = off,
+            description = "Geht bei einem Buff kein Flüstern raus, obwohl es sollte, öffnet sich ein Bericht zum Kopieren (höchstens dreimal je Sitzung). Auch mit /wcui danke." },
+          { type = "button", label = "Protokoll", text = "Bericht jetzt zeigen", onClick = function() TH.Report() end })
     B:Section("Sprüche", "Sorte wählen: darunter, woran der Buff erkannt wird, und ihre Sprüche. Anklicken bearbeitet, × löscht.")
     B:Row({ type = "dropdown", label = "Sorte", items = TH.KINDS,
             get = function() return edit.kind end,
@@ -460,6 +592,7 @@ if mod then
     if mod.defaults.thanksGuild == nil then mod.defaults.thanksGuild = false end
     if mod.defaults.thanksInstance == nil then mod.defaults.thanksInstance = false end
     if mod.defaults.thanksAlways == nil then mod.defaults.thanksAlways = false end
+    if mod.defaults.thanksReport == nil then mod.defaults.thanksReport = true end
     if mod.defaults.thanksDelay == nil then mod.defaults.thanksDelay = 2 end
     if mod.defaults.thanksMix == nil then mod.defaults.thanksMix = 30 end
     mod.pages[#mod.pages + 1] = { key = "danke", label = "Danke", build = Build }

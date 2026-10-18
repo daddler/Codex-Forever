@@ -20069,6 +20069,39 @@ do
     Check(ok, "Chat kopieren: Zeilen, Links, verborgene gezaehlt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.69.0.0: Danke - Fehlerbericht nur bei ungewollten Gruenden, gedrosselt.
+do
+    local ok, err = pcall(function()
+        local TH = WeintCodex.UIThanks
+        assert(TH.Fail and TH.ReportLines and TH.Trace, "Bericht fehlt")
+        local oR, shown = TH.Report, 0
+        TH.Report = function() shown = shown + 1 end
+        TH.state.reports, TH.state.reportAt = 0, -1e9
+        TH.Fail("Test eins")
+        TH.Fail("Test zwei")  -- gedrosselt (REPORT_GAP)
+        assert(shown == 1, "Bericht nicht gedrosselt: " .. shown)
+        local lines = TH.ReportLines("Test")
+        local all = table.concat(lines, "\n")
+        assert(all:find("PROBLEM: Test", 1, true) and all:find("FEHLER: Test eins", 1, true), "Bericht ohne Problem/Protokoll")
+        -- Gewollter Grund (Gruppe) ploppt nicht auf.
+        TH.state.reportAt = -1e9
+        local oP = _G.UnitInParty
+        _G.UnitInParty = function() return true end
+        local oI, oU = _G.UnitIsPlayer, _G.UnitIsUnit
+        _G.UnitIsPlayer = function() return true end
+        _G.UnitIsUnit = function() return false end
+        TH.Try({ { name = "Seelenstärke", duration = 1800, isHelpful = true, sourceUnit = "party1" } }, 1e6, "neu")
+        assert(shown == 1, "gewollter Grund hat aufgeploppt")
+        -- Unbekannter Spender bei Spielerbuff: Fehler.
+        TH.Try({ { name = "Seelenstärke", duration = 1800, isHelpful = true } }, 1e6, "neu")
+        assert(shown == 2, "unbekannter Spender ohne Bericht")
+        _G.UnitInParty, _G.UnitIsPlayer, _G.UnitIsUnit = oP, oI, oU
+        TH.Report = oR
+        TH.state.reports, TH.state.reportAt = 0, -1e9
+    end)
+    Check(ok, "Danke: Fehlerbericht bei ungewollten Gruenden, gedrosselt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

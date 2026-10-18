@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.69.0.0] – 2026-10-18
+
+### Neu
+- Danke für Buffs: Protokoll der letzten 25 Buffs mit Ergebnis (`TH.Trace`), Fehlerbericht über `K.ShowReport` bei ungewollten Gründen (`TH.Fail`: Spender/Name nicht lesbar bei Spielerbuffs, keine Sätze, Flüstern gesperrt, vom Spiel nicht per `CHAT_MSG_WHISPER_INFORM` bestätigt – mit Systemmeldung), höchstens alle 120 s und dreimal je Sitzung; Schalter `comfort.thanksReport` (an), Knopf „Bericht jetzt zeigen“, `/wcui danke` öffnet ihn.
+
 ## [6.68.0.0] – 2026-10-18
 
 ### Neu

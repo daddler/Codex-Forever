@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.69.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFDanke: Fehlerbericht, wenn kein Flüstern rausgeht|r – bekommst du einen Buff und WeintCodex kann nicht danken, obwohl es sollte, öffnet sich ein Bericht zum Kopieren. Er enthält die letzten Buffs und den Grund. Gewollte Gründe wie Gruppe, Kampf oder „gerade erst gedankt“ lösen keinen Bericht aus. Auch mit /wcui danke oder auf der Seite Danke.",
+        },
+    },
+    {
         version = "6.68.0.0",
         date    = "18.10.2026",
         notes   = {
