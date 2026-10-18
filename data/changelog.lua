@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.73.1.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFEinstellungen im Kampf|r – das Fenster lässt sich jetzt auch im Kampf schließen, verschieben und durchblättern, ohne dass das Spiel Meldungen „blockiert“ wirft. Die Knöpfe „Neu laden“ und „Bearbeitungsmodus des Spiels“ wirken im Kampf nur als Hinweis und sind danach wieder voll da.",
+        },
+    },
+    {
         version = "6.73.0.0",
         date    = "18.10.2026",
         notes   = {

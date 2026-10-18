@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.73.1.0] – 2026-10-18
+
+### Behoben
+- Einstellungsfenster im Kampf blockiert (`Hide`, `StartMoving`, `SetShown`/`SetHeight`/`SetVerticalScroll` beim Seitenwechsel): die `SecureActionButtonTemplate`-Überlagerungen von `WeintCodex.AttachReload` und `ui/editmode.lua` machten das ganze Fenster geschützt. `WeintCodex.DetachInCombat` hängt sie bei `PLAYER_REGEN_DISABLED` an einen versteckten Halter und bei `PLAYER_REGEN_ENABLED` zurück.
+
 ## [6.73.0.0] – 2026-10-18
 
 ### Neu

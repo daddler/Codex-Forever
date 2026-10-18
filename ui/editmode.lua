@@ -865,6 +865,7 @@ function E.AttachGame(button, together)
                 if f then f(button) end
             end)
             button._gameEditMode = ov
+            WeintCodex.DetachInCombat(ov, button)
             return ov
         end
     end
@@ -897,6 +898,7 @@ function E.AttachGameClose(button)
     end)
     ov:Hide()
     button._gameClose = ov
+    WeintCodex.DetachInCombat(ov, button)
     return ov
 end
 
@@ -973,6 +975,7 @@ function E.AttachBack(button)
                 if f then f(button) end
             end)
             button._gameBack = ov
+            WeintCodex.DetachInCombat(ov, button)
             return ov
         end
     end

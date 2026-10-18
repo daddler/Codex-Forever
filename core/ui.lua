@@ -2627,8 +2627,56 @@ function WeintCodex.AttachReload(button, onClick)
         if not armed[ov] then ReloadHint() end
     end)
     button._reloadOverlay = ov
+    WeintCodex.DetachInCombat(ov, button)
     return ov
 end
+
+-- 6.73.1.0 (Fehlerbericht: im Kampf "Blockiert: WeintCodexUIOptions:Hide()",
+-- StartMoving, SetShown beim Seitenwechsel): ein geschuetzter Knopf IN einem
+-- Fenster macht das ganze Fenster im Kampf geschuetzt - es laesst sich dann
+-- weder schliessen noch verschieben noch neu aufbauen. Darum loesen sich die
+-- Makroknoepfe (Neu laden, Bearbeitungsmodus des Spiels) beim Kampfbeginn
+-- aus ihrem Fenster (PLAYER_REGEN_DISABLED kommt, bevor die Sperre greift)
+-- und kehren danach zurueck. Im Kampf tut der sichtbare Knopf dann nur, was
+-- er ohne Makro tut (Hinweis).
+local detached = {}       -- [ov] = { button = b, shown = bool } (schwach)
+setmetatable(detached, { __mode = "k" })
+local holder = CreateFrame("Frame")
+holder:Hide()
+function WeintCodex.DetachInCombat(ov, button)
+    if type(ov) ~= "table" or type(button) ~= "table" then return end
+    detached[ov] = detached[ov] or {}
+    detached[ov].button = button
+end
+local function Reanchor(ov, button)
+    ov:SetParent(button)
+    ov:ClearAllPoints()
+    if not pcall(ov.SetAllPoints, ov, button) then
+        ov:ClearAllPoints()
+        WeintCodex.FollowRect(ov, button)
+    end
+    ov:SetFrameLevel((button:GetFrameLevel() or 1) + 5)
+end
+function WeintCodex.DetachAll(on)
+    for ov, st in pairs(detached) do
+        if on then
+            if ov:GetParent() ~= holder then
+                st.shown = ov:IsShown() and true or false
+                pcall(ov.SetParent, ov, holder)
+                pcall(ov.ClearAllPoints, ov)
+            end
+        elseif ov:GetParent() == holder then
+            pcall(Reanchor, ov, st.button)
+            if st.shown == false then ov:Hide() else ov:Show() end
+        end
+    end
+end
+local combatWatch = CreateFrame("Frame")
+pcall(combatWatch.RegisterEvent, combatWatch, "PLAYER_REGEN_DISABLED")
+pcall(combatWatch.RegisterEvent, combatWatch, "PLAYER_REGEN_ENABLED")
+combatWatch:SetScript("OnEvent", function(_, event)
+    WeintCodex.DetachAll(event == "PLAYER_REGEN_DISABLED")
+end)
 
 WeintCodex.SetSolidBg = SetSolidBg
 WeintCodex.DrawBorder = DrawBorder

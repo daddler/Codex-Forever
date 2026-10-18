@@ -20276,6 +20276,21 @@ do
     Check(ok, "Wegpunkt fuer eigene Ziele: " .. tostring(err))
 end
 
+-- 6.73.1.0: Makroknoepfe loesen sich im Kampf aus ihrem Fenster.
+do
+    local ok, err = pcall(function()
+        local host = CreateFrame("Frame", nil, UIParent)
+        local b = CreateFrame("Button", nil, host)
+        local ov = CreateFrame("Button", nil, b)
+        WeintCodex.DetachInCombat(ov, b)
+        WeintCodex.DetachAll(true)
+        Check(ov:GetParent() ~= b, "Im Kampf haengt der Makroknopf nicht mehr im Fenster")
+        WeintCodex.DetachAll(false)
+        Check(ov:GetParent() == b, "Nach dem Kampf haengt der Makroknopf wieder am Knopf")
+    end)
+    Check(ok, "Makroknoepfe im Kampf: " .. tostring(err))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
