@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.74.0.0] – 2026-10-18
+
+### Geändert
+- Zielmarke im Raum neu gestaltet nach der Form des Pings (`BuildMarker`): Scheibe mit Raute (`media/ui/disc`, `diamond`), Strahl 96 px mit Verlauf, Schein am Boden, atmender Halo per AnimationGroup. Sichtbar erst ab `questarrow.markerNear` (Standard 100, Regler 25–400), 25 m weiches Einblenden, Größe 0,85–1,15 (`QA.MarkerLook`).
+
 ## [6.73.3.0] – 2026-10-18
 
 ### Behoben

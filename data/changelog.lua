@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.74.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFNeue Zielmarke im Raum|r – im Stil eines Pings: Plakette mit Raute, Lichtstrahl bis zum Boden, leuchtender Schein, größer als vorher und in deiner Akzentfarbe. Sie erscheint erst in der Nähe (ab 100 m, einstellbar beim Questpfeil unter „Der Pfeil im Einzelnen“), blendet weich ein und wächst beim Näherkommen.",
+        },
+    },
+    {
         version = "6.73.3.0",
         date    = "18.10.2026",
         notes   = {

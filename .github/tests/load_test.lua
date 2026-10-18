@@ -3530,6 +3530,7 @@ do
     _G.C_Navigation = { GetDistance = function() return 125 end, GetTargetState = function() return 1 end,
                         GetFrame = function() return navFrame end, HasValidScreenPosition = function() return true end,
                         WasClampedToScreen = function() return false end }
+    WeintCodex.UIKit.Set("questarrow", "markerNear", 200)
     QA.Update(true)
     local ht = QA.texts.height:GetText() or ""
     Check(ht:find("Höhenunterschied ≈ 75 m", 1, true) and ht:find("verdeckt", 1, true),
@@ -20289,6 +20290,15 @@ do
         Check(ov:GetParent() == b, "Nach dem Kampf haengt der Makroknopf wieder am Knopf")
     end)
     Check(ok, "Makroknoepfe im Kampf: " .. tostring(err))
+end
+
+-- 6.74.0.0: Zielmarke im Raum erst in der Naehe.
+do
+    local QA = WeintCodex.UIQuestArrow
+    local a1 = QA.MarkerLook(300, 100)
+    local a2, s2 = QA.MarkerLook(50, 100)
+    local a3 = QA.MarkerLook(110, 100)
+    Check(a1 == 0 and a2 == 1 and a3 > 0 and a3 < 1 and s2 > 0.85, "Zielmarke: fern unsichtbar, nah ganz, dazwischen weich")
 end
 
 if failures == 0 then

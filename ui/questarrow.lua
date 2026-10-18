@@ -97,6 +97,7 @@ local defaults = {
     -- stand nur als "Position unbekannt" im Bild.
     hideInInstance = true,
     arriveDistance = 5,
+    markerNear = 100,      -- Zielmarke im Raum erst ab dieser Naehe (6.74.0.0)
     showHeight  = true,    -- Hoehenunterschied und "verdeckt" (6.6.0.1)
     worldMarker = true,    -- Zielmarke im Raum am Ort des Ziels (6.6.0.1)
     corpse     = true,     -- als Geist zur Leiche
@@ -791,35 +792,104 @@ end
 function QA.ResetHeight() anchor, sign = nil, nil end
 
 local marker
+-- 6.74.0.0 (Wunsch: "erst in der Naehe, groesser, schoener - wie das
+-- Ping-System"): eine Plakette mit Raute auf runder Scheibe, darunter ein
+-- Lichtstrahl bis zum Boden, am Boden ein Schein - die Form des Pings, in
+-- der Farbe des Akzents. Erst ab QA.MARK_NEAR sichtbar, davor blendet sie
+-- ueber QA.MARK_FADE weich ein und waechst beim Naeherkommen etwas.
+QA.MARK_BADGE, QA.MARK_BEAM = 44, 96
+QA.MARK_FADE = 25
 local function BuildMarker()
+    local bs, beamH = QA.MARK_BADGE, QA.MARK_BEAM
     marker = CreateFrame("Frame", "WeintCodexQuestArrowMarker", UIParent)
-    marker:SetSize(22, 30)
+    marker:SetSize(bs, bs + beamH)
     marker:SetFrameStrata("LOW")
     marker:EnableMouse(false)
-    local UI = "Interface\\AddOns\\WeintCodex\\media\\ui\\"
-    local halo = marker:CreateTexture(nil, "BACKGROUND")
-    halo:SetTexture(UI .. "halo")
-    halo:SetSize(36, 36)
-    halo:SetPoint("CENTER", marker, "BOTTOM", 0, 2)
-    halo:SetVertexColor(C.accentBright[1], C.accentBright[2], C.accentBright[3], 0.7)
+    local a, d, bg = C.accentBright, C.accent or C.accentBright, C.bgPanel
+    local M = K.MEDIA
+    -- Schein am Boden
+    local ground = marker:CreateTexture(nil, "BACKGROUND")
+    ground:SetTexture(M .. "halo")
+    ground:SetSize(bs * 1.3, bs * 0.45)
+    ground:SetPoint("CENTER", marker, "BOTTOM", 0, 0)
+    ground:SetVertexColor(a[1], a[2], a[3], 0.8)
+    if ground.SetBlendMode then ground:SetBlendMode("ADD") end
+    -- Strahl: weicher Schein und harter Kern
+    local glowBeam = marker:CreateTexture(nil, "BORDER")
+    glowBeam:SetColorTexture(a[1], a[2], a[3], 0.25)
+    glowBeam:SetSize(6, beamH)
+    glowBeam:SetPoint("BOTTOM", marker, "BOTTOM", 0, 0)
+    local beam = marker:CreateTexture(nil, "ARTWORK")
+    beam:SetColorTexture(a[1], a[2], a[3], 0.9)
+    beam:SetSize(2, beamH)
+    beam:SetPoint("BOTTOM", marker, "BOTTOM", 0, 0)
+    if beam.SetGradient and _G.CreateColor then
+        pcall(beam.SetGradient, beam, "VERTICAL", _G.CreateColor(a[1], a[2], a[3], 0.15), _G.CreateColor(a[1], a[2], a[3], 0.95))
+        pcall(glowBeam.SetGradient, glowBeam, "VERTICAL", _G.CreateColor(a[1], a[2], a[3], 0), _G.CreateColor(a[1], a[2], a[3], 0.35))
+    end
+    -- Plakette oben
+    local badge = CreateFrame("Frame", nil, marker)
+    badge:SetSize(bs, bs)
+    badge:SetPoint("TOP", marker, "TOP", 0, 0)
+    local halo = badge:CreateTexture(nil, "BACKGROUND")
+    halo:SetTexture(M .. "halo")
+    halo:SetSize(bs * 1.7, bs * 1.7)
+    halo:SetPoint("CENTER")
+    halo:SetVertexColor(a[1], a[2], a[3], 0.55)
     if halo.SetBlendMode then halo:SetBlendMode("ADD") end
-    local rim = marker:CreateTexture(nil, "ARTWORK", nil, 1)
-    rim:SetTexture(UI .. "pin")
-    rim:SetAllPoints(marker)
-    rim:SetVertexColor(C.bgPanel[1], C.bgPanel[2], C.bgPanel[3], 1)
-    local fill = marker:CreateTexture(nil, "ARTWORK", nil, 2)
-    fill:SetTexture(UI .. "pin")
-    fill:SetPoint("TOPLEFT", marker, "TOPLEFT", 2, -2)
-    fill:SetPoint("BOTTOMRIGHT", marker, "BOTTOMRIGHT", -2, 4)
-    fill:SetVertexColor(C.accentBright[1], C.accentBright[2], C.accentBright[3], 1)
-    marker.label = K.NewText(marker, 11)
-    marker.label:SetPoint("BOTTOM", marker, "TOP", 0, 2)
+    local rim = badge:CreateTexture(nil, "ARTWORK", nil, 1)
+    rim:SetTexture(M .. "disc")
+    rim:SetAllPoints(badge)
+    rim:SetVertexColor(a[1], a[2], a[3], 1)
+    local face = badge:CreateTexture(nil, "ARTWORK", nil, 2)
+    face:SetTexture(M .. "disc")
+    face:SetPoint("TOPLEFT", badge, "TOPLEFT", 3, -3)
+    face:SetPoint("BOTTOMRIGHT", badge, "BOTTOMRIGHT", -3, 3)
+    face:SetVertexColor(bg[1], bg[2], bg[3], 0.95)
+    local dia = badge:CreateTexture(nil, "ARTWORK", nil, 3)
+    dia:SetTexture(M .. "diamond")
+    dia:SetSize(bs * 0.56, bs * 0.56)
+    dia:SetPoint("CENTER")
+    dia:SetVertexColor(a[1], a[2], a[3], 1)
+    local core = badge:CreateTexture(nil, "ARTWORK", nil, 4)
+    core:SetTexture(M .. "diamond")
+    core:SetSize(bs * 0.3, bs * 0.3)
+    core:SetPoint("CENTER")
+    core:SetVertexColor(bg[1], bg[2], bg[3], 1)
+    local dot = badge:CreateTexture(nil, "ARTWORK", nil, 5)
+    dot:SetTexture(M .. "diamond")
+    dot:SetSize(bs * 0.14, bs * 0.14)
+    dot:SetPoint("CENTER")
+    dot:SetVertexColor(d[1], d[2], d[3], 1)
+    -- Atmen des Scheins (Animation des Spiels, kein eigener Takt)
+    pcall(function()
+        local ag = halo:CreateAnimationGroup()
+        ag:SetLooping("BOUNCE")
+        local al = ag:CreateAnimation("Alpha")
+        al:SetFromAlpha(0.25)
+        al:SetToAlpha(0.75)
+        al:SetDuration(0.9)
+        ag:Play()
+    end)
+    marker.badge = badge
+    marker.label = K.NewText(marker, 13)
+    marker.label:SetPoint("BOTTOM", badge, "TOP", 0, 3)
     marker.label:SetTextColor(unpack(C.textBright))
     marker:Hide()
     QA.marker = marker
 end
 
--- Die Zielmarke an den Bildschirmpunkt des Ziels. Die Spitze steht auf
+-- Sichtbarkeit und Groesse nach Entfernung (Yards). 0 = unsichtbar.
+function QA.MarkerLook(dist, near)
+    if type(dist) ~= "number" or type(near) ~= "number" or near <= 0 then return 0, 1 end
+    if dist > near + QA.MARK_FADE then return 0, 1 end
+    local alpha = dist <= near and 1 or (1 - (dist - near) / QA.MARK_FADE)
+    -- nah: 1,15-fach, am Rand des Bereichs 0,85-fach
+    local scale = 0.85 + 0.3 * (1 - math.min(1, dist / near))
+    return alpha, scale
+end
+
+-- Die Zielmarke an den Bildschirmpunkt des Ziels. Der Strahl steht auf
 -- dem Punkt. Verdeckt: halb durchsichtig.
 local function PlaceMarker(n, text)
     if not K.Get(KEY, "worldMarker") or not n or not n.frame or not n.onScreen then
@@ -833,6 +903,11 @@ local function PlaceMarker(n, text)
     -- Marke steht jetzt immer; den Rahmen des Spiels beruehren wir nicht.
     local own = _G.SuperTrackedFrame
     QA.gameMarkerVisible = type(own) == "table" and own.IsVisible and K.Bool(own:IsVisible(), false) or false
+    local alpha, scale = QA.MarkerLook(n.dist, K.Get(KEY, "markerNear") or 100)
+    if alpha <= 0 then
+        if marker then marker:Hide() end
+        return false
+    end
     if not marker then BuildMarker() end
     if marker._to ~= n.frame then
         marker:ClearAllPoints()
@@ -842,7 +917,8 @@ local function PlaceMarker(n, text)
         end
         marker._to = n.frame
     end
-    marker:SetAlpha(n.occluded and 0.5 or 1)
+    marker:SetScale(scale)
+    marker:SetAlpha(alpha * (n.occluded and 0.5 or 1))
     marker.label:SetText(text or "")
     marker:Show()
     return true
@@ -1491,7 +1567,9 @@ K.Register({
                     description = "Aus der Navigation des Spiels: wie viel höher oder tiefer das Ziel liegt und ob es verdeckt ist (Höhle, Gebäude). Ob höher oder tiefer, nur wenn der Client deine eigene Höhe nennt – /wcui pfeil sagt es." })
             B:Row({ type = "slider", label = "„Am Ziel“ ab", key = "arriveDistance", min = 2, max = 30, step = 1,
                     format = function(v) return string.format("%d m", v) end },
-                  { type = "empty" })
+                  { type = "slider", label = "Zielmarke im Raum ab", key = "markerNear", min = 25, max = 400, step = 25,
+                    format = function(v) return string.format("%d m", v) end,
+                    disabled = function() return not K.Get(KEY, "worldMarker") end })
             B:Section("Routenplaner")
             B:Row({ type = "toggle", label = "Schnellsten Weg planen", key = "routePlan",
                     description = "Zeigt über Flugmeister, Schiffe, Zeppeline, Tiefenbahn, Portale und Ruhestein, wenn das schneller ist als laufen, mit Linie auf der Minikarte. Flugpunkte lernt er, wenn du eine Flugkarte öffnest; Abfahrtszeiten, wenn du mitfährst." },
