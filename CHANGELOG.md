@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.73.3.0] – 2026-10-18
+
+### Behoben
+- Zielmarke im Raum fehlte trotz „Wegpunkt gesetzt, verfolgt, auf dem Bildschirm ja“: `PlaceMarker` trat zurück, wenn `SuperTrackedFrame` sichtbar war – auf Forever sichtbar, aber leer. Die eigene Marke steht jetzt immer; `/wcui pfeil` nennt, ob sie steht und ob die des Spiels sichtbar ist.
+
 ## [6.73.2.0] – 2026-10-18
 
 ### Geändert

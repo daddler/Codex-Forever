@@ -826,11 +826,13 @@ local function PlaceMarker(n, text)
         if marker then marker:Hide() end
         return false
     end
+    -- 6.73.3.0 (Beta-Test mit /wcui pfeil: "Wegpunkt gesetzt, verfolgt,
+    -- auf dem Bildschirm ja" - und keine Marke zu sehen): bis hierher trat
+    -- die eigene Marke zurueck, sobald SuperTrackedFrame des Spiels sichtbar
+    -- war. Auf Forever ist er sichtbar, zeichnet aber nichts. Die eigene
+    -- Marke steht jetzt immer; den Rahmen des Spiels beruehren wir nicht.
     local own = _G.SuperTrackedFrame
-    if type(own) == "table" and own.IsVisible and K.Bool(own:IsVisible(), false) then
-        if marker then marker:Hide() end
-        return false
-    end
+    QA.gameMarkerVisible = type(own) == "table" and own.IsVisible and K.Bool(own:IsVisible(), false) or false
     if not marker then BuildMarker() end
     if marker._to ~= n.frame then
         marker:ClearAllPoints()
@@ -1368,6 +1370,8 @@ function QA.Inspect()
         out[#out + 1] = string.format("Navigation: Luftlinie %s, verdeckt %s, auf dem Bildschirm %s",
             N(n.dist), n.occluded and "ja" or "nein", n.onScreen and "ja" or "nein")
     end
+    out[#out + 1] = "Zielmarke im Raum: " .. ((QA.marker and QA.marker:IsShown()) and "steht" or "nicht gezeigt")
+        .. " · Marke des Spiels " .. (QA.gameMarkerVisible and "sichtbar" or "nicht sichtbar")
     out[#out + 1] = "Wegpunkt für eigene Ziele: " .. (QA.pinState or "noch nicht versucht")
         .. (QA.pin and (QA.PinIsOurs() and ", verfolgt" or ", nicht mehr unserer") or "")
     out[#out + 1] = "Richtung der Höhe: " .. ((sign == "up" and "höher") or (sign == "down" and "tiefer")

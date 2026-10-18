@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.73.3.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFZielmarke im Raum sichtbar|r – die Nadel am Ziel trat bisher zurück, sobald das Spiel meinte, selbst eine Marke zu zeigen. Die blieb aber unsichtbar. Jetzt steht die Nadel von WeintCodex immer.",
+        },
+    },
+    {
         version = "6.73.2.0",
         date    = "18.10.2026",
         notes   = {
