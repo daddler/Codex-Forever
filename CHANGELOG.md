@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.77.0.0] – 2026-10-18
+
+### Geändert
+- Eigene Dankessprüche und Erkennungswörter kontoweit in `WeintCodex_SavedData.thanksOwn` (`lines`, `words`) statt im Profil (`comfort.thanksLines/thanksWords`); nie in eine Ersatztabelle vor dem Laden (`TH.Own`). `TH.MigrateOwn` holt beim Einloggen Profilwerte herüber (überschreibt keine vorhandene Sorte) und löscht sie im Profil.
+
 ## [6.76.8.0] – 2026-10-18
 
 ### Geändert

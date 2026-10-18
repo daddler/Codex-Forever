@@ -4072,7 +4072,7 @@ do
         local bl = TH.OwnLines("blessing")
         bl[#bl + 1] = "Dein Segen ist ein Geschenk. Deine Blase ein Lebensstil."
         for _, t in ipairs(TH.Lines("blessing")) do assert(not t:find("Blase"), "Blase nicht berichtigt") end
-        K.Set("comfort", "thanksLines", nil) K.Set("comfort", "thanksWords", nil)
+        _G.WeintCodex_SavedData.thanksOwn = nil   -- seit 6.77.0.0 kontoweit
         for _, t in ipairs(TH.Lines("blessing")) do assert(not t:find("Blase"), "Blase in den Voreinstellungen") end
         assert(TH.Kind("Göttlicher Wille") == "spirit", "zurueck auf WeintCodex")
         _G.UnitIsUnit = function() return false end
@@ -20368,6 +20368,25 @@ do
     _G.GetRaidTargetIndex = function() return nil end
     Check(c and c[1] > 0.9 and NP.MarkIndex("nameplate1") == nil, "Markierungsfarbe: Totenkopf weiss, ohne Markierung keine")
     _G.GetRaidTargetIndex = old
+end
+
+-- 6.77.0.0: eigene Dankessprueche kontoweit, aus dem Profil uebernommen.
+do
+    local ok, err = pcall(function()
+        local TH, K = WeintCodex.UIThanks, WeintCodex.UIKit
+        _G.WeintCodex_SavedData = _G.WeintCodex_SavedData or {}
+        _G.WeintCodex_SavedData.thanksOwn = nil
+        K.Set("comfort", "thanksLines", { heal = { "Mein eigener Spruch" } })
+        TH.MigrateOwn()
+        local l = TH.Lines("heal")
+        Check(l[1] == "Mein eigener Spruch", "Eigener Spruch nach der Uebernahme da")
+        Check(K.Get("comfort", "thanksLines") == nil, "Im Profil nach der Uebernahme geloescht")
+        local list = TH.OwnLines("heal")
+        list[#list + 1] = "Zweiter"
+        Check(_G.WeintCodex_SavedData.thanksOwn.lines.heal[2] == "Zweiter", "Neuer Spruch steht kontoweit in WeintCodex_SavedData")
+        _G.WeintCodex_SavedData.thanksOwn = nil
+    end)
+    Check(ok, "Eigene Dankessprueche: " .. tostring(err))
 end
 
 if failures == 0 then

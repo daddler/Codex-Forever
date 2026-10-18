@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.77.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFEigene Dankessprüche bleiben|r – was du dir selbst ausdenkst, liegt jetzt fest für dein ganzes Konto gespeichert: es übersteht jedes Update, gilt auf allen Charakteren und in jedem Profil. Was du schon geschrieben hattest, wird beim Einloggen übernommen.",
+        },
+    },
+    {
         version = "6.76.8.0",
         date    = "18.10.2026",
         notes   = {

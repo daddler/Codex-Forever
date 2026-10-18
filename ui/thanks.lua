@@ -188,8 +188,56 @@ end
 -- 6.41.2.0: "Blase" heisst unter Spielern "Bubble" - auch in schon
 -- uebernommenen eigenen Listen berichtigt (nur genau dieser Satz).
 TH.FIXES = { ["Dein Segen ist ein Geschenk. Deine Blase ein Lebensstil."] = "Dein Segen ist ein Geschenk. Deine Bubble ein Lebensstil." }
+-- 6.77.0.0 (Wunsch: "bei kommenden Updates muessen eigene Sprueche drin
+-- bleiben"): eigene Saetze und Woerter liegen KONTOWEIT an einer festen
+-- Stelle, WeintCodex_SavedData.thanksOwn = { lines = {}, words = {} } -
+-- nicht mehr im Profil (das je Charakter wechseln kann), und nie in einer
+-- Ersatztabelle vor dem Laden: gibt es WeintCodex_SavedData noch nicht,
+-- wird nichts gespeichert (und nichts geht verloren). Was frueher im
+-- Profil stand, wird beim Einloggen einmal herueber geholt (TH.MigrateOwn);
+-- eine Sorte, die schon kontoweit steht, wird dabei nie ueberschrieben.
+function TH.Own(which, create)
+    local sd = _G.WeintCodex_SavedData
+    if type(sd) ~= "table" then return nil end
+    local t = sd.thanksOwn
+    if type(t) ~= "table" then
+        if not create then return nil end
+        t = { lines = {}, words = {} }
+        sd.thanksOwn = t
+    end
+    if type(t[which]) ~= "table" then
+        if not create then return nil end
+        t[which] = {}
+    end
+    return t[which]
+end
+
+function TH.MigrateOwn()
+    local moved = 0
+    for which, key in pairs({ lines = "thanksLines", words = "thanksWords" }) do
+        local old = K.Get(KEY, key)
+        if type(old) == "table" and _G.next(old) then
+            local own = TH.Own(which, true)
+            if own then
+                for kind, list in pairs(old) do
+                    if type(list) == "table" and type(own[kind]) ~= "table" then
+                        local copy = {}
+                        for i, v in ipairs(list) do copy[i] = v end
+                        own[kind] = copy
+                        moved = moved + 1
+                    end
+                end
+                -- Herueber geholt: im Profil loeschen, sonst kaeme eine
+                -- spaeter zurueckgesetzte Sorte beim naechsten Login wieder.
+                K.Set(KEY, key, nil)
+            end
+        end
+    end
+    return moved
+end
+
 function TH.Lines(kind)
-    local own = K.Get(KEY, "thanksLines")
+    local own = TH.Own("lines")
     if type(own) == "table" and type(own[kind]) == "table" then
         local list = own[kind]
         for i, t in ipairs(list) do
@@ -202,8 +250,8 @@ end
 
 -- Zum Bearbeiten: eigene Kopie anlegen (einmal je Sorte).
 function TH.OwnLines(kind)
-    local own = K.Get(KEY, "thanksLines")
-    if type(own) ~= "table" then K.Set(KEY, "thanksLines", {}) own = K.Get(KEY, "thanksLines") end
+    local own = TH.Own("lines", true)
+    if not own then return {} end   -- vor dem Laden: nichts anlegen
     if type(own[kind]) ~= "table" then
         own[kind] = {}
         for i, t in ipairs(TH.LINES[kind] or {}) do own[kind][i] = t end
@@ -212,15 +260,15 @@ function TH.OwnLines(kind)
 end
 
 function TH.Words(kind)
-    local own = K.Get(KEY, "thanksWords")
+    local own = TH.Own("words")
     if type(own) == "table" and type(own[kind]) == "table" then return own[kind] end
     for _, w in ipairs(TH.WORDS) do if w[1] == kind then return w[2] end end
     return {}
 end
 
 function TH.SetWords(kind, text)
-    local own = K.Get(KEY, "thanksWords")
-    if type(own) ~= "table" then K.Set(KEY, "thanksWords", {}) own = K.Get(KEY, "thanksWords") end
+    local own = TH.Own("words", true)
+    if not own then return end
     local list = {}
     for w in tostring(text or ""):gmatch("[^,]+") do
         w = w:gsub("^%s+", ""):gsub("%s+$", ""):lower()
@@ -739,6 +787,7 @@ ev:SetScript("OnEvent", function(_, event, a1, a2)
         if a1 == "player" then pcall(TH.OnAura, a2) end
     elseif event == "PLAYER_LOGIN" then
         TH.HookTips()
+        pcall(TH.MigrateOwn)
         pcall(TH.ApplyHidden)
     elseif event == "PLAYER_ENTERING_WORLD" then
         pcall(TH.ApplyHidden)
@@ -899,9 +948,9 @@ local function Build(B)
                 if t ~= "" and list[edit.line] then list[edit.line] = t K.Fire("setting", KEY, "thanksLines") end
             end },
           { type = "button", label = "Diese Sorte", text = "Sprüche von WeintCodex zurück", onClick = function()
-                local own = K.Get(KEY, "thanksLines")
+                local own = TH.Own("lines")
                 if type(own) == "table" then own[edit.kind] = nil end
-                local ow = K.Get(KEY, "thanksWords")
+                local ow = TH.Own("words")
                 if type(ow) == "table" then ow[edit.kind] = nil end
                 K.Fire("setting", KEY, "thanksLines")
             end })
