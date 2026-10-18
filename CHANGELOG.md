@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.69.3.0] – 2026-10-18
+
+### Behoben
+- Danke: nach Anmelden/Neuladen meldet das Spiel getragene Buffs als `addedAuras` – jetzt nur frische (Restdauer ≈ volle Dauer, `TH.Fresh`), `isFullUpdate` übergangen. Fehlerbericht einer Spielerin direkt nach dem Login.
+- „Spender unbekannt“ (Spiel nennt `sourceUnit` nicht) ist kein Fehlerbericht mehr, sondern ein einmaliger Hinweis je Sitzung (`TH.HintUnknown`: freundliche Namensplaketten helfen).
+
 ## [6.69.2.0] – 2026-10-18
 
 ### Behoben

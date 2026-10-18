@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.69.3.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFDanke: kein Fehlalarm mehr nach dem Login|r – Buffs, die du beim Anmelden schon hast, zählen nicht mehr als neu. Nennt das Spiel den Spender nicht, gibt es keinen Fehlerbericht mehr, sondern einmal einen Hinweis, was hilft.",
+        },
+    },
+    {
         version = "6.69.2.0",
         date    = "18.10.2026",
         notes   = {

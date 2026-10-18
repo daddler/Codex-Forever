@@ -149,6 +149,15 @@ function TH.ReportLines(problem)
     return out
 end
 
+function TH.HintUnknown()
+    if st.hinted then return end
+    st.hinted = true
+    print(WeintCodex.ColorText("accent", "[WeintCodex]")
+        .. " Danke: das Spiel hat nicht verraten, wer dich gebufft hat – es nennt den Spender nur, wenn er"
+        .. " für dich eine Einheit ist (Ziel, Maus, Namensplakette). Mit Namensplaketten für freundliche"
+        .. " Spieler (Einstellungen → Namensplaketten) klappt es öfter.")
+end
+
 function TH.Report(problem)
     return K.ShowReport("Danke für Buffs – Fehlerbericht", TH.ReportLines(problem))
 end
@@ -263,7 +272,10 @@ function TH.Eligible(aura)
         -- Nur Buffs, die nach Spieler aussehen (eine eigene Sorte: Ausdauer,
         -- Willenskraft, Intelligenz, Segen), sind ein Fehler - Buffs von
         -- NPCs und Gegenstaenden kommen oft ohne Spender.
-        if TH.Kind(K.Plain(aura.name)) ~= "general" then st.fail = st.why end
+        -- 6.69.3.0: kein Fehler mehr, sondern eine Grenze des Spiels (Bericht
+        -- eines Spielers: "Spender nil" bei Seelenstaerke und Arkaner
+        -- Intelligenz). Einmal je Sitzung ein Hinweis, was hilft.
+        if TH.Kind(K.Plain(aura.name)) ~= "general" then TH.HintUnknown() end
         return nil
     end
     if Bool(_G.UnitIsUnit, src, "player") then return nil end
@@ -398,9 +410,27 @@ function TH.Try(list, now, how)
     return false
 end
 
+-- 6.69.3.0 (Fehlerbericht direkt nach dem Login): beim Anmelden, Neuladen
+-- und Zonenwechsel meldet das Spiel die Buffs, die man schon traegt, als
+-- "neu" (addedAuras). Frisch ist ein Buff nur, wenn er (fast) noch seine
+-- volle Dauer vor sich hat - wie bei den erneuerten.
+function TH.Fresh(a)
+    local dur, exp = K.Plain(a.duration), K.Plain(a.expirationTime)
+    if type(dur) ~= "number" or type(exp) ~= "number" or exp == 0 then return true end
+    return exp - Now() >= dur - TH.REFRESH_SLACK
+end
+
 function TH.OnAura(info)
     if not (TH.Active() and type(info) == "table") then return end
+    if K.Plain(info.isFullUpdate) == true then return end
     local added = info.addedAuras
+    if type(added) == "table" then
+        local fresh = {}
+        for _, a in ipairs(added) do
+            if type(a) == "table" and TH.Fresh(a) then fresh[#fresh + 1] = a end
+        end
+        added = fresh
+    end
     local fresh = TH.Refreshed(info)
     if type(added) ~= "table" and #fresh == 0 then return end
     if not TH.Where() then TH.Trace("Buff übergangen: " .. tostring(st.why)) return end

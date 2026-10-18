@@ -20092,9 +20092,13 @@ do
         _G.UnitIsUnit = function() return false end
         TH.Try({ { name = "Seelenstärke", duration = 1800, isHelpful = true, sourceUnit = "party1" } }, 1e6, "neu")
         assert(shown == 1, "gewollter Grund hat aufgeploppt")
-        -- Unbekannter Spender bei Spielerbuff: Fehler.
+        -- 6.69.3.0: unbekannter Spender ist eine Grenze des Spiels - kein Bericht.
         TH.Try({ { name = "Seelenstärke", duration = 1800, isHelpful = true } }, 1e6, "neu")
-        assert(shown == 2, "unbekannter Spender ohne Bericht")
+        assert(shown == 1, "unbekannter Spender hat aufgeploppt")
+        -- Nach dem Login gemeldete alte Buffs sind nicht frisch.
+        local now = _G.GetTime and _G.GetTime() or 0
+        assert(TH.Fresh({ duration = 3600, expirationTime = now + 3599 }) == true, "frischer Buff nicht frisch")
+        assert(TH.Fresh({ duration = 3600, expirationTime = now + 1200 }) == false, "alter Buff gilt als frisch")
         _G.UnitInParty, _G.UnitIsPlayer, _G.UnitIsUnit = oP, oI, oU
         TH.Report = oR
         TH.state.reports, TH.state.reportAt = 0, -1e9
