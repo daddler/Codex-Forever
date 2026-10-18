@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.78.0.1] – 2026-10-18
+
+### Behoben
+- Flugspiele: `SetSize` mit Tabelle – `FG.H` war Fensterhöhe und Hühnerjagd zugleich. Höhe heißt jetzt `FG.WIN_H`.
+
 ## [6.78.0.0] – 2026-10-18
 
 ### Neu

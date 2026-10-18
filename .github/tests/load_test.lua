@@ -20394,6 +20394,7 @@ do
     local ok, err = pcall(function()
         local FG = WeintCodex.UIFlightGames
         local J, M = FG.J, FG.M
+        Check(type(FG.WIN_H) == "number" and type(FG.W) == "number", "Flugspiele: Fenstermasse sind Zahlen")
         FG.Ask(true)
         FG.Play("jewels")
         local _, n = J.Matches()

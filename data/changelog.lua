@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.78.0.1",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFFlugspiele öffnen sich wieder|r – das Fenster ließ sich nicht öffnen, weder beim Abflug noch über die Einstellungen oder /wcui spiele.",
+        },
+    },
+    {
         version = "6.78.0.0",
         date    = "18.10.2026",
         notes   = {

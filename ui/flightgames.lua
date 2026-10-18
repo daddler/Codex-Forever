@@ -41,7 +41,7 @@ FG.GAMES = {
     { key = "mahjong", name = "Mahjong",     hint = "Zwei gleiche freie Steine anklicken. Frei ist ein Stein ohne Stein darauf und mit freier linker oder rechter Seite." },
     { key = "hunt",    name = "Hühnerjagd",  hint = "Huhn anklicken, bevor es den Himmel verlässt. Klein und schnell gibt mehr." },
 }
-FG.W, FG.H = 440, 520
+FG.W, FG.WIN_H = 440, 520   -- nicht FG.H: das ist die Huehnerjagd
 FG.BOARD = 400
 FG.HUHN = "Interface\\Icons\\Spell_Magic_PolymorphChicken"
 
@@ -535,7 +535,7 @@ end
 local function Build()
     if win then return win end
     win = CreateFrame("Frame", "WeintCodexFlightGames", UIParent)
-    win:SetSize(FG.W, FG.H)
+    win:SetSize(FG.W, FG.WIN_H)
     win:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
     win:SetFrameStrata("DIALOG")
     win:SetMovable(true)
