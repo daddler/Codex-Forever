@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.73.2.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFSchussprotokoll genauer|r – /wcui schuss hält jetzt auch fest, welche Leiche oder welches Objekt das Spiel gerade zum Plündern anvisiert, ob sie tot ist, und wie die weiche Zielerfassung eingestellt ist. Damit lässt sich klären, warum der Jäger manchmal vom Schießen ins Zuschlagen wechselt.",
+        },
+    },
+    {
         version = "6.73.1.0",
         date    = "18.10.2026",
         notes   = {

@@ -65,6 +65,15 @@ function SL.Begin()
     SL.fights[#SL.fights + 1] = cur
     while #SL.fights > 2 do table.remove(SL.fights, 1) end
     SL.Add("Kampf beginnt")
+    local P = WeintCodex.UIProfile
+    if P and P.GetCVar then
+        local t = {}
+        for _, n in ipairs({ "SoftTargetInteract", "SoftTargetEnemy", "SoftTargetIconInteract", "autoInteract" }) do
+            local v = P.GetCVar(n)
+            if v ~= nil then t[#t + 1] = n .. "=" .. tostring(v) end
+        end
+        if #t > 0 then SL.Add("Einstellungen: " .. table.concat(t, " ")) end
+    end
 end
 
 function SL.End()
@@ -104,7 +113,13 @@ ev:SetScript("OnEvent", function(_, event, a1, a2, a3, a4)
         return
     end
     if event == "PLAYER_SOFT_ENEMY_CHANGED" then SL.Add("weiche Zielerfassung (Gegner) wechselt") return end
-    if event == "PLAYER_SOFT_INTERACT_CHANGED" then return end
+    -- 6.73.2.0 (Beta-Test: Leiche mit orangem Namen statt grau, danach
+    -- Nahkampf statt Autoshot): was die weiche Interaktion gerade meint.
+    if event == "PLAYER_SOFT_INTERACT_CHANGED" then
+        local ex = _G.UnitExists and K.Bool(_G.UnitExists("softinteract"), false)
+        if ex then SL.Add("weiche Interaktion: " .. SL.UnitText("softinteract")) end
+        return
+    end
     if event == "PLAYER_TARGET_CHANGED" then SL.deadSaid = nil end
     if event == "START_AUTOREPEAT_SPELL" then SL.Add("AUTOSHOT AN")
     elseif event == "STOP_AUTOREPEAT_SPELL" then SL.Add("AUTOSHOT AUS · Ziel: " .. SL.TargetText())
@@ -135,16 +150,18 @@ end)
 -- 6.61.21.0: "Ziel: keins" war mehrdeutig - im Kampf ist der Name eines
 -- Gegners oft geheim. Jetzt: gibt es ein Ziel, Freund/Feind, tot, Name
 -- wenn lesbar, und grob die Entfernung (Nahkampf/Wurf/weiter weg).
-function SL.TargetText()
-    local ex = _G.UnitExists and K.Bool(_G.UnitExists("target"), nil)
+function SL.TargetText() return SL.UnitText("target") end
+function SL.UnitText(unit)
+    local ex = _G.UnitExists and K.Bool(_G.UnitExists(unit), nil)
     if ex == false then return "keins (Ziel verloren)" end
     if ex == nil then return "unbekannt" end
     local parts = {}
-    local n = _G.UnitName and K.Plain(_G.UnitName("target"))
+    local n = _G.UnitName and K.Plain(_G.UnitName(unit))
     parts[#parts + 1] = type(n) == "string" and n or "Name verborgen"
-    local enemy = _G.UnitCanAttack and K.Bool(_G.UnitCanAttack("player", "target"), nil)
+    local enemy = _G.UnitCanAttack and K.Bool(_G.UnitCanAttack("player", unit), nil)
     if enemy ~= nil then parts[#parts + 1] = enemy and "Gegner" or "kein Gegner" end
-    if _G.UnitIsDead and K.Bool(_G.UnitIsDead("target"), false) then parts[#parts + 1] = "tot" end
+    if _G.UnitIsDead and K.Bool(_G.UnitIsDead(unit), false) then parts[#parts + 1] = "tot" end
+    if _G.UnitIsUnit and unit ~= "target" and K.Bool(_G.UnitIsUnit(unit, "target"), false) then parts[#parts + 1] = "= dein Ziel" end
     -- 6.62.1.0 (Fehlerbericht "Blockiert: UNKNOWN()" aus TargetText):
     -- CheckInteractDistance ist im Kampf geschuetzt - pcall faengt das nicht,
     -- das Spiel meldet die Sperre trotzdem. Die Entfernung entfaellt.

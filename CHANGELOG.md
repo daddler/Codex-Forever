@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.73.2.0] – 2026-10-18
+
+### Geändert
+- Schussprotokoll (`ui/shotlog.lua`): `PLAYER_SOFT_INTERACT_CHANGED` wird mit Name/Gegner/tot/„= dein Ziel“ protokolliert (`SL.UnitText`), zu Kampfbeginn die CVars `SoftTargetInteract`, `SoftTargetEnemy`, `SoftTargetIconInteract`, `autoInteract`. Anlass: Leiche mit Interaktionsname in Feindfarbe, danach Nahkampf statt Autoshot – auch mit Glitzern aus.
+
 ## [6.73.1.0] – 2026-10-18
 
 ### Behoben
