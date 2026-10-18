@@ -20301,6 +20301,37 @@ do
     Check(a1 == 0 and a2 == 1 and a3 > 0 and a3 < 1 and s2 > 0.85, "Zielmarke: fern unsichtbar, nah ganz, dazwischen weich")
 end
 
+-- 6.75.0.0: freundliche Plaketten dauerhaft unsichtbar an, und zurueck.
+do
+    local ok, err = pcall(function()
+        local TH, K = WeintCodex.UIThanks, WeintCodex.UIKit
+        local oldCV, oldNP, oldCombat = _G.C_CVar, _G.C_NamePlate, _G.InCombatLockdown
+        local cv, click = { nameplateShowFriends = "0" }, false
+        _G.C_CVar = { GetCVar = function(n) return cv[n] end, SetCVar = function(n, v) cv[n] = tostring(v) return true end }
+        local plate = CreateFrame("Frame", nil, UIParent)
+        _G.C_NamePlate = setmetatable({ SetNamePlateFriendlyClickThrough = function(v) click = v end,
+            GetNamePlateFriendlyClickThrough = function() return click end,
+            GetNamePlateForUnit = function() return plate end }, { __index = oldNP })
+        _G.InCombatLockdown = function() return false end
+        local oldIn = _G.IsInInstance
+        _G.IsInInstance = function() return false end
+        K.Set("comfort", "thanksHidden", true)
+        TH.hidden.owns = false
+        TH.ApplyHidden()
+        Check(cv.nameplateShowFriends == "1" and click == true, "Unsichtbare Plaketten: eingeschaltet und nicht anklickbar")
+        local oldUCA = _G.UnitCanAttack
+        _G.UnitCanAttack = function() return false end
+        TH.PlateAdded("nameplate1")
+        Check(plate:GetAlpha() == 0, "Freundliche Plakette ist unsichtbar")
+        _G.UnitCanAttack = oldUCA
+        K.Set("comfort", "thanksHidden", false)
+        TH.ApplyHidden()
+        Check(cv.nameplateShowFriends == "0" and click == false and plate:GetAlpha() == 1, "Ausgeschaltet: Einstellung und Plakette zurueck")
+        _G.C_CVar, _G.C_NamePlate, _G.InCombatLockdown, _G.IsInInstance = oldCV, oldNP, oldCombat, oldIn
+    end)
+    Check(ok, "Unsichtbare freundliche Plaketten: " .. tostring(err))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

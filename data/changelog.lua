@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.75.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFDanke findet jeden Spender|r – wer die Namensplaketten freundlicher Spieler aus hat, bekommt sie jetzt unsichtbar und nicht anklickbar eingeschaltet. So kennt das Spiel jeden, der dich bufft, und das Dankeschön geht zuverlässig raus. Du siehst davon nichts. Abschaltbar unter Danke → Erweitert; dann kommt deine Einstellung zurück. In Instanzen bleibt alles, wie du es eingestellt hast.",
+        },
+    },
+    {
         version = "6.74.0.0",
         date    = "18.10.2026",
         notes   = {

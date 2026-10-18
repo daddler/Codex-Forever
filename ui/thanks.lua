@@ -550,6 +550,7 @@ function TH.Peek()
     if (_G.InCombatLockdown and _G.InCombatLockdown()) or K.InCombat() then return false end
     local now = Now()
     if now - st.peekAt < TH.PEEK_GAP then return false end
+    if TH.hidden.owns then return false end                -- dauerhaft unsichtbar an
     if GetCV(TH.PEEK_CVAR) ~= "0" then return false end   -- schon an (oder unbekannt): nichts zu tun
     if not SetCV(TH.PEEK_CVAR, "1") then return false end
     st.peeking, st.peekAt = true, now
@@ -569,9 +570,72 @@ function TH.Peek()
     return true
 end
 
+-- Dauerhaft unsichtbar (6.75.0.0, Wunsch nach Messung: "mit Namensplaketten
+-- an funktioniert Danke richtig gut, aus nur sporadisch"). Auf Wunsch
+-- schaltet WeintCodex die freundlichen Plaketten ein und haelt jede
+-- freundliche Plakette unsichtbar (Deckkraft 0) und nicht anklickbar
+-- (SetNamePlateFriendlyClickThrough) - fuer das Spiel sind die Spieler
+-- Einheiten, fuer den Spieler aendert sich nichts. Nur, wenn der Spieler
+-- sie selbst aus hatte; der Wert geht ueber PF.SetCVar und kommt beim
+-- Ausschalten zurueck. In Instanzen sind freundliche Plaketten fuer Addons
+-- gesperrt (forbidden): dort waeren sie sichtbar - darum dort aus.
+TH.hidden = { owns = false, click = nil }
+local function PFm() return WeintCodex.UIProfile end
+function TH.HiddenWanted()
+    if K.Get(KEY, "thanksHidden") ~= true or K.Get(KEY, "thanks") == false then return false end
+    if _G.IsInInstance then
+        local ok, inside = pcall(_G.IsInInstance)
+        if ok and K.Bool(inside, false) then return false end
+    end
+    return true
+end
+local function ClickThrough(on)
+    local np = _G.C_NamePlate
+    if not (np and np.SetNamePlateFriendlyClickThrough) then return false end
+    if on and TH.hidden.click == nil and np.GetNamePlateFriendlyClickThrough then
+        local ok, v = pcall(np.GetNamePlateFriendlyClickThrough)
+        TH.hidden.click = ok and K.Bool(v, false) or false
+    end
+    local want = on or (TH.hidden.click == true)
+    return pcall(np.SetNamePlateFriendlyClickThrough, want)
+end
+function TH.ApplyHidden()
+    if (_G.InCombatLockdown and _G.InCombatLockdown()) or K.InCombat() then
+        if K.AfterCombat then K.AfterCombat(TH.ApplyHidden) end
+        return false
+    end
+    local P = PFm()
+    if TH.HiddenWanted() then
+        if TH.hidden.owns then return true end
+        if GetCV(TH.PEEK_CVAR) ~= "0" then return false end   -- selbst an: sichtbar lassen
+        local ok = P and P.SetCVar and P.SetCVar(TH.PEEK_CVAR, "1", KEY) or SetCV(TH.PEEK_CVAR, "1")
+        if not ok then return false end
+        TH.hidden.owns = true
+        ClickThrough(true)
+        TH.Trace("freundliche Namensplaketten unsichtbar eingeschaltet")
+        return true
+    end
+    if not TH.hidden.owns then return false end
+    TH.hidden.owns = false
+    for plate in pairs(hiddenPlates) do pcall(plate.SetAlpha, plate, 1) hiddenPlates[plate] = nil end
+    if P and P.Release and P.Release(TH.PEEK_CVAR) then
+        -- zurueck
+    elseif GetCV(TH.PEEK_CVAR) == "1" then
+        SetCV(TH.PEEK_CVAR, "0")
+    end
+    ClickThrough(false)
+    TH.hidden.click = nil
+    return true
+end
+
+local function Friendly(unit)
+    local can = _G.UnitCanAttack and K.Bool(_G.UnitCanAttack("player", unit), nil)
+    return can == false
+end
+
 -- Waehrend des Hinschauens entstandene Plaketten unsichtbar halten.
 function TH.PlateAdded(unit)
-    if not st.peeking then return end
+    if not (st.peeking or (TH.hidden.owns and Friendly(unit))) then return end
     local np = _G.C_NamePlate
     local ok, plate = pcall(function() return np and np.GetNamePlateForUnit and np.GetNamePlateForUnit(unit) end)
     if ok and type(plate) == "table" and not (plate.IsForbidden and plate:IsForbidden()) and plate.SetAlpha then
@@ -663,7 +727,7 @@ end
 local ev = CreateFrame("Frame")
 pcall(ev.RegisterUnitEvent, ev, "UNIT_AURA", "player")
 for _, e in ipairs({ "PLAYER_TARGET_CHANGED", "UPDATE_MOUSEOVER_UNIT", "NAME_PLATE_UNIT_ADDED",
-                     "NAME_PLATE_UNIT_REMOVED", "GROUP_ROSTER_UPDATE", "PLAYER_LOGIN" }) do
+                     "NAME_PLATE_UNIT_REMOVED", "GROUP_ROSTER_UPDATE", "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 pcall(ev.RegisterEvent, ev, "ADDON_ACTION_BLOCKED")
@@ -675,6 +739,9 @@ ev:SetScript("OnEvent", function(_, event, a1, a2)
         if a1 == "player" then pcall(TH.OnAura, a2) end
     elseif event == "PLAYER_LOGIN" then
         TH.HookTips()
+        pcall(TH.ApplyHidden)
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        pcall(TH.ApplyHidden)
     elseif event == "NAME_PLATE_UNIT_REMOVED" then
         pcall(TH.PlateRemoved, a1)
     elseif event == "PLAYER_TARGET_CHANGED" or event == "UPDATE_MOUSEOVER_UNIT"
@@ -796,12 +863,16 @@ local function Build(B)
             format = function(v) return v == 0 and "sofort" or string.format("%d s", v) end },
           { type = "slider", label = "Allgemeine Sprüche beimischen", key = "thanksMix", min = 0, max = 100, step = 10, disabled = off,
             format = function(v) return string.format("%d %%", v) end })
+    B:Advanced()
     B:Row({ type = "toggle", label = "Fehlerbericht, wenn kein Dank rausgeht", key = "thanksReport", disabled = off,
             description = "Geht bei einem Buff kein Flüstern raus, obwohl es sollte, öffnet sich ein Bericht zum Kopieren (höchstens dreimal je Sitzung). Auch mit /wcui danke." },
           { type = "button", label = "Protokoll", text = "Bericht jetzt zeigen", onClick = function() TH.Report() end })
     B:Row({ type = "toggle", label = "Spender kurz über Namensplaketten suchen", key = "thanksPeek", disabled = off,
             description = "Nennt das Spiel den Spender nicht, schaltet WeintCodex die Namensplaketten freundlicher Spieler für einen Augenblick unsichtbar ein – dann kennt das Spiel ihn meist. Nie im Kampf." },
-          { type = "empty" })
+          { type = "toggle", label = "Freundliche Plaketten unsichtbar an", key = "thanksHidden", disabled = off,
+            set = function(v) K.Set(KEY, "thanksHidden", v) pcall(TH.ApplyHidden) end,
+            description = "Zuverlässigste Art: die Namensplaketten freundlicher Spieler sind eingeschaltet, aber unsichtbar und nicht anklickbar – das Spiel kennt so jeden Spender. Du siehst nichts davon. Nur, wenn du sie selbst aus hast; nicht in Instanzen. Aus: deine Einstellung kommt zurück." })
+    B:EndAdvanced()
     B:Section("Sprüche", "Sorte wählen: darunter, woran der Buff erkannt wird, und ihre Sprüche. Anklicken bearbeitet, × löscht.")
     B:Row({ type = "dropdown", label = "Sorte", items = TH.KINDS,
             get = function() return edit.kind end,
@@ -844,6 +915,7 @@ if mod then
     if mod.defaults.thanksAlways == nil then mod.defaults.thanksAlways = false end
     if mod.defaults.thanksReport == nil then mod.defaults.thanksReport = true end
     if mod.defaults.thanksPeek == nil then mod.defaults.thanksPeek = true end
+    if mod.defaults.thanksHidden == nil then mod.defaults.thanksHidden = true end
     if mod.defaults.thanksDelay == nil then mod.defaults.thanksDelay = 2 end
     if mod.defaults.thanksMix == nil then mod.defaults.thanksMix = 30 end
     mod.pages[#mod.pages + 1] = { key = "danke", label = "Danke", build = Build }

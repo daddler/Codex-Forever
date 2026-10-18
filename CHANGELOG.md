@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.75.0.0] – 2026-10-18
+
+### Neu
+- Danke: „Freundliche Plaketten unsichtbar an“ (`comfort.thanksHidden`, an, unter Erweitert): `nameplateShowFriends` = 1 über `PF.SetCVar` (Besitzer comfort, zurück beim Ausschalten), jede freundliche Plakette Deckkraft 0 (`TH.PlateAdded`), `C_NamePlate.SetNamePlateFriendlyClickThrough(true)` (vorheriger Wert zurück). Nur wenn der Spieler sie aus hatte, nie im Kampf, nicht in Instanzen (dort sind freundliche Plaketten für Addons gesperrt). Anlass: Messung des Besitzers – mit Plaketten an klappt Danke zuverlässig, aus nur sporadisch. Fehlerbericht-Zeile wandert unter Erweitert (15 sichtbare Einstellungen).
+
 ## [6.74.0.0] – 2026-10-18
 
 ### Geändert
