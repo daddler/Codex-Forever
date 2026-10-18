@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.76.3.0] – 2026-10-18
+
+### Behoben
+- Markierungsfarbe über Kurve (geheimer Index) wirkungslos beim Balkenstil „Verlauf“: der Verlauf trug die alte Farbe, `SetVertexColor` multiplizierte nur. `NP.ClearGradient` stellt den Verlauf vorher auf Weiß (Plaketten und Einheitenrahmen).
+
 ## [6.76.2.0] – 2026-10-18
 
 ### Geändert

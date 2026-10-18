@@ -1701,6 +1701,18 @@ function NP.ThreatCurve()
     return curve
 end
 
+-- 6.76.3.0 (Beta-Test mit Bild: Totenkopf, Balken weiter lila): beim
+-- Balkenstil "Verlauf" traegt der VERLAUF die Farbe und die Grundfarbe ist
+-- weiss - eine geheime Farbe ueber SetVertexColor wurde damit nur mit dem
+-- alten Verlauf multipliziert. Vorher den Verlauf neutral stellen.
+local white
+function NP.ClearGradient(tex)
+    if not (tex and tex.SetGradient and _G.CreateColor) then return end
+    white = white or _G.CreateColor(1, 1, 1, 1)
+    pcall(tex.SetGradient, tex, "VERTICAL", white, white)
+    tex._wcGradient = nil
+end
+
 -- Stufenkurve 1..8 -> Farbe der Markierung, fuer geheime Indizes.
 local markCurve
 function NP.MarkCurve()
@@ -1731,6 +1743,7 @@ function NP.PaintMarkSecret(p)
     if not okE or type(col) == "nil" or not col.GetRGB then return false end
     local done = pcall(function()
         local r, g, b = col:GetRGB()
+        NP.ClearGradient(tex)
         tex:SetVertexColor(r, g, b, 1)
         if p.raidGlow and S.raidMarker ~= "none" then
             local sz = (S.raidMarkerSize or 24) * 2.2
@@ -1762,6 +1775,7 @@ function NP.TintByMark(bar, unit)
     if not okE or type(col) == "nil" or not col.GetRGB then return false end
     local done = pcall(function()
         local r, g, b = col:GetRGB()
+        NP.ClearGradient(tex)
         tex:SetVertexColor(r, g, b, 1)
     end)
     bar._wcR, bar._wcG, bar._wcB = nil, nil, nil
@@ -1777,6 +1791,7 @@ function NP.PaintSecret(bar, scaled)
     if not ok or type(col) == "nil" or not col.GetRGB then return false end
     local ok2 = pcall(function()
         local r, g, b = col:GetRGB()
+        NP.ClearGradient(tex)
         tex:SetVertexColor(r, g, b, 1)
     end)
     -- Der Zwischenspeicher von K.PaintBar kennt diese Farbe nicht.

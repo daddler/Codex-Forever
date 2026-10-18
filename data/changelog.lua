@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.76.3.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFMarkierungsfarbe im Kampf wirklich sichtbar|r – mit dem Balkenstil „Verlauf“ blieb die Plakette eines markierten Gegners im Kampf in ihrer alten Farbe. Jetzt nimmt sie die Farbe der Markierung an.",
+        },
+    },
+    {
         version = "6.76.2.0",
         date    = "18.10.2026",
         notes   = {
