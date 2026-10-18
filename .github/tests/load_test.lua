@@ -20454,6 +20454,22 @@ do
         and not K.NeedsWideFont("Danke – schön! Größe") and not K.NeedsWideFont("Спасибо"), "Fremde Schrift erkannt, Deutsch und Kyrillisch nicht")
 end
 
+do
+    local QA = WeintCodex.UIQuestArrow
+    if QA and QA.MarkerReach then
+        QA.markKey = nil
+        local a = QA.MarkerReach("q:1", 50, 8)
+        local b = QA.MarkerReach("q:1", 5, 8)
+        local c = QA.MarkerReach("q:1", 60, 8)
+        local d = QA.MarkerReach("q:1", 85, 8)
+        local e = QA.MarkerReach("q:2", 5, 8); local f = QA.MarkerReach("q:3", 30, 8)
+        QA.markShown, QA.markTime = 0, 10
+        local g = QA.MarkerFade(1, 10.5)
+        Check(not a and b and c and not d and e and not f and g > 0 and g < 1,
+            "Zielmarke: erst nach Ankunft weg, ab 80 m langsam zurueck")
+    end
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

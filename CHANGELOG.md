@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.80.0.0] – 2026-10-18
+
+### Geändert
+- Zielmarke im Raum: nach echter Ankunft am Ziel langsam ausgeblendet,
+  ab etwa 80 m Abstand langsam wieder eingeblendet (`QA.MarkerReach`,
+  `QA.MarkerFade`). Neues Ziel setzt den Zustand zurück.
+
 ## [6.79.3.0] – 2026-10-18
 
 ### Geändert

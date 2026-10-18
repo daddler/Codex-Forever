@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.80.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFZielmarke im Raum|r – hast du das Ziel ganz erreicht, blendet die Marke langsam aus und taucht erst ab etwa 80 m Abstand langsam wieder auf. Vor der Ankunft bleibt sie wie bisher.",
+        },
+    },
+    {
         version = "6.79.3.0",
         date    = "18.10.2026",
         notes   = {

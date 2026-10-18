@@ -921,9 +921,36 @@ end
 
 -- Die Zielmarke an den Bildschirmpunkt des Ziels. Der Strahl steht auf
 -- dem Punkt. Verdeckt: halb durchsichtig.
-local function PlaceMarker(n, text)
+-- 6.80.0.0 (auf Wunsch): erreicht man das Ziel ganz (Ankunftsabstand),
+-- blendet die Marke langsam aus und kommt erst ab QA.MARK_BACK Yards
+-- Abstand langsam wieder. Nur nach echter Ankunft; ein neues Ziel
+-- setzt das zurueck. Ein- und Ausblenden mit QA.MARK_RATE je Sekunde.
+QA.MARK_BACK, QA.MARK_RATE = 80, 1.2
+QA.markShown, QA.markReached, QA.markKey, QA.markTime = 0, false, nil, nil
+
+function QA.MarkerReach(key, dist, arrive)
+    if key ~= QA.markKey then QA.markKey, QA.markReached = key, false end
+    if type(dist) ~= "number" then return QA.markReached end
+    if dist <= arrive then QA.markReached = true
+    elseif QA.markReached and dist >= QA.MARK_BACK then QA.markReached = false end
+    return QA.markReached
+end
+
+function QA.MarkerFade(want, now)
+    -- Erstes Bild (neu im Blick): sofort, nur Uebergaenge blenden.
+    if not QA.markTime then QA.markTime, QA.markShown = now, want return want end
+    local dt = math.max(0, math.min(0.5, now - QA.markTime))
+    QA.markTime = now
+    local cur, step = QA.markShown, QA.MARK_RATE * dt
+    if cur < want then cur = math.min(want, cur + step) else cur = math.max(want, cur - step) end
+    QA.markShown = cur
+    return cur
+end
+
+local function PlaceMarker(n, text, key)
     if not K.Get(KEY, "worldMarker") or not n or not n.frame or not n.onScreen then
         if marker then marker:Hide() end
+        QA.markShown, QA.markTime = 0, nil
         return false
     end
     -- 6.73.3.0 (Beta-Test mit /wcui pfeil: "Wegpunkt gesetzt, verfolgt,
@@ -935,6 +962,8 @@ local function PlaceMarker(n, text)
     QA.gameMarkerVisible = type(own) == "table" and own.IsVisible and K.Bool(own:IsVisible(), false) or false
     local alpha, scale = QA.MarkerLook(n.dist, K.Get(KEY, "markerNear") or 100)
     if n.inRange then alpha = 0 end
+    if QA.MarkerReach(key, n.dist, math.max(K.Get(KEY, "arriveDistance") or 5, 8)) then alpha = 0 end
+    alpha = QA.MarkerFade(alpha, Now())
     if alpha <= 0 then
         if marker then marker:Hide() end
         return false
@@ -1276,7 +1305,7 @@ function QA.Update(force)
             end
             height:SetText(first and second and (first .. " · " .. second) or first or second or "")
         end
-        PlaceMarker(nav, QA.FormatDistance(nav.dist, units))
+        PlaceMarker(nav, QA.FormatDistance(nav.dist, units), tostring(t.kind) .. ":" .. tostring(name))
     end
 
     if hop and (navRest or yards) <= math.max(K.Get(KEY, "arriveDistance") or 5, 10) then
