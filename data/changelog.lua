@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.75.1.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFZielmarke verschwindet im Questgebiet|r – stehst du schon im Gebiet einer Quest, braucht es keine Nadel mehr; sie geht weg, sobald das Spiel dich dort meldet.",
+        },
+    },
+    {
         version = "6.75.0.0",
         date    = "18.10.2026",
         notes   = {

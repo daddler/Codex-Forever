@@ -20332,6 +20332,22 @@ do
     Check(ok, "Unsichtbare freundliche Plaketten: " .. tostring(err))
 end
 
+-- 6.75.1.0: im Zielgebiet keine Nadel.
+do
+    local ok, err = pcall(function()
+        local QA, K = WeintCodex.UIQuestArrow, WeintCodex.UIKit
+        local old = _G.C_Navigation
+        local f = CreateFrame("Frame", nil, UIParent)
+        _G.C_Navigation = { GetDistance = function() return 40 end, GetTargetState = function() return 2 end,
+                            GetFrame = function() return f end, HasValidScreenPosition = function() return true end,
+                            WasClampedToScreen = function() return false end }
+        local n = QA.Nav()
+        Check(n and n.inRange == true, "Navigation meldet: im Zielgebiet")
+        _G.C_Navigation = old
+    end)
+    Check(ok, "Zielgebiet: " .. tostring(err))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

@@ -732,13 +732,18 @@ function QA.Nav()
     local ok, d = pcall(cn.GetDistance)
     d = ok and K.Plain(d) or nil
     if type(d) ~= "number" or d <= 0 then return nil end
-    out.dist, out.occluded, out.frame = d, nil, nil
+    out.dist, out.occluded, out.frame, out.inRange = d, nil, nil, nil
     if cn.GetTargetState then
         local okS, st = pcall(cn.GetTargetState)
         st = okS and K.Plain(st) or nil
         local E = _G.Enum and _G.Enum.NavigationState
         local occ = (E and E.Occluded) or 1
         out.occluded = (st == occ)
+        -- 6.75.1.0 (Beta-Test mit Bild: "ich bin im Questgebiet, die Nadel ist
+        -- immer noch da"): steht man im Zielgebiet einer Quest, meldet die
+        -- Navigation des Spiels "InRange" - dann ist die Nadel ueberfluessig.
+        local inr = (E and E.InRange) or 2
+        out.inRange = (st == inr)
     end
     if cn.GetFrame then
         local okF, f = pcall(cn.GetFrame)
@@ -904,6 +909,7 @@ local function PlaceMarker(n, text)
     local own = _G.SuperTrackedFrame
     QA.gameMarkerVisible = type(own) == "table" and own.IsVisible and K.Bool(own:IsVisible(), false) or false
     local alpha, scale = QA.MarkerLook(n.dist, K.Get(KEY, "markerNear") or 100)
+    if n.inRange then alpha = 0 end
     if alpha <= 0 then
         if marker then marker:Hide() end
         return false
@@ -1443,8 +1449,8 @@ function QA.Inspect()
     if not n then
         out[#out + 1] = "Navigation des Spiels: kein Ziel (Quest im Questlog verfolgen oder Kartenmarkierung setzen)"
     else
-        out[#out + 1] = string.format("Navigation: Luftlinie %s, verdeckt %s, auf dem Bildschirm %s",
-            N(n.dist), n.occluded and "ja" or "nein", n.onScreen and "ja" or "nein")
+        out[#out + 1] = string.format("Navigation: Luftlinie %s, verdeckt %s, auf dem Bildschirm %s, im Zielgebiet %s",
+            N(n.dist), n.occluded and "ja" or "nein", n.onScreen and "ja" or "nein", n.inRange and "ja" or "nein")
     end
     out[#out + 1] = "Zielmarke im Raum: " .. ((QA.marker and QA.marker:IsShown()) and "steht" or "nicht gezeigt")
         .. " · Marke des Spiels " .. (QA.gameMarkerVisible and "sichtbar" or "nicht sichtbar")

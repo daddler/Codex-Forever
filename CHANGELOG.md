@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.75.1.0] – 2026-10-18
+
+### Geändert
+- Zielmarke im Raum: aus, wenn `C_Navigation.GetTargetState()` = `Enum.NavigationState.InRange` (im Zielgebiet). `/wcui pfeil` nennt „im Zielgebiet ja/nein“.
+
 ## [6.75.0.0] – 2026-10-18
 
 ### Neu
