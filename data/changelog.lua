@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.78.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFFlugspiele|r – beim Abheben fragt WeintCodex, ob du bis zur Landung spielen willst: Juwelen (drei Gleiche tauschen), Mahjong (Paare abräumen) oder Hühnerjagd. Nach der Landung stehen deine Punkte und dein Bestwert da, auf Wunsch als Zeile für den Gildenchat. Alles abschaltbar unter Komfort → Flugspiele, jederzeit spielbar mit /wcui spiele.",
+        },
+    },
+    {
         version = "6.77.2.0",
         date    = "18.10.2026",
         notes   = {

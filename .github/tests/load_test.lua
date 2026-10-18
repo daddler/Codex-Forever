@@ -18198,7 +18198,7 @@ do
             assert(QoL.PAGE_ORDER[p.key], "Seite ohne Thema: " .. p.key)
         end
         local order = table.concat(keys, ",")
-        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,ringe,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,danke,gespraeche",
+        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,ringe,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,danke,gespraeche,flugspiele",
             "Reihenfolge: " .. order)
         assert(O.PageIndex("comfort", "gespraeche") == 16 and O.PageIndex("comfort", "fluestern") == 14, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
@@ -20387,6 +20387,40 @@ do
         _G.WeintCodex_SavedData.thanksOwn = nil
     end)
     Check(ok, "Eigene Dankessprueche: " .. tostring(err))
+end
+
+-- 6.78.0.0: Flugspiele.
+do
+    local ok, err = pcall(function()
+        local FG = WeintCodex.UIFlightGames
+        local J, M = FG.J, FG.M
+        FG.Ask(true)
+        FG.Play("jewels")
+        local _, n = J.Matches()
+        Check(n == 0 and J.HasMove(), "Juwelen: Start ohne Dreier, aber mit Zug")
+        -- Eine Reihe von Hand legen und aufloesen.
+        J.grid[8][1], J.grid[8][2], J.grid[8][3] = 1, 1, 1
+        local pts = J.Resolve()
+        Check(pts >= 30, "Juwelen: Dreier gibt Punkte (" .. tostring(pts) .. ")")
+        local list = M.Deal()
+        Check(list and #list == 36, "Mahjong: 36 Steine verteilt")
+        local faces = {}
+        for _, t in ipairs(list) do faces[t.face] = (faces[t.face] or 0) + 1 end
+        local even = true
+        for _, c in pairs(faces) do if c % 2 ~= 0 then even = false end end
+        Check(even, "Mahjong: jedes Gesicht paarweise")
+        FG.Play("mahjong")
+        Check(M.HasPair(), "Mahjong: zu Beginn ein freies Paar")
+        FG.Play("hunt")
+        FG.H.Tick(nil, 1)
+        _G.WeintCodex_SavedData = _G.WeintCodex_SavedData or {}
+        FG.flight.scores = { hunt = 120 }
+        local res = FG.Record()
+        Check(res[1] and res[1].score == 120 and FG.Best().hunt == 120, "Bestwert gespeichert")
+        Check(FG.GuildLine(res):find("^/g Flugspiele: 120 Punkte in H"), "Zeile fuer die Gilde")
+        FG.Close()
+    end)
+    Check(ok, "Flugspiele: " .. tostring(err))
 end
 
 if failures == 0 then

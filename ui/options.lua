@@ -1465,6 +1465,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
             .. " – Bericht im Fenster, Strg+C kopiert.")
         return
     end
+    -- 6.78.0.0: Flugspiele jederzeit.
+    if msg == "spiele" or msg == "spiel" or msg == "games" then
+        WeintCodex.UIFlightGames.Ask(true)
+        return
+    end
     -- 6.61.25.0: warum der letzte Buff keinen Dank bekam.
     if msg == "danke" or msg == "thanks" then
         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. WeintCodex.UIThanks.StatusLine())

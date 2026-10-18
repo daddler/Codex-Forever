@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.78.0.0] – 2026-10-18
+
+### Neu
+- Flugspiele (`ui/flightgames.lua`, Komfort → Flugspiele, `comfort.flightGames`/`flightGamesAsk`, an): Frage beim Abflug (`PLAYER_CONTROL_LOST` + `UnitOnTaxi`), drei eigene Spiele – Juwelen (Match-3, 8×8), Mahjong (36 Steine in drei Lagen, immer lösbar verteilt, bei festgefahrener Lage neu gemischt), Hühnerjagd (Pool von 6, Takt ohne Allokation). Ergebnis bei der Landung, Bestwerte kontoweit in `WeintCodex_SavedData.flightGames`. „Der Gilde zeigen“ legt `/g …` in die Chatzeile (Senden per Enter). `/wcui spiele`. Keine Namen oder Bilder der Vorbilder.
+
 ## [6.77.2.0] – 2026-10-18
 
 ### Behoben
