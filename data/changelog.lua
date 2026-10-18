@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.76.8.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFLebensbalken in der Farbe der Markierung|r – markierte Gegner haben jetzt einen Balken ganz in ihrer Farbe: Totenkopf weiß, Kreuz rot, Quadrat blau, Mond silbern, Stern gelb, Kreis orange, Diamant lila, Dreieck grün. Auch im Kampf.",
+        },
+    },
+    {
         version = "6.76.7.0",
         date    = "18.10.2026",
         notes   = {

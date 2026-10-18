@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.76.8.0] – 2026-10-18
+
+### Geändert
+- Markierungsfarbe ersetzt die Füllung: deckendes Bild (`media/ui/mark1..8.tga`, Alpha 255) als Bild im Text, in einem Rahmen an der Fülltextur des Balkens mit `SetClipsChildren` – färbt genau den gefüllten Teil, auch bei geheimem Index und geheimem Leben. Beobachtung: auf Forever ist der Index auch außerhalb des Kampfes nicht offen lesbar.
+
 ## [6.76.7.0] – 2026-10-18
 
 ### Geändert

@@ -820,8 +820,16 @@ local function Build(parent)
     -- Text, wie das Symbol selbst. So geht auch eine GEHEIME Markierung (im
     -- Kampf) hinein, ohne dass Lua sie lesen muss: der Client setzt die Zahl
     -- in den Pfad ein (media/ui/mark1..8, halb durchsichtig).
-    local tint = K.NewText(health, 10)
-    tint:SetPoint("CENTER", health, "CENTER", 0, 0)
+    -- 6.76.8.0 (Wunsch: "die roten Balken ersetzen mit den Farben der
+    -- Marks"): das Bild ist deckend und liegt in einem Rahmen, der an der
+    -- FUELLUNG des Balkens haengt und an ihr abschneidet - so faerbt es genau
+    -- den gefuellten Teil, ohne dass Lua Leben oder Markierung lesen muss.
+    local clip = CreateFrame("Frame", nil, health)
+    clip:SetFrameLevel(health:GetFrameLevel() + 1)
+    if clip.SetClipsChildren then clip:SetClipsChildren(true) end
+    p.markClip = clip
+    local tint = K.NewText(clip, 10)
+    tint:SetPoint("LEFT", health, "LEFT", 0, 0)
     tint:Hide()
     p.markTint = tint
 
@@ -1507,7 +1515,7 @@ end
 NP.MARK_EDGE = 3
 
 -- Die Farbflaeche (siehe Aufbau). true, wenn gesetzt. edge: Rahmen statt
--- Flaeche (deckendes Bild markb, ringsum NP.MARK_EDGE groesser).
+-- Flaeche (ringsum NP.MARK_EDGE groesser).
 function NP.ShowMarkTint(fs, bar, unit, edge)
     if not (fs and bar and unit and _G.GetRaidTargetIndex) then return false end
     local ok, idx = pcall(_G.GetRaidTargetIndex, unit)
@@ -1532,6 +1540,13 @@ local function UpdateRaidIcon(p)
     if not p.unit or S.raidMarker == "none" then p.raid:Hide() return end
     local shown, secret = K.ShowRaidIcon(p.raid, p.unit)
     if shown and S.raidMarkColor and not p._friendly and p.markTint then
+        local fill = p.health.GetStatusBarTexture and p.health:GetStatusBarTexture()
+        if fill and p.markClip._to ~= fill then
+            p.markClip:ClearAllPoints()
+            p.markClip:SetPoint("TOPLEFT", fill, "TOPLEFT", 0, 0)
+            p.markClip:SetPoint("BOTTOMRIGHT", fill, "BOTTOMRIGHT", 0, 0)
+            p.markClip._to = fill
+        end
         NP.markTintInfo = NP.ShowMarkTint(p.markTint, p.health, p.unit) and "gesetzt" or "nicht gesetzt"
     end
     if shown then
