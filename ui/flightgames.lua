@@ -704,12 +704,12 @@ FG.H = H
 -- 6.78.1.0 (Wunsch: "verschiedene witzige Huehner"): jedes Huhn hat seine
 -- Art - Farbe, Groesse, Tempo, Flugbahn, Punkte, Spruch. Gewichte = wie oft.
 H.KINDS = {
-    { key = "huhn",    w = 46, tint = nil, min = 34, max = 52, v1 = 60,  v2 = 140, pts = 10, words = { "Gack!", "Bwaak!", "Pock pock!" } },
-    { key = "kueken",  w = 16, tint = 1,   min = 22, max = 28, v1 = 170, v2 = 240, pts = 40, words = { "Piep!", "Piiiep?" } },
-    { key = "flatter", w = 12, tint = 3,   min = 30, max = 42, v1 = 90,  v2 = 140, pts = 30, zig = 46, words = { "Wuiii!", "Huiii!" } },
-    { key = "zombie",  w = 10, tint = 4,   min = 40, max = 54, v1 = 45,  v2 = 70,  pts = 35, hp = 2, words = { "Grrbwak?", "Hirrrn…", "Gaaarg!" } },
-    { key = "bombe",   w = 10, tint = 7,   min = 34, max = 46, v1 = 80,  v2 = 130, pts = -50, words = { "BUMM!", "Autsch!" } },
-    { key = "gold",    w = 4,  tint = 2,   min = 36, max = 40, v1 = 230, v2 = 300, pts = 150, words = { "GOLDHUHN!", "Kikeriki – Jackpot!" } },
+    { key = "huhn",    w = 46, tint = nil, min = 34, max = 52, v1 = 60,  v2 = 140, pts = 10, words = { "Gack!", "Bwaak!", "Pock pock!" }, sounds = { "gack", "bwaak", "pock" } },
+    { key = "kueken",  w = 16, tint = 1,   min = 22, max = 28, v1 = 170, v2 = 240, pts = 40, words = { "Piep!", "Piiiep?" }, sounds = { "piep" } },
+    { key = "flatter", w = 12, tint = 3,   min = 30, max = 42, v1 = 90,  v2 = 140, pts = 30, zig = 46, words = { "Wuiii!", "Huiii!" }, sounds = { "bwaak", "gack" } },
+    { key = "zombie",  w = 10, tint = 4,   min = 40, max = 54, v1 = 45,  v2 = 70,  pts = 35, hp = 2, words = { "Grrbwak?", "Hirrrn…", "Gaaarg!" }, sounds = { "zombie" } },
+    { key = "bombe",   w = 10, tint = 7,   min = 34, max = 46, v1 = 80,  v2 = 130, pts = -50, words = { "BUMM!", "Autsch!" }, sounds = { "bumm" } },
+    { key = "gold",    w = 4,  tint = 2,   min = 36, max = 40, v1 = 230, v2 = 300, pts = 150, words = { "GOLDHUHN!", "Kikeriki – Jackpot!" }, sounds = { "gold" } },
 }
 local weightSum = 0
 for _, k in ipairs(H.KINDS) do weightSum = weightSum + k.w end
@@ -721,6 +721,17 @@ local function PickKind()
         if x <= 0 then return k end
     end
     return H.KINDS[1]
+end
+
+-- 6.78.3.0 (Beta-Test: "die Gackertoene gehen noch nicht"): eigene,
+-- gerechnete Toene (media/sounds/huhn_*.ogg, .github/scripts/make_chicken_sounds.py).
+FG.SOUND_PATH = "Interface\\AddOns\\WeintCodex\\media\\sounds\\huhn_"
+function H.Sound(kind)
+    if K.Get(KEY, "flightGamesSound") == false or not _G.PlaySoundFile then return false end
+    local list = kind and kind.sounds
+    if not list or #list == 0 then return false end
+    local name = list[math.random(1, #list)]
+    return pcall(_G.PlaySoundFile, FG.SOUND_PATH .. name .. ".ogg", "Master")
 end
 
 -- Ein Wort, das kurz aufsteigt und verblasst (Pool, keine neuen Tabellen).
@@ -760,6 +771,7 @@ function H.Hit(b)
     local k = b.kind or H.KINDS[1]
     b.hp = (b.hp or 1) - 1
     local bx, by = b.x + b.size / 2, b.y
+    H.Sound(k)
     if b.hp > 0 then
         b:SetAlpha(0.55)
         b.speed = b.speed * 1.8
@@ -1167,7 +1179,9 @@ local function BuildPage(B)
             disabled = function() return K.Get(KEY, "flightGames") == false end,
             description = "Beim Abheben fragt ein kleines Fenster, ob du spielen willst. Aus: nur über /wcui spiele." })
     B:Row({ type = "button", label = "Ausprobieren", text = "Spiele jetzt öffnen", onClick = function() FG.Ask(true) end },
-          { type = "empty" })
+          { type = "toggle", label = "Töne", key = "flightGamesSound",
+            disabled = function() return K.Get(KEY, "flightGames") == false end,
+            description = "Gackern, Piepen und Bumm in der Hühnerjagd." })
     B:Note("„Der Gilde zeigen“ schreibt die Zeile nur in die Chatzeile – erst Enter schickt sie ab.")
 end
 FG.BuildPage = BuildPage
@@ -1176,6 +1190,7 @@ local mod = K.Module(KEY)
 if mod then
     if mod.defaults.flightGames == nil then mod.defaults.flightGames = true end
     if mod.defaults.flightGamesAsk == nil then mod.defaults.flightGamesAsk = true end
+    if mod.defaults.flightGamesSound == nil then mod.defaults.flightGamesSound = true end
     mod.pages[#mod.pages + 1] = { key = "flugspiele", label = "Flugspiele", build = BuildPage }
     if type(mod.pageOrder) == "table" then mod.pageOrder.flugspiele = 33 end
 end

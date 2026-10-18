@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.78.3.0] – 2026-10-18
+
+### Neu
+- Hühnerjagd mit Tönen: `media/sounds/huhn_{gack,pock,bwaak,piep,zombie,bumm,gold}.ogg`, gerechnet von `.github/scripts/make_chicken_sounds.py` (keine Aufnahmen), je Art in `H.KINDS[].sounds`, `PlaySoundFile` auf „Master“. Schalter `comfort.flightGamesSound` (an).
+
 ## [6.78.2.0] – 2026-10-18
 
 ### Geändert

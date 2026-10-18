@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.78.3.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Hühner gackern|r – jeder Treffer in der Hühnerjagd ist zu hören: Gackern, Glucken und Bwaak beim Huhn, Piepen beim Küken, Grollen beim Zombiehuhn, ein Bumm beim Bombenhuhn und Glitzern beim Goldhuhn. Abschaltbar unter Komfort → Flugspiele → Töne.",
+        },
+    },
+    {
         version = "6.78.2.0",
         date    = "18.10.2026",
         notes   = {
