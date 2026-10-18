@@ -203,6 +203,7 @@ local function Tooltip(self)
     end
     gt:AddLine("Eingang: Wissensstand aus der Beta – unbestätigt.", C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
     gt:AddLine("Klick: im Codex öffnen", C.textMuted[1], C.textMuted[2], C.textMuted[3])
+    gt:AddLine("Rechtsklick: Questpfeil und Zielmarke hierhin", C.textMuted[1], C.textMuted[2], C.textMuted[3])
     gt:Show()
 end
 
@@ -220,11 +221,22 @@ function ME.Open(spot)
     return true
 end
 
+-- 6.73.0.0: Rechtsklick fuehrt hin - Questpfeil und, wo der Client es
+-- kann, die Zielmarke im Raum (QA.SetCustom setzt den Wegpunkt des Spiels).
+function ME.Guide(spot)
+    local QA = WeintCodex.UIQuestArrow
+    local e = spot and spot.entries and spot.entries[1]
+    if not (e and QA and QA.SetCustom and spot.map and spot.x and spot.y) then return false end
+    local name = e.dungeon and (e.dungeon.name or e.dungeon.id) or "Eingang"
+    QA.SetCustom({ map = spot.map, x = spot.x, y = spot.y, title = "Eingang: " .. tostring(name) })
+    return true
+end
+
 local function NewPin(canvas)
     local p = CreateFrame("Button", nil, canvas)
     p:SetSize(ME.PIN, ME.PIN)
     p:EnableMouse(true)
-    if p.RegisterForClicks then p:RegisterForClicks("LeftButtonUp") end
+    if p.RegisterForClicks then p:RegisterForClicks("LeftButtonUp", "RightButtonUp") end
     local rim = p:CreateTexture(nil, "ARTWORK", nil, 1)
     rim:SetTexture(K.MEDIA .. "disc")
     rim:SetAllPoints(p)
@@ -250,7 +262,9 @@ local function NewPin(canvas)
         Paint(false)
         if _G.GameTooltip then _G.GameTooltip:Hide() end
     end)
-    p:SetScript("OnClick", function(self) ME.Open(self.spot) end)
+    p:SetScript("OnClick", function(self, button)
+        if button == "RightButton" then ME.Guide(self.spot) else ME.Open(self.spot) end
+    end)
     p:Hide()
     return p
 end

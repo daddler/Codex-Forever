@@ -20233,6 +20233,49 @@ do
     Check(ok, "Dungeonkarten: bekannte Instanz zeigt ihre Ebenen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.73.0.0: eigenes Ziel setzt den Wegpunkt des Spiels und nimmt ihn wieder ab.
+do
+    local ok, err = pcall(function()
+        local QA, ME = WeintCodex.UIQuestArrow, WeintCodex.UIMapEntrances
+        local oldMap, oldST, oldP = _G.C_Map, _G.C_SuperTrack, _G.UiMapPoint
+        local wp, tracking, quest = nil, false, 42
+        local mine = { uiMapID = 1, position = { x = 0.1, y = 0.2 } }
+        _G.UiMapPoint = { CreateFromCoordinates = function(m, x, y) return { uiMapID = m, position = { x = x, y = y } } end }
+        _G.C_Map = setmetatable({
+            CanSetUserWaypointOnMap = function() return true end,
+            SetUserWaypoint = function(p) wp = p end,
+            GetUserWaypoint = function() return wp end,
+            ClearUserWaypoint = function() wp = nil end,
+        }, { __index = oldMap })
+        _G.C_SuperTrack = setmetatable({
+            SetSuperTrackedUserWaypoint = function(on) tracking = on end,
+            IsSuperTrackingUserWaypoint = function() return tracking end,
+            GetSuperTrackedQuestID = function() return tracking and 0 or quest end,
+        }, { __index = oldST })
+        wp = mine
+        QA.pin = nil
+        QA.SetCustom({ map = 1434, x = 0.5, y = 0.6, title = "Test" })
+        Check(wp and wp.uiMapID == 1434 and tracking == true, "Eigenes Ziel setzt und verfolgt den Wegpunkt des Spiels")
+        Check(QA.PinIsOurs() == true, "Der gesetzte Wegpunkt gilt als unserer")
+        QA.Skip()
+        Check(wp == mine and QA.pin == nil, "Ziel geloest: der Wegpunkt des Spielers kommt zurueck")
+        -- Spieler setzt inzwischen selbst einen: der bleibt.
+        wp = nil
+        QA.SetCustom({ map = 1434, x = 0.5, y = 0.6, title = "Test" })
+        local own = { uiMapID = 1434, position = { x = 0.9, y = 0.9 } }
+        wp = own
+        QA.ClearCustom()
+        Check(wp == own, "Ein Wegpunkt, den der Spieler selbst gesetzt hat, bleibt stehen")
+        -- Rechtsklick auf einen Eingang fuehrt hin.
+        Check(type(ME.Guide) == "function", "ME.Guide vorhanden")
+        local spot = { map = 1434, x = 0.3, y = 0.4, entries = { { dungeon = { id = "x", name = "Testgrotte" } } } }
+        Check(ME.Guide(spot) == true and QA.custom and QA.custom.title == "Eingang: Testgrotte", "Rechtsklick auf einen Eingang setzt das Ziel")
+        QA.ClearCustom()
+        _G.C_Map, _G.C_SuperTrack, _G.UiMapPoint = oldMap, oldST, oldP
+    end)
+    Check(ok, "Wegpunkt fuer eigene Ziele: " .. tostring(err))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

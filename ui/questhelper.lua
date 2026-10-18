@@ -153,7 +153,7 @@ end
 function QH.SetFocus(id)
     local QA = WeintCodex.UIQuestArrow
     -- 6.60.1.0: eine Quest waehlen loest den Pfeil vom Buch.
-    if id and QA then QA.custom = nil end
+    if id and QA then if QA.ClearCustom then QA.ClearCustom() else QA.custom = nil end end
     -- Loesen gibt den Pfeil nur frei, wenn er noch unserer Wahl folgt.
     if QA and QH.focus and QA.manual == QH.focus then QA.manual = nil end
     QH.focus = id

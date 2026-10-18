@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.73.0.0] – 2026-10-18
+
+### Neu
+- Zielmarke im Raum für eigene Ziele (`QA.SetCustom` → `QA.PinGame`): setzt `C_Map.SetUserWaypoint` + `C_SuperTrack.SetSuperTrackedUserWaypoint`, damit `C_Navigation.GetFrame` einen Bildschirmpunkt liefert, an dem die vorhandene Marke hängt. Nie im Kampf, nur wenn `CanSetUserWaypointOnMap`; beim Lösen (`QA.ClearCustom`) wird ein vorheriger Spieler-Wegpunkt wiederhergestellt, ein inzwischen selbst gesetzter bleibt. Die verfolgte Quest wird bewusst nicht zurückgesetzt (`SetSuperTrackedQuestID` bleibt verboten). Schalter: „Zielmarke im Raum“. Stand in `/wcui pfeil`. Verhalten nach NaowhForever, kein Code übernommen.
+- Rechtsklick auf einen Instanzeingang der Weltkarte führt hin (`ME.Guide`).
+
 ## [6.72.0.0] – 2026-10-18
 
 ### Neu

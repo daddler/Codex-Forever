@@ -370,9 +370,9 @@ local function ResolveTarget(playerMap)
     local cu = QA.custom
     if cu then
         if cu.done and cu.done() then
-            QA.custom = nil
+            QA.ClearCustom()
         else
-            return "ok", cu.map, cu.x, cu.y, cu.title, "custom"
+            return "ok", cu.map, cu.x, cu.y, cu.title, "custom", QA.PinIsOurs()
         end
     end
 
@@ -569,13 +569,118 @@ function QA.Replan()
 end
 
 -- "/wcui pfeil weiter": das jetzige Ziel 10 Minuten auslassen.
+--------------------------------------------------
+-- Wegpunkt des Spiels fuer eigene Ziele (6.73.0.0)
+--------------------------------------------------
+-- Wunsch: "den Pin von der Karte auch auf dem Bildschirm sehen, wenn ich in
+-- der Naehe bin - wie das Ping-System". Ein Addon kann nichts in die Welt
+-- zeichnen und keinen Kartenpunkt auf den Bildschirm umrechnen. Das Spiel
+-- kann es: setzt man seinen Kartenwegpunkt (C_Map.SetUserWaypoint) und
+-- verfolgt ihn (C_SuperTrack), legt die Navigation einen Bildschirmpunkt
+-- genau ans Ziel (C_Navigation.GetFrame) - daran haengt die Zielmarke im
+-- Raum (PlaceMarker). Verhalten wie NaowhForever, eigener Code.
+-- 6.5.1.0 stand hier noch "setzt laut Beta-Berichten nicht verlaesslich" -
+-- darum: nur, wenn der Client die Karte annimmt, und wieder weg, sobald das
+-- eigene Ziel geloest ist. Ein Wegpunkt, den der Spieler vorher selbst
+-- hatte, kommt danach zurueck. Die verfolgte Quest stellen wir NICHT
+-- zurueck: SetSuperTrackedQuestID ist seit 6.6.0.1 verboten (gemessen:
+-- danach blockiert das Spiel im Kampf SetPassThroughButtons). Auch den
+-- Wegpunkt nie im Kampf - dieselbe Sorte Schreiben, nur ungemessen.
+QA.pin = nil       -- { map, x, y, before = UiMapPoint|nil }
+QA.pinAt = -math.huge
+
+local function Now() return _G.GetTime and K.Plain(_G.GetTime()) or 0 end
+
+local function MapPoint(map, x, y)
+    local P = _G.UiMapPoint
+    if type(P) ~= "table" then return nil end
+    if P.CreateFromCoordinates then return P.CreateFromCoordinates(map, x, y) end
+    if P.CreateFromVector2D and _G.CreateVector2D then return P.CreateFromVector2D(map, _G.CreateVector2D(x, y)) end
+    return nil
+end
+
+-- Den Wegpunkt des Spiels aufs eigene Ziel setzen. true, wenn gesetzt.
+function QA.PinGame(t)
+    local cm, st = _G.C_Map, _G.C_SuperTrack
+    if not (t and type(t.map) == "number" and type(t.x) == "number" and type(t.y) == "number") then return false end
+    if not (K.Get(KEY, "worldMarker") and cm and cm.SetUserWaypoint and st and st.SetSuperTrackedUserWaypoint) then return false end
+    if cm.CanSetUserWaypointOnMap then
+        local ok, can = pcall(cm.CanSetUserWaypointOnMap, t.map)
+        if not ok or not K.Bool(can, false) then QA.pinState = "Karte nimmt keinen Wegpunkt" return false end
+    end
+    if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false) then QA.pinState = "im Kampf nicht gesetzt" return false end
+    local point = MapPoint(t.map, t.x, t.y)
+    if not point then QA.pinState = "UiMapPoint fehlt" return false end
+    local pin = QA.pin
+    if not pin then
+        pin = {}
+        local okB, before = pcall(cm.GetUserWaypoint or function() end)
+        pin.before = okB and before or nil
+    end
+    QA.pinAt = Now()
+    if not pcall(cm.SetUserWaypoint, point) then QA.pinState = "SetUserWaypoint abgelehnt" return false end
+    pcall(st.SetSuperTrackedUserWaypoint, true)
+    pin.map, pin.x, pin.y = t.map, t.x, t.y
+    QA.pin, QA.pinState = pin, "gesetzt"
+    return true
+end
+
+-- Ist der Wegpunkt des Spiels noch unserer, und wird er verfolgt?
+function QA.PinIsOurs()
+    local pin, cm, st = QA.pin, _G.C_Map, _G.C_SuperTrack
+    if not (pin and cm and cm.GetUserWaypoint) then return false end
+    local ok, wp = pcall(cm.GetUserWaypoint)
+    if not ok or type(wp) ~= "table" or not wp.position then return false end
+    local x, y = wp.position.x, wp.position.y
+    if wp.position.GetXY then x, y = wp.position:GetXY() end
+    x, y = K.Plain(x), K.Plain(y)
+    if K.Plain(wp.uiMapID) ~= pin.map or type(x) ~= "number" or type(y) ~= "number"
+       or math.abs(x - pin.x) > 0.0005 or math.abs(y - pin.y) > 0.0005 then return false end
+    if st and st.IsSuperTrackingUserWaypoint then
+        local okS, on = pcall(st.IsSuperTrackingUserWaypoint)
+        return okS and K.Bool(on, false)
+    end
+    return true
+end
+
+-- Unseren Wegpunkt wieder abnehmen; was vorher war, zurueck. Ein Wegpunkt,
+-- den der Spieler inzwischen selbst gesetzt hat, bleibt stehen.
+function QA.UnpinGame()
+    local pin = QA.pin
+    if not pin then return false end
+    local ours = QA.PinIsOurs()
+    QA.pin = nil
+    if not ours then return false end
+    local cm, st = _G.C_Map, _G.C_SuperTrack
+    QA.pinAt = Now()
+    if pin.before and cm.SetUserWaypoint then
+        pcall(cm.SetUserWaypoint, pin.before)
+    elseif cm.ClearUserWaypoint then
+        pcall(cm.ClearUserWaypoint)
+    end
+    if st and not pin.before and st.SetSuperTrackedUserWaypoint then
+        pcall(st.SetSuperTrackedUserWaypoint, false)
+    end
+    return true
+end
+
+-- Hat gerade WeintCodex selbst die Verfolgung geaendert? Dann ist das
+-- SUPER_TRACKING_CHANGED keine Wahl des Spielers.
+function QA.PinBusy() return Now() - QA.pinAt < 1.5 end
+
+function QA.ClearCustom()
+    QA.custom = nil
+    QA.UnpinGame()
+end
+
 function QA.SetCustom(t)
     QA.custom = t
+    if t then QA.PinGame(t) else QA.UnpinGame() end
     if QA.Update then pcall(QA.Update, true) end
 end
 
 function QA.Skip()
-    if QA.custom then QA.custom = nil return end
+    if QA.custom then QA.ClearCustom() return end
     local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
     local id = QA.manual or QA.Chosen
     if id then QA.skipped[id] = now + 600 end
@@ -1178,6 +1283,10 @@ local AUTO = { QUEST_ACCEPTED = true, QUEST_TURNED_IN = true, QUEST_REMOVED = tr
 local function OnSmartEvent(event, questID, game)
     local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
     if AUTO[event] then autoAt = now end
+    if event == "SUPER_TRACKING_CHANGED" and QA.PinBusy() then
+        Refresh()
+        return
+    end
     if event == "SUPER_TRACKING_CHANGED" then
         if not game then
             QA.manual = nil
@@ -1193,7 +1302,7 @@ local function OnSmartEvent(event, questID, game)
                 -- 6.60.1.0 (Beta-Test: "Buch gewaehlt, dann doch eine Quest
                 -- angeklickt - der Pfeil aendert sich nicht mehr"): wer
                 -- selbst eine Quest waehlt, loest das eigene Ziel.
-                QA.custom = nil
+                QA.ClearCustom()
                 Refresh()
             end)
         end
@@ -1259,6 +1368,8 @@ function QA.Inspect()
         out[#out + 1] = string.format("Navigation: Luftlinie %s, verdeckt %s, auf dem Bildschirm %s",
             N(n.dist), n.occluded and "ja" or "nein", n.onScreen and "ja" or "nein")
     end
+    out[#out + 1] = "Wegpunkt für eigene Ziele: " .. (QA.pinState or "noch nicht versucht")
+        .. (QA.pin and (QA.PinIsOurs() and ", verfolgt" or ", nicht mehr unserer") or "")
     out[#out + 1] = "Richtung der Höhe: " .. ((sign == "up" and "höher") or (sign == "down" and "tiefer")
         or "unbekannt – erst, wenn der Client die eigene Höhe nennt und du bergauf oder bergab gehst")
     -- Planen (6.6.2.7): wer gewaehlt hat und was zur Wahl stand.
@@ -1343,7 +1454,7 @@ K.Register({
                         { value = "yards",  text = "Yards" } } })
             B:Row({ type = "toggle", label = "Name der Quest", key = "showTitle" },
                   { type = "toggle", label = "Zielmarke im Raum", key = "worldMarker",
-                    description = "Eine Nadel genau am Ziel, auf dem Berg oder am Höhleneingang. Nur für die Quest, die das Spiel verfolgt, und für Kartenmarkierungen." })
+                    description = "Eine Nadel genau am Ziel, auf dem Berg oder am Höhleneingang. Für die Quest, die das Spiel verfolgt, Kartenmarkierungen und eigene Ziele (Eingang, Händler, Buch) – dafür setzt WeintCodex den Wegpunkt des Spiels und nimmt ihn danach wieder ab." })
             B:Row({ type = "dropdown", label = "Kompass", key = "compass", items = {
                         { value = "off",  text = "Aus" },
                         { value = "both", text = "Pfeil und Kompass" },

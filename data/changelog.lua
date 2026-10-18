@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.73.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFZielmarke im Raum für eigene Ziele|r – führt dich der Questpfeil zu einem Instanzeingang, Rezepthändler oder Buch, steht jetzt auch eine Nadel genau am Ziel in der Welt, mit Entfernung. Rechtsklick auf einen Instanzeingang auf der Weltkarte führt dich hin. Dafür setzt WeintCodex den Wegpunkt des Spiels und nimmt ihn danach wieder ab; dein eigener Wegpunkt kommt zurück.",
+        },
+    },
+    {
         version = "6.72.0.0",
         date    = "18.10.2026",
         notes   = {
