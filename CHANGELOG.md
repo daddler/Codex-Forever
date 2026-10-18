@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.76.1.0] – 2026-10-18
+
+### Behoben
+- Markierungsfarbe fehlte im Kampf (geheimer `GetRaidTargetIndex`): `NP.MarkCurve` (Stufenkurve `C_CurveUtil.CreateColorCurve`, Punkte 1–8) wertet den geheimen Index aus, die geheime Farbe geht direkt an Balken und Schein (`NP.PaintMarkSecret`); die Bedrohungsfärbung über Kurve tritt dann zurück. Stand in der Selbstprüfung der Plaketten. Ungemessen auf Forever.
+
 ## [6.76.0.0] – 2026-10-18
 
 ### Neu

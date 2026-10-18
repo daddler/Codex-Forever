@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.76.1.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFMarkierungsfarbe auch im Kampf|r – dort nennt das Spiel die Markierung nur verschlüsselt. Die Farbe kommt jetzt über einen Weg des Spiels selbst, der verschlüsselte Werte in Farben übersetzen darf.",
+        },
+    },
+    {
         version = "6.76.0.0",
         date    = "18.10.2026",
         notes   = {

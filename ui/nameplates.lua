@@ -1405,8 +1405,13 @@ end
 local function UpdateColor(p)
     if not p.unit then return end
     local r, g, b = BarColor(p)
+    p.health._wcMarkSecret = nil
     K.PaintBar(p.health, r, g, b)
     if not p._friendly then PaintBg(p, r, g, b) end
+    -- 6.76.1.0 (Beta-Test mit Bild: im Kampf keine Farbe - die Markierung
+    -- ist dort geheim): eine Stufenkurve des Spiels macht aus der geheimen
+    -- Zahl eine (geheime) Farbe, die direkt an Balken und Schein geht.
+    if S.raidMarkColor and S.raidMarker ~= "none" and not p._friendly then NP.PaintMarkSecret(p) end
 end
 
 local anyTarget = false
@@ -1497,6 +1502,10 @@ local function UpdateRaidIcon(p)
     local shown, secret = K.ShowRaidIcon(p.raid, p.unit)
     if shown then
         NP.raidInfo = secret and "geheim, als Bild aus dem Text gezeigt" or "offen lesbar, gezeigt"
+        if secret and S.raidMarkColor and not p._friendly then
+            NP.PaintMarkSecret(p)
+            NP.raidInfo = NP.raidInfo .. " · Farbe " .. (NP.markSecretInfo or "unbekannt")
+        end
         local c = S.raidMarkColor and NP.MarkColor(NP.MarkIndex(p.unit))
         if c and p.raidGlow then
             local sz = (S.raidMarkerSize or 20) * 2.2
@@ -1692,7 +1701,52 @@ function NP.ThreatCurve()
     return curve
 end
 
+-- Stufenkurve 1..8 -> Farbe der Markierung, fuer geheime Indizes.
+local markCurve
+function NP.MarkCurve()
+    if markCurve ~= nil then return markCurve or nil end
+    markCurve = false
+    local CU, E = _G.C_CurveUtil, _G.Enum
+    if type(CU) ~= "table" or type(CU.CreateColorCurve) ~= "function" or type(_G.CreateColor) ~= "function" then return nil end
+    local ok, curve = pcall(CU.CreateColorCurve)
+    if not ok or type(curve) == "nil" then return nil end
+    if E and E.LuaCurveType and E.LuaCurveType.Step and curve.SetType then pcall(curve.SetType, curve, E.LuaCurveType.Step) end
+    for i = 1, 8 do
+        local c = WeintCodex.GameColors["raidMark" .. i]
+        pcall(curve.AddPoint, curve, i, _G.CreateColor(c[1], c[2], c[3], 1))
+    end
+    markCurve = curve
+    return curve
+end
+
+-- Nur fuer GEHEIME Indizes (offene faerbt BarColor). true, wenn gefaerbt.
+function NP.PaintMarkSecret(p)
+    if not (p.unit and _G.GetRaidTargetIndex) then return false end
+    local ok, idx = pcall(_G.GetRaidTargetIndex, p.unit)
+    if not ok or not K.IsSecret(idx) then return false end
+    local curve = NP.MarkCurve()
+    local tex = p.health.GetStatusBarTexture and p.health:GetStatusBarTexture()
+    if not (curve and curve.Evaluate and tex) then return false end
+    local okE, col = pcall(curve.Evaluate, curve, idx)
+    if not okE or type(col) == "nil" or not col.GetRGB then return false end
+    local done = pcall(function()
+        local r, g, b = col:GetRGB()
+        tex:SetVertexColor(r, g, b, 1)
+        if p.raidGlow and S.raidMarker ~= "none" then
+            local sz = (S.raidMarkerSize or 24) * 2.2
+            p.raidGlow:SetSize(sz, sz)
+            p.raidGlow:SetVertexColor(r, g, b, 0.9)
+            p.raidGlow:Show()
+        end
+    end)
+    p.health._wcR, p.health._wcG, p.health._wcB = nil, nil, nil
+    p.health._wcMarkSecret = done or nil
+    NP.markSecretInfo = done and "geheim, über Kurve gefärbt" or "geheim, Kurve fehlt"
+    return done
+end
+
 function NP.PaintSecret(bar, scaled)
+    if bar._wcMarkSecret then return true end   -- die Markierung geht vor
     local curve = NP.ThreatCurve()
     local tex = bar.GetStatusBarTexture and bar:GetStatusBarTexture()
     if not curve or not tex or not curve.Evaluate then return false end
