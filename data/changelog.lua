@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.68.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFChat kopieren|r – oben rechts an jedem Chatfenster sitzt ein kleiner Knopf „Kopieren“. Er öffnet den Verlauf des offenen Reiters (Allgemein, Handel …) als Text zum Markieren und Kopieren mit Strg+C. Abschaltbar im Komfort.",
+        },
+    },
+    {
         version = "6.67.1.0",
         date    = "18.10.2026",
         notes   = {

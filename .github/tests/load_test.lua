@@ -20053,6 +20053,22 @@ do
     Check(ok, "Berufe: Rezepte beim Haendler, Pfeil dorthin" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.68.0.0: Chat kopieren - Verlauf eines Chatfensters als blosser Text.
+do
+    local ok, err = pcall(function()
+        local CC = WeintCodex.UIChatCopy
+        assert(CC and CC.Lines and CC.Copy, "Modul fehlt")
+        assert(CC.Clean("|cffff0000[Handel]|r |Hitem:123|h[Kupferbarren]|h zu verkaufen") == "[Handel] [Kupferbarren] zu verkaufen",
+            "Farben/Links nicht entfernt: " .. CC.Clean("|cffff0000[Handel]|r |Hitem:123|h[Kupferbarren]|h zu verkaufen"))
+        local cf = { GetNumMessages = function() return 3 end,
+                     GetMessageInfo = function(_, i) if i == 2 then return nil end return "Zeile " .. i end }
+        local lines, hidden = CC.Lines(cf)
+        assert(#lines == 2 and hidden == 1 and lines[2] == "Zeile 3", "Zeilen falsch gelesen")
+        assert(#CC.Lines({}) == 0, "Fenster ohne Verlauf")
+    end)
+    Check(ok, "Chat kopieren: Zeilen, Links, verborgene gezaehlt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

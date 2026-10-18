@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.68.0.0] – 2026-10-18
+
+### Neu
+- Chat kopieren (`ui/chatcopy.lua`, Komfort, Schalter `comfort.chatCopy`, an): Knopf an jedem Chatfenster, Verlauf (höchstens 500 Zeilen) über `K.ShowReport`; Farben, Symbole und Links als Text, geheime Zeilen gezählt statt verschluckt.
+
 ## [6.67.1.0] – 2026-10-18
 
 ### Behoben (Verdacht, ungemessen)
