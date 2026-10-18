@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.80.1.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFZielmarke im Raum|r – steht das Ziel hinter einem Baum oder Fels, wird die Marke nur noch leicht gedämpft statt halb durchsichtig. Sie sah sonst aus, als wäre sie schon ausgeblendet.",
+        },
+    },
+    {
         version = "6.80.0.0",
         date    = "18.10.2026",
         notes   = {

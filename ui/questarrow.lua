@@ -926,6 +926,9 @@ end
 -- Abstand langsam wieder. Nur nach echter Ankunft; ein neues Ziel
 -- setzt das zurueck. Ein- und Ausblenden mit QA.MARK_RATE je Sekunde.
 QA.MARK_BACK, QA.MARK_RATE = 80, 1.2
+-- 6.80.1.0 (Beta-Test: hinter einem Baum wirkte die halb durchsichtige
+-- Marke "ausgeblendet"): verdeckt nur noch leicht gedaempft.
+QA.MARK_HIDDEN = 0.8
 QA.markShown, QA.markReached, QA.markKey, QA.markTime = 0, false, nil, nil
 
 function QA.MarkerReach(key, dist, arrive)
@@ -978,7 +981,7 @@ local function PlaceMarker(n, text, key)
         marker._to = n.frame
     end
     marker:SetScale(scale)
-    marker:SetAlpha(alpha * (n.occluded and 0.5 or 1))
+    marker:SetAlpha(alpha * (n.occluded and QA.MARK_HIDDEN or 1))
     marker.label:SetText(text or "")
     marker:Show()
     return true

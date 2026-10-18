@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.80.1.0] – 2026-10-18
+
+### Geändert
+- Zielmarke im Raum: verdeckt nur noch auf 80 % gedämpft statt 50 %
+  (`QA.MARK_HIDDEN`); halb durchsichtig wirkte sie wie ausgeblendet.
+
 ## [6.80.0.0] – 2026-10-18
 
 ### Geändert

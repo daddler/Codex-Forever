@@ -3535,7 +3535,7 @@ do
     local ht = QA.texts.height:GetText() or ""
     Check(ht:find("Höhenunterschied ≈ 75 m", 1, true) and ht:find("verdeckt", 1, true),
         "Hoehenunterschied und verdeckt: " .. ht)
-    Check(QA.marker and QA.marker:IsShown() and QA.marker:GetAlpha() == 0.5, "Zielmarke im Raum fehlt oder nicht halb durchsichtig")
+    Check(QA.marker and QA.marker:IsShown() and math.abs(QA.marker:GetAlpha() - 0.8) < 0.001, "Zielmarke im Raum fehlt oder verdeckt nicht leicht gedaempft")
     -- Eigene Wahl des Pfeils: die Navigation zeigt woandershin - keine Hoehe.
     QA.Chosen = 42
     tracked = 7
