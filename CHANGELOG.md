@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.76.0.0] – 2026-10-18
+
+### Neu
+- Namensplaketten: „In der Farbe der Markierung“ (`nameplates.raidMarkColor`, an): Balkenfarbe aus `GameColors.raidMark1..8` vor Ziel-/Fokusfarbe, Schein (`media/ui/halo`, ADD) hinter dem Symbol; nur bei offen lesbarem `GetRaidTargetIndex` (geheim → keine Farbe). `RAID_TARGET_UPDATE` färbt neu. Standardgröße des Symbols 20 → 24.
+
 ## [6.75.3.0] – 2026-10-18
 
 ### Geändert

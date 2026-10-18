@@ -20359,6 +20359,17 @@ do
     Check(ok, "Fundorte der Questziele: " .. tostring(err))
 end
 
+-- 6.76.0.0: markierte Gegner in der Farbe der Markierung.
+do
+    local NP = WeintCodex.UINameplates
+    local old = _G.GetRaidTargetIndex
+    _G.GetRaidTargetIndex = function() return 8 end
+    local c = NP.MarkColor(NP.MarkIndex("nameplate1"))
+    _G.GetRaidTargetIndex = function() return nil end
+    Check(c and c[1] > 0.9 and NP.MarkIndex("nameplate1") == nil, "Markierungsfarbe: Totenkopf weiss, ohne Markierung keine")
+    _G.GetRaidTargetIndex = old
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

@@ -372,6 +372,16 @@ WeintCodex.GameColors = {
     targetGlow    = {0.486, 0.424, 1.000, 0.85},  -- = Akzent: Leuchten des Ziels
     targetMark    = {1.000, 1.000, 1.000, 1.00},  -- Zielmarken links und rechts
     plateName     = {0.840, 0.840, 0.870, 1.00},  -- Name auf der Plakette; hell nur Ziel und Maus
+    -- Farben der Schlachtzugsmarkierungen (6.76.0.0), wie die Symbole des
+    -- Spiels: Stern, Kreis, Diamant, Dreieck, Mond, Quadrat, Kreuz, Totenkopf.
+    raidMark1     = {1.000, 0.920, 0.200, 1.00},
+    raidMark2     = {1.000, 0.550, 0.100, 1.00},
+    raidMark3     = {0.780, 0.300, 1.000, 1.00},
+    raidMark4     = {0.200, 0.900, 0.250, 1.00},
+    raidMark5     = {0.750, 0.820, 0.900, 1.00},
+    raidMark6     = {0.200, 0.550, 1.000, 1.00},
+    raidMark7     = {1.000, 0.200, 0.150, 1.00},
+    raidMark8     = {0.950, 0.950, 0.950, 1.00},
     executeMark   = {1.000, 1.000, 1.000, 0.75},  -- Hinrichtungsmarke im Balken
     damageTrail   = {0.957, 0.851, 0.722, 0.85},  -- Schadensspur: was ein Treffer nahm, hell (6.8.1.0)
     hitFlash      = {1.000, 1.000, 1.000, 0.45},  -- Treffer am Ziel: kurzes Aufblitzen (additiv)

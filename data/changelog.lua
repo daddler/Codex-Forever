@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.76.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFMarkierte Gegner fallen auf|r – der Lebensbalken nimmt die Farbe der Markierung an (Stern gelb, Kreis orange, Diamant lila, Dreieck grün, Mond silbern, Quadrat blau, Kreuz rot, Totenkopf weiß), hinter dem Symbol leuchtet ein Schein in derselben Farbe, und das Symbol ist etwas größer. Abschaltbar bei den Namensplaketten unter Schlachtzugsmarkierung.",
+        },
+    },
+    {
         version = "6.75.3.0",
         date    = "18.10.2026",
         notes   = {

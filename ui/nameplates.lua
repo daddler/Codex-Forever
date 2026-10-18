@@ -148,7 +148,8 @@ local defaults = {
     comboOffset = 3,
     eliteFrame = true,    -- 6.29.30.0: goldener Rahmen und Drache an Elite
     raidMarker = "topright",
-    raidMarkerSize = 20,
+    raidMarkerSize = 24,
+    raidMarkColor = true,      -- markierte Gegner in der Farbe ihrer Markierung (6.76.0.0)
 
     castEnabled = true,
     castHeight  = 14,
@@ -808,6 +809,13 @@ local function Build(parent)
 
     local raid = K.NewRaidIcon(textHost, defaults.raidMarkerSize)
     p.raid = raid
+    -- Schein in der Farbe der Markierung hinter dem Symbol (6.76.0.0).
+    local rg = textHost:CreateTexture(nil, "BACKGROUND")
+    rg:SetTexture(K.MEDIA .. "halo")
+    if rg.SetBlendMode then rg:SetBlendMode("ADD") end
+    rg:SetPoint("CENTER", raid, "CENTER", 0, 0)
+    rg:Hide()
+    p.raidGlow = rg
 
     -- Zielmarken: zwei gestaffelte Winkel links und rechts, die auf den
     -- Balken zeigen. Eine Datei, rechts gespiegelt.
@@ -1333,6 +1341,12 @@ local function BarColor(p)
     if K.Bool(_G.UnitIsTapDenied and _G.UnitIsTapDenied(unit), false) then
         return C3(S.tapped)
     end
+    -- 6.76.0.0 (Wunsch: "markierte Mobs besser sehen, in der Farbe der
+    -- Markierung"): vor Ziel- und Fokusfarbe - das Ziel erkennt man am Leuchten.
+    if S.raidMarkColor and S.raidMarker ~= "none" then
+        local c = NP.MarkColor(NP.MarkIndex(unit))
+        if c then return c[1], c[2], c[3] end
+    end
     if S.targetColorEnabled and IsUnit(unit, "target") then return C3(S.target) end
     if S.focusColorEnabled and IsUnit(unit, "focus") then return C3(S.focus) end
 
@@ -1464,11 +1478,32 @@ NP.SetHovered = SetHovered
 -- UIKit.ShowRaidIndex. 6.3.2.6 liess dafuer die Markierung des Spiels
 -- stehen; im Beta-Test blieb auch die unsichtbar.
 NP.raidInfo = "noch keine Markierung gesehen"
+-- Die Markierung als Zahl 1-8, wenn der Client sie offen nennt (im Kampf
+-- kann sie geheim sein - dann nil: keine Farbe, nie geraten).
+function NP.MarkIndex(unit)
+    if not (unit and _G.GetRaidTargetIndex) then return nil end
+    local ok, idx = pcall(_G.GetRaidTargetIndex, unit)
+    if not ok or K.IsSecret(idx) then return nil end
+    idx = K.Plain(idx)
+    return (type(idx) == "number" and idx >= 1 and idx <= 8) and idx or nil
+end
+function NP.MarkColor(idx)
+    return idx and WeintCodex.GameColors["raidMark" .. idx] or nil
+end
+
 local function UpdateRaidIcon(p)
+    if p.raidGlow then p.raidGlow:Hide() end
     if not p.unit or S.raidMarker == "none" then p.raid:Hide() return end
     local shown, secret = K.ShowRaidIcon(p.raid, p.unit)
     if shown then
         NP.raidInfo = secret and "geheim, als Bild aus dem Text gezeigt" or "offen lesbar, gezeigt"
+        local c = S.raidMarkColor and NP.MarkColor(NP.MarkIndex(p.unit))
+        if c and p.raidGlow then
+            local sz = (S.raidMarkerSize or 20) * 2.2
+            p.raidGlow:SetSize(sz, sz)
+            p.raidGlow:SetVertexColor(c[1], c[2], c[3], 0.9)
+            p.raidGlow:Show()
+        end
     end
 end
 NP.UpdateRaidIcon = UpdateRaidIcon
@@ -2041,7 +2076,7 @@ local function OnEvent(_, event, unit)
         end
         return
     elseif event == "RAID_TARGET_UPDATE" then
-        for _, p in pairs(plates) do UpdateRaidIcon(p) end
+        for _, p in pairs(plates) do UpdateRaidIcon(p) UpdateColor(p) end
         return
     elseif event == "UPDATE_MOUSEOVER_UNIT" then
         local found
@@ -2676,6 +2711,10 @@ K.Register({
                         { value = "none",     text = "Aus" } } },
                   { type = "slider", label = "Größe", key = "raidMarkerSize", min = 12, max = 40, step = 1, format = px,
                     disabled = function() return K.Get(KEY, "raidMarker") == "none" end })
+            B:Row({ type = "toggle", label = "In der Farbe der Markierung", key = "raidMarkColor",
+                    disabled = function() return K.Get(KEY, "raidMarker") == "none" end,
+                    description = "Markierte Gegner: Lebensbalken in der Farbe ihrer Markierung (Stern gelb, Kreis orange, Totenkopf weiß …) und ein Schein hinter dem Symbol. Nennt das Spiel die Markierung im Kampf nur verschlüsselt, bleibt die gewohnte Farbe." },
+                  { type = "empty" })
         end },
         { key = "auren", label = "Auren", build = function(B)
             local off = function() return not K.Get(KEY, "auraEnabled") end
