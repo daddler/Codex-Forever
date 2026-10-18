@@ -20433,6 +20433,10 @@ do
         local res = FG.Record()
         Check(res[1] and res[1].score == 120 and FG.Best().hunt == 120, "Bestwert gespeichert")
         Check(FG.GuildLine(res):find("^/g Flugspiele: 120 Punkte in H"), "Zeile fuer die Gilde")
+        FG.flight.from, FG.flight.to, FG.flight.secs = "Sturmwind", "Eisenschmiede", 151
+        local gl = FG.GuildLine(res)
+        Check(gl:find("^/g Flug Sturmwind nach Eisenschmiede, 2:31 min – Flugspiele: 120 Punkte", 1, false) ~= nil, "Gildenzeile mit Strecke und Flugzeit: " .. gl)
+        FG.flight.from, FG.flight.to, FG.flight.secs = nil, nil, nil
         FG.Close()
     end)
     Check(ok, "Flugspiele: " .. tostring(err))

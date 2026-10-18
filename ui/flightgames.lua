@@ -503,22 +503,26 @@ function M.Deal()
     return nil
 end
 
+-- Zwei Farben (rot, blau) je 1-9, dazu ein Zeichen: Kreis oder Raute.
 local function MFace(face)
-    local suit = face > 9 and 6 or 7
-    return tostring(((face - 1) % 9) + 1), GC["raidMark" .. suit]
+    local red = face <= 9
+    return tostring(((face - 1) % 9) + 1), GC["raidMark" .. (red and 7 or 6)], red and "diamond" or "disc"
 end
 
 local function MPaint()
     for _, t in ipairs(M.tiles) do
         local b = t.btn
-        b:SetShown(t.alive)
+        b:SetShown(t.alive or b.fading or false)
         if t.alive then
             local free = M.Free(t)
-            local s = free and (C.textBright or C.textNormal) or (C.textMuted or C.textNormal)
-            b.face:SetTextColor(t.col[1], t.col[2], t.col[3], free and 1 or 0.45)
-            b.bg:SetColorTexture(0.93, 0.9, 0.82, free and 1 or 0.7)
-            b.sel:SetShown(M.sel == t)
-            b.edge:SetColorTexture(s[1] * 0.3, s[2] * 0.3, s[3] * 0.3, 1)
+            b.face:SetTextColor(t.col[1], t.col[2], t.col[3], 1)
+            b.suit:SetVertexColor(t.col[1], t.col[2], t.col[3], 1)
+            b.dim:SetShown(not free)
+            local on = (M.sel == t)
+            b.sel:SetShown(on)
+            b.top:ClearAllPoints()
+            b.top:SetPoint("TOPLEFT", b, "TOPLEFT", on and -2 or 0, on and 2 or 0)
+            b.top:SetSize(M.TW - 6, M.TH - 6)
         end
     end
 end
@@ -540,6 +544,13 @@ function M.Click(t)
     if not s or s == t then M.sel = (s == t) and nil or t MPaint() return end
     if s.face == t.face then
         s.alive, t.alive, M.sel = false, false, nil
+        for _, x in ipairs({ s, t }) do
+            local bb = x.btn
+            if bb.fade then
+                bb.fading = true
+                pcall(bb.fade.Play, bb.fade)
+            end
+        end
         FG.AddScore(20)
         local left = 0
         for _, x in ipairs(M.tiles) do if x.alive then left = left + 1 end end
@@ -561,33 +572,100 @@ function M.Shuffle()
     for _, t in ipairs(M.tiles) do if t.alive then alive[#alive + 1] = t faces[#faces + 1] = t.face end end
     for _ = 1, 20 do
         for i = #faces, 2, -1 do local j = Rand(i) faces[i], faces[j] = faces[j], faces[i] end
-        for i, t in ipairs(alive) do t.face = faces[i] t.label, t.col = MFace(t.face) t.btn.face:SetText(t.label) end
+        for i, t in ipairs(alive) do
+            t.face = faces[i]
+            t.label, t.col, t.icon = MFace(t.face)
+            t.btn.face:SetText(t.label)
+            t.btn.suit:SetTexture(K.MEDIA .. t.icon)
+        end
         if M.HasPair() then break end
     end
     if win and win.note then win.note:SetText("Keine Paare mehr frei – neu gemischt.") end
 end
 
+-- 6.78.2.0 (Wunsch: "Mahjong schoener"): Steine mit Schatten, Seitenkante
+-- (Dicke), Elfenbeinflaeche mit Verlauf, feinem Rand in der Farbe der
+-- Sorte, Zahl und Zeichen; gesperrte Steine abgedunkelt, der gewaehlte
+-- hebt sich an und leuchtet; abgeraeumte verblassen. Brett auf Filz.
 local function BuildMahjong()
     local v = View("mahjong")
-    local board = CreateFrame("Frame", nil, v)
-    board:SetSize(6 * M.TW + 8, 4 * M.TH + 8)
-    board:SetPoint("TOP", v, "TOP", 0, -60)
+    local felt = CreateFrame("Frame", nil, v)
+    felt:SetSize(6 * M.TW + 40, 4 * M.TH + 40)
+    felt:SetPoint("TOP", v, "TOP", 0, -40)
+    local fb = felt:CreateTexture(nil, "BACKGROUND")
+    fb:SetAllPoints(felt)
+    local fc = GC.tileFelt
+    fb:SetColorTexture(fc[1], fc[2], fc[3], 1)
+    local glow = felt:CreateTexture(nil, "BORDER")
+    glow:SetTexture(K.MEDIA .. "halo")
+    glow:SetAllPoints(felt)
+    glow:SetVertexColor(fc[1] * 3, fc[2] * 3, fc[3] * 3, 0.35)
+    local side = GC.tileSide
+    K.Border(felt, 2, side[1], side[2], side[3], 0.9)
+    local board = CreateFrame("Frame", nil, felt)
+    board:SetSize(6 * M.TW, 4 * M.TH)
+    board:SetPoint("CENTER", felt, "CENTER", 4, -2)
     M.board = board
+    local face, top, acc = GC.tileFace, GC.tileFaceTop, C.accentBright or C.accent
     for i = 1, #M.LAYOUT do
         local b = CreateFrame("Button", nil, board)
-        b:SetSize(M.TW - 2, M.TH - 2)
-        b.edge = b:CreateTexture(nil, "BACKGROUND")
-        b.edge:SetPoint("TOPLEFT", b, "TOPLEFT", -1, 1)
-        b.edge:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", 3, -3)
-        b.bg = b:CreateTexture(nil, "BORDER")
-        b.bg:SetAllPoints(b)
-        b.face = K.NewText(b, 24)
-        b.face:SetPoint("CENTER")
-        b.sel = b:CreateTexture(nil, "OVERLAY")
-        b.sel:SetAllPoints(b)
-        local a = C.accentBright or C.accent
-        b.sel:SetColorTexture(a[1], a[2], a[3], 0.35)
+        b:SetSize(M.TW, M.TH)
+        -- Schatten und Seitenkante (die Dicke des Steins)
+        local sh = b:CreateTexture(nil, "BACKGROUND", nil, 1)
+        sh:SetColorTexture(0, 0, 0, 0.45)
+        sh:SetPoint("TOPLEFT", b, "TOPLEFT", 5, -5)
+        sh:SetSize(M.TW - 4, M.TH - 4)
+        local sd = b:CreateTexture(nil, "BACKGROUND", nil, 2)
+        sd:SetColorTexture(side[1], side[2], side[3], 1)
+        sd:SetPoint("TOPLEFT", b, "TOPLEFT", 3, -3)
+        sd:SetSize(M.TW - 5, M.TH - 5)
+        -- Flaeche als eigener Rahmen: hebt sich beim Waehlen an.
+        local t = CreateFrame("Frame", nil, b)
+        t:SetSize(M.TW - 6, M.TH - 6)
+        t:SetPoint("TOPLEFT", b, "TOPLEFT", 0, 0)
+        t:EnableMouse(false)
+        b.top = t
+        local f = t:CreateTexture(nil, "BACKGROUND")
+        f:SetAllPoints(t)
+        f:SetColorTexture(1, 1, 1, 1)
+        if f.SetGradient and _G.CreateColor then
+            pcall(f.SetGradient, f, "VERTICAL", _G.CreateColor(face[1], face[2], face[3], 1), _G.CreateColor(top[1], top[2], top[3], 1))
+        else
+            f:SetVertexColor(face[1], face[2], face[3], 1)
+        end
+        local inner = CreateFrame("Frame", nil, t)
+        inner:SetPoint("TOPLEFT", t, "TOPLEFT", 3, -3)
+        inner:SetPoint("BOTTOMRIGHT", t, "BOTTOMRIGHT", -3, 3)
+        b.ring = K.Border(inner, 1, side[1], side[2], side[3], 0.8)
+        b.face = K.NewText(t, 22)
+        b.face:SetPoint("CENTER", t, "CENTER", 0, 7)
+        b.suit = t:CreateTexture(nil, "ARTWORK")
+        b.suit:SetSize(13, 13)
+        b.suit:SetPoint("BOTTOM", t, "BOTTOM", 0, 7)
+        b.dim = t:CreateTexture(nil, "OVERLAY", nil, 1)
+        b.dim:SetAllPoints(t)
+        b.dim:SetColorTexture(0, 0, 0, 0.38)
+        b.sel = CreateFrame("Frame", nil, t)
+        b.sel:SetPoint("TOPLEFT", t, "TOPLEFT", -2, 2)
+        b.sel:SetPoint("BOTTOMRIGHT", t, "BOTTOMRIGHT", 2, -2)
+        K.Border(b.sel, 2, acc[1], acc[2], acc[3], 1)
+        local sg = b.sel:CreateTexture(nil, "OVERLAY")
+        sg:SetAllPoints(t)
+        sg:SetColorTexture(acc[1], acc[2], acc[3], 0.12)
         b.sel:Hide()
+        local hl = t:CreateTexture(nil, "HIGHLIGHT")
+        hl:SetAllPoints(t)
+        hl:SetColorTexture(1, 1, 1, 0.12)
+        b:SetHighlightTexture(hl)
+        pcall(function()
+            local ag = b:CreateAnimationGroup()
+            local al = ag:CreateAnimation("Alpha")
+            al:SetFromAlpha(1)
+            al:SetToAlpha(0)
+            al:SetDuration(0.22)
+            ag:SetScript("OnFinished", function() b.fading = nil b:Hide() b:SetAlpha(1) end)
+            b.fade = ag
+        end)
         M.btns = M.btns or {}
         M.btns[i] = b
     end
@@ -600,10 +678,13 @@ function M.Start()
     for i, t in ipairs(list) do
         local b = M.btns[i]
         t.btn = b
-        t.label, t.col = MFace(t.face)
+        t.label, t.col, t.icon = MFace(t.face)
         b.face:SetText(t.label)
+        b.suit:SetTexture(K.MEDIA .. t.icon)
+        b.fading = nil
+        b:SetAlpha(1)
         b:ClearAllPoints()
-        b:SetPoint("TOPLEFT", M.board, "TOPLEFT", t.x * M.TW - t.z * 4, -(t.y * M.TH) + t.z * 4)
+        b:SetPoint("TOPLEFT", M.board, "TOPLEFT", t.x * M.TW - t.z * 5, -(t.y * M.TH) + t.z * 5)
         b:SetFrameLevel(M.board:GetFrameLevel() + 1 + t.z * 3)
         local tt = t
         b:SetScript("OnClick", function() M.Click(tt) end)
@@ -934,7 +1015,10 @@ function FG.Result(list)
     for _, r in ipairs(list) do
         lines[#lines + 1] = r.name .. ": " .. r.score .. " Punkte" .. (r.record and "  – neuer Bestwert!" or ("  (Bestwert " .. tostring(r.best) .. ")"))
     end
-    views.result.text:SetText("Gelandet" .. (FG.flight.to and (" in " .. FG.flight.to) or "") .. "!\n\n" .. table.concat(lines, "\n"))
+    local f = FG.flight
+    local route = FG.Route()
+    views.result.text:SetText("Gelandet" .. (f.to and (" in " .. f.to) or "") .. "!"
+        .. (route and ("\n" .. route) or "") .. "\n\n" .. table.concat(lines, "\n"))
     local guild = _G.IsInGuild and K.Bool(_G.IsInGuild(), false)
     views.result.guild:SetShown(guild and true or false)
     win.title:SetText("Flugspiele – Ergebnis")
@@ -945,13 +1029,25 @@ function FG.Result(list)
 end
 
 -- Eine Zeile in die Chatzeile - Enter schickt sie, der Spieler entscheidet.
+-- "Flug Sturmwind nach Eisenschmiede, 2:31 min" - was bekannt ist.
+function FG.Route()
+    local f = FG.flight
+    local out
+    if f.from and f.to and f.from ~= f.to then out = "Flug " .. f.from .. " nach " .. f.to
+    elseif f.to then out = "Flug nach " .. f.to end
+    local d = FG.Duration(f.secs)
+    if d then out = (out or "Flug") .. ", " .. d end
+    return out
+end
+
 function FG.GuildLine(list)
     local parts = {}
     for _, r in ipairs(list or {}) do
         parts[#parts + 1] = r.score .. " Punkte in " .. r.name .. (r.record and " (neuer Bestwert)" or "")
     end
     if #parts == 0 then return nil end
-    return "/g Flugspiele: " .. table.concat(parts, ", ") .. "!"
+    local route = FG.Route()
+    return "/g " .. (route and (route .. " – ") or "") .. "Flugspiele: " .. table.concat(parts, ", ") .. "!"
 end
 
 function FG.ToGuild()
@@ -969,17 +1065,68 @@ end
 
 local function OnTaxi() return _G.UnitOnTaxi and K.Bool(_G.UnitOnTaxi("player"), false) or false end
 
+-- 6.78.2.0 (Wunsch: "im Gildenpost von wo nach wo, Flugzeit, Punkte"):
+-- Start und Ziel aus der Flugkarte, wenn der Spieler dort klickt
+-- (TakeTaxiNode, nur mitgelesen), sonst der Ort beim Abheben und Landen.
+local function Place(name)
+    name = K.Plain(name)
+    if type(name) ~= "string" or name == "" then return nil end
+    return (name:gsub(",.*$", ""))
+end
+FG.Place = Place
+
+local function HereName()
+    local f = _G.GetMinimapZoneText or _G.GetSubZoneText
+    local n = f and Place(f())
+    if not n and _G.GetZoneText then n = Place(_G.GetZoneText()) end
+    return n
+end
+
+function FG.NoteTaxi(index)
+    local from, to
+    if _G.TaxiNodeName then to = Place(select(2, pcall(_G.TaxiNodeName, index))) end
+    if _G.NumTaxiNodes and _G.TaxiNodeGetType and _G.TaxiNodeName then
+        local ok, n = pcall(_G.NumTaxiNodes)
+        for i = 1, (ok and K.Plain(n) or 0) do
+            if K.Plain(_G.TaxiNodeGetType(i)) == "CURRENT" then from = Place(_G.TaxiNodeName(i)) break end
+        end
+    end
+    FG.pending = { from = from, to = to, at = _G.GetTime and K.Plain(_G.GetTime()) or 0 }
+end
+if type(_G.TakeTaxiNode) == "function" and _G.hooksecurefunc then
+    pcall(_G.hooksecurefunc, "TakeTaxiNode", function(i) pcall(FG.NoteTaxi, i) end)
+end
+
+-- "2:31 min" bzw. "45 s".
+function FG.Duration(sec)
+    if type(sec) ~= "number" or sec < 0 then return nil end
+    sec = math.floor(sec + 0.5)
+    if sec < 60 then return sec .. " s" end
+    return string.format("%d:%02d min", math.floor(sec / 60), sec % 60)
+end
+
 function FG.Takeoff()
     if FG.flight.on or not OnTaxi() then return false end
-    FG.flight.on, FG.flight.scores, FG.flight.game, FG.flight.points = true, {}, nil, 0
-    FG.flight.to = nil
+    local f = FG.flight
+    f.on, f.scores, f.game, f.points = true, {}, nil, 0
+    local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
+    local pend = FG.pending
+    local fresh = pend and type(now) == "number" and now - (pend.at or 0) < 30
+    f.from = (fresh and pend.from) or HereName()
+    f.to = fresh and pend.to or nil
+    f.start = now
+    FG.pending = nil
     if not FG.Active() or K.Get(KEY, "flightGamesAsk") == false then return false end
     return FG.Ask()
 end
 
 function FG.Landing()
     if not FG.flight.on or OnTaxi() then return false end
-    FG.flight.on = false
+    local f = FG.flight
+    f.on = false
+    f.to = f.to or HereName()
+    local now = _G.GetTime and K.Plain(_G.GetTime()) or nil
+    f.secs = (type(now) == "number" and type(f.start) == "number") and (now - f.start) or nil
     local played = FG.flight.game ~= nil or _G.next(FG.flight.scores) ~= nil
     if not played then
         if win then win:Hide() end

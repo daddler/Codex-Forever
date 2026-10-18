@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.78.2.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFFlugspiele: Strecke und Flugzeit|r – Ergebnis und Gildenzeile nennen jetzt, von wo nach wo du geflogen bist und wie lange, etwa „Flug Sturmwind nach Eisenschmiede, 2:31 min – Flugspiele: 340 Punkte in Juwelen“.",
+            "|cff7C6CFFSchöneres Mahjong|r – Steine aus Elfenbein mit Schatten und Kante, Zahl und Zeichen in der Farbe ihrer Sorte, auf grünem Filz. Gesperrte Steine sind abgedunkelt, der gewählte hebt sich leuchtend an, abgeräumte Paare verblassen.",
+        },
+    },
+    {
         version = "6.78.1.0",
         date    = "18.10.2026",
         notes   = {

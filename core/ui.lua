@@ -374,6 +374,11 @@ WeintCodex.GameColors = {
     plateName     = {0.840, 0.840, 0.870, 1.00},  -- Name auf der Plakette; hell nur Ziel und Maus
     -- Farben der Schlachtzugsmarkierungen (6.76.0.0), wie die Symbole des
     -- Spiels: Stern, Kreis, Diamant, Dreieck, Mond, Quadrat, Kreuz, Totenkopf.
+    -- Mahjong-Steine der Flugspiele (6.78.2.0): Elfenbein, Seite, Filz.
+    tileFace      = {0.960, 0.930, 0.850, 1.00},
+    tileFaceTop   = {1.000, 0.985, 0.940, 1.00},
+    tileSide      = {0.720, 0.640, 0.500, 1.00},
+    tileFelt      = {0.070, 0.180, 0.120, 1.00},
     raidMark1     = {1.000, 0.920, 0.200, 1.00},
     raidMark2     = {1.000, 0.550, 0.100, 1.00},
     raidMark3     = {0.780, 0.300, 1.000, 1.00},

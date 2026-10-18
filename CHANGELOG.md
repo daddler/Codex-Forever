@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.78.2.0] – 2026-10-18
+
+### Geändert
+- Flugspiele: Start/Ziel aus `TakeTaxiNode` (mitgelesen per `hooksecurefunc`, Start = Knoten `CURRENT`), sonst Minikartenort beim Abheben/Landen; Flugzeit aus `GetTime`. `FG.Route` im Ergebnis und in der Gildenzeile.
+- Mahjong neu gestaltet: Schatten, Seitenkante, Elfenbeinfläche mit Verlauf, Rand, Zahl + Zeichen (Raute/Kreis) je Sorte, Filzbrett, abgedunkelt wenn gesperrt, Auswahl angehoben mit Akzentrand, Verblassen beim Abräumen. Neue Farben `GameColors.tileFace/tileFaceTop/tileSide/tileFelt`.
+
 ## [6.78.1.0] – 2026-10-18
 
 ### Geändert
