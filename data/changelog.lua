@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.71.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFDanke findet den Spender öfter|r – verrät das Spiel nicht, wer dich gebufft hat, schaltet WeintCodex die Namensplaketten freundlicher Spieler für einen Augenblick unsichtbar ein und gleich wieder aus. Dann kennt das Spiel den Spender meist, und der Dank geht raus. Nie im Kampf; wer die Plaketten selbst an hat, merkt keinen Unterschied. Abschaltbar auf der Seite Danke.",
+        },
+    },
+    {
         version = "6.70.0.0",
         date    = "18.10.2026",
         notes   = {

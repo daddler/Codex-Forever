@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.71.0.0] – 2026-10-18
+
+### Neu
+- Danke: `TH.Peek` – ist `nameplateShowFriends` aus, für 0,4 s an (direkt über `C_CVar`, bewusst nicht `PF.SetCVar`: kein Profilwert), entstehende Plaketten Deckkraft 0 und beim Entfernen zurück; danach `0` nur, wenn noch unser Wert steht. Nie im Kampf, höchstens alle 5 s; Schalter `comfort.thanksPeek` (an). Ungemessen auf Forever.
+
 ## [6.70.0.0] – 2026-10-18
 
 ### Neu

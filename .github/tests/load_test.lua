@@ -20164,6 +20164,30 @@ do
     Check(ok, "Danke: unbekannter Spender vorgemerkt, spaeter gedankt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.71.0.0: kurz hinschauen - Plaketten-Einstellung an und wieder auf den alten Wert.
+do
+    local ok, err = pcall(function()
+        local TH = WeintCodex.UIThanks
+        local st = TH.state
+        local cv = { nameplateShowFriends = "0" }
+        local oCV, oT = _G.C_CVar, _G.C_Timer
+        _G.C_CVar = { GetCVar = function(n) return cv[n] end, SetCVar = function(n, v) cv[n] = v return true end }
+        local later
+        _G.C_Timer = { After = function(_, f) later = later or f end }
+        st.peekAt, st.peeking = -1e9, false
+        assert(TH.Peek() == true and cv.nameplateShowFriends == "1", "nicht eingeschaltet")
+        assert(TH.Peek() == false, "doppelt eingeschaltet")
+        later()
+        assert(cv.nameplateShowFriends == "0" and not st.peeking, "nicht zurueckgestellt")
+        -- Spieler hat sie selbst an: nichts anfassen.
+        cv.nameplateShowFriends, st.peekAt = "1", -1e9
+        assert(TH.Peek() == false and cv.nameplateShowFriends == "1", "eigene Einstellung angefasst")
+        _G.C_CVar, _G.C_Timer = oCV, oT
+        st.peekAt, st.peeking = -1e9, false
+    end)
+    Check(ok, "Danke: Namensplaketten kurz an, alter Wert zurueck" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

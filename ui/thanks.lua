@@ -476,6 +476,88 @@ function TH.Remember(aura)
     st.pending[id] = Now() + TH.PENDING_TTL
     TH.Trace("vorgemerkt: " .. Str(aura.name) .. " – Spender noch unbekannt, wird bis zu " .. TH.PENDING_TTL .. " s nachgefragt")
     TH.StartTicker()
+    pcall(TH.Peek)
+end
+
+-- Kurz hinschauen (6.71.0.0, Wunsch: "fuer ein paar Millisekunden die
+-- freundlichen Namensplaketten an und wieder aus, ohne dass der Spieler es
+-- merkt"). Wer sie aus hat: fuer TH.PEEK_TIME Sekunden an - jeder Spieler
+-- in Reichweite wird so eine Einheit (nameplateN), und das Spiel nennt den
+-- Spender (TH.Recheck bei NAME_PLATE_UNIT_ADDED). Die Plaketten, die dabei
+-- entstehen, sind unsichtbar (Deckkraft 0, beim Entfernen zurueck - die
+-- Rahmen werden fuer Gegner wiederverwendet). Danach der alte Wert, aber
+-- nur, wenn noch UNSER Wert steht (hat der Spieler inzwischen selbst
+-- umgeschaltet, bleibt seiner). Direkt ueber C_CVar, nicht PF.SetCVar:
+-- ein Wert fuer eine halbe Sekunde ist keine Einstellung, die das Profil
+-- sich merken und beim Ausschalten "zurueckgeben" duerfte.
+-- Nie im Kampf (das Spiel sperrt Plaketten-Einstellungen dort), hoechstens
+-- alle TH.PEEK_GAP Sekunden.
+TH.PEEK_TIME = 0.4
+TH.PEEK_GAP = 5
+TH.PEEK_CVAR = "nameplateShowFriends"
+st.peekAt = -1e9
+local hiddenPlates = setmetatable({}, { __mode = "k" })
+TH.hiddenPlates = hiddenPlates
+
+local function GetCV(name)
+    local cv = _G.C_CVar
+    local ok, v = pcall(function()
+        if cv and cv.GetCVar then return cv.GetCVar(name) end
+        return _G.GetCVar and _G.GetCVar(name)
+    end)
+    v = ok and K.Plain(v) or nil
+    return type(v) == "string" and v or nil
+end
+local function SetCV(name, value)
+    local cv = _G.C_CVar
+    local ok = pcall(function()
+        if cv and cv.SetCVar then return cv.SetCVar(name, value) end
+        if _G.SetCVar then return _G.SetCVar(name, value) end
+        _G.error("kein SetCVar")
+    end)
+    return ok
+end
+
+function TH.Peek()
+    if K.Get(KEY, "thanksPeek") == false or st.peeking then return false end
+    if (_G.InCombatLockdown and _G.InCombatLockdown()) or K.InCombat() then return false end
+    local now = Now()
+    if now - st.peekAt < TH.PEEK_GAP then return false end
+    if GetCV(TH.PEEK_CVAR) ~= "0" then return false end   -- schon an (oder unbekannt): nichts zu tun
+    if not SetCV(TH.PEEK_CVAR, "1") then return false end
+    st.peeking, st.peekAt = true, now
+    TH.Trace("freundliche Namensplaketten kurz eingeschaltet, um den Spender zu finden")
+    local function Done()
+        pcall(TH.Recheck)
+        st.peeking = false
+        if GetCV(TH.PEEK_CVAR) == "1" then SetCV(TH.PEEK_CVAR, "0") end
+        -- Sicherheitsnetz: was noch unsichtbar ist, zurueck auf sichtbar
+        -- (die Rahmen dienen gleich wieder Gegnern).
+        local function Restore()
+            for plate in pairs(hiddenPlates) do pcall(plate.SetAlpha, plate, 1) hiddenPlates[plate] = nil end
+        end
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.3, Restore) else Restore() end
+    end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(TH.PEEK_TIME, Done) else Done() end
+    return true
+end
+
+-- Waehrend des Hinschauens entstandene Plaketten unsichtbar halten.
+function TH.PlateAdded(unit)
+    if not st.peeking then return end
+    local np = _G.C_NamePlate
+    local ok, plate = pcall(function() return np and np.GetNamePlateForUnit and np.GetNamePlateForUnit(unit) end)
+    if ok and type(plate) == "table" and not (plate.IsForbidden and plate:IsForbidden()) and plate.SetAlpha then
+        if pcall(plate.SetAlpha, plate, 0) then hiddenPlates[plate] = true end
+    end
+end
+function TH.PlateRemoved(unit)
+    local np = _G.C_NamePlate
+    local ok, plate = pcall(function() return np and np.GetNamePlateForUnit and np.GetNamePlateForUnit(unit) end)
+    if ok and type(plate) == "table" and hiddenPlates[plate] then
+        pcall(plate.SetAlpha, plate, 1)
+        hiddenPlates[plate] = nil
+    end
 end
 
 function TH.Recheck()
@@ -554,7 +636,7 @@ end
 local ev = CreateFrame("Frame")
 pcall(ev.RegisterUnitEvent, ev, "UNIT_AURA", "player")
 for _, e in ipairs({ "PLAYER_TARGET_CHANGED", "UPDATE_MOUSEOVER_UNIT", "NAME_PLATE_UNIT_ADDED",
-                     "GROUP_ROSTER_UPDATE", "PLAYER_LOGIN" }) do
+                     "NAME_PLATE_UNIT_REMOVED", "GROUP_ROSTER_UPDATE", "PLAYER_LOGIN" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 pcall(ev.RegisterEvent, ev, "ADDON_ACTION_BLOCKED")
@@ -566,8 +648,11 @@ ev:SetScript("OnEvent", function(_, event, a1, a2)
         if a1 == "player" then pcall(TH.OnAura, a2) end
     elseif event == "PLAYER_LOGIN" then
         TH.HookTips()
+    elseif event == "NAME_PLATE_UNIT_REMOVED" then
+        pcall(TH.PlateRemoved, a1)
     elseif event == "PLAYER_TARGET_CHANGED" or event == "UPDATE_MOUSEOVER_UNIT"
         or event == "NAME_PLATE_UNIT_ADDED" or event == "GROUP_ROSTER_UPDATE" then
+        if event == "NAME_PLATE_UNIT_ADDED" then pcall(TH.PlateAdded, a1) end
         if _G.next(st.pending) then pcall(TH.Recheck) end
     elseif event == "CHAT_MSG_WHISPER_INFORM" then
         -- Bestaetigung des Spiels: der Text kam bei ihm an.
@@ -687,6 +772,9 @@ local function Build(B)
     B:Row({ type = "toggle", label = "Fehlerbericht, wenn kein Dank rausgeht", key = "thanksReport", disabled = off,
             description = "Geht bei einem Buff kein Flüstern raus, obwohl es sollte, öffnet sich ein Bericht zum Kopieren (höchstens dreimal je Sitzung). Auch mit /wcui danke." },
           { type = "button", label = "Protokoll", text = "Bericht jetzt zeigen", onClick = function() TH.Report() end })
+    B:Row({ type = "toggle", label = "Spender kurz über Namensplaketten suchen", key = "thanksPeek", disabled = off,
+            description = "Nennt das Spiel den Spender nicht, schaltet WeintCodex die Namensplaketten freundlicher Spieler für einen Augenblick unsichtbar ein – dann kennt das Spiel ihn meist. Nie im Kampf." },
+          { type = "empty" })
     B:Section("Sprüche", "Sorte wählen: darunter, woran der Buff erkannt wird, und ihre Sprüche. Anklicken bearbeitet, × löscht.")
     B:Row({ type = "dropdown", label = "Sorte", items = TH.KINDS,
             get = function() return edit.kind end,
@@ -728,6 +816,7 @@ if mod then
     if mod.defaults.thanksInstance == nil then mod.defaults.thanksInstance = false end
     if mod.defaults.thanksAlways == nil then mod.defaults.thanksAlways = false end
     if mod.defaults.thanksReport == nil then mod.defaults.thanksReport = true end
+    if mod.defaults.thanksPeek == nil then mod.defaults.thanksPeek = true end
     if mod.defaults.thanksDelay == nil then mod.defaults.thanksDelay = 2 end
     if mod.defaults.thanksMix == nil then mod.defaults.thanksMix = 30 end
     mod.pages[#mod.pages + 1] = { key = "danke", label = "Danke", build = Build }
