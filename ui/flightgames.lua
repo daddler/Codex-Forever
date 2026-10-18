@@ -726,8 +726,31 @@ end
 -- 6.78.3.0 (Beta-Test: "die Gackertoene gehen noch nicht"): eigene,
 -- gerechnete Toene (media/sounds/huhn_*.ogg, .github/scripts/make_chicken_sounds.py).
 FG.SOUND_PATH = "Interface\\AddOns\\WeintCodex\\media\\sounds\\huhn_"
-function H.Sound(kind)
+-- 6.79.2.0 (Beta-Test: "klingt nicht nach Huhn"): zuerst die echten
+-- Huehner des Spiels - Buschhuhn, sound/creature/bushchicken (FileDataIDs
+-- vom Spieler aus wago.tools). WeintCodex spielt sie nur ab, liefert nichts
+-- aus. Kennt der Client eine Nummer nicht (PlaySoundFile: willPlay false),
+-- springen die eigenen gerechneten Toene ein.
+H.GAME_SOUNDS = {
+    huhn    = { 545686, 545688, 545685, 545698, 545703, 545700, 545701, 545704, 545705 },
+    kueken  = { 545698, 545703, 545685 },
+    flatter = { 545700, 545701, 545704, 545705 },
+    zombie  = { 545692, 545695, 545699, 545694, 545702 },
+    bombe   = { 545690, 545691, 545693 },
+    gold    = { 545684, 545697 },
+    wound   = { 545687, 545689, 545696 },
+}
+H.gameSounds = nil   -- zuletzt: hat der Client das Huhn des Spiels gespielt?
+
+function H.Sound(kind, which)
     if K.Get(KEY, "flightGamesSound") == false or not _G.PlaySoundFile then return false end
+    local ids = H.GAME_SOUNDS[which or (kind and kind.key) or ""]
+    if ids then
+        local ok, willPlay = pcall(_G.PlaySoundFile, ids[math.random(1, #ids)], "Master")
+        willPlay = ok and K.Plain(willPlay)
+        H.gameSounds = willPlay and true or false
+        if willPlay then return true end
+    end
     local list = kind and kind.sounds
     if not list or #list == 0 then return false end
     local name = list[math.random(1, #list)]
@@ -771,13 +794,14 @@ function H.Hit(b)
     local k = b.kind or H.KINDS[1]
     b.hp = (b.hp or 1) - 1
     local bx, by = b.x + b.size / 2, b.y
-    H.Sound(k)
     if b.hp > 0 then
+        H.Sound(k, "wound")
         b:SetAlpha(0.55)
         b.speed = b.speed * 1.8
         H.Say(bx, by, "Noch nicht tot!", true)
         return
     end
+    H.Sound(k)
     b.live = false
     b:Hide()
     local pts = k.pts

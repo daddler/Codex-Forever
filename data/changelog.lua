@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.79.2.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFEchte Hühner|r – die Hühnerjagd spielt jetzt die Hühnerstimmen aus dem Spiel selbst: Gackern beim Treffer, Schmerzlaut beim Zombiehuhn, Todesschrei beim Bombenhuhn. Kennt dein Spiel sie nicht, kommen die eigenen Töne.",
+        },
+    },
+    {
         version = "6.79.1.0",
         date    = "18.10.2026",
         notes   = {

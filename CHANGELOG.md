@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.79.2.0] – 2026-10-18
+
+### Geändert
+- Hühnerjagd: zuerst Töne des Spiels per FileDataID (`H.GAME_SOUNDS`, `sound/creature/bushchicken/*`, IDs 545684–545705 aus wago.tools), Rückfall auf `media/sounds/huhn_*.ogg`, wenn `PlaySoundFile` nicht abspielt. Zombiehuhn beim ersten Treffer: Wundlaut.
+
 ## [6.79.1.0] – 2026-10-18
 
 ### Geändert
