@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.77.1.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFBalken ganz in der Farbe der Markierung|r – an den Rändern schaute noch die alte Farbe heraus. Jetzt füllt die Markierungsfarbe den Balken vollständig, mit demselben Verlauf wie eine selbst gewählte Balkenfarbe.",
+        },
+    },
+    {
         version = "6.77.0.0",
         date    = "18.10.2026",
         notes   = {

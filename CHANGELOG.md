@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.77.1.0] – 2026-10-18
+
+### Behoben
+- Markierungsfarbe ließ den Rand frei: das Bild im Text wird mit der Schrift skaliert und war kleiner als der Balken. Jetzt `NP.MARK_OVER` (2,5-fach) groß und mittig, der Rahmen an der Füllung schneidet ab. `media/ui/mark1..8.tga` als 8×16 mit vertikalem Verlauf 0,72 → 1 wie `K.PaintBar` (Stil „Verlauf“).
+
 ## [6.77.0.0] – 2026-10-18
 
 ### Geändert

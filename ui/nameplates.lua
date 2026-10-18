@@ -829,7 +829,7 @@ local function Build(parent)
     if clip.SetClipsChildren then clip:SetClipsChildren(true) end
     p.markClip = clip
     local tint = K.NewText(clip, 10)
-    tint:SetPoint("LEFT", health, "LEFT", 0, 0)
+    tint:SetPoint("CENTER", health, "CENTER", 0, 0)
     tint:Hide()
     p.markTint = tint
 
@@ -1512,11 +1512,10 @@ function NP.MarkColor(idx)
     return idx and WeintCodex.GameColors["raidMark" .. idx] or nil
 end
 
-NP.MARK_EDGE = 3
+NP.MARK_OVER = 2.5     -- so viel groesser als der Balken wird das Farbbild gesetzt
 
--- Die Farbflaeche (siehe Aufbau). true, wenn gesetzt. edge: Rahmen statt
--- Flaeche (ringsum NP.MARK_EDGE groesser).
-function NP.ShowMarkTint(fs, bar, unit, edge)
+-- Die Farbflaeche (siehe Aufbau). true, wenn gesetzt.
+function NP.ShowMarkTint(fs, bar, unit)
     if not (fs and bar and unit and _G.GetRaidTargetIndex) then return false end
     local ok, idx = pcall(_G.GetRaidTargetIndex, unit)
     if not ok or type(idx) == "nil" then fs:Hide() return false end
@@ -1526,9 +1525,11 @@ function NP.ShowMarkTint(fs, bar, unit, edge)
     end
     local w, h = K.Plain(bar:GetWidth()), K.Plain(bar:GetHeight())
     if type(w) ~= "number" or type(h) ~= "number" or w <= 0 or h <= 0 then fs:Hide() return false end
-    local grow = edge and NP.MARK_EDGE * 2 or 0
-    local fmt = "|TInterface\\AddOns\\WeintCodex\\media\\ui\\mark" .. (edge and "b" or "") .. "%d:"
-        .. math.floor(h + grow + 0.5) .. ":" .. math.floor(w + grow + 0.5) .. "|t"
+    -- 6.76.9.0 (Beta-Test mit Bild: Rand blieb rot): das Bild im Text
+    -- skaliert der Client mit der Schrift, es wurde kleiner als der Balken.
+    -- Der Rahmen schneidet an der Fuellung ab - also reichlich groesser.
+    local fmt = "|TInterface\\AddOns\\WeintCodex\\media\\ui\\mark%d:"
+        .. math.floor(h * NP.MARK_OVER + 0.5) .. ":" .. math.floor(w * NP.MARK_OVER + 0.5) .. "|t"
     local okS = pcall(fs.SetFormattedText, fs, fmt, idx)
     if okS then fs:Show() else fs:Hide() end
     return okS
