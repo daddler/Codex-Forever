@@ -824,6 +824,13 @@ local function Build(parent)
     tint:SetPoint("CENTER", health, "CENTER", 0, 0)
     tint:Hide()
     p.markTint = tint
+    -- 6.76.5.0 ("muss noch besser"): dazu ein deckender Rahmen in der Farbe,
+    -- als zweites Bild HINTER dem Balken, ringsum NP.MARK_EDGE groesser.
+    local edge = K.NewText(p, 10)
+    edge:SetDrawLayer("BACKGROUND", -8)
+    edge:SetPoint("CENTER", health, "CENTER", 0, 0)
+    edge:Hide()
+    p.markEdge = edge
 
     -- Zielmarken: zwei gestaffelte Winkel links und rechts, die auf den
     -- Balken zeigen. Eine Datei, rechts gespiegelt.
@@ -1504,8 +1511,11 @@ function NP.MarkColor(idx)
     return idx and WeintCodex.GameColors["raidMark" .. idx] or nil
 end
 
--- Die Farbflaeche (siehe Aufbau). true, wenn gesetzt.
-function NP.ShowMarkTint(fs, bar, unit)
+NP.MARK_EDGE = 3
+
+-- Die Farbflaeche (siehe Aufbau). true, wenn gesetzt. edge: Rahmen statt
+-- Flaeche (deckendes Bild markb, ringsum NP.MARK_EDGE groesser).
+function NP.ShowMarkTint(fs, bar, unit, edge)
     if not (fs and bar and unit and _G.GetRaidTargetIndex) then return false end
     local ok, idx = pcall(_G.GetRaidTargetIndex, unit)
     if not ok or type(idx) == "nil" then fs:Hide() return false end
@@ -1515,7 +1525,9 @@ function NP.ShowMarkTint(fs, bar, unit)
     end
     local w, h = K.Plain(bar:GetWidth()), K.Plain(bar:GetHeight())
     if type(w) ~= "number" or type(h) ~= "number" or w <= 0 or h <= 0 then fs:Hide() return false end
-    local fmt = "|TInterface\\AddOns\\WeintCodex\\media\\ui\\mark%d:" .. math.floor(h + 0.5) .. ":" .. math.floor(w + 0.5) .. "|t"
+    local grow = edge and NP.MARK_EDGE * 2 or 0
+    local fmt = "|TInterface\\AddOns\\WeintCodex\\media\\ui\\mark" .. (edge and "b" or "") .. "%d:"
+        .. math.floor(h + grow + 0.5) .. ":" .. math.floor(w + grow + 0.5) .. "|t"
     local okS = pcall(fs.SetFormattedText, fs, fmt, idx)
     if okS then fs:Show() else fs:Hide() end
     return okS
@@ -1524,10 +1536,12 @@ end
 local function UpdateRaidIcon(p)
     if p.raidGlow then p.raidGlow:Hide() end
     if p.markTint then p.markTint:Hide() end
+    if p.markEdge then p.markEdge:Hide() end
     if not p.unit or S.raidMarker == "none" then p.raid:Hide() return end
     local shown, secret = K.ShowRaidIcon(p.raid, p.unit)
     if shown and S.raidMarkColor and not p._friendly and p.markTint then
         NP.markTintInfo = NP.ShowMarkTint(p.markTint, p.health, p.unit) and "gesetzt" or "nicht gesetzt"
+        if p.markEdge then NP.ShowMarkTint(p.markEdge, p.health, p.unit, true) end
     end
     if shown then
         NP.raidInfo = secret and "geheim, als Bild aus dem Text gezeigt" or "offen lesbar, gezeigt"

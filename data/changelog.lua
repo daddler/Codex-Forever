@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.76.5.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFMarkierte Gegner noch deutlicher|r – die Farbfläche über dem Balken ist kräftiger, und um den Balken liegt ein voller Rahmen in der Farbe der Markierung. Auf Namensplakette und Zielrahmen, auch im Kampf.",
+        },
+    },
+    {
         version = "6.76.4.0",
         date    = "18.10.2026",
         notes   = {

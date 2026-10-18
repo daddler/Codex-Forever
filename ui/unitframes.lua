@@ -916,11 +916,19 @@ function Frame:Refresh()
                 self._markTint:SetPoint("CENTER", self.health, "CENTER", 0, 0)
             end
             NP.ShowMarkTint(self._markTint, self.health, u)
-        elseif self._markTint then
-            self._markTint:Hide()
+            if not self._markEdge then
+                self._markEdge = K.NewText(self, 10)
+                self._markEdge:SetDrawLayer("BACKGROUND", -8)
+                self._markEdge:SetPoint("CENTER", self.health, "CENTER", 0, 0)
+            end
+            NP.ShowMarkTint(self._markEdge, self.health, u, true)
+        else
+            if self._markTint then self._markTint:Hide() end
+            if self._markEdge then self._markEdge:Hide() end
         end
-    elseif self._markTint then
-        self._markTint:Hide()
+    else
+        if self._markTint then self._markTint:Hide() end
+        if self._markEdge then self._markEdge:Hide() end
     end
     self:UpdatePrediction()
 
