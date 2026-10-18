@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.75.2.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFZielmarke im Questgebiet, zweiter Anlauf|r – das Spiel meldet nicht, wann du im Gebiet einer Quest stehst. Bei offenen Quests verschwindet die Nadel jetzt, sobald du nah an der Mitte des Gebiets bist. Bei Abgaben und eigenen Zielen bleibt sie bis zum Ziel.",
+        },
+    },
+    {
         version = "6.75.1.0",
         date    = "18.10.2026",
         notes   = {

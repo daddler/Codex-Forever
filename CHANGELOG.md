@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.75.2.0] – 2026-10-18
+
+### Geändert
+- Zielmarke im Raum: Forever meldet `NavigationState.InRange` nicht (gemessen: „im Zielgebiet nein“ mitten im Gebiet). Ersatz: bei offenen Quests (nicht „Abgeben:“, nicht eigenes Ziel) gilt flache Entfernung ≤ `QA.AREA` (90) als im Gebiet. Geschätzt.
+
 ## [6.75.1.0] – 2026-10-18
 
 ### Geändert

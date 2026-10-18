@@ -804,6 +804,7 @@ local marker
 -- ueber QA.MARK_FADE weich ein und waechst beim Naeherkommen etwas.
 QA.MARK_BADGE, QA.MARK_BEAM = 44, 96
 QA.MARK_FADE = 25
+QA.AREA = 90           -- so nah am Mittelpunkt eines Questgebiets gilt man als "drin" (Yards)
 local function BuildMarker()
     local bs, beamH = QA.MARK_BADGE, QA.MARK_BEAM
     marker = CreateFrame("Frame", "WeintCodexQuestArrowMarker", UIParent)
@@ -1219,6 +1220,15 @@ function QA.Update(force)
     -- Hoehe und Zielmarke aus der Navigation des Spiels (siehe Kopf).
     local nav = t.nav and not hop and QA.Nav() or nil
     if nav then
+        -- 6.75.2.0 (Messung: "im Zielgebiet nein", obwohl mitten im Gebiet -
+        -- Forever meldet InRange nicht): bei einer offenen Quest (nicht
+        -- Abgabe, nicht eigenes Ziel) gilt die Naehe zum Mittelpunkt des
+        -- Gebiets als "drin". Geschaetzt - die Flaeche selbst nennt der
+        -- Client Addons nicht.
+        if t.kind == "quest" and type(name) == "string" and not name:find("^Abgeben: ")
+           and flatGoal <= QA.AREA then
+            nav.inRange = true
+        end
         local units = K.Get(KEY, "units")
         if K.Get(KEY, "showHeight") then
             local first, second
