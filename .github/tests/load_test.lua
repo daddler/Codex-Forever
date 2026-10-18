@@ -20414,6 +20414,20 @@ do
         Check(M.HasPair(), "Mahjong: zu Beginn ein freies Paar")
         FG.Play("hunt")
         FG.H.Tick(nil, 1)
+        local b = FG.H.birds[1]
+        b.live, b.kind, b.size, b.x, b.y, b.hp = true, FG.H.KINDS[4], 40, 10, 10, 2
+        FG.H.Hit(b)
+        Check(b.live == true, "Zombiehuhn braucht zwei Treffer")
+        FG.H.Hit(b)
+        Check(b.live == false, "Zombiehuhn nach dem zweiten Treffer weg")
+        FG.H.Tick(nil, 0.5)
+        -- Juwelen: Tausch mit Animation (Takt von Hand).
+        FG.Play("jewels")
+        local J = FG.J
+        J.Click(1, 1) J.Click(1, 2)
+        Check(J.Busy(), "Juwelen: Tausch laeuft als Animation")
+        for _ = 1, 60 do J.Tick(J.board, 0.1) end
+        Check(not J.Busy(), "Juwelen: Animation kommt zur Ruhe")
         _G.WeintCodex_SavedData = _G.WeintCodex_SavedData or {}
         FG.flight.scores = { hunt = 120 }
         local res = FG.Record()

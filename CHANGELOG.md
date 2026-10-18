@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.78.1.0] – 2026-10-18
+
+### Geändert
+- Juwelen animiert (`J.Tick`, Phasen swap/unswap/pop/fall, ein Takt nur während der Animation, keine Klicks dabei, Brett schneidet ab); aufsteigende Punkte und „Kette xN“.
+- Hühnerjagd: Arten `H.KINDS` (Huhn, Küken, Flatterhuhn, Zombiehuhn mit 2 Treffern, Bombenhuhn −50, Goldhuhn +150), gewichtet gezogen, eingefärbt mit `GameColors.raidMarkN`; Sprüche als aufsteigender Text (Pool), Serie ab 3 Treffern, Fehlschuss reißt sie.
+
 ## [6.78.0.1] – 2026-10-18
 
 ### Behoben

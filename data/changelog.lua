@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.78.1.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFJuwelen in Bewegung|r – Steine gleiten beim Tauschen, Treffer blähen sich auf und verpuffen, alles rutscht nach und Neue fallen von oben herein. Ketten zählen hoch („Kette x3!“), Punkte steigen auf.",
+            "|cff7C6CFFHühnerjagd mit Hühnerzoo|r – Küken (klein und flink), Flatterhuhn (Zickzack), Zombiehuhn (braucht zwei Treffer), Goldhuhn (selten, sehr schnell, viele Punkte) und das rote Bombenhuhn, das Punkte kostet. Jeder Treffer gackert zurück, Trefferserien bringen Extrapunkte.",
+        },
+    },
+    {
         version = "6.78.0.1",
         date    = "18.10.2026",
         notes   = {

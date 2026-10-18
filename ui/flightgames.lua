@@ -39,7 +39,7 @@ FG.DEFAULTS = { flightGames = true }
 FG.GAMES = {
     { key = "jewels",  name = "Juwelen",     hint = "Zwei Nachbarn tauschen – drei Gleiche in einer Reihe verschwinden." },
     { key = "mahjong", name = "Mahjong",     hint = "Zwei gleiche freie Steine anklicken. Frei ist ein Stein ohne Stein darauf und mit freier linker oder rechter Seite." },
-    { key = "hunt",    name = "Hühnerjagd",  hint = "Huhn anklicken, bevor es den Himmel verlässt. Klein und schnell gibt mehr." },
+    { key = "hunt",    name = "Hühnerjagd",  hint = "Hühner anklicken: Küken und Goldhuhn bringen viel, Zombiehühner brauchen zwei Treffer – Finger weg vom roten Bombenhuhn!" },
 }
 FG.W, FG.WIN_H = 440, 520   -- nicht FG.H: das ist die Huehnerjagd
 FG.BOARD = 400
@@ -125,6 +125,16 @@ FG.J = J
 
 local function JColor(kind) return GC["raidMark" .. ({ 7, 2, 1, 4, 6, 3 })[kind]] end
 
+-- Darstellung je Feld: Versatz (dx, dy), Groesse und Deckkraft des Steins
+-- - nur die Animation aendert sie, JPaint setzt sie auf Ruhe zurueck.
+local function JPlace(cell)
+    cell.gem:ClearAllPoints()
+    cell.gem:SetPoint("CENTER", cell, "CENTER", cell.dx or 0, cell.dy or 0)
+    local s = (J.GEM or 38) * (cell.scale or 1)
+    cell.gem:SetSize(s, s)
+    cell.gem:SetAlpha(cell.alpha or 1)
+end
+
 local function JPaint()
     for r = 1, J.N do
         for c = 1, J.N do
@@ -133,6 +143,8 @@ local function JPaint()
             if col then cell.gem:SetVertexColor(col[1], col[2], col[3], 1) end
             cell.gem:SetShown(kind ~= 0)
             cell.sel:SetShown(J.sel ~= nil and J.sel[1] == r and J.sel[2] == c)
+            cell.dx, cell.dy, cell.scale, cell.alpha = 0, 0, 1, 1
+            JPlace(cell)
         end
     end
 end
@@ -223,7 +235,156 @@ function J.Resolve()
     return total
 end
 
+--------------------------------------------------
+-- Juwelen: Animation (6.78.1.0, Wunsch: "Animationen wie bei Candy Crush")
+--------------------------------------------------
+-- Tauschen gleitet, Treffer blaehen sich auf und verblassen, Steine fallen
+-- nach, neue fallen von oben herein, Ketten zaehlen hoch ("Kette x2!").
+-- Ein Takt nur, solange etwas laeuft; je Bild keine neue Tabelle. Waehrend
+-- einer Animation nimmt das Brett keinen Klick an.
+J.anim = { phase = nil, t = 0, dur = 0 }
+J.SWAP, J.POP, J.FALL = 0.14, 0.2, 0.24
+local pop = { t = 9, dur = 0.9 }
+
+local function Ease(p) return p * p * (3 - 2 * p) end
+
+function J.PopText(text)
+    if not J.popText then return end
+    J.popText:SetText(text)
+    pop.t = 0
+    J.popText:Show()
+    J.board:SetScript("OnUpdate", J.Tick)
+end
+
+local function StartPhase(phase, dur)
+    local a = J.anim
+    a.phase, a.t, a.dur = phase, 0, dur
+    J.board:SetScript("OnUpdate", J.Tick)
+end
+
+-- Treffer suchen und, wenn welche da sind, aufblaehen lassen.
+local function TryPop()
+    local hit, n = J.Matches()
+    if n == 0 then
+        J.anim.phase = nil
+        if not J.HasMove() then
+            J.Fill()
+            JPaint()
+            J.PopText("Neu gemischt")
+        end
+        return false
+    end
+    local a = J.anim
+    a.combo = (a.combo or 0) + 1
+    a.hit, a.n = hit, n
+    StartPhase("pop", J.POP)
+    return true
+end
+
+-- Treffer weg, Punkte, nachrutschen: jede Zelle weiss, wie weit ihr Stein faellt.
+local function Collapse()
+    local a = J.anim
+    local pts = a.n * 10 * a.combo
+    FG.AddScore(pts)
+    J.PopText((a.combo > 1) and ("+" .. pts .. "   Kette x" .. a.combo .. "!") or ("+" .. pts))
+    for k in pairs(a.hit) do J.grid[math.floor(k / 100)][k % 100] = 0 end
+    local size = J.SIZE
+    for c = 1, J.N do
+        local w = J.N
+        for r = J.N, 1, -1 do
+            if J.grid[r][c] ~= 0 then
+                J.grid[w][c] = J.grid[r][c]
+                J.cells[w][c].fall = w - r
+                if w ~= r then J.grid[r][c] = 0 end
+                w = w - 1
+            end
+        end
+        for r = w, 1, -1 do
+            J.grid[r][c] = Rand(J.KINDS)
+            J.cells[r][c].fall = w
+        end
+    end
+    JPaint()
+    for r = 1, J.N do
+        for c = 1, J.N do
+            local cell = J.cells[r][c]
+            cell.dy = (cell.fall or 0) * size
+            JPlace(cell)
+        end
+    end
+    StartPhase("fall", J.FALL)
+end
+
+function J.Tick(self, el)
+    el = el or 0
+    if pop.t < pop.dur then
+        pop.t = pop.t + el
+        local p = math.min(1, pop.t / pop.dur)
+        J.popText:SetAlpha(1 - p * p)
+        J.popText:ClearAllPoints()
+        J.popText:SetPoint("CENTER", self, "CENTER", 0, 20 + 30 * p)
+        if p >= 1 then J.popText:Hide() end
+    end
+    local a = J.anim
+    if a.phase then
+        a.t = a.t + el
+        local p = math.min(1, a.t / a.dur)
+        local e = Ease(p)
+        if a.phase == "swap" or a.phase == "unswap" then
+            local k = (a.phase == "swap") and e or (1 - e)
+            a.c1.dx, a.c1.dy = a.vx * k, a.vy * k
+            a.c2.dx, a.c2.dy = -a.vx * k, -a.vy * k
+            JPlace(a.c1) JPlace(a.c2)
+        elseif a.phase == "pop" then
+            for key in pairs(a.hit) do
+                local cell = J.cells[math.floor(key / 100)][key % 100]
+                cell.scale, cell.alpha = 1 + 0.5 * e, 1 - e
+                JPlace(cell)
+            end
+        elseif a.phase == "fall" then
+            for r = 1, J.N do
+                for c = 1, J.N do
+                    local cell = J.cells[r][c]
+                    if (cell.fall or 0) > 0 then
+                        cell.dy = cell.fall * J.SIZE * (1 - p * p)
+                        JPlace(cell)
+                    end
+                end
+            end
+        end
+        if p >= 1 then
+            local ph = a.phase
+            a.phase = nil
+            if ph == "swap" then
+                Swap(a.r1, a.c1r, a.r2, a.c2r)
+                JPaint()
+                a.combo = 0
+                if not TryPop() then
+                    -- Kein Treffer: zurueck tauschen, sichtbar zurueckgleiten.
+                    Swap(a.r1, a.c1r, a.r2, a.c2r)
+                    JPaint()
+                    a.c1.dx, a.c1.dy, a.c2.dx, a.c2.dy = a.vx, a.vy, -a.vx, -a.vy
+                    JPlace(a.c1) JPlace(a.c2)
+                    StartPhase("unswap", J.SWAP)
+                end
+            elseif ph == "unswap" then
+                JPaint()
+            elseif ph == "pop" then
+                Collapse()
+            elseif ph == "fall" then
+                for r = 1, J.N do for c = 1, J.N do J.cells[r][c].fall = 0 end end
+                JPaint()
+                TryPop()
+            end
+        end
+    end
+    if not J.anim.phase and pop.t >= pop.dur then self:SetScript("OnUpdate", nil) end
+end
+
+function J.Busy() return J.anim.phase ~= nil end
+
 function J.Click(r, c)
+    if J.Busy() then return end
     local s = J.sel
     if not s then J.sel = { r, c } JPaint() return end
     J.sel = nil
@@ -232,18 +393,24 @@ function J.Click(r, c)
         JPaint()
         return
     end
-    Swap(s[1], s[2], r, c)
-    local _, n = J.Matches()
-    if n == 0 then Swap(s[1], s[2], r, c) else J.Resolve() end
     JPaint()
+    local a = J.anim
+    a.r1, a.c1r, a.r2, a.c2r = s[1], s[2], r, c
+    a.c1, a.c2 = J.cells[s[1]][s[2]], J.cells[r][c]
+    -- Weg von Stein 1 zu Stein 2 in Bildpunkten (y nach oben positiv).
+    a.vx, a.vy = (c - s[2]) * J.SIZE, -(r - s[1]) * J.SIZE
+    StartPhase("swap", J.SWAP)
 end
 
 local function BuildJewels()
     local v = View("jewels")
     local size = FG.BOARD / J.N
+    J.SIZE, J.GEM = size, size - 12
     local board = CreateFrame("Frame", nil, v)
     board:SetSize(FG.BOARD, FG.BOARD)
     board:SetPoint("TOP", v, "TOP", 0, -30)
+    if board.SetClipsChildren then board:SetClipsChildren(true) end
+    J.board = board
     for r = 1, J.N do
         J.cells[r] = {}
         for c = 1, J.N do
@@ -267,10 +434,19 @@ local function BuildJewels()
             J.cells[r][c] = b
         end
     end
+    local top = CreateFrame("Frame", nil, board)
+    top:SetAllPoints(board)
+    top:SetFrameLevel(board:GetFrameLevel() + 20)
+    J.popText = K.NewText(top, 22)
+    J.popText:SetPoint("CENTER", board, "CENTER", 0, 20)
+    local g = C.textBright
+    J.popText:SetTextColor(g[1], g[2], g[3])
+    J.popText:Hide()
 end
 
 function J.Start()
     J.sel = nil
+    J.anim.phase = nil
     J.Fill()
     JPaint()
 end
@@ -441,28 +617,94 @@ end
 -- Huehnerjagd
 --------------------------------------------------
 
-local H = { birds = {}, POOL = 6, spawnIn = 0 }
+local H = { birds = {}, POOL = 7, spawnIn = 0, texts = {}, streak = 0 }
 FG.H = H
 
+-- 6.78.1.0 (Wunsch: "verschiedene witzige Huehner"): jedes Huhn hat seine
+-- Art - Farbe, Groesse, Tempo, Flugbahn, Punkte, Spruch. Gewichte = wie oft.
+H.KINDS = {
+    { key = "huhn",    w = 46, tint = nil, min = 34, max = 52, v1 = 60,  v2 = 140, pts = 10, words = { "Gack!", "Bwaak!", "Pock pock!" } },
+    { key = "kueken",  w = 16, tint = 1,   min = 22, max = 28, v1 = 170, v2 = 240, pts = 40, words = { "Piep!", "Piiiep?" } },
+    { key = "flatter", w = 12, tint = 3,   min = 30, max = 42, v1 = 90,  v2 = 140, pts = 30, zig = 46, words = { "Wuiii!", "Huiii!" } },
+    { key = "zombie",  w = 10, tint = 4,   min = 40, max = 54, v1 = 45,  v2 = 70,  pts = 35, hp = 2, words = { "Grrbwak?", "Hirrrn…", "Gaaarg!" } },
+    { key = "bombe",   w = 10, tint = 7,   min = 34, max = 46, v1 = 80,  v2 = 130, pts = -50, words = { "BUMM!", "Autsch!" } },
+    { key = "gold",    w = 4,  tint = 2,   min = 36, max = 40, v1 = 230, v2 = 300, pts = 150, words = { "GOLDHUHN!", "Kikeriki – Jackpot!" } },
+}
+local weightSum = 0
+for _, k in ipairs(H.KINDS) do weightSum = weightSum + k.w end
+
+local function PickKind()
+    local x = math.random() * weightSum
+    for _, k in ipairs(H.KINDS) do
+        x = x - k.w
+        if x <= 0 then return k end
+    end
+    return H.KINDS[1]
+end
+
+-- Ein Wort, das kurz aufsteigt und verblasst (Pool, keine neuen Tabellen).
+function H.Say(x, y, text, good)
+    local t
+    for _, f in ipairs(H.texts) do if not f.live then t = f break end end
+    t = t or H.texts[1]
+    if not t then return end
+    t.live, t.t, t.x, t.y = true, 0, x, y
+    t:SetText(text)
+    local c = good and (C.textBright) or GC.raidMark7
+    t:SetTextColor(c[1], c[2], c[3], 1)
+    t:Show()
+end
+
 local function Spawn(b)
-    local s = math.random(28, 56)
-    b.size = s
+    local k = PickKind()
+    b.kind = k
+    local s = math.random(k.min, k.max)
+    b.size, b.hp = s, k.hp or 1
     b:SetSize(s, s)
+    b:SetAlpha(1)
     b.dir = (math.random() < 0.5) and 1 or -1
-    b.speed = math.random(60, 170) * (1 + (56 - s) / 56)
+    b.speed = math.random(k.v1, k.v2)
     b.x = b.dir > 0 and -s or FG.BOARD
-    b.y = math.random(10, FG.BOARD - s - 10)
+    b.y = math.random(20, FG.BOARD - s - 60)
     b.wob = math.random() * 6
     b.icon:SetTexCoord(b.dir > 0 and 0.92 or 0.08, b.dir > 0 and 0.08 or 0.92, 0.08, 0.92)
+    local c = k.tint and GC["raidMark" .. k.tint]
+    if c then b.icon:SetVertexColor(c[1], c[2], c[3], 1) else b.icon:SetVertexColor(1, 1, 1, 1) end
     b.live = true
     b:Show()
+end
+
+function H.Hit(b)
+    if not b.live then return end
+    local k = b.kind or H.KINDS[1]
+    b.hp = (b.hp or 1) - 1
+    local bx, by = b.x + b.size / 2, b.y
+    if b.hp > 0 then
+        b:SetAlpha(0.55)
+        b.speed = b.speed * 1.8
+        H.Say(bx, by, "Noch nicht tot!", true)
+        return
+    end
+    b.live = false
+    b:Hide()
+    local pts = k.pts
+    if pts > 0 then
+        H.streak = H.streak + 1
+        pts = pts + (b.kind.key == "huhn" and (52 - b.size) or 0)
+        if H.streak >= 3 then pts = pts + 5 * H.streak end
+    else
+        H.streak = 0
+    end
+    FG.AddScore(pts)
+    local word = k.words[math.random(1, #k.words)]
+    H.Say(bx, by, word .. "  " .. (pts > 0 and "+" or "") .. pts .. (H.streak >= 3 and ("  Serie " .. H.streak) or ""), pts > 0)
 end
 
 local function Tick(_, el)
     el = el or 0
     H.spawnIn = H.spawnIn - el
     if H.spawnIn <= 0 then
-        H.spawnIn = 0.6 + math.random() * 0.9
+        H.spawnIn = 0.5 + math.random() * 0.8
         for _, b in ipairs(H.birds) do
             if not b.live then Spawn(b) break end
         end
@@ -470,13 +712,28 @@ local function Tick(_, el)
     for _, b in ipairs(H.birds) do
         if b.live then
             b.x = b.x + b.dir * b.speed * el
-            b.wob = b.wob + el * 4
-            local y = b.y + math.sin(b.wob) * 8
+            b.wob = b.wob + el * ((b.kind and b.kind.zig) and 6 or 4)
+            local y = b.y + math.sin(b.wob) * ((b.kind and b.kind.zig) or 8)
             if b.x < -b.size - 2 or b.x > FG.BOARD + 2 then
                 b.live = false
                 b:Hide()
+                if b.kind and b.kind.pts > 0 then H.streak = 0 end
             else
                 b:SetPoint("TOPLEFT", H.sky, "TOPLEFT", b.x, -y)
+            end
+        end
+    end
+    for _, t in ipairs(H.texts) do
+        if t.live then
+            t.t = t.t + el
+            local p = t.t / 1.1
+            if p >= 1 then
+                t.live = false
+                t:Hide()
+            else
+                t:SetAlpha(1 - p * p)
+                t:ClearAllPoints()
+                t:SetPoint("CENTER", H.sky, "TOPLEFT", t.x, -t.y + 24 * p)
             end
         end
     end
@@ -510,21 +767,29 @@ local function BuildHunt()
         b.icon = b:CreateTexture(nil, "ARTWORK")
         b.icon:SetAllPoints(b)
         b.icon:SetTexture(FG.HUHN)
-        b:SetScript("OnMouseDown", function(self)
-            if not self.live then return end
-            self.live = false
-            self:Hide()
-            FG.AddScore(10 + (56 - self.size) + math.floor(self.speed / 20))
-        end)
+        b:SetScript("OnMouseDown", function(self) H.Hit(self) end)
+        b:SetFrameLevel(sky:GetFrameLevel() + 2)
         b:Hide()
         H.birds[i] = b
+    end
+    -- Daneben geschossen: die Serie reisst.
+    sky:EnableMouse(true)
+    sky:SetScript("OnMouseDown", function() H.streak = 0 end)
+    local over = CreateFrame("Frame", nil, sky)
+    over:SetAllPoints(sky)
+    over:SetFrameLevel(sky:GetFrameLevel() + 10)
+    for i = 1, 5 do
+        local t = K.NewText(over, 14)
+        t:Hide()
+        H.texts[i] = t
     end
     v:SetScript("OnShow", function() sky:SetScript("OnUpdate", Tick) end)
     v:SetScript("OnHide", function() sky:SetScript("OnUpdate", nil) end)
 end
 
 function H.Start()
-    H.spawnIn = 0.3
+    H.spawnIn, H.streak = 0.3, 0
+    for _, t in ipairs(H.texts) do t.live = false t:Hide() end
     for _, b in ipairs(H.birds) do b.live = false b:Hide() end
 end
 
