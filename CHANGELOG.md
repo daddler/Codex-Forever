@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.72.0.0] – 2026-10-18
+
+### Neu
+- Dungeonkarten (`ui/dungeonmap.lua`, Komfort → Karte, `comfort.dungeonMaps`, an): in Instanzen mit bekannter Karte liegt beim Öffnen der Weltkarte die Karte der Instanz über der des Spiels (4 × 3 Kacheln, Ebenen per Pfeil/Mausrad). Bildnummern aus dem Client, Bestand `data/dungeonmaps.lua` (25 Instanzen, 63 Ebenen) erzeugt von `.github/scripts/import_dungeonmaps.py` aus OpenMap (MIT, Lizenztext in der Datei). Nie, wo das Spiel selbst eine Dungeonkarte hat; setzt der Client eine Kachel nicht, bleibt die Karte des Spiels.
+
 ## [6.71.1.0] – 2026-10-18
 
 ### Geändert

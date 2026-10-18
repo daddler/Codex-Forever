@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.71.1.0
+## Version: 6.72.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -109,6 +109,8 @@ data/rares.lua
 data/books.lua
 # Kartenteile zum Aufdecken der Weltkarte (6.20.0.0, erzeugt); gelesen von ui/mapreveal.lua.
 data/mapreveal.lua
+# Dungeonkarten: Bildnummern des Clients je Instanz (6.72.0.0, erzeugt, aus OpenMap - MIT).
+data/dungeonmaps.lua
 # Geistheiler und Uebergaenge auf der Weltkarte (6.21.0.0, erzeugt); gelesen von ui/mapmarks.lua.
 data/mapmarks.lua
 # Reisedaten des Routenplaners (6.31.2.0, erzeugt von .github/scripts/import_travel.py); gelesen von ui/route.lua.
@@ -273,6 +275,7 @@ ui/messenger.lua
 ui/minimapclick.lua
 # Instanzeingaenge auf der Weltkarte (6.20.0.0, Komfort): eigene Symbole, Daten aus J.ENTRANCES.
 ui/mapentrances.lua
+ui/dungeonmap.lua
 # Flugzeit beim Fliegen (6.54.0.0), Abschnitt auf der Komfortseite "Karte".
 ui/flighttimer.lua
 # Layer anzeigen und wechseln (6.62.0.0, nach dem Verhalten von LayerSwap).

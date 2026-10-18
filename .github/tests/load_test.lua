@@ -20207,6 +20207,32 @@ do
     Check(ok, "Danke: gesperrtes Fluestern nachgeholt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.72.0.0: Dungeonkarten - in einer bekannten Instanz ueber der Weltkarte.
+do
+    local ok, err = pcall(function()
+        local DM, D = WeintCodex.UIDungeonMap, WeintCodex.DungeonMapData
+        assert(DM and D and D.MAPS and D.MAPS[33], "Bestand fehlt")
+        assert(D.SOURCE and D.SOURCE.kind == "community", "Herkunft fehlt")
+        for id, m in pairs(D.MAPS) do
+            assert(#m.floors > 0, "Instanz ohne Ebene " .. id)
+            for _, f in ipairs(m.floors) do assert(#f.tiles == 12, "Ebene ohne 12 Kacheln in " .. id) end
+        end
+        local oII, oGI, oWM = _G.IsInInstance, _G.GetInstanceInfo, _G.WorldMapFrame
+        _G.WorldMapFrame = _G.WorldMapFrame or CreateFrame("Frame", "WorldMapFrame", UIParent)
+        _G.IsInInstance = function() return true, "party" end
+        _G.GetInstanceInfo = function() return "Burg", "party", 1, "", 5, 0, false, 33 end
+        assert(DM.Current() == D.MAPS[33], "Instanz nicht erkannt")
+        assert(DM.Refresh() == true and DM.view:IsShown(), "Karte nicht gezeigt")
+        assert(DM.view.title:GetText():find("1 / 7", 1, true), "Ebene nicht genannt: " .. tostring(DM.view.title:GetText()))
+        DM.ShowFloor(DM.view.floor + 1)
+        assert(DM.floorOf[33] == 2, "Ebene nicht gewechselt")
+        _G.GetInstanceInfo = function() return "Neu", "party", 1, "", 5, 0, false, 99999 end
+        assert(DM.Refresh() == false and not DM.view:IsShown(), "Karte ohne Bestand gezeigt")
+        _G.IsInInstance, _G.GetInstanceInfo, _G.WorldMapFrame = oII, oGI, oWM
+    end)
+    Check(ok, "Dungeonkarten: bekannte Instanz zeigt ihre Ebenen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

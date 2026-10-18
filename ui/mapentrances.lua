@@ -440,6 +440,8 @@ local function BuildPage(B)
     if ZI and ZI.BuildRows then ZI.BuildRows(B) end
     local MR = WeintCodex.UIMapReveal
     if MR and MR.BuildRows then MR.BuildRows(B) end
+    local DM = WeintCodex.UIDungeonMap
+    if DM and DM.BuildRows then DM.BuildRows(B) end
 end
 ME.BuildPage = BuildPage
 

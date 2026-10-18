@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.72.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFDungeonkarten|r – in den klassischen Dungeons und Schlachtzügen zeigt die Weltkarte (M) jetzt die Karte der Instanz, wie man es aus WoW kennt. Ebenen wechselst du mit den Pfeilen oder dem Mausrad, „Weltkarte“ blendet sie aus. Abschaltbar im Komfort unter Karte.",
+        },
+    },
+    {
         version = "6.71.1.0",
         date    = "18.10.2026",
         notes   = {
