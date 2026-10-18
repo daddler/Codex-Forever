@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.76.7.0] – 2026-10-18
+
+### Geändert
+- Markierungsfarbe zurück auf den Stand von 6.76.4.0 (Beta-Test: „sieht echt nicht gut aus“): kein Rahmen (`markb*.tga` entfernt), Fläche Alpha 140, bei Mond und Totenkopf 100.
+
 ## [6.76.6.0] – 2026-10-18
 
 ### Geändert

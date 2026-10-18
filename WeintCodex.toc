@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.76.6.0
+## Version: 6.76.7.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -109,7 +109,7 @@ data/rares.lua
 data/books.lua
 # Kartenteile zum Aufdecken der Weltkarte (6.20.0.0, erzeugt); gelesen von ui/mapreveal.lua.
 data/mapreveal.lua
-# Dungeonkarten: Bildnummern des Clients je Instanz (6.76.6.0, erzeugt, aus OpenMap - MIT).
+# Dungeonkarten: Bildnummern des Clients je Instanz (6.76.7.0, erzeugt, aus OpenMap - MIT).
 data/dungeonmaps.lua
 # Geistheiler und Uebergaenge auf der Weltkarte (6.21.0.0, erzeugt); gelesen von ui/mapmarks.lua.
 data/mapmarks.lua

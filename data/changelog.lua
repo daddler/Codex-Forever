@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.76.7.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFMarkierte Gegner wieder dezenter|r – der farbige Rahmen ist weg, die Fläche wieder so zart wie vorher; bei Totenkopf und Mond noch etwas zarter, damit Name und Leben lesbar bleiben.",
+        },
+    },
+    {
         version = "6.76.6.0",
         date    = "18.10.2026",
         notes   = {

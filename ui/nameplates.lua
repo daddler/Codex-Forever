@@ -824,13 +824,6 @@ local function Build(parent)
     tint:SetPoint("CENTER", health, "CENTER", 0, 0)
     tint:Hide()
     p.markTint = tint
-    -- 6.76.5.0 ("muss noch besser"): dazu ein deckender Rahmen in der Farbe,
-    -- als zweites Bild HINTER dem Balken, ringsum NP.MARK_EDGE groesser.
-    local edge = K.NewText(p, 10)
-    edge:SetDrawLayer("BACKGROUND", -8)
-    edge:SetPoint("CENTER", health, "CENTER", 0, 0)
-    edge:Hide()
-    p.markEdge = edge
 
     -- Zielmarken: zwei gestaffelte Winkel links und rechts, die auf den
     -- Balken zeigen. Eine Datei, rechts gespiegelt.
@@ -1536,12 +1529,10 @@ end
 local function UpdateRaidIcon(p)
     if p.raidGlow then p.raidGlow:Hide() end
     if p.markTint then p.markTint:Hide() end
-    if p.markEdge then p.markEdge:Hide() end
     if not p.unit or S.raidMarker == "none" then p.raid:Hide() return end
     local shown, secret = K.ShowRaidIcon(p.raid, p.unit)
     if shown and S.raidMarkColor and not p._friendly and p.markTint then
         NP.markTintInfo = NP.ShowMarkTint(p.markTint, p.health, p.unit) and "gesetzt" or "nicht gesetzt"
-        if p.markEdge then NP.ShowMarkTint(p.markEdge, p.health, p.unit, true) end
     end
     if shown then
         NP.raidInfo = secret and "geheim, als Bild aus dem Text gezeigt" or "offen lesbar, gezeigt"
