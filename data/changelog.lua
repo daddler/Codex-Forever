@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.75.3.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFZielmarke erkennt das Questgebiet|r – statt zu schätzen schaut WeintCodex jetzt, wo die Gegner, Objekte und Beute einer Quest zu finden sind. Stehst du in ihrer Nähe, verschwindet die Nadel; verlässt du das Gebiet, kommt sie wieder.",
+        },
+    },
+    {
         version = "6.75.2.0",
         date    = "18.10.2026",
         notes   = {

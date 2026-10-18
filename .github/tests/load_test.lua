@@ -20348,6 +20348,17 @@ do
     Check(ok, "Zielgebiet: " .. tostring(err))
 end
 
+-- 6.75.3.0: Questgebiet aus den Fundorten der Ziele.
+do
+    local ok, err = pcall(function()
+        local QH = WeintCodex.UIQuestHelper
+        local n = QH.TargetSpots(7, 1429, function() end)   -- Saeuberung im Koboldlager: Koboldgezuecht
+        Check(n > 0, "Fundorte der Questziele gefunden (" .. tostring(n) .. ")")
+        Check(QH.TargetSpots(999999, 1429, function() end) == 0, "Unbekannte Quest: keine Fundorte")
+    end)
+    Check(ok, "Fundorte der Questziele: " .. tostring(err))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

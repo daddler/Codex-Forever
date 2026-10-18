@@ -401,6 +401,7 @@ local function ResolveTarget(playerMap)
     -- Ziele erfuellt: der Ort ist jetzt der, an dem man abgibt (das Spiel
     -- verlegt Wegpunkt und Markierung dorthin).
     if IsComplete(questID) then title = "Abgeben: " .. title end
+    QA.lastQuest = questID
     local mapID, x, y = QuestLocation(questID, playerMap)
     if not mapID then return "unknown", nil, nil, nil, title, "quest" end
     return "ok", mapID, x, y, title, "quest", nav
@@ -804,7 +805,30 @@ local marker
 -- ueber QA.MARK_FADE weich ein und waechst beim Naeherkommen etwas.
 QA.MARK_BADGE, QA.MARK_BEAM = 44, 96
 QA.MARK_FADE = 25
-QA.AREA = 90           -- so nah am Mittelpunkt eines Questgebiets gilt man als "drin" (Yards)
+QA.AREA = 45           -- so nah an einem Fundort der Questziele gilt man als "drin" (Yards)
+QA.areaMemo = { at = -1e9, quest = nil, map = nil, inside = false, spots = 0 }
+
+-- Steht der Spieler nahe an einem Fundort der Ziele von questID? Einmal je
+-- Sekunde gerechnet; die Fundorte liest die Questhilfe (ui/questhelper.lua).
+function QA.InArea(questID, playerMap)
+    local QH = WeintCodex.UIQuestHelper
+    local m = QA.areaMemo
+    if not (QH and QH.TargetSpots and type(questID) == "number" and type(playerMap) == "number") then return false end
+    local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
+    if m.quest == questID and m.map == playerMap and now - m.at < 1 then return m.inside end
+    m.at, m.quest, m.map, m.inside, m.spots = now, questID, playerMap, false, 0
+    local pm, px, py = PlayerMapPos()
+    if pm ~= playerMap or not px then return false end
+    local pc, pN, pW = ToWorld(playerMap, px, py)
+    if not pc then return false end
+    local r2 = QA.AREA * QA.AREA
+    m.spots = QH.TargetSpots(questID, playerMap, function(x, y)
+        if m.inside or type(x) ~= "number" or type(y) ~= "number" then return end
+        local c, n, w = ToWorld(playerMap, x, y)
+        if c == pc and (n - pN) ^ 2 + (w - pW) ^ 2 <= r2 then m.inside = true end
+    end)
+    return m.inside
+end
 local function BuildMarker()
     local bs, beamH = QA.MARK_BADGE, QA.MARK_BEAM
     marker = CreateFrame("Frame", "WeintCodexQuestArrowMarker", UIParent)
@@ -1220,13 +1244,15 @@ function QA.Update(force)
     -- Hoehe und Zielmarke aus der Navigation des Spiels (siehe Kopf).
     local nav = t.nav and not hop and QA.Nav() or nil
     if nav then
-        -- 6.75.2.0 (Messung: "im Zielgebiet nein", obwohl mitten im Gebiet -
-        -- Forever meldet InRange nicht): bei einer offenen Quest (nicht
-        -- Abgabe, nicht eigenes Ziel) gilt die Naehe zum Mittelpunkt des
-        -- Gebiets als "drin". Geschaetzt - die Flaeche selbst nennt der
-        -- Client Addons nicht.
+        -- 6.75.3.0 (Messung: "im Zielgebiet nein", obwohl mitten im Gebiet -
+        -- Forever meldet InRange nicht; der Mittelpunkt allein war dem
+        -- Spieler zu ungenau): bei einer offenen Quest gilt man als "drin",
+        -- sobald man nahe an einem Fundort ihrer Ziele steht - Gegner,
+        -- Objekte, wer die Gegenstaende fallen laesst (data/questdb.lua,
+        -- dieselben Punkte wie die Questhilfe auf der Karte). Kennt der
+        -- Bestand keine, bleibt die Nadel.
         if t.kind == "quest" and type(name) == "string" and not name:find("^Abgeben: ")
-           and flatGoal <= QA.AREA then
+           and QA.InArea(QA.lastQuest, playerMap) then
             nav.inRange = true
         end
         local units = K.Get(KEY, "units")
@@ -1461,6 +1487,8 @@ function QA.Inspect()
     else
         out[#out + 1] = string.format("Navigation: Luftlinie %s, verdeckt %s, auf dem Bildschirm %s, im Zielgebiet %s",
             N(n.dist), n.occluded and "ja" or "nein", n.onScreen and "ja" or "nein", n.inRange and "ja" or "nein")
+        out[#out + 1] = string.format("Questgebiet aus Fundorten: %s (%d Fundorte der Ziele hier)",
+            QA.areaMemo.inside and "drin" or "nicht drin", QA.areaMemo.spots or 0)
     end
     out[#out + 1] = "Zielmarke im Raum: " .. ((QA.marker and QA.marker:IsShown()) and "steht" or "nicht gezeigt")
         .. " · Marke des Spiels " .. (QA.gameMarkerVisible and "sichtbar" or "nicht sichtbar")

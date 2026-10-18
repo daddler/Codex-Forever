@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.75.3.0] – 2026-10-18
+
+### Geändert
+- Zielmarke im Raum: Questgebiet nicht mehr aus der Entfernung zur Mitte geschätzt, sondern aus den Fundorten der Ziele (`QH.TargetSpots`: Ziel-NPCs, -Objekte, Quellen der Gegenstände aus `data/questdb.lua`). Innerhalb `QA.AREA` (45) eines Fundorts auf der eigenen Karte gilt man als im Gebiet (`QA.InArea`, einmal je Sekunde). Ohne Fundorte bleibt die Nadel. `/wcui pfeil` nennt „Questgebiet aus Fundorten“.
+
 ## [6.75.2.0] – 2026-10-18
 
 ### Geändert

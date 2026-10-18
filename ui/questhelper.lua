@@ -353,6 +353,26 @@ function QH.Places(rec, mapID, add)
     return count
 end
 
+-- Fundorte der Ziele einer Quest auf `mapID` (Gegner, Objekte, wer die
+-- Gegenstaende fallen laesst): ruft fn(x, y) je Lage, x/y 0..1. Zahl.
+-- Gelesen von der Zielmarke des Questpfeils (6.75.3.0): "bin ich im Gebiet".
+function QH.TargetSpots(questID, mapID, fn)
+    local d = Data()
+    local q = type(questID) == "number" and QH.Parse(d.q[questID])
+    if type(q) ~= "table" or type(mapID) ~= "number" then return 0 end
+    local n = 0
+    for _, npc in ipairs(q[10] or {}) do n = n + QH.Places(d.n[npc], mapID, fn) end
+    for _, ob in ipairs(q[11] or {}) do n = n + QH.Places(d.o[ob], mapID, fn) end
+    for _, item in ipairs(q[12] or {}) do
+        local src = QH.Item(d.i[item])
+        if src then
+            for _, npc in ipairs(src[1]) do n = n + QH.Places(d.n[npc], mapID, fn) end
+            for _, ob in ipairs(src[2]) do n = n + QH.Places(d.o[ob], mapID, fn) end
+        end
+    end
+    return n
+end
+
 local forMap = {}
 QH.stats = { built = 0, avail = 0, turnin = 0, target = 0, book = 0 }
 
