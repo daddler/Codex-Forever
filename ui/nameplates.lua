@@ -788,12 +788,28 @@ local function Build(parent)
     -- Hinrichtungsmarke: ein fester Strich im Balken. Keine Rechnung mit
     -- dem Leben (das kann geheim sein) - der Strich steht, der Balken
     -- laeuft an ihm vorbei.
-    local ex = health:CreateTexture(nil, "OVERLAY", nil, 2)
+    -- 6.77.2.0: auf eigenem Rahmen UEBER der Farbe der Markierung (die liegt
+    -- eine Ebene ueber dem Balken), sonst verschwaende der Strich darunter.
+    local exHost = CreateFrame("Frame", nil, health)
+    exHost:SetAllPoints(health)
+    exHost:SetFrameLevel(health:GetFrameLevel() + 2)
+    local ex = exHost:CreateTexture(nil, "OVERLAY", nil, 2)
     local ec = GC.executeMark
     ex:SetColorTexture(ec[1], ec[2], ec[3], ec[4])
     ex:SetWidth(1)
     ex:Hide()
     p.exec = ex
+    -- Bei hellen Markierungen (Stern, Mond, Totenkopf) wird der weisse Strich
+    -- dunkel: ein Bild je Markierung (media/ui/exd1..8 - dunkel oder leer),
+    -- ueber den Strich gelegt und an ihm abgeschnitten. Geht auch geheim.
+    local exClip = CreateFrame("Frame", nil, exHost)
+    exClip:SetAllPoints(ex)
+    exClip:SetFrameLevel(exHost:GetFrameLevel() + 1)
+    if exClip.SetClipsChildren then exClip:SetClipsChildren(true) end
+    local exDark = K.NewText(exClip, 10)
+    exDark:SetPoint("CENTER", exClip, "CENTER", 0, 0)
+    exDark:Hide()
+    p.execDark = exDark
 
     -- Texte liegen auf einem eigenen Rahmen ueber dem Balken, damit der
     -- Rand sie nicht ueberdeckt.
@@ -1515,7 +1531,7 @@ end
 NP.MARK_OVER = 2.5     -- so viel groesser als der Balken wird das Farbbild gesetzt
 
 -- Die Farbflaeche (siehe Aufbau). true, wenn gesetzt.
-function NP.ShowMarkTint(fs, bar, unit)
+function NP.ShowMarkTint(fs, bar, unit, image)
     if not (fs and bar and unit and _G.GetRaidTargetIndex) then return false end
     local ok, idx = pcall(_G.GetRaidTargetIndex, unit)
     if not ok or type(idx) == "nil" then fs:Hide() return false end
@@ -1528,7 +1544,7 @@ function NP.ShowMarkTint(fs, bar, unit)
     -- 6.76.9.0 (Beta-Test mit Bild: Rand blieb rot): das Bild im Text
     -- skaliert der Client mit der Schrift, es wurde kleiner als der Balken.
     -- Der Rahmen schneidet an der Fuellung ab - also reichlich groesser.
-    local fmt = "|TInterface\\AddOns\\WeintCodex\\media\\ui\\mark%d:"
+    local fmt = "|TInterface\\AddOns\\WeintCodex\\media\\ui\\" .. (image or "mark") .. "%d:"
         .. math.floor(h * NP.MARK_OVER + 0.5) .. ":" .. math.floor(w * NP.MARK_OVER + 0.5) .. "|t"
     local okS = pcall(fs.SetFormattedText, fs, fmt, idx)
     if okS then fs:Show() else fs:Hide() end
@@ -1538,6 +1554,7 @@ end
 local function UpdateRaidIcon(p)
     if p.raidGlow then p.raidGlow:Hide() end
     if p.markTint then p.markTint:Hide() end
+    if p.execDark then p.execDark:Hide() end
     if not p.unit or S.raidMarker == "none" then p.raid:Hide() return end
     local shown, secret = K.ShowRaidIcon(p.raid, p.unit)
     if shown and S.raidMarkColor and not p._friendly and p.markTint then
@@ -1549,6 +1566,7 @@ local function UpdateRaidIcon(p)
             p.markClip._to = fill
         end
         NP.markTintInfo = NP.ShowMarkTint(p.markTint, p.health, p.unit) and "gesetzt" or "nicht gesetzt"
+        if S.executeMark and p.execDark then NP.ShowMarkTint(p.execDark, p.health, p.unit, "exd") end
     end
     if shown then
         NP.raidInfo = secret and "geheim, als Bild aus dem Text gezeigt" or "offen lesbar, gezeigt"

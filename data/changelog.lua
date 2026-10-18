@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.77.2.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFHinrichtungsmarke auf markierten Gegnern|r – der Strich liegt jetzt über der Farbe der Markierung und wird bei hellen Markierungen (Totenkopf, Mond, Stern) dunkel, damit man ihn weiter sieht.",
+        },
+    },
+    {
         version = "6.77.1.0",
         date    = "18.10.2026",
         notes   = {

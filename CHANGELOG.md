@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.77.2.0] – 2026-10-18
+
+### Behoben
+- Hinrichtungsmarke lag unter der Markierungsfarbe: eigener Rahmen (`health`-Ebene + 2). Bei Stern, Mond, Totenkopf dunkel über `media/ui/exd1..8.tga` (dunkel bzw. leer) als Bild im Text, an der Marke abgeschnitten – auch bei geheimem Index.
+
 ## [6.77.1.0] – 2026-10-18
 
 ### Behoben
