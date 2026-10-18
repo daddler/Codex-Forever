@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.79.1.0] – 2026-10-18
+
+### Geändert
+- Flugspiele, Auswahl: Karten je Spiel (Bild, Name, Erklärung, ganze Karte klickbar), Bestwerte darunter, Knöpfe unten ohne Überlappung (Beta-Test mit Bild). „Ton“ in die Kopfzeile.
+
 ## [6.79.0.0] – 2026-10-18
 
 ### Neu

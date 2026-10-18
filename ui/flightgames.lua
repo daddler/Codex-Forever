@@ -913,36 +913,93 @@ local function Build()
     local t = C.textBright
     win.title:SetTextColor(t[1], t[2], t[3])
     win.score = K.NewText(win, 13)
-    win.score:SetPoint("TOPRIGHT", win, "TOPRIGHT", -48, -15)
+    win.score:SetPoint("TOPRIGHT", win, "TOPRIGHT", -122, -15)
     win.close = Button(win, "×", 26, 22, function() FG.Close() end)
     win.close:SetPoint("TOPRIGHT", win, "TOPRIGHT", -12, -10)
 
     -- Frage
     local ask = View("ask")
-    ask.text = K.NewText(ask, 13)
-    ask.text:SetPoint("TOP", ask, "TOP", 0, -10)
-    ask.text:SetWidth(FG.W - 60)
+    -- 6.79.1.0 (Beta-Test mit Bild: Erklaerungen liefen in die Knoepfe):
+    -- je Spiel eine Karte - Bild, Name, Erklaerung, die ganze Karte klickbar.
+    ask.text = K.NewText(ask, 15)
+    ask.text:SetPoint("TOP", ask, "TOP", 0, -4)
     ask.text:SetText("Lust auf ein Spiel, bis du landest?")
+    local CARD_H, GAP = 92, 10
+    local m, tb, acc = C.textMuted, C.textBright, C.accent
     for i, g in ipairs(FG.GAMES) do
-        local b = Button(ask, g.name, 260, 40, function() FG.Play(g.key) end)
-        b:SetPoint("TOP", ask, "TOP", 0, -50 - (i - 1) * 56)
-        local h = K.NewText(ask, 10)
-        h:SetPoint("TOP", b, "BOTTOM", 0, -3)
-        h:SetWidth(FG.W - 60)
-        h:SetText(g.hint)
-        local m = C.textMuted
-        h:SetTextColor(m[1], m[2], m[3])
+        local card = CreateFrame("Button", nil, ask)
+        card:SetSize(FG.BOARD, CARD_H)
+        card:SetPoint("TOP", ask, "TOP", 0, -36 - (i - 1) * (CARD_H + GAP))
+        local bg = card:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints(card)
+        local s1 = C.surface1 or C.bgCard
+        bg:SetColorTexture(s1[1], s1[2], s1[3], 1)
+        local strip = card:CreateTexture(nil, "BORDER")
+        strip:SetPoint("TOPLEFT") strip:SetPoint("BOTTOMLEFT")
+        strip:SetWidth(3)
+        strip:SetColorTexture(acc[1], acc[2], acc[3], 1)
+        local hl = card:CreateTexture(nil, "HIGHLIGHT")
+        hl:SetAllPoints(card)
+        hl:SetColorTexture(1, 1, 1, 0.06)
+        local pic = CreateFrame("Frame", nil, card)
+        pic:SetSize(60, 60)
+        pic:SetPoint("LEFT", card, "LEFT", 16, 0)
+        local pbg = pic:CreateTexture(nil, "BACKGROUND")
+        pbg:SetAllPoints(pic)
+        local s2 = C.surface2 or C.bgPanel
+        pbg:SetColorTexture(s2[1], s2[2], s2[3], 1)
+        if g.key == "jewels" then
+            for j, mk in ipairs({ 7, 6, 4, 1 }) do
+                local d = pic:CreateTexture(nil, "ARTWORK")
+                d:SetTexture(K.MEDIA .. "diamond")
+                d:SetSize(24, 24)
+                d:SetPoint("TOPLEFT", pic, "TOPLEFT", 5 + ((j - 1) % 2) * 26, -5 - math.floor((j - 1) / 2) * 26)
+                local c = GC["raidMark" .. mk]
+                d:SetVertexColor(c[1], c[2], c[3], 1)
+            end
+        elseif g.key == "mahjong" then
+            local face, side = GC.tileFace, GC.tileSide
+            local sd = pic:CreateTexture(nil, "ARTWORK", nil, 1)
+            sd:SetColorTexture(side[1], side[2], side[3], 1)
+            sd:SetSize(36, 46) sd:SetPoint("CENTER", pic, "CENTER", 3, -3)
+            local tf = pic:CreateTexture(nil, "ARTWORK", nil, 2)
+            tf:SetColorTexture(face[1], face[2], face[3], 1)
+            tf:SetSize(36, 46) tf:SetPoint("CENTER", pic, "CENTER", 0, 0)
+            local n = K.NewText(pic, 22)
+            n:SetPoint("CENTER", pic, "CENTER", 0, 2)
+            n:SetText("8")
+            local r = GC.raidMark7
+            n:SetTextColor(r[1], r[2], r[3])
+        else
+            local h = pic:CreateTexture(nil, "ARTWORK")
+            h:SetTexture(FG.HUHN)
+            h:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+            h:SetPoint("TOPLEFT", pic, "TOPLEFT", 4, -4)
+            h:SetPoint("BOTTOMRIGHT", pic, "BOTTOMRIGHT", -4, 4)
+        end
+        local name = K.NewText(card, 15)
+        name:SetPoint("TOPLEFT", pic, "TOPRIGHT", 14, -2)
+        name:SetText(g.name)
+        name:SetTextColor(tb[1], tb[2], tb[3])
+        local hint = K.NewText(card, 11)
+        hint:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -6)
+        hint:SetWidth(FG.BOARD - 106)
+        hint:SetJustifyH("LEFT")
+        hint:SetText(g.hint)
+        hint:SetTextColor(m[1], m[2], m[3])
+        card:SetScript("OnClick", function() FG.Play(g.key) end)
     end
-    local no = Button(ask, "Nein danke", 120, 26, function() FG.Close() end)
-    no:SetPoint("BOTTOMLEFT", ask, "BOTTOMLEFT", 20, 10)
-    local never = Button(ask, "Nicht mehr fragen", 160, 26, function()
+    ask.best = K.NewText(ask, 11)
+    ask.best:SetPoint("TOP", ask, "TOP", 0, -36 - 3 * (CARD_H + GAP) - 6)
+    ask.best:SetWidth(FG.BOARD)
+    local no = Button(ask, "Nein danke", 150, 28, function() FG.Close() end)
+    no:SetPoint("BOTTOMLEFT", ask, "BOTTOMLEFT", 0, 0)
+    local never = Button(ask, "Nicht mehr fragen", 170, 28, function()
         K.Set(KEY, "flightGamesAsk", false)
         FG.Close()
         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Keine Frage mehr beim Fliegen. Spielen geht weiter mit /wcui spiele; wieder fragen: Komfort → Flugspiele.")
     end)
-    never:SetPoint("BOTTOMRIGHT", ask, "BOTTOMRIGHT", -20, 10)
-    ask.best = K.NewText(ask, 11)
-    ask.best:SetPoint("BOTTOM", no, "TOP", 90, 16)
+    never:SetPoint("BOTTOMRIGHT", ask, "BOTTOMRIGHT", 0, 0)
 
     -- Ergebnis
     local res = View("result")
@@ -963,14 +1020,15 @@ local function Build()
 
     -- 6.79.0.0 (Wunsch: "Ton muten"): Knopf unten links, gleicher Schalter
     -- wie in den Einstellungen (Komfort -> Flugspiele -> Toene).
-    win.mute = Button(win, "", 90, 20, function()
+    win.mute = Button(win, "", 72, 22, function()
         K.Set(KEY, "flightGamesSound", K.Get(KEY, "flightGamesSound") == false)
         FG.PaintMute()
     end)
-    win.mute:SetPoint("BOTTOMLEFT", win, "BOTTOMLEFT", 12, 10)
+    win.mute:SetPoint("TOPRIGHT", win, "TOPRIGHT", -44, -10)
     -- Zurueck zur Auswahl waehrend des Spiels.
     win.back = Button(win, "Anderes Spiel", 120, 22, function() FG.Ask(true) end)
-    win.back:SetPoint("TOPRIGHT", win, "TOPRIGHT", -150, -10)
+    win.back:SetSize(108, 22)
+    win.back:SetPoint("TOPRIGHT", win, "TOPRIGHT", -214, -10)
     win:Hide()
     table.insert(_G.UISpecialFrames or {}, "WeintCodexFlightGames")
     FG.win = win

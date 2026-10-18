@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.79.1.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFFlugspiele: aufgeräumte Auswahl|r – jedes Spiel hat eine eigene Karte mit Bild, Namen und Erklärung; nichts überlappt mehr. Der Tonschalter sitzt jetzt oben neben dem Schließen-Knopf.",
+        },
+    },
+    {
         version = "6.79.0.0",
         date    = "18.10.2026",
         notes   = {
