@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.76.6.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFZielrahmen wieder wie gewohnt|r – die Farbe der Markierung zeigt nur noch die Namensplakette.",
+        },
+    },
+    {
         version = "6.76.5.0",
         date    = "18.10.2026",
         notes   = {

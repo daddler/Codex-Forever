@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.76.6.0] – 2026-10-18
+
+### Geändert
+- Markierungsfarbe aus den Einheitenrahmen entfernt (Wunsch: nur die Namensplakette). `NP.TintByMark` bleibt ungenutzt im Bestand der Plaketten.
+
 ## [6.76.5.0] – 2026-10-18
 
 ### Geändert

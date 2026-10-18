@@ -905,31 +905,6 @@ function Frame:Refresh()
     local hr, hg, hb = HealthColor(u)
     K.PaintBar(self.health, hr, hg, hb)
     self:PaintBg(hr, hg, hb)
-    -- 6.76.2.0 (Beta-Test: "Totenkopf, aber der Zielrahmen bleibt lila"):
-    -- markierte Gegner auch hier in der Farbe der Markierung.
-    local NP = WeintCodex.UINameplates
-    if NP and NP.TintByMark and not K.Bool(_G.UnitIsFriend and _G.UnitIsFriend("player", u), false) then
-        NP.TintByMark(self.health, u)
-        if NP.ShowMarkTint and K.Get("nameplates", "raidMarkColor") ~= false then
-            if not self._markTint then
-                self._markTint = K.NewText(self.health, 10)
-                self._markTint:SetPoint("CENTER", self.health, "CENTER", 0, 0)
-            end
-            NP.ShowMarkTint(self._markTint, self.health, u)
-            if not self._markEdge then
-                self._markEdge = K.NewText(self, 10)
-                self._markEdge:SetDrawLayer("BACKGROUND", -8)
-                self._markEdge:SetPoint("CENTER", self.health, "CENTER", 0, 0)
-            end
-            NP.ShowMarkTint(self._markEdge, self.health, u, true)
-        else
-            if self._markTint then self._markTint:Hide() end
-            if self._markEdge then self._markEdge:Hide() end
-        end
-    else
-        if self._markTint then self._markTint:Hide() end
-        if self._markEdge then self._markEdge:Hide() end
-    end
     self:UpdatePrediction()
 
     if Opt(u .. "_power") then
