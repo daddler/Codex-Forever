@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.80.2.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFZielmarke im Raum|r – blendet nicht mehr schon am Rand des Questgebiets aus. Sie verschwindet erst, wenn du am Ziel bist (im Questgebiet: höchstens 45 m davon), und kommt ab etwa 80 m wieder. Verdeckt ist sie wieder halb durchsichtig.",
+        },
+    },
+    {
         version = "6.80.1.0",
         date    = "18.10.2026",
         notes   = {

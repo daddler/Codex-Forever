@@ -926,9 +926,8 @@ end
 -- Abstand langsam wieder. Nur nach echter Ankunft; ein neues Ziel
 -- setzt das zurueck. Ein- und Ausblenden mit QA.MARK_RATE je Sekunde.
 QA.MARK_BACK, QA.MARK_RATE = 80, 1.2
--- 6.80.1.0 (Beta-Test: hinter einem Baum wirkte die halb durchsichtige
--- Marke "ausgeblendet"): verdeckt nur noch leicht gedaempft.
-QA.MARK_HIDDEN = 0.8
+-- Verdeckt: halb durchsichtig (6.80.1.0 kurz 0,8 - Fehldeutung, zurueck).
+QA.MARK_HIDDEN = 0.5
 QA.markShown, QA.markReached, QA.markKey, QA.markTime = 0, false, nil, nil
 
 function QA.MarkerReach(key, dist, arrive)
@@ -964,8 +963,12 @@ local function PlaceMarker(n, text, key)
     local own = _G.SuperTrackedFrame
     QA.gameMarkerVisible = type(own) == "table" and own.IsVisible and K.Bool(own:IsVisible(), false) or false
     local alpha, scale = QA.MarkerLook(n.dist, K.Get(KEY, "markerNear") or 100)
-    if n.inRange then alpha = 0 end
-    if QA.MarkerReach(key, n.dist, math.max(K.Get(KEY, "arriveDistance") or 5, 8)) then alpha = 0 end
+    -- 6.80.2.0 (Beta-Test: blendete bei 57 m aus, "noch gar nicht am
+    -- Gebiet"): das Questgebiet zaehlt nur noch als Ankunft, wenn auch das
+    -- Ziel selbst nah ist (QA.AREA); dann gilt dieselbe Rueckkehr ab 80 m.
+    local arrive = math.max(K.Get(KEY, "arriveDistance") or 5, 8)
+    if n.inRange and type(n.dist) == "number" and n.dist <= QA.AREA then arrive = math.max(arrive, n.dist) end
+    if QA.MarkerReach(key, n.dist, arrive) then alpha = 0 end
     alpha = QA.MarkerFade(alpha, Now())
     if alpha <= 0 then
         if marker then marker:Hide() end

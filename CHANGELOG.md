@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.80.2.0] – 2026-10-18
+
+### Behoben
+- Zielmarke im Raum blendete bei 57 m aus: die Questgebiet-Erkennung
+  (Fundort im Umkreis von 45 m) zählt nur noch als Ankunft, wenn auch das
+  Ziel höchstens `QA.AREA` entfernt ist; danach gilt die Rückkehr ab 80 m.
+- 6.80.1.0 zurückgenommen: verdeckt wieder 50 %.
+
 ## [6.80.1.0] – 2026-10-18
 
 ### Geändert
