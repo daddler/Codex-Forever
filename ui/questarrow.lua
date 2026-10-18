@@ -968,7 +968,10 @@ local function PlaceMarker(n, text, key)
     -- Ziel selbst nah ist (QA.AREA); dann gilt dieselbe Rueckkehr ab 80 m.
     local arrive = math.max(K.Get(KEY, "arriveDistance") or 5, 8)
     if n.inRange and type(n.dist) == "number" and n.dist <= QA.AREA then arrive = math.max(arrive, n.dist) end
-    if QA.MarkerReach(key, n.dist, arrive) then alpha = 0 end
+    -- 6.80.3.0 (Wunsch): nur Questziele (Gegner, Objekte, Gebiet) blenden
+    -- aus. Abgeben, Questgeber und eigene Wegpunkte bleiben stehen - im
+    -- Gewirr soll man sehen, wo die Person steht. Ohne key: nie ausblenden.
+    if key and QA.MarkerReach(key, n.dist, arrive) then alpha = 0 end
     alpha = QA.MarkerFade(alpha, Now())
     if alpha <= 0 then
         if marker then marker:Hide() end
@@ -1311,7 +1314,8 @@ function QA.Update(force)
             end
             height:SetText(first and second and (first .. " · " .. second) or first or second or "")
         end
-        PlaceMarker(nav, QA.FormatDistance(nav.dist, units), tostring(t.kind) .. ":" .. tostring(name))
+        local fades = t.kind == "quest" and type(name) == "string" and not name:find("^Abgeben: ")
+        PlaceMarker(nav, QA.FormatDistance(nav.dist, units), fades and ("quest:" .. name) or nil)
     end
 
     if hop and (navRest or yards) <= math.max(K.Get(KEY, "arriveDistance") or 5, 10) then

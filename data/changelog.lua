@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.80.3.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFZielmarke im Raum|r – blendet nur noch bei Questzielen aus (Gegner, Objekte, Gebiet). Beim Abgeben, bei Questgebern und eigenen Wegpunkten bleibt sie stehen, damit du die Person auch im Gewühl findest.",
+        },
+    },
+    {
         version = "6.80.2.0",
         date    = "18.10.2026",
         notes   = {

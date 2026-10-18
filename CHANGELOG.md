@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.80.3.0] – 2026-10-18
+
+### Geändert
+- Zielmarke im Raum: Ausblenden nach Ankunft nur bei Questzielen; Abgeben,
+  Questgeber und eigene Wegpunkte bleiben sichtbar.
+
 ## [6.80.2.0] – 2026-10-18
 
 ### Behoben
