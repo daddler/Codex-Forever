@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.79.0.0",
+        date    = "18.10.2026",
+        notes   = {
+            "|cff7C6CFFBestand: welche Charaktere zählen|r – Charaktere der anderen Fraktion zählen in Tooltip und Gold nur noch, wenn du es willst („Andere Fraktion“ auf der Seite Taschen). Jeden Charakter kannst du dort einzeln aus Tooltip und Gold nehmen. Steht die andere Fraktion drin, ist sie im Tooltip gekennzeichnet.",
+            "|cff7C6CFFHühner klingen nach Hühnern|r – neue Töne: raues „bok bok bok BAAK!“, Küken-Piepsen, gurgelnder Zombie, Kikeriki beim Goldhuhn. Unten links im Spielfenster schaltet „Ton“ sie stumm.",
+            "|cff7C6CFFHändlerfenster groß ziehen ab Werk aus|r – es kann dazu führen, dass Klicks in die Taschen vom Spiel verboten werden. Wer es möchte, schaltet es im Komfort wieder ein.",
+        },
+    },
+    {
         version = "6.78.3.0",
         date    = "18.10.2026",
         notes   = {

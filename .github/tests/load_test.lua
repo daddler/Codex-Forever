@@ -4134,6 +4134,7 @@ end
 -- aus der gemessenen Groesse, nie kleiner als das Spiel, Zahl je Seite.
 do
     local MS = WeintCodex.UIMerchantSize
+    WeintCodex.UIKit.Set("comfort", "vendorGrow", true)   -- seit 6.79.0.0 ab Werk aus
     local saved = { _G.MerchantFrame, MS.state.native, _G.MERCHANT_ITEMS_PER_PAGE, _G.GetMerchantNumItems, _G.CreateFrame }
     -- Keine Plaetze anlegen: die Pruefung des Haendler-Stils zaehlt sie.
     _G.CreateFrame = function() end
@@ -20396,6 +20397,10 @@ do
         local J, M = FG.J, FG.M
         Check(type(FG.WIN_H) == "number" and type(FG.W) == "number", "Flugspiele: Fenstermasse sind Zahlen")
         FG.Ask(true)
+        local was = WeintCodex.UIKit.Get("comfort", "flightGamesSound")
+        FG.win.mute:GetScript("OnClick")()
+        Check(WeintCodex.UIKit.Get("comfort", "flightGamesSound") == false and FG.win.mute.text:GetText() == "Ton: aus", "Flugspiele: Ton stummschalten")
+        FG.win.mute:GetScript("OnClick")()
         FG.Play("jewels")
         local _, n = J.Matches()
         Check(n == 0 and J.HasMove(), "Juwelen: Start ohne Dreier, aber mit Zug")

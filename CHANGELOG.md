@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.79.0.0] – 2026-10-18
+
+### Neu
+- Bestand: `IV.Included` (Realm, Fraktion `comfort.invOtherFaction` – ab Werk aus, Ausschluss je Charakter kontoweit in `st.excluded`) für Tooltip und Gold; Seite Taschen mit Knöpfen „Andere Fraktion“ und je Charakter „Im Tooltip und beim Gold“. Andere Fraktion im Tooltip als „(Horde)/(Allianz)“.
+- Flugspiele: Knopf „Ton“ im Fenster.
+
+### Geändert
+- Hühnertöne neu gerechnet (Impulsfolge mit Jitter durch Formant-Resonatoren, `scipy.signal.lfilter`).
+- `comfort.vendorGrow` ab Werk aus: zweiter Bericht „Verboten: UseContainerItem()“ mit `MerchantFrame.itemIndex/selectedTab` tainted durch WeintCodex (`MerchantFrame_Update` aus Addon-Code). Hinweis an der Einstellung. `BankFrame.currentBankPage` tainted – Ursache noch offen.
+
 ## [6.78.3.0] – 2026-10-18
 
 ### Neu

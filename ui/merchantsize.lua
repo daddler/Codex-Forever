@@ -277,7 +277,13 @@ end
 
 local mod = K.Module(KEY)
 if mod then
-    if mod.defaults.vendorGrow == nil then mod.defaults.vendorGrow = true end
+    -- 6.79.0.0: ab Werk aus. Zweiter Fehlerbericht "Verboten: UseContainerItem()"
+    -- mit Taint-Bericht: MerchantFrame.itemIndex und .selectedTab "tainted
+    -- (WeintCodex)" - der Klick in die Tasche liest sie. Das Vergroessern
+    -- muss die Seite des Haendlers neu aufbauen (MerchantFrame_Update aus
+    -- Addon-Code), und alles, was der Aufbau dann schreibt, ist tainted.
+    -- Wer es will, schaltet es ein - mit Hinweis.
+    if mod.defaults.vendorGrow == nil then mod.defaults.vendorGrow = false end
     local page = mod.pages and mod.pages[1]
     if page then
         local build = page.build
@@ -285,7 +291,7 @@ if mod then
             build(B)
             B:Section("Händlerfenster")
             B:Row({ type = "toggle", label = "Händlerfenster groß ziehen", key = "vendorGrow", reload = true,
-                    description = "Am Griff unten rechts größer ziehen: alle Waren auf einen Blick, ohne Blättern." },
+                    description = "Am Griff unten rechts größer ziehen: alle Waren auf einen Blick, ohne Blättern. Achtung: solange ein Händler offen war, kann ein Klick in die Taschen „Verboten“ melden – dann bitte ausschalten und neu laden." },
                   { type = "empty" })
         end
     end

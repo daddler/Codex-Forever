@@ -961,6 +961,13 @@ local function Build()
     win.note = K.NewText(win, 11)
     win.note:SetPoint("BOTTOM", win, "BOTTOM", 0, 14)
 
+    -- 6.79.0.0 (Wunsch: "Ton muten"): Knopf unten links, gleicher Schalter
+    -- wie in den Einstellungen (Komfort -> Flugspiele -> Toene).
+    win.mute = Button(win, "", 90, 20, function()
+        K.Set(KEY, "flightGamesSound", K.Get(KEY, "flightGamesSound") == false)
+        FG.PaintMute()
+    end)
+    win.mute:SetPoint("BOTTOMLEFT", win, "BOTTOMLEFT", 12, 10)
     -- Zurueck zur Auswahl waehrend des Spiels.
     win.back = Button(win, "Anderes Spiel", 120, 22, function() FG.Ask(true) end)
     win.back:SetPoint("TOPRIGHT", win, "TOPRIGHT", -150, -10)
@@ -968,6 +975,12 @@ local function Build()
     table.insert(_G.UISpecialFrames or {}, "WeintCodexFlightGames")
     FG.win = win
     return win
+end
+
+function FG.PaintMute()
+    if win and win.mute then
+        win.mute.text:SetText(K.Get(KEY, "flightGamesSound") == false and "Ton: aus" or "Ton: an")
+    end
 end
 
 function FG.Ask(force)
@@ -981,6 +994,7 @@ function FG.Ask(force)
     win.title:SetText(FG.flight.on and "Flugspiele – guten Flug!" or "Flugspiele")
     win.back:Hide()
     win.note:SetText("")
+    FG.PaintMute()
     Show("ask")
     win:Show()
     return true

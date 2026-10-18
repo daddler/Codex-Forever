@@ -32,6 +32,7 @@ IV.DEFAULTS = {
     invOn = true,            -- Bestand merken und im Tooltip zeigen
     invAllRealms = false,    -- auch Charaktere anderer Realms
     invTooltip = true,       -- 6.25.0.0: Zeilen im Tooltip (getrennt vom Merken)
+    invOtherFaction = false, -- 6.79.0.0: auch Charaktere der anderen Fraktion
 }
 IV.MAX_RESULTS = 40
 
@@ -199,10 +200,10 @@ function IV.MoneyLines()
     out[#out + 1] = { "Saldo", (net < 0 and "−" or "+") .. IV.MoneyText(math.abs(net)), net < 0 and "red" or "green" }
     local st = IV.Store(false)
     local myKey, _, myRealm = IV.Me()
-    local all = K.Get(KEY, "invAllRealms")
+    local myFaction = IV.MyFaction()
     local list, unknown, total = {}, 0, 0
     for key, c in pairs(st and st.chars or {}) do
-        if all or c.realm == myRealm then
+        if IV.Included(key, c, myRealm, myFaction) then
             if type(c.money) == "number" then
                 list[#list + 1] = { key = key, c = c }
                 total = total + c.money
@@ -271,21 +272,49 @@ end
 -- Auskunft
 --------------------------------------------------
 
+-- 6.79.0.0 (Wunsch einer Spielerin: "fraktionsuebergreifend schwierig -
+-- eine Option, welche Charaktere man inbegriffen haben moechte"): zaehlt
+-- ein Charakter fuer Tooltip und Gold? Realm, Fraktion (unbekannt zaehlt)
+-- und die eigene Wahl je Charakter (kontoweit, st.excluded).
+function IV.MyFaction()
+    return _G.UnitFactionGroup and Str(_G.UnitFactionGroup("player")) or nil
+end
+function IV.Included(key, c, myRealm, myFaction)
+    if type(c) ~= "table" then return false end
+    if not K.Get(KEY, "invAllRealms") and c.realm ~= myRealm then return false end
+    if not K.Get(KEY, "invOtherFaction") and myFaction and c.faction and c.faction ~= myFaction then return false end
+    local st = IV.Store(false)
+    if st and type(st.excluded) == "table" and st.excluded[key] then return false end
+    return true
+end
+function IV.IsExcluded(key)
+    local st = IV.Store(false)
+    return st and type(st.excluded) == "table" and st.excluded[key] and true or false
+end
+function IV.SetExcluded(key, on)
+    local st = IV.Store(true)
+    if not st then return false end
+    st.excluded = type(st.excluded) == "table" and st.excluded or {}
+    st.excluded[key] = on and true or nil
+    return true
+end
+
 -- { { key, name, realm, class, bags, bank, worn, total, bankKnown }, ... }
 -- fuer einen Gegenstand; der eigene Charakter zuerst.
 function IV.Holders(id)
     local st = IV.Store(false)
     if not (st and type(id) == "number") then return {} end
     local me, _, myRealm = IV.Me()
-    local all = K.Get(KEY, "invAllRealms")
+    local myFaction = IV.MyFaction()
     local out = {}
     for key, c in pairs(st.chars) do
-        if all or c.realm == myRealm then
+        if IV.Included(key, c, myRealm, myFaction) then
             local b = c.bags and c.bags[id] or 0
             local k = c.bank and c.bank[id] or 0
             local w = c.worn and c.worn[id] or 0
             if b + k + w > 0 then
                 out[#out + 1] = { key = key, name = c.name, realm = c.realm, class = c.class,
+                    faction = (myFaction and c.faction and c.faction ~= myFaction) and c.faction or nil,
                     bags = b, bank = k, worn = w, total = b + k + w, me = key == me }
             end
         end
@@ -318,6 +347,7 @@ IV.ClassColor = ClassColor
 local function Label(h, myRealm)
     local n = h.name or "?"
     if h.realm and myRealm and h.realm ~= myRealm then n = n .. "-" .. h.realm end
+    if h.faction then n = n .. " (" .. (h.faction == "Horde" and "Horde" or "Allianz") .. ")" end
     return n
 end
 

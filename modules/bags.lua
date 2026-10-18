@@ -56,9 +56,14 @@ function BG.Chars()
     local st = iv.Store(false)
     local _, _, myRealm = iv.Me()      -- nicht "iv and iv.Me()": das kappt auf einen Wert
     local all = Get("invAllRealms")
+    local other = Get("invOtherFaction")
+    local mine = iv.MyFaction and iv.MyFaction()
     local out = {}
     for key, c in pairs(st and st.chars or {}) do
-        if all or c.realm == myRealm then
+        -- 6.79.0.0: die andere Fraktion nur auf Wunsch. Ausgeschlossene
+        -- Charaktere stehen weiter da (sonst liessen sie sich nie wieder
+        -- einschliessen), nur Tooltip und Gold zaehlen sie nicht.
+        if (all or c.realm == myRealm) and (other or not (mine and c.faction and c.faction ~= mine)) then
             out[#out + 1] = { key = key, name = c.name, realm = c.realm, class = c.class }
         end
     end
@@ -317,6 +322,7 @@ local function SidebarItems(chars, myRealm)
         if ch.realm ~= myRealm then label = label .. "-" .. tostring(ch.realm) end
         local status = c.bank and { text = Count(c) .. " Stück", color = "textMuted" }
             or { text = Count(c) .. " · Bank unbekannt", color = "gold" }
+        if IV().IsExcluded and IV().IsExcluded(ch.key) then status = { text = "nicht im Tooltip", color = "textMuted" } end
         local key = ch.key
         items[#items + 1] = { label = label, status = status,
                               onClick = function() BG.sel = key BG.Show() end }
@@ -342,7 +348,12 @@ local function Inspector(chars)
         rows[#rows + 1] = { label = "Taschen", value = n(c.bags) .. " Stück" }
         rows[#rows + 1] = { label = "Angelegt", value = n(c.worn) .. " Stück" }
         rows[#rows + 1] = { label = "Bank", value = c.bank and (n(c.bank) .. " Stück") or "unbekannt" }
+        if c.faction then rows[#rows + 1] = { label = "Fraktion", value = c.faction == "Horde" and "Horde" or "Allianz" } end
     end
+    local sel = BG.sel
+    local own = (sel ~= BG.ALL) and {
+        type = "button", label = "Im Tooltip und beim Gold: " .. (iv.IsExcluded(sel) and "nein" or "ja"),
+        onClick = function() iv.SetExcluded(sel, not iv.IsExcluded(sel)) BG.Show() end } or nil
     return {
         { type = "header", text = BG.sel == BG.ALL and "Alle Charaktere" or "Charakter" },
         { type = "rows", rows = rows },
@@ -352,6 +363,9 @@ local function Inspector(chars)
           onClick = function() Toggle("invTooltip") end },
         { type = "button", label = "Andere Realms: " .. (Get("invAllRealms") and "an" or "aus"),
           onClick = function() Toggle("invAllRealms") end },
+        { type = "button", label = "Andere Fraktion: " .. (Get("invOtherFaction") and "an" or "aus"),
+          onClick = function() Toggle("invOtherFaction") end },
+        own or { type = "divider" },
         { type = "divider" },
         { type = "header", text = "Woher das stammt" },
         { type = "card", lines = {
