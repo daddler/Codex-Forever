@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.87.5.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFDirekt neu laden|r – unter Tastenbelegung → AddOns → WeintCodex → „Oberfläche neu laden“ eine Taste vergeben: ein Druck lädt sofort neu, ohne Frage. Ein Chatbefehl wie /rl darf das auf Forever nicht direkt, darum fragt /rl weiter kurz nach.",
+        },
+    },
+    {
         version = "6.87.4.0",
         date    = "19.10.2026",
         notes   = {

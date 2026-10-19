@@ -3361,6 +3361,27 @@ function WeintCodex.ReloadPrompt()
     end
     rlFrame:Show()
 end
+-- 6.87.5.0 (Wunsch: "direkt neu laden, ohne Frage"): ein Tastendruck geht
+-- direkt - ein benannter gesicherter Knopf, den die Tastenbelegung des
+-- Spiels klickt (Bindings.xml, "CLICK WeintCodexReloadDirect:LeftButton").
+-- Ein Addon-Befehl wie /rl darf das Neuladen nicht ausloesen; darum
+-- bleibt dort die Frage.
+do
+    local ok, b = pcall(CreateFrame, "Button", "WeintCodexReloadDirect", UIParent, "SecureActionButtonTemplate")
+    if ok and b then
+        if b.RegisterForClicks then b:RegisterForClicks("AnyUp", "AnyDown") end
+        ArmReload(b)
+        b:SetAttribute("useOnKeyDown", true)
+        -- Sichtbar, aber unsichtbar klein: verborgene Knoepfe nehmen
+        -- Klicks der Belegung nicht zuverlaessig an.
+        b:SetSize(1, 1)
+        b:SetAlpha(0)
+        b:SetPoint("TOPLEFT", UIParent, "TOPLEFT", -10, 10)
+        b:EnableMouse(false)
+    end
+end
+BINDING_NAME_CLICK_WeintCodexReloadDirect_LeftButton = "Oberfläche neu laden"
+
 do
     local taken = type(hash_SlashCmdList) == "table" and hash_SlashCmdList["/RL"]
     if not taken then
