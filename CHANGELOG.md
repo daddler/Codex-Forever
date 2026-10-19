@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.87.3.0] – 2026-10-19
+
+### Behoben
+- Buffzeiten: Paladin-Siegel ohne `consumedBy` (Richturteil verbraucht auf
+  Forever nicht, laut Tooltips des Spiels).
+
 ## [6.87.2.0] – 2026-10-19
 
 ### Behoben

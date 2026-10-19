@@ -56,7 +56,9 @@ BT.CLASSES = {
     PALADIN = {
         { key = "seal", label = "Siegel", remind = true,
           duration = 30 * SEC,          -- Siegel: 30 s (Classic)
-          consumedBy = { 20271 },       -- Richturteil verbraucht das Siegel
+          -- 6.87.3.0 (Beta-Test mit Bildern der Tooltips): auf Forever
+          -- "entfesselt" Richturteil die Energie des Siegels - das Siegel
+          -- bleibt 30 s stehen (Classic: verbraucht). Kein Verbraucher mehr.
           spells = {
             21082, 20162, 20305, 20306, 20307, 20308,          -- Siegel des Kreuzfahrers 1-6
             21084,                                             -- der Rechtschaffenheit 1 (Start)

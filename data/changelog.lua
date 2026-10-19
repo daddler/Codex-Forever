@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.87.3.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFBuffzeiten: Siegel|r – Richturteil beendet das Siegel nicht mehr. Auf Forever „entfesselt“ Richturteil nur seine Energie, das Siegel bleibt seine 30 Sekunden aktiv – WeintCodex hatte es wie in Classic als verbraucht gezählt und darum „fehlt“ gezeigt.",
+        },
+    },
+    {
         version = "6.87.2.0",
         date    = "19.10.2026",
         notes   = {

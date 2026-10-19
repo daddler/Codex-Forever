@@ -21170,7 +21170,9 @@ do
             assert(BT.active.seal.spell == 21082 and math.floor(BT.Remaining("seal", 110)) == 20, "Uhr falsch")
             assert(BT.OnCast(20165, 105) == "start" and BT.active.seal.spell == 20165, "Siegel ersetzte Siegel nicht")
             assert(BT.Remaining("seal", 106) == 29, "neues Siegel ohne neue Uhr")
-            assert(BT.OnCast(20271, 107) == "consume" and BT.active.seal == nil, "Richturteil liess das Siegel stehen")
+            -- 6.87.3.0: auf Forever bleibt das Siegel nach Richturteil stehen.
+            BT.OnCast(20271, 107)
+            assert(BT.active.seal and BT.active.seal.spell == 20165, "Richturteil nahm das Siegel weg")
             BT.OnCast(21082, 200)
             assert(BT.Remaining("seal", 229) and BT.Remaining("seal", 231) == nil and BT.active.seal == nil, "Uhr endete nicht")
             -- Geheime ID: nicht verglichen, Stand bleibt.
