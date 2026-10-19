@@ -535,7 +535,13 @@ local function OnlyQuestLoot(n)
 end
 
 function GA.OnLootOpened()
-    if not tracker.at then return end
+    -- 6.82.1.0 (Messung /wcui prüfen: "Beutequelle: noch keine Beute" nach
+    -- zwei Kraeutern): die Beute kann vor UNIT_SPELLCAST_SUCCEEDED kommen
+    -- (und mit Schnellpluendern als LOOT_READY). Laeuft ein Sammelzauber,
+    -- zaehlt sie ab jetzt; je Versuch nur einmal.
+    if not tracker.spell or tracker.looted then return end
+    if not tracker.at then tracker.at = Now() end
+    tracker.looted = true
     local window = tracker.kind == "fish" and GA.FISH_WINDOW or GA.LOOT_WINDOW
     if Now() - tracker.at > window then for k in pairs(tracker) do tracker[k] = nil end return end
     local n = _G.GetNumLootItems and K.Plain(_G.GetNumLootItems())
@@ -907,37 +913,195 @@ function GA.CmdClear()
     if map then GA.ClearRoute(map) end
 end
 
+-- 6.82.1.0 (Beta-Test mit Bild: "die Knoepfe verdecken Koordinaten und
+-- Spielerposition, man weiss nicht, wofuer sie stehen, eckig statt rund";
+-- Wunsch: "unter Quests noch einen Balken mit Farmen", Kraeuter/Erz
+-- waehlen und die Suche des Charakters stellt sich mit): eine zweite
+-- Leiste unter dem Kartenfenster - unter der Quest-Leiste, sonst direkt
+-- unter der Karte -, Pillen wie dort, jede mit Erklaerung beim Zeigen.
+--   Kraeuter / Erz / Beides: was Karte und Route zeigen; Kraeuter oder Erz
+--   stellen die Suche des Spiels fest um (der Wechsel ruht), Beides laesst
+--   wieder wechseln.
+--   Route erstellen / bearbeiten / folgen / loeschen.
+GA.FARM = {
+    { key = "herb", text = "Kräuter", tip = "Nur Kräuter auf Karte und Route. Stellt die Kräutersuche deines Charakters ein." },
+    { key = "ore",  text = "Erz",     tip = "Nur Erz auf Karte und Route. Stellt die Mineraliensuche deines Charakters ein." },
+    { key = "all",  text = "Beides",  tip = "Kräuter und Erz. Die Suche wechselt wieder zwischen beiden, wenn du das eingeschaltet hast." },
+    { gap = true },
+    { key = "build",  text = "Route erstellen", tip = "Kürzester Rundweg durch alle Fundstellen der Auswahl auf dieser Karte." },
+    { key = "edit",   text = "Route ändern",    tip = "Fundstellen auf der Karte anklicken: hinzufügen oder entfernen, in Klickreihenfolge. Noch einmal klicken: fertig." },
+    { key = "follow", text = "Route folgen",    tip = "Der Questpfeil führt von Halt zu Halt, im Kreis." },
+    { key = "clear",  text = "Route löschen",   tip = "Die Farmroute dieser Karte entfernen." },
+}
+
+function GA.Choice()
+    local k = K.Get(KEY, "gaRouteKind") or "all"
+    if k ~= "herb" and k ~= "ore" then k = "all" end
+    return k
+end
+
+-- Auswahl setzen: Karte, Route und Suche des Spiels.
+function GA.Choose(kind)
+    K.Set(KEY, "gaRouteKind", kind)
+    K.Set(KEY, "gaMapHerb", kind ~= "ore")
+    K.Set(KEY, "gaMapOre", kind ~= "herb")
+    local GT = WeintCodex.UIGatherTrack
+    if not GT then return end
+    if kind == "all" then
+        if GT.wasSwap ~= nil then K.Set(KEY, "gatherSwap", GT.wasSwap) GT.wasSwap = nil end
+        return
+    end
+    if GT.wasSwap == nil then GT.wasSwap = K.Get(KEY, "gatherSwap") and true or false end
+    K.Set(KEY, "gatherSwap", false)
+    if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), false) then return end
+    local herb, ore = GT.Find and GT.Find()
+    local want = kind == "herb" and herb or ore
+    local _, _, set = GT.API and GT.API()
+    if want and set then
+        pcall(set, want, true)
+    else
+        Say(kind == "herb" and "Kräutersuche ist nicht gelernt." or "Mineraliensuche ist nicht gelernt.")
+    end
+end
+
+local CHIP_H = 18
+local function Chip(bar, f, x)
+    local b = CreateFrame("Button", nil, bar)
+    b.key, b.tip = f.key, f.tip
+    b.text = K.NewText(b, 11)
+    b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
+    b.text:SetText(f.text)
+    local tw = K.Plain(b.text.GetStringWidth and b.text:GetStringWidth())
+    local bw = (type(tw) == "number" and tw > 0 and tw or 70) + 22
+    b:SetSize(bw, CHIP_H)
+    b:SetPoint("LEFT", bar, "LEFT", x, 0)
+    b.fill = b:CreateTexture(nil, "BACKGROUND")
+    b.fill:SetPoint("TOPLEFT", b, "TOPLEFT", CHIP_H / 2, 0)
+    b.fill:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -CHIP_H / 2, 0)
+    b.capL = b:CreateTexture(nil, "BACKGROUND")
+    b.capL:SetSize(CHIP_H, CHIP_H)
+    b.capL:SetPoint("LEFT", b, "LEFT", 0, 0)
+    b.capL:SetTexture(K.MEDIA .. "disc")
+    b.capR = b:CreateTexture(nil, "BACKGROUND")
+    b.capR:SetSize(CHIP_H, CHIP_H)
+    b.capR:SetPoint("RIGHT", b, "RIGHT", 0, 0)
+    b.capR:SetTexture(K.MEDIA .. "disc")
+    b:SetScript("OnEnter", function(self)
+        self._hot = true
+        GA.SyncBar()
+        local tt = _G.GameTooltip
+        if tt then
+            tt:SetOwner(self, "ANCHOR_TOP")
+            tt:SetText(self.text:GetText() or "", 1, 1, 1)
+            tt:AddLine(self.tip, nil, nil, nil, true)
+            tt:Show()
+        end
+    end)
+    b:SetScript("OnLeave", function(self)
+        self._hot = nil
+        GA.SyncBar()
+        if _G.GameTooltip then _G.GameTooltip:Hide() end
+    end)
+    b:SetScript("OnClick", function(self)
+        local k = self.key
+        if k == "herb" or k == "ore" or k == "all" then GA.Choose(k)
+        elseif k == "build" then GA.CmdBuild()
+        elseif k == "edit" then GA.CmdEdit()
+        elseif k == "follow" then GA.CmdFollow()
+        elseif k == "clear" then GA.CmdClear() end
+        GA.SyncBar()
+    end)
+    return b, bw
+end
+
+local function Paint(b, on, hot)
+    local a, base = K.Highlight(), WeintCodex.GameColors.kachelFill
+    local r, g, bl
+    if on then
+        local k = hot and 0.55 or 0.40
+        r, g, bl = base[1] + (a[1] - base[1]) * k, base[2] + (a[2] - base[2]) * k, base[3] + (a[3] - base[3]) * k
+    else
+        local s1 = hot and (C.borderStrong or C.surface3) or C.surface3
+        r, g, bl = s1[1], s1[2], s1[3]
+    end
+    b.fill:SetColorTexture(r, g, bl, 1)
+    b.capL:SetVertexColor(r, g, bl, 1)
+    b.capR:SetVertexColor(r, g, bl, 1)
+    local tc = on and C.textBright or C.textNormal
+    b.text:SetTextColor(tc[1], tc[2], tc[3], on and 1 or 0.85)
+end
+
 function GA.SyncBar()
     local bar = GA.bar
     if not bar then return end
-    bar.edit:SetText(GA.editing and "Fertig" or "Route bearbeiten")
-    bar.follow:SetText(GA.following and "Nicht mehr folgen" or "Route folgen")
+    local choice = GA.Choice()
+    local map = ViewMap()
+    local r = map and GA.Route(map)
+    for _, b in ipairs(bar.chips) do
+        local k, on = b.key, false
+        if k == "herb" or k == "ore" or k == "all" then on = (k == choice)
+        elseif k == "edit" then on = GA.editing and true or false
+            b.text:SetText(GA.editing and "Fertig" or "Route ändern")
+        elseif k == "follow" then on = GA.following and true or false
+            b.text:SetText(GA.following and "Folgen beenden" or "Route folgen")
+        end
+        Paint(b, on, b._hot)
+    end
+    local n = r and r.stops and #r.stops or 0
+    bar.info:SetText(n > 0 and ("Route: " .. n .. " Halte") or "Noch keine Route")
+    -- Unter der Quest-Leiste, wenn sie steht; sonst direkt unter der Karte.
+    local QH, wm = WeintCodex.UIQuestHelper, _G.WorldMapFrame
+    local qb = QH and QH.bar
+    local below = (qb and qb.IsShown and qb:IsShown()) and qb or wm
+    if bar._below ~= below then
+        bar:ClearAllPoints()
+        bar:SetPoint("TOPLEFT", below, "BOTTOMLEFT", 0, -4)
+        bar._below = below
+    end
 end
 
 local function EnsureBar()
     if GA.bar then return GA.bar end
     local wm = _G.WorldMapFrame
-    if type(wm) ~= "table" or not WeintCodex.CreateButton then return nil end
-    local anchor = wm.ScrollContainer or wm
-    local bar = CreateFrame("Frame", nil, wm)
-    bar:SetSize(4 * 112, 24)
-    bar:SetPoint("BOTTOMLEFT", anchor, "BOTTOMLEFT", 8, 8)
-    bar:SetFrameLevel((K.Plain(wm:GetFrameLevel()) or 0) + 20)
-    local function B(i, text, fn)
-        local b = WeintCodex.CreateButton(bar, { text = text, kind = "secondary", height = 22, size = 10,
-                                                 backdrop = "bgDark", onClick = function() fn() GA.SyncBar() end })
-        b:SetWidth(108)
-        b:SetPoint("LEFT", bar, "LEFT", (i - 1) * 112, 0)
-        return b
+    if type(wm) ~= "table" then return nil end
+    local bar = CreateFrame("Frame", "WeintCodexFarmBar", wm)
+    if bar.SetClampedToScreen then bar:SetClampedToScreen(true) end
+    bar:SetHeight(28)
+    bar:SetFrameStrata("HIGH")
+    bar.kachel = K.Kachel(bar, { shadow = 3 })
+    bar.mark = bar:CreateTexture(nil, "ARTWORK")
+    bar.mark:SetSize(16, 16)
+    bar.mark:SetPoint("LEFT", bar, "LEFT", 8, 0)
+    bar.mark:SetTexture(K.MEDIA .. "gather_herb")
+    local hc = WeintCodex.GameColors.gatherHerb
+    if hc then bar.mark:SetVertexColor(hc[1], hc[2], hc[3], 1) end
+    bar.title = K.NewText(bar, 12)
+    bar.title:SetFont(WeintCodex.Fonts.sansSemi, 12, "")
+    bar.title:SetPoint("LEFT", bar.mark, "RIGHT", 4, 0)
+    bar.title:SetText("Farmen")
+    local tc = C.textBright
+    bar.title:SetTextColor(tc[1], tc[2], tc[3], 1)
+    bar.chips = {}
+    local x = 8 + 16 + 4 + 54
+    for _, f in ipairs(GA.FARM) do
+        if f.gap then
+            x = x + 10
+        else
+            local b, w = Chip(bar, f, x)
+            bar.chips[#bar.chips + 1] = b
+            x = x + w + 4
+        end
     end
-    bar.edit = B(1, "Route bearbeiten", GA.CmdEdit)
-    bar.build = B(2, "Route aus Zone", GA.CmdBuild)
-    bar.follow = B(3, "Route folgen", GA.CmdFollow)
-    bar.clear = B(4, "Route leeren", GA.CmdClear)
+    bar.info = K.NewText(bar, 11)
+    bar.info:SetPoint("LEFT", bar, "LEFT", x + 6, 0)
+    local mc = C.textMuted
+    bar.info:SetTextColor(mc[1], mc[2], mc[3], 1)
+    bar:SetWidth(x + 110)
     GA.bar = bar
     GA.SyncBar()
     return bar
 end
+GA.EnsureBar = EnsureBar
 
 local driver
 local function EnsureDriver()
@@ -1072,7 +1236,7 @@ ev:SetScript("OnEvent", K.Measured("Sammel-Atlas", function(_, event, a, b, c, d
     if event == "UNIT_SPELLCAST_SENT" then GA.OnSent(a, b, c, d)
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then GA.OnSucceeded(a, b, c)
     elseif event == "UNIT_SPELLCAST_FAILED" or event == "UNIT_SPELLCAST_INTERRUPTED" then GA.OnFailed(a, b)
-    elseif event == "LOOT_OPENED" then GA.OnLootOpened()
+    elseif event == "LOOT_OPENED" or event == "LOOT_READY" then GA.OnLootOpened()
     elseif event == "CHAT_MSG_ADDON" then GA.OnAddonMessage(a, b, c, d)
     elseif event == "ADDON_LOADED" then
         if a == "Blizzard_WorldMap" then EnsureDriver() end
@@ -1080,7 +1244,7 @@ ev:SetScript("OnEvent", K.Measured("Sammel-Atlas", function(_, event, a, b, c, d
 end))
 
 local EVENTS = { "UNIT_SPELLCAST_SENT", "UNIT_SPELLCAST_SUCCEEDED", "UNIT_SPELLCAST_FAILED",
-                 "UNIT_SPELLCAST_INTERRUPTED", "LOOT_OPENED", "ADDON_LOADED" }
+                 "UNIT_SPELLCAST_INTERRUPTED", "LOOT_OPENED", "LOOT_READY", "ADDON_LOADED" }
 
 function GA.Apply()
     Changed()

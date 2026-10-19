@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.82.1.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFFarmen|r – eigene Leiste unter der Quest-Leiste statt Knöpfen auf der Karte: runde Knöpfe mit Erklärung beim Zeigen. Kräuter, Erz oder Beides wählt, was Karte und Route zeigen, und stellt die Kräuter- bzw. Mineraliensuche deines Charakters mit um.",
+            "|cff7C6CFFSammel-Atlas|r – erkennt die Beute jetzt auch, wenn sie vor dem Ende des Sammelzaubers oder per Schnellplündern kommt. Erst damit gehen Fundorte an die Gilde.",
+            "|cff7C6CFFRoutenplaner|r – Fahrpläne, Portale und Teleports auf den neuesten Stand gebracht.",
+        },
+    },
+    {
         version = "6.82.0.0",
         date    = "19.10.2026",
         notes   = {

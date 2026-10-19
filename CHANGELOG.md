@@ -9,6 +9,19 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.82.1.0] – 2026-10-19
+
+### Geändert
+- Farm-Leiste (`WeintCodexFarmBar`, `GA.FARM`, `GA.Choose`) unter der
+  Quest-Leiste ersetzt die Knöpfe auf der Karte; Auswahl stellt
+  `gaRouteKind`, Kartenfilter und die Suche des Spiels (Wechsel ruht).
+- `data/travel.lua` neu eingespielt (Shortest Path Forever 1.20.1);
+  Geländedaten unverändert.
+
+### Behoben
+- Sammel-Atlas: Beute vor `UNIT_SPELLCAST_SUCCEEDED` und `LOOT_READY`
+  werden gezählt – ohne sie fehlte die Objektnummer und damit das Teilen.
+
 ## [6.82.0.0] – 2026-10-19
 
 ### Neu
