@@ -233,6 +233,7 @@ function BT.OnCast(spellID, now, fighting)
     cur.spell, cur.start = spellID, now
     cur.duration = (not g.variable) and g.duration or nil
     BT.active[g.key] = cur
+    BT.last[g.key] = spellID
     return "start"
 end
 
@@ -310,6 +311,7 @@ function BT.Reconcile(now, fighting)
                     a.duration = a.duration or g.duration
                 end
                 BT.active[g.key] = a
+                if a.spell then BT.last[g.key] = a.spell end
                 st.reconciled = st.reconciled + 1
             elseif a and not unknown then
                 BT.active[g.key] = nil
@@ -331,6 +333,7 @@ end
 -- Was die Reihe zeigt: Liste von { group, state = "time"|"on"|"runs"|"missing", left }.
 -- Eintraege aus einem Vorrat (je Gruppe einer) - der Takt legt nichts neu an.
 local entries, pool = {}, {}
+BT.last = BT.last or {}     -- [Gruppe] = zuletzt gewirkter Zauber (fuer "fehlt")
 local function Put(g, spell, state, left)
     local n = #entries + 1
     local e = pool[n] or {}
@@ -347,7 +350,11 @@ function BT.Entries(now, fighting, showMissing, sample)
         if a then
             Put(g, a.spell, left and "time" or (g.variable and "runs") or "on", left)
         elseif fighting and showMissing and g.remind and BT.Learned(g) then
-            Put(g, g.spells[1], "missing", nil)
+            -- 6.87.2.0 (Beta-Test mit Bild: nach Richturteil ein weisses
+            -- Feld mit "!"): Rang 1 des Siegels hat der Charakter oft gar
+            -- nicht, das Spiel liefert dafuer kein Bild. Jetzt das zuletzt
+            -- gewirkte Siegel der Gruppe, grau mit "!".
+            Put(g, BT.last[g.key] or g.spells[1], "missing", nil)
         elseif sample then
             Put(g, g.spells[1], "on", nil)
         end

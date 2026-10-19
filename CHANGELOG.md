@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.87.2.0] – 2026-10-19
+
+### Behoben
+- Buffzeiten: „fehlt“ zeigt das zuletzt gewirkte Mitglied der Gruppe
+  (`BT.last`) statt Rang 1, dessen Bild der Client nicht liefert.
+
 ## [6.87.1.0] – 2026-10-19
 
 ### Geändert

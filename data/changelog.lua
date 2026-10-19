@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.87.2.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFBuffzeiten|r – nach Richturteil im Kampf zeigte das „fehlt“-Symbol ein weißes Feld. Jetzt steht dort grau mit „!“ das Siegel, das du zuletzt gewirkt hast.",
+        },
+    },
+    {
         version = "6.87.1.0",
         date    = "19.10.2026",
         notes   = {
