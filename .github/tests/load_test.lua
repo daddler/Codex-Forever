@@ -20648,6 +20648,182 @@ do
     end
 end
 
+do
+    -- Suche (Titelleiste): Lehrer, Klassenquests, Berufe, Taschen, Seiten.
+    local G = _G
+    local SR, nav = WeintCodex.Search, WeintCodex.Navigation
+    local oC, oR, oF, oS, oN, oRe = G.UnitClass, G.UnitRace, G.UnitFactionGroup, G.C_Spell, G.UnitName, G.GetRealmName
+    local oGo, sd = nav.GoToTab, WeintCodex.SavedData
+    local oInv = sd and sd.inventory
+    local ok, err = pcall(function()
+        local T, Q, P, PRO, BG = WeintCodex.TrainerData, WeintCodex.ClassQuestData, WeintCodex.ProfessionData,
+            WeintCodex.Professions, WeintCodex.Bags
+        local sp = T.Spells("WARRIOR", 1, "Alliance")[1]
+        assert(sp, "kein Kriegerzauber")
+        G.UnitClass = function() return "Krieger", "WARRIOR", 1 end
+        G.UnitRace = function() return "Mensch", "Human", 1 end
+        G.UnitFactionGroup = function() return "Alliance" end
+        G.UnitName = function() return "Suchtest" end
+        G.GetRealmName = function() return "Testrealm" end
+        G.C_Spell = { GetSpellName = function(id) return id == sp.id and "Zauberwörtchen" or nil end }
+        sd.inventory = { chars = {
+            ["Testrealm|Suchtest"] = { name = "Suchtest", realm = "Testrealm", faction = "Alliance", bags = { [999001] = 3 } },
+            ["Testrealm|Fremd"] = { name = "Fremd", realm = "Testrealm", faction = "Horde", bags = { [999001] = 1 } },
+        }, names = { [999001] = "Glitzerkiesel des Suchtests" } }
+        SR.Reset()
+        local went
+        nav.GoToTab = function(t) went = t end
+        local function First(q, cat)
+            for _, e in ipairs(SR.Filter(q)) do if e.category == cat then return e end end
+        end
+        -- Lehrer, umlauttolerant und ohne Gross/Klein.
+        local e = First("ZAUBERWOERTCHEN", "trainer")
+        assert(e and e.label:find("Lehrer", 1, true), "Lehrerzauber nicht gefunden")
+        e.onClick() assert(went == "lehrer", "Lehrer: " .. tostring(went))
+        -- Klassenquest (Rueckfallname des Bestands).
+        local q = WeintCodex.ClassQuests.List("WARRIOR", 1)[1]
+        local qt = WeintCodex.ClassQuests.Title(q)
+        e = First(qt, "quest")
+        assert(e, "Klassenquest nicht gefunden: " .. tostring(qt))
+        e.onClick() assert(went == "klassenquests", "Klassenquest: " .. tostring(went))
+        -- Rezept: oeffnet den Beruf beim Rezept.
+        local key = P.PROFS[1].key
+        local r = PRO.Recipes(key)[1]
+        e = First(r.name, "recipe")
+        assert(e and e.label:find("Beruf: ", 1, true), "Rezept nicht gefunden: " .. r.name)
+        e.onClick()
+        assert(went == "berufe" and PRO.Selected() == key and PRO.selRecipe and PRO.selRecipe.spell == r.spell, "Rezept nicht vorgewaehlt: " .. tostring(went) .. " " .. tostring(PRO.Selected()) .. " " .. e.label)
+        assert(First(PRO.ProfName(key), "profession"), "Beruf nicht gefunden")
+        -- Taschen: nur einbezogene Charaktere (andere Fraktion bleibt weg).
+        local hits = 0
+        for _, x in ipairs(SR.Filter("glitzerkiesel")) do
+            if x.category == "item" then
+                hits = hits + 1
+                assert(x.label:find("Taschen: Suchtest", 1, true), "Taschen: " .. x.label)
+                x.onClick()
+            end
+        end
+        assert(hits == 1 and went == "taschen" and BG.sel == "Testrealm|Suchtest", "Taschen: " .. hits)
+        BG.sel = BG.ALL
+        -- Seiten beim Namen, Treffer je Art gedeckelt.
+        e = First("raidplanung", "page")
+        assert(e, "Raidplanung nicht gefunden") e.onClick() assert(went == "anmeldung", "Raidplanung")
+        assert(#SR.Filter("e") <= 8, "zu viele Treffer")
+    end)
+    G.UnitClass, G.UnitRace, G.UnitFactionGroup, G.C_Spell, G.UnitName, G.GetRealmName = oC, oR, oF, oS, oN, oRe
+    nav.GoToTab = oGo
+    if sd then sd.inventory = oInv end
+    if SR and SR.Reset then SR.Reset() end
+    Check(ok, "Suche: Lehrer, Klassenquests, Berufe, Taschen und Seiten, je Art gedeckelt"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
+-- Wildtierkunde (Jaeger): Bestand, Suche, Reiter nur fuer Jaeger, Aufzeichnen
+-- beim Anvisieren und nach Wildtierkunde, Wildtierausbildung, Karte und Pfeil.
+do
+    local G = _G
+    local saved = { G.UnitClass, G.UnitGUID, G.UnitName, G.UnitLevel, G.C_TooltipInfo, G.GetNumCrafts,
+                    G.GetCraftInfo, G.GetCraftDisplaySkillLine, G.C_Map }
+    local BL, BD, TR = WeintCodex.Beasts, WeintCodex.BeastData, WeintCodex.Trainer
+    local QA = WeintCodex.UIQuestArrow
+    local oldSet = QA and QA.SetCustom
+    local ok, err = pcall(function()
+        assert(BL and BD and #BD.F == 18 and #BD.A > 10, "data/beasts.lua nicht geladen")
+        local wolf
+        for i, f in ipairs(BD.F) do if f[1] == "Wolf" then wolf = i end end
+        assert(wolf and BL.Count(wolf) > 20, "Familie Wolf leer")
+        local list = BL.Search("", wolf)
+        assert(#list == BL.Count(wolf), "Filter Familie")
+        local withLevel = 0
+        for _, b in ipairs(list) do
+            assert(b.family == wolf and b.kind == (b.new and "community" or "classic"), "Art falsch: " .. b.id)
+            if b.level then withLevel = withLevel + 1 end
+        end
+        assert(withLevel > 20, "Woelfe ohne Stufe")
+        local b69 = BL.Get(69)
+        assert(b69 and b69.name == "Wilder Waldwolf" and b69.level == "2" and b69.swing == 2, "Wilder Waldwolf")
+        local hits = BL.Search("waldwolf", "all")
+        local found = false
+        for _, b in ipairs(hits) do if b.id == 69 then found = true end end
+        assert(found and #hits < 20, "Suche nach Namen")
+        assert(#BL.Search("wald von elwynn", "all") > 0, "Suche nach Gebiet")
+        assert(#BL.Search("Wutgeheul", "all") > 0, "Suche nach Faehigkeit")
+        assert(BL.Fold("ÄÖÜ") == "äöü", "Umlaute in der Suche")
+        local sp = BL.Spots(69)
+        assert(#sp > 0 and sp[1].map == 1429 and #sp[1].points > 0 and sp[1].points[1][1] > 0
+            and sp[1].points[1][1] < 1, "Lagen des Wilden Waldwolfs")
+
+        -- Nicht-Jaeger: kein Reiter, kein Aufzeichnen.
+        G.UnitClass = function() return "Krieger", "WARRIOR", 1 end
+        TR.Show("beasts")
+        assert(TR.view ~= "beasts" and #WeintCodex.Navigation.SidebarButtons() == 2, "Wildtierkunde fuer Nicht-Jaeger")
+        G.UnitGUID = function() return "Creature-0-1-2-3-69-0000AB" end
+        G.UnitName = function() return "Wilder Waldwolf" end
+        G.UnitLevel = function() return 2 end
+        G.C_Map = { GetBestMapForUnit = function() return 1429 end,
+                    GetPlayerMapPosition = function() return { x = 0.5, y = 0.45 } end }
+        assert(BL.RecordTarget("target") == nil, "Krieger zeichnet auf")
+
+        -- Jaeger: Reiter, Aufzeichnen in SavedData, "neu".
+        G.UnitClass = function() return "Jäger", "HUNTER", 3 end
+        WeintCodex_SavedData.beasts = nil
+        BL.MarkLooked()
+        WeintCodex.Navigation.SwitchTo("wildtierkunde")
+        assert(TR.view == "beasts" and #WeintCodex.Navigation.SidebarButtons() == 3, "Reiter Wildtierkunde fehlt")
+        assert(BL.lastDraw and BL.lastDraw.rows > 0 and BL.lastDraw.families == 3 + #BD.F, "Seite nicht gezeichnet")
+        assert(BL.lastDraw.rows <= BL.MAX_ROWS, "Liste nicht gedeckelt")
+        G.time = G.time or os.time
+        local r = BL.RecordTarget("target")
+        local st = WeintCodex_SavedData.beasts
+        assert(r and st and st.seen[69] == r and r.level == 2 and r.map == 1429, "Anvisieren nicht gespeichert: " .. tostring(r) .. tostring(st) .. tostring(r and r.level) .. tostring(r and r.map))
+        st.seen[69].t = (st.lastLook or 0) + 5
+        assert(BL.IsNew(69), "gesehenes Tier nicht neu")
+        G.UnitGUID = function() return "Player-1-0000ABCD" end
+        assert(BL.RecordTarget("target") == nil, "Spieler aufgezeichnet")
+        G.UnitGUID = function() return nil end
+        assert(BL.RecordTarget("target") == nil, "geheime GUID aufgezeichnet")
+        G.UnitGUID = function() return "Creature-0-1-2-3-69-0000AB" end
+        -- Wildtierkunde: Tooltip nennt nichts -> unbekannt, nennt etwas -> Rang.
+        G.C_TooltipInfo = { GetUnit = function() return { lines = { { leftText = "Wilder Waldwolf" } } } end }
+        local lr = BL.OnLore("target")
+        assert(lr and lr.lore and lr.abilities == nil, "ohne Angabe Faehigkeiten behauptet")
+        G.C_TooltipInfo = { GetUnit = function() return { lines = { { leftText = "Beißen (Rang 1)" } } } end }
+        lr = BL.OnLore("target")
+        assert(lr.abilities and lr.abilities[1] == 1, "Rang aus dem Tooltip nicht gelesen")
+        -- Wildtierausbildung: je Charakter; ohne Schnittstelle unbekannt.
+        G.GetNumCrafts, G.GetCraftInfo = nil, nil
+        assert(BL.ReadTraining() == nil, "ohne Fenster etwas gelesen")
+        G.GetCraftDisplaySkillLine = function() return "Wildtierausbildung" end
+        G.GetNumCrafts = function() return 2 end
+        G.GetCraftInfo = function(i) if i == 1 then return "Beißen", "Rang 3", "used" end return "Ducken", "Rang 1", "available" end
+        local kn = BL.ReadTraining()
+        assert(kn and kn[1] == 3 and kn[4] == 1, "Wildtierausbildung nicht gelesen")
+        -- Favorit, Detailbereich, Pfeil.
+        assert(BL.ToggleFav(69) == true and #BL.Search("", "fav") == 1, "Favorit")
+        local blocks = BL.InspectorBlocks(69)
+        local labels = {}
+        for _, bl in ipairs(blocks) do
+            if bl.type == "button" then labels[bl.label] = true end
+            if bl.type == "rows" then for _, row in ipairs(bl.rows) do labels[row.label .. "=" .. tostring(row.value)] = true end end
+        end
+        assert(labels["Auf der Karte zeigen"] and labels["Pfeil hierhin"] and labels["Herkunft=Aus Classic"], "Detailbereich")
+        local got
+        if QA then QA.SetCustom = function(t) got = t end end
+        assert(BL.Guide(69) and got and got.map == 1429 and got.title:find("Waldwolf", 1, true), "Pfeil hierhin")
+        BL.selected = 69
+        BL.Draw()
+        BL.ToggleFav(69)
+    end)
+    G.UnitClass, G.UnitGUID, G.UnitName, G.UnitLevel, G.C_TooltipInfo, G.GetNumCrafts,
+        G.GetCraftInfo, G.GetCraftDisplaySkillLine, G.C_Map = unpack(saved, 1, 9)
+    if QA then QA.SetCustom = oldSet end
+    BL.selected, BL.filter, BL.query = nil, "all", ""
+    TR.view = "spells"
+    if WeintCodex_SavedData then WeintCodex_SavedData.beasts = nil end
+    Check(ok, "Wildtierkunde: Bestand, Suche, Reiter nur fuer Jaeger, Aufzeichnen, Wildtierausbildung, Pfeil"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

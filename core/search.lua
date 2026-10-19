@@ -29,7 +29,18 @@ local CATEGORY_LABEL = {
     boss      = "BOSS",
     material  = "MATERIAL",
     character = "CHARAKTER",
+    trainer   = "LEHRER",
+    quest     = "KLASSENQUEST",
+    profession = "BERUF",
+    recipe    = "REZEPT",
+    beast     = "WILDTIER",
+    item      = "TASCHEN",
+    book      = "BUCH",
 }
+
+-- Hoechstens so viele Treffer je Art: sonst fuellten 2000 Rezepte mit
+-- "Leinen" die Liste, und der Lehrer kaeme nie zu Wort.
+local MAX_PER_CATEGORY = 4
 
 -- Die Navigationseintraege, als Treffer. Der Schluessel ist derselbe wie
 -- in core/navigation.lua; gesperrte Bereiche faengt GoToTab selbst ab
@@ -49,6 +60,7 @@ local PAGES = {
     { id = "dungeons",    label = "Dungeons" },
     { id = "gruppe",      label = "Gruppencheck" },
     { id = "raids",       label = "Schlachtzüge" },
+    { id = "anmeldung",   label = "Raidplanung" },
     { id = "anmeldung",   label = "Anmeldung" },
     { id = "kalender",    label = "Kalender" },
     { id = "materialien", label = "Materialien" },
@@ -63,9 +75,28 @@ WeintCodex.Search.PAGES = PAGES
 --------------------------------------------------
 -- Index aufbauen
 --------------------------------------------------
--- Klein genug, um bei jeder Eingabe neu gebaut zu werden - so sind
--- frisch importierte Daten und eine gerade erst eingetroffene
--- Profilaenderung ohne weiteres Zutun enthalten.
+-- Zwei Teile (6.x, "die Suchleiste muss auch fuer Lehrer, Berufe,
+-- Taschen funktionieren"): der FESTE Index (Seiten, Schlachtzuege,
+-- Dungeons, Lehrer, Klassenquests, Berufe, Buecher) wird beim ersten
+-- Suchen gebaut und gemerkt - mit ueber tausend Rezepten ist er nicht
+-- mehr klein genug fuer jeden Tastendruck. Der WECHSELNDE Teil
+-- (Materialien mit Freigabe, Twinks, Taschen) bleibt je Eingabe neu, so
+-- sind Importe, Profilaenderungen und neu gelesene Taschen sofort drin.
+-- Namen, die der Client erst nachlaedt (Zauber, Quests), machen den
+-- festen Index "unfertig"; er wird dann hoechstens alle zwei Sekunden
+-- neu gebaut, bis alle da sind.
+
+-- Vergleich ohne Gross/Klein und ohne Umlaute: "Ruestung", "rüstung" und
+-- "RÜSTUNG" finden dasselbe. Byteweise sicher: ersetzt werden nur ganze
+-- UTF-8-Folgen.
+local FOLD = {
+    ["ä"] = "ae", ["ö"] = "oe", ["ü"] = "ue", ["Ä"] = "ae", ["Ö"] = "oe", ["Ü"] = "ue", ["ß"] = "ss",
+}
+local function Fold(text)
+    text = tostring(text or ""):gsub("\195[\132\150\156\164\182\188\159]", FOLD)
+    return (text:lower())
+end
+WeintCodex.Search.Fold = Fold
 
 local function GoTo(tabId)
     local nav = WeintCodex.Navigation
@@ -74,8 +105,12 @@ local function GoTo(tabId)
     elseif nav.SwitchTo then nav.SwitchTo(tabId) end
 end
 
-local function BuildIndex()
-    local index = {}
+local function Add(index, category, label, onClick)
+    index[#index + 1] = { category = category, label = label, key = Fold(label), onClick = onClick }
+end
+
+local function BuildStatic()
+    local index, complete = {}, true
 
     for _, page in ipairs(PAGES) do
         index[#index + 1] = {
@@ -151,7 +186,96 @@ local function BuildIndex()
         end
     end
 
-    -- Nur die Materialien sind gildenintern. BuildIndex laeuft bei jedem
+    -- LEHRER: die Zauber der eigenen Klasse (dieselbe Liste wie die Seite),
+    -- mit Rang und Stufe. Der Name kommt allein vom Client - fehlt er noch,
+    -- steht der Zauber (noch) nicht im Index.
+    local TR, T = WeintCodex.Trainer, WeintCodex.TrainerData
+    if TR and T and T.Spells and TR.PlayerState and TR.SpellInfo then
+        local st = TR.PlayerState()
+        local seen = {}
+        for _, sp in ipairs(st.class and T.Spells(st.class, st.race, st.faction) or {}) do
+            local name, sub = TR.SpellInfo(sp.id)
+            if not name then complete = false
+            elseif not seen[sp.id] then
+                seen[sp.id] = true
+                Add(index, "trainer", name .. (sub and ("  · " .. sub) or "") .. "  · Lehrer, Stufe " .. sp.level,
+                    function() GoTo("lehrer") end)
+            end
+        end
+    end
+
+    -- KLASSENQUESTS: Titel vom Client, sonst der Rueckfall des Bestands.
+    local CQ = WeintCodex.ClassQuests
+    if CQ and CQ.List and CQ.Title and TR and TR.PlayerState then
+        local st = TR.PlayerState()
+        for _, q in ipairs(CQ.List(st.class, CQ.PlayerRace and CQ.PlayerRace() or nil)) do
+            local title = CQ.Title(q)
+            if title then
+                Add(index, "quest", title .. (q.lv and ("  · Klassenquests, Stufe " .. q.lv) or "  · Klassenquests"),
+                    function() GoTo("klassenquests") end)
+            end
+        end
+    end
+
+    -- BERUFE und ihre Rezepte: oeffnet den Beruf, das Rezept im Detail.
+    local PRO, P = WeintCodex.Professions, WeintCodex.ProfessionData
+    if PRO and P and PRO.Recipes and PRO.Select then
+        for _, p in ipairs(P.PROFS or {}) do
+            local key = p.key
+            local pname = PRO.ProfName(key)
+            Add(index, "profession", pname, function() PRO.Select(key) GoTo("berufe") end)
+            for _, r in ipairs(PRO.Recipes(key)) do
+                if r.name then
+                    Add(index, "recipe", r.name .. "  · Beruf: " .. pname,
+                        function() PRO.Select(key) PRO.selRecipe = r GoTo("berufe") end)
+                end
+            end
+        end
+    end
+
+    -- BUECHER der Bibliothek.
+    for _, b in ipairs((WeintCodex.BooksData and WeintCodex.BooksData.books) or {}) do
+        if type(b[4]) == "string" then
+            Add(index, "book", b[4] .. "  · Bücher", function() GoTo("buecher") end)
+        end
+    end
+
+    -- WILDTIERE (nur Jaeger, Reiter Wildtierkunde unter Lehrer).
+    local BL = WeintCodex.Beasts
+    local BD = WeintCodex.BeastData
+    if BL and BL.IsHunter and BL.IsHunter() and BD and type(BD.b) == "table" then
+        for id in pairs(BD.b) do
+            local be = BL.Get(id)
+            if be and type(be.name) == "string" then
+                local fam = BL.Family and BL.Family(be.family)
+                Add(index, "beast", be.name .. "  · Wildtier" .. ((type(fam) == "table" and type(fam.name) == "string") and (": " .. fam.name) or ""),
+                    function() BL.filter, BL.query, BL.selected = "all", "", id GoTo("wildtierkunde") end)
+            end
+        end
+    end
+
+    for _, e in ipairs(index) do e.key = e.key or Fold(e.label) end
+    return index, complete
+end
+
+local staticIndex, staticComplete, staticAt
+
+local function StaticIndex()
+    local now = (GetTime and GetTime()) or 0
+    if not staticIndex or (not staticComplete and now - (staticAt or 0) >= 2) then
+        staticIndex, staticComplete = BuildStatic()
+        staticAt = now
+    end
+    return staticIndex
+end
+
+-- Fuer den Prueflauf und nach Datenwechseln: beim naechsten Suchen neu.
+function WeintCodex.Search.Reset() staticIndex = nil end
+
+local function BuildDynamic()
+    local index = {}
+
+    -- Nur die Materialien sind gildenintern. Dieser Teil laeuft bei jedem
     -- Tastendruck neu und greift eine Profilaenderung damit sofort auf.
     local matAllowed = not (WeintCodex.Access and WeintCodex.Access.Can)
         or WeintCodex.Access.Can("materials.view")
@@ -178,21 +302,57 @@ local function BuildIndex()
         }
     end
 
+    -- TASCHEN: Gegenstaende aller einbezogenen Charaktere (dieselben
+    -- Filter wie Tooltip und Gold: Realm, Fraktion, ausgeschlossen).
+    -- Ein Treffer je Gegenstand und Charakter; oeffnet die Seite bei ihm.
+    local IV, BG = WeintCodex.UIInventory, WeintCodex.Bags
+    local st = IV and IV.Store and IV.Store(false)
+    if st and BG and IV.Included then
+        local _, _, myRealm = IV.Me()
+        local myFaction = IV.MyFaction and IV.MyFaction()
+        local names = st.names or {}
+        for ckey, c in pairs(st.chars or {}) do
+            if IV.Included(ckey, c, myRealm, myFaction) then
+                local who = c.name or ckey
+                local have = {}
+                for _, part in ipairs({ "bags", "bank", "worn" }) do
+                    for id in pairs(c[part] or {}) do
+                        local nm = names[id]
+                        if not have[id] and type(nm) == "string" then
+                            have[id] = true
+                            index[#index + 1] = { category = "item", label = nm .. "  · Taschen: " .. who,
+                                key = Fold(nm), onClick = function() BG.sel = ckey GoTo("taschen") end }
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    for _, e in ipairs(index) do e.key = e.key or Fold(e.label) end
     return index
 end
 
 local function Filter(query)
-    query = query:lower()
-    local index = BuildIndex()
-    local matches = {}
-    for _, entry in ipairs(index) do
-        if entry.label:lower():find(query, 1, true) then
-            matches[#matches + 1] = entry
-            if #matches >= MAX_RESULTS then break end
+    query = Fold(query)
+    if query == "" then return {} end
+    local matches, perCat = {}, {}
+    local function Scan(index)
+        for _, entry in ipairs(index) do
+            if #matches >= MAX_RESULTS then return end
+            local n = perCat[entry.category] or 0
+            if n < (entry.category == "page" and MAX_RESULTS or MAX_PER_CATEGORY)
+                    and entry.key:find(query, 1, true) then
+                matches[#matches + 1] = entry
+                perCat[entry.category] = n + 1
+            end
         end
     end
+    Scan(StaticIndex())
+    Scan(BuildDynamic())
     return matches
 end
+WeintCodex.Search.Filter = Filter
 
 --------------------------------------------------
 -- Dropdown befuellen

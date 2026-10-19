@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.83.0.0] – 2026-10-19
+
+### Neu
+- Wildtierkunde (`modules/beasts.lua`, `data/beasts.lua` erzeugt von
+  `.github/scripts/import_beasts.py`; Daten: pfQuest MIT, cMaNGOS GPL-3.0,
+  EG Link CC BY 4.0, Spieldaten) als Reiter unter Lehrer, nur für Jäger.
+- Suche (`core/search.lua`): Lehrer, Klassenquests, Berufe/Rezepte, Taschen,
+  Bücher, Wildtiere, alle Seiten; `Search.Fold` für Groß/Klein und Umlaute.
+
 ## [6.82.2.0] – 2026-10-19
 
 ### Behoben

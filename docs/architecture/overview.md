@@ -368,6 +368,23 @@ nicht gemessen, damit Spiel und Prüflauf dieselbe Seite bauen. Was aus
 dem Bestand des Bots wächst, landet in der Detailkarte — der einen
 Fläche der Seite, die rollen darf.
 
+### Die Suche (Titelleiste, Strg+K)
+
+`core/search.lua` findet Seiten (jeder Eintrag der Spalte und jeder Reiter,
+auch „Raidplanung", „Import", „Klassenquests"), Schlachtzüge, Dungeons,
+Bosse, Lehrerzauber der eigenen Klasse (Name vom Client, mit Rang und
+Stufe), Klassenquests, Berufe und ihre Rezepte, Bücher, Materialien (nur
+mit Freigabe), Twinks und die Gegenstände in den Taschen aller
+einbezogenen Charaktere (`IV.Included`: Realm, Fraktion, ausgeschlossen).
+Der feste Teil wird beim ersten Suchen gebaut und gemerkt (unfertig,
+solange der Client Namen nachlädt: höchstens alle 2 s neu), der
+wechselnde Teil (Materialien, Twinks, Taschen) je Eingabe. Verglichen wird
+ohne Groß/Klein und ohne Umlaute (`Search.Fold`); höchstens 8 Treffer,
+je Art 4 (Seiten ausgenommen). Ein Treffer landet auf dem Treffer: Beruf
+und Rezept vorgewählt (`PRO.Select`, `PRO.selRecipe`), Taschen beim
+Charakter (`Bags.sel`). Die Art steht links, Beruf bzw. Charakter hinter
+dem Namen („· Beruf: Schneiderei", „· Taschen: Name").
+
 ## Der Seitenkopf
 
 `WeintCodex.PageHead(parent, opts)` ist der **einzige** Ort, an dem ein

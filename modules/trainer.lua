@@ -629,19 +629,30 @@ end
 -- "Klassenquests" (modules/classquests.lua). TR.view merkt sich den Reiter.
 TR.view = "spells"
 
+-- Dritter Reiter "Wildtierkunde" (modules/beasts.lua), nur fuer Jaeger.
 function TR.Show(view)
-    if view == "quests" or view == "spells" then TR.view = view end
+    local BL = WeintCodex.Beasts
+    local hunter = BL and BL.IsHunter and BL.IsHunter() or false
+    if view == "quests" or view == "spells" or (view == "beasts" and hunter) then TR.view = view end
+    if TR.view == "beasts" and not hunter then TR.view = "spells" end
     local nav = WeintCodex.Navigation
-    nav.BuildSidebar("Lehrer", {
+    local items = {
         { label = "Zauber und Waffen", onClick = function() TR.view = "spells" TR.DrawView() end },
         { label = "Klassenquests", onClick = function() TR.view = "quests" TR.DrawView() end },
-    })
-    nav.ActivateIndex(TR.view == "quests" and 2 or 1)
+    }
+    if hunter then
+        items[3] = { label = "Wildtierkunde", onClick = function() TR.view = "beasts" TR.DrawView() end }
+    end
+    nav.BuildSidebar("Lehrer", items)
+    nav.ActivateIndex(TR.view == "beasts" and 3 or TR.view == "quests" and 2 or 1)
 end
 
 function TR.DrawView()
     local CQ = WeintCodex.ClassQuests
-    if TR.view == "quests" and CQ and CQ.Draw then
+    local BL = WeintCodex.Beasts
+    if TR.view == "beasts" and BL and BL.Draw then
+        BL.Draw()
+    elseif TR.view == "quests" and CQ and CQ.Draw then
         CQ.Draw()
     else
         TR.DrawSpells()

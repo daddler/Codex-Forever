@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.82.2.0
+## Version: 6.83.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -103,6 +103,8 @@ data/trainer.lua
 data/professions.lua
 # Klassenquests und Klassenlehrer (6.15.0.0, erzeugt); gelesen von modules/classquests.lua.
 data/classquests.lua
+# Wildtierkunde des Jaegers (erzeugt); gelesen von modules/beasts.lua.
+data/beasts.lua
 # Seltene Gegner (6.16.0.0, erzeugt); gelesen von ui/rares.lua.
 data/rares.lua
 # Buecher der Bibliothek (6.56.0.0, erzeugt); gelesen von modules/library.lua.
@@ -158,6 +160,7 @@ modules/charakter.lua
 modules/trainer.lua
 # Klassenquests (6.15.0.0): zweiter Reiter unter Lehrer.
 modules/classquests.lua
+modules/beasts.lua
 # Berufe (6.14.0.0): Rezepte nach deiner Fertigkeit, Lehrer auf der Karte.
 modules/professions.lua
 # Taschen (6.25.0.0): Bestand aller Charaktere als Seite; Daten aus ui/inventory.lua.

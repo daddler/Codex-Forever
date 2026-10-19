@@ -103,6 +103,8 @@ local SUBTABS = {
     import = { tab = "companion", sub = "import" },
     -- 6.15.0.0: Klassenquests als Reiter unter Lehrer.
     klassenquests = { tab = "lehrer", sub = "quests" },
+    -- Wildtierkunde als dritter Reiter unter Lehrer (nur Jaeger).
+    wildtierkunde = { tab = "lehrer", sub = "beasts" },
     -- 6.61.1.0: Kalender als Gruppe unter Raidplanung.
     kalender = { tab = "anmeldung", sub = "kalender" },
 }

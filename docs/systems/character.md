@@ -220,6 +220,43 @@ ist. **Klassenlehrer** (rechts): deine Fraktion, der nächstgelegene oben
 Quest, die jetzt einen Zauber lehrt – vor den Dungeons, weil es den Zauber
 nur dort gibt.
 
+## Wildtierkunde *(Jäger, dritter Reiter unter Lehrer)*
+
+Wunsch des Besitzers: ein Buch der zähmbaren Tiere für den Jäger. Eigener
+Code und eigenes Aussehen (`modules/beasts.lua`); nur die **Daten** stammen
+aus den Datendateien eines Jäger-Addons für Forever, dessen Code und Grafik
+„All rights reserved“ sind – davon ist nichts übernommen, und kein Text im
+Spiel nennt es.
+
+- **Bestand:** `data/beasts.lua`, **erzeugt** von
+  `.github/scripts/import_beasts.py` (liest die Dateien, führt sie nie aus).
+  Je Tier ein Text wie in `data/questdb.lua` (~80 KB, 639 Tiere, 18
+  Familien, 23 Fähigkeiten, Lagen für 525 Tiere, höchstens 10 Punkte je
+  Gebiet). Herkunft im Kopf der Datei (cMaNGOS GPL-3.0, pfQuest MIT,
+  warcraft.wiki.gg CC BY-SA, EG Link CC BY 4.0, Client-Tabellen). Art
+  `classic`; als neu in Forever geführte Tiere `community`. Gebiete ohne
+  bekannte uiMapID (Instanzen, neue Inseln) behalten den Namen, bekommen
+  aber keine Kartenpunkte.
+- **Nur für Jäger:** `TR.Show` baut den Reiter nur, wenn `UnitClass` HUNTER
+  sagt; `/wc wildtiere` bzw. `Navigation.SUBTABS.wildtierkunde`.
+- **Seite:** links Familien (dazu „Alle“, „Favoriten“, „Neu gesehen“),
+  rechts Suche (Name, Familie, Gebiet, Fähigkeit; mit Text über alle
+  Familien) und Liste in der Scrollfläche, gedeckelt auf `BL.MAX_ROWS`. Der
+  Detailbereich zeigt das gewählte Tier mit Art („Aus Classic“ /
+  „Unbestätigt“) und `S.Why`, „Auf der Karte zeigen“ (Marke der Questkarte
+  am nächsten Spawn, eigene Punkte an allen Spawns des Gebiets),
+  „Pfeil hierhin“ (`QA.SetCustom`) und Favorit.
+- **Aufzeichnen** (`WeintCodex_SavedData.beasts`, je Konto): Anvisieren
+  eines Tieres aus dem Bestand speichert Name, Stufe, Karte; nach
+  Wildtierkunde (1462, `UNIT_SPELLCAST_SUCCEEDED`) zusätzlich, was
+  `C_TooltipInfo.GetUnit` an Fähigkeiten mit Rang nennt – nennt er nichts,
+  bleibt es „unbekannt“. „Neu“ = gesehen seit dem letzten Blick (gilt für
+  die Sitzung).
+- **Begleiter:** was er kann, liest `BL.ReadTraining` aus dem Fenster der
+  Wildtierausbildung (klassisches `GetCraft*`, je Charakter). **Auf Forever
+  nicht gemessen** – ebenso wenig, ob der Tooltip nach Wildtierkunde die
+  Fähigkeiten nennt. Ohne Antwort: „unbekannt“, nie „keine“.
+
 ## Berufe *(seit 6.14.0.0)*
 
 `modules/professions.lua` (`WeintCodex.Professions`), Navigation „Berufe“

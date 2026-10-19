@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.83.0.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFWildtierkunde für Jäger|r – neuer Reiter unter „Lehrer“, nur für Jäger: alle zähmbaren Tiere nach Familien, mit Stufe, Zonen, Angriffstempo und was sie lehren, Suche, Favoriten und „neu gesehen“. Wildtierkunde auf ein Tier wirken oder es anvisieren merkt es sich. „Auf der Karte zeigen“ und „Pfeil hierhin“ führen zu den Fundorten. /wc wildtiere",
+            "|cff7C6CFFSuche|r – findet jetzt auch Zauber beim Lehrer, Klassenquests, Berufe und Rezepte, Gegenstände in den Taschen aller Charaktere, Bücher, Wildtiere und jede Seite beim Namen. Umlaute dürfen als ae, oe, ue getippt werden.",
+        },
+    },
+    {
         version = "6.82.2.0",
         date    = "19.10.2026",
         notes   = {
