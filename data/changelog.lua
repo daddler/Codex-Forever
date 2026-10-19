@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.84.6.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFSammel-Atlas|r – Ringe auf der Minikarte kleiner und sauberer: dünn, mit weichem Schatten statt dickem dunklem Rand. Der Knopf „Weiter“ am Pfeil ist jetzt rund wie die Farm-Leiste.",
+        },
+    },
+    {
         version = "6.84.5.0",
         date    = "19.10.2026",
         notes   = {

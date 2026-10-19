@@ -105,15 +105,21 @@ def fish():
 
 
 def ring():
-    # 6.83.4.0: Minikarte - ein offener Ring, damit das echte Vorkommen des
-    # Spiels in der Mitte sichtbar bleibt.
-    m = blank()
-    dm = ImageDraw.Draw(m)
-    # 6.84.1.0: duenner und mit grossem Loch - das Symbol des Spiels passt
-    # ganz hinein (unter die Minikarte legen geht nicht, siehe gatheratlas).
-    dm.ellipse((14, 14, BIG - 14, BIG - 14), fill=255)
-    dm.ellipse((40, 40, BIG - 40, BIG - 40), fill=0)
-    return compose(m)
+    # 6.84.6.0 (Beta-Test: "sehr gross, sieht nicht gut aus"): ein sauberer,
+    # duenner Ring ohne dunklen Rand des Symbol-Stils, nur ein weicher
+    # Schatten aussen, damit er auf hellem Boden lesbar bleibt. Eingefaerbt
+    # wird im Spiel.
+    from PIL import ImageFilter as F
+    size = BIG
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    sh = Image.new("L", (size, size), 0)
+    ImageDraw.Draw(sh).ellipse((30, 30, size - 30, size - 30), outline=255, width=34)
+    sh = sh.filter(F.GaussianBlur(10))
+    img.paste((0, 0, 0, 255), (0, 0), sh.point(lambda v: int(v * 0.55)))
+    rg = Image.new("L", (size, size), 0)
+    ImageDraw.Draw(rg).ellipse((40, 40, size - 40, size - 40), outline=255, width=20)
+    img.paste((255, 255, 255, 255), (0, 0), rg)
+    return img.resize((SIZE, SIZE), Image.LANCZOS)
 
 
 def main():

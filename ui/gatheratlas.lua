@@ -90,7 +90,7 @@ GA.REACH = 15              -- m: Halt erreicht (6.84.2.0: 10 war zu knapp)
 GA.MAX_PINS = 400          -- Symbole auf der Weltkarte
 GA.MAX_MINI = 60
 GA.PIN = 14
-GA.MINI_PIN = 26
+GA.MINI_PIN = 18   -- 6.84.6.0: 26 war zu gross
 -- 6.84.1.0 (Beta-Test: "immer noch schwer zu sehen - eine Ebene tiefer
 -- waere super"): tiefer geht nicht - die Vorkommen zeichnet die Minikarte
 -- selbst, auf ihrem eigenen deckenden Bild; alles von Addons liegt
@@ -100,7 +100,7 @@ GA.MINI_PIN = 26
 -- ueberdeckt"): auf der Minikarte ein offener Ring statt des Symbols - das
 -- Vorkommen des Spiels steht sichtbar in der Mitte; nur gedeckt gezeigt.
 GA.MINI_RING = K.MEDIA .. "gather_ring"
-GA.MINI_ALPHA = 0.7
+GA.MINI_ALPHA = 0.85
 GA.MINI_FADE, GA.MINI_GONE = 34, 10   -- Bildpunkte vom Spielerpfeil (6.84.3.0)
 GA.TICK = 0.1
 GA.MM_TICK = 0.2
@@ -466,16 +466,32 @@ end
 -- 6.84.5.0 (Wunsch): kleiner Knopf "Weiter" rechts am Questpfeil - nur
 -- solange einer Farmroute gefolgt wird und der Pfeil steht. Ein normaler
 -- Knopf (nichts Geschuetztes), klickbar auch im Kampf.
+local Paint    -- Pille malen (weiter unten, Farm-Leiste)
 function GA.SyncSkipButton()
     local qa = _G.WeintCodexQuestArrow
     local want = GA.following and type(qa) == "table" and qa.IsShown and qa:IsShown()
     local b = GA.skipButton
-    if want and not b and WeintCodex.CreateButton then
-        b = WeintCodex.CreateButton(UIParent, { text = "Weiter", kind = "secondary", height = 20, size = 11,
-                                               onClick = function() GA.Skip() end })
-        b:SetWidth(64)
+    if want and not b then
+        -- 6.84.6.0 (Beta-Test mit Bild: "eckig"): Pille wie die Farm-Leiste.
+        b = CreateFrame("Button", nil, UIParent)
+        b:SetSize(70, 20)
         b:SetPoint("LEFT", qa, "RIGHT", 2, 18)
         b:SetFrameStrata("MEDIUM")
+        b.text = K.NewText(b, 11)
+        b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
+        b.text:SetText("Weiter ›")
+        b.fill = b:CreateTexture(nil, "BACKGROUND")
+        b.fill:SetPoint("TOPLEFT", b, "TOPLEFT", 10, 0)
+        b.fill:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -10, 0)
+        b.capL = b:CreateTexture(nil, "BACKGROUND")
+        b.capL:SetSize(20, 20)
+        b.capL:SetPoint("LEFT", b, "LEFT", 0, 0)
+        b.capL:SetTexture(K.MEDIA .. "disc")
+        b.capR = b:CreateTexture(nil, "BACKGROUND")
+        b.capR:SetSize(20, 20)
+        b.capR:SetPoint("RIGHT", b, "RIGHT", 0, 0)
+        b.capR:SetTexture(K.MEDIA .. "disc")
+        b:SetScript("OnClick", function() GA.Skip() end)
         b:SetScript("OnEnter", function(self)
             local tt = _G.GameTooltip
             if not tt then return end
@@ -483,8 +499,13 @@ function GA.SyncSkipButton()
             tt:SetText("Halt überspringen", 1, 1, 1)
             tt:AddLine("Der Pfeil zeigt zum nächsten Halt der Farmroute.", nil, nil, nil, true)
             tt:Show()
+            Paint(self, true, true)
         end)
-        b:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+        b:SetScript("OnLeave", function(self)
+            if _G.GameTooltip then _G.GameTooltip:Hide() end
+            Paint(self, false, false)
+        end)
+        Paint(b, false, false)
         GA.skipButton = b
     end
     if b then b:SetShown(want and true or false) end
@@ -1159,7 +1180,7 @@ local function Chip(bar, f, x)
     return b, bw
 end
 
-local function Paint(b, on, hot)
+Paint = function(b, on, hot)
     local a, base = K.Highlight(), WeintCodex.GameColors.kachelFill
     local r, g, bl
     if on then
