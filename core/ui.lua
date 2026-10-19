@@ -3327,16 +3327,24 @@ function WeintCodex.ReloadPrompt()
         f:SetSize(260, 92)
         f:SetPoint("CENTER", UIParent, "CENTER", 0, 120)
         f:SetFrameStrata("DIALOG")
-        WeintCodex.CreateSurface(f, { tone = "plain", radius = 10, backdrop = "bgDark" }):SetAllPoints(f)
-        local t = WeintCodex.Label(f, "Oberfläche neu laden?", { size = 13 })
-        t:SetPoint("TOP", f, "TOP", 0, -16)
-        local go = WeintCodex.CreateButton(f, { text = "Neu laden (Enter)", kind = "primary", height = 26, size = 12 })
+        -- 6.87.8.0 (Beta-Test mit Bild: leeres Fenster, nur "Abbrechen"):
+        -- Text und Knoepfe lagen unter der Flaeche. Jetzt alles AUF der
+        -- Flaeche, Knoepfe als Pillen (Radius = halbe Hoehe).
+        local surf = WeintCodex.CreateSurface(f, { tone = "plain", radius = 10, backdrop = "bgDark" })
+        surf:SetAllPoints(f)
+        local lvl = (surf:GetFrameLevel() or 1) + 2
+        local t = WeintCodex.Label(surf, "Oberfläche neu laden?", { size = 13, color = "textBright" })
+        t:SetPoint("TOP", surf, "TOP", 0, -18)
+        local go = WeintCodex.CreateButton(surf, { text = "Neu laden (Enter)", kind = "primary", height = 26, size = 12,
+                                                   radius = 13, backdrop = "bgDark" })
         go:SetWidth(150)
-        go:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 14, 14)
-        local no = WeintCodex.CreateButton(f, { text = "Abbrechen", kind = "secondary", height = 26, size = 12,
-                                                onClick = function() f:Hide() end })
+        go:SetPoint("BOTTOMLEFT", surf, "BOTTOMLEFT", 14, 14)
+        go:SetFrameLevel(lvl)
+        local no = WeintCodex.CreateButton(surf, { text = "Abbrechen", kind = "secondary", height = 26, size = 12,
+                                                   radius = 13, backdrop = "bgDark", onClick = function() f:Hide() end })
         no:SetWidth(80)
-        no:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -14, 14)
+        no:SetPoint("BOTTOMRIGHT", surf, "BOTTOMRIGHT", -14, 14)
+        no:SetFrameLevel(lvl)
         WeintCodex.AttachReload(go)
         -- Fuer Enter ein benannter gesicherter Knopf (Belegung braucht Namen).
         local ok, key = pcall(CreateFrame, "Button", "WeintCodexReloadKey", f, "SecureActionButtonTemplate")
@@ -3357,6 +3365,8 @@ function WeintCodex.ReloadPrompt()
             if ClearOverrideBindings and not InCombatLockdown() then ClearOverrideBindings(self) end
         end)
         table.insert(UISpecialFrames, "WeintCodexReloadPrompt")
+        -- Erst verbergen, damit das erste Show() OnShow ausloest (Enter).
+        f:Hide()
         rlFrame = f
     end
     rlFrame:Show()

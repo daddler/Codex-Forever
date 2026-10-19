@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.87.8.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFF/rl|r – das Fenster war leer bis auf „Abbrechen“: Text und Knopf „Neu laden“ lagen unter der Fläche. Jetzt sichtbar, beide Knöpfe rund; Enter funktioniert auch beim ersten Öffnen.",
+        },
+    },
+    {
         version = "6.87.7.0",
         date    = "19.10.2026",
         notes   = {

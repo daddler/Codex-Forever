@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.87.8.0] – 2026-10-19
+
+### Behoben
+- `/rl`: Inhalt auf die Fläche gelegt, Knöpfe mit Radius 13; Fenster nach
+  dem Bau verborgen, damit OnShow die Enter-Belegung setzt.
+
 ## [6.87.7.0] – 2026-10-19
 
 ### Behoben
