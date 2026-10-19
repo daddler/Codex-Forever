@@ -90,7 +90,7 @@ GA.REACH = 15              -- m: Halt erreicht (6.84.2.0: 10 war zu knapp)
 GA.MAX_PINS = 400          -- Symbole auf der Weltkarte
 GA.MAX_MINI = 60
 GA.PIN = 14
-GA.MINI_PIN = 18   -- 6.84.6.0: 26 war zu gross
+GA.MINI_PIN = 22   -- 6.84.6.0: 26 war zu gross; 6.84.7.0: 18 verdeckte das Vorkommen - duenner Ring, grosses Loch
 -- 6.84.1.0 (Beta-Test: "immer noch schwer zu sehen - eine Ebene tiefer
 -- waere super"): tiefer geht nicht - die Vorkommen zeichnet die Minikarte
 -- selbst, auf ihrem eigenen deckenden Bild; alles von Addons liegt

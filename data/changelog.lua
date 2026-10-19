@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.84.7.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFSammel-Atlas auf der Minikarte|r – der Ring ist hauchdünn mit großem Loch: ein Vorkommen des Spiels steht ganz frei darin und wird nicht mehr angeschnitten.",
+        },
+    },
+    {
         version = "6.84.6.0",
         date    = "19.10.2026",
         notes   = {

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.84.7.0] – 2026-10-19
+
+### Geändert
+- `gather_ring.tga` dünner mit größerem Loch, `GA.MINI_PIN` 22.
+
 ## [6.84.6.0] – 2026-10-19
 
 ### Geändert
