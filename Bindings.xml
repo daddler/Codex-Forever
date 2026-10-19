@@ -1,0 +1,7 @@
+<Bindings>
+	<!-- WeintCodex: Tastenbelegung (6.84.4.0). Erscheint im Spiel unter
+	     Tastenbelegung -> AddOns -> WeintCodex. Nur ungeschuetzter Code. -->
+	<Binding name="WEINTCODEX_FARM_SKIP" header="WEINTCODEX" category="ADDONS">
+		if WeintCodex and WeintCodex.UIGatherAtlas then WeintCodex.UIGatherAtlas.Skip() end
+	</Binding>
+</Bindings>

@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.84.4.0] – 2026-10-19
+
+### Neu
+- Farmroute: `GA.Skip` über Knopf, Taste (`Bindings.xml`,
+  `WEINTCODEX_FARM_SKIP`) und `/wcui weiter`; im Kampf nur Pfeil, kein
+  Wegpunkt des Spiels.
+
 ## [6.84.3.0] – 2026-10-19
 
 ### Geändert

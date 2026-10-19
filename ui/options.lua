@@ -1599,6 +1599,12 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    if msg == "weiter" or msg == "skip" then
+        -- 6.84.4.0: Farmroute - diesen Halt auslassen.
+        local GA = WeintCodex.UIGatherAtlas
+        if GA and GA.Skip then GA.Skip() end
+        return
+    end
     if msg == "sammeln" or msg == "atlas" or msg == "gather" then
         -- 6.82.0.0: Sammel-Atlas und Suche wechseln (Komfort, Seite "Sammeln").
         O.Show("comfort", O.PageIndex("comfort", "sammeln"))

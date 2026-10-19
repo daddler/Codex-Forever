@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.84.4.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFFarmroute: Halt überspringen|r – zu viele Gegner an einem Halt? Knopf „Halt überspringen“ in der Farm-Leiste, eine eigene Taste (Tastenbelegung → AddOns → WeintCodex) oder /wcui weiter – der Pfeil zeigt zum nächsten. Taste und Befehl gehen auch im Kampf.",
+        },
+    },
+    {
         version = "6.84.3.0",
         date    = "19.10.2026",
         notes   = {

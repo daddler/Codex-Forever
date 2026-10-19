@@ -414,6 +414,20 @@ function GA.Advance()
     return PointTo()
 end
 
+_G.BINDING_HEADER_WEINTCODEX = "WeintCodex"
+_G.BINDING_NAME_WEINTCODEX_FARM_SKIP = "Farmroute: Halt überspringen"
+
+-- 6.84.4.0 (Wunsch: "im Kampf einen Halt auslassen, zu viele Mobs"):
+-- von Hand weiter - Knopf, Taste (Bindings.xml) und /wcui weiter. Nur
+-- Pfeil und eigene Daten, nichts Geschuetztes - geht auch im Kampf.
+function GA.Skip()
+    if not GA.following then
+        Say("Du folgst gerade keiner Farmroute.")
+        return false
+    end
+    return GA.Advance()
+end
+
 -- Abstand des Spielers zum aktuellen Halt in Metern (oder nil).
 local stopWorld = { 0, 0, 0 }
 function GA.YardsToStop()
@@ -1022,6 +1036,7 @@ GA.FARM = {
     { key = "build",  text = "Route erstellen", tip = "Kürzester Rundweg durch alle Fundstellen der Auswahl auf dieser Karte." },
     { key = "edit",   text = "Route ändern",    tip = "Fundstellen auf der Karte anklicken: hinzufügen oder entfernen, in Klickreihenfolge. Noch einmal klicken: fertig." },
     { key = "follow", text = "Route folgen",    tip = "Der Questpfeil führt von Halt zu Halt, im Kreis." },
+    { key = "skip",   text = "Halt überspringen", tip = "Beim Folgen: diesen Halt auslassen, der Pfeil zeigt zum nächsten. Geht auch im Kampf – per Taste (Tastenbelegung → WeintCodex) oder /wcui weiter." },
     { key = "clear",  text = "Route löschen",   tip = "Die Farmroute dieser Karte entfernen." },
 }
 
@@ -1108,6 +1123,7 @@ local function Chip(bar, f, x)
         elseif k == "build" then GA.CmdBuild()
         elseif k == "edit" then GA.CmdEdit()
         elseif k == "follow" then GA.CmdFollow()
+        elseif k == "skip" then GA.Skip()
         elseif k == "clear" then GA.CmdClear() end
         GA.SyncBar()
     end)
