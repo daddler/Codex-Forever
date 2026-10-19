@@ -996,9 +996,9 @@ end
 --   wieder wechseln.
 --   Route erstellen / bearbeiten / folgen / loeschen.
 GA.FARM = {
-    { key = "herb", text = "Kräuter", tip = "Nur Kräuter auf Karte und Route. Stellt die Kräutersuche deines Charakters ein." },
-    { key = "ore",  text = "Erz",     tip = "Nur Erz auf Karte und Route. Stellt die Mineraliensuche deines Charakters ein." },
-    { key = "all",  text = "Beides",  tip = "Kräuter und Erz. Die Suche wechselt wieder zwischen beiden, wenn du das eingeschaltet hast." },
+    { key = "herb", text = "Kräuter", tip = "Nur Kräuter auf Karte und Route. Stellt die Kräutersuche deines Charakters ein. Noch einmal klicken: ausblenden." },
+    { key = "ore",  text = "Erz",     tip = "Nur Erz auf Karte und Route. Stellt die Mineraliensuche deines Charakters ein. Noch einmal klicken: ausblenden." },
+    { key = "all",  text = "Beides",  tip = "Kräuter und Erz. Die Suche wechselt wieder zwischen beiden, wenn du das eingeschaltet hast. Noch einmal klicken: ausblenden." },
     { gap = true },
     { key = "build",  text = "Route erstellen", tip = "Kürzester Rundweg durch alle Fundstellen der Auswahl auf dieser Karte." },
     { key = "edit",   text = "Route ändern",    tip = "Fundstellen auf der Karte anklicken: hinzufügen oder entfernen, in Klickreihenfolge. Noch einmal klicken: fertig." },
@@ -1007,6 +1007,7 @@ GA.FARM = {
 }
 
 function GA.Choice()
+    if K.Get(KEY, "gaMapHerb") == false and K.Get(KEY, "gaMapOre") == false then return "none" end
     local k = K.Get(KEY, "gaRouteKind") or "all"
     if k ~= "herb" and k ~= "ore" then k = "all" end
     return k
@@ -1014,6 +1015,14 @@ end
 
 -- Auswahl setzen: Karte, Route und Suche des Spiels.
 function GA.Choose(kind)
+    -- 6.83.3.0 (Wunsch: "nochmal auf Kraeuter klicken blendet sie aus"):
+    -- die gewaehlte Pille noch einmal - Kraeuter und Erz von der Karte,
+    -- die Suche des Spiels bleibt, wie sie ist.
+    if kind == GA.Choice() then
+        K.Set(KEY, "gaMapHerb", false)
+        K.Set(KEY, "gaMapOre", false)
+        return
+    end
     K.Set(KEY, "gaRouteKind", kind)
     K.Set(KEY, "gaMapHerb", kind ~= "ore")
     K.Set(KEY, "gaMapOre", kind ~= "herb")

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.83.3.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFFarmen|r – ein zweiter Klick auf Kräuter, Erz oder Beides blendet die Fundstellen auf der Karte aus, ohne den Sammel-Atlas abzuschalten. Ein weiterer Klick zeigt sie wieder.",
+        },
+    },
+    {
         version = "6.83.2.0",
         date    = "19.10.2026",
         notes   = {

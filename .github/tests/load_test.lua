@@ -20849,6 +20849,19 @@ do
     end
 end
 
+do
+    local GA, K = WeintCodex.UIGatherAtlas, WeintCodex.UIKit
+    if GA and GA.Choose then
+        GA.Choose("herb")
+        GA.Choose("herb")
+        local hidden = GA.Choice() == "none" and K.Get("comfort", "gaMapHerb") == false and K.Get("comfort", "gaMapOre") == false
+        GA.Choose("herb")
+        Check(hidden and GA.Choice() == "herb" and K.Get("comfort", "gaMapHerb") == true,
+            "Farm-Leiste: zweiter Klick blendet aus, dritter wieder ein")
+        GA.Choose("all")
+    end
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.83.3.0] – 2026-10-19
+
+### Geändert
+- Farm-Leiste: gewählte Pille erneut → `gaMapHerb`/`gaMapOre` aus,
+  `GA.Choice()` = "none"; Suche des Spiels unverändert.
+
 ## [6.83.2.0] – 2026-10-19
 
 ### Behoben
