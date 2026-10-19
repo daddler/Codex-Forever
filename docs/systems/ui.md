@@ -1702,6 +1702,43 @@ beide ab Werk aus.
   Der Bestand deckt alle 50 Karten der Quelle ab, auch die neuen Gebiete
   von Forever.
 
+### Sammel-Atlas (`ui/gatheratlas.lua`, 6.82.0.0)
+
+Wunsch des Spielers, alle fünf Teile auf der Seite „Sammeln“ (unter dem
+Wechsel der Suche; von Haus aus **aus**, geht ohne Oberfläche; `/wcui sammeln`).
+
+- **Erkennen ohne Kampflog:** `UNIT_SPELLCAST_SENT` des Spielers mit einem
+  Sammelzauber (`GA.SPELLS`: Kräutersammeln 2366, Bergbau 2575, Öffnen 3365,
+  Angeln 7620/7731/7732/18248), dieselbe `castGUID` in
+  `UNIT_SPELLCAST_SUCCEEDED`, dann `LOOT_OPENED` binnen 1,5 s (Angeln 30 s):
+  `GetLootSourceInfo(1)` → `GameObject-…-<objectID>-…`. Ohne GUID zählt der
+  Name aus dem Zauber (dann nie geteilt). Nie in Instanzen. Angeln nur aus
+  einem Schwarm (Quelle ≠ Schwimmer 35591), Lage = die des Spielers. „Öffnen“
+  mit nur Questbeute zählt nicht (Questobjekte). **Ungemessen auf Forever** –
+  `/wcui prüfen`, Abschnitt „Sammel-Atlas“, zeigt die letzte Erkennung.
+- **Speicher:** `WeintCodex_SavedData.gather` (kontoweit): `nodes[map][objectID]
+  = { {x,y,n,last,s} }`, `names`, `kinds`, `routes[map] = { kind, stops = {{x,y}} }`.
+  Näher als `GA.MERGE` (0,004) = dieselbe Stelle; je Karte höchstens
+  `GA.MAP_CAP`. Kein Bestand ohne Herkunft: WeintCodex bringt **keine**
+  Fundstellen mit.
+- **Karten:** eigene, gepoolte Symbole (`media/ui/gather_*.tga`, weiß, erzeugt
+  von `.github/scripts/make_gather_icons.py`, gefärbt mit `GameColors.gather*`),
+  Weltkarte über `QM.Canvas` wie die Eingänge, neu gesetzt nur bei Änderung
+  (Karte, Größe, Maßstab, `GA.version`); Minikarte über `QH.MinimapOffset`
+  an **eigenen** Einträgen (nie an gespeicherten Tabellen – die Weltlage würde
+  sonst mitgespeichert). Filter je Art getrennt für Welt- und Minikarte.
+- **Farmroute:** `FarmRoute.Cluster` (Raster, ≤ 150 Halte) → `FarmRoute.Order`
+  (nächster Nachbar + 2-opt, geschlossen, rein, im Test geprüft); von Hand
+  „Route bearbeiten“ (Leiste unten links auf der Weltkarte oder Seite): Klick
+  auf ein Symbol fügt an/entfernt. „Route folgen“ setzt `QA.SetCustom`; ≤ 10 m
+  oder dort gesammelt → nächster Halt, im Kreis; setzt der Spieler den Pfeil
+  anders, endet das Folgen.
+- **Stilles Teilen** (`gatherShare`, an, wirkt nur mit Atlas): Kennung `WCGA`,
+  nur `GUILD`, je neue Stelle `n,<Karte>,<Objekt>,<x·10000>,<y·10000>[,h|o|c|f]`,
+  eine Nachricht je Sekunde, nie im Kampf. Empfang streng (`GA.Parse`: Muster,
+  Bereiche, Länge ≤ 48; `GA.Allow`: 30 je Minute und Absender), gespeichert
+  mit `s = true`, zählt nie als eigenes Sammeln; ohne bekannte Art unsichtbar.
+
 ## Herkunft im Spiel ohne fremde Namen *(6.21.0.0)*
 
 Beta-Test: „Ich möchte, dass nirgendwo als Quelle … steht, dass dies von

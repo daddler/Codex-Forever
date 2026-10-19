@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.82.0.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFSammel-Atlas|r – merkt sich, wo du Kräuter, Erz, Truhen und Fischschwärme gesammelt hast, und zeigt sie auf Weltkarte und Minikarte, mit Filtern je Art. Farmroute automatisch aus einer Zone oder selbst angeklickt, der Pfeil führt von Punkt zu Punkt. Fundorte gehen still an die Gilde (nur Karte, Art und Ort). Ab Werk aus, unter Komfort → Sammeln oder /wcui sammeln.",
+            "|cff7C6CFFQuestpfeil|r – ruhigere Spitze ohne Zittern; bei mehreren Fundorten eines Questziels zeigt er auf den nächsten statt auf die Gebietsmitte; Wegecken springen nicht mehr hin und her; als Geist auf Wunsch zum Geistheiler, wenn der deutlich näher ist. /wcui pfeil zeigt mehr.",
+            "|cff7C6CFFLaufweg|r – 688 unmögliche Verbindungen in den Geländedaten gesperrt (vom Boden einer Stadt oder Höhle direkt auf den Berg). Ironforge in Richtung Osten ist damit noch nicht ganz behoben.",
+        },
+    },
+    {
         version = "6.81.0.0",
         date    = "19.10.2026",
         notes   = {

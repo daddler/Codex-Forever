@@ -20489,6 +20489,154 @@ do
     end
 end
 
+-- 6.81.1.0: Ironforge - die Kante vom Boden der Stadt auf den Berg
+-- (Abschnitt 471, Knoten 52 -> 26) ist gesperrt.
+do
+    local B = WeintCodex.NavBlocked
+    Check(type(B) == "table" and type(B[0]) == "table" and B[0][471 * 16777216 + 52 * 4096 + 26] == true,
+        "Gelaendekarte: Ironforge-Kante Boden -> Berg (471:52:26) gesperrt")
+end
+
+do -- Questpfeil nach RestedXP: Totband, Geistheiler, Hysterese, naechster Fundort
+    local Q = WeintCodex.UIQuestArrow
+    Check(Q.AngleMoved(nil, 1) and not Q.AngleMoved(1, 1.03) and Q.AngleMoved(1, 1.1)
+        and not Q.AngleMoved(0.01, 2 * math.pi - 0.01), "Questpfeil: Totband unter ~3 Grad, auch ueber 0/2pi")
+    Check(Q.PickGhost(100, 50) and not Q.PickGhost(100, 70) and not Q.PickGhost(nil, 10) and not Q.PickGhost(100, nil),
+        "Questpfeil: Geistheiler nur, wenn klar naeher als die Leiche")
+    Check(Q.HopSwitch(true, 5, 20, 0) and not Q.HopSwitch(true, 12, 3, 0.5) and not Q.HopSwitch(false, 2, 10, 1)
+        and Q.HopSwitch(false, 2, 15, 0) and Q.HopSwitch(true, 30, 3, 2.5), "Questpfeil: Hysterese beim Wechsel, nie haengen")
+    Check(Q.Within(false, 9, 10, 16) and not Q.Within(false, 12, 10, 16) and Q.Within(true, 15, 10, 16)
+        and not Q.Within(true, 17, 10, 16), "Questpfeil: Einstieg hinein ab 10, hinaus erst ueber 16")
+    local s = { pN = 0, pW = 0, r2 = 100, inside = false }
+    Q.SpotStep(s, 30, 40) Q.SpotStep(s, 6, 8) Q.SpotStep(s, -20, 0)
+    Check(s.inside and s.bN == 6 and s.bW == 8 and s.bestD2 == 100, "Questpfeil: naechster Fundort gewaehlt")
+    local f = { SetText = function(self, t) self.n = (self.n or 0) + 1 end }
+    Q.SetTxt(f, "a") Q.SetTxt(f, "a") Q.SetTxt(f, nil)
+    Check(f.n == 2, "Questpfeil: Text nur bei Aenderung gesetzt")
+    local src = io.open(ROOT .. "/ui/questarrow.lua") local qs = src and src:read("*a") or "" if src then src:close() end
+    Check(not qs:find("TargetSpots%(questID, playerMap, function"), "Questpfeil: kein Abschluss je Suche der Fundorte")
+end
+
+-- 6.82.0.0: Sammel-Atlas - Rundweg, Zusammenfassen naher Stellen, strenge
+-- Pruefung empfangener Nachrichten, Filter je Art und Karte.
+do
+    local GA, FR = WeintCodex.UIGatherAtlas, WeintCodex.FarmRoute
+    Check(GA and FR and type(FR.Order) == "function", "Sammel-Atlas: ui/gatheratlas.lua geladen")
+    local ok, err = pcall(function()
+        -- Rundweg: jeder Punkt genau einmal, und nicht laenger als die Eingabe.
+        local pts, seed = {}, 7
+        for i = 1, 40 do
+            seed = (seed * 1103515245 + 12345) % 2147483648
+            local x = (seed % 10000) / 10000
+            seed = (seed * 1103515245 + 12345) % 2147483648
+            pts[i] = { x, (seed % 10000) / 10000 }
+        end
+        local tour = FR.Order(pts, 1.5)
+        assert(#tour == #pts, "Rundweg verliert Punkte: " .. #tour)
+        local seen = {}
+        for _, p in ipairs(tour) do assert(not seen[p], "Punkt doppelt im Rundweg") seen[p] = true end
+        for _, p in ipairs(pts) do assert(seen[p], "Punkt fehlt im Rundweg") end
+        assert(FR.Length(tour, 1.5) <= FR.Length(pts, 1.5), "Rundweg laenger als die Eingabe")
+        -- Quadrat ueber Kreuz: 2-opt entwirrt es.
+        local sq = { { 0, 0 }, { 1, 1 }, { 1, 0 }, { 0, 1 } }
+        assert(math.abs(FR.Length(FR.Order(sq), 1) - 4) < 1e-6, "Quadrat nicht entwirrt")
+        assert(#FR.Order({}) == 0 and #FR.Order({ { 0.5, 0.5 } }) == 1, "kleine Eingaben")
+        -- Raster: Obergrenze haelt.
+        local many = {}
+        for i = 1, 600 do many[i] = { (i % 30) / 30, math.floor(i / 30) / 20 } end
+        assert(#FR.Cluster(many, 0.001, 150) <= 150, "Raster haelt die Obergrenze nicht")
+        -- Zusammenfassen: nah = dieselbe Stelle; Gilde zaehlt nie als eigenes Sammeln.
+        local sd = WeintCodex.SavedData
+        assert(type(sd) == "table", "SavedData fehlt")
+        local before = sd.gather
+        sd.gather = nil
+        local MAP = 99001
+        local p1, new1 = GA.Record(MAP, 1617, 0.5, 0.5, "herb", "Friedensblume", false, 100)
+        local p2, new2 = GA.Record(MAP, 1617, 0.502, 0.4985, "herb", nil, false, 200)
+        assert(new1 and not new2 and p1 == p2 and p1.n == 2 and p1.last == 200, "nahe Stellen nicht zusammengefasst")
+        local p3, new3 = GA.Record(MAP, 1617, 0.6, 0.5, "herb", nil, false, 300)
+        assert(new3 and p3 ~= p1, "ferne Stelle zusammengefasst")
+        local p4, new4 = GA.Record(MAP, 1617, 0.7, 0.7, nil, nil, true, 400)
+        assert(new4 and p4.s and p4.n == 0, "Gilde zaehlt als eigenes Sammeln")
+        local _, again = GA.Record(MAP, 1617, 0.7, 0.7, nil, nil, true, 500)
+        assert(not again and p4.n == 0, "doppelt von der Gilde")
+        GA.Record(MAP, 1617, 0.7005, 0.7, "herb", nil, false, 600)
+        assert(p4.n == 1 and not p4.s, "selbst gesammelt bleibt 'von der Gilde'")
+        assert(sd.gather.names[1617] == "Friedensblume" and sd.gather.kinds[1617] == "herb", "Name/Art nicht einmal gemerkt")
+        assert(GA.Record(MAP, 1617, 1.5, 0.5, "herb") == nil and GA.Record(-1, 1617, 0.5, 0.5) == nil, "ungueltige Lage angenommen")
+        -- Obergrenze je Karte.
+        local cap = GA.MAP_CAP
+        GA.MAP_CAP = GA.CountMap(sd.gather.nodes[MAP])
+        assert(GA.Record(MAP, 1618, 0.1, 0.1, "ore") == nil, "Obergrenze je Karte haelt nicht")
+        GA.MAP_CAP = cap
+        -- Route aus den Stellen und von Hand.
+        assert(GA.BuildRoute(MAP, "herb") >= 2, "keine Route aus der Zone")
+        assert(GA.BuildRoute(MAP, "ore") == 0 and GA.Route(MAP) == nil, "Route aus Stellen, die es nicht gibt")
+        assert(GA.ToggleStop(MAP, 0.2, 0.2) == true and GA.ToggleStop(MAP, 0.3, 0.3) == true
+            and GA.ToggleStop(MAP, 0.2005, 0.2) == false and #GA.Route(MAP).stops == 1, "Halt von Hand an/aus")
+        GA.ClearRoute(MAP)
+        assert(GA.Route(MAP) == nil, "Route nicht geleert")
+        -- Nachrichten: Format hin und zurueck, Unsinn abgewiesen.
+        local m, o, x, y, k = GA.Parse(GA.Format(1429, 1731, 0.4512, 0.33, "ore"))
+        assert(m == 1429 and o == 1731 and math.abs(x - 0.4512) < 1e-9 and math.abs(y - 0.33) < 1e-9 and k == "ore", "Format/Parse")
+        assert(GA.Parse("n,1429,1731,4512,3300") and select(5, GA.Parse("n,1429,1731,4512,3300")) == nil, "ohne Art abgewiesen")
+        for _, bad in ipairs({ "n,1,2,3", "n,1,2,10001,5", "n,0,2,3,4", "n,1,0,3,4", "x,1,2,3,4", "n,1,2,3,4,z",
+                               "n,1,2,-3,4", "n,1.5,2,3,4", "n,1,2,3,4,h,9", string.rep("9", 60), 12, nil }) do
+            assert(GA.Parse(bad) == nil, "Unsinn angenommen: " .. tostring(bad))
+        end
+        assert(GA.ObjectID("GameObject-0-4170-0-12-1731-0000ABCDEF") == 1731, "objectID aus der GUID")
+        assert(GA.ObjectID("Creature-0-4170-0-12-1731-0000ABCDEF") == nil and GA.ObjectID(nil) == nil, "GUID einer Kreatur angenommen")
+        -- Filter je Art, getrennt fuer Welt- und Minikarte; aus = nichts.
+        local saved = {}
+        for _, key in ipairs({ "gatherAtlas", "gatherShare", "gaMapChest", "gaMiniHerb", "gaMiniChest" }) do saved[key] = K.Get("comfort", key) end
+        assert(K.Module("comfort").defaults.gatherAtlas == false, "Sammel-Atlas von Haus aus an")
+        assert(not GA.ShowsOnMap("herb") and not GA.Sharing(), "aus zeigt oder teilt etwas")
+        K.Set("comfort", "gatherAtlas", true)
+        K.Set("comfort", "gaMapChest", false)
+        K.Set("comfort", "gaMiniHerb", true)
+        K.Set("comfort", "gaMiniChest", false)
+        if K.IsActive("comfort") then
+            assert(GA.ShowsOnMap("herb") and not GA.ShowsOnMap("chest") and GA.ShowsOnMini("herb")
+                and not GA.ShowsOnMini("chest") and not GA.ShowsOnMap("nichts"), "Filter je Art falsch")
+            K.Set("comfort", "gatherShare", true)
+            assert(GA.Sharing(), "Teilen trotz Schalter aus")
+            -- Empfang: eigene Nachrichten, fremde Kennung, falscher Kanal abgewiesen; Takt je Absender.
+            local me = _G.UnitName and _G.UnitName("player")
+            if type(me) == "string" then
+                assert(not GA.OnAddonMessage("WCGA", "n,99001,1619,1000,1000,h", "GUILD", me, 1), "eigene Nachricht angenommen")
+            end
+            assert(not GA.OnAddonMessage("WCGA", "n,99001,1619,1000,1000,h", "WHISPER", "Fremd", 1), "nicht von der Gilde angenommen")
+            assert(not GA.OnAddonMessage("WCAH", "n,99001,1619,1000,1000,h", "GUILD", "Fremd", 1), "fremde Kennung angenommen")
+            assert(GA.OnAddonMessage("WCGA", "n,99001,1619,1000,1000,h", "GUILD", "Fremd-Realm", 1), "gueltige Nachricht abgewiesen")
+            local rate = GA.RATE_MAX
+            GA.RATE_MAX = 2
+            GA.OnAddonMessage("WCGA", "n,99001,1619,2000,1000,h", "GUILD", "Flut", 50)
+            GA.OnAddonMessage("WCGA", "n,99001,1619,3000,1000,h", "GUILD", "Flut", 50)
+            assert(not GA.OnAddonMessage("WCGA", "n,99001,1619,4000,1000,h", "GUILD", "Flut", 50), "Takt je Absender haelt nicht")
+            GA.RATE_MAX = rate
+            assert(#GA.StatusLines() >= 3, "Bericht fuer /wcui pruefen fehlt")
+        end
+        K.Set("comfort", "gatherAtlas", false)
+        assert(not GA.ShowsOnMap("herb") and not GA.ShowsOnMini("herb") and not GA.Sharing(), "Atlas aus zeigt noch etwas")
+        for key, v in pairs(saved) do K.Set("comfort", key, v) end
+        sd.gather = before
+        -- Seite: Atlas auf "Sammeln", in der Suche zu finden; Symbole und Farben da.
+        local found = false
+        for _, e in ipairs(WeintCodex.UIOptions.SearchIndex()) do
+            if e.label == "Sammel-Atlas" and e.module == "comfort" then found = true end
+        end
+        assert(found, "Sammel-Atlas nicht auf der Seite Sammeln")
+        for _, kind in ipairs(GA.KINDS) do
+            local f = io.open(ROOT .. "/media/ui/gather_" .. kind .. ".tga", "rb")
+            assert(f, "Symbol fehlt: " .. kind)
+            f:close()
+            assert(WeintCodex.GameColors[GA.KIND_COLOR[kind]], "Farbe fehlt: " .. kind)
+        end
+    end)
+    Check(ok, "Sammel-Atlas: Rundweg geschlossen ohne Doppelte, nahe Stellen zusammengefasst, Nachrichten streng, Filter je Karte"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

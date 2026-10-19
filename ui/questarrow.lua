@@ -101,6 +101,7 @@ local defaults = {
     showHeight  = true,    -- Hoehenunterschied und "verdeckt" (6.6.0.1)
     worldMarker = true,    -- Zielmarke im Raum am Ort des Ziels (6.6.0.1)
     corpse     = true,     -- als Geist zur Leiche
+    ghostHealer = false,   -- als Geist zum Geistheiler, wenn der klar naeher ist
     -- Welches Ziel (6.6.2.7): "smart" plant selbst - das naechste lohnende
     -- Ziel aus dem ganzen Questlog; "tracked" folgt nur der Quest, die das
     -- Spiel verfolgt (alles vor 6.6.2.7).
@@ -354,6 +355,38 @@ local function CorpseTarget(playerMap)
     return "unknown"
 end
 
+-- Als Geist zum Geistheiler (Verhalten wie RestedXP, eigener Code): nur
+-- wenn er KLAR naeher ist als die Leiche (QA.GHOST_RATIO), sonst bleibt es
+-- bei der Leiche. Die Lagen stehen in data/mapmarks.lua (erzeugt), auf der
+-- Karte, auf der man steht.
+QA.GHOST_RATIO = 0.6
+function QA.PickGhost(corpseD, healerD, ratio)
+    return type(corpseD) == "number" and type(healerD) == "number"
+        and healerD < corpseD * (ratio or QA.GHOST_RATIO) or false
+end
+function QA.GhostHealer(playerMap, cmap, cx, cy)
+    if not K.Get(KEY, "ghostHealer") or type(playerMap) ~= "number" then return nil end
+    local d = WeintCodex.MapMarksData
+    local list = d and d.spirit and d.spirit[playerMap]
+    if type(list) ~= "table" then return nil end
+    local pc, pN, pW = PlayerWorld()
+    if not pc then return nil end
+    local cc, cN, cW = ToWorld(cmap, cx, cy)
+    if cc ~= pc then return nil end
+    local corpseD = math.sqrt((cN - pN) ^ 2 + (cW - pW) ^ 2)
+    local bestD, bx, by
+    for i = 1, #list - 1, 2 do
+        local c, n, w = ToWorld(playerMap, list[i], list[i + 1])
+        if c == pc then
+            local dd = math.sqrt((n - pN) ^ 2 + (w - pW) ^ 2)
+            if not bestD or dd < bestD then bestD, bx, by = dd, list[i], list[i + 1] end
+        end
+    end
+    QA.ghostLast = bestD and string.format("Leiche %.0f, Geistheiler %.0f", corpseD, bestD) or nil
+    if QA.PickGhost(corpseD, bestD) then return playerMap, bx, by end
+    return nil
+end
+
 local function IsComplete(questID)
     local ql = _G.C_QuestLog
     -- Dieselbe strenge Pruefung wie die Erfahrungsleiste (6.28.1.0).
@@ -364,7 +397,13 @@ end
 
 local function ResolveTarget(playerMap)
     local cs, cmap, cx, cy = CorpseTarget(playerMap)
-    if cs then return cs, cmap, cx, cy, "Deine Leiche", "corpse" end
+    if cs then
+        if cs == "ok" then
+            local hm, hx, hy = QA.GhostHealer(playerMap, cmap, cx, cy)
+            if hm then return "ok", hm, hx, hy, "Geistheiler", "healer" end
+        end
+        return cs, cmap, cx, cy, "Deine Leiche", "corpse"
+    end
 
     -- 6.57.0.0: eigenes Ziel (Buch der Bibliothek, modules/library.lua) -
     -- bis es erledigt ist oder der Spieler es loest (QA.Skip).
@@ -380,7 +419,7 @@ local function ResolveTarget(playerMap)
     local st = _G.C_SuperTrack
     if not st then return "none" end
 
-    if st.IsSuperTrackingUserWaypoint and st.IsSuperTrackingUserWaypoint()
+    if st.IsSuperTrackingUserWaypoint and K.Bool(st.IsSuperTrackingUserWaypoint(), false)
        and _G.C_Map and _G.C_Map.GetUserWaypoint then
         local wp = _G.C_Map.GetUserWaypoint()
         if wp and wp.uiMapID and wp.position then
@@ -703,6 +742,22 @@ end
 
 local frame, arrow, title, dist, eta, height
 
+-- Text nur setzen, wenn er sich aendert (wie RestedXP): ein Feld am
+-- Textobjekt merkt den letzten Wert - keine Tabelle, kein Neuzeichnen.
+local function SetTxt(fs, s)
+    s = s or ""
+    if fs._wcT ~= s then fs._wcT = s fs:SetText(s) end
+end
+QA.SetTxt = SetTxt
+
+-- Totband des Pfeils: unter ~3 Grad Drehung bleibt die Textur stehen.
+QA.TURN_EPS = math.pi / 60
+function QA.AngleMoved(last, new, eps)
+    if type(last) ~= "number" then return true end
+    if type(new) ~= "number" then return false end
+    return math.abs(Norm(new - last)) >= (eps or QA.TURN_EPS)
+end
+
 local function Is3D() return K.Get(KEY, "style") ~= "flat" end
 
 -- Den Pfeil auf einen Winkel stellen: im 3D-Stil die passende Ansicht,
@@ -806,28 +861,100 @@ local marker
 QA.MARK_BADGE, QA.MARK_BEAM = 44, 96
 QA.MARK_FADE = 25
 QA.AREA = 45           -- so nah an einem Fundort der Questziele gilt man als "drin" (Yards)
-QA.areaMemo = { at = -1e9, quest = nil, map = nil, inside = false, spots = 0 }
+QA.areaMemo = { at = -1e9, quest = nil, map = nil, inside = false, spots = 0, nearN = nil, nearW = nil, nearD = nil }
+
+-- Ein Schritt der Suche (rein, fuer den Ladetest): Punkt n, w gegen den
+-- Spieler in s - drin? naeher als der bisher naechste?
+function QA.SpotStep(s, n, w)
+    local d2 = (n - s.pN) ^ 2 + (w - s.pW) ^ 2
+    if d2 <= s.r2 then s.inside = true end
+    if not s.bestD2 or d2 < s.bestD2 then s.bestD2, s.bN, s.bW = d2, n, w end
+end
+-- Zustand der Suche auf Dateiebene, damit kein Abschluss je Lauf entsteht.
+local scan = { map = nil, pc = nil, pN = 0, pW = 0, r2 = 0, inside = false }
+local function ScanSpot(x, y)
+    if type(x) ~= "number" or type(y) ~= "number" then return end
+    local c, n, w = ToWorld(scan.map, x, y)
+    if c == scan.pc and n then QA.SpotStep(scan, n, w) end
+end
 
 -- Steht der Spieler nahe an einem Fundort der Ziele von questID? Einmal je
 -- Sekunde gerechnet; die Fundorte liest die Questhilfe (ui/questhelper.lua).
+-- Nebenbei: der naechste Fundort (QA.NearestSpot).
 function QA.InArea(questID, playerMap)
     local QH = WeintCodex.UIQuestHelper
     local m = QA.areaMemo
     if not (QH and QH.TargetSpots and type(questID) == "number" and type(playerMap) == "number") then return false end
-    local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
+    local now = Now()
     if m.quest == questID and m.map == playerMap and now - m.at < 1 then return m.inside end
     m.at, m.quest, m.map, m.inside, m.spots = now, questID, playerMap, false, 0
-    local pm, px, py = PlayerMapPos()
-    if pm ~= playerMap or not px then return false end
-    local pc, pN, pW = ToWorld(playerMap, px, py)
+    m.nearN, m.nearW, m.nearD = nil, nil, nil
+    -- Eigene Lage ueber K.PlayerWorld (ohne Wegwerf-Vektoren je Abfrage).
+    local pc, pN, pW = PlayerWorld()
     if not pc then return false end
-    local r2 = QA.AREA * QA.AREA
-    m.spots = QH.TargetSpots(questID, playerMap, function(x, y)
-        if m.inside or type(x) ~= "number" or type(y) ~= "number" then return end
-        local c, n, w = ToWorld(playerMap, x, y)
-        if c == pc and (n - pN) ^ 2 + (w - pW) ^ 2 <= r2 then m.inside = true end
-    end)
+    scan.map, scan.pc, scan.pN, scan.pW, scan.r2 = playerMap, pc, pN, pW, QA.AREA * QA.AREA
+    scan.inside, scan.bestD2, scan.bN, scan.bW = false, nil, nil, nil
+    m.spots = QH.TargetSpots(questID, playerMap, ScanSpot)
+    m.inside = scan.inside
+    if scan.bestD2 then m.nearN, m.nearW, m.nearD = scan.bN, scan.bW, math.sqrt(scan.bestD2) end
     return m.inside
+end
+
+-- Mehrere Fundorte: der naechste statt der Mitte des Gebiets (RestedXP-
+-- Verhalten), erst ab QA.SPOT_NEAR an das Gebiet heran. Weltlage oder nil.
+QA.SPOT_NEAR = 300
+function QA.NearestSpot(questID, playerMap)
+    QA.InArea(questID, playerMap)
+    local m = QA.areaMemo
+    if m.quest ~= questID or (m.spots or 0) < 2 then return nil end
+    return m.nearN, m.nearW, m.nearD
+end
+
+-- Wechsel zum naechsten Abschnitt mit Hysterese: vorwaerts erst im Radius
+-- der neuen Ecke, zurueck erst mit Abstand; nie haengen - ist der andere
+-- Abschnitt laenger als QA.HOP_STUCK naeher, geht es trotzdem weiter.
+QA.HOP_ENTER, QA.HOP_LEAVE, QA.HOP_STUCK = 8, 14, 2
+function QA.HopSwitch(ahead, dEnter, dHeld, worseFor)
+    if ahead and type(dEnter) == "number" and dEnter <= QA.HOP_ENTER then return true end
+    if not ahead and type(dHeld) == "number" and dHeld >= QA.HOP_LEAVE then return true end
+    return type(worseFor) == "number" and worseFor >= QA.HOP_STUCK
+end
+-- Drin bleiben mit Hysterese: hinein ab enter, hinaus erst ueber leave.
+function QA.Within(was, d, enter, leave)
+    if type(d) ~= "number" then return false end
+    if was then return d <= leave end
+    return d <= enter
+end
+local function SegD(aN, aW, bN, bW, pN, pW)
+    local dN, dW = bN - aN, bW - aW
+    local l2 = dN * dN + dW * dW
+    local u = l2 > 0 and ((pN - aN) * dN + (pW - aW) * dW) / l2 or 0
+    if u < 0 then u = 0 elseif u > 1 then u = 1 end
+    return math.sqrt((aN + dN * u - pN) ^ 2 + (aW + dW * u - pW) ^ 2)
+end
+local hold = { path = nil, i = nil, since = nil, state = nil }
+QA.hold = hold
+-- Haelt den Abschnitt des Laufwegs, dem der Pfeil folgt (path flach:
+-- n1, w1, n2, w2, ...; i = Anfang des Abschnitts wie NV.Steer).
+function QA.HoldCorner(path, i, pN, pW, sN, sW)
+    if type(path) ~= "table" or type(i) ~= "number" then hold.path, hold.state = nil, nil return sN, sW end
+    local h = hold.i
+    if hold.path ~= path or type(h) ~= "number" or not path[h + 3] then
+        hold.path, hold.i, hold.since, hold.state = path, i, nil, "folgt"
+        return sN, sW
+    end
+    if i == h then hold.since, hold.state = nil, "folgt" return sN, sW end
+    local now = Now()
+    hold.since = hold.since or now
+    local ahead = i > h
+    local dEnter = math.sqrt((path[i] - pN) ^ 2 + (path[i + 1] - pW) ^ 2)
+    local dHeld = SegD(path[h], path[h + 1], path[h + 2], path[h + 3], pN, pW)
+    if QA.HopSwitch(ahead, dEnter, dHeld, now - hold.since) then
+        hold.i, hold.since, hold.state = i, nil, "weiter"
+        return sN, sW
+    end
+    hold.state = "hält"
+    return path[h + 2], path[h + 3]
 end
 local function BuildMarker()
     local bs, beamH = QA.MARK_BADGE, QA.MARK_BEAM
@@ -999,7 +1126,7 @@ local function PlaceMarker(n, text, key)
     end
     marker:SetScale(scale)
     marker:SetAlpha(alpha * (n.occluded and QA.MARK_HIDDEN or 1))
-    marker.label:SetText(text or "")
+    SetTxt(marker.label, text)
     marker:Show()
     return true
 end
@@ -1046,9 +1173,9 @@ local function Build()
     frame.WCShowForUnlock = function(self, on)
         self._unlock = on and true or nil
         if on then
-            title:SetText("Questpfeil")
-            dist:SetText("120 m")
-            eta:SetText("")
+            SetTxt(title, "Questpfeil")
+            SetTxt(dist, "120 m")
+            SetTxt(eta, "")
             PointArrow(0)
             arrow:SetVertexColor(unpack(C.successBright))
             arrow:Show()
@@ -1060,6 +1187,7 @@ local function Build()
 end
 
 local function ApplyStyle()
+    if QA._aim then QA._aim.lastRot = nil end
     if not frame then return end
     frame:SetScale((K.Get(KEY, "scale") or 100) / 100)
     if Is3D() then
@@ -1117,8 +1245,11 @@ function QA.Turn()
     if type(facing) ~= "number" then return false end
     local _, rotation = QA.Solve(aim.pN, aim.pW, aim.tN, aim.tW, facing)
     if not rotation then return false end
-    PointArrow(rotation)
-    SetArrowColor(rotation)
+    if QA.AngleMoved(aim.lastRot, rotation) then
+        PointArrow(rotation)
+        SetArrowColor(rotation)
+        aim.lastRot = rotation
+    end
     return true
 end
 
@@ -1174,9 +1305,9 @@ function QA.Update(force)
     if status == "none" then frame:Hide() return end
 
     local showTitle = K.Get(KEY, "showTitle")
-    title:SetText(showTitle and name or "")
-    eta:SetText("")
-    height:SetText("")
+    SetTxt(title, showTitle and name or "")
+    SetTxt(eta, "")
+    SetTxt(height, "")
     if QA.updown then QA.updown:Hide() end
 
     -- Zuerst die eigene Position: ohne sie laesst sich auch der Ort der
@@ -1185,13 +1316,13 @@ function QA.Update(force)
     -- ueber den Client.
     if not playerMap and not rawC then
         arrow:Hide()
-        dist:SetText("Position unbekannt")
+        SetTxt(dist, "Position unbekannt")
         frame:Show()
         return
     end
     if status == "unknown" then
         arrow:Hide()
-        dist:SetText("Ort unbekannt")
+        SetTxt(dist, "Ort unbekannt")
         frame:Show()
         return
     end
@@ -1201,15 +1332,23 @@ function QA.Update(force)
     local tc, tN, tW = t.tc, t.tN, t.tW
     if not pc then
         arrow:Hide()
-        dist:SetText("Position unbekannt")
+        SetTxt(dist, "Position unbekannt")
         frame:Show()
         return
     end
     if not tc then
         arrow:Hide()
-        dist:SetText("Ort unbekannt")
+        SetTxt(dist, "Ort unbekannt")
         frame:Show()
         return
+    end
+    -- Mehrere Fundorte, offene Quest, nah am Gebiet: der naechste Fundort.
+    local gN, gW = tN, tW
+    QA.spotUsed = false
+    if t.kind == "quest" and pc == tc and type(name) == "string" and not name:find("^Abgeben: ")
+       and (tN - pN) ^ 2 + (tW - pW) ^ 2 <= QA.SPOT_NEAR * QA.SPOT_NEAR then
+        local sN, sW = QA.NearestSpot(QA.lastQuest, playerMap)
+        if sN then tN, tW, QA.spotUsed = sN, sW, true end
     end
     -- Routenplaner (ui/route.lua): schneller ueber Flug, Schiff, Portal
     -- oder Ruhestein? Dann zeigt der Pfeil auf den naechsten Wegpunkt, die
@@ -1228,14 +1367,14 @@ function QA.Update(force)
             pc == tc and math.sqrt((tN - pN) ^ 2 + (tW - pW) ^ 2) or nil)) or nil
     if hop and hop.mode == "teleport" then
         arrow:Hide()
-        dist:SetText(hop.hearth and "Ruhestein benutzen" or "Teleport wirken")
-        eta:SetText(routeLine or "")
+        SetTxt(dist, hop.hearth and "Ruhestein benutzen" or "Teleport wirken")
+        SetTxt(eta, routeLine or "")
         frame:Show()
         return
     end
     if hop then
         tc, tN, tW = hop.node.c, hop.node.n, hop.node.w
-        if showTitle then title:SetText(ViaTitle(name, hop.waypoint)) end
+        if showTitle then SetTxt(title, ViaTitle(name, hop.waypoint)) end
     end
     -- Gelaendekarte (ui/navmesh.lua): der Pfeil folgt dem Laufweg, die
     -- Minikarte zeichnet ihn. Bis er berechnet ist: Luftlinie.
@@ -1244,11 +1383,12 @@ function QA.Update(force)
     -- Luftlinie zum Ziel selbst: die Hoehe rechnet gegen sie, nicht gegen
     -- den Punkt voraus auf dem Weg (6.32.2.0, Beta-Test: "414 m
     -- Hoehenunterschied bei 570 m" - es war der Abstand zum Punkt voraus).
-    local flatGoal = math.sqrt((tN - pN) ^ 2 + (tW - pW) ^ 2)
+    local flatGoal = math.sqrt(((hop and tN or gN) - pN) ^ 2 + ((hop and tW or gW) - pW) ^ 2)
     if planning and NV and pc == tc and K.Get(KEY, "terrain") ~= false then
         navPath = NV.Path(pc, pN, pW, tN, tW)
         if navPath then
-            local sN, sW, rest = NV.Steer(navPath, pN, pW)
+            local sN, sW, rest, segI = NV.Steer(navPath, pN, pW)
+            sN, sW = QA.HoldCorner(navPath, segI, pN, pW, sN, sW)
             navRest = rest
             tN, tW = sN, sW
         end
@@ -1257,22 +1397,22 @@ function QA.Update(force)
     if planning then RT.DrawMinimap(pc, pN, pW, tc, tN, tW, navPath) end
     if _G.UnitOnTaxi and K.Bool(_G.UnitOnTaxi("player"), false) then
         arrow:Hide()
-        dist:SetText("Im Flug")
-        eta:SetText(routeLine or "")
+        SetTxt(dist, "Im Flug")
+        SetTxt(eta, routeLine or "")
         frame:Show()
         return
     end
     if planning and RT.Riding() then
         arrow:Hide()
-        dist:SetText("An Bord")
-        eta:SetText(routeLine or "")
+        SetTxt(dist, "An Bord")
+        SetTxt(eta, routeLine or "")
         frame:Show()
         return
     end
     if pc ~= tc then
         arrow:Hide()
-        dist:SetText("Anderer Kontinent")
-        eta:SetText(routeLine or "")
+        SetTxt(dist, "Anderer Kontinent")
+        SetTxt(eta, routeLine or "")
         frame:Show()
         return
     end
@@ -1323,43 +1463,46 @@ function QA.Update(force)
             if nav.occluded and nav.dist <= 150 then
                 second = "verdeckt – Höhle, Gebäude oder Hang?"
             end
-            height:SetText(first and second and (first .. " · " .. second) or first or second or "")
+            SetTxt(height, first and second and (first .. " · " .. second) or first or second or "")
         end
         local fades = t.kind == "quest" and type(name) == "string" and not name:find("^Abgeben: ")
         PlaceMarker(nav, QA.MarkerText(nav.dist, flatGoal, units), fades and ("quest:" .. name) or nil)
     end
 
-    if hop and (navRest or yards) <= math.max(K.Get(KEY, "arriveDistance") or 5, 10) then
+    local boardR = math.max(K.Get(KEY, "arriveDistance") or 5, 10)
+    QA.boarding = hop and QA.Within(QA.boarding, navRest or yards, boardR, boardR + 6) or false
+    if QA.boarding then
         arrow:Hide()
-        dist:SetText((hop.mode == "flight" and "Beim Flugmeister: " or "Hier einsteigen: ") .. hop.leg)
-        eta:SetText(routeLine or "")
+        SetTxt(dist, (hop.mode == "flight" and "Beim Flugmeister: " or "Hier einsteigen: ") .. hop.leg)
+        SetTxt(eta, routeLine or "")
         frame:Show()
         return
     end
     if (navRest or yards) <= (K.Get(KEY, "arriveDistance") or 5) then
         arrow:Hide()
-        dist:SetText(t.kind == "corpse" and "Bei deiner Leiche" or "Am Ziel")
+        SetTxt(dist, t.kind == "corpse" and "Bei deiner Leiche" or t.kind == "healer" and "Beim Geistheiler" or "Am Ziel")
         frame:Show()
         return
     end
 
-    dist:SetText(QA.DistText(navRest or yards, K.Get(KEY, "units"), hop and hop.suffix or nil))
+    SetTxt(dist, QA.DistText(navRest or yards, K.Get(KEY, "units"), hop and hop.suffix or nil))
     if rotation then
         PointArrow(rotation)
         SetArrowColor(rotation)
+        aim.lastRot = rotation
         -- "Nur Kompass": der Pfeil weicht, die Zeilen darunter bleiben.
         arrow:SetShown(K.Get(KEY, "compass") ~= "only")
         aim.ok = true
     else
         arrow:Hide()
-        dist:SetText(QA.FormatDistance(yards, K.Get(KEY, "units")) .. " · " .. QA.Compass(bearing))
+        SetTxt(dist, QA.FormatDistance(yards, K.Get(KEY, "units")) .. " · " .. QA.Compass(bearing))
     end
 
     -- Ankunftszeit aus der tatsaechlichen Annaeherung, nicht aus der
     -- Laufgeschwindigkeit: wer im Zickzack um einen Berg laeuft, kommt
     -- nicht mit Laufgeschwindigkeit naeher.
     if routeLine and K.Get(KEY, "showEta") then
-        eta:SetText(routeLine)
+        SetTxt(eta, routeLine)
     elseif K.Get(KEY, "showEta") and _G.GetTime then
         local now = _G.GetTime()
         if lastYards and lastTime and now > lastTime then
@@ -1367,7 +1510,7 @@ function QA.Update(force)
             QA._speed = (QA._speed or speed) * 0.85 + speed * 0.15
             if QA._speed > 0.5 then
                 local secs = math.floor(yards / QA._speed + 0.5)
-                eta:SetText(QA.EtaText(secs))
+                SetTxt(eta, QA.EtaText(secs))
             end
         end
         lastYards, lastTime = yards, now
@@ -1540,6 +1683,15 @@ function QA.Inspect()
         out[#out + 1] = string.format("Questgebiet aus Fundorten: %s (%d Fundorte der Ziele hier)",
             QA.areaMemo.inside and "drin" or "nicht drin", QA.areaMemo.spots or 0)
     end
+    out[#out + 1] = "Ankunft ab " .. QA.FormatDistance(K.Get(KEY, "arriveDistance") or 5, K.Get(KEY, "units"))
+        .. (QA.hop and (" · Einstieg ab " .. QA.FormatDistance(math.max(K.Get(KEY, "arriveDistance") or 5, 10), K.Get(KEY, "units"))
+            .. (QA.boarding and " (dort)" or "")) or "")
+    if QA.spotUsed and QA.areaMemo.nearD then
+        out[#out + 1] = "Ziel: nächster von " .. (QA.areaMemo.spots or 0) .. " Fundorten, "
+            .. QA.FormatDistance(QA.areaMemo.nearD, K.Get(KEY, "units"))
+    end
+    if hold.state then out[#out + 1] = "Abschnitt des Laufwegs: " .. hold.state .. " (Nr. " .. tostring(hold.i) .. ")" end
+    if QA.ghostLast then out[#out + 1] = "Als Geist: " .. QA.ghostLast end
     out[#out + 1] = "Zielmarke im Raum: " .. ((QA.marker and QA.marker:IsShown()) and "steht" or "nicht gezeigt")
         .. " · Marke des Spiels " .. (QA.gameMarkerVisible and "sichtbar" or "nicht sichtbar")
     out[#out + 1] = "Wegpunkt für eigene Ziele: " .. (QA.pinState or "noch nicht versucht")
@@ -1647,6 +1799,8 @@ K.Register({
                     tooltip = "Selbst planen: aus deinem ganzen Questlog das Ziel mit dem kürzesten Weg – offene Quests an ihrem Zielgebiet, erfüllte an der Abgabe. Quests weit über deiner Stufe und Gruppenquests zählen weiter weg. Klickst du selbst eine Quest an, gilt sie bis zur Abgabe." },
                   { type = "toggle", label = "Als Geist zur Leiche", key = "corpse",
                     description = "Nach dem Tod zeigt der Pfeil von selbst zu deiner Leiche." })
+            B:Row({ type = "toggle", label = "Als Geist: zum Geistheiler, wenn näher", key = "ghostHealer",
+                    description = "Liegt ein Geistheiler deiner Karte deutlich näher als die Leiche, zeigt der Pfeil zu ihm." })
             -- 6.10.1.0: Aussehen des Pfeils und was nach einer Quest kommt, zugeklappt.
             B:Advanced()
             B:Section("Der Pfeil im Einzelnen")

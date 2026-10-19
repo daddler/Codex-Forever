@@ -954,12 +954,20 @@ function NV.Search(c, sN, sW, gN, gW)
             local gc = goalCost[u]
             if gc and gu + gc < best then best, bestNode = gu + gc, u end
             local s, pos = cl.s, cl.edge[iu]
+            -- 6.81.1.0 (Ironforge: Kante vom Boden auf den Berg, 194 hoch bei
+            -- Kosten 8 - die Route lief ueber den Berg statt durchs Tor):
+            -- gesperrte Kanten im Abschnitt (data/nav_blocked.lua, Schluessel
+            -- u * 4096 + Knoten), ohne Tabelle oder Text je Kante.
+            local blocked = not NV.NavBlockedOff and WeintCodex.NavBlocked and WeintCodex.NavBlocked[c] or nil
             for _ = 1, B64[byte(s, 3 + iu * 7 + 6)] do
                 local off = B64[byte(s, pos)]
                 local kt = ku + (floor(off / 3) - 1) * st.ny + off % 3 - 1
-                local v = kt * 4096 + Num(s, pos + 1, 2)
+                local iv = Num(s, pos + 1, 2)
+                local v = kt * 4096 + iv
                 local nd = gu + Num(s, pos + 3, 2)
-                if not g[v] or nd < g[v] then
+                if blocked and kt == ku and blocked[u * 4096 + iv] then
+                    -- gesperrt
+                elseif not g[v] or nd < g[v] then
                     local n, w = NV.NodePos(st, v)
                     if n then
                         g[v], from[v] = nd, u

@@ -638,6 +638,21 @@ Check("Sammeln", function(add)
     for _, line in ipairs(GT.StatusLines()) do add("", "   " .. line) end
 end)
 
+-- Sammel-Atlas (6.82.0.0): sieht die Erkennung eine Beutequelle (GUID) oder
+-- wenigstens das Ziel des Sammelzaubers? Ungemessen auf Forever.
+Check("Sammel-Atlas", function(add)
+    local GA = WeintCodex.UIGatherAtlas
+    if not GA then add(SC.OPEN, "Sammel-Atlas nicht geladen.") return end
+    local L = GA.last
+    local seen = L.spell and (L.objectID or L.target)
+    add(GA.Active() and (L.spell and (seen and SC.OK or SC.BAD) or SC.OPEN) or SC.OPEN,
+        GA.Active() and (L.spell and (L.objectID and "Erkennung: Beutequelle mit Objektnummer gesehen"
+            or L.target and "Erkennung: nur das Ziel des Zaubers (keine Objektnummer)"
+            or "Erkennung: weder Beutequelle noch Ziel") or "Sammel-Atlas an – einmal sammeln, dann wieder prüfen")
+            or "Sammel-Atlas aus (Komfort → Sammeln)")
+    for _, line in ipairs(GA.StatusLines()) do add("", "   " .. line) end
+end)
+
 -- Buffs im WeintCodex-Stil (6.37.0.0)
 Check("Buffs", function(add)
     local BS = WeintCodex.UIBuffSkin

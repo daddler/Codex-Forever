@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.81.0.0
+## Version: 6.82.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -133,6 +133,8 @@ data/nav/nav1_7.lua
 data/nav/nav1_8.lua
 data/nav/nav1_9.lua
 data/nav/nav2991_1.lua
+# Gesperrte Kanten der Gelaendekarte (6.81.1.0, erzeugt von .github/scripts/scan_nav_edges.lua).
+data/nav_blocked.lua
 # Questhilfe: Quests, Geber, Ziele (6.30.0.0, erzeugt); gelesen von ui/questhelper.lua.
 data/questdb.lua
 data/questevents.lua
@@ -291,6 +293,8 @@ ui/levelup.lua
 # Warnton bei vermeidbarem Schaden (6.21.1.0, Seite "Feuer" im Komfort).
 ui/firealarm.lua
 ui/gathertrack.lua
+# Sammel-Atlas: Fundstellen, Farmroute, stilles Teilen mit der Gilde (6.82.0.0).
+ui/gatheratlas.lua
 # Glitzern: Questgegenstaende, Kraeuter und Erz (6.29.0.0, Komfort; Verhalten von ForeverLootSparkles, eigener Code).
 ui/sparkles.lua
 ui/dialogue.lua

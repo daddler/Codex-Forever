@@ -222,6 +222,15 @@ WeintCodex.GameColors = {
     -- In "friendly" waren sie auf dem Gruen der Karte kaum zu sehen
     -- (Beta-Test) - heller und satter, dazu ein heller Rand.
     mapMark       = {0.420, 1.000, 0.380, 1.0},
+    -- 6.82.0.0: Sammel-Atlas (ui/gatheratlas.lua) - Farbe je Art der
+    -- Fundstelle (die Symbole sind weiss und werden gefaerbt) und der
+    -- Farmroute. Status der Spielwelt, nie die Klasse.
+    gatherHerb    = {0.400, 0.900, 0.350, 1.0},
+    gatherOre     = {0.950, 0.640, 0.300, 1.0},
+    gatherChest   = {1.000, 0.850, 0.350, 1.0},
+    gatherFish    = {0.350, 0.750, 1.000, 1.0},
+    gatherRoute   = {1.000, 0.400, 0.700, 1.0},
+    gatherShared  = {0.750, 0.750, 0.750, 1.0},   -- Rand: von der Gilde
     -- 6.21.2.0: Flugmeister, Schiffe, Zeppeline, Portale nach Fraktion.
     alliance      = {0.250, 0.550, 1.000, 1.0},
     horde         = {0.950, 0.250, 0.200, 1.0},

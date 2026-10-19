@@ -9,6 +9,22 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.82.0.0] – 2026-10-19
+
+### Neu
+- Sammel-Atlas (`ui/gatheratlas.lua`, `WeintCodex.FarmRoute`): Fundorte
+  aufzeichnen, Pins auf Welt- und Minikarte, Filter, Farmrouten (automatisch
+  per Nächster-Nachbar + 2-opt oder per Klick), Pfeilführung, stilles Teilen
+  über `WCGA` an die Gilde. Symbole aus `.github/scripts/make_gather_icons.py`.
+- Questpfeil: Winkel-Totband und Textcache, Geistheiler (`ghostHealer`),
+  Hysterese an Wegecken und Einstieg, nächster Fundort statt Gebietsmitte,
+  mehr in `/wcui pfeil`.
+
+### Behoben
+- Geländekarte: `data/nav_blocked.lua` (erzeugt von
+  `.github/scripts/scan_nav_edges.lua`) sperrt 688 Kanten, die steiler als
+  45° und ohne Weg im Raster sind. Ironforge nach Osten noch offen.
+
 ## [6.81.0.0] – 2026-10-19
 
 ### Geändert

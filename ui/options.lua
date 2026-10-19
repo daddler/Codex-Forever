@@ -1599,6 +1599,11 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
         end
         return
     end
+    if msg == "sammeln" or msg == "atlas" or msg == "gather" then
+        -- 6.82.0.0: Sammel-Atlas und Suche wechseln (Komfort, Seite "Sammeln").
+        O.Show("comfort", O.PageIndex("comfort", "sammeln"))
+        return
+    end
     if msg == "selten" or msg == "rares" or msg == "rare" then
         local RA = WeintCodex.UIRares
         if RA and RA.Report then K.ShowReport("Seltene Gegner", RA.Report()) end
