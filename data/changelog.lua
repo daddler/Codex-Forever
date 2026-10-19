@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.82.2.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFLaufweg nach Ironforge|r – liegt das Ziel in der Stadt und du bist draußen, führt der Weg jetzt erst zum Tor statt über den Berg. Drinnen und überall sonst bleibt alles wie bisher.",
+        },
+    },
+    {
         version = "6.82.1.0",
         date    = "19.10.2026",
         notes   = {

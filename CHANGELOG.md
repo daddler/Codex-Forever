@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.82.2.0] – 2026-10-19
+
+### Behoben
+- Laufweg: Ziel in Ironforge von draußen → erst zum Tor (`NV.GATED`,
+  `NV.GateFor`). Kantensperren und Zielebenen-Wahl wurden geprüft und
+  verworfen (neue unerreichbare Wege bzw. Ziel im Fels ohne Fläche).
+
 ## [6.82.1.0] – 2026-10-19
 
 ### Geändert

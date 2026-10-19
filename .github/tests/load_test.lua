@@ -20637,6 +20637,17 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+do
+    local NV = WeintCodex.UINav
+    if NV and NV.GateFor then
+        local n, w = NV.GateFor(0, -5499, -518, -4900, -950)
+        local n2, w2 = NV.GateFor(0, -4950, -900, -4900, -950)
+        local n3 = NV.GateFor(0, -5499, -518, -5600, -1900)
+        Check(n == -5059 and w == -823 and n2 == -4900 and w2 == -950 and n3 == -5600,
+            "Laufweg nach Ironforge erst zum Tor, drinnen und anderswo unverändert")
+    end
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

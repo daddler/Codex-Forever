@@ -1097,8 +1097,31 @@ end
 
 -- Weg zur Lage (gN, gW), oder nil (noch nicht da, keine Karte, kein Weg).
 -- Neu gesucht bei neuem Ziel oder wenn man sich vom Weg entfernt hat.
+-- 6.82.2.0 (Spielerbericht mit Bild: Kharanos -> Questgeber in Ironforge
+-- lief ueber den Berg): Ironforge liegt unter dem Fels, das Ziel hat keine
+-- Hoehe, und die Gelaendedaten verbinden Stadtboden und Gipfel. Sperren
+-- einzelner Kanten machte anderswo Wege unmoeglich (geprueft, verworfen).
+-- Grob und sicher: liegt das Ziel in einer solchen Stadt und der Spieler
+-- draussen, fuehrt der Weg erst zum Tor; drinnen wie bisher.
+-- Rechteck der Stadt und Tor in Weltkoordinaten (N, W), Kontinent 0,
+-- aus den Kartengrenzen von Ironforge und Dun Morogh (Classic).
+NV.GATED = {
+    { c = 0, n1 = -5030, n2 = -4569, w1 = -1504, w2 = -714, gateN = -5059, gateW = -823 },  -- Ironforge
+}
+function NV.GateFor(c, sN, sW, gN, gW)
+    for i = 1, #NV.GATED do
+        local g = NV.GATED[i]
+        if g.c == c and gN >= g.n1 and gN <= g.n2 and gW >= g.w1 and gW <= g.w2
+           and not (sN >= g.n1 and sN <= g.n2 and sW >= g.w1 and sW <= g.w2) then
+            return g.gateN, g.gateW
+        end
+    end
+    return gN, gW
+end
+
 function NV.Path(c, sN, sW, gN, gW)
     if not NV.Available(c) then return nil end
+    gN, gW = NV.GateFor(c, sN, sW, gN, gW)
     local e = Find(c, gN, gW)
     local have = e and e.path or nil
     if have and NV.OffPath(have, sN, sW) <= NV.REPATH_MOVE then
