@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.84.1.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFSammel-Atlas auf der Minikarte|r – der Ring ist größer und dünner, das Vorkommen des Spiels steht ganz frei in seiner Mitte.",
+        },
+    },
+    {
         version = "6.84.0.0",
         date    = "19.10.2026",
         notes   = {

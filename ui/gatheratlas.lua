@@ -90,12 +90,17 @@ GA.REACH = 10              -- m: Halt erreicht
 GA.MAX_PINS = 400          -- Symbole auf der Weltkarte
 GA.MAX_MINI = 60
 GA.PIN = 14
-GA.MINI_PIN = 16
+GA.MINI_PIN = 26
+-- 6.84.1.0 (Beta-Test: "immer noch schwer zu sehen - eine Ebene tiefer
+-- waere super"): tiefer geht nicht - die Vorkommen zeichnet die Minikarte
+-- selbst, auf ihrem eigenen deckenden Bild; alles von Addons liegt
+-- darueber (unter der Minikarte waere es verdeckt). Darum ein groesserer,
+-- duenner Ring, in dessen Loch das Symbol des Spiels ganz frei steht.
 -- 6.83.4.0 (Beta-Test mit Bild: "das wirkliche Vorkommen wird vom Icon
 -- ueberdeckt"): auf der Minikarte ein offener Ring statt des Symbols - das
 -- Vorkommen des Spiels steht sichtbar in der Mitte; nur gedeckt gezeigt.
 GA.MINI_RING = K.MEDIA .. "gather_ring"
-GA.MINI_ALPHA = 0.8
+GA.MINI_ALPHA = 0.7
 GA.TICK = 0.1
 GA.MM_TICK = 0.2
 GA.FOLLOW_TICK = 0.5

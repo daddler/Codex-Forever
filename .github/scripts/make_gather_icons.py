@@ -109,8 +109,10 @@ def ring():
     # Spiels in der Mitte sichtbar bleibt.
     m = blank()
     dm = ImageDraw.Draw(m)
-    dm.ellipse((24, 24, BIG - 24, BIG - 24), fill=255)
-    dm.ellipse((62, 62, BIG - 62, BIG - 62), fill=0)
+    # 6.84.1.0: duenner und mit grossem Loch - das Symbol des Spiels passt
+    # ganz hinein (unter die Minikarte legen geht nicht, siehe gatheratlas).
+    dm.ellipse((14, 14, BIG - 14, BIG - 14), fill=255)
+    dm.ellipse((40, 40, BIG - 40, BIG - 40), fill=0)
     return compose(m)
 
 
