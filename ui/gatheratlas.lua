@@ -101,6 +101,7 @@ GA.MINI_PIN = 26
 -- Vorkommen des Spiels steht sichtbar in der Mitte; nur gedeckt gezeigt.
 GA.MINI_RING = K.MEDIA .. "gather_ring"
 GA.MINI_ALPHA = 0.7
+GA.MINI_FADE, GA.MINI_GONE = 34, 10   -- Bildpunkte vom Spielerpfeil (6.84.3.0)
 GA.TICK = 0.1
 GA.MM_TICK = 0.2
 GA.FOLLOW_TICK = 0.5
@@ -1306,6 +1307,12 @@ function GA.PlaceMinimap()
                 p:SetFrameLevel((K.Plain(mmHolder:GetFrameLevel()) or 0) + 1)
                 p:ClearAllPoints()
                 p:SetPoint("CENTER", mmHolder, "CENTER", dx, dy)
+                -- 6.84.3.0 (Wunsch): naht der Spielerpfeil, blendet der Ring
+                -- weich aus - ab GA.MINI_FADE Bildpunkten, ganz weg bei
+                -- GA.MINI_GONE.
+                local r = math.sqrt(dx * dx + dy * dy)
+                local a = (r - GA.MINI_GONE) / (GA.MINI_FADE - GA.MINI_GONE)
+                p:SetAlpha(a >= 1 and 1 or (a <= 0 and 0 or a))
                 p:Show()
             end
         end

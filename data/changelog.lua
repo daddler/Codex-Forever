@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.84.3.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFSammel-Atlas auf der Minikarte|r – kommt dein Spielerpfeil einem Ring nahe, blendet der Ring weich aus und kommt beim Weggehen wieder.",
+        },
+    },
+    {
         version = "6.84.2.0",
         date    = "19.10.2026",
         notes   = {

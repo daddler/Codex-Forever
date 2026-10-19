@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.84.3.0] – 2026-10-19
+
+### Geändert
+- Minikarten-Ringe blenden nahe am Spielerpfeil aus (`GA.MINI_FADE` 34 px,
+  `GA.MINI_GONE` 10 px), über die Deckkraft des Rahmens.
+
 ## [6.84.2.0] – 2026-10-19
 
 ### Behoben
