@@ -908,6 +908,12 @@ unangetastet (siehe `core/ui.lua`).
 
 ## Beute und Quests *(seit 6.5.0.0)*
 
+> Die vollständige Beute aller Instanzen, Rufe, PvP und Sets mit
+> Wunschliste steht seit dem Beutebuch auf einer eigenen Seite „Beute“
+> (`modules/lootbook.lua`, `data/loot.lua`, erzeugt;
+> `docs/systems/character.md`, Abschnitt *Beute*). Das Journal hier bleibt
+> die Beute **am Boss** auf der Dungeonseite.
+
 `data/dungeon_journal.lua` (`WeintCodex.DungeonJournal`) trägt für die
 Dungeons, zu denen Beta-Berichte vorliegen, die **Beute je Boss** und die
 **Quests je Dungeon**. Bis 6.9.0.5 waren es sieben (Hall of Thanes,

@@ -36,6 +36,8 @@ local CATEGORY_LABEL = {
     beast     = "WILDTIER",
     item      = "TASCHEN",
     book      = "BUCH",
+    loot      = "BEUTE",
+    wish      = "WUNSCHLISTE",
 }
 
 -- Hoechstens so viele Treffer je Art: sonst fuellten 2000 Rezepte mit
@@ -58,6 +60,7 @@ local PAGES = {
     { id = "taschen",     label = "Taschen" },
     { id = "buecher",     label = "Bücher" },
     { id = "dungeons",    label = "Dungeons" },
+    { id = "beute",       label = "Beute" },
     { id = "gruppe",      label = "Gruppencheck" },
     { id = "raids",       label = "Schlachtzüge" },
     { id = "anmeldung",   label = "Raidplanung" },
@@ -254,6 +257,21 @@ local function BuildStatic()
         end
     end
 
+    -- BEUTE: Bereiche und Bosse (modules/lootbook.lua). Gegenstaende stehen
+    -- im wechselnden Teil - ihre Namen kennt erst der Client.
+    local LB = WeintCodex.LootBook
+    if LB and LB.Count then
+        for n = 1, LB.Count() do
+            local inst = LB.Instance(n)
+            local iname = LB.InstanceName(inst)
+            Add(index, "loot", iname .. "  · Beute", function() LB.Open(inst.key) GoTo("beute") end)
+            for _, b in ipairs(LB.Bosses(n)) do
+                Add(index, "loot", LB.BossName(b) .. "  · Beute: " .. iname,
+                    function() LB.Open(inst.key) GoTo("beute") end)
+            end
+        end
+    end
+
     for _, e in ipairs(index) do e.key = e.key or Fold(e.label) end
     return index, complete
 end
@@ -324,6 +342,33 @@ local function BuildDynamic()
                                 key = Fold(nm), onClick = function() BG.sel = ckey GoTo("taschen") end }
                         end
                     end
+                end
+            end
+        end
+    end
+
+    -- BEUTE: Wunschliste und Gegenstaende, deren Namen der Client in dieser
+    -- Sitzung schon geliefert hat (nie geraten, nie gespeichert).
+    local LB = WeintCodex.LootBook
+    if LB and LB.names then
+        for id, nm in pairs(LB.names) do
+            local n = LB.SourceOf(id)
+            local inst = n and LB.Instance(n)
+            if inst and type(nm) == "string" then
+                local wished = LB.IsWished(id)
+                index[#index + 1] = { category = wished and "wish" or "loot",
+                    label = nm .. "  · Beute: " .. LB.InstanceName(inst), key = Fold(nm),
+                    onClick = function() LB.Open(inst.key, id) GoTo("beute") end }
+            end
+        end
+        for _, id in ipairs(LB.WishIds()) do
+            if not LB.names[id] then
+                local n = LB.SourceOf(id)
+                local inst = n and LB.Instance(n)
+                if inst then
+                    local label = "Wunsch aus " .. LB.InstanceName(inst)
+                    index[#index + 1] = { category = "wish", label = label, key = Fold(label),
+                        onClick = function() LB.cat = "wish" LB.Open(nil, id) GoTo("beute") end }
                 end
             end
         end

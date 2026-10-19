@@ -257,6 +257,53 @@ Spiel nennt es.
   nicht gemessen** – ebenso wenig, ob der Tooltip nach Wildtierkunde die
   Fähigkeiten nennt. Ohne Antwort: „unbekannt“, nie „keine“.
 
+## Beute *(Navigation „Beute“, Gruppe Leveln, unter „Dungeons“)*
+
+`modules/lootbook.lua` (`WeintCodex.LootBook`), Bestand `data/loot.lua`
+(`WeintCodex.LootData`) – **erzeugt** von `.github/scripts/import_loot.py`
+aus den *Datendateien* von AtlasLootClassic (Forever-Fassung, GPL-2.0;
+geparst, nie ausgeführt; kein Code, keine Grafik; TBC/Wrath/SoD nicht).
+59 Bereiche (25 klassische Dungeons, Weltbosse und 8 Schlachtzüge,
+4 Forever-Dungeons, 9 Rufe, 8 PvP-Tafeln, 4 Set-Tafeln), 582 Bosse/Gruppen,
+4381 Einträge, 3426 Gegenstände, 61 KB. Je Boss ein Text
+„Name, NPC oder s<Set>, Nummer[:Dropchance][a|h]“.
+
+- **Platz:** eigener Eintrag in der Spalte direkt unter „Dungeons“ – er
+  nimmt den Platz, den 6.61.1.0 freigegeben hatte (678 von 684 px, die
+  Spalte ist wieder **voll**). Ein Reiter unter Dungeons ging nicht: deren
+  Unternavigation hätte mit einer Zeile mehr die geforderte Luft
+  unterschritten (Excavation Site, 28 statt 60 px). Die Unternavigation
+  trägt die Rubriken (Wunschliste, Dungeons, Schlachtzüge, Ruf, PvP, Sets),
+  die Seite links die Bereiche, rechts Abschnitte je Boss mit einem Raster,
+  dessen Spaltenzahl aus der Breite gerechnet ist; höchstens
+  `LB.MAX_CELLS` (240) Zellen, die Suche grenzt ein. Beide Listen liegen in
+  Rollflächen der Seite (wie Wildtierkunde).
+- **Herkunft:** `classic` für alles aus Classic, `community` für die
+  Forever-Dungeons und für Gegenstände ab Nummer 100000 („neu in
+  Forever“). Dropchancen stammen aus Classic; fehlt eine, steht keine da.
+  Forever-Dungeons und -Schlachtzüge ohne Beute im Bestand fehlen ganz
+  (keine Quelle, kein Eintrag). Keine Wertung, keine Bestenliste.
+- **Namen, Bilder, Qualität, Platz** liefert allein der Client
+  (`C_Item.GetItemInfo`, `GetItemIconByID`, `_G[equipLoc]`), gemerkt nur in
+  der Sitzung; bis er antwortet: „lädt …“. `GET_ITEM_INFO_RECEIVED` zeichnet
+  gebündelt neu (0,3 s). Instanz-/Fraktions-/Setnamen ebenfalls vom Client
+  (`C_Map.GetAreaInfo`, `C_Reputation`, `C_Item.GetItemSetInfo`), sonst der
+  deutsche Name aus dem Erzeuger.
+- **Bedienung:** Tooltip `GameTooltip:SetItemByID`, Umschalt-Klick
+  verlinkt im Chat, Strg-Klick anprobieren (`DressUpItemLink`), Rechtsklick
+  oder Stern: Wunschliste. Belohnungen nur einer Fraktion sieht nur sie.
+- **Wunschliste:** `WeintCodex_SavedData.loot.wish[itemID] = { k, b, t }`
+  je Konto; ohne SavedData nur lesen.
+- **Suche:** Bereiche und Bosse im festen Index, Wunschliste und bereits
+  geladene Gegenstandsnamen im wechselnden (`core/search.lua`, Arten
+  BEUTE/WUNSCHLISTE). `/wc beute`.
+- Das Journal der Dungeonseite (Beute je Boss, oben) bleibt, wie es ist;
+  „Zum Dungeon im Codex“ im Detailbereich führt von der Beute dorthin.
+- **Auf Forever nicht gemessen:** ob die klassischen Nummern und
+  Dropchancen auf Forever gelten (Blizzard hat die Beute überarbeitet), ob
+  der Client die Forever-Nummern ≥ 100000 auflöst, und ob
+  `GetItemSetInfo`/`DressUpItemLink` dort antworten.
+
 ## Berufe *(seit 6.14.0.0)*
 
 `modules/professions.lua` (`WeintCodex.Professions`), Navigation „Berufe“

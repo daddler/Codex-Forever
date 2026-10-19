@@ -90,7 +90,12 @@ GA.REACH = 10              -- m: Halt erreicht
 GA.MAX_PINS = 400          -- Symbole auf der Weltkarte
 GA.MAX_MINI = 60
 GA.PIN = 14
-GA.MINI_PIN = 12
+GA.MINI_PIN = 16
+-- 6.83.4.0 (Beta-Test mit Bild: "das wirkliche Vorkommen wird vom Icon
+-- ueberdeckt"): auf der Minikarte ein offener Ring statt des Symbols - das
+-- Vorkommen des Spiels steht sichtbar in der Mitte; nur gedeckt gezeigt.
+GA.MINI_RING = K.MEDIA .. "gather_ring"
+GA.MINI_ALPHA = 0.8
 GA.TICK = 0.1
 GA.MM_TICK = 0.2
 GA.FOLLOW_TICK = 0.5
@@ -836,9 +841,9 @@ end
 local function Dress(p, e)
     if p.entry == e then return end
     p.entry = e
-    p.icon:SetTexture(GA.MEDIA[e.kind])
+    p.icon:SetTexture(p.mini and GA.MINI_RING or GA.MEDIA[e.kind])
     local c = GC[e.p.s and "gatherShared" or GA.KIND_COLOR[e.kind]]
-    p.icon:SetVertexColor(c[1], c[2], c[3], 1)
+    p.icon:SetVertexColor(c[1], c[2], c[3], p.mini and GA.MINI_ALPHA or 1)
 end
 
 local function OnPinClick(self)

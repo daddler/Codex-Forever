@@ -437,6 +437,8 @@ Check(navUsed <= navBudget,
 -- ihm zusammengelegt werden (oder als Reiter unter einen bestehenden,
 -- Navigation.SUBTABS). Geprueft wird weiter, dass alles passt (oben) -
 -- und dass nichts mehr dazukommt, ohne dass diese Zahl angefasst wird.
+-- 6.61.1.0 gab einen Platz frei, "Beute" (modules/lootbook.lua) hat ihn
+-- genommen: 14 Eintraege, 6 px frei - wieder voll.
 Check(#WeintCodex.Navigation.Tabs() <= 14,
     "Navigationsspalte voll (seit 6.59.0.0): neuer Eintrag nur gegen einen alten ("
     .. (navBudget - navUsed) .. " px frei)")
@@ -935,7 +937,7 @@ end
 -- Leatrix Maps als Hinweis, wer die Karte schon aufdeckt - eine Auskunft
 -- ueber den Spieler, keine Quelle.
 do
-    local NAMES = { "ForeverGuide", "Questie", "What's Training", "Dungeon Journal 1", "Leatrix Maps 1" }
+    local NAMES = { "ForeverGuide", "Questie", "What's Training", "Dungeon Journal 1", "Leatrix Maps 1", "AtlasLoot" }
     local ALLOWED = { ['"ForeverGuide"'] = true }
     local bad = {}
     local p = io.popen("find '" .. ROOT .. "/core' '" .. ROOT .. "/data' '" .. ROOT .. "/modules' '" .. ROOT .. "/ui' -name '*.lua' | sort")
@@ -17993,7 +17995,7 @@ do
     local nav = WeintCodex.Navigation
     local ok, err = pcall(function()
         local want = {
-            { "uebersicht", "Leveln" }, { "charakter" }, { "lehrer" }, { "berufe" }, { "taschen" }, { "buecher" }, { "dungeons" },
+            { "uebersicht", "Leveln" }, { "charakter" }, { "lehrer" }, { "berufe" }, { "taschen" }, { "buecher" }, { "dungeons" }, { "beute" },
             { "gruppe", "Gruppe" }, { "raids" }, { "anmeldung" },
             { "materialien", "Gilde" },
             { "companion", "System" }, { "settings" },
@@ -18051,7 +18053,7 @@ do
             { "import", "companion" }, { "companion", "companion" }, { "einstellungen", "settings" },
             { "dungeons", "dungeons" }, { "raids", "raids" }, { "anmeldung", "anmeldung" },
             { "kalender", "anmeldung" }, { "charakter", "charakter" }, { "materialien", "materialien" },
-            { "lehrer", "lehrer" }, { "gruppe", "gruppe" },
+            { "lehrer", "lehrer" }, { "gruppe", "gruppe" }, { "beute", "beute" },
         }
         for _, c in ipairs(cases) do
             WeintCodex.ResetToHome()
@@ -20860,6 +20862,97 @@ do
             "Farm-Leiste: zweiter Klick blendet aus, dritter wieder ein")
         GA.Choose("all")
     end
+end
+
+-- Beute (modules/lootbook.lua, data/loot.lua erzeugt): Bestand laedt, Van
+-- Cleef hat Beute mit Dropchance, Namen nur vom Client ("lädt …" bis dahin),
+-- Seite baut gedeckelt, Suche, Wunschliste hin und zurueck, Eintrag in der
+-- Spalte unter Dungeons, globale Suche.
+do
+    local G = _G
+    local LB, LD = WeintCodex.LootBook, WeintCodex.LootData
+    local savedItem, savedFaction = G.C_Item, G.UnitFactionGroup
+    local ok, err = pcall(function()
+        assert(LB and LD and #LD.i > 40, "data/loot.lua nicht geladen")
+        local tabs, beuteAt, dungAt = WeintCodex.Navigation.Tabs(), nil, nil
+        for i, t in ipairs(tabs) do
+            if t.id == "beute" then beuteAt = i end
+            if t.id == "dungeons" then dungAt = i end
+        end
+        assert(beuteAt and dungAt and beuteAt == dungAt + 1 and not tabs[beuteAt].group, "Beute nicht unter Dungeons in Leveln")
+        local dm = LB.FindInstance("TheDeadmines")
+        assert(dm and LB.Instance(dm).cat == "d" and LB.Instance(dm).kind == "classic", "Todesminen fehlen")
+        local vc
+        for _, b in ipairs(LB.Bosses(dm)) do if b.npc == 639 then vc = b end end
+        assert(vc and #vc.items >= 3 and vc.items[1].rate, "Van Cleef ohne Beute/Dropchance")
+        -- Art: neue Inhalte von Forever community, Classic classic.
+        local thanes = LB.FindInstance("TheHallOfThanes")
+        assert(thanes and LB.Instance(thanes).kind == "community", "Hall of Thanes nicht community")
+        assert(LB.KindOf(LB.Instance(dm), 273289) == "community" and LB.KindOf(LB.Instance(dm), 5193) == "classic", "Art je Gegenstand")
+        for _, c in ipairs({ "d", "r", "f", "p", "s" }) do assert(#LB.InstancesOf(c) > 0, "Rubrik leer: " .. c) end
+        -- Client antwortet nicht: "lädt …", nie ein erfundener Name.
+        G.C_Item = { GetItemInfo = function() return nil end, RequestLoadItemDataByID = function() end,
+                     GetItemIconByID = function() return 134400 end }
+        local inf = LB.Info(5193)
+        assert(inf.loading and inf.name == nil and LB.pending[5193], "Name ohne Client")
+        -- Client antwortet: Name, Qualitaet, Platz.
+        G.C_Item.GetItemInfo = function(id)
+            if id == 5193 then return "Umhang der Bruderschaft", "|cff0070dd|Hitem:5193|h[Umhang]|h|r", 3, 24, 19, "Rüstung", "Stoff", 1, "INVTYPE_CLOAK", 133762 end
+        end
+        G.INVTYPE_CLOAK = "Rücken"
+        G.WeintCodex_SavedData = G.WeintCodex_SavedData or {}
+        WeintCodex_SavedData.loot = nil
+        WeintCodex.Navigation.GoToTab("beute")
+        assert(LB.Page() and LB.Page():IsShown(), "Seite Beute nicht offen")
+        assert(#WeintCodex.Navigation.SidebarButtons() >= #LB.CATEGORIES, "Rubriken nicht in der Unternavigation: " .. #WeintCodex.Navigation.SidebarButtons())
+        LB.cat, LB.inst = "d", dm
+        LB.Draw()
+        assert(LB.lastDraw and LB.lastDraw.cells > 0 and LB.lastDraw.cells <= LB.MAX_CELLS, "Raster nicht gezeichnet")
+        inf = LB.Info(5193)
+        assert(inf.name == "Umhang der Bruderschaft" and inf.quality == 3 and inf.kind:find("Rücken", 1, true), "Info vom Client")
+        -- Grosse Instanz: gedeckelt.
+        LB.cat, LB.inst = "r", LB.FindInstance("Naxxramas")
+        LB.Draw()
+        assert(LB.lastDraw.cells <= LB.MAX_CELLS, "Raster nicht gedeckelt")
+        -- Suche: Boss, Instanz, geladener Gegenstand.
+        local secs = LB.Sections("d", nil, "cleef")
+        assert(#secs == 1 and secs[1].boss == vc, "Suche nach Boss")
+        assert(#LB.Sections("d", nil, "todesminen") >= 5, "Suche nach Instanz")
+        secs = LB.Sections("d", nil, "bruderschaft")
+        assert(#secs >= 1, "Suche nach geladenem Gegenstand")
+        -- Wunschliste: hin, Rubrik, zurueck; je Konto in SavedData.
+        assert(LB.ToggleWish(5193) == true and WeintCodex_SavedData.loot.wish[5193].k == "TheDeadmines", "Wunsch nicht gespeichert")
+        local ws = LB.Sections("wish", nil, "")
+        assert(#ws == 1 and ws[1].items[1].id == 5193, "Wunschliste zeigt ihn nicht")
+        LB.cat = "wish"
+        LB.Draw()
+        assert(LB.lastDraw.cells == 1, "Rubrik Wunschliste")
+        local r = LB.Click({ id = 5193 }, "RightButton")
+        assert(r == "wish" and not LB.IsWished(5193), "Wunsch nicht entfernt")
+        -- Globale Suche: Boss und geladener Gegenstand.
+        local SR = WeintCodex.Search
+        SR.Reset()
+        local foundBoss, foundItem = false, false
+        for _, e in ipairs(SR.Filter("van cleef") or {}) do
+            if e.category == "loot" then foundBoss = true end
+        end
+        for _, e in ipairs(SR.Filter("umhang der bruder") or {}) do
+            if e.category == "loot" or e.category == "wish" then foundItem = true end
+        end
+        assert(foundBoss and foundItem, "globale Suche findet Beute nicht")
+        -- Ohne SavedData: nur lesen, nie in eine Ersatztabelle.
+        local sv = G.WeintCodex_SavedData
+        G.WeintCodex_SavedData = nil
+        assert(LB.ToggleWish(5193) == false, "ohne SavedData geschrieben")
+        G.WeintCodex_SavedData = sv
+        local blocks = LB.InspectorBlocks()
+        assert(#blocks > 0, "Detailbereich leer")
+    end)
+    G.C_Item, G.UnitFactionGroup = savedItem, savedFaction
+    if WeintCodex_SavedData then WeintCodex_SavedData.loot = nil end
+    if LB then LB.cat, LB.inst, LB.query, LB.selected = "d", nil, "", nil end
+    Check(ok, "Beute: Bestand, Van Cleef, Namen vom Client, Raster gedeckelt, Suche, Wunschliste, Spalte"
+        .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then

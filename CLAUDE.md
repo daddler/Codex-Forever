@@ -145,7 +145,8 @@ internet; any further outward message needs the same explicit request.
   the nav column, which was **full in 6.59.0.0** (owner's decision,
   „Bücher“) and got one slot back in 6.61.1.0 (Anmeldung + Kalender merged
   into „Raidplanung“, `Navigation.ShowPlanning`, gated per group via
-  `PLAN_FEATURES`): a new entry there must replace or merge an old one, or
+  `PLAN_FEATURES`) and is **full again** since „Beute“ took that slot
+  (14 entries, 678 of 684 px): a new entry there must replace or merge an old one, or
   become a tab under an existing one (`Navigation.SUBTABS`). Page
   content that grows from bot-supplied data is capped (raids, see
   `RolePanel.BossCards`) or goes into the one surface built to scroll
@@ -310,6 +311,7 @@ into modules that no longer exist. A green run means "it loads", never
 | Artwork, `data/artwork.lua`, `WeintCodex.Artwork`, `media/dungeons/` | `docs/systems/dungeons.md`, Abschnitt *Bilder: kein Spielmaterial, eigenes schon* |
 | Herkunft eines Eintrags, `data/sources.lua`, `release`/`announced`/`beta`/`community`/`classic` | `docs/systems/dungeons.md`, Abschnitt *Fünf Arten von Herkunft* |
 | Charakterseite, Twinks, Ausrüstungsstand, Lehrer (`modules/trainer.lua`, `data/trainer.lua`; seit 6.15.0.0 Reiter „Klassenquests“, `modules/classquests.lua`, `data/classquests.lua` **erzeugt**, Stand vom Client, Belohnungen `classic`; für Jäger Reiter „Wildtierkunde“, `modules/beasts.lua`, `data/beasts.lua` **erzeugt** von `.github/scripts/import_beasts.py`, `classic`/`community`, Gesehenes in `SavedData.beasts`, `/wc wildtiere`), Berufe (6.14.0.0: `modules/professions.lua`, `data/professions.lua` **erzeugt** von `.github/scripts/import_foreverguide.py`; Gelerntes aus dem Berufsfenster je Charakter) | `docs/systems/character.md` |
+| Beute (`modules/lootbook.lua`, Navigation „Beute“ unter Dungeons in Leveln): `data/loot.lua` **erzeugt** von `.github/scripts/import_loot.py` aus den Datendateien von AtlasLootClassic (GPL-2.0, nur Daten), `classic`/`community`; Namen/Symbole/Qualität nur vom Client („lädt …“); Wunschliste `SavedData.loot.wish`; `/wc beute`; keine Wertung, keine BiS | `docs/systems/character.md`, Abschnitt *Beute* |
 | Gruppencheck | `docs/systems/groupcheck.md` |
 | Companion-Sync allgemein (Inbox/Outbound, `ProcessInbox`) | `docs/systems/companion-bridge.md` |
 | Onboarding-Tour, Update-Changelog-Popup | `docs/systems/onboarding-changelog.md` |

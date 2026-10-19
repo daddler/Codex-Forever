@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.83.4.0
+## Version: 6.84.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -105,6 +105,8 @@ data/professions.lua
 data/classquests.lua
 # Wildtierkunde des Jaegers (erzeugt); gelesen von modules/beasts.lua.
 data/beasts.lua
+# Beute je Boss, Ruf, PvP, Sets (erzeugt); gelesen von modules/lootbook.lua.
+data/loot.lua
 # Seltene Gegner (6.16.0.0, erzeugt); gelesen von ui/rares.lua.
 data/rares.lua
 # Buecher der Bibliothek (6.56.0.0, erzeugt); gelesen von modules/library.lua.
@@ -171,6 +173,8 @@ modules/raidpages.lua
 # Questgeber auf der Weltkarte (6.5.1.0); das Kompendium ruft es beim Klick.
 modules/questmap.lua
 modules/dungeonpages.lua
+# Beute: Eintrag unter Dungeons in der Gruppe Leveln (liest data/loot.lua).
+modules/lootbook.lua
 modules/signup.lua
 modules/calendar.lua
 modules/groupcheck.lua

@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.84.0.0] – 2026-10-19
+
+### Neu
+- Beute (`modules/lootbook.lua`, `data/loot.lua` erzeugt von
+  `.github/scripts/import_loot.py` aus AtlasLootClassic-Daten, GPL-2.0):
+  eigener Eintrag unter Dungeons, Wunschliste in `SavedData.loot.wish`.
+
+### Behoben
+- 6.83.4.0 enthielt nur das Bild des Rings; die Änderung in
+  `ui/gatheratlas.lua` kommt jetzt.
+
 ## [6.83.4.0] – 2026-10-19
 
 ### Geändert

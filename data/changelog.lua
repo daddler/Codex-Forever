@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.84.0.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFBeute|r – neue Seite unter „Dungeons“: Beute aller Dungeons, Schlachtzüge, Weltbosse, Ruf, PvP und Sets nach Instanz und Boss, mit Symbol, Qualität, Platz und Dropchance. Tooltip beim Zeigen, Shift-Klick verlinkt, Strg-Klick zeigt die Anprobe, Stern setzt auf die Wunschliste. Classic-Inhalte „aus Classic“, neue Forever-Inhalte „unbestätigt“. /wc beute",
+            "|cff7C6CFFSammel-Atlas auf der Minikarte|r – der offene Ring aus 6.83.4.0 ist jetzt wirklich drin (dort fehlte die Änderung am Code).",
+        },
+    },
+    {
         version = "6.83.4.0",
         date    = "19.10.2026",
         notes   = {

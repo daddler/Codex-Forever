@@ -60,6 +60,11 @@ local tabs = {
     -- Bots, und die gaten in der Seite (siehe data/roles.lua) - der
     -- neutrale Teil bleibt damit offen.
     { id = "dungeons",   icon = ICON_PATH .. "nav_dungeons",   label = "Dungeons" },
+    -- Beute (modules/lootbook.lua): was in Dungeons, Schlachtzuegen, beim
+    -- Ruf und im PvP faellt, mit Wunschliste. Ohne feature: Bestand aus
+    -- data/loot.lua, Namen vom eigenen Client. Nimmt den Platz, den
+    -- 6.61.1.0 freigegeben hatte - die Spalte ist damit wieder VOLL.
+    { id = "beute",      icon = ICON_PATH .. "nav_beute",      label = "Beute" },
 
     -- Bewusst OHNE feature: der Gruppencheck liest ausschliesslich die
     -- Ausruestung der Leute, die gerade neben einem stehen. Das ist keine
@@ -2456,6 +2461,10 @@ function WeintCodex.Navigation.SwitchTo(tabId)
     elseif tabId == "dungeons" then
         if WeintCodex.DungeonPages and WeintCodex.DungeonPages.Show then
             WeintCodex.DungeonPages.Show()
+        end
+    elseif tabId == "beute" then
+        if WeintCodex.LootBook and WeintCodex.LootBook.Show then
+            WeintCodex.LootBook.Show()
         end
     elseif tabId == "anmeldung" then
         WeintCodex.Navigation.ShowPlanning(sub)

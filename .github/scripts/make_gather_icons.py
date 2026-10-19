@@ -104,9 +104,19 @@ def fish():
     return compose(m, d)
 
 
+def ring():
+    # 6.83.4.0: Minikarte - ein offener Ring, damit das echte Vorkommen des
+    # Spiels in der Mitte sichtbar bleibt.
+    m = blank()
+    dm = ImageDraw.Draw(m)
+    dm.ellipse((24, 24, BIG - 24, BIG - 24), fill=255)
+    dm.ellipse((62, 62, BIG - 62, BIG - 62), fill=0)
+    return compose(m)
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
-    for name, fn in (("herb", herb), ("ore", ore), ("chest", chest), ("fish", fish)):
+    for name, fn in (("herb", herb), ("ore", ore), ("chest", chest), ("fish", fish), ("ring", ring)):
         path = os.path.join(OUT, "gather_" + name + ".tga")
         write_tga(path, fn())
         print("geschrieben:", os.path.relpath(path, ROOT))
