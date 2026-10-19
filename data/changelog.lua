@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.80.6.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFFlugspiele|r – das Fenster steht fest und lässt sich beim Spielen nicht mehr verschieben. Eine eigene Zeile unter dem Titel zeigt Ziel und Flugzeit, die mitläuft, und rechts die Punkte; nichts überlappt mehr die Knöpfe oder die Hinweise der Spiele.",
+        },
+    },
+    {
         version = "6.80.5.0",
         date    = "19.10.2026",
         notes   = {

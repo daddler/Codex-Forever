@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.80.6.0] – 2026-10-19
+
+### Geändert
+- Flugspiele: Fenster nicht mehr verschiebbar; zweite Kopfzeile mit Ziel und
+  laufender Flugzeit (`FG.FlightLine`, `FG.PaintFlight`) und Punkten; Titel
+  begrenzt, „Anderes Spiel“ rückt an die übrigen Knöpfe.
+
 ## [6.80.5.0] – 2026-10-19
 
 ### Behoben

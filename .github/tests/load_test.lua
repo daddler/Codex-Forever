@@ -20476,6 +20476,19 @@ do
         "Zielmarke: nah am Boden gemessen, weit wie die Navigation")
 end
 
+do
+    local FG = WeintCodex.UIFlightGames
+    if FG and FG.FlightLine then
+        local old = FG.flight
+        FG.flight = { on = true, start = 100, to = "Eisenschmiede" }
+        local a = FG.FlightLine(183)
+        FG.flight = { on = false }
+        local b = FG.FlightLine(183)
+        FG.flight = old
+        Check(a == "Flug nach Eisenschmiede · 1:23 min" and b == "", "Flugspiele: Flugzeit in eigener Zeile: " .. tostring(a))
+    end
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

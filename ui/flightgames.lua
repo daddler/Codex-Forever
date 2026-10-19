@@ -41,7 +41,7 @@ FG.GAMES = {
     { key = "mahjong", name = "Mahjong",     hint = "Zwei gleiche freie Steine anklicken. Frei ist ein Stein ohne Stein darauf und mit freier linker oder rechter Seite." },
     { key = "hunt",    name = "Hühnerjagd",  hint = "Hühner anklicken: Küken und Goldhuhn bringen viel, Zombiehühner brauchen zwei Treffer – Finger weg vom roten Bombenhuhn!" },
 }
-FG.W, FG.WIN_H = 440, 520   -- nicht FG.H: das ist die Huehnerjagd
+FG.W, FG.WIN_H = 440, 544   -- nicht FG.H: das ist die Huehnerjagd
 FG.BOARD = 400
 FG.HUHN = "Interface\\Icons\\Spell_Magic_PolymorphChicken"
 
@@ -103,7 +103,7 @@ FG.Button = Button
 
 local function View(name)
     local v = CreateFrame("Frame", nil, win)
-    v:SetPoint("TOPLEFT", win, "TOPLEFT", 20, -44)
+    v:SetPoint("TOPLEFT", win, "TOPLEFT", 20, -68)
     v:SetPoint("BOTTOMRIGHT", win, "BOTTOMRIGHT", -20, 20)
     v:Hide()
     views[name] = v
@@ -921,11 +921,9 @@ local function Build()
     win:SetSize(FG.W, FG.WIN_H)
     win:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
     win:SetFrameStrata("DIALOG")
-    win:SetMovable(true)
+    -- 6.80.6.0 (Wunsch): fest an seinem Platz - beim Spielen verschob ein
+    -- Ziehen auf dem Brett das ganze Fenster.
     win:EnableMouse(true)
-    win:RegisterForDrag("LeftButton")
-    win:SetScript("OnDragStart", function(self) self:StartMoving() end)
-    win:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
     win:SetClampedToScreen(true)
     local bg = win:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(win)
@@ -937,8 +935,27 @@ local function Build()
     win.title:SetPoint("TOPLEFT", win, "TOPLEFT", 16, -14)
     local t = C.textBright
     win.title:SetTextColor(t[1], t[2], t[3])
+    -- 6.80.6.0 (Wunsch: Flugzeit erkennbar, nichts ueberlappt): zweite
+    -- Kopfzeile nur fuer Flug und Punkte, eigene Plaetze, kein Teilen mit
+    -- Hinweisen der Spiele (win.note unten).
+    win.flight = K.NewText(win, 12)
+    win.flight:SetPoint("TOPLEFT", win, "TOPLEFT", 16, -42)
+    win.flight:SetWidth(FG.W - 150)
+    win.flight:SetJustifyH("LEFT")
+    win.flight:SetWordWrap(false)
+    local ac = C.accent
+    win.flight:SetTextColor(ac[1], ac[2], ac[3])
     win.score = K.NewText(win, 13)
-    win.score:SetPoint("TOPRIGHT", win, "TOPRIGHT", -122, -15)
+    win.score:SetPoint("TOPRIGHT", win, "TOPRIGHT", -16, -42)
+    win.score:SetJustifyH("RIGHT")
+    local line = win:CreateTexture(nil, "ARTWORK")
+    line:SetPoint("TOPLEFT", win, "TOPLEFT", 16, -60)
+    line:SetPoint("TOPRIGHT", win, "TOPRIGHT", -16, -60)
+    line:SetHeight(1)
+    line:SetColorTexture(ac[1], ac[2], ac[3], 0.25)
+    win.title:SetWidth(FG.W - 260)
+    win.title:SetJustifyH("LEFT")
+    win.title:SetWordWrap(false)
     win.close = Button(win, "×", 26, 22, function() FG.Close() end)
     win.close:SetPoint("TOPRIGHT", win, "TOPRIGHT", -12, -10)
 
@@ -1053,11 +1070,32 @@ local function Build()
     -- Zurueck zur Auswahl waehrend des Spiels.
     win.back = Button(win, "Anderes Spiel", 120, 22, function() FG.Ask(true) end)
     win.back:SetSize(108, 22)
-    win.back:SetPoint("TOPRIGHT", win, "TOPRIGHT", -214, -10)
+    win.back:SetPoint("TOPRIGHT", win, "TOPRIGHT", -122, -10)
+    local acc = 1
+    win:SetScript("OnUpdate", function(_, el)
+        acc = acc + el
+        if acc < 1 then return end
+        acc = 0
+        FG.PaintFlight()
+    end)
     win:Hide()
     table.insert(_G.UISpecialFrames or {}, "WeintCodexFlightGames")
     FG.win = win
     return win
+end
+
+-- Kopfzeile: "Flug nach Eisenschmiede · 1:23 min" (live, einmal je Sekunde).
+function FG.FlightLine(now)
+    local f = FG.flight
+    if not (f and f.on) then return "" end
+    local secs = (type(now) == "number" and type(f.start) == "number") and (now - f.start) or nil
+    local d = FG.Duration(secs)
+    local where = f.to and ("Flug nach " .. f.to) or "Im Flug"
+    return d and (where .. " · " .. d) or where
+end
+function FG.PaintFlight()
+    if not (win and win.flight) then return end
+    win.flight:SetText(FG.FlightLine(_G.GetTime and K.Plain(_G.GetTime()) or nil))
 end
 
 function FG.PaintMute()
@@ -1074,7 +1112,8 @@ function FG.Ask(force)
         if best and best[g.key] then parts[#parts + 1] = g.name .. " " .. best[g.key] end
     end
     views.ask.best:SetText(#parts > 0 and ("Bestwerte: " .. table.concat(parts, " · ")) or "")
-    win.title:SetText(FG.flight.on and "Flugspiele – guten Flug!" or "Flugspiele")
+    win.title:SetText("Flugspiele")
+    FG.PaintFlight()
     win.back:Hide()
     win.note:SetText("")
     FG.PaintMute()
@@ -1088,6 +1127,7 @@ function FG.Play(key)
     local f = FG.flight
     f.game, f.points = key, 0
     win.title:SetText(FG.NameOf(key))
+    FG.PaintFlight()
     win.score:SetText("0 Punkte")
     win.back:Show()
     win.note:SetText("")
