@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.83.4.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFSammel-Atlas auf der Minikarte|r – statt eines Symbols ein offener Ring um die gemerkte Stelle: das echte Vorkommen des Spiels bleibt in der Mitte sichtbar.",
+        },
+    },
+    {
         version = "6.83.3.0",
         date    = "19.10.2026",
         notes   = {

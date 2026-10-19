@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.83.4.0] – 2026-10-19
+
+### Geändert
+- Sammel-Atlas, Minikarte: offener Ring `media/ui/gather_ring.tga`
+  (`GA.MINI_RING`, 16 px, 80 %) statt des Symbols.
+
 ## [6.83.3.0] – 2026-10-19
 
 ### Geändert
