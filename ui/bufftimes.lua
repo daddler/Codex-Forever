@@ -178,9 +178,7 @@ local function SpellName(id)
         if ok and not K.IsSecret(n) and type(n) == "string" and n ~= "" then return n end
     end
 end
-function BT.ByName(id)
-    local n = SpellName(id)
-    if not n then return nil end
+local function NameMap()
     if _G.next(nameGroup) == nil then
         for _, gr in ipairs(BT.Groups and BT.Groups() or {}) do
             for _, sid in ipairs(gr.spells) do
@@ -189,7 +187,37 @@ function BT.ByName(id)
             end
         end
     end
-    return nameGroup[n]
+    return nameGroup
+end
+function BT.ByName(id)
+    local n = SpellName(id)
+    if not n then return nil end
+    return NameMap()[n]
+end
+
+-- 6.87.9.0 (Beta-Test: "Siegel des Furors vor dem Kampf aktiv - nichts; im
+-- Kampf grau mit !"): der Abgleich suchte die Aura nur unter den Nummern
+-- der Liste; Forever fuehrt dieses Siegel unter einer anderen - der Abgleich
+-- nahm es darum weg. Jetzt auch ueber die Namen der eigenen Buffs (nur
+-- ausserhalb des Kampfes, wie jeder Abgleich). Fuellt `found` je Gruppe.
+local byNameFound = {}
+local EMPTY = {}
+function BT.ScanAuraNames()
+    for k in pairs(byNameFound) do byNameFound[k] = nil end
+    local ua = _G.C_UnitAuras
+    if not (ua and ua.GetAuraDataByIndex) then return byNameFound end
+    local map = NameMap()
+    for i = 1, 40 do
+        local ok, d = pcall(ua.GetAuraDataByIndex, "player", i, "HELPFUL")
+        if not ok or type(d) ~= "table" then break end
+        local n, sid = K.Plain(d.name), K.Plain(d.spellId)
+        local g = type(n) == "string" and map[n]
+        if g and not byNameFound[g.key] then
+            byNameFound[g.key] = d
+            if type(sid) == "number" then BT.byId[sid] = BT.byId[sid] or g end
+        end
+    end
+    return byNameFound
 end
 
 local function Opt(k) return K.Get(KEY, k) end
@@ -318,6 +346,7 @@ function BT.Reconcile(now, fighting)
     if fighting then return false end
     now = now or Now()
     local st = BT.stats
+    local named = BT.ScanAuraNames()
     for _, g in ipairs(BT.Groups()) do
         local a = BT.active[g.key]
         if g.weapon then
@@ -330,7 +359,11 @@ function BT.Reconcile(now, fighting)
             end
         else
             local seen, seenId, unknown = nil, nil, false
-            for _, id in ipairs(g.spells) do
+            if named[g.key] then
+                seen, seenId = named[g.key], K.Plain(named[g.key].spellId)
+                if type(seenId) ~= "number" then seenId = a and a.spell or g.spells[1] end
+            end
+            for _, id in ipairs(seen and EMPTY or g.spells) do
                 local aura = BT.Aura(id)
                 if aura == nil then unknown = true
                 elseif aura then seen, seenId = aura, id break end

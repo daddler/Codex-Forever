@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.87.9.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFBuffzeiten: Siegel des Furors|r – vor dem Kampf gewirkt, verschwand es gleich wieder, und im Kampf stand „fehlt“: der Abgleich mit deinen Buffs suchte es unter der Classic-Nummer und fand es nicht. Jetzt erkennt der Abgleich Buffs auch am Namen.",
+        },
+    },
+    {
         version = "6.87.8.0",
         date    = "19.10.2026",
         notes   = {

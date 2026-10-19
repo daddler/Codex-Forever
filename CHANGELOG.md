@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.87.9.0] – 2026-10-19
+
+### Behoben
+- Buffzeiten: Abgleich außerhalb des Kampfes auch über die Namen der
+  eigenen Buffs (`BT.ScanAuraNames`), merkt die Nummer des Clients.
+
 ## [6.87.8.0] – 2026-10-19
 
 ### Behoben
