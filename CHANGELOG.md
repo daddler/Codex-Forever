@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.83.2.0] – 2026-10-19
+
+### Behoben
+- Sammel-Atlas teilt auch Stellen ohne Objektnummer (`t,map,art,x,y,name`,
+  `GA.FormatName`/`GA.Parse`) und den eigenen Bestand nach dem Einloggen
+  (`GA.QueueBacklog`, höchstens 400 Zeilen, 2 s Abstand, alle 30 min).
+
 ## [6.83.1.0] – 2026-10-19
 
 ### Geändert

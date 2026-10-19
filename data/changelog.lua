@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.83.2.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFSammel-Atlas mit der Gilde|r – geteilt wurde bisher nur, was beim Sammeln eine Objektnummer hatte, und nur im selben Moment. Jetzt auch nach Name, und deine bisherigen Fundstellen gehen nach dem Einloggen langsam an die Gilde (eine Zeile alle 2 s, alle 30 Minuten erneut). Wer sie sehen will, braucht den Sammel-Atlas eingeschaltet – einen Beruf braucht man nicht.",
+        },
+    },
+    {
         version = "6.83.1.0",
         date    = "19.10.2026",
         notes   = {

@@ -20838,6 +20838,17 @@ do
     end
 end
 
+do
+    local GA = WeintCodex.UIGatherAtlas
+    if GA and GA.Line then
+        local line = GA.Line(1429, "Friedensblume", 0.4, 0.5, "herb")
+        local m, key, x, y, kind = GA.Parse(line)
+        local bad = GA.Parse("t,1429,h,4000,5000,|cffff0000x") == nil and GA.Parse("t,1429,z,1,1,a") == nil
+        Check(m == 1429 and key == "Friedensblume" and math.abs(x - 0.4) < 1e-4 and kind == "herb" and bad,
+            "Sammel-Atlas: Teilen nach Name hin und zurück, Unsinn abgewiesen")
+    end
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

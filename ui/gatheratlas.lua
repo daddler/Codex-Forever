@@ -508,7 +508,7 @@ local function Commit(key, name)
     if not p then GA.last.result = "nicht gemerkt (voll oder ungültig)" return nil end
     GA.stats.gathered = GA.stats.gathered + 1
     GA.last.result = fresh and "neue Stelle" or "bekannte Stelle"
-    if fresh and type(key) == "number" then GA.Share(map, key, p.x, p.y, kind) end
+    if fresh then GA.Share(map, key, p.x, p.y, kind) end
     -- Am Halt der Route gesammelt: weiter.
     if GA.following == map then
         local r = GA.Route(map)
@@ -581,7 +581,15 @@ GA.QUEUE_MAX = 30
 GA.RATE_WINDOW = 60
 GA.RATE_MAX = 30          -- Nachrichten je Absender und Minute
 GA.SENDER_MAX = 200
-GA.MSG_MAX = 48
+GA.MSG_MAX = 96
+-- 6.83.2.0 (Gildentest: "er sieht meine Bluemchen nicht"): geteilt wurde
+-- nur, was beim Sammeln eine Objektnummer hatte, und nur in dem Moment.
+-- Jetzt auch nach Name ("t,...") und der eigene Bestand langsam nach dem
+-- Einloggen und alle GA.BACKLOG_EVERY s (GA.BACKLOG_GAP je Zeile).
+GA.BACKLOG_MAX = 400
+GA.BACKLOG_GAP = 2.0
+GA.BACKLOG_EVERY = 1800
+GA.NAME_MAX = 40
 
 local queue = {}
 GA.queue = queue
@@ -594,10 +602,25 @@ function GA.Format(mapID, objectID, x, y, kind)
     return s
 end
 
--- Eine empfangene Zeile pruefen. Gibt mapID, objectID, x, y, kind|nil
--- zurueck - oder nil.
+-- Ohne Objektnummer: nach Name, die Art ist dann Pflicht.
+function GA.FormatName(mapID, name, x, y, kind)
+    return "t," .. mapID .. "," .. GA.KIND_CODE[kind] .. "," .. math.floor(x * 10000 + 0.5) .. ","
+        .. math.floor(y * 10000 + 0.5) .. "," .. name
+end
+
+-- Eine empfangene Zeile pruefen. Gibt mapID, objectID (oder Name), x, y,
+-- kind|nil zurueck - oder nil.
 function GA.Parse(text)
     if type(text) ~= "string" or #text > GA.MSG_MAX then return nil end
+    if text:sub(1, 2) == "t," then
+        local m, k, x, y, name = text:match("^t,(%d+),(%a),(%d+),(%d+),(.+)$")
+        m, x, y = tonumber(m), tonumber(x), tonumber(y)
+        local kind = k and GA.CODE_KIND[k]
+        if not (m and x and y and kind and name) then return nil end
+        if m < 1 or m > 100000 or x > 10000 or y > 10000 then return nil end
+        if #name > GA.NAME_MAX or name:find("[%c|]") then return nil end
+        return m, name, x / 10000, y / 10000, kind
+    end
     local m, o, x, y, k = text:match("^n,(%d+),(%d+),(%d+),(%d+),?(%a?)$")
     m, o, x, y = tonumber(m), tonumber(o), tonumber(x), tonumber(y)
     if not (m and o and x and y) then return nil end
@@ -617,15 +640,64 @@ local function InGuild()
     return _G.IsInGuild and K.Bool(_G.IsInGuild(), false) or false
 end
 
+local function Line(mapID, key, x, y, kind)
+    if type(key) == "number" then return GA.Format(mapID, key, x, y, kind) end
+    if type(key) == "string" and GA.KIND_CODE[kind or ""] and #key <= GA.NAME_MAX and not key:find("[%c|]") then
+        return GA.FormatName(mapID, key, x, y, kind)
+    end
+end
+GA.Line = Line
+
 function GA.Share(mapID, objectID, x, y, kind)
     if not (GA.Sharing() and InGuild()) or #queue >= GA.QUEUE_MAX then return false end
-    queue[#queue + 1] = GA.Format(mapID, objectID, x, y, kind)
+    local line = Line(mapID, objectID, x, y, kind)
+    if not line then return false end
+    queue[#queue + 1] = line
     if GA.sendFrame then GA.sendFrame:Show() end
     return true
 end
 
+-- Eigener Bestand, langsam hinterher (nur eigene Stellen, nie Geteiltes).
+local backlog = {}
+GA.backlog = backlog
+function GA.QueueBacklog()
+    for i = #backlog, 1, -1 do backlog[i] = nil end
+    if not (GA.Sharing() and InGuild()) then return 0 end
+    local g = GA.Store()
+    for mapID, m in pairs(g and g.nodes or {}) do
+        for key, list in pairs(m) do
+            local kind = g.kinds[key]
+            for _, p in ipairs(list) do
+                if not p.s and #backlog < GA.BACKLOG_MAX then
+                    local line = Line(mapID, key, p.x, p.y, kind)
+                    if line then backlog[#backlog + 1] = line end
+                end
+            end
+        end
+    end
+    if #backlog > 0 and GA.sendFrame then GA.sendFrame:Show() end
+    return #backlog
+end
+
 local nextSend = 0
 function GA.SendNext(now)
+    if #queue == 0 and #backlog > 0 then
+        if now < nextSend or InCombat() then return false end
+        local cc = _G.C_ChatInfo
+        if not (cc and cc.SendAddonMessage and GA.Sharing()) then
+            for i = #backlog, 1, -1 do backlog[i] = nil end
+            return true
+        end
+        local ok, res = pcall(cc.SendAddonMessage, GA.PREFIX, backlog[#backlog], "GUILD")
+        if ok and (res == nil or res == true or res == 0) then
+            backlog[#backlog] = nil
+            GA.stats.sent = GA.stats.sent + 1
+            nextSend = now + GA.BACKLOG_GAP
+        else
+            nextSend = now + 5
+        end
+        return #backlog == 0
+    end
     if #queue == 0 then return true end
     if now < nextSend or InCombat() then return false end
     local cc = _G.C_ChatInfo
@@ -1240,11 +1312,18 @@ ev:SetScript("OnEvent", K.Measured("Sammel-Atlas", function(_, event, a, b, c, d
     elseif event == "CHAT_MSG_ADDON" then GA.OnAddonMessage(a, b, c, d)
     elseif event == "ADDON_LOADED" then
         if a == "Blizzard_WorldMap" then EnsureDriver() end
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        if not GA.backlogTicker and _G.C_Timer and _G.C_Timer.After then
+            GA.backlogTicker = true
+            _G.C_Timer.After(30, GA.QueueBacklog)
+            if _G.C_Timer.NewTicker then _G.C_Timer.NewTicker(GA.BACKLOG_EVERY, GA.QueueBacklog) end
+        end
     end
 end))
 
 local EVENTS = { "UNIT_SPELLCAST_SENT", "UNIT_SPELLCAST_SUCCEEDED", "UNIT_SPELLCAST_FAILED",
-                 "UNIT_SPELLCAST_INTERRUPTED", "LOOT_OPENED", "LOOT_READY", "ADDON_LOADED" }
+                 "UNIT_SPELLCAST_INTERRUPTED", "LOOT_OPENED", "LOOT_READY", "ADDON_LOADED",
+                 "PLAYER_ENTERING_WORLD" }
 
 function GA.Apply()
     Changed()
