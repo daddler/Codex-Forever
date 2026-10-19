@@ -21213,6 +21213,12 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+do
+    local okP = pcall(WeintCodex.ReloadPrompt)
+    Check(_G.SLASH_WEINTCODEXRL1 == "/rl" and type(SlashCmdList.WEINTCODEXRL) == "function" and okP
+        and _G.WeintCodexReloadPrompt ~= nil, "/rl öffnet die Frage zum Neuladen")
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

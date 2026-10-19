@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.87.4.0] – 2026-10-19
+
+### Neu
+- `/rl` (`WeintCodex.ReloadPrompt`, core/ui.lua): Frage mit gesichertem
+  /reload-Knopf, Enter über `SetOverrideBindingClick` solange offen; nur
+  wenn kein anderes Addon `/rl` belegt.
+
 ## [6.87.3.0] – 2026-10-19
 
 ### Behoben

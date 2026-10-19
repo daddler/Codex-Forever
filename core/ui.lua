@@ -3308,3 +3308,63 @@ function WeintCodex.ShowExportDialog(titleText, exportStr)
         exportFrame.EditBox:HighlightText()
     end)
 end
+
+--------------------------------------------------
+-- /rl (6.87.4.0, Wunsch: "nicht nur /reload, auch /rl")
+--------------------------------------------------
+-- Neuladen aus Addon-Code sperrt das Spiel (siehe AttachReload). /rl
+-- oeffnet darum eine kleine Frage; Enter oder der Knopf loest den
+-- gesicherten /reload-Makroknopf aus - ein Tastendruck mehr als /reload.
+-- Hat schon ein anderes Addon /rl, bleibt es dessen.
+local rlFrame
+function WeintCodex.ReloadPrompt()
+    if InCombatLockdown and InCombatLockdown() then
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Im Kampf nicht – danach /rl oder /reload.")
+        return
+    end
+    if not rlFrame then
+        local f = CreateFrame("Frame", "WeintCodexReloadPrompt", UIParent)
+        f:SetSize(260, 92)
+        f:SetPoint("CENTER", UIParent, "CENTER", 0, 120)
+        f:SetFrameStrata("DIALOG")
+        WeintCodex.CreateSurface(f, { tone = "plain", radius = 10, backdrop = "bgDark" }):SetAllPoints(f)
+        local t = WeintCodex.Label(f, "Oberfläche neu laden?", { size = 13 })
+        t:SetPoint("TOP", f, "TOP", 0, -16)
+        local go = WeintCodex.CreateButton(f, { text = "Neu laden (Enter)", kind = "primary", height = 26, size = 12 })
+        go:SetWidth(150)
+        go:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 14, 14)
+        local no = WeintCodex.CreateButton(f, { text = "Abbrechen", kind = "secondary", height = 26, size = 12,
+                                                onClick = function() f:Hide() end })
+        no:SetWidth(80)
+        no:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -14, 14)
+        WeintCodex.AttachReload(go)
+        -- Fuer Enter ein benannter gesicherter Knopf (Belegung braucht Namen).
+        local ok, key = pcall(CreateFrame, "Button", "WeintCodexReloadKey", f, "SecureActionButtonTemplate")
+        if ok and key then
+            if key.RegisterForClicks then key:RegisterForClicks("AnyUp", "AnyDown") end
+            ArmReload(key)
+            key:SetAttribute("useOnKeyDown", true)
+            f.secureButton = key
+        end
+        f:SetScript("OnShow", function(self)
+            -- Enter klickt den gesicherten Knopf (Belegung nur, solange offen).
+            local sec = self.secureButton
+            if sec and SetOverrideBindingClick and not InCombatLockdown() then
+                SetOverrideBindingClick(self, true, "ENTER", sec:GetName(), "LeftButton")
+            end
+        end)
+        f:SetScript("OnHide", function(self)
+            if ClearOverrideBindings and not InCombatLockdown() then ClearOverrideBindings(self) end
+        end)
+        table.insert(UISpecialFrames, "WeintCodexReloadPrompt")
+        rlFrame = f
+    end
+    rlFrame:Show()
+end
+do
+    local taken = type(hash_SlashCmdList) == "table" and hash_SlashCmdList["/RL"]
+    if not taken then
+        SLASH_WEINTCODEXRL1 = "/rl"
+        SlashCmdList["WEINTCODEXRL"] = function() WeintCodex.ReloadPrompt() end
+    end
+end

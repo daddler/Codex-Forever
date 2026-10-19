@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.87.4.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFF/rl|r – lädt die Oberfläche neu: eine kleine Frage, Enter bestätigt. Direkt neu laden dürfen Addons auf Forever nicht, darum der eine Tastendruck mehr. /reload geht wie immer. Hat schon ein anderes Addon /rl, bleibt es dessen.",
+        },
+    },
+    {
         version = "6.87.3.0",
         date    = "19.10.2026",
         notes   = {
