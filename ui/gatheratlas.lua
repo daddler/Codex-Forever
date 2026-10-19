@@ -86,7 +86,7 @@ GA.MERGE = 0.004           -- Kartenanteil: so nah = dieselbe Stelle
 GA.MAP_CAP = 1500          -- Punkte je Karte
 GA.LOOT_WINDOW = 1.5       -- s nach dem Zauber
 GA.FISH_WINDOW = 30
-GA.REACH = 10              -- m: Halt erreicht
+GA.REACH = 15              -- m: Halt erreicht (6.84.2.0: 10 war zu knapp)
 GA.MAX_PINS = 400          -- Symbole auf der Weltkarte
 GA.MAX_MINI = 60
 GA.PIN = 14
@@ -429,13 +429,21 @@ end
 function GA.CheckFollow()
     if not GA.following then return end
     local QA = WeintCodex.UIQuestArrow
-    -- Der Spieler hat den Pfeil anders gesetzt oder geloest: aufhoeren.
+    local d = GA.YardsToStop()
+    -- 6.84.2.0 (Beta-Test: "Punkt erreicht, der Pfeil geht nicht weiter"):
+    -- am Halt loest das Spiel seinen Wegpunkt und mit ihm das Ziel des
+    -- Pfeils - das galt als "Spieler hat aufgehoert". Jetzt: ist das Ziel
+    -- nur weg und der Spieler nah am Halt, geht es zum naechsten. Aufhoeren
+    -- nur, wenn ein anderes Ziel gesetzt ist oder der Spieler weit weg ist.
     if QA and QA.custom ~= followTarget then
+        if QA.custom == nil and d and d <= GA.REACH * 3 then
+            GA.Advance()
+            return
+        end
         followTarget = nil
         GA.StopFollow()
         return
     end
-    local d = GA.YardsToStop()
     if d and d <= GA.REACH then GA.Advance() end
 end
 

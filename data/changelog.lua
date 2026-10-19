@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.84.2.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFFarmroute folgen|r – am Halt angekommen geht der Pfeil jetzt zum nächsten weiter. Bisher löste das Spiel beim Erreichen seinen Wegpunkt, und WeintCodex hielt das für „aufgehört“. Ein Halt gilt ab 15 m als erreicht.",
+        },
+    },
+    {
         version = "6.84.1.0",
         date    = "19.10.2026",
         notes   = {

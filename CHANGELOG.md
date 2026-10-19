@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.84.2.0] – 2026-10-19
+
+### Behoben
+- Farmroute: `GA.CheckFollow` geht weiter, wenn das Ziel des Pfeils am Halt
+  gelöst wurde (nah am Halt), statt aufzuhören; `GA.REACH` 10 → 15.
+
 ## [6.84.1.0] – 2026-10-19
 
 ### Geändert
