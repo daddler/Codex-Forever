@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.81.0.0] – 2026-10-19
+
+### Geändert
+- Juwelen: sechs eigene Kristallbilder `media/ui/gem1..6.tga`, erzeugt mit
+  `.github/scripts/make_gems.py` (Pillow); Farbe im Bild, `JColor` entfällt.
+
 ## [6.80.6.0] – 2026-10-19
 
 ### Geändert

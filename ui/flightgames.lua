@@ -121,9 +121,9 @@ FG.ShowView = Show
 --------------------------------------------------
 
 local J = { N = 8, KINDS = 6, grid = {}, cells = {}, sel = nil }
+J.GEMS = { "gem1", "gem2", "gem3", "gem4", "gem5", "gem6" }
 FG.J = J
 
-local function JColor(kind) return GC["raidMark" .. ({ 7, 2, 1, 4, 6, 3 })[kind]] end
 
 -- Darstellung je Feld: Versatz (dx, dy), Groesse und Deckkraft des Steins
 -- - nur die Animation aendert sie, JPaint setzt sie auf Ruhe zurueck.
@@ -139,8 +139,13 @@ local function JPaint()
     for r = 1, J.N do
         for c = 1, J.N do
             local cell, kind = J.cells[r][c], J.grid[r][c]
-            local col = JColor(kind)
-            if col then cell.gem:SetVertexColor(col[1], col[2], col[3], 1) end
+            -- 6.81.0.0 (Wunsch: "sollen nach Kristallen aussehen"): je Art ein
+            -- eigener geschliffener Stein (media/ui/gem1..6.tga, gebaut mit
+            -- .github/scripts/make_gems.py), Farbe im Bild - kein Einfaerben.
+            if kind ~= 0 and cell.kind ~= kind then
+                cell.gem:SetTexture(K.MEDIA .. J.GEMS[kind])
+                cell.kind = kind
+            end
             cell.gem:SetShown(kind ~= 0)
             cell.sel:SetShown(J.sel ~= nil and J.sel[1] == r and J.sel[2] == c)
             cell.dx, cell.dy, cell.scale, cell.alpha = 0, 0, 1, 1
@@ -422,7 +427,7 @@ local function BuildJewels()
             local s = ((r + c) % 2 == 0) and (C.surface1 or C.bgPanel) or (C.surface2 or C.bgPanel)
             bg:SetColorTexture(s[1], s[2], s[3], 1)
             b.gem = b:CreateTexture(nil, "ARTWORK")
-            b.gem:SetTexture(K.MEDIA .. "diamond")
+            b.gem:SetTexture(K.MEDIA .. "gem1")
             b.gem:SetSize(size - 12, size - 12)
             b.gem:SetPoint("CENTER")
             b.sel = b:CreateTexture(nil, "OVERLAY")

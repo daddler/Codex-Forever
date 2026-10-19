@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.81.0.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFFlugspiele – Juwelen|r – echte Kristalle statt einfarbiger Rauten: sechs eigene, geschliffene Steine mit Facetten, Glanz und Funkeln – rund in Rot, Sechseck in Orange, Achteck in Gelb, Smaragdschliff in Grün, Dreieck in Blau, Raute in Violett. Auch an der Form unterscheidbar.",
+        },
+    },
+    {
         version = "6.80.6.0",
         date    = "19.10.2026",
         notes   = {
