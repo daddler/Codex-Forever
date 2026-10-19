@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.84.9.0] – 2026-10-19
+
+### Behoben
+- Beute: Namen zusätzlich über `C_Item.GetItemNameByID`,
+  `C_TooltipInfo.GetItemByID` und `Item:ContinueOnItemLoad`; nach
+  `LB.TRIES` Anfragen „vom Spiel nicht genannt“; Messzeile `LB.diag`.
+
 ## [6.84.8.0] – 2026-10-19
 
 ### Behoben

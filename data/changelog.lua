@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.84.9.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFBeute|r – Namen fragt WeintCodex jetzt auf vier Wegen beim Spiel an statt nur auf einem. Nennt das Spiel nach mehreren Versuchen keinen Namen, steht „vom Spiel nicht genannt“ statt endlos „lädt …“. Rechts zeigt „Namen vom Client“, welcher Weg geantwortet hat.",
+        },
+    },
+    {
         version = "6.84.8.0",
         date    = "19.10.2026",
         notes   = {

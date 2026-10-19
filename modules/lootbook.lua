@@ -190,6 +190,9 @@ local function IconOf(id)
 end
 
 LB.RETRY = 4
+LB.diag = { byInfo = 0, byName = 0, byTooltip = 0, byObject = 0 }
+local asked, loadedName, tries = {}, {}, {}
+LB.TRIES = 4
 local waiting = false
 function LB.WaitForNames()
     if waiting or not (_G.C_Timer and _G.C_Timer.After) then return end
@@ -212,6 +215,43 @@ function LB.Info(id)
             name, link, quality, itype, isub, equip, icon = Plain(n), Plain(l), Plain(q), Plain(t), Plain(st), Plain(eq), Plain(tex)
         end
     end
+    -- 6.84.9.0 (Beta-Test mit Bild: Sets laden auch nach 6.84.8.0 nie,
+    -- obwohl die Symbole da sind): GetItemInfo antwortet auf Forever fuer
+    -- diese Gegenstaende nicht. Weitere Wege des Clients, der Reihe nach:
+    -- Name je Nummer, Tooltipdaten, Gegenstand-Objekt mit Rueckruf.
+    if (type(name) ~= "string" or name == "") and ci and ci.GetItemNameByID then
+        local ok, n = pcall(ci.GetItemNameByID, id)
+        n = ok and Plain(n) or nil
+        if type(n) == "string" and n ~= "" then name = n LB.diag.byName = LB.diag.byName + 1 end
+    end
+    if (type(name) ~= "string" or name == "") and _G.C_TooltipInfo and _G.C_TooltipInfo.GetItemByID then
+        local ok, d = pcall(_G.C_TooltipInfo.GetItemByID, id)
+        local line = ok and type(d) == "table" and type(d.lines) == "table" and d.lines[1]
+        local n = type(line) == "table" and Plain(line.leftText) or nil
+        if type(n) == "string" and n ~= "" and n ~= _G.RETRIEVING_ITEM_INFO then name = n LB.diag.byTooltip = LB.diag.byTooltip + 1 end
+    end
+    if (type(quality) ~= "number") and ci and ci.GetItemQualityByID then
+        local ok, q = pcall(ci.GetItemQualityByID, id)
+        q = ok and Plain(q) or nil
+        if type(q) == "number" then quality = q end
+    end
+    if (type(name) ~= "string" or name == "") and not asked[id] and _G.Item and _G.Item.CreateFromItemID then
+        asked[id] = true
+        local ok, obj = pcall(_G.Item.CreateFromItemID, _G.Item, id)
+        if ok and type(obj) == "table" and obj.ContinueOnItemLoad then
+            pcall(obj.ContinueOnItemLoad, obj, function()
+                local okn, n = pcall(obj.GetItemName, obj)
+                n = okn and Plain(n) or nil
+                if type(n) == "string" and n ~= "" then
+                    LB.names[id] = n
+                    loadedName[id] = n
+                    LB.diag.byObject = LB.diag.byObject + 1
+                    if LB.Redraw then LB.Redraw() end
+                end
+            end)
+        end
+    end
+    if (type(name) ~= "string" or name == "") and loadedName[id] then name = loadedName[id] end
     if type(name) ~= "string" or name == "" then
         -- 6.84.8.0 (Beta-Test mit Bild: Sets "laden und laden"): bei vielen
         -- Gegenstaenden auf einmal laesst der Server Anfragen fallen - die
@@ -220,12 +260,21 @@ function LB.Info(id)
         local now = _G.GetTime and Plain(_G.GetTime()) or 0
         if not pending[id] or now - pending[id] > LB.RETRY then
             pending[id] = now
+            tries[id] = (tries[id] or 0) + 1
             if ci and ci.RequestLoadItemDataByID then pcall(ci.RequestLoadItemDataByID, id) end
+        end
+        -- Nach LB.TRIES Anfragen ohne Antwort: ehrlich "unbekannt" statt
+        -- ewig "laedt" (unknown ist nicht loading).
+        if (tries[id] or 0) >= LB.TRIES then
+            LB.diag.missing = (LB.diag.missing or 0) + (tries[id] == LB.TRIES and 1 or 0)
+            tries[id] = LB.TRIES + 1
+            return { icon = IconOf(id), missing = true }
         end
         LB.WaitForNames()
         return { icon = IconOf(id), loading = true }
     end
     pending[id] = nil
+    if type(Plain(fn and select(2, pcall(fn, id)))) == "string" then LB.diag.byInfo = LB.diag.byInfo + 1 end
     local slot = type(equip) == "string" and equip ~= "" and _G[equip]
     local kind = {}
     if type(slot) == "string" and slot ~= "" then kind[#kind + 1] = slot end
@@ -579,7 +628,10 @@ function LB.PaintCell(r)
     local it = r.item
     local inf = LB.Info(it.id)
     r.icon:SetTexture(inf.icon or QUESTION_ICON)
-    if inf.loading then
+    if inf.missing then
+        r.title:SetText("vom Spiel nicht genannt")
+        r.title:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3])
+    elseif inf.loading then
         r.title:SetText("lädt …")
         r.title:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3])
     else
@@ -728,6 +780,9 @@ function LB.InspectorBlocks()
         { type = "rows", rows = {
             { label = "Bereiche im Bestand", value = tostring(LB.Count()) },
             { label = "Auf deiner Wunschliste", value = tostring(#LB.WishIds()) },
+            -- 6.84.9.0: welcher Weg des Clients Namen liefert (zum Messen).
+            { label = "Namen vom Client", value = string.format("Info %d · Nummer %d · Tooltip %d · Objekt %d · keine %d",
+                LB.diag.byInfo, LB.diag.byName, LB.diag.byTooltip, LB.diag.byObject, LB.diag.missing or 0) },
         }},
     }
     if inst and LB.cat ~= "wish" then
