@@ -203,18 +203,21 @@ K.GAME_LAYOUT = {
       point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 316, frames = { "EssentialCooldownViewer" },
       display = { IconSize = 80 } },
     { key = "utility", label = "Abklingzeiten: Hilfreich", sys = "CooldownViewer", idx = "Utility", personal = true,
-      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 366, frames = { "UtilityCooldownViewer" },
+      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 396, frames = { "UtilityCooldownViewer" },
       display = { IconSize = 80 } },
-    -- "Buffs" des Abklingzeitmanagers ueber dem Spielerrahmen, rechts
-    -- buendig, klein (6.6.1.7, Beta-Test: "ausgewaehlte Buffs zeigen").
+    -- "Buffs" des Abklingzeitmanagers klein und mittig direkt ueber
+    -- "Wichtig" (Wunsch mit Bild eines Jaegers: kleine Buffreihe ueber der
+    -- grossen Reihe der Faehigkeiten, mittig unter dem Charakter; vorher,
+    -- 6.6.1.7, rechts buendig ueber dem Spielerrahmen). "Hilfreich" rueckt
+    -- dafuer eine Reihe hoeher. Gilt nur im Layout "WeintCodex" des
+    -- Bearbeitungsmodus - ein eigenes Layout des Spielers bleibt.
     -- Welche Buffs, waehlt der Spieler im Fenster des Spiels - nur eigene,
     -- und das Spiel fuellt sie auch im Kampf. Nicht `personal`: der Platz
     -- ist Teil des Entwurfs, nicht aus einem frueheren Layout.
     { key = "bufficon", label = "Abklingzeiten: Buffs", sys = "CooldownViewer", idx = "BuffIcon",
-      point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -AXIS, y = COCKPIT_Y + UF_H + 6, frames = { "BuffIconCooldownViewer" },
+      point = "BOTTOM", relPoint = "BOTTOM", x = 0, y = 362, frames = { "BuffIconCooldownViewer" },
       display = { IconSize = 60 },
-      enum = { VisibleSetting = { "CooldownViewerVisibleSetting", "Always" },
-               IconDirection = { "CooldownViewerIconDirection", "Left" } } },
+      enum = { VisibleSetting = { "CooldownViewerVisibleSetting", "Always" } } },
     { key = "buffbar", label = "Abklingzeiten: Buffleisten", sys = "CooldownViewer", idx = "BuffBar", personal = true,
       point = "BOTTOMRIGHT", relPoint = "BOTTOM", x = -(AXIS + UF_W + 10), y = 316, frames = { "BuffBarCooldownViewer" },
       enum = { VisibleSetting = { "CooldownViewerVisibleSetting", "Hidden" } } },

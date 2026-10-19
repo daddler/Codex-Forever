@@ -5571,8 +5571,8 @@ do
         -- dem frueheren Layout; die Buffleisten bleiben aus.
         local bb
         for _, sy in ipairs(wc.systems) do if sy.system == 20 and sy.systemIndex == 3 then bb = sy end end
-        assert(SetOf(bi, 6) == 0 and SetOf(bi, 3) == 1 and bi.anchorInfo.offsetX == K.LAYOUT.uf_player.x,
-            "Buff-Symbole nicht klein ueber dem Spieler")
+        assert(SetOf(bi, 6) == 0 and SetOf(bi, 3) == 1 and bi.anchorInfo.offsetX == 0 and bi.anchorInfo.point == "BOTTOM",
+            "Buff-Symbole nicht klein und mittig ueber Wichtig")
         assert(SetOf(bb, 6) == 2, "Buffleisten des Spiels nicht aus")
         assert(ES.report.kept == 2 and ES.report.keptFrom == "EllesmereUI Forever v4", "Uebernahme nicht gemeldet")
         assert(ES.RawValue(20, 3, 500) == nil and ES.RawValue(99, 3, 80) == nil, "Wert ausserhalb des Reglers gesetzt")
@@ -10384,10 +10384,16 @@ do
     for _, e in ipairs(K.GAME_LAYOUT) do
         if e.key == "buffs" then buffE = e elseif e.key == "bufficon" then iconE = e end
     end
-    Check(iconE.point == "BOTTOMRIGHT" and iconE.relPoint == L.uf_player.relPoint and iconE.x == L.uf_player.x
-        and iconE.y >= M.cockpitY + M.unitHeight and not iconE.personal and buffE.point == "TOPRIGHT"
+    -- Seit dem Wunsch "wie bei meinem Jaeger": klein und mittig zwischen
+    -- "Wichtig" (darunter) und "Hilfreich" (darueber).
+    local essE, utilE
+    for _, e in ipairs(K.GAME_LAYOUT) do
+        if e.key == "essential" then essE = e elseif e.key == "utility" then utilE = e end
+    end
+    Check(iconE.point == "BOTTOM" and iconE.x == 0 and iconE.y > essE.y and iconE.y < utilE.y
+        and not iconE.personal and buffE.point == "TOPRIGHT"
         and L.uf_focus.x <= L.uf_player.x - M.unitWidth,
-        "Cockpit: ausgewaehlte Buffs ueber dem Spielerrahmen, alle Buffs oben rechts, Fokus daneben")
+        "Cockpit: ausgewaehlte Buffs mittig ueber Wichtig, alle Buffs oben rechts, Fokus daneben")
 end
 
 -- Stil 2.0: Balken bekommen die Glanztextur, ein Stilwechsel erreicht sie.
@@ -20962,6 +20968,168 @@ do
         local hidden = not (GA.skipButton and GA.skipButton:IsShown())
         Check(ok and hidden, "Weiter-Knopf am Pfeil nur beim Folgen einer Farmroute")
     end
+end
+
+-- Abklingzeitmanager je Klasse (ui/cdmsetup.lua): Listen nur aus dem
+-- Lehrerbestand der Klasse; eigenes Layout des Spielers bleibt; aus nimmt
+-- nur das eigene, aktive Layout zurueck. Der Manager des Spiels ist hier
+-- eine Attrappe seiner Mixins (Blizzard_CooldownViewer).
+do
+    local G = _G
+    local CS = WeintCodex.UICooldownSetup
+    local ok, err = pcall(function()
+        assert(CS, "ui/cdmsetup.lua nicht geladen")
+        local T = WeintCodex.TrainerData
+        for cls, list in pairs(CS.LISTS) do
+            local set = {}
+            for _, sp in ipairs(T.Spells(cls)) do set[sp.id] = true end
+            for _, ch in ipairs(T.CLASSES[cls].ranks or {}) do for _, x in ipairs(ch) do set[x] = true end end
+            for key, ids in pairs(list) do
+                assert(CS.MAX[key], cls .. ": unbekannte Reihe " .. key)
+                assert(#ids <= CS.MAX[key], cls .. ": zu viele in " .. key)
+                for _, id in ipairs(ids) do assert(set[id], cls .. ": " .. id .. " nicht im Lehrerbestand der Klasse") end
+            end
+        end
+        for _, cls in ipairs({ "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "MAGE", "WARLOCK", "DRUID", "SHAMAN" }) do
+            assert(CS.LISTS[cls] and #CS.LISTS[cls].essential > 0 and #CS.LISTS[cls].buffs > 0, cls .. " ohne Liste")
+        end
+
+        -- Attrappe: Speicher als Zeichenkette "aktiv;id=name,id=name".
+        local saved = ""
+        local cat = { Essential = 0, Utility = 1, TrackedBuff = 2, TrackedBar = 3 }
+        local static = {   -- cooldownID -> Info, wie der Client sie nennt
+            [11] = { cooldownID = 11, spellID = 20271, category = 1, isKnown = true },   -- Richturteil
+            [12] = { cooldownID = 12, spellID = 20166, category = 3, isKnown = true },   -- Siegel der Weisheit
+            [13] = { cooldownID = 13, spellID = 642, category = 0, isKnown = false },    -- nicht gelernt
+            [14] = { cooldownID = 14, spellID = 99999, category = 0, isKnown = true },   -- nicht in der Liste
+        }
+        local function Parse(str)
+            local active, layouts = nil, {}
+            local a, rest = str:match("^(%-?%d*);(.*)$")
+            if a then
+                active = tonumber(a)
+                for id, name in rest:gmatch("(%d+)=([^,]+)") do layouts[tonumber(id)] = { layoutID = tonumber(id), name = name } end
+            end
+            return active, layouts
+        end
+        local LM = {}
+        function LM:Init(dp, ser) self.dp, self.ser, self.layouts = dp, ser, {} end
+        function LM:GetCurrentSpecTag() return 21 end
+        function LM:EnumerateLayouts() return pairs(self.layouts) end
+        function LM:GetActiveLayoutID() return self.activeLayoutID end
+        function LM:GetActiveLayout() return self.layouts[self.activeLayoutID] end
+        function LM:SwitchToBestLayoutForSpec() end
+        function LM:AddLayout(name)
+            local id = 1
+            while self.layouts[id] do id = id + 1 end
+            self.layouts[id] = { layoutID = id, name = name }
+            return self.layouts[id], 0
+        end
+        function LM:SetActiveLayout(l) self.activeLayoutID = l.layoutID end
+        function LM:RemoveLayout(id)
+            if self.activeLayoutID == id then self.activeLayoutID = nil end
+            self.layouts[id] = nil
+        end
+        function LM:UseDefaultLayout() self.activeLayoutID = nil end
+        function LM:WriteCooldownOrderToActiveLayout(ids) local l = self:GetActiveLayout() if l then l.order = ids end end
+        local SER = {}
+        function SER:Init(mgr, persist)
+            self.mgr, self.persist = mgr, persist
+            mgr.activeLayoutID, mgr.layouts = Parse(persist:GetSerializedData())
+        end
+        function SER:WriteData()
+            local parts = {}
+            for id, l in pairs(self.mgr.layouts) do parts[#parts + 1] = id .. "=" .. l.name end
+            self.persist:SetSerializedData(tostring(self.mgr.activeLayoutID or "") .. ";" .. table.concat(parts, ","))
+        end
+        local DP = {}
+        function DP:SetLayoutManager(m) self.mgr = m end
+        function DP:MarkDirty() end
+        function DP:CheckBuildDisplayData()
+            self.data = { cooldownInfoByID = {} }
+            for id, i in pairs(static) do self.data.cooldownInfoByID[id] = { cooldownID = id, spellID = i.spellID, category = i.category, isKnown = i.isKnown } end
+        end
+        function DP:GetDisplayData() return self.data end
+        function DP:GetOrderedCooldownIDs() return { 11, 12, 13, 14 } end
+        function DP:SetCooldownToCategory(id, c)
+            local l = self.mgr:GetActiveLayout()
+            l.cats = l.cats or {}
+            l.cats[id] = c
+            DP.lastLayout = l
+            return 0
+        end
+        local keep = {}
+        for _, n in ipairs({ "C_CooldownViewer", "CooldownViewerLayoutManagerMixin", "CooldownViewerDataStoreSerializationMixin",
+                             "CooldownViewerSettingsDataProviderMixin", "CreateFromMixins", "CooldownManagerLayout_GetName",
+                             "CooldownManagerLayout_GetID", "UnitClass", "CooldownViewerSettings" }) do keep[n] = G[n] end
+        local keepEnum = G.Enum and G.Enum.CooldownViewerCategory
+        local keepState, keepReload = K.CharState, K.MarkReload
+        local st = {}
+        K.CharState = function() return st end
+        local reloads = 0
+        K.MarkReload = function() reloads = reloads + 1 end
+        G.C_CooldownViewer = {
+            GetCooldownViewerCategorySet = function() return {} end,
+            GetCooldownViewerCooldownInfo = function(id) return static[id] end,
+            GetLayoutData = function() return saved end,
+            SetLayoutData = function(v) saved = v end,
+        }
+        G.CooldownViewerLayoutManagerMixin, G.CooldownViewerDataStoreSerializationMixin, G.CooldownViewerSettingsDataProviderMixin = LM, SER, DP
+        G.CreateFromMixins = function(m) local o = {} for k, v in pairs(m) do o[k] = v end return o end
+        G.CooldownManagerLayout_GetName = function(l) return l.name end
+        G.CooldownManagerLayout_GetID = function(l) return l.layoutID end
+        G.Enum = G.Enum or {}
+        G.Enum.CooldownViewerCategory = cat
+        G.UnitClass = function() return "Paladin", "PALADIN", 2 end
+        G.CooldownViewerSettings = nil
+        local finally = function()
+            for n, v in pairs(keep) do G[n] = v end
+            G.Enum.CooldownViewerCategory = keepEnum
+            K.CharState, K.MarkReload = keepState, keepReload
+        end
+        local ok2, e2 = pcall(function()
+            -- 1. Eigenes Layout des Spielers: nichts veraendert.
+            saved = "5;5=Mein Paladin"
+            local code = CS.Apply(false)
+            assert(code == "own" and saved == "5;5=Mein Paladin" and reloads == 0, "eigenes Layout ueberschrieben")
+            -- Auch ein fremdes, nicht aktives Layout zaehlt.
+            saved = ";5=Mein Paladin"
+            assert(CS.Apply(true) == "own" and saved == ";5=Mein Paladin", "nicht aktives eigenes Layout ueberschrieben")
+            -- 2. Vorgabe des Spiels: Layout "WeintCodex" angelegt und aktiv.
+            saved = ""
+            code = CS.Apply(false)
+            assert(code == "applied" and saved == "1;1=WeintCodex" and reloads == 1, "nicht eingerichtet: " .. tostring(code) .. " " .. saved)
+            local l = DP.lastLayout
+            assert(l.cats[11] == cat.Essential and l.cats[12] == cat.TrackedBuff, "Richturteil/Siegel falsch zugeordnet")
+            assert(l.cats[13] == nil and l.cats[14] == nil, "ungelernten oder fremden Zauber zugeordnet")
+            assert(st.cdm.layouts[21] == 1 and st.cdm.done[21], "eigenes Layout nicht gemerkt")
+            -- Nochmal von selbst: nichts neu geschrieben.
+            assert(CS.Apply(false) == "applied" and reloads == 1, "bei jedem Laden neu geschrieben")
+            -- 3. Spieler wechselt auf ein eigenes: Ausschalten setzt nichts zurueck.
+            saved = "2;1=WeintCodex,2=Mein Paladin"
+            assert(CS.Restore() == "off" and saved == "2;1=WeintCodex,2=Mein Paladin", "Ausschalten griff in fremdes Layout")
+            -- 4. "WeintCodex" aktiv: Ausschalten entfernt es, Vorgabe wieder.
+            saved = "1;1=WeintCodex"
+            assert(CS.Restore() == "restored" and saved == ";", "Ausschalten stellte die Vorgabe nicht her: " .. saved)
+            -- 5. Vom Spieler geloescht: von selbst nicht wieder angelegt.
+            assert(CS.Apply(false) == "removed" and saved == ";", "geloeschtes Layout von selbst neu angelegt")
+            assert(CS.Apply(true) == "applied", "Jetzt einrichten legte nicht neu an")
+            -- 6. Im Kampf: nichts.
+            local ic = G.InCombatLockdown
+            G.InCombatLockdown = function() return true end
+            local before = saved
+            assert(CS.Apply(true) == "combat" and saved == before, "im Kampf geschrieben")
+            G.InCombatLockdown = ic
+            -- 7. Ohne Schnittstelle: ehrlich "nicht verfuegbar".
+            G.C_CooldownViewer = nil
+            assert(CS.Apply(true) == "unavailable", "fehlende Schnittstelle nicht gemeldet")
+            assert(#CS.StatusLines() >= 2, "Statuszeilen fehlen")
+        end)
+        finally()
+        if not ok2 then error(e2, 0) end
+    end)
+    Check(ok, "Abklingzeitmanager je Klasse: Listen aus dem Lehrerbestand, eigenes Layout bleibt, aus nur das eigene"
+        .. (ok and "" or (": " .. tostring(err))))
 end
 
 if failures == 0 then

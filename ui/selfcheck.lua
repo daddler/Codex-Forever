@@ -653,6 +653,17 @@ Check("Sammel-Atlas", function(add)
     for _, line in ipairs(GA.StatusLines()) do add("", "   " .. line) end
 end)
 
+-- Abklingzeitmanager je Klasse (Layout "WeintCodex" ueber C_CooldownViewer)
+Check("Abklingzeitmanager", function(add)
+    local CS = WeintCodex.UICooldownSetup
+    if not CS then add(SC.OPEN, "Einrichtung je Klasse nicht geladen.") return end
+    local on = K.Get("reminders", "cdmClassSetup")
+    local A = CS.Api()
+    add(A and (on and SC.OK or SC.OPEN) or SC.BAD,
+        on and "Je Klasse einrichten an" or "Je Klasse einrichten aus (Erinnerungen → Abklingzeitmanager)")
+    for _, line in ipairs(CS.StatusLines()) do add("", "   " .. line) end
+end)
+
 -- Buffs im WeintCodex-Stil (6.37.0.0)
 Check("Buffs", function(add)
     local BS = WeintCodex.UIBuffSkin

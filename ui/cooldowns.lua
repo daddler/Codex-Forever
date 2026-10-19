@@ -437,6 +437,8 @@ function CD.BuildPage(B)
             tooltip = "Öffnet das Auswahlfenster des Abklingzeitmanagers des Spiels.",
             onClick = function() CD.OpenSettings() end },
           { type = "empty" })
+    local CS = WeintCodex.UICooldownSetup
+    if CS and CS.BuildSection then CS.BuildSection(B) end
     B:Section("Schrift")
     B:Row({ type = "slider", label = "Abklingzahl", key = "cdmFontSize", min = 10, max = 28, step = 1, format = px },
           { type = "slider", label = "Ladungen und Stapel", key = "cdmCountSize", min = 8, max = 20, step = 1, format = px })

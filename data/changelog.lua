@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.86.0.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager je Klasse|r – WeintCodex richtet den Abklingzeitmanager des Spiels für deine Klasse ein: oben klein deine Buffs (Siegel und Auren, Aspekte, Rüstungen, Schilde …), darunter die wichtigen Fähigkeiten. In einem eigenen Layout „WeintCodex“ – hast du schon ein eigenes, ändert sich nichts. Wirkt nach dem Neuladen. Erinnerungen → Abklingzeitmanager, ab Werk an, mit „Jetzt einrichten“.",
+        },
+    },
+    {
         version = "6.85.0.0",
         date    = "19.10.2026",
         notes   = {

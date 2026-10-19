@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.86.0.0] – 2026-10-19
+
+### Neu
+- `ui/cdmsetup.lua`: Layout „WeintCodex“ im Abklingzeitmanager des Spiels
+  je Klasse (`C_CooldownViewer.GetLayoutData`/`SetLayoutData`), nur ohne
+  eigene Layouts des Spielers; Schalter `cdmClassSetup`; Buffreihe im
+  WeintCodex-Bearbeitungslayout zwischen Wichtig und Hilfreich.
+
 ## [6.85.0.0] – 2026-10-19
 
 ### Geändert

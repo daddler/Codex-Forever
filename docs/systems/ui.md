@@ -554,6 +554,39 @@ Seit 6.2.0.0:
   dort werden sie gespeichert, und Einstellungen des Bearbeitungsmodus
   aus Addon-Code machen ihn unsicher. Kein eigener Eintrag in der
   Seitenleiste – sie ist voll (Test „Nichts muss scrollen“).
+* **Abklingzeitmanager je Klasse einrichten** (`ui/cdmsetup.lua`,
+  Erinnerungen → Abklingzeitmanager, Schalter `cdmClassSetup`, ab Werk an;
+  Wunsch mit Bild eines Jägers: kleine Buffreihe über der großen Reihe der
+  Fähigkeiten, mittig unter dem Charakter). Je Klasse drei Listen
+  (`CS.LISTS`: Wichtig ≤ 8, Hilfreich ≤ 6, Buffs – Siegel/Auren, Aspekte,
+  Rüstungen, Formen, Schilde), Zaubernummern aus Classic wie im
+  Lehrerbestand (`data/trainer.lua`, Art `classic`; `load_test.lua` prüft
+  je Klasse), eine Nummer steht für ihre Rangkette. Zugeordnet wird nur,
+  was `C_CooldownViewer` für den Charakter anbietet (`isKnown`), in der Art,
+  die das Spiel zulässt (aktive Fähigkeit → Wichtig/Hilfreich, Buff →
+  Buffs); der Rest bleibt, wie das Spiel ihn vorgibt.
+  *Schnittstelle* (gelesen in `Gethe/wow-ui-source`, Zweig live,
+  `Blizzard_CooldownViewer`): Layouts je Charakter und Klasse+Spez.
+  (höchstens 5; ohne Layout gilt die Vorgabe, Nummer 0), gespeichert als
+  eine Zeichenkette über `C_CooldownViewer.GetLayoutData`/`SetLayoutData`.
+  Der Code des Fensters ist nicht gesichert, aber WeintCodex fasst den
+  laufenden Manager nicht an (Taint, die Anzeigen lesen im Kampf): eine
+  stumme Kopie aus den Mixins des Spiels (`CS.Shadow`) liest die
+  Zeichenkette, legt „WeintCodex“ an, ordnet zu und schreibt zurück –
+  wirksam nach dem Neuladen (`K.MarkReload`).
+  *Nichts überschreiben* wie `ui/profile.lua`: irgendein fremdes Layout
+  oder ein fremdes aktives → nichts („eigene Einstellung erkannt“). Von
+  selbst einmal je Charakter und Spez. (`K.CharState().cdm`); ein vom
+  Spieler gelöschtes „WeintCodex“ bleibt gelöscht bis „Jetzt einrichten“.
+  Aus: nur wenn „WeintCodex“ noch aktiv ist, wird es entfernt und die
+  Vorgabe gilt wieder. Nie im Kampf, nie bei offenen Änderungen im Fenster
+  des Spiels. Platz: im Bearbeitungsmodus-Layout „WeintCodex“ stehen die
+  Buff-Symbole (`bufficon`) seitdem mittig zwischen Wichtig (316) und
+  Hilfreich (396); ein eigenes Layout des Spielers bleibt.
+  **Ungemessen auf Forever:** ob `SetLayoutData` aus Addon-Code gespeichert
+  wird (zurückgelesen, sonst Fehlermeldung), welche Spez.-Kennung der
+  Client ohne Spezialisierungen nennt, welche Classic-Zauber der Client im
+  Manager überhaupt anbietet. `/wcui prüfen` → „Abklingzeitmanager“.
 * **Debuffs am Zielrahmen: die Symbole des Spiels** (6.4.0.3,
   `targetAuraSource`). Eigene Symbole bleiben im Kampf leer (siehe
   6.3.0.2). Der Zielrahmen des Spiels bleibt deshalb am Leben, alles an
