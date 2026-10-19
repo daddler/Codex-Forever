@@ -38,6 +38,7 @@ NV.SNAP = 6            -- Zellen Umkreis, wenn man nicht auf einer Zelle steht
 NV.REPATH_MOVE = 40    -- so weit weg vom Weg: neu suchen
 NV.LOOKAHEAD = 30      -- der Pfeil zeigt so weit voraus auf den Weg
 NV.CORNER = 6          -- so nah an einer Ecke: schon um sie herum zeigen
+NV.CUT = 5             -- Ecken bis so weit neben der Sichtlinie gelten als gerade (6.83.1.0)
 NV.CACHE = 600         -- entpackte Wegenetze im Speicher (je rund 1 KB)
 NV.CELLS = 32          -- entpackte Gitter im Speicher (je rund 4,5 KB)
 
@@ -1195,6 +1196,36 @@ function NV.Steer(path, pN, pW)
     -- hinter der Wand. Erst kurz vor der Ecke (NV.CORNER) zeigt der Pfeil
     -- schon den naechsten Abschnitt entlang.
     local need = NV.LOOKAHEAD
+    -- 6.83.1.0 (Beta-Test mit Bild: "zu streng - auf der Strasse soll ich
+    -- 10 m nach links, danach wieder geradeaus"): der Weg aus dem Raster
+    -- hat kleine Knicke; an jedem zeigte der Pfeil erst auf die Ecke. Jetzt
+    -- weich: voraus entlang des Wegs, und die Ecken dazwischen zaehlen nur,
+    -- wenn eine weiter als NV.CUT neben der geraden Linie vom Lotpunkt auf dem Weg zum
+    -- Zielpunkt liegt (dort waere wirklich etwas im Weg). Sonst wie bisher.
+    do
+        local cN, cW = aN + (bN - aN) * bestU, aW + (bW - aW) * bestU
+        local togo, i, tN, tW = need, bestI, nil, nil
+        local fromN, fromW = cN, cW
+        while i <= #path - 3 do
+            local eN, eW = path[i + 2], path[i + 3]
+            local l = sqrt((eN - fromN) ^ 2 + (eW - fromW) ^ 2)
+            if l >= togo then
+                local t = togo / math.max(l, 0.01)
+                tN, tW = fromN + (eN - fromN) * t, fromW + (eW - fromW) * t
+                break
+            end
+            togo = togo - l
+            fromN, fromW = eN, eW
+            i = i + 2
+        end
+        if not tN then tN, tW = path[#path - 1], path[#path] end
+        local ok = true
+        for j = bestI + 2, math.min(i, #path - 1), 2 do
+            local d = SegDist(cN, cW, tN, tW, path[j], path[j + 1])
+            if d > NV.CUT then ok = false break end
+        end
+        if ok then return tN, tW, rest, bestI end
+    end
     if left >= NV.CORNER then
         local t = bestU + math.min(need, left) / math.max(seg, 0.01)
         return aN + (bN - aN) * t, aW + (bW - aW) * t, rest, bestI

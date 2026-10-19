@@ -20824,6 +20824,20 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+do
+    local NV = WeintCodex.UINav
+    if NV and NV.Steer then
+        -- Weg mit kleinem Knick (3 nach links), Spieler 8 neben dem Weg: Pfeil
+        -- zeigt voraus (>= 25 weiter), nicht auf die Ecke.
+        local path = { 0, 0, 10, 3, 20, 0, 60, 0 }
+        local sN = NV.Steer(path, 0, 8)
+        -- Echte Ecke (90 Grad): bleibt bei der Ecke.
+        local path2 = { 0, 0, 10, 0, 10, 40 }
+        local tN, tW = NV.Steer(path2, 0, 0)
+        Check(sN >= 25 and tN <= 10.01 and tW <= 1, "Pfeil: kleine Knicke weich, echte Ecken bleiben")
+    end
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

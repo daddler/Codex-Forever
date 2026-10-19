@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.83.1.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFQuestpfeil weniger streng|r – kleine Knicke im Laufweg schickt er nicht mehr einzeln an: läufst du die Straße entlang, zeigt er voraus statt „10 m nach links, dann wieder geradeaus“. An echten Kurven und Hindernissen zeigt er wie bisher um die Ecke.",
+        },
+    },
+    {
         version = "6.83.0.0",
         date    = "19.10.2026",
         notes   = {

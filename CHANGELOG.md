@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.83.1.0] – 2026-10-19
+
+### Geändert
+- `NV.Steer`: Vorausschau über Ecken, die höchstens `NV.CUT` (5) neben der
+  Linie vom Lotpunkt zum Zielpunkt liegen; sonst wie bisher bis zur Ecke.
+
 ## [6.83.0.0] – 2026-10-19
 
 ### Neu
