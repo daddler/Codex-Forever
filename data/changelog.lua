@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.84.5.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFFarmroute: „Weiter“ am Pfeil|r – solange du einer Farmroute folgst, steht rechts am Questpfeil ein kleiner Knopf „Weiter“: ein Klick lässt den Halt aus. Auch im Kampf.",
+        },
+    },
+    {
         version = "6.84.4.0",
         date    = "19.10.2026",
         notes   = {

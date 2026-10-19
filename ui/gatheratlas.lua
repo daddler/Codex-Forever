@@ -407,6 +407,7 @@ function GA.StopFollow()
     followTarget = nil
     GA.following = nil
     if GA.followFrame then GA.followFrame:Hide() end
+    if GA.skipButton then GA.skipButton:Hide() end
 end
 
 function GA.Advance()
@@ -462,6 +463,33 @@ function GA.CheckFollow()
     if d and d <= GA.REACH then GA.Advance() end
 end
 
+-- 6.84.5.0 (Wunsch): kleiner Knopf "Weiter" rechts am Questpfeil - nur
+-- solange einer Farmroute gefolgt wird und der Pfeil steht. Ein normaler
+-- Knopf (nichts Geschuetztes), klickbar auch im Kampf.
+function GA.SyncSkipButton()
+    local qa = _G.WeintCodexQuestArrow
+    local want = GA.following and type(qa) == "table" and qa.IsShown and qa:IsShown()
+    local b = GA.skipButton
+    if want and not b and WeintCodex.CreateButton then
+        b = WeintCodex.CreateButton(UIParent, { text = "Weiter", kind = "secondary", height = 20, size = 11,
+                                               onClick = function() GA.Skip() end })
+        b:SetWidth(64)
+        b:SetPoint("LEFT", qa, "RIGHT", 2, 18)
+        b:SetFrameStrata("MEDIUM")
+        b:SetScript("OnEnter", function(self)
+            local tt = _G.GameTooltip
+            if not tt then return end
+            tt:SetOwner(self, "ANCHOR_RIGHT")
+            tt:SetText("Halt überspringen", 1, 1, 1)
+            tt:AddLine("Der Pfeil zeigt zum nächsten Halt der Farmroute.", nil, nil, nil, true)
+            tt:Show()
+        end)
+        b:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+        GA.skipButton = b
+    end
+    if b then b:SetShown(want and true or false) end
+end
+
 local followFrame = CreateFrame("Frame")
 followFrame:Hide()
 local fAcc = 0
@@ -470,6 +498,7 @@ followFrame:SetScript("OnUpdate", K.Measured("Sammel-Atlas: Route folgen", funct
     if fAcc < GA.FOLLOW_TICK then return end
     fAcc = 0
     GA.CheckFollow()
+    GA.SyncSkipButton()
 end))
 GA.followFrame = followFrame
 

@@ -20955,6 +20955,15 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+do
+    local GA = WeintCodex.UIGatherAtlas
+    if GA and GA.SyncSkipButton then
+        local ok = pcall(GA.SyncSkipButton)
+        local hidden = not (GA.skipButton and GA.skipButton:IsShown())
+        Check(ok and hidden, "Weiter-Knopf am Pfeil nur beim Folgen einer Farmroute")
+    end
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

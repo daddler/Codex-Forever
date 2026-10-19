@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.84.5.0] – 2026-10-19
+
+### Neu
+- Knopf „Weiter“ rechts am Questpfeil (`GA.SyncSkipButton`), nur beim
+  Folgen einer Farmroute.
+
 ## [6.84.4.0] – 2026-10-19
 
 ### Neu
