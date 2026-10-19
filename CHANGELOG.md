@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.87.7.0] – 2026-10-19
+
+### Behoben
+- Bindings.xml: Kopf `WEINTCODEX` nur am ersten Eintrag.
+
 ## [6.87.6.0] – 2026-10-19
 
 ### Behoben

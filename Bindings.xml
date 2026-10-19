@@ -4,6 +4,7 @@
 	<Binding name="WEINTCODEX_FARM_SKIP" header="WEINTCODEX" category="ADDONS">
 		if WeintCodex and WeintCodex.UIGatherAtlas then WeintCodex.UIGatherAtlas.Skip() end
 	</Binding>
-	<!-- 6.87.5.0: direkt neu laden - klickt den gesicherten Knopf. -->
-	<Binding name="CLICK WeintCodexReloadDirect:LeftButton" header="WEINTCODEX" category="ADDONS"/>
+	<!-- 6.87.5.0: direkt neu laden - klickt den gesicherten Knopf. Kopf nur
+	     einmal (6.87.7.0: zweiter Kopf gab LUA_WARNING). -->
+	<Binding name="CLICK WeintCodexReloadDirect:LeftButton" category="ADDONS"/>
 </Bindings>

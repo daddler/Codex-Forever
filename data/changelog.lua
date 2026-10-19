@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.87.7.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFTastenbelegung|r – die Warnung „Binding header WEINTCODEX was attempted to be loaded more than once“ beim Laden ist behoben.",
+        },
+    },
+    {
         version = "6.87.6.0",
         date    = "19.10.2026",
         notes   = {
