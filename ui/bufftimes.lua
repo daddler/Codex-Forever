@@ -166,6 +166,31 @@ BT.stats = { casts = 0, tracked = 0, secret = 0, secretInCombat = 0, plainInComb
 BT.active = {}
 BT.class = nil
 BT.byId, BT.consumers = {}, {}
+local nameGroup = {}    -- [Zaubername] = Gruppe (aus den Nummern der Listen)
+local function SpellName(id)
+    local cs = _G.C_Spell
+    if cs and cs.GetSpellName then
+        local ok, n = pcall(cs.GetSpellName, id)
+        if ok and not K.IsSecret(n) and type(n) == "string" and n ~= "" then return n end
+    end
+    if _G.GetSpellInfo then
+        local ok, n = pcall(_G.GetSpellInfo, id)
+        if ok and not K.IsSecret(n) and type(n) == "string" and n ~= "" then return n end
+    end
+end
+function BT.ByName(id)
+    local n = SpellName(id)
+    if not n then return nil end
+    if _G.next(nameGroup) == nil then
+        for _, gr in ipairs(BT.Groups and BT.Groups() or {}) do
+            for _, sid in ipairs(gr.spells) do
+                local sn = SpellName(sid)
+                if sn and not nameGroup[sn] then nameGroup[sn] = gr end
+            end
+        end
+    end
+    return nameGroup[n]
+end
 
 local function Opt(k) return K.Get(KEY, k) end
 local function Now() return _G.GetTime and _G.GetTime() or 0 end
@@ -175,7 +200,7 @@ function BT.Groups(class) return BT.CLASSES[class or BT.class] or {} end
 -- Nachschlagen aufbauen (einmal je Klasse).
 function BT.SetClass(class)
     BT.class = class
-    wipe(BT.byId) wipe(BT.consumers) wipe(BT.active)
+    wipe(BT.byId) wipe(BT.consumers) wipe(BT.active) wipe(nameGroup)
     for _, g in ipairs(BT.Groups(class)) do
         for _, id in ipairs(g.spells) do BT.byId[id] = g end
         for _, id in ipairs(g.consumedBy or {}) do
@@ -220,7 +245,18 @@ function BT.OnCast(spellID, now, fighting)
         result = "consume"
     end
     local g = BT.byId[spellID]
-    if not g then return result end
+    -- 6.87.6.0 (Beta-Test: "Siegel des Furors geht noch nicht"): Forever
+    -- wirkt manche Zauber unter einer anderen Nummer als Classic. Dann
+    -- ueber den Namen des Zaubers (vom Client, einmal je Nummer gemerkt).
+    if not g then
+        g = BT.ByName(spellID)
+        if not g then
+            st.unknownLast = spellID
+            return result
+        end
+        BT.byId[spellID] = g
+        st.byName = (st.byName or 0) + 1
+    end
     if g.others and BT.SelfTarget() ~= true then
         st.notSelf = st.notSelf + 1
         return result
@@ -510,6 +546,8 @@ function BT.StatusLines()
     out[#out + 1] = "Zauber-ID im Kampf geheim: " .. secret
     out[#out + 1] = string.format("Abgleich mit Auren: %d, gefunden: %d, entfernt: %d",
         s.reconciled, s.found, s.removed)
+    out[#out + 1] = string.format("Über den Namen erkannt: %d · zuletzt unbekannter Zauber: %s",
+        s.byName or 0, tostring(s.unknownLast or "–"))
     return out
 end
 

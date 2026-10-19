@@ -574,6 +574,7 @@ local function Build()
     local function Insert(link)
         if type(link) == "string" and link ~= "" and input and input:HasFocus() then
             input:Insert(link)
+            MS.linkedAt = _G.GetTime and _G.GetTime() or 0
         end
     end
     if _G.hooksecurefunc then
@@ -582,6 +583,19 @@ local function Build()
         if type(CFU) == "table" and type(CFU.InsertLink) == "function" then pcall(_G.hooksecurefunc, CFU, "InsertLink", Insert) end
     end
     MS.InsertLink = Insert
+    -- 6.87.6.0 (Beta-Test mit Bild: "nach dem Verlinken will er den Stapel
+    -- teilen"): ohne aktive Chatzeile des Spiels oeffnet Shift-Klick auf
+    -- einen Stapel das Teilen-Fenster. Kam gerade ein Link im Messenger an,
+    -- schliesst WeintCodex es gleich wieder - wie beim Verlinken in der Gilde.
+    local ssf = _G.StackSplitFrame
+    if type(ssf) == "table" and ssf.HookScript then
+        ssf:HookScript("OnShow", function(self)
+            if MS.linkedAt and (_G.GetTime and _G.GetTime() or 0) - MS.linkedAt < 0.3 then
+                MS.linkedAt = nil
+                if self.Cancel then pcall(self.Cancel, self) else self:Hide() end
+            end
+        end)
+    end
 
     foot = K.NewText(win, 10)
     foot:SetPoint("BOTTOMLEFT", win, "BOTTOMLEFT", MS.LIST_W + 12, 8)

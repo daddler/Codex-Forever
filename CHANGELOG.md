@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.87.6.0] – 2026-10-19
+
+### Behoben
+- Messenger: `StackSplitFrame` schließt sich, wenn gerade ein Link ins
+  eigene Feld ging (`MS.linkedAt`).
+- Buffzeiten: unbekannte Zaubernummer → Erkennung über den Namen
+  (`BT.ByName`), gemerkt je Nummer; `/wcui prüfen` nennt die letzte
+  unbekannte.
+
 ## [6.87.5.0] – 2026-10-19
 
 ### Neu

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.87.6.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFMessenger|r – Shift-Klick auf einen Stapel in den Taschen verlinkt ihn, ohne dass das Fenster zum Teilen des Stapels aufgeht – wie beim Verlinken in der Gilde.",
+            "|cff7C6CFFBuffzeiten: Siegel des Furors|r – Forever wirkt manche Zauber unter einer anderen Nummer als Classic. Erkennt WeintCodex eine Nummer nicht, vergleicht es jetzt den Namen des Zaubers. /wcui prüfen nennt die zuletzt unbekannte Nummer.",
+        },
+    },
+    {
         version = "6.87.5.0",
         date    = "19.10.2026",
         notes   = {
