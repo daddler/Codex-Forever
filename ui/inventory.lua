@@ -281,7 +281,7 @@ function IV.MyFaction()
 end
 function IV.Included(key, c, myRealm, myFaction)
     if type(c) ~= "table" then return false end
-    if not K.Get(KEY, "invAllRealms") and c.realm ~= myRealm then return false end
+    if not K.Get(KEY, "invAllRealms") and myRealm and c.realm ~= myRealm then return false end
     if not K.Get(KEY, "invOtherFaction") and myFaction and c.faction and c.faction ~= myFaction then return false end
     local st = IV.Store(false)
     if st and type(st.excluded) == "table" and st.excluded[key] then return false end

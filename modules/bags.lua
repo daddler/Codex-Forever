@@ -343,7 +343,7 @@ local function Inspector(chars)
         for _, ch in ipairs(chars) do if not st.chars[ch.key].bank then unknown = unknown + 1 end end
         rows[#rows + 1] = { label = "Bank unbekannt", value = tostring(unknown) }
     else
-        local c = st.chars[BG.sel]
+        local c = st.chars[BG.sel] or {}
         local function n(t) local x = 0 for _, v in pairs(t or {}) do x = x + v end return x end
         rows[#rows + 1] = { label = "Taschen", value = n(c.bags) .. " Stück" }
         rows[#rows + 1] = { label = "Angelegt", value = n(c.worn) .. " Stück" }

@@ -9,6 +9,17 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.80.5.0] – 2026-10-19
+
+### Behoben
+- Mahjong: Ausblendung des letzten Paars versteckte zwei Steine des neuen
+  Spiels (`b.fade:Stop()` in `M.Start`, `OnFinished` prüft `b.fading`).
+- Danke: `TH.Peek` nicht in Instanzen; Zurückschalten der CVar über
+  `K.AfterCombat`.
+- Taschen: `st.chars[BG.sel]` ohne Eintrag warf einen Fehler; ohne lesbaren
+  Realm schloss `IV.Included` alle Charaktere aus.
+- `K.MatchFont`: Größe auch für die Chatschrift, neue Größe wird übernommen.
+
 ## [6.80.4.0] – 2026-10-18
 
 ### Behoben

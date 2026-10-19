@@ -596,6 +596,12 @@ end
 function TH.Peek()
     if K.Get(KEY, "thanksPeek") == false or st.peeking then return false end
     if (_G.InCombatLockdown and _G.InCombatLockdown()) or K.InCombat() then return false end
+    -- 6.80.5.0: in Instanzen sind freundliche Plaketten gesperrt - sie
+    -- waeren kurz sichtbar.
+    if _G.IsInInstance then
+        local ok, inside = pcall(_G.IsInInstance)
+        if ok and K.Bool(inside, false) then return false end
+    end
     local now = Now()
     if now - st.peekAt < TH.PEEK_GAP then return false end
     if TH.hidden.owns then return false end                -- dauerhaft unsichtbar an
@@ -606,7 +612,10 @@ function TH.Peek()
     local function Done()
         pcall(TH.Recheck)
         st.peeking = false
-        if GetCV(TH.PEEK_CVAR) == "1" then SetCV(TH.PEEK_CVAR, "0") end
+        -- 6.80.5.0: kam inzwischen ein Kampf, erst danach zurueckschalten.
+        K.AfterCombat(function()
+            if not st.peeking and GetCV(TH.PEEK_CVAR) == "1" then SetCV(TH.PEEK_CVAR, "0") end
+        end)
         -- Sicherheitsnetz: was noch unsichtbar ist, zurueck auf sichtbar
         -- (die Rahmen dienen gleich wieder Gegnern).
         local function Restore()

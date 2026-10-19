@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.80.5.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFGroße Prüfung vor dem Ende der Beta|r – Mahjong: nach einem abgeräumten Brett verschwanden zwei Steine des neuen Spiels, das Spiel war dann nicht mehr lösbar. Behoben.",
+            "|cff7C6CFFDanke|r – schaltet die freundlichen Plaketten nicht mehr in Instanzen kurz ein (dort wären sie sichtbar) und schaltet sie nach Kampfbeginn erst nach dem Kampf zurück, statt eine Sperrmeldung auszulösen.",
+            "|cff7C6CFFTaschen|r – Fehler beim Öffnen eines gelöschten Charakters behoben; solange der Realm noch nicht lesbar ist, fehlt im Tooltip niemand mehr.",
+            "|cff7C6CFFFremde Schriften|r – japanische und chinesische Sprüche in derselben Größe wie die übrigen.",
+        },
+    },
+    {
         version = "6.80.4.0",
         date    = "18.10.2026",
         notes   = {

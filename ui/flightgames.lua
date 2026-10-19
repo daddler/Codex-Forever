@@ -663,7 +663,7 @@ local function BuildMahjong()
             al:SetFromAlpha(1)
             al:SetToAlpha(0)
             al:SetDuration(0.22)
-            ag:SetScript("OnFinished", function() b.fading = nil b:Hide() b:SetAlpha(1) end)
+            ag:SetScript("OnFinished", function() if not b.fading then return end b.fading = nil b:Hide() b:SetAlpha(1) end)
             b.fade = ag
         end)
         M.btns = M.btns or {}
@@ -681,6 +681,7 @@ function M.Start()
         t.label, t.col, t.icon = MFace(t.face)
         b.face:SetText(t.label)
         b.suit:SetTexture(K.MEDIA .. t.icon)
+        if b.fade then pcall(b.fade.Stop, b.fade) end  -- 6.80.5.0: alte Ausblendung trifft sonst Steine des neuen Spiels
         b.fading = nil
         b:SetAlpha(1)
         b:ClearAllPoints()

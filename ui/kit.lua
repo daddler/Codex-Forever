@@ -910,11 +910,16 @@ end
 function K.MatchFont(fs, size, text)
     if type(fs) ~= "table" then return end
     local wide = K.NeedsWideFont(text)
-    if wide == fs._wcWide then return end
-    fs._wcWide = wide
+    if wide == fs._wcWide and size == fs._wcSize then return end
+    fs._wcWide, fs._wcSize = wide, size
     local chat = _G.ChatFontNormal
     if wide and type(chat) == "table" and fs.SetFontObject then
         fs:SetFontObject(chat)
+        -- Groesse wie die uebrigen Zeilen (6.80.5.0), Schrift des Chats.
+        local ok, path, _, flags = pcall(chat.GetFont, chat)
+        if ok and type(path) == "string" and type(size) == "number" and fs.SetFont then
+            pcall(fs.SetFont, fs, path, size, flags or "")
+        end
     else
         K.SetFont(fs, size)
     end
