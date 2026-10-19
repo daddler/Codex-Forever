@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.87.1.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFMessenger|r – Shift-Linksklick auf einen Gegenstand verlinkt ihn ins Eingabefeld, wie in der Chatzeile des Spiels.",
+            "|cff7C6CFFAbklingzeitmanager|r – „Jetzt einrichten“ legt ein eigenes Profil „WeintCodex“ neben deine Profile, auch wenn du schon eins hast; dein Profil bleibt unverändert, und beim Ausschalten kehrt das vorher aktive zurück. Von selbst richtet WeintCodex weiterhin nur ein, wenn du keins hast. Siegel des Furors steht jetzt in der Buffreihe.",
+        },
+    },
+    {
         version = "6.87.0.0",
         date    = "19.10.2026",
         notes   = {

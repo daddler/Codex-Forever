@@ -21094,7 +21094,14 @@ do
             assert(code == "own" and saved == "5;5=Mein Paladin" and reloads == 0, "eigenes Layout ueberschrieben")
             -- Auch ein fremdes, nicht aktives Layout zaehlt.
             saved = ";5=Mein Paladin"
-            assert(CS.Apply(true) == "own" and saved == ";5=Mein Paladin", "nicht aktives eigenes Layout ueberschrieben")
+            assert(CS.Apply(false) == "own" and saved == ";5=Mein Paladin", "nicht aktives eigenes Layout ueberschrieben")
+            -- 6.87.1.0: auf "Jetzt einrichten" ein NEUES Profil daneben, das
+            -- eigene bleibt.
+            CS.Apply(true)
+            assert(saved:find("5=Mein Paladin", 1, true) and saved:find("WeintCodex", 1, true),
+                "Jetzt einrichten: eigenes Profil weg oder keins angelegt: " .. saved)
+            st.cdm.layouts, st.cdm.done, st.cdm.before = {}, {}, {}
+            reloads = 0
             -- 2. Vorgabe des Spiels: Layout "WeintCodex" angelegt und aktiv.
             saved = ""
             code = CS.Apply(false)

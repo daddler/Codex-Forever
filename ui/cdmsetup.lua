@@ -63,7 +63,7 @@ local NAME = "WeintCodex"
 
 CS.SOURCE = { kind = "classic", label = "Zaubernummern aus Classic, wie im Lehrerbestand" }
 CS.NAME = NAME
-CS.MAX = { essential = 8, utility = 6, buffs = 10 }
+CS.MAX = { essential = 8, utility = 6, buffs = 12 }   -- 6.87.1.0: 12 Buffs (Siegel des Furors)
 
 -- Je Klasse: Reihe "Wichtig" (Rotation, kurze Abklingzeiten), "Hilfreich"
 -- (laengere, Verteidigung, Unterbrechen) und "Buffs" (eigene Dauerbuffs,
@@ -78,7 +78,7 @@ CS.LISTS = {
     PALADIN = {
         essential = { 20271, 879, 853, 26573, 24275, 2812, 20929 },         -- Richturteil, Exorzismus, Hammer der Gerechtigkeit, Weihe, Hammer des Zorns, Heiliger Zorn, Heiliger Schock
         utility   = { 498, 642, 1022, 633, 1044, 19752 },                   -- Goettlicher Schutz, Gottesschild, Segen des Schutzes, Handauflegung, Segen der Freiheit, Goettliches Eingreifen
-        buffs     = { 20287, 20164, 20165, 20166, 21082, 20915,             -- Siegel: Rechtschaffenheit, Gerechtigkeit, Licht, Weisheit, Kreuzfahrer, Befehl
+        buffs     = { 20287, 20164, 20165, 20166, 21082, 20915, 20163,      -- Siegel: Rechtschaffenheit, Gerechtigkeit, Licht, Weisheit, Kreuzfahrer, Befehl, Furor (Forever, 6.87.1.0)
                       465, 7294, 19746, 25780 },                            -- Aura der Hingabe, Vergeltungsaura, Aura der Konzentration, Zorn der Gerechtigkeit
     },
     HUNTER = {
@@ -141,6 +141,7 @@ local function Mem()
     st.cdm = st.cdm or {}
     st.cdm.layouts = st.cdm.layouts or {}   -- [Klasse+Spez.] = Layoutnummer
     st.cdm.done = st.cdm.done or {}         -- [Klasse+Spez.] = einmal von selbst eingerichtet
+    st.cdm.before = st.cdm.before or {}     -- [Klasse+Spez.] = vorher aktives eigenes Layout (6.87.1.0)
     return st.cdm
 end
 CS.Mem = Mem
@@ -342,10 +343,17 @@ function CS.Apply(explicit)
     if not ok then return Say("error", "Layouts nicht lesbar: " .. tostring(sh)) end
     local info = CS.Inspect(sh, mem)
     if type(info.tag) ~= "number" then return Say("nospec", "Klasse/Spezialisierung vom Client nicht genannt – nichts verändert.") end
-    if info.own > 0 or info.foreignActive then
-        return Say("own", "Eigene Einstellung erkannt – nichts verändert.")
+    -- 6.87.1.0 (Wunsch: "wer die Voreinstellung will, bekommt ein NEUES
+    -- Profil, das alte wird nicht ueberschrieben"): von selbst nie, auf
+    -- "Jetzt einrichten" legt WeintCodex sein Layout NEBEN die eigenen und
+    -- merkt sich, welches vorher aktiv war (Ausschalten kehrt dorthin zurueck).
+    if (info.own > 0 or info.foreignActive) and not explicit then
+        return Say("own", "Eigene Einstellung erkannt – nichts verändert. „Jetzt einrichten“ legt ein eigenes Profil „" .. NAME .. "“ daneben an.")
     end
-    if info.ours and not info.activeOurs then
+    if info.foreignActive and info.active ~= nil and not info.activeOurs then
+        mem.before[info.tag] = info.active
+    end
+    if info.ours and not info.activeOurs and not explicit then
         return Say("own", "Layout „" .. NAME .. "“ ist nicht aktiv – nichts verändert.")
     end
     if not info.ours and mem.done[info.tag] and not explicit then
@@ -391,7 +399,13 @@ function CS.Restore()
     if not info.ours then return Say("off", "Aus – kein Layout „" .. NAME .. "“ da.") end
     if not info.activeOurs then return Say("off", "Aus – „" .. NAME .. "“ ist nicht aktiv, nichts zurückgesetzt.") end
     sh.mgr:RemoveLayout(LayoutID(info.ours))
-    sh.mgr:UseDefaultLayout()
+    -- Vorher aktives eigenes Layout zurueck, sonst die Vorgabe des Spiels.
+    local back, prev = nil, mem.before[info.tag]
+    if prev then
+        for id, l in sh.mgr:EnumerateLayouts() do if id == prev then back = l end end
+    end
+    if back then sh.mgr:SetActiveLayout(back) else sh.mgr:UseDefaultLayout() end
+    mem.before[info.tag] = nil
     local okC, err = Commit(sh, A)
     if not okC then return Say("error", err) end
     mem.layouts[info.tag] = nil

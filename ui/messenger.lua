@@ -567,6 +567,21 @@ local function Build()
     input:HookScript("OnTextChanged", function(self) MS.UpdateHint() end)
     input:HookScript("OnEditFocusLost", function() MS.UpdateHint() end)
     input:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    -- 6.87.1.0 (Wunsch: "Shift-Linksklick auf einen Gegenstand verlinkt ihn
+    -- wie im Spiel"): das Spiel reicht Links an die Chatzeile weiter; steht
+    -- der Cursor im Messenger, landet der Link dort. Nur angehaengt, nichts
+    -- des Spiels ersetzt.
+    local function Insert(link)
+        if type(link) == "string" and link ~= "" and input and input:HasFocus() then
+            input:Insert(link)
+        end
+    end
+    if _G.hooksecurefunc then
+        if type(_G.ChatEdit_InsertLink) == "function" then pcall(_G.hooksecurefunc, "ChatEdit_InsertLink", Insert) end
+        local CFU = _G.ChatFrameUtil
+        if type(CFU) == "table" and type(CFU.InsertLink) == "function" then pcall(_G.hooksecurefunc, CFU, "InsertLink", Insert) end
+    end
+    MS.InsertLink = Insert
 
     foot = K.NewText(win, 10)
     foot:SetPoint("BOTTOMLEFT", win, "BOTTOMLEFT", MS.LIST_W + 12, 8)

@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.87.1.0] – 2026-10-19
+
+### Geändert
+- Messenger: Links über `ChatEdit_InsertLink`/`ChatFrameUtil.InsertLink`
+  (nachgehängt) ins eigene Feld, wenn es den Cursor hat.
+- `CS.Apply(true)` legt „WeintCodex“ neben eigene Layouts, merkt das
+  vorher aktive (`cdm.before`), `CS.Restore` kehrt dorthin zurück;
+  Siegel des Furors (20163) in der Buffreihe, `CS.MAX.buffs` 12.
+
 ## [6.87.0.0] – 2026-10-19
 
 ### Neu
