@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.85.0.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFBeute: Forever-Dungeons|r – stehen jetzt nach Stufe an ihrem Platz zwischen den alten Dungeons statt ganz unten und tragen „Forever neu“.",
+            "|cff7C6CFFBeute: große Listen|r – WeintCodex fragt höchstens 20 Namen je Sekunde an. Bei den Sets flutete es den Server, eingegrenzt kam alles an; jetzt füllt sich auch die volle Liste nach und nach.",
+        },
+    },
+    {
         version = "6.84.9.0",
         date    = "19.10.2026",
         notes   = {

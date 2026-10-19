@@ -193,6 +193,8 @@ LB.RETRY = 4
 LB.diag = { byInfo = 0, byName = 0, byTooltip = 0, byObject = 0 }
 local asked, loadedName, tries = {}, {}, {}
 LB.TRIES = 4
+LB.REQ_MAX = 20
+local reqSec, reqN = -1, 0
 local waiting = false
 function LB.WaitForNames()
     if waiting or not (_G.C_Timer and _G.C_Timer.After) then return end
@@ -258,7 +260,11 @@ function LB.Info(id)
         -- blieben fuer immer "unterwegs". Jetzt nach LB.RETRY s erneut fragen,
         -- und solange etwas laedt, malt die Seite alle 2 s nach.
         local now = _G.GetTime and Plain(_G.GetTime()) or 0
-        if not pending[id] or now - pending[id] > LB.RETRY then
+        -- Hoechstens LB.REQ_MAX Anfragen je Sekunde - grosse Listen (Sets)
+        -- fluteten den Server, eingegrenzt ("Platte") kam alles an.
+        if reqSec ~= math.floor(now) then reqSec, reqN = math.floor(now), 0 end
+        if (not pending[id] or now - pending[id] > LB.RETRY) and reqN < LB.REQ_MAX then
+            reqN = reqN + 1
             pending[id] = now
             tries[id] = (tries[id] or 0) + 1
             if ci and ci.RequestLoadItemDataByID then pcall(ci.RequestLoadItemDataByID, id) end
@@ -434,11 +440,25 @@ function LB.Sections(cat, instIndex, query)
     return out, total
 end
 
+-- 6.85.0.0 (Beta-Test: "die Forever-Dungeons stehen ganz unten"): Dungeons
+-- nach Stufe sortiert, die neuen dazwischen an ihrem Platz; sonst wie im
+-- Bestand.
+local function MinLevel(inst)
+    return tonumber(tostring(inst and inst.levels or ""):match("^(%d+)")) or 999
+end
+LB.MinLevel = MinLevel
 function LB.InstancesOf(cat)
     local out = {}
     for n = 1, LB.Count() do
         local inst = LB.Instance(n)
         if inst.cat == cat then out[#out + 1] = n end
+    end
+    if cat == "d" then
+        table.sort(out, function(a, b)
+            local la, lb = MinLevel(LB.Instance(a)), MinLevel(LB.Instance(b))
+            if la ~= lb then return la < lb end
+            return a < b
+        end)
     end
     return out
 end
@@ -861,7 +881,11 @@ function LB.Draw()
     else
         for _, n in ipairs(LB.InstancesOf(LB.cat)) do
             local i2 = LB.Instance(n)
-            y = ListRow(f.ListBody, y, 186, LB.InstanceName(i2), i2.levels, LB.inst == n and LB.query == "", function()
+            local sub = i2.levels
+            if i2.kind == "community" then
+                sub = ((sub and sub ~= "") and (sub .. " · ") or "") .. "Forever neu"
+            end
+            y = ListRow(f.ListBody, y, 186, LB.InstanceName(i2), sub, LB.inst == n and LB.query == "", function()
                 LB.inst, LB.selected = n, nil
                 if f.Search and LB.query ~= "" then LB.query = "" f.Search:SetText("") end
                 LB.Draw()

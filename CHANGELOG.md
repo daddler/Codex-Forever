@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.85.0.0] – 2026-10-19
+
+### Geändert
+- Beute: Dungeons nach Mindeststufe sortiert (`LB.InstancesOf`), Forever-
+  Dungeons mit „Forever neu“; Anfragen gedrosselt (`LB.REQ_MAX` 20/s).
+
 ## [6.84.9.0] – 2026-10-19
 
 ### Behoben
