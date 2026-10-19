@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.87.0.0] – 2026-10-19
+
+### Neu
+- `ui/bufftimes.lua`: eigene Buffzeiten aus `UNIT_SPELLCAST_SUCCEEDED`
+  je Klasse (Gruppen, Verbraucher, Dauer aus Classic), Abgleich mit Auren
+  außerhalb des Kampfes, „fehlt“ im Kampf; Startzauber in `BT.STARTER`.
+
 ## [6.86.0.0] – 2026-10-19
 
 ### Neu

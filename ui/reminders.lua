@@ -63,6 +63,10 @@ local defaults = {
     bannerScale   = 100,      -- Groesse der Erinnerungen in Prozent
     alpha         = 100,      -- Deckkraft von Erinnerungen und Symbolen in Prozent
     hideResting   = false,    -- in Stadt und Gasthaus (ruhend) nichts zeigen
+    -- Buffzeiten aus Zaubern (ui/bufftimes.lua, Beta-Test Paladin: Siegel):
+    castTimes     = true,     -- eigene Buffs aus dem Wirken mit Uhr
+    castMissing   = true,     -- im Kampf "fehlt" (grau mit "!")
+    castSize      = 28,       -- Symbolgroesse
 }
 R.DEFAULTS = defaults
 
@@ -1665,6 +1669,7 @@ local function Enable()
         R.UpdateBanner()
     end))
     R.UpdateAll()
+    if WeintCodex.UIBuffTimes then WeintCodex.UIBuffTimes.Enable() end
 end
 
 --------------------------------------------------
@@ -1920,6 +1925,9 @@ K.Register({
                   { type = "dropdown", label = "Laune (bei Begleiter): erinnern, wenn", items = R.HAPPY_BELOW,
                     get = function() return draft.below end, set = function(v) draft.below = v DraftChanged() end,
                     disabled = function() return draft.kind ~= "happy" end })
+        end },
+        { key = "buffzeiten", label = "Buffzeiten", build = function(B)
+            WeintCodex.UIBuffTimes.BuildPage(B)
         end },
         { key = "anzeige", label = "Anzeige", build = function(B)
             B:Section("Erinnerungen")

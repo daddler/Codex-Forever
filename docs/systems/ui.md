@@ -1964,6 +1964,33 @@ Client die Auren geheim gibt. Seit 6.27.0.2 zählt zusätzlich jeder Buff, desse
 Erfahrungsbuffs auf Forever – erkannt an „Erfahrung“/„Experience“ in
 einem Aurennamen.
 
+## Buffzeiten aus Zaubern *(`ui/bufftimes.lua`, Seite „Buffzeiten“ der Erinnerungen)*
+
+Beta-Test (Paladin): „Siegel des Kreuzfahrers“ bietet der Abklingzeitmanager
+nicht an. Weil der Client im Kampf keine Auren herausgibt, rechnet
+WeintCodex eigene Buffs **aus dem Wirken**: `UNIT_SPELLCAST_SUCCEEDED`
+(`player`) mit bekannter ID startet eine eigene Uhr (eigene Zahlen, nie
+geheime, `SetCooldown`). `BT.CLASSES` je Klasse in Gruppen – eine Gruppe ist
+ein Platz, ein neuer Zauber ersetzt den alten (Siegel, Aspekte, Rüstungen,
+Schilde); `consumedBy` (Richturteil beendet das Siegel), `toggle`
+(Gestalten), `variable` („läuft“ ohne Uhr, Zerhäckseln), ohne `duration`
+„an“, `others` (auch auf andere wirkbar: zählt nur mit klarem Selbstziel),
+`weapon` (Abgleich über `GetWeaponEnchantInfo`). IDs und Dauern `classic`,
+**jede ID aus dem Lehrerbestand der Klasse** (`load_test.lua`) – Rang 1, den
+kein Lehrer lehrt, und die Kriegerhaltungen fehlen deshalb.
+
+- Geheime Zauber-ID: nie verglichen, letzter Stand bleibt, gezählt
+  (`BT.stats`).
+- Außerhalb des Kampfes (Kampfende, `UNIT_AURA`, Betreten der Welt)
+  Abgleich mit `C_UnitAuras.GetPlayerAuraBySpellID`: Rest korrigiert,
+  Fehlendes entfernt, schon Laufendes übernommen; nicht lesbar ≠ weg.
+  Tod löscht alles.
+- Im Kampf „fehlt“ (grau mit „!“) nur für gelernte Gruppen mit `remind`.
+- Rahmen `bufftimes` (`K.Layout`, über den Reihen des Abklingzeitmanagers),
+  verschiebbar im Gestaltungsmodus; Takt eine Sekunde ohne Neuanlage.
+- `/wcui prüfen`, Abschnitt „Buffzeiten“: Zauber gesehen, verfolgt, ob die
+  ID im Kampf geheim war (sonst „ungemessen“), Abgleiche.
+
 ## Eigene Farbe der Oberfläche *(6.21.1.0)*
 
 `general.highlight` kennt `"custom"`: die Farbe aus `highlightColor`

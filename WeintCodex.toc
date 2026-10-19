@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.86.0.0
+## Version: 6.87.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -258,6 +258,7 @@ ui/chat.lua
 ui/bags.lua
 ui/damagemeter.lua
 ui/reminders.lua
+ui/bufftimes.lua
 ui/reminderpick.lua
 ui/cooldowns.lua
 ui/cdmsetup.lua

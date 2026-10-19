@@ -664,6 +664,15 @@ Check("Abklingzeitmanager", function(add)
     for _, line in ipairs(CS.StatusLines()) do add("", "   " .. line) end
 end)
 
+-- Buffzeiten aus Zaubern (ui/bufftimes.lua)
+Check("Buffzeiten", function(add)
+    local BT = WeintCodex.UIBuffTimes
+    if not BT then add(SC.OPEN, "Buffzeiten nicht geladen.") return end
+    local on = K.Get("reminders", "castTimes") ~= false
+    add(on and SC.OK or SC.OPEN, on and "Buffzeiten aus Zaubern an" or "Buffzeiten aus Zaubern aus (Erinnerungen → Buffzeiten)")
+    for _, line in ipairs(BT.StatusLines()) do add("", "   " .. line) end
+end)
+
 -- Buffs im WeintCodex-Stil (6.37.0.0)
 Check("Buffs", function(add)
     local BS = WeintCodex.UIBuffSkin

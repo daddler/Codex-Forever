@@ -70,6 +70,9 @@ K.LAYOUT = {
     reminders       = { point = "TOP",         relPoint = "TOP", x = 0, y = -186 },
     procs           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 268 },
     cooldowns       = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 228 },
+    -- Buffzeiten aus Zaubern (ui/bufftimes.lua): mittig ueber den Reihen
+    -- des Abklingzeitmanagers (Buffs 362, Hilfreich 396 bis ~425) - frei ab 432.
+    bufftimes       = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 432 },
     xpbar           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 4 },
     damagemeter     = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -36 },
     bags            = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20, y = 110 },

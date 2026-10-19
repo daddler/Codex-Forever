@@ -21132,6 +21132,78 @@ do
         .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Buffzeiten aus Zaubern (ui/bufftimes.lua): Listen aus dem Lehrerbestand,
+-- Siegel ersetzt Siegel, Richturteil verbraucht, Uhr endet, geheime ID
+-- ignoriert, Abgleich entfernt ausserhalb des Kampfes.
+do
+    local ok, err = pcall(function()
+        local BT = WeintCodex.UIBuffTimes
+        local TD = WeintCodex.TrainerData
+        assert(BT and TD, "ui/bufftimes.lua oder Lehrerbestand nicht geladen")
+        for class, groups in pairs(BT.CLASSES) do
+            local have = {}
+            for _, list in pairs(TD.CLASSES[class].spells) do
+                for _, sp in ipairs(list) do have[sp.id] = true end
+            end
+            for _, g in ipairs(groups) do
+                for _, id in ipairs(g.spells) do
+                    assert(have[id] or BT.STARTER[id], class .. "/" .. g.key .. ": " .. id .. " nicht im Lehrerbestand")
+                end
+                for _, id in ipairs(g.consumedBy or {}) do
+                    assert(have[id], class .. "/" .. g.key .. ": Verbraucher " .. id .. " nicht im Lehrerbestand")
+                end
+                assert(not (g.duration and g.variable), class .. "/" .. g.key .. ": Dauer und variabel zugleich")
+            end
+        end
+        local G = _G
+        local saved = { G.C_UnitAuras, G.issecretvalue, G.UnitExists }
+        local okT, e2 = pcall(function()
+            BT.SetClass("PALADIN")
+            assert(BT.OnCast(21082, 100) == "start", "Kreuzfahrer nicht verfolgt")
+            assert(BT.active.seal.spell == 21082 and math.floor(BT.Remaining("seal", 110)) == 20, "Uhr falsch")
+            assert(BT.OnCast(20165, 105) == "start" and BT.active.seal.spell == 20165, "Siegel ersetzte Siegel nicht")
+            assert(BT.Remaining("seal", 106) == 29, "neues Siegel ohne neue Uhr")
+            assert(BT.OnCast(20271, 107) == "consume" and BT.active.seal == nil, "Richturteil liess das Siegel stehen")
+            BT.OnCast(21082, 200)
+            assert(BT.Remaining("seal", 229) and BT.Remaining("seal", 231) == nil and BT.active.seal == nil, "Uhr endete nicht")
+            -- Geheime ID: nicht verglichen, Stand bleibt.
+            BT.OnCast(21082, 300)
+            local sec = {}
+            G.issecretvalue = function(v) return v == sec end
+            local n = BT.stats.secretInCombat
+            assert(BT.OnCast(sec, 301, true) == "secret" and BT.stats.secretInCombat == n + 1, "geheime ID nicht gezaehlt")
+            assert(BT.active.seal and BT.active.seal.spell == 21082, "geheime ID aenderte den Stand")
+            G.issecretvalue = saved[2]
+            -- Abgleich: im Kampf nichts, ausserhalb entfernt.
+            G.C_UnitAuras = { GetPlayerAuraBySpellID = function() return nil end }
+            assert(BT.Reconcile(302, true) == false and BT.active.seal, "Abgleich im Kampf")
+            BT.Reconcile(302, false)
+            assert(BT.active.seal == nil, "Abgleich entfernte fehlende Aura nicht")
+            G.C_UnitAuras = { GetPlayerAuraBySpellID = function(id)
+                if id == 20166 then return { duration = 30, expirationTime = 320 } end end }
+            BT.Reconcile(305, false)
+            assert(BT.active.seal and BT.active.seal.spell == 20166 and BT.Remaining("seal", 310) == 10, "Aura nicht uebernommen")
+            -- Fremdes Ziel bei Buffs fuer andere: nicht gezaehlt; variabel ohne Uhr.
+            BT.SetClass("DRUID")
+            G.UnitExists = function() return true end
+            local ui, uca = G.UnitIsUnit, G.UnitCanAssist
+            G.UnitIsUnit, G.UnitCanAssist = function() return false end, function() return true end
+            BT.OnCast(1126, 1)
+            G.UnitIsUnit, G.UnitCanAssist = ui, uca
+            assert(BT.active.mark == nil, "Mal auf fremdes Ziel als eigenes gezaehlt")
+            BT.SetClass("ROGUE")
+            BT.OnCast(5171, 1)
+            assert(BT.active.snd and BT.Remaining("snd", 2) == nil and BT.Entries(2)[1].state == "runs", "Zerhaeckseln mit geratener Uhr")
+            assert(#BT.StatusLines() >= 3, "Statuszeilen fehlen")
+        end)
+        G.C_UnitAuras, G.issecretvalue, G.UnitExists = saved[1], saved[2], saved[3]
+        BT.SetClass(nil)
+        if not okT then error(e2, 0) end
+    end)
+    Check(ok, "Buffzeiten aus Zaubern: Lehrerbestand, Siegel ersetzt Siegel, Richturteil, Uhr endet, geheim ignoriert, Abgleich"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

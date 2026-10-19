@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.87.0.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFBuffzeiten aus Zaubern|r – für alle Klassen eine kleine Symbolreihe unter dem Charakter: Siegel (30 s, Richturteil verbraucht es), Aspekte, Rüstungen, Inneres Feuer, Schilde und Waffenbuffs, Schlachtruf und Haltungen, Zerhäckseln, Gestalten, Mal und Dornen. Gezählt wird ab deinem Zauber, weil das Spiel Buffs im Kampf nicht herausgibt; außerhalb des Kampfes gleicht WeintCodex mit den echten Buffs ab. Fehlt im Kampf ein Siegel oder Aspekt, wird das Symbol grau mit „!“. Erinnerungen → Buffzeiten, ab Werk an.",
+        },
+    },
+    {
         version = "6.86.0.0",
         date    = "19.10.2026",
         notes   = {
