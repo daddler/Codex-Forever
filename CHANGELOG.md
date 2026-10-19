@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.84.8.0] – 2026-10-19
+
+### Behoben
+- Beute: erneute Anfrage nach `LB.RETRY` s und Nachmalen alle 2 s,
+  solange Namen fehlen; Stern als `media/ui/star.tga`; Hinweiszeile
+  (`f.Count`) unter der Suche, links/rechts begrenzt.
+
 ## [6.84.7.0] – 2026-10-19
 
 ### Geändert

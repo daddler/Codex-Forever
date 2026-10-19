@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.84.8.0",
+        date    = "19.10.2026",
+        notes   = {
+            "|cff7C6CFFBeute|r – Namen, die nicht kommen, fragt WeintCodex nach ein paar Sekunden erneut an (bei großen Listen wie den Sets ließ der Server Anfragen fallen – es blieb bei „lädt …“). Der Stern zum Merken ist ein Bild statt eines Zeichens, das die Schrift nicht kannte (es stand „?“). Der Hinweis über der Liste hat eine eigene Zeile und läuft nicht mehr über Suche und Liste.",
+        },
+    },
+    {
         version = "6.84.7.0",
         date    = "19.10.2026",
         notes   = {

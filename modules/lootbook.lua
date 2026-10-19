@@ -189,6 +189,17 @@ local function IconOf(id)
     return nil
 end
 
+LB.RETRY = 4
+local waiting = false
+function LB.WaitForNames()
+    if waiting or not (_G.C_Timer and _G.C_Timer.After) then return end
+    waiting = true
+    _G.C_Timer.After(2, function()
+        waiting = false
+        if LB.Redraw then LB.Redraw() end
+    end)
+end
+
 function LB.Info(id)
     local have = info[id]
     if have then return have end
@@ -202,10 +213,16 @@ function LB.Info(id)
         end
     end
     if type(name) ~= "string" or name == "" then
-        if not pending[id] then
-            pending[id] = true
+        -- 6.84.8.0 (Beta-Test mit Bild: Sets "laden und laden"): bei vielen
+        -- Gegenstaenden auf einmal laesst der Server Anfragen fallen - die
+        -- blieben fuer immer "unterwegs". Jetzt nach LB.RETRY s erneut fragen,
+        -- und solange etwas laedt, malt die Seite alle 2 s nach.
+        local now = _G.GetTime and Plain(_G.GetTime()) or 0
+        if not pending[id] or now - pending[id] > LB.RETRY then
+            pending[id] = now
             if ci and ci.RequestLoadItemDataByID then pcall(ci.RequestLoadItemDataByID, id) end
         end
+        LB.WaitForNames()
         return { icon = IconOf(id), loading = true }
     end
     pending[id] = nil
@@ -472,9 +489,13 @@ local function BuildPage()
     end)
     box:SetPoint("TOPLEFT", ic, "TOPLEFT", 20, -14)
     f.Search = eb
-    f.Count = WeintCodex.Label(ic, "", { size = 11, color = "textDim", justify = "RIGHT" })
-    f.Count:SetPoint("TOPRIGHT", ic, "TOPRIGHT", -18, -22)
-    f.ItemScroll, f.ItemBody = WeintCodex.CreateScrollArea(ic, 20, -52, 420, 300, true)
+    -- 6.84.8.0 (Beta-Test mit Bild: der Hinweis lief ueber Suche und Liste):
+    -- eigene Zeile unter der Suche, links und rechts begrenzt, einzeilig.
+    f.Count = WeintCodex.Label(ic, "", { size = 11, color = "textDim", justify = "LEFT" })
+    f.Count:SetPoint("TOPLEFT", ic, "TOPLEFT", 22, -50)
+    f.Count:SetPoint("TOPRIGHT", ic, "TOPRIGHT", -18, -50)
+    f.Count:SetWordWrap(false)
+    f.ItemScroll, f.ItemBody = WeintCodex.CreateScrollArea(ic, 20, -70, 420, 300, true)
 
     f:SetScript("OnSizeChanged", function(self, width)
         width = Plain(width)
@@ -553,7 +574,6 @@ local function Head(body, y, w, text, sub)
 end
 
 local QUESTION_ICON = "Interface\\Icons\\INV_Misc_QuestionMark"
-local STAR = "\226\152\133"
 
 function LB.PaintCell(r)
     local it = r.item
@@ -574,7 +594,7 @@ function LB.PaintCell(r)
     r.sub:SetText(table.concat(parts, "  ·  "))
     local wished = LB.IsWished(it.id)
     local sc = wished and C.goldBright or C.textGhost
-    r.star.label:SetTextColor(sc[1], sc[2], sc[3])
+    r.star.tex:SetVertexColor(sc[1], sc[2], sc[3], wished and 1 or 0.6)
     r.sel:SetShown(LB.selected == it.id)
     return not inf.loading
 end
@@ -637,8 +657,12 @@ local function Cell(body, x, y, w, it, inst)
         r.star = CreateFrame("Button", nil, r)
         r.star:SetSize(22, 22)
         r.star:SetPoint("RIGHT", r, "RIGHT", -4, 0)
-        r.star.label = WeintCodex.Label(r.star, STAR, { size = 14, justify = "CENTER" })
-        r.star.label:SetPoint("CENTER", r.star, "CENTER", 0, 0)
+        -- 6.84.8.0 (Beta-Test mit Bild: "?" statt Stern - die Schrift kennt
+        -- das Zeichen nicht): eigenes Bild media/ui/star.tga.
+        r.star.tex = r.star:CreateTexture(nil, "ARTWORK")
+        r.star.tex:SetSize(14, 14)
+        r.star.tex:SetPoint("CENTER", r.star, "CENTER", 0, 0)
+        r.star.tex:SetTexture("Interface\\AddOns\\WeintCodex\\media\\ui\\star")
         r.star:SetScript("OnClick", function(self)
             LB.ToggleWish(self:GetParent().item.id)
             LB.Draw()
@@ -764,7 +788,7 @@ function LB.Draw()
     local total = Plain(f:GetWidth())
     local lh = (Plain(f.ListCard:GetHeight()) or 360) - 28
     local iw = (Plain(f.ItemCard:GetWidth()) or 460) - 40
-    local ih = (Plain(f.ItemCard:GetHeight()) or 360) - 68
+    local ih = (Plain(f.ItemCard:GetHeight()) or 360) - 86
     f.ListScroll:SetSize(196, math.max(60, lh))
     f.ListBody:SetWidth(186)
     f.ItemScroll:SetSize(iw, math.max(60, ih))
