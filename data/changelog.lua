@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.103.1.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFZorn der Gerechtigkeit|r hat jetzt eine eigene Uhr (30 Minuten) bei den Buffzeiten. Läuft er ab, meldet die Erinnerung „fehlt“ auch im Kampf – wenn „Auch im Kampf“ an ist. Das gilt für jeden selbst gewirkten Buff mit bekannter Dauer.",
+        },
+    },
+    {
         version = "6.103.0.0",
         date    = "20.10.2026",
         notes   = {

@@ -69,6 +69,11 @@ BT.CLASSES = {
             20915, 20918, 20919, 20920,                        -- des Befehls 2-5
             20163,                                             -- des Furors (Forever)
           } },
+        -- 6.103.1.0 (Beta-Test: Erinnerung "Zorn der Gerechtigkeit fehlt"
+        -- kam beim Auslaufen nicht - im Kampf sind die Auren blind).
+        { key = "fury", label = "Zorn der Gerechtigkeit",
+          duration = 30 * MIN,          -- 30 min (Classic)
+          spells = { 25780 } },
     },
     HUNTER = {
         { key = "aspect", label = "Aspekt", remind = true,   -- ohne Dauer (Classic)
@@ -311,6 +316,26 @@ function BT.Remaining(key, now)
     local left = a.start + a.duration - (now or Now())
     if left <= 0 then BT.active[key] = nil return nil end
     return left
+end
+
+-- 6.103.1.0: Zustand eines Zaubers nach der eigenen Uhr - "running",
+-- "expired" (selbst gewirkt und abgelaufen) oder nil (weiss nicht).
+function BT.ClockState(spellID, now)
+    if type(spellID) ~= "number" then return nil end
+    for _, g in ipairs(BT.Groups()) do
+        for _, id in ipairs(g.spells or {}) do
+            if id == spellID then
+                if not g.duration or g.variable then return nil end
+                if BT.active[g.key] then
+                    BT.Remaining(g.key, now)      -- entfernt Abgelaufenes
+                    -- Noch da (auch ohne lesbare Dauer): laeuft.
+                    if BT.active[g.key] then return "running" end
+                end
+                return BT.last[g.key] and "expired" or nil
+            end
+        end
+    end
+    return nil
 end
 
 function BT.Expire(now)

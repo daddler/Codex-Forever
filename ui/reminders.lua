@@ -1332,6 +1332,20 @@ function R.Recheck(delay)
     end
 end
 
+-- 6.103.1.0 (Beta-Test: "Zorn der Gerechtigkeit fehlt" kam beim Auslaufen
+-- nicht): im Kampf sind die eigenen Auren blind - aber einen Buff, den du
+-- selbst gewirkt hast und dessen Dauer bekannt ist, zaehlt die eigene Uhr
+-- der Buffzeiten (ui/bufftimes.lua). Ist sie abgelaufen, fehlt er sicher
+-- (ausser er wurde neu gewirkt - dann laeuft die Uhr wieder).
+function R.ClockHit(rule)
+    local BTm = WeintCodex.UIBuffTimes
+    if not (BTm and BTm.ClockState) or type(rule.spell) ~= "string" then return nil end
+    local sp = R.Resolve(rule.spell)
+    if not (sp and sp.id) then return nil end
+    if BTm.ClockState(sp.id) ~= "expired" then return nil end
+    return { text = (rule.label or sp.name or rule.spell) .. " fehlt", icon = sp.icon }
+end
+
 -- Alle Erinnerungen, die jetzt gelten.
 function R.Active()
     local out = {}
@@ -1344,7 +1358,10 @@ function R.Active()
     if where == "instance" and not InInstance() then return out end
     for _, rule in ipairs(R.Here()) do
         local k = rule.kind
-        if (k == "buff" or k == "weapon" or k == "pet" or k == "happy" or k == "ammo" or k == "item")
+        local clock = fighting and k == "buff" and R.ClockHit(rule)
+        if clock then
+            out[#out + 1] = clock
+        elseif (k == "buff" or k == "weapon" or k == "pet" or k == "happy" or k == "ammo" or k == "item")
            and not (fighting and R.BLIND_IN_COMBAT[k]) then
             local hit = R.Check(rule)
             -- 6.61.22.0 (Beta-Test: "Aspekt des Falken ploppte kurz vor

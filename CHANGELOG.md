@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.103.1.0] – 2026-10-20
+
+### Behoben
+- Erinnerungen: im Kampf zählt für Buff-Regeln die eigene Uhr der Buffzeiten (`R.ClockHit`, `BT.ClockState`: selbst gewirkt und abgelaufen = fehlt); vorher meldete WeintCodex im Kampf nie einen fehlenden Buff (Auren blind). Paladin-Gruppe `fury` (Zorn der Gerechtigkeit 25780, 30 min, Classic). Anlass: Beta-Test, Erinnerung kam beim Auslaufen nicht.
+
 ## [6.103.0.0] – 2026-10-20
 
 ### Geändert
