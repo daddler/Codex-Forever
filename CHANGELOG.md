@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.99.1.0] – 2026-10-20
+
+### Behoben
+- Seelensplitter: `DeleteCursorItem` nur noch in einer Eingabe des Spielers (Tastenwächter mit Weitergabe, `WorldFrame` OnMouseDown) – vorher „Blockiert: DeleteCursorItem()“.
+
 ## [6.99.0.0] – 2026-10-20
 
 ### Hinzugefügt

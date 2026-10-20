@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.99.1.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFSeelensplitter: löschen wie früher|r – das Spiel löscht nur während einer Eingabe. WeintCodex löscht überzählige Splitter deshalb beim nächsten Tastendruck oder Klick in die Welt (laufen, zaubern) – fühlt sich an wie von selbst, die Taste wirkt trotzdem. Keine Fehlermeldung mehr.",
+        },
+    },
+    {
         version = "6.99.0.0",
         date    = "20.10.2026",
         notes   = {

@@ -9,9 +9,12 @@
 -- Kampf) zaehlt WeintCodex die Splitter (Gegenstand 6265, Classic). Sind
 -- es mehr als eingestellt, nimmt es EINEN Splitter auf und loescht ihn -
 -- die naechste Aenderung der Taschen loest den naechsten aus.
--- SPERRE: verbietet der Client das Loeschen ohne Klick
--- (ADDON_ACTION_BLOCKED), schaltet das selbsttaetige Loeschen ab und ein
--- kleiner Knopf "Splitter loeschen" erscheint - ein Klick, ein Splitter.
+-- SPERRE (gemessen 6.99.0.0: "Blockiert: DeleteCursorItem()"): das Spiel
+-- loescht nur waehrend einer Eingabe des Spielers. Seit 6.99.1.0 merkt
+-- sich WeintCodex daher nur "zu viele" und loescht beim naechsten
+-- Tastendruck oder Mausklick in die Welt (Laufen, Zaubern, Klicken) -
+-- die Taste geht trotzdem ans Spiel, nichts wird verschluckt. So wirkt
+-- es wie frueher von selbst. Bleibt es trotzdem gesperrt: Knopf.
 -- Nie etwas anderes als Seelensplitter, nie bei belegtem Mauszeiger.
 --------------------------------------------------
 
@@ -106,13 +109,31 @@ function SS.Check()
     local n = SS.Scan()
     local over = n - SS.Max()
     if over <= 0 then if btn then btn:Hide() end return end
+    SS.pending = true
     if SS.blocked then
         if K.InCombat() then return end
         Button():SetText(over .. " Seelensplitter zu viel – löschen")
         btn:Show()
-        return
     end
+end
+
+-- Waehrend einer Eingabe des Spielers (Tastendruck, Mausklick in die Welt).
+function SS.OnInput()
+    if not SS.pending or SS.blocked or not SS.Active() or K.InCombat() then return end
+    SS.pending = false
     SS.DeleteOne()
+end
+
+-- Tasten mitlesen, nie verschlucken.
+local keys = CreateFrame("Frame", "WeintCodexSoulShardKeys", UIParent)
+SS.keys = keys
+if keys.EnableKeyboard then
+    pcall(keys.EnableKeyboard, keys, true)
+    if keys.SetPropagateKeyboardInput then pcall(keys.SetPropagateKeyboardInput, keys, true) end
+    keys:SetScript("OnKeyDown", function() SS.OnInput() end)
+end
+if _G.WorldFrame and _G.WorldFrame.HookScript then
+    pcall(_G.WorldFrame.HookScript, _G.WorldFrame, "OnMouseDown", function() SS.OnInput() end)
 end
 
 local ev = CreateFrame("Frame")
