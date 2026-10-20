@@ -20970,6 +20970,44 @@ do
     end
 end
 
+-- Eigener Abklingzeitmanager (ui/owncooldowns.lua): Wahl je Charakter,
+-- Anzeige des Spiels nur ueber PF.SetCVar aus und beim Zurueckwechseln
+-- zurueck; Voreinstellung je Klasse; Rahmen im Layout.
+do
+    local G = _G
+    local OC = WeintCodex.UIOwnCooldowns
+    local K = WeintCodex.UIKit
+    local ok, err = pcall(function()
+        assert(OC and OC.Enable, "ui/owncooldowns.lua nicht geladen")
+        for _, k in ipairs({ "ocd_big", "ocd_small", "ocd_buffs" }) do assert(K.LAYOUT[k], "Layout ohne " .. k) end
+        for _, cls in ipairs({ "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "MAGE", "WARLOCK", "DRUID", "SHAMAN" }) do
+            local big = 0
+            for _, e in ipairs(OC.Catalog(cls)) do if e.preset == "big" then big = big + 1 end end
+            assert(big > 0, cls .. ": keine Voreinstellung 'Wichtig'")
+        end
+        assert(OC.Mode() == "blizzard", "ab Werk nicht Blizzard: " .. tostring(OC.Mode()))
+        local savedCV = G.C_CVar
+        local cvars = { cooldownViewerEnabled = "1" }
+        G.C_CVar = { GetCVar = function(n) return cvars[n] end, SetCVar = function(n, v) cvars[n] = v return true end,
+                     GetCVarBool = function(n) return cvars[n] == "1" end }
+        assert(OC.SetMode("weintcodex") and cvars.cooldownViewerEnabled == "0", "Anzeige des Spiels nicht aus")
+        assert(K.CharState().ocd.mode == "weintcodex", "Wahl nicht je Charakter gespeichert")
+        assert(OC.SetMode("blizzard") and cvars.cooldownViewerEnabled == "1", "Anzeige des Spiels nicht zurueck")
+        -- Spieler hatte sie selbst aus: WeintCodex und zurueck nach "keiner" laesst sie aus.
+        cvars.cooldownViewerEnabled = "0"
+        OC.SetMode("weintcodex") OC.SetMode("off")
+        assert(cvars.cooldownViewerEnabled == "0", "keiner: Anzeige des Spiels an")
+        OC.SetMode("blizzard")
+        G.C_CVar = savedCV
+        local e = { key = 1, preset = "big" }
+        OC.SetSlot(e, "small") assert(OC.Slot(e) == "small", "Wahl je Zauber nicht gemerkt")
+        OC.ResetPreset() assert(OC.Slot(e) == "big", "Voreinstellung nicht wiederhergestellt")
+        OC.Update()
+    end)
+    Check(ok, "Eigener Abklingzeitmanager: Wahl je Charakter, Anzeige des Spiels gemerkt und zurück, Voreinstellung je Klasse"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Abklingzeitmanager je Klasse (ui/cdmsetup.lua): Listen nur aus dem
 -- Lehrerbestand der Klasse; eigenes Layout des Spielers bleibt; aus nimmt
 -- nur das eigene, aktive Layout zurueck. Der Manager des Spiels ist hier

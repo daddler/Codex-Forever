@@ -262,6 +262,8 @@ ui/bufftimes.lua
 ui/reminderpick.lua
 ui/cooldowns.lua
 ui/cdmsetup.lua
+# Eigener Abklingzeitmanager (Wahl Blizzard/WeintCodex auf der Seite Abklingzeitmanager).
+ui/owncooldowns.lua
 ui/questtracker.lua
 ui/navmesh.lua
 ui/route.lua

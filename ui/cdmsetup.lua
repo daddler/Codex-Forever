@@ -420,6 +420,9 @@ end
 -- Beim Betreten der Welt, sobald der Manager des Spiels geladen hat.
 function CS.Auto()
     if not Opt("cdmClassSetup") then return end
+    -- Eigener Manager gewaehlt: der des Spiels wird nicht eingerichtet.
+    local OC = WeintCodex.UIOwnCooldowns
+    if OC and OC.Mode and OC.Mode() ~= "blizzard" then return end
     K.AfterCombat(function() CS.Apply(false) end)
 end
 

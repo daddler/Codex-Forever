@@ -477,6 +477,13 @@ end
 
 function BT.Update()
     if not row then return end
+    -- Der eigene Abklingzeitmanager zeigt dieselben Buffs in seiner Reihe.
+    local OC = WeintCodex.UIOwnCooldowns
+    if OC and OC.OwnsBuffs and OC.OwnsBuffs() and not row._unlock then
+        for _, b in ipairs(row.icons) do b:Hide() end
+        row:SetSize(28, 28)
+        return
+    end
     local on = Opt("castTimes") ~= false
     -- Im Gestaltungsmodus zeigt jede Gruppe ein Symbol (wo die Reihe steht).
     local list = BT.Entries(Now(), BT.fighting or K.InCombat(), Opt("castMissing") ~= false, row._unlock)

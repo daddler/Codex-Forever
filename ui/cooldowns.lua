@@ -428,7 +428,15 @@ end
 local function px(v) return string.format("%d px", v) end
 
 function CD.BuildPage(B)
-    B:Section("Abklingzeitmanager", "Der Manager des Spiels im WeintCodex-Stil. Welche Zauber und Buffs erscheinen, wählst du im Fenster des Spiels; verschieben: Bearbeitungsmodus des Spiels.")
+    -- Die Wahl zuerst (Wunsch: "im Einstellungsbereich erkennbar, ob
+    -- Blizzards oder WeintCodex Abklingzeitenmanager"), ui/owncooldowns.lua.
+    local OC = WeintCodex.UIOwnCooldowns
+    if OC and OC.ModeRow then
+        B:Section("Welcher Abklingzeitmanager?", "Blizzard: der Manager des Spiels (unten im WeintCodex-Stil). WeintCodex: eigene Reihen mit fertiger Auswahl für deine Klasse – die Anzeige des Spiels wird dafür ausgeschaltet und beim Zurückwechseln wieder so gestellt wie vorher. Keiner: beide aus.")
+        OC.ModeRow(B)
+        OC.BuildSection(B)
+    end
+    B:Section("Abklingzeitmanager des Spiels", "Gilt, wenn oben „Blizzard“ gewählt ist. Der Manager des Spiels im WeintCodex-Stil. Welche Zauber und Buffs erscheinen, wählst du im Fenster des Spiels; verschieben: Bearbeitungsmodus des Spiels.")
     B:Row({ type = "toggle", label = "Abklingzeitmanager aktivieren",
             get = function() return CD.GameEnabled() end, set = function(v) CD.SetGameEnabled(v) end },
           { type = "toggle", label = "Im WeintCodex-Stil", key = "cdmSkin", reload = true,
@@ -439,12 +447,14 @@ function CD.BuildPage(B)
           { type = "empty" })
     local CS = WeintCodex.UICooldownSetup
     if CS and CS.BuildSection then CS.BuildSection(B) end
-    B:Section("Schrift")
+    B:GameEditMode("Platz, Symbolgröße, Abstand und Reihen des Managers des Spiels stellt dessen Bearbeitungsmodus ein – dort werden sie gespeichert.")
+    B:Advanced()
+    B:Section("Schrift (Manager des Spiels)")
     B:Row({ type = "slider", label = "Abklingzahl", key = "cdmFontSize", min = 10, max = 28, step = 1, format = px },
           { type = "slider", label = "Ladungen und Stapel", key = "cdmCountSize", min = 8, max = 20, step = 1, format = px })
     B:Row({ type = "slider", label = "Balken: Name und Zeit", key = "cdmBarFontSize", min = 8, max = 18, step = 1, format = px },
           { type = "empty" })
-    B:GameEditMode("Eigene Zählwerke gibt es hier bewusst nicht: im Kampf nennt der Client Abklingzeiten und Buffs nur dem Manager des Spiels. Platz, Symbolgröße, Abstand und Reihen stellt dessen Bearbeitungsmodus ein – dort werden sie gespeichert.")
+    B:EndAdvanced()
 end
 
 -- An das Modul "Erinnerungen" haengen (es laedt vorher, siehe .toc).

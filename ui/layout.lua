@@ -73,6 +73,12 @@ K.LAYOUT = {
     -- Buffzeiten aus Zaubern (ui/bufftimes.lua): mittig ueber den Reihen
     -- des Abklingzeitmanagers (Buffs 362, Hilfreich 396 bis ~425) - frei ab 432.
     bufftimes       = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 432 },
+    -- Eigener Abklingzeitmanager (ui/owncooldowns.lua): dort, wo sonst die
+    -- Reihen des Spiels stehen (die sind bei "WeintCodex" aus) - Wichtig
+    -- unten, darueber Weitere, darueber die Buffs.
+    ocd_big         = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 316 },
+    ocd_small       = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 362 },
+    ocd_buffs       = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 396 },
     xpbar           = { point = "BOTTOM",      relPoint = "BOTTOM", x = 0, y = 4 },
     damagemeter     = { point = "TOPLEFT",     relPoint = "TOPLEFT", x = 12, y = -36 },
     bags            = { point = "BOTTOMRIGHT", relPoint = "BOTTOMRIGHT", x = -20, y = 110 },

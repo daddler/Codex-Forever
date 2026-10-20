@@ -587,6 +587,33 @@ Seit 6.2.0.0:
   wird (zurückgelesen, sonst Fehlermeldung), welche Spez.-Kennung der
   Client ohne Spezialisierungen nennt, welche Classic-Zauber der Client im
   Manager überhaupt anbietet. `/wcui prüfen` → „Abklingzeitmanager“.
+* **Eigener Abklingzeitmanager** (`ui/owncooldowns.lua`, oben auf der Seite
+  Erinnerungen → Abklingzeitmanager; Wunsch: „als Alternative zu Blizzards,
+  gute Voreinstellungen, im Einstellungsbereich erkennbar, welcher genutzt
+  wird“). Wahl je Charakter (`K.CharState().ocd.mode`): **Blizzard** (ab
+  Werk, ändert nichts), **WeintCodex**, **Keiner**. Bei WeintCodex/Keiner
+  schaltet `PF.SetCVar("cooldownViewerEnabled", "0", "reminders")` die
+  Anzeige des Spiels aus (Wert von vorher gemerkt); zurück zu Blizzard gibt
+  `PF.Release` ihn zurück, nur wenn noch unser Wert steht – stand sie danach
+  noch aus, schaltet die ausdrückliche Wahl „Blizzard“ sie an. Nie im
+  Kampf. `CS.Auto` richtet Blizzards Manager nicht ein, solange nicht
+  „Blizzard“ gewählt ist. Drei Reihen (`ocd_big`, `ocd_small`, `ocd_buffs`
+  in `ui/layout.lua`, Gestaltungsmodus): Wichtig, Weitere, Buffs. Buffs aus
+  `BT.Entries` (`ui/bufftimes.lua`); deren eigene Reihe bleibt dann leer
+  (`OC.OwnsBuffs`), nichts doppelt. Voreinstellung: `CS.LISTS` essential →
+  Wichtig, utility → Weitere (Classic, Lehrerbestand); weitere Lehrerzauber
+  mit `GetSpellBaseCooldown` ≥ 2 s stehen aus in der Liste. Nur Gelerntes
+  (Rangkette rückwärts, sonst über den Namen), höchstens 30. Uhr: die des
+  Spiels (`GetSpellCooldownDuration` → `SetCooldownFromDurationObject`,
+  sonst `SetCooldown` mit Client-Werten) – zeichnet auch Geheimes;
+  „bereit“-Leuchten nur bei offen genannter Dauer (geheim = weiß nicht).
+  Einstellungen je Charakter (`ocd`: Größen, nur im Kampf, Zahl, Leuchten,
+  Wahl je Zauber als Abweichung von der Voreinstellung); Liste als eine
+  eigene Zeile (zwei Spalten, Klick: Wichtig → Weitere → Aus), Knopf
+  „Voreinstellung wiederherstellen“. Schrift des Spiel-Managers seitdem
+  unter „Erweitert“ (≤ 15 sichtbar). **Ungemessen auf Forever:** ob die
+  Dauer im Kampf geheim ist (dann leuchtet im Kampf nichts), ob
+  `GetSpellBaseCooldown` existiert (sonst nur die Voreinstellung in der Liste).
 * **Debuffs am Zielrahmen: die Symbole des Spiels** (6.4.0.3,
   `targetAuraSource`). Eigene Symbole bleiben im Kampf leer (siehe
   6.3.0.2). Der Zielrahmen des Spiels bleibt deshalb am Leben, alles an
