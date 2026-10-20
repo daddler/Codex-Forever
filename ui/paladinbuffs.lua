@@ -342,6 +342,17 @@ function PB.Frame()
     f.secure = b
     f.WCShowForUnlock = function(self, on) self._unlock = on and true or nil PB.Update() end
     K.RegisterMover(f, "paladinbuffs", "Segen", K.Layout("paladinbuffs"), { secure = true })
+    -- Frei ziehbar am Rahmen (6.100.1.0, Wunsch), nicht nur im
+    -- Gestaltungsmodus; der Platz wird wie dort gemerkt. Nie im Kampf.
+    f:SetMovable(true)
+    f:SetClampedToScreen(true)
+    f:EnableMouse(true)
+    f:RegisterForDrag("LeftButton")
+    f:SetScript("OnDragStart", function(self) if not K.InCombat() then self:StartMoving() end end)
+    f:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        if K.SavePosition then K.SavePosition("paladinbuffs", self) end
+    end)
     f:Hide()
     frame = f
     PB.frame = f
@@ -392,7 +403,15 @@ function PB.Update()
     if not f then K.AfterCombat(PB.Update) return end
     if not K.InCombat() then
         PB.Scan()
-        if not f:IsShown() then f:Show() end
+        -- Alle gesegnet: Rahmen weg (6.100.1.0, Wunsch); kommt wieder,
+        -- sobald einer seinen Segen braucht. Im Gestaltungsmodus immer da.
+        local r = PB.result
+        local done = r and r.missing == 0 and r.unclear == 0
+        if done and not f._unlock then
+            if f:IsShown() then f:Hide() end
+        elseif not f:IsShown() then
+            f:Show()
+        end
     end
     PB.Paint()
 end

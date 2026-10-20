@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.100.1.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFSegen: frei verschiebbar und verschwindet|r – den Rahmen einfach mit der Maus ziehen (außerhalb des Kampfes), der Platz wird gemerkt. Sind alle gesegnet, verschwindet er und kommt wieder, sobald jemand seinen Segen braucht.",
+        },
+    },
+    {
         version = "6.100.0.0",
         date    = "20.10.2026",
         notes   = {

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.100.1.0] – 2026-10-20
+
+### Geändert
+- Segen: Rahmen direkt ziehbar (`K.SavePosition`), versteckt bei „alle gesegnet“.
+
 ## [6.100.0.0] – 2026-10-20
 
 ### Hinzugefügt
