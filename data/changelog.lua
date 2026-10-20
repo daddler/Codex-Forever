@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.103.2.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFElixier oder Schriftrolle|r – ist eine Schriftrolle aktiv, schlägt die Erinnerung kein Elixier mehr vor, und umgekehrt. Beides zugleich geht auf Forever nicht.",
+        },
+    },
+    {
         version = "6.103.1.0",
         date    = "20.10.2026",
         notes   = {

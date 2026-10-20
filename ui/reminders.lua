@@ -1171,6 +1171,17 @@ local function HelpfulNames()
     end
     return names, tips
 end
+-- Genau dieser Name (ohne Gross/Klein), kein Teilwort: "Staerke" einer
+-- Rolle ist nicht "Machtwort: Seelenstaerke".
+function R.ExactName(names, name)
+    local want = type(name) == "string" and name:lower() or nil
+    if not want then return false end
+    for _, n in ipairs(names) do
+        if type(n) == "string" and n:lower() == want then return true end
+    end
+    return false
+end
+
 local function AnyName(names, words)
     for _, n in ipairs(names) do
         if HasWord(n, words) then return true end
@@ -1279,6 +1290,20 @@ function R.BagBuffs(out)
         end
     end
     for _, e in pairs(bagCache) do if e then e._counted = nil end end
+    -- 6.103.2.0 (Beta-Test: "Elixiere und Schriftrollen koennen nicht
+    -- gleichzeitig drauf - die Erinnerung sagt trotzdem, ich koennte ein
+    -- Elixier nehmen"): auf Forever schliessen sich Rolle und Elixier aus.
+    -- Liegt der Buff einer bekannten Rolle an (jede, die in dieser Sitzung
+    -- in einer Tasche lag), kein Elixier vorschlagen - und umgekehrt.
+    if elixir then
+        for _, e in pairs(bagCache) do
+            if e and e.kind == "elixir" and type(e.spell) == "string" and (e.scroll and true or false) ~= (elixir.e.scroll and true or false)
+               and R.ExactName(names, e.spell) then
+                elixir = nil
+                break
+            end
+        end
+    end
     if wantFood then
         -- Satt ist, wer einen Essensbuff hat (Name) oder irgendeinen Buff,
         -- der laut Tooltip Erfahrung gibt oder satt macht.

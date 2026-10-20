@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.103.2.0] – 2026-10-20
+
+### Behoben
+- Erinnerungen (Tasche): Rolle und Elixier schließen sich aus – liegt der Buff einer bekannten Rolle (bzw. eines Elixiers) an, wird die andere Sorte nicht vorgeschlagen. Bekannt = in dieser Sitzung in einer Tasche gesehen (`bagCache`); Vergleich über den ganzen Namen (`R.ExactName`). Anlass: Beta-Test.
+
 ## [6.103.1.0] – 2026-10-20
 
 ### Behoben
