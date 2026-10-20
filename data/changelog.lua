@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.95.1.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFKomfort → Sammeln: „Volle Taschen beim Looten“|r – der Abschnitt mit dem Schalter für das Fenster „Löschen & looten“ steht jetzt wirklich dort (Grünes und Auktionspreis unter „Erweitert“).",
+        },
+    },
+    {
         version = "6.95.0.0",
         date    = "20.10.2026",
         notes   = {

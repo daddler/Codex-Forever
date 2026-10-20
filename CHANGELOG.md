@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.95.1.0] – 2026-10-20
+
+### Behoben
+- `ui/bagtriage.lua` lädt nach `ui/gathertrack.lua` – vorher gab es die Seite „Sammeln“ noch nicht, der Abschnitt fehlte.
+
 ## [6.95.0.0] – 2026-10-20
 
 ### Hinzugefügt

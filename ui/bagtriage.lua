@@ -814,10 +814,12 @@ do
                 page.build = function(B, ...)
                     if orig then orig(B, ...) end
                     B:Section("Volle Taschen beim Looten", "Passt Beute nicht mehr in die Taschen und ist sie mehr wert als dein billigster Platz, fragt ein Fenster, ob du diesen Platz löschen und die Beute nehmen willst. Gelöscht wird nur auf deinen Klick. Werkzeuge der Berufe, Handwerksmaterial, Questgegenstände, Verbrauchbares und alles ohne Preis werden nie vorgeschlagen.")
-                    B:Row({ type = "toggle", label = "Tausch vorschlagen", key = "triageOn" },
-                          { type = "toggle", label = "Fenster „Löschen & looten“", key = "triagePopup" })
+                    B:Row({ type = "toggle", label = "Fenster „Löschen & looten“", key = "triageOn" },
+                          { type = "empty" })
+                    B:Advanced()
                     B:Row({ type = "toggle", label = "Auch Grünes vorschlagen", key = "triageGreens" },
                           { type = "toggle", label = "Auktionspreis zählen", key = "triageAuction" })
+                    B:EndAdvanced()
                 end
             end
         end
