@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.90.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFEigener Abklingzeitmanager|r – unter Erinnerungen → Abklingzeitmanager wählst du jetzt „Blizzard“, „WeintCodex“ oder „Keiner“. Der eigene zeigt drei Reihen (Wichtig, Weitere, Buffs) mit Voreinstellung je Klasse; ein Klick auf einen Zauber schaltet Wichtig → Weitere → Aus. Blizzards Anzeige wird dabei ausgeblendet und beim Zurückwechseln wiederhergestellt.",
+            "|cff7C6CFFTaschen: Ausmisten|r – zeigt die billigsten Plätze in deinen Taschen mit Wert und Grund, „Behalten“ je Gegenstand. Sind die Taschen beim Looten voll, markiert eine Goldmünze Beute, die mehr wert ist, und der Platz, der dafür weichen könnte, leuchtet. Gelöscht wird nie von selbst.",
+            "|cff7C6CFFMessenger: Antworten-Taste|r – „Auf Flüstern antworten“ (R oder deine eigene Belegung) öffnet jetzt verlässlich das Fenster.",
+        },
+    },
+    {
         version = "6.89.1.0",
         date    = "20.10.2026",
         notes   = {

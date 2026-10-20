@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.90.0.0] – 2026-10-20
+
+### Hinzugefügt
+- Eigener Abklingzeitmanager (`ui/owncooldowns.lua`): Wahl Blizzard/WeintCodex/Keiner je Charakter, drei Reihen, Voreinstellung je Klasse, `cooldownViewerEnabled` über `PF.SetCVar`.
+- Taschen → Ausmisten (`ui/bagtriage.lua`, `modules/bagtrash.lua`): billigste Plätze, Behalten-Liste, Markierung beim Looten mit vollen Taschen.
+
+### Behoben
+- Messenger: Tastenwächter liest die Belegung „REPLY“, öffnet das Fenster auch bei eigener Taste.
+
 ## [6.89.1.0] – 2026-10-20
 
 ### Geändert

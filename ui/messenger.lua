@@ -1449,8 +1449,13 @@ function MS.EditAimsAt(key)
     return false
 end
 
-function MS.OnReply()
+function MS.OnReply(_, src)
     if not MS.Active() then return end
+    -- Haken und Tastenwaechter koennen beide feuern: einmal genuegt.
+    local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
+    if type(now) == "number" and MS.replySrc and MS.replySrc ~= src and MS.replyAt
+       and now - MS.replyAt < 0.3 then return end
+    MS.replyAt, MS.replySrc = now, src
     local key = MS.lastIn
     if not (key and conv[key]) then return end
     Touch(key)
@@ -1539,6 +1544,32 @@ local function HookChatEdit()
     end
 end
 MS.HookChatEdit = HookChatEdit
+
+-- Tastenwaechter (6.90.0.0, Wunsch: "Wenn ich auf R druecke ... soll sich
+-- der Messenger auch oeffnen. Belege ich das auf eine andere Taste, dann
+-- auch"): der Haken an ReplyTell feuert auf Forever nicht verlaesslich.
+-- Ein unsichtbarer Rahmen liest jede Taste mit, reicht sie weiter
+-- (nie verschluckt) und fragt das Spiel, welche Belegung sie hat -
+-- so gilt jede Taste, die der Spieler "Auf Fluestern antworten" gibt.
+function MS.KeyIsReply(key)
+    if type(key) ~= "string" or type(_G.GetBindingAction) ~= "function" then return false end
+    local mods = ""
+    if _G.IsAltKeyDown and K.Bool(_G.IsAltKeyDown(), false) then mods = mods .. "ALT-" end
+    if _G.IsControlKeyDown and K.Bool(_G.IsControlKeyDown(), false) then mods = mods .. "CTRL-" end
+    if _G.IsShiftKeyDown and K.Bool(_G.IsShiftKeyDown(), false) then mods = mods .. "SHIFT-" end
+    local ok, action = pcall(_G.GetBindingAction, mods .. key)
+    return ok and K.Plain(action) == "REPLY"
+end
+
+local keyWatch = CreateFrame("Frame", "WeintCodexReplyKeyWatch", UIParent)
+MS.keyWatch = keyWatch
+if keyWatch.EnableKeyboard then
+    pcall(keyWatch.EnableKeyboard, keyWatch, true)
+    if keyWatch.SetPropagateKeyboardInput then pcall(keyWatch.SetPropagateKeyboardInput, keyWatch, true) end
+    keyWatch:SetScript("OnKeyDown", function(_, key)
+        if MS.KeyIsReply(key) then MS.OnReply(nil, "key") end
+    end)
+end
 
 local ev = CreateFrame("Frame")
 MS.events = ev
