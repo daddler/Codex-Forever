@@ -60,6 +60,8 @@ OC.MODES = {
 OC.DEFAULT_MODE = "blizzard"
 OC.SLOTS = { "big", "small", "off" }
 OC.SLOT_TEXT = { big = "Wichtig", small = "Weitere", off = "Aus" }
+OC.MAX_EXTRA = 6     -- eigene Reihen (6.98.0.0)
+OC.COLS_PER_BAND = 3 -- Spalten je Band in den Einstellungen
 OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true, vertical = false, perLine = 0,
     glowColor = "green", glowStrength = 100, glowPulse = true }
 OC.MAX_LIST = 80
@@ -101,6 +103,81 @@ function OC.Set(k, v)
     m[k] = v
     OC.Refresh()
     return true
+end
+
+--------------------------------------------------
+-- Eigene Reihen (6.98.0.0, Wunsch: "noch mehr Abklingzeitenreihen
+-- erstellen und benennen"). m.rowsDef = { { id = "r1", name, size } }.
+-- Jede Reihe ist eine Spalte in den Einstellungen und ein Rahmen im
+-- Gestaltungsmodus ("ocd_x_<id>").
+--------------------------------------------------
+function OC.ExtraRows()
+    local m = Mem()
+    if not m then return {} end
+    m.rowsDef = m.rowsDef or {}
+    return m.rowsDef
+end
+function OC.ExtraDef(id)
+    if type(id) ~= "string" then return nil end
+    for _, d in ipairs(OC.ExtraRows()) do if d.id == id then return d end end
+    return nil
+end
+local slotList = {}
+function OC.Slots()
+    for i = #slotList, 1, -1 do slotList[i] = nil end
+    slotList[1], slotList[2] = "big", "small"
+    for _, d in ipairs(OC.ExtraRows()) do slotList[#slotList + 1] = d.id end
+    slotList[#slotList + 1] = "off"
+    return slotList
+end
+function OC.SlotText(slot)
+    local t = OC.SLOT_TEXT[slot]
+    if t then return t end
+    local d = OC.ExtraDef(slot)
+    return d and d.name or "?"
+end
+function OC.NextSlot(cur)
+    local list = OC.Slots()
+    for i, k in ipairs(list) do if k == cur then return list[i % #list + 1] end end
+    return "big"
+end
+function OC.AddRow(name)
+    local defs = OC.ExtraRows()
+    if #defs >= OC.MAX_EXTRA then return false, "Höchstens " .. OC.MAX_EXTRA .. " eigene Reihen." end
+    name = type(name) == "string" and name:gsub("^%s+", ""):gsub("%s+$", "") or ""
+    if name == "" then name = "Reihe " .. (#defs + 1) end
+    local n, id = 1, nil
+    repeat id = "r" .. n n = n + 1 until not OC.ExtraDef(id)
+    defs[#defs + 1] = { id = id, name = name, size = 32 }
+    OC.Refresh()
+    return true
+end
+function OC.RenameRow(id, name)
+    local d = OC.ExtraDef(id)
+    if not d or type(name) ~= "string" or name:match("^%s*$") then return false end
+    d.name = name:gsub("^%s+", ""):gsub("%s+$", "")
+    if OC.extraRows and OC.extraRows[id] and K.RegisterMover then
+        K.RegisterMover(OC.extraRows[id], "ocd_x_" .. id, "Abklingzeiten: " .. d.name, OC.ExtraDefault(id))
+    end
+    OC.Refresh()
+    return true
+end
+function OC.RemoveRow(id)
+    local m = Mem()
+    local defs = OC.ExtraRows()
+    for i = #defs, 1, -1 do if defs[i].id == id then table.remove(defs, i) end end
+    -- Zauber der Reihe zurueck nach "Weitere"
+    if m then for k, v in pairs(m.spells) do if v == id then m.spells[k] = "small" end end end
+    OC.Refresh()
+end
+function OC.SetRowSize(id, size)
+    local d = OC.ExtraDef(id)
+    if d then d.size = size OC.Refresh() end
+end
+function OC.ExtraDefault(id)
+    local idx = 1
+    for i, d in ipairs(OC.ExtraRows()) do if d.id == id then idx = i end end
+    return K.Layout("ocd_buffs", 0, 40 * idx)
 end
 
 function OC.Mode() return OC.Get("mode") end
@@ -526,7 +603,7 @@ end
 function OC.Slot(e)
     local m = Mem()
     local v = m and m.spells[e.key]
-    if v == "big" or v == "small" or v == "off" then return v end
+    if v == "big" or v == "small" or v == "off" or OC.ExtraDef(v) then return v end
     return e.preset
 end
 
@@ -866,7 +943,7 @@ end
 
 function OC.Cycle(e)
     local cur = OC.Slot(e)
-    local nxt = cur == "big" and "small" or cur == "small" and "off" or "big"
+    local nxt = OC.NextSlot(cur)
     OC.SetSlot(e, nxt)
 end
 
@@ -1153,7 +1230,7 @@ local function DrawSpells(row, slot, size, show)
         b.icon:SetTexture(134400)
         b.cd:Clear()
         OC.ShowGlow(b, false)
-        b.state:SetText(OC.SLOT_TEXT[slot])
+        b.state:SetText(OC.SlotText(slot))
         b:Show()
         i = 1
     end
@@ -1187,7 +1264,32 @@ function OC.Update()
     DrawSpells(rows.big, "big", tonumber(OC.Get("big")) or 40, show)
     DrawSpells(rows.small, "small", tonumber(OC.Get("small")) or 28, show)
     DrawBuffs(rows.buffs, tonumber(OC.Get("buff")) or 28, show)
+    -- Eigene Reihen: Rahmen bei Bedarf, geloeschte bleiben leer
+    local seen = OC.seenRows
+    for k in _G.next, seen do seen[k] = nil end
+    for _, d in ipairs(OC.ExtraRows()) do
+        local row = OC.extraRows[d.id]
+        if not row then
+            row = CreateFrame("Frame", "WeintCodexOwnCooldowns_" .. d.id, UIParent)
+            row:SetSize(28, 28)
+            row.icons = {}
+            row.WCShowForUnlock = function(self, on) self._unlock = on and true or nil OC.Update() end
+            K.RegisterMover(row, "ocd_x_" .. d.id, "Abklingzeiten: " .. d.name, OC.ExtraDefault(d.id))
+            OC.extraRows[d.id] = row
+        end
+        seen[d.id] = true
+        DrawSpells(row, d.id, tonumber(d.size) or 32, show)
+    end
+    for id, row in pairs(OC.extraRows) do
+        if not seen[id] then
+            row._unlock = nil
+            DrawSpells(row, id, 28, false)
+            if K.SetMoverEnabled then pcall(K.SetMoverEnabled, "ocd_x_" .. id, false) end
+        elseif K.SetMoverEnabled then pcall(K.SetMoverEnabled, "ocd_x_" .. id, true) end
+    end
 end
+OC.extraRows = {}
+OC.seenRows = {}
 
 -- Die Buffzeiten-Reihe zeigt dasselbe - solange unsere Buffs laufen, steht
 -- sie nicht doppelt da (ui/bufftimes.lua fragt hier).
@@ -1361,11 +1463,23 @@ end
 
 local ROW_H = 26
 local HEAD_H = 26
-local function ListHeight()
-    local n = { big = 0, small = 0, off = 0 }
+local BAND_GAP = 10
+-- Hoehe je Band (bis zu drei Spalten nebeneinander) aus der Zahl der Zauber.
+local function Bands()
+    local n = {}
     for _, e in ipairs(OC.known) do local sl = OC.Slot(e) n[sl] = (n[sl] or 0) + 1 end
-    local most = math.max(1, n.big, n.small, n.off)
-    return HEAD_H + most * ROW_H + 8
+    local slots, bands = OC.Slots(), {}
+    for i, sl in ipairs(slots) do
+        local b = math.floor((i - 1) / OC.COLS_PER_BAND) + 1
+        bands[b] = math.max(bands[b] or 1, n[sl] or 0)
+    end
+    for b, most in ipairs(bands) do bands[b] = HEAD_H + most * ROW_H + 8 end
+    return bands
+end
+local function ListHeight()
+    local h = 0
+    for i, bh in ipairs(Bands()) do h = h + bh + (i > 1 and BAND_GAP or 0) end
+    return h
 end
 OC.ListHeight = ListHeight
 
@@ -1376,13 +1490,30 @@ local function CreateList(parent, width)
     local f = CreateFrame("Frame", nil, parent)
     f.lines, f.cols = {}, {}
     local gap = 10
-    local colW = math.floor((width - 2 * gap) / 3)
-    for ci, slot in ipairs(OC.SLOTS) do
-        local col = CreateFrame("Frame", nil, f)
+    local per = OC.COLS_PER_BAND
+    local colW = math.floor((width - (per - 1) * gap) / per)
+    local bands = Bands()
+    local slots = {}
+    for i, sl in ipairs(OC.Slots()) do slots[i] = sl end
+    for ci, slot in ipairs(slots) do
+        local col = CreateFrame("Button", nil, f)
         col.slot = slot
-        col:SetPoint("TOPLEFT", f, "TOPLEFT", (ci - 1) * (colW + gap), 0)
-        col:SetPoint("BOTTOM", f, "BOTTOM", 0, 0)
-        col:SetWidth(colW)
+        local band, pos = math.floor((ci - 1) / per) + 1, (ci - 1) % per
+        local y = 0
+        for b = 1, band - 1 do y = y + bands[b] + BAND_GAP end
+        col:SetPoint("TOPLEFT", f, "TOPLEFT", pos * (colW + gap), -y)
+        col:SetSize(colW, bands[band])
+        -- Eigene Reihe: Klick auf die Kopfzeile -> Umbenennen, Größe, Löschen
+        if OC.ExtraDef(slot) then
+            col:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+            col:SetScript("OnClick", function(self)
+                local _, cy = _G.GetCursorPosition()
+                local sc = self:GetEffectiveScale() or 1
+                local top = self:GetTop()
+                if top and cy / sc < top - HEAD_H then return end
+                OC.RowMenu(self, slot)
+            end)
+        end
         local bg = col:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints(col)
         bg:SetColorTexture(unpack(C.surface1))
@@ -1442,7 +1573,7 @@ local function CreateList(parent, width)
         pop.glow:SetText("Leuchten: " .. OC.GLOW_TEXT[OC.GlowMode(e)] .. "  ›")
         pop.sound:SetText("Ton: " .. OC.SoundText(OC.SoundOf(e)) .. "  ▾")
         pop.when:SetText("Ton wann: " .. OC.WHEN_TEXT[OC.SoundWhen(e)] .. (OC.DotDuration(e.name) and "  ›" or ""))
-        pop.slot:SetText("Spalte: " .. OC.SLOT_TEXT[OC.Slot(e)] .. "  ›")
+        pop.slot:SetText("Spalte: " .. OC.SlotText(OC.Slot(e)) .. "  ›")
         pop.remove:SetText(e.custom and "Entfernen" or "Schließen")
     end
     pop.rank = PopBtn(1, function() if pop.entry then OC.NextRank(pop.entry) PopSync() f.Sync() end end)
@@ -1457,7 +1588,7 @@ local function CreateList(parent, width)
         local e = pop.entry
         if not e then return end
         local cur = OC.Slot(e)
-        local nxt = cur == "big" and "small" or cur == "small" and "off" or "big"
+        local nxt = OC.NextSlot(cur)
         OC.Place(e.key, nxt, nil)
         OC.Relayout()
     end)
@@ -1568,7 +1699,8 @@ local function CreateList(parent, width)
     end
 
     f.Sync = function()
-        local count = { big = 0, small = 0, off = 0 }
+        local count = {}
+        for _, col in ipairs(f.cols) do count[col.slot] = 0 end
         local colOf = {}
         for ci, col in ipairs(f.cols) do colOf[col.slot] = col end
         local i = 0
@@ -1582,7 +1714,7 @@ local function CreateList(parent, width)
                 l:ClearAllPoints()
                 l:SetPoint("TOPLEFT", col, "TOPLEFT", 4, -HEAD_H - count[sl] * ROW_H)
                 l:SetFrameLevel(col:GetFrameLevel() + 10)
-                count[sl] = count[sl] + 1
+                count[sl] = (count[sl] or 0) + 1
                 l.icon:SetTexture(e.tex)
                 if l.icon.SetDesaturated then l.icon:SetDesaturated(sl == "off") end
                 local label = e.rank and (e.name .. " (" .. e.rank .. ")") or e.name
@@ -1594,11 +1726,51 @@ local function CreateList(parent, width)
         end
         for j = i + 1, #f.lines do f.lines[j]:Hide() end
         for _, col in ipairs(f.cols) do
-            col.head:SetText(OC.SLOT_TEXT[col.slot] .. "  ·  " .. count[col.slot])
+            col.head:SetText(OC.SlotText(col.slot) .. "  ·  " .. (count[col.slot] or 0) .. (OC.ExtraDef(col.slot) and "  ▾" or ""))
         end
         if pop:IsShown() then PopSync() end
     end
     return f
+end
+
+-- Menue einer eigenen Reihe (Kopf der Spalte).
+function OC.RowMenu(owner, id)
+    local d = OC.ExtraDef(id)
+    if not d then return end
+    local MU = _G.MenuUtil
+    if not (MU and MU.CreateContextMenu) then OC.AskRename(id) return end
+    MU.CreateContextMenu(owner, function(_, root)
+        if root.CreateTitle then root:CreateTitle(d.name) end
+        root:CreateButton("Umbenennen …", function() OC.AskRename(id) end)
+        local sub = root:CreateButton("Symbolgröße")
+        for _, px in ipairs({ 20, 24, 28, 32, 36, 40, 48, 56 }) do
+            sub:CreateRadio(px .. " px", function() return (tonumber(d.size) or 32) == px end,
+                function() OC.SetRowSize(id, px) end)
+        end
+        root:CreateButton("Reihe löschen", function() OC.RemoveRow(id) OC.Relayout() end)
+    end)
+end
+
+function OC.AskRename(id)
+    local d = OC.ExtraDef(id)
+    if not d or type(_G.StaticPopupDialogs) ~= "table" or not _G.StaticPopup_Show then return end
+    _G.StaticPopupDialogs.WEINTCODEX_OCD_RENAME = _G.StaticPopupDialogs.WEINTCODEX_OCD_RENAME or {
+        text = "Neuer Name der Reihe:", button1 = "Übernehmen", button2 = "Abbrechen",
+        hasEditBox = true, timeout = 0, whileDead = true, hideOnEscape = true,
+        OnShow = function(self, data)
+            local eb = self.editBox or self.EditBox
+            if eb then eb:SetText(data and data.name or "") eb:HighlightText() end
+        end,
+        OnAccept = function(self, data)
+            local eb = self.editBox or self.EditBox
+            if eb and data then OC.RenameRow(data.id, eb:GetText()) OC.Relayout() end
+        end,
+        EditBoxOnEnterPressed = function(self)
+            local p = self:GetParent()
+            if p and p.button1 then p.button1:Click() end
+        end,
+    }
+    _G.StaticPopup_Show("WEINTCODEX_OCD_RENAME", nil, nil, { id = id, name = d.name })
 end
 
 -- Gezogener Zauber haengt an der Maus (6.97.0.0, Wunsch: "visuelle
@@ -1734,6 +1906,16 @@ function OC.BuildSection(B)
             onClick = function() OC.ResetPreset() end },
           { type = "empty" })
     B:EndAdvanced()
+    local rowDraft = ""
+    B:Row({ type = "input", label = "Neue Reihe (Name)",
+            get = function() return rowDraft end, set = function(v) rowDraft = v or "" end, disabled = off },
+          { type = "button", label = " ", text = "Reihe hinzufügen", disabled = off,
+            tooltip = "Legt eine weitere Reihe an – sie erscheint als Spalte unten und als eigener Rahmen im Gestaltungsmodus. Klick auf ihren Spaltenkopf: umbenennen, Größe, löschen.",
+            onClick = function()
+                local ok, why = OC.AddRow(rowDraft)
+                if ok then rowDraft = "" OC.Relayout()
+                elseif why then print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. why) end
+            end })
     local draft = ""
     B:Row({ type = "input", label = "Zauber oder Gegenstand hinzufügen",
             get = function() return draft end, set = function(v) draft = v or "" end, disabled = off },
@@ -1748,7 +1930,7 @@ function OC.BuildSection(B)
                     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. why)
                 end
             end })
-    B:Note("So geht's: Jede Spalte ist eine Reihe auf dem Bildschirm – „Wichtig“ große Symbole, „Weitere“ kleine, „Aus“ wird nicht gezeigt. Zauber mit der Maus greifen und auf einen anderen Zauber ziehen: er landet davor, auch in einer anderen Spalte; auf freie Fläche einer Spalte: ans Ende. Die Reihenfolge in der Spalte ist die auf dem Bildschirm. Klick auf einen Zauber: Rang, Leuchten, Ton und Spalte einstellen.")
+    B:Note("So geht's: Jede Spalte ist eine Reihe auf dem Bildschirm – „Wichtig“ große Symbole, „Weitere“ kleine, eigene Reihen in ihrer Größe, „Aus“ wird nicht gezeigt. Eigene Reihen legst du oben an; Klick auf ihren Spaltenkopf (▾): umbenennen, Größe, löschen. Zauber mit der Maus greifen und auf einen anderen Zauber ziehen: er landet davor, auch in einer anderen Spalte; auf freie Fläche einer Spalte: ans Ende. Die Reihenfolge in der Spalte ist die auf dem Bildschirm. Klick auf einen Zauber: Rang, Leuchten, Ton und Spalte einstellen.")
     B:Row({ type = "custom", height = ListHeight(), create = CreateList })
     B:Note("Alle Zauber deines Zauberbuchs, dazu was du selbst hinzufügst. Ziehen ordnet innerhalb einer Spalte oder schiebt in eine andere; ein Klick öffnet Rang, Leuchten und Ton des Zaubers. „Ton“ rechts heißt: dieser Zauber spielt einen Ton, wenn er bereit ist. Buffs kommen aus den Buffzeiten.")
 end

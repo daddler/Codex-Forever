@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.98.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager: eigene Reihen|r – bis zu sechs weitere Reihen mit eigenem Namen anlegen („Neue Reihe“ → „Reihe hinzufügen“). Jede ist eine Spalte zum Hineinziehen und ein eigener Rahmen im Gestaltungsmodus. Klick auf ihren Spaltenkopf: umbenennen, Symbolgröße, löschen.",
+        },
+    },
+    {
         version = "6.97.3.0",
         date    = "20.10.2026",
         notes   = {

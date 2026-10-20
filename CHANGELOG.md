@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.98.0.0] – 2026-10-20
+
+### Hinzugefügt
+- Abklingzeitmanager: eigene Reihen (`ocd.rowsDef`, `OC.AddRow`/`RenameRow`/`RemoveRow`), Mover `ocd_x_<id>`, Spalten in Bändern zu je drei.
+
 ## [6.97.3.0] – 2026-10-20
 
 ### Behoben
