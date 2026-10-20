@@ -571,21 +571,21 @@ local pop
 
 local function PopRow(i)
     local r = CreateFrame("Frame", nil, pop)
-    r:SetSize(380, 44)
+    r:SetSize(520, 44)
     r:SetPoint("TOPLEFT", pop, "TOPLEFT", 12, -34 - (i - 1) * 48)
     r.loot = r:CreateTexture(nil, "ARTWORK")
     r.loot:SetSize(28, 28)
     r.loot:SetPoint("LEFT", r, "LEFT", 0, 0)
     r.lootText = K.NewText(r, 11)
     r.lootText:SetPoint("TOPLEFT", r.loot, "TOPRIGHT", 6, 0)
-    r.lootText:SetWidth(120)
+    r.lootText:SetWidth(170)
     r.lootText:SetJustifyH("LEFT")
     r.bag = r:CreateTexture(nil, "ARTWORK")
     r.bag:SetSize(28, 28)
-    r.bag:SetPoint("LEFT", r, "LEFT", 160, 0)
+    r.bag:SetPoint("LEFT", r, "LEFT", 210, 0)
     r.bagText = K.NewText(r, 11)
     r.bagText:SetPoint("TOPLEFT", r.bag, "TOPRIGHT", 6, 0)
-    r.bagText:SetWidth(90)
+    r.bagText:SetWidth(170)
     r.bagText:SetJustifyH("LEFT")
     r.btn = WeintCodex.CreateButton(r, { text = "Löschen & looten", kind = "primary", height = 24, size = 11,
         onClick = function() BT.Swap(r.lootSlot, r.entry) end })
@@ -597,7 +597,7 @@ end
 local function BuildPop()
     if pop then return pop end
     pop = CreateFrame("Frame", "WeintCodexLootSwap", UIParent)
-    pop:SetSize(404, 40 + BT.POP_ROWS * 48)
+    pop:SetSize(544, 40 + BT.POP_ROWS * 48)
     pop:SetFrameStrata("DIALOG")
     pop:SetClampedToScreen(true)
     pop:SetMovable(true)
@@ -629,6 +629,17 @@ local function Icon(link)
     return 134400
 end
 
+-- Beide Preise fuer den Tausch (6.97.2.0, Wunsch): "Händler 12s · AH 1g".
+function BT.PriceText(id, count)
+    count = count or 1
+    local _, _, _, sell = BT.ItemInfo(id)
+    local vendor = type(sell) == "number" and ("Händler " .. BT.Money(sell * count)) or "Händler –"
+    local AP = WeintCodex.UIAuctionPrices
+    local a = AP and AP.Lookup and AP.Lookup(id)
+    local p = a and Num(a.price)
+    return vendor .. " · " .. (p and ("AH " .. BT.Money(p * count)) or "AH –")
+end
+
 function BT.ShowPopup()
     if not (BT.Active() and BT.lootOpen) then
         if pop then pop:Hide() end
@@ -645,10 +656,11 @@ function BT.ShowPopup()
             r.lootSlot, r.entry = slot, e or nil
             local link = _G.GetLootSlotLink and Str(_G.GetLootSlotLink(slot))
             r.loot:SetTexture(Icon(link or li.id))
-            r.lootText:SetText((link or "Beute") .. "\n" .. (li.quest and "Questgegenstand" or (li.value and BT.Money(li.value) or "Wert unbekannt")))
+            local qty = _G.GetLootSlotInfo and Num(select(3, _G.GetLootSlotInfo(slot))) or 1
+            r.lootText:SetText((link or "Beute") .. "\n" .. (li.quest and "Questgegenstand" or BT.PriceText(li.id, qty)))
             if e then
                 r.bag:SetTexture(e.icon or Icon(e.id))
-                r.bagText:SetText((e.link or e.name or "?") .. "\n" .. BT.Money(e.value))
+                r.bagText:SetText((e.link or e.name or "?") .. "\n" .. BT.PriceText(e.id, e.count))
                 r.bag:Show()
                 r.btn:SetText(worth and "Löschen & looten" or "Trotzdem tauschen")
                 r.btn:Show()

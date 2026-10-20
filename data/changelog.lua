@@ -22,10 +22,11 @@
 
 WeintCodex_ChangelogData = {
     {
-        version = "6.97.1.0",
+        version = "6.97.2.0",
         date    = "20.10.2026",
         notes   = {
             "|cff7C6CFFVolle Taschen: Fenster kommt immer|r – passt Beute nicht mehr hinein, zeigt das Fenster jetzt jedes Mal den Vergleich mit deinem billigsten Platz. Lohnt der Tausch nicht, steht dort „Trotzdem tauschen“; ist alles geschützt, sagt es das.",
+            "|cff7C6CFFHändler- und Auktionspreis|r – im Fenster stehen für Beute und Taschenplatz beide Preise nebeneinander.",
         },
     },
     {
