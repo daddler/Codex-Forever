@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.103.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFEinstellungen aufgeräumt|r – Komfort ist nicht mehr ein Eintrag mit 17 Reitern, sondern vier Themen in der Seitenleiste: Alltag, Kampf & Gruppe, Welt & Karte, Handel & Gespräche. Alles steht, wo man es sucht; Gespeichertes bleibt, wie es war.",
+            "|cff7C6CFFNichts mehr versteckt|r – den Knopf „Erweitert“ gibt es nicht mehr. Seltener Gebrauchtes steht immer sichtbar unten auf der Seite unter „Feineinstellungen“.",
+            "|cff7C6CFFFlugspiele|r stehen jetzt unter Welt & Karte.",
+            "|cff7C6CFFTaschen-Fehlerbericht genauer|r – der Bericht nennt jetzt den Moment, in dem Bank- oder Postfenster gestört wurden. Hilft, „Verboten: UseContainerItem()“ endlich zu finden.",
+        },
+    },
+    {
         version = "6.102.2.0",
         date    = "20.10.2026",
         notes   = {

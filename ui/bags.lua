@@ -327,6 +327,50 @@ blockEv:SetScript("OnEvent", function(_, event, addon, func)
     while #b > 10 do table.remove(b, 1) end
 end)
 
+-- 6.103.0.0 (Fehlerbericht: BankFrame.currentBankPage, MailFrame.selectedTab
+-- und .activeSubFrame "tainted (WeintCodex)" - Ursache unbekannt): ein
+-- Waechter merkt sich den ERSTEN Moment, in dem eines dieser Felder
+-- beschmutzt ist, samt den letzten Ereignissen davor. Nur lesen
+-- (issecurevariable), nie schreiben; halbsekuendlich, ohne Tabelle je Takt.
+BG.TAINT_WATCH = { { "MailFrame", "selectedTab" }, { "MailFrame", "activeSubFrame" },
+                   { "BankFrame", "currentBankPage" }, { "MerchantFrame", "selectedTab" } }
+BG.taintFirst, BG.recentEv = {}, {}
+local watchEv = CreateFrame("Frame")
+for _, e in ipairs({ "MAIL_SHOW", "MAIL_CLOSED", "BANKFRAME_OPENED", "BANKFRAME_CLOSED", "MERCHANT_SHOW",
+                      "MERCHANT_CLOSED", "PLAYER_INTERACTION_MANAGER_FRAME_SHOW",
+                      "PLAYER_INTERACTION_MANAGER_FRAME_HIDE", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED" }) do
+    pcall(watchEv.RegisterEvent, watchEv, e)
+end
+local function Stamp() return _G.date and _G.date("%H:%M:%S") or "" end
+function BG.TaintScan(why)
+    local isv = _G.issecurevariable
+    if type(isv) ~= "function" then return end
+    for _, w in ipairs(BG.TAINT_WATCH) do
+        local key = w[1] .. "." .. w[2]
+        local t = _G[w[1]]
+        if not BG.taintFirst[key] and type(t) == "table" then
+            local ok, sec, who = pcall(isv, t, w[2])
+            if ok and not sec then
+                BG.taintFirst[key] = string.format("%s %s (%s) – vorher: %s", Stamp(), key, tostring(who),
+                    table.concat(BG.recentEv, ", "))
+            end
+        end
+    end
+end
+watchEv:SetScript("OnEvent", function(_, event, kind)
+    local r = BG.recentEv
+    r[#r + 1] = Stamp() .. " " .. event .. (type(K.Plain(kind)) == "number" and ("/" .. K.Plain(kind)) or "")
+    while #r > 6 do table.remove(r, 1) end
+    BG.TaintScan(event)
+end)
+local watchT = 0
+watchEv:SetScript("OnUpdate", function(_, el)
+    watchT = watchT + (el or 0)
+    if watchT < 0.5 then return end
+    watchT = 0
+    BG.TaintScan("takt")
+end)
+
 local function TaintedKeys(t, label, out, limit)
     local isv = _G.issecurevariable
     local n = 0
@@ -370,6 +414,13 @@ function BG.TaintReport()
         if ok and not sec then hits = hits + 1 out[#out + 1] = "   " .. g .. "  (" .. tostring(who) .. ")" end
     end
     if hits == 0 then out[#out + 1] = "   nichts" end
+    out[#out + 1] = "Erstmals tainted (Wächter seit dem Laden):"
+    local any = false
+    for _, w in ipairs(BG.TAINT_WATCH) do
+        local l = BG.taintFirst[w[1] .. "." .. w[2]]
+        if l then any = true out[#out + 1] = "   " .. l end
+    end
+    if not any then out[#out + 1] = "   nichts" end
     out[#out + 1] = "Sperren gegen WeintCodex (zuletzt):"
     if #BG.lockLog == 0 then out[#out + 1] = "   keine seit dem Laden" end
     for _, l in ipairs(BG.lockLog) do out[#out + 1] = "   " .. l end

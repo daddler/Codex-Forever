@@ -2731,7 +2731,7 @@ K.Register({
             B:Row({ type = "dropdown", label = "Bewegung", key = "motion", items = {
                         { value = "calm",   text = "Ruhig" },
                         { value = "lively", text = "Lebendig" },
-                        { value = "custom", text = "Eigene (unter „Erweitert“)" } },
+                        { value = "custom", text = "Eigene (unter „Feineinstellungen“)" } },
                     description = "Ruhig: das Ziel leuchtet, aber nichts atmet, glänzt oder blitzt. Lebendig: Leuchten atmet, Glanz läuft, Treffer blitzen, Zielmarken bewegen sich." },
                   { type = "toggle", label = "Schadensspur", key = "damageTrail",
                     description = "Was ein Treffer nimmt, bleibt einen Moment hell stehen und schmilzt dann weg." })

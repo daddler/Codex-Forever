@@ -28,6 +28,7 @@ WeintCodex.UIOptions = {}
 
 local O = WeintCodex.UIOptions
 local K = WeintCodex.UIKit
+local Mod   -- Modul oder Ansicht (6.103.0.0, unten bei O.Views)
 local C = WeintCodex.Colors
 local F = WeintCodex.Fonts
 
@@ -39,7 +40,7 @@ local LOGO     = 40         -- Logo vor "WeintCodex" (media/ui/logo_64)
 -- Seitenleiste darf rollen muessen).
 -- 36/34 statt 40/38 seit 6.4.0.0: zwoelf Module (Erinnerungen) und
 -- trotzdem Luft fuer eins mehr (load_test.lua).
-local SIDE_ROW_H, SIDE_ROW_STEP = 34, 36
+local SIDE_ROW_H, SIDE_ROW_STEP = 28, 30   -- 6.103.0.0: Komfort in vier Themen, drei Eintraege mehr
 local HEAD_H   = 96
 local TABS_H   = 38
 local FOOT_H   = 58
@@ -248,6 +249,8 @@ K.Register({
 --------------------------------------------------
 
 function O.ModuleStatus(key)
+    local view = O.VIEWS and O.VIEWS[key]
+    if view and view.proxy then key = view.proxy end
     local m = K.Module(key)
     if not m then return "", "textDim" end
     if key == "general" then
@@ -297,40 +300,45 @@ end
 -- Einstellungen dahinter liegen. Ein Klick blendet sie auf JEDER Seite ein
 -- (general.showAdvanced) - wer Feinheiten sucht, sucht sie selten nur
 -- einmal. Verloren geht nichts: die Werte gelten weiter, auch zugeklappt.
-O.ADV_HIDE = "Erweiterte Einstellungen ausblenden"
+O.ADV_HIDE = "Erweiterte Einstellungen ausblenden"   -- (bis 6.102: Knopf; fuer alte Pruefungen)
 function O.AdvancedText(count)
     if count == 1 then return "Erweitert: 1 Einstellung einblenden" end
     return string.format("Erweitert: %d Einstellungen einblenden", count)
 end
 
+-- 6.103.0.0 (Rueckmeldung vieler Spieler: "warum habe ich die Option nicht,
+-- die andere vorschlagen?" - fast immer stand sie hinter dem zugeklappten
+-- "Erweitert", und der Knopf wurde uebersehen): NICHTS ist mehr
+-- versteckt. Was nach B:Advanced() steht, steht unten auf der Seite unter
+-- einer ruhigen Ueberschrift "Feineinstellungen" - getrennt vom Wichtigen,
+-- aber immer da. general.showAdvanced bleibt gespeichert, schaltet nichts.
+O.FINE_TITLE = "Feineinstellungen"
+O.FINE_NOTE = "Selten gebraucht – die Grundeinstellungen oben reichen meist."
 function Builder:Advanced()
-    local open = K.Get("general", "showAdvanced") and true or false
-    if self.y < -4 then self.y = self.y - 8 end
-    local b = WeintCodex.CreateButton(self.parent, {
-        text = open and O.ADV_HIDE or O.AdvancedText(0), kind = "secondary", height = 24, size = 11,
-        backdrop = "bgDark",
-        onClick = function() O.SetAdvanced(not open) end,
-    })
-    b:SetPoint("TOPLEFT", self.parent, "TOPLEFT", 0, self.y)
-    b._advanced = true
-    self.y = self.y - 24 - 12
+    if self.y < -4 then self.y = self.y - 22 end
+    local eb = K.NewText(self.parent)
+    eb:SetFont(F.sansSemi, 12, "")
+    eb:SetTextColor(unpack(C.textDim))
+    eb:SetText(WeintCodex.Upper(O.FINE_TITLE))
+    eb:SetPoint("TOPLEFT", self.parent, "TOPLEFT", 0, self.y)
+    local note = K.NewText(self.parent)
+    note:SetFont(F.sans, 11, "")
+    note:SetTextColor(unpack(C.textFaint))
+    note:SetText(O.FINE_NOTE)
+    note:SetPoint("LEFT", eb, "RIGHT", 10, 0)
+    self.y = self.y - 22
     self.zones = self.zones or {}
-    local zone = { button = b, count = 0, open = open }
+    local zone = { title = eb, count = 0, open = true }
     self.zones[#self.zones + 1] = zone
     self.zone = zone
-    self.skip = not open
+    self.skip = false
 end
 
 function Builder:EndAdvanced()
     self.skip, self.zone = false, nil
 end
 
--- Nach dem Bau: die Knoepfe nennen, wie viel hinter ihnen liegt.
-function Builder:FinishAdvanced()
-    for _, z in ipairs(self.zones or {}) do
-        if not z.open then z.button:SetText(O.AdvancedText(z.count)) end
-    end
-end
+function Builder:FinishAdvanced() end
 
 function Builder:Section(title, note)
     if self.skip then return end
@@ -627,11 +635,11 @@ local function ShowPage()
     -- Eine Seite ersetzt die Treffer der Suche (Klick links waehrend der Suche).
     if O.HideSearch then O.HideSearch() end
     local key = current.module
-    local m = K.Module(key)
+    local m = Mod(key)
     local b = built[key]
 
     for k, other in pairs(built) do
-        if other.tabs then other.tabs:SetShown(k == key and #K.Module(k).pages > 1) end
+        if other.tabs then other.tabs:SetShown(k == key and #Mod(k).pages > 1) end
         if other.preview then other.preview:SetShown(k == key) end
         for i, p in pairs(other.pages) do
             p.frame:SetShown(k == key and i == current.page)
@@ -646,7 +654,7 @@ local function ShowPage()
         host:SetSize(CONTENT_W, 10)
         -- `store`: eine Seite, deren Einstellungen bei einem anderen Modul
         -- liegen (Klickzauber und Makros im Komfort, 6.9.0.0).
-        local B = NewBuilder((def and def.store) or key, host)
+        local B = NewBuilder((def and def.store) or m.proxy or key, host)
         if def and def.build then
             local ok, err = pcall(def.build, B)
             if not ok then K.Report(key, err) end
@@ -711,7 +719,7 @@ local function Layout()
     local key = current.module
     local b = built[key]
     local top = HEAD_H
-    if b.tabs and #K.Module(key).pages > 1 then
+    if b.tabs and #Mod(key).pages > 1 then
         local th = b.tabs:GetHeight() or TABS_H
         tabsHost:SetHeight(th)
         top = top + th + 10
@@ -743,8 +751,73 @@ function O.SortPages(m)
     m._sortedFor = #m.pages
 end
 
-function O.Select(key, pageIndex)
+-- ANSICHTEN (6.103.0.0): ein Modul mit `themes` (Komfort, ui/comfort.lua)
+-- zeigt sich in der Seitenleiste als mehrere Eintraege nach Thema - jeder
+-- mit seinen Seiten, gespeichert wird weiter beim Modul selbst (`proxy`).
+-- Wer das Modul mit Seitennummer oeffnet (O.Show("comfort", i)), landet
+-- im passenden Thema (O.Locate). Neu gebaut, wenn das Modul Seiten dazu
+-- bekommt oder verliert.
+O.VIEWS = {}
+local viewsOf = {}     -- [Modul] = { Ansichten in Reihenfolge }
+function O.Views(key)
     local m = K.Module(key)
+    if not (m and m.themes) then return nil end
+    O.SortPages(m)
+    local v = viewsOf[key]
+    if v and v._for == #m.pages then return v end
+    v = { _for = #m.pages }
+    for i, t in ipairs(m.themes) do
+        local view = O.VIEWS[t.key] or {}
+        view.key, view.title, view.description = t.key, t.title, t.description
+        view.group, view.order, view.proxy = m.group, (m.order or 100) + i / 100, key
+        view.pages = {}
+        v[i] = view
+        O.VIEWS[t.key] = view
+        if built and built[t.key] then
+            for _, p in pairs(built[t.key].pages) do p.frame:Hide() end
+            if built[t.key].tabs then built[t.key].tabs:Hide() end
+            built[t.key] = nil
+        end
+    end
+    for _, p in ipairs(m.pages) do
+        local rank = (m.pageOrder and m.pageOrder[p.key]) or 999
+        local into = v[#v]
+        for i, t in ipairs(m.themes) do
+            if rank < t.upTo then into = v[i] break end
+        end
+        into.pages[#into.pages + 1] = p
+    end
+    -- Ein Thema ohne Seiten (Klasse ohne eigene Seite ...) zeigt sich nicht.
+    for i = #v, 1, -1 do if #v[i].pages == 0 then table.remove(v, i) end end
+    viewsOf[key] = v
+    return v
+end
+
+-- Modul oder Ansicht.
+function Mod(key)
+    local view = O.VIEWS[key]
+    if view and view.proxy then O.Views(view.proxy) end
+    return O.VIEWS[key] or K.Module(key)
+end
+O.Mod = Mod
+
+-- Modul + Seitennummer -> Ansicht + Seitennummer darin.
+function O.Locate(key, pageIndex)
+    local views = O.Views(key)
+    if not views then return key, pageIndex end
+    local m = K.Module(key)
+    local def = m.pages[pageIndex or 1]
+    for _, view in ipairs(views) do
+        for i, p in ipairs(view.pages) do
+            if p == def then return view.key, i end
+        end
+    end
+    return views[1] and views[1].key or key, 1
+end
+
+function O.Select(key, pageIndex)
+    key, pageIndex = O.Locate(key, pageIndex)
+    local m = Mod(key)
     if not m then return false end
     O.SortPages(m)
     O.Build()
@@ -793,6 +866,7 @@ function O.Select(key, pageIndex)
     -- Kopf
     local groupLabel = ""
     for _, g in ipairs(GROUPS) do if g.key == m.group then groupLabel = g.label end end
+    if m.proxy then groupLabel = (K.Module(m.proxy).title or groupLabel) end
     headEyebrow:SetText(WeintCodex.Upper(groupLabel))
     headTitle:SetText(m.title or key)
     headDesc:SetText(m.description or "")
@@ -810,9 +884,18 @@ end
 local headToggles = {}
 function O.HeadToggle(key)
     if headToggles[key] ~= nil then return headToggles[key] or nil end
-    local m = K.Module(key)
+    local m = Mod(key)
     local opts
-    if key == "general" and not K.OPT_IN then
+    if m.proxy then
+        -- Ein Schalter fuer alle Themen des Moduls - jede Ansicht zeigt ihn.
+        local src = m.proxy
+        opts = {
+            label = (K.Module(src).title or src) .. " an",
+            tooltip = "Gilt für alle Seiten von " .. (K.Module(src).title or src) .. " – jede Funktion schaltest du darin einzeln.",
+            get = function() return K.ModuleEnabled(src) end,
+            set = function(on) K.SetModuleEnabled(src, on) end,
+        }
+    elseif key == "general" and not K.OPT_IN then
         -- Kein Hauptschalter, solange er nichts schalten kann.
         headToggles[key] = false
         return nil
@@ -872,7 +955,14 @@ local function BuildSidebar()
     for _, g in ipairs(GROUPS) do
         local members = {}
         for _, key in ipairs(K.order) do
-            if K.Module(key).group == g.key then members[#members + 1] = key end
+            if K.Module(key).group == g.key then
+                local views = O.Views(key)
+                if views then
+                    for _, v in ipairs(views) do members[#members + 1] = v.key end
+                else
+                    members[#members + 1] = key
+                end
+            end
         end
         if #members > 0 then
             if g.key ~= "general" then
@@ -882,7 +972,7 @@ local function BuildSidebar()
                 y = y - 30
             end
             for _, key in ipairs(members) do
-                local m = K.Module(key)
+                local m = Mod(key)
                 local row = CreateFrame("Button", nil, sidebar)
                 row:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 8, y)
                 row:SetSize(SIDE_W - 16, SIDE_ROW_H)
@@ -1293,6 +1383,7 @@ function O.SearchIndex()
     scratch:Hide()
     for _, key in ipairs(K.order) do
         local m = K.Module(key)
+        O.SortPages(m)   -- Seitennummern wie im Fenster (O.Locate)
         for i, def in ipairs(m.pages or {}) do
             if def.build then
                 local R = setmetatable({ out = index, module = key, page = i, pageLabel = def.label,
@@ -1310,7 +1401,7 @@ function O.Search(text, limit)
     local hits = {}
     if #q < 2 then return hits end
     for _, e in ipairs(O.SearchIndex()) do
-        local m = K.Module(e.module)
+        local m = Mod((O.Locate(e.module, e.page)))
         local hay = Fold(e.label) .. " " .. Fold(e.section) .. " " .. Fold(e.pageLabel) .. " "
             .. Fold(m and m.title) .. " " .. Fold(e.description)
         if hay:find(q, 1, true) then
@@ -1327,7 +1418,6 @@ local results, resultRows, searchBox = nil, {}, nil
 local function OpenHit(e)
     if searchBox then searchBox:SetText("") searchBox:ClearFocus() end
     if results then results:Hide() end
-    if e.advanced and not K.Get("general", "showAdvanced") then O.SetAdvanced(true) end
     O.Show(e.module, e.page)
 end
 O.OpenHit = OpenHit
@@ -1384,12 +1474,12 @@ function O.ShowSearch(text)
     end
     for i, e in ipairs(hits) do
         local r = ResultRow(i)
-        local m = K.Module(e.module)
+        local m = Mod((O.Locate(e.module, e.page)))
         r._hit = e
         r.label:SetText(e.label)
         local path = (m and m.title or e.module) .. "  ›  " .. (e.pageLabel or "")
         if e.section then path = path .. "  ›  " .. e.section end
-        if e.advanced then path = path .. "  ·  Erweitert" end
+        if e.advanced then path = path .. "  ·  " .. O.FINE_TITLE end
         r.path:SetText(path)
         r:Show()
     end
@@ -1626,7 +1716,7 @@ SlashCmdList["WEINTCODEXUI"] = function(msg)
     if msg == "flüstern" or msg == "fluestern" or msg == "wim" or msg == "whisper" then
         local MS = WeintCodex.UIMessenger
         if MS and MS.Active() then MS.Toggle()
-        else print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Flüstern im eigenen Fenster ist aus (Komfort → Flüstern).") end
+        else print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Flüstern im eigenen Fenster ist aus (Handel & Gespräche → Flüstern).") end
         return
     end
     if msg == "auktion" or msg == "ah" or msg == "auction" then

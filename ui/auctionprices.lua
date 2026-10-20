@@ -602,7 +602,7 @@ drv:SetScript("OnUpdate", K.Measured("Auktionspreise", function(_, el) AP.Step(e
 -- Scan starten (Knopf, /wcui auktion scan).
 function AP.Start()
     if not AP.Active() then
-        Say("Auktionspreise sind aus (Komfort → Auktionshaus).")
+        Say("Auktionspreise sind aus (Handel & Gespräche → Auktionshaus).")
         return false
     end
     if not AP.open then

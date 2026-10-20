@@ -9,6 +9,16 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.103.0.0] – 2026-10-20
+
+### Geändert
+- Einstellungsfenster: Module mit `themes` erscheinen als mehrere Einträge (`O.Views`, `O.Mod`, `O.Locate`); Komfort in vier Themen nach Rang der Seite (`QoL.THEMES`, `upTo`), gespeichert weiter unter `comfort` (`proxy`), ein Schalter „Komfort an“ in jedem Thema. `O.Show("comfort", i)` landet im passenden Thema. Seitenleiste 28/30 statt 34/36.
+- `Builder:Advanced` klappt nicht mehr zu: Überschrift „Feineinstellungen“, immer sichtbar (`general.showAdvanced` schaltet nichts mehr). Anlass: Rückmeldung vieler Spieler, der Knopf wurde übersehen.
+- Flugspiele Rang 24 (Welt & Karte). Hinweise „Komfort → Seite“ nennen das Thema.
+
+### Hinzugefügt
+- Taschen-Taint-Bericht: Wächter `BG.TaintScan` merkt den ersten Moment, in dem `MailFrame.selectedTab/activeSubFrame`, `BankFrame.currentBankPage`, `MerchantFrame.selectedTab` tainted sind, mit den Ereignissen davor. Anlass: Fehlerbericht „Verboten: UseContainerItem()“ (Ursache weiter offen).
+
 ## [6.102.2.0] – 2026-10-20
 
 ### Behoben

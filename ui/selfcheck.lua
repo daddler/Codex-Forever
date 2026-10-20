@@ -532,7 +532,7 @@ Check("Seltene Gegner", function(add)
     local n = 0
     for _ in pairs(RD.RAW or {}) do n = n + 1 end
     local active = RA.Active()
-    add(active and SC.OK or SC.OPEN, (active and "An" or "Aus (Komfort → Seltene Gegner)") .. " · " .. n .. " im Bestand")
+    add(active and SC.OK or SC.OPEN, (active and "An" or "Aus (Welt & Karte → Seltene Gegner)") .. " · " .. n .. " im Bestand")
     local function has(f) return type(f) == "function" and "ja" or "nein" end
     local vi = _G.C_VignetteInfo
     add("", "   UnitClassification: " .. has(_G.UnitClassification) .. " · UnitGUID: " .. has(_G.UnitGUID)
@@ -560,7 +560,7 @@ Check("Auktionspreise", function(add)
         return
     end
     local active = AP.Active()
-    add(active and SC.OK or SC.OPEN, active and "An" or "Aus (Komfort → Auktionshaus)")
+    add(active and SC.OK or SC.OPEN, active and "An" or "Aus (Handel & Gespräche → Auktionshaus)")
     local function has(f) return type(f) == "function" and "ja" or "nein" end
     local ah = type(_G.C_AuctionHouse) == "table" and _G.C_AuctionHouse or {}
     add("", "   Vollscan (ReplicateItems): " .. has(ah.ReplicateItems) .. " · Suche (SendBrowseQuery): "
@@ -592,7 +592,7 @@ Check("Flüstern", function(add)
         return
     end
     local active = MS.Active()
-    add(active and SC.OK or SC.OPEN, active and "An" or "Aus (Komfort → Flüstern)")
+    add(active and SC.OK or SC.OPEN, active and "An" or "Aus (Handel & Gespräche → Flüstern)")
     for _, line in ipairs(MS.StatusLines()) do add("", "   " .. line) end
 end)
 
@@ -605,7 +605,7 @@ Check("Karte", function(add)
         return
     end
     local active = ME.Active()
-    add(active and SC.OK or SC.OPEN, active and "Instanzeingänge an" or "Instanzeingänge aus (Komfort → Karte)")
+    add(active and SC.OK or SC.OPEN, active and "Instanzeingänge an" or "Instanzeingänge aus (Welt & Karte → Karte)")
     for _, line in ipairs(ME.StatusLines()) do add("", "   " .. line) end
     local MK = WeintCodex.UIMapMarks
     if MK then
@@ -624,7 +624,7 @@ end)
 Check("Raus da", function(add)
     local FA = WeintCodex.UIFireAlarm
     if not FA then add(SC.OPEN, "Warnton nicht geladen.") return end
-    add(FA.Active() and SC.OK or SC.OPEN, FA.Active() and "Warnton an" or "Warnton aus (Komfort → Raus da)")
+    add(FA.Active() and SC.OK or SC.OPEN, FA.Active() and "Warnton an" or "Warnton aus (Kampf & Gruppe → Raus da)")
     for _, line in ipairs(FA.StatusLines()) do add("", "   " .. line) end
 end)
 
@@ -634,7 +634,7 @@ Check("Sammeln", function(add)
     if not GT then add(SC.OPEN, "Suche wechseln nicht geladen.") return end
     local bad = GT.stopped or GT.stats.blocked > 0
     add(bad and SC.BAD or (GT.Active() and SC.OK or SC.OPEN),
-        GT.Active() and "Kräuter/Erz wechseln an" or "Kräuter/Erz wechseln aus (Komfort → Sammeln)")
+        GT.Active() and "Kräuter/Erz wechseln an" or "Kräuter/Erz wechseln aus (Welt & Karte → Sammeln)")
     for _, line in ipairs(GT.StatusLines()) do add("", "   " .. line) end
 end)
 
@@ -649,7 +649,7 @@ Check("Sammel-Atlas", function(add)
         GA.Active() and (L.spell and (L.objectID and "Erkennung: Beutequelle mit Objektnummer gesehen"
             or L.target and "Erkennung: nur das Ziel des Zaubers (keine Objektnummer)"
             or "Erkennung: weder Beutequelle noch Ziel") or "Sammel-Atlas an – einmal sammeln, dann wieder prüfen")
-            or "Sammel-Atlas aus (Komfort → Sammeln)")
+            or "Sammel-Atlas aus (Welt & Karte → Sammeln)")
     for _, line in ipairs(GA.StatusLines()) do add("", "   " .. line) end
 end)
 
@@ -658,7 +658,7 @@ Check("Flugspiele: Bestenliste", function(add)
     local FG = WeintCodex.UIFlightGames
     if not (FG and FG.StatusLines) then add(SC.OPEN, "Flugspiele nicht geladen.") return end
     add(FG.Sharing() and SC.OK or SC.OPEN, FG.Sharing() and "Bestenliste mit der Gilde teilen an"
-        or "Bestenliste teilen aus (Komfort → Flugspiele)")
+        or "Bestenliste teilen aus (Welt & Karte → Flugspiele)")
     for _, line in ipairs(FG.StatusLines()) do add("", "   " .. line) end
 end)
 
@@ -722,14 +722,14 @@ Check("Glitzern", function(add)
     local SP = WeintCodex.UISparkles
     if not SP then add(SC.OPEN, "Glitzern nicht geladen.") return end
     local on = SP.LootActive() or SP.NodesActive()
-    add(on and SC.OK or SC.OPEN, on and "Glitzern an" or "Glitzern aus (Komfort → Glitzern)")
+    add(on and SC.OK or SC.OPEN, on and "Glitzern an" or "Glitzern aus (Welt & Karte → Glitzern)")
     for _, line in ipairs(SP.StatusLines()) do add("", "   " .. line) end
 end)
 
 Check("Questhilfe", function(add)
     local QH = WeintCodex.UIQuestHelper
     if not QH then add(SC.OPEN, "Questhilfe nicht geladen.") return end
-    add(QH.Active() and SC.OK or SC.OPEN, QH.Active() and "Questhilfe an" or "Questhilfe aus (Komfort → Questhilfe)")
+    add(QH.Active() and SC.OK or SC.OPEN, QH.Active() and "Questhilfe an" or "Questhilfe aus (Welt & Karte → Questhilfe)")
     for _, line in ipairs(QH.StatusLines()) do add("", "   " .. line) end
 end)
 
@@ -746,7 +746,7 @@ Check("Gespräche", function(add)
     local DL = WeintCodex.UIDialogue
     if not DL then add(SC.OPEN, "Gespräche nicht geladen.") return end
     add(DL.stats.failed > 0 and SC.BAD or (DL.Active() and SC.OK or SC.OPEN),
-        DL.Active() and "Gespräche im Codex-Stil an" or "Gespräche im Codex-Stil aus (Komfort → Gespräche)")
+        DL.Active() and "Gespräche im Codex-Stil an" or "Gespräche im Codex-Stil aus (Handel & Gespräche → Gespräche)")
     for _, line in ipairs(DL.StatusLines()) do add("", "   " .. line) end
 end)
 

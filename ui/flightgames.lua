@@ -1500,7 +1500,7 @@ function FG.PaintBoard()
     end
     if not empty and #list == 0 then
         empty = "Noch keine Ergebnisse aus der Gilde."
-            .. (FG.Sharing() and "" or "\nTeilen ist aus (Komfort → Flugspiele).")
+            .. (FG.Sharing() and "" or "\nTeilen ist aus (Welt & Karte → Flugspiele).")
     end
     local tb, acc = C.textBright, C.accentBright or C.accent
     for i, r in ipairs(v.rows) do
@@ -1681,7 +1681,7 @@ Build = function()
     local never = Button(ask, "Nicht mehr fragen", 170, 28, function()
         K.Set(KEY, "flightGamesAsk", false)
         FG.Close()
-        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Keine Frage mehr beim Fliegen. Spielen geht weiter mit /wcui spiele; wieder fragen: Komfort → Flugspiele.")
+        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Keine Frage mehr beim Fliegen. Spielen geht weiter mit /wcui spiele; wieder fragen: Welt & Karte → Flugspiele.")
     end)
     never:SetPoint("BOTTOMRIGHT", ask, "BOTTOMRIGHT", 0, 0)
     -- 6.89.0.0: eigene Zeile ueber "Nein danke" / "Nicht mehr fragen".
@@ -2045,5 +2045,6 @@ if mod then
     if mod.defaults.flightGamesSound == nil then mod.defaults.flightGamesSound = true end
     if mod.defaults.flightGamesShare == nil then mod.defaults.flightGamesShare = true end
     mod.pages[#mod.pages + 1] = { key = "flugspiele", label = "Flugspiele", build = BuildPage }
-    if type(mod.pageOrder) == "table" then mod.pageOrder.flugspiele = 33 end
+    -- 6.103.0.0: Rang 24 statt 33 - Thema Welt & Karte, nicht Handel.
+    if type(mod.pageOrder) == "table" then mod.pageOrder.flugspiele = 24 end
 end

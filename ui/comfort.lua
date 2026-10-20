@@ -564,6 +564,24 @@ QoL.PAGE_ORDER = {
 }
 K.Module(KEY).pageOrder = QoL.PAGE_ORDER
 
+-- 6.103.0.0 (Rueckmeldung: "17 Komfortfunktionen, sehr ueberwaeltigend"):
+-- im Einstellungsfenster ist Komfort kein Eintrag mit 17 Reitern mehr,
+-- sondern vier Eintraege nach Thema (ui/options.lua, O.Views). Was wohin
+-- gehoert, sagt der Rang der Seite (pageOrder): bis unter `upTo`. Eine
+-- neue Seite ohne Rang landet im letzten Thema - nie nirgends.
+-- Gespeichert wird weiter alles beim Modul "comfort"; ein Schalter.
+QoL.THEMES = {
+    { key = "komfort_alltag", title = "Alltag", upTo = 10,
+      description = "Was WeintCodex dir abnimmt: reparieren, Schrott verkaufen, Beute, Hinweise auf dem Bildschirm." },
+    { key = "komfort_kampf", title = "Kampf & Gruppe", upTo = 20,
+      description = "Hilfen in Kampf und Gruppe: Warnungen, Markieren, Klickzauber, Makros, Ringe – und für Paladine die Segen." },
+    { key = "komfort_welt", title = "Welt & Karte", upTo = 30,
+      description = "Unterwegs: Karte, Quests, Sammeln, seltene Gegner und die Flugspiele." },
+    { key = "komfort_handel", title = "Handel & Gespräche", upTo = math.huge,
+      description = "Mit anderen: Auktionshaus, Flüstern, Danke für Buffs und Gespräche mit NPCs." },
+}
+K.Module(KEY).themes = QoL.THEMES
+
 -- Nach dem Einschalten (K.Activate setzt _active erst nach Enable) die
 -- Ereignisse einmal nach Lage verteilen.
 K.Listen(function(kind, key)

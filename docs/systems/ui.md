@@ -2127,7 +2127,12 @@ alle umgesetzt:
    zugeklappt. Der Knopf nennt die Zahl („Erweitert: 12 Einstellungen
    einblenden“), ein Klick klappt auf **jeder** Seite auf
    (`general.showAdvanced`, `O.SetAdvanced` verwirft die gebauten Seiten
-   und baut die aktuelle an derselben Stelle neu). Markiert: Plaketten
+   und baut die aktuelle an derselben Stelle neu). **Seit 6.103.0.0 nie
+   mehr zugeklappt** (Rückmeldung: der Knopf wurde übersehen): Überschrift
+   „Feineinstellungen“ unten auf der Seite, immer sichtbar; `showAdvanced`
+   schaltet nichts. Komfort erscheint seither als vier Themen in der
+   Seitenleiste (`QoL.THEMES`, `O.Views`/`O.Mod`/`O.Locate`, gespeichert
+   weiter unter `comfort`). Markiert: Plaketten
    (alle sechs Seiten), Einheitenrahmen (Schrift, Zauberbalken),
    Schadensanzeige (Melden). Die Werte gelten auch zugeklappt.
    **Suche** oben rechts: `O.SearchIndex` liest jede Seite einmal mit

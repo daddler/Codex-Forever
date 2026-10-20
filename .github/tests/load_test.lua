@@ -831,8 +831,15 @@ Check(WeintCodex.UIKit.Profile().modules.nameplates.hover == nil,
 -- rueckt um die Hoehe der Leiste nach unten.
 do
     local over, wrapped = {}, nil
+    -- 6.103.0.0: was die Seitenleiste zeigt - Module und Themen (O.Views).
+    local entries = {}
     for _, key in ipairs(K.order) do
-        local m = K.Module(key)
+        local views = UO.Views(key)
+        if views then for _, v in ipairs(views) do entries[#entries + 1] = v.key end
+        else entries[#entries + 1] = key end
+    end
+    for _, key in ipairs(entries) do
+        local m = UO.Mod(key)
         if #m.pages > 1 then
             UO.Show(key, 1)
             local b = UO.built[key]
@@ -853,16 +860,19 @@ do
                 if UO.tabsBottom ~= 96 + (tabs:GetHeight() or 0) + 10 then
                     over[#over + 1] = key .. ": Inhalt bei " .. tostring(UO.tabsBottom) .. ", Leiste " .. tostring(tabs:GetHeight())
                 end
-                if (tabs.rows or 1) > 1 then wrapped = key end
+                if (tabs.rows or 1) > 1 and UO.VIEWS[key] then wrapped = key end
             end
         end
     end
     Check(#over == 0, "Reiterleisten passen ins Fenster" .. (#over > 0 and (": " .. table.concat(over, ", ")) or ""))
-    -- Der Komfort hat so viele Seiten, dass seine Leiste umbricht.
-    local comfortRows = UO.built.comfort and UO.built.comfort.tabs and UO.built.comfort.tabs.rows
-    Check(wrapped ~= nil and comfortRows and comfortRows > 1
-        and (UO.built.comfort.tabs:GetHeight() or 0) == 38 + (comfortRows - 1) * 34,
-        "Reiterleiste bricht um, wenn eine Zeile nicht reicht (Komfort: " .. tostring(comfortRows) .. " Zeilen)")
+    -- 6.103.0.0: Komfort in Themen - keine Reiterleiste braucht mehr zwei
+    -- Zeilen (bis 6.102 brach die des Komforts mit 17 Reitern um).
+    Check(wrapped == nil, "keine Reiterleiste bricht um (" .. tostring(wrapped) .. ")")
+    local cv = UO.Views("comfort")
+    Check(cv and #cv == 4 and UO.Locate("comfort", UO.PageIndex("comfort", "sammeln")) == "komfort_welt"
+        and UO.Locate("comfort", UO.PageIndex("comfort", "danke")) == "komfort_handel"
+        and UO.Locate("comfort", UO.PageIndex("comfort", "automark")) == "komfort_kampf",
+        "Komfort in vier Themen, Seiten finden ihr Thema")
 end
 
 -- 6.21.0.0 (Beta-Test: "unter den Punkten erklaert, allerdings mit 3
@@ -2524,64 +2534,40 @@ do
     Check(ok, "jede Auswahlliste laesst sich oeffnen" .. (ok and "" or (": " .. tostring(err))))
 end
 
--- 6.10.0.0: Feineinstellungen zugeklappt ("Erweitert"). Zugeklappt nennt
--- der Knopf, wie viele Einstellungen dahinter liegen; aufgeklappt sind sie
--- alle da - und jede Auswahlliste darin oeffnet sich wie die anderen.
+-- 6.103.0.0 (Rueckmeldung: der Knopf "Erweitert" wurde uebersehen):
+-- Feineinstellungen sind immer da, unter einer Ueberschrift - nichts
+-- zugeklappt, egal was general.showAdvanced sagt.
 do
     local ok, err = pcall(function()
-        assert(K.Get("general", "showAdvanced") == false, "Erweitert ist nicht von Haus aus zu")
-        local closed, zonesSeen = {}, 0
+        local zonesSeen = 0
         for _, key in ipairs(K.order) do
             for i in ipairs(K.Module(key).pages) do
                 UO.Show(key, i)
-                closed[key .. "/" .. i] = #UO.CurrentWidgets()
                 for _, z in ipairs(UO.CurrentZones()) do
                     zonesSeen = zonesSeen + 1
-                    assert(not z.open and z.count > 0, key .. "/" .. i .. ": leerer oder offener Bereich")
-                    assert(z.button._label:GetText() == UO.AdvancedText(z.count), key .. "/" .. i .. ": Knopf nennt die Zahl nicht")
-                end
-            end
-        end
-        assert(zonesSeen >= 6, "zu wenige Bereiche 'Erweitert': " .. zonesSeen)
-        -- Zugeklappt wird auch ein Hinweis darin nicht gebaut.
-        local texts = {}
-        local setText = stub.Methods.SetText
-        stub.Methods.SetText = function(self, t) texts[#texts + 1] = tostring(t) return setText(self, t) end
-        UO.SetAdvanced(false)
-        UO.Show("damagemeter", 1)
-        stub.Methods.SetText = setText
-        for _, t in ipairs(texts) do
-            assert(not t:find("Gemeldet wird nur nach dem Kampf", 1, true), "Hinweis unter 'Erweitert' trotzdem gebaut")
-        end
-        UO.Show("nameplates", 1)
-        UO.CurrentZones()[1].button:Click()
-        assert(K.Get("general", "showAdvanced") == true, "Knopf blendet nicht ein")
-        local grew = 0
-        for _, key in ipairs(K.order) do
-            for i in ipairs(K.Module(key).pages) do
-                UO.Show(key, i)
-                local n = #UO.CurrentWidgets()
-                local zones = UO.CurrentZones()
-                local hidden = 0
-                for _, z in ipairs(zones) do
-                    assert(z.open and z.button._label:GetText() == UO.ADV_HIDE, key .. "/" .. i .. ": Bereich bleibt zu")
-                end
-                if #zones > 0 then
-                    assert(n > closed[key .. "/" .. i], key .. "/" .. i .. ": aufgeklappt nicht mehr Elemente")
-                    grew = grew + 1
+                    assert(z.open and z.title and z.title:GetText() == WeintCodex.Upper(UO.FINE_TITLE), key .. "/" .. i .. ": Feineinstellungen zu oder ohne Ueberschrift")
                 end
                 for _, w in ipairs(UO.CurrentWidgets()) do
                     if w._button then w._button:Click() end
                 end
             end
         end
-        assert(grew >= 6, "aufgeklappt kaum mehr: " .. grew)
-        UO.Show("nameplates", 1)
-        UO.CurrentZones()[1].button:Click()
-        assert(K.Get("general", "showAdvanced") == false, "Knopf blendet nicht wieder aus")
+        assert(zonesSeen >= 6, "zu wenige Feineinstellungen: " .. zonesSeen)
+        local texts = {}
+        local setText = stub.Methods.SetText
+        stub.Methods.SetText = function(self, t) texts[#texts + 1] = tostring(t) return setText(self, t) end
+        K.Set("general", "showAdvanced", false)
+        UO.SetAdvanced(false)
+        UO.Show("damagemeter", 1)
+        stub.Methods.SetText = setText
+        local seen = false
+        for _, t in ipairs(texts) do
+            if t:find("Gemeldet wird nur nach dem Kampf", 1, true) then seen = true end
+        end
+        assert(seen, "Hinweis unter den Feineinstellungen fehlt")
         UO.frame:Hide()
     end)
-    Check(ok, "Einstellungen: 'Erweitert' zu (Knopf nennt die Zahl), auf (mehr Elemente, alle Listen oeffnen sich), wieder zu"
+    Check(ok, "Einstellungen: Feineinstellungen immer sichtbar, unter eigener Ueberschrift, alle Listen oeffnen sich"
         .. (ok and "" or (": " .. tostring(err))))
 end
 
@@ -16690,7 +16676,6 @@ do
         assert(not UO.results:IsShown() and UO.searchBox:GetText() == "", "Suche bleibt nach dem Klick stehen")
         local w = UO.Where()
         assert(w.module == "nameplates" and w.page == 1, "Klick oeffnet die falsche Seite: " .. tostring(w.module) .. "/" .. tostring(w.page))
-        assert(K.Get("general", "showAdvanced") == true, "Treffer unter 'Erweitert' klappt nicht auf")
         -- Leere Suche: zurueck zur Seite; Klick links ersetzt die Treffer.
         UO.ShowSearch("bedrohung")
         assert(UO.results:IsShown(), "zweite Suche zeigt nichts")
@@ -18252,10 +18237,10 @@ do
         end
         local order = table.concat(keys, ",")
         local pal = WeintCodex.UIPaladinBuffs.IsPaladin()
-        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros," .. (pal and "segen," or "") .. "ringe,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,danke,gespraeche,flugspiele",
+        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros," .. (pal and "segen," or "") .. "ringe,karte,questhilfe,sammeln,glitzern,selten,flugspiele,auktion,fluestern,danke,gespraeche",
             "Reihenfolge: " .. order)
         local d = pal and 0 or -1
-        assert(O.PageIndex("comfort", "gespraeche") == 17 + d and O.PageIndex("comfort", "fluestern") == 15 + d, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 18 + d and O.PageIndex("comfort", "fluestern") == 16 + d, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")
