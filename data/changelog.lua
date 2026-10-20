@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.88.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFHerstellzeit|r – stellst du mehrere Stücke auf einmal her (Barren verhütten, Stoff, Tränke …), zeigt eine Leiste oben: was, wie viele von wie vielen und wie lange es noch dauert. Die Dauer je Stück nennt das Spiel beim Herstellen. Komfort → Sammeln, ab Werk an; verschiebbar im Gestaltungsmodus.",
+        },
+    },
+    {
         version = "6.87.9.0",
         date    = "19.10.2026",
         notes   = {

@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.87.9.0
+## Version: 6.88.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -304,6 +304,7 @@ ui/firealarm.lua
 ui/gathertrack.lua
 # Sammel-Atlas: Fundstellen, Farmroute, stilles Teilen mit der Gilde (6.82.0.0).
 ui/gatheratlas.lua
+ui/crafttimer.lua
 # Glitzern: Questgegenstaende, Kraeuter und Erz (6.29.0.0, Komfort; Verhalten von ForeverLootSparkles, eigener Code).
 ui/sparkles.lua
 ui/dialogue.lua

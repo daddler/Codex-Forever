@@ -21219,6 +21219,13 @@ do
         and _G.WeintCodexReloadPrompt ~= nil, "/rl öffnet die Frage zum Neuladen")
 end
 
+do
+    local CT = WeintCodex.UICraftTimer
+    Check(CT and CT.Remaining(20, 8, 3, 1.5) == 1.5 + 11 * 3 and CT.Remaining(5, 5, 3) == 0
+        and CT.Remaining(5, 0, nil) == nil and CT.Format(95) == "1:35",
+        "Herstellzeit: Rest aus Anzahl und Dauer, ohne Dauer nichts geraten")
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

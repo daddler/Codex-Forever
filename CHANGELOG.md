@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.88.0.0] – 2026-10-20
+
+### Neu
+- `ui/crafttimer.lua`: Anzahl aus `C_TradeSkillUI.CraftRecipe`/
+  `DoTradeSkill`/`DoCraft` (nachgehängt) bzw. `GetRecipeRepeatCount`,
+  Dauer aus `UnitCastingInfo`; Leiste `crafttimer` im Layout.
+
 ## [6.87.9.0] – 2026-10-19
 
 ### Behoben

@@ -85,6 +85,8 @@ K.LAYOUT = {
     rarealert       = { point = "TOP",         relPoint = "TOP", x = 0, y = -340 },
     -- Flugzeit (ui/flighttimer.lua, 6.54.0.0): oben, unter dem Hinweis.
     flighttimer     = { point = "TOP",         relPoint = "TOP", x = 0, y = -230 },
+    -- Herstellzeit (ui/crafttimer.lua, 6.88.0.0): unter der Flugzeit.
+    crafttimer      = { point = "TOP",         relPoint = "TOP", x = 0, y = -276 },
     -- Fluestern (ui/messenger.lua, 6.19.0.0): das Fenster links ueber dem Chat.
     messenger       = { point = "BOTTOMLEFT",  relPoint = "BOTTOMLEFT", x = 20, y = 330 },
     -- Gruppenwerkzeuge (6.29.13.0): links, wo das Menue des Spiels stand.
