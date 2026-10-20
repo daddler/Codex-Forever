@@ -304,6 +304,48 @@ geparst, nie ausgeführt; kein Code, keine Grafik; TBC/Wrath/SoD nicht).
   der Client die Forever-Nummern ≥ 100000 auflöst, und ob
   `GetItemSetInfo`/`DressUpItemLink` dort antworten.
 
+## Ausmisten *(Taschen, Eintrag „Ausmisten“ in der Unternavigation)*
+
+Wunsch des Spielers: „Trash visualisieren und sehen, was vielleicht mehr
+wert ist als das, was ich gerade loote“. Verhalten nach dem Addon
+LootTriage – **kein Code, keine Datendatei** daraus (es hat keine Lizenz).
+Kein Spielertext nennt es.
+
+- **Bewertung** (`ui/bagtriage.lua`, `WeintCodex.UIBagTriage`): je Platz
+  der normalen Taschen Händlerpreis × Anzahl aus `GetItemInfo`. Liegt im
+  eigenen Auktionspreis-Bestand (`ui/auctionprices.lua`, `AP.Lookup`) ein
+  höherer Preis und ist der Gegenstand nicht gebunden, zählt der –
+  Herkunft „Auktion“ steht an der Zeile. Nennt der Client keinen Preis:
+  **Wert unbekannt**, nie 0, nie ein Vorschlag (gezählt im Fuß der Seite).
+- **Vorschläge:** Grau immer (Händlerpreis 0 ist gemessen, nicht
+  unbekannt), Weiß mit Händlerpreis, Grün nur auf Wunsch
+  (`triageGreens`). Geschützt: was der Client Questgegenstand nennt
+  (`GetContainerItemQuestInfo`, Klasse 12) und was ein Ziel im Questlog
+  verlangt (Name aus `GetQuestLogLeaderBoard`), Verbrauchbares, Behälter,
+  Reagenzien, Munition, Handwerkswaren/Material, Rezepte, Köcher,
+  Schlüssel, alles ohne Händlerpreis (Ruhestein, Seelengebundenes ohne
+  Wert), Ausrüstungssets und die **Behalten-Liste** je Charakter
+  (`WeintCodex_SavedData.triage.keep["Realm|Name"][itemID]`). Eine eigene
+  Liste der Questgegenstände gibt es bewusst nicht – nur, was der Client sagt.
+- **Seite** (`modules/bagtrash.lua`, `WeintCodex.BagTrash`, auch
+  `GoToTab("ausmisten")` über `Navigation.SUBTABS`): Belegung frei/gesamt,
+  Summe der Vorschläge, die billigsten Plätze (Symbol, Name, Anzahl, Wert,
+  Grund, „Behalten“). Nichts rollt: `BTP.Capacity` nimmt so viele Zeilen,
+  wie die Karte trägt, der Rest steht als Zahl im Fuß. Schalter und die
+  Behalten-Liste im Detailbereich.
+- **Beute** (`LOOT_OPENED`, nur bei höchstens `BT.NEAR_FULL` = 2 freien
+  Plätzen): Beute, die auf einen angefangenen Stapel passt, braucht keinen
+  Platz; die wertvollste (Questbeute zuerst) bekommt die freien Plätze,
+  jede weitere wird dem billigsten noch freien Vorschlag gegenübergestellt.
+  Ist sie mehr wert: Goldmünze an ihrer Karte im Beutefenster, der Platz
+  leuchtet gold in den Taschen (eigene Taschen `ui/bags.lua` und die des
+  Spiels), Tooltipzeile „Lohnt sich: Platz von …“. Sonst im Tooltip „Wert
+  im Vergleich“ bzw. „Ausmisten: Platz n von m“. **Gelöscht wird nie** –
+  das bleibt Spielerhandlung.
+- Schalter im Speicher des Komforts (`triageOn` ab Werk an,
+  `triageGreens`, `triageAuction`), läuft wie der Bestand ohne Oberfläche.
+  Gerechnet wird bei Ereignissen, nie je Bild; Einträge aus einem Vorrat.
+
 ## Berufe *(seit 6.14.0.0)*
 
 `modules/professions.lua` (`WeintCodex.Professions`), Navigation „Berufe“

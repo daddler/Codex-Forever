@@ -167,6 +167,8 @@ modules/beasts.lua
 modules/professions.lua
 # Taschen (6.25.0.0): Bestand aller Charaktere als Seite; Daten aus ui/inventory.lua.
 modules/bags.lua
+# Ausmisten (Reiter der Taschen): guenstigste Plaetze; Bewertung aus ui/bagtriage.lua.
+modules/bagtrash.lua
 modules/encounter_tracking.lua
 modules/rolepanel.lua
 modules/raidpages.lua
@@ -280,6 +282,8 @@ ui/rares.lua
 # Auktionspreise (6.17.0.0, Komfort): Scan am Auktionshaus, Preis im Tooltip.
 ui/auctionprices.lua
 ui/inventory.lua
+# Ausmisten (Verhalten von LootTriage, eigener Code): Wert je Taschenplatz, Muenze an der Beute.
+ui/bagtriage.lua
 # Auktionspreise von anderen Spielern (6.18.0.0): Gilde, ForeverGuide nur zuhoeren.
 ui/auctionshare.lua
 # Fluestern als Messenger (6.19.0.0, Komfort): Fenster nach dem Verhalten von WIM, kein Code daraus.
