@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.102.2.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFSegen: kein Fehler mehr beim Angreifen|r – der Knopf wurde beim Kampfbeginn noch umgestellt, das sperrt das Spiel. Im Kampf ändert sich jetzt nur die Zeile „Im Kampf“.",
+        },
+    },
+    {
         version = "6.102.1.0",
         date    = "20.10.2026",
         notes   = {

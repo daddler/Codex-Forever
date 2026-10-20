@@ -541,7 +541,7 @@ end
 
 function PB.Text()
     local r = PB.result
-    if K.InCombat() then return "Im Kampf" end
+    if K.InCombat() or PB.fighting then return "Im Kampf" end
     if r.missing == 0 and r.unclear == 0 then return NO_TARGET end
     if r.unclear > 0 and r.missing == 0 then return "unklar: " .. r.unclear end
     return "noch " .. r.missing .. " ohne Segen"
@@ -550,7 +550,11 @@ end
 function PB.Paint()
     if not frame then return end
     frame.count:SetText(PB.Text())
-    if frame.btn.SetEnabled then pcall(frame.btn.SetEnabled, frame.btn, not K.InCombat()) end
+    -- Nie im Kampf anfassen (6.102.2.0, Bericht "Blockiert: UNKNOWN()" beim
+    -- Angreifen): der sichere Knopf haengt an diesem Knopf, im Kampf ist
+    -- er damit geschuetzt. Im Kampf zeigt nur die Zeile "Im Kampf".
+    if K.InCombat() or PB.fighting then return end
+    if frame.btn.SetEnabled then pcall(frame.btn.SetEnabled, frame.btn, true) end
 end
 
 function PB.Update()
@@ -650,7 +654,8 @@ events:SetScript("OnEvent", K.Measured("Segen", function(_, event, unit, _, spel
     elseif event == "SPELLS_CHANGED" then
         for k in pairs(names) do names[k] = nil end
     end
-    if event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" then PB.Update() return end
+    if event == "PLAYER_REGEN_DISABLED" then PB.fighting = true PB.Paint() return end
+    if event == "PLAYER_REGEN_ENABLED" then PB.fighting = false PB.Update() return end
     Soon()
 end))
 

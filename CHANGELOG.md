@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.102.2.0] – 2026-10-20
+
+### Behoben
+- Segen: `SetEnabled` am Knopf unter dem sicheren Knopf nicht im Kampf (`ADDON_ACTION_BLOCKED UNKNOWN()`), Merker `PB.fighting` ab `PLAYER_REGEN_DISABLED`.
+
 ## [6.102.1.0] – 2026-10-20
 
 ### Geändert
