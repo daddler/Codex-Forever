@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.101.0.0] – 2026-10-20
+
+### Hinzugefügt
+- Segen: Zuweisung `bless_KLASSE_ROLLE` (`PB.CLASS_ROLES`), Rolle aus dem Talentbaum (`GetTalentTabInfo`, andere über `NotifyInspect`/`INSPECT_READY`, Zuordnung `PB.TREE_ROLE`), sonst Gruppenrolle; Einstellungsseite Klasse → Rollen.
+
 ## [6.100.1.0] – 2026-10-20
 
 ### Geändert

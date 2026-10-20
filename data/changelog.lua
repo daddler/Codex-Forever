@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.101.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFSegen je Klasse und Rolle|r – erst die Klasse wählen, dann je Rolle den Segen: Druide Tank/Heiler/Nahkampf/Zauberschaden, Schamane Heiler/Nahkampf/Zauberschaden usw. Darunter steht der Überblick aller Klassen.",
+            "|cff7C6CFFRolle aus den Talenten|r – WeintCodex liest, wie jemand geskillt ist: deine Talente direkt, die der anderen durch kurzes Betrachten (nur außerhalb des Kampfes, einer nach dem anderen). Ohne Talente gilt die Gruppenrolle.",
+        },
+    },
+    {
         version = "6.100.1.0",
         date    = "20.10.2026",
         notes   = {
