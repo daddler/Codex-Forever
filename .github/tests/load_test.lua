@@ -4218,6 +4218,14 @@ do
         assert(path and #path >= 6, "kein Weg")
         assert(math.abs(path[#path - 1] - (NV.TILE + 3.5 * cs)) < 0.01, "Ende nicht am Ziel")
         assert(len > 10 and len < 2000, "Laenge " .. tostring(len))
+        -- 6.103.4.0: Eingaenge weit seitlich (Zeile 3), Start und Ziel in
+        -- Zeile 0 dicht an der Grenze - kein Umweg ueber die Eingaenge.
+        local h0 = E(1, 2) .. E(15, 3) .. E(0, 1) .. E(0, 2) .. E(1, 1) .. E(7, 1) .. E(0, 2) .. E(10, 2) .. E(10, 2)
+        local h1 = E(1, 2) .. E(3, 3) .. E(0, 1) .. E(0, 2) .. E(1, 1) .. E(1, 1) .. E(0, 2) .. E(10, 2) .. E(10, 2)
+        WeintCodex.NavData[95] = { cx0 = 0, cy0 = 0, nx = 2, ny = 1, cells = 4, swim = 3, graph = {}, grid = {}, fcell = {},
+            raw = { graph = { [1] = h0, [2] = h1 }, grid = { [1] = "Q+", [2] = "Q+" }, fcell = {} } }
+        local dp, dlen = NV.Search(95, 3.5 * cs, 0.5 * cs, NV.TILE + 0.5 * cs, 0.5 * cs)
+        assert(dp and dlen and dlen < 1.5 * cs, "Umweg ueber die Eingaenge: " .. tostring(dlen) .. " statt ~" .. cs)
         -- Verteilt: NV.Path startet, Pump rechnet fertig.
         NV.Reset()
         assert(NV.Path(99, 0.5 * cs, 1.5 * cs, NV.TILE + 3.5 * cs, 1.5 * cs) == nil, "sofort fertig")

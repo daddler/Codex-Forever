@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.103.4.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFQuestpfeil ohne Umweg|r – nahe einer unsichtbaren Abschnittsgrenze der Welt zeigte der Pfeil oft zur Seite und nannte eine zu große Entfernung. Jetzt sucht er auch den direkten Weg über das Gelände und nimmt den kürzeren.",
+        },
+    },
+    {
         version = "6.103.3.0",
         date    = "20.10.2026",
         notes   = {

@@ -979,6 +979,31 @@ function NV.Search(c, sN, sW, gN, gW)
             end
         end
     end
+    -- 6.103.4.0 (Beta-Test, Bild: Questgeber 81 m geradeaus, der Pfeil
+    -- zeigte nach rechts, "115 m"): liegen Start und Ziel in BENACHBARTEN
+    -- Abschnitten, zwang die Suche den Weg ueber einen Eingang an der
+    -- Grenze - der kann weit seitlich liegen. Jetzt zusaetzlich direkt ueber
+    -- die Zellen beider Abschnitte (NV.Bridge); der kuerzere Weg gewinnt.
+    if ks ~= kg and math.abs(floor(ks / st.ny) - floor(kg / st.ny)) <= 1
+       and math.abs(ks % st.ny - kg % st.ny) <= 1 and cs0 and cg0
+       -- nur am Boden: Ebenen (Hoehle, Stadt unter dem Berg) kennt das Gitter nicht
+       and NV.Cells(st, cls) and NV.Cells(st, clg)
+       and Walk(cls, cs0) ~= 0 and Walk(clg, cg0) ~= 0 then
+        local straight = sqrt((gN - sN) ^ 2 + (gW - sW) ^ 2)
+        local limit = math.min(best, straight * 1.6 + 16)
+        local direct = { sN, sW }
+        if NV.Bridge(st, ks, cs0, kg, cg0, direct, limit / size) then
+            direct[#direct + 1], direct[#direct + 2] = gN, gW
+            local len = 0
+            for i = 3, #direct - 1, 2 do
+                len = len + sqrt((direct[i] - direct[i - 2]) ^ 2 + (direct[i + 1] - direct[i - 1]) ^ 2)
+            end
+            if len < best then
+                NV.stats.direct = (NV.stats.direct or 0) + 1
+                return direct, len
+            end
+        end
+    end
     if best == huge then return nil end
     local out = {}
     if not bestNode then

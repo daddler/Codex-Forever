@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.103.4.0] – 2026-10-20
+
+### Behoben
+- Geländekarte: liegen Start und Ziel in benachbarten Abschnitten, zusätzlich direkte Suche über die Zellen beider (`NV.Bridge` in `NV.Search`, Grenze 1,6 × Luftlinie + 16, nur am Boden); der kürzere Weg gewinnt (`NV.stats.direct`). Vorher immer über die Eingänge an der Grenze – Prüffall: 810 statt 133 Einheiten. Anlass: Beta-Test mit Bild, Questgeber 81 m geradeaus, Pfeil nach rechts mit 115 m.
+
 ## [6.103.3.0] – 2026-10-20
 
 ### Behoben
