@@ -112,6 +112,8 @@ local SUBTABS = {
     wildtierkunde = { tab = "lehrer", sub = "beasts" },
     -- 6.61.1.0: Kalender als Gruppe unter Raidplanung.
     kalender = { tab = "anmeldung", sub = "kalender" },
+    -- Ausmisten als Eintrag in der Unternavigation der Taschen.
+    ausmisten = { tab = "taschen", sub = "trash" },
 }
 
 -- Freigaben innerhalb der Raidplanung: je Gruppe, nicht je Eintrag.
@@ -2486,7 +2488,7 @@ function WeintCodex.Navigation.SwitchTo(tabId)
         end
     elseif tabId == "taschen" then
         if WeintCodex.Bags and WeintCodex.Bags.Show then
-            WeintCodex.Bags.Show()
+            WeintCodex.Bags.Show(sub)
         end
     elseif tabId == "buecher" then
         if WeintCodex.BooksPage and WeintCodex.BooksPage.Show then

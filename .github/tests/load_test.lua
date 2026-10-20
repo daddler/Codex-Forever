@@ -21360,6 +21360,83 @@ do
     Check(ok, "Bestenliste der Flugspiele" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- Ausmisten (ui/bagtriage.lua, Reiter der Taschen): Grau zuerst, unbekannt
+-- ist kein Vorschlag, Quest und Behalten geschuetzt, Beute gegen Platz.
+do
+    local G = _G
+    local names = { "C_Container", "GetItemInfo", "GetNumLootItems", "GetLootSlotType", "GetLootSlotLink",
+                    "GetLootSlotInfo", "UnitName", "GetRealmName", "NUM_BAG_SLOTS", "C_Timer" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local BT = G.WeintCodex.UIBagTriage
+    local ok, err = pcall(function()
+        G.UnitName = function() return "Ich" end
+        G.GetRealmName = function() return "Testrealm" end
+        G.NUM_BAG_SLOTS = 0
+        G.C_Timer = nil
+        -- Platz 1 grau 5c, 2 weiss 3x40c, 3 ohne Preis, 4 Quest, 5 Verbrauchbar, 6 leer
+        local bag = { { itemID = 1, quality = 0, stackCount = 1 }, { itemID = 2, quality = 1, stackCount = 3 },
+                      { itemID = 3, quality = 1, stackCount = 1 }, { itemID = 4, quality = 1, stackCount = 1 },
+                      { itemID = 5, quality = 1, stackCount = 1 } }
+        local info = { [1] = { "Grauer Knochen", 0, 1, 5, 15, 0 }, [2] = { "Leinenstoff", 1, 20, 40, 2, 0 },
+                       [4] = { "Wolfsfleisch", 1, 10, 4, 12, 0 }, [5] = { "Brot", 1, 20, 1, 0, 0 },
+                       [9] = { "Schönes Schwert", 2, 1, 900, 2, 1 } }
+        G.C_Container = {
+            GetContainerNumSlots = function(b) return b == 0 and 6 or 0 end,
+            GetContainerItemInfo = function(b, sl) return b == 0 and bag[sl] or nil end,
+            GetContainerNumFreeSlots = function() return 1, 0 end,
+        }
+        G.GetItemInfo = function(id)
+            id = type(id) == "number" and id or tonumber(tostring(id):match("item:(%d+)"))
+            local d = info[id]
+            if not d then return nil end
+            return d[1], nil, d[2], nil, nil, nil, nil, d[3], nil, nil, d[4], d[5], d[6]
+        end
+        BT.dirty = true
+        local c = BT.Candidates()
+        Check(#c == 2 and c[1].id == 1 and c[1].value == 5 and c[2].id == 2 and c[2].value == 120,
+            "Ausmisten: Grau zuerst, Wert = Preis x Anzahl")
+        Check(BT.stats.unknown == 1 and BT.stats.free == 1 and BT.stats.total == 6,
+            "Ausmisten: ohne Preis unbekannt (nicht 0), Belegung frei/gesamt")
+        BT.SetKept(1, true)
+        c = BT.Candidates()
+        Check(#c == 1 and c[1].id == 2 and BT.IsKept(1), "Ausmisten: Behalten schuetzt")
+        BT.SetKept(1, false)
+        -- Beute: zwei Gegenstaende, ein freier Platz -> der billigere weicht.
+        G.GetNumLootItems = function() return 2 end
+        G.GetLootSlotType = function() return 1 end
+        G.GetLootSlotLink = function(i) return i == 1 and "|Hitem:9|h[Schönes Schwert]|h" or "|Hitem:1|h[Grauer Knochen]|h" end
+        G.GetLootSlotInfo = function(i) return nil, nil, 1, nil, i == 1 and 2 or 0, false, false end
+        BT.lootOpen = true
+        local pairs_ = BT.PairLoot()
+        Check(pairs_[1] == nil and pairs_[2] == nil, "Ausmisten: wertvollste Beute bekommt den freien Platz, Knochen gegen Knochen lohnt nicht")
+        G.GetLootSlotInfo = function(i) return nil, nil, 1, nil, 2, false, false end
+        G.GetLootSlotLink = function() return "|Hitem:9|h[Schönes Schwert]|h" end
+        pairs_ = BT.PairLoot()
+        Check(pairs_[2] and pairs_[2].id == 1 and BT.glow[0 * 1000 + 1] == 1, "Ausmisten: Beute mehr wert -> Platz leuchtet")
+        local tl = BT.TooltipLines(9)
+        Check(tl and tl[1][1]:find("Lohnt sich", 1, true) ~= nil, "Ausmisten: Tooltipzeile an der Beute")
+        G.GetLootSlotInfo = function() return nil, nil, 1, nil, 2, false, false end
+        info[9] = { "Schönes Schwert", 2, 1, nil, 2, 1 }
+        pairs_ = BT.PairLoot()
+        Check(_G.next(pairs_) == nil, "Ausmisten: Beute ohne Preis verdraengt nichts")
+        BT.lootOpen = false
+        local Bt = G.WeintCodex.BagTrash
+        Check(Bt.Capacity(400) == math.floor((400 - Bt.TOP - Bt.FOOT) / Bt.ROW), "Ausmisten: Zeilen nach Kartenhoehe")
+        if G.WeintCodex.Bags and G.WeintCodex.ContentPanel then
+            BT.dirty = true
+            G.WeintCodex.Bags.Show("trash")
+            Check(G.WeintCodex.Bags.sel == G.WeintCodex.Bags.TRASH and Bt.page and Bt.page:IsShown(), "Ausmisten: Reiter der Taschen zeichnet")
+            G.WeintCodex.Bags.sel = G.WeintCodex.Bags.ALL
+        end
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    BT.lootOpen = false
+    BT.dirty = true
+    if G.WeintCodex_SavedData then G.WeintCodex_SavedData.triage = nil end
+    Check(ok, "Ausmisten" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)
