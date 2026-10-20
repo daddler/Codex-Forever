@@ -463,8 +463,17 @@ function SH.Export()
                    uiEnabled = K.UIEnabled() and true or false,
                    gameLayout = gl, gameLayoutName = gln,
                    cvars = SH.CVarList(), bindings = SH.Bindings(),
-                   launcher = type(ui.launcher) == "table" and ui.launcher or nil }
+                   launcher = type(ui.launcher) == "table" and ui.launcher or nil,
+                   -- Eigener Abklingzeitmanager liegt je Charakter, nicht im
+                   -- Profil (6.98.1.0, Wunsch: "alles im Export inbegriffen").
+                   ocd = SH.CharPart("ocd") }
     return SH.PREFIX .. SH.Encode(SH.Serialize(data))
+end
+
+function SH.CharPart(key)
+    local st = K.CharState and K.CharState()
+    local v = type(st) == "table" and st[key]
+    return type(v) == "table" and next(v) ~= nil and v or nil
 end
 
 -- Was ein Text enthaelt, in Worten (fuer die Rueckfrage und den Bericht).
@@ -477,6 +486,7 @@ function SH.Contents(data)
     if n > 0 then parts[#parts + 1] = n .. " Spieleinstellungen" end
     if type(data.bindings) == "table" and #data.bindings > 0 then parts[#parts + 1] = "Tastenbelegung (" .. #data.bindings .. " Befehle)" end
     if data.uiEnabled ~= nil then parts[#parts + 1] = "Oberfläche " .. (data.uiEnabled and "an" or "aus") end
+    if data.ocd then parts[#parts + 1] = "eigener Abklingzeitmanager" end
     if type(data.profile.bars) == "table" then parts[#parts + 1] = SH.CountBars(data.profile.bars) .. " zusätzliche Aktionsleisten an" end
     return table.concat(parts, ", ")
 end
@@ -498,6 +508,7 @@ function SH.Parse(text)
     if type(data.cvars) ~= "table" then data.cvars = nil end
     if type(data.bindings) ~= "table" then data.bindings = nil end
     if type(data.launcher) ~= "table" then data.launcher = nil end
+    if type(data.ocd) ~= "table" then data.ocd = nil end
     if type(data.uiEnabled) ~= "boolean" then data.uiEnabled = nil end
     if data.profile.bars ~= nil then
         local ok = type(data.profile.bars) == "table" and #data.profile.bars <= 16
@@ -549,6 +560,9 @@ function SH.Items(data)
     if n > 0 then out[#out + 1] = { id = "cvars", label = "Spieleinstellungen (" .. n .. ")", game = true, on = true } end
     if data.bindings and #data.bindings > 0 then
         out[#out + 1] = { id = "bindings", label = "Tastenbelegung (" .. #data.bindings .. " Befehle) – ersetzt deine", game = true, on = false }
+    end
+    if data.ocd then
+        out[#out + 1] = { id = "ocd", label = "Eigener Abklingzeitmanager (Wahl, Zauber, Reihen, Töne, Leuchten)", on = true }
     end
     if data.launcher then out[#out + 1] = { id = "launcher", label = "Platz des Minikarten-Symbols", game = true, on = true } end
     if data.uiEnabled ~= nil then
@@ -621,6 +635,19 @@ function SH.Apply(data, sel)
     end
     if data.launcher and Want("launcher") and type(ui.launcher) == "table" then
         for k, v in pairs(PR.DeepCopy(data.launcher)) do ui.launcher[k] = v end
+    end
+    if data.ocd and Want("ocd") then
+        local st = K.CharState and K.CharState()
+        if type(st) == "table" then
+            st.ocd = PR.DeepCopy(data.ocd)
+            local OC = WeintCodex.UIOwnCooldowns
+            if OC then
+                if OC.ApplyGame then pcall(OC.ApplyGame, OC.Mode()) end
+                if OC.Scan then pcall(OC.Scan) end
+                if OC.Refresh then pcall(OC.Refresh) end
+            end
+            notes[#notes + 1] = "Abklingzeitmanager übernommen."
+        end
     end
     if data.uiEnabled ~= nil and Want("uiEnabled") and K.SetUIEnabled then pcall(K.SetUIEnabled, data.uiEnabled) end
     local layoutNote = #notes > 0 and table.concat(notes, " ") or nil

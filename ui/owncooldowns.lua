@@ -1904,7 +1904,24 @@ function OC.BuildSection(B)
     B:Row({ type = "button", label = "Voreinstellung", text = "Voreinstellung wiederherstellen",
             tooltip = "Zauberwahl, Größen und Schalter wie ab Werk für deine Klasse.",
             onClick = function() OC.ResetPreset() end },
-          { type = "empty" })
+          { type = "button", label = "Eigene Reihen", text = "Reihe löschen …",
+            tooltip = "Wählt eine eigene Reihe zum Löschen; ihre Zauber wandern nach „Weitere“. Geht auch über den Kopf ihrer Spalte.",
+            onClick = function(btn)
+                local MU = _G.MenuUtil
+                local defs = OC.ExtraRows()
+                if #defs == 0 then
+                    print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Es gibt keine eigenen Reihen.")
+                    return
+                end
+                if not (MU and MU.CreateContextMenu) then OC.RemoveRow(defs[#defs].id) OC.Relayout() return end
+                MU.CreateContextMenu(btn or UIParent, function(_, root)
+                    if root.CreateTitle then root:CreateTitle("Reihe löschen") end
+                    for _, d in ipairs(defs) do
+                        local id = d.id
+                        root:CreateButton(d.name, function() OC.RemoveRow(id) OC.Relayout() end)
+                    end
+                end)
+            end })
     B:EndAdvanced()
     local rowDraft = ""
     B:Row({ type = "input", label = "Neue Reihe (Name)",

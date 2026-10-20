@@ -13,6 +13,7 @@ nicht zusammen.
 
 ### Behoben
 - Einstellungen: `O.Rebuild` baut die aktuelle Seite neu (Seiten waren gemerkt, `OC.Relayout` wirkte nicht); Zeichen ▾ fehlte in der Schrift.
+- Profil-Export/-Import: `ocd` (eigener Abklingzeitmanager, je Charakter) als eigener Eintrag; „Reihe löschen …“ unter Erweitert.
 
 ## [6.98.0.0] – 2026-10-20
 

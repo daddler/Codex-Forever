@@ -26,6 +26,8 @@ WeintCodex_ChangelogData = {
         date    = "20.10.2026",
         notes   = {
             "|cff7C6CFFAbklingzeitmanager: neue Reihen erscheinen sofort|r – die Einstellungsseite baut sich nach „Reihe hinzufügen“, Umbenennen, Löschen und Ziehen neu auf; die neue Spalte steht direkt da (bis drei nebeneinander, „Aus“ rutscht darunter).",
+            "|cff7C6CFFEigene Reihen löschen|r – über den Kopf der Spalte („Menü ›“) oder unter „Erweitert“ → „Reihe löschen …“.",
+            "|cff7C6CFFProfil-Export mit Abklingzeitmanager|r – Export und Import nehmen jetzt auch den eigenen Abklingzeitmanager mit: Wahl, Zauber und Reihenfolge, eigene Reihen, Töne, Leuchten.",
         },
     },
     {
