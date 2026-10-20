@@ -4195,6 +4195,28 @@ do
     Check(ok, "Haendlerfenster: Raster nach Groesse, Zahl je Seite, Seite begrenzt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.103.5.0: Ziel zuerst - kleine Knicke halten den Pfeil auf dem Ziel,
+-- ein echter Umweg laesst ihn dem Weg folgen, mit Hysterese.
+do
+    local QA = WeintCodex.UIQuestArrow
+    local ok, err = pcall(function()
+        QA.course.follow = false
+        -- 500 lang, Knicke 10 seitlich: auf Kurs.
+        local zig = { 0, 0, 100, 10, 200, -10, 300, 10, 400, -8, 500, 0 }
+        assert(QA.OnCourse(zig, 1, 0, 0, 500, 0, 520) == true, "kleine Knicke lassen den Pfeil folgen")
+        -- Umweg 200 seitlich: dem Weg folgen.
+        local det = { 0, 0, 250, 200, 500, 0 }
+        assert(QA.OnCourse(det, 1, 0, 0, 500, 0, 640) == false, "Umweg nicht erkannt")
+        -- Hysterese: knapp unter der Schwelle (75) bleibt er beim Weg.
+        local near = { 0, 0, 250, 70, 500, 0 }
+        assert(QA.OnCourse(near, 1, 0, 0, 500, 0, 520) == false, "springt an der Grenze zurueck")
+        QA.course.follow = false
+        assert(QA.OnCourse(near, 1, 0, 0, 500, 0, 520) == true, "ohne Vorgeschichte 70 < 75 nicht auf Kurs")
+    end)
+    QA.course.follow = false
+    Check(ok, "Questpfeil: Ziel zuerst, Weg nur bei echtem Umweg, Hysterese" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.

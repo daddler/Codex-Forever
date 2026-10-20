@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.103.5.0] – 2026-10-20
+
+### Geändert
+- Questpfeil „Ziel zuerst“ (`QA.OnCourse`): Richtung aufs Ziel, solange kein Punkt des restlichen Laufwegs weiter als 35 Einheiten bzw. 15 % der Entfernung neben der Luftlinie liegt und der Weg höchstens 1,3-mal so lang ist; sonst Punkt voraus auf dem Weg. Hysterese (zurück unter 60 % bzw. 1,15). Entfernung und Minikarte bleiben beim Laufweg. Anlass: Beta-Test, Pfeil zittert auf langer Strecke.
+
 ## [6.103.4.0] – 2026-10-20
 
 ### Behoben

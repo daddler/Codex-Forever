@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.103.5.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFQuestpfeil ruhiger|r – er zeigt jetzt aufs Ziel, solange der Weg ungefähr geradeaus geht. Nur wenn wirklich etwas im Weg ist (Berg, Wasser, Mauer), folgt er dem Laufweg. Kein Zittern mehr bei jedem kleinen Knick.",
+        },
+    },
+    {
         version = "6.103.4.0",
         date    = "20.10.2026",
         notes   = {

@@ -936,6 +936,40 @@ local hold = { path = nil, i = nil, since = nil, state = nil }
 QA.hold = hold
 -- Haelt den Abschnitt des Laufwegs, dem der Pfeil folgt (path flach:
 -- n1, w1, n2, w2, ...; i = Anfang des Abschnitts wie NV.Steer).
+-- ZIEL ZUERST (6.103.5.0, Beta-Test: "Der Pfeil ist nur am Zittern, sehr
+-- viele Korrekturen auf langer Strecke. Lieber erstmal das Ziel, und wenn
+-- man wirklich vom Kurs abweicht, korrigiert er sich"): der Laufweg aus
+-- dem Raster hat viele kleine Knicke, und der Punkt voraus wanderte mit
+-- jedem Schritt. Jetzt zeigt der Pfeil auf das ZIEL, solange der Weg
+-- ungefaehr der Luftlinie folgt: kein Punkt des restlichen Wegs weiter als
+-- QA.COURSE_MIN (oder QA.COURSE_RATIO der Entfernung) neben der Linie,
+-- und der Weg hoechstens QA.COURSE_LONG mal so lang. Sonst (Berg, Wasser,
+-- Mauer dazwischen) folgt er dem Weg. Hysterese: zurueck zum Ziel erst
+-- unter QA.COURSE_BACK der Schwelle - kein Hin und Her an der Grenze.
+-- Entfernung und Minikarte bleiben beim Laufweg.
+QA.COURSE_MIN, QA.COURSE_RATIO, QA.COURSE_LONG, QA.COURSE_BACK = 35, 0.15, 1.3, 0.6
+QA.COURSE_LONG_BACK = 1.15
+QA.course = { follow = false }
+function QA.OnCourse(path, segI, pN, pW, gN, gW, rest)
+    local st = QA.course
+    if type(path) ~= "table" or #path < 4 then st.follow = false return true end
+    local dN, dW = gN - pN, gW - pW
+    local len = math.sqrt(dN * dN + dW * dW)
+    if len < 1 then st.follow = false return true end
+    local limit = math.max(QA.COURSE_MIN, len * QA.COURSE_RATIO)
+    if st.follow then limit = limit * QA.COURSE_BACK end
+    local worst = 0
+    for i = (type(segI) == "number" and segI or 1), #path - 1, 2 do
+        -- Abstand des Wegpunkts von der Linie Spieler-Ziel (senkrecht).
+        local d = math.abs((path[i] - pN) * dW - (path[i + 1] - pW) * dN) / len
+        if d > worst then worst = d end
+    end
+    local tooLong = type(rest) == "number" and rest > len * (st.follow and QA.COURSE_LONG_BACK or QA.COURSE_LONG)
+    st.follow = worst > limit or tooLong or false
+    st.worst = worst
+    return not st.follow
+end
+
 function QA.HoldCorner(path, i, pN, pW, sN, sW)
     if type(path) ~= "table" or type(i) ~= "number" then hold.path, hold.state = nil, nil return sN, sW end
     local h = hold.i
@@ -1390,7 +1424,9 @@ function QA.Update(force)
             local sN, sW, rest, segI = NV.Steer(navPath, pN, pW)
             sN, sW = QA.HoldCorner(navPath, segI, pN, pW, sN, sW)
             navRest = rest
-            tN, tW = sN, sW
+            -- 6.103.5.0: Ziel zuerst - dem Weg nur folgen, wenn er wirklich
+            -- von der Luftlinie abweicht (QA.OnCourse).
+            if not QA.OnCourse(navPath, segI, pN, pW, tN, tW, rest) then tN, tW = sN, sW end
         end
     end
     QA.navPath = navPath
