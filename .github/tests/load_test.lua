@@ -21226,6 +21226,140 @@ do
         "Herstellzeit: Rest aus Anzahl und Dauer, ohne Dauer nichts geraten")
 end
 
+-- 6.89.0.0: Bestenliste der Flugspiele (WCFG, nur Gilde).
+do
+    local FG, K = WeintCodex.UIFlightGames, WeintCodex.UIKit
+    local G = _G
+    local names = { "UnitName", "GetNormalizedRealmName", "IsInGuild", "C_ChatInfo", "InCombatLockdown", "C_Timer" }
+    local saved = {}
+    for i, n in ipairs(names) do saved[i] = G[n] end
+    local sent = {}
+    local ok, err = pcall(function()
+        G.UnitName = function() return "Ich" end
+        G.GetNormalizedRealmName = function() return "Testrealm" end
+        G.IsInGuild = function() return true end
+        G.InCombatLockdown = function() return false end
+        G.C_Timer = nil
+        G.C_ChatInfo = { SendAddonMessage = function(p, t, ch) sent[#sent + 1] = { p, t, ch } return true end }
+        G.WeintCodex_SavedData = G.WeintCodex_SavedData or {}
+        G.WeintCodex_SavedData.flightGames = nil
+        K.Set("comfort", "flightGames", true)
+        K.Set("comfort", "flightGamesShare", true)
+        Check(FG.Sharing(), "Bestenliste: Teilen ab Werk an")
+        -- Format/Parse
+        local line = FG.FormatScore("hunt", 1234, 12, 34, 151)
+        local k, g, s, a, z, d = FG.Parse(line)
+        Check(line == "s,h,1234,12,34,151" and k == "s" and g == "hunt" and s == 1234 and a == 12 and z == 34 and d == 151,
+            "Bestenliste: Ergebnis hin und zurueck: " .. line)
+        Check(FG.Parse("q") == "q" and select(3, FG.Parse("b,j,500")) == 500 and select(5, FG.Parse("r,m,90,3,4")) == 4,
+            "Bestenliste: q, b und r gelesen")
+        local bad = { "s,x,10,1,2,3", "s,h,0,1,2,3", "s,h,99999999999,1,2,3", "s,h,6000000,1,2,3", "s,h,10,1,0,3",
+            "s,h,10,5,5,3", "s,h,10,1,2,99999", "s,h,10,1,2", "s,h,-5,1,2,3", "s,h,1e5,1,2,3", "b,h,abc", "b,j,10,Name",
+            "r,j,10,0,4", "Q", "q,1", "s,H,10,1,2,3", "hallo welt", "s,h,10,1,2,3|cff", ("s,h,1,1,2," .. string.rep("1", 80)),
+            "s,h,10,100000,2,3", "", "b,j,10.5" }
+        local allBad = true
+        for _, t in ipairs(bad) do if FG.Parse(t) ~= nil then allBad = false print("  angenommen: " .. t) end end
+        Check(allBad and FG.Parse(nil) == nil and FG.Parse(12) == nil, "Bestenliste: " .. #bad .. " kaputte Zeilen abgewiesen")
+        -- Empfang: Kanal, Praefix, eigener Name, Absender
+        local rej = FG.stats.rejected
+        Check(not FG.OnAddonMessage("WCFG", "b,j,100", "PARTY", "Anna-Testrealm", 1), "Bestenliste: nicht aus der Gruppe")
+        Check(not FG.OnAddonMessage("WCGA", "b,j,100", "GUILD", "Anna-Testrealm", 1), "Bestenliste: fremde Kennung uebergangen")
+        Check(not FG.OnAddonMessage("WCFG", "b,j,100", "GUILD", "Ich-Testrealm", 1) and not FG.OnAddonMessage("WCFG", "b,j,100", "GUILD", "Ich", 1),
+            "Bestenliste: eigener Name ignoriert")
+        Check(not FG.OnAddonMessage("WCFG", "b,j,100", "GUILD", "Böse|cff-Realm", 1), "Bestenliste: Absender mit Steuerzeichen abgewiesen")
+        Check(not FG.OnAddonMessage("WCFG", "b,j,abc", "GUILD", "Anna-Testrealm", 1) and FG.stats.rejected > rej, "Bestenliste: Unsinn gezaehlt")
+        Check(FG.OnAddonMessage("WCFG", "b,j,300", "GUILD", "Anna-Testrealm", 1)
+            and FG.OnAddonMessage("WCFG", "s,j,500,12,34,90", "GUILD", "Bert", 1), "Bestenliste: gueltige Zeilen angenommen")
+        local b = FG.Board()
+        Check(b.all.jewels["Anna-Testrealm"][1] == 300 and b.all.jewels["Bert-Testrealm"][1] == 500
+            and b.route["12>34"].jewels["Bert-Testrealm"][1] == 500, "Bestenliste: Name aus dem Absenderfeld, Strecke gespeichert")
+        FG.OnAddonMessage("WCFG", "b,j,200", "GUILD", "Anna-Testrealm", 1)
+        Check(b.all.jewels["Anna-Testrealm"][1] == 300, "Bestenliste: Schlechteres ersetzt Besseres nicht")
+        -- Takt je Absender
+        local okN = 0
+        for i = 1, 40 do if FG.OnAddonMessage("WCFG", "b,m," .. i, "GUILD", "Spam-Testrealm", 5) then okN = okN + 1 end end
+        Check(okN == FG.RATE_MAX, "Bestenliste: hoechstens " .. FG.RATE_MAX .. " je Minute und Absender (" .. okN .. ")")
+        Check(FG.OnAddonMessage("WCFG", "b,m,41", "GUILD", "Spam-Testrealm", 5 + FG.RATE_WINDOW + 1), "Bestenliste: Takt laeuft wieder an")
+        -- Eigenes Ergebnis: Liste + Nachricht, nur GUILD, 1 je Sekunde
+        for i = #FG.queue, 1, -1 do FG.queue[i] = nil end
+        FG.flight.fromID, FG.flight.toID, FG.flight.secs = 12, 34, 95
+        FG.lastRouteKey = "12>34"
+        FG.flight.scores = { jewels = 400 }
+        FG.Record()
+        Check(#FG.queue == 1 and FG.queue[1] == "s,j,400,12,34,95", "Bestenliste: Ergebnis in der Warteschlange: " .. tostring(FG.queue[1]))
+        Check(FG.RankOf("jewels", nil) == 2 and FG.RankOf("jewels", "12>34") == 2, "Bestenliste: eigener Platz 2 hinter Bert")
+        local rl = FG.RankLine("jewels")
+        Check(rl and rl:find("Platz 2 in der Gilde %(alle Zeiten%) · Platz 2 auf dieser Strecke"), "Bestenliste: Platz im Ergebnis: " .. tostring(rl))
+        local rk = FG.Ranking("jewels", nil)
+        Check(rk[1].name == "Bert-Testrealm" and rk[2].own and rk[3].name == "Anna-Testrealm" and not rk[1].own, "Bestenliste: Reihenfolge absteigend, eigener markiert")
+        sent = {}
+        FG.Push("q")
+        Check(not FG.SendNext(100) and #sent == 1 and sent[1][3] == "GUILD" and sent[1][1] == "WCFG", "Bestenliste: eine Nachricht, an GUILD")
+        FG.SendNext(100.5)
+        Check(#sent == 1, "Bestenliste: zweite Nachricht erst nach einer Sekunde")
+        FG.SendNext(101.1)
+        Check(#sent == 2 and #FG.queue == 0, "Bestenliste: Warteschlange leer")
+        -- Antwort: hoechstens einmal je 10 min, hoechstens 20 Zeilen
+        for i = 1, 30 do FG.Enter("hunt", "Ich-Testrealm", 10 + i, (100 + i) .. ">" .. (200 + i)) end
+        local lines = FG.AnswerLines()
+        Check(#lines == FG.ANSWER_MAX and lines[1]:find("^b,"), "Bestenliste: Antwort gedeckelt (" .. #lines .. ")")
+        for _, l in ipairs(lines) do if not FG.Parse(l) then Check(false, "Bestenliste: eigene Antwort unlesbar: " .. l) end end
+        for i = #FG.queue, 1, -1 do FG.queue[i] = nil end
+        FG.lastAnswer = nil
+        Check(FG.OnQuery(1000) and #FG.queue == FG.ANSWER_MAX, "Bestenliste: erste Bitte beantwortet")
+        for i = #FG.queue, 1, -1 do FG.queue[i] = nil end
+        Check(not FG.OnQuery(1300) and #FG.queue == 0 and FG.OnQuery(1601), "Bestenliste: hoechstens einmal je 10 min")
+        for i = #FG.queue, 1, -1 do FG.queue[i] = nil end
+        -- Deckel: Namen je Spiel und Strecken
+        for i = 1, FG.NAMES_MAX + 25 do FG.Enter("mahjong", "N" .. i .. "-R", i, nil, 1000 + i) end
+        local n = 0
+        for _ in pairs(FG.Board().all.mahjong) do n = n + 1 end
+        Check(n == FG.NAMES_MAX and FG.Board().all.mahjong["N1-R"] == nil and FG.Board().all.mahjong["N225-R"], "Bestenliste: hoechstens 200 Namen, der aelteste geht")
+        for i = 1, FG.ROUTES_MAX + 10 do FG.Enter("hunt", "X-R", 5, (1000 + i) .. ">" .. (5000 + i), 2000 + i) end
+        local r = 0
+        for _ in pairs(FG.Board().route) do r = r + 1 end
+        Check(r == FG.ROUTES_MAX, "Bestenliste: hoechstens 300 Strecken (" .. r .. ")")
+        -- Ansicht: alles innerhalb von FG.W, nichts ueberlappt
+        local L, vw = FG.BL, FG.W - 40
+        local gamesW = #FG.GAMES * L.GAME_W + (#FG.GAMES - 1) * L.GAP
+        local last = L.COLS[#L.COLS]
+        local fits = gamesW <= vw and 2 * L.SCOPE_W + L.GAP <= vw and last.x + last.w <= vw
+        for i = 2, #L.COLS do if L.COLS[i - 1].x + L.COLS[i - 1].w > L.COLS[i].x then fits = false end end
+        local viewH = FG.WIN_H - 68 - 20
+        local rowsEnd = -L.Y_ROWS + L.ROWS * L.ROW_H
+        Check(fits and -L.Y_GAMES + FG.PILL_H < -L.Y_SCOPE and -L.Y_SCOPE + FG.PILL_H < -L.Y_LABEL
+            and -L.Y_LABEL + 14 < -L.Y_HEAD and -L.Y_HEAD + 14 < -L.Y_ROWS and rowsEnd < viewH - L.BACK_H,
+            "Bestenliste: Ansicht passt in " .. FG.W .. " x " .. FG.WIN_H .. " ohne Ueberlappung")
+        FG.ShowBoard("ask", "jewels")
+        local v = FG.views.board
+        Check(v:IsShown() and not FG.views.ask:IsShown() and v.rows[1]:IsShown() and v.rows[2].own and not v.rows[1].own
+            and v.rows[2].cells[2]:GetText() == "Ich-Testrealm", "Bestenliste: Ansicht mit eigener Zeile hervorgehoben")
+        FG.bstate.scope = "route"
+        FG.lastRouteKey, FG.flight.fromID, FG.flight.toID = nil, nil, nil
+        FG.PaintBoard()
+        Check(v.empty:IsShown() and not v.rows[1]:IsShown(), "Bestenliste: Strecke unbekannt ehrlich leer")
+        FG.bstate.scope, FG.bstate.game = "all", "hunt"
+        FG.Board().all.hunt = {}
+        FG.PaintBoard()
+        Check(v.empty:GetText():find("Noch keine Ergebnisse aus der Gilde", 1, true) ~= nil, "Bestenliste: leerer Zustand")
+        Check(FG.RouteName("12>34") == "Strecke 12 → 34", "Bestenliste: unbekannte Knoten als Strecke")
+        FG.NoteNode(12, "Sturmwind") FG.NoteNode(34, "Eisenschmiede")
+        Check(FG.RouteName("12>34") == "Sturmwind → Eisenschmiede", "Bestenliste: Namen der Knoten")
+        FG.BoardBack()
+        Check(FG.views.ask:IsShown(), "Bestenliste: zurueck zur Frage")
+        Check(#FG.StatusLines() == 2, "Bestenliste: Zeilen fuer /wcui pruefen")
+        K.Set("comfort", "flightGamesShare", false)
+        Check(not FG.Sharing() and not FG.Push("q") and not FG.OnAddonMessage("WCFG", "b,j,9", "GUILD", "Carl-R", 9999), "Bestenliste: aus heisst still")
+        K.Set("comfort", "flightGamesShare", true)
+        FG.Close()
+    end)
+    for i, n in ipairs(names) do G[n] = saved[i] end
+    FG.flight.fromID, FG.flight.toID, FG.lastRouteKey = nil, nil, nil
+    for i = #FG.queue, 1, -1 do FG.queue[i] = nil end
+    if G.WeintCodex_SavedData then G.WeintCodex_SavedData.flightGames = nil end
+    Check(ok, "Bestenliste der Flugspiele" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

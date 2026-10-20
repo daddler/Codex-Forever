@@ -35,7 +35,7 @@ local C = WeintCodex.Colors
 local GC = WeintCodex.GameColors
 local KEY = "comfort"
 
-FG.DEFAULTS = { flightGames = true }
+FG.DEFAULTS = { flightGames = true, flightGamesShare = true }
 FG.GAMES = {
     { key = "jewels",  name = "Juwelen",     hint = "Zwei Nachbarn tauschen – drei Gleiche in einer Reihe verschwinden." },
     { key = "mahjong", name = "Mahjong",     hint = "Zwei gleiche freie Steine anklicken. Frei ist ein Stein ohne Stein darauf und mit freier linker oder rechter Seite." },
@@ -46,6 +46,7 @@ FG.BOARD = 400
 FG.HUHN = "Interface\\Icons\\Spell_Magic_PolymorphChicken"
 
 local win, views = nil, {}
+local Build   -- Fenster (weiter unten)
 FG.views = views
 FG.flight = { on = false, scores = {}, game = nil, to = nil }
 
@@ -917,10 +918,646 @@ function H.Start()
 end
 
 --------------------------------------------------
+-- Bestenliste der Gilde (6.89.0.0)
+--------------------------------------------------
+-- Wunsch: "Bestenlisten - best erreichte Punkte und pro Flug innerhalb der
+-- Gilde." Fuenfte Ausnahme nach aussen (CLAUDE.md): Addon-Nachrichten mit
+-- dem Praefix WCFG, nur an die Gilde, nur Spiel, Punkte, Knoten der
+-- Flugstrecke und Flugdauer - kein freier Text. Der Name kommt aus dem
+-- Absenderfeld, nie aus der Nachricht. Schalter flightGamesShare (ab Werk
+-- an, nur mit den Flugspielen).
+--   s,<g>,<Punkte>,<von|0>,<nach|0>,<Sekunden|0>  nach jedem Spiel eines Flugs
+--   q                                            Bitte um Bestwerte (Einloggen +40 s, alle 30 min)
+--   b,<g>,<Punkte>                               eigener Bestwert je Spiel (Antwort)
+--   r,<g>,<Punkte>,<von>,<nach>                  eigener Bestwert je Strecke (Antwort)
+-- Gespeichert in WeintCodex_SavedData.flightGames.board.
+
+FG.PREFIX = "WCFG"
+FG.CODE = { jewels = "j", mahjong = "m", hunt = "h" }
+FG.GAME_OF = { j = "jewels", m = "mahjong", h = "hunt" }
+FG.SCORE_MAX = 5000000
+FG.NODE_MAX = 99999
+FG.SECS_MAX = 7200
+FG.MSG_MAX = 64
+FG.SEND_GAP = 1.0
+FG.QUEUE_MAX = 40
+FG.ANSWER_MAX = 20
+FG.ANSWER_GAP = 600
+FG.REQUEST_EVERY = 1800
+FG.RATE_WINDOW, FG.RATE_MAX, FG.SENDER_MAX = 60, 30, 300
+FG.NAMES_MAX, FG.ROUTES_MAX, FG.NODES_MAX = 200, 300, 600
+FG.stats = { sent = 0, received = 0, rejected = 0, answered = 0 }
+
+local bqueue = {}
+FG.queue = bqueue
+local fgSenders, fgSenderN = {}, 0
+
+function FG.Sharing() return FG.Active() and K.Get(KEY, "flightGamesShare") ~= false end
+
+local function Epoch()
+    local t = _G.time and K.Plain(_G.time())
+    return type(t) == "number" and t or 0
+end
+local function Clock()
+    local t = _G.GetTime and K.Plain(_G.GetTime())
+    return type(t) == "number" and t or 0
+end
+local function FGInGuild() return _G.IsInGuild and K.Bool(_G.IsInGuild(), false) or false end
+local function FGInCombat() return _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), true) or false end
+
+local function Realm()
+    local r = _G.GetNormalizedRealmName and K.Plain(_G.GetNormalizedRealmName())
+    return (type(r) == "string" and r ~= "") and r or nil
+end
+-- "Name-Realm" wie das Absenderfeld; nil ohne Antwort des Clients.
+function FG.Me()
+    local n = _G.UnitName and K.Plain(_G.UnitName("player"))
+    if type(n) ~= "string" or n == "" then return nil end
+    local r = Realm()
+    return r and (n .. "-" .. r) or n
+end
+function FG.FullName(sender)
+    sender = K.Plain(sender)
+    if type(sender) ~= "string" or sender == "" or #sender > 60 or sender:find("[%c|,]") then return nil end
+    if not sender:find("-", 1, true) then
+        local r = Realm()
+        if r then sender = sender .. "-" .. r end
+    end
+    return sender
+end
+
+function FG.Board(create)
+    local sd = _G.WeintCodex_SavedData
+    if type(sd) ~= "table" then return nil end
+    local fg = sd.flightGames
+    if type(fg) ~= "table" then
+        if not create then return nil end
+        fg = { best = {} }
+        sd.flightGames = fg
+    end
+    local b = fg.board
+    if type(b) ~= "table" then
+        if not create then return nil end
+        b = {}
+        fg.board = b
+    end
+    if type(b.all) ~= "table" then b.all = {} end
+    if type(b.route) ~= "table" then b.route = {} end
+    if type(b.nodes) ~= "table" then b.nodes = {} end
+    return b
+end
+
+function FG.RouteKey(from, to)
+    if type(from) ~= "number" or type(to) ~= "number" or from < 1 or to < 1 or from == to then return nil end
+    return from .. ">" .. to
+end
+
+-- Ein Eintrag je Name und Spiel: nur Besseres ersetzt. Voll -> der aelteste geht.
+local function Put(list, name, score, t)
+    local e = list[name]
+    if e then
+        if e[1] >= score then return false end
+        e[1], e[2] = score, t
+        return true
+    end
+    local n, oldK, oldT = 0, nil, nil
+    for k, v in pairs(list) do
+        n = n + 1
+        if not oldT or (v[2] or 0) < oldT then oldK, oldT = k, v[2] or 0 end
+    end
+    if n >= FG.NAMES_MAX and oldK then list[oldK] = nil end
+    list[name] = { score, t }
+    return true
+end
+
+local function Newest(r)
+    local m = 0
+    for _, list in pairs(r) do for _, v in pairs(list) do if (v[2] or 0) > m then m = v[2] or 0 end end end
+    return m
+end
+
+function FG.Enter(game, name, score, routeKey, t)
+    local b = FG.Board(true)
+    if not (b and FG.CODE[game] and type(name) == "string" and type(score) == "number" and score > 0) then return false end
+    t = t or Epoch()
+    b.all[game] = b.all[game] or {}
+    local changed = Put(b.all[game], name, score, t)
+    if routeKey then
+        local r = b.route[routeKey]
+        if not r then
+            local n, oldK, oldT = 0, nil, nil
+            for k, v in pairs(b.route) do
+                n = n + 1
+                local nt = Newest(v)
+                if not oldT or nt < oldT then oldK, oldT = k, nt end
+            end
+            if n >= FG.ROUTES_MAX and oldK then b.route[oldK] = nil end
+            r = {}
+            b.route[routeKey] = r
+        end
+        r[game] = r[game] or {}
+        changed = Put(r[game], name, score, t) or changed
+    end
+    return changed
+end
+
+function FG.NoteNode(id, name)
+    if type(id) ~= "number" or type(name) ~= "string" or name == "" then return end
+    local b = FG.Board(true)
+    if not b then return end
+    if not b.nodes[id] then
+        local n = 0
+        for _ in pairs(b.nodes) do n = n + 1 end
+        if n >= FG.NODES_MAX then return end
+    end
+    b.nodes[id] = name
+end
+
+function FG.RouteName(key)
+    if type(key) ~= "string" then return nil end
+    local a, z = key:match("^(%d+)>(%d+)$")
+    if not a then return nil end
+    local b = FG.Board()
+    local na, nz = b and b.nodes[tonumber(a)], b and b.nodes[tonumber(z)]
+    if na and nz then return na .. " → " .. nz end
+    return "Strecke " .. (na or a) .. " → " .. (nz or z)
+end
+
+-- Strecke des laufenden, sonst des letzten Flugs.
+function FG.CurrentRouteKey()
+    local f = FG.flight
+    return FG.RouteKey(f.fromID, f.toID) or FG.lastRouteKey
+end
+
+-- Rangliste: { {name, score, t, own}, ... } absteigend, Gleichstand: frueher vorn.
+function FG.Ranking(game, routeKey)
+    local b = FG.Board()
+    local list
+    if b then
+        if routeKey then list = b.route[routeKey] and b.route[routeKey][game]
+        else list = b.all[game] end
+    end
+    local out, me = {}, FG.Me()
+    for name, v in pairs(list or {}) do
+        out[#out + 1] = { name = name, score = v[1], t = v[2] or 0, own = (name == me) }
+    end
+    table.sort(out, function(x, y)
+        if x.score ~= y.score then return x.score > y.score end
+        if x.t ~= y.t then return x.t < y.t end
+        return x.name < y.name
+    end)
+    return out
+end
+
+function FG.RankOf(game, routeKey, name)
+    name = name or FG.Me()
+    for i, e in ipairs(FG.Ranking(game, routeKey)) do if e.name == name then return i end end
+    return nil
+end
+
+-- Bestwerte von vor der Bestenliste nachtragen (eigener Name).
+function FG.SeedOwn()
+    local me, best = FG.Me(), FG.Best()
+    if not (me and best) then return end
+    for g in pairs(FG.CODE) do
+        if type(best[g]) == "number" and best[g] > 0 then FG.Enter(g, me, best[g], nil, nil) end
+    end
+end
+
+-- Nachrichten bauen und strikt pruefen ------------------------------
+
+function FG.FormatScore(game, score, from, to, secs)
+    return "s," .. FG.CODE[game] .. "," .. math.floor(score) .. "," .. math.floor(from or 0) .. ","
+        .. math.floor(to or 0) .. "," .. math.floor(secs or 0)
+end
+
+local function Num(s, max)
+    if type(s) ~= "string" or #s > 8 then return nil end
+    local n = tonumber(s)
+    if not n or n < 0 or n > max or n ~= math.floor(n) then return nil end
+    return n
+end
+
+-- Liefert kind, game, score, from, to, secs - oder nil.
+function FG.Parse(text)
+    if type(text) ~= "string" or #text > FG.MSG_MAX then return nil end
+    if text == "q" then return "q" end
+    local g, s, a, z, d = text:match("^s,(%l),(%d+),(%d+),(%d+),(%d+)$")
+    if g then
+        local game = FG.GAME_OF[g]
+        s, a, z, d = Num(s, FG.SCORE_MAX), Num(a, FG.NODE_MAX), Num(z, FG.NODE_MAX), Num(d, FG.SECS_MAX)
+        if not (game and s and s > 0 and a and z and d) then return nil end
+        if (a == 0) ~= (z == 0) or (a > 0 and a == z) then return nil end
+        return "s", game, s, a, z, d
+    end
+    g, s = text:match("^b,(%l),(%d+)$")
+    if g then
+        local game = FG.GAME_OF[g]
+        s = Num(s, FG.SCORE_MAX)
+        if not (game and s and s > 0) then return nil end
+        return "b", game, s
+    end
+    g, s, a, z = text:match("^r,(%l),(%d+),(%d+),(%d+)$")
+    if g then
+        local game = FG.GAME_OF[g]
+        s, a, z = Num(s, FG.SCORE_MAX), Num(a, FG.NODE_MAX), Num(z, FG.NODE_MAX)
+        if not (game and s and s > 0 and a and z and a > 0 and z > 0 and a ~= z) then return nil end
+        return "r", game, s, a, z
+    end
+    return nil
+end
+
+function FG.Push(line)
+    if not (FG.Sharing() and FGInGuild()) or #bqueue >= FG.QUEUE_MAX then return false end
+    bqueue[#bqueue + 1] = line
+    if FG.sendFrame then FG.sendFrame:Show() end
+    return true
+end
+
+-- Eigenes Ergebnis: in die eigene Liste und (wenn geteilt) an die Gilde.
+function FG.Submit(game, score, from, to, secs)
+    local me = FG.Me()
+    local rk = FG.RouteKey(from, to)
+    if me then FG.Enter(game, me, score, rk, nil) end
+    if not rk then from, to = 0, 0 end
+    if type(secs) ~= "number" or secs < 0 then secs = 0 end
+    if secs > FG.SECS_MAX then secs = FG.SECS_MAX end
+    score = math.min(score, FG.SCORE_MAX)
+    return FG.Push(FG.FormatScore(game, score, from, to, secs))
+end
+
+local fgNextSend = 0
+function FG.SendNext(now)
+    if #bqueue == 0 then return true end
+    if now < fgNextSend or FGInCombat() then return false end
+    local cc = _G.C_ChatInfo
+    if not (cc and cc.SendAddonMessage and FG.Sharing()) then
+        for i = #bqueue, 1, -1 do bqueue[i] = nil end
+        return true
+    end
+    local ok, res = pcall(cc.SendAddonMessage, FG.PREFIX, bqueue[1], "GUILD")
+    if ok and (res == nil or res == true or res == 0) then
+        table.remove(bqueue, 1)
+        FG.stats.sent = FG.stats.sent + 1
+        fgNextSend = now + FG.SEND_GAP
+    else
+        fgNextSend = now + 5
+    end
+    return #bqueue == 0
+end
+
+local sendFrame = CreateFrame("Frame")
+sendFrame:Hide()
+local fgAcc = 0
+sendFrame:SetScript("OnUpdate", function(self, el)
+    fgAcc = fgAcc + (el or 0)
+    if fgAcc < 0.25 then return end
+    fgAcc = 0
+    if FG.SendNext(Clock()) then self:Hide() end
+end)
+FG.sendFrame = sendFrame
+
+-- Antwort auf "q": hoechstens einmal je FG.ANSWER_GAP s, hoechstens
+-- FG.ANSWER_MAX Zeilen - Bestwerte je Spiel, dann die besten Strecken.
+function FG.AnswerLines()
+    local lines, best, me = {}, FG.Best(), FG.Me()
+    for _, g in ipairs(FG.GAMES) do
+        local s = best and best[g.key]
+        if type(s) == "number" and s > 0 then lines[#lines + 1] = "b," .. FG.CODE[g.key] .. "," .. math.min(math.floor(s), FG.SCORE_MAX) end
+    end
+    local b, mine = FG.Board(), {}
+    for key, r in pairs(b and b.route or {}) do
+        local a, z = key:match("^(%d+)>(%d+)$")
+        for game, list in pairs(r) do
+            local e = me and list[me]
+            if e and FG.CODE[game] and a then mine[#mine + 1] = { game = game, score = e[1], a = a, z = z } end
+        end
+    end
+    table.sort(mine, function(x, y) return x.score > y.score end)
+    for _, e in ipairs(mine) do
+        if #lines >= FG.ANSWER_MAX then break end
+        lines[#lines + 1] = "r," .. FG.CODE[e.game] .. "," .. math.min(math.floor(e.score), FG.SCORE_MAX) .. "," .. e.a .. "," .. e.z
+    end
+    return lines
+end
+
+FG.lastAnswer = nil
+function FG.QueueAnswer()
+    local n = 0
+    for _, l in ipairs(FG.AnswerLines()) do if FG.Push(l) then n = n + 1 end end
+    if n > 0 then FG.stats.answered = FG.stats.answered + 1 end
+    return n
+end
+
+function FG.OnQuery(now)
+    if FG.lastAnswer and now - FG.lastAnswer < FG.ANSWER_GAP then return false end
+    FG.lastAnswer = now
+    local later = _G.C_Timer and _G.C_Timer.After
+    if later then later(math.random() * 5, FG.QueueAnswer) else FG.QueueAnswer() end
+    return true
+end
+
+FG.lastRequest = nil
+function FG.Request()
+    if not (FG.Sharing() and FGInGuild()) then return false end
+    local now = Clock()
+    if FG.lastRequest and now - FG.lastRequest < 60 then return false end
+    FG.lastRequest = now
+    return FG.Push("q")
+end
+
+function FG.Allow(sender, now)
+    local r = fgSenders[sender]
+    if not r then
+        if fgSenderN >= FG.SENDER_MAX then return false end
+        r = { now, 0 }
+        fgSenders[sender] = r
+        fgSenderN = fgSenderN + 1
+    end
+    if now - r[1] > FG.RATE_WINDOW then r[1], r[2] = now, 0 end
+    r[2] = r[2] + 1
+    return r[2] <= FG.RATE_MAX
+end
+
+function FG.OnAddonMessage(prefix, text, channel, sender, now)
+    prefix, text, channel = K.Plain(prefix), K.Plain(text), K.Plain(channel)
+    if prefix ~= FG.PREFIX then return false end
+    if channel ~= "GUILD" or not FG.Sharing() then FG.stats.rejected = FG.stats.rejected + 1 return false end
+    local name = FG.FullName(sender)
+    if not name then FG.stats.rejected = FG.stats.rejected + 1 return false end
+    if name == FG.Me() then return false end
+    now = type(now) == "number" and now or Clock()
+    if not FG.Allow(name, now) then FG.stats.rejected = FG.stats.rejected + 1 return false end
+    local kind, game, score, a, z = FG.Parse(text)
+    if not kind then FG.stats.rejected = FG.stats.rejected + 1 return false end
+    FG.stats.received = FG.stats.received + 1
+    if kind == "q" then return FG.OnQuery(now) or true end
+    if kind == "b" then FG.Enter(game, name, score, nil, nil)
+    else FG.Enter(game, name, score, FG.RouteKey(a, z), nil) end
+    if FG.views and FG.views.board and FG.views.board:IsShown() then FG.PaintBoard() end
+    return true
+end
+
+-- Klassen aus der Gildenliste (fuer die Farbe des Namens).
+FG.roster = {}
+function FG.ScanRoster()
+    if not (_G.GetNumGuildMembers and _G.GetGuildRosterInfo) then return 0 end
+    local ok, n = pcall(_G.GetNumGuildMembers)
+    n = ok and K.Plain(n) or 0
+    if type(n) ~= "number" then return 0 end
+    for i = 1, math.min(n, 1000) do
+        local ok2, name, _, _, _, _, _, _, _, _, _, class = pcall(_G.GetGuildRosterInfo, i)
+        name, class = ok2 and K.Plain(name), ok2 and K.Plain(class)
+        if type(name) == "string" and type(class) == "string" then
+            FG.roster[FG.FullName(name) or name] = class
+        end
+    end
+    return n
+end
+function FG.ClassColor(name)
+    local class = FG.roster[name]
+    if not class then return nil end
+    local cc
+    if _G.C_ClassColor and _G.C_ClassColor.GetClassColor then
+        local ok, col = pcall(_G.C_ClassColor.GetClassColor, class)
+        if ok and type(col) == "table" then cc = col end
+    end
+    if not cc and type(_G.RAID_CLASS_COLORS) == "table" then cc = _G.RAID_CLASS_COLORS[class] end
+    if type(cc) ~= "table" or type(cc.r) ~= "number" then return nil end
+    return cc
+end
+
+function FG.StatusLines()
+    local b, n, r = FG.Board(), 0, 0
+    for _, list in pairs(b and b.all or {}) do for _ in pairs(list) do n = n + 1 end end
+    for _ in pairs(b and b.route or {}) do r = r + 1 end
+    return {
+        string.format("Gilde: %s · gesendet %d · empfangen %d · abgewiesen %d · beantwortet %d",
+            FG.Sharing() and "teilen an" or "teilen aus", FG.stats.sent, FG.stats.received, FG.stats.rejected, FG.stats.answered),
+        string.format("Bestenliste: %d Einträge (alle Zeiten) · %d Strecken", n, r),
+    }
+end
+
+-- Pillen mit runden Enden (wie die Farm-Leiste des Sammel-Atlas).
+FG.PILL_H = 22
+local function PaintPill(b, on, hot)
+    local a, base = K.Highlight(), GC.kachelFill
+    local r, g, bl
+    if on then
+        local k = hot and 0.55 or 0.40
+        r, g, bl = base[1] + (a[1] - base[1]) * k, base[2] + (a[2] - base[2]) * k, base[3] + (a[3] - base[3]) * k
+    else
+        local s1 = hot and (C.borderStrong or C.surface3) or C.surface3
+        r, g, bl = s1[1], s1[2], s1[3]
+    end
+    b.fill:SetColorTexture(r, g, bl, 1)
+    b.capL:SetVertexColor(r, g, bl, 1)
+    b.capR:SetVertexColor(r, g, bl, 1)
+    local tc = on and C.textBright or C.textNormal
+    b.text:SetTextColor(tc[1], tc[2], tc[3], on and 1 or 0.85)
+    b.on = on
+end
+FG.PaintPill = PaintPill
+
+local function Pill(parent, text, w, onClick)
+    local H = FG.PILL_H
+    local b = CreateFrame("Button", nil, parent)
+    b:SetSize(w, H)
+    b.fill = b:CreateTexture(nil, "BACKGROUND")
+    b.fill:SetPoint("TOPLEFT", b, "TOPLEFT", H / 2, 0)
+    b.fill:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -H / 2, 0)
+    b.capL = b:CreateTexture(nil, "BACKGROUND")
+    b.capL:SetSize(H, H)
+    b.capL:SetPoint("LEFT", b, "LEFT", 0, 0)
+    b.capL:SetTexture(K.MEDIA .. "disc")
+    b.capR = b:CreateTexture(nil, "BACKGROUND")
+    b.capR:SetSize(H, H)
+    b.capR:SetPoint("RIGHT", b, "RIGHT", 0, 0)
+    b.capR:SetTexture(K.MEDIA .. "disc")
+    b.text = K.NewText(b, 12)
+    b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
+    b.text:SetText(text)
+    b:SetScript("OnEnter", function(self) self._hot = true PaintPill(self, self.on, true) end)
+    b:SetScript("OnLeave", function(self) self._hot = nil PaintPill(self, self.on, false) end)
+    if onClick then b:SetScript("OnClick", onClick) end
+    PaintPill(b, false, false)
+    return b
+end
+FG.Pill = Pill
+
+-- Masse der Ansicht (Breite der Ansicht = FG.W - 40). Spalten: Platz,
+-- Name, Punkte, Datum - nichts reicht ueber die Ansicht hinaus.
+FG.BL = {
+    GAME_W = 120, SCOPE_W = 130, GAP = 10,
+    Y_GAMES = -4, Y_SCOPE = -36, Y_LABEL = -68, Y_HEAD = -92, Y_ROWS = -112, ROW_H = 28, ROWS = 10,
+    COLS = { { x = 8, w = 28 }, { x = 42, w = 176 }, { x = 224, w = 84 }, { x = 314, w = 78 } },
+    BACK_W = 140, BACK_H = 28,
+}
+FG.bstate = { game = "jewels", scope = "all", from = "ask" }
+
+local function DateText(t)
+    if type(t) ~= "number" or t <= 0 or not _G.date then return "" end
+    local ok, s = pcall(_G.date, "%d.%m.%y", t)
+    return ok and type(s) == "string" and s or ""
+end
+
+local function BuildBoardView()
+    local v = View("board")
+    local L, vw = FG.BL, FG.W - 40
+    v.games = {}
+    local gx = (vw - (#FG.GAMES * L.GAME_W + (#FG.GAMES - 1) * L.GAP)) / 2
+    for i, g in ipairs(FG.GAMES) do
+        local key = g.key
+        local p = Pill(v, g.name, L.GAME_W, function() FG.bstate.game = key FG.PaintBoard() end)
+        p:SetPoint("TOPLEFT", v, "TOPLEFT", gx + (i - 1) * (L.GAME_W + L.GAP), L.Y_GAMES)
+        p.key = key
+        v.games[i] = p
+    end
+    local sx = (vw - (2 * L.SCOPE_W + L.GAP)) / 2
+    v.scopeAll = Pill(v, "Alle Zeiten", L.SCOPE_W, function() FG.bstate.scope = "all" FG.PaintBoard() end)
+    v.scopeAll:SetPoint("TOPLEFT", v, "TOPLEFT", sx, L.Y_SCOPE)
+    v.scopeRoute = Pill(v, "Dieser Flug", L.SCOPE_W, function() FG.bstate.scope = "route" FG.PaintBoard() end)
+    v.scopeRoute:SetPoint("TOPLEFT", v, "TOPLEFT", sx + L.SCOPE_W + L.GAP, L.Y_SCOPE)
+    local m, tb = C.textMuted, C.textBright
+    v.label = K.NewText(v, 12)
+    v.label:SetPoint("TOPLEFT", v, "TOPLEFT", 0, L.Y_LABEL)
+    v.label:SetWidth(vw)
+    v.label:SetJustifyH("CENTER")
+    v.label:SetWordWrap(false)
+    v.label:SetTextColor(m[1], m[2], m[3])
+    local function Cell(parent, i, size, y, right)
+        local c = L.COLS[i]
+        local t = K.NewText(parent, size)
+        t:SetPoint("TOPLEFT", parent, "TOPLEFT", c.x, y)
+        t:SetWidth(c.w)
+        t:SetJustifyH(right and "RIGHT" or "LEFT")
+        t:SetWordWrap(false)
+        return t
+    end
+    v.head = {}
+    for i, h in ipairs({ "#", "Name", "Punkte", "Datum" }) do
+        local t = Cell(v, i, 11, L.Y_HEAD, i >= 3)
+        t:SetText(h)
+        t:SetTextColor(m[1], m[2], m[3])
+        v.head[i] = t
+    end
+    v.rows = {}
+    local s1, acc = C.surface1 or C.bgCard, C.accent
+    for i = 1, L.ROWS do
+        local r = CreateFrame("Frame", nil, v)
+        r:SetSize(vw, L.ROW_H - 2)
+        r:SetPoint("TOPLEFT", v, "TOPLEFT", 0, L.Y_ROWS - (i - 1) * L.ROW_H)
+        r.bg = r:CreateTexture(nil, "BACKGROUND")
+        r.bg:SetAllPoints(r)
+        r.bg:SetColorTexture(s1[1], s1[2], s1[3], (i % 2 == 1) and 0.9 or 0.55)
+        r.mark = r:CreateTexture(nil, "BORDER")
+        r.mark:SetAllPoints(r)
+        r.mark:SetColorTexture(acc[1], acc[2], acc[3], 0.18)
+        r.mark:Hide()
+        r.strip = r:CreateTexture(nil, "ARTWORK")
+        r.strip:SetPoint("TOPLEFT") r.strip:SetPoint("BOTTOMLEFT")
+        r.strip:SetWidth(3)
+        r.strip:SetColorTexture(acc[1], acc[2], acc[3], 1)
+        r.strip:Hide()
+        r.cells = {}
+        for c = 1, 4 do
+            local t = Cell(r, c, 12, -7, c >= 3)
+            t:SetTextColor(tb[1], tb[2], tb[3])
+            r.cells[c] = t
+        end
+        r:Hide()
+        v.rows[i] = r
+    end
+    v.empty = K.NewText(v, 13)
+    v.empty:SetPoint("TOP", v, "TOP", 0, L.Y_ROWS - 60)
+    v.empty:SetWidth(vw - 40)
+    v.empty:SetJustifyH("CENTER")
+    v.empty:SetTextColor(m[1], m[2], m[3])
+    v.back = Button(v, "Zurück", L.BACK_W, L.BACK_H, function() FG.BoardBack() end)
+    v.back:SetPoint("BOTTOM", v, "BOTTOM", 0, 0)
+end
+
+function FG.PaintBoard()
+    local v = views.board
+    if not v then return end
+    local st = FG.bstate
+    for _, p in ipairs(v.games) do PaintPill(p, p.key == st.game, p._hot) end
+    local rk = FG.CurrentRouteKey()
+    PaintPill(v.scopeAll, st.scope == "all", v.scopeAll._hot)
+    PaintPill(v.scopeRoute, st.scope == "route", v.scopeRoute._hot)
+    local list, empty = {}, nil
+    if st.scope == "route" then
+        if rk then
+            v.label:SetText(FG.RouteName(rk) or "")
+            list = FG.Ranking(st.game, rk)
+        else
+            v.label:SetText("Strecke unbekannt")
+            empty = "Für diesen Flug ist die Strecke nicht bekannt – sie steht fest, wenn du am Flugmeister ein Ziel wählst."
+        end
+    else
+        v.label:SetText(FG.NameOf(st.game) .. " · beste Punkte aller Zeiten")
+        list = FG.Ranking(st.game, nil)
+    end
+    if not empty and #list == 0 then
+        empty = "Noch keine Ergebnisse aus der Gilde."
+            .. (FG.Sharing() and "" or "\nTeilen ist aus (Komfort → Flugspiele).")
+    end
+    local tb, acc = C.textBright, C.accentBright or C.accent
+    for i, r in ipairs(v.rows) do
+        local e = list[i]
+        if e and not empty then
+            r.cells[1]:SetText(tostring(i))
+            r.cells[2]:SetText(WeintCodex.Truncate and WeintCodex.Truncate(e.name, 24) or e.name)
+            r.cells[3]:SetText(tostring(e.score))
+            r.cells[4]:SetText(DateText(e.t))
+            local cc = (not e.own) and FG.ClassColor(e.name)
+            if e.own then r.cells[2]:SetTextColor(acc[1], acc[2], acc[3])
+            elseif cc then r.cells[2]:SetTextColor(cc.r, cc.g, cc.b)
+            else r.cells[2]:SetTextColor(tb[1], tb[2], tb[3]) end
+            r.mark:SetShown(e.own)
+            r.strip:SetShown(e.own)
+            r.own = e.own
+            r:Show()
+        else
+            r.own = nil
+            r:Hide()
+        end
+    end
+    for _, h in ipairs(v.head) do h:SetShown(not empty) end
+    v.empty:SetText(empty or "")
+    v.empty:SetShown(empty ~= nil)
+    v.list = list
+end
+
+function FG.ShowBoard(from, game)
+    Build()
+    FG.SeedOwn()
+    local st = FG.bstate
+    st.from = from or "ask"
+    if game and FG.CODE[game] then st.game = game end
+    win.title:SetText("Flugspiele – Bestenliste")
+    win.back:Hide()
+    win.note:SetText("")
+    Show("board")
+    FG.PaintBoard()
+    win:Show()
+    return true
+end
+
+function FG.BoardBack()
+    if FG.bstate.from == "result" and FG.lastResult then
+        win.title:SetText("Flugspiele – Ergebnis")
+        Show("result")
+    else
+        FG.Ask(true)
+    end
+end
+
+--------------------------------------------------
 -- Fenster, Frage, Ergebnis
 --------------------------------------------------
 
-local function Build()
+Build = function()
     if win then return win end
     win = CreateFrame("Frame", "WeintCodexFlightGames", UIParent)
     win:SetSize(FG.W, FG.WIN_H)
@@ -1047,6 +1684,9 @@ local function Build()
         print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Keine Frage mehr beim Fliegen. Spielen geht weiter mit /wcui spiele; wieder fragen: Komfort → Flugspiele.")
     end)
     never:SetPoint("BOTTOMRIGHT", ask, "BOTTOMRIGHT", 0, 0)
+    -- 6.89.0.0: eigene Zeile ueber "Nein danke" / "Nicht mehr fragen".
+    ask.board = Button(ask, "Bestenliste der Gilde", 180, 28, function() FG.ShowBoard("ask") end)
+    ask.board:SetPoint("BOTTOM", ask, "BOTTOM", 0, 40)
 
     -- Ergebnis
     local res = View("result")
@@ -1058,10 +1698,17 @@ local function Build()
     res.guild:SetPoint("BOTTOM", res, "BOTTOM", -100, 20)
     res.ok = Button(res, "Schließen", 140, 30, function() FG.Close() end)
     res.ok:SetPoint("BOTTOM", res, "BOTTOM", 100, 20)
+    -- 6.89.0.0: eigene Zeile ueber den beiden Knoepfen.
+    res.board = Button(res, "Bestenliste", 160, 28, function()
+        local first = FG.lastResult and FG.lastResult[1]
+        FG.ShowBoard("result", first and first.key)
+    end)
+    res.board:SetPoint("BOTTOM", res, "BOTTOM", 0, 60)
 
     BuildJewels()
     BuildMahjong()
     BuildHunt()
+    BuildBoardView()
     win.note = K.NewText(win, 11)
     win.note:SetPoint("BOTTOM", win, "BOTTOM", 0, 14)
 
@@ -1156,6 +1803,7 @@ function FG.Record()
             local rec = best and (best[g.key] or 0) < s
             if rec then best[g.key] = s end
             out[#out + 1] = { key = g.key, name = g.name, score = s, record = rec, best = best and best[g.key] }
+            pcall(FG.Submit, g.key, s, FG.flight.fromID, FG.flight.toID, FG.flight.secs)
         end
     end
     FG.flight.scores, FG.flight.game, FG.flight.points = {}, nil, 0
@@ -1168,6 +1816,8 @@ function FG.Result(list)
     local lines = {}
     for _, r in ipairs(list) do
         lines[#lines + 1] = r.name .. ": " .. r.score .. " Punkte" .. (r.record and "  – neuer Bestwert!" or ("  (Bestwert " .. tostring(r.best) .. ")"))
+        local rank = FG.RankLine(r.key)
+        if rank then lines[#lines + 1] = rank end
     end
     local f = FG.flight
     local route = FG.Route()
@@ -1180,6 +1830,20 @@ function FG.Result(list)
     win.score:SetText("")
     Show("result")
     win:Show()
+end
+
+-- "Platz 2 in der Gilde (alle Zeiten) · Platz 1 auf dieser Strecke" -
+-- nur, was bekannt ist; allein ohne andere Eintraege nichts.
+function FG.RankLine(game)
+    local a = FG.RankOf(game, nil)
+    local rk = FG.CurrentRouteKey()
+    local b = rk and FG.RankOf(game, rk)
+    local nA, nB = #FG.Ranking(game, nil), rk and #FG.Ranking(game, rk) or 0
+    local parts = {}
+    if a and nA > 1 then parts[#parts + 1] = "Platz " .. a .. " in der Gilde (alle Zeiten)" end
+    if b and nB > 1 then parts[#parts + 1] = "Platz " .. b .. " auf dieser Strecke" end
+    if #parts == 0 then return nil end
+    return "   " .. table.concat(parts, " · ")
 end
 
 -- Eine Zeile in die Chatzeile - Enter schickt sie, der Spieler entscheidet.
@@ -1245,10 +1909,34 @@ function FG.NoteTaxi(index)
             if K.Plain(_G.TaxiNodeGetType(i)) == "CURRENT" then from = Place(_G.TaxiNodeName(i)) break end
         end
     end
-    FG.pending = { from = from, to = to, at = _G.GetTime and K.Plain(_G.GetTime()) or 0 }
+    local okI, fromID, toID = pcall(FG.TaxiIDs, index)
+    if not okI then fromID, toID = nil, nil end
+    FG.pending = { from = from, to = to, fromID = fromID, toID = toID, at = _G.GetTime and K.Plain(_G.GetTime()) or 0 }
 end
 if type(_G.TakeTaxiNode) == "function" and _G.hooksecurefunc then
     pcall(_G.hooksecurefunc, "TakeTaxiNode", function(i) pcall(FG.NoteTaxi, i) end)
+end
+
+-- 6.89.0.0: Knotennummern der Flugkarte (fuer die Bestenliste je Strecke);
+-- Namen der Knoten merkt sich die Bestenliste. Ohne Antwort nil.
+function FG.TaxiIDs(index)
+    local TM = _G.C_TaxiMap
+    if not (TM and TM.GetAllTaxiNodes and _G.GetTaxiMapID) then return nil end
+    local okM, mid = pcall(_G.GetTaxiMapID)
+    mid = okM and K.Plain(mid)
+    if type(mid) ~= "number" then return nil end
+    local ok, nodes = pcall(TM.GetAllTaxiNodes, mid)
+    if not ok or type(nodes) ~= "table" then return nil end
+    local from, to
+    for _, n in ipairs(nodes) do
+        local id, slot, st = K.Plain(n.nodeID), K.Plain(n.slotIndex), K.Plain(n.state)
+        if type(id) == "number" and id >= 1 and id <= FG.NODE_MAX then
+            FG.NoteNode(id, Place(n.name))
+            if slot == index then to = id end
+            if st == 0 then from = id end   -- Enum.FlightPathState.Current
+        end
+    end
+    return from, to
 end
 
 -- "2:31 min" bzw. "45 s".
@@ -1268,6 +1956,8 @@ function FG.Takeoff()
     local fresh = pend and type(now) == "number" and now - (pend.at or 0) < 30
     f.from = (fresh and pend.from) or HereName()
     f.to = fresh and pend.to or nil
+    f.fromID, f.toID = fresh and pend.fromID or nil, fresh and pend.toID or nil
+    FG.lastRouteKey = FG.RouteKey(f.fromID, f.toID)
     f.start = now
     FG.pending = nil
     if not FG.Active() or K.Get(KEY, "flightGamesAsk") == false then return false end
@@ -1287,6 +1977,7 @@ function FG.Landing()
         return false
     end
     local list = FG.Record()
+    f.fromID, f.toID = nil, nil   -- spaeter Gespieltes (/wcui spiele) zaehlt nicht fuer diese Strecke
     if #list == 0 then
         if win then win:Hide() end
         return false
@@ -1297,11 +1988,27 @@ end
 
 local ev = CreateFrame("Frame")
 FG.events = ev
-for _, e in ipairs({ "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED", "PLAYER_ENTERING_WORLD" }) do
+for _, e in ipairs({ "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED", "PLAYER_ENTERING_WORLD", "CHAT_MSG_ADDON", "GUILD_ROSTER_UPDATE" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
-ev:SetScript("OnEvent", function(_, event)
+ev:SetScript("OnEvent", function(_, event, a, b, c, d)
+    if event == "CHAT_MSG_ADDON" then
+        if a == FG.PREFIX then pcall(FG.OnAddonMessage, a, b, c, d) end
+        return
+    elseif event == "GUILD_ROSTER_UPDATE" then
+        pcall(FG.ScanRoster)
+        return
+    end
     local later = _G.C_Timer and _G.C_Timer.After
+    if event == "PLAYER_ENTERING_WORLD" and not FG.requestTimer then
+        FG.requestTimer = true
+        local cc = _G.C_ChatInfo
+        if cc and cc.RegisterAddonMessagePrefix then pcall(cc.RegisterAddonMessagePrefix, FG.PREFIX) end
+        if later then later(40, function() pcall(FG.Request) end) end
+        if _G.C_Timer and _G.C_Timer.NewTicker then
+            _G.C_Timer.NewTicker(FG.REQUEST_EVERY, function() pcall(FG.Request) end)
+        end
+    end
     if event == "PLAYER_CONTROL_LOST" then
         if later then later(1, function() pcall(FG.Takeoff) end) else pcall(FG.Takeoff) end
     else
@@ -1324,6 +2031,9 @@ local function BuildPage(B)
           { type = "toggle", label = "Töne", key = "flightGamesSound",
             disabled = function() return K.Get(KEY, "flightGames") == false end,
             description = "Gackern, Piepen und Bumm in der Hühnerjagd." })
+    B:Row({ type = "toggle", label = "Bestenliste mit der Gilde teilen", key = "flightGamesShare",
+            disabled = function() return K.Get(KEY, "flightGames") == false end,
+            description = "Schickt nach jedem Spiel nur Spiel, Punkte, Flugstrecke und Flugdauer an die Gilde und empfängt deren Bestwerte. Aus: die Bestenliste zeigt nur dich." })
     B:Note("„Der Gilde zeigen“ schreibt die Zeile nur in die Chatzeile – erst Enter schickt sie ab.")
 end
 FG.BuildPage = BuildPage
@@ -1333,6 +2043,7 @@ if mod then
     if mod.defaults.flightGames == nil then mod.defaults.flightGames = true end
     if mod.defaults.flightGamesAsk == nil then mod.defaults.flightGamesAsk = true end
     if mod.defaults.flightGamesSound == nil then mod.defaults.flightGamesSound = true end
+    if mod.defaults.flightGamesShare == nil then mod.defaults.flightGamesShare = true end
     mod.pages[#mod.pages + 1] = { key = "flugspiele", label = "Flugspiele", build = BuildPage }
     if type(mod.pageOrder) == "table" then mod.pageOrder.flugspiele = 33 end
 end

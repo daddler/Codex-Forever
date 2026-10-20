@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.89.0.0] – 2026-10-20
+
+### Neu
+- Flugspiele: Bestenliste der Gilde (Präfix `WCFG`, `flightGamesShare`,
+  `SavedData.flightGames.board`), Ansicht „Bestenliste“, Platz im Ergebnis;
+  fünfte Ausnahme in CLAUDE.md.
+
 ## [6.88.0.0] – 2026-10-20
 
 ### Neu

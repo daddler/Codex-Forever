@@ -653,6 +653,15 @@ Check("Sammel-Atlas", function(add)
     for _, line in ipairs(GA.StatusLines()) do add("", "   " .. line) end
 end)
 
+-- Bestenliste der Flugspiele (6.89.0.0): WCFG, nur Gilde.
+Check("Flugspiele: Bestenliste", function(add)
+    local FG = WeintCodex.UIFlightGames
+    if not (FG and FG.StatusLines) then add(SC.OPEN, "Flugspiele nicht geladen.") return end
+    add(FG.Sharing() and SC.OK or SC.OPEN, FG.Sharing() and "Bestenliste mit der Gilde teilen an"
+        or "Bestenliste teilen aus (Komfort → Flugspiele)")
+    for _, line in ipairs(FG.StatusLines()) do add("", "   " .. line) end
+end)
+
 -- Abklingzeitmanager je Klasse (Layout "WeintCodex" ueber C_CooldownViewer)
 Check("Abklingzeitmanager", function(add)
     local CS = WeintCodex.UICooldownSetup

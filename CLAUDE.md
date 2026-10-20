@@ -68,6 +68,9 @@ LayerSwap hosts read. Never by itself, no hosting, no invites sent.
 Gilde“, `ui/gatheratlas.lua`):** Sammel-Atlas nodes, prefix `WCGA`, guild
 only, only map id, object id, coordinates (and the node kind), switch
 `gatherShare`, active only with the atlas on.
+**Fifth exception since 6.89.0.0, on request (Bestenlisten der Flugspiele,
+`ui/flightgames.lua`):** prefix `WCFG`, guild only, only game, score, flight
+node IDs and duration; switch `flightGamesShare`.
 Nothing else leaves the client, nothing goes to the
 internet; any further outward message needs the same explicit request.
 

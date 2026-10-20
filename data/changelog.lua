@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.89.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFFlugspiele: Bestenliste der Gilde|r – je Spiel die besten 10 aller Zeiten und die Besten auf deiner Flugstrecke, dein Eintrag hervorgehoben. Nach jedem Spiel steht dein Platz im Ergebnis. Dafür gehen Spiel, Punkte, Strecke und Flugdauer still an die Gilde; ausschaltbar unter Komfort → Flugspiele → „Bestenliste mit der Gilde teilen“.",
+        },
+    },
+    {
         version = "6.88.0.0",
         date    = "20.10.2026",
         notes   = {

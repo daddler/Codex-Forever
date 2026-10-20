@@ -1772,6 +1772,29 @@ Wechsel der Suche; von Haus aus **aus**, geht ohne Oberfläche; `/wcui sammeln`)
   Bereiche, Länge ≤ 48; `GA.Allow`: 30 je Minute und Absender), gespeichert
   mit `s = true`, zählt nie als eigenes Sammeln; ohne bekannte Art unsichtbar.
 
+### Bestenliste der Flugspiele (`ui/flightgames.lua`, 6.89.0.0)
+
+Wunsch: „Bestenlisten – best erreichte Punkte und pro Flug innerhalb der
+Gilde.“ Fünfte Ausnahme nach außen (CLAUDE.md). Schalter `flightGamesShare`
+(an, wirkt nur mit den Flugspielen). Kennung `WCFG`, nur `GUILD`, eine
+Nachricht je Sekunde über `FG.queue`, nie im Kampf, kein freier Text:
+`s,<j|m|h>,<Punkte>,<von|0>,<nach|0>,<Sek.|0>` nach jedem Spiel eines Flugs
+(`FG.Submit` aus `FG.Record`); `q` 40 s nach dem Einloggen und alle 30 min;
+Antwort höchstens einmal je 10 min, 0–5 s verzögert, ≤ 20 Zeilen
+`b,<g>,<Punkte>` / `r,<g>,<Punkte>,<von>,<nach>`. Der Name kommt nur aus dem
+Absenderfeld (`FG.FullName`), der eigene wird ignoriert; `FG.Parse` prüft
+Muster, Ziffern ≤ 8, Punkte ≤ 5 000 000, Knoten ≤ 99 999, Dauer ≤ 7200 s;
+`FG.Allow` 30 je Minute und Absender. Gespeichert in
+`WeintCodex_SavedData.flightGames.board` (`all[Spiel][Name-Realm]`,
+`route["von>nach"][Spiel][Name]` = `{Punkte, Zeit}`, `nodes[id]` = Name aus
+`C_TaxiMap.GetAllTaxiNodes`; je Spiel ≤ 200 Namen, ≤ 300 Strecken – der
+älteste fliegt). Unbekannter Knoten: „Strecke <id>“. Ansicht „board“ im
+Fenster (`FG.BL`: Pillen mit runden Enden für Spiel und „Alle Zeiten“/
+„Dieser Flug“, zehn Zeilen, eigene Zeile im Akzent, Namen in Klassenfarbe
+aus der Gildenliste), erreichbar aus Frage und Ergebnis; das Ergebnis nennt
+„Platz X in der Gilde (alle Zeiten) · Platz Y auf dieser Strecke“, wenn es
+mehr als einen Eintrag gibt. `/wcui prüfen`: „Flugspiele: Bestenliste“.
+
 ## Herkunft im Spiel ohne fremde Namen *(6.21.0.0)*
 
 Beta-Test: „Ich möchte, dass nirgendwo als Quelle … steht, dass dies von
