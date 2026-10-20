@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.100.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFPaladine: Segen verteilen|r – neue Seite Komfort → Segen: je Klasse (und unter „Erweitert“ je Rolle) einen Segen festlegen. Ein kleiner Rahmen mit „Buffen“ setzt bei jedem Klick den nächsten fehlenden Segen auf das richtige Gruppenmitglied – nachdenken entfällt. Auch als Taste belegbar. Nur außerhalb des Kampfes.",
+        },
+    },
+    {
         version = "6.99.1.0",
         date    = "20.10.2026",
         notes   = {

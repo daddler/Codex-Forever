@@ -105,6 +105,8 @@ K.LAYOUT = {
     -- Automark (ui/automark.lua, 6.9.0.2): der Knopf "Markieren" unter den
     -- Erinnerungen - erscheint nur beim Betreten einer Instanz.
     automark        = { point = "TOP",         relPoint = "TOP", x = 0, y = -255 },
+    -- Segen verteilen (ui/paladinbuffs.lua): Knopf "Buffen" links der Mitte unten.
+    paladinbuffs    = { point = "BOTTOM",      relPoint = "BOTTOM", x = -300, y = 220 },
     -- Mikromenue und Taschenleiste des Spiels (6.9.1.0): seitdem Rahmen des
     -- Gestaltungsmodus (ui/actionbars.lua) - hier ihr Standardplatz, den
     -- auch das Layout im Bearbeitungsmodus bekommt (K.GAME_LAYOUT, `from`).

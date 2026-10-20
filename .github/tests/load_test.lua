@@ -3119,6 +3119,49 @@ do
         "ohne Auskunft des Clients ist die Haltbarkeit unbekannt, nicht 0")
 end
 
+-- Segen verteilen (Paladin): nur Einzelsegen (keine grossen), Rolle vor
+-- Klasse, Tank nie Rettung, Knopf geschuetzt, nichts gesendet.
+do
+    local ok, err = pcall(function()
+        local PB = WeintCodex.UIPaladinBuffs
+        assert(PB, "ui/paladinbuffs.lua nicht geladen")
+        local found = false
+        for _, pg in ipairs(K.Module("comfort").pages) do if pg.key == "segen" then found = true end end
+        assert(found, "Segen nicht als Seite im Komfort")
+        assert(K.Get("comfort", "blessOn") == false, "Segen von Haus aus an")
+        for key in pairs(PB.BLESSINGS) do
+            for _, id in ipairs(PB.Chain(key)) do assert(not PB.GREATER[id], key .. ": grosser Segen in der Kette") end
+        end
+        assert(#PB.Chain("might") > 1, "Macht ohne hoehere Raenge aus dem Lehrerbestand")
+        local G = _G
+        local saved = { IsPlayerSpell = G.IsPlayerSpell, IsSpellKnown = G.IsSpellKnown }
+        local known = {}
+        for _, id in ipairs(PB.Chain("might")) do known[id] = true end
+        known[PB.Chain("wisdom")[1]] = true
+        known[PB.Chain("salvation")[1]] = true
+        G.IsPlayerSpell = function(id) return known[id] or false end
+        G.IsSpellKnown = function() return false end
+        local key, id = PB.Want("MAGE", nil)
+        assert(key == "wisdom" and id == PB.Chain("wisdom")[1], "Magier: " .. tostring(key))
+        key, id = PB.Want("WARRIOR", "TANK")       -- Koenige nicht gelernt -> Klasse
+        assert(key == "might" and id == PB.Chain("might")[#PB.Chain("might")], "Tank: " .. tostring(key))
+        K.Set("comfort", "blessRole_TANK", "salvation")
+        key = PB.Want("WARRIOR", "TANK")
+        assert(key ~= "salvation", "Tank bekommt Rettung")
+        K.Set("comfort", "blessRole_TANK", "kings")
+        G.IsPlayerSpell, G.IsSpellKnown = saved.IsPlayerSpell, saved.IsSpellKnown
+        local src = io.open(ROOT .. "/ui/paladinbuffs.lua"):read("*a")
+        assert(not src:find("SendAddonMessage") and not src:find("C_ChatInfo"), "Segen senden etwas")
+        assert(src:find("SecureActionButtonTemplate") and src:find("PreClick"), "Knopf nicht geschuetzt")
+        assert(not src:find("CastSpell"), "zaubert ohne Klick")
+        assert(not src:find("PallyPower"), "fremder Name im Code")
+        local bind = io.open(ROOT .. "/Bindings.xml"):read("*a")
+        assert(bind:find("CLICK WeintCodexBlessButton:LeftButton", 1, true), "keine Tastenbelegung")
+    end)
+    Check(ok, "Segen verteilen: Einzelsegen aus dem Lehrerbestand, Rolle vor Klasse, Tank nie Rettung, geschuetzter Knopf"
+        .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- Automark (6.8.1.0, 6.9.0.2 auf Klick): Tank und Heiler markieren - nur mit
 -- der Rolle, die das Spiel vergeben hat, nur als Gruppenleiter, je Instanz
 -- einmal, nie im Kampf, und nur ueber den Klick auf einen Makroknopf.
@@ -18207,9 +18250,9 @@ do
             assert(QoL.PAGE_ORDER[p.key], "Seite ohne Thema: " .. p.key)
         end
         local order = table.concat(keys, ",")
-        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,ringe,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,danke,gespraeche,flugspiele",
+        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,segen,ringe,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,danke,gespraeche,flugspiele",
             "Reihenfolge: " .. order)
-        assert(O.PageIndex("comfort", "gespraeche") == 16 and O.PageIndex("comfort", "fluestern") == 14, "Index nach Sortieren")
+        assert(O.PageIndex("comfort", "gespraeche") == 17 and O.PageIndex("comfort", "fluestern") == 15, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")

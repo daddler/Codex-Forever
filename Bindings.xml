@@ -7,4 +7,6 @@
 	<!-- 6.87.5.0: direkt neu laden - klickt den gesicherten Knopf. Kopf nur
 	     einmal (6.87.7.0: zweiter Kopf gab LUA_WARNING). -->
 	<Binding name="CLICK WeintCodexReloadDirect:LeftButton" category="ADDONS"/>
+	<!-- Segen verteilen (Paladin): klickt den gesicherten Knopf "Buffen". -->
+	<Binding name="CLICK WeintCodexBlessButton:LeftButton" category="ADDONS"/>
 </Bindings>

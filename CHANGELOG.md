@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.100.0.0] – 2026-10-20
+
+### Hinzugefügt
+- `ui/paladinbuffs.lua`: Segensverteilung je Klasse/Rolle, sicherer Knopf `WeintCodexBlessButton` (PreClick setzt Ziel und Zauber außerhalb des Kampfes), Tastenbelegung, keine Addon-Nachrichten.
+
 ## [6.99.1.0] – 2026-10-20
 
 ### Behoben

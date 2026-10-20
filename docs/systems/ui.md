@@ -4548,3 +4548,31 @@ Aufrufkette „WeintCodex“ nennt, dazu `ADDON_ACTION_BLOCKED/FORBIDDEN` mit Ad
 Gebiet, Anzahl, Zeiten und gekürzter Aufrufkette – nie im Kampf, dann danach.
 `/wcui fehler` zeigt alle, `/wcui fehler leeren` löscht. Schalter `comfort.errorCatch`
 (an), Seite Komfort › Anzeigen.
+
+## Segen verteilen (Paladin, `ui/paladinbuffs.lua`)
+
+Seite „Segen“ im Komfort (Thema Kampf und Gruppe, Rang 13.5), von Haus aus
+aus, nur für Paladine. Nach dem *Verhalten* eines bekannten Paladin-Addons
+(„All Rights Reserved“ – kein Code, keine Daten, keine Bilder; in
+Spielertexten nicht genannt).
+
+- **Zuweisung:** je Klasse (alle neun, Schamane für beide Fraktionen) ein
+  Segen (`bless_<KLASSE>`), unter „Erweitert“ Vorrang je Rolle
+  (`blessRole_TANK/HEALER/DAMAGER`, „Wie die Klasse“) und die Restzeit, ab
+  der neu gesegnet wird (`blessRefresh`, Minuten). Rolle nur vom Spiel
+  (`UnitGroupRolesAssigned`), nie geraten. Nicht gelernt → Segen der Klasse
+  → Macht. Ein Tank bekommt nie Rettung (`PB.Want`).
+- **Raenge:** Ketten aus `data/trainer.lua` über `requiredIds`, die großen
+  Segen aus Classic (`PB.GREATER`) ausgelassen – Forever hat keine. Höchster
+  gelernter Rang über `IsPlayerSpell`/`IsSpellKnown`. Auren über den Namen
+  des Zaubers (wie `ui/bufftimes.lua`), nur außerhalb des Kampfes;
+  unlesbar = „unklar“, nie „fehlt“. Selbst Gezaubertes wird 60 min gemerkt.
+- **Knopf:** `WeintCodexBlessButton` (SecureActionButtonTemplate); `PreClick`
+  setzt außerhalb des Kampfes `type/spell/unit` auf das nächste
+  Gruppenmitglied ohne Segen (tot, offline, außer Reichweite übersprungen;
+  Reichweite unbekannt → versucht). Im Kampf tut er nichts. Rahmen
+  `paladinbuffs` (verschiebbar, `ui/layout.lua`), Tastenbelegung
+  `CLICK WeintCodexBlessButton:LeftButton` in `Bindings.xml`.
+- **Nichts wird gesendet** – keine Addon-Nachrichten.
+- Ungemessen: `spell` als Nummer im Forever-Client, `IsSpellInRange` für
+  Gruppenmitglieder.
