@@ -567,14 +567,138 @@ end
 -- des Spiels): Gruppen im Menue, eigene Toene, Toene des Spiels und
 -- Vorlesen. Toene des Spiels nur, wenn der Client den Namen kennt
 -- (SOUNDKIT) - sonst fehlen sie im Menue statt still zu bleiben.
+-- Toene des Abklingzeitmanagers des Spiels (Nummern aus
+-- Blizzard_CooldownViewer/CooldownViewerSoundAlertData.lua, Fassung 12.x).
+-- Namen: Rueckfall, wenn der Client seine eigenen (CDMSND_*) nicht hat.
+OC.GAME_SOUNDS = {
+    { cat = "Animals", text = "Tiere", items = {
+        { 316401, "CDMSND_ANIMALS_CAT", "Cat" },
+        { 316406, "CDMSND_ANIMALS_CHICKEN", "Chicken" },
+        { 316407, "CDMSND_ANIMALS_COW", "Cow" },
+        { 316409, "CDMSND_ANIMALS_GNOLL", "Gnoll" },
+        { 316715, "CDMSND_ANIMALS_GOAT", "Goat" },
+        { 316411, "CDMSND_ANIMALS_LION", "Lion" },
+        { 316412, "CDMSND_ANIMALS_PANTHER", "Panther" },
+        { 316413, "CDMSND_ANIMALS_RATTLESNAKE", "Rattlesnake" },
+        { 316414, "CDMSND_ANIMALS_SHEEP", "Sheep" },
+        { 316415, "CDMSND_ANIMALS_WOLF", "Wolf" },
+    } },
+    { cat = "Devices", text = "Geräte", items = {
+        { 316442, "CDMSND_DEVICES_BOAT_HORN", "Boat Horn" },
+        { 316436, "CDMSND_DEVICES_AIR_HORN", "Air Horn" },
+        { 316713, "CDMSND_DEVICES_BIKE_HORN", "Bike Horn" },
+        { 316446, "CDMSND_DEVICES_CASH_REGISTER", "Cash Register" },
+        { 316717, "CDMSND_DEVICES_JACKPOT_BELL", "Jackpot Bell" },
+        { 316718, "CDMSND_DEVICES_JACKPOT_COINS", "Jackpot Coins" },
+        { 316719, "CDMSND_DEVICES_JACKPOT_FAIL", "Jackpot Fail" },
+        { 316433, "CDMSND_DEVICES_ROTARY_PHONE_DIAL", "Rotary Phone Dial" },
+        { 316492, "CDMSND_DEVICES_ROTARY_PHONE_RING", "Rotary Phone Ring" },
+        { 316425, "CDMSND_DEVICES_STOVE_PIPE", "Stove Pipe" },
+        { 316430, "CDMSND_DEVICES_TRASHCAN_LID", "Trashcan Lid" },
+    } },
+    { cat = "Impacts", text = "Treffer", items = {
+        { 316528, "CDMSND_IMPACTS_ANVIL_STRIKE", "Anvil Strike" },
+        { 316419, "CDMSND_IMPACTS_BUBBLE_SMASH", "Bubble Smash" },
+        { 316531, "CDMSND_IMPACTS_LOW_THUD", "Low Thud" },
+        { 316532, "CDMSND_IMPACTS_METAL_CLANKS", "Metal Clanks" },
+        { 316486, "CDMSND_IMPACTS_METAL_RATTLE", "Metal Rattle" },
+        { 316484, "CDMSND_IMPACTS_METAL_SCRAPE", "Metal Scrape" },
+        { 316536, "CDMSND_IMPACTS_METAL_WARBLE", "Metal Warble" },
+        { 316434, "CDMSND_IMPACTS_POP_CLICK", "Pop Click" },
+        { 316453, "CDMSND_IMPACTS_STRANGE_CLANG", "Strange Clang" },
+        { 316535, "CDMSND_IMPACTS_SWORD_SCRAPE", "Sword Scrape" },
+    } },
+    { cat = "Instruments", text = "Instrumente", items = {
+        { 316493, "CDMSND_INSTRUMENTS_BELL_RING", "Bell Ring" },
+        { 316712, "CDMSND_INSTRUMENTS_BELL_TRILL", "Bell Trill" },
+        { 316722, "CDMSND_INSTRUMENTS_BRASS", "Brass" },
+        { 316447, "CDMSND_INSTRUMENTS_CHIME_ASCENDING", "Chime Ascending" },
+        { 316477, "CDMSND_INSTRUMENTS_GUITAR_CHUG", "Guitar Chug" },
+        { 316482, "CDMSND_INSTRUMENTS_GUITAR_PINCH", "Guitar Pinch" },
+        { 316509, "CDMSND_INSTRUMENTS_PITCH_PIPE_DISTRESSED", "Pitch Pipe Distressed" },
+        { 316501, "CDMSND_INSTRUMENTS_PITCH_PIPE_NOTE", "Pitch Pipe Note" },
+        { 316540, "CDMSND_INSTRUMENTS_SYNTH_BIG", "Synth Big" },
+        { 316476, "CDMSND_INSTRUMENTS_SYNTH_BUZZ", "Synth Buzz" },
+        { 316460, "CDMSND_INSTRUMENTS_SYNTH_HIGH", "Synth High" },
+        { 316723, "CDMSND_INSTRUMENTS_WARHORN", "Warhorn" },
+    } },
+    { cat = "Short", text = "Kurz", items = {
+        { 353392, "CDMSND_SHORT_BELL_STRIKE", "Bell Strike" },
+        { 353387, "CDMSND_SHORT_BELL_TREE", "Bell Tree" },
+        { 353388, "CDMSND_SHORT_BIG_POT", "Big Pot" },
+        { 353389, "CDMSND_SHORT_BLADES", "Blades" },
+        { 353424, "CDMSND_SHORT_COFFEE_MUG", "Coffee Mug" },
+        { 353393, "CDMSND_SHORT_COW_BELL", "Cow Bell" },
+        { 353395, "CDMSND_SHORT_FINGER_SNAP", "Finger Snap" },
+        { 353404, "CDMSND_SHORT_GUITAR", "Guiter" },
+        { 353405, "CDMSND_SHORT_KALIMBA", "Kalimba" },
+        { 353406, "CDMSND_SHORT_METAL_BLADE_DROP", "Metal Blade Drop" },
+        { 353407, "CDMSND_SHORT_METAL_BLADE_ON_ROD", "Metal Blade On Rod" },
+        { 353408, "CDMSND_SHORT_METAL_IMPACT", "Metal Impact" },
+        { 353410, "CDMSND_SHORT_MINI_WOOD_XYLOPHONE", "Mini Wood Xylophone" },
+        { 353425, "CDMSND_SHORT_PAPER_CUP", "Paper Cup" },
+        { 353417, "CDMSND_SHORT_SHEET_METAL", "Sheet Metal" },
+        { 353419, "CDMSND_SHORT_STOVE_PIPE", "Stove Pipe" },
+        { 353420, "CDMSND_SHORT_STOVE_PIPE_BLADE", "Stove Pipe Blade" },
+        { 353421, "CDMSND_SHORT_SWORD_SHING", "Sword Shing" },
+        { 353402, "CDMSND_SHORT_SYNTH_BLEEP", "Synth Bleep" },
+        { 353400, "CDMSND_SHORT_SYNTH_BLURP", "Synth Blurp" },
+        { 353397, "CDMSND_SHORT_SYNTH_ERROR", "Synth Error" },
+        { 353399, "CDMSND_SHORT_SYNTH_HIGH", "Synth High" },
+        { 353423, "CDMSND_SHORT_TRIANGLE", "Triangle" },
+        { 353426, "CDMSND_SHORT_WATER_DROP", "Water Drop" },
+        { 353427, "CDMSND_SHORT_WINE_BOTTLE", "Wine Bottle" },
+        { 353428, "CDMSND_SHORT_WOOD_XYLOPHONE", "Wood Xylophone" },
+    } },
+    { cat = "War2", text = "Warcraft 2", items = {
+        { 316731, "CDMSND_WAR2_ABSTRACT_WHOOSH", "Abstract Whoosh" },
+        { 316733, "CDMSND_WAR2_CHOIR", "Choir" },
+        { 316735, "CDMSND_WAR2_CONSTRUCTION", "Construction" },
+        { 316736, "CDMSND_WAR2_MAGIC_CHIMES", "Magic Chimes" },
+        { 316745, "CDMSND_WAR2_PIG_SQUEAL", "Pig Squeal" },
+        { 316738, "CDMSND_WAR2_SAWS", "Saws" },
+        { 316746, "CDMSND_WAR2_SEAL", "Seal" },
+        { 316748, "CDMSND_WAR2_SLOW", "Slow" },
+        { 316749, "CDMSND_WAR2_SMITH", "Smith" },
+        { 316739, "CDMSND_WAR2_SYNTH_STINGER", "Synth Stinger" },
+        { 316740, "CDMSND_WAR2_TRUMPET_RALLY", "Trumpet Rally" },
+        { 316737, "CDMSND_WAR2_ZIPPY_MAGIC", "Zippy Magic" },
+    } },
+    { cat = "War3", text = "Warcraft 3", items = {
+        { 316773, "CDMSND_WAR3_BELL", "Bell" },
+        { 316774, "CDMSND_WAR3_CRUNCHY_BELL", "Crunchy Bell" },
+        { 316768, "CDMSND_WAR3_DRUM_SPLASH", "Drum Splash" },
+        { 316775, "CDMSND_WAR3_ERROR", "Error" },
+        { 316769, "CDMSND_WAR3_FANFARE", "Fanfare" },
+        { 316776, "CDMSND_WAR3_GATE_OPEN", "Gate Open" },
+        { 316770, "CDMSND_WAR3_GOLD", "Gold" },
+        { 316778, "CDMSND_WAR3_MAGIC_SHIMMER", "Magic Shimmer" },
+        { 316771, "CDMSND_WAR3_RINGOUT", "Ringout" },
+        { 316765, "CDMSND_WAR3_ROOSTER", "Rooster" },
+        { 316779, "CDMSND_WAR3_SHIMMER_BELL", "Shimmer Bell" },
+        { 316766, "CDMSND_WAR3_WOLF_HOWL", "Wolf Howl" },
+    } },
+}
+
+-- Danach die eigenen (6.95.0.0: alle Toene des Spiels zuerst, wie dort).
 OC.SOUND_GROUPS = {
     { text = "WeintCodex", items = { "hoch", "tief", "trill", "dreifach", "achtung", "fehler", "hupe", "sirene", "raus" } },
-    { text = "Warnungen des Spiels", items = { "raid", "boss", "ready", "alarm", "alarm2" } },
-    { text = "Hinweise des Spiels", items = { "whisper", "invite", "queue", "toast",
-        "kit:MAP_PING", "kit:IG_QUEST_LIST_COMPLETE", "kit:UI_EPICLOOT_TOAST", "kit:AUCTION_WINDOW_OPEN",
-        "kit:IG_BACKPACK_COIN_OK", "kit:UI_RAID_LOOT_TOAST_LESSER_ITEM_WON", "kit:UI_LEGENDARY_LOOT_TOAST" } },
     { text = "Huhn", items = { "file:huhn_gack", "file:huhn_bwaak", "file:huhn_piep", "file:huhn_pock", "file:huhn_gold", "file:huhn_bumm" } },
 }
+
+-- Name eines Spiel-Tons: der des Clients, sonst der Rueckfall.
+OC.cdmName = {}
+for _, g in ipairs(OC.GAME_SOUNDS) do
+    for _, it in ipairs(g.items) do OC.cdmName[it[1]] = it end
+end
+function OC.GameSoundText(it)
+    local t = _G[it[2]]
+    return type(t) == "string" and t ~= "" and t or it[3]
+end
+function OC.GameCatText(g)
+    local t = _G["COOLDOWN_VIEWER_SETTINGS_SOUND_ALERT_CATEGORY_" .. g.cat:upper()]
+    return type(t) == "string" and t ~= "" and t or g.text
+end
 OC.KIT_TEXT = {
     MAP_PING = "Kartenpieps", IG_QUEST_LIST_COMPLETE = "Quest fertig", UI_EPICLOOT_TOAST = "Epische Beute",
     AUCTION_WINDOW_OPEN = "Auktionshaus", IG_BACKPACK_COIN_OK = "Münzen", UI_RAID_LOOT_TOAST_LESSER_ITEM_WON = "Beute gewonnen",
@@ -591,6 +715,7 @@ end
 
 function OC.SoundAvailable(k)
     if k == "tts" then return true end
+    if k:match("^cdm:") then return true end
     if k:match("^kit:") then return KitOf(k) ~= nil end
     if k:match("^file:") then return true end
     local FA = WeintCodex.UIFireAlarm
@@ -600,6 +725,11 @@ end
 function OC.SoundText(k)
     if k == "none" or not k then return "Kein Ton" end
     if k == "tts" then return "Vorlesen (Name des Zaubers)" end
+    local cdm = tonumber(k:match("^cdm:(%d+)$") or "")
+    if cdm then
+        local it = OC.cdmName[cdm]
+        return it and OC.GameSoundText(it) or ("Ton " .. cdm)
+    end
     local _, kit = KitOf(k)
     if kit then return OC.KIT_TEXT[kit] or kit end
     local f = k:match("^file:(.+)$")
@@ -630,6 +760,8 @@ end
 function OC.PlaySound(k, e)
     if not k or k == "none" then return end
     if k == "tts" then OC.Speak(e and e.name or "Bereit") return end
+    local cdm = tonumber(k:match("^cdm:(%d+)$") or "")
+    if cdm then if _G.PlaySound then pcall(_G.PlaySound, cdm, "Master") end return end
     local kit = KitOf(k)
     if kit then if _G.PlaySound then pcall(_G.PlaySound, kit, "Master") end return end
     local FA = WeintCodex.UIFireAlarm
@@ -681,6 +813,9 @@ function OC.SoundMenu(owner, e, after)
     if not (MU and MU.CreateContextMenu) then
         -- ohne Menue des Spiels: weiterschalten
         local flat = { "none" }
+        for _, g in ipairs(OC.GAME_SOUNDS) do
+            for _, it in ipairs(g.items) do flat[#flat + 1] = "cdm:" .. it[1] end
+        end
         for _, g in ipairs(OC.SOUND_GROUPS) do
             for _, k in ipairs(g.items) do if OC.SoundAvailable(k) then flat[#flat + 1] = k end end
         end
@@ -695,6 +830,14 @@ function OC.SoundMenu(owner, e, after)
         if root.CreateTitle then root:CreateTitle("Tonhinweis") end
         root:CreateRadio("Kein Ton", function() return OC.SoundOf(e) == "none" end,
             function() OC.SetSound(e, "none") if after then after() end end)
+        for _, g in ipairs(OC.GAME_SOUNDS) do
+            local sub = root:CreateButton(OC.GameCatText(g))
+            for _, it in ipairs(g.items) do
+                local k = "cdm:" .. it[1]
+                sub:CreateRadio(OC.GameSoundText(it), function() return OC.SoundOf(e) == k end,
+                    function() OC.SetSound(e, k) if after then after() end end)
+            end
+        end
         for _, g in ipairs(OC.SOUND_GROUPS) do
             local sub = root:CreateButton(g.text)
             for _, k in ipairs(g.items) do

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.95.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager: alle Töne des Spiels|r – das Tonmenü bietet jetzt dieselben Töne wie der Abklingzeitmanager von Blizzard: Tiere, Geräte, Treffer, Instrumente, Kurz, Warcraft 2 und Warcraft 3, mit den Namen des Spiels. Dazu die eigenen Töne und Vorlesen.",
+        },
+    },
+    {
         version = "6.94.0.0",
         date    = "20.10.2026",
         notes   = {

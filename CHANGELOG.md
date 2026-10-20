@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.95.0.0] – 2026-10-20
+
+### Hinzugefügt
+- Abklingzeitmanager: Tonliste des Spiels (`OC.GAME_SOUNDS`, Nummern aus `CooldownViewerSoundAlertData.lua`, Namen über `CDMSND_*`/Kategorien vom Client), Schlüssel `cdm:<id>`.
+
 ## [6.94.0.0] – 2026-10-20
 
 ### Geändert
