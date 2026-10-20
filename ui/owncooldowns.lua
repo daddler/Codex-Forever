@@ -60,7 +60,8 @@ OC.MODES = {
 OC.DEFAULT_MODE = "blizzard"
 OC.SLOTS = { "big", "small", "off" }
 OC.SLOT_TEXT = { big = "Wichtig", small = "Weitere", off = "Aus" }
-OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true, vertical = false, perLine = 0 }
+OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true, vertical = false, perLine = 0,
+    glowColor = "green", glowStrength = 100, glowPulse = true }
 OC.MAX_LIST = 80
 OC.MIN_BASE_CD = 2000   -- ms; darunter ist es die globale Abklingzeit
 
@@ -934,6 +935,15 @@ local function Icon(parent)
     K.Border(top, 1, 0, 0, 0, 1, "OVERLAY")
     -- Hinter dem Symbol (6.90.1.0): oben drauf deckte die Flaeche das Bild ganz zu.
     b.glow = K.Glow(b, { layer = "BACKGROUND", spread = 5, color = C.successBright, shown = false })
+    -- Pulsieren (6.96.0.0): Alpha-Animation der Engine, kein OnUpdate.
+    local ag = b.glow.tex:CreateAnimationGroup()
+    ag:SetLooping("BOUNCE")
+    local a = ag:CreateAnimation("Alpha")
+    a:SetFromAlpha(1)
+    a:SetToAlpha(0.25)
+    a:SetDuration(0.6)
+    if a.SetSmoothing then a:SetSmoothing("IN_OUT") end
+    b.pulse = ag
     b.state = K.NewText(top, 10)
     b.state:SetPoint("BOTTOM", b, "BOTTOM", 0, 2)
     b:Hide()
@@ -1008,6 +1018,38 @@ function OC.ItemClock(b, id)
     return "cd"
 end
 
+-- Farbe, Staerke und Pulsieren des Leuchtens (Farben aus core/ui.lua).
+OC.GLOW_COLORS = {
+    { value = "green", text = "Grün", token = "successBright" },
+    { value = "gold",  text = "Gold", token = "gold" },
+    { value = "class", text = "Klassenfarbe", token = "accent" },
+    { value = "red",   text = "Rot",  token = "dangerBright" },
+    { value = "blue",  text = "Blau", token = "infoBright" },
+    { value = "white", text = "Weiß", token = "textBright" },
+}
+function OC.GlowRGB()
+    local want = OC.Get("glowColor")
+    for _, c in ipairs(OC.GLOW_COLORS) do
+        if c.value == want then return C[c.token] or C.successBright end
+    end
+    return C.successBright
+end
+
+function OC.ShowGlow(b, on)
+    if on then
+        local c = OC.GlowRGB()
+        local s = (tonumber(OC.Get("glowStrength")) or 100) / 100
+        b.glow:SetColor(c[1], c[2], c[3], math.max(0.1, math.min(1, s)))
+        b.glow:SetSpread(3 + math.floor(4 * s + 0.5))
+    end
+    b.glow:SetShown(on)
+    if b.pulse then
+        local want = on and OC.Get("glowPulse") and true or false
+        if want and not b.pulse:IsPlaying() then b.pulse:Play()
+        elseif not want and b.pulse:IsPlaying() then b.pulse:Stop() b.glow.tex:SetAlpha(1) end
+    end
+end
+
 local function Visible()
     if not OC.Active() then return false end
     if OC.Get("combatOnly") and not (fighting or K.InCombat()) then return false end
@@ -1047,12 +1089,15 @@ local function DrawSpells(row, slot, size, show)
             local dotLeft = ds and (ds + dd - Now()) or nil
             local needDot = OC.DotDuration(e.name) and OC.HasEnemyTarget()
                 and (not ds or (dotLeft and dotLeft <= OC.DOT_WARN)) or false
-            b.glow:SetShown((gm == "ready" and st == "ready") or (gm == "dot" and needDot and st ~= "cd"))
+            OC.ShowGlow(b, (gm == "ready" and st == "ready") or (gm == "dot" and needDot and st ~= "cd"))
             -- Ausgegraut, wenn der Client sagt: gerade nicht nutzbar (Proc fehlt,
             -- falsche Haltung) - nur bei offener Antwort, geheim = farbig.
             local usable = e.item and true or OC.Usable(e.id)
-            if b.icon.SetDesaturated then b.icon:SetDesaturated(usable == false) end
-            b.icon:SetVertexColor(usable == false and 0.55 or 1, usable == false and 0.55 or 1, usable == false and 0.55 or 1)
+            -- Grau auch, solange eine Abklingzeit laeuft (6.96.0.0, Wunsch)
+            local grey = usable == false or st == "cd"
+            if b.icon.SetDesaturated then b.icon:SetDesaturated(grey) end
+            local v = grey and 0.55 or 1
+            b.icon:SetVertexColor(v, v, v)
             -- Ton: beim Wechsel auf "bereit" bzw. wenn der DoT auslaeuft
             local was, wasDot = OC.prev[e.key], OC.prevDot[e.key]
             if st then OC.prev[e.key] = st end
@@ -1076,7 +1121,7 @@ local function DrawSpells(row, slot, size, show)
         local b = row.icons[1]
         b.icon:SetTexture(134400)
         b.cd:Clear()
-        b.glow:SetShown(false)
+        OC.ShowGlow(b, false)
         b.state:SetText(OC.SLOT_TEXT[slot])
         b:Show()
         i = 1
@@ -1098,7 +1143,7 @@ local function DrawBuffs(row, size, show)
         if e.state == "time" and a then b.cd:SetCooldown(a.start, a.duration) else b.cd:Clear() end
         if b.cd.SetHideCountdownNumbers then b.cd:SetHideCountdownNumbers(not OC.Get("numbers")) end
         b.icon:SetDesaturated(e.state == "missing")
-        b.glow:SetShown(false)
+        OC.ShowGlow(b, false)
         b.state:SetText(e.state == "on" and "an" or e.state == "runs" and "läuft" or e.state == "missing" and "!" or "")
         b:Show()
     end
@@ -1584,9 +1629,17 @@ function OC.BuildSection(B)
     B:Row({ type = "toggle", label = "Leuchten, wenn bereit (Vorgabe)", disabled = off,
             get = function() return OC.Get("glow") and true or false end, set = function(v) OC.Set("glow", v and true or false) end,
             description = "Nur wenn der Client die Abklingzeit offen nennt – sonst lieber kein Leuchten als ein falsches." },
-          { type = "button", label = "Voreinstellung", text = "Voreinstellung wiederherstellen",
+          { type = "toggle", label = "Leuchten pulsiert", disabled = off,
+            get = function() return OC.Get("glowPulse") and true or false end, set = function(v) OC.Set("glowPulse", v and true or false) end })
+    B:Row({ type = "dropdown", label = "Farbe des Leuchtens", items = OC.GLOW_COLORS,
+            get = function() return OC.Get("glowColor") end, set = function(v) OC.Set("glowColor", v) end },
+          { type = "slider", label = "Stärke des Leuchtens", min = 20, max = 100, step = 10, disabled = off,
+            format = function(v) return v .. " %" end,
+            get = function() return tonumber(OC.Get("glowStrength")) or 100 end, set = function(v) OC.Set("glowStrength", v) end })
+    B:Row({ type = "button", label = "Voreinstellung", text = "Voreinstellung wiederherstellen",
             tooltip = "Zauberwahl, Größen und Schalter wie ab Werk für deine Klasse.",
-            onClick = function() OC.ResetPreset() end })
+            onClick = function() OC.ResetPreset() end },
+          { type = "empty" })
     B:EndAdvanced()
     local draft = ""
     B:Row({ type = "input", label = "Zauber oder Gegenstand hinzufügen",

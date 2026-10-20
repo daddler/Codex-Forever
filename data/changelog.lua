@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.96.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager: grau bei Abklingzeit|r – ein Zauber ist jetzt auch grau, solange seine Abklingzeit läuft, nicht nur wenn er gerade nicht geht.",
+            "|cff7C6CFFLeuchten einstellbar|r – unter „Erweitert“: pulsieren an/aus, Farbe (Grün, Gold, Klassenfarbe, Rot, Blau, Weiß) und Stärke.",
+        },
+    },
+    {
         version = "6.95.1.0",
         date    = "20.10.2026",
         notes   = {

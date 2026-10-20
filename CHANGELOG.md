@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.96.0.0] – 2026-10-20
+
+### Hinzugefügt
+- Abklingzeitmanager: grau bei laufender Abklingzeit; Leuchten mit Farbe (`glowColor`), Stärke (`glowStrength`) und Pulsieren (`glowPulse`, Alpha-Animation).
+
 ## [6.95.1.0] – 2026-10-20
 
 ### Behoben
