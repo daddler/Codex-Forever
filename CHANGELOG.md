@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.93.2.0] – 2026-10-20
+
+### Behoben
+- Abklingzeitmanager: Zeilen über den Spalten (Rahmenebene), Klick und Ziehen kommen an.
+
 ## [6.93.1.0] – 2026-10-20
 
 ### Behoben

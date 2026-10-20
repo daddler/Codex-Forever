@@ -1154,6 +1154,7 @@ local function CreateList(parent, width)
         col.head = K.NewText(col, 12)
         col.head:SetPoint("TOPLEFT", col, "TOPLEFT", 8, -6)
         col.head:SetTextColor(unpack(slot == "off" and C.textMuted or C.textBright))
+        col:SetFrameLevel(f:GetFrameLevel() + 1)
         col:EnableMouse(true)
         f.cols[ci] = col
     end
@@ -1252,6 +1253,10 @@ local function CreateList(parent, width)
     local function Line(i)
         local l = CreateFrame("Button", nil, f)
         l:SetSize(colW - 8, ROW_H - 4)
+        -- Ueber den Spalten (6.93.2.0): die Spalten nehmen die Maus fuer das
+        -- Hineinziehen aus dem Zauberbuch und lagen auf gleicher Ebene ueber
+        -- den Zeilen - kein Klick, kein Ziehen kam an.
+        l:SetFrameLevel(f:GetFrameLevel() + 10)
         l.hl = l:CreateTexture(nil, "BACKGROUND")
         l.hl:SetAllPoints(l)
         l.hl:SetColorTexture(1, 1, 1, 0)
@@ -1335,6 +1340,7 @@ local function CreateList(parent, width)
                 l.entry = e
                 l:ClearAllPoints()
                 l:SetPoint("TOPLEFT", col, "TOPLEFT", 4, -HEAD_H - count[sl] * ROW_H)
+                l:SetFrameLevel(col:GetFrameLevel() + 10)
                 count[sl] = count[sl] + 1
                 l.icon:SetTexture(e.tex)
                 if l.icon.SetDesaturated then l.icon:SetDesaturated(sl == "off") end

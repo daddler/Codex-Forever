@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.93.2.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager: Klicken und Ziehen|r – geht in den drei Spalten wieder; die Spalten lagen über den Zaubern und schluckten jeden Klick.",
+        },
+    },
+    {
         version = "6.93.1.0",
         date    = "20.10.2026",
         notes   = {
