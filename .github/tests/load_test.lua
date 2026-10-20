@@ -3127,7 +3127,8 @@ do
         assert(PB, "ui/paladinbuffs.lua nicht geladen")
         local found = false
         for _, pg in ipairs(K.Module("comfort").pages) do if pg.key == "segen" then found = true end end
-        assert(found, "Segen nicht als Seite im Komfort")
+        -- 6.102.1.0: nur fuer Paladine eine Seite
+        assert(found == PB.IsPaladin(), "Segen-Seite nur fuer Paladine")
         assert(K.Get("comfort", "blessOn") == false, "Segen von Haus aus an")
         for key in pairs(PB.BLESSINGS) do
             for _, id in ipairs(PB.Chain(key)) do assert(not PB.GREATER[id], key .. ": grosser Segen in der Kette") end
@@ -18250,9 +18251,11 @@ do
             assert(QoL.PAGE_ORDER[p.key], "Seite ohne Thema: " .. p.key)
         end
         local order = table.concat(keys, ",")
-        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros,segen,ringe,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,danke,gespraeche,flugspiele",
+        local pal = WeintCodex.UIPaladinBuffs.IsPaladin()
+        assert(order == "automatik,anzeigen,rausda,automark,klickzauber,makros," .. (pal and "segen," or "") .. "ringe,karte,questhilfe,sammeln,glitzern,selten,auktion,fluestern,danke,gespraeche,flugspiele",
             "Reihenfolge: " .. order)
-        assert(O.PageIndex("comfort", "gespraeche") == 17 and O.PageIndex("comfort", "fluestern") == 15, "Index nach Sortieren")
+        local d = pal and 0 or -1
+        assert(O.PageIndex("comfort", "gespraeche") == 17 + d and O.PageIndex("comfort", "fluestern") == 15 + d, "Index nach Sortieren")
         for _, h in ipairs(WL.HELPERS) do
             local mod = K.Module(h.module)
             assert(mod and mod.group ~= "ui" or h.module == "groupframes", h.label .. ": haengt an einem Modul der Oberflaeche")

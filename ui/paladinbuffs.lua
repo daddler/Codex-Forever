@@ -746,6 +746,23 @@ if mod then
     if type(mod.pageOrder) == "table" then mod.pageOrder.segen = 13.5 end
 end
 
+-- Nur fuer Paladine sichtbar (6.102.1.0, Wunsch): beim Einloggen steht die
+-- Klasse fest - wer kein Paladin ist, bekommt die Seite gar nicht.
+function PB.DropPageIfNotPaladin()
+    local m = K.Module(KEY)
+    if not m or PB.IsPaladin() then return false end
+    for i = #m.pages, 1, -1 do
+        if m.pages[i].key == "segen" then table.remove(m.pages, i) end
+    end
+    m._sortedFor = nil
+    return true
+end
+do
+    local login = CreateFrame("Frame")
+    login:RegisterEvent("PLAYER_LOGIN")
+    login:SetScript("OnEvent", function() PB.DropPageIfNotPaladin() end)
+end
+
 _G.BINDING_NAME_CLICK_WeintCodexBlessButton_LeftButton = "Segen verteilen (Paladin)"
 
 K.Listen(function(kind, key)

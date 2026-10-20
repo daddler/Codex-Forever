@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.102.1.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFKomfort → Segen nur für Paladine|r – andere Klassen sehen die Seite nicht mehr.",
+        },
+    },
+    {
         version = "6.102.0.0",
         date    = "20.10.2026",
         notes   = {

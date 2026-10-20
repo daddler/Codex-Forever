@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.102.1.0] – 2026-10-20
+
+### Geändert
+- Segen: Seite beim Einloggen entfernt, wenn kein Paladin (`PB.DropPageIfNotPaladin`).
+
 ## [6.102.0.0] – 2026-10-20
 
 ### Geändert
