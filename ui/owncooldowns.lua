@@ -170,10 +170,7 @@ function OC.RemoveRow(id)
     if m then for k, v in pairs(m.spells) do if v == id then m.spells[k] = "small" end end end
     OC.Refresh()
 end
-function OC.SetRowSize(id, size)
-    local d = OC.ExtraDef(id)
-    if d then d.size = size OC.Refresh() end
-end
+function OC.SetRowSize(id, size) OC.SetRowOpt(id, "size", size) end
 function OC.ExtraDefault(id)
     local idx = 1
     for i, d in ipairs(OC.ExtraRows()) do if d.id == id then idx = i end end
@@ -1033,12 +1030,43 @@ end
 
 -- Anordnung (6.90.1.0, Wunsch): waagerecht oder senkrecht, umbrechen nach
 -- "Symbole je Zeile" (0 = alle in einer Zeile); mittig wie die Reihen des Spiels.
-local function Arrange(row, n, s)
-    local gap = 4
-    local per = tonumber(OC.Get("perLine")) or 0
+-- Einstellungen je Reihe (6.98.2.0, Wunsch: "die einzelnen Reihen auch
+-- einstellen koennen in Groesse etc"). m.rowOpt[slot] = { size, vertical,
+-- perLine, gap, combatOnly }; fehlt ein Wert, gilt der allgemeine.
+function OC.RowOpt(slot, key)
+    local m = Mem()
+    local o = m and m.rowOpt and m.rowOpt[slot]
+    local v = o and o[key]
+    if v ~= nil then return v end
+    if key == "size" then
+        if slot == "big" then return tonumber(OC.Get("big")) or 40 end
+        if slot == "small" then return tonumber(OC.Get("small")) or 28 end
+        if slot == "buffs" then return tonumber(OC.Get("buff")) or 28 end
+        local d = OC.ExtraDef(slot)
+        return d and tonumber(d.size) or 32
+    end
+    if key == "vertical" then return OC.Get("vertical") and true or false end
+    if key == "perLine" then return tonumber(OC.Get("perLine")) or 0 end
+    if key == "gap" then return 4 end
+    if key == "combatOnly" then return OC.Get("combatOnly") and true or false end
+    return nil
+end
+function OC.SetRowOpt(slot, key, v)
+    local m = Mem()
+    if not m then return end
+    m.rowOpt = m.rowOpt or {}
+    m.rowOpt[slot] = m.rowOpt[slot] or {}
+    m.rowOpt[slot][key] = v
+    OC.Refresh()
+end
+OC.ROW_LABEL = { buffs = "Buffs" }
+
+local function Arrange(row, n, s, slot)
+    local gap = tonumber(OC.RowOpt(slot, "gap")) or 4
+    local per = tonumber(OC.RowOpt(slot, "perLine")) or 0
     if per <= 0 or per > n then per = math.max(1, n) end
     local lines = math.max(1, math.ceil(n / per))
-    local vert = OC.Get("vertical") and true or false
+    local vert = OC.RowOpt(slot, "vertical") and true or false
     local long, short = per * s + (per - 1) * gap, lines * s + (lines - 1) * gap
     if vert then row:SetSize(math.max(s, short), math.max(s, long)) else row:SetSize(math.max(s, long), math.max(s, short)) end
     for i = 1, n do
@@ -1169,7 +1197,7 @@ local function DrawSpells(row, slot, size, show)
         if n == 0 and row._unlock then n = 1 end
     end
     Ensure(row, n)
-    Arrange(row, n, size)
+    Arrange(row, n, size, slot)
     local numbers, glow = OC.Get("numbers") and true or false, OC.Get("glow") and true or false
     local i = 0
     for _, e in ipairs(OC.known) do
@@ -1243,7 +1271,7 @@ local function DrawBuffs(row, size, show)
         and BT.Entries(_G.GetTime and _G.GetTime() or 0, fighting or K.InCombat(), true, row._unlock) or nil
     local n = list and #list or 0
     Ensure(row, n)
-    Arrange(row, n, size)
+    Arrange(row, n, size, "buffs")
     for i = 1, n do
         local e, b = list[i], row.icons[i]
         b.icon:SetTexture(Texture(e.spell))
@@ -1258,12 +1286,19 @@ local function DrawBuffs(row, size, show)
     for j = n + 1, #row.icons do row.icons[j]:Hide() end
 end
 
+-- Reihe zeigen? Allgemein sichtbar und - je Reihe - "nur im Kampf".
+function OC.RowShow(slot, show)
+    if not show then return false end
+    if OC.RowOpt(slot, "combatOnly") and not (fighting or K.InCombat()) then return false end
+    return true
+end
+
 function OC.Update()
     if not rows.big then return end
     local show = Visible()
-    DrawSpells(rows.big, "big", tonumber(OC.Get("big")) or 40, show)
-    DrawSpells(rows.small, "small", tonumber(OC.Get("small")) or 28, show)
-    DrawBuffs(rows.buffs, tonumber(OC.Get("buff")) or 28, show)
+    DrawSpells(rows.big, "big", OC.RowOpt("big", "size"), OC.RowShow("big", show))
+    DrawSpells(rows.small, "small", OC.RowOpt("small", "size"), OC.RowShow("small", show))
+    DrawBuffs(rows.buffs, OC.RowOpt("buffs", "size"), OC.RowShow("buffs", show))
     -- Eigene Reihen: Rahmen bei Bedarf, geloeschte bleiben leer
     local seen = OC.seenRows
     for k in _G.next, seen do seen[k] = nil end
@@ -1278,7 +1313,7 @@ function OC.Update()
             OC.extraRows[d.id] = row
         end
         seen[d.id] = true
-        DrawSpells(row, d.id, tonumber(d.size) or 32, show)
+        DrawSpells(row, d.id, OC.RowOpt(d.id, "size"), OC.RowShow(d.id, show))
     end
     for id, row in pairs(OC.extraRows) do
         if not seen[id] then
@@ -1504,7 +1539,7 @@ local function CreateList(parent, width)
         col:SetPoint("TOPLEFT", f, "TOPLEFT", pos * (colW + gap), -y)
         col:SetSize(colW, bands[band])
         -- Eigene Reihe: Klick auf die Kopfzeile -> Umbenennen, Größe, Löschen
-        if OC.ExtraDef(slot) then
+        if slot ~= "off" then
             col:RegisterForClicks("LeftButtonUp", "RightButtonUp")
             col:SetScript("OnClick", function(self)
                 local _, cy = _G.GetCursorPosition()
@@ -1726,7 +1761,7 @@ local function CreateList(parent, width)
         end
         for j = i + 1, #f.lines do f.lines[j]:Hide() end
         for _, col in ipairs(f.cols) do
-            col.head:SetText(OC.SlotText(col.slot) .. "  ·  " .. (count[col.slot] or 0) .. (OC.ExtraDef(col.slot) and "   · Menü ›" or ""))
+            col.head:SetText(OC.SlotText(col.slot) .. "  ·  " .. (count[col.slot] or 0) .. (col.slot ~= "off" and "   · Menü ›" or ""))
         end
         if pop:IsShown() then PopSync() end
     end
@@ -1736,18 +1771,37 @@ end
 -- Menue einer eigenen Reihe (Kopf der Spalte).
 function OC.RowMenu(owner, id)
     local d = OC.ExtraDef(id)
-    if not d then return end
+    if id == "off" then return end
     local MU = _G.MenuUtil
-    if not (MU and MU.CreateContextMenu) then OC.AskRename(id) return end
+    if not (MU and MU.CreateContextMenu) then if d then OC.AskRename(id) end return end
+    local title = OC.ROW_LABEL[id] or OC.SlotText(id)
     MU.CreateContextMenu(owner, function(_, root)
-        if root.CreateTitle then root:CreateTitle(d.name) end
-        root:CreateButton("Umbenennen …", function() OC.AskRename(id) end)
+        if root.CreateTitle then root:CreateTitle(title) end
+        if d then root:CreateButton("Umbenennen …", function() OC.AskRename(id) end) end
         local sub = root:CreateButton("Symbolgröße")
-        for _, px in ipairs({ 20, 24, 28, 32, 36, 40, 48, 56 }) do
-            sub:CreateRadio(px .. " px", function() return (tonumber(d.size) or 32) == px end,
-                function() OC.SetRowSize(id, px) end)
+        for _, px in ipairs({ 18, 20, 24, 28, 32, 36, 40, 44, 48, 56, 64 }) do
+            sub:CreateRadio(px .. " px", function() return (tonumber(OC.RowOpt(id, "size")) or 32) == px end,
+                function() OC.SetRowOpt(id, "size", px) end)
         end
-        root:CreateButton("Reihe löschen", function() OC.RemoveRow(id) OC.Relayout() end)
+        local ori = root:CreateButton("Anordnung")
+        ori:CreateRadio("Waagerecht", function() return not OC.RowOpt(id, "vertical") end,
+            function() OC.SetRowOpt(id, "vertical", false) end)
+        ori:CreateRadio("Senkrecht", function() return OC.RowOpt(id, "vertical") and true or false end,
+            function() OC.SetRowOpt(id, "vertical", true) end)
+        local per = root:CreateButton("Symbole je Zeile")
+        for _, n in ipairs({ 0, 2, 3, 4, 5, 6, 8, 10, 12 }) do
+            per:CreateRadio(n == 0 and "alle in einer Zeile" or tostring(n),
+                function() return (tonumber(OC.RowOpt(id, "perLine")) or 0) == n end,
+                function() OC.SetRowOpt(id, "perLine", n) end)
+        end
+        local gap = root:CreateButton("Abstand")
+        for _, g in ipairs({ 0, 2, 4, 6, 8, 12 }) do
+            gap:CreateRadio(g .. " px", function() return (tonumber(OC.RowOpt(id, "gap")) or 4) == g end,
+                function() OC.SetRowOpt(id, "gap", g) end)
+        end
+        root:CreateCheckbox("Nur im Kampf zeigen", function() return OC.RowOpt(id, "combatOnly") and true or false end,
+            function() OC.SetRowOpt(id, "combatOnly", not OC.RowOpt(id, "combatOnly")) end)
+        if d then root:CreateButton("Reihe löschen", function() OC.RemoveRow(id) OC.Relayout() end) end
     end)
 end
 
@@ -1876,10 +1930,13 @@ function OC.BuildSection(B)
         "Eigene Reihen statt des Managers des Spiels: Wichtig (groß), Weitere (kleiner) und deine Buffs mit Restzeit. Ab Werk steht für deine Klasse schon das Wichtigste drin – sortiert in die Spalten Wichtig, Weitere und Aus. Gilt, wenn oben „WeintCodex“ gewählt ist. Verschieben im Gestaltungsmodus.")
     local off = function() return not OC.Active() end
     B:Row({ type = "slider", label = "Größe: Wichtig", min = 24, max = 64, step = 2, format = px,
-            get = function() return tonumber(OC.Get("big")) end, set = function(v) OC.Set("big", v) end, disabled = off },
+            get = function() return tonumber(OC.Get("big")) end, set = function(v) OC.Set("big", v) OC.SetRowOpt("big", "size", nil) end, disabled = off },
           { type = "slider", label = "Größe: Weitere und Buffs", min = 18, max = 48, step = 2, format = px,
             get = function() return tonumber(OC.Get("small")) end,
-            set = function(v) OC.Set("small", v) OC.Set("buff", v) end, disabled = off })
+            set = function(v)
+                OC.Set("small", v) OC.Set("buff", v)
+                OC.SetRowOpt("small", "size", nil) OC.SetRowOpt("buffs", "size", nil)
+            end, disabled = off })
     B:Advanced()
     B:Row({ type = "dropdown", label = "Anordnung", disabled = off, items = {
                 { value = "h", text = "Waagerecht" }, { value = "v", text = "Senkrecht" } },
@@ -1922,6 +1979,10 @@ function OC.BuildSection(B)
                     end
                 end)
             end })
+    B:Row({ type = "button", label = "Reihe der Buffs", text = "Buffs-Reihe einstellen …",
+            tooltip = "Größe, Anordnung, Symbole je Zeile, Abstand und „Nur im Kampf“ für die Reihe der Buffs. Die anderen Reihen: Klick auf den Kopf ihrer Spalte.",
+            onClick = function() OC.RowMenu(UIParent, "buffs") end },
+          { type = "empty" })
     B:EndAdvanced()
     local rowDraft = ""
     B:Row({ type = "input", label = "Neue Reihe (Name)",
@@ -1947,7 +2008,7 @@ function OC.BuildSection(B)
                     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. why)
                 end
             end })
-    B:Note("So geht's: Jede Spalte ist eine Reihe auf dem Bildschirm – „Wichtig“ große Symbole, „Weitere“ kleine, eigene Reihen in ihrer Größe, „Aus“ wird nicht gezeigt. Eigene Reihen legst du oben an; Klick auf ihren Spaltenkopf („Menü ›“): umbenennen, Größe, löschen. Zauber mit der Maus greifen und auf einen anderen Zauber ziehen: er landet davor, auch in einer anderen Spalte; auf freie Fläche einer Spalte: ans Ende. Die Reihenfolge in der Spalte ist die auf dem Bildschirm. Klick auf einen Zauber: Rang, Leuchten, Ton und Spalte einstellen.")
+    B:Note("So geht's: Jede Spalte ist eine Reihe auf dem Bildschirm – „Wichtig“ große Symbole, „Weitere“ kleine, eigene Reihen in ihrer Größe, „Aus“ wird nicht gezeigt. Eigene Reihen legst du oben an. Klick auf den Kopf einer Spalte („Menü ›“): Größe, Anordnung, Symbole je Zeile, Abstand, nur im Kampf – bei eigenen Reihen auch umbenennen und löschen. Zauber mit der Maus greifen und auf einen anderen Zauber ziehen: er landet davor, auch in einer anderen Spalte; auf freie Fläche einer Spalte: ans Ende. Die Reihenfolge in der Spalte ist die auf dem Bildschirm. Klick auf einen Zauber: Rang, Leuchten, Ton und Spalte einstellen.")
     B:Row({ type = "custom", height = ListHeight(), create = CreateList })
     B:Note("Alle Zauber deines Zauberbuchs, dazu was du selbst hinzufügst. Ziehen ordnet innerhalb einer Spalte oder schiebt in eine andere; ein Klick öffnet Rang, Leuchten und Ton des Zaubers. „Ton“ rechts heißt: dieser Zauber spielt einen Ton, wenn er bereit ist. Buffs kommen aus den Buffzeiten.")
 end

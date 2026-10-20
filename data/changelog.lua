@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.98.2.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager: jede Reihe einzeln einstellen|r – Klick auf den Kopf einer Spalte („Menü ›“): Symbolgröße, waagerecht oder senkrecht, Symbole je Zeile, Abstand und „Nur im Kampf zeigen“ – für Wichtig, Weitere und jede eigene Reihe. Die Buffs-Reihe unter „Erweitert“.",
+        },
+    },
+    {
         version = "6.98.1.0",
         date    = "20.10.2026",
         notes   = {
