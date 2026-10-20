@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.89.1.0] – 2026-10-20
+
+### Geändert
+- Beute: Suchfeld als Pille über die ganze Breite (32 px), Lupe
+  `icon_search`, Rand im Akzent bei Fokus/Text.
+
 ## [6.89.0.0] – 2026-10-20
 
 ### Neu

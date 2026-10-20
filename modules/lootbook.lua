@@ -494,25 +494,63 @@ local function ResetPools()
     usedList, usedCells, usedHeads = 0, 0, 0
 end
 
+-- 6.89.1.0 (Beta-Test: "das Suchfeld ist ziemlich unscheinbar"): eine
+-- deutliche Pille ueber die ganze Breite, Lupe vorn, Rand in der Akzent-
+-- farbe, sobald man tippt. Breite setzt der Aufrufer (TOPLEFT/TOPRIGHT).
+local MEDIA_UI = "Interface\\AddOns\\WeintCodex\\media\\ui\\"
 local function SearchBox(parent, hintText, onChange)
+    local H = 32
     local box = CreateFrame("Frame", nil, parent)
-    box:SetSize(260, 28)
-    local bb = box:CreateTexture(nil, "BACKGROUND")
-    bb:SetAllPoints(box)
-    bb:SetColorTexture(C.surface2[1], C.surface2[2], C.surface2[3], 1)
+    box:SetHeight(H)
+    local function Part(layer, sub)
+        local t = box:CreateTexture(nil, layer, nil, sub)
+        return t
+    end
+    -- Rand (eine Spur groesser) und Flaeche, beide als Pille.
+    local rim, fill = {}, {}
+    for i, set in ipairs({ rim, fill }) do
+        local inset = (i == 1) and 0 or 1
+        set.mid = Part("BACKGROUND", i)
+        set.mid:SetPoint("TOPLEFT", box, "TOPLEFT", H / 2, -inset)
+        set.mid:SetPoint("BOTTOMRIGHT", box, "BOTTOMRIGHT", -H / 2, inset)
+        set.l = Part("BACKGROUND", i)
+        set.l:SetTexture(MEDIA_UI .. "disc")
+        set.l:SetSize(H - 2 * inset, H - 2 * inset)
+        set.l:SetPoint("LEFT", box, "LEFT", inset, 0)
+        set.r = Part("BACKGROUND", i)
+        set.r:SetTexture(MEDIA_UI .. "disc")
+        set.r:SetSize(H - 2 * inset, H - 2 * inset)
+        set.r:SetPoint("RIGHT", box, "RIGHT", -inset, 0)
+    end
+    local function Paint(set, c, a)
+        set.mid:SetColorTexture(c[1], c[2], c[3], a or 1)
+        set.l:SetVertexColor(c[1], c[2], c[3], a or 1)
+        set.r:SetVertexColor(c[1], c[2], c[3], a or 1)
+    end
+    Paint(fill, C.surface2)
+    local function Rim(active)
+        local c = active and (C.accent or C.borderStrong) or (C.borderStrong or C.surface3)
+        Paint(rim, c, active and 1 or 0.9)
+    end
+    Rim(false)
+    local glass = box:CreateTexture(nil, "ARTWORK")
+    glass:SetSize(14, 14)
+    glass:SetPoint("LEFT", box, "LEFT", 12, 0)
+    glass:SetTexture(MEDIA_UI .. "icon_search")
+    glass:SetVertexColor(C.textMuted[1], C.textMuted[2], C.textMuted[3])
     local eb = CreateFrame("EditBox", nil, box)
-    eb:SetPoint("TOPLEFT", box, "TOPLEFT", 0, 0)
-    eb:SetPoint("BOTTOMRIGHT", box, "BOTTOMRIGHT", -26, 0)
+    eb:SetPoint("TOPLEFT", box, "TOPLEFT", 30, 0)
+    eb:SetPoint("BOTTOMRIGHT", box, "BOTTOMRIGHT", -30, 0)
     eb:SetAutoFocus(false)
     eb:SetMaxLetters(40)
-    eb:SetFont(WeintCodex.Fonts.sans, 12, "")
-    eb:SetTextInsets(10, 4, 0, 0)
+    eb:SetFont(WeintCodex.Fonts.sans, 13, "")
+    eb:SetTextInsets(4, 4, 0, 0)
     eb:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
-    eb.hint = WeintCodex.Label(box, hintText, { size = 12, color = "textMuted" })
-    eb.hint:SetPoint("LEFT", box, "LEFT", 10, 0)
+    eb.hint = WeintCodex.Label(box, hintText, { size = 13, color = "textDim" })
+    eb.hint:SetPoint("LEFT", box, "LEFT", 34, 0)
     local clear = CreateFrame("Button", nil, box)
     clear:SetSize(24, 24)
-    clear:SetPoint("RIGHT", box, "RIGHT", -2, 0)
+    clear:SetPoint("RIGHT", box, "RIGHT", -6, 0)
     clear.x = WeintCodex.Label(clear, "\195\151", { size = 15, color = "textMuted" })
     clear.x:SetPoint("CENTER", clear, "CENTER", 0, 1)
     clear:SetScript("OnClick", function() eb:SetText("") eb:ClearFocus() end)
@@ -521,10 +559,16 @@ local function SearchBox(parent, hintText, onChange)
         local t = self:GetText() or ""
         self.hint:SetShown(t == "")
         clear:SetShown(t ~= "")
+        Rim(t ~= "" or self:HasFocus())
         onChange(t)
     end)
+    eb:SetScript("OnEditFocusGained", function() Rim(true) end)
+    eb:SetScript("OnEditFocusLost", function(self) Rim((self:GetText() or "") ~= "") end)
     eb:SetScript("OnEscapePressed", function(self) self:SetText("") self:ClearFocus() end)
     eb:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+    -- Klick irgendwo in die Pille setzt den Cursor.
+    box:EnableMouse(true)
+    box:SetScript("OnMouseDown", function() eb:SetFocus() end)
     return box, eb
 end
 
@@ -551,20 +595,21 @@ local function BuildPage()
     ic:SetPoint("TOPLEFT",     lc, "TOPRIGHT", M.GAP, 0)
     ic:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -M.PAD_X, M.PAD_Y)
     f.ItemCard = ic
-    local box, eb = SearchBox(ic, "Gegenstand, Boss oder Instanz …", function(t)
+    local box, eb = SearchBox(ic, "Gegenstand, Boss oder Instanz suchen …", function(t)
         if t == LB.query then return end
         LB.query = t
         LB.Draw()
     end)
-    box:SetPoint("TOPLEFT", ic, "TOPLEFT", 20, -14)
+    box:SetPoint("TOPLEFT", ic, "TOPLEFT", 18, -14)
+    box:SetPoint("TOPRIGHT", ic, "TOPRIGHT", -18, -14)
     f.Search = eb
     -- 6.84.8.0 (Beta-Test mit Bild: der Hinweis lief ueber Suche und Liste):
     -- eigene Zeile unter der Suche, links und rechts begrenzt, einzeilig.
     f.Count = WeintCodex.Label(ic, "", { size = 11, color = "textDim", justify = "LEFT" })
-    f.Count:SetPoint("TOPLEFT", ic, "TOPLEFT", 22, -50)
-    f.Count:SetPoint("TOPRIGHT", ic, "TOPRIGHT", -18, -50)
+    f.Count:SetPoint("TOPLEFT", ic, "TOPLEFT", 26, -54)
+    f.Count:SetPoint("TOPRIGHT", ic, "TOPRIGHT", -18, -54)
     f.Count:SetWordWrap(false)
-    f.ItemScroll, f.ItemBody = WeintCodex.CreateScrollArea(ic, 20, -70, 420, 300, true)
+    f.ItemScroll, f.ItemBody = WeintCodex.CreateScrollArea(ic, 20, -74, 420, 300, true)
 
     f:SetScript("OnSizeChanged", function(self, width)
         width = Plain(width)
@@ -863,7 +908,7 @@ function LB.Draw()
     local total = Plain(f:GetWidth())
     local lh = (Plain(f.ListCard:GetHeight()) or 360) - 28
     local iw = (Plain(f.ItemCard:GetWidth()) or 460) - 40
-    local ih = (Plain(f.ItemCard:GetHeight()) or 360) - 86
+    local ih = (Plain(f.ItemCard:GetHeight()) or 360) - 90
     f.ListScroll:SetSize(196, math.max(60, lh))
     f.ListBody:SetWidth(186)
     f.ItemScroll:SetSize(iw, math.max(60, ih))

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.89.1.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFBeute: Suchfeld|r – deutlich sichtbar: eine runde Leiste über die ganze Breite mit Lupe, größerer Schrift und einem Rand in deiner Klassenfarbe, sobald du tippst. Ein Klick irgendwo in die Leiste setzt den Cursor.",
+        },
+    },
+    {
         version = "6.89.0.0",
         date    = "20.10.2026",
         notes   = {
