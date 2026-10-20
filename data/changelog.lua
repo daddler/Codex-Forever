@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.90.1.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager: Leuchten|r – liegt jetzt als Rand um das Symbol statt als grüne Fläche darüber.",
+            "|cff7C6CFFAbklingzeitmanager: Anordnung|r – waagerecht oder senkrecht und „Symbole je Zeile“ zum Umbrechen; in der Zauberliste steht der Rang, ein Tooltip zeigt den Zauber.",
+        },
+    },
+    {
         version = "6.90.0.0",
         date    = "20.10.2026",
         notes   = {

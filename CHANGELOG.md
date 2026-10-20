@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.90.1.0] – 2026-10-20
+
+### Behoben
+- Eigener Abklingzeitmanager: Leuchten hinter dem Symbol (deckte es ganz zu).
+
+### Hinzugefügt
+- Anordnung waagerecht/senkrecht, Symbole je Zeile; Rang (`GetSpellSubtext`) und Tooltip in der Zauberliste, doppelte Namen nur einmal.
+
 ## [6.90.0.0] – 2026-10-20
 
 ### Hinzugefügt

@@ -60,7 +60,7 @@ OC.MODES = {
 OC.DEFAULT_MODE = "blizzard"
 OC.SLOTS = { "big", "small", "off" }
 OC.SLOT_TEXT = { big = "Wichtig", small = "Weitere", off = "Aus" }
-OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true }
+OC.DEFAULTS = { big = 40, small = 28, buff = 28, combatOnly = false, numbers = true, glow = true, buffs = true, vertical = false, perLine = 0 }
 OC.MAX_LIST = 30
 OC.MIN_BASE_CD = 2000   -- ms; darunter ist es die globale Abklingzeit
 
@@ -149,6 +149,18 @@ end
 --------------------------------------------------
 -- Welche Zauber
 --------------------------------------------------
+
+-- Rang vom Client ("Rang 3"), sonst nichts (6.90.1.0, Wunsch).
+local function SpellRank(id)
+    local cs = _G.C_Spell
+    local f = (cs and cs.GetSpellSubtext) or _G.GetSpellSubtext
+    if not f then return nil end
+    local ok, r = pcall(f, id)
+    r = ok and Plain(r) or nil
+    if type(r) == "string" and r ~= "" then return r end
+    return nil
+end
+OC.SpellRank = SpellRank
 
 local function SpellName(id)
     local cs = _G.C_Spell
@@ -256,8 +268,11 @@ function OC.Scan()
     for _, e in ipairs(OC.Catalog(class)) do
         local id = OC.Resolve(e.chain)
         if id and #list < OC.MAX_LIST then
-            e.id, e.name, e.tex = id, SpellName(id) or tostring(id), Texture(id)
-            list[#list + 1] = e
+            e.id, e.name, e.tex, e.rank = id, SpellName(id) or tostring(id), Texture(id), SpellRank(id)
+            -- Derselbe Zauber in zwei Ketten: nur einmal, der hoechste Rang.
+            local dup
+            for _, o in ipairs(list) do if o.name == e.name then dup = true break end end
+            if not dup then list[#list + 1] = e end
         end
     end
     return list
@@ -313,7 +328,8 @@ local function Icon(parent)
     top:SetAllPoints(b)
     top:SetFrameLevel((b.cd:GetFrameLevel() or 1) + 2)
     K.Border(top, 1, 0, 0, 0, 1, "OVERLAY")
-    b.glow = K.Glow(b, { host = top, layer = "OVERLAY", spread = 4, color = C.successBright, shown = false })
+    -- Hinter dem Symbol (6.90.1.0): oben drauf deckte die Flaeche das Bild ganz zu.
+    b.glow = K.Glow(b, { layer = "BACKGROUND", spread = 5, color = C.successBright, shown = false })
     b.state = K.NewText(top, 10)
     b.state:SetPoint("BOTTOM", b, "BOTTOM", 0, 2)
     b:Hide()
@@ -324,14 +340,28 @@ local function Ensure(row, n)
     for i = #row.icons + 1, n do row.icons[i] = Icon(row) end
 end
 
+-- Anordnung (6.90.1.0, Wunsch): waagerecht oder senkrecht, umbrechen nach
+-- "Symbole je Zeile" (0 = alle in einer Zeile); mittig wie die Reihen des Spiels.
 local function Arrange(row, n, s)
     local gap = 4
-    row:SetSize(math.max(s, n * s + math.max(0, n - 1) * gap), s)
+    local per = tonumber(OC.Get("perLine")) or 0
+    if per <= 0 or per > n then per = math.max(1, n) end
+    local lines = math.max(1, math.ceil(n / per))
+    local vert = OC.Get("vertical") and true or false
+    local long, short = per * s + (per - 1) * gap, lines * s + (lines - 1) * gap
+    if vert then row:SetSize(math.max(s, short), math.max(s, long)) else row:SetSize(math.max(s, long), math.max(s, short)) end
     for i = 1, n do
         local b = row.icons[i]
         b:SetSize(s, s)
         b:ClearAllPoints()
-        b:SetPoint("LEFT", row, "LEFT", (i - 1) * (s + gap), 0)
+        local line, pos = math.floor((i - 1) / per), (i - 1) % per
+        local inLine = math.min(per, n - line * per)
+        local shift = (per - inLine) * (s + gap) / 2
+        if vert then
+            b:SetPoint("TOPLEFT", row, "TOPLEFT", line * (s + gap), -(shift + pos * (s + gap)))
+        else
+            b:SetPoint("TOPLEFT", row, "TOPLEFT", shift + pos * (s + gap), -line * (s + gap))
+        end
     end
 end
 
@@ -548,6 +578,16 @@ local function CreateList(parent, width)
                 l.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
                 l.name = K.NewText(l, 12)
                 l.name:SetPoint("LEFT", l.icon, "RIGHT", 6, 0)
+                -- Tooltip des Zaubers mit Rang (6.90.1.0)
+                l:EnableMouse(true)
+                l:SetScript("OnEnter", function(self)
+                    local tt = _G.GameTooltip
+                    if not (tt and self.entry and self.entry.id) then return end
+                    tt:SetOwner(self, "ANCHOR_RIGHT")
+                    pcall(tt.SetSpellByID, tt, self.entry.id)
+                    tt:Show()
+                end)
+                l:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
                 l.name:SetWidth(colW - (ROW_H - 4) - 96)
                 l.name:SetJustifyH("LEFT")
                 if l.name.SetWordWrap then l.name:SetWordWrap(false) end
@@ -563,7 +603,8 @@ local function CreateList(parent, width)
             local col, r = (i - 1) % 2, math.floor((i - 1) / 2)
             l:SetPoint("TOPLEFT", f, "TOPLEFT", col * (colW + 12), -r * ROW_H)
             l.icon:SetTexture(e.tex)
-            l.name:SetText(WeintCodex.Truncate and WeintCodex.Truncate(e.name, 22) or e.name)
+            local label = e.rank and (e.name .. " (" .. e.rank .. ")") or e.name
+            l.name:SetText(WeintCodex.Truncate and WeintCodex.Truncate(label, 26) or label)
             local s = OC.Slot(e)
             l.btn:SetText(OC.SLOT_TEXT[s])
             l.name:SetTextColor(unpack(s == "off" and C.textMuted or C.textBright))
@@ -586,6 +627,12 @@ function OC.BuildSection(B)
           { type = "slider", label = "Größe: Weitere und Buffs", min = 18, max = 48, step = 2, format = px,
             get = function() return tonumber(OC.Get("small")) end,
             set = function(v) OC.Set("small", v) OC.Set("buff", v) end, disabled = off })
+    B:Row({ type = "dropdown", label = "Anordnung", disabled = off, items = {
+                { value = "h", text = "Waagerecht" }, { value = "v", text = "Senkrecht" } },
+            get = function() return OC.Get("vertical") and "v" or "h" end, set = function(v) OC.Set("vertical", v == "v") end },
+          { type = "slider", label = "Symbole je Zeile", min = 0, max = 16, step = 1, disabled = off,
+            format = function(v) return v == 0 and "alle" or tostring(v) end,
+            get = function() return tonumber(OC.Get("perLine")) or 0 end, set = function(v) OC.Set("perLine", v) end })
     B:Row({ type = "toggle", label = "Nur im Kampf zeigen", disabled = off,
             get = function() return OC.Get("combatOnly") and true or false end, set = function(v) OC.Set("combatOnly", v and true or false) end },
           { type = "toggle", label = "Restzeit als Zahl", disabled = off,
