@@ -1005,7 +1005,7 @@ local function CreateList(parent, width)
 
     -- Feinheiten je Zauber: kleines Feld neben der Zeile.
     local pop = CreateFrame("Frame", nil, f)
-    pop:SetSize(220, 4 * 30 + 40)
+    pop:SetSize(220, 5 * 30 + 40)
     pop:SetFrameStrata("DIALOG")
     pop:EnableMouse(true)
     K.Kachel(pop, { shadow = 6, alpha = 1 })
@@ -1029,12 +1029,21 @@ local function CreateList(parent, width)
         pop.rank:SetText(e.ranks and #e.ranks > 1 and ("Rang: " .. (e.rank or "?") .. "  ›") or (e.rank or "Nur ein Rang"))
         pop.glow:SetText("Leuchten, wenn bereit: " .. (OC.GlowOf(e) and "an" or "aus"))
         pop.sound:SetText("Ton, wenn bereit: " .. OC.SoundText(OC.SoundOf(e)) .. "  ›")
+        pop.slot:SetText("Spalte: " .. OC.SLOT_TEXT[OC.Slot(e)] .. "  ›")
         pop.remove:SetText(e.custom and "Entfernen" or "Schließen")
     end
     pop.rank = PopBtn(1, function() if pop.entry then OC.NextRank(pop.entry) PopSync() f.Sync() end end)
     pop.glow = PopBtn(2, function() if pop.entry then OC.SetGlowOf(pop.entry, not OC.GlowOf(pop.entry)) PopSync() f.Sync() end end)
     pop.sound = PopBtn(3, function() if pop.entry then OC.NextSound(pop.entry) PopSync() f.Sync() end end)
-    pop.remove = PopBtn(4, function()
+    pop.slot = PopBtn(4, function()
+        local e = pop.entry
+        if not e then return end
+        local cur = OC.Slot(e)
+        local nxt = cur == "big" and "small" or cur == "small" and "off" or "big"
+        OC.Place(e.key, nxt, nil)
+        OC.Relayout()
+    end)
+    pop.remove = PopBtn(5, function()
         local e = pop.entry
         pop.entry = nil
         pop:Hide()
@@ -1042,8 +1051,19 @@ local function CreateList(parent, width)
     end)
     f:SetScript("OnHide", function() pop:Hide() end)
 
+    -- Treffer ueber die Mausposition (6.92.1.0): IsMouseOver meldete beim
+    -- Loslassen nach dem Ziehen nichts - Spalten wechselten nicht.
+    local function Hit(fr)
+        if not (fr and fr:IsShown() and _G.GetCursorPosition) then return false end
+        local x, y = _G.GetCursorPosition()
+        local sc = fr:GetEffectiveScale() or 1
+        x, y = x / sc, y / sc
+        local l, r, t, b = fr:GetLeft(), fr:GetRight(), fr:GetTop(), fr:GetBottom()
+        if not (l and r and t and b) then return false end
+        return x >= l and x <= r and y >= b and y <= t
+    end
     local function ColUnderMouse()
-        for _, col in ipairs(f.cols) do if col:IsMouseOver() then return col end end
+        for _, col in ipairs(f.cols) do if Hit(col) then return col end end
         return nil
     end
 
@@ -1090,7 +1110,7 @@ local function CreateList(parent, width)
             if not from then return end
             local target
             for _, o in ipairs(f.lines) do
-                if o:IsShown() and o ~= self and o.entry and o:IsMouseOver() then target = o break end
+                if o:IsShown() and o ~= self and o.entry and Hit(o) then target = o break end
             end
             if target then
                 OC.Place(from, OC.Slot(target.entry), target.entry.key)
@@ -1138,10 +1158,7 @@ local function CreateList(parent, width)
                 local label = e.rank and (e.name .. " (" .. e.rank .. ")") or e.name
                 l.name:SetText(label)
                 l.name:SetTextColor(unpack(sl == "off" and C.textMuted or C.textBright))
-                local marks = ""
-                if sl ~= "off" and OC.GlowOf(e) then marks = "Licht" end
-                if OC.SoundOf(e) ~= "none" then marks = marks == "" and "Ton" or (marks .. " · Ton") end
-                l.mark:SetText(marks)
+                l.mark:SetText(OC.SoundOf(e) ~= "none" and "Ton" or "")
                 l:Show()
             end
         end
@@ -1239,7 +1256,7 @@ function OC.BuildSection(B)
                 end
             end })
     B:Row({ type = "custom", height = ListHeight(), create = CreateList })
-    B:Note("Alle Zauber deines Zauberbuchs, dazu was du selbst hinzufügst. Ziehen ordnet innerhalb einer Spalte oder schiebt in eine andere; ein Klick öffnet Rang, Leuchten und Ton des Zaubers. „Licht“ und „Ton“ rechts zeigen, was eingestellt ist. Buffs kommen aus den Buffzeiten.")
+    B:Note("Alle Zauber deines Zauberbuchs, dazu was du selbst hinzufügst. Ziehen ordnet innerhalb einer Spalte oder schiebt in eine andere; ein Klick öffnet Rang, Leuchten und Ton des Zaubers. „Ton“ rechts heißt: dieser Zauber spielt einen Ton, wenn er bereit ist. Buffs kommen aus den Buffzeiten.")
 end
 
 -- An das Modul "Erinnerungen" haengen.

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.92.1.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager: Ziehen zwischen Spalten|r – klappt wieder; zusätzlich schaltet „Spalte“ im Klickfeld eines Zaubers um. Das verwirrende „Licht“ hinter jedem Zauber ist weg, rechts steht nur noch „Ton“, wenn einer eingestellt ist.",
+            "|cff7C6CFFTaschen: Ausmisten im Taschenfenster|r – neuer Knopf „Ausmisten“ neben „Sortieren“ umrandet die billigsten Plätze gold; unten steht, wie viele es sind und was sie wert sind.",
+        },
+    },
+    {
         version = "6.92.0.0",
         date    = "20.10.2026",
         notes   = {

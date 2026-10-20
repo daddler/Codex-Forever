@@ -544,7 +544,13 @@ function BG.Refresh()
         -- Belegt laut Client. Steht hier eine Zahl, aber die Plaetze sind
         -- leer, liefert das Spiel die Gegenstaende und nur das Zeichnen
         -- scheitert - fuer eine Fehlermeldung aus dem Spiel Gold wert.
-        note:SetFormattedText("%d von %d Plätzen belegt", filled, n)
+        local BT = WeintCodex.UIBagTriage
+        local extra = BT and BT.SuggestText and BT.SuggestText()
+        if extra then
+            note:SetFormattedText("%d von %d Plätzen belegt · %s", filled, n, extra)
+        else
+            note:SetFormattedText("%d von %d Plätzen belegt", filled, n)
+        end
         note:SetTextColor(unpack(C.textMuted))
     end
     note:Show()
@@ -604,6 +610,24 @@ local function Build()
         end,
     })
     sort:SetPoint("RIGHT", close, "LEFT", -6, 0)
+
+    -- Ausmisten (6.92.1.0): die billigsten Plaetze gold zeigen, ui/bagtriage.lua.
+    local trash
+    trash = WeintCodex.CreateButton(win, {
+        text = "Ausmisten", kind = "ghost", height = 22, size = 11, backdrop = "bgDark",
+        tooltip = "Zeigt die billigsten Plätze gold umrandet – was du zuerst wegwerfen oder verkaufen kannst. Noch ein Klick blendet es aus. Gelöscht wird nie von selbst. Die ganze Liste: Codex → Taschen → Ausmisten.",
+        onClick = function()
+            local BT = WeintCodex.UIBagTriage
+            if not BT or not BT.SetShowSuggest then return end
+            BT.SetShowSuggest(not BT.showSuggest)
+            trash:SetText(BT.showSuggest and "Ausmisten: an" or "Ausmisten")
+        end,
+    })
+    trash:SetPoint("RIGHT", sort, "LEFT", -4, 0)
+    win:HookScript("OnHide", function()
+        local BT = WeintCodex.UIBagTriage
+        if BT and BT.showSuggest then BT.SetShowSuggest(false) trash:SetText("Ausmisten") end
+    end)
 
     search = CreateFrame("EditBox", nil, win)
     search:SetSize(160, 22)

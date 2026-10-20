@@ -469,10 +469,38 @@ function BT.BagSlotOf(btn)
     return bag, slot
 end
 
+-- Vorschlaege im Taschenfenster zeigen (6.92.1.0, Beta-Test: "In der
+-- Tasche steht nichts von Ausmisten"): Knopf "Ausmisten" schaltet die
+-- billigsten Plaetze gold, auch ohne Beute.
+BT.SUGGEST_MAX = 8
+BT.showSuggest = false
+BT.suggest = {}
+function BT.SetShowSuggest(on)
+    BT.showSuggest = on and true or false
+    Wipe(BT.suggest)
+    if BT.showSuggest then
+        for i, e in ipairs(BT.Candidates()) do
+            if i > BT.SUGGEST_MAX then break end
+            BT.suggest[e.bag * 1000 + e.slot] = i
+        end
+    end
+    BT.PaintBags()
+end
+
+function BT.SuggestText()
+    if not BT.Active() then return nil end
+    local list = BT.Candidates()
+    if #list == 0 then return nil end
+    local n, v = math.min(#list, BT.SUGGEST_MAX), 0
+    for i = 1, n do v = v + list[i].value end
+    return string.format("%d zum Ausmisten · %s", n, BT.Money(v))
+end
+
 local function PaintButton(btn)
     if type(btn) ~= "table" or not btn.CreateTexture then return end
     local bag, slot = BT.BagSlotOf(btn)
-    local on = bag and slot and BT.glow[bag * 1000 + slot] ~= nil or false
+    local k = bag and slot and bag * 1000 + slot
+    local on = k and (BT.glow[k] ~= nil or (BT.showSuggest and BT.suggest[k] ~= nil)) or false
     local o = overlays[btn]
     if on then ShowOverlay(Overlay(btn), true) elseif o then ShowOverlay(o, false) end
 end
@@ -503,6 +531,7 @@ function BT.PaintBags() BT.EachBagButton(PaintButton) end
 
 function BT.Refresh()
     if BT.lootOpen then BT.PairLoot() BT.MarkLoot() end
+    if BT.showSuggest then BT.SetShowSuggest(true) end
     BT.PaintBags()
     local page = WeintCodex.BagTrash
     if page and page.Redraw then page.Redraw() end

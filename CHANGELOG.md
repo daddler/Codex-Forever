@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.92.1.0] – 2026-10-20
+
+### Behoben
+- Abklingzeitmanager: Ziehen zwischen Spalten über die Mausposition statt `IsMouseOver`; Spaltenwahl im Klickfeld; Markierung „Licht“ entfernt.
+
+### Hinzugefügt
+- Taschenfenster: Knopf „Ausmisten“ (`BT.SetShowSuggest`), Summe in der Fußzeile.
+
 ## [6.92.0.0] – 2026-10-20
 
 ### Geändert
