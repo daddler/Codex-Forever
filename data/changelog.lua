@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.99.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFHexenmeister: Seelensplitter begrenzen|r – unter Komfort → Automatik stellst du ein, wie viele Seelensplitter du behältst (1–40); jeder weitere wird gleich gelöscht. Nur Seelensplitter, nie im Kampf. Lässt das Spiel das Löschen nur auf Klick zu, erscheint ein Knopf „… zu viel – löschen“.",
+        },
+    },
+    {
         version = "6.98.2.0",
         date    = "20.10.2026",
         notes   = {
