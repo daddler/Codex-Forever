@@ -999,12 +999,39 @@ local function Clock(b, id)
     if cs and cs.GetSpellCooldownDuration and b.cd.SetCooldownFromDurationObject then
         local ok, dur = pcall(cs.GetSpellCooldownDuration, id)
         if ok and dur and pcall(b.cd.SetCooldownFromDurationObject, b.cd, dur) then
-            return type(d) == "number" and "cd" or nil
+            return type(d) == "number" and "cd" or nil, d
         end
     end
     if type(start) == "nil" or type(duration) == "nil" then b.cd:Clear() return nil end
     pcall(b.cd.SetCooldown, b.cd, start, duration)
-    return type(d) == "number" and "cd" or nil
+    return type(d) == "number" and "cd" or nil, d
+end
+
+-- Abklingzeit selbst mitgerechnet (6.97.3.0, Beta-Test: Arkaner Schuss
+-- wurde im Kampf nicht grau). Im Kampf nennt der Client die Dauer nur
+-- geheim; die Uhr zeichnet er trotzdem, sagen kann ein Addon daraus
+-- nichts. Darum: Laenge einmal offen gelernt (ausserhalb des Kampfes)
+-- oder aus GetSpellBaseCooldown, Start aus dem eigenen Wirken.
+OC.lastCast = {}   -- Name -> Zeit des letzten eigenen Wirkens
+OC.cdLen = {}      -- Name -> Sekunden (gelernt)
+function OC.Learn(name, d)
+    if name and type(d) == "number" and d > 1.5 then OC.cdLen[name] = d end
+end
+function OC.Estimate(e)
+    local t = e.name and OC.lastCast[e.name]
+    if not t then return nil end
+    local len = OC.cdLen[e.name]
+    if not len and not e.item then
+        local fn = _G.GetSpellBaseCooldown
+        if type(fn) == "function" then
+            local ok, ms = pcall(fn, e.id)
+            ms = ok and Plain(ms) or nil
+            if type(ms) == "number" and ms > 1500 then len = ms / 1000 OC.cdLen[e.name] = len end
+        end
+    end
+    if not len then return nil end
+    local now = _G.GetTime and Plain(_G.GetTime()) or 0
+    return now < t + len and "cd" or "ready"
 end
 
 function OC.ItemClock(b, id)
@@ -1075,7 +1102,11 @@ local function DrawSpells(row, slot, size, show)
             local b = row.icons[i]
             b.icon:SetTexture(e.tex)
             if b.cd.SetHideCountdownNumbers then b.cd:SetHideCountdownNumbers(not numbers) end
-            local st = e.item and OC.ItemClock(b, e.id) or Clock(b, e.id)
+            local st, rawD
+            if e.item then st = OC.ItemClock(b, e.id) else st, rawD = Clock(b, e.id) end
+            OC.Learn(e.name, rawD)
+            -- Geheim (im Kampf): selbst mitgerechnet
+            if st == nil and not e.item then st = OC.Estimate(e) end
             -- Eigener DoT auf dem Ziel: seine Laufzeit statt "bereit"
             local ds, dd
             if not e.item then ds, dd = OC.DotOn(e.name) end
@@ -1236,6 +1267,7 @@ function OC.OnCast(unit, spellID)
     local id = Plain(spellID)
     if type(id) ~= "number" then return end
     local n = SpellName(id)
+    if n then OC.lastCast[n] = _G.GetTime and Plain(_G.GetTime()) or 0 end
     local dur = OC.DotDuration(n)
     if not dur then return end
     local now = _G.GetTime and Plain(_G.GetTime()) or 0

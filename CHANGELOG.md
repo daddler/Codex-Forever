@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.97.3.0] – 2026-10-20
+
+### Behoben
+- Abklingzeitmanager: Grau bei geheimer Abklingzeit über eigene Rechnung (`OC.lastCast`, `OC.cdLen`, `OC.Estimate`).
+
+### Geändert
+- Tauschfenster schmal (300 px), zweizeilig.
+
 ## [6.97.2.0] – 2026-10-20
 
 ### Behoben
