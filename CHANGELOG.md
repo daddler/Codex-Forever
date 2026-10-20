@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.103.3.0] – 2026-10-20
+
+### Behoben
+- Erinnerungen (Tasche): statt Rolle-gegen-Elixier pauschal (6.103.2.0, falsch verstanden) zählt der gemeinsame Wert: liegt der Buff eines bekannten Verbrauchsguts an, das einen Wert des Kandidaten hebt, kein Vorschlag (`R.SameStatActive`, in der Schleife – das nächste Elixier der Tasche kommt weiter dran). Anlass: schwaches Verteidigungselixier vorgeschlagen, stärkere Rüstungsrolle aktiv.
+
 ## [6.103.2.0] – 2026-10-20
 
 ### Behoben

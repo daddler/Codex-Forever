@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.103.3.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFElixiere und Schriftrollen genauer|r – kein Vorschlag mehr, wenn schon ein Elixier oder eine Rolle für denselben Wert wirkt (etwa Rüstung). Für andere Werte schlägt die Erinnerung beides wieder vor – die pauschale Sperre der letzten Fassung war zu grob.",
+        },
+    },
+    {
         version = "6.103.2.0",
         date    = "20.10.2026",
         notes   = {
