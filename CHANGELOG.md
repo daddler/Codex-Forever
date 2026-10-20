@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.93.0.0] – 2026-10-20
+
+### Hinzugefügt
+- Abklingzeitmanager: Tonmenü über `MenuUtil` (`OC.SOUND_GROUPS`, SOUNDKIT nur wenn vorhanden, Vorlesen), „Ton wann“; Leuchten je Zauber „bereit / DoT fehlt / aus“; Ausgrauen über `IsSpellUsable` (nur offene Antwort).
+
 ## [6.92.1.0] – 2026-10-20
 
 ### Behoben

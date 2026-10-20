@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.93.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager: Tonhinweis wie im Spiel|r – Menü mit Gruppen (WeintCodex, Warnungen und Hinweise des Spiels, Huhn) und „Vorlesen“, dazu „Ton wann“: verfügbar oder DoT ausgelaufen.",
+            "|cff7C6CFFAusgegraut, wenn nicht nutzbar|r – kann ein Zauber gerade nicht gewirkt werden (Proc fehlt, kein Mana), ist sein Symbol grau und wird wieder farbig, sobald er geht.",
+            "|cff7C6CFFLeuchten für DoTs|r – „Leuchten: wenn DoT fehlt/ausläuft“ macht Schlangenbiss und Co. hell, wenn sie auf deinem Ziel fehlen oder in 3 s auslaufen. Ab Werk für DoTs gewählt.",
+        },
+    },
+    {
         version = "6.92.1.0",
         date    = "20.10.2026",
         notes   = {

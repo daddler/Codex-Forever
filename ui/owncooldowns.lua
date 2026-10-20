@@ -536,37 +536,116 @@ function OC.SetSlot(e, slot)
     OC.Refresh()
 end
 
-function OC.GlowOf(e)
+-- Leuchten je Zauber (6.93.0.0): "ready" = wenn bereit, "dot" = wenn der
+-- eigene DoT auf dem Ziel fehlt oder gleich auslaeuft, "off". Alte
+-- Speicherstaende (true/false) gelten als "ready"/"off".
+OC.GLOW_TEXT = { ready = "wenn bereit", dot = "wenn DoT fehlt/ausläuft", off = "aus" }
+OC.DOT_WARN = 3   -- s Rest, ab dem "ausläuft" leuchtet
+
+function OC.GlowMode(e)
     local m = Mem()
     local v = m and m.glowOf[e.key]
-    if v == nil then return OC.Get("glow") and true or false end
-    return v and true or false
+    if v == true then return "ready" elseif v == false then return "off" end
+    if v == "ready" or v == "dot" or v == "off" then return v end
+    if OC.DotDuration(e.name) then return "dot" end
+    return OC.Get("glow") and "ready" or "off"
 end
+function OC.GlowOf(e) return OC.GlowMode(e) ~= "off" end
 
-function OC.SetGlowOf(e, v)
+function OC.NextGlow(e)
     local m = Mem()
-    if m then m.glowOf[e.key] = v and true or false OC.Refresh() end
+    if not m then return end
+    local cur = OC.GlowMode(e)
+    local list = OC.DotDuration(e.name) and { "ready", "dot", "off" } or { "ready", "off" }
+    local nxt = list[1]
+    for i, k in ipairs(list) do if k == cur then nxt = list[i % #list + 1] break end end
+    m.glowOf[e.key] = nxt
+    OC.Refresh()
 end
 
--- Toene wie beim Feueralarm (eigene und die des Spiels).
-OC.SOUND_ORDER = { "none", "hoch", "trill", "dreifach", "ready", "raid", "alarm2", "toast", "whisper" }
+-- Toene (6.93.0.0, Wunsch: "Sowas soll drin sein" - Bild der Tonauswahl
+-- des Spiels): Gruppen im Menue, eigene Toene, Toene des Spiels und
+-- Vorlesen. Toene des Spiels nur, wenn der Client den Namen kennt
+-- (SOUNDKIT) - sonst fehlen sie im Menue statt still zu bleiben.
+OC.SOUND_GROUPS = {
+    { text = "WeintCodex", items = { "hoch", "tief", "trill", "dreifach", "achtung", "fehler", "hupe", "sirene", "raus" } },
+    { text = "Warnungen des Spiels", items = { "raid", "boss", "ready", "alarm", "alarm2" } },
+    { text = "Hinweise des Spiels", items = { "whisper", "invite", "queue", "toast",
+        "kit:MAP_PING", "kit:IG_QUEST_LIST_COMPLETE", "kit:UI_EPICLOOT_TOAST", "kit:AUCTION_WINDOW_OPEN",
+        "kit:IG_BACKPACK_COIN_OK", "kit:UI_RAID_LOOT_TOAST_LESSER_ITEM_WON", "kit:UI_LEGENDARY_LOOT_TOAST" } },
+    { text = "Huhn", items = { "file:huhn_gack", "file:huhn_bwaak", "file:huhn_piep", "file:huhn_pock", "file:huhn_gold", "file:huhn_bumm" } },
+}
+OC.KIT_TEXT = {
+    MAP_PING = "Kartenpieps", IG_QUEST_LIST_COMPLETE = "Quest fertig", UI_EPICLOOT_TOAST = "Epische Beute",
+    AUCTION_WINDOW_OPEN = "Auktionshaus", IG_BACKPACK_COIN_OK = "Münzen", UI_RAID_LOOT_TOAST_LESSER_ITEM_WON = "Beute gewonnen",
+    UI_LEGENDARY_LOOT_TOAST = "Legendär",
+}
+OC.FILE_TEXT = { huhn_gack = "Gack", huhn_bwaak = "Bwaak", huhn_piep = "Piep", huhn_pock = "Pock", huhn_gold = "Gold", huhn_bumm = "Bumm" }
+
+local function KitOf(k)
+    local name = type(k) == "string" and k:match("^kit:(.+)$")
+    if not name then return nil end
+    local id = _G.SOUNDKIT and _G.SOUNDKIT[name]
+    return type(id) == "number" and id or nil, name
+end
+
+function OC.SoundAvailable(k)
+    if k == "tts" then return true end
+    if k:match("^kit:") then return KitOf(k) ~= nil end
+    if k:match("^file:") then return true end
+    local FA = WeintCodex.UIFireAlarm
+    return FA and FA.SOUNDS and FA.SOUNDS[k] ~= nil or false
+end
+
 function OC.SoundText(k)
     if k == "none" or not k then return "Kein Ton" end
+    if k == "tts" then return "Vorlesen (Name des Zaubers)" end
+    local _, kit = KitOf(k)
+    if kit then return OC.KIT_TEXT[kit] or kit end
+    local f = k:match("^file:(.+)$")
+    if f then return "Huhn: " .. (OC.FILE_TEXT[f] or f) end
     local FA = WeintCodex.UIFireAlarm
     local s = FA and FA.SOUNDS and FA.SOUNDS[k]
     return s and s.text or k
 end
 
-function OC.PlaySound(k)
+-- Vorlesen: TextToSpeech des Spiels, wenn es ihn gibt.
+function OC.Speak(text)
+    if type(text) ~= "string" or text == "" then return false end
+    if type(_G.TextToSpeech_Speak) == "function" then
+        local voice = _G.TextToSpeech_GetSelectedVoice and _G.Enum and _G.Enum.TtsVoiceType
+            and select(2, pcall(_G.TextToSpeech_GetSelectedVoice, _G.Enum.TtsVoiceType.Standard)) or nil
+        if pcall(_G.TextToSpeech_Speak, text, voice) then return true end
+    end
+    local vc = _G.C_VoiceChat
+    if vc and vc.SpeakText then
+        local voices = vc.GetTtsVoices and select(2, pcall(vc.GetTtsVoices))
+        local id = type(voices) == "table" and voices[1] and voices[1].voiceID or 0
+        if pcall(vc.SpeakText, id, text, 0, 100, false) then return true end
+        if pcall(vc.SpeakText, id, text, _G.Enum and _G.Enum.VoiceTtsDestination and _G.Enum.VoiceTtsDestination.LocalPlayback or 1, 0, 100) then return true end
+    end
+    return false
+end
+
+function OC.PlaySound(k, e)
+    if not k or k == "none" then return end
+    if k == "tts" then OC.Speak(e and e.name or "Bereit") return end
+    local kit = KitOf(k)
+    if kit then if _G.PlaySound then pcall(_G.PlaySound, kit, "Master") end return end
     local FA = WeintCodex.UIFireAlarm
+    local f = k:match("^file:(.+)$")
+    if f then
+        if _G.PlaySoundFile then pcall(_G.PlaySoundFile, (FA and FA.SOUND_PATH or "") .. f .. ".ogg", "Master") end
+        return
+    end
     local s = FA and FA.SOUNDS and FA.SOUNDS[k]
     if not s then return end
     if s.file then
         if _G.PlaySoundFile then pcall(_G.PlaySoundFile, (FA.SOUND_PATH or "") .. s.file, "Master") end
         return
     end
-    local kit = _G.SOUNDKIT and _G.SOUNDKIT[s.kit] or s.id
-    if _G.PlaySound then pcall(_G.PlaySound, kit, "Master") end
+    local id = _G.SOUNDKIT and _G.SOUNDKIT[s.kit] or s.id
+    if _G.PlaySound then pcall(_G.PlaySound, id, "Master") end
 end
 
 function OC.SoundOf(e)
@@ -574,15 +653,60 @@ function OC.SoundOf(e)
     return m and m.sound[e.key] or "none"
 end
 
-function OC.NextSound(e)
+function OC.SetSound(e, k)
     local m = Mem()
     if not m then return end
-    local cur, nxt = OC.SoundOf(e), "none"
-    for i, k in ipairs(OC.SOUND_ORDER) do
-        if k == cur then nxt = OC.SOUND_ORDER[i % #OC.SOUND_ORDER + 1] break end
+    m.sound[e.key] = (k and k ~= "none") and k or nil
+    if k and k ~= "none" then OC.PlaySound(k, e) end
+end
+
+-- Wann der Ton kommt: "ready" (Abklingzeit vorbei) oder "dot" (DoT laeuft aus)
+OC.WHEN_TEXT = { ready = "Verfügbar", dot = "DoT ausgelaufen" }
+function OC.SoundWhen(e)
+    local m = Mem()
+    local v = m and m.soundWhen and m.soundWhen[e.key]
+    if v == "ready" or v == "dot" then return v end
+    return OC.DotDuration(e.name) and "dot" or "ready"
+end
+function OC.NextSoundWhen(e)
+    local m = Mem()
+    if not m then return end
+    m.soundWhen = m.soundWhen or {}
+    m.soundWhen[e.key] = OC.SoundWhen(e) == "ready" and "dot" or "ready"
+end
+
+-- Menue wie das des Spiels: Gruppen mit Untermenues, Vorlesen, kein Ton.
+function OC.SoundMenu(owner, e, after)
+    local MU = _G.MenuUtil
+    if not (MU and MU.CreateContextMenu) then
+        -- ohne Menue des Spiels: weiterschalten
+        local flat = { "none" }
+        for _, g in ipairs(OC.SOUND_GROUPS) do
+            for _, k in ipairs(g.items) do if OC.SoundAvailable(k) then flat[#flat + 1] = k end end
+        end
+        flat[#flat + 1] = "tts"
+        local cur, nxt = OC.SoundOf(e), "none"
+        for i, k in ipairs(flat) do if k == cur then nxt = flat[i % #flat + 1] break end end
+        OC.SetSound(e, nxt)
+        if after then after() end
+        return
     end
-    m.sound[e.key] = nxt ~= "none" and nxt or nil
-    if nxt ~= "none" then OC.PlaySound(nxt) end
+    MU.CreateContextMenu(owner, function(_, root)
+        if root.CreateTitle then root:CreateTitle("Tonhinweis") end
+        root:CreateRadio("Kein Ton", function() return OC.SoundOf(e) == "none" end,
+            function() OC.SetSound(e, "none") if after then after() end end)
+        for _, g in ipairs(OC.SOUND_GROUPS) do
+            local sub = root:CreateButton(g.text)
+            for _, k in ipairs(g.items) do
+                if OC.SoundAvailable(k) then
+                    sub:CreateRadio(OC.SoundText(k), function() return OC.SoundOf(e) == k end,
+                        function() OC.SetSound(e, k) if after then after() end end)
+                end
+            end
+        end
+        root:CreateRadio("Vorlesen (Text-to-Speech)", function() return OC.SoundOf(e) == "tts" end,
+            function() OC.SetSound(e, "tts") if after then after() end end)
+    end)
 end
 
 function OC.NextRank(e)
@@ -619,6 +743,38 @@ end
 local rows = {}
 OC.rows = rows
 OC.prev = {}
+OC.prevDot = {}
+
+local function Now()
+    local t = _G.GetTime and Plain(_G.GetTime())
+    return type(t) == "number" and t or 0
+end
+
+-- true/false nur bei offener Antwort des Clients, sonst nil.
+function OC.Usable(id)
+    local cs = _G.C_Spell
+    local f = (cs and cs.IsSpellUsable) or _G.IsUsableSpell
+    if not f then return nil end
+    local ok, u, noMana = pcall(f, id)
+    if not ok then return nil end
+    u, noMana = Plain(u), Plain(noMana)
+    if type(u) ~= "boolean" then return nil end
+    if u == false and noMana == true then return false end
+    return u
+end
+
+function OC.HasEnemyTarget()
+    if not (_G.UnitExists and _G.UnitCanAttack) then return false end
+    local ok, ex = pcall(_G.UnitExists, "target")
+    if not (ok and K.Bool(ex, false)) then return false end
+    local ok2, can = pcall(_G.UnitCanAttack, "player", "target")
+    if not (ok2 and K.Bool(can, false)) then return false end
+    if _G.UnitIsDead then
+        local ok3, dead = pcall(_G.UnitIsDead, "target")
+        if ok3 and K.Bool(dead, false) then return false end
+    end
+    return true
+end
 local fighting = false
 
 local function Icon(parent)
@@ -743,13 +899,28 @@ local function DrawSpells(row, slot, size, show)
                 st = "dot"
             end
             if b.cd.SetReverse then b.cd:SetReverse(st == "dot") end
-            b.glow:SetShown(OC.GlowOf(e) and st == "ready")
-            -- Ton beim Wechsel von "laeuft" auf "bereit"
-            local was = OC.prev[e.key]
+            -- Leuchten je Zauber: wenn bereit, oder wenn der DoT fehlt/auslaeuft
+            local gm = OC.GlowMode(e)
+            local dotLeft = ds and (ds + dd - Now()) or nil
+            local needDot = OC.DotDuration(e.name) and OC.HasEnemyTarget()
+                and (not ds or (dotLeft and dotLeft <= OC.DOT_WARN)) or false
+            b.glow:SetShown((gm == "ready" and st == "ready") or (gm == "dot" and needDot and st ~= "cd"))
+            -- Ausgegraut, wenn der Client sagt: gerade nicht nutzbar (Proc fehlt,
+            -- falsche Haltung) - nur bei offener Antwort, geheim = farbig.
+            local usable = e.item and true or OC.Usable(e.id)
+            if b.icon.SetDesaturated then b.icon:SetDesaturated(usable == false) end
+            b.icon:SetVertexColor(usable == false and 0.55 or 1, usable == false and 0.55 or 1, usable == false and 0.55 or 1)
+            -- Ton: beim Wechsel auf "bereit" bzw. wenn der DoT auslaeuft
+            local was, wasDot = OC.prev[e.key], OC.prevDot[e.key]
             if st then OC.prev[e.key] = st end
-            if was == "cd" and st == "ready" then
-                local snd = OC.SoundOf(e)
-                if snd ~= "none" then OC.PlaySound(snd) end
+            OC.prevDot[e.key] = ds and true or false
+            local snd = OC.SoundOf(e)
+            if snd ~= "none" then
+                local when = OC.SoundWhen(e)
+                if (when == "ready" and was == "cd" and st == "ready")
+                   or (when == "dot" and wasDot and not ds) then
+                    OC.PlaySound(snd, e)
+                end
             end
             b.state:SetText("")
             b:Show()
@@ -1005,7 +1176,7 @@ local function CreateList(parent, width)
 
     -- Feinheiten je Zauber: kleines Feld neben der Zeile.
     local pop = CreateFrame("Frame", nil, f)
-    pop:SetSize(220, 5 * 30 + 40)
+    pop:SetSize(240, 6 * 30 + 40)
     pop:SetFrameStrata("DIALOG")
     pop:EnableMouse(true)
     K.Kachel(pop, { shadow = 6, alpha = 1 })
@@ -1027,15 +1198,21 @@ local function CreateList(parent, width)
         if not e then pop:Hide() return end
         pop.title:SetText(e.name)
         pop.rank:SetText(e.ranks and #e.ranks > 1 and ("Rang: " .. (e.rank or "?") .. "  ›") or (e.rank or "Nur ein Rang"))
-        pop.glow:SetText("Leuchten, wenn bereit: " .. (OC.GlowOf(e) and "an" or "aus"))
-        pop.sound:SetText("Ton, wenn bereit: " .. OC.SoundText(OC.SoundOf(e)) .. "  ›")
+        pop.glow:SetText("Leuchten: " .. OC.GLOW_TEXT[OC.GlowMode(e)] .. "  ›")
+        pop.sound:SetText("Ton: " .. OC.SoundText(OC.SoundOf(e)) .. "  ▾")
+        pop.when:SetText("Ton wann: " .. OC.WHEN_TEXT[OC.SoundWhen(e)] .. (OC.DotDuration(e.name) and "  ›" or ""))
         pop.slot:SetText("Spalte: " .. OC.SLOT_TEXT[OC.Slot(e)] .. "  ›")
         pop.remove:SetText(e.custom and "Entfernen" or "Schließen")
     end
     pop.rank = PopBtn(1, function() if pop.entry then OC.NextRank(pop.entry) PopSync() f.Sync() end end)
-    pop.glow = PopBtn(2, function() if pop.entry then OC.SetGlowOf(pop.entry, not OC.GlowOf(pop.entry)) PopSync() f.Sync() end end)
-    pop.sound = PopBtn(3, function() if pop.entry then OC.NextSound(pop.entry) PopSync() f.Sync() end end)
-    pop.slot = PopBtn(4, function()
+    pop.glow = PopBtn(2, function() if pop.entry then OC.NextGlow(pop.entry) PopSync() f.Sync() end end)
+    pop.sound = PopBtn(3, function()
+        if pop.entry then OC.SoundMenu(pop.sound, pop.entry, function() PopSync() f.Sync() end) end
+    end)
+    pop.when = PopBtn(4, function()
+        if pop.entry and OC.DotDuration(pop.entry.name) then OC.NextSoundWhen(pop.entry) PopSync() end
+    end)
+    pop.slot = PopBtn(5, function()
         local e = pop.entry
         if not e then return end
         local cur = OC.Slot(e)
@@ -1043,7 +1220,7 @@ local function CreateList(parent, width)
         OC.Place(e.key, nxt, nil)
         OC.Relayout()
     end)
-    pop.remove = PopBtn(5, function()
+    pop.remove = PopBtn(6, function()
         local e = pop.entry
         pop.entry = nil
         pop:Hide()
