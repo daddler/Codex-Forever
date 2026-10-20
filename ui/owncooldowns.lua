@@ -1175,9 +1175,14 @@ local function CreateList(parent, width)
     OC.list = f
 
     -- Feinheiten je Zauber: kleines Feld neben der Zeile.
-    local pop = CreateFrame("Frame", nil, f)
+    -- Am UIParent, nicht an der Liste (6.93.1.0): die Liste liegt in der
+    -- Rollflaeche der Einstellungen und die schneidet alles ab, was
+    -- daneben stehen soll - das Feld war unsichtbar.
+    local pop = CreateFrame("Frame", "WeintCodexOwnCooldownsPop", UIParent)
     pop:SetSize(240, 6 * 30 + 40)
-    pop:SetFrameStrata("DIALOG")
+    pop:SetFrameStrata("FULLSCREEN_DIALOG")
+    pop:SetClampedToScreen(true)
+    if type(_G.UISpecialFrames) == "table" then table.insert(_G.UISpecialFrames, "WeintCodexOwnCooldownsPop") end
     pop:EnableMouse(true)
     K.Kachel(pop, { shadow = 6, alpha = 1 })
     pop.title = K.NewText(pop, 13, "OVERLAY")
@@ -1306,6 +1311,7 @@ local function CreateList(parent, width)
             if pop.entry == self.entry and pop:IsShown() then pop:Hide() pop.entry = nil return end
             pop.entry = self.entry
             pop:ClearAllPoints()
+            pop:SetScale(self:GetEffectiveScale() / (UIParent:GetEffectiveScale() or 1))
             pop:SetPoint("TOPLEFT", self, "TOPRIGHT", 6, 0)
             PopSync()
             pop:Show()

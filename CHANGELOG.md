@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.93.1.0] – 2026-10-20
+
+### Behoben
+- Abklingzeitmanager: Klickfeld am UIParent statt in der Rollfläche (wurde abgeschnitten).
+
+### Hinzugefügt
+- Einstellungsfenster: Höhe per Griff, Skalierung per Strg + Mausrad (`general.optHeight`, `general.optScale`).
+
 ## [6.93.0.0] – 2026-10-20
 
 ### Hinzugefügt

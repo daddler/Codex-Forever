@@ -931,6 +931,46 @@ function O.Build()
     bg:SetColorTexture(unpack(C.bgDark))
     WeintCodex.DrawBorder(frame, C.border[1], C.border[2], C.border[3], 1, 1)
 
+    -- Groesse aendern (6.93.1.0, Wunsch): Griff unten rechts zieht die
+    -- Hoehe (die Breite traegt das Raster der Seiten und bleibt), Strg +
+    -- Mausrad ueber dem Fenster skaliert es ganz. Beides gemerkt.
+    frame:SetResizable(true)
+    if frame.SetResizeBounds then pcall(frame.SetResizeBounds, frame, W, 480, W, 1600)
+    elseif frame.SetMinResize then frame:SetMinResize(W, 480) frame:SetMaxResize(W, 1600) end
+    local savedH, savedScale = tonumber(K.Get("general", "optHeight")), tonumber(K.Get("general", "optScale"))
+    if savedH and savedH >= 480 then frame:SetHeight(savedH) end
+    if savedScale and savedScale >= 0.6 and savedScale <= 1.5 then frame:SetScale(savedScale) end
+    local grip = CreateFrame("Button", nil, frame)
+    grip:SetSize(16, 16)
+    grip:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -2, 2)
+    grip:SetFrameLevel(frame:GetFrameLevel() + 20)
+    grip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    grip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+    grip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+    grip:SetScript("OnMouseDown", function() frame:StartSizing("BOTTOMRIGHT") end)
+    grip:SetScript("OnMouseUp", function()
+        frame:StopMovingOrSizing()
+        frame:SetWidth(W)
+        K.Set("general", "optHeight", math.floor(frame:GetHeight() + 0.5))
+    end)
+    grip:SetScript("OnEnter", function(self)
+        local tt = _G.GameTooltip
+        if not tt then return end
+        tt:SetOwner(self, "ANCHOR_TOPLEFT")
+        tt:SetText("Ziehen: Höhe ändern")
+        tt:AddLine("Strg + Mausrad über der linken Leiste oder dem Kopf: ganzes Fenster größer oder kleiner", 0.7, 0.7, 0.7, true)
+        tt:Show()
+    end)
+    grip:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+    O.grip = grip
+    frame:SetScript("OnMouseWheel", function(self, delta)
+        if not (_G.IsControlKeyDown and K.Bool(_G.IsControlKeyDown(), false)) then return end
+        local sc = math.max(0.6, math.min(1.5, (self:GetScale() or 1) + (delta > 0 and 0.05 or -0.05)))
+        self:SetScale(sc)
+        K.Set("general", "optScale", sc)
+    end)
+    frame:EnableMouseWheel(true)
+
     -- ESC schliesst, wie jedes Fenster des Spiels.
     if type(_G.UISpecialFrames) == "table" then
         table.insert(_G.UISpecialFrames, "WeintCodexUIOptions")

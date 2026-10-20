@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.93.1.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager: Klickfeld erscheint|r – Rang, Leuchten, Ton und Spalte öffnen sich jetzt wirklich neben dem Zauber; vorher schnitt die Seite das Feld ab.",
+            "|cff7C6CFFEinstellungen: Größe ändern|r – Griff unten rechts zieht das Fenster höher oder niedriger, Strg + Mausrad über der linken Leiste macht es größer oder kleiner. Beides wird gemerkt.",
+        },
+    },
+    {
         version = "6.93.0.0",
         date    = "20.10.2026",
         notes   = {
