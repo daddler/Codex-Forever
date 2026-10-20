@@ -77,6 +77,9 @@ local function Mem()
     st.ocd.spells = st.ocd.spells or {}
     st.ocd.order = st.ocd.order or {}     -- Reihenfolge per Ziehen (Schluessel)
     st.ocd.custom = st.ocd.custom or {}   -- selbst hinzugefuegt: { kind = "spell"|"item", id }
+    st.ocd.rank = st.ocd.rank or {}       -- je Zauber gewaehlter Rang (Nummer)
+    st.ocd.glowOf = st.ocd.glowOf or {}   -- je Zauber Leuchten an/aus (nil = Vorgabe)
+    st.ocd.sound = st.ocd.sound or {}     -- je Zauber Ton, wenn bereit
     return st.ocd
 end
 OC.Mem = Mem
@@ -268,9 +271,11 @@ function OC.Spellbook()
         if not n then return end
         if byName[n] then
             -- spaeter im Buch = hoeherer Rang
-            for _, o in ipairs(out) do if o.name == n then o.id = id end end
+            for _, o in ipairs(out) do
+                if o.name == n then o.id = id o.ranks[#o.ranks + 1] = id end
+            end
         else
-            out[#out + 1] = { id = id, name = n }
+            out[#out + 1] = { id = id, name = n, ranks = { id } }
         end
         byName[n] = id
     end
@@ -306,6 +311,8 @@ function OC.Spellbook()
             end
         end
     end
+    OC.bookRanks = {}
+    for _, o in ipairs(out) do OC.bookRanks[o.name] = o.ranks end
     return out, byName
 end
 
@@ -345,6 +352,16 @@ function OC.Scan()
         end
     end
     OC.AddCustom(list)
+    local m = Mem()
+    for _, e in ipairs(list) do
+        e.ranks = not e.item and OC.bookRanks and OC.bookRanks[e.name] or nil
+        local want = m and tonumber(m.rank[e.key])
+        if want and e.ranks then
+            for _, r in ipairs(e.ranks) do
+                if r == want then e.id, e.rank, e.tex = r, SpellRank(r), Texture(r) break end
+            end
+        end
+    end
     OC.SortByOrder(list)
     return list
 end
@@ -519,6 +536,66 @@ function OC.SetSlot(e, slot)
     OC.Refresh()
 end
 
+function OC.GlowOf(e)
+    local m = Mem()
+    local v = m and m.glowOf[e.key]
+    if v == nil then return OC.Get("glow") and true or false end
+    return v and true or false
+end
+
+function OC.SetGlowOf(e, v)
+    local m = Mem()
+    if m then m.glowOf[e.key] = v and true or false OC.Refresh() end
+end
+
+-- Toene wie beim Feueralarm (eigene und die des Spiels).
+OC.SOUND_ORDER = { "none", "hoch", "trill", "dreifach", "ready", "raid", "alarm2", "toast", "whisper" }
+function OC.SoundText(k)
+    if k == "none" or not k then return "Kein Ton" end
+    local FA = WeintCodex.UIFireAlarm
+    local s = FA and FA.SOUNDS and FA.SOUNDS[k]
+    return s and s.text or k
+end
+
+function OC.PlaySound(k)
+    local FA = WeintCodex.UIFireAlarm
+    local s = FA and FA.SOUNDS and FA.SOUNDS[k]
+    if not s then return end
+    if s.file then
+        if _G.PlaySoundFile then pcall(_G.PlaySoundFile, (FA.SOUND_PATH or "") .. s.file, "Master") end
+        return
+    end
+    local kit = _G.SOUNDKIT and _G.SOUNDKIT[s.kit] or s.id
+    if _G.PlaySound then pcall(_G.PlaySound, kit, "Master") end
+end
+
+function OC.SoundOf(e)
+    local m = Mem()
+    return m and m.sound[e.key] or "none"
+end
+
+function OC.NextSound(e)
+    local m = Mem()
+    if not m then return end
+    local cur, nxt = OC.SoundOf(e), "none"
+    for i, k in ipairs(OC.SOUND_ORDER) do
+        if k == cur then nxt = OC.SOUND_ORDER[i % #OC.SOUND_ORDER + 1] break end
+    end
+    m.sound[e.key] = nxt ~= "none" and nxt or nil
+    if nxt ~= "none" then OC.PlaySound(nxt) end
+end
+
+function OC.NextRank(e)
+    local m = Mem()
+    if not (m and e.ranks and #e.ranks > 1) then return end
+    local idx = 1
+    for i, r in ipairs(e.ranks) do if r == e.id then idx = i end end
+    local r = e.ranks[idx % #e.ranks + 1]
+    m.rank[e.key] = (r ~= e.ranks[#e.ranks]) and r or nil
+    e.id, e.rank, e.tex = r, SpellRank(r), Texture(r)
+    OC.Refresh()
+end
+
 function OC.Cycle(e)
     local cur = OC.Slot(e)
     local nxt = cur == "big" and "small" or cur == "small" and "off" or "big"
@@ -541,6 +618,7 @@ end
 
 local rows = {}
 OC.rows = rows
+OC.prev = {}
 local fighting = false
 
 local function Icon(parent)
@@ -657,7 +735,22 @@ local function DrawSpells(row, slot, size, show)
             b.icon:SetTexture(e.tex)
             if b.cd.SetHideCountdownNumbers then b.cd:SetHideCountdownNumbers(not numbers) end
             local st = e.item and OC.ItemClock(b, e.id) or Clock(b, e.id)
-            b.glow:SetShown(glow and st == "ready")
+            -- Eigener DoT auf dem Ziel: seine Laufzeit statt "bereit"
+            local ds, dd
+            if not e.item then ds, dd = OC.DotOn(e.name) end
+            if ds and (st == "ready" or st == nil) then
+                pcall(b.cd.SetCooldown, b.cd, ds, dd)
+                st = "dot"
+            end
+            if b.cd.SetReverse then b.cd:SetReverse(st == "dot") end
+            b.glow:SetShown(OC.GlowOf(e) and st == "ready")
+            -- Ton beim Wechsel von "laeuft" auf "bereit"
+            local was = OC.prev[e.key]
+            if st then OC.prev[e.key] = st end
+            if was == "cd" and st == "ready" then
+                local snd = OC.SoundOf(e)
+                if snd ~= "none" then OC.PlaySound(snd) end
+            end
             b.state:SetText("")
             b:Show()
         end
@@ -723,7 +816,80 @@ local function Tick(_, el)
     if OC.Active() then OC.Update() end
 end
 
-local function OnEvent(_, event)
+--------------------------------------------------
+-- Laufzeit eigener DoTs (6.92.0.0, Wunsch: "Die Laufzeit von DoTs, wie
+-- zB Schlangengift, sollte im Abklingzeitmanager einzusehen sein")
+--------------------------------------------------
+-- Die Plakette zeigt die Auren ueber den Aurenbehaelter des Spiels - lesen
+-- kann ein Addon sie im Kampf nicht. Darum wie bei den Buffzeiten: aus dem
+-- eigenen Wirken (UNIT_SPELLCAST_SUCCEEDED) und der Dauer aus Classic,
+-- gebunden an das Ziel beim Wirken. Herkunft `classic`; erste Nummer der
+-- Rangkette, der Name kommt vom Client. Dauer, die an Kombopunkten oder am
+-- Rang haengt (Blutung, Zerfetzen, Verwunden), fehlt bewusst.
+OC.DOTS = {
+    { id = 1978,  dur = 15 },   -- Schlangenbiss
+    { id = 3043,  dur = 20 },   -- Skorpidstich
+    { id = 3034,  dur = 8 },    -- Vipernbiss
+    { id = 1130,  dur = 120 },  -- Mal des Jaegers
+    { id = 172,   dur = 18 },   -- Verderbnis (Rang 1: 12 s)
+    { id = 980,   dur = 24 },   -- Fluch der Pein
+    { id = 348,   dur = 15 },   -- Feuerbrand
+    { id = 18265, dur = 30 },   -- Lebensentzug
+    { id = 589,   dur = 18 },   -- Schattenwort: Schmerz
+    { id = 2944,  dur = 24 },   -- Verschlingende Seuche
+    { id = 8921,  dur = 12 },   -- Mondfeuer (Rang 1: 9 s)
+    { id = 5570,  dur = 12 },   -- Insektenschwarm
+    { id = 1822,  dur = 9 },    -- Krallenhieb
+    { id = 703,   dur = 18 },   -- Erdrosseln
+    { id = 8050,  dur = 12 },   -- Flammenschock
+    { id = 770,   dur = 40 },   -- Feenfeuer
+}
+OC.dots = {}       -- Name -> { start, dur, guid }
+local dotDur       -- Name -> Sekunden (beim ersten Gebrauch gebaut)
+
+function OC.DotDuration(name)
+    if not dotDur then
+        dotDur = {}
+        for _, d in ipairs(OC.DOTS) do
+            local n = SpellName(d.id)
+            if n then dotDur[n] = d.dur end
+        end
+    end
+    return name and dotDur[name] or nil
+end
+
+local function TargetGUID()
+    if not _G.UnitGUID then return nil end
+    local ok, g = pcall(_G.UnitGUID, "target")
+    g = ok and Plain(g) or nil
+    return type(g) == "string" and g or nil
+end
+
+function OC.OnCast(unit, spellID)
+    if Plain(unit) ~= "player" then return end
+    local id = Plain(spellID)
+    if type(id) ~= "number" then return end
+    local n = SpellName(id)
+    local dur = OC.DotDuration(n)
+    if not dur then return end
+    local now = _G.GetTime and Plain(_G.GetTime()) or 0
+    OC.dots[n] = { start = now, dur = dur, guid = TargetGUID() }
+end
+
+-- Laeuft der DoT dieses Zaubers auf dem aktuellen Ziel? -> start, dur
+function OC.DotOn(name)
+    local d = name and OC.dots[name]
+    if not d then return nil end
+    local now = _G.GetTime and Plain(_G.GetTime()) or 0
+    if now - d.start >= d.dur then OC.dots[name] = nil return nil end
+    local g = TargetGUID()
+    if d.guid and g and g ~= d.guid then return nil end
+    if d.guid and not g then return nil end
+    return d.start, d.dur
+end
+
+local function OnEvent(_, event, a1, a2, a3)
+    if event == "UNIT_SPELLCAST_SUCCEEDED" then OC.OnCast(a1, a3) end
     if event == "PLAYER_REGEN_DISABLED" then
         fighting = true
     elseif event == "PLAYER_REGEN_ENABLED" then
@@ -782,26 +948,44 @@ end
 
 function OC.ModeRow(B)
     B:Row({ type = "dropdown", label = "Welcher Abklingzeitmanager?", items = OC.MODES,
-            get = function() return OC.Mode() end, set = function(v) OC.SetMode(v) end,
+            get = function() return OC.Mode() end, set = function(v) OC.SetMode(v) OC.Relayout() end,
             tooltip = "Blizzard: der Manager des Spiels. WeintCodex: eigene Reihen, die Anzeige des Spiels wird dafür ausgeschaltet und beim Zurückwechseln wieder so gestellt wie vorher. Je Charakter." },
           { type = "empty" })
 end
 
 local ROW_H = 26
+local HEAD_H = 26
 local function ListHeight()
-    local n = #OC.known
-    if n == 0 then return 40 end
-    return math.ceil(n / 2) * ROW_H + 4
+    local n = { big = 0, small = 0, off = 0 }
+    for _, e in ipairs(OC.known) do local sl = OC.Slot(e) n[sl] = (n[sl] or 0) + 1 end
+    local most = math.max(1, n.big, n.small, n.off)
+    return HEAD_H + most * ROW_H + 8
 end
+OC.ListHeight = ListHeight
 
+-- Drei Spalten Wichtig | Weitere | Aus (6.92.0.0, Wunsch). Ziehen ordnet
+-- innerhalb einer Spalte und zwischen ihnen; Klick oeffnet die Feinheiten
+-- des Zaubers (Rang, Leuchten, Ton).
 local function CreateList(parent, width)
     local f = CreateFrame("Frame", nil, parent)
-    f.lines = {}
-    f.empty = K.NewText(f, 12)
-    f.empty:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -4)
-    f.empty:SetTextColor(unpack(C.textMuted))
-    f.empty:SetText("Noch keine gelernten Zauber mit Abklingzeit erkannt.")
-    local colW = math.floor((width - 12) / 2)
+    f.lines, f.cols = {}, {}
+    local gap = 10
+    local colW = math.floor((width - 2 * gap) / 3)
+    for ci, slot in ipairs(OC.SLOTS) do
+        local col = CreateFrame("Frame", nil, f)
+        col.slot = slot
+        col:SetPoint("TOPLEFT", f, "TOPLEFT", (ci - 1) * (colW + gap), 0)
+        col:SetPoint("BOTTOM", f, "BOTTOM", 0, 0)
+        col:SetWidth(colW)
+        local bg = col:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints(col)
+        bg:SetColorTexture(unpack(C.surface1))
+        col.head = K.NewText(col, 12)
+        col.head:SetPoint("TOPLEFT", col, "TOPLEFT", 8, -6)
+        col.head:SetTextColor(unpack(slot == "off" and C.textMuted or C.textBright))
+        col:EnableMouse(true)
+        f.cols[ci] = col
+    end
     -- Zauber oder Gegenstand auf die Liste ziehen: hinzufuegen.
     f.Drop = function()
         local c = OC.FromCursor()
@@ -813,80 +997,191 @@ local function CreateList(parent, width)
     f:EnableMouse(true)
     f:SetScript("OnReceiveDrag", f.Drop)
     f:SetScript("OnMouseUp", function() if OC.FromCursor() then f.Drop() end end)
+    for _, col in ipairs(f.cols) do
+        col:SetScript("OnReceiveDrag", f.Drop)
+        col:SetScript("OnMouseUp", function() if OC.FromCursor() then f.Drop() end end)
+    end
     OC.list = f
-    f.Sync = function()
-        local list = OC.known
-        f.empty:SetShown(#list == 0)
-        for i, e in ipairs(list) do
-            local l = f.lines[i]
-            if not l then
-                l = CreateFrame("Frame", nil, f)
-                l:SetSize(colW, ROW_H - 4)
-                l.icon = l:CreateTexture(nil, "ARTWORK")
-                l.icon:SetSize(ROW_H - 4, ROW_H - 4)
-                l.icon:SetPoint("LEFT", l, "LEFT", 0, 0)
-                l.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-                l.name = K.NewText(l, 12)
-                l.name:SetPoint("LEFT", l.icon, "RIGHT", 6, 0)
-                -- Tooltip des Zaubers mit Rang (6.90.1.0)
-                l:EnableMouse(true)
-                l:SetScript("OnEnter", function(self)
-                    local tt = _G.GameTooltip
-                    if not (tt and self.entry and self.entry.id) then return end
-                    tt:SetOwner(self, "ANCHOR_RIGHT")
-                    if self.entry.item then pcall(tt.SetItemByID, tt, self.entry.id)
-                    else pcall(tt.SetSpellByID, tt, self.entry.id) end
-                    tt:AddLine("Ziehen: Reihenfolge ändern" .. (self.entry.custom and " · Rechtsklick: entfernen" or ""), 0.6, 0.6, 0.6)
-                    tt:Show()
-                end)
-                l:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
-                l:RegisterForDrag("LeftButton")
-                l:SetScript("OnDragStart", function(self) f.dragKey = self.entry and self.entry.key self:SetAlpha(0.4) end)
-                l:SetScript("OnDragStop", function(self)
-                    self:SetAlpha(1)
-                    local from = f.dragKey
-                    f.dragKey = nil
-                    if not from then return end
-                    for _, o in ipairs(f.lines) do
-                        if o:IsShown() and o ~= self and o.entry and o:IsMouseOver() then
-                            OC.Move(from, o.entry.key)
-                            break
-                        end
-                    end
-                    f.Sync()
-                end)
-                l:SetScript("OnMouseUp", function(self, button)
-                    if button == "RightButton" and self.entry and self.entry.custom then
-                        OC.Remove(self.entry)
-                        OC.Relayout()
-                    end
-                end)
-                l:SetScript("OnReceiveDrag", function() f.Drop() end)
-                l.name:SetWidth(colW - (ROW_H - 4) - 96)
-                l.name:SetJustifyH("LEFT")
-                if l.name.SetWordWrap then l.name:SetWordWrap(false) end
-                l.btn = WeintCodex.CreateButton(l, { text = "", kind = "secondary", height = ROW_H - 4, size = 11,
-                    tooltip = "Klick: Wichtig → Weitere → Aus",
-                    onClick = function() if l.entry then OC.Cycle(l.entry) f.Sync() end end })
-                l.btn:SetWidth(84)
-                l.btn:SetPoint("RIGHT", l, "RIGHT", 0, 0)
-                f.lines[i] = l
+
+    -- Feinheiten je Zauber: kleines Feld neben der Zeile.
+    local pop = CreateFrame("Frame", nil, f)
+    pop:SetSize(220, 4 * 30 + 40)
+    pop:SetFrameStrata("DIALOG")
+    pop:EnableMouse(true)
+    K.Kachel(pop, { shadow = 6, alpha = 1 })
+    pop.title = K.NewText(pop, 13, "OVERLAY")
+    pop.title:SetPoint("TOPLEFT", pop, "TOPLEFT", 10, -8)
+    pop.title:SetPoint("RIGHT", pop, "RIGHT", -10, 0)
+    pop.title:SetJustifyH("LEFT")
+    if pop.title.SetWordWrap then pop.title:SetWordWrap(false) end
+    local function PopBtn(i, onClick)
+        local b = WeintCodex.CreateButton(pop, { text = "", kind = "secondary", height = 26, size = 11, onClick = onClick })
+        b:SetPoint("TOPLEFT", pop, "TOPLEFT", 10, -32 - (i - 1) * 30)
+        b:SetPoint("RIGHT", pop, "RIGHT", -10, 0)
+        return b
+    end
+    pop:Hide()
+    f.pop = pop
+    local function PopSync()
+        local e = pop.entry
+        if not e then pop:Hide() return end
+        pop.title:SetText(e.name)
+        pop.rank:SetText(e.ranks and #e.ranks > 1 and ("Rang: " .. (e.rank or "?") .. "  ›") or (e.rank or "Nur ein Rang"))
+        pop.glow:SetText("Leuchten, wenn bereit: " .. (OC.GlowOf(e) and "an" or "aus"))
+        pop.sound:SetText("Ton, wenn bereit: " .. OC.SoundText(OC.SoundOf(e)) .. "  ›")
+        pop.remove:SetText(e.custom and "Entfernen" or "Schließen")
+    end
+    pop.rank = PopBtn(1, function() if pop.entry then OC.NextRank(pop.entry) PopSync() f.Sync() end end)
+    pop.glow = PopBtn(2, function() if pop.entry then OC.SetGlowOf(pop.entry, not OC.GlowOf(pop.entry)) PopSync() f.Sync() end end)
+    pop.sound = PopBtn(3, function() if pop.entry then OC.NextSound(pop.entry) PopSync() f.Sync() end end)
+    pop.remove = PopBtn(4, function()
+        local e = pop.entry
+        pop.entry = nil
+        pop:Hide()
+        if e and e.custom then OC.Remove(e) OC.Relayout() end
+    end)
+    f:SetScript("OnHide", function() pop:Hide() end)
+
+    local function ColUnderMouse()
+        for _, col in ipairs(f.cols) do if col:IsMouseOver() then return col end end
+        return nil
+    end
+
+    local function Line(i)
+        local l = CreateFrame("Button", nil, f)
+        l:SetSize(colW - 8, ROW_H - 4)
+        l.hl = l:CreateTexture(nil, "BACKGROUND")
+        l.hl:SetAllPoints(l)
+        l.hl:SetColorTexture(1, 1, 1, 0)
+        l.icon = l:CreateTexture(nil, "ARTWORK")
+        l.icon:SetSize(ROW_H - 6, ROW_H - 6)
+        l.icon:SetPoint("LEFT", l, "LEFT", 2, 0)
+        l.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        l.name = K.NewText(l, 12)
+        l.name:SetPoint("LEFT", l.icon, "RIGHT", 6, 0)
+        l.name:SetPoint("RIGHT", l, "RIGHT", -62, 0)
+        l.name:SetJustifyH("LEFT")
+        if l.name.SetWordWrap then l.name:SetWordWrap(false) end
+        l.mark = K.NewText(l, 11)
+        l.mark:SetPoint("RIGHT", l, "RIGHT", -4, 0)
+        l.mark:SetTextColor(unpack(C.textMuted))
+        l:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        l:SetScript("OnEnter", function(self)
+            local c = C.accent
+            self.hl:SetColorTexture(c[1], c[2], c[3], 0.15)
+            local tt = _G.GameTooltip
+            if not (tt and self.entry and self.entry.id) then return end
+            tt:SetOwner(self, "ANCHOR_RIGHT")
+            if self.entry.item then pcall(tt.SetItemByID, tt, self.entry.id)
+            else pcall(tt.SetSpellByID, tt, self.entry.id) end
+            tt:AddLine("Klick: Rang, Leuchten, Ton · Ziehen: ordnen oder in eine andere Spalte" .. (self.entry.custom and " · Rechtsklick: entfernen" or ""), 0.6, 0.6, 0.6, true)
+            tt:Show()
+        end)
+        l:SetScript("OnLeave", function(self)
+            self.hl:SetColorTexture(1, 1, 1, 0)
+            if _G.GameTooltip then _G.GameTooltip:Hide() end
+        end)
+        l:RegisterForDrag("LeftButton")
+        l:SetScript("OnDragStart", function(self) f.dragKey = self.entry and self.entry.key self:SetAlpha(0.4) pop:Hide() end)
+        l:SetScript("OnDragStop", function(self)
+            self:SetAlpha(1)
+            local from = f.dragKey
+            f.dragKey = nil
+            if not from then return end
+            local target
+            for _, o in ipairs(f.lines) do
+                if o:IsShown() and o ~= self and o.entry and o:IsMouseOver() then target = o break end
             end
-            l.entry = e
-            l:ClearAllPoints()
-            local col, r = (i - 1) % 2, math.floor((i - 1) / 2)
-            l:SetPoint("TOPLEFT", f, "TOPLEFT", col * (colW + 12), -r * ROW_H)
-            l.icon:SetTexture(e.tex)
-            local label = e.rank and (e.name .. " (" .. e.rank .. ")") or e.name
-            l.name:SetText(WeintCodex.Truncate and WeintCodex.Truncate(label, 26) or label)
-            local s = OC.Slot(e)
-            l.btn:SetText(OC.SLOT_TEXT[s])
-            l.name:SetTextColor(unpack(s == "off" and C.textMuted or C.textBright))
-            l:Show()
+            if target then
+                OC.Place(from, OC.Slot(target.entry), target.entry.key)
+            else
+                local col = ColUnderMouse()
+                if col then OC.Place(from, col.slot, nil) end
+            end
+            OC.Relayout()
+        end)
+        l:SetScript("OnClick", function(self, button)
+            if not self.entry then return end
+            if button == "RightButton" then
+                if self.entry.custom then OC.Remove(self.entry) OC.Relayout() end
+                return
+            end
+            if pop.entry == self.entry and pop:IsShown() then pop:Hide() pop.entry = nil return end
+            pop.entry = self.entry
+            pop:ClearAllPoints()
+            pop:SetPoint("TOPLEFT", self, "TOPRIGHT", 6, 0)
+            PopSync()
+            pop:Show()
+        end)
+        l:SetScript("OnReceiveDrag", f.Drop)
+        f.lines[i] = l
+        return l
+    end
+
+    f.Sync = function()
+        local count = { big = 0, small = 0, off = 0 }
+        local colOf = {}
+        for ci, col in ipairs(f.cols) do colOf[col.slot] = col end
+        local i = 0
+        for _, e in ipairs(OC.known) do
+            local sl = OC.Slot(e)
+            local col = colOf[sl]
+            if col then
+                i = i + 1
+                local l = f.lines[i] or Line(i)
+                l.entry = e
+                l:ClearAllPoints()
+                l:SetPoint("TOPLEFT", col, "TOPLEFT", 4, -HEAD_H - count[sl] * ROW_H)
+                count[sl] = count[sl] + 1
+                l.icon:SetTexture(e.tex)
+                if l.icon.SetDesaturated then l.icon:SetDesaturated(sl == "off") end
+                local label = e.rank and (e.name .. " (" .. e.rank .. ")") or e.name
+                l.name:SetText(label)
+                l.name:SetTextColor(unpack(sl == "off" and C.textMuted or C.textBright))
+                local marks = ""
+                if sl ~= "off" and OC.GlowOf(e) then marks = "Licht" end
+                if OC.SoundOf(e) ~= "none" then marks = marks == "" and "Ton" or (marks .. " · Ton") end
+                l.mark:SetText(marks)
+                l:Show()
+            end
         end
-        for j = #list + 1, #f.lines do f.lines[j]:Hide() end
+        for j = i + 1, #f.lines do f.lines[j]:Hide() end
+        for _, col in ipairs(f.cols) do
+            col.head:SetText(OC.SLOT_TEXT[col.slot] .. "  ·  " .. count[col.slot])
+        end
+        if pop:IsShown() then PopSync() end
     end
     return f
+end
+
+-- Zauber "key" in Spalte "slot" setzen, vor "beforeKey" (nil = ans Ende).
+function OC.Place(key, slot, beforeKey)
+    local m = Mem()
+    if not m then return false end
+    local e
+    for _, o in ipairs(OC.known) do if o.key == key then e = o break end end
+    if not e then return false end
+    if OC.Slot(e) ~= slot then
+        m.spells[e.key] = (slot ~= e.preset) and slot or nil
+    end
+    local keys = {}
+    for _, o in ipairs(OC.known) do if o.key ~= key then keys[#keys + 1] = o.key end end
+    local at = #keys + 1
+    if beforeKey then
+        for i, k in ipairs(keys) do if k == beforeKey then at = i break end end
+    else
+        -- ans Ende der Spalte: hinter den letzten dieser Spalte
+        for i, k in ipairs(keys) do
+            for _, o in ipairs(OC.known) do
+                if o.key == k and OC.Slot(o) == slot then at = i + 1 end
+            end
+        end
+    end
+    table.insert(keys, at, key)
+    m.order = keys
+    OC.SortByOrder(OC.known)
+    OC.Refresh()
+    return true
 end
 
 -- Seite neu bauen, wenn die Liste waechst oder schrumpft (Hoehe steht beim Bau fest).
@@ -904,7 +1199,7 @@ local function px(v) return string.format("%d px", v) end
 function OC.BuildSection(B)
     if not K.InCombat() and #OC.known == 0 then OC.Scan() end
     B:Section("WeintCodex-Abklingzeitmanager",
-        "Eigene Reihen statt des Managers des Spiels: Wichtig (groß), Weitere (kleiner) und deine Buffs mit Restzeit. Ab Werk steht für deine Klasse schon das Wichtigste drin – je Zauber ein Klick: Wichtig, Weitere oder Aus. Gilt, wenn oben „WeintCodex“ gewählt ist. Verschieben im Gestaltungsmodus.")
+        "Eigene Reihen statt des Managers des Spiels: Wichtig (groß), Weitere (kleiner) und deine Buffs mit Restzeit. Ab Werk steht für deine Klasse schon das Wichtigste drin – sortiert in die Spalten Wichtig, Weitere und Aus. Gilt, wenn oben „WeintCodex“ gewählt ist. Verschieben im Gestaltungsmodus.")
     local off = function() return not OC.Active() end
     B:Row({ type = "slider", label = "Größe: Wichtig", min = 24, max = 64, step = 2, format = px,
             get = function() return tonumber(OC.Get("big")) end, set = function(v) OC.Set("big", v) end, disabled = off },
@@ -922,7 +1217,7 @@ function OC.BuildSection(B)
             get = function() return OC.Get("combatOnly") and true or false end, set = function(v) OC.Set("combatOnly", v and true or false) end },
           { type = "toggle", label = "Restzeit als Zahl", disabled = off,
             get = function() return OC.Get("numbers") and true or false end, set = function(v) OC.Set("numbers", v and true or false) end })
-    B:Row({ type = "toggle", label = "Leuchten, wenn bereit", disabled = off,
+    B:Row({ type = "toggle", label = "Leuchten, wenn bereit (Vorgabe)", disabled = off,
             get = function() return OC.Get("glow") and true or false end, set = function(v) OC.Set("glow", v and true or false) end,
             description = "Nur wenn der Client die Abklingzeit offen nennt – sonst lieber kein Leuchten als ein falsches." },
           { type = "button", label = "Voreinstellung", text = "Voreinstellung wiederherstellen",
@@ -944,7 +1239,7 @@ function OC.BuildSection(B)
                 end
             end })
     B:Row({ type = "custom", height = ListHeight(), create = CreateList })
-    B:Note("Liste: deine gelernten Zauber mit Abklingzeit, dazu was du selbst hinzufügst. Ziehen ändert die Reihenfolge, Rechtsklick entfernt Selbst-Hinzugefügtes. Buffs kommen aus den Buffzeiten.")
+    B:Note("Alle Zauber deines Zauberbuchs, dazu was du selbst hinzufügst. Ziehen ordnet innerhalb einer Spalte oder schiebt in eine andere; ein Klick öffnet Rang, Leuchten und Ton des Zaubers. „Licht“ und „Ton“ rechts zeigen, was eingestellt ist. Buffs kommen aus den Buffzeiten.")
 end
 
 -- An das Modul "Erinnerungen" haengen.

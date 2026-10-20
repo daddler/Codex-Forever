@@ -436,18 +436,24 @@ function CD.BuildPage(B)
         OC.ModeRow(B)
         OC.BuildSection(B)
     end
-    B:Section("Abklingzeitmanager des Spiels", "Gilt, wenn oben „Blizzard“ gewählt ist. Der Manager des Spiels im WeintCodex-Stil. Welche Zauber und Buffs erscheinen, wählst du im Fenster des Spiels; verschieben: Bearbeitungsmodus des Spiels.")
-    B:Row({ type = "toggle", label = "Abklingzeitmanager aktivieren",
+    -- Ausgegraut, solange nicht "Blizzard" gewaehlt ist (6.92.0.0, Wunsch).
+    local notGame = function() return OC and OC.Mode and OC.Mode() ~= "blizzard" or false end
+    B:Section("Abklingzeitmanager des Spiels", notGame()
+        and "Nicht aktiv – oben ist nicht „Blizzard“ gewählt. Die Einstellungen hier gelten erst, wenn du oben auf „Blizzard“ umstellst."
+        or "Gilt, wenn oben „Blizzard“ gewählt ist. Der Manager des Spiels im WeintCodex-Stil. Welche Zauber und Buffs erscheinen, wählst du im Fenster des Spiels; verschieben: Bearbeitungsmodus des Spiels.")
+    B:Row({ type = "toggle", label = "Abklingzeitmanager aktivieren", disabled = notGame,
             get = function() return CD.GameEnabled() end, set = function(v) CD.SetGameEnabled(v) end },
-          { type = "toggle", label = "Im WeintCodex-Stil", key = "cdmSkin", reload = true,
+          { type = "toggle", label = "Im WeintCodex-Stil", key = "cdmSkin", reload = true, disabled = notGame,
             description = "Aus: das Aussehen des Spiels. Wirkt nach dem Neuladen." })
-    B:Row({ type = "button", label = "Zauber", text = "Zauber auswählen",
-            tooltip = "Öffnet das Auswahlfenster des Abklingzeitmanagers des Spiels.",
-            onClick = function() CD.OpenSettings() end },
-          { type = "empty" })
-    local CS = WeintCodex.UICooldownSetup
-    if CS and CS.BuildSection then CS.BuildSection(B) end
-    B:GameEditMode("Platz, Symbolgröße, Abstand und Reihen des Managers des Spiels stellt dessen Bearbeitungsmodus ein – dort werden sie gespeichert.")
+    if not notGame() then
+        B:Row({ type = "button", label = "Zauber", text = "Zauber auswählen",
+                tooltip = "Öffnet das Auswahlfenster des Abklingzeitmanagers des Spiels.",
+                onClick = function() CD.OpenSettings() end },
+              { type = "empty" })
+        local CS = WeintCodex.UICooldownSetup
+        if CS and CS.BuildSection then CS.BuildSection(B) end
+        B:GameEditMode("Platz, Symbolgröße, Abstand und Reihen des Managers des Spiels stellt dessen Bearbeitungsmodus ein – dort werden sie gespeichert.")
+    end
     B:Advanced()
     B:Section("Schrift (Manager des Spiels)")
     B:Row({ type = "slider", label = "Abklingzahl", key = "cdmFontSize", min = 10, max = 28, step = 1, format = px },

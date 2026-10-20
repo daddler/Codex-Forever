@@ -22,6 +22,16 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.92.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager: drei Spalten|r – Wichtig, Weitere und Aus nebeneinander. Ziehen ordnet innerhalb einer Spalte oder schiebt in eine andere.",
+            "|cff7C6CFFJe Zauber einstellbar|r – ein Klick öffnet Rang, Leuchten und Ton, wenn der Zauber bereit ist.",
+            "|cff7C6CFFDoT-Laufzeit|r – eigene DoTs wie Schlangenbiss zeigen am Symbol, wie lange sie auf deinem Ziel noch laufen (rückwärts laufende Uhr).",
+            "|cff7C6CFFBlizzards Manager ausgegraut|r – solange oben nicht „Blizzard“ gewählt ist.",
+        },
+    },
+    {
         version = "6.91.0.0",
         date    = "20.10.2026",
         notes   = {

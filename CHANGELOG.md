@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.92.0.0] – 2026-10-20
+
+### Geändert
+- Eigener Abklingzeitmanager: Liste in drei Spalten (`OC.Place`), Feinheiten je Zauber (`ocd.rank`, `ocd.glowOf`, `ocd.sound`), Ton beim Wechsel auf bereit.
+- Blizzards Abschnitt ausgegraut bzw. ausgeblendet, solange nicht „Blizzard“ gewählt ist.
+
+### Hinzugefügt
+- DoT-Laufzeit aus dem eigenen Wirken (`OC.DOTS`, Dauer `classic`, an das Ziel gebunden).
+
 ## [6.91.0.0] – 2026-10-20
 
 ### Hinzugefügt
