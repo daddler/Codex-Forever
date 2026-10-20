@@ -51,7 +51,9 @@ PB.DURATION = 60 * MIN
 
 -- Segen und ihr Rang 1 (Nummern aus data/trainer.lua; Refugium kommt aus
 -- dem Talentbaum, seine hoeheren Raenge vom Lehrer).
-PB.ORDER = { "might", "wisdom", "kings", "salvation", "light", "sanctuary" }
+-- Zur Wahl nur die 60-Minuten-Segen (6.102.0.0, Wunsch): Macht, Weisheit,
+-- Koenige, Licht. Rettung und Refugium bleiben bekannt, sind aber keine Wahl.
+PB.ORDER = { "might", "wisdom", "kings", "light" }
 PB.BLESSINGS = {
     might     = { root = 19740, label = "Macht" },
     wisdom    = { root = 19742, label = "Weisheit" },
@@ -60,9 +62,14 @@ PB.BLESSINGS = {
     light     = { root = 19977, label = "Licht" },
     sanctuary = { root = 20911, label = "Refugium" },
 }
--- Grosse Segen aus Classic - auf Forever nicht vorhanden, nie verwendet.
+-- Grosse Segen (Lehrerbestand, Classic). 6.102.0.0, Beta-Test: "Laut
+-- WeintCodex im Berufsbereich vom Paladin gibt es grosse Segen" - die
+-- Annahme "auf Forever nicht vorhanden" war falsch. Ein grosser Segen trifft
+-- alle der Klasse in der Gruppe; genutzt nur, wenn ALLE dieser Klasse
+-- denselben Segen bekommen sollen und er gelernt ist.
 PB.GREATER = { [25782] = true, [25916] = true, [25894] = true, [25918] = true,
                [25898] = true, [25895] = true, [25890] = true, [25899] = true }
+PB.GREATER_OF = { might = { 25782, 25916 }, wisdom = { 25894, 25918 }, kings = { 25898 }, light = { 25890 } }
 
 PB.CLASSES = { "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "SHAMAN", "MAGE", "WARLOCK", "DRUID" }
 PB.CLASS_LABEL = { WARRIOR = "Krieger", PALADIN = "Paladin", HUNTER = "Jäger", ROGUE = "Schurke",
@@ -105,6 +112,7 @@ PB.TREE_ROLE = {
 -- Weisheit, Schaden wie die Klasse. Rettung nie fuer Tanks (PB.Want).
 PB.DEFAULTS = {
     blessOn = false,
+    blessGreater = true,
     blessRefresh = 5,                -- Minuten Restzeit, ab der neu gesegnet wird
     bless_WARRIOR = "might", bless_ROGUE = "might", bless_PALADIN = "might",
     bless_HUNTER = "wisdom", bless_SHAMAN = "wisdom", bless_DRUID = "wisdom",
@@ -179,6 +187,13 @@ function PB.Best(key)
     for i = #chain, 1, -1 do
         if Knows(chain[i]) then return chain[i] end
     end
+    return nil
+end
+
+function PB.BestGreater(key)
+    local g = PB.GREATER_OF[key]
+    if not g or K.Get(KEY, "blessGreater") == false then return nil end
+    for i = #g, 1, -1 do if Knows(g[i]) then return g[i] end end
     return nil
 end
 
@@ -324,6 +339,15 @@ PB.memo = {}
 
 -- Restzeit des Segens auf der Einheit: Sekunden, math.huge (ohne Ende),
 -- 0 (fehlt) oder nil (unklar: Auren geheim oder nicht lesbar).
+local gnames = {}
+function PB.GreaterName(key)
+    if gnames[key] ~= nil then return gnames[key] or nil end
+    local g = PB.GREATER_OF[key]
+    local n = g and SpellName(g[1])
+    gnames[key] = n or false
+    return n
+end
+
 function PB.Remaining(unit, key, guid)
     local name = PB.Name(key)
     local ua = _G.C_UnitAuras
@@ -336,7 +360,7 @@ function PB.Remaining(unit, key, guid)
             if type(d) ~= "table" then break end
             local n = K.Plain(d.name)
             if type(n) ~= "string" then known = false
-            elseif n == name then
+            elseif n == name or (PB.GreaterName(key) and n == PB.GreaterName(key)) then
                 local exp = K.Plain(d.expirationTime)
                 if type(exp) ~= "number" then return nil end
                 if exp == 0 then return math.huge end
@@ -409,7 +433,7 @@ function PB.Scan()
                     else
                         res.missing = res.missing + 1
                         if usable then
-                            if not fU then fU, fI, fK = unit, id, key end
+                            if not fU then fU, fI, fK, PB.planClass = unit, id, key, class end
                         else
                             res.away = res.away + 1
                         end
@@ -418,8 +442,24 @@ function PB.Scan()
             end
         end
     end
-    if fU then return fU, fI, fK end
+    if fU then
+        local g = PB.BestGreater(fK)
+        if g and PB.AllOfClassWant(PB.planClass, fK) then return fU, g, fK end
+        return fU, fI, fK
+    end
     return uU, uI, uK
+end
+
+-- Sollen alle dieser Klasse in der Gruppe denselben Segen haben?
+function PB.AllOfClassWant(class, key)
+    if not class then return false end
+    for _, unit in ipairs(Units()) do
+        if Call(_G.UnitExists, unit) then
+            local _, c = Call(_G.UnitClass, unit)
+            if c == class and PB.Want(c, PB.RoleOf(unit, c)) ~= key then return false end
+        end
+    end
+    return true
 end
 
 --------------------------------------------------
@@ -569,6 +609,23 @@ end
 function PB.OnCast(spellId)
     spellId = K.Plain(spellId)
     if type(spellId) ~= "number" or not PB.lastPlan then return end
+    for key, g in pairs(PB.GREATER_OF) do
+        for _, id in ipairs(g) do
+            if id == spellId and PB.planClass then
+                local t = Now()
+                for _, unit in ipairs(Units()) do
+                    local _, c = Call(_G.UnitClass, unit)
+                    local guid = Call(_G.UnitGUID, unit)
+                    if c == PB.planClass and type(guid) == "string" then
+                        local m = PB.memo[guid] or {}
+                        m[key] = t
+                        PB.memo[guid] = m
+                    end
+                end
+                return
+            end
+        end
+    end
     for key in pairs(PB.BLESSINGS) do
         for _, id in ipairs(PB.Chain(key)) do
             if id == spellId then
@@ -664,8 +721,11 @@ local function Build(B)
         lines[#lines + 1] = PB.CLASS_LABEL[c] .. " – " .. table.concat(parts, ", ")
     end
     B:Note(table.concat(lines, "\n"))
-    B:Note("Großen Segen gibt es auf Forever nicht – gesegnet wird jeder einzeln, jeder Segen hält 60 Minuten. "
-        .. "Nicht gelernt: dann der Segen der Klasse, sonst Macht. Begleiter bekommen keinen Segen.")
+    B:Row({ type = "toggle", label = "Große Segen nutzen", key = "blessGreater", disabled = off,
+            description = "Sollen alle einer Klasse denselben Segen bekommen und kennst du den großen, segnet ein Klick die ganze Klasse." },
+          { type = "empty" })
+    B:Note("Zur Wahl stehen die 60-Minuten-Segen: Macht, Weisheit, Könige, Licht. "
+        .. "Nicht gelernt: dann Macht. Begleiter bekommen keinen Segen.")
     B:Advanced()
     B:Row({ type = "slider", label = "Neu segnen ab Restzeit", key = "blessRefresh", min = 0, max = 30, step = 1,
             format = function(v) return v .. " min" end, disabled = off },

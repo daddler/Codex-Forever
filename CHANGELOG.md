@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.102.0.0] – 2026-10-20
+
+### Geändert
+- Segen: große Segen (`PB.GREATER_OF`, `PB.BestGreater`, `PB.AllOfClassWant`, Schalter `blessGreater`), Aura des großen Segens zählt; Auswahl nur Macht/Weisheit/Könige/Licht.
+
 ## [6.101.0.0] – 2026-10-20
 
 ### Hinzugefügt

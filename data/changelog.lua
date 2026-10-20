@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.102.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFSegen: große Segen|r – kennst du einen großen Segen und sollen alle einer Klasse denselben bekommen, segnet ein Klick die ganze Klasse (abschaltbar). Die falsche Aussage „gibt es auf Forever nicht“ ist weg.",
+            "|cff7C6CFFNur noch 60-Minuten-Segen zur Wahl|r – Macht, Weisheit, Könige, Licht.",
+        },
+    },
+    {
         version = "6.101.0.0",
         date    = "20.10.2026",
         notes   = {
