@@ -318,6 +318,7 @@ end
 BT.pairs = {}
 BT.lootInfo = {}        -- [lootSlot] = { id, value } (wiederverwendet)
 BT.glow = {}            -- [bag * 1000 + slot] = Rang
+BT.offer = {}           -- [lootSlot] = billigster Platz oder false (keiner)
 BT.lootOpen = false
 local order = {}
 
@@ -380,10 +381,15 @@ function BT.PairLoot()
         if va ~= vb then return va > vb end
         return a < b
     end)
+    -- BT.offer: jede Beute ohne Platz bekommt ihren Vergleich, auch wenn
+    -- der Tausch nicht lohnt (6.97.1.0, Beta-Test: "Inventar voll und keine
+    -- Information kommt") - das Fenster sagt dann ehrlich "lohnt nicht".
+    Wipe(BT.offer)
     local c = 1
     for k, slot in ipairs(order) do
         if k > st.free then
             local li, e = BT.lootInfo[slot], cand[c]
+            BT.offer[slot] = e or false
             if e and (li.quest or (li.value and li.value > e.value)) then
                 BT.pairs[slot] = e
                 BT.glow[e.bag * 1000 + e.slot] = c
@@ -602,7 +608,7 @@ local function BuildPop()
     K.Kachel(pop, { shadow = 6, alpha = 1 })
     pop.title = K.NewText(pop, 13, "OVERLAY")
     pop.title:SetPoint("TOPLEFT", pop, "TOPLEFT", 12, -10)
-    pop.title:SetText("Taschen voll – lohnt sich der Tausch?")
+    pop.title:SetText("Taschen voll – Beute gegen Taschenplatz")
     local close = WeintCodex.CreateButton(pop, { text = "×", kind = "ghost", height = 20, size = 14,
         onClick = function() pop:Hide() end })
     close:SetWidth(24)
@@ -624,23 +630,33 @@ local function Icon(link)
 end
 
 function BT.ShowPopup()
-    if not (BT.Active() and BT.lootOpen and Opt("triagePopup") ~= false) then
+    if not (BT.Active() and BT.lootOpen) then
         if pop then pop:Hide() end
         return
     end
     local n = 0
-    for slot, e in pairs(BT.pairs) do
+    for slot, e in pairs(BT.offer) do
         local li = BT.lootInfo[slot]
         if li and li.id and n < BT.POP_ROWS then
             BuildPop()
             n = n + 1
             local r = pop.rows[n]
-            r.lootSlot, r.entry = slot, e
+            local worth = e and BT.pairs[slot] ~= nil
+            r.lootSlot, r.entry = slot, e or nil
             local link = _G.GetLootSlotLink and Str(_G.GetLootSlotLink(slot))
             r.loot:SetTexture(Icon(link or li.id))
-            r.lootText:SetText((link or "Beute") .. "\n" .. (li.value and BT.Money(li.value) or "Questgegenstand"))
-            r.bag:SetTexture(e.icon or Icon(e.id))
-            r.bagText:SetText((e.link or e.name or "?") .. "\n" .. BT.Money(e.value))
+            r.lootText:SetText((link or "Beute") .. "\n" .. (li.quest and "Questgegenstand" or (li.value and BT.Money(li.value) or "Wert unbekannt")))
+            if e then
+                r.bag:SetTexture(e.icon or Icon(e.id))
+                r.bagText:SetText((e.link or e.name or "?") .. "\n" .. BT.Money(e.value))
+                r.bag:Show()
+                r.btn:SetText(worth and "Löschen & looten" or "Trotzdem tauschen")
+                r.btn:Show()
+            else
+                r.bag:Hide()
+                r.bagText:SetText("Nichts zum Tauschen – alles\nin den Taschen ist geschützt")
+                r.btn:Hide()
+            end
             r:Show()
         end
     end
@@ -788,6 +804,7 @@ ev:SetScript("OnEvent", function(_, event, a1)
         if pop then pop:Hide() end
         Wipe(BT.pairs)
         Wipe(BT.glow)
+        Wipe(BT.offer)
         BT.MarkLoot()
         BT.PaintBags()
     elseif event == "LOOT_SLOT_CLEARED" then
@@ -795,6 +812,7 @@ ev:SetScript("OnEvent", function(_, event, a1)
             local li = BT.lootInfo[a1]
             if li then li.id = nil end
             BT.pairs[a1] = nil
+            BT.offer[a1] = nil
             BT.ShowPopup()
         end
     else
