@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.98.1.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager: neue Reihen erscheinen sofort|r – die Einstellungsseite baut sich nach „Reihe hinzufügen“, Umbenennen, Löschen und Ziehen neu auf; die neue Spalte steht direkt da (bis drei nebeneinander, „Aus“ rutscht darunter).",
+        },
+    },
+    {
         version = "6.98.0.0",
         date    = "20.10.2026",
         notes   = {

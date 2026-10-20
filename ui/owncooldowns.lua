@@ -1571,7 +1571,7 @@ local function CreateList(parent, width)
         pop.title:SetText(e.name)
         pop.rank:SetText(e.ranks and #e.ranks > 1 and ("Rang: " .. (e.rank or "?") .. "  ›") or (e.rank or "Nur ein Rang"))
         pop.glow:SetText("Leuchten: " .. OC.GLOW_TEXT[OC.GlowMode(e)] .. "  ›")
-        pop.sound:SetText("Ton: " .. OC.SoundText(OC.SoundOf(e)) .. "  ▾")
+        pop.sound:SetText("Ton: " .. OC.SoundText(OC.SoundOf(e)) .. "  ›")
         pop.when:SetText("Ton wann: " .. OC.WHEN_TEXT[OC.SoundWhen(e)] .. (OC.DotDuration(e.name) and "  ›" or ""))
         pop.slot:SetText("Spalte: " .. OC.SlotText(OC.Slot(e)) .. "  ›")
         pop.remove:SetText(e.custom and "Entfernen" or "Schließen")
@@ -1726,7 +1726,7 @@ local function CreateList(parent, width)
         end
         for j = i + 1, #f.lines do f.lines[j]:Hide() end
         for _, col in ipairs(f.cols) do
-            col.head:SetText(OC.SlotText(col.slot) .. "  ·  " .. (count[col.slot] or 0) .. (OC.ExtraDef(col.slot) and "  ▾" or ""))
+            col.head:SetText(OC.SlotText(col.slot) .. "  ·  " .. (count[col.slot] or 0) .. (OC.ExtraDef(col.slot) and "   · Menü ›" or ""))
         end
         if pop:IsShown() then PopSync() end
     end
@@ -1861,9 +1861,9 @@ end
 -- Seite neu bauen, wenn die Liste waechst oder schrumpft (Hoehe steht beim Bau fest).
 function OC.Relayout()
     local O = WeintCodex.UIOptions
-    if O and O.Where and O.Return then
-        local ok = pcall(O.Return, O.Where())
-        if ok then return end
+    if O and O.Rebuild then
+        local ok, done = pcall(O.Rebuild)
+        if ok and done then return end
     end
     if OC.list then OC.list.Sync() end
 end
@@ -1930,7 +1930,7 @@ function OC.BuildSection(B)
                     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. why)
                 end
             end })
-    B:Note("So geht's: Jede Spalte ist eine Reihe auf dem Bildschirm – „Wichtig“ große Symbole, „Weitere“ kleine, eigene Reihen in ihrer Größe, „Aus“ wird nicht gezeigt. Eigene Reihen legst du oben an; Klick auf ihren Spaltenkopf (▾): umbenennen, Größe, löschen. Zauber mit der Maus greifen und auf einen anderen Zauber ziehen: er landet davor, auch in einer anderen Spalte; auf freie Fläche einer Spalte: ans Ende. Die Reihenfolge in der Spalte ist die auf dem Bildschirm. Klick auf einen Zauber: Rang, Leuchten, Ton und Spalte einstellen.")
+    B:Note("So geht's: Jede Spalte ist eine Reihe auf dem Bildschirm – „Wichtig“ große Symbole, „Weitere“ kleine, eigene Reihen in ihrer Größe, „Aus“ wird nicht gezeigt. Eigene Reihen legst du oben an; Klick auf ihren Spaltenkopf („Menü ›“): umbenennen, Größe, löschen. Zauber mit der Maus greifen und auf einen anderen Zauber ziehen: er landet davor, auch in einer anderen Spalte; auf freie Fläche einer Spalte: ans Ende. Die Reihenfolge in der Spalte ist die auf dem Bildschirm. Klick auf einen Zauber: Rang, Leuchten, Ton und Spalte einstellen.")
     B:Row({ type = "custom", height = ListHeight(), create = CreateList })
     B:Note("Alle Zauber deines Zauberbuchs, dazu was du selbst hinzufügst. Ziehen ordnet innerhalb einer Spalte oder schiebt in eine andere; ein Klick öffnet Rang, Leuchten und Ton des Zaubers. „Ton“ rechts heißt: dieser Zauber spielt einen Ton, wenn er bereit ist. Buffs kommen aus den Buffzeiten.")
 end

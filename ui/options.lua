@@ -670,6 +670,23 @@ local function ShowPage()
     SyncChrome()
 end
 
+-- Die aktuelle Seite neu bauen, an derselben Stelle (6.98.1.0): Seiten
+-- werden gemerkt - eine Liste, deren Hoehe oder Spalten sich aendern
+-- (eigene Reihen des Abklingzeitmanagers), braucht einen frischen Bau.
+function O.Rebuild()
+    local b = current.module and built[current.module]
+    if not b then return false end
+    local scroll = scroller and scroller:GetVerticalScroll()
+    for _, p in pairs(b.pages) do p.frame:Hide() end
+    wipe(b.pages)
+    ShowPage()
+    if type(scroll) == "number" and scroller then
+        local maxScroll = math.max(0, (inner:GetHeight() or 0) - (scroller:GetHeight() or 0))
+        scroller:SetVerticalScroll(math.min(scroll, maxScroll))
+    end
+    return true
+end
+
 -- Erweitert ein- oder ausblenden: alle gebauten Seiten verwerfen, die
 -- aktuelle neu bauen - an derselben Stelle.
 function O.SetAdvanced(on)

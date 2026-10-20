@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.98.1.0] – 2026-10-20
+
+### Behoben
+- Einstellungen: `O.Rebuild` baut die aktuelle Seite neu (Seiten waren gemerkt, `OC.Relayout` wirkte nicht); Zeichen ▾ fehlte in der Schrift.
+
 ## [6.98.0.0] – 2026-10-20
 
 ### Hinzugefügt
