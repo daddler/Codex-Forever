@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.94.0.0] – 2026-10-20
+
+### Geändert
+- Ausmisten: Seite (`modules/bagtrash.lua`) und Knopf im Taschenfenster entfernt; Fenster „Löschen & looten“ (`BT.ShowPopup`, `BT.Swap`); Schalter auf Komfort → Sammeln.
+- Schutz: Berufswerkzeuge (`BT.TOOLS`, Angelruten), Handwerksmaterial unabhängig von der Qualität.
+- Abklingzeitmanager: DoT-Uhr je Ziel (`OC.dots[Name][GUID]`), Ton „ausgelaufen“ nicht beim Zielwechsel.
+
 ## [6.93.2.0] – 2026-10-20
 
 ### Behoben

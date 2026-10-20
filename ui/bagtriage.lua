@@ -8,7 +8,7 @@
 -- Wie ui/inventory.lua: Teil des Codex, laeuft ohne Oberflaeche und ohne
 -- das Komfortmodul; der Schalter liegt im Speicher des Komforts
 -- ("triageOn", ab Werk an), bedient auf der Codex-Seite "Taschen", Reiter
--- "Ausmisten" (modules/bagtrash.lua).
+-- Fenster "Löschen & looten" bei vollen Taschen.
 --
 --   Bewertung   je Taschenplatz Haendlerpreis x Anzahl (GetItemInfo). Steht
 --               im eigenen Auktionspreis-Bestand (ui/auctionprices.lua) ein
@@ -46,6 +46,7 @@ BT.DEFAULTS = {
     triageOn = true,        -- Ausmisten: Bewertung, Beute-Muenze, Leuchten
     triageGreens = false,   -- auch Gruenes vorschlagen
     triageAuction = true,   -- Auktionspreis zaehlen, wenn hoeher
+    triagePopup = true,     -- Fenster "Löschen & looten" bei vollen Taschen
 }
 BT.NEAR_FULL = 2            -- "fast voll": so wenige freie Plaetze
 
@@ -57,6 +58,25 @@ BT.PROTECTED_CLASS = {
     [13] = "Schlüssel",
 }
 BT.QUALITY = { [0] = "Grau", [1] = "Weiß", [2] = "Grün" }
+
+-- Werkzeuge der Berufe (6.94.0.0, Wunsch: "Kuerschnermesser, Spitzhacke,
+-- Angel ... duerfen NIE betroffen sein"). Nummern aus Classic; Angeln
+-- zusaetzlich ueber ihre Unterklasse (Waffe, Angelrute = 20).
+BT.TOOLS = {
+    [7005] = true,  -- Kuerschnermesser
+    [2901] = true,  -- Spitzhacke
+    [5956] = true,  -- Schmiedehammer
+    [6219] = true,  -- Bogenlichtschraubenschluessel
+    [10498] = true, -- Gyromatischer Mikroregulator
+    [6218] = true, [6339] = true, [11130] = true, [11145] = true, [16207] = true, -- Runenverzierte Ruten
+    [4471] = true,  -- Zunderkasten
+    [9149] = true,  -- Stein der Philosophen
+    [20815] = true, -- Juwelierwerkzeug
+    [6256] = true, [6365] = true, [6366] = true, [6367] = true, [12225] = true,
+    [19022] = true, [19970] = true, -- Angelruten
+    [12709] = true, [19901] = true, [20723] = true, -- Hammer/Messer mit Werkzeugwirkung
+}
+BT.SUB_FISHING_POLE = 20
 
 local function Plain(v) return K.Plain(v) end
 local function Num(v) v = Plain(v) return type(v) == "number" and v or nil end
@@ -200,6 +220,9 @@ function BT.Evaluate(info, bag, slot, quest)
     quality = Num(info.quality) or quality
     if not name or type(sell) ~= "number" or type(quality) ~= "number" then return nil, "unknown" end
     if classID == BT.CLASS_QUEST or BT.questNeeds[name] then return nil, "quest" end
+    if BT.TOOLS[id] then return nil, "tool" end
+    if classID == BT.CLASS_WEAPON and subID == BT.SUB_FISHING_POLE then return nil, "tool" end
+    if craft or BT.PROTECTED_CLASS[classID] then return nil, "class" end
     local maxQ = Opt("triageGreens") and 2 or 1
     if quality > maxQ then return nil, "quality" end
     if quality > 0 then
@@ -529,12 +552,137 @@ end
 
 function BT.PaintBags() BT.EachBagButton(PaintButton) end
 
+--------------------------------------------------
+-- Fenster beim Looten mit vollen Taschen (6.94.0.0, Wunsch: "dann sollte
+-- das aufploppen und die Moeglichkeit bestehen das wenig wert Item im
+-- Inventar zu loeschen, damit man das andere looten kann")
+--------------------------------------------------
+-- Je lohnender Beute eine Zeile: Beute (Wert) gegen den billigsten
+-- Taschenplatz (Wert), Knopf "Löschen und looten". Geloescht wird nur auf
+-- diesen Klick (Hardware-Ereignis) - nie von selbst.
+BT.POP_ROWS = 3
+local pop
+
+local function PopRow(i)
+    local r = CreateFrame("Frame", nil, pop)
+    r:SetSize(380, 44)
+    r:SetPoint("TOPLEFT", pop, "TOPLEFT", 12, -34 - (i - 1) * 48)
+    r.loot = r:CreateTexture(nil, "ARTWORK")
+    r.loot:SetSize(28, 28)
+    r.loot:SetPoint("LEFT", r, "LEFT", 0, 0)
+    r.lootText = K.NewText(r, 11)
+    r.lootText:SetPoint("TOPLEFT", r.loot, "TOPRIGHT", 6, 0)
+    r.lootText:SetWidth(120)
+    r.lootText:SetJustifyH("LEFT")
+    r.bag = r:CreateTexture(nil, "ARTWORK")
+    r.bag:SetSize(28, 28)
+    r.bag:SetPoint("LEFT", r, "LEFT", 160, 0)
+    r.bagText = K.NewText(r, 11)
+    r.bagText:SetPoint("TOPLEFT", r.bag, "TOPRIGHT", 6, 0)
+    r.bagText:SetWidth(90)
+    r.bagText:SetJustifyH("LEFT")
+    r.btn = WeintCodex.CreateButton(r, { text = "Löschen & looten", kind = "primary", height = 24, size = 11,
+        onClick = function() BT.Swap(r.lootSlot, r.entry) end })
+    r.btn:SetWidth(110)
+    r.btn:SetPoint("RIGHT", r, "RIGHT", 0, 0)
+    return r
+end
+
+local function BuildPop()
+    if pop then return pop end
+    pop = CreateFrame("Frame", "WeintCodexLootSwap", UIParent)
+    pop:SetSize(404, 40 + BT.POP_ROWS * 48)
+    pop:SetFrameStrata("DIALOG")
+    pop:SetClampedToScreen(true)
+    pop:SetMovable(true)
+    pop:EnableMouse(true)
+    pop:RegisterForDrag("LeftButton")
+    pop:SetScript("OnDragStart", pop.StartMoving)
+    pop:SetScript("OnDragStop", pop.StopMovingOrSizing)
+    K.Kachel(pop, { shadow = 6, alpha = 1 })
+    pop.title = K.NewText(pop, 13, "OVERLAY")
+    pop.title:SetPoint("TOPLEFT", pop, "TOPLEFT", 12, -10)
+    pop.title:SetText("Taschen voll – lohnt sich der Tausch?")
+    local close = WeintCodex.CreateButton(pop, { text = "×", kind = "ghost", height = 20, size = 14,
+        onClick = function() pop:Hide() end })
+    close:SetWidth(24)
+    close:SetPoint("TOPRIGHT", pop, "TOPRIGHT", -6, -6)
+    pop.rows = {}
+    for i = 1, BT.POP_ROWS do pop.rows[i] = PopRow(i) end
+    pop:Hide()
+    return pop
+end
+
+local function Icon(link)
+    local f = _G.C_Item and _G.C_Item.GetItemIconByID or _G.GetItemIcon
+    local id = type(link) == "string" and tonumber(link:match("item:(%d+)")) or link
+    if f and id then
+        local ok, t = pcall(f, id)
+        if ok and Plain(t) then return Plain(t) end
+    end
+    return 134400
+end
+
+function BT.ShowPopup()
+    if not (BT.Active() and BT.lootOpen and Opt("triagePopup") ~= false) then
+        if pop then pop:Hide() end
+        return
+    end
+    local n = 0
+    for slot, e in pairs(BT.pairs) do
+        local li = BT.lootInfo[slot]
+        if li and li.id and n < BT.POP_ROWS then
+            BuildPop()
+            n = n + 1
+            local r = pop.rows[n]
+            r.lootSlot, r.entry = slot, e
+            local link = _G.GetLootSlotLink and Str(_G.GetLootSlotLink(slot))
+            r.loot:SetTexture(Icon(link or li.id))
+            r.lootText:SetText((link or "Beute") .. "\n" .. (li.value and BT.Money(li.value) or "Questgegenstand"))
+            r.bag:SetTexture(e.icon or Icon(e.id))
+            r.bagText:SetText((e.link or e.name or "?") .. "\n" .. BT.Money(e.value))
+            r:Show()
+        end
+    end
+    if n == 0 then
+        if pop then pop:Hide() end
+        return
+    end
+    for i = n + 1, BT.POP_ROWS do pop.rows[i]:Hide() end
+    pop:SetHeight(40 + n * 48)
+    if not pop:IsShown() then
+        pop:ClearAllPoints()
+        local lf = _G.LootFrame
+        if lf and lf.IsShown and lf:IsShown() then pop:SetPoint("TOPLEFT", lf, "TOPRIGHT", 8, 0)
+        else pop:SetPoint("CENTER", UIParent, "CENTER", 0, 120) end
+        pop:Show()
+    end
+end
+
+-- Den Taschenplatz loeschen und die Beute nehmen - nur auf den Klick.
+function BT.Swap(lootSlot, e)
+    if not (e and lootSlot) then return end
+    local cc = _G.C_Container
+    local pick = cc and cc.PickupContainerItem or _G.PickupContainerItem
+    if not (pick and _G.DeleteCursorItem) then return end
+    -- Steht dort noch derselbe Gegenstand?
+    local info = cc and cc.GetContainerItemInfo and select(2, pcall(cc.GetContainerItemInfo, e.bag, e.slot))
+    if type(info) ~= "table" or Num(info.itemID) ~= e.id then BT.dirty = true BT.Refresh() return end
+    if _G.ClearCursor then _G.ClearCursor() end
+    pick(e.bag, e.slot)
+    _G.DeleteCursorItem()
+    BT.pendingLoot = lootSlot
+    local function Take()
+        if BT.lootOpen and BT.pendingLoot and _G.LootSlot then pcall(_G.LootSlot, BT.pendingLoot) end
+        BT.pendingLoot = nil
+    end
+    if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.2, Take) else Take() end
+end
+
 function BT.Refresh()
     if BT.lootOpen then BT.PairLoot() BT.MarkLoot() end
-    if BT.showSuggest then BT.SetShowSuggest(true) end
+    BT.ShowPopup()
     BT.PaintBags()
-    local page = WeintCodex.BagTrash
-    if page and page.Redraw then page.Redraw() end
 end
 
 --------------------------------------------------
@@ -637,6 +785,7 @@ ev:SetScript("OnEvent", function(_, event, a1)
         if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, BT.Refresh) else BT.Refresh() end
     elseif event == "LOOT_CLOSED" then
         BT.lootOpen = false
+        if pop then pop:Hide() end
         Wipe(BT.pairs)
         Wipe(BT.glow)
         BT.MarkLoot()
@@ -646,21 +795,31 @@ ev:SetScript("OnEvent", function(_, event, a1)
             local li = BT.lootInfo[a1]
             if li then li.id = nil end
             BT.pairs[a1] = nil
+            BT.ShowPopup()
         end
     else
         BT.dirty = true
-        if BT.lootOpen then BT.Refresh()
-        elseif event == "BAG_UPDATE_DELAYED" then
-            local page = WeintCodex.BagTrash
-            if page and page.Redraw then page.Redraw() end
-        end
+        if BT.lootOpen then BT.Refresh() end
     end
 end)
 
--- Standardwerte gleich beim Laden (die Seite fragt sie vor dem Einloggen ab).
+-- Standardwerte gleich beim Laden; Schalter auf der Komfortseite "Sammeln".
 do
     local mod = K.Module(KEY)
     if mod then
         for k, v in pairs(BT.DEFAULTS) do if mod.defaults[k] == nil then mod.defaults[k] = v end end
+        for _, page in ipairs(mod.pages or {}) do
+            if page.key == "sammeln" then
+                local orig = page.build
+                page.build = function(B, ...)
+                    if orig then orig(B, ...) end
+                    B:Section("Volle Taschen beim Looten", "Passt Beute nicht mehr in die Taschen und ist sie mehr wert als dein billigster Platz, fragt ein Fenster, ob du diesen Platz löschen und die Beute nehmen willst. Gelöscht wird nur auf deinen Klick. Werkzeuge der Berufe, Handwerksmaterial, Questgegenstände, Verbrauchbares und alles ohne Preis werden nie vorgeschlagen.")
+                    B:Row({ type = "toggle", label = "Tausch vorschlagen", key = "triageOn" },
+                          { type = "toggle", label = "Fenster „Löschen & looten“", key = "triagePopup" })
+                    B:Row({ type = "toggle", label = "Auch Grünes vorschlagen", key = "triageGreens" },
+                          { type = "toggle", label = "Auktionspreis zählen", key = "triageAuction" })
+                end
+            end
+        end
     end
 end

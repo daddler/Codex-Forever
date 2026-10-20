@@ -112,8 +112,6 @@ local SUBTABS = {
     wildtierkunde = { tab = "lehrer", sub = "beasts" },
     -- 6.61.1.0: Kalender als Gruppe unter Raidplanung.
     kalender = { tab = "anmeldung", sub = "kalender" },
-    -- Ausmisten als Eintrag in der Unternavigation der Taschen.
-    ausmisten = { tab = "taschen", sub = "trash" },
 }
 
 -- Freigaben innerhalb der Raidplanung: je Gruppe, nicht je Eintrag.

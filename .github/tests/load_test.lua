@@ -21459,14 +21459,7 @@ do
         pairs_ = BT.PairLoot()
         Check(_G.next(pairs_) == nil, "Ausmisten: Beute ohne Preis verdraengt nichts")
         BT.lootOpen = false
-        local Bt = G.WeintCodex.BagTrash
-        Check(Bt.Capacity(400) == math.floor((400 - Bt.TOP - Bt.FOOT) / Bt.ROW), "Ausmisten: Zeilen nach Kartenhoehe")
-        if G.WeintCodex.Bags and G.WeintCodex.ContentPanel then
-            BT.dirty = true
-            G.WeintCodex.Bags.Show("trash")
-            Check(G.WeintCodex.Bags.sel == G.WeintCodex.Bags.TRASH and Bt.page and Bt.page:IsShown(), "Ausmisten: Reiter der Taschen zeichnet")
-            G.WeintCodex.Bags.sel = G.WeintCodex.Bags.ALL
-        end
+        Check(BT.TOOLS[7005] and BT.TOOLS[2901], "Ausmisten: Kuerschnermesser und Spitzhacke geschuetzt")
     end)
     for i, n in ipairs(names) do G[n] = saved[i] end
     BT.lootOpen = false

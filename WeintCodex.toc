@@ -2,7 +2,7 @@
 ## Title: |cff7C6CFFWeintCodex|r
 ## Notes: Raid Guide & Intelligence System — Forever Edition
 ## Author: Fabian
-## Version: 6.93.2.0
+## Version: 6.94.0.0
 ## SavedVariables: WeintCodex_SavedData, WeintCompanionDB, WeintCompanionInboxDB, WeintCodex_WhispersAccount
 ## SavedVariablesPerCharacter: WeintCodex_Whispers
 
@@ -167,8 +167,6 @@ modules/beasts.lua
 modules/professions.lua
 # Taschen (6.25.0.0): Bestand aller Charaktere als Seite; Daten aus ui/inventory.lua.
 modules/bags.lua
-# Ausmisten (Reiter der Taschen): guenstigste Plaetze; Bewertung aus ui/bagtriage.lua.
-modules/bagtrash.lua
 modules/encounter_tracking.lua
 modules/rolepanel.lua
 modules/raidpages.lua

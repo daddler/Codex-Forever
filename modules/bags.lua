@@ -26,7 +26,6 @@ local C = WeintCodex.Colors
 BG.CELL = 40
 BG.GAP = 4
 BG.ALL = "*"                 -- Auswahl "Alle Charaktere"
-BG.TRASH = "!ausmisten"      -- Reiter "Ausmisten" (modules/bagtrash.lua)
 BG.HEAD = 84
 
 BG.sel = BG.ALL
@@ -317,10 +316,6 @@ local function SidebarItems(chars, myRealm)
     items[1] = { label = "Alle Charaktere", status = { text = sum .. " Stück", color = "textMuted" },
                  onClick = function() BG.sel = BG.ALL BG.Show() end }
     order[1] = BG.ALL
-    -- Ausmisten: die guenstigsten Plaetze der eigenen Taschen.
-    items[2] = { label = "Ausmisten", status = { text = "eigene Taschen", color = "textMuted" },
-                 onClick = function() BG.sel = BG.TRASH BG.Show() end }
-    order[2] = BG.TRASH
     for _, ch in ipairs(chars) do
         local c = st.chars[ch.key]
         local label = ch.name or "?"
@@ -385,7 +380,6 @@ end
 BG.Inspector = Inspector
 
 function BG.Show(sub)
-    if sub == "trash" then BG.sel = BG.TRASH end
     local cp = WeintCodex.ContentPanel
     for _, child in pairs({ cp:GetChildren() }) do child:Hide() end
     local nav = WeintCodex.Navigation
@@ -400,7 +394,7 @@ function BG.Show(sub)
     iv.ScanBags()
     local _, _, myRealm = iv.Me()
     local chars = BG.Chars()
-    local known = BG.sel == BG.ALL or BG.sel == BG.TRASH
+    local known = BG.sel == BG.ALL
     for _, ch in ipairs(chars) do if ch.key == BG.sel then known = true end end
     if not known then BG.sel = BG.ALL end
     local items, order = SidebarItems(chars, myRealm)
@@ -410,11 +404,6 @@ function BG.Show(sub)
             local btn = nav.SidebarButtons()[i]
             if btn and btn.SetActive then btn:SetActive(true) end
         end
-    end
-    if BG.sel == BG.TRASH then
-        local BTP = WeintCodex.BagTrash
-        if BTP and BTP.Draw then BTP.Draw() end
-        return
     end
     if BG.sel ~= BG.ALL then
         for i, key in ipairs(order) do

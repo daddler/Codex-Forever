@@ -304,7 +304,14 @@ geparst, nie ausgeführt; kein Code, keine Grafik; TBC/Wrath/SoD nicht).
   der Client die Forever-Nummern ≥ 100000 auflöst, und ob
   `GetItemSetInfo`/`DressUpItemLink` dort antworten.
 
-## Ausmisten *(Taschen, Eintrag „Ausmisten“ in der Unternavigation)*
+## Ausmisten *(seit 6.94.0.0 nur beim Looten)*
+
+> **Stand 6.94.0.0:** Seite und Knopf „Ausmisten“ sind entfernt (Wunsch des
+> Spielers). Geblieben ist das Fenster „Löschen & looten“ bei vollen
+> Taschen (`BT.ShowPopup`, `BT.Swap` – löscht nur auf Klick) und der Schutz,
+> jetzt auch für Berufswerkzeuge (`BT.TOOLS`, Angelruten über die
+> Unterklasse). Was unten über die Seite steht, ist Geschichte.
+
 
 Wunsch des Spielers: „Trash visualisieren und sehen, was vielleicht mehr
 wert ist als das, was ich gerade loote“. Verhalten nach dem Addon

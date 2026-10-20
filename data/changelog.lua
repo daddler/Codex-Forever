@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.94.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFVolle Taschen beim Looten|r – passt Beute nicht mehr und ist sie mehr wert als dein billigster Platz, öffnet sich ein Fenster: Beute gegen Taschenplatz, Knopf „Löschen & looten“. Gelöscht wird nur auf deinen Klick. Die Seite „Ausmisten“ ist dafür weg.",
+            "|cff7C6CFFNie vorgeschlagen|r – Werkzeuge der Berufe (Kürschnermesser, Spitzhacke, Angel …), Handwerksmaterial und Questgegenstände.",
+            "|cff7C6CFFDoT-Zeit je Ziel|r – liegt Schlangenbiss auf zwei Gegnern, zeigt der Abklingzeitmanager beim Zielwechsel die Restzeit des jeweiligen Ziels.",
+        },
+    },
+    {
         version = "6.93.2.0",
         date    = "20.10.2026",
         notes   = {

@@ -913,7 +913,10 @@ local function DrawSpells(row, slot, size, show)
             -- Ton: beim Wechsel auf "bereit" bzw. wenn der DoT auslaeuft
             local was, wasDot = OC.prev[e.key], OC.prevDot[e.key]
             if st then OC.prev[e.key] = st end
-            OC.prevDot[e.key] = ds and true or false
+            -- Auslaufen nur auf demselben Ziel - ein Zielwechsel ist kein Ablauf
+            local tg = OC.TargetGUID and OC.TargetGUID() or "?"
+            wasDot = wasDot and wasDot == tg
+            OC.prevDot[e.key] = ds and tg or false
             local snd = OC.SoundOf(e)
             if snd ~= "none" then
                 local when = OC.SoundWhen(e)
@@ -1036,6 +1039,10 @@ local function TargetGUID()
     return type(g) == "string" and g or nil
 end
 
+-- Je Ziel eine Uhr (6.94.0.0, Wunsch: zwei Gegner mit Schlangenbiss -
+-- beim Zielwechsel die Restzeit DIESES Ziels). OC.dots[Name][GUID].
+local NOGUID = "?"
+OC.TargetGUID = function() return TargetGUID() or NOGUID end
 function OC.OnCast(unit, spellID)
     if Plain(unit) ~= "player" then return end
     local id = Plain(spellID)
@@ -1044,18 +1051,26 @@ function OC.OnCast(unit, spellID)
     local dur = OC.DotDuration(n)
     if not dur then return end
     local now = _G.GetTime and Plain(_G.GetTime()) or 0
-    OC.dots[n] = { start = now, dur = dur, guid = TargetGUID() }
+    local per = OC.dots[n]
+    if not per then per = {} OC.dots[n] = per end
+    local g = TargetGUID() or NOGUID
+    local d = per[g]
+    if d then d.start, d.dur = now, dur else per[g] = { start = now, dur = dur } end
+    -- Abgelaufene anderer Ziele wegraeumen (selten, keine Last pro Bild)
+    for k, o in _G.next, per do
+        if now - o.start >= o.dur then per[k] = nil end
+    end
 end
 
 -- Laeuft der DoT dieses Zaubers auf dem aktuellen Ziel? -> start, dur
 function OC.DotOn(name)
-    local d = name and OC.dots[name]
+    local per = name and OC.dots[name]
+    if not per then return nil end
+    local g = TargetGUID() or NOGUID
+    local d = per[g]
     if not d then return nil end
     local now = _G.GetTime and Plain(_G.GetTime()) or 0
-    if now - d.start >= d.dur then OC.dots[name] = nil return nil end
-    local g = TargetGUID()
-    if d.guid and g and g ~= d.guid then return nil end
-    if d.guid and not g then return nil end
+    if now - d.start >= d.dur then per[g] = nil return nil end
     return d.start, d.dur
 end
 
