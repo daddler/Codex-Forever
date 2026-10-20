@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.91.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager: alle Zauber|r – die Liste liest jetzt dein ganzes Zauberbuch, je Zauber den höchsten Rang. Was nicht in der Voreinstellung steht, ist zunächst „Aus“.",
+            "|cff7C6CFFAbklingzeitmanager: Reihenfolge per Ziehen|r – einen Zauber in der Liste auf einen anderen ziehen setzt ihn davor.",
+            "|cff7C6CFFAbklingzeitmanager: selbst hinzufügen|r – Zauber oder Gegenstand per Name oder Nummer eintragen oder direkt aus Zauberbuch und Taschen auf die Liste ziehen; Rechtsklick entfernt ihn wieder. Gegenstände zeigen ihre Abklingzeit.",
+        },
+    },
+    {
         version = "6.90.1.0",
         date    = "20.10.2026",
         notes   = {

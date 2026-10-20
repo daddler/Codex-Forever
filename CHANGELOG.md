@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.91.0.0] – 2026-10-20
+
+### Hinzugefügt
+- Eigener Abklingzeitmanager: alle aktiven Zauber aus dem Zauberbuch (`OC.Spellbook`, höchster Rang je Name), Reihenfolge per Ziehen (`ocd.order`), eigene Zauber/Gegenstände (`ocd.custom`, Ziehen auf die Liste, Name/ID), Abklingzeit von Gegenständen.
+
+### Geändert
+- Feineinstellungen (Anordnung, Zahl, Leuchten, Voreinstellung) unter „Erweitert“.
+
 ## [6.90.1.0] – 2026-10-20
 
 ### Behoben
