@@ -592,8 +592,14 @@ local function PopRow(i)
     r.bagText:SetJustifyH("LEFT")
     r.btn = WeintCodex.CreateButton(r, { text = "Löschen & looten", kind = "primary", height = 22, size = 11,
         onClick = function() BT.Swap(r.lootSlot, r.entry) end })
-    r.btn:SetPoint("TOPLEFT", r.bag, "BOTTOMLEFT", 0, -4)
-    r.btn:SetPoint("RIGHT", r, "RIGHT", 0, 0)
+    r.btn:SetPoint("TOPRIGHT", r.bag, "BOTTOMLEFT", BT.POP_W - 24, -4)
+    r.btn:SetWidth(118)
+    -- Urteil links neben dem Knopf (6.97.3.0, Wunsch: "wenn es keinen Sinn
+    -- macht ... sollte auch hier die Meldung kommen")
+    r.note = K.NewText(r, 11)
+    r.note:SetPoint("LEFT", r.bag, "BOTTOMLEFT", 0, -15)
+    r.note:SetPoint("RIGHT", r.btn, "LEFT", -6, 0)
+    r.note:SetJustifyH("LEFT")
     return r
 end
 
@@ -667,10 +673,18 @@ function BT.ShowPopup()
                 r.bag:Show()
                 r.btn:SetText(worth and "Löschen & looten" or "Trotzdem tauschen")
                 r.btn:Show()
+                if worth then
+                    r.note:SetText("Lohnt sich")
+                    r.note:SetTextColor(unpack(C.successBright))
+                else
+                    r.note:SetText("Lohnt nicht – dein Platz ist mehr wert")
+                    r.note:SetTextColor(unpack(C.warningBright))
+                end
             else
                 r.bag:Hide()
                 r.bagText:SetText("Nichts zum Tauschen – alles\nin den Taschen ist geschützt")
                 r.btn:Hide()
+                r.note:SetText("")
             end
             r:Show()
         end

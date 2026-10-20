@@ -26,7 +26,7 @@ WeintCodex_ChangelogData = {
         date    = "20.10.2026",
         notes   = {
             "|cff7C6CFFAbklingzeitmanager: grau auch im Kampf|r – im Kampf hält das Spiel die Abklingzeit geheim; WeintCodex rechnet sie jetzt ab deinem Wirken selbst mit (Länge einmal außerhalb des Kampfes gelernt), Arkaner Schuss und Co. werden grau.",
-            "|cff7C6CFFTauschfenster kompakter|r – Beute oben, Taschenplatz darunter, Knopf darunter; schmal statt langgezogen.",
+            "|cff7C6CFFTauschfenster kompakter|r – Beute oben, Taschenplatz darunter, Knopf darunter; schmal statt langgezogen. Daneben steht klar „Lohnt sich“ oder „Lohnt nicht – dein Platz ist mehr wert“.",
         },
     },
     {
