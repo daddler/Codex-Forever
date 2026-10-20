@@ -1492,9 +1492,15 @@ local function CreateList(parent, width)
             if _G.GameTooltip then _G.GameTooltip:Hide() end
         end)
         l:RegisterForDrag("LeftButton")
-        l:SetScript("OnDragStart", function(self) f.dragKey = self.entry and self.entry.key self:SetAlpha(0.4) pop:Hide() end)
+        l:SetScript("OnDragStart", function(self)
+            f.dragKey = self.entry and self.entry.key
+            self:SetAlpha(0.4)
+            pop:Hide()
+            if self.entry then OC.GhostStart(self.entry, f) end
+        end)
         l:SetScript("OnDragStop", function(self)
             self:SetAlpha(1)
+            OC.GhostStop()
             local from = f.dragKey
             f.dragKey = nil
             if not from then return end
@@ -1561,6 +1567,61 @@ local function CreateList(parent, width)
         if pop:IsShown() then PopSync() end
     end
     return f
+end
+
+-- Gezogener Zauber haengt an der Maus (6.97.0.0, Wunsch: "visuelle
+-- Bestaetigung"); die Zeile oder Spalte darunter wird hell.
+local ghost
+function OC.GhostStart(e, list)
+    if not ghost then
+        ghost = CreateFrame("Frame", "WeintCodexOwnCooldownsGhost", UIParent)
+        ghost:SetSize(200, 26)
+        ghost:SetFrameStrata("TOOLTIP")
+        ghost:EnableMouse(false)
+        K.Kachel(ghost, { shadow = 4, alpha = 0.95 })
+        ghost.icon = ghost:CreateTexture(nil, "ARTWORK")
+        ghost.icon:SetSize(22, 22)
+        ghost.icon:SetPoint("LEFT", ghost, "LEFT", 3, 0)
+        ghost.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        ghost.text = K.NewText(ghost, 12, "OVERLAY")
+        ghost.text:SetPoint("LEFT", ghost.icon, "RIGHT", 6, 0)
+        ghost.text:SetPoint("RIGHT", ghost, "RIGHT", -6, 0)
+        ghost.text:SetJustifyH("LEFT")
+        ghost:SetScript("OnUpdate", function(self)
+            local x, y = _G.GetCursorPosition()
+            local sc = UIParent:GetEffectiveScale()
+            self:ClearAllPoints()
+            self:SetPoint("LEFT", UIParent, "BOTTOMLEFT", x / sc + 14, y / sc)
+            -- Ziel hervorheben
+            local L = self.list
+            if not L then return end
+            local hit
+            for _, o in ipairs(L.lines) do
+                if o:IsShown() and o.entry and o.entry.key ~= self.key then
+                    local os = o:GetEffectiveScale() or 1
+                    local cx, cy = x / os, y / os
+                    local l, r, t, b = o:GetLeft(), o:GetRight(), o:GetTop(), o:GetBottom()
+                    if l and cx >= l and cx <= r and cy >= b and cy <= t then hit = o break end
+                end
+            end
+            if hit ~= self.hit then
+                if self.hit then self.hit.hl:SetColorTexture(1, 1, 1, 0) end
+                if hit then local c = C.accent hit.hl:SetColorTexture(c[1], c[2], c[3], 0.35) end
+                self.hit = hit
+            end
+        end)
+    end
+    ghost.icon:SetTexture(e.tex)
+    ghost.text:SetText(e.rank and (e.name .. " (" .. e.rank .. ")") or e.name)
+    ghost.key, ghost.list, ghost.hit = e.key, list, nil
+    ghost:Show()
+end
+
+function OC.GhostStop()
+    if not ghost then return end
+    if ghost.hit then ghost.hit.hl:SetColorTexture(1, 1, 1, 0) end
+    ghost.hit, ghost.list = nil, nil
+    ghost:Hide()
 end
 
 -- Zauber "key" in Spalte "slot" setzen, vor "beforeKey" (nil = ans Ende).
@@ -1655,6 +1716,7 @@ function OC.BuildSection(B)
                     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. why)
                 end
             end })
+    B:Note("So geht's: Jede Spalte ist eine Reihe auf dem Bildschirm – „Wichtig“ große Symbole, „Weitere“ kleine, „Aus“ wird nicht gezeigt. Zauber mit der Maus greifen und auf einen anderen Zauber ziehen: er landet davor, auch in einer anderen Spalte; auf freie Fläche einer Spalte: ans Ende. Die Reihenfolge in der Spalte ist die auf dem Bildschirm. Klick auf einen Zauber: Rang, Leuchten, Ton und Spalte einstellen.")
     B:Row({ type = "custom", height = ListHeight(), create = CreateList })
     B:Note("Alle Zauber deines Zauberbuchs, dazu was du selbst hinzufügst. Ziehen ordnet innerhalb einer Spalte oder schiebt in eine andere; ein Klick öffnet Rang, Leuchten und Ton des Zaubers. „Ton“ rechts heißt: dieser Zauber spielt einen Ton, wenn er bereit ist. Buffs kommen aus den Buffzeiten.")
 end

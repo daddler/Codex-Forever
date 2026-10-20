@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.97.0.0",
+        date    = "20.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeitmanager: Ziehen sichtbar|r – der gezogene Zauber hängt an der Maus, und die Zeile, vor der er landet, leuchtet auf.",
+            "|cff7C6CFFErklärung über den Spalten|r – kurz, was Wichtig/Weitere/Aus bedeuten und wie Ziehen und Klicken funktionieren.",
+        },
+    },
+    {
         version = "6.96.0.0",
         date    = "20.10.2026",
         notes   = {

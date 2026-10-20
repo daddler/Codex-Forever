@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.97.0.0] – 2026-10-20
+
+### Hinzugefügt
+- Abklingzeitmanager: Ziehbild an der Maus (`OC.GhostStart`), Ziel hervorgehoben; Erklärung über den Spalten.
+
 ## [6.96.0.0] – 2026-10-20
 
 ### Hinzugefügt
