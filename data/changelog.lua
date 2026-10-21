@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.110.0.0",
+        date    = "21.10.2026",
+        notes   = {
+            "|cff7C6CFFRundes Porträt bewegt sich|r – mit Porträt „3D-Modell“ ist der Kopf im runden Rahmen animiert. „Bild“ zeigt wie bisher das stehende Bild.",
+        },
+    },
+    {
         version = "6.109.0.0",
         date    = "21.10.2026",
         notes   = {

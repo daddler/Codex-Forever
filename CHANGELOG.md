@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.110.0.0] – 2026-10-21
+
+### Hinzugefügt
+- Runde Form: 3D-Modell (`r.model`, `<u>_portrait = "3d"`) im einbeschriebenen Quadrat (0,7 × Durchmesser) – Modelle lassen sich nicht maskieren, zeichnen aber keinen Hintergrund. Ohne Modelldatei oder außer Sicht das Bild. Auswahl „Porträt“ in runder Form wieder bedienbar.
+
 ## [6.109.0.0] – 2026-10-21
 
 ### Geändert

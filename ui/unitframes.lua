@@ -735,6 +735,21 @@ function Frame:Round()
         mask:SetAllPoints(r.tex)
         r.tex:AddMaskTexture(mask)
     end
+    -- 6.110.0.0 (Wunsch: "wenn der Kopf trotzdem animiert waere"): ein
+    -- Modell laesst sich nicht maskieren - aber es zeichnet keinen
+    -- Hintergrund, nur den Kopf. Im einbeschriebenen Quadrat (Seite 0,7 x
+    -- Durchmesser) ragt nichts ueber den Kreis; der Grund ist die Scheibe.
+    local okModel, model = pcall(CreateFrame, "PlayerModel", nil, r)
+    if okModel and type(model) == "table" then
+        model:SetPoint("CENTER")
+        if K.TrackModel then K.TrackModel(model) end
+        pcall(model.SetScript, model, "OnModelLoaded", function(m)
+            if m.SetPortraitZoom then m:SetPortraitZoom(1) end
+            if m.SetCamDistanceScale then m:SetCamDistanceScale(1) end
+        end)
+        model:Hide()
+        r.model = model
+    end
     -- Stufe
     local b = CreateFrame("Frame", nil, r)
     b:SetSize(22, 22)
@@ -758,7 +773,33 @@ function Frame:UpdateRound()
     if not (r and r:IsShown()) then return end
     local u = self.unit
     if not K.Bool(_G.UnitExists and _G.UnitExists(u), false) then return end
-    if _G.SetPortraitTexture then _G.SetPortraitTexture(r.tex, u) end
+    -- Bewegt (3D) wie eingestellt; ausser Sichtweite oder ohne Modell das Bild.
+    local m = r.model
+    local visible = K.Bool(_G.UnitIsVisible and _G.UnitIsVisible(u), true)
+    if m and Opt(u .. "_portrait") == "3d" and visible then
+        r.tex:Hide()
+        m:Show()
+        m:SetUnit(u)
+        if m.SetPortraitZoom then m:SetPortraitZoom(1) end
+        if m.SetCamDistanceScale then m:SetCamDistanceScale(1) end
+        local me, token = self, (self._roundToken or 0) + 1
+        self._roundToken = token
+        if _G.C_Timer and _G.C_Timer.After and m.GetModelFileID then
+            _G.C_Timer.After(0.4, function()
+                if me._roundToken ~= token or not m:IsShown() then return end
+                local id = K.Plain(m:GetModelFileID())
+                if type(id) ~= "number" or id <= 0 then
+                    m:Hide()
+                    r.tex:Show()
+                    if _G.SetPortraitTexture then _G.SetPortraitTexture(r.tex, u) end
+                end
+            end)
+        end
+    else
+        if m then m:Hide() end
+        r.tex:Show()
+        if _G.SetPortraitTexture then _G.SetPortraitTexture(r.tex, u) end
+    end
     local text, cr, cg, cb = LevelParts(u)
     r.badge.text:SetText(text)
     r.badge.text:SetTextColor(cr, cg, cb)
@@ -827,6 +868,10 @@ function Frame:Layout()
         r.ring:SetSize(D + 6, D + 6)
         r.back:SetSize(D, D)
         r.tex:SetSize(D - 2, D - 2)
+        if r.model then
+            local side = math.floor((D - 2) * 0.7)
+            r.model:SetSize(side, side)
+        end
         r:ClearAllPoints()
         r:SetPoint("CENTER", self, right and "RIGHT" or "LEFT", right and D * 0.42 or -D * 0.42, 0)
         r.badge:ClearAllPoints()
@@ -1915,14 +1960,14 @@ local function UnitPage(u)
         B:Section(LABELS[u])
         B:Row({ type = "toggle", label = "Rahmen anzeigen", key = u .. "_enabled", reload = true,
                 description = "Ersetzt den Blizzard-Rahmen. Wirkt nach dem Neuladen." },
-              { type = "dropdown", label = "Porträt", key = u .. "_portrait", disabled = function() return off() or UF.IsRound(u) end,
+              { type = "dropdown", label = "Porträt", key = u .. "_portrait", disabled = off,
                 items = PortraitItems(u) })
         if u == "player" or u == "target" then
             B:Row({ type = "dropdown", label = "Form", key = u .. "_style", disabled = off, items = {
                         { value = "auto",  text = "Wie das Design" },
                         { value = "flat",  text = "Flach" },
                         { value = "round", text = "Klassisch – rundes Porträt" } },
-                    tooltip = "„Wie das Design“: rund, wenn unter Allgemein „Klassisch“ gewählt ist. Rund zeigt immer das Bild (ein Modell lässt sich nicht rund schneiden) und die Stufe am Porträt." },
+                    tooltip = "„Wie das Design“: rund, wenn unter Allgemein „Klassisch“ gewählt ist. Rund mit Stufe am Porträt; „3D-Modell“ bewegt den Kopf, sonst das Bild." },
                   { type = "empty" })
         end
         B:Row({ type = "slider", label = "Breite", key = u .. "_width", min = 60, max = 320, step = 1, format = px, disabled = off },
