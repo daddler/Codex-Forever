@@ -57,7 +57,8 @@ OC.MODES = {
     { value = "weintcodex", text = "WeintCodex (eigener Manager)" },
     { value = "off",        text = "Keiner" },
 }
-OC.DEFAULT_MODE = "blizzard"
+-- 6.106.0.0 (Wunsch: "ab Werk an soll der Abklingzeitmanager von WeintCodex sein").
+OC.DEFAULT_MODE = "weintcodex"
 OC.SLOTS = { "big", "small", "off" }
 OC.SLOT_TEXT = { big = "Wichtig", small = "Weitere", off = "Aus" }
 OC.MAX_EXTRA = 6     -- eigene Reihen (6.98.0.0)
@@ -1466,6 +1467,13 @@ function OC.Enable()
     ev:SetScript("OnEvent", K.Measured("Eigener Abklingzeitmanager", OnEvent))
     ev:SetScript("OnUpdate", K.Measured("Eigener Abklingzeitmanager", Tick))
     OC.Scan()
+    -- 6.106.0.0: noch nie gewaehlt -> die Vorgabe einmal richtig setzen
+    -- (auch die Anzeige des Spiels aus, sonst stuenden beide da). Danach
+    -- gilt die gespeicherte Wahl, auch "Blizzard".
+    local m = Mem()
+    if m and m.mode == nil then
+        K.AfterCombat(function() if m.mode == nil then OC.SetMode(OC.DEFAULT_MODE) end end)
+    end
     -- Steht nach dem Laden die Anzeige des Spiels wieder an, obwohl
     -- WeintCodex gewaehlt ist (z. B. in den Optionen des Spiels
     -- eingeschaltet), bleibt das so: das hat der Spieler entschieden.

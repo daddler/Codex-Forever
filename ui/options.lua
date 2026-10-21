@@ -65,6 +65,14 @@ local GROUPS = {
 --------------------------------------------------
 
 
+-- Erscheinungsbild der Flaechen (core/ui.lua, WeintCodex.LOOKS).
+O.LOOK_CELL = { type = "dropdown", label = "Design der Oberfläche", key = "look", reload = true, items = {
+        { value = "schwarz",     text = "Schwarz (Standard)" },
+        { value = "transparent", text = "Transparent – die Welt scheint durch" },
+        { value = "klassisch",   text = "Klassisch – warm, mit goldenem Rand" } },
+    disabled = function() return not K.UIEnabled() end,
+    tooltip = "Füllung und Rand aller Flächen der Oberfläche: Rahmen, Leisten, Schadensanzeige, Tooltips. Gilt nach dem Neuladen." }
+
 K.Register({
     key = "general", group = "general", order = 0,
     title = "WeintCodex-Oberfläche",
@@ -137,7 +145,9 @@ K.Register({
                 B:Row({ type = "button", label = "Willkommen", text = "Assistenten zeigen",
                         tooltip = "Der Rundgang vom ersten Mal: Oberfläche ja oder nein, Komfort wählen, übernehmen (/wcui willkommen).",
                         onClick = function() WeintCodex.UIWelcome.Ask() end },
-                      { type = "empty" })
+                      -- 6.105.0.0, seit 6.106.0.0 hier oben (Wunsch: "im Nachhinein
+                      -- in ein anderes Design wechseln" - unten uebersehen).
+                      O.LOOK_CELL)
                 B:Note("Eigenes Profil: Die Oberfläche bekommt im Bearbeitungsmodus ein eigenes Layout „WeintCodex“. Dein Layout, deine Chatreiter und deine Spieleinstellungen bleiben – schaltest du aus, ist dein Layout wieder aktiv, und was WeintCodex an Einstellungen geändert hat, steht wie vorher.")
                 B:Note("Alles links unter „Komfort“ — Schadensanzeige, Questpfeil, Erinnerungen, Klickzauber, Makro-Helfer, Automark und die kleinen Helfer — hängt nicht an diesem Schalter. Schadensanzeige und Erinnerungen sind mit der Oberfläche von Haus aus an; ohne sie schaltest du sie selbst ein.")
             else
@@ -175,13 +185,6 @@ K.Register({
                   { type = "color", label = "Eigene Farbe", key = "highlightColor", reload = true,
                     disabled = function() return K.Get("general", "highlight") ~= "custom" end,
                     tooltip = "Gilt mit „Eigene Farbe“ nach dem Neuladen. Sehr dunkle Farben machen Text in dieser Farbe schwer lesbar." })
-            -- 6.105.0.0: Erscheinungsbild der Flaechen (core/ui.lua, WeintCodex.LOOKS).
-            B:Row({ type = "dropdown", label = "Erscheinungsbild", key = "look", reload = true, items = {
-                        { value = "schwarz",     text = "Schwarz (Standard)" },
-                        { value = "transparent", text = "Transparent – die Welt scheint durch" },
-                        { value = "klassisch",   text = "Klassisch – warm, mit goldenem Rand" } },
-                    tooltip = "Füllung und Rand aller Flächen der Oberfläche: Rahmen, Leisten, Schadensanzeige, Tooltips. Gilt nach dem Neuladen." },
-                  { type = "empty" })
             B:Section("Bildschirm",
                 "Skalierung: ab Werk bleibt die des Spiels. „Fest auf 1“ stellt alles auf jedem Bildschirm ins gleiche Verhältnis, wird auf 1440p und 4K aber deutlich größer. Breitbild: auf 21:9 oder 32:9 rücken Chat, Minikarte, Questliste und Schadensanzeige vom Rand in die Mitte.")
             B:Row({ type = "dropdown", label = "Skalierung", key = "uiScaleMode", items = {

@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.106.0.0] – 2026-10-21
+
+### Geändert
+- Eigener Abklingzeitmanager ab Werk (`OC.DEFAULT_MODE = "weintcodex"`); noch nie gewählt → beim Laden einmal `OC.SetMode` (Anzeige des Spiels aus, nach dem Kampf). Gespeicherte Wahl gilt weiter.
+- Sammel-Atlas ab Werk an (`gatherAtlas = true`); damit gilt auch `gatherShare` (ab Werk an) – stilles Teilen mit der Gilde, `WCGA`.
+- „Design der Oberfläche“ (`O.LOOK_CELL`, `general.look`) oben im Abschnitt Hauptschalter statt unter Schrift und Balken.
+
 ## [6.105.0.0] – 2026-10-21
 
 ### Geändert

@@ -63,7 +63,7 @@ WeintCodex.FarmRoute = {}
 local FR = WeintCodex.FarmRoute
 
 GA.DEFAULTS = {
-    gatherAtlas = false,     -- der ganze Atlas
+    gatherAtlas = true,      -- der ganze Atlas (6.106.0.0: ab Werk an, Wunsch)
     gatherShare = true,      -- still mit der Gilde teilen (nur mit Atlas)
     gaMapHerb = true, gaMapOre = true, gaMapChest = true, gaMapFish = true,
     gaMiniHerb = true, gaMiniOre = true, gaMiniChest = false, gaMiniFish = false,

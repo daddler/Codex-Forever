@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.106.0.0",
+        date    = "21.10.2026",
+        notes   = {
+            "|cff7C6CFFAbklingzeiten von WeintCodex ab Werk|r – wer noch nie gewählt hat, bekommt den eigenen Manager; die Anzeige des Spiels geht dafür aus. Zurück auf Blizzard: Erinnerungen → Abklingzeitmanager.",
+            "|cff7C6CFFSammel-Atlas ab Werk an|r – Fundstellen von Kräutern, Erz und Truhen auf Welt- und Minikarte.",
+            "|cff7C6CFFDesign jederzeit wechseln|r – „Design der Oberfläche“ steht jetzt ganz oben unter Einstellungen → Allgemein.",
+        },
+    },
+    {
         version = "6.105.0.0",
         date    = "21.10.2026",
         notes   = {

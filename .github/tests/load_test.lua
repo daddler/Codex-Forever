@@ -16079,8 +16079,11 @@ do
         assert(E.Report():find("/editmode", 1, true), "Diagnose nennt den Weg nicht")
 
         -- 7. Jede Seite, deren Rahmen das Spiel stellt, hat den Knopf.
+        -- 6.106.0.0: der Knopf der Erinnerungen gilt dem Manager des Spiels -
+        -- nur mit "Blizzard" (ab Werk jetzt der eigene).
+        local OCm = WeintCodex.UIOwnCooldowns
         local want = { general = true, actionbars = true, minimap = true, questtracker = true,
-                       groupframes = true, reminders = true }
+                       groupframes = true, reminders = (OCm and OCm.Mode() == "blizzard") or nil }
         local found = {}
         for _, key in ipairs(K.order) do
             for i in ipairs(K.Module(key).pages) do
@@ -20704,7 +20707,8 @@ do
         -- Filter je Art, getrennt fuer Welt- und Minikarte; aus = nichts.
         local saved = {}
         for _, key in ipairs({ "gatherAtlas", "gatherShare", "gaMapChest", "gaMiniHerb", "gaMiniChest" }) do saved[key] = K.Get("comfort", key) end
-        assert(K.Module("comfort").defaults.gatherAtlas == false, "Sammel-Atlas von Haus aus an")
+        assert(K.Module("comfort").defaults.gatherAtlas == true, "Sammel-Atlas von Haus aus aus (6.106.0.0: an)")
+        K.Set("comfort", "gatherAtlas", false)
         assert(not GA.ShowsOnMap("herb") and not GA.Sharing(), "aus zeigt oder teilt etwas")
         K.Set("comfort", "gatherAtlas", true)
         K.Set("comfort", "gaMapChest", false)
@@ -21092,7 +21096,7 @@ do
             for _, e in ipairs(OC.Catalog(cls)) do if e.preset == "big" then big = big + 1 end end
             assert(big > 0, cls .. ": keine Voreinstellung 'Wichtig'")
         end
-        assert(OC.Mode() == "blizzard", "ab Werk nicht Blizzard: " .. tostring(OC.Mode()))
+        assert(OC.DEFAULT_MODE == "weintcodex", "ab Werk nicht der eigene: " .. tostring(OC.DEFAULT_MODE))
         local savedCV = G.C_CVar
         local cvars = { cooldownViewerEnabled = "1" }
         G.C_CVar = { GetCVar = function(n) return cvars[n] end, SetCVar = function(n, v) cvars[n] = v return true end,
