@@ -18075,6 +18075,10 @@ do
         assert(a.body:GetText():find("bis dahin läuft", 1, true), "Hinweis aufs Neuladen fehlt")
         a.later:Click()
         assert(not a:IsShown(), "Spaeter schliesst nicht")
+        -- 6.107.0.0: "Frisch beginnen" - leeres Profil, keine Kopie.
+        local fresh = PR.New("Frisch", true)
+        assert(fresh == "Frisch" and next(K.Root().profiles.Frisch) == nil, "Frisch beginnen kopiert")
+        PR.Choose("Zweiter")
         -- Wer schon gewaehlt hat, wird nie gefragt.
         me = "Shooty"
         assert(PR.Answered(), "Charakter mit Profil gefragt")

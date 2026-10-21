@@ -120,7 +120,9 @@ end
 
 -- Neues Profil als Kopie des gewaehlten, benannt nach dem Charakter, und
 -- gleich gewaehlt.
-function PR.New(name)
+-- fresh (6.107.0.0, Wunsch: "ein neuer Charakter soll erstmal alle
+-- Leisten sehen"): leer statt Kopie - die Grundeinstellungen von WeintCodex.
+function PR.New(name, fresh)
     local ui = K.Root()
     if not ui then return nil end
     if not name then
@@ -129,7 +131,7 @@ function PR.New(name)
     end
     local ok, clean = PR.Check(name)
     if not ok then return nil, clean end
-    ui.profiles[clean] = DeepCopy(ui.profiles[PR.Chosen()] or {})
+    ui.profiles[clean] = fresh and {} or DeepCopy(ui.profiles[PR.Chosen()] or {})
     PR.Choose(clean)
     return clean
 end
@@ -345,7 +347,7 @@ end
 -- speichert (dieselbe Regel wie ui/welcome.lua - sonst kaeme die Frage
 -- nach jedem Neuladen wieder).
 
-PR.ASK_W, PR.ASK_H = 560, 214
+PR.ASK_W, PR.ASK_H = 560, 256
 
 local ask, later = nil, false
 
@@ -428,6 +430,7 @@ local function BuildAsk()
     f.create = Button("Eigenes Profil anlegen", "primary", function() PR.AskCreate() end)
     f.pick = Button("Profil wählen …", "secondary", function() PR.AskPick() end)
     f.keep = Button("Standard behalten", "secondary", function() PR.AskKeep() end)
+    f.fresh = Button("Frisch beginnen", "secondary", function() PR.AskCreate(true) end)
     f.later = Button("Später", "ghost", function() PR.AskLater() end)
     f.close = WeintCodex.CreateButton(f, { text = "×", kind = "ghost", height = 26, size = 14,
         backdrop = "surface2", tooltip = "Später – beim nächsten Einloggen wieder.", onClick = function() PR.AskLater() end })
@@ -443,27 +446,32 @@ local function BuildAsk()
 end
 
 -- Den Dialog in einem seiner zwei Zustaende zeigen: "frage" oder "angelegt".
-function PR.ShowAsk(state, created)
+function PR.ShowAsk(state, created, fresh)
     local f = BuildAsk()
     f.decided, f.state = false, state
     local name = Name()
     if state == "angelegt" then
         f.title:SetText("Profil „" .. tostring(created) .. "“ angelegt")
-        f.body:SetText("Es ist eine Kopie deiner jetzigen Einstellungen und für " .. name
+        f.body:SetText((fresh and "Es beginnt mit den Grundeinstellungen von WeintCodex – alle Leisten sichtbar – und ist für "
+                or "Es ist eine Kopie deiner jetzigen Einstellungen und für ") .. name
             .. " gewählt. Was du ab jetzt einstellst und verschiebst, gilt nur dort.\n"
             .. "Es gilt nach dem Neuladen – bis dahin läuft „" .. tostring(PR.Active()) .. "“.")
-        f.create:Hide() f.pick:Hide() f.keep:Hide()
+        f.create:Hide() f.pick:Hide() f.keep:Hide() f.fresh:Hide()
         f.reload:Show()
         f.later:Show()
     else
         f.title:SetText("Eigenes Profil für " .. name .. "?")
         f.body:SetText(name .. " nutzt „" .. tostring(PR.Chosen()) .. "“ – das teilen sich alle Charaktere ohne eigenes Profil."
             .. " Ein eigenes Profil beginnt als Kopie davon; danach ändert, was du einstellst und verschiebst, nur "
-            .. name .. ".\nÄndern lässt sich das jederzeit unter /wcui profil.")
+            .. name .. ". „Frisch beginnen“: ein eigenes Profil mit den Grundeinstellungen – alles sichtbar, wie beim ersten Mal."
+            .. "\nÄndern lässt sich das jederzeit unter /wcui profil.")
         f.reload:Hide()
         f.later:Hide()
         f.create:Show()
         f.keep:Show()
+        f.fresh:Show()
+        f.fresh:ClearAllPoints()
+        f.fresh:SetPoint("BOTTOMLEFT", f.create, "TOPLEFT", 0, 10)
         local more = #PR.List() > 1
         f.pick:SetShown(more)
         f.keep:ClearAllPoints()
@@ -479,11 +487,11 @@ function PR.ShowAsk(state, created)
     return f
 end
 
-function PR.AskCreate()
+function PR.AskCreate(fresh)
     -- Angelegt heisst gewaehlt (ui.profileOf) - damit beantwortet.
-    local created = PR.New()
+    local created = PR.New(nil, fresh)
     if created then
-        PR.ShowAsk("angelegt", created)
+        PR.ShowAsk("angelegt", created, fresh)
     elseif ask then
         ask.decided = true
         ask:Hide()

@@ -36,7 +36,9 @@ P.DEFAULTS = {
     presenceDelay   = 4,     -- Sekunden nach Kampf/Zielverlust bis Ruhe
     fade_player     = 35,    -- Spielerrahmen (und Begleiter) in Ruhe, %
     fade_mainbar    = 100,   -- Aktionsleiste 1
-    fade_bars       = 0,     -- alle weiteren Aktionsleisten
+    -- 6.107.0.0 (Wunsch: "ein ganz neuer Nutzer weiss sonst nicht, wo die
+    -- Leisten sind"): ab Werk sichtbar; bis dahin 0 = in Ruhe unsichtbar.
+    fade_bars       = 100,   -- alle weiteren Aktionsleisten
     fade_damage     = 45,    -- Schadensanzeige
 }
 

@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.107.0.0] – 2026-10-21
+
+### Geändert
+- Ruhe und Kampf: `fade_bars` ab Werk 100 statt 0 (weitere Aktionsleisten außerhalb des Kampfes sichtbar). Gilt für alle, die den Regler nie bewegt haben.
+
+### Hinzugefügt
+- Profilfrage: „Frisch beginnen“ (`PR.New(name, fresh)`, `PR.AskCreate(true)`) – leeres Profil, also die Grundeinstellungen. Dialog 256 hoch.
+
 ## [6.106.0.0] – 2026-10-21
 
 ### Geändert

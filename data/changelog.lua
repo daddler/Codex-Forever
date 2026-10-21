@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.107.0.0",
+        date    = "21.10.2026",
+        notes   = {
+            "|cff7C6CFFAlle Leisten ab Werk sichtbar|r – weitere Aktionsleisten verschwanden außerhalb des Kampfes ganz. Neue Spieler sehen jetzt alles; ausblenden geht unter Allgemein → Ruhe und Kampf.",
+            "|cff7C6CFFNeuer Charakter: „Frisch beginnen“|r – in der Profilfrage ein eigenes Profil mit den Grundeinstellungen statt einer Kopie.",
+        },
+    },
+    {
         version = "6.106.0.0",
         date    = "21.10.2026",
         notes   = {
