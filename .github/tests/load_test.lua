@@ -4323,6 +4323,22 @@ do
     Check(ok, "Komfort: Kameraabstand gesetzt, Grenze des Spiels gelesen, zurueckgegeben" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.112.0.0: Erste Einrichtung schaltet Abklingzahlen und Schnell-Pluendern ein, ohne Besitz.
+do
+    local WL = WeintCodex.UIWelcome
+    local saved = _G.C_CVar
+    local ok, err = pcall(function()
+        local cv = { countdownForCooldowns = "0", autoLootDefault = "0" }
+        _G.C_CVar = { GetCVar = function(n) return cv[n] end, SetCVar = function(n, v) cv[n] = v return true end }
+        assert(WL.ApplyStartCVars() == 2, "nicht beide gesetzt")
+        assert(cv.countdownForCooldowns == "1" and cv.autoLootDefault == "1", "Werte falsch")
+        local ui = K.Root and K.Root()
+        assert(not (ui and ui.cvars and ui.cvars.autoLootDefault), "Startwert darf nicht zurueckgestellt werden")
+    end)
+    _G.C_CVar = saved
+    Check(ok, "Willkommen: Abklingzahlen und Schnell-Pluendern als Startwerte" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.

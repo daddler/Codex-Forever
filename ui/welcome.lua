@@ -346,10 +346,29 @@ function WL.Summary()
     return lines
 end
 
+-- Zwei Spieleinstellungen, die bei der ersten Einrichtung an sein sollen
+-- (6.112.0.0, auf Wunsch): Zahlen auf Abklingzeiten und Schnell-Pluendern.
+-- Einmalige Startwerte, kein Besitz: nie zurueckgestellt, danach gehoeren
+-- sie dem Spieler (darum PF.RawSet, nicht PF.SetCVar).
+WL.START_CVARS = {
+    { name = "countdownForCooldowns", value = "1" },
+    { name = "autoLootDefault",       value = "1" },
+}
+
+function WL.ApplyStartCVars()
+    local PF = WeintCodex.UIProfile
+    local n = 0
+    for _, c in ipairs(WL.START_CVARS) do
+        if PF and PF.RawSet(c.name, c.value) then n = n + 1 end
+    end
+    return n
+end
+
 -- Uebernehmen. Gibt einen Bericht zurueck: { layout = true|"Grund"|nil, reload = bool }.
 function WL.Apply()
     local report = {}
     MarkAsked()
+    if not K.InCombat() then report.startCVars = WL.ApplyStartCVars() end
     local ui = choice.ui and true or false
     -- Zuerst der Hauptschalter: davon haengt ab, was "Standard" ist.
     K.SetUIEnabled(ui)

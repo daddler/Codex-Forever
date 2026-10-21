@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.112.0.0] – 2026-10-21
+
+### Geändert
+- Willkommens-Assistent: „Übernehmen“ setzt `countdownForCooldowns` und `autoLootDefault` auf 1 (`WL.START_CVARS`, `WL.ApplyStartCVars`). Einmalige Startwerte über `PF.RawSet`, ohne Besitz – nie zurückgestellt. Nicht im Kampf.
+
 ## [6.111.0.0] – 2026-10-21
 
 ### Hinzugefügt

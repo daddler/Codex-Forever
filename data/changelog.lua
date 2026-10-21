@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.112.0.0",
+        date    = "21.10.2026",
+        notes   = {
+            "|cff7C6CFFZahlen auf Abklingzeiten und Schnell-Plündern|r sind nach der ersten Einrichtung an. Danach gehören beide Einstellungen dir – ausschalten bleibt aus.",
+        },
+    },
+    {
         version = "6.111.0.0",
         date    = "21.10.2026",
         notes   = {
