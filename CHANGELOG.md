@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.110.2.0] – 2026-10-21
+
+### Geändert
+- Runde Form: immer das Bild (`UF.ROUND_MODEL = false`). Modelle lassen sich nur rechteckig beschneiden – 6.110.0.0 schnitt den Kopf ab, 6.110.1.0 ragte er über den Ring (zwei Bilder aus dem Beta-Test). Code des Modells bleibt, abgeschaltet. „Porträt“ in runder Form wieder ausgegraut.
+
 ## [6.110.1.0] – 2026-10-21
 
 ### Behoben

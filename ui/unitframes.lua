@@ -703,6 +703,7 @@ end
 -- die Ringe). Das Modell laesst sich nicht maskieren: immer das Bild.
 UF.CIRCLE = "Interface\\Common\\CommonMaskCircle"
 UF.ROUND_CAM = 1.45   -- Kameraabstand im runden Portraet (1 = wie eckig)
+UF.ROUND_MODEL = false   -- 6.110.2.0: rund nie das Modell (siehe UpdateRound)
 function UF.IsRound(u)
     if u ~= "player" and u ~= "target" then return false end
     local st = Opt(u .. "_style")
@@ -777,7 +778,11 @@ function Frame:UpdateRound()
     -- Bewegt (3D) wie eingestellt; ausser Sichtweite oder ohne Modell das Bild.
     local m = r.model
     local visible = K.Bool(_G.UnitIsVisible and _G.UnitIsVisible(u), true)
-    if m and Opt(u .. "_portrait") == "3d" and visible then
+    -- 6.110.2.0 (Beta-Test mit zwei Bildern): ein Modell laesst sich nur
+    -- rechteckig beschneiden - klein im Kreis schnitten Kanten den Kopf
+    -- ab, gross ragte er ueber den Ring. Rund zeigt darum immer das Bild
+    -- (UF.ROUND_MODEL = false); bewegt nur in der flachen Form.
+    if m and UF.ROUND_MODEL and Opt(u .. "_portrait") == "3d" and visible then
         r.tex:Hide()
         m:Show()
         m:SetUnit(u)
@@ -1963,14 +1968,14 @@ local function UnitPage(u)
         B:Section(LABELS[u])
         B:Row({ type = "toggle", label = "Rahmen anzeigen", key = u .. "_enabled", reload = true,
                 description = "Ersetzt den Blizzard-Rahmen. Wirkt nach dem Neuladen." },
-              { type = "dropdown", label = "Porträt", key = u .. "_portrait", disabled = off,
+              { type = "dropdown", label = "Porträt", key = u .. "_portrait", disabled = function() return off() or UF.IsRound(u) end,
                 items = PortraitItems(u) })
         if u == "player" or u == "target" then
             B:Row({ type = "dropdown", label = "Form", key = u .. "_style", disabled = off, items = {
                         { value = "auto",  text = "Wie das Design" },
                         { value = "flat",  text = "Flach" },
                         { value = "round", text = "Klassisch – rundes Porträt" } },
-                    tooltip = "„Wie das Design“: rund, wenn unter Allgemein „Klassisch“ gewählt ist. Rund mit Stufe am Porträt; „3D-Modell“ bewegt den Kopf, sonst das Bild." },
+                    tooltip = "„Wie das Design“: rund, wenn unter Allgemein „Klassisch“ gewählt ist. Rund zeigt das Bild mit der Stufe am Porträt – ein bewegter Kopf lässt sich nicht rund zuschneiden, den gibt es in der flachen Form." },
                   { type = "empty" })
         end
         B:Row({ type = "slider", label = "Breite", key = u .. "_width", min = 60, max = 320, step = 1, format = px, disabled = off },

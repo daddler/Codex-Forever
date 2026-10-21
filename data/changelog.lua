@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.110.2.0",
+        date    = "21.10.2026",
+        notes   = {
+            "|cff7C6CFFRundes Porträt wieder als Bild|r – ein bewegter Kopf lässt sich im Spiel nicht rund zuschneiden: er wurde abgeschnitten oder ragte über den Ring. Rund zeigt jetzt sauber das Bild; bewegt bleibt der Kopf in der flachen Form.",
+        },
+    },
+    {
         version = "6.110.1.0",
         date    = "21.10.2026",
         notes   = {
