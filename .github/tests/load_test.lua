@@ -4217,6 +4217,31 @@ do
     Check(ok, "Questpfeil: Ziel zuerst, Weg nur bei echtem Umweg, Hysterese" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.104.0.0: Zauber beim Lehrer gewaehlt - rechts Karte und Pin des
+-- naechsten Lehrers der Klasse und Fraktion, Pfeil dorthin.
+do
+    local TR, QA = WeintCodex.Trainer, WeintCodex.UIQuestArrow
+    local ok, err = pcall(function()
+        local state = { class = "PALADIN", faction = "Alliance" }
+        local n = TR.NearestTrainer(state)
+        assert(n and n.map and n.x, "kein Paladinlehrer der Allianz mit Lage")
+        TR.selLevel, TR.selCost = 14, 2000
+        local blocks = TR.SpellBlocks(19740, state)
+        local hasMap, who = false, nil
+        for _, b in ipairs(blocks) do
+            if b.type == "custom" then hasMap = true end
+            if b.type == "rows" then for _, r in ipairs(b.rows) do if r.label == "Nächster Lehrer" then who = r.value end end end
+        end
+        assert(hasMap and who == n.name, "Karte oder Lehrer fehlt")
+        local Hm = TR.NearestTrainer({ class = "PALADIN", faction = "Horde" })
+        assert(not Hm or Hm.faction ~= "A", "Horde bekommt einen Allianzlehrer")
+        assert(TR.GuideToTrainer(n, "Segen der Macht") and QA.custom and QA.custom.map == n.map, "Pfeil nicht gesetzt")
+        QA.ClearCustom()
+        TR.selLevel, TR.selCost = nil, nil
+    end)
+    Check(ok, "Lehrer: gewaehlter Zauber zeigt den naechsten Lehrer mit Karte und Pfeil" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.104.0.0] – 2026-10-21
+
+### Hinzugefügt
+- Lehrerseite: Zauber wählbar (`TR.selSpell`, Klick; Umschalt-Klick verlinkt weiter). Detailbereich oben: Rang, Stufe, Kosten, nächster Lehrer der Klasse und Fraktion (`TR.NearestTrainer` über `CQ.Trainers`, Lage aus den Klassenquest-Daten, `community`), Karte mit Pin (`BP.MapWidget`/`BP.PaintMap` wie bei Berufen), „Questpfeil hierhin“ (`TR.GuideToTrainer` → `QA.SetCustom`). Waffen nicht wählbar (Waffenmeister haben schon „Karte“).
+
 ## [6.103.5.0] – 2026-10-20
 
 ### Geändert

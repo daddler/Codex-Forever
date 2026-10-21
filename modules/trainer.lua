@@ -437,11 +437,26 @@ local function SpellRow(body, y, w, sp, opts)
         gt:Show()
     end)
     row:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+    -- 6.104.0.0: gewaehlt (Klick) - Flaeche wie beim Ueberfahren, kraeftiger.
+    if TR.selSpell == sp.id and not opts.noSelect then
+        local sel = row:CreateTexture(nil, "BACKGROUND")
+        sel:SetAllPoints(row)
+        sel:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.14)
+    end
     row:SetScript("OnClick", function(self)
         local cs = _G.C_Spell
-        if not (_G.IsModifiedClick and _G.IsModifiedClick("CHATLINK") and _G.ChatEdit_InsertLink) then return end
-        local link = cs and cs.GetSpellLink and cs.GetSpellLink(self.spellID)
-        if type(link) == "string" then _G.ChatEdit_InsertLink(link) end
+        if _G.IsModifiedClick and _G.IsModifiedClick("CHATLINK") and _G.ChatEdit_InsertLink then
+            local link = cs and cs.GetSpellLink and cs.GetSpellLink(self.spellID)
+            if type(link) == "string" then _G.ChatEdit_InsertLink(link) end
+            return
+        end
+        -- 6.104.0.0 (Wunsch: "auf den Zauber klicken, rechts wie bei den
+        -- Berufen eine kleine Karte des naechsten Klassenlehrers, Pin
+        -- setzen"): waehlen, noch einmal klicken waehlt ab.
+        if opts.noSelect then return end
+        TR.selSpell = (TR.selSpell ~= self.spellID) and self.spellID or nil
+        TR.selCost, TR.selLevel = sp.cost, sp.level
+        TR.Redraw()
     end)
     TR.drawnRows = (TR.drawnRows or 0) + 1
     return y - ROW_H
@@ -562,7 +577,7 @@ local function DrawWeapons(body, w, list)
             local tag = WEAPON_TAG[wp.key]
             local label = tag[1] or ("ab Stufe " .. wp.level)
             local costColor = wp.key ~= "now" and "textFaint" or nil
-            y = SpellRow(body, y, w, sp, { dim = wp.key == "known", costColor = costColor })
+            y = SpellRow(body, y, w, sp, { dim = wp.key == "known", costColor = costColor, noSelect = true })
             local fs = Keep(WeintCodex.Label(body, label, { size = 10, color = tag[2], justify = "RIGHT" }))
             fs:SetPoint("TOPRIGHT", body, "TOPRIGHT", -80, y + ROW_H - 7)
             if wp.key ~= "known" then
@@ -583,6 +598,68 @@ local function DrawWeapons(body, w, list)
         y = -30
     end
     body:SetHeight(math.max(1, -y))
+end
+
+-- Der naechste Lehrer deiner Klasse und Fraktion (Klassenquest-Daten,
+-- CQ.Trainers: gleicher Kontinent nach Entfernung, sonst die eigene Karte).
+function TR.NearestTrainer(state)
+    local CQ = WeintCodex.ClassQuests
+    if not (CQ and CQ.Trainers and state and state.class) then return nil end
+    for _, n in ipairs(CQ.Trainers(state.class, state.faction)) do
+        if n.map and n.x and n.y then return n end
+    end
+    return nil
+end
+
+function TR.GuideToTrainer(n, spellName)
+    local QA = WeintCodex.UIQuestArrow
+    if not (n and n.map and QA and QA.SetCustom) then return false end
+    QA.SetCustom({ map = n.map, x = n.x / 100, y = n.y / 100,
+        title = (spellName and (spellName .. " bei ") or "Lehrer: ") .. n.name })
+    return true
+end
+
+-- Ein gewaehlter Zauber: wo lernen (Karte, Pin, Pfeil), was er kostet.
+function TR.SpellBlocks(id, state)
+    local name, sub = TR.SpellInfo(id)
+    name = name or ("Zauber " .. id)
+    local blocks = { { type = "header", text = name .. (sub and ("  ·  " .. sub) or "") } }
+    local rows = {}
+    if TR.selLevel then rows[#rows + 1] = { label = "Ab Stufe", value = tostring(TR.selLevel) } end
+    if TR.selCost then rows[#rows + 1] = { label = "Kosten", value = TR.Money(TR.selCost) } end
+    local n = TR.NearestTrainer(state)
+    local BP, QM = WeintCodex.BooksPage, WeintCodex.QuestMap
+    if not n then
+        blocks[#blocks + 1] = { type = "rows", rows = rows }
+        blocks[#blocks + 1] = { type = "text", text = "Kein Lehrer deiner Klasse mit bekannter Lage." }
+        return blocks
+    end
+    rows[#rows + 1] = { label = "Nächster Lehrer", value = n.name }
+    local zone = QM and QM.MapName and QM.MapName(n.map)
+    if zone then rows[#rows + 1] = { label = "Gebiet", value = zone } end
+    if n.dist then rows[#rows + 1] = { label = "Entfernung", value = string.format("%d m", math.floor(n.dist + 0.5)) } end
+    if BP and BP.MapWidget and BP.PaintMap then
+        blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
+            local w = BP.MapWidget(parent, width)
+            BP.PaintMap(w, n.map, n.x / 100, n.y / 100)
+            return w
+        end }
+    end
+    blocks[#blocks + 1] = { type = "rows", rows = rows }
+    if BP and BP.Pill and WeintCodex.UIQuestArrow then
+        blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
+            if not TR.guideBtn then TR.guideBtn = BP.Pill(parent, "Questpfeil hierhin", { height = 32, size = 12, primary = true }) end
+            local g = TR.guideBtn
+            g:SetParent(parent)
+            g:SetWidth(width)
+            g:SetScript("OnClick", function() TR.GuideToTrainer(n, name) end)
+            g:Paint(false)
+            return g
+        end }
+    end
+    blocks[#blocks + 1] = { type = "text", text = "Lage des Lehrers: Wissensstand aus der Beta – unbestätigt." }
+    blocks[#blocks + 1] = { type = "divider" }
+    return blocks
 end
 
 local function InspectorBlocks(state, cat, weapons)
@@ -608,7 +685,8 @@ local function InspectorBlocks(state, cat, weapons)
         bill[#bill + 1] = { label = "Bis Stufe " .. (state.level + SOON), value = TR.Money(b.upcoming) }
         bill[#bill + 1] = { label = "Danach", value = vUp, valueColor = vUpColor }
     end
-    return {
+    local out = TR.selSpell and TR.SpellBlocks(TR.selSpell, state) or {}
+    for _, blk in ipairs({
         { type = "header", text = "Beim Lehrer" },
         { type = "rows", rows = rows },
         { type = "divider" },
@@ -622,7 +700,8 @@ local function InspectorBlocks(state, cat, weapons)
             "Ob du etwas schon kannst, sagt dein Client.",
             "Rufrabatte beim Lehrer sind nicht eingerechnet.",
         }},
-    }
+    }) do out[#out + 1] = blk end
+    return out
 end
 
 -- Zwei Reiter (6.15.0.0): "Zauber und Waffen" (diese Seite) und

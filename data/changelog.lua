@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.104.0.0",
+        date    = "21.10.2026",
+        notes   = {
+            "|cff7C6CFFLehrer: wo lerne ich das?|r – ein Klick auf einen Zauber zeigt rechts den nächsten Lehrer deiner Klasse mit kleiner Karte und Pin. „Questpfeil hierhin“ führt dich hin. Noch ein Klick wählt ab.",
+        },
+    },
+    {
         version = "6.103.5.0",
         date    = "20.10.2026",
         notes   = {
