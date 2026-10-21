@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.110.1.0",
+        date    = "21.10.2026",
+        notes   = {
+            "|cff7C6CFFRundes Porträt ohne Kanten|r – der bewegte Kopf wurde an einem kleinen Quadrat abgeschnitten. Jetzt füllt er den Kreis mit etwas Abstand. Die Stufe sitzt auf der Seite zum Balken.",
+        },
+    },
+    {
         version = "6.110.0.0",
         date    = "21.10.2026",
         notes   = {

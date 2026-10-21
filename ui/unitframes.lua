@@ -702,6 +702,7 @@ end
 -- Spiel ausser der Kreismaske (Interface\Common\CommonMaskCircle, wie
 -- die Ringe). Das Modell laesst sich nicht maskieren: immer das Bild.
 UF.CIRCLE = "Interface\\Common\\CommonMaskCircle"
+UF.ROUND_CAM = 1.45   -- Kameraabstand im runden Portraet (1 = wie eckig)
 function UF.IsRound(u)
     if u ~= "player" and u ~= "target" then return false end
     local st = Opt(u .. "_style")
@@ -737,15 +738,15 @@ function Frame:Round()
     end
     -- 6.110.0.0 (Wunsch: "wenn der Kopf trotzdem animiert waere"): ein
     -- Modell laesst sich nicht maskieren - aber es zeichnet keinen
-    -- Hintergrund, nur den Kopf. Im einbeschriebenen Quadrat (Seite 0,7 x
-    -- Durchmesser) ragt nichts ueber den Kreis; der Grund ist die Scheibe.
+    -- Hintergrund, nur den Kopf. Seit 6.110.1.0 in voller Groesse mit
+    -- weiterer Kamera (UF.ROUND_CAM); der Grund ist die Scheibe.
     local okModel, model = pcall(CreateFrame, "PlayerModel", nil, r)
     if okModel and type(model) == "table" then
         model:SetPoint("CENTER")
         if K.TrackModel then K.TrackModel(model) end
         pcall(model.SetScript, model, "OnModelLoaded", function(m)
             if m.SetPortraitZoom then m:SetPortraitZoom(1) end
-            if m.SetCamDistanceScale then m:SetCamDistanceScale(1) end
+            if m.SetCamDistanceScale then m:SetCamDistanceScale(UF.ROUND_CAM) end
         end)
         model:Hide()
         r.model = model
@@ -781,7 +782,7 @@ function Frame:UpdateRound()
         m:Show()
         m:SetUnit(u)
         if m.SetPortraitZoom then m:SetPortraitZoom(1) end
-        if m.SetCamDistanceScale then m:SetCamDistanceScale(1) end
+        if m.SetCamDistanceScale then m:SetCamDistanceScale(UF.ROUND_CAM) end
         local me, token = self, (self._roundToken or 0) + 1
         self._roundToken = token
         if _G.C_Timer and _G.C_Timer.After and m.GetModelFileID then
@@ -868,14 +869,16 @@ function Frame:Layout()
         r.ring:SetSize(D + 6, D + 6)
         r.back:SetSize(D, D)
         r.tex:SetSize(D - 2, D - 2)
-        if r.model then
-            local side = math.floor((D - 2) * 0.7)
-            r.model:SetSize(side, side)
-        end
+        -- 6.110.1.0 (Beta-Test mit Bild: "zu abgehakt" - im kleinen Quadrat
+        -- schnitten dessen Kanten Haare und Seiten gerade ab): volle Groesse,
+        -- die Kamera weiter weg (UF.ROUND_CAM) - der Kopf liegt mittig mit
+        -- Luft; der leere Rest des Modells zeichnet nichts.
+        if r.model then r.model:SetSize(D - 2, D - 2) end
         r:ClearAllPoints()
         r:SetPoint("CENTER", self, right and "RIGHT" or "LEFT", right and D * 0.42 or -D * 0.42, 0)
         r.badge:ClearAllPoints()
-        r.badge:SetPoint("CENTER", r, right and "BOTTOMRIGHT" or "BOTTOMLEFT", right and -4 or 4, 4)
+        -- Innenseite (zum Balken hin): aussen deckte sie den Begleiterrahmen (6.110.1.0, Bild).
+        r.badge:SetPoint("CENTER", r, right and "BOTTOMLEFT" or "BOTTOMRIGHT", right and 4 or -4, 4)
         r:Show()
         self:UpdateRound()
     elseif self._round then

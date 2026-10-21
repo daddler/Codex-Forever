@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.110.1.0] – 2026-10-21
+
+### Behoben
+- Runde Form: Modell in voller Kreisgröße mit `UF.ROUND_CAM = 1.45` statt einbeschriebenem Quadrat (Kanten schnitten Haare ab, Bild aus dem Beta-Test); Stufenplakette auf der Innenseite.
+
 ## [6.110.0.0] – 2026-10-21
 
 ### Hinzugefügt
