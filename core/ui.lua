@@ -322,6 +322,11 @@ WeintCodex.GameColors = {
     -- des Ziels ist `targetRing`, also der Akzent.
     kachelFill    = {0.047, 0.047, 0.059, 0.88},  -- = bgDark, 88 % deckend
     kachelEdge    = {0.000, 0.000, 0.000, 1.00},  -- Rand der Kachel (6.105.0.0, Erscheinungsbild)
+    -- Design "Klassisch" (6.105.0.0/6.108.0.0): Gold fuer Kachelrand und
+    -- runden Portraetring. Eigener Schluessel, NICHT frameAccent (das ist
+    -- den Fenstern des Spiels vorbehalten) - nur derselbe Ton. Gold steht
+    -- hier nie neben der Klassenfarbe als zweite Bedeutung: es ist Rahmen.
+    classicGold   = {0.757, 0.643, 0.439, 0.85},
     -- Questhilfe (6.55.0.0): Ziele einer Quest teilen eine Farbe, damit
     -- man sie auf der Karte auseinanderhaelt. Kennfarben wie Klassenfarben,
     -- keine Bedeutung (nicht gut/schlecht) - nie Akzent, nie Status.
@@ -466,7 +471,7 @@ local function Mix(a, b, k) return a + (b - a) * k end
 WeintCodex.LOOKS = {
     schwarz     = { label = "Schwarz",     fill = {0.047, 0.047, 0.059, 0.88}, edge = {0.000, 0.000, 0.000, 1.00} },
     transparent = { label = "Transparent", fill = {0.047, 0.047, 0.059, 0.45}, edge = {0.000, 0.000, 0.000, 0.55} },
-    klassisch   = { label = "Klassisch",   fill = {0.082, 0.066, 0.050, 0.92}, edge = {0.757, 0.643, 0.439, 0.85} },
+    klassisch   = { label = "Klassisch",   fill = {0.082, 0.066, 0.050, 0.92}, edge = {0.757, 0.643, 0.439, 0.85} },  -- edge = classicGold
 }
 WeintCodex.LOOK_ORDER = { "schwarz", "transparent", "klassisch" }
 function WeintCodex.SetLook(key)

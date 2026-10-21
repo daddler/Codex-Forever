@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.108.0.0] – 2026-10-21
+
+### Hinzugefügt
+- Einheitenrahmen Spieler/Ziel: Form (`<u>_style`: `auto` folgt `general.look`, `flat`, `round`; `UF.IsRound`). Rund: Bild der Einheit mit Kreismaske (`Interface\Common\CommonMaskCircle`), Ring und Stufenplakette in `GameColors.classicGold` (neu, gleicher Ton wie `frameAccent`, aber eigener Schlüssel), halb über den Rand (`Frame:Round`, `Frame:UpdateRound`); eckiges Porträt dann aus.
+
 ## [6.107.0.0] – 2026-10-21
 
 ### Geändert

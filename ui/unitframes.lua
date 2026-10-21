@@ -120,6 +120,8 @@ for _, u in ipairs(UNITS) do
     defaults[u .. "_portrait"] = s.portrait or "none"
     -- Das Ziel spiegelt den Spieler: Portraet rechts (wie in EllesmereUI).
     defaults[u .. "_portraitRight"] = (u == "target")
+    -- 6.108.0.0: Form - "auto" folgt dem Design (Klassisch = rund).
+    if u == "player" or u == "target" then defaults[u .. "_style"] = "auto" end
     -- Portraet IM Balken (6.20.0.0): wie deckend der Kopf ueber der Fuellung liegt.
     defaults[u .. "_barAlpha"] = 35
     -- Abstand der Kamera im Balken in Prozent (6.21.0.0, Beta-Test: "ein
@@ -692,8 +694,75 @@ function Frame:UpdateBarPortrait()
     end
 end
 
+-- RUNDE FORM (6.108.0.0, Wunsch mit Bild: "Spieler- und Zielrahmen sollen
+-- dieses Design auch waehlen koennen. Runder Spielerkopf"): rundes Bild
+-- der Einheit (Kreismaske) mit Ring in classicGold, halb ueber den Rand
+-- des Rahmens; darunter die Stufe in einer runden Plakette. Nach dem
+-- Verhalten der Rahmen des Spiels, eigene Flaechen - kein Bild aus dem
+-- Spiel ausser der Kreismaske (Interface\Common\CommonMaskCircle, wie
+-- die Ringe). Das Modell laesst sich nicht maskieren: immer das Bild.
+UF.CIRCLE = "Interface\\Common\\CommonMaskCircle"
+function UF.IsRound(u)
+    if u ~= "player" and u ~= "target" then return false end
+    local st = Opt(u .. "_style")
+    if st == "auto" or st == nil then return K.Get("general", "look") == "klassisch" end
+    return st == "round"
+end
+
+function Frame:Round()
+    if self._round then return self._round end
+    local GC = WeintCodex.GameColors
+    local r = CreateFrame("Frame", nil, self)
+    r:SetFrameLevel((self:GetFrameLevel() or 1) + 6)
+    local function Disc(layer, sub, col, a)
+        local t = r:CreateTexture(nil, layer, nil, sub)
+        t:SetTexture(UF.CIRCLE)
+        t:SetPoint("CENTER")
+        t:SetVertexColor(col[1], col[2], col[3], a or col[4] or 1)
+        return t
+    end
+    r.ring = Disc("BACKGROUND", 0, GC.classicGold, 1)
+    r.back = Disc("BACKGROUND", 1, { 0, 0, 0, 1 })
+    r.tex = r:CreateTexture(nil, "ARTWORK")
+    r.tex:SetPoint("CENTER")
+    if r.CreateMaskTexture then
+        local mask = r:CreateMaskTexture()
+        mask:SetTexture(UF.CIRCLE, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        mask:SetAllPoints(r.tex)
+        r.tex:AddMaskTexture(mask)
+    end
+    -- Stufe
+    local b = CreateFrame("Frame", nil, r)
+    b:SetSize(22, 22)
+    b:SetFrameLevel(r:GetFrameLevel() + 2)
+    b.ring = b:CreateTexture(nil, "BACKGROUND", nil, 0)
+    b.ring:SetTexture(UF.CIRCLE) b.ring:SetAllPoints(b)
+    b.ring:SetVertexColor(GC.classicGold[1], GC.classicGold[2], GC.classicGold[3], 1)
+    b.fill = b:CreateTexture(nil, "BACKGROUND", nil, 1)
+    b.fill:SetTexture(UF.CIRCLE) b.fill:SetPoint("CENTER") b.fill:SetSize(18, 18)
+    b.fill:SetVertexColor(0.05, 0.05, 0.06, 1)
+    b.text = K.NewText(b, 10)
+    b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
+    r.badge = b
+    r:Hide()
+    self._round = r
+    return r
+end
+
+function Frame:UpdateRound()
+    local r = self._round
+    if not (r and r:IsShown()) then return end
+    local u = self.unit
+    if not K.Bool(_G.UnitExists and _G.UnitExists(u), false) then return end
+    if _G.SetPortraitTexture then _G.SetPortraitTexture(r.tex, u) end
+    local text, cr, cg, cb = LevelParts(u)
+    r.badge.text:SetText(text)
+    r.badge.text:SetTextColor(cr, cg, cb)
+end
+
 function Frame:UpdatePortrait()
     local pf, u = self._portrait, self.unit
+    if self._round and self._round:IsShown() then self:UpdateRound() return end
     local kind = Opt(u .. "_portrait")
     self:UpdateBarPortrait()
     if kind == "none" or kind == "bar" or not K.Bool(_G.UnitExists and _G.UnitExists(u), false) then return end
@@ -744,6 +813,25 @@ function Frame:Layout()
     local right = Opt(u .. "_portraitRight")
     local kind = Opt(u .. "_portrait")
     if kind == "bar" and not self._barModel then kind = "none" end
+    -- 6.108.0.0: runde Form - das eckige Portraet weicht dem runden.
+    local round = UF.IsRound(u)
+    if round then
+        kind = "none"
+        local r = self:Round()
+        local D = math.floor(total * 1.5 + 10)
+        r:SetSize(D + 6, D + 6)
+        r.ring:SetSize(D + 6, D + 6)
+        r.back:SetSize(D, D)
+        r.tex:SetSize(D - 2, D - 2)
+        r:ClearAllPoints()
+        r:SetPoint("CENTER", self, right and "RIGHT" or "LEFT", right and D * 0.42 or -D * 0.42, 0)
+        r.badge:ClearAllPoints()
+        r.badge:SetPoint("CENTER", r, right and "BOTTOMRIGHT" or "BOTTOMLEFT", right and -4 or 4, 4)
+        r:Show()
+        self:UpdateRound()
+    elseif self._round then
+        self._round:Hide()
+    end
     if kind ~= "none" and kind ~= "bar" then
         inset = total + 1
         pf:ClearAllPoints()
@@ -895,6 +983,7 @@ end
 function Frame:Refresh()
     local u = self.unit
     if not K.Bool(_G.UnitExists and _G.UnitExists(u), false) and not self._unlockShown then return end
+    if self._round and self._round:IsShown() then self:UpdateRound() end
 
     local GZ = WeintCodex.UIGlanz
     local snap = GZ.Changed(self.health, u)
@@ -1822,7 +1911,16 @@ local function UnitPage(u)
         B:Section(LABELS[u])
         B:Row({ type = "toggle", label = "Rahmen anzeigen", key = u .. "_enabled", reload = true,
                 description = "Ersetzt den Blizzard-Rahmen. Wirkt nach dem Neuladen." },
-              { type = "dropdown", label = "Porträt", key = u .. "_portrait", disabled = off, items = PortraitItems(u) })
+              { type = "dropdown", label = "Porträt", key = u .. "_portrait", disabled = function() return off() or UF.IsRound(u) end,
+                items = PortraitItems(u) })
+        if u == "player" or u == "target" then
+            B:Row({ type = "dropdown", label = "Form", key = u .. "_style", disabled = off, items = {
+                        { value = "auto",  text = "Wie das Design" },
+                        { value = "flat",  text = "Flach" },
+                        { value = "round", text = "Klassisch – rundes Porträt" } },
+                    tooltip = "„Wie das Design“: rund, wenn unter Allgemein „Klassisch“ gewählt ist. Rund zeigt immer das Bild (ein Modell lässt sich nicht rund schneiden) und die Stufe am Porträt." },
+                  { type = "empty" })
+        end
         B:Row({ type = "slider", label = "Breite", key = u .. "_width", min = 60, max = 320, step = 1, format = px, disabled = off },
               { type = "slider", label = "Höhe", key = u .. "_height", min = 10, max = 80, step = 1, format = px, disabled = off })
         B:Row({ type = "toggle", label = "Kraftleiste", key = u .. "_power", disabled = off },

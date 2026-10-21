@@ -4262,6 +4262,28 @@ do
     Check(ok, "Lehrer: gewaehlter Zauber zeigt den naechsten Lehrer mit Karte und Pfeil" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.108.0.0: runde Form fuer Spieler und Ziel - folgt dem Design, je Rahmen umstellbar.
+do
+    local UF = WeintCodex.UIUnitFrames
+    local ok, err = pcall(function()
+        local f = UF.frames.player
+        assert(f, "kein Spielerrahmen gebaut")
+        assert(not UF.IsRound("player") and not UF.IsRound("focus"), "ab Werk rund")
+        K.Set("general", "look", "klassisch")
+        assert(UF.IsRound("player") and UF.IsRound("target") and not UF.IsRound("pet"), "Klassisch macht nicht rund")
+        f:Layout()
+        assert(f._round and f._round:IsShown() and not f._portrait:IsShown(), "rundes Portraet nicht gezeigt")
+        K.Set("unitframes", "player_style", "flat")
+        f:Layout()
+        assert(not f._round:IsShown(), "Flach bleibt rund")
+        K.Set("unitframes", "player_style", "auto")
+        K.Set("general", "look", "schwarz")
+        f:Layout()
+        assert(not f._round:IsShown(), "Schwarz bleibt rund")
+    end)
+    Check(ok, "Einheitenrahmen: runde Form nach Design und je Rahmen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.108.0.0",
+        date    = "21.10.2026",
+        notes   = {
+            "|cff7C6CFFSpieler- und Zielrahmen klassisch|r – rundes Porträt mit goldenem Ring und die Stufe als kleine Plakette. Kommt von selbst mit dem Design „Klassisch“; je Rahmen unter Einheitenrahmen → Form auch einzeln.",
+        },
+    },
+    {
         version = "6.107.0.0",
         date    = "21.10.2026",
         notes   = {
