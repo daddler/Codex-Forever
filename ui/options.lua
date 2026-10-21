@@ -80,6 +80,8 @@ K.Register({
                     highlight = "class", highlightColor = WeintCodex.VioletRGB(),
                     -- 6.10.0.0: Feineinstellungen jeder Seite zugeklappt (Builder:Advanced).
                     showAdvanced = false,
+                    -- 6.105.0.0: Erscheinungsbild (WeintCodex.LOOKS).
+                    look = "schwarz",
                     -- 6.29.10.0: Breitbild, ui/layout.lua (K.WideInset).
                     wideArea = "169",
                     -- 6.29.26.0: Skalierung des Spiels behalten (ui/setup.lua).
@@ -173,6 +175,13 @@ K.Register({
                   { type = "color", label = "Eigene Farbe", key = "highlightColor", reload = true,
                     disabled = function() return K.Get("general", "highlight") ~= "custom" end,
                     tooltip = "Gilt mit „Eigene Farbe“ nach dem Neuladen. Sehr dunkle Farben machen Text in dieser Farbe schwer lesbar." })
+            -- 6.105.0.0: Erscheinungsbild der Flaechen (core/ui.lua, WeintCodex.LOOKS).
+            B:Row({ type = "dropdown", label = "Erscheinungsbild", key = "look", reload = true, items = {
+                        { value = "schwarz",     text = "Schwarz (Standard)" },
+                        { value = "transparent", text = "Transparent – die Welt scheint durch" },
+                        { value = "klassisch",   text = "Klassisch – warm, mit goldenem Rand" } },
+                    tooltip = "Füllung und Rand aller Flächen der Oberfläche: Rahmen, Leisten, Schadensanzeige, Tooltips. Gilt nach dem Neuladen." },
+                  { type = "empty" })
             B:Section("Bildschirm",
                 "Skalierung: ab Werk bleibt die des Spiels. „Fest auf 1“ stellt alles auf jedem Bildschirm ins gleiche Verhältnis, wird auf 1440p und 4K aber deutlich größer. Breitbild: auf 21:9 oder 32:9 rücken Chat, Minikarte, Questliste und Schadensanzeige vom Rand in die Mitte.")
             B:Row({ type = "dropdown", label = "Skalierung", key = "uiScaleMode", items = {

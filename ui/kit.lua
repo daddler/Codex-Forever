@@ -389,6 +389,8 @@ end
 -- Option"): "custom" nimmt die Farbe aus highlightColor - weiter EIN
 -- Akzent, nur einer, den der Spieler waehlt.
 function K.ResetHighlight()
+    -- 6.105.0.0: Erscheinungsbild (Fuellung und Rand der Kacheln), vor dem Aufbau.
+    if WeintCodex.SetLook then WeintCodex.SetLook(K.Get("general", "look")) end
     local h = K.Get("general", "highlight")
     if h == "accent" then WeintCodex.SetVioletAccent()
     elseif h == "custom" then
@@ -1149,7 +1151,8 @@ function K.Kachel(frame, opts)
     o.light:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
     o.light:SetHeight(1)
     o.light:SetColorTexture(l[1], l[2], l[3], l[4])
-    o.border = K.Border(frame, 1, 0, 0, 0, 1, "BORDER")
+    local e = GC.kachelEdge or { 0, 0, 0, 1 }
+    o.border = K.Border(frame, 1, e[1], e[2], e[3], e[4], "BORDER")
     if opts.border == false then o.border:SetShown(false) end
     if (opts.shadow or 6) > 0 then
         o.shadow = K.Glow(frame, { spread = opts.shadow or 6, shadow = true })

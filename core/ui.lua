@@ -321,6 +321,7 @@ WeintCodex.GameColors = {
     -- eine Bedeutungsfarbe - Schatten schwarz, Licht weiss; das Leuchten
     -- des Ziels ist `targetRing`, also der Akzent.
     kachelFill    = {0.047, 0.047, 0.059, 0.88},  -- = bgDark, 88 % deckend
+    kachelEdge    = {0.000, 0.000, 0.000, 1.00},  -- Rand der Kachel (6.105.0.0, Erscheinungsbild)
     -- Questhilfe (6.55.0.0): Ziele einer Quest teilen eine Farbe, damit
     -- man sie auf der Karte auseinanderhaelt. Kennfarben wie Klassenfarben,
     -- keine Bedeutung (nicht gut/schlecht) - nie Akzent, nie Status.
@@ -455,6 +456,26 @@ local function Mix(a, b, k) return a + (b - a) * k end
 
 -- Den Akzent auf r, g, b setzen (0-1). Liefert, ob etwas gesetzt wurde.
 -- tones: fertige Stufen statt abgeleiteter (Violett: genau die alten Werte).
+-- ERSCHEINUNGSBILD (6.105.0.0, Wunsch: "eine Oberflaeche aussuchen -
+-- transparent, schwarz, vielleicht Blizzard-aehnlich"). Ein Bild ist nur
+-- Fuellung und Rand der Kachel (UIKit.Kachel) - keine neue Bedeutungsfarbe,
+-- kein Material des Spiels. "Klassisch" ist warmes Dunkel mit dem
+-- gedaempften Gold der Fenster (frameAccent) als Rand: an Blizzard
+-- angelehnt, nicht nachgebaut. Gilt ab dem Laden (SetLook vor dem Aufbau),
+-- ein Wechsel nach dem Neuladen.
+WeintCodex.LOOKS = {
+    schwarz     = { label = "Schwarz",     fill = {0.047, 0.047, 0.059, 0.88}, edge = {0.000, 0.000, 0.000, 1.00} },
+    transparent = { label = "Transparent", fill = {0.047, 0.047, 0.059, 0.45}, edge = {0.000, 0.000, 0.000, 0.55} },
+    klassisch   = { label = "Klassisch",   fill = {0.082, 0.066, 0.050, 0.92}, edge = {0.757, 0.643, 0.439, 0.85} },
+}
+WeintCodex.LOOK_ORDER = { "schwarz", "transparent", "klassisch" }
+function WeintCodex.SetLook(key)
+    local look = WeintCodex.LOOKS[key] or WeintCodex.LOOKS.schwarz
+    local GC = WeintCodex.GameColors
+    for i = 1, 4 do GC.kachelFill[i], GC.kachelEdge[i] = look.fill[i], look.edge[i] end
+    return look
+end
+
 function WeintCodex.SetAccent(r, g, b, tones)
     if type(r) ~= "number" or type(g) ~= "number" or type(b) ~= "number" then return false end
     local tone = tones or {

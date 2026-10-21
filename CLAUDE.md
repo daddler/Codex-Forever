@@ -221,7 +221,7 @@ internet; any further outward message needs the same explicit request.
   `ui/kit.lua` (6.0.0.3–6.8.1.0 it was `false`: the beta client did not
   persist SavedVariables); flipping it back to `false` makes the UI on for
   everyone again, and `load_test.lua` tests both states. The first login
-  shows a welcome wizard once per account (`ui/welcome.lua`; since 6.26.7.0 eight steps – every comfort function, grouped by theme like the comfort pages, all preselected with the UI:
+  shows a welcome wizard once per account (`ui/welcome.lua`; since 6.105.0.0 four steps – Willkommen, Aussehen (cards: without UI / `WeintCodex.LOOKS` Schwarz, Transparent, Klassisch, stored as `general.look`), Helfer („Empfohlen“ or „Selbst auswählen“, the latter through the theme steps of 6.26.7.0), Bereit; before that eight steps – every comfort function, grouped by theme like the comfort pages, all preselected with the UI:
   UI yes/no with own illustrations, then comfort choices either way;
   nothing changes before "Übernehmen"). **Profile rule
   (`ui/profile.lua`):** the UI gets its own Edit Mode layout "WeintCodex"

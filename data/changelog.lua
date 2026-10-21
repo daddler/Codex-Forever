@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.105.0.0",
+        date    = "21.10.2026",
+        notes   = {
+            "|cff7C6CFFWillkommen, einfacher|r – vier Schritte statt acht: Willkommen, Aussehen, Helfer, fertig. Bei den Helfern reicht ein Klick auf „Empfohlen“; wer mag, wählt selbst.",
+            "|cff7C6CFFErscheinungsbild wählbar|r – Schwarz, Transparent (die Welt scheint durch) oder Klassisch (warm, mit goldenem Rand). Im Willkommen mit Vorschau, später unter Einstellungen → Allgemein.",
+        },
+    },
+    {
         version = "6.104.0.0",
         date    = "21.10.2026",
         notes   = {

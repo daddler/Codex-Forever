@@ -2608,15 +2608,25 @@ do
         WL.Button("later"):Click()
         assert(not WL.IsShown() and not sd.ui.asked and not K.UIEnabled(), "Spaeter hat etwas entschieden")
 
-        -- WEG OHNE OBERFLAECHE: danach trotzdem die Komfortfrage.
+        -- WEG OHNE OBERFLAECHE, SELBST AUSGEWAEHLT (6.105.0.0: vier Karten
+        -- zum Aussehen, dann "Empfohlen" oder "Selbst auswaehlen").
         WL.Ask()
         assert(WL.logo and WL.logo:GetWidth() == WL.LOGO, "Assistent ohne Logo")
+        assert(#WL.Path() == 4, "kurzer Weg nicht vier Schritte")
         WL.Button("next"):Click()
-        assert(WL.Step() == "ui" and WL.BodyText():find("Profil bleibt deins", 1, true), "Schritt Oberflaeche ohne Profilversprechen")
-        WL.ShowShot("plates")
-        assert(WL.ShownShot() == "plates", "Galerie wechselt das Bild nicht")
-        WL.Button("no"):Click()
-        assert(WL.Step() == "anzeigen", "nach Nein keine Komfortfrage")
+        assert(WL.Step() == "ui" and WL.Card("look:none") and WL.Card("look:schwarz") and WL.Card("look:transparent")
+            and WL.Card("look:klassisch"), "Aussehen ohne vier Karten")
+        assert(WL.uiHint and WL.uiHint:GetText():find("Layout bleibt gemerkt", 1, true), "Aussehen ohne Profilversprechen")
+        WL.Button("next"):Click()
+        assert(WL.Step() == "ui", "ohne Wahl weiter")
+        WL.Card("look:klassisch"):Click()
+        assert(WL.preview:IsShown(), "keine Vorschau des Erscheinungsbilds")
+        WL.Card("look:none"):Click()
+        assert(not WL.preview:IsShown() and WL.choice.ui == false, "Wie bisher waehlt die Oberflaeche")
+        WL.Button("next"):Click()
+        assert(WL.Step() == "komfort" and WL.Card("help:recommended") and WL.Card("help:custom"), "Helfer ohne zwei Karten")
+        WL.Card("help:custom"):Click()
+        assert(WL.Step() == "anzeigen" and #WL.Path() == #WL.STEPS, "Selbst auswaehlen fuehrt nicht durch die Themen")
         local c = WL.choice
         assert(not c.shows.damagemeter and not c.shows.reminders and c.shows.questarrow,
             "ohne Oberflaeche Anzeigen vorgewaehlt, die niemand gewaehlt hat")
@@ -2624,48 +2634,52 @@ do
         assert(c.shows.damagemeter and WL.ShownShot() == "damage", "Schadensanzeige laesst sich nicht waehlen")
         assert(not K.WantsActive("damagemeter") and not sd.ui.asked, "vor Uebernehmen schon geschaltet")
         WL.Button("next"):Click()
-        -- 6.26.7.0: je Thema ein Schritt, alle Komfortfunktionen.
         assert(WL.Step() == "alltag", "nach den Anzeigen kein Schritt Alltag: " .. WL.Step())
-        assert(not c.helpers.autoRepair and not c.helpers.fireAlarm, "ohne Oberflaeche Helfer vorgewaehlt")
-        WL.Row("help", "autoRepair"):Click()
-        assert(c.helpers.autoRepair and not K.Get("comfort", "autoRepair"), "Helfer vor Uebernehmen geschaltet")
+        assert(c.helpers.autoRepair and c.helpers.fireAlarm and not c.helpers.msgOn and c.helpers.thanks, "Empfohlen nicht vorgewaehlt (Danke bleibt an)")
+        assert(not K.Get("comfort", "autoRepair"), "Helfer vor Uebernehmen geschaltet")
         WL.Button("next"):Click()
         assert(WL.Step() == "kampf" and WL.BodyText():find("Klickzauber", 1, true), "Kampf ohne Hinweis auf Klickzauber")
         assert(WL.Row("help", "fireAlarm") and WL.Row("help", "markHover"), "Raus da oder Markieren fehlen")
+        WL.Row("help", "fireAlarm"):Click()
         WL.Button("next"):Click()
         assert(WL.Step() == "welt" and WL.Row("help", "mapReveal") and WL.Row("help", "sparkleLoot") and WL.Row("help", "mapMarks"), "Welt und Karte fehlt")
-        WL.Row("help", "mapMarks"):Click()
         WL.Button("next"):Click()
         assert(WL.Step() == "handel" and WL.Row("help", "msgOn") and WL.Row("help", "dlgOn"), "Handel und Gespraeche fehlt")
-        -- Zurueckblaettern bis zur Oberflaeche und wieder Nein: Haken bleiben.
+        -- Zurueck bis zum Aussehen und wieder "Wie bisher": Haken bleiben.
         for _ = 1, 4 do WL.Button("back"):Click() end
         assert(WL.Step() == "anzeigen", "Zurueck landet nicht bei den Anzeigen: " .. WL.Step())
         WL.Button("back"):Click()
-        WL.Button("no"):Click()
-        assert(c.shows.damagemeter and c.helpers.autoRepair, "Zurueckblaettern verliert die Wahl")
+        assert(WL.Step() == "komfort", "Zurueck landet nicht bei den Helfern: " .. WL.Step())
+        WL.Button("back"):Click()
+        WL.Card("look:none"):Click()
+        WL.Button("next"):Click()
+        WL.Card("help:custom"):Click()
+        assert(c.shows.damagemeter and not c.helpers.fireAlarm, "Zurueckblaettern verliert die Wahl")
         for _ = 1, 5 do WL.Button("next"):Click() end
         assert(WL.Step() == "bereit", "keine Zusammenfassung: " .. WL.Step())
         local txt = WL.BodyText()
         assert(txt:find("Oberfläche: nein", 1, true) and txt:find("Schadensanzeige", 1, true)
-            and txt:find("Automatisch reparieren", 1, true) and txt:find("/wcui", 1, true),
+            and txt:find("Alltag: alles", 1, true) and txt:find("/wcui", 1, true),
             "Zusammenfassung nennt die Wahl nicht: " .. txt)
         WL.Button("apply"):Click()
         assert(WL.Step() == "fertig" and sd.ui.asked == true and not K.UIEnabled(), "Uebernehmen ohne Oberflaeche falsch")
         assert(K.WantsActive("damagemeter") and WeintCodex.UIKit.Profile().modules.damagemeter.enabled == true, "Schadensanzeige nicht gewaehlt")
         assert(not K.WantsActive("reminders") and K.Get("comfort", "autoRepair") == true, "Helfer oder Erinnerungen falsch")
         assert(K.Get("comfort", "mapSpirit") and K.Get("comfort", "mapTravel") and not K.Get("comfort", "fireAlarm"),
-            "Sammelschalter Karte nicht auf alle Teile, oder Ungewaehltes geschaltet")
-        for _, k in ipairs({ "mapSpirit", "mapCrossings", "mapFlight", "mapTravel" }) do K.Set("comfort", k, false) end
+            "Sammelschalter Karte nicht auf alle Teile, oder Abgewaehltes geschaltet")
         assert(WL.Button("reload") and WL.Button("close"), "Anzeige gewaehlt, aber kein Neuladen angeboten")
         WL.Button("close"):Click()
         assert(not WL.IsShown(), "Spaeter schliesst nicht")
         WL.MaybeAsk()
         assert(not WL.IsShown(), "nach der Antwort wird erneut gefragt")
-        K.Set("comfort", "autoRepair", false)
+        for _, h in ipairs(WL.HELPERS) do
+            local m = K.Module(h.module)
+            for _, k in ipairs(h.keys or { h.key }) do K.Set(h.module, k, m and m.defaults[k] or false) end
+        end
         WeintCodex.UIKit.Profile().modules.damagemeter.enabled = nil
 
-        -- WEG MIT OBERFLAECHE: das Komplettpaket ist vorgewaehlt, und das
-        -- Layout entsteht gleich beim Uebernehmen (ein Neuladen statt zwei).
+        -- WEG MIT OBERFLAECHE, EMPFOHLEN: Transparent, ein Klick bis zur
+        -- Zusammenfassung; das Layout entsteht beim Uebernehmen.
         local ES = WeintCodex.UISetup
         local oldHas, oldApply = ES.HasLayout, ES.Apply
         local setupRan = 0
@@ -2674,27 +2688,32 @@ do
         sd.ui.asked = nil
         WL.Ask()
         WL.Button("next"):Click()
-        WL.Button("yes"):Click()
+        WL.Card("look:transparent"):Click()
+        WL.Button("next"):Click()
+        WL.Card("help:recommended"):Click()
+        assert(WL.Step() == "bereit", "Empfohlen fuehrt nicht zur Zusammenfassung: " .. WL.Step())
         assert(c.ui and c.shows.damagemeter and c.shows.reminders, "mit Oberflaeche kein Komplettpaket")
         for _, h in ipairs(WL.HELPERS) do
-            assert(c.helpers[h.key], "mit Oberflaeche nicht vorgewaehlt: " .. h.label)
+            assert((c.helpers[h.key] and true or false) == (h.optional and WL.HelperGet(h) or not h.optional), "Empfohlen falsch: " .. h.label)
         end
         assert(setupRan == 0 and not K.UIEnabled(), "vor Uebernehmen eingerichtet")
-        for _ = 1, 5 do WL.Button("next"):Click() end
-        assert(WL.Step() == "bereit", "mit Oberflaeche keine Zusammenfassung: " .. WL.Step())
-        assert(WL.BodyText():find("Alltag: alles", 1, true), "Zusammenfassung sagt nicht 'alles': " .. WL.BodyText())
+        assert(WL.BodyText():find("Alltag: alles", 1, true) and WL.BodyText():find("Transparent", 1, true),
+            "Zusammenfassung: " .. WL.BodyText())
+        WL.Button("back"):Click()
+        assert(WL.Step() == "komfort", "Zurueck von der Zusammenfassung nicht zu den Helfern")
+        WL.Card("help:recommended"):Click()
         WL.Button("apply"):Click()
-        assert(K.Get("comfort", "fireAlarm") and K.Get("comfort", "dlgOn") and K.Get("comfort", "mapFlight"),
-            "komplettes Programm nicht geschaltet")
+        assert(K.Get("comfort", "fireAlarm") and K.Get("comfort", "mapFlight") and not K.Get("comfort", "dlgOn"),
+            "Empfohlen nicht geschaltet")
+        assert(K.Get("general", "look") == "transparent", "Erscheinungsbild nicht gespeichert")
         ES.HasLayout, ES.Apply = oldHas, oldApply
         assert(K.UIEnabled() and setupRan == 1, "Oberflaeche nicht an oder Layout nicht eingerichtet")
         assert(WL.BodyText():find("Layout „WeintCodex“", 1, true), "Bericht nennt das Layout nicht")
-        -- Das Paket ist der Standard, keine ausdrueckliche Wahl: es folgt
-        -- der Oberflaeche, wenn sie spaeter ausgeht.
         assert(K.WantsActive("reminders") and (WeintCodex.UIKit.Profile().modules.reminders or {}).enabled == nil,
             "Komplettpaket als feste Wahl gespeichert")
         assert(WL.Button("reload"), "mit Oberflaeche kein Neuladen angeboten")
         WL.Button("close"):Click()
+        K.Set("general", "look", "schwarz")
 
         -- Zurueck auf den Ausgangszustand fuer die Pruefungen darunter.
         for _, h in ipairs(WL.HELPERS) do
@@ -2958,8 +2977,9 @@ do
     local ok, err = pcall(function()
         WL.Ask()
         WL.Button("next"):Click()
-        WL.Button("yes"):Click()
-        for _ = 1, #WL.STEPS - 3 do WL.Button("next"):Click() end
+        WL.Card("look:schwarz"):Click()
+        WL.Button("next"):Click()
+        WL.Card("help:recommended"):Click()
         WL.Button("apply"):Click()
         local btn = WL.Button("reload")
         assert(btn and btn._reloadOverlay, "Neuladeknopf ohne Makroknopf")
@@ -18395,8 +18415,9 @@ do
         -- Nach Uebernehmen ist dieser gemerkt.
         WL.Ask()
         WL.Button("next"):Click()
-        WL.Button("no"):Click()
-        for _ = 1, #WL.STEPS - 3 do WL.Button("next"):Click() end
+        WL.Card("look:none"):Click()
+        WL.Button("next"):Click()
+        WL.Card("help:recommended"):Click()
         WL.Button("apply"):Click()
         assert(ui.welcomed[key] == true and ui.welcomed["Anderer-Realm"] and WL.Asked(), "Antwort nicht je Charakter gemerkt")
         if WL.IsShown() then WL.Close() end

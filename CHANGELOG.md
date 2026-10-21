@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.105.0.0] – 2026-10-21
+
+### Geändert
+- Willkommens-Assistent: kurzer Weg mit vier Schritten (`WL.SHORT`: start, ui, komfort, bereit), Karten statt Knöpfe (`WL.Card`, `WL.LOOK_CARDS`), Vorschau des Erscheinungsbilds (`WL.ShowLook`); „Empfohlen“ (`WL.Recommend`: alle Helfer an, `optional` – Messenger, Gespräche, Danke – bleiben wie gespeichert) oder „Selbst auswählen“ (`choice.custom`, die Themen-Schritte). Texte gekürzt. Anlass: Rückmeldung „überwältigend“.
+
+### Hinzugefügt
+- Erscheinungsbild (`WeintCodex.LOOKS`, `WeintCodex.SetLook` in core/ui.lua; `general.look`, Standard „schwarz“ = bisher): Füllung und Rand der Kachel (`GameColors.kachelEdge` neu, `UIKit.Kachel` nimmt ihn). Transparent 45 %, Klassisch warmes Dunkel mit `frameAccent`-Rand. Angewandt vor dem Aufbau (`K.ResetHighlight`), Wechsel nach dem Neuladen. Einstellung unter Allgemein.
+
 ## [6.104.0.0] – 2026-10-21
 
 ### Hinzugefügt

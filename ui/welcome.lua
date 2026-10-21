@@ -77,13 +77,21 @@ WL.GALLERY = { "overview", "plates", "group", "windows" }
 -- Seiten unter Komfort (WL.GROUPS, ui/comfort.lua COMFORT_ORDER). Alles
 -- dort geht auch ohne Oberflaeche; mit Oberflaeche ist alles vorgewaehlt
 -- (das komplette Programm), ohne steht es, wie es ist.
-WL.STEPS = { "start", "ui", "anzeigen", "alltag", "kampf", "welt", "handel", "bereit" }
+-- 6.105.0.0 (Beta-Test: "vereinfachen, besser zu verstehen; eine
+-- Oberflaeche aussuchen - transparent, schwarz, Blizzard-aehnlich"): der
+-- kurze Weg hat VIER Schritte - Willkommen, Aussehen (vier Karten mit
+-- Vorschau), Helfer ("Empfohlen" oder "Selbst auswaehlen"), Bereit. Nur
+-- wer selbst auswaehlt, geht durch die Themen (anzeigen ... handel).
+WL.STEPS = { "start", "ui", "komfort", "anzeigen", "alltag", "kampf", "welt", "handel", "bereit" }
+WL.SHORT = { "start", "ui", "komfort", "bereit" }
+-- Der Weg, wie er gerade gilt.
+function WL.Path() return WL.choice and WL.choice.custom and WL.STEPS or WL.SHORT end
 
 WL.GROUPS = {
-    { key = "alltag", eyebrow = "Komfort · Alltag", title = "Was dir unterwegs Klicks spart", shot = "helpers" },
-    { key = "kampf",  eyebrow = "Komfort · Kampf und Gruppe", title = "Im Kampf und in der Gruppe", shot = "group" },
-    { key = "welt",   eyebrow = "Komfort · Welt und Karte", title = "Auf der Karte und unterwegs", shot = "arrow" },
-    { key = "handel", eyebrow = "Komfort · Handel und Gespräche", title = "Handeln und miteinander reden", shot = "helpers" },
+    { key = "alltag", eyebrow = "Helfer · Alltag", title = "Was dir unterwegs Klicks spart", shot = "helpers" },
+    { key = "kampf",  eyebrow = "Helfer · Kampf und Gruppe", title = "Im Kampf und in der Gruppe", shot = "group" },
+    { key = "welt",   eyebrow = "Helfer · Welt und Karte", title = "Auf der Karte und unterwegs", shot = "arrow" },
+    { key = "handel", eyebrow = "Helfer · Handel und Gespräche", title = "Handeln und miteinander reden", shot = "helpers" },
 }
 
 -- Die Anzeigen (Module) und Helfer (Einstellungen) zum Waehlen.
@@ -142,12 +150,13 @@ WL.HELPERS = {
     -- Handel und Gespraeche
     { group = "handel", module = "comfort", key = "ahPrices", label = "Auktionspreise",
       text = "Merkt sich Preise im Auktionshaus und zeigt sie im Tooltip – und teilt sie mit der Gilde (abschaltbar)." },
-    { group = "handel", module = "comfort", key = "msgOn", label = "Flüstern als Messenger",
+    -- `optional`: aendert Gewohntes spuerbar - nicht in "Empfohlen".
+    { group = "handel", module = "comfort", key = "msgOn", label = "Flüstern als Messenger", optional = true,
       text = "Jedes Gespräch in einem eigenen Fenster." },
-    { group = "handel", module = "comfort", key = "dlgOn", label = "Gespräche im Codex-Stil",
+    { group = "handel", module = "comfort", key = "dlgOn", label = "Gespräche im Codex-Stil", optional = true,
       text = "Questgeber und Händler in einem ruhigen Fenster, mit Kamera." },
     -- 6.41.8.0: flüstert Fremde an - darum hier gefragt, nicht still an.
-    { group = "handel", module = "comfort", key = "thanks", label = "Danke für Buffs",
+    { group = "handel", module = "comfort", key = "thanks", label = "Danke für Buffs", optional = true,
       text = "Fremde, die dich draußen buffen, bekommen ein kurzes Flüstern." },
 }
 
@@ -230,7 +239,7 @@ end
 -- Die Wahl (erst "Uebernehmen" schreibt sie)
 --------------------------------------------------
 
-local choice = { ui = nil, shows = {}, helpers = {}, picked = nil }
+local choice = { ui = nil, shows = {}, helpers = {}, picked = nil, look = nil, custom = false }
 WL.choice = choice
 
 local function PlayerClass()
@@ -267,34 +276,57 @@ end
 function WL.Decide(ui)
     ui = ui and true or false
     if choice.picked ~= ui then
-        for _, s in ipairs(WL.SHOWS) do choice.shows[s.key] = ShowDefault(s.key, ui) end
-        for _, h in ipairs(WL.HELPERS) do
-            choice.helpers[h.key] = ui or WL.HelperGet(h)
-        end
+        WL.Recommend(ui)
         choice.picked = ui
     end
     choice.ui = ui
 end
 
+-- "Empfohlen" (6.105.0.0): die Anzeigen wie das Paket (mit Oberflaeche
+-- alle), jeder Helfer an - die, die Gewohntes spuerbar aendern
+-- (`optional`: Messenger, Gespraeche, Danke), bleiben, wie sie sind. Gleich mit und ohne
+-- Oberflaeche; wer anders will, waehlt selbst.
+function WL.Recommend(ui)
+    for _, s in ipairs(WL.SHOWS) do choice.shows[s.key] = ShowDefault(s.key, ui) end
+    -- Die `optional`en bleiben, wie sie sind (Danke ist ab Werk an).
+    for _, h in ipairs(WL.HELPERS) do
+        if h.optional then choice.helpers[h.key] = WL.HelperGet(h) else choice.helpers[h.key] = true end
+    end
+end
+
+-- Aussehen waehlen: "none" = ohne Oberflaeche, sonst ein Bild aus WeintCodex.LOOKS.
+function WL.PickLook(key)
+    if key == "none" then
+        WL.Decide(false)
+        choice.look = "none"
+    elseif WeintCodex.LOOKS and WeintCodex.LOOKS[key] then
+        WL.Decide(true)
+        choice.look = key
+    end
+end
+
 local function ResetChoice()
-    choice.ui, choice.picked = nil, nil
+    choice.ui, choice.picked, choice.look, choice.custom = nil, nil, nil, false
     wipe(choice.shows)
     wipe(choice.helpers)
     for _, h in ipairs(WL.HELPERS) do
         choice.helpers[h.key] = WL.HelperGet(h)
     end
     -- Wer schon geantwortet hat (/wcui willkommen), sieht seinen Stand.
-    if Asked() and K.OPT_IN then WL.Decide(K.UIEnabled()) end
+    if Asked() and K.OPT_IN then
+        WL.Decide(K.UIEnabled())
+        choice.look = K.UIEnabled() and (K.Get("general", "look") or "schwarz") or "none"
+    end
 end
 
 -- Die Wahl in Worten (Schritt 5 und Prueflauf).
 function WL.Summary()
     local lines = {}
     if choice.ui then
-        lines[#lines + 1] = "•  Oberfläche: ja (dieser Charakter) – mit eigenem Layout „WeintCodex“. Dein Layout, deine Chatreiter"
-            .. " und Einstellungen bleiben und kommen beim Ausschalten zurück."
+        local look = WeintCodex.LOOKS and WeintCodex.LOOKS[choice.look or "schwarz"]
+        lines[#lines + 1] = "•  Oberfläche: ja, " .. (look and look.label or "Schwarz") .. " – dein bisheriges Layout bleibt gemerkt."
     else
-        lines[#lines + 1] = "•  Oberfläche: nein (dieser Charakter) – das Spiel zeigt seine Rahmen wie bisher."
+        lines[#lines + 1] = "•  Oberfläche: nein – das Spiel zeigt seine Rahmen wie bisher."
     end
     local on = {}
     for _, s in ipairs(WL.SHOWS) do if choice.shows[s.key] then on[#on + 1] = s.label end end
@@ -307,7 +339,7 @@ function WL.Summary()
                 if choice.helpers[h.key] then help[#help + 1] = h.label end
             end
         end
-        local name = g.eyebrow:gsub("^Komfort · ", "")
+        local name = g.eyebrow:gsub("^Helfer · ", "")
         lines[#lines + 1] = "•  " .. name .. ": " .. (#help == 0 and "nichts"
             or #help == all and "alles" or table.concat(help, ", "))
     end
@@ -321,6 +353,10 @@ function WL.Apply()
     local ui = choice.ui and true or false
     -- Zuerst der Hauptschalter: davon haengt ab, was "Standard" ist.
     K.SetUIEnabled(ui)
+    if ui and choice.look and choice.look ~= "none" and K.Get("general", "look") ~= choice.look then
+        K.Set("general", "look", choice.look)
+        K.MarkReload()
+    end
     for _, s in ipairs(WL.SHOWS) do
         local want = choice.shows[s.key] and true or false
         if K.ModuleEnabled(s.key) ~= want then K.SetModuleEnabled(s.key, want) end
@@ -503,6 +539,38 @@ local function Build()
         thumbs[i] = t
     end
 
+    -- Vorschau des Erscheinungsbilds (6.105.0.0): eine Beispielflaeche
+    -- ueber dem Bild, gefaerbt wie die gewaehlte Kachel.
+    local pv = CreateFrame("Frame", nil, frame)
+    pv:SetSize(200, 74)
+    pv:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 22, 22)
+    pv.bg = pv:CreateTexture(nil, "BACKGROUND")
+    pv.bg:SetAllPoints(pv)
+    pv.edge = K.Border(pv, 1, 0, 0, 0, 1)
+    pv.name = K.NewText(pv)
+    pv.name:SetFont(F.sansSemi, 12, "")
+    pv.name:SetTextColor(unpack(C.textBright))
+    pv.name:SetPoint("TOPLEFT", pv, "TOPLEFT", 10, -9)
+    pv.name:SetText("Beispiel")
+    local function Bar(y, col, w)
+        local b = pv:CreateTexture(nil, "ARTWORK")
+        b:SetHeight(12)
+        b:SetPoint("TOPLEFT", pv, "TOPLEFT", 10, y)
+        b:SetWidth(w)
+        b:SetColorTexture(col[1], col[2], col[3], 0.9)
+        return b
+    end
+    Bar(-30, C.accent, 170)
+    Bar(-48, C.info or C.accent, 120)
+    pv:Hide()
+    WL.preview = pv
+
+    -- Karten zum Waehlen (Aussehen, Helfer).
+    WL.cardsHost = CreateFrame("Frame", nil, win)
+    WL.cardsHost:SetPoint("TOPLEFT", win, "TOPLEFT", WL.PAD, -WL.BODY_TOP)
+    WL.cardsHost:SetSize(WL.COL_W, WL.H - WL.BODY_TOP - WL.FOOT_H)
+    WL.cardsHost:Hide()
+
     rowsHost = CreateFrame("Frame", nil, win)
     rowsHost:SetPoint("TOPLEFT", win, "TOPLEFT", WL.PAD, -WL.BODY_TOP)
     rowsHost:SetSize(WL.COL_W, WL.H - WL.BODY_TOP - WL.FOOT_H)
@@ -593,11 +661,21 @@ function WL.Row(kind, key) return rows[kind .. ":" .. key] end
 
 local Go
 
-local function Head(n, eb, t)
-    eyebrow:SetText(WeintCodex.Spaced(WeintCodex.Upper(eb .. " · Schritt " .. n .. " von " .. #WL.STEPS)))
+local function PathIndex(key)
+    for i, k in ipairs(WL.Path()) do if k == key then return i end end
+    return 1
+end
+
+local function Head(key, eb, t)
+    local path = WL.Path()
+    local n = PathIndex(key)
+    eyebrow:SetText(WeintCodex.Spaced(WeintCodex.Upper(eb .. " · Schritt " .. n .. " von " .. #path)))
     title:SetText(t)
     local hi = K.Highlight()
     for i, d in ipairs(dots) do
+        d:ClearAllPoints()
+        d:SetPoint("TOPRIGHT", win, "TOPRIGHT", -WL.PAD - (#path - i) * 26 - 30, -30)
+        d:SetShown(i <= #path)
         d:SetWidth(i == n and 18 or 8)
         if i <= n then d:SetColorTexture(hi[1], hi[2], hi[3], i == n and 1 or 0.45)
         else d:SetColorTexture(C.surface3[1], C.surface3[2], C.surface3[3], 1) end
@@ -608,66 +686,196 @@ local function ShowGallery(on)
     for _, t in ipairs(thumbs) do t:SetShown(on) end
 end
 
+-- KARTEN (6.105.0.0): eine grosse Flaeche je Antwort - Titel, ein Satz,
+-- gewaehlt mit Rand im Akzent. Einmal gebaut.
+WL.CARD_H, WL.CARD_GAP = 72, 8
+local cards = {}
+local function Card(id, head, text, y, onClick)
+    local c = cards[id]
+    if not c then
+        c = CreateFrame("Button", nil, WL.cardsHost)
+        c:SetSize(WL.COL_W, WL.CARD_H)
+        c.bg = c:CreateTexture(nil, "BACKGROUND")
+        c.bg:SetAllPoints(c)
+        c.bg:SetColorTexture(unpack(C.surface1))
+        local hl = c:CreateTexture(nil, "HIGHLIGHT")
+        hl:SetAllPoints(c)
+        hl:SetColorTexture(1, 1, 1, 0.05)
+        c.edge = K.Border(c, 1, C.border[1], C.border[2], C.border[3], 1)
+        c.head = K.NewText(c)
+        c.head:SetFont(F.sansSemi, 14, "")
+        c.head:SetTextColor(unpack(C.textBright))
+        c.head:SetPoint("TOPLEFT", c, "TOPLEFT", 14, -12)
+        c.text = K.NewText(c)
+        c.text:SetFont(F.sans, 11, "")
+        c.text:SetTextColor(unpack(C.textDim))
+        c.text:SetPoint("TOPLEFT", c.head, "BOTTOMLEFT", 0, -6)
+        c.text:SetWidth(WL.COL_W - 28)
+        c.text:SetJustifyH("LEFT")
+        c.id = id
+        c:SetScript("OnClick", function(self) if self._onClick then self._onClick() end end)
+        cards[id] = c
+    end
+    c.head:SetText(head)
+    c.text:SetText(text)
+    c._onClick = onClick
+    c:ClearAllPoints()
+    c:SetPoint("TOPLEFT", WL.cardsHost, "TOPLEFT", 0, -y)
+    c:Show()
+    return c
+end
+function WL.Card(id) local c = cards[id] return c and c:IsShown() and c or nil end
+local function HideCards() for _, c in pairs(cards) do c:Hide() end end
+local function MarkCard(id)
+    local hi = K.Highlight()
+    for cid, c in pairs(cards) do
+        if cid == id then c.edge:SetColor(hi[1], hi[2], hi[3], 1)
+        else c.edge:SetColor(C.border[1], C.border[2], C.border[3], 1) end
+    end
+end
+
 -- Die Texte der Schritte (fuer den Aufbau UND fuer die Platzpruefung im
 -- Prueflauf - beide lesen dieselbe Quelle).
 function WL.Text(key)
     if key == "start" then
-        return "WeintCodex ist dein Begleiter für Forever: Dungeons und Schlachtzüge mit dem, was deine Rolle"
-            .. " wissen muss, Hilfe beim Leveln, Lehrer, Gruppencheck und die Brücke zu Discord.\n\n"
-            .. "Dazu bringt es zwei Pakete mit, die du jetzt in Ruhe wählst:\n"
-            .. "•  die WeintCodex-Oberfläche – ein eigenes, ruhiges Interface,\n"
-            .. "•  Komfort – Helfer, die es auch ohne die Oberfläche gibt.\n\n"
-            .. "Nichts geschieht, bevor du am Ende „Übernehmen“ klickst. Alles lässt sich später mit /wcui"
-            .. " ändern, und diesen Assistenten zeigt /wcui willkommen wieder."
+        return "WeintCodex hilft dir beim Leveln, in Dungeons und Schlachtzügen – und kann dein Spiel"
+            .. " schöner und bequemer machen.\n\n"
+            .. "Du entscheidest jetzt zwei Dinge:\n"
+            .. "1.  Wie dein Spiel aussehen soll.\n"
+            .. "2.  Welche Helfer du möchtest.\n\n"
+            .. "Nichts ändert sich, bevor du am Ende „Übernehmen“ klickst. Alles lässt sich später"
+            .. " in den Einstellungen (/wcui) ändern."
     elseif key == "ui" then
-        return "•  Plaketten, Rahmen, Leisten, Karte, Chat und Taschen in einem ruhigen Stil.\n"
-            .. "•  Ziel und Gefahr springen ins Auge: Schadensspur, Zielleuchten, Zauberbalken.\n"
-            .. "•  Gruppenrahmen mit HoTs, Schilden und bannbaren Debuffs – auch im Kampf.\n"
-            .. "•  Außerhalb des Kampfes tritt alles zurück.\n"
-            .. "•  Die Fenster des Spiels ohne Holz und Pergament.\n"
-            .. "•  Dazu das Komplettpaket: Schadensanzeige und Erinnerungen sind gleich an.\n\n"
-            .. "Dein Profil bleibt deins: Die Oberfläche bekommt im Bearbeitungsmodus ein eigenes Layout."
-            .. " Dein jetziges, deine Chatreiter und deine Einstellungen werden nicht überschrieben –"
-            .. " ausschalten bringt alles zurück. Die Wahl gilt nur für diesen Charakter."
+        return "Klick eine Karte an – rechts siehst du, wie es aussieht. Dein jetziges Layout bleibt gemerkt"
+            .. " und kommt zurück, wenn du die Oberfläche wieder ausschaltest."
+    elseif key == "komfort" then
+        return "Kleine Helfer: reparieren, Schrott verkaufen, Questpfeil, Erinnerungen, Warnton und mehr."
     elseif key == "kampf" then
-        return "Klickzauber und Makros richtest du später unter /wcui → Komfort ein."
+        return "Klickzauber und Makros richtest du später unter /wcui → Kampf & Gruppe ein."
     end
     return ""
 end
 
+WL.LOOK_CARDS = {
+    { key = "none",        head = "Wie bisher",  text = "Die Rahmen des Spiels bleiben. Nur die Helfer kommen dazu." },
+    { key = "schwarz",     head = "Schwarz",     text = "Ruhig und klar lesbar – die WeintCodex-Oberfläche." },
+    { key = "transparent", head = "Transparent", text = "Leichter: die Spielwelt scheint durch die Flächen." },
+    { key = "klassisch",   head = "Klassisch",   text = "Warm mit goldenem Rand – an das Spiel angelehnt." },
+}
+
+-- Vorschau rechts: Beispielflaeche in Fuellung und Rand des Bilds.
+function WL.ShowLook(key)
+    local pv = WL.preview
+    if not pv then return end
+    local look = key and key ~= "none" and WeintCodex.LOOKS and WeintCodex.LOOKS[key]
+    if not look then
+        pv:Hide()
+        WL.ShowShot("windows")
+        caption:SetText(key == "none" and "Wie bisher: das Spiel zeigt seine eigenen Rahmen." or "Wähle links, wie es aussehen soll.")
+        return
+    end
+    WL.ShowShot("overview")
+    pv.bg:SetColorTexture(look.fill[1], look.fill[2], look.fill[3], look.fill[4])
+    pv.edge:SetColor(look.edge[1], look.edge[2], look.edge[3], look.edge[4])
+    pv:Show()
+    caption:SetText(look.label .. ": so sehen Rahmen, Leisten und Fenster aus.")
+end
+
 local function StepStart()
-    Head(1, "Willkommen", "Schön, dass du da bist.")
+    Head("start", "Willkommen", "Schön, dass du da bist.")
     body:SetText(WL.Text("start"))
     body:Show()
     rowsHost:Hide()
+    HideCards()
     ShowGallery(false)
+    if WL.preview then WL.preview:Hide() end
     WL.ShowShot("overview")
     SetButtons({ { key = "later", text = "Später", onClick = function() WL.Later() end } },
         { { key = "next", text = "Los geht’s", kind = "primary", onClick = function() Go("ui") end } })
 end
 
 local function StepUI()
-    Head(2, "Die Oberfläche", "Ein Interface aus einem Guss")
-    body:SetText(WL.Text("ui"))
-    body:Show()
+    Head("ui", "Aussehen", "Wie soll dein Spiel aussehen?")
+    body:Hide()
     rowsHost:Hide()
-    ShowGallery(true)
-    WL.ShowShot("overview")
+    ShowGallery(false)
+    HideCards()
+    WL.cardsHost:Show()
+    local y = 0
+    for _, lc in ipairs(WL.LOOK_CARDS) do
+        Card("look:" .. lc.key, lc.head, lc.text, y, function()
+            WL.PickLook(lc.key)
+            MarkCard("look:" .. lc.key)
+            WL.ShowLook(lc.key)
+            local nb = WL.Button("next")
+            if nb and nb.SetEnabled then nb:SetEnabled(true) end
+        end)
+        y = y + WL.CARD_H + WL.CARD_GAP
+    end
+    local hint = WL.uiHint
+    if not hint then
+        hint = K.NewText(WL.cardsHost)
+        hint:SetFont(F.sans, 11, "")
+        hint:SetTextColor(unpack(C.textDim))
+        hint:SetWidth(WL.COL_W)
+        hint:SetJustifyH("LEFT")
+        WL.uiHint = hint
+    end
+    hint:ClearAllPoints()
+    hint:SetPoint("TOPLEFT", WL.cardsHost, "TOPLEFT", 0, -y)
+    hint:SetText(WL.Text("ui"))
+    MarkCard(choice.look and ("look:" .. choice.look) or nil)
+    WL.ShowLook(choice.look)
     SetButtons({ { key = "back", text = "Zurück", onClick = function() Go("start") end } },
-        { { key = "no", text = "Ohne Oberfläche", onClick = function() WL.Decide(false) Go("anzeigen") end },
-          { key = "yes", text = "Oberfläche verwenden", kind = "primary", onClick = function() WL.Decide(true) Go("anzeigen") end } })
+        { { key = "next", text = "Weiter", kind = "primary", onClick = function()
+            if choice.look then Go("komfort") end
+        end } })
+    local nb = WL.Button("next")
+    if nb and nb.SetEnabled then nb:SetEnabled(choice.look ~= nil) end
+end
+
+local function StepKomfort()
+    Head("komfort", "Helfer", "Welche Helfer möchtest du?")
+    body:Hide()
+    rowsHost:Hide()
+    ShowGallery(false)
+    HideCards()
+    if WL.uiHint then WL.uiHint:SetText("") end
+    if WL.preview then WL.preview:Hide() end
+    WL.cardsHost:Show()
+    Card("help:recommended", "Empfohlen", "Alle Helfer an. Messenger, Gespräche im Codex-Stil und Danke"
+        .. " für Buffs bleiben, wie sie sind – die ändern Gewohntes.", 0, function()
+        choice.custom = false
+        WL.Recommend(choice.ui)
+        Go("bereit")
+    end)
+    Card("help:custom", "Selbst auswählen", "Jeden Helfer einzeln an- oder abwählen – in fünf kurzen Schritten.",
+        WL.CARD_H + WL.CARD_GAP, function()
+        choice.custom = true
+        Go("anzeigen")
+    end)
+    MarkCard(nil)
+    local hint = WL.uiHint
+    if hint then
+        hint:ClearAllPoints()
+        hint:SetPoint("TOPLEFT", WL.cardsHost, "TOPLEFT", 0, -2 * (WL.CARD_H + WL.CARD_GAP))
+        hint:SetText(WL.Text("komfort"))
+    end
+    WL.ShowShot("helpers")
+    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go("ui") end } }, {})
 end
 
 local function StepShows()
-    Head(3, "Komfort · Anzeigen",
+    Head("anzeigen", "Helfer · Anzeigen",
         choice.ui and "Dein Komplettpaket: Anzeigen" or "Was darf WeintCodex dir zeigen?")
     body:Hide()
+    HideCards()
     rowsHost:Show()
     ShowGallery(false)
     WL.rowsHeight = Rows(WL.SHOWS, "show")
     WL.ShowShot("damage")
-    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go("ui") end } },
-        { { key = "next", text = "Weiter", kind = "primary", onClick = function() Go(WL.STEPS[4]) end } })
+    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go("komfort") end } },
+        { { key = "next", text = "Weiter", kind = "primary", onClick = function() Go("alltag") end } })
 end
 
 local function StepIndex(key)
@@ -686,7 +894,8 @@ end
 
 local function StepGroup(g)
     local n = StepIndex(g.key)
-    Head(n, g.eyebrow, g.title)
+    Head(g.key, g.eyebrow, g.title)
+    HideCards()
     rowsHost:Show()
     ShowGallery(false)
     local y = Rows(WL.GroupList(g.key), "help")
@@ -710,23 +919,25 @@ function WL.ReadyText()
     return table.concat(WL.Summary(), "\n")
         .. "\n\nNach „Übernehmen“ " .. (choice.ui and "richtet WeintCodex sein Layout ein; danach einmal neu laden."
             or "gilt das meiste sofort; Anzeigen kommen nach dem Neuladen.")
-        .. "\n\nÄndern kannst du alles jederzeit mit /wcui oder unter Einstellungen → Oberfläche."
+        .. "\n\nÄndern kannst du alles jederzeit mit /wcui."
 end
 
 local function StepReady()
-    Head(#WL.STEPS, "Zusammenfassung", "Bereit")
+    Head("bereit", "Zusammenfassung", "Bereit")
     rowsHost:Hide()
+    HideCards()
     ShowGallery(false)
+    if WL.preview then WL.preview:Hide() end
     body:SetText(WL.ReadyText())
     body:Show()
     WL.ShowShot(choice.ui and "overview" or "helpers")
-    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go(WL.STEPS[#WL.STEPS - 1]) end } },
+    SetButtons({ { key = "back", text = "Zurück", onClick = function() Go(choice.custom and "handel" or "komfort") end } },
         { { key = "apply", text = "Übernehmen", kind = "primary", onClick = function() WL.Finish() end } })
 end
 
 -- Nach "Uebernehmen": was geschah, und das Neuladen.
 local function StepDone(report)
-    Head(#WL.STEPS, "Fertig", report.reload and "Fertig – jetzt neu laden" or "Fertig")
+    Head("bereit", "Fertig", report.reload and "Fertig – jetzt neu laden" or "Fertig")
     local lines = {}
     if report.layout == true then
         lines[#lines + 1] = "•  Layout „WeintCodex“ im Bearbeitungsmodus angelegt und aktiv. Dein bisheriges ist gemerkt."
@@ -756,8 +967,10 @@ Go = function(key)
     body:ClearAllPoints()
     body:SetPoint("TOPLEFT", win, "TOPLEFT", WL.PAD, -WL.BODY_TOP)
     body:SetTextColor(unpack(C.textNormal))
+    if WL.cardsHost then WL.cardsHost:SetShown(key == "ui" or key == "komfort") end
     if key == "start" then StepStart()
     elseif key == "ui" then StepUI()
+    elseif key == "komfort" then StepKomfort()
     elseif key == "anzeigen" then StepShows()
     elseif key == "bereit" then StepReady()
     else
