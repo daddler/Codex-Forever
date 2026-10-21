@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.109.0.0",
+        date    = "21.10.2026",
+        notes   = {
+            "|cff7C6CFFRundes Porträt im eigenen Design|r – Ring und Stufenplakette tragen Rand und Fläche des gewählten Designs: schwarz, transparent oder golden (Klassisch).",
+        },
+    },
+    {
         version = "6.108.0.0",
         date    = "21.10.2026",
         notes   = {

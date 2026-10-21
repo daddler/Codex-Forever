@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.109.0.0] – 2026-10-21
+
+### Geändert
+- Runde Form der Einheitenrahmen: Ring und Plakette aus `kachelEdge`/`kachelFill` (folgen `general.look`) statt fest `classicGold`.
+
 ## [6.108.0.0] – 2026-10-21
 
 ### Hinzugefügt

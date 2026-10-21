@@ -696,7 +696,7 @@ end
 
 -- RUNDE FORM (6.108.0.0, Wunsch mit Bild: "Spieler- und Zielrahmen sollen
 -- dieses Design auch waehlen koennen. Runder Spielerkopf"): rundes Bild
--- der Einheit (Kreismaske) mit Ring in classicGold, halb ueber den Rand
+-- der Einheit (Kreismaske) mit Ring im Rand des Designs (seit 6.109.0.0), halb ueber den Rand
 -- des Rahmens; darunter die Stufe in einer runden Plakette. Nach dem
 -- Verhalten der Rahmen des Spiels, eigene Flaechen - kein Bild aus dem
 -- Spiel ausser der Kreismaske (Interface\Common\CommonMaskCircle, wie
@@ -721,8 +721,12 @@ function Frame:Round()
         t:SetVertexColor(col[1], col[2], col[3], a or col[4] or 1)
         return t
     end
-    r.ring = Disc("BACKGROUND", 0, GC.classicGold, 1)
-    r.back = Disc("BACKGROUND", 1, { 0, 0, 0, 1 })
+    -- 6.109.0.0 (Wunsch: "der Rahmen muss das Design haben, das ich
+    -- gewaehlt habe"): Ring = Rand der Kachel, Grund = ihre Fuellung -
+    -- Schwarz, Transparent oder Klassisch (Gold), wie alle Flaechen.
+    local edge, fill = GC.kachelEdge, GC.kachelFill
+    r.ring = Disc("BACKGROUND", 0, edge)
+    r.back = Disc("BACKGROUND", 1, { fill[1], fill[2], fill[3], 1 })
     r.tex = r:CreateTexture(nil, "ARTWORK")
     r.tex:SetPoint("CENTER")
     if r.CreateMaskTexture then
@@ -737,10 +741,10 @@ function Frame:Round()
     b:SetFrameLevel(r:GetFrameLevel() + 2)
     b.ring = b:CreateTexture(nil, "BACKGROUND", nil, 0)
     b.ring:SetTexture(UF.CIRCLE) b.ring:SetAllPoints(b)
-    b.ring:SetVertexColor(GC.classicGold[1], GC.classicGold[2], GC.classicGold[3], 1)
+    b.ring:SetVertexColor(edge[1], edge[2], edge[3], edge[4])
     b.fill = b:CreateTexture(nil, "BACKGROUND", nil, 1)
     b.fill:SetTexture(UF.CIRCLE) b.fill:SetPoint("CENTER") b.fill:SetSize(18, 18)
-    b.fill:SetVertexColor(0.05, 0.05, 0.06, 1)
+    b.fill:SetVertexColor(fill[1], fill[2], fill[3], math.max(0.8, fill[4]))
     b.text = K.NewText(b, 10)
     b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
     r.badge = b
