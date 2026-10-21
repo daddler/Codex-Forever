@@ -881,13 +881,16 @@ function Frame:Layout()
         if r.model then r.model:SetSize(D - 2, D - 2) end
         r:ClearAllPoints()
         r:SetPoint("CENTER", self, right and "RIGHT" or "LEFT", right and D * 0.42 or -D * 0.42, 0)
+        -- Wie weit der Ring in den Balken ragt (fuer die Schrift dort).
+        self._roundOver = math.max(0, math.ceil((D + 6) / 2 - D * 0.42))
         r.badge:ClearAllPoints()
         -- Innenseite (zum Balken hin): aussen deckte sie den Begleiterrahmen (6.110.1.0, Bild).
         r.badge:SetPoint("CENTER", r, right and "BOTTOMLEFT" or "BOTTOMRIGHT", right and 4 or -4, 4)
         r:Show()
         self:UpdateRound()
-    elseif self._round then
-        self._round:Hide()
+    else
+        self._roundOver = nil
+        if self._round then self._round:Hide() end
     end
     if kind ~= "none" and kind ~= "bar" then
         inset = total + 1
@@ -932,10 +935,15 @@ function Frame:Layout()
     K.SetFont(self.left, Opt("nameSize"))
     K.SetFont(self.right, Opt("textSize"))
     self.left:ClearAllPoints()
-    self.left:SetPoint("LEFT", self.health, "LEFT", 5, 0)
+    -- 6.110.3.0 (Beta-Test mit Bild): auf der Seite des runden Portraets
+    -- rueckt die Schrift um den Ueberstand des Rings nach innen.
+    local over = self._roundOver or 0
+    local padL = (over > 0 and not right) and math.max(5, over + 2) or 5
+    local padR = (over > 0 and right) and math.max(5, over + 2) or 5
+    self.left:SetPoint("LEFT", self.health, "LEFT", padL, 0)
     self.left:SetWidth(math.max(20, (w - inset) * 0.62))
     self.right:ClearAllPoints()
-    self.right:SetPoint("RIGHT", self.health, "RIGHT", -5, 0)
+    self.right:SetPoint("RIGHT", self.health, "RIGHT", -padR, 0)
     self.right:SetWidth(math.max(20, (w - inset) * 0.4))
 
     if self._cast then

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.110.3.0] – 2026-10-21
+
+### Behoben
+- Runde Form: Text auf der Seite des Porträts um den Überstand des Rings eingerückt (`_roundOver`, Abstand Überstand + 2 statt 5; bei Standardhöhe etwa 10 px). Anlass: Bild aus dem Beta-Test.
+
 ## [6.110.2.0] – 2026-10-21
 
 ### Geändert

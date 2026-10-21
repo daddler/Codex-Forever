@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.110.3.0",
+        date    = "21.10.2026",
+        notes   = {
+            "|cff7C6CFFRunde Rahmen: Schrift frei|r – Name beim Spieler und Leben beim Ziel rücken ein Stück vom runden Porträt weg, statt unter dem Ring zu beginnen.",
+        },
+    },
+    {
         version = "6.110.2.0",
         date    = "21.10.2026",
         notes   = {
