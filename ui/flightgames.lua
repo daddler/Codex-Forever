@@ -1557,6 +1557,30 @@ end
 -- Fenster, Frage, Ergebnis
 --------------------------------------------------
 
+-- Flugzeitleiste ueber dem Fenster (oder zurueck an ihren Platz).
+function FG.DockTimer(on)
+    local FT = WeintCodex.UIFlightTimer
+    local tf = FT and FT.frame
+    if not (tf and win) then return false end
+    if on then
+        if not FG.timerPts then
+            local pts = {}
+            for i = 1, (tf:GetNumPoints() or 0) do pts[i] = { tf:GetPoint(i) } end
+            FG.timerPts, FG.timerStrata = pts, tf:GetFrameStrata()
+        end
+        tf:ClearAllPoints()
+        tf:SetPoint("BOTTOM", win, "TOP", 0, 6)
+        tf:SetFrameStrata("DIALOG")
+        if tf.SetClampedToScreen then tf:SetClampedToScreen(true) end
+    elseif FG.timerPts then
+        tf:ClearAllPoints()
+        for _, pt in ipairs(FG.timerPts) do tf:SetPoint(unpack(pt)) end
+        tf:SetFrameStrata(FG.timerStrata or "MEDIUM")
+        FG.timerPts, FG.timerStrata = nil, nil
+    end
+    return true
+end
+
 Build = function()
     if win then return win end
     win = CreateFrame("Frame", "WeintCodexFlightGames", UIParent)
@@ -1567,6 +1591,11 @@ Build = function()
     -- Ziehen auf dem Brett das ganze Fenster.
     win:EnableMouse(true)
     win:SetClampedToScreen(true)
+    -- 6.110.4.0 (Wunsch: "die Flugzeitleiste darf nicht vom Flugspielfenster
+    -- ueberdeckt werden"): solange das Fenster offen ist, steht die Leiste
+    -- (ui/flighttimer.lua) direkt darueber; beim Schliessen zurueck.
+    win:HookScript("OnShow", function() FG.DockTimer(true) end)
+    win:HookScript("OnHide", function() FG.DockTimer(false) end)
     local bg = win:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(win)
     local p = C.bgPanel

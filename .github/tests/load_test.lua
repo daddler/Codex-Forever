@@ -21526,6 +21526,25 @@ do
         K.Set("comfort", "flightGamesShare", false)
         Check(not FG.Sharing() and not FG.Push("q") and not FG.OnAddonMessage("WCFG", "b,j,9", "GUILD", "Carl-R", 9999), "Bestenliste: aus heisst still")
         K.Set("comfort", "flightGamesShare", true)
+        -- 6.110.4.0: offen steht die Flugzeitleiste ueber dem Fenster, zu wieder an ihrem Platz.
+        local FT = WeintCodex.UIFlightTimer
+        local oldTF = FT.frame
+        local tf = { pts = {}, strata = "MEDIUM" }
+        function tf:SetPoint(...) self.pts[#self.pts + 1] = { ... } end
+        function tf:ClearAllPoints() self.pts = {} end
+        function tf:GetNumPoints() return #self.pts end
+        function tf:GetPoint(i) return unpack(self.pts[i]) end
+        function tf:SetFrameStrata(v) self.strata = v end
+        function tf:GetFrameStrata() return self.strata end
+        tf:SetPoint("TOP", UIParent, "TOP", 0, -230)
+        FT.frame = tf
+        FG.DockTimer(true)
+        local p1, rel = tf:GetPoint(1)
+        Check(p1 == "BOTTOM" and rel == G.WeintCodexFlightGames and tf:GetFrameStrata() == "DIALOG", "Flugzeit nicht ueber dem Fenster")
+        FG.DockTimer(false)
+        local p2, rel2, _, _, y2 = tf:GetPoint(1)
+        Check(p2 == "TOP" and rel2 == UIParent and y2 == -230, "Flugzeit nicht zurueck an ihrem Platz")
+        FT.frame = oldTF
         FG.Close()
     end)
     for i, n in ipairs(names) do G[n] = saved[i] end

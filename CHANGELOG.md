@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.110.4.0] – 2026-10-21
+
+### Behoben
+- Flugspiele: Flugzeitleiste (`UIFlightTimer.frame`) beim Öffnen über das Fenster gesetzt (`FG.DockTimer`, Anker und Ebene gemerkt), beim Schließen zurück. Vorher verdeckte das Fenster (Mitte, 544 hoch, DIALOG) die Leiste (oben −230, MEDIUM).
+
 ## [6.110.3.0] – 2026-10-21
 
 ### Behoben

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.110.4.0",
+        date    = "21.10.2026",
+        notes   = {
+            "|cff7C6CFFFlugzeit über den Flugspielen|r – solange ein Flugspiel offen ist, steht die Flugzeitleiste direkt über dem Fenster statt darunter verdeckt. Danach wieder an ihrem Platz.",
+        },
+    },
+    {
         version = "6.110.3.0",
         date    = "21.10.2026",
         notes   = {
