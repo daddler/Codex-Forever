@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.111.0.0] – 2026-10-21
+
+### Hinzugefügt
+- Kameraabstand (`ui/camera.lua`, `comfort.camZoom`, 0 = wie im Spiel, sonst 1,0–4,0): `cameraDistanceMaxZoomFactor` über `PF.SetCVar` (Besitzer `comfort`, alter Wert gemerkt, `PF.Release` bei 0 bzw. Sweep). Nach dem Setzen zurückgelesen; nimmt das Spiel weniger, wird dessen Wert gemerkt und in der Einstellung genannt. Nie im Kampf.
+
 ## [6.110.5.0] – 2026-10-21
 
 ### Behoben

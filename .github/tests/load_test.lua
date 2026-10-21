@@ -4304,6 +4304,25 @@ do
     Check(ok, "Erinnerungen: vom Spiel abgewiesenes Elixier schweigt, bis der staerkere Buff endet" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.111.0.0: Kameraabstand ueber die Spieleinstellung, "Wie im Spiel" gibt zurueck.
+do
+    local CA = WeintCodex.UICamera
+    local saved = _G.C_CVar
+    local ok, err = pcall(function()
+        local cv = { cameraDistanceMaxZoomFactor = "1.9" }
+        _G.C_CVar = { GetCVar = function(n) return cv[n] end,
+                      SetCVar = function(n, v) cv[n] = (n == "cameraDistanceMaxZoomFactor" and tonumber(v) > 2.6) and "2.6" or v return true end }
+        K.Set("comfort", "camZoom", 3.5)
+        CA.Apply()
+        assert(cv.cameraDistanceMaxZoomFactor == "2.6" and CA.applied == 2.6, "Wert nicht gesetzt oder Grenze des Spiels nicht gelesen")
+        K.Set("comfort", "camZoom", 0)
+        CA.Apply()
+        assert(cv.cameraDistanceMaxZoomFactor == "1.9", "Wie im Spiel gibt den alten Wert nicht zurueck: " .. tostring(cv.cameraDistanceMaxZoomFactor))
+    end)
+    _G.C_CVar = saved
+    Check(ok, "Komfort: Kameraabstand gesetzt, Grenze des Spiels gelesen, zurueckgegeben" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.111.0.0",
+        date    = "21.10.2026",
+        notes   = {
+            "|cff7C6CFFWeiter wegzoomen|r – unter Komfort → Alltag → Anzeigen stellst du ein, wie weit die Kamera vom Charakter weg darf. „Wie im Spiel“ gibt die Einstellung des Spiels zurück.",
+        },
+    },
+    {
         version = "6.110.5.0",
         date    = "21.10.2026",
         notes   = {
