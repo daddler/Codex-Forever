@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.110.5.0] – 2026-10-21
+
+### Behoben
+- Erinnerungen (Tasche): abgewiesene Verbrauchsgüter (`R.bounced`): Hooks hinter `C_Container.UseContainerItem`/`UseItemByName` merken den Gegenstand, `UI_ERROR_MESSAGE` mit `SPELL_FAILED_AURA_BOUNCED` binnen 2 s sperrt ihn, bis ein Buff vom Moment des Abweisens fehlt (`R.Bounced`). Anlass: Rolle des Schutzes aktiv (nicht mehr in der Tasche), schwächeres Verteidigungselixier vorgeschlagen.
+
 ## [6.110.4.0] – 2026-10-21
 
 ### Behoben

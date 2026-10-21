@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.110.5.0",
+        date    = "21.10.2026",
+        notes   = {
+            "|cff7C6CFFKein Dauer-Hinweis für schwächere Elixiere|r – sagt das Spiel beim Benutzen „Ein mächtigerer Zauber ist bereits aktiv“, schweigt die Erinnerung zu diesem Elixier, bis der stärkere Buff ausgelaufen ist.",
+        },
+    },
+    {
         version = "6.110.4.0",
         date    = "21.10.2026",
         notes   = {

@@ -4284,6 +4284,26 @@ do
     Check(ok, "Einheitenrahmen: runde Form nach Design und je Rahmen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.110.5.0: "Ein maechtigerer Zauber ist bereits aktiv" - Gegenstand
+-- abgewiesen, Erinnerung schweigt, bis ein Buff von damals endet.
+do
+    local R = WeintCodex.UIReminders
+    local ok, err = pcall(function()
+        local oldT = _G.GetTime
+        _G.GetTime = function() return 100 end
+        R.lastUse.id, R.lastUse.t = 3389, 99.5
+        assert(R.OnUIError("Ein mächtigerer Zauber ist bereits aktiv.", { "schutz", "segen der macht" }), "Abweisen nicht erkannt")
+        assert(R.Bounced(3389, { "schutz", "segen der macht" }), "abgewiesenes Elixier wieder vorgeschlagen")
+        assert(not R.Bounced(3389, { "segen der macht" }), "nach Ende der Rolle weiter still")
+        R.lastUse.id, R.lastUse.t = 3389, 90
+        assert(not R.OnUIError("Ein mächtigerer Zauber ist bereits aktiv.", {}), "alte Benutzung zaehlt")
+        assert(not R.OnUIError("Nicht genug Mana", {}), "andere Meldung zaehlt")
+        _G.GetTime = oldT
+        R.bounced[3389] = nil
+    end)
+    Check(ok, "Erinnerungen: vom Spiel abgewiesenes Elixier schweigt, bis der staerkere Buff endet" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.

@@ -1171,6 +1171,72 @@ local function HelpfulNames()
     end
     return names, tips
 end
+-- DAS SPIEL SAGT NEIN (6.110.5.0, Beta-Test mit Bild: Rolle des Schutzes
+-- aktiv, die Erinnerung wollte trotzdem das schwaechere Verteidigungs-
+-- elixier - die Rolle lag nicht mehr in der Tasche, R.SameStatActive
+-- kannte sie nicht). Benutzt der Spieler ein Verbrauchsgut und das Spiel
+-- antwortet "Ein maechtigerer Zauber ist bereits aktiv"
+-- (SPELL_FAILED_AURA_BOUNCED), schweigt die Erinnerung zu genau diesem
+-- Gegenstand, bis einer der Buffs von dem Moment endet (der staerkere
+-- ist dann ausgelaufen). Nur gelesen: Hooks hinter dem Benutzen,
+-- die Fehlermeldung des Spiels.
+R.bounced = {}          -- [Gegenstand] = { Buffnamen beim Abweisen }
+R.lastUse = { id = nil, t = 0 }
+R.BOUNCE_WINDOW = 2
+local function NoteUse(id)
+    id = K.Plain(id)
+    if type(id) ~= "number" then return end
+    R.lastUse.id, R.lastUse.t = id, (_G.GetTime and K.Plain(_G.GetTime())) or 0
+end
+do
+    local cc = _G.C_Container
+    if _G.hooksecurefunc and cc and type(cc.UseContainerItem) == "function" then
+        _G.hooksecurefunc(cc, "UseContainerItem", function(bag, slot)
+            local ok, id = pcall(cc.GetContainerItemID, bag, slot)
+            if ok then NoteUse(id) end
+        end)
+    end
+    if _G.hooksecurefunc and type(_G.UseItemByName) == "function" then
+        _G.hooksecurefunc("UseItemByName", function(name)
+            local ci = _G.C_Item
+            local inst = (ci and ci.GetItemInfoInstant) or _G.GetItemInfoInstant
+            if inst then local ok, id = pcall(inst, name) if ok then NoteUse(id) end end
+        end)
+    end
+end
+function R.IsBounceText(msg)
+    msg = K.Plain(msg)
+    if type(msg) ~= "string" then return false end
+    local g = _G.SPELL_FAILED_AURA_BOUNCED
+    if type(g) == "string" and msg == g then return true end
+    return msg:find("mächtigerer Zauber", 1, true) ~= nil or msg:find("more powerful spell", 1, true) ~= nil
+end
+function R.OnUIError(msg, names)
+    if not R.IsBounceText(msg) then return false end
+    local now = (_G.GetTime and K.Plain(_G.GetTime())) or 0
+    local id = R.lastUse.id
+    if not id or now - (R.lastUse.t or 0) > R.BOUNCE_WINDOW then return false end
+    if not names then names = HelpfulNames() end
+    R.bounced[id] = names or {}
+    return true
+end
+-- Weist das Spiel diesen Gegenstand gerade ab? Bis ein Buff von damals fehlt.
+function R.Bounced(id, names)
+    local snap = R.bounced[id]
+    if not snap then return false end
+    for _, n in ipairs(snap) do
+        if not R.ExactName(names, n) then R.bounced[id] = nil return false end
+    end
+    return true
+end
+do
+    local ev = CreateFrame("Frame")
+    pcall(ev.RegisterEvent, ev, "UI_ERROR_MESSAGE")
+    ev:SetScript("OnEvent", function(_, _, _, msg)
+        if R.OnUIError(msg) and R.Schedule then R.Schedule(true, false, false) end
+    end)
+end
+
 -- Genau dieser Name (ohne Gross/Klein), kein Teilwort: "Staerke" einer
 -- Rolle ist nicht "Machtwort: Seelenstaerke".
 function R.ExactName(names, name)
@@ -1304,6 +1370,7 @@ function R.BagBuffs(out)
                             end
                         end
                         if not has and R.SameStatActive(e, names) then has = true end
+                        if not has and R.Bounced(id, names) then has = true end
                         if not has then elixir = { id = id, e = e } end
                     end
                 end
