@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.131.2.0] – 2026-10-22
+
+### Behoben
+- Gruppenrahmen (Beta-Test: orangener Rand bei Krankheit ragt in den Spieler darunter): `GG.FitOverlays` legt die Hervorhebung bannbarer Debuffs des Spiels (eine für alle Arten, nur die Farbe wechselt) genau auf den Rahmen; gesucht nach Feldnamen mit „Dispel“ + Overlay/Highlight/Border. `/wcui gruppe` nennt die gefundenen Hervorhebungen.
+
 ## [6.131.1.0] – 2026-10-22
 
 ### Behoben

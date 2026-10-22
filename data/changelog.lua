@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.131.2.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Debuff-Hervorhebung bleibt im Gruppenrahmen|r – der farbige Rand bei Krankheit, Gift, Magie und Fluch ragte in den Spieler darunter.",
+        },
+    },
+    {
         version = "6.131.1.0",
         date    = "22.10.2026",
         notes   = {

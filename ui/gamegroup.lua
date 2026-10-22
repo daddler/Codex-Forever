@@ -217,12 +217,42 @@ function GG.Layout(f)
     else
         hb:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -2, 2)
     end
+    GG.FitOverlays(f)
     if type(role) == "table" and role.SetPoint then
         role:ClearAllPoints()
         role:SetPoint("TOPLEFT", f, "TOPLEFT", 3, -3)
         role:SetSize(12, 12)
     end
     return true
+end
+
+-- 6.131.2.0 (Beta-Test: orangener Rahmen bei Krankheit ragt in den Spieler
+-- darunter): die Hervorhebung bannbarer Debuffs des Spiels (Krankheit, Gift,
+-- Magie, Fluch - eine Hervorhebung, je Art nur eine andere Farbe) ist fuer
+-- die Rahmen des Spiels gebaut und steht ueber. Sie liegt jetzt genau auf
+-- dem Rahmen. Gesucht nach dem Feldnamen, weil Forever ihn nicht sicher
+-- wie Retail nennt; gelesen, nie geschrieben.
+GG.OVERLAY_KEYS = { "DispelOverlay", "dispelOverlay", "DebuffHighlight", "debuffHighlight",
+                    "dispelHighlight", "DispelHighlight" }
+function GG.FitOverlays(f)
+    local seen, n = {}, 0
+    local function fit(o)
+        if type(o) ~= "table" or seen[o] or not o.SetPoint or o == f then return end
+        if o.IsForbidden and o:IsForbidden() then return end
+        seen[o] = true
+        if pcall(o.ClearAllPoints, o) then
+            pcall(o.SetPoint, o, "TOPLEFT", f, "TOPLEFT", 0, 0)
+            pcall(o.SetPoint, o, "BOTTOMRIGHT", f, "BOTTOMRIGHT", 0, 0)
+            n = n + 1
+        end
+    end
+    for _, k in ipairs(GG.OVERLAY_KEYS) do fit(f[k]) end
+    for k, v in pairs(f) do
+        if type(k) == "string" and k:find("[Dd]ispel") and (k:find("Overlay") or k:find("Highlight") or k:find("Border")) then
+            fit(v)
+        end
+    end
+    return n
 end
 
 -- Krone beim Gruppenleiter (6.29.23.0, Spielerbericht: "das Gruppenfenster
@@ -358,6 +388,14 @@ function GG.Inspect()
     if frames[1] then
         local ok, name = pcall(frames[1].GetName, frames[1])
         out[#out + 1] = "Erster Rahmen: " .. tostring(ok and name or "?")
+        local keys = {}
+        for k, v in pairs(frames[1]) do
+            if type(k) == "string" and type(v) == "table" and (k:lower():find("dispel") or k:lower():find("highlight")) then
+                keys[#keys + 1] = k
+            end
+        end
+        table.sort(keys)
+        out[#out + 1] = "Hervorhebungen am Rahmen: " .. (#keys > 0 and table.concat(keys, ", ") or "keine gefunden")
     end
     local rs = GG.RaidStyleParty()
     out[#out + 1] = "Schlachtzugsartige Gruppenrahmen: "
