@@ -199,8 +199,10 @@ function GG.Layout(f)
     local ph = (Opt("powerHeight") or GG.POWER_H)
     if power then
         pb:ClearAllPoints()
-        pb:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 1, 1)
-        pb:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, 1)
+        -- 6.131.0.1 (Beta-Test: "der blaue Rahmen ragt in den anderen
+        -- Spieler"): 2 px vom Rand, innerhalb von Rand und Auswahlrahmen.
+        pb:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 2, 2)
+        pb:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -2, 2)
         pb:SetHeight(ph)
     end
     hb:ClearAllPoints()
@@ -209,7 +211,7 @@ function GG.Layout(f)
     -- das Spiel haengt die Kraftleiste an den Lebensbalken. Der Balken
     -- darf deshalb nie an der Kraftleiste haengen, nur am Rahmen.
     if power then
-        hb:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, ph + 2)
+        hb:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, ph + 3)
     else
         hb:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, 1)
     end

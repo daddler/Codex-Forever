@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.131.0.1",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Kraftleiste bleibt im eigenen Gruppenrahmen|r – sie ragte bis an den Rahmen darunter.",
+        },
+    },
+    {
         version = "6.131.0.0",
         date    = "22.10.2026",
         notes   = {

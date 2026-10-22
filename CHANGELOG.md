@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.131.0.1] – 2026-10-22
+
+### Behoben
+- Gruppenrahmen (Beta-Test: „der blaue Rahmen ragt in den anderen Spieler“): Kraftleiste 2 px vom unteren und seitlichen Rand, innerhalb von Rand und Auswahlrahmen; Lebensbalken endet 1 px darüber.
+
 ## [6.131.0.0] – 2026-10-22
 
 ### Geändert
