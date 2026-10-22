@@ -1857,15 +1857,22 @@ function WeintCodex.CreateSlider(parent, opts)
         if v > minV then fill:Show() else fill:Hide() end
     end
 
+    -- 6.123.1.0 (Beta-Test: "jedes Mal beim Oeffnen steht 'Jetzt neu
+    -- laden'"): das Abgleichen beim Zeigen loeste OnValueChanged aus - und
+    -- damit set, als haette der Spieler geschoben (Regler mit Neuladen).
+    local syncing = false
     row.Sync = function()
         local v = Snap(opts.get and opts.get() or minV)
+        syncing = true
         slider:SetValue(v)
+        syncing = false
         Paint(v)
     end
 
     slider:SetScript("OnValueChanged", function(_, raw)
         local v = Snap(raw)
         Paint(v)
+        if syncing then return end
         if opts.set then opts.set(v) end
     end)
     slider:SetScript("OnSizeChanged", function() Paint(current) end)

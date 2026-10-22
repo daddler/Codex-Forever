@@ -4497,6 +4497,18 @@ do
     Check(ok, "Gift-Auswahl: Hand der Erinnerung auf der linken Taste" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.123.1.0: Abgleichen eines Reglers beim Zeigen ist keine Aenderung.
+do
+    local ok, err = pcall(function()
+        local calls = 0
+        local row = WeintCodex.CreateSlider(UIParent, { label = "x", min = 0, max = 100, step = 5,
+            get = function() return 45 end, set = function() calls = calls + 1 end })
+        row.Sync()
+        assert(calls == 0, "Abgleich ruft set: " .. calls)
+    end)
+    Check(ok, "Regler: Zeigen loest kein Neuladen aus" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.

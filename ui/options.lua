@@ -439,8 +439,10 @@ function Builder:Cell(spec)
         end
     end
     local set = function(...)
+        -- Neuladen nur, wenn sich wirklich etwas aendert (6.123.1.0).
+        local before = spec.reload and t ~= "color" and t ~= "button" and get() or nil
         rawSet(...)
-        if spec.reload then K.MarkReload() end
+        if spec.reload and (t == "color" or t == "button" or get() ~= before) then K.MarkReload() end
     end
     local disabled = spec.disabled
 

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.123.1.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFKein „Jetzt neu laden“ mehr beim bloßen Öffnen|r der Einstellungen – nur, wenn du wirklich etwas änderst, das ein Neuladen braucht.",
+        },
+    },
+    {
         version = "6.123.0.0",
         date    = "22.10.2026",
         notes   = {

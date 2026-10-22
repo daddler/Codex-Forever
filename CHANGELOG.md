@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.123.1.0] – 2026-10-22
+
+### Behoben
+- Einstellungen: beim Öffnen stand „Jetzt neu laden“ (Beta-Test). Der Abgleich eines Reglers beim Zeigen (`row.Sync` → `SetValue`) löste `OnValueChanged` und damit `set` aus – beim neuen Regler „Deckkraft (Transparent)“ mit Neuladen. Abgleich ruft `set` nicht mehr; zusätzlich markiert der Builder ein Neuladen nur, wenn sich der Wert ändert.
+
 ## [6.123.0.0] – 2026-10-22
 
 ### Hinzugefügt
