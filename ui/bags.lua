@@ -745,6 +745,10 @@ BG.RETRIES = 25
 local queue, qTicker = {}, nil
 BG.queue = queue
 
+-- 6.126.2.0 (Beta-Test: "Verbrauchbar bewegt kein einziges Item"):
+-- Gegenstaende mit Zauber (Essen, Traenke) gehen nicht ueber Benutzen -
+-- das kann das Spiel fuer Addons sperren -, sondern wie mit der Maus:
+-- aufheben, in einen freien Platz auf der anderen Seite legen.
 local function Movable(e)
     local info = Info(e.bag, e.slot)
     local id = info and K.Plain(info.itemID)
@@ -753,8 +757,26 @@ local function Movable(e)
     if K.Plain(info.isLocked) then return "locked" end
     local ci = _G.C_Item
     local spell = ci and ci.GetItemSpell and select(2, pcall(ci.GetItemSpell, id))
-    if spell then return "gone" end   -- wuerde benutzt statt bewegt
-    return "ok"
+    return spell and "carry" or "ok"
+end
+
+-- Ein freier Platz auf der Zielseite (Bank oder Taschen), oder nil.
+function BG.FreeSlot(toBank)
+    local BK = WeintCodex.UIBankCats
+    local ids = toBank and (BK and BK.BagIDs() or {}) or BagIDs()
+    for _, bag in ipairs(ids) do
+        for slot = 1, NumSlots(bag) do
+            local info = Info(bag, slot)
+            if not (info and K.Plain(info.itemID)) then return bag, slot end
+        end
+    end
+    return nil
+end
+
+function BG.IsBankBag(bag)
+    local BK = WeintCodex.UIBankCats
+    for _, b in ipairs(BK and BK.BagIDs() or {}) do if b == bag then return true end end
+    return false
 end
 
 function BG.Step()
@@ -771,6 +793,16 @@ function BG.Step()
     if st == "ok" then
         table.remove(queue, 1)
         pcall(cc.UseContainerItem, e.bag, e.slot)
+    elseif st == "carry" then
+        table.remove(queue, 1)
+        local tb, ts = BG.FreeSlot(not BG.IsBankBag(e.bag))
+        local cursor = _G.GetCursorInfo and _G.GetCursorInfo()
+        if tb and not cursor and cc.PickupContainerItem then
+            pcall(cc.PickupContainerItem, e.bag, e.slot)
+            pcall(cc.PickupContainerItem, tb, ts)
+            -- Lag es nicht ab (Platz doch belegt), zurueck an den alten Platz.
+            if _G.GetCursorInfo and _G.GetCursorInfo() then pcall(cc.PickupContainerItem, e.bag, e.slot) end
+        end
     elseif st == "locked" then
         e.tries = (e.tries or 0) + 1
         table.remove(queue, 1)

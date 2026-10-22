@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.126.2.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFAuch Verbrauchbares wandert in die Bank|r – Essen, Tränke und alles mit Wirkung wird jetzt wie mit der Maus in einen freien Platz gelegt.",
+        },
+    },
+    {
         version = "6.126.1.0",
         date    = "22.10.2026",
         notes   = {

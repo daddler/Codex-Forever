@@ -4537,6 +4537,20 @@ do
         -- 6.126.1.0: Stueck fuer Stueck, gesperrte spaeter noch einmal.
         while BG.Step() do end
         assert(#used == 3 and #BG.queue == 0, "nicht alle bewegt: " .. #used)
+        -- 6.126.2.0: mit Zauber (Essen) nicht benutzen, sondern tragen.
+        local oItem = _G.C_Item
+        _G.C_Item = setmetatable({ GetItemSpell = function() return "Essen", 1 end }, { __index = oItem })
+        local picks = {}
+        _G.C_Container.PickupContainerItem = function(b, sl) picks[#picks + 1] = b .. ":" .. sl end
+        _G.C_Container.GetContainerNumSlots = function(bag) return 3 end
+        local free = BG.FreeSlot
+        BG.FreeSlot = function() return 0, 9 end
+        used = {}
+        BG.Transfer({ { bag = BK.BagIDs()[1], slot = 2 } })
+        while BG.Step() do end
+        BG.FreeSlot = free
+        _G.C_Item = oItem
+        assert(#used == 0 and picks[1] == BK.BagIDs()[1] .. ":2" and picks[2] == "0:9", "Essen nicht getragen: " .. tostring(picks[1]) .. " " .. tostring(picks[2]))
         BG.bankOpen = false
         _G.BankFrame:Hide()
         assert(BK.Refresh() == nil, "Fenster ohne Bank")

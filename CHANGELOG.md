@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.126.2.0] – 2026-10-22
+
+### Behoben
+- Kategorie „Verbrauchbar“ bewegte per Rechtsklick nichts (Beta-Test): Gegenstände mit Zauber wurden übersprungen. Sie gehen jetzt über `PickupContainerItem` in den ersten freien Platz der anderen Seite (`BG.FreeSlot`, `BG.IsBankBag`); liegt nichts ab, zurück an den alten Platz. Gestapelt wird dabei nicht.
+
 ## [6.126.1.0] – 2026-10-22
 
 ### Behoben
