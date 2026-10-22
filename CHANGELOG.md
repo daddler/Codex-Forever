@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.128.0.0] – 2026-10-22
+
+### Neu
+- Gespräche im Codex-Stil (Wunsch einer Spielerin, wie Immersion): die Wahlbelohnung mit dem höchsten Verkaufswert (Stückpreis × Anzahl, `DL.SellValue`/`DL.MarkBestValue`) trägt eine Goldmünze, im Tooltip „Höchster Verkaufswert“. Nur wenn alle Preise bekannt sind und genau einer vorn liegt; noch nicht geladene Gegenstände lösen einmal ein Neuzeichnen nach 0,5 s aus. Immer an, keine Einstellung.
+
 ## [6.127.0.0] – 2026-10-22
 
 ### Geändert

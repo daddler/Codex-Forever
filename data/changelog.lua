@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.128.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDie wertvollste Belohnung trägt eine Goldmünze|r – bei Quests mit Auswahl siehst du sofort, welcher Gegenstand beim Händler am meisten bringt.",
+        },
+    },
+    {
         version = "6.127.0.0",
         date    = "22.10.2026",
         notes   = {

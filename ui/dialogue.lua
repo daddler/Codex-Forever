@@ -344,10 +344,17 @@ local function Item(i)
     b.count:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -3, 3)
     b.sel = K.Border(b, 2, r, g, bl, 1, "OVERLAY")
     b.sel:SetShown(false)
+    b.coin = b:CreateTexture(nil, "OVERLAY", nil, 2)
+    b.coin:SetSize(14, 14)
+    b.coin:SetPoint("TOPRIGHT", b, "TOPRIGHT", 3, 3)
+    b.coin:SetTexture("Interface\\MoneyFrame\\UI-GoldIcon")
+    b.coin:Hide()
     b:SetScript("OnEnter", function(self)
         local gt = Tip()
         gt:SetOwner(self, "ANCHOR_RIGHT")
         if gt.SetQuestItem then pcall(gt.SetQuestItem, gt, self.kind, self.index) end
+        local rw = DL.rewards and DL.rewards[self.slot or 0]
+        if rw and rw.best then gt:AddLine("Höchster Verkaufswert", 1, 0.82, 0) end
         gt:Show()
         DL.Compare(gt)
     end)
@@ -626,6 +633,41 @@ end
 
 local function Num(name) local v = Plain(Call(name)) return type(v) == "number" and v or 0 end
 
+-- Verkaufswert eines Belohnungsgegenstands (Stueckpreis x Anzahl) beim
+-- Haendler. nil = unbekannt (Gegenstand noch nicht geladen) - nie 0.
+function DL.SellValue(kind, index, count)
+    local link = Plain(Call("GetQuestItemLink", kind, index))
+    if type(link) ~= "string" then return nil end
+    local price
+    local ci = _G.C_Item
+    if ci and ci.GetItemInfo then
+        price = Plain(select(11, ci.GetItemInfo(link)))
+    elseif _G.GetItemInfo then
+        price = Plain(select(11, _G.GetItemInfo(link)))
+    end
+    if type(price) ~= "number" then return nil end
+    return price * ((type(count) == "number" and count > 0) and count or 1)
+end
+
+-- Wunsch einer Spielerin (wie Immersion): die Wahlbelohnung mit dem
+-- hoechsten Verkaufswert bekommt eine Muenze. Nur wenn alle Werte bekannt
+-- sind und genau einer vorn liegt - sonst nichts, nie geraten.
+function DL.MarkBestValue()
+    local best, bestV, tie, unknown, n = nil, -1, false, false, 0
+    for _, rw in ipairs(DL.rewards) do
+        rw.best = nil
+        if rw.kind == "choice" then
+            n = n + 1
+            local v = DL.SellValue(rw.kind, rw.index, rw.count)
+            if v == nil then unknown = true
+            elseif v > bestV then best, bestV, tie = rw, v, false
+            elseif v == bestV then tie = true end
+        end
+    end
+    if n > 1 and best and bestV > 0 and not tie and not unknown then best.best = true end
+    return unknown
+end
+
 -- Sammelt Text, Zeilen und Belohnungen des Zustands.
 function DL.Collect(state)
     DL.list, DL.rewards = {}, {}
@@ -683,6 +725,15 @@ function DL.Collect(state)
         if xp > 0 then parts[#parts + 1] = xp .. " Erfahrung" end
         c.extra = #parts > 0 and table.concat(parts, "   ") or nil
     end
+    if DL.MarkBestValue() and not DL.valueRetry and _G.C_Timer and _G.C_Timer.After then
+        -- Gegenstaende noch nicht geladen: einmal kurz spaeter neu zeichnen.
+        DL.valueRetry = true
+        _G.C_Timer.After(0.5, function()
+            local cur = DL.current
+            if cur and win and win:IsShown() then DL.Draw(DL.Collect(cur.state)) end
+            DL.valueRetry = false
+        end)
+    end
     DL.current = c
     return c
 end
@@ -721,10 +772,11 @@ function DL.Draw(c)
         y = y + 20
         for i, rw in ipairs(DL.rewards) do
             local b = Item(i)
-            b.kind, b.index = rw.kind, rw.index
+            b.kind, b.index, b.slot = rw.kind, rw.index, i
             b.icon:SetTexture(rw.tex)
             b.count:SetText((type(rw.count) == "number" and rw.count > 1) and rw.count or "")
             b.sel:SetShown(rw.kind == "choice" and DL.choice == rw.index)
+            b.coin:SetShown(rw.best == true)
             b:ClearAllPoints()
             b:SetPoint("TOPLEFT", win, "TOPLEFT", 22 + (i - 1) * 46, -y)
             b:Show()
