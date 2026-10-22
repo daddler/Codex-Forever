@@ -476,7 +476,7 @@ function hud(look) {
   const L = {
     schwarz:     { fill: "rgba(12,12,15,.88)", edge: "#000", ring: "#000" },
     transparent: { fill: "rgba(12,12,15,.45)", edge: "rgba(0,0,0,.55)", ring: "rgba(0,0,0,.55)" },
-    klassisch:   { fill: "url(wood.png) repeat", edge: "#f5c738", ring: "#f5c738", bw: 2 },
+    klassisch:   { fill: "url(wood.png) repeat", edge: "#f5c738", ring: "#f5c738", bw: 1 },
   }[look];
   const box = (x, y, w, h, inner) => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:${L.fill};border:${L.bw || 1}px solid ${L.edge};box-shadow:0 6px 18px rgba(0,0,0,.45)">${inner || ""}</div>`;
   const unit = (x, name, pct, col, right) => box(x, 300, 250, 52,

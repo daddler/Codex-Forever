@@ -878,8 +878,11 @@ function Frame:Layout()
         kind = "none"
         local r = self:Round()
         local D = math.floor(total * 1.5 + 10)
-        r:SetSize(D + 6, D + 6)
-        r.ring:SetSize(D + 6, D + 6)
+        -- 6.122.1.0 (Beta-Test: "der goldene Rahmen ist zu dick"): bei Holz
+        -- ist der Ring gelb und faellt auf - 2 px statt 3 px.
+        local ringW = WeintCodex.GameColors.kachelWood and 4 or 6
+        r:SetSize(D + ringW, D + ringW)
+        r.ring:SetSize(D + ringW, D + ringW)
         r.back:SetSize(D, D)
         r.tex:SetSize(D - 2, D - 2)
         -- 6.110.1.0 (Beta-Test mit Bild: "zu abgehakt" - im kleinen Quadrat
@@ -890,7 +893,7 @@ function Frame:Layout()
         r:ClearAllPoints()
         r:SetPoint("CENTER", self, right and "RIGHT" or "LEFT", right and D * 0.42 or -D * 0.42, 0)
         -- Wie weit der Ring in den Balken ragt (fuer die Schrift dort).
-        self._roundOver = math.max(0, math.ceil((D + 6) / 2 - D * 0.42))
+        self._roundOver = math.max(0, math.ceil((D + ringW) / 2 - D * 0.42))
         r.badge:ClearAllPoints()
         -- Innenseite (zum Balken hin): aussen deckte sie den Begleiterrahmen (6.110.1.0, Bild).
         r.badge:SetPoint("CENTER", r, right and "BOTTOMLEFT" or "BOTTOMRIGHT", right and 4 or -4, 4)

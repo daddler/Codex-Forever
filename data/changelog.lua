@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.122.1.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFKlassisch: dünnerer gelber Rand|r – an allen Flächen 1 statt 2 Bildpunkte, der Ring um die runden Bilder schmaler.",
+        },
+    },
+    {
         version = "6.122.0.0",
         date    = "22.10.2026",
         notes   = {

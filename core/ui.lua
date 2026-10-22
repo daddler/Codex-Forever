@@ -476,7 +476,7 @@ WeintCodex.LOOKS = {
     -- Textur) auf den Kacheln, 2 px gelber Rand. `fill` ist der Mittelton des
     -- Holzes - fuer Flaechen, die nur eine Farbe kennen.
     klassisch   = { label = "Klassisch",   fill = {0.180, 0.110, 0.055, 0.95}, edge = {0.960, 0.780, 0.220, 0.95},
-                    wood = true, edgeSize = 2 },
+                    wood = true, edgeSize = 1 },  -- 6.122.1.0: 2 px war zu dick
 }
 -- Transparent: Deckkraft in Prozent (general.lookAlpha, 0 = ausgeblendet).
 WeintCodex.LOOK_ALPHA_DEFAULT = 45

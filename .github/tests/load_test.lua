@@ -4459,7 +4459,7 @@ do
         WeintCodex.SetLook("transparent", 45)
         assert(math.abs(GC.kachelFill[4] - 0.45) < 1e-9 and math.abs(GC.kachelEdge[4] - 0.55) < 1e-9, "Transparent 45 % nicht wie bisher")
         WeintCodex.SetLook("klassisch")
-        assert(GC.kachelWood and GC.kachelEdgeSize == 2, "Klassisch ohne Holz oder breiten Rand")
+        assert(GC.kachelWood and GC.kachelEdgeSize == 1, "Klassisch ohne Holz oder mit dickem Rand")
         local f = CreateFrame("Frame", nil, UIParent)
         local k = K.Kachel(f)
         assert(k.wood, "Kachel ohne Holz")

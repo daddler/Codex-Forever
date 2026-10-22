@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.122.1.0] – 2026-10-22
+
+### Geändert
+- Klassisch: Rand 1 px statt 2 px (`edgeSize`), Ring der runden Bilder 2 px statt 3 px bei Holz.
+
 ## [6.122.0.0] – 2026-10-22
 
 ### Behoben
