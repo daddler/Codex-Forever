@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.122.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDas Aussehen gilt jetzt auch für die Fenster des Spiels|r – Charakter, Gilde, Händler, Taschen und Co. tragen bei Klassisch Holz, bei Transparent lassen sie die Welt durchscheinen.",
+            "|cff7C6CFFAuch Tooltip, Chat und Swing-Leiste|r folgen dem gewählten Aussehen.",
+        },
+    },
+    {
         version = "6.121.0.0",
         date    = "22.10.2026",
         notes   = {

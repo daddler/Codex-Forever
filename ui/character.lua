@@ -219,7 +219,7 @@ function CS.Layout(f, d, theme)
         L = {}
         if d and d.kachel then
             local b = GC.showcaseBase
-            d.kachel.bg:SetColorTexture(b[1], b[2], b[3], b[4])
+            d.kachel:SetBase(b)
             L.base = true
         end
         for _, key in ipairs({ "Inset", "InsetRight", "InsetLeft" }) do

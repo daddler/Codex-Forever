@@ -390,7 +390,10 @@ end
 -- Akzent, nur einer, den der Spieler waehlt.
 function K.ResetHighlight()
     -- 6.105.0.0: Erscheinungsbild (Fuellung und Rand der Kacheln), vor dem Aufbau.
-    if WeintCodex.SetLook then WeintCodex.SetLook(K.Get("general", "look"), K.Get("general", "lookAlpha")) end
+    if WeintCodex.SetLook then
+        WeintCodex.SetLook(K.Get("general", "look"), K.Get("general", "lookAlpha"))
+        K.RepaintKacheln()
+    end
     local h = K.Get("general", "highlight")
     if h == "accent" then WeintCodex.SetVioletAccent()
     elseif h == "custom" then
@@ -1137,6 +1140,58 @@ end
 -- Die Kachel (Grundsatz 3): Graphit 88 %, 1 px Schwarz, Lichtkante oben,
 -- weicher Schatten. opts = { alpha = 0..1, shadow = px (0 = keiner),
 -- border = false }.
+-- 6.122.0.0 (Beta-Test: "die einzelnen Fenster fehlen - die UI muss
+-- komplett mit der Optik durch das ganze Spiel gehen"): jede Kachel malt
+-- sich nach dem Aussehen und malt sich neu, wenn es feststeht. Fenster des
+-- Spiels werden oft VOR dem Einloggen gestaltet (ADDON_LOADED), als noch
+-- Schwarz galt - darum K.RepaintKacheln nach WeintCodex.SetLook.
+local kacheln = setmetatable({}, { __mode = "k" })
+K.kacheln = kacheln
+
+function K.PaintKachel(o, keepEdge)
+    local GC = WeintCodex.GameColors
+    local f = GC.kachelFill
+    local a = o.alpha or (o.base and o.base[4]) or f[4]
+    -- Transparent gilt auch fuer Fenster mit eigener Deckkraft.
+    if GC.lookTransparent then a = math.min(a, f[4]) end
+    o.wood = GC.kachelWood and true or false
+    if o.wood then
+        o.bg:SetTexture(K.MEDIA .. "wood", "REPEAT", "REPEAT")
+        if o.bg.SetHorizTile then o.bg:SetHorizTile(true) o.bg:SetVertTile(true) end
+        o.bg:SetVertexColor(1, 1, 1, a)
+    else
+        local c = o.base or f
+        if o.bg.SetHorizTile then o.bg:SetHorizTile(false) o.bg:SetVertTile(false) end
+        o.bg:SetColorTexture(c[1], c[2], c[3], a)
+    end
+    if not keepEdge and o.border then
+        local e = GC.kachelEdge
+        o.border:SetColor(e[1], e[2], e[3], e[4])
+        o.border:SetSize(GC.kachelEdgeSize or 1)
+    end
+end
+
+-- Eine einzelne Flaeche (Tooltip, Chat, Swing-Leiste ...) wie eine Kachel
+-- faerben - Holz oder Farbe - und beim Aussehenswechsel mitnehmen.
+local flats = setmetatable({}, { __mode = "k" })
+function K.LookFill(tex, alpha, border)
+    local o = flats[tex]
+    if not o then
+        o = { bg = tex }
+        flats[tex] = o
+        kacheln[o] = true
+    end
+    o.alpha, o.border = alpha, border or o.border
+    K.PaintKachel(o)
+    return o
+end
+
+function K.RepaintKacheln()
+    local n = 0
+    for o in pairs(kacheln) do K.PaintKachel(o) n = n + 1 end
+    return n
+end
+
 function K.Kachel(frame, opts)
     opts = opts or {}
     local GC = WeintCodex.GameColors
@@ -1144,15 +1199,8 @@ function K.Kachel(frame, opts)
     local f = GC.kachelFill
     o.bg = frame:CreateTexture(nil, "BACKGROUND", nil, -7)
     o.bg:SetAllPoints(frame)
-    -- 6.121.0.0: "Klassisch" ist Holz - gekachelte Maserung statt Farbe.
-    o.wood = GC.kachelWood and true or false
-    if o.wood then
-        o.bg:SetTexture(K.MEDIA .. "wood", "REPEAT", "REPEAT")
-        if o.bg.SetHorizTile then o.bg:SetHorizTile(true) o.bg:SetVertTile(true) end
-        o.bg:SetVertexColor(1, 1, 1, opts.alpha or f[4])
-    else
-        o.bg:SetColorTexture(f[1], f[2], f[3], opts.alpha or f[4])
-    end
+    o.alpha = opts.alpha
+    K.PaintKachel(o)
     local l = GC.lightEdge
     o.light = frame:CreateTexture(nil, "BORDER", nil, 1)
     o.light:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
@@ -1162,14 +1210,20 @@ function K.Kachel(frame, opts)
     local e = GC.kachelEdge or { 0, 0, 0, 1 }
     o.border = K.Border(frame, GC.kachelEdgeSize or 1, e[1], e[2], e[3], e[4], "BORDER")
     if opts.border == false then o.border:SetShown(false) end
+    kacheln[o] = true
     if (opts.shadow or 6) > 0 then
         o.shadow = K.Glow(frame, { spread = opts.shadow or 6, shadow = true })
     end
     function o:SetAlpha(a)
         self.bg:SetAlpha(1)
-        if self.wood then self.bg:SetVertexColor(1, 1, 1, a) return end
-        local c = GC.kachelFill
-        self.bg:SetColorTexture(c[1], c[2], c[3], a)
+        self.alpha = a
+        K.PaintKachel(self, true)
+    end
+    -- Eigene Grundfarbe (Charakterfenster, Tafeln): gilt, solange das
+    -- Aussehen kein Holz ist.
+    function o:SetBase(c)
+        self.base = c
+        K.PaintKachel(self, true)
     end
     function o:SetShown(v)
         if v then self.bg:Show() self.light:Show() else self.bg:Hide() self.light:Hide() end

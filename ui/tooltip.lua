@@ -85,8 +85,7 @@ local function StyleHealthBar()
     local bg = sb:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(sb)
     local f = WeintCodex.GameColors.kachelFill
-    bg:SetColorTexture(f[1], f[2], f[3], 0.94)
-    K.Border(sb, 1, 0, 0, 0, 1, "BORDER")
+    K.LookFill(bg, 0.94, K.Border(sb, 1, 0, 0, 0, 1, "BORDER"))
     for _, key in ipairs({ "BorderLeft", "BorderRight", "BorderMid", "Border" }) do
         local r = sb[key]
         if type(r) == "table" and r.SetAlpha then r:SetAlpha(0) end

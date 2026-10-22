@@ -493,6 +493,7 @@ function WeintCodex.SetLook(key, alphaPct)
         GC.kachelEdge[4] = math.min(1, a * 0.55 / 0.45)
     end
     GC.kachelWood = look.wood and true or false
+    GC.lookTransparent = key == "transparent"
     GC.kachelEdgeSize = look.edgeSize or 1
     return look
 end

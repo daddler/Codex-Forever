@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.122.0.0] – 2026-10-22
+
+### Behoben
+- Fenster des Spiels blieben bei „Klassisch“ schwarz (Beta-Test mit Bild): sie werden oft vor dem Einloggen gestaltet, als das Aussehen noch nicht galt, und Charakterfenster/Tafeln überschrieben die Füllung mit eigener Farbe. Jede Kachel ist jetzt angemeldet und wird nach `SetLook` neu gemalt (`K.PaintKachel`, `K.RepaintKacheln`); eigene Grundfarben über `kachel:SetBase` gelten nur ohne Holz.
+- Tooltip, Chat, Swing-Leiste und Gruppen-Abzeichen über `K.LookFill`: Holz bzw. Farbe des Aussehens, Rand mit.
+- Transparent gilt auch für Fenster mit eigener Deckkraft (höchstens die gewählte).
+
 ## [6.121.0.0] – 2026-10-22
 
 ### Hinzugefügt

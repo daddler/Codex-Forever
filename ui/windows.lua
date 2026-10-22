@@ -565,7 +565,7 @@ function W.NavEntry(f, r, atlas, sc)
         d = { kachel = K.Kachel(f, { shadow = 0 }) }
         own[d.kachel.bg], own[d.kachel.light] = true, true
         local s1 = C.surface1
-        d.kachel.bg:SetColorTexture(s1[1], s1[2], s1[3], 0.95)
+        d.kachel:SetBase({ s1[1], s1[2], s1[3], 0.95 })
         local hl = f:CreateTexture(nil, "HIGHLIGHT")
         hl:SetAllPoints(f)
         local h = WeintCodex.GameColors.hoverFill
@@ -1581,7 +1581,7 @@ local function SkinTab(tab, accent, sel)
             own[d.kachel.bg], own[d.kachel.light] = true, true
             -- Eine Stufe heller als die Fensterkachel, sonst verschwindet er darin.
             local s1 = C.surface1
-            d.kachel.bg:SetColorTexture(s1[1], s1[2], s1[3], 0.95)
+            d.kachel:SetBase({ s1[1], s1[2], s1[3], 0.95 })
         end
         local hl = tab:CreateTexture(nil, "HIGHLIGHT")
         hl:SetAllPoints(d.icon or tab)

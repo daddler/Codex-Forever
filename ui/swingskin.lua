@@ -112,8 +112,8 @@ function SW.Skin(holder)
     local f = GC.kachelFill
     d.bg = sb:CreateTexture(nil, "BACKGROUND", nil, -7)
     d.bg:SetAllPoints(sb)
-    d.bg:SetColorTexture(f[1], f[2], f[3], f[4])
     d.border = K.Border(sb, 1, 0, 0, 0, 1, "OVERLAY")
+    K.LookFill(d.bg, f[4], d.border)
     Fonts(sb)
     if holder ~= sb then Fonts(holder) end
     -- Setzt das Spiel die Textur neu, wieder die eigene (nur dann).

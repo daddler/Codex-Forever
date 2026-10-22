@@ -4464,8 +4464,20 @@ do
         local k = K.Kachel(f)
         assert(k.wood, "Kachel ohne Holz")
         k:SetAlpha(0.5)
+        -- 6.122.0.0: vor dem Einloggen gebaut (Schwarz), danach Klassisch - wird Holz.
+        WeintCodex.SetLook("schwarz")
+        local early = K.Kachel(CreateFrame("Frame", nil, UIParent))
+        local tex = CreateFrame("Frame", nil, UIParent):CreateTexture()
+        local flat = K.LookFill(tex, 0.9)
+        assert(not early.wood and not flat.wood, "Schwarz als Holz")
+        WeintCodex.SetLook("klassisch")
+        K.RepaintKacheln()
+        assert(early.wood and flat.wood, "frueh gebaute Kachel bleibt ohne Holz")
+        early:SetBase({ 0.1, 0.1, 0.1, 0.97 })
+        assert(early.wood, "eigene Grundfarbe schlaegt Holz")
     end)
     WeintCodex.SetLook("schwarz")
+    K.RepaintKacheln()
     Check(ok, "Aussehen: Transparent einstellbar, Klassisch aus Holz" .. (ok and "" or (": " .. tostring(err))))
 end
 

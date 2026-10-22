@@ -362,7 +362,7 @@ end
 function S.Panel(f)
     local k = K.Kachel(f, { alpha = 1, shadow = 8 })
     local b = GC.showcaseBase
-    k.bg:SetColorTexture(b[1], b[2], b[3], b[4])
+    k:SetBase(b)
     Own(k.bg)
     Own(k.light)
     if k.shadow and k.shadow.tex then Own(k.shadow.tex) end

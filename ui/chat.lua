@@ -281,7 +281,7 @@ local function ApplyFrame(cf, d)
     end
     local a = (Opt("bgAlpha") or 60) / 100
     local fill = WeintCodex.GameColors.kachelFill
-    d.bg:SetColorTexture(fill[1], fill[2], fill[3], a)
+    K.LookFill(d.bg, a)
     local panel = WeintCodex.Colors.bgPanel
     -- 6.33.4.0 (Beta-Test): bei 0 % ganz durchsichtig - vorher blieben
     -- Reiterzeile (+15 %), Linie und Rand stehen.
