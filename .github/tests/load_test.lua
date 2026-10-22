@@ -4532,7 +4532,12 @@ do
         local n, junk = 0, nil
         for _, b in ipairs(blocks or {}) do n = n + b.n if b.key == "junk" then junk = b end end
         assert(n == 3 and junk and junk.n == 1, "Bank: Zahl oder Schrott falsch: " .. n)
+        BG.bankOpen = true
         assert(BK.Take(BK.Items()) == 3, "Herausnehmen")
+        -- 6.126.1.0: Stueck fuer Stueck, gesperrte spaeter noch einmal.
+        while BG.Step() do end
+        assert(#used == 3 and #BG.queue == 0, "nicht alle bewegt: " .. #used)
+        BG.bankOpen = false
         _G.BankFrame:Hide()
         assert(BK.Refresh() == nil, "Fenster ohne Bank")
         K.Set("bags", "categories", nil)

@@ -733,23 +733,71 @@ end
 -- Kampf. Gegenstaende, die einen Zauber wirken, laesst das Spiel so
 -- nicht zu - die bleiben, wo sie sind.
 BG.bankOpen = false
+
+-- 6.126.1.0 (Beta-Test: "ich muss mehrmals rechtsklicken, manchmal geht's
+-- gar nicht"): alles auf einmal geschickt, sperrt das Spiel jeden Platz,
+-- solange es ihn bewegt, und verwirft die Bewegungen dazwischen still.
+-- Jetzt eine Warteschlange: ein Gegenstand je Schritt, gesperrte Plaetze
+-- werden spaeter noch einmal versucht. Bricht im Kampf und bei
+-- geschlossener Bank ab.
+BG.STEP = 0.12
+BG.RETRIES = 25
+local queue, qTicker = {}, nil
+BG.queue = queue
+
+local function Movable(e)
+    local info = Info(e.bag, e.slot)
+    local id = info and K.Plain(info.itemID)
+    if type(id) ~= "number" then return "gone" end
+    if e.id and id ~= e.id then return "gone" end
+    if K.Plain(info.isLocked) then return "locked" end
+    local ci = _G.C_Item
+    local spell = ci and ci.GetItemSpell and select(2, pcall(ci.GetItemSpell, id))
+    if spell then return "gone" end   -- wuerde benutzt statt bewegt
+    return "ok"
+end
+
+function BG.Step()
+    local cc = _G.C_Container
+    if K.InCombat() or not BG.bankOpen or not (cc and cc.UseContainerItem) then
+        for i = #queue, 1, -1 do queue[i] = nil end
+    end
+    local e = queue[1]
+    if not e then
+        if qTicker then if qTicker.Cancel then qTicker:Cancel() end qTicker = nil end
+        return false
+    end
+    local st = Movable(e)
+    if st == "ok" then
+        table.remove(queue, 1)
+        pcall(cc.UseContainerItem, e.bag, e.slot)
+    elseif st == "locked" then
+        e.tries = (e.tries or 0) + 1
+        table.remove(queue, 1)
+        if e.tries < BG.RETRIES then queue[#queue + 1] = e end
+    else
+        table.remove(queue, 1)
+    end
+    return true
+end
+
+-- Gibt die Zahl der eingereihten Gegenstaende zurueck.
 function BG.Transfer(items)
     if K.InCombat() or not BG.bankOpen then return 0 end
-    local cc = _G.C_Container
-    if not (cc and cc.UseContainerItem) then return 0 end
     local n = 0
     for _, e in ipairs(items or {}) do
         if e.bag and e.slot and e.cat ~= "empty" then
             local info = Info(e.bag, e.slot)
             local id = info and K.Plain(info.itemID)
-            local ci = _G.C_Item
-            local spell = type(id) == "number" and ci and ci.GetItemSpell and select(2, pcall(ci.GetItemSpell, id))
-            -- Was einen Zauber wirkt, wuerde benutzt statt eingelagert (und
-            -- das Spiel sperrt es fuer Addons) - liegen lassen.
-            if info and not K.Plain(info.isLocked) and not spell then
-                if pcall(cc.UseContainerItem, e.bag, e.slot) then n = n + 1 end
+            if type(id) == "number" then
+                queue[#queue + 1] = { bag = e.bag, slot = e.slot, id = id }
+                n = n + 1
             end
         end
+    end
+    if n > 0 and not qTicker then
+        BG.Step()
+        if _G.C_Timer and _G.C_Timer.NewTicker and #queue > 0 then qTicker = _G.C_Timer.NewTicker(BG.STEP, BG.Step) end
     end
     return n
 end

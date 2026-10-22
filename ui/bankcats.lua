@@ -62,14 +62,10 @@ function GB.Items()
     return out
 end
 
+-- Ueber die Warteschlange der Taschen (BG.Transfer): ein Gegenstand je
+-- Schritt - auf einmal verwarf das Spiel die meisten (6.126.1.0).
 function GB.Take(list)
-    local cc = _G.C_Container
-    if K.InCombat() or not (cc and cc.UseContainerItem) then return 0 end
-    local n = 0
-    for _, e in ipairs(list or {}) do
-        if pcall(cc.UseContainerItem, e.bag, e.slot) then n = n + 1 end
-    end
-    return n
+    return BG.Transfer(list)
 end
 
 local function Cell(i)

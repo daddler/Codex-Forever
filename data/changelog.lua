@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.126.1.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFEin Rechtsklick genügt|r – Kategorien wandern jetzt Stück für Stück zwischen Taschen und Bank, statt dass das Spiel die meisten Gegenstände verwirft.",
+        },
+    },
+    {
         version = "6.126.0.0",
         date    = "22.10.2026",
         notes   = {

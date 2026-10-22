@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.126.1.0] – 2026-10-22
+
+### Behoben
+- Kategorie per Rechtsklick in die Bank bzw. heraus: auf einmal geschickt, verwarf das Spiel die meisten Bewegungen (Beta-Test: „mehrmals rechtsklicken, manchmal gar nicht“). Warteschlange `BG.queue`/`BG.Step` (alle 0,12 s ein Gegenstand, gesperrte bis zu 25-mal neu versucht, Abbruch im Kampf oder bei geschlossener Bank); `ui/bankcats.lua` nutzt sie mit.
+
 ## [6.126.0.0] – 2026-10-22
 
 ### Hinzugefügt
