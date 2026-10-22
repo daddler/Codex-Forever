@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.141.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Planer sagt, was ein Klick tut|r – Hinweise über Weg und Einkaufsliste, dazu „Ganze Einkaufsliste auf die Merkliste“.",
+        },
+    },
+    {
         version = "6.140.0.0",
         date    = "22.10.2026",
         notes   = {

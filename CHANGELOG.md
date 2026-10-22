@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.141.0.0] – 2026-10-22
+
+### Geändert
+- Planer (Beta-Test: „es muss irgendwo stehen, dass man das anklicken kann“): Tipp unter „Weg“ und „Einkaufsliste“, dazu eine Zeile „+ Ganze Einkaufsliste auf die Merkliste“.
+
 ## [6.140.0.0] – 2026-10-22
 
 ### Geändert

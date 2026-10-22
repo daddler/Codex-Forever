@@ -991,6 +991,8 @@ function PT.DrawPlanner(body, w)
     local plan = PT.Plan(key, s.rank, target, cap)
     local lines = PT.PlanLines(plan)
     y = Head(body, y, w, "Weg", #lines .. " Schritte")
+    -- 6.141.0.0 (Beta-Test: "es muss irgendwo stehen, dass man das anklicken kann").
+    y = Note(body, y, w, WeintCodex.ColorText("accent", "Tipp:") .. " Klick auf einen Herstell-Schritt setzt das Rezept mit dieser Anzahl auf die Merkliste – die Materialien dafür stehen dann dort.")
     local risky = false
     for _, l in ipairs(lines) do
         local right = l.right
@@ -1011,6 +1013,12 @@ function PT.DrawPlanner(body, w)
     end
     y = y - 8
     y = Head(body, y, w, "Einkaufsliste", plan.unknown > 0 and ("ab " .. Money(plan.total)) or Money(plan.total))
+    y = Note(body, y, w, WeintCodex.ColorText("accent", "Tipp:") .. " Klick auf einen Gegenstand setzt ihn auf die Merkliste – oder alles auf einmal:")
+    y = Row(body, y, w, "+ Ganze Einkaufsliste auf die Merkliste", "", { tone = "accent",
+        onClick = function()
+            for _, e in ipairs(plan.shop) do PT.AddWatchItem(e.id, e.count) end
+            print(WeintCodex.AC .. "[WeintCodex]|r " .. #plan.shop .. " Gegenstände auf der Merkliste.")
+        end })
     for _, e in ipairs(plan.shop) do
         local mine = PT.Have(e.id)
         y = Row(body, y, w, e.count .. "× " .. PRO.ItemName(e.id),
