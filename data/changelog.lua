@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.132.0.1",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFSkill-Weg rechts neben den Berufsreitern|r – er lag über ihnen und folgt jetzt der gewählten Optik (z. B. Transparent).",
+        },
+    },
+    {
         version = "6.132.0.0",
         date    = "22.10.2026",
         notes   = {

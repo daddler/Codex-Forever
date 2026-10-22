@@ -1140,12 +1140,15 @@ local function BuildSide(host)
     if side then return side end
     local f = CreateFrame("Frame", nil, host)
     f:SetWidth(300)
-    f:SetPoint("TOPLEFT", host, "TOPRIGHT", 6, 0)
-    f:SetPoint("BOTTOMLEFT", host, "BOTTOMRIGHT", 6, 0)
     local bg = f:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(f)
     local c = C.bgDark or C.surface1
     bg:SetColorTexture(c[1], c[2], c[3], 0.94)
+    -- 6.132.0.1: in der Optik der Oberflaeche (Transparent, Holz ...).
+    local K = WeintCodex.UIKit
+    if K and K.LookFill and K.Border then
+        pcall(K.LookFill, bg, 0.94, K.Border(f, 1, 0, 0, 0, 1, "BORDER"))
+    end
     f.title = WeintCodex.Label(f, "", { size = 13, color = "textBright", font = WeintCodex.Fonts.sansSemi })
     f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -12)
     f.title:SetPoint("RIGHT", f, "RIGHT", -14, 0)
@@ -1233,10 +1236,33 @@ function PT.FillSide(f, key)
     return true
 end
 
+-- 6.132.0.1 (Beta-Test: "die Liste muss rechts neben die Unterpunkte"):
+-- rechts neben allem, was am Fenster heraussteht (Reiter der Berufe).
+PT.TAB_W = 58
+function PT.PlaceSide(f, host)
+    local right = Plain(host:GetRight())
+    local extra = 0
+    if type(right) == "number" and host.GetChildren then
+        for _, ch in ipairs({ host:GetChildren() }) do
+            if ch ~= f and ch ~= f.open and ch.IsShown and ch:IsShown() and ch.GetRight then
+                local r = Plain(ch:GetRight())
+                if type(r) == "number" and r - right > extra and r - right < 150 then extra = r - right end
+            end
+        end
+    end
+    -- Haengen die Reiter nicht am Fenster, Platz fuer sie lassen (im Bild ~56 px).
+    if extra < PT.TAB_W then extra = PT.TAB_W end
+    f:ClearAllPoints()
+    f:SetPoint("TOPLEFT", host, "TOPRIGHT", extra + 6, 0)
+    f:SetPoint("BOTTOMLEFT", host, "BOTTOMRIGHT", extra + 6, 0)
+    PT.sideOffset = extra + 6
+end
+
 function PT.RefreshSide()
     local host = _G.ProfessionsFrame or _G.TradeSkillFrame
     if type(host) ~= "table" or not host.IsShown then return end
     local f = BuildSide(host)
+    PT.PlaceSide(f, host)
     local hidden = SideHidden()
     f.open:SetShown(hidden and host:IsShown())
     if hidden or not host:IsShown() then f:Hide() return end

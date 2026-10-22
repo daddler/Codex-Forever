@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.132.0.1] – 2026-10-22
+
+### Behoben
+- Skill-Weg lag über den Berufsreitern rechts am Fenster (Beta-Test): `PT.PlaceSide` setzt ihn rechts neben alles, was am Fenster heraussteht, mindestens `PT.TAB_W` (58 px); Fläche über `K.LookFill` in der Optik der Oberfläche.
+
 ## [6.132.0.0] – 2026-10-22
 
 ### Neu
