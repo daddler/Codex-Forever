@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.122.2.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFF„Klassisch“ heißt jetzt „Holz“|r – und reicht weiter: Schadensanzeige, Questliste, Minikarte, die Leiste über dem Chat und die Knöpfe im Spielmenü tragen Holz und gelben Rand.",
+        },
+    },
+    {
         version = "6.122.1.0",
         date    = "22.10.2026",
         notes   = {

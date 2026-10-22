@@ -1155,7 +1155,9 @@ function K.PaintKachel(o, keepEdge)
     -- Transparent gilt auch fuer Fenster mit eigener Deckkraft.
     if GC.lookTransparent then a = math.min(a, f[4]) end
     o.wood = GC.kachelWood and true or false
-    if o.wood then
+    if not o.bg then
+        -- nur ein Rand (K.LookEdge)
+    elseif o.wood then
         o.bg:SetTexture(K.MEDIA .. "wood", "REPEAT", "REPEAT")
         if o.bg.SetHorizTile then o.bg:SetHorizTile(true) o.bg:SetVertTile(true) end
         o.bg:SetVertexColor(1, 1, 1, a)
@@ -1164,7 +1166,14 @@ function K.PaintKachel(o, keepEdge)
         if o.bg.SetHorizTile then o.bg:SetHorizTile(false) o.bg:SetVertTile(false) end
         o.bg:SetColorTexture(c[1], c[2], c[3], a)
     end
-    if not keepEdge and o.border then
+    -- Knoepfe heben sich bei Holz von der Flaeche ab: ein warmer Schein
+    -- dazu (additiv - Holz kann man nicht heller einfaerben).
+    if o.liftTex then o.liftTex:SetShown(o.wood) end
+    if not keepEdge and o.border and o.plainEdge and not o.wood then
+        local e = o.plainEdge
+        o.border:SetColor(e[1], e[2], e[3], e[4] or 1)
+        o.border:SetSize(1)
+    elseif not keepEdge and o.border then
         local e = GC.kachelEdge
         o.border:SetColor(e[1], e[2], e[3], e[4])
         o.border:SetSize(GC.kachelEdgeSize or 1)
@@ -1174,16 +1183,36 @@ end
 -- Eine einzelne Flaeche (Tooltip, Chat, Swing-Leiste ...) wie eine Kachel
 -- faerben - Holz oder Farbe - und beim Aussehenswechsel mitnehmen.
 local flats = setmetatable({}, { __mode = "k" })
-function K.LookFill(tex, alpha, border)
+-- `plainEdge`: Randfarbe ohne Holz (sonst der Rand des Aussehens).
+function K.LookFill(tex, alpha, border, plainEdge)
     local o = flats[tex]
     if not o then
         o = { bg = tex }
         flats[tex] = o
         kacheln[o] = true
     end
-    o.alpha, o.border = alpha, border or o.border
+    o.alpha, o.border, o.plainEdge = alpha, border or o.border, plainEdge or o.plainEdge
     K.PaintKachel(o)
     return o
+end
+
+-- Nur ein Rand, der bei Holz gelb wird (Minikarte).
+function K.LookEdge(border, plainEdge)
+    local o = flats[border]
+    if not o then
+        o = { border = border }
+        flats[border] = o
+        kacheln[o] = true
+    end
+    o.plainEdge = plainEdge
+    K.PaintKachel(o)
+    return o
+end
+
+-- Dunkle Leiste (Kopf, Reiterzeile): bei Holz nur ein Hauch Schatten.
+function K.LookStrip(tex, c, alpha)
+    if WeintCodex.GameColors.kachelWood then tex:SetColorTexture(0, 0, 0, alpha > 0 and 0.18 or 0)
+    else tex:SetColorTexture(c[1], c[2], c[3], alpha) end
 end
 
 function K.RepaintKacheln()
@@ -1200,6 +1229,12 @@ function K.Kachel(frame, opts)
     o.bg = frame:CreateTexture(nil, "BACKGROUND", nil, -7)
     o.bg:SetAllPoints(frame)
     o.alpha = opts.alpha
+    if opts.lift then
+        o.liftTex = frame:CreateTexture(nil, "BACKGROUND", nil, -6)
+        o.liftTex:SetAllPoints(frame)
+        o.liftTex:SetColorTexture(1, 0.80, 0.50, 0.16)
+        if o.liftTex.SetBlendMode then o.liftTex:SetBlendMode("ADD") end
+    end
     K.PaintKachel(o)
     local l = GC.lightEdge
     o.light = frame:CreateTexture(nil, "BORDER", nil, 1)

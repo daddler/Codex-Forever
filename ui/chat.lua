@@ -280,13 +280,18 @@ local function ApplyFrame(cf, d)
         cf:SetShadowColor(0, 0, 0, 1)
     end
     local a = (Opt("bgAlpha") or 60) / 100
-    local fill = WeintCodex.GameColors.kachelFill
     K.LookFill(d.bg, a)
     local panel = WeintCodex.Colors.bgPanel
     -- 6.33.4.0 (Beta-Test): bei 0 % ganz durchsichtig - vorher blieben
     -- Reiterzeile (+15 %), Linie und Rand stehen.
     local clear = a <= 0
-    d.strip:SetColorTexture(panel[1], panel[2], panel[3], clear and 0 or math.min(1, a + 0.15))
+    if WeintCodex.GameColors.kachelWood then
+        -- 6.122.2.0 (Beta-Test: "die Leiste ueber dem Chat ist noch dunkel"):
+        -- bei Holz nur ein Hauch Schatten, das Holz darunter bleibt sichtbar.
+        d.strip:SetColorTexture(0, 0, 0, clear and 0 or 0.18)
+    else
+        d.strip:SetColorTexture(panel[1], panel[2], panel[3], clear and 0 or math.min(1, a + 0.15))
+    end
     local hair = WeintCodex.Colors.border
     d.hair:SetColorTexture(hair[1], hair[2], hair[3], clear and 0 or 1)
     for _, e in ipairs(d.edges or {}) do e:SetShown(not clear) end

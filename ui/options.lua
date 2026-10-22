@@ -69,7 +69,7 @@ local GROUPS = {
 O.LOOK_CELL = { type = "dropdown", label = "Design der Oberfläche", key = "look", reload = true, items = {
         { value = "schwarz",     text = "Schwarz (Standard)" },
         { value = "transparent", text = "Transparent – die Welt scheint durch" },
-        { value = "klassisch",   text = "Klassisch – Holz mit gelbem Rand" } },
+        { value = "klassisch",   text = "Holz – mit gelbem Rand" } },
     disabled = function() return not K.UIEnabled() end,
     tooltip = "Füllung und Rand aller Flächen der Oberfläche: Rahmen, Leisten, Schadensanzeige, Tooltips. Gilt nach dem Neuladen." }
 

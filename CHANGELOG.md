@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.122.2.0] – 2026-10-22
+
+### Geändert
+- Design „Klassisch“ heißt „Holz“ (Schlüssel bleibt `klassisch`).
+- Holz auch an: Knöpfen der Fenster/Spielmenü (`SetBase` statt fester Farbe, additiver warmer Schein `lift`), Reiterzeile des Chats und Kopf der Schadensanzeige (`K.LookStrip`, nur ein Hauch Schatten), Schadensanzeige und Questliste (`K.LookFill` mit eigener Randfarbe ohne Holz), Rand der Minikarte (`K.LookEdge`).
+
 ## [6.122.1.0] – 2026-10-22
 
 ### Geändert

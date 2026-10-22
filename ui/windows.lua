@@ -1652,10 +1652,13 @@ local function SkinPanelButton(b, states)
             if ok and type(t) == "table" then Hide(t) end
         end
     end
-    local d = K.Kachel(b, { shadow = 0 })
+    -- 6.122.2.0 (Beta-Test: "Buttons im Spielmenue zu dunkel"): Grundfarbe
+    -- ueber SetBase (bei Holz Holz statt Schwarz) und heller als die Flaeche.
+    local d = K.Kachel(b, { shadow = 0, lift = true })
     own[d.bg], own[d.light] = true, true
+    if d.liftTex then own[d.liftTex] = true end
     local s1 = C.surface1
-    d.bg:SetColorTexture(s1[1], s1[2], s1[3], 0.95)
+    d:SetBase({ s1[1], s1[2], s1[3], 0.95 })
     local mine = b:CreateTexture(nil, "HIGHLIGHT")
     mine:SetAllPoints(b)
     local h = WeintCodex.GameColors.hoverFill

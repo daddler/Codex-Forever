@@ -325,8 +325,8 @@ function Win:Layout()
     local w, n, h = Width(), Opt("bars"), Opt("barHeight")
     local f = self.frame
     f:SetSize(w, 24 + n * (h + 1) + 3)
-    local bg = C.bgDark
-    f.bg:SetColorTexture(bg[1], bg[2], bg[3], (Opt("bgAlpha") or 85) / 100)
+    -- 6.122.2.0: folgt dem Aussehen (Holz, Transparent).
+    K.LookFill(f.bg, (Opt("bgAlpha") or 85) / 100, f.edge, { C.border[1], C.border[2], C.border[3], 1 })
     for i = 1, math.max(n, #self.rows) do
         local r = self.rows[i] or Row(self)
         self.rows[i] = r
@@ -2239,7 +2239,7 @@ local function CreateWindow(i)
     f:SetClampedToScreen(true)
     f.bg = f:CreateTexture(nil, "BACKGROUND")
     f.bg:SetAllPoints(f)
-    WeintCodex.DrawBorder(f, C.border[1], C.border[2], C.border[3], 1, 1)
+    f.edge = K.Border(f, 1, C.border[1], C.border[2], C.border[3], 1, "BORDER")
     f.shadow = K.Glow(f, { spread = 7, shadow = true })
 
     local header = CreateFrame("Frame", nil, f)
@@ -2248,8 +2248,7 @@ local function CreateWindow(i)
     header:SetHeight(21)
     local hb = header:CreateTexture(nil, "BACKGROUND")
     hb:SetAllPoints(header)
-    local s2 = C.surface2
-    hb:SetColorTexture(s2[1], s2[2], s2[3], 1)
+    K.LookStrip(hb, C.surface2, 1)
     w.header = header
     -- Ziehen an der Kopfzeile (6.30.32.0, Wunsch: "verschieben und fixieren
     -- auch ohne den Gestaltungsmodus"). Der Platz ist derselbe wie im

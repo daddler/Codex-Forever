@@ -790,7 +790,7 @@ WL.LOOK_CARDS = {
     { key = "none",        head = "Wie bisher",  text = "Die Rahmen des Spiels bleiben. Nur die Helfer kommen dazu." },
     { key = "schwarz",     head = "Schwarz",     text = "Ruhig und klar lesbar – die WeintCodex-Oberfläche." },
     { key = "transparent", head = "Transparent", text = "Leichter: die Spielwelt scheint durch die Flächen." },
-    { key = "klassisch",   head = "Klassisch",   text = "Holz mit gelbem Rand – an das Spiel angelehnt." },
+    { key = "klassisch",   head = "Holz",        text = "Holzmaserung mit gelbem Rand – an das Spiel angelehnt." },
 }
 
 -- Vorschau rechts: Beispielflaeche in Fuellung und Rand des Bilds.

@@ -99,11 +99,10 @@ end
 function QT.Apply()
     local t = Tracker()
     if not t or not panel then return end
-    local bg = C.bgDark
-    panel.bg:SetColorTexture(bg[1], bg[2], bg[3], (Opt("bgAlpha") or 75) / 100)
-    border:SetShown(Opt("border"))
+    -- 6.122.2.0: folgt dem Aussehen (Holz, Transparent).
     local b = C.border
-    border:SetColor(b[1], b[2], b[3], 1)
+    K.LookFill(panel.bg, (Opt("bgAlpha") or 75) / 100, border, { b[1], b[2], b[3], 1 })
+    border:SetShown(Opt("border"))
     HideArt(t)
 
     local pad = Opt("padding") or 8
