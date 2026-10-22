@@ -4430,6 +4430,22 @@ do
     Check(ok, "Erinnerungen: Stufe und Voraussetzungen je Klasse" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.118.1.0: neue Klasse bekommt ihre Vorschlaege einmal dazu.
+do
+    local R = WeintCodex.UIReminders
+    local oRules, oSeed = K.Get("reminders", "rules"), K.Get("reminders", "seeded")
+    local ok, err = pcall(function()
+        local list = { { kind = "buff", spell = "1", class = "__FREMD" } }
+        K.Set("reminders", "seeded", {})
+        assert(R.SeedClass(list, "SHAMAN") == true and #list > 1, "Vorschlaege nicht ergaenzt")
+        local n = #list
+        assert(R.SeedClass(list, "SHAMAN") == false and #list == n, "doppelt ergaenzt")
+    end)
+    K.Set("reminders", "rules", oRules)
+    K.Set("reminders", "seeded", oSeed)
+    Check(ok, "Erinnerungen: Vorschlaege einer neuen Klasse einmal ergaenzt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.

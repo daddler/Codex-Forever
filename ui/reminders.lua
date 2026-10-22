@@ -365,6 +365,28 @@ function R.Rules()
     return R.Suggestions()
 end
 
+-- 6.118.1.0 (Beta-Test: neuer Schamane, "keine Erinnerungen in der Liste"):
+-- die Regeln gelten fuer den Account; wer schon Regeln hatte, bekam die
+-- Vorschlaege einer neuen Klasse nie. Einmal je Klasse kommen sie dazu,
+-- wenn es fuer sie noch keine Regel gibt - geloeschte bleiben geloescht.
+function R.SeedClass(list, class)
+    if type(list) ~= "table" then return false end
+    class = class or PlayerClass()
+    if not class then return false end
+    local seeded = Opt("seeded")
+    if type(seeded) == "table" and seeded[class] then return false end
+    seeded = type(seeded) == "table" and seeded or {}
+    local has = false
+    for _, rule in ipairs(list) do if rule.class == class then has = true break end end
+    if not has then
+        for _, sg in ipairs(R.Suggestions(class)) do list[#list + 1] = sg end
+    end
+    seeded[class] = true
+    K.Set(KEY, "seeded", seeded)
+    K.Set(KEY, "rules", list)
+    return not has
+end
+
 local function CopyRules(list)
     local out = {}
     for i, rule in ipairs(list) do
@@ -1848,6 +1870,10 @@ local function Enable()
         if event == "PLAYER_REGEN_DISABLED" then R.fighting = true
         elseif event == "PLAYER_REGEN_ENABLED" then R.fighting = false end
         if event == "SPELLS_CHANGED" or event == "PLAYER_ENTERING_WORLD" then R.ClearCache() end
+        if event == "PLAYER_ENTERING_WORLD" and not R.seededNow then
+            R.seededNow = true
+            R.SeedClass(Opt("rules"))
+        end
         if event == "SPELL_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_CHARGES" then
             R.Schedule(false, false, true)
             return

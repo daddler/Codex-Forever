@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.118.1.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFNeue Klassen bekommen ihre Erinnerungen|r – wer schon Regeln für andere Klassen hatte, bekam beim ersten Charakter einer neuen Klasse keine Vorschläge. Jetzt kommen sie einmal je Klasse dazu.",
+        },
+    },
+    {
         version = "6.118.0.0",
         date    = "22.10.2026",
         notes   = {
