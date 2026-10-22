@@ -133,8 +133,17 @@ function BP.MapWidget(parent, width)
 end
 
 -- Kacheln der Gebietskarte legen; true, wenn der Client sie genannt hat.
+BP.mapExtra = {}
 function BP.PaintMap(w, mapID, x, y)
     for _, t in ipairs(w.tiles) do t:Hide() end
+    -- 6.144.0.1 (Beta-Test: Punkte der Haendler der Merkliste erschienen auf
+    -- der Karte eines Rezepts): die Karte gibt es nur einmal. Zusaetzliche
+    -- Punkte (w.extra) gelten nur bis zum naechsten Zeichnen; der eigene
+    -- Punkt ist wieder da.
+    for _, p in ipairs(BP.mapExtra) do p:Hide() end
+    for i = #BP.mapExtra, 1, -1 do BP.mapExtra[i] = nil end
+    w.ring:Show()
+    w.dot:Show()
     local cm = _G.C_Map
     local W, H = Plain(w:GetWidth()) or 0, Plain(w:GetHeight()) or 0
     local ok = false

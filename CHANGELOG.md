@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.144.0.1] – 2026-10-22
+
+### Behoben
+- Kartenausschnitt (Beta-Test: Punkte der Holzhändler auf der Karte eines Kochrezepts): die Karte gibt es einmal (`BP.MapWidget`), die Händlerpunkte der Merkliste blieben daran hängen und der eigene Punkt ausgeblendet. `BP.PaintMap` blendet zusätzliche Punkte (`BP.mapExtra`) aus und zeigt den eigenen wieder.
+
 ## [6.144.0.0] – 2026-10-22
 
 ### Geändert

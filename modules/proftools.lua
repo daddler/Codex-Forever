@@ -1237,6 +1237,7 @@ function PT.VendorBlock(parent, width, vs)
                 local c = (v == sel) and C.gold or C.textBright
                 p.dot:SetVertexColor(c[1], c[2], c[3], 1)
                 p:Show()
+                BP.mapExtra[#BP.mapExtra + 1] = p
                 f.rows[i].pin = p
             end
         end

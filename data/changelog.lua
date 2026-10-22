@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.144.0.1",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFKarten zeigen nur noch ihre eigenen Punkte|r – die Händlerpunkte aus der Merkliste blieben auf der Karte anderer Rezepte stehen.",
+        },
+    },
+    {
         version = "6.144.0.0",
         date    = "22.10.2026",
         notes   = {
