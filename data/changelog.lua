@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.119.1.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFWeitere echte Bilder im Willkommens-Assistenten|r – Namensplaketten, Schadensanzeige und die kleinen Helfer.",
+        },
+    },
+    {
         version = "6.119.0.0",
         date    = "22.10.2026",
         notes   = {
