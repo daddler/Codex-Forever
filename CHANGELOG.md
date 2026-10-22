@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.134.0.1] – 2026-10-22
+
+### Behoben
+- Merkliste (Beta-Test: „Das überlappt“): Zeilen wurden in der Breite vor dem Detailbereich gezeichnet und liefen unter ihn. `PT.Draw` setzt jetzt erst den Detailbereich, dann misst es; Klick auf einen Gegenstand zeichnet die Liste neu.
+
 ## [6.134.0.0] – 2026-10-22
 
 ### Neu

@@ -1012,7 +1012,6 @@ function PT.DrawWatch(body, w)
               end })
     end
     y = Note(body, y - 6, w, "Klick auf einen Gegenstand: Preis, Preisverlauf und Fundorte rechts. Rechtsklick nimmt einen einzeln vorgemerkten Gegenstand heraus. Gezählt: Taschen und Bank dieses Charakters; was deine anderen Charaktere haben, steht in Klammern (Bestand aller Charaktere muss dafür an sein).")
-    if PT.selItem then PT.SelectItem(PT.selItem) end
     return y
 end
 
@@ -1122,8 +1121,7 @@ end
 
 function PT.SelectItem(id)
     PT.selItem = id
-    local nav = WeintCodex.Navigation
-    if nav and nav.SetInspector then nav.SetInspector(PT.ItemBlocks(id)) end
+    PT.Draw("merkliste")
 end
 
 function PT.DrawCooldowns(body, w)
@@ -1202,6 +1200,11 @@ function PT.Draw(key)
     for i, it in ipairs(PT.BAR_ITEMS) do if it.key == key and f.ToolBar then f.ToolBar:Select(i) end end
     local nav = WeintCodex.Navigation
     if nav and nav.ClearInspector then nav.ClearInspector() end
+    -- 6.134.0.1 (Beta-Test: "das ueberlappt"): erst der Detailbereich, dann
+    -- messen - er macht die Karte schmaler.
+    if key == "merkliste" and PT.selItem and nav and nav.SetInspector then
+        nav.SetInspector(PT.ItemBlocks(PT.selItem))
+    end
     local cw = (Plain(f.Card:GetWidth()) or 640) - 40
     local ch = (Plain(f.Card:GetHeight()) or 360) - 62
     f.Scroll:SetSize(cw, math.max(60, ch))

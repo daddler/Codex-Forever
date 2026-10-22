@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.134.0.1",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFMerkliste überlappt die Details nicht mehr|r – die Liste wird schmaler, sobald rechts ein Gegenstand gezeigt wird.",
+        },
+    },
+    {
         version = "6.134.0.0",
         date    = "22.10.2026",
         notes   = {
