@@ -698,6 +698,7 @@ local function Tip(row)
     end
 end
 
+local editRows = setmetatable({}, { __mode = "k" })
 local function Row(body, y, w, left, right, opts)
     opts = opts or {}
     used.row = used.row + 1
@@ -752,6 +753,64 @@ local function Row(body, y, w, left, right, opts)
     row.left:SetText(left)
     local c = C[opts.tone or "textNormal"] or C.textNormal
     row.left:SetTextColor(c[1], c[2], c[3])
+    -- 6.140.0.0 (Beta-Test: "60x vorgeschlagen - 60 mal klicken zum
+    -- Loeschen"): Menge direkt eintippen, × loescht.
+    if opts.edit then
+        if not editRows[row] then
+            editRows[row] = true
+            row.wcDel = CreateFrame("Button", nil, row)
+            row.wcDel:SetSize(18, 18)
+            row.wcDel:SetPoint("RIGHT", row, "RIGHT", -2, 0)
+            row.wcDel.t = WeintCodex.Label(row.wcDel, "×", { size = 14, color = "dangerBright", justify = "CENTER" })
+            row.wcDel.t:SetPoint("CENTER", row.wcDel, "CENTER", 0, 1)
+            row.wcDel:SetScript("OnClick", function(self) local r = self:GetParent() if r.edit then r.edit(0) end end)
+            row.wcDel:SetScript("OnEnter", function(self)
+                local gt = _G.GameTooltip
+                if gt then gt:SetOwner(self, "ANCHOR_RIGHT") gt:SetText("Von der Merkliste nehmen") gt:Show() end
+            end)
+            row.wcDel:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+            local eb = CreateFrame("EditBox", nil, row)
+            eb:SetSize(44, 18)
+            eb:SetPoint("RIGHT", row.wcDel, "LEFT", -6, 0)
+            eb:SetAutoFocus(false)
+            if eb.SetNumeric then eb:SetNumeric(true) end
+            if eb.SetMaxLetters then eb:SetMaxLetters(4) end
+            eb:SetFont(WeintCodex.Fonts.mono, 11, "")
+            eb:SetJustifyH("CENTER")
+            eb:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3])
+            local bg = eb:CreateTexture(nil, "BACKGROUND")
+            bg:SetAllPoints(eb)
+            bg:SetColorTexture(C.surface3[1], C.surface3[2], C.surface3[3], 1)
+            local function commit(self)
+                local r = self:GetParent()
+                local n = tonumber(self:GetText())
+                self:ClearFocus()
+                if r.edit and n then r.edit(n) end
+            end
+            eb:SetScript("OnEnterPressed", commit)
+            eb:SetScript("OnEditFocusLost", function(self)
+                local r = self:GetParent()
+                if r.editValue and tonumber(self:GetText()) ~= r.editValue then commit(self) end
+            end)
+            eb:SetScript("OnEscapePressed", function(self)
+                local r = self:GetParent()
+                self:SetText(tostring(r.editValue or ""))
+                self:ClearFocus()
+            end)
+            row.wcBox = eb
+        end
+        row.edit, row.editValue = opts.edit, opts.editValue
+        row.wcBox:SetText(tostring(opts.editValue or ""))
+        row.wcBox:Show()
+        row.wcDel:Show()
+        row.right:ClearAllPoints()
+        row.right:SetPoint("RIGHT", row.wcBox, "LEFT", -8, 0)
+    else
+        if editRows[row] then row.wcBox:Hide() row.wcDel:Hide() end
+        row.edit, row.editValue = nil, nil
+        row.right:ClearAllPoints()
+        row.right:SetPoint("RIGHT", row, "RIGHT", -4, 0)
+    end
     row.right:SetText(right or "")
     local rc = C[opts.rightTone or "textMuted"] or C.textMuted
     row.right:SetTextColor(rc[1], rc[2], rc[3])
@@ -986,8 +1045,10 @@ function PT.DrawWatch(body, w)
     if #list > 0 then
         y = Head(body, y, w, "Rezepte", #list .. "")
         for _, e in ipairs(list) do
-            y = Row(body, y, w, e.n .. "× " .. PRO.RecipeName(e.r), PRO.ProfName(e.r.key),
-                { recipe = e.r, hint = "Linksklick: eins mehr · Rechtsklick: eins weniger",
+            y = Row(body, y, w, PRO.RecipeName(e.r), PRO.ProfName(e.r.key),
+                { recipe = e.r, hint = "Menge rechts eintippen (Enter), × nimmt es heraus. Linksklick: eins mehr · Rechtsklick: eins weniger",
+                  editValue = e.n,
+                  edit = function(n) PT.AddWatch(e.r.spell, n - (watch[e.r.spell] or 0)) PT.Draw("merkliste") end,
                   onClick = function(button)
                       PT.AddWatch(e.r.spell, button == "RightButton" and -1 or 1)
                       PT.Draw("merkliste")
@@ -1009,6 +1070,8 @@ function PT.DrawWatch(body, w)
         if e.missing > 0 then right = right .. "   " .. (e.price and Money(e.price * e.missing) or "Preis unbekannt") end
         y = Row(body, y, w, PRO.ItemName(e.id), right,
             { item = e.id, tone = e.missing > 0 and "textNormal" or "textDim", rightTone = e.missing > 0 and "dangerBright" or "successBright",
+              editValue = witems[e.id],
+              edit = witems[e.id] and function(n) PT.AddWatchItem(e.id, n - (witems[e.id] or 0)) PT.Draw("merkliste") end or nil,
               onClick = function(button)
                   if button == "RightButton" and witems[e.id] then
                       PT.AddWatchItem(e.id, -witems[e.id])
@@ -1018,7 +1081,7 @@ function PT.DrawWatch(body, w)
                   PT.SelectItem(e.id)
               end })
     end
-    y = Note(body, y - 6, w, "Klick auf einen Gegenstand: Preis, Preisverlauf und Fundorte rechts. Rechtsklick nimmt einen einzeln vorgemerkten Gegenstand heraus. Gezählt: Taschen und Bank dieses Charakters; was deine anderen Charaktere haben, steht in Klammern (Bestand aller Charaktere muss dafür an sein).")
+    y = Note(body, y - 6, w, "Klick auf einen Gegenstand: Preis, Preisverlauf und Fundorte rechts. Menge eintippen und Enter ändert sie, × nimmt sie heraus. Gezählt: Taschen und Bank dieses Charakters; was deine anderen Charaktere haben, steht in Klammern (Bestand aller Charaktere muss dafür an sein).")
     return y
 end
 

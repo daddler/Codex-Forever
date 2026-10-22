@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.140.0.0] – 2026-10-22
+
+### Geändert
+- Merkliste (Beta-Test: „60× vorgeschlagen – 60 mal klicken zum Löschen“): Zeilen vorgemerkter Rezepte und Gegenstände tragen ein Zahlenfeld (Enter oder Fokus weg übernimmt, Esc verwirft, 0 entfernt) und ein ×.
+
 ## [6.139.0.0] – 2026-10-22
 
 ### Geändert

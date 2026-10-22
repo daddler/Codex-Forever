@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.140.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFMerkliste: Menge direkt eintippen|r – jedes vorgemerkte Rezept und jeder Gegenstand hat ein Feld für die Anzahl (Enter übernimmt) und ein × zum Entfernen.",
+        },
+    },
+    {
         version = "6.139.0.0",
         date    = "22.10.2026",
         notes   = {
