@@ -4518,6 +4518,8 @@ do
         assert(BG.MoveCategory(first, -1) and BG.AllCategories()[1].key == first, "nach oben")
         assert(not BG.MoveCategory(first, -1), "ueber den Anfang hinaus")
         K.Set("bags", "catOrder", {})
+        K.Set("bags", "categories", true)
+        K.Set("bags", "guildCats", true)
         _G.GuildBankFrame = CreateFrame("Frame", nil, UIParent)
         _G.GuildBankFrame:Show()
         _G.GetCurrentGuildBankTab = function() return 1 end
@@ -4535,6 +4537,8 @@ do
         assert(GB.Take(GB.Items(1)) == 3 and taken[1] == "1:1", "Herausnehmen")
         _G.GuildBankFrame:Hide()
         assert(GB.Refresh() == nil, "Fenster ohne Gildenbank")
+        K.Set("bags", "categories", nil)
+        K.Set("bags", "guildCats", nil)
     end)
     _G.GuildBankFrame, _G.GetCurrentGuildBankTab, _G.GetGuildBankItemInfo, _G.GetGuildBankItemLink, _G.AutoStoreGuildBankItem = unpack(saved)
     Check(ok, "Taschen: Kategorien umsortieren, Gildenbank nach Kategorien" .. (ok and "" or (": " .. tostring(err))))
@@ -10615,6 +10619,7 @@ do
             end,
         }
         BG.seen = nil
+        K.Set("bags", "categories", true)
         BG.Open()
         BG.Refresh()
         -- Rucksack + vier Taschen, je vier Plaetze (Reagenzientasche gibt es

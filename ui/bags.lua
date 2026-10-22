@@ -47,7 +47,9 @@ local defaults = {
     -- Gepluendertes setzt sich von selbst hin"): Gegenstaende nach Art
     -- gruppiert statt nach Tasche. Nach dem Verhalten von Baganator, ohne
     -- dessen Code.
-    categories = true,
+    -- 6.125.1.0 (Wunsch: "fuer jetzt optional einschaltbar - nach der
+    -- Beta wird alles aktiviert"): ab Werk aus.
+    categories = false,
 }
 -- Die Kategorien in Reihenfolge. `classes`: Gegenstandsklassen des Spiels
 -- (C_Item.GetItemInfoInstant). Abgeschaltete fallen in "Verschiedenes".
@@ -75,7 +77,7 @@ defaults.assign = {}
 -- Reihenfolge als Liste von Schluesseln; was fehlt, kommt an seinen
 -- gewohnten Platz dahinter.
 defaults.catOrder = {}
-defaults.guildCats = true
+defaults.guildCats = false
 BG.CAT_GAP = 12
 BG.HEAD_H, BG.BAG_GAP = 16, 10
 

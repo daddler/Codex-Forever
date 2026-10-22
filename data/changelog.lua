@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.125.1.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFTaschen nach Kategorien und Gildenbank nach Kategorien|r sind während der Beta ab Werk aus – einschalten unter Taschen → Allgemein bzw. Taschen → Kategorien.",
+        },
+    },
+    {
         version = "6.125.0.0",
         date    = "22.10.2026",
         notes   = {
