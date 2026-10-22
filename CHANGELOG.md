@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.124.0.0] – 2026-10-22
+
+### Hinzugefügt
+- Taschen: eigene Kategorien (`bags.customCats`, nach „Neu“ vor den eingebauten), Zuordnung je Gegenstand (`bags.assign`) durch Ziehen auf eine Überschrift (`BG.DropOn`, auch für eingebaute Kategorien). Leere eigene Kategorien bleiben als Ziel sichtbar („hierher ziehen“). Löschen nimmt die Zuordnungen mit.
+
 ## [6.123.2.0] – 2026-10-22
 
 ### Hinzugefügt

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.124.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFEigene Kategorien in den Taschen|r – unter Taschen → Allgemein anlegen, dann im Taschenfenster einen Gegenstand auf die Überschrift ziehen. Er bleibt dort, auch beim nächsten Plündern. Das geht genauso mit den eingebauten Kategorien.",
+        },
+    },
+    {
         version = "6.123.2.0",
         date    = "22.10.2026",
         notes   = {

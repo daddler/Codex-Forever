@@ -10619,6 +10619,22 @@ do
         BG.bankOpen = true
         assert(BG.Transfer(junk.items) == 1 and used[1] == "0:1", "nicht eingelagert: " .. tostring(used[1]))
         BG.bankOpen = false
+        -- 6.124.0.0: eigene Kategorie, Gegenstand auf die Ueberschrift gezogen.
+        assert(BG.AddCustom("Farm") and not BG.AddCustom("Farm") and not BG.AddCustom("  "), "Anlegen")
+        BG.Refresh()
+        local farm
+        for _, hd in ipairs(BG.catHeads) do if hd:IsShown() and hd.cat.key == "c:Farm" then farm = hd end end
+        assert(farm, "leere eigene Kategorie ohne Ueberschrift")
+        local oCur, oClr = _G.GetCursorInfo, _G.ClearCursor
+        _G.GetCursorInfo = function() return "item", 1 end
+        _G.ClearCursor = function() end
+        assert(BG.DropOn(farm), "Ziehen nicht angenommen")
+        _G.GetCursorInfo, _G.ClearCursor = oCur, oClr
+        cats = {}
+        for _, b in ipairs(BG.catBlocks or {}) do cats[b.key] = b.n end
+        assert(cats["c:Farm"] == 5 and not cats.junk, "Zuordnung nicht beachtet: " .. tostring(cats["c:Farm"]))
+        BG.RemoveCustom("Farm")
+        assert(#BG.CustomList() == 0 and next(K.Get("bags", "assign")) == nil, "Loeschen")
         _G.C_Container.GetContainerItemInfo = base
         K.Set("bags", "categories", false)
         _G.C_Container.GetBagName = function(bag) if bag == 4 then return "Köcher" end end

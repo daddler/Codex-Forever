@@ -65,6 +65,12 @@ BG.CATEGORIES = {
     { key = "empty",      label = "Leer" },
 }
 for _, c in ipairs(BG.CATEGORIES) do defaults["cat_" .. c.key] = true end
+-- 6.124.0.0 (Wunsch: "eigene Kategorien einstellen"): Namen in
+-- Reihenfolge, und welcher Gegenstand wohin gehoert ([itemID] = Schluessel,
+-- eigene als "c:Name", sonst der einer eingebauten Kategorie). Zugeordnet
+-- wird, indem man einen Gegenstand auf die Ueberschrift zieht.
+defaults.customCats = {}
+defaults.assign = {}
 BG.CAT_GAP = 12
 BG.HEAD_H, BG.BAG_GAP = 16, 10
 
@@ -586,6 +592,15 @@ function BG.CategoryOf(bag, slot, info)
     local id = info and K.Plain(info.itemID)
     if type(id) ~= "number" then return On("empty") and "empty" or nil end
     if On("new") and BG.seen and BG.seen[bag * 1000 + slot] ~= id then return "new" end
+    local a = Opt("assign")
+    local mine = type(a) == "table" and a[id]
+    if mine then
+        if mine:sub(1, 2) == "c:" then
+            for _, n in ipairs(BG.CustomList()) do if "c:" .. n == mine then return mine end end
+        elseif On(mine) then
+            return mine
+        end
+    end
     local q = K.Plain(info.quality)
     if On("junk") and q == 0 then return "junk" end
     if On("quest") and QuestItem(bag, slot) then return "quest" end
@@ -598,6 +613,64 @@ end
 
 local catHeads = {}
 BG.catHeads = catHeads
+
+function BG.CustomList()
+    local t = Opt("customCats")
+    return type(t) == "table" and t or {}
+end
+
+-- Alle Kategorien in Reihenfolge: Neu, die eigenen, dann die eingebauten.
+function BG.AllCategories()
+    local out = { BG.CATEGORIES[1] }
+    for _, name in ipairs(BG.CustomList()) do
+        out[#out + 1] = { key = "c:" .. name, label = name, custom = true }
+    end
+    for i = 2, #BG.CATEGORIES do out[#out + 1] = BG.CATEGORIES[i] end
+    return out
+end
+
+function BG.AddCustom(name)
+    name = type(name) == "string" and name:gsub("^%s+", ""):gsub("%s+$", "") or ""
+    if name == "" then return false, "Bitte einen Namen eingeben." end
+    local list = {}
+    for _, n in ipairs(BG.CustomList()) do
+        if n == name then return false, "„" .. name .. "“ gibt es schon." end
+        list[#list + 1] = n
+    end
+    list[#list + 1] = name
+    K.Set(KEY, "customCats", list)
+    return true
+end
+
+function BG.RemoveCustom(name)
+    local list = {}
+    for _, n in ipairs(BG.CustomList()) do if n ~= name then list[#list + 1] = n end end
+    K.Set(KEY, "customCats", list)
+    local a, keep = Opt("assign"), {}
+    for id, k in pairs(type(a) == "table" and a or {}) do if k ~= "c:" .. name then keep[id] = k end end
+    K.Set(KEY, "assign", keep)
+end
+
+function BG.Assign(itemID, key)
+    if type(itemID) ~= "number" then return false end
+    local a, out = Opt("assign"), {}
+    for id, k in pairs(type(a) == "table" and a or {}) do out[id] = k end
+    out[itemID] = key
+    K.Set(KEY, "assign", out)
+    if BG.Refresh then BG.Refresh() end
+    return true
+end
+
+-- Gegenstand vom Mauszeiger auf eine Ueberschrift.
+function BG.DropOn(head)
+    local GetCursorInfo = _G.GetCursorInfo
+    if not (GetCursorInfo and head and head.cat) then return false end
+    local kind, id = GetCursorInfo()
+    if kind ~= "item" or type(K.Plain(id)) ~= "number" then return false end
+    if head.cat.key == "new" or head.cat.key == "empty" then return false end
+    if _G.ClearCursor then _G.ClearCursor() end
+    return BG.Assign(K.Plain(id), head.cat.key)
+end
 
 -- 6.123.2.0 (Beta-Test mit Video, wie in Baganator: "Rechtsklick zum
 -- Transferieren"): ist die Bank offen, legt ein Rechtsklick auf die
@@ -632,14 +705,19 @@ function BG.NewCatHead()
     b.text = K.NewText(b)
     b.text:SetFont(F.sans, 11, "")
     b.text:SetPoint("LEFT", b, "LEFT", 0, 0)
-    if b.RegisterForClicks then b:RegisterForClicks("RightButtonUp") end
-    b:SetScript("OnClick", function(self) BG.Transfer(self.items) end)
+    if b.RegisterForClicks then b:RegisterForClicks("LeftButtonUp", "RightButtonUp") end
+    b:SetScript("OnClick", function(self, button)
+        if BG.DropOn(self) then return end
+        if button == "RightButton" then BG.Transfer(self.items) end
+    end)
+    b:SetScript("OnReceiveDrag", function(self) BG.DropOn(self) end)
     b:SetScript("OnEnter", function(self)
-        if not BG.bankOpen or self.cat.key == "empty" then return end
+        if self.cat.key == "empty" or self.cat.key == "new" then return end
         local tt = _G.GameTooltip
         tt:SetOwner(self, "ANCHOR_TOP")
         tt:SetText(self.cat.label, 1, 1, 1)
-        tt:AddLine("Rechtsklick: alles in die Bank", 0.4, 1, 0.4)
+        tt:AddLine("Gegenstand hierher ziehen: gehört ab jetzt in diese Kategorie", 0.8, 0.8, 0.8, true)
+        if BG.bankOpen then tt:AddLine("Rechtsklick: alles in die Bank", 0.4, 1, 0.4) end
         tt:Show()
     end)
     b:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
@@ -662,11 +740,11 @@ function BG.LayoutCategories(list, size, sp, cols)
     local maxW = cols
     local hi = 0
     BG.catBlocks = {}
-    for _, c in ipairs(BG.CATEGORIES) do
-        local items = byCat[c.key]
-        if items and #items > 0 then
-            local w = math.min(#items, cols)
-            local rows = math.ceil(#items / w)
+    for _, c in ipairs(BG.AllCategories()) do
+        local items = byCat[c.key] or (c.custom and {}) or nil
+        if items and (#items > 0 or c.custom) then
+            local w = math.max(math.min(#items, cols), c.custom and math.min(4, cols) or 1)
+            local rows = math.max(1, math.ceil(#items / w))
             if x > 0 and x + w > maxW then
                 x, y, rowH = 0, y + rowH, 0
             end
@@ -681,7 +759,8 @@ function BG.LayoutCategories(list, size, sp, cols)
             hd:SetPoint("TOPLEFT", grid, "TOPLEFT", px, -py)
             hd:SetSize(math.max(w * cell - sp, 40), BG.HEAD_H)
             hd.cat, hd.items = c, items
-            hd.text:SetText(c.label .. (c.key == "empty" and ("  " .. #items) or ""))
+            hd.text:SetText(c.label .. (c.key == "empty" and ("  " .. #items) or "")
+                .. ((c.custom and #items == 0) and "  ·  hierher ziehen" or ""))
             hd.text:SetTextColor(unpack(c.key == "new" and C.accent or C.textMuted))
             hd:Show()
             for i, e in ipairs(items) do
@@ -1062,6 +1141,24 @@ K.Register({
                   { type = "toggle", label = "Rand in Qualitätsfarbe", key = "qualityBorder" })
             B:Row({ type = "toggle", label = "Graue Gegenstände abdunkeln", key = "dimJunk" },
                   { type = "empty" })
+            B:Section("Eigene Kategorien", "Anlegen, dann im Taschenfenster einen Gegenstand auf ihre Überschrift ziehen – er bleibt dort. Das geht auch mit den eingebauten Kategorien.")
+            local catDraft = ""
+            B:Row({ type = "input", label = "Name der Kategorie",
+                    get = function() return catDraft end, set = function(v) catDraft = v or "" end,
+                    disabled = function() return not Opt("categories") end },
+                  { type = "button", label = " ", text = "Kategorie hinzufügen",
+                    disabled = function() return not Opt("categories") end,
+                    onClick = function()
+                        local ok, why = BG.AddCustom(catDraft)
+                        if ok then catDraft = "" BG.Refresh() if WeintCodex.UIOptions.Rebuild then WeintCodex.UIOptions.Rebuild() end
+                        elseif why then print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. why) end
+                    end })
+            for _, name in ipairs(BG.CustomList()) do
+                B:Row({ type = "button", label = name, text = "Löschen",
+                        tooltip = "Die Kategorie und ihre Zuordnungen löschen – die Gegenstände fallen zurück in ihre Art.",
+                        onClick = function() BG.RemoveCustom(name) BG.Refresh() if WeintCodex.UIOptions.Rebuild then WeintCodex.UIOptions.Rebuild() end end },
+                      { type = "empty" })
+            end
             B:Advanced()
             B:Section("Kategorien", "Abgeschaltete Kategorien landen unter „Verschiedenes“. Die Reihenfolge im Fenster ist die dieser Liste.")
             local cats = {}
