@@ -251,6 +251,36 @@ function BT.Evaluate(info, bag, slot, quest)
     return e
 end
 
+local function Wipe(t) for k in _G.next, t do t[k] = nil end end
+
+-- 6.131.4.0 (Beta-Test: "Alles in der Tasche geschuetzt? warum?"): statt
+-- eines pauschalen Satzes die Gruende, gezaehlt beim letzten Durchgang.
+BT.WHY_TEXT = {
+    quality = "grün oder besser",
+    class   = "Verbrauchbares, Handwerk, Reagenzien",
+    quest   = "Questgegenstände",
+    tool    = "Berufswerkzeuge",
+    kept    = "von dir behalten",
+    set     = "im Ausrüstungsset",
+    novalue = "ohne Händlerpreis",
+    unknown = "noch nicht geladen",
+}
+BT.WHY_ORDER = { "quality", "class", "quest", "tool", "kept", "set", "novalue", "unknown" }
+function BT.WhyNothing()
+    local why = BT.stats.why or {}
+    local parts = {}
+    for _, k in ipairs(BT.WHY_ORDER) do
+        local n = why[k]
+        if n and n > 0 then parts[#parts + 1] = n .. "× " .. BT.WHY_TEXT[k] end
+        if #parts >= 2 then break end
+    end
+    local text = "Nichts zum Tauschen – geschützt: " .. (#parts > 0 and table.concat(parts, ", ") or "alles")
+    if (why.quality or 0) > 0 and not Opt("triageGreens") then
+        text = text .. "\nGrünes zuschalten: Komfort → Sammeln → Erweitert"
+    end
+    return text
+end
+
 local function Cheaper(a, b)
     if a.value ~= b.value then return a.value < b.value end
     if a.quality ~= b.quality then return a.quality < b.quality end
@@ -264,6 +294,8 @@ function BT.Scan()
     Release()
     local st = BT.stats
     st.used, st.total, st.free, st.unknown, st.known = 0, 0, 0, 0, false
+    st.why = st.why or {}
+    Wipe(st.why)
     BT.dirty = false
     local cc = CC()
     if not cc then return BT.candidates end
@@ -284,7 +316,10 @@ function BT.Scan()
                 end
                 local e, why = BT.Evaluate(info, bag, slot, q)
                 if e then cand[#cand + 1] = e
-                elseif why == "unknown" then st.unknown = st.unknown + 1 end
+                else
+                    if why == "unknown" then st.unknown = st.unknown + 1 end
+                    if why then st.why[why] = (st.why[why] or 0) + 1 end
+                end
             end
         end
     end
@@ -322,7 +357,6 @@ BT.offer = {}           -- [lootSlot] = billigster Platz oder false (keiner)
 BT.lootOpen = false
 local order = {}
 
-local function Wipe(t) for k in _G.next, t do t[k] = nil end end
 
 -- Passt die Beute auf einen angefangenen Stapel?
 local function Stacks(id, qty, maxStack)
@@ -682,7 +716,7 @@ function BT.ShowPopup()
                 end
             else
                 r.bag:Hide()
-                r.bagText:SetText("Nichts zum Tauschen – alles\nin den Taschen ist geschützt")
+                r.bagText:SetText(BT.WhyNothing())
                 r.btn:Hide()
                 r.note:SetText("")
             end

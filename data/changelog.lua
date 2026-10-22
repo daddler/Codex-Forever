@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.131.4.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFF„Taschen voll“ sagt, warum nichts zum Tauschen da ist|r – statt „alles geschützt“ steht dort, was deine Taschen füllt (z. B. Grünes, Verbrauchbares, Handwerk) und wie du Grünes zuschaltest.",
+        },
+    },
+    {
         version = "6.131.3.0",
         date    = "22.10.2026",
         notes   = {

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.131.4.0] – 2026-10-22
+
+### Geändert
+- Fenster „Taschen voll“ (Beta-Test: „Alles in der Tasche geschützt? warum?“): `BT.Scan` zählt die Gründe je Platz (`stats.why`), `BT.WhyNothing` nennt die zwei häufigsten und den Weg zu „Auch Grünes vorschlagen“. Was geschützt ist, bleibt gleich.
+
 ## [6.131.3.0] – 2026-10-22
 
 ### Behoben
