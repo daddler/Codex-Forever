@@ -296,6 +296,34 @@ function R.KindReady(rule, class)
     return true
 end
 
+-- Ab welcher Stufe eine Regel der eigenen Klasse greift, wenn es nur an
+-- der Stufe liegt (6.118.0.0: in der Liste ausgegraut "ab Stufe N").
+-- nil = Stufe reicht schon oder ist unbekannt.
+function R.UnlockLevel(rule, class)
+    class = class or PlayerClass()
+    if rule.class and rule.class ~= R.ALL and rule.class ~= class then return nil end
+    local lvl = PlayerLevel()
+    if type(lvl) ~= "number" then return nil end
+    local T = WeintCodex.TrainerData
+    local function MinLevel(list)
+        local best
+        for _, t in ipairs(list or {}) do
+            local n = T and T.SpellLevel and T.SpellLevel(class, tonumber(t))
+            if type(n) == "number" and (not best or n < best) then best = n end
+        end
+        return best
+    end
+    local need
+    if rule.learned and rule.kind == "buff" then
+        need = MinLevel(rule.any or { rule.spell })
+    elseif R.CLASS_KINDS[rule.kind] and not rule.oil then
+        local kn = R.KIND_NEEDS[class] and R.KIND_NEEDS[class][rule.kind]
+        need = kn and (kn.level or MinLevel(kn.any))
+    end
+    if type(need) == "number" and lvl < need then return need end
+    return nil
+end
+
 function R.Applies(rule, class)
     if rule.learned and R.Learned(rule) == false then return false end
     if R.CLASS_KINDS[rule.kind] and not R.KindReady(rule, class) then return false end
@@ -1859,7 +1887,10 @@ function R.RuleText(rule)
     local text = R.BaseRuleText(rule)
     local scope = R.ScopeText(rule)
     if scope then text = text .. "  ·  " .. scope end
-    if not R.Applies(rule) then text = text .. "  (hier aus)" end
+    if not R.Applies(rule) then
+        local n = R.UnlockLevel(rule)
+        text = text .. (n and ("  (aktiv ab Stufe " .. n .. ")") or "  (hier aus)")
+    end
     return text
 end
 
@@ -1943,7 +1974,9 @@ R.listAll = false
 function R.ListedRules()
     local out, hidden = {}, 0
     for i, rule in ipairs(R.Rules()) do
-        if R.listAll or R.Applies(rule) then
+        -- 6.118.0.0: Regeln, die erst mit einer Stufe greifen, stehen
+        -- ausgegraut dabei - der Spieler sieht, was kommt.
+        if R.listAll or R.Applies(rule) or R.UnlockLevel(rule) then
             out[#out + 1] = { rule = rule, index = i }
         else
             hidden = hidden + 1
@@ -2017,7 +2050,7 @@ function R.BuildRuleList(parent, width)
         local others = hidden > 0 or R.listAll
         if R.listAll then
             local n = 0
-            for _, e in ipairs(listed) do if not R.Applies(e.rule) then n = n + 1 end end
+            for _, e in ipairs(listed) do if not R.Applies(e.rule) and not R.UnlockLevel(e.rule) then n = n + 1 end end
             others = n > 0
         end
         w.toggle:SetShown(others)

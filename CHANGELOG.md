@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.118.0.0] – 2026-10-22
+
+### Hinzugefügt
+- Regelliste der Erinnerungen: Regeln der eigenen Klasse, die nur an der Stufe scheitern (`R.UnlockLevel`, Lehrerstufe bzw. `R.KIND_NEEDS`), stehen ausgegraut mit „(aktiv ab Stufe N)“ statt ausgeblendet.
+
 ## [6.117.0.0] – 2026-10-22
 
 ### Behoben

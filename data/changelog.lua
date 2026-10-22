@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.118.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFRegeln, die erst später greifen, stehen schon in der Liste|r – unter Erinnerungen → Regeln ausgegraut mit „aktiv ab Stufe …“.",
+        },
+    },
+    {
         version = "6.117.0.0",
         date    = "22.10.2026",
         notes   = {

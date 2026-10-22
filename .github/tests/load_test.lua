@@ -4415,6 +4415,7 @@ do
         WeintCodex.Trainer.Known = function() return true end
         local aspect = { kind = "buff", spell = "13165", any = { "13165", "13163" }, learned = true, class = "HUNTER" }
         assert(R.Applies(aspect, "HUNTER") == false, "Aspekt auf Stufe 1 erinnert")
+        assert(R.UnlockLevel(aspect, "HUNTER") == 4, "Stufe zum Freischalten falsch")
         lvl = 4
         assert(R.Applies(aspect, "HUNTER") == true, "Aspekt des Affen ab 4 nicht erinnert")
         lvl = 10
