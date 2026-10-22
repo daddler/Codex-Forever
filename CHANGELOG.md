@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.130.0.0] – 2026-10-22
+
+### Geändert
+- Gruppenrahmen des Spiels (Beta-Test: „sieht richtig blöd aus“): `GG.Layout` legt außerhalb des Kampfes die Kraftleiste dünn (Höhe der Kraftleiste, 3 px) an den unteren Rand und den Lebensbalken darüber – kein dickes Band mit dunklem Streifen mehr; Rollensymbol oben links (12 px), Krone oben rechts statt darüber; Name mit Kontur.
+
 ## [6.129.0.0] – 2026-10-22
 
 ### Neu

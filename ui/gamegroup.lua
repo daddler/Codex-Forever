@@ -160,6 +160,16 @@ function GG.Style(f)
             st:SetPoint("CENTER", f, "CENTER", 0, -6)
             if st.SetJustifyH then st:SetJustifyH("CENTER") end
         end
+        -- 6.130.0.0 (Beta-Test: "Gruppenrahmen sieht richtig bloed aus"):
+        -- Name mit Kontur (auf hellen Klassenfarben unlesbar), Rollen-
+        -- symbol oben links, Krone oben rechts (lagen uebereinander), die
+        -- Kraftleiste duenn am unteren Rand statt eines dicken Bands mit
+        -- dunklem Streifen darunter. Lage nur ausserhalb des Kampfes.
+        if type(name) == "table" and name.GetFont then
+            local path, sz = name:GetFont()
+            if type(path) == "string" and type(sz) == "number" then pcall(name.SetFont, name, path, sz, "OUTLINE") end
+        end
+        GG.Layout(f)
         GG.Color(f)
         Crop(f.buffFrames)
         Crop(f.debuffFrames)
@@ -179,6 +189,35 @@ function GG.Style(f)
     return ok
 end
 
+-- Balken und Symbole neu legen (nur Methoden, nur ausserhalb des Kampfes).
+GG.POWER_H = 3
+function GG.Layout(f)
+    if _G.InCombatLockdown and K.Bool(_G.InCombatLockdown(), true) then return false end
+    local hb, pb, role = f.healthBar, f.powerBar, f.roleIcon
+    if type(hb) ~= "table" or not hb.SetPoint then return false end
+    local power = type(pb) == "table" and pb.IsShown and pb:IsShown()
+    local ph = (Opt("powerHeight") or GG.POWER_H)
+    if power then
+        pb:ClearAllPoints()
+        pb:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 1, 1)
+        pb:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, 1)
+        pb:SetHeight(ph)
+    end
+    hb:ClearAllPoints()
+    hb:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
+    if power then
+        hb:SetPoint("BOTTOMRIGHT", pb, "TOPRIGHT", 0, 1)
+    else
+        hb:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, 1)
+    end
+    if type(role) == "table" and role.SetPoint then
+        role:ClearAllPoints()
+        role:SetPoint("TOPLEFT", f, "TOPLEFT", 3, -3)
+        role:SetSize(12, 12)
+    end
+    return true
+end
+
 -- Krone beim Gruppenleiter (6.29.23.0, Spielerbericht: "das Gruppenfenster
 -- muesste anzeigen, wer den Lead hat"). Die Rahmen des Spiels zeigen es
 -- nicht; die eigenen Kacheln hatten die Krone (leaderIcon) schon. Dasselbe
@@ -189,7 +228,7 @@ function GG.Leader(f)
     if not s.leader then
         s.leader = f:CreateTexture(nil, "OVERLAY", nil, 7)
         s.leader:SetSize(12, 12)
-        s.leader:SetPoint("TOPLEFT", f, "TOPLEFT", 2, -2)
+        s.leader:SetPoint("TOPRIGHT", f, "TOPRIGHT", -3, -3)
         s.leader:SetTexture(K.MEDIA .. "icon_leader")
         local lc = WeintCodex.GameColors.leader
         s.leader:SetVertexColor(lc[1], lc[2], lc[3], 1)
@@ -281,6 +320,7 @@ function GG.Enable()
                 _G.hooksecurefunc(fn, K.Measured("Gruppenrahmen des Spiels", function(f)
                     GG.Color(f)
                     GG.Leader(f)
+                    if styled[f] then GG.Layout(f) end
                 end))
                 GG.hooks = (GG.hooks or 0) + 1
             end

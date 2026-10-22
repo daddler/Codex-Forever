@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.130.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFAufgeräumte Gruppenrahmen|r – Namen mit Kontur gut lesbar, Rollensymbol und Leiterkrone liegen nicht mehr übereinander, die Kraftleiste ist eine dünne Linie am unteren Rand.",
+        },
+    },
+    {
         version = "6.129.0.0",
         date    = "22.10.2026",
         notes   = {
