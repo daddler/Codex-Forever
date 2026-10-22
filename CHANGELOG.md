@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.131.3.0] – 2026-10-22
+
+### Behoben
+- Gruppenrahmen (Beta-Test „immer noch“): `DispelOverlay` liegt jetzt 3 px eingerückt (`GG.OVERLAY_INSET`) – seine Randbilder sitzen außerhalb des eigenen Rahmens; bei jedem `OnShow` (auch im Kampf) neu eingepasst. `/wcui gruppe` zeigt die Lage der Randbilder.
+
 ## [6.131.2.0] – 2026-10-22
 
 ### Behoben

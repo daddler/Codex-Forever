@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.131.3.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDebuff-Rand im Gruppenrahmen eingerückt|r – er liegt jetzt innerhalb des Rahmens, auch wenn das Spiel ihn im Kampf neu zeigt.",
+        },
+    },
+    {
         version = "6.131.2.0",
         date    = "22.10.2026",
         notes   = {

@@ -234,6 +234,8 @@ end
 -- wie Retail nennt; gelesen, nie geschrieben.
 GG.OVERLAY_KEYS = { "DispelOverlay", "dispelOverlay", "DebuffHighlight", "debuffHighlight",
                     "dispelHighlight", "DispelHighlight" }
+GG.OVERLAY_INSET = 3
+GG.hookedOverlay = setmetatable({}, { __mode = "k" })
 function GG.FitOverlays(f)
     local seen, n = {}, 0
     local function fit(o)
@@ -241,9 +243,22 @@ function GG.FitOverlays(f)
         if o.IsForbidden and o:IsForbidden() then return end
         seen[o] = true
         if pcall(o.ClearAllPoints, o) then
-            pcall(o.SetPoint, o, "TOPLEFT", f, "TOPLEFT", 0, 0)
-            pcall(o.SetPoint, o, "BOTTOMRIGHT", f, "BOTTOMRIGHT", 0, 0)
+            -- 6.131.3.0 (Beta-Test "immer noch"): die Randbilder des Spiels
+            -- liegen ein Stueck AUSSERHALB ihres Rahmens - daher eingerueckt.
+            local i = GG.OVERLAY_INSET
+            pcall(o.SetPoint, o, "TOPLEFT", f, "TOPLEFT", i, -i)
+            pcall(o.SetPoint, o, "BOTTOMRIGHT", f, "BOTTOMRIGHT", -i, i)
             n = n + 1
+        end
+        -- Zeigt das Spiel sie neu (auch im Kampf), wieder einpassen.
+        if o.HookScript and not GG.hookedOverlay[o] then
+            GG.hookedOverlay[o] = true
+            pcall(o.HookScript, o, "OnShow", function(self)
+                local i = GG.OVERLAY_INSET
+                pcall(self.ClearAllPoints, self)
+                pcall(self.SetPoint, self, "TOPLEFT", f, "TOPLEFT", i, -i)
+                pcall(self.SetPoint, self, "BOTTOMRIGHT", f, "BOTTOMRIGHT", -i, i)
+            end)
         end
     end
     for _, k in ipairs(GG.OVERLAY_KEYS) do fit(f[k]) end
@@ -396,6 +411,21 @@ function GG.Inspect()
         end
         table.sort(keys)
         out[#out + 1] = "Hervorhebungen am Rahmen: " .. (#keys > 0 and table.concat(keys, ", ") or "keine gefunden")
+        -- Wie die Teile der Debuff-Hervorhebung liegen (Abstand zum Rahmen).
+        local o = frames[1].DispelOverlay
+        if type(o) == "table" and o.GetRegions then
+            local parts = {}
+            for _, r in ipairs({ o:GetRegions() }) do
+                local ok2, pt, _, rpt, x, y = pcall(r.GetPoint, r, 1)
+                local w, h = r.GetWidth and r:GetWidth(), r.GetHeight and r:GetHeight()
+                if ok2 and pt then
+                    parts[#parts + 1] = string.format("%s>%s %.0f,%.0f %.0fx%.0f", tostring(pt), tostring(rpt),
+                        K.Plain(x) or 0, K.Plain(y) or 0, K.Plain(w) or 0, K.Plain(h) or 0)
+                end
+                if #parts >= 6 then break end
+            end
+            out[#out + 1] = "Debuff-Rand: " .. (#parts > 0 and table.concat(parts, "; ") or "keine Teile")
+        end
     end
     local rs = GG.RaidStyleParty()
     out[#out + 1] = "Schlachtzugsartige Gruppenrahmen: "
