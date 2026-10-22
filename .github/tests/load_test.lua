@@ -4623,6 +4623,27 @@ do
         assert(#needs == #r1.reagents, "Reagenzien fehlen")
         PT.AddWatch(r1.spell, -1)
         assert(PT.Watch()[r1.spell] == nil, "nicht entfernt")
+        -- 6.134.0.0: Gegenstaende auf der Merkliste, Verlauf, Detailbereich.
+        sd.profWatchItems = nil
+        PT.AddWatchItem(2589, 20)
+        local hit
+        for _, e in ipairs(PT.Needs()) do if e.id == 2589 then hit = e end end
+        assert(hit and hit.need == 20, "Gegenstand nicht auf der Merkliste")
+        local AP = WeintCodex.UIAuctionPrices
+        local st = { items = {} }
+        AP.Remember(st, 2589, 500, 100)
+        AP.Remember(st, 2589, 400, 100)
+        AP.Remember(st, 2589, 450, 101)
+        AP.Remember(st, 2589, 300, 110)
+        assert(st.hist[2589] == "110:300", "Verlauf falsch: " .. tostring(st.hist[2589]))
+        st.hist[2589] = nil
+        AP.Remember(st, 2589, 500, 100)
+        AP.Remember(st, 2589, 400, 100)
+        assert(st.hist[2589] == "100:400", "Tagesminimum falsch: " .. tostring(st.hist[2589]))
+        local blocks = PT.ItemBlocks(2589)
+        assert(#blocks > 4, "Detailbereich leer")
+        PT.AddWatchItem(2589, -20)
+        assert(PT.WatchItems()[2589] == nil, "Gegenstand nicht entfernt")
         -- Abklingzeiten: Restzeit als Text.
         assert(PT.Remaining((_G.time and _G.time() or 0) + 90000):find("1 T", 1, true), "Restzeit falsch")
         assert(PT.Remaining(0) == nil, "Vergangenes nicht bereit")

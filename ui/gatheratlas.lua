@@ -651,7 +651,45 @@ function GA.OnLootOpened()
         GA.last.result = "nur Questbeute – nicht gemerkt"
         return
     end
-    Commit(id or tracker.target, tracker.target)
+    -- 6.134.0.0: was eine Fundstelle hergibt (fuer "wo finde ich das?" in
+    -- der Merkliste der Berufe): Gegenstandsnummern je Schluessel.
+    local key = id or tracker.target
+    local g = GA.Store(true)
+    if g and key and _G.GetLootSlotLink then
+        g.yields = g.yields or {}
+        for i = 1, math.min(n, 8) do
+            local ok, link = pcall(_G.GetLootSlotLink, i)
+            link = ok and K.Plain(link) or nil
+            local item = type(link) == "string" and tonumber(link:match("item:(%d+)"))
+            if item then
+                g.yields[key] = g.yields[key] or {}
+                g.yields[key][item] = true
+            end
+        end
+    end
+    Commit(key, tracker.target)
+end
+
+-- Fundstellen, die diesen Gegenstand hergaben: { mapID, x, y, count } je
+-- Karte (die Karte mit den meisten zuerst).
+function GA.WhereItem(item)
+    local g = GA.Store()
+    local out = {}
+    if not (g and g.yields) then return out end
+    local byMap = {}
+    for key, items in pairs(g.yields) do
+        if items[item] then
+            for mapID, m in pairs(g.nodes) do
+                for _, p in ipairs(m[key] or {}) do
+                    local e = byMap[mapID]
+                    if not e then e = { mapID = mapID, x = p.x, y = p.y, count = 0 } byMap[mapID] = e out[#out + 1] = e end
+                    e.count = e.count + 1
+                end
+            end
+        end
+    end
+    table.sort(out, function(a, b) return a.count > b.count end)
+    return out
 end
 
 --------------------------------------------------

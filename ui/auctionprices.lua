@@ -180,6 +180,9 @@ function AP.Prune(store, today)
         local _, _, day = AP.Unpack(v)
         if today - day > AP.KEEP_DAYS then store.items[id] = nil else n = n + 1 end
     end
+    for id in pairs(store.hist or {}) do
+        if not store.items[id] then store.hist[id] = nil end
+    end
     return n
 end
 
@@ -189,9 +192,52 @@ function AP.Merge(store, price, qty, day)
     local n = 0
     for id, p in pairs(price) do
         store.items[id] = AP.Pack(p, qty[id], day)
+        AP.Remember(store, id, p, day)
         n = n + 1
     end
     return n
+end
+
+-- 6.134.0.0 (Wunsch: "Preisentwicklung der letzten 7 Tage"): je Gegenstand
+-- der niedrigste Preis je Tag, als kurzer Text "Tag:Preis,Tag:Preis" (eine
+-- Tabelle je Gegenstand kostete im Speicher ein Vielfaches). Nur
+-- AP.HIST_DAYS Tage; was aelter ist, faellt beim naechsten Eintrag heraus.
+AP.HIST_DAYS = 7
+function AP.Remember(store, id, price, day)
+    store.hist = store.hist or {}
+    local old = store.hist[id]
+    local parts, have = {}, false
+    if type(old) == "string" then
+        for d, pr in old:gmatch("(%d+):(%d+)") do
+            d, pr = tonumber(d), tonumber(pr)
+            if day - d < AP.HIST_DAYS then
+                if d == day then pr = math.min(pr, math.floor(price)) have = true end
+                parts[#parts + 1] = d .. ":" .. pr
+            end
+        end
+    end
+    if not have then parts[#parts + 1] = day .. ":" .. math.floor(price) end
+    store.hist[id] = table.concat(parts, ",")
+end
+
+-- { {day, price}, ... } aufsteigend, oder leer. Seite wie AP.Lookup.
+function AP.History(id)
+    local out = {}
+    local side = AP.side or AP.Faction()
+    local store = AP.Store(side)
+    local h = store and store.hist and store.hist[id]
+    if not h and side ~= "Neutral" then
+        store = AP.Store("Neutral")
+        h = store and store.hist and store.hist[id]
+    end
+    if type(h) ~= "string" then return out end
+    local today = AP.Day()
+    for d, pr in h:gmatch("(%d+):(%d+)") do
+        d = tonumber(d)
+        if today - d < AP.HIST_DAYS then out[#out + 1] = { d, tonumber(pr) } end
+    end
+    table.sort(out, function(a, b) return a[1] < b[1] end)
+    return out
 end
 
 -- Preis eines Gegenstands: zuerst das Auktionshaus, an dem du stehst (sonst

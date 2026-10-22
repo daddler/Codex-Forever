@@ -9,6 +9,13 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.134.0.0] – 2026-10-22
+
+### Neu
+- Merkliste der Berufe (Wunsch des Spielers): Gegenstände aus der Einkaufsliste per Klick vormerken (`SavedData.profWatchItems`); Klick auf einen Gegenstand der Merkliste zeigt rechts Auktionspreis, Preisverlauf der letzten 7 Tage (Balken je Tag) und Fundorte – eigene Sammelstellen aus dem Sammel-Atlas mit Karte, sonst Dungeonbeute (`classic`); ohne Bestand sagt er das.
+- Auktionspreise: Verlauf je Gegenstand, niedrigster Preis je Tag, 7 Tage (`AP.Remember`/`AP.History`, `store.hist` als kurzer Text).
+- Sammel-Atlas: merkt, welche Gegenstände eine Fundstelle hergab (`g.yields`, `GA.WhereItem`) – erst ab dieser Fassung.
+
 ## [6.133.0.0] – 2026-10-22
 
 ### Geändert

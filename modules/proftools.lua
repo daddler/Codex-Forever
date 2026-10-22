@@ -536,6 +536,21 @@ function PT.AddWatch(spell, n)
     w[spell] = v > 0 and v or nil
 end
 
+-- 6.134.0.0: auch einzelne Gegenstaende (aus der Einkaufsliste).
+function PT.WatchItems()
+    local sd = SD()
+    if not sd then return nil end
+    sd.profWatchItems = sd.profWatchItems or {}
+    return sd.profWatchItems
+end
+
+function PT.AddWatchItem(id, n)
+    local w = PT.WatchItems()
+    if not w then return end
+    local v = (w[id] or 0) + (n or 1)
+    w[id] = v > 0 and v or nil
+end
+
 -- Wie viele ein Charakter hat: eigener Client (Taschen + Bank), dazu die
 -- anderen Charaktere aus dem Bestand (wenn an).
 function PT.Have(id)
@@ -566,6 +581,7 @@ function PT.Needs()
             for _, e in ipairs(r.reagents) do need[e[1]] = (need[e[1]] or 0) + e[2] * n end
         end
     end
+    for id, n in pairs(PT.WatchItems() or {}) do need[id] = (need[id] or 0) + n end
     local out = {}
     for id, n in pairs(need) do
         local mine, others = PT.Have(id)
@@ -933,7 +949,10 @@ function PT.DrawPlanner(body, w)
         local mine = PT.Have(e.id)
         y = Row(body, y, w, e.count .. "× " .. PRO.ItemName(e.id),
             (mine > 0 and ("hast " .. mine .. "   ") or "") .. (e.price and Money(e.price * e.count) or "Preis unbekannt"),
-            { item = e.id })
+            { item = e.id, onClick = function()
+                PT.AddWatchItem(e.id, e.count)
+                print(WeintCodex.AC .. "[WeintCodex]|r " .. e.count .. "× " .. PRO.ItemName(e.id) .. " auf der Merkliste.")
+            end })
     end
     y = Note(body, y - 6, w, "Gerechnet wird mit Rezepten, die du kannst oder beim Lehrer lernst, und der Chance auf einen Punkt wie in Classic: orange immer, gelb meist, grün selten, grau nie. Orange und Gelb gehen vor; Grün nur, wenn es nichts anderes gibt. Preise nur aus deinen Auktionspreisen – „Preis unbekannt“ heißt: nie gesehen, nicht umsonst. Klick auf einen Schritt setzt ihn auf die Merkliste.")
     return y
@@ -944,11 +963,12 @@ function PT.DrawWatch(body, w)
     local f = page
     f.Title:SetText("Merkliste")
     local watch = PT.Watch() or {}
+    local witems = PT.WatchItems() or {}
     f.Action:SetText("Leeren")
-    f.Action.run = function() local sd = SD() if sd then sd.profWatch = {} end PT.Draw("merkliste") end
-    f.Action:SetShown(next(watch) ~= nil)
-    if next(watch) == nil then
-        return Note(body, y, w, "Noch nichts vorgemerkt. In den Details eines Rezepts (Seite des Berufs) oder im Planer mit einem Klick hinzufügen.")
+    f.Action.run = function() local sd = SD() if sd then sd.profWatch, sd.profWatchItems = {}, {} end PT.selItem = nil PT.Draw("merkliste") end
+    f.Action:SetShown(next(watch) ~= nil or next(witems) ~= nil)
+    if next(watch) == nil and next(witems) == nil then
+        return Note(body, y, w, "Noch nichts vorgemerkt. In den Details eines Rezepts, im Planer (Schritt oder Einkaufsliste) mit einem Klick hinzufügen.")
     end
     local list = {}
     for spell, n in pairs(watch) do
@@ -956,14 +976,16 @@ function PT.DrawWatch(body, w)
         if r then list[#list + 1] = { r = r, n = n } end
     end
     table.sort(list, function(a, b) return a.r.spell < b.r.spell end)
-    y = Head(body, y, w, "Rezepte", #list .. "")
-    for _, e in ipairs(list) do
-        y = Row(body, y, w, e.n .. "× " .. PRO.RecipeName(e.r), PRO.ProfName(e.r.key),
-            { recipe = e.r, hint = "Linksklick: eins mehr · Rechtsklick: eins weniger",
-              onClick = function(button)
-                  PT.AddWatch(e.r.spell, button == "RightButton" and -1 or 1)
-                  PT.Draw("merkliste")
-              end })
+    if #list > 0 then
+        y = Head(body, y, w, "Rezepte", #list .. "")
+        for _, e in ipairs(list) do
+            y = Row(body, y, w, e.n .. "× " .. PRO.RecipeName(e.r), PRO.ProfName(e.r.key),
+                { recipe = e.r, hint = "Linksklick: eins mehr · Rechtsklick: eins weniger",
+                  onClick = function(button)
+                      PT.AddWatch(e.r.spell, button == "RightButton" and -1 or 1)
+                      PT.Draw("merkliste")
+                  end })
+        end
     end
     y = y - 8
     local needs = PT.Needs()
@@ -973,16 +995,135 @@ function PT.DrawWatch(body, w)
             if e.price then cost = cost + e.price * e.missing else unknown = unknown + 1 end
         end
     end
-    y = Head(body, y, w, "Reagenzien", unknown > 0 and ("fehlt: ab " .. Money(cost)) or ("fehlt: " .. Money(cost)))
+    y = Head(body, y, w, "Gegenstände", unknown > 0 and ("fehlt: ab " .. Money(cost)) or ("fehlt: " .. Money(cost)))
     for _, e in ipairs(needs) do
         local right = e.mine .. " / " .. e.need
         if e.others > 0 then right = right .. "  (+" .. e.others .. " Twinks)" end
         if e.missing > 0 then right = right .. "   " .. (e.price and Money(e.price * e.missing) or "Preis unbekannt") end
         y = Row(body, y, w, PRO.ItemName(e.id), right,
-            { item = e.id, tone = e.missing > 0 and "textNormal" or "textDim", rightTone = e.missing > 0 and "dangerBright" or "successBright" })
+            { item = e.id, tone = e.missing > 0 and "textNormal" or "textDim", rightTone = e.missing > 0 and "dangerBright" or "successBright",
+              onClick = function(button)
+                  if button == "RightButton" and witems[e.id] then
+                      PT.AddWatchItem(e.id, -witems[e.id])
+                      PT.Draw("merkliste")
+                      return
+                  end
+                  PT.SelectItem(e.id)
+              end })
     end
-    y = Note(body, y - 6, w, "Gezählt: Taschen und Bank dieses Charakters; was deine anderen Charaktere haben, steht in Klammern (Bestand aller Charaktere muss dafür an sein).")
+    y = Note(body, y - 6, w, "Klick auf einen Gegenstand: Preis, Preisverlauf und Fundorte rechts. Rechtsklick nimmt einen einzeln vorgemerkten Gegenstand heraus. Gezählt: Taschen und Bank dieses Charakters; was deine anderen Charaktere haben, steht in Klammern (Bestand aller Charaktere muss dafür an sein).")
+    if PT.selItem then PT.SelectItem(PT.selItem) end
     return y
+end
+
+-- Detailbereich eines Gegenstands: Auktionspreis, Verlauf, Fundorte.
+local chart
+local function Chart(parent, width, hist)
+    if not chart then
+        chart = CreateFrame("Frame", nil, parent)
+        chart.bars, chart.labels = {}, {}
+        for i = 1, 7 do
+            chart.bars[i] = chart:CreateTexture(nil, "ARTWORK")
+            chart.labels[i] = WeintCodex.Label(chart, "", { size = 9, color = "textDim", justify = "CENTER" })
+        end
+    end
+    chart:SetParent(parent)
+    chart:SetSize(width, 80)
+    local AP = WeintCodex.UIAuctionPrices
+    local today = AP and AP.Day and AP.Day() or 0
+    local byDay, max = {}, 0
+    for _, e in ipairs(hist) do byDay[e[1]] = e[2] if e[2] > max then max = e[2] end end
+    local bw = math.floor((width - 6 * 6) / 7)
+    for i = 1, 7 do
+        local d = today - 7 + i
+        local v = byDay[d]
+        local b, l = chart.bars[i], chart.labels[i]
+        local h = (v and max > 0) and math.max(3, math.floor(56 * v / max)) or 2
+        b:ClearAllPoints()
+        b:SetPoint("BOTTOMLEFT", chart, "BOTTOMLEFT", (i - 1) * (bw + 6), 16)
+        b:SetSize(bw, h)
+        local c = v and C.accent or C.surface3
+        b:SetColorTexture(c[1], c[2], c[3], v and 0.9 or 0.6)
+        l:ClearAllPoints()
+        l:SetPoint("TOP", b, "BOTTOM", 0, -3)
+        l:SetText(i == 7 and "heute" or ("-" .. (7 - i)))
+    end
+    chart:Show()
+    return chart
+end
+
+function PT.ItemBlocks(id)
+    local blocks = { { type = "header", text = PRO.ItemName(id) } }
+    local rows = {}
+    local mine, others = PT.Have(id)
+    rows[#rows + 1] = { label = "Du hast", value = tostring(mine) }
+    if others > 0 then rows[#rows + 1] = { label = "Twinks", value = tostring(others) } end
+    local AP = WeintCodex.UIAuctionPrices
+    local f = AP and AP.Lookup and AP.Lookup(id)
+    if f and type(f.price) == "number" then
+        rows[#rows + 1] = { label = "Auktionshaus", value = Money(f.price) }
+        if AP.AgeText then rows[#rows + 1] = { label = "Gesehen", value = AP.AgeText(f.day) } end
+    else
+        rows[#rows + 1] = { label = "Auktionshaus", value = "nie gesehen" }
+    end
+    blocks[#blocks + 1] = { type = "rows", rows = rows }
+    local hist = AP and AP.History and AP.History(id) or {}
+    blocks[#blocks + 1] = { type = "divider" }
+    blocks[#blocks + 1] = { type = "header", text = "Preis der letzten 7 Tage" }
+    if #hist >= 1 then
+        blocks[#blocks + 1] = { type = "custom", create = function(parent, width) return Chart(parent, width, hist) end }
+        local lo, hi = math.huge, 0
+        for _, e in ipairs(hist) do lo = math.min(lo, e[2]) hi = math.max(hi, e[2]) end
+        blocks[#blocks + 1] = { type = "text", text = "Niedrigster Preis je Tag, an dem du gescannt hast: " .. Money(lo) .. " bis " .. Money(hi) .. ". Leere Tage: kein Scan." }
+    else
+        blocks[#blocks + 1] = { type = "text", text = "Noch kein Verlauf – er entsteht mit jedem Scan im Auktionshaus (ab dieser Fassung)." }
+    end
+    -- Fundorte: eigene Sammelstellen, sonst Dungeonbeute aus dem Bestand.
+    blocks[#blocks + 1] = { type = "divider" }
+    blocks[#blocks + 1] = { type = "header", text = "Wo finde ich das?" }
+    local any = false
+    local GA = WeintCodex.UIGatherAtlas
+    local where = GA and GA.WhereItem and GA.WhereItem(id) or {}
+    local QM = WeintCodex.QuestMap
+    local BP = WeintCodex.BooksPage
+    if where[1] then
+        any = true
+        local lines = {}
+        for i, e in ipairs(where) do
+            if i > 4 then break end
+            lines[#lines + 1] = ((QM and QM.MapName and QM.MapName(e.mapID)) or ("Karte " .. e.mapID)) .. ": " .. e.count .. " Fundstellen"
+        end
+        blocks[#blocks + 1] = { type = "card", lines = lines }
+        local e = where[1]
+        if BP and BP.MapWidget then
+            blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
+                local wdg = BP.MapWidget(parent, width)
+                BP.PaintMap(wdg, e.mapID, e.x, e.y)
+                return wdg
+            end }
+        end
+        blocks[#blocks + 1] = { type = "text", text = "Aus deinem Sammel-Atlas: Stellen, an denen du (oder deine Gilde) das gesammelt hast." }
+    end
+    local LB = WeintCodex.LootBook
+    if LB and LB.SourceOf then
+        local n, bi = LB.SourceOf(id)
+        if n then
+            any = true
+            local inst = LB.Instance(n)
+            local b = LB.Bosses(n)[bi]
+            blocks[#blocks + 1] = { type = "text", text = "Beute: " .. LB.InstanceName(inst) .. (b and (" – " .. LB.BossName(b)) or "") .. " (aus Classic, in Forever unbestätigt)." }
+        end
+    end
+    if not any then
+        blocks[#blocks + 1] = { type = "text", text = "Kein Fundort im Bestand. Sammelst du es selbst, merkt sich der Sammel-Atlas die Stellen; Stoff und Fleisch fallen von Gegnern – wo genau, weiß WeintCodex nicht." }
+    end
+    return blocks
+end
+
+function PT.SelectItem(id)
+    PT.selItem = id
+    local nav = WeintCodex.Navigation
+    if nav and nav.SetInspector then nav.SetInspector(PT.ItemBlocks(id)) end
 end
 
 function PT.DrawCooldowns(body, w)

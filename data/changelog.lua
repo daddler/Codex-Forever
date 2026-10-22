@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.134.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFEinkaufsliste auf die Merkliste|r – ein Klick auf einen Gegenstand im Planer merkt ihn vor.",
+            "|cff7C6CFFGegenstände der Merkliste mit Details|r – Klick zeigt rechts Auktionspreis, Preisverlauf der letzten 7 Tage und wo du es findest: eigene Sammelstellen auf der Karte oder Dungeonbeute.",
+        },
+    },
+    {
         version = "6.133.0.0",
         date    = "22.10.2026",
         notes   = {
