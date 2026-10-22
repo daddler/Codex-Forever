@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.113.4.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFStufe im kleinen Kreis|r einen Bildpunkt zurück nach links.",
+        },
+    },
+    {
         version = "6.113.3.0",
         date    = "22.10.2026",
         notes   = {

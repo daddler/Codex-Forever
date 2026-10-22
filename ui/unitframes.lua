@@ -765,9 +765,10 @@ function Frame:Round()
     b.text = K.NewText(b, 10)
     -- 6.113.2.0 (Beta-Test mit Bild: Zahl nicht mittig): ueber die ganze
     -- Breite gespannt und mittig gesetzt - nur CENTER liess sie links haengen.
-    -- 6.113.3.0 (Bild): die Schrift zeichnet mittig noch 1-2 px zu weit links.
-    b.text:SetPoint("LEFT", b, "LEFT", 2, 0)
-    b.text:SetPoint("RIGHT", b, "RIGHT", 1, 0)
+    -- 6.113.3.0/6.113.4.0 (Bilder): mittig zeichnet die Schrift etwas zu
+    -- weit links, 1,5 px nach rechts war zu viel - jetzt 0,5 px.
+    b.text:SetPoint("LEFT", b, "LEFT", 1, 0)
+    b.text:SetPoint("RIGHT", b, "RIGHT", 0, 0)
     if b.text.SetJustifyH then b.text:SetJustifyH("CENTER") end
     if b.text.SetJustifyV then b.text:SetJustifyV("MIDDLE") end
     if b.text.SetWordWrap then b.text:SetWordWrap(false) end
