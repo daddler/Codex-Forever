@@ -4600,7 +4600,9 @@ do
         -- Planer: Chance wie in Classic, Weg ohne Luecke, Preis unbekannt ~= 0.
         local r = { learn = 10, yellow = 20, green = 30, grey = 40 }
         assert(PT.Chance(r, 5) == 0 and PT.Chance(r, 15) == 1 and PT.Chance(r, 30) == 0.5 and PT.Chance(r, 40) == 0, "Chance falsch")
+        assert(PT.Color(r, 15) == "orange" and PT.Color(r, 25) == "yellow" and PT.Color(r, 35) == "green" and PT.Color(r, 40) == "grey", "Farbe falsch")
         local plan = PT.Plan("tailoring", 1, 50)
+        for _, st in ipairs(plan.steps) do assert(st.color ~= "grey", "grau geplant") end
         assert(#plan.steps > 0, "kein Weg")
         assert(plan.steps[1].from == 1, "Weg beginnt falsch")
         for _, it in ipairs(plan.shop) do assert(it.price == nil or type(it.price) == "number", "Preis kein Wert") end

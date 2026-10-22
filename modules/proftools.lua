@@ -374,10 +374,19 @@ function PT.Usable(key)
     return out
 end
 
--- Weg von rank bis target. Je Punkt das Rezept mit den geringsten Kosten je
--- erwartetem Punkt; Rezepte mit unbekanntem Preis nur, wenn keins mit Preis
--- geht. Liefert Abschnitte, Einkaufsliste, Summe, Zahl unbekannter Preise.
-PT.MIN_CHANCE = 0.25
+-- Farbe eines Rezepts bei Fertigkeit s, wie im Berufsfenster.
+function PT.Color(r, s)
+    if not (r.learn and r.grey) or s < r.learn or s >= r.grey then return "grey" end
+    if s < (r.yellow or r.learn) then return "orange" end
+    if s < (r.green or r.grey) then return "yellow" end
+    return "green"
+end
+
+-- Weg von rank bis target. 6.131.0.0 (Beta-Test: "wenn nur noch ein Rezept
+-- gruen ist, ist kein Punkt garantiert, grau gibt gar keinen"): erst
+-- orange und gelb, darunter das mit den geringsten Kosten je erwartetem
+-- Punkt. Gruen nur, wenn es kein oranges oder gelbes gibt - als Wagnis
+-- markiert. Grau nie. Abschnitte wechseln auch mit der Farbe.
 function PT.Plan(key, rank, target)
     local usable = PT.Usable(key)
     local steps, shop = {}, {}
@@ -388,25 +397,34 @@ function PT.Plan(key, rank, target)
     end
     for _, r in ipairs(usable) do r._cost = nil end
     local gap
-    for s = rank, target - 1 do
+    local function pick(s, allowGreen)
         local best, bestScore, bestKnown
         for _, r in ipairs(usable) do
-            local ch = PT.Chance(r, s)
-            if ch >= PT.MIN_CHANCE then
-                local c = costOf(r)
-                local known = c ~= nil
-                local score = known and (c / ch) or (1 / ch)
-                if not best or (known and not bestKnown) or (known == bestKnown and score < bestScore) then
-                    best, bestScore, bestKnown = r, score, known
+            local col = PT.Color(r, s)
+            if col == "orange" or col == "yellow" or (allowGreen and col == "green") then
+                local ch = PT.Chance(r, s)
+                if ch > 0 then
+                    local c = costOf(r)
+                    local known = c ~= nil
+                    local score = known and (c / ch) or (1 / ch)
+                    if not best or (known and not bestKnown) or (known == bestKnown and score < bestScore) then
+                        best, bestScore, bestKnown = r, score, known
+                    end
                 end
             end
         end
+        return best
+    end
+    for s = rank, target - 1 do
+        local best = pick(s, false) or pick(s, true)
         if not best then gap = s break end
-        local n = 1 / PT.Chance(best, s)
-        if cur and cur.recipe == best then
-            cur.to, cur.crafts = s + 1, cur.crafts + n
+        local col = PT.Color(best, s)
+        local ch = PT.Chance(best, s)
+        if cur and cur.recipe == best and cur.color == col then
+            cur.to, cur.crafts = s + 1, cur.crafts + 1 / ch
+            cur.minChance = math.min(cur.minChance, ch)
         else
-            cur = { from = s, to = s + 1, recipe = best, crafts = n }
+            cur = { from = s, to = s + 1, recipe = best, crafts = 1 / ch, color = col, minChance = ch, risky = col == "green" }
             steps[#steps + 1] = cur
         end
     end
@@ -815,15 +833,25 @@ function PT.DrawPlanner(body, w)
     if s.rank >= target then return Note(body, y, w, "Nichts mehr zu planen.") end
     local plan = PT.Plan(key, s.rank, target)
     y = Head(body, y, w, "Weg", #plan.steps .. " Schritte")
+    local TONE = { orange = "skillOrange", yellow = "skillYellow", green = "skillGreen" }
+    local risky = false
     for _, st in ipairs(plan.steps) do
         local cost = PT.CraftCost(st.recipe)
-        y = Row(body, y, w, st.crafts .. "× " .. PRO.RecipeName(st.recipe),
+        local count = (st.color == "orange" and "" or "ca. ") .. st.crafts .. "× "
+        local hint = st.color == "orange" and "Orange: jedes Herstellen bringt einen Punkt."
+            or st.color == "yellow" and ("Gelb: meist ein Punkt, zuletzt etwa " .. math.floor(st.minChance * 100 + 0.5) .. " % – die Anzahl ist geschätzt.")
+            or ("Grün: nur noch etwa " .. math.floor(st.minChance * 100 + 0.5) .. " % je Herstellen – kein Punkt garantiert, es gibt hier kein oranges oder gelbes Rezept.")
+        if st.risky then risky = true end
+        y = Row(body, y, w, count .. PRO.RecipeName(st.recipe) .. (st.risky and "  (Glückssache)" or ""),
             st.from .. "–" .. st.to .. "   " .. (cost and Money(cost * st.crafts) or "Preis unbekannt"),
-            { recipe = st.recipe, hint = "Klick: auf die Merkliste (" .. st.crafts .. "×)",
+            { recipe = st.recipe, tone = TONE[st.color], hint = hint .. "\nKlick: auf die Merkliste (" .. st.crafts .. "×)",
               onClick = function() PT.AddWatch(st.recipe.spell, st.crafts) end })
     end
+    if risky then
+        y = Note(body, y, w, "Grüne Schritte sind Glückssache: die Zahl ist der Durchschnitt, es können deutlich mehr werden. Besser: ein neues Rezept beim Lehrer oder Händler suchen, das dort noch orange oder gelb ist.")
+    end
     if plan.gap then
-        y = Note(body, y, w, "Ab " .. plan.gap .. " kennt der Planer kein Rezept mehr, das noch sicher Punkte bringt – vielleicht gibt es eins beim Händler oder als Fundstück (siehe Rezepte des Berufs).")
+        y = Note(body, y, w, "Ab " .. plan.gap .. " ist jedes deiner Rezepte grau und bringt keinen Punkt mehr – vielleicht gibt es eins beim Händler oder als Fundstück (siehe Rezepte des Berufs).")
     end
     y = y - 8
     y = Head(body, y, w, "Einkaufsliste", plan.unknown > 0 and ("ab " .. Money(plan.total)) or Money(plan.total))
@@ -833,7 +861,7 @@ function PT.DrawPlanner(body, w)
             (mine > 0 and ("hast " .. mine .. "   ") or "") .. (e.price and Money(e.price * e.count) or "Preis unbekannt"),
             { item = e.id })
     end
-    y = Note(body, y - 6, w, "Gerechnet wird mit Rezepten, die du kannst oder beim Lehrer lernst, und der Chance auf einen Punkt wie in Classic (orange sicher, ab gelb weniger). Preise nur aus deinen Auktionspreisen – „Preis unbekannt“ heißt: nie gesehen, nicht umsonst. Klick auf einen Schritt setzt ihn auf die Merkliste.")
+    y = Note(body, y - 6, w, "Gerechnet wird mit Rezepten, die du kannst oder beim Lehrer lernst, und der Chance auf einen Punkt wie in Classic: orange immer, gelb meist, grün selten, grau nie. Orange und Gelb gehen vor; Grün nur, wenn es nichts anderes gibt. Preise nur aus deinen Auktionspreisen – „Preis unbekannt“ heißt: nie gesehen, nicht umsonst. Klick auf einen Schritt setzt ihn auf die Merkliste.")
     return y
 end
 

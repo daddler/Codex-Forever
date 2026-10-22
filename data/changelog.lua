@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.131.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Berufe-Planer kennt die Farben|r – orange und gelbe Rezepte gehen vor, grüne nur, wenn es nichts anderes gibt, und dann als „Glückssache“ markiert. Graue plant er nie.",
+        },
+    },
+    {
         version = "6.130.0.1",
         date    = "22.10.2026",
         notes   = {

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.131.0.0] – 2026-10-22
+
+### Geändert
+- Berufe-Planer (Beta-Test: „grün ist kein garantierter Punkt, grau gibt keinen“): `PT.Color` wie im Berufsfenster; je Punkt erst unter orangen und gelben Rezepten das günstigste je erwartetem Punkt, grün nur als Ausweg (markiert „Glückssache“, Hinweis), grau nie. Schritte in der Farbe des Rezepts, Anzahl bei gelb/grün als „ca.“, Tooltip mit der Chance.
+
 ## [6.130.0.1] – 2026-10-22
 
 ### Behoben
