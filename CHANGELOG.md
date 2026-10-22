@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.142.0.0] – 2026-10-22
+
+### Behoben
+- Erinnerungen (Spielerbericht: Gift wurde angewendet, obwohl ein Fenster darüber lag): die sicheren Knöpfe auf den Zeilen lagen in der Ebene DIALOG über jedem Fenster. Jetzt Ebene LOW wie die Erinnerungen selbst (`RP.LINE_STRATA`, Stufe Erinnerung + 20); Fenster des Spiels liegen darüber. Der Auswahlring bleibt oben.
+
 ## [6.141.0.0] – 2026-10-22
 
 ### Geändert

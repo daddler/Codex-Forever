@@ -96,11 +96,17 @@ local function Tip(owner, pick, id)
     tt:Show()
 end
 
-local function NewSecure(parent, size)
+-- 6.142.0.0 (Spielerbericht: "liegt ein anderes Fenster darueber, wird
+-- trotzdem die Waffe vergiftet"): die Knoepfe auf den Zeilen lagen in der
+-- Ebene DIALOG - ueber jedem Fenster. Sie liegen jetzt in der Ebene der
+-- Erinnerungen (LOW), knapp darueber; Fenster des Spiels decken sie zu.
+-- Nur der Ring (oeffnet auf Klick) bleibt oben.
+RP.LINE_STRATA = "LOW"
+local function NewSecure(parent, size, strata)
     local b = CreateFrame("Button", nil, parent, "SecureActionButtonTemplate")
     b:RegisterForClicks("AnyUp", "AnyDown")
     if size then b:SetSize(size, size) end
-    b:SetFrameStrata("DIALOG")
+    b:SetFrameStrata(strata or "DIALOG")
     return b
 end
 
@@ -223,7 +229,7 @@ end
 local function Line(i)
     local b = lines[i]
     if b then return b end
-    b = NewSecure(UIParent)
+    b = NewSecure(UIParent, nil, RP.LINE_STRATA)
     b:SetScript("OnEnter", function(self) Tip(self, self._pick, self._single) end)
     b:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
     -- Mehrere Sorten: der sichere Klick tut nichts (kein Typ), der Haken
@@ -239,6 +245,7 @@ end
 -- Knopf ueber Symbol bis rechten Rand des Hinweises, in UIParent-Massen.
 function RP.Place(b, icon, banner)
     b:ClearAllPoints()
+    if banner.GetFrameLevel then b:SetFrameLevel((banner:GetFrameLevel() or 1) + 20) end
     local il, ib, _, ih = icon:GetRect()
     local bl, _, bw = banner:GetRect()
     local us = UIParent:GetEffectiveScale() or 1

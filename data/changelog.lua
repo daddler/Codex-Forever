@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.142.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFErinnerungen schlucken keine Klicks mehr|r – liegt ein Fenster über einer Erinnerung (z. B. Gift), bekommt das Fenster den Klick, nicht die Waffe.",
+        },
+    },
+    {
         version = "6.141.0.0",
         date    = "22.10.2026",
         notes   = {

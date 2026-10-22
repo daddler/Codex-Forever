@@ -1601,7 +1601,8 @@ local banner
 local function BuildBanner()
     banner = CreateFrame("Frame", "WeintCodexReminders", UIParent)
     banner:SetSize(260, 30)
-    banner:SetFrameStrata("MEDIUM")
+    -- 6.142.0.0: unter den Fenstern des Spiels (siehe ui/reminderpick.lua).
+    banner:SetFrameStrata("LOW")
     banner.kachel = K.Kachel(banner, { shadow = 6 })
     local a = C.warning or C.accent
     banner.strip = banner:CreateTexture(nil, "ARTWORK")
