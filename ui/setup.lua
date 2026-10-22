@@ -284,6 +284,64 @@ function ES.SetGroupHorizontal(kind, on)
     return true
 end
 
+-- LEISTEN VERSCHIEBEN OHNE BEARBEITUNGSMODUS (6.115.0.0, Wunsch: "dann
+-- waere ich komplett unabhaengig vom Bearbeitungsmodus"). Direkt
+-- verschieben darf WeintCodex die Leisten nicht (6.3.0.4/.5, blockiert im
+-- Kampf) - es schreibt ihren Platz in SEIN Layout und laesst das Spiel sie
+-- setzen, wie nach dem Bearbeitungsmodus. Nie in ein Layout des Spielers.
+
+local function OwnLayout()
+    local info, why = Layouts()
+    if not info then return nil, nil, why end
+    for i, l in ipairs(info.layouts) do
+        if l.layoutName == ES.LAYOUT_NAME and type(l.systems) == "table" then return info, l, i end
+    end
+    return nil, nil, "kein Layout „WeintCodex“"
+end
+
+local function GameEntry(key)
+    for _, e in ipairs(K.GAME_LAYOUT) do if e.key == key then return e end end
+    return nil
+end
+
+-- Wo eine Leiste im Layout „WeintCodex“ steht: { point, relPoint, x, y } oder nil.
+function ES.BarAnchor(key)
+    local e = GameEntry(key)
+    local _, layout = OwnLayout()
+    local sys = e and layout and Find(layout.systems, e)
+    local a = sys and sys.anchorInfo
+    if type(a) ~= "table" or type(a.point) ~= "string" then return nil end
+    if a.relativeTo and a.relativeTo ~= "UIParent" then return nil end
+    return { point = a.point, relPoint = a.relativePoint or a.point,
+             x = tonumber(a.offsetX) or 0, y = tonumber(a.offsetY) or 0 }
+end
+
+-- Plaetze schreiben: places[key] = { point, relPoint, x, y }. true oder false, Grund.
+function ES.SetBarAnchors(places)
+    if K.InCombat() then return false, "im Kampf" end
+    if ES.LayoutActive() ~= true then return false, "Layout „WeintCodex“ ist nicht aktiv" end
+    local info, layout, slot = OwnLayout()
+    if not info then return false, slot end
+    local n = 0
+    for key, p in pairs(places) do
+        local e = GameEntry(key)
+        local sys = e and Find(layout.systems, e)
+        if sys then
+            sys.anchorInfo = { point = p.point, relativeTo = "UIParent", relativePoint = p.relPoint or p.point,
+                               offsetX = p.x or 0, offsetY = p.y or 0 }
+            sys.isInDefaultPosition = false
+            n = n + 1
+        end
+    end
+    if n == 0 then return false, "Leiste im Layout nicht gefunden" end
+    local em = _G.C_EditMode
+    local ok, err = pcall(em.SaveLayouts, info)
+    if not ok then return false, "SaveLayouts: " .. tostring(err) end
+    local presets = Presets()
+    if em.SetActiveLayout then pcall(em.SetActiveLayout, (presets and #presets or 2) + slot) end
+    return true
+end
+
 -- WORAUF WIRD AUFGEBAUT? Auf der Vorlage des Spiels ("Modern", die erste)
 -- - sie traegt jedes System mit gueltigen Einstellungen, und was WeintCodex
 -- nicht stellt, steht dann dort, wo das Spiel es hinstellt, nicht dort,

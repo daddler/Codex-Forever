@@ -4366,6 +4366,40 @@ do
     Check(ok, "Auktionspreise: Angebotsliste beim Kaufen aktualisiert den Preis" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.115.0.0: Leisten verschieben ueber das eigene Layout, nie direkt.
+do
+    local BM, ES = WeintCodex.UIBarMover, WeintCodex.UISetup
+    local oEM, oEnum, oBar = _G.C_EditMode, _G.Enum, _G.MultiBarBottomLeft
+    local ok, err = pcall(function()
+        local sys = { system = 0, systemIndex = 2, anchorInfo = { point = "BOTTOM", relativeTo = "UIParent", relativePoint = "BOTTOM", offsetX = 0, offsetY = 90 } }
+        local info = { activeLayout = 3, layouts = { { layoutName = ES.LAYOUT_NAME, systems = { sys } } } }
+        local saved, active = 0, nil
+        _G.C_EditMode = { GetLayouts = function() return info end, SaveLayouts = function() saved = saved + 1 end,
+                          SetActiveLayout = function(i) active = i end }
+        _G.Enum = setmetatable({ EditModeSystem = { ActionBar = 0 }, EditModeActionBarSystemIndices = { Bar2 = 2 } },
+                               { __index = oEnum })
+        local barSet = false
+        local bar = CreateFrame("Frame", "MultiBarBottomLeft", UIParent)
+        bar:SetSize(500, 40)
+        bar.SetPoint = function() barSet = true end
+        local a = ES.BarAnchor("bar2")
+        assert(a and a.point == "BOTTOM" and a.y == 90, "Platz im Layout nicht gelesen")
+        assert(BM.Prepare() >= 1 and BM.ghosts.bar2, "kein Platzhalter")
+        local ui = K.Profile()
+        ui.positions[BM.PREFIX .. "bar2"] = { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = 300, y = 200 }
+        assert(BM.OnPlaced(BM.PREFIX .. "bar2"), "nicht ins Layout geschrieben")
+        assert(sys.anchorInfo.point == "BOTTOMLEFT" and sys.anchorInfo.offsetX == 300 and sys.anchorInfo.offsetY == 200
+            and saved == 1 and active == 3, "Layout falsch geschrieben oder nicht angewandt")
+        assert(not barSet, "Leiste direkt verschoben")
+        -- Fremdes Layout aktiv: nichts schreiben.
+        info.activeLayout = 1
+        assert(not ES.SetBarAnchors({ bar2 = { point = "TOP", x = 0, y = 0 } }) and saved == 1, "fremdes Layout beschrieben")
+        ui.positions[BM.PREFIX .. "bar2"] = nil
+    end)
+    _G.C_EditMode, _G.Enum, _G.MultiBarBottomLeft = oEM, oEnum, oBar
+    Check(ok, "Leisten verschieben: Platzhalter, Platz ins eigene Layout, nie direkt" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.

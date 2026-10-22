@@ -1358,7 +1358,7 @@ K.Register({
                         { value = "wc",   text = "WeintCodex (je Leiste)" },
                         { value = "game", text = "Bearbeitungsmodus des Spiels" } } },
                   { type = "empty" })
-            B:GameEditMode("Verschieben: im Bearbeitungsmodus des Spiels. Eine dort verschobene Leiste lässt das Spiel an ihrem Platz; WeintCodex ordnet nur die Knöpfe darin. Im eigenen Gestaltungsmodus verschiebt WeintCodex die Leisten nicht – das Spiel stapelt sie im Kampf selbst neu und blockiert jeden fremden Eingriff.")
+            B:GameEditMode("Verschieben: im Gestaltungsmodus von WeintCodex – die Leiste ziehen, beim Loslassen setzt das Spiel sie an den neuen Platz (über das Layout „WeintCodex“, nur außerhalb des Kampfes). Der Bearbeitungsmodus des Spiels geht weiterhin.")
             local items = {}
             for i, e in ipairs(BAR_BUTTONS) do items[i] = { value = i, text = e.label } end
             B:Section("Leiste")

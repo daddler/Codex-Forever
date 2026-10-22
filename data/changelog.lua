@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.115.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFAktionsleisten im Gestaltungsmodus verschieben|r – ziehen, loslassen, und die Leiste steht am neuen Platz. Der Bearbeitungsmodus des Spiels wird dafür nicht mehr gebraucht. Nur außerhalb des Kampfes.",
+        },
+    },
+    {
         version = "6.114.0.0",
         date    = "22.10.2026",
         notes   = {

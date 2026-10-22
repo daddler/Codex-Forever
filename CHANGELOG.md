@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.115.0.0] – 2026-10-22
+
+### Hinzugefügt
+- Leisten des Spiels im Gestaltungsmodus verschieben (`ui/barmover.lua`): Platzhalter in Größe der Leiste (`gbar_<key>`), beim Loslassen/Pfeiltasten/Zahlen/Zurücksetzen schreibt `ES.SetBarAnchors` den Platz ins Layout „WeintCodex“ (`SaveLayouts`, dann `SetActiveLayout`) – das Spiel setzt die Leiste, WeintCodex nie direkt. Nur im eigenen, aktiven Layout, nie im Kampf. Startplatz des Platzhalters aus dem Layout (`ES.BarAnchor`).
+- `K.RegisterMover` nimmt `onPlaced`, gerufen nur nach Handlungen des Spielers.
+
 ## [6.114.0.0] – 2026-10-22
 
 ### Geändert

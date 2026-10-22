@@ -1317,6 +1317,15 @@ end
 
 K.SavePosition = SavePosition
 
+-- Nach einer Handlung des Spielers (Ziehen, Pfeiltasten, Zahlen,
+-- Zuruecksetzen): wer es braucht, erfaehrt den neuen Platz (6.115.0.0,
+-- Leisten des Spiels ueber das Layout, ui/barmover.lua). Nie beim
+-- blossen Anwenden - das schriebe Gespeichertes ungefragt zurueck.
+local function Placed(key)
+    local m = movers[key]
+    if m and m.onPlaced then pcall(m.onPlaced, key) end
+end
+
 function K.ApplyPosition(key)
     local m = movers[key]
     if not m then return end
@@ -1338,6 +1347,7 @@ function K.RegisterMover(frame, key, label, default, opts)
     local m = movers[key] or {}
     m.frame, m.label, m.default = frame, label, default
     m.secure = opts.secure and true or false
+    m.onPlaced = opts.onPlaced
     movers[key] = m
 
     if not m.overlay then
@@ -1388,6 +1398,7 @@ function K.RegisterMover(frame, key, label, default, opts)
             -- angelegt wird er aus dem Gespeicherten.
             K.ApplyPosition(key)
             K.SelectMover(key)
+            Placed(key)
         end)
         ov:SetScript("OnMouseDown", function(_, button)
             if button == "LeftButton" then K.SelectMover(key) end
@@ -1407,6 +1418,7 @@ function K.RegisterMover(frame, key, label, default, opts)
             local ui = K.Profile()
             if ui then ui.positions[key] = nil end
             K.ApplyPosition(key)
+            Placed(key)
         end)
         ov:SetScript("OnEnter", function(self)
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
@@ -1489,6 +1501,7 @@ function K.NudgeMover(dx, dy)
         x = (cur.x or 0) + dx, y = (cur.y or 0) + dy }
     K.ApplyPosition(selected)
     K.Fire("moverSelect", selected)
+    Placed(selected)
     return true
 end
 
@@ -1505,6 +1518,7 @@ function K.SetMoverPosition(key, x, y)
         x = math.floor(x + 0.5), y = math.floor(y + 0.5) }
     K.ApplyPosition(key)
     K.Fire("moverSelect", key)
+    Placed(key)
     return true
 end
 
@@ -1561,7 +1575,7 @@ function K.ResetAllPositions()
     local ui = K.Profile()
     if not ui then return end
     wipe(ui.positions)
-    for key in pairs(movers) do K.ApplyPosition(key) end
+    for key in pairs(movers) do K.ApplyPosition(key) Placed(key) end
 end
 
 --------------------------------------------------
