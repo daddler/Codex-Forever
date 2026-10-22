@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.130.0.1",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFKein Fehler mehr an den Gruppenrahmen|r – beim Aufbau der Gruppe meldete das Spiel einen Lua-Fehler.",
+        },
+    },
+    {
         version = "6.130.0.0",
         date    = "22.10.2026",
         notes   = {

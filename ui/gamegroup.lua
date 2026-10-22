@@ -205,8 +205,11 @@ function GG.Layout(f)
     end
     hb:ClearAllPoints()
     hb:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
+    -- 6.130.0.1 (Lua-Fehler "Cannot anchor to a region dependent on it"):
+    -- das Spiel haengt die Kraftleiste an den Lebensbalken. Der Balken
+    -- darf deshalb nie an der Kraftleiste haengen, nur am Rahmen.
     if power then
-        hb:SetPoint("BOTTOMRIGHT", pb, "TOPRIGHT", 0, 1)
+        hb:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, ph + 2)
     else
         hb:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, 1)
     end

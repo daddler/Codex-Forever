@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.130.0.1] – 2026-10-22
+
+### Behoben
+- Lua-Fehler „Cannot anchor to a region dependent on it“ (`CompactPartyFrameMember1PowerBar:SetPoint`): das Spiel hängt die Kraftleiste an den Lebensbalken, `GG.Layout` hängte den Lebensbalken an die Kraftleiste. Der Lebensbalken hängt jetzt nur am Rahmen.
+
 ## [6.130.0.0] – 2026-10-22
 
 ### Geändert
