@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.118.2.0] – 2026-10-22
+
+### Behoben
+- Listen-Kopfzeilen (`W.ListHeader`): weiterverwendete Zeilen behielten Raute, Linie und Schrift der Überschrift. `FitList` prüft je Durchlauf, ob das Bild noch eine Kopfzeile ist (Atlas, vom Spiel versteckt) – sonst Verzierung weg und Schrift des Spiels zurück; jeder Durchlauf prüft alle offenen Kopfzeilen.
+- Scrollen: `W.HookScrollBoxes` meldet sich an `OnDataRangeChanged`/`OnLayout` jeder ScrollBox in gestalteten Fenstern an und gestaltet sofort (höchstens einmal je Bild), statt auf den Takt (0,3 s bzw. 5 s) zu warten.
+
 ## [6.118.1.0] – 2026-10-22
 
 ### Behoben

@@ -923,7 +923,40 @@ W.ListHeaders = listHeads
 -- andere Gruppen. Die Linie ist nur links verankert, ihre Breite
 -- gerechnet (W.SizeLine): bis vor das Zeichen zum Auf- und Zuklappen,
 -- sonst bis vor das Ende des Balkens.
+-- 6.118.2.0 (Beta-Test, Vermaechtnis: "einige Punkte mit Raute und Strich,
+-- andere nicht"): die Liste verwendet ihre Zeilen weiter - eine Zeile, die
+-- einmal Kopfzeile war, traegt jetzt vielleicht einen Eintrag. Ist das Bild
+-- dahinter keine Kopfzeile mehr, faellt die Verzierung weg und die Schrift
+-- wird wieder die des Spiels.
+local function IsStillHeader(d)
+    -- Versteckt das Spiel das Bild (Zeile als Eintrag weiterverwendet, das
+    -- Zeichen zum Aufklappen weg): keine Kopfzeile. Die Deckkraft setzt
+    -- WeintCodex selbst - sie zaehlt hier nicht.
+    if d.beam.IsVisible and d.frame.IsVisible and K.Bool(d.frame:IsVisible(), false)
+        and not K.Bool(d.beam:IsVisible(), true) then return false end
+    local ok, atlas = pcall(TextureAtlas, d.beam)
+    if not ok or type(atlas) ~= "string" or atlas == "" then return true end
+    return W.HeaderAtlas(atlas) and true or false
+end
+
+local function Unheader(d)
+    if not d.bare then
+        d.dot:Hide() d.hole:Hide() d.line:Hide()
+        d.width, d.tw, d.bare = 0, 0, true
+    end
+    if not d.plain and d.font and d.title.SetFont then
+        pcall(d.title.SetFont, d.title, d.font[1], d.font[2], d.font[3])
+        if d.color then pcall(d.title.SetTextColor, d.title, d.color[1], d.color[2], d.color[3]) end
+    end
+    d.plain = true
+end
+
 local function FitList(d)
+    if not IsStillHeader(d) then Unheader(d) return end
+    if d.plain then
+        d.plain = false
+        S.Title(d.title, (d.style and d.style.headerSize) or W.LIST_HEADER_SIZE, C.textBright)
+    end
     local tw = TextWidth(d.title)
     -- Ohne Text keine Verzierung: Raute und Linie hingen sonst am Anfang der
     -- Zeile und liefen durch den Text, den eine andere Zeile traegt.
@@ -996,6 +1029,15 @@ function W.ListHeader(f, beam, sc)
     local fs = HeaderTitle(f, true) or HeaderTitle(f)
     if not fs then return nil end
     d = { title = fs, frame = f, icon = HeaderIcon(f), beam = beam, style = sc, accent = S.Accent(sc and sc.accent) }
+    -- Schrift des Spiels merken, falls die Zeile spaeter keine Kopfzeile ist.
+    if fs.GetFont then
+        local ok, a, b, c = pcall(fs.GetFont, fs)
+        if ok and a then d.font = { a, b, c } end
+    end
+    if fs.GetTextColor then
+        local ok, r, g, b = pcall(fs.GetTextColor, fs)
+        if ok and type(K.Plain(r)) == "number" then d.color = { r, g, b } end
+    end
     S.Title(fs, (sc and sc.headerSize) or W.LIST_HEADER_SIZE, C.textBright)
     -- Die Gruppe als eigene Sektion (6.7.0.2): Licht von links, Haarlinie oben.
     if sc and sc.band then d.band = S.Band(f) end
@@ -2703,6 +2745,9 @@ function W.Inner()
         end
     end
     SkinModeTabs()
+    for f, d in pairs(listHeads) do
+        if Open(f) then FitList(d) end
+    end
     local map = _G[W.MAP]
     if type(map) == "table" and done[map] and Opt("mapSkin") and Open(map) then
         W.SkinMap(map)
@@ -2724,6 +2769,33 @@ function W.Status()
         stats.err and (" · Fehler: " .. tostring(stats.err)) or "")
 end
 
+-- 6.118.2.0 (Beta-Test: "beim Scrollen kurz noch das Design von
+-- Blizzard"): eine Liste, die neue Zeilen zeigt, wird sofort gestaltet -
+-- nicht erst beim naechsten Takt. Hoechstens einmal je Bild.
+local scrollHooked = setmetatable({}, { __mode = "k" })
+local scrollRanAt = -1
+local function OnScrollChanged()
+    local now = _G.GetTime and K.Plain(_G.GetTime()) or 0
+    if now == scrollRanAt then return end
+    scrollRanAt = now
+    local ok, err = pcall(W.Inner)
+    if not ok then stats.err = err K.Report("fenster", err) end
+end
+W.OnScrollChanged = OnScrollChanged
+
+function W.HookScrollBoxes(f, depth)
+    depth = depth or 0
+    if depth > 7 or type(f) ~= "table" or (f.IsForbidden and f:IsForbidden()) then return end
+    if not scrollHooked[f] and type(f.RegisterCallback) == "function" and type(f.GetScrollTarget) == "function" then
+        scrollHooked[f] = true
+        local ev = type(f.Event) == "table" and f.Event
+        for _, name in ipairs({ "OnDataRangeChanged", "OnLayout" }) do
+            if ev and ev[name] then pcall(f.RegisterCallback, f, ev[name], OnScrollChanged, W) end
+        end
+    end
+    for _, ch in ipairs(Children(f, "scroll", depth)) do W.HookScrollBoxes(ch, depth + 1) end
+end
+
 function W.Apply()
     if not Opt("windowSkin") then return end
     for _, n in ipairs(W.WINDOWS) do
@@ -2732,6 +2804,7 @@ function W.Apply()
         -- zweite Kachel.
         local parent = type(f) == "table" and f.GetParent and f:GetParent()
         W.Skin(f, parent and done[parent] and true or false)
+        if type(f) == "table" and done[f] then pcall(W.HookScrollBoxes, f, 0) end
     end
     for _, n in ipairs(W.PANELS) do
         local f = _G[n]

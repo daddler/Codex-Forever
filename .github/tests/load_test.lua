@@ -14844,6 +14844,17 @@ do
         later._text = "Freundesliste"
         W.ListHeader(row2, bg, S.CALM)
         assert(d2.title == later and d2.dot:IsShown() and d2.width > 0, "Text kam spaeter - Verzierung bleibt weg oder an der leeren Zeile: " .. tostring(d2.title == later) .. tostring(d2.dot:IsShown()) .. tostring(d2.width))
+        -- 6.118.2.0: Zeile weiterverwendet als Eintrag (anderes Bild) - Verzierung weg, wieder Kopfzeile - wieder da.
+        local atlas = "common-button-list-collapseExpand"
+        bg.GetAtlas = function() return atlas end
+        W.FitList(d2)
+        assert(d2.dot:IsShown(), "Kopfzeile verloren")
+        atlas = "Legacy-Challenge-Left-Sub-Tab"
+        W.FitList(d2)
+        assert(not d2.dot:IsShown() and not d2.line:IsShown() and d2.plain, "Eintrag traegt noch Raute und Linie")
+        atlas = "common-button-list-collapseExpand"
+        W.FitList(d2)
+        assert(d2.dot:IsShown() and d2.width > 0 and not d2.plain, "Kopfzeile kommt nicht zurueck")
     end)
     Check(okFH, "Kopfzeile einer Liste: nie durch den Text, Titel mit Text, hinter dem letzten Text, ohne Text keine Verzierung"
         .. (okFH and "" or (": " .. tostring(errFH))))

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.118.2.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFNur Überschriften tragen Raute und Linie|r – in Listen, die ihre Zeilen weiterverwenden (Vermächtnis, Ruf, Charakter …), behielten einfache Einträge die Verzierung einer früheren Überschrift.",
+            "|cff7C6CFFBeim Scrollen sofort im WeintCodex-Stil|r – neue Zeilen einer Liste werden gestaltet, sobald sie erscheinen, statt einen Augenblick später.",
+        },
+    },
+    {
         version = "6.118.1.0",
         date    = "22.10.2026",
         notes   = {
