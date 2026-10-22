@@ -2550,6 +2550,26 @@ function NP.EnableCombo()
     if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, NP.UpdateCombo) end
 end
 
+-- 6.127.0.0 (/wcui speicher: "Neu bauen 108 KB/s" mitten im Kampf, wenn
+-- mehr Gegner erscheinen als je zuvor): ein Vorrat wird ausserhalb des
+-- Kampfes Stueck fuer Stueck vorgebaut. Die Kosten verschwinden nicht, sie
+-- fallen nur in die Ruhe statt in den Kampf.
+NP.PREWARM = 12
+function NP.Prewarm()
+    if not (_G.C_Timer and _G.C_Timer.After) then return end
+    local function Step()
+        if #pool >= NP.PREWARM then return end
+        if not (_G.InCombatLockdown and _G.InCombatLockdown()) then
+            local p = Build(hidden)
+            p:Hide()
+            p:SetParent(hidden)
+            pool[#pool + 1] = p
+        end
+        _G.C_Timer.After(0.2, Step)
+    end
+    _G.C_Timer.After(2, Step)
+end
+
 --------------------------------------------------
 -- Modul
 --------------------------------------------------
@@ -2566,6 +2586,7 @@ local function Enable()
     for e in pairs(CAST_EVENTS) do Register(events, e) end
     events:SetScript("OnEvent", K.Measured("Plaketten", OnEvent))
     NP.EnableCombo()
+    NP.Prewarm()
 
     -- Plaketten, die beim Einschalten schon stehen (Neuladen mitten in
     -- der Welt), bekommen kein ADDED mehr.

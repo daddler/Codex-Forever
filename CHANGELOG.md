@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.127.0.0] – 2026-10-22
+
+### Geändert
+- Leistung (`/wcui speicher` aus dem Beta-Test: „Plaketten: Neu bauen 108 KB/s“, „Taschen 99,9 KB/s“): `NP.Prewarm` baut außerhalb des Kampfes bis zu 12 Plaketten in den Vorrat (eine je 0,2 s) – die Kosten fallen in die Ruhe statt in den Kampf. Taschen: Ereignisse werden 0,05 s gebündelt und nur bei offenem Fenster verarbeitet; `BAG_UPDATE_COOLDOWN` setzt nur noch die Uhren (`BG.RefreshCooldowns`) statt das Fenster neu aufzubauen.
+
 ## [6.126.2.0] – 2026-10-22
 
 ### Behoben

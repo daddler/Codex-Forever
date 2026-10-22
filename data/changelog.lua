@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.127.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFRuhigere Kämpfe|r – Namensplaketten werden in ruhigen Momenten vorbereitet statt erst, wenn viele Gegner auftauchen, und das Taschenfenster baut sich beim Umräumen nicht mehr bei jeder Kleinigkeit neu auf.",
+        },
+    },
+    {
         version = "6.126.2.0",
         date    = "22.10.2026",
         notes   = {

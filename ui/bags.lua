@@ -913,6 +913,24 @@ function BG.LayoutCategories(list, size, sp, cols)
     return math.max(size, y + rowH - BG.CAT_GAP)
 end
 
+-- Nur die Abklingzeiten der sichtbaren Plaetze, ohne Neuaufbau.
+function BG.RefreshCooldowns()
+    if not win or not win:IsShown() then return end
+    local cc = _G.C_Container
+    if not (cc and cc.GetContainerItemCooldown and _G.CooldownFrame_Set) then return end
+    for i = 1, #slots do
+        local s = slots[i]
+        local btn = s.button
+        if s.holder:IsShown() and s.icon and s.icon:IsShown() then
+            local cdFrame = btn.Cooldown or _G[(btn:GetName() or "") .. "Cooldown"]
+            if type(cdFrame) == "table" then
+                local start, duration, enable = cc.GetContainerItemCooldown(s.holder:GetID(), btn:GetID())
+                _G.CooldownFrame_Set(cdFrame, start, duration, enable)
+            end
+        end
+    end
+end
+
 function BG.Refresh()
     if not win or not win:IsShown() then return end
     if Opt("categories") then return BG.RefreshCategories() end
@@ -1231,11 +1249,29 @@ local function Enable()
         "BANKFRAME_OPENED", "BANKFRAME_CLOSED" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
+    -- 6.127.0.0 (/wcui speicher: "Taschen 99,9 KB/s"): jedes Ereignis baute
+    -- das ganze Fenster neu, beim Verschieben feuern mehrere je Gegenstand.
+    -- Jetzt einmal gebuendelt im naechsten Augenblick; Abklingzeiten setzen
+    -- nur die Uhren.
+    local pending = false
+    local function Flush()
+        pending = false
+        BG.Refresh()
+    end
     ev:SetScript("OnEvent", K.Measured("Taschen", function(_, event)
         if event == "PLAYER_REGEN_ENABLED" then EnsurePool() end
         if event == "BANKFRAME_OPENED" then BG.bankOpen = true
         elseif event == "BANKFRAME_CLOSED" then BG.bankOpen = false end
-        BG.Refresh()
+        if event == "BAG_UPDATE_COOLDOWN" then return BG.RefreshCooldowns() end
+        if not (win and win:IsShown()) then return end
+        if _G.C_Timer and _G.C_Timer.After then
+            if not pending then
+                pending = true
+                _G.C_Timer.After(0.05, Flush)
+            end
+        else
+            BG.Refresh()
+        end
     end))
 end
 
