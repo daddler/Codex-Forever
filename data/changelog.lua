@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.143.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFGefundene Händler teilt die Gilde still|r – wer Handwerkswaren verkauft, siehst du jetzt auch, wenn ein Gildenmitglied mit WeintCodex den Händler geöffnet hat („von …“).",
+        },
+    },
+    {
         version = "6.142.0.0",
         date    = "22.10.2026",
         notes   = {

@@ -4663,6 +4663,17 @@ do
         end
         assert(PT.vendorShown == 1, "Haendler nicht im Detailbereich")
         _G.GetMerchantNumItems, _G.UnitName = oN, oU
+        -- 6.143.0.0: Haendler still geteilt und empfangen.
+        local line = PT.EncodeVendor(2589, { n = "Erika Tate", t = "Kochbedarf", m = 84, x = 0.78, y = 0.53, p = 35, q = 1 })
+        local vid, ve = PT.DecodeVendor(line)
+        assert(vid == 2589 and ve.n == "Erika Tate" and ve.t == "Kochbedarf" and ve.p == 35 and math.abs(ve.x - 0.78) < 0.001, "Haendler-Zeile falsch")
+        assert(PT.DecodeVendor("V|1|2|3|4|||a|b|c") == nil, "Unsinn angenommen")
+        PT.OnAddonMessage("WCPR", line, "GUILD", "Anna-Realm")
+        local gotShared = false
+        for _, v in ipairs(PT.Vendors(2589)) do if v.n == "Erika Tate" and v.s and v.by == "Anna" then gotShared = true end end
+        assert(gotShared, "geteilter Haendler fehlt")
+        -- Geteiltes ueberschreibt nie Eigenes.
+        assert(PT.StoreVendor(2589, { n = "Thurman Mullby", s = true, m = 1, x = 0.1, y = 0.1 }) == false, "Eigenes ueberschrieben")
         sd.vendorSeen = nil
         _G.GetMerchantItemID = oldID
         slot:Hide()

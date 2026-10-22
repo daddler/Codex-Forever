@@ -74,7 +74,9 @@ node IDs and duration; switch `flightGamesShare`.
 **Sixth exception since 6.129.0.0, on request („sowas wie Profession Master“,
 `modules/proftools.lua`):** prefix `WCPR`, guild only, only profession key,
 skill rank/max and the spell IDs of learned recipes (plus a bare `Q` to ask
-for them); switch `SavedData.profShare`, on by default, toggled on the page.
+for them); since 6.143.0.0 also vendors seen for profession reagents
+(`V|item|map|x|y|price|qty|name|title`); switch `SavedData.profShare`, on by
+default, toggled on the page.
 Nothing else leaves the client, nothing goes to the
 internet; any further outward message needs the same explicit request.
 

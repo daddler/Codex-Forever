@@ -171,7 +171,8 @@ function PT.QueueOwn()
     local m = PRO.Memory()
     if not m then return 0 end
     local skills = PRO.Skills()
-    for i = #queue, 1, -1 do queue[i] = nil end
+    -- Nur die eigenen Berufszeilen ersetzen; Haendler (V|) bleiben drin.
+    for i = #queue, 1, -1 do if queue[i]:sub(1, 2) == "D|" then table.remove(queue, i) end end
     for key, s in pairs(skills) do
         if m.scanned[key] then
             local ids = {}
@@ -224,6 +225,11 @@ function PT.OnAddonMessage(prefix, text, channel, sender)
             lastQueued = t
             _G.C_Timer.After(5 + math.random() * 20, PT.QueueOwn)
         end
+        return
+    end
+    if text:sub(1, 2) == "V|" then
+        local id, e = PT.DecodeVendor(text)
+        if id then e.s, e.by = true, name PT.StoreVendor(id, e) end
         return
     end
     local prof, rank, max, part, parts, ids = PT.Decode(text)
@@ -953,7 +959,7 @@ function PT.DrawGuild(body, w)
     if not any then
         y = Note(body, y, w, "Noch niemand bekannt. Öffne einmal dein Berufsfenster – dann kennt WeintCodex deine Rezepte. Was die Gilde kann, kommt von Mitgliedern, die WeintCodex nutzen, nach und nach herein.")
     end
-    y = Note(body, y - 6, w, "Wer ein bestimmtes Rezept kann, steht im Tooltip des Gegenstands („Herstellbar von …“) und in den Details eines Rezepts. Geteilt werden nur Beruf, Fertigkeit und gelernte Rezepte.")
+    y = Note(body, y - 6, w, "Wer ein bestimmtes Rezept kann, steht im Tooltip des Gegenstands („Herstellbar von …“) und in den Details eines Rezepts. Geteilt werden nur Beruf, Fertigkeit, gelernte Rezepte und gesehene Händler für Handwerkswaren (Name, Ort, Preis).")
     return y
 end
 
@@ -1203,7 +1209,7 @@ function PT.VendorBlock(parent, width, vs)
         r:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -y)
         r:SetWidth(width)
         local zone = v.m and QM and QM.MapName and QM.MapName(v.m)
-        r.a:SetText(v.n .. (v.t and (" <" .. v.t .. ">") or ""))
+        r.a:SetText(v.n .. (v.t and (" <" .. v.t .. ">") or "") .. (v.s and WeintCodex.ColorText("textDim", "  · von " .. (v.by or "der Gilde")) or ""))
         r.b:SetText((zone or "Ort unbekannt") .. (v.x and string.format(" (%.0f, %.0f)", v.x * 100, v.y * 100) or "")
             .. (v.p and ("  ·  " .. Money(v.p) .. ((v.q and v.q > 1) and (" für " .. v.q) or "")) or ""))
         r.sel:SetShown(v == sel)
@@ -1278,7 +1284,7 @@ function PT.ItemBlocks(id)
         -- 6.138.0.0 (Beta-Test: "beide Haendler auf die Karte, Maus drueber
         -- pulsiert, Klick waehlt fuer den Questpfeil").
         if not (PT.selVendor and vs[PT.selVendor] and PT.selVendorItem == id) then PT.selVendor, PT.selVendorItem = 1, id end
-        blocks[#blocks + 1] = { type = "text", text = "Beim Händler – von dir gesehen (Maus drüber: auf der Karte, Klick: wählen):" }
+        blocks[#blocks + 1] = { type = "text", text = "Beim Händler – gesehen von dir oder der Gilde (Maus drüber: auf der Karte, Klick: wählen):" }
         blocks[#blocks + 1] = { type = "custom", create = function(parent, width) return PT.VendorBlock(parent, width, vs) end }
         local v = vs[PT.selVendor]
         local QA = WeintCodex.UIQuestArrow
@@ -1503,6 +1509,13 @@ ev:SetScript("OnEvent", function(_, event, a, b, c, d)
             _G.C_Timer.After(60, function()
                 if not (PT.Sharing() and _G.IsInGuild and Plain(_G.IsInGuild())) then return end
                 PT.QueueOwn()
+                -- Eigene Haendler einmal nach dem Einloggen (hoechstens 40).
+                local sd2, k = SD(), 0
+                for vid, list in pairs(sd2 and sd2.vendorSeen or {}) do
+                    for _, e in ipairs(list) do
+                        if not e.s and k < 40 and PT.ShareVendor(vid, e) then k = k + 1 end
+                    end
+                end
                 local cc = _G.C_ChatInfo
                 if cc and cc.SendAddonMessage then queue[#queue + 1] = "Q" sender:Show() end
             end)
@@ -1831,17 +1844,75 @@ function PT.RecordMerchant()
                 local ok, _, _, p, q = pcall(_G.GetMerchantItemInfo, i)
                 if ok then price, qty = Plain(p), Plain(q) end
             end
-            local list = sd.vendorSeen[id] or {}
-            for k = #list, 1, -1 do if list[k].n == name then table.remove(list, k) end end
-            table.insert(list, 1, { n = name, t = title, m = map, x = x and math.floor(x * 10000) / 10000,
+            local e = { n = name, t = title, m = map, x = x and math.floor(x * 10000) / 10000,
                 y = y and math.floor(y * 10000) / 10000, p = type(price) == "number" and price or nil,
-                q = type(qty) == "number" and qty or nil, at = Now() })
-            while #list > PT.VENDOR_KEEP do table.remove(list) end
-            sd.vendorSeen[id] = list
+                q = type(qty) == "number" and qty or nil, at = Now() }
+            if PT.StoreVendor(id, e) then PT.ShareVendor(id, e) end
             n = n + 1
         end
     end
     return n
+end
+
+-- Einen Haendler zu einem Gegenstand ablegen. Eigenes ersetzt alles mit
+-- demselben Namen; Geteiltes (e.s) ueberschreibt nie Eigenes. Gibt true
+-- zurueck, wenn sich etwas Teilenswertes geaendert hat (neu, Lage, Preis).
+function PT.StoreVendor(id, e)
+    local sd = SD()
+    if not sd then return false end
+    sd.vendorSeen = sd.vendorSeen or {}
+    local list = sd.vendorSeen[id] or {}
+    local changed = true
+    for k = #list, 1, -1 do
+        local o = list[k]
+        if o.n == e.n then
+            if e.s and not o.s then return false end
+            changed = not (o.m == e.m and o.p == e.p and o.x and e.x and math.abs(o.x - e.x) < 0.01
+                and math.abs(o.y - e.y) < 0.01)
+            table.remove(list, k)
+        end
+    end
+    table.insert(list, 1, e)
+    -- Eigene zuerst behalten, wenn es zu viele werden.
+    while #list > PT.VENDOR_KEEP do
+        local drop = #list
+        for k = #list, 1, -1 do if list[k].s then drop = k break end end
+        table.remove(list, drop)
+    end
+    sd.vendorSeen[id] = list
+    return changed
+end
+
+-- 6.143.0.0 (Wunsch: "die gefundenen Haendler still auch den anderen
+-- mitteilen"): Prefix WCPR wie die Berufe, nur Gilde, mit demselben
+-- Schalter (profShare). Nur Gegenstand, Karte, Lage, Preis, Menge, Name
+-- und Titel des Haendlers.
+PT.VENDOR_QUEUE_MAX = 60
+function PT.EncodeVendor(id, e)
+    if not (e.m and e.x and e.y and e.n) then return nil end
+    if e.n:find("[|%c]") or #e.n > 40 or (e.t and (e.t:find("[|%c]") or #e.t > 40)) then return nil end
+    return "V|" .. id .. "|" .. e.m .. "|" .. math.floor(e.x * 10000 + 0.5) .. "|" .. math.floor(e.y * 10000 + 0.5)
+        .. "|" .. (e.p or "") .. "|" .. (e.q or "") .. "|" .. e.n .. "|" .. (e.t or "")
+end
+
+function PT.DecodeVendor(text)
+    if type(text) ~= "string" or #text > 255 then return nil end
+    local id, m, x, y, p, q, n, t = text:match("^V|(%d+)|(%d+)|(%d+)|(%d+)|(%d*)|(%d*)|([^|]+)|([^|]*)$")
+    id, m, x, y = tonumber(id), tonumber(m), tonumber(x), tonumber(y)
+    if not (id and m and x and y) or x > 10000 or y > 10000 or #n > 40 or #t > 40 or n:find("%c") or t:find("%c") then return nil end
+    if id > 10000000 or m > 100000 then return nil end
+    return id, { n = n, t = t ~= "" and t or nil, m = m, x = x / 10000, y = y / 10000,
+        p = tonumber(p), q = tonumber(q), at = Now() }
+end
+
+function PT.ShareVendor(id, e)
+    if not (PT.Sharing() and _G.IsInGuild and Plain(_G.IsInGuild())) then return false end
+    if #queue >= PT.VENDOR_QUEUE_MAX then return false end
+    local line = PT.EncodeVendor(id, e)
+    if not line then return false end
+    queue[#queue + 1] = line
+    if PT.sender then PT.sender:Show() end
+    return true
 end
 
 function PT.Vendors(id)

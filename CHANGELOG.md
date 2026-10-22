@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.143.0.0] – 2026-10-22
+
+### Neu
+- Händler still mit der Gilde teilen (Wunsch des Spielers): Prefix `WCPR`, Zeile `V|Gegenstand|Karte|x|y|Preis|Menge|Name|Titel`, nur `GUILD`, Schalter `profShare` (der der Berufe). Gesendet bei neuem oder geändertem Händler und einmal nach dem Einloggen (höchstens 40); empfangen in `vendorSeen` mit Kennung `s`/`by` – überschreibt nie Eigenes, Eigenes bleibt beim Kürzen zuerst. Detailbereich: „· von <Name>“.
+
 ## [6.142.0.0] – 2026-10-22
 
 ### Behoben
