@@ -4450,6 +4450,25 @@ do
     Check(ok, "Erinnerungen: Vorschlaege einer neuen Klasse einmal ergaenzt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.121.0.0: Transparent einstellbar bis ausgeblendet; Klassisch ist Holz mit gelbem Rand.
+do
+    local ok, err = pcall(function()
+        local GC = WeintCodex.GameColors
+        WeintCodex.SetLook("transparent", 0)
+        assert(GC.kachelFill[4] == 0 and GC.kachelEdge[4] == 0 and not GC.kachelWood, "Transparent 0 % nicht ausgeblendet")
+        WeintCodex.SetLook("transparent", 45)
+        assert(math.abs(GC.kachelFill[4] - 0.45) < 1e-9 and math.abs(GC.kachelEdge[4] - 0.55) < 1e-9, "Transparent 45 % nicht wie bisher")
+        WeintCodex.SetLook("klassisch")
+        assert(GC.kachelWood and GC.kachelEdgeSize == 2, "Klassisch ohne Holz oder breiten Rand")
+        local f = CreateFrame("Frame", nil, UIParent)
+        local k = K.Kachel(f)
+        assert(k.wood, "Kachel ohne Holz")
+        k:SetAlpha(0.5)
+    end)
+    WeintCodex.SetLook("schwarz")
+    Check(ok, "Aussehen: Transparent einstellbar, Klassisch aus Holz" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.

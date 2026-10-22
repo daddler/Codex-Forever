@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.121.0.0] – 2026-10-22
+
+### Hinzugefügt
+- Allgemein: Regler „Deckkraft (Transparent)“ (`general.lookAlpha`, 0–100, Standard 45, 0 = ausgeblendet), nur beim Design Transparent; Rand geht mit (`SetLook(key, alphaPct)`).
+
+### Geändert
+- Klassisch: Holzmaserung auf den Kacheln (`media/ui/wood.tga`, eigene Textur aus `.github/scripts/make_wood.py`, gekachelt) und 2 px gelber Rand (`kachelWood`, `kachelEdgeSize`). Flächen, die nur eine Farbe kennen, nehmen den Mittelton des Holzes. Bild im Willkommens-Assistenten neu.
+
 ## [6.120.0.0] – 2026-10-22
 
 ### Geändert

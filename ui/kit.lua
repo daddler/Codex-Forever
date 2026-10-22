@@ -390,7 +390,7 @@ end
 -- Akzent, nur einer, den der Spieler waehlt.
 function K.ResetHighlight()
     -- 6.105.0.0: Erscheinungsbild (Fuellung und Rand der Kacheln), vor dem Aufbau.
-    if WeintCodex.SetLook then WeintCodex.SetLook(K.Get("general", "look")) end
+    if WeintCodex.SetLook then WeintCodex.SetLook(K.Get("general", "look"), K.Get("general", "lookAlpha")) end
     local h = K.Get("general", "highlight")
     if h == "accent" then WeintCodex.SetVioletAccent()
     elseif h == "custom" then
@@ -1144,7 +1144,15 @@ function K.Kachel(frame, opts)
     local f = GC.kachelFill
     o.bg = frame:CreateTexture(nil, "BACKGROUND", nil, -7)
     o.bg:SetAllPoints(frame)
-    o.bg:SetColorTexture(f[1], f[2], f[3], opts.alpha or f[4])
+    -- 6.121.0.0: "Klassisch" ist Holz - gekachelte Maserung statt Farbe.
+    o.wood = GC.kachelWood and true or false
+    if o.wood then
+        o.bg:SetTexture(K.MEDIA .. "wood", "REPEAT", "REPEAT")
+        if o.bg.SetHorizTile then o.bg:SetHorizTile(true) o.bg:SetVertTile(true) end
+        o.bg:SetVertexColor(1, 1, 1, opts.alpha or f[4])
+    else
+        o.bg:SetColorTexture(f[1], f[2], f[3], opts.alpha or f[4])
+    end
     local l = GC.lightEdge
     o.light = frame:CreateTexture(nil, "BORDER", nil, 1)
     o.light:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
@@ -1152,12 +1160,17 @@ function K.Kachel(frame, opts)
     o.light:SetHeight(1)
     o.light:SetColorTexture(l[1], l[2], l[3], l[4])
     local e = GC.kachelEdge or { 0, 0, 0, 1 }
-    o.border = K.Border(frame, 1, e[1], e[2], e[3], e[4], "BORDER")
+    o.border = K.Border(frame, GC.kachelEdgeSize or 1, e[1], e[2], e[3], e[4], "BORDER")
     if opts.border == false then o.border:SetShown(false) end
     if (opts.shadow or 6) > 0 then
         o.shadow = K.Glow(frame, { spread = opts.shadow or 6, shadow = true })
     end
-    function o:SetAlpha(a) self.bg:SetAlpha(1) local c = GC.kachelFill self.bg:SetColorTexture(c[1], c[2], c[3], a) end
+    function o:SetAlpha(a)
+        self.bg:SetAlpha(1)
+        if self.wood then self.bg:SetVertexColor(1, 1, 1, a) return end
+        local c = GC.kachelFill
+        self.bg:SetColorTexture(c[1], c[2], c[3], a)
+    end
     function o:SetShown(v)
         if v then self.bg:Show() self.light:Show() else self.bg:Hide() self.light:Hide() end
         self.border:SetShown(v)

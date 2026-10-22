@@ -69,7 +69,7 @@ local GROUPS = {
 O.LOOK_CELL = { type = "dropdown", label = "Design der Oberfläche", key = "look", reload = true, items = {
         { value = "schwarz",     text = "Schwarz (Standard)" },
         { value = "transparent", text = "Transparent – die Welt scheint durch" },
-        { value = "klassisch",   text = "Klassisch – warm, mit goldenem Rand" } },
+        { value = "klassisch",   text = "Klassisch – Holz mit gelbem Rand" } },
     disabled = function() return not K.UIEnabled() end,
     tooltip = "Füllung und Rand aller Flächen der Oberfläche: Rahmen, Leisten, Schadensanzeige, Tooltips. Gilt nach dem Neuladen." }
 
@@ -90,6 +90,7 @@ K.Register({
                     showAdvanced = false,
                     -- 6.105.0.0: Erscheinungsbild (WeintCodex.LOOKS).
                     look = "schwarz",
+                    lookAlpha = 45,
                     -- 6.29.10.0: Breitbild, ui/layout.lua (K.WideInset).
                     wideArea = "169",
                     -- 6.29.26.0: Skalierung des Spiels behalten (ui/setup.lua).
@@ -148,6 +149,13 @@ K.Register({
                       -- 6.105.0.0, seit 6.106.0.0 hier oben (Wunsch: "im Nachhinein
                       -- in ein anderes Design wechseln" - unten uebersehen).
                       O.LOOK_CELL)
+                -- 6.121.0.0 (Wunsch: "Transparenz individueller einstellen bis
+                -- hin zu ausgeblendet"): nur fuer das Design Transparent.
+                B:Row({ type = "slider", label = "Deckkraft (Transparent)", key = "lookAlpha", min = 0, max = 100, step = 5,
+                        reload = true, format = function(v) return v == 0 and "ausgeblendet" or (v .. " %") end,
+                        disabled = function() return not K.UIEnabled() or K.Get("general", "look") ~= "transparent" end,
+                        tooltip = "Wie stark Rahmen, Leisten und Tooltips die Welt verdecken – 0 blendet Flächen und Ränder ganz aus. Gilt nach dem Neuladen." },
+                      { type = "empty" })
                 B:Note("Eigenes Profil: Die Oberfläche bekommt im Bearbeitungsmodus ein eigenes Layout „WeintCodex“. Dein Layout, deine Chatreiter und deine Spieleinstellungen bleiben – schaltest du aus, ist dein Layout wieder aktiv, und was WeintCodex an Einstellungen geändert hat, steht wie vorher.")
                 B:Note("Alles links unter „Komfort“ — Schadensanzeige, Questpfeil, Erinnerungen, Klickzauber, Makro-Helfer, Automark und die kleinen Helfer — hängt nicht an diesem Schalter. Schadensanzeige und Erinnerungen sind mit der Oberfläche von Haus aus an; ohne sie schaltest du sie selbst ein.")
             else

@@ -471,13 +471,29 @@ local function Mix(a, b, k) return a + (b - a) * k end
 WeintCodex.LOOKS = {
     schwarz     = { label = "Schwarz",     fill = {0.047, 0.047, 0.059, 0.88}, edge = {0.000, 0.000, 0.000, 1.00} },
     transparent = { label = "Transparent", fill = {0.047, 0.047, 0.059, 0.45}, edge = {0.000, 0.000, 0.000, 0.55} },
-    klassisch   = { label = "Klassisch",   fill = {0.082, 0.066, 0.050, 0.92}, edge = {0.757, 0.643, 0.439, 0.85} },  -- edge = classicGold
+    -- 6.121.0.0 (Wunsch: "Holzrahmen und gelbe Umrandungen - kein einfaches
+    -- Braun, sondern hoelzern"): Holzmaserung (media/ui/wood.tga, eigene
+    -- Textur) auf den Kacheln, 2 px gelber Rand. `fill` ist der Mittelton des
+    -- Holzes - fuer Flaechen, die nur eine Farbe kennen.
+    klassisch   = { label = "Klassisch",   fill = {0.180, 0.110, 0.055, 0.95}, edge = {0.960, 0.780, 0.220, 0.95},
+                    wood = true, edgeSize = 2 },
 }
+-- Transparent: Deckkraft in Prozent (general.lookAlpha, 0 = ausgeblendet).
+WeintCodex.LOOK_ALPHA_DEFAULT = 45
 WeintCodex.LOOK_ORDER = { "schwarz", "transparent", "klassisch" }
-function WeintCodex.SetLook(key)
+function WeintCodex.SetLook(key, alphaPct)
     local look = WeintCodex.LOOKS[key] or WeintCodex.LOOKS.schwarz
     local GC = WeintCodex.GameColors
     for i = 1, 4 do GC.kachelFill[i], GC.kachelEdge[i] = look.fill[i], look.edge[i] end
+    -- 6.121.0.0: Transparent nach Wunsch durchsichtig, bis ganz weg. Der
+    -- Rand geht mit (bei 45 % wie bisher 55 %).
+    if key == "transparent" and type(alphaPct) == "number" then
+        local a = math.max(0, math.min(100, alphaPct)) / 100
+        GC.kachelFill[4] = a
+        GC.kachelEdge[4] = math.min(1, a * 0.55 / 0.45)
+    end
+    GC.kachelWood = look.wood and true or false
+    GC.kachelEdgeSize = look.edgeSize or 1
     return look
 end
 

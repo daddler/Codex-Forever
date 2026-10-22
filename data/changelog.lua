@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.121.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFTransparent nach Wunsch|r – unter Allgemein stellst du die Deckkraft ein, von fast deckend bis ganz ausgeblendet.",
+            "|cff7C6CFFKlassisch ist jetzt aus Holz|r – Rahmen, Leisten und Fenster mit Holzmaserung und gelbem Rand.",
+        },
+    },
+    {
         version = "6.120.0.0",
         date    = "22.10.2026",
         notes   = {
