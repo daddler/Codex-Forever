@@ -368,7 +368,13 @@ function PT.Usable(key)
     for _, r in ipairs(PRO.Recipes(key)) do
         if r.learn and r.grey and #r.reagents > 0 then
             local learned = PRO.Learned(r, m)
-            if learned or r.trainer then out[#out + 1] = r end
+            -- 6.133.0.0: auch Lehrer- und Haendlerrezepte, die du noch
+            -- lernen musst - der Weg sagt dann "lernen"/"kaufen".
+            if learned then r._how = "known"
+            elseif r.trainer then r._how = "trainer"
+            elseif #PRO.Vendors(r) > 0 then r._how = "vendor"
+            else r._how = nil end
+            if r._how then out[#out + 1] = r end
         end
     end
     return out
@@ -387,7 +393,10 @@ end
 -- orange und gelb, darunter das mit den geringsten Kosten je erwartetem
 -- Punkt. Gruen nur, wenn es kein oranges oder gelbes gibt - als Wagnis
 -- markiert. Grau nie. Abschnitte wechseln auch mit der Farbe.
-function PT.Plan(key, rank, target)
+PT.RANK_STEP = 75
+PT.STICKY = 0.7
+PT.RANK_NAMES = { [75] = "Geselle", [150] = "Experte", [225] = "Fachmann" }
+function PT.Plan(key, rank, target, cap)
     local usable = PT.Usable(key)
     local steps, shop = {}, {}
     local cur
@@ -397,11 +406,12 @@ function PT.Plan(key, rank, target)
     end
     for _, r in ipairs(usable) do r._cost = nil end
     local gap
-    local function pick(s, allowGreen)
+    local function pick(s, allowGreen, allowVendor)
         local best, bestScore, bestKnown
         for _, r in ipairs(usable) do
             local col = PT.Color(r, s)
-            if col == "orange" or col == "yellow" or (allowGreen and col == "green") then
+            if (r._how ~= "vendor" or allowVendor)
+               and (col == "orange" or col == "yellow" or (allowGreen and col == "green")) then
                 local ch = PT.Chance(r, s)
                 if ch > 0 then
                     local c = costOf(r)
@@ -415,23 +425,47 @@ function PT.Plan(key, rank, target)
         end
         return best
     end
+    local announced = {}
+    local lastCraft
     for s = rank, target - 1 do
-        local best = pick(s, false) or pick(s, true)
+        -- Obergrenze erreicht: naechster Rang beim Lehrer.
+        if cap and s >= cap and cap < target then
+            steps[#steps + 1] = { kind = "rank", at = s, cap = cap, name = PT.RANK_NAMES[cap] }
+            cap = cap + PT.RANK_STEP
+            cur = nil
+        end
+        -- Beim selben Rezept bleiben, solange es noch fast sicher Punkte
+        -- bringt - sonst springt der Weg alle paar Punkte zum Lehrer.
+        local last = lastCraft and lastCraft.recipe
+        local best
+        if last and PT.Chance(last, s) >= PT.STICKY then best = last end
+        best = best or pick(s, false, false) or pick(s, false, true) or pick(s, true, false) or pick(s, true, true)
         if not best then gap = s break end
+        if best._how ~= "known" and not announced[best] then
+            announced[best] = true
+            steps[#steps + 1] = { kind = best._how == "vendor" and "buy" or "learn", at = s, recipe = best }
+            cur = nil
+        end
         local col = PT.Color(best, s)
         local ch = PT.Chance(best, s)
-        if cur and cur.recipe == best and cur.color == col then
+        local RANKC = { orange = 1, yellow = 2, green = 3 }
+        if cur and cur.recipe == best then
             cur.to, cur.crafts = s + 1, cur.crafts + 1 / ch
             cur.minChance = math.min(cur.minChance, ch)
+            if (RANKC[col] or 0) > (RANKC[cur.color] or 0) then cur.color = col end
+            if col == "green" then cur.risky = true end
         else
-            cur = { from = s, to = s + 1, recipe = best, crafts = 1 / ch, color = col, minChance = ch, risky = col == "green" }
+            cur = { kind = "craft", from = s, to = s + 1, recipe = best, crafts = 1 / ch, color = col, minChance = ch, risky = col == "green" }
             steps[#steps + 1] = cur
+            lastCraft = cur
         end
     end
     local total, unknown = 0, 0
     for _, st in ipairs(steps) do
-        st.crafts = math.ceil(st.crafts - 0.001)
-        for _, e in ipairs(st.recipe.reagents) do shop[e[1]] = (shop[e[1]] or 0) + e[2] * st.crafts end
+        if st.kind == "craft" then
+            st.crafts = math.ceil(st.crafts - 0.001)
+            for _, e in ipairs(st.recipe.reagents) do shop[e[1]] = (shop[e[1]] or 0) + e[2] * st.crafts end
+        end
     end
     local list = {}
     for id, n in pairs(shop) do
@@ -441,6 +475,47 @@ function PT.Plan(key, rank, target)
     end
     table.sort(list, function(a, b) return a.count > b.count end)
     return { steps = steps, shop = list, total = total, unknown = unknown, gap = gap }
+end
+
+-- Ziel und Obergrenze fuer "den Beruf maxen": bis zum hoechsten Grau
+-- der Rezepte (hoechstens 300), Raenge alle 75 Punkte beim Lehrer.
+function PT.Goal(key, s)
+    local top = 0
+    for _, r in ipairs(PRO.Recipes(key)) do if r.grey and r.grey > top then top = r.grey end end
+    local target = math.min(300, math.max(top, s.rank))
+    local cap = s.max
+    if not cap or cap <= s.rank then cap = nil end
+    if cap and cap % PT.RANK_STEP ~= 0 then cap = nil end
+    return target, cap
+end
+
+-- Der Weg als Zeilen fuer beide Ansichten: { left, right, tone, recipe, hint, crafts }.
+local LTONE = { orange = "skillOrange", yellow = "skillYellow", green = "skillGreen" }
+function PT.PlanLines(plan)
+    local out = {}
+    for _, st in ipairs(plan.steps) do
+        if st.kind == "rank" then
+            out[#out + 1] = { left = "→ Lehrer: Rang " .. (st.name or "") .. " lernen", right = "bei " .. st.at,
+                tone = "accent", hint = "Deine Obergrenze ist " .. st.cap .. ". Beim Berufslehrer den nächsten Rang lernen (der Lehrer nennt die nötige Stufe)." }
+        elseif st.kind == "learn" then
+            out[#out + 1] = { left = "→ Lehrer: " .. PRO.RecipeName(st.recipe) .. " lernen", right = "bei " .. st.at,
+                tone = "accent", recipe = st.recipe, hint = "Beim Berufslehrer lernen (falls du es noch nicht kannst)." }
+        elseif st.kind == "buy" then
+            local v = PRO.Vendors(st.recipe)[1]
+            out[#out + 1] = { left = "→ Händler: Rezept " .. PRO.RecipeName(st.recipe) .. " kaufen", right = "bei " .. st.at,
+                tone = "goldBright", recipe = st.recipe, hint = v and ("Bei " .. v[1] .. " – Händler aus Classic, in Forever unbestätigt.") or "Händler unbekannt." }
+        else
+            local pct = math.floor(st.minChance * 100 + 0.5)
+            out[#out + 1] = {
+                left = (st.color == "orange" and "" or "ca. ") .. st.crafts .. "× " .. PRO.RecipeName(st.recipe) .. (st.risky and " (Glückssache)" or ""),
+                right = st.from .. "–" .. st.to, tone = LTONE[st.color], recipe = st.recipe, crafts = st.crafts, step = st,
+                hint = st.color == "orange" and "Orange: jedes Herstellen bringt einen Punkt."
+                    or st.color == "yellow" and ("Gelb: meist ein Punkt, zuletzt etwa " .. pct .. " %.")
+                    or ("Grün: nur etwa " .. pct .. " % – kein Punkt garantiert."),
+            }
+        end
+    end
+    return out
 end
 
 --------------------------------------------------
@@ -828,30 +903,23 @@ function PT.DrawPlanner(body, w)
         y = Note(body, y, w, PRO.ProfName(sel) .. " hast du nicht gelernt – geplant wird " .. PRO.ProfName(key) .. ".")
     end
     local s = skills[key]
-    local target = s.max or s.rank
-    local note
-    if s.rank >= target then
-        target = math.min(300, s.rank + 75)
-        note = "Du bist an der Obergrenze – geplant bis " .. target .. ", nach dem nächsten Rang beim Lehrer."
-    end
+    local target, cap = PT.Goal(key, s)
     f.Title:SetText("Planer · " .. PRO.ProfName(key) .. "  " .. s.rank .. " → " .. target)
-    if note then y = Note(body, y, w, note) end
     if s.rank >= target then return Note(body, y, w, "Nichts mehr zu planen.") end
-    local plan = PT.Plan(key, s.rank, target)
-    y = Head(body, y, w, "Weg", #plan.steps .. " Schritte")
-    local TONE = { orange = "skillOrange", yellow = "skillYellow", green = "skillGreen" }
+    local plan = PT.Plan(key, s.rank, target, cap)
+    local lines = PT.PlanLines(plan)
+    y = Head(body, y, w, "Weg", #lines .. " Schritte")
     local risky = false
-    for _, st in ipairs(plan.steps) do
-        local cost = PT.CraftCost(st.recipe)
-        local count = (st.color == "orange" and "" or "ca. ") .. st.crafts .. "× "
-        local hint = st.color == "orange" and "Orange: jedes Herstellen bringt einen Punkt."
-            or st.color == "yellow" and ("Gelb: meist ein Punkt, zuletzt etwa " .. math.floor(st.minChance * 100 + 0.5) .. " % – die Anzahl ist geschätzt.")
-            or ("Grün: nur noch etwa " .. math.floor(st.minChance * 100 + 0.5) .. " % je Herstellen – kein Punkt garantiert, es gibt hier kein oranges oder gelbes Rezept.")
-        if st.risky then risky = true end
-        y = Row(body, y, w, count .. PRO.RecipeName(st.recipe) .. (st.risky and "  (Glückssache)" or ""),
-            st.from .. "–" .. st.to .. "   " .. (cost and Money(cost * st.crafts) or "Preis unbekannt"),
-            { recipe = st.recipe, tone = TONE[st.color], hint = hint .. "\nKlick: auf die Merkliste (" .. st.crafts .. "×)",
-              onClick = function() PT.AddWatch(st.recipe.spell, st.crafts) end })
+    for _, l in ipairs(lines) do
+        local right = l.right
+        if l.crafts then
+            local cost = PT.CraftCost(l.recipe)
+            right = right .. "   " .. (cost and Money(cost * l.crafts) or "Preis unbekannt")
+            if l.step.risky then risky = true end
+        end
+        y = Row(body, y, w, l.left, right,
+            { recipe = l.recipe, tone = l.tone, hint = l.hint .. (l.crafts and ("\nKlick: auf die Merkliste (" .. l.crafts .. "×)") or ""),
+              onClick = l.crafts and function() PT.AddWatch(l.recipe.spell, l.crafts) end or nil })
     end
     if risky then
         y = Note(body, y, w, "Grüne Schritte sind Glückssache: die Zahl ist der Durchschnitt, es können deutlich mehr werden. Besser: ein neues Rezept beim Lehrer oder Händler suchen, das dort noch orange oder gelb ist.")
@@ -1201,30 +1269,34 @@ function PT.FillSide(f, key)
         f.note:SetText("Welcher Beruf offen ist, sagt das Spiel noch nicht – einmal blättern oder neu öffnen.")
         return false
     end
-    local target = s.max or s.rank
-    if s.rank >= target then target = math.min(300, s.rank + 75) end
+    local target, cap = PT.Goal(key, s)
     f.title:SetText(PRO.ProfName(key) .. " · " .. s.rank .. " → " .. target)
     if s.rank >= target then
         f.note:SetText("Nichts mehr zu planen.")
         return true
     end
-    local plan = PT.Plan(key, s.rank, target)
+    local plan = PT.Plan(key, s.rank, target, cap)
+    local lines = PT.PlanLines(plan)
     local n = 0
-    for _, st in ipairs(plan.steps) do
+    for _, l in ipairs(lines) do
         if n >= PT.SIDE_ROWS then break end
         n = n + 1
         local r = f.rows[n]
-        r.left:SetText((st.color == "orange" and "" or "ca. ") .. st.crafts .. "× " .. PRO.RecipeName(st.recipe)
-            .. (st.risky and " (Glück)" or ""))
-        local c = C[TONES[st.color] or "textNormal"] or C.textNormal
+        r.left:SetText(l.left)
+        local c = C[l.tone or "textNormal"] or C.textNormal
         r.left:SetTextColor(c[1], c[2], c[3])
-        r.right:SetText(st.from .. "–" .. st.to)
-        r.spell = st.recipe.spell
-        local need = {}
-        for _, e in ipairs(st.recipe.reagents) do need[#need + 1] = (e[2] * st.crafts) .. "× " .. PRO.ItemName(e[1]) end
-        r.hint = "Braucht: " .. table.concat(need, ", ")
+        r.right:SetText(l.right)
+        r.spell = l.recipe and l.recipe.spell or nil
+        local hint = l.hint
+        if l.crafts then
+            local need = {}
+            for _, e in ipairs(l.recipe.reagents) do need[#need + 1] = (e[2] * l.crafts) .. "× " .. PRO.ItemName(e[1]) end
+            hint = hint .. "\nBraucht: " .. table.concat(need, ", ")
+        end
+        r.hint = hint
         r:Show()
     end
+    plan.steps = lines
     local more = #plan.steps - n
     local note = more > 0 and (more .. " weitere Schritte auf der Codex-Seite „Berufe“ → Planer.") or ""
     if plan.gap then

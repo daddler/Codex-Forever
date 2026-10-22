@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.133.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Skill-Weg führt dich bis zum Ende des Berufs|r – „mach so viele hiervon, dann zum Lehrer, lerne dieses Rezept, dann so viele davon“, mit dem nächsten Rang beim Lehrer und Händlerrezepten, wo der Lehrer nichts hat. Ein Rezept bleibt, solange es noch fast sicher Punkte bringt.",
+        },
+    },
+    {
         version = "6.132.0.1",
         date    = "22.10.2026",
         notes   = {

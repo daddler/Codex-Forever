@@ -4604,7 +4604,15 @@ do
         local plan = PT.Plan("tailoring", 1, 50)
         for _, st in ipairs(plan.steps) do assert(st.color ~= "grey", "grau geplant") end
         assert(#plan.steps > 0, "kein Weg")
-        assert(plan.steps[1].from == 1, "Weg beginnt falsch")
+        local firstCraft
+        for _, st in ipairs(plan.steps) do if st.kind == "craft" then firstCraft = st break end end
+        assert(firstCraft and firstCraft.from == 1, "Weg beginnt falsch")
+        -- 6.133.0.0: Raenge und Lernen als eigene Schritte.
+        local p2 = PT.Plan("tailoring", 1, 160, 75)
+        local ranks = 0
+        for _, st in ipairs(p2.steps) do if st.kind == "rank" then ranks = ranks + 1 end end
+        assert(ranks == 2 or p2.gap, "Raenge fehlen: " .. ranks)
+        assert(#PT.PlanLines(p2) == #p2.steps, "Zeilen fehlen")
         for _, it in ipairs(plan.shop) do assert(it.price == nil or type(it.price) == "number", "Preis kein Wert") end
         -- Merkliste.
         sd.profWatch = nil

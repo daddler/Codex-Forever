@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.133.0.0] – 2026-10-22
+
+### Geändert
+- Berufe-Planer und Skill-Weg (Wunsch des Spielers): geplant bis zum höchsten Grau der Rezepte (höchstens 300, `PT.Goal`), mit Schritten „Lehrer: X lernen“ (Lehrerrezepte, die du noch nicht kannst), „Händler: Rezept X kaufen“ (nur wenn weder Gelerntes noch Lehrer passt) und „Lehrer: Rang … lernen“ alle 75 Punkte ab deiner Obergrenze. Beim selben Rezept bleiben, solange die Chance ≥ 70 % (`PT.STICKY`); Farbwechsel teilen keinen Schritt mehr. Gemeinsame Zeilen `PT.PlanLines` für Seite und Berufsfenster.
+
 ## [6.132.0.1] – 2026-10-22
 
 ### Behoben
