@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.129.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFWerkzeuge für Berufe|r – auf der Seite „Berufe“ oben: wer in der Gilde und unter deinen Charakteren welches Rezept kann (auch im Tooltip „Herstellbar von …“), ein Planer mit dem günstigsten Weg und Einkaufsliste, eine Merkliste mit fehlenden Reagenzien und die Abklingzeiten aller Charaktere.",
+            "|cff7C6CFFDie Goldmünze erscheint jetzt auch im Questfenster des Spiels|r – nicht nur im Gespräch im Codex-Stil.",
+        },
+    },
+    {
         version = "6.128.0.0",
         date    = "22.10.2026",
         notes   = {

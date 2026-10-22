@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.129.0.0] – 2026-10-22
+
+### Neu
+- Werkzeuge der Berufe (`modules/proftools.lua`, Wunsch des Spielers, Verhalten von Profession Master ohne Code – „All Rights Reserved“): Umschalter unter dem Kopf der Seite „Berufe“ (Spalte voll). **Gilde:** eigene gelernte Rezepte still an die Gilde (Prefix `WCPR`, nur Beruf/Fertigkeit/Zaubernummern, Schalter `profShare`, an), Tooltip „Herstellbar von …“, „Wer es kann“ in den Rezeptdetails. **Planer:** günstigster Weg bis zur Obergrenze, Chance wie Classic, Preise nur aus eigenen Auktionspreisen (unbekannt ≠ 0), Einkaufsliste. **Merkliste:** fehlende Reagenzien, Twinks über den Bestand. **Abklingzeiten:** vom Client beim Herstellen gemerkt, je Charakter.
+
+### Behoben
+- Goldmünze der wertvollsten Wahlbelohnung fehlte im Questfenster des Spiels (Beta-Test): `DL.MarkGameRewards` bei `QUEST_COMPLETE`/`QUEST_DETAIL`.
+
 ## [6.128.0.0] – 2026-10-22
 
 ### Neu

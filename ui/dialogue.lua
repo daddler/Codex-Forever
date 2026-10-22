@@ -1546,3 +1546,59 @@ function DL.Boot()
     Apply()
 end
 boot:SetScript("OnEvent", function() DL.Boot() end)
+
+--------------------------------------------------
+-- 6.129.0.0 (Beta-Test: "Die Muenze wird nicht angezeigt" - im Questfenster
+-- des Spiels): dieselbe Muenze an den Wahlbelohnungen des Spiels, auch
+-- ohne Gespraeche im Codex-Stil. Immer an.
+--------------------------------------------------
+
+function DL.MarkGameRewards()
+    local n = Num("GetNumQuestChoices")
+    local frame = _G.QuestInfoRewardsFrame
+    local buttons = type(frame) == "table" and frame.RewardButtons
+    local function button(i)
+        if type(buttons) == "table" then
+            for _, b in ipairs(buttons) do
+                if b.type == "choice" and b.GetID and b:GetID() == i and b:IsShown() then return b end
+            end
+        end
+        local b = _G["QuestInfoRewardsFrameQuestInfoItem" .. i]
+        return type(b) == "table" and b or nil
+    end
+    local best, bestV, tie, unknown = nil, -1, false, false
+    for i = 1, n do
+        local _, _, count = Call("GetQuestItemInfo", "choice", i)
+        local v = DL.SellValue("choice", i, Plain(count))
+        if v == nil then unknown = true
+        elseif v > bestV then best, bestV, tie = i, v, false
+        elseif v == bestV then tie = true end
+    end
+    if n < 2 or unknown or tie or bestV <= 0 then best = nil end
+    for i = 1, math.max(n, 10) do
+        local b = button(i)
+        if b then
+            if not b.wcCoin and best == i then
+                b.wcCoin = b:CreateTexture(nil, "OVERLAY", nil, 7)
+                b.wcCoin:SetSize(14, 14)
+                local icon = b.Icon or _G[(b.GetName and b:GetName() or "") .. "IconTexture"] or b
+                b.wcCoin:SetPoint("TOPRIGHT", icon, "TOPRIGHT", 3, 3)
+                b.wcCoin:SetTexture("Interface\\MoneyFrame\\UI-GoldIcon")
+            end
+            if b.wcCoin then b.wcCoin:SetShown(best == i) end
+        end
+    end
+    return unknown
+end
+
+do
+    local qev = CreateFrame("Frame")
+    pcall(qev.RegisterEvent, qev, "QUEST_COMPLETE")
+    pcall(qev.RegisterEvent, qev, "QUEST_DETAIL")
+    qev:SetScript("OnEvent", function()
+        if not (_G.C_Timer and _G.C_Timer.After) then return DL.MarkGameRewards() end
+        _G.C_Timer.After(0.1, function()
+            if DL.MarkGameRewards() then _G.C_Timer.After(0.6, DL.MarkGameRewards) end
+        end)
+    end)
+end

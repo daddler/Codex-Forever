@@ -4561,6 +4561,74 @@ do
     Check(ok, "Taschen: Kategorien umsortieren, Bank nach Kategorien" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.129.0.0: Berufe-Werkzeuge (modules/proftools.lua): Gilde, Planer,
+-- Merkliste, Abklingzeiten.
+do
+    local PT, PRO = WeintCodex.ProfTools, WeintCodex.Professions
+    local ok, err = pcall(function()
+        assert(PT and PRO, "Modul fehlt")
+        -- Nachrichten: kurz, wieder lesbar, Unsinn verworfen.
+        local ids = {}
+        for i = 1, 120 do ids[i] = 2000 + i * 37 end
+        local msgs = PT.Encode("alchemy", 150, 225, ids)
+        assert(#msgs > 1, "nicht geteilt")
+        local got = {}
+        for i, m in ipairs(msgs) do
+            assert(#m <= 255, "zu lang: " .. #m)
+            local prof, rank, max, part, parts, list = PT.Decode(m)
+            assert(prof == "alchemy" and rank == 150 and max == 225 and part == i and parts == #msgs, "Kopf falsch")
+            for _, id in ipairs(list) do got[#got + 1] = id end
+        end
+        assert(#got == 120, "Nummern verloren: " .. #got)
+        assert(PT.Decode("D|hacking|1|1|1|1|a") == nil, "fremder Beruf angenommen")
+        assert(PT.Decode("D|alchemy|1|1|2|1|a") == nil, "Teil > Teile angenommen")
+        -- Empfang: erst mit allen Teilen gespeichert, nur aus der Gilde.
+        local sd = WeintCodex.SavedData
+        sd.guildProfs = nil
+        local r1 = PRO.Recipes("alchemy")[1]
+        local two = PT.Encode("alchemy", 100, 150, { r1.spell, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 })
+        PT.OnAddonMessage("WCPR", two[1], "WHISPER", "Fremd-Realm")
+        assert(next(PT.Guild()) == nil, "Fluestern angenommen")
+        for _, m in ipairs(two) do PT.OnAddonMessage("WCPR", m, "GUILD", "Anna-Realm") end
+        local e = PT.Guild().Anna and PT.Guild().Anna.alchemy
+        assert(e and e.rank == 100 and e.known[r1.spell], "nicht gespeichert")
+        local cr = PT.Crafters(r1.spell)
+        local found = false
+        for _, c in ipairs(cr) do if c.name == "Anna" then found = true end end
+        assert(found, "Anna kann es nicht")
+        assert(PT.CraftersText(r1.spell, 3):find("Anna", 1, true), "Text ohne Anna")
+        -- Planer: Chance wie in Classic, Weg ohne Luecke, Preis unbekannt ~= 0.
+        local r = { learn = 10, yellow = 20, green = 30, grey = 40 }
+        assert(PT.Chance(r, 5) == 0 and PT.Chance(r, 15) == 1 and PT.Chance(r, 30) == 0.5 and PT.Chance(r, 40) == 0, "Chance falsch")
+        local plan = PT.Plan("tailoring", 1, 50)
+        assert(#plan.steps > 0, "kein Weg")
+        assert(plan.steps[1].from == 1, "Weg beginnt falsch")
+        for _, it in ipairs(plan.shop) do assert(it.price == nil or type(it.price) == "number", "Preis kein Wert") end
+        -- Merkliste.
+        sd.profWatch = nil
+        PT.AddWatch(r1.spell, 2)
+        PT.AddWatch(r1.spell, -1)
+        assert(PT.Watch()[r1.spell] == 1, "Merkliste zaehlt falsch")
+        local needs = PT.Needs()
+        assert(#needs == #r1.reagents, "Reagenzien fehlen")
+        PT.AddWatch(r1.spell, -1)
+        assert(PT.Watch()[r1.spell] == nil, "nicht entfernt")
+        -- Abklingzeiten: Restzeit als Text.
+        assert(PT.Remaining((_G.time and _G.time() or 0) + 90000):find("1 T", 1, true), "Restzeit falsch")
+        assert(PT.Remaining(0) == nil, "Vergangenes nicht bereit")
+        -- Alle Ansichten zeichnen.
+        WeintCodex.Navigation.SwitchTo("berufe")
+        for _, t in ipairs(PT.TOOLS) do
+            PT.Show(t.key)
+            assert(PT.lastDraw and PT.lastDraw.key == t.key, "nicht gezeichnet: " .. t.key)
+        end
+        PT.Show(nil)
+        assert(PRO.lastDraw and PRO.view == nil, "zurueck zu Rezepten")
+        sd.guildProfs, sd.profWatch = nil, nil
+    end)
+    Check(ok, "Berufe-Werkzeuge: Gilde teilen, Planer, Merkliste, Abklingzeiten" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.

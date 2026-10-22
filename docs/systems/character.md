@@ -434,3 +434,22 @@ viele davon im Bestand stehen – passen sie nicht, ist das ein Befund.
 Zeilen werden wiederverwendet (500 Rezepte der Lederverarbeitung wären
 sonst bei jedem Aufschlagen 500 neue Rahmen). Die Startseite bekommt den
 Schritt „Beruf“ nur mit bekanntem Gelernten (`HM.Professions`).
+
+### Werkzeuge der Berufe *(seit 6.129.0.0, `modules/proftools.lua`)*
+
+Nach dem Verhalten von Profession Master („All Rights Reserved“, kein Code).
+Umschalter unter dem Kopf der Seite „Berufe“ (die Spalte links ist voll):
+Rezepte · Gilde · Planer · Merkliste · Abklingzeiten.
+
+- **Gilde:** eigene gelernte Rezepte gehen still an die Gilde (`WCPR`,
+  `D|Beruf|Rang|Max|Teil|Teile|ids36`, `Q` fragt nach); geteilt wird nur,
+  was im Berufsfenster gelesen wurde. Empfang in `SavedData.guildProfs`,
+  nach 45 Tagen ohne Nachricht verworfen. Tooltip „Herstellbar von …“,
+  Rezeptdetails „Wer es kann“ (Twinks + Gilde).
+- **Planer:** je Punkt das Rezept mit den geringsten Kosten je erwartetem
+  Punkt (Chance wie Classic), nur gelernte oder Lehrer-Rezepte; Preise nur
+  aus den eigenen Auktionspreisen, fehlt einer: „Preis unbekannt“.
+- **Merkliste:** `SavedData.profWatch` (Zauber → Anzahl), fehlende
+  Reagenzien gegen Taschen + Bank, Twinks über den Bestand.
+- **Abklingzeiten:** welche Rezepte eine haben, sagt der Client beim
+  Herstellen (`SavedData.profCD`), keine feste Liste.

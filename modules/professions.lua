@@ -502,7 +502,11 @@ local function BuildPage()
         height  = 84,
     })
     local rc = WeintCodex.CreateSurface(f, { tone = "plain", radius = 14, backdrop = "bgDark" })
-    rc:SetPoint("TOPLEFT",    f, "TOPLEFT",    PAD_X, -(PAD_Y + 84))
+    -- 6.129.0.0: Umschalter Rezepte/Werkzeuge (modules/proftools.lua) unter dem Kopf.
+    local PT = WeintCodex.ProfTools
+    local barH = PT and PT.BAR_H or 0
+    if PT then PT.AttachBar(f, "rezepte") end
+    rc:SetPoint("TOPLEFT",    f, "TOPLEFT",    PAD_X, -(PAD_Y + 84 + barH))
     rc:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", PAD_X, PAD_Y)
     rc:SetWidth(460)
     f.RecipeCard = rc
@@ -848,6 +852,7 @@ function PRO.SidebarItems(skills)
     local function add(p, status)
         items[#items + 1] = { label = PRO.ProfName(p.key), status = status, onClick = function()
             selected = p.key
+            PRO.view = nil
             PRO.Show()
         end }
         order[#order + 1] = p.key
@@ -932,6 +937,8 @@ local function RecipeInspector(r)
         blocks[#blocks + 1] = { type = "header", text = "Reagenzien" }
         blocks[#blocks + 1] = { type = "card", lines = lines }
     end
+    local PT = WeintCodex.ProfTools
+    if PT and PT.RecipeBlocks then PT.RecipeBlocks(r, blocks) end
     blocks[#blocks + 1] = { type = "divider" }
     blocks[#blocks + 1] = { type = "text", text = kind == "vendor" and "Händler und Lage aus Classic – in Forever unbestätigt."
         or "Unbestätigt – Wissensstand aus der Beta." }
@@ -1008,14 +1015,17 @@ function PRO.Show()
     local nav = WeintCodex.Navigation
     nav.BuildSidebar("Berufe", items)
     for i, key in ipairs(order) do
-        if key == selected and nav.SidebarButtons then
+        if key == selected and not PRO.view and nav.SidebarButtons then
             local btn = nav.SidebarButtons()[i]
             if btn and btn.SetActive then btn:SetActive(true) end
         end
     end
 
+    local PT = WeintCodex.ProfTools
+    if PRO.view and PT then return PT.Draw(PRO.view) end
     local f = BuildPage()
     f:Show()
+    if f.ToolBar then f.ToolBar:Select(1) end
     local name = PRO.ProfName(selected)
     WeintCodex.SetBreadcrumb("Berufe", name)
     local s = skills[selected]
