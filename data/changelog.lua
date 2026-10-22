@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.139.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFEigene Ziele erledigen sich selbst|r – hast du eine selbst gesetzte Markierung (oder einen Händler, ein Buch …) erreicht und gehst wieder weg, verschwinden Pfeil und Markierung. Quests bleiben wie bisher.",
+        },
+    },
+    {
         version = "6.138.0.0",
         date    = "22.10.2026",
         notes   = {

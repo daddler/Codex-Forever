@@ -4710,6 +4710,26 @@ do
     Check(ok, "Berufe-Werkzeuge: Gilde teilen, Planer, Merkliste, Abklingzeiten" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.139.0.0: eigenes Ziel nach Ankunft und Weggehen erledigt.
+do
+    local QA = WeintCodex.UIQuestArrow
+    local ok, err = pcall(function()
+        local cleared = 0
+        local old = QA.ClearCustom
+        QA.ClearCustom = function() cleared = cleared + 1 end
+        local t = { kind = "custom", tm = 84, tx = 0.5, ty = 0.5 }
+        assert(not QA.OwnArrival(t, 200), "vor Ankunft geloescht")
+        assert(not QA.OwnArrival(t, 3), "am Ziel geloescht")
+        assert(not QA.OwnArrival(t, 15), "zu frueh geloescht")
+        assert(QA.OwnArrival(t, 60) and cleared == 1, "nach Weggehen nicht geloescht")
+        local q = { kind = "quest", tm = 84, tx = 0.5, ty = 0.5 }
+        QA.OwnArrival(q, 3)
+        assert(not QA.OwnArrival(q, 200), "Quest geloescht")
+        QA.ClearCustom = old
+    end)
+    Check(ok, "Questpfeil: eigenes Ziel nach Ankunft erledigt, Quests nicht" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.

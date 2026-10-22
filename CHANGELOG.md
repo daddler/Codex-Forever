@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.139.0.0] – 2026-10-22
+
+### Geändert
+- Questpfeil (Wunsch des Spielers): eigene Ziele (`custom`: Händler, Buch …; `waypoint`: Kartenmarkierung) gelten nach der Ankunft als erledigt, sobald man `QA.OWN_LEAVE` (25) Yards über den Ankunftsabstand hinaus weg ist (`QA.OwnArrival`) – eigenes Ziel gelöst bzw. Kartenmarkierung entfernt. Quests unverändert.
+
 ## [6.138.0.0] – 2026-10-22
 
 ### Geändert

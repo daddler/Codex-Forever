@@ -1091,6 +1091,32 @@ QA.MARK_BACK, QA.MARK_RATE = 80, 1.2
 QA.MARK_HIDDEN = 0.5
 QA.markShown, QA.markReached, QA.markKey, QA.markTime = 0, false, nil, nil
 
+-- 6.139.0.0 (Wunsch: "habe ich eine Markierung selbst gesetzt und das Ziel
+-- erreicht, will ich nicht noch mal hin, wenn ich weggehe"): eigene Ziele
+-- (Kartenmarkierung, Haendler, Buch ...) gelten nach der Ankunft als
+-- erledigt, sobald man QA.OWN_LEAVE Yards weiter weg ist - Pfeil und
+-- Markierung verschwinden. Quests bleiben wie sie sind.
+QA.OWN_LEAVE = 25
+QA.ownKey, QA.ownReached = nil, false
+function QA.OwnArrival(t, d)
+    if not t or (t.kind ~= "custom" and t.kind ~= "waypoint") or type(d) ~= "number" then return false end
+    local key = tostring(t.tm) .. ":" .. tostring(t.tx) .. ":" .. tostring(t.ty)
+    if key ~= QA.ownKey then QA.ownKey, QA.ownReached = key, false end
+    local arrive = math.max(K.Get(KEY, "arriveDistance") or 5, 8)
+    if d <= arrive then QA.ownReached = true return false end
+    if not (QA.ownReached and d >= arrive + QA.OWN_LEAVE) then return false end
+    QA.ownKey, QA.ownReached = nil, false
+    if t.kind == "custom" then
+        QA.ClearCustom()
+    else
+        local cm, st = _G.C_Map, _G.C_SuperTrack
+        if cm and cm.ClearUserWaypoint then pcall(cm.ClearUserWaypoint) end
+        if st and st.SetSuperTrackedUserWaypoint then pcall(st.SetSuperTrackedUserWaypoint, false) end
+    end
+    QA.ownDone = (QA.ownDone or 0) + 1
+    return true
+end
+
 function QA.MarkerReach(key, dist, arrive)
     if key ~= QA.markKey then QA.markKey, QA.markReached = key, false end
     if type(dist) ~= "number" then return QA.markReached end
@@ -1512,6 +1538,12 @@ function QA.Update(force)
         SetTxt(dist, (hop.mode == "flight" and "Beim Flugmeister: " or "Hier einsteigen: ") .. hop.leg)
         SetTxt(eta, routeLine or "")
         frame:Show()
+        return
+    end
+    -- 6.139.0.0: eigenes Ziel erreicht und wieder weggegangen -> erledigt.
+    if QA.OwnArrival(t, navRest or yards) then
+        frame:Hide()
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0, function() QA.Update(true) end) end
         return
     end
     if (navRest or yards) <= (K.Get(KEY, "arriveDistance") or 5) then
