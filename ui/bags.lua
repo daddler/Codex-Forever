@@ -625,8 +625,10 @@ local function Build()
     win:Hide()
     local bg = win:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(win)
-    bg:SetColorTexture(unpack(C.bgDark))
-    WeintCodex.DrawBorder(win, C.border[1], C.border[2], C.border[3], 1, 1)
+    -- 6.122.3.0 (Beta-Test: "Taschen auch Holzoptik, aber nicht so krass"):
+    -- Holz gedaempft (shade), Rand wie das Aussehen.
+    local edge = K.Border(win, 1, C.border[1], C.border[2], C.border[3], 1, "BORDER")
+    K.LookFill(bg, C.bgDark[4] or 1, edge, { C.border[1], C.border[2], C.border[3], 1 }, 0.55)
     K.Glow(win, { spread = 10, shadow = true })
     if type(_G.UISpecialFrames) == "table" then table.insert(_G.UISpecialFrames, "WeintCodexBags") end
 

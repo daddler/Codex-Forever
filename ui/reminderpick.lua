@@ -52,12 +52,28 @@ function RP.Macro(id, hand)
     return m
 end
 
--- Linke/rechte Taste: bei Waffen Haupt-/Nebenhand, sonst beide benutzen.
-local function Arm(b, id, weapon)
+-- Linke/rechte Taste: bei Waffen links die Hand der Erinnerung, rechts die
+-- andere; sonst beide benutzen. 6.122.3.0 (Beta-Test: "Nebenhand wendet
+-- das Gift auf die Haupthand an"): links war immer die Haupthand - auch an
+-- der Erinnerung "Nebenhand ohne Gift".
+function RP.Hands(hand)
+    if hand == "off" then return "off", "main" end
+    if hand then return "main", "off" end
+    return nil, nil
+end
+
+local function Arm(b, id, hand)
+    local left, right = RP.Hands(hand)
     b:SetAttribute("type1", "macro")
     b:SetAttribute("type2", "macro")
-    b:SetAttribute("macrotext1", RP.Macro(id, weapon and "main" or nil))
-    b:SetAttribute("macrotext2", RP.Macro(id, weapon and "off" or nil))
+    b:SetAttribute("macrotext1", RP.Macro(id, left))
+    b:SetAttribute("macrotext2", RP.Macro(id, right))
+end
+RP.Arm = Arm
+
+local function HandsText(hand, sep)
+    if hand == "off" then return "Links: Nebenhand" .. sep .. "Rechts: Haupthand" end
+    return "Links: Haupthand" .. sep .. "Rechts: Nebenhand"
 end
 
 local function Disarm(b)
@@ -73,7 +89,7 @@ local function Tip(owner, pick, id)
     local weapon = pick and pick.hand ~= nil
     local g = C.textMuted or { 0.7, 0.7, 0.7 }
     if id then
-        tt:AddLine(weapon and "Links: Haupthand · Rechts: Nebenhand" or "Klick: benutzen", g[1], g[2], g[3])
+        tt:AddLine(weapon and HandsText(pick.hand, " · ") or "Klick: benutzen", g[1], g[2], g[3])
     else
         tt:AddLine("Klick: Auswahl öffnen", g[1], g[2], g[3])
     end
@@ -181,7 +197,7 @@ function RP.Open(pick)
             b.icon:SetTexture(ok and K.Plain(tex) or nil)
             local c = Count(id)
             b.count:SetText(c and c > 1 and tostring(c) or "")
-            Arm(b, id, weapon)
+            Arm(b, id, pick.hand)
             b:Show()
         else
             b._item = nil
@@ -189,7 +205,7 @@ function RP.Open(pick)
             b:Hide()
         end
     end
-    ring.title:SetText(weapon and "Links: Haupthand\nRechts: Nebenhand" or "Auswählen")
+    ring.title:SetText(weapon and HandsText(pick.hand, "\n") or "Auswählen")
     ring._away = 0
     st.open = true
     ring:Show()
@@ -259,7 +275,7 @@ function RP.Sync(banner, list, n)
             b._pick = pick
             if #pick.items == 1 then
                 b._single = pick.items[1]
-                Arm(b, pick.items[1], pick.hand ~= nil)
+                Arm(b, pick.items[1], pick.hand)
             else
                 b._single = nil
                 Disarm(b)

@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.122.3.0] – 2026-10-22
+
+### Behoben
+- Gift-Auswahl der Erinnerungen: links war immer die Haupthand, auch an der Erinnerung „Nebenhand“ (Beta-Test). `RP.Hands`: links die Hand der Erinnerung, rechts die andere; Texte im Ring und Tooltip passend.
+- Transparent: Deckkraft wirkte nur auf Kacheln. `GC.lookFade` (1 bei 45 %, darunter bis 0) auch für den Grund der Aktionsknöpfe, Lebens-/Ressourcenbalken und Zauberleiste der Einheitenrahmen.
+
+### Geändert
+- Taschenfenster: Holz gedämpft (`K.LookFill` mit `shade` 0,55), Rand nach Aussehen.
+
 ## [6.122.2.0] – 2026-10-22
 
 ### Geändert

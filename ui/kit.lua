@@ -1160,7 +1160,8 @@ function K.PaintKachel(o, keepEdge)
     elseif o.wood then
         o.bg:SetTexture(K.MEDIA .. "wood", "REPEAT", "REPEAT")
         if o.bg.SetHorizTile then o.bg:SetHorizTile(true) o.bg:SetVertTile(true) end
-        o.bg:SetVertexColor(1, 1, 1, a)
+        local sh = o.shade or 1
+        o.bg:SetVertexColor(sh, sh, sh, a)
     else
         local c = o.base or f
         if o.bg.SetHorizTile then o.bg:SetHorizTile(false) o.bg:SetVertTile(false) end
@@ -1184,7 +1185,7 @@ end
 -- faerben - Holz oder Farbe - und beim Aussehenswechsel mitnehmen.
 local flats = setmetatable({}, { __mode = "k" })
 -- `plainEdge`: Randfarbe ohne Holz (sonst der Rand des Aussehens).
-function K.LookFill(tex, alpha, border, plainEdge)
+function K.LookFill(tex, alpha, border, plainEdge, shade)
     local o = flats[tex]
     if not o then
         o = { bg = tex }
@@ -1192,6 +1193,7 @@ function K.LookFill(tex, alpha, border, plainEdge)
         kacheln[o] = true
     end
     o.alpha, o.border, o.plainEdge = alpha, border or o.border, plainEdge or o.plainEdge
+    o.shade = shade or o.shade
     K.PaintKachel(o)
     return o
 end

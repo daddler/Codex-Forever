@@ -935,9 +935,10 @@ function Frame:Layout()
     if showPower then self.power:Show() else self.power:Hide() end
 
     local bg = K.GetColor(KEY, "bgColor")
-    self.healthBg:SetColorTexture(bg.r, bg.g, bg.b, 1)
+    local fade = WeintCodex.GameColors.lookFade or 1
+    self.healthBg:SetColorTexture(bg.r, bg.g, bg.b, fade)
     self._bgR = nil
-    self.powerBg:SetColorTexture(bg.r * 0.7, bg.g * 0.7, bg.b * 0.7, 1)
+    self.powerBg:SetColorTexture(bg.r * 0.7, bg.g * 0.7, bg.b * 0.7, fade)
     self.border:SetShown(Opt("showBorder"))
     local bc = K.GetColor(KEY, "borderColor")
     self.border:SetColor(bc.r, bc.g, bc.b, 1)
@@ -1011,7 +1012,7 @@ function Frame:PaintBg(r, g, b)
     end
     if self._bgR == br and self._bgG == bgg and self._bgB == bb then return end
     self._bgR, self._bgG, self._bgB = br, bgg, bb
-    self.healthBg:SetColorTexture(br, bgg, bb, 1)
+    self.healthBg:SetColorTexture(br, bgg, bb, WeintCodex.GameColors.lookFade or 1)
 end
 
 -- Treffer und Heilung als Zahl. UNIT_COMBAT(unit, action, flag, amount):
@@ -1143,7 +1144,7 @@ function Frame:UpdateClassification()
     local col = WeintCodex.GameColors[c.color]
     cb.text:SetText(c.text)
     cb.text:SetTextColor(col[1], col[2], col[3])
-    cb.bg:SetColorTexture(0, 0, 0, 0.75)
+    cb.bg:SetColorTexture(0, 0, 0, 0.75 * (WeintCodex.GameColors.lookFade or 1))
     local w = K.Plain(cb.text:GetStringWidth())
     cb:SetWidth((type(w) == "number" and w or 40) + 10)
     cb:Show()

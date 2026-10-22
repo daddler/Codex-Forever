@@ -226,7 +226,7 @@ local function Skin(b)
 
     d.bg = b:CreateTexture(nil, "BACKGROUND", nil, -7)
     d.bg:SetAllPoints(b)
-    d.bg:SetColorTexture(0, 0, 0, 0.5)
+    d.bg:SetColorTexture(0, 0, 0, 0.5 * (WeintCodex.GameColors.lookFade or 1))
     d.border = K.Border(b, 1, 0, 0, 0, 1, "OVERLAY")
     d.shadow = K.Glow(b, { spread = 3, shadow = true })
 
@@ -435,7 +435,7 @@ local function Apply(b, d)
     end
     -- Leere Plaetze werfen keinen Schatten: sie sollen kaum auffallen.
     if d.shadow then d.shadow:SetShown(not empty) end
-    d.bg:SetColorTexture(0, 0, 0, empty and 0.35 or 0.5)
+    d.bg:SetColorTexture(0, 0, 0, (empty and 0.35 or 0.5) * (WeintCodex.GameColors.lookFade or 1))
     if d.hotkey then
         K.SetFont(d.hotkey, Opt("hotkeySize"))
         d.hotkey:SetAlpha(Opt("hotkeys") and 1 or 0)

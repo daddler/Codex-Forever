@@ -22,6 +22,15 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.122.3.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFGift auf die Nebenhand|r – an der Erinnerung „Nebenhand“ legt der Linksklick das Gift jetzt auf die Nebenhand (rechts: Haupthand).",
+            "|cff7C6CFFDeckkraft bei Transparent wirkt weiter|r – auch der Grund der Aktionsknöpfe, der Lebens- und Ressourcenbalken und der Zauberleiste wird durchsichtiger.",
+            "|cff7C6CFFTaschen mit dezentem Holz|r beim Aussehen Holz.",
+        },
+    },
+    {
         version = "6.122.2.0",
         date    = "22.10.2026",
         notes   = {

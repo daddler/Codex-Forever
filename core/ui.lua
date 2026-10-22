@@ -494,6 +494,13 @@ function WeintCodex.SetLook(key, alphaPct)
     end
     GC.kachelWood = look.wood and true or false
     GC.lookTransparent = key == "transparent"
+    -- 6.122.3.0 (Beta-Test: "die Transparenz aendert nur das Spielmenue, nicht
+    -- die Leisten"): Faktor fuer Grund von Knoepfen und Balken. Bei 45 %
+    -- (ab Werk) 1 - wie bisher -, darunter bis 0.
+    GC.lookFade = 1
+    if key == "transparent" and type(alphaPct) == "number" then
+        GC.lookFade = math.max(0, math.min(1, alphaPct / WeintCodex.LOOK_ALPHA_DEFAULT))
+    end
     GC.kachelEdgeSize = look.edgeSize or 1
     return look
 end

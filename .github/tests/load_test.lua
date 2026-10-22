@@ -4481,6 +4481,22 @@ do
     Check(ok, "Aussehen: Transparent einstellbar, Klassisch aus Holz" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.122.3.0: Gift-Auswahl an der Erinnerung "Nebenhand" - links Nebenhand.
+do
+    local RP = WeintCodex.UIReminderPick
+    local ok, err = pcall(function()
+        local attrs = {}
+        local b = { SetAttribute = function(_, k, v) attrs[k] = v end }
+        RP.Arm(b, 2892, "off")
+        assert(attrs.macrotext1:find("/use 17", 1, true) and attrs.macrotext2:find("/use 16", 1, true), "Nebenhand links nicht Nebenhand")
+        RP.Arm(b, 2892, "main")
+        assert(attrs.macrotext1:find("/use 16", 1, true) and attrs.macrotext2:find("/use 17", 1, true), "Haupthand vertauscht")
+        RP.Arm(b, 2892, nil)
+        assert(not attrs.macrotext1:find("/use 1", 1, true), "Nicht-Waffe auf eine Hand")
+    end)
+    Check(ok, "Gift-Auswahl: Hand der Erinnerung auf der linken Taste" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.
