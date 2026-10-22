@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.135.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Merkliste leuchtet beim Händler|r – was dir noch fehlt (z. B. Verbleite Phiolen), pulsiert im Händlerfenster mit der fehlenden Menge; auch der Tooltip sagt es.",
+        },
+    },
+    {
         version = "6.134.0.1",
         date    = "22.10.2026",
         notes   = {

@@ -299,6 +299,13 @@ local function OnItem(tt, data)
     if AP and AP.ItemIdOf then id = AP.ItemIdOf(tt, data)
     else id = type(data) == "table" and Plain(data.id) or nil end
     if type(id) ~= "number" then return end
+    -- 6.135.0.0: steht er auf der Merkliste und fehlt noch?
+    local sd = SD()
+    local w = sd and (next(sd.profWatchItems or {}) or next(sd.profWatch or {})) and PT.Missing()[id]
+    if w then
+        local g = C.goldBright or C.accent
+        tt:AddLine("Merkliste: dir fehlen noch " .. w, g[1], g[2], g[3])
+    end
     local rs = PT.RecipesForItem(id)
     if not rs then return end
     for _, r in ipairs(rs) do
@@ -1497,5 +1504,111 @@ do
         queued = true
         local function run() queued = false PT.RefreshSide() end
         if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.5, run) else run() end
+    end)
+end
+
+--------------------------------------------------
+-- Merkliste beim Haendler
+--------------------------------------------------
+-- 6.135.0.0 (Wunsch: "Handwerksmaterial vom Haendler im Haendlerfenster
+-- markieren, damit man es nicht uebersieht"): was auf der Merkliste noch
+-- fehlt, leuchtet im Haendlerfenster, und der Tooltip sagt, wie viele.
+
+PT.MERCHANT_SLOTS = 12
+
+-- [Gegenstand] = fehlende Menge (nur > 0).
+function PT.Missing()
+    local out = {}
+    for _, e in ipairs(PT.Needs()) do
+        if e.missing > 0 then out[e.id] = e.missing end
+    end
+    return out
+end
+
+local marks = {}
+local function Mark(btn)
+    local m = marks[btn]
+    if m then return m end
+    m = CreateFrame("Frame", nil, btn)
+    m:SetPoint("TOPLEFT", btn, "TOPLEFT", -3, 3)
+    m:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", 3, -3)
+    m:SetFrameLevel((btn:GetFrameLevel() or 1) + 5)
+    local c = C.goldBright or C.accent
+    m.edges = {}
+    for i, pt in ipairs({ { "TOPLEFT", "TOPRIGHT", 0, 2 }, { "BOTTOMLEFT", "BOTTOMRIGHT", 0, 2 },
+                          { "TOPLEFT", "BOTTOMLEFT", 2, 0 }, { "TOPRIGHT", "BOTTOMRIGHT", 2, 0 } }) do
+        local t = m:CreateTexture(nil, "OVERLAY")
+        t:SetPoint(pt[1], m, pt[1], 0, 0)
+        t:SetPoint(pt[2], m, pt[2], 0, 0)
+        if pt[3] > 0 then t:SetWidth(pt[3]) else t:SetHeight(pt[4]) end
+        t:SetColorTexture(c[1], c[2], c[3], 1)
+        m.edges[i] = t
+    end
+    m.tag = WeintCodex.Label(m, "", { size = 10, color = "goldBright", font = WeintCodex.Fonts.sansSemi })
+    m.tag:SetPoint("BOTTOMLEFT", m, "TOPLEFT", 0, 1)
+    -- Pulsieren, damit es nicht uebersehen wird.
+    if m.CreateAnimationGroup then
+        local ag = m:CreateAnimationGroup()
+        local a = ag:CreateAnimation("Alpha")
+        if a and a.SetFromAlpha then
+            a:SetFromAlpha(1) a:SetToAlpha(0.35) a:SetDuration(0.8) a:SetSmoothing("IN_OUT")
+            ag:SetLooping("BOUNCE")
+            m.anim = ag
+        end
+    end
+    marks[btn] = m
+    return m
+end
+
+function PT.MarkMerchant()
+    local missing = PT.Missing()
+    local n = 0
+    for i = 1, PT.MERCHANT_SLOTS do
+        local slot = _G["MerchantItem" .. i]
+        local btn = _G["MerchantItem" .. i .. "ItemButton"] or slot
+        local id
+        if type(btn) == "table" and slot and slot.IsShown and slot:IsShown() and btn.GetID then
+            local index = Plain(btn:GetID())
+            if type(index) ~= "number" or index < 1 then index = i end
+            if _G.GetMerchantItemID then
+                local ok, v = pcall(_G.GetMerchantItemID, index)
+                id = ok and Plain(v) or nil
+            end
+            if not id and _G.GetMerchantItemLink then
+                local ok, link = pcall(_G.GetMerchantItemLink, index)
+                link = ok and Plain(link) or nil
+                id = type(link) == "string" and tonumber(link:match("item:(%d+)")) or nil
+            end
+        end
+        local need = id and missing[id]
+        if type(btn) == "table" then
+            if need then
+                local m = Mark(btn)
+                m.tag:SetText("Merkliste: " .. need)
+                m:Show()
+                if m.anim then m.anim:Play() end
+                n = n + 1
+            elseif marks[btn] then
+                if marks[btn].anim then marks[btn].anim:Stop() end
+                marks[btn]:Hide()
+            end
+        end
+    end
+    PT.merchantMarks = n
+    return n
+end
+
+do
+    local mev = CreateFrame("Frame")
+    for _, e in ipairs({ "MERCHANT_SHOW", "MERCHANT_UPDATE", "BAG_UPDATE_DELAYED" }) do pcall(mev.RegisterEvent, mev, e) end
+    local hooked = false
+    mev:SetScript("OnEvent", function(_, event)
+        if not hooked and _G.hooksecurefunc and type(_G.MerchantFrame_UpdateMerchantInfo) == "function" then
+            hooked = true
+            _G.hooksecurefunc("MerchantFrame_UpdateMerchantInfo", function() pcall(PT.MarkMerchant) end)
+        end
+        if event == "BAG_UPDATE_DELAYED" and not (_G.MerchantFrame and _G.MerchantFrame:IsShown()) then return end
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.1, function() pcall(PT.MarkMerchant) end)
+        else pcall(PT.MarkMerchant) end
     end)
 end

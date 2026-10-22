@@ -4642,6 +4642,17 @@ do
         assert(st.hist[2589] == "100:400", "Tagesminimum falsch: " .. tostring(st.hist[2589]))
         local blocks = PT.ItemBlocks(2589)
         assert(#blocks > 4, "Detailbereich leer")
+        -- 6.135.0.0: beim Haendler markiert.
+        local slot = CreateFrame("Frame", "MerchantItem1", UIParent)
+        local b = CreateFrame("Button", "MerchantItem1ItemButton", slot)
+        b:SetID(1)
+        slot:Show()
+        local oldID = _G.GetMerchantItemID
+        _G.GetMerchantItemID = function(i) return i == 1 and 2589 or nil end
+        local mm = PT.MarkMerchant()
+        assert(mm == 1, "Haendler nicht markiert: " .. tostring(mm) .. " fehlt=" .. tostring(PT.Missing()[2589]) .. " shown=" .. tostring(slot:IsShown()))
+        _G.GetMerchantItemID = oldID
+        slot:Hide()
         PT.AddWatchItem(2589, -20)
         assert(PT.WatchItems()[2589] == nil, "Gegenstand nicht entfernt")
         -- Abklingzeiten: Restzeit als Text.

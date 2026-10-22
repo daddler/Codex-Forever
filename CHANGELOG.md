@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.135.0.0] – 2026-10-22
+
+### Neu
+- Merkliste beim Händler (Wunsch des Spielers): `PT.MarkMerchant` legt um Waren, die auf der Merkliste noch fehlen, einen pulsierenden goldenen Rand mit „Merkliste: N“ (nach `MerchantFrame_UpdateMerchantInfo`, `MERCHANT_SHOW/UPDATE`, nach Käufen); Tooltip jedes Gegenstands „Merkliste: dir fehlen noch N“.
+
 ## [6.134.0.1] – 2026-10-22
 
 ### Behoben
