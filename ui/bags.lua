@@ -597,6 +597,54 @@ function BG.CategoryOf(bag, slot, info)
 end
 
 local catHeads = {}
+BG.catHeads = catHeads
+
+-- 6.123.2.0 (Beta-Test mit Video, wie in Baganator: "Rechtsklick zum
+-- Transferieren"): ist die Bank offen, legt ein Rechtsklick auf die
+-- Ueberschrift alles aus der Kategorie in die Bank - ueber das Benutzen
+-- des Spiels (UseContainerItem bei offener Bank), im Klick selbst, nie im
+-- Kampf. Gegenstaende, die einen Zauber wirken, laesst das Spiel so
+-- nicht zu - die bleiben, wo sie sind.
+BG.bankOpen = false
+function BG.Transfer(items)
+    if K.InCombat() or not BG.bankOpen then return 0 end
+    local cc = _G.C_Container
+    if not (cc and cc.UseContainerItem) then return 0 end
+    local n = 0
+    for _, e in ipairs(items or {}) do
+        if e.bag and e.slot and e.cat ~= "empty" then
+            local info = Info(e.bag, e.slot)
+            local id = info and K.Plain(info.itemID)
+            local ci = _G.C_Item
+            local spell = type(id) == "number" and ci and ci.GetItemSpell and select(2, pcall(ci.GetItemSpell, id))
+            -- Was einen Zauber wirkt, wuerde benutzt statt eingelagert (und
+            -- das Spiel sperrt es fuer Addons) - liegen lassen.
+            if info and not K.Plain(info.isLocked) and not spell then
+                if pcall(cc.UseContainerItem, e.bag, e.slot) then n = n + 1 end
+            end
+        end
+    end
+    return n
+end
+
+function BG.NewCatHead()
+    local b = CreateFrame("Button", nil, grid)
+    b.text = K.NewText(b)
+    b.text:SetFont(F.sans, 11, "")
+    b.text:SetPoint("LEFT", b, "LEFT", 0, 0)
+    if b.RegisterForClicks then b:RegisterForClicks("RightButtonUp") end
+    b:SetScript("OnClick", function(self) BG.Transfer(self.items) end)
+    b:SetScript("OnEnter", function(self)
+        if not BG.bankOpen or self.cat.key == "empty" then return end
+        local tt = _G.GameTooltip
+        tt:SetOwner(self, "ANCHOR_TOP")
+        tt:SetText(self.cat.label, 1, 1, 1)
+        tt:AddLine("Rechtsklick: alles in die Bank", 0.4, 1, 0.4)
+        tt:Show()
+    end)
+    b:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+    return b
+end
 -- Bloecke nebeneinander, solange sie in die Breite passen (wie Baganator).
 function BG.LayoutCategories(list, size, sp, cols)
     local cell = size + sp
@@ -625,15 +673,16 @@ function BG.LayoutCategories(list, size, sp, cols)
             hi = hi + 1
             local hd = catHeads[hi]
             if not hd then
-                hd = K.NewText(grid)
-                hd:SetFont(F.sans, 11, "")
+                hd = BG.NewCatHead()
                 catHeads[hi] = hd
             end
-            local px, py = x * cell + (x > 0 and 0 or 0), y
+            local px, py = x * cell, y
             hd:ClearAllPoints()
             hd:SetPoint("TOPLEFT", grid, "TOPLEFT", px, -py)
-            hd:SetText(c.label .. (c.key == "empty" and ("  " .. #items) or ""))
-            hd:SetTextColor(unpack(c.key == "new" and C.accent or C.textMuted))
+            hd:SetSize(math.max(w * cell - sp, 40), BG.HEAD_H)
+            hd.cat, hd.items = c, items
+            hd.text:SetText(c.label .. (c.key == "empty" and ("  " .. #items) or ""))
+            hd.text:SetTextColor(unpack(c.key == "new" and C.accent or C.textMuted))
             hd:Show()
             for i, e in ipairs(items) do
                 local col, row = (i - 1) % w, math.floor((i - 1) / w)
@@ -762,7 +811,7 @@ function BG.RefreshCategories()
                 s.holder:SetSize(size, size)
                 K.SetFont(s.d.ilvl, math.max(8, math.floor(size * 0.3)))
                 if PaintSlot(s, bag, slot) then filled = filled + 1 end
-                list[#list + 1] = { s = s, cat = BG.CategoryOf(bag, slot, Info(bag, slot)) }
+                list[#list + 1] = { s = s, bag = bag, slot = slot, cat = BG.CategoryOf(bag, slot, Info(bag, slot)) }
             else
                 missing = missing + 1
             end
@@ -965,11 +1014,14 @@ local function Enable()
 
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "BAG_UPDATE_DELAYED", "ITEM_LOCK_CHANGED", "BAG_UPDATE_COOLDOWN",
-        "PLAYER_MONEY", "INVENTORY_SEARCH_UPDATE", "PLAYER_REGEN_ENABLED" }) do
+        "PLAYER_MONEY", "INVENTORY_SEARCH_UPDATE", "PLAYER_REGEN_ENABLED",
+        "BANKFRAME_OPENED", "BANKFRAME_CLOSED" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
     ev:SetScript("OnEvent", K.Measured("Taschen", function(_, event)
         if event == "PLAYER_REGEN_ENABLED" then EnsurePool() end
+        if event == "BANKFRAME_OPENED" then BG.bankOpen = true
+        elseif event == "BANKFRAME_CLOSED" then BG.bankOpen = false end
         BG.Refresh()
     end))
 end

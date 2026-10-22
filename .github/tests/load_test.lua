@@ -10608,6 +10608,17 @@ do
         cats = {}
         for _, b in ipairs(BG.catBlocks or {}) do cats[b.key] = b.n end
         assert(cats.new == 1, "neu Gepluendertes nicht unter Neu")
+        -- 6.123.2.0: Rechtsklick auf eine Kategorie lagert bei offener Bank ein.
+        local used = {}
+        _G.C_Container.UseContainerItem = function(b, sl) used[#used + 1] = b .. ":" .. sl end
+        local junk
+        for _, hd in ipairs(BG.catHeads) do if hd:IsShown() and hd.cat.key == "junk" then junk = hd end end
+        assert(junk, "keine Ueberschrift Schrott")
+        BG.bankOpen = false
+        assert(BG.Transfer(junk.items) == 0 and #used == 0, "ohne Bank eingelagert")
+        BG.bankOpen = true
+        assert(BG.Transfer(junk.items) == 1 and used[1] == "0:1", "nicht eingelagert: " .. tostring(used[1]))
+        BG.bankOpen = false
         _G.C_Container.GetContainerItemInfo = base
         K.Set("bags", "categories", false)
         _G.C_Container.GetBagName = function(bag) if bag == 4 then return "Köcher" end end

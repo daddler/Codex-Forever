@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.123.2.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFGanze Kategorien in die Bank|r – bei offener Bank legt ein Rechtsklick auf eine Überschrift in den Taschen (etwa „Handwerk“) alles daraus in die Bank.",
+        },
+    },
+    {
         version = "6.123.1.0",
         date    = "22.10.2026",
         notes   = {

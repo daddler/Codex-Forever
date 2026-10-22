@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.123.2.0] – 2026-10-22
+
+### Hinzugefügt
+- Taschen nach Kategorien: Überschriften sind Knöpfe; bei offener Bank (`BANKFRAME_OPENED`) lagert Rechtsklick die ganze Kategorie ein (`BG.Transfer`, `UseContainerItem` im Klick, nie im Kampf; gesperrte und zauberwirkende Gegenstände bleiben liegen). Nach dem Verhalten von Baganator.
+
 ## [6.123.1.0] – 2026-10-22
 
 ### Behoben
