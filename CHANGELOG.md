@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.114.0.0] – 2026-10-22
+
+### Geändert
+- Neuer Charakter (bis Stufe 5, noch kein `barsFrom`): `SH.NewBars` schaltet mindestens Leiste 2–5 ein, zusätzlich zu den Leisten des Profils (vorher nur, wenn das Profil welche hatte).
+
+### Hinzugefügt
+- Aktionsleisten → Leisten: Schalter „Aktionsleiste 2“ bis „8“ (`SH.SetBar`/`SH.BarOn` über `SetActionBarToggles`, nie im Kampf, ins Profil gemerkt). Kann der Client es nicht, bleibt der Verweis auf die Optionen des Spiels.
+
 ## [6.113.4.0] – 2026-10-22
 
 ### Behoben

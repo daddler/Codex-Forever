@@ -20061,7 +20061,11 @@ do
             st.barsFrom = nil
             G.UnitLevel = function() return 1 end
             SH.OnLogin()
-            assert(cur[1] and cur[2] and cur[3] and not cur[4], "neuer Charakter ohne Leisten")
+            -- 6.114.0.0: mindestens Leiste 2 bis 5.
+            assert(cur[1] and cur[2] and cur[3] and cur[4], "neuer Charakter ohne Leisten")
+            -- Aus WeintCodex ausblenden (Leiste 3), ins Profil gemerkt.
+            assert(SH.SetBar(3, false) and cur[2] == false and cur[1] and p.bars[2] == false, "Leiste nicht ausgeblendet")
+            assert(SH.BarOn(3) == false and SH.BarOn(2) == true, "Leistenstand falsch gelesen")
             -- Alter Charakter ohne Eintrag: nichts umstellen.
             cur = { false, false, false, false }
             st.barsFrom = nil

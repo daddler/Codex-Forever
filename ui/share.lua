@@ -403,6 +403,38 @@ function SH.ApplyBars(list)
     return true
 end
 
+-- 6.114.0.0 (Wunsch: "nach dem Erstellen eines Charakters direkt mit an"):
+-- ein neuer Charakter bekommt mindestens die Leisten 2 bis 5 - zusaetzlich
+-- zu dem, was das Profil schon an hat. Index 1 = Leiste 2.
+SH.NEW_BARS = { true, true, true, true }
+
+function SH.NewBars(list)
+    local out = {}
+    for i = 1, math.max(#SH.NEW_BARS, type(list) == "table" and #list or 0) do
+        out[i] = (SH.NEW_BARS[i] or (type(list) == "table" and list[i])) and true or false
+    end
+    return out
+end
+
+-- Eine Leiste an/aus, aus den Einstellungen von WeintCodex (6.114.0.0).
+-- n = Nummer der Leiste wie im Spiel (2 bis 8). true / false, Grund.
+function SH.SetBar(n, on)
+    local cur = SH.BarToggles()
+    if not cur then return false, "vom Spiel nicht angeboten" end
+    local list = {}
+    for i = 1, #cur do list[i] = cur[i] end
+    if n - 1 > #list then return false, "gibt es nicht" end
+    list[n - 1] = on and true or false
+    local ok, why = SH.ApplyBars(list)
+    if ok then SH.RememberBars() end
+    return ok, why
+end
+
+function SH.BarOn(n)
+    local cur = SH.BarToggles()
+    return cur and cur[n - 1] or false
+end
+
 -- Merkt die Leisten dieses Charakters im aktiven Profil.
 function SH.RememberBars()
     local p = K.Profile and K.Profile()
@@ -425,12 +457,11 @@ function SH.OnLogin()
         st.barsFrom = name
         return
     end
-    if type(p.bars) == "table" and #p.bars > 0 then
-        local ok = SH.ApplyBars(p.bars)
-        if not ok then return end
-        print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Aktionsleisten aus dem Profil „" .. tostring(name)
-            .. "“ eingeschaltet (" .. SH.CountBars(p.bars) .. " zusätzliche an).")
-    end
+    local bars = SH.NewBars(p.bars)
+    local ok = SH.ApplyBars(bars)
+    if not ok then return end
+    print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Aktionsleisten eingeschaltet (" .. SH.CountBars(bars)
+        .. " zusätzliche an) – ausschalten geht unter Aktionsleisten → Leisten.")
     st.barsFrom = name
 end
 

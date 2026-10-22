@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.114.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFNeue Charaktere starten mit den Aktionsleisten 2 bis 5|r – sie sind gleich beim ersten Einloggen an.",
+            "|cff7C6CFFLeisten an- und ausschalten in WeintCodex|r – unter Aktionsleisten → Leisten, ohne Umweg über die Optionen des Spiels.",
+        },
+    },
+    {
         version = "6.113.4.0",
         date    = "22.10.2026",
         notes   = {

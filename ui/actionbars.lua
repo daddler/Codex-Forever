@@ -1333,9 +1333,26 @@ K.Register({
                 return spec
             end
             -- 6.26.11.0: welche Leisten es gibt, schaltet das Spiel ein.
+            -- 6.114.0.0 (Wunsch: "WeintCodex soll die Leisten ausblenden
+            -- koennen"): dieselben Schalter wie in den Optionen des Spiels,
+            -- nie im Kampf.
             B:Section("Leisten des Spiels")
-            B:GameSettings("Weitere Leisten schaltet das Spiel ein: Optionen → Aktionsleisten.",
-                "Leiste hinzufügen (Optionen des Spiels)", WeintCodex.UIOptions.ACTIONBAR_NAMES)
+            local SH = WeintCodex.UIShare
+            if SH and SH.BarToggles() then
+                local function BarCell(n)
+                    if n > 8 then return { type = "empty" } end
+                    return { type = "toggle", label = "Aktionsleiste " .. n,
+                             get = function() return SH.BarOn(n) end,
+                             set = function(v)
+                                 local ok, why = SH.SetBar(n, v)
+                                 if not ok then print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " Aktionsleiste " .. n .. " nicht umgeschaltet: " .. tostring(why) .. ".") end
+                             end }
+                end
+                for n = 2, 8, 2 do B:Row(BarCell(n), BarCell(n + 1)) end
+            else
+                B:GameSettings("Weitere Leisten schaltet das Spiel ein: Optionen → Aktionsleisten.",
+                    "Leiste hinzufügen (Optionen des Spiels)", WeintCodex.UIOptions.ACTIONBAR_NAMES)
+            end
             B:Section("Anordnung")
             B:Row({ type = "dropdown", label = "Wer ordnet die Knöpfe", key = "layout", items = {
                         { value = "wc",   text = "WeintCodex (je Leiste)" },
