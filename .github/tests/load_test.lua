@@ -4707,10 +4707,10 @@ do
         PT.RefreshSide()
         assert(PT.side and PT.side:IsShown(), "Weg nicht gezeigt")
         if learned[1] then assert(PT.side.title:GetText():find("→", 1, true), "Weg ohne Ziel") end
-        WeintCodex.SavedData.profPathHidden = true
+        PT.sideClosed = true
         PT.RefreshSide()
         assert(not PT.side:IsShown() and PT.side.open:IsShown(), "nicht einklappbar")
-        WeintCodex.SavedData.profPathHidden = nil
+        PT.sideClosed = false
         PT.OpenProfession = oldOpen
         host:Hide()
         _G.ProfessionsFrame = nil

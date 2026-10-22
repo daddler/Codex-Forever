@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.144.1.0] – 2026-10-22
+
+### Geändert
+- Skill-Weg am Berufsfenster (Beta-Test): × blendet nur bis zum Schließen des Fensters aus (`PT.sideClosed`, zurückgesetzt bei `TRADE_SKILL_SHOW`/`TRADE_SKILL_CLOSE`) statt dauerhaft (`profPathHidden` entfällt).
+
 ## [6.144.0.1] – 2026-10-22
 
 ### Behoben

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.144.1.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Skill-Weg ist beim nächsten Öffnen wieder da|r – × blendet ihn nur aus, bis du das Berufsfenster schließt.",
+        },
+    },
+    {
         version = "6.144.0.1",
         date    = "22.10.2026",
         notes   = {

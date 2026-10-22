@@ -1567,9 +1567,11 @@ function PT.OpenProfession()
     return nil
 end
 
+-- 6.144.1.0 (Beta-Test: "beim naechsten Oeffnen wieder da"): × blendet nur
+-- bis zum Schliessen des Berufsfensters aus, nicht dauerhaft.
+PT.sideClosed = false
 local function SideHidden()
-    local sd = SD()
-    return sd and sd.profPathHidden and true or false
+    return PT.sideClosed and true or false
 end
 
 local function BuildSide(host)
@@ -1615,11 +1617,11 @@ local function BuildSide(host)
     f.note:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 14, 12)
     f.note:SetWidth(272)
     f.close = WeintCodex.CreateButton(f, { kind = "ghost", text = "×", height = 20, size = 13, padding = 10, radius = 0,
-        onClick = function() local sd = SD() if sd then sd.profPathHidden = true end PT.RefreshSide() end })
+        onClick = function() PT.sideClosed = true PT.RefreshSide() end })
     f.close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -6, -8)
     -- Knopf am Fenster des Spiels, um den Weg wieder zu zeigen.
     f.open = WeintCodex.CreateButton(host, { kind = "ghost", text = "Skill-Weg", height = 22, size = 11, padding = 14, radius = 0,
-        onClick = function() local sd = SD() if sd then sd.profPathHidden = nil end PT.RefreshSide() end })
+        onClick = function() PT.sideClosed = false PT.RefreshSide() end })
     f.open:SetPoint("BOTTOMRIGHT", host, "TOPRIGHT", 0, 4)
     side = f
     PT.side = f
@@ -1716,7 +1718,12 @@ do
         pcall(sev.RegisterEvent, sev, e)
     end
     local queued = false
-    sev:SetScript("OnEvent", function()
+    pcall(sev.RegisterEvent, sev, "TRADE_SKILL_CLOSE")
+    sev:SetScript("OnEvent", function(_, event)
+        if event == "TRADE_SKILL_CLOSE" or event == "TRADE_SKILL_SHOW" then
+            if event == "TRADE_SKILL_CLOSE" then PT.sideClosed = false return end
+            PT.sideClosed = false
+        end
         if queued then return end
         queued = true
         local function run() queued = false PT.RefreshSide() end
