@@ -43,7 +43,29 @@ local defaults = {
     -- zaehlen, was noch frei ist"). Ein Fenster bleibt; jede Tasche ein
     -- eigener Block mit Name und "frei / Plaetze".
     split      = false,
+    -- 6.123.0.0 (Beta-Test: "Kategorien einstellen wie Baganator, neu
+    -- Gepluendertes setzt sich von selbst hin"): Gegenstaende nach Art
+    -- gruppiert statt nach Tasche. Nach dem Verhalten von Baganator, ohne
+    -- dessen Code.
+    categories = true,
 }
+-- Die Kategorien in Reihenfolge. `classes`: Gegenstandsklassen des Spiels
+-- (C_Item.GetItemInfoInstant). Abgeschaltete fallen in "Verschiedenes".
+BG.CATEGORIES = {
+    { key = "new",        label = "Neu" },
+    { key = "quest",      label = "Quest",         classes = { [12] = true } },
+    { key = "equipment",  label = "Ausrüstung",    classes = { [2] = true, [4] = true } },
+    { key = "consumable", label = "Verbrauchbar",  classes = { [0] = true } },
+    { key = "trade",      label = "Handwerk",      classes = { [7] = true, [5] = true, [3] = true } },
+    { key = "recipe",     label = "Rezepte",       classes = { [9] = true } },
+    { key = "ammo",       label = "Munition",      classes = { [6] = true } },
+    { key = "container",  label = "Taschen",       classes = { [1] = true, [11] = true } },
+    { key = "misc",       label = "Verschiedenes" },
+    { key = "junk",       label = "Schrott" },
+    { key = "empty",      label = "Leer" },
+}
+for _, c in ipairs(BG.CATEGORIES) do defaults["cat_" .. c.key] = true end
+BG.CAT_GAP = 12
 BG.HEAD_H, BG.BAG_GAP = 16, 10
 
 local function Opt(k) return K.Get(KEY, k) end
@@ -522,8 +544,117 @@ end
 -- Fenster
 --------------------------------------------------
 
+--------------------------------------------------
+-- Kategorien (6.123.0.0)
+--------------------------------------------------
+
+-- Was beim letzten Schliessen in den Taschen lag: [bag*1000+slot] = itemID.
+-- Was danach dazukommt, ist "Neu" - bis das Fenster wieder zugeht.
+BG.seen = nil
+
+function BG.Snapshot()
+    local t = {}
+    for _, bag in ipairs(BagIDs()) do
+        for slot = 1, NumSlots(bag) do
+            local info = Info(bag, slot)
+            local id = info and K.Plain(info.itemID)
+            if type(id) == "number" then t[bag * 1000 + slot] = id end
+        end
+    end
+    BG.seen = t
+end
+
+local function ItemClass(id)
+    local ci = _G.C_Item
+    local f = (ci and ci.GetItemInfoInstant) or _G.GetItemInfoInstant
+    if not f then return nil end
+    local ok, _, _, _, _, _, classID = pcall(f, id)
+    classID = ok and K.Plain(classID) or nil
+    return type(classID) == "number" and classID or nil
+end
+
+local function QuestItem(bag, slot)
+    local cc = _G.C_Container
+    if not (cc and cc.GetContainerItemQuestInfo) then return false end
+    local ok, q = pcall(cc.GetContainerItemQuestInfo, bag, slot)
+    return ok and type(q) == "table" and (K.Plain(q.isQuestItem) == true or type(K.Plain(q.questID)) == "number")
+end
+
+-- Kategorie eines Platzes (Schluessel aus BG.CATEGORIES).
+function BG.CategoryOf(bag, slot, info)
+    local function On(k) return Opt("cat_" .. k) ~= false end
+    local id = info and K.Plain(info.itemID)
+    if type(id) ~= "number" then return On("empty") and "empty" or nil end
+    if On("new") and BG.seen and BG.seen[bag * 1000 + slot] ~= id then return "new" end
+    local q = K.Plain(info.quality)
+    if On("junk") and q == 0 then return "junk" end
+    if On("quest") and QuestItem(bag, slot) then return "quest" end
+    local class = ItemClass(id)
+    for _, c in ipairs(BG.CATEGORIES) do
+        if c.classes and class and c.classes[class] and On(c.key) then return c.key end
+    end
+    return "misc"
+end
+
+local catHeads = {}
+-- Bloecke nebeneinander, solange sie in die Breite passen (wie Baganator).
+function BG.LayoutCategories(list, size, sp, cols)
+    local cell = size + sp
+    local byCat = {}
+    for _, e in ipairs(list) do
+        local k = e.cat
+        if k then
+            byCat[k] = byCat[k] or {}
+            table.insert(byCat[k], e)
+        else
+            e.s.holder:Hide()
+        end
+    end
+    local x, y, rowH = 0, 0, 0
+    local maxW = cols
+    local hi = 0
+    BG.catBlocks = {}
+    for _, c in ipairs(BG.CATEGORIES) do
+        local items = byCat[c.key]
+        if items and #items > 0 then
+            local w = math.min(#items, cols)
+            local rows = math.ceil(#items / w)
+            if x > 0 and x + w > maxW then
+                x, y, rowH = 0, y + rowH, 0
+            end
+            hi = hi + 1
+            local hd = catHeads[hi]
+            if not hd then
+                hd = K.NewText(grid)
+                hd:SetFont(F.sans, 11, "")
+                catHeads[hi] = hd
+            end
+            local px, py = x * cell + (x > 0 and 0 or 0), y
+            hd:ClearAllPoints()
+            hd:SetPoint("TOPLEFT", grid, "TOPLEFT", px, -py)
+            hd:SetText(c.label .. (c.key == "empty" and ("  " .. #items) or ""))
+            hd:SetTextColor(unpack(c.key == "new" and C.accent or C.textMuted))
+            hd:Show()
+            for i, e in ipairs(items) do
+                local col, row = (i - 1) % w, math.floor((i - 1) / w)
+                e.s.holder:ClearAllPoints()
+                e.s.holder:SetPoint("TOPLEFT", grid, "TOPLEFT", px + col * cell, -(py + BG.HEAD_H + row * cell))
+                e.s.holder:Show()
+            end
+            BG.catBlocks[#BG.catBlocks + 1] = { key = c.key, n = #items }
+            rowH = math.max(rowH, BG.HEAD_H + rows * cell - sp + BG.CAT_GAP)
+            x = x + w + 1   -- eine Spalte Luft zum Nachbarn
+            if x >= maxW then x, y, rowH = 0, y + rowH, 0 end
+        end
+    end
+    for i = hi + 1, #catHeads do catHeads[i]:Hide() end
+    return math.max(size, y + rowH - BG.CAT_GAP)
+end
+
 function BG.Refresh()
     if not win or not win:IsShown() then return end
+    if Opt("categories") then return BG.RefreshCategories() end
+    for _, hd in ipairs(catHeads) do hd:Hide() end
     EnsurePool()
     local size, sp, cols = Opt("slotSize"), Opt("spacing"), Opt("columns")
     local split = Opt("split") and true or false
@@ -600,6 +731,50 @@ function BG.Refresh()
     end
     note:Show()
     BG._filled = filled
+end
+
+local function Footer(filled, n, missing)
+    local money = _G.GetMoney and _G.GetMoney() or 0
+    if _G.GetMoneyString then gold:SetText(_G.GetMoneyString(money, true))
+    elseif _G.GetCoinTextureString then gold:SetText(_G.GetCoinTextureString(money)) end
+    if missing > 0 then
+        note:SetText(missing .. " Plätze erscheinen nach dem Kampf.")
+        note:SetTextColor(unpack(C.warningBright))
+    else
+        note:SetFormattedText("%d von %d Plätzen belegt", filled, n)
+        note:SetTextColor(unpack(C.textMuted))
+    end
+    note:Show()
+    BG._filled = filled
+end
+
+function BG.RefreshCategories()
+    EnsurePool()
+    if not BG.seen then BG.Snapshot() end
+    local size, sp, cols = Opt("slotSize"), Opt("spacing"), Opt("columns")
+    local n, missing, filled = 0, 0, 0
+    local list = {}
+    for _, bag in ipairs(BagIDs()) do
+        for slot = 1, NumSlots(bag) do
+            n = n + 1
+            local s = slots[n]
+            if s then
+                s.holder:SetSize(size, size)
+                K.SetFont(s.d.ilvl, math.max(8, math.floor(size * 0.3)))
+                if PaintSlot(s, bag, slot) then filled = filled + 1 end
+                list[#list + 1] = { s = s, cat = BG.CategoryOf(bag, slot, Info(bag, slot)) }
+            else
+                missing = missing + 1
+            end
+        end
+    end
+    for i = n + 1, #slots do slots[i].holder:Hide() end
+    for _, hd in ipairs(heads) do hd:Hide() end
+    used = n
+    local h = BG.LayoutCategories(list, size, sp, cols)
+    grid:SetSize(cols * (size + sp) - sp, h)
+    win:SetSize(cols * (size + sp) - sp + 24, h + 92)
+    Footer(filled, n, missing)
 end
 
 -- Name einer Tasche fuer die Kopfzeile: vom Client, sonst "Tasche n".
@@ -690,6 +865,8 @@ local function Build()
 
     win:SetScript("OnShow", function() BG.Refresh() end)
     win:SetScript("OnHide", function()
+        -- Was jetzt drin ist, ist beim naechsten Oeffnen nicht mehr "Neu".
+        BG.Snapshot()
         local cc = _G.C_Container
         if search and search:GetText() ~= "" then
             search:SetText("")
@@ -820,7 +997,11 @@ K.Register({
             B:Row({ type = "slider", label = "Abstand", key = "spacing", min = 0, max = 10, step = 1, format = px },
                   { type = "slider", label = "Fenstergröße", key = "scale", min = 60, max = 150, step = 5,
                     format = function(v) return string.format("%d %%", v) end })
+            B:Row({ type = "toggle", label = "Nach Kategorien", key = "categories",
+                    description = "Gegenstände nach Art gruppiert (Quest, Ausrüstung, Verbrauchbar …) statt nach Tasche. Neu Geplündertes steht oben unter „Neu“, bis du die Taschen schließt." },
+                  { type = "empty" })
             B:Row({ type = "toggle", label = "Taschen einzeln", key = "split",
+                    disabled = function() return Opt("categories") end,
                     description = "Jede Tasche ein eigener Block mit Namen und „frei von Plätze“ – Köcher, Munitions- und Seelentaschen auf einen Blick." },
                   { type = "empty" })
             B:Section("Anzeigen")
@@ -829,6 +1010,16 @@ K.Register({
                   { type = "toggle", label = "Rand in Qualitätsfarbe", key = "qualityBorder" })
             B:Row({ type = "toggle", label = "Graue Gegenstände abdunkeln", key = "dimJunk" },
                   { type = "empty" })
+            B:Advanced()
+            B:Section("Kategorien", "Abgeschaltete Kategorien landen unter „Verschiedenes“. Die Reihenfolge im Fenster ist die dieser Liste.")
+            local cats = {}
+            for _, c in ipairs(BG.CATEGORIES) do
+                if c.key ~= "misc" then
+                    cats[#cats + 1] = { type = "toggle", label = c.label, key = "cat_" .. c.key,
+                                        disabled = function() return not Opt("categories") end }
+                end
+            end
+            for i = 1, #cats, 2 do B:Row(cats[i], cats[i + 1] or { type = "empty" }) end
             B:Note("Die Bank bleibt die des Spiels. Öffnen mit der Taschentaste (B) oder einem Klick auf den Rucksack.")
         end },
     },

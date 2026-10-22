@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.123.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFTaschen nach Kategorien|r – Quest, Ausrüstung, Verbrauchbar, Handwerk, Schrott und mehr, nebeneinander gepackt. Neu Geplündertes steht oben unter „Neu“ und sortiert sich beim nächsten Öffnen von selbst ein. Kategorien an- und abschaltbar unter Taschen → Allgemein.",
+        },
+    },
+    {
         version = "6.122.3.0",
         date    = "22.10.2026",
         notes   = {

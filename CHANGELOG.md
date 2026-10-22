@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.123.0.0] – 2026-10-22
+
+### Hinzugefügt
+- Taschen nach Kategorien (`bags.categories`, ab Werk an; nach dem Verhalten von Baganator, ohne Code): `BG.CATEGORIES` nach Gegenstandsklasse (`GetItemInfoInstant`), Quest über `GetContainerItemQuestInfo`, Schrott = Qualität 0, „Neu“ = seit dem letzten Schließen dazugekommen (`BG.Snapshot`), „Leer“ zum Hineinziehen. Blöcke nebeneinander, solange sie passen. Je Kategorie ein Schalter (`cat_<key>`, Feineinstellungen); abgeschaltete landen unter „Verschiedenes“. „Taschen einzeln“ nur ohne Kategorien.
+
 ## [6.122.3.0] – 2026-10-22
 
 ### Behoben

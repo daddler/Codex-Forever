@@ -10571,6 +10571,7 @@ do
                 end
             end,
         }
+        BG.seen = nil
         BG.Open()
         BG.Refresh()
         -- Rucksack + vier Taschen, je vier Plaetze (Reagenzientasche gibt es
@@ -10579,6 +10580,24 @@ do
         -- Belegt ist, was der Client meldet: je Tasche Platz 1.
         assert(BG._filled == 5, "falsche Zahl belegter Plaetze: " .. tostring(BG._filled))
         -- 6.26.19.0: einzeln - je Tasche ein Block mit "frei von".
+        -- 6.123.0.0: nach Kategorien (ab Werk) - Grau als Schrott, Rest
+        -- nach Klasse; was nach dem Schliessen dazukommt, ist "Neu".
+        local cats = {}
+        for _, b in ipairs(BG.catBlocks or {}) do cats[b.key] = b.n end
+        assert(cats.junk == 1 and cats.empty == 15, "Kategorien falsch: Schrott " .. tostring(cats.junk) .. ", Leer " .. tostring(cats.empty))
+        BG.Close()
+        local base = _G.C_Container.GetContainerItemInfo
+        _G.C_Container.GetContainerItemInfo = function(bag, slot)
+            if bag == 1 and slot == 2 then return { iconFileID = 1, stackCount = 1, quality = 1, itemID = 7 } end
+            return base(bag, slot)
+        end
+        BG.Open()
+        BG.Refresh()
+        cats = {}
+        for _, b in ipairs(BG.catBlocks or {}) do cats[b.key] = b.n end
+        assert(cats.new == 1, "neu Gepluendertes nicht unter Neu")
+        _G.C_Container.GetContainerItemInfo = base
+        K.Set("bags", "categories", false)
         _G.C_Container.GetBagName = function(bag) if bag == 4 then return "Köcher" end end
         K.Set("bags", "split", true)
         BG.Refresh()
@@ -10590,6 +10609,7 @@ do
         assert(type(rep) == "table" and #rep > 1, "Sperrbericht bei offenen Bloecken")
         assert(BG.UsedSlots() == 20 and BG._filled == 5, "einzeln andere Zahlen")
         K.Set("bags", "split", nil)
+        K.Set("bags", "categories", nil)
         BG.Refresh()
         BG.Close()
         _G.C_Container = nil
