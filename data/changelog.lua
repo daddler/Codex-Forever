@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.113.1.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFStufe am runden Zielbild|r sitzt weiter im Kreis.",
+        },
+    },
+    {
         version = "6.113.0.0",
         date    = "22.10.2026",
         notes   = {

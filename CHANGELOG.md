@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.113.1.0] – 2026-10-22
+
+### Behoben
+- Rundes Bild am Zielrahmen: Stufe 5 px weiter nach rechts in den Kreis (Versatz 4 → 9).
+
 ## [6.113.0.0] – 2026-10-22
 
 ### Behoben

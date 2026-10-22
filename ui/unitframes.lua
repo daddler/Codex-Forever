@@ -885,7 +885,8 @@ function Frame:Layout()
         self._roundOver = math.max(0, math.ceil((D + 6) / 2 - D * 0.42))
         r.badge:ClearAllPoints()
         -- Innenseite (zum Balken hin): aussen deckte sie den Begleiterrahmen (6.110.1.0, Bild).
-        r.badge:SetPoint("CENTER", r, right and "BOTTOMLEFT" or "BOTTOMRIGHT", right and 4 or -4, 4)
+        -- 6.113.1.0 (Beta-Test mit Bild: am Zielrahmen zu weit links): rechts weiter hinein.
+        r.badge:SetPoint("CENTER", r, right and "BOTTOMLEFT" or "BOTTOMRIGHT", right and 9 or -4, 4)
         r:Show()
         self:UpdateRound()
     else
