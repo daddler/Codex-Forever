@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.132.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFSkill-Weg direkt am Berufsfenster|r – neben dem Fenster steht, was du am besten herstellst, um den offenen Beruf hochzubringen: Rezept, Anzahl und Fertigkeitsbereich in den Farben des Berufsfensters. Mit × einklappen, mit „Skill-Weg“ wieder zeigen.",
+        },
+    },
+    {
         version = "6.131.4.0",
         date    = "22.10.2026",
         notes   = {

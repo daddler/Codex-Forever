@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.132.0.0] – 2026-10-22
+
+### Neu
+- Skill-Weg am Berufsfenster (Beta-Test): eigene Fläche rechts neben `ProfessionsFrame` (`PT.RefreshSide`, `PT.FillSide`) mit dem Plan des offenen Berufs (`PT.OpenProfession`: `C_TradeSkillUI.GetBaseProfessionInfo`, sonst `GetTradeSkillLine`, sonst der letzte Lesedurchgang), bis 14 Schritte, Tooltip mit den Reagenzien. Einklappbar (`SavedData.profPathHidden`), Knopf „Skill-Weg“ über dem Fenster.
+
 ## [6.131.4.0] – 2026-10-22
 
 ### Geändert

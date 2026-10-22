@@ -4634,6 +4634,22 @@ do
             PT.Show("planer")
             assert(PT.planKey == learned[2] and PRO.view == "planer", "Planer nimmt den Beruf nicht: " .. tostring(PT.planKey))
         end
+        -- 6.132.0.0: Weg am Berufsfenster.
+        local host = CreateFrame("Frame", "ProfessionsFrame", UIParent)
+        host:Show()
+        _G.ProfessionsFrame = host
+        local oldOpen = PT.OpenProfession
+        PT.OpenProfession = function() return learned[1] end
+        PT.RefreshSide()
+        assert(PT.side and PT.side:IsShown(), "Weg nicht gezeigt")
+        if learned[1] then assert(PT.side.title:GetText():find("→", 1, true), "Weg ohne Ziel") end
+        WeintCodex.SavedData.profPathHidden = true
+        PT.RefreshSide()
+        assert(not PT.side:IsShown() and PT.side.open:IsShown(), "nicht einklappbar")
+        WeintCodex.SavedData.profPathHidden = nil
+        PT.OpenProfession = oldOpen
+        host:Hide()
+        _G.ProfessionsFrame = nil
         PT.Show(nil)
         assert(PRO.lastDraw and PRO.view == nil, "zurueck zu Rezepten")
         sd.guildProfs, sd.profWatch = nil, nil

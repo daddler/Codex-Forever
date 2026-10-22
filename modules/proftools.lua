@@ -1095,3 +1095,165 @@ ev:SetScript("OnEvent", function(_, event, a, b, c, d)
         end
     end
 end)
+
+--------------------------------------------------
+-- Weg am Berufsfenster
+--------------------------------------------------
+-- 6.132.0.0 (Beta-Test: "am Berufsfenster selbst den Weg, was man am besten
+-- skillen soll"): neben dem Berufsfenster des Spiels derselbe Plan wie auf
+-- der Codex-Seite, fuer den offenen Beruf. Eigene Flaeche, nichts im
+-- Fenster des Spiels geaendert; per Knopf ein- und ausklappbar.
+
+PT.SIDE_ROWS = 14
+local side
+
+-- Welcher Beruf ist offen? Erst der Client, sonst der letzte Lesedurchgang.
+function PT.OpenProfession()
+    local ts = _G.C_TradeSkillUI
+    if ts and ts.GetBaseProfessionInfo then
+        local ok, info = pcall(ts.GetBaseProfessionInfo)
+        if ok and type(info) == "table" then
+            local id = Plain(info.professionID)
+            for _, p in ipairs(P and P.PROFS or {}) do
+                if p.line == id then return p.key end
+            end
+            local key = PRO.KeyByName(Plain(info.professionName))
+            if key then return key end
+        end
+    end
+    if _G.GetTradeSkillLine then
+        local ok, name = pcall(_G.GetTradeSkillLine)
+        local key = ok and PRO.KeyByName(Plain(name)) or nil
+        if key then return key end
+    end
+    local seen = PRO.lastScan and PRO.lastScan.professions
+    if seen then for k in pairs(seen) do return k end end
+    return nil
+end
+
+local function SideHidden()
+    local sd = SD()
+    return sd and sd.profPathHidden and true or false
+end
+
+local function BuildSide(host)
+    if side then return side end
+    local f = CreateFrame("Frame", nil, host)
+    f:SetWidth(300)
+    f:SetPoint("TOPLEFT", host, "TOPRIGHT", 6, 0)
+    f:SetPoint("BOTTOMLEFT", host, "BOTTOMRIGHT", 6, 0)
+    local bg = f:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(f)
+    local c = C.bgDark or C.surface1
+    bg:SetColorTexture(c[1], c[2], c[3], 0.94)
+    f.title = WeintCodex.Label(f, "", { size = 13, color = "textBright", font = WeintCodex.Fonts.sansSemi })
+    f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -12)
+    f.title:SetPoint("RIGHT", f, "RIGHT", -14, 0)
+    f.rows = {}
+    for i = 1, PT.SIDE_ROWS do
+        local r = CreateFrame("Button", nil, f)
+        r:SetHeight(20)
+        r:SetPoint("TOPLEFT", f, "TOPLEFT", 14, -36 - (i - 1) * 21)
+        r:SetPoint("RIGHT", f, "RIGHT", -14, 0)
+        r.right = WeintCodex.Label(r, "", { size = 11, justify = "RIGHT", font = WeintCodex.Fonts.mono })
+        r.right:SetPoint("RIGHT", r, "RIGHT", 0, 0)
+        r.left = WeintCodex.Label(r, "", { size = 11 })
+        r.left:SetPoint("LEFT", r, "LEFT", 0, 0)
+        r.left:SetPoint("RIGHT", r.right, "LEFT", -6, 0)
+        r.left:SetWordWrap(false)
+        r:SetScript("OnEnter", function(self)
+            local gt = _G.GameTooltip
+            if not (gt and self.hint) then return end
+            gt:SetOwner(self, "ANCHOR_RIGHT")
+            if self.spell and gt.SetSpellByID then pcall(gt.SetSpellByID, gt, self.spell) end
+            gt:AddLine(self.hint, C.textMuted[1], C.textMuted[2], C.textMuted[3], true)
+            gt:Show()
+        end)
+        r:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
+        f.rows[i] = r
+    end
+    f.note = WeintCodex.Paragraph(f, "", { size = 10, color = "textDim" })
+    f.note:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 14, 12)
+    f.note:SetWidth(272)
+    f.close = WeintCodex.CreateButton(f, { kind = "ghost", text = "×", height = 20, size = 13, padding = 10, radius = 0,
+        onClick = function() local sd = SD() if sd then sd.profPathHidden = true end PT.RefreshSide() end })
+    f.close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -6, -8)
+    -- Knopf am Fenster des Spiels, um den Weg wieder zu zeigen.
+    f.open = WeintCodex.CreateButton(host, { kind = "ghost", text = "Skill-Weg", height = 22, size = 11, padding = 14, radius = 0,
+        onClick = function() local sd = SD() if sd then sd.profPathHidden = nil end PT.RefreshSide() end })
+    f.open:SetPoint("BOTTOMRIGHT", host, "TOPRIGHT", 0, 4)
+    side = f
+    PT.side = f
+    return f
+end
+
+local TONES = { orange = "skillOrange", yellow = "skillYellow", green = "skillGreen" }
+
+function PT.FillSide(f, key)
+    for _, r in ipairs(f.rows) do r:Hide() end
+    local skills = PRO.Skills()
+    local s = key and skills[key]
+    if not s then
+        f.title:SetText("Skill-Weg")
+        f.note:SetText("Welcher Beruf offen ist, sagt das Spiel noch nicht – einmal blättern oder neu öffnen.")
+        return false
+    end
+    local target = s.max or s.rank
+    if s.rank >= target then target = math.min(300, s.rank + 75) end
+    f.title:SetText(PRO.ProfName(key) .. " · " .. s.rank .. " → " .. target)
+    if s.rank >= target then
+        f.note:SetText("Nichts mehr zu planen.")
+        return true
+    end
+    local plan = PT.Plan(key, s.rank, target)
+    local n = 0
+    for _, st in ipairs(plan.steps) do
+        if n >= PT.SIDE_ROWS then break end
+        n = n + 1
+        local r = f.rows[n]
+        r.left:SetText((st.color == "orange" and "" or "ca. ") .. st.crafts .. "× " .. PRO.RecipeName(st.recipe)
+            .. (st.risky and " (Glück)" or ""))
+        local c = C[TONES[st.color] or "textNormal"] or C.textNormal
+        r.left:SetTextColor(c[1], c[2], c[3])
+        r.right:SetText(st.from .. "–" .. st.to)
+        r.spell = st.recipe.spell
+        local need = {}
+        for _, e in ipairs(st.recipe.reagents) do need[#need + 1] = (e[2] * st.crafts) .. "× " .. PRO.ItemName(e[1]) end
+        r.hint = "Braucht: " .. table.concat(need, ", ")
+        r:Show()
+    end
+    local more = #plan.steps - n
+    local note = more > 0 and (more .. " weitere Schritte auf der Codex-Seite „Berufe“ → Planer.") or ""
+    if plan.gap then
+        note = note .. (note ~= "" and " " or "") .. "Ab " .. plan.gap .. " ist jedes deiner Rezepte grau – neues Rezept beim Lehrer oder Händler holen."
+    elseif n == 0 then
+        note = "Kein Rezept bringt gerade Punkte."
+    end
+    f.note:SetText(note ~= "" and note or "Orange: sicher ein Punkt. Gelb: meist. Grün: Glückssache.")
+    return true
+end
+
+function PT.RefreshSide()
+    local host = _G.ProfessionsFrame or _G.TradeSkillFrame
+    if type(host) ~= "table" or not host.IsShown then return end
+    local f = BuildSide(host)
+    local hidden = SideHidden()
+    f.open:SetShown(hidden and host:IsShown())
+    if hidden or not host:IsShown() then f:Hide() return end
+    f:Show()
+    PT.FillSide(f, PT.OpenProfession())
+end
+
+do
+    local sev = CreateFrame("Frame")
+    for _, e in ipairs({ "TRADE_SKILL_SHOW", "TRADE_SKILL_LIST_UPDATE", "SKILL_LINES_CHANGED" }) do
+        pcall(sev.RegisterEvent, sev, e)
+    end
+    local queued = false
+    sev:SetScript("OnEvent", function()
+        if queued then return end
+        queued = true
+        local function run() queued = false PT.RefreshSide() end
+        if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.5, run) else run() end
+    end)
+end
