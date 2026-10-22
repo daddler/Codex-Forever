@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.131.0.2] – 2026-10-22
+
+### Behoben
+- Gruppenrahmen (Beta-Test: Lebensbalken über dem gelben Auswahlrahmen): Lebensbalken ringsum 2 px vom Rand.
+
 ## [6.131.0.1] – 2026-10-22
 
 ### Behoben

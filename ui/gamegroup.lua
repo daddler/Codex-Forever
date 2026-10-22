@@ -206,14 +206,16 @@ function GG.Layout(f)
         pb:SetHeight(ph)
     end
     hb:ClearAllPoints()
-    hb:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
+    -- 6.131.0.2 (Beta-Test: "Lebensbalken liegt ueber dem gelben Rahmen"):
+    -- ringsum 2 px frei fuer Auswahl- und Aggrorahmen des Spiels.
+    hb:SetPoint("TOPLEFT", f, "TOPLEFT", 2, -2)
     -- 6.130.0.1 (Lua-Fehler "Cannot anchor to a region dependent on it"):
     -- das Spiel haengt die Kraftleiste an den Lebensbalken. Der Balken
     -- darf deshalb nie an der Kraftleiste haengen, nur am Rahmen.
     if power then
-        hb:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, ph + 3)
+        hb:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -2, ph + 3)
     else
-        hb:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, 1)
+        hb:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -2, 2)
     end
     if type(role) == "table" and role.SetPoint then
         role:ClearAllPoints()

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.131.0.2",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Auswahlrahmen der Gruppe ist wieder ganz zu sehen|r – der Lebensbalken lag über seinem Rand.",
+        },
+    },
+    {
         version = "6.131.0.1",
         date    = "22.10.2026",
         notes   = {
