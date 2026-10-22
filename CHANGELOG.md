@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.137.0.0] – 2026-10-22
+
+### Neu
+- Händler gemerkt (Beta-Test: „wo das Holz gekauft wurde, inkl. Map-Pin“): `PT.RecordMerchant` beim Öffnen eines Händlers – für Reagenzien aus den Rezepten und Vorgemerktes Name, Titel (Tooltipzeile 2), Karte, Lage, Preis; je Gegenstand bis 3 Händler (`SavedData.vendorSeen`). Detailbereich der Merkliste: „Beim Händler – von dir gesehen“ mit Karte und Questpfeil.
+
+### Geändert
+- Markierung im Händlerfenster deutlicher: um den ganzen Platz, 3 px Rand, goldener Schimmer, Schild „Merkliste · fehlt N“.
+
 ## [6.136.0.0] – 2026-10-22
 
 ### Neu

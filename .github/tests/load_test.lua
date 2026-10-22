@@ -4651,6 +4651,19 @@ do
         _G.GetMerchantItemID = function(i) return i == 1 and 2589 or nil end
         local mm = PT.MarkMerchant()
         assert(mm == 1, "Haendler nicht markiert: " .. tostring(mm) .. " fehlt=" .. tostring(PT.Missing()[2589]) .. " shown=" .. tostring(slot:IsShown()))
+        -- 6.137.0.0: Haendler gemerkt, im Detailbereich genannt.
+        local oN, oU = _G.GetMerchantNumItems, _G.UnitName
+        _G.GetMerchantNumItems = function() return 1 end
+        _G.UnitName = function(u) if u == "npc" then return "Thurman Mullby" end return oU(u) end
+        assert(PT.RecordMerchant() == 1, "Haendler nicht gemerkt")
+        assert(PT.Vendors(2589)[1].n == "Thurman Mullby", "Haendler falsch")
+        local found = false
+        for _, b2 in ipairs(PT.ItemBlocks(2589)) do
+            for _, l in ipairs(b2.lines or {}) do if l:find("Thurman", 1, true) then found = true end end
+        end
+        assert(found, "Haendler nicht im Detailbereich")
+        _G.GetMerchantNumItems, _G.UnitName = oN, oU
+        sd.vendorSeen = nil
         _G.GetMerchantItemID = oldID
         slot:Hide()
         PT.AddWatchItem(2589, -20)

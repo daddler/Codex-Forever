@@ -1084,10 +1084,45 @@ function PT.ItemBlocks(id)
     else
         blocks[#blocks + 1] = { type = "text", text = "Noch kein Verlauf – er entsteht mit jedem Scan im Auktionshaus (ab dieser Fassung)." }
     end
-    -- Fundorte: eigene Sammelstellen, sonst Dungeonbeute aus dem Bestand.
+    -- Fundorte: Haendler, eigene Sammelstellen, Dungeonbeute aus dem Bestand.
     blocks[#blocks + 1] = { type = "divider" }
     blocks[#blocks + 1] = { type = "header", text = "Wo finde ich das?" }
     local any = false
+    local QM0 = WeintCodex.QuestMap
+    local BP0 = WeintCodex.BooksPage
+    local vs = PT.Vendors(id)
+    if vs[1] then
+        any = true
+        local lines = {}
+        for _, v in ipairs(vs) do
+            local zone = v.m and QM0 and QM0.MapName and QM0.MapName(v.m)
+            lines[#lines + 1] = v.n .. (v.t and (" <" .. v.t .. ">") or "")
+            lines[#lines + 1] = "   " .. (zone or "Ort unbekannt") .. (v.x and string.format(" (%.0f, %.0f)", v.x * 100, v.y * 100) or "")
+                .. (v.p and ("  ·  " .. Money(v.p) .. ((v.q and v.q > 1) and (" für " .. v.q) or "")) or "")
+        end
+        blocks[#blocks + 1] = { type = "text", text = "Beim Händler – von dir gesehen:" }
+        blocks[#blocks + 1] = { type = "card", lines = lines }
+        local v = vs[1]
+        if v.m and v.x and BP0 and BP0.MapWidget then
+            blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
+                local wdg = BP0.MapWidget(parent, width)
+                BP0.PaintMap(wdg, v.m, v.x, v.y)
+                return wdg
+            end }
+        end
+        local QA = WeintCodex.UIQuestArrow
+        if v.m and v.x and QA and QA.SetCustom and BP0 and BP0.Pill then
+            blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
+                if not PT.vendorBtn then PT.vendorBtn = BP0.Pill(parent, "Questpfeil hierhin", { height = 30, size = 12, primary = true }) end
+                local b = PT.vendorBtn
+                b:SetParent(parent)
+                b:SetWidth(width)
+                b:SetScript("OnClick", function() QA.SetCustom({ map = v.m, x = v.x, y = v.y, title = v.n }) end)
+                b:Paint(false)
+                return b
+            end }
+        end
+    end
     local GA = WeintCodex.UIGatherAtlas
     local where = GA and GA.WhereItem and GA.WhereItem(id) or {}
     local QM = WeintCodex.QuestMap
@@ -1101,7 +1136,7 @@ function PT.ItemBlocks(id)
         end
         blocks[#blocks + 1] = { type = "card", lines = lines }
         local e = where[1]
-        if BP and BP.MapWidget then
+        if BP and BP.MapWidget and not (vs[1] and vs[1].m) then
             blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
                 local wdg = BP.MapWidget(parent, width)
                 BP.PaintMap(wdg, e.mapID, e.x, e.y)
@@ -1529,23 +1564,34 @@ local marks = {}
 local function Mark(btn)
     local m = marks[btn]
     if m then return m end
-    m = CreateFrame("Frame", nil, btn)
-    m:SetPoint("TOPLEFT", btn, "TOPLEFT", -3, 3)
-    m:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", 3, -3)
-    m:SetFrameLevel((btn:GetFrameLevel() or 1) + 5)
+    -- 6.137.0.0 (Beta-Test: "muesste noch besser zu sehen sein"): um den
+    -- ganzen Platz (Symbol und Name), 3 px Rand, goldener Schimmer darin.
+    local area = btn.wcArea or btn
+    m = CreateFrame("Frame", nil, area)
+    m:SetPoint("TOPLEFT", area, "TOPLEFT", -4, 4)
+    m:SetPoint("BOTTOMRIGHT", area, "BOTTOMRIGHT", 4, -4)
+    m:SetFrameLevel((area:GetFrameLevel() or 1) + 8)
     local c = C.goldBright or C.accent
+    m.fill = m:CreateTexture(nil, "ARTWORK")
+    m.fill:SetAllPoints(m)
+    m.fill:SetColorTexture(c[1], c[2], c[3], 0.16)
     m.edges = {}
     for i, pt in ipairs({ { "TOPLEFT", "TOPRIGHT", 0, 2 }, { "BOTTOMLEFT", "BOTTOMRIGHT", 0, 2 },
                           { "TOPLEFT", "BOTTOMLEFT", 2, 0 }, { "TOPRIGHT", "BOTTOMRIGHT", 2, 0 } }) do
         local t = m:CreateTexture(nil, "OVERLAY")
         t:SetPoint(pt[1], m, pt[1], 0, 0)
         t:SetPoint(pt[2], m, pt[2], 0, 0)
-        if pt[3] > 0 then t:SetWidth(pt[3]) else t:SetHeight(pt[4]) end
+        if pt[3] > 0 then t:SetWidth(3) else t:SetHeight(3) end
         t:SetColorTexture(c[1], c[2], c[3], 1)
         m.edges[i] = t
     end
-    m.tag = WeintCodex.Label(m, "", { size = 10, color = "goldBright", font = WeintCodex.Fonts.sansSemi })
-    m.tag:SetPoint("BOTTOMLEFT", m, "TOPLEFT", 0, 1)
+    m.tagBg = m:CreateTexture(nil, "OVERLAY", nil, -1)
+    m.tagBg:SetColorTexture(c[1], c[2], c[3], 1)
+    m.tag = WeintCodex.Label(m, "", { size = 11, color = "bgDark", font = WeintCodex.Fonts.sansSemi })
+    m.tag:SetTextColor(0.08, 0.06, 0.03)
+    m.tag:SetPoint("TOPRIGHT", m, "TOPRIGHT", -4, -1)
+    m.tagBg:SetPoint("TOPLEFT", m.tag, "TOPLEFT", -4, 2)
+    m.tagBg:SetPoint("BOTTOMRIGHT", m.tag, "BOTTOMRIGHT", 4, -2)
     -- Pulsieren, damit es nicht uebersehen wird.
     if m.CreateAnimationGroup then
         local ag = m:CreateAnimationGroup()
@@ -1558,6 +1604,77 @@ local function Mark(btn)
     end
     marks[btn] = m
     return m
+end
+
+-- 6.137.0.0 (Beta-Test: "rechts muesste stehen, wo das Holz gekauft
+-- wurde, mit Map-Pin"): beim Oeffnen eines Haendlers merken, wer welche
+-- Handwerkswaren (Reagenzien eines Rezepts oder Vorgemerktes) verkauft -
+-- Name, Titel, Karte und Lage (deine Lage am Haendler), Preis.
+PT.VENDOR_KEEP = 3
+local reagentSet
+local function IsReagent(id)
+    if not reagentSet then
+        reagentSet = {}
+        for _, p in ipairs(P and P.PROFS or {}) do
+            for _, r in ipairs(PRO.Recipes(p.key)) do
+                for _, e in ipairs(r.reagents) do reagentSet[e[1]] = true end
+            end
+        end
+    end
+    return reagentSet[id] or (PT.WatchItems() or {})[id] ~= nil
+end
+PT.IsReagent = IsReagent
+
+function PT.NpcTitle()
+    local ti = _G.C_TooltipInfo
+    if not (ti and ti.GetUnit) then return nil end
+    local ok, data = pcall(ti.GetUnit, "npc")
+    local lines = ok and type(data) == "table" and data.lines
+    local l2 = type(lines) == "table" and lines[2] and Plain(lines[2].leftText)
+    if type(l2) == "string" and l2 ~= "" and not l2:find("%d") then return l2 end
+    return nil
+end
+
+function PT.RecordMerchant()
+    local sd = SD()
+    local name = _G.UnitName and Plain(_G.UnitName("npc"))
+    if not (sd and type(name) == "string") then return 0 end
+    local K = WeintCodex.UIKit
+    local map, x, y
+    if K and K.MapPosSlow then map, x, y = K.MapPosSlow() end
+    local title = PT.NpcTitle()
+    local num = _G.GetMerchantNumItems and Plain(_G.GetMerchantNumItems()) or 0
+    sd.vendorSeen = sd.vendorSeen or {}
+    local n = 0
+    for i = 1, (type(num) == "number" and num or 0) do
+        local id
+        if _G.GetMerchantItemID then local ok, v = pcall(_G.GetMerchantItemID, i) id = ok and Plain(v) or nil end
+        if type(id) == "number" and IsReagent(id) then
+            local price, qty
+            local cm = _G.C_MerchantFrame
+            if cm and cm.GetItemInfo then
+                local ok, info = pcall(cm.GetItemInfo, i)
+                if ok and type(info) == "table" then price, qty = Plain(info.price), Plain(info.stackCount) end
+            elseif _G.GetMerchantItemInfo then
+                local ok, _, _, p, q = pcall(_G.GetMerchantItemInfo, i)
+                if ok then price, qty = Plain(p), Plain(q) end
+            end
+            local list = sd.vendorSeen[id] or {}
+            for k = #list, 1, -1 do if list[k].n == name then table.remove(list, k) end end
+            table.insert(list, 1, { n = name, t = title, m = map, x = x and math.floor(x * 10000) / 10000,
+                y = y and math.floor(y * 10000) / 10000, p = type(price) == "number" and price or nil,
+                q = type(qty) == "number" and qty or nil, at = Now() })
+            while #list > PT.VENDOR_KEEP do table.remove(list) end
+            sd.vendorSeen[id] = list
+            n = n + 1
+        end
+    end
+    return n
+end
+
+function PT.Vendors(id)
+    local sd = SD()
+    return sd and sd.vendorSeen and sd.vendorSeen[id] or {}
 end
 
 function PT.MarkMerchant()
@@ -1581,10 +1698,11 @@ function PT.MarkMerchant()
             end
         end
         local need = id and missing[id]
+        if type(btn) == "table" and type(slot) == "table" and btn ~= slot then btn.wcArea = slot end
         if type(btn) == "table" then
             if need then
                 local m = Mark(btn)
-                m.tag:SetText("Merkliste: " .. need)
+                m.tag:SetText("Merkliste · fehlt " .. need)
                 m:Show()
                 if m.anim then m.anim:Play() end
                 n = n + 1
@@ -1608,6 +1726,7 @@ do
             _G.hooksecurefunc("MerchantFrame_UpdateMerchantInfo", function() pcall(PT.MarkMerchant) end)
         end
         if event == "BAG_UPDATE_DELAYED" and not (_G.MerchantFrame and _G.MerchantFrame:IsShown()) then return end
+        if event == "MERCHANT_SHOW" then pcall(PT.RecordMerchant) end
         if _G.C_Timer and _G.C_Timer.After then _G.C_Timer.After(0.1, function() pcall(PT.MarkMerchant) end)
         else pcall(PT.MarkMerchant) end
     end)

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.137.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFMerkliste beim Händler deutlicher|r – der ganze Platz leuchtet golden mit dickem Rand und „Merkliste · fehlt N“ auf einem Schild.",
+            "|cff7C6CFFWeintCodex merkt sich, wer Handwerkswaren verkauft|r – in der Merkliste steht rechts der Händler mit Titel, Gebiet, Preis und Karte samt Pin, dazu der Questpfeil dorthin.",
+        },
+    },
+    {
         version = "6.136.0.0",
         date    = "22.10.2026",
         notes   = {
