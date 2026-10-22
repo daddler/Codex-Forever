@@ -2620,9 +2620,13 @@ do
         WL.Button("next"):Click()
         assert(WL.Step() == "ui", "ohne Wahl weiter")
         WL.Card("look:klassisch"):Click()
-        assert(WL.preview:IsShown(), "keine Vorschau des Erscheinungsbilds")
+        -- 6.120.0.0: je Aussehen ein eigenes Bild statt der Farbflaeche.
+        assert(WL.ShownShot() == "look_klassisch" and not WL.preview:IsShown(), "keine Vorschau des Erscheinungsbilds")
         WL.Card("look:none"):Click()
-        assert(not WL.preview:IsShown() and WL.choice.ui == false, "Wie bisher waehlt die Oberflaeche")
+        assert(WL.ShownShot() == "look_none" and WL.choice.ui == false, "Wie bisher waehlt die Oberflaeche")
+        for _, h in ipairs(WL.HELPERS) do
+            assert(WL.SHOTS[h.shot], "Helfer ohne eigenes Bild: " .. h.key)
+        end
         WL.Button("next"):Click()
         assert(WL.Step() == "komfort" and WL.Card("help:recommended") and WL.Card("help:custom"), "Helfer ohne zwei Karten")
         WL.Card("help:custom"):Click()

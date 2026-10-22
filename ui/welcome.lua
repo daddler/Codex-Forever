@@ -60,7 +60,7 @@ local MEDIA = "Interface\\AddOns\\WeintCodex\\media\\welcome\\"
 
 -- Die Bilder (Namen wie in make_welcome.py).
 WL.SHOTS = {
-    overview  = { file = MEDIA .. "overview",  caption = "Alles auf einen Blick – der Akzent trägt deine Klassenfarbe (hier: Jäger)." },
+    overview  = { file = MEDIA .. "overview",  caption = "Alles auf einen Blick – der Akzent trägt deine Klassenfarbe (hier: Magier)." },
     plates    = { file = MEDIA .. "plates",    caption = "Namensplaketten: Schadensspur, Zielleuchten, Zauberbalken, deine Auren." },
     group     = { file = MEDIA .. "group",     caption = "Gruppenrahmen mit HoTs, Schilden und Debuffs – Klickzauber direkt darauf." },
     windows   = { file = MEDIA .. "windows",   caption = "Die Fenster des Spiels ruhig, ohne Holz und Pergament." },
@@ -88,10 +88,10 @@ WL.SHORT = { "start", "ui", "komfort", "bereit" }
 function WL.Path() return WL.choice and WL.choice.custom and WL.STEPS or WL.SHORT end
 
 WL.GROUPS = {
-    { key = "alltag", eyebrow = "Helfer · Alltag", title = "Was dir unterwegs Klicks spart", shot = "helpers" },
+    { key = "alltag", eyebrow = "Helfer · Alltag", title = "Was dir unterwegs Klicks spart", shot = "sellJunk" },
     { key = "kampf",  eyebrow = "Helfer · Kampf und Gruppe", title = "Im Kampf und in der Gruppe", shot = "group" },
-    { key = "welt",   eyebrow = "Helfer · Welt und Karte", title = "Auf der Karte und unterwegs", shot = "arrow" },
-    { key = "handel", eyebrow = "Helfer · Handel und Gespräche", title = "Handeln und miteinander reden", shot = "helpers" },
+    { key = "welt",   eyebrow = "Helfer · Welt und Karte", title = "Auf der Karte und unterwegs", shot = "mapMarks" },
+    { key = "handel", eyebrow = "Helfer · Handel und Gespräche", title = "Handeln und miteinander reden", shot = "ahPrices" },
 }
 
 -- Die Anzeigen (Module) und Helfer (Einstellungen) zum Waehlen.
@@ -127,7 +127,7 @@ WL.HELPERS = {
       text = "Als Gruppenleiter: ein Klick beim Betreten markiert Tank und Heiler." },
     { group = "kampf", module = "comfort", key = "markHover", label = "Markieren per Maus und Taste",
       text = "Maus über den Gegner, Taste drücken – nächste freie Markierung." },
-    { group = "kampf", module = "groupframes", key = "clickDispel", label = "Entfluchen auf Klick", dispel = true, shot = "group",
+    { group = "kampf", module = "groupframes", key = "clickDispel", label = "Entfluchen auf Klick", dispel = true,
       text = "Strg + Klick auf einen Gruppenrahmen entfernt, was deine Klasse entfernen kann." },
     { group = "kampf", module = "comfort", key = "combatAlert", label = "Kampfhinweis",
       text = "„+ Kampf“ und „− Kampf“ kurz in der Bildschirmmitte." },
@@ -159,6 +159,17 @@ WL.HELPERS = {
     { group = "handel", module = "comfort", key = "thanks", label = "Danke für Buffs", optional = true,
       text = "Fremde, die dich draußen buffen, bekommen ein kurzes Flüstern." },
 }
+
+-- 6.120.0.0 (Beta-Test: "jede Funktion braucht ihr eigenes Bild"): je
+-- Helfer ein Bild mit seinem Namen (make_welcome.py), Unterschrift = Text.
+for _, h in ipairs(WL.HELPERS) do
+    h.shot = h.shot or h.key
+    WL.SHOTS[h.shot] = WL.SHOTS[h.shot] or { file = MEDIA .. h.shot, caption = h.label .. ": " .. h.text }
+end
+-- Je Aussehen ein Bild (look_none, look_schwarz, ...).
+for _, k in ipairs({ "none", "schwarz", "transparent", "klassisch" }) do
+    WL.SHOTS["look_" .. k] = { file = MEDIA .. "look_" .. k, caption = "" }
+end
 
 function WL.HelperGet(h)
     if h.keys then
@@ -787,16 +798,20 @@ function WL.ShowLook(key)
     local pv = WL.preview
     if not pv then return end
     local look = key and key ~= "none" and WeintCodex.LOOKS and WeintCodex.LOOKS[key]
+    -- 6.120.0.0 (Beta-Test: die Farbflaeche ueber dem Bild "sieht nicht gut
+    -- aus"): je Aussehen ein eigenes gezeichnetes Bild.
+    pv:Hide()
     if not look then
-        pv:Hide()
-        WL.ShowShot("windows")
-        caption:SetText(key == "none" and "Wie bisher: das Spiel zeigt seine eigenen Rahmen." or "Wähle links, wie es aussehen soll.")
+        if key == "none" then
+            WL.ShowShot("look_none")
+            caption:SetText("Wie bisher: das Spiel zeigt seine eigenen Rahmen.")
+        else
+            WL.ShowShot("overview")
+            caption:SetText("Wähle links, wie es aussehen soll.")
+        end
         return
     end
-    WL.ShowShot("overview")
-    pv.bg:SetColorTexture(look.fill[1], look.fill[2], look.fill[3], look.fill[4])
-    pv.edge:SetColor(look.edge[1], look.edge[2], look.edge[3], look.edge[4])
-    pv:Show()
+    WL.ShowShot("look_" .. key)
     caption:SetText(look.label .. ": so sehen Rahmen, Leisten und Fenster aus.")
 end
 

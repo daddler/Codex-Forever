@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.120.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFJede Funktion im Willkommens-Assistenten hat ihr eigenes Bild|r – fahr mit der Maus über einen Helfer, und rechts siehst du, was er tut.",
+            "|cff7C6CFFDie vier Arten auszusehen als eigene Bilder|r – Wie bisher, Schwarz, Transparent und Klassisch nebeneinander vergleichbar.",
+        },
+    },
+    {
         version = "6.119.1.0",
         date    = "22.10.2026",
         notes   = {

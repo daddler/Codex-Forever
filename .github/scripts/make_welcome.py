@@ -34,7 +34,13 @@ OUT = os.path.join(ROOT, "media", "welcome")
 # Das Fenster ist hoeher als die Szene: der kopflose Chromium zieht von der
 # Fensterhoehe etwas ab, und abgeschnitten wird danach (crop).
 # Die Szenen in shots.html - dieselben Namen stehen in ui/welcome.lua (WL.SHOTS).
-SCENES = ["overview", "plates", "group", "windows", "damage", "reminders", "arrow", "helpers"]
+SCENES = ["overview", "plates", "group", "windows", "damage", "reminders", "arrow", "helpers",
+          # 6.120.0.0: je Funktion und je Aussehen ein eigenes Bild.
+          "autoRepair", "sellJunk", "fastLoot", "skipCinematics", "levelUpPopup", "durability", "mapCoords",
+          "fireAlarm", "autoMark", "markHover", "clickDispel", "combatAlert", "hideErrorsInCombat",
+          "mapEntrances", "mapMarks", "mapReveal", "gatherSwap", "sparkleLoot", "rareAlert",
+          "ahPrices", "msgOn", "dlgOn", "thanks",
+          "look_none", "look_schwarz", "look_transparent", "look_klassisch"]
 SRC_W, SRC_H = 1024, 512
 W, H = 512, 256
 
@@ -59,10 +65,11 @@ def shoot(browser, scene, png):
 
 def main():
     preview = sys.argv[1] if len(sys.argv) > 1 else None
+    only = sys.argv[2:]
     browser = chrome()
     os.makedirs(OUT, exist_ok=True)
     with tempfile.TemporaryDirectory() as work:
-        for scene in SCENES:
+        for scene in (only or SCENES):
             png = os.path.join(work, scene + ".png")
             shoot(browser, scene, png)
             img = Image.open(png).convert("RGB").crop((0, 0, SRC_W, SRC_H)).resize((W, H), Image.LANCZOS)

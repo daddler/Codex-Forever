@@ -325,6 +325,194 @@ html, body { width: 1024px; height: 512px; overflow: hidden; background: #000; }
   </div>
 </div>
 
+
+<!-- 6.120.0.0: je Funktion ein eigenes Bild, je Aussehen ein eigenes Bild.
+     Gebaut im Skript unten (S(id, html)), damit die Teile gleich bleiben. -->
+<div id="more"></div>
+<script>
+const more = document.getElementById("more");
+function S(id, html, bg) {
+  const d = document.createElement("div");
+  d.className = "scene"; d.id = id;
+  d.innerHTML = `<div class="${bg || "world"}"></div>` + html;
+  more.appendChild(d);
+}
+const ic = (x, y, sz, a, b, extra) => `<div class="icon" style="left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;background:linear-gradient(135deg,${a},${b});${extra || ""}"></div>`;
+const tile = (x, y, w, h, inner, extra) => `<div class="tile" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;${extra || ""}">${inner || ""}</div>`;
+const txt = (x, y, size, t, extra) => `<div class="name" style="left:${x}px;top:${y}px;font-size:${size}px;${extra || ""}">${t}</div>`;
+const brow = (x, y, t, col) => `<div class="eyebrow" style="position:absolute;left:${x}px;top:${y}px;font-size:13px;color:${col || "var(--acc)"}">${t}</div>`;
+const WC = `<span style="color:var(--acc)">[WeintCodex]</span>`;
+const chat = (x, y, w, lines) => tile(x, y, w, 30 + lines.length * 34,
+  `<div class="eyebrow" style="position:absolute;left:16px;top:10px;font-size:11px;color:var(--td)">Chat · Allgemein</div>` +
+  lines.map((l, i) => `<div style="position:absolute;left:16px;right:16px;top:${32 + i * 34}px;font-size:19px;line-height:28px;white-space:nowrap">${l}</div>`).join(""));
+const coin = t => `<span class="mono" style="color:var(--gold)">${t}</span>`;
+const npc = (x, y, w, h, col) => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;border-radius:45% 45% 30% 30%;background:radial-gradient(circle at 50% 30%,${col || "#3a2f28"},#120e0c);opacity:.9"></div>`;
+const plate = (x, y, w, name, pct, col, glow) => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:24px;background:#1a1a1e;border:1px solid ${glow ? "var(--acc)" : "#000"};${glow ? "box-shadow:0 0 22px 6px rgba(63,199,235,.45)" : ""}">
+  <div class="bar gloss" style="width:${pct}%;background:${col || "var(--red)"}"></div>${txt(8, 0, 16, name, "line-height:24px")}</div>`;
+const mapbox = (x, y, w, h, inner) => `<div class="tile" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:
+  radial-gradient(ellipse 40% 30% at 30% 35%,#4a5a3a,transparent 70%),radial-gradient(ellipse 35% 40% at 72% 62%,#3c4c30,transparent 70%),
+  radial-gradient(ellipse 20% 50% at 55% 20%,#2c4a5a,transparent 70%),linear-gradient(160deg,#36442c,#232c1c)">${inner || ""}</div>`;
+const pin = (x, y, col, label) => `<div style="position:absolute;left:${x}px;top:${y}px;width:22px;height:22px;border-radius:50%;background:${col};border:2px solid #0b0b0e;box-shadow:0 2px 6px #000"></div>` +
+  (label ? `<div class="name" style="left:${x + 28}px;top:${y}px;font-size:15px;line-height:22px">${label}</div>` : "");
+const cursor = (x, y) => `<svg width="26" height="34" viewBox="0 0 13 17" style="position:absolute;left:${x}px;top:${y}px"><path d="M1 1v14l3.6-3.4 2.4 5 2-1-2.4-4.8H12z" fill="#fff" stroke="#000" stroke-width="1"/></svg>`;
+const key = (x, y, t) => `<div class="mono" style="position:absolute;left:${x}px;top:${y}px;padding:6px 12px;font-size:18px;color:var(--tb);background:#1c1c23;border:1px solid #3a3a44;border-bottom-width:3px;border-radius:4px">${t}</div>`;
+const star = (x, y, sz) => `<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" style="position:absolute;left:${x}px;top:${y}px"><path d="M12 1.5l3.1 6.6 7.2.8-5.4 4.9 1.5 7.1L12 17.3 5.6 20.9l1.5-7.1L1.7 8.9l7.2-.8z" fill="#ffd84a" stroke="#7a5a00"/></svg>`;
+const diamond = (x, y, sz, col) => `<div style="position:absolute;left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;background:${col};transform:rotate(45deg);border:1px solid #000"></div>`;
+
+// ---------- Alltag ----------
+S("autoRepair", npc(150, 170, 120, 170) + tile(300, 90, 430, 250,
+  brow(24, 20, "Händler", "var(--gold)") + `<div style="position:absolute;left:24px;top:44px;font-family:Serif;font-size:30px;color:var(--tb)">Schmied Argus</div>` +
+  `<div style="position:absolute;left:24px;right:24px;top:110px;height:14px;background:#101014"><div class="bar" style="width:100%;background:var(--green)"></div></div>` +
+  txt(24, 132, 18, "Ausrüstung: 100 %", "color:var(--green)") + txt(24, 180, 17, "vorher 23 %", "color:var(--td)")) +
+  chat(300, 370, 600, [`${WC} <span style="color:var(--tm)">Repariert für</span> ${coin("3g 12s 40c")}`]));
+S("sellJunk", tile(90, 70, 380, 300,
+  brow(20, 16, "Taschen") + Array.from({length: 24}, (_, i) => {
+    const g = [2, 7, 11, 15, 20].includes(i);
+    return ic(20 + (i % 6) * 58, 50 + Math.floor(i / 6) * 58, 50, g ? "#9a9a9a" : ["#9fe3ff", "#ffb36b", "#c9b6ff", "#a8ffb0"][i % 4], g ? "#4a4a4a" : "#2a3a5a",
+      g ? "opacity:.35;filter:grayscale(1)" : "");
+  }).join("")) +
+  `<div style="position:absolute;left:500px;top:190px;font-size:60px;color:var(--gold)">→</div>` +
+  chat(580, 150, 400, [`${WC} <span style="color:var(--tm)">5 graue verkauft</span>`, `<span style="color:var(--tm)">für</span> ${coin("47s 20c")}`]));
+S("fastLoot", npc(380, 250, 200, 110, "#3a3a2a") +
+  [["Leinenstoff ×3", "#ffffff"], ["Grobe Pfote", "#9d9d9d"], ["Wolfsfleisch ×2", "#ffffff"], ["Grüner Ring", "#1eff00"]].map((r, i) =>
+    tile(560, 60 + i * 66, 360, 54, ic(8, 6, 40, ["#e8e8e8", "#8a8a8a", "#ffb0b0", "#a8ffb0"][i], "#333") + txt(60, 13, 21, r[0], `color:${r[1]}`), `opacity:${1 - i * 0.12}`)).join("") +
+  txt(80, 420, 28, "Alles eingesammelt – ohne Fenster", "font-family:SansB"));
+S("skipCinematics", `<div style="position:absolute;left:0;right:0;top:0;height:70px;background:#000"></div><div style="position:absolute;left:0;right:0;bottom:0;height:70px;background:#000"></div>` +
+  `<svg width="200" height="200" viewBox="0 0 100 100" style="position:absolute;left:412px;top:156px;opacity:.9"><circle cx="50" cy="50" r="46" fill="rgba(0,0,0,.55)" stroke="#fff" stroke-width="3"/><path d="M34 30 L58 50 L34 70Z M58 30 L66 30 L66 70 L58 70Z" fill="#fff"/></svg>` +
+  txt(0, 380, 26, "Zwischensequenz übersprungen", "left:0;right:0;text-align:center"));
+S("levelUpPopup", tile(232, 70, 560, 360,
+  `<div style="position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--acc)"></div>` +
+  brow(28, 22, "Stufe 20") + `<div style="position:absolute;left:28px;top:46px;font-family:Serif;font-size:34px;color:var(--tb)">Neu beim Lehrer: 4 Zauber</div>` +
+  [["Frostblitz", "Rang 4", "#9fe3ff", "#2a6aa0"], ["Feuerball", "Rang 5", "#ffb36b", "#a1300f"], ["Blinzeln", "", "#c9b6ff", "#4a2a9a"], ["Arkane Explosion", "Rang 2", "#e0c8ff", "#5a2a9a"]].map((r, i) =>
+    ic(28, 112 + i * 52, 40, r[2], r[3]) + txt(82, 118 + i * 52, 21, r[0]) + txt(300, 120 + i * 52, 17, r[1], "color:var(--td)")).join("") +
+  `<div style="position:absolute;right:28px;bottom:24px;padding:10px 26px;background:var(--acc);font-family:SansB;font-size:17px;color:#0b0b0e">Zum Lehrer</div>`));
+S("durability", `<svg width="190" height="250" viewBox="0 0 38 50" style="position:absolute;left:160px;top:120px">
+  <rect x="13" y="1" width="12" height="11" rx="3" fill="#e0b23a"/><rect x="9" y="13" width="20" height="18" rx="2" fill="#c8463c"/>
+  <rect x="2" y="13" width="6" height="16" rx="2" fill="#e0b23a"/><rect x="30" y="13" width="6" height="16" rx="2" fill="#3db85c"/>
+  <rect x="10" y="32" width="8" height="16" rx="2" fill="#3db85c"/><rect x="20" y="32" width="8" height="16" rx="2" fill="#c8463c"/></svg>` +
+  tile(420, 150, 460, 120, txt(28, 22, 30, "Ausrüstung: 18 %", "color:var(--warn);font-family:SansB") + txt(28, 70, 19, "Brust und Beine bald kaputt – zum Schmied", "color:var(--tm)"), "border-color:var(--warn);box-shadow:0 0 30px rgba(240,166,58,.25)"));
+S("mapCoords", mapbox(150, 50, 724, 400,
+  `<svg width="30" height="30" viewBox="0 0 10 10" style="position:absolute;left:330px;top:180px"><path d="M5 0 L9 10 L5 7.5 L1 10Z" fill="#fff" stroke="#000" stroke-width=".6"/></svg>` + cursor(520, 110) +
+  `<div class="mono" style="position:absolute;left:0;right:0;bottom:0;height:48px;background:rgba(8,8,10,.85);display:flex;align-items:center;justify-content:space-around;font-size:21px">
+   <span><span style="color:var(--td)">Du</span> 42,7 · 61,3</span><span><span style="color:var(--td)">Maus</span> 58,1 · 33,9</span></div>`));
+
+// ---------- Kampf ----------
+S("fireAlarm", `<div style="position:absolute;left:300px;top:300px;width:420px;height:150px;border-radius:50%;background:radial-gradient(ellipse,rgba(120,255,80,.75),rgba(40,160,30,.35) 55%,transparent 72%)"></div>` +
+  npc(470, 260, 80, 130, "#2a3a4a") +
+  `<div class="name" style="left:0;right:0;top:90px;text-align:center;font-size:62px;font-family:SansB;color:var(--red)">Raus da!</div>` +
+  `<svg width="70" height="70" viewBox="0 0 24 24" style="position:absolute;left:680px;top:92px"><path d="M3 9v6h4l5 5V4L7 9H3z M16 8c1.5 1 2.5 2.5 2.5 4s-1 3-2.5 4 M19 5c2.5 2 4 4.5 4 7s-1.5 5-4 7" fill="none" stroke="#fff" stroke-width="2"/></svg>`);
+S("autoMark", npc(250, 230, 110, 160, "#4a3a2a") + npc(620, 240, 100, 150, "#2a4a3a") + star(272, 170, 64) + diamond(652, 186, 40, "#3ddc84") +
+  txt(260, 410, 22, "Tank") + txt(640, 410, 22, "Heiler") +
+  tile(300, 40, 424, 64, txt(24, 16, 22, "Instanz betreten – <b>Markieren</b>?") , "border-color:var(--acc)"));
+S("markHover", npc(430, 210, 150, 200, "#4a2a2a") + plate(380, 168, 250, "Defias-Räuber", 100) +
+  `<svg width="56" height="56" viewBox="0 0 24 24" style="position:absolute;left:478px;top:100px"><path d="M4 4 L20 20 M20 4 L4 20" stroke="#ff4040" stroke-width="5"/></svg>` +
+  cursor(560, 260) + key(640, 300, "Taste") + txt(150, 440, 21, "Maus darüber, Taste – nächste freie Markierung", "left:0;right:0;text-align:center;color:var(--tm)"));
+S("clickDispel", `<div style="position:absolute;left:180px;top:120px;display:grid;grid-template-columns:repeat(2,220px);gap:8px">` +
+  [["Brunhild", "#c79c6e", 92, ""], ["Lene", "#ffffff", 60, "#7c2ad0"], ["Ole", "#fff569", 80, ""], ["Grimm", "#9482c9", 100, ""]].map(r =>
+    `<div class="tile" style="position:relative;width:220px;height:74px;${r[3] ? "box-shadow:0 0 0 2px " + r[3] + ",0 0 20px " + r[3] : ""}">
+     <div class="bar gloss" style="left:2px;top:2px;bottom:2px;width:${r[2]}%;background:${r[1]};opacity:.9"></div>${txt(10, 8, 19, r[0], r[1] === "#ffffff" || r[1] === "#fff569" ? "color:#111;text-shadow:none" : "")}
+     ${r[3] ? ic(180, 40, 28, "#c070ff", "#3a0a6a") : ""}</div>`).join("") + `</div>` +
+  cursor(420, 160) + key(470, 250, "Strg + Klick") + txt(640, 160, 22, "Fluch entfernt", "color:var(--green)"), "dark");
+S("combatAlert", `<div class="name" style="left:0;right:0;top:150px;text-align:center;font-size:84px;font-family:SansB;color:var(--red);text-shadow:0 0 24px rgba(200,70,60,.6),0 2px 4px #000">+ Kampf</div>` +
+  `<div class="name" style="left:0;right:0;top:300px;text-align:center;font-size:48px;font-family:SansB;color:var(--green);opacity:.55">− Kampf</div>`);
+S("hideErrorsInCombat", `<div class="name" style="left:0;right:0;top:110px;text-align:center;font-size:32px;color:#ff3030;opacity:.85;text-decoration:line-through">Außer Reichweite</div>` +
+  `<div class="name" style="left:0;right:0;top:160px;text-align:center;font-size:32px;color:#ff3030;opacity:.6;text-decoration:line-through">Nicht genug Mana</div>` +
+  `<div class="name" style="left:0;right:0;top:210px;text-align:center;font-size:32px;color:#ff3030;opacity:.4;text-decoration:line-through">Ziel nicht im Sichtfeld</div>` +
+  tile(312, 330, 400, 70, txt(0, 20, 22, "Im Kampf: Ruhe auf dem Bildschirm", "left:0;right:0;text-align:center")));
+
+// ---------- Welt ----------
+S("mapEntrances", mapbox(150, 50, 724, 400,
+  [[180, 120, "Höhlen der Klage"], [460, 250, "Die Todesminen"], [300, 300, ""]].map(r =>
+    `<svg width="36" height="36" viewBox="0 0 24 24" style="position:absolute;left:${r[0]}px;top:${r[1]}px"><path d="M3 21V10l9-7 9 7v11h-6v-7H9v7z" fill="#c9a45c" stroke="#000" stroke-width="1.2"/></svg>` +
+    (r[2] ? `<div class="name" style="left:${r[0] + 44}px;top:${r[1] + 6}px;font-size:18px">${r[2]}</div>` : "")).join("")));
+S("mapMarks", mapbox(150, 50, 724, 400,
+  pin(150, 110, "#7fd0ff", "Geistheiler") + pin(420, 90, "#e0b23a", "Flugmeister") +
+  `<div style="position:absolute;left:520px;top:280px;width:150px;height:3px;background:repeating-linear-gradient(90deg,#fff 0 10px,transparent 10px 18px);transform:rotate(-20deg)"></div>` +
+  pin(500, 290, "#4ea8f5", "") + txt(350, 330, 18, "Schiff nach Auberdine") + pin(200, 300, "#c070ff", "Portal")));
+S("mapReveal", mapbox(150, 50, 724, 400,
+  `<div style="position:absolute;left:380px;top:0;right:0;bottom:0;background:rgba(0,0,0,.45);border-left:1px dashed rgba(255,255,255,.4)"></div>` +
+  tile(40, 40, 280, 120, txt(16, 12, 22, "Wald von Elwynn") + txt(16, 48, 17, "Stufe 1–10", "color:var(--green)") + txt(16, 78, 17, "Kräuter 1–70 · Erz 1–65 · Angeln 1–75", "color:var(--tm)")) +
+  txt(430, 180, 20, "noch unerkundet", "color:var(--tm)")));
+S("gatherSwap", `<div class="tile" style="left:362px;top:56px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,#3c4c30,#232c1c)">
+  ${pin(80, 90, "#3ddc84")}${pin(190, 70, "#e0b23a")}${pin(200, 190, "#3ddc84")}${pin(90, 200, "#e0b23a")}
+  <svg width="22" height="22" viewBox="0 0 10 10" style="position:absolute;left:139px;top:139px"><path d="M5 0 L9 10 L5 7.5 L1 10Z" fill="#fff" stroke="#000" stroke-width=".6"/></svg></div>` +
+  ic(310, 390, 54, "#a8ffb0", "#22803a") + `<div style="position:absolute;left:390px;top:396px;font-size:40px;color:var(--tm)">⇄</div>` + ic(460, 390, 54, "#ffe08a", "#8a6a12") +
+  txt(540, 402, 22, "alle 2 s im Wechsel", "color:var(--tm)"));
+S("sparkleLoot", npc(250, 250, 120, 120, "#4a4a2a") + npc(640, 260, 110, 110, "#2a4a2a") +
+  [[300, 230], [330, 270], [270, 290], [680, 240], [700, 290], [650, 300]].map(p =>
+    `<div style="position:absolute;left:${p[0]}px;top:${p[1]}px;width:18px;height:18px;background:radial-gradient(circle,#fff,rgba(255,240,150,.8) 30%,transparent 70%);box-shadow:0 0 18px 6px rgba(255,230,120,.6)"></div>`).join("") +
+  txt(220, 400, 20, "Questgegenstand", "color:var(--tm)") + txt(620, 400, 20, "Kraut in der Nähe", "color:var(--tm)"));
+S("rareAlert", npc(560, 200, 200, 220, "#5a3a5a") + plate(520, 160, 280, "Mor'Ladim", 100, "var(--red)", true) +
+  tile(120, 120, 340, 130, `<div style="position:absolute;left:0;top:0;bottom:0;width:6px;background:#c070ff"></div>` +
+    brow(24, 18, "Seltener Gegner", "#c070ff") + txt(24, 44, 28, "Mor'Ladim") + txt(24, 86, 18, "Stufe 35 · Elite · in der Nähe", "color:var(--tm)")));
+
+// ---------- Handel ----------
+S("ahPrices", tile(312, 80, 400, 300,
+  txt(20, 18, 24, "Leinenstoff", "color:#fff") + txt(20, 54, 18, "Handwerkswaren", "color:var(--td)") +
+  `<div style="position:absolute;left:20px;right:20px;top:96px;height:1px;background:var(--line)"></div>` +
+  txt(20, 112, 19, "Verkaufspreis") + `<div class="name mono" style="right:20px;top:112px;font-size:19px;color:var(--gold)">13c</div>` +
+  txt(20, 150, 19, "Auktionshaus", "color:var(--acc)") + `<div class="name mono" style="right:20px;top:150px;font-size:19px;color:var(--gold)">ab 1s 80c</div>` +
+  txt(20, 188, 19, "Stapel (20)") + `<div class="name mono" style="right:20px;top:188px;font-size:19px;color:var(--gold)">36s</div>` +
+  txt(20, 236, 16, "Preis von heute", "color:var(--td)"), "border-color:var(--acc)"), "dark");
+S("msgOn", tile(240, 50, 544, 410,
+  `<div style="position:absolute;left:0;top:0;bottom:0;width:150px;background:#101014;border-right:1px solid var(--line)">` +
+  ["Brunhild", "Lene", "Ole"].map((n, i) => `<div style="position:absolute;left:0;right:0;top:${14 + i * 46}px;height:40px;${i === 0 ? "background:#1c1c23;border-left:3px solid var(--acc)" : ""}">${txt(16, 9, 18, n)}</div>`).join("") + `</div>` +
+  `<div style="position:absolute;left:170px;top:30px;max-width:300px;padding:10px 14px;background:#1c1c23;font-size:18px">Kommst du mit in die Höhle?</div>` +
+  `<div style="position:absolute;right:20px;top:100px;max-width:300px;padding:10px 14px;background:rgba(63,199,235,.25);font-size:18px">Klar, 5 Minuten!</div>` +
+  `<div style="position:absolute;left:170px;top:170px;max-width:300px;padding:10px 14px;background:#1c1c23;font-size:18px">Super, ich warte am Eingang.</div>` +
+  `<div style="position:absolute;left:170px;right:20px;bottom:18px;height:42px;background:#0c0c0f;border:1px solid var(--line)">${txt(12, 10, 17, "Antworten …", "color:var(--tf)")}</div>`), "dark");
+S("dlgOn", npc(130, 120, 220, 300, "#5a4a3a") + tile(400, 60, 560, 390,
+  brow(28, 22, "Questgeber", "var(--gold)") + `<div style="position:absolute;left:28px;top:46px;font-family:Serif;font-size:32px;color:var(--tb)">Marschall Dughan</div>` +
+  `<div style="position:absolute;left:28px;right:28px;top:110px;font-size:19px;line-height:30px;color:var(--tm)">Die Kobolde in der Mine werden immer dreister. Bringt mir zehn ihrer Kerzen, dann wissen wir, wie viele es sind.</div>` +
+  `<div style="position:absolute;left:28px;bottom:24px;padding:10px 24px;background:var(--gold);font-family:SansB;font-size:17px;color:#0b0b0e">Annehmen</div>` +
+  `<div style="position:absolute;left:180px;bottom:24px;padding:10px 24px;background:#1c1c23;font-family:SansB;font-size:17px">Ablehnen</div>`, "border-color:#3a3226"));
+S("thanks", npc(260, 220, 110, 170, "#3a3a5a") + npc(620, 220, 110, 170, "#2a3a4a") +
+  `<div style="position:absolute;left:300px;top:150px;width:360px;height:4px;background:linear-gradient(90deg,transparent,#fff8c0,transparent);box-shadow:0 0 18px #fff8c0"></div>` +
+  ic(450, 110, 56, "#fff3a0", "#a08a20") +
+  chat(212, 410, 600, [`<span style="color:#ff80ff">An [Lene]: Danke für den Buff!</span>`]));
+
+// ---------- Aussehen ----------
+function hud(look) {
+  const L = {
+    schwarz:     { fill: "rgba(12,12,15,.88)", edge: "#000", ring: "#000" },
+    transparent: { fill: "rgba(12,12,15,.45)", edge: "rgba(0,0,0,.55)", ring: "rgba(0,0,0,.55)" },
+    klassisch:   { fill: "rgba(21,17,13,.92)", edge: "#c1a470", ring: "#c1a470" },
+  }[look];
+  const box = (x, y, w, h, inner) => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:${L.fill};border:1px solid ${L.edge};box-shadow:0 6px 18px rgba(0,0,0,.45)">${inner || ""}</div>`;
+  const unit = (x, name, pct, col, right) => box(x, 300, 250, 52,
+    `<div style="position:absolute;left:4px;top:4px;right:4px;height:32px;background:#101014"><div class="bar gloss" style="width:${pct}%;background:${col}"></div>${txt(right ? 10 : 34, 4, 18, name)}<div class="name mono" style="${right ? "right:40px" : "right:10px"};top:6px;font-size:15px">${pct}&nbsp;%</div></div>
+     <div style="position:absolute;left:4px;bottom:4px;right:4px;height:8px;background:#101014"><div class="bar" style="width:70%;background:#3f6fe0"></div></div>`) +
+    `<div style="position:absolute;left:${right ? x + 222 : x - 50}px;top:288px;width:76px;height:76px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#d8b8a0,#5a4030);border:4px solid ${L.ring};box-shadow:0 0 0 1px ${L.edge}"></div>`;
+  return unit(170, "Kalle", 88, "#3FC7EB") + unit(604, "Wildschwein", 64, "var(--red)", true) +
+    box(240, 410, 544, 54, `<div style="position:absolute;left:6px;top:6px;display:flex;gap:4px">` +
+      ["#ff9b4a,#9a2a12", "#9fe3ff,#2a6aa0", "#c9b6ff,#4a2a9a", "#ffe08a,#8a6a12", "#a8ffb0,#22803a", "#ff8aa0,#801a3a", "#d0d0d0,#444", "#7fd0ff,#1a3f80", "#ffcf7f,#7a3a10", "#b0ffef,#1a7a6a", "#555,#222", "#555,#222"]
+        .map(c => `<div class="icon" style="position:relative;width:40px;height:40px;background:linear-gradient(135deg,${c})"></div>`).join("") + `</div>`) +
+    box(820, 24, 180, 180, `<div style="position:absolute;inset:6px;background:radial-gradient(circle at 40% 45%,#3a4a32,#26301f 60%,#1b2216)"></div>`) +
+    box(24, 24, 240, 130, txt(12, 8, 13, "SCHADEN", "font-family:Mono;color:var(--td)") +
+      [["Kalle", 100, "#3FC7EB"], ["Brunhild", 78, "#C79C6E"], ["Ole", 55, "#FFF569"]].map((r, i) =>
+        `<div style="position:absolute;left:6px;right:6px;top:${32 + i * 30}px;height:24px;background:#101014"><div class="bar gloss" style="width:${r[1]}%;background:${r[2]}"></div>${txt(6, 0, 15, r[0], "line-height:24px" + (r[2] === "#FFF569" ? ";color:#111;text-shadow:none" : ""))}</div>`).join(""));
+}
+S("look_schwarz", hud("schwarz"));
+S("look_transparent", hud("transparent"));
+S("look_klassisch", hud("klassisch"));
+// Wie bisher: die Rahmen des Spiels - verziert, Gold, Pergament.
+const gold = "linear-gradient(180deg,#e8c878,#8a6a2a)";
+const gframe = (x, y, w, h, inner) => `<div style="position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;padding:4px;background:${gold};border-radius:6px;box-shadow:0 4px 12px #000"><div style="position:relative;width:100%;height:100%;background:#1a120a;border-radius:3px">${inner || ""}</div></div>`;
+S("look_none",
+  gframe(150, 286, 290, 80, `<div style="position:absolute;left:76px;top:14px;right:10px;height:20px;background:#0a0a0a"><div class="bar" style="width:88%;background:linear-gradient(180deg,#4fe06a,#1a8a2a)"></div></div>
+    <div style="position:absolute;left:76px;top:40px;right:10px;height:14px;background:#0a0a0a"><div class="bar" style="width:70%;background:linear-gradient(180deg,#6a8aff,#1a3aa0)"></div></div>
+    <div style="position:absolute;left:-10px;top:-12px;width:84px;height:84px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#d8b8a0,#5a4030);border:5px solid #c9a45c"></div>`) +
+  gframe(584, 286, 290, 80, `<div style="position:absolute;right:76px;top:14px;left:10px;height:20px;background:#0a0a0a"><div class="bar" style="width:64%;background:linear-gradient(180deg,#4fe06a,#1a8a2a)"></div></div>
+    <div style="position:absolute;right:-10px;top:-12px;width:84px;height:84px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#8a6a50,#3a2418);border:5px solid #c9a45c"></div>`) +
+  `<div style="position:absolute;left:160px;bottom:10px;width:704px;height:70px;background:linear-gradient(180deg,#4a3a22,#22180c);border-top:4px solid #c9a45c;border-radius:10px 10px 0 0"></div>
+   <div style="position:absolute;left:110px;bottom:4px;width:90px;height:90px;border-radius:40% 40% 10% 10%;background:${gold}"></div>
+   <div style="position:absolute;right:110px;bottom:4px;width:90px;height:90px;border-radius:40% 40% 10% 10%;background:${gold}"></div>
+   <div style="position:absolute;left:220px;bottom:22px;display:flex;gap:6px">` +
+   ["#ff9b4a,#9a2a12", "#9fe3ff,#2a6aa0", "#c9b6ff,#4a2a9a", "#ffe08a,#8a6a12", "#a8ffb0,#22803a", "#ff8aa0,#801a3a", "#d0d0d0,#444", "#7fd0ff,#1a3f80", "#ffcf7f,#7a3a10", "#b0ffef,#1a7a6a", "#555,#222", "#555,#222"]
+     .map(c => `<div style="width:42px;height:42px;border:2px solid #c9a45c;background:linear-gradient(135deg,${c})"></div>`).join("") + `</div>` +
+  `<div style="position:absolute;right:30px;top:24px;width:170px;height:170px;border-radius:50%;padding:6px;background:${gold}"><div style="width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 40% 45%,#3a4a32,#26301f 60%,#1b2216)"></div></div>`);
+</script>
+
 <script>
 // Zeilen der Schadensanzeige (Klassenfarben des Spiels, Namen ausgedacht).
 const rows = [
