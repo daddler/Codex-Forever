@@ -71,6 +71,11 @@ for _, c in ipairs(BG.CATEGORIES) do defaults["cat_" .. c.key] = true end
 -- wird, indem man einen Gegenstand auf die Ueberschrift zieht.
 defaults.customCats = {}
 defaults.assign = {}
+-- 6.125.0.0 (Wunsch: "Kategorien sollen sich umsortieren lassen"):
+-- Reihenfolge als Liste von Schluesseln; was fehlt, kommt an seinen
+-- gewohnten Platz dahinter.
+defaults.catOrder = {}
+defaults.guildCats = true
 BG.CAT_GAP = 12
 BG.HEAD_H, BG.BAG_GAP = 16, 10
 
@@ -601,9 +606,25 @@ function BG.CategoryOf(bag, slot, info)
             return mine
         end
     end
-    local q = K.Plain(info.quality)
+    return BG.CategoryOfItem(id, K.Plain(info.quality), QuestItem(bag, slot), true)
+end
+
+-- Kategorie nach Gegenstand allein (auch fuer die Gildenbank).
+function BG.CategoryOfItem(id, q, quest, assigned)
+    local function On(k) return Opt("cat_" .. k) ~= false end
+    if not assigned then
+        local a = Opt("assign")
+        local mine = type(a) == "table" and a[id]
+        if mine then
+            if mine:sub(1, 2) == "c:" then
+                for _, n in ipairs(BG.CustomList()) do if "c:" .. n == mine then return mine end end
+            elseif On(mine) then
+                return mine
+            end
+        end
+    end
     if On("junk") and q == 0 then return "junk" end
-    if On("quest") and QuestItem(bag, slot) then return "quest" end
+    if On("quest") and quest then return "quest" end
     local class = ItemClass(id)
     for _, c in ipairs(BG.CATEGORIES) do
         if c.classes and class and c.classes[class] and On(c.key) then return c.key end
@@ -619,14 +640,43 @@ function BG.CustomList()
     return type(t) == "table" and t or {}
 end
 
--- Alle Kategorien in Reihenfolge: Neu, die eigenen, dann die eingebauten.
+-- Alle Kategorien in der Reihenfolge des Spielers (catOrder); ohne Wahl:
+-- Neu, die eigenen, dann die eingebauten.
 function BG.AllCategories()
-    local out = { BG.CATEGORIES[1] }
+    local base = { BG.CATEGORIES[1] }
     for _, name in ipairs(BG.CustomList()) do
-        out[#out + 1] = { key = "c:" .. name, label = name, custom = true }
+        base[#base + 1] = { key = "c:" .. name, label = name, custom = true }
     end
-    for i = 2, #BG.CATEGORIES do out[#out + 1] = BG.CATEGORIES[i] end
+    for i = 2, #BG.CATEGORIES do base[#base + 1] = BG.CATEGORIES[i] end
+    local byKey = {}
+    for _, c in ipairs(base) do byKey[c.key] = c end
+    local out, used = {}, {}
+    local order = Opt("catOrder")
+    for _, k in ipairs(type(order) == "table" and order or {}) do
+        if byKey[k] and not used[k] then out[#out + 1] = byKey[k] used[k] = true end
+    end
+    for _, c in ipairs(base) do
+        if not used[c.key] then out[#out + 1] = c end
+    end
     return out
+end
+
+-- Eine Kategorie um einen Platz verschieben (-1 hoch, +1 runter).
+function BG.MoveCategory(key, dir)
+    local list = BG.AllCategories()
+    local keys = {}
+    for i, c in ipairs(list) do keys[i] = c.key end
+    for i, k in ipairs(keys) do
+        if k == key then
+            local j = i + dir
+            if j < 1 or j > #keys then return false end
+            keys[i], keys[j] = keys[j], keys[i]
+            K.Set(KEY, "catOrder", keys)
+            if BG.Refresh then BG.Refresh() end
+            return true
+        end
+    end
+    return false
 end
 
 function BG.AddCustom(name)
@@ -680,7 +730,7 @@ end
 -- nicht zu - die bleiben, wo sie sind.
 BG.bankOpen = false
 function BG.Transfer(items)
-    if K.InCombat() or not BG.bankOpen then return 0 end
+    if K.InCombat() or not (BG.bankOpen or BG.guildOpen) then return 0 end
     local cc = _G.C_Container
     if not (cc and cc.UseContainerItem) then return 0 end
     local n = 0
@@ -717,7 +767,9 @@ function BG.NewCatHead()
         tt:SetOwner(self, "ANCHOR_TOP")
         tt:SetText(self.cat.label, 1, 1, 1)
         tt:AddLine("Gegenstand hierher ziehen: gehört ab jetzt in diese Kategorie", 0.8, 0.8, 0.8, true)
-        if BG.bankOpen then tt:AddLine("Rechtsklick: alles in die Bank", 0.4, 1, 0.4) end
+        if BG.bankOpen or BG.guildOpen then
+            tt:AddLine(BG.guildOpen and "Rechtsklick: alles in die Gildenbank" or "Rechtsklick: alles in die Bank", 0.4, 1, 0.4)
+        end
         tt:Show()
     end)
     b:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
@@ -1094,13 +1146,22 @@ local function Enable()
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "BAG_UPDATE_DELAYED", "ITEM_LOCK_CHANGED", "BAG_UPDATE_COOLDOWN",
         "PLAYER_MONEY", "INVENTORY_SEARCH_UPDATE", "PLAYER_REGEN_ENABLED",
-        "BANKFRAME_OPENED", "BANKFRAME_CLOSED" }) do
+        "BANKFRAME_OPENED", "BANKFRAME_CLOSED",
+        "PLAYER_INTERACTION_MANAGER_FRAME_SHOW", "PLAYER_INTERACTION_MANAGER_FRAME_HIDE",
+        "GUILDBANKFRAME_OPENED", "GUILDBANKFRAME_CLOSED" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
     ev:SetScript("OnEvent", K.Measured("Taschen", function(_, event)
         if event == "PLAYER_REGEN_ENABLED" then EnsurePool() end
         if event == "BANKFRAME_OPENED" then BG.bankOpen = true
-        elseif event == "BANKFRAME_CLOSED" then BG.bankOpen = false end
+        elseif event == "BANKFRAME_CLOSED" then BG.bankOpen = false
+        -- 6.125.0.0: auch die Gildenbank nimmt per Benutzen an.
+        elseif event == "GUILDBANKFRAME_OPENED" then BG.guildOpen = true
+        elseif event == "GUILDBANKFRAME_CLOSED" then BG.guildOpen = false
+        elseif event == "PLAYER_INTERACTION_MANAGER_FRAME_SHOW" or event == "PLAYER_INTERACTION_MANAGER_FRAME_HIDE" then
+            local gb = _G.GuildBankFrame
+            BG.guildOpen = type(gb) == "table" and gb.IsShown and K.Bool(gb:IsShown(), false) or false
+        end
         BG.Refresh()
     end))
 end
@@ -1141,6 +1202,10 @@ K.Register({
                   { type = "toggle", label = "Rand in Qualitätsfarbe", key = "qualityBorder" })
             B:Row({ type = "toggle", label = "Graue Gegenstände abdunkeln", key = "dimJunk" },
                   { type = "empty" })
+            B:Note("Die Bank bleibt die des Spiels. Öffnen mit der Taschentaste (B) oder einem Klick auf den Rucksack.")
+        end },
+        -- 6.125.0.0: Kategorien auf eigener Seite (eigene, Reihenfolge, Gildenbank).
+        { key = "kategorien", label = "Kategorien", build = function(B)
             B:Section("Eigene Kategorien", "Anlegen, dann im Taschenfenster einen Gegenstand auf ihre Überschrift ziehen – er bleibt dort. Das geht auch mit den eingebauten Kategorien.")
             local catDraft = ""
             B:Row({ type = "input", label = "Name der Kategorie",
@@ -1159,8 +1224,22 @@ K.Register({
                         onClick = function() BG.RemoveCustom(name) BG.Refresh() if WeintCodex.UIOptions.Rebuild then WeintCodex.UIOptions.Rebuild() end end },
                       { type = "empty" })
             end
+            B:Row({ type = "toggle", label = "Gildenbank nach Kategorien", key = "guildCats",
+                    description = "Neben der Gildenbank ein Fenster mit dem offenen Fach, nach denselben Kategorien. Rechtsklick nimmt heraus, Rechtsklick auf eine Überschrift alles aus der Kategorie." },
+                  { type = "empty" })
             B:Advanced()
-            B:Section("Kategorien", "Abgeschaltete Kategorien landen unter „Verschiedenes“. Die Reihenfolge im Fenster ist die dieser Liste.")
+            B:Section("Reihenfolge", "So stehen die Kategorien im Taschenfenster – und neben der Gildenbank.")
+            for i, c in ipairs(BG.AllCategories()) do
+                local function Move(d)
+                    BG.MoveCategory(c.key, d)
+                    if WeintCodex.UIOptions.Rebuild then WeintCodex.UIOptions.Rebuild() end
+                end
+                B:Row({ type = "button", label = i .. ". " .. c.label, text = "Nach oben",
+                        disabled = function() return not Opt("categories") or i == 1 end, onClick = function() Move(-1) end },
+                      { type = "button", label = " ", text = "Nach unten",
+                        disabled = function() return not Opt("categories") end, onClick = function() Move(1) end })
+            end
+            B:Section("Kategorien", "Abgeschaltete Kategorien landen unter „Verschiedenes“.")
             local cats = {}
             for _, c in ipairs(BG.CATEGORIES) do
                 if c.key ~= "misc" then
@@ -1169,7 +1248,6 @@ K.Register({
                 end
             end
             for i = 1, #cats, 2 do B:Row(cats[i], cats[i + 1] or { type = "empty" }) end
-            B:Note("Die Bank bleibt die des Spiels. Öffnen mit der Taschentaste (B) oder einem Klick auf den Rucksack.")
         end },
     },
 })

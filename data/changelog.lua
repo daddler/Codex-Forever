@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.125.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFKategorien umsortieren|r – unter Taschen → Kategorien legst du die Reihenfolge fest.",
+            "|cff7C6CFFGildenbank nach Kategorien|r – neben der Gildenbank zeigt ein Fenster das offene Fach geordnet wie deine Taschen. Rechtsklick nimmt heraus, Rechtsklick auf eine Überschrift die ganze Kategorie. Und bei offener Gildenbank lagert der Rechtsklick auf eine Taschen-Kategorie dort ein.",
+        },
+    },
+    {
         version = "6.124.0.0",
         date    = "22.10.2026",
         notes   = {

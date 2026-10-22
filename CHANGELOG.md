@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.125.0.0] – 2026-10-22
+
+### Hinzugefügt
+- Taschen: Reihenfolge der Kategorien (`bags.catOrder`, `BG.MoveCategory`), eigene Seite „Kategorien“ (eigene Kategorien, Gildenbank, Reihenfolge und Schalter unter Feineinstellungen).
+- Gildenbank nach Kategorien (`ui/guildbankcats.lua`, `bags.guildCats`): Fenster neben `GuildBankFrame` mit dem offenen Fach, `BG.CategoryOfItem`, Rechtsklick `AutoStoreGuildBankItem`, Linksklick `PickupGuildBankItem`, Überschrift nimmt die Kategorie. Taschen-Überschrift lagert bei offener Gildenbank dort ein.
+
 ## [6.124.0.0] – 2026-10-22
 
 ### Hinzugefügt
