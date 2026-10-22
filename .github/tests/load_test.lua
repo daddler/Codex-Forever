@@ -4339,6 +4339,33 @@ do
     Check(ok, "Willkommen: Abklingzahlen und Schnell-Pluendern als Startwerte" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.113.0.0: Angebotsliste beim Kaufen ersetzt einen alten, zu billigen Preis.
+do
+    local AP = WeintCodex.UIAuctionPrices
+    local saved = _G.C_AuctionHouse
+    local ok, err = pcall(function()
+        AP.side = "Horde"
+        local st = AP.Store("Horde", true)
+        st.items[2589] = AP.Pack(45, 1, AP.Day() - 1)
+        local rows = { { unitPrice = 180, quantity = 20 }, { unitPrice = 210, quantity = 5 } }
+        _G.C_AuctionHouse = { GetNumCommoditySearchResults = function() return #rows end,
+                              GetCommoditySearchResultInfo = function(_, i) return rows[i] end,
+                              GetNumItemSearchResults = function() return 2 end,
+                              GetItemSearchResultInfo = function(_, i) return ({ { buyoutAmount = 1000, quantity = 2 }, { quantity = 1 } })[i] end }
+        assert(AP.CollectSearch("COMMODITY_SEARCH_RESULTS_UPDATED", 2589) == 180, "guenstigstes Angebot nicht gelesen")
+        local p, q, d, sh = AP.Unpack(st.items[2589])
+        assert(p == 180 and q == 25 and d == AP.Day() and not sh, "Preis nicht ersetzt")
+        assert(AP.CollectSearch("ITEM_SEARCH_RESULTS_UPDATED", { itemID = 2590 }) == 500, "Stueckpreis aus Sofortkauf falsch")
+        rows = {}
+        assert(AP.CollectSearch("COMMODITY_SEARCH_RESULTS_UPDATED", 2589) == nil and select(1, AP.Unpack(st.items[2589])) == 180,
+            "leere Liste darf keinen Preis setzen")
+        st.items[2589], st.items[2590] = nil, nil
+    end)
+    _G.C_AuctionHouse = saved
+    AP.side = nil
+    Check(ok, "Auktionspreise: Angebotsliste beim Kaufen aktualisiert den Preis" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.
@@ -7781,8 +7808,8 @@ do
         assert(select(1, AP.Unpack(st.items[555])) == 60, "bestaetigter Ausreisser nicht uebernommen")
         -- Tooltip: "von Spielern".
         local lines = AP.TooltipLines(400)
-        -- 6.27.4.0: Preis von heute - keine Zeile mit Alter oder Stueckzahl.
-        assert(#lines == 1, "Tooltip ueberladen: " .. tostring(lines[2] and lines[2][1]))
+        -- 6.113.0.0: von Spielern steht dabei, auch von heute (keine Stueckzahl).
+        assert(#lines == 2 and lines[2][1] == "Preis von heute (von Spielern)", "Tooltip: " .. tostring(lines[2] and lines[2][1]))
         -- Fremder Realm, ich selbst, Zukunft: nichts.
         assert(AS.OnBulk("Zed-Andersrealm", "Gilde", "Horde", fresh, E(401) .. ",1,1", clock) == 0
             and AS.OnBulk("Ich", "Gilde", "Horde", fresh, E(402) .. ",1,1", clock) == 0

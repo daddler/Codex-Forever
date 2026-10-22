@@ -9,6 +9,12 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.113.0.0] – 2026-10-22
+
+### Behoben
+- Auktionspreise: Tooltip zeigte ein längst verkauftes billiges Angebot (45 Kupfer statt 1 Silber 80), bis zum nächsten Scan. `AP.CollectSearch` liest `COMMODITY_SEARCH_RESULTS_UPDATED`/`ITEM_SEARCH_RESULTS_UPDATED` (Angebotsliste beim Kaufen, auch nach jedem Kauf) und ersetzt den gemerkten Preis durch das günstigste Angebot; leere Liste ändert nichts.
+- Tooltip nennt fremde Preise wieder „(von Spielern)“, auch von heute.
+
 ## [6.112.0.0] – 2026-10-21
 
 ### Geändert

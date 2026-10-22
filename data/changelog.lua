@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.113.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFAuktionspreise bleiben ohne Scan aktueller|r – wenn du im Auktionshaus einen Gegenstand anklickst oder kaufst, merkt sich WeintCodex das jetzt günstigste Angebot. Ein billiges Angebot, das längst weg ist, steht so nicht mehr im Tooltip.",
+            "|cff7C6CFFPreise von anderen Spielern|r sind im Tooltip wieder als solche gekennzeichnet.",
+        },
+    },
+    {
         version = "6.112.0.0",
         date    = "21.10.2026",
         notes   = {

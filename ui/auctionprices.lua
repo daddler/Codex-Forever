@@ -311,8 +311,13 @@ function AP.TooltipLines(id, stack)
     -- Weniger lesen (6.27.4.0, Beta-Test: "zu ueberladen ... wie viele heute
     -- angeboten wurden interessiert keine Sau"): keine Stueckzahl mehr, und
     -- eine Zeile zum Alter nur, wenn der Preis nicht von heute ist.
+    -- 6.113.0.0: wieder sagen, wenn der Preis von anderen Spielern kam -
+    -- dann hat ihn niemand hier selbst gesehen.
+    local from = e.shared and " (von Spielern)" or ""
     if e.missing then
-        lines[#lines + 1] = { "Preis von " .. AP.AgeText(e.day) .. ", zuletzt nicht im Angebot" }
+        lines[#lines + 1] = { "Preis von " .. AP.AgeText(e.day) .. from .. ", zuletzt nicht im Angebot" }
+    elseif e.shared then
+        lines[#lines + 1] = { "Preis von " .. AP.AgeText(e.day) .. from }
     elseif AP.AgeText(e.day) ~= "heute" then
         lines[#lines + 1] = { "Preis von " .. AP.AgeText(e.day) }
     end
@@ -668,6 +673,57 @@ function AP.CollectPassive(reset)
     return store and AP.Merge(store, price, qty) or 0
 end
 
+-- 6.113.0.0 (Beta-Test: Tooltip „45 Kupfer“, im Auktionshaus 1 Silber 80 -
+-- das billige Angebot war gekauft, die Zahl blieb bis zum naechsten Scan):
+-- die Angebotsliste beim Kaufen ist der genaueste Blick, den es gibt. Ihr
+-- guenstigstes Angebot ersetzt den gemerkten Preis - auch nach jedem Kauf,
+-- weil das Spiel die Liste dann neu schickt. Leere Liste: nichts geaendert
+-- (kein Angebot ist kein Preis).
+function AP.CollectSearch(event, arg)
+    local ah = _G.C_AuctionHouse
+    if not ah then return nil end
+    local id, best, total = nil, nil, 0
+    if event == "COMMODITY_SEARCH_RESULTS_UPDATED" then
+        id = K.Plain(arg)
+        if type(id) ~= "number" or not (ah.GetNumCommoditySearchResults and ah.GetCommoditySearchResultInfo) then return nil end
+        local ok, n = pcall(ah.GetNumCommoditySearchResults, id)
+        n = ok and K.Plain(n) or 0
+        for i = 1, (type(n) == "number" and n or 0) do
+            local ok2, r = pcall(ah.GetCommoditySearchResultInfo, id, i)
+            local p = ok2 and type(r) == "table" and K.Plain(r.unitPrice)
+            local q = ok2 and type(r) == "table" and K.Plain(r.quantity)
+            if type(p) == "number" and p > 0 then
+                if not best or p < best then best = p end
+                if type(q) == "number" then total = total + q end
+            end
+        end
+    elseif event == "ITEM_SEARCH_RESULTS_UPDATED" then
+        local key = arg
+        id = type(key) == "table" and K.Plain(key.itemID)
+        if type(id) ~= "number" or not (ah.GetNumItemSearchResults and ah.GetItemSearchResultInfo) then return nil end
+        local ok, n = pcall(ah.GetNumItemSearchResults, key)
+        n = ok and K.Plain(n) or 0
+        for i = 1, (type(n) == "number" and n or 0) do
+            local ok2, r = pcall(ah.GetItemSearchResultInfo, key, i)
+            local b = ok2 and type(r) == "table" and K.Plain(r.buyoutAmount)
+            local q = ok2 and type(r) == "table" and K.Plain(r.quantity)
+            q = (type(q) == "number" and q > 0) and q or 1
+            if type(b) == "number" and b > 0 then
+                local p = math.floor(b / q + 0.5)
+                if not best or p < best then best = p end
+                total = total + q
+            end
+        end
+    else
+        return nil
+    end
+    if not best then return nil end
+    local store = AP.Store(AP.side, true)
+    if not store then return nil end
+    store.items[id] = AP.Pack(best, total, AP.Day())
+    return best
+end
+
 --------------------------------------------------
 -- Knopf am Auktionshaus
 --------------------------------------------------
@@ -762,7 +818,8 @@ end
 local ev = CreateFrame("Frame")
 AP.events = ev
 local AH_EVENTS = { "REPLICATE_ITEM_LIST_UPDATE", "AUCTION_HOUSE_BROWSE_RESULTS_UPDATED",
-                    "AUCTION_HOUSE_BROWSE_RESULTS_ADDED", "AUCTION_HOUSE_THROTTLED_SYSTEM_READY" }
+                    "AUCTION_HOUSE_BROWSE_RESULTS_ADDED", "AUCTION_HOUSE_THROTTLED_SYSTEM_READY",
+                    "COMMODITY_SEARCH_RESULTS_UPDATED", "ITEM_SEARCH_RESULTS_UPDATED" }
 
 local function SetAHEvents(on)
     for _, e in ipairs(AH_EVENTS) do
@@ -770,7 +827,11 @@ local function SetAHEvents(on)
     end
 end
 
-local function OnEvent(_, event)
+local function OnEvent(_, event, arg)
+    if event == "COMMODITY_SEARCH_RESULTS_UPDATED" or event == "ITEM_SEARCH_RESULTS_UPDATED" then
+        if AP.open then AP.CollectSearch(event, arg) end
+        return
+    end
     if event == "AUCTION_HOUSE_SHOW" then
         AP.open, AP.side = true, AP.SideHere()
         passive.seen = 0
