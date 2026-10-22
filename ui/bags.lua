@@ -77,7 +77,9 @@ defaults.assign = {}
 -- Reihenfolge als Liste von Schluesseln; was fehlt, kommt an seinen
 -- gewohnten Platz dahinter.
 defaults.catOrder = {}
-defaults.guildCats = false
+-- 6.126.0.0: die persoenliche Bank nach Kategorien (ui/bankcats.lua);
+-- die Gildenbank-Ansicht von 6.125.0.0 ist auf Wunsch wieder weg.
+defaults.bankCats = false
 BG.CAT_GAP = 12
 BG.HEAD_H, BG.BAG_GAP = 16, 10
 
@@ -732,7 +734,7 @@ end
 -- nicht zu - die bleiben, wo sie sind.
 BG.bankOpen = false
 function BG.Transfer(items)
-    if K.InCombat() or not (BG.bankOpen or BG.guildOpen) then return 0 end
+    if K.InCombat() or not BG.bankOpen then return 0 end
     local cc = _G.C_Container
     if not (cc and cc.UseContainerItem) then return 0 end
     local n = 0
@@ -769,9 +771,7 @@ function BG.NewCatHead()
         tt:SetOwner(self, "ANCHOR_TOP")
         tt:SetText(self.cat.label, 1, 1, 1)
         tt:AddLine("Gegenstand hierher ziehen: gehört ab jetzt in diese Kategorie", 0.8, 0.8, 0.8, true)
-        if BG.bankOpen or BG.guildOpen then
-            tt:AddLine(BG.guildOpen and "Rechtsklick: alles in die Gildenbank" or "Rechtsklick: alles in die Bank", 0.4, 1, 0.4)
-        end
+        if BG.bankOpen then tt:AddLine("Rechtsklick: alles in die Bank", 0.4, 1, 0.4) end
         tt:Show()
     end)
     b:SetScript("OnLeave", function() if _G.GameTooltip then _G.GameTooltip:Hide() end end)
@@ -1148,22 +1148,13 @@ local function Enable()
     local ev = CreateFrame("Frame")
     for _, e in ipairs({ "BAG_UPDATE_DELAYED", "ITEM_LOCK_CHANGED", "BAG_UPDATE_COOLDOWN",
         "PLAYER_MONEY", "INVENTORY_SEARCH_UPDATE", "PLAYER_REGEN_ENABLED",
-        "BANKFRAME_OPENED", "BANKFRAME_CLOSED",
-        "PLAYER_INTERACTION_MANAGER_FRAME_SHOW", "PLAYER_INTERACTION_MANAGER_FRAME_HIDE",
-        "GUILDBANKFRAME_OPENED", "GUILDBANKFRAME_CLOSED" }) do
+        "BANKFRAME_OPENED", "BANKFRAME_CLOSED" }) do
         pcall(ev.RegisterEvent, ev, e)
     end
     ev:SetScript("OnEvent", K.Measured("Taschen", function(_, event)
         if event == "PLAYER_REGEN_ENABLED" then EnsurePool() end
         if event == "BANKFRAME_OPENED" then BG.bankOpen = true
-        elseif event == "BANKFRAME_CLOSED" then BG.bankOpen = false
-        -- 6.125.0.0: auch die Gildenbank nimmt per Benutzen an.
-        elseif event == "GUILDBANKFRAME_OPENED" then BG.guildOpen = true
-        elseif event == "GUILDBANKFRAME_CLOSED" then BG.guildOpen = false
-        elseif event == "PLAYER_INTERACTION_MANAGER_FRAME_SHOW" or event == "PLAYER_INTERACTION_MANAGER_FRAME_HIDE" then
-            local gb = _G.GuildBankFrame
-            BG.guildOpen = type(gb) == "table" and gb.IsShown and K.Bool(gb:IsShown(), false) or false
-        end
+        elseif event == "BANKFRAME_CLOSED" then BG.bankOpen = false end
         BG.Refresh()
     end))
 end
@@ -1226,11 +1217,12 @@ K.Register({
                         onClick = function() BG.RemoveCustom(name) BG.Refresh() if WeintCodex.UIOptions.Rebuild then WeintCodex.UIOptions.Rebuild() end end },
                       { type = "empty" })
             end
-            B:Row({ type = "toggle", label = "Gildenbank nach Kategorien", key = "guildCats",
-                    description = "Neben der Gildenbank ein Fenster mit dem offenen Fach, nach denselben Kategorien. Rechtsklick nimmt heraus, Rechtsklick auf eine Überschrift alles aus der Kategorie." },
+            B:Row({ type = "toggle", label = "Bank nach Kategorien", key = "bankCats",
+                    disabled = function() return not Opt("categories") end,
+                    description = "Neben der Bank ein Fenster mit allem, was in der Bank liegt, nach denselben Kategorien. Rechtsklick nimmt in die Taschen, Rechtsklick auf eine Überschrift die ganze Kategorie." },
                   { type = "empty" })
             B:Advanced()
-            B:Section("Reihenfolge", "So stehen die Kategorien im Taschenfenster – und neben der Gildenbank.")
+            B:Section("Reihenfolge", "So stehen die Kategorien im Taschenfenster – und neben der Bank.")
             for i, c in ipairs(BG.AllCategories()) do
                 local function Move(d)
                     BG.MoveCategory(c.key, d)

@@ -1,62 +1,73 @@
 --------------------------------------------------
--- WeintCodex :: Oberflaeche - Gildenbank nach Kategorien
+-- WeintCodex :: Oberflaeche - Bank nach Kategorien
 --------------------------------------------------
--- Seit 6.125.0.0 (Wunsch: "die Gildenbank genau so wie die Taschen").
--- Neben dem Fenster der Gildenbank ein eigenes Fenster mit dem OFFENEN
--- Fach, nach denselben Kategorien und in derselben Reihenfolge wie die
--- Taschen (ui/bags.lua: BG.AllCategories, BG.CategoryOfItem).
---
--- Die Gildenbank selbst bleibt die des Spiels - Faecher, Rechte, Protokoll,
--- Geld. Hier nur zeigen und nehmen: Rechtsklick nimmt den Gegenstand in die
--- Taschen (AutoStoreGuildBankItem, im Klick), Linksklick hebt ihn auf
--- (PickupGuildBankItem) - ablegen wie gewohnt. Rechtsklick auf eine
--- Ueberschrift nimmt alles aus der Kategorie, soweit die Rechte reichen;
--- was das Spiel ablehnt, bleibt liegen. Nie im Kampf.
+-- Seit 6.126.0.0 (Wunsch: "die persoenliche Bank fehlt noch"). Wie
+-- ui/guildbankcats.lua: neben dem Fenster der Bank ein eigenes Fenster mit
+-- ALLEM in der Bank (Hauptfach und Bankfaecher bzw. -taschen), nach den
+-- Kategorien der Taschen. Rechtsklick nimmt in die Taschen (Benutzen bei
+-- offener Bank, UseContainerItem), Linksklick hebt auf
+-- (PickupContainerItem); Rechtsklick auf eine Ueberschrift nimmt die ganze
+-- Kategorie. Die Bank des Spiels bleibt (Faecher kaufen, Geld). Nie im Kampf.
 --------------------------------------------------
 
 WeintCodex = WeintCodex or {}
-WeintCodex.UIGuildBankCats = {}
+WeintCodex.UIBankCats = {}
 
-local GB = WeintCodex.UIGuildBankCats
+local GB = WeintCodex.UIBankCats
 local K  = WeintCodex.UIKit
 local C  = WeintCodex.Colors
 local F  = WeintCodex.Fonts
 local BG = WeintCodex.UIBags
 
-GB.SLOTS = 98
 GB.SIZE, GB.GAP, GB.COLS = 34, 3, 10
 local win, cells, heads = nil, {}, {}
 
-local function On() return K.IsActive("bags") and K.Get("bags", "categories") and K.Get("bags", "guildCats") end
+local function On() return K.IsActive("bags") and K.Get("bags", "categories") and K.Get("bags", "bankCats") end
 
-local function Tab()
-    local f = _G.GetCurrentGuildBankTab
-    return f and K.Plain(f()) or nil
+-- Die Behaelter der Bank: neue Clients haben Bankfaecher
+-- (Enum.BagIndex.CharacterBankTab_1..), alte das Hauptfach (-1) und
+-- Banktaschen hinter den eigenen Taschen. Was 0 Plaetze hat, faellt weg.
+function GB.BagIDs()
+    local ids = {}
+    local E = _G.Enum and _G.Enum.BagIndex
+    if E and E.CharacterBankTab_1 then
+        for i = 1, 8 do
+            local id = E["CharacterBankTab_" .. i]
+            if id then ids[#ids + 1] = id end
+        end
+    else
+        ids[1] = _G.BANK_CONTAINER or -1
+        local first = (_G.NUM_BAG_SLOTS or 4) + 1
+        for b = first, first + (_G.NUM_BANKBAGSLOTS or 6) - 1 do ids[#ids + 1] = b end
+    end
+    return ids
 end
 
--- { slot, id, count, quality, icon } je belegtem Platz des offenen Fachs.
-function GB.Items(tab)
+-- { bag, slot, id, count, quality, icon } je belegtem Platz der Bank.
+function GB.Items()
     local out = {}
-    tab = tab or Tab()
-    if type(tab) ~= "number" or not _G.GetGuildBankItemInfo then return out end
-    for slot = 1, GB.SLOTS do
-        local ok, icon, count, _, _, quality = pcall(_G.GetGuildBankItemInfo, tab, slot)
-        icon = ok and K.Plain(icon) or nil
-        if icon then
-            local link = _G.GetGuildBankItemLink and K.Plain(_G.GetGuildBankItemLink(tab, slot))
-            local id = type(link) == "string" and tonumber(link:match("item:(%d+)")) or nil
-            out[#out + 1] = { tab = tab, slot = slot, id = id, icon = icon,
-                              count = K.Plain(count) or 1, quality = K.Plain(quality) }
+    local cc = _G.C_Container
+    if not (cc and cc.GetContainerNumSlots and cc.GetContainerItemInfo) then return out end
+    for _, bag in ipairs(GB.BagIDs()) do
+        local okN, n = pcall(cc.GetContainerNumSlots, bag)
+        n = okN and K.Plain(n) or 0
+        for slot = 1, (type(n) == "number" and n or 0) do
+            local ok, info = pcall(cc.GetContainerItemInfo, bag, slot)
+            if ok and type(info) == "table" and K.Plain(info.iconFileID) then
+                out[#out + 1] = { bag = bag, slot = slot, id = K.Plain(info.itemID), icon = K.Plain(info.iconFileID),
+                                  count = K.Plain(info.stackCount) or 1, quality = K.Plain(info.quality) }
+            end
         end
     end
     return out
 end
 
 function GB.Take(list)
-    if K.InCombat() or not _G.AutoStoreGuildBankItem then return 0 end
+    local cc = _G.C_Container
+    if K.InCombat() or not (cc and cc.UseContainerItem) then return 0 end
     local n = 0
     for _, e in ipairs(list or {}) do
-        if pcall(_G.AutoStoreGuildBankItem, e.tab, e.slot) then n = n + 1 end
+        if pcall(cc.UseContainerItem, e.bag, e.slot) then n = n + 1 end
     end
     return n
 end
@@ -76,13 +87,16 @@ local function Cell(i)
     b:SetScript("OnClick", function(self, button)
         if K.InCombat() or not self.e then return end
         if button == "RightButton" then GB.Take({ self.e })
-        elseif _G.PickupGuildBankItem then pcall(_G.PickupGuildBankItem, self.e.tab, self.e.slot) end
+        else
+            local cc = _G.C_Container
+            if cc and cc.PickupContainerItem then pcall(cc.PickupContainerItem, self.e.bag, self.e.slot) end
+        end
     end)
     b:SetScript("OnEnter", function(self)
         local tt = _G.GameTooltip
         if not (tt and self.e) then return end
         tt:SetOwner(self, "ANCHOR_RIGHT")
-        if tt.SetGuildBankItem then pcall(tt.SetGuildBankItem, tt, self.e.tab, self.e.slot) end
+        if tt.SetBagItem then pcall(tt.SetBagItem, tt, self.e.bag, self.e.slot) end
         tt:AddLine("Rechtsklick: in die Taschen", 0.4, 1, 0.4)
         tt:Show()
     end)
@@ -113,7 +127,7 @@ local function Head(i)
 end
 
 local function Build()
-    win = CreateFrame("Frame", "WeintCodexGuildBankCats", UIParent)
+    win = CreateFrame("Frame", "WeintCodexBankCats", UIParent)
     win:SetFrameStrata("HIGH")
     win:SetClampedToScreen(true)
     win:EnableMouse(true)
@@ -126,16 +140,15 @@ end
 
 -- Neu zeichnen. Gibt die Bloecke zurueck ({ key, n }) - fuer den Test.
 function GB.Refresh()
-    local gb = _G.GuildBankFrame
+    local gb = _G.BankFrame
     local open = type(gb) == "table" and gb.IsShown and K.Bool(gb:IsShown(), false)
     if not (On() and open) then
         if win then win:Hide() end
         return nil
     end
     if not win then Build() end
-    local tab = Tab()
     local byCat = {}
-    for _, e in ipairs(GB.Items(tab)) do
+    for _, e in ipairs(GB.Items()) do
         local k = type(e.id) == "number" and BG.CategoryOfItem(e.id, e.quality, false) or "misc"
         byCat[k] = byCat[k] or {}
         table.insert(byCat[k], e)
@@ -176,8 +189,7 @@ function GB.Refresh()
     end
     for i = ci + 1, #cells do cells[i]:Hide() cells[i].e = nil end
     for i = hi + 1, #heads do heads[i]:Hide() end
-    local name = _G.GetGuildBankTabInfo and K.Plain((_G.GetGuildBankTabInfo(tab or 1)))
-    win.title:SetText((type(name) == "string" and name ~= "" and name or "Gildenbank") .. "  ·  nach Kategorien")
+    win.title:SetText("Bank  ·  nach Kategorien")
     win:SetSize(24 + GB.COLS * cell - GB.GAP, math.max(80, y + rowH + 4))
     win:ClearAllPoints()
     win:SetPoint("TOPLEFT", gb, "TOPRIGHT", 8, 0)
@@ -187,8 +199,8 @@ function GB.Refresh()
 end
 
 local ev = CreateFrame("Frame")
-for _, e in ipairs({ "GUILDBANKFRAME_OPENED", "GUILDBANKFRAME_CLOSED", "GUILDBANKBAGSLOTS_CHANGED",
-    "GUILDBANK_UPDATE_TABS", "PLAYER_INTERACTION_MANAGER_FRAME_SHOW", "PLAYER_INTERACTION_MANAGER_FRAME_HIDE" }) do
+for _, e in ipairs({ "BANKFRAME_OPENED", "BANKFRAME_CLOSED", "BAG_UPDATE_DELAYED", "PLAYERBANKSLOTS_CHANGED",
+    "PLAYER_INTERACTION_MANAGER_FRAME_SHOW", "PLAYER_INTERACTION_MANAGER_FRAME_HIDE" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 ev:SetScript("OnEvent", function()
@@ -198,7 +210,3 @@ ev:SetScript("OnEvent", function()
         pcall(GB.Refresh)
     end
 end)
--- Fachwechsel in der Gildenbank: neu zeichnen.
-if _G.hooksecurefunc and type(_G.SetCurrentGuildBankTab) == "function" then
-    _G.hooksecurefunc("SetCurrentGuildBankTab", function() pcall(GB.Refresh) end)
-end

@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.126.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDeine Bank nach Kategorien|r – neben der Bank zeigt ein Fenster alles, was darin liegt, geordnet wie deine Taschen. Rechtsklick nimmt heraus, Rechtsklick auf eine Überschrift die ganze Kategorie. Einschalten unter Taschen → Kategorien.",
+            "Die Ansicht der Gildenbank ist wieder entfernt.",
+        },
+    },
+    {
         version = "6.125.1.0",
         date    = "22.10.2026",
         notes   = {

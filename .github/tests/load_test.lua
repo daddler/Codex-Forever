@@ -4509,39 +4509,37 @@ do
     Check(ok, "Regler: Zeigen loest kein Neuladen aus" .. (ok and "" or (": " .. tostring(err))))
 end
 
--- 6.125.0.0: Kategorien umsortieren; Gildenbank nach Kategorien.
+-- 6.125.0.0: Kategorien umsortieren; 6.126.0.0: Bank nach Kategorien.
 do
-    local BG, GB = WeintCodex.UIBags, WeintCodex.UIGuildBankCats
-    local saved = { _G.GuildBankFrame, _G.GetCurrentGuildBankTab, _G.GetGuildBankItemInfo, _G.GetGuildBankItemLink, _G.AutoStoreGuildBankItem }
+    local BG, BK = WeintCodex.UIBags, WeintCodex.UIBankCats
+    local saved = { _G.BankFrame, _G.C_Container }
     local ok, err = pcall(function()
         local first = BG.AllCategories()[2].key
         assert(BG.MoveCategory(first, -1) and BG.AllCategories()[1].key == first, "nach oben")
         assert(not BG.MoveCategory(first, -1), "ueber den Anfang hinaus")
         K.Set("bags", "catOrder", {})
         K.Set("bags", "categories", true)
-        K.Set("bags", "guildCats", true)
-        _G.GuildBankFrame = CreateFrame("Frame", nil, UIParent)
-        _G.GuildBankFrame:Show()
-        _G.GetCurrentGuildBankTab = function() return 1 end
-        _G.GetGuildBankItemInfo = function(_, slot) if slot <= 3 then return 134400, 5, false, false, slot == 1 and 0 or 1 end end
-        _G.GetGuildBankItemLink = function(_, slot) return "|Hitem:" .. (100 + slot) .. "|h" end
-        local taken = {}
-        _G.AutoStoreGuildBankItem = function(t, sl) taken[#taken + 1] = t .. ":" .. sl end
-        local blocks = GB.Refresh()
-        local n = 0
-        for _, b in ipairs(blocks or {}) do n = n + b.n end
-        assert(n == 3, "Gildenbank: falsche Zahl Gegenstaende: " .. n)
-        local junk
-        for _, b in ipairs(blocks) do if b.key == "junk" then junk = b end end
-        assert(junk and junk.n == 1, "Schrott in der Gildenbank nicht erkannt")
-        assert(GB.Take(GB.Items(1)) == 3 and taken[1] == "1:1", "Herausnehmen")
-        _G.GuildBankFrame:Hide()
-        assert(GB.Refresh() == nil, "Fenster ohne Gildenbank")
+        K.Set("bags", "bankCats", true)
+        _G.BankFrame = CreateFrame("Frame", nil, UIParent)
+        _G.BankFrame:Show()
+        local used = {}
+        _G.C_Container = {
+            GetContainerNumSlots = function(bag) return (bag == BK.BagIDs()[1]) and 3 or 0 end,
+            GetContainerItemInfo = function(_, slot) return { iconFileID = 1, itemID = 100 + slot, stackCount = 2, quality = slot == 1 and 0 or 1 } end,
+            UseContainerItem = function(b, sl) used[#used + 1] = b .. ":" .. sl end,
+        }
+        local blocks = BK.Refresh()
+        local n, junk = 0, nil
+        for _, b in ipairs(blocks or {}) do n = n + b.n if b.key == "junk" then junk = b end end
+        assert(n == 3 and junk and junk.n == 1, "Bank: Zahl oder Schrott falsch: " .. n)
+        assert(BK.Take(BK.Items()) == 3, "Herausnehmen")
+        _G.BankFrame:Hide()
+        assert(BK.Refresh() == nil, "Fenster ohne Bank")
         K.Set("bags", "categories", nil)
-        K.Set("bags", "guildCats", nil)
+        K.Set("bags", "bankCats", nil)
     end)
-    _G.GuildBankFrame, _G.GetCurrentGuildBankTab, _G.GetGuildBankItemInfo, _G.GetGuildBankItemLink, _G.AutoStoreGuildBankItem = unpack(saved)
-    Check(ok, "Taschen: Kategorien umsortieren, Gildenbank nach Kategorien" .. (ok and "" or (": " .. tostring(err))))
+    _G.BankFrame, _G.C_Container = unpack(saved)
+    Check(ok, "Taschen: Kategorien umsortieren, Bank nach Kategorien" .. (ok and "" or (": " .. tostring(err))))
 end
 
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
