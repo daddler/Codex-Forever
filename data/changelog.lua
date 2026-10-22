@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.113.2.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFStufe im kleinen Kreis am runden Bild|r steht mittig; der Kreis sitzt wieder an seinem alten Platz.",
+        },
+    },
+    {
         version = "6.113.1.0",
         date    = "22.10.2026",
         notes   = {

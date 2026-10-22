@@ -763,7 +763,13 @@ function Frame:Round()
     b.fill:SetTexture(UF.CIRCLE) b.fill:SetPoint("CENTER") b.fill:SetSize(18, 18)
     b.fill:SetVertexColor(fill[1], fill[2], fill[3], math.max(0.8, fill[4]))
     b.text = K.NewText(b, 10)
-    b.text:SetPoint("CENTER", b, "CENTER", 0, 0)
+    -- 6.113.2.0 (Beta-Test mit Bild: Zahl nicht mittig): ueber die ganze
+    -- Breite gespannt und mittig gesetzt - nur CENTER liess sie links haengen.
+    b.text:SetPoint("LEFT", b, "LEFT", 0, 0)
+    b.text:SetPoint("RIGHT", b, "RIGHT", 0, 0)
+    if b.text.SetJustifyH then b.text:SetJustifyH("CENTER") end
+    if b.text.SetJustifyV then b.text:SetJustifyV("MIDDLE") end
+    if b.text.SetWordWrap then b.text:SetWordWrap(false) end
     r.badge = b
     r:Hide()
     self._round = r
@@ -885,8 +891,7 @@ function Frame:Layout()
         self._roundOver = math.max(0, math.ceil((D + 6) / 2 - D * 0.42))
         r.badge:ClearAllPoints()
         -- Innenseite (zum Balken hin): aussen deckte sie den Begleiterrahmen (6.110.1.0, Bild).
-        -- 6.113.1.0 (Beta-Test mit Bild: am Zielrahmen zu weit links): rechts weiter hinein.
-        r.badge:SetPoint("CENTER", r, right and "BOTTOMLEFT" or "BOTTOMRIGHT", right and 9 or -4, 4)
+        r.badge:SetPoint("CENTER", r, right and "BOTTOMLEFT" or "BOTTOMRIGHT", right and 4 or -4, 4)
         r:Show()
         self:UpdateRound()
     else
