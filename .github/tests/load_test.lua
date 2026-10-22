@@ -4657,11 +4657,11 @@ do
         _G.UnitName = function(u) if u == "npc" then return "Thurman Mullby" end return oU(u) end
         assert(PT.RecordMerchant() == 1, "Haendler nicht gemerkt")
         assert(PT.Vendors(2589)[1].n == "Thurman Mullby", "Haendler falsch")
-        local found = false
+        PT.vendorShown = nil
         for _, b2 in ipairs(PT.ItemBlocks(2589)) do
-            for _, l in ipairs(b2.lines or {}) do if l:find("Thurman", 1, true) then found = true end end
+            if b2.type == "custom" then b2.create(UIParent, 300) end
         end
-        assert(found, "Haendler nicht im Detailbereich")
+        assert(PT.vendorShown == 1, "Haendler nicht im Detailbereich")
         _G.GetMerchantNumItems, _G.UnitName = oN, oU
         sd.vendorSeen = nil
         _G.GetMerchantItemID = oldID

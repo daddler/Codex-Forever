@@ -1058,6 +1058,117 @@ local function Chart(parent, width, hist)
     return chart
 end
 
+-- Haendlerliste mit Karte: eine Zeile je Haendler, alle auf der Karte des
+-- gewaehlten; Maus ueber eine Zeile laesst ihren Punkt pulsieren.
+local vblock
+function PT.VendorBlock(parent, width, vs)
+    local BP = WeintCodex.BooksPage
+    local QM = WeintCodex.QuestMap
+    if not vblock then
+        vblock = CreateFrame("Frame", nil, parent)
+        vblock.rows, vblock.pins = {}, {}
+    end
+    local f = vblock
+    f:SetParent(parent)
+    f:SetWidth(width)
+    for _, r in ipairs(f.rows) do r:Hide() end
+    for _, p in ipairs(f.pins) do p:Hide() end
+    local y = 0
+    local sel = vs[PT.selVendor] or vs[1]
+    local function pinFor(i)
+        local p = f.pins[i]
+        if not p then
+            p = CreateFrame("Frame", nil, f)
+            p:SetSize(14, 14)
+            p.dot = p:CreateTexture(nil, "OVERLAY")
+            p.dot:SetAllPoints(p)
+            p.dot:SetTexture("Interface\\AddOns\\WeintCodex\\media\\ui\\disc")
+            if p.CreateAnimationGroup then
+                local ag = p:CreateAnimationGroup()
+                local sc = ag:CreateAnimation("Scale")
+                if sc and sc.SetScale then
+                    sc:SetScale(1.8, 1.8) sc:SetDuration(0.45)
+                    ag:SetLooping("BOUNCE")
+                    p.anim = ag
+                end
+            end
+            f.pins[i] = p
+        end
+        return p
+    end
+    for i, v in ipairs(vs) do
+        local r = f.rows[i]
+        if not r then
+            r = CreateFrame("Button", nil, f)
+            r:SetHeight(34)
+            r.sel = r:CreateTexture(nil, "BACKGROUND")
+            r.sel:SetAllPoints(r)
+            r.sel:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.16)
+            local hl = r:CreateTexture(nil, "HIGHLIGHT")
+            hl:SetAllPoints(r)
+            hl:SetColorTexture(1, 1, 1, 0.06)
+            r.a = WeintCodex.Label(r, "", { size = 11, color = "textBright" })
+            r.a:SetPoint("TOPLEFT", r, "TOPLEFT", 6, -3)
+            r.a:SetPoint("RIGHT", r, "RIGHT", -6, 0)
+            r.a:SetWordWrap(false)
+            r.b = WeintCodex.Label(r, "", { size = 10, color = "textMuted" })
+            r.b:SetPoint("TOPLEFT", r.a, "BOTTOMLEFT", 0, -2)
+            r:SetScript("OnEnter", function(self)
+                local p = self.pin
+                if p and p:IsShown() and p.anim then p.anim:Play() end
+            end)
+            r:SetScript("OnLeave", function(self)
+                local p = self.pin
+                if p and p.anim then p.anim:Stop() end
+            end)
+            r:SetScript("OnClick", function(self)
+                PT.selVendor = self.index
+                PT.Draw("merkliste")
+            end)
+            f.rows[i] = r
+        end
+        r.index = i
+        r:ClearAllPoints()
+        r:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -y)
+        r:SetWidth(width)
+        local zone = v.m and QM and QM.MapName and QM.MapName(v.m)
+        r.a:SetText(v.n .. (v.t and (" <" .. v.t .. ">") or ""))
+        r.b:SetText((zone or "Ort unbekannt") .. (v.x and string.format(" (%.0f, %.0f)", v.x * 100, v.y * 100) or "")
+            .. (v.p and ("  ·  " .. Money(v.p) .. ((v.q and v.q > 1) and (" für " .. v.q) or "")) or ""))
+        r.sel:SetShown(v == sel)
+        r.pin = nil
+        r:Show()
+        y = y + 36
+    end
+    if sel and sel.m and sel.x and BP and BP.MapWidget then
+        local w = BP.MapWidget(f, width)
+        w:ClearAllPoints()
+        w:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -(y + 4))
+        BP.PaintMap(w, sel.m, sel.x, sel.y)
+        w.ring:Hide()
+        w.dot:Hide()
+        local W, H = Plain(w:GetWidth()) or width, Plain(w:GetHeight()) or 0
+        for i, v in ipairs(vs) do
+            if v.m == sel.m and v.x then
+                local p = pinFor(i)
+                p:SetParent(w)
+                p:SetFrameLevel((w:GetFrameLevel() or 1) + 3)
+                p:ClearAllPoints()
+                p:SetPoint("CENTER", w, "TOPLEFT", W * v.x, -H * v.y)
+                local c = (v == sel) and C.gold or C.textBright
+                p.dot:SetVertexColor(c[1], c[2], c[3], 1)
+                p:Show()
+                f.rows[i].pin = p
+            end
+        end
+        y = y + 4 + H
+    end
+    f:SetHeight(math.max(1, y))
+    f:Show()
+    PT.vendorShown = #vs
+    return f
+end
+
 function PT.ItemBlocks(id)
     local blocks = { { type = "header", text = PRO.ItemName(id) } }
     local rows = {}
@@ -1093,23 +1204,12 @@ function PT.ItemBlocks(id)
     local vs = PT.Vendors(id)
     if vs[1] then
         any = true
-        local lines = {}
-        for _, v in ipairs(vs) do
-            local zone = v.m and QM0 and QM0.MapName and QM0.MapName(v.m)
-            lines[#lines + 1] = v.n .. (v.t and (" <" .. v.t .. ">") or "")
-            lines[#lines + 1] = "   " .. (zone or "Ort unbekannt") .. (v.x and string.format(" (%.0f, %.0f)", v.x * 100, v.y * 100) or "")
-                .. (v.p and ("  ·  " .. Money(v.p) .. ((v.q and v.q > 1) and (" für " .. v.q) or "")) or "")
-        end
-        blocks[#blocks + 1] = { type = "text", text = "Beim Händler – von dir gesehen:" }
-        blocks[#blocks + 1] = { type = "card", lines = lines }
-        local v = vs[1]
-        if v.m and v.x and BP0 and BP0.MapWidget then
-            blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
-                local wdg = BP0.MapWidget(parent, width)
-                BP0.PaintMap(wdg, v.m, v.x, v.y)
-                return wdg
-            end }
-        end
+        -- 6.138.0.0 (Beta-Test: "beide Haendler auf die Karte, Maus drueber
+        -- pulsiert, Klick waehlt fuer den Questpfeil").
+        if not (PT.selVendor and vs[PT.selVendor] and PT.selVendorItem == id) then PT.selVendor, PT.selVendorItem = 1, id end
+        blocks[#blocks + 1] = { type = "text", text = "Beim Händler – von dir gesehen (Maus drüber: auf der Karte, Klick: wählen):" }
+        blocks[#blocks + 1] = { type = "custom", create = function(parent, width) return PT.VendorBlock(parent, width, vs) end }
+        local v = vs[PT.selVendor]
         local QA = WeintCodex.UIQuestArrow
         if v.m and v.x and QA and QA.SetCustom and BP0 and BP0.Pill then
             blocks[#blocks + 1] = { type = "custom", create = function(parent, width)
@@ -1117,6 +1217,7 @@ function PT.ItemBlocks(id)
                 local b = PT.vendorBtn
                 b:SetParent(parent)
                 b:SetWidth(width)
+                b.label:SetText("Questpfeil zu " .. v.n)
                 b:SetScript("OnClick", function() QA.SetCustom({ map = v.m, x = v.x, y = v.y, title = v.n }) end)
                 b:Paint(false)
                 return b

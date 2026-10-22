@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.138.0.0] – 2026-10-22
+
+### Geändert
+- Merkliste, Händler im Detailbereich (Beta-Test): `PT.VendorBlock` – je Händler eine Zeile, alle Händler auf der Karte des gewählten als Punkte (gewählter in Gold), Maus über eine Zeile lässt ihren Punkt pulsieren, Klick wählt (`PT.selVendor`), „Questpfeil zu <Name>“ führt zum gewählten.
+
 ## [6.137.0.0] – 2026-10-22
 
 ### Neu

@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.138.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFAlle Händler auf der Karte|r – jeder gesehene Händler eines Gegenstands hat seinen Punkt; Maus über den Händler lässt seinen Punkt pulsieren, ein Klick wählt ihn, und der Questpfeil führt zu genau diesem.",
+        },
+    },
+    {
         version = "6.137.0.0",
         date    = "22.10.2026",
         notes   = {
