@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.144.0.0] – 2026-10-22
+
+### Geändert
+- Händler teilen: auf die Nachfrage `Q` eines Gildenmitglieds (nach dessen Einloggen) gehen neben den Berufen auch die eigenen Händler raus (`PT.QueueOwnVendors`, höchstens 40, höchstens alle 10 Minuten wie bisher).
+
 ## [6.143.0.0] – 2026-10-22
 
 ### Neu

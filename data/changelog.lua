@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.144.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFHändler erreichen auch Spätkommer|r – wer sich später einloggt, fragt nach und bekommt die Händler der Gilde, wie schon die Berufe.",
+        },
+    },
+    {
         version = "6.143.0.0",
         date    = "22.10.2026",
         notes   = {

@@ -223,7 +223,9 @@ function PT.OnAddonMessage(prefix, text, channel, sender)
         -- Jemand fragt nach: hoechstens alle 10 Minuten antworten, zeitversetzt.
         if t - lastQueued > PT.ANSWER_EVERY and _G.C_Timer and _G.C_Timer.After then
             lastQueued = t
-            _G.C_Timer.After(5 + math.random() * 20, PT.QueueOwn)
+            -- 6.144.0.0: auch die eigenen Haendler - wer spaeter einloggt,
+            -- bekommt sie so ebenfalls.
+            _G.C_Timer.After(5 + math.random() * 20, function() PT.QueueOwn() PT.QueueOwnVendors() end)
         end
         return
     end
@@ -1509,13 +1511,7 @@ ev:SetScript("OnEvent", function(_, event, a, b, c, d)
             _G.C_Timer.After(60, function()
                 if not (PT.Sharing() and _G.IsInGuild and Plain(_G.IsInGuild())) then return end
                 PT.QueueOwn()
-                -- Eigene Haendler einmal nach dem Einloggen (hoechstens 40).
-                local sd2, k = SD(), 0
-                for vid, list in pairs(sd2 and sd2.vendorSeen or {}) do
-                    for _, e in ipairs(list) do
-                        if not e.s and k < 40 and PT.ShareVendor(vid, e) then k = k + 1 end
-                    end
-                end
+                PT.QueueOwnVendors()
                 local cc = _G.C_ChatInfo
                 if cc and cc.SendAddonMessage then queue[#queue + 1] = "Q" sender:Show() end
             end)
@@ -1913,6 +1909,19 @@ function PT.ShareVendor(id, e)
     queue[#queue + 1] = line
     if PT.sender then PT.sender:Show() end
     return true
+end
+
+-- Eigene Haendler in die Warteschlange (nach dem Einloggen, auf Nachfrage).
+PT.VENDOR_BACKLOG = 40
+function PT.QueueOwnVendors()
+    local sd, k = SD(), 0
+    for i = #queue, 1, -1 do if queue[i]:sub(1, 2) == "V|" then table.remove(queue, i) end end
+    for vid, list in pairs(sd and sd.vendorSeen or {}) do
+        for _, e in ipairs(list) do
+            if not e.s and k < PT.VENDOR_BACKLOG and PT.ShareVendor(vid, e) then k = k + 1 end
+        end
+    end
+    return k
 end
 
 function PT.Vendors(id)
