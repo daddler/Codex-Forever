@@ -29,11 +29,14 @@ local function Say(text)
     print(WeintCodex.ColorText("accent", "[WeintCodex]") .. " " .. text)
 end
 
--- Die verschiebbaren Leisten: alle ActionBar-Eintraege des Layouts.
+-- Was so verschoben wird: alle Leisten, seit 6.116.0.0 auch Chat und
+-- Minikarte (Wunsch: "das gleiche fuer Chatfenster und Minimap").
+BM.SYSTEMS = { ActionBar = true, ChatFrame = true, Minimap = true }
+
 function BM.Entries()
     local out = {}
     for _, e in ipairs(K.GAME_LAYOUT or {}) do
-        if e.sys == "ActionBar" then out[#out + 1] = e end
+        if BM.SYSTEMS[e.sys] then out[#out + 1] = e end
     end
     return out
 end

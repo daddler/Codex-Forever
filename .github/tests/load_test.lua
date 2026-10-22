@@ -4385,6 +4385,9 @@ do
         local a = ES.BarAnchor("bar2")
         assert(a and a.point == "BOTTOM" and a.y == 90, "Platz im Layout nicht gelesen")
         assert(BM.Prepare() >= 1 and BM.ghosts.bar2, "kein Platzhalter")
+        local keys = {}
+        for _, e in ipairs(BM.Entries()) do keys[e.key] = true end
+        assert(keys.chat and keys.minimap and keys.bar1, "Chat oder Minikarte nicht verschiebbar")
         local ui = K.Profile()
         ui.positions[BM.PREFIX .. "bar2"] = { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = 300, y = 200 }
         assert(BM.OnPlaced(BM.PREFIX .. "bar2"), "nicht ins Layout geschrieben")

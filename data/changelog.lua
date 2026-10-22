@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.116.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFChat und Minikarte im Gestaltungsmodus verschieben|r – genauso wie die Aktionsleisten, ohne Bearbeitungsmodus des Spiels.",
+        },
+    },
+    {
         version = "6.115.0.0",
         date    = "22.10.2026",
         notes   = {

@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.116.0.0] – 2026-10-22
+
+### Hinzugefügt
+- `ui/barmover.lua`: auch Chat (`ChatFrame`) und Minikarte (`Minimap`) als Platzhalter, Platz über das Layout „WeintCodex“ (`BM.SYSTEMS`).
+
 ## [6.115.0.0] – 2026-10-22
 
 ### Hinzugefügt
