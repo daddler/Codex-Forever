@@ -852,7 +852,8 @@ function PRO.SidebarItems(skills)
     local function add(p, status)
         items[#items + 1] = { label = PRO.ProfName(p.key), status = status, onClick = function()
             selected = p.key
-            PRO.view = nil
+            -- 6.131.1.0 (Beta-Test: "Planer springt zurueck auf Leder"): ein
+            -- Werkzeug bleibt offen und nimmt den gewaehlten Beruf.
             PRO.Show()
         end }
         order[#order + 1] = p.key
@@ -1015,7 +1016,7 @@ function PRO.Show()
     local nav = WeintCodex.Navigation
     nav.BuildSidebar("Berufe", items)
     for i, key in ipairs(order) do
-        if key == selected and not PRO.view and nav.SidebarButtons then
+        if key == selected and nav.SidebarButtons then
             local btn = nav.SidebarButtons()[i]
             if btn and btn.SetActive then btn:SetActive(true) end
         end

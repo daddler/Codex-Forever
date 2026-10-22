@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.131.1.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Planer plant den Beruf, den du links wählst|r – ein Werkzeug bleibt dabei offen, statt zu den Rezepten zurückzuspringen.",
+        },
+    },
+    {
         version = "6.131.0.2",
         date    = "22.10.2026",
         notes   = {

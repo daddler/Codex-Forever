@@ -4624,6 +4624,16 @@ do
             PT.Show(t.key)
             assert(PT.lastDraw and PT.lastDraw.key == t.key, "nicht gezeichnet: " .. t.key)
         end
+        -- 6.131.1.0: der Planer nimmt den gewaehlten Beruf.
+        local sk = PRO.Skills()
+        local learned = {}
+        for k in pairs(sk) do learned[#learned + 1] = k end
+        table.sort(learned)
+        if #learned > 1 then
+            PRO.Select(learned[2])
+            PT.Show("planer")
+            assert(PT.planKey == learned[2] and PRO.view == "planer", "Planer nimmt den Beruf nicht: " .. tostring(PT.planKey))
+        end
         PT.Show(nil)
         assert(PRO.lastDraw and PRO.view == nil, "zurueck zu Rezepten")
         sd.guildProfs, sd.profWatch = nil, nil

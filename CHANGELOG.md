@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.131.1.0] – 2026-10-22
+
+### Behoben
+- Berufe-Planer sprang auf den ersten Beruf zurück (Beta-Test: Kochkunst gewählt, Lederverarbeitung geplant): ein Klick auf einen Beruf in der Seitenleiste lässt das Werkzeug offen, der Planer nimmt `PRO.Selected()`; „Beruf wechseln“ wählt den Beruf auch links.
+
 ## [6.131.0.2] – 2026-10-22
 
 ### Behoben

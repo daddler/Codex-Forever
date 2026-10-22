@@ -809,6 +809,8 @@ function PT.DrawPlanner(body, w)
     if #order == 0 then
         return Note(body, y, w, "Du hast noch keinen Beruf gelernt.")
     end
+    local sel = PRO.Selected and PRO.Selected()
+    if sel and skills[sel] then PT.planKey = sel end
     PT.planKey = (PT.planKey and skills[PT.planKey]) and PT.planKey or order[1]
     if #order > 1 then
         f.Action:SetText("Beruf wechseln")
@@ -816,11 +818,15 @@ function PT.DrawPlanner(body, w)
             local i = 1
             for k, key in ipairs(order) do if key == PT.planKey then i = k end end
             PT.planKey = order[i % #order + 1]
-            PT.Draw("planer")
+            PRO.Select(PT.planKey)
+            PRO.Show()
         end
         f.Action:Show()
     end
     local key = PT.planKey
+    if sel and not skills[sel] then
+        y = Note(body, y, w, PRO.ProfName(sel) .. " hast du nicht gelernt – geplant wird " .. PRO.ProfName(key) .. ".")
+    end
     local s = skills[key]
     local target = s.max or s.rank
     local note
