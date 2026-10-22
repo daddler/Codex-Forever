@@ -70,11 +70,11 @@ LF.WINDOWS = { LFGParentFrame = "Suche nach Gruppe", PVEFrame = "Suche nach Grup
                MailFrame = "Post", OpenMailFrame = "Brief", FriendsFrame = "Kontakte",
                SocialUIFrame = "Kontakte", ClassTrainerFrame = "Lehrer",
                LegacySystemFrame = "Vermächtnis", CalendarFrame = "Kalender", ChannelFrame = "Chat-Kanäle",
-               CooldownViewerSettings = "Abklingzeiten" }
+               CooldownViewerSettings = "Abklingzeiten", AddonList = "Addons" }
 LF.HOSTS = { "LFGParentFrame", "PVEFrame", "CollectionsJournal", "SettingsPanel", "MacroFrame", "TradeFrame",
              "AuctionHouseFrame", "BankFrame", "GuildBankFrame", "MailFrame", "OpenMailFrame", "FriendsFrame",
              "SocialUIFrame", "ClassTrainerFrame", "LegacySystemFrame", "CalendarFrame", "ChannelFrame",
-             "CooldownViewerSettings" }
+             "CooldownViewerSettings", "AddonList" }
 -- Innenflaechen, die das Fenster selbst nicht als solche baut: Feld am
 -- Fenster oder globaler Name -> W.OwnBackground (eigene Bilder weg,
 -- Innenflaeche). Makros (6.9.0.0, ui/macroframe.lua): die Liste (Leder)

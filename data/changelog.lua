@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.136.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDie Addon-Liste im Stil der Oberfläche|r – ohne Metallrahmen und rote Knöpfe, mit flacher Suche, wie die anderen Fenster.",
+        },
+    },
+    {
         version = "6.135.0.0",
         date    = "22.10.2026",
         notes   = {

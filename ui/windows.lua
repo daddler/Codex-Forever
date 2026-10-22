@@ -109,7 +109,9 @@ W.WINDOWS = { "CharacterFrame", "PVPFrame", "HonorFrame", "PlayerSpellsFrame", "
               -- Seitenreiter, Leder; ui/calm.lua LF.Cooldown).
               "CooldownViewerSettings",
               -- 6.62.3.0: Chat-Kanaele (Blizzard_Channels; ui/channels.lua).
-              "ChannelFrame" }
+              "ChannelFrame",
+              -- 6.136.0.0: die Addon-Liste (ui/addonlist.lua).
+              "AddonList" }
 
 -- SPIELMENUE (6.6.3.3, gemessen mit /wcui fenster): rote Knoepfe
 -- ("128-RedButton-Left/Center/Right/Highlight"), Rahmen und Kopf aus
