@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.119.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFDer Willkommens-Assistent zeigt echte Bilder aus dem Spiel|r – Übersicht, Fenster, Erinnerungen und Questpfeil.",
+        },
+    },
+    {
         version = "6.118.2.0",
         date    = "22.10.2026",
         notes   = {

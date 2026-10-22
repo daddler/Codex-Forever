@@ -60,7 +60,7 @@ local MEDIA = "Interface\\AddOns\\WeintCodex\\media\\welcome\\"
 
 -- Die Bilder (Namen wie in make_welcome.py).
 WL.SHOTS = {
-    overview  = { file = MEDIA .. "overview",  caption = "Alles auf einen Blick – der Akzent trägt deine Klassenfarbe (hier: Magier)." },
+    overview  = { file = MEDIA .. "overview",  caption = "Alles auf einen Blick – der Akzent trägt deine Klassenfarbe (hier: Jäger)." },
     plates    = { file = MEDIA .. "plates",    caption = "Namensplaketten: Schadensspur, Zielleuchten, Zauberbalken, deine Auren." },
     group     = { file = MEDIA .. "group",     caption = "Gruppenrahmen mit HoTs, Schilden und Debuffs – Klickzauber direkt darauf." },
     windows   = { file = MEDIA .. "windows",   caption = "Die Fenster des Spiels ruhig, ohne Holz und Pergament." },

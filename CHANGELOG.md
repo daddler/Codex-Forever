@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.119.0.0] – 2026-10-22
+
+### Geändert
+- Willkommens-Assistent: `overview`, `windows`, `reminders`, `arrow` sind Bildschirmfotos des Spielers (Beta-Test) statt Zeichnungen; neues `.github/scripts/import_welcome_shot.py` (Ausschnitt 2:1 → 512×256 BLP). `plates`, `group`, `damage`, `helpers` bleiben vorerst Zeichnungen.
+
 ## [6.118.2.0] – 2026-10-22
 
 ### Behoben
