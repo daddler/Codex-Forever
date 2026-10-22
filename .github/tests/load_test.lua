@@ -4403,6 +4403,32 @@ do
     Check(ok, "Leisten verschieben: Platzhalter, Platz ins eigene Layout, nie direkt" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.117.0.0: Erinnerungen erst, wenn die Stufe reicht und das Noetige gelernt ist.
+do
+    local R = WeintCodex.UIReminders
+    local oL, oK, oSB, oIPS = _G.UnitLevel, WeintCodex.Trainer.Known, _G.C_SpellBook, _G.IsPlayerSpell
+    local ok, err = pcall(function()
+        local lvl = 1
+        _G.UnitLevel = function() return lvl end
+        _G.IsPlayerSpell = function() return true end
+        -- Der Client "kennt" alles (Zauberbuch zeigt kuenftige Zauber).
+        WeintCodex.Trainer.Known = function() return true end
+        local aspect = { kind = "buff", spell = "13165", any = { "13165", "13163" }, learned = true, class = "HUNTER" }
+        assert(R.Applies(aspect, "HUNTER") == false, "Aspekt auf Stufe 1 erinnert")
+        lvl = 4
+        assert(R.Applies(aspect, "HUNTER") == true, "Aspekt des Affen ab 4 nicht erinnert")
+        lvl = 10
+        local poison = { kind = "weapon", hand = "main", class = "ROGUE" }
+        assert(R.Applies(poison, "ROGUE") == false, "Gift vor Stufe 20 erinnert")
+        lvl = 20
+        assert(R.Applies(poison, "ROGUE") == true, "Gift ab 20 nicht erinnert")
+        WeintCodex.Trainer.Known = function() return false end
+        assert(R.Applies({ kind = "pet", class = "HUNTER" }, "HUNTER") == false, "Begleiter ohne Zaehmen erinnert")
+    end)
+    _G.UnitLevel, WeintCodex.Trainer.Known, _G.C_SpellBook, _G.IsPlayerSpell = oL, oK, oSB, oIPS
+    Check(ok, "Erinnerungen: Stufe und Voraussetzungen je Klasse" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.32.0.0: Gelaendekarte (ui/navmesh.lua): zwei Abschnitte, je ein
 -- Eingang, Gitter offen - der Weg geht ueber beide Eingaenge; Suche
 -- verteilt (Coroutine), Pfeil voraus auf dem Weg, Rest des Weges.

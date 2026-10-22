@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.117.0.0",
+        date    = "22.10.2026",
+        notes   = {
+            "|cff7C6CFFErinnerungen nur für das, was du schon kannst|r – ein Buff, den der Lehrer erst auf einer höheren Stufe lehrt, wird nicht verlangt. Begleiter erst mit Zähmen bzw. Beschwören, Gifte ab Stufe 20, Waffenzauber des Schamanen erst, wenn einer gelernt ist.",
+            "|cff7C6CFFPaladine als Tank|r werden an Zorn der Gerechtigkeit erinnert.",
+        },
+    },
+    {
         version = "6.116.0.0",
         date    = "22.10.2026",
         notes   = {

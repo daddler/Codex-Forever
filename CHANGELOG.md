@@ -9,6 +9,15 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.117.0.0] – 2026-10-22
+
+### Behoben
+- Erinnerungen: „Aspekt des Falken fehlt“ auf Stufe 1. `R.TooLow` (über `T.SpellLevel` aus `data/trainer.lua`) zählt einen Zauber unterhalb seiner Lehrerstufe nie als gelernt, auch wenn der Client ihn kennt.
+- Waffe/Begleiter/Laune je Klasse erst mit Voraussetzung (`R.KIND_NEEDS`): Jäger Begleiter rufen/Wildtier zähmen, Hexenmeister ein Beschwören, Schamane eine Waffenverzauberung, Schurke ab Stufe 20. Gilt auch für gespeicherte Regeln.
+
+### Hinzugefügt
+- Paladin: Zorn der Gerechtigkeit als Vorschlag nur in der Rolle Tank (`role`, `PB.RoleOf`).
+
 ## [6.116.0.0] – 2026-10-22
 
 ### Hinzugefügt

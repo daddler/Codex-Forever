@@ -143,6 +143,20 @@ R.CLASS_BUFFS = {
     -- Blitzschlagschild"): eines der beiden Schilde genuegt (R.ALSO).
     SHAMAN  = { { any = { 324 }, label = "Blitzschlagschild oder Wasserschild" } },
 }
+-- 6.117.0.0: Zorn der Gerechtigkeit nur fuer den Paladin als Tank.
+table.insert(R.CLASS_BUFFS.PALADIN, { any = { 25780 }, role = "TANK" })
+
+-- 6.117.0.0 (Beta-Test: "Aspekt des Falken fehlt" beim frischen Jaeger -
+-- erst ab Stufe 10 lernbar): Waffe und Begleiter erinnern erst, wenn der
+-- Charakter das Noetige kann. `any`: einer der Zauber gelernt (IDs aus
+-- Classic, Art classic; auch ueber den Namen), `level`: ab dieser Stufe
+-- (Gifte des Schurken kommen in Classic mit Stufe 20 ueber eine Quest).
+R.KIND_NEEDS = {
+    HUNTER  = { pet = { any = { 883, 1515 } }, happy = { any = { 883, 1515 } } },
+    WARLOCK = { pet = { any = { 688, 697, 712, 691 } } },
+    SHAMAN  = { weapon = { any = { 8017, 8024, 8033, 8232 } } },
+    ROGUE   = { weapon = { level = 20 } },
+}
 
 -- Zauberoele (Verzauberkunst), staerkstes zuerst. IDs aus Classic
 -- (Art classic) - auf Forever nicht gemessen; ein Oel, das der Client nicht
@@ -181,7 +195,7 @@ function R.Suggestions(class)
     for _, b in ipairs(R.CLASS_BUFFS[class] or {}) do
         local any = {}
         for i, id in ipairs(b.any) do any[i] = tostring(id) end
-        out[#out + 1] = { kind = "buff", spell = any[1], any = any, label = b.label, learned = true }
+        out[#out + 1] = { kind = "buff", spell = any[1], any = any, label = b.label, learned = true, role = b.role }
     end
     for _, r in ipairs(out) do r.class = class end
     return out
@@ -241,17 +255,55 @@ function R.KnownByName(id)
     return type(mid) == "number" and SpellKnown(mid) == true
 end
 
-function R.Learned(rule)
+-- 6.117.0.0: ein Zauber, den der Lehrer erst ab einer hoeheren Stufe
+-- lehrt, ist nicht gelernt - egal, was der Client sagt (das Zauberbuch
+-- zeigt kuenftige Zauber schon an; "Aspekt des Falken fehlt" auf Stufe 1).
+local function PlayerLevel()
+    local l = K.Plain(_G.UnitLevel and _G.UnitLevel("player"))
+    return type(l) == "number" and l or nil
+end
+
+function R.TooLow(id, class)
+    local T = WeintCodex.TrainerData
+    local need = T and T.SpellLevel and T.SpellLevel(class or PlayerClass(), id)
+    local lvl = PlayerLevel()
+    return type(need) == "number" and type(lvl) == "number" and lvl < need
+end
+
+function R.LearnedAny(list, class)
     if not CanAskSpells() then return nil end
-    for _, t in ipairs(rule.any or { rule.spell }) do
+    for _, t in ipairs(list) do
         local id = tonumber(t)
-        if id and (SpellKnown(id) or R.KnownByName(id)) then return true end
+        if id and not R.TooLow(id, class) and (SpellKnown(id) or R.KnownByName(id)) then return true end
     end
     return false
 end
 
+function R.Learned(rule)
+    return R.LearnedAny(rule.any or { rule.spell }, rule.class)
+end
+
+-- Kann der Charakter, was Waffe/Begleiter voraussetzen? false = nein.
+function R.KindReady(rule, class)
+    class = class or rule.class or PlayerClass()
+    local need = R.KIND_NEEDS[class] and R.KIND_NEEDS[class][rule.kind]
+    if not need or rule.oil then return true end
+    if need.level then
+        local lvl = PlayerLevel()
+        if type(lvl) == "number" and lvl < need.level then return false end
+    end
+    if need.any and R.LearnedAny(need.any, class) == false then return false end
+    return true
+end
+
 function R.Applies(rule, class)
     if rule.learned and R.Learned(rule) == false then return false end
+    if R.CLASS_KINDS[rule.kind] and not R.KindReady(rule, class) then return false end
+    if rule.role then
+        local PB = WeintCodex.UIPaladinBuffs
+        local role = PB and PB.RoleOf and PB.RoleOf("player", class or PlayerClass())
+        if role and role ~= rule.role then return false end
+    end
     if rule.class == R.ALL then return true end
     class = class or PlayerClass()
     if rule.class then return class == nil or rule.class == class end

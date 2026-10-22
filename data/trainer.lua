@@ -2232,6 +2232,25 @@ function T.Spells(class, race, faction)
     return out
 end
 
+-- Ab welcher Stufe der Lehrer einen Zauber lehrt, oder nil (6.117.0.0,
+-- Erinnerungen: "erst mit Stufe 10 lernbar").
+local levelOf = {}
+function T.SpellLevel(class, id)
+    local c = T.CLASSES[class]
+    if not c then return nil end
+    local map = levelOf[class]
+    if not map then
+        map = {}
+        for level, list in pairs(c.spells) do
+            for _, s in ipairs(list) do
+                if not map[s.id] or level < map[s.id] then map[s.id] = level end
+            end
+        end
+        levelOf[class] = map
+    end
+    return map[id]
+end
+
 -- Rangliste, in der `id` steht (hoeherer Rang ersetzt den niedrigeren),
 -- und die Stelle darin.
 function T.RankChain(class, id)
