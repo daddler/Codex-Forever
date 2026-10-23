@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.145.0.0] – 2026-10-23
+
+### Geändert
+- Berufe → Gilde (Wunsch des Spielers): Namen in der Klassenfarbe (`PT.ClassMap`: Klasse aus `GetGuildRosterInfo`, eigene Charaktere aus dem Bestand; `RAID_CLASS_COLORS`). Unbekannte Klasse: Farbe wie bisher.
+
 ## [6.144.1.0] – 2026-10-22
 
 ### Geändert

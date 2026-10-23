@@ -759,7 +759,7 @@ local function Row(body, y, w, left, right, opts)
         row.left:SetPoint("LEFT", row, "LEFT", 4, 0)
     end
     row.left:SetText(left)
-    local c = C[opts.tone or "textNormal"] or C.textNormal
+    local c = opts.rgb or C[opts.tone or "textNormal"] or C.textNormal
     row.left:SetTextColor(c[1], c[2], c[3])
     -- 6.140.0.0 (Beta-Test: "60x vorgeschlagen - 60 mal klicken zum
     -- Loeschen"): Menge direkt eintippen, × loescht.
@@ -915,7 +915,34 @@ local function Skills()
     return skills, order
 end
 
+-- 6.145.0.0 (Wunsch: Namen in der Klassenfarbe): Klasse aus der
+-- Gildenliste des Clients, eigene Charaktere aus dem Bestand.
+function PT.ClassMap()
+    local out = {}
+    -- Die Liste fuellt der Client erst auf Anfrage; beim naechsten Zeichnen ist sie da.
+    local gi = _G.C_GuildInfo
+    if gi and gi.GuildRoster then pcall(gi.GuildRoster) elseif _G.GuildRoster then pcall(_G.GuildRoster) end
+    local n = _G.GetNumGuildMembers and Plain(_G.GetNumGuildMembers())
+    for i = 1, (type(n) == "number" and n or 0) do
+        local ok, name, _, _, _, _, _, _, _, _, _, class = pcall(_G.GetGuildRosterInfo, i)
+        name, class = ok and Plain(name), ok and Plain(class)
+        if type(name) == "string" and type(class) == "string" then out[name:match("^([^-]+)") or name] = class end
+    end
+    local sd = SD()
+    for _, c in pairs(sd and sd.inventory and sd.inventory.chars or {}) do
+        if type(c) == "table" and type(c.name) == "string" and type(c.class) == "string" then out[c.name] = c.class end
+    end
+    return out
+end
+
+function PT.ClassRGB(class)
+    local cc = class and _G.RAID_CLASS_COLORS and _G.RAID_CLASS_COLORS[class]
+    if type(cc) == "table" and type(cc.r) == "number" then return { cc.r, cc.g, cc.b } end
+    return nil
+end
+
 function PT.DrawGuild(body, w)
+    local classes = PT.ClassMap()
     local y = 0
     local g = PT.Guild() or {}
     local f = page
@@ -953,7 +980,7 @@ function PT.DrawGuild(body, w)
             for _, x in ipairs(people) do
                 local right = (x.rank and (x.rank .. (x.max and (" / " .. x.max) or "")) or "") .. "   " .. x.n .. " Rezepte"
                 y = Row(body, y, w, x.name .. (x.own and "  (dein Charakter)" or ""), right,
-                    { tone = x.own and "textBright" or "textNormal" })
+                    { tone = x.own and "textBright" or "textNormal", rgb = PT.ClassRGB(classes[x.name]) })
             end
             y = y - 8
         end

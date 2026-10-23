@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.145.0.0",
+        date    = "23.10.2026",
+        notes   = {
+            "|cff7C6CFFBerufe der Gilde in Klassenfarben|r – jeder Name steht in der Farbe seiner Klasse.",
+        },
+    },
+    {
         version = "6.144.1.0",
         date    = "22.10.2026",
         notes   = {
