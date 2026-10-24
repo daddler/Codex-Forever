@@ -34,7 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           case "$KEEP" in ''|*[!0-9]*) echo "keep muss eine Zahl sein"; exit 1;; esac
-          if [ "$KEEP" -lt 5 ]; then echo "Weniger als 5 behalten ist hier nicht erlaubt"; exit 1; fi
+          if [ "$KEEP" -lt 2 ]; then echo "Weniger als 2 behalten ist hier nicht erlaubt (das neueste und eines als Backup)"; exit 1; fi
           gh api --paginate "repos/$REPO/releases?per_page=100" \
             --jq '.[] | select(.draft == false and (.tag_name | startswith("v"))) | [.created_at, .tag_name] | @tsv' | sort -r > all.tsv
           total=$(wc -l < all.tsv)
