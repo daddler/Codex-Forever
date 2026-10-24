@@ -1,7 +1,7 @@
 # WeintCodex — Forever Edition
 
 <p align="center">
-  <img src="media/logo.png" alt="WeintCodex" width="240">
+  <img src="docs/images/weintcodex_banner.webp" alt="WeintCodex – Raid Guide &amp; Intelligence System" width="900">
 </p>
 
 <p align="center">
