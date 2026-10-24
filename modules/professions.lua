@@ -247,6 +247,20 @@ function PRO.Learned(r, m)
     return nil
 end
 
+-- 1.0.0.0: Fertigkeit je Beruf merken (fuer die Companion, Seite „Berufe“):
+-- { [key] = { rank, max } } und skillsAt. Nur wenn der Client geantwortet
+-- hat - sonst bleibt der alte Stand, nie ein leerer.
+function PRO.RememberSkills()
+    local skills, answered = PRO.Skills()
+    if not answered then return false end
+    local m = PRO.Memory()
+    if not m then return false end
+    local out = {}
+    for key, s in pairs(skills) do out[key] = { rank = s.rank, max = s.max } end
+    m.skills, m.skillsAt = out, Now()
+    return true
+end
+
 -- Wann das Berufsfenster dieses Berufs zuletzt gelesen wurde (oder nil).
 function PRO.ScannedAt(key)
     local m = PRO.Memory()
@@ -1096,7 +1110,7 @@ PRO.QueueScan = QueueScan
 local ev = CreateFrame("Frame")
 for _, e in ipairs({ "TRADE_SKILL_SHOW", "TRADE_SKILL_LIST_UPDATE", "TRADE_SKILL_UPDATE", "NEW_RECIPE_LEARNED",
                      "CRAFT_SHOW", "CRAFT_UPDATE", "SKILL_LINES_CHANGED", "SPELL_DATA_LOAD_RESULT",
-                     "GET_ITEM_INFO_RECEIVED" }) do
+                     "GET_ITEM_INFO_RECEIVED", "PLAYER_LOGIN" }) do
     pcall(ev.RegisterEvent, ev, e)
 end
 -- Wie oft jedes Ereignis kam (fuer /wcui pruefen: hat das Spiel das
@@ -1104,6 +1118,8 @@ end
 PRO.eventCount = {}
 ev:SetScript("OnEvent", function(_, event, id)
     PRO.eventCount[event] = (PRO.eventCount[event] or 0) + 1
+    if event == "PLAYER_LOGIN" or event == "SKILL_LINES_CHANGED" then pcall(PRO.RememberSkills) end
+    if event == "PLAYER_LOGIN" then return end
     if event == "TRADE_SKILL_SHOW" or event == "CRAFT_SHOW" then QueueScan(0.3) return end
     if event == "NEW_RECIPE_LEARNED" then
         local m = PRO.Memory()

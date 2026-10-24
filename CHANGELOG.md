@@ -9,6 +9,14 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.0.0.0] – 2026-10-24
+
+### Geändert
+- Umstellung auf Forever: die Zählung der Fassungen beginnt neu bei 1.0.0.0 (vorher 6.146.0.0). Die Companion vergleicht Fassungen auf Ungleichheit, nicht auf „höher“ – bestehende Installationen bekommen 1.0.0.0 deshalb als Update angeboten, ab Companion 1.0.0 mit dem Knopf „Umstellung auf Forever“. Das Changelog-Popup sucht die zuletzt gesehene Fassung nach Position in `data/changelog.lua`, nicht nach Größe – es zeigt also genau diesen Eintrag.
+
+### Neu
+- Berufe: `PRO.RememberSkills()` merkt sich beim Einloggen und bei `SKILL_LINES_CHANGED` die Fertigkeit je Beruf in `SavedData.professions[Name-Realm].skills` (`{ rank, max }`) und `skillsAt` – nur wenn der Client geantwortet hat. Gelesen von der Seite „Berufe“ der Companion (`core/professions.py` drüben).
+
 ## [6.146.0.0] – 2026-10-24
 
 ### Neu

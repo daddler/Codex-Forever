@@ -22,6 +22,14 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.0.0.0",
+        date    = "24.10.2026",
+        notes   = {
+            "|cff7C6CFFWeintCodex heißt jetzt ganz Forever|r – die Zählung beginnt neu bei 1.0. Alles, was du eingestellt hast, bleibt, wie es ist.",
+            "|cff7C6CFFDeine Berufe in der Companion|r – WeintCodex merkt sich die Fertigkeit jedes Berufs, damit du am Desktop siehst, welcher Charakter was herstellen kann.",
+        },
+    },
+    {
         version = "6.146.0.0",
         date    = "24.10.2026",
         notes   = {
