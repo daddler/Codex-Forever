@@ -2397,6 +2397,43 @@ do
     Check(ok, "Raus da: eigene Alarme als Datei plus Toene des Spiels, alle waehlbar" .. (ok and "" or (": " .. tostring(err))))
 end
 
+-- 6.146.0.0: eigene Toene aus der Companion (WeintCodex_Sounds): nur
+-- eigen<n> mit .ogg, vorn in der Liste, Pfad im Begleitordner; kaputte
+-- Eintraege werden uebergangen, nicht geraten.
+do
+    local G = _G
+    local FA = WeintCodex.UIFireAlarm
+    local savedList, savedPlay = G.WeintCodex_CustomSounds, G.PlaySoundFile
+    local ok, err = pcall(function()
+        G.WeintCodex_CustomSounds = {
+            { key = "eigen1", file = "eigen1.ogg", text = "Mein Gong" },
+            { key = "raus", file = "raus.ogg", text = "Kapern" },
+            { key = "eigen2", file = "../boese.ogg", text = "Pfad" },
+            "kein Eintrag",
+        }
+        FA.MergeCustom()
+        assert(FA.ORDER[1] == "eigen1", "eigener Ton nicht vorn")
+        assert(FA.SOUNDS.eigen1.path == FA.CUSTOM_PATH .. "eigen1.ogg", "Pfad falsch")
+        assert(FA.SOUNDS.eigen1.text == "Eigener Ton: Mein Gong", "Name fehlt")
+        assert(FA.SOUNDS.eigen2 == nil, "unsicherer Dateiname uebernommen")
+        assert(FA.SOUNDS.raus.file == "raus.ogg", "mitgelieferter Ton ueberschrieben")
+        local played
+        G.PlaySoundFile = function(p) played = p end
+        K.Set("comfort", "fireSound", "eigen1")
+        FA.Play()
+        assert(played == FA.CUSTOM_PATH .. "eigen1.ogg", "eigener Ton nicht gespielt")
+        FA.MergeCustom()
+        local n = 0
+        for _, k in ipairs(FA.ORDER) do if k == "eigen1" then n = n + 1 end end
+        assert(n == 1, "eigener Ton doppelt in der Liste")
+    end)
+    K.Set("comfort", "fireSound", "raus")
+    for i = #FA.ORDER, 1, -1 do if FA.ORDER[i]:match("^eigen") then table.remove(FA.ORDER, i) end end
+    FA.SOUNDS.eigen1 = nil
+    G.WeintCodex_CustomSounds, G.PlaySoundFile = savedList, savedPlay
+    Check(ok, "Raus da: eigene Toene aus der Companion" .. (ok and "" or (": " .. tostring(err))))
+end
+
 -- 6.25.1.0: Raus da ausserhalb des Kampfes (Lagerfeuer): zweimal Leben
 -- verloren binnen 3 s -> Ton; einmal (Sturz) nicht; im Kampf nicht.
 do

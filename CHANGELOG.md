@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [6.146.0.0] – 2026-10-24
+
+### Neu
+- Raus da! (Wunsch des Spielers): eigene Töne aus der Companion. Sie liegen im Begleitordner `WeintCodex_Sounds` (ein Update von WeintCodex ersetzt ihn nie), `sounds.lua` setzt `WeintCodex_CustomSounds`; `FA.MergeCustom()` liest sie erst beim Gebrauch (Liste, Probe, Alarm, Töne der Abklingzeiten) und stellt sie vorn in die Auswahl. `FA.FileOf()` ist der eine Pfad für mitgelieferte und eigene Dateien. Vertrag: `../Companion-Forever/docs/custom-sounds-bridge.md`.
+
 ## [6.145.0.0] – 2026-10-23
 
 ### Geändert

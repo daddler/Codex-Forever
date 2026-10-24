@@ -73,6 +73,36 @@ FA.SOUNDS = {
 }
 FA.ORDER = { "raus", "achtung", "fehler", "trill", "hoch", "tief", "dreifach", "hupe", "sirene", "raid", "boss", "ready", "alarm", "alarm2", "whisper", "invite", "queue", "toast" }
 
+-- 6.146.0.0 (Wunsch: eigene Toene ueber die Companion): eigene Dateien des
+-- Spielers. Die Companion schreibt sie in ein eigenes Addon WeintCodex_Sounds
+-- (ein Update von WeintCodex ersetzt diesen Ordner nie) und dort sounds.lua
+-- mit WeintCodex_CustomSounds = { { key, file, text }, ... }. Gelesen wird
+-- erst beim Gebrauch, nie beim Laden: WeintCodex_Sounds laedt nach uns.
+-- Neue Dateien kennt das Spiel erst nach einem Neustart des Spiels.
+-- Vertrag: ../Companion-Forever/docs/custom-sounds-bridge.md
+FA.CUSTOM_PATH = "Interface\\AddOns\\WeintCodex_Sounds\\"
+local customSeen
+function FA.MergeCustom()
+    local list = _G.WeintCodex_CustomSounds
+    if type(list) ~= "table" or list == customSeen then return end
+    customSeen = list
+    for _, e in ipairs(list) do
+        local key, file = type(e) == "table" and e.key, type(e) == "table" and e.file
+        if type(key) == "string" and key:match("^eigen%d+$") and type(file) == "string"
+            and file:match("^[%w_]+%.ogg$") and not FA.SOUNDS[key] then
+            FA.SOUNDS[key] = { path = FA.CUSTOM_PATH .. file,
+                text = "Eigener Ton: " .. (type(e.text) == "string" and e.text ~= "" and e.text or key) }
+            table.insert(FA.ORDER, 1, key)
+        end
+    end
+end
+
+-- Der volle Pfad einer Datei-Eintragung (eigene oder mitgelieferte).
+function FA.FileOf(s)
+    if type(s) ~= "table" then return nil end
+    return s.path or (s.file and FA.SOUND_PATH .. s.file) or nil
+end
+
 local stats = { checks = 0, plain = 0, secret = 0, none = 0, alarms = 0 }
 FA.stats = stats
 local last            -- letzte offene Summe des eigenen vermeidbaren Schadens
@@ -86,9 +116,11 @@ local function Now()
 end
 
 function FA.Play()
-    local s = FA.SOUNDS[K.Get(KEY, "fireSound")] or FA.SOUNDS.hoch
-    if s.file then
-        if _G.PlaySoundFile then pcall(_G.PlaySoundFile, FA.SOUND_PATH .. s.file, "Master") end
+    FA.MergeCustom()
+    local s = FA.SOUNDS[K.Get(KEY, "fireSound")] or FA.SOUNDS.raus
+    local path = FA.FileOf(s)
+    if path then
+        if _G.PlaySoundFile then pcall(_G.PlaySoundFile, path, "Master") end
         return
     end
     local kit = _G.SOUNDKIT and _G.SOUNDKIT[s.kit] or s.id
@@ -384,6 +416,7 @@ end
 local function Build(B)
     local off = function() return not K.Get(KEY, "fireAlarm") end
     B:Section("Raus da!", "Ein Ton, sobald du in etwas stehst, das dir schadet und dem man ausweichen kann – nicht nur Feuer: alles am Boden (Gift, Leere, Eis, Blitze, Wirbel), Kegel und Wellen vor dem Gegner. Was vermeidbar ist, sagt das Spiel; ein Kampflog gibt es für Addons nicht.")
+    FA.MergeCustom()
     local items = {}
     for _, k in ipairs(FA.ORDER) do items[#items + 1] = { value = k, text = FA.SOUNDS[k].text } end
     B:Row({ type = "toggle", label = "Warnton, wenn du in etwas stehst", key = "fireAlarm",

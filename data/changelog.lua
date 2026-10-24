@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "6.146.0.0",
+        date    = "24.10.2026",
+        notes   = {
+            "|cff7C6CFFEigene Töne für „Raus da!“|r – in der Companion ausgewählt, stehen sie hier oben in der Liste der Töne. Neue Töne hört das Spiel nach einem Neustart.",
+        },
+    },
+    {
         version = "6.145.0.0",
         date    = "23.10.2026",
         notes   = {

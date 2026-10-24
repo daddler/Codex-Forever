@@ -329,6 +329,7 @@ into modules that no longer exist. A green run means "it loads", never
 | Kopflose Prüfläufe, Client-Attrappe | `.github/tests/README.md` |
 | Zugriffsprofile / `core/access.lua` | `../Companion-Forever/docs/access-profile-bridge.md` |
 | Ausrüstungsstand an die Companion (`character_sheet`) | `../Companion-Forever/docs/character-sheet-bridge.md` |
+| Eigene Töne für „Raus da!“ (Begleitordner `WeintCodex_Sounds`, `FA.MergeCustom`) | `../Companion-Forever/docs/custom-sounds-bridge.md` |
 | Live-Brücke (`data/companion_live.lua`) | `../Companion-Forever/docs/live-bridge.md` |
 | Raid-Termin, Countdown, Zusagen | `../Companion-Forever/docs/raid-schedule-bridge.md` |
 | WCIMPORT-Import (`/wc import`, Bot-Slash-Commands) | `../Companion-Forever/docs/wcimport-protocol.md` |

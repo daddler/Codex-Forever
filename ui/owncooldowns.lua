@@ -795,6 +795,7 @@ function OC.SoundAvailable(k)
     if k:match("^kit:") then return KitOf(k) ~= nil end
     if k:match("^file:") then return true end
     local FA = WeintCodex.UIFireAlarm
+    if FA and FA.MergeCustom then FA.MergeCustom() end
     return FA and FA.SOUNDS and FA.SOUNDS[k] ~= nil or false
 end
 
@@ -846,10 +847,12 @@ function OC.PlaySound(k, e)
         if _G.PlaySoundFile then pcall(_G.PlaySoundFile, (FA and FA.SOUND_PATH or "") .. f .. ".ogg", "Master") end
         return
     end
+    if FA and FA.MergeCustom then FA.MergeCustom() end
     local s = FA and FA.SOUNDS and FA.SOUNDS[k]
     if not s then return end
-    if s.file then
-        if _G.PlaySoundFile then pcall(_G.PlaySoundFile, (FA.SOUND_PATH or "") .. s.file, "Master") end
+    local path = FA.FileOf and FA.FileOf(s)
+    if path then
+        if _G.PlaySoundFile then pcall(_G.PlaySoundFile, path, "Master") end
         return
     end
     local id = _G.SOUNDKIT and _G.SOUNDKIT[s.kit] or s.id
