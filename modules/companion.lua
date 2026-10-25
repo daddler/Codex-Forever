@@ -404,6 +404,17 @@ INBOX_HANDLERS.dungeon_invites = function(payload)
 
 end
 
+-- Auftraege aus der Gilde (modules/craftorders.lua). Immer der volle
+-- Stand; das Fenster oeffnet core/main.lua nach ProcessInbox, wenn ein
+-- noch nicht gezeigter Auftrag dabei ist.
+INBOX_HANDLERS.craft_orders = function(payload)
+
+    if WeintCodex.CraftOrders and WeintCodex.CraftOrders.Receive then
+        WeintCodex.CraftOrders.Receive(payload)
+    end
+
+end
+
 local function Dispatch(message)
 
     local handler = INBOX_HANDLERS[message.type]

@@ -58,6 +58,7 @@ mitreissen: jeder Behandler läuft in `pcall`.
 |---|---|
 | `access_profile` | `core/access.lua` |
 | `raid_import` | `modules/sync.lua` (`QuickImport`) |
+| `craft_orders` | `modules/craftorders.lua` (`CO.Receive`), Fenster nach dem Login; Rückweg `craft_order_status`; Vertrag `../Companion-Forever/docs/craft-orders-bridge.md` |
 | `dungeon_invites` | `modules/companion.lua` → `SavedData.dungeonInvites`, gezeigt in `modules/dungeonpages.lua` (`InvitesFor`); Vertrag `../Companion-Forever/docs/raid-schedule-bridge.md`, *Dungeon-Einladungen* |
 
 **Mehr nicht.** `academy_catalog`, `academy_state`, `weinttv_report`,

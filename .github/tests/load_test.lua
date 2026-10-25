@@ -22216,6 +22216,50 @@ do
     Check(ok, "Dungeon-Einladungen" .. (ok and "" or (": " .. tostring(err))))
 end
 
+Section("Aufträge aus der Gilde")
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local CO = WeintCodex.CraftOrders
+        G.WeintCompanionDB = { version = 1, lastId = 0, queue = {} }
+        G.WeintCompanionInboxDB = { queue = {
+            { type = "craft_orders", payload = { count = 2, orders = {
+                { id = 12, role = "crafter", recipe = "Runenstoffbeutel", character = "Weintmage",
+                  quantity = 4, mats = true, status = "open", from = "Fabi", note = "per Post" },
+                { id = 13, role = "requester", recipe = "Mondstoff", character = "Schneidi",
+                  quantity = 1, mats = false, status = "accepted", from = "Ich" },
+            } } },
+        } }
+        WeintCodex.Companion.ProcessInbox()
+        Check(#CO.List() == 2, "Aufträge: angekommen")
+        Check(#CO.Unseen() == 1, "Aufträge: nur eingehende offene gelten als neu")
+        local head, sub, state = CO.Line(CO.List()[1])
+        Check(head == "4× Runenstoffbeutel" and sub:find("von Fabi", 1, true)
+            and sub:find("Material gestellt", 1, true) and state == "offen", "Aufträge: Zeile lesbar")
+        Check(#CO.Moves(CO.List()[1]) == 3 and CO.Moves(CO.List()[2])[1] == "cancelled",
+            "Aufträge: Knöpfe je Rolle")
+        CO.Show()
+        Check(#CO.Unseen() == 0, "Aufträge: gezeigt ist gesehen")
+        CO.SetStatus(CO.List()[1], "accepted")
+        local q = G.WeintCompanionDB.queue
+        Check(q[#q] and q[#q].type == "craft_order_status" and q[#q].payload == "12|accepted",
+            "Aufträge: Klick geht in die Warteschlange an die Companion")
+        local _, _, pending = CO.Line(CO.List()[1])
+        Check(pending == "angenommen · wird gemeldet" and #CO.Moves(CO.List()[1]) == 0,
+            "Aufträge: bis zur Meldung kein zweiter Klick")
+        CO.Receive({ count = 1, orders = {
+            { id = 12, role = "crafter", recipe = "Runenstoffbeutel", character = "Weintmage",
+              quantity = 4, mats = true, status = "accepted", from = "Fabi" } } })
+        local _, _, after = CO.Line(CO.List()[1])
+        Check(after == "angenommen" and CO.Moves(CO.List()[1])[1] == "done",
+            "Aufträge: Bestätigung vom Bot löst die Meldung auf")
+        CO.Receive({ count = 0, orders = {} })
+        Check(#CO.List() == 0, "Aufträge: leere Liste heisst keine mehr")
+        CO.Hide()
+    end)
+    Check(ok, "Aufträge" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

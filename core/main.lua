@@ -12,7 +12,7 @@ WeintCodex = WeintCodex or {}
 -- "v" plus diese Zahl sein. Die CI prueft alle vier gegeneinander und
 -- bricht sonst ab - siehe .github/scripts/release_notes.py und
 -- docs/development/releases.md.
-WeintCodex.Version = "1.1.0.0"
+WeintCodex.Version = "1.2.0.0"
 
 SLASH_WEINTCODEX1 = "/wc"
 SLASH_WEINTCODEX2 = "/weintcodex"
@@ -106,6 +106,11 @@ SlashCmdList["WEINTCODEX"] = function(msg)
 
     if verb == "beute" or verb == "loot" or verb == "wunschliste" then
         Open("beute")
+        return
+    end
+
+    if verb == "aufträge" or verb == "auftraege" or verb == "auftrag" or verb == "orders" then
+        if WeintCodex.CraftOrders then WeintCodex.CraftOrders.Show() end
         return
     end
 
@@ -328,6 +333,12 @@ local function OnEvent(self, event, addonName)
     -- Raid-Roster-Export von einem verknuepften Raidlead).
     if WeintCodex.Companion and WeintCodex.Companion.ProcessInbox then
         WeintCodex.Companion.ProcessInbox()
+    end
+
+    -- Ein neuer Auftrag aus der Gilde: das kleine Fenster, auch wenn
+    -- WeintCodex selbst zu ist (modules/craftorders.lua).
+    if WeintCodex.CraftOrders and WeintCodex.CraftOrders.ShowIfNew then
+        WeintCodex.CraftOrders.ShowIfNew()
     end
 
     -- Sperren aus dem Zugriffsprofil anwenden. Muss nach ProcessInbox

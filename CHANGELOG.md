@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.2.0.0] – 2026-10-26
+
+### Neu
+- Aufträge aus der Gilde (Wunsch des Spielers): `modules/craftorders.lua`, eigenes Fenster am Bildschirm (nicht im Hauptfenster), öffnet sich nach dem Einloggen bei einem noch nicht gezeigten eingehenden Auftrag (`CO.ShowIfNew`, nach dem Kampf), sonst `/wc aufträge`. Inbox-Typ `craft_orders` (immer der volle Stand, `SavedData.craftOrders`). Annehmen/Erledigt/Ablehnen bzw. Stornieren reiht `craft_order_status` („id|status“) an die Companion; bis die Antwort des Bots ankommt, steht „wird gemeldet“ und es gibt keinen zweiten Klick. „Neue Aufträge holen“ über `WeintCodex.AttachReload`. Vertrag: `../Companion-Forever/docs/craft-orders-bridge.md`.
+
 ## [1.1.0.0] – 2026-10-25
 
 ### Neu

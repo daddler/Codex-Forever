@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.2.0.0",
+        date    = "26.10.2026",
+        notes   = {
+            "|cff7C6CFFAufträge aus der Gilde|r – hat jemand im Discord etwas bei dir bestellt, öffnet sich nach dem Einloggen ein kleines Fenster: was, wie viel, für welchen Charakter, ob das Material gestellt wird. Annehmen, Erledigt oder Ablehnen geht direkt dort; mit „/wc aufträge“ holst du es jederzeit zurück.",
+        },
+    },
+    {
         version = "1.1.0.0",
         date    = "25.10.2026",
         notes   = {
