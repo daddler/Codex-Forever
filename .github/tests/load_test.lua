@@ -22181,6 +22181,41 @@ do
     Check(ok, "Ausmisten" .. (ok and "" or (": " .. tostring(err))))
 end
 
+Section("Dungeon-Einladungen aus dem Discord")
+do
+    local G = _G
+    local ok, err = pcall(function()
+        local now = G.time and G.time() or os.time()
+        G.WeintCompanionInboxDB = { queue = {
+            { type = "dungeon_invites", payload = { count = 2, invites = {
+                { dungeon = "the_deadmines", name = "The Deadmines", title = "Todesminen",
+                  at = now + 3600, active = 3, size = 5, me = "none", open = true },
+                { dungeon = "the_deadmines", name = "The Deadmines", title = "alt",
+                  at = now - 4 * 3600, active = 5, size = 5, open = true },
+            } } },
+        } }
+        WeintCodex.Companion.ProcessInbox()
+        local DP = WeintCodex.DungeonPages
+        local list = DP.InvitesFor("the_deadmines")
+        Check(#list == 1, "Einladungen: angekommen, vorbei ist vorbei")
+        Check(#DP.InvitesFor("ragefire_chasm") == 0, "Einladungen: nur beim eigenen Dungeon")
+        local title, detail = DP.InviteLines(list[1])
+        Check(title:find("Gruppe im Discord", 1, true) and detail:find("3 / 5 zugesagt", 1, true)
+            and detail:find("noch nicht angemeldet", 1, true), "Einladungen: Zeile lesbar")
+        local _, noTime = DP.InviteLines({ dungeon = "x", open = false })
+        Check(not noTime:find("0", 1, true) and noTime:find("geschlossen", 1, true),
+            "Einladungen: ohne Zahlen keine erfundene Null")
+        DP.Select("the_deadmines")
+        WeintCodex.Navigation.SwitchTo("dungeons")
+        G.WeintCompanionInboxDB = { queue = {
+            { type = "dungeon_invites", payload = { count = 0, invites = {} } },
+        } }
+        WeintCodex.Companion.ProcessInbox()
+        Check(#DP.InvitesFor("the_deadmines") == 0, "Einladungen: leere Liste heisst keine mehr")
+    end)
+    Check(ok, "Dungeon-Einladungen" .. (ok and "" or (": " .. tostring(err))))
+end
+
 if failures == 0 then
     print("BESTANDEN")
     os.exit(0)

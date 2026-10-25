@@ -58,6 +58,7 @@ mitreissen: jeder Behandler läuft in `pcall`.
 |---|---|
 | `access_profile` | `core/access.lua` |
 | `raid_import` | `modules/sync.lua` (`QuickImport`) |
+| `dungeon_invites` | `modules/companion.lua` → `SavedData.dungeonInvites`, gezeigt in `modules/dungeonpages.lua` (`InvitesFor`); Vertrag `../Companion-Forever/docs/raid-schedule-bridge.md`, *Dungeon-Einladungen* |
 
 **Mehr nicht.** `academy_catalog`, `academy_state`, `weinttv_report`,
 `weakaura_library`, `stat_weights` und `target_gear` gibt es in dieser

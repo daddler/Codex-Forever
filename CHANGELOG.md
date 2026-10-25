@@ -9,6 +9,11 @@ Die Fassung für *Mists of Pandaria Classic* (`daddler/WeintCodex`) hat ihren
 eigenen Changelog und ihren eigenen Update-Kanal. Die beiden Zweige laufen
 nicht zusammen.
 
+## [1.1.0.0] – 2026-10-25
+
+### Neu
+- Dungeon-Einladungen aus dem Discord: neuer Inbox-Typ `dungeon_invites` (`modules/companion.lua`), immer der volle Stand in `SavedData.dungeonInvites` (leere Liste = keine mehr). Die Dungeonseite zeigt sie unter „Besonderheiten“ in der Detailkarte (`DungeonPages.InvitesFor`/`InviteLines`), bis drei Stunden nach Beginn; ohne Zahl keine erfundene 0. Zuordnung über die Dungeon-Kennung, nicht den Namen. Vertrag: `../Companion-Forever/docs/raid-schedule-bridge.md`, Abschnitt *Dungeon-Einladungen*.
+
 ## [1.0.0.0] – 2026-10-24
 
 ### Geändert

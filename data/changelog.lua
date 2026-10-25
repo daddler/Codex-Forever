@@ -22,6 +22,13 @@
 
 WeintCodex_ChangelogData = {
     {
+        version = "1.1.0.0",
+        date    = "25.10.2026",
+        notes   = {
+            "|cff7C6CFFGruppen aus dem Discord auf der Dungeonseite|r – wird im Discord eine Runde für einen Dungeon geplant, steht sie bei diesem Dungeon unter „Besonderheiten“: wann, wie viele dabei sind und ob du schon zugesagt hast. Dafür braucht es die Companion.",
+        },
+    },
+    {
         version = "1.0.0.0",
         date    = "24.10.2026",
         notes   = {

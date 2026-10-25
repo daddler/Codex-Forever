@@ -382,6 +382,28 @@ INBOX_HANDLERS.raid_import = function(payload)
 
 end
 
+-- Dungeon-Einladungen aus dem Discord (Bot: Sonderraid mit Dungeon,
+-- Companion: core/dungeon_invites.py). Immer der VOLLE Stand - eine
+-- leere Liste heisst "keine mehr", nicht "nichts Neues". Gezeigt auf
+-- der Seite des Dungeons (modules/dungeonpages.lua, Besonderheiten).
+-- Vertrag: ../Companion-Forever/docs/raid-schedule-bridge.md,
+-- Abschnitt "Dungeon-Einladungen".
+INBOX_HANDLERS.dungeon_invites = function(payload)
+
+    if type(payload) ~= "table" then return end
+
+    local list = {}
+    for _, invite in ipairs(type(payload.invites) == "table" and payload.invites or {}) do
+        if type(invite) == "table" and type(invite.dungeon) == "string" then
+            list[#list + 1] = invite
+        end
+    end
+
+    WeintCodex.SavedData = WeintCodex.SavedData or {}
+    WeintCodex.SavedData.dungeonInvites = { receivedAt = time(), list = list }
+
+end
+
 local function Dispatch(message)
 
     local handler = INBOX_HANDLERS[message.type]

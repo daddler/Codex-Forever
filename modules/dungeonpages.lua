@@ -2324,8 +2324,58 @@ local COL_RUBRIC_H = 18    -- Rubrik -> erste Zeile der Spalte
 -- Alles, was ueber diesen Dungeon zu sagen ist, ohne dass jemand
 -- einen Boss angeklickt hat. Reihenfolge ist Rangfolge: was die
 -- Gruppe VORHER wissen muss, steht oben.
+-- Die Einladungen aus dem Discord zu DIESEM Dungeon, die noch nicht
+-- vorbei sind. Ohne Companion oder ohne Einladung: keine Zeile - nie
+-- "0 Einladungen", denn ob es keine gibt, weiss das Addon ohne
+-- Companion nicht.
+local INVITE_WEEKDAYS = { "So", "Mo", "Di", "Mi", "Do", "Fr", "Sa" }
+local INVITE_ME = { active = "zugesagt", tentative = "vielleicht",
+                    bench = "Ersatzbank", absent = "abgesagt", none = "noch nicht angemeldet" }
+local INVITE_GRACE = 3 * 3600
+
+function WeintCodex.DungeonPages.InvitesFor(dungeonId)
+    local store = WeintCodex.SavedData and WeintCodex.SavedData.dungeonInvites
+    local out = {}
+    if type(store) ~= "table" or type(store.list) ~= "table" then return out end
+    local now = time()
+    for _, invite in ipairs(store.list) do
+        if invite.dungeon == dungeonId
+            and (type(invite.at) ~= "number" or invite.at + INVITE_GRACE > now) then
+            out[#out + 1] = invite
+        end
+    end
+    return out
+end
+
+function WeintCodex.DungeonPages.InviteLines(invite)
+    local when = "Termin offen"
+    if type(invite.at) == "number" then
+        local t = date("*t", invite.at)
+        when = string.format("%s %02d.%02d. %02d:%02d",
+            INVITE_WEEKDAYS[t.wday] or "", t.day, t.month, t.hour, t.min)
+    end
+
+    local parts = {}
+    if type(invite.active) == "number" then
+        parts[#parts + 1] = invite.active .. (type(invite.size) == "number"
+            and (" / " .. invite.size) or "") .. " zugesagt"
+    end
+    if type(invite.me) == "string" and INVITE_ME[invite.me] then
+        parts[#parts + 1] = "du: " .. INVITE_ME[invite.me]
+    end
+    parts[#parts + 1] = invite.open == false and "Anmeldung geschlossen"
+        or "anmelden im Discord"
+
+    return "Gruppe im Discord: " .. when, table.concat(parts, " · ")
+end
+
 local function FactEntries(dungeon)
     local out = {}
+
+    for _, invite in ipairs(WeintCodex.DungeonPages.InvitesFor(dungeon.id)) do
+        local title, detail = WeintCodex.DungeonPages.InviteLines(invite)
+        out[#out + 1] = { title = title, detail = detail, tone = "successBright" }
+    end
 
     local wings = D.Wings(dungeon)
     if wings and #wings > 1 then
