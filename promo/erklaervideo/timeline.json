@@ -1,0 +1,937 @@
+{
+ "voice": "elevenlabs",
+ "bpm": 110,
+ "bars": 301,
+ "duration": 653.864,
+ "scenes": [
+  {
+   "key": "intro",
+   "start": 0.0,
+   "end": 41.455,
+   "bar": 0,
+   "bars": 19,
+   "music": "intro",
+   "drop": false
+  },
+  {
+   "key": "install",
+   "start": 41.455,
+   "end": 104.727,
+   "bar": 19,
+   "bars": 29,
+   "music": "soft",
+   "drop": false
+  },
+  {
+   "key": "window",
+   "start": 104.727,
+   "end": 154.909,
+   "bar": 48,
+   "bars": 23,
+   "music": "main",
+   "drop": true
+  },
+  {
+   "key": "dungeons",
+   "start": 154.909,
+   "end": 220.364,
+   "bar": 71,
+   "bars": 30,
+   "music": "calm",
+   "drop": false
+  },
+  {
+   "key": "loot",
+   "start": 220.364,
+   "end": 248.727,
+   "bar": 101,
+   "bars": 13,
+   "music": "groove",
+   "drop": false
+  },
+  {
+   "key": "character",
+   "start": 248.727,
+   "end": 298.909,
+   "bar": 114,
+   "bars": 23,
+   "music": "soft",
+   "drop": false
+  },
+  {
+   "key": "professions",
+   "start": 298.909,
+   "end": 349.091,
+   "bar": 137,
+   "bars": 23,
+   "music": "calm",
+   "drop": false
+  },
+  {
+   "key": "auction",
+   "start": 349.091,
+   "end": 377.455,
+   "bar": 160,
+   "bars": 13,
+   "music": "groove",
+   "drop": false
+  },
+  {
+   "key": "map",
+   "start": 377.455,
+   "end": 405.818,
+   "bar": 173,
+   "bars": 13,
+   "music": "soft",
+   "drop": false
+  },
+  {
+   "key": "gathering",
+   "start": 405.818,
+   "end": 449.455,
+   "bar": 186,
+   "bars": 20,
+   "music": "calm",
+   "drop": false
+  },
+  {
+   "key": "flight",
+   "start": 449.455,
+   "end": 480.0,
+   "bar": 206,
+   "bars": 14,
+   "music": "big",
+   "drop": true
+  },
+  {
+   "key": "sleepingbag",
+   "start": 480.0,
+   "end": 504.0,
+   "bar": 220,
+   "bars": 11,
+   "music": "groove",
+   "drop": false
+  },
+  {
+   "key": "comfort",
+   "start": 504.0,
+   "end": 560.727,
+   "bar": 231,
+   "bars": 26,
+   "music": "calm",
+   "drop": false
+  },
+  {
+   "key": "group",
+   "start": 560.727,
+   "end": 615.273,
+   "bar": 257,
+   "bars": 25,
+   "music": "main",
+   "drop": false
+  },
+  {
+   "key": "outro",
+   "start": 615.273,
+   "end": 652.364,
+   "bar": 282,
+   "bars": 17,
+   "music": "outro",
+   "drop": true
+  }
+ ],
+ "subs": [
+  {
+   "t0": 4.814,
+   "t1": 7.935,
+   "text": "Das ist WeintCodex, die Forever Edition.",
+   "scene": "intro"
+  },
+  {
+   "t0": 8.185,
+   "t1": 14.088,
+   "text": "Ein Addon für World of Warcraft Forever, das dich vom ersten Level bis in den Schlachtzug begleitet.",
+   "scene": "intro"
+  },
+  {
+   "t0": 14.338,
+   "t1": 19.675,
+   "text": "Du öffnest es mit dem Befehl Schrägstrich W C, oder mit einem Klick auf das Symbol.",
+   "scene": "intro"
+  },
+  {
+   "t0": 19.925,
+   "t1": 23.08,
+   "text": "WeintCodex arbeitet mit zwei Partnern zusammen.",
+   "scene": "intro"
+  },
+  {
+   "t0": 23.33,
+   "t1": 28.115,
+   "text": "Die Companion-App auf deinem Rechner, und dem WeintCodex-Bot in eurem Discord.",
+   "scene": "intro"
+  },
+  {
+   "t0": 28.365,
+   "t1": 30.969,
+   "text": "Das Addon selbst geht nie ins Internet.",
+   "scene": "intro"
+  },
+  {
+   "t0": 31.219,
+   "t1": 33.904,
+   "text": "Was von außen kommt, bringt die Companion mit.",
+   "scene": "intro"
+  },
+  {
+   "t0": 34.154,
+   "t1": 39.659,
+   "text": "In den nächsten Minuten zeige ich dir, was drin ist, wo du es einstellst und wie du es benutzt.",
+   "scene": "intro"
+  },
+  {
+   "t0": 46.268,
+   "t1": 48.251,
+   "text": "Fangen wir mit der Installation an.",
+   "scene": "install"
+  },
+  {
+   "t0": 48.501,
+   "t1": 50.187,
+   "text": "Die übernimmt die Companion.",
+   "scene": "install"
+  },
+  {
+   "t0": 50.437,
+   "t1": 55.141,
+   "text": "Sie installiert WeintCodex und hält es aktuell, du musst nichts von Hand kopieren.",
+   "scene": "install"
+  },
+  {
+   "t0": 55.391,
+   "t1": 58.547,
+   "text": "Beim ersten Start begrüßt dich der Willkommens-Assistent.",
+   "scene": "install"
+  },
+  {
+   "t0": 58.797,
+   "t1": 60.104,
+   "text": "Er hat vier Schritte.",
+   "scene": "install"
+  },
+  {
+   "t0": 60.354,
+   "t1": 64.511,
+   "text": "Zuerst: Willkommen. Hier steht kurz, was WeintCodex ist.",
+   "scene": "install"
+  },
+  {
+   "t0": 64.761,
+   "t1": 68.291,
+   "text": "Dann: das Aussehen. Du wählst zwischen vier Looks.",
+   "scene": "install"
+  },
+  {
+   "t0": 68.541,
+   "t1": 72.001,
+   "text": "Wie bisher, Schwarz, Transparent oder Holz.",
+   "scene": "install"
+  },
+  {
+   "t0": 72.251,
+   "t1": 74.412,
+   "text": "Rechts siehst du gleich eine Vorschau.",
+   "scene": "install"
+  },
+  {
+   "t0": 74.662,
+   "t1": 76.855,
+   "text": "Im dritten Schritt geht es um die Helfer.",
+   "scene": "install"
+  },
+  {
+   "t0": 77.105,
+   "t1": 81.827,
+   "text": "Nimm Empfohlen, oder wähle mit Selbst auswählen jedes Thema einzeln.",
+   "scene": "install"
+  },
+  {
+   "t0": 82.077,
+   "t1": 85.584,
+   "text": "Zum Schluss: Bereit. Du siehst eine Zusammenfassung.",
+   "scene": "install"
+  },
+  {
+   "t0": 85.834,
+   "t1": 93.233,
+   "text": "Wählst du einen Look, richtet WeintCodex die Oberfläche beim Übernehmen gleich mit ein, und dein bisheriges Layout bleibt gemerkt.",
+   "scene": "install"
+  },
+  {
+   "t0": 93.483,
+   "t1": 97.659,
+   "text": "Wichtig: Bis du auf Übernehmen klickst, ändert sich nichts.",
+   "scene": "install"
+  },
+  {
+   "t0": 97.909,
+   "t1": 101.791,
+   "text": "Brichst du ab, fragt dich der Assistent beim nächsten Einloggen noch einmal.",
+   "scene": "install"
+  },
+  {
+   "t0": 109.541,
+   "t1": 111.109,
+   "text": "Jetzt zum Hauptfenster.",
+   "scene": "window"
+  },
+  {
+   "t0": 111.359,
+   "t1": 114.674,
+   "text": "Links ist die Navigation, in vier Gruppen geordnet.",
+   "scene": "window"
+  },
+  {
+   "t0": 114.924,
+   "t1": 117.965,
+   "text": "Leveln, Gruppe, Gilde und System.",
+   "scene": "window"
+  },
+  {
+   "t0": 118.215,
+   "t1": 125.959,
+   "text": "Unter Leveln findest du die Übersicht, Charakter, Lehrer, Berufe, Taschen, Bücher, Dungeons und Beute.",
+   "scene": "window"
+  },
+  {
+   "t0": 126.209,
+   "t1": 128.458,
+   "text": "Die Übersicht ist deine Startseite.",
+   "scene": "window"
+  },
+  {
+   "t0": 128.708,
+   "t1": 134.033,
+   "text": "Oben steht, was als Nächstes ansteht, zum Beispiel wie viele Zauber beim Lehrer auf dich warten.",
+   "scene": "window"
+  },
+  {
+   "t0": 134.283,
+   "t1": 138.668,
+   "text": "Darunter siehst du Dein Weg, deine nächsten Stufen auf einen Blick.",
+   "scene": "window"
+  },
+  {
+   "t0": 138.918,
+   "t1": 143.13,
+   "text": "Unter Gruppe stehen Gruppencheck, Schlachtzüge und Raidplanung.",
+   "scene": "window"
+  },
+  {
+   "t0": 143.38,
+   "t1": 148.509,
+   "text": "Unter Gilde die Materialien, und unter System die Companion und die Einstellungen.",
+   "scene": "window"
+  },
+  {
+   "t0": 148.759,
+   "t1": 153.243,
+   "text": "Oben im Fenster gibt es eine Suche, und rechts oben schließt du das Fenster wieder.",
+   "scene": "window"
+  },
+  {
+   "t0": 159.723,
+   "t1": 161.886,
+   "text": "Ein Herzstück sind die Dungeons.",
+   "scene": "dungeons"
+  },
+  {
+   "t0": 162.136,
+   "t1": 167.031,
+   "text": "Sie sind nach Stufen sortiert, die neuen von Forever und die klassischen in einer Liste.",
+   "scene": "dungeons"
+  },
+  {
+   "t0": 167.281,
+   "t1": 172.156,
+   "text": "Jeder Dungeon hat Bosskarten, eine Aufstellung nach Rollen und seine Besonderheiten.",
+   "scene": "dungeons"
+  },
+  {
+   "t0": 172.406,
+   "t1": 177.3,
+   "text": "Klick auf einen Boss, und du siehst seine Beute mit Dropchance und seine Fähigkeiten.",
+   "scene": "dungeons"
+  },
+  {
+   "t0": 177.55,
+   "t1": 180.146,
+   "text": "Die Fähigkeiten kommen direkt aus dem Spiel.",
+   "scene": "dungeons"
+  },
+  {
+   "t0": 180.396,
+   "t1": 183.046,
+   "text": "Eine Taktik findest du hier bewusst nicht.",
+   "scene": "dungeons"
+  },
+  {
+   "t0": 183.296,
+   "t1": 188.473,
+   "text": "Die bekommst du im Discord vom Bot, mit dem Befehl Schrägstrich weint boss.",
+   "scene": "dungeons"
+  },
+  {
+   "t0": 188.723,
+   "t1": 193.046,
+   "text": "Darunter stehen die Quests zum Dungeon, mit dem Questgeber auf der Karte.",
+   "scene": "dungeons"
+  },
+  {
+   "t0": 193.296,
+   "t1": 196.465,
+   "text": "Und mit Eingang auf der Karte findest du den Weg hinein.",
+   "scene": "dungeons"
+  },
+  {
+   "t0": 196.715,
+   "t1": 200.095,
+   "text": "WeintCodex sagt dir auch, woher eine Angabe stammt.",
+   "scene": "dungeons"
+  },
+  {
+   "t0": 200.345,
+   "t1": 204.071,
+   "text": "Steht da Unbestätigt, kommt sie aus Berichten von Spielern.",
+   "scene": "dungeons"
+  },
+  {
+   "t0": 204.321,
+   "t1": 207.973,
+   "text": "Steht da Aus Classic, stammt sie aus dem klassischen Spiel.",
+   "scene": "dungeons"
+  },
+  {
+   "t0": 208.223,
+   "t1": 212.436,
+   "text": "Und was es noch nicht gibt, ist als noch nicht im Spiel markiert.",
+   "scene": "dungeons"
+  },
+  {
+   "t0": 212.686,
+   "t1": 218.02,
+   "text": "Habt ihr im Discord einen Dungeon geplant, steht die Einladung auch hier, unter Besonderheiten.",
+   "scene": "dungeons"
+  },
+  {
+   "t0": 225.177,
+   "t1": 227.644,
+   "text": "Direkt unter Dungeons liegt die Beute.",
+   "scene": "loot"
+  },
+  {
+   "t0": 227.894,
+   "t1": 230.013,
+   "text": "Hier siehst du, was wo fällt.",
+   "scene": "loot"
+  },
+  {
+   "t0": 230.263,
+   "t1": 234.83,
+   "text": "Nach Dungeons, Schlachtzügen, Ruf, P V P und Sets.",
+   "scene": "loot"
+  },
+  {
+   "t0": 235.08,
+   "t1": 238.479,
+   "text": "Gefällt dir ein Gegenstand, setzt du ihn auf deine Wunschliste.",
+   "scene": "loot"
+  },
+  {
+   "t0": 238.729,
+   "t1": 241.078,
+   "text": "Die Dropchancen stammen aus Classic.",
+   "scene": "loot"
+  },
+  {
+   "t0": 241.328,
+   "t1": 245.392,
+   "text": "Fehlt eine, steht auch keine da, und nie null Prozent.",
+   "scene": "loot"
+  },
+  {
+   "t0": 253.541,
+   "t1": 255.293,
+   "text": "Weiter zu deinem Charakter.",
+   "scene": "character"
+  },
+  {
+   "t0": 255.543,
+   "t1": 261.298,
+   "text": "Die Seite Charakter zeigt dir deine Ausrüstung, mit Gegenstandsstufe und deiner Spezialisierung.",
+   "scene": "character"
+  },
+  {
+   "t0": 261.548,
+   "t1": 266.876,
+   "text": "Auf der Seite Lehrer siehst du, was du auf deiner Stufe lernen kannst, und was es kostet.",
+   "scene": "character"
+  },
+  {
+   "t0": 267.126,
+   "t1": 270.729,
+   "text": "Die Liste steht nach Stufe, so wie der Lehrer sie anbietet.",
+   "scene": "character"
+  },
+  {
+   "t0": 270.979,
+   "t1": 273.828,
+   "text": "Im zweiten Reiter stehen deine Klassenquests.",
+   "scene": "character"
+  },
+  {
+   "t0": 274.078,
+   "t1": 277.322,
+   "text": "Taschen zeigt dir den Bestand aller deiner Charaktere.",
+   "scene": "character"
+  },
+  {
+   "t0": 277.572,
+   "t1": 282.83,
+   "text": "Oben suchst du nach einem Gegenstand und filterst nach Taschen, Bank oder Angelegt.",
+   "scene": "character"
+  },
+  {
+   "t0": 283.08,
+   "t1": 286.128,
+   "text": "Unter Bücher findest du die Bücher der Bibliothek.",
+   "scene": "character"
+  },
+  {
+   "t0": 286.378,
+   "t1": 292.164,
+   "text": "Sie sind sortiert in Abgeben, Empfohlen, Möglich, Abgeraten und Abgegeben.",
+   "scene": "character"
+  },
+  {
+   "t0": 292.414,
+   "t1": 297.045,
+   "text": "Klick auf ein Buch, und du siehst, wo es liegt, mit einem Knopf für den Questpfeil.",
+   "scene": "character"
+  },
+  {
+   "t0": 303.723,
+   "t1": 309.421,
+   "text": "Bei den Berufen siehst du alle Rezepte, deine Lehrer, einen Planer und deine Merkliste.",
+   "scene": "professions"
+  },
+  {
+   "t0": 309.671,
+   "t1": 314.912,
+   "text": "Wähle links einen Beruf, und rechts siehst du seine Rezepte mit den Lehrern, die sie anbieten.",
+   "scene": "professions"
+  },
+  {
+   "t0": 315.162,
+   "t1": 319.191,
+   "text": "Unter Gilde siehst du, wer in deiner Gilde welches Rezept kann.",
+   "scene": "professions"
+  },
+  {
+   "t0": 319.441,
+   "t1": 323.306,
+   "text": "Das Teilen mit der Gilde kannst du auf der Seite ein- und ausschalten.",
+   "scene": "professions"
+  },
+  {
+   "t0": 323.556,
+   "t1": 325.862,
+   "text": "Neu ist das Werkzeug Gewinn.",
+   "scene": "professions"
+  },
+  {
+   "t0": 326.112,
+   "t1": 328.97,
+   "text": "Es rechnet dir aus, ob sich das Herstellen lohnt.",
+   "scene": "professions"
+  },
+  {
+   "t0": 329.22,
+   "t1": 335.406,
+   "text": "Der Erlös ist dein zuletzt gesehener Auktionspreis mal die Stückzahl, minus fünf Prozent Gebühr.",
+   "scene": "professions"
+  },
+  {
+   "t0": 335.656,
+   "t1": 342.042,
+   "text": "Davon gehen die Materialkosten ab, zum günstigsten bekannten Preis, beim Händler oder im Auktionshaus.",
+   "scene": "professions"
+  },
+  {
+   "t0": 342.292,
+   "t1": 346.738,
+   "text": "Fehlt eine Zahl, zeigt WeintCodex keinen Gewinn an, statt zu raten.",
+   "scene": "professions"
+  },
+  {
+   "t0": 353.905,
+   "t1": 355.549,
+   "text": "Woher kommen die Preise?",
+   "scene": "auction"
+  },
+  {
+   "t0": 355.799,
+   "t1": 358.933,
+   "text": "Im Auktionshaus klickst du auf Preise scannen.",
+   "scene": "auction"
+  },
+  {
+   "t0": 359.183,
+   "t1": 362.148,
+   "text": "Ein Balken zeigt dir, wie weit der Scan schon ist.",
+   "scene": "auction"
+  },
+  {
+   "t0": 362.398,
+   "t1": 365.672,
+   "text": "Danach steht der Preis im Tooltip jedes Gegenstands.",
+   "scene": "auction"
+  },
+  {
+   "t0": 365.922,
+   "t1": 371.469,
+   "text": "Wenn du willst, teilst du die Preise mit deiner Gilde, mit dem Schalter Mit der Gilde teilen.",
+   "scene": "auction"
+  },
+  {
+   "t0": 371.719,
+   "t1": 374.065,
+   "text": "Dann profitieren alle von einem Scan.",
+   "scene": "auction"
+  },
+  {
+   "t0": 382.268,
+   "t1": 384.479,
+   "text": "Unterwegs hilft dir der Questpfeil.",
+   "scene": "map"
+  },
+  {
+   "t0": 384.729,
+   "t1": 388.75,
+   "text": "Er zeigt zur gewählten Quest, mit Entfernung und Ankunftszeit.",
+   "scene": "map"
+  },
+  {
+   "t0": 389.0,
+   "t1": 392.727,
+   "text": "Auf der Karte siehst du die Instanzeingänge, die WeintCodex kennt.",
+   "scene": "map"
+  },
+  {
+   "t0": 392.977,
+   "t1": 398.14,
+   "text": "Dazu auf Wunsch Geistheiler, Flugmeister und die Übergänge in andere Gebiete.",
+   "scene": "map"
+  },
+  {
+   "t0": 398.39,
+   "t1": 402.401,
+   "text": "Und die Karte lässt sich ganz aufdecken, auch dort, wo du noch nicht warst.",
+   "scene": "map"
+  },
+  {
+   "t0": 410.632,
+   "t1": 413.029,
+   "text": "Für Sammler gibt es den Sammel-Atlas.",
+   "scene": "gathering"
+  },
+  {
+   "t0": 413.279,
+   "t1": 415.611,
+   "text": "Er merkt sich, wo du schon gesammelt hast.",
+   "scene": "gathering"
+  },
+  {
+   "t0": 415.861,
+   "t1": 421.18,
+   "text": "WeintCodex bringt keine fertige Liste mit, jeder Punkt stammt aus deinem eigenen Spiel.",
+   "scene": "gathering"
+  },
+  {
+   "t0": 421.43,
+   "t1": 426.907,
+   "text": "Mit Kräuter und Erz im Wechsel laufen beide Suchen auf der Minikarte, außerhalb des Kampfes.",
+   "scene": "gathering"
+  },
+  {
+   "t0": 427.157,
+   "t1": 429.561,
+   "text": "Neu ist Angeln mit einer Taste.",
+   "scene": "gathering"
+  },
+  {
+   "t0": 429.811,
+   "t1": 434.771,
+   "text": "Du wählst eine Taste, und sie wirft aus, holt den Schwimmer ein und nimmt die Beute.",
+   "scene": "gathering"
+  },
+  {
+   "t0": 435.021,
+   "t1": 438.329,
+   "text": "Jeder Druck kommt von dir, nichts passiert von selbst.",
+   "scene": "gathering"
+  },
+  {
+   "t0": 438.579,
+   "t1": 442.842,
+   "text": "Dazu gibt es ein Logbuch, als Werkzeug Angeln auf der Seite Berufe.",
+   "scene": "gathering"
+  },
+  {
+   "t0": 443.092,
+   "t1": 446.754,
+   "text": "Dort siehst du je Gebiet deine Würfe und was du gefangen hast.",
+   "scene": "gathering"
+  },
+  {
+   "t0": 454.268,
+   "t1": 456.318,
+   "text": "Auch Fliegen ist jetzt angenehmer.",
+   "scene": "flight"
+  },
+  {
+   "t0": 456.568,
+   "t1": 459.161,
+   "text": "Die Flugzeit zeigt dir, wann du landest.",
+   "scene": "flight"
+  },
+  {
+   "t0": 459.411,
+   "t1": 463.71,
+   "text": "Bei längeren Strecken siehst du jeden Zwischenstopp, mit seiner Ankunftszeit.",
+   "scene": "flight"
+  },
+  {
+   "t0": 463.96,
+   "t1": 467.25,
+   "text": "Mit dem Knopf Landen steigst du am nächsten Halt aus.",
+   "scene": "flight"
+  },
+  {
+   "t0": 467.5,
+   "t1": 472.039,
+   "text": "Und ein Knopf bringt dich direkt zu den Flugspielen, falls dir der Flug zu lang wird.",
+   "scene": "flight"
+  },
+  {
+   "t0": 472.289,
+   "t1": 477.658,
+   "text": "Kennt WeintCodex eine Strecke noch nicht, schätzt es nicht, sondern misst sie beim ersten Flug.",
+   "scene": "flight"
+  },
+  {
+   "t0": 484.814,
+   "t1": 487.804,
+   "text": "Ebenfalls neu: der Gemütliche Schlafsack.",
+   "scene": "sleepingbag"
+  },
+  {
+   "t0": 488.054,
+   "t1": 490.189,
+   "text": "Du findest ihn auf der Seite Bücher.",
+   "scene": "sleepingbag"
+  },
+  {
+   "t0": 490.439,
+   "t1": 494.324,
+   "text": "Dort stehen alle Schritte der Questreihe, passend zu deiner Fraktion.",
+   "scene": "sleepingbag"
+  },
+  {
+   "t0": 494.574,
+   "t1": 498.047,
+   "text": "Mit einem Klick setzt du den Questpfeil auf den nächsten Schritt.",
+   "scene": "sleepingbag"
+  },
+  {
+   "t0": 498.297,
+   "t1": 500.973,
+   "text": "Was erledigt ist, sagt dir das Spiel selbst.",
+   "scene": "sleepingbag"
+  },
+  {
+   "t0": 508.814,
+   "t1": 510.891,
+   "text": "Jetzt zur Komfort-Oberfläche.",
+   "scene": "comfort"
+  },
+  {
+   "t0": 511.141,
+   "t1": 515.455,
+   "text": "Sie hat einen Hauptschalter, du entscheidest also, ob du sie überhaupt willst.",
+   "scene": "comfort"
+  },
+  {
+   "t0": 515.705,
+   "t1": 520.158,
+   "text": "Profile gelten je Charakter, und den Look kannst du jederzeit wechseln.",
+   "scene": "comfort"
+  },
+  {
+   "t0": 520.408,
+   "t1": 524.421,
+   "text": "Die Einstellungen öffnest du mit Schrägstrich W C U I.",
+   "scene": "comfort"
+  },
+  {
+   "t0": 524.671,
+   "t1": 527.183,
+   "text": "Die Helfer sind in vier Themen sortiert.",
+   "scene": "comfort"
+  },
+  {
+   "t0": 527.433,
+   "t1": 532.769,
+   "text": "Alltag, Kampf und Gruppe, Welt und Karte, und Handel und Gespräche.",
+   "scene": "comfort"
+  },
+  {
+   "t0": 533.019,
+   "t1": 536.874,
+   "text": "Weißt du nicht, wo etwas steht, tippst du oben einfach in die Suche.",
+   "scene": "comfort"
+  },
+  {
+   "t0": 537.124,
+   "t1": 538.32,
+   "text": "Ein paar Beispiele.",
+   "scene": "comfort"
+  },
+  {
+   "t0": 538.57,
+   "t1": 542.791,
+   "text": "Namensplaketten zeigen dir Bedrohung und Markierungen auf einen Blick.",
+   "scene": "comfort"
+  },
+  {
+   "t0": 543.041,
+   "t1": 548.091,
+   "text": "Die Schadensanzeige misst deinen Schaden, die Erinnerungen melden sich vor dem Kampf.",
+   "scene": "comfort"
+  },
+  {
+   "t0": 548.341,
+   "t1": 554.241,
+   "text": "Automark markiert für dich, und Flüstern als Messenger gibt jedem Gespräch ein eigenes Fenster.",
+   "scene": "comfort"
+  },
+  {
+   "t0": 554.491,
+   "t1": 557.431,
+   "text": "Und die Fenster des Spiels kannst du frei verschieben.",
+   "scene": "comfort"
+  },
+  {
+   "t0": 565.541,
+   "t1": 567.864,
+   "text": "Zum Schluss Gruppe und Gilde.",
+   "scene": "group"
+  },
+  {
+   "t0": 568.114,
+   "t1": 572.135,
+   "text": "Der Gruppencheck zeigt die Ausrüstung der ganzen Gruppe auf einen Blick.",
+   "scene": "group"
+  },
+  {
+   "t0": 572.385,
+   "t1": 578.927,
+   "text": "Trägt jeder etwas auf jedem Platz, ist etwas zerbrochen, und wie weit liegen die Gegenstandsstufen auseinander?",
+   "scene": "group"
+  },
+  {
+   "t0": 579.177,
+   "t1": 581.491,
+   "text": "Er bewertet nicht, er zählt nur.",
+   "scene": "group"
+  },
+  {
+   "t0": 581.741,
+   "t1": 584.937,
+   "text": "Unter Schlachtzüge findest du die Raids mit ihren Bossen.",
+   "scene": "group"
+  },
+  {
+   "t0": 585.187,
+   "t1": 589.769,
+   "text": "In der Raidplanung siehst du die Termine im Kalender und wer sich angemeldet hat.",
+   "scene": "group"
+  },
+  {
+   "t0": 590.019,
+   "t1": 595.031,
+   "text": "Unter Materialien siehst du die Materialien der Gildenbank, nach Kategorien sortiert.",
+   "scene": "group"
+  },
+  {
+   "t0": 595.281,
+   "t1": 598.791,
+   "text": "Und Aufträge aus der Gilde kommen direkt aus dem Discord.",
+   "scene": "group"
+  },
+  {
+   "t0": 599.041,
+   "t1": 603.706,
+   "text": "Jemand sieht dort, dass einer deiner Charaktere ein Rezept kann, und bestellt bei dir.",
+   "scene": "group"
+  },
+  {
+   "t0": 603.956,
+   "t1": 608.742,
+   "text": "Im Spiel nimmst du den Auftrag an, meldest ihn als erledigt, oder lehnst ihn ab.",
+   "scene": "group"
+  },
+  {
+   "t0": 608.992,
+   "t1": 612.385,
+   "text": "Die Companion gibt deine Antwort dann an den Discord weiter.",
+   "scene": "group"
+  },
+  {
+   "t0": 620.086,
+   "t1": 623.022,
+   "text": "Das war WeintCodex, die Forever Edition.",
+   "scene": "outro"
+  },
+  {
+   "t0": 623.272,
+   "t1": 629.245,
+   "text": "Unter System findest du noch die Seite Companion. Sie zeigt dir den Stand der letzten Lieferung aus der App.",
+   "scene": "outro"
+  },
+  {
+   "t0": 629.495,
+   "t1": 635.267,
+   "text": "Du bekommst WeintCodex über die Companion-App. Sie installiert und aktualisiert alles für dich.",
+   "scene": "outro"
+  },
+  {
+   "t0": 635.517,
+   "t1": 639.427,
+   "text": "Und ein Tipp zum Schluss: Du musst nicht alles auf einmal einschalten.",
+   "scene": "outro"
+  },
+  {
+   "t0": 639.677,
+   "t1": 643.238,
+   "text": "Fang mit den Empfehlungen an und probier den Rest in Ruhe aus.",
+   "scene": "outro"
+  },
+  {
+   "t0": 643.488,
+   "t1": 646.87,
+   "text": "Danke fürs Zuschauen, und viel Spaß in Azeroth.",
+   "scene": "outro"
+  }
+ ]
+}

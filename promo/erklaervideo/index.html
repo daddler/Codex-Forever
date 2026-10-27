@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="fonts.css">
+<style>
+  /* Stil des Werbevideos (Companion-Forever/promo/werbevideo), Farben von WeintCodex (core/ui.lua). */
+  :root {
+    --ink: #1d1530; --ink2: #4a3f66;
+    --violet: #7C6CFF; --violet2: #a89dff; --gold: #F0A63A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0b0820; }
+  body { font-family: 'Outfit', sans-serif; color: var(--ink); }
+  #stage { position: absolute; inset: 0; overflow: hidden; }
+  .scene { position: absolute; inset: 0; opacity: 0; visibility: hidden; transform-origin: 50% 45%; }
+
+  /* ---------- Hintergruende ---------- */
+  .bg-light { position: absolute; inset: -60px;
+    background:
+      radial-gradient(1100px 700px at 30% 40%, rgba(255,255,255,.85), rgba(255,255,255,0) 60%),
+      radial-gradient(900px 700px at 80% 70%, rgba(186,176,255,.55), rgba(186,176,255,0) 70%),
+      linear-gradient(160deg, #f4f2ff 0%, #e2ddff 45%, #cfc7ff 100%); }
+  .bg-light .floor, .bg-dark .floor { position: absolute; left: -30%; right: -30%; bottom: -12%; height: 55%;
+    background-size: 120px 120px; transform: perspective(900px) rotateX(70deg); transform-origin: 50% 0;
+    mask-image: linear-gradient(to bottom, transparent, black 35%, black); }
+  .bg-light .floor { background-image: linear-gradient(rgba(124,108,255,.10) 2px, transparent 2px), linear-gradient(90deg, rgba(124,108,255,.10) 2px, transparent 2px); }
+  .bg-dark { position: absolute; inset: -60px;
+    background: radial-gradient(900px 600px at 50% 45%, rgba(124,108,255,.42), rgba(124,108,255,0) 70%),
+                linear-gradient(180deg, #0c0a20 0%, #15123a 60%, #1b1650 100%); }
+  .bg-dark .floor { background-image: linear-gradient(rgba(168,155,255,.5) 2px, transparent 2px), linear-gradient(90deg, rgba(168,155,255,.5) 2px, transparent 2px);
+    box-shadow: 0 -40px 120px rgba(124,108,255,.6) inset; }
+  .dark { color: #f1eeff; }
+
+  /* ---------- Bausteine ---------- */
+  .a { position: absolute; will-change: transform, opacity; }
+  .title { font-weight: 700; font-size: 96px; letter-spacing: -2px; line-height: 1.02; }
+  .dark .title { color: #fff; }
+  .hl { background: linear-gradient(90deg, #6a5cff, #b39dff); -webkit-background-clip: text; color: transparent; }
+  .dark .hl { background: linear-gradient(90deg, #c7beff, #8f7fff 60%, #F0A63A); -webkit-background-clip: text; color: transparent; }
+  .num { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 30px; letter-spacing: 6px; color: var(--violet); }
+  .dark .num { color: var(--violet2); }
+  .neu { display: inline-block; background: var(--gold); color: #1d1530; font-weight: 800; font-size: 24px; letter-spacing: 3px;
+    padding: 6px 16px; border-radius: 10px; box-shadow: 0 8px 30px rgba(240,166,58,.45); }
+
+  .kicker { left: 56px; top: 40px; display: flex; align-items: center; gap: 14px;
+    background: #17122e; color: #fff; font-weight: 600; font-size: 24px; padding: 10px 22px 10px 12px; border-radius: 999px;
+    box-shadow: 0 10px 30px rgba(40,20,90,.25); }
+  .kicker img { width: 34px; height: 34px; }
+  .kicker .n { font-family: 'JetBrains Mono', monospace; color: var(--violet2); font-size: 20px; }
+  .path { right: 56px; top: 44px; font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 600;
+    background: rgba(255,255,255,.92); color: var(--ink); padding: 10px 20px; border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(70,40,150,.18), 0 0 0 1px rgba(124,108,255,.18); white-space: nowrap; }
+  .dark .path { background: rgba(30,24,70,.9); color: #e9e5ff; box-shadow: 0 0 0 1px rgba(168,155,255,.35); }
+
+  /* Fenster mit Rahmen fuer Aufnahmen und Bilder */
+  .win { border-radius: 18px; overflow: hidden; background: #0c0c0f;
+    box-shadow: 0 40px 100px rgba(40,20,110,.38), 0 0 0 1px rgba(124,108,255,.35), 0 0 0 8px rgba(255,255,255,.55); }
+  .dark .win { box-shadow: 0 40px 100px rgba(0,0,0,.6), 0 0 0 1px rgba(168,155,255,.45), 0 0 60px rgba(124,108,255,.35); }
+  .win .bar { height: 44px; display: flex; align-items: center; gap: 9px; padding: 0 16px; background: #17151f; border-bottom: 1px solid #2a2733; }
+  .win .bar i { width: 12px; height: 12px; border-radius: 50%; background: #3a3646; display: block; }
+  .win .bar b { margin-left: 10px; font-size: 19px; font-weight: 600; color: #cfc9e6; }
+  .win .bar .src { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 15px; color: #77718c; }
+  .win .view { position: relative; overflow: hidden; }
+  .win .view img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 50% 50%; }
+
+  .hand { font-family: 'Caveat', cursive; font-weight: 600; color: #5a48ff; font-size: 50px; line-height: 1.05; width: 340px; }
+  .dark .hand { color: #d6ceff; }
+  .hand::before { content: "↙ "; }
+  .hand.r::before { content: "↖ "; }
+
+  .card { background: rgba(255,255,255,.95); border-radius: 26px; padding: 44px 52px;
+    box-shadow: 0 30px 80px rgba(60,30,140,.22), 0 0 0 1px rgba(124,108,255,.12); }
+  .dark .card { background: rgba(28,22,66,.92); color: #f1eeff; box-shadow: 0 30px 80px rgba(0,0,0,.45), 0 0 0 1px rgba(168,155,255,.35); }
+  .card h2 { font-size: 52px; font-weight: 700; letter-spacing: -1px; margin-bottom: 26px; }
+  .card .li { display: flex; align-items: center; gap: 18px; font-size: 34px; font-weight: 500; margin: 16px 0; }
+  .card .li .ck { width: 38px; height: 38px; flex: none; border-radius: 50%; background: linear-gradient(140deg, #9a8cff, #5a48e6); color: #fff;
+    display: grid; place-items: center; font-size: 20px; font-weight: 800; }
+  .card .li .ck.x { background: linear-gradient(140deg, #ff8a80, #c8463c); }
+  .card code { font-family: 'JetBrains Mono', monospace; font-weight: 700; background: #17122e; color: #fff; padding: 6px 16px; border-radius: 10px; }
+  .card small { display: block; font-size: 24px; color: var(--ink2); margin-top: 4px; }
+  .dark .card small { color: #b8b0e0; }
+
+  .icon3d { width: 230px; height: 230px; border-radius: 60px; position: relative;
+    background: radial-gradient(120% 120% at 25% 15%, #c4bbff 0%, #7C6CFF 35%, #3f30c0 75%, #241a80 100%);
+    box-shadow: 0 40px 80px rgba(60,30,170,.45), 0 0 0 3px rgba(255,255,255,.25) inset, 0 -20px 40px rgba(20,0,80,.5) inset, 0 0 120px rgba(140,120,255,.55); }
+  .icon3d::before { content: ""; position: absolute; left: 14%; top: 7%; width: 72%; height: 38%; border-radius: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,0)); filter: blur(2px); }
+  .icon3d > img { position: absolute; inset: 0; margin: auto; width: 54%; height: 54%; filter: brightness(0) invert(1) drop-shadow(0 6px 10px rgba(20,0,80,.5)); }
+  .icon3d > svg { position: absolute; inset: 0; margin: auto; width: 54%; height: 54%; filter: drop-shadow(0 6px 10px rgba(20,0,80,.5)); }
+  .icon3d.gold { background: radial-gradient(120% 120% at 25% 15%, #ffe2a8 0%, #F0A63A 40%, #a8641a 80%, #6a3a0a 100%); }
+  .icon3d.blue { background: radial-gradient(120% 120% at 25% 15%,#9fb2ff 0%,#5a6cff 35%,#2d2fb8 75%,#18157a 100%); }
+  .pic { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 30px 50px rgba(60,20,170,.55)); }
+  .glow { position: absolute; border-radius: 50%; filter: blur(60px); background: rgba(140,120,255,.55); }
+
+  .cmd { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 150px; color: #fff; background: #17122e;
+    padding: 30px 70px; border-radius: 36px; box-shadow: 10px 10px 0 var(--violet), -10px -10px 0 var(--gold), 0 40px 100px rgba(60,30,170,.5); }
+
+  /* Navigation, nachgebaut aus core/navigation.lua */
+  .nav { width: 440px; background: #101014; border-radius: 22px; padding: 26px 14px; color: #c8c4d6;
+    box-shadow: 0 40px 100px rgba(40,20,110,.38), 0 0 0 1px rgba(124,108,255,.35); }
+  .nav .g { font-family: 'JetBrains Mono', monospace; font-size: 15px; letter-spacing: 4px; color: #5f5f6b; margin: 16px 18px 8px; text-transform: uppercase; }
+  .nav .e { display: flex; align-items: center; gap: 14px; font-size: 24px; padding: 7px 18px; border-radius: 10px; }
+  .nav .e img { width: 26px; height: 26px; opacity: .8; }
+  .nav .grp { border-radius: 14px; padding: 2px 0 6px; transition: none; }
+  .nav .grp.on { background: rgba(124,108,255,.18); box-shadow: 0 0 0 2px rgba(124,108,255,.65); }
+  .nav .grp.on .g { color: #b8afff; }
+  .nav .grp.on .e { color: #fff; }
+
+  .grid { display: grid; gap: 26px; }
+  .tile { border-radius: 18px; overflow: hidden; background: #0c0c0f; position: relative;
+    box-shadow: 0 24px 60px rgba(40,20,110,.3), 0 0 0 1px rgba(124,108,255,.3); }
+  .tile img { width: 100%; display: block; }
+  .tile .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 18px; background: linear-gradient(transparent, rgba(0,0,0,.85));
+    color: #fff; font-weight: 600; font-size: 26px; }
+
+  .flash { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, #d2caff, #7C6CFF 60%, #2f2490); }
+  .rays { position: absolute; inset: -50%; background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.22) 0deg 4deg, rgba(255,255,255,0) 4deg 12deg); }
+
+  #sub { position: absolute; left: 0; right: 0; bottom: 22px; text-align: center; z-index: 50; pointer-events: none; }
+  #sub span { display: inline-block; max-width: 1500px; background: rgba(16,10,40,.8); color: #fff; font-weight: 600; font-size: 31px;
+    line-height: 1.3; padding: 9px 26px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+
+  .credits { text-align: center; color: #e9e5ff; font-size: 30px; line-height: 1.7; }
+  .credits b { color: #fff; }
+  .credits .k { font-family: 'JetBrains Mono', monospace; font-size: 18px; letter-spacing: 4px; color: #a89dff; text-transform: uppercase; display: block; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="sub"><span></span></div>
+
+<script src="timeline.js"></script>
+<script src="clips.js"></script>
+<script>
+// =====================================================================
+// Szenenplan. Jede Tafel haengt an einem Satz der Szene (at = Index in
+// tts/script.json); sie steht bis zur naechsten Tafel. So passt sich das
+// Bild von selbst an jede Stimme an (Piper-Vorschau oder ElevenLabs).
+//   clip:  Ausschnitt aus clips/<name>/ (make_clips.sh), im Fenster mit Rahmen
+//   img:   Bild aus assets/ im Fenster mit Rahmen
+//   card:  Karte mit Titel und Zeilen; nav, looks, headers, trio, cmd, logo: eigene Bauten
+// note = handschriftliche Notiz neben dem Fenster, path = Weg zur Einstellung oben rechts.
+// =====================================================================
+const PLAN = {
+  intro: { bg: "dark", panels: [
+    { at: 0, type: "logo" },
+    { at: 2, type: "cmd", text: "/wc", note: "oder Klick auf das Symbol" },
+    { at: 3, type: "trio", note2: "nie direkt ins Internet", noteAt: 5 },
+  ]},
+  install: { n: 1, title: "Installation & erster Start", icon: "nav_companion", panels: [
+    { at: 0, type: "card", icon: "companion", title: "WeintCompanion", lines: ["installiert WeintCodex", "hält es aktuell"], sub: "nichts von Hand kopieren" },
+    { at: 3, clip: "welcome1", label: "Willkommens-Assistent · Schritt 1 von 4", note: "4 Schritte" },
+    { at: 6, type: "looks" },
+    { at: 8, clip: "welcome2", label: "Schritt 2 von 4 · Aussehen", note: "Vorschau rechts" },
+    { at: 9, clip: "welcome3", label: "Schritt 3 von 4 · Helfer", note: "Empfohlen oder Selbst auswählen" },
+    { at: 11, clip: "welcome4", label: "Schritt 4 von 4 · Bereit", note: "erst „Übernehmen“ schaltet" },
+  ]},
+  window: { n: 2, title: "Das Hauptfenster", icon: "nav_uebersicht", panels: [
+    { at: 0, type: "nav", hl: [] , hlAt: [[1, ["Leveln", "Gruppe", "Gilde", "System"]], [3, ["Leveln"]]] },
+    { at: 4, clip: "uebersicht", label: "WeintCodex · Übersicht", note: "Als Nächstes · Dein Weg" },
+    { at: 7, type: "nav", hlAt: [[7, ["Gruppe"]], [8, ["Gilde", "System"]], [9, []]] },
+  ]},
+  dungeons: { n: 3, title: "Dungeons", icon: "nav_dungeons", panels: [
+    { at: 0, type: "headers" },
+    { at: 2, clip: "dungeon", label: "Dungeons · The Deadmines", path: "/wc › Dungeons", note: "Bosse, Aufstellung, Besonderheiten" },
+    { at: 4, type: "card", title: "Fähigkeiten ja – Taktik nein", lines: [["ok", "Fähigkeiten der Bosse: aus dem Spiel"], ["x", "keine Anleitung im Addon"], ["ok", "Taktik vom Bot im Discord: <code>/weintboss</code>"]] },
+    { at: 7, clip: "eingang", label: "Karte & Questlog · Eingang auf der Karte", note: "Weg hinein" },
+    { at: 9, img: "herkunft", label: "Herkunft jeder Angabe" },
+    { at: 13, type: "card", title: "Dungeon-Einladungen", lines: [["ok", "geplant im Discord"], ["ok", "im Codex unter „Besonderheiten“"]] },
+  ]},
+  loot: { n: 4, title: "Beute & Wunschliste", icon: "nav_beute", panels: [
+    { at: 0, clip: "beute", label: "WeintCodex · Beute", path: "/wc › Beute" },
+    { at: 3, clip: "beute2", label: "Beute · Wunschliste", path: "/wc › Beute", note: "Dropchance aus Classic – fehlt sie, steht keine da" },
+  ]},
+  character: { n: 5, title: "Charakter, Lehrer, Taschen, Bücher", icon: "nav_charakter", panels: [
+    { at: 0, clip: "charakter", label: "WeintCodex · Charakter", path: "/wc › Charakter" },
+    { at: 2, clip: "lehrer", label: "WeintCodex · Lehrer", path: "/wc › Lehrer", note: "zweiter Reiter: Klassenquests", noteAt: 4 },
+    { at: 5, clip: "taschen", label: "WeintCodex · Taschen", path: "/wc › Taschen", note: "Taschen · Bank · Angelegt" },
+    { at: 7, clip: "buecher", label: "WeintCodex · Bücher", path: "/wc › Bücher", note: "mit Knopf für den Questpfeil", noteAt: 9 },
+  ]},
+  professions: { n: 6, title: "Berufe", icon: "nav_berufe", panels: [
+    { at: 0, clip: "planer", label: "Berufe · Planer", path: "/wc › Berufe" },
+    { at: 1, clip: "berufe", label: "Berufe · Lederverarbeitung", path: "/wc › Berufe" },
+    { at: 2, clip: "berufe_gilde", label: "Berufe · Gilde", path: "/wc › Berufe › Gilde", note: "Teilen schaltest du auf der Seite", noteAt: 3 },
+    { at: 4, img: "gewinn", label: "Werkzeug · Gewinn", path: "/wc › Berufe › Gewinn", neu: true, note: "fehlt eine Zahl: kein Gewinn", noteAt: 8 },
+  ]},
+  auction: { n: 7, title: "Auktionspreise", icon: "nav_materialien", panels: [
+    { at: 0, img: "ahScan", label: "Auktionshaus · Preise scannen", path: "Auktionshaus › Preise scannen" },
+    { at: 4, clip: "handel", label: "Einstellungen · Handel & Gespräche", path: "/wcui › Handel & Gespräche", note: "Mit der Gilde teilen" },
+  ]},
+  map: { n: 8, title: "Karte & Questpfeil", icon: "nav_dungeons", panels: [
+    { at: 0, clip: "questpfeil", label: "Einstellungen · Questpfeil", path: "/wcui › Questpfeil", note: "Entfernung und Ankunftszeit" },
+    { at: 2, img: "mapEntrances", label: "Instanzeingänge auf der Karte" },
+    { at: 3, clip: "welt", label: "Einstellungen · Welt & Karte", path: "/wcui › Welt & Karte" },
+    { at: 4, img: "mapReveal", label: "Ganze Karte aufdecken" },
+  ]},
+  gathering: { n: 9, title: "Sammeln & Angeln", icon: "nav_berufe", panels: [
+    { at: 0, img: "atlas", label: "Sammel-Atlas", path: "/wcui › Welt & Karte › Sammeln", note: "nur aus deinem Spiel" },
+    { at: 3, img: "gatherSwap", label: "Kräuter und Erz im Wechsel", path: "/wcui › Welt & Karte › Sammeln" },
+    { at: 4, img: "angeln", label: "Angeln mit einer Taste", path: "/wcui › Welt & Karte › Sammeln", neu: true, note: "jeder Druck ist deiner", noteAt: 6 },
+    { at: 7, img: "angellog", label: "Werkzeug · Angeln (Logbuch)", path: "/wc › Berufe › Angeln", neu: true },
+  ]},
+  flight: { n: 10, title: "Fliegen", icon: "nav_uebersicht", neu: true, bg: "dark", panels: [
+    { at: 0, img: "flugzeit", label: "Flugzeit", neu: true, note: "Zwischenstopp mit Ankunft", noteAt: 2 },
+    { at: 4, clip: "flugspiele", label: "Flugspiele", note: "Lust auf ein Spiel, bis du landest?" },
+    { at: 5, type: "card", title: "Strecke unbekannt?", lines: [["ok", "keine geschätzte Landezeit"], ["ok", "„Flugzeit unbekannt – wird gemessen“"]] },
+  ]},
+  sleepingbag: { n: 11, title: "Gemütlicher Schlafsack", icon: "nav_buecher", neu: true, bg: "dark", panels: [
+    { at: 0, img: "schlafsack", label: "Bücher · Gemütlicher Schlafsack", path: "/wc › Bücher", neu: true, note: "ein Klick: Questpfeil", noteAt: 3 },
+  ]},
+  comfort: { n: 12, title: "Komfort-Oberfläche", icon: "nav_einstellungen", panels: [
+    { at: 0, clip: "alltag", label: "Einstellungen · Alltag", path: "/wcui", note: "Hauptschalter oben rechts", noteAt: 1 },
+    { at: 3, type: "cmd", text: "/wcui", note: "öffnet die Einstellungen" },
+    { at: 4, type: "themes" },
+    { at: 6, img: "suche", label: "Einstellungen · Suche", path: "/wcui" },
+    { at: 8, clip: "plaketten", label: "Einstellungen · Namensplaketten", path: "/wcui › Namensplaketten" },
+    { at: 9, clip: "erinnerungen", label: "Einstellungen · Erinnerungen", path: "/wcui › Erinnerungen" },
+    { at: 10, img: "msgOn", label: "Flüstern als Messenger", path: "/wcui › Handel & Gespräche" },
+    { at: 11, type: "card", icon: "nav_einstellungen", title: "Fenster verschieben", lines: [["ok", "die Fenster des Spiels frei verschieben"]] },
+  ]},
+  group: { n: 13, title: "Gruppe & Gilde", icon: "nav_gruppe", panels: [
+    { at: 0, type: "card", icon: "nav_gruppe", title: "Gruppencheck", lines: [["ok", "Platz leer?"], ["ok", "Gegenstand zerbrochen?"], ["ok", "Abstand der Gegenstandsstufen"]], sub: "zählt nur, bewertet nicht" },
+    { at: 4, clip: "raid", label: "WeintCodex · Raidplanung", path: "/wc › Raidplanung", note: "Namen unkenntlich gemacht" },
+    { at: 6, type: "card", icon: "nav_materialien", title: "Materialien", lines: [["ok", "Materialien der Gildenbank"], ["ok", "nach Kategorien sortiert"]] },
+    { at: 7, img: "auftrag", label: "Aufträge aus der Gilde", note: "Antwort geht über die Companion zurück", noteAt: 10 },
+  ]},
+  outro: { bg: "dark", panels: [
+    { at: 0, type: "logo" },
+    { at: 2, type: "trio", noteAt: 99 },
+    { at: 3, type: "card", title: "Ein Tipp zum Schluss", lines: [["ok", "Fang mit „Empfohlen“ an"], ["ok", "probier den Rest in Ruhe aus"]] },
+    { at: 5, type: "credits" },
+  ]},
+};
+
+// ---------------------------------------------------------------------
+const TL = window.TL, CLIPS = window.CLIPS;
+const stage = document.getElementById("stage");
+const el = (tag, cls, html, style) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; if (style) e.style.cssText = style; return e; };
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const prog = (t, t0, d) => clamp((t - t0) / d);
+const easeOut = p => 1 - Math.pow(1 - p, 3);
+const easeInOut = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+const easeBack = p => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
+
+const ANIM = [];      // { el, t0, kind, base }
+const VIEWS = [];     // Fenster mit Bild: { img, clip, t0, t1 }
+const NAVS = [];      // { el, steps: [[t, [gruppen]]] }
+const SCENES = [];    // { el, a, b, flash }
+function A(node, t0, kind, base) { node.classList.add("a"); ANIM.push({ el: node, t0, kind: kind || "fade", base: base || "" }); return node; }
+
+const SVG_CODEX = `<svg viewBox="0 0 24 24"><path fill="#fff" d="M12 2 2 7l10 5 10-5-10-5Zm-8 9.2v5.3L12 21l8-4.5v-5.3L12 15l-8-3.8Z"/></svg>`;
+const SVG_BOT = `<svg viewBox="0 0 24 24"><path fill="#fff" d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm4 6.5a1.5 1.5 0 1 0 0 .01Zm4 0a1.5 1.5 0 1 0 0 .01Zm4 0a1.5 1.5 0 1 0 0 .01Z"/></svg>`;
+const NAV = [["Leveln", [["uebersicht", "Übersicht"], ["charakter", "Charakter"], ["lehrer", "Lehrer"], ["berufe", "Berufe"], ["taschen", "Taschen"], ["buecher", "Bücher"], ["dungeons", "Dungeons"], ["beute", "Beute"]]],
+             ["Gruppe", [["gruppe", "Gruppencheck"], ["bosse", "Schlachtzüge"], ["kalender", "Raidplanung"]]],
+             ["Gilde", [["materialien", "Materialien"]]],
+             ["System", [["companion", "Companion"], ["einstellungen", "Einstellungen"]]]];
+const THEMES = [["Alltag", "reparieren, Schrott verkaufen, Beute, Hinweise auf dem Bildschirm"],
+                ["Kampf & Gruppe", "Warnungen, Markieren, Klickzauber, Makros"],
+                ["Welt & Karte", "Karte, Quests, Sammeln, seltene Gegner, Flugspiele"],
+                ["Handel & Gespräche", "Auktionshaus, Flüstern, Danke für Buffs, NPCs"]];
+
+// Fenster mit Rahmen. Gibt { node, w, h } - Groesse passend zum Seitenverhaeltnis.
+function frame(label, src, ratio, maxW, maxH) {
+  let w = maxW, h = w / ratio + 44;
+  if (h > maxH) { h = maxH; w = (h - 44) * ratio; }
+  const n = el("div", "win", `<div class="bar"><i></i><i></i><i></i><b>${label || ""}</b><span class="src">${src || ""}</span></div><div class="view" style="height:${h - 44}px"><img></div>`, `width:${w}px;height:${h}px`);
+  return { node: n, w, h, img: n.querySelector("img") };
+}
+const RATIO = {};   // Seitenverhaeltnis je Ausschnitt/Bild, beim Laden gemessen
+
+function buildPanel(sc, p, t0, t1, sub, scDark) {
+  const root = el("div", "", null, "position:absolute;inset:0");
+  root._t0 = t0; root._t1 = t1;
+  const noteT = p.noteAt != null && sub[p.noteAt] ? sub[p.noteAt].t0 : t0 + 0.9;
+  let fw = 0;
+  if (p.clip || p.img) {
+    const ratio = RATIO[p.clip || p.img] || 1.6;
+    const f = frame(p.label, p.clip ? "Aufnahme aus dem Spiel" : (p.neu ? "Darstellung" : ""), ratio, p.note ? 1300 : 1500, 800);
+    const left = p.note ? 90 + (1300 - f.w) / 2 : (1920 - f.w) / 2;
+    f.node.style.left = left + "px"; f.node.style.top = (130 + (800 - f.h) / 2) + "px";
+    root.appendChild(A(f.node, t0, "rise"));
+    VIEWS.push({ img: f.img, clip: p.clip, src: p.img ? `assets/${p.img}.jpg` : null, t0, t1 });
+    fw = left + f.w;
+    if (p.neu) root.appendChild(A(el("div", "neu", "NEU", `left:${left - 18}px;top:${130 + (800 - f.h) / 2 - 18}px;transform:rotate(-6deg)`), t0 + .4, "pop", "rotate(-6deg)"));
+  }
+  if (p.type === "logo") {
+    root.appendChild(A(el("div", "glow", null, "left:660px;top:250px;width:600px;height:400px"), t0, "fade"));
+    root.appendChild(A(el("div", "", `<img src="assets/logo.png" style="width:760px">`, "left:580px;top:240px"), t0 + .2, "pop"));
+    root.appendChild(A(el("div", "hand r", "Forever Edition", "left:1180px;top:640px;transform:rotate(-4deg);width:420px"), t0 + 1.2, "write", "rotate(-4deg)"));
+  }
+  if (p.type === "cmd") {
+    root.appendChild(A(el("div", "cmd", p.text, `left:${p.text.length > 3 ? 650 : 750}px;top:330px`), t0, "pop"));
+    if (p.note) root.appendChild(A(el("div", "hand", p.note, "left:1180px;top:640px;transform:rotate(-3deg);width:480px"), t0 + .9, "write", "rotate(-3deg)"));
+  }
+  if (p.type === "trio") {
+    const items = [[SVG_CODEX, "", "WeintCodex", "das Addon im Spiel"], [`<img src="assets/companion.png" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 30px 50px rgba(60,20,170,.55))">`, "img", "Companion", "die App auf deinem Rechner"], [SVG_BOT, "blue", "WeintCodex-Bot", "dein Discord"]];
+    items.forEach((it, i) => {
+      const icon = it[1] === "img" ? `<div style="width:250px;height:250px;margin:0 auto">${it[0]}</div>` : `<div class="icon3d ${it[1]}" style="margin:0 auto">${it[0]}</div>`;
+      const n = el("div", "", `<div class="bob" data-phase="${i}">${icon}</div><div style="font-weight:700;font-size:42px;margin-top:30px;color:#fff">${it[2]}</div><div style="font-size:28px;color:#c8c0f0">${it[3]}</div>`, `left:${250 + i * 520}px;top:300px;width:400px;text-align:center`);
+      root.appendChild(A(n, t0 + .2 + i * .35, "pop"));
+    });
+    if (p.note2) { const nt = sub[p.noteAt] ? sub[p.noteAt].t0 : t0 + 2;
+      root.appendChild(A(el("div", "hand", p.note2, "left:120px;top:150px;transform:rotate(-3deg);width:560px;color:#F0A63A"), nt, "write", "rotate(-3deg)")); }
+  }
+  if (p.type === "card") {
+    const lines = (p.lines || []).map(l => Array.isArray(l) ? l : ["ok", l]);
+    const icon = p.icon ? `<img src="assets/${p.icon}.png" style="width:72px;height:72px;vertical-align:middle;margin-right:18px;${p.icon.startsWith("nav") ? "filter:brightness(0) saturate(100%) invert(39%) sepia(80%) saturate(2400%) hue-rotate(235deg)" : ""}">` : "";
+    const n = el("div", "card", `<h2>${icon}${p.title}</h2>` + lines.map(l => `<div class="li"><div class="ck ${l[0] === "x" ? "x" : ""}">${l[0] === "x" ? "✕" : "✓"}</div><div>${l[1]}</div></div>`).join("") + (p.sub ? `<small style="margin-top:24px">${p.sub}</small>` : ""), "left:460px;top:250px;width:1000px");
+    const ct = p.showAt != null && sub[p.showAt] ? sub[p.showAt].t0 : t0;
+    root.appendChild(A(n, ct, "rise"));
+    if (p.showAt != null) root._t0 = ct;
+  }
+  if (p.type === "nav") {
+    const nav = el("div", "nav", NAV.map(g => `<div class="grp" data-g="${g[0]}"><div class="g">${g[0]}</div>` + g[1].map(e => `<div class="e"><img src="assets/nav_${e[0]}.png">${e[1]}</div>`).join("") + `</div>`).join(""), "left:740px;top:115px");
+    root.appendChild(A(nav, t0, "rise"));
+    NAVS.push({ el: nav, steps: (p.hlAt || []).map(s => [sub[s[0]] ? sub[s[0]].t0 : 1e9, s[1]]) });
+    root.appendChild(A(el("div", "hand", "aus core/navigation.lua", "left:1220px;top:820px;transform:rotate(-3deg);width:420px;font-size:40px"), t0 + 1.2, "write", "rotate(-3deg)"));
+  }
+  if (p.type === "looks") {
+    const g = el("div", "grid", [["look_none", "Wie bisher"], ["look_schwarz", "Schwarz"], ["look_transparent", "Transparent"], ["look_klassisch", "Holz"]].map(l =>
+      `<div class="tile"><img src="assets/${l[0]}.jpg"><div class="cap">${l[1]}</div></div>`).join(""), "left:330px;top:150px;width:1260px;grid-template-columns:1fr 1fr");
+    root.appendChild(A(g, t0, "rise"));
+  }
+  if (p.type === "headers") {
+    const hs = ["hall_of_thanes", "ruins_of_lordaeron", "city_of_dalaran", "wailing_caverns", "the_deadmines", "shadowfang_keep", "gnomeregan", "scholomance", "stratholme"];
+    const g = el("div", "grid", hs.map((h, i) => `<div class="tile" style="height:210px"><img src="assets/header_${h}.jpg" style="height:100%;object-fit:cover"></div>`).join(""), "left:260px;top:160px;width:1400px;grid-template-columns:1fr 1fr 1fr");
+    root.appendChild(A(g, t0, "rise"));
+    root.appendChild(A(el("div", "hand", "Forever und Classic in einer Liste", "left:1330px;top:90px;transform:rotate(3deg);width:520px;font-size:44px"), t0 + 1, "write", "rotate(3deg)"));
+  }
+  if (p.type === "themes") {
+    const g = el("div", "grid", THEMES.map((th, i) => `<div class="card" style="padding:34px 40px"><div class="num" style="font-size:22px">THEMA ${i + 1}</div><h2 style="margin:10px 0 12px;font-size:46px">${th[0]}</h2><div style="font-size:27px;color:#4a3f66">${th[1]}</div></div>`).join(""), "left:300px;top:170px;width:1320px;grid-template-columns:1fr 1fr");
+    root.appendChild(A(g, t0, "rise"));
+  }
+  if (p.type === "credits") {
+    const voice = TL.voice === "elevenlabs" ? "ElevenLabs" : "ElevenLabs <span style='color:#F0A63A'>(Vorschau: Piper)</span>";
+    root.appendChild(A(el("div", "credits", `<img src="assets/logo.png" style="width:520px"><br>
+      <span class="k">Addon</span><b>WeintCodex – Forever Edition</b>
+      <span class="k">Herunterladen</span>über die WeintCompanion
+      <span class="k">Stimme</span>${voice}
+      <span class="k">Musik</span>eigene Komposition`, "left:460px;top:120px;width:1000px"), t0, "rise"));
+  }
+  if (p.note && (p.clip || p.img)) {
+    root.appendChild(A(el("div", "hand", p.note, `left:${Math.min(fw + 40, 1540)}px;top:${p.noteTop || 300}px;transform:rotate(-3deg)`), noteT, "write", "rotate(-3deg)"));
+  }
+  return root;
+}
+
+// Szenen bauen
+TL.scenes.forEach((s, k) => {
+  const plan = PLAN[s.key] || { panels: [] };
+  const sub = TL.subs.filter(c => c.scene === s.key);
+  const dark = plan.bg === "dark";
+  const sec = el("section", "scene" + (dark ? " dark" : ""), `<div class="${dark ? "bg-dark" : "bg-light"}"><div class="floor"></div></div>`);
+  stage.appendChild(sec);
+  SCENES.push({ el: sec, a: s.start - .35, b: s.end + .35 });
+  const speech0 = sub.length ? sub[0].t0 : s.start + 2;
+  // Titelkarte (nicht bei Intro/Outro)
+  if (plan.title) {
+    const tc = el("div", "", null, "position:absolute;inset:0"); tc._t0 = s.start; tc._t1 = speech0 - .45;
+    tc.appendChild(A(el("div", "", `<div class="icon3d ${plan.neu ? "gold" : ""}"><img src="assets/${plan.icon}.png"></div>`, "left:845px;top:190px"), s.start + .2, "pop"));
+    tc.appendChild(A(el("div", "", `<div class="num">KAPITEL ${String(plan.n).padStart(2, "0")}</div><div class="title" style="margin-top:14px">${plan.title.replace(/^(\S+)/, '<span class="hl">$1</span>')}</div>`
+      + (plan.neu ? `<div class="neu" style="margin-top:24px">NEU</div>` : ""), "left:0;right:0;top:470px;text-align:center"), s.start + .5, "rise"));
+    sec.appendChild(tc);
+    sec.appendChild(A(el("div", "kicker", `<img src="assets/${plan.icon}.png"><span class="n">${String(plan.n).padStart(2, "0")}</span>${plan.title}`), speech0, "slidedown"));
+  }
+  const ps = plan.panels;
+  ps.forEach((p, i) => {
+    const t0 = i === 0 ? (plan.title ? speech0 - .1 : s.start + .3) : (sub[p.at] ? sub[p.at].t0 - .25 : s.end);
+    const t1 = i + 1 < ps.length ? (sub[ps[i + 1].at] ? sub[ps[i + 1].at].t0 - .25 : s.end) : s.end + .4;
+    const node = buildPanel(s, p, t0, t1, sub, dark);
+    if (p.path) node.appendChild(A(el("div", "path", p.path), t0 + .3, "slidedown"));
+    sec.appendChild(node);
+  });
+});
+// Lichtkranz vor den Szenen mit "drop"
+TL.scenes.forEach(s => {
+  if (!s.drop) return;
+  const f = el("section", "scene", `<div class="flash"></div><div class="rays"></div>`);
+  stage.appendChild(f);
+  SCENES.push({ el: f, a: s.start - .7, b: s.start + .4, flash: true });
+});
+
+// Seitenverhaeltnisse messen (Clips: erstes Bild), dann alles neu bauen ist zu teuer - darum vorab:
+// RATIO wird von preload() gefuellt und der Plan danach gebaut (siehe unten).
+
+const subEl = document.querySelector("#sub span");
+const PANELS = [...document.querySelectorAll(".scene > div")].filter(n => n._t0 != null);
+const bobs = () => document.querySelectorAll(".bob");
+
+function frameSrc(v, t) {
+  if (!v.clip) return v.src;
+  const n = CLIPS[v.clip] || 1, dur = n / 15, span = v.t1 - v.t0;
+  const rate = clamp(dur / Math.max(span, .1), .5, 1);
+  const i = Math.min(n, 1 + Math.floor(Math.max(0, t - v.t0) * 15 * rate));
+  return `clips/${v.clip}/${String(i).padStart(3, "0")}.jpg`;
+}
+
+async function setTime(t) {
+  for (const s of SCENES) {
+    let o;
+    if (s.flash) { const p = prog(t, s.a, s.b - s.a); o = t < s.a || t > s.b ? 0 : Math.sin(Math.PI * p); s.el.style.transform = `scale(${1 + .25 * p})`;
+      s.el.querySelector(".rays").style.transform = `rotate(${(t - s.a) * 40}deg)`; }
+    else { const fin = prog(t, s.a, .45), fout = 1 - prog(t, s.b - .45, .45); o = t < s.a || t > s.b ? 0 : Math.min(fin, fout);
+      const k = prog(t, s.a, s.b - s.a); s.el.style.transform = `scale(${1 + .03 * easeInOut(k)})`; }
+    s.el.style.opacity = o; s.el.style.visibility = o > .001 ? "visible" : "hidden";
+  }
+  for (const n of PANELS) {
+    const o = t < n._t0 || t > n._t1 ? 0 : Math.min(prog(t, n._t0, .3), 1 - prog(t, n._t1 - .3, .3));
+    n.style.opacity = o; n.style.visibility = o > .001 ? "visible" : "hidden";
+  }
+  for (const a of ANIM) {
+    const p = prog(t, a.t0, a.kind === "write" ? .9 : .6);
+    let tr = "", op = 1, clip = "";
+    switch (a.kind) {
+      case "pop": { const e = easeBack(p); op = clamp(p * 2.5); tr = `scale(${.6 + .4 * e})`; break; }
+      case "rise": { const e = easeOut(p); op = p; tr = `translateY(${50 * (1 - e)}px)`; break; }
+      case "slidedown": { const e = easeOut(p); op = p; tr = `translateY(${-30 * (1 - e)}px)`; break; }
+      case "write": { op = clamp(p * 4); const e = easeInOut(p); clip = e >= 1 ? "" : `inset(-30% ${(1 - e) * 115 - 15}% -30% -8%)`; break; }
+      default: op = easeOut(p);
+    }
+    a.el.style.opacity = op; a.el.style.transform = tr + " " + a.base; a.el.style.clipPath = clip;
+  }
+  const waits = [];
+  for (const v of VIEWS) {
+    if (t < v.t0 - .3 || t > v.t1 + .6) continue;
+    const src = frameSrc(v, t);
+    if (v.img.getAttribute("src") !== src) { v.img.setAttribute("src", src); waits.push(v.img.decode().catch(() => {})); }
+    // Kameraschub im Fenster
+    const k = prog(t, v.t0, Math.max(v.t1 - v.t0, 1));
+    v.img.style.transform = `scale(${1 + .04 * easeInOut(k)})`;
+  }
+  for (const nv of NAVS) {
+    let on = [];
+    for (const [ts, g] of nv.steps) if (t >= ts) on = g;
+    nv.el.querySelectorAll(".grp").forEach(g => g.classList.toggle("on", on.includes(g.dataset.g)));
+  }
+  bobs().forEach((b, i) => { const ph = +(b.dataset.phase || i); b.style.transform = `translateY(${Math.sin(t * 1.7 + ph * 1.3) * 9}px) rotate(${Math.sin(t * 1.1 + ph) * 1.5}deg)`; });
+  const cue = TL.subs.find(c => t >= c.t0 && t < c.t1);
+  subEl.textContent = cue ? cue.text : "";
+  subEl.parentNode.style.display = cue ? "block" : "none";
+  subEl.style.opacity = cue ? clamp(Math.min((t - cue.t0) / .15, (cue.t1 - t) / .15)) : 0;
+  await Promise.all(waits);
+}
+window.setTime = setTime;
+window.DURATION = TL.duration;
+</script>
+<script>
+// Seitenverhaeltnisse vorab messen und die Rahmen anpassen (Bild im Rahmen fuellt ohne Beschnitt).
+window.READY = (async () => {
+  const fix = [];
+  for (const v of VIEWS) {
+    const src = v.clip ? `clips/${v.clip}/001.jpg` : v.src;
+    const im = new Image(); im.src = src; await im.decode().catch(() => {});
+    const r = im.naturalWidth / im.naturalHeight || 1.6;
+    const win = v.img.closest(".win"), view = v.img.parentNode;
+    const hasNote = win.parentNode.querySelector(".hand") != null;
+    const maxW = hasNote ? 1300 : 1500, maxH = 800;
+    let w = maxW, h = w / r + 44;
+    if (h > maxH) { h = maxH; w = (h - 44) * r; }
+    const left = hasNote ? 90 + (1300 - w) / 2 : (1920 - w) / 2, top = 130 + (800 - h) / 2;
+    Object.assign(win.style, { width: w + "px", height: h + "px", left: left + "px", top: top + "px" });
+    view.style.height = (h - 44) + "px";
+    const note = win.parentNode.querySelector(".hand");
+    if (note) note.style.left = Math.min(left + w + 40, 1540) + "px";
+    const neu = win.parentNode.querySelector(".neu");
+    if (neu) { neu.style.left = (left - 18) + "px"; neu.style.top = (top - 18) + "px"; }
+  }
+  await document.fonts.ready;
+  await setTime(0);
+})();
+</script>
+</body>
+</html>
