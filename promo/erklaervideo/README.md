@@ -8,9 +8,9 @@ Die gerenderte Fassung liegt nicht im Repo, weil sie zu groß ist. Die Spielaufn
 
 | Datei | Zweck |
 |---|---|
-| `tts/script.json` | Sprechertext: 15 Szenen, 132 Sätze. Die Sätze sind auch die Untertitel. |
+| `tts/script.json` | Sprechertext: 15 Szenen. Die Sätze sind auch die Untertitel. |
 | `tts/build_voice_piper.py`, `tts/scenes.py` | Vorschau-Stimme mit Piper (`de_DE-thorsten-high`). Legt die Szenen auf ganze Takte (110 BPM) mit 2 Takten Titelkarte. In `scenes.py` steht die Musikart je Szene. Ergebnis: `voice.wav`, `timeline.json`, `timeline.js`. |
-| `tts/split_el.py`, `tts/build_voice_el.py` | ElevenLabs-Aufnahme an den Pausen schneiden, den Sätzen zuordnen, Zeitleiste bauen (aus dem Werbevideo). |
+| `tts/split_el.py`, `tts/split_nach.py`, `tts/build_voice_el.py` | ElevenLabs-Aufnahme (`voice/elevenlabs_roger.mp3`, Stand `tts/script_v1.json`) und Nachaufnahme (`voice/nachaufnahme.mp3`, die drei Sätze zu „Entdecken“, 1.5.0.0) an den Pausen schneiden und den Sätzen zuordnen, Zeitleiste bauen. Ohne sherpa-Whisper nimmt `split_el.py` faster-whisper. |
 | `clips.txt`, `make_clips.sh` | Ausschnitte aus den Spielaufnahmen: Zeit, Zuschnitt aufs Fenster, Bereiche mit fremden Namen unscharf. Ergebnis: `clips/<name>/*.jpg` (15 fps) und `clips.js`. |
 | `assets/` | Logo, Navigationssymbole, Dungeon-Header (aus `Codex-Forever/media`), Bilder der Willkommens-Szenen und die neuen Bilder (Quelle: `bilder/shots_neu.html`, gleicher Stil wie `make_welcome.py`). |
 | `index.html` | Alle Szenen. Jede Bildtafel hängt an einem Satz (`PLAN`), dadurch passt sie zu jeder Stimme. Gesteuert über `setTime(t)`. |
@@ -28,7 +28,7 @@ npm install
 # Stimme, entweder Vorschau:
 python3 tts/build_voice_piper.py /pfad/de_DE-thorsten-high.onnx "$PWD"
 # oder ElevenLabs (voice/elevenlabs_roger.mp3), dann in timeline.js "voice": "elevenlabs" setzen (Abspann):
-#   cd tts && python3 split_el.py && python3 build_voice_el.py ..
+#   cd tts && python3 split_el.py && python3 split_nach.py && python3 build_voice_el.py ..
 python3 music2.py timeline.json music2.wav
 ./mix.sh
 node render.js "$PWD"

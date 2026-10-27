@@ -62,7 +62,7 @@
   .win .bar b { margin-left: 10px; font-size: 19px; font-weight: 600; color: #cfc9e6; }
   .win .bar .src { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 15px; color: #77718c; }
   .win .view { position: relative; overflow: hidden; }
-  .win .view img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 50% 50%; }
+  .win .view img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; }
 
   .hand { font-family: 'Caveat', cursive; font-weight: 600; color: #5a48ff; font-size: 50px; line-height: 1.05; width: 340px; }
   .dark .hand { color: #d6ceff; }
@@ -163,7 +163,8 @@ const PLAN = {
   ]},
   dungeons: { n: 3, title: "Dungeons", icon: "nav_dungeons", panels: [
     { at: 0, type: "headers" },
-    { at: 2, clip: "dungeon", label: "Dungeons · The Deadmines", path: "/wc › Dungeons", note: "Bosse, Aufstellung, Besonderheiten" },
+    { at: 2, clip: "dungeon", label: "WeintCodex · Dungeons", path: "/wc › Dungeons", note: "Bosse, Aufstellung, Besonderheiten" },
+    { at: 3, clip: "dungeon2", label: "Dungeons · Bosse und Beute", path: "/wc › Dungeons" },
     { at: 4, type: "card", title: "Fähigkeiten ja – Taktik nein", lines: [["ok", "Fähigkeiten der Bosse: aus dem Spiel"], ["x", "keine Anleitung im Addon"], ["ok", "Taktik vom Bot im Discord: <code>/weintboss</code>"]] },
     { at: 7, clip: "eingang", label: "Karte & Questlog · Eingang auf der Karte", note: "Weg hinein" },
     { at: 9, img: "herkunft", label: "Herkunft jeder Angabe" },
@@ -173,11 +174,10 @@ const PLAN = {
     { at: 0, clip: "beute", label: "WeintCodex · Beute", path: "/wc › Beute" },
     { at: 3, clip: "beute2", label: "Beute · Wunschliste", path: "/wc › Beute", note: "Dropchance aus Classic – fehlt sie, steht keine da" },
   ]},
-  character: { n: 5, title: "Charakter, Lehrer, Taschen, Bücher", icon: "nav_charakter", panels: [
+  character: { n: 5, title: "Charakter, Lehrer, Taschen", icon: "nav_charakter", panels: [
     { at: 0, clip: "charakter", label: "WeintCodex · Charakter", path: "/wc › Charakter" },
     { at: 2, clip: "lehrer", label: "WeintCodex · Lehrer", path: "/wc › Lehrer", note: "zweiter Reiter: Klassenquests", noteAt: 4 },
     { at: 5, clip: "taschen", label: "WeintCodex · Taschen", path: "/wc › Taschen", note: "Taschen · Bank · Angelegt" },
-    { at: 7, clip: "buecher", label: "WeintCodex · Bücher", path: "/wc › Bücher", note: "mit Knopf für den Questpfeil", noteAt: 9 },
   ]},
   professions: { n: 6, title: "Berufe", icon: "nav_berufe", panels: [
     { at: 0, clip: "planer", label: "Berufe · Planer", path: "/wc › Berufe" },
@@ -190,7 +190,8 @@ const PLAN = {
     { at: 4, clip: "handel", label: "Einstellungen · Handel & Gespräche", path: "/wcui › Handel & Gespräche", note: "Mit der Gilde teilen" },
   ]},
   map: { n: 8, title: "Karte & Questpfeil", icon: "nav_dungeons", panels: [
-    { at: 0, clip: "questpfeil", label: "Einstellungen · Questpfeil", path: "/wcui › Questpfeil", note: "Entfernung und Ankunftszeit" },
+    { at: 0, clip: "questpfeil_welt", label: "Questpfeil unterwegs" },
+    { at: 1, clip: "questpfeil", label: "Einstellungen · Questpfeil", path: "/wcui › Questpfeil", note: "Entfernung und Ankunftszeit" },
     { at: 2, img: "mapEntrances", label: "Instanzeingänge auf der Karte" },
     { at: 3, clip: "welt", label: "Einstellungen · Welt & Karte", path: "/wcui › Welt & Karte" },
     { at: 4, img: "mapReveal", label: "Ganze Karte aufdecken" },
@@ -202,17 +203,20 @@ const PLAN = {
     { at: 7, img: "angellog", label: "Werkzeug · Angeln (Logbuch)", path: "/wc › Berufe › Angeln", neu: true },
   ]},
   flight: { n: 10, title: "Fliegen", icon: "nav_uebersicht", neu: true, bg: "dark", panels: [
-    { at: 0, img: "flugzeit", label: "Flugzeit", neu: true, note: "Zwischenstopp mit Ankunft", noteAt: 2 },
+    { at: 0, clip: "flug", label: "Im Flug", note: "oben: wann du landest" },
+    { at: 2, img: "flugzeit", label: "Flugzeit mit Zwischenstopp", neu: true, note: "Ankunft je Halt" },
     { at: 4, clip: "flugspiele", label: "Flugspiele", note: "Lust auf ein Spiel, bis du landest?" },
     { at: 5, type: "card", title: "Strecke unbekannt?", lines: [["ok", "keine geschätzte Landezeit"], ["ok", "„Flugzeit unbekannt – wird gemessen“"]] },
   ]},
-  sleepingbag: { n: 11, title: "Gemütlicher Schlafsack", icon: "nav_buecher", neu: true, bg: "dark", panels: [
-    { at: 0, img: "schlafsack", label: "Bücher · Gemütlicher Schlafsack", path: "/wc › Bücher", neu: true, note: "ein Klick: Questpfeil", noteAt: 3 },
+  sleepingbag: { n: 11, title: "Entdecken: Bücher & Schlafsack", icon: "nav_buecher", panels: [
+    { at: 0, clip: "buecher", label: "WeintCodex · Bücher der Bibliothek", path: "/wc › Entdecken", note: "in der Aufnahme noch „Bücher“, seit 1.5 „Entdecken“" },
+    { at: 3, img: "schlafsack", label: "Entdecken · Gemütlicher Schlafsack", path: "/wc › Entdecken › Questreihen", neu: true, note: "ein Klick: Questpfeil", noteAt: 6 },
   ]},
   comfort: { n: 12, title: "Komfort-Oberfläche", icon: "nav_einstellungen", panels: [
     { at: 0, clip: "alltag", label: "Einstellungen · Alltag", path: "/wcui", note: "Hauptschalter oben rechts", noteAt: 1 },
     { at: 3, type: "cmd", text: "/wcui", note: "öffnet die Einstellungen" },
     { at: 4, type: "themes" },
+    { at: 5, clip: "kampf", label: "Einstellungen · Kampf & Gruppe", path: "/wcui › Kampf & Gruppe" },
     { at: 6, img: "suche", label: "Einstellungen · Suche", path: "/wcui" },
     { at: 8, clip: "plaketten", label: "Einstellungen · Namensplaketten", path: "/wcui › Namensplaketten" },
     { at: 9, clip: "erinnerungen", label: "Einstellungen · Erinnerungen", path: "/wcui › Erinnerungen" },
@@ -251,7 +255,7 @@ function A(node, t0, kind, base) { node.classList.add("a"); ANIM.push({ el: node
 
 const SVG_CODEX = `<svg viewBox="0 0 24 24"><path fill="#fff" d="M12 2 2 7l10 5 10-5-10-5Zm-8 9.2v5.3L12 21l8-4.5v-5.3L12 15l-8-3.8Z"/></svg>`;
 const SVG_BOT = `<svg viewBox="0 0 24 24"><path fill="#fff" d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm4 6.5a1.5 1.5 0 1 0 0 .01Zm4 0a1.5 1.5 0 1 0 0 .01Zm4 0a1.5 1.5 0 1 0 0 .01Z"/></svg>`;
-const NAV = [["Leveln", [["uebersicht", "Übersicht"], ["charakter", "Charakter"], ["lehrer", "Lehrer"], ["berufe", "Berufe"], ["taschen", "Taschen"], ["buecher", "Bücher"], ["dungeons", "Dungeons"], ["beute", "Beute"]]],
+const NAV = [["Leveln", [["uebersicht", "Übersicht"], ["charakter", "Charakter"], ["lehrer", "Lehrer"], ["berufe", "Berufe"], ["taschen", "Taschen"], ["buecher", "Entdecken"], ["dungeons", "Dungeons"], ["beute", "Beute"]]],
              ["Gruppe", [["gruppe", "Gruppencheck"], ["bosse", "Schlachtzüge"], ["kalender", "Raidplanung"]]],
              ["Gilde", [["materialien", "Materialien"]]],
              ["System", [["companion", "Companion"], ["einstellungen", "Einstellungen"]]]];
@@ -428,7 +432,7 @@ async function setTime(t) {
     if (v.img.getAttribute("src") !== src) { v.img.setAttribute("src", src); waits.push(v.img.decode().catch(() => {})); }
     // Kameraschub im Fenster
     const k = prog(t, v.t0, Math.max(v.t1 - v.t0, 1));
-    v.img.style.transform = `scale(${1 + .04 * easeInOut(k)})`;
+    v.img.closest('.win').style.scale = String(1 + .035 * easeInOut(k));
   }
   for (const nv of NAVS) {
     let on = [];

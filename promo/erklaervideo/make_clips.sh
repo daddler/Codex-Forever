@@ -9,7 +9,7 @@ grep -v '^#' clips.txt | while read n f st d cx cy cw ch bl; do
     IFS=, read bx by bw bh <<< "$bl"
     vf="split[a][b];[b]crop=$bw:$bh:$bx:$by,boxblur=14:3[bb];[a][bb]overlay=$bx:$by,crop=$cw:$ch:$cx:$cy"
   fi
-  ffmpeg -v error -y -ss $st -t $d -i ../out/$f -vf "$vf,scale='min(1500,iw*1.6)':-2:flags=lanczos,fps=15" -q:v 3 clips/$n/%03d.jpg </dev/null
+  ffmpeg -v error -y -ss $st -t $d -i ../out/$f -vf "$vf,scale='min(1500,iw*1.8)':-2:flags=lanczos,fps=15" -q:v 3 clips/$n/%03d.jpg </dev/null
   echo "$n $(ls clips/$n | wc -l)"
 done
 # Bildzahl je Ausschnitt fuer index.html

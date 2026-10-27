@@ -51,8 +51,24 @@ import soundfile as sf
 _x, SR = sf.read(os.path.join(HERE, "..", "voice", "all.wav"))
 _seg = json.load(open(os.path.join(HERE, "..", "voice", "segments.json")))
 script = json.load(open(os.path.join(HERE, "script.json")))
-clips = [_x[int(a * SR):int(b * SR)].astype(np.float32) for a, b in _seg]
-assert len(clips) == sum(len(s["lines"]) for s in script)
+# Erste Aufnahme: Saetze aus script_v1.json (Stand der Aufnahme), per Text gefunden.
+# Neue Saetze kommen aus der Nachaufnahme (split_nach.py), in ihrer Reihenfolge.
+v1 = [l for s in json.load(open(os.path.join(HERE, "script_v1.json"))) for l in s["lines"]]
+assert len(_seg) == len(v1)
+byText = {l: _x[int(a * SR):int(b * SR)].astype(np.float32) for l, (a, b) in zip(v1, _seg)}
+nachP = os.path.join(HERE, "..", "voice", "nach.wav")
+nach = []
+if os.path.exists(nachP):
+    _n, _sr = sf.read(nachP)
+    assert _sr == SR
+    nach = [_n[int(a * SR):int(b * SR)].astype(np.float32) for a, b in json.load(open(os.path.join(HERE, "..", "voice", "segments_nach.json")))]
+clips = []
+for s in script:
+    for l in s["lines"]:
+        if l in byText: clips.append(byText[l])
+        else:
+            assert nach, "Satz fehlt in beiden Aufnahmen: " + l
+            clips.append(nach.pop(0))
 
 scenes, subs, voice_parts = [], [], []
 bar = 0

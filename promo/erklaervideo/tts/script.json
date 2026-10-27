@@ -38,7 +38,7 @@
    "Jetzt zum Hauptfenster.",
    "Links ist die Navigation, in vier Gruppen geordnet.",
    "Leveln, Gruppe, Gilde und System.",
-   "Unter Leveln findest du die Übersicht, Charakter, Lehrer, Berufe, Taschen, Bücher, Dungeons und Beute.",
+   "Unter Leveln findest du die Übersicht, Charakter, Lehrer, Berufe, Taschen, Entdecken, Dungeons und Beute.",
    "Die Übersicht ist deine Startseite.",
    "Oben steht, was als Nächstes ansteht, zum Beispiel wie viele Zauber beim Lehrer auf dich warten.",
    "Darunter siehst du Dein Weg, deine nächsten Stufen auf einen Blick.",
@@ -86,10 +86,7 @@
    "Die Liste steht nach Stufe, so wie der Lehrer sie anbietet.",
    "Im zweiten Reiter stehen deine Klassenquests.",
    "Taschen zeigt dir den Bestand aller deiner Charaktere.",
-   "Oben suchst du nach einem Gegenstand und filterst nach Taschen, Bank oder Angelegt.",
-   "Unter Bücher findest du die Bücher der Bibliothek.",
-   "Sie sind sortiert in Abgeben, Empfohlen, Möglich, Abgeraten und Abgegeben.",
-   "Klick auf ein Buch, und du siehst, wo es liegt, mit einem Knopf für den Questpfeil."
+   "Oben suchst du nach einem Gegenstand und filterst nach Taschen, Bank oder Angelegt."
   ]
  },
  {
@@ -155,8 +152,11 @@
  {
   "scene": "sleepingbag",
   "lines": [
+   "Unter Entdecken findest du die Bücher der Bibliothek.",
+   "Sie sind sortiert in Abgeben, Empfohlen, Möglich, Abgeraten und Abgegeben.",
+   "Klick auf ein Buch, und du siehst, wo es liegt, mit einem Knopf für den Questpfeil.",
    "Ebenfalls neu: der Gemütliche Schlafsack.",
-   "Du findest ihn auf der Seite Bücher.",
+   "Auch er steht unter Entdecken, im Abschnitt Questreihen.",
    "Dort stehen alle Schritte der Questreihe, passend zu deiner Fraktion.",
    "Mit einem Klick setzt du den Questpfeil auf den nächsten Schritt.",
    "Was erledigt ist, sagt dir das Spiel selbst."

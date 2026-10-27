@@ -1,0 +1,209 @@
+[
+ {
+  "scene": "intro",
+  "lines": [
+   "Das ist WeintCodex, die Forever Edition.",
+   "Ein Addon für World of Warcraft Forever, das dich vom ersten Level bis in den Schlachtzug begleitet.",
+   "Du öffnest es mit dem Befehl Schrägstrich W C, oder mit einem Klick auf das Symbol.",
+   "WeintCodex arbeitet mit zwei Partnern zusammen.",
+   "Die Companion-App auf deinem Rechner, und dem WeintCodex-Bot in eurem Discord.",
+   "Das Addon selbst geht nie ins Internet.",
+   "Was von außen kommt, bringt die Companion mit.",
+   "In den nächsten Minuten zeige ich dir, was drin ist, wo du es einstellst und wie du es benutzt."
+  ]
+ },
+ {
+  "scene": "install",
+  "lines": [
+   "Fangen wir mit der Installation an.",
+   "Die übernimmt die Companion.",
+   "Sie installiert WeintCodex und hält es aktuell, du musst nichts von Hand kopieren.",
+   "Beim ersten Start begrüßt dich der Willkommens-Assistent.",
+   "Er hat vier Schritte.",
+   "Zuerst: Willkommen. Hier steht kurz, was WeintCodex ist.",
+   "Dann: das Aussehen. Du wählst zwischen vier Looks.",
+   "Wie bisher, Schwarz, Transparent oder Holz.",
+   "Rechts siehst du gleich eine Vorschau.",
+   "Im dritten Schritt geht es um die Helfer.",
+   "Nimm Empfohlen, oder wähle mit Selbst auswählen jedes Thema einzeln.",
+   "Zum Schluss: Bereit. Du siehst eine Zusammenfassung.",
+   "Wählst du einen Look, richtet WeintCodex die Oberfläche beim Übernehmen gleich mit ein, und dein bisheriges Layout bleibt gemerkt.",
+   "Wichtig: Bis du auf Übernehmen klickst, ändert sich nichts.",
+   "Brichst du ab, fragt dich der Assistent beim nächsten Einloggen noch einmal."
+  ]
+ },
+ {
+  "scene": "window",
+  "lines": [
+   "Jetzt zum Hauptfenster.",
+   "Links ist die Navigation, in vier Gruppen geordnet.",
+   "Leveln, Gruppe, Gilde und System.",
+   "Unter Leveln findest du die Übersicht, Charakter, Lehrer, Berufe, Taschen, Bücher, Dungeons und Beute.",
+   "Die Übersicht ist deine Startseite.",
+   "Oben steht, was als Nächstes ansteht, zum Beispiel wie viele Zauber beim Lehrer auf dich warten.",
+   "Darunter siehst du Dein Weg, deine nächsten Stufen auf einen Blick.",
+   "Unter Gruppe stehen Gruppencheck, Schlachtzüge und Raidplanung.",
+   "Unter Gilde die Materialien, und unter System die Companion und die Einstellungen.",
+   "Oben im Fenster gibt es eine Suche, und rechts oben schließt du das Fenster wieder."
+  ]
+ },
+ {
+  "scene": "dungeons",
+  "lines": [
+   "Ein Herzstück sind die Dungeons.",
+   "Sie sind nach Stufen sortiert, die neuen von Forever und die klassischen in einer Liste.",
+   "Jeder Dungeon hat Bosskarten, eine Aufstellung nach Rollen und seine Besonderheiten.",
+   "Klick auf einen Boss, und du siehst seine Beute mit Dropchance und seine Fähigkeiten.",
+   "Die Fähigkeiten kommen direkt aus dem Spiel.",
+   "Eine Taktik findest du hier bewusst nicht.",
+   "Die bekommst du im Discord vom Bot, mit dem Befehl Schrägstrich weint boss.",
+   "Darunter stehen die Quests zum Dungeon, mit dem Questgeber auf der Karte.",
+   "Und mit Eingang auf der Karte findest du den Weg hinein.",
+   "WeintCodex sagt dir auch, woher eine Angabe stammt.",
+   "Steht da Unbestätigt, kommt sie aus Berichten von Spielern.",
+   "Steht da Aus Classic, stammt sie aus dem klassischen Spiel.",
+   "Und was es noch nicht gibt, ist als noch nicht im Spiel markiert.",
+   "Habt ihr im Discord einen Dungeon geplant, steht die Einladung auch hier, unter Besonderheiten."
+  ]
+ },
+ {
+  "scene": "loot",
+  "lines": [
+   "Direkt unter Dungeons liegt die Beute.",
+   "Hier siehst du, was wo fällt.",
+   "Nach Dungeons, Schlachtzügen, Ruf, P V P und Sets.",
+   "Gefällt dir ein Gegenstand, setzt du ihn auf deine Wunschliste.",
+   "Die Dropchancen stammen aus Classic.",
+   "Fehlt eine, steht auch keine da, und nie null Prozent."
+  ]
+ },
+ {
+  "scene": "character",
+  "lines": [
+   "Weiter zu deinem Charakter.",
+   "Die Seite Charakter zeigt dir deine Ausrüstung, mit Gegenstandsstufe und deiner Spezialisierung.",
+   "Auf der Seite Lehrer siehst du, was du auf deiner Stufe lernen kannst, und was es kostet.",
+   "Die Liste steht nach Stufe, so wie der Lehrer sie anbietet.",
+   "Im zweiten Reiter stehen deine Klassenquests.",
+   "Taschen zeigt dir den Bestand aller deiner Charaktere.",
+   "Oben suchst du nach einem Gegenstand und filterst nach Taschen, Bank oder Angelegt.",
+   "Unter Bücher findest du die Bücher der Bibliothek.",
+   "Sie sind sortiert in Abgeben, Empfohlen, Möglich, Abgeraten und Abgegeben.",
+   "Klick auf ein Buch, und du siehst, wo es liegt, mit einem Knopf für den Questpfeil."
+  ]
+ },
+ {
+  "scene": "professions",
+  "lines": [
+   "Bei den Berufen siehst du alle Rezepte, deine Lehrer, einen Planer und deine Merkliste.",
+   "Wähle links einen Beruf, und rechts siehst du seine Rezepte mit den Lehrern, die sie anbieten.",
+   "Unter Gilde siehst du, wer in deiner Gilde welches Rezept kann.",
+   "Das Teilen mit der Gilde kannst du auf der Seite ein- und ausschalten.",
+   "Neu ist das Werkzeug Gewinn.",
+   "Es rechnet dir aus, ob sich das Herstellen lohnt.",
+   "Der Erlös ist dein zuletzt gesehener Auktionspreis mal die Stückzahl, minus fünf Prozent Gebühr.",
+   "Davon gehen die Materialkosten ab, zum günstigsten bekannten Preis, beim Händler oder im Auktionshaus.",
+   "Fehlt eine Zahl, zeigt WeintCodex keinen Gewinn an, statt zu raten."
+  ]
+ },
+ {
+  "scene": "auction",
+  "lines": [
+   "Woher kommen die Preise?",
+   "Im Auktionshaus klickst du auf Preise scannen.",
+   "Ein Balken zeigt dir, wie weit der Scan schon ist.",
+   "Danach steht der Preis im Tooltip jedes Gegenstands.",
+   "Wenn du willst, teilst du die Preise mit deiner Gilde, mit dem Schalter Mit der Gilde teilen.",
+   "Dann profitieren alle von einem Scan."
+  ]
+ },
+ {
+  "scene": "map",
+  "lines": [
+   "Unterwegs hilft dir der Questpfeil.",
+   "Er zeigt zur gewählten Quest, mit Entfernung und Ankunftszeit.",
+   "Auf der Karte siehst du die Instanzeingänge, die WeintCodex kennt.",
+   "Dazu auf Wunsch Geistheiler, Flugmeister und die Übergänge in andere Gebiete.",
+   "Und die Karte lässt sich ganz aufdecken, auch dort, wo du noch nicht warst."
+  ]
+ },
+ {
+  "scene": "gathering",
+  "lines": [
+   "Für Sammler gibt es den Sammel-Atlas.",
+   "Er merkt sich, wo du schon gesammelt hast.",
+   "WeintCodex bringt keine fertige Liste mit, jeder Punkt stammt aus deinem eigenen Spiel.",
+   "Mit Kräuter und Erz im Wechsel laufen beide Suchen auf der Minikarte, außerhalb des Kampfes.",
+   "Neu ist Angeln mit einer Taste.",
+   "Du wählst eine Taste, und sie wirft aus, holt den Schwimmer ein und nimmt die Beute.",
+   "Jeder Druck kommt von dir, nichts passiert von selbst.",
+   "Dazu gibt es ein Logbuch, als Werkzeug Angeln auf der Seite Berufe.",
+   "Dort siehst du je Gebiet deine Würfe und was du gefangen hast."
+  ]
+ },
+ {
+  "scene": "flight",
+  "lines": [
+   "Auch Fliegen ist jetzt angenehmer.",
+   "Die Flugzeit zeigt dir, wann du landest.",
+   "Bei längeren Strecken siehst du jeden Zwischenstopp, mit seiner Ankunftszeit.",
+   "Mit dem Knopf Landen steigst du am nächsten Halt aus.",
+   "Und ein Knopf bringt dich direkt zu den Flugspielen, falls dir der Flug zu lang wird.",
+   "Kennt WeintCodex eine Strecke noch nicht, schätzt es nicht, sondern misst sie beim ersten Flug."
+  ]
+ },
+ {
+  "scene": "sleepingbag",
+  "lines": [
+   "Ebenfalls neu: der Gemütliche Schlafsack.",
+   "Du findest ihn auf der Seite Bücher.",
+   "Dort stehen alle Schritte der Questreihe, passend zu deiner Fraktion.",
+   "Mit einem Klick setzt du den Questpfeil auf den nächsten Schritt.",
+   "Was erledigt ist, sagt dir das Spiel selbst."
+  ]
+ },
+ {
+  "scene": "comfort",
+  "lines": [
+   "Jetzt zur Komfort-Oberfläche.",
+   "Sie hat einen Hauptschalter, du entscheidest also, ob du sie überhaupt willst.",
+   "Profile gelten je Charakter, und den Look kannst du jederzeit wechseln.",
+   "Die Einstellungen öffnest du mit Schrägstrich W C U I.",
+   "Die Helfer sind in vier Themen sortiert.",
+   "Alltag, Kampf und Gruppe, Welt und Karte, und Handel und Gespräche.",
+   "Weißt du nicht, wo etwas steht, tippst du oben einfach in die Suche.",
+   "Ein paar Beispiele.",
+   "Namensplaketten zeigen dir Bedrohung und Markierungen auf einen Blick.",
+   "Die Schadensanzeige misst deinen Schaden, die Erinnerungen melden sich vor dem Kampf.",
+   "Automark markiert für dich, und Flüstern als Messenger gibt jedem Gespräch ein eigenes Fenster.",
+   "Und die Fenster des Spiels kannst du frei verschieben."
+  ]
+ },
+ {
+  "scene": "group",
+  "lines": [
+   "Zum Schluss Gruppe und Gilde.",
+   "Der Gruppencheck zeigt die Ausrüstung der ganzen Gruppe auf einen Blick.",
+   "Trägt jeder etwas auf jedem Platz, ist etwas zerbrochen, und wie weit liegen die Gegenstandsstufen auseinander?",
+   "Er bewertet nicht, er zählt nur.",
+   "Unter Schlachtzüge findest du die Raids mit ihren Bossen.",
+   "In der Raidplanung siehst du die Termine im Kalender und wer sich angemeldet hat.",
+   "Unter Materialien siehst du die Materialien der Gildenbank, nach Kategorien sortiert.",
+   "Und Aufträge aus der Gilde kommen direkt aus dem Discord.",
+   "Jemand sieht dort, dass einer deiner Charaktere ein Rezept kann, und bestellt bei dir.",
+   "Im Spiel nimmst du den Auftrag an, meldest ihn als erledigt, oder lehnst ihn ab.",
+   "Die Companion gibt deine Antwort dann an den Discord weiter."
+  ]
+ },
+ {
+  "scene": "outro",
+  "lines": [
+   "Das war WeintCodex, die Forever Edition.",
+   "Unter System findest du noch die Seite Companion. Sie zeigt dir den Stand der letzten Lieferung aus der App.",
+   "Du bekommst WeintCodex über die Companion-App. Sie installiert und aktualisiert alles für dich.",
+   "Und ein Tipp zum Schluss: Du musst nicht alles auf einmal einschalten.",
+   "Fang mit den Empfehlungen an und probier den Rest in Ruhe aus.",
+   "Danke fürs Zuschauen, und viel Spaß in Azeroth."
+  ]
+ }
+]

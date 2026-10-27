@@ -68,9 +68,10 @@ S("flugzeit",
 // 6 Schlafsack
 S("schlafsack", tile(40, 26, 944, 460,
   `<div style="position:absolute;left:0;top:0;bottom:0;width:230px;background:#101014;border-right:1px solid var(--line)">` +
-  brow(18, 20, "Bücher", "var(--td)") +
-  ["Abgeben", "Empfohlen", "Möglich", "Abgeraten", "Abgegeben", "Gemütlicher Schlafsack"].map((n, i) =>
-    `<div style="position:absolute;left:0;right:0;top:${52 + i * 40}px;height:36px;${i === 5 ? "background:#1c1c23;border-left:3px solid var(--acc)" : ""}">${txt(18, 8, 16, n, i === 5 ? "" : "color:var(--tm)")}</div>`).join("") + `</div>` +
+  brow(18, 18, "Entdecken", "var(--td)") +
+  [["g", "Bücher der Bibliothek"], ["", "Alle Bücher"], ["", "Abgeben"], ["", "Empfohlen"], ["", "Möglich"], ["", "Abgeraten"], ["", "Abgegeben"], ["g", "Questreihen"], ["on", "Gemütlicher Schlafsack"]].map((n, i) =>
+    n[0] === "g" ? `<div class="eyebrow" style="position:absolute;left:18px;top:${50 + i * 38 + 8}px;font-size:10px;color:var(--tf)">${n[1]}</div>`
+    : `<div style="position:absolute;left:0;right:0;top:${50 + i * 38}px;height:34px;${n[0] === "on" ? "background:#1c1c23;border-left:3px solid var(--acc)" : ""}">${txt(18, 7, 15, n[1], n[0] === "on" ? "" : "color:var(--tm)")}</div>`).join("") + `</div>` +
   `<div style="position:absolute;left:260px;top:20px;font-family:Serif;font-size:30px;color:var(--tb)">Gemütlicher Schlafsack</div>` +
   [["Pocket Litter", "Verlassenes Lager", 1], ["Mound of Dirt", "Felsvorsprung nördlich des Lagers", 1], ["Carved Figurine", "Stonewrought Dam", 0], ["Messenger Bag", "In Thoradins Wall", 0], ["Hastily Rolled-Up Satchel", "Unter der Messenger Bag", 0]].map((r, i) =>
     `<div style="position:absolute;left:260px;right:24px;top:${84 + i * 62}px;height:54px;background:${i === 2 ? "#1c1c23" : "#141419"};border:1px solid ${i === 2 ? "var(--acc)" : "var(--line)"}">

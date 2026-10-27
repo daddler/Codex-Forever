@@ -1,29 +1,33 @@
-# Ausschnitte aus ../out (siehe ../ausschnitte.md). Zuschnitt x y b h im 1920x1080-Bild;
-# blur = Bereich (x y b h, im Originalbild), der unscharf wird (fremde Namen).
-# name          datei                                   start dauer crop                  blur
-uebersicht      Codex/Codex-01-Uebersicht.mp4           22  6   112 37 1613 1000          -
-dungeon         Codex/Codex-07-Dungeons.mp4             31  7   112 37 1613 1000          -
-eingang         Codex/Codex-07-Dungeons.mp4             101 5   80 150 760 410        -
-beute           Codex/Codex-08-Beute.mp4                20  6   112 37 1613 1000          -
-beute2          Codex/Codex-08-Beute.mp4                92  6   112 37 1613 1000          -
-charakter       Codex/Codex-02-Charakter.mp4            10  6   112 37 1613 1000          -
-lehrer          Codex/Codex-03-Lehrer.mp4               30  6   112 37 1613 1000          -
-taschen         Codex/Codex-05-CodexTaschen.mp4         30  6   112 37 1613 1000          -
-buecher         Codex/Codex-06-Buecher.mp4              12  6   112 37 1613 1000          -
-berufe          Codex/Codex-04-Berufe.mp4               22  6   112 37 1613 1000          -
-berufe_gilde    Codex/Codex-04-Berufe.mp4               152 6   112 37 1613 1000          480,230,980,800
-planer          Codex/Codex-04-Berufe.mp4               212 6   112 37 1613 1000          -
-raid            Codex/Codex-11-Raidplanung.mp4          12  6   112 37 1613 1000          480,180,1000,850
-flugspiele      Codex/Codex-13-Flugspiele.mp4           12  5   720 90 480 560        -
-flug            Codex/Codex-14-Abschluss.mp4            45  8   400 150 1100 640          -
-welcome1        Oberflaeche/UI-01-Einrichtung.mp4       102 6   400 140 820 520       -
-welcome2        Oberflaeche/UI-01-Einrichtung.mp4       172 6   400 140 820 520       -
-welcome3        Oberflaeche/UI-01-Einrichtung.mp4       219 6   400 140 820 520       -
-welcome4        Oberflaeche/UI-01-Einrichtung.mp4       232 6   400 140 820 520       -
-alltag          Oberflaeche/UI-16-Alltag.mp4            32  6   330 80 1000 610       -
-kampf           Oberflaeche/UI-17-KampfGruppe.mp4       30  6   330 80 1000 610       -
-welt            Oberflaeche/UI-18-WeltKarte.mp4         30  6   330 70 1000 620       -
-handel          Oberflaeche/UI-19-HandelGespraeche.mp4  30  6   330 210 700 620      -
-plaketten       Oberflaeche/UI-04-Namensplaketten.mp4   12  6   510 10 880 500        -
-questpfeil      Oberflaeche/UI-13-Questpfeil.mp4        102 6   330 120 1000 560      -
-erinnerungen    Oberflaeche/UI-15-Erinnerungen.mp4      30  6   330 50 1000 590       -
+# Ausschnitte aus ../out (siehe ../ausschnitte.md). Zuschnitt x y b h im 1920x1080-Bild,
+# am Raster gemessen: das ganze Fenster, nichts abgeschnitten.
+# blur = Bereich (x,y,b,h im Originalbild), der unscharf wird (fremde Namen, fremde Addons).
+# Laengere Stellen mit Bewegung (Seitenwechsel, Scrollen, Tooltips) statt Standbild.
+# name           datei                                   start dauer crop                  blur
+uebersicht       Codex/Codex-01-Uebersicht.mp4           92  14  110 28 1585 1050         -
+dungeon          Codex/Codex-07-Dungeons.mp4             10  14  155 28 1570 1050         -
+dungeon2         Codex/Codex-07-Dungeons.mp4             120 14  155 28 1570 1050         -
+eingang          Codex/Codex-07-Dungeons.mp4             99  7   0 120 1050 540           -
+beute            Codex/Codex-08-Beute.mp4                10  14  155 28 1570 1050         -
+beute2           Codex/Codex-08-Beute.mp4                86  14  155 28 1570 1050         -
+charakter        Codex/Codex-02-Charakter.mp4            9     12  110 28 1585 1050         -
+lehrer           Codex/Codex-03-Lehrer.mp4               25  14  110 28 1585 1050         -
+taschen          Codex/Codex-05-CodexTaschen.mp4         25  14  155 28 1570 1050         -
+buecher          Codex/Codex-06-Buecher.mp4              8   14  155 28 1570 1050         -
+berufe           Codex/Codex-04-Berufe.mp4               10  14  155 28 1570 1050         -
+berufe_gilde     Codex/Codex-04-Berufe.mp4               145 14  155 28 1570 1050         480,230,980,800
+planer           Codex/Codex-04-Berufe.mp4               205 14  155 28 1570 1050         -
+raid             Codex/Codex-11-Raidplanung.mp4          5   14  155 28 1570 1050         480,180,1000,850
+flugspiele       Codex/Codex-13-Flugspiele.mp4           10  12  730 160 460 620          -
+flug             Codex/Codex-14-Abschluss.mp4            40  14  400 150 1100 640         -
+welcome1         Oberflaeche/UI-01-Einrichtung.mp4       104   10  540 214 840 600          -
+welcome2         Oberflaeche/UI-01-Einrichtung.mp4       170 14  540 214 840 600          -
+welcome3         Oberflaeche/UI-01-Einrichtung.mp4       217 11  540 214 840 600          -
+welcome4         Oberflaeche/UI-01-Einrichtung.mp4       231   9   540 214 840 600          -
+alltag           Oberflaeche/UI-16-Alltag.mp4            30    14  450 160 1020 800         -
+kampf            Oberflaeche/UI-17-KampfGruppe.mp4       25    14  460 140 1020 800         -
+welt             Oberflaeche/UI-18-WeltKarte.mp4         25    10  460 140 1020 800         -
+handel           Oberflaeche/UI-19-HandelGespraeche.mp4  25    14  400 340 1020 740         1040,740,400,140
+plaketten        Oberflaeche/UI-04-Namensplaketten.mp4   10  14  580 25 1020 700          -
+questpfeil       Oberflaeche/UI-13-Questpfeil.mp4        104   12  460 150 1020 740         -
+questpfeil_welt  Oberflaeche/UI-13-Questpfeil.mp4        20  12  300 40 1300 780          -
+erinnerungen     Oberflaeche/UI-15-Erinnerungen.mp4      33    8   430 100 1060 700         -
